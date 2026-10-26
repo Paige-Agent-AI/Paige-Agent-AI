@@ -1,8 +1,8 @@
 // Backfills embeddings for client_memory rows where embedding IS NULL.
-// Admin-only. Processes in batches of 20 with 500ms delay between batches.
+// Platform Operator only (EXP08 stage 0). Processes in batches of 20 with 500ms delay between batches.
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { embeddingsCompat } from "../_shared/voyage.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
+import { requireOperator } from "../_shared/operatorAuth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -18,9 +18,6 @@ serve(async (req) => {
 
   try {
     const OPENAI_API_KEY = "unused";
-    const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
-    const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-    const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
 
     if (!OPENAI_API_KEY) {
       return new Response(JSON.stringify({ error: "OPENAI_API_KEY not configured" }), {
@@ -28,28 +25,13 @@ serve(async (req) => {
       });
     }
 
-    // Auth: require admin
-    const authHeader = req.headers.get("Authorization") || "";
-    const userClient = createClient(SUPABASE_URL, ANON_KEY, {
-      global: { headers: { Authorization: authHeader } },
-    });
-    const { data: { user }, error: authErr } = await userClient.auth.getUser();
-    if (authErr || !user) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-    const { data: isAdmin } = await userClient.rpc("has_role", {
-      _user_id: user.id, _role: "admin",
-    });
-    if (!isAdmin) {
-      return new Response(JSON.stringify({ error: "Admin role required" }), {
-        status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
+    // EXP08 stage 0 (owner ruling 2026-10-26): this job embeds EVERY business's client_memory with the
+    // service role, so it is a PLATFORM act — the Platform Operator's (§53), from the VERIFIED JWT.
+    // It used to admit the global `admin` row, which an owner/admin seat in ANY workspace writes.
+    const guard = await requireOperator(req);
+    if (!guard.ok) return guard.response;
     // Service-role client for read/write bypassing RLS
-    const admin = createClient(SUPABASE_URL, SERVICE_KEY);
+    const admin = guard.admin;
 
     // Fetch all rows without an embedding
     const { data: rows, error: fetchErr } = await admin

@@ -1,0 +1,225 @@
+[
+  {
+    "actions": [
+      {
+        "disabled": false,
+        "height": 66.4000015258789,
+        "text": "Prepare approval review"
+      },
+      {
+        "disabled": false,
+        "height": 66.4000015258789,
+        "text": "Edit invitations"
+      }
+    ],
+    "focus": "Request checked · not sent",
+    "heading": "Request checked · not sent",
+    "overflow": false,
+    "state": "checked"
+  },
+  {
+    "actions": [
+      {
+        "disabled": true,
+        "height": 44,
+        "text": "Checking…"
+      },
+      {
+        "disabled": false,
+        "height": 44,
+        "text": "Stop waiting"
+      }
+    ],
+    "focus": "Preparing approval review",
+    "heading": "Preparing approval review",
+    "overflow": false,
+    "state": "preparing"
+  },
+  {
+    "actions": [
+      {
+        "disabled": false,
+        "height": 66.4000015258789,
+        "text": "Approve and send invitations"
+      },
+      {
+        "disabled": false,
+        "height": 66.4000015258789,
+        "text": "Cancel approval review"
+      }
+    ],
+    "focus": "Approve this signature request",
+    "heading": "Approve this signature request",
+    "overflow": false,
+    "state": "approval"
+  },
+  {
+    "actions": [
+      {
+        "disabled": true,
+        "height": 44,
+        "text": "Checking original request…"
+      }
+    ],
+    "focus": "Signature request in progress",
+    "heading": "Signature request in progress",
+    "overflow": false,
+    "state": "submitting"
+  },
+  {
+    "actions": [
+      {
+        "disabled": false,
+        "height": 44,
+        "text": "Check original request"
+      }
+    ],
+    "focus": "Provider accepted the invitations",
+    "heading": "Provider accepted the invitations",
+    "overflow": false,
+    "state": "accepted"
+  },
+  {
+    "actions": [
+      {
+        "disabled": false,
+        "height": 44,
+        "text": "Check original request"
+      }
+    ],
+    "focus": "Some invitations were accepted",
+    "heading": "Some invitations were accepted",
+    "overflow": false,
+    "state": "partial"
+  },
+  {
+    "actions": [
+      {
+        "disabled": false,
+        "height": 44,
+        "text": "Check original request"
+      }
+    ],
+    "focus": "Sending result is uncertain",
+    "heading": "Sending result is uncertain",
+    "overflow": false,
+    "state": "unknown"
+  },
+  {
+    "actions": [
+      {
+        "disabled": true,
+        "height": 44,
+        "text": "Reading original request…"
+      }
+    ],
+    "focus": "Checking the original request",
+    "heading": "Checking the original request",
+    "overflow": false,
+    "state": "reading"
+  },
+  {
+    "actions": [
+      {
+        "disabled": false,
+        "height": 44,
+        "text": "Read saved document"
+      }
+    ],
+    "focus": "Request could not proceed",
+    "heading": "Request could not proceed",
+    "overflow": false,
+    "state": "refused"
+  },
+  {
+    "actions": [
+      {
+        "disabled": false,
+        "height": 44,
+        "text": "Read saved document"
+      }
+    ],
+    "focus": "Approval has expired",
+    "heading": "Approval has expired",
+    "overflow": false,
+    "state": "expired"
+  },
+  {
+    "actions": [
+      {
+        "disabled": false,
+        "height": 44,
+        "text": "Read saved document"
+      }
+    ],
+    "focus": "The reviewed source changed",
+    "heading": "The reviewed source changed",
+    "overflow": false,
+    "state": "changed"
+  },
+  {
+    "actions": [
+      {
+        "disabled": false,
+        "height": 44,
+        "text": "Return to business sign-in"
+      }
+    ],
+    "focus": "Agreement access unavailable",
+    "heading": "Agreement access unavailable",
+    "overflow": false,
+    "state": "denied"
+  },
+  {
+    "actions": [
+      {
+        "disabled": false,
+        "height": 44,
+        "text": "Read saved document"
+      }
+    ],
+    "focus": "No signature request recorded",
+    "heading": "No signature request recorded",
+    "overflow": false,
+    "state": "empty"
+  },
+  {
+    "actions": [
+      {
+        "disabled": false,
+        "height": 44,
+        "text": "Check original request"
+      }
+    ],
+    "focus": "Request history could not be read",
+    "heading": "Request history could not be read",
+    "overflow": false,
+    "state": "error"
+  },
+  {
+    "actions": [
+      {
+        "disabled": false,
+        "height": 44,
+        "text": "Check original request"
+      }
+    ],
+    "focus": "Agreement voided · prior provider acceptance retained",
+    "heading": "Agreement voided · prior provider acceptance retained",
+    "overflow": false,
+    "state": "voided"
+  },
+  {
+    "actions": [
+      {
+        "disabled": false,
+        "height": 44,
+        "text": "Read saved document"
+      }
+    ],
+    "focus": "Saved document",
+    "heading": "Saved document",
+    "overflow": false,
+    "state": "document"
+  }
+]

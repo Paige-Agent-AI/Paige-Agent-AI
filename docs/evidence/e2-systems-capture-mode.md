@@ -665,3 +665,79 @@ exact approved75-line claim SQL and original factory proof. The two append-only
 CI/evidence conflicts were reconciled explicitly. Fresh exact-head review/CI,
 E05 receiving and safe260002 application/readback remain required; prior green
 checks stay historical. No invocation, worker, scan, public admission or activation.
+
+## October25 — trusted native cancellation in the original manual capture core
+
+Intended usable outcome: a future authorized Systems worker can stop waiting
+after interruption without losing the original work or letting a late read
+continue into later core writes. This is a missing prerequisite, not a callable
+manual scan or completed customer workflow. EXTEND the existing core and REUSE
+native AbortSignal; no second executor, timeout factory, registry or data store.
+
+`manualCaptureSignal` is optional and accepted only with the original validated
+manual/tenant/none WorkUUID. A plain JSON lookalike, unbound signal or already
+cancelled request cannot start source work. The core forwards the same native
+signal through original Supabase builders before their terminal read/write and
+races uncooperative read ports. Abort listeners are removed on settlement.
+It rechecks cancellation after replies and never turns interrupted check reads
+into persisted error findings. Existing default callers do not install a signal.
+
+Original `SystemsCheckCaptureUnconfirmed` retains the same original Work/runUUID
+and a closed phase, including context/catalog/check reads. An issued write may
+have committed even if its acknowledgement was cancelled. No absence, rollback,
+automatic retry, receipt, completed check or current permission is inferred.
+The caller must still use original claim/current authority/lease, existing Work
+transition, actual result/receipt readback and unknown-outcome recovery.
+
+Proof command: `node node_modules/vitest/vitest.mjs run
+src/__tests__/systems-check-capture-mode.test.ts --reporter=dot`. The actual whole
+core and its declared forge import execute; no copied implementation. Original
+baseline97PASS; with eighteen new interruption/compatibility assertions the
+unchanged core produces97PASS/18FAIL. Candidate115PASS/0FAIL, plus28 original
+navigation/latest-run/source-integrity assertions: final143PASS across four
+suites. Scoped lint and diff checks pass. Initial Windows temporary-cache refusal ran zero tests and
+is INVALID as source proof; the completed local run is the counted observation.
+
+The actual pinned Supabase2.75 types resolve under Deno2.1.4/TypeScript5.6.2.
+Original and candidate compiler bodies are identical after excluding only their
+different checked-entry header: the same three diagnostics in unchanged
+prompt-forge.ts, none in the changed core. This is not a clean compile. The
+existing local parser refuses that older compiler's first-error prefix as
+unclassified; no passing local ratchet is claimed. Hosted required affected-
+function type gates remain binding. The existing affected-function resolver
+identifies change/onboarding/operator/scheduled as the four original consumers.
+
+Deferred original-source fixtures deliberately ignore cancellation and withhold
+acknowledgements AFTER their simulated writes commit. Seven core I/O phases,
+late returned/thrown checks, concurrent resolution, native signal propagation,
+listener cleanup, malformed/unbound signals and already-cancelled refusal are
+covered. Late replies cannot issue later core writes, forge/file actions or
+invent a completed result. These fixtures prove source behavior only, not real
+RLS, customer authentication, latency SLO or provider cancellation/rollback.
+
+| Orchestration contract | Actual boundary |
+| --- | --- |
+| Request/entry | Future manual Systems request from existing Executive/Chat path; no caller/admission added |
+| Evidence/actor | Original tenant-scoped registry/runners; trusted native Work identity, not audit/body authority |
+| Capability/specialist | Manual Spine UNAVAILABLE/unregistered; VERA interpretation, no new registration |
+| Adapter | Existing Systems core only; no Layer C executor for ordinary reads |
+| Authority | Existing native claim/current-authority/lease still required; cancellation grants none |
+| Writer | Original run/finding producer, no remediation/model/provider effect |
+| Durable identity | Original WorkUUID/run/work_id; no new Work or Rail receipt here |
+| Interruption | Original unconfirmed identity/phase; late commit possible, no replay/absence claim |
+| Verified result | Original readbacks still required; no actual worker/receipt/customer completion proved |
+| Return | Existing authorized Work/history and original receipt/result reconciliation remain owed |
+
+The E05 heartbeat/current-authority seam proposed in ANT161/a27eba0c has not been
+edited. ACKfcf5efe9 now permits that bounded original-function source window;
+immutable implementation/proof receiving remains required before its merge.
+No permission grant is inferred. Required final
+review/exact-head CI/merge, normal affected Edge source readback and public
+production identity remain separate release obligations.
+
+Functional: LOCAL prerequisite. Visual: N/A, no UI change. Experiential: complete
+manual request/result/Rail/recovery INCOMPLETE. Founder Acceptance: NOT_ACCEPTED.
+ALG03/06/11/12/13 actual maturity and CAP009–017 coverage/access are unchanged;
+no verified additional supporting algorithm is identified by cancellation.
+All19/nine and historical9PASS/0FAIL+12PASS/0FAIL/4BLOCKED retained. No scan,
+worker/scheduler/Chat/provider/spend activation or protected monthly retry.

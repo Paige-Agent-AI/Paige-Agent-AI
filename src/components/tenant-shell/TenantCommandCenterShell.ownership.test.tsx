@@ -4,7 +4,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { Settings } from "lucide-react";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi, beforeAll } from "vitest";
 import { TenantCommandCenterShell, TenantPaigeCommandField } from "./TenantCommandCenterShell";
 import { PaigeAIChat } from "@/components/dashboard/PaigeAIChat";
 // Load the mounted app as suite setup, before measuring any navigation assertion.
@@ -158,6 +158,21 @@ vi.mock("@/solo/settings", () => ({ SoloSettings: () => null }));
 
 const source = (path: string) => readFileSync(resolve(process.cwd(), path), "utf8");
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+
+// Route-level code split (PR9): SoloApp's screens load lazily. The Vibe tests mount
+// the real growth surface, so pre-warm its chunk at file load (vitest transforms on
+// first import — the eager world paid this at module load) and wait for screens to
+// settle rather than assuming one act flush covers chunk resolution.
+beforeAll(async () => {
+  await Promise.all([import("@/solo/growth2"), import("@/solo/vibe")]);
+});
+const waitForScreenReady = async (element: HTMLElement) => {
+  for (let attempt = 0; attempt < 40 && element.textContent?.includes("Opening "); attempt += 1) {
+    await act(async () => { await new Promise((resolve) => setTimeout(resolve, 5)); });
+  }
+  await act(async () => { await new Promise((resolve) => setTimeout(resolve, 10)); });
+};
+
 
 const RouteProbe = () => {
   const location = useLocation();
@@ -453,10 +468,12 @@ describe("tenant shell owns one PAIGE surface", () => {
         </MemoryRouter>,
       );
     });
+    await waitForScreenReady(host);
 
     const launcher = Array.from(host.querySelectorAll<HTMLButtonElement>("button"))
       .find((button) => button.textContent?.trim() === "Vibe Studio");
     await act(async () => launcher?.click());
+    await waitForScreenReady(host);
     expect(host.textContent).toContain("Back to Marketing");
 
     const brandHome = host.querySelector<HTMLAnchorElement>('[aria-label="PAIGE Solo home"]');
@@ -516,6 +533,7 @@ describe("tenant shell owns one PAIGE surface", () => {
         </MemoryRouter>,
       );
     });
+    await waitForScreenReady(host);
 
     const launcher = Array.from(host.querySelectorAll<HTMLButtonElement>("button"))
       .find((button) => button.textContent?.trim() === "Vibe Studio");

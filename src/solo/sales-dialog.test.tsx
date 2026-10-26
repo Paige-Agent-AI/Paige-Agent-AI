@@ -77,6 +77,23 @@ it('adopts only an explicit reviewed editor baseline and protects later edits ag
   act(()=>{adopt('');setValue('');});leave=new Event('beforeunload',{cancelable:true});window.dispatchEvent(leave);expect(leave.defaultPrevented).toBe(false);
   act(()=>setValue('Later proposal'));leave=new Event('beforeunload',{cancelable:true});window.dispatchEvent(leave);expect(leave.defaultPrevented).toBe(true);
 });
+
+it('retains only an opaque signature reference alongside the original document and keeps the one leave guard',()=>{
+  const agreement='aaaaaaaa-0000-4000-8000-000000000001',preparationId='bbbbbbbb-0000-4000-8000-000000000001',business='cccccccc-0000-4000-8000-000000000001',operation='dddddddd-0000-4000-8000-000000000001';
+  const start=`/solo/alpha/sales/agreements?agreement=${agreement}&agreement_document_request=${preparationId}&agreement_business=${business}`;
+  history.replaceState(null,'',start);let retain!:ReturnType<typeof useSalesDraftExit>['retainRequestLocation'];
+  function Checkpoint(){const guard=useSalesDraftExit('private invitations',false,()=>{}, {uncertain:true});retain=guard.retainRequestLocation;return <>{guard.confirmation}</>;}
+  host=document.createElement('div');document.body.append(host);root=createRoot(host);act(()=>root.render(<Checkpoint/>));
+  const target=start+`&agreement_signature_request=${operation}&agreement_signature_digest=${'a'.repeat(64)}`;
+  const replace=vi.fn(()=>history.replaceState(null,'',target));act(()=>expect(retain(target,replace,'signature')).toBe(true));
+  expect(location.search).toContain(preparationId);expect(hasUnsavedWork()).toBe(true);
+  for(const bad of [target+'&message=private',target+`&agreement_signature_request=${operation}`,target.replace('a'.repeat(64),'invalid'),target.replace(business,operation)]){
+    const change=vi.fn();expect(retain(bad,change,'signature')).toBe(false);expect(change).not.toHaveBeenCalled();
+  }
+  const clear=new URL(location.href);clear.searchParams.delete('agreement_document_request');
+  act(()=>expect(retain(clear.href,()=>history.replaceState(null,'',clear.href),'document')).toBe(true));
+  expect(location.search).toContain(operation);expect(location.search).toContain(business);
+});
 it('fallback protects same-account Back with a visible choice',()=>{open();act(()=>{history.replaceState(null,'','/solo/alpha/growth/catalog');window.dispatchEvent(new PopStateEvent('popstate',{state:null}));});expect(location.pathname).toBe('/solo/alpha/growth/sales');expect(host.querySelector('[role="alertdialog"]')).not.toBeNull();expect(document.activeElement?.textContent).toBe('Continue editing');});
 it('the original Sales navigation request is intercepted BEFORE route and keyboard focus can advance',()=>{
   open();const proceed=vi.fn(),event=new CustomEvent('paige:sales-before-navigation',{cancelable:true,detail:{proceed}});

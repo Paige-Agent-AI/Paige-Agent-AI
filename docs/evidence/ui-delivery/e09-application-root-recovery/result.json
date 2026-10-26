@@ -1,0 +1,260 @@
+{
+  "kind": "actual component and original boot, isolated local download refusal, no Auth or customer data",
+  "checks": [
+    {
+      "theme": "light",
+      "viewport": {
+        "width": 1536,
+        "height": 770
+      },
+      "geometry": {
+        "width": 1536,
+        "scrollWidth": 1536,
+        "height": 46,
+        "color": "rgb(32, 30, 35)",
+        "background": "rgb(251, 249, 245)",
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "fontLoaded": true
+      }
+    },
+    {
+      "theme": "light",
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "geometry": {
+        "width": 1366,
+        "scrollWidth": 1366,
+        "height": 46,
+        "color": "rgb(32, 30, 35)",
+        "background": "rgb(251, 249, 245)",
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "fontLoaded": true
+      }
+    },
+    {
+      "theme": "light",
+      "viewport": {
+        "width": 1024,
+        "height": 768
+      },
+      "geometry": {
+        "width": 1024,
+        "scrollWidth": 1024,
+        "height": 46,
+        "color": "rgb(32, 30, 35)",
+        "background": "rgb(251, 249, 245)",
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "fontLoaded": true
+      }
+    },
+    {
+      "theme": "light",
+      "viewport": {
+        "width": 900,
+        "height": 1000
+      },
+      "geometry": {
+        "width": 900,
+        "scrollWidth": 900,
+        "height": 46,
+        "color": "rgb(32, 30, 35)",
+        "background": "rgb(251, 249, 245)",
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "fontLoaded": true
+      }
+    },
+    {
+      "theme": "light",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "geometry": {
+        "width": 390,
+        "scrollWidth": 390,
+        "height": 46,
+        "color": "rgb(32, 30, 35)",
+        "background": "rgb(251, 249, 245)",
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "fontLoaded": true
+      }
+    },
+    {
+      "theme": "light",
+      "viewport": {
+        "width": 320,
+        "height": 700
+      },
+      "geometry": {
+        "width": 320,
+        "scrollWidth": 320,
+        "height": 46,
+        "color": "rgb(32, 30, 35)",
+        "background": "rgb(251, 249, 245)",
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "fontLoaded": true
+      }
+    },
+    {
+      "theme": "dark",
+      "viewport": {
+        "width": 1536,
+        "height": 770
+      },
+      "geometry": {
+        "width": 1536,
+        "scrollWidth": 1536,
+        "height": 46,
+        "color": "rgb(246, 242, 234)",
+        "background": "rgb(16, 14, 20)",
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "fontLoaded": true
+      }
+    },
+    {
+      "theme": "dark",
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "geometry": {
+        "width": 1366,
+        "scrollWidth": 1366,
+        "height": 46,
+        "color": "rgb(246, 242, 234)",
+        "background": "rgb(16, 14, 20)",
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "fontLoaded": true
+      }
+    },
+    {
+      "theme": "dark",
+      "viewport": {
+        "width": 1024,
+        "height": 768
+      },
+      "geometry": {
+        "width": 1024,
+        "scrollWidth": 1024,
+        "height": 46,
+        "color": "rgb(246, 242, 234)",
+        "background": "rgb(16, 14, 20)",
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "fontLoaded": true
+      }
+    },
+    {
+      "theme": "dark",
+      "viewport": {
+        "width": 900,
+        "height": 1000
+      },
+      "geometry": {
+        "width": 900,
+        "scrollWidth": 900,
+        "height": 46,
+        "color": "rgb(246, 242, 234)",
+        "background": "rgb(16, 14, 20)",
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "fontLoaded": true
+      }
+    },
+    {
+      "theme": "dark",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "geometry": {
+        "width": 390,
+        "scrollWidth": 390,
+        "height": 46,
+        "color": "rgb(246, 242, 234)",
+        "background": "rgb(16, 14, 20)",
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "fontLoaded": true
+      }
+    },
+    {
+      "theme": "dark",
+      "viewport": {
+        "width": 320,
+        "height": 700
+      },
+      "geometry": {
+        "width": 320,
+        "scrollWidth": 320,
+        "height": 46,
+        "color": "rgb(246, 242, 234)",
+        "background": "rgb(16, 14, 20)",
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "fontLoaded": true
+      }
+    },
+    {
+      "explicitKeyboardReload": "same address; one reload; genuine local JS import resumes"
+    },
+    {
+      "registeredUnsavedWork": "reload refused"
+    },
+    {
+      "originalBoot": "rejected original main import catches and removes splash without false ready marker"
+    },
+    {
+      "reflow": "200 percent root text, 390px viewport, no horizontal overflow"
+    },
+    {
+      "originalMain": "root-error",
+      "theme": "light",
+      "viewport": {
+        "width": 1536,
+        "height": 770
+      },
+      "readyMarker": false,
+      "privateErrorText": false
+    },
+    {
+      "originalMain": "root-provider",
+      "theme": "dark",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "readyMarker": false,
+      "privateErrorText": false
+    },
+    {
+      "originalMain": "healthy original stateful child and ready marker retained"
+    },
+    {
+      "originalMain": "explicit keyboard reload resumes the same original address after fixture recovery",
+      "documentLoads": 2
+    }
+  ],
+  "externalRequests": [],
+  "sources": [
+    {
+      "file": "src/App.tsx",
+      "sha256": "1186fcc1218f347d3032b1baa94901b01fa08526d9435f437e527250b74d04e6"
+    },
+    {
+      "file": "src/main.tsx",
+      "sha256": "3cbc337d6ae275b65d7cd1023b47c5684df9526104b37f14b622995af3278c44"
+    },
+    {
+      "file": "src/boot-splash.tsx",
+      "sha256": "af19f0a18f4dc5d7b1c923ffe2abf7c7ef0476d37465ed13371d89a338aed1a1"
+    },
+    {
+      "file": "src/components/app/PageLoadBoundary.tsx",
+      "sha256": "dfa71ef9a4e461ba4683bc861b20c43d2ff193d8d22bbd7b24b047e1aa80cb78"
+    },
+    {
+      "file": "src/components/app/page-load-boundary.css",
+      "sha256": "d01339b438bde4e34decff5e2d97605442d98660118b948d09d537685ddfeb3f"
+    }
+  ],
+  "result": "PASS"
+}

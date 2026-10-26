@@ -341,7 +341,7 @@ export const MCP_CAPABILITY_POLICY: Readonly<Record<string, McpCapability>> = {
     canonical: "member_roster",
     effect: "read",
     category: "read",
-    evidence: "index.ts:1074-1096 — two `.select()` calls only (user_roles at 1059-1062, profiles at 1069-1071), then in-memory join. No insert/update/delete/rpc/fetch, no audit().",
+    evidence: "index.ts:1144-1157 list_team_members → paige-mcp/team-members.ts:31-74 listWorkspaceTeam — two `.select()` calls only (tenant_members .eq('tenant_id', actorTenantId()), then profiles .in(user_id)), in-memory join. No insert/update/delete/rpc/fetch, no audit(). EXP08 stage 0: was a platform-wide user_roles read.",
     paigeHome: false,
   },
   list_tenants: {

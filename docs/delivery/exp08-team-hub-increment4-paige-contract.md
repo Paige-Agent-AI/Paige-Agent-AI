@@ -125,15 +125,28 @@ selector. Model-supplied tenant or user ids are never honoured.
   - Query length is 2–200 after trimming; anything else returns `{ok:false, code:'invalid'}`.
 - **Returned fields:** message id, conversation id, conversation label, thread root, author display
   name, time, and a snippet of at most 240 characters. No email, no storage path.
-- **No text index and no new storage.** No message text is indexed or embedded anywhere.
+- **No new storage, no embedding, and one owner-approved text index.** Nothing is embedded; the only index over message text is the ASCII-only trigram index below, approved by the owner on 2026-10-25.
   - *As built in increment 4:* a sequential, bounded scan. The visibility helper ran per row, so
     the planner read a workspace's messages before filtering them (4.3–4.8 s at 1M messages).
   - *Read-performance slice (migration `20271114250008`):* visibility is resolved once per call,
     and messages are read newest first through a btree index over `(tenant_id, created_at, id)`.
     The index holds ids and times only, no text, so the owner's "nothing indexed" exclusion of
     content still holds. Measured at 1M messages: 2–4 ms for a common word, about 1.8 s for a rare
-    one. A text (trigram) index would make rare words fast too, but it indexes content, so it is
-    not built and needs an owner ruling.
+    one. (Measured with JIT on in the sandbox; production runs `jit = off`, see the rare-word slice.)
+  - *Rare-word slice (migration `20271114300008`, owner-approved 2026-10-25):* a pg_trgm GIN index on
+    `team_hub_messages.body`, partial to plain-ASCII bodies, serves the same literal `ILIKE` for an
+    ASCII query; non-ASCII bodies are read newest first through their own small index, and a
+    non-ASCII query keeps the full scan. ASCII only, because under production's ICU collation
+    ILIKE's per-character case folding and the index's whole-string folding disagree for some text
+    (a Greek final sigma), and an index over every body would miss real matches. The function also
+    plans each call fresh, so a cached generic plan cannot send a rare word through a full walk.
+    Measured at ~1M messages, `jit = off`: rare word ~1.0 s → 1.5 ms, common word 0.7 → 1.6 ms,
+    non-ASCII query unchanged (~1 s). The 1.5 ms is for all-ASCII text: messages with a curly
+    apostrophe, an em dash or an emoji are read in full for a rare word (reviewer-measured 83 ms at
+    300k with 30% of them; ~0.3 s projected at 1M). Output byte-identical, proven in
+    `supabase/tests/exp08_team_hub_read_performance.sql` section 5. The approved
+    `paige_workspace_events` partial index is not built: it went unused under PostgREST's generic
+    plans (measured), so the per-turn check is unchanged.
   - The same migration gives `team_hub_list_messages` a partial index over
     `(channel_id, created_at, id) WHERE parent_message_id IS NULL` and takes the page before
     building JSON (0.75–1.6 s → 2–3 ms). The output of both functions is byte-identical, proven by

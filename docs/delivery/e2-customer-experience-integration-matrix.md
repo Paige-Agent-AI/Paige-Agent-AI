@@ -1,5 +1,44 @@
 # Experience 02 — Customer Experience Integration Matrix
 
+## October25 — Finance navigation release and bounded original-customer proof
+
+O04/O14/O16 repair [#2883](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2883#issuecomment-6405085439)
+reviewed421cd1c8abf4f8a83ca99e2bf222b2a69ad4c6b3/LOWER5645755912,
+all10 exact checks/two webSUCCESS/zero threads, actually merged
+1ff498e790da4deeab60be2c60f988f7023a7a80/tree85876627. All30 owning leaves,
+16,272 incoming outside entries and whole incoming Brain inverse exact. READY
+dpl_Hf4QkAHriAuuVvs3Yx6eDhGojqpb/both public exact1ff-mvogm6xt/null23:30:40UTC;
+native/Edge/permission/provider/activation delta N/A.
+
+Actual existing authorized SOLO Owner read-only proof covers11 continuous native
+transitions/all7 pages/focus=selected/one panel/empty draft; in-app conversation
+unchanged; Finance menu→Overview/VERA; source Escape original focus and Back closes
+retired details; reload returns Owner/Overview. ANT52/cf628932 closes only the
+earlier key-loss finding, not full Finance or Chat/Live continuity. Extra post-reload
+key batch timed out with no observation/excluded. Native200percent/other roles/
+cohorts/AT/Live/provider/full19+nine/founder remain unverified. Existing catalogue,
+ALG maturity/finance.department PROOF_OWED and original9/0+12/0/4 unchanged; protected
+monthly UNKNOWN/UNRETRIED. Original evidence record and sole Master4.0 hold delivery.
+
+## October25 — O07 trusted manual interruption prerequisite, development
+
+EXTEND the original Systems core, not a new execution/budget engine: optional
+native AbortSignal plus original manual WorkUUID. Genuine whole-core causal
+baseline97PASS/18FAIL becomes115PASS; existing source tests retain their assertions.
+Cancellation during an uncooperative read or issued write retains original
+identity/phase, prevents later core writes and never means absent/rolled-back/
+retryable/completed. Existing default/remediation paths remain covered.
+[Original evidence and orchestration boundary](../evidence/e2-systems-capture-mode.md).
+
+No caller, worker, heartbeat edit, grant, scheduler, scan or provider is activated.
+E05 source-window ACKfcf5efe9 permits the bounded original heartbeat branch;
+the function remains unedited and final implementation receiving is still owed. Consumer,
+authority/lease, terminal transition, Rail/result/recovery and authenticated proof
+are still required. Functional LOCAL; Visual N/A; Experiential INCOMPLETE;
+Founder NOT_ACCEPTED. Review/exact CI/merge/Edge/public readback remain distinct.
+Manual Spine/catalogue, ALG03/06/11/12/13 and all19/nine stay at their existing
+partial/unavailable/unverified maturity; historical9/0+12/0/4 preserved.
+
 ## October25 — original manual Work history reader actually released
 
 O07/O14 prerequisite [#2877](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2877#issuecomment-6404523521)

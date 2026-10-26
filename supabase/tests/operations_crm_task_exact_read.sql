@@ -68,8 +68,18 @@ set local role authenticated;
 select pg_temp.task_check(public.operations_crm_work_read('ed350000-0000-4000-8000-000000000003','ed350000-0000-4000-8000-000000001111','ed350000-0000-4000-8000-000000010250')->'tasks'->0->>'id'='ed350000-0000-4000-8000-000000010250','current tenant admin and RLS admin retain exact row');
 reset role;
 delete from public.user_roles where user_id='ed350000-0000-4000-8000-000000000003';
+-- EXP08 admin scope stage 0: workspace admin power is the admin SEAT in this workspace, never the
+-- global 'admin' row (an admin seat in any other business carries that row too). So the seat alone
+-- keeps the native admin row rule, and taking the seat away is what removes it.
 set local role authenticated;
-select pg_temp.task_check(jsonb_array_length(public.operations_crm_work_read('ed350000-0000-4000-8000-000000000003','ed350000-0000-4000-8000-000000001111','ed350000-0000-4000-8000-000000010250')->'tasks')=0,'tenant admin alone never bypasses original task RLS');
+select pg_temp.task_check(public.operations_crm_work_read('ed350000-0000-4000-8000-000000000003','ed350000-0000-4000-8000-000000001111','ed350000-0000-4000-8000-000000010250')->'tasks'->0->>'id'='ed350000-0000-4000-8000-000000010250','workspace admin seat alone keeps the native admin row rule');
+reset role;
+select set_config('request.jwt.claims','',true);
+update public.tenant_members set role='member' where tenant_id='ed350000-0000-4000-8000-000000001111' and user_id='ed350000-0000-4000-8000-000000000003';
+delete from public.user_roles where user_id='ed350000-0000-4000-8000-000000000003' and role='admin';
+select set_config('request.jwt.claims','{"sub":"ed350000-0000-4000-8000-000000000003","role":"authenticated"}',true);
+set local role authenticated;
+select pg_temp.task_check(jsonb_array_length(public.operations_crm_work_read('ed350000-0000-4000-8000-000000000003','ed350000-0000-4000-8000-000000001111','ed350000-0000-4000-8000-000000010250')->'tasks')=0,'a member without the admin seat never bypasses original task RLS');
 reset role;
 select set_config('request.jwt.claims','{"sub":"ed350000-0000-4000-8000-000000000004","role":"authenticated"}',true);
 set local role authenticated;

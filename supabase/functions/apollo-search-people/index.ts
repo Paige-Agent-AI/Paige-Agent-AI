@@ -1,11 +1,14 @@
 // Apollo.io prospect search proxy.
 // Body: { q?: string, titles?: string[], company_domains?: string[], page?: number, per_page?: number }
-import { corsHeaders, jsonResponse, requireAdmin } from "../_shared/adminAuth.ts";
+import { corsHeaders, jsonResponse } from "../_shared/adminAuth.ts";
+// EXP08 stage 0: a platform resource, so the Platform Operator only (§53) — not the global
+// `admin` row that every workspace owner carries. See _shared/operatorAuth.ts.
+import { requireOperator } from "../_shared/operatorAuth.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "POST") return jsonResponse({ error: "method_not_allowed" }, 405);
-  const guard = await requireAdmin(req);
+  const guard = await requireOperator(req);
   if (!guard.ok) return guard.response;
 
   const apolloKey = Deno.env.get("APOLLO_API_KEY");

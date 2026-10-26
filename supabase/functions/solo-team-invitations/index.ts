@@ -29,6 +29,8 @@ type InviteAction =
       permission?: string;
       jobTitle?: string;
       responsibilities?: string;
+      /** EXP08 Team conversations for the invited person. Omitted = on (the database default). */
+      teamHubAccess?: boolean;
     }
   | { action: "resend" | "revoke" | "archive"; expectedTenantId?: string; inviteId?: string };
 
@@ -157,6 +159,10 @@ Deno.serve(async (req) => {
         _permission: String(body.permission ?? "member"),
         _job_title: body.jobTitle ?? null,
         _responsibilities: body.responsibilities ?? null,
+        // Sent only when the screen actually chose, so a body without it keeps the exact six named
+        // arguments every deployed version of the function accepts (migrations and edge functions
+        // ship as separate pipelines off one merge).
+        ...(typeof body.teamHubAccess === "boolean" ? { _team_hub_access: body.teamHubAccess } : {}),
       });
       if (error) throw error;
       invite = data as PreparedInvite | null;

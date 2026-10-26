@@ -169,8 +169,31 @@ Each slice is its own PR with a §37 producer inventory, §32 proof, and §39 pe
     explicit `service_role` trust branch so the legitimate `paige-ai-chat` path works. Boundary proof
     `supabase/tests/match_paige_memory_authz.sql`; evidence `docs/evidence/match-paige-memory-authz.md`.
     (The remaining c1 candidates + the c2 policy queue are NOT swept here — narrow, evidence-led slice.)
+  - **R3b — admin scope STAGE 0 ✅ LIVE 2026-10-26 (#2904 `865c168a9`, applied and read back)** (migration `20271115030008`, owner
+    ruling 2026-10-26: owning or administering one business never gives admin power in another; operator
+    tiers unchanged; owners, admins and PAIGE keep full create/change/delete in their own workspace). Closes
+    the readers stage 1 cannot reach: 23 functions and 29 policies on 19 tables that bound no tenant, took
+    the target tenant from the caller or a portal relationship, or read `admin` through `current_user_roles()`. Adds
+    `public.is_workspace_admin(_tenant)` (active owner/admin seat of the caller in `_tenant`, or
+    `agency_can_manage_child`; no company-workspace operator branch, unlike `is_tenant_admin`).
+    `grant_tenant_member_role` no longer writes a global `admin` row (the seat sync still does, until
+    stage 3), and writes any other global role only for a person already active in the workspace;
+    `change_user_role` refuses a target with no active seat there (operator paths unchanged). `has_role`, `has_any_role`, `current_user_roles`, `is_staff`, `studio_role_ok`, the sync
+    triggers and every `user_roles` row are untouched. Proof `supabase/tests/admin_scope_stage0.sql`
+    (192 checks: 75 fail on production's definitions and pass after; 48 mutants killed). Known open until
+    stage 1: tenant-bound `has_role` readers (e.g. `paige_coach_assignments` "Admins write staff
+    assignments", `record_rail_event`'s staff path), `lender_research_results` planting, MCP tools
+    following the active business. Storage S7 is partial: the staff policies guard their cast, ~20 sibling
+    storage policies still cast without a guard and fail closed (follow-up). Edge-function holes (S4) are
+    closed on the same branch (operator-only or workspace-bound; `execute-approval` included). Not merged;
+    production persisted-apply, edge readback and signed-in drive OWED.
 - **R4 — Backfill + dual-read, narrowed by §0 (2026-09-26) to `admin` only. Do not execute the struck plan for any other value.** ~~Ensure every Class-B grant exists in `tenant_members`; make helpers
   read tenant-scoped first, global second. Reversible.~~ **`admin` keeps the original reconciliation, but only where the tenant is proven.** It is one of the three tenant roles, so a global `admin` grant is reconciled into `tenant_members.role` only when its holder already has a matching active owner or admin membership. `user_roles` carries no tenant, so that membership is the only evidence of which tenant the grant belongs to. A global `admin` grant with no such membership is **never** turned into a new membership, because that would invent tenant authority. It is investigated and retired. Helpers read the tenant-scoped grant first and the global one second. Reconciling the proven grants and retiring the unproven ones is what makes the R5 constraint safe. **Every other Class-B grant does not move into `tenant_members`**, because none of those values becomes a tenant role. For them, R4 is a **per-value retirement**, one decision per value. `coach` is ruled: the seat becomes `member` + title "Coach", and access comes from client assignment, with effective access proven identical before any grant is removed. Every other Class-B value is **undecided** and stays as it is until its own decision.
+  **Status 2026-10-26 (owner ruling):** for a person asking about **themselves**, "global second" is
+  overruled: a global `admin` row must never answer for a workspace where the person holds no owner/admin
+  seat. Stage 0 (R3b) is built on a branch, not merged; stage 1 (`has_role`/`has_any_role` answered from the current
+  workspace's seat), stage 3 (writers stop minting) and stage 4 (retire rows, needs owner sign-off) are
+  not built.
 - **R5 — Cut over and constrain.** Once no reader depends on global Class-B roles, add a DB CHECK so
   `user_roles` accepts **only** Class-A roles. Structural, not conventional (the §51/§53 pattern).
 

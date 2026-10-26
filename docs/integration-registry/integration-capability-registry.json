@@ -1749,6 +1749,11 @@
           "path": "supabase/migrations/20271031000250_paige_email_sendgrid_sender_integrity.sql",
           "role": "fail_closed_containment",
           "note": "only the service role may create or change a SendGrid connector (signed-in users may only switch one off); one SendGrid-verified claim per domain across businesses; one row per SendGrid domain id."
+        },
+        {
+          "path": "supabase/functions/_shared/agreements/prepared-signature-originating.ts",
+          "role": "fail_closed_containment",
+          "note": "EXP04 originating agreement consumer reuses the original agreement_send HIGH confirmation, scoped Work, per-recipient governed prepare and private send-message door. Exact document, sending identity and all invitation content are reviewed together. Native publication records distinguish provider acceptance, partial acceptance and uncertain results; a return read never resends or renews approval. Implemented source/controlled proof only: actual provider, ordinary-role and complete Experience acceptance remain PROOF OWED. No connection, provider readiness, sender, approval or activation authority is added."
         }
       ],
       "sources": [
@@ -3284,6 +3289,140 @@
         "Google Business Profile API basic setup, OAuth, account/location, review, post, and quota documentation",
         "docs/product/provider-result-contract.md",
         "docs/evidence/ui-delivery/solo-public-presence.md"
+      ]
+    },
+    {
+      "id": "cloudflare-stream",
+      "name": "Cloudflare Stream (video hosting, delivery and live inputs)",
+      "taxonomy": "marketing_ads_social_presence_analytics",
+      "business_reason": "Owner-directed 2026-10-24/25: the media substrate for Vibe Studio uploads, PAIGE-hosted playback and live broadcasting for SOLO tenants and the PAIGE Platform, using PAIGE's existing Cloudflare account as shared infrastructure (one account; per-tenant isolation at the resource level; never a per-customer token).",
+      "paige_use_cases": [
+        "(governed, EXP07-led) tenant-owned video upload, processing and library management",
+        "(governed) authorized playback in PAIGE surfaces and approved customer-site embeds (EXP06)",
+        "(governed, future) live inputs and simulcast push to ELIGIBLE social destinations (EXP10 owns destination eligibility)"
+      ],
+      "connection_prerequisite": "Platform-held CLOUDFLARE_STREAM_API_TOKEN (server-side only, verified by use 2026-10-25 - never by value); every customer-facing operation rides an authenticated PAIGE door that binds the resource to canonical tenant or Platform ownership",
+      "required_scopes": [
+        "Cloudflare Stream API token (platform-held; customers NEVER receive it)"
+      ],
+      "safe_readable_context": "Media metadata (uid, status, duration, created) traceability; never the token; private media authorized-playback only",
+      "allowed_writes_external_effects": "None live. Planned (EXP07 implementation PRs, each reviewed/CI/deployed): direct upload URL creation after tenant authority and quota checks; live-input creation; simulcast push configuration. Bounded evidence today: READ-ONLY backend lookup of the designated test video - no upload, live, guest or isolation proof.",
+      "authority_lane": [
+        "read",
+        "draft",
+        "confirm"
+      ],
+      "m1_dependency": "none",
+      "canonical_provider_receipt": "Cloudflare Stream API response (uid/status per resource); the durable record of truth stays in PAIGE's canonical media tables - Cloudflare metadata is traceability, not the boundary",
+      "rail_mind_memory": "Rail: governed media/broadcast outcomes. Mind: safe facts only. Memory: none of media bytes.",
+      "status": "PROOF_OWED",
+      "owner": "EXP10 (connections/eligibility/readiness) coordinating with EXP07 (broadcast/media experience owner)",
+      "dependency": "Backend API access VERIFIED 2026-10-25 via the deployed read-only canary (GET read-back: ok, test video status ready 100%, duration 8.8s, account match; deployments v1/v2 ACTIVE, identical source). Owed: tenant upload to processing to playback proof, live input + simulcast proof, tenant/Platform isolation negatives, deletion/retention, the complementary two-way guest component decision.",
+      "next_slice": "EXP07's first end-to-end implementation PR (upload/processing/playback against the verified backend)",
+      "tier_eligibility": {
+        "platform": "eligible",
+        "solo": "eligible",
+        "agency_future": "resell",
+        "enterprise_future": "eligible"
+      },
+      "expense_and_operations": {
+        "cost_responsibility": "platform_paid",
+        "billing_owner": "platform (PAIGE Agent AI Inc. Cloudflare account)",
+        "operational_owner": "EXP07 lead + EXP10 connections",
+        "pricing_model": "metered_usage",
+        "pricing_source_url": "https://developers.cloudflare.com/stream/platform/pricing/",
+        "pricing_checked_as_of": null,
+        "pricing_note": "Storage per minute stored + delivery per minute viewed + live per minute streamed (per Cloudflare's published pricing; NOT verified live this slice — commercial limits are an owner decision before any customer-facing activation)",
+        "access_prerequisite": "Existing platform Cloudflare account + Stream enabled (owner-verified)",
+        "expected_cost_driver": [
+          "storage",
+          "transactions"
+        ],
+        "rate_limits_quotas": "Named per-row where verified; streaming/delivery quotas verified at source before activation",
+        "usage_review_cadence": "monthly during early launch",
+        "renewal_deprecation_review": "review on Cloudflare pricing changes",
+        "data_privacy_retention": "Media bytes are tenant/Platform-owned; Cloudflare processes per its terms; private media requires signed playback authorization",
+        "money_movement": {
+          "can_move_real_money": false,
+          "m1_dependency_track": "none",
+          "detail": "Stream is media delivery, not money movement"
+        },
+        "receipt_reconciliation": "Stream API resource identifiers reconciled against PAIGE's canonical media records",
+        "rail_outcome": "Governed media/broadcast outcome on Rail",
+        "pause_revoke_path": "Token rotation (owner action); per-tenant media deletion via the API + PAIGE record deletion",
+        "next_owner": "EXP07",
+        "next_slice": "Implementation PR with tenant ownership + upload-to-playback proof"
+      },
+      "code_anchors": [
+        {
+          "path": "supabase/functions/cf-stream-verify/index.ts",
+          "role": "provider_adapter",
+          "note": "the read-only backend-access canary - the committed file is the deployed source verbatim (v1 compared byte-for-byte via the Management read API; the merge-deployed v2 reports the identical bundle hash ezbr_sha256 379e6f42351d1fd840de65a51570c34beeaff455c6951e050145626513b02380 - the provider digest of the same bytes; source sha256 f3b84ece81c864e6ed639f0151f0ab7f6825cdfd923067fa3088f96403b9d66; deployment bundle hash ezbr_sha256 379e6f42351d1fd840de65a51570c34beeaff455c6951e050145626513b02380) - retired when the governed media door verifies equivalently"
+        }
+      ],
+      "sources": [
+        "docs/delivery/exp10-connect-my-business/EXP10-SOURCE-RECONCILIATION-REGISTER.md"
+      ]
+    },
+    {
+      "id": "cloudflare-r2",
+      "name": "Cloudflare R2 (object storage)",
+      "taxonomy": "files_contracts_vault",
+      "business_reason": "ASSESSED ONLY (owner checkpoint reply 2): treated as a SEPARATE service from Stream - provisioned only for a demonstrated requirement with legitimate authority. Candidate future role: original-media storage for broadcast recordings when the existing Supabase Storage + Business Vault path is measured insufficient. No requirement demonstrated yet.",
+      "paige_use_cases": [
+        "(assessed only) original-media object storage if/when a measured requirement exists"
+      ],
+      "connection_prerequisite": "Would require its own platform-held token scoped to R2 (never created in this slice) and a governed PAIGE door binding objects to canonical ownership",
+      "required_scopes": [
+        "R2 token (NOT created; no credentials exist)"
+      ],
+      "safe_readable_context": "Nothing today - no credentials, no integration",
+      "allowed_writes_external_effects": "None. No provisioning, no data, no spend.",
+      "authority_lane": [
+        "prohibited"
+      ],
+      "m1_dependency": "none",
+      "canonical_provider_receipt": "None - nothing exists to receipt",
+      "rail_mind_memory": "N/A",
+      "status": "UNAVAILABLE",
+      "owner": "EXP10 (assessment) with EXP07 (any future requirement demonstration)",
+      "dependency": "Deliberately NOT provisioned: no demonstrated requirement. Supabase Storage + the Business Vault remain the canonical path for document/original media. Any future activation is its own owner decision with a measured requirement first.",
+      "next_slice": "None - remains unprovisioned until a demonstrated requirement with legitimate authority",
+      "tier_eligibility": {
+        "platform": "deferred",
+        "solo": "deferred",
+        "agency_future": "deferred",
+        "enterprise_future": "deferred"
+      },
+      "expense_and_operations": {
+        "cost_responsibility": "undecided",
+        "billing_owner": "N/A - not provisioned",
+        "operational_owner": "N/A",
+        "pricing_model": "unknown",
+        "pricing_source_url": "https://developers.cloudflare.com/r2/pricing/",
+        "pricing_checked_as_of": null,
+        "pricing_note": "R2 pricing exists (storage + operations; zero egress fees) but is irrelevant until a requirement is demonstrated",
+        "access_prerequisite": "Would require explicit owner provisioning authorization - deliberately not requested here",
+        "expected_cost_driver": [
+          "storage"
+        ],
+        "rate_limits_quotas": "Named per-row where verified; streaming/delivery quotas verified at source before activation",
+        "usage_review_cadence": "N/A",
+        "renewal_deprecation_review": "N/A",
+        "data_privacy_retention": "Would bind objects to canonical tenant/Platform ownership under the same privacy rules as all media",
+        "money_movement": {
+          "can_move_real_money": false,
+          "m1_dependency_track": "none",
+          "detail": "Storage, not money movement"
+        },
+        "receipt_reconciliation": "N/A",
+        "rail_outcome": "N/A",
+        "pause_revoke_path": "Delete the R2 bucket + token (trivial - nothing exists today)",
+        "next_owner": "EXP07",
+        "next_slice": "None - assessment recorded"
+      },
+      "sources": [
+        "docs/delivery/exp10-connect-my-business/EXP10-SOURCE-RECONCILIATION-REGISTER.md"
       ]
     }
   ],

@@ -1,0 +1,261 @@
+{
+  "schemaVersion": 1,
+  "capturedAt": "2026-10-26T02:03:55.047Z",
+  "classification": "LOCAL_NATIVE_ENGINE_AND_ACTUAL_CONTROLLED_VIEWER",
+  "head": "382b2d75b6fb1a5b378e097d48e9af553bdb5a4d",
+  "sourceTree": "6a2143050dc30da0599d5eb4800b8403f2b72c02",
+  "base": "d08a2f206d479c3727898cb68466758075382898",
+  "source": [
+    {
+      "file": "scripts/agreements/native-pdf-bundle-proof.mjs",
+      "gitBlob": "6751485e9ac8813871ff945a7e6a10f57248021d",
+      "bytes": 2563,
+      "sha256": "9d56fce4ff71706045c8c67b9413fa17b1c794abd6115a5533070e1a7a62571f"
+    },
+    {
+      "file": "supabase/functions/_shared/agreements/commercial-document.ts",
+      "gitBlob": "57f28c77a3921141aeafb2719e02d7a19f8f6849",
+      "bytes": 1843,
+      "sha256": "b084da42eaf2d9b6f16be43ad4e3a1e901504276cb3d9c056d84cb0aa31b9f58"
+    },
+    {
+      "file": "supabase/functions/_shared/agreements/commercial-presentation.test.ts",
+      "gitBlob": "b010d7dfe34359281bee8d185870b7c0ca9d181e",
+      "bytes": 14361,
+      "sha256": "cc3847eb65020eee581aa147ba833ef73ffdd0db8946c948bb90259237c4789f"
+    },
+    {
+      "file": "supabase/functions/_shared/agreements/commercial-presentation.ts",
+      "gitBlob": "6ae238074f415403634f958bf44190bcd8092e23",
+      "bytes": 9257,
+      "sha256": "427b30c45bdba3e7905770af54f2812091bccf3b4459aa27ee57ab07328ab7bd"
+    },
+    {
+      "file": "supabase/functions/_shared/agreements/document-preparation.ts",
+      "gitBlob": "bfd8bb1cd953890a9f7cd2664e76d34c262c4304",
+      "bytes": 2882,
+      "sha256": "bc93dcb5539f20c1b6f10b47066860ba5b55caef691c2bbdffbb928c62fa9040"
+    },
+    {
+      "file": "supabase/functions/_shared/agreements/document.test.ts",
+      "gitBlob": "a89e8c46673d8a4ee4f52233dd684340cb60585b",
+      "bytes": 34869,
+      "sha256": "5492f23ec06d6727bff635aa31ad77b6335ee572bee9fc9ffe55d658a5eb6307"
+    },
+    {
+      "file": "supabase/functions/_shared/agreements/document.ts",
+      "gitBlob": "ea3c87ca415e7cbaa48747bee35222f79e3aec77",
+      "bytes": 34070,
+      "sha256": "138f7aa48558bcece96c8658674957bcf93f5efe7bad655e131d10e2fce38da6"
+    },
+    {
+      "file": "supabase/functions/_shared/agreements/prepared-seal-source.test.ts",
+      "gitBlob": "8c4deac908ef0c615d9fc60831ac73ddc76847e8",
+      "bytes": 7284,
+      "sha256": "4a6603daf2dcbc407114de235c2a57e6e84fcab81b0ab122a28575745b981a37"
+    }
+  ],
+  "rendered": [
+    {
+      "file": "1366-native-pdf.jpg",
+      "bytes": 77011,
+      "sha256": "df1238231b9d5974a12dc54234a98761f013ea93d8576cb9d33c1b2d72ec6854",
+      "width": 1351,
+      "height": 890,
+      "format": "jpeg"
+    },
+    {
+      "file": "390-native-pdf.jpg",
+      "bytes": 31762,
+      "sha256": "4f81709dc6cfd3f7e754c30a2bee6acd2fab09ae8c7fb2e42f0e2f540b132449",
+      "width": 375,
+      "height": 811,
+      "format": "jpeg"
+    },
+    {
+      "file": "390-document-zoom200.jpg",
+      "bytes": 22456,
+      "sha256": "be059956a46d2f23d8b470b2a1f1d9573dfd8bbaf94ebda38cb6536942b964e3",
+      "width": 375,
+      "height": 811,
+      "format": "jpeg"
+    },
+    {
+      "file": "geometry.json",
+      "bytes": 4168,
+      "sha256": "de8326cd69dd9dfee1e9dfd87b33b7dbf8875e4a0f37274df6f17a2005f34844"
+    }
+  ],
+  "logs": [
+    {
+      "file": "e04-c55-native-graph-baseline.json",
+      "bytes": 1861,
+      "sha256": "f20728f10804a4925011a672d59dbdd99a9e1aba4500515742d362edfd2a2fc4",
+      "originalBytes": 1238,
+      "originalSha256": "8105ed7c11baadf160fac73ac01d43d2ef9981a1a54a887be20aba20f47db5d6"
+    },
+    {
+      "file": "e04-c55-browser-boundary-baseline.json",
+      "bytes": 2541,
+      "sha256": "f808397102d157ca70a8838572ea7600d29fe2e8e400a2fdae9c8a036fda5717",
+      "originalBytes": 1746,
+      "originalSha256": "df4091ff9709db2b6899d5081095a31d7a3fdc071345a0392c5d0c9d021dec39"
+    },
+    {
+      "file": "e04-c55-separated-graph.json",
+      "bytes": 1486,
+      "sha256": "d2f9bf789c9eb4a00934499cb627548f3cbb83aeb66f51a73c5785218fb97969",
+      "originalBytes": 963,
+      "originalSha256": "99eb37c19a898f9c0af8b1153384f8ce48c5c088c11797bd5e1da3dce039bdec"
+    },
+    {
+      "file": "e04-c55-final-compatibility-graph.json",
+      "bytes": 1496,
+      "sha256": "328b7455b2e1a0fab144c13e69bb62d40a1c05dd3ab423e01ff7cb5651549ec7",
+      "originalBytes": 963,
+      "originalSha256": "99eb37c19a898f9c0af8b1153384f8ce48c5c088c11797bd5e1da3dce039bdec"
+    },
+    {
+      "file": "e04-c55-native-296-baseline-types.json",
+      "bytes": 2285,
+      "sha256": "bafdb0413f568a066d120c9fd90094f2b5e79c3928ad1d783a441f536f6ca778",
+      "originalBytes": 1552,
+      "originalSha256": "b7362597745fb479d0e9842904a91df312cbf2b45e73d88b46d187413e5f296b"
+    },
+    {
+      "file": "e04-c55-native-contract-typed.json",
+      "bytes": 409123,
+      "sha256": "5bcfc576ab33458015e5bbc1739917f2f3aff9c30bd5605d20225762eea62d96",
+      "originalBytes": 306684,
+      "originalSha256": "7f1c4779b583ae43774993dcd272b47b59724ff239eb4d8bbecb3b0a3cb7659f"
+    },
+    {
+      "file": "e04-c55-native-contract-isolated.json",
+      "bytes": 17189,
+      "sha256": "dd9d15911dcb5ea31a7b7708c36ef9ee4ed8506ed529a60d036e6f73a52d02c5",
+      "originalBytes": 12732,
+      "originalSha256": "bd7bd9ffae3db06595cef804a0a968841c4ddd57a66ce2ee39058945d68bf06d"
+    },
+    {
+      "file": "e04-c55-native-contract-exact-types.json",
+      "bytes": 66396,
+      "sha256": "7978dc05e2d4c3397b349a647e6b15f2cc0a1156aa1772d3d97b12355638fc14",
+      "originalBytes": 49633,
+      "originalSha256": "2c17783140d5648a43d02b88bb5252d2085072b32cd1dac5df7c40cce5cdd7eb"
+    },
+    {
+      "file": "e04-c55-separated-native-contract.json",
+      "bytes": 76810,
+      "sha256": "5a7dc955f2b1ca137280664d78e0880d2a0cd3391720ad861585a79938b9af15",
+      "originalBytes": 57447,
+      "originalSha256": "20b964943cfd2b1008ac8d258034a81166e47ee8a74c12c165eb9225641b45d3"
+    },
+    {
+      "file": "e04-c55-web-build.json",
+      "bytes": 4681,
+      "sha256": "a13980f6060f096d39fb8fd8a5cf574f9d2a35f6b6b6f577e5fcf03ab3efbd0d",
+      "originalBytes": 3362,
+      "originalSha256": "8cf2131a7a8603ee41c82d9135f933969e9c0fc50e3f798965fda7a118c77b83"
+    },
+    {
+      "file": "e04-c55-separated-web-build.json",
+      "bytes": 52600,
+      "sha256": "62f0427d50124f0175064f0f3e6480d65e8a189b518c9647699fc7d58f16dd14",
+      "originalBytes": 39293,
+      "originalSha256": "d531ea91909d41b8946e3efb958dfb433a31c0ec477a621e31f278b67e1a0767"
+    },
+    {
+      "file": "e04-c55-separated-lint.json",
+      "bytes": 199,
+      "sha256": "61748853c85179beca91847bd7804c6726bc37080aacdcf0338adcf43a203f9e",
+      "originalBytes": 0,
+      "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "e04-c55-native-contract.json",
+      "bytes": 478,
+      "sha256": "8801730dae03f30648fd5d69d09b50a2ecde76064e44987aa9b3d61af2d3e3ad",
+      "originalBytes": 207,
+      "originalSha256": "f45ba9e620a21f82919738bd653b8140d50e0089d1ba8b29c09c461cbc83ff8c"
+    },
+    {
+      "file": "e04-c55-native-214-contract.json",
+      "bytes": 526,
+      "sha256": "c4d8cf42f2e9b9b67c4c884f37324dcbf6951a3f90fe1332264c364ae42c0fab",
+      "originalBytes": 239,
+      "originalSha256": "1124af291698436b47ac629a84b821784a5f1b86d4bcad3517019bfbcf61ed5e"
+    }
+  ],
+  "references": [
+    {
+      "file": "e04-c55-commercial-move-proof.json",
+      "bytes": 185,
+      "sha256": "41f752c5c1e31f6fe6d98f13b1a4fca5ea2dd4f34103627235d43468b8238ce0"
+    },
+    {
+      "file": "e04-c55-edge-plan.json",
+      "bytes": 214,
+      "sha256": "23c76e80cb3e937afa68a30be33cc6c28446107596251bb7ec86c90381d71ece"
+    }
+  ],
+  "nativePdf": {
+    "file": "controlled-native-pdf.json",
+    "packetSha256": "a0505a801f14aaaea342f4619b83190c3225d5042aed17f1be6022d850f20f21",
+    "byteLength": 1234,
+    "documentSha256": "859f39956715d70639c2d853136ea94658472a7907cd8f2aeee78996bfc7e962",
+    "pages": 1,
+    "originalCustomerDocument": false,
+    "businessRecordCreated": false
+  },
+  "tests": {
+    "final": {
+      "files": 16,
+      "passed": 352,
+      "steps": 250,
+      "failed": 0
+    },
+    "nativeDependencyGraph": "two original failures to two passes; expanded pure-browser boundary failure to three passes",
+    "graphCompilers": [
+      "2.9.6",
+      "2.1.4"
+    ],
+    "runtimeCompiler": "2.9.6 with task-owned isolated cache",
+    "typesChecked": true,
+    "noCheckUsed": false,
+    "runtimeDenials": [
+      "net",
+      "env",
+      "run",
+      "ffi",
+      "sys"
+    ],
+    "previousFailuresPreserved": true
+  },
+  "build": {
+    "actualFullWebBuildExitCode": 0,
+    "initialNativeBrowserBoundaryFailureRetained": true,
+    "noBundlerExclusionOrViteConfigChange": true
+  },
+  "lint": {
+    "owningFiles": 8,
+    "exitCode": 0
+  },
+  "visual": {
+    "actualOriginalComponents": true,
+    "canonicalStyles": true,
+    "keyboardTextDisclosure": true,
+    "documentZoom200AndKeyboardPan": true,
+    "browserZoom200": "UNVERIFIED",
+    "fullAuthenticatedShell": "UNVERIFIED"
+  },
+  "release": {
+    "merged": false,
+    "deployed": false,
+    "hostedExactHeadCI": "PROOF_OWED",
+    "publishedReview": "PROOF_OWED",
+    "productionOriginalPdfRead": "FAIL before this candidate; same-file readback owed",
+    "founder": "NOT_ACCEPTED",
+    "allTwelve": "OPEN"
+  },
+  "boundary": "No account/credential, original customer document, signature, send, payment, permission, native SQL, Root/C0b or provider action."
+}

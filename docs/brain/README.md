@@ -1036,6 +1036,20 @@ Overview/Banking visual refinements2694/2696 are drafts, not released or accepte
 All19/nine, original monthly CPU/recovery/claim hold and one complete founder
 evaluation remain open. No provider/permission/algorithm/catalogue activation.
 
+## EXP05 original weekly Work-source budget — October26 development
+
+The existing Planning source point read pins its original actor/tenant/item and
+uses the same eight-second weekly elapsed-stage helper for session, membership,
+tenant and row stages. Lazy query subscription is rechecked; expiry/retirement
+returns the existing unavailable contract without later stages. All native RLS,
+raw version and Work inspector/writer contracts remain. Actual9PASS/6FAIL becomes
+four-suite109PASS, including positive within-budget/eager-rejection controls.
+Exact-lock runner repeats109PASS; original type ratchet PASS/baseline10/current6,
+with old dependency-mismatch failure and7/7 diagnostic comparison retained.
+Review/CI/deployed bundle and authenticated timeout/reload remain owed; no new
+native/provider/action/catalogue/algorithm/Experience acceptance.
+See [original source-read evidence](../evidence/ui-delivery/exp05-weekly-source-read-budget.md).
+
 ## EXP05 business-calendar return — local correction, October23
 
 Known missing/invalid calendar now has guarded reentry to the original current-account

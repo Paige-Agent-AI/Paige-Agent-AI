@@ -603,6 +603,17 @@ INSERT INTO public.team_hub_messages(tenant_id,channel_id,author_user_id,body,cl
 SELECT :'ta'::uuid, :'general'::uuid, :'u2'::uuid, b, gen_random_uuid(), timestamptz '2025-04-01' + make_interval(hours=>o::int)
 FROM unnest(ARRAY[E'line one\nzephyrine status two', E'tab\tSTATUS zephyrine', E'del\x7f zephyrine', U&'\0080 zephyrine status',
   U&'\00FF zephyrine', U&'\+01F600 zephyrine heater']) WITH ORDINALITY x(b,o);
+-- Non-ASCII matches that only the non-ASCII branch's own filters hide: a private channel (u3 and u6 are
+-- not in #leads), a DM u3 is not in, the archived channel, a deleted message, a reply under the deleted
+-- thread root, and workspace B. Removing any one of those filters from that branch changes a search.
+INSERT INTO public.team_hub_messages(tenant_id,channel_id,author_user_id,body,client_request_id,created_at,deleted_at,parent_message_id)
+VALUES (:'ta',:'leads',:'u2','Leads only: zephyrine — private',gen_random_uuid(),timestamptz '2025-07-01',NULL,NULL),
+ (:'ta',:'dm12',:'u1','Between us: zephyrine — DM',gen_random_uuid(),timestamptz '2025-07-02',NULL,NULL),
+ (:'ta',:'archived',:'u1','Archived zephyrine — old',gen_random_uuid(),timestamptz '2025-07-03',NULL,NULL),
+ (:'ta',:'general',:'u2','Deleted zephyrine — gone',gen_random_uuid(),timestamptz '2025-07-04',timestamptz '2025-07-05',NULL),
+ (:'ta',:'general',:'u2','Reply zephyrine — under a deleted root',gen_random_uuid(),timestamptz '2025-07-06',NULL,
+  (SELECT id FROM roots ORDER BY id LIMIT 1)),
+ (:'tb',:'bgeneral',:'u7','Workspace B zephyrine — other',gen_random_uuid(),timestamptz '2025-07-07',NULL,NULL);
 ANALYZE public.team_hub_messages;
 CREATE TEMP TABLE rare_calls(k text PRIMARY KEY, actor text, q text);
 INSERT INTO rare_calls
@@ -667,7 +678,7 @@ DO $$ DECLARE pa text; pn text; bad bigint; nonascii bigint; BEGIN
  EXECUTE format('SELECT count(*) FILTER (WHERE (%s) IS DISTINCT FROM (octet_length(body)=char_length(body))
    OR (%s) IS NOT DISTINCT FROM (%s)), count(*) FILTER (WHERE %s) FROM public.team_hub_messages', pa, pa, pn, pn)
   INTO bad, nonascii;
- IF pa IS NULL OR pn IS NULL OR bad<>0 OR nonascii<>13 THEN
+ IF pa IS NULL OR pn IS NULL OR bad<>0 OR nonascii<>19 THEN
   RAISE EXCEPTION 'FAIL: the index predicates do not split the bodies into exactly ASCII and the rest (% misplaced, % non-ASCII)', bad, nonascii; END IF;
 END $$;
 -- After the hundreds of searches above in this one session (so a cached generic plan would be in use),

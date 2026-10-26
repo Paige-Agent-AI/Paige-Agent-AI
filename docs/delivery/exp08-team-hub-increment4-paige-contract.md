@@ -141,7 +141,9 @@ selector. Model-supplied tenant or user ids are never honoured.
     (a Greek final sigma), and an index over every body would miss real matches. The function also
     plans each call fresh, so a cached generic plan cannot send a rare word through a full walk.
     Measured at ~1M messages, `jit = off`: rare word ~1.0 s → 1.5 ms, common word 0.7 → 1.6 ms,
-    non-ASCII query unchanged (~1 s). Output byte-identical, proven in
+    non-ASCII query unchanged (~1 s). The 1.5 ms is for all-ASCII text: messages with a curly
+    apostrophe, an em dash or an emoji are read in full for a rare word (reviewer-measured 83 ms at
+    300k with 30% of them; ~0.3 s projected at 1M). Output byte-identical, proven in
     `supabase/tests/exp08_team_hub_read_performance.sql` section 5. The approved
     `paige_workspace_events` partial index is not built: it went unused under PostgREST's generic
     plans (measured), so the per-turn check is unchanged.

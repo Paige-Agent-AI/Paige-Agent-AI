@@ -412,7 +412,7 @@ Authenticated runtime is `UNVERIFIED`. Production holds both migrations and the 
 
 **Scheduled stale-file sweep (migration `20271114260008`, edge `team-hub-file-sweep`; released #2882 `15970d639`, first scheduled run read back 2026-10-25; the removal path has not yet met a real file):** no tier or availability change. An hourly service job runs the existing per-uploader sweep for up to 50 uploaders with stale or unremoved files per run (40-second budget; the rest wait for the next run), so a person who never uploads again no longer leaves unreadable files behind until retirement. It is reachable only with the service role or the cron token; no person, tier or tenant can call it. Proof: section 11b of `supabase/tests/exp08_team_hub_files.sql` and `_shared/team-hub/file-sweep.test.ts`, in CI.
 
-**Rare-word search (migration `20271114300008`, owner-approved 2026-10-25):** no tier, availability or output change. An ASCII-only trigram index makes rare-word search fast (~1.0 s → 1.5 ms at ~1M messages); non-ASCII queries are unchanged. Proof: section 5 of `supabase/tests/exp08_team_hub_read_performance.sql`, in CI.
+**Rare-word search (migration `20271114300008`, owner-approved 2026-10-25):** no tier, availability or output change. An ASCII-only trigram index makes rare-word search fast (~1.0 s → 1.5 ms at ~1M all-ASCII messages; about 0.3 s projected when 30% of messages carry curly quotes, dashes or emoji); non-ASCII queries are unchanged. Proof: section 5 of `supabase/tests/exp08_team_hub_read_performance.sql`, in CI.
 
 ### EXP08 Team Hub increment 4: PAIGE with Team Hub (migrations `20271114240008` and `20271114240108`, 2026-10-25; merged #2860)
 

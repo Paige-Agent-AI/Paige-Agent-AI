@@ -7684,8 +7684,8 @@ Current gaps:
   search ~1.0 s with production's `jit = off`). Two btree indexes over ids and times only; output byte-identical.
 - Team Hub rare-word search (migration `20271114300008`, owner-approved 2026-10-25): ASCII-only pg_trgm index on message
   bodies (ICU makes an all-body index miss matches), regex ASCII test the planner can estimate, scalar
-  reply-parent check, per-call planning. ~1M messages, `jit = off`: rare ~1.0 s → 1.5 ms, common 0.7 → 1.6 ms,
-  non-ASCII query unchanged. The approved `paige_workspace_events` partial index is not built (unused under
+  reply-parent check, per-call planning. ~1M messages, `jit = off`: rare ~1.0 s → 1.5 ms (all-ASCII text; ~0.3 s projected
+  when 30% of messages carry curly quotes, dashes or emoji), common 0.7 → 1.6 ms, non-ASCII query unchanged. The approved `paige_workspace_events` partial index is not built (unused under
   PostgREST generic plans, measured).
 - Team Hub scheduled stale-file sweep (migration `20271114260008`, edge `team-hub-file-sweep`, hourly
   pg_cron, up to 50 uploaders per run): an unposted upload older than a day is discarded and its bytes

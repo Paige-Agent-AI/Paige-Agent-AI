@@ -206,7 +206,7 @@ WITH r AS (SELECT pg_temp.cmd(jsonb_build_object('type','prepare_action','briefI
 SELECT pg_temp.require_true((SELECT res->>'outcome'='prepared' AND res->>'lifecycle'='approval_required' FROM r),
   'a planned step is prepared and waits for approval');
 RESET ROLE;
-SELECT pg_temp.require_true((SELECT a.status='pending_approval' AND p.status='pending_approval' AND p.source='paige_action_bus'
+SELECT pg_temp.require_true((SELECT a.status='pending_approval' AND p.status='pending' AND p.source='paige_action_bus'
   AND p.submitted_by_user_id='a2980500-0000-4000-8000-000000000001' AND p.metadata->>'action_id'=a.id::text
   AND p.draft_content->>'subject'='Book the venue' AND p.draft_content->>'body' LIKE 'Approving records%'
   FROM public.paige_actions a JOIN public.paige_pending_approvals p ON p.id=a.approval_id WHERE a.id=(SELECT id FROM prep_step)),

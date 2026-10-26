@@ -9,11 +9,11 @@ PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: An eligible SOLO owner asks for a finite 
 VISUAL_DIRECTION: NOT_APPLICABLE: Original Sales and Chat interfaces and shared PAIGE design tokens are unchanged.
 AUTOMATED_EVIDENCE: PASS: 145 focused cases in 11 files; original commercial SQL proof plus new amount-basis/negative/replay/source-drift checks and valid untitled-record continuity pass on isolated PostgreSQL 16. Commands and boundaries below.
 STATIC_EVIDENCE: PASS: Scoped ESLint; original TypeScript ratchet baseline10/current6/no-new; web build and original entry-size guard pass (385 KiB within 520 KiB). This is not a clean full TypeScript compile.
-RENDERED_EVIDENCE: NOT_APPLICABLE: No rendered component changes in this read-contract slice; controlled UI proposal renders belong to their separate source, not evidence of this candidate's authenticated operation.
+RENDERED_EVIDENCE: PASS: Actual candidate881dc7bd API adapter and original CollectionPlanBuilder rendered the valid null-title RPC shape at1366x768 and390x844. The selected record shows Title not set and its unchanged3500 amount; exact controlled assets below. These are local component/adapter observations, not authenticated full-shell proof.
 BEHAVIORAL_EVIDENCE: PASS: Actual isolated native calls distinguish a fixed total, per-cycle amount, per-installment amount and unverified legacy meaning. The original read-only Chat adapter's source/refusal tests pass; hosted behavior remains unverified.
 AUTHENTICATED_RUNTIME: UNVERIFIED: Candidate native migration and Chat import closure are not deployed. Existing ordinary-owner preparation proof is different source and does not establish this repayment-read outcome.
-KEYBOARD_FOCUS: NOT_APPLICABLE: No DOM, control, focus, keyboard handler or navigation change.
-ZOOM_REFLOW: NOT_APPLICABLE: No layout or presentation change; prior screenshots are not borrowed as this candidate's evidence.
+KEYBOARD_FOCUS: PASS: Controlled original Saved agreement selector → Tab → Anchor date, visible focus at390px. No keyboard/focus handler changed; full-shell/role coverage remains unverified.
+ZOOM_REFLOW: UNVERIFIED: Controlled390px viewport/document375px and1366px viewport/document1351px show no horizontal overflow. Browser zoom/full-shell matrix is not proven by these component observations.
 REDUCED_MOTION: NOT_APPLICABLE: No animation or motion change.
 STATE_COVERAGE: PASS: Original missing source/offer/economics, stale terms, inactive source, recurring conflict, malformed input and distinct readiness/refusal paths remain; legacy/periodic amount semantics and injected caller basis are covered.
 TRUTHFUL_STATE_LABELS: PASS: Ready-for-review remains principal-only, authority not evaluated and execution not started. No signing, balance, financial settlement, notification or delivery completion is inferred.
@@ -69,6 +69,13 @@ Current receiving runtime: `b849916ba8673eaa9ebd088d78a7445b9f70c8cc`, based on 
 Failing-first record: before the preview repair, the new semantic tests had **7 failures / 11 passes**, reproducing the unsafe interpretation and missing verification. Initial module-absence, Windows psql textual newline and isolated fixture-column failures were separately retained and corrected; none is presented as production behavior or acceptance.
 
 The valid-title continuity test also failed first through the actual `readAgreements` adapter: **1 failed / 16 passed**, with **Agreements could not be read** for the valid native null title. The corrected adapter, unchanged original RPC and original native null-title assertion now pass. This is bounded decoder/record-continuity proof, not authenticated UI acceptance.
+
+### Controlled title-read visual checkpoint
+
+The rendered source was exact `881dc7bd950abe7ae95bf90c3f6be9d634330448` on the original candidate branch. The local fixture replaces only the SDK read boundary, supplies a valid original one-time/null-title response and mounts the actual adapter, original form and shared styles. It performs no backend, provider, approval, signing or financial write. The selected original ID remains the same; no title is written. Desktop/narrow inspection found the explicit title label legible and original controls intact. The later C58 preparation UI, full shell, two legitimate contexts, role coverage, actual save and premium complete Experience are not established here.
+
+![Actual original form, controlled null-title read at1366x768](assets/e04-collection-title/desktop.png)
+![Actual original form, controlled null-title read and visible keyboard focus at390x844](assets/e04-collection-title/narrow.png)
 
 ## Algorithms, orchestration and remaining proof
 

@@ -82,3 +82,31 @@ Source base d8a7670bf249af7ec3d937aa355204a40d601ddf preserves E09's native10309
 and earlier E02/E08/E05 work. Current E08 Root/risk/registry/C0b lease, E02 original
 finalizer, E04 commercial and E09 Portal source remain untouched. Browser time
 remains queued via Linear; all original ten outcomes/E5-CV1–9 are preserved.
+
+## October26 production source release — authenticated acceptance unchanged
+
+Reviewedff5be97a083e0bfe0a11469059c427f5b655f217/LOWER5658931676 passed all10
+applicable exact-head checks, both web statuses and zero review threads; normal
+no-schema PreviewSKIP. Direct verify121844415317 SUCCESS independently confirmed
+after an older general snapshot still reported running. Actual merge
+9186eab1efb91a39427b88b211ff18bbe8c58590/tree42e37cf7793fc0e07c9dee0e014d1beb88eaaf21
+has original3d541038+ff5be97a parents and equals the independently composed tree.
+All four reviewed paths/executed product blobs and incoming Brain are preserved.
+
+Normal productiondpl_ECaUvsUF9g61mZwQRuumd8XzjxaC READY/exact/canonical aliases;
+both public origins200/exact9186eab1...-mvpsif58/null21:51:30–32UTC. The original
+Planning reader in OperationsRoute-DielrjBI.js has frozen origin/8000ms helper,
+compiled functionSHA25677e4b1f606c0d922d7279a0c24ece1e195d0f45d1b1b6d38e54686a11642dd3e.
+Actual baseline15cdd256 lacked both, proof8c4d6c4b05376ddd68b9f3388aecb4747fe97669a4248e1fa979ee7eca3d32d9;
+release proof878892ab2f351eb9f69399f8d576dd129f0814c4714cbab86e03f9dbbb24b86c.
+Earlier expected46 baseline mismatch after15cdd deployed remains retained82aafb76.
+See [actual release receipt6428214658](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2938#issuecomment-6428214658).
+
+Production emitted-source proof is not ordinary authenticated timeout/reload,
+role/RLS/isolation, visual interaction or customer acceptance. No browser call,
+customer mutation, new receipt/tool/permission/native/Edge/provider/activation or
+catalogue/algorithm promotion belongs to this repair. All full ten/E5/Builder/
+weekly/ZION/notices/cohorts/Live and founder obligations remain open. Recovery
+uses reviewed forward source correction; no original record or uncertain action
+is deleted, rolled back or replayed. This factual closeout is not recursively
+logged as another customer outcome.

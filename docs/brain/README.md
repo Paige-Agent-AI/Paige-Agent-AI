@@ -1050,6 +1050,14 @@ Review/CI/deployed bundle and authenticated timeout/reload remain owed; no new
 native/provider/action/catalogue/algorithm/Experience acceptance.
 See [original source-read evidence](../evidence/ui-delivery/exp05-weekly-source-read-budget.md).
 
+October26 source release: #2938 exactff5be97a/LOWER5658931676 passed all required
+checks and merged9186eab1/tree42e37cf7 with incoming3d541038 preserved. Normal
+productionECaUvsUF9g61mZwQRuumd8XzjxaC and both public exact9186 builds/source
+verified21:51UTC; [receipt6428214658](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2938#issuecomment-6428214658).
+The original reader's frozen origin/8000ms stage is emitted; ordinary signed-in
+timeout/reload and current-permission proof remain owed. No new action, native,
+Edge, activation, catalogue/ALG promotion or full ten/E5/founder acceptance.
+
 ## EXP05 business-calendar return — local correction, October23
 
 Known missing/invalid calendar now has guarded reentry to the original current-account

@@ -151,7 +151,7 @@ async function main() {
       await page.locator("button", { hasText: "Approve and post once" }).click();
       await page.waitForSelector(".mct-pubdoor-result", { timeout: 15_000 });
       const text = await panelText(page);
-      await page.screenshot({ path: path.join(OUT, `flow-${door}.png`) });
+      await page.screenshot({ path: path.join(OUT, door === "outcome_unknown" ? "flow-outcome-uncertain.png" : `flow-${door}.png`) });
       check(text.includes(needle), `${label} states the door's sentence verbatim`, text.slice(0, 160));
     }
 
@@ -166,7 +166,7 @@ async function main() {
       await prepareOn(page, "refused");
       await page.waitForSelector(".mct-pubdoor-result", { timeout: 15_000 });
       const text = await panelText(page);
-      await page.screenshot({ path: path.join(OUT, `flow-${door}.png`) });
+      await page.screenshot({ path: path.join(OUT, door === "outcome_unknown" ? "flow-outcome-uncertain.png" : `flow-${door}.png`) });
       check(text.includes(needle), `${label} refuses before approval with the door's sentence`, text.slice(0, 160));
     }
 
@@ -178,7 +178,7 @@ async function main() {
     await openPiece(page, { piece: "mc-2" });
     const uncertainPiece = await panelText(page);
     check(uncertainPiece.includes("Outcome being checked — it may have posted"), `receipts an unresolved attempt says exactly what it is`, uncertainPiece.slice(0, 200));
-    await page.screenshot({ path: path.join(OUT, "receipts-outcome-unknown.png") });
+    await page.screenshot({ path: path.join(OUT, "receipts-uncertain-attempts.png") });
 
     // The library foot now tells the connected truth (it used to say posting wasn't connected).
     await page.goto(`${BASE}?tab=content&theme=light&paige=closed`, { waitUntil: "domcontentloaded", timeout: 120_000 });

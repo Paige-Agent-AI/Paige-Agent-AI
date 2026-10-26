@@ -106,8 +106,20 @@ function denied(name,options={},role='authenticated',tokenOverride) {
 let started=false;
 try {
  run('initdb',['-D',cluster,'-U','postgres','-A','trust','--no-locale','-E','UTF8']);
- run('pg_ctl',['-D',cluster,'-l',path.join(cluster,'server.log'),'-o',`-h 127.0.0.1 -p ${port}`,'-w','start']); started=true;
+ try {
+  // Same TCP-only startup as the original durable-document proof. A Linux
+  // package's system Unix-socket directory is not part of this isolated test.
+  run('pg_ctl',['-D',cluster,'-l',path.join(cluster,'server.log'),'-o',`-h 127.0.0.1 -p ${port} -c unix_socket_directories=`,'-w','start']); started=true;
+ } catch (error) {
+  // Startup precedes every fixture: this log contains no customer/provider data.
+  let detail='Startup log unavailable';
+  try { detail=fs.readFileSync(path.join(cluster,'server.log'),'utf8').trim().split(/\r?\n/).slice(-8).join('\n'); } catch { /* failed before log creation */ }
+  throw new Error(`${error.message}\n${detail}`);
+ }
  sql(fs.readFileSync(path.join(root,'scripts/proof/e09-consumer-invite-fixture.sql'),'utf8'));
+ if(requestShareCatalogue)check('Original synthetic catalogue proof stays on its designated TCP loopback only',()=>{
+  assert.equal(sql(`SELECT current_setting('unix_socket_directories')='' AND inet_server_addr()='127.0.0.1'::inet AND current_setting('listen_addresses')='127.0.0.1' AND current_setting('port')='${port}';`),'t');
+ });
  if(entry || entryBaseline) {
  const validator=fs.readFileSync(path.join(root,'supabase/migrations/20271107110000_e09_client_welcome_atomic.sql'),'utf8').replaceAll('\r\n','\n')
    .match(/CREATE OR REPLACE FUNCTION public\._client_portal_welcome_fields\(p_config jsonb\)[\s\S]*?\n\$\$;/)?.[0];

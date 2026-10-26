@@ -186,6 +186,25 @@ jobs:
         # branch's install at once — CI could not have been pinned to a known-good tree.
         run: npm ci --no-audit --no-fund
 
+      - name: EXP09 original customer-request catalogue, current authority and incumbent rows in isolated PostgreSQL
+        id: e09_request_catalogue
+        run: |
+          PGBIN="$(pg_config --bindir)"
+          [ -x "$PGBIN/initdb" ] || { echo "FAIL — PostgreSQL server binaries are required."; exit 2; }
+          E09_PG_BIN="$PGBIN" E09_PROOF_DIR="outputs/e09-request-catalogue-ci" node scripts/proof/e09-consumer-invite.mjs --request-share-catalogue
+
+      - name: Retain original EXP09 synthetic catalogue proof and failure transcript
+        if: ${{ always() && (steps.e09_request_catalogue.outcome == 'success' || steps.e09_request_catalogue.outcome == 'failure') }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: e09-request-catalogue-${{ github.sha }}
+          path: |
+            outputs/e09-request-catalogue-ci/candidate.json
+            outputs/e09-request-catalogue-ci/candidate-transcript.json
+            outputs/e09-request-catalogue-ci/cluster-*/server.log
+          if-no-files-found: error
+          retention-days: 7
+
       # --- Changed-file gates (PR only — a push to main has no PR base). Cheap checks first. -----
       # Compute the MERGE-BASE once and diff against it, not the raw base-branch tip. base.sha is
       # the CURRENT main tip; a stale PR branch cut from an older main re-surfaces files sibling
@@ -1003,24 +1022,6 @@ jobs:
           PGBIN="$(pg_config --bindir)"
           [ -x "$PGBIN/initdb" ] || { echo "FAIL — PostgreSQL server binaries are required."; exit 2; }
           PG_PROOF_BIN="$PGBIN" node scripts/proof/paige-durable-document-work.mjs
-
-      - name: EXP09 original customer-request catalogue, current authority and incumbent rows in isolated PostgreSQL
-        id: e09_request_catalogue
-        run: |
-          PGBIN="$(pg_config --bindir)"
-          [ -x "$PGBIN/initdb" ] || { echo "FAIL — PostgreSQL server binaries are required."; exit 2; }
-          E09_PG_BIN="$PGBIN" E09_PROOF_DIR="outputs/e09-request-catalogue-ci" node scripts/proof/e09-consumer-invite.mjs --request-share-catalogue
-
-      - name: Retain original EXP09 synthetic catalogue proof and failure transcript
-        if: ${{ always() && (steps.e09_request_catalogue.outcome == 'success' || steps.e09_request_catalogue.outcome == 'failure') }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: e09-request-catalogue-${{ github.sha }}
-          path: |
-            outputs/e09-request-catalogue-ci/candidate.json
-            outputs/e09-request-catalogue-ci/candidate-transcript.json
-          if-no-files-found: error
-          retention-days: 7
 
       - name: C0b — incumbent adapter authority bindings
         run: |

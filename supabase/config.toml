@@ -586,6 +586,15 @@ project_id = "xygzykjyynhzqytbqnzu"
   [functions.security-canary-probe]
     verify_jwt = false
 
+  # cf-stream-verify (EXP10) — the read-only Cloudflare Stream backend-access canary
+  # (security-canary-probe precedent). GET-only over one hardcoded ALREADY-PUBLIC test
+  # video; closed-vocabulary responses (never the token); no write path. Called without
+  # a Supabase JWT for verification probes, so verify_jwt=false matches the deployed
+  # v1/v2 posture — the deployed-source readback expects this declaration. Retired when
+  # the governed media door verifies equivalently.
+  [functions.cf-stream-verify]
+    verify_jwt = false
+
 [functions.tenant-n8n-oauth]
 # Callback is public; JWT owner authorization and one-time callback proof are enforced inside.
 verify_jwt = false

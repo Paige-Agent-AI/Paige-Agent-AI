@@ -1,0 +1,8 @@
+{
+  "schemaVersion": 1,
+  "encoding": "base64",
+  "bytes": 188,
+  "sha256": "e9ce5ca91c3ab3fe9526bc4457dd36d1d86f487275dbe5865b0a003ee66e164e",
+  "content": "VUkgZGVsaXZlcnkgZXZpZGVuY2U6IEZBSUwKZG9jcy9ldmlkZW5jZS91aS1kZWxpdmVyeS9lMDQtY2xpZW50LXN0YW5kaW5nLWhhbmRvZmYubWQ6CiAgLSBTVEFURV9DT1ZFUkFHRSBtdXN0IGJlZ2luIFBBU1M6LCBVTlZFUklGSUVEOiwgb3IgTk9UX0FQUExJQ0FCTEU6IGFuZCBpbmNsdWRlIGV2aWRlbmNlIG9yIGEgcmVhc29uLgo=",
+  "disposition": "Initial state-coverage declaration rejected. Corrected to explicit UNVERIFIED undeployed scope; no validator or runtime change."
+}

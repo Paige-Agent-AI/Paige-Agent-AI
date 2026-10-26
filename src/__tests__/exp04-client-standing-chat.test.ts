@@ -43,6 +43,14 @@ function fakeCaller(replies: Record<string, { data?: unknown; error?: { code?: s
 const one = (id = CLIENT, exact = true) => ({ matches: [{ id, name: 'Test Consulting Client', status: 'active', exact }], more: false });
 
 describe('the client-standing projection never invents money', () => {
+  it.each([0,3])('does not equate %i done work records with accepted service', done => {
+    const s=base();s.work={...s.work,total:3,done,open:0,cancelled:3-done,blocked:0,overdue:0,undated_open:0,
+      items:s.work.items.map(item=>({...item,status:done===3?'done':'cancelled'}))};
+    const text=standing(s);
+    expect(text).toContain(`ONBOARDING AND DELIVERY: no open linked work — ${done} of 3 done`);
+    expect(text).toContain('Work counts do not establish client acceptance or engagement completion.');
+    expect(text).not.toContain('ONBOARDING AND DELIVERY: complete');
+  });
   it('explains a mismatched invoice revision without declaring current-plan dates due', () => {
     const s=base();s.terms[0].collection_terms_version=2;
     const text=standing(s);

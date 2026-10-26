@@ -65,7 +65,7 @@ function moneyPill(s: ClientEngagementStatus): { state: PillState; label: string
 
 const WORK_PILL: Record<ClientEngagementStatus["work"]["state"], { state: PillState; label: string }> = {
   none: { state: "off", label: "No delivery work" },
-  complete: { state: "success", label: "Complete" },
+  complete: { state: "success", label: "Nothing open" },
   on_schedule: { state: "success", label: "On schedule" },
   behind: { state: "error", label: "Behind" },
   undated: { state: "pending", label: "No due dates" },
@@ -219,6 +219,7 @@ function Standing({ s, name, account, openPaige }: { s: ClientEngagementStatus; 
 
         <Row state={WORK_PILL[w.state]} label="Delivery" actions={<StandingLink destination="operations_work" account={account} />}>
           <span>{workLine}</span>
+          <span className="trc-standing-quiet-line">Client acceptance is not shown here.</span>
           {w.next && <span className="trc-standing-quiet-line">Next: {w.next.title ?? "Untitled"} · {dayLabel(w.next.due_at, zone) === NOT_SHOWN ? "due date not shown until the business time zone is set" : <span className="trc-standing-nowrap">due {dayLabel(w.next.due_at, zone)}</span>}</span>}
         </Row>
 

@@ -29,6 +29,14 @@ const dd = (term: string) => [...host.querySelectorAll(".trc-standing-money > di
 const hrefs = () => [...host.querySelectorAll("a")].map(a => [a.textContent, a.getAttribute("href")]);
 
 describe("ClientStanding", () => {
+  it.each([0,3])("does not equate %i done work records with accepted service", async done => {
+    const work={...structuredClone(source.work),total:3,done,open:0,cancelled:3-done,blocked:0,overdue:0,undated_open:0};
+    work.items=work.items.map((item: Record<string,unknown>)=>({...item,status:done===3?"done":"cancelled"}));
+    rpc.mockResolvedValue(reply({work}));await render();
+    expect(row("Delivery")?.textContent).toContain("Nothing open");
+    expect(row("Delivery")?.textContent).toContain(`${done} of 3 done`);
+    expect(row("Delivery")?.textContent).toContain("Client acceptance is not shown here.");
+  });
   it("explains an invoice revision mismatch while preserving balances and original navigation", async () => {
     const changed=structuredClone(source);changed.terms[0].collection_terms_version=2;
     rpc.mockResolvedValue({data:{...changed,receipt_id:undefined},error:null});await render();

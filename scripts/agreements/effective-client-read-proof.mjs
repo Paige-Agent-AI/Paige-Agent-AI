@@ -20,7 +20,10 @@ export function proveEffectiveClientRead({sql,read,tenant,c,prepared}){
  const publicSignature='public.read_client_engagement_status(uuid,uuid)';
  equal(sql(`SELECT to_regprocedure('${publicSignature}') IS NULL;`),'t','Unique original signing fixture has no pre-existing status reader to overwrite');
  sql(source.slice(at,close+3)+`\nREVOKE ALL ON FUNCTION ${publicSignature} FROM PUBLIC,anon,service_role;GRANT EXECUTE ON FUNCTION ${publicSignature} TO authenticated;`);
- const publicBefore=sql(`SELECT pg_get_functiondef('${publicSignature}'::regprocedure);`);
+ // Normalize psql's Windows transport newline only. The migration and the
+ // assertions below still pin native md5(prosrc), not a normalized server body.
+ const publicDefinition=()=>sql(`SELECT pg_get_functiondef('${publicSignature}'::regprocedure);`).replaceAll('\r\n','\n');
+ const publicBefore=publicDefinition();
  const publicMeta=()=>json(`SELECT jsonb_build_object('oid',oid,'acl',proacl::text,'owner',proowner,'definer',prosecdef,'volatility',provolatile,'path',proconfig)
   FROM pg_proc WHERE oid='${publicSignature}'::regprocedure;`);
  const publicMetadata=publicMeta();
@@ -28,10 +31,10 @@ export function proveEffectiveClientRead({sql,read,tenant,c,prepared}){
  const signature='public._sales_client_effective_terms(uuid,uuid,uuid)';
  const meta=()=>json(`SELECT jsonb_build_object('oid',oid,'body',md5(prosrc),'acl',proacl::text,'owner',proowner,'definer',prosecdef,'volatility',provolatile,'path',proconfig)
   FROM pg_proc WHERE oid='${signature}'::regprocedure;`);
- const beforeMeta=meta(),publicAfter=sql(`SELECT pg_get_functiondef('${publicSignature}'::regprocedure);`);
+ const beforeMeta=meta(),publicAfter=publicDefinition();
  sql(migration);equal(meta(),beforeMeta,'Complete migration replays without changing private read identity or authority');
  equal(publicMeta(),publicMetadata,'Whole original public OID/owner/ACL/definer/path/volatility preserved');
- equal(sql(`SELECT pg_get_functiondef('${publicSignature}'::regprocedure);`),publicAfter,'Complete original public projection replays exactly');
+ equal(publicDefinition(),publicAfter,'Complete original public projection replays exactly');
  const guard=migration.slice(migration.indexOf('DO $guard$'),start);
  for(const patch of [
   `ALTER FUNCTION ${publicSignature} STABLE;`,

@@ -204,10 +204,10 @@ export function projectClientStanding(s: ClientEngagementStatus): string {
   } else lines.push('INVOICES: none.');
 
   const w = s.work;
-  if (w.state === 'none') lines.push('ONBOARDING AND DELIVERY: no delivery plan or tasks are recorded for this client.');
+  if (w.state === 'none') lines.push('ONBOARDING AND DELIVERY: no linked milestones or tasks are recorded for this client. Work counts do not establish client acceptance or engagement completion.');
   else {
-    const label = w.state === 'complete' ? 'complete' : w.state === 'on_schedule' ? 'on schedule' : w.state === 'behind' ? 'behind' : 'no due dates set';
-    lines.push(`ONBOARDING AND DELIVERY: ${label} — ${w.done} of ${w.total} done, ${w.open} open, ${w.overdue} overdue, ${w.blocked} blocked${s.truncated.work ? ' (more items exist than are listed)' : ''}. Work deadlines are exact times, so the overdue count does not depend on the business time zone.${w.next ? ` Next: ${w.next.item_type} ${rec(w.next.title)} due ${when(w.next.due_at)}.` : ''}`);
+    const label = w.state === 'complete' ? 'no open linked work' : w.state === 'on_schedule' ? 'on schedule' : w.state === 'behind' ? 'behind' : 'no due dates set';
+    lines.push(`ONBOARDING AND DELIVERY: ${label} — ${w.done} of ${w.total} done, ${w.open} open, ${w.overdue} overdue, ${w.blocked} blocked${s.truncated.work ? ' (more items exist than are listed)' : ''}. Work deadlines are exact times, so the overdue count does not depend on the business time zone. Work counts do not establish client acceptance or engagement completion.${w.next ? ` Next: ${w.next.item_type} ${rec(w.next.title)} due ${when(w.next.due_at)}.` : ''}`);
   }
 
   lines.push(s.attention.length

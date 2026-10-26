@@ -24,6 +24,9 @@ export async function proveAcceptedCollectionSource({sql,read,quote,tenant,actor
  const predecessor=json(`SET test.uid='${actor}';SET test.tenant='${tenant}';SET ROLE authenticated;SELECT list_sales_collection_agreements('${tenant}');`);
  equal(predecessor.rows.find(row=>row.id===c.terms)?.agreed_amount_basis,'unverified','Predecessor read cannot yet use original accepted/effective provenance');
  sql(read('supabase/migrations/20271115060004_sales_collection_fixed_source_guard.sql'));
+ const evidenceMode=process.argv.includes('--accepted-total-evidence');
+ const evidenceProof=evidenceMode?await(await import('./collection-total-evidence-proof.mjs')).proveCollectionTotalEvidence({sql,read,quote,tenant,actor,c}):null;
+ checks+=evidenceProof?.checks??0;
  const basis=()=>sql(`SELECT _sales_collection_amount_basis(t) FROM tenant_client_agreements t WHERE id='${c.terms}';`);
  equal(sql(`SELECT count(*) FROM paige_sales_collection_operations WHERE command->>'action'='collection.create_commercial_terms' AND result#>>'{row,id}'='${c.terms}';`),'0','Original legacy signing fixture has no later fixed-creation receipt');
  const accepted=()=>json(`SELECT _paige_accepted_commercial_payload(a) FROM paige_agreements a WHERE id='${source}';`);
@@ -56,7 +59,7 @@ export async function proveAcceptedCollectionSource({sql,read,quote,tenant,actor
  assert.throws(()=>mutationBasis(`UPDATE tenant_client_agreements SET effective_at=NULL WHERE id='${c.terms}';`),/23514:.*e04_effective_provenance_complete/);checks++;
  equal(mutationBasis(`UPDATE tenant_client_agreements SET term_kind='recurring' WHERE id='${c.terms}';`),'per_cycle','Old acceptance never makes a current recurring amount a finite principal');
  for(const kind of ['deposit','custom_quote']){
-  equal(mutationBasis(`UPDATE tenant_client_agreements SET term_kind='${kind}' WHERE id='${c.terms}';`),'total','Exact accepted principal may establish total meaning for '+kind);
+  equal(mutationBasis(`UPDATE tenant_client_agreements SET term_kind='${kind}' WHERE id='${c.terms}';`),evidenceMode?'total':'unverified','Additional finite kind requires the separate matched-evidence contract for '+kind);
   equal(mutationBasis(`UPDATE tenant_client_agreements SET term_kind='${kind}',effective_at=NULL,effective_signing_id=NULL,effective_terms_version=NULL,effective_operation_id=NULL,effective_source_digest=NULL WHERE id='${c.terms}';`),'unverified','No total inference without original accepted/effective evidence for '+kind);
  }
  equal(mutationBasis(`UPDATE tenant_client_agreements SET price_basis='catalog',catalog_price_snapshot_kind='installment' WHERE id='${c.terms}';`),'per_installment','Catalogue price retains its original per-payment meaning');
@@ -79,5 +82,5 @@ export async function proveAcceptedCollectionSource({sql,read,quote,tenant,actor
  equal(basis(),'total','Later-session source read retains the original principal meaning');
  const page=json(`SET test.uid='${actor}';SET test.tenant='${tenant}';SET ROLE authenticated;SELECT list_sales_collection_agreements('${tenant}');`);
  equal(page.rows.find(row=>row.id===c.terms)?.agreed_amount_basis,'total','Original scoped mounted-UI reader receives the same meaning');
- return {checks,scope:'Original accepted payload/effectuation and governed draft save; synthetic authority and metadata files, no hosted signing or financial effect'};
+ return {checks,evidenceProof,scope:'Original accepted payload/effectuation and governed draft save; synthetic authority and metadata files, no hosted signing or financial effect'};
 }

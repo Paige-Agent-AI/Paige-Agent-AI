@@ -49,5 +49,10 @@ export function readCollectionAmountBasis(value:Record<string,unknown>):Collecti
   ||basis==='total'&&kind!=='one_time'&&kind!=='installment'
   ||basis==='per_cycle'&&kind!=='recurring'
   ||basis==='per_installment'&&kind!=='installment')throw new TypeError('COLLECTION_AMOUNT_BASIS_UNVERIFIED');
+ // These kinds retain an unverified marker for older clients. An upgraded reader
+ // may derive meaning only from complete ORIGINAL native evidence matched to this
+ // row's tenant/customer/offer, principal/currency and current/accepted revisions.
+ // A standalone total label remains rejected above, and is never write authority.
+ if((kind==='deposit'||kind==='custom_quote')&&basis==='unverified')return readAcceptedCollectionTotalEvidence(value)?'total':'unverified';
  return basis as CollectionAmountBasis;
 }

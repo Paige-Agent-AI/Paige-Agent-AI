@@ -10,7 +10,7 @@ describe('fixed repayment requires canonical total semantics',()=>{
   expect(readCollectionAmountBasis({})).toBe('unverified');
   expect(previewRepaymentRead(input,[row])).toMatchObject({state:'needs_input',fields:['verified_fixed_total_basis']});
  });
- it.each(['one_time','installment','deposit','custom_quote'])('uses a verified %s total with the original calculation',term_kind=>{
+ it.each(['one_time','installment'])('uses a verified %s total with the original calculation',term_kind=>{
   expect(readCollectionAmountBasis({term_kind,agreed_amount_basis:'total'})).toBe('total');
   const result=previewRepaymentRead(input,[{...row,term_kind,agreed_amount_basis:'total'}]);
   expect(result).toMatchObject({state:'ready_for_review',total_cents:350000,installment_count:10,execution:'not_started'});
@@ -24,7 +24,7 @@ describe('fixed repayment requires canonical total semantics',()=>{
  });
  it.each([
   {term_kind:'recurring',agreed_amount_basis:'total'},
-  {term_kind:'deposit',agreed_amount_basis:'per_cycle'},
+  {term_kind:'deposit',agreed_amount_basis:'total'},
   {term_kind:'one_time',agreed_amount_basis:'per_cycle'},
   {term_kind:'custom_quote',agreed_amount_basis:'per_installment'},
   {term_kind:'one_time'}, {agreed_amount_basis:'total'},

@@ -9,7 +9,7 @@
  */
 import { act, StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, onTestFinished, vi } from "vitest";
 import { TeamHubWorkspace } from "./TeamHubWorkspace";
 import { REFRESH_INTERVAL_MS, teamHubNavigation } from "./useTeamHub";
 
@@ -902,6 +902,11 @@ describe("mark read through the newest displayed message (A8, mocked RPC)", () =
 
 describe("structure for assistive tech (mocked RPC)", () => {
   it("names the day, New and replies separators, since a separator's text is not read", async () => {
+    // Pin the clock to midday: "10 minutes ago" read just after midnight is yesterday, and the
+    // separator would rightly say so. Only Date is faked; the component's timers stay real.
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date(2026, 9, 26, 12, 0, 0));
+    onTestFinished(() => { vi.useRealTimers(); });
     db.conversations = [channel({ unread: 1 })];
     db.messages["c-general"] = [msg({ id: "m-root", reply_count: 2, created_at: at(10) })];
     db.replies["m-root"] = [msg({ id: "r-1", parent_message_id: "m-root", created_at: at(6) }), msg({ id: "r-2", parent_message_id: "m-root", created_at: at(5) })];

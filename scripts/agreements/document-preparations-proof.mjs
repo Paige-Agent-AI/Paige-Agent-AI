@@ -139,14 +139,14 @@ export async function proveDocumentPreparations({sql,read,context,tenant,actor,c
  if(commercialProof){
   const start=checks,hex=value=>createHash('sha256').update(value).digest('hex');
   const literal=value=>quote(JSON.stringify(value))+'::jsonb';
-  const makeCommercial=async()=>{
+  const makeCommercial=async({currency='USD'}={})=>{
    const initial=original(),offer=randomUUID(),terms=randomUUID(),invoice=randomUUID();
    const schedule=assembleFixedRepaymentSchedule({total_cents:350000,currency:'usd',deposit_cents:50000,deposit_date:'2026-10-15',installment_cents:30000,first_installment_date:'2026-11-15',cadence:'monthly'});
    assert.equal(schedule.state,'ready');
    const treatment={state:'not_applicable',charges:[],source:'Synthetic owner decision',policy:'No applicable charge recorded'},conditions={schema_version:1,tax:treatment,fees:treatment};
    sql(`INSERT INTO tenant_products(id,tenant_id) VALUES('${offer}','${tenant}');
     INSERT INTO tenant_client_agreements(id,tenant_id,contact_id,offer_id,agreed_amount_minor,agreed_currency,term_kind,installments_total,collection_terms,starts_on,price_basis)
-      VALUES('${terms}','${tenant}','${client}','${offer}',350000,'USD','installment',10,${literal(schedule.terms)},'2026-10-15','negotiated');
+      VALUES('${terms}','${tenant}','${client}','${offer}',350000,${quote(currency)},'installment',10,${literal(schedule.terms)},'2026-10-15','negotiated');
     UPDATE paige_agreements SET offer_id='${offer}',commercial_terms_id='${terms}' WHERE id='${initial.agreement_id}';`);
    const source=readSource(initial.agreement_id),words=json(`SELECT jsonb_build_object('title',title,'body',body_markdown) FROM paige_agreements WHERE id='${source.agreement_id}';`);
    const draft={schema_version:3,agreement_id:source.agreement_id,total_minor:350000,agreement_snapshot:{id:source.agreement_id,version:source.version},commercial_terms_reference:{id:terms,version:1},commercial_conditions:conditions,

@@ -131,6 +131,20 @@ try {
  assert.equal(readDefinition(),appliedDefinition,'guarded refusal rolled back the test change');
  process.stdout.write('PASS amount basis: original whole-reader inverse/ACL and exact replay; governed fixed total, per-cycle and per-installment distinctions; ambiguous legacy, changed economics, foreign provenance, revoked role and source-drift refusals. No new obligations or financial effects.\n');
  // C60: the existing native execution rechecks its preview after locking the original agreement.
+ // Install the ORIGINAL accepted-record validators on their original empty table definitions.
+ // Positive signing/effectuation continuity belongs to the full fenced document runner;
+ // this commercial runner must not stand in a fake accepted=true helper.
+ run('CREATE TABLE tenant_agreement_versions(id uuid PRIMARY KEY);');
+ const agreementRecords=read('supabase/migrations/20270401000000_agreements_engine_records.sql');
+ for(const table of ['paige_agreements','paige_agreement_signers','paige_agreement_events']){
+  const from=agreementRecords.indexOf('CREATE TABLE IF NOT EXISTS public.'+table+' ('),to=agreementRecords.indexOf('\n);',from);
+  assert(from>=0&&to>from,table);run(agreementRecords.slice(from,to+4));
+ }
+ run('ALTER TABLE paige_agreements ADD COLUMN commercial_presentation jsonb,ADD COLUMN presented_body_markdown text;ALTER TABLE tenant_client_agreements ADD COLUMN effective_signing_id uuid,ADD COLUMN effective_terms_version bigint,ADD COLUMN effective_at timestamptz,ADD COLUMN effective_operation_id uuid,ADD COLUMN effective_source_digest text;ALTER TABLE paige_workspace_events ADD COLUMN detail jsonb;');
+ run(extract(read('supabase/migrations/20271113230004_agreement_commercial_presentation.sql'),'_paige_commercial_canonical_json'));
+ const acceptedSource=read('supabase/migrations/20271113810004_e04_accepted_commercial_evidence.sql');
+ run(extract(acceptedSource,'_paige_retained_commercial_payload')+extract(acceptedSource,'_paige_accepted_commercial_payload'));
+ for(const signature of ['_paige_commercial_canonical_json(jsonb)','_paige_retained_commercial_payload(public.paige_agreements)','_paige_accepted_commercial_payload(public.paige_agreements)'])run(`REVOKE ALL ON FUNCTION public.${signature} FROM PUBLIC,anon,authenticated,service_role;`);
  run(extract(collections,'_sales_collection_validate_terms'));
  const effective=read('supabase/migrations/20271113820004_e04_exact_signed_terms.sql');
  const routerStart=effective.indexOf('DO $$',effective.indexOf('-- Extend the installed command router'));
@@ -156,6 +170,15 @@ try {
  assert.equal(definitionOf(executeRoutine),priorExecute,'whole original executor remains byte-identical');
  assert.equal(run(`SELECT md5(prosrc) FROM pg_proc WHERE oid=${executeRoutine};`).trim(),'4a25621d37c0b292aa3b38d5b7f055f2','actual current original executor');
  const helperIdentity="'public._sales_collection_amount_basis(public.tenant_client_agreements)'::regprocedure";
+ for(const signature of ['_paige_commercial_canonical_json(jsonb)','_paige_retained_commercial_payload(public.paige_agreements)','_paige_accepted_commercial_payload(public.paige_agreements)']){
+  const identity=`'public.${signature}'::regprocedure`,before=definitionOf(identity);
+  const drift=before.replace('\nBEGIN','\nBEGIN /* synthetic accepted-validator source drift */');assert.notEqual(drift,before);
+  assert.throws(()=>run('BEGIN;'+drift+';'+sourceGuard),/Original accepted commercial validator changed/);
+  for(const change of [`ALTER FUNCTION public.${signature} SECURITY DEFINER;`,`ALTER FUNCTION public.${signature} SET search_path=public;`,`GRANT EXECUTE ON FUNCTION public.${signature} TO anon;`]){
+   assert.throws(()=>run('BEGIN;'+change+sourceGuard),/Original accepted commercial validator changed/);
+   assert.equal(definitionOf(identity),before,'accepted-validator source/authority drift rolls back');
+  }
+ }
  for(const role of ['anon','authenticated','service_role']){
   assert.equal(run(`SELECT has_function_privilege('${role}',${helperIdentity},'EXECUTE');`).trim(),'f');
   deny('SELECT public._sales_collection_amount_basis(NULL::public.tenant_client_agreements);','42501',`SET LOCAL ROLE ${role};`);

@@ -7698,12 +7698,18 @@ Current gaps:
   and `paige-ai-chat` read back on production. `PROOF_OWED`. Contract:
   [increment 4 PAIGE contract](delivery/exp08-team-hub-increment4-paige-contract.md).
 - Team Hub read performance (migration `20271114250008`): opening a conversation and searching cost
-  the page, not the workspace (measured 0.75–4.8 s → 2–4 ms at 1M messages; rare-word search
-  ~1.8 s). Two btree indexes over ids and times only, no message text; output byte-identical.
+  the page, not the workspace (measured 0.75–4.8 s → 2–4 ms at 1M messages, sandbox JIT on; rare-word
+  search ~1.0 s with production's `jit = off`). Two btree indexes over ids and times only; output byte-identical.
+- Team Hub rare-word search (migration `20271114300008`, owner-approved 2026-10-25): ASCII-only pg_trgm index on message
+  bodies (ICU makes an all-body index miss matches), regex ASCII test the planner can estimate, scalar
+  reply-parent check, per-call planning. ~1M messages, `jit = off`: rare ~1.0 s → 1.5 ms (all-ASCII text; ~0.3 s projected
+  when 30% of messages carry curly quotes, dashes or emoji), common 0.7 → 1.6 ms, non-ASCII query unchanged. The approved `paige_workspace_events` partial index is not built (unused under
+  PostgREST generic plans, measured).
 - Team Hub scheduled stale-file sweep (migration `20271114260008`, edge `team-hub-file-sweep`, hourly
   pg_cron, up to 50 uploaders per run): an unposted upload older than a day is discarded and its bytes
-  removed even if the person never uploads again. Service role / cron token only. `PROOF_OWED` until
-  merged, deployed and a first scheduled run is read back.
+  removed even if the person never uploads again. Service role / cron token only. Released #2882
+  (`15970d639`); first scheduled run read back 2026-10-25 (200, nothing to sweep). The removal path has
+  not yet met a real file.
 - `/solo/{n}/team` still redirects to Settings → Team; Team Hub is a separate destination.
 - Team actions still emit no Rail outcome.
 

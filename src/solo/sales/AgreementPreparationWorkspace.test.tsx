@@ -74,7 +74,7 @@ function props() {
     clients: [{ id: client, name: 'Sample Client' }], clientsReady: true, clientsReadable: true,
     agreementId: 'new', requestId: request, requestTenantId: tenant, freshlyOpened: true, onDraftAttempted: vi.fn(),
     onOpenRecord: vi.fn(), onClose: vi.fn(), onOpenClients: vi.fn(), onRefresh: vi.fn(),
-    signings: { signingEvents: vi.fn(async (): Promise<SigningEventsResult> => ({ ok: true, events: [], truncated: false })), signedCopyUrl: vi.fn(async () => ({ ok: false, message: 'Synthetic unavailable copy' } as const)) } };
+    signings: { signingEvents: vi.fn(async (): Promise<SigningEventsResult> => ({ ok: true, events: [], truncated: false })), signedCopyUrl: vi.fn(async (): Promise<{ ok: false; message: string }> => ({ ok: false, message: 'Synthetic unavailable copy' })) } };
 }
 const fill = () => {
   fireEvent.change(screen.getByLabelText('Client', { exact: true }), { target: { value: client } });
@@ -381,6 +381,44 @@ describe('native agreement preparation flow', () => {
     expect(screen.getByText('Signature request result recorded')).toBeTruthy();
     expect(screen.queryByText('Draft revised')).toBeNull();
     expect(screen.queryByText('Delivered')).toBeNull();
+  });
+  it('keeps the original history button focused during and after its read without starting another read', async () => {
+    const p = { ...props(), agreementId: id, requestId: null, freshlyOpened: false };
+    let resolve!: (value: SigningEventsResult) => void;
+    p.signings.signingEvents.mockReturnValueOnce(new Promise<SigningEventsResult>(done => { resolve = done; }));
+    render(<AgreementPreparationWorkspace {...p} />); await screen.findByText('Original retained wording.');
+    const entry = screen.getByRole('button', { name: 'View signing history' }); entry.focus(); fireEvent.click(entry);
+    expect(document.activeElement).toBe(entry); expect(entry.getAttribute('aria-disabled')).toBe('true');
+    fireEvent.click(entry); expect(p.signings.signingEvents).toHaveBeenCalledTimes(1);
+    await act(async () => { resolve({ ok: true, events: [], truncated: false }); });
+    expect(screen.getByRole('button', { name: 'Refresh history' })).toBe(entry);
+    expect(document.activeElement).toBe(entry); expect(entry.getAttribute('aria-disabled')).toBe('false');
+  });
+  it('returns focus from stopped history waiting and ignores the retired read', async () => {
+    const p = { ...props(), agreementId: id, requestId: null, freshlyOpened: false };
+    let resolve!: (value: SigningEventsResult) => void;
+    p.signings.signingEvents.mockReturnValueOnce(new Promise<SigningEventsResult>(done => { resolve = done; }));
+    render(<AgreementPreparationWorkspace {...p} />); await screen.findByText('Original retained wording.');
+    const entry = screen.getByRole('button', { name: 'View signing history' }); fireEvent.click(entry);
+    const stop = screen.getByRole('button', { name: 'Stop waiting' }); stop.focus(); fireEvent.click(stop);
+    expect(document.activeElement).toBe(entry);
+    await act(async () => { resolve({ ok: false, message: 'Retired history response' }); });
+    expect(screen.queryByText('Retired history response')).toBeNull(); expect(document.activeElement).toBe(entry);
+  });
+  it('retains document-read keyboard focus and returns it when waiting is stopped', async () => {
+    const record = original(); record.agreement.status = 'completed'; record.agreement.can_edit = false;
+    fixtures.read.mockResolvedValue({ ok: true, value: record });
+    const p = { ...props(), agreementId: id, requestId: null, freshlyOpened: false };
+    let resolve!: (value: { ok: false; message: string }) => void;
+    p.signings.signedCopyUrl.mockReturnValueOnce(new Promise(done => { resolve = done; }));
+    render(<AgreementPreparationWorkspace {...p} />); await screen.findByText('Original retained wording.');
+    const entry = screen.getByRole('button', { name: 'Prepare retained document' }); entry.focus(); fireEvent.click(entry);
+    expect(document.activeElement).toBe(entry); expect(entry.getAttribute('aria-disabled')).toBe('true');
+    fireEvent.click(entry); expect(p.signings.signedCopyUrl).toHaveBeenCalledTimes(1);
+    const stop = screen.getByRole('button', { name: 'Stop waiting' }); stop.focus(); fireEvent.click(stop);
+    expect(document.activeElement).toBe(entry);
+    await act(async () => { resolve({ ok: false, message: 'Retired document response' }); });
+    expect(screen.queryByText('Retired document response')).toBeNull(); expect(document.activeElement).toBe(entry);
   });
   it('returns keyboard focus to the original history entry after its view is mounted', async () => {
     fixtures.read.mockResolvedValueOnce({ok:true,value:original()}).mockResolvedValueOnce({ok:true,value:{...original(),agreement:{...original().agreement,version:2,body_markdown:'Latest canonical correction.'}}});

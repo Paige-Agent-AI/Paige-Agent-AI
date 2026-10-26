@@ -1403,8 +1403,10 @@ describe("Agreement documents — signature state, separate from commercial stat
     expect(rows).toHaveLength(2);
 
     // Newest first, exactly as the read returned it — never re-sorted into a guess.
-    expect(rows[0].textContent).toContain("Signed and completed");
-    expect(rows[1].textContent).toContain("Sent");
+    // The shared history vocabulary names the signing ceremony explicitly;
+    // issuing a request does not establish provider delivery or completed work.
+    expect(rows[0].textContent).toContain("Signing completed");
+    expect(rows[1].textContent).toContain("Signature request issued");
     // The recorded actor, address and device, and nothing invented to fill the gaps: the `sent`
     // event carries none of the three, so it falls back to who did it rather than a blank.
     expect(rows[0].textContent).toContain("dana@example.com");
@@ -1423,6 +1425,24 @@ describe("Agreement documents — signature state, separate from commercial stat
     // a head row repeating it directly above is a stutter, and this is what keeps it gone.
     const headings = [...panel.querySelectorAll("h1, h2, h3")].map((h) => h.textContent);
     expect(headings).toEqual(["Signed and completed"]);
+  });
+
+  it("retains prepared-event distinctions in the original completion history", async () => {
+    const recorded = { actorKind: "owner", actorEmail: null, ip: null, userAgent: null, at: "2026-09-22T12:10:00Z" };
+    harness.signings.signingEvents = vi.fn(async () => ({ ok: true, truncated: false, events: [
+      { ...recorded, id: "prepared-result", type: "sent", action: "prepared_signature_request_recorded" },
+      { ...recorded, id: "prepared-links", type: "edited", action: "prepared_signature_credentials_recorded" },
+    ] }));
+    openCompleted(); await act(async () => {});
+    const panel = document.querySelector('[aria-labelledby="so-done-title"]')!;
+    const rows = [...panel.querySelectorAll(".so-ev")];
+    expect(rows).toHaveLength(2);
+    expect(rows[0].textContent).toContain("Signature request result recorded");
+    expect(rows[1].textContent).toContain("Signing links prepared");
+    expect(rows[1].textContent).not.toContain("Draft revised");
+    expect(rows[0].textContent).not.toContain("Delivered");
+    expect(rows[0].className).not.toContain("is-done");
+    expect(rows[1].className).not.toContain("is-done");
   });
 
   it("says so when the trail cannot be read, rather than showing an empty history", async () => {

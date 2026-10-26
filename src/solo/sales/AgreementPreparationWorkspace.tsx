@@ -430,6 +430,7 @@ function AgreementRecordHistory({ id, tenantId, completed, signings }: { id: str
   const [copyBusy, setCopyBusy] = React.useState(false);
   const [copyMessage, setCopyMessage] = React.useState('');
   const [copyUrl, setCopyUrl] = React.useState<string | null>(null);
+  const historyButton = React.useRef<HTMLButtonElement>(null), copyButton = React.useRef<HTMLButtonElement>(null);
   const live = React.useRef(true), historyRequest = React.useRef(0), copyRequest = React.useRef(0), retainedUrl = React.useRef<string | null>(null);
   React.useEffect(() => { live.current = true; return () => { live.current = false; if (retainedUrl.current) URL.revokeObjectURL(retainedUrl.current); }; }, []);
   const load = async () => {
@@ -453,8 +454,9 @@ function AgreementRecordHistory({ id, tenantId, completed, signings }: { id: str
     retainedUrl.current = result.url; setCopyUrl(result.url);
   };
   return <section className="e04-preparation-context-card" aria-label="Agreement history and files"><h3>History and files</h3>
-    {loading ? <><p role="status">Reading recorded agreement activity…</p><button onClick={() => { historyRequest.current++; setLoading(false); }}>Stop waiting</button></> : <button onClick={() => { void load(); }}><RefreshCw size={16} />{trail ? 'Refresh history' : 'View signing history'}</button>}
+    <button ref={historyButton} aria-disabled={loading} onClick={() => { if (!loading) void load(); }}><RefreshCw size={16} />{loading ? 'Reading history…' : trail ? 'Refresh history' : 'View signing history'}</button>
+    {loading && <><p role="status">Reading recorded agreement activity…</p><button onClick={() => { historyRequest.current++; setLoading(false); historyButton.current?.focus(); }}>Stop waiting</button></>}
     {trail && (trail.ok === true ? <>{trail.events.length ? <ol className="e04-agreement-history">{trail.events.map(event => <li key={event.id}><strong>{agreementEventLabel(event.type,event.action)}</strong><span>{historyTime(event.at)}</span><small>{event.actorKind === 'system' ? 'System record' : event.actorKind === 'signer' ? 'Signer record' : 'Authorized account record'}{event.actorEmail ? ` · ${event.actorEmail}` : ''}</small></li>)}</ol> : <p>No agreement activity was returned.</p>}{trail.truncated && <p>Older activity is outside this view. The latest {trail.events.length} recorded events are shown.</p>}</> : <p role="alert">{trail.message}</p>)}
-    {completed && <>{copyBusy ? <><p role="status">Reading the retained document…</p><button onClick={() => { copyRequest.current++; setCopyBusy(false); }}>Stop waiting</button></> : <button onClick={() => { void copy(); }}><FileText size={16} />Prepare retained document</button>}{copyUrl && <a className="e04-agreement-file" href={copyUrl} download="completed-agreement.pdf" target="_blank" rel="noopener noreferrer">Download retained document<ArrowRight size={16} /></a>}{copyMessage && <p role="alert">{copyMessage}</p>}</>}
+    {completed && <><button ref={copyButton} aria-disabled={copyBusy} onClick={() => { if (!copyBusy) void copy(); }}><FileText size={16} />{copyBusy ? 'Reading document…' : 'Prepare retained document'}</button>{copyBusy && <><p role="status">Reading the retained document…</p><button onClick={() => { copyRequest.current++; setCopyBusy(false); copyButton.current?.focus(); }}>Stop waiting</button></>}{copyUrl && <a className="e04-agreement-file" href={copyUrl} download="completed-agreement.pdf" target="_blank" rel="noopener noreferrer">Download retained document<ArrowRight size={16} /></a>}{copyMessage && <p role="alert">{copyMessage}</p>}</>}
   </section>;
 }

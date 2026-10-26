@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {randomUUID} from 'node:crypto';
-import {readAcceptedCollectionTotalEvidence,readCollectionAmountBasis} from '../../supabase/functions/_shared/sales-collections/amount-basis.ts';
+import {readAcceptedCollectionTotalEvidence,readCollectionAmountBasis,RECURRING_COLLECTION_AMOUNT_REFUSAL} from '../../supabase/functions/_shared/sales-collections/amount-basis.ts';
 
 /** Extends the incumbent fenced native fixture only. No hosted account, consent,
  * real document, provider, privileged production caller or customer acceptance.
@@ -11,10 +11,14 @@ export async function proveCollectionTotalEvidence({sql,read,tenant,actor,c}){
  const reader='public.list_sales_collection_agreements(uuid,integer,uuid)',basis='public._sales_collection_amount_basis(public.tenant_client_agreements)',proof='public._sales_collection_accepted_total_evidence(public.tenant_client_agreements)';
  const definition=signature=>sql(`SELECT pg_get_functiondef('${signature}'::regprocedure);`).replaceAll('\r\n','\n');
  const metadata=signature=>json(`SELECT jsonb_build_object('owner',proowner,'acl',proacl::text,'definer',prosecdef,'path',proconfig,'volatility',provolatile) FROM pg_proc WHERE oid='${signature}'::regprocedure;`);
- const before={reader:definition(reader),basis:definition(basis),readerMeta:metadata(reader),basisMeta:metadata(basis)};
+ const previewSignature='public.preview_sales_collection_command(uuid,uuid,jsonb)',executor='public.execute_sales_collection_command(uuid,uuid,uuid,jsonb,jsonb)';
+ const before={reader:definition(reader),basis:definition(basis),preview:definition(previewSignature),executor:definition(executor),readerMeta:metadata(reader),basisMeta:metadata(basis),previewMeta:metadata(previewSignature)};
  sql(migration);const after={reader:definition(reader),basis:definition(basis),proof:definition(proof)};sql(migration);
  equal(definition(reader),after.reader,'Evidence projection replays exactly');equal(definition(basis),after.basis,'One basis helper replays exactly');equal(definition(proof),after.proof,'Private evidence producer replays exactly');
  equal(metadata(reader),before.readerMeta,'Original reader authority metadata preserved');equal(metadata(basis),before.basisMeta,'Original private basis authority metadata preserved');
+ const oldCycleGuard=migration.match(/original_cycle_guard CONSTANT text:=\$cycle_before\$([\s\S]*?)\$cycle_before\$/)[1],newCycleGuard=migration.match(/verified_cycle_guard CONSTANT text:=\$cycle_after\$([\s\S]*?)\$cycle_after\$/)[1];
+ equal(definition(previewSignature).replace(newCycleGuard,oldCycleGuard),before.preview,'Whole original preview inverse retains every other branch/authority check');
+ equal(metadata(previewSignature),before.previewMeta,'Original preview authority metadata preserved');equal(definition(executor),before.executor,'Whole original locked executor unchanged');
  const patches=[...migration.matchAll(/EXECUTE replace\(definition,\$before\$([\s\S]*?)\$before\$,\$after\$([\s\S]*?)\$after\$\)/g)];equal(patches.length,2,'Only original basis and read projection change');
  equal(after.basis.replace(patches[0][2],patches[0][1]),before.basis,'Whole basis inverse preserves all other meanings');
  equal(after.reader.replace(patches[1][2],patches[1][1]),before.reader,'Whole reader inverse preserves original scope/bounds/cursor');
@@ -58,6 +62,18 @@ export async function proveCollectionTotalEvidence({sql,read,tenant,actor,c}){
   equal(json(`BEGIN;SET LOCAL session_replication_role=replica;UPDATE tenant_client_agreements SET term_kind='${kind}',effective_signing_id=NULL,effective_operation_id=NULL,effective_source_digest=NULL,effective_terms_version=NULL,effective_at=NULL WHERE id='${c.terms}';SET LOCAL session_replication_role=origin;${context}${preview(command)}ROLLBACK;`).eligible,false,'Previously read evidence cannot override missing current native provenance');
   assert.throws(()=>sql(context+preview({...command,agreed_amount_total_evidence:current.agreed_amount_total_evidence})),/22023:/);checks++;
  }
+ const cycleTerms={...original.collection_terms,kind:'recurring',cadence:'monthly',count:null,dates:[],deposit_cents:null,end_date:null};
+ const cycleCommand={action:'collection.save_terms',agreement_id:c.terms,expected_version:original.collection_terms_version,terms:cycleTerms};
+ const literal=v=>"'"+JSON.stringify(v).replaceAll("'","''")+"'::jsonb";
+ const context=`SET test.uid='${actor}';SET test.tenant='${tenant}';SET test.admin='true';SET test.member='true';SET ROLE service_role;`;
+ const cyclePreview=`SELECT preview_sales_collection_command('${actor}','${tenant}',${literal(cycleCommand)});`;
+ const incompatible=json(context+cyclePreview);equal(incompatible.eligible,false,'A fixed principal cannot silently become a cycle price');equal(incompatible.summary,RECURRING_COLLECTION_AMOUNT_REFUSAL,'Exact known recurring refusal reaches the existing domain response');
+ const cycleId=randomUUID(),governance={actor_user_id:actor,tenant_id:tenant,tool:'sales_save_collection_terms',action:cycleCommand.action,approval_channel:'operator_card',approved_fingerprint:'a'.repeat(16),decision_receipt_recorded:true};
+ const cycleSave=`SELECT execute_sales_collection_command('${actor}','${tenant}','${cycleId}',${literal(cycleCommand)},${literal(governance)});`;
+ assert.throws(()=>sql(context+cycleSave),/22023:/);checks++;
+ const cycleResults=sql(`BEGIN;SET LOCAL session_replication_role=replica;UPDATE tenant_client_agreements SET term_kind='recurring' WHERE id='${c.terms}';SET LOCAL session_replication_role=origin;${context}${cyclePreview}${cycleSave}${cycleSave}RESET ROLE;SELECT jsonb_build_object('replication_role',current_setting('session_replication_role'),'collection_terms_version',(SELECT collection_terms_version FROM tenant_client_agreements WHERE id='${c.terms}'));ROLLBACK;`).split(/\r?\n/).filter(line=>line.startsWith('{')).map(line=>JSON.parse(line));
+ equal(cycleResults[0].eligible,true,'Preserve legitimate original per-cycle recurring source');equal(cycleResults[1].ok,true,'Original recurring save remains usable');equal(cycleResults[2],cycleResults[1],'Recurring replay is one original operation');
+ equal(cycleResults[3],{replication_role:'origin',collection_terms_version:original.collection_terms_version+1},'Recurring save advances once with original integrity triggers active');
  for(const role of ['anon','authenticated','service_role']){
   equal(sql(`SELECT has_function_privilege('${role}','${proof}','EXECUTE');`),'f','Evidence helper is not an authority RPC');
   assert.throws(()=>sql(`SET ROLE ${role};SELECT _sales_collection_accepted_total_evidence(NULL::public.tenant_client_agreements);`),/42501:/);checks++;

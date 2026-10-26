@@ -37,6 +37,42 @@ describe('Original collection-plan repayment preparation',()=>{
   {term_kind:undefined,agreed_amount_basis:undefined},
   {term_kind:'recurring' as const,agreed_amount_basis:'per_cycle' as const},
   {term_kind:'installment' as const,agreed_amount_basis:'per_installment' as const},
+  {term_kind:'custom_quote' as const,agreed_amount_basis:'unverified' as const},
+ ])('never previews or reviews a finite plan from incompatible or missing amount meaning %j',semantics=>{
+  const saved=parseCollectionTerms({schema_version:1,kind:'full',currency:'usd',total_cents:350000,anchor_date:'2026-11-01',cadence:'monthly',count:1});
+  const {review}=mount([{...agreement,...semantics,collection_terms:saved}]);
+  expect(host.querySelectorAll('aside .sc-trail')).toHaveLength(0);
+  expect(button('Review and save terms').disabled).toBe(true);
+  act(()=>host.querySelector('.sc-builder > .sc-builder-grid > form')!.dispatchEvent(new Event('submit',{bubbles:true,cancelable:true})));
+  expect(review).not.toHaveBeenCalled();
+ });
+ it('retains legitimate recurring previews and refuses using a finite total as a cycle price',()=>{
+  const full=parseCollectionTerms({schema_version:1,kind:'full',currency:'usd',total_cents:350000,anchor_date:'2026-11-01',cadence:'monthly',count:1});
+  const {review,show}=mount([{...agreement,collection_terms:full}]);
+  click('Recurring');expect(button('Review and save terms').disabled).toBe(true);expect(host.querySelectorAll('aside .sc-trail')).toHaveLength(0);
+  expect(host.textContent).toContain('verified amount per billing cycle');
+  act(()=>host.querySelector('.sc-builder > .sc-builder-grid > form')!.dispatchEvent(new Event('submit',{bubbles:true,cancelable:true})));
+  expect(review).not.toHaveBeenCalled();
+  show([{...agreement,term_kind:'recurring',agreed_amount_basis:'per_cycle',collection_terms:full}]);
+  expect(button('Review and save terms').disabled).toBe(false);click('Review and save terms');
+  expect(savedCommand(review)).toMatchObject({agreement_id:agreement.id,terms:{kind:'recurring',total_cents:350000}});
+ });
+ it('retires applied proposals when the accepted source changes at the same commercial version',()=>{
+  const evidence={schema_version:1 as const,kind:'accepted_effective_principal' as const,tenant_id:agreement.tenant_id,commercial_terms_id:agreement.id,client_id:agreement.client_id,offer_id:other.id,principal_minor:350000,currency:'usd',current_terms_version:3,accepted_terms_version:1,signing_id:'55555555-5555-4555-8555-555555555555',signing_version:1,source_digest:'a'.repeat(64),operation_id:'66666666-6666-4666-8666-666666666666',receipt_id:'77777777-7777-4777-8777-777777777777'};
+  const full=parseCollectionTerms({schema_version:1,kind:'full',currency:'usd',total_cents:350000,anchor_date:'2026-11-01',cadence:'monthly',count:1});
+  const source={...agreement,term_kind:'installment' as const,collection_terms:full,agreed_amount_total_evidence:evidence};
+  const {review,show}=mount([source]);open();complete();click('Use proposed schedule');
+  show([{...source,agreed_amount_total_evidence:{...evidence,signing_id:'88888888-8888-4888-8888-888888888888',accepted_terms_version:3,source_digest:'b'.repeat(64),operation_id:'99999999-9999-4999-8999-999999999999'}}]);
+  expect(button('Review and save terms').disabled).toBe(true);expect(host.textContent).toContain('Accepted terms: revision 3');
+  act(()=>host.querySelector('.sc-builder > .sc-builder-grid > form')!.dispatchEvent(new Event('submit',{bubbles:true,cancelable:true})));
+  expect(review).not.toHaveBeenCalled();
+  click('Discard proposal and use current terms');expect(document.activeElement).toBe(field('Saved agreement'));
+  expect(host.textContent).toContain('Controlled client');expect(button('Review and save terms').disabled).toBe(false);
+ });
+ it.each([
+  {term_kind:undefined,agreed_amount_basis:undefined},
+  {term_kind:'recurring' as const,agreed_amount_basis:'per_cycle' as const},
+  {term_kind:'installment' as const,agreed_amount_basis:'per_installment' as const},
   {term_kind:'installment' as const,agreed_amount_basis:'unverified' as const},
   {status:'cancelled'}, {status:'completed'},
  ])('requires original fixed-total and eligible-source evidence %j',semantics=>{

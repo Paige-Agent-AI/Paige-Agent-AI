@@ -8,6 +8,7 @@ export type CollectionAmountBasis='total'|'per_cycle'|'per_installment'|'unverif
 export type CollectionTermKind='one_time'|'recurring'|'installment'|'deposit'|'custom_quote';
 /** Exact native refusal vocabulary; never display arbitrary backend diagnostics as this message. */
 export const FIXED_COLLECTION_TOTAL_REFUSAL='The original commercial amount is not a verified engagement total. Review its original terms before saving a finite collection schedule.';
+export const RECURRING_COLLECTION_AMOUNT_REFUSAL='The original commercial amount is not a verified per-cycle amount. Review its original terms before saving a recurring collection schedule.';
 export type AcceptedCollectionTotalEvidence={
  schema_version:1;kind:'accepted_effective_principal';tenant_id:string;commercial_terms_id:string;
  client_id:string;offer_id:string;principal_minor:number;currency:string;
@@ -26,7 +27,8 @@ export function readAcceptedCollectionTotalEvidence(value:Record<string,unknown>
  if(typeof evidence!=='object'||Array.isArray(evidence))return fail();
  const e=evidence as Record<string,unknown>,keys=Object.keys(e);
  if(keys.length!==totalEvidenceKeys.length||keys.some(key=>!totalEvidenceKeys.includes(key))
-  ||e.schema_version!==1||e.kind!=='accepted_effective_principal')return fail();
+  ||e.schema_version!==1||e.kind!=='accepted_effective_principal'
+  ||typeof value.term_kind!=='string'||!['installment','deposit','custom_quote'].includes(value.term_kind))return fail();
  const validId=(v:unknown):v is string=>typeof v==='string'&&UUID.test(v);
  for(const key of ['tenant_id','commercial_terms_id','client_id','offer_id','signing_id','operation_id','receipt_id'])if(!validId(e[key]))return fail();
  for(const [proofKey,rowKey] of [['tenant_id','tenant_id'],['commercial_terms_id','id'],['client_id','client_id'],['offer_id','offer_id']]){

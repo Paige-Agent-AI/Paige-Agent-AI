@@ -1,7 +1,7 @@
 import {readFileSync} from 'node:fs';
 import {transpileModule,ModuleKind,ScriptTarget} from 'typescript';
 import {commercialTermsSummary} from '../../../../supabase/functions/_shared/sales-commercial/terms-summary';
-import {FIXED_COLLECTION_TOTAL_REFUSAL} from '../../../../supabase/functions/_shared/sales-collections/amount-basis';
+import {FIXED_COLLECTION_TOTAL_REFUSAL,RECURRING_COLLECTION_AMOUNT_REFUSAL} from '../../../../supabase/functions/_shared/sales-collections/amount-basis';
 import {it,expect} from 'vitest';
 import {decideDeclaredCapability} from '../../../../supabase/functions/_shared/capability-kit/decision';
 import {SALES_COLLECTION_KIT_BY_ACTION} from '../../../../supabase/functions/_shared/paige-spine/domains/sales_collections';
@@ -19,7 +19,7 @@ function setup(options:{role?:string;tenant?:string;replay?:unknown;claimed?:unk
   builder.maybeSingle=async()=>({data:table==='tenant_members'?{role:options.role??'owner',status:'active'}:mutation==='update'?options.claimed?{args:options.claimed}:null:mutation==='insert'?{summary:'Review import',expires_at:'2099-01-01T00:00:00Z'}:null,error:null});
   builder.then=(resolve:(v:unknown)=>unknown,reject:(v:unknown)=>unknown)=>Promise.resolve({error:table==='paige_audit_log'&&options.auditFails?{code:'failure'}:null}).then(resolve,reject);return builder;
  }};
- const scope={Deno:{env:{get:(key:string)=>key},serve:(fn:typeof handler)=>{handler=fn}},createClient:(_url:string,key:string)=>key==='SUPABASE_ANON_KEY'?caller:admin,confirmFingerprint:async()=>'0123456789abcdef',decideDeclaredCapability,SALES_COLLECTION_KIT_BY_ACTION,databaseAnswered:()=>true,UUID,COLLECTION_ACTIONS,parseCollectionCommand,commercialTermsSummary,FIXED_COLLECTION_TOTAL_REFUSAL};
+ const scope={Deno:{env:{get:(key:string)=>key},serve:(fn:typeof handler)=>{handler=fn}},createClient:(_url:string,key:string)=>key==='SUPABASE_ANON_KEY'?caller:admin,confirmFingerprint:async()=>'0123456789abcdef',decideDeclaredCapability,SALES_COLLECTION_KIT_BY_ACTION,databaseAnswered:()=>true,UUID,COLLECTION_ACTIONS,parseCollectionCommand,commercialTermsSummary,FIXED_COLLECTION_TOTAL_REFUSAL,RECURRING_COLLECTION_AMOUNT_REFUSAL};
  new Function(...Object.keys(scope),compiled)(...Object.values(scope));
  return {calls,request:async(extra:Record<string,unknown>={})=>{const response=await handler(new Request('https://example.test',{method:'POST',body:JSON.stringify({expected_tenant_id:tenant,operation_id:operation,command,...extra})}));return {status:response.status,body:await response.json()}}};
 }
@@ -46,10 +46,20 @@ it('a canonical stored approval executes the exact reviewed digest with server a
 const commercialCommand={action:'collection.create_commercial_terms',client_id:tenant,offer_id:operation,term_kind:'one_time',agreed_amount_minor:350000,agreed_currency:'usd',billing_interval:null,interval_count:null,installments_total:null,payment_schedule:'on_start',starts_on:'2026-11-01',ends_on:null,title:null,notes:null};
 const fixedRefusal=FIXED_COLLECTION_TOTAL_REFUSAL;
 const fixedCommand={action:'collection.save_terms',agreement_id:operation,expected_version:0,terms:{schema_version:1,kind:'full',currency:'usd',total_cents:350000,anchor_date:'2026-11-01',cadence:'monthly',count:1}};
+const recurringCommand={...fixedCommand,terms:{...fixedCommand.terms,kind:'recurring',count:null}};
 it('returns the exact finite-total refusal to the existing review without opening approval or execution',async()=>{
  const test=setup({preview:{eligible:false,summary:fixedRefusal}}),result=await test.request({command:fixedCommand});
  expect(result.status).toBe(422);expect(result.body).toMatchObject({outcome:'refused',code:'SALES_COLLECTION_INELIGIBLE',message:fixedRefusal});
  expect(test.calls.map(call=>call.name)).toEqual(['read_sales_collection_command_result','preview_sales_collection_command']);
+});
+it('returns only the exact known per-cycle refusal without approval or execution',async()=>{
+ const test=setup({preview:{eligible:false,summary:RECURRING_COLLECTION_AMOUNT_REFUSAL}}),result=await test.request({command:recurringCommand});
+ expect(result.status).toBe(422);expect(result.body).toMatchObject({outcome:'refused',message:RECURRING_COLLECTION_AMOUNT_REFUSAL});
+ expect(test.calls.map(call=>call.name)).toEqual(['read_sales_collection_command_result','preview_sales_collection_command']);
+ const other=setup({preview:{eligible:false,summary:RECURRING_COLLECTION_AMOUNT_REFUSAL}});expect((await other.request()).body).not.toHaveProperty('message');
+ for(const [requested,summary] of [[fixedCommand,RECURRING_COLLECTION_AMOUNT_REFUSAL],[recurringCommand,fixedRefusal]]){
+  const mismatched=setup({preview:{eligible:false,summary}});expect((await mismatched.request({command:requested})).body).not.toHaveProperty('message');
+ }
 });
 it('never promotes an arbitrary refusal summary or another action into that customer message',async()=>{
  for(const [requested,summary] of [[fixedCommand,'PRIVATE backend note'],[command,fixedRefusal]]){

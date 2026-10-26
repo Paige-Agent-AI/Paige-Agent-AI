@@ -6,6 +6,25 @@ BEGIN;
 SET LOCAL lock_timeout='5s';
 DO $preflight$
 DECLARE entry record; p record;
+ original_cycle_guard CONSTANT text:=$cycle_before$    -- The original execute function holds this agreement FOR UPDATE before calling this preview.
+    -- Revalidate current amount semantics here; a read or old approval cannot supply them.
+    IF _command#>>'{terms,kind}'<>'recurring' AND public._sales_collection_amount_basis(agreement)<>'total' THEN
+      eligible:=false;
+      summary:='The original commercial amount is not a verified engagement total. Review its original terms before saving a finite collection schedule.';
+    ELSE
+    summary:='Save this client agreement collection schedule and agreed fee metadata. No invoice, accrual or charge is created.';
+    END IF;$cycle_before$;
+ verified_cycle_guard CONSTANT text:=$cycle_after$    -- The original execute function holds this agreement FOR UPDATE before calling this preview.
+    -- Revalidate current amount semantics here; a read or old approval cannot supply them.
+    IF _command#>>'{terms,kind}'<>'recurring' AND public._sales_collection_amount_basis(agreement)<>'total' THEN
+      eligible:=false;
+      summary:='The original commercial amount is not a verified engagement total. Review its original terms before saving a finite collection schedule.';
+    ELSIF _command#>>'{terms,kind}'='recurring' AND public._sales_collection_amount_basis(agreement)<>'per_cycle' THEN
+      eligible:=false;
+      summary:='The original commercial amount is not a verified per-cycle amount. Review its original terms before saving a recurring collection schedule.';
+    ELSE
+    summary:='Save this client agreement collection schedule and agreed fee metadata. No invoice, accrual or charge is created.';
+    END IF;$cycle_after$;
 BEGIN
  FOR entry IN SELECT * FROM (VALUES
   ('list_sales_collection_agreements(uuid,integer,uuid)','5c417ab5ff754506c60342d2c5f2d35b','8a0cb33d5ca87cea2ea6eb90f02c7dd9','plpgsql','v',true,'jsonb','search_path=pg_catalog, public','authenticated',false),
@@ -22,7 +41,7 @@ BEGIN
    IF entry.optional THEN CONTINUE; END IF;
    RAISE EXCEPTION 'Original Collections evidence source unavailable: %',entry.signature USING ERRCODE='55000';
   END IF;
-  IF md5(p.prosrc) NOT IN (entry.old_hash,entry.new_hash)
+  IF (md5(p.prosrc) NOT IN (entry.old_hash,entry.new_hash) AND NOT(entry.signature='preview_sales_collection_command(uuid,uuid,jsonb)' AND md5(replace(p.prosrc,verified_cycle_guard,original_cycle_guard))=entry.old_hash))
     OR p.prolang<>(SELECT oid FROM pg_language WHERE lanname=entry.language)
     OR p.provolatile::text IS DISTINCT FROM entry.volatility OR p.prosecdef IS DISTINCT FROM entry.definer
     OR p.prorettype IS DISTINCT FROM to_regtype(entry.return_type) OR p.proretset
@@ -85,6 +104,25 @@ REVOKE ALL ON FUNCTION public._sales_collection_accepted_total_evidence(public.t
 
 DO $patch$
 DECLARE definition text; source text;
+ original_cycle_guard CONSTANT text:=$cycle_before$    -- The original execute function holds this agreement FOR UPDATE before calling this preview.
+    -- Revalidate current amount semantics here; a read or old approval cannot supply them.
+    IF _command#>>'{terms,kind}'<>'recurring' AND public._sales_collection_amount_basis(agreement)<>'total' THEN
+      eligible:=false;
+      summary:='The original commercial amount is not a verified engagement total. Review its original terms before saving a finite collection schedule.';
+    ELSE
+    summary:='Save this client agreement collection schedule and agreed fee metadata. No invoice, accrual or charge is created.';
+    END IF;$cycle_before$;
+ verified_cycle_guard CONSTANT text:=$cycle_after$    -- The original execute function holds this agreement FOR UPDATE before calling this preview.
+    -- Revalidate current amount semantics here; a read or old approval cannot supply them.
+    IF _command#>>'{terms,kind}'<>'recurring' AND public._sales_collection_amount_basis(agreement)<>'total' THEN
+      eligible:=false;
+      summary:='The original commercial amount is not a verified engagement total. Review its original terms before saving a finite collection schedule.';
+    ELSIF _command#>>'{terms,kind}'='recurring' AND public._sales_collection_amount_basis(agreement)<>'per_cycle' THEN
+      eligible:=false;
+      summary:='The original commercial amount is not a verified per-cycle amount. Review its original terms before saving a recurring collection schedule.';
+    ELSE
+    summary:='Save this client agreement collection schedule and agreed fee metadata. No invoice, accrual or charge is created.';
+    END IF;$cycle_after$;
 BEGIN
  SELECT pg_get_functiondef(oid),prosrc INTO definition,source FROM pg_proc
  WHERE oid='public._sales_collection_amount_basis(public.tenant_client_agreements)'::regprocedure;
@@ -135,6 +173,9 @@ $after$);
   EXECUTE replace(definition,$before$'term_kind',a.term_kind,'agreed_amount_basis',public._sales_collection_amount_basis(a),$before$,$after$'term_kind',a.term_kind,'agreed_amount_basis',CASE WHEN a.term_kind IN ('deposit','custom_quote') THEN 'unverified' ELSE public._sales_collection_amount_basis(a) END,
     'agreed_amount_total_evidence',public._sales_collection_accepted_total_evidence(a),$after$);
  END IF;
+ SELECT pg_get_functiondef(oid),prosrc INTO definition,source FROM pg_proc WHERE oid='public.preview_sales_collection_command(uuid,uuid,jsonb)'::regprocedure;
+ IF md5(source)='de97896559987f475de6972b8ef0a595' THEN EXECUTE replace(definition,original_cycle_guard,verified_cycle_guard); END IF;
+ IF NOT EXISTS(SELECT 1 FROM pg_proc WHERE oid='public.preview_sales_collection_command(uuid,uuid,jsonb)'::regprocedure AND strpos(prosrc,verified_cycle_guard)>0 AND md5(replace(prosrc,verified_cycle_guard,original_cycle_guard))='de97896559987f475de6972b8ef0a595') THEN RAISE EXCEPTION 'Original recurring source guard readback failed' USING ERRCODE='55000'; END IF;
  IF (SELECT md5(prosrc) FROM pg_proc WHERE oid='public._sales_collection_amount_basis(public.tenant_client_agreements)'::regprocedure) IS DISTINCT FROM 'a7c2887fc4578d00a7e9cf84d6b53097'
   OR (SELECT md5(prosrc) FROM pg_proc WHERE oid='public.list_sales_collection_agreements(uuid,integer,uuid)'::regprocedure) IS DISTINCT FROM '8a0cb33d5ca87cea2ea6eb90f02c7dd9'
   OR (SELECT md5(prosrc) FROM pg_proc WHERE oid='public._sales_collection_accepted_total_evidence(public.tenant_client_agreements)'::regprocedure) IS DISTINCT FROM '86404f3e9e26ef646e7c2db458f9218b' THEN

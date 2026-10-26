@@ -3,10 +3,11 @@ import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { WeeklyDraftComposer } from "./WeeklyDraftComposer";
 import type { WeeklyDraftResult, WeeklyDraftState } from "./weekly-draft-command";
-const f=vi.hoisted(()=>({request:vi.fn(),eligible:true,auth:null as null|((event:string)=>void)}));
+type AuthSnapshot={user:{id:string;last_sign_in_at?:string}};
+const f=vi.hoisted(()=>({request:vi.fn(),eligible:true,auth:null as null|((event:string,session?:AuthSnapshot|null)=>void)}));
 vi.mock("./weekly-draft-command",()=>({requestWeeklyDraft:f.request}));
 vi.mock("./useWeeklyResponsibility",()=>({useWeeklyOwnerAudience:()=>({eligible:f.eligible,key:String(f.eligible),context:{activeUserId:"actor",activeTenantId:"tenant"}})}));
-vi.mock("@/integrations/supabase/client",()=>({supabase:{auth:{onAuthStateChange:(cb:(event:string)=>void)=>{f.auth=cb;return {data:{subscription:{unsubscribe(){f.auth=null;}}}};}}}}));
+vi.mock("@/integrations/supabase/client",()=>({supabase:{auth:{onAuthStateChange:(cb:(event:string,session?:AuthSnapshot|null)=>void)=>{f.auth=cb;return {data:{subscription:{unsubscribe(){f.auth=null;}}}};}}}}));
 const state=(phase:WeeklyDraftState['phase']='awaiting_approval'):WeeklyDraftState=>({phase,confirmationId:"confirmation",requestId:"request",readAt:new Date().toISOString(),expiresAt:new Date(Date.now()+600000).toISOString(),
   summary:"Save this exact weekly proposal as an unapproved draft.",draft:{name:"Weekly responsibility",weekday:1,local_time:"09:00",timezone:"America/New_York"},token:phase==='awaiting_approval'?"0123456789abcdef:token":null,
   automationId:phase==='saved'?"canonical-process":null,revision:phase==='saved'?1:null,processState:phase==='saved'?"draft":null,receiptId:phase==='saved'?"canonical-receipt":null});
@@ -98,4 +99,62 @@ it("does not restore an empty result from a retired session's late response",asy
   expect(container.textContent).not.toContain(emptyRead);
   expect(button('Prepare a weekly responsibility')?.disabled).toBe(true);
   expect(f.request).toHaveBeenCalledTimes(1);
+});
+
+const sameSignIn:AuthSnapshot={user:{id:'actor',last_sign_in_at:'2026-10-25T14:00:00Z'}};
+it('retains the exact unsaved proposal, typed input and focus on same-session return without preparing anything',async()=>{
+  await render();await act(async()=>f.auth?.('INITIAL_SESSION',sameSignIn));
+  await click('Prepare a weekly responsibility');
+  const input=container.querySelector<HTMLInputElement>('.e5-weekly-planning input')!;
+  const setter=Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value')!.set!;
+  await act(async()=>{setter.call(input,'Original unsaved weekly proposal');input.dispatchEvent(new Event('input',{bubbles:true}));});
+  input.focus();
+  await act(async()=>f.auth?.('SIGNED_IN',sameSignIn));
+  expect(container.querySelector('.e5-weekly-planning input')).toBe(input);
+  expect(input.value).toBe('Original unsaved weekly proposal');expect(document.activeElement).toBe(input);
+  expect(f.request.mock.calls.map(v=>v[3])).toEqual([{action:'pending'}]);expect(saved).not.toHaveBeenCalled();
+});
+it('retains the original saved review and receipt on same-session return without another read',async()=>{
+  f.request.mockResolvedValue({kind:'pending',requests:[state('saved')],hasMore:false});await render();
+  await act(async()=>f.auth?.('INITIAL_SESSION',sameSignIn));const original=container.innerHTML;
+  await act(async()=>f.auth?.('SIGNED_IN',sameSignIn));
+  expect(container.innerHTML).toBe(original);expect(container.textContent).toContain('canonical-receipt');
+  expect(f.request).toHaveBeenCalledTimes(1);expect(saved).not.toHaveBeenCalled();
+});
+it('keeps the original approval busy through same-session recovery and accepts only its original outcome',async()=>{
+  let release!:(value:WeeklyDraftResult)=>void;
+  f.request.mockResolvedValueOnce({kind:'pending',requests:[state()],hasMore:false}).mockImplementationOnce(()=>new Promise(resolve=>{release=resolve;}));
+  await render();await act(async()=>f.auth?.('INITIAL_SESSION',sameSignIn));await click('Approve');
+  await act(async()=>f.auth?.('SIGNED_IN',sameSignIn));
+  expect(button('Read saved status')?.disabled).toBe(true);expect(button('Approve')).toBeUndefined();
+  expect(button('Prepare another responsibility')?.disabled).toBe(true);
+  await act(async()=>release({kind:'state',state:state('saved')}));
+  expect(container.textContent).toContain('canonical-receipt');expect(saved).toHaveBeenCalledTimes(1);
+  expect(f.request.mock.calls.map(v=>v[3])).toEqual([{action:'pending'},{action:'commit',confirmation_id:'confirmation',approvedConfirmations:[state().token]}]);
+});
+it('keeps an unknown original save inspect-only after a same-session notification',async()=>{
+  f.request.mockResolvedValueOnce({kind:'pending',requests:[state()],hasMore:false}).mockResolvedValueOnce({kind:'unconfirmed'});
+  await render();await act(async()=>f.auth?.('INITIAL_SESSION',sameSignIn));await click('Approve');
+  await act(async()=>f.auth?.('SIGNED_IN',sameSignIn));
+  expect(button('Approve')).toBeUndefined();expect(button('Prepare another responsibility')?.disabled).toBe(true);
+  expect(button('Read saved status')?.disabled).toBe(false);expect(f.request).toHaveBeenCalledTimes(2);expect(saved).not.toHaveBeenCalled();
+});
+it.each([
+  ['SIGNED_IN',{user:{id:'actor',last_sign_in_at:'2026-10-25T16:00:00Z'}}],
+  ['SIGNED_IN',{user:{id:'foreign',last_sign_in_at:'2026-10-25T14:00:00Z'}}],
+  ['SIGNED_IN',{user:{id:'actor'}}],['SIGNED_IN',{user:{id:'actor',last_sign_in_at:'invalid'}}],
+  ['SIGNED_OUT',null],['USER_UPDATED',sameSignIn],
+] as const)('withdraws private proposals and editing after genuine or unknown auth change %s %j',async(event,session)=>{
+  f.request.mockResolvedValue({kind:'pending',requests:[state('saved')],hasMore:false});await render();
+  await act(async()=>f.auth?.('INITIAL_SESSION',sameSignIn));await act(async()=>f.auth?.(event,session));
+  expect(container.textContent).not.toContain('canonical-receipt');expect(button('Prepare a weekly responsibility')?.disabled).toBe(true);
+  expect(f.request).toHaveBeenCalledTimes(1);expect(saved).not.toHaveBeenCalled();
+});
+it('cannot restore a late original save after logout and an out-of-order initial notification',async()=>{
+  let release!:(value:WeeklyDraftResult)=>void;
+  f.request.mockResolvedValueOnce({kind:'pending',requests:[state()],hasMore:false}).mockImplementationOnce(()=>new Promise(resolve=>{release=resolve;}));
+  await render();await click('Approve');
+  await act(async()=>{f.auth?.('SIGNED_OUT',null);f.auth?.('INITIAL_SESSION',sameSignIn);f.auth?.('SIGNED_IN',sameSignIn);});
+  await act(async()=>release({kind:'state',state:state('saved')}));
+  expect(container.textContent).not.toContain('canonical-receipt');expect(saved).not.toHaveBeenCalled();expect(f.request).toHaveBeenCalledTimes(2);
 });

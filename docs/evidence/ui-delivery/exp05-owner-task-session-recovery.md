@@ -1,5 +1,17 @@
 # EXP05 — retain original automation inspection during routine session recovery
 
+## Post-release observation — October25 23:32–35UTC
+
+The source attestation below retains its original development snapshot.
+[#2885 production receipt6404960556](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2885#issuecomment-6404960556)
+records actual1d6a917/treee0a218a6, exact4356824/LOWER/all10 checks/two webSUCCESS,
+no-native PreviewSKIP/zero threads, READY and both exact public/emitted-source reads.
+Original approved Task/result/receipt and declined cancellation/zero Task links
+were read by the existing owner after refresh; process stayed paused. The tab-focus
+probe remained visible, so actual SDK notification acceptance stays UNVERIFIED.
+No new action/approval/control/enablement/provider/record. Native/Edge N/A;
+full ten/E5/Builder/weekly/ZION/Live/cohort/founder acceptance remains open.
+
 UI_DELIVERY_EVIDENCE_VERSION: 1
 FLOW_BY_FLOW: PASS: returning ordinary SOLO owner retains the original inspection and in-flight decision; existing flow contract docs/delivery/experience-05-weekly-commitment-check.md and source checks docs/evidence/exp05-owner-task-session-recovery.json. Genuine-session retirement and current native authority remain mandatory.
 PAIGE_UI_DESIGN: PASS: incumbent Operate, original Operations/Settings controls and routed design/accessibility/quality guidance retained. Only the existing hook's auth-event discrimination and owning tests change; no JSX/CSS/widget/route or new visual state.

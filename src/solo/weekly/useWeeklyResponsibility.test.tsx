@@ -5,12 +5,13 @@ import { useWeeklyResponsibility } from "./useWeeklyResponsibility";
 import type { WeeklyOwnerRead } from "./weekly-owner-read";
 import { setScopedUserId } from "@/lib/scopedUser";
 
+type AuthSnapshot = { user: { id: string; last_sign_in_at?: string } };
 const harness = vi.hoisted(() => ({ context: { loading: false, accountContextStatus: "ready", activeUserId: "actor-a", activeTenantId: "tenant-a", activeTenant: { account_type: "standalone" as string | null, parent_tenant_id: null as string | null }, isPlatformStaff: false, soloShellEnabled: true },
-  impersonating: false, read: vi.fn(), control: vi.fn(), authEvent: null as null | ((event: string) => void) }));
+  impersonating: false, read: vi.fn(), control: vi.fn(), authEvent: null as null | ((event: string, session?: AuthSnapshot | null) => void) }));
 vi.mock("@/contexts/ImpersonationContext", () => ({ useImpersonation: () => ({ isImpersonating: harness.impersonating, target: harness.impersonating ? { contactId: "client" } : null }) }));
 vi.mock("@/hooks/useTenantContext", () => ({ useTenantContext: () => harness.context }));
 vi.mock("./weekly-owner-read", () => ({ readWeeklyOwner: harness.read, controlWeeklyOwner: harness.control }));
-vi.mock("@/integrations/supabase/client", () => ({ supabase: { auth: { onAuthStateChange: (fn: (event: string) => void) => { harness.authEvent = fn; return { data: { subscription: { unsubscribe: vi.fn() } } }; } } } }));
+vi.mock("@/integrations/supabase/client", () => ({ supabase: { auth: { onAuthStateChange: (fn: (event: string, session?: AuthSnapshot | null) => void) => { harness.authEvent = fn; return { data: { subscription: { unsubscribe: vi.fn() } } }; } } } }));
 let root: Root, container: HTMLDivElement;
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 let api: ReturnType<typeof useWeeklyResponsibility>;
@@ -141,4 +142,59 @@ it("effective-user leave and return rejects the original pending owner result", 
   await act(async () => setScopedUserId(null));
   await act(async () => release(ready("stale PRIVATE owner result")));
   expect(container.textContent).toContain("fresh owner result"); expect(container.textContent).not.toContain("stale PRIVATE");
+});
+
+const sameSignIn: AuthSnapshot = { user: { id: "actor-a", last_sign_in_at: "2026-10-25T14:00:00Z" } };
+it("retains the original weekly read on a same-session sign-in notification without another request", async () => {
+  harness.read.mockResolvedValue(ready("original weekly read")); await act(async () => root.render(<Harness />));
+  await act(async () => harness.authEvent?.("INITIAL_SESSION", sameSignIn));
+  const original = api.read;
+  await act(async () => harness.authEvent?.("SIGNED_IN", sameSignIn));
+  expect(api.read).toBe(original); expect(container.textContent).toContain("original weekly read");
+  expect(harness.read).toHaveBeenCalledTimes(1);
+});
+it("accepts the original pending read after same-session visibility recovery", async () => {
+  let release!: (value: WeeklyOwnerRead) => void;
+  harness.read.mockImplementationOnce(() => new Promise(resolve => { release = resolve; }));
+  await act(async () => root.render(<Harness />));
+  await act(async () => { harness.authEvent?.("INITIAL_SESSION", sameSignIn); harness.authEvent?.("SIGNED_IN", sameSignIn); });
+  await act(async () => release(ready("original held read")));
+  expect(container.textContent).toContain("original held read"); expect(harness.read).toHaveBeenCalledTimes(1);
+});
+it("retains the original control flight and unknown hold across same-session sign-in", async () => {
+  const value = responsibility(), target = value.snapshot.checks[0];
+  let release!: (value: { status: "unknown" }) => void;
+  harness.control.mockReset().mockImplementation(() => new Promise(resolve => { release = resolve; }));
+  harness.read.mockResolvedValue(value); await act(async () => root.render(<Harness />));
+  await act(async () => harness.authEvent?.("INITIAL_SESSION", sameSignIn));
+  let pending!: ReturnType<typeof api.control>;
+  await act(async () => { pending = api.control(target, "pause"); });
+  await act(async () => harness.authEvent?.("SIGNED_IN", sameSignIn));
+  expect(api.controlBusy).toBe(true); expect(await api.control(target, "pause")).toEqual({ status: "refused" });
+  await act(async () => { release({ status: "unknown" }); expect(await pending).toEqual({ status: "unknown" }); });
+  await act(async () => harness.authEvent?.("SIGNED_IN", sameSignIn));
+  expect(api.read.status).toBe("unavailable"); expect(harness.control).toHaveBeenCalledTimes(1);
+  expect(harness.read).toHaveBeenCalledTimes(1);
+});
+it.each([
+  ["SIGNED_IN", { user: { id: "actor-a", last_sign_in_at: "2026-10-25T16:00:00Z" } }],
+  ["SIGNED_IN", { user: { id: "foreign", last_sign_in_at: "2026-10-25T14:00:00Z" } }],
+  ["SIGNED_IN", { user: { id: "actor-a" } }],
+  ["SIGNED_IN", { user: { id: "actor-a", last_sign_in_at: "invalid" } }],
+  ["SIGNED_OUT", null], ["USER_UPDATED", sameSignIn],
+] as const)("retires original private weekly evidence after a genuine or unverified auth change %s %j", async (event, session) => {
+  harness.read.mockResolvedValue(ready("private weekly result")); await act(async () => root.render(<Harness />));
+  await act(async () => harness.authEvent?.("INITIAL_SESSION", sameSignIn));
+  await act(async () => harness.authEvent?.(event, session));
+  expect(container.textContent).not.toContain("private weekly result"); expect(api.read.status).toBe("unavailable");
+  expect(harness.read).toHaveBeenCalledTimes(1);
+});
+it("a late initial notification cannot restore or reanchor a signed-out weekly reader", async () => {
+  let release!: (value: WeeklyOwnerRead) => void;
+  harness.read.mockImplementationOnce(() => new Promise(resolve => { release = resolve; }));
+  await act(async () => root.render(<Harness />));
+  await act(async () => { harness.authEvent?.("SIGNED_OUT", null); harness.authEvent?.("INITIAL_SESSION", sameSignIn); harness.authEvent?.("SIGNED_IN", sameSignIn); });
+  await act(async () => release(ready("private late result")));
+  expect(container.textContent).not.toContain("private late result"); expect(api.read.status).toBe("unavailable");
+  expect(harness.read).toHaveBeenCalledTimes(1);
 });

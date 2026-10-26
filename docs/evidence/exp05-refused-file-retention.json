@@ -83,5 +83,13 @@
     "main": "35fff3a88118e053d049be3bea0c2b99178fe929",
     "all_seven_tested_product_test_harness_hashes_unchanged": true,
     "scope": "source byte preservation and fresh strict comparison, not relabeled full-tree test/render/runtime proof"
+  },
+  "native_prototype_cache_isolation": {
+    "prior_frozen_source": "f8056c5cc8f2231246295254507af54c0cb61f04",
+    "reason": "initial native page remained blank; isolate original prototype optimizer cache from shared worktree dependency directory; after reload actual composer rendered",
+    "scope": "test-only cacheDir; production sources and all owning tests remain byte-exact",
+    "file": "scripts/live-drive/harness/paige-chat-mount/attachment.vite.config.ts",
+    "current_sha256": "6d8767d2bd4b30349ab943b0d3854e91a318db8aa0cc1eb19f8b685507174a75",
+    "proof_boundary": "initial local DOM only; no full material-flow or customer proof inferred"
   }
 }

@@ -1,8 +1,11 @@
 import config from "./solo.vite.config";
+import path from "node:path";
 
 // INT-338 renders the actual canonical upload hook; only authentication/history/model data are fake.
 export default {
   ...config,
+  // Worktrees share dependencies; keep this prototype's optimizer cache local.
+  cacheDir: path.resolve(import.meta.dirname, "../../../../work/exp05-attachment-vite-cache"),
   resolve: {
     ...config.resolve,
     alias: config.resolve.alias.filter(entry => !String(entry.find).includes("useChatDocumentUpload")),

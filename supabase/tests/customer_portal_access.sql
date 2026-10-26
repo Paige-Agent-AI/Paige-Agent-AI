@@ -5,7 +5,7 @@
 -- the notices that stop, end + re-invite + a different person, the merge rules, the honest customer
 -- read, and that a pause at one business never touches another.
 BEGIN;
-SELECT plan(361);
+SELECT plan(363);
 
 -- Supabase's default table grants (RLS is the boundary) are reproduced, so every refusal below is the
 -- policy's or the guard's, never a missing grant.
@@ -218,6 +218,15 @@ SELECT is(pg_temp.business_support()->>'support_email',NULL::text,'disabled inbo
 UPDATE public.channel_connectors SET active=true,tenant_id='e0927000-0000-4000-8000-000000000002' WHERE id='e0997000-0000-4000-8000-000000000001';
 SELECT is(pg_temp.business_support()->>'support_email',NULL::text,'foreign inbound route cannot become this business contact');
 UPDATE public.channel_connectors SET tenant_id='e0927000-0000-4000-8000-000000000001' WHERE id='e0997000-0000-4000-8000-000000000001';
+UPDATE public.tenant_email_identities SET local_part='test-e09_support-contact' WHERE tenant_id='e0927000-0000-4000-8000-000000000001';
+UPDATE public.channel_connectors SET inbound_address='test-e09_support-contact@business-mail.example' WHERE id='e0997000-0000-4000-8000-000000000001';
+INSERT INTO public.channel_connectors(id,tenant_id,channel_type,provider,inbound_address,active) VALUES
+ ('e0997000-0000-4000-8000-000000000002','e0927000-0000-4000-8000-000000000002','email','resend','test-e09Xsupport-contact@business-mail.example',true);
+SELECT is(pg_temp.business_support()->>'support_email',NULL::text,'original receiver match cannot select a different business');
+DELETE FROM public.channel_connectors WHERE id='e0997000-0000-4000-8000-000000000002';
+SELECT is(pg_temp.business_support()->>'support_email','test-e09_support-contact@business-mail.example','unambiguous registered receiving address stays available');
+UPDATE public.tenant_email_identities SET local_part='test-e09-support-contact' WHERE tenant_id='e0927000-0000-4000-8000-000000000001';
+UPDATE public.channel_connectors SET inbound_address='test-e09-support-contact@business-mail.example' WHERE id='e0997000-0000-4000-8000-000000000001';
 UPDATE public.tenant_email_identities SET status='disabled' WHERE tenant_id='e0927000-0000-4000-8000-000000000001';
 SELECT is(pg_temp.business_support()->>'support_email',NULL::text,'disabled registered identity is withheld');
 UPDATE public.tenant_email_identities SET status='active' WHERE tenant_id='e0927000-0000-4000-8000-000000000001';

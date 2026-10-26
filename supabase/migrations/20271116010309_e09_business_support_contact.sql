@@ -25,7 +25,9 @@ DECLARE
              AND lower(c.inbound_address) = lower(i.local_part || '@' || s.shared_domain))
          AND NOT EXISTS (SELECT 1 FROM public.channel_connectors c
            WHERE c.tenant_id IS DISTINCT FROM me.tid AND c.channel_type = 'email' AND c.active
-             AND lower(c.inbound_address) = lower(i.local_part || '@' || s.shared_domain))
+             -- Preserve the original receiver's match semantics as well as
+             -- the exact own-business route; an ambiguous match is not readiness.
+             AND c.inbound_address ILIKE (i.local_part || '@' || s.shared_domain))
      ) candidate
      WHERE length(btrim(candidate.email)) <= 254
        AND candidate.email !~ '[[:cntrl:]]'

@@ -48,6 +48,12 @@ export function supportContactProof({sql,check,assert,fs,fixture}) {
  check('Ambiguous foreign inbound route is withheld',()=>assert.equal(read().support_email,null));
  sql(`DELETE FROM channel_connectors WHERE tenant_id='${f.foreign}';UPDATE tenant_email_identities SET status='disabled';`);
  check('Disabled sending identity is withheld',()=>assert.equal(read().support_email,null));
+ sql(`UPDATE tenant_email_identities SET status='active',local_part='north_wind';UPDATE channel_connectors SET inbound_address='north_wind@business-mail.example';
+ INSERT INTO channel_connectors VALUES('${f.foreign}','email',true,'northXwind@business-mail.example');`);
+ check('Original receiver match semantics cannot select another business',()=>assert.equal(read().support_email,null));
+ sql(`DELETE FROM channel_connectors WHERE tenant_id='${f.foreign}';`);
+ check('Unambiguous original registered receiving address stays available',()=>assert.equal(read().support_email,'north_wind@business-mail.example'));
+ sql(`UPDATE tenant_email_identities SET status='disabled';`);
  check('Exact migration replay preserves definition and metadata',()=>{sql(migration);assert.equal(sql("SELECT pg_get_functiondef('public.get_client_portal_brand()'::regprocedure)"),installed);assert.equal(metadata(),before);});
  const drift=original.replace("c.id = public.client_portal_relationship_id()","true");
  sql(drift);

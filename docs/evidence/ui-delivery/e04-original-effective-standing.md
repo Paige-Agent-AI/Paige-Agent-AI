@@ -1,5 +1,7 @@
 # EXP04: original effective terms read foundation and work-status truth
 
+This is the foundation snapshot through source270c985. The integrated original read consumer and current limitations are recorded in [e04-accepted-standing-consumer.md](e04-accepted-standing-consumer.md); later integration does not erase the earlier failures or proof boundaries.
+
 UI_DELIVERY_EVIDENCE_VERSION: 1
 FLOW_BY_FLOW: PASS: original source packet and read/receipt boundaries below; Clients and PAIGE work counts must not establish client acceptance.
 PAIGE_UI_DESIGN: PASS: existing project skill and routed modules applied; original standing rows, StatePill, tokens, navigation and quiet supporting text retained.

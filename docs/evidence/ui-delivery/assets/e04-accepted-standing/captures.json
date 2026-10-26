@@ -1,0 +1,101 @@
+{
+  "runtime": "9a3b0cb3b8a35c6bc26f787b51d9021d87df3478",
+  "scope": "Actual component, existing read hook/composer, controlled native-shaped fixture and simulated authority. Not a full SOLO shell, hosted provider, authenticated role/cohort, payment, signing or customer-acceptance proof.",
+  "authenticated": false,
+  "fullShell": false,
+  "dependencyChanges": [],
+  "captures": [
+    {
+      "filename": "desktop-light.jpg",
+      "theme": "light",
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "image": {
+        "format": "jpeg",
+        "width": 1351,
+        "height": 945
+      },
+      "sha256": "ef0126e382b35999fb98d7aa5eed1985392a88ad1fdc1318bf8dbf3337557240"
+    },
+    {
+      "filename": "desktop-dark.jpg",
+      "theme": "dark",
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "image": {
+        "format": "jpeg",
+        "width": 1351,
+        "height": 945
+      },
+      "sha256": "ce536cd161b4a1e3d0b1eccd01c740a309242d2ba81c4f8d544e25c71fb5551c"
+    },
+    {
+      "filename": "tablet-light.jpg",
+      "theme": "light",
+      "viewport": {
+        "width": 900,
+        "height": 1000
+      },
+      "image": {
+        "format": "jpeg",
+        "width": 900,
+        "height": 1000
+      },
+      "sha256": "a82829da6b8779a99a65ab261af57dc95222151f7005bba970fb456fc9b6b167"
+    },
+    {
+      "filename": "tablet-dark.jpg",
+      "theme": "dark",
+      "viewport": {
+        "width": 900,
+        "height": 1000
+      },
+      "image": {
+        "format": "jpeg",
+        "width": 900,
+        "height": 1000
+      },
+      "sha256": "8962b69ddbc27352b0168a35339b173f11682503fb4e70b1a73d7d5a85a71ea2"
+    },
+    {
+      "filename": "phone-light.jpg",
+      "theme": "light",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "image": {
+        "format": "jpeg",
+        "width": 375,
+        "height": 1554
+      },
+      "sha256": "64c025903c18f03e0a1d5634ff23d218048647fcda11bd52d546b26b557b990d"
+    },
+    {
+      "filename": "phone-dark.jpg",
+      "theme": "dark",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "image": {
+        "format": "jpeg",
+        "width": 375,
+        "height": 1554
+      },
+      "sha256": "88a8c1e3b236bb5871a26ab2d206d9456eef749ed9678f652b3508b3246dc84e"
+    }
+  ],
+  "invalidExcluded": [
+    "phone-dark-final.jpg was light after harness HMR reset",
+    "initial phone-dark.jpg had isolated wrapper background overflow; product CSS was unchanged"
+  ],
+  "limitations": [
+    "Original Sales destination and full-shell navigation are unmounted",
+    "Actual browser zoom, assistive technology, full-shell PAIGE states and real role/cohort proof remain owed"
+  ]
+}

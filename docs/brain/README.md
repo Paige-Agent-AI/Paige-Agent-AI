@@ -756,6 +756,11 @@ no write, retry, new permission, schedule or receipt is added. Original-suite
 stopped and fixture role restored. Source strict/lint/Kit PASS, while the one
 incumbent strict-test fixture diagnostic remains unchanged. See the original
 [handoff evidence](../evidence/ui-delivery/exp05-weekly-status-handoff.md).
+The old44f1b9ef hosted Kit self-test failure is retained: repeated scope text
+prevented its single causal mutant. One shared fail-closed observer now preserves
+the unchanged guard40/runtime48 and exact-lock207 cases. The new native run's
+1039.639ms history margin FAIL remains explicit pending identical serial proof;
+an earlier128PASS is not borrowed as the corrected candidate's native result.
 Immutable review/CI/deployment/authenticated interruption/reload remain owed.
 No catalogue/algorithm/recurring/Live or full ten/E5 acceptance promotion.
 

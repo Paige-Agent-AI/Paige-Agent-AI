@@ -77,3 +77,31 @@ ten outcomes/E5-CV1–9 and shared source. No Chat/Root/registry/risk/C0b/CI/nat
 edits under the existing E08 source window or E09→E02→E04 native sequence.
 The first evidence guard correctly refused a modified historical record alone;
 this increment adds its own record without changing the guard or routing trailer.
+
+## Exact hosted-guard correction
+
+The published44f1b9ef candidate's verify job121822996762/run40394262434
+failed step157, Capability Kit contract + anti-bypass guard. The full original
+command reproduced `Weekly negative must mutate exactly one source: Weekly loses
+epoch check`: two copies of the scope expression prevented the existing single
+causal mutant from being constructed. The earlier lint-only PASS did not cover
+that self-test. The failed source, hosted result and reproduction are retained.
+
+The reader and its awaiting Chat consumer now reuse one fail-closed scope
+observer. The entire linter and every mutation case remain unchanged. Complete
+original lint/self-test40/runtime48 pass (log SHA256
+2f6028c7c51ea51c2bb6aa14aecc0f426eb8a87930f587a902fbf9e513e7e1d5).
+Exact-lock six-suite rerun207PASS/0FAIL/0skipped (report SHA256
+ffd1a004be1e813c69da4eaf6f29686770d66e0020702f82517bfd4fb2a8c194).
+An initial restricted temporary-cache EPERM ran zero assertions and remains
+INVALID infrastructure evidence; the unchanged authorized rerun is separate.
+Reader strict and scoped lint remain0. No Root/risk/registry/C0b/guard or native
+source changed. Current main46e473a9 composes without replacing incoming work.
+
+The fresh native rerun did execute its original engine/Gateway/adapter/reader/
+redrain successfully, restore the fixture role and stop its own cluster, but
+failed the unchanged history-read performance margin: median1039.639ms against
+1000ms, still below the original2000ms reader ceiling. This is a retained actual
+FAIL, not a full128PASS or an invalid assertion. A separate serial measurement
+with identical source, native SQL, limits and assertions is required before the
+new candidate's full native result can be called PASS. No timing gate is raised.

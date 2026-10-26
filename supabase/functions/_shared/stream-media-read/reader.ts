@@ -73,8 +73,9 @@ export async function handleStreamMediaRead(req: Request, deps: StreamMediaReadD
 
   const read = await deps.adapter.getVideo(uid);
   if (!read.ok) {
-    const status = read.code === "video_missing" ? 404 : 502;
-    return respond(status, { ok: false, code: read.code === "video_missing" ? "MEDIA_NOT_IN_LIBRARY" : "MEDIA_READ_FAILED", error: "The video couldn't be read right now. Nothing changed." });
+    const failed = read as unknown as { code: string };
+    const missing = failed.code === "video_missing";
+    return respond(missing ? 404 : 502, { ok: false, code: missing ? "MEDIA_NOT_IN_LIBRARY" : "MEDIA_READ_FAILED", error: "The video couldn't be read right now. Nothing changed." });
   }
   return respond(200, { ok: true, video: read.video });
 }

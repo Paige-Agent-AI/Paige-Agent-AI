@@ -14,7 +14,7 @@ vi.mock("../../supabase/functions/_shared/studio-caller.ts", () => ({
   }),
 }));
 
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { FOREIGN_VIDEO, MINE, TEST_VIDEO, world } from "./stream-media-read.world";
 
 const body = async (res: Response) => res.json() as Promise<Record<string, unknown>>;

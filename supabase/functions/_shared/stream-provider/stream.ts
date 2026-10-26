@@ -43,13 +43,18 @@ function mapVideo(v: Record<string, unknown>): StreamVideoMetadata {
   };
 }
 
+// Deno's env is reached through globalThis (upload-post.ts's pattern) so the module type-checks
+// and unit tests load it outside the Deno runtime; the values exist only in the edge environment.
+const deno = (globalThis as { Deno?: { env?: { get(key: string): string | undefined } } }).Deno;
+const env = (key: string) => deno?.env?.get(key);
+
 export const streamReadAdapter: StreamReadAdapter = {
   isConfigured() {
-    return Boolean(Deno.env.get("CLOUDFLARE_STREAM_API_TOKEN")) && Boolean(Deno.env.get("CLOUDFLARE_ACCOUNT_ID"));
+    return Boolean(env("CLOUDFLARE_STREAM_API_TOKEN")) && Boolean(env("CLOUDFLARE_ACCOUNT_ID"));
   },
   async getVideo(uid: string) {
-    const token = Deno.env.get("CLOUDFLARE_STREAM_API_TOKEN");
-    const account = Deno.env.get("CLOUDFLARE_ACCOUNT_ID");
+    const token = env("CLOUDFLARE_STREAM_API_TOKEN");
+    const account = env("CLOUDFLARE_ACCOUNT_ID");
     if (!token || !account) return { ok: false as const, code: "adapter_not_configured" as const };
     try {
       const res = await fetch(`${API_ROOT}/${account}/stream/${encodeURIComponent(uid)}`, {

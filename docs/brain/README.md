@@ -22,6 +22,27 @@ AT/Live/provider/full Finance and all19/nine remain unverified. Founder NOT_ACCE
 finance.department stays PROOF_OWED, no catalogue/ALG promotion. Original9/0+12/0/4
 and protected monthly UNKNOWN/UNRETRIED unchanged. Sole Master4.0 records#2883.
 
+## EXP02 manual capture interruption foundation — October25, development
+
+The original Systems core now accepts an optional trusted native cancellation
+signal only with its already-validated manual Work/run identity. Existing
+default/remediation callers supply no signal and retain their original behavior.
+An interruption keeps that identity and a closed unconfirmed phase, stops late
+core continuation and cancels supported original Supabase requests. An issued
+write can still commit; cancellation never proves absence, rollback or retry.
+Actual whole-core causal source proof: original97PASS/18newFAIL becomes115PASS;
+the final four-suite Systems regression is143PASS/0FAIL.
+See [the existing O07 evidence](../evidence/e2-systems-capture-mode.md).
+
+No caller consumes the option yet. E05's current-authority heartbeat source
+window is acknowledged in ANT161/fcf5efe9; the function remains unedited and its
+final implementation still requires receiving review. Native authority, bounded
+consumer, original transition/Rail/result/recovery and authenticated proof are
+still owed. Review, exact CI and source release/readback remain separate gates.
+Functional LOCAL prerequisite; Visual N/A; Experiential INCOMPLETE; Founder
+NOT_ACCEPTED. Manual Spine/catalogue and ALG03/06/11/12/13 maturity unchanged;
+all19/nine, original9/0+12/0/4 and protected monthly UNKNOWN/UNRETRIED retained.
+
 ## EXP02 original manual Work history reader released — October25
 
 [#2877 actual release](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2877#issuecomment-6404523521)
@@ -401,6 +422,12 @@ The original recovery boundary now catches App/provider render errors above rout
 
 ## EXP09 approved private-request publication — October25 source milestone
 
+**October26 — original PAIGE review and publication source released.** [#2887](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2887) exact0b26/LOWER5646724361/all13+two webSUCCESS/resolved finding actually merged49a280ca02316d91c7c0bea9a0cf1111578ae1c2/treef85d5869bd. All37 own/16,368 incoming outside entries retained. Normal native40261926622/deploy121376120541 SUCCESS;20271115020009 once/six/db-live49a; wrapper/predecessor/native reader+publisher full definitions/ABIs/ACL verified. Normal web5K91 READY/exact49a/public49a-mvoo6pr4/null; containing9vHY READY/exact6e2/public6e2-mvoobovh/null/delivery checks03:09:47UTC. [Actual release6407368198](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2887#issuecomment-6407368198).
+
+Initial Edge40261926725 source gate failed23/25; actual CF JWT mismatch and stale SmartCredit risk bundle remain historical failures, not waived. Existing EXP10#2902 normal containing6e2 recovery40262247462/job121376919864 succeeds/all25 source checks/edge-live6e2; artifact12625166667/SHA1c50e8e3d4e5280cf4ade7d168f0ea62a20b51300f2ccf64d8539e2db4bf6556. PAIGE v548/JWTtrue/291 vendor-emitted entries bind committed Rootdb58; every37 E09 blob is unchanged49a→6e2. Temporary CI scratch cleanup permission warning is retained, not production-source success for cleanup. No E09 workaround/alternate executor/provider effect.
+
+Functional: original private Work review now mounts in the existing unsent composer and common HIGH scoped claim/original native publisher; bounded50/99/51/1242 source/native proof and deployment verification are separate from actual customer work. Visual: original local33 checks/31captures/19 prototype; real shell/cohort/device/AT owed. Experiential: ordinary owner approval/customer response/reload and latest returning-customer login/cause UNVERIFIED. Founder Acceptance NOT_REQUESTED; full42/seven/Teach/CAP018–024/original lifecycle and canonical algorithms remain open. OFF/HIGH/voice/unknown/private-content/INT346 controls unchanged; no activation, customer publication or maturity promotion. Earlier October25 source milestones below retain their dated scope.
+
 Original [#2851](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2851) exact reviewed58fd/all13 checks/two webSUCCESS/zero threads, documented AUTHOR-REVIEW / LOWER ASSURANCE5644315607/5644495135, actually merged81a185cfcbd5ff14d3ec9d03cd46d3d0718945f5/treee98c7c72. Actual213+58 union retains every9own and16174incoming outside entry. Original HIGH stored-call evidence, owner/customer/source/version/recipient/access/consent checks and original Work/publisher/PCA/notice/audit/response sources remain; ordinary drafted/executing refuses only this private-publication kind. No second approval, execution, inbox or receipt system.
 
 Normal native40218936283/job121246162498/persisted check/db-live81a SUCCESS. Production14230009 once9statements; advance0d412f9c/share81e21f92 and new caller-Auth-only ABI/postgres/empty path read back, original authority7c/publisher21bd/private read1701/historyad2d unchanged. Productiondpl_92uuhfzSJ3CGcKziRzB3N9GLokhV READY/exact81a; both public200/build81a185cfcbd5ff14d3ec9d03cd46d3d0718945f5-mvo4ry4b/null at17:59:39UTC. [Actual receipt6401201920](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2851#issuecomment-6401201920), [original owning packet](../delivery/e09-customer-actions-business-scope.md), [original evidence](../evidence/e09-private-request-publication.json). Main post-push CI is recorded separately and was still running at this observation.
@@ -536,6 +563,16 @@ Same known actor/sign-in retains typed proposal/focus, original review and pendi
 unknown hold without another request. Genuine/unknown changes still retire.
 [Bounded source/evidence](../evidence/ui-delivery/exp05-weekly-session-recovery.md)
 does not authorize recurrence or close deployed/customer/cohort/Live/E5 acceptance.
+
+## EXP05 weekly session retention — October26 source released
+
+Original weekly hook/composer#2890 is mergedabc8c75b7 after exacta82/LOWER5646239219,
+all10 checks/two webSUCCESS and unchanged successful retry of the retained521
+download failure. READY/exact public build and both original callbacks are read
+back; original empty owner panel reload is distinct from SDK/draft retention
+acceptance. No native/Edge/role/recurrence/provider/Live activation or catalogue/
+algorithm promotion. [Actual release and limits](../evidence/ui-delivery/exp05-weekly-session-recovery.md).
+Full ten/E5/Builder/owner-away/ZION/cohort/isolation/founder proof remains open.
 
 ## EXP05 weekly save/source recovery — October25 merged, full source proof failed
 

@@ -97,7 +97,7 @@ is already right. Live values: `agency_owner`, `agency_admin`.
 | `platform_admin` | `user_roles` | Platform | **Only** a super_admin (same trigger) | `is_platform_admin()` / `is_platform_operator()` |
 | `agency_owner` | `agency_team_members` | One agency | Agency owner / super_admin | `agency_current_id()` + `agency_team_role()` |
 | `agency_admin` | `agency_team_members` | One agency | Agency owner | same |
-| `owner` | `tenant_members` | One tenant | Tenant owner / provisioning | `is_tenant_member()` + role check |
+| `owner` | `tenant_members` | One tenant | ~~Tenant owner~~ **The account holder of record** (`tenants.owner_user_id` with an active owner seat) or the platform owner, through `grant_co_owner()` / `revoke_co_owner()`; or provisioning. A co-owner grants and revokes nothing, and nobody revokes the account holder there (EXP08 `20271116020008`, 2026-10-26, provisional owner default; the old "Tenant owner" let any co-owner act — a live defect) | `is_tenant_owner()`; `is_tenant_account_holder()` for co-owner authority |
 | ~~`admin`, `coach`, `sales_rep`, … | `tenant_members` **(target state)** | One tenant | Tenant admin/owner | tenant-scoped check~~ |
 | `admin`, `member` **(§0, 2026-09-26)** | `tenant_members` | One tenant | Tenant owner (admin/member only; nobody grants owner) | tenant-scoped check |
 

@@ -501,6 +501,21 @@ Also found, not used: `assign_contact(p_contact_id, p_user_id, p_role, p_tenant_
 
 **Evidence:** disposable-PostgreSQL proof `supabase/tests/exp08_team_lifecycle.sql` (20 PASS; the role, self-seating and invitation functions and production's three `user_roles` triggers are production bodies, md5-checked, 15 of 15; round 1: 55 mutants, 53 killed, 2 redundant-layer survivors; round 2: 24 mutants for the new fixes, all killed and all still killed in round 3; round 3: 22 mutants for rule 1b and the review's item rows, all killed, control survives; round 4: 25 mutants for B3 across `team-seat.ts`, `index.ts` and the proof's edge sequence, all killed, both controls survive, and round 2's M8 re-killed by a new platform-owner case after loading the `user_roles` sync trigger had masked it), in CI. Deno tests `accept-invite/team-seat.test.ts` (23) and `consume-order.test.ts` (4), in CI. Node test `_shared/team-hub/chat.test.ts` (39) covers PAIGE's two new refusals. `PROOF_OWED`: not merged or applied; the Team screen and Team Hub browser surfaces for these acts are not built; the full-chain pgTAP files edited here were not run locally (no pgTAP); authenticated runtime `UNVERIFIED`.
 
+### EXP08 co-owner authority: only the account holder grants or revokes co-ownership (migration `20271116020008`, 2026-10-26; NOT YET MERGED — proof local, PROOF OWED on production)
+
+Live defect found 2026-10-26 (`docs/brain/decision-log.md`): `grant_co_owner` / `revoke_co_owner` gated on `is_tenant_owner(caller) OR is_platform_owner()`, so ANY co-owner could mint co-owners and revoke the account holder of record (`tenants.owner_user_id`), demoting them to admin. Fix: a new helper `is_tenant_account_holder(_user, _tenant)` (holder of record AND still an active owner seat) replaces the gate; `revoke_co_owner` also refuses a non-platform caller revoking themselves and refuses revoking the account holder for EVERYONE, platform owner included (moving the holder is an ownership transfer, a future step). Provisional owner default, pending confirmation. No data changed; no UI calls either function (no callers outside SQL). §61 default: no exception (not tier-gated).
+
+| Tier | Grant co-ownership | Revoke a co-owner | Revoke the account holder |
+|---|---|---|---|
+| God / Super Admin (`is_platform_owner()`) | ✓ (unchanged) | ✓ (unchanged; last-owner floor still holds) | ✗ **(was ✓)** |
+| Platform admin (operator, not super_admin) | ✗ **(was ✓ in a company workspace via `is_tenant_owner`'s operator branch)** | ✗ (same) | ✗ |
+| Account holder (any tenant tier: Agency, Enterprise, Solo, Sub-account) | ✓ only while their owner seat is active | ✓ (never themselves) | ✗ (themselves) |
+| Co-owner (not the holder) | ✗ **(was ✓)** | ✗ **(was ✓)** | ✗ **(was ✓)** |
+| Admin / Member / outsider | ✗ | ✗ | ✗ |
+| Client / Anonymous | ✗ (no grant; the helper is not anon-executable) | ✗ | ✗ |
+
+Production 2026-10-26: 12 tenants; 4 have no `owner_user_id` (none has an active owner) and 1 holder has no active owner seat — on those, only the platform owner can grant. Every tenant with an active owner has its holder among them. Proof: `supabase/tests/exp08_co_owner_authority.sql` in CI (39 cases; production bodies let 10 holes through; migrated 39/39; 9/9 mutants killed, 2/2 controls survive).
+
 ### Solo Settings → Team: the screens for the team lifecycle (2026-10-26; owner-approved design, APPROVED-FROZEN §28)
 
 What a person can now do from **Settings → Team** (`/solo/{account}/settings/team`), each through the seam already listed above — no new writer:

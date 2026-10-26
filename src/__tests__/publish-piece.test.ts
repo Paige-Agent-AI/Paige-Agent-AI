@@ -4,6 +4,7 @@
 // door can produce, so a regression that swaps a truthful state for a friendlier one fails here.
 vi.mock('@/integrations/supabase/client', () => ({ supabase: { rpc: vi.fn(), functions: { invoke: vi.fn() } } }));
 
+import { describe, expect, it, vi } from "vitest";
 import { classifyPublishNetworks, doorFace, defaultCaption, PUBLICATION_STATUS_WORDS } from '@/solo/publish-piece';
 
 const NETWORKS = [
@@ -95,7 +96,7 @@ describe('EXP07 · publish affordance · door faces', () => {
   it('the framework’s non-2xx constant is never shown to a person', () => {
     const face = doorFace(null, { error: 'Edge Function returned a non-2xx status code' });
     expect(face.face).toBe('unreachable');
-    expect(face.sentence).not.toMatch(/non-2xx/i);
+    if (face.face === 'unreachable') expect(face.sentence).not.toMatch(/non-2xx/i);
   });
 
   it('no body at all claims nothing', () => {

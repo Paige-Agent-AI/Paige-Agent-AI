@@ -48,20 +48,21 @@ describe("ScreenLoadBoundary (PR9 failed-download recovery)", () => {
 
   it("a render error inside a loaded screen is NOT mislabeled a download failure — it propagates to the shell boundary", async () => {
     vi.spyOn(console, "error").mockImplementation(() => undefined);
-    const ShellBoundary = ({ children }: { children: React.ReactNode }) => (
-      <ScreenLoadBoundary resetKey="/x">
-        <Outer outer={children} />
-      </ScreenLoadBoundary>
-    );
-    // Outer boundary stands in for SoloScreenBoundary: it must receive what the
-    // inner one rethrows.
-    class Outer extends Component<{ outer: React.ReactNode; children?: React.ReactNode }, { caught: unknown }> {
+    // Outer boundary stands in for SoloScreenBoundary and MUST WRAP
+    // ScreenLoadBoundary — with the nesting inverted (outer as the child), the
+    // closest-boundary rule would hand the error to the stand-in directly and the
+    // test would pass even with ScreenLoadBoundary deleted (round-2 review catch).
+    class Outer extends Component<{ children?: React.ReactNode }, { caught: unknown }> {
       state: { caught: unknown } = { caught: null };
       static getDerivedStateFromError(error: unknown) { return { caught: error }; }
-      render() { return this.state.caught ? <p data-outer-boundary>outer boundary</p> : this.props.outer; }
+      render() { return this.state.caught ? <p data-outer-boundary>outer boundary</p> : this.props.children; }
     }
     const Screen = () => { throw new Error("a render bug inside a loaded screen"); };
-    await render(<ShellBoundary><Screen /></ShellBoundary>);
+    await render(
+      <Outer>
+        <ScreenLoadBoundary resetKey="/x"><Screen /></ScreenLoadBoundary>
+      </Outer>,
+    );
     expect(host.querySelector("[data-outer-boundary]")).toBeTruthy();
     expect(host.textContent).not.toContain("This view could not open.");
     expect(host.textContent).not.toContain("Reload PAIGE");

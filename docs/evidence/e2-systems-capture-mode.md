@@ -565,3 +565,58 @@ borrowed from the predecessor. Current main005f5d389d9faf98fa4e56ac9f3bb53c1471f
 is composed, including E08 native250008 before this reader250102. SQL/proof bytes
 and the complete other-kind reader remain fixed. No production history repair,
 reset, include-all, second applier, native invocation or activation is performed.
+
+## October26 — bounded original Work heartbeat, development only
+
+This O07/O14 prerequisite extends only EXP05's existing
+`heartbeat_paige_durable_work(uuid,text,integer)` under received ANT161/fcf5efe9.
+The CLI-created file is forward-renamed20271115080002. Existing OID/ABI/default,
+owner, empty search path, ACL and planner attributes remain the same; no new
+callable, grant, registry, worker, scheduler, scan, receipt or customer admission.
+The complete incumbent other-kind body is preserved by source inverse. The
+existing Work transition remains the only finalizer; renewal is not execution.
+
+Both reserved kind/capability sides enter the closed manual branch. Current
+Auth→profile→eligible standalone active tenant→Owner/Admin membership→optional
+workspace conversation rows are pinned before Work, in the preparation/dispatch
+order. The actual canonical Metric predicate is reused; the stored authority
+snapshot never grants permission. The original server key, tenant/actor/thread,
+exact tenant/manual/none payload, epoch, one-attempt ceiling and dispatch marker1
+must all agree. Prepared but undispatched work cannot borrow this renewal path.
+
+Actual time is evaluated after all real lock waits. No lease survives beyond
+original `claimed_at + five minutes`, including time spent in preparation.
+Expired lease/budget becomes original expired state, never a retry or completed
+scan. Terminal/uncertain work is refused unchanged. Wrong-key/purpose/current
+authority refusal never manufactures an absence, cancellation or result receipt.
+The future bounded caller/dispatch/capture/result/Rail/recovery remain separate
+engineering and authenticated obligations; this file activates none of them.
+
+`node scripts/proof/e2-manual-systems-heartbeat.mjs <isolated-port>` reuses the
+existing OperatorPostgresFixture, original Work envelope/document extension,
+current creator/identity trigger and actual Metric/Knowledge predicates. Genuine
+baseline2PASS/2FAIL (revocation and finite budget) becomes4/0. Final57 checkpoints
+cover full semantic metadata/default preservation, every other public function,
+whole other-kind inverse, actual anon/authenticated execute denial, current role/
+workspace/Auth/cohort/conversation negatives, closed purpose/foreign key/attempt
+refusals, terminal/uncertain immutability, replay/drift, three incumbent kinds,
+actual two-session authority-before-Work lock order, lease/budget expiry after
+real waits, a reintroduced transaction-start-clock mutant and concurrent renewal
+of one original Work/attempt without a scan result. No disabled identity trigger.
+
+The surrounding Auth tables/current-user/Operator helpers are controlled fixture
+boundaries; this is not actual Auth, Operator or customer acceptance. Initial
+restricted-loopback setup, parser-offset/Windows-line-ending comparisons,
+fixture schema qualification and missing Knowledge dependency attempts are
+retained as INVALID fixture setup, not source defects or customer failures.
+PostgreSQL default-expression parser source offsets are normalized to the actual
+SQL expression; no semantic default or other pg_proc attribute is ignored.
+
+Functional: local DEVELOPMENT. Visual: N/A. Experiential: manual journey
+INCOMPLETE. Founder Acceptance: NOT_ACCEPTED. Exact receiving, final review,
+original CI wiring/required exact-head checks, normal native/web release and
+readback remain owed. The independently observed shared history recovery does
+not waive source/order or release gates. No customer scan or protected monthly
+retry. ALG03/06/11/12/13 maturity, manual Spine UNAVAILABLE/unregistered,
+Systems/Mind boundaries and CAP009–017 readiness unchanged. Original9PASS/0FAIL
+and12PASS/0FAIL/4BLOCKED retained; all19/nine remain open.

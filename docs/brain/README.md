@@ -1,3 +1,33 @@
+## EXP02 original manual heartbeat guard — October26 development
+
+O07/O14 prerequisite EXTENDs only the existing EXP05-owned
+`heartbeat_paige_durable_work(uuid,text,integer)` in the received native source
+window ANT161/fcf5efe9. Exact closed manual purpose, original server key,
+one attempt/dispatch marker and current canonical Metric actor authority govern
+renewal. Auth→profile→tenant→membership→optional conversation are locked before
+Work. Actual time after waits enforces both the live lease and original
+`claimed_at + five minutes` ceiling; preparation consumes that same budget.
+No new function, argument, return field, grant, worker, scan or receipt. Complete
+other-kind body is preserved by inverse; existing transition remains finalizer.
+
+Local native proof over original Work/Metric/Knowledge and existing PostgreSQL
+fixture reproduces baseline2PASS/2FAIL→4/0;57 candidate checkpoints pass,
+including actual role denials, terminal/foreign/purpose refusals, replay/drift,
+authority-before-Work lock waits, elapsed lease/budget after waits, clock mutant
+and concurrent renewals. Surrounding Auth/Operator fixtures are synthetic,
+not customer authentication or production activation. Failed fixture setup
+attempts remain INVALID; they are not product findings.
+
+CLI-created migration is forward-renamed20271115080002; original private dispatch
+is a separate held PR#2878, no invocation. Exact receiving review, current source,
+CI wiring/required exact-head gates, normal release and readback remain owed.
+The prior shared history mismatch is independently observed resolved, not repaired
+by EXP02; actual frontier/order must still be rechecked before release.
+Functional: DEVELOPMENT ONLY. Visual: N/A. Experiential: complete manual request,
+scan/result/Rail/recovery INCOMPLETE. Founder NOT_ACCEPTED. Manual Spine remains
+UNAVAILABLE; ALG03/06/11/12/13 and all nine catalogue states unchanged. All19/nine,
+original9/0+12/0/4 and protected monthly UNKNOWN/UNRETRIED preserved.
+
 ## EXP02 continuous Finance navigation released and bounded customer proof — October25
 
 [#2883 release and authorized readback](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2883#issuecomment-6405085439)

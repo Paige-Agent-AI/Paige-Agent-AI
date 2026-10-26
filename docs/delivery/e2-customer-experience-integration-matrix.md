@@ -1,5 +1,28 @@
 # Experience 02 — Customer Experience Integration Matrix
 
+## October26 — bounded original manual heartbeat, development only
+
+O07/O14 EXTEND the original EXP05 Work heartbeat under ANT161/fcf5efe9,
+not a new execution path. Current canonical Metric authority and original
+Auth/profile/tenant/member/conversation locks precede Work; closed payload,
+server key, epoch, one attempt and dispatch marker remain mandatory. Fixed
+`claimed_at + five minutes` ceiling and actual time after waits prevent renewal
+of revoked, expired, terminal or uncertain work. Original ABI/security/permissions
+and complete other-kind source inverse preserved; no new callable/grant/scan.
+
+Isolated original-writer proof: causal2PASS/2FAIL→4/0,57 checkpoints including
+actual roles, source replay/drift, two-session authority order/expiry/budget,
+clock regression mutant and concurrent renewals. Surrounding identity helpers
+are controlled fixtures, not authenticated acceptance. Source/proof and detailed
+limits: [original Systems evidence](../evidence/e2-systems-capture-mode.md).
+
+Forward-only80002 source is DEVELOPMENT; exact receiving/CI wiring/review/required
+checks/normal apply/readback owed. Separate private dispatch#2878 remains held;
+no public caller/activation or Systems run/Rail result. The original shared history
+mismatch was observed resolved by its existing owner; no E2 repair. Visual N/A;
+Experiential INCOMPLETE; Founder NOT_ACCEPTED. All19/nine/original9/0+12/0/4,
+manual Spine UNAVAILABLE, catalogue and ALG maturity remain unchanged.
+
 ## October25 — Finance navigation release and bounded original-customer proof
 
 O04/O14/O16 repair [#2883](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2883#issuecomment-6405085439)

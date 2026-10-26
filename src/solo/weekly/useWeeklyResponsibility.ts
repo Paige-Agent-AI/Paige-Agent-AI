@@ -68,8 +68,17 @@ export function useWeeklyResponsibility(enabled = true) {
     const focused = () => { if (document.visibilityState === "visible") void refresh(); };
     window.addEventListener("focus", focused);
     document.addEventListener("visibilitychange", focused);
-    const { data } = supabase.auth.onAuthStateChange(event => {
+    let signInIdentity: string | null = null, observedChange = false;
+    const { data } = supabase.auth.onAuthStateChange((event, session) => {
+      // Retention only: original reads/controls still prove current server authority.
+      const user = session?.user, at = user?.last_sign_in_at;
+      const identity = user && user.id === context.activeUserId && typeof at === "string" && Number.isFinite(Date.parse(at))
+        ? JSON.stringify([user.id, at]) : null;
+      if (event === "INITIAL_SESSION") { if (!observedChange) signInIdentity = identity; return; }
       if (event === "SIGNED_OUT" || event === "SIGNED_IN" || event === "USER_UPDATED") {
+        observedChange = true;
+        if (event === "SIGNED_IN" && identity !== null && identity === signInIdentity) return;
+        signInIdentity = event === "SIGNED_OUT" ? null : identity;
         generation.current.epoch++;
         if (event === "SIGNED_OUT") scope.current = null;
         else if (scope.current) scope.current = { ...scope.current, epoch: generation.current.epoch };

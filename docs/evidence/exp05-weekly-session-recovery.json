@@ -1,0 +1,53 @@
+{
+  "schema": 1,
+  "base": "137b3fc0f9cd1a2563f39d33f7c11b08df37bdcc",
+  "source": {
+    "src/solo/weekly/useWeeklyResponsibility.ts": "1024f3c1fa174e2d03b775834da27e62ee9e63ebef7b4b613e44cf912714afbe",
+    "src/solo/weekly/useWeeklyResponsibility.test.tsx": "660f1eeceb02a25687392d72063e928a3caea942d556fadaa3396fc6f98a4d3b",
+    "src/solo/weekly/WeeklyDraftComposer.tsx": "34377f6b9a3e42dd44850235459abed9792a1fad88bbdb69fd4c429327d8cf7b",
+    "src/solo/weekly/WeeklyDraftComposer.test.tsx": "00c92ebcf29d537a57116cb652699423c5119951016f5092dba5d8f06f0891b5"
+  },
+  "tests": {
+    "red": {
+      "sha256": "4400d80c4b3ed5d331b08a5e9086c8b2d2543689a8e34666163a7db5c92771f9",
+      "passed": 50,
+      "failed": 7,
+      "files": 2,
+      "success": false
+    },
+    "focused": {
+      "sha256": "a182f6858daea99afed530eb31fa88f0f32f46473d78ff8fc5eb5e78e32c270a",
+      "passed": 57,
+      "failed": 0,
+      "files": 2,
+      "success": true
+    },
+    "regression": {
+      "sha256": "c0a62b7ed71857b74645474a713db876de824f07f63135c88430628e4691f693",
+      "passed": 373,
+      "failed": 0,
+      "files": 14,
+      "success": true
+    }
+  },
+  "strictGraph": {
+    "baseExit": 2,
+    "candidateExit": 2,
+    "baseDiagnostics": 14,
+    "candidateDiagnostics": 14,
+    "newDiagnostics": [],
+    "candidateBytesRestored": true
+  },
+  "unchangedRenderAndAuthorityInputs": {
+    "src/solo/weekly/weekly-responsibility.css": "a999cecb1193b49590ed830f633a7644bcff0d37e45003e4fbec3fc3673f8323",
+    "src/solo/weekly/WeeklyDraftReview.tsx": "71603bc24810bcc3042001110a22ccf0438f74b2826467df3cc65af93f783f4b",
+    "src/solo/weekly/weekly-owner-read.ts": "7d5678ffe83e4bedfdc466207fa19872fc71b4cb9125cd5733862c853e01ecd7",
+    "src/solo/weekly/weekly-draft-command.ts": "884adc1efd51b9c09d000f79691a2ed954f0be133e40d99f596f9e25f2978380",
+    "src/solo/weekly/WeeklyResponsibilityPanel.tsx": "13028fcacf67cfcfddf2952be436c0becab74883b40d8a79c7403acc899e9e2a",
+    "src/solo/weekly/WeeklyCalendarResponsibility.tsx": "d75680391d4d28a276ffc04e40205da02586b9ab13e688b58378c94fe3141d6f"
+  },
+  "originalJSXAndFocusHandlerExact": true,
+  "renderedEvidence": "Original React DOM composer and real weekly hook with neutral Auth/domain ports. Same original typed input node/value/focus, saved markup, single pending operation and original result. Not native-browser pixels, RLS or customer execution.",
+  "catalogue": "Original status/draft contracts and operations.department PROOF_OWED unchanged; eleven recipes Listed/Unverified. No tool/recurrence/provider/Live admission or maturity promotion.",
+  "boundary": "No new domain execution, approval, provider, permission, native source, Root/risk/C0b, cache, scheduler, ledger or registry. Exact-head review/CI/deployment/authenticated proof and full Experience remain separately owed."
+}

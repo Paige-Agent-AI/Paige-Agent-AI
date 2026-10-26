@@ -253,7 +253,11 @@ select set_config('request.jwt.claim.sub','e4000000-0000-4000-8000-000000000001'
 set local role authenticated;
 select pg_temp.refused($s$select public.set_business_time_zone('e4000000-0000-4000-8000-00000000aaaa','Asia/Tokyo')$s$,'42501','an owner who is not active cannot set the business time zone');
 reset role;
+-- EXP08 team lifecycle: a suspension is lifted only by reinstatement or by trusted code with no
+-- signed-in caller, never by the suspended person's own session, so restore the seat with no JWT.
+select set_config('request.jwt.claim.sub','',true);
 update public.tenant_members set status='active' where tenant_id='e4000000-0000-4000-8000-00000000aaaa' and user_id='e4000000-0000-4000-8000-000000000001';
+select pg_temp.check_true((select status='active' from public.tenant_members where tenant_id='e4000000-0000-4000-8000-00000000aaaa' and user_id='e4000000-0000-4000-8000-000000000001'),'trusted code restores the owner''s seat');
 select pg_temp.check_true((select time_zone='America/New_York' from public.tenant_business_time_zones where tenant_id='e4000000-0000-4000-8000-00000000aaaa'),'refused writers changed nothing');
 
 -- A missing zone is reported and no owner-local date is given; the owner can clear and re-set it.

@@ -3439,8 +3439,13 @@ JSON:`;
     }
     // Keep the Team Hub receipts-only rule intact. A Portal request can appear
     // first on its card, so its separate check includes that existing store.
-    if (!customerPortal && await teamHubSessionTainted(supabase, user.id, [personaCtx.tenant_id],
-      [PORTAL_REQUEST_SHARE_TOOL], PORTAL_REQUEST_SHARE_TOOL).catch(() => true)) traceCtx.content_policy = "metadata_only";
+    if (!customerPortal) {
+      // Restricted Chat never reads the approval store. Withhold private traces
+      // without that read; the existing admission/recovery brakes stay intact.
+      if (interactiveConversational || interactiveRecoveryReadOnly) traceCtx.content_policy = "metadata_only";
+      else if (await teamHubSessionTainted(supabase, user.id, [personaCtx.tenant_id],
+        [PORTAL_REQUEST_SHARE_TOOL], PORTAL_REQUEST_SHARE_TOOL).catch(() => true)) traceCtx.content_policy = "metadata_only";
+    }
 
     // === L8 MEMORY FABRIC — Owner-Ops cross-session SEMANTIC memory (§7/§8/§26/§34) ===
     // STILL DEFERRED to slice 4b (cross-chat memory) — NOT wired here. Slice 4a.3 delivered the

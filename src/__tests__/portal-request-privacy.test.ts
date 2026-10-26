@@ -17,6 +17,34 @@ if (!guard) throw Error('Original per-call privacy guard absent');
 const compiled = ts.transpileModule(`function gate(calls) { const toolResults=[]; const reached=[]; for(const tc of calls) { ${guard.getText(source)} reached.push(tc.function.name); } return {toolResults,reached}; }`, { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS } }).outputText;
 const run = (carried: boolean, names: string[]) => new Function('portalRequestContentCarried', 'TEAM_HUB_EGRESS_WITHHELD_TOOLS', `${compiled};return gate;`)(carried, TEAM_HUB_EGRESS_WITHHELD_TOOLS)(names.map((name, i) => ({ id: String(i), function: { name } })));
 
+let tracePrivacy: ts.IfStatement | undefined;
+function findTrace(node: ts.Node) {
+  if (ts.isIfStatement(node) && node.expression.getText(source).includes('!customerPortal')
+    && node.getText(source).includes('[PORTAL_REQUEST_SHARE_TOOL], PORTAL_REQUEST_SHARE_TOOL')) tracePrivacy = node;
+  ts.forEachChild(node, findTrace);
+}
+findTrace(source);
+if (!tracePrivacy) throw Error('Original Portal trace privacy branch missing');
+const traceCode = ts.transpileModule(`async function inspect(){${tracePrivacy.getText(source)}}`, { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText;
+async function inspectTrace(flags: { conversational?: boolean; recovery?: boolean; customer?: boolean; tainted?: boolean } = {}) {
+  let reads = 0;
+  const traceCtx = { content_policy: 'full' };
+  const names = ['customerPortal', 'interactiveConversational', 'interactiveRecoveryReadOnly', 'traceCtx', 'supabase', 'user', 'personaCtx', 'PORTAL_REQUEST_SHARE_TOOL', 'teamHubSessionTainted'];
+  const values = [!!flags.customer, !!flags.conversational, !!flags.recovery, traceCtx, {}, { id: 'test-actor' }, { tenant_id: 'test-business' }, 'client_portal_request_share', async () => { reads++; return !!flags.tainted; }];
+  await new Function(...names, `${traceCode};return inspect;`)(...values)();
+  return { reads, policy: traceCtx.content_policy };
+}
+it('keeps conversational and read-only recovery off the approval store while withholding private traces', async () => {
+  for (const flags of [{ conversational: true }, { recovery: true }, { conversational: true, recovery: true }]) {
+    expect(await inspectTrace(flags)).toEqual({ reads: 0, policy: 'metadata_only' });
+  }
+});
+it('retains admitted owner trace checks and leaves the customer private path separate', async () => {
+  expect(await inspectTrace()).toEqual({ reads: 1, policy: 'full' });
+  expect(await inspectTrace({ tainted: true })).toEqual({ reads: 1, policy: 'metadata_only' });
+  expect(await inspectTrace({ customer: true })).toEqual({ reads: 0, policy: 'full' });
+});
+
 it('keeps untainted owner turns on the original path', () => {
   expect(run(false, ['web_fetch', 'web_search', 'save_to_knowledge_base', 'crm_log_activity']).reached).toEqual(['web_fetch', 'web_search', 'save_to_knowledge_base', 'crm_log_activity']);
 });

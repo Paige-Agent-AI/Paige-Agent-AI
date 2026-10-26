@@ -17,7 +17,7 @@ const object=(x:unknown):x is Record<string,unknown>=>!!x&&typeof x==='object'&&
 const uuid=(x:unknown):x is string=>typeof x==='string'&&/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i.test(x);
 const nullableUuid=(x:unknown):x is string|null=>x===null||uuid(x);
 const time=(x:unknown):x is string=>typeof x==='string'&&/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,6})?(?:Z|[+-]\d{2}:\d{2})$/.test(x)&&Number.isFinite(Date.parse(x));
-const exact=(x:Record<string,unknown>,fields:readonly string[])=>Object.keys(x).length===fields.length&&fields.every(k=>Object.hasOwn(x,k));
+const exact=(x:Record<string,unknown>,fields:readonly string[])=>Object.keys(x).length===fields.length&&fields.every(k=>Object.prototype.hasOwnProperty.call(x,k));
 const same=(a:Record<string,unknown>,b:Record<string,unknown>)=>exact(a,Object.keys(b))&&Object.keys(b).every(k=>a[k]===b[k]);
 const words=(x:unknown,max:number):x is string=>typeof x==='string'&&x.replace(/^[ \t\r\n]+|[ \t\r\n]+$/g,'').length>0&&[...x].length<=max;
 const targetFields=['expected_tenant_id','contact_id','work_id','version','title','body','recipient_user_id','access_version']as const;

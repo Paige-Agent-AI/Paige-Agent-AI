@@ -29,7 +29,7 @@
 // and an order does not name a campaign — `utm_campaign` lives on `analytics_events` and
 // `referral_clicks`, never on the order — so send → click → order does not join. Attribution
 // therefore is not shown at all, rather than shown badly (§13).
-import { AGREEMENT_STATE, SIGNATURE_STATE } from "./sales/agreementVocabulary";
+import { AGREEMENT_STATE, SIGNATURE_STATE, agreementEventLabel } from "./sales/agreementVocabulary";
 import React from "react";
 import { Ic } from "./_shared";
 import { useCatalogOffers } from "./useCatalogOffers";
@@ -1404,22 +1404,6 @@ const EC_LABEL = { actual: "Actual", contracted: "Contracted", dated: "Dated", o
  * four timestamps can say a document was viewed, they cannot say by which address, from which
  * device, in what order. Nothing here is invented; an event the engine did not record is simply
  * not shown. */
-const EVENT_LABEL = {
-  created: "Created",
-  edited: "Edited",
-  sent: "Sent",
-  delivered: "Delivered",
-  viewed: "Viewed",
-  consented: "Consent recorded",
-  signed: "Signed",
-  declined: "Declined",
-  completed: "Signed and completed",
-  voided: "Stopped",
-  expired: "Link expired",
-  sealed: "Sealed",
-  downloaded: "Copy downloaded",
-  resent: "Sent again",
-};
 /* The events that CLOSE the ceremony carry the settled mark; everything else is in-flight. */
 const EVENT_DONE = new Set(["completed", "signed", "sealed", "consented"]);
 
@@ -1530,7 +1514,7 @@ function AgreementCompletion({ signings, signing, clientName, tenantId, onClose,
                 <span className="so-ev-mark" aria-hidden="true" />
                 <span className="so-ev-when">{stamp(event.at)}</span>
                 <span className="so-ev-what">
-                  <b>{EVENT_LABEL[event.type] || event.type}</b>
+                  <b>{agreementEventLabel(event.type,event.action)}</b>
                   {/* Only what the engine actually recorded. A missing address or device is left
                     * out rather than filled with a plausible-looking blank. */}
                   <span>{[event.actorEmail, event.ip, event.userAgent].filter(Boolean).join(" · ") || `by ${event.actorKind}`}</span>

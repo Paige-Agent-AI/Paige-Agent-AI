@@ -15,7 +15,7 @@ import { canPrepareAgreementSigners, emptySignerDraft, prepareAgreementSignerCom
 import { prepareAgreementCorrection, saveAgreementCorrection } from './agreementCorrectionApi';
 import { createAgreementDraft, readAgreementPreparation, recoverAgreementCreation, type AgreementPreparation } from './agreementPreparationApi';
 import {readAgreementTemplate,type AgreementTemplateVersion} from './agreementTemplateApi';
-import { SIGNER_STATE, signingPreparationLabel } from './agreementVocabulary';
+import { SIGNER_STATE, signingPreparationLabel, agreementEventLabel } from './agreementVocabulary';
 import './agreement-preparation.css';
 const AgreementDocumentPreparation=React.lazy(()=>import('./AgreementDocumentPreparation').then(module=>({default:module.AgreementDocumentPreparation})));
 
@@ -420,12 +420,6 @@ function ScopedPreparation({ tenantId, agreementId, requestId, requestTenantId, 
   </article>;
 }
 
-const eventLabels: Record<string, string> = {
-  created: 'Draft recorded', edited: 'Draft revised', sent: 'Signature request issued',
-  viewed: 'Signing page opened', signed: 'Signature recorded', completed: 'Signing completed',
-  declined: 'Signing declined', voided: 'Agreement stopped', expired: 'Signing request expired',
-  signer_added: 'Signer added', signer_removed: 'Signer removed',
-};
 function historyTime(value: string | null) {
   const time = value ? Date.parse(value) : NaN;
   return Number.isFinite(time) ? new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(time) : 'Time unavailable';
@@ -460,7 +454,7 @@ function AgreementRecordHistory({ id, tenantId, completed, signings }: { id: str
   };
   return <section className="e04-preparation-context-card" aria-label="Agreement history and files"><h3>History and files</h3>
     {loading ? <><p role="status">Reading recorded agreement activity…</p><button onClick={() => { historyRequest.current++; setLoading(false); }}>Stop waiting</button></> : <button onClick={() => { void load(); }}><RefreshCw size={16} />{trail ? 'Refresh history' : 'View signing history'}</button>}
-    {trail && (trail.ok === true ? <>{trail.events.length ? <ol className="e04-agreement-history">{trail.events.map(event => <li key={event.id}><strong>{eventLabels[event.type] ?? 'Agreement activity recorded'}</strong><span>{historyTime(event.at)}</span><small>{event.actorKind === 'system' ? 'System record' : event.actorKind === 'signer' ? 'Signer record' : 'Authorized account record'}{event.actorEmail ? ` · ${event.actorEmail}` : ''}</small></li>)}</ol> : <p>No agreement activity was returned.</p>}{trail.truncated && <p>Older activity is outside this view. The latest {trail.events.length} recorded events are shown.</p>}</> : <p role="alert">{trail.message}</p>)}
+    {trail && (trail.ok === true ? <>{trail.events.length ? <ol className="e04-agreement-history">{trail.events.map(event => <li key={event.id}><strong>{agreementEventLabel(event.type,event.action)}</strong><span>{historyTime(event.at)}</span><small>{event.actorKind === 'system' ? 'System record' : event.actorKind === 'signer' ? 'Signer record' : 'Authorized account record'}{event.actorEmail ? ` · ${event.actorEmail}` : ''}</small></li>)}</ol> : <p>No agreement activity was returned.</p>}{trail.truncated && <p>Older activity is outside this view. The latest {trail.events.length} recorded events are shown.</p>}</> : <p role="alert">{trail.message}</p>)}
     {completed && <>{copyBusy ? <><p role="status">Reading the retained document…</p><button onClick={() => { copyRequest.current++; setCopyBusy(false); }}>Stop waiting</button></> : <button onClick={() => { void copy(); }}><FileText size={16} />Prepare retained document</button>}{copyUrl && <a className="e04-agreement-file" href={copyUrl} download="completed-agreement.pdf" target="_blank" rel="noopener noreferrer">Download retained document<ArrowRight size={16} /></a>}{copyMessage && <p role="alert">{copyMessage}</p>}</>}
   </section>;
 }

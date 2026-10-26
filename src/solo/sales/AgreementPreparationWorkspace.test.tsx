@@ -2,6 +2,7 @@ import React, { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AgreementPreparation } from './agreementPreparationApi';
+import type { SigningEventsResult } from '../useSoloAgreementSignings';
 const fixtures = vi.hoisted(() => ({ context: {} as Record<string, unknown>, read: vi.fn(), recover: vi.fn(), create: vi.fn(), history: vi.fn(), template:vi.fn(), correct: vi.fn(), saveSigner:vi.fn(), recoverSigner:vi.fn() }));
 vi.mock('@/hooks/useTenantContext', () => ({ useTenantContext: () => fixtures.context }));
 vi.mock('./agreementPreparationApi', () => ({ readAgreementPreparation: fixtures.read, recoverAgreementCreation: fixtures.recover, createAgreementDraft: fixtures.create }));
@@ -73,7 +74,7 @@ function props() {
     clients: [{ id: client, name: 'Sample Client' }], clientsReady: true, clientsReadable: true,
     agreementId: 'new', requestId: request, requestTenantId: tenant, freshlyOpened: true, onDraftAttempted: vi.fn(),
     onOpenRecord: vi.fn(), onClose: vi.fn(), onOpenClients: vi.fn(), onRefresh: vi.fn(),
-    signings: { signingEvents: vi.fn(async () => ({ ok: true, events: [], truncated: false } as const)), signedCopyUrl: vi.fn(async () => ({ ok: false, message: 'Synthetic unavailable copy' } as const)) } };
+    signings: { signingEvents: vi.fn(async (): Promise<SigningEventsResult> => ({ ok: true, events: [], truncated: false })), signedCopyUrl: vi.fn(async () => ({ ok: false, message: 'Synthetic unavailable copy' } as const)) } };
 }
 const fill = () => {
   fireEvent.change(screen.getByLabelText('Client', { exact: true }), { target: { value: client } });
@@ -365,6 +366,21 @@ describe('native agreement preparation flow', () => {
     fireEvent.click(screen.getByRole('button', { name: 'View signing history' }));
     await screen.findByText('Agreement history could not be read. Try the original record again.');
     expect(p.signings.signingEvents).toHaveBeenCalledWith(id, tenant);
+  });
+  it('distinguishes recorded signing preparation from draft revisions and provider delivery', async () => {
+    const p = { ...props(), agreementId: id, requestId: null, freshlyOpened: false };
+    const recorded = { actorKind: 'owner', actorEmail: null, ip: null, userAgent: null, at: '2026-10-25T12:00:00Z' };
+    p.signings.signingEvents.mockResolvedValue({ ok: true, truncated: false, events: [
+      { ...recorded, id: 'controlled-credential-event', type: 'edited', action: 'prepared_signature_credentials_recorded' },
+      { ...recorded, id: 'controlled-publication-event', type: 'sent', action: 'prepared_signature_request_recorded' },
+    ] });
+    render(<AgreementPreparationWorkspace {...p} />);
+    await screen.findByText('Original retained wording.');
+    fireEvent.click(screen.getByRole('button', { name: 'View signing history' }));
+    await screen.findByText('Signing links prepared');
+    expect(screen.getByText('Signature request result recorded')).toBeTruthy();
+    expect(screen.queryByText('Draft revised')).toBeNull();
+    expect(screen.queryByText('Delivered')).toBeNull();
   });
   it('returns keyboard focus to the original history entry after its view is mounted', async () => {
     fixtures.read.mockResolvedValueOnce({ok:true,value:original()}).mockResolvedValueOnce({ok:true,value:{...original(),agreement:{...original().agreement,version:2,body_markdown:'Latest canonical correction.'}}});

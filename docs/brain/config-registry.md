@@ -703,3 +703,13 @@ added. The connection remains PARTIAL: this corrects client scope selection, not
 scope registration, consent or outbound execution. Automated and synthetic-browser evidence,
 independent review, and the exact remaining proof boundary are in
 `../evidence/ui-delivery/mcp-oauth-resource-scopes.md`.
+
+## EXP02 private Systems host purpose — October26, development only
+
+Existing `systems-check-run-onboarding?manual_work=1` reuses the current internal
+service/verified-cron gate and existing `EdgeRuntime.waitUntil` lifetime. No new
+function, config, environment variable, secret, provider, cron, grant or queue.
+Bounded5-second transport/90-second capture/fresh5-second settlement; hard host
+limits still apply.202 is not execution proof. Normal source deployment/readback
+and customer admission are not yet established. Original wiring/flavors retained.
+Canonical details: [Systems evidence](../evidence/e2-systems-capture-mode.md).

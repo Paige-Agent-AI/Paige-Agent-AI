@@ -4468,3 +4468,19 @@ Functional LOCAL/unadmitted; final review/exact CI/release proof owed. Visual N/
 Experiential manual workflow INCOMPLETE; Founder NOT_ACCEPTED. All19/nine,
 ALG03/06/11/12/13, catalogue readiness and historical9-0+12-0-4/monthlyUNKNOWN
 UNRETRIED remain unchanged. [Original Systems evidence](../evidence/e2-systems-capture-mode.md).
+
+## EXP02 original Systems private host purpose — development only, October26
+
+The existing onboarding host now has a private manual Work transport; its entire
+ordinary onboarding/provisioning contract remains intact. Existing internal gate,
+platform bounded lifetime, original Core and native claim/heartbeat/finalizer/Rail
+are reused, with no new function/config/grant/queue/worker or public activation.
+A202 acknowledges delivery only, never execution; actual original Work/result
+still decides.40 new host/entry controls plus179 original cases pass (219 total),
+scoped lint passes, full real-compiler diagnostics match the original3 existing
+errors with zero new. Source review/exact CI/normal release/readback and original
+customer admission/run/Rail/reload/recovery remain owed. Manual Spine/catalogue
+UNAVAILABLE; all19/nine/ALG maturity unchanged, VisualN/A, ExperientialINCOMPLETE,
+FounderNOT_ACCEPTED. Details and complete orchestration contract stay in the
+[existing Systems evidence](../evidence/e2-systems-capture-mode.md); prior dated
+source releases remain history. No customer/model/provider operation.

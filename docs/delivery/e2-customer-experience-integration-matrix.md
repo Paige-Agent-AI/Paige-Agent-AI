@@ -11,7 +11,8 @@ retryable/completed. Existing default/remediation paths remain covered.
 [Original evidence and orchestration boundary](../evidence/e2-systems-capture-mode.md).
 
 No caller, worker, heartbeat edit, grant, scheduler, scan or provider is activated.
-E05 receiving for the current-authority continuation remains pending; consumer,
+E05 source-window ACKfcf5efe9 permits the bounded original heartbeat branch;
+the function remains unedited and final implementation receiving is still owed. Consumer,
 authority/lease, terminal transition, Rail/result/recovery and authenticated proof
 are still required. Functional LOCAL; Visual N/A; Experiential INCOMPLETE;
 Founder NOT_ACCEPTED. Review/exact CI/merge/Edge/public readback remain distinct.

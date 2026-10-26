@@ -593,8 +593,9 @@ Proof command: `node node_modules/vitest/vitest.mjs run
 src/__tests__/systems-check-capture-mode.test.ts --reporter=dot`. The actual whole
 core and its declared forge import execute; no copied implementation. Original
 baseline97PASS; with eighteen new interruption/compatibility assertions the
-unchanged core produces97PASS/18FAIL. Candidate115PASS/0FAIL, scoped lint and
-diff checks pass. Initial Windows temporary-cache refusal ran zero tests and
+unchanged core produces97PASS/18FAIL. Candidate115PASS/0FAIL, plus28 original
+navigation/latest-run/source-integrity assertions: final143PASS across four
+suites. Scoped lint and diff checks pass. Initial Windows temporary-cache refusal ran zero tests and
 is INVALID as source proof; the completed local run is the counted observation.
 
 The actual pinned Supabase2.75 types resolve under Deno2.1.4/TypeScript5.6.2.
@@ -628,7 +629,9 @@ RLS, customer authentication, latency SLO or provider cancellation/rollback.
 | Return | Existing authorized Work/history and original receipt/result reconciliation remain owed |
 
 The E05 heartbeat/current-authority seam proposed in ANT161/a27eba0c has not been
-edited. No shared source window or permission grant is assumed. Required final
+edited. ACKfcf5efe9 now permits that bounded original-function source window;
+immutable implementation/proof receiving remains required before its merge.
+No permission grant is inferred. Required final
 review/exact-head CI/merge, normal affected Edge source readback and public
 production identity remain separate release obligations.
 

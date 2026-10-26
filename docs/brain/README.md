@@ -6,11 +6,13 @@ default/remediation callers supply no signal and retain their original behavior.
 An interruption keeps that identity and a closed unconfirmed phase, stops late
 core continuation and cancels supported original Supabase requests. An issued
 write can still commit; cancellation never proves absence, rollback or retry.
-Actual whole-core causal source proof: original97PASS/18newFAIL becomes115PASS.
+Actual whole-core causal source proof: original97PASS/18newFAIL becomes115PASS;
+the final four-suite Systems regression is143PASS/0FAIL.
 See [the existing O07 evidence](../evidence/e2-systems-capture-mode.md).
 
-No caller consumes the option yet. E05's proposed current-authority heartbeat
-seam remains unedited pending receiving disposition; native authority, bounded
+No caller consumes the option yet. E05's current-authority heartbeat source
+window is acknowledged in ANT161/fcf5efe9; the function remains unedited and its
+final implementation still requires receiving review. Native authority, bounded
 consumer, original transition/Rail/result/recovery and authenticated proof are
 still owed. Review, exact CI and source release/readback remain separate gates.
 Functional LOCAL prerequisite; Visual N/A; Experiential INCOMPLETE; Founder

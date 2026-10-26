@@ -10,6 +10,23 @@ import type { ReadLinkDestination, ReadRecordLink } from '../paige-turn/record-l
 
 export const INVOICE_TERMS_VERSION_REASON = 'Invoice and plan versions differ';
 
+/** One explanation for the existing Clients and PAIGE reads, not a new source. */
+export function standingTimingReason(s: ClientEngagementStatus): string | null {
+  if (s.attention.includes('effective_terms_unverified')) return 'Original invoice terms need verification';
+  if (s.attention.includes('invoice_terms_version_mismatch')) return INVOICE_TERMS_VERSION_REASON;
+  if (s.attention.some(key => ['invoice_terms_unavailable','invoice_terms_amount_mismatch','effective_terms_unverified'].includes(key)))
+    return 'Original invoice terms need verification';
+  if (s.attention.includes('terms_stale') || s.attention.includes('terms_unreadable')) return 'The payment schedule is not established';
+  return null;
+}
+
+export function standingTermsEvidence(s: ClientEngagementStatus): string | null {
+  if (s.agreement.effective === 'unverified') return 'Original effective agreement evidence is not verified.';
+  if (s.agreement.effective !== 'verified' || s.terms?.basis !== 'accepted') return null;
+  return `Accepted revision ${s.terms.version}${s.terms.working_differs
+    ? ` · Working draft revision ${s.terms.working_version} differs` : ''}`;
+}
+
 export const AGREEMENT_TEXT: Record<string, string> = {
   none: 'no agreement has been sent', draft: 'agreement drafted, not sent', sent: 'agreement sent, not yet viewed',
   viewed: 'agreement viewed, not signed', partially_signed: 'agreement partially signed', signed: 'agreement signed',
@@ -32,6 +49,9 @@ export const ATTENTION_TEXT: Record<Attention, string> = {
   list_truncated: 'There are more records than one read returns, so totals are not added up.',
   terms_invoiced_more_than_once: 'The agreed terms were invoiced more than once.',
   invoice_terms_version_mismatch: 'The invoice and payment plan refer to different agreement versions. Review the original terms before checking payment timing.',
+  invoice_terms_unavailable: 'An invoice refers to agreement terms that this read could not establish. Payment timing is not known.',
+  invoice_terms_amount_mismatch: 'An invoice amount or currency differs from its original agreement terms. Review those records before checking payment timing.',
+  effective_terms_unverified: 'The original effective agreement evidence could not be verified. Accepted terms and payment timing are not established.',
   other_terms_not_shown: 'This client has other terms that are not shown.',
   business_time_zone_unset: 'The business time zone is not set, so due and overdue dates are on hold.',
 };
@@ -66,6 +86,9 @@ export const ATTENTION_DESTINATION: Record<Attention, ReadLinkDestination | null
   invoice_status_legacy: 'sales_invoices',
   terms_invoiced_more_than_once: 'sales_invoices',
   invoice_terms_version_mismatch: 'sales_agreements',
+  invoice_terms_unavailable: 'sales_agreements',
+  invoice_terms_amount_mismatch: 'sales_invoices',
+  effective_terms_unverified: 'sales_agreements',
   work_overdue: 'operations_work',
   work_blocked: 'operations_work',
   business_time_zone_unset: 'business_time_zone',

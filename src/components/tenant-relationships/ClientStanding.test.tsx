@@ -4,6 +4,7 @@ import { createRoot, type Root } from "react-dom/client";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ATTENTION_TEXT } from "../../../supabase/functions/_shared/client-engagement/labels";
+import {effectiveStandingFixture} from "../../__tests__/fixtures/exp04-effective-standing-source";
 
 // Experience 04 E4-S3 PR beta (Track D): where one client stands, on that client's Solo record —
 // read through the SAME governed read and composer PAIGE answers from, so the page and the chat can
@@ -29,6 +30,18 @@ const dd = (term: string) => [...host.querySelectorAll(".trc-standing-money > di
 const hrefs = () => [...host.querySelectorAll("a")].map(a => [a.textContent, a.getAttribute("href")]);
 
 describe("ClientStanding", () => {
+  it("shows the accepted revision separately from the later working draft", async () => {
+    const {source:changed}=effectiveStandingFixture();rpc.mockResolvedValue({data:changed,error:null});await render();
+    expect(row("Agreement")?.textContent).toContain("Accepted revision 1 · Working draft revision 2 differs");
+    expect(row("Agreement")?.textContent).toContain("$3,500.00 accepted");
+    expect(dd("Overdue")?.textContent).toBe("$320.00");
+  });
+  it("does not call an exact original signing outside the title list untitled", async () => {
+    const {source:changed}=effectiveStandingFixture();changed.signings=[];changed.signings_has_more=true;
+    rpc.mockResolvedValue({data:changed,error:null});await render();
+    expect(row("Agreement")?.textContent).toContain("Original signed agreement");
+    expect(row("Agreement")?.textContent).not.toContain("Untitled agreement");
+  });
   it.each([0,3])("does not equate %i done work records with accepted service", async done => {
     const work={...structuredClone(source.work),total:3,done,open:0,cancelled:3-done,blocked:0,overdue:0,undated_open:0};
     work.items=work.items.map((item: Record<string,unknown>)=>({...item,status:done===3?"done":"cancelled"}));

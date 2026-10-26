@@ -11,9 +11,10 @@ import { collectionMoney } from "@/solo/sales/collections/presentation";
 import {
   ATTENTION_DESTINATION,
   ATTENTION_TEXT,
-  INVOICE_TERMS_VERSION_REASON,
   NOT_RECORDED_TEXT,
   standingInvoiceLink,
+  standingTermsEvidence,
+  standingTimingReason,
 } from "../../../supabase/functions/_shared/client-engagement/labels";
 import type { ClientEngagementStatus } from "../../../supabase/functions/_shared/client-engagement/status";
 import type { ReadLinkDestination } from "../../../supabase/functions/_shared/paige-turn/record-links";
@@ -118,7 +119,8 @@ function Row({ state, label, children, actions }: { state: { state: PillState; l
 function notKnown(s: ClientEngagementStatus): string {
   if (s.money.mixed_currency) return "More than one currency, so not added up";
   if (s.truncated.invoices || s.truncated.terms) return "More invoices than one check reads, so not added up";
-  if (s.attention.includes('invoice_terms_version_mismatch')) return INVOICE_TERMS_VERSION_REASON;
+  const timingReason = standingTimingReason(s);
+  if (timingReason) return timingReason;
   return "Not known from these records";
 }
 
@@ -160,7 +162,7 @@ function Standing({ s, name, account, openPaige }: { s: ClientEngagementStatus; 
   const terms = s.terms;
   const termsLine = terms
     ? [`Terms: ${(AGREEMENT_STATE[terms.status] ?? AGREEMENT_STATE.unrecognised).label}`,
-        terms.agreed_minor !== null && terms.currency ? `${collectionMoney(terms.agreed_minor, terms.currency)} ${s.attention.includes('invoice_terms_version_mismatch') ? 'recorded' : 'agreed'}` : null,
+        terms.agreed_minor !== null && terms.currency ? `${collectionMoney(terms.agreed_minor, terms.currency)} ${terms.basis === 'accepted' ? 'accepted' : standingTimingReason(s) ? 'recorded' : 'agreed'}` : null,
         terms.recurring ? "recurring" : terms.schedule.length ? plural(terms.schedule.length, "scheduled payment") : null,
       ].filter(Boolean).join(" · ")
     : "No terms agreed yet";
@@ -176,6 +178,7 @@ function Standing({ s, name, account, openPaige }: { s: ClientEngagementStatus; 
   const held = s.as_of_date === null ? businessCalendarHeldNote(s.time_zone.state === "invalid" ? "invalid" : "missing", "record") : null;
 
   const m = s.money;
+  const termsEvidence = standingTermsEvidence(s);
   const requests = [
     (m.awaiting_confirmation_minor ?? 0) > 0 ? `${collectionMoney(m.awaiting_confirmation_minor!, currency)} awaiting payment provider confirmation — not received` : null,
     m.outcome_unknown_count > 0 ? `${plural(m.outcome_unknown_count, "payment")} with an unknown outcome` : null,
@@ -195,9 +198,10 @@ function Standing({ s, name, account, openPaige }: { s: ClientEngagementStatus; 
     <>
       <ol className="trc-standing-rows">
         <Row state={signature} label="Agreement" actions={<StandingLink destination="sales_agreements" account={account} />}>
-          <span>{s.agreement.title ?? (s.agreement.state === "none" ? "No agreement document yet" : "Untitled agreement")}</span>
+          <span>{s.agreement.title ?? (s.agreement.effective === "verified" ? "Original signed agreement" : s.agreement.state === "none" ? "No agreement document yet" : "Untitled agreement")}</span>
           {signedLine && <span className="trc-standing-quiet-line">{signedLine}</span>}
           <span className="trc-standing-quiet-line">{termsLine}</span>
+          {termsEvidence && <span className="trc-standing-quiet-line">{termsEvidence}</span>}
         </Row>
 
         <Row state={moneyPill(s)} label="Money" actions={<>

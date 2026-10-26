@@ -8,7 +8,7 @@ import {
   parseClientEngagementSource,
   type ClientEngagementStatus,
 } from './status.ts';
-import { AGREEMENT_TEXT, ATTENTION_TEXT, INVOICE_TERMS_VERSION_REASON, PAYMENT_STATE_TEXT, standingRecordLinks } from './labels.ts';
+import { AGREEMENT_TEXT, ATTENTION_TEXT, PAYMENT_STATE_TEXT, standingRecordLinks, standingTermsEvidence, standingTimingReason } from './labels.ts';
 import type { ReadRecordLink } from '../paige-turn/record-links.ts';
 
 // Experience 04 E4-S2 — "where does this client stand?" and the business time zone, from chat.
@@ -151,6 +151,7 @@ export function projectClientStanding(s: ClientEngagementStatus): string {
   const when = (iso: string | null) => at(iso, zone) ?? (iso ? 'date not shown until the business time zone is set' : null);
   const m = s.money;
   const invoiceTermsVersionMismatch = s.attention.includes('invoice_terms_version_mismatch');
+  const timingReason = standingTimingReason(s);
   const totalsReason = m.mixed_currency ? 'not added up: invoices use more than one currency'
     : s.truncated.invoices ? 'not added up: more invoices exist than one read returns' : 'not known';
   const lines: string[] = [];
@@ -160,18 +161,23 @@ export function projectClientStanding(s: ClientEngagementStatus): string {
     : `Business time zone: ${s.time_zone.state === 'missing' ? 'NOT SET' : 'NOT RECOGNISED'} — due, upcoming and overdue judgements are withheld until the owner sets it in Settings → Setup → Business profile.`}`);
 
   const a = s.agreement;
-  lines.push(`AGREEMENT: ${AGREEMENT_TEXT[a.state] ?? a.state}${a.title ? ` (${rec(a.title)})` : ''}${a.sent_at ? `; sent ${when(a.sent_at)}` : ''}${a.completed_at ? `; signed ${when(a.completed_at)}` : ''}${a.state === 'signed' ? (a.sealed ? '; sealed copy stored' : '; sealed copy not confirmed') : ''}. Linked to the agreed terms: ${a.bound_to_terms ? 'yes' : 'no'}. Effective terms are not established by this standing view.`);
+  const effectiveNote = a.effective === 'verified' ? 'Original accepted terms are retained with this signed agreement.'
+    : a.effective === 'unverified' ? 'The original effective agreement evidence could not be verified.'
+    : 'Effective terms are not established by this standing view.';
+  lines.push(`AGREEMENT: ${AGREEMENT_TEXT[a.state] ?? a.state}${a.title ? ` (${rec(a.title)})` : ''}${a.sent_at ? `; sent ${when(a.sent_at)}` : ''}${a.completed_at ? `; signed ${when(a.completed_at)}` : ''}${a.state === 'signed' ? (a.sealed ? '; sealed copy stored' : '; sealed copy not confirmed') : ''}. Linked to the agreed terms: ${a.bound_to_terms ? 'yes' : 'no'}. ${effectiveNote}`);
+  const evidence = standingTermsEvidence(s);
+  if (evidence && a.effective === 'verified') lines.push(evidence);
 
   if (!s.terms) lines.push('TERMS: no agreed terms are recorded for this client.');
   else {
     const t = s.terms;
     const planState = invoiceTermsVersionMismatch ? 'saved plan; invoice version not matched' : t.state === 'current' ? 'current' : t.state === 'stale' ? 'changed since it was agreed' : t.state === 'unreadable' ? 'schedule unreadable' : t.state;
-    lines.push(`TERMS: ${rec(t.title ?? t.offer_name, 'Agreed terms')} — status ${t.status}, ${planState}; ${invoiceTermsVersionMismatch ? 'recorded amount' : 'agreed'} ${money(t.agreed_minor, t.currency)}${t.kind ? `, ${t.kind.replace(/_/g, ' ')}` : ''}${t.recurring ? ', recurring' : ''}.`);
+    lines.push(`TERMS: ${t.basis === 'accepted' ? 'Original accepted commercial terms' : rec(t.title ?? t.offer_name, 'Agreed terms')} — status ${t.status}, ${planState}; ${t.basis === 'accepted' ? 'accepted' : timingReason ? 'recorded amount' : 'agreed'} ${money(t.agreed_minor, t.currency)}${t.kind ? `, ${t.kind.replace(/_/g, ' ')}` : ''}${t.recurring ? ', recurring' : ''}.`);
     if (t.schedule.length) {
       lines.push(`INSTALLMENTS (${t.schedule.length}${t.schedule_has_more ? '+' : ''}):`);
       for (const r of t.schedule.slice(0, 12)) {
-        const due = r.due === null ? zoneSet && invoiceTermsVersionMismatch
-          ? `verification pending — ${INVOICE_TERMS_VERSION_REASON.toLowerCase()}` : held : r.due ? 'due' : 'not yet due';
+        const due = r.due === null ? zoneSet
+          ? `verification pending — ${(timingReason ?? 'the schedule is not established').toLowerCase()}` : held : r.due ? 'due' : 'not yet due';
         lines.push(`  #${r.sequence} ${r.due_date} ${money(r.amount_minor, t.currency)}${r.label ? ` (${rec(r.label)})` : ''} — ${due}`);
       }
       if (t.schedule.length > 12 || t.schedule_has_more) lines.push('  (more installments exist; not all are listed)');

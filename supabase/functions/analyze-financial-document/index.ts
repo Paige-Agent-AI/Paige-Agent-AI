@@ -1,6 +1,8 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { gatewayCompat } from "../_shared/claude.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
+import { decideDocumentAnalysisAccess } from "./access.ts";
+import { resolveWorkspaceAuthorityAs } from "../_shared/workspace-authority.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -90,14 +92,34 @@ serve(async (req) => {
       });
     }
 
-    // Ownership check: only the document's owner or an admin may analyze.
-    if (doc.user_id !== user.id) {
-      const { data: isAdmin } = await supabase.rpc('has_role', { _user_id: user.id, _role: 'admin' });
-      if (!isAdmin) {
-        return new Response(JSON.stringify({ error: 'Forbidden' }), {
-          status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
+    // Access (EXP08 stage 0, see ./access.ts): the document's owner, an owner/admin of the
+    // document's own client workspace (or its managing agency), or the Platform Operator. NOT the
+    // global `admin` role, which an owner/admin seat in any workspace carries.
+    const callerClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!, {
+      global: { headers: { Authorization: authHeader } },
+    });
+    const access = await decideDocumentAnalysisAccess(user.id, doc, {
+      isOperator: async () => {
+        const { data, error } = await callerClient.rpc('is_platform_operator');
+        if (error) throw new Error(`operator check failed: ${error.message}`);
+        return data === true;
+      },
+      linkedClientTenant: async (clientId, ownerUserId) => {
+        const { data, error } = await supabase.from('clients').select('tenant_id')
+          .eq('id', clientId).eq('linked_user_id', ownerUserId).maybeSingle();
+        if (error) throw new Error(`client read failed: ${error.message}`);
+        return typeof data?.tenant_id === 'string' ? data.tenant_id : null;
+      },
+      isWorkspaceAdmin: async (tenantId) => {
+        const r = await resolveWorkspaceAuthorityAs(supabase, user.id, tenantId);
+        if (!r.ok) throw new Error(r.error);
+        return r.authority.workspaceAdmin;
+      },
+    });
+    if (!access.allowed) {
+      return new Response(JSON.stringify({ error: 'Forbidden' }), {
+        status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     // Refuse before anything is written or downloaded: the service-role download below must only

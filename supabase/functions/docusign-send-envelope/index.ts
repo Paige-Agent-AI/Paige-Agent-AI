@@ -1,6 +1,9 @@
 // Create + send a DocuSign envelope from a template, then record it.
 // Body: { contact_id?, envelope_type, template_id, prefill?: { email, name, role? }, email_subject?, email_blurb? }
-import { adminClient, corsHeaders, jsonResponse, requireAdmin } from "../_shared/adminAuth.ts";
+import { adminClient, corsHeaders, jsonResponse } from "../_shared/adminAuth.ts";
+// EXP08 stage 0: a platform resource, so the Platform Operator only (§53) — not the global
+// `admin` row that every workspace owner carries. See _shared/operatorAuth.ts.
+import { requireOperator } from "../_shared/operatorAuth.ts";
 import { getDocuSignAccess } from "../_shared/docusignJwt.ts";
 import { CLIENT_CONTACT_METHODS_EMBED, withPrimaryAddresses } from "../_shared/contact-methods.ts";
 
@@ -8,7 +11,7 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "POST") return jsonResponse({ error: "method_not_allowed" }, 405);
 
-  const guard = await requireAdmin(req);
+  const guard = await requireOperator(req);
   if (!guard.ok) return guard.response;
 
   const body = await req.json().catch(() => ({}));

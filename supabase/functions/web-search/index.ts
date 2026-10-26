@@ -1,10 +1,13 @@
 // Paige admin web search — Firecrawl-backed (Tavily deprecated per Doctrine §88).
 // Body: { query: string, limit?: number }
-import { corsHeaders, jsonResponse, requireAdmin } from "../_shared/adminAuth.ts";
+import { corsHeaders, jsonResponse } from "../_shared/adminAuth.ts";
+// EXP08 stage 0: a platform resource, so the Platform Operator only (§53) — not the global
+// `admin` row that every workspace owner carries. See _shared/operatorAuth.ts.
+import { requireOperator } from "../_shared/operatorAuth.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
-  const guard = await requireAdmin(req);
+  const guard = await requireOperator(req);
   if (!guard.ok) return guard.response;
 
   const body = await req.json().catch(() => ({}));

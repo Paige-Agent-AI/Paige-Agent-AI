@@ -118,10 +118,16 @@
       "fingerprint": "ca845b189e11837b"
     },
     {
+      "function": "public.change_user_role(uuid, app_role, app_role, uuid, text)",
+      "reason": "Refuses a change to the retired role by name before any write. First judged when 20271115030008 re-emitted it (admin scope stage 0 changed who may call it and requires the target to be an active member of the workspace); the coach refusal is the body production already ran.",
+      "defined_in": "20271115030008_admin_scope_stage0.sql",
+      "fingerprint": "47994ae4f66b706d"
+    },
+    {
       "function": "public.grant_tenant_member_role(uuid, app_role, uuid, text)",
-      "reason": "Refuses a grant of the retired role by name before any write.",
-      "defined_in": "20270508000000_forbid_title_role_value.sql",
-      "fingerprint": "2e68e23b91930d58"
+      "reason": "Refuses a grant of the retired role by name before any write. Re-read and re-pinned for 20271115030008, which stops the global 'admin' user_roles insert and writes any other global role only for a person already active in the workspace (or on an operator path); the coach refusal is unchanged.",
+      "defined_in": "20271115030008_admin_scope_stage0.sql",
+      "fingerprint": "bdbedf4a6ae0cf19"
     },
     {
       "function": "public.revoke_tenant_member_role(uuid, app_role, uuid, text)",

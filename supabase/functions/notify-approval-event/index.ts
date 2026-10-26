@@ -4,6 +4,7 @@
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { isAuthorizedInternalCaller, adminClient } from '../_shared/systems-check-http.ts'
 import { canonicalAppUrl, resolveCanonicalAppPath } from '../_shared/canonical-app-url.ts'
+import { approvalCreatedRecipients, type Recipient as AudienceMember } from './recipients.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -50,7 +51,7 @@ Deno.serve(async (req) => {
   // Load approval
   const { data: approval, error: aErr } = await supabase
     .from('paige_pending_approvals')
-    .select('id, category, summary, priority, risk_level, contact_id, submitted_by_user_id, requires_role, assigned_to_user_id, status')
+    .select('id, tenant_id, category, summary, priority, risk_level, contact_id, submitted_by_user_id, requires_role, assigned_to_user_id, status')
     .eq('id', body.approval_id)
     .maybeSingle()
 
@@ -59,11 +60,14 @@ Deno.serve(async (req) => {
   // Resolve client name (optional)
   let clientName: string | undefined
   if (approval.contact_id) {
-    const { data: c } = await supabase
+    // The client must be in the approval's own workspace; a contact id from another workspace
+    // names nobody here (and a workspace-less approval names no client at all).
+    let clientQuery = supabase
       .from('clients')
       .select('first_name, last_name, business_name')
       .eq('id', approval.contact_id)
-      .maybeSingle()
+    clientQuery = approval.tenant_id ? clientQuery.eq('tenant_id', approval.tenant_id) : clientQuery.is('tenant_id', null)
+    const { data: c } = await clientQuery.maybeSingle()
     if (c) {
       const full = [c.first_name, c.last_name].filter(Boolean).join(' ').trim()
       clientName = full || c.business_name || undefined
@@ -92,44 +96,65 @@ Deno.serve(async (req) => {
   const recipients: Recipient[] = []
 
   if (body.event === 'created') {
-    // Target by assigned_to_user_id, else requires_role, else all admins+super_admins
-    if (approval.assigned_to_user_id) {
-      const { data: au } = await supabase.auth.admin.getUserById(approval.assigned_to_user_id)
+    // EXP08 stage 0: the approval's OWN workspace (owner/admin seats), the assignee only when they
+    // belong there, operators only for operator work — never every global `admin`. See ./recipients.ts.
+    let audience: AudienceMember[]
+    try {
+      audience = await approvalCreatedRecipients(
+        {
+          tenant_id: (approval.tenant_id as string | null) ?? null,
+          assigned_to_user_id: (approval.assigned_to_user_id as string | null) ?? null,
+          requires_role: (approval.requires_role as string | null) ?? null,
+        },
+        {
+          seats: async (tenantId, roles) => {
+            const { data, error } = await supabase
+              .from('tenant_members')
+              .select('user_id, role')
+              .eq('tenant_id', tenantId)
+              .eq('status', 'active')
+              .in('role', roles)
+            if (error) throw new Error(`seat read failed: ${error.message}`)
+            return (data ?? []).map((r) => ({ user_id: r.user_id as string, role: String(r.role) }))
+          },
+          seatRole: async (tenantId, userId) => {
+            const { data, error } = await supabase
+              .from('tenant_members')
+              .select('role')
+              .eq('tenant_id', tenantId)
+              .eq('user_id', userId)
+              .eq('status', 'active')
+              .maybeSingle()
+            if (error) throw new Error(`seat read failed: ${error.message}`)
+            return data?.role ? String(data.role) : null
+          },
+          operators: async (roles) => {
+            const { data, error } = await supabase
+              .from('user_roles')
+              .select('user_id, role')
+              .in('role', roles)
+            if (error) throw new Error(`operator read failed: ${error.message}`)
+            return (data ?? []).map((r) => ({ user_id: r.user_id as string, role: String(r.role) }))
+          },
+        },
+      )
+    } catch (e) {
+      console.error('[notify-approval-event] recipient resolution failed:', (e as Error).message)
+      return json({ error: 'recipient resolution failed' }, 500)
+    }
+    for (const member of audience) {
+      const { data: au } = await supabase.auth.admin.getUserById(member.user_id)
       const { data: p } = await supabase
         .from('profiles')
         .select('display_name, first_name, last_name')
-        .eq('user_id', approval.assigned_to_user_id)
+        .eq('user_id', member.user_id)
         .maybeSingle()
       recipients.push({
-        user_id: approval.assigned_to_user_id,
+        user_id: member.user_id,
         email: au?.user?.email ?? undefined,
         name: p?.display_name || [p?.first_name, p?.last_name].filter(Boolean).join(' ').trim() || undefined,
-        role: approval.requires_role ?? 'admin',
+        role: member.role,
       })
-    } else {
-      const role = approval.requires_role && approval.requires_role !== 'any'
-        ? [approval.requires_role]
-        : ['admin', 'super_admin']
-      const { data: roleRows } = await supabase
-        .from('user_roles')
-        .select('user_id, role')
-        .in('role', role)
-      const userIds = Array.from(new Set((roleRows ?? []).map((r) => r.user_id as string)))
-      for (const uid of userIds) {
-        const roleRow = (roleRows ?? []).find((row) => row.user_id === uid)
-        const { data: au } = await supabase.auth.admin.getUserById(uid)
-        const { data: p } = await supabase
-          .from('profiles')
-          .select('display_name, first_name, last_name')
-          .eq('user_id', uid)
-          .maybeSingle()
-        recipients.push({
-          user_id: uid,
-          email: au?.user?.email ?? undefined,
-          name: p?.display_name || [p?.first_name, p?.last_name].filter(Boolean).join(' ').trim() || undefined,
-          role: String(roleRow?.role ?? 'admin'),
-        })
-      }
     }
   } else if (body.event === 'changes_requested') {
     // Notify the original submitter

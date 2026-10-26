@@ -91,6 +91,10 @@ jobs:
         run: node scripts/proof/e2-manual-systems-work.mjs 5432
       - name: EXP02 original manual Work read, current authority, closed purpose and incumbent compatibility
         run: node scripts/proof/e2-manual-systems-work-read.mjs 5432
+      - name: EXP02 proposed private manual dispatch gate, two native claimers and current authority
+        run: node scripts/proof/e2-manual-systems-work.mjs 5432 --manual-dispatch
+      - name: EXP02 original manual heartbeat, current authority, finite budget and actual lock waits
+        run: node scripts/proof/e2-manual-systems-heartbeat.mjs 5432
       - name: EXP08 Team Hub storage, workspace isolation, refusals and migration replay in a disposable database
         run: psql -h 127.0.0.1 -U postgres -d postgres -f supabase/tests/exp08_team_hub_collaboration.sql
       - name: EXP08 Team Hub team work, atomic Operations task creation, exactly-once retry and work list isolation in a disposable database
@@ -101,6 +105,10 @@ jobs:
         run: psql -h 127.0.0.1 -U postgres -d postgres -f supabase/tests/exp08_team_hub_search.sql
       - name: EXP08 Team Hub read and search performance, byte-identical results across the call matrix, index use at volume
         run: psql -h 127.0.0.1 -U postgres -d postgres -v ON_ERROR_STOP=1 -f supabase/tests/exp08_team_hub_read_performance.sql
+      - name: Admin scope stage 0, owner or admin of one business gains no admin power in another, failing-first and mutants in a disposable database
+        run: psql -h 127.0.0.1 -U postgres -d postgres -v ON_ERROR_STOP=1 -f supabase/tests/admin_scope_stage0.sql
+      - name: EXP08 team lifecycle, suspend/reinstate/remove authority, consent, Team conversations switch, arrival join and departure review in a disposable database
+        run: psql -h 127.0.0.1 -U postgres -d postgres -v ON_ERROR_STOP=1 -f supabase/tests/exp08_team_lifecycle.sql
       - name: Communications executor coverage includes subsequently introduced mailbox paths
         run: node scripts/ci/comms-provider-boundary-wiring.mjs
       - name: Gmail native connection authority, private credential isolation and concurrent rollback
@@ -185,6 +193,25 @@ jobs:
         # re-resolution is what let an upstream unpublish (@splinetool/animation-core) break every
         # branch's install at once — CI could not have been pinned to a known-good tree.
         run: npm ci --no-audit --no-fund
+
+      - name: EXP09 original customer-request catalogue, current authority and incumbent rows in isolated PostgreSQL
+        id: e09_request_catalogue
+        run: |
+          PGBIN="$(pg_config --bindir)"
+          [ -x "$PGBIN/initdb" ] || { echo "FAIL — PostgreSQL server binaries are required."; exit 2; }
+          E09_PG_BIN="$PGBIN" E09_PROOF_DIR="outputs/e09-request-catalogue-ci" node scripts/proof/e09-consumer-invite.mjs --request-share-catalogue
+
+      - name: Retain original EXP09 synthetic catalogue proof and failure transcript
+        if: ${{ always() && (steps.e09_request_catalogue.outcome == 'success' || steps.e09_request_catalogue.outcome == 'failure') }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: e09-request-catalogue-${{ github.sha }}
+          path: |
+            outputs/e09-request-catalogue-ci/candidate.json
+            outputs/e09-request-catalogue-ci/candidate-transcript.json
+            outputs/e09-request-catalogue-ci/cluster-*/server.log
+          if-no-files-found: error
+          retention-days: 7
 
       # --- Changed-file gates (PR only — a push to main has no PR base). Cheap checks first. -----
       # Compute the MERGE-BASE once and diff against it, not the raw base-branch tip. base.sha is
@@ -808,6 +835,16 @@ jobs:
         run: deno test --allow-sys --no-lock supabase/functions/_shared/transactional-email-templates/email-footer.test.ts
       - name: SendGrid admin key is referenced by no tenant-execution function (ANT-43/S7)
         run: node scripts/ci/forbid-sendgrid-admin-key-refs.mjs
+      - name: EXP08 stage 0 — admin power stops at the admin's own workspace (edge authority)
+        run: |
+          deno test --allow-import --allow-env --allow-read=supabase/functions --node-modules-dir=none --deny-net --deny-write --deny-run --deny-ffi \
+            supabase/functions/_shared/operatorAuth.test.ts \
+            supabase/functions/analyze-financial-document/access.test.ts \
+            supabase/functions/ingest-rag-outcome/access.test.ts \
+            supabase/functions/paige-mcp/team-members.test.ts \
+            supabase/functions/notify-approval-event/recipients.test.ts \
+            supabase/functions/execute-approval/admission_test.ts \
+            supabase/functions/paige-ai-chat/member-grant-result_test.ts
       - name: Deno ratchet (affected edge functions — fails on NEW or increased diagnostics)
         # `count != ''` as well as `!= '0'`: an empty count means the resolve step did not run or
         # produced no output, and an unbounded run is a configuration error, not a no-op pass.
@@ -871,6 +908,10 @@ jobs:
         if: ${{ !cancelled() }}
         run: npm run build
 
+      - name: Solo entry size guard (chat-first first load)
+        if: ${{ !cancelled() }}
+        run: node scripts/ci/solo-entry-size-guard.mjs
+
       - name: Billing payment setup safety and reconciliation
         if: ${{ !cancelled() }}
         run: |
@@ -899,6 +940,7 @@ jobs:
           # test` in the LATER step. `none` makes Deno resolve `npm:pdf-lib` from its own cache and
           # leave node_modules completely untouched. Do not "fix" a resolution error by switching
           # this back to auto; add the dependency or vendor it instead.
+          node scripts/agreements/native-pdf-bundle-proof.mjs
           deno test --allow-import --node-modules-dir=none --deny-net --deny-env --deny-run --deny-ffi --deny-sys \
             supabase/functions/_shared/agreements/token.test.ts \
             supabase/functions/_shared/agreements/document.test.ts \
@@ -913,7 +955,9 @@ jobs:
             supabase/functions/_shared/agreements/owner-preparation-http.test.ts \
             supabase/functions/_shared/agreements/prepared-signature-review.test.ts \
             supabase/functions/_shared/agreements/prepared-signature-request.test.ts \
-            supabase/functions/_shared/agreements/portal-door.test.ts
+            supabase/functions/_shared/agreements/portal-door.test.ts \
+            supabase/functions/_shared/agreements/commercial-presentation.test.ts \
+            supabase/functions/_shared/agreements/field-preparation.test.ts
           # E09 Slice A: agreement-document's third (customer portal) door is mounted before the other
           # two and leaves both byte-identical. Source pins read the repo tree only; every other deny stays.
           deno test --allow-read --allow-import --node-modules-dir=none --deny-net --deny-env --deny-write --deny-run --deny-ffi --deny-sys \
@@ -1206,6 +1250,23 @@ jobs:
       - name: E09 original client game-plan draft and saved-receipt proof
         if: ${{ !cancelled() }}
         run: node --import ./scripts/knowledge-scope/register.mjs scripts/proof/e09-client-game-plan.mjs
+
+      - name: EXP08 accepting a team invitation never lifts a suspension or leaves a global role behind a refused seat
+        if: ${{ !cancelled() }}
+        run: |
+          # accept-invite's consume path (B3, EXP08 lifecycle review round 3): a person whose seat in
+          # the invitation's workspace is suspended or otherwise not active is refused 409 before any
+          # write; otherwise the seat is written first and read back active, then the global role, each
+          # result checked, with the seat write undone if the role write fails and the role taken back
+          # if a suspension lands in between. Real team-seat.ts against a recording fake that plays the
+          # consent trigger's rules (1) and 1b and the seat-to-role sync.
+          deno test --allow-import=deno.land --node-modules-dir=none --deny-net --deny-env --deny-read --deny-write --deny-run --deny-ffi --deny-sys \
+            supabase/functions/accept-invite/team-seat.test.ts
+          # And index.ts calls it at the right moments: the check before any write, the password included.
+          deno test --allow-import=deno.land --allow-read=supabase/functions/accept-invite --node-modules-dir=none --deny-net --deny-env --deny-write --deny-run --deny-ffi --deny-sys \
+            supabase/functions/accept-invite/consume-order.test.ts
+          deno check --allow-import --node-modules-dir=none \
+            supabase/functions/accept-invite/index.ts
 
       - name: The platform email sender is not an open relay (who may send, and to whom)
         if: ${{ !cancelled() }}

@@ -1,17 +1,20 @@
-import {useCallback, useEffect, useId, useRef, useState, type FormEvent} from 'react';
+import {useCallback, useEffect, useId, useLayoutEffect, useRef, useState, type FormEvent} from 'react';
+import {flushSync} from 'react-dom';
 import {Check, Lock, RefreshCw, X} from 'lucide-react';
 import {useBeforeUnloadGuard} from '@/hooks/useBeforeUnloadGuard';
 import {useClientPrivateRequest} from '@/hooks/useClientPrivateRequest';
 import type {OwnerActionScope} from '@/hooks/useClientActionsOwner';
+import {handOffPaigePrompt} from '@/lib/paigePromptHandoff';
+import {getPaigeClientScope,subscribePaigeClientScope} from '@/solo/paigeClientScope';
 import './client-private-requests.css';
 
 export type PrivateRequestModel=ReturnType<typeof useClientPrivateRequest>;
 type OwnerPhase='loading'|'ready'|'refused'|'error';
-type Props={model:PrivateRequestModel;clientName:string;expanded:boolean;ownerPhase:OwnerPhase;onCollapse:()=>void;panelId?:string};
+type Props={model:PrivateRequestModel;clientName:string;expanded:boolean;ownerPhase:OwnerPhase;onCollapse:()=>void;panelId?:string;onReviewSharing?:(workId:string)=>void};
 const stateLabel=(state:string)=>state==='prepared'?'Private request':state==='shared'?'Customer action linked':'Changed in work';
 const date=(value:string)=>new Intl.DateTimeFormat(undefined,{dateStyle:'medium',timeStyle:'short'}).format(new Date(value));
 
-export function PrivateRequestEditor({model,clientName,expanded,ownerPhase,onCollapse,panelId}:Props){
+export function PrivateRequestEditor({model,clientName,expanded,ownerPhase,onCollapse,panelId,onReviewSharing}:Props){
  const generatedId=useId(),id=panelId??generatedId,panel=useRef<HTMLDivElement>(null),titleInput=useRef<HTMLInputElement>(null),bodyInput=useRef<HTMLTextAreaElement>(null),savedHeading=useRef<HTMLHeadingElement>(null);
  const [title,setTitle]=useState(''),[body,setBody]=useState(''),[validation,setValidation]=useState(false);
  const previous=useRef({expanded:false,phase:model.phase}),historySync=useRef<string|null>(null),pendingFocus=useRef<'title'|'saved'|null>(null);
@@ -67,8 +70,12 @@ export function PrivateRequestEditor({model,clientName,expanded,ownerPhase,onCol
      {request.content_state==='prepared'?<><strong>{request.title}</strong><p className="trc-action-words">{request.body}</p>
       <p className="trc-private-note"><Lock aria-hidden="true"/>Saved privately. Sharing requires a separate approval.</p></>
       :<p>{request.content_state==='shared'?'The saved work links to a customer action. Its current response remains in the original action history.':'This work changed after preparation. Its earlier wording is withheld.'}</p>}
+     {request.content_state==='prepared'&&!model.result?.recipient_available&&<p className="trc-private-note">Sharing is not available for this customer yet. Check their portal access and consent.</p>}
      <p className="trc-private-note">Created <time dateTime={request.created_at}>{date(request.created_at)}</time></p>
-     <div className="trc-private-buttons"><button type="button" className="trc-shared-quiet" onClick={()=>void model.checkSaved()}>Check saved request</button>
+     <div className="trc-private-buttons">
+      {request.content_state==='prepared'&&model.result?.recipient_available&&onReviewSharing&&<button type="button" className="trc-shared-quiet" disabled={!ready||busy}
+       onClick={()=>{if(ready&&!busy)onReviewSharing(request.work_id);}}>Review sharing with PAIGE</button>}
+      <button type="button" className="trc-shared-quiet" onClick={()=>void model.checkSaved()}>Check saved request</button>
       <button type="button" className="trc-shared-quiet" onClick={another}>Prepare another request</button></div>
     </div>:model.phase==='checking'?<p role="status">Checking the original saved request…</p>:<form aria-labelledby={`${id}-heading`} onSubmit={submit} noValidate aria-busy={busy||undefined}>
      <p className="trc-private-note">Prepare a next step for {clientName}. Save privately before reviewing sharing.</p>
@@ -130,6 +137,16 @@ export function ClientPrivateRequests({scope,clientName,ownerPhase}:{scope:Owner
 }
 function PrivateRequestScope({scope,...props}:Omit<Props,'model'>&{scope:OwnerActionScope}){
  const model=useClientPrivateRequest(scope);
+ const currentReview=useRef(false),queuedReview=useRef<(()=>void)|null>(null);
+ const cancelQueuedReview=useCallback(()=>{queuedReview.current?.();queuedReview.current=null;},[]);
+ useLayoutEffect(()=>{
+  currentReview.current=props.ownerPhase==='ready'&&model.phase==='saved';
+  if(!currentReview.current)cancelQueuedReview();
+  const stop=subscribePaigeClientScope(()=>{
+   if(getPaigeClientScope(scope.tenant)?.clientId!==scope.contact)cancelQueuedReview();
+  });
+  return()=>{currentReview.current=false;cancelQueuedReview();stop();};
+ },[props.ownerPhase,model.phase,scope.tenant,scope.contact,cancelQueuedReview]);
  const {readHistory,checkSaved}=model;
  const revalidate=useCallback(()=>{void readHistory();void checkSaved();},[readHistory,checkSaved]);
  useEffect(()=>{
@@ -137,5 +154,23 @@ function PrivateRequestScope({scope,...props}:Omit<Props,'model'>&{scope:OwnerAc
   window.addEventListener('focus',revalidate);document.addEventListener('visibilitychange',visible);
   return()=>{window.removeEventListener('focus',revalidate);document.removeEventListener('visibilitychange',visible);};
  },[revalidate]);
- return <PrivateRequestEditor {...props} model={model}/>;
+ const reviewSharing=(workId:string)=>{
+  const saved=model.result,request=saved?.request;
+  if(props.ownerPhase!=='ready'||model.phase!=='saved'||!saved?.found||!saved.recipient_available
+   ||saved.actor_id!==scope.actor||saved.tenant_id!==scope.tenant||saved.contact_id!==scope.contact
+   ||!request||request.content_state!=='prepared'||request.work_id!==workId)return;
+  // Original shell/prefill only: the person sends this request and approves the
+  // eventual exact card separately. No private words, email, versions or tokens
+  // enter the handoff. References are identifiers, never execution authority.
+  // Commit the original focus first: the previous writable composer must not
+  // consume this question before its client-scoped draft changes. A scope or
+  // actor change can retire this keyed record during that commit.
+  cancelQueuedReview();
+  flushSync(()=>window.dispatchEvent(new CustomEvent('paige:open',{detail:{clientId:scope.contact,clientLabel:props.clientName}})));
+  if(!currentReview.current||getPaigeClientScope(scope.tenant)?.clientId!==scope.contact)return;
+  const cancel=handOffPaigePrompt(`Help me review sharing this saved customer request. Read the original saved request and show me the exact review before sharing anything.\n\nCustomer record: ${scope.contact}\nSaved request reference: ${workId}`);
+  if(!currentReview.current||getPaigeClientScope(scope.tenant)?.clientId!==scope.contact)cancel();
+  else queuedReview.current=cancel;
+ };
+ return <PrivateRequestEditor {...props} model={model} onReviewSharing={reviewSharing}/>;
 }

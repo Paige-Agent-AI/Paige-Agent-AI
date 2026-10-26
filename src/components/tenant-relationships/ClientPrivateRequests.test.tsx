@@ -4,6 +4,8 @@ import {beforeEach,afterEach,expect,it,vi} from 'vitest';
 import {ClientActionItems} from './ClientActionItems';
 import {hasUnsavedWork} from '@/hooks/useBeforeUnloadGuard';
 import type {PrivateRequestResult} from '@/lib/client-private-request';
+import {takePendingPaigePrompt} from '@/lib/paigePromptHandoff';
+import {clearPaigeClientScope,readPaigeOpenScope,setPaigeClientScope} from '@/solo/paigeClientScope';
 
 (globalThis as {IS_REACT_ACT_ENVIRONMENT?:boolean}).IS_REACT_ACT_ENVIRONMENT=true;
 type Listener=(event:string,session:{user:{id:string}}|null)=>void;
@@ -34,6 +36,27 @@ const type=async(selector:string,value:string)=>act(async()=>{const input=host.q
 const words=async()=>{await type('input','  Review the plan  ');await type('textarea','  Read the guide.\nBring one question.  ');};
 beforeEach(()=>{Object.assign(f.context,{activeUserId:actor,activeTenantId:tenant,accountContextLoading:false,accountContextStatus:'ready'});f.listeners.clear();f.rpc.mockReset().mockImplementation(native);f.user.mockReset().mockResolvedValue({data:{user:{id:actor}},error:null});saved=new Map();host=document.createElement('div');document.body.append(host);root=createRoot(host);});
 afterEach(()=>{act(()=>root.unmount());host.remove();expect(f.listeners.size).toBe(0);expect(hasUnsavedWork()).toBe(false);});
+
+it('hands only original record references to the existing unsent owner Chat review',async()=>{
+ const events:unknown[]=[],listener=(event:Event)=>{const detail=(event as CustomEvent).detail;events.push(detail);const scope=readPaigeOpenScope(detail,tenant);if(scope)setPaigeClientScope(scope);};
+ window.addEventListener('paige:open',listener);
+ try{
+  await mount();await click('Prepare request');await words();await click('Save private request');
+  const before=f.rpc.mock.calls.length;await click('Review sharing with PAIGE');
+  expect(events).toHaveLength(1);expect(events[0]).toMatchObject({clientId:contact,clientLabel:'Jordan Rivera'});
+  const prompt=takePendingPaigePrompt()!;
+  expect(prompt).toContain(`Customer record: ${contact}`);expect(prompt).toContain(`Saved request reference: ${work}`);
+  for(const value of ['Review the plan','Read the guide','Bring one question',version,actor,tenant])expect(prompt).not.toContain(value);
+  expect(Object.keys(events[0]as object).sort()).toEqual(['clientId','clientLabel']);
+  expect(f.rpc.mock.calls).toHaveLength(before);expect(host.textContent).toContain('Saved privately');
+ }finally{window.removeEventListener('paige:open',listener);takePendingPaigePrompt();clearPaigeClientScope();}
+});
+it('does not offer sharing when the native result cannot resolve an eligible recipient',async()=>{
+ f.rpc.mockImplementation((name,args)=>{const reply=native(name,args);return name==='prepare_client_portal_request'?{data:{...reply.data,recipient_available:false},error:null}:reply;});
+ await mount();await click('Prepare request');await words();await click('Save private request');
+ expect(host.textContent).toContain('Saved privately');expect(button('Review sharing with PAIGE')).toBeUndefined();
+ expect(host.textContent).toContain('Check their portal access and consent.');
+});
 
 it('does not request private material until the owner opens preparation',async()=>{await mount();expect(f.rpc).toHaveBeenCalledTimes(1);expect(host.querySelector('input')).toBeNull();await click('Prepare request');expect(f.rpc.mock.calls.map(x=>x[0])).toEqual(['list_pending_customer_actions','list_client_portal_request_drafts']);expect(host.textContent).toContain('No private requests have been prepared');expect(host.querySelector('button[aria-expanded="true"]')?.getAttribute('aria-controls')).toBe(host.querySelector('.trc-private-request')?.id);});
 it('saves through the original hook and displays canonical normalized words and version-bound history',async()=>{await mount();await click('Prepare request');await words();await click('Save private request');expect(host.textContent).toContain('Saved privately');expect(host.textContent).toContain('Read the guide.\nBring one question.');const calls=f.rpc.mock.calls.filter(x=>x[0]==='prepare_client_portal_request');expect(calls).toHaveLength(1);expect(calls[0][1]).toMatchObject({_expected_actor_id:actor,_expected_tenant_id:tenant,_contact_id:contact,_title:'Review the plan',_body:'Read the guide.\nBring one question.'});expect([...saved.values()][0].request?.version).toBe(version);expect(host.querySelector('h5[tabindex]')).toBe(document.activeElement);expect(hasUnsavedWork()).toBe(false);});

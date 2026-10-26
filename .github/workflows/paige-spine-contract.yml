@@ -726,6 +726,12 @@ jobs:
       # approval, and Updates consent for promotions/announcements to portal-linked contacts at plan AND send.
       - run: supabase test db supabase/tests/e09_campaign_portal_audience.sql
         if: ${{ !cancelled() }}
+      # EXP03 email journey: the rest of the campaign lifecycle — saved drafts reopen as saved, members and
+      # other businesses refused, a filed version frozen, stale or generic approvals refused, PAIGE files but
+      # never approves, decline returns a draft, suppression re-checked at send, an expired lease never
+      # re-sent, a duplicate record refused, cancel mid-send, and a resend never reaching anyone twice.
+      - run: supabase test db supabase/tests/email_campaign_lifecycle.sql
+        if: ${{ !cancelled() }}
       # E09 K2: relevant retrieval — the asker re-resolved from the thread; authorized set first, candidates only
       # through the exact-chunk check, ranked by distance, five sources, eight passages within 4,800 characters
       # in index order; unrankable shares fill by recency; no embedding = the K1 read's documents, order and text; finance re-checked;
@@ -977,6 +983,15 @@ jobs:
       # ordinary-member side); and no credential material crosses. Rides this replayed DB for the same
       # §24 reason as above.
       - run: psql -v ON_ERROR_STOP=1 -f supabase/tests/integrations_surface_sees_mcp.sql postgresql://postgres:postgres@127.0.0.1:54322/postgres
+      # EXP10: the Systems Check runner read-set grant pin. 20260816160000 declared the rule
+      # ("the grant set covers every table the runner modules .from()"); PR7 added two read
+      # targets without the grants and every scheduled sweep errored until 20271115100000.
+      # This pin makes the rule executable against the REBUILT database (real roles, real
+      # tables, production-truth ACLs via reproduce-production-grants.sh) — the comms-job
+      # database is empty at step time, so wiring it there was a vacuous green (review P1 of
+      # 5c6a8a0ab: without roles/tables every assertion errors, and only ON_ERROR_STOP
+      # converts that into a red). ON_ERROR_STOP is set at the step level, as here.
+      - run: psql -v ON_ERROR_STOP=1 -f supabase/tests/systems_check_runner_read_grants.sql postgresql://postgres:postgres@127.0.0.1:54322/postgres
       # There must be exactly ONE public.record_capability_run (migration 20270411090000).
       # 20270107000000 added four trailing params as a NEW signature instead of replacing the
       # old one, and issued no DROP — so BOTH were live with defaults past the fifth argument,

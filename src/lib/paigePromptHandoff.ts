@@ -18,7 +18,7 @@ import { detectVpAddress } from "../../supabase/functions/_shared/paige-context/
 const EVENT = "paige:prefill";
 const MAX = 4000;
 
-let pending: string | null = null;
+let pending: { text: string } | null = null;
 
 /** Strip control characters and cap the length; a handed-off question is plain text. */
 export function cleanPaigePrompt(prompt: unknown): string | null {
@@ -28,17 +28,20 @@ export function cleanPaigePrompt(prompt: unknown): string | null {
   return text ? text.slice(0, MAX) : null;
 }
 
-/** Hand a question to PAIGE's composer: held until one takes it, and announced to any mounted one. */
-export function handOffPaigePrompt(prompt: unknown): void {
+/** Hand a question to PAIGE's composer; the optional returned cleanup retires only
+ * this still-waiting question, never another producer's question or a typed draft. */
+export function handOffPaigePrompt(prompt: unknown): () => void {
   const text = cleanPaigePrompt(prompt);
-  if (!text) return;
-  pending = text;
+  if (!text) return () => {};
+  const waiting = { text };
+  pending = waiting;
   if (typeof window !== "undefined") window.dispatchEvent(new CustomEvent(EVENT, { detail: { prompt: text } }));
+  return () => { if (pending === waiting) pending = null; };
 }
 
 /** Take the waiting question, if any. It is handed out once. */
 export function takePendingPaigePrompt(): string | null {
-  const text = pending;
+  const text = pending?.text ?? null;
   pending = null;
   return text;
 }

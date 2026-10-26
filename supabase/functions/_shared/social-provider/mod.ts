@@ -16,6 +16,25 @@ export interface SocialProviderProfile {
   accounts: SocialProviderAccount[];
 }
 
+/** What one platform's publish attempt proved — the provider's own identifiers, verbatim. */
+export interface SocialProviderPostResult {
+  platform: string;
+  success: boolean;
+  postId: string | null;
+  postUrl: string | null;
+  error: string | null;
+}
+
+/** The provider's answer to one createPost call. */
+export type SocialProviderPostOutcome =
+  | { kind: "published"; results: SocialProviderPostResult[] }
+  /** The provider accepted the post for background processing and named it — the outcome is
+   *  UNKNOWN until its status is reconciled; the requestId is the reconciliation handle. */
+  | { kind: "processing"; requestId: string }
+  /** The transport itself was uncertain (network failure after send, or an unusable answer).
+   *  The post MAY exist; nothing here may be reported as either success or failure. */
+  | { kind: "unknown"; requestId: string | null; reason: string };
+
 export interface SocialProviderAdapter {
   readonly key: string;
   isConfigured(): boolean;
@@ -27,6 +46,14 @@ export interface SocialProviderAdapter {
   }): Promise<{ url: string; expiresAt: string }>;
   readProfile(input: { providerProfileKey: string }): Promise<SocialProviderProfile>;
   deleteProfile(input: { providerProfileKey: string }): Promise<void>;
+  /** Publish one text post to one platform under one provider profile. Never schedules, queues,
+   *  or fans out — the door publishes exactly what one approval claimed, now. */
+  createPost(input: {
+    providerProfileKey: string;
+    platform: string;
+    text: string;
+    externalId: string;
+  }): Promise<SocialProviderPostOutcome>;
 }
 
 export class SocialProviderError extends Error {

@@ -42,8 +42,9 @@
 // held act's coordinates. This one door also delegates those to the Layer-C approval-executor — re-running the
 // governed decision as an execute and driving the adapter → ledger — so there is still ONE approve door (§18),
 // not a second. The exact canonical owner.task companion admits this workspace's active owner/admin
-// seat. Unrelated approvals retain their existing global-admin + tenant admission; metadata alone can
-// never select Layer C, and no outbound-send permission is added here.
+// seat. Unrelated approvals admit the approval workspace's own owner/admin (or managing agency) and the
+// Platform Operator (EXP08 stage 0, ./admission.ts); metadata alone can never select Layer C, and no
+// outbound-send permission is added here.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { approvalRefusalMessage, executeApprovedLayerCAct, type ApproveExecutorDb } from "../_shared/paige-orchestration/approve-executor.ts";
 import { CLIENT_CONTACT_METHODS_EMBED, clientAddresses } from "../_shared/contact-methods.ts";
@@ -54,6 +55,7 @@ import {
   holdReasonOf, refuseSendKindApproval, type HeldDraftContent, type HoldReason, type SendKindAdmin,
 } from "./action-email.ts";
 import { resolveWorkspaceAuthority } from "../_shared/workspace-authority.ts";
+import { approvalAdmission, isApprovalOperator } from "./admission.ts";
 
 const objectRecord = (value: unknown): Record<string, unknown> | null =>
   value !== null && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : null;
@@ -89,10 +91,9 @@ Deno.serve(async (req) => {
   const { data: { user }, error: userError } = await userClient.auth.getUser();
   if (userError || !user) return json(401, { error: "unauthorized" });
 
-  // Existing unrelated paths keep their global-admin admission. Only the exact
-  // canonical owner.task companion below gains ordinary current-workspace seats.
-  const { data: isAdmin, error: adminRoleError } = await admin.rpc("has_role", { _user_id: user.id, _role: "admin" });
-  const legacyAdmin = !adminRoleError && isAdmin === true;
+  // EXP08 stage 0 (owner ruling 2026-10-26): admission is about THIS approval's workspace, never the
+  // global `admin` row an owner/admin seat in any workspace writes. See ./admission.ts.
+  const operator = await isApprovalOperator(admin, user.id);
 
   let payload: { approval_id?: string };
   try { payload = await req.json(); } catch { return json(400, { error: "invalid_json" }); }
@@ -106,7 +107,13 @@ Deno.serve(async (req) => {
     .eq("id", approvalId)
     .maybeSingle();
   if (loadErr) return json(503, { error: "approval_lookup_unavailable" });
-  if (!approval) return legacyAdmin ? json(404, { error: "approval_not_found" }) : json(403, { error: "forbidden" });
+  if (!approval) return operator ? json(404, { error: "approval_not_found" }) : json(403, { error: "forbidden" });
+
+  // The workspace's own owner/admin (or the agency managing it), or the Platform Operator. An approval
+  // with no workspace is the operator's alone. An authority read failure is 503, never a guessed answer.
+  const admission = await approvalAdmission(admin, user.id, approval.tenant_id, operator);
+  if (admission === "unavailable") return json(503, { error: "approval_authority_unavailable" });
+  const workspaceAdmitted = admission === "admit";
 
   const taskSeat = async (): Promise<boolean> => {
     try {
@@ -116,21 +123,7 @@ Deno.serve(async (req) => {
       return (await resolveWorkspaceAuthority(userClient, admin, user.id, approval.tenant_id)).seat === true;
     } catch { return false; }
   };
-  if (!legacyAdmin && !await taskSeat()) return json(403, { error: "forbidden" });
-
-  // Preserve the existing tenant defense for unrelated global-admin paths. The
-  // owner.task exception is checked more strictly against the active seat below.
-  const { data: isOwner } = await admin.rpc("is_platform_owner", { _user_id: user.id });
-  if (legacyAdmin && approval.tenant_id && !isOwner) {
-    const { data: membership } = await admin
-      .from("tenant_members")
-      .select("tenant_id")
-      .eq("user_id", user.id)
-      .eq("tenant_id", approval.tenant_id)
-      .eq("status", "active")
-      .maybeSingle();
-    if (!membership) return json(403, { error: "cross_tenant_forbidden" });
-  }
+  if (!workspaceAdmitted && !await taskSeat()) return json(403, { error: "forbidden" });
 
   // Keep every send-kind refusal before claims AND route selection. Even a
   // forged orchestration/campaign shape must not bypass this incumbent guard.
@@ -190,7 +183,7 @@ Deno.serve(async (req) => {
     canonicalLayerC = canonical.value;
   }
   const ownerTask = canonicalLayerC?.capabilityKey === "owner.task";
-  if ((!legacyAdmin && !ownerTask) || (ownerTask && !await taskSeat())) return json(403, { error: "forbidden" });
+  if ((!workspaceAdmitted && !ownerTask) || (ownerTask && !await taskSeat())) return json(403, { error: "forbidden" });
 
   // Idempotency: don't re-run a row that already went out.
   if (approval.status === "sent" || approval.status === "approved") {

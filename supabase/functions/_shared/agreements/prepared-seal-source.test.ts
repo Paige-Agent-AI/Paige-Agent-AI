@@ -1,4 +1,5 @@
 import {assert,assertEquals} from 'https://deno.land/std@0.190.0/testing/asserts.ts';
+import type {PDFPage,PDFObject} from 'npm:pdf-lib@1.17.1';
 import {sealAndComplete} from './seal.ts';
 import {sealAgreementPdf} from './document.ts';
 import {preparedSealFixture} from './test-fixtures/prepared-seal.ts';
@@ -37,8 +38,8 @@ async function setup(change?:(wire:Record<string,unknown>)=>void,rpcError:unknow
 async function pageOperators(bytes:Uint8Array){
  const {PDFDocument,PDFArray,PDFRawStream,decodePDFRawStream}=await import('npm:pdf-lib@1.17.1');
  const pdf=await PDFDocument.load(bytes);
- return pdf.getPages().slice(0,4).map(page=>{const contents=page.node.Contents();if(!contents)return '';
-  return (contents instanceof PDFArray?contents.asArray():[contents]).map(entry=>{
+ return pdf.getPages().slice(0,4).map((page:PDFPage)=>{const contents=page.node.Contents();if(!contents)return '';
+  return (contents instanceof PDFArray?contents.asArray():[contents]).map((entry:PDFObject)=>{
    const stream=pdf.context.lookup(entry);assert(stream instanceof PDFRawStream);
    return new TextDecoder().decode(decodePDFRawStream(stream).decode());}).join('\n');});
 }

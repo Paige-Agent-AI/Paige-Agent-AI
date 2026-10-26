@@ -1,0 +1,56 @@
+{
+  "desktop": {
+    "canvas": [
+      {
+        "height": 1263.050048828125,
+        "pixelHeight": 1264,
+        "pixelWidth": 977,
+        "width": 976
+      }
+    ],
+    "docWidth": 1351,
+    "height": 900,
+    "width": 1366
+  },
+  "keyboard": {
+    "state": "Browser tab: 20, Title: \"Original native PDF viewer verification\", URL: \"http://127.0.0.1:57355/\".\n1 AXWebArea Original native PDF viewer verification, URL: 127.0.0.1:57355/\n\t2 container\n\t\t3 text Local verification copy · no signing or payment\n\t\t4 container Document field preparation\n\t\t\t5 container\n\t\t\t\t6 heading Document review verification, Value: 3\n\t\t\t\t\t7 text Document review verification\n\t\t\t\t8 text Inspect the retained PDF and field positions. This view cannot change the document. 0 fields\n\t\t\t9 text Read-only verification of the original native document.\n\t\t\t10 container\n\t\t\t\t11 text Assign fields to\n\t\t\t\t12 pop up button (disabled, collapsed, settable) Description: Field recipient, Value: No signers on this agreement, Secondary Actions: Expand\n\t\t\t\t\t13 menu\n\t\t\t\t\t\t14 (disabled) No signers on this agreement\n\t\t\t15 container Field type\n\t\t\t\t16 checkbox (disabled) Signature, Value: 1\n\t\t\t\t17 checkbox (disabled) Initials, Value: 0\n\t\t\t\t18 checkbox (disabled) Signed date, Value: 0\n\t\t\t\t19 checkbox (disabled) Text, Value: 0\n\t\t\t\t20 checkbox (disabled) Checkbox, Value: 0\n\t\t\t21 text Recipient labels are unavailable for this version\n\t\t\t22 text Current signer names are not substituted for earlier, unverified identities.\n\t\t\t23 button (disabled) Previous document page\n\t\t\t24 text Page  1  of  1\n\t\t\t25 button (disabled) Next document page\n\t\t\t26 container\n\t\t\t\t27 text Zoom\n\t\t\t\t28 pop up button (collapsed, settable) Description: Document zoom, Value: Fit to width, Secondary Actions: Expand\n\t\t\t\t\t29 menu\n\t\t\t\t\t\t30 (selected) Fit to width\n\t\t\t\t\t\t31 100%\n\t\t\t\t\t\t32 150%\n\t\t\t\t\t\t33 200%\n\t\t\t34 container Scrollable document page\n\t\t\t\t35 image Document page 1\n\t\t\t52 container\n\t\t\t\t53 button (expanded) Read page text, Secondary Actions: Collapse\n\t\t\t\t\t54 text Read page text\n\t\t\t\t55 text Document review verification  Controlled interface verification copy.  This document checks the original native PDF renderer and viewer.  No services, signature request or payment request are created by this local verification.  The document shown must be the exact bytes produced and checked by the original document  engine.\n\t\t\t38 container Assigned fields\n\t\t\t\t39 heading Place a signature, Value: 4\n\t\t\t\t\t40 text Place a  signature\n\t\t\t\t41 text Choose an agreement signer first.\n\t\t\t\t42 checkbox (disabled) Place on document, Value: 0\n\t\t\t\t43 button (disabled) Add at page centre\n\t\t\t\t44 text Use the position controls or arrow keys for precise adjustments. Shift moves ten points.\n\t\t\t\t45 heading Assigned fields, Value: 4\n\t\t\t\t\t46 text Assigned fields\n\t\t\t\t47 text No fields placed yet.\n\t\t\t48 button (disabled) Undo field change\n\t\t\t49 container\n\t\t\t\t50 text Read-only field inspection. Save unfinished fields to return later. Required fields and overlaps must be resolved before requesting signatures.\n\t\t\t51 button (disabled) Save draft fields\n\nThe focused UI element is 53 button (expanded) Read page text, Secondary Actions: Collapse",
+    "focus": {
+      "tag": "SUMMARY",
+      "text": "Read page text"
+    }
+  },
+  "narrow": {
+    "canvas": [
+      {
+        "height": 395.4750061035156,
+        "pixelHeight": 396,
+        "pixelWidth": 306,
+        "width": 305.6000061035156
+      }
+    ],
+    "docWidth": 375,
+    "height": 844,
+    "width": 390
+  },
+  "documentZoom200": {
+    "canvas": [
+      {
+        "height": 1584,
+        "pixelHeight": 1585,
+        "pixelWidth": 1225,
+        "width": 1224
+      }
+    ],
+    "docWidth": 375,
+    "documentZoom": "2",
+    "height": 844,
+    "width": 390
+  },
+  "keyboardPan": {
+    "clientWidth": 296,
+    "docWidth": 375,
+    "focusLabel": "Scrollable document page",
+    "scrollLeft": 40,
+    "scrollWidth": 1224
+  }
+}

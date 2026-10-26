@@ -1,7 +1,7 @@
 import React, { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { MemoryRouter, Route, Routes, useLocation, useNavigate } from "react-router-dom";
-import { afterEach, beforeEach, expect, it, vi } from "vitest";
+import { beforeAll, afterEach, beforeEach, expect, it, vi } from "vitest";
 
 // D5 closeout regression: the REAL SoloSettings (no ./settings mock) mounted
 // through the REAL SoloApp shell, against a backend double shaped like the
@@ -95,6 +95,15 @@ vi.mock("@/lib/voice/VoiceDeviceProvider", () => ({ VoiceDeviceProvider: ({ chil
   useVoiceDevice: () => null }));
 import SoloApp from "./SoloApp";
 
+// Route-level code split (PR9): the settings screen loads lazily inside SoloApp.
+// Vitest transforms it on FIRST import, which an in-test wait budget cannot
+// honestly cover — pre-warm at file load (the eager world paid this same cost at
+// module load). The lazy path itself is pinned by the tabSplit suite.
+const settingsWarm = import("./settings");
+beforeAll(async () => {
+  await settingsWarm;
+}, 60_000);
+
 let host: HTMLDivElement, root: Root;
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 beforeEach(() => { port.contextCalls = 0; port.failContext = false; sessionStorage.clear(); host = document.createElement("div"); document.body.append(host); root = createRoot(host); });
@@ -107,10 +116,23 @@ function Address() {
     {/* The readiness-notice CTA and every in-app Setup link navigate this exact path. */}
     <button onClick={() => navigate("/solo/123/settings/setup")}>Open Setup</button></div>;
 }
+
+// Route-level code split (PR9): SoloApp's screens load lazily; a mount or route
+// change can briefly show the shell's "Opening …" fallback. Wait for the real
+// screen instead of assuming one act flush covers the chunk resolution.
+const waitForScreenReady = async (element: HTMLElement = host) => {
+  for (let attempt = 0; attempt < 40 && element.textContent?.includes("Opening "); attempt += 1) {
+    await act(async () => { await new Promise((resolve) => setTimeout(resolve, 5)); });
+  }
+  // Post-mount effects (address canonicalization, retained-state restore) land one
+  // flush after the chunk does; settle once more so assertions see the settled screen.
+  await act(async () => { await new Promise((resolve) => setTimeout(resolve, 10)); });
+};
 const mount = async (initial: string) => {
   await act(async () => root.render(<MemoryRouter initialEntries={[initial]}>
     <Address /><Routes><Route path="/solo/:account/*" element={<SoloApp />} /></Routes>
   </MemoryRouter>));
+  await waitForScreenReady();
 };
 const address = () => host.querySelector("[data-actual-address]")?.textContent;
 const text = () => host.textContent ?? "";
@@ -118,6 +140,7 @@ async function clickOpenSetup() {
   const button = Array.from(host.querySelectorAll<HTMLButtonElement>("button")).find(node => node.textContent?.trim() === "Open Setup");
   expect(button).toBeTruthy();
   await act(async () => button!.click());
+  await waitForScreenReady();
 }
 
 it("deep link to Setup mounts the real settings tree and canonicalizes to business-profile", async () => {

@@ -24,15 +24,15 @@
       "function": "public.accept_solo_team_invite(text)",
       "purpose": "invite-copy",
       "reason": "Copies the accepted invitation's title and responsibilities onto the new membership; the membership's role comes from default_role, never from the title.",
-      "defined_in": "20261200000300_solo_team_recipient_binding.sql",
-      "fingerprint": "1c6c78d3b4fc528a"
+      "defined_in": "20271115040008_exp08_team_lifecycle.sql",
+      "fingerprint": "0d8b2a9e8da76f75"
     },
     {
-      "function": "public.create_solo_team_invite(uuid, uuid, text, text, text, text)",
+      "function": "public.create_solo_team_invite(uuid, uuid, text, text, text, text, boolean)",
       "purpose": "write",
-      "reason": "Stores the invited person's title and responsibilities on the invitation row after solo_team_invite_authority() authorizes the actor; the access granted is _permission, checked against admin | member.",
-      "defined_in": "20261047000000_an_invitation_is_sent_to_the_workspace_the_owner_named.sql",
-      "fingerprint": "f8d144bd0f04c6ad"
+      "reason": "Stores the invited person's title and responsibilities (and, since EXP08, the Team conversations choice) on the invitation row after solo_team_invite_authority() authorizes the actor; the access granted is _permission, checked against admin | member.",
+      "defined_in": "20271115040008_exp08_team_lifecycle.sql",
+      "fingerprint": "d4405a24b183ce9f"
     },
     {
       "function": "public.get_paige_team_context()",
@@ -52,8 +52,8 @@
       "function": "public.resend_solo_team_invite(uuid, uuid, uuid)",
       "purpose": "invite-copy",
       "reason": "Carries the old invitation's title and responsibilities into its replacement through create_solo_team_invite; authority is resolved by solo_team_invite_authority().",
-      "defined_in": "20261047000000_an_invitation_is_sent_to_the_workspace_the_owner_named.sql",
-      "fingerprint": "77667e901d9ca63d"
+      "defined_in": "20271115040008_exp08_team_lifecycle.sql",
+      "fingerprint": "4950f060625b6d8f"
     },
     {
       "function": "public.set_solo_team_member_work_profile(uuid, text, text)",
@@ -66,8 +66,8 @@
       "function": "public.team_hub_list_conversations(uuid)",
       "purpose": "display",
       "reason": "Returns each active teammate's title in the Team Hub roster so namesakes can be told apart in the @ picker; who may see the roster is the caller's active seat in a canonical SOLO workspace, and permission is derived from role and is_owner, never the title.",
-      "defined_in": "20271113850008_exp08_team_hub_collaboration.sql",
-      "fingerprint": "1c7ef3aea66eef8d"
+      "defined_in": "20271115040008_exp08_team_lifecycle.sql",
+      "fingerprint": "71e0780a24da227f"
     }
   ],
   "non_identity_columns": {
@@ -81,7 +81,8 @@
       "joined_at",
       "created_at",
       "updated_at",
-      "is_owner"
+      "is_owner",
+      "team_hub_access"
     ],
     "public.tenant_invite_tokens": [
       "id",
@@ -106,7 +107,8 @@
       "archived_at",
       "portal_operation_id",
       "portal_proposal_hash",
-      "portal_receipt_id"
+      "portal_receipt_id",
+      "team_hub_access"
     ]
   },
   "ts": [],
@@ -118,10 +120,16 @@
       "fingerprint": "ca845b189e11837b"
     },
     {
+      "function": "public.change_user_role(uuid, app_role, app_role, uuid, text)",
+      "reason": "Refuses a change to the retired role by name before any write. First judged when 20271115030008 re-emitted it (admin scope stage 0 changed who may call it and requires the target to be an active member of the workspace); the coach refusal is the body production already ran.",
+      "defined_in": "20271115030008_admin_scope_stage0.sql",
+      "fingerprint": "47994ae4f66b706d"
+    },
+    {
       "function": "public.grant_tenant_member_role(uuid, app_role, uuid, text)",
-      "reason": "Refuses a grant of the retired role by name before any write.",
-      "defined_in": "20270508000000_forbid_title_role_value.sql",
-      "fingerprint": "2e68e23b91930d58"
+      "reason": "Refuses a grant of the retired role by name before any write. Re-read and re-pinned for 20271115030008, which stops the global 'admin' user_roles insert and writes any other global role only for a person already active in the workspace (or on an operator path), and refuses a row-listed operator-tier role up front with PROTECTED_ROLE_GRANT_FORBIDDEN; the coach refusal is unchanged and still first.",
+      "defined_in": "20271115030008_admin_scope_stage0.sql",
+      "fingerprint": "41f03cba6726074e"
     },
     {
       "function": "public.revoke_tenant_member_role(uuid, app_role, uuid, text)",

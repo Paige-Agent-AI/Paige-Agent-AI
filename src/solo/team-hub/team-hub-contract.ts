@@ -27,6 +27,13 @@ export const TEAM_HUB_REFUSALS = [
   "too_large",
   "limit_reached",
   "rejected",
+  // EXP08 lifecycle: the caller is still on the team but their Team conversations switch is off, so
+  // every Team Hub door refuses them (their work and permission are unchanged). Distinct from
+  // not_member, whose sentence ("you're no longer on this team") would be untrue of them.
+  "conversations_off",
+  // EXP08 lifecycle: a DM's other person has Team conversations off and can't read it. Nothing was
+  // stored, so the message is NOT delivered and must never be shown as sent.
+  "recipient_conversations_off",
 ] as const;
 export type TeamHubRefusal = typeof TEAM_HUB_REFUSALS[number];
 
@@ -46,6 +53,14 @@ export interface TeamHubPerson {
   display_name: string;
   title: string | null;
   permission: TeamHubPermission;
+  /** EXP08: whether this person takes part in Team conversations (can be added, DM'd, mentioned).
+   *  `null` when the server did not say (an answer from before the switch existed). */
+  team_conversations?: boolean | null;
+}
+
+/** True only when the server SAID this person's Team conversations are off. Unknown is not off. */
+export function conversationsOff(person: Pick<TeamHubPerson, "team_conversations">): boolean {
+  return person.team_conversations === false;
 }
 
 export interface TeamHubConversation {
@@ -196,8 +211,10 @@ function parsePerson(value: unknown): TeamHubPerson | null {
   if (!isRow(value) || !isText(value.user_id) || !isText(value.display_name)) return null;
   if (!(value.title === null || value.title === undefined || typeof value.title === "string")) return null;
   if (value.permission !== "owner" && value.permission !== "admin" && value.permission !== "member") return null;
+  if (!(value.team_conversations === undefined || value.team_conversations === null || typeof value.team_conversations === "boolean")) return null;
   const title = typeof value.title === "string" && value.title.trim() ? value.title.trim() : null;
-  return { user_id: value.user_id, display_name: value.display_name.trim() || value.display_name, title, permission: value.permission };
+  return { user_id: value.user_id, display_name: value.display_name.trim() || value.display_name, title, permission: value.permission,
+    team_conversations: typeof value.team_conversations === "boolean" ? value.team_conversations : null };
 }
 
 function parseConversation(value: unknown): TeamHubConversation | null {
@@ -591,7 +608,11 @@ export function mentionCandidates(scope: MentionScope, people: TeamHubPerson[], 
   const needle = query.trim().toLowerCase();
   return people
     .filter((person) => person.user_id !== meId)
+    // EXP08: the server refuses a mention of someone whose Team conversations are off, so they are
+    // not offered: they couldn't read the conversation they would be told about.
+    .filter((person) => !conversationsOff(person))
     .filter((person) => scope.kind === "everyone" || scope.ids.includes(person.user_id))
+
     .filter((person) => !needle || mentionLabel(person, people).toLowerCase().includes(needle))
     .sort((a, b) => a.display_name.localeCompare(b.display_name));
 }
@@ -746,6 +767,12 @@ export function refusalMessage(code: TeamHubRefusal | "no_answer", action: "send
       return "This conversation isn't available to you.";
     case "not_member":
       return "You're no longer on this team.";
+    case "conversations_off":
+      return "Team conversations are off for you in this workspace. Your work and permission are unchanged.";
+    case "recipient_conversations_off":
+      return action === "send"
+        ? "Not delivered. This teammate has Team conversations turned off, so they can't read it. Your message is kept here."
+        : "This teammate has Team conversations turned off, so they can't be messaged here.";
     case "scope_changed":
       return "Your workspace changed. Team Hub is reloading for the workspace you're in now.";
     case "unavailable":

@@ -4,6 +4,34 @@ import { cleanPaigePrompt, handOffPaigePrompt, mergeIntoDraft, subscribePaigePro
 afterEach(() => { takePendingPaigePrompt(); });
 
 describe("Ask PAIGE handoff", () => {
+  it("retires only its own still-waiting question", () => {
+    const retire = handOffPaigePrompt("private review");
+    retire();
+    expect(takePendingPaigePrompt()).toBeNull();
+    const older = handOffPaigePrompt("same words");
+    handOffPaigePrompt("same words");
+    older();
+    expect(takePendingPaigePrompt()).toBe("same words");
+  });
+
+  it("does not cancel a replacement or an already delivered typed draft", () => {
+    const retire = handOffPaigePrompt("first");
+    handOffPaigePrompt("another surface");
+    retire();
+    expect(takePendingPaigePrompt()).toBe("another surface");
+    const apply = vi.fn();
+    const stop = subscribePaigePromptHandoff(apply);
+    const delivered = handOffPaigePrompt("delivered");
+    delivered();
+    expect(apply).toHaveBeenCalledExactlyOnceWith("delivered");
+    expect(takePendingPaigePrompt()).toBeNull();
+    stop();
+    const invalid = handOffPaigePrompt(null);
+    handOffPaigePrompt("valid");
+    invalid();
+    expect(takePendingPaigePrompt()).toBe("valid");
+  });
+
   it("keeps plain text only, trimmed and capped", () => {
     expect(cleanPaigePrompt("  ask\u0007 me  ")).toBe("ask me");
     expect(cleanPaigePrompt("   ")).toBeNull();

@@ -1,3 +1,164 @@
+## EXP02 original capture-phase checkpoints — development only, October26
+
+The original Systems core now has an optional trusted manual checkpoint port at
+each existing I/O/check boundary, requiring the validated WorkUUID/native signal.
+Only an explicit true acknowledgement permits the next step; refused, malformed,
+cancelled or late checkpoints retain phase/identity and cannot become a normal
+error finding or completion. No caller installs it; native Work heartbeat remains
+the authority/lease issuer, not JavaScript role logic or the callback itself.
+Genuine unchanged-core baseline115PASS/27FAIL becomes143 capture cases PASS,
+including one additional repeated-phase control; four affected suites171PASS.
+Scoped lint passes. Two local startup failures were INVALID before assertions.
+Full hosted build/review/exact CI/normal Edge release/readback remain required.
+No UI/native/grant/provider/worker/caller/scan activation, receipt or customer proof.
+ALG/CAP/manualSpine/all19/nine/9-0+12-0-4/monthlyUNKNOWNUNRETRIED retained;
+Visual N/A, Experiential INCOMPLETE, Founder NOT_ACCEPTED. Original evidence:
+[Systems capture](../evidence/e2-systems-capture-mode.md).
+
+## October26 — original manual Work safeguards deployed, scan still unavailable
+
+[#2918 actual release](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2918#issuecomment-6424997500): reviewed
+ef36f7c78752d7bc5f937d3b00d6ac54fbe64073/tree75c0b327,
+AUTHOR-REVIEW / LOWER ASSURANCE5657102273/all13 exact checks/normal Preview/
+two webSUCCESS/zero threads. Actual mergee8197859ea8aaf32f86cfaab5c79625611648e93,
+parents9dc+ef36, complete root and all16,482 outside entries/incoming docs/otherCI exact.
+Original E05 source-byte receiving b7e1171e/8be27afd retained; no new material SQL.
+
+Normal deploy-migrations40383697454/job121786526429 SUCCESS at exacte819.
+Production20271116010102 heartbeat then20271116010202 approved private claim each
+applied once; bodiesf1e7ab28b56b167c50aba50f51d6afee/11a08bb0e52828cac0011dd6ec17bbd5,
+original ABI/default300/postgres/definer/empty search_path/server-only ACLs verified;
+anon/authenticated execute=false. Same approved75-line claim SHA2564fba913a unchanged.
+No direct applier, history repair, reset or include-all. E09 next10309 window released
+after actual native readback. Original#2878 closed as superseded, not merged/deployed
+at its old head; its original failure/review/approval evidence remains historical.
+
+READY productiondpl_9TyvJ3juiLhay6vCgY2J89e6FN3K/exacte819/canonical aliases;
+both public origins200/exacte819-mvpmostu/customerUpdate:null at
+2026-10-26T19:09:56.957Z. UI/Edge delta N/A. Fresh original preparation47,
+claim40, heartbeat57 and history-reader31 native checks pass separately;
+controlled identity fixtures and seeded records are not customer acceptance.
+
+Functional: bounded private safeguards DEPLOYED/source verified. Visual: N/A,
+prior Finance rendered proof retained. Experiential: manual request/scan/result/
+Rail/recovery INCOMPLETE. Founder NOT_ACCEPTED. No scan/caller/worker/scheduler/
+provider or consequential Chat activation; manual Spine remains UNAVAILABLE.
+Original finalizer source window/consumer and authenticated proof remain owed;
+private finalizer prototypes are not a released runner or customer result.
+ALG03/06/11/12/13, nine catalogue readiness, original19 definitions and
+9PASS/0FAIL plus12PASS/0FAIL/4BLOCKED remain at their existing bounds.
+Protected monthly stays UNKNOWN/UNRETRIED; representative-week baseline UNMEASURED.
+Earlier development/order checkpoints below remain dated history, superseded only
+for this source release. Sole Master4.0 records it once; no customer announcement.
+
+## EXP02 full-matrix clarification — October26, acceptance remains open
+
+The [existing nineteen-outcome matrix](../delivery/e2-customer-experience-integration-matrix.md)
+now adds the Coordinator's original O01–O19 subcases for complete source-backed
+review, useful original Work/artifacts, approved minimal Vault context and
+revocation, held originating producers and measured representative-week value.
+All original nineteen definitions and nine analytics entries are retained; no
+readiness, algorithm, deployment, activation or customer/founder claim is promoted.
+This is acceptance clarification, not new infrastructure or an originating-domain
+takeover. Protected monthly remains UNKNOWN/UNRETRIED; baseline value UNMEASURED.
+
+## October26 — coherent original manual Work safeguards, release ordering pending
+
+O07/O14 REUSE/EXTEND only the original Work preparation, private claim and
+heartbeat contracts. The single #2918 successor composes current main9dc021eeb
+and the unchanged human-approved #2878 claim SQL. Proposed forward-only order is
+20271116010102 heartbeat then20271116010202 claim, after actual16010000.
+Coordinator/owner receiving of this next native window is still pending; these
+filenames are not production confirmation. No backward apply/history repair or
+include-all. Original #2878 remains open until actual successor release.
+
+Original heartbeat SQL SHA2563e2ed9f1 and approved75-line claim SHA2564fba913a
+are byte-identical to their reviewed predecessors. Current bff/13fc each passed
+all13 exact checks/Preview/two web statuses; those are historical, not new-head
+checks. Fresh combined native proof, sequential AUTHOR-REVIEW / LOWER ASSURANCE,
+receiving, exact-head CI/Preview, safe merge and normal native/web readback remain
+required. The original E08 midnight fixture finding is OPEN and unchanged; no
+test, clock, assertion or gate is weakened to obtain green.
+
+Actual original-native finalizer groundwork reproduces15 unmet manual-domain
+completion requirements, while original client-role/key refusals and actual Rail
+deduplication/transaction rollback pass. This is a controlled synthetic server
+suitability gap for an unavailable path, not customer execution or a new public
+authorization finding. Existing system_check/check_completed Rail vocabulary
+already fits the result; do not invent a capability key or receipt engine.
+The bounded existing transition-function window is requested in ANT161/a5c5c093,
+refined30e33450; the shared function remains untouched. Its consumer, verified
+original run/findings, atomic Work/Rail result, interruption and recovery remain
+next, before separate customer activation and authenticated proof.
+
+Functional: composed DEVELOPMENT source; current normal release unverified.
+Visual: N/A for native safeguards, prior Finance rendered evidence retained.
+Experiential: full manual request/result/Rail/recovery INCOMPLETE.
+Founder Acceptance: NOT_ACCEPTED. Algorithm Support: ALG03/06/11/12/13 unchanged;
+no prediction, causal improvement or timesaving score. Orchestration: original
+Work only; no caller, worker, scan, provider, scheduler or Chat activation.
+Manual Spine remains UNAVAILABLE; all19 outcomes/nine catalogue states and
+historical9PASS/0FAIL plus12PASS/0FAIL/4BLOCKED stay open at their stated bounds.
+Protected monthly remains UNKNOWN/UNRETRIED. Ordinary-owner browser handback from
+EXP09 is pending; no other session is inspected or borrowed.
+
+## EXP02 original manual capture interruption source released — October26
+
+[#2897 actual release](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2897#issuecomment-6421114701):
+reviewed9f6/LOWER5654522457/all11 exact+Preview/two webSUCCESS/143 local cases;
+maine993016f69293e9407ff5b97d0d827d0eeb05516/treeb6e34513. Entire incoming source
+and Brain inverse exact. Normal Edge40355616710 SUCCESS; original API certificate
+12666385155 verified locally against all four complete deployed closures/config.
+Merge webdpl_7jHPZKSorwKkBFEjgVfjj1d4NcyY READY; both public origins200/exact
+c4e2d13958ef8fe0dad89d31a7f6c93d9ec62d20-mvpgcdjr/null16:17:10UTC. That verified
+EXP05 successor changes only four original documentation paths, no runtime/config.
+
+Functional optional interruption source RELEASED. Visual N/A. No signal producer,
+caller, scan, worker, grant or activation. Issued writes remain uncertain; no
+restart/completion claim. Experiential manual Work→scan→result/Rail/recovery
+INCOMPLETE; Founder NOT_ACCEPTED. All19/nine, manual Spine UNAVAILABLE,
+catalogue/ALG and original9/0+12/0/4/monthlyUNKNOWNUNRETRIED retained. Sole Master4.0
+records the actual source release; this closeout carries no product/status change.
+
+## EXP02 original manual heartbeat guard — October26 development
+
+O07/O14 prerequisite EXTENDs only the existing EXP05-owned
+`heartbeat_paige_durable_work(uuid,text,integer)` in the received native source
+window ANT161/fcf5efe9. Exact closed manual purpose, original server key,
+one attempt/dispatch marker and current canonical Metric actor authority govern
+renewal. Auth→profile→tenant→membership→optional conversation are locked before
+Work. Actual time after waits enforces both the live lease and original
+`claimed_at + five minutes` ceiling; preparation consumes that same budget.
+No new function, argument, return field, grant, worker, scan or receipt. Complete
+other-kind body is preserved by inverse; existing transition remains finalizer.
+
+Local native proof over original Work/Metric/Knowledge and existing PostgreSQL
+fixture reproduces baseline2PASS/2FAIL→4/0;57 candidate checkpoints pass,
+including actual role denials, terminal/foreign/purpose refusals, replay/drift,
+authority-before-Work lock waits, elapsed lease/budget after waits, clock mutant
+and concurrent renewals. Surrounding Auth/Operator fixtures are synthetic,
+not customer authentication or production activation. Failed fixture setup
+attempts remain INVALID; they are not product findings.
+
+CLI-created migration is forward-renamed20271115040102; original private dispatch
+is a separate held PR#2878, no invocation. Exact receiving review, current source,
+required exact-head gates, normal release and readback remain owed. The original
+CI step is added within the received EXP02 block (ANT161/a7e44784); all other
+workflow bytes remain unchanged. Hosted execution is not yet verified.
+The prior shared history mismatch is independently observed resolved, not repaired
+by EXP02; actual frontier/order must still be rechecked before release.
+Functional: DEVELOPMENT ONLY. Visual: N/A. Experiential: complete manual request,
+scan/result/Rail/recovery INCOMPLETE. Founder NOT_ACCEPTED. Manual Spine remains
+UNAVAILABLE; ALG03/06/11/12/13 and all nine catalogue states unchanged. All19/nine,
+original9/0+12/0/4 and protected monthly UNKNOWN/UNRETRIED preserved.
+
+Filename-only order reconciliation: predecessor95d2 earned all13 exact checks,
+Preview and two webSUCCESS plus original E05 independent receiving8be27afd.
+E04 receiving350310db confirms no ready50004/60004/70004 and no objection to
+interstitial40102/40202 after current40008. Use that gap to preserve its slots;
+SQL bytes/ABI/permissions unchanged. New exact-head review/receiving/CI/Preview
+and current frontier still govern release; predecessor green stays historical.
+
 ## EXP02 continuous Finance navigation released and bounded customer proof — October25
 
 [#2883 release and authorized readback](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2883#issuecomment-6405085439)
@@ -21,6 +182,27 @@ post-reload key batch timed out/excluded. Full Chat selection/other roles/cohort
 AT/Live/provider/full Finance and all19/nine remain unverified. Founder NOT_ACCEPTED;
 finance.department stays PROOF_OWED, no catalogue/ALG promotion. Original9/0+12/0/4
 and protected monthly UNKNOWN/UNRETRIED unchanged. Sole Master4.0 records#2883.
+
+## EXP02 manual capture interruption foundation — October25, development
+
+The original Systems core now accepts an optional trusted native cancellation
+signal only with its already-validated manual Work/run identity. Existing
+default/remediation callers supply no signal and retain their original behavior.
+An interruption keeps that identity and a closed unconfirmed phase, stops late
+core continuation and cancels supported original Supabase requests. An issued
+write can still commit; cancellation never proves absence, rollback or retry.
+Actual whole-core causal source proof: original97PASS/18newFAIL becomes115PASS;
+the final four-suite Systems regression is143PASS/0FAIL.
+See [the existing O07 evidence](../evidence/e2-systems-capture-mode.md).
+
+No caller consumes the option yet. E05's current-authority heartbeat source
+window is acknowledged in ANT161/fcf5efe9; the function remains unedited and its
+final implementation still requires receiving review. Native authority, bounded
+consumer, original transition/Rail/result/recovery and authenticated proof are
+still owed. Review, exact CI and source release/readback remain separate gates.
+Functional LOCAL prerequisite; Visual N/A; Experiential INCOMPLETE; Founder
+NOT_ACCEPTED. Manual Spine/catalogue and ALG03/06/11/12/13 maturity unchanged;
+all19/nine, original9/0+12/0/4 and protected monthly UNKNOWN/UNRETRIED retained.
 
 ## EXP02 original manual Work history reader released — October25
 
@@ -86,6 +268,14 @@ remain incomplete. Founder Acceptance: NOT_ACCEPTED. No scan was run or offered;
 manual capability remains UNAVAILABLE and analytics/catalogue maturity unchanged.
 Original9/0 and12/0/4 remain historical; all19/nine continue. Protected monthly
 UNKNOWN/UNRETRIED remains intact. Earlier development/failure evidence is retained.
+
+## EXP04 original signature factory and native PDF source — October26
+
+[#2888 source receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2888#issuecomment-6407684085) records reviewed02902badb898aef1ba67708a56c9c2ac658869f7 → actual main99c63316dfc6a9a0ddd19d80660fe43fe724b564/tree5a905090e11c3ab07f0177c297591572da9fa4d8, LOWER6405130919/all13 exact checks/two webSUCCESS. The originating governed factory is SOURCE MERGED; this dated statement supersedes the earlier source-unreleased label below without rewriting its history. It reuses original Work/approval/sender/publication, immutable documents and receipts; actual signing/send/payment acceptance is separate.
+
+[#2906 source receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2906#issuecomment-6408543958) records reviewed4b8b81d3fe3c3b6a5e815db6e8c7148526585939 → actualb56f60b74f4d533b27cd814fb7b44c2d49cf85ee/tree00836569a174d37b407a9198bbfea23e6daed89f, LOWER5647146018/current-source supplement/all11 exact checks/two webSUCCESS. Same PDF engine and renderer, original bytes/versions retained; local352 cases/250steps/16suites/real graph proof, actual web build and original entry-size guard PASS. This repairs dependency registration, not a replacement signing engine.
+
+The sole [Master§4.0](../PAIGE-MASTER-PROJECT-REFERENCE.md#40-shipped-delivery-log) contains both bounded source rows. Detailed production identifiers and protected original QA remain in existing ANT-51/ANT-52; their public disclosure is separately held. Authenticated page display, full-shell/ordinary-role/cohort and complete commercial/signing/delivery acceptance remain open. Functional source merge, visual proof, complete experience and founder acceptance are separate; full O1–O12/founder NOT_ACCEPTED. ALG01/12 PARTIAL,02 INCOMPLETE,13 usefulness UNVERIFIED; no catalogue/activation/maturity promotion, customer version or recursive closeout row.
 
 ## EXP04 original history and recipient recovery — October25 verified closeout
 
@@ -385,7 +575,19 @@ Original [#2768](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2768) rev
 
 
 
+## EXP09 application startup recovery — October26 source released
+
+Original [#2900](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2900) exact reviewed7f9b53493b68d900bcd65153e22c576b1e15d7b2/LOWER5646544693, all10 applicable checks/two webSUCCESS/no-native Preview SKIP/zero threads, merged0617f6d8c5d1534d831a642bf4bf20c3486cb6d4/tree1914f3bd289a3bcf38ea12255aeb8cbe30e10c26. Actual c0d1+7f9 union retains10 own/16,379 outside entries. Normal webdpl_8ySMuLRKAmbW4CDwRdz9tjETXwk4 READY/exact0617; both origins exact0617-mvon01s9/null and actual app/assets/404/revalidation/native304 readback PASS at02:29:19UTC. [Release receipt6406895196](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2900#issuecomment-6406895196); [original UI evidence](../evidence/ui-delivery/e09-application-root-recovery.md).
+
+The original recovery boundary now catches App/provider render errors above route boundaries. Controlled bootstrap1/2→3/0, focused44/0, original renderer20 checks/0 external retains every16 prior result; healthy state/router draft and explicit guarded reload remain. Functional: source release verified for this failure class. Visual: original bounded local desktop/narrow/light/dark/keyboard/reflow proof, real device/AT owed. Experiential: latest actual customer sign-in/history and initiating cause UNVERIFIED; earlier genuine return proof is separate. Founder Acceptance NOT_REQUESTED; full42/seven, Teach CURA, CAP018–024, original lifecycle/domain/orchestration and canonical algorithms remain open. No SQL/Edge/Auth/role/consent/provider/activation or customer publication. This mechanical observed-identity closeout does not add product or a recursive shipped row.
+
 ## EXP09 approved private-request publication — October25 source milestone
+
+**October26 — original PAIGE review and publication source released.** [#2887](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2887) exact0b26/LOWER5646724361/all13+two webSUCCESS/resolved finding actually merged49a280ca02316d91c7c0bea9a0cf1111578ae1c2/treef85d5869bd. All37 own/16,368 incoming outside entries retained. Normal native40261926622/deploy121376120541 SUCCESS;20271115020009 once/six/db-live49a; wrapper/predecessor/native reader+publisher full definitions/ABIs/ACL verified. Normal web5K91 READY/exact49a/public49a-mvoo6pr4/null; containing9vHY READY/exact6e2/public6e2-mvoobovh/null/delivery checks03:09:47UTC. [Actual release6407368198](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2887#issuecomment-6407368198).
+
+Initial Edge40261926725 source gate failed23/25; actual CF JWT mismatch and stale SmartCredit risk bundle remain historical failures, not waived. Existing EXP10#2902 normal containing6e2 recovery40262247462/job121376919864 succeeds/all25 source checks/edge-live6e2; artifact12625166667/SHA1c50e8e3d4e5280cf4ade7d168f0ea62a20b51300f2ccf64d8539e2db4bf6556. PAIGE v548/JWTtrue/291 vendor-emitted entries bind committed Rootdb58; every37 E09 blob is unchanged49a→6e2. Temporary CI scratch cleanup permission warning is retained, not production-source success for cleanup. No E09 workaround/alternate executor/provider effect.
+
+Functional: original private Work review now mounts in the existing unsent composer and common HIGH scoped claim/original native publisher; bounded50/99/51/1242 source/native proof and deployment verification are separate from actual customer work. Visual: original local33 checks/31captures/19 prototype; real shell/cohort/device/AT owed. Experiential: ordinary owner approval/customer response/reload and latest returning-customer login/cause UNVERIFIED. Founder Acceptance NOT_REQUESTED; full42/seven/Teach/CAP018–024/original lifecycle and canonical algorithms remain open. OFF/HIGH/voice/unknown/private-content/INT346 controls unchanged; no activation, customer publication or maturity promotion. Earlier October25 source milestones below retain their dated scope.
 
 Original [#2851](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2851) exact reviewed58fd/all13 checks/two webSUCCESS/zero threads, documented AUTHOR-REVIEW / LOWER ASSURANCE5644315607/5644495135, actually merged81a185cfcbd5ff14d3ec9d03cd46d3d0718945f5/treee98c7c72. Actual213+58 union retains every9own and16174incoming outside entry. Original HIGH stored-call evidence, owner/customer/source/version/recipient/access/consent checks and original Work/publisher/PCA/notice/audit/response sources remain; ordinary drafted/executing refuses only this private-publication kind. No second approval, execution, inbox or receipt system.
 
@@ -517,11 +719,53 @@ feature credit for this closeout.
 
 ## EXP05 weekly same-session recovery — October25 development
 
+### October26 whole-Experience receiving reconciliation
+
+Owner design addendum ANT-11/704476b3 is mapped as subcases in the same original
+acceptance packet: original-record drilldowns, real workflow detail, compact
+nonredundant copy, purposeful color/graphics/motion, laptop/tablet/phone in both
+themes, keyboard/focus/zoom/reduced motion and bounded Impeccable finish evidence.
+No new UI or case PASS is claimed by this mapping. Master4.0 now records actual
+#2931/source083634 and #2929/source56db releases with exact CI/production/build
+boundaries. #2933 remains the next original-reader source/CI candidate; original
+ten/E5/owner-away/Builder/ZION/cohort/Live/founder acceptance stays open.
+
+Owner addendum ANT-11/7d47cc68 is mapped to the same ten outcomes and unchanged
+E5-CV1–9 in the [original acceptance packet](../delivery/experience-05-weekly-acceptance-packet.md#october26-whole-experience-reconciliation--original-scope-retained).
+Owner-away policy/trigger/artifact/Rail/notice/stop/recovery, E04 obligations,
+E08 Work/capacity and E09 acceptance are explicit subcases, not new engines or
+scope transfer. Exact producer/receiver, build/proof/held dependency and ALG
+input/logic/wiring/maturity gaps remain separate. E08's bounded Chat window and
+E09 browser allocation are preserved; current safe engineering continues.
+No capability, activation, catalogue or founder acceptance state is promoted.
+
 Original weekly hook/composer causal50/7 becomes57/0; surrounding14-file373/0.
 Same known actor/sign-in retains typed proposal/focus, original review and pending/
 unknown hold without another request. Genuine/unknown changes still retire.
 [Bounded source/evidence](../evidence/ui-delivery/exp05-weekly-session-recovery.md)
 does not authorize recurrence or close deployed/customer/cohort/Live/E5 acceptance.
+
+## EXP05 weekly review interruption — October26 development
+
+Original unadmitted weekly review now snapshots its initiating scope before the
+canonical read and refuses a cancelled, changed or unavailable identity at the
+completed-read handoff. Actual39 incumbent PASS/3 causal FAIL becomes244 PASS
+across six original suites; strict ES2020 closure passes. Initial temp-cache
+rename failure ran no assertions and remains INVALID. [Original additive evidence](../evidence/exp05-weekly-control-state-binding.json)
+retains earlier state/cutoff releases and exact source/test hashes. No Root,
+registry, risk, native writer, permission, provider or activation changes; no
+new customer-visible control. Weekly Chat/Live future controls remain unadmitted,
+all ten/E5/owner-away/Builder/ZION/role/cohort/founder proof remains open.
+
+## EXP05 weekly session retention — October26 source released
+
+Original weekly hook/composer#2890 is mergedabc8c75b7 after exacta82/LOWER5646239219,
+all10 checks/two webSUCCESS and unchanged successful retry of the retained521
+download failure. READY/exact public build and both original callbacks are read
+back; original empty owner panel reload is distinct from SDK/draft retention
+acceptance. No native/Edge/role/recurrence/provider/Live activation or catalogue/
+algorithm promotion. [Actual release and limits](../evidence/ui-delivery/exp05-weekly-session-recovery.md).
+Full ten/E5/Builder/owner-away/ZION/cohort/isolation/founder proof remains open.
 
 ## EXP05 weekly save/source recovery — October25 merged, full source proof failed
 
@@ -803,6 +1047,20 @@ Sales owner coordination retains canonical resolver/revocation.
 Overview/Banking visual refinements2694/2696 are drafts, not released or accepted.
 All19/nine, original monthly CPU/recovery/claim hold and one complete founder
 evaluation remain open. No provider/permission/algorithm/catalogue activation.
+
+## EXP05 original weekly Work-source budget — October26 development
+
+The existing Planning source point read pins its original actor/tenant/item and
+uses the same eight-second weekly elapsed-stage helper for session, membership,
+tenant and row stages. Lazy query subscription is rechecked; expiry/retirement
+returns the existing unavailable contract without later stages. All native RLS,
+raw version and Work inspector/writer contracts remain. Actual9PASS/6FAIL becomes
+four-suite109PASS, including positive within-budget/eager-rejection controls.
+Exact-lock runner repeats109PASS; original type ratchet PASS/baseline10/current6,
+with old dependency-mismatch failure and7/7 diagnostic comparison retained.
+Review/CI/deployed bundle and authenticated timeout/reload remain owed; no new
+native/provider/action/catalogue/algorithm/Experience acceptance.
+See [original source-read evidence](../evidence/ui-delivery/exp05-weekly-source-read-budget.md).
 
 ## EXP05 business-calendar return — local correction, October23
 
@@ -4119,3 +4377,30 @@ mechanical source-release accounting, not another delivery log or activation.
 ## EXP05 routine automation session recovery — October25 source correction
 
 The existing native Operations/Settings process hook must not discard original history or a pending/inconclusive control on routine same-session SIGNED_IN. Reuse canonical nonsecret actor/sign-in metadata for retention only; genuine session/scope changes still retire synchronously and original caller/native CAS remain authority. Actual hook causal38/4 becomes228/0 across five owning data/hook/UI files, including original native component/result/link preservation and all negative controls. [Source and proof limits](../evidence/ui-delivery/exp05-owner-task-session-recovery.md) retain strict base/candidate15 inherited failures/zero new, unchanged native markup/styles and actual pre-release ordinary-owner original Task/receipt/reload retrieval separately from corrected deployment acceptance. No Root lease, runtime, writer, provider, capability/catalogue/algorithm maturity or full-Experience closure; exact review/CI/deployment/current authenticated return still owed.
+## EXP02 original manual result finalization — source only, October26
+
+O07/O14/O16 extend the existing E05 Work transition under original source window
+ANT161/3b5f49aa. Forward candidate `20271116010352` follows actual E09 `10309`;
+original E04 gap receiving c0311e44 is retained, not an idle reservation. Only
+the closed manual Systems branch verifies current authority, original completed
+run/findings and original Rail before one atomic Work settlement. Every other
+kind's full source and the existing function identity/defaults/ACL remain intact.
+Late source/receipt lock waits cannot revive an expired attempt; historical
+success replay remains valid after later original-domain finding corrections,
+but cannot manufacture a missing receipt. Failure/cancellation retain original
+semantics and do not imply rollback or absence of partial data.
+
+The existing native heartbeat proof retains all57 assertions and adds91 finalizer
+checks:148 PASS, including actual two-session waits, clock mutants, concurrency,
+source/result/receipt contradictions, current-role refusals, replay and rollback.
+Original Systems/Rail/Work records are seeded synthetic fixtures, not a real scan,
+actual Auth, customer results or acceptance. No new helper/grant/runtime/worker,
+caller, scan, registry or provider activation. Exact source receiving/review/CI,
+Preview, normal native deployment and readback remain required. Manual Spine is
+UNAVAILABLE; ALG/CAP009–017 maturity, all19/nine, historical9-0+12-0-4 and protected
+monthly UNKNOWN/UNRETRIED remain unchanged. Visual N/A, Experiential INCOMPLETE,
+Founder NOT_ACCEPTED. [Original evidence](../evidence/e2-systems-capture-mode.md).
+Follow-up review reproduced partial-source completion on old0be80. The repair
+requires the canonical null full-sweep marker and rejects even an empty marked
+subset. The original no-data Preview was retired normally before revising the
+unmerged migration; all148 native controls now pass. Fresh gates remain owed.

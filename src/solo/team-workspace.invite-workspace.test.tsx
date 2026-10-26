@@ -73,6 +73,13 @@ const button = (host: HTMLElement, label: string): HTMLButtonElement => {
   if (!found) throw new Error(`no button matching "${label}" — saw: ${[...host.querySelectorAll("button")].map((b) => b.textContent).join(" | ")}`);
   return found as HTMLButtonElement;
 };
+// The approved design names the act "Send invitation" (gold, the one act that sends something);
+// after a failure the same control reads "Try again".
+const sendButton = (host: HTMLElement): HTMLButtonElement => {
+  const found = [...host.querySelectorAll("button")].find((b) => /^(Send invitation|Try again|Sending…)$/.test((b.textContent ?? "").trim()));
+  if (!found) throw new Error("no send control");
+  return found as HTMLButtonElement;
+};
 const click = (el: HTMLElement) => act(() => { el.dispatchEvent(new MouseEvent("click", { bubbles: true })); });
 const settle = (ms = 240) => act(async () => { await new Promise((r) => setTimeout(r, ms)); });
 
@@ -93,7 +100,7 @@ function mountDialog() {
 /** Fill the form and advance to the review step. */
 function compose(host: HTMLElement, email = "new.person@example.com") {
   setValue(host.querySelector("input[type=email]") as HTMLInputElement, email);
-  const title = [...host.querySelectorAll("input")].find((n) => n.placeholder === "Operations Lead") as HTMLInputElement;
+  const title = [...host.querySelectorAll("input")].find((n) => n.placeholder === "e.g. Video Editor") as HTMLInputElement;
   setValue(title, "Operations Lead");
   setValue(host.querySelector("textarea") as HTMLTextAreaElement, "Owns client handoffs.");
   click(button(host, "Review invitation"));
@@ -123,7 +130,7 @@ describe("an invitation names the workspace it will be sent to", () => {
   it("sends the workspace it was opened against as the expected workspace", async () => {
     const { host } = mountDialog();
     compose(host);
-    await act(async () => { button(host, "Confirm and send invitation").click(); });
+    await act(async () => { sendButton(host).click(); });
     const [fn, options] = mocks.invoke.mock.calls[0];
     expect(fn).toBe("solo-team-invitations");
     expect(options.body).toMatchObject({
@@ -140,7 +147,7 @@ describe("a refusal reaches the operator in the server's own words", () => {
     });
     const { host, onInvited } = mountDialog();
     compose(host);
-    await act(async () => { button(host, "Confirm and send invitation").click(); });
+    await act(async () => { sendButton(host).click(); });
     expect(mocks.error).toHaveBeenCalledWith("only an owner or admin may manage team invitations in that workspace");
     expect(mocks.success).not.toHaveBeenCalled();
     expect(onInvited, "a refused invitation does not refresh as though it worked").not.toHaveBeenCalled();
@@ -156,7 +163,7 @@ describe("a refusal reaches the operator in the server's own words", () => {
       mocks.invoke.mockResolvedValue(failure);
       const { host } = mountDialog();
       compose(host);
-      await act(async () => { button(host, "Confirm and send invitation").click(); });
+      await act(async () => { sendButton(host).click(); });
       const said = String(mocks.error.mock.calls[0][0]);
       expect(said, `leaked the constant for ${JSON.stringify(failure.error)}`).not.toMatch(/non-2xx/i);
       expect(said.length).toBeGreaterThan(0);
@@ -171,7 +178,7 @@ describe("a refusal reaches the operator in the server's own words", () => {
     });
     const { host } = mountDialog();
     compose(host);
-    await act(async () => { button(host, "Confirm and send invitation").click(); });
+    await act(async () => { sendButton(host).click(); });
     expect(String(mocks.error.mock.calls[0][0])).toContain("Reload Team");
   });
 });
@@ -185,7 +192,7 @@ describe("a workspace that changes under an open invitation", () => {
     // and sending to Northwind contradicts the live screen. So it aborts.
     mocks.tenant.activeTenantId = "tenant-2";
     rerender();
-    await act(async () => { button(host, "Confirm and send invitation").click(); });
+    await act(async () => { sendButton(host).click(); });
     expect(mocks.invoke, "nothing is sent").not.toHaveBeenCalled();
     expect(String(mocks.error.mock.calls[0][0])).toContain("Northwind Advisory");
   });
@@ -205,7 +212,9 @@ describe("the dialog survives the roster reloading underneath it", () => {
     let release!: (v: unknown) => void;
     const pending = new Promise((resolve) => { release = resolve; });
     let calls = 0;
-    mocks.rpc.mockImplementation(async () => {
+    mocks.rpc.mockImplementation(async (fn: string) => {
+      // Only the roster read is counted: the screen also reads Team conversations from Team Hub.
+      if (fn !== "get_solo_team_workspace") return { data: null, error: null };
       calls += 1;
       if (calls === 1) return { data: workspace, error: null };
       await pending;
@@ -273,10 +282,10 @@ describe("failure, retry and cancellation", () => {
     mocks.invoke.mockResolvedValueOnce({ data: null, error: functionsHttpError(500, { ok: false, error: "network unreachable" }) });
     const { host, onClose, onInvited } = mountDialog();
     compose(host);
-    await act(async () => { button(host, "Confirm and send invitation").click(); });
+    await act(async () => { sendButton(host).click(); });
     expect(onClose, "the dialog stays open").not.toHaveBeenCalled();
     mocks.invoke.mockResolvedValue({ data: { ok: true, emailed: true, tenantId: "tenant-1" }, error: null });
-    await act(async () => { button(host, "Confirm and send invitation").click(); });
+    await act(async () => { sendButton(host).click(); });
     expect(mocks.invoke).toHaveBeenCalledTimes(2);
     expect(mocks.invoke.mock.calls[1][1].body.expectedTenantId).toBe("tenant-1");
     expect(onInvited).toHaveBeenCalled();
@@ -296,8 +305,76 @@ describe("failure, retry and cancellation", () => {
     mocks.invoke.mockResolvedValue({ data: { ok: true, emailed: false, tenantId: "tenant-1" }, error: null });
     const { host } = mountDialog();
     compose(host);
-    await act(async () => { button(host, "Confirm and send invitation").click(); });
+    await act(async () => { sendButton(host).click(); });
     expect(mocks.warning).toHaveBeenCalled();
     expect(mocks.success).not.toHaveBeenCalled();
+  });
+});
+
+describe("EXP08: the invitation carries Team conversations", () => {
+  it("leaves the field out when Team conversations stay on, so every deployed function accepts the body", async () => {
+    const { host } = mountDialog();
+    compose(host);
+    expect(host.querySelector(".stw-invite-review")?.textContent).toContain("On: joins the open team channels when they accept");
+    await act(async () => { sendButton(host).click(); });
+    expect(Object.prototype.hasOwnProperty.call(mocks.invoke.mock.calls[0][1].body, "teamHubAccess")).toBe(false);
+  });
+
+  it("sends teamHubAccess: false when it is switched off, and the review says what that means", async () => {
+    const { host, onInvited } = mountDialog();
+    setValue(host.querySelector("input[type=email]") as HTMLInputElement, "spot.job@example.com");
+    const sw = host.querySelector('[role="switch"]') as HTMLButtonElement;
+    expect(sw.getAttribute("aria-checked")).toBe("true");
+    click(sw);
+    expect(sw.getAttribute("aria-checked")).toBe("false");
+    expect(host.textContent).toContain("Good for a spot-job contractor");
+    click(button(host, "Review invitation"));
+    expect(host.querySelector(".stw-invite-review")?.textContent).toContain("Off: assigned work only, no Team Hub");
+    await act(async () => { sendButton(host).click(); });
+    expect(mocks.invoke.mock.calls[0][1].body).toMatchObject({ action: "create", email: "spot.job@example.com", teamHubAccess: false });
+    expect(onInvited).toHaveBeenCalledWith({ email: "spot.job@example.com", conversations: false, emailed: true });
+  });
+
+  it("chooses permission with radio cards, not a native select, and lets an admin invite an admin as the server allows", () => {
+    // Who may invite an Admin is an open owner question; until it is ruled the shipped behaviour
+    // stands (§58): solo_team_invite_authority accepts any owner or admin, and the Admin card is live.
+    const host = document.createElement("div");
+    document.body.append(host);
+    const root = createRoot(host);
+    act(() => { root.render(<InviteDialog workspace={{ ...workspace, viewer_permission: "admin" }} onClose={vi.fn()} onInvited={vi.fn()} />); });
+    expect(host.querySelector("select"), "no native select").toBeNull();
+    const radios = [...host.querySelectorAll('[role="radio"]')] as HTMLButtonElement[];
+    expect(radios.map((r) => r.textContent)).toEqual([expect.stringContaining("Member"), expect.stringContaining("Admin")]);
+    const admin = radios[1];
+    expect(admin.getAttribute("aria-disabled")).toBeNull();
+    click(admin);
+    expect(admin.getAttribute("aria-checked")).toBe("true");
+  });
+
+  it("shows the email error only after blur or Review, keeps Review enabled, and sends focus to the field", () => {
+    const host = document.createElement("div");
+    document.body.append(host);
+    const root = createRoot(host);
+    act(() => { root.render(<InviteDialog workspace={workspace} onClose={vi.fn()} onInvited={vi.fn()} />); });
+    const input = host.querySelector("input[type=email]") as HTMLInputElement;
+    setValue(input, "not-an-email");
+    expect(host.textContent, "no error while typing").not.toContain("Enter an email address like name@company.com.");
+    const review = button(host, "Review invitation") as HTMLButtonElement;
+    expect(review.disabled, "Review stays enabled").toBe(false);
+    act(() => { (document.activeElement as HTMLElement | null)?.blur(); review.focus(); });
+    click(review);
+    expect(host.textContent).toContain("Enter an email address like name@company.com.");
+    expect(host.querySelector(".stw-invite-review"), "an invalid email does not reach the review step").toBeNull();
+    expect(document.activeElement).toBe(input);
+    act(() => root.unmount()); host.remove();
+  });
+
+  it("keeps the server's refusal on screen inside the dialog, beside a retry", async () => {
+    mocks.invoke.mockResolvedValue({ data: null, error: functionsHttpError(403, { ok: false, error: "only an owner or admin may manage team invitations in that workspace" }) });
+    const { host } = mountDialog();
+    compose(host);
+    await act(async () => { sendButton(host).click(); });
+    expect(host.querySelector('[role="alert"]')?.textContent).toContain("only an owner or admin may manage team invitations");
+    expect(sendButton(host).textContent).toBe("Try again");
   });
 });

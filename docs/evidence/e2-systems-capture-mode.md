@@ -1,4 +1,195 @@
+## October26 — optional original manual capture checkpoints, source only
+
+O07/O16 EXTEND only `RunSystemsCheckOptions`/the existing `manualBoundary` in
+the original runner. `manualCaptureCheckpoint` is a trusted internal phase port,
+not permission: a future canonical worker must bind it to the original native
+Work heartbeat/current authority/lease. No caller installs the port here. It
+requires the same validated manual WorkUUID/native AbortSignal/tenant/manual/none
+context. There is no new role policy, timer, executor, API, grant or data store.
+
+Every original context/catalog/run/check/finding/finalization/readback boundary
+awaits an explicit true acknowledgement. Malformed or refused acknowledgements
+become the existing phase-specific capture-unconfirmed result; original context
+and runner fallback catches cannot convert that refusal into continued work or
+an ordinary error finding. Cancellation races an uncooperative checkpoint and
+checks again before I/O; its late resolution/rejection cannot resume the core,
+and existing abort listeners are removed. Earlier writes remain uncertain.
+
+Original whole-core fixture is reused, not a mock implementation of the core.
+Unchanged-core causal baseline:115PASS/27FAIL. The first candidate exposed eight
+remaining fallback-catch failures, repaired without weakening assertions. Final
+143 capture cases include all115 originals, the27 causal cases and one additional
+second-check permission refresh control; all four affected suites171PASS.
+Coverage includes malformed port/context/acknowledgements, all eight phase
+refusals with actual issued-operation order, partial saved-state preservation,
+cancellation/late replies, private-reason masking and listener cleanup. Default,
+scheduled, remediation and recorded-finding/latest-run/navigation tests remain.
+Scoped ESLint/whitespace PASS. Restricted native-cache and unsupported local
+reporter failures were setup INVALID before assertions, not product failures.
+
+Functional: LOCAL source proof only; exact review/hosted CI/full compiler/normal
+four-function Edge deployment/source readback remain owed. Visual N/A;
+Experiential full manual request/result/Rail/recovery INCOMPLETE; Founder
+NOT_ACCEPTED. Original transition/Rail source window now granted by E05 in
+ANT161/3b5f49aa but its production consumer/settlement is not supplied by this port.
+No new native function, privilege, caller/worker/schedule/provider/scan or Chat
+activation. Manual Spine/CAP009–017/ALG03/06/11/12/13 unchanged; all19/nine,
+original9-0+12-0-4 and protected monthlyUNKNOWNUNRETRIED remain open.
+
+## October26 — original manual Work safeguards deployed, scan still unavailable
+
+[#2918 actual release](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2918#issuecomment-6424997500): reviewed
+ef36f7c78752d7bc5f937d3b00d6ac54fbe64073/tree75c0b327,
+AUTHOR-REVIEW / LOWER ASSURANCE5657102273/all13 exact checks/normal Preview/
+two webSUCCESS/zero threads. Actual mergee8197859ea8aaf32f86cfaab5c79625611648e93,
+parents9dc+ef36, complete root and all16,482 outside entries/incoming docs/otherCI exact.
+Original E05 source-byte receiving b7e1171e/8be27afd retained; no new material SQL.
+
+Normal deploy-migrations40383697454/job121786526429 SUCCESS at exacte819.
+Production20271116010102 heartbeat then20271116010202 approved private claim each
+applied once; bodiesf1e7ab28b56b167c50aba50f51d6afee/11a08bb0e52828cac0011dd6ec17bbd5,
+original ABI/default300/postgres/definer/empty search_path/server-only ACLs verified;
+anon/authenticated execute=false. Same approved75-line claim SHA2564fba913a unchanged.
+No direct applier, history repair, reset or include-all. E09 next10309 window released
+after actual native readback. Original#2878 closed as superseded, not merged/deployed
+at its old head; its original failure/review/approval evidence remains historical.
+
+READY productiondpl_9TyvJ3juiLhay6vCgY2J89e6FN3K/exacte819/canonical aliases;
+both public origins200/exacte819-mvpmostu/customerUpdate:null at
+2026-10-26T19:09:56.957Z. UI/Edge delta N/A. Fresh original preparation47,
+claim40, heartbeat57 and history-reader31 native checks pass separately;
+controlled identity fixtures and seeded records are not customer acceptance.
+
+Functional: bounded private safeguards DEPLOYED/source verified. Visual: N/A,
+prior Finance rendered proof retained. Experiential: manual request/scan/result/
+Rail/recovery INCOMPLETE. Founder NOT_ACCEPTED. No scan/caller/worker/scheduler/
+provider or consequential Chat activation; manual Spine remains UNAVAILABLE.
+Original finalizer source window/consumer and authenticated proof remain owed;
+private finalizer prototypes are not a released runner or customer result.
+ALG03/06/11/12/13, nine catalogue readiness, original19 definitions and
+9PASS/0FAIL plus12PASS/0FAIL/4BLOCKED remain at their existing bounds.
+Protected monthly stays UNKNOWN/UNRETRIED; representative-week baseline UNMEASURED.
+Earlier development/order checkpoints below remain dated history, superseded only
+for this source release. Sole Master4.0 records it once; no customer announcement.
+
+## October26 — coherent original manual Work safeguards, release ordering pending
+
+O07/O14 REUSE/EXTEND only the original Work preparation, private claim and
+heartbeat contracts. The single #2918 successor composes current main9dc021eeb
+and the unchanged human-approved #2878 claim SQL. Proposed forward-only order is
+20271116010102 heartbeat then20271116010202 claim, after actual16010000.
+Coordinator/owner receiving of this next native window is still pending; these
+filenames are not production confirmation. No backward apply/history repair or
+include-all. Original #2878 remains open until actual successor release.
+
+Original heartbeat SQL SHA2563e2ed9f1 and approved75-line claim SHA2564fba913a
+are byte-identical to their reviewed predecessors. Current bff/13fc each passed
+all13 exact checks/Preview/two web statuses; those are historical, not new-head
+checks. Fresh combined native proof, sequential AUTHOR-REVIEW / LOWER ASSURANCE,
+receiving, exact-head CI/Preview, safe merge and normal native/web readback remain
+required. The original E08 midnight fixture finding is OPEN and unchanged; no
+test, clock, assertion or gate is weakened to obtain green.
+
+Actual original-native finalizer groundwork reproduces15 unmet manual-domain
+completion requirements, while original client-role/key refusals and actual Rail
+deduplication/transaction rollback pass. This is a controlled synthetic server
+suitability gap for an unavailable path, not customer execution or a new public
+authorization finding. Existing system_check/check_completed Rail vocabulary
+already fits the result; do not invent a capability key or receipt engine.
+The bounded existing transition-function window is requested in ANT161/a5c5c093,
+refined30e33450; the shared function remains untouched. Its consumer, verified
+original run/findings, atomic Work/Rail result, interruption and recovery remain
+next, before separate customer activation and authenticated proof.
+
+Functional: composed DEVELOPMENT source; current normal release unverified.
+Visual: N/A for native safeguards, prior Finance rendered evidence retained.
+Experiential: full manual request/result/Rail/recovery INCOMPLETE.
+Founder Acceptance: NOT_ACCEPTED. Algorithm Support: ALG03/06/11/12/13 unchanged;
+no prediction, causal improvement or timesaving score. Orchestration: original
+Work only; no caller, worker, scan, provider, scheduler or Chat activation.
+Manual Spine remains UNAVAILABLE; all19 outcomes/nine catalogue states and
+historical9PASS/0FAIL plus12PASS/0FAIL/4BLOCKED stay open at their stated bounds.
+Protected monthly remains UNKNOWN/UNRETRIED. Ordinary-owner browser handback from
+EXP09 is pending; no other session is inspected or borrowed.
+
 # EXP02 Systems capture without automatic remediation
+
+## October26 — trusted cancellation source actually released
+
+Original [#2897 production receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2897#issuecomment-6421114701)
+binds reviewed9f6/LOWER5654522457/all11 exact checks+Preview/two webSUCCESS/143 local
+to actual maine993016f69293e9407ff5b97d0d827d0eeb05516/treeb6e34513. All16,464
+outside incoming entries and whole incoming Brain inverse exact. Normal affected
+Edge40355616710/job121687149820 SUCCESS; original certificate12666385155 ZIP
+SHA25652919e124e0319c03614254e71b8aa16d89ffb89cf654b8d52f88d4b46cb6119. All four
+API-downloaded source closures/config match immutable Git: change144/40files,
+onboarding148/40, operator150/39, scheduled151/40. No function was invoked.
+
+Merge webdpl_7jHPZKSorwKkBFEjgVfjj1d4NcyY READY/exacte993. At16:17:10UTC both
+public aliases200 returnsc4e2d13958ef8fe0dad89d31a7f6c93d9ec62d20-mvpgcdjr/null.
+Ancestry and its four original EXP05 docs-only changes verified: all runtime/
+config/certified closures unchanged. Earlier direct-e993 assertion correctly
+refused this successor; exact-e993 public alias exposure was not observed.
+
+Functional: optional source interruption support RELEASED. Visual N/A. No new
+signal producer, customer caller, grant, scan, worker or activation. Cancellation
+is neither authority nor rollback; issued writes stay uncertain. Experiential
+manual result/Rail/recovery and authenticated scan proof remain INCOMPLETE.
+Founder NOT_ACCEPTED; all19/nine/ALG/CAP/manual Spine and original9/0+12/0/4,
+monthlyUNKNOWNUNRETRIED unchanged. Sole Master4.0 records actual delivery once;
+no customer release identity or recursively logged closeout.
+
+## October26 — unchanged approved private claim moves forward, release held
+
+Current native readback observes frontier20271115040008, old290002 absent and
+the private claim function absent. The original shared history mismatch is now
+resolved by its existing owner; EXP02 performed no repair. Only this unapplied
+filename and owning proof path move to20271115040202. Exact approved75-line SQL
+SHA2564fba913a01659da82f4a3dbb167adc37b80c16b7ca5945de4bd6597b7af96da4,
+ABI, source authority, one-attempt CAS and existing service-role-only grant are
+unchanged. The original human approval remains specific; no new grant requested.
+
+Current-mainc4e2 composition preserves original source and incoming cancellation,
+Finance, Work and other-owner records. Protective heartbeat#2918/40102 is a
+separate reviewed foundation; preserve E04 pending50004/60004/70004 and coordinate
+actual order before merge. No include-all, reset, direct apply or history edit.
+Prior950 required verify failure is retained: actual E08 midnight assertion
+00:05FAIL/00:15PASS is reproduced; original E08 correction/source-window request
+ANT161/a52223e4 is pending. No blind retry, test weakening or unowned edit.
+Fresh forward-name native preparation47 plus private-dispatch40 checkpoints pass
+separately; these are source/fixture observations, not permission or invocation.
+New exact-head review/CI/Preview/receiving/normal release/readback remain required;
+earlier green or failures stay bound to their actual heads.
+
+Functional: DEVELOPMENT ONLY/private claim, no invocation. Visual N/A;
+Experiential manual request→capture→result/Rail/recovery INCOMPLETE; Founder
+NOT_ACCEPTED. No worker/scan/public or Chat/provider/spend activation. All19/nine,
+manual Spine UNAVAILABLE, CAP/ALG maturity, original9/0+12/0/4 and protected
+monthly UNKNOWN/UNRETRIED remain unchanged.
+
+E04 exact receiving350310db confirms none of50004/60004/70004 ready and no
+objection to40102/40202 after current40008. This filename-only successor uses
+that gap, preserving all its pending slots. Frozenf24 native47+40, LOWER5655428946
+and its fresh no-data Preview remain historical; approved SQL4fba is unchanged.
+The own empty Preview (0Auth/0Work/0clients) is retired through the same draft
+PR's normal lifecycle before new exact-head checks. No history DDL/reset or
+borrowed green; release order, receiving and CI remain mandatory.
+
+## October25 — unapplied claim moves forward after actual260008
+
+Claim #2878 exact08efd1e54e9ee68e58cdcbaa4a099d67468334c3 earned all13 required
+checks/Preview/two webSUCCESS and E05 receiving108ca435. It was not merged after
+the legitimate E08 main15970/native260008 release overtook its unapplied260002.
+Production readback confirms260008 current and own260002 absent. Only the
+never-applied E02 filename and owning proof path move to20271114290002, after
+known pending E09/E04 slots270009/280004; normal current-main composition and
+fresh exact-head review/CI/Preview/native readback remain required. The approved
+75-line SQL SHA2564fba913a01659da82f4a3dbb167adc37b80c16b7ca5945de4bd6597b7af96da4,
+function/ABI/server-only grant and other-kind/default factory proof are unchanged.
+Current mainece619ca includes the actual lower reader/Finance/closeout/E05/E08/E09
+source; all incoming content must be preserved. Prior checks stay historical.
+No reset/include-all/applied-history repair or invocation/worker/scan/public/Chat/
+provider activation; all19/nine/founder and protected monthly UNKNOWN stay open.
 
 ## October25 — original manual Work history read actually released
 
@@ -565,3 +756,330 @@ borrowed from the predecessor. Current main005f5d389d9faf98fa4e56ac9f3bb53c1471f
 is composed, including E08 native250008 before this reader250102. SQL/proof bytes
 and the complete other-kind reader remain fixed. No production history repair,
 reset, include-all, second applier, native invocation or activation is performed.
+
+## October25 — proposed private manual dispatch gate, release held
+
+O07 preparation after the original request/read prerequisites: one private native
+`_start_manual_systems_check_work(uuid)` over the original Work row. This is a
+concrete DEVELOPMENT proposal; the new server-role grant requires explicit owner
+authorization before production release. The earlier preparation-function grant
+does not approve this grant. No customer scan or public admission is requested.
+
+The function discovers immutable original identities, pins current Auth/profile/
+standalone active tenant/Owner-or-Admin membership/optional workspace thread in
+the same order as preparation, then locks the original Work row. It rechecks the
+closed manual pair/payload/epoch/authority labels, one attempt, actual lease time
+and native dispatch marker. Only one original dispatch CAS can succeed. The
+original attempt stays one; no new identity or restart. Duplicate, expired,
+unknown, cancelled or currently unauthorized work is refused without a state
+write. The bounded five-minute execution lease is original Work state, not a
+second scheduler. No generic/document/Knowledge writer or grant is changed.
+
+The existing PostgreSQL proof's optional `--manual-dispatch` mode retains its
+original47 checkpoints, then verifies40 claim checkpoints: real absent-function
+baseline, server-only ACL, duplicate-DDL refusal, exact original tuple, same-row
+lost-ACK refusal, eligibility/role/foreign-purpose negatives, seven observed
+native claim waits across two actual sessions, current authority after waits,
+expiry during a held row lock, three-second timeout and caller-setting restore.
+One further actual wait with only the row lock removed deliberately exposes
+duplicate admission; the repaired concurrency assertion rejects that outcome.
+The correct definition is restored before final metadata/no-scan checks. Review
+added an explicit refusal when an original run ID or Work backlink already
+exists, preserving reconciliation before any new claim. The runner's duplicate
+INSERT guard is not used as permission to rescan. Initial37/38-check and corrected
+40-check runs are distinct local observations. A redundant fixture ALTER hit the
+already installed original Work backlink and is retained INVALID42701; removing
+that setup duplication does not relax any source assertion. None is
+production activation or authenticated customer evidence. Surrounding modeled
+Auth/Operator fixture boundaries remain explicitly bounded.
+
+| Orchestration contract | This proposal |
+| --- | --- |
+| Request/entry | Future deliberate manual Systems check; no entry point admitted |
+| Source/context | Original Work actor/tenant/thread and current canonical Metric authority |
+| Capability/specialist | Manual Spine remains UNAVAILABLE/unregistered; no specialist runtime |
+| Adapter | Original Work dispatch marker, one per original attempt; no worker mode added |
+| Authority/risk | Private native permission proposal only; new grant held for owner approval |
+| Original writer | Existing Work row only; original Systems runner remains sole run/finding writer |
+| Identity/receipt | Same original Work/run UUID; no result, completion or Rail receipt produced |
+| Recovery | Duplicate/unknown/expired refusal; never replay to discover what happened |
+| Verified result | Local native CAS and negative control only; no domain execution proof |
+| Visible feedback | Existing safe Work read only; a claim is not a completed business check |
+
+Functional: LOCAL proposal; required exact-head review/CI and privileged release
+authorization remain owed. Visual: N/A/no UI delta. Experiential: original
+consumer/result/receipt/recovery and authorized ordinary SOLO scan proof remain
+INCOMPLETE. Founder Acceptance: NOT_ACCEPTED. ALG03/06/11/12/13 and CAP009–017
+readiness unchanged; concurrency safety is not a predictive-intelligence claim.
+All19/nine and historical9/0+12/0/4 preserved. No provider expense/activation,
+worker, timer, approval, correction, customer release name or monthly retry.
+
+### Specific owner grant approval received — October25
+
+Direct human approval, also verified in the Coordinator's actual owner message,
+is received in ANT138/ce7a6f00. It applies only to the exact75-line
+`_start_manual_systems_check_work(uuid)` definition and existing service-role
+EXECUTE grant, SQL SHA256
+`4fba913a01659da82f4a3dbb167adc37b80c16b7ca5945de4bd6597b7af96da4`.
+This supersedes the preceding grant-pending status at this decision boundary.
+Normal review, exact-head CI/Preview, E05 receiving inspection, forward migration
+ordering, safe production application and actual readback remain required.
+No invocation, scan, worker/scheduler/provider/spend/public or Chat admission,
+additional role/table grant, test waiver or founder acceptance is authorized.
+The unapplied260002 slot remains after actual E04 native250004; the original
+reader's unapplied slot is moving to250102 and retains prior release order.
+
+### Lower reader release and current-main composition
+
+Original reader #2877 is now released as6683bfb7cf1f0179922cc7c84840c6a0f3a5799c.
+Normal native40241921677/job121315482302 succeeded;250102 occurs once,
+bodyd953ea9965f31193d3dbf2f184114730 and original twelve-field ABI/auth-only ACL
+were read back. Both public aliases returned that exact build at22:51:45UTC.
+This composition preserves the whole reader source/proof/CI/evidence and the
+exact approved75-line claim SQL and original factory proof. The two append-only
+CI/evidence conflicts were reconciled explicitly. Fresh exact-head review/CI,
+E05 receiving and safe260002 application/readback remain required; prior green
+checks stay historical. No invocation, worker, scan, public admission or activation.
+
+## October25 — trusted native cancellation in the original manual capture core
+
+Intended usable outcome: a future authorized Systems worker can stop waiting
+after interruption without losing the original work or letting a late read
+continue into later core writes. This is a missing prerequisite, not a callable
+manual scan or completed customer workflow. EXTEND the existing core and REUSE
+native AbortSignal; no second executor, timeout factory, registry or data store.
+
+`manualCaptureSignal` is optional and accepted only with the original validated
+manual/tenant/none WorkUUID. A plain JSON lookalike, unbound signal or already
+cancelled request cannot start source work. The core forwards the same native
+signal through original Supabase builders before their terminal read/write and
+races uncooperative read ports. Abort listeners are removed on settlement.
+It rechecks cancellation after replies and never turns interrupted check reads
+into persisted error findings. Existing default callers do not install a signal.
+
+Original `SystemsCheckCaptureUnconfirmed` retains the same original Work/runUUID
+and a closed phase, including context/catalog/check reads. An issued write may
+have committed even if its acknowledgement was cancelled. No absence, rollback,
+automatic retry, receipt, completed check or current permission is inferred.
+The caller must still use original claim/current authority/lease, existing Work
+transition, actual result/receipt readback and unknown-outcome recovery.
+
+Proof command: `node node_modules/vitest/vitest.mjs run
+src/__tests__/systems-check-capture-mode.test.ts --reporter=dot`. The actual whole
+core and its declared forge import execute; no copied implementation. Original
+baseline97PASS; with eighteen new interruption/compatibility assertions the
+unchanged core produces97PASS/18FAIL. Candidate115PASS/0FAIL, plus28 original
+navigation/latest-run/source-integrity assertions: final143PASS across four
+suites. Scoped lint and diff checks pass. Initial Windows temporary-cache refusal ran zero tests and
+is INVALID as source proof; the completed local run is the counted observation.
+
+The actual pinned Supabase2.75 types resolve under Deno2.1.4/TypeScript5.6.2.
+Original and candidate compiler bodies are identical after excluding only their
+different checked-entry header: the same three diagnostics in unchanged
+prompt-forge.ts, none in the changed core. This is not a clean compile. The
+existing local parser refuses that older compiler's first-error prefix as
+unclassified; no passing local ratchet is claimed. Hosted required affected-
+function type gates remain binding. The existing affected-function resolver
+identifies change/onboarding/operator/scheduled as the four original consumers.
+
+Deferred original-source fixtures deliberately ignore cancellation and withhold
+acknowledgements AFTER their simulated writes commit. Seven core I/O phases,
+late returned/thrown checks, concurrent resolution, native signal propagation,
+listener cleanup, malformed/unbound signals and already-cancelled refusal are
+covered. Late replies cannot issue later core writes, forge/file actions or
+invent a completed result. These fixtures prove source behavior only, not real
+RLS, customer authentication, latency SLO or provider cancellation/rollback.
+
+| Orchestration contract | Actual boundary |
+| --- | --- |
+| Request/entry | Future manual Systems request from existing Executive/Chat path; no caller/admission added |
+| Evidence/actor | Original tenant-scoped registry/runners; trusted native Work identity, not audit/body authority |
+| Capability/specialist | Manual Spine UNAVAILABLE/unregistered; VERA interpretation, no new registration |
+| Adapter | Existing Systems core only; no Layer C executor for ordinary reads |
+| Authority | Existing native claim/current-authority/lease still required; cancellation grants none |
+| Writer | Original run/finding producer, no remediation/model/provider effect |
+| Durable identity | Original WorkUUID/run/work_id; no new Work or Rail receipt here |
+| Interruption | Original unconfirmed identity/phase; late commit possible, no replay/absence claim |
+| Verified result | Original readbacks still required; no actual worker/receipt/customer completion proved |
+| Return | Existing authorized Work/history and original receipt/result reconciliation remain owed |
+
+The E05 heartbeat/current-authority seam proposed in ANT161/a27eba0c has not been
+edited. ACKfcf5efe9 now permits that bounded original-function source window;
+immutable implementation/proof receiving remains required before its merge.
+No permission grant is inferred. Required final
+review/exact-head CI/merge, normal affected Edge source readback and public
+production identity remain separate release obligations.
+
+Functional: LOCAL prerequisite. Visual: N/A, no UI change. Experiential: complete
+manual request/result/Rail/recovery INCOMPLETE. Founder Acceptance: NOT_ACCEPTED.
+ALG03/06/11/12/13 actual maturity and CAP009–017 coverage/access are unchanged;
+no verified additional supporting algorithm is identified by cancellation.
+All19/nine and historical9PASS/0FAIL+12PASS/0FAIL/4BLOCKED retained. No scan,
+worker/scheduler/Chat/provider/spend activation or protected monthly retry.
+
+## October26 — bounded original Work heartbeat, development only
+
+This O07/O14 prerequisite extends only EXP05's existing
+`heartbeat_paige_durable_work(uuid,text,integer)` under received ANT161/fcf5efe9.
+The CLI-created file is forward-renamed20271115040102. Existing OID/ABI/default,
+owner, empty search path, ACL and planner attributes remain the same; no new
+callable, grant, registry, worker, scheduler, scan, receipt or customer admission.
+The complete incumbent other-kind body is preserved by source inverse. The
+existing Work transition remains the only finalizer; renewal is not execution.
+
+Both reserved kind/capability sides enter the closed manual branch. Current
+Auth→profile→eligible standalone active tenant→Owner/Admin membership→optional
+workspace conversation rows are pinned before Work, in the preparation/dispatch
+order. The actual canonical Metric predicate is reused; the stored authority
+snapshot never grants permission. The original server key, tenant/actor/thread,
+exact tenant/manual/none payload, epoch, one-attempt ceiling and dispatch marker1
+must all agree. Prepared but undispatched work cannot borrow this renewal path.
+
+Actual time is evaluated after all real lock waits. No lease survives beyond
+original `claimed_at + five minutes`, including time spent in preparation.
+Expired lease/budget becomes original expired state, never a retry or completed
+scan. Terminal/uncertain work is refused unchanged. Wrong-key/purpose/current
+authority refusal never manufactures an absence, cancellation or result receipt.
+The future bounded caller/dispatch/capture/result/Rail/recovery remain separate
+engineering and authenticated obligations; this file activates none of them.
+
+`node scripts/proof/e2-manual-systems-heartbeat.mjs <isolated-port>` reuses the
+existing OperatorPostgresFixture, original Work envelope/document extension,
+current creator/identity trigger and actual Metric/Knowledge predicates. Genuine
+baseline2PASS/2FAIL (revocation and finite budget) becomes4/0. Final57 checkpoints
+cover full semantic metadata/default preservation, every other public function,
+whole other-kind inverse, actual anon/authenticated execute denial, current role/
+workspace/Auth/cohort/conversation negatives, closed purpose/foreign key/attempt
+refusals, terminal/uncertain immutability, replay/drift, three incumbent kinds,
+actual two-session authority-before-Work lock order, lease/budget expiry after
+real waits, a reintroduced transaction-start-clock mutant and concurrent renewal
+of one original Work/attempt without a scan result. No disabled identity trigger.
+
+The surrounding Auth tables/current-user/Operator helpers are controlled fixture
+boundaries; this is not actual Auth, Operator or customer acceptance. Initial
+restricted-loopback setup, parser-offset/Windows-line-ending comparisons,
+fixture schema qualification and missing Knowledge dependency attempts are
+retained as INVALID fixture setup, not source defects or customer failures.
+PostgreSQL default-expression parser source offsets are normalized to the actual
+SQL expression; no semantic default or other pg_proc attribute is ignored.
+
+Functional: local DEVELOPMENT. Visual: N/A. Experiential: manual journey
+INCOMPLETE. Founder Acceptance: NOT_ACCEPTED. Exact receiving, final review,
+required exact-head checks, normal native/web release and
+readback remain owed. The independently observed shared history recovery does
+not waive source/order or release gates. No customer scan or protected monthly
+retry. ALG03/06/11/12/13 maturity, manual Spine UNAVAILABLE/unregistered,
+Systems/Mind boundaries and CAP009–017 readiness unchanged. Original9PASS/0FAIL
+and12PASS/0FAIL/4BLOCKED retained; all19/nine remain open.
+
+The original CI workflow receives exactly one two-line EXP02 step under the
+bounded existing-owner acknowledgement ANT161/a7e44784. All other workflow
+content is unchanged; actual hosted execution remains owed. Fresh forward-name
+native57 and unchanged original request47/reader31 regressions pass separately.
+
+### Interstitial order reconciliation, same SQL — October26
+
+Exact95d2 received all13 required checks/Preview/two webSUCCESS, original
+independent E05 receiving8be27afd/review5655397304 and author LOWER5655191385.
+E04 confirms none of its50004/60004/70004 is release-ready and records no objection
+to40102/40202 (ANT161/350310db). Current40008 leaves that gap; only the owning
+unapplied filename and proof input change, preserving all E04 slots. SQL SHA256
+3e2ed9f105485a27917326d113f5838ffe2d840a8515301a8aa038f9f07ae6af/bodyf1e7 remain
+exact. Currentc4e2 and every incoming source/document are retained. Original own
+no-data/nonpersistent Preview was verified0Auth/0Work/0clients before its normal
+same-PR close/reopen lifecycle; no history DDL/reset/include-all or second applier.
+Fresh exact-head gates/receiving/order/normal release/readback remain mandatory;
+no predecessor-green or activation inference.
+## October26 — source-verified original manual Work finalization
+
+O07/O14/O16 **REUSE/EXTEND**, under original E05 source window
+ANT161/3b5f49aa and E04 gap receiving c0311e44. The existing CLI created the
+migration scaffold; its unapplied source-only forward name is
+`20271116010352_e02_manual_systems_finalizer.sql`, after the independently
+verified actual production frontier/E09 `20271116010309`. No slot is held idle.
+The original transition body `41b46e22be68b608deede008b7b36f24` is also verified
+unchanged in production; candidate body `48e851ee40eec05738b6ba09b8000f93` is LOCAL.
+
+The guarded migration only replaces the body of the ORIGINAL
+`transition_paige_durable_work(uuid,text,text,jsonb,text,text,text,integer,boolean)`.
+It retains OID, arguments/results/defaults, owner, definer configuration and ACL;
+the entire incumbent non-Systems body reconstructs exactly by inverse. There is
+no new callable, grant, status, queue, scheduler, worker or execution engine.
+Both reserved identifiers must match; current Auth/profile/tenant/membership/
+optional conversation authority is locked before original Work, followed by its
+immutable key/payload/epoch/one-attempt/dispatch checks. The original Metric
+authority predicate remains the issuer; a stored snapshot is not permission.
+
+Success verifies the original tenant/manual/none completed run, same Work/run
+identity and FK, canonical null full-sweep marker, persisted distinct
+findings/counts and no drafted/linked fixes.
+It derives the result from those records, never a caller's `verified_readback`
+claim, supplied count or fabricated summary. Failed/skipped checks remain actual
+failed/skipped findings; capture completion does not mean business health. The
+original `system_check/check_completed` Rail writer and original Work settlement
+share one transaction. Receipt conflicts, missing readback or write refusal
+prevent settlement. Time is refreshed after authority/Work, source and receipt/
+unique-index waits; one Work update uses final actual time. Expired/unknown work
+requires explicit original reconciliation; no second dispatch is introduced.
+
+Known-success replay observes the immutable original outcome and matching
+original receipt without recreating it or demanding that later legitimately
+corrected findings remain unmodified. Current authority still applies. Other
+canonical states retain original semantics: cancellation/failure is not proof
+that previously issued work wrote nothing. Partial records remain inspectable.
+
+The EXISTING native heartbeat proof and CI step are extended, with all57 prior
+assertions retained byte-exact by inverse. Actual local PostgreSQL16 execution:
+**148 PASS / 0 FAIL** (57 retained +91 finalizer checks). The original finalizer's
+acceptance of a bare caller flag with no original result/receipt is reproduced
+as an unsafe causal baseline. Native cases cover current-role/cohort/thread/key/
+purpose refusals, source/count/result/receipt contradictions, admin positive,
+exact and revoked replay, original non-success/three other-kind behavior, full
+metadata/guard/replay drift, real authority-before-Work locking, lease expiry
+during real Work/run/finding/receipt waits with transaction-start-clock mutants,
+concurrent completion, actual final timestamps, original Rail rollback and the
+original request→approved claim→heartbeat→seeded result→completion chain.
+
+The proof uses actual original Systems DDL, original Work/Metric/Knowledge
+functions and the ORIGINAL Rail table/vocabulary/display/writer. Auth surroundings
+are controlled fixture tables; results/findings are seeded, not real runner
+execution or authenticated evidence. Existing source constraints remain enabled:
+incompatible manual scope/action purposes are refused by the original constraint,
+not manufactured by disabling it. Invalid Windows process setup, fixture JSON
+shape and literal replacement attempts are retained locally before final proof.
+All owned disposable databases are removed and the loopback server stopped.
+
+Further review after old0be80/146 identified the missing full-sweep marker check.
+The original Work payload carries no filter, but the original core can produce
+marked partial manual runs, which the canonical snapshot intentionally excludes.
+With the ACTUAL original ALTER source installed in the fixture, the partial-source
+refusal control fails on unchanged0be80. The repaired source refuses non-null
+`selected_runner_keys`, including an empty marked array, matching the canonical
+reader. Final148/0 retains all earlier controls. Old no-data Preview10352/body328c
+was verified0Auth/0Work/0clients, retired via ordinary PR close and actual branch
+absence BEFORE this unapplied source revision. Old0be80 and its146 proof/Preview
+remain historical; new review/CI/fresh Preview/receiving cannot borrow them.
+
+Orchestration contract: owner requests a tenant-only read-only Systems Check;
+the existing Executive request/Chat/eligible Live admission and registered Spine
+consumer are still NOT supplied/activated here. Original actor/tenant Work is the
+identity; PAIGE coordinates original Systems intelligence, not a new specialist
+runtime. The existing bounded worker/Harness path must eventually bind native
+claim/heartbeat, the original core and this finalizer. No consequential corrective
+action or approval is granted by completion. Original Systems records + original
+Rail establish success; original unknown/reconciliation and source IDs establish
+return/recovery. Caller cancellation cannot assert rollback. Actual caller,
+interruption/reload, full-source production and ordinary-owner result proof remain
+owed. Layer C applies only where its actual governed action contract is used.
+
+Functional: **LOCAL source/native proof**, exact original-owner receiving,
+separate final review, required exact-head CI/Preview, normal deployment/native
+readback still owed. Visual: N/A, no customer surface change. Experiential:
+manual request/result/corrective-work/reload journey INCOMPLETE. Founder
+Acceptance: NOT_ACCEPTED. No manual customer scan, Chat/worker/provider activation
+or protected monthly retry. Capability status remains UNAVAILABLE/unregistered
+for manual `systems.check`; no catalogue promotion. ALG03/06/11/12/13 and nine
+analytics CAP009–017 remain at existing maturity: this slice verifies execution
+evidence, not a prioritization, prediction, anomaly or financial algorithm. All19
+original outcomes/nine analytics and original9PASS0FAIL + supplement12PASS0FAIL
+4BLOCKED + monthlyUNKNOWN/UNRETRIED remain separately open.

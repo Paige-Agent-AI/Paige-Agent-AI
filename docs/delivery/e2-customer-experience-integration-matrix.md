@@ -1,5 +1,189 @@
 # Experience 02 — Customer Experience Integration Matrix
 
+## October26 — original manual Work safeguards deployed, scan still unavailable
+
+[#2918 actual release](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2918#issuecomment-6424997500): reviewed
+ef36f7c78752d7bc5f937d3b00d6ac54fbe64073/tree75c0b327,
+AUTHOR-REVIEW / LOWER ASSURANCE5657102273/all13 exact checks/normal Preview/
+two webSUCCESS/zero threads. Actual mergee8197859ea8aaf32f86cfaab5c79625611648e93,
+parents9dc+ef36, complete root and all16,482 outside entries/incoming docs/otherCI exact.
+Original E05 source-byte receiving b7e1171e/8be27afd retained; no new material SQL.
+
+Normal deploy-migrations40383697454/job121786526429 SUCCESS at exacte819.
+Production20271116010102 heartbeat then20271116010202 approved private claim each
+applied once; bodiesf1e7ab28b56b167c50aba50f51d6afee/11a08bb0e52828cac0011dd6ec17bbd5,
+original ABI/default300/postgres/definer/empty search_path/server-only ACLs verified;
+anon/authenticated execute=false. Same approved75-line claim SHA2564fba913a unchanged.
+No direct applier, history repair, reset or include-all. E09 next10309 window released
+after actual native readback. Original#2878 closed as superseded, not merged/deployed
+at its old head; its original failure/review/approval evidence remains historical.
+
+READY productiondpl_9TyvJ3juiLhay6vCgY2J89e6FN3K/exacte819/canonical aliases;
+both public origins200/exacte819-mvpmostu/customerUpdate:null at
+2026-10-26T19:09:56.957Z. UI/Edge delta N/A. Fresh original preparation47,
+claim40, heartbeat57 and history-reader31 native checks pass separately;
+controlled identity fixtures and seeded records are not customer acceptance.
+
+Functional: bounded private safeguards DEPLOYED/source verified. Visual: N/A,
+prior Finance rendered proof retained. Experiential: manual request/scan/result/
+Rail/recovery INCOMPLETE. Founder NOT_ACCEPTED. No scan/caller/worker/scheduler/
+provider or consequential Chat activation; manual Spine remains UNAVAILABLE.
+Original finalizer source window/consumer and authenticated proof remain owed;
+private finalizer prototypes are not a released runner or customer result.
+ALG03/06/11/12/13, nine catalogue readiness, original19 definitions and
+9PASS/0FAIL plus12PASS/0FAIL/4BLOCKED remain at their existing bounds.
+Protected monthly stays UNKNOWN/UNRETRIED; representative-week baseline UNMEASURED.
+Earlier development/order checkpoints below remain dated history, superseded only
+for this source release. Sole Master4.0 records it once; no customer announcement.
+
+## October26 — full-matrix customer subcases, original scope retained
+
+Receiving the [original Coordinator clarification](https://linear.app/paigeagentai/issue/ANT-138#comment-b0c4448f-df8b-489c-ac09-57cc8d73bce8)
+adds acceptance subcases to the original O01–O19 and CAP009–017 below; it does not
+replace their definitions, denominator, original writers or evidence. EXP02 owns
+the complete PAIGE/VERA review journey. A department label, source test, prepared
+draft, merged increment or connected badge cannot close a customer outcome.
+
+Classification: **implementation gap** means the required consumer/result is not
+yet complete; **proof owed** means source exists without the stated customer
+evidence; **held dependency** names an originating contract or activation boundary;
+**external decision** means actual human authority is needed. None is a permanent
+scope exemption. All existing historical PASS/FAIL/BLOCKED/UNKNOWN states remain.
+
+Every subcase starts from the current permitted actor/tenant and original source,
+reauthorizes the receiving destination and retains the original request identity.
+Each executed result requires its domain record and original receipt; a pure read
+does not manufacture an action receipt. Reload must restore the same authorized
+artifact/context, and denial, source drift, interruption and uncertainty must be
+proved without replaying a consequential action. Source/review/exact-head CI,
+merge/deployment, configuration/connection/activation, authenticated verification
+and founder acceptance remain separate evidence legs for every row.
+
+| Existing outcome subcases | Useful customer request and result | Original owner, record and authority | Remaining requirement and classification | Algorithm Support |
+| --- | --- | --- | --- | --- |
+| **O01.a / O02.a** | Explain this week's real business state and show the same period, scope, currencies, coverage and sources in Executive and Chat. Missing, stale or conflicting facts remain unknown. | EXP02/VERA consumes original Metric/Evidence and Operating Fabric through `business.operating_snapshot`/`get_business_snapshot`; original departmental adapters remain writers. Ordinary caller authority and original Chat context apply. | Bounded original briefing/Executive source exists; complete multi-domain populated read, current weekly settlement, interruption/return and matched visual/reload proof are **proof owed / implementation gap**. Preserve the two historical CPU failures. | ALG03 source prioritization partial; ALG06 partial sources; ALG11 foundations/partial measurement. No invented health score or forecast. |
+| **O03.a** | Explain a pipeline or conversion change, inspect the originating opportunities and distinguish raw invoice counts from revenue. | EXP03 acquisition/attribution and EXP04 Sales own the original leads/deals/invoices; EXP02 consumes the issued measurements and source links with their period/currency and role restrictions. | Originating reads and bounded navigation exist; supported populated comparisons, conversion provenance and permission-filtered cross-department reload are **proof owed**. Missing agreement/booking links remain an **originating integration gap**, not inferred conversions. | ALG06 partial business evidence; ALG13 usefulness and resulting commercial benefit unverified. |
+| **O04.a** | Review actual receipts, receivables and financial coverage with VERA; understand what is and is not cash, income, expense or profit. | Original EXP04 commercial records and permitted Finance/Metric adapters; originating EXP11 depth remains a held producer dependency. Existing Finance review context and actor/tenant permissions stay authoritative. | Released source-specific Finance presentation/navigation is a bounded subset. Verified banking/accounting/budget/liability/forecast coverage, populated currency/period negatives and complete Finance acceptance are **implementation gap / proof owed / held dependency**. No new bank/provider activation. | ALG06 partial sources; no cash forecast/backtest or financial-benefit claim without original verified evidence. |
+| **O05.a** | Identify a customer who actually needs attention and inspect onboarding, service progress and the exact accepted delivery version. Lack of Portal use alone is not poor health. | EXP09/CURA customer service, EXP04 `client.engagement_status` and original commercial acceptance, EXP05 Work/delivery and EXP08 permitted people/capacity sources remain original owners. | Counts and individual originating reads are not full health/retention evidence. Permission-filtered lifecycle/progress/accepted-version consumer and supported source-derived health interpretation are **integration gap / proof owed**. | ALG02/04 only where actual activation/retention inputs exist; no verified supporting health algorithm is identified for missing inputs — **gap or verification owed**. |
+| **O06.a** | Inspect the latest recorded Systems findings, age, coverage, severity and unfinished state; return to the same evidence after reload. | Existing `systems_check_snapshot`, original run/finding records and caller-scoped Systems UI. Refresh only reads. | Recorded findings source and bounded UI repairs exist; current completed/unfinished/empty/denied and full-shell responsive/reload acceptance are **proof owed**. A refresh is never a new scan. | ALG12 partial source exceptions; no statistical anomaly or resolved-risk claim inferred from a card. |
+| **O07.a** | Request a real permitted check, observe its original Work status, inspect saved findings and distinguish a suggested fix from an authorized correction. | Original Systems runner/registry and Work contracts; EXP02 owns the consumer, EXP05 owns general Work, and receiving departments own corrections. Same tenant/actor, current authority, original approval and INT346 restrictions apply. | Preparation/history and cancellation source are released prerequisites; #2918 claim/heartbeat source is normally deployed and read back; this is not scan activation. Actual consumer/native domain finalizer/atomic original Rail/recovery and authenticated new-result proof are **implementation gap / proof owed**. Shared source window and separate activation remain **held dependencies**. Private seeded-record prototypes are not a real scan. | ALG12 partial findings; ALG03/13 advisory integration does not authorize execution or prove a corrected condition. |
+| **O08.a** | Choose one to three explainable priorities and inspect why each matters, its actual source and a genuinely available next step. | Existing Fabric severity/source ordering and original capability readiness; EXP02/VERA explanation, originating Experience for any action or artifact. | Ranked advisory source exists. A priority must connect to useful permitted original Work/artifact and retain its request/source after return; populated usefulness and later measured result are **integration gap / proof owed**. No causal improvement from completion alone. | ALG03 deterministic source ordering partial; ALG13 recommendation utility/outcome unverified. |
+| **O09.a / O10.a** | Save direction, revise the same Strategic Play and compare its numeric target with an actually matched metric/period/currency. | Existing Mission revisions/mutation receipts and owner-approved Play-linked F7 targets; original Metric issuer owns actuals. No business-wide target store or copied actuals. | Source foundation/Executive target consumer exist; authenticated create/revise/transition, stale revision, replay, unknown result, original receipt and reload/Live continuity are **proof owed / integration gap**. Plan lifecycle Complete is not proof the promised work happened. | ALG03/06 consume supported evidence only. Target variance is existing arithmetic, not a new predictive algorithm. |
+| **O11.a / O12.a** | Inspect the actual permission/approval, approve only the exact proposed work where eligible and see an authentic resulting record or a clear refusal. | Existing Trust tool autonomy, original pending approval/queue, Layer C/Spine/domain writers and Rails. VERA attribution grants no additional authority. | Manual subsets exist; complete current-role/stale-approval/replay/uncertain-outcome and authorized domain-result loop is **integration gap / proof owed**. Consequential Chat activation and real-effect authorization remain **external decisions** when the concrete governed path is ready. | No verified supporting algorithm is identified for authority/approval decisions — canonical policy is not a prediction or score. |
+| **O13.a / O14.a** | Ask what PAIGE accomplished, what still needs approval and what is blocked; open the original record and return to the same discussion. | Original domain receipts/Work/act executions, caller-scoped Rail and existing semantic record resolver/frame; destination permissions are checked again. | Existing activity and links are bounded reads. Populated actor-attributed result/receipt, denied destination, current Play/account context and later-session recovery are **proof owed**. A viewed item or read receipt is not completed business work. | ALG12 source exception interpretation partial; ALG13 next-step usefulness unverified. |
+| **O15.a** | Use permitted business context and approved Vault facts with provenance; correct or revoke context without exposing secrets or publishing private material. | Original Mind/Knowledge/Memory and Vault. Existing `vault-contract.ts` distinguishes `store_only`, `classify`, `approved_context`; facts carry approved/stale/corrected/revoked states and record/version provenance. `business_vault_access_status`/`business_vault_snapshot` are originating UI contracts, not automatic E02 read authority. | E02's allowlisted minimal Vault projection and current revocation/provenance consumer are **integration gap / held dependency / proof owed**. Reuse an original approved seam when verified; do not read raw secrets, grant access or copy a private Vault store. | No verified supporting algorithm identified for this minimal context/revocation subcase — **gap or verification owed**; ALG11 model foundations do not establish permission. |
+| **O16.a** | Ask via supported Chat/eligible Live, interrupt or leave safely, and return on desktop/narrow/mobile with the same authorized context and truthful work state. | Existing Chat/Live/runtime, document/Work continuation and source-bound navigation. EXP02 owns its review consumer; no alternate conversation runtime or dispatch from an observation. | Responsive source and bounded native Finance navigation exist; genuine weekly response reliability, speech eligibility, interruption/recovery, focus/scroll/draft preservation, role/cohort and accessible full-shell parity are **proof owed / integration gap**. Protected monthly remains UNKNOWN/UNRETRIED. | ALG11 quality/latency/cost measurement partial; no unmeasured reliability, cost-saving or Live acceptance claim. |
+| **O17.a** | Review real customer/business communications and distinguish prepared, awaiting approval, provider accepted, delivered, failed and unknown states. | EXP03 canonical Conversations/Communications and originating approval/provider records; original EXP04/EXP09 service/commercial boundaries and private-mail scope remain intact. | Bounded envelope/reference source exists. Full thread/provider/approval interpretation, permitted navigation, reload/privacy and eligible Chat/Live are **integration gap / proof owed**. Provider credentials/consent/first sends remain original-owner **held dependencies / external decisions**, not E02 activation. | No verified supporting algorithm identified for missing communication-state evidence — **gap or verification owed**. |
+| **O18.a** | Research a real opportunity, inspect citations, save the original research result and retrieve it later; Knowledge publication remains a distinct consent. | Existing `research_knowledge.deep_research`, Research/Model Fabric and `research_runs/research_sources`/Knowledge contracts. | Engine source exists; exact authorized provider/cohort/spend/consent, cited persistence/retrieval and E02 context integration remain **held dependency / integration gap / proof owed**. No protected monthly retry, provider call or second research engine. | No verified supporting research algorithm identified for this complete E02 outcome — **gap or verification owed**; a citation list is not algorithm acceptance. |
+| **O19.a** | Authorize meaningful follow-through, inspect the original department result and receipt, and recover without duplicating or inventing an outcome. | Registered capability/specialist → Trust → existing Harness/Layer C where applicable → original departmental writer → readback/Rail; same original request/Work identity. | Historical refusal is retained but cannot close positive execution. Eligible action integration, actual domain result, tenant/role/replay/unknown recovery and authenticated continuity remain **implementation gap / proof owed**; activation/effects stay **held/external decision** under their existing controls. | ALG13 can recommend only from verified conditions/readiness. Recommendation, approval, execution, verification and later business impact are separate. |
+
+**People, vendors and financial depth:** O01/O04/O05/O08/O15 must include these
+where an authorized original producer exists. The Coordinator explicitly holds
+EXP11/13/15 producer dependencies and future staffing; EXP02 records the missing
+handoff/consumer evidence and does not take over those Experiences. Existing team
+or Vault UI is not proof of an issued Metric/Evidence projection. Full review
+coverage remains required, with unknown/unavailable states until that original
+contract is verified. No new roster, vendor, finance or metric store is authorized.
+
+**Representative-week value:** O01/O08/O13/O16/O19 must be evaluated against an
+observed baseline of owner effort, interventions, verified outcomes, failures and
+recovery using original Work/turn/receipt evidence and clearly attributed human
+observations. The baseline is **UNMEASURED / PROOF OWED**. No verified supporting
+algorithm identified for a savings/ROI score — **gap or verification owed**.
+Neither an aspiration nor elapsed job time is measured human time saved.
+
+CAP009–017 remain the same nine assigned analytics capabilities and retain their
+individual source/readiness limits below; this clarification promotes none to
+Live. The deployed catalogue/access presentation still requires actual account/
+actor/provider readback, including the current EXP01 access-truth source. No
+capability is accepted from a registry entry or synthetic render. Functional,
+Visual, Experiential, Founder Acceptance, Algorithm Support and Orchestration
+Contract remain distinct. One complete live founder evaluation is still owed.
+
+## October26 — coherent original manual Work safeguards, release ordering pending
+
+O07/O14 REUSE/EXTEND only the original Work preparation, private claim and
+heartbeat contracts. The single #2918 successor composes current main9dc021eeb
+and the unchanged human-approved #2878 claim SQL. Proposed forward-only order is
+20271116010102 heartbeat then20271116010202 claim, after actual16010000.
+Coordinator/owner receiving of this next native window is still pending; these
+filenames are not production confirmation. No backward apply/history repair or
+include-all. Original #2878 remains open until actual successor release.
+
+Original heartbeat SQL SHA2563e2ed9f1 and approved75-line claim SHA2564fba913a
+are byte-identical to their reviewed predecessors. Current bff/13fc each passed
+all13 exact checks/Preview/two web statuses; those are historical, not new-head
+checks. Fresh combined native proof, sequential AUTHOR-REVIEW / LOWER ASSURANCE,
+receiving, exact-head CI/Preview, safe merge and normal native/web readback remain
+required. The original E08 midnight fixture finding is OPEN and unchanged; no
+test, clock, assertion or gate is weakened to obtain green.
+
+Actual original-native finalizer groundwork reproduces15 unmet manual-domain
+completion requirements, while original client-role/key refusals and actual Rail
+deduplication/transaction rollback pass. This is a controlled synthetic server
+suitability gap for an unavailable path, not customer execution or a new public
+authorization finding. Existing system_check/check_completed Rail vocabulary
+already fits the result; do not invent a capability key or receipt engine.
+The bounded existing transition-function window is requested in ANT161/a5c5c093,
+refined30e33450; the shared function remains untouched. Its consumer, verified
+original run/findings, atomic Work/Rail result, interruption and recovery remain
+next, before separate customer activation and authenticated proof.
+
+Functional: composed DEVELOPMENT source; current normal release unverified.
+Visual: N/A for native safeguards, prior Finance rendered evidence retained.
+Experiential: full manual request/result/Rail/recovery INCOMPLETE.
+Founder Acceptance: NOT_ACCEPTED. Algorithm Support: ALG03/06/11/12/13 unchanged;
+no prediction, causal improvement or timesaving score. Orchestration: original
+Work only; no caller, worker, scan, provider, scheduler or Chat activation.
+Manual Spine remains UNAVAILABLE; all19 outcomes/nine catalogue states and
+historical9PASS/0FAIL plus12PASS/0FAIL/4BLOCKED stay open at their stated bounds.
+Protected monthly remains UNKNOWN/UNRETRIED. Ordinary-owner browser handback from
+EXP09 is pending; no other session is inspected or borrowed.
+
+## October26 — original manual capture interruption source released
+
+O07/O14 prerequisite [#2897](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2897#issuecomment-6421114701),
+reviewed9f6/LOWER5654522457/143 local/all11 exact+Preview/two webSUCCESS, actually
+merged e993016f69293e9407ff5b97d0d827d0eeb05516/treeb6e34513. All incoming source
+and Brain preserved. Normal Edge40355616710 SUCCESS/original API certificate
+12666385155 full four-function closure/config comparison PASS. Merge web READY;
+both public origins200/exactc4e2-mvpgcdjr/null16:17:10UTC, verified four-doc-only
+descendant with runtime/config unchanged. Actual identities in sole Master4.0.
+
+Functional optional cancellation source RELEASED; Visual N/A; Experiential
+manual request/result/Rail/recovery INCOMPLETE; Founder NOT_ACCEPTED. No caller,
+signal producer, grant, scan or activation. Full19/nine, ALG/CAP/manual Spine,
+original9/0+12/0/4 and protected monthly UNKNOWN/UNRETRIED unchanged.
+
+## October26 — bounded original manual heartbeat, development only
+
+O07/O14 EXTEND the original EXP05 Work heartbeat under ANT161/fcf5efe9,
+not a new execution path. Current canonical Metric authority and original
+Auth/profile/tenant/member/conversation locks precede Work; closed payload,
+server key, epoch, one attempt and dispatch marker remain mandatory. Fixed
+`claimed_at + five minutes` ceiling and actual time after waits prevent renewal
+of revoked, expired, terminal or uncertain work. Original ABI/security/permissions
+and complete other-kind source inverse preserved; no new callable/grant/scan.
+
+Isolated original-writer proof: causal2PASS/2FAIL→4/0,57 checkpoints including
+actual roles, source replay/drift, two-session authority order/expiry/budget,
+clock regression mutant and concurrent renewals. Surrounding identity helpers
+are controlled fixtures, not authenticated acceptance. Source/proof and detailed
+limits: [original Systems evidence](../evidence/e2-systems-capture-mode.md).
+
+Forward-only40102 source is DEVELOPMENT; original CI step is added under received
+ANT161/a7e44784, hosted execution/receiving/review/required checks/normal apply/
+readback owed. Separate private dispatch#2878 remains held;
+no public caller/activation or Systems run/Rail result. The original shared history
+mismatch was observed resolved by its existing owner; no E2 repair. Visual N/A;
+Experiential INCOMPLETE; Founder NOT_ACCEPTED. All19/nine/original9/0+12/0/4,
+manual Spine UNAVAILABLE, catalogue and ALG maturity remain unchanged.
+
+Predecessor95d2 all13 exact checks/Preview/two webSUCCESS and original independent
+E05 receiving remain historical. E04 exact order ACK350310db permits byte-identical
+40102/40202 before its retained50004/60004/70004. No body/permission change;
+new exact-head review/CI/Preview/receiving and actual frontier still govern.
+
 ## October25 — Finance navigation release and bounded original-customer proof
 
 O04/O14/O16 repair [#2883](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2883#issuecomment-6405085439)
@@ -19,6 +203,25 @@ key batch timed out with no observation/excluded. Native200percent/other roles/
 cohorts/AT/Live/provider/full19+nine/founder remain unverified. Existing catalogue,
 ALG maturity/finance.department PROOF_OWED and original9/0+12/0/4 unchanged; protected
 monthly UNKNOWN/UNRETRIED. Original evidence record and sole Master4.0 hold delivery.
+
+## October25 — O07 trusted manual interruption prerequisite, development
+
+EXTEND the original Systems core, not a new execution/budget engine: optional
+native AbortSignal plus original manual WorkUUID. Genuine whole-core causal
+baseline97PASS/18FAIL becomes115PASS; existing source tests retain their assertions.
+Cancellation during an uncooperative read or issued write retains original
+identity/phase, prevents later core writes and never means absent/rolled-back/
+retryable/completed. Existing default/remediation paths remain covered.
+[Original evidence and orchestration boundary](../evidence/e2-systems-capture-mode.md).
+
+No caller, worker, heartbeat edit, grant, scheduler, scan or provider is activated.
+E05 source-window ACKfcf5efe9 permits the bounded original heartbeat branch;
+the function remains unedited and final implementation receiving is still owed. Consumer,
+authority/lease, terminal transition, Rail/result/recovery and authenticated proof
+are still required. Functional LOCAL; Visual N/A; Experiential INCOMPLETE;
+Founder NOT_ACCEPTED. Review/exact CI/merge/Edge/public readback remain distinct.
+Manual Spine/catalogue, ALG03/06/11/12/13 and all19/nine stay at their existing
+partial/unavailable/unverified maturity; historical9/0+12/0/4 preserved.
 
 ## October25 — original manual Work history reader actually released
 

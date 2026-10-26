@@ -101,8 +101,8 @@ function useManagedIdentity() {
   };
 }
 
-function TeamView({ openPaige }: { openPaige?: () => void }) {
-  return <SoloTeamWorkspace openPaige={openPaige}/>;
+function TeamView({ openPaige, openConnections }: { openPaige?: () => void; openConnections?: () => void }) {
+  return <SoloTeamWorkspace openPaige={openPaige} openConnections={openConnections}/>;
 }
 
 
@@ -1713,7 +1713,7 @@ export function SoloSettings(props: { openPaige?: () => void } = {}) {
 }
 
 function SoloSettingsContent({ openPaige }: { openPaige?: () => void }) {
-  const [tab] = useSubtabRoute("solo", "settings", "setup");
+  const [tab, setTab] = useSubtabRoute("solo", "settings", "setup");
   const tabs=[['setup','Setup'],['team','Team'],['connections','Connections'],['integrations','Integrations'],['analytics','Analytics'],['security-data','Security & data'],['vault','Vault'],['billing','Billing']];
   const location = useLocation();
   const params = useParams();
@@ -1851,7 +1851,7 @@ function SoloSettingsContent({ openPaige }: { openPaige?: () => void }) {
     resetSettingsScroll();
   }, [tab, segment, resetSettingsScroll]);
   const current = SOLO_SETTINGS_DESTINATIONS.find(item => item.key === tab) ?? SOLO_SETTINGS_DESTINATIONS[0];
-  const view = tab === "team" ? <TeamView openPaige={openPaige}/> : tab === "connections" ? <ConnectionsView initialSegment={segment} onSegmentChange={resetSettingsScroll}/> : tab === "integrations" ? <SoloIntegrationsView/> : tab === "analytics" ? <SoloSettingsAnalytics/> : tab === "security-data" ? <SecurityView/> : tab === "vault" ? <VaultView openPaige={openPaige}/> : tab === "billing" ? <SoloBillingView/> : <SoloBusinessContextSetup account={account} openPaige={openPaige}/>;
+  const view = tab === "team" ? <TeamView openPaige={openPaige} openConnections={() => setTab("connections")}/> : tab === "connections" ? <ConnectionsView initialSegment={segment} onSegmentChange={resetSettingsScroll}/> : tab === "integrations" ? <SoloIntegrationsView/> : tab === "analytics" ? <SoloSettingsAnalytics/> : tab === "security-data" ? <SecurityView/> : tab === "vault" ? <VaultView openPaige={openPaige}/> : tab === "billing" ? <SoloBillingView/> : <SoloBusinessContextSetup account={account} openPaige={openPaige}/>;
   return <div ref={rootRef} className={`solo-settings${tab === "vault" ? " solo-settings--vault" : ""}`}>
     {/* Connections and Integrations each carry their own in-surface header (the sub-tab
         row below), so the shared page-head would print the word a second time under a

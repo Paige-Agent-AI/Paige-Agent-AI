@@ -22,7 +22,74 @@ beforeEach(() => {
   mock.from.mockReturnValue(query); mock.select.mockReturnValue(query); mock.eq.mockReturnValue(query); mock.or.mockReturnValue(query);
   mock.read.mockResolvedValue({ data: item, error: null });
 });
-afterEach(() => setScopedUserId(null));
+afterEach(() => { setScopedUserId(null); vi.useRealTimers(); });
+
+it("retires a late session before starting private source lookups", async () => {
+  vi.useFakeTimers();
+  mock.session.mockImplementationOnce(async () => {
+    await new Promise(resolve => setTimeout(resolve, 8001));
+    return { data: { session: { user: { id: actorId } } }, error: null };
+  });
+  const read = readWeeklyPlanningSource(scope, () => true);
+  await vi.advanceTimersByTimeAsync(8002);
+  expect(await read).toEqual({ kind: "unavailable" });
+  expect(mock.rpc).not.toHaveBeenCalled(); expect(mock.from).not.toHaveBeenCalled();
+});
+it("preserves a successful exact source inspection within the shared budget", async () => {
+  vi.useFakeTimers();
+  mock.session.mockImplementationOnce(async () => {
+    await new Promise(resolve => setTimeout(resolve, 7999));
+    return { data: { session: { user: { id: actorId } } }, error: null };
+  });
+  const read = readWeeklyPlanningSource(scope, () => true);
+  await vi.advanceTimersByTimeAsync(7999);
+  expect(await read).toEqual({ kind: "verified", item });
+  expect(mock.eq).toHaveBeenCalledWith("id", itemId);
+});
+it("observes an eager read rejection even if construction exhausts the budget", async () => {
+  vi.useFakeTimers();
+  mock.read.mockImplementation(() => { vi.advanceTimersByTime(8001); return Promise.reject(new Error("late read")); });
+  expect(await readWeeklyPlanningSource(scope, () => true)).toEqual({ kind: "unavailable" });
+  await Promise.resolve();
+});
+it("uses one elapsed inspection budget across otherwise successful source stages", async () => {
+  vi.useFakeTimers();
+  const session = mock.session.getMockImplementation()!, rpc = mock.rpc.getMockImplementation()!, row = mock.read.getMockImplementation()!;
+  mock.session.mockImplementation(async () => { await new Promise(resolve => setTimeout(resolve, 1200)); return session(); });
+  mock.rpc.mockImplementation(async (...args) => { await new Promise(resolve => setTimeout(resolve, 1500)); return rpc(...args); });
+  mock.read.mockImplementation(async () => { await new Promise(resolve => setTimeout(resolve, 1500)); return row(); });
+  const read = readWeeklyPlanningSource(scope, () => true);
+  await vi.advanceTimersByTimeAsync(10_000);
+  expect(await read).toEqual({ kind: "unavailable" });
+  expect(mock.session).toHaveBeenCalledOnce();
+});
+it("does not subscribe to a lazy private query after construction exhausts the budget", async () => {
+  vi.useFakeTimers();
+  const consume = vi.fn((resolve: (reply: unknown) => unknown) => resolve({ data: item, error: null }));
+  mock.read.mockImplementation(() => { vi.advanceTimersByTime(8001); return { then: consume }; });
+  expect(await readWeeklyPlanningSource(scope, () => true)).toEqual({ kind: "unavailable" });
+  expect(consume).not.toHaveBeenCalled();
+});
+it("does not subscribe to a constructed query after queued scope retirement", async () => {
+  let current = true;
+  const consume = vi.fn((resolve: (reply: unknown) => unknown) => resolve({ data: item, error: null }));
+  mock.read.mockImplementation(() => { queueMicrotask(() => { current = false; }); return { then: consume }; });
+  expect(await readWeeklyPlanningSource(scope, () => current)).toEqual({ kind: "unavailable" });
+  expect(consume).not.toHaveBeenCalled();
+});
+it("keeps the initiating record address when a caller mutates its argument during preflight", async () => {
+  const origin = { ...scope };
+  mock.session.mockImplementationOnce(async () => {
+    origin.itemId = "30000000-0000-4000-8000-000000000002";
+    return { data: { session: { user: { id: actorId } } }, error: null };
+  });
+  expect(await readWeeklyPlanningSource(origin, () => true)).toEqual({ kind: "verified", item });
+  expect(mock.eq).toHaveBeenCalledWith("id", itemId);
+});
+it("returns unavailable rather than throwing when the source observer has retired", async () => {
+  await expect(readWeeklyPlanningSource(scope, () => { throw new Error("retired"); })).resolves.toEqual({ kind: "unavailable" });
+  expect(mock.session).not.toHaveBeenCalled(); expect(mock.from).not.toHaveBeenCalled();
+});
 it("refuses an effective client persona before calls and discards a point read when it changes", async () => {
   setScopedUserId("client");
   expect((await readWeeklyPlanningSource(scope, () => true)).kind).toBe("unavailable");

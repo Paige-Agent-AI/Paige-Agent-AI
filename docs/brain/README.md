@@ -1018,8 +1018,10 @@ tenant and row stages. Lazy query subscription is rechecked; expiry/retirement
 returns the existing unavailable contract without later stages. All native RLS,
 raw version and Work inspector/writer contracts remain. Actual9PASS/6FAIL becomes
 four-suite109PASS, including positive within-budget/eager-rejection controls.
-Type completion/review/CI/deployed bundle and authenticated timeout/reload remain
-owed; no new native/provider/action/catalogue/algorithm/Experience acceptance.
+Exact-lock runner repeats109PASS; original type ratchet PASS/baseline10/current6,
+with old dependency-mismatch failure and7/7 diagnostic comparison retained.
+Review/CI/deployed bundle and authenticated timeout/reload remain owed; no new
+native/provider/action/catalogue/algorithm/Experience acceptance.
 See [original source-read evidence](../evidence/ui-delivery/exp05-weekly-source-read-budget.md).
 
 ## EXP05 business-calendar return — local correction, October23

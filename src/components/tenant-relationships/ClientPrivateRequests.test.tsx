@@ -4,6 +4,8 @@ import {beforeEach,afterEach,expect,it,vi} from 'vitest';
 import {ClientActionItems} from './ClientActionItems';
 import {hasUnsavedWork} from '@/hooks/useBeforeUnloadGuard';
 import type {PrivateRequestResult} from '@/lib/client-private-request';
+import {takePendingPaigePrompt} from '@/lib/paigePromptHandoff';
+import {clearPaigeClientScope,readPaigeOpenScope,setPaigeClientScope} from '@/solo/paigeClientScope';
 
 (globalThis as {IS_REACT_ACT_ENVIRONMENT?:boolean}).IS_REACT_ACT_ENVIRONMENT=true;
 type Listener=(event:string,session:{user:{id:string}}|null)=>void;
@@ -36,18 +38,18 @@ beforeEach(()=>{Object.assign(f.context,{activeUserId:actor,activeTenantId:tenan
 afterEach(()=>{act(()=>root.unmount());host.remove();expect(f.listeners.size).toBe(0);expect(hasUnsavedWork()).toBe(false);});
 
 it('hands only original record references to the existing unsent owner Chat review',async()=>{
- const events:unknown[]=[],listener=(event:Event)=>events.push((event as CustomEvent).detail);
+ const events:unknown[]=[],listener=(event:Event)=>{const detail=(event as CustomEvent).detail;events.push(detail);const scope=readPaigeOpenScope(detail,tenant);if(scope)setPaigeClientScope(scope);};
  window.addEventListener('paige:open',listener);
  try{
   await mount();await click('Prepare request');await words();await click('Save private request');
   const before=f.rpc.mock.calls.length;await click('Review sharing with PAIGE');
   expect(events).toHaveLength(1);expect(events[0]).toMatchObject({clientId:contact,clientLabel:'Jordan Rivera'});
-  const prompt=(events[0]as{prompt:string}).prompt;
+  const prompt=takePendingPaigePrompt()!;
   expect(prompt).toContain(`Customer record: ${contact}`);expect(prompt).toContain(`Saved request reference: ${work}`);
   for(const value of ['Review the plan','Read the guide','Bring one question',version,actor,tenant])expect(prompt).not.toContain(value);
-  expect(Object.keys(events[0]as object).sort()).toEqual(['clientId','clientLabel','prompt']);
+  expect(Object.keys(events[0]as object).sort()).toEqual(['clientId','clientLabel']);
   expect(f.rpc.mock.calls).toHaveLength(before);expect(host.textContent).toContain('Saved privately');
- }finally{window.removeEventListener('paige:open',listener);}
+ }finally{window.removeEventListener('paige:open',listener);takePendingPaigePrompt();clearPaigeClientScope();}
 });
 it('does not offer sharing when the native result cannot resolve an eligible recipient',async()=>{
  f.rpc.mockImplementation((name,args)=>{const reply=native(name,args);return name==='prepare_client_portal_request'?{data:{...reply.data,recipient_available:false},error:null}:reply;});

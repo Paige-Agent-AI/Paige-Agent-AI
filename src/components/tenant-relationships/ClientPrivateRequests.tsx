@@ -1,8 +1,11 @@
-import {useCallback, useEffect, useId, useRef, useState, type FormEvent} from 'react';
+import {useCallback, useEffect, useId, useLayoutEffect, useRef, useState, type FormEvent} from 'react';
+import {flushSync} from 'react-dom';
 import {Check, Lock, RefreshCw, X} from 'lucide-react';
 import {useBeforeUnloadGuard} from '@/hooks/useBeforeUnloadGuard';
 import {useClientPrivateRequest} from '@/hooks/useClientPrivateRequest';
 import type {OwnerActionScope} from '@/hooks/useClientActionsOwner';
+import {handOffPaigePrompt} from '@/lib/paigePromptHandoff';
+import {getPaigeClientScope,subscribePaigeClientScope} from '@/solo/paigeClientScope';
 import './client-private-requests.css';
 
 export type PrivateRequestModel=ReturnType<typeof useClientPrivateRequest>;
@@ -134,6 +137,16 @@ export function ClientPrivateRequests({scope,clientName,ownerPhase}:{scope:Owner
 }
 function PrivateRequestScope({scope,...props}:Omit<Props,'model'>&{scope:OwnerActionScope}){
  const model=useClientPrivateRequest(scope);
+ const currentReview=useRef(false),queuedReview=useRef<(()=>void)|null>(null);
+ const cancelQueuedReview=useCallback(()=>{queuedReview.current?.();queuedReview.current=null;},[]);
+ useLayoutEffect(()=>{
+  currentReview.current=props.ownerPhase==='ready'&&model.phase==='saved';
+  if(!currentReview.current)cancelQueuedReview();
+  const stop=subscribePaigeClientScope(()=>{
+   if(getPaigeClientScope(scope.tenant)?.clientId!==scope.contact)cancelQueuedReview();
+  });
+  return()=>{currentReview.current=false;cancelQueuedReview();stop();};
+ },[props.ownerPhase,model.phase,scope.tenant,scope.contact,cancelQueuedReview]);
  const {readHistory,checkSaved}=model;
  const revalidate=useCallback(()=>{void readHistory();void checkSaved();},[readHistory,checkSaved]);
  useEffect(()=>{
@@ -149,8 +162,15 @@ function PrivateRequestScope({scope,...props}:Omit<Props,'model'>&{scope:OwnerAc
   // Original shell/prefill only: the person sends this request and approves the
   // eventual exact card separately. No private words, email, versions or tokens
   // enter the handoff. References are identifiers, never execution authority.
-  window.dispatchEvent(new CustomEvent('paige:open',{detail:{clientId:scope.contact,clientLabel:props.clientName,
-   prompt:`Help me review sharing this saved customer request. Read the original saved request and show me the exact review before sharing anything.\n\nCustomer record: ${scope.contact}\nSaved request reference: ${workId}`}}));
+  // Commit the original focus first: the previous writable composer must not
+  // consume this question before its client-scoped draft changes. A scope or
+  // actor change can retire this keyed record during that commit.
+  cancelQueuedReview();
+  flushSync(()=>window.dispatchEvent(new CustomEvent('paige:open',{detail:{clientId:scope.contact,clientLabel:props.clientName}})));
+  if(!currentReview.current||getPaigeClientScope(scope.tenant)?.clientId!==scope.contact)return;
+  const cancel=handOffPaigePrompt(`Help me review sharing this saved customer request. Read the original saved request and show me the exact review before sharing anything.\n\nCustomer record: ${scope.contact}\nSaved request reference: ${workId}`);
+  if(!currentReview.current||getPaigeClientScope(scope.tenant)?.clientId!==scope.contact)cancel();
+  else queuedReview.current=cancel;
  };
  return <PrivateRequestEditor {...props} model={model} onReviewSharing={reviewSharing}/>;
 }

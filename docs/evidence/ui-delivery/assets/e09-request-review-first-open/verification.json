@@ -1,0 +1,240 @@
+{
+  "capturedAt": "2026-10-26T16:46:49.3696708Z",
+  "base": "1a69eda9801d29276e4a744807348da80fe7f06c",
+  "testResult": {
+    "failed": 0,
+    "passed": 279,
+    "total": 279
+  },
+  "sourceHashes": [
+    {
+      "sha256": "3d6e30abcad2bbb7d8014cda30df61061ed37f76dfa588b128a43ae2cf81da92",
+      "path": "src/components/tenant-relationships/ClientPrivateRequests.tsx"
+    },
+    {
+      "sha256": "027f09ff4458f950e2307e2e8eba7639a4e9163cbd643fc60332ff302bb750a5",
+      "path": "src/components/tenant-relationships/ClientPrivateRequests.test.tsx"
+    },
+    {
+      "sha256": "b07c848fe4510a29fa65e5a26e9edbaaee25f03f76af0a17cd70790a94373eba",
+      "path": "src/components/tenant-relationships/ClientPrivateRequests.handoff.test.tsx"
+    },
+    {
+      "sha256": "ff2ce8f41aa8f7b95b25c8a4675bde3f97f94a372ed2419e79ca30b6188a288f",
+      "path": "src/lib/paigePromptHandoff.ts"
+    },
+    {
+      "sha256": "61e7e24932e4de8c96c1d2ec708dc88706cdcbc98a4dc81d90ed33a097b43a3d",
+      "path": "src/lib/paigePromptHandoff.test.ts"
+    }
+  ],
+  "ownerGeometries": {
+    "open": [
+      {
+        "composer": true,
+        "height": 770,
+        "review": [
+          {
+            "height": 44,
+            "width": 182.0124969482422
+          }
+        ],
+        "scrollWidth": 1536,
+        "width": 1536
+      },
+      {
+        "composer": true,
+        "height": 768,
+        "review": [
+          {
+            "height": 44,
+            "width": 182.0124969482422
+          }
+        ],
+        "scrollWidth": 1366,
+        "width": 1366
+      },
+      {
+        "composer": true,
+        "height": 768,
+        "review": [
+          {
+            "height": 44,
+            "width": 182.0124969482422
+          }
+        ],
+        "scrollWidth": 1024,
+        "width": 1024
+      },
+      {
+        "composer": true,
+        "height": 1000,
+        "review": [
+          {
+            "height": 44,
+            "width": 182.0124969482422
+          }
+        ],
+        "scrollWidth": 900,
+        "width": 900
+      }
+    ],
+    "closed": [
+      {
+        "composer": true,
+        "height": 770,
+        "review": [
+          {
+            "height": 44,
+            "width": 182.0124969482422
+          }
+        ],
+        "scrollWidth": 1536,
+        "width": 1536
+      },
+      {
+        "composer": true,
+        "height": 768,
+        "review": [
+          {
+            "height": 44,
+            "width": 182.0124969482422
+          }
+        ],
+        "scrollWidth": 1366,
+        "width": 1366
+      },
+      {
+        "composer": true,
+        "height": 768,
+        "review": [
+          {
+            "height": 44,
+            "width": 182.0124969482422
+          }
+        ],
+        "scrollWidth": 1024,
+        "width": 1024
+      },
+      {
+        "composer": true,
+        "height": 1000,
+        "review": [
+          {
+            "height": 44,
+            "width": 182.0124969482422
+          }
+        ],
+        "scrollWidth": 900,
+        "width": 900
+      }
+    ],
+    "boundary": "Unchanged production layout before the handoff repair; no final runtime claim."
+  },
+  "secondContextGeometries": {
+    "open": [
+      {
+        "formerRequestVisible": false,
+        "height": 770,
+        "privateTitle": "",
+        "scrollWidth": 1536,
+        "width": 1536
+      },
+      {
+        "formerRequestVisible": false,
+        "height": 768,
+        "privateTitle": "",
+        "scrollWidth": 1366,
+        "width": 1366
+      },
+      {
+        "formerRequestVisible": false,
+        "height": 768,
+        "privateTitle": "",
+        "scrollWidth": 1024,
+        "width": 1024
+      },
+      {
+        "formerRequestVisible": false,
+        "height": 1000,
+        "privateTitle": "",
+        "scrollWidth": 900,
+        "width": 900
+      }
+    ],
+    "closed": [
+      {
+        "formerRequestVisible": false,
+        "height": 770,
+        "privateTitle": "",
+        "scrollWidth": 1536,
+        "width": 1536
+      },
+      {
+        "formerRequestVisible": false,
+        "height": 768,
+        "privateTitle": "",
+        "scrollWidth": 1366,
+        "width": 1366
+      },
+      {
+        "formerRequestVisible": false,
+        "height": 768,
+        "privateTitle": "",
+        "scrollWidth": 1024,
+        "width": 1024
+      },
+      {
+        "formerRequestVisible": false,
+        "height": 1000,
+        "privateTitle": "",
+        "scrollWidth": 900,
+        "width": 900
+      }
+    ],
+    "boundary": "Original second CRM context; no customer or business effect; existing geometry before handoff release."
+  },
+  "privateCaptureHashes": [
+    {
+      "file": "owner-review-closed-1024.jpg",
+      "sha256": "50c08554964e88f633cc69ef54d8bcd1c675d4d7c37fd358ca73dd3a3fd89325"
+    },
+    {
+      "file": "owner-review-closed-1366.jpg",
+      "sha256": "9383e075b295c10ca92b6e1b793e8ea5618a61ee6f7ff7cb7cffe46b339960da"
+    },
+    {
+      "file": "owner-review-closed-1536.jpg",
+      "sha256": "5cdf9fb784b6b3aaf4d299ac68cdb940e750ba537a177388351a900057dbe8d9"
+    },
+    {
+      "file": "owner-review-closed-900.jpg",
+      "sha256": "63d3c3574108b070d3c0684a3aaa13fe054ef20358849e6a69af3ffae8397c7c"
+    },
+    {
+      "file": "owner-review-empty-composer.jpg",
+      "sha256": "fcdf3dc48374970f415f2a0eb0712785048e0007a954acbd8e880f134ef2ff25"
+    },
+    {
+      "file": "owner-review-open-1024.jpg",
+      "sha256": "ccff442ff03c30babcf17608afe42fe497212788f407687c8475bcd682695899"
+    },
+    {
+      "file": "owner-review-open-1366.jpg",
+      "sha256": "91f19dfd41202bf47b9096953e508977e2b8fff6b000d695c36061dfe599cf20"
+    },
+    {
+      "file": "owner-review-open-1536.jpg",
+      "sha256": "17b14e0def98026f2ee119ae6ebe48968722d2b7b98f73b397be7161d7460478"
+    },
+    {
+      "file": "owner-review-open-900.jpg",
+      "sha256": "9e8cac35e0d7af301afe352dbcfb0aebaf099a10f37a8423e9e9e18217fed762"
+    },
+    {
+      "file": "owner-review-warm-prefill.jpg",
+      "sha256": "5b67e6f698fb94507d420f764679514cee1bb2d64f223944ae17d04e30f37153"
+    }
+  ],
+  "boundary": "Source/component checks and unchanged actual production layouts; repaired authenticated production behavior, publication, physical phone and founder acceptance remain unverified."
+}

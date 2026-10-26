@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "source": "e04-c56-project-types-summary.json",
+  "bytes": 332,
+  "sha256": "0150b473ca3996f8dc860dc4c520b8b05490a33e0f0f740803c3916d1b87d272",
+  "encoding": "base64",
+  "content": "ewogICJzb3VyY2UiOiAiMGEwZjExYmRiZmZhNDFjOTljNjdkNWQzNjg0ZDRhNWEyZDMyMWFiZiIsCiAgImNvbmZpZyI6ICJ0c2NvbmZpZy5hcHAuanNvbiIsCiAgIm9wdGlvbnNDaGFuZ2VkIjogZmFsc2UsCiAgInByb2plY3REaWFnbm9zdGljcyI6IDYsCiAgIm93bmluZ0ZpbGVzIjogNCwKICAib3duaW5nRGlhZ25vc3RpY3MiOiAwLAogICJib3VuZGFyeSI6ICJPd25pbmctZmlsZSBwcm9qZWN0LWNvbXBpbGVyIGNoZWNrIG9ubHkuIFdob2xlIHByb2plY3QgZGlhZ25vc3RpY3MgYXJlIHJldGFpbmVkOyBub3QgY2xlYW4gZ2xvYmFsIGNvbXBpbGF0aW9uIG9yIGhvc3RlZCBDSS4iCn0=",
+  "boundary": "Controlled local proof. Not production, provider, independent QA or founder acceptance."
+}

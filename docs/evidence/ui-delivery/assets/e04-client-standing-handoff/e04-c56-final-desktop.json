@@ -1,0 +1,15 @@
+{
+  "ax": "Browser tab: 21, Title: \"EXP04 client handoff — local prototype\", URL: \"http://127.0.0.1:5286/\".\nThe following is a diff from the previous accessibility tree with ~ and + representing changed and added elements, respectively. Removed elements are summarized by ID range.\n~\t\t\t20 button Fold composer\n+\t\t38 container Controlled composer port\n+\t\t\t39 heading PAIGE, Value: 2\n+\t\t\t\t40 text PAIGE\n+\t\t\t41 text Selected client: Synthetic consulting client\n+\t\t\t42 text Canonical scope, draft storage and merger; controlled visual port. No Chat backend or send.\n+\t\t\t43 text Review your unsent question\n+\t\t\t44 text entry area (settable) Review your unsent question, ID: c56-question, Value: MERIT, read where this client stands using the current agreement, invoice, payment and delivery records. Keep verified payments, owner-recorded payments and unknown amounts distinct. Read only; do not change records, send, sign, schedule or collect anything.\n+\t\t\t45 button Seed a draft\n+\t\t\t46 button Return to business draft\n+\t\t\t47 button Clear this draft\n+\t\t\t48 text No message has been sent. Actual model, authorization and read receipt remain unverified by this prototype.\nThe focused UI element is 33 button Ask PAIGE about Synthetic consulting client",
+  "dom": {
+    "documentWidth": 1366,
+    "draft": "MERIT, read where this client stands using the current agreement, invoice, payment and delivery records. Keep verified payments, owner-recorded payments and unknown amounts distinct. Read only; do not change records, send, sign, schedule or collect anything.",
+    "font": "Inter, system-ui, -apple-system, sans-serif",
+    "height": 900,
+    "scope": [
+      "Checked 8:10 PM EDT",
+      "Selected client: Synthetic consulting client"
+    ],
+    "standing": "Where Synthetic consulting client standsChecked 8:10 PM EDTCheck againNothing commercial is recorded for Synthetic consulting client yet.Terms, signatures, invoices and delivery work appear here as they’re added in Sales and Operations.Set up termsAsk PAIGE about Synthetic consulting clientFrom your Sales and Operations records. Checking changes nothing. Not tracked here: payment disputes, refunds made at your payment provider, when an agreement takes effect, which installment a payment paid.",
+    "width": 1366
+  }
+}

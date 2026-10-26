@@ -1,0 +1,66 @@
+[
+  {
+    "mode": "populated",
+    "ax": "Browser tab: 21, Title: \"EXP04 client handoff — local prototype\", URL: \"http://127.0.0.1:5286/\".\n0 AXWebArea EXP04 client handoff — local prototype, URL: 127.0.0.1:5286/\n\t1 container\n\t\t2 container Prototype controls\n\t\t\t3 text Local flow prototype · synthetic records · no backend effects\n\t\t\t4 container\n\t\t\t\t5 text Record state\n\t\t\t\t6 pop up button (collapsed, settable) Record state, Value: populated, Secondary Actions: Expand\n\t\t\t\t\t7 menu\n\t\t\t\t\t\t8 empty\n\t\t\t\t\t\t9 (selected) populated\n\t\t\t\t\t\t10 loading\n\t\t\t\t\t\t11 refused\n\t\t\t\t\t\t12 error\n\t\t\t13 container\n\t\t\t\t14 text Theme\n\t\t\t\t15 pop up button (collapsed, settable) Theme, Value: Mineral, Secondary Actions: Expand\n\t\t\t\t\t16 menu\n\t\t\t\t\t\t17 (selected) Mineral\n\t\t\t\t\t\t18 Obsidian\n\t\t\t19 checkbox (settable, integer) Description: Settle selected scope before prefill, Value: 1\n\t\t\t20 button Fold composer\n\t\t50 container\n\t\t\t51 heading Client standing, Value: 1\n\t\t\t\t52 text Client standing\n\t\t\t53 container Where Synthetic consulting client stands, ID: client-standing\n\t\t\t\t54 heading Where Synthetic consulting client stands, Value: 3, ID: trc-standing-title\n\t\t\t\t\t55 text Where  Synthetic consulting client  stands\n\t\t\t\t56 container\n\t\t\t\t\t57 text Checked  8:10 PM EDT\n\t\t\t\t58 button Check again\n\t\t\t\t59 content list\n\t\t\t\t\t60 container\n\t\t\t\t\t\t61 text Agreement COMPLETED Test consulting agreement Sent Aug 28, 2026  ·  Completed Sep 1, 2026 Terms: Active · $3,500.00 agreed · 11 scheduled payments\n\t\t\t\t\t\t62 link Description: Open terms & agreements, Value: 127.0.0.1:5286/solo/123/sales/agreements\n\t\t\t\t\t63 container\n\t\t\t\t\t\t64 text Money OVERDUE\n\t\t\t\t\t\t65 definition list\n\t\t\t\t\t\t\t66 container Paid · verified by your payment provider\n\t\t\t\t\t\t\t\t67 text Paid · verified by your payment provider\n\t\t\t\t\t\t\t68 text $100.00\n\t\t\t\t\t\t\t69 container Recorded by you · not provider-verified\n\t\t\t\t\t\t\t\t70 text Recorded by you · not provider-verified\n\t\t\t\t\t\t\t71 text $500.00\n\t\t\t\t\t\t\t72 container Outstanding\n\t\t\t\t\t\t\t\t73 text Outstanding\n\t\t\t\t\t\t\t74 text $3,020.00\n\t\t\t\t\t\t\t75 container Overdue\n\t\t\t\t\t\t\t\t76 text Overdue\n\t\t\t\t\t\t\t77 text $320.00\n\t\t\t\t\t\t78 text $200.00 awaiting payment provider confirmation — not received · 1 payment with an unknown outcome · 1 failed payment request Test payments (not real money):  $300.00  — never counted above.\n\t\t\t\t\t\t79 link Description: Open invoices, Value: 127.0.0.1:5286/solo/123/sales/payments?view=invoices\n\t\t\t\t\t\t80 link Description: Open collections, Value: 127.0.0.1:5286/solo/123/sales/payments?view=collections\n\t\t\t\t\t81 container\n\t\t\t\t\t\t82 text Delivery BEHIND 1 of 3 done · 1 overdue Next:  Draft discovery report  ·  due  Oct 10, 2026\n\t\t\t\t\t\t83 link Description: Open delivery work, Value: 127.0.0.1:5286/solo/123/operations/work\n\t\t\t\t\t84 container\n\t\t\t\t\t\t85 text Next steps 5 TO LOOK AT\n\t\t\t\t\t\t86 content list\n\t\t\t\t\t\t\t87 container\n\t\t\t\t\t\t\t\t88 text A payment is overdue.\n\t\t\t\t\t\t\t\t89 link Description: Open invoices, Value: 127.0.0.1:5286/solo/123/sales/payments?view=invoices\n\t\t\t\t\t\t\t90 text Payments are behind the agreed schedule.\n\t\t\t\t\t\t\t91 text A payment attempt has an unknown outcome; it is not counted as paid.\n\t\t\t\t\t\t92 button (collapsed) Show 2 more, Secondary Actions: Expand\n\t\t\t\t\t\t93 button Ask PAIGE about Synthetic consulting client\n\t\t\t\t\t\t\t94 text Ask PAIGE about \n\t\t\t\t\t\t\t95 text Synthetic consulting client\n\t\t\t\t96 container\n\t\t\t\t\t97 text From your Sales and Operations records. Checking changes nothing.  Not tracked here:  payment disputes, refunds made at your payment provider, when an agreement takes effect, which installment a payment paid .\n\t\t39 container Controlled composer port\n\t\t\t40 heading PAIGE, Value: 2\n\t\t\t\t41 text PAIGE\n\t\t\t42 text Selected client: Synthetic consulting client\n\t\t\t43 text Canonical scope, draft storage and merger; controlled visual port. No Chat backend or send.\n\t\t\t44 text Review your unsent question\n\t\t\t45 text entry area (settable) Review your unsent question, ID: c56-question, Value: MERIT, read where this client stands using the current agreement, invoice, payment and delivery records. Keep verified payments, owner-recorded payments and unknown amounts distinct. Read only; do not change records, send, sign, schedule or collect anything.\n\t\t\t46 button Seed a draft\n\t\t\t47 button Return to business draft\n\t\t\t48 button Clear this draft\n\t\t\t49 text No message has been sent. Actual model, authorization and read receipt remain unverified by this prototype.\n\nThe focused UI element is 0 AXWebArea EXP04 client handoff — local prototype, URL: 127.0.0.1:5286/",
+    "dom": {
+      "asks": 1,
+      "client": [
+        "Checked 8:10 PM EDT",
+        "Selected client: Synthetic consulting client"
+      ],
+      "draft": "MERIT, read where this client stands using the current agreement, invoice, payment and delivery records. Keep verified payments, owner-recorded payments and unknown amounts distinct. Read only; do not change records, send, sign, schedule or collect anything.",
+      "standing": "Where Synthetic consulting client standsChecked 8:10 PM EDTCheck againAgreementCompletedTest consulting agreementSent Aug 28, 2026 · Completed Sep 1, 2026Terms: Active · $3,500.00 agreed · 11 scheduled paymentsOpen terms & agreementsMoneyOverduePaid · verified by your payment provider$100.00Recorded by you · not provider-verified$500.00Outstanding$3,020.00Overdue$320.00$200.00 awaiting payment provider confirmation — not received · 1 payment with an unknown outcome · 1 failed payment requestTest payments (not real money): $300.00 — never counted above.Open invoicesOpen collectionsDeliveryBehind1 of 3 done · 1 overdueNext: Draft discovery report · due Oct 10, 2026Open delivery workNext steps5 to look atA payment is overdue.Open invoicesPayments are behind the agreed schedule.A payment attempt has an unknown outcome; it is not counted as paid.Show 2 moreAsk PAIGE about Synthetic consulting clientFrom your Sales and Operations records. Checking changes nothing. Not tracked here: payment disputes, refunds made at your payment provider, when an agreement takes effect, which installment a payment paid."
+    }
+  },
+  {
+    "mode": "loading",
+    "ax": "Browser tab: 21, Title: \"EXP04 client handoff — local prototype\", URL: \"http://127.0.0.1:5286/\".\nThe following is a diff from the previous accessibility tree with ~ and + representing changed and added elements, respectively. Removed elements are summarized by ID range.\nRemoved element IDs: 52-97\n~\t\t\t\t6 pop up button (collapsed, settable) Record state, Value: loading, Secondary Actions: Expand\n~\t\t\t\t\t\t9 populated\n~\t\t\t\t\t\t10 (selected) loading\n~\t\t50 heading Client standing, Value: 1\n~\t\t\t51 text Client standing\n+\t\t52 container Where Synthetic consulting client stands, ID: client-standing\n+\t\t\t53 heading Where Synthetic consulting client stands, Value: 3, ID: trc-standing-title\n+\t\t\t\t54 text Where  Synthetic consulting client  stands\n+\t\t\t55 button (disabled) Check again\n+\t\t\t56 container\n+\t\t\t\t57 text Checking where  Synthetic consulting client  stands…\nThe focused UI element is 0 AXWebArea EXP04 client handoff — local prototype, URL: 127.0.0.1:5286/",
+    "dom": {
+      "asks": 0,
+      "client": [
+        "Checking where Synthetic consulting client stands…",
+        "Selected client: Synthetic consulting client"
+      ],
+      "draft": "MERIT, read where this client stands using the current agreement, invoice, payment and delivery records. Keep verified payments, owner-recorded payments and unknown amounts distinct. Read only; do not change records, send, sign, schedule or collect anything.",
+      "standing": "Where Synthetic consulting client standsCheck againChecking where Synthetic consulting client stands…"
+    }
+  },
+  {
+    "mode": "refused",
+    "ax": "Browser tab: 21, Title: \"EXP04 client handoff — local prototype\", URL: \"http://127.0.0.1:5286/\".\nThe following is a diff from the previous accessibility tree with ~ and + representing changed and added elements, respectively. Removed elements are summarized by ID range.\nRemoved element IDs: 56-57\n~\t\t\t\t6 pop up button (collapsed, settable) Record state, Value: refused, Secondary Actions: Expand\n~\t\t\t\t\t\t10 loading\n~\t\t\t\t\t\t11 (selected) refused\n~\t\t\t55 container\n+\t\t\t\t56 text Only the business owner or an admin can see agreements and payments for  Synthetic consulting client .\nThe focused UI element is 0 AXWebArea EXP04 client handoff — local prototype, URL: 127.0.0.1:5286/",
+    "dom": {
+      "asks": 0,
+      "client": [
+        "Only the business owner or an admin can see agreements and payments for Synthetic consulting client.",
+        "Selected client: Synthetic consulting client"
+      ],
+      "draft": "MERIT, read where this client stands using the current agreement, invoice, payment and delivery records. Keep verified payments, owner-recorded payments and unknown amounts distinct. Read only; do not change records, send, sign, schedule or collect anything.",
+      "standing": "Where Synthetic consulting client standsOnly the business owner or an admin can see agreements and payments for Synthetic consulting client."
+    }
+  },
+  {
+    "mode": "error",
+    "ax": "Browser tab: 21, Title: \"EXP04 client handoff — local prototype\", URL: \"http://127.0.0.1:5286/\".\nThe following is a diff from the previous accessibility tree with ~ and + representing changed and added elements, respectively. Removed elements are summarized by ID range.\n~\t\t\t\t6 pop up button (collapsed, settable) Record state, Value: error, Secondary Actions: Expand\n~\t\t\t\t\t\t11 refused\n~\t\t\t\t\t\t12 (selected) error\n~\t\t\t\t56 text We couldn’t check where  Synthetic consulting client  stands. Nothing here is shown as zero; it wasn’t read.\n+\t\t\t\t57 button Try again\nThe focused UI element is 0 AXWebArea EXP04 client handoff — local prototype, URL: 127.0.0.1:5286/",
+    "dom": {
+      "asks": 0,
+      "client": [
+        "Selected client: Synthetic consulting client"
+      ],
+      "draft": "MERIT, read where this client stands using the current agreement, invoice, payment and delivery records. Keep verified payments, owner-recorded payments and unknown amounts distinct. Read only; do not change records, send, sign, schedule or collect anything.",
+      "standing": "Where Synthetic consulting client standsWe couldn’t check where Synthetic consulting client stands. Nothing here is shown as zero; it wasn’t read.Try again"
+    }
+  },
+  {
+    "mode": "empty",
+    "ax": "Browser tab: 21, Title: \"EXP04 client handoff — local prototype\", URL: \"http://127.0.0.1:5286/\".\nThe following is a diff from the previous accessibility tree with ~ and + representing changed and added elements, respectively. Removed elements are summarized by ID range.\nRemoved element IDs: 57\n~\t\t\t\t6 pop up button (collapsed, settable) Record state, Value: empty, Secondary Actions: Expand\n~\t\t\t\t\t\t8 (selected) empty\n~\t\t\t\t\t\t12 error\n~\t\t\t\t56 text Checked  8:10 PM EDT\n+\t\t\t57 button Check again\n+\t\t\t58 container\n+\t\t\t\t59 text Nothing commercial is recorded for  Synthetic consulting client  yet.\n+\t\t\t60 text Terms, signatures, invoices and delivery work appear here as they’re added in Sales and Operations.\n+\t\t\t61 link Description: Set up terms, Value: 127.0.0.1:5286/solo/123/sales/agreements\n+\t\t\t62 button Ask PAIGE about Synthetic consulting client\n+\t\t\t\t63 text Ask PAIGE about \n+\t\t\t\t64 text Synthetic consulting client\n+\t\t\t65 container\n+\t\t\t\t66 text From your Sales and Operations records. Checking changes nothing.  Not tracked here:  payment disputes, refunds made at your payment provider, when an agreement takes effect, which installment a payment paid .\nThe focused UI element is 0 AXWebArea EXP04 client handoff — local prototype, URL: 127.0.0.1:5286/",
+    "dom": {
+      "asks": 1,
+      "client": [
+        "Checked 8:10 PM EDT",
+        "Selected client: Synthetic consulting client"
+      ],
+      "draft": "MERIT, read where this client stands using the current agreement, invoice, payment and delivery records. Keep verified payments, owner-recorded payments and unknown amounts distinct. Read only; do not change records, send, sign, schedule or collect anything.",
+      "standing": "Where Synthetic consulting client standsChecked 8:10 PM EDTCheck againNothing commercial is recorded for Synthetic consulting client yet.Terms, signatures, invoices and delivery work appear here as they’re added in Sales and Operations.Set up termsAsk PAIGE about Synthetic consulting clientFrom your Sales and Operations records. Checking changes nothing. Not tracked here: payment disputes, refunds made at your payment provider, when an agreement takes effect, which installment a payment paid."
+    }
+  }
+]

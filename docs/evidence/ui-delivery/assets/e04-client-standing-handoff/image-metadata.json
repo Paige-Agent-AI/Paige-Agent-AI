@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "images": [
+    {
+      "file": "e04-c56-final-desktop.jpg",
+      "format": "JPEG",
+      "width": 1366,
+      "height": 900,
+      "bytes": 83547
+    },
+    {
+      "file": "e04-c56-final-narrow.jpg",
+      "format": "JPEG",
+      "width": 390,
+      "height": 843,
+      "bytes": 46146
+    },
+    {
+      "file": "e04-c56-prototype-desktop.jpg",
+      "format": "JPEG",
+      "width": 1366,
+      "height": 900,
+      "bytes": 83252
+    },
+    {
+      "file": "e04-c56-prototype-narrow.jpg",
+      "format": "JPEG",
+      "width": 390,
+      "height": 843,
+      "bytes": 47746
+    }
+  ],
+  "edits": "NONE: original screenshot bytes retained",
+  "optionalPillowMetadataAttempt": "UNAVAILABLE: PIL is not installed in that system Python. No package was installed. Original JPEG headers and actual rendered captures are inspected instead."
+}

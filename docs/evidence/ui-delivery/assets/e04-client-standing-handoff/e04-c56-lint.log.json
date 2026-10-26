@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "source": "e04-c56-lint.log",
+  "bytes": 356,
+  "sha256": "d84f7990f145b9e06ab544dd25c96e70ff1fbb18c4f701b5ccbca8fa06c29b7a",
+  "encoding": "base64",
+  "content": "CkM6XFVzZXJzXHRvbmlnXERvY3VtZW50c1xDb2RleFwyMDI2LTEwLTE0XHBhaWdlLWVuZ2luZWVyaW5nLTItMC1leHBlcmllbmNlLTA0XHdvcmtcZTA0LWRlbGl2ZXJ5XHNyY1xjb21wb25lbnRzXHRlbmFudC1yZWxhdGlvbnNoaXBzXENsaWVudFN0YW5kaW5nLmhhbmRvZmYudGVzdC50c3gKICAzOToxNDcgIHdhcm5pbmcgIFJlYWN0IEhvb2sgdXNlRWZmZWN0IGhhcyBhIG1pc3NpbmcgZGVwZW5kZW5jeTogJ2RyYWZ0Jy4gRWl0aGVyIGluY2x1ZGUgaXQgb3IgcmVtb3ZlIHRoZSBkZXBlbmRlbmN5IGFycmF5ICByZWFjdC1ob29rcy9leGhhdXN0aXZlLWRlcHMKCuKcliAxIHByb2JsZW0gKDAgZXJyb3JzLCAxIHdhcm5pbmcpCgo=",
+  "boundary": "Controlled local proof. Not production, provider, independent QA or founder acceptance."
+}

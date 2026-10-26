@@ -1,0 +1,60 @@
+{
+  "schemaVersion": 1,
+  "source": "0a0f11bdbffa41c99c67d5d3684d4a5a2d321abf",
+  "tree": "4b935593835f0c66d2af3a095d50544a166a83fe",
+  "base": "0617f6d8c5d1534d831a642bf4bf20c3486cb6d4",
+  "wholeStandingInverse": true,
+  "owningPaths": [
+    "src/components/tenant-relationships/ClientStanding.handoff.test.tsx",
+    "src/components/tenant-relationships/ClientStanding.scope.test.tsx",
+    "src/components/tenant-relationships/ClientStanding.test.tsx",
+    "src/components/tenant-relationships/ClientStanding.tsx"
+  ],
+  "preservedOutsideEntries": 16386,
+  "allOutsideExact": true,
+  "unchangedCanonicalInputs": [
+    {
+      "path": "src/lib/paigePromptHandoff.ts",
+      "blob": "a3240f101ec80d9c5da0305b4bdc545f371fcb3f",
+      "unchanged": true
+    },
+    {
+      "path": "src/lib/paigeComposerScopeState.ts",
+      "blob": "a8421ff14fd2e175f019f38809a171f47e80c588",
+      "unchanged": true
+    },
+    {
+      "path": "src/solo/paigeClientScope.ts",
+      "blob": "f21fd4a231750429c83f132c06540689d43fba55",
+      "unchanged": true
+    },
+    {
+      "path": "src/solo/paigePublicPresenceScope.ts",
+      "blob": "339bc955709d453b0976b27e21935d39e82bb8fa",
+      "unchanged": true
+    },
+    {
+      "path": "src/solo/SoloApp.tsx",
+      "blob": "c204f253f042f29d813d9eabfbd6f91a703f67fb",
+      "unchanged": true
+    },
+    {
+      "path": "src/solo/SoloPaigeWorkspace.tsx",
+      "blob": "4d1e446edfa95a2e4f06cbb86da93e36c38293a5",
+      "unchanged": true
+    },
+    {
+      "path": "src/components/dashboard/PaigeAIChat.tsx",
+      "blob": "f3080b1dd57821db62a1955a8233ab402b9355ef",
+      "unchanged": true
+    },
+    {
+      "path": "supabase/functions/paige-ai-chat/index.ts",
+      "blob": "4f995e623d42858947b6aef9ce0a70c4964f0762",
+      "unchanged": true
+    }
+  ],
+  "algorithmMaturity": "No promotion; ALG01/12PARTIAL,02INCOMPLETE,13 usefulnessUNVERIFIED",
+  "authority": "Existing local UI context/draft only. Native actor/tenant/client authorization and INT346 are unchanged.",
+  "boundary": "Controlled local/source proof, not hosted CI, deployed customer behavior or founder acceptance."
+}

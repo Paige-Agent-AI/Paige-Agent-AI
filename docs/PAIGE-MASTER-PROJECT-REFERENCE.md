@@ -852,6 +852,12 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**2026-10-25 UTC — EXP02 continuous Finance navigation and source return.**
+
+| PR / actual main | Shipped change and reason | Actual delivery and proof boundary | Canonical evidence / customer release |
+| --- | --- | --- | --- |
+| [#2883](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2883#issuecomment-6405085439); reviewed421cd1c8abf4f8a83ca99e2bf222b2a69ad4c6b3; main1ff498e790da4deeab60be2c60f988f7023a7a80/tree85876627cef26a09886ab8dedc020dbd9dafea22 | Two-line repair: retain Finance's healthy screen across seven routes while preserving identity/error recovery; retire source details/return-focus ref on tab history. Same original source readers/VERA/Chat/permissions. | LOWER5645755912/all10 exact checks/two webSUCCESS/designed PreviewSKIP/zero threads. Actual137b+421 union/all30 owning leaves/16,272 outside entries/whole incoming Brain inverse exact. Local42/four suites/parity+18controls and13 original source-render PNGs; prior causal failures preserved. READYdpl_Hf4QkAHriAuuVvs3Yx6eDhGojqpb/bothpublic200/exact1ff498e790da4deeab60be2c60f988f7023a7a80-mvogm6xt/null23:30:40UTC. Existing authorized SOLO Owner verifies11 continuous transitions/all7 pages/focus=selected/one panel/empty draft/unchanged in-app conversation, Overview+VERA/source Escape+Back and return after reload. Native/Edge/permission/provider/activation N/A. | [Original UI evidence](evidence/ui-delivery/e2-finance-tab-continuity.md), sanitized authenticated observation JSON, ANT52/cf628932. Bounded key-loss finding closed; extra post-reload keys timed out/excluded, full Chat selection/native200percent/other roles/cohorts/AT/Live/provider/full Finance/full19+nine/founder remain unverified. finance.department stays PROOF_OWED; catalogue/ALG maturity,9/0+12/0/4/monthly UNKNOWN unchanged. Internal-only/no customer name/version/announcement; forward correction/revert preserves records. |
+
 **2026-10-25 UTC — EXP02 original manual Work history reader.**
 
 | PR / actual main | Shipped change and reason | Actual delivery and proof boundary | Canonical evidence / customer release |

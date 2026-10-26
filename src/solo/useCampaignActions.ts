@@ -269,7 +269,7 @@ export function useCampaignActions(tenantId: string | null, briefId: string | nu
     ...(input.expected?.trim() ? { expectedResult: { summary: input.expected.trim() } } : {}),
   }, (next, data) => Boolean(find(next, briefId, data.action_id)), input.key), [write]);
   // Preparing asks the bus's own writer to draft the step, which opens its approval; confirmed only
-  // when the readback shows that approval waiting (or the step already past it).
+  // when the readback shows that approval waiting (a step already past it is not re-confirmed here).
   const prepare = useCallback((briefId: string, actionId: string) => write({ type: "prepare_action", briefId, actionId },
     (next) => find(next, briefId, actionId)?.lifecycle === "approval_required"), [write]);
   const remove = useCallback((briefId: string, actionId: string) => write({ type: "unlink_action", briefId, actionId },

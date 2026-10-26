@@ -193,15 +193,18 @@ SELECT pg_temp.require_true(pg_temp.lifecycle(v,'a2980500-0000-4000-8000-0000000
   AND pg_temp.entry(v,'a2980500-0000-4000-8000-0000000000d6')->>'observed_through'='human','outcome and evaluation read back') FROM r2;
 
 -- 4b. Preparing a planned step asks the bus's own writer to draft it: the approval opens, nothing is sent.
+-- The step is the owner's planned one; the admin prepares it (both are tenant admins to the writer).
 RESET ROLE;
+-- A temp table's default ACL admits only its owner, so the later authenticated reads need this grant.
 CREATE TEMP TABLE prep_step AS SELECT id FROM public.paige_actions WHERE title='Book the venue';
+GRANT SELECT ON pg_temp.prep_step TO authenticated;
 SELECT pg_temp.require_true((SELECT id IS NOT NULL FROM prep_step),'the step to prepare is the owner''s planned one');
 SET LOCAL ROLE authenticated;
 SELECT pg_temp.as_user('a2980500-0000-4000-8000-000000000001');
-SELECT pg_temp.require_true((pg_temp.cmd(jsonb_build_object('type','prepare_action','briefId','a2980500-0000-4000-8000-0000000000c1',
-  'actionId',(SELECT id::text FROM prep_step)),'prep-1')->>'outcome')='prepared','a planned step is prepared');
-SELECT pg_temp.require_true((pg_temp.cmd(jsonb_build_object('type','prepare_action','briefId','a2980500-0000-4000-8000-0000000000c1',
-  'actionId',(SELECT id::text FROM prep_step)),'prep-2')->>'lifecycle')='approval_required','the prepared step waits for approval');
+WITH r AS (SELECT pg_temp.cmd(jsonb_build_object('type','prepare_action','briefId','a2980500-0000-4000-8000-0000000000c1',
+  'actionId',(SELECT id::text FROM prep_step)),'prep-1') AS res)
+SELECT pg_temp.require_true((SELECT res->>'outcome'='prepared' AND res->>'lifecycle'='approval_required' FROM r),
+  'a planned step is prepared and waits for approval');
 RESET ROLE;
 SELECT pg_temp.require_true((SELECT a.status='pending_approval' AND p.status='pending_approval' AND p.source='paige_action_bus'
   AND p.submitted_by_user_id='a2980500-0000-4000-8000-000000000001' AND p.metadata->>'action_id'=a.id::text
@@ -211,7 +214,7 @@ SET LOCAL ROLE authenticated;
 SELECT pg_temp.as_user('a2980500-0000-4000-8000-000000000001');
 SELECT pg_temp.require_true(pg_temp.lifecycle(public.get_campaign_brief_actions(NULL,'a2980500-0000-4000-8000-0000000000c1'),
   (SELECT id::text FROM prep_step))='approval_required','the read derives approval_required for the prepared step');
-SELECT pg_temp.require_refused($$SELECT pg_temp.cmd(jsonb_build_object('type','prepare_action','briefId','a2980500-0000-4000-8000-0000000000c1','actionId',(SELECT id::text FROM prep_step)),'prep-3')$$,'CAMPAIGN_ACTION_NOT_PLANNED','only a step still planned can be prepared');
+SELECT pg_temp.require_refused($$SELECT pg_temp.cmd(jsonb_build_object('type','prepare_action','briefId','a2980500-0000-4000-8000-0000000000c1','actionId',(SELECT id::text FROM prep_step)),'prep-2')$$,'CAMPAIGN_ACTION_NOT_PLANNED','only a step still planned can be prepared');
 
 -- 5. Dependencies stay inside one campaign, and unlinking keeps dependants honest.
 SELECT pg_temp.require_refused($$SELECT public.configure_campaign_brief_actions(NULL,'{"type":"link_action","briefId":"a2980500-0000-4000-8000-0000000000c4","actionId":"a2980500-0000-4000-8000-0000000000da","tactic":"Thanks","family":"email","dependsOnActionId":"a2980500-0000-4000-8000-0000000000d1"}','dep-1','human')$$,'CAMPAIGN_ACTION_DEPENDENCY_INVALID','a dependency in another campaign is refused');
@@ -267,6 +270,6 @@ DELETE FROM public.paige_actions WHERE id='a2980500-0000-4000-8000-0000000000d1'
 SELECT pg_temp.require_true((SELECT count(*)=0 FROM public.campaign_brief_actions WHERE automation_id IS NOT NULL OR action_id='a2980500-0000-4000-8000-0000000000d1')
   AND (SELECT depends_on_action_id IS NULL FROM public.campaign_brief_actions WHERE action_id='a2980500-0000-4000-8000-0000000000da'),'a deleted process or action leaves its links behind cleanly');
 
-SELECT pg_temp.require_true((SELECT count(*)=22 FROM public.audit_logs WHERE action='campaign_brief.actions' AND data->>'tenant_id'='a2980500-0000-4000-8000-000000000011'),'every write is audited once');
-SELECT pg_temp.require_true((SELECT count(*)=22 FROM public.campaign_brief_command_results WHERE tenant_id='a2980500-0000-4000-8000-000000000011'),'every write is in the ledger once');
+SELECT pg_temp.require_true((SELECT count(*)=21 FROM public.audit_logs WHERE action='campaign_brief.actions' AND data->>'tenant_id'='a2980500-0000-4000-8000-000000000011'),'every write is audited once');
+SELECT pg_temp.require_true((SELECT count(*)=21 FROM public.campaign_brief_command_results WHERE tenant_id='a2980500-0000-4000-8000-000000000011'),'every write is in the ledger once');
 ROLLBACK;

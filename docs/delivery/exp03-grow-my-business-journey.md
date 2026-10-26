@@ -591,36 +591,41 @@ It does not narrow any of them. NEXUS stays the existing product specialist unde
 | PR | Disposition |
 |---|---|
 | [#2923](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2923) F8 records | Reviewed **NON-AUTHOR** on exact head `4b00bc0`. The production claim was re-read: `20271116010000` is applied and the live read carries the F8 fields. All required checks were SUCCESS (Preview SKIP for a docs-only change). **Merged** `ae12ff14`. Receipt: [#2923 comment](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2923#issuecomment-6425223336). It closes the #2917 row, so it is not logged recursively. |
-| [#2131](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2131) S3 backend closeout | **Not merged; reconciliation owed.** Its base is `5c90859` (2026-10-14), 12 days stale. Its content is still absent from main: master §4.0 has no `f2e2a0af6` release row, and master line ~3821 still reads "NOT merged or live". The successor will port only facts it re-verifies on current main into a fresh records PR, then close #2131 as superseded with a link. It will not merge the stale branch blind. |
+| [#2131](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2131) S3 backend closeout | **Not merged; reconciliation owed.** Its base is `5c90859` (2026-10-14), 12 days stale. Its content is still absent from main: master §4.0 has no `f2e2a0af6` release row, and master line ~3828 still reads "NOT merged or live". The successor will port only facts it re-verifies on current main into a fresh records PR, then close #2131 as superseded with a link. It will not merge the stale branch blind. |
 | [#2152](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2152) SendGrid-only directive (2026-10-14) | **Not merged; reconciliation owed.** The owner's 2026-10-14 ruling (SendGrid replaces Resend for platform, tenant PAIGE Email and campaigns) is still unrecorded on main. Current source still sends managed campaign mail as `provider:'resend'` (`_email_resolve_sender`). The same fresh-records approach as #2131 applies: re-verify the inventory against current source and official provider docs, then supersede. |
 
 ### 14.2 Next coherent safe deliverable — started and proven in this checkpoint
 
-**Email campaign lifecycle negatives** (`supabase/tests/email_campaign_lifecycle.sql`, 78 assertions, rolled
+**Email campaign lifecycle negatives** (`supabase/tests/email_campaign_lifecycle.sql`, 86 assertions, rolled
 back, synthetic test tenants). It runs in the required `database-contract` job (`paige-spine-contract.yml`)
 through `supabase test db`, and `src/__tests__/email-campaign-lifecycle.test.ts` pins that wiring and the plan count.
 
 Before it, no database-contract suite drove the campaign lifecycle. The E09 suite covers portal audience and
 Updates consent only. The new suite proves, through the real seams:
 - a saved draft reopens as saved;
-- members and another business are refused;
+- members and another business are refused (campaigns, versions and recipients unreadable to them);
 - a filed version is frozen;
 - a stale approval (version replaced, or hash mismatch) and a generic queue approve are refused;
-- approval needs a signed-in owner/admin;
-- PAIGE files, replays her own filing and never approves or takes over an owner filing;
-- decline from the seam and from the approvals queue both return a draft;
-- suppression is applied at plan and re-checked at send after approval;
+- approval needs a signed-in owner or admin: an admin seat approves, and a call with no signed-in person is
+  refused by the function body (`not_signed_in`), not only by the grant;
+- PAIGE's filing waits for a person: she replays her own filing and cannot take over an owner's filing.
+  The database does not stop a JWT-bearing caller from approving; what keeps PAIGE from approving is that
+  approve is not one of her registered capabilities (`_shared/paige-spine/domains/email_campaigns.ts`);
+- decline from the seam and the owner's own RLS-scoped decline from the approvals queue both return a draft;
+- suppressed and opted-out people are excluded at plan, and both are re-checked at send after approval;
 - an expired lease becomes `outcome_unknown` and is never handed out again;
 - a duplicate record is refused;
-- cancel mid-send refuses the leased hand-off;
+- cancel mid-send refuses the leased hand-off, and a held-back (deferred) send under the cancelled campaign is
+  never claimed again;
 - settle reads the rows;
 - a resend never re-plans anyone sent or outcome-unknown.
 
 **Evidence, by class:**
 - **Automated (local, replayed schema):** the full 1,479-migration replay on Supabase CLI 2.109.1 (CI's
-  version) passes 78/78 via `supabase test db`.
-- **Mutation proof (§71.4):** eight defects were reinstated one at a time, and each turned specific assertions
-  red. The restored baseline is 78/78.
+  version) passes 86/86 via `supabase test db`, six repeated runs (recipient ids are random; the suite
+  does not depend on their order).
+- **Mutation proof (§71.4):** ten defects were reinstated one at a time, and each turned specific assertions
+  red. The restored baseline is 86/86.
   - M1: the send-time suppression re-check removed.
   - M2: an expired lease returned to planned.
   - M3: the approve skips both hash checks.
@@ -629,11 +634,21 @@ Updates consent only. The new suite proves, through the real seams:
   - M6: the approval-guard trigger disabled.
   - M7: the frozen-version trigger disabled.
   - M8: the queue-decline withdrawal trigger disabled.
+  - M9: the claim ignores campaign status (found by the independent review: the first version's
+    "never claimed again" assertion could not fail, because nothing was left planned).
+  - M10: the approve body no longer requires a signed-in person (the first version asserted the grant's
+    refusal instead of the body's).
   - The first M1 and M3 mutants were operator-precedence no-ops and were corrected before counting.
   - One finding: removing only the re-derived hash comparison is masked by the stored-hash comparison. That is
     defense in depth, not a gap.
 - **Not reached:** CI on the exact head (pending), production grants (CI reproduces them; the local run did
   not), any provider send, authenticated customer drive and founder evaluation.
+
+**Independent review:** a separate reviewer agent, given the code rather than my conclusions, found 2 MAJOR
+and 9 MINOR issues, all in the proof and this record, none in product code. All were fixed in this PR: a
+vacuous cancelled-claim check, a grant-dependent signed-in check, a NULL-able hand-off id, an error-tolerant
+`isnt`, a superuser stand-in for the queue decline, header overclaims, campaign-scoped claim assertions, and
+vitest counting, comment matching and address checks.
 
 **No defect was found** in the lifecycle seams, so no product change ships with this proof.
 
@@ -764,7 +779,8 @@ grepped across `supabase/functions` and `src`.
 
 **Appended email subcases (owner mandate; original IDs untouched):**
 - **E-1 to E-9 (campaign lifecycle):** draft save/reopen, member/foreign refusal, freeze, stale refusal,
-  person-only approve, PAIGE-files-only, decline, suppression at plan and send, unknown/duplicate/cancel/resend.
+  owner-or-admin-only approve, PAIGE's filing waits for a person, decline, suppression and opt-out at plan and
+  send, unknown/duplicate/cancel/resend.
   WORKING (source) and proven §14.2. No live send.
 - **E-10 SendGrid account integration:**
   - PARTIAL: the door, receipts and sender integrity are live but inert.

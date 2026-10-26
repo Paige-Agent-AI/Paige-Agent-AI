@@ -6,6 +6,7 @@
 // §32: a green typecheck proves this file parses. It proves nothing about whether pdf-lib can load
 // the bytes we produced, embed a font, take a PNG, append a page and save — which is exactly the
 // class of failure that compiles clean and then blanks at runtime. These tests RUN that path.
+import type { PDFPage, PDFObject } from "npm:pdf-lib@1.17.1";
 import {
   assert,
   assertEquals,
@@ -35,10 +36,10 @@ import {preparedSealFixture,PREP_CLIENT,PREP_SIGNER,PREP_ID} from './test-fixtur
 async function originalPageOperators(bytes:Uint8Array){
   const {PDFDocument,PDFArray,PDFRawStream,decodePDFRawStream}=await import('npm:pdf-lib@1.17.1');
   const pdf=await PDFDocument.load(bytes);
-  return pdf.getPages().slice(0,4).map(page=>{
+  return pdf.getPages().slice(0,4).map((page:PDFPage)=>{
     const contents=page.node.Contents();if(!contents)return '';
     const entries=contents instanceof PDFArray?contents.asArray():[contents];
-    return entries.map(entry=>{const stream=pdf.context.lookup(entry);assert(stream instanceof PDFRawStream);return new TextDecoder().decode(decodePDFRawStream(stream).decode());}).join('\n');
+    return entries.map((entry:PDFObject)=>{const stream=pdf.context.lookup(entry);assert(stream instanceof PDFRawStream);return new TextDecoder().decode(decodePDFRawStream(stream).decode());}).join('\n');
   });
 }
 

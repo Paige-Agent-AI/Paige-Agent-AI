@@ -1,7 +1,6 @@
-import { inspectUploadedPdf } from './document.ts';
+import { inspectUploadedPdf, loadNativePdfLib } from './document.ts';
 import { verifyRetainedAgreementPdf } from './retained-document.ts';
 import { readAgreementPdfDocument, type AgreementPdfDocument } from './field-preparation.ts';
-const PDFLIB_SPEC = 'npm:pdf-lib@1.17.1';
 
 /** Dormant native preparation inspector. Never saves/re-renders the document,
  * changes its existing metadata, approves it, or authorizes access. Caller must
@@ -17,7 +16,7 @@ export async function inspectAgreementPreparationPdf(bytes: Uint8Array, expected
   if (!inspected.ok || inspected.pages > 250) return fail();
   try {
     // SAME existing native loader/version; encryption is never ignored.
-    const { PDFDocument, PDFName, PDFNumber } = await import(PDFLIB_SPEC);
+    const { PDFDocument, PDFName, PDFNumber } = await loadNativePdfLib();
     const pdf = await PDFDocument.load(retained, { updateMetadata: false });
     const pages = [];
     for (const page of pdf.getPages()) {

@@ -865,6 +865,13 @@ documentation successor; exact-e993 public aliases were not observed. Original
 source/capture evidence retains this limitation and original9/0+12/0/4. This
 mechanical identity closeout is not logged recursively.
 
+**2026-10-26 UTC — EXP03 F8: the qualified handoff reads Sales' own records.**
+
+| Increment | Exact reviewed source and observed release | Completion boundary |
+| --- | --- | --- |
+| [#2917 qualified-handoff read](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2917) | Merged `4422cb02d0` (squash of reviewed head `a9dd387e2`); independent review round 1 HOLD with one P1 (deals.actual_close_date is a DATE — a timestamp literal could never match) plus two P3s taken (incumbent tail order; date-only strings parsed as local midnight so a won date reads the same day west of UTC); one P3 disclosed not taken (no paige_invoices(deal_id) index — fine at current scale, a future perf note). Reviewer confirmed the migration is mechanically derived from the SOLE incumbent definition with exactly four additions, and the lateral/gating semantics. Exact-head checks all green on `a9dd387e2`: ci, PAIGE Spine contract (after the CI-caught hex-uuid fixture fix), migration-lint, ui-delivery-evidence, Security Audit, Finance/Sales SQL proofs. deploy-migrations SUCCESS on the merge; production readback 2026-10-26: `20271116010000` in schema_migrations and the live `get_campaign_brief_leads` carries the F8 fields. Evidence: `docs/evidence/ui-delivery/exp03-f8-qualified-handoff-read.md` (validator PASS). | Read-side complete and released: recipient (admin-gated name), invoices as raw counts, the close date when won, and the two unlinked facts (agreement, booked call) said once. Rendered matrix, an authenticated owner view of a real opportunity, the Sales-owned writers (agreement/invoice links), and the founder run remain PROOF OWED / others' lanes. |
+
+
 **2026-10-26 UTC — EXP04 original signature factory and native PDF source closeout.**
 
 | PR / exact public source | What shipped and why | Evidence and acceptance boundary |

@@ -35,7 +35,7 @@ ACCEPTANCE_CRITERIA: Native facts and exact original fixed-creation provenance e
 MOTION_PURPOSE: NONE: no motion change.
 PROTECTED_SEAMS: Existing native reader's whole-definition inverse and ACL/config are proven; original operation store and exact creation writer are reused. Chat Root, admission, approval/risk, registry, provider, signing and mutation writers are unchanged.
 
-INTERNAL_BUILD_IDENTITY: c445b0d6c3144c2d93d555e18cdf787812f0de3d; deployment=NOT_DEPLOYED; environment=development; migrations=PROOF_OWED(candidate-native-read-production-parity); edge=PROOF_OWED(candidate-Chat-import-closure-production-parity); evidence=docs/evidence/ui-delivery/e04-collection-amount-basis.md
+INTERNAL_BUILD_IDENTITY: a71a1f59646539346d4ddc1c72a1ac18ba6f6ae6; deployment=NOT_DEPLOYED; environment=development; migrations=PROOF_OWED(candidate-native-read-production-parity); edge=PROOF_OWED(candidate-Chat-import-closure-production-parity); evidence=docs/evidence/ui-delivery/e04-collection-amount-basis.md
 RELEASE_CHANNEL: development: Isolated source/native proof; no customer release or production activation.
 RELEASE_CLASSIFICATION: patch: Correctness prerequisite for the existing fixed repayment preview and subsequent UI preparation.
 CUSTOMER_RELEASE_IDENTITY: none: bounded source repair, no founder-accepted integrated Experience or announcement.
@@ -59,7 +59,7 @@ This is **REPAIR/EXTEND** in the existing Sales/Collections family, owned by EXP
 
 ## Reproducible verification
 
-Source runtime: `c445b0d6c3144c2d93d555e18cdf787812f0de3d`, based on current main `1845a482f39b739762d9364f3877181537816166`. Subsequent evidence commits must preserve all ten runtime/test blobs.
+Current receiving runtime: `a71a1f59646539346d4ddc1c72a1ac18ba6f6ae6`, based on main `e0263aac0646ff70b60c15ca807e68967640341d`. The unapplied forward migration is now `20271115050004_sales_collection_amount_basis.sql`, after the incoming canonical Team lifecycle source. Its entire content is byte-identical to the original candidate; only its filename and the native proof reference changed. All other original runtime/test blobs remain unchanged. Native proof and 144 cases were rerun on this current union; exact-SHA Chat native ratchet is again 9 base / 9 head / no-new. Evidence-only commits must preserve these current runtime/test blobs.
 
 1. `node node_modules/vitest/vitest.mjs run src/__tests__/sales-collection-amount-basis.test.ts src/__tests__/sales-fixed-repayment-read.test.ts src/__tests__/sales-collection-context.test.ts src/solo/sales/collections supabase/functions/_shared/sales-collections/model.test.ts supabase/functions/_shared/sales-collections/contract.test.ts` — **144 PASS / 11 files**.
 2. `node scripts/sql/sales-commercial-create-proof.mjs <psql> 56347 <verified-isolated-data-directory> <local-proof-user>` — **PASS** on disposable loopback PostgreSQL16. This runner retains the original table constraints/common writer/governance/replay/receipt/concurrency checks and adds original whole-reader inverse, exact replay/ACL, periodic/legacy/changed-source/foreign-provenance/refusal cases. Auth resolver/autonomy/approval stamps are fixtures; this is **not hosted JWT/customer acceptance**. The original reader had no basis field before applying the forward migration; the guard also refuses a deliberate source drift.
@@ -75,3 +75,9 @@ ALG-01 reconciliation and ALG-12 exception detection remain **PARTIAL**. This sl
 The requested action is a read-only proposal from Sales/Chat. Original commercial/operation identity supplies the data; existing caller/tenant/role authorization governs the read; original Rail records retrieval; the shared calculator returns principal-only readiness or a precise refusal/missing-source signal. No approval, durable financial work, provider effect, settlement or recovery receipt is fabricated. Later consequential review/execution remains its original governed path. No new activation is performed.
 
 All O1–O12 and the consultant lifecycle additions remain open until their respective implementation, review, exact-head CI, deployment/readback, authenticated roles/continuity, authorized effects and final founder acceptance are actually proven. This candidate stays a draft while its required review and proof are completed.
+
+## Current receiving checkpoint
+
+The original final head `1fe9099a2e44308b68d24f94bc6f0e988f7ab84c` passed all thirteen hosted checks, including Preview. Those results are historical and do not stand in for the current head. Current-main Team seat/security source, CI, doctrine and original EXP04 suspended-owner negative test are preserved; only its fixture now restores the seat under a cleared synthetic caller. Current exact-head hosted gates and ordinary deployment remain owed. A separately recorded shared native release/history reconciliation hold is unresolved; this branch does not repair or bypass it.
+
+The separate local preparation UI also requires write-time source-semantic revalidation through the original native writer before activation. This read-only repair never claimed to establish that consequential write contract. All original execution/admission, customer/cohort and founder-acceptance gates remain in force.

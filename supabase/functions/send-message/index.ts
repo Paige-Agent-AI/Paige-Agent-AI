@@ -119,7 +119,10 @@ type OutboundDelivery = Awaited<ReturnType<OutboundChannelAdapter["send"]>>;
 // event for this message. They are HINTS for finding the stored governed send, never proof: a receipt
 // is accepted only after it is verified server-side against the stored message (tenant, operation,
 // message id and the recorded X-Message-Id), never trusted from the event.
-type CommsEmailSendContext = OutboundSendContext & { abortSignal?: AbortSignal | null; sendgridCustomArgs?: Record<string, string> | null };
+type CommsEmailSendContext = OutboundSendContext & { abortSignal?: AbortSignal | null; sendgridCustomArgs?: Record<string, string> | null;
+  // Experience 03: a campaign email asks SendGrid to track opens and clicks itself, so campaign analytics
+  // never depend on the account's tracking defaults.
+  sendgridTrackEngagement?: boolean };
 
 // read_comms_email_send_binding returns the binding (flat, like the invoice read) plus the
 // message's tenant. A nested `comms_email_binding` object is accepted too. Anything malformed,
@@ -386,6 +389,9 @@ const emailOutboundAdapter: OutboundChannelAdapter = {
           body: JSON.stringify({
             personalizations: [{ to: [{ email: ctx.to }] }],
             ...(sgCustomArgs ? { custom_args: sgCustomArgs } : {}),
+            ...(sgComms.sendgridTrackEngagement ? {
+              tracking_settings: { open_tracking: { enable: true }, click_tracking: { enable: true, enable_text: false } },
+            } : {}),
             from: name0 ? { email: ctx.from.address, name: name0 } : { email: ctx.from.address },
             ...(ctx.replyTo ? { reply_to: { email: ctx.replyTo } } : {}),
             subject: msg.subject || "(no subject)",
@@ -1649,6 +1655,7 @@ Deno.serve(async (req) => {
           paige_tenant_id: campaignSendgrid.tenant_id,
           paige_operation_id: campaignSendgrid.recipient_id, paige_message_id: campaignSendgrid.recipient_id,
         };
+        (ctx as CommsEmailSendContext).sendgridTrackEngagement = true;
       }
       await assertCurrentEmailSender();
       if(signingMessage&&preparedAgreement){

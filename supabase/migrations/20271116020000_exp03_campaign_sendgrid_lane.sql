@@ -43,7 +43,8 @@
 --    and address match, leased within 15 minutes) answers 'pending' so SendGrid redelivers once the
 --    dispatcher has recorded the id. A recipient left outcome_unknown is NOT settled by an event here
 --    (journalled `recipient_not_sent`); settling it would change a finished campaign's totals and is
---    tracked as its own decision (journey §14.6).
+--    tracked as its own decision (journey §14.6). Its complaint or hard bounce (claims and address
+--    matching, SendGrid version) still suppresses the address: the person's answer is honoured.
 --
 -- 4. email_campaign_dispatch_record meters a sent email under the provider that sent it (the
 --    version's frozen sender), instead of always 'resend'. Nothing else in it changes.
@@ -61,7 +62,9 @@
 --   email_campaign_sendgrid_admit: new; one caller, supabase/functions/send-message/index.ts.
 --   ingest_sendgrid_receipt: same 10-argument signature and return words. Callers:
 --     handle-sendgrid-webhook (named args, unchanged), supabase/tests/sendgrid_receipt_ingest.sql,
---     supabase/tests/paige_email_sendgrid_receipts.sql (both re-run in CI).
+--     supabase/tests/paige_email_sendgrid_receipts.sql. That proof replays 20271031000200 inside its
+--     transaction (recreating the older ingest), so it now replays THIS migration after it too: every
+--     governed-reply assertion runs against the new ingest.
 --   email_campaign_dispatch_record: same signature/returns; caller email-campaign-worker (unchanged).
 --   sendgrid_receipt_processing gains one nullable column (correlated_campaign_recipient_id); readers
 --     select named columns only (grepped).
@@ -183,6 +186,23 @@ BEGIN
          AND cr.updated_at > now() - interval '15 minutes' THEN
         -- Still being handed over: the dispatcher records the id in a moment. Redeliver.
         RETURN jsonb_build_object('correlation', 'pending', 'reason', 'awaiting_record', 'recipient_id', cr.id, 'effect', 'none');
+      END IF;
+      IF FOUND AND cr.status = 'outcome_unknown' AND cr.provider_message_id IS NULL
+         AND _email IS NOT NULL AND lower(btrim(_email)) = lower(btrim(cr.email))
+         AND EXISTS (SELECT 1 FROM public.email_campaign_versions v
+                      WHERE v.id = cr.version_id AND v.sender_snapshot->>'provider' = 'sendgrid') THEN
+        -- The send's answer could not be read, so the row stays outcome_unknown and no time is written
+        -- (settling it would move a finished campaign's totals). But a complaint or a hard bounce about it
+        -- is the person's own answer: honour it, so the next campaign never reaches them.
+        IF _status = 'complained' OR (_status = 'bounced' AND hard) THEN
+          INSERT INTO public.paige_suppressions (tenant_id, contact_id, address_normalized, channel, reason, source)
+          VALUES (cr.tenant_id, cr.client_id, CASE WHEN cr.client_id IS NULL THEN lower(btrim(cr.email)) END, 'email',
+                  CASE WHEN _status = 'bounced' THEN 'bounce_hard' ELSE 'complaint' END, 'webhook')
+          ON CONFLICT DO NOTHING;
+          RETURN jsonb_build_object('correlation', 'correlated', 'reason', 'recipient_outcome_unknown', 'recipient_id', cr.id,
+                                    'effect', 'suppressed_only');
+        END IF;
+        RETURN jsonb_build_object('correlation', 'uncorrelated', 'reason', 'recipient_not_sent', 'recipient_id', NULL, 'effect', 'none');
       END IF;
       IF FOUND AND cr.status IN ('outcome_unknown', 'failed', 'sending') THEN
         RETURN jsonb_build_object('correlation', 'uncorrelated', 'reason', 'recipient_not_sent', 'recipient_id', NULL, 'effect', 'none');

@@ -120,6 +120,7 @@ describe("send-message admits an approved campaign email to SendGrid only as the
       args: { p_recipient_id: RECIPIENT, p_connector_id: CONNECTOR, p_to: "lead@example.test" } }]);
     expect(s.sendgridCalls().length).toBe(1);
     expect(s.sendgridCalls()[0].body.custom_args).toEqual({ paige_tenant_id: TENANT, paige_operation_id: RECIPIENT, paige_message_id: RECIPIENT });
+    expect(s.sendgridCalls()[0].body.tracking_settings).toEqual({ open_tracking: { enable: true }, click_tracking: { enable: true, enable_text: false } });
     expect(r.body).toMatchObject({ status: "sent", outcome: "sent", vendor_message_id: "sgCampaign1" });
     expect(mapSendResult(r.status, r.body)).toMatchObject({ outcome: "sent", providerMessageId: "sgCampaign1" });
   });

@@ -878,11 +878,23 @@ receipt journal are built and connected. SES remains a later cost option, not a 
    never sent twice (SendGrid has no idempotent replay).
 4. A sent campaign email is metered under the provider that sent it.
 
-**Evidence (local, full replay):** `email_campaign_sendgrid_lane.sql` 56/56; 10 mutants of the
-migration each fail it; the governed-reply receipt proof (91 assertions) passes on the new ingest;
-lifecycle 86/86, E09 audience 84/84, the psql receipt/door/integrity/marketing/domain proofs pass;
-`send-message-campaign-sendgrid.test.ts` 7/7 (3 fail on the old send-message; 2 mutants caught);
-`deno check send-message` clean on base and head.
+**Evidence (local, full replay):** `email_campaign_sendgrid_lane.sql` 70/70; 11 mutants of the
+migration each fail it; the governed-reply receipt proof (91 assertions) now replays this migration
+after 20271031000200, so it runs against the new ingest in CI; lifecycle 86/86, E09 audience 84/84,
+the psql receipt/door/integrity/marketing/domain proofs pass; `send-message-campaign-sendgrid.test.ts`
+7/7 (3 fail on the old send-message; 2 mutants caught); `deno check send-message` clean on base and
+head; the PAIGE Spine registry lint and its self-test pass with the `send-message` source digest
+renewed (old digest reproduced from main first).
+
+**Independent review (§39, author-dispatched, lower assurance): no blocker.** Fixed: a complaint or hard
+bounce about an `outcome_unknown` send still suppresses the address (without moving totals); the
+governed-reply proof now exercises the new ingest; campaign sends ask SendGrid to track opens and clicks
+per message; untested refusals (signed-in subject under the service role, connector switched off, From
+changed, expired lease, cancelled campaign) and an untyped bounce are now proven. Left as tracked, by
+choice: `dropped` events stay journal-only (SendGrid drops to its own lists; no column); an unconfirmed
+send's audit row reads `failed` (the audit `status` vocabulary has no unknown) while the campaign row
+reads `outcome_unknown`; the admission is not single-use (only the service role can ask, and the worker
+begins each recipient once).
 
 **Still not live, by design.** No business has a SendGrid sender. Next, in order: (a) Paige's own
 managed sender on SendGrid — needs the authenticated SendGrid domain from the owner; (b) a business

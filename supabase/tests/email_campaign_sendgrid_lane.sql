@@ -14,7 +14,7 @@
 --      not; forged, missing or mismatched claims change nothing; an early event is redelivered; a
 --      Resend-sent recipient is never touched by a SendGrid event.
 BEGIN;
-SELECT plan(56);
+SELECT plan(70);
 
 -- ── Seed ────────────────────────────────────────────────────────────────────────────────────────
 -- Users: 1 owner of Cedar, 2 owner of Dune.
@@ -241,6 +241,54 @@ SELECT is(pg_temp.ev('sg:lane-rs-a', 'rsx-a', 'bounced', 'a.sglane@tests.invalid
 SELECT ok((SELECT bounced_at IS NULL FROM public.email_campaign_recipients WHERE id = pg_temp.k('rsA')::uuid)
       AND NOT EXISTS (SELECT 1 FROM public.paige_suppressions WHERE contact_id = 'e03f0300-0000-4000-8000-000000000001'),
   'and nothing about A changed');
+
+-- ── 5. A third campaign, on SendGrid again: the admission's remaining refusals, and what an unknown send
+--    or an unlabelled bounce still teaches ─────────────────────────────────────────────────────────
+INSERT INTO k SELECT 'sg2', pg_temp.draft('Cedar update', '{"mode":"connector","connector_id":"e03f0900-0000-4000-8000-000000000001"}')::text;
+SELECT ok(NOT (pg_temp.owner(format('SELECT public.email_campaign_request_approval(%L::uuid)', (pg_temp.k('sg2')::jsonb)->>'version_id')) ? 'error')
+      AND NOT (pg_temp.owner(format('SELECT public.email_campaign_approve(%L::uuid)', (pg_temp.k('sg2')::jsonb)->>'version_id')) ? 'error')
+      AND pg_temp.svc('SELECT public.email_campaign_dispatch_claim(25)') ? 'recipients',
+  'a second SendGrid campaign is filed, approved and leased');
+INSERT INTO k SELECT 's2'||l, pg_temp.rid(((pg_temp.k('sg2')::jsonb)->>'version_id')::uuid, l)::text FROM unnest(ARRAY['A','B','E']) l;
+SELECT is((SELECT string_agg(status, ',' ORDER BY client_id) FROM public.email_campaign_recipients
+            WHERE version_id = ((pg_temp.k('sg2')::jsonb)->>'version_id')::uuid), 'sending,sending,sending',
+  'its three eligible people (C and D are now suppressed) are being handed over');
+-- The function body refuses a signed-in subject even under the service role.
+SELECT is(pg_temp.as_user('e03f0100-0000-4000-8000-000000000001',
+  format('SELECT public.email_campaign_sendgrid_admit(%L::uuid, %L::uuid, %L)', pg_temp.k('s2E'), 'e03f0900-0000-4000-8000-000000000001', 'e.sglane@tests.invalid'),
+  'service_role')->>'sqlstate', '42501', 'the admission refuses a signed-in subject even with the service role');
+UPDATE public.channel_connectors SET active = false WHERE id = 'e03f0900-0000-4000-8000-000000000001';
+SELECT is(pg_temp.admit(pg_temp.k('s2E'), 'e03f0900-0000-4000-8000-000000000001', 'e.sglane@tests.invalid')->>'reason',
+  'sender_changed', 'a connector switched off after approval is refused');
+UPDATE public.channel_connectors SET active = true, from_address = 'promo@cedar.tests.invalid' WHERE id = 'e03f0900-0000-4000-8000-000000000001';
+SELECT is(pg_temp.admit(pg_temp.k('s2E'), 'e03f0900-0000-4000-8000-000000000001', 'e.sglane@tests.invalid')->>'reason',
+  'sender_changed', 'a From changed after approval is refused, even on the same verified domain');
+UPDATE public.channel_connectors SET from_address = 'news@cedar.tests.invalid' WHERE id = 'e03f0900-0000-4000-8000-000000000001';
+UPDATE public.email_campaign_recipients SET lease_until = now() - interval '1 second' WHERE id = pg_temp.k('s2E')::uuid; -- tampering: an expired lease
+SELECT is(pg_temp.admit(pg_temp.k('s2E'), 'e03f0900-0000-4000-8000-000000000001', 'e.sglane@tests.invalid')->>'reason',
+  'recipient_not_leased', 'an expired lease is refused');
+-- B's send answer could not be read: outcome_unknown, no provider id. Its spam report still suppresses B.
+SELECT is(pg_temp.svc(format('SELECT to_jsonb(public.email_campaign_dispatch_record(%L::uuid, %L))', pg_temp.k('s2B'), 'outcome_unknown')) #>> '{}',
+  'outcome_unknown', 'B''s send is recorded outcome unknown');
+SELECT is(pg_temp.ev('sg:lane2-b-spam', 'sgzB', 'complained', 'b.sglane@tests.invalid',
+  'e03f0200-0000-4000-8000-000000000001', pg_temp.k('s2B'), pg_temp.k('s2B'))||'/'||pg_temp.jr('sg:lane2-b-spam'),
+  'processed/correlated:recipient_outcome_unknown', 'a spam report about an unknown send is recognised');
+SELECT ok(EXISTS (SELECT 1 FROM public.paige_suppressions WHERE contact_id = 'e03f0300-0000-4000-8000-000000000002' AND reason = 'complaint')
+      AND (SELECT status = 'outcome_unknown' AND complained_at IS NULL FROM public.email_campaign_recipients WHERE id = pg_temp.k('s2B')::uuid),
+  'it suppresses B and leaves the unknown send, and the campaign''s totals, as they were');
+-- A bounce SendGrid gives no type for is treated as a hard bounce.
+SELECT is(pg_temp.svc(format('SELECT to_jsonb(public.email_campaign_dispatch_record(%L::uuid, %L, %L))', pg_temp.k('s2A'), 'sent', 'sgzA')) #>> '{}',
+  'sent', 'A is recorded sent');
+SELECT is(pg_temp.ev('sg:lane2-a-bounce', 'sgzA', 'bounced', 'a.sglane@tests.invalid',
+  'e03f0200-0000-4000-8000-000000000001', pg_temp.k('s2A'), pg_temp.k('s2A'), NULL), 'processed', 'A''s untyped bounce is processed');
+SELECT ok(EXISTS (SELECT 1 FROM public.paige_suppressions WHERE contact_id = 'e03f0300-0000-4000-8000-000000000001' AND reason = 'bounce_hard'),
+  'an untyped bounce suppresses, like a hard one');
+-- Cancelled mid-send: the leased recipient is no longer admitted.
+UPDATE public.email_campaign_recipients SET lease_until = now() + interval '5 minutes' WHERE id = pg_temp.k('s2E')::uuid;
+SELECT ok(NOT (pg_temp.owner(format('SELECT public.email_campaign_cancel(%L::uuid)', (pg_temp.k('sg2')::jsonb)->>'campaign_id')) ? 'error'),
+  'the owner cancels the campaign');
+SELECT is(pg_temp.admit(pg_temp.k('s2E'), 'e03f0900-0000-4000-8000-000000000001', 'e.sglane@tests.invalid')->>'ok',
+  'false', 'a cancelled campaign''s email is not admitted');
 
 SELECT * FROM finish();
 ROLLBACK;

@@ -18,7 +18,7 @@ export const FOREIGN_PIECE = "44444444-4444-4444-8444-444444444444";
 export const CONNECTION = "55555555-5555-4555-8555-555555555555";
 
 type Row = Record<string, unknown>;
-// deno-lint-ignore no-explicit-any
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- filter args vary by operation
 type Filter = any[];
 
 export interface WorldOptions {

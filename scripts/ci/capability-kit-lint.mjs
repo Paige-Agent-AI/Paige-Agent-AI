@@ -189,8 +189,8 @@ function teamLifecycleReadDoorBound(resolver, call) {
   const door = compact(read("supabase/functions/_shared/team-lifecycle/chat.ts"));
   return chat.includes("from'../_shared/paige-spine/domains/team_lifecycle.ts'")
     && chat.includes("from'../_shared/team-lifecycle/chat.ts'")
-    && chat.includes("if(!scopedClientId&&!customerPortal)toolDefs.push(...TEAM_LIFECYCLE_TOOLSasany);")
-    && chat.includes("constlifecycleScope={tenantId:!scopedClientId&&!customerPortal?personaCtx?.tenant_id??null:null,userId:user.id};")
+    && chat.includes('if(callerTier!=="client"&&!customerPortal)toolDefs.push(...TEAM_LIFECYCLE_TOOLSasany);')
+    && chat.includes('constlifecycleScope={tenantId:callerTier!=="client"&&!customerPortal?personaCtx?.tenant_id??null:null,userId:user.id,')
     && chat.includes("awaitTEAM_LIFECYCLE_READERS[tc.function.name](lifecycleScope,supabaseClient,lifecycleArgs)")
     && door.includes(compact(call));
 }

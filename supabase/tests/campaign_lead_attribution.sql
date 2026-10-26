@@ -188,9 +188,9 @@ UPDATE public.profiles SET full_name='Ada Admin' WHERE user_id='a3e30100-0000-40
 UPDATE public.deals SET owner_user_id='a3e30100-0000-4000-8000-000000000001'
  WHERE id=(SELECT s.deal_id FROM public.growth_form_submissions s WHERE s.id='a3e30100-0000-4000-8000-0000000000e1');
 INSERT INTO public.paige_invoices(id,tenant_id,contact_id,invoice_number,amount_total_cents,deal_id,status,currency) VALUES
- ('a3e30100-0000-4000-8000-0000000000i1','a3e30100-0000-4000-8000-000000000011','a3e30100-0000-4000-8000-0000000000b1','XPA-0001',120000,
+ ('a3e30100-0000-4000-8000-0000000000a1','a3e30100-0000-4000-8000-000000000011','a3e30100-0000-4000-8000-0000000000b1','XPA-0001',120000,
   (SELECT s.deal_id FROM public.growth_form_submissions s WHERE s.id='a3e30100-0000-4000-8000-0000000000e1'),'paid','USD'),
- ('a3e30100-0000-4000-8000-0000000000i2','a3e30100-0000-4000-8000-000000000011','a3e30100-0000-4000-8000-0000000000b1','XPA-0002',80000,
+ ('a3e30100-0000-4000-8000-0000000000a2','a3e30100-0000-4000-8000-000000000011','a3e30100-0000-4000-8000-0000000000b1','XPA-0002',80000,
   (SELECT s.deal_id FROM public.growth_form_submissions s WHERE s.id='a3e30100-0000-4000-8000-0000000000e1'),'draft','USD');
 
 -- 3a. The owner/admin reads the campaign's leads with names, opportunity, pipeline and stage.

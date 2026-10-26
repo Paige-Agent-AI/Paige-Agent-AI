@@ -31,5 +31,17 @@
       "scope": "Controlled local source-backed prototype, no real owner or customer data"
     }
   ],
-  "externalOrNativeEffects": false
+  "externalOrNativeEffects": false,
+  "typecheck": {
+    "plainExit": 2,
+    "plainDiagnostics": 6,
+    "ownDiagnostics": 0,
+    "ratchetExit": 0,
+    "baseline": 10,
+    "current": 6,
+    "newDiagnostics": 0,
+    "scriptSha256": "d6d5dff805a9ae1234f5b8efda9d66230f0366962076377a0d1da97ffb2f7d36",
+    "baselineSha256": "2d9861114ab050082bc2eb7d4d3e8249e88f410f3d9d6602d195da5fe399b04d",
+    "boundary": "Original committed-baseline ratchet; not a clean full-web compile or authenticated acceptance."
+  }
 }

@@ -165,7 +165,7 @@ describe("Solo Team member work-details dialog", () => {
 
     expect(reopenedHost.querySelector<HTMLInputElement>('input[placeholder="e.g. Client Success Manager"]')?.value).toBe("Operations Lead");
     expect(reopenedHost.querySelector<HTMLTextAreaElement>('textarea[placeholder="What this person owns, decides, and hands off."]')?.value).toBe("Owns delivery and weekly planning.");
-    expect(reopenedHost.querySelector<HTMLSelectElement>(".stw-permission-change select")?.value).toBe("member");
+    expect(reopenedHost.querySelector(".stw-permission-change [role='radio'][aria-checked='true']")?.textContent).toContain("Member");
     expect(mocks.rpc).toHaveBeenCalledTimes(1);
 
     await act(async () => reopenedRoot.unmount());

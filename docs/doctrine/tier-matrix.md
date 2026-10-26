@@ -453,7 +453,7 @@ Merged as #2860 (`a8aaa1316`). Production holds `20271114240008` and `2027111424
 
 **Read-performance slice (migration `20271114250008`):** no tier, availability or output changes. `team_hub_list_messages` and `team_hub_search` are re-emitted with byte-identical output and unchanged privileges, plus two btree indexes over ids and times only (no text). Proof: `supabase/tests/exp08_team_hub_read_performance.sql`, in CI.
 
-### EXP08 team lifecycle: suspend, admin removal, Team conversations switch, departure review (migration `20271115040008`, 2026-10-26; not yet merged)
+### EXP08 team lifecycle: suspend, admin removal, Team conversations switch, departure review (migration `20271115040008`, 2026-10-26; merged #2912 `e0263aac0`, applied and read back 2026-10-26)
 
 Owner rulings 2026-10-26 (`docs/brain/decision-log.md`). An owner or an admin can **suspend** a teammate (a reversible hold: the seat, private Team Hub memberships and authored records are kept; every grant that needs an active seat stops, and a global `admin` grant that only this seat gave is revoked), **reinstate** them, **remove** them (admins: members only), turn their **Team conversations** off or on, and read a **departure review** of their open work, CRM tasks, client relationships, deals, assigned approvals and connected mailboxes. New teammates join the open team channels on arrival unless their Team conversations are off. Contractors are members.
 
@@ -500,6 +500,27 @@ Also found, not used: `assign_contact(p_contact_id, p_user_id, p_role, p_tenant_
 - *Approvals stay assigned and wait.* Their status does not change. The suspended person cannot see or act on them: RLS needs their active workspace, and `execute-approval` refuses `cross_tenant_forbidden` without an active seat. Owners and admins can read and decide them, but Solo's Game Plan approvals card shows an assigned approval only to its assignee, so they do not see it there (PAIGE's pending count does include it). A new approval assigned to a suspended person still notifies them by in-app message and email (`notify-approval-event` has no seat check). Production has 0 open assigned approvals and 0 suspended seats (2026-10-26).
 
 **Evidence:** disposable-PostgreSQL proof `supabase/tests/exp08_team_lifecycle.sql` (20 PASS; the role, self-seating and invitation functions and production's three `user_roles` triggers are production bodies, md5-checked, 15 of 15; round 1: 55 mutants, 53 killed, 2 redundant-layer survivors; round 2: 24 mutants for the new fixes, all killed and all still killed in round 3; round 3: 22 mutants for rule 1b and the review's item rows, all killed, control survives; round 4: 25 mutants for B3 across `team-seat.ts`, `index.ts` and the proof's edge sequence, all killed, both controls survive, and round 2's M8 re-killed by a new platform-owner case after loading the `user_roles` sync trigger had masked it), in CI. Deno tests `accept-invite/team-seat.test.ts` (23) and `consume-order.test.ts` (4), in CI. Node test `_shared/team-hub/chat.test.ts` (39) covers PAIGE's two new refusals. `PROOF_OWED`: not merged or applied; the Team screen and Team Hub browser surfaces for these acts are not built; the full-chain pgTAP files edited here were not run locally (no pgTAP); authenticated runtime `UNVERIFIED`.
+
+### Solo Settings → Team: the screens for the team lifecycle (2026-10-26; owner-approved design, APPROVED-FROZEN §28)
+
+What a person can now do from **Settings → Team** (`/solo/{account}/settings/team`), each through the seam already listed above — no new writer:
+
+- **Suspend / reinstate** a teammate from the row menu (`suspend_solo_team_member` / `reinstate_solo_team_member`); a suspended row says so and offers only reinstatement, because a held seat's role cannot change until it is reinstated.
+- **Team conversations** switch per person (`set_solo_team_member_team_hub_access`), and on the invitation form (`solo-team-invitations` create carries it). Team Hub shows a person whose conversations are off a plain "conversations are off" state instead of an empty hub.
+- **Departure review before removal** (`team_member_holdings`, read-only), then hand-over item by item through each item's own writer: Work → `plan_update_item_versioned` (Operations' `submitOperationsWorkUpdate`), CRM tasks / client coach / lead owner / deal owner → `crm-command` (`task.assign`, `contact.assign_coach`, `contact.assign_owner`, `deal.assign_owner`, each returning its confirmation card first). Approvals and connected mailboxes have no writer and are listed with what will happen to them. Then **Remove** (`remove_solo_team_member`).
+- **Accepting an invitation** shows the `seat_not_active` refusal in words (`AcceptInvite`).
+- Every act is offered only where the authority rule allows it (owner on admins and members; admin on members; nobody on an owner or themselves); the server still decides.
+
+| Tier | Settings → Team lifecycle screens |
+|---|---|
+| God / Operator | ✗ (no Solo workspace) |
+| Agency / Enterprise | ✗ (Solo surface) |
+| Standalone (Solo) | ✓ |
+| Sub-account | ✓ same Solo shell (Team Hub parts held, as above) |
+| Client | ✗ |
+| Anonymous | ✗ |
+
+**Evidence:** 390 targeted tests (vitest, jsdom with mocked RPCs) and rendered frames in light and dark through the real components and tokens. **Authenticated drive on the live platform: `UNVERIFIED`** — it needs the owner-designated SOLO account's credentials in the session environment. The hand-over is several separate writes, not one transaction; each reports its own result.
 
 ### EXP08 PAIGE team-lifecycle tools (branch `exp08-paige-team-tools`, migration `20271116100008`, 2026-10-26; not yet merged)
 

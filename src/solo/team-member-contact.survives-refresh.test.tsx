@@ -41,7 +41,7 @@ describe("Team → a person's contact details", () => {
     const root = createRoot(host);
     await act(async () => root.render(<SoloTeamWorkspace />));
     await wait(250);
-    await act(async () => (Array.from(host.querySelectorAll("button.stw-row")).find((b) => b.textContent?.includes("Dana Reyes")) as HTMLButtonElement).click());
+    await act(async () => (Array.from(host.querySelectorAll("button.stw-namebtn")).find((b) => b.textContent?.includes("Dana Reyes")) as HTMLButtonElement).click());
     await wait(50);
 
     const phone = document.querySelector<HTMLInputElement>('.stw-contact input[type="tel"]')!;

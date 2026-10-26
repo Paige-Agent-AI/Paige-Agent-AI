@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2, ShieldCheck } from "lucide-react";
 import { safeRedirectOr } from "@/lib/auth/safeRedirect";
+import { readFunctionErrorBody } from "@/lib/integrations/connectError";
 import "./workspace/workspace-theme.css";
 
 type InviteType = "btf_client" | "team_member";
@@ -34,6 +35,21 @@ interface InviteInfo {
  * Both /accept-invite (canonical) and /workspace/accept-invite (back-compat with already-sent
  * BTF emails) mount this component.
  */
+/**
+ * The accept-invite function's own sentence for a refusal. supabase.functions.invoke returns every
+ * non-2xx as `{ data: null, error }` whose message is the framework constant ("Edge Function
+ * returned a non-2xx status code"); the honest body ({ ok: false, code, error }, e.g. a 409
+ * seat_not_active) sits on error.context. Reading it is readFunctionErrorBody's job (one home);
+ * this only refuses to echo the framework constant at a person.
+ */
+async function refusalSentence(error: unknown, data: unknown, fallback: string): Promise<string> {
+  const body = await readFunctionErrorBody(error, data);
+  const raw = body?.error;
+  const sentence = typeof raw === "string" ? raw.trim() : raw && typeof raw === "object" && typeof (raw as { message?: unknown }).message === "string" ? String((raw as { message: string }).message).trim() : "";
+  if (sentence && !/non-2xx status code/i.test(sentence)) return sentence;
+  return fallback;
+}
+
 export default function AcceptInvitePage() {
   const [params] = useSearchParams();
   const navigate = useNavigate();
@@ -61,7 +77,7 @@ export default function AcceptInvitePage() {
           body: { action: "lookup", token },
         });
         if (invErr || !data?.ok) {
-          setError(data?.error ?? invErr?.message ?? "Invite not found or no longer valid");
+          setError(await refusalSentence(invErr, data, "Invite not found or no longer valid"));
         } else {
           setInfo(data as InviteInfo);
           setFullName(data.displayName ?? "");
@@ -93,8 +109,9 @@ export default function AcceptInvitePage() {
         body: { action: "consume", token, password, fullName: fullName || undefined },
       });
       if (consumeErr || !data?.ok) {
-        throw new Error(data?.error ?? consumeErr?.message ?? "Activation failed");
+        throw new Error(await refusalSentence(consumeErr, data, "Activation failed. Nothing was changed. Try the link again."));
       }
+
       // Sign the user in with the password they just set.
       const { error: signInErr } = await supabase.auth.signInWithPassword({
         email: data.email,

@@ -5,7 +5,7 @@ export type WorkUpdate = { status?: PlanItemStatus; dueAt?: string; remindAt?: s
 export type WorkUpdateScope = { actorId: string; tenantId: string; itemId: string; expectedUpdatedAt?: string };
 export type WorkUpdateResult =
   | { kind: "acknowledged" }
-  | { kind: "refused"; message: string }
+  | { kind: "refused"; message: string; /** Someone changed the work after its version was read (40001). Nothing was saved. */ conflict?: true }
   | { kind: "uncertain"; message: string };
 
 /** Preconditions only; the scoped RPC delegates all mutation authority to canonical Planning. */
@@ -42,7 +42,7 @@ export async function submitOperationsWorkUpdate(scope: WorkUpdateScope, update:
     });
     if (error) {
       if (error.code === "40001") return {
-        kind: "refused", message: "Someone changed this work while you were editing. Refresh and review their changes before saving again.",
+        kind: "refused", conflict: true, message: "Someone changed this work while you were editing. Refresh and review their changes before saving again.",
       };
       if (["42501", "22023", "P0002"].includes(error.code)) return {
         kind: "refused", message: "This change isn’t allowed for the current account, workspace or work. Refresh to review it.",

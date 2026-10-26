@@ -1,4 +1,5 @@
 import type { OriginalSpecialistObservation } from '@/components/chat/specialistHistory';
+import { FunctionsHttpError } from '@supabase/supabase-js';
 import { createWeeklyDraftDeadline } from '../../../supabase/functions/_shared/paige-orchestration/weekly-draft-deadline';
 
 export type ZionReadScope = { actorId: string; tenantId: string; epoch: number; actAsClientId?: string | null };
@@ -58,8 +59,8 @@ function original(raw: unknown, expected: ZionAssignmentSummary): ZionAssignment
     response_text: x.response_text as string | null, response_truncated: x.response_truncated,
     completion_scope: 'specialist_response_only', note: x.note };
 }
-const denied = (error: unknown) => typeof error === 'object' && error !== null && 'context' in error
-  && typeof error.context === 'object' && error.context !== null && 'status' in error.context && error.context.status === 403;
+const denied = (error: unknown) => error instanceof FunctionsHttpError
+  && error.context instanceof globalThis.Response && [401, 403].includes(error.context.status);
 
 /** A new UI consumer of the ORIGINAL caller-JWT inspector, never a dispatch,
  * approval, settlement or retry. One elapsed budget also retires late preflight. */

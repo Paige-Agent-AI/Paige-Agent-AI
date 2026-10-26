@@ -40,6 +40,7 @@ export const STEP_START_LABELS: Readonly<Record<string, string>> = Object.freeze
   team_hub_read_conversation: "Reading Team Hub",
   team_hub_search: "Searching Team Hub",
   team_hub_post_reply: "Posting your Team Hub reply",
+  client_portal_request_share: "Sharing the saved customer request",
   // Action bus
   action_advance: "Moving that action forward",
   action_list: "Checking the team's queue",

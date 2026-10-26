@@ -1,7 +1,42 @@
 // The REAL social publish door (supabase/functions/_shared/social-publish-command/door.ts) driven
 // by an in-memory world (social-publish-door.world.ts). The door's own code decides everything;
-// only the clients and the provider adapter are doubles.
-import { describe, expect, it } from "vitest";
+// only the clients, the provider adapter, and the governance seam (which is Deno-runtime and
+// proven separately by paige-social's production use) are doubles.
+import { describe, expect, it, vi } from "vitest";
+
+// The governance module (governSocialMutation → decideGovernedExecution) runs in Deno edge
+// functions and has Deno-specific dependencies (paige-spine's governedExecution.ts). It is
+// production-proven by paige-social. Here we double it to test the DOOR's own logic: every
+// branch the door takes on each governance answer (proposal/claim/refusal).
+vi.mock("../../supabase/functions/_shared/social-provider/governance.ts", () => {
+  // Track fingerprints the double has issued and consumed — mirrors the REAL module's single-use
+  // CAS on paige_pending_confirmations.consumed_at.
+  const consumed = new Set<string>();
+  return {
+    governSocialMutation: vi.fn(async (input: {
+      approvedFingerprint?: string | null;
+      requestArgs: Record<string, unknown>;
+      summary: string;
+    }) => {
+      if (input.approvedFingerprint) {
+        if (consumed.has(input.approvedFingerprint)) {
+          return { kind: "refuse", code: "approval_claim_missing", message: "The approval was already used.", decision: { kind: "refuse" } };
+        }
+        consumed.add(input.approvedFingerprint);
+        return { kind: "execute", args: input.requestArgs, confirmationId: "conf-" + input.approvedFingerprint, decision: { kind: "execute" } };
+      }
+      return {
+        kind: "approval_required",
+        fingerprint: consumed.size.toString(16).padStart(16, "0"),
+        summary: input.summary,
+        expiresAt: new Date(Date.now() + 600000).toISOString(),
+        revalidate: false,
+        decision: { kind: "approval_required" },
+      };
+    }),
+  };
+});
+
 import {
   world, publishBody, connectedRow, pieceRow, MINE, THEIRS, USER, PIECE, FOREIGN_PIECE, CONNECTION,
 } from "./social-publish-door.world.ts";

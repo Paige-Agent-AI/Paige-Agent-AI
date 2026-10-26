@@ -201,11 +201,14 @@ describe("social publish door — proposal, owner approval, provider execution, 
     expect(w.seen.createPost).toHaveLength(0);
   });
 
-  it("a caller in a different workspace than the piece's is refused, never cross-served", async () => {
+  it("a caller in a different workspace than the piece's gets not-found — never cross-served", async () => {
     const w = world({ active: THEIRS });
     const r = await w.call(publishBody());
-    expect(r.status).toBe(403);
-    expect(r.body.code).toBe("CALLER_OTHER_WORKSPACE");
+    // The piece is tenant-scoped to MINE; the THEIRS caller's read finds nothing — 404 IS the
+    // cross-workspace protection (the piece is never visible outside its workspace).
+    expect(r.status).toBe(404);
+    expect(r.body.code).toBe("CONTENT_NOT_FOUND");
+    expect(w.seen.createPost).toHaveLength(0);
   });
 
   it("a custom caption is what the provider receives — the piece title is only the default", async () => {

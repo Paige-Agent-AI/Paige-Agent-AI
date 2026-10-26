@@ -2371,4 +2371,61 @@
     "status": "NOT_MERGED/NOT_DEPLOYED/NOT_ACTIVATED; fresh exact-head review and CI required",
     "authenticated": "UNVERIFIED; original customer consent/identity/session/other browser leases unchanged"
   }
+,
+  "ownerCommandRestrictedCorrection": {
+    "failedHead": "977ecd32492172aef59e2fffc3beff064b087f99",
+    "runtime": "94c2227d4e785d4cad4737d67ca83eb4a4e85692",
+    "composed": "405c9c9202be4f7948d4f8c6409d4acc181c61eb",
+    "binding": "d9ac2f6d6296108dc36d2c1053dbe6ff28badcad",
+    "rootSha256": "89f212b4e1cf05c0e95088df3639d805fac9b53d98a543e61c1f1511e7821fdd",
+    "findings": [
+      "Original restricted Chat may not touch the approval store; original handler reproduces new trace-read failure",
+      "App-target ES2020 reports TS2550 on newly consumed backend Object.hasOwn; earlier isolated ES2022 scope was insufficient"
+    ],
+    "disposition": [
+      "Existing restricted flags withhold metadata without card reads; original assertions/admission unchanged",
+      "Equivalent prototype-own check, same fields/ABI/authority; compiler/baseline unchanged"
+    ],
+    "tests": {
+      "focused": {
+        "passed": 96,
+        "failed": 0,
+        "serial": true,
+        "prior94Retained": true
+      },
+      "restrictedPrivacy": {
+        "redPassed": 7,
+        "redFailed": 1,
+        "greenPassed": 8,
+        "greenFailed": 0,
+        "overlapsFocused": true
+      },
+      "transport": {
+        "passed": 68,
+        "failed": 0
+      },
+      "consumerAppES2020": "PASS:0",
+      "wholeLocalApp": "NOT_PASS: unrelated absent @mdxeditor/editor dependency remains",
+      "partialParallel34": "INVALID for complete suite claim",
+      "originalRestrictedHandler": "PASS unchanged program",
+      "selectedOriginalPrograms": "PASS: answer/context/metadata/restricted/recovery/booking/Work/planning/weekly/history/CURA status+teaching/two-tool; full hosted pause matrix still required",
+      "rootDeno": "same10 inherited diagnostics, not zero-error compile"
+    },
+    "native": {
+      "frontier": "20271114260008",
+      "proposed270009": "NOT_APPLIED",
+      "listDefinitionMd5": "7b224b776dcd79d51f1216196351a1b8",
+      "publisherDefinitionMd5": "dad507ac047c8f91dc23ccac16c28998"
+    },
+    "protocol": {
+      "version": 2,
+      "active": true,
+      "scope": "read-only existing global flag; not new action/Live authorization or execution proof"
+    },
+    "status": "NOT_MERGED/NOT_DEPLOYED; fresh exact-head review and CI required",
+    "activation": "UNCHANGED",
+    "authenticated": "UNVERIFIED",
+    "founderAcceptance": "NOT_REQUESTED",
+    "scope": "Full42/seven retained. Owner-relayed lifecycle additions acknowledged; classify original Calendar/E04/E05/support/commercial/Comms source and ALG01/02/04/10/12/13 before any new implementation; no second system or broader authority."
+  }
 }

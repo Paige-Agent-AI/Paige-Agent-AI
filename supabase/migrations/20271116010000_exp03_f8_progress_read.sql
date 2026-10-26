@@ -100,8 +100,5 @@ BEGIN
 END $$;
 REVOKE ALL ON FUNCTION public.get_campaign_brief_leads(uuid, uuid) FROM PUBLIC, anon, service_role;
 GRANT EXECUTE ON FUNCTION public.get_campaign_brief_leads(uuid, uuid) TO authenticated;
-
 COMMENT ON FUNCTION public.get_campaign_brief_leads(uuid, uuid) IS
   'Experience 03 S1: the leads attributed to one campaign at capture, with contact, opportunity, pipeline, stage and status; the deal recipient (owners and admins only), the close date when won, and the deal invoice counts; server counts; members get no names. Caller''s own workspace only.';
-REVOKE ALL ON FUNCTION public.get_campaign_brief_leads(uuid, uuid) FROM PUBLIC, anon, service_role;
-GRANT EXECUTE ON FUNCTION public.get_campaign_brief_leads(uuid, uuid) TO authenticated;

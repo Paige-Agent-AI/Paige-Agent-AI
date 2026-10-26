@@ -245,7 +245,7 @@ END $read_agency$;
 
 -- 3b3. F8, the won case: when Sales marks the deal won, the close date reads beside it — a recorded fact, not a claim this campaign caused it.
 SELECT pg_temp.as_service();
-UPDATE public.deals SET stage_id='a3e30100-0000-4000-8000-0000000000d3', status='won', actual_close_date='2031-03-04T15:00:00Z'
+UPDATE public.deals SET stage_id='a3e30100-0000-4000-8000-0000000000d3', status='won', actual_close_date='2031-03-04'
  WHERE id=(SELECT s.deal_id FROM public.growth_form_submissions s WHERE s.id='a3e30100-0000-4000-8000-0000000000e1');
 SELECT pg_temp.as_user('a3e30100-0000-4000-8000-000000000001');
 DO $read_won$ DECLARE r jsonb; l jsonb; BEGIN
@@ -253,7 +253,7 @@ DO $read_won$ DECLARE r jsonb; l jsonb; BEGIN
  IF (r->'counts'->>'won')::int<>1 THEN RAISE EXCEPTION 'FAIL: the won opportunity counts once, got %',r->'counts'; END IF;
  SELECT x INTO l FROM jsonb_array_elements(r->'leads') x WHERE x->>'submission_id'='a3e30100-0000-4000-8000-0000000000e1';
  IF l->>'deal_status' IS DISTINCT FROM 'won' OR l->>'stage_label' IS DISTINCT FROM 'Won'
-    OR l->>'won_at' IS DISTINCT FROM '2031-03-04T15:00:00:00+00:00' THEN
+    OR l->>'won_at' IS DISTINCT FROM '2031-03-04' THEN
    RAISE EXCEPTION 'FAIL: a won opportunity reads with Sales'' own close date, got %',l; END IF;
 END $read_won$;
 SELECT pg_temp.as_service();

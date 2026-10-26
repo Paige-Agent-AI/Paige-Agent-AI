@@ -10,7 +10,8 @@ import { ATTRIBUTION_LABEL, statusLabel, statusTone, type CampaignLead, type Cam
 // The year shows only when it isn't this year, so an old lead never reads as a recent one.
 const day = (iso: string | null) => {
   if (!iso) return "—";
-  const date = new Date(iso);
+  // A date-only string (Sales' close date) is local midnight, so it reads as the same day west of UTC too.
+  const date = /^\d{4}-\d{2}-\d{2}$/.test(iso) ? new Date(`${iso}T00:00:00`) : new Date(iso);
   if (Number.isNaN(date.getTime())) return "—";
   const thisYear = date.getFullYear() === new Date().getFullYear();
   return date.toLocaleDateString(undefined, thisYear ? { day: "numeric", month: "short" } : { day: "numeric", month: "short", year: "numeric" });

@@ -118,5 +118,51 @@
     "screenshot": { "path": "docs/evidence/ui-delivery/assets/exp05-refused-file-retention/known-refusal-focus-c156.jpg", "format": "JPEG", "width": 1536, "height": 791, "sha256": "f5bdd0d6838f95a07ef6c822238984e8f7adf7521461553005b07cccec0e99d1" },
     "boundaries": "no focus steal from another control, retired workspace or unknown response; successful/general Send unchanged; full file/narrow/customer proof still UNVERIFIED",
     "strict": { "base": "abc8c75b7337949361a1be03996f2d354a8f6722", "baseExit": 2, "candidateExit": 2, "baseDiagnosticLines": 24, "candidateDiagnosticLines": 24, "newDiagnosticSignatures": [], "locationNormalizationOnly": true, "allFourCandidateFilesRestored": true }
+  },
+  "current_main_9186_composition": {
+    "base": "9186eab1efb91a39427b88b211ff18bbe8c58590",
+    "composed": "cf9e6c369f019dc060f169d258b4a01af213bcf2",
+    "tree": "19ae97ebe64565a93d6abf990749ab9a11bc6518",
+    "all_seven_owning_blobs_unchanged_from": "5649cd07afc6c673666a2859bf36bee63b4a7bab",
+    "executed_files": {
+      "src/components/dashboard/PaigeAIChat.tsx": "f6f94460e9b49f621e36a8013bf45f757747b8cd3e7b49556c57e22f7df0389b",
+      "src/hooks/useChatDocumentUpload.ts": "77eaa1cc851dd497b14442dc6de106b8e6844cc27454d2aad3c4e4aa63d66c89",
+      "src/components/dashboard/PaigeAIChat.attachments.test.tsx": "03bc07d7d70f6a4b830a088961682ec255681c87e47a39ae88b912b25c7ac942",
+      "src/hooks/useChatDocumentUpload.test.tsx": "4e484151e7890f5223fe5700c5855b3cb40ca3cf391e2822daffc05dbb880fcf",
+      "scripts/live-drive/harness/paige-chat-mount/attachment.vite.config.ts": "6d8767d2bd4b30349ab943b0d3854e91a318db8aa0cc1eb19f8b685507174a75",
+      "scripts/live-drive/harness/paige-chat-mount/solo-main.tsx": "340380be456d9c8318551af3af2d97435c0a998ab70c04c479e7dbf258deeba4",
+      "scripts/live-drive/harness/paige-chat-mount/solo-stubs.ts": "ac294f2ee09283616c1ca7e440ab52519e5aba8c975d41739057a3ae00081324"
+    },
+    "locked_versions": {
+      "typescript": "5.9.3",
+      "pdfjs": "5.5.207",
+      "vitest": "4.1.11"
+    },
+    "source_tests": {
+      "passed": 204,
+      "failed": 0,
+      "skipped": 0,
+      "sha256": "8580659a216c1e083ed556b2f0cc87d5c29d0954d940d6b380530b001e88af67"
+    },
+    "strict": {
+      "original_diagnostics": 19,
+      "current_diagnostics": 19,
+      "added": 0,
+      "source_files_never_modified": true,
+      "sha256": "1eb6d8c38bad26a9044d239b21891b7018b8e49b135c9667cb268148d52b0d75",
+      "clean_strict": false
+    },
+    "scoped_lint": "PASS",
+    "material_flow_gate": {
+      "result": "FAIL",
+      "exit": 1,
+      "sha256": "1750ba2c2f42274bb4943f512ad5b69e76f35ba98a6c4431648be00e0cb26fe7",
+      "reason": "Original full native file/prototype/narrow/zoom/focus proof still owed; no waiver"
+    },
+    "browser_calls": 0,
+    "production_actions": 0,
+    "merged": false,
+    "deployed": false,
+    "customer_acceptance": "UNVERIFIED"
   }
 }

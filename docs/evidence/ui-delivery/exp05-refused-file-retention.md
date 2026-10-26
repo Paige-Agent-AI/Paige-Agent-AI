@@ -88,3 +88,27 @@ preserve other selected controls and genuine context retirement. This does not
 change generic successful-Send focus or prove file selection/retention/removal.
 
 ![Known-refusal keyboard recovery](assets/exp05-refused-file-retention/known-refusal-focus-c156.jpg)
+
+## October26 current-main composition — material-flow hold retained
+
+Main9186eab1efb91a39427b88b211ff18bbe8c58590 is composed as
+cf9e6c369f019dc060f169d258b4a01af213bcf2/tree19ae97ebe64565a93d6abf990749ab9a11bc6518.
+All seven owning runtime/test/harness blobs remain byte-identical to5649cd07;
+incoming E08/E09/E02/E03 and original Work/source contracts are preserved.
+The exact existing lock remainsf3bd78f7; TS5.9.3/PDF5.5.207/Vitest4.1.11 match it.
+Fresh original five suites204PASS/0FAIL/0skipped, reportSHA256
+8580659a216c1e083ed556b2f0cc87d5c29d0954d940d6b380530b001e88af67.
+Scoped lint0; nonmutating CompilerHost comparison has19 original strict
+diagnostics/19 current, no added signature (report1eb6d8c38bad26a9044d239b21891b7018b8e49b135c9667cb268148d52b0d75).
+Earlier raw24-line reports remain historical, a different count from diagnostics;
+this is not a clean strict typecheck.
+
+The current material-flow gate still FAILS: full FLOW_PROTOTYPE proof is owed,
+log1750ba2c2f42274bb4943f512ad5b69e76f35ba98a6c4431648be00e0cb26fe7.
+No token, gate, test, source deadline or owner waiver was changed. Native file
+selection→known refusal→retention/deliberate new Send/remove, actual narrow
+viewport/zoom and focus/reload remain unverified. Earlier1536×791 captures are
+not narrow evidence. ZERO new browser or customer/provider calls were made.
+Existing E09→E02→E05 custody and the separate local-tab request remain pending.
+Fresh immutable review/CI does not remove this release hold. No merge,
+deployment, Knowledge publication, capability/ALG or ten/E5/founder closure.

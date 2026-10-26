@@ -19,8 +19,9 @@ CREATE TABLE IF NOT EXISTS public.content_publications (
   created_by        uuid REFERENCES auth.users(id) ON DELETE SET NULL,
   -- The saved piece being published. Nullable-proof: deleting the piece leaves the receipt.
   content_id        uuid REFERENCES public.marketing_content(id) ON DELETE SET NULL,
-  -- The network the piece ships to (the lifecycle's requested_platform vocabulary).
-  platform          text NOT NULL CHECK (platform IN ('tiktok','instagram','facebook','linkedin','youtube','x','threads','pinterest','google_business','snapchat')),
+  -- The network the piece ships to (the lifecycle's requested_platform vocabulary). Nullable until
+  -- the attempt is BOUND to its exact approved args — the bind sets it, once.
+  platform          text CHECK (platform IS NULL OR platform IN ('tiktok','instagram','facebook','linkedin','youtube','x','threads','pinterest','google_business','snapchat')),
   -- The governed connection this attempt ran through (NULL when refused before one was needed).
   connection_id     uuid,
   -- The single-use proposal claim this attempt executed under (the original actor's approval).
@@ -70,13 +71,17 @@ BEGIN
   IF _caller IS NOT NULL THEN
     RAISE EXCEPTION 'CONTENT_FORBIDDEN: publication records are written only by the publish door' USING ERRCODE = '42501';
   END IF;
-  IF p_tenant_id IS NULL OR _walk IS NULL THEN
-    RAISE EXCEPTION 'CONTENT_INVALID: a tenant and a door status are required' USING ERRCODE = '22023';
+  IF p_tenant_id IS NULL THEN
+    RAISE EXCEPTION 'CONTENT_INVALID: a tenant is required' USING ERRCODE = '22023';
   END IF;
   IF p_id IS NULL THEN
+    -- Creation: the walk check does not apply (the row starts at 'registered').
     INSERT INTO public.content_publications (tenant_id, status)
       VALUES (p_tenant_id, 'registered') RETURNING * INTO _row;
   ELSE
+    IF _walk IS NULL THEN
+      RAISE EXCEPTION 'CONTENT_INVALID: that is not a door status' USING ERRCODE = '22023';
+    END IF;
     UPDATE public.content_publications
       SET status = _walk,
           provider_post_id = COALESCE(p_provider_post_id, provider_post_id),

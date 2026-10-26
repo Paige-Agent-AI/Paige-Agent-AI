@@ -87,6 +87,14 @@ manual capability remains UNAVAILABLE and analytics/catalogue maturity unchanged
 Original9/0 and12/0/4 remain historical; all19/nine continue. Protected monthly
 UNKNOWN/UNRETRIED remains intact. Earlier development/failure evidence is retained.
 
+## EXP04 original signature factory and native PDF source — October26
+
+[#2888 source receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2888#issuecomment-6407684085) records reviewed02902badb898aef1ba67708a56c9c2ac658869f7 → actual main99c63316dfc6a9a0ddd19d80660fe43fe724b564/tree5a905090e11c3ab07f0177c297591572da9fa4d8, LOWER6405130919/all13 exact checks/two webSUCCESS. The originating governed factory is SOURCE MERGED; this dated statement supersedes the earlier source-unreleased label below without rewriting its history. It reuses original Work/approval/sender/publication, immutable documents and receipts; actual signing/send/payment acceptance is separate.
+
+[#2906 source receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2906#issuecomment-6408543958) records reviewed4b8b81d3fe3c3b6a5e815db6e8c7148526585939 → actualb56f60b74f4d533b27cd814fb7b44c2d49cf85ee/tree00836569a174d37b407a9198bbfea23e6daed89f, LOWER5647146018/current-source supplement/all11 exact checks/two webSUCCESS. Same PDF engine and renderer, original bytes/versions retained; local352 cases/250steps/16suites/real graph proof, actual web build and original entry-size guard PASS. This repairs dependency registration, not a replacement signing engine.
+
+The sole [Master§4.0](../PAIGE-MASTER-PROJECT-REFERENCE.md#40-shipped-delivery-log) contains both bounded source rows. Detailed production identifiers and protected original QA remain in existing ANT-51/ANT-52; their public disclosure is separately held. Authenticated page display, full-shell/ordinary-role/cohort and complete commercial/signing/delivery acceptance remain open. Functional source merge, visual proof, complete experience and founder acceptance are separate; full O1–O12/founder NOT_ACCEPTED. ALG01/12 PARTIAL,02 INCOMPLETE,13 usefulness UNVERIFIED; no catalogue/activation/maturity promotion, customer version or recursive closeout row.
+
 ## EXP04 original history and recipient recovery — October25 verified closeout
 
 [#2874](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2874#issuecomment-6403644446) actually merged9eb3bc49ff1f219abf24680fda54f7483c594352 after final LOWER6403537557/all13 exact checks/two web statuses. Normal native40235644282/Edge40235644302 succeeded; 20271114250004 once and original status/Work/publication/permission identities verified. agreement-send27 source34of34 exact and certificate12614638476 retained. READYdpl_B5zRbkMJDn7r91xVS4hQYVyaiWjq and exact public9eb…-mvocb5xq/null observed21:34:49–50UTC. Original provider receipt history can be read without another send or revival of authority.

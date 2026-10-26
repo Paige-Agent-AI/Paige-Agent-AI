@@ -15,7 +15,6 @@ import { readFileSync } from "node:fs";
 import { transpileModule, ModuleKind, ScriptTarget } from "typescript";
 import { describe, it, expect } from "vitest";
 import { senderDisplayName } from "../../supabase/functions/_shared/email/sender-display-name.ts";
-import { isPreparedAgreementMessage } from "../../supabase/functions/_shared/agreements/prepared-signature-message.ts";
 import { decideContentRead } from "../../supabase/functions/_shared/inbox-intelligence/policy.ts";
 import { mapSendResult } from "../../supabase/functions/email-campaign-worker/logic.ts";
 
@@ -70,7 +69,9 @@ function setup(opts: { caller?: "user" | "service"; admit?: Admit; provider?: Pr
     if (typeof opts.provider === "number") return Promise.resolve(new Response("{\"errors\":[]}", { status: opts.provider }));
     return Promise.resolve(new Response(null, { status: 202, headers: { "X-Message-Id": "sgCampaign1" } }));
   };
-  const scope = { decideContentRead, commsProviderExecutionAllowed, COMMS_PROVIDER_EXECUTION_DISABLED, PAIGE_APP_ORIGIN: "https://app.example.test", isPreparedAgreementMessage,
+  const scope = { decideContentRead, commsProviderExecutionAllowed, COMMS_PROVIDER_EXECUTION_DISABLED, PAIGE_APP_ORIGIN: "https://app.example.test",
+    // isPreparedAgreementMessage is read only for a stored draft (message_id); a marketing send has none.
+    isPreparedAgreementMessage: () => { throw new Error("prepared agreement path reached"); },
     Deno: {
       env: { get: (k: string) => k === "SUPABASE_SERVICE_ROLE_KEY" ? SERVICE : k === "SENDGRID_MAIL_SEND_API_KEY" ? "SG.platform-key" : k === "RESEND_API_KEY" ? "re_key" : k === "SUPABASE_URL" ? "https://proj.example.test" : "configured" },
       serve: (fn: typeof handler) => { handler = fn; },

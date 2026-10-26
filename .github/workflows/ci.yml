@@ -923,6 +923,10 @@ jobs:
           # EXP10 ALG-12: the connections_healthy runner — same --no-check rationale as the line above
           # (the shared runner graph carries prompt-forge's baselined type errors; the ratchet owns those).
           deno test --no-check --allow-import=esm.sh,deno.land --deny-net --deny-env --deny-read --deny-write --deny-run --deny-ffi --deny-sys supabase/functions/_shared/systems-check-runners/connections_healthy.test.ts
+          # EXP10 (AWS-ruling pin): safeFetch's deadline covers DNS/connect/body, and a 429 is its
+          # own closed code. Stubs DNS + fetch, so --deny-net is exact. --no-check matches the
+          # sibling steps' convention (this graph reaches no baselined-error module).
+          deno test --no-check --allow-import=esm.sh,deno.land --deny-net --deny-env --deny-read --deny-write --deny-run --deny-ffi --deny-sys supabase/functions/_shared/mcp-timeout-ratelimit.test.ts
 
       - name: Agreements engine — token contract, PDF seal, and database integrity (INT-163)
         if: ${{ !cancelled() }}

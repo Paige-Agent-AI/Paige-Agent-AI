@@ -150,6 +150,11 @@ export interface RunSystemsCheckOptions {
    *  grants no authority, claim, persistence, idempotency or retry permission.
    *  No public caller consumes this option; legacy captures still mint their ID. */
   manualCaptureRunId?: string;
+  /** Trusted internal worker cancellation/deadline, only with the validated
+   *  original manual Work ID above. No caller installs this yet. Cancellation
+   *  stops this core's continuation; an already-issued write may still commit.
+   *  It grants no actor authority, lease, retry or result/receipt confirmation. */
+  manualCaptureSignal?: AbortSignal;
   /** Test seam: override the dispatch map (defaults to the shared SYSTEMS_CHECK_DISPATCH registry). */
   dispatch?: Record<string, CheckRunner>;
 }
@@ -170,7 +175,8 @@ export interface RunSystemsCheckSummary {
   }>;
 }
 
-type CaptureReadbackPhase = "run_insert" | "finding_write" | "finding_readback" | "run_finalize" | "run_readback";
+type CaptureReadbackPhase = "context_read" | "catalog_read" | "check_read"
+  | "run_insert" | "finding_write" | "finding_readback" | "run_finalize" | "run_readback";
 
 /** A known original run owes reconciliation. This never proves absence or permits replay. */
 export class SystemsCheckCaptureUnconfirmed extends Error {
@@ -256,17 +262,51 @@ export async function runSystemsCheck(opts: RunSystemsCheckOptions): Promise<Run
     if (actionFiling !== "none") throw new Error("SYSTEMS_CHECK_MANUAL_CAPTURE_ONLY");
   }
 
+  const manualCaptureSignal = opts.manualCaptureSignal;
+  if (manualCaptureSignal !== undefined) {
+    if (!manualCaptureRunId) throw new Error("SYSTEMS_CHECK_MANUAL_SIGNAL_CONTEXT");
+    if (!(manualCaptureSignal instanceof AbortSignal)) throw new Error("SYSTEMS_CHECK_MANUAL_SIGNAL_INVALID");
+  }
+
+  // Reuse the worker's native cancellation signal, not another timer/executor.
+  // Some read ports may ignore cancellation: race their reply and never resume
+  // this core after cancellation. Late writes remain uncertain, not rolled back.
+  async function manualBoundary<T>(operation: () => PromiseLike<T>, phase: CaptureReadbackPhase): Promise<T> {
+    if (!manualCaptureSignal) return await operation();
+    const unconfirmed = () => new SystemsCheckCaptureUnconfirmed(manualCaptureRunId!, phase);
+    if (manualCaptureSignal.aborted) throw unconfirmed();
+    let onAbort!: () => void;
+    const aborted = new Promise<never>((_, reject) => { onAbort = () => reject(unconfirmed()); });
+    manualCaptureSignal.addEventListener("abort", onAbort, { once: true });
+    try {
+      const pending = Promise.resolve().then(() => {
+        if (manualCaptureSignal.aborted) throw unconfirmed();
+        return operation();
+      });
+      const result = await Promise.race([pending, aborted]);
+      if (manualCaptureSignal.aborted) throw unconfirmed();
+      return result;
+    } finally {
+      manualCaptureSignal.removeEventListener("abort", onAbort);
+    }
+  }
+  function cancelable<Q extends { abortSignal(signal: AbortSignal): Q }>(query: Q): Q {
+    return manualCaptureSignal ? query.abortSignal(manualCaptureSignal) : query;
+  }
+
   // Resolve the display name for the remediation brief's business-name token (§15 — no placeholder). For a
   // tenant scan this is the tenant's name; for an operator scan there is no tenant, so use a platform label
   // (operator remediation briefs carry no {{tenant.business_name}} token — this is only a safe default).
   let tenantName = scope === "operator" ? "the Paige Agent AI platform" : "your business";
   if (scope === "tenant" && tenantId) {
     try {
-      const { data: tRow } = await admin.from("tenants").select("name").eq("id", tenantId).maybeSingle();
+      const { data: tRow } = await manualBoundary(() => cancelable(admin.from("tenants")
+        .select("name").eq("id", tenantId)).maybeSingle(), "context_read");
       if (tRow && typeof (tRow as { name?: string }).name === "string") {
         tenantName = (tRow as { name?: string }).name || tenantName;
       }
     } catch (e) {
+      if (manualCaptureSignal?.aborted) throw new SystemsCheckCaptureUnconfirmed(manualCaptureRunId!, "context_read");
       console.error("[systems-check] tenant name lookup failed:", (e as Error)?.message);
     }
   }
@@ -283,7 +323,7 @@ export async function runSystemsCheck(opts: RunSystemsCheckOptions): Promise<Run
   if (opts.runnerKeys && opts.runnerKeys.length > 0) {
     q = q.in("runner_key", opts.runnerKeys);
   }
-  const { data: catalog, error: catErr } = await q;
+  const { data: catalog, error: catErr } = await manualBoundary(() => cancelable(q), "catalog_read");
   if (catErr) {
     throw new Error(`SYSTEMS_CHECK_CATALOG_READ_FAILED: ${catErr.message}`);
   }
@@ -374,7 +414,7 @@ export async function runSystemsCheck(opts: RunSystemsCheckOptions): Promise<Run
   const captureRunId = actionFiling === "none" ? manualCaptureRunId ?? crypto.randomUUID() : null;
   let runInsert: { data: unknown; error: { message?: string } | null };
   try {
-    runInsert = await admin
+    runInsert = await manualBoundary(() => cancelable(admin
     .from("paige_systems_check_run")
     .insert({
       ...(captureRunId ? { id: captureRunId } : {}),
@@ -400,8 +440,8 @@ export async function runSystemsCheck(opts: RunSystemsCheckOptions): Promise<Run
       // Actual mode/scope override context labels; they describe this capture, never authorize it.
       triggered_by: { ...(opts.triggeredBy ?? {}), scope, action_filing: actionFiling },
     })
-    .select("id")
-    .single();
+    .select("id"))
+    .single(), "run_insert");
   } catch (error) {
     if (captureRunId) throw new SystemsCheckCaptureUnconfirmed(captureRunId, "run_insert");
     throw error;
@@ -417,7 +457,7 @@ export async function runSystemsCheck(opts: RunSystemsCheckOptions): Promise<Run
   const runId = captureRunId ?? (runRow as { id: string }).id;
 
   async function captureIo<T>(operation: () => PromiseLike<T>, phase: CaptureReadbackPhase): Promise<T> {
-    try { return await operation(); }
+    try { return await manualBoundary(operation, phase); }
     catch (error) {
       if (actionFiling === "none") throw new SystemsCheckCaptureUnconfirmed(runId, phase);
       throw error;
@@ -448,7 +488,7 @@ export async function runSystemsCheck(opts: RunSystemsCheckOptions): Promise<Run
       };
     } else {
       try {
-        result = await runner(ctx, row);
+        result = await manualBoundary(() => runner(ctx, row), "check_read");
         // Defensive: a runner that returns a malformed status is treated as an error, not trusted.
         if (!result || !["pass", "fail", "skip", "error"].includes(result.status)) {
           result = {
@@ -457,6 +497,7 @@ export async function runSystemsCheck(opts: RunSystemsCheckOptions): Promise<Run
           };
         }
       } catch (e) {
+        if (manualCaptureSignal?.aborted) throw new SystemsCheckCaptureUnconfirmed(manualCaptureRunId!, "check_read");
         result = {
           status: "error",
           evidence: {
@@ -527,7 +568,7 @@ export async function runSystemsCheck(opts: RunSystemsCheckOptions): Promise<Run
 
     // 3) Insert the finding (service-role; the SOLE writer of this table, §37). tenant_id EXPLICIT (§9);
     //    department_id denormalized from the registry row for §16 routing history.
-    const { data: findingRow, error: findErr } = await captureIo(() => admin
+    const { data: findingRow, error: findErr } = await captureIo(() => cancelable(admin
       .from("paige_systems_check_finding")
       .insert({
         run_id: runId,
@@ -540,7 +581,7 @@ export async function runSystemsCheck(opts: RunSystemsCheckOptions): Promise<Run
         paige_drafted_fix: draftedFix,
         department_id: row.department ?? null,
       })
-      .select("id")
+      .select("id"))
       .single(), "finding_write");
     if (findErr || !findingRow) {
       // A finding-insert failure is loud but must not abort the whole scan — record and continue (§13).
@@ -610,7 +651,7 @@ export async function runSystemsCheck(opts: RunSystemsCheckOptions): Promise<Run
       .select("id,tenant_id,run_id,check_id,status,paige_drafted_fix,resolution_action_id")
       .eq("run_id", runId);
     findingRead = scope === "operator" ? findingRead.is("tenant_id", null) : findingRead.eq("tenant_id", tenantId);
-    const { data, error } = await captureIo(() => findingRead, "finding_readback");
+    const { data, error } = await captureIo(() => cancelable(findingRead), "finding_readback");
     const expected = new Map(summary.findings.map(finding => [finding.check_id, finding]));
     const observedIds = new Set<string>();
     const verified = !error && Array.isArray(data) && data.length === summary.check_count
@@ -643,7 +684,7 @@ export async function runSystemsCheck(opts: RunSystemsCheckOptions): Promise<Run
   if (actionFiling === "none") {
     finalize = scope === "operator" ? finalize.is("tenant_id", null) : finalize.eq("tenant_id", tenantId);
   }
-  const { error: patchErr } = await captureIo(() => finalize, "run_finalize");
+  const { error: patchErr } = await captureIo(() => cancelable(finalize), "run_finalize");
   if (patchErr) {
     console.error("[systems-check] run finalize failed:", patchErr.message);
     if (actionFiling === "none") throw new SystemsCheckCaptureUnconfirmed(runId, "run_finalize");
@@ -656,7 +697,7 @@ export async function runSystemsCheck(opts: RunSystemsCheckOptions): Promise<Run
         : "id,tenant_id,scan_flavor,completed_at,check_count,pass_count,fail_count,triggered_by")
       .eq("id", runId);
     runRead = scope === "operator" ? runRead.is("tenant_id", null) : runRead.eq("tenant_id", tenantId);
-    const { data, error } = await captureIo(() => runRead.maybeSingle(), "run_readback");
+    const { data, error } = await captureIo(() => cancelable(runRead).maybeSingle(), "run_readback");
     const row = data as Record<string, unknown> | null;
     const audit = row?.triggered_by as Record<string, unknown> | null;
     if (error || !row || Array.isArray(row) || row.id !== runId || row.tenant_id !== tenantId

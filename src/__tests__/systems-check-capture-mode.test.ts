@@ -26,13 +26,14 @@ const captureUuid = vi.fn((): ReturnType<Crypto['randomUUID']> => RUN);
 const PRIOR = 'b4000000-0000-4000-8000-00000000a002';
 const MANUAL_PRIOR = 'b4000000-0000-4000-8000-00000000a003';
 const ACTION = 'b4000000-0000-4000-8000-00000000c001';
-type Call = { table: string; operation: 'read' | 'insert' | 'update'; payload?: Record<string, unknown>; selected?: string; filters: unknown[][] };
+type Call = { table: string; operation: 'read' | 'insert' | 'update'; payload?: Record<string, unknown>; selected?: string; filters: unknown[][]; signal?: AbortSignal };
 type Result = { data: unknown; error: { message: string } | null };
 type Query = {
   select(columns?: string): Query; insert(payload: Record<string, unknown>): Query; update(payload: Record<string, unknown>): Query;
   eq(...args: unknown[]): Query; neq(...args: unknown[]): Query; not(...args: unknown[]): Query; is(...args: unknown[]): Query;
   in(...args: unknown[]): Query; order(...args: unknown[]): Query; limit(...args: unknown[]): Query;
-  maybeSingle(): Promise<Result>; single(): Promise<Result>; then(fulfilled: (result: Result) => unknown): Promise<unknown>;
+  abortSignal(signal: AbortSignal): Query;
+  maybeSingle(): Promise<Result>; single(): Promise<Result>; then(fulfilled: (result: Result) => unknown, rejected?: (error: unknown) => unknown): Promise<unknown>;
 };
 
 function fixture(statuses: string[] = ['fail'], options: {
@@ -41,6 +42,8 @@ function fixture(statuses: string[] = ['fail'], options: {
   findingReadError?: boolean; runReadError?: boolean; findingReadPatch?: Record<string, unknown>;
   runReadPatch?: Record<string, unknown>; findingRows?: 'missing' | 'duplicate'; findingWriteLostAck?: boolean;
   finalizeLostAck?: boolean; runInsertLostAck?: boolean; runInsertResponse?: unknown;
+  pauseResponse?: (call: Readonly<Call>) => Promise<void>;
+  pauseRunner?: () => Promise<void>;
 } = {}) {
   const calls: Call[] = [], rpcs: Array<{ name: string; input: Record<string, unknown> }> = [], dispatched: Record<string, unknown>[] = [];
   let finding = 0;
@@ -101,11 +104,19 @@ function fixture(statuses: string[] = ['fail'], options: {
         }
         throw new Error('Unbound original source operation: ' + table);
       };
+      const respond = async (): Promise<Result> => {
+        // Commit the original operation BEFORE withholding its acknowledgement.
+        // Deliberately ignore cancellation: late source replies must be safe too.
+        const result = answer();
+        await options.pauseResponse?.(call);
+        return result;
+      };
       const query: Query = {
         select(columns?: string) { call.selected = columns; return query; }, insert(payload: Record<string, unknown>) { call.operation = 'insert'; call.payload = payload; return query; }, update(payload: Record<string, unknown>) { call.operation = 'update'; call.payload = payload; return query; },
         eq(...args: unknown[]) { call.filters.push(['eq', ...args]); return query; }, neq(...args: unknown[]) { call.filters.push(['neq', ...args]); return query; }, not(...args: unknown[]) { call.filters.push(['not', ...args]); return query; }, is(...args: unknown[]) { call.filters.push(['is', ...args]); return query; },
         in(...args: unknown[]) { call.filters.push(['in', ...args]); return query; }, order(...args: unknown[]) { call.filters.push(['order', ...args]); return query; }, limit(...args: unknown[]) { call.filters.push(['limit', ...args]); return query; },
-        maybeSingle: async () => answer(), single: async () => answer(), then: (fulfilled: (result: Result) => unknown) => Promise.resolve(answer()).then(fulfilled),
+        abortSignal(signal: AbortSignal) { call.signal = signal; return query; },
+        maybeSingle: respond, single: respond, then: (fulfilled, rejected) => respond().then(fulfilled, rejected),
       };
       return query;
     },
@@ -113,6 +124,7 @@ function fixture(statuses: string[] = ['fail'], options: {
   };
   const dispatch = Object.fromEntries(rows.filter(() => !options.missing).map(row => [row.runner_key, async (context: Record<string, unknown>) => {
     dispatched.push(context);
+    await options.pauseRunner?.();
     if (options.throws) throw new Error('Original source failed');
     return { status: row.status, evidence: { source: 'original_record' }, interpretation: 'Recorded observation' };
   }]));
@@ -400,5 +412,113 @@ describe('Internal original-Work identity binding, never caller authority', () =
     const h=fixture(['pass'],{runReadPatch:{work_id:workId}});
     await expect(h.execute({scanFlavor:'manual',actionFiling:'none',manualCaptureRunId:PRIOR})).rejects.toMatchObject({name:'SystemsCheckCaptureUnconfirmed',runId:PRIOR,reason:'run_readback'});
     expect(h.inserted('paige_systems_check_run')).toHaveLength(1);expect(captureUuid).not.toHaveBeenCalled();expect(h.rpcs).toEqual([]);
+  });
+});
+
+function deferredRead() {
+  let enter!: () => void, release!: () => void;
+  const entered = new Promise<void>(resolve => { enter = resolve; });
+  const released = new Promise<void>(resolve => { release = resolve; });
+  return { entered, release, pause: async () => { enter(); await released; } };
+}
+
+async function observedWithin<T>(operation: Promise<T>): Promise<T | 'did-not-settle'> {
+  let timeout: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([operation, new Promise<'did-not-settle'>(resolve => {
+      timeout = setTimeout(() => resolve('did-not-settle'), 1000);
+    })]);
+  } finally { clearTimeout(timeout); }
+}
+
+describe('Trusted manual cancellation retains original work and stops late continuation', () => {
+  const manual = { scanFlavor: 'manual', actionFiling: 'none', manualCaptureRunId: PRIOR };
+  const unconfirmed = (reason: string) => ({ name: 'SystemsCheckCaptureUnconfirmed', runId: PRIOR, reason });
+
+  it('passes the same native signal to every original core query and completes normal capture', async () => {
+    const controller = new AbortController();
+    const add = vi.spyOn(controller.signal, 'addEventListener'), remove = vi.spyOn(controller.signal, 'removeEventListener');
+    const h = fixture(['pass', 'fail']);
+    expect(await h.execute({ ...manual, manualCaptureSignal: controller.signal })).toMatchObject({ run_id: PRIOR, check_count: 2, actions_filed: 0 });
+    expect(h.calls.length).toBeGreaterThan(6);
+    expect(h.calls.every(call => call.signal === controller.signal)).toBe(true);
+    expect(add).toHaveBeenCalled();
+    expect(remove.mock.calls.map(call => call[1])).toEqual(add.mock.calls.map(call => call[1]));
+    expect(captureUuid).not.toHaveBeenCalled(); expect(forge).not.toHaveBeenCalled(); expect(h.rpcs).toEqual([]);
+  });
+
+  it.each([null, false, 'aborted', {}, { aborted: false }])('rejects a non-native internal signal before I/O: %j', async manualCaptureSignal => {
+    const h = fixture();
+    await expect(h.execute({ ...manual, manualCaptureSignal })).rejects.toThrow('SYSTEMS_CHECK_MANUAL_SIGNAL_INVALID');
+    expect(h.calls).toEqual([]); expect(h.dispatched).toEqual([]); expect(h.rpcs).toEqual([]);
+  });
+
+  it('requires the original Work identity rather than accepting a signal as authority', async () => {
+    const h = fixture();
+    await expect(h.execute({ scanFlavor: 'manual', actionFiling: 'none', manualCaptureSignal: new AbortController().signal })).rejects.toThrow('SYSTEMS_CHECK_MANUAL_SIGNAL_CONTEXT');
+    expect(h.calls).toEqual([]); expect(h.dispatched).toEqual([]);
+  });
+
+  it('does not read or write after an already-cancelled internal request', async () => {
+    const controller = new AbortController(); controller.abort('private worker reason');
+    const h = fixture();
+    await expect(h.execute({ ...manual, manualCaptureSignal: controller.signal })).rejects.toMatchObject(unconfirmed('context_read'));
+    expect(h.calls).toEqual([]); expect(h.dispatched).toEqual([]); expect(captureUuid).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['tenants', 'read', 'context_read'],
+    ['paige_systems_check_registry', 'read', 'catalog_read'],
+    ['paige_systems_check_run', 'insert', 'run_insert'],
+    ['paige_systems_check_finding', 'insert', 'finding_write'],
+    ['paige_systems_check_finding', 'read', 'finding_readback'],
+    ['paige_systems_check_run', 'update', 'run_finalize'],
+    ['paige_systems_check_run', 'read', 'run_readback'],
+  ] as const)('settles cancellation while %s %s ignores it, retaining phase %s', async (table, operation, phase) => {
+    const gate = deferredRead(), controller = new AbortController();
+    const h = fixture(['pass', 'pass'], { pauseResponse: async call => {
+      if (call.table === table && call.operation === operation) await gate.pause();
+    } });
+    const pending = h.execute({ ...manual, manualCaptureSignal: controller.signal }).then(value => value, error => error);
+    await gate.entered;
+    const callsAtAbort = h.calls.length;
+    controller.abort('private worker reason');
+    const outcome = await observedWithin(pending);
+    // Release the late acknowledgement even on a failed causal baseline.
+    gate.release();
+    await new Promise(resolve => setImmediate(resolve));
+    expect(outcome).toMatchObject(unconfirmed(phase));
+    expect(h.calls).toHaveLength(callsAtAbort);
+    expect(h.inserted('paige_systems_check_run').length).toBeLessThanOrEqual(1);
+    if (h.persisted().run) expect(h.persisted().run).toMatchObject({ id: PRIOR, work_id: PRIOR });
+    if (phase === 'run_insert') expect(h.persisted().run?.completed_at).toBeNull();
+    if (phase === 'run_finalize' || phase === 'run_readback') expect(h.persisted().run?.completed_at).toEqual(expect.any(String));
+    expect(forge).not.toHaveBeenCalled(); expect(h.rpcs).toEqual([]); expect(captureUuid).not.toHaveBeenCalled();
+  });
+
+  it.each(['returns', 'throws'] as const)('stops an uncooperative check that later %s without writing an error finding', async late => {
+    const gate = deferredRead(), controller = new AbortController();
+    const h = fixture(['fail', 'pass'], { pauseRunner: async () => {
+      await gate.pause();
+      if (late === 'throws') throw new Error('late original read failure');
+    } });
+    const pending = h.execute({ ...manual, manualCaptureSignal: controller.signal }).then(value => value, error => error);
+    await gate.entered;
+    controller.abort();
+    const outcome = await observedWithin(pending);
+    gate.release();
+    await new Promise(resolve => setImmediate(resolve));
+    expect(outcome).toMatchObject(unconfirmed('check_read'));
+    expect(h.dispatched).toHaveLength(1); expect(h.persisted().findings).toEqual([]);
+    expect(h.updated('paige_systems_check_run')).toEqual([]);
+    expect(h.persisted().run).toMatchObject({ id: PRIOR, work_id: PRIOR, completed_at: null });
+    expect(forge).not.toHaveBeenCalled(); expect(h.rpcs).toEqual([]);
+  });
+
+  it('rechecks cancellation before the first finding even when the check resolves concurrently', async () => {
+    const controller = new AbortController();
+    const h = fixture(['pass'], { pauseRunner: async () => { controller.abort(); } });
+    await expect(h.execute({ ...manual, manualCaptureSignal: controller.signal })).rejects.toMatchObject(unconfirmed('check_read'));
+    expect(h.persisted().findings).toEqual([]); expect(h.updated('paige_systems_check_run')).toEqual([]);
   });
 });

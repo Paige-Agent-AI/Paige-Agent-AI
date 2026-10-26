@@ -144,3 +144,17 @@
 .e04-invitation-checked summary{min-height:44px;align-content:center;cursor:pointer;font:500 13px/1.5 var(--pg-font-ui)}
 .e04-invitation-checked details{margin-top:12px;overflow-wrap:anywhere}
 @media(max-width:700px){.e04-signature-invitations{grid-template-columns:minmax(0,1fr);gap:20px}.e04-invitation-actions{grid-column:1}.e04-invitation-actions>button{flex:1}.e04-invitation-sender select{max-width:100%}}
+
+.e04-signature-execution,.e04-signature-history{min-width:0;margin-block:24px;padding-block:24px;border-top:1px solid var(--pg-line);color:var(--pg-ink)}
+.e04-signature-execution p,.e04-signature-history p{max-width:70ch;font:400 14px/1.65 var(--pg-font-ui);overflow-wrap:anywhere}
+.e04-signature-execution :is(h6,button),.e04-signature-history :is(h6,button){margin-block:12px}
+.e04-signature-approval{padding:20px;background:var(--pg-surface);border:1px solid var(--pg-line-strong);border-radius:var(--r-m)}
+.e04-signature-approval h6,.e04-signature-result h6{display:flex;align-items:start;gap:10px;font:600 16px/1.5 var(--pg-font-ui)}
+.e04-signature-approval h6 svg,.e04-signature-result h6 svg{flex:none;margin-top:1px}
+.e04-signature-execution button,.e04-signature-history button{min-height:44px;white-space:normal;text-align:left}
+.e04-signature-history :is(button,summary):focus-visible,.e04-signature-execution :is(button,summary):focus-visible{outline:2px solid var(--pg-violet);outline-offset:3px}
+.e04-signature-result details{margin-top:16px;overflow-wrap:anywhere}
+.e04-signature-result dl{display:grid;grid-template-columns:auto minmax(0,1fr);gap:8px 16px;font:400 12px/1.6 var(--pg-font-ui)}
+.e04-signature-result dd{margin:0;overflow-wrap:anywhere}
+.e04-signature-history summary{cursor:pointer;min-height:44px;align-content:center}
+@media(max-width:600px){.e04-signature-approval{padding:16px}.e04-signature-execution button,.e04-signature-history button{width:100%}.e04-signature-result dl{grid-template-columns:minmax(0,1fr);gap:4px}}

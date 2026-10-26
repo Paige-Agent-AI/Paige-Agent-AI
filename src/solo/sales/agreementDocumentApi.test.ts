@@ -267,6 +267,66 @@ async function requestWire(x:Awaited<ReturnType<typeof readyRequestFixture>>){
   return {kind:'prepared_signature_request_review',tool:'agreement_send',args,request_sha256:await sha256Hex(canonicalPresentationJson(args)),
     approval:'not_requested',execution:'unavailable'};
 }
+describe('originating signature approval and original return references',()=>{
+ beforeEach(()=>invoke.mockReset());
+ afterEach(()=>invoke.mockReset());
+ const ref=(wire:Awaited<ReturnType<typeof requestWire>>)=>({operation_id:wire.args.operationId,request_sha256:wire.request_sha256});
+ const nativeResult=(wire:Awaited<ReturnType<typeof requestWire>>)=>({kind:'prepared_signature_request_result',state:'provider_accepted',tenant_id:fixture.source.tenant_id,
+  actor_id:actor,operation_id:wire.args.operationId,request_sha256:wire.request_sha256,agreement_id:fixture.source.agreement_id,work_id:request,receipt_id:event});
+ it('submits the whole checked content to the original HIGH door without inventing approval',async()=>{
+  const x=await readyRequestFixture(),wire=await requestWire(x),proposal={state:'approval_required',capability:'agreement_send',fingerprint:'a'.repeat(16),operation_id:wire.args.operationId,request_sha256:wire.request_sha256,summary:'Review the exact agreement and invitations.',expires_at:'2026-12-01T12:00:00Z'};
+  invoke.mockResolvedValue({data:{ok:true,result:proposal},error:null});
+  expect(documentSDK.submitAgreementSignatureRequest).toBeTypeOf('function');
+  expect(await documentSDK.submitAgreementSignatureRequest(context(),wire)).toEqual({ok:true,value:proposal});
+  expect(invoke).toHaveBeenCalledOnce();expect(invoke.mock.calls[0][0]).toBe('agreement-send?command=prepared-request');
+  expect(invoke.mock.calls[0][1]).toMatchObject({method:'POST',headers:{Authorization:'Bearer controlled-auth-token'},body:{operation_id:wire.args.operationId,review:x.review.request,
+   expected_review_sha256:x.review.review_sha256,expected_request_sha256:wire.request_sha256,connector_id:senderId,messages:x.draft.messages}});
+  expect(invoke.mock.calls[0][1].body).not.toHaveProperty('approved_fingerprint');expect(rpc).not.toHaveBeenCalled();
+ });
+ it.each(['missing_receipt','foreign_actor','foreign_operation','changed_digest','delivery'])('withholds %s apparent execution success',async variant=>{
+  const x=await readyRequestFixture(),wire=await requestWire(x),result=nativeResult(wire);
+  if(variant==='missing_receipt')Object.assign(result,{receipt_id:null});if(variant==='foreign_actor')result.actor_id=request;
+  if(variant==='foreign_operation')result.operation_id=request;if(variant==='changed_digest')result.request_sha256='0'.repeat(64);if(variant==='delivery')result.state='delivered';
+  invoke.mockResolvedValue({data:{ok:true,result},error:null});expect(documentSDK.submitAgreementSignatureRequest).toBeTypeOf('function');
+  expect(await documentSDK.submitAgreementSignatureRequest(context(),wire,'a'.repeat(16))).toMatchObject({ok:false,reason:'unconfirmed'});
+ });
+ it('retains the exact approval fingerprint and original receipt, and never retries an uncertain send',async()=>{
+  const x=await readyRequestFixture(),wire=await requestWire(x);invoke.mockResolvedValueOnce({data:{ok:true,result:nativeResult(wire)},error:null});
+  expect(documentSDK.submitAgreementSignatureRequest).toBeTypeOf('function');
+  expect(await documentSDK.submitAgreementSignatureRequest(context(),wire,'a'.repeat(16))).toMatchObject({ok:true,value:{state:'provider_accepted',receipt_id:event}});
+  expect(invoke.mock.calls[0][1].body.approved_fingerprint).toBe('a'.repeat(16));invoke.mockReset();invoke.mockRejectedValue(Error('Controlled transport interruption'));
+  const failed=await documentSDK.submitAgreementSignatureRequest(context(),wire,'a'.repeat(16));expect(failed).toMatchObject({ok:false,reason:'unconfirmed'});
+  if(failed.ok===false)expect(failed.message).toMatch(/original request/i);expect(invoke).toHaveBeenCalledOnce();
+ });
+ it('reads the original native result from only its opaque return reference',async()=>{
+  const x=await readyRequestFixture(),wire=await requestWire(x),result=nativeResult(wire);invoke.mockResolvedValue({data:{ok:true,result},error:null});
+  expect(documentSDK.readAgreementSignatureRecovery).toBeTypeOf('function');expect(await documentSDK.readAgreementSignatureRecovery(context(),ref(wire))).toEqual({ok:true,value:result});
+  expect(invoke.mock.calls[0][0]).toBe('agreement-send?review=request-recovery');expect(invoke.mock.calls[0][1].body).toEqual({tenant_id:fixture.source.tenant_id,agreement_id:fixture.source.agreement_id,operation_id:wire.args.operationId,expected_request_sha256:wire.request_sha256});
+ });
+ it('restores only the source-checked original draft for another deliberate review',async()=>{
+  const x=await readyRequestFixture(),wire=await requestWire(x),command={operation_id:wire.args.operationId,review:x.review.request,expected_review_sha256:x.review.review_sha256,
+   connector_id:senderId,messages:x.draft.messages,expected_request_sha256:wire.request_sha256};
+  invoke.mockResolvedValue({data:{ok:true,result:{kind:'prepared_signature_request_review_recovery',state:'review_available',...ref(wire),command,review:wire}},error:null});
+  expect(documentSDK.readAgreementSignatureRecovery).toBeTypeOf('function');
+  expect(await documentSDK.readAgreementSignatureRecovery(context(),ref(wire))).toMatchObject({ok:true,value:{state:'review_available',command}});
+  expect(invoke).toHaveBeenCalledOnce();
+  command.messages[0].body_text+=' changed';expect(await documentSDK.readAgreementSignatureRecovery(context(),ref(wire))).toMatchObject({ok:false,reason:'unconfirmed'});
+ });
+ it('keeps consumed and expired approval states separate from actual sending and never renews them',async()=>{
+  const x=await readyRequestFixture(),wire=await requestWire(x);expect(documentSDK.readAgreementSignatureRecovery).toBeTypeOf('function');
+  for(const reason of ['consumed','expired','unverified']){const result={kind:'prepared_signature_request_review_recovery',state:'review_unavailable',...ref(wire),reason};
+   invoke.mockResolvedValue({data:{ok:true,result},error:null});expect(await documentSDK.readAgreementSignatureRecovery(context(),ref(wire))).toEqual({ok:true,value:result});}
+  invoke.mockResolvedValue({data:{ok:true,result:null},error:null});expect(await documentSDK.readAgreementSignatureRecovery(context(),ref(wire))).toEqual({ok:true,value:null});
+  expect(invoke.mock.calls.every(([name])=>name==='agreement-send?review=request-recovery')).toBe(true);
+ });
+ it('rejects a forged checked digest before dispatch and retires a late original-history response',async()=>{
+  const x=await readyRequestFixture(),wire=await requestWire(x);expect(documentSDK.submitAgreementSignatureRequest).toBeTypeOf('function');expect(documentSDK.readAgreementSignatureRecovery).toBeTypeOf('function');
+  expect(await documentSDK.submitAgreementSignatureRequest(context(),{...wire,request_sha256:'0'.repeat(64)})).toMatchObject({ok:false,reason:'invalid_request'});expect(invoke).not.toHaveBeenCalled();
+  const pending=held<{data:unknown;error:null}>();let active=true;invoke.mockReturnValue(pending.promise);
+  const reading=documentSDK.readAgreementSignatureRecovery({...context(),isCurrent:()=>active},ref(wire));await vi.waitFor(()=>expect(invoke).toHaveBeenCalledOnce());active=false;
+  pending.resolve({data:{ok:true,result:nativeResult(wire)},error:null});expect(await reading).toMatchObject({ok:false,reason:'retired'});
+ });
+});
 it('reads the complete exact request through the original SDK without claiming approval or execution',async()=>{
   const x=await readyRequestFixture(),wire=await requestWire(x);invoke.mockResolvedValue({data:{ok:true,review:wire},error:null});
   expect(documentSDK.readAgreementSignatureRequest).toBeTypeOf('function');

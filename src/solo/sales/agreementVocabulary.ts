@@ -63,3 +63,23 @@ export const SIGNER_STATE: Record<string, string> = {
   // own agreement/provider evidence; this state only confirms no signature.
   pending: 'Not signed', viewed: 'Signing link opened', signed: 'Signature recorded', declined: 'Declined',
 };
+
+type AgreementEventAction = 'prepared_signature_credentials_recorded' | 'prepared_signature_request_recorded';
+/** Only the original native event discriminators reach the display adapter. */
+export function readAgreementEventAction(value: unknown): AgreementEventAction | null {
+  return value === 'prepared_signature_credentials_recorded' || value === 'prepared_signature_request_recorded' ? value : null;
+}
+const AGREEMENT_EVENT_LABELS: Record<string, string> = {
+  created: 'Draft recorded', edited: 'Agreement updated', sent: 'Signature request issued',
+  delivered: 'Delivery recorded', viewed: 'Signing page opened', consented: 'Electronic consent recorded',
+  signed: 'Signature recorded', completed: 'Signing completed', declined: 'Signing declined',
+  voided: 'Agreement stopped', expired: 'Signing request expired', sealed: 'Signed document sealed',
+  downloaded: 'Document copy requested', resent: 'Signature request reissued',
+  signer_added: 'Signer added', signer_removed: 'Signer removed',
+};
+/** Preparation is not revised wording, a sent message, delivery or a signature. */
+export function agreementEventLabel(type: string, action?: unknown): string {
+  if (type === 'edited' && action === 'prepared_signature_credentials_recorded') return 'Signing links prepared';
+  if (type === 'sent' && action === 'prepared_signature_request_recorded') return 'Signature request result recorded';
+  return Object.prototype.hasOwnProperty.call(AGREEMENT_EVENT_LABELS, type) ? AGREEMENT_EVENT_LABELS[type] : 'Agreement activity recorded';
+}

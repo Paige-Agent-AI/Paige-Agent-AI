@@ -1,0 +1,206 @@
+{
+  "schemaVersion": 1,
+  "capturedAt": "2026-10-26T01:29:36.528Z",
+  "classification": "LOCAL_CONTROLLED_ACTUAL_COMPONENTS",
+  "head": "3e4a96e1d46bc672a71246753240b5bc6faa782c",
+  "sourceTree": "a9271057f9e8fb06f88ae4b0090b39e536379886",
+  "base": "ee6980d09c28f230d334a7c90ffd9cb173eb4f67",
+  "source": [
+    {
+      "file": "src/solo/sales-ops.contract.test.tsx",
+      "gitBlob": "e286fb455b9be24e278196968a5349adc9393a0c",
+      "bytes": 99127,
+      "sha256": "db197212e2f3cf8c6c7e9f2cd240835cfac6607fd6df97c69b3f55a74cbbbe59"
+    },
+    {
+      "file": "src/solo/sales-ops.tsx",
+      "gitBlob": "88da41752d6f560f3a8a0d2e88684d0b99ea4065",
+      "bytes": 164821,
+      "sha256": "63a168ecdae9c957ad0f1151fe5cbf5397f6bb10616dc896a5cec29a8d9f25fe"
+    },
+    {
+      "file": "src/solo/sales/AgreementPreparationWorkspace.test.tsx",
+      "gitBlob": "44fa79796d03393f7bf638dab4fc1b735c8cc7be",
+      "bytes": 52060,
+      "sha256": "9d8d974e659efc47ed39c2c9eefa5655afbf0dc30ad779555ac0549adfe7f751"
+    },
+    {
+      "file": "src/solo/sales/AgreementPreparationWorkspace.tsx",
+      "gitBlob": "40ce8b3f7e2515597c7e6c36bc4f60e374ce936c",
+      "bytes": 48406,
+      "sha256": "e3abbbbc2228aa89d73ae86157100aed0616755ab515a4e791ede9be38998cd7"
+    },
+    {
+      "file": "src/solo/sales/agreementVocabulary.test.ts",
+      "gitBlob": "264ab49b04957d17bf4f004694774b75a34ce7f2",
+      "bytes": 3071,
+      "sha256": "509f0b51af0ee58a96c8f82842e43e42d251f92a7567ac090758ea6642bec28c"
+    },
+    {
+      "file": "src/solo/sales/agreementVocabulary.ts",
+      "gitBlob": "0a66ccb43c011f2375cc46fab55d3df33701bc46",
+      "bytes": 5045,
+      "sha256": "6425c4585c5aa3d0cf4cadcbae44a8d093cc8a2674e0ba1170befdd151344da8"
+    },
+    {
+      "file": "src/solo/useSoloAgreementSignings.history.test.tsx",
+      "gitBlob": "739a5ab28d4ec9fdab66b6668a729f4a31d05c10",
+      "bytes": 4636,
+      "sha256": "7f1e8e032a6a5253d9871d9dd7dd5f1c49753311c70c10d6e099f045ceab4dae"
+    },
+    {
+      "file": "src/solo/useSoloAgreementSignings.ts",
+      "gitBlob": "25facb721980ed26b01e819d4b71c27b1c0c621f",
+      "bytes": 44594,
+      "sha256": "51a7b1c0f242e18c06705b04b6498ea7fe70b220f29a978fdcece5a98f9d73fc"
+    }
+  ],
+  "rendered": [
+    {
+      "file": "1366-history.jpg",
+      "bytes": 42645,
+      "sha256": "6bd304cf363890b7d8f417f5e983bc580c5ae993a3b29e6320cc97ee65feebcf",
+      "width": 1351,
+      "height": 890,
+      "format": "jpeg"
+    },
+    {
+      "file": "390-history.jpg",
+      "bytes": 32635,
+      "sha256": "2c0284b7453a19d3f232d95efaeb9c1e895e9b6576b21472647bdd7b94e82991",
+      "width": 375,
+      "height": 811,
+      "format": "jpeg"
+    },
+    {
+      "file": "geometry.json",
+      "bytes": 1347,
+      "sha256": "6e2823721178e8e9471793f868bedfa551245050826d2907d3e37b107329d152"
+    }
+  ],
+  "logs": [
+    {
+      "file": "e04-c54-history-baseline-1792973981285.json",
+      "bytes": 2398,
+      "sha256": "a8269f0fd72ee084121697e5bb5fe298fe28d9cf7da87dc445fc72f7f11b639a",
+      "encoding": "base64",
+      "originalBytes": 1635,
+      "originalSha256": "f7682ae5dfaebcef4fc4406b7c69d3e68ca98881ae581b94e9d33842952c2a38"
+    },
+    {
+      "file": "e04-c54-history-serial-tests-1792975053764.json",
+      "bytes": 1269,
+      "sha256": "c5dd1e12ed659b28390631b138143117e6dd3a3928304d06db1548ed58933fc6",
+      "encoding": "base64",
+      "originalBytes": 784,
+      "originalSha256": "d70f6be2a1ed4072d28aa5ff66bba32b07e80d2f41780cce0cf0160f9ea9ea0f"
+    },
+    {
+      "file": "e04-c54-focus-causal-baseline.json",
+      "bytes": 31730,
+      "sha256": "b761c5c142bfdc9d25f46eb47c969c4addc8caf4831eff30384aadd4b8ca9cff",
+      "encoding": "base64",
+      "originalBytes": 23639,
+      "originalSha256": "9e1f7504a7ecf36b1b414c334d56abc48227e6257d172df2c00cae986ad3950f"
+    },
+    {
+      "file": "e04-c54-focus-final-tests.json",
+      "bytes": 3957,
+      "sha256": "65d53dcc950c1d85796135ea52a39004167a5fb75e84873e8f1fc2a0f7fb1d15",
+      "encoding": "base64",
+      "originalBytes": 2813,
+      "originalSha256": "4f86b61f7f838e01baa575cc36677cda62154074b4a66dbf629c4d950b3d6b4f"
+    },
+    {
+      "file": "e04-c54-focus-final-types.json",
+      "bytes": 1428,
+      "sha256": "e37b27ec44bcb8235e7e9036f519b8198b3974f7b496f48ba429faaa120ce551",
+      "encoding": "base64",
+      "originalBytes": 917,
+      "originalSha256": "f04632a63ab72d7c1b8b45612eeb50bcb3cd33116315636e3d8ff23cc2f6f167"
+    },
+    {
+      "file": "e04-c54-focus-repaired-tests.json",
+      "bytes": 2552,
+      "sha256": "f43891db68cc07c75edd86b90e686ab06e5af938a7a94fa3c1cbc2f1d9742e9f",
+      "encoding": "base64",
+      "originalBytes": 1758,
+      "originalSha256": "8738018cafb50190ca8251dc9a870eb737dfdf3520be4c36e2dcbd996c342895"
+    },
+    {
+      "file": "e04-c54-focus-repaired-types.json",
+      "bytes": 205,
+      "sha256": "1df0e26f63ee1a86df8eaf6f01b43748d1e5b402cfe728fed66829cffe7a9b37",
+      "encoding": "base64",
+      "originalBytes": 0,
+      "originalSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "e04-c54-focus-repaired-lint.json",
+      "bytes": 634,
+      "sha256": "caf0551629624fda98a10af558b469dbb4a143e66831bf1230f6f90c3e5a13ee",
+      "encoding": "base64",
+      "originalBytes": 320,
+      "originalSha256": "f3649477b7bc629d5bb850ecd834de5ce36524ba062859b00bef661d5d7ae044"
+    },
+    {
+      "file": "e04-c54-focus-quiet-tests.json",
+      "bytes": 1244,
+      "sha256": "4cc244ce9cfd85c55bdabe43fc3658655516b03231008e5c74300cb7f304c4b4",
+      "encoding": "base64",
+      "originalBytes": 780,
+      "originalSha256": "daf76d04fb0c3e2e42db552bc2c40df269dc117899a8ac1591ae7a6272143754"
+    },
+    {
+      "file": "e04-c54-impeccable.json",
+      "bytes": 252,
+      "sha256": "95503497ed8b9151d3c19618cde8475953d6fb55935de49f3a325acc0d1af877",
+      "encoding": "base64",
+      "originalBytes": 41,
+      "originalSha256": "6bf64187472dcd64b7055e5ee036702be3e6b457f7461defd9dc473d481b11ab"
+    }
+  ],
+  "evidencePackaging": "Raw transcripts retained losslessly in base64 JSON envelopes after the initial plain-text packaging failed the unchanged whitespace guard.",
+  "tests": {
+    "final": {
+      "files": 6,
+      "passed": 204,
+      "failed": 0,
+      "log": "e04-c54-focus-quiet-tests.json"
+    },
+    "focusCausalBaseline": {
+      "failed": 3,
+      "skipped": 55
+    },
+    "previousRunsRetained": true,
+    "existingTimeoutFailureMillisecondsUnchanged": 5000
+  },
+  "types": {
+    "exitCode": 0,
+    "config": "original ES2020 app config; eight owning paths"
+  },
+  "lint": {
+    "exitCode": 0,
+    "errors": 0,
+    "incumbentWarnings": 1
+  },
+  "impeccable": {
+    "version": "4.1.0",
+    "directExitCode": 0,
+    "capturedCount": null,
+    "emptyOutput": true,
+    "invalidWrapperExcluded": true
+  },
+  "runtime": {
+    "production": false,
+    "providerCalls": 0,
+    "businessMutations": 0,
+    "fixture": "work/c54-history-proof: actual original workspace/hook and canonical styles, controlled transport/context only"
+  },
+  "acceptance": {
+    "allTwelve": "OPEN",
+    "founder": "NOT_ACCEPTED",
+    "authenticatedCandidate": "UNVERIFIED",
+    "existingProductionPdfRead": "FAIL / original503; specific cause not inferred"
+  }
+}

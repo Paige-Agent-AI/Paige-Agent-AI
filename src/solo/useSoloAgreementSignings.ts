@@ -28,7 +28,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTenantContext } from "@/hooks/useTenantContext";
 import { supabase } from "@/integrations/supabase/client";
-import { displaySignatureState as readState } from "./sales/agreementVocabulary";
+import { displaySignatureState as readState, readAgreementEventAction } from "./sales/agreementVocabulary";
 import { agreementPdfIntakeProblem } from "./sales/agreementPdfIntake";
 
 /**
@@ -129,6 +129,7 @@ export type SigningWriteResult = {
 export type SigningEvent = {
   readonly id: string;
   readonly type: string;
+  readonly action?: ReturnType<typeof readAgreementEventAction>;
   readonly actorKind: string;
   readonly actorEmail: string | null;
   readonly ip: string | null;
@@ -548,7 +549,8 @@ export function useSoloAgreementSignings(): SigningsState {
         // `seq` is the engine's monotonic order and the ONLY safe sort: two events written in the
         // same millisecond render in a stable order rather than swapping between reads, which on a
         // legal trail would look like the history changing.
-        .select("id,event_type,actor_kind,actor_email,ip,user_agent,created_at,seq")
+        // Project only the action scalar; private document/credential detail stays server-side.
+        .select("id,event_type,detail->>action,actor_kind,actor_email,ip,user_agent,created_at,seq")
         .eq("tenant_id", expected)
         .eq("agreement_id", signingId)
         .order("seq", { ascending: false })
@@ -568,6 +570,7 @@ export function useSoloAgreementSignings(): SigningsState {
         events: all.slice(0, TRAIL_LIMIT).map((row) => ({
           id: String(row.id),
           type: toText(row.event_type) ?? "unrecognised",
+          action: readAgreementEventAction(row.action),
           actorKind: toText(row.actor_kind) ?? "system",
           actorEmail: toText(row.actor_email),
           ip: toText(row.ip),

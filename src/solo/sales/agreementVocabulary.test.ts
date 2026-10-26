@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { AGREEMENT_STATE, SIGNATURE_STATE } from "./agreementVocabulary";
+import { AGREEMENT_STATE, SIGNATURE_STATE, agreementEventLabel, readAgreementEventAction } from "./agreementVocabulary";
 
 // Experience 04 E4-S3 PR-0 — the Sales engagement and signature words live in ONE module, so Sales and
 // the client record (Track D) never describe one agreement two ways. Moved verbatim from sales-ops.tsx.
@@ -28,5 +28,22 @@ describe("agreementVocabulary — one home for the Sales agreement words", () =>
     const src = readFileSync("src/solo/sales-ops.tsx", "utf8");
     expect(src).not.toMatch(/const (AGREEMENT_STATE|SIGNATURE_STATE)\s*=/);
     expect(src).toMatch(/from "\.\/sales\/agreementVocabulary"/);
+  });
+  it('keeps preparation, request results, consent and signing as different recorded facts', () => {
+    expect(agreementEventLabel('edited', 'prepared_signature_credentials_recorded')).toBe('Signing links prepared');
+    expect(agreementEventLabel('sent', 'prepared_signature_request_recorded')).toBe('Signature request result recorded');
+    expect(agreementEventLabel('consented')).toBe('Electronic consent recorded');
+    expect(agreementEventLabel('signed')).toBe('Signature recorded');
+    expect(agreementEventLabel('completed')).toBe('Signing completed');
+    expect(agreementEventLabel('edited')).toBe('Agreement updated');
+  });
+  it('cannot promote an unknown event or private action text into a signing or payment claim', () => {
+    for (const type of ['paid', 'toString', 'unknown_future_event']) {
+      expect(agreementEventLabel(type, 'prepared_signature_credentials_recorded')).toBe('Agreement activity recorded');
+    }
+    expect(readAgreementEventAction('private recipient detail')).toBeNull();
+    expect(readAgreementEventAction({ action: 'prepared_signature_credentials_recorded' })).toBeNull();
+    expect(readAgreementEventAction('prepared_signature_credentials_recorded')).toBe('prepared_signature_credentials_recorded');
+    expect(agreementEventLabel('edited', 'private recipient detail')).toBe('Agreement updated');
   });
 });

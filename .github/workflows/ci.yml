@@ -111,6 +111,8 @@ jobs:
         run: psql -h 127.0.0.1 -U postgres -d postgres -v ON_ERROR_STOP=1 -f supabase/tests/exp08_team_lifecycle.sql
       - name: EXP08 co-owner authority, only the account holder or the platform owner grants or revokes, nobody revokes the holder, production holes, gate-only diff and mutants in a disposable database
         run: psql -h 127.0.0.1 -U postgres -d postgres -v ON_ERROR_STOP=1 -f supabase/tests/exp08_co_owner_authority.sql
+      - name: EXP08 Team Hub agents A1a, accepted-turn record, single-use agent posts, one-reply rule, per-seat cap, agent DM isolation, roster correction and mutants in a disposable database
+        run: psql -h 127.0.0.1 -U postgres -d postgres -v ON_ERROR_STOP=1 -f supabase/tests/exp08_team_hub_agents_a1.sql
       - name: Communications executor coverage includes subsequently introduced mailbox paths
         run: node scripts/ci/comms-provider-boundary-wiring.mjs
       - name: Gmail native connection authority, private credential isolation and concurrent rollback

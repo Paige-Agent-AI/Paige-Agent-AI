@@ -25,7 +25,7 @@ MUST_PRESERVE: the publish door's sole authority over going live; GrowthBlocks' 
 ACCEPTANCE_CRITERIA: an owner with a live page can download a static HTML copy that renders the published version with the same tokens and rhythm, links back to the live page for everything interactive, ships no scripts, and carries lineage + asset provenance in a manifest; a draft page offers no export; nothing about the download changes what visitors see.
 MOTION_PURPOSE: NONE: no motion added (the export ships none at all).
 PROTECTED_SEAMS: NONE_AFFECTED: no authority, write, provider, or isolation surface touched. Not affected: tenant isolation, auth, entitlements, approvals (publish door untouched — static test re-pins no-RPC), Spine, canonical writes, Rail, chat transcript, Live, Vault, connections, jobs, shell geometry, accessibility, privacy (the export adds NO data flow — it serializes fields the public page already renders).
-INTERNAL_BUILD_IDENTITY: 50941c88a80334191eb4cd6202b890dadd9eb7f1; deployment=vercel-preview-of-PR; environment=preview; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=this record + assets/exp06-portable-export/
+INTERNAL_BUILD_IDENTITY: 975e4758550cd4885e0e5f6538cccd47639cf073; deployment=vercel-preview-of-PR; environment=preview; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=this record + assets/exp06-portable-export/
 RELEASE_CHANNEL: preview: ordinary PR preview of the Solo shell; no staged rollout, no external eligibility.
 RELEASE_CLASSIFICATION: internal-only: portable-export capability increment within EXP06; not a customer release event.
 CUSTOMER_RELEASE_IDENTITY: none: coherent owner-visible EXP06 evaluation has not occurred.

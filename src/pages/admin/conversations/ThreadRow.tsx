@@ -196,7 +196,7 @@ export function ThreadRow({
           {/* R-B1: a queued scheduled send is visible in the rail (find-and-cancel surface). */}
           {scheduled && preview?.scheduled_for && (
             <StatePill state="pending" icon={<Clock className="h-2.5 w-2.5" />}>
-              Scheduled · {formatDistanceToNow(new Date(preview.scheduled_for))}
+              Scheduled · {formatDistanceToNow(new Date(preview.scheduled_for), { addSuffix: true })}
             </StatePill>
           )}
           {snoozed && (

@@ -188,14 +188,19 @@ export function governedEmailReceiptLabel(
 export function governedNotSentLine(reason: string | null | undefined): string {
   const r = (reason ?? "").toLowerCase();
   if (r === "cancelled_by_owner") return "Canceled — it won't be sent.";
-  if (r.startsWith("blocked_")) return "Not sent — this person opted out of email since it was scheduled.";
+  // Each hold send-message can record, in the owner's words; never "opted out" for a hold that is not one.
+  if (r === "blocked_suppressed") return "Not sent — this address can't get email from you (they unsubscribed or it bounced).";
+  if (r === "blocked_no_consent") return "Not sent — this person hasn't agreed to get email from you.";
+  if (r === "blocked_client_dnd") return "Not sent — this person asked not to be contacted right now.";
+  if (r === "blocked_unsubscribe_unavailable") return "Not sent — an unsubscribe link couldn't be added to it.";
+  if (r.startsWith("blocked_")) return "Not sent — this person can't be emailed right now.";
   if (r === "send_no_longer_eligible" || r === "sender_changed" || r === "recipient_changed")
     return "Not sent — the sending address or this person's email changed since it was scheduled.";
   if (r === "scheduler_authority_removed") return "Not sent — the person who scheduled it no longer has access to this business.";
   return "Nothing went out.";
 }
 
-/** "Scheduled for <local time> · Cancel" — the time in the viewer's own clock and words. */
+/** The send time in the viewer's own clock and words ("Wed, Oct 28, 9:00 AM"). */
 export function scheduledForLabel(sendAt: string, locale?: string): string {
   const at = new Date(sendAt);
   return Number.isFinite(at.getTime())
@@ -208,6 +213,8 @@ export const GOVERNED_SEND_COPY = {
   scheduled: { pill: "Scheduled", line: null },
   sending: { pill: "Sending…", line: null },
   not_sent: { pill: "Not sent", line: null },
+  // A scheduled email its owner canceled reached the goal they asked for: a neutral pill, not an error.
+  canceled: { pill: "Canceled", line: null },
   unconfirmed: {
     pill: "Couldn't confirm",
     line: "Couldn't confirm this went out — don't resend.",

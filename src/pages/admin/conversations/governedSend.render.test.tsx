@@ -377,7 +377,10 @@ describe.each([
     expect(host.textContent).not.toContain("Sending…");
     expect(buttons(host)).not.toContain("Approve & send");
     const cancel = host.querySelector<HTMLButtonElement>('[data-governed-send="scheduled"]');
-    expect(cancel?.textContent).toBe(`Scheduled for ${new Date(inAnHour).toLocaleString(undefined, { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })} · Cancel`);
+    const when = new Date(inAnHour).toLocaleString(undefined, { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+    expect(cancel?.parentElement?.textContent).toBe(`Sends ${when}Cancel`);
+    expect(cancel?.textContent).toBe("Cancel");
+    expect(cancel?.getAttribute("aria-label")).toBe(`Cancel the email scheduled for ${when}`);
     await act(async () => { cancel!.click(); await flush(); });
     expect(db.doorBodies).toEqual([{ expected_tenant_id: "tenant-a", operation_id: OPERATION, cancel: true }]);
     expect(db.cancellations).toEqual([]);
@@ -390,13 +393,14 @@ describe.each([
     ["failed", undefined, "It didn't go out."],
     ["outcome_unknown", undefined, "Too late — it's already on its way."],
     ["provider_accepted", undefined, "Too late — it's already on its way."],
-  ])("a cancel that came too late (%s, %s) says what really happened", async (outcome, reason, line) => {
+  ])("a cancel that came too late (%s, %s) says what really happened; only 'on its way' is an error", async (outcome, reason, line) => {
     db.messages = [scheduledRow()];
     db.threads = [thread];
     db.doorAnswer = { data: null, error: { context: { json: async () => ({ ok: false, cancelled: false, code: "COMMS_EMAIL_CANCEL_TOO_LATE", outcome, ...(reason ? { reason } : {}) }) } } };
     const host = await mountInbox(path);
     await act(async () => { host.querySelector<HTMLButtonElement>('[data-governed-send="scheduled"]')!.click(); await flush(); });
-    expect(toast.error).toHaveBeenCalledWith(line);
+    if (outcome === "refused" || outcome === "failed") { expect(toast).toHaveBeenCalledWith(line); expect(toast.error).not.toHaveBeenCalled(); }
+    else expect(toast.error).toHaveBeenCalledWith(line);
     expect(toast.success).not.toHaveBeenCalled();
   });
   it("the thread list marks a governed email Scheduled only while it is: past its release grace it is not", async () => {
@@ -421,15 +425,27 @@ describe.each([
     const cancel = () => host.querySelector<HTMLButtonElement>('[data-governed-send="scheduled"]')!;
     await act(async () => { cancel().click(); await flush(); });
     expect(cancel().disabled).toBe(true);
+    expect(cancel().textContent).toBe("Canceling…");
     await act(async () => { cancel().click(); await flush(); });
     expect(db.doorBodies).toHaveLength(1);
     await act(async () => { answer({ data: { ok: true, cancelled: true }, error: null }); await flush(); });
     expect(cancel().disabled).toBe(false);
     expect(toast.success).toHaveBeenCalledWith("Canceled — it won't be sent.");
   });
+  it("a scheduled email its owner canceled reads Canceled (neutral), not the red Not sent", async () => {
+    db.messages = [scheduledRow({ status: "blocked", scheduled_for: null, comms_email_state: "refused", comms_email_reason: "cancelled_by_owner" })];
+    db.threads = [thread];
+    const host = await mountInbox(path);
+    expect(host.textContent).toContain("Canceled");
+    expect(host.textContent).not.toContain("Not sent");
+    expect(host.querySelector('[data-governed-send="not_sent"]')?.textContent).toBe("Canceled — it won't be sent.");
+  });
   it.each([
-    ["cancelled_by_owner", "Canceled — it won't be sent."],
-    ["blocked_suppressed", "Not sent — this person opted out of email since it was scheduled."],
+    ["blocked_suppressed", "Not sent — this address can't get email from you (they unsubscribed or it bounced)."],
+    ["blocked_client_dnd", "Not sent — this person asked not to be contacted right now."],
+    ["blocked_no_consent", "Not sent — this person hasn't agreed to get email from you."],
+    ["blocked_unsubscribe_unavailable", "Not sent — an unsubscribe link couldn't be added to it."],
+    ["blocked_something_new", "Not sent — this person can't be emailed right now."],
     ["sender_changed", "Not sent — the sending address or this person's email changed since it was scheduled."],
     ["scheduler_authority_removed", "Not sent — the person who scheduled it no longer has access to this business."],
     ["scheduled_release_missed", "Nothing went out."],
@@ -440,7 +456,7 @@ describe.each([
     expect(host.textContent).toContain("Not sent");
     expect(host.querySelector('[data-governed-send="not_sent"]')?.textContent).toBe(line);
     expect(host.querySelector('[data-governed-send="scheduled"]')).toBeNull();
-    expect(host.textContent).not.toMatch(/cancelled_by_owner|blocked_suppressed|scheduler_authority_removed|scheduled_release_missed|sender_changed/);
+    expect(host.textContent).not.toMatch(/cancelled_by_owner|blocked_[a-z_]+|scheduler_authority_removed|scheduled_release_missed|sender_changed/);
   });
 });
 
@@ -482,7 +498,8 @@ describe("a scheduled governed email's state, with the clock injected", () => {
   });
   it("governedNotSentLine never shows a code", () => {
     expect(governedNotSentLine("cancelled_by_owner")).toBe("Canceled — it won't be sent.");
-    expect(governedNotSentLine("blocked_no_consent")).toMatch(/^Not sent — this person opted out/);
+    expect(governedNotSentLine("blocked_no_consent")).toBe("Not sent — this person hasn't agreed to get email from you.");
+    expect(governedNotSentLine("blocked_client_dnd")).not.toMatch(/opted out/);
     expect(governedNotSentLine("send_no_longer_eligible")).toMatch(/changed since it was scheduled/);
     expect(governedNotSentLine(null)).toBe("Nothing went out.");
     expect(governedNotSentLine("weird_code")).toBe("Nothing went out.");

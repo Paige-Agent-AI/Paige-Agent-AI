@@ -292,6 +292,9 @@ function MessageBubble({
         isCall ? voiceStatusPill(m)
         : governed === "scheduled" ? <StatePill state="pending">{GOVERNED_SEND_COPY.scheduled.pill}</StatePill>
         : governed === "sending" ? <StatePill state="pending">{GOVERNED_SEND_COPY.sending.pill}</StatePill>
+        : governed === "not_sent" && m.comms_email_reason === "cancelled_by_owner" ? (
+          <StatePill state="off">{GOVERNED_SEND_COPY.canceled.pill}</StatePill>
+        )
         : governed === "not_sent" ? (
           // Red deepened toward ink: the plain error pill measured 4.21:1 in light at 10px
           // (render-results.json), the same fix the "Couldn't confirm" pill needed.
@@ -345,16 +348,20 @@ function MessageBubble({
         // An approved email set to go out later: cancelled through the governed email door (never the
         // generic undo, which no longer touches a governed row). The time is the viewer's local time.
         governed === "scheduled" && m.comms_email_operation && m.comms_email_send_at ? (
-          <button
-            type="button"
-            data-governed-send="scheduled"
-            disabled={cancelPending}
-            aria-busy={cancelPending || undefined}
-            onClick={() => onCancelGovernedScheduled(m.comms_email_operation!)}
-            className="text-[11px] text-muted-foreground underline hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--ring))] disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            Scheduled for {scheduledForLabel(m.comms_email_send_at)} · Cancel
-          </button>
+          <p className="flex flex-wrap items-center gap-x-2 text-[11px] leading-4 text-muted-foreground">
+            <span className="whitespace-nowrap">Sends {scheduledForLabel(m.comms_email_send_at)}</span>
+            <button
+              type="button"
+              data-governed-send="scheduled"
+              disabled={cancelPending}
+              aria-busy={cancelPending || undefined}
+              aria-label={cancelPending ? "Canceling the scheduled email" : `Cancel the email scheduled for ${scheduledForLabel(m.comms_email_send_at)}`}
+              onClick={() => onCancelGovernedScheduled(m.comms_email_operation!)}
+              className="text-[11px] font-medium text-foreground underline underline-offset-2 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--ring))] disabled:cursor-not-allowed"
+            >
+              {cancelPending ? "Canceling…" : "Cancel"}
+            </button>
+          </p>
         ) :
         governed === "not_sent" && m.comms_email_send_at ? (
           <p data-governed-send="not_sent" className="text-[11px] leading-4 text-foreground">
@@ -1093,10 +1100,16 @@ export default function ClientsConversations() {
         answer = await context?.json?.().then((v) => (v && typeof v === "object" ? v as Record<string, unknown> : null)).catch(() => null) ?? null;
       }
       if (answer?.cancelled === true) toast.success("Canceled — it won't be sent.");
-      // Too late: say what actually happened to the send, from its recorded state.
-      else if (answer?.code === "COMMS_EMAIL_CANCEL_TOO_LATE") toast.error(cancelTooLateLine(answer.outcome, answer.reason));
+      // Too late: say what actually happened to the send, from its recorded state. Nothing going out is
+      // what the owner asked for, so only "already on its way" is an error.
+      else if (answer?.code === "COMMS_EMAIL_CANCEL_TOO_LATE") {
+        const line = cancelTooLateLine(answer.outcome, answer.reason);
+        if (answer.outcome === "refused" || answer.outcome === "failed") toast(line); else toast.error(line);
+      }
       else toast.error("Couldn't cancel it. Refresh the conversation to see where it stands.");
       void load(); void loadThreads();
+      // The Cancel control is gone once the row re-reads: keep keyboard focus in the conversation.
+      requestAnimationFrame(() => document.querySelector<HTMLTextAreaElement>('[data-composer-writing-surface="true"] textarea')?.focus({ preventScroll: true }));
     } finally {
       setCancellingOperations((s) => { const next = new Set(s); next.delete(operationId); return next; });
     }

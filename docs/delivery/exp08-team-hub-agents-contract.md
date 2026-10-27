@@ -10,8 +10,9 @@ draft's default (owners and admins assign agent work) and Q2 as its default (a t
 a top-level reply linked to the asker's message; a thread reply is answered in its thread); MERIT =
 Sales & getting paid confirmed; the storage in section 5 approved. Owner rulings of 2026-10-26 and
 2026-10-27 are in the decision log ("EXP08 Team Hub agents"). **Built so far: A1a** (storage, doors,
-tolerant parsers and the roster correction, migrations `20271117010008` and `20271117010108`); A1b
-(the Chat-lane turn and the UI) and A2–A4 are not built. This contract was grounded against
+tolerant parsers and the roster correction, migrations `20271117010008` and `20271117010108`; merged
+and applied on production, read back 2026-10-27) and **A1b part 1, the server turn** (branch
+`exp08-hub-agents-a1b`, not merged; notes below). The A1b UI and A2–A4 are not built. This contract was grounded against
 origin/main `e8197859e`. Line numbers come from the grounding notes, which were read at `9dc021ee`.
 Where the two differ, re-check before building (§71.1).
 
@@ -48,6 +49,45 @@ where this contract left a detail open, or where review changed it; the approved
   [the personalities](exp08-team-hub-agents-personalities.md) are left out deliberately: MERIT's names a
   doctrine section, internal jargon that must never reach a person (§11), and VERA's and MENTOR's explain
   a refusal rather than state one.
+
+**A1b part 1 notes (2026-10-27, the server turn; the UI is part 2).** How the turn was built where
+this contract left a detail open, and where the build departs from it (§13, §58: recorded, not silent).
+- **Where it runs (§18).** One early branch in `paige-ai-chat/index.ts` hands a request
+  `{ teamHubAgentTurn: {conversationId, sourceMessageId, threadRootId, agent, privateFollowUp} }` to
+  `_shared/team-hub/agent-turn.ts` and returns. The chat already owns the verified actor, the ingress
+  rate limit, the one model seam (`fabricCompletion`) and the service client receipts use, so a second
+  edge function would have duplicated all four; the logic stays out of the handler. The seam sits after
+  the verified actor and the ingress rate limit and before the chat schema (C0b: identity[15] only,
+  29 scalars renewed).
+- **Not an interactive chat turn.** The request and response are plain JSON, not the streamed interactive
+  protocol, and no `paige_chat_threads` row is written (the per-(asker, channel, agent) thread is the
+  Chat-lane thread migration, not built). The browser waits for the JSON; the agent's posted message is
+  in it, read back.
+- **The control is a reply field, not a tool.** The model answers `{"reply", "route"}`; `route` is
+  `answer`, `private` or `act`. A tool needs a capability declaration, and the control has no executor
+  to declare. Semantics are unchanged: `private` (only in a shared conversation whose stored allowlist
+  names `team_hub_answer_privately`) posts the public part with `p_private_answer`, so the definer
+  appends the fixed line; `act` posts *I can't take actions here yet.* after any public part. A tool the
+  model was not offered never runs: a read moves to the DM, a write gets the A1 line.
+- **What the agent can run in part 1.** `team_hub_read_conversation` (pinned: only the turn's own
+  conversation, plus the asking conversation on a DM follow-up) and `read_business_time_zone`, each
+  with its existing definition. `ask_choices`, `capability_status`, `marketplace_browse`,
+  `list_event_kinds` and every DM-scope read beyond those two (`crm_*`, `agreement_*`, `growth_list`,
+  …) are `UNAVAILABLE` here: their executors live inside the chat's general loop. So a private answer
+  that needs CRM says the agent can't see it from Team Hub yet; it never guesses.
+- **Receipts.** The `team_hub_read_conversation` receipt (the memory-taint marker, increment 4 §5) is
+  recorded before any Team Hub text reaches the model, or the turn ends unrun. Every accepted turn
+  records `team_hub_agent_post` (non-dotted, metadata only) with its real outcome. No Spine capability
+  `team.hub_agent_post` is registered and no action-risk / receipt-ledger row is added: the registry
+  and the risk policy both model a chat tool, and the agent post is not one (the model can never call
+  it).
+- **Persona.** Identity from `VP_ROSTER`, presentation from the stored `config.personality`, fenced as
+  style guidance. `buildVpAddressBlock` is not reused: its text carries PAIGE-chat tool guidance that
+  would mislead in Team Hub. PAIGE's Team Hub personality is a constant from the approved personalities
+  §2; a tenant's Playbook persona does not reach the Team Hub turn yet.
+- **Settling an unknown post.** A post whose answer is lost is retried once with the same token and
+  request id (idempotent), then settled by `team_hub_end_agent_turn`, which can only end an unconsumed
+  turn: "ended" proves nothing posted, "not_found" means it may have (reported *may not have posted*).
 
 Increments 1–4 are in
 [collaboration](exp08-team-hub-collaboration-contract.md),

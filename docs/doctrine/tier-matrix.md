@@ -522,7 +522,7 @@ Live defect found 2026-10-26 (`docs/brain/decision-log.md`): `grant_co_owner` / 
 
 Production 2026-10-26: 12 tenants; 4 have no `owner_user_id` (none has an active owner) and 1 holder has no active owner seat — on those, only the platform owner can grant. Every tenant with an active owner has its holder among them. Proof: `supabase/tests/exp08_co_owner_authority.sql` in CI (69 cases; the guard and `is_tenant_admin` / `is_tenant_member` are loaded from the migration chain and md5-pinned to production, with production's six tenants policies; production bodies let 17 holes through; migrated 69/69; 20/20 mutants killed — including the four step-down mutants, the guard seat check without `is_owner`, and the carve-out without the `stripe_customer_id` / `parent_tenant_id` conditions — and 4/4 controls survive; with the old carve-out reinstated the 5 S1 holes fail). A holderless tenant with no active owner: its admin's self-crown is refused by the guard; its member's is refused earlier by RLS (no UPDATE policy admits a member).
 
-### EXP08 Team Hub agents A1a: agent storage, turn doors, tolerant parsers and the roster correction (migrations `20271117010008` and `20271117010108`, 2026-10-27; NOT YET MERGED — proof local and in CI, PROOF OWED on production)
+### EXP08 Team Hub agents A1a: agent storage, turn doors, tolerant parsers and the roster correction (migrations `20271117010008` and `20271117010108`, 2026-10-27; merged #2969; applied on production — `schema_migrations` rows, the four doors and the six rows' three config keys read back 2026-10-27)
 
 Owner approval 2026-10-27 ("approved, go with your recommendations and start building"): the design (prototype v3), the seven personalities as drafted, Q1 (owners and admins assign agent work, A3), Q2 (a top-level question gets a top-level reply linked to the asker's message; a thread reply is answered in its thread), MERIT = Sales & getting paid, and the storage. Contract: [`docs/delivery/exp08-team-hub-agents-contract.md`](../delivery/exp08-team-hub-agents-contract.md); personalities: [`docs/delivery/exp08-team-hub-agents-personalities.md`](../delivery/exp08-team-hub-agents-personalities.md).
 
@@ -547,6 +547,21 @@ Owner approval 2026-10-27 ("approved, go with your recommendations and start bui
 | Anonymous | ✗ no grant | ✗ | ✗ |
 
 **Evidence:** `supabase/tests/exp08_team_hub_agents_a1.sql` (disposable PG16, in CI): the production chain md5-checked (36/36 team_hub functions), each re-emitted body reduced back to production's md5 by undoing only its A1 hunks, every §5 A1 SQL proof, the 10-minute abandoned-turn re-arm, and 24/24 mutants each breaking the property it guards (with the raw outcome under each new one the defect itself, not an unrelated error), including a reused request id answered with another question's reply, re-arms off the cap, and every acceptance and post guard that had no behaviour probe; every increment 1–4, lifecycle, admin-scope and co-owner proof still green. Vitest/node tests for both parsers, mutation-checked (§71.4). **Owed after merge:** the §32 persisted-apply read-back of both migrations (`schema_migrations`, the objects, the six rows), and an authenticated drive once A1b gives agents a voice.
+
+### EXP08 Team Hub agents A1b part 1: the server agent turn (2026-10-27; branch `exp08-hub-agents-a1b`, NOT YET MERGED — the UI is part 2, so no agent speaks to anyone yet)
+
+**What exists on the branch (and nothing more):** `paige-ai-chat` answers a closed request `{ teamHubAgentTurn: {...} }` through `_shared/team-hub/agent-turn.ts`: it resolves the workspace from the asker's JWT, re-reads the asking message under that JWT (theirs, visible now, asking this agent or in their DM with it), accepts the turn on the service role (`team_hub_accept_agent_turn`, the per-seat cap of 30 starts an hour), records the Team Hub memory-taint receipt before any Team Hub text reaches the model, gives the model only that conversation's messages (and on a private follow-up the asker's DM with the agent), runs it through `fabricCompletion` with the agent's stored personality and a read-only tool list (stored allowlist ∩ `team_hub_read_conversation` pinned and `read_business_time_zone`; never a write), posts under the asker's JWT (`team_hub_post_agent_message`, request id derived from source, agent and intent), reads the post back and records `team_hub_agent_post`. A private part posts the public part plus the definer's fixed line and tells the browser to start the DM turn; an act posts *I can't take actions here yet.* `UNAVAILABLE` in part 1: the other allowlisted tools and every DM-scope read beyond those two (contract §5 A1b part 1 notes).
+
+| Tier | Agent turn (server) | Agents in the UI |
+|---|---|---|
+| God / Operator | ✗ no seat: the persona read or the acceptance refuses (`not_member`); nothing runs | ✗ |
+| Agency / Enterprise | ✗ acceptance refuses `unavailable` (not canonical SOLO); nothing runs | ✗ |
+| Standalone (Solo) | ✓ any active seat with Team conversations on, for its own message in a conversation it can see; owner and member alike (the member is the most-affected tier, §51.5) | ✗ until part 2 |
+| Sub-account | ✗ `unavailable` until Team Hub opens there | ✗ |
+| Client | ✗ no seat | ✗ |
+| Anonymous | ✗ no JWT: the chat refuses 401 before the seam | ✗ |
+
+**Evidence:** `supabase/functions/_shared/team-hub/agent-turn.test.ts` (41, automated against fakes of the definers and the model seam; 20/20 mutants killed) and `agent-turn-wiring.test.ts` (structural, 4); base `cab598493` vs branch, measured: the CI node set 582/582 → 627/627, `deno check` of `paige-ai-chat` 9 → 9 identical diagnostics, C0b 29/29 base pins reproduced and only identity[15] changed; every `lint:*` in CI green; the A1a and increment 1–4 SQL proofs re-run green. **Owed:** `edge-live` for `paige-ai-chat` after merge, and an authenticated drive (a real model turn and a real post) once part 2 gives the turn a screen — none has run.
 
 ### Solo Settings → Team: the screens for the team lifecycle (2026-10-26; owner-approved design, APPROVED-FROZEN §28)
 

@@ -7975,6 +7975,13 @@ Current gaps:
   yet:** the `paige-ai-chat` turn and the agent UI are A1b; cards (A2), assignments (A3) and editable
   personalities (A4) follow. `PROOF_OWED`. Proof `supabase/tests/exp08_team_hub_agents_a1.sql`.
   Contract: [Team Hub agents contract](delivery/exp08-team-hub-agents-contract.md).
+  **§13 correction (2026-10-27):** A1a is merged (#2969) and both migrations are applied on production
+  (`schema_migrations`, the four doors and the six rows' config keys read back). **A1b part 1** (branch
+  `exp08-hub-agents-a1b`, not merged): the server agent turn — a closed `{ teamHubAgentTurn }` request in
+  `paige-ai-chat`, logic in `_shared/team-hub/agent-turn.ts` (re-read under the asker's JWT, service-role
+  acceptance, channel-safe context only, `fabricCompletion` with a read-only tool list, post under the
+  asker's JWT, read-back, `team_hub_agent_post` receipt). Still no agent speaks to anyone: the UI is A1b
+  part 2. `PROOF_OWED` (no authenticated drive).
 - `/solo/{n}/team` still redirects to Settings → Team; Team Hub is a separate destination.
 - Team actions still emit no Rail outcome.
 

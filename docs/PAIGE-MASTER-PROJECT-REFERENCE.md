@@ -856,6 +856,12 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**2026-10-27 UTC — EXP02 original deployment-readback reliability.**
+
+| PR | Verified source/release | Delivered behavior and proof boundary |
+| --- | --- | --- |
+| [#2980 source release](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2980#issuecomment-6440521272) | Reviewed `b2aa029feee0ed078abb327eb525ef6cd0edadac`, AUTHOR-REVIEW / LOWER ASSURANCE5665610194; all10 applicable exact checks/two web statuses SUCCESS, designed no-SQL Preview SKIPPED/zero threads. Actual main `b9659598cfbcb3a9c74283722de00e8d9093b0f2` / tree `f7320a6a392fddf67eeb67eaa0bc999ccd8ebc24` equals the reviewed union, original124 controls/122 prior AST/outside16,852 entries and whole incoming histories/config retained. Normal Edge40494321413/job122155800348 SUCCESS/original124 tests; affected source/config/retirement empty, upload/preflight/readback/tag correctly skipped. Original certificate remains1ad5f13c; no fresh51-function verification claim. READYdpl_Bx7CbcQQ3gqCLmPaaQ6WfjJP2AW1, both public origins exactb965-mvql694f/matching entry/null customerUpdate/missing404 at11:14:16UTC. | Same original read-only verifier may run after an unsuccessful deployment command only with valid source/preflight and no cancellation; failed jobs still cannot certify release. No app/native/grant/provider/worker/action activation delta or customer announcement. Original#2977 release row now live. Functional bounded workflow source verified; Visual N/A; Experiential authenticated Finance/Chat/manual Work/full19+nine owed; Founder NOT_ACCEPTED. ALG/CAP/historical9-0/12-0-4/monthlyUNKNOWNUNRETRIED unchanged. |
+
 **2026-10-27 UTC — EXP02 original campaign email evidence.**
 
 | Increment | Exact released source and observed production | Acceptance boundary |

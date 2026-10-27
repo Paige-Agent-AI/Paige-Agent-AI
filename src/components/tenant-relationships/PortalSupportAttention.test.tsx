@@ -1,0 +1,17 @@
+import React,{act} from 'react';
+import {createRoot,type Root} from 'react-dom/client';
+import {afterEach,beforeEach,expect,it,vi} from 'vitest';
+import {PortalSupportAttention} from './PortalSupportAttention';
+import type {RelationshipPerson} from './useTenantRelationshipsData';
+const fixture=vi.hoisted(()=>({read:{phase:'ready',value:{cases:[] as unknown[],source_count:0,read_at:'2026-10-26T12:00:00Z'},refresh:vi.fn()},hook:vi.fn()}));
+vi.mock('./usePortalSupportAttention',()=>({usePortalSupportAttention:(...args:unknown[])=>{fixture.hook(...args);return fixture.read;}}));
+(globalThis as typeof globalThis&{IS_REACT_ACT_ENVIRONMENT:boolean}).IS_REACT_ACT_ENVIRONMENT=true;
+let host:HTMLDivElement,root:Root;const open=vi.fn(),people=[{id:'known-client',name:'Jordan Client'} as RelationshipPerson];
+const show=async(list=people)=>act(async()=>root.render(<PortalSupportAttention tenantId="current-business" people={list} openClient={open}/>));
+beforeEach(()=>{host=document.createElement('div');document.body.append(host);root=createRoot(host);fixture.read.phase='ready';fixture.read.value.cases=[];fixture.read.refresh.mockClear();fixture.hook.mockClear();open.mockClear();});
+afterEach(()=>{act(()=>root.unmount());host.remove();});
+it('names the original source and bounded absence rather than all support being clear',async()=>{await show();expect(fixture.hook).toHaveBeenCalledWith('current-business',['known-client']);expect(host.textContent).toContain('50-case mailbox window');expect(host.textContent).toContain('Portal help requests are in Messages');expect(host.textContent).toContain('No active cases found in this window');});
+it('opens the exact CRM client, escaping source subject markup',async()=>{fixture.read.value.cases=[{id:'original-case',contact_id:'known-client',status:'awaiting_owner',subject:'<script>not code</script>',last_inbound_at:null}];await show();expect(host.querySelector('script')).toBeNull();expect(host.textContent).toContain('<script>not code</script>');const button=host.querySelector<HTMLButtonElement>('[aria-label="Review client Jordan Client"]')!;await act(async()=>button.click());expect(open).toHaveBeenCalledExactlyOnceWith('known-client');});
+it.each(['loading','error','unavailable'])('shows %s distinctly and withholds old cases',async phase=>{fixture.read.phase=phase;fixture.read.value.cases=[{id:'case',contact_id:'known-client',status:'open',subject:'old subject',last_inbound_at:null}];await show();expect(host.textContent).not.toContain('old subject');expect(host.textContent).not.toContain('No active cases');expect(host.querySelector('[role="alert"]')!==null).toBe(phase!=='loading');});
+it('Refresh is a read retry and does not open or change a case',async()=>{fixture.read.phase='error';await show();await act(async()=>host.querySelector<HTMLButtonElement>('button')!.click());expect(fixture.read.refresh).toHaveBeenCalledOnce();expect(open).not.toHaveBeenCalled();});
+it('does not claim a source was checked with no loaded client',async()=>{await show([]);expect(host.textContent).toContain('Load a client');expect(host.querySelector('button')?.disabled).toBe(true);});

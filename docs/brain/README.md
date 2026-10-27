@@ -4531,3 +4531,14 @@ UNAVAILABLE; all19/nine/ALG maturity unchanged, VisualN/A, ExperientialINCOMPLET
 FounderNOT_ACCEPTED. Details and complete orchestration contract stay in the
 [existing Systems evidence](../evidence/e2-systems-capture-mode.md); prior dated
 source releases remain history. No customer/model/provider operation.
+
+## EXP05 original ZION access-refusal correction — development, October26
+
+The original Operations assignment reader now distinguishes genuine installed-SDK
+HTTP401/403 from relay/offline/name-like errors. Existing refused-state handling
+withdraws the prior sample and original text; no body is consumed or action
+repeated. Five causal failures corrected; four exact-source regression suites
+140PASS. UI markup, caller-JWT inspector, scope/deadline, permissions, original
+receipts, providers and activation unchanged. Source/review/CI/deployment and
+authenticated proof remain separate; full ten/E5/Builder/ZION/owner-away/Live and
+founder acceptance stay open. [Bounded evidence](../evidence/ui-delivery/exp05-zion-history-access-refusal.md).

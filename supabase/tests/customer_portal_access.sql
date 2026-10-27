@@ -5,7 +5,7 @@
 -- the notices that stop, end + re-invite + a different person, the merge rules, the honest customer
 -- read, and that a pause at one business never touches another.
 BEGIN;
-SELECT plan(363);
+SELECT plan(385);
 
 -- Supabase's default table grants (RLS is the boundary) are reproduced, so every refusal below is the
 -- policy's or the guard's, never a missing grant.
@@ -962,6 +962,58 @@ SELECT is(pg_temp.publication_source_mutation(format('UPDATE public.paige_action
 SELECT is(pg_temp.publication_source_mutation(format('UPDATE public.paige_actions SET result=jsonb_set(result,''{ids}'',jsonb_build_array(%L::text)) WHERE id=%L',
  (SELECT result#>>'{ids,0}' FROM unrelated_source_publication),(SELECT result#>>'{request,work_id}' FROM publication_request)))->>'sqlstate',
  '55000','historical sharing source refuses a different original publisher result');
+
+-- Owner Portal support attention consumes original E03 cases; no inbox/case writer is added.
+INSERT INTO public.clients(id,tenant_id,created_by,first_name,last_name,status) VALUES
+ ('e0937000-0000-4000-8000-0000000000a1','e0927000-0000-4000-8000-000000000001','e0917000-0000-4000-8000-000000000001','Support','Client A','active'),
+ ('e0937000-0000-4000-8000-0000000000a2','e0927000-0000-4000-8000-000000000002','e0917000-0000-4000-8000-000000000002','Support','Client B','active');
+INSERT INTO public.channel_connectors(id,tenant_id,channel_type,mailbox_class,status,active,mailbox_owner_user_id) VALUES
+ ('e0967000-0000-4000-8000-0000000000a1','e0927000-0000-4000-8000-000000000001','email','shared_support','pending',false,NULL),
+ ('e0967000-0000-4000-8000-0000000000a2','e0927000-0000-4000-8000-000000000002','email','shared_support','pending',false,NULL),
+ ('e0967000-0000-4000-8000-0000000000a3','e0927000-0000-4000-8000-000000000001','email','personal','pending',false,'e0917000-0000-4000-8000-000000000001');
+INSERT INTO public.support_cases(id,tenant_id,connector_id,thread_key,contact_id,status,last_inbound_at) VALUES
+ ('e0977000-0000-4000-8000-0000000000a1','e0927000-0000-4000-8000-000000000001','e0967000-0000-4000-8000-0000000000a1','support-a','e0937000-0000-4000-8000-0000000000a1','awaiting_owner',now()),
+ ('e0977000-0000-4000-8000-0000000000a2','e0927000-0000-4000-8000-000000000002','e0967000-0000-4000-8000-0000000000a2','support-b','e0937000-0000-4000-8000-0000000000a2','open',now()),
+ -- Deliberately malformed producer data must not expose a personal mailbox or foreign client.
+ ('e0977000-0000-4000-8000-0000000000a3','e0927000-0000-4000-8000-000000000001','e0967000-0000-4000-8000-0000000000a3','private-a','e0937000-0000-4000-8000-0000000000a1','open',now()),
+ ('e0977000-0000-4000-8000-0000000000a4','e0927000-0000-4000-8000-000000000001','e0967000-0000-4000-8000-0000000000a1','foreign-client','e0937000-0000-4000-8000-0000000000a2','open',now()),
+ ('e0977000-0000-4000-8000-0000000000a5','e0927000-0000-4000-8000-000000000001','e0967000-0000-4000-8000-0000000000a1','resolved-a','e0937000-0000-4000-8000-0000000000a1','resolved',now());
+CREATE FUNCTION pg_temp.support_attention(
+ _actor uuid DEFAULT 'e0917000-0000-4000-8000-000000000001',
+ _expected uuid DEFAULT 'e0917000-0000-4000-8000-000000000001',
+ _tenant uuid DEFAULT 'e0927000-0000-4000-8000-000000000001',
+ _ids uuid[] DEFAULT ARRAY['e0937000-0000-4000-8000-0000000000a1'::uuid],_role text DEFAULT 'authenticated'
+) RETURNS jsonb LANGUAGE sql AS $$ SELECT pg_temp.as_user(_actor,format(
+ 'SELECT public.read_client_portal_support_attention(%L,%L,%L::uuid[])',_expected,_tenant,_ids),_role) $$;
+CREATE TEMP TABLE support_attention_before AS SELECT
+ (SELECT count(*) FROM public.support_cases) cases,(SELECT count(*) FROM public.messages) messages,
+ (SELECT count(*) FROM public.paige_pending_confirmations) approvals;
+CREATE TEMP TABLE support_attention_result AS SELECT pg_temp.support_attention() result;
+SELECT ok(has_function_privilege('authenticated','public.read_client_portal_support_attention(uuid,uuid,uuid[])','EXECUTE')
+ AND NOT has_function_privilege('anon','public.read_client_portal_support_attention(uuid,uuid,uuid[])','EXECUTE')
+ AND NOT has_function_privilege('service_role','public.read_client_portal_support_attention(uuid,uuid,uuid[])','EXECUTE'),'support attention is authenticated-only');
+SELECT ok((SELECT NOT prosecdef AND provolatile='s' AND proconfig=ARRAY['search_path=""'] FROM pg_proc WHERE oid='public.read_client_portal_support_attention(uuid,uuid,uuid[])'::regprocedure),'support attention is a stable invoker with closed search path');
+SELECT is((SELECT result->>'actor_id' FROM support_attention_result),'e0917000-0000-4000-8000-000000000001','support attention binds actual owner');
+SELECT is((SELECT result->>'tenant_id' FROM support_attention_result),'e0927000-0000-4000-8000-000000000001','support attention binds server business');
+SELECT is((SELECT count(*) FROM support_attention_result,jsonb_object_keys(result)),7::bigint,'support attention has only its closed envelope');
+SELECT is((SELECT jsonb_array_length(result->'cases') FROM support_attention_result),1,'only the original active shared case for this known client is shown');
+SELECT is((SELECT result#>>'{cases,0,id}' FROM support_attention_result),'e0977000-0000-4000-8000-0000000000a1','case identity is original, not a new Portal case');
+SELECT is((SELECT count(*) FROM support_attention_result,jsonb_object_keys(result#>'{cases,0}')),5::bigint,'case projection excludes bodies, internal notes and contact details');
+SELECT is((SELECT result->>'source_window' FROM support_attention_result),'50','source window is bounded rather than a fabricated full count');
+SELECT is(pg_temp.support_attention(_actor=>'e0917000-0000-4000-8000-000000000002',_expected=>'e0917000-0000-4000-8000-000000000002',_tenant=>'e0927000-0000-4000-8000-000000000002',_ids=>ARRAY['e0937000-0000-4000-8000-0000000000a2'::uuid])#>>'{cases,0,id}','e0977000-0000-4000-8000-0000000000a2','second legitimate Solo business sees its own original case');
+SELECT is(pg_temp.support_attention(_expected=>'e0917000-0000-4000-8000-000000000002')->>'sqlstate','42501','a caller cannot substitute the expected actor');
+SELECT is(pg_temp.support_attention(_tenant=>'e0927000-0000-4000-8000-000000000002')->>'sqlstate','42501','a route cannot select another active business');
+SELECT is(pg_temp.support_attention(_ids=>ARRAY['e0937000-0000-4000-8000-0000000000a2'::uuid])->>'sqlstate','42501','foreign CRM identity refuses before a result');
+SELECT is(pg_temp.support_attention(_actor=>'e0917000-0000-4000-8000-000000000005',_expected=>'e0917000-0000-4000-8000-000000000005')->>'sqlstate','42501','plain member global admin label does not become owner authority');
+SELECT is(pg_temp.support_attention(_actor=>'e0917000-0000-4000-8000-000000000031',_expected=>'e0917000-0000-4000-8000-000000000031')->>'sqlstate','42501','customer cannot read owner support work');
+SELECT is(pg_temp.support_attention(_role=>'anon')->>'sqlstate','42501','anonymous support attention refuses');
+SELECT is(pg_temp.support_attention(_role=>'service_role')->>'sqlstate','42501','service cannot impersonate the owner');
+SELECT is(pg_temp.support_attention(_ids=>NULL)->>'sqlstate','22023','missing client list refuses');
+SELECT is(pg_temp.support_attention(_ids=>ARRAY[]::uuid[])->>'sqlstate','22023','empty client list refuses without an authorization oracle');
+SELECT is(pg_temp.support_attention(_ids=>ARRAY['e0937000-0000-4000-8000-0000000000a1'::uuid,'e0937000-0000-4000-8000-0000000000a1'::uuid])->>'sqlstate','22023','duplicate client list refuses');
+SELECT is(pg_temp.support_attention(_ids=>array_fill('e0937000-0000-4000-8000-0000000000a1'::uuid,ARRAY[251]))->>'sqlstate','22023','oversized client list refuses');
+SELECT ok((SELECT b.cases=(SELECT count(*) FROM public.support_cases) AND b.messages=(SELECT count(*) FROM public.messages)
+ AND b.approvals=(SELECT count(*) FROM public.paige_pending_confirmations) FROM support_attention_before b),'support attention never creates or changes a case, message or approval');
 
 SELECT * FROM finish();
 ROLLBACK;

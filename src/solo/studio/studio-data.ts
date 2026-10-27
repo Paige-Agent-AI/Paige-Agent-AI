@@ -290,12 +290,15 @@ export interface StudioPage {
   changesPending: boolean;
   blocks: GrowthBlock[];
   theme: GrowthPageTheme | null;
+  /** The PUBLISHED columns of the same row — what visitors see, and the ONLY thing a portable
+   *  export may carry (drafts never ship). Null until the page has been published once. */
+  published: { blocks: GrowthBlock[]; theme: GrowthPageTheme | null; seo: { description?: string; og_image?: string } | null; publishedAt: string | null } | null;
 }
 
 export async function loadPage(id: string): Promise<StudioPage> {
   const { data, error } = await supabase
     .from("growth_pages")
-    .select("id, title, slug, status, blocks_json, draft_blocks_json, theme_json, draft_theme_json, seo_json, draft_seo_json")
+    .select("id, title, slug, status, blocks_json, draft_blocks_json, theme_json, draft_theme_json, seo_json, draft_seo_json, published_at")
     .eq("id", id)
     .maybeSingle();
   if (error) throw error;
@@ -307,6 +310,7 @@ export async function loadPage(id: string): Promise<StudioPage> {
 export function pageFromRow(r: Record<string, unknown>): StudioPage {
   const live = r.status === "published";
   const blocks = (r.draft_blocks_json ?? r.blocks_json) as GrowthBlock[] | null;
+  const pubBlocks = Array.isArray(r.blocks_json) ? (r.blocks_json as GrowthBlock[]) : null;
   return {
     id: String(r.id), title: String(r.title ?? "Page"), slug: String(r.slug ?? ""), live,
     // Publishing a page puts its draft sections, theme and SEO live, so any of them differing is a change.
@@ -314,6 +318,16 @@ export function pageFromRow(r: Record<string, unknown>): StudioPage {
       r[`draft_${k}_json`] != null && JSON.stringify(r[`draft_${k}_json`]) !== JSON.stringify(r[`${k}_json`])),
     blocks: Array.isArray(blocks) ? blocks : [],
     theme: ((r.draft_theme_json ?? r.theme_json) as GrowthPageTheme | null) ?? null,
+    // The published face is complete only for a published page (an unpublished draft keeps its
+    // last live columns readable but it is NOT live; export refuses unless status is published).
+    published: live && pubBlocks
+      ? {
+        blocks: pubBlocks,
+        theme: (r.theme_json as GrowthPageTheme | null) ?? null,
+        seo: (r.seo_json as { description?: string; og_image?: string } | null) ?? null,
+        publishedAt: (r.published_at as string | null) ?? null,
+      }
+      : null,
   };
 }
 

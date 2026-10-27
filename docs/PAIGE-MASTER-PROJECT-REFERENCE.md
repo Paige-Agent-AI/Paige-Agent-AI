@@ -7896,6 +7896,12 @@ Current gaps:
   (the `accept-invite` edge function refuses a not-active seat 409 before any write, writes the seat
   before the global role and checks both). Proof `supabase/tests/exp08_team_lifecycle.sql` (20 PASS);
   deno tests `supabase/functions/accept-invite/team-seat.test.ts` and `consume-order.test.ts`.
+  Merged #2912 (`e0263aac0`); PAIGE's tools for these acts (suspend, reinstate, remove, Team
+  conversations, hand-over) merged #2957 (squash `2aa4d23e8`), their catalogue migration
+  `20271116100008` applied on production (read back in `schema_migrations` 2026-10-27), and `edge-live`
+  and `db-live` both at `2aa4d23e8`. `PROOF_OWED`: the Team screen and Team Hub browser surfaces for
+  these acts are not built, and no authenticated drive of the acts (in the browser or through PAIGE) has
+  run.
 - Team Hub agents A1a (migrations `20271116120008` and `20271116120108`, 2026-10-27, owner-approved
   design, personalities, Q1/Q2 and storage that day; branch `exp08-hub-agents-a1`, not yet merged):
   storage and doors for PAIGE and her six agents to take part in Team Hub — agent-authored messages
@@ -7908,8 +7914,6 @@ Current gaps:
   yet:** the `paige-ai-chat` turn and the agent UI are A1b; cards (A2), assignments (A3) and editable
   personalities (A4) follow. `PROOF_OWED`. Proof `supabase/tests/exp08_team_hub_agents_a1.sql`.
   Contract: [Team Hub agents contract](delivery/exp08-team-hub-agents-contract.md).
-  `PROOF_OWED`: not merged, the Team screen and Team Hub browser surfaces for these acts are not
-  built, and PAIGE's tools for them are task #7.
 - `/solo/{n}/team` still redirects to Settings → Team; Team Hub is a separate destination.
 - Team actions still emit no Rail outcome.
 

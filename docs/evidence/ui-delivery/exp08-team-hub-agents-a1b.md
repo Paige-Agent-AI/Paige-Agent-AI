@@ -35,13 +35,13 @@ ACCEPTANCE_CRITERIA: on the real platform a SOLO member types "@CURA who's onboa
 MOTION_PURPOSE: the three writing dots pulse (th-dot) only while the asker's turn is open, to show an agent is working; static under reduced motion with the words unchanged
 PROTECTED_SEAMS: useTeamHub deliver (gains p_agent_mention_keys only when non-empty, then asks the agents after a confirmed post — tested); team_hub_post_message's A1a parameter; the A1a list read (agent DMs counted in unread and markRead — tested); team-hub-contract's message and channel parsers (agent_dm accepted only private and unnamed — tested); newDividerBefore (agent rows never the reader's own — tested); paige-ai-chat request shape (strictly the HANDOFF keys — tested); NONE_AFFECTED: no non-SOLO UI file, no migration and no edge function changed in this part
 
-INTERNAL_BUILD_IDENTITY: a0ee2cca0f4aad0c97807e2fa3b7d6a583972b02; deployment=none (branch exp08-hub-agents-a1b, local commits only, not pushed); environment=local; migrations=NOT_APPLICABLE; edge=PROOF_OWED(paige-ai-chat carries the A1b part 1 agent-turn seam on this unmerged branch; not deployed, edge-live does not include it); evidence=docs/evidence/ui-delivery/exp08-team-hub-agents-a1b.md and its assets folder
+INTERNAL_BUILD_IDENTITY: a0ee2cca0f4aad0c97807e2fa3b7d6a583972b02; deployment=none (branch exp08-hub-agents-a1b, local commits only, not pushed); environment=local; migrations=NOT_APPLICABLE; edge=PROOF_OWED(paige-ai-chat carries the A1b part 1 agent-turn seam on this unmerged branch and is not deployed, so edge-live does not include it); evidence=docs/evidence/ui-delivery/exp08-team-hub-agents-a1b.md and its assets folder
 RELEASE_CHANNEL: development: local commits on exp08-hub-agents-a1b; nothing is deployed by this record
 RELEASE_CLASSIFICATION: internal-only: pre-launch build with no customer release identity; agents reach no one until merge, the paige-ai-chat deploy and the authenticated drive
 CUSTOMER_RELEASE_IDENTITY: none: no approved release record and authenticated runtime is unproven
 RELEASE_NOTE_REQUIRED: NO: internal-only; a customer-facing note waits for the authenticated drive and an owner decision
 RELEASE_TRUTH_BOUNDARY: PROOF OWED: the client, its mocked-RPC, static and rendered-harness evidence are complete for A1b part 2; the paige-ai-chat deploy and every authenticated flow are proof owed, so nothing here is LIVE; other members' private-part lines are UNAVAILABLE until a member-safe turn read exists
-RELEASE_RECOVERY: position=revert the merge; the change is confined to src/solo/team-hub, 56 additive tokens in src/index.css and docs, with no migration, so a revert restores increment 4's Team Hub exactly (the specialist handoff included); reference=docs/delivery/exp08-team-hub-agents-contract.md "A1b part 2 notes"
+RELEASE_RECOVERY: position=revert the merge, since the change is confined to src/solo/team-hub, 56 additive tokens in src/index.css and docs, with no migration, so a revert restores increment 4's Team Hub exactly (the specialist handoff included); reference=docs/delivery/exp08-team-hub-agents-contract.md "A1b part 2 notes"
 
 ## Scope and collisions
 

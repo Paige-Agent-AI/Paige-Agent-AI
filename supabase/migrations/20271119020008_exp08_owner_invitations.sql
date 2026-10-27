@@ -169,30 +169,47 @@ BEGIN;
 SET LOCAL lock_timeout = '2s';
 
 -- INCUMBENT GUARD (precedent 20271108233000, 20271116100008). Every production function this file
--- replaces must still be the exact body it was written against (md5(prosrc), read from production
--- 2026-10-27 and again before this migration was finalised). A different body means another change
--- landed first: refuse, compose and review, rather than overwrite it.
+-- replaces must still be the body it was written against, compared as a FINGERPRINT: md5 of prosrc
+-- with every run of whitespace collapsed to one space and the ends trimmed. Comments are KEPT (a
+-- marker such as E09_CONSUMER_INVITE_PEEK_V1 is part of the body), so any added, removed or changed
+-- token, comment included, is refused; a re-indented or re-wrapped body is not. The fingerprints are
+-- computed from production's bodies (read 2026-10-27). Every mismatch is collected and named in ONE
+-- error, so a reviewer sees all the drift at once. A different body means another change landed
+-- first: refuse, compose and review, rather than overwrite it.
+--   peek_tenant_invite(text) has TWO accepted fingerprints, both read, both the same logic. Production's
+--   (80dab1cb) and the repository replay's (a128d2c0): 20260713050000_invite_brand_cascade.sql (recorded
+--   on production as git_ledger_reconciliation, so production never ran it; it ran 20260713030834, which
+--   has no comment) adds three comment lines above "SELECT * INTO _rb", and 20271108120100 then patches
+--   whichever body it finds with replace(). With comments removed the two are identical (fda7fafd on
+--   both, read 2026-10-27). This file DROPs and re-creates peek_tenant_invite, so either is replaced whole.
+--   The other nine replay to production's exact md5(prosrc) (rebuilt 2026-10-27 from every migration that
+--   creates or patches them, in version order).
+--   Limits, stated: a whitespace change INSIDE a string literal (two spaces in a message becoming one)
+--   passes; whitespace removed between two tokens ("a = b" to "a=b") is refused (the safe direction).
 -- exp08-owners-incumbent-guard:begin
 DO $guard$
-DECLARE r record; _have text;
+DECLARE r record; _have text; _drift text[] := '{}';
 BEGIN
   FOR r IN SELECT * FROM (VALUES
-    ('public.guard_tenant_member_owner_flag()', '011b8efe34db45a4f284517b85d6eed6'),
-    ('public.guard_tenant_owner_only_columns()', 'd77a4bfab3aa53b73e592497acf0f46a'),
-    ('public.create_solo_team_invite(uuid,uuid,text,text,text,text,boolean)', 'c002b98c2a117367ab487e21d88fcf08'),
-    ('public.resend_solo_team_invite(uuid,uuid,uuid)', 'b6c0293243b3ae5161d45bf4f0f36973'),
-    ('public.revoke_solo_team_invite(uuid,uuid,uuid)', '2c4ed28dd36e7e7bc97d687fb6d93a82'),
-    ('public.archive_solo_team_invite(uuid,uuid,uuid)', '3dc08a57851eff073e72e8a56723cd2a'),
-    ('public.accept_solo_team_invite(text)', 'de8a6ac14ef033515bb8d3247f4d1c84'),
-    ('public.accept_tenant_invite(text)', '177c271028efecfc63c23623ef3aff88'),
-    ('public.create_tenant_invite_token(uuid,text,public.tenant_role,integer,integer,uuid,text)', '3a91af3aeb67fb8dbbf450eb3d612ade'),
-    ('public.peek_tenant_invite(text)', '276541d0f26a55a1fd9697b8f9e2f858')) v(sig, want) LOOP
-    SELECT md5(p.prosrc) INTO _have FROM pg_proc p WHERE p.oid = to_regprocedure(r.sig);
-    IF _have IS DISTINCT FROM r.want THEN
-      RAISE EXCEPTION 'EXP08 owner invitations: % is not the body this migration replaces (md5(prosrc) %, expected %); another change landed first, so compose and review before applying',
-        r.sig, COALESCE(_have, 'missing'), r.want;
+    ('public.guard_tenant_member_owner_flag()', ARRAY['eee4ebeeb7857bbe7e3c523d52a91c70']),
+    ('public.guard_tenant_owner_only_columns()', ARRAY['29be287e537691027db03524507bb866']),
+    ('public.create_solo_team_invite(uuid,uuid,text,text,text,text,boolean)', ARRAY['e46f6c104440f576895b974457552e56']),
+    ('public.resend_solo_team_invite(uuid,uuid,uuid)', ARRAY['343ee1a88fd818d66cbee3fd3ab347f4']),
+    ('public.revoke_solo_team_invite(uuid,uuid,uuid)', ARRAY['0f3a759aabffbced19b0b2a6c6de8cf2']),
+    ('public.archive_solo_team_invite(uuid,uuid,uuid)', ARRAY['e82ee9a9df63ca300edfae1f9b2aaa3c']),
+    ('public.accept_solo_team_invite(text)', ARRAY['97df5ef979f613384e5e0a76ce09bbd3']),
+    ('public.accept_tenant_invite(text)', ARRAY['30945f57539d62fd75b3108fb3b7955d']),
+    ('public.create_tenant_invite_token(uuid,text,public.tenant_role,integer,integer,uuid,text)', ARRAY['38a8eb9e482563ef518df2733dc41c69']),
+    ('public.peek_tenant_invite(text)', ARRAY['80dab1cbb1bffe71f8714b8d36ecd67f', 'a128d2c03820d46ea72e55eb73000a96'])) v(sig, want) LOOP
+    SELECT md5(btrim(regexp_replace(p.prosrc, '\s+', ' ', 'g'))) INTO _have FROM pg_proc p WHERE p.oid = to_regprocedure(r.sig);
+    IF _have IS NULL OR NOT (_have = ANY (r.want)) THEN
+      _drift := _drift || format('%s (fingerprint %s, expected %s)', r.sig, COALESCE(_have, 'missing'), array_to_string(r.want, ' or '));
     END IF;
   END LOOP;
+  IF cardinality(_drift) > 0 THEN
+    RAISE EXCEPTION 'EXP08 owner invitations: % of 10 functions are not the body this migration replaces: %; another change landed first, so compose and review before applying',
+      cardinality(_drift), array_to_string(_drift, '; ');
+  END IF;
 END $guard$;
 -- exp08-owners-incumbent-guard:end
 

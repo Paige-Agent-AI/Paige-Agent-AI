@@ -1170,33 +1170,131 @@ SELECT p.proname::text AS name, p.prosrc, p.prorettype, p.proargtypes::text AS a
    'archive_solo_team_invite','accept_solo_team_invite','accept_tenant_invite','create_tenant_invite_token','peek_tenant_invite');
 DO $$ BEGIN IF (SELECT count(*) FROM proof.prior) <> 10 THEN RAISE EXCEPTION 'FAIL: expected 10 prior bodies'; END IF; END $$;
 
--- S2. The migration's INCUMBENT GUARD, read out of the migration file between its markers. On
--- production's bodies it passes; with ANY ONE of the ten replaced bodies drifted (one comment line
--- added, inside a rolled-back subtransaction) it refuses, naming that function.
+-- S2. The migration's INCUMBENT GUARD, read out of the migration file between its markers, run as a
+-- case suite (each case inside a rolled-back subtransaction). The guard compares a FINGERPRINT:
+-- md5(prosrc) with whitespace runs collapsed to one space and the ends trimmed, comments kept.
+--   G1 production's ten bodies pass.
+--   G2 peek_tenant_invite as the REPOSITORY REPLAY builds it passes: production's body plus the three
+--      comment lines 20260713050000 adds (read out of that file), which must give md5(prosrc)
+--      e9ea6eb2, the exact value PR #3008's database-contract job read after replaying every migration.
+--   G3 all ten re-formatted, whitespace only (every space doubled, every line re-indented), pass.
+--   G4 one changed identifier in accept_tenant_invite is refused, naming it and only it.
+--   G5 peek_tenant_invite with its consumer AND clause removed is refused, naming it and only it.
+--   G6 G4 and G5 at once: ONE error naming both ("2 of 10").
+--   D  each of the ten with one comment line added is refused, naming it and only it (10 cases).
+-- Guard mutants (§71.4), each a one-place rewrite of the guard text: M1 normalization removed (raw
+-- md5) must fail G3; M2 compares nothing must fail G4; M3 raises at the first mismatch must fail G6.
+-- Control C1 (the membership test written as an array containment) must fail none.
 \set d_guard `sed -n '/^-- exp08-owners-incumbent-guard:begin$/,/^-- exp08-owners-incumbent-guard:end$/p' supabase/migrations/20271119020008_exp08_owner_invitations.sql`
-SELECT set_config('proof.guard', :'d_guard', false) IS NOT NULL AS guard_loaded \gset
-DO $$ DECLARE r record; _caught text; _n int := 0; BEGIN
-  IF length(current_setting('proof.guard')) < 500 THEN RAISE EXCEPTION 'FAIL: the incumbent guard was not read out of the migration'; END IF;
-  EXECUTE current_setting('proof.guard');   -- passes on production's bodies
-  FOR r IN SELECT p.oid::regprocedure AS f, p.proname::text AS name FROM pg_proc p
-            WHERE p.pronamespace = 'public'::regnamespace AND p.proname IN ('guard_tenant_member_owner_flag',
-              'guard_tenant_owner_only_columns','create_solo_team_invite','resend_solo_team_invite','revoke_solo_team_invite',
-              'archive_solo_team_invite','accept_solo_team_invite','accept_tenant_invite','create_tenant_invite_token','peek_tenant_invite') LOOP
-    _caught := NULL;
-    BEGIN
-      EXECUTE regexp_replace(pg_get_functiondef(r.f), 'AS \$function\$', E'AS $function$\n-- drift', '');
-      EXECUTE current_setting('proof.guard');
-    EXCEPTION WHEN OTHERS THEN _caught := SQLERRM;
-    END;
-    IF _caught IS NULL OR strpos(_caught, 'is not the body this migration replaces') = 0 OR strpos(_caught, r.name) = 0 THEN
-      RAISE EXCEPTION 'FAIL: the incumbent guard did not refuse a drifted %: %', r.f, coalesce(_caught, 'no error'); END IF;
-    _n := _n + 1;
+\set d_replay_comment `sed -n '/^  -- Resolve brand up the parent chain/,/^  -- the operator master brand/p' supabase/migrations/20260713050000_invite_brand_cascade.sql`
+SELECT set_config('proof.guard', :'d_guard', false) IS NOT NULL AS guard_loaded,
+       set_config('proof.replay_comment', :'d_replay_comment', false) IS NOT NULL AS replay_comment_loaded \gset
+CREATE FUNCTION proof.guard_named(_err text) RETURNS text[] LANGUAGE sql IMMUTABLE AS $f$
+  SELECT coalesce(array_agg(n ORDER BY n), '{}') FROM unnest(ARRAY['guard_tenant_member_owner_flag',
+    'guard_tenant_owner_only_columns','create_solo_team_invite','resend_solo_team_invite','revoke_solo_team_invite',
+    'archive_solo_team_invite','accept_solo_team_invite','accept_tenant_invite','create_tenant_invite_token',
+    'peek_tenant_invite']) n WHERE strpos(coalesce(_err, ''), 'public.' || n || '(') > 0 $f$;
+-- Applies each edit (re-creating the function from pg_get_functiondef), runs the guard, rolls everything
+-- back and returns the guard's error (NULL when it passed). A missing edit anchor fails the proof itself.
+CREATE FUNCTION proof.guard_run(_guard text, _edits jsonb) RETURNS text LANGUAGE plpgsql AS $f$
+DECLARE e jsonb; _def text; _before text; _err text := NULL;
+BEGIN
+  BEGIN
+    FOR e IN SELECT value FROM jsonb_array_elements(_edits) LOOP
+      _def := pg_get_functiondef((e->>'f')::regprocedure);
+      _before := (SELECT md5(prosrc) FROM pg_proc WHERE oid = (e->>'f')::regprocedure);
+      IF e ? 'reformat' THEN
+        _def := replace(replace(_def, ' ', '  '), E'\n', E'\n\t ');
+      ELSE
+        IF (length(_def) - length(replace(_def, e->>'from', ''))) / length(e->>'from') <> 1 THEN
+          RAISE EXCEPTION 'FAIL (S2): case anchor is not in % exactly once: %', e->>'f', e->>'from' USING ERRCODE = 'P0097';
+        END IF;
+        _def := replace(_def, e->>'from', e->>'to');
+      END IF;
+      EXECUTE _def;
+      IF (SELECT md5(prosrc) FROM pg_proc WHERE oid = (e->>'f')::regprocedure) = _before THEN
+        RAISE EXCEPTION 'FAIL (S2): the case did not change % at all', e->>'f' USING ERRCODE = 'P0097'; END IF;
+      IF e ? 'want_md5' AND (SELECT md5(prosrc) FROM pg_proc WHERE oid = (e->>'f')::regprocedure) <> e->>'want_md5' THEN
+        RAISE EXCEPTION 'FAIL (S2): % is not the body the case means (md5(prosrc) %, meant %)', e->>'f',
+          (SELECT md5(prosrc) FROM pg_proc WHERE oid = (e->>'f')::regprocedure), e->>'want_md5' USING ERRCODE = 'P0097'; END IF;
+    END LOOP;
+    BEGIN EXECUTE _guard; EXCEPTION WHEN OTHERS THEN _err := SQLERRM; END;
+    RAISE EXCEPTION USING ERRCODE = 'P0098', MESSAGE = 'rollback guard case';
+  EXCEPTION WHEN SQLSTATE 'P0098' THEN NULL;
+  END;
+  RETURN _err;
+END $f$;
+-- The suite: returns the cases this guard text fails ('{}' = all pass).
+CREATE FUNCTION proof.guard_suite(_guard text) RETURNS text[] LANGUAGE plpgsql AS $f$
+DECLARE _fail text[] := '{}'; _err text; _all jsonb := '[]'; r record;
+  _ident jsonb := jsonb_build_object('f', 'public.accept_tenant_invite(text)',
+    'from', 'IF _tok.revoked_at IS NOT NULL THEN', 'to', 'IF _tok.last_used_at IS NOT NULL THEN');
+  _clause jsonb := jsonb_build_object('f', 'public.peek_tenant_invite(text)',
+    'from', E'\n                   AND (_tok.kind <> ''consumer'' OR (_tok.uses = 0 AND _tok.last_used_at IS NULL));',
+    'to', ';');
+  _msg text := 'functions are not the body this migration replaces';
+BEGIN
+  _err := proof.guard_run(_guard, '[]');
+  IF _err IS NOT NULL THEN _fail := _fail || ('G1 production bodies pass: ' || _err); END IF;
+  _err := proof.guard_run(_guard, jsonb_build_array(jsonb_build_object('f', 'public.peek_tenant_invite(text)',
+    'from', '  SELECT * INTO _rb FROM', 'to', current_setting('proof.replay_comment') || E'\n  SELECT * INTO _rb FROM',
+    'want_md5', 'e9ea6eb2a40ee0487fb1d49d8d409785')));
+  IF _err IS NOT NULL THEN _fail := _fail || ('G2 repository-replay peek passes: ' || _err); END IF;
+  FOR r IN SELECT p.oid::regprocedure::text AS f FROM pg_proc p WHERE p.pronamespace = 'public'::regnamespace
+            AND p.proname = ANY (proof.guard_named(array_to_string(ARRAY['public.guard_tenant_member_owner_flag(',
+              'public.guard_tenant_owner_only_columns(','public.create_solo_team_invite(','public.resend_solo_team_invite(',
+              'public.revoke_solo_team_invite(','public.archive_solo_team_invite(','public.accept_solo_team_invite(',
+              'public.accept_tenant_invite(','public.create_tenant_invite_token(','public.peek_tenant_invite('], ' '))) LOOP
+    _all := _all || jsonb_build_array(jsonb_build_object('f', r.f, 'reformat', true));
   END LOOP;
-  IF _n <> 10 THEN RAISE EXCEPTION 'FAIL: % of 10 drifted bodies tried', _n; END IF;
-  -- And it is still production's bodies afterwards (every drift was rolled back).
-  EXECUTE current_setting('proof.guard');
+  IF jsonb_array_length(_all) <> 10 THEN RAISE EXCEPTION 'FAIL (S2): % of 10 bodies to re-format', jsonb_array_length(_all) USING ERRCODE = 'P0097'; END IF;
+  _err := proof.guard_run(_guard, _all);
+  IF _err IS NOT NULL THEN _fail := _fail || ('G3 whitespace-only reformatting of all ten passes: ' || _err); END IF;
+  _err := proof.guard_run(_guard, jsonb_build_array(_ident));
+  IF _err IS NULL OR strpos(_err, _msg) = 0 OR strpos(_err, '1 of 10') = 0
+     OR proof.guard_named(_err) <> ARRAY['accept_tenant_invite'] THEN
+    _fail := _fail || ('G4 a changed identifier is refused and named: ' || coalesce(_err, 'no error')); END IF;
+  _err := proof.guard_run(_guard, jsonb_build_array(_clause));
+  IF _err IS NULL OR strpos(_err, _msg) = 0 OR strpos(_err, '1 of 10') = 0
+     OR proof.guard_named(_err) <> ARRAY['peek_tenant_invite'] THEN
+    _fail := _fail || ('G5 a removed AND clause is refused and named: ' || coalesce(_err, 'no error')); END IF;
+  _err := proof.guard_run(_guard, jsonb_build_array(_ident, _clause));
+  IF _err IS NULL OR strpos(_err, _msg) = 0 OR strpos(_err, '2 of 10') = 0
+     OR proof.guard_named(_err) <> ARRAY['accept_tenant_invite', 'peek_tenant_invite'] THEN
+    _fail := _fail || ('G6 two drifts are both named in one error: ' || coalesce(_err, 'no error')); END IF;
+  FOR r IN SELECT value->>'f' AS f FROM jsonb_array_elements(_all) LOOP
+    _err := proof.guard_run(_guard, jsonb_build_array(jsonb_build_object('f', r.f, 'from', 'AS $function$', 'to', E'AS $function$\n-- drift')));
+    IF _err IS NULL OR strpos(_err, _msg) = 0 OR proof.guard_named(_err) <> ARRAY[split_part(split_part(r.f, '(', 1), '.', 2)]
+       AND proof.guard_named(_err) <> ARRAY[split_part(r.f, '(', 1)] THEN
+      _fail := _fail || ('D ' || r.f || ' with a comment added is refused and named: ' || coalesce(_err, 'no error')); END IF;
+  END LOOP;
+  RETURN _fail;
+END $f$;
+DO $$ DECLARE _g text := current_setting('proof.guard'); _f text[]; m record; _mg text; BEGIN
+  IF length(_g) < 500 THEN RAISE EXCEPTION 'FAIL: the incumbent guard was not read out of the migration'; END IF;
+  IF length(current_setting('proof.replay_comment')) < 200 THEN RAISE EXCEPTION 'FAIL: the replay comment lines were not read out of 20260713050000'; END IF;
+  _f := proof.guard_suite(_g);
+  IF cardinality(_f) > 0 THEN RAISE EXCEPTION 'FAIL (S2): the incumbent guard fails: %', array_to_string(_f, ' | '); END IF;
+  FOR m IN SELECT * FROM (VALUES
+    ('M1 normalization removed (raw md5)', $m$md5(btrim(regexp_replace(p.prosrc, '\s+', ' ', 'g')))$m$, 'md5(p.prosrc)', 'G3', false),
+    ('M2 the guard compares nothing', 'IF _have IS NULL OR NOT (_have = ANY (r.want)) THEN', 'IF false THEN', 'G4', false),
+    ('M3 raises at the first mismatch', '      _drift := _drift || format(',
+       $m$      RAISE EXCEPTION 'EXP08 owner invitations: 1 of 10 functions are not the body this migration replaces: %', r.sig; _drift := _drift || format($m$, 'G6', false),
+    ('C1 control: membership written as array containment', 'NOT (_have = ANY (r.want))', 'NOT (r.want @> ARRAY[_have])', NULL, true)
+    ) v(name, from_text, to_text, must_fail, control) LOOP
+    IF (length(_g) - length(replace(_g, m.from_text, ''))) / length(m.from_text) <> 1 THEN
+      RAISE EXCEPTION 'FAIL (S2): guard mutant % does not apply (anchor not found exactly once)', m.name; END IF;
+    _mg := replace(_g, m.from_text, m.to_text);
+    _f := proof.guard_suite(_mg);
+    IF m.control AND cardinality(_f) <> 0 THEN
+      RAISE EXCEPTION 'FAIL (S2): guard control % was flagged: %', m.name, array_to_string(_f, ' | '); END IF;
+    IF NOT m.control AND NOT EXISTS (SELECT 1 FROM unnest(_f) x WHERE x LIKE m.must_fail || ' %') THEN
+      RAISE EXCEPTION 'FAIL (S2): guard mutant % survives case %: it fails only %', m.name, m.must_fail, coalesce(array_to_string(_f, ' | '), 'none'); END IF;
+  END LOOP;
+  -- And it is still production's bodies afterwards (every case was rolled back).
+  EXECUTE _g;
 END $$;
-\echo 'PASS (S2): the incumbent guard passes on production''s 10 bodies and refuses each one drifted (10 of 10)'
+\echo 'PASS (S2): the incumbent guard (whitespace-normalized md5, comments kept) passes on production''s 10 bodies, on the repository replay''s peek_tenant_invite (md5 e9ea6eb2) and on all 10 re-formatted; refuses a changed identifier, a removed AND clause and a comment added to each of the 10, naming each, and two drifts in one error; guard mutants M1 M2 M3 killed, control C1 survives'
 
 -- ═════════════════════ PHASE 2: the migration under test ═════════════════════
 \ir ../migrations/20271119020008_exp08_owner_invitations.sql

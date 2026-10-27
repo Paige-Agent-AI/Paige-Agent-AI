@@ -5,7 +5,7 @@
 -- admission refuses everything that is not the caller's own changeable booking with one "not found";
 -- request-id and state replay; and admission never writes public.internal_bookings.
 BEGIN;
-SELECT plan(200);
+SELECT plan(201);
 INSERT INTO auth.users(id,aud,role,email,email_confirmed_at,raw_app_meta_data) VALUES
  ('e0961000-0000-4000-8000-000000000001','authenticated','authenticated','sessions-host-a@tests.invalid',now(),'{"comms_provider_execution":"disabled"}'),
  ('e0961000-0000-4000-8000-000000000002','authenticated','authenticated','sessions-host-b@tests.invalid',now(),'{"comms_provider_execution":"disabled"}'),
@@ -611,7 +611,7 @@ CREATE FUNCTION pg_temp.private_booking_plan() RETURNS jsonb LANGUAGE sql AS $pl
    'availability_json',h.availability_json,'timezone',h.timezone) ORDER BY h.user_id)
    FROM public.calendar_hosts h WHERE h.calendar_id=c.id),
   'host_ids',jsonb_build_array('e0961000-0000-4000-8000-000000000001'::uuid),'booking_kind','single',
-  'title','Strategy call','start_at',now()+interval '12 days','end_at',now()+interval '12 days 45 minutes',
+  'title','Strategy call','start_at',now()+interval '12 days 2 hours','end_at',now()+interval '12 days 2 hours 45 minutes',
   'guest_name','Jordan Rivera','guest_email','jordan.rivera@tests.invalid','guest_phone',NULL,
   'notes',NULL,'location_type','phone','location_value',NULL,'intake_answers','{}'::jsonb,
   'appointment_type','{"id":"t1","name":"Strategy call","duration_min":45}'::jsonb)
@@ -636,9 +636,9 @@ CREATE FUNCTION pg_temp.private_booking_create(
  _tenant uuid DEFAULT 'e0962000-0000-4000-8000-000000000001',
  _client uuid DEFAULT 'e0963000-0000-4000-8000-000000000001',
  _request uuid DEFAULT 'e0968000-0000-4000-8000-000000000001',
- _override jsonb DEFAULT '{}'::jsonb) RETURNS jsonb LANGUAGE sql AS $create$
+ _override jsonb DEFAULT '{}'::jsonb,_intent_override jsonb DEFAULT '{}'::jsonb) RETURNS jsonb LANGUAGE sql AS $create$
  SELECT pg_temp.private_booking_call(format('SELECT public.client_portal_commit_booking(%L,%L,%L,%L,%L::jsonb,%L::jsonb)',
-  _actor,_tenant,_client,_request,intent,p||_override)) FROM private_booking_input
+  _actor,_tenant,_client,_request,intent||_intent_override,p||_override)) FROM private_booking_input
 $create$;
 SELECT ok(NOT has_function_privilege('authenticated',
  'public.client_portal_commit_booking(uuid,uuid,uuid,uuid,jsonb,jsonb)','EXECUTE'),
@@ -657,6 +657,13 @@ SELECT is(pg_temp.private_booking_create(_client=>'e0963000-0000-4000-8000-00000
  'native booking refuses the wrong customer');
 SELECT is(pg_temp.private_booking_create(_override=>'{"guest_email":"other@tests.invalid"}')->>'sqlstate','40001',
  'the saved customer recipient cannot be replaced with a typed email');
+-- The earlier unlinked owner/guest fixture intentionally occupies day12. Keep
+-- its real native uniqueness protection and prove that no private create can
+-- overwrite or adopt it by a typed matching email. The positive is two hours later.
+SELECT is(pg_temp.private_booking_create(_override=>jsonb_build_object(
+ 'start_at',now()+interval '12 days','end_at',now()+interval '12 days 45 minutes'),
+ _intent_override=>jsonb_build_object('start',now()+interval '12 days'))->>'sqlstate','23505',
+ 'the original occupied host time refuses a private create and rolls back the request');
 CREATE TEMP TABLE private_booking_saved AS SELECT pg_temp.private_booking_create() r;
 -- Diagnostic contains only this rolled-back synthetic fixture, never customer data.
 SELECT diag('private booking native response: '||r::text) FROM private_booking_saved

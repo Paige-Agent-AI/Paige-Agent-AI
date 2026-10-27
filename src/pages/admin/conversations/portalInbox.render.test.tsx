@@ -339,7 +339,9 @@ describe.each([
     db.threads = [thread(null)];
     const host = await mountInbox(path);
     expect(composerBox(host).placeholder).toBe("Reply to Maya Ortiz…  (drop a file to attach)");
-    expect(host.textContent).toContain("To maya@ortizlandscaping.example");
+    // EXP03 O12 piece 3: an email reply goes through the governed door, which sends to the contact
+    // card's main email; the note says so instead of naming a thread address.
+    expect(host.textContent).toContain("Goes to Maya Ortiz's main email.");
     expect(host.textContent).not.toContain("Portal ·");
   });
 
@@ -378,7 +380,11 @@ describe.each([
     expect(composerBox(host).placeholder).toBe("Message Maya Ortiz in their client portal…");
     await chooseIdentity(host, /jordan@northlightadvisory/);
     expect(composerBox(host).placeholder).toBe("Reply to Maya Ortiz…  (drop a file to attach)");
-    expect(host.textContent).toContain(`To ${MAYA_EMAIL}`);
+    // The address is still known from the thread (Draft with Paige still has a recipient), but a governed
+    // email goes only to the contact card's main email — and her card has none, so the note says that
+    // plainly instead of naming an address the send would not use.
+    expect(host.textContent).toContain("Maya Ortiz has no email address on their contact card yet.");
+    expect(host.textContent).not.toContain(`To ${MAYA_EMAIL}`);
     expect(host.textContent).not.toContain("No address on this thread");
   });
 

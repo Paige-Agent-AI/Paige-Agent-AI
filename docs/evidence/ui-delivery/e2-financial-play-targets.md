@@ -14,10 +14,10 @@ KEYBOARD_FOCUS: PASS: actual390px disclosure Enter opens the original native det
 ZOOM_REFLOW: UNVERIFIED: eight required CSS layout frames captured; measured1536/1024/900/390/320 DOM widths show no document overflow. Native200percent browser zoom and physical-device proof remain owed; captured pixels are not substituted for CSS or native zoom.
 REDUCED_MOTION: PASS: this change adds no animation or transition, retaining the original shell's reduced-motion contract. No new native preference test or motion-performance claim.
 STATE_COVERAGE: PASS: settled populated/partial/expired/empty-sample/unavailable/loading/error/denied source states rendered. Controlled tests withhold wrong actor/tenant/foreign target, unresolved account, expired actual/variance and unsupported attainment, and retry the existing source only.
-TRUTHFUL_STATE_LABELS: PASS: finance.department remains PROOF_OWED, CAP009–017 retains prior Limited/Coming Soon/Unverified boundaries, ALG03/06/11/12/13 maturity unchanged. Target arithmetic is not prediction; source/UI proof is not provider or customer acceptance.
+TRUTHFUL_STATE_LABELS: PASS: original finance.department classification is preserved in the binding-ledger JSON. CAP009–017 retains its original Limited/Coming Soon/Unverified presentation and ALG03/06/11/12/13 maturity is unchanged. Original target arithmetic adds no predictive or provider-readiness claim.
 SOLO_UI: YES: original account-neutral Finance route and canonical active actor/tenant for all eligible existing/future SOLO accounts. No account-number allowlist, provisioning or role change. Controlled sample identities never select production authority.
-INTERNAL_BUILD_IDENTITY: source=5682b88ab1fca4687890c30e2d78a188ae7f92da; deployment=NOT_DEPLOYED; environment=local-source; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=assets/e2-financial-play-targets
-RELEASE_CHANNEL: internal-only: reviewed source increment must earn exact-head required CI/current-main composition and production readback before release.
+INTERNAL_BUILD_IDENTITY: source=5682b88ab1fca4687890c30e2d78a188ae7f92da; deployment=NOT_DEPLOYED; environment=local; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=assets/e2-financial-play-targets
+RELEASE_CHANNEL: development: source increment must earn exact-head required CI/current-main composition and production readback before release.
 RELEASE_CLASSIFICATION: internal-only: bounded original financial Play target consumer, no customer release name or platform activation.
 CUSTOMER_RELEASE_IDENTITY: none: complete integrated EXP02 remains for one founder evaluation.
 RELEASE_NOTE_REQUIRED: no: sanitized engineering receipts only until the complete customer outcome earns announcement.

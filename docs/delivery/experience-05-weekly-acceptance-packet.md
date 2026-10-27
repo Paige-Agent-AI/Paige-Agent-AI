@@ -13,12 +13,18 @@ permission, catalogue, algorithm or acceptance state changes.
 
 ## October27 same-ZION integration in both chats — original outcomes retained
 
-Read updated ANT-11 description (20:57:29UTC), ANT-161 description
+Initial dated grounding: read ANT-11 description (20:57:29UTC), ANT-161 description
 (20:58:23UTC), owner ae482d19/10cca85b and EXP08 receiving c727d13c.
 EXP05 ACK is ANT-11/a40f0e29; exact producer/consumer handoff is
 ANT-161/772d7b77. Inspected main
 `4380b6928b657fc954d6df8d513b9ea3b6e07486`; A1b #2999 at
-`4017c381405e05a25e048624d567c06d3fc1cb91` is DRAFT/unmerged.
+`4017c381405e05a25e048624d567c06d3fc1cb91` was DRAFT/unmerged at that snapshot.
+Current reconciliation: main `545e086b2f94de9704a8ea2de9bf8c4d7b6748f7`;
+A1b merged as `956b47ef50b55f5831add6f3c3e22700bced5820`. EXP08's
+ANT-161/5b169d84 records migration20271119010008 and corrected normal Edge
+run40587156841 attempt2/source readback/edge-live956. The first nonlanding
+upload remains dated evidence. This is released source, not complete authenticated
+specialist/action acceptance. A2 original action admission remains missing.
 This extends the SAME ten outcomes/E5-CV1–9/A–H/S1–S12 below, never a new
 inventory or closure. Source, deployment, activation, authenticated proof and
 founder acceptance remain separate.
@@ -37,17 +43,29 @@ EXP08 owns A2 current asker ∩ registered specialist scope, participant/routing
 channel/DM privacy, original confirmation cards and result/reopen presentation.
 EXP05 retains the original Operations/Planning/Calendar/Automation writers.
 
+**Current intended behavior (owner c797df3b/33906e73/2371cb83):** PAIGE may
+coordinate a bounded goal, explain its plan and success criteria, and continue
+eligible work within legitimate standing authority. Suggest / Prepare / Execute
+uses the original Trust Compass/Spine and combined-plan scope, with current
+actor/tenant/role/provider/recipient/revocation/risk checks at each effect.
+An extra human click for every write, a human-sent handoff for every step and
+attended-only follow-through are superseded as universal final-target rules;
+applicable exact approval and held activation boundaries remain. No authority
+comes from agent personality, prose or model confidence. Preserve direct
+@PAIGE/@ZION and other original specialist mentions, DMs and in-place replies;
+PAIGE coordination adds a route and never forces a PAIGE intermediary.
+
 | Original outcome / E5 cases | PAIGE Chat / original source and current boundary | Team Hub gap, receiving owner and terminal proof |
 | --- | --- | --- |
 | 01 Responsibilities / CV3,4,9 | PARTIAL R1: `plan_list`, `crm_list_tasks`, exact `crm_get_task`, original Calendar/weekly reads. | EXP08 A2 original permitted reads; private Work in asker DM. E05 exact record/coverage references. Compare both chats with actual authorized sources. |
 | 02 Plan week / CV1,2,5,9 | PARTIAL R1/R2/R8; capacity/dependency correction remains missing. Held2961 is a read-preview, never execution. | E05 original correction loop; EXP08 consumes same plan/result. Prove changed context, zone, correction, save and reopen without another plan engine. |
-| 03 Manage work / CV4,5,6 | PARTIAL R3: original `crm_create_task`/`crm_update_task`, `plan_create`/`plan_add_milestone`/`plan_assign_task`/`plan_update_item`, exact stored arguments/current version. | EXP08 A2 channel-safe original Task proposal only, asker-only approval; private/other work in DM. E05 confirms supported writer/assignee shape. Same domain record/readback/Rail, no duplicate. |
+| 03 Manage work / CV4,5,6 | PARTIAL R3: original `crm_create_task`/`crm_update_task`, `plan_create`/`plan_add_milestone`/`plan_assign_task`/`plan_update_item`, exact stored arguments/current version. | EXP08 A2 original Task admission/authority presentation; E05 original writer/assignee contract. Suggest/Prepare/Execute follows current original policy and goal scope; obtain exact approval when required. Private results stay permitted-recipient scoped. Same domain record/readback/Rail, no duplicate. |
 | 04 Calendar/reminders / CV2,5,7 | PARTIAL R2/R5: `read_calendar_agenda`, `read_calendar_booking`, `plan_set_reminder`, `read_weekly_commitment_status`; recurrence proof still owed. | EXP08 original private reads/actions under real scope; E05 original zone/DST/schedule/result. E03/09 retain customer bookings. No new scheduler/recurrence activation. |
-| 05 Build automations / CV1,5,9 | PARTIAL R4/R7: `automation_draft`/`weekly_commitment_draft` only prepare/save. Full multi-step clarification/correction Builder remains missing. | E05 original definitions; EXP08 permitted preview/correction and canonical approval in DM. Saved draft is not authorized/enabled/executed work. |
-| 06 Execute / CV1,3,7 | PARTIAL R5: original event→`runEventActs`→ActionAdapter→domain/Rail. `automation_set_grant`/`automation_set_state` remain owner_only. | E08 A2 admission/card, E05 actual original act/record/receipt. Prove exact asker/tenant/stored approval and no duplicate. Historical approved Task readback is not a new execution. |
+| 05 Build automations / CV1,5,9 | PARTIAL R4/R7: `automation_draft`/`weekly_commitment_draft` only prepare/save. Full multi-step clarification/correction Builder remains missing. | E05 original definitions/goal and dependency plan; EXP08 permitted preview/correction and original authority/approval presentation. Saved draft is not authorized/enabled/executed work. |
+| 06 Execute / CV1,3,7 | PARTIAL R5: original event→`runEventActs`→ActionAdapter→domain/Rail. `automation_set_grant`/`automation_set_state` remain owner_only. | E08 A2 admission/standing-authority and pause/revoke presentation; E05 original act/record/receipt and useful independent follow-through. Prove current asker/tenant/combined-plan/per-effect authorization, exact approval where required and no duplicate. No new activation grant; historical Task readback is not new execution. |
 | 07 Monitor / CV3,6,8 | PARTIAL R1/R6/R8: original process/act/Work and `list_subagents`; useful anomaly triage/ongoing monitoring remains missing. | E05 original evidence/ALG12 with E02/E10 sources; E08 permitted placement only. Writing indicator/reply is not monitoring or business success. |
 | 08 Recover / CV5,6,7,9 | PARTIAL R2/R5/R6: exact operation reconciliation, `read_owner_task_act`, weekly/ZION original results. | E08 original request/turn/privacy through loss/reopen; E05 original domain operation/receipt. Test expired/revoked/cancelled/stale/unknown, no replay across either chat. |
-| 09 Inform / CV8 | HELD DEPENDENCY / MISSING: useful permitted owner-away result and original consented notice lifecycle. | E05 original result/notice; E08 only own-assignment reports or when asked. Original Communications consent/quiet hours/provider authority; no new external effect. |
+| 09 Inform / CV8 | HELD DEPENDENCY / MISSING: useful permitted owner-away result and original consented notice lifecycle. | E05 original result/authorized goal, assignment or monitoring trigger; E08 permitted placement, dismiss/defer/pause and original references. Prove restrained useful suggestions and deduplication in original homes. Original Communications consent/quiet hours/provider authority; no new external effect. |
 | 10 Return/resume / CV3,4,6,9 | PARTIAL R1/R2/R6: original conversation, Work, process history and own-row ZION results; useful positive assignment/recovery still owed. | E08 Hub reopen/reference rendering; E05 original result/native destination. Same work in both chats, no DM leak, invented completion or recreated effect. |
 
 Exact read handoff: `automations.owner_task_history` / `read_owner_task_act` →
@@ -68,9 +86,26 @@ references stay in the asker's authorized DM. Preserve the original attachment
 contract and prohibition on Team Hub→Knowledge/Memory saving. A1b read-only
 replies are not final action acceptance. No capability/ALG maturity promotion.
 
-Shared Chat/C0b composition stays in ANT-161 at EXP08's normal A1b handback;
-preserve both implementations and renew only corresponding reviewed source
-identities. No blanket stop on independent domain work. Full ten/E5, Builder,
+The same original Work/task/run/artifact workshop must be inspectable from both
+chats, with explicit least-context handoff and original status/result/receipt/
+cancellation/recovery. Private DM transcripts are never automatically copied.
+E05 owns original Work/Harness/results, E08 workshop/conversation/admission/Trust
+presentation, E10 provider custody and original Vault/Trust owners their sources;
+E19's general runner stays held. No new workshop engine or Sandbox activation.
+
+ALG-11 remains shared `fabricCompletion`/Model Fabric: E08 supplies workload/eval
+cases; the existing custodian owns routing. Evaluate routine/balanced/complex
+workloads with a quality floor, bounded escalation and original privacy/authority.
+Measure actual success, latency and total variable cost per verified outcome,
+including retries/tools; no Hub-only router, specific live model selection,
+monetary-exhaustion downgrade or algorithm maturity promotion. Original ALG-01,
+02/03/08/12/13 integration/proof remains owed; identity/personality is unchanged.
+
+Shared Chat/C0b composition stays in ANT-161; A1b handback5b169d84 is received.
+Preserve both implementations and renew only corresponding reviewed source
+identities. Current #3008/55e725dbe has no index/C0b delta; E08's later A1c
+agent-turn module remains theirs. Inspect actual current source at each boundary,
+never hold independent work under a blanket old upload-size freeze. Full ten/E5, Builder,
 algorithms, universal eligible existing/new SOLO, isolation, separate eligible
 Live and founder acceptance remain OPEN.
 

@@ -40,7 +40,7 @@ $$;
 
 CREATE FUNCTION pg_temp.retired_to(addr text, t uuid) RETURNS boolean LANGUAGE sql AS $$
   SELECT EXISTS (SELECT 1 FROM public.paige_retired_managed_addresses
-                  WHERE address = addr || '@' || pg_temp.dom() AND tenant_id IS NOT DISTINCT FROM t)
+                  WHERE address = addr || '@' || pg_temp.dom() AND retired_tenant_id IS NOT DISTINCT FROM t)
 $$;
 
 CREATE FUNCTION pg_temp.as_owner_a() RETURNS void LANGUAGE sql AS $$
@@ -183,13 +183,13 @@ DELETE FROM public.channel_connectors
  WHERE tenant_id = 'd2c00000-0000-4000-8000-0000000000e1' AND config ->> 'managed_default' = 'true';
 SELECT pg_temp.require_true(
   EXISTS (SELECT 1 FROM public.paige_retired_managed_addresses
-           WHERE address = 'mani-b-moved-2@' || pg_temp.dom() AND tenant_id = 'd2c00000-0000-4000-8000-0000000000e1'
+           WHERE address = 'mani-b-moved-2@' || pg_temp.dom() AND retired_tenant_id = 'd2c00000-0000-4000-8000-0000000000e1'
              AND source = 'connector_released'),
   '10: a deleted connector''s address is retired to its business');
 SELECT public.set_tenant_email_identity(p_local_part => 'mani-f-renamed', p_tenant_id => 'd2c00000-0000-4000-8000-0000000000f1');
 SELECT pg_temp.require_true(
   EXISTS (SELECT 1 FROM public.paige_retired_managed_addresses
-           WHERE address = 'mani-c-3@' || pg_temp.dom() AND tenant_id = 'd2c00000-0000-4000-8000-0000000000f1'),
+           WHERE address = 'mani-c-3@' || pg_temp.dom() AND retired_tenant_id = 'd2c00000-0000-4000-8000-0000000000f1'),
   '10: a changed identity''s old address is retired to its business');
 
 -- 11. The retired list is not readable from a browser session.

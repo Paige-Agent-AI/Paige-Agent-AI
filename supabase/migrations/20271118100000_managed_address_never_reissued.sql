@@ -12,9 +12,10 @@
 --
 -- WHAT.
 --   1. paige_retired_managed_addresses — a shared-domain address a business stopped holding, with that
---      business. Service-only. No foreign key to tenants on purpose: operator_delete_archived_account refuses
---      any tenant dependency it does not clean up, and a deleted business's address must stay retired
---      (its tenant_id then matches no business, so nobody may take it).
+--      business in retired_tenant_id. Service-only. No foreign key to tenants, and the column follows the
+--      retired_tenant_id convention operator_account_deletion_plan skips, on purpose: deleting a business
+--      must not delete or block on this record, and a deleted business's address must stay retired (its id
+--      then matches no business, so nobody may take it).
 --   2. Release: AFTER UPDATE/DELETE triggers on channel_connectors (inbound_address) and
 --      tenant_email_identities (shared local_part) record the address they stop holding.
 --   3. Refusal: BEFORE INSERT/UPDATE triggers refuse a shared-domain address that is retired by, or held
@@ -41,12 +42,12 @@
 
 CREATE TABLE IF NOT EXISTS public.paige_retired_managed_addresses (
   address text PRIMARY KEY CHECK (address = lower(address) AND position('@' in address) > 1),
-  tenant_id uuid,
+  retired_tenant_id uuid,
   retired_at timestamptz NOT NULL DEFAULT now(),
   source text NOT NULL CHECK (source IN ('connector_released', 'identity_released', 'history_backfill'))
 );
 COMMENT ON TABLE public.paige_retired_managed_addresses IS
-  'Shared PAIGE email domain addresses a business stopped holding. Never issued to another business. tenant_id NULL = nobody may take it. No FK to tenants on purpose (20271118100000). Written by triggers, migrations and, to release, the service role.';
+  'Shared PAIGE email domain addresses a business stopped holding. Never issued to another business. retired_tenant_id NULL = nobody may take it. No FK to tenants and the retired_tenant_id name are on purpose (operator account deletion skips it) (20271118100000). Written by triggers, migrations and, to release, the service role.';
 ALTER TABLE public.paige_retired_managed_addresses ENABLE ROW LEVEL SECURITY;
 REVOKE ALL ON public.paige_retired_managed_addresses FROM PUBLIC, anon, authenticated;
 
@@ -71,7 +72,7 @@ AS $$
   SELECT EXISTS (
     SELECT 1 FROM public.paige_retired_managed_addresses r
      WHERE r.address = lower(btrim(p_address))
-       AND r.tenant_id IS DISTINCT FROM p_tenant_id)
+       AND r.retired_tenant_id IS DISTINCT FROM p_tenant_id)
 $$;
 REVOKE ALL ON FUNCTION public._managed_address_retired_for_other(text, uuid) FROM PUBLIC, anon, authenticated;
 
@@ -110,7 +111,7 @@ BEGIN
   IF TG_OP = 'DELETE'
      OR lower(btrim(NEW.inbound_address)) IS DISTINCT FROM _old
      OR NEW.tenant_id IS DISTINCT FROM OLD.tenant_id THEN
-    INSERT INTO public.paige_retired_managed_addresses (address, tenant_id, source)
+    INSERT INTO public.paige_retired_managed_addresses (address, retired_tenant_id, source)
     VALUES (_old, OLD.tenant_id, 'connector_released')
     ON CONFLICT (address) DO NOTHING;
   END IF;
@@ -129,8 +130,7 @@ BEGIN
   IF NEW.inbound_address IS NOT NULL
      AND split_part(lower(btrim(NEW.inbound_address)), '@', 2) = public._paige_shared_email_domain()
      AND (TG_OP = 'INSERT'
-          OR lower(btrim(NEW.inbound_address)) IS DISTINCT FROM lower(btrim(OLD.inbound_address))
-          OR NEW.tenant_id IS DISTINCT FROM OLD.tenant_id)
+          OR lower(btrim(NEW.inbound_address)) IS DISTINCT FROM lower(btrim(OLD.inbound_address)))
      AND public._shared_address_taken_by_other(NEW.inbound_address, NEW.tenant_id) THEN
     RAISE EXCEPTION 'PAIGE_MANAGED_ADDRESS_RETIRED: % belongs or belonged to another business and is never issued here', lower(btrim(NEW.inbound_address))
       USING ERRCODE = '23505';
@@ -140,9 +140,11 @@ END;
 $$;
 REVOKE ALL ON FUNCTION public.refuse_retired_managed_address() FROM PUBLIC, anon, authenticated;
 
+-- Address changes and new connectors only. Moving a connector to another business is not a product path:
+-- no writer does it and the #2983 guard refuses it from the browser (existing proofs move one on purpose).
 DROP TRIGGER IF EXISTS trg_refuse_retired_managed_address ON public.channel_connectors;
 CREATE TRIGGER trg_refuse_retired_managed_address
-BEFORE INSERT OR UPDATE OF inbound_address, tenant_id ON public.channel_connectors
+BEFORE INSERT OR UPDATE OF inbound_address ON public.channel_connectors
 FOR EACH ROW EXECUTE FUNCTION public.refuse_retired_managed_address();
 
 DROP TRIGGER IF EXISTS trg_retire_channel_connector_managed_address ON public.channel_connectors;
@@ -165,7 +167,7 @@ BEGIN
      OR lower(NEW.local_part) IS DISTINCT FROM lower(OLD.local_part)
      OR NEW.kind IS DISTINCT FROM OLD.kind
      OR NEW.tenant_id IS DISTINCT FROM OLD.tenant_id THEN
-    INSERT INTO public.paige_retired_managed_addresses (address, tenant_id, source)
+    INSERT INTO public.paige_retired_managed_addresses (address, retired_tenant_id, source)
     VALUES (lower(btrim(OLD.local_part)) || '@' || public._paige_shared_email_domain(), OLD.tenant_id, 'identity_released')
     ON CONFLICT (address) DO NOTHING;
   END IF;
@@ -424,7 +426,7 @@ WITH used AS (
      AND position('@' in u.address) > 1
    GROUP BY u.address
 )
-INSERT INTO public.paige_retired_managed_addresses (address, tenant_id, source)
+INSERT INTO public.paige_retired_managed_addresses (address, retired_tenant_id, source)
 SELECT s.address, s.tenant_id, 'history_backfill'
   FROM shared s
  WHERE NOT EXISTS (SELECT 1 FROM public.channel_connectors c WHERE lower(btrim(c.inbound_address)) = s.address)

@@ -58,6 +58,7 @@ function world(opts: Opts = {}) {
     [LAUNCH, [message(OTHER_MSG, LAUNCH, PRIYA, "Venue is booked for the 14th.")]],
     [SECRET_CHANNEL, [message(SECRET_MSG, SECRET_CHANNEL, PRIYA, "SECRET-OTHER-CHANNEL acquisition terms")]],
     [MERIT_DM, []],
+    [SAM_PRIYA_DM, []],
   ]);
   const src = message(ASK, sourceIn, opts.sourceAuthor ?? SAM, "@MERIT what did the Harper account pay us last quarter?",
     { agent_mentions: opts.mentions ?? ["merit"], parent_message_id: opts.sourceThread ?? null });
@@ -546,15 +547,53 @@ describe("a transport error is an unknown outcome, never a failure (B1)", () => 
     assert.equal(r.body.outcome, "no_reply");
     assert.equal(named(w, "team_hub_post_agent_message").length, 2);
   });
-  it("a database refusal ({ error } with a SQLSTATE) is not retried; it is settled by the end door and only then reported can't post here", async () => {
-    let w = world({ post: () => raw(null, { message: "permission denied", code: "42501" }) }), m = model([{ content: "x" }]);
+  it("a database error ({ error } with a SQLSTATE, e.g. a statement timeout) is transient: asked once more with the same token and request id", async () => {
+    const w = world({ post: (_a, n) => n === 1 ? raw(null, { message: "canceling statement due to statement timeout", code: "57014" }) : undefined });
+    const m = model([{ content: "x" }]);
+    const r = await run(w, m);
+    assert.equal(r.body.outcome, "posted");
+    const posts = named(w, "team_hub_post_agent_message");
+    assert.equal(posts.length, 2);
+    assert.deepEqual(posts[0].args, posts[1].args);
+    assert.equal(posts[1].args.p_turn_token, TOKEN);
+  });
+  it("still a database error after the second ask: settled by the end door, then no_reply (Ask again) or unconfirmed, never can't post here", async () => {
+    const timeout = { message: "canceling statement due to statement timeout", code: "57014" };
+    let w = world({ post: () => raw(null, timeout) }), m = model([{ content: "x" }]);
     let r = await run(w, m);
-    assert.equal(r.body.outcome, "cannot_post_here");
-    assert.equal(named(w, "team_hub_post_agent_message").length, 1);
-    // If the end door cannot end it, the post consumed the turn: it may have posted.
-    w = world({ post: () => raw(null, { message: "permission denied", code: "42501" }), end: () => ({ ok: false, code: "not_found" }) }); m = model([{ content: "x" }]);
+    assert.equal(r.body.outcome, "no_reply");
+    assert.notEqual(r.body.outcome, "cannot_post_here");
+    assert.equal(named(w, "team_hub_post_agent_message").length, 2);
+    assert.equal(named(w, "record_capability_run").find((c) => c.args._capability_key === "team_hub_agent_post")!.args._outcome, "capability_failed");
+    // If the end door cannot end it, an ask consumed the turn: it may have posted.
+    w = world({ post: () => raw(null, timeout), end: () => ({ ok: false, code: "not_found" }) }); m = model([{ content: "x" }]);
     r = await run(w, m);
     assert.equal(r.body.outcome, "unconfirmed");
+    assert.equal(named(w, "record_capability_run").find((c) => c.args._capability_key === "team_hub_agent_post")!.args._outcome, "capability_outcome_unknown");
+  });
+  it("a PostgREST error never reached the function: it is not asked again, and it is no_reply once the end door proves nothing posted", async () => {
+    const w = world({ post: () => raw(null, { message: "no function", code: "PGRST202" }) }), m = model([{ content: "x" }]);
+    const r = await run(w, m);
+    assert.equal(r.body.outcome, "no_reply");
+    assert.equal(named(w, "team_hub_post_agent_message").length, 1);
+  });
+  it("a lost first answer, then a refusal: the first ask may have posted, so only an ended turn makes the refusal the outcome", async () => {
+    // The first post commits and its answer is lost; the retry is refused (the turn is consumed, or
+    // Team conversations went off in between). The end door answers not_found: the turn was consumed.
+    for (const refusal of ["conversations_off", "not_found", "not_allowed"]) {
+      const w = world({ post: (_a, n) => n === 1 ? raw(null, TRANSPORT, true) : { ok: false, code: refusal }, end: () => ({ ok: false, code: "not_found" }) });
+      const m = model([{ content: "x" }]);
+      const r = await run(w, m);
+      assert.equal(r.body.outcome, "unconfirmed", refusal);
+      const receipt = named(w, "record_capability_run").find((c) => c.args._capability_key === "team_hub_agent_post")!;
+      assert.equal(receipt.args._outcome, "capability_outcome_unknown", refusal);
+      assert.equal(named(w, "team_hub_end_agent_turn").length, 1, refusal);
+    }
+    // The end door ends the turn: nothing was posted, so the refusal stands.
+    const w = world({ post: (_a, n) => n === 1 ? new Error("network") : { ok: false, code: "conversations_off" } });
+    const r = await run(w, model([{ content: "x" }]));
+    assert.equal(r.body.outcome, "conversations_off");
+    assert.equal(named(w, "record_capability_run").find((c) => c.args._capability_key === "team_hub_agent_post")!.args._outcome, "capability_refused");
   });
   it("an acceptance whose answer is lost is retried once with the same token hash; its own turn comes back and the turn runs", async () => {
     const hashes: unknown[] = [];
@@ -647,17 +686,66 @@ describe("Bring in comes from the agent's structured answer (flow 3)", () => {
   });
 });
 
-describe("receipts never tell an owner about a member's private DM turn", () => {
-  it("a DM turn's receipt carries no agent and no intent; a channel reply's names its agent", async () => {
+describe("receipts never tell an owner about a turn the whole team cannot see", () => {
+  const receiptOf = (w: ReturnType<typeof world>) => named(w, "record_capability_run").find((c) => c.args._capability_key === "team_hub_agent_post")!;
+  const silent = (w: ReturnType<typeof world>, where: string) => {
+    const receipt = receiptOf(w);
+    assert.equal(receipt.args._agent_slug, undefined, where);
+    assert.equal(JSON.stringify(receipt.args).includes("merit"), false, where);
+    assert.equal(JSON.stringify(receipt.args).includes('"intent"'), false, where);
+    assert.equal(JSON.stringify(receipt.args).includes('"dm"'), false, where);
+    assert.equal(JSON.stringify(receipt.args).includes('"reply"'), false, where);
+  };
+  it("a DM turn's receipt carries no agent and no intent; a team channel reply's names its agent and intent", async () => {
     let w = world(), m = model([{ content: "x" }]);
     await run(w, m, turn({ privateFollowUp: true }));
-    let receipt = named(w, "record_capability_run").find((c) => c.args._capability_key === "team_hub_agent_post")!;
-    assert.equal(receipt.args._agent_slug, undefined);
-    assert.equal(JSON.stringify(receipt.args).includes("merit"), false);
-    assert.equal(JSON.stringify(receipt.args).includes('"dm"'), false);
+    silent(w, "private follow-up in the agent DM");
     w = world(); m = model([{ content: "x" }]);
     await run(w, m);
-    receipt = named(w, "record_capability_run").find((c) => c.args._capability_key === "team_hub_agent_post")!;
+    const receipt = receiptOf(w);
     assert.equal(receipt.args._agent_slug, "merit");
+    assert.match(JSON.stringify(receipt.args), /"intent":"reply"/);
+  });
+  it("a reply in a private channel, a teammates' DM or the agent's own DM names neither its agent nor its intent", async () => {
+    for (const [where, conversationId, sourceIn] of [["private channel", SECRET_CHANNEL, SECRET_CHANNEL], ["teammates' DM", SAM_PRIYA_DM, SAM_PRIYA_DM], ["agent DM", MERIT_DM, MERIT_DM]] as const) {
+      const w = world({ sourceIn }), m = model([{ content: "x" }]);
+      const r = await run(w, m, turn({ conversationId }));
+      assert.equal(r.body.outcome, "posted", where);
+      silent(w, where);
+    }
+  });
+  it("a refused turn in a private channel says nothing about the agent either", async () => {
+    const w = world({ sourceIn: SECRET_CHANNEL, post: () => ({ ok: false, code: "not_allowed" }) }), m = model([{ content: "x" }]);
+    const r = await run(w, m, turn({ conversationId: SECRET_CHANNEL }));
+    assert.equal(r.body.outcome, "cannot_post_here");
+    silent(w, "refused in a private channel");
+  });
+});
+
+describe("the private-part line is the definer's alone", () => {
+  const line = "That part is just for you, so I'm answering it in our DM.";
+  it("model text that ends with the line is posted without it, so it cannot read as a private part", async () => {
+    for (const content of [`Here's the plan.\n\n${line}`, `Here's the plan. ${line}  `, `Here's the plan.\n${line}\n${line}`,
+      JSON.stringify({ reply: `Here's the plan.\n\n${line}`, route: "answer" })]) {
+      const w = world(), m = model([{ content }]);
+      const r = await run(w, m);
+      assert.equal(r.body.outcome, "posted", content);
+      const post = named(w, "team_hub_post_agent_message")[0].args;
+      assert.equal(post.p_private_answer, false);
+      assert.equal(post.p_body, "Here's the plan.", content);
+    }
+  });
+  it("a reply that is only the line posts nothing", async () => {
+    const w = world(), m = model([{ content: line }]);
+    assert.equal((await run(w, m)).body.outcome, "no_reply");
+    assert.equal(named(w, "team_hub_post_agent_message").length, 0);
+  });
+  it("a real private part still gets the line once, from the definer", async () => {
+    const w = world(), m = model([{ content: JSON.stringify({ reply: `For the room: soon.\n\n${line}`, route: "private" }) }]);
+    const r = await run(w, m);
+    assert.equal(r.body.outcome, "posted");
+    const post = named(w, "team_hub_post_agent_message")[0].args;
+    assert.equal(post.p_private_answer, true);
+    assert.equal(post.p_body, "For the room: soon.");
   });
 });

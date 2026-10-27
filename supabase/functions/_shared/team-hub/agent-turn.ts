@@ -397,6 +397,34 @@ export function isTransportError(result: RpcResult | null): boolean {
   return !(/^[0-9A-Z]{5}$/.test(code) || /^PGRST/.test(code));
 }
 
+/**
+ * A database error that is not a refusal the door chose: a SQLSTATE such as 57014 (statement timeout),
+ * 40001 or 40P01. The doors answer every expected refusal as {"ok":false,"code":...} and never raise, so
+ * an error carrying a SQLSTATE means the call failed on its way through the database, and its
+ * transaction rolled back. It may succeed if asked again. (A PostgREST code is not one: it never reached
+ * the function.)
+ */
+export function isDatabaseError(result: RpcResult | null): boolean {
+  const code = typeof result?.error?.code === "string" ? result.error.code.trim() : "";
+  return !!result?.error && /^[0-9A-Z]{5}$/.test(code);
+}
+
+/**
+ * The post, asked at most twice with the same token and request id (the definer is idempotent on both,
+ * so a second ask can never post twice). It is asked again when the first answer was lost (a throw or a
+ * transport error) or was a database error. `answerLost` is true when any attempt's answer was lost,
+ * so that attempt may have committed: then a refusal from the next attempt does not prove nothing
+ * posted (the turn may be consumed, and a consumed turn is refused), and only the end door settles it.
+ */
+async function postOnceMore(c: { rpc(name: string, args?: Record<string, unknown>): PromiseLike<RpcResult> }, args: Record<string, unknown>)
+  : Promise<{ result: RpcResult | null; answerLost: boolean }> {
+  const first = await rpcSafe(c, "team_hub_post_agent_message", args);
+  if (!isTransportError(first) && !isDatabaseError(first)) return { result: first, answerLost: false };
+  const second = await rpcSafe(c, "team_hub_post_agent_message", args);
+  const answerLost = isTransportError(first) || isTransportError(second);
+  return { result: isTransportError(second) ? null : second, answerLost };
+}
+
 /** A call whose answer is unknown (thrown, or a transport error) is retried once with the same arguments. */
 async function rpcOnceMore(c: { rpc(name: string, args?: Record<string, unknown>): PromiseLike<RpcResult> }, name: string, args: Record<string, unknown>): Promise<RpcResult | null> {
   const first = await rpcSafe(c, name, args);
@@ -457,6 +485,15 @@ async function contextRead(caller: TeamHubCaller, tenantId: string, userId: stri
 // ---------------------------------------------------------------- the turn
 
 const A1_NO_ACTS_LINE = "I can't take actions here yet.";
+/** The fixed line team_hub_post_agent_message appends to a reply with a private part (20271117010008). */
+export const PRIVATE_PART_LINE = "That part is just for you, so I'm answering it in our DM.";
+
+/** Model text with any trailing copy of the private-part line removed (the screen reads a trailing one as a private part). */
+export function withoutPrivateLine(text: string): string {
+  let out = text.trimEnd();
+  while (out.endsWith(PRIVATE_PART_LINE)) out = out.slice(0, out.length - PRIVATE_PART_LINE.length).trimEnd();
+  return out;
+}
 const MAX_ROUNDS = 4;
 const MAX_REPLY_CHARS = 4000;
 const RECEIPT_KEY = "team_hub_agent_post";
@@ -556,16 +593,20 @@ export async function runTeamHubAgentTurn(deps: AgentTurnDeps, raw: unknown): Pr
     const e = r && !r.error ? object(r.data) : null;
     return e?.ok === true ? "ended" : e?.code === "not_found" ? "not_found" : "unknown";
   };
+  // Only a reply in a team channel is visible to the whole team. A private channel, a DM between
+  // teammates and an agent DM are not, so their receipts name neither the agent nor the intent.
+  const teamVisible = intent === "reply" && conv.kind === "channel" && conv.visibility === "team";
   const receipt = async (outcome: CapabilityOutcome, code: AgentTurnOutcomeCode) => {
     try {
       await recordCapabilityRun(service, { tenantId, actorId: userId, capabilityKey: RECEIPT_KEY, outcome,
         runId: await stableRunId([RECEIPT_KEY, tenantId, userId, turnId, hash]),
         // Metadata only: never the question, the reply or a conversation name. Owners and admins read
         // every receipt in their workspace on the Rail (get_solo_rail_activity: title, agent label and
-        // time; never the actor or the detail), so a DM turn's receipt names neither its agent nor that
-        // it was a DM: an owner must not learn that a member asked an agent privately.
-        agentSlug: intent === "dm" || agent === "paige" ? null : agent,
-        detail: intent === "dm" ? { channel: "team_hub", outcome: code } : { channel: "team_hub", agent, intent, outcome: code } });
+        // time; never the actor or the detail), so a turn in a conversation the whole team cannot see (a
+        // private channel, a DM between teammates, an agent DM) names neither its agent nor its intent:
+        // an owner must not learn which agent a member asked where they could not see it.
+        agentSlug: !teamVisible || agent === "paige" ? null : agent,
+        detail: teamVisible ? { channel: "team_hub", agent, intent, outcome: code } : { channel: "team_hub", outcome: code } });
     } catch (e) { console.error("[team-hub agent] receipt not recorded:", (e as Error)?.message); }
   };
   const endedWithoutPost = async (code: AgentTurnOutcomeCode): Promise<AgentTurnResult> => {
@@ -686,7 +727,10 @@ export async function runTeamHubAgentTurn(deps: AgentTurnDeps, raw: unknown): Pr
 
   // 7. The body. The fixed lines are the server's, never the model's: the private-part line is appended by
   // the definer (p_private_answer), the A1 line here.
-  const capped = Array.from(text).length > MAX_REPLY_CHARS ? `${Array.from(text).slice(0, MAX_REPLY_CHARS - 1).join("")}…` : text;
+  // The private-part line is the definer's alone (p_private_answer): model text that ends with it would
+  // read as a private part that never happened, so it is stripped from the model's words, every time.
+  const modelText = withoutPrivateLine(text);
+  const capped = Array.from(modelText).length > MAX_REPLY_CHARS ? `${Array.from(modelText).slice(0, MAX_REPLY_CHARS - 1).join("")}…` : modelText;
   // ("private" is only ever set where privateRouteAllowed said so: a shared conversation.)
   const privateAnswer = control === "private";
   const body = control === "act" ? (capped ? `${capped}\n\n${A1_NO_ACTS_LINE}` : A1_NO_ACTS_LINE) : capped;
@@ -706,18 +750,19 @@ export async function runTeamHubAgentTurn(deps: AgentTurnDeps, raw: unknown): Pr
   // 8. The post, under the asker's JWT. Its outcome is read back before it is reported.
   const postArgs = { p_expected_tenant: tenantId, p_channel_id: target, p_agent_key: agent, p_body: body, p_client_request_id: requestId,
     p_parent_message_id: parentId, p_asked_in_message_id: askedIn, p_intent: intent, p_turn_token: token, p_private_answer: privateAnswer };
-  // A lost answer (a throw, or the client's { error } for a transport failure) is retried once: the same
-  // token and request id again is idempotent (the definer returns the stored row, duplicate).
-  const posted = await rpcOnceMore(caller, "team_hub_post_agent_message", postArgs);
+  // A lost answer (a throw, or the client's { error } for a transport failure) or a database error (a
+  // SQLSTATE: a timeout, a deadlock) is asked once more: the same token and request id again is
+  // idempotent (the definer returns the stored row, duplicate).
+  const { result: posted, answerLost } = await postOnceMore(caller, postArgs);
   if (!posted || posted.error) {
-    // Still unknown, or a database error. The end door settles it: it can only end a turn that was NOT
+    // Still unknown, or still an error. The end door settles it: it can only end a turn that was NOT
     // consumed, so "ended" proves nothing was posted, and anything else means the post may have
-    // consumed it. A reply that posted is never reported, or receipted, as a failure.
+    // consumed it. A reply that posted is never reported, or receipted, as a failure. An error is never
+    // "can't post here": nothing refused this post, so Ask again may well work.
     const settled = await end();
     if (settled === "ended") {
-      const code: AgentTurnOutcomeCode = posted ? "cannot_post_here" : "no_reply";
-      await receipt(posted ? "capability_refused" : "capability_failed", code);
-      return fail(agent, code, { intent });
+      await receipt("capability_failed", "no_reply");
+      return fail(agent, "no_reply", { intent });
     }
     await receipt("capability_outcome_unknown", "unconfirmed");
     return fail(agent, "unconfirmed", { intent, conversation_id: target });
@@ -730,7 +775,16 @@ export async function runTeamHubAgentTurn(deps: AgentTurnDeps, raw: unknown): Pr
   }
   if (env.ok !== true) {
     const code = env.code === "not_found" ? "not_visible" : env.code === "conversations_off" ? "conversations_off" : "cannot_post_here";
-    return endedWithoutPost(code);
+    if (!answerLost) return endedWithoutPost(code);
+    // An earlier attempt's answer was lost, so it may have committed and consumed the turn; a refusal
+    // now does not prove nothing posted. Only "ended" does.
+    const settled = await end();
+    if (settled === "ended") {
+      await receipt("capability_refused", code);
+      return fail(agent, code, { intent });
+    }
+    await receipt("capability_outcome_unknown", "unconfirmed");
+    return fail(agent, "unconfirmed", { intent, conversation_id: target });
   }
   const postedId = uuid(object(env.message)?.id);
   if (!postedId) { await receipt("capability_outcome_unknown", "unconfirmed"); return fail(agent, "unconfirmed", { intent, conversation_id: target }); }

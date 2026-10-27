@@ -9,15 +9,15 @@ globalThis.IS_REACT_ACT_ENVIRONMENT=true;
 const original='/solo/3123/sales/agreements?agreement=e4000000-0000-4000-8000-0000000d0001';
 const target='/solo/3123/sales/agreements?agreement=e4000000-0000-4000-8000-0000000d0002';
 let root:Root,host:HTMLDivElement;
-function Editor({busy=false,uncertain=false}:{busy?:boolean;uncertain?:boolean}){
+function Editor({busy=false,uncertain=false,to=target}:{busy?:boolean;uncertain?:boolean;to?:string}){
  const [draft,setDraft]=useState(''),guard=useSalesDraftExit(draft,busy,()=>{}, {uncertain});
  const location=useLocation();
  return <><button onClick={()=>setDraft('Private unsaved wording')}>Edit wording</button><p>{draft}</p>
-  <output>{location.pathname+location.search}</output><CheckLinks links={[{label:'Open terms & agreements',to:target}]}/>{guard.confirmation}</>;
+  <output>{location.pathname+location.search}</output><CheckLinks links={[{label:'Open terms & agreements',to}]}/>{guard.confirmation}</>;
 }
 beforeEach(()=>{vi.stubGlobal('navigation',undefined);history.replaceState(null,'',original);host=document.createElement('div');document.body.append(host);root=createRoot(host);});
 afterEach(()=>{act(()=>root.unmount());host.remove();history.replaceState(null,'','/');vi.unstubAllGlobals();});
-const open=(props:{busy?:boolean;uncertain?:boolean}={})=>act(()=>root.render(<MemoryRouter initialEntries={[original]}><Editor {...props}/></MemoryRouter>));
+const open=(props:{busy?:boolean;uncertain?:boolean;to?:string}={})=>act(()=>root.render(<MemoryRouter initialEntries={[original]}><Editor {...props}/></MemoryRouter>));
 const click=(text:string)=>act(()=>[...host.querySelectorAll<HTMLElement>('button,a')].find(node=>node.textContent===text)!.click());
 const route=()=>host.querySelector('output')?.textContent;
 
@@ -39,6 +39,10 @@ describe('Chat record links respect the existing Sales leave guard before Router
  });
  it('follows a clean exact-record link without adding a confirmation',()=>{
   open();click('Open terms & agreements');expect(route()).toBe(target);expect(host.querySelector('[role=alertdialog]')).toBeNull();
+ });
+ it.each([location.origin+target,'//'+location.host+target])('preserves same-origin absolute link behavior after explicit leave: %s',to=>{
+  open({to});click('Edit wording');click('Open terms & agreements');expect(route()).toBe(original);
+  click('Discard changes');expect(route()).toBe(target);
  });
  it('leaves modified clicks to the browser and never opens a Sales leave decision',()=>{
   open();click('Edit wording');const listener=vi.fn();window.addEventListener('paige:sales-before-navigation',listener);

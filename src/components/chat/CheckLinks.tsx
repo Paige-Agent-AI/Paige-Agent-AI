@@ -12,9 +12,10 @@ function RouterCheckLink({ to, className, children }: { to: string; className: s
     if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.altKey || event.shiftKey) return;
     const destination = new URL(to, location.href);
     if (destination.origin !== location.origin) return;
+    const target = /^(?:[a-z][a-z\d+.-]*:|\/\/)/i.test(to) ? destination.pathname + destination.search + destination.hash : to;
     // Reuse Sales' existing leave/recovery decision before Router state advances,
     // including browsers without the Navigation API. This authorizes no action.
-    const request = new CustomEvent('paige:sales-before-navigation', { cancelable: true, detail: { proceed: () => navigate(to) } });
+    const request = new CustomEvent('paige:sales-before-navigation', { cancelable: true, detail: { proceed: () => navigate(target) } });
     if (!window.dispatchEvent(request)) event.preventDefault();
   }}>{children}</Link>;
 }

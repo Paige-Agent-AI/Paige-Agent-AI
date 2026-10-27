@@ -35,5 +35,16 @@
     "sha256": "eb78a411f07343272331c507093543d35cb458d414929f85387ba985a1db3236",
     "width": 720,
     "height": 1284
+  },
+  "post_review": {
+    "runtime": "dc052646cebe1dabeab06d949463e11a8f7ce94b",
+    "scope": "same actual controlled components and unchanged styles; original document destination/backend remain unmounted",
+    "absolute_source_result": "/solo/42/sales/agreements?agreement=e4000000-0000-4000-8000-0000000a0002",
+    "facts": [
+      "dirty absolute link opened original leave guard",
+      "explicit Discard alone reached exact same-origin pathname/query",
+      "no duplicate origin or invented backend outcome"
+    ],
+    "causal_tests": "two original failures then seven leave controls PASS; composed226/11 PASS"
   }
 }

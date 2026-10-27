@@ -1468,15 +1468,145 @@ SELECT coalesce((pg_temp.err(format('INSERT INTO public.team_hub_messages(tenant
   :'ta', :'m10dm', :'u6', 'linked', 'agent', 'zion', :'m9src'))<>'ok'),false) AS g \gset
 ROLLBACK;
 INSERT INTO mutant_results VALUES ('M12 reply linked across conversations', :'g');
+-- M13: the conflict-recovery path no longer checks that the stored reply answers this turn's question.
+SELECT pg_temp.post(:'u6', :'ta', :'mch', '@CURA m13 question A', '{cura}')#>>'{message,id}' AS m13a \gset
+SELECT pg_temp.post(:'u6', :'ta', :'mch', '@CURA m13 question B', '{cura}')#>>'{message,id}' AS m13b \gset
+SELECT gen_random_uuid() AS r13 \gset
+SELECT pg_temp.accept(:'ta', :'u6', :'mch', :'m13a', 'cura', 'reply', pg_temp.tok('M13A'))->>'ok' AS m13acc_a \gset
+SELECT pg_temp.agent_post(:'u6', :'ta', :'mch', 'cura', 'Answer to A', :'r13', NULL, :'m13a', 'reply', pg_temp.tok('M13A'))->>'ok' AS m13post_a \gset
+SELECT pg_temp.accept(:'ta', :'u6', :'mch', :'m13b', 'cura', 'reply', pg_temp.tok('M13B'))->>'turn_id' AS m13turn_b \gset
+SELECT pg_temp.check(:'m13acc_a'='true' AND :'m13post_a'='true' AND :'m13turn_b'<>'', 'mutants: M13 setup');
+BEGIN;
+SELECT pg_temp.mutate('public.team_hub_post_agent_message(uuid,uuid,text,text,uuid,uuid,uuid,text,text,boolean)',
+ E'\n    OR msg.asked_in_message_id IS DISTINCT FROM p_asked_in_message_id\n    OR msg.parent_message_id IS DISTINCT FROM p_parent_message_id THEN', ' THEN');
+SELECT coalesce((pg_temp.agent_post(:'u6', :'ta', :'mch', 'cura', 'Answer to B', :'r13', NULL, :'m13b', 'reply', pg_temp.tok('M13B'))->>'code'='invalid'),false) AS g \gset
+ROLLBACK;
+INSERT INTO mutant_results VALUES ('M13 reused request id binds another question''s reply', :'g');
+-- M14: a re-arm skips the cap. M15: the cap counts rows, not starts. Both re-probed by accept-and-end
+-- cycles on one source for a seat with no turns yet (Person 8, in #mutants-two so #mutants' unread
+-- counts stay as the M9 control reads them), rolled back each time.
+SELECT pg_temp.post(:'u8', :'ta', :'mch2', '@ZION m14 asked over and over', '{zion}')#>>'{message,id}' AS m14src \gset
+SELECT pg_temp.check(:'m14src'<>'' AND pg_temp.used(:'u8')=0, 'mutants: M14/M15 setup, a seat with no turns');
+BEGIN;
+SELECT pg_temp.mutate('public.team_hub_accept_agent_turn(uuid,uuid,uuid,uuid,text,text,text)',
+ 'IF used>=30 THEN', 'IF used>=30 AND NOT existing THEN');
+SELECT coalesce(((pg_temp.cycle(:'ta', :'u8', :'mch2', :'m14src', 'zion', 'm14', 31))[31]='rate_limited'),false) AS g \gset
+ROLLBACK;
+INSERT INTO mutant_results VALUES ('M14 re-arm skips the cap', :'g');
+BEGIN;
+SELECT pg_temp.mutate('public.team_hub_accept_agent_turn(uuid,uuid,uuid,uuid,text,text,text)',
+ E'SELECT coalesce(sum((SELECT count(*) FROM unnest(t.attempts) a(at) WHERE a.at>now()-interval ''1 hour'')),0) INTO used', 'SELECT count(*) INTO used');
+SELECT coalesce(((pg_temp.cycle(:'ta', :'u8', :'mch2', :'m14src', 'zion', 'm15', 31))[31]='rate_limited'),false) AS g \gset
+ROLLBACK;
+INSERT INTO mutant_results VALUES ('M15 cap counts rows not starts', :'g');
+-- M16: a reply turn no longer needs its source to be in the conversation it answers in.
+SELECT pg_temp.post(:'u6', :'ta', :'mch', '@VERA m16', '{vera}')#>>'{message,id}' AS m16src \gset
+BEGIN;
+SELECT pg_temp.mutate('public.team_hub_accept_agent_turn(uuid,uuid,uuid,uuid,text,text,text)', 'OR src.channel_id<>ch.id OR', 'OR');
+SELECT coalesce((pg_temp.accept(:'ta', :'u6', :'mch2', :'m16src', 'vera', 'reply', pg_temp.tok('M16'))->>'code'='not_allowed'),false) AS g \gset
+ROLLBACK;
+INSERT INTO mutant_results VALUES ('M16 reply source in another conversation', :'g');
+-- M17: a DM turn from a message elsewhere no longer needs that message to ask this agent (rule 2).
+SELECT pg_temp.post(:'u6', :'ta', :'mch', '@CURA m17', '{cura}')#>>'{message,id}' AS m17src \gset
+BEGIN;
+SELECT pg_temp.mutate('public.team_hub_accept_agent_turn(uuid,uuid,uuid,uuid,text,text,text)',
+ E'\n    OR NOT EXISTS(SELECT 1 FROM public.team_hub_message_agent_mentions x WHERE x.message_id=src.id AND x.agent_key=p_agent_key)) THEN', ') THEN');
+SELECT coalesce((pg_temp.accept(:'ta', :'u6', :'m10dm', :'m17src', 'zion', 'dm', pg_temp.tok('M17'))->>'code'='not_allowed'),false) AS g \gset
+ROLLBACK;
+INSERT INTO mutant_results VALUES ('M17 dm turn from a message that does not ask this agent', :'g');
+-- M18: a DM turn from a message elsewhere no longer needs the asker to still see that conversation.
+SELECT pg_temp.j(:'u6', format('public.team_hub_create_channel(%L::uuid,%L,%L,%L::uuid[],gen_random_uuid())', :'ta','m18-private','private', format('{%s}', :'u1')))->>'channel_id' AS m18ch \gset
+SELECT pg_temp.post(:'u6', :'ta', :'m18ch', '@ZION m18 the plan in here', '{zion}')#>>'{message,id}' AS m18src \gset
+SELECT pg_temp.j(:'u6', format('public.team_hub_leave_channel(%L::uuid,%L::uuid)', :'ta', :'m18ch'))->>'ok' AS m18left \gset
+SELECT pg_temp.check(:'m18src'<>'' AND :'m18left'='true' AND NOT EXISTS(SELECT 1 FROM public._team_hub_visible(:'ta', :'u6', :'m18ch')),
+ 'mutants: M18 setup, the asker left the private channel her question is in');
+BEGIN;
+SELECT pg_temp.mutate('public.team_hub_accept_agent_turn(uuid,uuid,uuid,uuid,text,text,text)',
+ E'(NOT EXISTS(SELECT 1 FROM public._team_hub_visible(p_tenant,p_asker,src.channel_id))\n    OR NOT EXISTS(SELECT 1 FROM public.team_hub_message_agent_mentions x WHERE',
+ '(NOT EXISTS(SELECT 1 FROM public.team_hub_message_agent_mentions x WHERE');
+SELECT coalesce((pg_temp.accept(:'ta', :'u6', :'m10dm', :'m18src', 'zion', 'dm', pg_temp.tok('M18'))->>'code'='not_allowed'),false) AS g \gset
+ROLLBACK;
+INSERT INTO mutant_results VALUES ('M18 dm turn from a conversation the asker no longer sees', :'g');
+-- M19: the post door no longer refuses a source deleted after its turn was accepted.
+SELECT pg_temp.post(:'u6', :'ta', :'mch', '@MENTOR m19', '{mentor}')#>>'{message,id}' AS m19src \gset
+SELECT pg_temp.accept(:'ta', :'u6', :'mch', :'m19src', 'mentor', 'reply', pg_temp.tok('M19'))->>'ok' AS m19acc \gset
+UPDATE public.team_hub_messages SET deleted_at=now() WHERE id=:'m19src';
+SELECT pg_temp.check(:'m19acc'='true', 'mutants: M19 setup, accepted then the question deleted');
+BEGIN;
+SELECT pg_temp.mutate('public.team_hub_post_agent_message(uuid,uuid,text,text,uuid,uuid,uuid,text,text,boolean)',
+ E' IF src.deleted_at IS NOT NULL\n   OR p_asked_in_message_id', ' IF p_asked_in_message_id');
+SELECT coalesce((pg_temp.agent_post(:'u6', :'ta', :'mch', 'mentor', 'late answer', gen_random_uuid()::text, NULL, :'m19src', 'reply', pg_temp.tok('M19'))->>'code'='invalid'),false) AS g \gset
+ROLLBACK;
+INSERT INTO mutant_results VALUES ('M19 post answers a deleted question', :'g');
+-- M20: acceptance no longer refuses a deleted source.
+SELECT pg_temp.post(:'u6', :'ta', :'mch', '@MERIT m20', '{merit}')#>>'{message,id}' AS m20src \gset
+UPDATE public.team_hub_messages SET deleted_at=now() WHERE id=:'m20src';
+BEGIN;
+SELECT pg_temp.mutate('public.team_hub_accept_agent_turn(uuid,uuid,uuid,uuid,text,text,text)',
+ ' AND m.author_kind=''user'' AND m.deleted_at IS NULL;', ' AND m.author_kind=''user'';');
+SELECT coalesce((pg_temp.accept(:'ta', :'u6', :'mch', :'m20src', 'merit', 'reply', pg_temp.tok('M20'))->>'code'='not_allowed'),false) AS g \gset
+ROLLBACK;
+INSERT INTO mutant_results VALUES ('M20 acceptance of a deleted question', :'g');
+-- M21: a seat that ends deletes an agent DM that holds a file record (the record goes, its bytes strand).
+SELECT pg_temp.j(:'u6', format('public.team_hub_open_agent_dm(%L::uuid,%L)', :'ta', 'cura'))->>'channel_id' AS m21dm \gset
+INSERT INTO public.team_hub_files(id,tenant_id,channel_id,uploaded_by,client_request_id,storage_path,file_name,mime_type,size_bytes)
+ VALUES ('51000000-0000-4000-8000-000000000002',:'ta',:'m21dm',:'u6',gen_random_uuid(),
+  :'ta'||'/team-hub/51000000-0000-4000-8000-000000000002','plan.txt','text/plain',10);
+BEGIN;
+SELECT pg_temp.mutate('public._team_hub_seat_ended()', E'\n    AND NOT EXISTS(SELECT 1 FROM public.team_hub_files f WHERE f.channel_id=c.id)', '');
+SELECT pg_temp.err(format('DELETE FROM public.tenant_members WHERE tenant_id=%L AND user_id=%L', :'ta', :'u6')) AS m21del \gset
+SELECT coalesce((:'m21del'='ok' AND EXISTS(SELECT 1 FROM public.team_hub_files WHERE id='51000000-0000-4000-8000-000000000002')
+ AND EXISTS(SELECT 1 FROM public.team_hub_channels WHERE id=:'m21dm')),false) AS g \gset
+ROLLBACK;
+INSERT INTO mutant_results VALUES ('M21 seat end drops an agent DM holding a file', :'g');
+-- M22: search no longer names an agent DM by its agent. M23: nor an agent's message by the agent.
+SELECT pg_temp.post(:'u6', :'ta', :'m10dm', 'zebra stripes on the m22 plan')->>'ok' AS m22post \gset
+SELECT pg_temp.check(:'m22post'='true', 'mutants: M22 setup, a message in the agent DM');
+CREATE FUNCTION pg_temp.search_has(actor text, q text, field text, want text) RETURNS boolean LANGUAGE sql AS $$
+ SELECT coalesce(bool_or(r->>field=want),false) FROM jsonb_array_elements(pg_temp.j(actor, format('public.team_hub_search(%L::uuid,%L)',
+  '20000000-0000-4000-8000-00000000000a', q))->'results') r $$;
+BEGIN;
+SELECT pg_temp.mutate('public.team_hub_search(uuid,text,integer)',
+ E'CASE WHEN h.kind=''agent_dm'' THEN public._team_hub_agent_name(h.channel_agent_key)\n    WHEN h.kind<>''dm'' THEN h.name', 'CASE WHEN h.kind<>''dm'' THEN h.name');
+SELECT pg_temp.search_has(:'u6', 'zebra stripes', 'conversation_label', 'ZION') AS g \gset
+ROLLBACK;
+INSERT INTO mutant_results VALUES ('M22 agent DM not labelled by its agent in search', :'g');
+BEGIN;
+SELECT pg_temp.mutate('public.team_hub_search(uuid,text,integer)',
+ E'CASE WHEN h.author_kind=''agent'' THEN public._team_hub_agent_name(h.agent_key)\n    WHEN public._team_hub_is_active', 'CASE WHEN public._team_hub_is_active');
+SELECT pg_temp.search_has(:'u6', 'Answer for Vera Lane', 'author_name', 'CURA') AS g \gset
+ROLLBACK;
+INSERT INTO mutant_results VALUES ('M23 agent message not named by its agent in search', :'g');
 -- Controls: with nothing mutated, each probe that can be re-run holds.
 SELECT pg_temp.check(pg_temp.agent_post(:'u3', :'ta', :'mch', 'cura', 'forged', gen_random_uuid()::text, NULL, :'msrc', 'reply', pg_temp.tok('wrong'))->>'code'='not_allowed'
  AND pg_temp.accept(:'ta', :'u3', :'mch', :'msrc', 'vera', 'reply', pg_temp.tok('M5'))->>'code'='not_allowed'
  AND pg_temp.agent_post(:'u3', :'ta', :'mch2', 'mentor', 'elsewhere', gen_random_uuid()::text, NULL, NULL, 'reply', pg_temp.tok('M6'))->>'code'='not_allowed'
- AND pg_temp.unread(:'u6', :'ta', :'mch')=1,
+-- Two unread for Vera Lane now: the M9 reply and M13's reply to question A (an agent's row is
+ -- unread for the person who asked it, which is what M9 protects).
+ AND pg_temp.unread(:'u6', :'ta', :'mch')=2
+ AND pg_temp.agent_post(:'u6', :'ta', :'mch', 'cura', 'Answer to B', :'r13', NULL, :'m13b', 'reply', pg_temp.tok('M13B'))->>'code'='invalid'
+ AND (SELECT posted_message_id IS NULL AND consumed_at IS NULL FROM public.team_hub_agent_turns WHERE id=:'m13turn_b')
+ AND pg_temp.accept(:'ta', :'u6', :'mch2', :'m16src', 'vera', 'reply', pg_temp.tok('M16'))->>'code'='not_allowed'
+ AND pg_temp.accept(:'ta', :'u6', :'m10dm', :'m17src', 'zion', 'dm', pg_temp.tok('M17'))->>'code'='not_allowed'
+ AND pg_temp.accept(:'ta', :'u6', :'m10dm', :'m18src', 'zion', 'dm', pg_temp.tok('M18'))->>'code'='not_allowed'
+ AND pg_temp.agent_post(:'u6', :'ta', :'mch', 'mentor', 'late answer', gen_random_uuid()::text, NULL, :'m19src', 'reply', pg_temp.tok('M19'))->>'code'='invalid'
+ AND pg_temp.accept(:'ta', :'u6', :'mch', :'m20src', 'merit', 'reply', pg_temp.tok('M20'))->>'code'='not_allowed'
+ AND pg_temp.search_has(:'u6', 'zebra stripes', 'conversation_label', 'ZION')
+ AND pg_temp.search_has(:'u6', 'Answer for Vera Lane', 'author_name', 'CURA'),
  'mutants: every re-runnable probe holds on the unmutated migration (controls)');
-SELECT pg_temp.check((SELECT count(*) FROM mutant_results)=12 AND NOT EXISTS(SELECT 1 FROM mutant_results WHERE guarded IS NOT FALSE),
- 'mutants: all 12 weakened guards break the property they protect: '||(SELECT string_agg(mutant||'='||coalesce(guarded::text,'null'), '; ' ORDER BY mutant) FROM mutant_results));
-\echo 'PASS: 12 of 12 mutants (token, replay, one-reply index, acceptance grant, rule 2, conversation binding, cap, stale re-arm, unread, agent DM member, seat end, cross-conversation link) each fail their probe; controls hold'
+-- The two controls that write: the seat-end file guard (rolled back) and the cap cycles (Person 8, last).
+BEGIN;
+SELECT pg_temp.err(format('DELETE FROM public.tenant_members WHERE tenant_id=%L AND user_id=%L', :'ta', :'u6')) AS c21del \gset
+SELECT (:'c21del'='ok' AND EXISTS(SELECT 1 FROM public.team_hub_files WHERE id='51000000-0000-4000-8000-000000000002')
+ AND EXISTS(SELECT 1 FROM public.team_hub_channels WHERE id=:'m21dm')
+ AND NOT EXISTS(SELECT 1 FROM public.team_hub_channels WHERE id=:'m10dm')) AS c21 \gset
+ROLLBACK;
+SELECT pg_temp.cycle(:'ta', :'u8', :'mch2', :'m14src', 'zion', 'c14', 31) AS c14 \gset
+SELECT pg_temp.check(:'c21'::boolean AND (:'c14')::text[]=ARRAY['ok']||array_fill('rearmed'::text, ARRAY[29])||ARRAY['rate_limited'],
+ 'mutants: unmutated, a seat end keeps the agent DM holding a file (and drops the one without), and the cycles stop at 30 starts (controls)');
+SELECT pg_temp.check((SELECT count(*) FROM mutant_results)=23 AND NOT EXISTS(SELECT 1 FROM mutant_results WHERE guarded IS NOT FALSE),
+ 'mutants: all 23 weakened guards break the property they protect: '||(SELECT string_agg(mutant||'='||coalesce(guarded::text,'null'), '; ' ORDER BY mutant) FROM mutant_results));
+\echo 'PASS: 23 of 23 mutants (token, replay, one-reply index, acceptance grant, rule 2, conversation binding, cap, stale re-arm, unread, agent DM member, seat end, cross-conversation link, reused request id, re-arm off the cap, rows not starts, reply source elsewhere, dm source not asking, dm source not visible, post on a deleted question, acceptance of a deleted question, seat-end file guard, search DM label, search agent author) each fail their probe; controls hold'
 
 -- 6. The roster correction (20271116120108) on the six platform rows. The table carries production's
 -- columns for these rows and the rows production holds (read 2026-10-27), with two customisations made

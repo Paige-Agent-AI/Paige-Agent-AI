@@ -13,11 +13,22 @@
 --   team_hub_messages.broadcast_mention: 'channel' | 'here' | NULL.
 --   team_hub_message_broadcast_recipients (no browser grant): who an @channel / @here reached, as a
 --     mention row records its person. @channel: every member of the channel who takes part in Team
---     conversations. @here: those of them active in the last 10 minutes. Team Hub has no presence
---     substrate, so "active" is defined from what is stored: the member read a message posted in the
---     channel in the last 10 minutes (team_hub_mark_read moves last_read_at to the read message's time,
---     so a recent last_read_at proves a recent read), or posted in it in the last 10 minutes. The author
---     is never a recipient.
+--     conversations. @here: those of them active in the channel in the last 10 minutes. Team Hub has no
+--     presence substrate, so "active" is defined from two stored facts the person alone produces: they
+--     posted in the channel (a message or a thread reply of their own, author_kind 'user'; an agent reply
+--     to their question is not their post), or their own read door, team_hub_mark_read, ran for the
+--     channel (the browser calls it when the person opens the conversation, or reads new messages in it
+--     on screen). The author is never a recipient. A broadcast that would reach nobody (the author is
+--     alone, or nobody else is active for @here) is stored as a plain message: no broadcast, no chip.
+--     NOT last_read_at: it is also set by team_hub_join_channel, _team_hub_seat_started (invite
+--     acceptance) and the Team conversations toggle, so joining, being seated or being switched on
+--     would read as "here".
+--   team_hub_channel_members.last_active_at: when the person's own read door last ran for the
+--     channel. Written by team_hub_mark_read only; nothing else sets it (the proof checks every body).
+--     NULL until the door first runs. Team Hub has no notification or unread-mention count for any
+--     mention yet: @channel / @here store recipients and show a chip; alerts are a later increment.
+--   team_hub_mark_read (re-emitted from 20271113850008, changed only where marked "A1c:"): also sets
+--     last_active_at=now() on the caller's own membership row.
 --   team_hub_post_message (re-emitted from 20271117010008, changed only where marked "A1c:"): the new
 --     optional p_broadcast_mention ('channel' | 'here'), refused 'invalid' outside a channel. It never
 --     asks an agent. DROP and recreate (the signature grows by one defaulted argument): every existing
@@ -29,12 +40,55 @@
 -- Doors re-check the caller in their bodies (§59); the new table is RLS-on with no policy and no browser
 -- grant. Expected refusals return {"ok":false,"code":...}; nothing raises.
 -- Forward-only and replay-safe: a second apply changes nothing.
--- Rollback: re-emit team_hub_agent_turn_states from 20271119010008; DROP team_hub_post_message(...,text)
+-- Rollback: re-emit team_hub_mark_read from 20271113850008 and drop last_active_at; re-emit
+-- team_hub_agent_turn_states from 20271119010008; DROP team_hub_post_message(...,text)
 -- and re-emit the eight-argument body and grants from 20271117010008; re-emit _team_hub_message_json from
 -- 20271117010008; drop team_hub_message_broadcast_recipients and its guard; drop the column and its
 -- CHECK; remove the table from operator_retirement_disposition.
 BEGIN;
 SET LOCAL lock_timeout = '2s';
+
+-- ── 0. The bodies this file calls or replaces are the ones it was written against ────────────────
+-- md5(prosrc), production read 2026-10-27 (SELECT on pg_proc). team_hub_agent_turn_states is not on
+-- production: its prior body is the one 20271119010008 (A1b, which applies first) creates. A replaced
+-- body may also already be this file's own (a second apply is a no-op).
+DO $guard$
+DECLARE expected record; actual text;
+BEGIN
+ FOR expected IN SELECT * FROM (VALUES
+  ('public._team_hub_refusal(uuid)','b6ee98245fdbb9e0229547061a9391d2'),
+  ('public._team_hub_visible(uuid,uuid,uuid)','28a7e5c90f2a29b19b4481c4850a414f'),
+  ('public._team_hub_is_active(uuid,uuid)','c290399dc80d95d16116a0f88b0abd8c'),
+  ('public._team_hub_participates(uuid,uuid)','4f2fb69d09f7b362027edf195a37da83')
+ ) AS dependencies(identity,body) LOOP
+  SELECT pg_catalog.md5(prosrc) INTO actual FROM pg_catalog.pg_proc WHERE oid=to_regprocedure(expected.identity);
+  IF NOT FOUND OR actual IS DISTINCT FROM expected.body THEN
+   RAISE EXCEPTION 'Team Hub A1c dependency % changed; reconcile before applying',expected.identity USING ERRCODE='23514'; END IF;
+ END LOOP;
+ FOR expected IN SELECT * FROM (VALUES
+  ('public._team_hub_message_json(public.team_hub_messages)','ad0b586878d11116293c93dee22fb14a','62d0617567b0abc7b2114147680485f6'),
+  ('public.team_hub_mark_read(uuid,uuid,uuid)','9c5ff3594f8529e7bff24677dacf34a4','f6a8ca4e51efaaef26a424668a175a73'),
+  ('public.team_hub_agent_turn_states(uuid,uuid,uuid[])','ef17c1c68299417a192d3ba11ef3abb6','717dd706ab0df67f0179ce010ae1dd38')
+ ) AS replaced(identity,prior_body,own_body) LOOP
+  SELECT pg_catalog.md5(prosrc) INTO actual FROM pg_catalog.pg_proc WHERE oid=to_regprocedure(expected.identity);
+  IF NOT FOUND OR actual NOT IN (expected.prior_body,expected.own_body) THEN
+   RAISE EXCEPTION 'Team Hub A1c source % changed; reconcile before applying',expected.identity USING ERRCODE='23514'; END IF;
+ END LOOP;
+ -- The post door: production's eight-argument body (dropped below), or, on a second apply, only this
+ -- file's nine-argument body.
+ SELECT pg_catalog.md5(prosrc) INTO actual FROM pg_catalog.pg_proc
+  WHERE oid=to_regprocedure('public.team_hub_post_message(uuid,uuid,text,uuid,uuid,uuid[],uuid[],text[])');
+ IF FOUND THEN
+  IF actual IS DISTINCT FROM '4dc15ad28671cc2d81dade9fc88fa548'
+    OR to_regprocedure('public.team_hub_post_message(uuid,uuid,text,uuid,uuid,uuid[],uuid[],text[],text)') IS NOT NULL THEN
+   RAISE EXCEPTION 'Team Hub A1c source team_hub_post_message changed; reconcile before applying' USING ERRCODE='23514'; END IF;
+ ELSE
+  SELECT pg_catalog.md5(prosrc) INTO actual FROM pg_catalog.pg_proc
+   WHERE oid=to_regprocedure('public.team_hub_post_message(uuid,uuid,text,uuid,uuid,uuid[],uuid[],text[],text)');
+  IF NOT FOUND OR actual IS DISTINCT FROM '2b9e0270f28b6c17fd3adb37d5b554d8' THEN
+   RAISE EXCEPTION 'Team Hub A1c source team_hub_post_message changed; reconcile before applying' USING ERRCODE='23514'; END IF;
+ END IF;
+END $guard$;
 
 -- ── A. @channel / @here storage ──────────────────────────────────────────────────────────────────
 ALTER TABLE public.team_hub_messages ADD COLUMN IF NOT EXISTS broadcast_mention text;
@@ -108,7 +162,7 @@ RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
 DECLARE actor uuid:=auth.uid(); refusal text:=public._team_hub_refusal(p_expected_tenant); ch public.team_hub_channels;
  body text:=public._team_hub_trim(p_body); mentions uuid[]; msg public.team_hub_messages; other uuid;
  files uuid[]:=coalesce(p_file_ids,'{}'::uuid[]); held int; agents text[]:=coalesce(p_agent_mention_keys,'{}'::text[]);
- broadcast text:=p_broadcast_mention; -- A1c
+ broadcast text:=p_broadcast_mention; reach uuid[]; -- A1c
 BEGIN
  IF refusal IS NOT NULL THEN RETURN jsonb_build_object('ok',false,'code',refusal); END IF;
  SELECT * INTO ch FROM public._team_hub_visible(p_expected_tenant,actor,p_channel_id);
@@ -183,6 +237,20 @@ BEGIN
   INSERT INTO public.team_hub_channel_members(channel_id,tenant_id,user_id,added_by,last_read_at)
    VALUES (ch.id,p_expected_tenant,actor,actor,now()) ON CONFLICT (channel_id,user_id) DO NOTHING;
  END IF;
+ -- A1c: who an @channel or @here reaches, as a mention row reaches its person. @channel: every member of
+ -- the channel who takes part in Team conversations. @here: those of them active in it in the last 10
+ -- minutes: they posted in it (their own message or thread reply, never an agent reply to their question),
+ -- or their own read door ran for it (last_active_at, which only team_hub_mark_read writes; never
+ -- last_read_at, which joining, being seated and the Team conversations toggle also set). Never the author.
+ -- A broadcast that reaches nobody is stored as a plain message.
+ IF broadcast IS NOT NULL THEN
+  reach:=ARRAY(SELECT m.user_id FROM public.team_hub_channel_members m
+   WHERE m.channel_id=ch.id AND m.user_id<>actor AND public._team_hub_participates(p_expected_tenant,m.user_id)
+    AND (broadcast='channel' OR m.last_active_at>=now()-interval '10 minutes'
+     OR EXISTS(SELECT 1 FROM public.team_hub_messages x WHERE x.channel_id=ch.id AND x.author_user_id=m.user_id
+      AND x.author_kind='user' AND x.deleted_at IS NULL AND x.created_at>=now()-interval '10 minutes')));
+  IF cardinality(reach)=0 THEN broadcast:=NULL; END IF;
+ END IF;
  -- A1c: broadcast_mention.
  INSERT INTO public.team_hub_messages(tenant_id,channel_id,author_user_id,body,parent_message_id,client_request_id,broadcast_mention)
   VALUES (p_expected_tenant,ch.id,actor,body,p_parent_message_id,p_client_request_id,broadcast)
@@ -198,22 +266,40 @@ BEGIN
   SELECT msg.id,p_expected_tenant,ch.id,x.id FROM unnest(mentions) x(id);
  INSERT INTO public.team_hub_message_agent_mentions(message_id,tenant_id,channel_id,agent_key)
   SELECT msg.id,p_expected_tenant,ch.id,x.k FROM unnest(agents) x(k);
- -- A1c: who an @channel or @here reached, as a mention row reaches its person. @channel: every member of
- -- the channel who takes part in Team conversations. @here: those of them active in the last 10 minutes
- -- (they read a message posted in it in the last 10 minutes, or posted in it themselves). Never the author.
+ -- A1c: the recipients reached above.
  IF broadcast IS NOT NULL THEN
   INSERT INTO public.team_hub_message_broadcast_recipients(message_id,tenant_id,channel_id,user_id)
-   SELECT msg.id,p_expected_tenant,ch.id,m.user_id FROM public.team_hub_channel_members m
-   WHERE m.channel_id=ch.id AND m.user_id<>actor AND public._team_hub_participates(p_expected_tenant,m.user_id)
-    AND (broadcast='channel' OR m.last_read_at>=now()-interval '10 minutes'
-     OR EXISTS(SELECT 1 FROM public.team_hub_messages x WHERE x.channel_id=ch.id AND x.author_user_id=m.user_id
-      AND x.author_kind='user' AND x.deleted_at IS NULL AND x.created_at>=now()-interval '10 minutes'));
+   SELECT msg.id,p_expected_tenant,ch.id,x.id FROM unnest(reach) x(id);
  END IF;
  UPDATE public.team_hub_files f SET message_id=msg.id, posted_at=now() WHERE f.id=ANY(files);
  RETURN jsonb_build_object('ok',true,'message',public._team_hub_message_json(msg));
 END $$;
 REVOKE ALL ON FUNCTION public.team_hub_post_message(uuid,uuid,text,uuid,uuid,uuid[],uuid[],text[],text) FROM PUBLIC, anon, service_role;
 GRANT EXECUTE ON FUNCTION public.team_hub_post_message(uuid,uuid,text,uuid,uuid,uuid[],uuid[],text[],text) TO authenticated;
+
+-- ── C2. The activity signal @here reads: the person's own read door (20271113850008, plus A1c, marked) ─
+ALTER TABLE public.team_hub_channel_members ADD COLUMN IF NOT EXISTS last_active_at timestamptz;
+CREATE OR REPLACE FUNCTION public.team_hub_mark_read(p_expected_tenant uuid, p_channel_id uuid, p_through_message_id uuid)
+RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
+DECLARE actor uuid:=auth.uid(); refusal text:=public._team_hub_refusal(p_expected_tenant); ch public.team_hub_channels; through timestamptz;
+BEGIN
+ IF refusal IS NOT NULL THEN RETURN jsonb_build_object('ok',false,'code',refusal); END IF;
+ SELECT * INTO ch FROM public._team_hub_visible(p_expected_tenant,actor,p_channel_id);
+ IF NOT FOUND THEN RETURN jsonb_build_object('ok',false,'code','not_found'); END IF;
+ IF NOT EXISTS(SELECT 1 FROM public.team_hub_channel_members m WHERE m.channel_id=ch.id AND m.user_id=actor) THEN
+  RETURN jsonb_build_object('ok',false,'code','not_allowed'); END IF;
+ SELECT m.created_at INTO through FROM public.team_hub_messages m
+  WHERE m.id=p_through_message_id AND m.channel_id=ch.id AND m.parent_message_id IS NULL AND m.deleted_at IS NULL;
+ IF NOT FOUND THEN RETURN jsonb_build_object('ok',false,'code','invalid'); END IF;
+ UPDATE public.team_hub_channel_members m SET last_read_at=greatest(coalesce(m.last_read_at,'-infinity'),through)
+  -- A1c: the person's own read door ran now (the activity @here reads).
+  , last_active_at=now()
+  WHERE m.channel_id=ch.id AND m.user_id=actor;
+ IF NOT FOUND THEN RETURN jsonb_build_object('ok',false,'code','not_allowed'); END IF;
+ RETURN jsonb_build_object('ok',true);
+END $$;
+REVOKE ALL ON FUNCTION public.team_hub_mark_read(uuid,uuid,uuid) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.team_hub_mark_read(uuid,uuid,uuid) TO authenticated;
 
 -- ── D. The member-safe turn-state read (20271119010008, plus A1c, marked) ────────────────────────
 -- A turn left running for 10 minutes is taken as ended, as the acceptance door takes it.

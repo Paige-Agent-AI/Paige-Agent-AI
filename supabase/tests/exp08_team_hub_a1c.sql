@@ -750,7 +750,7 @@ SELECT 'con:'||c.conrelid::regclass::text||':'||c.conname, pg_get_constraintdef(
  WHERE c.conrelid IN ('public.team_hub_messages'::regclass, 'public.team_hub_message_broadcast_recipients'::regclass)
 UNION ALL
 SELECT 'col:'||a.attrelid::regclass::text||':'||a.attname, format_type(a.atttypid,a.atttypmod)||'|'||a.attnotnull FROM pg_attribute a
- WHERE a.attrelid IN ('public.team_hub_messages'::regclass, 'public.team_hub_message_broadcast_recipients'::regclass) AND a.attnum>0 AND NOT a.attisdropped
+ WHERE a.attrelid IN ('public.team_hub_messages'::regclass, 'public.team_hub_message_broadcast_recipients'::regclass, 'public.team_hub_channel_members'::regclass) AND a.attnum>0 AND NOT a.attisdropped
 UNION ALL
 SELECT 'rel:'||c.relname, concat_ws('|', c.relacl::text, c.relrowsecurity::text) FROM pg_class c
  WHERE c.relnamespace='public'::regnamespace AND c.relkind IN ('r','i') AND c.relname LIKE 'team_hub%'
@@ -790,7 +790,7 @@ $h$]))<>'ad0b586878d11116293c93dee22fb14a' THEN RAISE EXCEPTION 'FAIL: outside i
  IF md5(pg_temp.undo(src, ARRAY[
   $h$ files uuid[]:=coalesce(p_file_ids,'{}'::uuid[]); held int; agents text[]:=coalesce(p_agent_mention_keys,'{}'::text[]);
 BEGIN$h$, $h$ files uuid[]:=coalesce(p_file_ids,'{}'::uuid[]); held int; agents text[]:=coalesce(p_agent_mention_keys,'{}'::text[]);
- broadcast text:=p_broadcast_mention; -- A1c
+ broadcast text:=p_broadcast_mention; reach uuid[]; -- A1c
 BEGIN$h$,
   $h$   OR (cardinality(agents)>0 AND ch.kind='agent_dm') THEN
   RETURN jsonb_build_object('ok',false,'code','invalid'); END IF;
@@ -803,21 +803,29 @@ $h$, $h$   OR (cardinality(agents)>0 AND ch.kind='agent_dm') THEN
 $h$,
   $h$ INSERT INTO public.team_hub_messages(tenant_id,channel_id,author_user_id,body,parent_message_id,client_request_id)
   VALUES (p_expected_tenant,ch.id,actor,body,p_parent_message_id,p_client_request_id)$h$,
-  $h$ -- A1c: broadcast_mention.
+  $h$ -- A1c: who an @channel or @here reaches, as a mention row reaches its person. @channel: every member of
+ -- the channel who takes part in Team conversations. @here: those of them active in it in the last 10
+ -- minutes: they posted in it (their own message or thread reply, never an agent reply to their question),
+ -- or their own read door ran for it (last_active_at, which only team_hub_mark_read writes; never
+ -- last_read_at, which joining, being seated and the Team conversations toggle also set). Never the author.
+ -- A broadcast that reaches nobody is stored as a plain message.
+ IF broadcast IS NOT NULL THEN
+  reach:=ARRAY(SELECT m.user_id FROM public.team_hub_channel_members m
+   WHERE m.channel_id=ch.id AND m.user_id<>actor AND public._team_hub_participates(p_expected_tenant,m.user_id)
+    AND (broadcast='channel' OR m.last_active_at>=now()-interval '10 minutes'
+     OR EXISTS(SELECT 1 FROM public.team_hub_messages x WHERE x.channel_id=ch.id AND x.author_user_id=m.user_id
+      AND x.author_kind='user' AND x.deleted_at IS NULL AND x.created_at>=now()-interval '10 minutes')));
+  IF cardinality(reach)=0 THEN broadcast:=NULL; END IF;
+ END IF;
+ -- A1c: broadcast_mention.
  INSERT INTO public.team_hub_messages(tenant_id,channel_id,author_user_id,body,parent_message_id,client_request_id,broadcast_mention)
   VALUES (p_expected_tenant,ch.id,actor,body,p_parent_message_id,p_client_request_id,broadcast)$h$,
   $h$  SELECT msg.id,p_expected_tenant,ch.id,x.k FROM unnest(agents) x(k);
 $h$, $h$  SELECT msg.id,p_expected_tenant,ch.id,x.k FROM unnest(agents) x(k);
- -- A1c: who an @channel or @here reached, as a mention row reaches its person. @channel: every member of
- -- the channel who takes part in Team conversations. @here: those of them active in the last 10 minutes
- -- (they read a message posted in it in the last 10 minutes, or posted in it themselves). Never the author.
+ -- A1c: the recipients reached above.
  IF broadcast IS NOT NULL THEN
   INSERT INTO public.team_hub_message_broadcast_recipients(message_id,tenant_id,channel_id,user_id)
-   SELECT msg.id,p_expected_tenant,ch.id,m.user_id FROM public.team_hub_channel_members m
-   WHERE m.channel_id=ch.id AND m.user_id<>actor AND public._team_hub_participates(p_expected_tenant,m.user_id)
-    AND (broadcast='channel' OR m.last_read_at>=now()-interval '10 minutes'
-     OR EXISTS(SELECT 1 FROM public.team_hub_messages x WHERE x.channel_id=ch.id AND x.author_user_id=m.user_id
-      AND x.author_kind='user' AND x.deleted_at IS NULL AND x.created_at>=now()-interval '10 minutes'));
+   SELECT msg.id,p_expected_tenant,ch.id,x.id FROM unnest(reach) x(id);
  END IF;
 $h$]))<>'4dc15ad28671cc2d81dade9fc88fa548' THEN RAISE EXCEPTION 'FAIL: outside its A1c hunks, team_hub_post_message differs from production'; END IF;
 
@@ -832,12 +840,21 @@ $h$]))<>'4dc15ad28671cc2d81dade9fc88fa548' THEN RAISE EXCEPTION 'FAIL: outside i
   OR (NOT s.private_part AND s.state='answering');$h$]))<>(SELECT v FROM a1b_states) THEN
   RAISE EXCEPTION 'FAIL: outside its two A1c hunks, team_hub_agent_turn_states differs from the A1b body'; END IF;
 
+ SELECT prosrc INTO src FROM pg_proc WHERE oid='public.team_hub_mark_read(uuid,uuid,uuid)'::regprocedure;
+ IF md5(pg_temp.undo(src, ARRAY[
+  $h$,through)
+  WHERE m.channel_id=ch.id AND m.user_id=actor;$h$, $h$,through)
+  -- A1c: the person's own read door ran now (the activity @here reads).
+  , last_active_at=now()
+  WHERE m.channel_id=ch.id AND m.user_id=actor;$h$]))<>'9c5ff3594f8529e7bff24677dacf34a4' THEN
+  RAISE EXCEPTION 'FAIL: outside its A1c hunk, team_hub_mark_read differs from production'; END IF;
+
  SELECT array_agg(b.name ORDER BY b.name) INTO changed FROM before_src b
   LEFT JOIN pg_proc p ON p.oid=to_regprocedure(b.sig) WHERE p.oid IS NULL OR p.prosrc<>b.src;
- IF changed IS DISTINCT FROM ARRAY['_team_hub_message_json','team_hub_agent_turn_states','team_hub_post_message'] THEN
+ IF changed IS DISTINCT FROM ARRAY['_team_hub_message_json','team_hub_agent_turn_states','team_hub_mark_read','team_hub_post_message'] THEN
   RAISE EXCEPTION 'FAIL: the functions that changed are %', changed; END IF;
 END $$;
-\echo 'PASS: byte identity: the message JSON, the post door and the turn-state read with only their marked A1c hunks undone are the bodies they replace; every other team_hub function is unchanged'
+\echo 'PASS: byte identity: the message JSON, the post door, the read door and the turn-state read with only their marked A1c hunks undone are the bodies they replace; every other team_hub function is unchanged'
 
 -- 4. Structure and grants.
 DO $$ BEGIN
@@ -990,27 +1007,89 @@ SELECT pg_temp.check(pg_temp.states(:'u7', :'ta', :'launch', ARRAY[:'q1t'])->>'c
 \echo 'PASS: writing for everyone: another member and the owner read answering (state only) for a running reply in a team channel and a thread; nothing once it posted, ended or went stale; a private channel''s non-member, anyone but its member on an agent DM, and another workspace read nothing'
 
 -- 5c. @channel / @here.
--- Who is active: Person 3 read through a message posted 2 minutes ago; Person 5 last read 30 minutes ago
--- but posted 5 minutes ago; the owner last read 30 minutes ago and posted 40 minutes ago.
+CREATE FUNCTION pg_temp.read_door(actor text, tenant text, channel text, through text) RETURNS jsonb LANGUAGE sql AS $$
+ SELECT pg_temp.j(actor, format('public.team_hub_mark_read(%L::uuid,%L::uuid,%L::uuid)', tenant, channel, through)) $$;
+CREATE FUNCTION pg_temp.member(channel text, who text) RETURNS public.team_hub_channel_members LANGUAGE sql AS $$
+ SELECT m FROM public.team_hub_channel_members m WHERE m.channel_id=channel::uuid AND m.user_id=who::uuid $$;
+-- Who is in #launch, and how each got there. Every way of arriving writes last_read_at=now(), and none
+-- of them is the person being active:
+--   Person 3 joined (team_hub_join_channel, in the setup above);
+--   Person 27's seat started (an invitation accepted: the seat trigger joins every open team channel);
+--   Person 28 was switched on (the Team conversations toggle joins every open team channel);
+--   Person 4 joined, asked CURA 20 minutes ago, and CURA's reply (stored with Person 4 as the asker) is
+--   2 minutes old: an agent reply to their question is not their post.
+-- Active: Person 5 posted 5 minutes ago; Person 8 posted a thread reply 3 minutes ago; Person 6's own
+-- read door ran 9 minutes ago. Not active any more: the owner posted 40 minutes ago and their read door
+-- last ran 11 minutes ago.
+RESET ROLE;
+INSERT INTO public.tenant_invite_tokens(tenant_id,token,kind,email,default_role,created_by,team_hub_access) VALUES
+ (:'ta', 'a1c-invite-27', 'team', 'person27@example.test', 'member', :'u1', true),
+ (:'ta', 'a1c-invite-28', 'team', 'person28@example.test', 'member', :'u1', false);
+SELECT pg_temp.check(pg_temp.j(u, format('(SELECT to_jsonb(public.accept_solo_team_invite(%L)))', t))->>'error' IS NULL, 'setup: Person '||right(u,2)||' accepts their invitation')
+ FROM (VALUES (:'u27','a1c-invite-27'), (:'u28','a1c-invite-28')) v(u,t);
+SELECT pg_temp.check(pg_temp.member(:'launch', :'u28') IS NULL
+ AND pg_temp.j(:'u1', format('(SELECT public.set_solo_team_member_team_hub_access(%L::uuid,%L::uuid,true))', :'u28', :'ta'))->>'error' IS NULL
+ AND (pg_temp.member(:'launch', :'u27')).user_id IS NOT NULL AND (pg_temp.member(:'launch', :'u28')).user_id IS NOT NULL,
+ 'setup: Person 27''s seat started and Person 28 was switched on; both are now in #launch');
+SELECT pg_temp.check(pg_temp.j(u, format('public.team_hub_join_channel(%L::uuid,%L::uuid)', :'ta', :'launch'))->>'ok'='true', 'setup: Person 4, 6 and 8 join #launch')
+ FROM unnest(ARRAY[:'u4', :'u6', :'u8']) u;
 SELECT pg_temp.post(:'u5', :'ta', :'launch', 'Back from lunch.')#>>'{message,id}' AS m5 \gset
 SELECT pg_temp.post(:'u1', :'ta', :'launch', 'Morning, all.')#>>'{message,id}' AS m1 \gset
+SELECT pg_temp.post(:'u8', :'ta', :'launch', 'On it.', '{}', :'m1')#>>'{message,id}' AS m8 \gset
+SELECT pg_temp.post(:'u4', :'ta', :'launch', '@CURA who covers Friday?', '{cura}')#>>'{message,id}' AS q4 \gset
+SELECT pg_temp.accept(:'ta', :'u4', :'launch', :'q4', 'cura', 'reply', pg_temp.tok('Q4'))->>'ok' AS aq4 \gset
+SELECT pg_temp.agent_post(:'u4', :'ta', :'launch', 'cura', 'Person 6 covers Friday.', gen_random_uuid()::text, NULL, :'q4', 'reply', pg_temp.tok('Q4')) AS rq4 \gset
+SELECT pg_temp.check(pg_temp.read_door(:'u6', :'ta', :'launch', :'m1')->>'ok'='true' AND pg_temp.read_door(:'u1', :'ta', :'launch', :'m1')->>'ok'='true',
+ 'setup: Person 6 and the owner read #launch through the read door');
 UPDATE public.team_hub_messages SET created_at=now()-interval '5 minutes' WHERE id=:'m5';
+UPDATE public.team_hub_messages SET created_at=now()-interval '3 minutes' WHERE id=:'m8';
 UPDATE public.team_hub_messages SET created_at=now()-interval '40 minutes' WHERE author_user_id=:'u1' AND channel_id=:'launch';
-UPDATE public.team_hub_channel_members SET last_read_at=CASE user_id WHEN :'u3'::uuid THEN now()-interval '2 minutes'
- ELSE now()-interval '30 minutes' END WHERE channel_id=:'launch' AND user_id IN (:'u1', :'u3', :'u5');
+UPDATE public.team_hub_messages SET created_at=now()-interval '20 minutes' WHERE id=:'q4';
+UPDATE public.team_hub_messages SET created_at=now()-interval '2 minutes' WHERE id=((:'rq4')::jsonb#>>'{message,id}')::uuid;
+UPDATE public.team_hub_channel_members SET last_active_at=now()-interval '9 minutes' WHERE channel_id=:'launch' AND user_id=:'u6';
+UPDATE public.team_hub_channel_members SET last_active_at=now()-interval '11 minutes' WHERE channel_id=:'launch' AND user_id=:'u1';
+-- The arrival values stay exactly as the doors wrote them: a fresh last_read_at, and no activity.
+SELECT pg_temp.check((SELECT bool_and((pg_temp.member(:'launch', u)).last_read_at>=now()-interval '10 minutes'
+   AND (pg_temp.member(:'launch', u)).last_active_at IS NULL) FROM unnest(ARRAY[:'u3', :'u27', :'u28', :'u4']) u)
+ AND :'aq4'='true' AND (:'rq4')::jsonb->>'ok'='true'
+ AND (SELECT author_kind='agent' AND author_user_id=:'u4'::uuid FROM public.team_hub_messages WHERE id=((:'rq4')::jsonb#>>'{message,id}')::uuid)
+ AND (pg_temp.member(:'launch', :'u6')).last_active_at IS NOT NULL
+ AND (pg_temp.member(:'launch', :'u5')).last_active_at IS NULL AND (pg_temp.member(:'launch', :'u8')).last_active_at IS NULL,
+ 'before the broadcast: Persons 3, 27, 28 and 4 carry a last_read_at under 10 minutes old from joining, a seat start or the toggle, and no last_active_at; CURA''s reply is stored as an agent row asked by Person 4; posting set nobody''s last_active_at; the read door set Person 6''s');
 SELECT pg_temp.bpost(:'u2', :'ta', :'launch', '@channel the launch is Friday', 'channel') AS pc \gset
 SELECT pg_temp.bpost(:'u2', :'ta', :'launch', '@here who can review now?', 'here') AS ph \gset
 SELECT pg_temp.check((:'pc')::jsonb->>'ok'='true' AND (:'pc')::jsonb#>>'{message,broadcast}'='channel'
- AND pg_temp.recipients((:'pc')::jsonb#>>'{message,id}')=(SELECT array_agg(x ORDER BY x) FROM unnest(ARRAY[:'u1', :'u3', :'u5']) x)
+ AND pg_temp.recipients((:'pc')::jsonb#>>'{message,id}')=(SELECT array_agg(x ORDER BY x) FROM unnest(ARRAY[:'u1', :'u3', :'u4', :'u5', :'u6', :'u8', :'u27', :'u28']) x)
  AND (:'ph')::jsonb->>'ok'='true' AND (:'ph')::jsonb#>>'{message,broadcast}'='here'
- AND pg_temp.recipients((:'ph')::jsonb#>>'{message,id}')=(SELECT array_agg(x ORDER BY x) FROM unnest(ARRAY[:'u3', :'u5']) x),
- '@channel reaches every other member of the channel; @here only those who read a message posted in the last 10 minutes or posted in the last 10 minutes; the author is never a recipient; the stored message says which');
+ AND pg_temp.recipients((:'ph')::jsonb#>>'{message,id}')=(SELECT array_agg(x ORDER BY x) FROM unnest(ARRAY[:'u5', :'u6', :'u8']) x),
+ '@channel reaches every other member of the channel; @here reaches only those who posted (Person 5, and Person 8 in a thread) or whose own read door ran (Person 6, 9 minutes ago) in the last 10 minutes: not a join (Person 3), a seat start (Person 27), the toggle (Person 28), an agent reply to their question (Person 4), or a read door 11 minutes ago (the owner); never the author');
+-- A broadcast that reaches nobody is a plain message: alone in a channel, or nobody else active.
+SELECT pg_temp.j(:'u2', format('public.team_hub_create_channel(%L::uuid,%L,%L,%L::uuid[],gen_random_uuid())', :'ta','alone','team','{}'))->>'channel_id' AS alone \gset
+SELECT pg_temp.j(:'u2', format('public.team_hub_create_channel(%L::uuid,%L,%L,%L::uuid[],gen_random_uuid())', :'ta','quiet','team','{}'))->>'channel_id' AS quiet \gset
+SELECT pg_temp.check(pg_temp.j(:'u3', format('public.team_hub_join_channel(%L::uuid,%L::uuid)', :'ta', :'quiet'))->>'ok'='true', 'setup: Person 3 joins #quiet');
+SELECT pg_temp.bpost(:'u2', :'ta', :'alone', '@channel anyone?', 'channel') AS pz1 \gset
+SELECT pg_temp.bpost(:'u2', :'ta', :'quiet', '@here anyone?', 'here') AS pz2 \gset
+SELECT pg_temp.bpost(:'u2', :'ta', :'quiet', '@channel anyone?', 'channel') AS pz3 \gset
+SELECT pg_temp.check((:'pz1')::jsonb->>'ok'='true' AND NOT ((:'pz1')::jsonb->'message' ? 'broadcast')
+ AND (SELECT broadcast_mention IS NULL FROM public.team_hub_messages WHERE id=((:'pz1')::jsonb#>>'{message,id}')::uuid)
+ AND pg_temp.recipients((:'pz1')::jsonb#>>'{message,id}')='{}'
+ AND (:'pz2')::jsonb->>'ok'='true' AND NOT ((:'pz2')::jsonb->'message' ? 'broadcast')
+ AND (SELECT broadcast_mention IS NULL FROM public.team_hub_messages WHERE id=((:'pz2')::jsonb#>>'{message,id}')::uuid)
+ AND (:'pz3')::jsonb#>>'{message,broadcast}'='channel' AND pg_temp.recipients((:'pz3')::jsonb#>>'{message,id}')=ARRAY[:'u3'],
+ 'a broadcast that reaches nobody is stored as a plain message (no broadcast, no chip, no recipients): @channel alone in #alone, and @here in #quiet where Person 3 only joined; @channel in #quiet still reaches Person 3');
+-- The activity column has one writer: the read door. Every other body leaves it alone.
+SELECT pg_temp.check((SELECT array_agg(p.proname::text ORDER BY p.proname) FROM pg_proc p WHERE p.pronamespace='public'::regnamespace AND p.prosrc ~ 'last_active_at')
+  =ARRAY['team_hub_mark_read','team_hub_post_message']
+ AND (SELECT array_agg(p.proname::text) FROM pg_proc p WHERE p.pronamespace='public'::regnamespace AND p.prosrc ~ 'last_active_at\s*=')=ARRAY['team_hub_mark_read']
+ AND NOT has_column_privilege('authenticated','public.team_hub_channel_members','last_active_at','UPDATE')
+ AND NOT has_column_privilege('authenticated','public.team_hub_channel_members','last_active_at','SELECT'),
+ 'last_active_at is written by team_hub_mark_read only (the post door only reads it), and the browser can neither read nor write it');
 -- A member with Team conversations off is not reached; a plain message carries no broadcast key.
 UPDATE public.tenant_members SET team_hub_access=false WHERE tenant_id=:'ta' AND user_id=:'u5';
 SELECT pg_temp.bpost(:'u2', :'ta', :'launch', '@channel second notice', 'channel') AS pc2 \gset
 SELECT pg_temp.post(:'u2', :'ta', :'launch', 'plain words') AS pp \gset
 UPDATE public.tenant_members SET team_hub_access=true WHERE tenant_id=:'ta' AND user_id=:'u5';
-SELECT pg_temp.check(pg_temp.recipients((:'pc2')::jsonb#>>'{message,id}')=(SELECT array_agg(x ORDER BY x) FROM unnest(ARRAY[:'u1', :'u3']) x)
+SELECT pg_temp.check(pg_temp.recipients((:'pc2')::jsonb#>>'{message,id}')=(SELECT array_agg(x ORDER BY x) FROM unnest(ARRAY[:'u1', :'u3', :'u4', :'u6', :'u8', :'u27', :'u28']) x)
  AND (:'pp')::jsonb->>'ok'='true' AND NOT ((:'pp')::jsonb->'message' ? 'broadcast')
  AND NOT ((:'pp')::jsonb->'message' ? 'broadcast_mention'),
  'a member whose Team conversations are off is not reached; a message without @channel or @here has no broadcast key at all');
@@ -1027,7 +1106,7 @@ SELECT pg_temp.bpost(:'u2', :'ta', :'launch', '@channel retry me', 'channel', '{
 SELECT pg_temp.bpost(:'u2', :'ta', :'launch', '@channel retry me', 'channel', '{}', :'crid') AS pr2 \gset
 SELECT pg_temp.bpost(:'u2', :'ta', :'launch', '@channel @CURA the plan?', 'channel', '{}') AS pa \gset
 SELECT pg_temp.check((:'pr2')::jsonb->>'duplicate'='true' AND (:'pr2')::jsonb#>>'{message,id}'=(:'pr1')::jsonb#>>'{message,id}'
- AND (SELECT count(*) FROM public.team_hub_message_broadcast_recipients WHERE message_id=((:'pr1')::jsonb#>>'{message,id}')::uuid)=3
+ AND (SELECT count(*) FROM public.team_hub_message_broadcast_recipients WHERE message_id=((:'pr1')::jsonb#>>'{message,id}')::uuid)=8
  AND NOT EXISTS(SELECT 1 FROM public.team_hub_message_agent_mentions WHERE message_id=((:'pa')::jsonb#>>'{message,id}')::uuid)
  AND pg_temp.accept(:'ta', :'u2', :'launch', (:'pa')::jsonb#>>'{message,id}', 'cura', 'reply', pg_temp.tok('PA'))->>'code'='not_allowed'
  AND pg_temp.accept(:'ta', :'u2', :'launch', (:'pc')::jsonb#>>'{message,id}', 'paige', 'reply', pg_temp.tok('PC'))->>'code'='not_allowed',
@@ -1119,7 +1198,7 @@ ROLLBACK;
 INSERT INTO mutant_results VALUES ('B1 broadcast in a DM', :'g');
 -- B2: @here reaches everyone (the activity rule skipped).
 BEGIN;
-SELECT pg_temp.mutate(pg_temp.post_sig(), $m$AND (broadcast='channel' OR m.last_read_at$m$, $m$AND (true OR m.last_read_at$m$);
+SELECT pg_temp.mutate(pg_temp.post_sig(), $m$AND (broadcast='channel' OR m.last_active_at$m$, $m$AND (true OR m.last_active_at$m$);
 SELECT pg_temp.bpost(:'u2', :'ta', :'launch', '@here mutant', 'here')#>>'{message,id}' AS mh \gset
 SELECT coalesce(NOT (:'u1'=ANY(pg_temp.recipients(:'mh'))),false) AS g \gset
 ROLLBACK;
@@ -1161,9 +1240,74 @@ GRANT SELECT ON public.team_hub_message_broadcast_recipients TO authenticated;
 SELECT coalesce(pg_temp.j(:'u2', 'SELECT to_jsonb(count(*)) FROM public.team_hub_message_broadcast_recipients')->>'error' LIKE 'permission denied%',false) AS g \gset
 ROLLBACK;
 INSERT INTO mutant_results VALUES ('B7 recipients table granted', :'g');
+-- B8: @here reads last_read_at again (the defect this round fixes): joining, a seat start and the toggle
+-- would read as "here".
+BEGIN;
+SELECT pg_temp.mutate(pg_temp.post_sig(), $m$m.last_active_at>=now()-interval '10 minutes'$m$, $m$m.last_read_at>=now()-interval '10 minutes'$m$);
+SELECT pg_temp.bpost(:'u2', :'ta', :'launch', '@here mutant', 'here')#>>'{message,id}' AS mh \gset
+SELECT coalesce(NOT (pg_temp.recipients(:'mh') && ARRAY[:'u3', :'u27', :'u28']),false) AS g \gset
+ROLLBACK;
+INSERT INTO mutant_results VALUES ('B8 here reads arrival last_read_at', :'g');
+-- B9: the author_kind guard removed: an agent reply to Person 4's question would count as Person 4 posting.
+BEGIN;
+SELECT pg_temp.mutate(pg_temp.post_sig(), $m$x.author_kind='user' AND x.deleted_at$m$, $m$x.deleted_at$m$);
+SELECT pg_temp.bpost(:'u2', :'ta', :'launch', '@here mutant', 'here')#>>'{message,id}' AS mh \gset
+SELECT coalesce(NOT (:'u4'=ANY(pg_temp.recipients(:'mh'))),false) AS g \gset
+ROLLBACK;
+INSERT INTO mutant_results VALUES ('B9 agent reply counts as the asker posting', :'g');
+-- B10: the read door stops recording activity: a person who just read would not be "here".
+BEGIN;
+SELECT pg_temp.mutate('public.team_hub_mark_read(uuid,uuid,uuid)'::regprocedure, $m$
+  , last_active_at=now()$m$, '');
+SELECT pg_temp.j(:'u9', format('public.team_hub_join_channel(%L::uuid,%L::uuid)', :'ta', :'launch'))->>'ok' AS j9 \gset
+SELECT pg_temp.read_door(:'u9', :'ta', :'launch', :'m1')->>'ok' AS r9 \gset
+SELECT pg_temp.bpost(:'u2', :'ta', :'launch', '@here mutant', 'here')#>>'{message,id}' AS mh \gset
+SELECT coalesce(:'j9'='true' AND :'r9'='true' AND :'u9'=ANY(pg_temp.recipients(:'mh')),false) AS g \gset
+ROLLBACK;
+INSERT INTO mutant_results VALUES ('B10 read door records no activity', :'g');
+-- B11: a broadcast that reaches nobody stored as a broadcast anyway.
+BEGIN;
+SELECT pg_temp.mutate(pg_temp.post_sig(), $m$  IF cardinality(reach)=0 THEN broadcast:=NULL; END IF;
+$m$, '');
+SELECT coalesce(NOT (pg_temp.bpost(:'u2', :'ta', :'alone', '@channel mutant', 'channel')->'message' ? 'broadcast'),false) AS g \gset
+ROLLBACK;
+INSERT INTO mutant_results VALUES ('B11 empty broadcast stored as one', :'g');
+
+-- The migration's own guard: run on its own, it accepts the bodies as they are now (this file's) and
+-- refuses a dependency or a replaced body that differs.
+\set guardsql `sed -n '/^DO \$guard\$/,/^END \$guard\$;/p' supabase/migrations/20271119030008_exp08_team_hub_a1c_writing_and_broadcast.sql`
+CREATE FUNCTION pg_temp.try(q text) RETURNS text LANGUAGE plpgsql AS $$
+BEGIN EXECUTE q; RETURN 'ran'; EXCEPTION WHEN OTHERS THEN RETURN SQLERRM; END $$;
+SELECT pg_temp.try(:'guardsql') AS gd0 \gset
+BEGIN;
+SELECT pg_temp.mutate('public._team_hub_participates(uuid,uuid)'::regprocedure, 'AND m.team_hub_access)', 'AND m.team_hub_access) -- drift');
+SELECT pg_temp.try(:'guardsql') AS gd1 \gset
+ROLLBACK;
+BEGIN;
+SELECT pg_temp.mutate('public.team_hub_mark_read(uuid,uuid,uuid)'::regprocedure, $m$ RETURN jsonb_build_object('ok',true);$m$, $m$ RETURN jsonb_build_object('ok',true,'drift',1);$m$);
+SELECT pg_temp.try(:'guardsql') AS gd2 \gset
+ROLLBACK;
+BEGIN;
+SELECT pg_temp.mutate(pg_temp.post_sig(), $m$ RETURN jsonb_build_object('ok',true,'message',public._team_hub_message_json(msg));
+END$m$, $m$ RETURN jsonb_build_object('ok',true,'message',public._team_hub_message_json(msg),'drift',1);
+END$m$);
+SELECT pg_temp.try(:'guardsql') AS gd3 \gset
+ROLLBACK;
+SELECT pg_temp.check(length(:'guardsql')>500 AND :'gd0'='ran'
+ AND :'gd1' LIKE 'Team Hub A1c dependency public._team_hub_participates(uuid,uuid) changed%'
+ AND :'gd2' LIKE 'Team Hub A1c source public.team_hub_mark_read(uuid,uuid,uuid) changed%'
+ AND :'gd3' LIKE 'Team Hub A1c source team_hub_post_message changed%',
+ 'the migration''s md5 guard accepts its own bodies and refuses a drifted dependency, read door or post door: '||:'gd0'||' / '||:'gd1'||' / '||:'gd2'||' / '||:'gd3');
+\echo 'PASS: the migration''s md5(prosrc) guard accepts the bodies it was written against (or its own) and refuses a drifted dependency, read door or post door'
 
 -- Controls: every probe holds on the unmutated migration.
 SELECT pg_temp.bpost(:'u2', :'ta', :'launch', '@here control', 'here')#>>'{message,id}' AS ch1 \gset
+BEGIN;
+SELECT pg_temp.j(:'u9', format('public.team_hub_join_channel(%L::uuid,%L::uuid)', :'ta', :'launch'))->>'ok' AS j9 \gset
+SELECT pg_temp.read_door(:'u9', :'ta', :'launch', :'m1')->>'ok' AS r9 \gset
+SELECT pg_temp.bpost(:'u2', :'ta', :'launch', '@here control', 'here')#>>'{message,id}' AS ch9 \gset
+SELECT (:'j9'='true' AND :'r9'='true' AND :'u9'=ANY(pg_temp.recipients(:'ch9'))) AS c9 \gset
+ROLLBACK;
 SELECT pg_temp.check(:'aqm'='true'
  AND pg_temp.states(:'u3', :'ta', :'board', ARRAY[:'q6'])->>'code'='not_found' AND pg_temp.states(:'u1', :'ta', :'vera_dm', ARRAY[:'q5'])->>'code'='not_found'
  AND pg_temp.st(pg_temp.states(:'u3', :'ta', :'launch', ARRAY[:'q1']), :'q1', 'zion') IS NULL
@@ -1173,13 +1317,15 @@ SELECT pg_temp.check(:'aqm'='true'
  AND pg_temp.bpost(:'u2', :'ta', :'dm23', '@channel control', 'channel')->>'code'='invalid'
  AND pg_temp.bpost(:'u2', :'ta', :'vera_dm', '@here control', 'here')->>'code'='invalid'
  AND NOT (:'u1'=ANY(pg_temp.recipients(:'ch1'))) AND NOT (:'u2'=ANY(pg_temp.recipients(:'ch1')))
+ AND NOT (pg_temp.recipients(:'ch1') && ARRAY[:'u3', :'u27', :'u28', :'u4']) AND :'c9'
+ AND NOT (pg_temp.bpost(:'u2', :'ta', :'alone', '@channel control', 'channel')->'message' ? 'broadcast')
  AND pg_temp.bpost(:'u2', :'ta', :'launch', '@everyone control', 'everyone')->>'code'='invalid'
  AND NOT (pg_temp.post(:'u2', :'ta', :'launch', 'plain control')->'message' ? 'broadcast')
  AND pg_temp.j(:'u2', 'SELECT to_jsonb(count(*)) FROM public.team_hub_message_broadcast_recipients')->>'error' LIKE 'permission denied%',
  'mutants: every probe holds on the unmutated migration (controls)');
-SELECT pg_temp.check((SELECT count(*) FROM mutant_results)=12 AND NOT EXISTS(SELECT 1 FROM mutant_results WHERE guarded IS NOT FALSE),
- 'mutants: all 12 weakened guards break the property they protect: '||(SELECT string_agg(mutant||'='||coalesce(guarded::text,'null'), '; ' ORDER BY mutant) FROM mutant_results));
-\echo 'PASS: 12 of 12 mutants (conversation visibility, others reading failed or stale turns, writing masked as replied, writing for the asker only, workspace door, broadcast in a DM, @here reaching the inactive, author as recipient, conversations-off member reached, unknown kind, plain JSON changed, recipients granted) each fail their probe; controls hold'
+SELECT pg_temp.check((SELECT count(*) FROM mutant_results)=16 AND NOT EXISTS(SELECT 1 FROM mutant_results WHERE guarded IS NOT FALSE),
+ 'mutants: all 16 weakened guards break the property they protect: '||(SELECT string_agg(mutant||'='||coalesce(guarded::text,'null'), '; ' ORDER BY mutant) FROM mutant_results));
+\echo 'PASS: 16 of 16 mutants (conversation visibility, others reading failed or stale turns, writing masked as replied, writing for the asker only, workspace door, broadcast in a DM, @here reaching the inactive, author as recipient, conversations-off member reached, unknown kind, plain JSON changed, recipients granted, @here reading arrival last_read_at, an agent reply counted as the asker posting, the read door recording nothing, an empty broadcast stored as one) each fail their probe; controls hold'
 
 RESET ROLE;
 \c postgres

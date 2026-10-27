@@ -6792,14 +6792,23 @@ owner token at the legacy `accept_tenant_invite` (it used to seat an Admin silen
 the owner refusals as written (by HINT code, 403/400/409) instead of a 500. Round 2 (2026-10-27): the
 migration runs in one transaction behind an md5 incumbent guard on the 10 production functions it replaces;
 nobody but the account holder may invite an address that has a live owner invitation (Settings → Team, and
-any token INSERT under a person's JWT of a kind that seats someone; not the service role, and not a
-seat-creating invitation of another kind created before the owner invitation); the
+any token INSERT under a person's JWT of a kind that seats someone; that rule alone does not stop the service
+role, an invitation created before the owner invitation, or one with no or another address being created); the
 representative's legal-owner record is no longer stamped with the invitee (it would block deleting their
 account); `peek_tenant_invite` names the legal owner only while the invitation is valid. Round 3 (2026-10-27):
 that address rule covers every seat-creating kind (all but `consumer` and `agency_team`; round 2 checked `team`
 only) and such an INSERT must store its address trimmed and lower case; an owner invitation whose legal owner
 was deleted is marked (`business_owner_removed_at`) and never resent; acceptance locks the tenant row and the
-sender's seat FOR SHARE before re-checking the sender (lock asserted on the body, the race not driven). Settings → Team does
+sender's seat FOR SHARE before re-checking the sender (lock asserted on the body, the race not driven). Round 4
+(2026-10-27, B1): the address rule compared addresses only when an invitation was created, so an admin's
+invitation with no or a made-up address (or one from before the owner invitation, or from the service role)
+could still be accepted through `/join` by the owner invitee, whose owner invitation then failed "already
+belongs". Now a new non-owner seat is refused at the seat, whoever writes it, for a person whose address has a
+live owner invitation in that business (`trg_tenant_members_owner_invitation_waiting`, HINT
+`OWNER_INVITE_WAITING`): every accept path and grant is covered; owner seats and seats the person already has
+are not refused. **Residual until I2, stated:** a co-owner with Setup `owner_full` can withdraw or disable the
+holder's legal-owner invitation through Setup (delete the record, leave it out of the saved list, or retype it
+to an individual). Settings → Team does
 not offer Owner yet (I3); PAIGE has no owner path yet (I4). **Correction (§13, 2026-10-27): the first entry
 said no screen offers Owner — the mounted Agency Team screen does** (`src/agency/team.tsx` `INVITE_ROLES`,
 `useAgencyPeople.ts` → `create_tenant_invite_token`). That choice used to report "Invite created" and never

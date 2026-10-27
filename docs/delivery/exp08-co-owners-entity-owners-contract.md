@@ -527,10 +527,37 @@ Migrations `20271117020008_exp08_owner_invitations.sql` (I1; the contract first 
     survives `create_solo_team_invite`'s withdraw (which matches `lower(email)` without trimming) and is accepted
     first (accept trims), pre-empting the owner invitation (case 1.52 drives exactly that chain under the mutant).
     The service role stays exempt. The holder's own Settings → Team invitation withdraws the owner invitation
-    before inserting, so it never trips this (case 1.44). **Not covered, stated:** an invitation of another
-    seat-creating kind that already existed BEFORE the owner invitation was created (for example a managing
-    agency's `subaccount_owner` invitation on a sub-account): the holder's create withdraws live `team`
-    invitations to that address only, as production does. Owed to I2/I3 if the owner wants it closed.
+    before inserting, so it never trips this (case 1.44). The token guard alone does not stop an invitation
+    that already existed BEFORE the owner invitation, one inserted by the service role (exempt), or one with no
+    address or another address; those can still be **created**, and since round 4 none of them can be **used**
+    by that person (next bullet). Each of the rule's conditions is pinned by a kept case and a mutant (round 4,
+    S1: another business's owner invitation, a used one, a withdrawn one and a live non-owner team invitation
+    do not block; a service-role INSERT is exempt; cases 4.30-4.34, mutants X01-X05).
+  - **I1 round 4 (B1): the seat-side rule.** `_tenant_member_owner_invitation_waiting` (new, SECURITY DEFINER,
+    owned by postgres, no client EXECUTE), trigger `trg_tenant_members_owner_invitation_waiting` BEFORE INSERT ON
+    `tenant_members` FOR EACH ROW: a **new non-owner seat** is refused for a person whose stored address
+    (`lower(btrim(...))`, confirmed or not) has a live owner invitation in that business (kind `team`, role Owner,
+    `uses = 0`, not revoked, not expired, not archived), **whoever writes it**: the browser, postgres-owned code
+    and the service role alike. Why at the seat and not only in `accept_tenant_invite`: the address rule above
+    compared addresses only when an invitation was created, `accept_tenant_invite`'s generic branch never
+    compares the accepting person's address, and its `subaccount_owner` branch compares it only when one is
+    stored, so an admin's `staff` (or any other kind) invitation with no or a made-up address, or a
+    `subaccount_owner` invitation with no address on a Solo account, could be accepted through `/join` by the
+    owner invitee, who then held a seat and whose owner invitation failed *"this account already belongs to the
+    workspace"* (V1, V1b, V2). One trigger covers every path that creates that seat: `accept_tenant_invite` (generic
+    branch and the `subaccount_owner` Admin fallback), `accept_solo_team_invite` for a non-owner invitation,
+    `accept_invitation` and the `accept-invite` edge function's service-role seat write (`public.invitations`),
+    `grant_tenant_member_role` and `agency_enter_subaccount`, including invitations created before the owner
+    invitation or by the service role. **Not refused:** an owner seat (the owner invitation's own acceptance; and
+    `accept_tenant_invite`'s first owner of a shell, which needs a business with no active owner, where no owner
+    invitation can be accepted because its sender is no longer the account holder) and a write onto a seat the
+    person already has (an `INSERT … ON CONFLICT` re-accept, which a BEFORE INSERT trigger also sees; such a
+    person's owner invitation could not seat them anyway). The person reads *"You have an owner invitation to
+    Northstar Studio waiting. Open that invitation to join as an owner. Nothing changed."*; someone granting them
+    a seat reads *"This person has an owner invitation to Northstar Studio waiting, so they join by accepting it.
+    Only the account holder can change it, from Settings → Team. Nothing changed."* (HINT `OWNER_INVITE_WAITING`,
+    409 in `solo-team-invitations` and `accept-invite`; `/join` shows the database sentence). Cases 4.01-4.28,
+    mutants S01-S11.
   - **DELETE of a non-owner token stays allowed** to tenant admins through the `FOR ALL` policy, **named, not
     changed:** that includes used tokens (it erases invitation history) and pending `subaccount_owner` and
     `agency_team` tokens (it withdraws an agency's or the platform's pending invitation). Every such DELETE only
@@ -690,6 +717,13 @@ looked up (no membership oracle). Each locks the tenant's active owner rows `FOR
   live owner token, refuses delete — **including the implicit delete of ids missing from `v_keep`
   (`:767`)** — and changes of `owner_kind` or `representative_user_id`, with the authored message (never
   a raw FK error). Revoked/used tokens don't block (SET NULL + revoke, §5.1).
+  **I1 residual until this lands (stated, review round 4, S2):** today `save_solo_setup_context` is unchanged, so
+  anyone whose Setup access is `owner_full` (every owner seat, a co-owner included, `solo_setup_access_scope`
+  `20261046000000:200`) can withdraw or disable the account holder's invitation for a **legal owner** through
+  Setup: deleting that record, or saving the owners list without it (the implicit delete, `:767`), revokes the
+  invitation (§5.1's revoke trigger); retyping the record to an individual makes the invitation refuse at
+  accept (*"that owner seat has changed"*). It grants nobody anything, and a person-owner invitation is
+  untouched, but it changes an owner invitation without the account holder. Closed by I2's refusal here.
 - **Global role sync / `protect_owner_admin`.** The live `sync_tenant_member_to_user_roles`
   (`20271115040008:76-149`) has **no** super_admin skip. `map_tenant_role_to_app_role` maps both `owner` and
   `admin` to global `admin` (`20270509000000:61-65`), so Make Admin and step-down change nothing global; but
@@ -1041,6 +1075,7 @@ address"*), so its Admin and Member invitations can never be accepted either. `s
 | Token guard | **browser** (authenticated, guarded): `WorkspaceSettingsPanel.tsx:90,189`, `ContactPortalPanel.tsx:109,209`, `PortalInvitationManager.tsx:36` (each sets only `revoked_at` NULL→now; an owner row is now refused, e.g. revoking an owner token from the legacy workspace panel). **Service role** (exempt by `auth.uid() IS NULL`): `send-portal-invite/index.ts:137,190,253`, **`agency-invite-member/index.ts:171-182`** (`kind='agency_team'`, `default_role='member'`, `agency_role` set, `created_by` = the caller; proven in I1). **Postgres-owned definer functions** (exempt by `current_user = 'postgres'`; I1 proves each one's `pg_proc.proowner` is `postgres`): `create_tenant_invite_token` INSERT (`20260824000000:100-106`); `create_solo_team_invite` (`20271115040008:1280,1287`); `resend_solo_team_invite` (`:1329`); `accept_solo_team_invite` (`:1389`); `accept_tenant_invite` uses (`:1504,1627`); `set_client_portal_access` revoke (`20271111010000:441`); `create_client_portal_invitation` stamps `portal_operation_id`, `portal_proposal_hash`, `portal_receipt_id` (`20271108233000:162`); the new `tenant_business_owners` BEFORE DELETE trigger (§5.1); `revoke_solo_team_invite` (`20261047000000:210`) and `archive_solo_team_invite` (`20261105000000:87`) |
 | CHECK `business_owner_id` null unless `is_owner` | every writer that clears `is_owner` must clear it in the same statement: `20260803190000`, `20260804020000`, `20261150000000`, `20271113630009`, `20271115040008`, `20271116020008` (re-emitted where needed; proven by case 7). **I1 re-emits none of them: DEFERRED to I2** (with `revoke_co_owner`). Interim: such a demotion fails closed on the CHECK, nothing changes (case 7.13); no seat that names a legal owner exists or can be created from a shipped surface before I3 |
 | Token guard, address of a live owner invitation (I1 round 2, S6; round 3, S-A/S-C every seat-creating kind, normalised address) | producers of seat-creating tokens (every kind but `consumer`, `agency_team`) under a JWT; production's only postgres-owned token INSERTers are `create_solo_team_invite` and `create_tenant_invite_token` (pg_proc read 2026-10-27), both storing `lower(trim(email))`; no browser or edge code inserts tokens under a person's JWT: `create_tenant_invite_token` callers (`WorkspaceSettingsPanel.tsx`, `ContactPortalPanel.tsx`, `ClientManagementDashboard.tsx`, `ContactCardRail.tsx`, `ContactDetail.tsx`, `AgencyBoard.tsx`, `useAgencyPeople.ts`) and direct INSERTs; `create_solo_team_invite` (holder replace path withdraws first; non-holders already refused); service role exempt |
+| Seat-side rule, owner invitation waiting (I1 round 4, B1) | producers of a new `tenant_members` row on production (pg_proc read 2026-10-27, prosrc `INSERT INTO tenant_members`): `accept_tenant_invite`, `accept_solo_team_invite`, `accept_invitation` (authenticated), `grant_tenant_member_role`, `change_user_role` (operator path; it catches its own seat-write error and audits `role:change:mirror_failed`), `agency_enter_subaccount` (both forms), `operator_provision_tenant`, `provision_tenant`, `provision_tenant_as`, `platform_grant_promotional_solo` (new tenants: no invitation can exist), the trigger `sync_user_role_to_tenant_member`; edge: `accept-invite` (`team-seat.ts`, service role; maps the HINT to 409 `owner_invite_waiting`). Owner seats and existing seats are never refused (cases 2.01, 4.26) |
 | `solo-team-invitations` owner refusals by HINT (S5) | consumers: Settings → Team (`team-workspace.tsx` shows `error`), PAIGE team tools through the same edge; statuses 403/400/409 replace 500 for these refusals only |
 | `create_tenant_invite_token` Owner sentence per account type | consumer: Agency Team screen `doInvite` → `flash(r.error)` (shown verbatim); `operator_company_workspace_authority.sql` re-pinned |
 | `team_member_holdings` `billing_contacts` | `team-departure.tsx`, `team-workspace.tsx` tolerate the new key (Vitest) |

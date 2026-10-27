@@ -75,6 +75,8 @@ export type GatewayConnection = {
   status: GatewayStatus;
   health: GatewayHealth;
   lastCheckedAt: string | null;
+  /** The probe's CLOSED refusal code (schema-enforced shape), or null. Never provider prose. */
+  lastErrorCode: string | null;
   grantedScopes: string[];
   visibility: string | null;
   serverUrlHost: string | null;
@@ -567,6 +569,13 @@ function scopes(value: unknown): string[] {
  * never added, described in words the server never said. Fabricated state is worse than a visible
  * read failure, because nothing on screen marks it as a guess (§13).
  */
+/** The closed-code shape the database CHECK enforces. Anything else (an unexpected value,
+ * a regression that ships prose) reads as null here too — the same vocabulary discipline at
+ * the browser edge as at the write, so the why-line can only ever speak in closed codes. */
+function closedCode(value: unknown): string | null {
+  return typeof value === "string" && /^[a-z0-9_]{1,64}$/.test(value) ? value : null;
+}
+
 function readRow(value: unknown): GatewayConnection | null {
   if (!value || typeof value !== "object") return null;
   const r = value as Record<string, unknown>;
@@ -589,6 +598,7 @@ function readRow(value: unknown): GatewayConnection | null {
     status,
     health: HEALTHS.has(health) ? health : "unknown",
     lastCheckedAt: str(r.last_checked_at),
+    lastErrorCode: closedCode(r.last_error_code),
     grantedScopes: scopes(r.granted_scopes),
     visibility: str(r.visibility),
     serverUrlHost: str(r.server_url_host),

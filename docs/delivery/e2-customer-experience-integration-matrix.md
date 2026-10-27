@@ -1,5 +1,25 @@
 # Experience 02 — Customer Experience Integration Matrix
 
+## October27 — financial Play target context, source increment
+
+O04/O10/O14/O16: the original Finance Forecast view now reuses focused Game Plan
+review/F7 financial targets and shared Executive target presentation. Target,
+actual, variance, period, currency, sampled coverage and owning Play remain
+original. Current actor/business mismatch retires facts; original issuer expiry
+and partial coverage withhold unsupported conclusions. Empty financial samples
+do not claim no saved goals. Existing forecast-input gaps, seven Finance routes,
+VERA and original writer/authorization contracts remain intact. No budget,
+forecast, prediction, provider, target store, approval or action receipt is added.
+
+Functional source/controlled verification is separate from release. Visual actual
+synthetic desktop/narrow and Mineral/Obsidian/product-font proof is recorded in
+[the target UI evidence](../evidence/ui-delivery/e2-financial-play-targets.md).
+Experiential local keyboard disclosure, original-record route/Back and synthetic
+discussion retention are bounded; actual Play, current ordinary owner, negative
+roles/cohorts, native zoom, Live and production reload still owe proof. Founder
+NOT_ACCEPTED; all19 definitions, nine analytics, original9/0+12/0/4, protected
+monthly UNKNOWN/UNRETRIED, algorithms and catalogue readiness remain unchanged.
+
 ## October27 UTC — original private host source released, manual journey still open
 
 O07/O14/O16/O19 prerequisite#2952 merged7ff9a6d884ec8ce6ec528cbb339e5bb74ced6874,

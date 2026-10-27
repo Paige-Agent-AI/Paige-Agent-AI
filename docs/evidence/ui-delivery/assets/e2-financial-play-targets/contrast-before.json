@@ -1,0 +1,35 @@
+{
+  "backgrounds": [
+    {
+      "color": "rgb(251, 249, 245)",
+      "tag": "DIV"
+    },
+    {
+      "color": "rgb(246, 245, 241)",
+      "tag": "DIV"
+    },
+    {
+      "color": "rgb(251, 249, 245)",
+      "tag": "MAIN"
+    },
+    {
+      "color": "rgb(251, 249, 245)",
+      "tag": "SECTION"
+    },
+    {
+      "color": "rgb(232, 229, 223)",
+      "tag": "DIV"
+    },
+    {
+      "color": "rgb(249, 250, 251)",
+      "tag": "BODY"
+    },
+    {
+      "color": "rgb(249, 250, 251)",
+      "tag": "HTML"
+    }
+  ],
+  "color": "rgb(139, 112, 73)",
+  "fontSize": "14px",
+  "text": "Open owning Play"
+}

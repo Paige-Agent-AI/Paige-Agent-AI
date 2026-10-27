@@ -19,20 +19,24 @@
 -- inviting admins and members, "keep as today".
 --
 -- WHAT CHANGES (each re-emitted function is production's body verbatim except the lines marked
--- "EXP08 owners (20271116130008)"; supabase/tests/exp08_owner_invitations.sql puts those lines back
+-- "EXP08 owners (20271117020008)"; supabase/tests/exp08_owner_invitations.sql puts those lines back
 -- and compares byte for byte against production's md5(prosrc), read 2026-10-27):
 --   Schema   tenant_business_owners: UNIQUE (tenant_id, id); owner_seat_vacant_since.
 --            tenant_members.business_owner_id (composite FK, NO ACTION; only on an owner seat; one
 --            seat per legal owner). tenant_invite_tokens.business_owner_id (composite FK, SET NULL of
 --            that column only; only on a team owner invitation; one live invitation per legal owner).
---            A linked legal owner is never an individual. Deleting a legal owner revokes its
+--            tenant_invite_tokens.business_owner_removed_at (set when that legal owner is deleted, so
+--            the unlinked invitation is never resent as a personal owner invitation).
+--            A linked legal owner is never an individual. Deleting a legal owner revokes and marks its
 --            invitations first. No new table; no backfill (R8).
 --   Guards   guard_tenant_invite_token_identity (new, SECURITY INVOKER): an authenticated writer may
 --            insert only its own non-owner tokens, may change ONLY revoked_at (NULL -> a value, once;
 --            the first value is kept), and may not touch an owner token at all. Service role
 --            (auth.uid() IS NULL) and postgres-owned code are exempt; the platform owner is NOT.
---            Under any JWT (postgres-owned code included) no team invitation is inserted for an
---            address with a live owner invitation in the same business.
+--            Under any JWT (postgres-owned code included), for every kind that seats a person in
+--            tenant_members (every kind but consumer and agency_team), an INSERT is refused for an
+--            address with a live owner invitation in the same business, and its address must be
+--            stored trimmed and in lower case.
 --            guard_tenant_member_owner_flag also refuses any client write of business_owner_id.
 --            guard_tenant_owner_only_columns becomes SECURITY INVOKER; the platform owner keeps
 --            billing/hierarchy but no longer moves owner_user_id directly; the #227 carve-out now also
@@ -40,9 +44,10 @@
 --            is added for the later recovery increment. Every owner_user_id change is audited.
 --   Invites  create_solo_team_invite takes Owner (account holder only, Solo account, team
 --            conversations on, a person or one non-individual legal owner, inline records allowed);
---            resend/revoke/archive of an owner invitation are the account holder's;
---            accept_solo_team_invite seats an owner after re-checking the sender is STILL the account
---            holder and the legal owner's seat is still open, and names the representative;
+--            resend/revoke/archive of an owner invitation are the account holder's, and resend refuses
+--            one whose legal owner was deleted; accept_solo_team_invite seats an owner after re-checking,
+--            with the tenant row and the sender's seat locked FOR SHARE, that the sender is STILL the
+--            account holder and the legal owner's seat is still open, and names the representative;
 --            accept_tenant_invite REFUSES an owner token (it used to turn it into Admin silently);
 --            create_tenant_invite_token refuses Owner for every kind and caller, with a sentence that
 --            is true for the account it is asked on (agency/enterprise vs any other).
@@ -67,12 +72,22 @@
 --        invite an Admin or Member here."
 --     The Owner option itself stays on that screen in this increment: removing a shipped option is an
 --     owner decision (§58), owed for I3.
---   * NEW REFUSAL FOR ADMINS AND CO-OWNERS: nobody but the account holder may invite an address that
---     already has a live owner invitation in the same business, through any path: Settings → Team's
---     create_solo_team_invite (which would replace it), create_tenant_invite_token(kind 'team'), or a
---     direct token INSERT (which would pre-empt it). They read: "There's already an owner invitation
---     for this address. Only the account holder can change it." (the two token paths add ", from
---     Settings → Team"). The account holder's own Settings → Team invitation replaces it as before.
+--   * NEW REFUSAL FOR ADMINS AND CO-OWNERS: while an address has a live (unused, unrevoked, unexpired)
+--     owner invitation in a business, nobody but the account holder creates another invitation to it
+--     there, on exactly these paths: Settings → Team's create_solo_team_invite (which would replace
+--     it), and any INSERT into tenant_invite_tokens under a person's JWT of a kind that seats someone
+--     in tenant_members (every kind but consumer and agency_team: team, subaccount_owner, and any
+--     other kind accept_tenant_invite's generic branch takes), whether a direct row INSERT or
+--     postgres-owned code such as create_tenant_invite_token. The address is compared trimmed and
+--     case-insensitively, and such an INSERT must store it trimmed and in lower case (one browser
+--     direct insert of " Pat@X " would otherwise survive the holder's withdraw query). They read:
+--     "There's already an owner invitation for this address. Only the account holder can change it."
+--     (the token INSERT paths add ", from Settings → Team"). The account holder's own Settings → Team
+--     invitation replaces it as before. NOT covered, stated: the service role (send-portal-invite,
+--     agency-invite-member: auth.uid() IS NULL, exempt throughout this guard); and an invitation of
+--     another seat-creating kind (e.g. subaccount_owner) that already existed BEFORE the owner
+--     invitation was created, which the holder's create does not withdraw (it withdraws live team
+--     invitations to that address only, as production does).
 --   * accept_tenant_invite turned an owner token into an Admin seat and reported success. It refuses.
 --   * The sole active owner of a holderless tenant could set owner_user_id to themselves with a direct
 --     client UPDATE (the #227 carve-out). Now only through postgres-owned code (accept_tenant_invite's
@@ -191,7 +206,12 @@ CREATE UNIQUE INDEX IF NOT EXISTS tenant_invite_tokens_one_live_invite_per_busin
   WHERE business_owner_id IS NOT NULL AND uses = 0 AND revoked_at IS NULL;
 COMMENT ON COLUMN public.tenant_invite_tokens.business_owner_id IS
   'EXP08 owners: on a team OWNER invitation, the legal owner the invitee will act for. One unused, '
-  'unrevoked invitation per legal owner. Nulled (and the token revoked first) if the record is deleted.';
+  'unrevoked invitation per legal owner. Nulled (and the token revoked and marked first) if the record is deleted.';
+ALTER TABLE public.tenant_invite_tokens ADD COLUMN IF NOT EXISTS business_owner_removed_at timestamptz NULL;
+COMMENT ON COLUMN public.tenant_invite_tokens.business_owner_removed_at IS
+  'EXP08 owners: set when the legal owner this invitation was for is deleted (its business_owner_id is '
+  'then nulled by the FK). resend_solo_team_invite refuses such an invitation, so it is never reissued '
+  'as an owner invitation for a person in their own right. Written only by postgres-owned code.';
 
 -- ── 5.2 Helpers (no client EXECUTE: every caller is a postgres-owned definer function) ─────────────
 -- A Solo-shell account: Standalone or Sub-account, and not a platform company workspace. The owner
@@ -336,9 +356,10 @@ CREATE TRIGGER trg_tenant_business_owners_seated_kind
   BEFORE UPDATE OF owner_kind ON public.tenant_business_owners
   FOR EACH ROW EXECUTE FUNCTION public._business_owner_seated_kind_guard();
 
--- Deleting a legal owner first REVOKES its invitations, so a token whose link the FK then nulls is
--- always revoked and can never become a person-owner invitation. Definer, owned by postgres: its
--- token UPDATE runs as postgres, which the token guard exempts, whoever deletes the record.
+-- Deleting a legal owner first REVOKES and MARKS every invitation that names it (live or already
+-- revoked), so a token whose link the FK then nulls is always revoked, and resend can tell it from a
+-- person-owner invitation and refuses it. Definer, owned by postgres: its token UPDATE runs as
+-- postgres, which the token guard exempts, whoever deletes the record.
 CREATE OR REPLACE FUNCTION public._business_owner_revoke_invitations()
  RETURNS trigger
  LANGUAGE plpgsql
@@ -347,8 +368,8 @@ CREATE OR REPLACE FUNCTION public._business_owner_revoke_invitations()
 AS $function$
 BEGIN
   UPDATE public.tenant_invite_tokens
-     SET revoked_at = COALESCE(revoked_at, now()), updated_at = now()
-   WHERE tenant_id = OLD.tenant_id AND business_owner_id = OLD.id AND revoked_at IS NULL;
+     SET revoked_at = COALESCE(revoked_at, now()), business_owner_removed_at = now(), updated_at = now()
+   WHERE tenant_id = OLD.tenant_id AND business_owner_id = OLD.id;
   RETURN OLD;
 END;
 $function$;
@@ -370,12 +391,15 @@ CREATE OR REPLACE FUNCTION public.guard_tenant_invite_token_identity()
  SET search_path TO 'public'
 AS $function$
 BEGIN
-  -- The address of a live owner invitation is the account holder's. No other invitation to it may be
-  -- created in the same business under a person's JWT, by a direct INSERT or by postgres-owned code
-  -- (create_tenant_invite_token): accepting it first would pre-empt the owner invitation. The holder's
-  -- own Settings → Team invitation withdraws the owner invitation before inserting, so it never trips
-  -- this. The service role (auth.uid() IS NULL) is exempt, as everywhere in this guard.
-  IF TG_OP = 'INSERT' AND auth.uid() IS NOT NULL AND NEW.kind = 'team'
+  -- The address of a live owner invitation is the account holder's. No other invitation that would
+  -- seat a person in tenant_members (every kind but consumer and agency_team: accept_solo_team_invite
+  -- takes 'team', accept_tenant_invite seats 'subaccount_owner' and every kind its generic branch
+  -- takes) may be created to it in the same business under a person's JWT, by a direct INSERT or by
+  -- postgres-owned code (create_tenant_invite_token): accepting it first would pre-empt the owner
+  -- invitation. The holder's own Settings → Team invitation withdraws the owner invitation before
+  -- inserting, so it never trips this. The service role (auth.uid() IS NULL) is exempt, as everywhere
+  -- in this guard.
+  IF TG_OP = 'INSERT' AND auth.uid() IS NOT NULL AND NEW.kind NOT IN ('consumer', 'agency_team')
      AND NULLIF(btrim(NEW.email), '') IS NOT NULL
      AND EXISTS (SELECT 1 FROM public.tenant_invite_tokens tk
                   WHERE tk.tenant_id = NEW.tenant_id AND tk.kind = 'team' AND tk.default_role = 'owner'::public.tenant_role
@@ -383,6 +407,15 @@ BEGIN
                     AND tk.uses = 0 AND tk.revoked_at IS NULL AND tk.expires_at > now()) THEN
     RAISE EXCEPTION 'There''s already an owner invitation for this address. Only the account holder can change it, from Settings → Team.'
       USING ERRCODE = '42501', HINT = 'OWNER_INVITE_EXISTS_FOR_ADDRESS';
+  END IF;
+  -- Those same invitations store their address trimmed and in lower case, as both postgres-owned
+  -- writers already do. The withdraw and compare queries in create_solo_team_invite match on
+  -- lower(email) without trimming, so a padded address inserted directly would survive the account
+  -- holder's withdraw and still be accepted (accept trims), pre-empting the owner invitation.
+  IF TG_OP = 'INSERT' AND auth.uid() IS NOT NULL AND NEW.kind NOT IN ('consumer', 'agency_team')
+     AND NEW.email IS DISTINCT FROM lower(btrim(NEW.email)) THEN
+    RAISE EXCEPTION 'INVITE_GUARD: an invitation''s email address is stored trimmed and in lower case'
+      USING ERRCODE = '42501';
   END IF;
 
   IF auth.uid() IS NULL OR current_user = 'postgres' THEN
@@ -431,11 +464,12 @@ END;
 $function$;
 REVOKE ALL ON FUNCTION public.guard_tenant_invite_token_identity() FROM PUBLIC, anon, authenticated, service_role;
 COMMENT ON FUNCTION public.guard_tenant_invite_token_identity() IS
-  'EXP08 owners (20271116130008): an authenticated writer of tenant_invite_tokens may insert only its '
+  'EXP08 owners (20271117020008): an authenticated writer of tenant_invite_tokens may insert only its '
   'own (created_by = auth.uid()) non-owner tokens, may change only revoked_at (NULL -> value, once), '
   'and may not update or delete an owner token. Service role and postgres-owned code are exempt from '
-  'those rules. Under any JWT, postgres-owned code included, no team invitation may be inserted for an '
-  'address that has a live owner invitation in the same business.';
+  'those rules. Under any JWT, postgres-owned code included, an invitation of a seat-creating kind '
+  '(every kind but consumer and agency_team) may not be inserted for an address that has a live owner '
+  'invitation in the same business, and must store its address trimmed and in lower case.';
 CREATE TRIGGER trg_tenant_invite_token_identity_guard
   BEFORE INSERT OR UPDATE OR DELETE ON public.tenant_invite_tokens
   FOR EACH ROW EXECUTE FUNCTION public.guard_tenant_invite_token_identity();
@@ -477,7 +511,7 @@ CREATE OR REPLACE FUNCTION public.guard_tenant_member_owner_flag()
  SET search_path TO 'public'
 AS $function$
 BEGIN
-  -- EXP08 owners (20271116130008): which legal owner a seat acts for is written ONLY by trusted server code
+  -- EXP08 owners (20271117020008): which legal owner a seat acts for is written ONLY by trusted server code
   -- (accept_solo_team_invite now; the co-owner functions in a later increment). Unlike the ownership
   -- checks below, the platform owner is NOT exempt: a super admin changes owners only through audited
   -- owner recovery, never by editing a seat.
@@ -527,7 +561,7 @@ CREATE OR REPLACE FUNCTION public.guard_tenant_owner_only_columns()
 RETURNS trigger LANGUAGE plpgsql SECURITY INVOKER SET search_path TO 'public'
 AS $function$
 BEGIN
-  -- EXP08 owners (20271116130008): the platform owner keeps billing and hierarchy, but moves the account
+  -- EXP08 owners (20271117020008): the platform owner keeps billing and hierarchy, but moves the account
   -- holder of record only through owner recovery (below), never by a direct UPDATE.
   IF auth.uid() IS NULL
      OR (public.is_platform_owner() AND NEW.owner_user_id IS NOT DISTINCT FROM OLD.owner_user_id) THEN
@@ -536,7 +570,7 @@ BEGIN
 
   -- #227 DEFECT-2 carve-out, narrowed by EXP08 (20271116020008): an authenticated caller may only
   -- ESTABLISH themselves (NULL -> auth.uid()) as holder, and only as the tenant's SOLE active owner.
-  -- EXP08 owners (20271116130008): and only inside trusted postgres-owned code (accept_tenant_invite),
+  -- EXP08 owners (20271117020008): and only inside trusted postgres-owned code (accept_tenant_invite),
   -- never by a direct client UPDATE. This guard runs SECURITY INVOKER, so current_user is real.
   IF current_user = 'postgres'
      AND OLD.owner_user_id IS NULL
@@ -563,7 +597,7 @@ BEGIN
     RETURN NEW;
   END IF;
 
-  -- EXP08 owners (20271116130008): owner recovery. platform_owner_recovery (a later increment) sets
+  -- EXP08 owners (20271117020008): owner recovery. platform_owner_recovery (a later increment) sets
   -- paige.owner_recovery transaction-locally around its one UPDATE. The flag alone is no credential
   -- (any role can set_config it): it counts only inside postgres-owned code, and only for a super admin.
   IF current_user = 'postgres'
@@ -582,7 +616,7 @@ BEGIN
   RETURN NEW;
 END; $function$;
 COMMENT ON FUNCTION public.guard_tenant_owner_only_columns() IS
-  '#227 F.0 (§9), narrowed by EXP08 20271116020008 and 20271116130008. SECURITY INVOKER, so '
+  '#227 F.0 (§9), narrowed by EXP08 20271116020008 and 20271117020008. SECURITY INVOKER, so '
   'current_user is the real role. Service role and migrations (auth.uid() IS NULL) are exempt. The '
   'platform owner may change billing and hierarchy but NOT owner_user_id. owner_user_id changes for an '
   'authenticated caller only inside postgres-owned code, and only (a) NULL -> auth.uid() as the '
@@ -623,7 +657,7 @@ BEGIN
   IF _team_hub_access IS NULL THEN
     RAISE EXCEPTION 'say whether team conversations are on or off for this invitation';
   END IF;
-  -- EXP08 owners (20271116130008): only the ACCOUNT HOLDER invites an Owner (owner rulings R1, R4), on a
+  -- EXP08 owners (20271117020008): only the ACCOUNT HOLDER invites an Owner (owner rulings R1, R4), on a
   -- Solo account, with team conversations on, as a person or for ONE non-individual legal owner of
   -- this business that has no seat and no other live invitation. Everyone else keeps inviting Admins
   -- and Members exactly as before (R14, "keep as today").
@@ -748,9 +782,15 @@ BEGIN
   WHERE id = _invite_id AND tenant_id = _tenant AND kind = 'team' FOR UPDATE;
   IF _old.id IS NULL THEN RAISE EXCEPTION 'team invitation not found'; END IF;
   IF _old.uses > 0 THEN RAISE EXCEPTION 'an accepted invitation cannot be resent'; END IF;
-  -- EXP08 owners (20271116130008): an owner invitation is the account holder's to resend.
+  -- EXP08 owners (20271117020008): an owner invitation is the account holder's to resend.
+  -- One whose legal owner was deleted is never reissued: the FK has nulled its link, and resending it
+  -- would make it an owner invitation for the person in their own right.
   IF _old.default_role = 'owner'::public.tenant_role THEN
     PERFORM public._assert_tenant_account_holder(_actor, _tenant, 'invitation');
+    IF _old.business_owner_removed_at IS NOT NULL THEN
+      RAISE EXCEPTION 'This owner invitation was for a legal owner that has since been removed, so it can''t be sent again. Send a new owner invitation instead.'
+        USING HINT = 'OWNER_INVITE_RECORD_REMOVED';
+    END IF;
   END IF;
   UPDATE public.tenant_invite_tokens SET revoked_at = COALESCE(revoked_at, now()), updated_at = now() WHERE id = _old.id;
   -- The re-entry carries the SAME proved workspace, so a resend can never resolve differently from
@@ -778,7 +818,7 @@ DECLARE
 BEGIN
   _tenant := public.solo_team_invite_authority(_actor, _expected_tenant_id);
 
-  -- EXP08 owners (20271116130008): an owner invitation is the account holder's to withdraw.
+  -- EXP08 owners (20271117020008): an owner invitation is the account holder's to withdraw.
   IF EXISTS (SELECT 1 FROM public.tenant_invite_tokens
               WHERE id = _invite_id AND tenant_id = _tenant AND kind = 'team'
                 AND default_role = 'owner'::public.tenant_role) THEN
@@ -823,7 +863,7 @@ BEGIN
     RAISE EXCEPTION 'that invitation is not on this workspace' USING ERRCODE = 'P0001';
   END IF;
 
-  -- EXP08 owners (20271116130008): an owner invitation is the account holder's to clear.
+  -- EXP08 owners (20271117020008): an owner invitation is the account holder's to clear.
   IF _invite.default_role = 'owner'::public.tenant_role THEN
     PERFORM public._assert_tenant_account_holder(_actor, _tenant, 'invitation');
   END IF;
@@ -880,11 +920,14 @@ BEGIN
   IF _invite.default_role NOT IN ('owner'::public.tenant_role, 'admin'::public.tenant_role, 'member'::public.tenant_role) THEN
     RAISE EXCEPTION 'team invitation has an unsupported permission';
   END IF;
-  -- EXP08 owners (20271116130008): an owner invitation is re-checked at the moment it is used, under the
+  -- EXP08 owners (20271117020008): an owner invitation is re-checked at the moment it is used, under the
   -- token lock: the sender must STILL be the account holder, the account a Solo one, and a legal
-  -- owner's seat still open (owner rulings R1, R4, R6; contract §5.3).
+  -- owner's seat still open (owner rulings R1, R4, R6; contract §5.3). The tenant row (the holder of
+  -- record) and the sender's seat (which a billing suspension rewrites) are locked FOR SHARE first,
+  -- so neither can change between this check and the seat it allows.
   IF _invite.default_role = 'owner'::public.tenant_role THEN
-    SELECT name INTO _tenant_name FROM public.tenants WHERE id = _invite.tenant_id;
+    SELECT name INTO _tenant_name FROM public.tenants WHERE id = _invite.tenant_id FOR SHARE;
+    PERFORM 1 FROM public.tenant_members WHERE tenant_id = _invite.tenant_id AND user_id = _invite.created_by FOR SHARE;
     IF NOT public._solo_shell_tenant(_invite.tenant_id) THEN
       RAISE EXCEPTION 'Owner invitations aren''t available for this account.' USING ERRCODE = '42501', HINT = 'OWNER_INVITE_UNAVAILABLE';
     END IF;
@@ -928,7 +971,7 @@ BEGIN
   IF NOT FOUND THEN RAISE EXCEPTION 'team invitation was already accepted'; END IF;
 
   UPDATE public.profiles SET active_tenant_id = _invite.tenant_id WHERE user_id = _actor;
-  -- EXP08 owners (20271116130008): the seat is the only source of "Represented by …". The record's earlier
+  -- EXP08 owners (20271117020008): the seat is the only source of "Represented by …". The record's earlier
   -- representative, if any, is overwritten and kept in the audit row.
   IF _record.id IS NOT NULL THEN
     UPDATE public.tenant_business_owners
@@ -1139,7 +1182,7 @@ BEGIN
     END IF;
 
   ELSE
-    -- EXP08 owners (20271116130008): an owner invitation is accepted only by accept_solo_team_invite,
+    -- EXP08 owners (20271117020008): an owner invitation is accepted only by accept_solo_team_invite,
     -- which re-checks the account holder at that moment. Here it used to be silently turned into an
     -- Admin seat and reported as accepted (§13). It is refused instead, before anything is written.
     IF _tok.default_role = 'owner'::public.tenant_role THEN
@@ -1231,7 +1274,7 @@ BEGIN
       USING ERRCODE = '42501';
   END IF;
 
-  -- FIX-1 (§9), narrowed by EXP08 owners (20271116130008): no token minted here carries Owner, for any
+  -- FIX-1 (§9), narrowed by EXP08 owners (20271117020008): no token minted here carries Owner, for any
   -- kind or any caller, the platform owner included. An Owner is invited only by the account holder,
   -- through create_solo_team_invite (owner rulings R1, R4).
   -- The sentence is the one the Agency Team screen shows (it still offers Owner), so it says what that
@@ -1316,7 +1359,7 @@ BEGIN
                    AND (_tok.expires_at > now())
                    AND (_tok.max_uses IS NULL OR _tok.uses < _tok.max_uses)
                    AND (_tok.kind <> 'consumer' OR (_tok.uses = 0 AND _tok.last_used_at IS NULL));
-  -- EXP08 owners (20271116130008): an owner invitation for a legal owner names it, so the invitee knows
+  -- EXP08 owners (20271117020008): an owner invitation for a legal owner names it, so the invitee knows
   -- whom they would act for, and only while it can still be used. A deliberate exposure to whoever
   -- holds a live link: the name only, never the ownership interest or the representative.
   business_owner_display := NULL;

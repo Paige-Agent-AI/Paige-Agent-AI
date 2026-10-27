@@ -1,5 +1,5 @@
 /**
- * EXP08 owner invitations (migration 20271116130008): the refusals the database raises on purpose for
+ * EXP08 owner invitations (migration 20271117020008): the refusals the database raises on purpose for
  * owner invitations, recognised by their stable HINT code rather than by their sentence.
  *
  * Why by HINT. These sentences name the business, the account holder or the legal owner ("Northstar
@@ -36,6 +36,7 @@ export const OWNER_REFUSAL_HINTS: Readonly<Record<string, 400 | 403 | 409>> = Ob
   OWNER_RECORD_SEATED: 409,
   OWNER_RECORD_INVITED: 409,
   OWNER_INVITE_SEAT_CHANGED: 409,
+  OWNER_INVITE_RECORD_REMOVED: 409,
 });
 
 /** The plain sentence and status for an owner refusal, or null when `error` is not one. */

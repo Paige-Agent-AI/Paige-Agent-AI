@@ -10,7 +10,7 @@ import {
 // solo-team-invitations as HTTP 500 "tell us". They are recognised by HINT and shown as written.
 
 const MIGRATION = readFileSync(
-  resolve(process.cwd(), "supabase/migrations/20271116130008_exp08_owner_invitations.sql"),
+  resolve(process.cwd(), "supabase/migrations/20271117020008_exp08_owner_invitations.sql"),
   "utf8",
 );
 const HANDLER = readFileSync(
@@ -52,6 +52,9 @@ describe("solo-team-invitations shows the owner refusals as written, with the ri
     expect(ownerRefusal(pgError("Enter the legal name.", "OWNER_RECORD_NAME", "P0001"))?.status).toBe(400);
     expect(ownerRefusal(pgError("There's already an owner invitation pending for Cedar Row Trust.", "OWNER_RECORD_INVITED", "P0001"))?.status).toBe(409);
     expect(ownerRefusal(pgError("Harbor Lane Holdings LLC already has a representative on the team.", "OWNER_RECORD_SEATED", "P0001"))?.status).toBe(409);
+    // Round 3 (S-B): resending an owner invitation whose legal owner was deleted.
+    const removed = "This owner invitation was for a legal owner that has since been removed, so it can't be sent again. Send a new owner invitation instead.";
+    expect(ownerRefusal(pgError(removed, "OWNER_INVITE_RECORD_REMOVED", "P0001"))).toEqual({ status: 409, message: removed });
   });
 
   it("passes nothing else: no hint, a foreign hint, a non-string hint or an empty message", () => {

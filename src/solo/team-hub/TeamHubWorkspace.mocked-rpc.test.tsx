@@ -223,6 +223,22 @@ const liveRegion = (host: HTMLElement) => host.querySelector<HTMLElement>("[aria
 const at = (minutesAgo: number) => new Date(Date.now() - minutesAgo * 60_000).toISOString();
 
 describe("Team Hub workspace (mocked RPC)", () => {
+  // EXP08 Team Hub agents (A1a): the screen ships tolerant of agent rows before the migration can make
+  // one. Until A1b renders agents, an agent DM is never listed and an agent's message is never shown,
+  // least of all in the name of the person who asked it; nothing else on the page is lost.
+  it("A1a: an agent DM and an agent's message are not shown, and the rest of the page still loads", async () => {
+    db.conversations = [channel(), channel({ id: "c-agent", kind: "agent_dm", name: null, visibility: "private", agent_key: "cura",
+      dm_user_id: null, member_count: 1, member_ids: [ME], unread: 1 }), channel({ id: "c-future", kind: "huddle", name: "standup" })];
+    db.messages["c-general"] = [msg(), msg({ id: "m-agent", author_user_id: "u-dana", body: "CURA says two people start Monday.",
+      author_kind: "agent", agent_key: "cura", asked_in_message_id: "m-1", agent_mentions: [] })];
+    const { host } = await mount();
+    expect(host.textContent).toContain("Kickoff is Thursday.");
+    expect(host.textContent).not.toContain("CURA says two people start Monday.");
+    expect(host.textContent).not.toContain("standup");
+    expect(host.querySelectorAll(".th-list button").length).toBeGreaterThan(0);
+    expect(Array.from(host.querySelectorAll(".th-list button")).map((b) => b.textContent ?? "").join(" ")).not.toMatch(/CURA|channel$/);
+  });
+
   it("passes the active workspace as p_expected_tenant on every call", async () => {
     const { host } = await mount();
     expect(host.textContent).toContain("Kickoff is Thursday.");

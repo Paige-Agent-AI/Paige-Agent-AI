@@ -15,6 +15,8 @@ import {
   parseAdded,
   parseChannelId,
   parseConversationList,
+  isAgentAuthored,
+  TEAM_HUB_AGENT_KEYS,
   parseMessagePage,
   parsePosted,
   parseThreadPage,
@@ -65,7 +67,9 @@ const conversation = (over: Partial<TeamHubConversation> = {}): TeamHubConversat
 });
 const message = (over: Partial<TeamHubMessage> = {}): TeamHubMessage => ({
   id: "m-1", author_user_id: "u-dana", body: "Hello", created_at: "2026-10-24T10:00:00.000Z",
-  parent_message_id: null, reply_count: 0, last_reply_at: null, mentions: [], work_ref: null, files: [], ...over,
+  parent_message_id: null, reply_count: 0, last_reply_at: null, mentions: [], work_ref: null, files: [],
+  // A1a: the server now says who wrote it; a person's message names no agent.
+  author_kind: "user", agent_key: null, asked_in_message_id: null, agent_mentions: [], ...over,
 });
 const list = (over: Record<string, unknown> = {}) => ({
   ok: true, tenant_id: TENANT, me: { user_id: "u-me" },
@@ -611,5 +615,75 @@ describe("EXP08 lifecycle: the Team conversations switch in the contract", () =>
     expect(refusalMessage("conversations_off", "read")).toBe("Team conversations are off for you in this workspace. Your work and permission are unchanged.");
     expect(refusalMessage("recipient_conversations_off", "send")).toMatch(/^Not delivered\. .*Your message is kept here\.$/);
     expect(refusalMessage("recipient_conversations_off", "dm")).not.toMatch(/sent|delivered/i);
+  });
+});
+
+// EXP08 Team Hub agents (A1a): this parser ships tolerant of agent rows BEFORE the migration can create
+// one (contract §5 A1, ship-order hazard). Agent rows are parsed, never shown as a person or a channel.
+describe("agent rows (A1a): tolerated, never misread, never emptying the list", () => {
+  const agentDm = { id: "c-agent", kind: "agent_dm", name: null, visibility: "private", joined: true, agent_key: "cura",
+    dm_user_id: null, member_count: 1, member_ids: ["u-me"], unread: 2, last_message_at: "2026-10-24T11:00:00.000Z" };
+  it("parses an agent DM into its own list, out of the conversations every current list renders", () => {
+    const result = parseConversationList(list({ conversations: [conversation(), agentDm] }), null, TENANT);
+    expect(result.kind).toBe("ok");
+    if (result.kind === "ok") {
+      expect(result.value.conversations.map((c) => c.id)).toEqual(["c-general"]);
+      expect(result.value.agent_dms).toEqual([{ id: "c-agent", agent_key: "cura", joined: true, unread: 2, last_message_at: "2026-10-24T11:00:00.000Z" }]);
+      expect(result.value.skipped).toBe(0);
+    }
+  });
+  it("one conversation of a kind it does not know is skipped and counted, and the list still loads", () => {
+    const result = parseConversationList(list({ conversations: [conversation(), { ...agentDm, id: "c-huddle", kind: "huddle" }] }), null, TENANT);
+    expect(result.kind).toBe("ok");
+    if (result.kind === "ok") {
+      expect(result.value.conversations.map((c) => c.id)).toEqual(["c-general"]);
+      expect(result.value.skipped).toBe(1);
+    }
+  });
+  it("a malformed agent DM still refuses the answer, as any malformed row does", () => {
+    for (const bad of [{ ...agentDm, agent_key: "bogus" }, { ...agentDm, visibility: "team" }, { ...agentDm, dm_user_id: "u-dana" }, { ...agentDm, name: "x" }]) {
+      expect(parseConversationList(list({ conversations: [bad] }), null, TENANT).kind).toBe("unavailable");
+    }
+  });
+  const page = (messages: unknown[]) => ({ ok: true, has_more: false, channel: { id: "c-general", kind: "channel", name: "general", visibility: "team", joined: true }, messages });
+  it("reads an agent's message as the agent's, with the person who asked as its accountable author", () => {
+    const reply = { ...message({ id: "m-2", author_user_id: "u-dana" }), author_kind: "agent", agent_key: "cura", asked_in_message_id: "m-1", agent_mentions: [] };
+    const asked = { ...message(), author_kind: "user", agent_key: null, agent_mentions: ["cura", "zion", "bogus"] };
+    const result = parseMessagePage(page([reply, asked]), null, "c-general");
+    expect(result.kind).toBe("ok");
+    if (result.kind === "ok") {
+      const [r, a] = result.value.messages;
+      expect(r).toMatchObject({ author_kind: "agent", agent_key: "cura", asked_in_message_id: "m-1", author_user_id: "u-dana" });
+      expect(isAgentAuthored(r)).toBe(true);
+      // An agent key this build does not know is dropped from the tags, never shown.
+      expect(a).toMatchObject({ author_kind: "user", agent_key: null, agent_mentions: ["cura", "zion"] });
+      expect(isAgentAuthored(a)).toBe(false);
+    }
+  });
+  it("an answer from before A1a is a person's message", () => {
+    const { author_kind: _k, agent_key: _a, asked_in_message_id: _q, agent_mentions: _m, ...before } = message();
+    const result = parseMessagePage(page([before]), null, "c-general");
+    expect(result.kind === "ok" && result.value.messages[0]).toMatchObject({ author_kind: "user", agent_key: null, asked_in_message_id: null, agent_mentions: [] });
+  });
+  it("one message of an author kind or agent it does not know is skipped and counted; the page still loads", () => {
+    const result = parseMessagePage(page([message(), { ...message({ id: "m-3" }), author_kind: "system" }, { ...message({ id: "m-4" }), author_kind: "agent", agent_key: "nova" }]), null, "c-general");
+    expect(result.kind).toBe("ok");
+    if (result.kind === "ok") {
+      expect(result.value.messages.map((m) => m.id)).toEqual(["m-1"]);
+      expect(result.value.skipped).toBe(2);
+    }
+  });
+  it("an agent row without its agent, or a person's row naming one, is malformed and refuses the page", () => {
+    for (const bad of [{ ...message(), author_kind: "agent", agent_key: null }, { ...message(), author_kind: "user", agent_key: "cura" },
+      { ...message(), author_kind: "user", asked_in_message_id: "m-0" }, { ...message(), agent_mentions: "cura" }]) {
+      expect(parseMessagePage(page([bad]), null, "c-general").kind).toBe("unavailable");
+    }
+  });
+  it("the roster's agent keys are PAIGE and the six specialists", () => {
+    expect([...TEAM_HUB_AGENT_KEYS]).toEqual(["paige", "vera", "nexus", "cura", "mentor", "merit", "zion"]);
+  });
+  it("reads the roster's name-clash mark, and a person without one has none", () => {
+    const result = parseConversationList(list({ people: [person({ display_name: "Vera Lane", agent_name_clash: true } as Partial<TeamHubPerson>), person({ user_id: "u-me" })] }), null, TENANT);
+    expect(result.kind === "ok" && result.value.people.map((p) => p.agent_name_clash)).toEqual([true, false]);
   });
 });

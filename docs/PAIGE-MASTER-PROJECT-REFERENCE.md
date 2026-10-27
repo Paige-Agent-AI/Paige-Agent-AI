@@ -8007,8 +8007,14 @@ Current gaps:
   to*, asker-only *is writing…*, the flow-9 lines with Ask again, the private-part note, Bring in, the
   agent DM and the read-only profile (About), gated on `team_hub_agents` (§60). 56 agent colour tokens in
   `src/index.css`. Evidence: mocked-RPC tests and a rendered harness
-  (`docs/evidence/ui-delivery/exp08-team-hub-agents-a1b.md`); authenticated runtime `UNVERIFIED`. Other
-  members' private-part lines need a member-safe turn read that does not exist yet.
+  (`docs/evidence/ui-delivery/exp08-team-hub-agents-a1b.md`); authenticated runtime `UNVERIFIED`.
+  **A1b part 3** (same branch, not merged, 2026-10-27): migration `20271118220008` adds the member-safe
+  turn-state read `team_hub_agent_turn_states` (authenticated, caller-scoped; other members see
+  *<AGENT> is answering / replied to <Name> privately.*, the asker sees the true state after a reload),
+  Bring in staged from the agent's structured answer, same-token acceptance; transport errors are
+  unknown outcomes, hinted agent turns are refused, DM-turn receipts omit agent and intent. Proof
+  `supabase/tests/exp08_team_hub_agent_turn_states.sql` (CI). Open owner decision: whether a member's
+  agent DM turns should leave a Rail row at all.
 - `/solo/{n}/team` still redirects to Settings → Team; Team Hub is a separate destination.
 - Team actions still emit no Rail outcome.
 

@@ -35,7 +35,8 @@ for (const theme of ["dark", "light"]) {
   shots.push({ ...phone, theme, act: "phone-list", name: `ev-390-list-${theme}` });
   shots.push({ ...phone, theme, act: "phone-reply", name: `ev-390-reply-${theme}` });
   const w = R["1366x768-closed"];
-  for (const act of ["writing", "atlist", "dmlist", "profile", "agentdm", "firstuse", "fail", "returning", "bring-asker", "bring-prefilled", "private-writing", "private-fail", "thread", "dm-empty"]) {
+  for (const act of ["writing", "atlist", "dmlist", "profile", "agentdm", "firstuse", "firstuse-hello", "fail", "returning", "returning-answering", "returning-unread",
+    "bring-asker", "bring-prefilled", "bring-other", "private-writing", "private-fail", "others-answering", "others-replied", "thread", "dm-empty"]) {
     shots.push({ ...w, theme, act, name: `ev-state-${act}-1366-${theme}` });
   }
 }
@@ -45,6 +46,9 @@ const zoom = { vw: 640, vh: 400, rail: 60, row: 58, paige: "closed" };
 shots.push({ ...zoom, theme: "light", act: "phone-reply", name: "ev-zoom200-1280-reply-light" });
 shots.push({ ...zoom, theme: "dark", act: "atlist", name: "ev-zoom200-1280-atlist-dark" });
 shots.push({ ...phone, theme: "light", act: "agentdm", name: "ev-390-agentdm-light" });
+shots.push({ ...phone, theme: "dark", act: "agentdm", name: "ev-390-agentdm-dark" });
+shots.push({ ...phone, theme: "dark", act: "writing", name: "ev-390-composer-dark" });
+for (const theme of ["dark", "light"]) shots.push({ ...R["1024x768-closed"], theme, act: "profile", name: `ev-state-profile-1024-${theme}` });
 
 const GOLD = ["--pg-gold-core", "--pg-gold", "--pg-gold-deep", "--pg-gold-fill"];
 const report = [];
@@ -54,9 +58,11 @@ for (const shot of shots) {
   const errors = [];
   page.on("console", (message) => { if (message.type() === "error") errors.push(message.text()); });
   page.on("pageerror", (error) => errors.push(String(error)));
-  const scenario = shot.act === "firstuse" ? "firstuse" : shot.act === "agentdm" ? "agentdm" : shot.act === "returning" ? "returning" : "populated";
-  const as = shot.act.startsWith("bring") ? "&as=priya" : "";
-  const url = `${BASE}?s=${scenario}${as}&theme=${shot.theme}&vw=${shot.vw}&vh=${shot.vh}&rail=${shot.rail}&row=${shot.row ?? 66}&paige=${shot.paige}&pw=${shot.pw ?? 0}`;
+  const scenario = shot.act.startsWith("firstuse") ? "firstuse" : shot.act === "agentdm" ? "agentdm" : shot.act.startsWith("returning") ? "returning"
+    : shot.act.startsWith("others") ? "others" : "populated";
+  const as = shot.act === "bring-asker" || shot.act === "bring-prefilled" ? "&as=priya" : "";
+  const extra = shot.act === "returning-answering" ? "&rs=answering" : shot.act === "returning-unread" ? "&states=down" : shot.act === "others-replied" ? "&ps=replied_privately" : "";
+  const url = `${BASE}?s=${scenario}${as}&theme=${shot.theme}&vw=${shot.vw}&vh=${shot.vh}&rail=${shot.rail}&row=${shot.row ?? 66}&paige=${shot.paige}&pw=${shot.pw ?? 0}${extra}`;
   await page.goto(url);
   await page.waitForSelector(".th-hub");
   await page.waitForTimeout(400);
@@ -91,10 +97,21 @@ for (const shot of shots) {
   } else if (act === "fail") {
     await openConv("launch"); await turn("no_reply"); await send("@MENTOR should the workshop be free or paid?");
     await page.waitForSelector(".th-ag-fail");
-  } else if (act === "returning") {
+  } else if (act === "returning" || act === "returning-unread") {
     await openConv("launch"); await page.waitForSelector(".th-ag-fail");
+  } else if (act === "returning-answering") {
+    await openConv("launch"); await page.waitForSelector(".th-ag-typing");
+  } else if (act === "firstuse-hello") {
+    await page.locator(".th-btn--primary", { hasText: "Say hello to PAIGE" }).first().dispatchEvent("click");
+    await page.waitForSelector(".th-conv-head--agent"); await page.waitForTimeout(200);
+  } else if (act === "others-answering" || act === "others-replied") {
+    await openConv("launch"); await page.waitForSelector(".th-ag-priv--others");
+  } else if (act === "bring-other") {
+    await openConv("launch"); await page.waitForSelector(".th-ag-bring");
+    await page.evaluate(() => document.querySelector(".th-msg--agent[data-ag='paige']")?.scrollIntoView({ block: "center" }));
   } else if (act === "bring-asker" || act === "bring-prefilled") {
     await openConv("launch");
+    await page.waitForSelector(".th-ag-bring-btn");
     if (act === "bring-prefilled") { await page.locator(".th-ag-bring-btn", { hasText: "Bring in NEXUS" }).dispatchEvent("click"); await page.waitForTimeout(150); }
     await page.evaluate(() => document.querySelector(".th-msg--agent[data-ag='paige']")?.scrollIntoView({ block: "center" }));
   } else if (act === "private-writing" || act === "private-fail") {
@@ -137,6 +154,24 @@ for (const shot of shots) {
     return {
       docOverflowX: document.documentElement.scrollWidth > document.documentElement.clientWidth,
       hubOverflowX: hub ? hub.scrollWidth > hub.clientWidth + 1 : null,
+      // The conversation list column: the body and every row stay inside it (the prototype's guard).
+      listOverflowX: (() => {
+        const body = document.querySelector(".th-list-body");
+        if (!body || !body.getClientRects().length) return null;
+        const edge = body.getBoundingClientRect().right;
+        const rows = Array.from(body.querySelectorAll(".th-conv-item")).filter((row) => row.getClientRects().length);
+        return body.scrollWidth > body.clientWidth + 1 || rows.some((row) => row.getBoundingClientRect().right > edge + 1);
+      })(),
+      dmHeader: (() => {
+        const head = document.querySelector(".th-conv-head--agent");
+        if (!head) return null;
+        const title = head.querySelector(".th-conv-title");
+        return { button: head.querySelector(".th-head-actions button")?.innerText ?? null,
+          titleClipped: title ? title.scrollWidth > title.clientWidth + 1 : null, title: title?.textContent ?? null };
+      })(),
+      composerHint: (() => { const hint = document.querySelector(".th-conv .th-hint"); return hint ? { text: hint.textContent, clipped: hint.scrollWidth > hint.clientWidth + 1 } : null; })(),
+      composerValue: document.querySelector(".th-conv textarea[role=combobox]")?.value ?? null,
+      bring: Array.from(document.querySelectorAll(".th-ag-bring")).map((row) => row.textContent),
       goldUse, plates, small,
       announced: document.querySelector("[aria-live=polite]")?.textContent ?? "",
       typing: Array.from(document.querySelectorAll(".th-ag-typing")).map((row) => row.textContent),

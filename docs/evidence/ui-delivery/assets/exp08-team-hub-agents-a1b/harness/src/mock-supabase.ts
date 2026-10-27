@@ -43,6 +43,9 @@ const db = {
       agentMsg("nexus", "l3", "u-marcus", "Ooh, agency owners. They're drowning in client chaos. Two hooks: “Run your agency, not your inbox” or “Your best people shouldn't be doing status updates.” I'd lead with the second. It names a pain they feel every week. Want a draft announcement?", { created_at: today(9, 13) }),
       msg({ id: "l5", author_user_id: "u-sam", body: "Love the second one. I'll mock up a banner.", created_at: today(9, 20) }),
       ...(scenario === "returning" ? [msg({ id: "l6", author_user_id: "u-me", body: "@MENTOR should the workshop be free or paid?", agent_mentions: ["mentor"], created_at: today(9, 31) })] : []),
+      // Another member's private question: what Morgan (not the asker) sees while it runs and once it's done.
+      ...(scenario === "others" ? [msg({ id: "l7", author_user_id: "u-sam", body: "@MERIT what did Harper & Co. pay us last quarter?", agent_mentions: ["merit"], created_at: today(9, 33) }),
+        agentMsg("merit", "l7", "u-sam", FIXED, { created_at: today(9, 34) })] : []),
     ],
     "c-delivery": [
       msg({ id: "d1", author_user_id: "u-marcus", body: "Kickoff agenda for the Harper & Co. onboarding. Comments in the thread please.", created_at: today(9, 2), reply_count: 2, last_reply_at: today(9, 9) }),
@@ -63,6 +66,38 @@ const db = {
     ],
   } as Record<string, Row[]>,
 };
+
+// The member-safe turn-state read (team_hub_agent_turn_states), as its proof pins it: the asker reads
+// every state of their own question; anyone else reads only the two private-part lines and who a reply
+// suggested bringing in, without the line. Facts: PAIGE's reply to Priya suggested NEXUS and ZION (as
+// in the prototype); `rs` sets the returning question's state, `ps` the other member's private part.
+const facts: Record<string, Row> = {
+  "l1:paige": { state: "replied", asker_name: "Priya Nair", bring_in: [{ agent: "nexus", context: "PAIGE suggested you take the workshop announcement." },
+    { agent: "zion", context: "PAIGE suggested you take the launch task plan." }] },
+  "l6:mentor": { state: params.get("rs") ?? "failed", asker_name: "Morgan Reyes" },
+  "l7:merit": { state: params.get("ps") ?? "answering", private_part: true, asker_name: "Sam Lee" },
+};
+function turnStates(p: Row) {
+  const c = db.conversations.find((item) => item.id === p.p_channel_id);
+  if (!c) return { ok: false, code: "not_found" };
+  if (params.get("states") === "down") return { ok: false, code: "invalid" };
+  const all = [...(db.messages[String(c.id)] ?? []), ...Object.values(db.replies).flat()];
+  const states: Row[] = [];
+  for (const id of p.p_message_ids as string[]) {
+    const q = all.find((item) => item.id === id && item.author_kind !== "agent");
+    if (!q) continue;
+    for (const key of c.kind === "agent_dm" ? [String(c.agent_key)] : (q.agent_mentions as string[])) {
+      const answered = all.some((item) => item.author_kind === "agent" && item.agent_key === key && item.asked_in_message_id === id);
+      const fact = { state: answered ? "replied" : "none", private_part: false, asker_name: "Teammate", ...facts[`${id}:${key}`] } as Row;
+      const mine = q.author_user_id === viewer;
+      const bring = Array.isArray(fact.bring_in) ? (mine ? fact.bring_in : (fact.bring_in as Row[]).map((item) => ({ agent: item.agent }))) : undefined;
+      const approved = fact.private_part === true && (fact.state === "answering" || fact.state === "replied_privately");
+      if (!mine && !approved && !bring) continue;
+      states.push({ message_id: id, agent_key: key, state: mine || approved ? fact.state : "replied", private_part: fact.private_part, asker_name: fact.asker_name, ...(bring ? { bring_in: bring } : {}) });
+    }
+  }
+  return { ok: true, states };
+}
 
 let seq = 0;
 const clock = { h: 10, m: 40 };
@@ -99,6 +134,7 @@ function backend(name: string, p: Row) {
     return { ok: true, channel_id: `c-dm-${key}` };
   }
   if (name === "team_hub_list_work") return { ok: true, items: [] };
+  if (name === "team_hub_agent_turn_states") return turnStates(p);
   return { ok: false, code: "invalid" };
 }
 

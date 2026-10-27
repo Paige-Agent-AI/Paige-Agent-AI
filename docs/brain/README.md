@@ -1,3 +1,23 @@
+## EXP02 original recorded-activity review — October27 development
+
+The existing business.operating_snapshot outcomes area now has a LOCAL consumer
+of get_solo_rail_activity(p_limit=25), not a second ledger or metrics reader.
+Only original owner-visible readable facts/time/tenant-safe attribution enter
+the requested-period bounded sample. Client-only/unknown classifications,
+changed authority/source and late cancelled answers are withheld. An empty
+sample does not prove no activity; a recorded successful read is not a completed
+business action, approval, domain receipt or measured improvement. Original
+departmental record linking remains a distinct source integration obligation.
+[Source/authority/evidence](../evidence/ui-delivery/e2-review-recorded-activity.md)
+separates local proof from required review/CI/source release/customer reload.
+CAP/ALG maturity and all nineteen outcomes remain unchanged and open.
+
+EXP05 explicitly received the original Systems Work/result/optional Rail consumer
+in ANT161e13f07ca. Existing weekly-read preview is not the Systems action door.
+EXP02 retains Systems registration, accepted-intent binding and full scan proof;
+original shared Root/risk/C0b composition remains coordinated with EXP05/EXP08.
+No manual scan, worker, provider, action or new privilege is activated by that ACK.
+
 ## EXP02 Systems source receiving and receipt consumer — October27 17:25UTC
 
 Superseding the dated development checkpoints below: original observation

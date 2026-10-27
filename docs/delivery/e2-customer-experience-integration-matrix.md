@@ -1,5 +1,27 @@
 # Experience 02 — Customer Experience Integration Matrix
 
+## October27 — O13 original activity review consumer in development
+
+REUSE native get_solo_rail_activity and original Rail writers; EXTEND the existing
+business.operating_snapshot outcomes adapter. Owner/admin/current-tenant caller
+authority, known owner/both audience/visibility and reauthorization govern this
+read. Up to three original recorded facts inside the requested period come from
+the latest25 native records; empty/omitted events do not prove no work. Original
+source/time/attribution stay quoted and bounded. No completion/approval count,
+new ledger, fake domain link, action receipt or causal improvement is inferred.
+Local source/control evidence is
+[recorded separately](../evidence/ui-delivery/e2-review-recorded-activity.md);
+review, exact-head CI, release, permissions/cohorts and actual reply/reload proof
+remain required. O13 and all19 stay OPEN; CAP009-017 and ALG maturity unchanged.
+
+O07/O12/O19 dependency correction: EXP05 receiving ACK ANT161e13f07ca confirms
+the actually released original2993 request/result/optional observation contract.
+No systems.check registration or Chat host exists yet; weekly preview2961 is
+not that action door. EXP02 retains registration/classification/accepted-intent
+integration and customer scan acceptance. Coordinate original shared-source
+composition with EXP05/EXP08; do not copy frozen weekly semantics or bypass the
+governed runtime. No action/provider/scan activation or new authority inferred.
+
 
 
 

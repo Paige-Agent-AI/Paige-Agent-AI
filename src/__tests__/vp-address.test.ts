@@ -1,5 +1,6 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest';
+import { readFileSync } from 'node:fs';
 import {
   VP_ROSTER,
   buildVpAddressBlock,
@@ -109,5 +110,29 @@ describe('buildVpAddressBlock — identity firm, authority stated once', () => {
     const block = buildVpAddressBlock(a, 'T');
     expect(block).toContain("no action's authority changes because a name was said");
     expect(block).not.toContain('you are still one Paige');
+  });
+});
+
+// EXP08 Team Hub agents A1a (owner, 2026-10-27): MERIT and NEXUS follow the binding 23 Oct 2026 roster
+// standard, here and on their platform rows (migration 20271116030108), and say the same thing in both.
+describe("the 23 Oct roster standard: MERIT is Sales & getting paid, NEXUS is Marketing & growth", () => {
+  const migration = readFileSync("supabase/migrations/20271116030108_exp08_team_hub_agents_roster.sql", "utf8");
+  const vp = (slug: string) => VP_ROSTER.find((v) => v.slug === slug)!;
+  it("MERIT owns sales, proposals, agreements and getting paid, and is not a finance specialist", () => {
+    expect(vp("merit").role).toBe("VP Sales & Getting Paid");
+    expect(vp("merit").scope).toMatch(/proposals, agreements/);
+    expect(vp("merit").scope).not.toMatch(/dunning|hiring|comp\b|Money spine/);
+    expect(looksLikeFinanceAgent({ domain: "sales_getting_paid", name: "MERIT", description: vp("merit").scope })).toBe(false);
+    expect(migration).toContain("role = 'VP Sales & Getting Paid'");
+  });
+  it("NEXUS owns marketing and campaigns; sales sequences and the pipeline are MERIT's", () => {
+    expect(vp("nexus").role).toBe("VP Marketing & Growth");
+    expect(vp("nexus").scope).not.toMatch(/sales sequences|pipeline management|lead scoring/);
+    expect(migration).toContain("role = 'VP Marketing & Growth'");
+  });
+  it("the other four remits are unchanged by A1a", () => {
+    expect(VP_ROSTER.map((v) => [v.slug, v.role])).toEqual([
+      ["vera", "VP Intelligence, Finance & Risk"], ["nexus", "VP Marketing & Growth"], ["cura", "VP Client Success"],
+      ["mentor", "VP Discovery, Education & Strategy"], ["merit", "VP Sales & Getting Paid"], ["zion", "VP Operations & Automation"]]);
   });
 });

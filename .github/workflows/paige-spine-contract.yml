@@ -161,6 +161,10 @@ on:
       - "supabase/migrations/20271031000200_paige_email_sendgrid_receipts_and_history.sql"
       - "supabase/migrations/20271031000250_paige_email_sendgrid_sender_integrity.sql"
       - "supabase/tests/email_campaign_sendgrid_lane.sql"
+      # "Approve now, send later" for the governed email door: its rollback proof and migration.
+      - "supabase/tests/comms_email_scheduled_send.sql"
+      - "supabase/migrations/20271119000000_comms_email_scheduled_send.sql"
+      - "supabase/functions/comms-scheduled-drain/**"
       - "supabase/tests/exp03_resend_retired.sql"
       - "supabase/tests/tenant_email_domain_normalization.sql"
       - "supabase/migrations/20271101042133_tenant_email_domains_normalize_domain.sql"
@@ -502,6 +506,15 @@ jobs:
       - name: Experience 03 PAIGE Email sender integrity (rolled back)
         if: ${{ !cancelled() }}
         run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/paige_email_sendgrid_sender_integrity.sql
+      # "Approve now, send later" (20271119000000): a scheduled governed email is prepared queued with its
+      # send_at, the claim admits it only once due and then on the scheduler's seat alone (an immediate send
+      # still needs the open workspace), admission moves it out of queued, cancel wins before the claim and
+      # is too late after it, and the generic undo never touches a governed row. A departed scheduler's
+      # email is still closed (or cancelled by another owner), past-grace rows are swept not re-leased,
+      # and one provider-restricted business cannot make claim_due_scheduled_messages fail for others.
+      - name: Governed email scheduled send (rolled back)
+        if: ${{ !cancelled() }}
+        run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/comms_email_scheduled_send.sql
       # One spelling of a sending domain (#2133): stored as lower(btrim(domain)), so the readiness read
       # and _comms_email_sendgrid_sender_verified agree; the backfill refuses rather than merging.
       - name: Experience 03 sending-domain normalization (rolled back)

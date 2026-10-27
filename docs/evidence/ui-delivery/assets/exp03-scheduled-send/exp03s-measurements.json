@@ -1,0 +1,6654 @@
+{
+  "exp03s-scheduled-light-1536x770-paige-closed": {
+    "ok": true,
+    "viewport": "1536x770",
+    "theme": "light",
+    "paige": "closed",
+    "state": "scheduled",
+    "act": "none",
+    "checks": {
+      "noOverflow": true,
+      "goldOnlyOnAct": true,
+      "fontLoaded": true,
+      "noRawCode": true,
+      "noApprove": true,
+      "noOtherFunctions": true,
+      "pillScheduled": true,
+      "cancelShown": true,
+      "sendsShown": true,
+      "railInFuture": true,
+      "railScheduled": true,
+      "noDoorCall": true,
+      "pillAA": true,
+      "cancelAA": true,
+      "sendsAA": true,
+      "railAA": true
+    },
+    "label": {
+      "ok": true,
+      "w": 174,
+      "h": 24
+    },
+    "font": {
+      "schibsted": true
+    },
+    "tagged": [
+      {
+        "kind": "rail-scheduled",
+        "disabled": false,
+        "incidental": false,
+        "text": "Scheduled · in about 19 hours",
+        "ratio": 5.47,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(247, 244, 238)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "pill-scheduled",
+        "disabled": false,
+        "incidental": false,
+        "text": "Scheduled",
+        "ratio": 5.47,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(247, 244, 238)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "sends-time",
+        "disabled": false,
+        "incidental": false,
+        "text": "Sends Wed, Oct 28, 9:00 AM",
+        "ratio": 4.93,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(236,232,230)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": "cancel-control",
+        "disabled": false,
+        "incidental": false,
+        "text": "Cancel",
+        "ratio": 13.52,
+        "color": "rgb(33, 30, 36)",
+        "bg": "rgb(236,232,230)",
+        "size": "11px",
+        "weight": "400"
+      }
+    ],
+    "low": [
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "1",
+        "ratio": 3.52,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(244, 241, 235)",
+        "size": "10px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "1",
+        "ratio": 3.52,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(244, 241, 235)",
+        "size": "10px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "1",
+        "ratio": 3.52,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(244, 241, 235)",
+        "size": "10px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 2.46,
+        "color": "rgba(103, 97, 107, 0.6)",
+        "bg": "rgb(247, 244, 238)",
+        "size": "12px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 2.43,
+        "color": "rgba(103, 97, 107, 0.6)",
+        "bg": "rgb(244, 241, 235)",
+        "size": "12px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "LIVE",
+        "ratio": 3.69,
+        "color": "rgb(50, 118, 90)",
+        "bg": "rgb(217,212,211)",
+        "size": "8px",
+        "weight": "600"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "· 1 day ago",
+        "ratio": 2.46,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(247, 244, 238)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "· 1 day ago",
+        "ratio": 2.36,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(236,232,230)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "· 12 minutes ago",
+        "ratio": 2.36,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(236,232,230)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "PROFILE · LIVE",
+        "ratio": 4.37,
+        "color": "rgb(50, 118, 90)",
+        "bg": "rgb(238,230,215)",
+        "size": "8px",
+        "weight": "600"
+      }
+    ],
+    "textCount": 170,
+    "goldOutsideAct": [],
+    "goldActs": [
+      "New conversation",
+      "Send"
+    ],
+    "sends": {
+      "text": "Sends Wed, Oct 28, 9:00 AM",
+      "size": "11px",
+      "lines": 1
+    },
+    "cancel": {
+      "text": "Cancel",
+      "ariaLabel": "Cancel the email scheduled for Wed, Oct 28, 9:00 AM",
+      "disabled": false,
+      "ariaBusy": null,
+      "opacity": "1",
+      "size": "11px",
+      "height": 24,
+      "width": 43
+    },
+    "notSentLines": [],
+    "overflowX": false,
+    "counts": {
+      "pillScheduled": 1,
+      "pillNotSent": 0,
+      "pillCanceled": 0,
+      "pillSending": 0,
+      "railScheduled": 1,
+      "rawCode": 0,
+      "approve": 0
+    },
+    "toasts": [],
+    "calls": [],
+    "errors": []
+  },
+  "exp03s-scheduled-dark-1536x770-paige-closed": {
+    "ok": true,
+    "viewport": "1536x770",
+    "theme": "dark",
+    "paige": "closed",
+    "state": "scheduled",
+    "act": "none",
+    "checks": {
+      "noOverflow": true,
+      "goldOnlyOnAct": true,
+      "fontLoaded": true,
+      "noRawCode": true,
+      "noApprove": true,
+      "noOtherFunctions": true,
+      "pillScheduled": true,
+      "cancelShown": true,
+      "sendsShown": true,
+      "railInFuture": true,
+      "railScheduled": true,
+      "noDoorCall": true,
+      "pillAA": true,
+      "cancelAA": true,
+      "sendsAA": true,
+      "railAA": true
+    },
+    "label": {
+      "ok": true,
+      "w": 174,
+      "h": 24
+    },
+    "font": {
+      "schibsted": true
+    },
+    "tagged": [
+      {
+        "kind": "rail-scheduled",
+        "disabled": false,
+        "incidental": false,
+        "text": "Scheduled · in about 19 hours",
+        "ratio": 7.7,
+        "color": "rgb(173, 167, 159)",
+        "bg": "rgb(22, 19, 27)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "pill-scheduled",
+        "disabled": false,
+        "incidental": false,
+        "text": "Scheduled",
+        "ratio": 7.7,
+        "color": "rgb(173, 167, 159)",
+        "bg": "rgb(22, 19, 27)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "sends-time",
+        "disabled": false,
+        "incidental": false,
+        "text": "Sends Wed, Oct 28, 9:00 AM",
+        "ratio": 6.95,
+        "color": "rgb(173, 167, 159)",
+        "bg": "rgb(32,29,40)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": "cancel-control",
+        "disabled": false,
+        "incidental": false,
+        "text": "Cancel",
+        "ratio": 14.83,
+        "color": "rgb(246, 242, 234)",
+        "bg": "rgb(32,29,40)",
+        "size": "11px",
+        "weight": "400"
+      }
+    ],
+    "low": [
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 3.55,
+        "color": "rgba(173, 167, 159, 0.6)",
+        "bg": "rgb(22, 19, 27)",
+        "size": "12px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 3.5,
+        "color": "rgba(173, 167, 159, 0.6)",
+        "bg": "rgb(24, 22, 29)",
+        "size": "12px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "· 1 day ago",
+        "ratio": 3.55,
+        "color": "rgb(173, 167, 159)",
+        "bg": "rgb(22, 19, 27)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "· 1 day ago",
+        "ratio": 3.39,
+        "color": "rgb(173, 167, 159)",
+        "bg": "rgb(32,29,40)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "· 12 minutes ago",
+        "ratio": 3.39,
+        "color": "rgb(173, 167, 159)",
+        "bg": "rgb(32,29,40)",
+        "size": "11px",
+        "weight": "400"
+      }
+    ],
+    "textCount": 170,
+    "goldOutsideAct": [],
+    "goldActs": [
+      "New conversation",
+      "Send"
+    ],
+    "sends": {
+      "text": "Sends Wed, Oct 28, 9:00 AM",
+      "size": "11px",
+      "lines": 1
+    },
+    "cancel": {
+      "text": "Cancel",
+      "ariaLabel": "Cancel the email scheduled for Wed, Oct 28, 9:00 AM",
+      "disabled": false,
+      "ariaBusy": null,
+      "opacity": "1",
+      "size": "11px",
+      "height": 24,
+      "width": 43
+    },
+    "notSentLines": [],
+    "overflowX": false,
+    "counts": {
+      "pillScheduled": 1,
+      "pillNotSent": 0,
+      "pillCanceled": 0,
+      "pillSending": 0,
+      "railScheduled": 1,
+      "rawCode": 0,
+      "approve": 0
+    },
+    "toasts": [],
+    "calls": [],
+    "errors": []
+  },
+  "exp03s-scheduled-light-1536x770-paige-open": {
+    "ok": true,
+    "viewport": "1536x770",
+    "theme": "light",
+    "paige": "open",
+    "state": "scheduled",
+    "act": "none",
+    "checks": {
+      "noOverflow": true,
+      "goldOnlyOnAct": true,
+      "fontLoaded": true,
+      "noRawCode": true,
+      "noApprove": true,
+      "noOtherFunctions": true,
+      "pillScheduled": true,
+      "cancelShown": true,
+      "sendsShown": true,
+      "railInFuture": true,
+      "railScheduled": true,
+      "noDoorCall": true,
+      "pillAA": true,
+      "cancelAA": true,
+      "sendsAA": true,
+      "railAA": true
+    },
+    "label": {
+      "ok": true,
+      "w": 174,
+      "h": 24
+    },
+    "font": {
+      "schibsted": true
+    },
+    "tagged": [
+      {
+        "kind": "rail-scheduled",
+        "disabled": false,
+        "incidental": false,
+        "text": "Scheduled · in about 19 hours",
+        "ratio": 5.47,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(247, 244, 238)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "pill-scheduled",
+        "disabled": false,
+        "incidental": false,
+        "text": "Scheduled",
+        "ratio": 5.47,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(247, 244, 238)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "sends-time",
+        "disabled": false,
+        "incidental": false,
+        "text": "Sends Wed, Oct 28, 9:00 AM",
+        "ratio": 4.93,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(236,232,230)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": "cancel-control",
+        "disabled": false,
+        "incidental": false,
+        "text": "Cancel",
+        "ratio": 13.52,
+        "color": "rgb(33, 30, 36)",
+        "bg": "rgb(236,232,230)",
+        "size": "11px",
+        "weight": "400"
+      }
+    ],
+    "low": [
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "1",
+        "ratio": 3.52,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(244, 241, 235)",
+        "size": "10px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "1",
+        "ratio": 3.52,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(244, 241, 235)",
+        "size": "10px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "1",
+        "ratio": 3.52,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(244, 241, 235)",
+        "size": "10px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 2.46,
+        "color": "rgba(103, 97, 107, 0.6)",
+        "bg": "rgb(247, 244, 238)",
+        "size": "12px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 2.43,
+        "color": "rgba(103, 97, 107, 0.6)",
+        "bg": "rgb(244, 241, 235)",
+        "size": "12px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "LIVE",
+        "ratio": 3.69,
+        "color": "rgb(50, 118, 90)",
+        "bg": "rgb(217,212,211)",
+        "size": "8px",
+        "weight": "600"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "· 1 day ago",
+        "ratio": 2.46,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(247, 244, 238)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "· 1 day ago",
+        "ratio": 2.36,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(236,232,230)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "· 12 minutes ago",
+        "ratio": 2.36,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(236,232,230)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "PROFILE · LIVE",
+        "ratio": 4.37,
+        "color": "rgb(50, 118, 90)",
+        "bg": "rgb(238,230,215)",
+        "size": "8px",
+        "weight": "600"
+      }
+    ],
+    "textCount": 168,
+    "goldOutsideAct": [],
+    "goldActs": [
+      "New conversation",
+      "Send"
+    ],
+    "sends": {
+      "text": "Sends Wed, Oct 28, 9:00 AM",
+      "size": "11px",
+      "lines": 1
+    },
+    "cancel": {
+      "text": "Cancel",
+      "ariaLabel": "Cancel the email scheduled for Wed, Oct 28, 9:00 AM",
+      "disabled": false,
+      "ariaBusy": null,
+      "opacity": "1",
+      "size": "11px",
+      "height": 24,
+      "width": 43
+    },
+    "notSentLines": [],
+    "overflowX": false,
+    "counts": {
+      "pillScheduled": 1,
+      "pillNotSent": 0,
+      "pillCanceled": 0,
+      "pillSending": 0,
+      "railScheduled": 1,
+      "rawCode": 0,
+      "approve": 0
+    },
+    "toasts": [],
+    "calls": [],
+    "errors": []
+  },
+  "exp03s-scheduled-dark-1536x770-paige-open": {
+    "ok": true,
+    "viewport": "1536x770",
+    "theme": "dark",
+    "paige": "open",
+    "state": "scheduled",
+    "act": "none",
+    "checks": {
+      "noOverflow": true,
+      "goldOnlyOnAct": true,
+      "fontLoaded": true,
+      "noRawCode": true,
+      "noApprove": true,
+      "noOtherFunctions": true,
+      "pillScheduled": true,
+      "cancelShown": true,
+      "sendsShown": true,
+      "railInFuture": true,
+      "railScheduled": true,
+      "noDoorCall": true,
+      "pillAA": true,
+      "cancelAA": true,
+      "sendsAA": true,
+      "railAA": true
+    },
+    "label": {
+      "ok": true,
+      "w": 174,
+      "h": 24
+    },
+    "font": {
+      "schibsted": true
+    },
+    "tagged": [
+      {
+        "kind": "rail-scheduled",
+        "disabled": false,
+        "incidental": false,
+        "text": "Scheduled · in about 19 hours",
+        "ratio": 7.7,
+        "color": "rgb(173, 167, 159)",
+        "bg": "rgb(22, 19, 27)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "pill-scheduled",
+        "disabled": false,
+        "incidental": false,
+        "text": "Scheduled",
+        "ratio": 7.7,
+        "color": "rgb(173, 167, 159)",
+        "bg": "rgb(22, 19, 27)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "sends-time",
+        "disabled": false,
+        "incidental": false,
+        "text": "Sends Wed, Oct 28, 9:00 AM",
+        "ratio": 6.95,
+        "color": "rgb(173, 167, 159)",
+        "bg": "rgb(32,29,40)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": "cancel-control",
+        "disabled": false,
+        "incidental": false,
+        "text": "Cancel",
+        "ratio": 14.83,
+        "color": "rgb(246, 242, 234)",
+        "bg": "rgb(32,29,40)",
+        "size": "11px",
+        "weight": "400"
+      }
+    ],
+    "low": [
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 3.55,
+        "color": "rgba(173, 167, 159, 0.6)",
+        "bg": "rgb(22, 19, 27)",
+        "size": "12px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 3.5,
+        "color": "rgba(173, 167, 159, 0.6)",
+        "bg": "rgb(24, 22, 29)",
+        "size": "12px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "· 1 day ago",
+        "ratio": 3.55,
+        "color": "rgb(173, 167, 159)",
+        "bg": "rgb(22, 19, 27)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "· 1 day ago",
+        "ratio": 3.39,
+        "color": "rgb(173, 167, 159)",
+        "bg": "rgb(32,29,40)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "· 12 minutes ago",
+        "ratio": 3.39,
+        "color": "rgb(173, 167, 159)",
+        "bg": "rgb(32,29,40)",
+        "size": "11px",
+        "weight": "400"
+      }
+    ],
+    "textCount": 168,
+    "goldOutsideAct": [],
+    "goldActs": [
+      "New conversation",
+      "Send"
+    ],
+    "sends": {
+      "text": "Sends Wed, Oct 28, 9:00 AM",
+      "size": "11px",
+      "lines": 1
+    },
+    "cancel": {
+      "text": "Cancel",
+      "ariaLabel": "Cancel the email scheduled for Wed, Oct 28, 9:00 AM",
+      "disabled": false,
+      "ariaBusy": null,
+      "opacity": "1",
+      "size": "11px",
+      "height": 24,
+      "width": 43
+    },
+    "notSentLines": [],
+    "overflowX": false,
+    "counts": {
+      "pillScheduled": 1,
+      "pillNotSent": 0,
+      "pillCanceled": 0,
+      "pillSending": 0,
+      "railScheduled": 1,
+      "rawCode": 0,
+      "approve": 0
+    },
+    "toasts": [],
+    "calls": [],
+    "errors": []
+  },
+  "exp03s-scheduled-light-1366x768-paige-closed": {
+    "ok": true,
+    "viewport": "1366x768",
+    "theme": "light",
+    "paige": "closed",
+    "state": "scheduled",
+    "act": "none",
+    "checks": {
+      "noOverflow": true,
+      "goldOnlyOnAct": true,
+      "fontLoaded": true,
+      "noRawCode": true,
+      "noApprove": true,
+      "noOtherFunctions": true,
+      "pillScheduled": true,
+      "cancelShown": true,
+      "sendsShown": true,
+      "railInFuture": true,
+      "railScheduled": true,
+      "noDoorCall": true,
+      "pillAA": true,
+      "cancelAA": true,
+      "sendsAA": true,
+      "railAA": true
+    },
+    "label": {
+      "ok": true,
+      "w": 174,
+      "h": 24
+    },
+    "font": {
+      "schibsted": true
+    },
+    "tagged": [
+      {
+        "kind": "rail-scheduled",
+        "disabled": false,
+        "incidental": false,
+        "text": "Scheduled · in about 19 hours",
+        "ratio": 5.47,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(247, 244, 238)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "pill-scheduled",
+        "disabled": false,
+        "incidental": false,
+        "text": "Scheduled",
+        "ratio": 5.47,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(247, 244, 238)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "sends-time",
+        "disabled": false,
+        "incidental": false,
+        "text": "Sends Wed, Oct 28, 9:00 AM",
+        "ratio": 4.93,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(236,232,230)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": "cancel-control",
+        "disabled": false,
+        "incidental": false,
+        "text": "Cancel",
+        "ratio": 13.52,
+        "color": "rgb(33, 30, 36)",
+        "bg": "rgb(236,232,230)",
+        "size": "11px",
+        "weight": "400"
+      }
+    ],
+    "low": [
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "1",
+        "ratio": 3.52,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(244, 241, 235)",
+        "size": "10px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "1",
+        "ratio": 3.52,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(244, 241, 235)",
+        "size": "10px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "1",
+        "ratio": 3.52,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(244, 241, 235)",
+        "size": "10px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 2.46,
+        "color": "rgba(103, 97, 107, 0.6)",
+        "bg": "rgb(247, 244, 238)",
+        "size": "12px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 2.43,
+        "color": "rgba(103, 97, 107, 0.6)",
+        "bg": "rgb(244, 241, 235)",
+        "size": "12px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "LIVE",
+        "ratio": 3.69,
+        "color": "rgb(50, 118, 90)",
+        "bg": "rgb(217,212,211)",
+        "size": "8px",
+        "weight": "600"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "· 1 day ago",
+        "ratio": 2.46,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(247, 244, 238)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "· 1 day ago",
+        "ratio": 2.36,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(236,232,230)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "· 12 minutes ago",
+        "ratio": 2.36,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(236,232,230)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "PROFILE · LIVE",
+        "ratio": 4.37,
+        "color": "rgb(50, 118, 90)",
+        "bg": "rgb(238,230,215)",
+        "size": "8px",
+        "weight": "600"
+      }
+    ],
+    "textCount": 170,
+    "goldOutsideAct": [],
+    "goldActs": [
+      "New conversation",
+      "Send"
+    ],
+    "sends": {
+      "text": "Sends Wed, Oct 28, 9:00 AM",
+      "size": "11px",
+      "lines": 1
+    },
+    "cancel": {
+      "text": "Cancel",
+      "ariaLabel": "Cancel the email scheduled for Wed, Oct 28, 9:00 AM",
+      "disabled": false,
+      "ariaBusy": null,
+      "opacity": "1",
+      "size": "11px",
+      "height": 24,
+      "width": 43
+    },
+    "notSentLines": [],
+    "overflowX": false,
+    "counts": {
+      "pillScheduled": 1,
+      "pillNotSent": 0,
+      "pillCanceled": 0,
+      "pillSending": 0,
+      "railScheduled": 1,
+      "rawCode": 0,
+      "approve": 0
+    },
+    "toasts": [],
+    "calls": [],
+    "errors": []
+  },
+  "exp03s-scheduled-dark-1366x768-paige-closed": {
+    "ok": true,
+    "viewport": "1366x768",
+    "theme": "dark",
+    "paige": "closed",
+    "state": "scheduled",
+    "act": "none",
+    "checks": {
+      "noOverflow": true,
+      "goldOnlyOnAct": true,
+      "fontLoaded": true,
+      "noRawCode": true,
+      "noApprove": true,
+      "noOtherFunctions": true,
+      "pillScheduled": true,
+      "cancelShown": true,
+      "sendsShown": true,
+      "railInFuture": true,
+      "railScheduled": true,
+      "noDoorCall": true,
+      "pillAA": true,
+      "cancelAA": true,
+      "sendsAA": true,
+      "railAA": true
+    },
+    "label": {
+      "ok": true,
+      "w": 174,
+      "h": 24
+    },
+    "font": {
+      "schibsted": true
+    },
+    "tagged": [
+      {
+        "kind": "rail-scheduled",
+        "disabled": false,
+        "incidental": false,
+        "text": "Scheduled · in about 19 hours",
+        "ratio": 7.7,
+        "color": "rgb(173, 167, 159)",
+        "bg": "rgb(22, 19, 27)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "pill-scheduled",
+        "disabled": false,
+        "incidental": false,
+        "text": "Scheduled",
+        "ratio": 7.7,
+        "color": "rgb(173, 167, 159)",
+        "bg": "rgb(22, 19, 27)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "sends-time",
+        "disabled": false,
+        "incidental": false,
+        "text": "Sends Wed, Oct 28, 9:00 AM",
+        "ratio": 6.95,
+        "color": "rgb(173, 167, 159)",
+        "bg": "rgb(32,29,40)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": "cancel-control",
+        "disabled": false,
+        "incidental": false,
+        "text": "Cancel",
+        "ratio": 14.83,
+        "color": "rgb(246, 242, 234)",
+        "bg": "rgb(32,29,40)",
+        "size": "11px",
+        "weight": "400"
+      }
+    ],
+    "low": [
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 3.55,
+        "color": "rgba(173, 167, 159, 0.6)",
+        "bg": "rgb(22, 19, 27)",
+        "size": "12px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 3.5,
+        "color": "rgba(173, 167, 159, 0.6)",
+        "bg": "rgb(24, 22, 29)",
+        "size": "12px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "· 1 day ago",
+        "ratio": 3.55,
+        "color": "rgb(173, 167, 159)",
+        "bg": "rgb(22, 19, 27)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "· 1 day ago",
+        "ratio": 3.39,
+        "color": "rgb(173, 167, 159)",
+        "bg": "rgb(32,29,40)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "· 12 minutes ago",
+        "ratio": 3.39,
+        "color": "rgb(173, 167, 159)",
+        "bg": "rgb(32,29,40)",
+        "size": "11px",
+        "weight": "400"
+      }
+    ],
+    "textCount": 170,
+    "goldOutsideAct": [],
+    "goldActs": [
+      "New conversation",
+      "Send"
+    ],
+    "sends": {
+      "text": "Sends Wed, Oct 28, 9:00 AM",
+      "size": "11px",
+      "lines": 1
+    },
+    "cancel": {
+      "text": "Cancel",
+      "ariaLabel": "Cancel the email scheduled for Wed, Oct 28, 9:00 AM",
+      "disabled": false,
+      "ariaBusy": null,
+      "opacity": "1",
+      "size": "11px",
+      "height": 24,
+      "width": 43
+    },
+    "notSentLines": [],
+    "overflowX": false,
+    "counts": {
+      "pillScheduled": 1,
+      "pillNotSent": 0,
+      "pillCanceled": 0,
+      "pillSending": 0,
+      "railScheduled": 1,
+      "rawCode": 0,
+      "approve": 0
+    },
+    "toasts": [],
+    "calls": [],
+    "errors": []
+  },
+  "exp03s-scheduled-light-1366x768-paige-open": {
+    "ok": true,
+    "viewport": "1366x768",
+    "theme": "light",
+    "paige": "open",
+    "state": "scheduled",
+    "act": "none",
+    "checks": {
+      "noOverflow": true,
+      "goldOnlyOnAct": true,
+      "fontLoaded": true,
+      "noRawCode": true,
+      "noApprove": true,
+      "noOtherFunctions": true,
+      "pillScheduled": true,
+      "cancelShown": true,
+      "sendsShown": true,
+      "railInFuture": true,
+      "railScheduled": true,
+      "noDoorCall": true,
+      "pillAA": true,
+      "cancelAA": true,
+      "sendsAA": true,
+      "railAA": true
+    },
+    "label": {
+      "ok": true,
+      "w": 174,
+      "h": 24
+    },
+    "font": {
+      "schibsted": true
+    },
+    "tagged": [
+      {
+        "kind": "rail-scheduled",
+        "disabled": false,
+        "incidental": false,
+        "text": "Scheduled · in about 19 hours",
+        "ratio": 5.47,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(247, 244, 238)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "pill-scheduled",
+        "disabled": false,
+        "incidental": false,
+        "text": "Scheduled",
+        "ratio": 5.47,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(247, 244, 238)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "sends-time",
+        "disabled": false,
+        "incidental": false,
+        "text": "Sends Wed, Oct 28, 9:00 AM",
+        "ratio": 4.93,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(236,232,230)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": "cancel-control",
+        "disabled": false,
+        "incidental": false,
+        "text": "Cancel",
+        "ratio": 13.52,
+        "color": "rgb(33, 30, 36)",
+        "bg": "rgb(236,232,230)",
+        "size": "11px",
+        "weight": "400"
+      }
+    ],
+    "low": [
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "1",
+        "ratio": 3.52,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(244, 241, 235)",
+        "size": "10px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "1",
+        "ratio": 3.52,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(244, 241, 235)",
+        "size": "10px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "1",
+        "ratio": 3.52,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(244, 241, 235)",
+        "size": "10px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 2.46,
+        "color": "rgba(103, 97, 107, 0.6)",
+        "bg": "rgb(247, 244, 238)",
+        "size": "12px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 2.43,
+        "color": "rgba(103, 97, 107, 0.6)",
+        "bg": "rgb(244, 241, 235)",
+        "size": "12px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "LIVE",
+        "ratio": 3.69,
+        "color": "rgb(50, 118, 90)",
+        "bg": "rgb(217,212,211)",
+        "size": "8px",
+        "weight": "600"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "· 1 day ago",
+        "ratio": 2.46,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(247, 244, 238)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "· 1 day ago",
+        "ratio": 2.36,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(236,232,230)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "· 12 minutes ago",
+        "ratio": 2.36,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(236,232,230)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "PROFILE · LIVE",
+        "ratio": 4.37,
+        "color": "rgb(50, 118, 90)",
+        "bg": "rgb(238,230,215)",
+        "size": "8px",
+        "weight": "600"
+      }
+    ],
+    "textCount": 167,
+    "goldOutsideAct": [],
+    "goldActs": [
+      "New conversation",
+      "Send"
+    ],
+    "sends": {
+      "text": "Sends Wed, Oct 28, 9:00 AM",
+      "size": "11px",
+      "lines": 1
+    },
+    "cancel": {
+      "text": "Cancel",
+      "ariaLabel": "Cancel the email scheduled for Wed, Oct 28, 9:00 AM",
+      "disabled": false,
+      "ariaBusy": null,
+      "opacity": "1",
+      "size": "11px",
+      "height": 24,
+      "width": 43
+    },
+    "notSentLines": [],
+    "overflowX": false,
+    "counts": {
+      "pillScheduled": 1,
+      "pillNotSent": 0,
+      "pillCanceled": 0,
+      "pillSending": 0,
+      "railScheduled": 1,
+      "rawCode": 0,
+      "approve": 0
+    },
+    "toasts": [],
+    "calls": [],
+    "errors": []
+  },
+  "exp03s-scheduled-dark-1366x768-paige-open": {
+    "ok": true,
+    "viewport": "1366x768",
+    "theme": "dark",
+    "paige": "open",
+    "state": "scheduled",
+    "act": "none",
+    "checks": {
+      "noOverflow": true,
+      "goldOnlyOnAct": true,
+      "fontLoaded": true,
+      "noRawCode": true,
+      "noApprove": true,
+      "noOtherFunctions": true,
+      "pillScheduled": true,
+      "cancelShown": true,
+      "sendsShown": true,
+      "railInFuture": true,
+      "railScheduled": true,
+      "noDoorCall": true,
+      "pillAA": true,
+      "cancelAA": true,
+      "sendsAA": true,
+      "railAA": true
+    },
+    "label": {
+      "ok": true,
+      "w": 174,
+      "h": 24
+    },
+    "font": {
+      "schibsted": true
+    },
+    "tagged": [
+      {
+        "kind": "rail-scheduled",
+        "disabled": false,
+        "incidental": false,
+        "text": "Scheduled · in about 19 hours",
+        "ratio": 7.7,
+        "color": "rgb(173, 167, 159)",
+        "bg": "rgb(22, 19, 27)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "pill-scheduled",
+        "disabled": false,
+        "incidental": false,
+        "text": "Scheduled",
+        "ratio": 7.7,
+        "color": "rgb(173, 167, 159)",
+        "bg": "rgb(22, 19, 27)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "sends-time",
+        "disabled": false,
+        "incidental": false,
+        "text": "Sends Wed, Oct 28, 9:00 AM",
+        "ratio": 6.95,
+        "color": "rgb(173, 167, 159)",
+        "bg": "rgb(32,29,40)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": "cancel-control",
+        "disabled": false,
+        "incidental": false,
+        "text": "Cancel",
+        "ratio": 14.83,
+        "color": "rgb(246, 242, 234)",
+        "bg": "rgb(32,29,40)",
+        "size": "11px",
+        "weight": "400"
+      }
+    ],
+    "low": [
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 3.55,
+        "color": "rgba(173, 167, 159, 0.6)",
+        "bg": "rgb(22, 19, 27)",
+        "size": "12px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 3.5,
+        "color": "rgba(173, 167, 159, 0.6)",
+        "bg": "rgb(24, 22, 29)",
+        "size": "12px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "· 1 day ago",
+        "ratio": 3.55,
+        "color": "rgb(173, 167, 159)",
+        "bg": "rgb(22, 19, 27)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "· 1 day ago",
+        "ratio": 3.39,
+        "color": "rgb(173, 167, 159)",
+        "bg": "rgb(32,29,40)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "· 12 minutes ago",
+        "ratio": 3.39,
+        "color": "rgb(173, 167, 159)",
+        "bg": "rgb(32,29,40)",
+        "size": "11px",
+        "weight": "400"
+      }
+    ],
+    "textCount": 167,
+    "goldOutsideAct": [],
+    "goldActs": [
+      "New conversation",
+      "Send"
+    ],
+    "sends": {
+      "text": "Sends Wed, Oct 28, 9:00 AM",
+      "size": "11px",
+      "lines": 1
+    },
+    "cancel": {
+      "text": "Cancel",
+      "ariaLabel": "Cancel the email scheduled for Wed, Oct 28, 9:00 AM",
+      "disabled": false,
+      "ariaBusy": null,
+      "opacity": "1",
+      "size": "11px",
+      "height": 24,
+      "width": 43
+    },
+    "notSentLines": [],
+    "overflowX": false,
+    "counts": {
+      "pillScheduled": 1,
+      "pillNotSent": 0,
+      "pillCanceled": 0,
+      "pillSending": 0,
+      "railScheduled": 1,
+      "rawCode": 0,
+      "approve": 0
+    },
+    "toasts": [],
+    "calls": [],
+    "errors": []
+  },
+  "exp03s-scheduled-light-1024x768-paige-closed": {
+    "ok": true,
+    "viewport": "1024x768",
+    "theme": "light",
+    "paige": "closed",
+    "state": "scheduled",
+    "act": "none",
+    "checks": {
+      "noOverflow": true,
+      "goldOnlyOnAct": true,
+      "fontLoaded": true,
+      "noRawCode": true,
+      "noApprove": true,
+      "noOtherFunctions": true,
+      "pillScheduled": true,
+      "cancelShown": true,
+      "sendsShown": true,
+      "railInFuture": true,
+      "railScheduled": true,
+      "noDoorCall": true,
+      "pillAA": true,
+      "cancelAA": true,
+      "sendsAA": true,
+      "railAA": true
+    },
+    "label": {
+      "ok": true,
+      "w": 174,
+      "h": 24
+    },
+    "font": {
+      "schibsted": true
+    },
+    "tagged": [
+      {
+        "kind": "rail-scheduled",
+        "disabled": false,
+        "incidental": false,
+        "text": "Scheduled · in about 19 hours",
+        "ratio": 5.47,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(247, 244, 238)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "pill-scheduled",
+        "disabled": false,
+        "incidental": false,
+        "text": "Scheduled",
+        "ratio": 5.47,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(247, 244, 238)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "sends-time",
+        "disabled": false,
+        "incidental": false,
+        "text": "Sends Wed, Oct 28, 9:00 AM",
+        "ratio": 4.93,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(236,232,230)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": "cancel-control",
+        "disabled": false,
+        "incidental": false,
+        "text": "Cancel",
+        "ratio": 13.52,
+        "color": "rgb(33, 30, 36)",
+        "bg": "rgb(236,232,230)",
+        "size": "11px",
+        "weight": "400"
+      }
+    ],
+    "low": [
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "1",
+        "ratio": 3.52,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(244, 241, 235)",
+        "size": "10px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "1",
+        "ratio": 3.52,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(244, 241, 235)",
+        "size": "10px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "1",
+        "ratio": 3.52,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(244, 241, 235)",
+        "size": "10px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 2.46,
+        "color": "rgba(103, 97, 107, 0.6)",
+        "bg": "rgb(247, 244, 238)",
+        "size": "12px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 2.43,
+        "color": "rgba(103, 97, 107, 0.6)",
+        "bg": "rgb(244, 241, 235)",
+        "size": "12px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "LIVE",
+        "ratio": 3.69,
+        "color": "rgb(50, 118, 90)",
+        "bg": "rgb(217,212,211)",
+        "size": "8px",
+        "weight": "600"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "· 1 day ago",
+        "ratio": 2.46,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(247, 244, 238)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "· 1 day ago",
+        "ratio": 2.36,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(236,232,230)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "· 12 minutes ago",
+        "ratio": 2.36,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(236,232,230)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "PROFILE · LIVE",
+        "ratio": 4.37,
+        "color": "rgb(50, 118, 90)",
+        "bg": "rgb(238,230,215)",
+        "size": "8px",
+        "weight": "600"
+      }
+    ],
+    "textCount": 167,
+    "goldOutsideAct": [],
+    "goldActs": [
+      "New conversation",
+      "Send"
+    ],
+    "sends": {
+      "text": "Sends Wed, Oct 28, 9:00 AM",
+      "size": "11px",
+      "lines": 1
+    },
+    "cancel": {
+      "text": "Cancel",
+      "ariaLabel": "Cancel the email scheduled for Wed, Oct 28, 9:00 AM",
+      "disabled": false,
+      "ariaBusy": null,
+      "opacity": "1",
+      "size": "11px",
+      "height": 24,
+      "width": 43
+    },
+    "notSentLines": [],
+    "overflowX": false,
+    "counts": {
+      "pillScheduled": 1,
+      "pillNotSent": 0,
+      "pillCanceled": 0,
+      "pillSending": 0,
+      "railScheduled": 1,
+      "rawCode": 0,
+      "approve": 0
+    },
+    "toasts": [],
+    "calls": [],
+    "errors": []
+  },
+  "exp03s-scheduled-dark-1024x768-paige-closed": {
+    "ok": true,
+    "viewport": "1024x768",
+    "theme": "dark",
+    "paige": "closed",
+    "state": "scheduled",
+    "act": "none",
+    "checks": {
+      "noOverflow": true,
+      "goldOnlyOnAct": true,
+      "fontLoaded": true,
+      "noRawCode": true,
+      "noApprove": true,
+      "noOtherFunctions": true,
+      "pillScheduled": true,
+      "cancelShown": true,
+      "sendsShown": true,
+      "railInFuture": true,
+      "railScheduled": true,
+      "noDoorCall": true,
+      "pillAA": true,
+      "cancelAA": true,
+      "sendsAA": true,
+      "railAA": true
+    },
+    "label": {
+      "ok": true,
+      "w": 174,
+      "h": 24
+    },
+    "font": {
+      "schibsted": true
+    },
+    "tagged": [
+      {
+        "kind": "rail-scheduled",
+        "disabled": false,
+        "incidental": false,
+        "text": "Scheduled · in about 19 hours",
+        "ratio": 7.7,
+        "color": "rgb(173, 167, 159)",
+        "bg": "rgb(22, 19, 27)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "pill-scheduled",
+        "disabled": false,
+        "incidental": false,
+        "text": "Scheduled",
+        "ratio": 7.7,
+        "color": "rgb(173, 167, 159)",
+        "bg": "rgb(22, 19, 27)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "sends-time",
+        "disabled": false,
+        "incidental": false,
+        "text": "Sends Wed, Oct 28, 9:00 AM",
+        "ratio": 6.95,
+        "color": "rgb(173, 167, 159)",
+        "bg": "rgb(32,29,40)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": "cancel-control",
+        "disabled": false,
+        "incidental": false,
+        "text": "Cancel",
+        "ratio": 14.83,
+        "color": "rgb(246, 242, 234)",
+        "bg": "rgb(32,29,40)",
+        "size": "11px",
+        "weight": "400"
+      }
+    ],
+    "low": [
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 3.55,
+        "color": "rgba(173, 167, 159, 0.6)",
+        "bg": "rgb(22, 19, 27)",
+        "size": "12px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 3.5,
+        "color": "rgba(173, 167, 159, 0.6)",
+        "bg": "rgb(24, 22, 29)",
+        "size": "12px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "· 1 day ago",
+        "ratio": 3.55,
+        "color": "rgb(173, 167, 159)",
+        "bg": "rgb(22, 19, 27)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "· 1 day ago",
+        "ratio": 3.39,
+        "color": "rgb(173, 167, 159)",
+        "bg": "rgb(32,29,40)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "· 12 minutes ago",
+        "ratio": 3.39,
+        "color": "rgb(173, 167, 159)",
+        "bg": "rgb(32,29,40)",
+        "size": "11px",
+        "weight": "400"
+      }
+    ],
+    "textCount": 167,
+    "goldOutsideAct": [],
+    "goldActs": [
+      "New conversation",
+      "Send"
+    ],
+    "sends": {
+      "text": "Sends Wed, Oct 28, 9:00 AM",
+      "size": "11px",
+      "lines": 1
+    },
+    "cancel": {
+      "text": "Cancel",
+      "ariaLabel": "Cancel the email scheduled for Wed, Oct 28, 9:00 AM",
+      "disabled": false,
+      "ariaBusy": null,
+      "opacity": "1",
+      "size": "11px",
+      "height": 24,
+      "width": 43
+    },
+    "notSentLines": [],
+    "overflowX": false,
+    "counts": {
+      "pillScheduled": 1,
+      "pillNotSent": 0,
+      "pillCanceled": 0,
+      "pillSending": 0,
+      "railScheduled": 1,
+      "rawCode": 0,
+      "approve": 0
+    },
+    "toasts": [],
+    "calls": [],
+    "errors": []
+  },
+  "exp03s-scheduled-light-1024x768-paige-open": {
+    "ok": true,
+    "viewport": "1024x768",
+    "theme": "light",
+    "paige": "open",
+    "state": "scheduled",
+    "act": "none",
+    "checks": {
+      "noOverflow": true,
+      "goldOnlyOnAct": true,
+      "fontLoaded": true,
+      "noRawCode": true,
+      "noApprove": true,
+      "noOtherFunctions": true,
+      "pillScheduled": true,
+      "cancelShown": true,
+      "sendsShown": true,
+      "railInFuture": true,
+      "railScheduled": true,
+      "noDoorCall": true,
+      "pillAA": true,
+      "cancelAA": true,
+      "sendsAA": true,
+      "railAA": true
+    },
+    "label": {
+      "ok": true,
+      "w": 174,
+      "h": 24
+    },
+    "font": {
+      "schibsted": true
+    },
+    "tagged": [
+      {
+        "kind": "rail-scheduled",
+        "disabled": false,
+        "incidental": false,
+        "text": "Scheduled · in about 19 hours",
+        "ratio": 5.47,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(247, 244, 238)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "pill-scheduled",
+        "disabled": false,
+        "incidental": false,
+        "text": "Scheduled",
+        "ratio": 5.47,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(247, 244, 238)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "sends-time",
+        "disabled": false,
+        "incidental": false,
+        "text": "Sends Wed, Oct 28, 9:00 AM",
+        "ratio": 4.93,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(236,232,230)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": "cancel-control",
+        "disabled": false,
+        "incidental": false,
+        "text": "Cancel",
+        "ratio": 13.52,
+        "color": "rgb(33, 30, 36)",
+        "bg": "rgb(236,232,230)",
+        "size": "11px",
+        "weight": "400"
+      }
+    ],
+    "low": [
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "1",
+        "ratio": 3.52,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(244, 241, 235)",
+        "size": "10px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "1",
+        "ratio": 3.52,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(244, 241, 235)",
+        "size": "10px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "1",
+        "ratio": 3.52,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(244, 241, 235)",
+        "size": "10px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 2.46,
+        "color": "rgba(103, 97, 107, 0.6)",
+        "bg": "rgb(247, 244, 238)",
+        "size": "12px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 2.43,
+        "color": "rgba(103, 97, 107, 0.6)",
+        "bg": "rgb(244, 241, 235)",
+        "size": "12px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "LIVE",
+        "ratio": 3.69,
+        "color": "rgb(50, 118, 90)",
+        "bg": "rgb(217,212,211)",
+        "size": "8px",
+        "weight": "600"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "· 1 day ago",
+        "ratio": 2.46,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(247, 244, 238)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "· 1 day ago",
+        "ratio": 2.36,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(236,232,230)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "· 12 minutes ago",
+        "ratio": 2.36,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(236,232,230)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "PROFILE · LIVE",
+        "ratio": 4.37,
+        "color": "rgb(50, 118, 90)",
+        "bg": "rgb(238,230,215)",
+        "size": "8px",
+        "weight": "600"
+      }
+    ],
+    "textCount": 167,
+    "goldOutsideAct": [],
+    "goldActs": [
+      "New conversation",
+      "Send"
+    ],
+    "sends": {
+      "text": "Sends Wed, Oct 28, 9:00 AM",
+      "size": "11px",
+      "lines": 1
+    },
+    "cancel": {
+      "text": "Cancel",
+      "ariaLabel": "Cancel the email scheduled for Wed, Oct 28, 9:00 AM",
+      "disabled": false,
+      "ariaBusy": null,
+      "opacity": "1",
+      "size": "11px",
+      "height": 24,
+      "width": 43
+    },
+    "notSentLines": [],
+    "overflowX": false,
+    "counts": {
+      "pillScheduled": 1,
+      "pillNotSent": 0,
+      "pillCanceled": 0,
+      "pillSending": 0,
+      "railScheduled": 1,
+      "rawCode": 0,
+      "approve": 0
+    },
+    "toasts": [],
+    "calls": [],
+    "errors": []
+  },
+  "exp03s-scheduled-dark-1024x768-paige-open": {
+    "ok": true,
+    "viewport": "1024x768",
+    "theme": "dark",
+    "paige": "open",
+    "state": "scheduled",
+    "act": "none",
+    "checks": {
+      "noOverflow": true,
+      "goldOnlyOnAct": true,
+      "fontLoaded": true,
+      "noRawCode": true,
+      "noApprove": true,
+      "noOtherFunctions": true,
+      "pillScheduled": true,
+      "cancelShown": true,
+      "sendsShown": true,
+      "railInFuture": true,
+      "railScheduled": true,
+      "noDoorCall": true,
+      "pillAA": true,
+      "cancelAA": true,
+      "sendsAA": true,
+      "railAA": true
+    },
+    "label": {
+      "ok": true,
+      "w": 174,
+      "h": 24
+    },
+    "font": {
+      "schibsted": true
+    },
+    "tagged": [
+      {
+        "kind": "rail-scheduled",
+        "disabled": false,
+        "incidental": false,
+        "text": "Scheduled · in about 19 hours",
+        "ratio": 7.7,
+        "color": "rgb(173, 167, 159)",
+        "bg": "rgb(22, 19, 27)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "pill-scheduled",
+        "disabled": false,
+        "incidental": false,
+        "text": "Scheduled",
+        "ratio": 7.7,
+        "color": "rgb(173, 167, 159)",
+        "bg": "rgb(22, 19, 27)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "sends-time",
+        "disabled": false,
+        "incidental": false,
+        "text": "Sends Wed, Oct 28, 9:00 AM",
+        "ratio": 6.95,
+        "color": "rgb(173, 167, 159)",
+        "bg": "rgb(32,29,40)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": "cancel-control",
+        "disabled": false,
+        "incidental": false,
+        "text": "Cancel",
+        "ratio": 14.83,
+        "color": "rgb(246, 242, 234)",
+        "bg": "rgb(32,29,40)",
+        "size": "11px",
+        "weight": "400"
+      }
+    ],
+    "low": [
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 3.55,
+        "color": "rgba(173, 167, 159, 0.6)",
+        "bg": "rgb(22, 19, 27)",
+        "size": "12px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 3.5,
+        "color": "rgba(173, 167, 159, 0.6)",
+        "bg": "rgb(24, 22, 29)",
+        "size": "12px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "· 1 day ago",
+        "ratio": 3.55,
+        "color": "rgb(173, 167, 159)",
+        "bg": "rgb(22, 19, 27)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "· 1 day ago",
+        "ratio": 3.39,
+        "color": "rgb(173, 167, 159)",
+        "bg": "rgb(32,29,40)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "· 12 minutes ago",
+        "ratio": 3.39,
+        "color": "rgb(173, 167, 159)",
+        "bg": "rgb(32,29,40)",
+        "size": "11px",
+        "weight": "400"
+      }
+    ],
+    "textCount": 167,
+    "goldOutsideAct": [],
+    "goldActs": [
+      "New conversation",
+      "Send"
+    ],
+    "sends": {
+      "text": "Sends Wed, Oct 28, 9:00 AM",
+      "size": "11px",
+      "lines": 1
+    },
+    "cancel": {
+      "text": "Cancel",
+      "ariaLabel": "Cancel the email scheduled for Wed, Oct 28, 9:00 AM",
+      "disabled": false,
+      "ariaBusy": null,
+      "opacity": "1",
+      "size": "11px",
+      "height": 24,
+      "width": 43
+    },
+    "notSentLines": [],
+    "overflowX": false,
+    "counts": {
+      "pillScheduled": 1,
+      "pillNotSent": 0,
+      "pillCanceled": 0,
+      "pillSending": 0,
+      "railScheduled": 1,
+      "rawCode": 0,
+      "approve": 0
+    },
+    "toasts": [],
+    "calls": [],
+    "errors": []
+  },
+  "exp03s-scheduled-light-900x1000-paige-closed": {
+    "ok": true,
+    "viewport": "900x1000",
+    "theme": "light",
+    "paige": "closed",
+    "state": "scheduled",
+    "act": "none",
+    "checks": {
+      "noOverflow": true,
+      "goldOnlyOnAct": true,
+      "fontLoaded": true,
+      "noRawCode": true,
+      "noApprove": true,
+      "noOtherFunctions": true,
+      "pillScheduled": true,
+      "cancelShown": true,
+      "sendsShown": true,
+      "railInFuture": true,
+      "railScheduled": true,
+      "noDoorCall": true,
+      "pillAA": true,
+      "cancelAA": true,
+      "sendsAA": true,
+      "railAA": true
+    },
+    "label": {
+      "ok": true,
+      "w": 174,
+      "h": 24
+    },
+    "font": {
+      "schibsted": true
+    },
+    "tagged": [
+      {
+        "kind": "rail-scheduled",
+        "disabled": false,
+        "incidental": false,
+        "text": "Scheduled · in about 19 hours",
+        "ratio": 5.47,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(247, 244, 238)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "pill-scheduled",
+        "disabled": false,
+        "incidental": false,
+        "text": "Scheduled",
+        "ratio": 5.47,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(247, 244, 238)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "sends-time",
+        "disabled": false,
+        "incidental": false,
+        "text": "Sends Wed, Oct 28, 9:00 AM",
+        "ratio": 4.93,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(236,232,230)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": "cancel-control",
+        "disabled": false,
+        "incidental": false,
+        "text": "Cancel",
+        "ratio": 13.52,
+        "color": "rgb(33, 30, 36)",
+        "bg": "rgb(236,232,230)",
+        "size": "11px",
+        "weight": "400"
+      }
+    ],
+    "low": [
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "1",
+        "ratio": 3.52,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(244, 241, 235)",
+        "size": "10px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "1",
+        "ratio": 3.52,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(244, 241, 235)",
+        "size": "10px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "1",
+        "ratio": 3.52,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(244, 241, 235)",
+        "size": "10px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 2.46,
+        "color": "rgba(103, 97, 107, 0.6)",
+        "bg": "rgb(247, 244, 238)",
+        "size": "12px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 2.43,
+        "color": "rgba(103, 97, 107, 0.6)",
+        "bg": "rgb(244, 241, 235)",
+        "size": "12px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "LIVE",
+        "ratio": 3.69,
+        "color": "rgb(50, 118, 90)",
+        "bg": "rgb(217,212,211)",
+        "size": "8px",
+        "weight": "600"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "· 1 day ago",
+        "ratio": 2.46,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(247, 244, 238)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "· 1 day ago",
+        "ratio": 2.36,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(236,232,230)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "· 12 minutes ago",
+        "ratio": 2.36,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(236,232,230)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "PROFILE · LIVE",
+        "ratio": 4.37,
+        "color": "rgb(50, 118, 90)",
+        "bg": "rgb(238,230,215)",
+        "size": "8px",
+        "weight": "600"
+      }
+    ],
+    "textCount": 194,
+    "goldOutsideAct": [],
+    "goldActs": [
+      "New conversation",
+      "Send"
+    ],
+    "sends": {
+      "text": "Sends Wed, Oct 28, 9:00 AM",
+      "size": "11px",
+      "lines": 1
+    },
+    "cancel": {
+      "text": "Cancel",
+      "ariaLabel": "Cancel the email scheduled for Wed, Oct 28, 9:00 AM",
+      "disabled": false,
+      "ariaBusy": null,
+      "opacity": "1",
+      "size": "11px",
+      "height": 24,
+      "width": 43
+    },
+    "notSentLines": [],
+    "overflowX": false,
+    "counts": {
+      "pillScheduled": 1,
+      "pillNotSent": 0,
+      "pillCanceled": 0,
+      "pillSending": 0,
+      "railScheduled": 1,
+      "rawCode": 0,
+      "approve": 0
+    },
+    "toasts": [],
+    "calls": [],
+    "errors": []
+  },
+  "exp03s-scheduled-dark-900x1000-paige-closed": {
+    "ok": true,
+    "viewport": "900x1000",
+    "theme": "dark",
+    "paige": "closed",
+    "state": "scheduled",
+    "act": "none",
+    "checks": {
+      "noOverflow": true,
+      "goldOnlyOnAct": true,
+      "fontLoaded": true,
+      "noRawCode": true,
+      "noApprove": true,
+      "noOtherFunctions": true,
+      "pillScheduled": true,
+      "cancelShown": true,
+      "sendsShown": true,
+      "railInFuture": true,
+      "railScheduled": true,
+      "noDoorCall": true,
+      "pillAA": true,
+      "cancelAA": true,
+      "sendsAA": true,
+      "railAA": true
+    },
+    "label": {
+      "ok": true,
+      "w": 174,
+      "h": 24
+    },
+    "font": {
+      "schibsted": true
+    },
+    "tagged": [
+      {
+        "kind": "rail-scheduled",
+        "disabled": false,
+        "incidental": false,
+        "text": "Scheduled · in about 19 hours",
+        "ratio": 7.7,
+        "color": "rgb(173, 167, 159)",
+        "bg": "rgb(22, 19, 27)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "pill-scheduled",
+        "disabled": false,
+        "incidental": false,
+        "text": "Scheduled",
+        "ratio": 7.7,
+        "color": "rgb(173, 167, 159)",
+        "bg": "rgb(22, 19, 27)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "sends-time",
+        "disabled": false,
+        "incidental": false,
+        "text": "Sends Wed, Oct 28, 9:00 AM",
+        "ratio": 6.95,
+        "color": "rgb(173, 167, 159)",
+        "bg": "rgb(32,29,40)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": "cancel-control",
+        "disabled": false,
+        "incidental": false,
+        "text": "Cancel",
+        "ratio": 14.83,
+        "color": "rgb(246, 242, 234)",
+        "bg": "rgb(32,29,40)",
+        "size": "11px",
+        "weight": "400"
+      }
+    ],
+    "low": [
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 3.55,
+        "color": "rgba(173, 167, 159, 0.6)",
+        "bg": "rgb(22, 19, 27)",
+        "size": "12px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 3.5,
+        "color": "rgba(173, 167, 159, 0.6)",
+        "bg": "rgb(24, 22, 29)",
+        "size": "12px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "· 1 day ago",
+        "ratio": 3.55,
+        "color": "rgb(173, 167, 159)",
+        "bg": "rgb(22, 19, 27)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "· 1 day ago",
+        "ratio": 3.39,
+        "color": "rgb(173, 167, 159)",
+        "bg": "rgb(32,29,40)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "· 12 minutes ago",
+        "ratio": 3.39,
+        "color": "rgb(173, 167, 159)",
+        "bg": "rgb(32,29,40)",
+        "size": "11px",
+        "weight": "400"
+      }
+    ],
+    "textCount": 194,
+    "goldOutsideAct": [],
+    "goldActs": [
+      "New conversation",
+      "Send"
+    ],
+    "sends": {
+      "text": "Sends Wed, Oct 28, 9:00 AM",
+      "size": "11px",
+      "lines": 1
+    },
+    "cancel": {
+      "text": "Cancel",
+      "ariaLabel": "Cancel the email scheduled for Wed, Oct 28, 9:00 AM",
+      "disabled": false,
+      "ariaBusy": null,
+      "opacity": "1",
+      "size": "11px",
+      "height": 24,
+      "width": 43
+    },
+    "notSentLines": [],
+    "overflowX": false,
+    "counts": {
+      "pillScheduled": 1,
+      "pillNotSent": 0,
+      "pillCanceled": 0,
+      "pillSending": 0,
+      "railScheduled": 1,
+      "rawCode": 0,
+      "approve": 0
+    },
+    "toasts": [],
+    "calls": [],
+    "errors": []
+  },
+  "exp03s-scheduled-light-900x1000-paige-open": {
+    "ok": true,
+    "viewport": "900x1000",
+    "theme": "light",
+    "paige": "open",
+    "state": "scheduled",
+    "act": "none",
+    "checks": {
+      "noOverflow": true,
+      "goldOnlyOnAct": true,
+      "fontLoaded": true,
+      "noRawCode": true,
+      "noApprove": true,
+      "noOtherFunctions": true,
+      "pillScheduled": true,
+      "cancelShown": true,
+      "sendsShown": true,
+      "railInFuture": true,
+      "railScheduled": true,
+      "noDoorCall": true,
+      "pillAA": true,
+      "cancelAA": true,
+      "sendsAA": true,
+      "railAA": true
+    },
+    "label": {
+      "ok": true,
+      "w": 174,
+      "h": 24
+    },
+    "font": {
+      "schibsted": true
+    },
+    "tagged": [
+      {
+        "kind": "rail-scheduled",
+        "disabled": false,
+        "incidental": false,
+        "text": "Scheduled · in about 19 hours",
+        "ratio": 5.47,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(247, 244, 238)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "pill-scheduled",
+        "disabled": false,
+        "incidental": false,
+        "text": "Scheduled",
+        "ratio": 5.47,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(247, 244, 238)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "sends-time",
+        "disabled": false,
+        "incidental": false,
+        "text": "Sends Wed, Oct 28, 9:00 AM",
+        "ratio": 4.93,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(236,232,230)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": "cancel-control",
+        "disabled": false,
+        "incidental": false,
+        "text": "Cancel",
+        "ratio": 13.52,
+        "color": "rgb(33, 30, 36)",
+        "bg": "rgb(236,232,230)",
+        "size": "11px",
+        "weight": "400"
+      }
+    ],
+    "low": [
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "1",
+        "ratio": 3.52,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(244, 241, 235)",
+        "size": "10px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "1",
+        "ratio": 3.52,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(244, 241, 235)",
+        "size": "10px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "1",
+        "ratio": 3.52,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(244, 241, 235)",
+        "size": "10px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 2.46,
+        "color": "rgba(103, 97, 107, 0.6)",
+        "bg": "rgb(247, 244, 238)",
+        "size": "12px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 2.43,
+        "color": "rgba(103, 97, 107, 0.6)",
+        "bg": "rgb(244, 241, 235)",
+        "size": "12px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "LIVE",
+        "ratio": 3.69,
+        "color": "rgb(50, 118, 90)",
+        "bg": "rgb(217,212,211)",
+        "size": "8px",
+        "weight": "600"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "· 1 day ago",
+        "ratio": 2.46,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(247, 244, 238)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "· 1 day ago",
+        "ratio": 2.36,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(236,232,230)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "· 12 minutes ago",
+        "ratio": 2.36,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(236,232,230)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "PROFILE · LIVE",
+        "ratio": 4.37,
+        "color": "rgb(50, 118, 90)",
+        "bg": "rgb(238,230,215)",
+        "size": "8px",
+        "weight": "600"
+      }
+    ],
+    "textCount": 194,
+    "goldOutsideAct": [],
+    "goldActs": [
+      "New conversation",
+      "Send"
+    ],
+    "sends": {
+      "text": "Sends Wed, Oct 28, 9:00 AM",
+      "size": "11px",
+      "lines": 1
+    },
+    "cancel": {
+      "text": "Cancel",
+      "ariaLabel": "Cancel the email scheduled for Wed, Oct 28, 9:00 AM",
+      "disabled": false,
+      "ariaBusy": null,
+      "opacity": "1",
+      "size": "11px",
+      "height": 24,
+      "width": 43
+    },
+    "notSentLines": [],
+    "overflowX": false,
+    "counts": {
+      "pillScheduled": 1,
+      "pillNotSent": 0,
+      "pillCanceled": 0,
+      "pillSending": 0,
+      "railScheduled": 1,
+      "rawCode": 0,
+      "approve": 0
+    },
+    "toasts": [],
+    "calls": [],
+    "errors": []
+  },
+  "exp03s-scheduled-dark-900x1000-paige-open": {
+    "ok": true,
+    "viewport": "900x1000",
+    "theme": "dark",
+    "paige": "open",
+    "state": "scheduled",
+    "act": "none",
+    "checks": {
+      "noOverflow": true,
+      "goldOnlyOnAct": true,
+      "fontLoaded": true,
+      "noRawCode": true,
+      "noApprove": true,
+      "noOtherFunctions": true,
+      "pillScheduled": true,
+      "cancelShown": true,
+      "sendsShown": true,
+      "railInFuture": true,
+      "railScheduled": true,
+      "noDoorCall": true,
+      "pillAA": true,
+      "cancelAA": true,
+      "sendsAA": true,
+      "railAA": true
+    },
+    "label": {
+      "ok": true,
+      "w": 174,
+      "h": 24
+    },
+    "font": {
+      "schibsted": true
+    },
+    "tagged": [
+      {
+        "kind": "rail-scheduled",
+        "disabled": false,
+        "incidental": false,
+        "text": "Scheduled · in about 19 hours",
+        "ratio": 7.7,
+        "color": "rgb(173, 167, 159)",
+        "bg": "rgb(22, 19, 27)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "pill-scheduled",
+        "disabled": false,
+        "incidental": false,
+        "text": "Scheduled",
+        "ratio": 7.7,
+        "color": "rgb(173, 167, 159)",
+        "bg": "rgb(22, 19, 27)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "sends-time",
+        "disabled": false,
+        "incidental": false,
+        "text": "Sends Wed, Oct 28, 9:00 AM",
+        "ratio": 6.95,
+        "color": "rgb(173, 167, 159)",
+        "bg": "rgb(32,29,40)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": "cancel-control",
+        "disabled": false,
+        "incidental": false,
+        "text": "Cancel",
+        "ratio": 14.83,
+        "color": "rgb(246, 242, 234)",
+        "bg": "rgb(32,29,40)",
+        "size": "11px",
+        "weight": "400"
+      }
+    ],
+    "low": [
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 3.55,
+        "color": "rgba(173, 167, 159, 0.6)",
+        "bg": "rgb(22, 19, 27)",
+        "size": "12px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 3.5,
+        "color": "rgba(173, 167, 159, 0.6)",
+        "bg": "rgb(24, 22, 29)",
+        "size": "12px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "· 1 day ago",
+        "ratio": 3.55,
+        "color": "rgb(173, 167, 159)",
+        "bg": "rgb(22, 19, 27)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "· 1 day ago",
+        "ratio": 3.39,
+        "color": "rgb(173, 167, 159)",
+        "bg": "rgb(32,29,40)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "· 12 minutes ago",
+        "ratio": 3.39,
+        "color": "rgb(173, 167, 159)",
+        "bg": "rgb(32,29,40)",
+        "size": "11px",
+        "weight": "400"
+      }
+    ],
+    "textCount": 194,
+    "goldOutsideAct": [],
+    "goldActs": [
+      "New conversation",
+      "Send"
+    ],
+    "sends": {
+      "text": "Sends Wed, Oct 28, 9:00 AM",
+      "size": "11px",
+      "lines": 1
+    },
+    "cancel": {
+      "text": "Cancel",
+      "ariaLabel": "Cancel the email scheduled for Wed, Oct 28, 9:00 AM",
+      "disabled": false,
+      "ariaBusy": null,
+      "opacity": "1",
+      "size": "11px",
+      "height": 24,
+      "width": 43
+    },
+    "notSentLines": [],
+    "overflowX": false,
+    "counts": {
+      "pillScheduled": 1,
+      "pillNotSent": 0,
+      "pillCanceled": 0,
+      "pillSending": 0,
+      "railScheduled": 1,
+      "rawCode": 0,
+      "approve": 0
+    },
+    "toasts": [],
+    "calls": [],
+    "errors": []
+  },
+  "exp03s-notsent-light-1366x768-paige-closed": {
+    "ok": true,
+    "viewport": "1366x768",
+    "theme": "light",
+    "paige": "closed",
+    "state": "notsent",
+    "act": "none",
+    "checks": {
+      "noOverflow": true,
+      "goldOnlyOnAct": true,
+      "fontLoaded": true,
+      "noRawCode": true,
+      "noApprove": true,
+      "noOtherFunctions": true,
+      "twoNotSentPills": true,
+      "noCancel": true,
+      "noScheduledPill": true,
+      "railNotScheduled": true,
+      "lines": true,
+      "pillAA": true,
+      "lineAA": true
+    },
+    "label": {
+      "ok": true,
+      "w": 174,
+      "h": 24
+    },
+    "font": {
+      "schibsted": true
+    },
+    "tagged": [
+      {
+        "kind": "pill-notsent",
+        "disabled": false,
+        "incidental": false,
+        "text": "Not sent",
+        "ratio": 6.07,
+        "color": "oklab(0.412425 0.0704803 0.0338449)",
+        "bg": "rgb(225,208,205)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "notsent-line",
+        "disabled": false,
+        "incidental": false,
+        "text": "Not sent — this person asked not to be contacted right now.",
+        "ratio": 13.52,
+        "color": "rgb(33, 30, 36)",
+        "bg": "rgb(236,232,230)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": "pill-notsent",
+        "disabled": false,
+        "incidental": false,
+        "text": "Not sent",
+        "ratio": 6.07,
+        "color": "oklab(0.412425 0.0704803 0.0338449)",
+        "bg": "rgb(225,208,205)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "notsent-line",
+        "disabled": false,
+        "incidental": false,
+        "text": "Nothing went out.",
+        "ratio": 13.52,
+        "color": "rgb(33, 30, 36)",
+        "bg": "rgb(236,232,230)",
+        "size": "11px",
+        "weight": "400"
+      }
+    ],
+    "low": [
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "1",
+        "ratio": 3.52,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(244, 241, 235)",
+        "size": "10px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "1",
+        "ratio": 3.52,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(244, 241, 235)",
+        "size": "10px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "1",
+        "ratio": 3.52,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(244, 241, 235)",
+        "size": "10px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 2.46,
+        "color": "rgba(103, 97, 107, 0.6)",
+        "bg": "rgb(247, 244, 238)",
+        "size": "12px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 2.43,
+        "color": "rgba(103, 97, 107, 0.6)",
+        "bg": "rgb(244, 241, 235)",
+        "size": "12px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "LIVE",
+        "ratio": 3.69,
+        "color": "rgb(50, 118, 90)",
+        "bg": "rgb(217,212,211)",
+        "size": "8px",
+        "weight": "600"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "· 1 day ago",
+        "ratio": 2.36,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(236,232,230)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "· about 3 hours ago",
+        "ratio": 2.36,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(236,232,230)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "· about 1 hour ago",
+        "ratio": 2.36,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(236,232,230)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "PROFILE · LIVE",
+        "ratio": 4.37,
+        "color": "rgb(50, 118, 90)",
+        "bg": "rgb(238,230,215)",
+        "size": "8px",
+        "weight": "600"
+      }
+    ],
+    "textCount": 171,
+    "goldOutsideAct": [],
+    "goldActs": [
+      "New conversation",
+      "Send"
+    ],
+    "sends": null,
+    "cancel": null,
+    "notSentLines": [
+      "Not sent — this person asked not to be contacted right now.",
+      "Nothing went out."
+    ],
+    "overflowX": false,
+    "counts": {
+      "pillScheduled": 0,
+      "pillNotSent": 2,
+      "pillCanceled": 0,
+      "pillSending": 0,
+      "railScheduled": 0,
+      "rawCode": 0,
+      "approve": 0
+    },
+    "toasts": [],
+    "calls": [],
+    "errors": []
+  },
+  "exp03s-scheduled-cancel-ok-light-1366x768-paige-closed": {
+    "ok": true,
+    "viewport": "1366x768",
+    "theme": "light",
+    "paige": "closed",
+    "state": "scheduled",
+    "act": "ok",
+    "checks": {
+      "noOverflow": true,
+      "goldOnlyOnAct": true,
+      "fontLoaded": true,
+      "noRawCode": true,
+      "noApprove": true,
+      "noOtherFunctions": true,
+      "toast": true,
+      "oneDoorCall": true,
+      "toastAA": true,
+      "after": true
+    },
+    "label": {
+      "ok": true,
+      "w": 174,
+      "h": 24
+    },
+    "font": {
+      "schibsted": true
+    },
+    "tagged": [
+      {
+        "kind": "pill-canceled",
+        "disabled": false,
+        "incidental": false,
+        "text": "Canceled",
+        "ratio": 5.47,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(247, 244, 238)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "notsent-line",
+        "disabled": false,
+        "incidental": false,
+        "text": "Canceled — it won't be sent.",
+        "ratio": 13.52,
+        "color": "rgb(33, 30, 36)",
+        "bg": "rgb(236,232,230)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": "toast",
+        "disabled": false,
+        "incidental": false,
+        "text": "Canceled — it won't be sent.",
+        "ratio": 17.26,
+        "color": "rgb(4, 20, 57)",
+        "bg": "rgb(249, 250, 251)",
+        "size": "13px",
+        "weight": "500"
+      }
+    ],
+    "low": [
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "1",
+        "ratio": 3.52,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(244, 241, 235)",
+        "size": "10px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "1",
+        "ratio": 3.52,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(244, 241, 235)",
+        "size": "10px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "1",
+        "ratio": 3.52,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(244, 241, 235)",
+        "size": "10px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 2.46,
+        "color": "rgba(103, 97, 107, 0.6)",
+        "bg": "rgb(247, 244, 238)",
+        "size": "12px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 2.43,
+        "color": "rgba(103, 97, 107, 0.6)",
+        "bg": "rgb(244, 241, 235)",
+        "size": "12px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "LIVE",
+        "ratio": 3.69,
+        "color": "rgb(50, 118, 90)",
+        "bg": "rgb(217,212,211)",
+        "size": "8px",
+        "weight": "600"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "· 1 day ago",
+        "ratio": 2.46,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(247, 244, 238)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "· 1 day ago",
+        "ratio": 2.36,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(236,232,230)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "· 12 minutes ago",
+        "ratio": 2.36,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(236,232,230)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "PROFILE · LIVE",
+        "ratio": 4.37,
+        "color": "rgb(50, 118, 90)",
+        "bg": "rgb(238,230,215)",
+        "size": "8px",
+        "weight": "600"
+      }
+    ],
+    "textCount": 169,
+    "goldOutsideAct": [],
+    "goldActs": [
+      "New conversation",
+      "Send"
+    ],
+    "sends": null,
+    "cancel": null,
+    "notSentLines": [
+      "Canceled — it won't be sent."
+    ],
+    "overflowX": false,
+    "counts": {
+      "pillScheduled": 0,
+      "pillNotSent": 0,
+      "pillCanceled": 1,
+      "pillSending": 0,
+      "railScheduled": 0,
+      "rawCode": 0,
+      "approve": 0
+    },
+    "toasts": [
+      {
+        "type": "success",
+        "text": "Canceled — it won't be sent."
+      }
+    ],
+    "calls": [
+      {
+        "name": "functions:comms-email-command",
+        "args": {
+          "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
+          "operation_id": "e0300000-0000-4000-8000-0000000d0001",
+          "cancel": true
+        }
+      }
+    ],
+    "errors": []
+  },
+  "exp03s-scheduled-cancel-toolate-light-1366x768-paige-closed": {
+    "ok": true,
+    "viewport": "1366x768",
+    "theme": "light",
+    "paige": "closed",
+    "state": "scheduled",
+    "act": "toolate",
+    "checks": {
+      "noOverflow": true,
+      "goldOnlyOnAct": true,
+      "fontLoaded": true,
+      "noRawCode": true,
+      "noApprove": true,
+      "noOtherFunctions": true,
+      "toast": true,
+      "oneDoorCall": true,
+      "toastAA": true,
+      "after": true
+    },
+    "label": {
+      "ok": true,
+      "w": 174,
+      "h": 24
+    },
+    "font": {
+      "schibsted": true
+    },
+    "tagged": [
+      {
+        "kind": "pill-sending",
+        "disabled": false,
+        "incidental": false,
+        "text": "Sending…",
+        "ratio": 5.47,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(247, 244, 238)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "toast",
+        "disabled": false,
+        "incidental": false,
+        "text": "Too late — it's already on its way.",
+        "ratio": 17.26,
+        "color": "rgb(4, 20, 57)",
+        "bg": "rgb(249, 250, 251)",
+        "size": "13px",
+        "weight": "500"
+      }
+    ],
+    "low": [
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "1",
+        "ratio": 3.52,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(244, 241, 235)",
+        "size": "10px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "1",
+        "ratio": 3.52,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(244, 241, 235)",
+        "size": "10px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "1",
+        "ratio": 3.52,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(244, 241, 235)",
+        "size": "10px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 2.46,
+        "color": "rgba(103, 97, 107, 0.6)",
+        "bg": "rgb(247, 244, 238)",
+        "size": "12px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 2.43,
+        "color": "rgba(103, 97, 107, 0.6)",
+        "bg": "rgb(244, 241, 235)",
+        "size": "12px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "LIVE",
+        "ratio": 3.69,
+        "color": "rgb(50, 118, 90)",
+        "bg": "rgb(217,212,211)",
+        "size": "8px",
+        "weight": "600"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "· 1 day ago",
+        "ratio": 2.46,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(247, 244, 238)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "· 1 day ago",
+        "ratio": 2.36,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(236,232,230)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "· 12 minutes ago",
+        "ratio": 2.36,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(236,232,230)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "PROFILE · LIVE",
+        "ratio": 4.37,
+        "color": "rgb(50, 118, 90)",
+        "bg": "rgb(238,230,215)",
+        "size": "8px",
+        "weight": "600"
+      }
+    ],
+    "textCount": 168,
+    "goldOutsideAct": [],
+    "goldActs": [
+      "New conversation",
+      "Send"
+    ],
+    "sends": null,
+    "cancel": null,
+    "notSentLines": [],
+    "overflowX": false,
+    "counts": {
+      "pillScheduled": 0,
+      "pillNotSent": 0,
+      "pillCanceled": 0,
+      "pillSending": 1,
+      "railScheduled": 0,
+      "rawCode": 0,
+      "approve": 0
+    },
+    "toasts": [
+      {
+        "type": "error",
+        "text": "Too late — it's already on its way."
+      }
+    ],
+    "calls": [
+      {
+        "name": "functions:comms-email-command",
+        "args": {
+          "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
+          "operation_id": "e0300000-0000-4000-8000-0000000d0001",
+          "cancel": true
+        }
+      }
+    ],
+    "errors": []
+  },
+  "exp03s-notsent-dark-1366x768-paige-closed": {
+    "ok": true,
+    "viewport": "1366x768",
+    "theme": "dark",
+    "paige": "closed",
+    "state": "notsent",
+    "act": "none",
+    "checks": {
+      "noOverflow": true,
+      "goldOnlyOnAct": true,
+      "fontLoaded": true,
+      "noRawCode": true,
+      "noApprove": true,
+      "noOtherFunctions": true,
+      "twoNotSentPills": true,
+      "noCancel": true,
+      "noScheduledPill": true,
+      "railNotScheduled": true,
+      "lines": true,
+      "pillAA": true,
+      "lineAA": true
+    },
+    "label": {
+      "ok": true,
+      "w": 174,
+      "h": 24
+    },
+    "font": {
+      "schibsted": true
+    },
+    "tagged": [
+      {
+        "kind": "pill-notsent",
+        "disabled": false,
+        "incidental": false,
+        "text": "Not sent",
+        "ratio": 7.57,
+        "color": "oklab(0.846699 0.0510728 0.0341136)",
+        "bg": "rgb(62,49,56)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "notsent-line",
+        "disabled": false,
+        "incidental": false,
+        "text": "Not sent — this person asked not to be contacted right now.",
+        "ratio": 14.83,
+        "color": "rgb(246, 242, 234)",
+        "bg": "rgb(32,29,40)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": "pill-notsent",
+        "disabled": false,
+        "incidental": false,
+        "text": "Not sent",
+        "ratio": 7.57,
+        "color": "oklab(0.846699 0.0510728 0.0341136)",
+        "bg": "rgb(62,49,56)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "notsent-line",
+        "disabled": false,
+        "incidental": false,
+        "text": "Nothing went out.",
+        "ratio": 14.83,
+        "color": "rgb(246, 242, 234)",
+        "bg": "rgb(32,29,40)",
+        "size": "11px",
+        "weight": "400"
+      }
+    ],
+    "low": [
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 3.55,
+        "color": "rgba(173, 167, 159, 0.6)",
+        "bg": "rgb(22, 19, 27)",
+        "size": "12px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 3.5,
+        "color": "rgba(173, 167, 159, 0.6)",
+        "bg": "rgb(24, 22, 29)",
+        "size": "12px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "· 1 day ago",
+        "ratio": 3.39,
+        "color": "rgb(173, 167, 159)",
+        "bg": "rgb(32,29,40)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "· about 3 hours ago",
+        "ratio": 3.39,
+        "color": "rgb(173, 167, 159)",
+        "bg": "rgb(32,29,40)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "· about 1 hour ago",
+        "ratio": 3.39,
+        "color": "rgb(173, 167, 159)",
+        "bg": "rgb(32,29,40)",
+        "size": "11px",
+        "weight": "400"
+      }
+    ],
+    "textCount": 171,
+    "goldOutsideAct": [],
+    "goldActs": [
+      "New conversation",
+      "Send"
+    ],
+    "sends": null,
+    "cancel": null,
+    "notSentLines": [
+      "Not sent — this person asked not to be contacted right now.",
+      "Nothing went out."
+    ],
+    "overflowX": false,
+    "counts": {
+      "pillScheduled": 0,
+      "pillNotSent": 2,
+      "pillCanceled": 0,
+      "pillSending": 0,
+      "railScheduled": 0,
+      "rawCode": 0,
+      "approve": 0
+    },
+    "toasts": [],
+    "calls": [],
+    "errors": []
+  },
+  "exp03s-scheduled-cancel-ok-dark-1366x768-paige-closed": {
+    "ok": true,
+    "viewport": "1366x768",
+    "theme": "dark",
+    "paige": "closed",
+    "state": "scheduled",
+    "act": "ok",
+    "checks": {
+      "noOverflow": true,
+      "goldOnlyOnAct": true,
+      "fontLoaded": true,
+      "noRawCode": true,
+      "noApprove": true,
+      "noOtherFunctions": true,
+      "toast": true,
+      "oneDoorCall": true,
+      "toastAA": true,
+      "after": true
+    },
+    "label": {
+      "ok": true,
+      "w": 174,
+      "h": 24
+    },
+    "font": {
+      "schibsted": true
+    },
+    "tagged": [
+      {
+        "kind": "pill-canceled",
+        "disabled": false,
+        "incidental": false,
+        "text": "Canceled",
+        "ratio": 7.7,
+        "color": "rgb(173, 167, 159)",
+        "bg": "rgb(22, 19, 27)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "notsent-line",
+        "disabled": false,
+        "incidental": false,
+        "text": "Canceled — it won't be sent.",
+        "ratio": 14.83,
+        "color": "rgb(246, 242, 234)",
+        "bg": "rgb(32,29,40)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": "toast",
+        "disabled": false,
+        "incidental": false,
+        "text": "Canceled — it won't be sent.",
+        "ratio": 18.26,
+        "color": "rgb(245, 245, 245)",
+        "bg": "rgb(12, 7, 18)",
+        "size": "13px",
+        "weight": "500"
+      }
+    ],
+    "low": [
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 3.55,
+        "color": "rgba(173, 167, 159, 0.6)",
+        "bg": "rgb(22, 19, 27)",
+        "size": "12px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 3.5,
+        "color": "rgba(173, 167, 159, 0.6)",
+        "bg": "rgb(24, 22, 29)",
+        "size": "12px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "· 1 day ago",
+        "ratio": 3.55,
+        "color": "rgb(173, 167, 159)",
+        "bg": "rgb(22, 19, 27)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "· 1 day ago",
+        "ratio": 3.39,
+        "color": "rgb(173, 167, 159)",
+        "bg": "rgb(32,29,40)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "· 12 minutes ago",
+        "ratio": 3.39,
+        "color": "rgb(173, 167, 159)",
+        "bg": "rgb(32,29,40)",
+        "size": "11px",
+        "weight": "400"
+      }
+    ],
+    "textCount": 169,
+    "goldOutsideAct": [],
+    "goldActs": [
+      "New conversation",
+      "Send"
+    ],
+    "sends": null,
+    "cancel": null,
+    "notSentLines": [
+      "Canceled — it won't be sent."
+    ],
+    "overflowX": false,
+    "counts": {
+      "pillScheduled": 0,
+      "pillNotSent": 0,
+      "pillCanceled": 1,
+      "pillSending": 0,
+      "railScheduled": 0,
+      "rawCode": 0,
+      "approve": 0
+    },
+    "toasts": [
+      {
+        "type": "success",
+        "text": "Canceled — it won't be sent."
+      }
+    ],
+    "calls": [
+      {
+        "name": "functions:comms-email-command",
+        "args": {
+          "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
+          "operation_id": "e0300000-0000-4000-8000-0000000d0001",
+          "cancel": true
+        }
+      }
+    ],
+    "errors": []
+  },
+  "exp03s-scheduled-cancel-toolate-dark-1366x768-paige-closed": {
+    "ok": true,
+    "viewport": "1366x768",
+    "theme": "dark",
+    "paige": "closed",
+    "state": "scheduled",
+    "act": "toolate",
+    "checks": {
+      "noOverflow": true,
+      "goldOnlyOnAct": true,
+      "fontLoaded": true,
+      "noRawCode": true,
+      "noApprove": true,
+      "noOtherFunctions": true,
+      "toast": true,
+      "oneDoorCall": true,
+      "toastAA": true,
+      "after": true
+    },
+    "label": {
+      "ok": true,
+      "w": 174,
+      "h": 24
+    },
+    "font": {
+      "schibsted": true
+    },
+    "tagged": [
+      {
+        "kind": "pill-sending",
+        "disabled": false,
+        "incidental": false,
+        "text": "Sending…",
+        "ratio": 7.7,
+        "color": "rgb(173, 167, 159)",
+        "bg": "rgb(22, 19, 27)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "toast",
+        "disabled": false,
+        "incidental": false,
+        "text": "Too late — it's already on its way.",
+        "ratio": 18.26,
+        "color": "rgb(245, 245, 245)",
+        "bg": "rgb(12, 7, 18)",
+        "size": "13px",
+        "weight": "500"
+      }
+    ],
+    "low": [
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 3.55,
+        "color": "rgba(173, 167, 159, 0.6)",
+        "bg": "rgb(22, 19, 27)",
+        "size": "12px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 3.5,
+        "color": "rgba(173, 167, 159, 0.6)",
+        "bg": "rgb(24, 22, 29)",
+        "size": "12px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "· 1 day ago",
+        "ratio": 3.55,
+        "color": "rgb(173, 167, 159)",
+        "bg": "rgb(22, 19, 27)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "· 1 day ago",
+        "ratio": 3.39,
+        "color": "rgb(173, 167, 159)",
+        "bg": "rgb(32,29,40)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "· 12 minutes ago",
+        "ratio": 3.39,
+        "color": "rgb(173, 167, 159)",
+        "bg": "rgb(32,29,40)",
+        "size": "11px",
+        "weight": "400"
+      }
+    ],
+    "textCount": 168,
+    "goldOutsideAct": [],
+    "goldActs": [
+      "New conversation",
+      "Send"
+    ],
+    "sends": null,
+    "cancel": null,
+    "notSentLines": [],
+    "overflowX": false,
+    "counts": {
+      "pillScheduled": 0,
+      "pillNotSent": 0,
+      "pillCanceled": 0,
+      "pillSending": 1,
+      "railScheduled": 0,
+      "rawCode": 0,
+      "approve": 0
+    },
+    "toasts": [
+      {
+        "type": "error",
+        "text": "Too late — it's already on its way."
+      }
+    ],
+    "calls": [
+      {
+        "name": "functions:comms-email-command",
+        "args": {
+          "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
+          "operation_id": "e0300000-0000-4000-8000-0000000d0001",
+          "cancel": true
+        }
+      }
+    ],
+    "errors": []
+  },
+  "exp03s-scheduled-light-390x844": {
+    "ok": true,
+    "viewport": "390x844",
+    "theme": "light",
+    "paige": "closed",
+    "state": "scheduled",
+    "act": "none",
+    "checks": {
+      "noOverflow": true,
+      "goldOnlyOnAct": true,
+      "fontLoaded": true,
+      "noRawCode": true,
+      "noApprove": true,
+      "noOtherFunctions": true,
+      "pillScheduled": true,
+      "cancelShown": true,
+      "sendsShown": true,
+      "railInFuture": true,
+      "railScheduled": true,
+      "noDoorCall": true,
+      "pillAA": true,
+      "cancelAA": true,
+      "sendsAA": true,
+      "railAA": true
+    },
+    "label": {
+      "ok": true,
+      "w": 174,
+      "h": 24
+    },
+    "font": {
+      "schibsted": true
+    },
+    "tagged": [
+      {
+        "kind": "rail-scheduled",
+        "disabled": false,
+        "incidental": false,
+        "text": "Scheduled · in about 19 hours",
+        "ratio": 5.47,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(247, 244, 238)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "pill-scheduled",
+        "disabled": false,
+        "incidental": false,
+        "text": "Scheduled",
+        "ratio": 5.47,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(247, 244, 238)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "sends-time",
+        "disabled": false,
+        "incidental": false,
+        "text": "Sends Wed, Oct 28, 9:00 AM",
+        "ratio": 4.93,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(236,232,230)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": "cancel-control",
+        "disabled": false,
+        "incidental": false,
+        "text": "Cancel",
+        "ratio": 13.52,
+        "color": "rgb(33, 30, 36)",
+        "bg": "rgb(236,232,230)",
+        "size": "11px",
+        "weight": "400"
+      }
+    ],
+    "low": [
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "1",
+        "ratio": 3.52,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(244, 241, 235)",
+        "size": "10px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "1",
+        "ratio": 3.52,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(244, 241, 235)",
+        "size": "10px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "1",
+        "ratio": 3.52,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(244, 241, 235)",
+        "size": "10px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 2.46,
+        "color": "rgba(103, 97, 107, 0.6)",
+        "bg": "rgb(247, 244, 238)",
+        "size": "12px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 2.43,
+        "color": "rgba(103, 97, 107, 0.6)",
+        "bg": "rgb(244, 241, 235)",
+        "size": "12px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "LIVE",
+        "ratio": 3.69,
+        "color": "rgb(50, 118, 90)",
+        "bg": "rgb(217,212,211)",
+        "size": "8px",
+        "weight": "600"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "· 12 minutes ago",
+        "ratio": 2.36,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(236,232,230)",
+        "size": "11px",
+        "weight": "400"
+      }
+    ],
+    "textCount": 122,
+    "goldOutsideAct": [],
+    "goldActs": [
+      "New conversation",
+      "Send"
+    ],
+    "sends": {
+      "text": "Sends Wed, Oct 28, 9:00 AM",
+      "size": "11px",
+      "lines": 2
+    },
+    "cancel": {
+      "text": "Cancel",
+      "ariaLabel": "Cancel the email scheduled for Wed, Oct 28, 9:00 AM",
+      "disabled": false,
+      "ariaBusy": null,
+      "opacity": "1",
+      "size": "11px",
+      "height": 24,
+      "width": 43
+    },
+    "notSentLines": [],
+    "overflowX": false,
+    "counts": {
+      "pillScheduled": 1,
+      "pillNotSent": 0,
+      "pillCanceled": 0,
+      "pillSending": 0,
+      "railScheduled": 1,
+      "rawCode": 0,
+      "approve": 0
+    },
+    "toasts": [],
+    "calls": [],
+    "errors": []
+  },
+  "exp03s-notsent-light-390x844": {
+    "ok": true,
+    "viewport": "390x844",
+    "theme": "light",
+    "paige": "closed",
+    "state": "notsent",
+    "act": "none",
+    "checks": {
+      "noOverflow": true,
+      "goldOnlyOnAct": true,
+      "fontLoaded": true,
+      "noRawCode": true,
+      "noApprove": true,
+      "noOtherFunctions": true,
+      "twoNotSentPills": true,
+      "noCancel": true,
+      "noScheduledPill": true,
+      "railNotScheduled": true,
+      "lines": true,
+      "pillAA": true,
+      "lineAA": true
+    },
+    "label": {
+      "ok": true,
+      "w": 174,
+      "h": 24
+    },
+    "font": {
+      "schibsted": true
+    },
+    "tagged": [
+      {
+        "kind": "notsent-line",
+        "disabled": false,
+        "incidental": false,
+        "text": "Not sent — this person asked not to be contacted right now.",
+        "ratio": 13.52,
+        "color": "rgb(33, 30, 36)",
+        "bg": "rgb(236,232,230)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": "pill-notsent",
+        "disabled": false,
+        "incidental": false,
+        "text": "Not sent",
+        "ratio": 6.07,
+        "color": "oklab(0.412425 0.0704803 0.0338449)",
+        "bg": "rgb(225,208,205)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "notsent-line",
+        "disabled": false,
+        "incidental": false,
+        "text": "Nothing went out.",
+        "ratio": 13.52,
+        "color": "rgb(33, 30, 36)",
+        "bg": "rgb(236,232,230)",
+        "size": "11px",
+        "weight": "400"
+      }
+    ],
+    "low": [
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "1",
+        "ratio": 3.52,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(244, 241, 235)",
+        "size": "10px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "1",
+        "ratio": 3.52,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(244, 241, 235)",
+        "size": "10px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "1",
+        "ratio": 3.52,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(244, 241, 235)",
+        "size": "10px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 2.46,
+        "color": "rgba(103, 97, 107, 0.6)",
+        "bg": "rgb(247, 244, 238)",
+        "size": "12px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 2.43,
+        "color": "rgba(103, 97, 107, 0.6)",
+        "bg": "rgb(244, 241, 235)",
+        "size": "12px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "LIVE",
+        "ratio": 3.69,
+        "color": "rgb(50, 118, 90)",
+        "bg": "rgb(217,212,211)",
+        "size": "8px",
+        "weight": "600"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "· about 1 hour ago",
+        "ratio": 2.36,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(236,232,230)",
+        "size": "11px",
+        "weight": "400"
+      }
+    ],
+    "textCount": 121,
+    "goldOutsideAct": [],
+    "goldActs": [
+      "New conversation",
+      "Send"
+    ],
+    "sends": null,
+    "cancel": null,
+    "notSentLines": [
+      "Not sent — this person asked not to be contacted right now.",
+      "Nothing went out."
+    ],
+    "overflowX": false,
+    "counts": {
+      "pillScheduled": 0,
+      "pillNotSent": 2,
+      "pillCanceled": 0,
+      "pillSending": 0,
+      "railScheduled": 0,
+      "rawCode": 0,
+      "approve": 0
+    },
+    "toasts": [],
+    "calls": [],
+    "errors": []
+  },
+  "exp03s-scheduled-cancel-ok-light-390x844": {
+    "ok": true,
+    "viewport": "390x844",
+    "theme": "light",
+    "paige": "closed",
+    "state": "scheduled",
+    "act": "ok",
+    "checks": {
+      "noOverflow": true,
+      "goldOnlyOnAct": true,
+      "fontLoaded": true,
+      "noRawCode": true,
+      "noApprove": true,
+      "noOtherFunctions": true,
+      "toast": true,
+      "oneDoorCall": true,
+      "toastAA": true,
+      "after": true
+    },
+    "label": {
+      "ok": true,
+      "w": 174,
+      "h": 24
+    },
+    "font": {
+      "schibsted": true
+    },
+    "tagged": [
+      {
+        "kind": "pill-canceled",
+        "disabled": false,
+        "incidental": false,
+        "text": "Canceled",
+        "ratio": 5.47,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(247, 244, 238)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "notsent-line",
+        "disabled": false,
+        "incidental": false,
+        "text": "Canceled — it won't be sent.",
+        "ratio": 13.52,
+        "color": "rgb(33, 30, 36)",
+        "bg": "rgb(236,232,230)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": "toast",
+        "disabled": false,
+        "incidental": false,
+        "text": "Canceled — it won't be sent.",
+        "ratio": 17.26,
+        "color": "rgb(4, 20, 57)",
+        "bg": "rgb(249, 250, 251)",
+        "size": "13px",
+        "weight": "500"
+      }
+    ],
+    "low": [
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "1",
+        "ratio": 3.52,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(244, 241, 235)",
+        "size": "10px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "1",
+        "ratio": 3.52,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(244, 241, 235)",
+        "size": "10px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "1",
+        "ratio": 3.52,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(244, 241, 235)",
+        "size": "10px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 2.46,
+        "color": "rgba(103, 97, 107, 0.6)",
+        "bg": "rgb(247, 244, 238)",
+        "size": "12px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 2.43,
+        "color": "rgba(103, 97, 107, 0.6)",
+        "bg": "rgb(244, 241, 235)",
+        "size": "12px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "LIVE",
+        "ratio": 3.69,
+        "color": "rgb(50, 118, 90)",
+        "bg": "rgb(217,212,211)",
+        "size": "8px",
+        "weight": "600"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "· 12 minutes ago",
+        "ratio": 2.36,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(236,232,230)",
+        "size": "11px",
+        "weight": "400"
+      }
+    ],
+    "textCount": 121,
+    "goldOutsideAct": [],
+    "goldActs": [
+      "New conversation",
+      "Send"
+    ],
+    "sends": null,
+    "cancel": null,
+    "notSentLines": [
+      "Canceled — it won't be sent."
+    ],
+    "overflowX": false,
+    "counts": {
+      "pillScheduled": 0,
+      "pillNotSent": 0,
+      "pillCanceled": 1,
+      "pillSending": 0,
+      "railScheduled": 0,
+      "rawCode": 0,
+      "approve": 0
+    },
+    "toasts": [
+      {
+        "type": "success",
+        "text": "Canceled — it won't be sent."
+      }
+    ],
+    "calls": [
+      {
+        "name": "functions:comms-email-command",
+        "args": {
+          "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
+          "operation_id": "e0300000-0000-4000-8000-0000000d0001",
+          "cancel": true
+        }
+      }
+    ],
+    "errors": []
+  },
+  "exp03s-scheduled-cancel-toolate-light-390x844": {
+    "ok": true,
+    "viewport": "390x844",
+    "theme": "light",
+    "paige": "closed",
+    "state": "scheduled",
+    "act": "toolate",
+    "checks": {
+      "noOverflow": true,
+      "goldOnlyOnAct": true,
+      "fontLoaded": true,
+      "noRawCode": true,
+      "noApprove": true,
+      "noOtherFunctions": true,
+      "toast": true,
+      "oneDoorCall": true,
+      "toastAA": true,
+      "after": true
+    },
+    "label": {
+      "ok": true,
+      "w": 174,
+      "h": 24
+    },
+    "font": {
+      "schibsted": true
+    },
+    "tagged": [
+      {
+        "kind": "pill-sending",
+        "disabled": false,
+        "incidental": false,
+        "text": "Sending…",
+        "ratio": 5.47,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(247, 244, 238)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "toast",
+        "disabled": false,
+        "incidental": false,
+        "text": "Too late — it's already on its way.",
+        "ratio": 17.26,
+        "color": "rgb(4, 20, 57)",
+        "bg": "rgb(249, 250, 251)",
+        "size": "13px",
+        "weight": "500"
+      }
+    ],
+    "low": [
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "1",
+        "ratio": 3.52,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(244, 241, 235)",
+        "size": "10px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "1",
+        "ratio": 3.52,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(244, 241, 235)",
+        "size": "10px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "1",
+        "ratio": 3.52,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(244, 241, 235)",
+        "size": "10px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 2.46,
+        "color": "rgba(103, 97, 107, 0.6)",
+        "bg": "rgb(247, 244, 238)",
+        "size": "12px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 2.43,
+        "color": "rgba(103, 97, 107, 0.6)",
+        "bg": "rgb(244, 241, 235)",
+        "size": "12px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "LIVE",
+        "ratio": 3.69,
+        "color": "rgb(50, 118, 90)",
+        "bg": "rgb(217,212,211)",
+        "size": "8px",
+        "weight": "600"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "· 12 minutes ago",
+        "ratio": 2.36,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(236,232,230)",
+        "size": "11px",
+        "weight": "400"
+      }
+    ],
+    "textCount": 120,
+    "goldOutsideAct": [],
+    "goldActs": [
+      "New conversation",
+      "Send"
+    ],
+    "sends": null,
+    "cancel": null,
+    "notSentLines": [],
+    "overflowX": false,
+    "counts": {
+      "pillScheduled": 0,
+      "pillNotSent": 0,
+      "pillCanceled": 0,
+      "pillSending": 1,
+      "railScheduled": 0,
+      "rawCode": 0,
+      "approve": 0
+    },
+    "toasts": [
+      {
+        "type": "error",
+        "text": "Too late — it's already on its way."
+      }
+    ],
+    "calls": [
+      {
+        "name": "functions:comms-email-command",
+        "args": {
+          "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
+          "operation_id": "e0300000-0000-4000-8000-0000000d0001",
+          "cancel": true
+        }
+      }
+    ],
+    "errors": []
+  },
+  "exp03s-scheduled-dark-390x844": {
+    "ok": true,
+    "viewport": "390x844",
+    "theme": "dark",
+    "paige": "closed",
+    "state": "scheduled",
+    "act": "none",
+    "checks": {
+      "noOverflow": true,
+      "goldOnlyOnAct": true,
+      "fontLoaded": true,
+      "noRawCode": true,
+      "noApprove": true,
+      "noOtherFunctions": true,
+      "pillScheduled": true,
+      "cancelShown": true,
+      "sendsShown": true,
+      "railInFuture": true,
+      "railScheduled": true,
+      "noDoorCall": true,
+      "pillAA": true,
+      "cancelAA": true,
+      "sendsAA": true,
+      "railAA": true
+    },
+    "label": {
+      "ok": true,
+      "w": 174,
+      "h": 24
+    },
+    "font": {
+      "schibsted": true
+    },
+    "tagged": [
+      {
+        "kind": "rail-scheduled",
+        "disabled": false,
+        "incidental": false,
+        "text": "Scheduled · in about 19 hours",
+        "ratio": 7.7,
+        "color": "rgb(173, 167, 159)",
+        "bg": "rgb(22, 19, 27)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "pill-scheduled",
+        "disabled": false,
+        "incidental": false,
+        "text": "Scheduled",
+        "ratio": 7.7,
+        "color": "rgb(173, 167, 159)",
+        "bg": "rgb(22, 19, 27)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "sends-time",
+        "disabled": false,
+        "incidental": false,
+        "text": "Sends Wed, Oct 28, 9:00 AM",
+        "ratio": 6.95,
+        "color": "rgb(173, 167, 159)",
+        "bg": "rgb(32,29,40)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": "cancel-control",
+        "disabled": false,
+        "incidental": false,
+        "text": "Cancel",
+        "ratio": 14.83,
+        "color": "rgb(246, 242, 234)",
+        "bg": "rgb(32,29,40)",
+        "size": "11px",
+        "weight": "400"
+      }
+    ],
+    "low": [
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 3.55,
+        "color": "rgba(173, 167, 159, 0.6)",
+        "bg": "rgb(22, 19, 27)",
+        "size": "12px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 3.5,
+        "color": "rgba(173, 167, 159, 0.6)",
+        "bg": "rgb(24, 22, 29)",
+        "size": "12px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "· 12 minutes ago",
+        "ratio": 3.39,
+        "color": "rgb(173, 167, 159)",
+        "bg": "rgb(32,29,40)",
+        "size": "11px",
+        "weight": "400"
+      }
+    ],
+    "textCount": 122,
+    "goldOutsideAct": [],
+    "goldActs": [
+      "New conversation",
+      "Send"
+    ],
+    "sends": {
+      "text": "Sends Wed, Oct 28, 9:00 AM",
+      "size": "11px",
+      "lines": 2
+    },
+    "cancel": {
+      "text": "Cancel",
+      "ariaLabel": "Cancel the email scheduled for Wed, Oct 28, 9:00 AM",
+      "disabled": false,
+      "ariaBusy": null,
+      "opacity": "1",
+      "size": "11px",
+      "height": 24,
+      "width": 43
+    },
+    "notSentLines": [],
+    "overflowX": false,
+    "counts": {
+      "pillScheduled": 1,
+      "pillNotSent": 0,
+      "pillCanceled": 0,
+      "pillSending": 0,
+      "railScheduled": 1,
+      "rawCode": 0,
+      "approve": 0
+    },
+    "toasts": [],
+    "calls": [],
+    "errors": []
+  },
+  "exp03s-notsent-dark-390x844": {
+    "ok": true,
+    "viewport": "390x844",
+    "theme": "dark",
+    "paige": "closed",
+    "state": "notsent",
+    "act": "none",
+    "checks": {
+      "noOverflow": true,
+      "goldOnlyOnAct": true,
+      "fontLoaded": true,
+      "noRawCode": true,
+      "noApprove": true,
+      "noOtherFunctions": true,
+      "twoNotSentPills": true,
+      "noCancel": true,
+      "noScheduledPill": true,
+      "railNotScheduled": true,
+      "lines": true,
+      "pillAA": true,
+      "lineAA": true
+    },
+    "label": {
+      "ok": true,
+      "w": 174,
+      "h": 24
+    },
+    "font": {
+      "schibsted": true
+    },
+    "tagged": [
+      {
+        "kind": "notsent-line",
+        "disabled": false,
+        "incidental": false,
+        "text": "Not sent — this person asked not to be contacted right now.",
+        "ratio": 14.83,
+        "color": "rgb(246, 242, 234)",
+        "bg": "rgb(32,29,40)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": "pill-notsent",
+        "disabled": false,
+        "incidental": false,
+        "text": "Not sent",
+        "ratio": 7.57,
+        "color": "oklab(0.846699 0.0510728 0.0341136)",
+        "bg": "rgb(62,49,56)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "notsent-line",
+        "disabled": false,
+        "incidental": false,
+        "text": "Nothing went out.",
+        "ratio": 14.83,
+        "color": "rgb(246, 242, 234)",
+        "bg": "rgb(32,29,40)",
+        "size": "11px",
+        "weight": "400"
+      }
+    ],
+    "low": [
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 3.55,
+        "color": "rgba(173, 167, 159, 0.6)",
+        "bg": "rgb(22, 19, 27)",
+        "size": "12px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 3.5,
+        "color": "rgba(173, 167, 159, 0.6)",
+        "bg": "rgb(24, 22, 29)",
+        "size": "12px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "· about 1 hour ago",
+        "ratio": 3.39,
+        "color": "rgb(173, 167, 159)",
+        "bg": "rgb(32,29,40)",
+        "size": "11px",
+        "weight": "400"
+      }
+    ],
+    "textCount": 121,
+    "goldOutsideAct": [],
+    "goldActs": [
+      "New conversation",
+      "Send"
+    ],
+    "sends": null,
+    "cancel": null,
+    "notSentLines": [
+      "Not sent — this person asked not to be contacted right now.",
+      "Nothing went out."
+    ],
+    "overflowX": false,
+    "counts": {
+      "pillScheduled": 0,
+      "pillNotSent": 2,
+      "pillCanceled": 0,
+      "pillSending": 0,
+      "railScheduled": 0,
+      "rawCode": 0,
+      "approve": 0
+    },
+    "toasts": [],
+    "calls": [],
+    "errors": []
+  },
+  "exp03s-scheduled-cancel-ok-dark-390x844": {
+    "ok": true,
+    "viewport": "390x844",
+    "theme": "dark",
+    "paige": "closed",
+    "state": "scheduled",
+    "act": "ok",
+    "checks": {
+      "noOverflow": true,
+      "goldOnlyOnAct": true,
+      "fontLoaded": true,
+      "noRawCode": true,
+      "noApprove": true,
+      "noOtherFunctions": true,
+      "toast": true,
+      "oneDoorCall": true,
+      "toastAA": true,
+      "after": true
+    },
+    "label": {
+      "ok": true,
+      "w": 174,
+      "h": 24
+    },
+    "font": {
+      "schibsted": true
+    },
+    "tagged": [
+      {
+        "kind": "pill-canceled",
+        "disabled": false,
+        "incidental": false,
+        "text": "Canceled",
+        "ratio": 7.7,
+        "color": "rgb(173, 167, 159)",
+        "bg": "rgb(22, 19, 27)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "notsent-line",
+        "disabled": false,
+        "incidental": false,
+        "text": "Canceled — it won't be sent.",
+        "ratio": 14.83,
+        "color": "rgb(246, 242, 234)",
+        "bg": "rgb(32,29,40)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": "toast",
+        "disabled": false,
+        "incidental": false,
+        "text": "Canceled — it won't be sent.",
+        "ratio": 18.26,
+        "color": "rgb(245, 245, 245)",
+        "bg": "rgb(12, 7, 18)",
+        "size": "13px",
+        "weight": "500"
+      }
+    ],
+    "low": [
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 3.55,
+        "color": "rgba(173, 167, 159, 0.6)",
+        "bg": "rgb(22, 19, 27)",
+        "size": "12px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 3.5,
+        "color": "rgba(173, 167, 159, 0.6)",
+        "bg": "rgb(24, 22, 29)",
+        "size": "12px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "· 12 minutes ago",
+        "ratio": 3.39,
+        "color": "rgb(173, 167, 159)",
+        "bg": "rgb(32,29,40)",
+        "size": "11px",
+        "weight": "400"
+      }
+    ],
+    "textCount": 121,
+    "goldOutsideAct": [],
+    "goldActs": [
+      "New conversation",
+      "Send"
+    ],
+    "sends": null,
+    "cancel": null,
+    "notSentLines": [
+      "Canceled — it won't be sent."
+    ],
+    "overflowX": false,
+    "counts": {
+      "pillScheduled": 0,
+      "pillNotSent": 0,
+      "pillCanceled": 1,
+      "pillSending": 0,
+      "railScheduled": 0,
+      "rawCode": 0,
+      "approve": 0
+    },
+    "toasts": [
+      {
+        "type": "success",
+        "text": "Canceled — it won't be sent."
+      }
+    ],
+    "calls": [
+      {
+        "name": "functions:comms-email-command",
+        "args": {
+          "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
+          "operation_id": "e0300000-0000-4000-8000-0000000d0001",
+          "cancel": true
+        }
+      }
+    ],
+    "errors": []
+  },
+  "exp03s-scheduled-cancel-toolate-dark-390x844": {
+    "ok": true,
+    "viewport": "390x844",
+    "theme": "dark",
+    "paige": "closed",
+    "state": "scheduled",
+    "act": "toolate",
+    "checks": {
+      "noOverflow": true,
+      "goldOnlyOnAct": true,
+      "fontLoaded": true,
+      "noRawCode": true,
+      "noApprove": true,
+      "noOtherFunctions": true,
+      "toast": true,
+      "oneDoorCall": true,
+      "toastAA": true,
+      "after": true
+    },
+    "label": {
+      "ok": true,
+      "w": 174,
+      "h": 24
+    },
+    "font": {
+      "schibsted": true
+    },
+    "tagged": [
+      {
+        "kind": "pill-sending",
+        "disabled": false,
+        "incidental": false,
+        "text": "Sending…",
+        "ratio": 7.7,
+        "color": "rgb(173, 167, 159)",
+        "bg": "rgb(22, 19, 27)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "toast",
+        "disabled": false,
+        "incidental": false,
+        "text": "Too late — it's already on its way.",
+        "ratio": 18.26,
+        "color": "rgb(245, 245, 245)",
+        "bg": "rgb(12, 7, 18)",
+        "size": "13px",
+        "weight": "500"
+      }
+    ],
+    "low": [
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 3.55,
+        "color": "rgba(173, 167, 159, 0.6)",
+        "bg": "rgb(22, 19, 27)",
+        "size": "12px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 3.5,
+        "color": "rgba(173, 167, 159, 0.6)",
+        "bg": "rgb(24, 22, 29)",
+        "size": "12px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "· 12 minutes ago",
+        "ratio": 3.39,
+        "color": "rgb(173, 167, 159)",
+        "bg": "rgb(32,29,40)",
+        "size": "11px",
+        "weight": "400"
+      }
+    ],
+    "textCount": 120,
+    "goldOutsideAct": [],
+    "goldActs": [
+      "New conversation",
+      "Send"
+    ],
+    "sends": null,
+    "cancel": null,
+    "notSentLines": [],
+    "overflowX": false,
+    "counts": {
+      "pillScheduled": 0,
+      "pillNotSent": 0,
+      "pillCanceled": 0,
+      "pillSending": 1,
+      "railScheduled": 0,
+      "rawCode": 0,
+      "approve": 0
+    },
+    "toasts": [
+      {
+        "type": "error",
+        "text": "Too late — it's already on its way."
+      }
+    ],
+    "calls": [
+      {
+        "name": "functions:comms-email-command",
+        "args": {
+          "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
+          "operation_id": "e0300000-0000-4000-8000-0000000d0001",
+          "cancel": true
+        }
+      }
+    ],
+    "errors": []
+  },
+  "exp03s-scheduled-cancel-hang-light-1366x768-paige-closed": {
+    "ok": true,
+    "viewport": "1366x768",
+    "theme": "light",
+    "paige": "closed",
+    "state": "scheduled",
+    "act": "hang",
+    "checks": {
+      "noOverflow": true,
+      "goldOnlyOnAct": true,
+      "fontLoaded": true,
+      "noRawCode": true,
+      "noApprove": true,
+      "noOtherFunctions": true,
+      "disabledWhilePending": true,
+      "oneDoorCall": true,
+      "noToast": true
+    },
+    "label": {
+      "ok": true,
+      "w": 174,
+      "h": 24
+    },
+    "font": {
+      "schibsted": true
+    },
+    "tagged": [
+      {
+        "kind": "rail-scheduled",
+        "disabled": false,
+        "incidental": false,
+        "text": "Scheduled · in about 19 hours",
+        "ratio": 5.47,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(247, 244, 238)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "pill-scheduled",
+        "disabled": false,
+        "incidental": false,
+        "text": "Scheduled",
+        "ratio": 5.47,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(247, 244, 238)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "sends-time",
+        "disabled": false,
+        "incidental": false,
+        "text": "Sends Wed, Oct 28, 9:00 AM",
+        "ratio": 4.93,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(236,232,230)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": "cancel-control",
+        "disabled": true,
+        "incidental": false,
+        "text": "Canceling…",
+        "ratio": 13.52,
+        "color": "rgb(33, 30, 36)",
+        "bg": "rgb(236,232,230)",
+        "size": "11px",
+        "weight": "400"
+      }
+    ],
+    "low": [
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "1",
+        "ratio": 3.52,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(244, 241, 235)",
+        "size": "10px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "1",
+        "ratio": 3.52,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(244, 241, 235)",
+        "size": "10px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "1",
+        "ratio": 3.52,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(244, 241, 235)",
+        "size": "10px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 2.46,
+        "color": "rgba(103, 97, 107, 0.6)",
+        "bg": "rgb(247, 244, 238)",
+        "size": "12px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 2.43,
+        "color": "rgba(103, 97, 107, 0.6)",
+        "bg": "rgb(244, 241, 235)",
+        "size": "12px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "LIVE",
+        "ratio": 3.69,
+        "color": "rgb(50, 118, 90)",
+        "bg": "rgb(217,212,211)",
+        "size": "8px",
+        "weight": "600"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "· 1 day ago",
+        "ratio": 2.46,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(247, 244, 238)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "· 1 day ago",
+        "ratio": 2.36,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(236,232,230)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "· 12 minutes ago",
+        "ratio": 2.36,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(236,232,230)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "PROFILE · LIVE",
+        "ratio": 4.37,
+        "color": "rgb(50, 118, 90)",
+        "bg": "rgb(238,230,215)",
+        "size": "8px",
+        "weight": "600"
+      }
+    ],
+    "textCount": 170,
+    "goldOutsideAct": [],
+    "goldActs": [
+      "New conversation",
+      "Send"
+    ],
+    "sends": {
+      "text": "Sends Wed, Oct 28, 9:00 AM",
+      "size": "11px",
+      "lines": 1
+    },
+    "cancel": {
+      "text": "Canceling…",
+      "ariaLabel": "Canceling the scheduled email",
+      "disabled": true,
+      "ariaBusy": "true",
+      "opacity": "1",
+      "size": "11px",
+      "height": 24,
+      "width": 66
+    },
+    "notSentLines": [],
+    "overflowX": false,
+    "counts": {
+      "pillScheduled": 1,
+      "pillNotSent": 0,
+      "pillCanceled": 0,
+      "pillSending": 0,
+      "railScheduled": 1,
+      "rawCode": 0,
+      "approve": 0
+    },
+    "toasts": [],
+    "calls": [
+      {
+        "name": "functions:comms-email-command",
+        "args": {
+          "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
+          "operation_id": "e0300000-0000-4000-8000-0000000d0001",
+          "cancel": true
+        }
+      }
+    ],
+    "errors": []
+  },
+  "exp03s-scheduled-cancel-hang-dark-1366x768-paige-closed": {
+    "ok": true,
+    "viewport": "1366x768",
+    "theme": "dark",
+    "paige": "closed",
+    "state": "scheduled",
+    "act": "hang",
+    "checks": {
+      "noOverflow": true,
+      "goldOnlyOnAct": true,
+      "fontLoaded": true,
+      "noRawCode": true,
+      "noApprove": true,
+      "noOtherFunctions": true,
+      "disabledWhilePending": true,
+      "oneDoorCall": true,
+      "noToast": true
+    },
+    "label": {
+      "ok": true,
+      "w": 174,
+      "h": 24
+    },
+    "font": {
+      "schibsted": true
+    },
+    "tagged": [
+      {
+        "kind": "rail-scheduled",
+        "disabled": false,
+        "incidental": false,
+        "text": "Scheduled · in about 19 hours",
+        "ratio": 7.7,
+        "color": "rgb(173, 167, 159)",
+        "bg": "rgb(22, 19, 27)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "pill-scheduled",
+        "disabled": false,
+        "incidental": false,
+        "text": "Scheduled",
+        "ratio": 7.7,
+        "color": "rgb(173, 167, 159)",
+        "bg": "rgb(22, 19, 27)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "sends-time",
+        "disabled": false,
+        "incidental": false,
+        "text": "Sends Wed, Oct 28, 9:00 AM",
+        "ratio": 6.95,
+        "color": "rgb(173, 167, 159)",
+        "bg": "rgb(32,29,40)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": "cancel-control",
+        "disabled": true,
+        "incidental": false,
+        "text": "Canceling…",
+        "ratio": 14.83,
+        "color": "rgb(246, 242, 234)",
+        "bg": "rgb(32,29,40)",
+        "size": "11px",
+        "weight": "400"
+      }
+    ],
+    "low": [
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 3.55,
+        "color": "rgba(173, 167, 159, 0.6)",
+        "bg": "rgb(22, 19, 27)",
+        "size": "12px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 3.5,
+        "color": "rgba(173, 167, 159, 0.6)",
+        "bg": "rgb(24, 22, 29)",
+        "size": "12px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "· 1 day ago",
+        "ratio": 3.55,
+        "color": "rgb(173, 167, 159)",
+        "bg": "rgb(22, 19, 27)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "· 1 day ago",
+        "ratio": 3.39,
+        "color": "rgb(173, 167, 159)",
+        "bg": "rgb(32,29,40)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "· 12 minutes ago",
+        "ratio": 3.39,
+        "color": "rgb(173, 167, 159)",
+        "bg": "rgb(32,29,40)",
+        "size": "11px",
+        "weight": "400"
+      }
+    ],
+    "textCount": 170,
+    "goldOutsideAct": [],
+    "goldActs": [
+      "New conversation",
+      "Send"
+    ],
+    "sends": {
+      "text": "Sends Wed, Oct 28, 9:00 AM",
+      "size": "11px",
+      "lines": 1
+    },
+    "cancel": {
+      "text": "Canceling…",
+      "ariaLabel": "Canceling the scheduled email",
+      "disabled": true,
+      "ariaBusy": "true",
+      "opacity": "1",
+      "size": "11px",
+      "height": 24,
+      "width": 66
+    },
+    "notSentLines": [],
+    "overflowX": false,
+    "counts": {
+      "pillScheduled": 1,
+      "pillNotSent": 0,
+      "pillCanceled": 0,
+      "pillSending": 0,
+      "railScheduled": 1,
+      "rawCode": 0,
+      "approve": 0
+    },
+    "toasts": [],
+    "calls": [
+      {
+        "name": "functions:comms-email-command",
+        "args": {
+          "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
+          "operation_id": "e0300000-0000-4000-8000-0000000d0001",
+          "cancel": true
+        }
+      }
+    ],
+    "errors": []
+  },
+  "exp03s-scheduled-cancel-already-light-1366x768-paige-closed": {
+    "ok": true,
+    "viewport": "1366x768",
+    "theme": "light",
+    "paige": "closed",
+    "state": "scheduled",
+    "act": "already",
+    "checks": {
+      "noOverflow": true,
+      "goldOnlyOnAct": true,
+      "fontLoaded": true,
+      "noRawCode": true,
+      "noApprove": true,
+      "noOtherFunctions": true,
+      "toast": true,
+      "oneDoorCall": true,
+      "toastAA": true,
+      "after": true
+    },
+    "label": {
+      "ok": true,
+      "w": 174,
+      "h": 24
+    },
+    "font": {
+      "schibsted": true
+    },
+    "tagged": [
+      {
+        "kind": "pill-canceled",
+        "disabled": false,
+        "incidental": false,
+        "text": "Canceled",
+        "ratio": 5.47,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(247, 244, 238)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "notsent-line",
+        "disabled": false,
+        "incidental": false,
+        "text": "Canceled — it won't be sent.",
+        "ratio": 13.52,
+        "color": "rgb(33, 30, 36)",
+        "bg": "rgb(236,232,230)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": "toast",
+        "disabled": false,
+        "incidental": false,
+        "text": "Already canceled — it won't be sent.",
+        "ratio": 17.26,
+        "color": "rgb(4, 20, 57)",
+        "bg": "rgb(249, 250, 251)",
+        "size": "13px",
+        "weight": "500"
+      }
+    ],
+    "low": [
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "1",
+        "ratio": 3.52,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(244, 241, 235)",
+        "size": "10px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "1",
+        "ratio": 3.52,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(244, 241, 235)",
+        "size": "10px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "1",
+        "ratio": 3.52,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(244, 241, 235)",
+        "size": "10px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 2.46,
+        "color": "rgba(103, 97, 107, 0.6)",
+        "bg": "rgb(247, 244, 238)",
+        "size": "12px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 2.43,
+        "color": "rgba(103, 97, 107, 0.6)",
+        "bg": "rgb(244, 241, 235)",
+        "size": "12px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "LIVE",
+        "ratio": 3.69,
+        "color": "rgb(50, 118, 90)",
+        "bg": "rgb(217,212,211)",
+        "size": "8px",
+        "weight": "600"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "· 1 day ago",
+        "ratio": 2.46,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(247, 244, 238)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "· 1 day ago",
+        "ratio": 2.36,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(236,232,230)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "· 12 minutes ago",
+        "ratio": 2.36,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(236,232,230)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "PROFILE · LIVE",
+        "ratio": 4.37,
+        "color": "rgb(50, 118, 90)",
+        "bg": "rgb(238,230,215)",
+        "size": "8px",
+        "weight": "600"
+      }
+    ],
+    "textCount": 169,
+    "goldOutsideAct": [],
+    "goldActs": [
+      "New conversation",
+      "Send"
+    ],
+    "sends": null,
+    "cancel": null,
+    "notSentLines": [
+      "Canceled — it won't be sent."
+    ],
+    "overflowX": false,
+    "counts": {
+      "pillScheduled": 0,
+      "pillNotSent": 0,
+      "pillCanceled": 1,
+      "pillSending": 0,
+      "railScheduled": 0,
+      "rawCode": 0,
+      "approve": 0
+    },
+    "toasts": [
+      {
+        "type": null,
+        "text": "Already canceled — it won't be sent."
+      }
+    ],
+    "calls": [
+      {
+        "name": "functions:comms-email-command",
+        "args": {
+          "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
+          "operation_id": "e0300000-0000-4000-8000-0000000d0001",
+          "cancel": true
+        }
+      }
+    ],
+    "errors": []
+  },
+  "exp03s-scheduled-cancel-didnt-light-1366x768-paige-closed": {
+    "ok": true,
+    "viewport": "1366x768",
+    "theme": "light",
+    "paige": "closed",
+    "state": "scheduled",
+    "act": "didnt",
+    "checks": {
+      "noOverflow": true,
+      "goldOnlyOnAct": true,
+      "fontLoaded": true,
+      "noRawCode": true,
+      "noApprove": true,
+      "noOtherFunctions": true,
+      "toast": true,
+      "oneDoorCall": true,
+      "toastAA": true,
+      "after": true
+    },
+    "label": {
+      "ok": true,
+      "w": 174,
+      "h": 24
+    },
+    "font": {
+      "schibsted": true
+    },
+    "tagged": [
+      {
+        "kind": "pill-notsent",
+        "disabled": false,
+        "incidental": false,
+        "text": "Not sent",
+        "ratio": 6.07,
+        "color": "oklab(0.412425 0.0704803 0.0338449)",
+        "bg": "rgb(225,208,205)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "notsent-line",
+        "disabled": false,
+        "incidental": false,
+        "text": "Nothing went out.",
+        "ratio": 13.52,
+        "color": "rgb(33, 30, 36)",
+        "bg": "rgb(236,232,230)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": "toast",
+        "disabled": false,
+        "incidental": false,
+        "text": "It didn't go out.",
+        "ratio": 17.26,
+        "color": "rgb(4, 20, 57)",
+        "bg": "rgb(249, 250, 251)",
+        "size": "13px",
+        "weight": "500"
+      }
+    ],
+    "low": [
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "1",
+        "ratio": 3.52,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(244, 241, 235)",
+        "size": "10px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "1",
+        "ratio": 3.52,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(244, 241, 235)",
+        "size": "10px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "1",
+        "ratio": 3.52,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(244, 241, 235)",
+        "size": "10px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 2.46,
+        "color": "rgba(103, 97, 107, 0.6)",
+        "bg": "rgb(247, 244, 238)",
+        "size": "12px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 2.43,
+        "color": "rgba(103, 97, 107, 0.6)",
+        "bg": "rgb(244, 241, 235)",
+        "size": "12px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "LIVE",
+        "ratio": 3.69,
+        "color": "rgb(50, 118, 90)",
+        "bg": "rgb(217,212,211)",
+        "size": "8px",
+        "weight": "600"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "· 1 day ago",
+        "ratio": 2.46,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(247, 244, 238)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "· 1 day ago",
+        "ratio": 2.36,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(236,232,230)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "· 12 minutes ago",
+        "ratio": 2.36,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(236,232,230)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "PROFILE · LIVE",
+        "ratio": 4.37,
+        "color": "rgb(50, 118, 90)",
+        "bg": "rgb(238,230,215)",
+        "size": "8px",
+        "weight": "600"
+      }
+    ],
+    "textCount": 169,
+    "goldOutsideAct": [],
+    "goldActs": [
+      "New conversation",
+      "Send"
+    ],
+    "sends": null,
+    "cancel": null,
+    "notSentLines": [
+      "Nothing went out."
+    ],
+    "overflowX": false,
+    "counts": {
+      "pillScheduled": 0,
+      "pillNotSent": 1,
+      "pillCanceled": 0,
+      "pillSending": 0,
+      "railScheduled": 0,
+      "rawCode": 0,
+      "approve": 0
+    },
+    "toasts": [
+      {
+        "type": null,
+        "text": "It didn't go out."
+      }
+    ],
+    "calls": [
+      {
+        "name": "functions:comms-email-command",
+        "args": {
+          "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
+          "operation_id": "e0300000-0000-4000-8000-0000000d0001",
+          "cancel": true
+        }
+      }
+    ],
+    "errors": []
+  },
+  "exp03s-scheduled-cancel-error-light-1366x768-paige-closed": {
+    "ok": true,
+    "viewport": "1366x768",
+    "theme": "light",
+    "paige": "closed",
+    "state": "scheduled",
+    "act": "error",
+    "checks": {
+      "noOverflow": true,
+      "goldOnlyOnAct": true,
+      "fontLoaded": true,
+      "noRawCode": true,
+      "noApprove": true,
+      "noOtherFunctions": true,
+      "toast": true,
+      "oneDoorCall": true,
+      "toastAA": true,
+      "after": true
+    },
+    "label": {
+      "ok": true,
+      "w": 174,
+      "h": 24
+    },
+    "font": {
+      "schibsted": true
+    },
+    "tagged": [
+      {
+        "kind": "rail-scheduled",
+        "disabled": false,
+        "incidental": false,
+        "text": "Scheduled · in about 19 hours",
+        "ratio": 5.47,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(247, 244, 238)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "pill-scheduled",
+        "disabled": false,
+        "incidental": false,
+        "text": "Scheduled",
+        "ratio": 5.47,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(247, 244, 238)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "sends-time",
+        "disabled": false,
+        "incidental": false,
+        "text": "Sends Wed, Oct 28, 9:00 AM",
+        "ratio": 4.93,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(236,232,230)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": "cancel-control",
+        "disabled": false,
+        "incidental": false,
+        "text": "Cancel",
+        "ratio": 13.52,
+        "color": "rgb(33, 30, 36)",
+        "bg": "rgb(236,232,230)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": "toast",
+        "disabled": false,
+        "incidental": false,
+        "text": "Couldn't cancel it. Refresh the conversation to see where it stands.",
+        "ratio": 17.26,
+        "color": "rgb(4, 20, 57)",
+        "bg": "rgb(249, 250, 251)",
+        "size": "13px",
+        "weight": "500"
+      }
+    ],
+    "low": [
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "1",
+        "ratio": 3.52,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(244, 241, 235)",
+        "size": "10px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "1",
+        "ratio": 3.52,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(244, 241, 235)",
+        "size": "10px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "1",
+        "ratio": 3.52,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(244, 241, 235)",
+        "size": "10px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 2.46,
+        "color": "rgba(103, 97, 107, 0.6)",
+        "bg": "rgb(247, 244, 238)",
+        "size": "12px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 2.43,
+        "color": "rgba(103, 97, 107, 0.6)",
+        "bg": "rgb(244, 241, 235)",
+        "size": "12px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "LIVE",
+        "ratio": 3.69,
+        "color": "rgb(50, 118, 90)",
+        "bg": "rgb(217,212,211)",
+        "size": "8px",
+        "weight": "600"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "· 1 day ago",
+        "ratio": 2.46,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(247, 244, 238)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "· 1 day ago",
+        "ratio": 2.36,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(236,232,230)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "· 12 minutes ago",
+        "ratio": 2.36,
+        "color": "rgb(103, 97, 107)",
+        "bg": "rgb(236,232,230)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "disabled": false,
+        "incidental": false,
+        "text": "PROFILE · LIVE",
+        "ratio": 4.37,
+        "color": "rgb(50, 118, 90)",
+        "bg": "rgb(238,230,215)",
+        "size": "8px",
+        "weight": "600"
+      }
+    ],
+    "textCount": 171,
+    "goldOutsideAct": [],
+    "goldActs": [
+      "New conversation",
+      "Send"
+    ],
+    "sends": {
+      "text": "Sends Wed, Oct 28, 9:00 AM",
+      "size": "11px",
+      "lines": 1
+    },
+    "cancel": {
+      "text": "Cancel",
+      "ariaLabel": "Cancel the email scheduled for Wed, Oct 28, 9:00 AM",
+      "disabled": false,
+      "ariaBusy": null,
+      "opacity": "1",
+      "size": "11px",
+      "height": 24,
+      "width": 43
+    },
+    "notSentLines": [],
+    "overflowX": false,
+    "counts": {
+      "pillScheduled": 1,
+      "pillNotSent": 0,
+      "pillCanceled": 0,
+      "pillSending": 0,
+      "railScheduled": 1,
+      "rawCode": 0,
+      "approve": 0
+    },
+    "toasts": [
+      {
+        "type": "error",
+        "text": "Couldn't cancel it. Refresh the conversation to see where it stands."
+      }
+    ],
+    "calls": [
+      {
+        "name": "functions:comms-email-command",
+        "args": {
+          "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
+          "operation_id": "e0300000-0000-4000-8000-0000000d0001",
+          "cancel": true
+        }
+      }
+    ],
+    "errors": []
+  },
+  "keyboard-light": {
+    "ok": true,
+    "theme": "light",
+    "tabs": 18,
+    "reached": true,
+    "tag": "BUTTON",
+    "type": "button",
+    "focusVisible": true,
+    "boxShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px",
+    "outline": "solid 3px",
+    "outlineColor": "rgb(33, 30, 36)",
+    "outlineOffset": "0px",
+    "text": "Cancel",
+    "roleNameMatches": 1,
+    "accessibleName": "Cancel the email scheduled for Wed, Oct 28, 9:00 AM",
+    "visibleText": "Cancel",
+    "enterCancelled": true,
+    "focusAfter": {
+      "tag": "TEXTAREA",
+      "inComposer": true,
+      "placeholder": "Reply to Jordan Rivera…  (drop a file to attach)",
+      "focusVisible": true
+    },
+    "indicator": "outline"
+  },
+  "keyboard-dark": {
+    "ok": true,
+    "theme": "dark",
+    "tabs": 18,
+    "reached": true,
+    "tag": "BUTTON",
+    "type": "button",
+    "focusVisible": true,
+    "boxShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px",
+    "outline": "solid 3px",
+    "outlineColor": "rgb(246, 242, 234)",
+    "outlineOffset": "0px",
+    "text": "Cancel",
+    "roleNameMatches": 1,
+    "accessibleName": "Cancel the email scheduled for Wed, Oct 28, 9:00 AM",
+    "visibleText": "Cancel",
+    "enterCancelled": true,
+    "focusAfter": {
+      "tag": "TEXTAREA",
+      "inComposer": true,
+      "placeholder": "Reply to Jordan Rivera…  (drop a file to attach)",
+      "focusVisible": true
+    },
+    "indicator": "outline"
+  }
+}

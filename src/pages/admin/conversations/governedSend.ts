@@ -8,10 +8,11 @@
 // draw it as "Paige drafted — awaiting your approval", never offer Approve & send or Edit on it,
 // and never count it as a draft (§13 — the screen says what is true; §70 — no dead-end control).
 //
-// Only the binding STATES and the two times that bound "Sending…" are read (six scalar JSON
-// paths), never the bound command, body or governance — the inbox needs to know what to say, not
-// what was approved.
+// Only the binding STATES, the times that bound "Sending…", a scheduled send's time and a refusal's
+// code-shaped reason are read (eight scalar JSON paths), never the bound command, body or governance —
+// the inbox needs to know what to say, not what was approved.
 import type { MessageRow } from "./inbox-shared";
+import { COMMS_EMAIL_SCHEDULED_RELEASE_GRACE_MS } from "../../../../supabase/functions/_shared/comms-email/contract";
 
 /** PostgREST select fragment appended to MESSAGE_COLS by the inbox's message pull. */
 export const GOVERNED_SEND_COLS =
@@ -19,6 +20,8 @@ export const GOVERNED_SEND_COLS =
   "comms_email_state:meta->comms_email_binding->>state, " +
   "comms_email_prepared_at:meta->comms_email_binding->>prepared_at, " +
   "comms_email_claimed_at:meta->comms_email_binding->>claimed_at, " +
+  "comms_email_send_at:meta->comms_email_binding->>send_at, " +
+  "comms_email_reason:meta->comms_email_binding->>outcome_reason, " +
   "sales_invoice_operation:meta->sales_invoice_binding->>operation_id, " +
   "sales_invoice_state:meta->sales_invoice_binding->>state";
 
@@ -27,12 +30,18 @@ export interface GovernedSendFields {
   comms_email_state?: string | null;
   comms_email_prepared_at?: string | null;
   comms_email_claimed_at?: string | null;
+  /** "Approve now, send later": when the approved email goes out (ISO, UTC). Absent = sent at once. */
+  comms_email_send_at?: string | null;
+  /** The code-shaped reason a refused send was closed with (finalize keeps nothing else). */
+  comms_email_reason?: string | null;
   sales_invoice_operation?: string | null;
   sales_invoice_state?: string | null;
 }
 
 /** What the inbox says about a governed send that has no settled message status yet. */
 export type GovernedSendView =
+  /** Approved to go out at a set time, and that time has not come: the owner can still cancel it. */
+  | "scheduled"
   /** Handed to the email service (or about to be) within the last couple of minutes. */
   | "sending"
   /** It may have gone out and nobody could confirm it — never resend. */
@@ -49,6 +58,13 @@ export type GovernedSendView =
  * (it never was). §13: the label has to stay true.
  */
 export const SENDING_WINDOW_MS = 2 * 60_000;
+
+/**
+ * How long after its time a scheduled governed email may still be released (the server's
+ * COMMS_EMAIL_SCHEDULED_RELEASE_GRACE_MS, _shared/comms-email/contract.ts — imported, not copied, so
+ * the label and the release cannot disagree about when "Sending…" stops being true).
+ */
+export const SCHEDULED_RELEASE_GRACE_MS = COMMS_EMAIL_SCHEDULED_RELEASE_GRACE_MS;
 
 function stateOf(m: GovernedSendFields): { bound: boolean; comms: boolean; state: string | null } {
   const comms = !!(m.comms_email_operation || m.comms_email_state);
@@ -92,10 +108,19 @@ export function governedSendView(m: MessageRow & GovernedSendFields, nowMs: numb
     case "provider_accepted":
     case "failed":
       return "settled";
-    case "prepared":
+    case "prepared": {
+      // "Approve now, send later": a queued governed email waits for its time ("Scheduled", still
+      // cancellable). Once due the drainer releases it within a minute or so, and gives up after the
+      // release grace — so "Sending…" holds only inside that window; past it nothing went out.
+      const sendAtMs = comms && m.comms_email_send_at ? Date.parse(m.comms_email_send_at) : NaN;
+      if (Number.isFinite(sendAtMs)) {
+        if (m.status === "queued" && nowMs < sendAtMs) return "scheduled";
+        return m.status === "queued" && nowMs - sendAtMs <= SCHEDULED_RELEASE_GRACE_MS ? "sending" : "not_sent";
+      }
       // Never claimed, so never handed to the email service. "Sending…" only while the claim
       // could still be on its way; after that the truthful word is "Not sent".
       return fresh(preparedAge) ? "sending" : "not_sent";
+    }
     case "dispatching": {
       // Claimed: the email service may have it. Past the window nobody is waiting on an answer
       // any more, so it may have gone out — don't resend.
@@ -108,6 +133,26 @@ export function governedSendView(m: MessageRow & GovernedSendFields, nowMs: numb
       if (m.status !== "draft") return "settled";
       return fresh(preparedAge) ? "sending" : "unconfirmed";
   }
+}
+
+/**
+ * The ONE test for "this message is waiting to go out at a set time" (the Scheduled view and the
+ * thread list's scheduled marker). A governed email is scheduled only while governedSendView says so —
+ * a governed row past its release grace still reads 'queued' but is not scheduled any more.
+ */
+export function isScheduledMessage(m: MessageRow & GovernedSendFields, nowMs: number = Date.now()): boolean {
+  const governed = governedSendView(m, nowMs);
+  if (governed !== null) return governed === "scheduled";
+  return m.status === "queued" && !!m.scheduled_for;
+}
+
+/** What the owner is told when a cancel came too late, from the send's own recorded state. */
+export function cancelTooLateLine(outcome: unknown, reason?: unknown): string {
+  // Only a recorded cancel is "already canceled"; a send closed for any other reason (a missed release,
+  // a quiet-hours hold, an opt-out) simply did not go out.
+  if (outcome === "refused" && reason === "cancelled_by_owner") return "Already canceled — it won't be sent.";
+  if (outcome === "refused" || outcome === "failed") return "It didn't go out.";
+  return "Too late — it's already on its way.";
 }
 
 /**
@@ -136,10 +181,40 @@ export function governedEmailReceiptLabel(
   return null;
 }
 
+/**
+ * The one plain line under a scheduled governed email that did not go out, from the code-shaped
+ * reason the server closed it with. Owner language only: no code ever reaches the screen.
+ */
+export function governedNotSentLine(reason: string | null | undefined): string {
+  const r = (reason ?? "").toLowerCase();
+  if (r === "cancelled_by_owner") return "Canceled — it won't be sent.";
+  // Each hold send-message can record, in the owner's words; never "opted out" for a hold that is not one.
+  if (r === "blocked_suppressed") return "Not sent — this address can't get email from you (they unsubscribed or it bounced).";
+  if (r === "blocked_no_consent") return "Not sent — this person hasn't agreed to get email from you.";
+  if (r === "blocked_client_dnd") return "Not sent — this person asked not to be contacted right now.";
+  if (r === "blocked_unsubscribe_unavailable") return "Not sent — an unsubscribe link couldn't be added to it.";
+  if (r.startsWith("blocked_")) return "Not sent — this person can't be emailed right now.";
+  if (r === "send_no_longer_eligible" || r === "sender_changed" || r === "recipient_changed")
+    return "Not sent — the sending address or this person's email changed since it was scheduled.";
+  if (r === "scheduler_authority_removed") return "Not sent — the person who scheduled it no longer has access to this business.";
+  return "Nothing went out.";
+}
+
+/** The send time in the viewer's own clock and words ("Wed, Oct 28, 9:00 AM"). */
+export function scheduledForLabel(sendAt: string, locale?: string): string {
+  const at = new Date(sendAt);
+  return Number.isFinite(at.getTime())
+    ? at.toLocaleString(locale, { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })
+    : "a set time";
+}
+
 /** Copy, kept with the rule so the label and the state cannot drift apart. */
 export const GOVERNED_SEND_COPY = {
+  scheduled: { pill: "Scheduled", line: null },
   sending: { pill: "Sending…", line: null },
   not_sent: { pill: "Not sent", line: null },
+  // A scheduled email its owner canceled reached the goal they asked for: a neutral pill, not an error.
+  canceled: { pill: "Canceled", line: null },
   unconfirmed: {
     pill: "Couldn't confirm",
     line: "Couldn't confirm this went out — don't resend.",

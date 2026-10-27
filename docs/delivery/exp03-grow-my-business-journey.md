@@ -975,7 +975,13 @@ Both closed as superseded with links; their branches are kept.
   contact's first name. N7 stays as is on purpose: when the contact cannot be created, the reply is stored unlinked
   rather than refused, because a refusal makes SendGrid redeliver for days and the reply is visible either way.
 
-**Open, in order:** Conversations composer through the governed door with files and scheduling (O12, B+(ii));
+- **O12 piece 1 (this PR, migration `20271119000000`): scheduled governed email.** Approve now, send later, cancel,
+  and the thread's Scheduled / Not sent states. Two independent reviews, all findings fixed. No product control
+  creates a scheduled email until piece 3 (the composer), so it is groundwork, not an owner capability yet.
+  Found while mapping: Conversations email attachments have never been sent; piece 2 builds them.
+
+**Open, in order:** O12 piece 2 (real email attachments, bound into the approval) and piece 3 (the composer's
+inline check on the door, with Schedule and Attach), then the New conversation dialog and draft approval on the door;
 inbound follow-ups (unauthenticated-sender badge — UI, needs design);
 custom-domain rebuild; owner-seen designs for the reply screen, S4b activation and company/personal mailbox
 access (owner direction 2026-10-27: the account holder grants each team member none / read / read and reply

@@ -60,6 +60,60 @@ export function parseCommsEmailCommand(value: unknown): CommsEmailCommand {
   });
 }
 
+/* ───────────────────────── "Approve now, send later" (scheduled governed email) ───────────────────────── */
+
+/** The earliest a scheduled email may be set for, measured when the card is raised. */
+export const COMMS_EMAIL_SEND_AT_MIN_LEAD_MS = 2 * 60_000;
+/** The furthest ahead a scheduled email may be set for. */
+export const COMMS_EMAIL_SEND_AT_MAX_LEAD_MS = 30 * 24 * 60 * 60_000;
+/**
+ * How long after its time a scheduled email may still be released. The drainer runs every minute and
+ * leases a row for five; past this window the release is closed as `scheduled_release_missed` (nothing
+ * went out) instead of an email arriving hours after the time the owner chose.
+ */
+export const COMMS_EMAIL_SCHEDULED_RELEASE_GRACE_MS = 15 * 60_000;
+
+const SEND_AT = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2})(?:\.(\d{1,3}))?)?(Z|([+-])(\d{2}):(\d{2}))$/;
+
+/**
+ * The canonical form of a requested send time, WITHOUT the window check: an ISO-8601 instant carrying
+ * `Z` or an explicit offset (a zone-less local time is refused — it would mean a different moment on
+ * the server), with real calendar fields (V8's Date.parse rolls "02-30" into March; this does not),
+ * floored to the minute and rendered exactly as `Date#toISOString` — the same text the database stores
+ * on the binding. Throws `COMMS_EMAIL_SEND_AT_INVALID`.
+ */
+export function canonicalCommsEmailSendAt(value: unknown): string {
+  const invalid = () => new TypeError("COMMS_EMAIL_SEND_AT_INVALID");
+  if (typeof value !== "string" || value.length > 40) throw invalid();
+  const m = SEND_AT.exec(value);
+  if (!m) throw invalid();
+  const [y, mo, d, h, mi, s] = [m[1], m[2], m[3], m[4], m[5], m[6] ?? "0"].map(Number);
+  const daysInMonth = mo >= 1 && mo <= 12 ? new Date(Date.UTC(y, mo, 0)).getUTCDate() : 0;
+  if (y < 2000 || y > 9999 || mo < 1 || mo > 12 || d < 1 || d > daysInMonth || h > 23 || mi > 59 || s > 59) throw invalid();
+  let offsetMinutes = 0;
+  if (m[8] !== "Z") {
+    const oh = Number(m[10]), om = Number(m[11]);
+    if (oh > 14 || om > 59 || (oh === 14 && om > 0)) throw invalid();
+    offsetMinutes = (m[9] === "-" ? -1 : 1) * (oh * 60 + om);
+  }
+  const ms = Date.UTC(y, mo - 1, d, h, mi, s) - offsetMinutes * 60_000;
+  if (!Number.isFinite(ms)) throw invalid();
+  return new Date(Math.floor(ms / 60_000) * 60_000).toISOString();
+}
+
+/**
+ * A requested send time, canonical (see above) and inside the window: at least two minutes and at
+ * most thirty days after `nowMs`. Pure — the caller passes the clock.
+ */
+export function parseCommsEmailSendAt(value: unknown, nowMs: number): string {
+  const canonical = canonicalCommsEmailSendAt(value);
+  const at = Date.parse(canonical);
+  if (!Number.isFinite(nowMs) || at < nowMs + COMMS_EMAIL_SEND_AT_MIN_LEAD_MS || at > nowMs + COMMS_EMAIL_SEND_AT_MAX_LEAD_MS) {
+    throw new TypeError("COMMS_EMAIL_SEND_AT_INVALID");
+  }
+  return canonical;
+}
+
 /** The recipient form every seam compares: trimmed and lower-cased (send-message's normalizeRecipient). */
 export function normalizeCommsEmailAddress(value: unknown): string | null {
   if (typeof value !== "string") return null;

@@ -97,6 +97,10 @@ interface SendBody {
   // A request to re-enter an 'unknown'/stale-'dispatching' operation. Refused before any claim: every
   // email now goes through SendGrid, which has no idempotent replay, so a re-send could deliver twice.
   comms_email_reconcile?: boolean;
+  // "Approve now, send later": the scheduled drainer releasing a SCHEDULED governed email (its binding
+  // carries send_at, its row is 'queued'). Only `true`, only service role, only with
+  // comms_email_operation_id, never with a reconcile. An immediate binding never accepts it.
+  comms_email_scheduled_release?: boolean;
   // Internal, one-use signing credential. It is never copied into the draft,
   // audit, Work, Conversation, receipt, error or any other provider pathway.
   agreement_signature_token?: string;
@@ -119,6 +123,8 @@ interface CommsEmailBinding {
   operation_id: string; tenant_id: string; actor_user_id: string; contact_id: string; connector_id: string;
   recipient: string; from_address: string; provider: "resend" | "gmail" | "smtp" | "sendgrid";
   subject: string; body_html: string; state: string;
+  /** A scheduled governed email's canonical send time (ISO, UTC, whole minute). null = an immediate send. */
+  send_at: string | null;
 }
 type CommsEmailOutcome = "provider_accepted" | "failed" | "refused" | "unknown";
 type OutboundDelivery = Awaited<ReturnType<OutboundChannelAdapter["send"]>>;
@@ -159,11 +165,19 @@ function parseCommsEmailBinding(value: unknown, messageTenantId: string | null):
   if (typeof v.subject !== "string" || !v.subject.trim() || v.subject.length > 200 || /[\r\n]/.test(v.subject)) return null;
   if (typeof v.body_html !== "string" || !v.body_html) return null;
   if (typeof v.state !== "string") return null;
+  // A present send_at must be exactly the canonical text prepare stored (Date#toISOString, whole minute).
+  let sendAt: string | null = null;
+  if (v.send_at !== undefined && v.send_at !== null) {
+    if (typeof v.send_at !== "string" || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:00\.000Z$/.test(v.send_at)) return null;
+    const ms = Date.parse(v.send_at);
+    if (!Number.isFinite(ms) || new Date(ms).toISOString() !== v.send_at) return null;
+    sendAt = v.send_at;
+  }
   return {
     operation_id: v.operation_id as string, tenant_id: v.tenant_id as string, actor_user_id: v.actor_user_id as string,
     contact_id: v.contact_id as string, connector_id: v.connector_id as string,
     recipient: v.recipient, from_address: v.from_address, provider: v.provider,
-    subject: v.subject, body_html: v.body_html, state: v.state,
+    subject: v.subject, body_html: v.body_html, state: v.state, send_at: sendAt,
   };
 }
 
@@ -669,7 +683,8 @@ Deno.serve(async (req) => {
   // ── INT-328 comms.email_send: a governed one-recipient business email is an immediate, single,
   //    attachment-free email of a PREPARED row, sent only by comms-email-command under the service
   //    role. It never rides marketing, the invoice binding, or the scheduler.
-  const commsEmailRequested = body?.comms_email_operation_id !== undefined || body?.comms_email_reconcile !== undefined;
+  const commsEmailRequested = body?.comms_email_operation_id !== undefined || body?.comms_email_reconcile !== undefined
+    || body?.comms_email_scheduled_release !== undefined;
   if(body?.agreement_signature_token!==undefined&&(!isInternal||!commsEmailRequested||body.channel!=="email")){
     return new Response(JSON.stringify({error:"agreement_signature_binding_required"}),{
       status:403,headers:{...corsHeaders,"Content-Type":"application/json"},
@@ -678,6 +693,8 @@ Deno.serve(async (req) => {
   if (commsEmailRequested) {
     if (typeof body.comms_email_operation_id !== "string" || !COMMS_EMAIL_UUID.test(body.comms_email_operation_id) ||
         (body.comms_email_reconcile !== undefined && typeof body.comms_email_reconcile !== "boolean") ||
+        // A scheduled release is `true` or absent, and never a reconcile.
+        (body.comms_email_scheduled_release !== undefined && (body.comms_email_scheduled_release !== true || body.comms_email_reconcile === true)) ||
         body.channel !== "email" || body.marketing !== undefined || body.scheduled_for !== undefined ||
         body.attachments !== undefined || body.invoice_delivery_operation_id !== undefined) {
       return new Response(JSON.stringify({ error: "comms_email_send_shape_invalid" }), {
@@ -770,6 +787,9 @@ Deno.serve(async (req) => {
     tenantId = data.tenant_id ?? null;
   }
   const terminalizeScheduledRelease = async (failure: string): Promise<Response> => {
+    // A scheduled GOVERNED email is never written directly here: finalize_comms_email_send owns its row
+    // (an unclaimed close as refused, with this failure as the code-shaped reason).
+    if (commsBinding) return await refuseCommsEmail(failure);
     if (!isInternal || !body.message_id || !tenantId || draftRow?.status !== "queued") {
       return new Response(JSON.stringify({ error: failure }), {
         status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -913,7 +933,22 @@ Deno.serve(async (req) => {
   };
   // INT-328: a governed email row that is no longer a draft has a recorded outcome (or one in
   // flight); it is never re-sent here and never answered with the generic "deduped: sent".
-  if (commsBinding && draftRow?.status !== "draft") {
+  //
+  // "Approve now, send later": a SCHEDULED governed email (binding.send_at) waits as a 'queued' row and
+  // is released only by the drainer's flagged request, once due. Edge clocks drift, so "due" here is
+  // generous (a minute early is admitted to the claim); the claim's own database clock is the real
+  // not-before (it answers not_before, below). Neither crossing is allowed: the flag on an immediate
+  // binding, or a scheduled binding released without the flag. Nothing is finalized on these refusals.
+  const commsScheduledRelease = body.comms_email_scheduled_release === true;
+  if (commsBinding && commsScheduledRelease !== (commsBinding.send_at !== null)) {
+    return commsEmailResponse("outcome_unknown", null, { code: commsScheduledRelease ? "COMMS_EMAIL_NOT_SCHEDULED" : "COMMS_EMAIL_SCHEDULED_RELEASE_REQUIRED" }, 409);
+  }
+  const commsReleasable = !!commsBinding && commsScheduledRelease && draftRow?.status === "queued"
+    && Date.parse(commsBinding.send_at ?? "") <= Date.now() + 60_000;
+  if (commsBinding && commsScheduledRelease && draftRow?.status === "queued" && !commsReleasable) {
+    return commsEmailResponse("outcome_unknown", null, { code: "COMMS_EMAIL_NOT_YET_DUE" }, 409);
+  }
+  if (commsBinding && draftRow?.status !== "draft" && !commsReleasable) {
     return commsEmailResponse("outcome_unknown", null, { code: "COMMS_EMAIL_NOT_CLAIMABLE" }, 409);
   }
   // Experience 03: a reconcile used to re-send the prepared email under Resend's Idempotency-Key, which
@@ -924,7 +959,9 @@ Deno.serve(async (req) => {
     return commsEmailResponse("outcome_unknown", null, { code: "COMMS_EMAIL_RECONCILIATION_REQUIRED" }, 409);
   }
   const scheduledBinding = draftRow?.meta?.scheduled_binding as Record<string, unknown> | undefined;
-  if (isInternal && draftRow?.status === "queued") {
+  // A governed email carries its own binding (checked above, field for field); the generic schedule
+  // binding below is for an ordinary queued draft and never applies to it.
+  if (isInternal && draftRow?.status === "queued" && !commsBinding) {
     if (!scheduledBinding || (typeof scheduledBinding.contact_id !== "string" && typeof scheduledBinding.connector_id !== "string")) {
       return await terminalizeScheduledRelease("scheduled_binding_unavailable");
     }
@@ -1667,7 +1704,9 @@ Deno.serve(async (req) => {
         if (claimError || !claimed || (claimed as { admitted?: unknown }).admitted !== true ||
             (claimed as { state?: unknown }).state !== "dispatching" ||
             typeof claimedAttempt !== "number" || !Number.isInteger(claimedAttempt) || claimedAttempt < 1) {
-          return commsEmailResponse("outcome_unknown", null, { code: "COMMS_EMAIL_NOT_CLAIMABLE" }, 409);
+          // A scheduled email the database's own clock says is not due yet: nothing happened, try later.
+          const notYetDue = !claimError && commsBinding.send_at !== null && typeof (claimed as { not_before?: unknown } | null)?.not_before === "string";
+          return commsEmailResponse("outcome_unknown", null, { code: notYetDue ? "COMMS_EMAIL_NOT_YET_DUE" : "COMMS_EMAIL_NOT_CLAIMABLE" }, 409);
         }
         commsDispatchClaimed = true;
         commsClaimedAttempt = claimedAttempt;

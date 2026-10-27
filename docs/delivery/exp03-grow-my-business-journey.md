@@ -906,3 +906,83 @@ a finished campaign's totals — an owner call); recording `dropped` events (no 
 **States kept separate:** source · review · exact CI · merge · deploy · configured · connected · activated ·
 authenticated · founder. This checkpoint reaches **source + local automated proof** for §14.2 and **merge**
 for #2923. Nothing else is claimed.
+
+### 14.7 Resend retired, replies come back, inbound routing protected (2026-10-27)
+
+**Owner rulings (2026-10-26/27):** the Resend account was emptied; "move EVERYTHING to SendGrid"; From stays on
+`@mail.paigeagent.ai`; merge when green. On 2026-10-27 the owner set `SENDGRID_INBOUND_PARSE_SECRET`, the
+Inbound Parse host `mail.paigeagent.ai`, approved the inbound-routing guard, and created
+`SENDGRID_DOMAIN_AUTH_API_KEY` (Sender Authentication only) for the custom-domain rebuild.
+
+**Shipped (each merged, deployed and read back; master §4.0 rows):**
+- **#2958** platform email (welcome, invites, booking mail, plan reminders) on SendGrid through
+  `sendPlatformEmail`; an unconfirmed send is never re-sent.
+- **#2966** every remaining PAIGE email off Resend: `send-message` has no Resend arm, managed and
+  connectorless sends use SendGrid with the platform From, reconcile never re-sends, a 5xx/timeout is
+  `outcome_unknown`. Managed connectors still carry the legacy label `provider='resend'`; sending is SendGrid.
+- **#2976 + #2978** SendGrid Inbound Parse arm in `handle-inbound-email`: secret-gated, routed on envelope
+  recipients against `inbound_address` only for `paigeagent.ai`, one row per business, business-scoped
+  idempotency, unauthenticated senders kept apart with no contact and no draft. #2978 declared
+  `verify_jwt=false` for `handle-inbound-webhook` so `edge-live` advanced (run #880).
+- **First real inbound delivery, 2026-10-27 13:28 UTC:** a real reply posted by SendGrid was accepted
+  (basic auth in the URL works through the gateway), stored once on the contact's thread with an
+  authenticated sender, and a `comms-draft-reply` action was filed in the `confirm` lane.
+- **#2983** (squash `74839345`; `deploy-migrations` run #705 SUCCESS; `20271118090000` recorded on production,
+  the trigger present with its final body, `db-live` = `74839345`, zero drift; the 9 address-carrying connectors
+  unchanged) a database guard: a browser session may not set or change
+  `inbound_address`/`inbound_domain`, nor re-enable a routing row or change its channel type, provider or
+  config. Independent review found the first version correct and three remaining claim paths; two are
+  closed in the PR.
+
+**Re-classified rows (§14.3):**
+- **Row 198 / PCO-COMMS-006 Business email sending:** PARTIAL → sends route through SendGrid in deployed
+  source. No outbound Conversations email has been sent since the cutover (production read, 2026-10-27), so
+  a live outbound readback is still owed.
+- **E-10 SendGrid account integration:** the Resend→SendGrid cutover is DONE (#2958, #2966). Event Webhook
+  configured by hand (§14.5); Inbound Parse configured and live-proven.
+- **E-15 Inbound replies → Conversations:** WORKING for replies to managed addresses (live-proven above).
+  Threading a reply back to the campaign that prompted it is still UNVERIFIED.
+- **E-12 Custom domain:** still MISSING. `manage-tenant-domain` calls the retired Resend API; rebuild on
+  SendGrid domain authentication is next, with the provider domain id bound server-side and a per-business
+  DNS ownership proof before an `inbound_domain` routes.
+
+**Supersedes:** #2131 (S3 backend closeout) — its central facts re-verified on current main: `f2e2a0af6` is on
+main and behind both `edge-live` and `db-live`, and `20271031000000/000100/000200/000250` are applied on
+production. #2152 (SendGrid-only directive, 2026-10-14) — carried out by #2958/#2966 and re-ruled 2026-10-26.
+Both closed as superseded with links; their branches are kept.
+
+- **Retired addresses (this records PR, migration `20271118100000`):** a managed address a business gives up is
+  never issued to another business; a new or renamed business takes a numbered variant. The review HIGH on #2983
+  reproduced on production first (rolled back): A renaming to B's old slug was handed B's old address.
+
+### 14.8 Retired addresses live, reply-box decision, inbound follow-ups (2026-10-27)
+
+- **#2986 merged as `a4d76c41` and LIVE.** deploy-migrations run 40538014513 pushed and verified
+  `20271118100000`. Read back on production: the migration row exists; the four triggers exist (connector
+  release/refuse, identity release/refuse); RLS is on; `authenticated` cannot read the table; the backfill holds
+  exactly 1 row; `provision_paige_managed_email_connector` carries the variant loop and
+  `check_solo_setup_managed_email` the retired clause. Known limit from the second review: a server-side write that
+  changes only a connector's `tenant_id` is not refused (a browser cannot do it — #2983 — and no product writer
+  does); recorded, not built.
+- **Owner decision on O12 (2026-10-27): B with (ii).** Pressing Send in the Conversations email composer shows an
+  inline check in place of the action row — server-resolved To and From, subject, files and send time — and
+  **Send now** (or **Schedule send**) is the approval. The 30-second undo for email goes away; SMS is unchanged.
+  (ii): the governed door is extended first so attachments and a scheduled send time keep working and are bound into
+  the approval. Prototype: the published "Reply Check Prototype" artifact (mocked, nothing sent). Build sequenced next.
+- **Inbound follow-ups in this PR:** N1 — one draft reply per inbound message (migration `20271118110000`, a partial
+  unique index on `paige_actions (tenant_id, payload->>'message_id')` for `comms-draft-reply`; a concurrent
+  redelivery's 23505 reads as already filed). N6 — a sender display name containing `@` is not used as the new
+  contact's first name. N7 stays as is on purpose: when the contact cannot be created, the reply is stored unlinked
+  rather than refused, because a refusal makes SendGrid redeliver for days and the reply is visible either way.
+
+**Open, in order:** Conversations composer through the governed door with files and scheduling (O12, B+(ii));
+inbound follow-ups (unauthenticated-sender badge — UI, needs design);
+custom-domain rebuild; owner-seen designs for the reply screen, S4b activation and company/personal mailbox
+access (owner direction 2026-10-27: the account holder grants each team member none / read / read and reply
+on the company mailbox; personal mailboxes stay private).
+
+**Owner-held:** SendGrid paid plan before the trial ends (the trial allows setup; 100 emails/day); first live
+campaign test send; Gmail send scopes; iCloud transport; ad launch/spend; tenant mailbox decision (E-11).
+
+**States reached:** source · review · exact CI · merge · deploy · configured · connected for inbound replies.
+Not reached: authenticated owner drive of the reply flow in the app, and founder acceptance.

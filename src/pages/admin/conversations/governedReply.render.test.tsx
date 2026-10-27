@@ -596,11 +596,16 @@ describe("checks that never reach the door", () => {
     const host = await mount();
     await write(host);
     await act(async () => { sendButton(host)!.click(); await flush(); });
-    db.tenant = OTHER_TENANT; db.rpcTenant = OTHER_TENANT; db.messages = []; db.threads = [];
+    // The other business has a conversation of its own open, with the same words typed: a late answer
+    // painted here would raise a check about an email asked for in the FIRST business.
+    db.tenant = OTHER_TENANT; db.rpcTenant = OTHER_TENANT;
     await act(async () => { root!.render(tree("/solo/3855/clients/conversations")); await flush(); });
     await settle();
+    await write(host);
+    expect(textarea(host)).toBeTruthy();
     await act(async () => { release(null); await flush(); });
     await settle();
+    expect(sendButton(host)).toBeTruthy();
     expect(strip(host)).toBeNull();
     expect(status(host)).not.toMatch(/Ready to send/);
   });

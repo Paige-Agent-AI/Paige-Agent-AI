@@ -854,6 +854,15 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**2026-10-26 UTC — EXP09 Portal settings fit beside PAIGE.**
+
+| Increment | Exact released source and observed production | Acceptance boundary |
+| --- | --- | --- |
+| [#2939 responsive Portal editor](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2939#issuecomment-6429707220) | Reviewed `4d26a917bb8a5d01a14b670d23478a6c287d4d17`, AUTHOR-REVIEW / LOWER ASSURANCE5658961509 and final receiving6429616047; all10 applicable checks and both web contexts SUCCESS, no-SQL Preview SKIPPED, zero threads. Actual main `50468eec27b2356ac3048d600206852eb39a29de` / tree `3fe13cade1a8cc7c973ba4aac4ec6a05a93c155e`, original792477+4d26 parents; all9 owning and16,566 incoming outside entries exact. Production `dpl_4SwsrqNzfH9w4k4HeTHg2rxNLSst` READY; both public origins exact50468-mvpvobl3/customerUpdate=null, entry/assets/cache/missing404 PASS at23:20:01.286UTC. Own native/Edge/provider delta N/A. | Existing48 regressions and final19 source-render cases PASS. Actual owner1514×822: PAIGE-open form708.3125/input666.7125px, folded form759.2/input717.6px with original440px preview; field44px and no measured document horizontal overflow. Saved contact remains clean; Tab reaches Headline; original PAIGE conversation restored open. No business write/send/activation. Full signed-in viewport/cohort matrix, physical phone/AT/zoom, external-client contact display, full42/seven-pillar and founder acceptance remain open. Internal repair, no customer version or announcement. |
+
+This mechanical post-merge identity closeout records the preceding delivery;
+it changes no product, policy, capability or acceptance status and is not logged recursively.
+
 **2026-10-26 UTC — EXP02 original Systems checkpoint and Work finalizer release receipts.**
 
 | Increment | Exact source and observed production evidence | Acceptance boundary |
@@ -873,6 +882,18 @@ not logged recursively. It adds no product, policy, capability or acceptance cha
 
 This mechanical post-merge identity closeout records the two preceding deliveries;
 it changes no product, policy, capability or acceptance status and is not logged recursively.
+
+**2026-10-26 UTC — EXP02 private original Systems Work consumer; not admitted.**
+
+| Increment | Exact source and observed production evidence | Acceptance boundary |
+| --- | --- | --- |
+| [#2944 private consumer](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2944#issuecomment-6429387101) | Reviewed `9ec3f387576a8d50a560758ca41ec9eabf477659`, LOWER5659772898 plus actual existing E05 NON-AUTHOR source review5659919149/receiving38072c6a, independently179PASS. Same-bot COMMENT is not distinct-account approval. All11 exact checks/normal Preview/two webSUCCESS/zero threads. Actual main `c4b2b2d937796cda64fe6a2d5702d40d573081e1` / tree `3fc22d44c9d22c882be38aebc1a282321c864244`, parents93f567749+9ec; all three tested source blobs/whole incoming docs/all16,557 outside entries/original19 matrix exact. Normal Edge40415606311/job121897039328 SUCCESS; API artifact12695856404 ZIP SHA25609543bc52cf509616574ecbd8e403a516670077e8263a124da38db991b6fdb39 independently matches all159 source entries/configs at certificate versions152/153/157/158, no emitted fallback. Later current versions153/154/158/159 independently verify all159 complete API sources/configs against the same Git merge,0mismatches/stable metadata; no cause for revision advance asserted. Webdpl_6q4kZLb58VjHzE8DPVrd4r7Tq6u8 READY; both public200/exactc4b2b2d937796cda64fe6a2d5702d40d573081e1-mvpupyff/customerUpdate:null. | Existing Core wait extraction deployed; private native claim→heartbeat→whole unfiltered Core→original finalizer/Rail adapter source merged, still unimported by HTTP hosts and UNADMITTED. Native/schema/grant delta N/A; original8/3/5-column/server-only contract metadata verified, no invocation.179 focused/207 affected-suite proof remains synthetic; original native148 separate. No manual scan, Spine/worker/provider/Chat activation or customer acceptance. Original-host adoption/bounded lifetimes, actual run/result/Rail/reload/corrective work and full19/nine remain incomplete; Visual N/A, Founder NOT_ACCEPTED, ALG/CAP/historical9-0+12-0-4/monthlyUNKNOWNUNRETRIED unchanged. |
+
+**2026-10-26 UTC — EXP02 original full-outcome reconciliation.**
+
+| Increment | Exact source and observed production evidence | Acceptance boundary |
+| --- | --- | --- |
+| [#2927 full19 audit and preceding safeguards receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2927#issuecomment-6426382518) | Reviewed `28341e918c4ead86457ab64db0d2499a2e843d67`, AUTHOR-REVIEW / LOWER ASSURANCE5657648881; all applicable exact checks/two web statuses SUCCESS, designed no-SQL Preview SKIPPED. Actual main `872c5b6ec0ea146a22a3c29efc776034b09ffd6c` / tree `494329e60abafe0300bc88dc5afd190f94fee979`; complete incoming documents/all16,542 outside entries/all19 original outcome rows retained,189 additive lines/four existing docs. Normal productiondpl_F19z5oMzomBtkcG97tKmBksBpCw2 READY. Both public origins200 observed the verified documentation-only containing successor56db711a82e6d97f4d4f04c95547b4b2ad730787-mvpp1juv/customerUpdate:null with872 as first parent; exact872 public alias was not observed. | Source audit preserves the nineteen original outcomes and adds their already-required Coordinator acceptance subcases, original-source dependencies, minimal approved Vault provenance/revocation and representative-week measurement obligations. No runtime, new registry, provider or action activation. Full19/nine/ALG/catalogue remain at their existing maturity; historical9-0+12-0-4 and monthlyUNKNOWN/UNRETRIED retained, representative week UNMEASURED, Founder NOT_ACCEPTED. This row records that broader reconciliation separately from its #2918 identity receipt; it is not customer acceptance. |
 
 **2026-10-26 UTC — EXP02 original private manual Work safeguards; no scan activation.**
 

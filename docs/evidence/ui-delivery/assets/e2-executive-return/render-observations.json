@@ -1,7 +1,8 @@
 {
-  "source": "3bbf343676dd3f6b447f02d2739de6af994a10de",
+  "source": "bc10362fa2471d855159c9242988945a822e6643",
+  "base": "1ad5f13c4579c717248027687468c43de90bcd40",
   "scope": "Original components and synthetic ports only; no authenticated department/model/provider/business operation",
-  "reviewCorrection": "Wheel/trackpad input during a pending fresh read now cancels restoration; causal140-versus420 regression before fix,119 controls/seven suites after. Native delayed-wheel itself remains component-tested, not authenticated or separately browser-driven.",
+  "reviewCorrection": "Original wheel/trackpad input causal regression and119 controls retained. Composed email-source regression136/eight suites; fresh12 frames/four native return trips. Delayed-wheel itself remains component-tested, not separately browser-driven.",
   "frames": [
     {
       "file": "1536x770-closed.jpg",
@@ -124,57 +125,85 @@
       }
     }
   ],
-  "desktopOpen": {
+  "desktopClosed": {
     "before": {
+      "draft": "",
       "focus": "Open Finance",
       "opened": [
         "Source & freshness"
       ],
-      "scroll": 1714.4000244140625
+      "pageScroll": 1366,
+      "pageWidth": 1366,
+      "rootScroll": 1279,
+      "rootWidth": 1279,
+      "scroll": 1719.199951171875,
+      "theme": "light"
     },
     "after": {
-      "draft": "Keep this synthetic review question while I inspect the original source.",
+      "draft": "",
       "focus": "Open Finance",
       "opened": [
         "Source & freshness"
       ],
-      "scroll": 1714.4000244140625
+      "pageScroll": 1366,
+      "pageWidth": 1366,
+      "rootScroll": 1279,
+      "rootWidth": 1279,
+      "scroll": 1719.199951171875,
+      "theme": "light"
     },
     "delta": 0
   },
-  "desktopClosed": {
+  "desktopOpen": {
     "before": {
+      "draft": "Keep this synthetic question while I inspect the original source.",
       "focus": "Open Finance",
       "opened": [
         "Source & freshness"
       ],
-      "scroll": 1719.199951171875
+      "pageScroll": 1366,
+      "pageWidth": 1366,
+      "rootScroll": 815,
+      "rootWidth": 815,
+      "scroll": 1714.4000244140625,
+      "theme": "light"
     },
     "after": {
-      "draft": "Keep this synthetic review question while I inspect the original source.",
+      "draft": "Keep this synthetic question while I inspect the original source.",
       "focus": "Open Finance",
       "opened": [
         "Source & freshness"
       ],
-      "scroll": 1719.199951171875
+      "pageScroll": 1366,
+      "pageWidth": 1366,
+      "rootScroll": 815,
+      "rootWidth": 815,
+      "scroll": 1714.4000244140625,
+      "theme": "light"
     },
     "delta": 0
   },
   "narrow": [
     {
-      "file": "390x844-obsidian-return.jpg",
       "viewport": [
         390,
         844
       ],
       "before": {
+        "draft": "",
         "focus": "Open Finance",
         "opened": [
           "Source & freshness"
         ],
-        "scroll": 2372.800048828125
+        "pageScroll": 390,
+        "pageWidth": 390,
+        "rootScroll": 303,
+        "rootWidth": 303,
+        "scroll": 2372.800048828125,
+        "theme": "dark"
       },
       "after": {
+        "draft": "",
         "focus": "Open Finance",
         "opened": [
           "Source & freshness"
@@ -189,19 +218,25 @@
       "delta": 0
     },
     {
-      "file": "320x740-obsidian-return.jpg",
       "viewport": [
         320,
         740
       ],
       "before": {
+        "draft": "",
         "focus": "Open Finance",
         "opened": [
           "Source & freshness"
         ],
-        "scroll": 2867.199951171875
+        "pageScroll": 320,
+        "pageWidth": 320,
+        "rootScroll": 233,
+        "rootWidth": 233,
+        "scroll": 2867.199951171875,
+        "theme": "dark"
       },
       "after": {
+        "draft": "",
         "focus": "Open Finance",
         "opened": [
           "Source & freshness"
@@ -215,5 +250,6 @@
       },
       "delta": 0
     }
-  ]
+  ],
+  "invalidAttempt": "An initial320 control toggled an already open disclosure due to an invalid aria-label-only harness query; corrected through visible region summary and freshly verified open state before the final native trip."
 }

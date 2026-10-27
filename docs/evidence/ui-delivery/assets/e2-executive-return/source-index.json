@@ -1,6 +1,6 @@
 {
-  "source": "3bbf343676dd3f6b447f02d2739de6af994a10de",
-  "base": "c76eb5cd62fc6cc4fa761b654bf18153b15ed395",
+  "source": "bc10362fa2471d855159c9242988945a822e6643",
+  "base": "1ad5f13c4579c717248027687468c43de90bcd40",
   "scope": "Declared original Executive, shell, route consumer, presenter/style/font and synthetic fixture inputs; not a complete transitive graph. No authenticated department, model, provider or business operation.",
   "inputs": [
     {
@@ -20,7 +20,7 @@
     },
     {
       "path": "src/solo/executive-review.ts",
-      "sha256": "8e80f725cfae09f05d21d358bb9b7f471fea87f932b25cef19601392e50f8627",
+      "sha256": "99cbde2cba5706f66571d6c1135787df1fda75435704b51312bb35e292c269af",
       "hash_mode": "text_lf"
     },
     {
@@ -85,7 +85,12 @@
     },
     {
       "path": "scripts/live-drive/harness/executive-mount/stubs.tsx",
-      "sha256": "65f0a15233e39a103e16a793dee7d8a8cfd18fd899b4d822d8dc3f9dfc397b86",
+      "sha256": "cf73b03bb27a951ac8c5897d8eba451c34c8e2679a0a0d22b108d813caa5736a",
+      "hash_mode": "text_lf"
+    },
+    {
+      "path": "scripts/live-drive/harness/executive-mount/email-fixture.ts",
+      "sha256": "475f6a9cf836b5f130e0c52dd8d625f63319f9aefb1cdfae77fa6a15d29ce77e",
       "hash_mode": "text_lf"
     },
     {
@@ -95,7 +100,7 @@
     },
     {
       "path": "scripts/live-drive/harness/executive-mount/vite.config.ts",
-      "sha256": "d727d65d9f4f0769854ff9bd442fb3dfb518da33fdf08841bcb4205ea6926f42",
+      "sha256": "f3cbee419e47505dce4f94dbe090c8c64c79e127e1b5011374650953fa320ba1",
       "hash_mode": "text_lf"
     },
     {
@@ -117,7 +122,7 @@
   "frames": [
     {
       "path": "1024x768-closed.jpg",
-      "sha256": "c0686cf760015d1114b444a4a29aa23194e5558ab0d14d8b4e9f429b6d96de7b"
+      "sha256": "51b9104be9e5f960d2e6b568960b05cacf9ed5a3765d3db441d5c9c6a425f144"
     },
     {
       "path": "1024x768-open.jpg",
@@ -133,11 +138,11 @@
     },
     {
       "path": "1366x768-return-chat-draft.jpg",
-      "sha256": "861679227d06bb8d06c647138cbd7bec22a0d40a8ba8c9ab7856dfe32a8bff3b"
+      "sha256": "ad1042a21b53d1131de2b3d09a8f8fc99753f23f5c5cb49971e190e1b3806297"
     },
     {
       "path": "1366x768-return-source.jpg",
-      "sha256": "0624b8ac3dcc35ca6d20d5e2bd47f815df31629d3f8a235dcfd67a3a9b1ea0a5"
+      "sha256": "a2a614df73c327c9988ae150cad6995326e24eae123e2a4d2239ef39b45c1d21"
     },
     {
       "path": "1536x770-closed.jpg",
@@ -149,11 +154,11 @@
     },
     {
       "path": "320x740-obsidian-return.jpg",
-      "sha256": "94e31a714adb8c305c711f6534a6fdb06d0ed26818eff1b7f9e32fe6bda2d049"
+      "sha256": "392b33d193fd1219edb96ee8a37ddc63eebe2db51e53c2a5dd75633964123f8f"
     },
     {
       "path": "390x844-obsidian-return.jpg",
-      "sha256": "4b04a8ec0c2a97b6affef19b40e2f00ff4ed193b03e305d4d8b53da4719f0463"
+      "sha256": "ab7c8fbdc43396ae0ee47fcff7d9f87b2b8d95ab0309bbe0165ca1c56f318613"
     },
     {
       "path": "900x1000-closed.jpg",
@@ -166,8 +171,8 @@
   ],
   "observations": "render-observations.json",
   "tests": {
-    "controls": 119,
-    "suites": 7,
+    "controls": 136,
+    "suites": 8,
     "skips": 0,
     "compiler_incumbent_diagnostics": 6,
     "compiler_new_diagnostics": 0,

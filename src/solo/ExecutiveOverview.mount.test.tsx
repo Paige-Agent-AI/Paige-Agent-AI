@@ -396,3 +396,23 @@ describe("Executive — integrated customer flow", () => {
     expect(mocks.review).toHaveBeenLastCalledWith("test-tenant-1", "last_30_days");
   });
 });
+
+describe('Executive invitation reporting context', () => {
+  it.each([['last_7_days', 'Last 7 days'], ['last_30_days', 'Last 30 days'], ['current_quarter', 'This quarter']])('retains %s on every original unsent conversation invitation', async (period, label) => {
+    const open = vi.fn();
+    mocks.review.mockReturnValue({ state: 'ready', snapshot: withTargetAndFinanceFixtures(structuredClone(SNAPSHOT), 'ready', true), refresh: vi.fn() });
+    mocks.pending.mockReturnValue({ items: [{ id: 'test-prepared', title: 'Prepared review', department: 'Operations' }], total: 1, loading: false, error: null, refresh: vi.fn() });
+    await act(async () => root!.render(<MemoryRouter initialEntries={[EXECUTIVE + '?review_period=' + period]}><ExecutiveOverview account="1234567" accountEpoch="test-tenant-1" openPaige={open} /></MemoryRouter>));
+    for (const name of ["How's my business doing?", 'Ask VERA to review the evidence', 'Review targets with PAIGE', 'Discuss with PAIGE', 'Review with PAIGE']) {
+      mocks.prefill.mockClear(); open.mockClear();
+      act(() => button(name).click());
+      expect(mocks.prefill, name).toHaveBeenCalledOnce();
+      expect(mocks.prefill, name).toHaveBeenCalledWith(expect.stringContaining(label));
+      const prompt = mocks.prefill.mock.calls[0][0] as string;
+      expect(prompt.split(label), name).toHaveLength(2);
+      expect(prompt, name).toContain('Reporting period: ' + label + '.');
+      expect(open, name).toHaveBeenCalledOnce();
+      expect(selectedPeriod()).toBe(period);
+    }
+  });
+});

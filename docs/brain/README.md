@@ -4619,6 +4619,115 @@ this safe no-schema UI slice; normal Preview-capacity and original E05/E09
 receiving dependencies remain in their canonical Linear threads.
 [Bounded original-control evidence](../evidence/ui-delivery/e2-report-thumbnail-accessibility.md).
 
+
+### October27 11:05UTC — original Executive-to-Chat reporting context
+
+Existing O02/O08/O10/O16 invitations now carry the selected reporting period
+through the same unsent prompt producer. Default company, VERA, target, priority
+and held-work questions each include it once; original source-specific target
+and metric windows stay authoritative. Three original-component period failures
+were reproduced before repair. Source0afddbd82e66e2986bdd6c0164da915c7ffe478f on
+actualmain1ad5f13c has84 controls/four suites/zero skips, lint0/build59.23s and the
+same six incumbent compiler findings/baseline10. Original test bodies retained.
+Fourteen raw synthetic frames/24 declared inputs, ten native desktop/phone Enter
+invitations and two Obsidian phone textarea keyboard checks passed. Fixed sample
+figures are not backend period-consistency or authenticated customer proof.
+No Send/model request, new runtime, writer, approval, provider/scan/worker action
+or receipt. Functional LOCAL, Visual synthetic, Experiential draft-only bounded,
+Founder NOT_ACCEPTED. Final review/CI/release/readback/authenticated full19/nine
+remain required; canonical ALG/CAP maturity unchanged, monthlyUNKNOWN/UNRETRIED.
+
+Original shared records also reconciled in place: DEL131 F/G/H/J132 only,29
+protected cells/metadata/history exact and near-limit K132 untouched; original
+CAP009–017 rows10–18 I/M/N/T/Y only,45 values/207 protected cells exact, all
+IDs/owners/inventory/closure/algorithm/style/note/link/history preserved. Current
+3Limited/3Unverified/3ComingSoon are catalogue metadata, not account acceptance.
+Neutral local-proof window returned to E05 (ANT1610fab13b2); ordinary-owner
+E09→E02→E05 custody/Finance QA and original manual Work receiving stay separate.
+[Bounded source/visual proof](../evidence/ui-delivery/e2-executive-chat-period.md).
+### October27 12:08UTC — EXP02 actual return release and composed handoff
+
+#2979 actually released d0ab7820dbba5e0cbb4aac2f03902a2e2761e8fc/tree db8af66f,
+exact reviewed1442/LOWER5666216936, all10+two webSUCCESS/no-SQL PreviewSKIP/zero
+unresolved threads. Productiondpl_DrWx5RF49nghLLuRWA6jfqN7LwNW READY; both public
+origins exactd0ab-mvqn2h1x/null update/matching reachable original bootstrap,
+application and Solo return source/missing404 at12:08:30UTC. No native/Edge,
+authority, provider or business activation delta. [Release receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2979#issuecomment-6441504603).
+
+#2981 normally receives ACTUAL d0ab as0a408ef9b214292258fc5760ce03b586542ca1c8.
+Its complete tracked tree8b7e37e5163f5c0ce892a2eeae81639b7fda8fae is identical to
+rendered prospective45eb4e90fdcba00f367c93cd2190dc80299b3ba5.269 local controls/
+13 disjoint suites/zero skips and18 inspected raw synthetic frames/24 declared
+inputs therefore bind to this actual composition. Twelve native keyboard period
+invitations/four department→Back trips preserve period/source/opener/scroll
+delta0 and the original synthetic draft. Required CSS viewports are verified;
+unresized native JPEG transport rounding up to1px is recorded individually.
+Initial local socket/warm-navigation/optional-image-library setup attempts and
+the exact-JPEG-size assumption are INVALID verification setup, not product PASS.
+Normal combined build71s PASS. Actual app compiler has the same six incumbent
+diagnostics under unchanged baseline10; no new finding or clean-compiler claim.
+Old63 green is historical, never a new-head CI waiver. Final review/CI/release
+for the composed handoff remains required; no shared Chat/runtime/issuer edit.
+
+Functional bounded return SOURCE RELEASED; Visual synthetic; Experiential local
+navigation/draft proof only; Founder NOT_ACCEPTED. Alternate in-app customer
+access resolved another workspace and stopped INVALID/WRONG_SCOPE. Explicit
+ordinary-owner Edge receiving and Finance Overview+six subpages/permissions/
+cohorts/reload/nativezoom/full AT/Chat-Live/all19/nine still owed. Original manual
+accepted-intent/Work observation/exact Rail projection receiving remains open.
+Historical9PASS0FAIL+12PASS0FAIL4BLOCKED/monthlyUNKNOWNUNRETRIED retained. Canonical
+ALG03/06/11/12/13 and catalogue3Limited/3Unverified/3ComingSoon stay unchanged;
+no action approval, scan/worker/provider activation or receipt promotion.
+
+### October27 13:16UTC — actual Chat-period release and original manual observation
+
+#2981 is actually released as ecb28d4b896be2f2ce43e5454f740cc3f45e8329,
+tree01c2ab85 matching reviewed9d3b3de9/LOWER5666843311. All10 new required checks/
+two webSUCCESS/no-SQL PreviewSKIP/zero unresolved threads. VercelciX READY; both
+public origins exactecb-mvqoxn8i/null update/reachable matching original bootstrap,
+application and Solo return+period code/missing404 at13:00:16UTC. No native/Edge,
+authority, provider or action activation delta. [Release receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2981#issuecomment-6442516466).
+Original Master4.0 records its verified source release; #2979's actual row is
+already on main. All19/nine/real Finance/Chat-Live and founder acceptance stay open.
+
+Next O07/O13/O16/O19 foundation is LOCAL source157ba6bf9514ac183c0a660e6f19fc7ab9be6450:
+the SAME original observer and closed codec recognize only the accepted manual
+Work purpose, delegating current Metric/SOLO authorization to the ORIGINAL
+get_paige_durable_work. Original actor/tenant/thread/latest accepted-effect fence
+remains. Same Work/run/closed finalizer counts and original source/revision0/actor/
+tenant Rail association establish a receipt UUID; no raw Rail data, replacement
+result reader or new grant. Manual result is never a Document/Research artifact.
+Current Work eligibility includes trial/past_due; those legitimate manual cases
+are delegated, while the original active-only legacy predicate is preserved.
+
+New native47 cases + unchanged native Document/Research34 + original Systems
+heartbeat/finalizer148 checkpoints PASS. Client38 controls/two suites PASS after
+19 causal failures, original18 controls untouched. Pinned Deno codec check/lint0
+PASS. Entire original source inverse outside five purpose-specific fragments,
+OID/ABI/ACL/config, unrelated function identities and original writers retained.
+Controlled surrounding Auth/schema ports are explicit: these are isolated native
+SQL/protocol proofs, NOT full-schema/hosted/customer or actual scan acceptance.
+All task-owned clusters/databases were removed after each run.
+
+Earlier fixture failures (missing current original getter, dropped query params,
+Windows transport line endings and missing exported SQL delimiter) remain
+INVALID proof setup, never a product PASS. Native constraints were retained;
+state negatives use complete valid tuples. Purpose-specific nested checks keep
+legacy callers independent of manual-only fixture helpers. Required exact-head
+review/CI/normal migration Preview/merge/deployment/readback remain owed.
+
+Functional LOCAL foundation; Visual N/A (no newly active UI/entry and incumbent
+response shape preserved); Experiential INCOMPLETE; Founder NOT_ACCEPTED.
+systems.check stays UNREGISTERED/UNAVAILABLE; no request, dispatch, scan, worker,
+provider, approval, execution or capability activation. Root/risk/registry/C0b and
+domain writers stay untouched. Existing manual consumerd770 remains separately
+preserved/local/unpushed; connect through the original governed source after this
+foundation legitimately releases, with actual actor/intent/Work/receipt recovery.
+No new observer engine, state/metric store, ledger, queue, scheduler or account.
+Original9PASS0FAIL/12PASS0FAIL4BLOCKED/monthlyUNKNOWNUNRETRIED and ALG/CAP maturity
+unchanged. Explicit ordinary-owner Edge receiving and Finance Overview+six subpages/
+roles/cohorts/reload/nativezoom/full AT/Chat-Live/full19/nine acceptance remain owed.
+
 ### October27 08:00UTC — EXP02 original report status source released
 
 The earlier local/held report records are historical. #2973 merged6c448b6c5f5b536d6793dc11d0663ecb26906000,

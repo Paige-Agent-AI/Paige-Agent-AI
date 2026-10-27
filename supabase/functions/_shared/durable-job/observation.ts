@@ -16,13 +16,21 @@ export async function readDurableObservation(reference:DurableObservationReferen
   const r={...read.data} as Record<string,unknown>;
   const after=await caller.auth.getUser(); const current=await caller.rpc('current_user_tenant_id');
   if(after.error||current.error||after.data.user?.id!==auth.data.user!.id||current.data!==tenant.data||r.actorId!==auth.data.user!.id||r.tenantId!==tenant.data||r.workId!==pin.workId||r.threadId!==pin.threadId||r.intentId!==pin.intentId||!uuid(r.workIntentId)||!['claimed','blocked','succeeded','failed','cancelled','expired','outcome_unknown'].includes(String(r.state))||!Number.isSafeInteger(r.version)||typeof r.artifactVerified!=='boolean'||(r.version as number)<1||!['observed','reconciliation_required','terminal_unverified'].includes(String(r.recoveryState))||(r.artifactVerified===true&&(!uuid(r.artifactRef)||r.state!=='succeeded')))return null;
-  const keys=['actorId','tenantId','workId','threadId','intentId','workIntentId','state','version','recoveryState','artifactVerified','artifactRef'];
+  const manual=r.observationKind==='systems_check';
+  if(r.observationKind!==undefined&&!manual)return null;
+  // An original run receipt is never a Document/Research artifact or execution
+  // eligibility. The native observer owns its exact Work/run/Rail association.
+  if(manual&&(r.artifactVerified!==false||r.artifactRef!==null||typeof r.receiptVerified!=='boolean'
+    ||(r.receiptVerified===true&&(r.state!=='succeeded'||r.recoveryState!=='observed'||!uuid(r.receiptRef)))
+    ||(r.receiptVerified===false&&(r.receiptRef!==null||(r.state==='succeeded'&&r.recoveryState!=='terminal_unverified')))))return null;
+  const keys=['actorId','tenantId','workId','threadId','intentId','workIntentId','state','version','recoveryState','artifactVerified','artifactRef','observationKind','receiptVerified','receiptRef'];
   const snapshot=JSON.stringify(keys.map(k=>r[k]??null));
   const final=await caller.rpc('read_paige_durable_observation',{_thread:pin.threadId,_intent:pin.intentId,_work:pin.workId});
   if(final.error||!final.data||typeof final.data!=='object'||Array.isArray(final.data))return null;
   const fresh=final.data as Record<string,unknown>;
   if(JSON.stringify(keys.map(k=>fresh[k]??null))!==snapshot)return null;
   // Closed projection; raw payloads and forged future execution fields never escape.
-  return {workId:pin.workId,threadId:pin.threadId,intentId:pin.intentId,workIntentId:r.workIntentId,state:r.state as string,version:r.version as number,recoveryState:r.recoveryState as string,approvalState:'unavailable' as const,cancelled:r.state==='cancelled',artifactVerified:r.artifactVerified,artifactRef:r.artifactVerified&&uuid(r.artifactRef)?r.artifactRef:null};
+  return {workId:pin.workId,threadId:pin.threadId,intentId:pin.intentId,workIntentId:r.workIntentId,state:r.state as string,version:r.version as number,recoveryState:r.recoveryState as string,approvalState:'unavailable' as const,cancelled:r.state==='cancelled',artifactVerified:r.artifactVerified,artifactRef:r.artifactVerified&&uuid(r.artifactRef)?r.artifactRef:null,
+    ...(manual?{observationKind:'systems_check' as const,receiptVerified:r.receiptVerified as boolean,receiptRef:r.receiptVerified===true&&uuid(r.receiptRef)?r.receiptRef:null}:{})};
  }catch{return null;}
 }

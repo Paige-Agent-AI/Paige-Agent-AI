@@ -428,6 +428,7 @@ button.th-ag-re:hover{color:var(--pg-muted);text-decoration:underline;text-under
 /* Couldn't answer: a warning mark and words, with Ask again. Never agent colour. */
 .th-ag-fail,.th-stream-content > .th-ag-fail{display:flex;flex-direction:row;flex-wrap:wrap;align-items:center;gap:8px;margin-top:6px;color:var(--pg-ink-2);font-size:12px}
 .th-hub .th-ag-fail svg{width:14px;height:14px;color:var(--pg-warning)}
+.th-hub .th-ag-fail--pending svg{color:var(--pg-muted)}
 .th-ag-fail .th-btn{min-height:40px}
 
 /* The private-part note: the agent speaking, so it wears a faint wash of its tint. */
@@ -453,6 +454,10 @@ button.th-ag-re:hover{color:var(--pg-muted);text-decoration:underline;text-under
 .th-conv-name--agent{flex:none;max-width:60%}
 .th-conv-role{flex:1;min-width:0;color:var(--pg-faint);font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .th-conv-item--agent[aria-current="page"]{background:color-mix(in srgb,var(--agc-tint) 55%,var(--pg-surface));border-color:color-mix(in srgb,var(--agc-ring) 45%,var(--pg-line))}
+/* The list body keeps a stable scrollbar gutter (15px where scrollbars take space), so an agent row is
+   15px narrower than the prototype's; a tighter gap and right edge give it back, and each role truncates
+   no earlier than prototype frame c05 (1024, 211px column). Measured, not eyeballed. */
+.th-hub .th-conv-item--agent{gap:5px;padding-right:2px}
 /* The name stays neutral (ink, bold when unread, as every row): the plate carries the agent's colour. */
 .th-conv-item--agent .th-conv-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .th-option[data-ag][aria-selected="true"]{background:color-mix(in srgb,var(--agc-tint) 55%,var(--pg-surface))}

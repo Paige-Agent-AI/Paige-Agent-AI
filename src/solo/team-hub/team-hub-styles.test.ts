@@ -128,4 +128,10 @@ describe("Team Hub stylesheet: agents (A1b, approved v5 colour rules)", () => {
     expect(css).toContain("@media (prefers-reduced-motion:no-preference){.th-ag-dots i{animation:th-dot 1.1s ease-in-out infinite}");
     expect(rule(".th-ag-dots i")).not.toContain("animation");
   });
+  it("gives an agent row back the scrollbar gutter's width (roles truncate no earlier than prototype c05), and marks an unknown turn state neutrally", () => {
+    // Measured in the rendered harness at 1024: with 9px gaps every role but two truncated earlier than c05.
+    expect(rule(".th-hub .th-conv-item--agent")).toBe("gap:5px;padding-right:2px");
+    expect(rule(".th-hub .th-ag-fail svg")).toContain("color:var(--pg-warning)");
+    expect(rule(".th-hub .th-ag-fail--pending svg")).toBe("color:var(--pg-muted)");
+  });
 });

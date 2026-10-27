@@ -735,7 +735,9 @@
   "viewport": "1024x768",
   "paige": "closed",
   "theme": "dark",
-  "errors": [],
+  "errors": [
+   "Failed to load resource: the server responded with a status of 404 (File not found)"
+  ],
   "docOverflowX": false,
   "hubOverflowX": false,
   "listOverflowX": false,
@@ -2217,7 +2219,9 @@
   "viewport": "1366x768",
   "paige": "closed",
   "theme": "dark",
-  "errors": [],
+  "errors": [
+   "Failed to load resource: the server responded with a status of 404 (File not found)"
+  ],
   "docOverflowX": false,
   "hubOverflowX": false,
   "listOverflowX": false,

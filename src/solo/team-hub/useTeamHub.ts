@@ -1056,6 +1056,13 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
     });
   }, [call]);
 
+  /**
+   * Check again for a state this screen could not know ("may still be replying", "may still be writing
+   * your private answer"): re-read that question's turn state and nothing else. It never starts a model
+   * turn; once the read says the turn ended, the line offers Ask again, and only that asks.
+   */
+  const checkTurn = useCallback((request: AgentTurnRequest) => readTurnStates(request.conversationId, [request.sourceMessageId]), [readTurnStates]);
+
   // Read the states when the open conversation or thread opens, when its questions change, and on the
   // hub's own focus / reconnect / 15 s ticks. Nothing here polls on its own.
   const agentDmIds = useMemo(() => new Set((overview?.agent_dms ?? []).map((dm) => dm.id)), [overview]);
@@ -1219,6 +1226,7 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
     turnStates,
     askAgent,
     askAgain,
+    checkTurn,
     openAgentDm,
   };
 }

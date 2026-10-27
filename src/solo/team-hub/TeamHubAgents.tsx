@@ -9,7 +9,7 @@
  * Status marks keep the system colours.
  */
 import type { ReactNode, RefObject } from "react";
-import { Cog, ExternalLink, GraduationCap, HeartHandshake, Lock, Megaphone, MessageSquare, ShieldCheck, Target, TriangleAlert, X } from "lucide-react";
+import { Clock, Cog, ExternalLink, GraduationCap, HeartHandshake, Lock, Megaphone, MessageSquare, ShieldCheck, Target, TriangleAlert, X } from "lucide-react";
 import type { TeamHubAgentKey } from "./team-hub-contract";
 import { agentName, FIXED_PRIVATE_LINE, TEAM_HUB_AGENT_PROFILES } from "./team-hub-agents";
 
@@ -48,9 +48,13 @@ export function AgentTyping({ agent, label }: { agent: TeamHubAgentKey; label?: 
   </div>;
 }
 
-/** The asker's line when a turn ended without a reply, with Ask again or Check again where they help. */
-export function AgentFailRow({ text, action, onAction, online }: { text: string; action: "ask_again" | "check_again" | null; onAction: () => void; online: boolean }) {
-  return <div className="th-ag-fail"><TriangleAlert aria-hidden="true" /><span>{text}</span>
+/**
+ * The asker's line when a turn ended without a reply, with Ask again or Check again where they help.
+ * `pending` is a state nobody can know yet ("may still be replying"): not a failure, so its mark is a
+ * neutral clock, never the warning triangle.
+ */
+export function AgentFailRow({ text, action, onAction, online, pending = false }: { text: string; action: "ask_again" | "check_again" | null; onAction: () => void; online: boolean; pending?: boolean }) {
+  return <div className={`th-ag-fail${pending ? " th-ag-fail--pending" : ""}`}>{pending ? <Clock aria-hidden="true" /> : <TriangleAlert aria-hidden="true" />}<span>{text}</span>
     {action && <button type="button" className="th-btn" disabled={!online} onClick={onAction}>{action === "check_again" ? "Check again" : "Ask again"}</button>}
   </div>;
 }
@@ -58,11 +62,11 @@ export function AgentFailRow({ text, action, onAction, online }: { text: string;
 /**
  * Flow 5, the asker's note under the channel reply: the DM turn writing, the answer in the DM, or the
  * DM turn failed with Ask again. After a reload whose turn state could not be read it says only that
- * the answer may still be coming, with Check again (the same request: it reads back, or runs once).
+ * the answer may still be coming, with Check again, which re-reads the state and never starts a turn.
  * It carries no link to the DM message, so no private text flows back.
  */
-export function PrivateNote({ agent, status, onOpenDm, onAskAgain, online }: {
-  agent: TeamHubAgentKey; status: "writing" | "posted" | "failed" | "unknown"; onOpenDm: () => void; onAskAgain: () => void; online: boolean;
+export function PrivateNote({ agent, status, onOpenDm, onAskAgain, onCheck, online }: {
+  agent: TeamHubAgentKey; status: "writing" | "posted" | "failed" | "unknown"; onOpenDm: () => void; onAskAgain: () => void; onCheck: () => void; online: boolean;
 }) {
   const name = agentName(agent);
   if (status === "failed" || status === "unknown") {
@@ -70,7 +74,7 @@ export function PrivateNote({ agent, status, onOpenDm, onAskAgain, online }: {
     return <div className={`th-ag-priv${status === "failed" ? " th-ag-priv--failed" : ""}`} data-ag={agent}>
       {status === "failed" ? <TriangleAlert aria-hidden="true" /> : <Lock aria-hidden="true" />}
       <span>{status === "failed" ? `${name} couldn't finish your private answer.` : `${name} may still be writing your private answer.`}</span>
-      <button type="button" className="th-btn" disabled={!online} onClick={onAskAgain}>{status === "failed" ? "Ask again" : "Check again"}</button></div>;
+      <button type="button" className="th-btn" disabled={!online} onClick={status === "failed" ? onAskAgain : onCheck}>{status === "failed" ? "Ask again" : "Check again"}</button></div>;
   }
   return <div className="th-ag-priv" data-ag={agent}><Lock aria-hidden="true" />
     <span>{status === "writing" ? `${name} is writing your answer in your DM. Only you can see it.` : `Your answer is in your DM with ${name}. Only you can see it.`}</span>

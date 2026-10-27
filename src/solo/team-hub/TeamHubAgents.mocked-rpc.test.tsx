@@ -371,12 +371,48 @@ describe("after a reload: the turn's true state, never a failure for a turn that
     expect(host.textContent).not.toContain("didn't reply");
   });
 
-  it("a question asked moments ago with no turn yet (another tab is starting it) says only that it may still be coming, with Check again", async () => {
+  it("a question asked moments ago with no turn yet (another tab is starting it) says only that it may still be coming, with Check again and a neutral mark", async () => {
     db.messages["c-launch"] = [mine({ created_at: new Date(Date.now() - 20_000).toISOString() })];
     const host = await mount();
-    expect(rowOf(host, "m-mine")!.querySelector(".th-ag-fail")!.textContent).toBe("MENTOR may still be replying.Check again");
-    answers.push(posted(reply("mentor", "m-mine", "Paid, with a free first session.")));
+    const line = rowOf(host, "m-mine")!.querySelector(".th-ag-fail")!;
+    expect(line.textContent).toBe("MENTOR may still be replying.Check again");
+    // Not a failure: a neutral clock, never the warning triangle.
+    expect(line.classList.contains("th-ag-fail--pending")).toBe(true);
+    expect(line.querySelector("svg.lucide-clock")).not.toBeNull();
+    expect(line.querySelector("svg.lucide-triangle-alert")).toBeNull();
+  });
+
+  it("Check again re-reads that question's turn state and never starts a turn: a turn still answering shows its writing row", async () => {
+    db.messages["c-launch"] = [mine({ created_at: new Date(Date.now() - 20_000).toISOString() })];
+    const host = await mount();
+    const readsBefore = calls.filter((call) => call.name === "team_hub_agent_turn_states").length;
+    // Another tab's turn is still running: the read says answering, so the writing row shows.
+    db.states = { "m-mine:mentor": { state: "answering" } };
     await click(button(rowOf(host, "m-mine")!, "Check again"));
+    await flush();
+    const reads = calls.filter((call) => call.name === "team_hub_agent_turn_states");
+    expect(reads.length).toBe(readsBefore + 1);
+    expect(reads.at(-1)!.params).toEqual({ p_expected_tenant: TENANT, p_channel_id: "c-launch", p_message_ids: ["m-mine"] });
+    expect(turns).toHaveLength(0);
+    expect(host.querySelector(".th-ag-typing")!.textContent).toBe("MENTOR is writing…");
+    expect(rowOf(host, "m-mine")!.querySelector(".th-ag-fail")).toBeNull();
+  });
+
+  it("Check again on an unknown state that the read then says failed shows didn't reply with Ask again, and starts no turn by itself", async () => {
+    db.messages["c-launch"] = [mine({ created_at: new Date(Date.now() - 20_000).toISOString() })];
+    db.override.team_hub_agent_turn_states = () => ({ ok: false, code: "invalid" });
+    const host = await mount();
+    expect(rowOf(host, "m-mine")!.querySelector(".th-ag-fail")!.textContent).toBe("MENTOR may still be replying.Check again");
+    delete db.override.team_hub_agent_turn_states;
+    db.states = { "m-mine:mentor": { state: "failed" } };
+    await click(button(rowOf(host, "m-mine")!, "Check again"));
+    await flush();
+    expect(turns).toHaveLength(0);
+    const line = rowOf(host, "m-mine")!.querySelector(".th-ag-fail")!;
+    expect(line.textContent).toBe("MENTOR didn't reply.Ask again");
+    expect(line.classList.contains("th-ag-fail--pending")).toBe(false);
+    answers.push(posted(reply("mentor", "m-mine", "Paid, with a free first session.")));
+    await click(button(rowOf(host, "m-mine")!, "Ask again"));
     expect(turnBody(0)).toEqual({ conversationId: "c-launch", sourceMessageId: "m-mine", threadRootId: null, agent: "mentor" });
     expect(host.textContent).toContain("Paid, with a free first session.");
   });
@@ -527,6 +563,22 @@ describe("flow 5: the private part, answered in the asker's DM", () => {
     expect(row.querySelector(".th-ag-priv--others")!.textContent).toBe(line);
     expect(button(row, /Open DM/)).toBeUndefined();
     expect(row.textContent).not.toContain("Ask again");
+  });
+
+  it("a private part whose state cannot be read says it may still be coming; Check again re-reads it and starts no turn", async () => {
+    db.messages["c-launch"] = [msg({ id: "m-ask", author_user_id: ME, body: "@MERIT what did Harper pay?", agent_mentions: ["merit"] }),
+      reply("merit", "m-ask", FIXED)];
+    db.override.team_hub_agent_turn_states = () => ({ ok: false, code: "invalid" });
+    const host = await mount();
+    const note = () => rowOf(host, "r-merit-m-ask")!.querySelector<HTMLElement>(".th-ag-priv")!;
+    expect(note().textContent).toContain("MERIT may still be writing your private answer.");
+    delete db.override.team_hub_agent_turn_states;
+    db.states = { "m-ask:merit": { state: "replied_privately", private_part: true } };
+    await click(button(note(), "Check again"));
+    await flush();
+    expect(turns).toHaveLength(0);
+    expect(calls.filter((call) => call.name === "team_hub_agent_turn_states").at(-1)!.params.p_message_ids).toEqual(["m-ask"]);
+    expect(note().textContent).toContain("Your answer is in your DM with MERIT. Only you can see it.");
   });
 
   it("after a reload the asker sees the private part's true state from the read", async () => {

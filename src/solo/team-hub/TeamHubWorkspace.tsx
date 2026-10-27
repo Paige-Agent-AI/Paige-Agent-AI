@@ -712,6 +712,7 @@ function ReadyHub({ hub, announce, announcement, onOpenTeamSettings, openPaige }
     onProfile: openProfile,
     onOpenDm: (agent) => void openAgent(agent),
     onAskAgain: (request) => void hub.askAgain(request),
+    onCheck: (request) => void hub.checkTurn(request),
     onBringIn: bringIn,
   };
 
@@ -1427,6 +1428,8 @@ type AgentView = {
   onProfile: (agent: TeamHubAgentKey, trigger: HTMLElement | null) => void;
   onOpenDm: (agent: TeamHubAgentKey) => void;
   onAskAgain: (request: AgentTurn["request"]) => void;
+  /** Check again for an unknown state: re-read the turn's state, never start a turn. */
+  onCheck: (request: AgentTurn["request"]) => void;
   onBringIn: (reply: TeamHubMessage, prefill: string, agent: TeamHubAgentKey) => void;
 };
 
@@ -1531,16 +1534,17 @@ function AskedAgentsStatus({ message, agent, place }: { message: TeamHubMessage;
     const turn = agent.turns[agentTurnKey(message.id, key)];
     if (place.around.some((other) => answers(other, message.id, key))) return [];
     const request = turn?.request ?? { conversationId: place.conversationId, sourceMessageId: message.id, threadRootId: message.parent_message_id, agent: key };
-    if (turn?.status === "failed" && turn.outcome) return [{ key, request, ...agentOutcomeLine(turn.outcome, key) }];
+    if (turn?.status === "failed" && turn.outcome) return [{ key, request, unknown: false, ...agentOutcomeLine(turn.outcome, key) }];
     if (turn) return [];
     // No turn in this tab (a reload, or another tab asked): what the server knows, and only that.
     // A turn that may still be running is never called a failure.
     const outcome = serverQuestionOutcome(agent.states[place.conversationId], message, key);
-    return outcome ? [{ key, request, ...agentOutcomeLine(outcome, key) }] : [];
+    return outcome ? [{ key, request, unknown: outcome === "unknown", ...agentOutcomeLine(outcome, key) }] : [];
   });
   if (!lines.length) return null;
-  return <>{lines.map((line) => <AgentFailRow key={line.key} text={line.text} action={line.action} online={agent.online}
-    onAction={() => agent.onAskAgain(line.request)} />)}</>;
+  // A state nobody can know yet is not a failure: a neutral mark, and Check again only re-reads it.
+  return <>{lines.map((line) => <AgentFailRow key={line.key} text={line.text} action={line.action} online={agent.online} pending={line.unknown}
+    onAction={() => (line.unknown ? agent.onCheck : agent.onAskAgain)(line.request)} />)}</>;
 }
 
 function AgentMessageRow({ message, agentKey, people, meId, onOpenThread, agent, place }: {
@@ -1595,7 +1599,8 @@ function AgentMessageRow({ message, agentKey, people, meId, onOpenThread, agent,
       {privatePart && isAsker && privateStatus && agent && message.asked_in_message_id && <PrivateNote agent={agentKey} status={privateStatus} online={agent.online}
         onOpenDm={() => agent.onOpenDm(agentKey)}
         onAskAgain={() => agent.onAskAgain(turn?.request
-          ?? { conversationId: place?.conversationId ?? "", sourceMessageId: message.asked_in_message_id!, threadRootId: message.parent_message_id, agent: agentKey, privateFollowUp: true })} />}
+          ?? { conversationId: place?.conversationId ?? "", sourceMessageId: message.asked_in_message_id!, threadRootId: message.parent_message_id, agent: agentKey, privateFollowUp: true })}
+        onCheck={() => agent.onCheck({ conversationId: place?.conversationId ?? "", sourceMessageId: message.asked_in_message_id!, threadRootId: message.parent_message_id, agent: agentKey })} />}
       {othersLine && <PrivateOthersNote agent={agentKey} askerName={askerShort} state={othersLine} />}
       {message.files.length > 0 && <MessageFiles files={message.files} />}
       {bring.length > 0 && agent && <BringInRow agents={bring.map((item) => item.agent)} askerName={askerShort} isAsker={isAsker}

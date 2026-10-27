@@ -25,7 +25,7 @@ MUST_PRESERVE: the publish door's sole authority over going live; the panel's ex
 ACCEPTANCE_CRITERIA: an owner who wants their own address gets the truthful current state, the exact records involved, where to change them for their actual provider, the guarantee that mail and authority records stay untouched, and an owner-gated host path with honest costs — while nothing about reading it changes DNS, billing, or what visitors see.
 MOTION_PURPOSE: NONE: no motion added.
 PROTECTED_SEAMS: NONE_AFFECTED: no authority, write, provider, or isolation surface touched. Not affected: tenant isolation, auth, entitlements, approvals (publish door untouched — static test re-pins no-RPC), Spine, canonical writes, Rail, chat transcript, Live, Vault, connections, jobs, shell geometry, accessibility, privacy (the card adds NO data flow — it renders constants plus optional observations never sourced from network).
-INTERNAL_BUILD_IDENTITY: PENDING-CODE-COMMIT; deployment=vercel-preview-of-PR; environment=preview; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=this record + assets/exp06-domain-guidance/
+INTERNAL_BUILD_IDENTITY: 7db09637d104a8d3cde4fa8402f7548df3572b7c; deployment=vercel-preview-of-PR; environment=preview; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=this record + assets/exp06-domain-guidance/
 RELEASE_CHANNEL: preview: ordinary PR preview of the Solo shell; no staged rollout, no external eligibility.
 RELEASE_CLASSIFICATION: internal-only: domain-guidance capability increment within EXP06; not a customer release event.
 CUSTOMER_RELEASE_IDENTITY: none: coherent owner-visible EXP06 evaluation has not occurred.

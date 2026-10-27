@@ -323,11 +323,16 @@ function refusalCopy(code: string, ctx: DoorCopyContext, settle: boolean): DoorV
 /**
  * How long this check holds, as a duration counted from when the answer arrived (`receivedMs`). The
  * door's `expires_at` is on the SERVER's clock; comparing it with this browser's clock would make a
- * live check look expired whenever the two disagree. With the server's own Date the lifetime is exact;
+ * live check look expired whenever the two disagree. The door's `expires_in_ms` (its own count) is exact;
+ * failing that, with the server's own Date the lifetime is exact;
  * without it (a cross-origin answer hides that header), it is what the browser can see, bounded by the
  * door's ten minutes — never negative. The server re-checks the fingerprint on confirm either way.
  */
-function checkDeadline(expiresAt: number, receivedMs: number, serverNowMs: number | null | undefined): number | null {
+function checkDeadline(expiresAt: number, receivedMs: number, serverNowMs: number | null | undefined, expiresInMs?: unknown): number | null {
+  // The door's own count (`expires_in_ms`, by the server's clock) is exact; trust it first.
+  if (typeof expiresInMs === "number" && Number.isFinite(expiresInMs)) {
+    return expiresInMs <= 0 ? null : receivedMs + Math.min(expiresInMs, CHECK_LIFETIME_MAX_MS);
+  }
   const remaining = typeof serverNowMs === "number" ? expiresAt - serverNowMs : expiresAt - receivedMs;
   if (typeof serverNowMs === "number" && remaining <= 0) return null;
   const bounded = remaining <= 0 || remaining > CHECK_LIFETIME_MAX_MS ? CHECK_LIFETIME_MAX_MS : remaining;
@@ -340,7 +345,7 @@ function readyCheck(b: Record<string, unknown>, request: GovernedReplyRequest, n
   if (typeof b.fingerprint !== "string" || !FINGERPRINT.test(b.fingerprint)) return null;
   const expiresAt = typeof b.expires_at === "string" ? Date.parse(b.expires_at) : NaN;
   if (!Number.isFinite(expiresAt)) return null;
-  const deadlineMs = checkDeadline(expiresAt, nowMs, serverNowMs);
+  const deadlineMs = checkDeadline(expiresAt, nowMs, serverNowMs, b.expires_in_ms);
   if (deadlineMs === null) return null;
   const preview = parseConfirmPreview(b.preview);
   if (!preview || preview.subject !== request.command.subject || preview.body_text !== request.command.body) return null;

@@ -68,6 +68,13 @@ describe("a check's lifetime never trusts the browser clock against the server's
     const v = classifyDoorAnswer(a, "check", request(), ctx, NOW);
     expect(v.kind === "ready" && v.check.deadlineMs).toBe(NOW + 9 * 60_000);
   });
+  it("the door's own expires_in_ms wins over every clock, and a spent one is no check", () => {
+    const skewed = ready({ expires_at: new Date(NOW - 60 * 60_000).toISOString(), expires_in_ms: 7 * 60_000 });
+    const v = classifyDoorAnswer(skewed, "check", request(), ctx, NOW);
+    expect(v.kind === "ready" && v.check.deadlineMs).toBe(NOW + 7 * 60_000);
+    const spent = classifyDoorAnswer(ready({ expires_in_ms: 0 }), "check", request(), ctx, NOW);
+    expect(spent.kind).not.toBe("ready");
+  });
   it("without one, a browser clock running ahead never makes a live check look expired (bounded by the door's 10 minutes)", () => {
     const ahead = classifyDoorAnswer(ready({ expires_at: new Date(NOW - 5 * 60_000).toISOString() }), "check", request(), ctx, NOW);
     expect(ahead.kind === "ready" && ahead.check.deadlineMs).toBe(NOW + 10 * 60_000);

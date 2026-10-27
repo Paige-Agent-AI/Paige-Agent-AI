@@ -1060,7 +1060,16 @@ const SOURCES = {
   // (outcome_unknown + unconfirmed, no provider call) after the §9 tenant gate and before the provider floor;
   // the message read adds the `error` column. No authority, recipient, tenant gate, H2 SendGrid-connector
   // refusal or dispatch branch changed. Prior e6fc6c24… reproduced from 0999a6a3 before renewing.
-  "supabase/functions/send-message/index.ts": "e1c22250edaa73de87a979a4642298e785f71a08c88b405d27a6427905683872",
+  // EXP03 O12 piece 1 renewal (2026-10-27), PR #2997, reviewed by two independent §39 adversarial reviews
+  // (round 1 + round 2, both on the real diff): send-message/index.ts changes in four places. (1) The door
+  // path accepts the internal comms_email_scheduled_release flag only with comms_email_operation_id, never with
+  // a reconcile, and releases a bound 'queued' row only when binding.send_at is due (60 s drift tolerance; the
+  // database claim's not_before is the authority); a bound row with send_at is refused without the flag and the
+  // flag on an immediate binding is refused. (2) parseCommsEmailBinding parses an optional send_at. (3) The
+  // generic scheduled_binding block and terminalizeScheduledRelease's direct row writes are skipped for a bound
+  // row (it is closed through the finalizer). (4) Nothing else: no authority, verifier, recipient, tenant gate,
+  // provider arm or dispatch branch changed. Old e1c22250… reproduced from main 9e325d91 first.
+  "supabase/functions/send-message/index.ts": "fffd0a7faae3f0c6150784ddda33e280e2786d03e05bfd53d9a0d8aa5a0d5f51",
   "supabase/functions/_shared/paige-spine/contracts.ts": "2d771686d636c04d2e07d9b8c336e19cde246b9a303ddd034d7ae8500f7eefb4",
   // Operator retirement adds opt-in timeout/no-retry controls; ordinary callers retain
   // their existing behavior. Renewed non-author review and actual retry controls are
@@ -1203,7 +1212,11 @@ const SOURCES = {
   "supabase/functions/_shared/brand-tokens.ts": "225f25c0ed74155012b7959766adfe51d4fd8c8341ad7da57c26b650caad06ca",
   "supabase/functions/_shared/cheesy-tells.ts": "7710d88a2999f0ab23870ff22f9ce46999d35d598982ce7f517a7fea0f4fab9a",
   "supabase/functions/_shared/claude-models.ts": "026a3b83753bd302319a1f671cfb560bb788c96b4f27bc44222cd6650fcc34fd",
-  "supabase/functions/_shared/comms-email/contract.ts": "733eb988e3541ab06727888c70d04146b6d59321bcbef6583363e5da917121c2",
+  // EXP03 O12 piece 1 renewal (2026-10-27), PR #2997, same two §39 reviews: contract.ts ADDS
+  // parseCommsEmailSendAt (whole minute, 2 min–30 days at proposal, format-only at confirm) and
+  // COMMS_EMAIL_SCHEDULED_RELEASE_GRACE_MS. The command, its keys, commsEmailBodyHtml and the content digest
+  // are unchanged. Old 733eb988… reproduced from main 9e325d91 first.
+  "supabase/functions/_shared/comms-email/contract.ts": "3fc25e779d16073b317508ab77637ae00f8c1de48bb078909928aff37505ffc6",
   "supabase/functions/_shared/paige-turn/continuity.ts": "ca8c258d200a59a573a3c0cc2a3ad253cbed1239da24afdd1efc0fdbc90dec69",
   "supabase/functions/_shared/paige-turn/contract.ts": "317424344aeb669ef5885b36bbe61c66f94ad3fce994c966203cd6c8f42763f4"
 };

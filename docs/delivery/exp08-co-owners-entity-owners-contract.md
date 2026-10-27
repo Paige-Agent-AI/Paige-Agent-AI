@@ -1,6 +1,6 @@
 # EXP08 co-owners and entity owners: delivery contract
 
-Status: **CONTRACT, round 7 (2026-10-27): design APPROVED by the owner (§28 frozen), open questions §10.1, §10.2a, §10.11 and §10.13 owner-ruled (R12–R15); R16 (operator powers over Solo accounts kept as shipped) reverses B3, D-A, D-B. I1 built (branch `exp08-owners-i1`, migration `20271117020008`), round 2 review findings applied.** Round 5 text follows, amended only where those rulings change it; reversed text is kept struck through and marked (§58), never silently deleted. Grounded on **`origin/main` at `50468eec2`** (fetched
+Status: **CONTRACT, round 7 (2026-10-27): design APPROVED by the owner (§28 frozen), open questions §10.1, §10.2a, §10.11 and §10.13 owner-ruled (R12–R15); R16 (operator powers over Solo accounts kept as shipped) reverses B3, D-A, D-B. I1 built (branch `exp08-owners-i1`, migration `20271117020008`), round 2 and round 3 review findings applied.** Round 5 text follows, amended only where those rulings change it; reversed text is kept struck through and marked (§58), never silently deleted. Grounded on **`origin/main` at `50468eec2`** (fetched
 2026-10-26). **PR #2945 is merged, as squash `51ede67eb`, and applied on production:** the `db-live` tag, which
 `deploy-migrations.yml` moves only after a persisted apply (§32), points at `51ede67eb` (`git ls-remote origin
 refs/tags/db-live`, read 2026-10-26). Production itself was not queried in round 5. `supabase/migrations/20271116020008_exp08_co_owner_authority.sql` on `origin/main` is
@@ -399,7 +399,7 @@ another owner's access until it's back. Owners still run the business."* Members
 | Edit an owner's title or responsibilities when not the account holder or that owner (proposed) | *"Only the account holder or the owner themselves can edit an owner's details."* |
 | Owner invitation with Team conversations off | *"Owners always take part in team conversations."* |
 | A non-holder invites an address with a live owner invitation (Settings → Team) | *"There's already an owner invitation for this address. Only the account holder can change it."* |
-| … through `create_tenant_invite_token(kind 'team')` or a direct token INSERT, by anyone under a JWT (I1 round 2, S6) | *"There's already an owner invitation for this address. Only the account holder can change it, from Settings → Team."* |
+| … through `create_tenant_invite_token` or a direct token INSERT of any kind that seats a person (every kind but `consumer` and `agency_team`), by anyone under a JWT (I1 round 2, S6; round 3, S-A) | *"There's already an owner invitation for this address. Only the account holder can change it, from Settings → Team."* |
 | Owner chosen on the Agency Team screen on an agency (enterprise) account (`create_tenant_invite_token`) | *"Agency accounts add Admins and Members. An owner is added by the account holder of a business account, from its Settings → Team."* (*"Enterprise accounts …"*) |
 | … while working inside a sub-account, or `create_tenant_invite_token(owner)` on any other account | *"Owners are added only by this business's account holder, from Settings → Team. You can invite an Admin or Member here."* |
 | … in a platform company workspace | *"Owner invitations aren't available for this account."* |
@@ -514,10 +514,23 @@ Migrations `20271117020008_exp08_owner_invitations.sql` (I1; the contract first 
   - Also closes the pre-existing forged-`created_by` `subaccount_owner` insert feeding
     `accept_tenant_invite`'s minter check (`20271115040008:1520-1522`).
   - **I1 round 2 (S6): the address of a live owner invitation is the account holder's.** Under any JWT, postgres-owned
-    code included (so `create_tenant_invite_token(kind 'team')` too), no `kind = 'team'` token is inserted for an
-    address that has a live (unused, unrevoked, unexpired) owner invitation in the same business; HINT
-    `OWNER_INVITE_EXISTS_FOR_ADDRESS` (§4.10). The service role stays exempt. The holder's own Settings → Team
-    invitation withdraws the owner invitation before inserting, so it never trips this (case 1.44).
+    code included (so `create_tenant_invite_token` too), no token of a kind that seats a person in `tenant_members`
+    is inserted for an address that has a live (unused, unrevoked, unexpired) owner invitation in the same business;
+    HINT `OWNER_INVITE_EXISTS_FOR_ADDRESS` (§4.10). **Round 3 (S-A):** "a kind that seats a person" is every kind
+    but `consumer` (links a contact, no seat) and `agency_team` (an `agency_team_members` row): `team`
+    (`accept_solo_team_invite`, and `accept_tenant_invite`'s generic branch), `subaccount_owner`
+    (`accept_tenant_invite`'s owner-or-Admin path) and any other text (the column has no CHECK on `kind`, and the
+    generic branch seats it); round 2 checked `team` only. The address is compared `lower(btrim(...))` on both
+    sides. **Round 3 (S-C):** such an INSERT under a JWT must store its address trimmed and in lower case
+    (`INVITE_GUARD`), as both postgres-owned writers already do (production 2026-10-27: 0 tokens of any kind with an
+    untrimmed or mixed-case address); otherwise a padded member invitation, inserted before the owner invitation,
+    survives `create_solo_team_invite`'s withdraw (which matches `lower(email)` without trimming) and is accepted
+    first (accept trims), pre-empting the owner invitation (case 1.52 drives exactly that chain under the mutant).
+    The service role stays exempt. The holder's own Settings → Team invitation withdraws the owner invitation
+    before inserting, so it never trips this (case 1.44). **Not covered, stated:** an invitation of another
+    seat-creating kind that already existed BEFORE the owner invitation was created (for example a managing
+    agency's `subaccount_owner` invitation on a sub-account): the holder's create withdraws live `team`
+    invitations to that address only, as production does. Owed to I2/I3 if the owner wants it closed.
   - **DELETE of a non-owner token stays allowed** to tenant admins through the `FOR ALL` policy, **named, not
     changed:** that includes used tokens (it erases invitation history) and pending `subaccount_owner` and
     `agency_team` tokens (it withdraws an agency's or the platform's pending invitation). Every such DELETE only
@@ -578,7 +591,19 @@ Migrations `20271117020008_exp08_owner_invitations.sql` (I1; the contract first 
   invitation is refused. Audit records `business_owner_id`.
 - **I1 round 2:** the migration runs in one transaction (`SET LOCAL lock_timeout = '2s'`) behind an incumbent guard:
   md5(prosrc) of the 10 production functions it replaces must equal the bodies it was written against (re-read
-  2026-10-27), or it refuses (proof: each of the 10 drifted → refused).
+  2026-10-27), or it refuses (proof: each of the 10 drifted → refused). **The guard compares body text only**
+  (`prosrc`): a drifted signature default, owner, SECURITY DEFINER flag, `search_path`, volatility or ACL with an
+  unchanged body passes it. The proof checks those separately on the migrated functions; the guard does not.
+- **I1 round 3 (S-B):** `tenant_invite_tokens.business_owner_removed_at` (nullable). Deleting a legal owner revokes
+  **and marks** every invitation that names it, live or already withdrawn, before the FK nulls the link;
+  `resend_solo_team_invite` refuses a marked owner invitation (*"This owner invitation was for a legal owner that has
+  since been removed, so it can't be sent again. Send a new owner invitation instead."*, HINT
+  `OWNER_INVITE_RECORD_REMOVED`, 409 at `solo-team-invitations`), so it is never reissued as an owner invitation for
+  the person in their own right (cases 2.16, 2.17).
+- **I1 round 3 (S-D):** `accept_solo_team_invite` locks the tenant row and the sender's seat `FOR SHARE` before
+  re-checking `is_tenant_account_holder(created_by)`, so a concurrent billing suspension (which rewrites that seat)
+  or holder move waits for the acceptance. The proof asserts the two lock statements and their order on the body
+  (case 2.18, killed by removing either); **the race itself is not driven** (the proof is one session).
 - **`resend_solo_team_invite`**, **`revoke_`/`archive_solo_team_invite`**: owner tokens holder-only;
   resend repeats every check and the expired-token revoke (per record, any email).
 - Every holder-gated function in §5.3 and §5.4 picks its refusal from `_tenant_account_holder_state`
@@ -802,10 +827,12 @@ tenant the backfill leaves never-owned, with its creation date and member count,
 
 > **REVERSED 2026-10-27 by owner ruling R16 (§0): nothing in this section is built.** Platform super_admin and
 > platform_admin keep `revoke_platform_access`, `admin-delete-user`, archive, restore and delete on Solo accounts
-> exactly as shipped. The text below is kept, unchanged, as the record of what was proposed and withdrawn (§58); no
+> exactly as shipped. The text below is kept, struck through, as the record of what was proposed and withdrawn (§58); no
 > `_solo_owner_seats_blocking_removal` helper, no 409/503 bodies, no caller changes. What still holds from it: the
 > **today** descriptions of both functions, and the fact that `admin-delete-user`'s seat DELETEs fire the seat-ended
 > trigger (§5.4), so a removed representative leaves the legal owner's seat held.
+> The two **today** descriptions are left unstruck because they still describe production.
+
 **Today.** Both overloads, `(uuid, text)` at `20270511000000:56-92` and `(uuid)` at `:94-118`, are SECURITY
 DEFINER, gated `is_platform_admin() OR is_platform_owner()` (`:64`, `:101`), so `platform_admin` as well as
 super_admin; they protect only the `app_settings_owner` user (`:67-72`, `:104-109`) and run `DELETE FROM
@@ -815,15 +842,15 @@ tenant to `none` and opens recovery. The fix migration flags it as a follow-up (
 `authenticated` holds EXECUTE (per the generated schema, `docs/sprints/bootstrap-byo-schema.sql:22456,22459`; I2
 confirms on prod with `has_function_privilege`).
 
-**One predicate, one home.** New `_solo_owner_seats_blocking_removal(_user uuid) RETURNS TABLE (tenant_id uuid,
+~~**One predicate, one home.** New `_solo_owner_seats_blocking_removal(_user uuid) RETURNS TABLE (tenant_id uuid,
 tenant_name text)`, SECURITY DEFINER, `STABLE`, **EXECUTE for `service_role` only** (definer callers run as its
 owner). It returns every tenant where the user's `tenant_members` row has `is_owner = true` **and `status IN
 ('active','suspended')`**, the tenant passes `_solo_shell_tenant`, **and `tenants.archived_at IS NULL`** (D-B). So an
 owner seat on an archived account (archiving sets `status = 'archived'` and keeps `is_owner`,
 `20270602000203:193-194`), or an owner seat in any other status, never blocks: round 4's "in any status" would have
-locked an operator out of every former owner of an archived Solo account, because recovery refuses archived accounts.
+locked an operator out of every former owner of an archived Solo account, because recovery refuses archived accounts.~~
 
-**Gate, `revoke_platform_access`.** Both overloads re-emitted verbatim except one pre-write check after the existing
+~~**Gate, `revoke_platform_access`.** Both overloads re-emitted verbatim except one pre-write check after the existing
 ones: if `_solo_owner_seats_blocking_removal(_user_id)` returns a row, refuse with the authored operator message
 (§4.10), for **every** caller, super_admin included. Nothing is deleted. The only
 platform-side way to take an owner seat off a Solo business is `platform_owner_recovery('revoke_owner', …)`
@@ -832,51 +859,52 @@ seats are non-owner and `revoke_platform_access` proceeds as today. Recovery nev
 `revoke_platform_access`, so no flag or bypass is needed. Non-owner seats, and owner seats on Agency, Enterprise
 or company-workspace tenants, are unchanged. **Owner-visible consequence:** while a Solo business has a working
 or paused account holder, no operator can revoke the platform access of its account holder or of any co-owner;
-the holder removes co-owners, and the holder's own access can't be revoked this way at all (§10.10).
+the holder removes co-owners, and the holder's own access can't be revoked this way at all (§10.10).~~
 
-**§37 callers of `revoke_platform_access` (grepped at `8587262ea` in round 4, unchanged on `origin/main`, across `src`, `supabase/functions`, `scripts`, `.github`, `supabase/tests`,
-`docs`):**
-| Class | Caller | Effect |
+~~**§37 callers of `revoke_platform_access` (grepped at `8587262ea` in round 4, unchanged on `origin/main`, across `src`, `supabase/functions`, `scripts`, `.github`, `supabase/tests`,
+`docs`):**~~
+| ~~Class~~ | ~~Caller~~ | ~~Effect~~ |
 |---|---|---|
-| Browser | `src/components/team/MembersRolesPanel.tsx:236` (one-argument overload; the error is shown as `toast.error(error.message)`, `:237`, so the operator reads the authored message), from the row menu "Revoke platform access" (`:484`) and dialog (`:563-576`) | Refused for Solo owners. **Reachability (§71):** `MembersRolesPanel` is imported only by `src/pages/admin/TeamHub.tsx:36,99`, and no route or component imports `src/pages/admin/TeamHub.tsx` (only `src/lib/auth/titleRoleRetiredFromClientScreens.test.ts:19` names it); import graph only, no built bundle was checked |
-| Direct RPC | Any `platform_admin` or super_admin JWT | Refused for Solo owners |
-| Manual proof script | `docs/security/move2_stage1_isolation_proof.sql:49,81` | Its victim must not hold a Solo owner seat, or the positive control now refuses |
-| Types | `src/integrations/supabase/types.ts:22042` | Unchanged signature |
-| Edge, scripts, CI, pgTAP | None found | New case 16 |
+| ~~Browser~~ | ~~`src/components/team/MembersRolesPanel.tsx:236` (one-argument overload; the error is shown as `toast.error(error.message)`, `:237`, so the operator reads the authored message), from the row menu "Revoke platform access" (`:484`) and dialog (`:563-576`)~~ | ~~Refused for Solo owners. **Reachability (§71):** `MembersRolesPanel` is imported only by `src/pages/admin/TeamHub.tsx:36,99`, and no route or component imports `src/pages/admin/TeamHub.tsx` (only `src/lib/auth/titleRoleRetiredFromClientScreens.test.ts:19` names it); import graph only, no built bundle was checked~~ |
+| ~~Direct RPC~~ | ~~Any `platform_admin` or super_admin JWT~~ | ~~Refused for Solo owners~~ |
+| ~~Manual proof script~~ | ~~`docs/security/move2_stage1_isolation_proof.sql:49,81`~~ | ~~Its victim must not hold a Solo owner seat, or the positive control now refuses~~ |
+| ~~Types~~ | ~~`src/integrations/supabase/types.ts:22042`~~ | ~~Unchanged signature~~ |
+| ~~Edge, scripts, CI, pgTAP~~ | ~~None found~~ | ~~New case 16~~ |
 
-**Gate, `admin-delete-user` (D-A).** Today the function admits the Platform Operator (super_admin or
+~~**Gate, `admin-delete-user` (D-A).**~~ Today the function admits the Platform Operator (super_admin or
 platform_admin) from the verified JWT (`requireOperator`, `supabase/functions/admin-delete-user/index.ts:18-21`), refuses
 self-deletion (`:30`), a platform_admin deleting a super_admin (`:32-46`) and the `app_settings_owner` user
 (`:48-61`), then deletes the user's per-user rows, **`tenant_members` included** (`:86-98`, `:110-112`), and the
-Auth user (`:120`). Change, and only this: after `:61` and **before the first write** (the unlink at `:75-77`), call
-`admin.rpc("_solo_owner_seats_blocking_removal", { _user: user_id })` through the service-role client (`admin`):
-- RPC error → **HTTP 503** `{ error: "Couldn't check whether this person owns a Solo business, so nothing was deleted. Try again.", code: "OWNER_SEAT_CHECK_FAILED" }`. Fail closed.
-- one or more rows → **HTTP 409** `{ error: <the §4.10 message>, code: "SOLO_OWNER_SEAT", tenants: [names] }`, the email
+Auth user (`:120`).
+~~Change, and only this: after `:61` and **before the first write** (the unlink at `:75-77`), call
+`admin.rpc("_solo_owner_seats_blocking_removal", { _user: user_id })` through the service-role client (`admin`):~~
+- ~~RPC error → **HTTP 503** `{ error: "Couldn't check whether this person owns a Solo business, so nothing was deleted. Try again.", code: "OWNER_SEAT_CHECK_FAILED" }`. Fail closed.~~
+- ~~one or more rows → **HTTP 409** `{ error: <the §4.10 message>, code: "SOLO_OWNER_SEAT", tenants: [names] }`, the email
   read with `admin.auth.admin.getUserById` (already called at `:56` when an owner row exists; read once). Nothing is
-  written: no unlink, no delete, no audit row.
-- no rows → exactly today's behaviour.
+  written: no unlink, no delete, no audit row.~~
+- ~~no rows → exactly today's behaviour.~~
 
-So **a working or paused account holder can never be deleted by an operator**: their own seat blocks it, and
+~~So **a working or paused account holder can never be deleted by an operator**: their own seat blocks it, and
 recovery's `revoke_owner` needs state `none`. A co-owner with an active or suspended seat can be deleted only after
 the account holder removes or demotes them, or, with no account holder, after recovery revokes the seat. **The last
 active owner of a holder-less business can't be deleted either**, because recovery's revoke keeps the floor: the
 operator grants another owner first. A **platform_admin** can never delete a Solo owner at all (recovery is
 super_admin only). Owner seats on Agency, Enterprise, company-workspace or archived tenants, and every non-owner seat,
 are unchanged. **Honest residual:** a user removed from Auth by any path other than this function (the Supabase
-dashboard, the Auth admin API directly) is not stopped; §5.4a then reads that tenant as `none`.
+dashboard, the Auth admin API directly) is not stopped; §5.4a then reads that tenant as `none`.~~
 
-**Response contract (§37 consumers).** A non-2xx reply reaches `supabase.functions.invoke` callers as a
+~~**Response contract (§37 consumers).** A non-2xx reply reaches `supabase.functions.invoke` callers as a
 `FunctionsHttpError` whose `message` is generic, so each caller reads the body from `error.context` (precedent
-`src/components/admin/contacts/BusinessVerificationCard.tsx:79-81`) and shows its `error`:
+`src/components/admin/contacts/BusinessVerificationCard.tsx:79-81`) and shows its `error`:~~
 
-| Class | Caller | Effect |
+| ~~Class~~ | ~~Caller~~ | ~~Effect~~ |
 |---|---|---|
-| Browser | `src/components/team/MembersRolesPanel.tsx:251-253` (shows `error.message`, then `data.error`) | Reads the 409/503 body; the authored message is shown, the dialog stays open, nothing is refreshed. **Reachability (§71):** imported only by `src/pages/admin/TeamHub.tsx`, which nothing imports; import graph only |
-| Browser | `src/pages/admin/ContactsAdmin.tsx:433-438` ("also delete platform account") | Same; the contact itself is **not** deleted when the account deletion is refused (today the contact row is removed only in the non-account branch, `:439-441`, so nothing else changes). **Reachability:** no route or component imports `ContactsAdmin.tsx` (named only by `src/lib/auth/titleRoleRetiredFromAssigneePickers.test.ts:15`); import graph only |
-| Browser | `src/components/dashboard/ClientManagementDashboard.tsx:347-357` (`toast.error(err.message)`) | Same. **Reachability:** no importer (named only by tests, e.g. `src/__tests__/portal-direct-invitation.test.ts:7`); import graph only |
-| Direct HTTP | Any super_admin or platform_admin JWT | Refused for Solo owners, with the body above |
-| Deno / Vitest | `supabase/functions/_shared/operatorAuth.test.ts:138,164-165` (reads the source), `src/__tests__/customer-private-chat-deletion.test.ts:5` (reads the source), `src/__tests__/security-data-adoption.test.tsx:66` | Source assertions unchanged in meaning; new case 17 |
-| Other seat deleters (swept on `origin/main`) | `supabase/functions/accept-invite/team-seat.ts:201` deletes only the admin/member seat it inserted moments earlier, when its own role write fails; `process-data-deletion` deletes no seat and no Auth user | Not affected |
+| ~~Browser~~ | ~~`src/components/team/MembersRolesPanel.tsx:251-253` (shows `error.message`, then `data.error`)~~ | ~~Reads the 409/503 body; the authored message is shown, the dialog stays open, nothing is refreshed. **Reachability (§71):** imported only by `src/pages/admin/TeamHub.tsx`, which nothing imports; import graph only~~ |
+| ~~Browser~~ | ~~`src/pages/admin/ContactsAdmin.tsx:433-438` ("also delete platform account")~~ | ~~Same; the contact itself is **not** deleted when the account deletion is refused (today the contact row is removed only in the non-account branch, `:439-441`, so nothing else changes). **Reachability:** no route or component imports `ContactsAdmin.tsx` (named only by `src/lib/auth/titleRoleRetiredFromAssigneePickers.test.ts:15`); import graph only~~ |
+| ~~Browser~~ | ~~`src/components/dashboard/ClientManagementDashboard.tsx:347-357` (`toast.error(err.message)`)~~ | ~~Same. **Reachability:** no importer (named only by tests, e.g. `src/__tests__/portal-direct-invitation.test.ts:7`); import graph only~~ |
+| ~~Direct HTTP~~ | ~~Any super_admin or platform_admin JWT~~ | ~~Refused for Solo owners, with the body above~~ |
+| ~~Deno / Vitest~~ | ~~`supabase/functions/_shared/operatorAuth.test.ts:138,164-165` (reads the source), `src/__tests__/customer-private-chat-deletion.test.ts:5` (reads the source), `src/__tests__/security-data-adoption.test.tsx:66`~~ | ~~Source assertions unchanged in meaning; new case 17~~ |
+| ~~Other seat deleters (swept on `origin/main`)~~ | ~~`supabase/functions/accept-invite/team-seat.ts:201` deletes only the admin/member seat it inserted moments earlier, when its own role write fails; `process-data-deletion` deletes no seat and no Auth user~~ | ~~Not affected~~ |
 
 ### 5.4d Holder-of-record restoration: the promotional grant and subscription provisioning (D-C, I2)
 **Classification (integrator D-C).** Two service-role functions outside the team flows seat an owner. They are allowed
@@ -1001,7 +1029,10 @@ disclosure in its own grid row under the holder's name line; Escape-dismissable,
 or focus arrives, kept open when its own text is tapped; instant under reduced motion));
 `team-workspace-contract.ts` (`canActOnOwner`, `canStepDown` = another active owner exists, refusal mappers); `src/agency/team.tsx:81`
 (**owner decision owed**: remove the Agency Team screen's Owner option, which never produced an owner; until then I1's
-tier-correct refusal is what that screen shows). `solo-team-invitations` already maps the owner refusals by HINT code
+tier-correct refusal is what that screen shows). **Recorded with that decision (pre-existing, not changed in I1):** the
+Agency Team screen creates its `kind = 'team'` tokens with **no email** (`useAgencyPeople.ts` passes none), and both
+team accept paths refuse a team invitation without an address (*"team invitation belongs to a different email
+address"*), so its Admin and Member invitations can never be accepted either. `solo-team-invitations` already maps the owner refusals by HINT code
 (I1 round 2, S5: `owner-refusals.ts`, 403 / 400 / 409, instead of a 500).
 
 ### 5.11 §37 producer and consumer inventory (proved per increment)
@@ -1009,7 +1040,7 @@ tier-correct refusal is what that screen shows). `solo-team-invitations` already
 |---|---|
 | Token guard | **browser** (authenticated, guarded): `WorkspaceSettingsPanel.tsx:90,189`, `ContactPortalPanel.tsx:109,209`, `PortalInvitationManager.tsx:36` (each sets only `revoked_at` NULL→now; an owner row is now refused, e.g. revoking an owner token from the legacy workspace panel). **Service role** (exempt by `auth.uid() IS NULL`): `send-portal-invite/index.ts:137,190,253`, **`agency-invite-member/index.ts:171-182`** (`kind='agency_team'`, `default_role='member'`, `agency_role` set, `created_by` = the caller; proven in I1). **Postgres-owned definer functions** (exempt by `current_user = 'postgres'`; I1 proves each one's `pg_proc.proowner` is `postgres`): `create_tenant_invite_token` INSERT (`20260824000000:100-106`); `create_solo_team_invite` (`20271115040008:1280,1287`); `resend_solo_team_invite` (`:1329`); `accept_solo_team_invite` (`:1389`); `accept_tenant_invite` uses (`:1504,1627`); `set_client_portal_access` revoke (`20271111010000:441`); `create_client_portal_invitation` stamps `portal_operation_id`, `portal_proposal_hash`, `portal_receipt_id` (`20271108233000:162`); the new `tenant_business_owners` BEFORE DELETE trigger (§5.1); `revoke_solo_team_invite` (`20261047000000:210`) and `archive_solo_team_invite` (`20261105000000:87`) |
 | CHECK `business_owner_id` null unless `is_owner` | every writer that clears `is_owner` must clear it in the same statement: `20260803190000`, `20260804020000`, `20261150000000`, `20271113630009`, `20271115040008`, `20271116020008` (re-emitted where needed; proven by case 7). **I1 re-emits none of them: DEFERRED to I2** (with `revoke_co_owner`). Interim: such a demotion fails closed on the CHECK, nothing changes (case 7.13); no seat that names a legal owner exists or can be created from a shipped surface before I3 |
-| Token guard, address of a live owner invitation (I1 round 2, S6) | producers of `kind = 'team'` tokens under a JWT: `create_tenant_invite_token` callers (`WorkspaceSettingsPanel.tsx`, `ContactPortalPanel.tsx`, `ClientManagementDashboard.tsx`, `ContactCardRail.tsx`, `ContactDetail.tsx`, `AgencyBoard.tsx`, `useAgencyPeople.ts`) and direct INSERTs; `create_solo_team_invite` (holder replace path withdraws first; non-holders already refused); service role exempt |
+| Token guard, address of a live owner invitation (I1 round 2, S6; round 3, S-A/S-C every seat-creating kind, normalised address) | producers of seat-creating tokens (every kind but `consumer`, `agency_team`) under a JWT; production's only postgres-owned token INSERTers are `create_solo_team_invite` and `create_tenant_invite_token` (pg_proc read 2026-10-27), both storing `lower(trim(email))`; no browser or edge code inserts tokens under a person's JWT: `create_tenant_invite_token` callers (`WorkspaceSettingsPanel.tsx`, `ContactPortalPanel.tsx`, `ClientManagementDashboard.tsx`, `ContactCardRail.tsx`, `ContactDetail.tsx`, `AgencyBoard.tsx`, `useAgencyPeople.ts`) and direct INSERTs; `create_solo_team_invite` (holder replace path withdraws first; non-holders already refused); service role exempt |
 | `solo-team-invitations` owner refusals by HINT (S5) | consumers: Settings → Team (`team-workspace.tsx` shows `error`), PAIGE team tools through the same edge; statuses 403/400/409 replace 500 for these refusals only |
 | `create_tenant_invite_token` Owner sentence per account type | consumer: Agency Team screen `doInvite` → `flash(r.error)` (shown verbatim); `operator_company_workspace_authority.sql` re-pinned |
 | `team_member_holdings` `billing_contacts` | `team-departure.tsx`, `team-workspace.tsx` tolerate the new key (Vitest) |
@@ -1151,7 +1182,7 @@ Billing (§5.8) · Spine (rename) · Chat (`paige-ai-chat`, `action-risk.ts`; la
 | Inc | Contents | Proof |
 |---|---|---|
 | I0 | **Merged and applied (`51ede67eb`).** `20271116020008` (PR #2945) is on `origin/main` as squash `51ede67eb`, byte-identical to `8587262ea`, and `db-live` = `51ede67eb` (read 2026-10-26) | Done for merge and apply. **Still owed, as I1's first production read (not run in round 5; no production query was made):** `is_tenant_account_holder` exists and `authenticated` cannot execute it, and md5(prosrc) of `grant_co_owner`, `revoke_co_owner` and `guard_tenant_owner_only_columns` equals the `51ede67eb` bodies |
-| I1 | `20271117020008` (was `20271116030008`, then `20271116110008`, then `20271116130008`; see §5): §5.1, §5.2, §5.3, `peek_tenant_invite`; round 2 (2026-10-27): one transaction + md5 incumbent guard on the 10 replaced bodies, no invitee `updated_by` stamp, the live-owner-invitation address rule (S6), the tier-correct `create_tenant_invite_token` Owner sentence, `solo-team-invitations` owner refusals by HINT (S5), peek only while valid | pgTAP cases 1, 2, 6, 7, 12, 13 failing first then mutants: **128 cases (31 kept, 34 production holes, 63 new); 52/52 mutants killed, 4/4 controls survive; incumbent guard refuses each of 10 drifted bodies**; Vitest for S5 (mutant-checked); §5.11 sweep incl. `proowner` of every postgres-owned token writer; pre-merge owner-token count (0 on 2026-10-27); `db-live`. **Deferred to I2, stated:** `tenants.first_owner_seated_at` (§5.1); re-emitting the CHECK writers that clear `is_owner` (§5.11; interim case 7.13). **Unchanged in I1, I2 scope:** a super admin can still seat the first owner of a holderless Solo standalone account through a `subaccount_owner` token, which skips R9's reason, recovery audit and notice (§5.4b gates it). **OWNER DECISION OWED: remove Agency Team's Owner option (I3) — it never produced an owner** |
+| I1 | `20271117020008` (was `20271116030008`, then `20271116110008`, then `20271116130008`; see §5): §5.1, §5.2, §5.3, `peek_tenant_invite`; round 2 (2026-10-27): one transaction + md5 incumbent guard on the 10 replaced bodies, no invitee `updated_by` stamp, the live-owner-invitation address rule (S6), the tier-correct `create_tenant_invite_token` Owner sentence, `solo-team-invitations` owner refusals by HINT (S5), peek only while valid; round 3 (2026-10-27): the address rule on every seat-creating kind (S-A) with normalised addresses (S-C), no resend after the legal owner is deleted (S-B), accept locks before the sender check (S-D), cases for V5/V15/V16/V21/V24 (S-E) | pgTAP cases 1, 2, 6, 7, 12, 13 failing first then mutants: **144 cases (34 kept, 41 production holes, 69 new); 68/68 mutants killed, 4/4 controls survive; incumbent guard refuses each of 10 drifted bodies**; Vitest for S5 (mutant-checked); §5.11 sweep incl. `proowner` of every postgres-owned token writer; pre-merge owner-token count (0 on 2026-10-27); `db-live`. **Deferred to I2, stated:** `tenants.first_owner_seated_at` (§5.1); re-emitting the CHECK writers that clear `is_owner` (§5.11; interim case 7.13). **Unchanged in I1, I2 scope:** a super admin can still seat the first owner of a holderless Solo standalone account through a `subaccount_owner` token, which skips R9's reason, recovery audit and notice (§5.4b gates it). **OWNER DECISION OWED: remove Agency Team's Owner option (I3) — it never produced an owner** |
 | I2 | `20271116040008`: §5.4, §5.4a, §5.4b, ~~§5.4c (database part)~~ (withdrawn, R16), §5.4d, §5.5–§5.8, Setup guards, the I1 deferrals (`first_owner_seated_at`; the CHECK writers) | cases 3, 4, 5, 8, 9, 10, 11, 14, 15, 18 (~~16, 17~~ withdrawn, R16); renamed-fact consumers; whole-suite baseline in a base worktree (§71.3); production reads: tenants by holder state, the `first_owner_seated_at` backfill result (§10.12), live platform-minted `subaccount_owner` tokens on owned Solo-shell tenants, and whether any billing-paused holder could reach the promotional grant (§5.4d); `db-live`. **Recorded, to lock in I2 (S4, not built in I1):** Setup's `save_solo_setup_context` can rename, delete (including by leaving the id out of the saved list) or reset the representative of a legal-owner record that has a pending owner invitation or a seat; I2 must refuse those with the §4.10 Setup sentence. **Also I2 scope:** the platform's `subaccount_owner` first-owner path on a holderless Solo standalone skips R9's reason and notice (§5.4b); and the inline record's `created_by`/`updated_by` FK on the account holder (§5.3) |
 | I3 | §5.10 (~~including `admin-delete-user` (§5.4c)~~ withdrawn, R16), and the Agency Team Owner option if the owner rules to remove it | Vitest; **rendered frames of every §4 screen, light and dark, 1366 and 390, shown to the owner before merge (§00)**; the prototype keyboard probe re-run against the built screens; `edge-live` |
 | I4 | §7 | chat tests, C0b, `edge-live` |
@@ -1162,8 +1193,9 @@ Each increment: spec-compliance review, then the adversarial peer-gate on the re
 ## 9. Not in this work
 Ownership transfer by the account holder; the holder's own seat representing an entity; PAIGE
 demote/remove/step-down/naming/records/recovery; entity signing (E04); Agency/Enterprise owner seats
-and recovery; ending a held seat (R11); stopping account deletion
-outside `admin-delete-user` (the Supabase dashboard, the Auth admin API directly; §5.4c residual); refusing the
+and recovery; ending a held seat (R11); stopping the deletion of an owner's account by any path
+(`admin-delete-user`, which operators keep as shipped under R16, the Supabase dashboard, the Auth admin API
+directly: none of them is gated by owner seats, §5.4c); refusing the
 promotional grant on archived accounts (named, §5.4d, §10.13); limiting the managing agency's owner path (kept as
 shipped, §10.9).
 

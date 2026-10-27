@@ -287,6 +287,9 @@ export function StudioSession({ tenantId, tenantSlug, sessionId, seedBrief, onNe
           <PublishPanel
             // A different piece is a different door preparation: never carry a fingerprint across.
             key={`${artifact.kind}:${artifactId(artifact)}`}
+            tenantSlug={tenantSlug}
+            tenantName={brand.name}
+            brandFloor={brand.floor}
             artifact={artifact}
             onNexusHandoff={onNexusHandoff}
             onClose={() => { setPublishOpen(false); publishBtnRef.current?.focus(); }}

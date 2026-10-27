@@ -773,7 +773,6 @@ All colors MUST be HSL.
     text-rendering: optimizeLegibility;
   }
   h1, h2, h3, .font-display {
-    /* impeccable-disable-next-line design-system-font -- pre-existing on main (the heading face predates DESIGN.md's Schibsted Grotesk), not introduced by EXP08 A1b; the detector scans the whole file because A1b adds agent tokens to it; tracked with the overused-font follow-up above */
     font-family: "Bricolage Grotesque", "Inter", system-ui, sans-serif;
     letter-spacing: -0.01em;
     /* Bricolage is a variable display face — let it tighten its own optical axis with size

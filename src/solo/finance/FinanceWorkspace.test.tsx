@@ -7,14 +7,20 @@ import { financeDebtReviewPrompt } from "./financeDebtSource";
 import { branchBySlug, subtabByKey } from "@/lib/routing/tierBranches";
 import { tenantShellDestinationsForPath } from "@/components/tenant-shell/tenantShellRoutes";
 import type { SalesMetricBundle } from "../sales/performance/types";
+import { financialPlayReview } from '@/test/fixtures/financial-play-review';
+import { TEST_REVIEW_TENANT } from '@/test/fixtures/business-review';
+const targetContext = vi.hoisted(() => ({ value: { activeUserId: 'test-owner',
+ activeTenantId: '10000000-0000-4000-8000-000000000001', loading: false, accountContextStatus: 'ready' } }));
+vi.mock('@/hooks/useTenantContext', () => ({ useOptionalTenantContext: () => targetContext.value }));
 const mocks = vi.hoisted(() => ({ phase: "ready", metricPhase: "ready", retry: vi.fn(), rows: [] as unknown[], metrics: [] as SalesMetricBundle[], identity: "A:0:0" }));
 const sourceRead = vi.hoisted(() => ({ value: { state: "loading" } as Record<string, unknown>, refresh: vi.fn(), read: vi.fn() }));
-vi.mock("../data/useBusinessReview", () => ({ useBusinessReview: (epoch: string | null | undefined) => { sourceRead.read(epoch); return { ...sourceRead.value, refresh: sourceRead.refresh }; } }));
+vi.mock("../data/useBusinessReview", () => ({ useBusinessReview: (epoch: string | null | undefined, period?: string, focused?: unknown) => { if (focused) sourceRead.read(epoch, period, focused); else sourceRead.read(epoch); return { ...sourceRead.value, refresh: sourceRead.refresh }; } }));
 vi.mock("../sales/performance/useSalesPerformanceMetrics", () => ({ useSalesPerformanceMetrics: () => ({ phase: mocks.metricPhase, metrics: mocks.metrics, retry: mocks.retry, unavailableKeys: {} }) }));
 vi.mock("./useFinanceInvoices", () => ({ useFinanceInvoices: () => ({ identity: mocks.identity, phase: mocks.phase, rows: mocks.rows, hasMore: false, readAt: null, retry: mocks.retry, loadMore: vi.fn() }) }));
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 let root: Root, host: HTMLDivElement;
 beforeEach(() => { mocks.phase = "ready"; mocks.metricPhase = "ready"; mocks.rows = []; mocks.metrics = []; mocks.identity = "A:0:0"; mocks.retry.mockReset(); sourceRead.value = { state: "loading" }; sourceRead.refresh.mockReset(); sourceRead.read.mockReset(); host = document.createElement("div"); document.body.append(host); root = createRoot(host); });
+beforeEach(() => { targetContext.value = { activeUserId: 'test-owner', activeTenantId: TEST_REVIEW_TENANT, loading: false, accountContextStatus: 'ready' }; });
 afterEach(() => { act(() => root.unmount()); host.remove(); });
 async function render(path = "/solo/123/finance/overview", epoch = "A") { await act(async () => root.render(<MemoryRouter initialEntries={[path]}><Routes><Route path="/solo/:account/*" element={<FinanceWorkspace epoch={epoch}/>}/></Routes></MemoryRouter>)); }
 const readySourceReview = () => ({ state: "ready", snapshot: { period: { timezone: "UTC" }, domains: { finance: { status: "available", data: { finance_evidence: {
@@ -27,6 +33,48 @@ const readySourceReview = () => ({ state: "ready", snapshot: { period: { timezon
   } } } } } });
 
 describe("Finance canonical destination", () => {
+ it('shows original financial Play evidence in Forecast without claiming a company budget or bank forecast', async () => {
+  sourceRead.value = { state: 'ready', snapshot: financialPlayReview() };
+  await render('/solo/123/finance/budgeting-forecasting', TEST_REVIEW_TENANT);
+  expect(host.textContent).toContain('Financial Play targets');
+  expect(host.textContent).toContain('USD 80.00');
+  expect(host.textContent).toContain('USD -20.00');
+  expect(host.querySelector('a[href*="?play="]')?.getAttribute('href')).toBe('/solo/123/command-center/business-game-plan?play=33333333-3333-4333-8333-333333333333');
+  expect(host.textContent).toContain('Verified bank balance needed');
+  expect(host.textContent).toContain('Durable budget and accounting sources needed');
+  expect(sourceRead.read).toHaveBeenLastCalledWith(TEST_REVIEW_TENANT, 'last_7_days', { focus: ['game_plan'], actorId: 'test-owner' });
+ });
+ it.each(['loading', 'unknown', 'tenant', 'actor'])('withholds the Forecast source until current %s context resolves', async kind => {
+  if (kind === 'loading') targetContext.value.loading = true;
+  if (kind === 'unknown') targetContext.value.accountContextStatus = 'unknown';
+  if (kind === 'tenant') targetContext.value.activeTenantId = 'other-tenant';
+  if (kind === 'actor') targetContext.value.activeUserId = '';
+  sourceRead.value = { state: 'ready', snapshot: financialPlayReview() };
+  await render('/solo/123/finance/budgeting-forecasting', TEST_REVIEW_TENANT);
+  expect(sourceRead.read.mock.calls.at(-1)?.[0]).toBeNull();
+  expect(host.textContent).not.toContain('Synthetic recorded-receipts target');
+ });
+ it('does not mount target details when the original Finance read authority refuses', async () => {
+  mocks.metricPhase = 'denied'; sourceRead.value = { state: 'ready', snapshot: financialPlayReview() };
+  await render('/solo/123/finance/budgeting-forecasting', TEST_REVIEW_TENANT);
+  expect(host.textContent).toContain('Financial access is restricted');
+  expect(host.querySelector('.finance-play-targets')).toBeNull(); expect(sourceRead.read.mock.calls.at(-1)?.[0]).toBeNull();
+ });
+ it('refreshes the same original focused review and prepares VERA context without copying target facts', async () => {
+  sourceRead.value = { state: 'ready', snapshot: financialPlayReview() };
+  await render('/solo/123/finance/budgeting-forecasting', TEST_REVIEW_TENANT);
+  await act(async () => [...host.querySelectorAll('button')].find(b => b.textContent === 'Refresh sources')!.click());
+  expect(sourceRead.refresh).toHaveBeenCalledOnce(); expect(mocks.retry).not.toHaveBeenCalled();
+  const prompts: string[] = []; const listener = (event: Event) => prompts.push((event as CustomEvent).detail.prompt);
+  window.addEventListener('paige:open', listener);
+  try {
+   await act(async () => (host.querySelector('.finance-primary') as HTMLButtonElement).click());
+   expect(prompts).toHaveLength(1); expect(prompts[0]).toContain('get_business_snapshot focused on game_plan');
+   expect(prompts[0]).toContain('original periods, currencies, coverage and actuals');
+   expect(prompts[0]).toContain('do not move money or edit books');
+   expect(prompts[0]).not.toContain('8000'); expect(prompts[0]).not.toContain('Synthetic recorded-receipts target');
+  } finally { window.removeEventListener('paige:open', listener); }
+ });
  it.each(["/solo/123/finance?from=menu#position", "/solo/456/finance/?from=menu#position"])("canonicalizes bare Finance entry %s to its Overview without a history detour", async path => {
   function LocationProbe() { const location = useLocation(), action = useNavigationType(); return <output aria-label="Current Finance address">{location.pathname}{location.search}{location.hash} {action}</output>; }
   await act(async () => root.render(<MemoryRouter initialEntries={[path]}><Routes><Route path="/solo/:account/*" element={<><FinanceWorkspace epoch="A"/><LocationProbe/></>}/></Routes></MemoryRouter>));

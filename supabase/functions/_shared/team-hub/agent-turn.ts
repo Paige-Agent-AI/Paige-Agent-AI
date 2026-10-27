@@ -149,6 +149,8 @@ export type AgentTurnResponse = {
   message?: Record<string, unknown>;
   conversation_id?: string;
   duplicate?: boolean;
+  /** The agents the reply suggests the asker bring in, each with the line its button writes (flow 3). */
+  bring_in?: Array<{ agent: TeamHubAgentKey; context: string }>;
   /** Set when the reply's private part moves to the agent DM: start that turn next (flow 5). */
   private_followup?: { conversationId: string; sourceMessageId: string; threadRootId: string | null; agent: TeamHubAgentKey; privateFollowUp: true; dm_conversation_id: string | null };
 };
@@ -179,6 +181,12 @@ export interface AgentTurnDeps {
   userId: string;
   complete: CompleteFn;
   signal?: AbortSignal;
+  /**
+   * The request's x-paige-chat-control header. An agent turn never carries one: a hint selects a larger
+   * ingress quota (status 120/min, stop 20/min of its own), so an agent turn sent with one would leave
+   * the chat's shared 20/min limit. Any value is refused before anything runs.
+   */
+  controlHint?: string | null;
   /** Test seam for the per-turn token. */
   random?: (n: number) => Uint8Array;
 }
@@ -235,10 +243,35 @@ export function privateRouteAllowed(stored: string[] | null, where: "shared" | "
   return where === "shared" && !!stored && stored.includes(ANSWER_PRIVATELY_TOOL);
 }
 
-export type AgentAnswer = { reply: string; route: "answer" | "private" | "act" };
+/** One agent the replying agent suggests the asker bring in, and what it would hand them (flow 3). */
+export type BringInSuggestion = { agent: TeamHubAgentKey; take: string };
+export type AgentAnswer = { reply: string; route: "answer" | "private" | "act"; bringIn: BringInSuggestion[] };
+const MAX_BRING_IN = 3;
+const MAX_TAKE_CHARS = 140;
+
 /**
- * The model's final answer. JSON {reply, route}; a reply that is not that JSON is taken as plain text
- * with route "answer" (it can only say less than a routed one, never more).
+ * The agents a structured answer suggests bringing in: at most three, distinct, each one of the seven
+ * with a short phrase of what to hand them ("the workshop announcement"). Anything malformed is
+ * dropped, never guessed: no @mention in the reply's text is ever read as a suggestion.
+ */
+export function parseBringIn(raw: unknown): BringInSuggestion[] {
+  const out: BringInSuggestion[] = [];
+  for (const item of Array.isArray(raw) ? raw : []) {
+    const o = object(item);
+    const key = typeof o?.agent === "string" ? o.agent.trim().toLowerCase().replace(/^@/, "") : "";
+    if (!(TEAM_HUB_AGENT_KEYS as readonly string[]).includes(key) || out.some((x) => x.agent === key)) continue;
+    const take = typeof o?.take === "string" ? o.take.replace(/[\r\n\t]+/g, " ").replace(/@/g, "").replace(/\s+/g, " ").trim().replace(/[.!?;:,]+$/, "").trim() : "";
+    if (!take || Array.from(take).length > MAX_TAKE_CHARS) continue;
+    out.push({ agent: key as TeamHubAgentKey, take });
+    if (out.length === MAX_BRING_IN) break;
+  }
+  return out;
+}
+
+/**
+ * The model's final answer. JSON {reply, route, bring_in}; a reply that is not that JSON is taken as
+ * plain text with route "answer" and nobody to bring in (it can only say less than a routed one, never
+ * more).
  */
 export function parseAgentAnswer(content: string): AgentAnswer {
   const trimmed = content.trim().replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "").trim();
@@ -247,11 +280,22 @@ export function parseAgentAnswer(content: string): AgentAnswer {
       const o = object(JSON.parse(trimmed));
       if (o && typeof o.reply === "string") {
         const route = o.route === "private" || o.route === "act" ? o.route : "answer";
-        return { reply: o.reply.trim(), route };
+        return { reply: o.reply.trim(), route, bringIn: parseBringIn(o.bring_in) };
       }
     } catch { /* not JSON: plain text below */ }
   }
-  return { reply: content.trim(), route: "answer" };
+  return { reply: content.trim(), route: "answer", bringIn: [] };
+}
+
+/**
+ * The line each Bring in button writes after the mention, exactly the approved form
+ * ("PAIGE suggested you take the workshop announcement."). Suggestions for the replying agent itself or
+ * an agent the question already asks are dropped.
+ */
+export function bringInLines(from: TeamHubAgentKey, suggestions: BringInSuggestion[], alreadyAsked: readonly string[]): Array<{ agent: TeamHubAgentKey; context: string }> {
+  const name = agentName(from) ?? "PAIGE";
+  return suggestions.filter((x) => x.agent !== from && !alreadyAsked.includes(x.agent))
+    .map((x) => ({ agent: x.agent, context: `${name} suggested you take ${x.take}.` }));
 }
 
 // ---------------------------------------------------------------- persona (presentation only)
@@ -319,9 +363,9 @@ export function buildAgentSystemPrompt(input: { agent: TeamHubAgentKey; tenantNa
   }
   rules.push(
     `NO ACTIONS YET: you cannot create, change, send, schedule, book or approve anything in Team Hub yet. If ${input.askerName} asks you to, set "route" to "act" (with an optional short line in "reply"), and never pretend to do it. Never say something is done, saved, sent or scheduled.`,
-    `HOW TO ANSWER: when you are done (after any tool calls), answer with one JSON object and nothing else: {"reply": "<your message, plain chat text>", "route": "answer"${input.privateRoute ? ' | "private"' : ""} | "act"}. Use "answer" unless a rule above says otherwise.`,
+    `HOW TO ANSWER: when you are done (after any tool calls), answer with one JSON object and nothing else: {"reply": "<your message, plain chat text>", "route": "answer"${input.privateRoute ? ' | "private"' : ""} | "act"${shared ? ', "bring_in": []' : ""}}. Use "answer" unless a rule above says otherwise.`,
     `WHAT YOU CAN SEE: only this conversation${input.tools.includes(TIME_ZONE_TOOL) ? " and the business time zone" : ""}. If you cannot see something, say so plainly; never guess a name, number, date or status.`,
-    "Speak only to answer this question. Nothing from Team Hub is saved: never say you will remember something. Never answer as another agent. When another agent owns part of it, name them with @ and their name (for example @ZION) so the person who asked can bring them in; never say you have brought them in.",
+    `Speak only to answer this question. Nothing from Team Hub is saved: never say you will remember something. Never answer as another agent. When another agent owns part of it, name them with @ and their name (for example @ZION)${shared ? `, and list them in "bring_in" as {"agent": "zion", "take": "<what to hand them, a short phrase that completes 'you take …', for example 'the launch task plan'>"} (at most three, never ${name} and never an agent ${input.askerName} already asked; the same privacy rule applies to it)` : ""} so the person who asked can bring them in; never say you have brought them in.`,
     "If someone sincerely asks, you are an AI on the team. You are not a licensed professional: point legal, tax, medical and investment questions to the right person. If anyone is in distress, put them first.",
     "The reply is plain chat text: no headings, no tables, no web addresses. Keep it short.",
   );
@@ -337,6 +381,28 @@ const PAGE = 50;
 
 async function rpcSafe(c: { rpc(name: string, args?: Record<string, unknown>): PromiseLike<RpcResult> }, name: string, args: Record<string, unknown>): Promise<RpcResult | null> {
   try { return await c.rpc(name, args); } catch { return null; }
+}
+
+/**
+ * Did this call's answer get lost on the way back, so it may or may not have committed? The Supabase
+ * client does not throw on a network failure: it returns { error } with no database error code (and
+ * status 0), and a gateway timeout comes back the same way. A database refusal carries a SQLSTATE
+ * (`42501`, `P0001`, …) or a PostgREST code (`PGRST…`), and its transaction rolled back. So an error
+ * without either is treated exactly like a throw: the outcome is unknown.
+ */
+export function isTransportError(result: RpcResult | null): boolean {
+  if (!result) return true;
+  if (!result.error) return false;
+  const code = typeof result.error.code === "string" ? result.error.code.trim() : "";
+  return !(/^[0-9A-Z]{5}$/.test(code) || /^PGRST/.test(code));
+}
+
+/** A call whose answer is unknown (thrown, or a transport error) is retried once with the same arguments. */
+async function rpcOnceMore(c: { rpc(name: string, args?: Record<string, unknown>): PromiseLike<RpcResult> }, name: string, args: Record<string, unknown>): Promise<RpcResult | null> {
+  const first = await rpcSafe(c, name, args);
+  if (!isTransportError(first)) return first;
+  const second = await rpcSafe(c, name, args);
+  return isTransportError(second) ? null : second;
 }
 
 /** One message of one conversation (in one thread, or at the top level), read under the asker's JWT. */
@@ -410,6 +476,9 @@ function acceptRefusal(code: unknown): AgentTurnOutcomeCode {
 }
 
 export async function runTeamHubAgentTurn(deps: AgentTurnDeps, raw: unknown): Promise<AgentTurnResult> {
+  if (deps.controlHint !== undefined && deps.controlHint !== null) {
+    return { status: 400, body: { ok: false, outcome: "invalid_request", error: "an agent turn never carries a chat control hint" } };
+  }
   const parsed = parseAgentTurnRequest(raw);
   if ("problem" in parsed) return { status: 400, body: { ok: false, outcome: "invalid_request", error: parsed.problem } };
   const req = parsed;
@@ -463,7 +532,11 @@ export async function runTeamHubAgentTurn(deps: AgentTurnDeps, raw: unknown): Pr
 
   // 3. Accept: the permission row (service role). The token never leaves this function.
   const { token, hash } = await newTurnToken(deps.random);
-  const accept = await rpcSafe(service, "team_hub_accept_agent_turn", { p_tenant: tenantId, p_asker: userId, p_channel_id: target,
+  // A lost answer is retried once with the same token hash: the door hands an unconsumed turn holding
+  // that hash back to its own invocation (20271118220008), so a retry never reads as in_flight. Still
+  // unknown, nothing has run and nothing can have posted (the token never left this function): the
+  // turn, if it was recorded, is taken as ended after 10 minutes.
+  const accept = await rpcOnceMore(service, "team_hub_accept_agent_turn", { p_tenant: tenantId, p_asker: userId, p_channel_id: target,
     p_source_message_id: req.sourceMessageId, p_agent_key: agent, p_intent: intent, p_token_hash: hash });
   const acc = accept && !accept.error ? object(accept.data) : null;
   if (!acc) return fail(agent, "could_not_start", { intent });
@@ -487,9 +560,12 @@ export async function runTeamHubAgentTurn(deps: AgentTurnDeps, raw: unknown): Pr
     try {
       await recordCapabilityRun(service, { tenantId, actorId: userId, capabilityKey: RECEIPT_KEY, outcome,
         runId: await stableRunId([RECEIPT_KEY, tenantId, userId, turnId, hash]),
-        agentSlug: agent === "paige" ? null : agent,
-        // Metadata only: never the question, the reply or a conversation name.
-        detail: { channel: "team_hub", agent, intent, outcome: code } });
+        // Metadata only: never the question, the reply or a conversation name. Owners and admins read
+        // every receipt in their workspace on the Rail (get_solo_rail_activity: title, agent label and
+        // time; never the actor or the detail), so a DM turn's receipt names neither its agent nor that
+        // it was a DM: an owner must not learn that a member asked an agent privately.
+        agentSlug: intent === "dm" || agent === "paige" ? null : agent,
+        detail: intent === "dm" ? { channel: "team_hub", outcome: code } : { channel: "team_hub", agent, intent, outcome: code } });
     } catch (e) { console.error("[team-hub agent] receipt not recorded:", (e as Error)?.message); }
   };
   const endedWithoutPost = async (code: AgentTurnOutcomeCode): Promise<AgentTurnResult> => {
@@ -543,6 +619,7 @@ export async function runTeamHubAgentTurn(deps: AgentTurnDeps, raw: unknown): Pr
   const trace: TraceCtx = { tenant_id: tenantId, working_context_tenant_id: tenantId, agent_id: agent, job_kind: "team_hub_agent_turn", content_policy: "metadata_only" };
   let control: "private" | "act" | null = null;
   let text = "";
+  let bringIn: BringInSuggestion[] = [];
   const writes = mutatingTools();
   for (let round = 0; round < MAX_ROUNDS && control === null; round++) {
     if (deps.signal?.aborted) return endedWithoutPost("no_reply");
@@ -561,6 +638,7 @@ export async function runTeamHubAgentTurn(deps: AgentTurnDeps, raw: unknown): Pr
       // The final answer: its route is the control (honoured only where it is allowed).
       const answer = parseAgentAnswer(text);
       text = answer.reply;
+      bringIn = answer.bringIn;
       if (answer.route === "act") control = "act";
       else if (answer.route === "private" && privateRoute) control = "private";
       break;
@@ -614,21 +692,36 @@ export async function runTeamHubAgentTurn(deps: AgentTurnDeps, raw: unknown): Pr
   const body = control === "act" ? (capped ? `${capped}\n\n${A1_NO_ACTS_LINE}` : A1_NO_ACTS_LINE) : capped;
   if (!body && !privateAnswer) return endedWithoutPost("no_reply");
 
+  // 7b. Bring in (flow 3), staged on the turn before it posts, so it lands with the reply or not at all.
+  // Only a reply in the conversation it was asked in, never with a private part (its line must say
+  // nothing the room can't see). If the door refuses or is unavailable, the reply posts without it.
+  let bringInStaged: Array<{ agent: TeamHubAgentKey; context: string }> = [];
+  const bringInWanted = intent === "reply" && !privateAnswer ? bringInLines(agent, bringIn, mentions.filter((m): m is string => typeof m === "string")) : [];
+  if (bringInWanted.length) {
+    const st = await rpcSafe(service, "team_hub_stage_agent_suggestions", { p_turn_id: turnId, p_token_hash: hash, p_suggestions: bringInWanted });
+    if (st && !st.error && object(st.data)?.ok === true) bringInStaged = bringInWanted;
+    else console.error("[team-hub agent] bring-in not staged:", st?.error?.message ?? object(st?.data)?.code ?? "no answer");
+  }
+
   // 8. The post, under the asker's JWT. Its outcome is read back before it is reported.
   const postArgs = { p_expected_tenant: tenantId, p_channel_id: target, p_agent_key: agent, p_body: body, p_client_request_id: requestId,
     p_parent_message_id: parentId, p_asked_in_message_id: askedIn, p_intent: intent, p_turn_token: token, p_private_answer: privateAnswer };
-  let posted = await rpcSafe(caller, "team_hub_post_agent_message", postArgs);
-  // A lost answer: the same token and request id again is idempotent (the definer returns the stored row).
-  if (!posted) posted = await rpcSafe(caller, "team_hub_post_agent_message", postArgs);
-  if (!posted) {
-    // Still unknown. The end door settles it: it can only end a turn that was NOT consumed, so "ended"
-    // proves nothing was posted, and "not_found" means the post consumed it.
+  // A lost answer (a throw, or the client's { error } for a transport failure) is retried once: the same
+  // token and request id again is idempotent (the definer returns the stored row, duplicate).
+  const posted = await rpcOnceMore(caller, "team_hub_post_agent_message", postArgs);
+  if (!posted || posted.error) {
+    // Still unknown, or a database error. The end door settles it: it can only end a turn that was NOT
+    // consumed, so "ended" proves nothing was posted, and anything else means the post may have
+    // consumed it. A reply that posted is never reported, or receipted, as a failure.
     const settled = await end();
-    if (settled === "ended") { await receipt("capability_failed", "no_reply"); return fail(agent, "no_reply", { intent }); }
+    if (settled === "ended") {
+      const code: AgentTurnOutcomeCode = posted ? "cannot_post_here" : "no_reply";
+      await receipt(posted ? "capability_refused" : "capability_failed", code);
+      return fail(agent, code, { intent });
+    }
     await receipt("capability_outcome_unknown", "unconfirmed");
     return fail(agent, "unconfirmed", { intent, conversation_id: target });
   }
-  if (posted.error) return endedWithoutPost("cannot_post_here");
   const env = object(posted.data);
   if (!env) {
     const settled = await end();
@@ -656,5 +749,6 @@ export async function runTeamHubAgentTurn(deps: AgentTurnDeps, raw: unknown): Pr
     followUp = { private_followup: { conversationId: req.conversationId, sourceMessageId: req.sourceMessageId, threadRootId: req.threadRootId,
       agent, privateFollowUp: true, dm_conversation_id: dmEnv?.ok === true ? uuid(dmEnv.channel_id) : null } };
   }
-  return { status: 200, body: { ok: true, outcome: "posted", agent, intent, message: back.found, conversation_id: target, duplicate: env.duplicate === true, ...followUp } };
+  return { status: 200, body: { ok: true, outcome: "posted", agent, intent, message: back.found, conversation_id: target, duplicate: env.duplicate === true,
+    ...(bringInStaged.length ? { bring_in: bringInStaged } : {}), ...followUp } };
 }

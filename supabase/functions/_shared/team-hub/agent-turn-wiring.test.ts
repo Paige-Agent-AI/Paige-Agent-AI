@@ -17,7 +17,7 @@ const at = (needle: string): number => {
 };
 const SEAM = "    if (isTeamHubAgentTurnRequest(rawData)) {\n"
   + "      const agentTurn = await runTeamHubAgentTurn({ caller: supabaseClient, service: supabase, userId: user.id,\n"
-  + "        complete: fabricCompletion, signal: req.signal }, rawData);\n"
+  + "        complete: fabricCompletion, signal: req.signal, controlHint }, rawData);\n"
   + "      return new Response(JSON.stringify(agentTurn.body),\n"
   + "        { status: agentTurn.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });\n"
   + "    }\n";
@@ -38,6 +38,13 @@ describe("the agent-turn seam in paige-ai-chat", () => {
     assert.ok(at("      } else rawData = await req.json();") < seam);
     assert.ok(seam < at("      validatedData = messageSchema.parse(rawData);"));
     assert.ok(seam < at('const { data: pc, error: pcErr } = await supabaseClient.rpc("get_paige_persona_context");'));
+  });
+  it("hands over the request's own control hint, read before the ingress limit chose its quota, so a hinted turn is refused (S2)", () => {
+    const seam = at(SEAM);
+    const hint = at("    const controlHint = req.headers.get(CHAT_CONTROL_HEADER);\n    const ingress = chatIngressPolicy(controlHint);\n");
+    assert.ok(hint < seam);
+    // Nothing between the header read and the seam reassigns it.
+    assert.equal(/controlHint\s*=(?!=)/.test(CHAT.slice(hint + 60, seam)), false);
   });
   it("uses the handler's own model seam, the one the chat imports", () => {
     at('import { describeAttempts, fabricChatStream, fabricCompletion, type FabricStream } from "../_shared/model-fabric.ts";');

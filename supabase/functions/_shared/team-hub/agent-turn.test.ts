@@ -9,8 +9,8 @@ import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import {
-  ANSWER_PRIVATELY_TOOL, EXECUTABLE_AGENT_TOOLS, PINNED_READ_TOOL, effectiveAgentTools, isTeamHubAgentTurnRequest, parseAgentAnswer, parseAgentTurnRequest, privateRouteAllowed,
-  runTeamHubAgentTurn, storedToolNames, uuidFrom, type AgentTurnDeps, type CompleteFn,
+  ANSWER_PRIVATELY_TOOL, EXECUTABLE_AGENT_TOOLS, PINNED_READ_TOOL, bringInLines, effectiveAgentTools, isTeamHubAgentTurnRequest, isTransportError, parseAgentAnswer, parseAgentTurnRequest,
+  parseBringIn, privateRouteAllowed, runTeamHubAgentTurn, storedToolNames, uuidFrom, type AgentTurnDeps, type CompleteFn,
 } from "./agent-turn.ts";
 
 const TENANT = "11111111-1111-4111-8111-111111111111";
@@ -45,8 +45,11 @@ type Opts = {
   sourceAuthor?: string; mentions?: string[]; config?: unknown; configThrows?: boolean;
   accept?: (args: Record<string, unknown>) => unknown; end?: () => unknown; recordFails?: string[];
   post?: (args: Record<string, unknown>, attempt: number) => unknown; readbackHides?: boolean;
-  sourceIn?: string; sourceThread?: string | null;
+  sourceIn?: string; sourceThread?: string | null; stage?: (args: Record<string, unknown>) => unknown;
 };
+/** A raw client answer (`{ data, error }`), for the transport failures the Supabase client returns instead of throwing. */
+const raw = (data: unknown, error: { message?: string; code?: string } | null, commit = false) => ({ __rpc: { data, error }, commit });
+const TRANSPORT = { message: "TypeError: fetch failed", code: "" };
 
 function world(opts: Opts = {}) {
   const calls: Call[] = [];
@@ -60,6 +63,7 @@ function world(opts: Opts = {}) {
     { agent_mentions: opts.mentions ?? ["merit"], parent_message_id: opts.sourceThread ?? null });
   if (opts.sourceThread) store.set(`${sourceIn}:${opts.sourceThread}`, [src]); else store.get(sourceIn)!.unshift(src);
   let postAttempt = 0;
+  const postedByRequest = new Map<string, Msg>();
   const caller = {
     rpc(name: string, args: Record<string, unknown> = {}) {
       calls.push({ who: "caller", name, args });
@@ -86,24 +90,41 @@ function world(opts: Opts = {}) {
           case "read_business_time_zone": return { state: "configured", zone: "America/Chicago", can_set: false, local_date: "2026-10-27" };
           case "team_hub_post_agent_message": {
             postAttempt += 1;
-            if (opts.post) { const r = opts.post(args, postAttempt); if (r instanceof Error) throw r; if (r !== undefined) return r; }
+            let after: unknown;
+            if (opts.post) {
+              const r = opts.post(args, postAttempt) as any;
+              if (r instanceof Error) throw r;
+              if (r && r.__rpc && !r.commit) return r;
+              if (r && r.__rpc) after = r; else if (r !== undefined) return r;
+            }
+            // The definer is idempotent on (token, request id): a repeat returns the stored row.
+            const earlier = postedByRequest.get(String(args.p_client_request_id));
+            if (earlier) return after ?? { ok: true, message: earlier, duplicate: true };
             const posted = message("f0f0f0f0-f0f0-4f0f-8f0f-f0f0f0f0f0f0", String(args.p_channel_id), SAM,
               `${args.p_body}${args.p_private_answer ? "\n\nThat part is just for you, so I'm answering it in our DM." : ""}`.trim(),
               { author_kind: "agent", agent_key: args.p_agent_key, asked_in_message_id: args.p_asked_in_message_id, parent_message_id: args.p_parent_message_id });
             const key = args.p_parent_message_id ? `${args.p_channel_id}:${args.p_parent_message_id}` : String(args.p_channel_id);
             store.set(key, [posted, ...(store.get(key) ?? [])]);
+            postedByRequest.set(String(args.p_client_request_id), posted);
+            // A commit whose answer is lost on the way back: the client returns { error }, not a throw.
+            if (after) return after;
             return { ok: true, message: posted };
           }
           default: return null;
         }
       })();
+      if (answer && typeof answer === "object" && "__rpc" in (answer as object)) return Promise.resolve((answer as any).__rpc);
       return Promise.resolve({ data: answer, error: null });
     },
   };
   const service = {
     rpc(name: string, args: Record<string, unknown> = {}) {
       calls.push({ who: "service", name, args });
-      if (name === "team_hub_accept_agent_turn") return Promise.resolve({ data: opts.accept ? opts.accept(args) : { ok: true, turn_id: TURN }, error: null });
+      if (name === "team_hub_accept_agent_turn") {
+        const a: any = opts.accept ? opts.accept(args) : { ok: true, turn_id: TURN };
+        return Promise.resolve(a && a.__rpc ? a.__rpc : { data: a, error: null });
+      }
+      if (name === "team_hub_stage_agent_suggestions") return Promise.resolve({ data: opts.stage ? opts.stage(args) : { ok: true }, error: null });
       if (name === "team_hub_end_agent_turn") return Promise.resolve({ data: opts.end ? opts.end() : { ok: true }, error: null });
       if (name === "record_capability_run") {
         const failed = opts.recordFails?.includes(String(args._capability_key));
@@ -317,11 +338,11 @@ describe("the tool scope is read-only and fails closed", () => {
 
 describe("the private part (flow 5)", () => {
   it("the answer is JSON {reply, route}; anything else is plain text that can only say less", () => {
-    assert.deepEqual(parseAgentAnswer('{"reply":"Hi","route":"private"}'), { reply: "Hi", route: "private" });
-    assert.deepEqual(parseAgentAnswer('```json\n{"reply":"Hi","route":"act"}\n```'), { reply: "Hi", route: "act" });
-    assert.deepEqual(parseAgentAnswer('{"reply":"Hi","route":"delete_everything"}'), { reply: "Hi", route: "answer" });
-    assert.deepEqual(parseAgentAnswer("Just text."), { reply: "Just text.", route: "answer" });
-    assert.deepEqual(parseAgentAnswer("{not json"), { reply: "{not json", route: "answer" });
+    assert.deepEqual(parseAgentAnswer('{"reply":"Hi","route":"private"}'), { reply: "Hi", route: "private", bringIn: [] });
+    assert.deepEqual(parseAgentAnswer('```json\n{"reply":"Hi","route":"act"}\n```'), { reply: "Hi", route: "act", bringIn: [] });
+    assert.deepEqual(parseAgentAnswer('{"reply":"Hi","route":"delete_everything"}'), { reply: "Hi", route: "answer", bringIn: [] });
+    assert.deepEqual(parseAgentAnswer("Just text."), { reply: "Just text.", route: "answer", bringIn: [] });
+    assert.deepEqual(parseAgentAnswer("{not json"), { reply: "{not json", route: "answer", bringIn: [] });
   });
   it("the private route exists only in a shared conversation whose stored allowlist names the control", () => {
     assert.equal(privateRouteAllowed(storedToolNames(SHARED_LIST), "shared"), true);
@@ -485,5 +506,158 @@ describe("honest failures (flow 9)", () => {
     const r = await runTeamHubAgentTurn({ caller, service: w.service, userId: SAM, complete: m.make(w.calls) }, turn());
     assert.equal(r.body.outcome, "could_not_start");
     assert.equal(named(w, "team_hub_accept_agent_turn").length, 0);
+  });
+});
+
+describe("a transport error is an unknown outcome, never a failure (B1)", () => {
+  it("classifies the client's { error } with no database code as transport, and a SQLSTATE or PostgREST code as a database answer", () => {
+    assert.equal(isTransportError(null), true);
+    assert.equal(isTransportError({ data: null, error: { message: "TypeError: fetch failed", code: "" } }), true);
+    assert.equal(isTransportError({ data: null, error: { message: "upstream timeout" } }), true);
+    assert.equal(isTransportError({ data: null, error: { message: "permission denied", code: "42501" } }), false);
+    assert.equal(isTransportError({ data: null, error: { message: "no function", code: "PGRST202" } }), false);
+    assert.equal(isTransportError({ data: { ok: true }, error: null }), false);
+  });
+  it("a post that commits and then comes back as { error } is retried with the same token and request id, and reported posted from the read-back", async () => {
+    const w = world({ post: (_a, n) => n === 1 ? raw(null, TRANSPORT, true) : undefined, end: () => ({ ok: false, code: "not_found" }) });
+    const m = model([{ content: '{"reply":"Two people start Monday.","route":"answer"}' }]);
+    const r = await run(w, m);
+    assert.equal(r.body.outcome, "posted");
+    assert.equal(r.body.ok, true);
+    const posts = named(w, "team_hub_post_agent_message");
+    assert.equal(posts.length, 2);
+    assert.deepEqual(posts[0].args, posts[1].args);
+    assert.equal(named(w, "team_hub_end_agent_turn").length, 0, "a posted reply is never ended");
+    const receipt = named(w, "record_capability_run").find((c) => c.args._capability_key === "team_hub_agent_post");
+    assert.equal(receipt!.args._outcome, "capability_succeeded");
+  });
+  it("a post that commits and loses BOTH answers is settled by the end door: not_found means it may have posted (unconfirmed), never a failure", async () => {
+    const w = world({ post: () => raw(null, TRANSPORT, true), end: () => ({ ok: false, code: "not_found" }) });
+    const m = model([{ content: "x" }]);
+    const r = await run(w, m);
+    assert.equal(r.body.outcome, "unconfirmed");
+    assert.notEqual(r.body.outcome, "cannot_post_here");
+    const receipt = named(w, "record_capability_run").find((c) => c.args._capability_key === "team_hub_agent_post");
+    assert.equal(receipt!.args._outcome, "capability_outcome_unknown");
+  });
+  it("two transport errors and nothing committed: the end door proves it, and the answer is no_reply", async () => {
+    const w = world({ post: () => raw(null, TRANSPORT, false) }), m = model([{ content: "x" }]);
+    const r = await run(w, m);
+    assert.equal(r.body.outcome, "no_reply");
+    assert.equal(named(w, "team_hub_post_agent_message").length, 2);
+  });
+  it("a database refusal ({ error } with a SQLSTATE) is not retried; it is settled by the end door and only then reported can't post here", async () => {
+    let w = world({ post: () => raw(null, { message: "permission denied", code: "42501" }) }), m = model([{ content: "x" }]);
+    let r = await run(w, m);
+    assert.equal(r.body.outcome, "cannot_post_here");
+    assert.equal(named(w, "team_hub_post_agent_message").length, 1);
+    // If the end door cannot end it, the post consumed the turn: it may have posted.
+    w = world({ post: () => raw(null, { message: "permission denied", code: "42501" }), end: () => ({ ok: false, code: "not_found" }) }); m = model([{ content: "x" }]);
+    r = await run(w, m);
+    assert.equal(r.body.outcome, "unconfirmed");
+  });
+  it("an acceptance whose answer is lost is retried once with the same token hash; its own turn comes back and the turn runs", async () => {
+    const hashes: unknown[] = [];
+    const w = world({ accept: (a) => { hashes.push(a.p_token_hash); return hashes.length === 1 ? raw(null, TRANSPORT) : { ok: true, turn_id: TURN, repeated: true }; } });
+    const m = model([{ content: "x" }]);
+    const r = await run(w, m);
+    assert.equal(r.body.outcome, "posted");
+    assert.equal(hashes.length, 2);
+    assert.equal(hashes[0], hashes[1]);
+    assert.equal(hashes[0], sha(TOKEN));
+  });
+  it("an acceptance lost twice starts nothing and posts nothing", async () => {
+    const w = world({ accept: () => raw(null, TRANSPORT) }), m = model([{ content: "x" }]);
+    const r = await run(w, m);
+    assert.equal(r.body.outcome, "could_not_start");
+    assert.equal(m.requests.length, 0);
+    assert.equal(named(w, "team_hub_post_agent_message").length, 0);
+  });
+});
+
+describe("a chat control hint never carries an agent turn (S2)", () => {
+  for (const hint of ["status", "stop", "anything", ""]) {
+    it(`x-paige-chat-control ${JSON.stringify(hint)}: a 400, and nothing is read, accepted or run`, async () => {
+      const w = world(), m = model([{ content: "x" }]);
+      const r = await run(w, m, turn(), { controlHint: hint });
+      assert.equal(r.status, 400);
+      assert.equal(w.calls.length, 0);
+      assert.equal(m.requests.length, 0);
+    });
+  }
+  it("no hint (null) runs as before", async () => {
+    const w = world(), m = model([{ content: "x" }]);
+    assert.equal((await run(w, m, turn(), { controlHint: null })).body.outcome, "posted");
+  });
+});
+
+describe("Bring in comes from the agent's structured answer (flow 3)", () => {
+  it("parses at most three distinct agents of the seven, each with a short phrase; anything else is dropped", () => {
+    assert.deepEqual(parseBringIn([{ agent: "nexus", take: "the workshop announcement." }, { agent: "@ZION", take: "the launch\ntask plan" },
+      { agent: "nexus", take: "again" }, { agent: "bogus", take: "x" }, { agent: "vera", take: "" }, { agent: "cura", take: "x".repeat(141) }, "merit",
+      { agent: "mentor", take: "an @intro" }, { agent: "merit", take: "the agreement" }]),
+    [{ agent: "nexus", take: "the workshop announcement" }, { agent: "zion", take: "the launch task plan" }, { agent: "mentor", take: "an intro" }]);
+    assert.deepEqual(parseBringIn(undefined), []);
+    assert.deepEqual(parseBringIn("nexus"), []);
+  });
+  it("writes the approved line, and never offers the replying agent or one the question already asked", () => {
+    assert.deepEqual(bringInLines("paige", [{ agent: "nexus", take: "the workshop announcement" }, { agent: "paige", take: "x" }, { agent: "cura", take: "y" }], ["paige", "cura"]),
+      [{ agent: "nexus", context: "PAIGE suggested you take the workshop announcement." }]);
+  });
+  it("stages the suggestions on the turn before it posts, with its token hash, and returns them with the reply", async () => {
+    const w = world(), m = model([{ content: '{"reply":"Pricing is a scope call. @ZION can set the kickoff; @NEXUS the announcement. @CURA has onboarding.","route":"answer","bring_in":[{"agent":"zion","take":"the kickoff tasks"},{"agent":"nexus","take":"the announcement"},{"agent":"merit","take":"itself"}]}' }]);
+    const r = await run(w, m);
+    assert.equal(r.body.outcome, "posted");
+    const stage = named(w, "team_hub_stage_agent_suggestions");
+    assert.equal(stage.length, 1);
+    assert.deepEqual(stage[0].args, { p_turn_id: TURN, p_token_hash: sha(TOKEN), p_suggestions: [
+      { agent: "zion", context: "MERIT suggested you take the kickoff tasks." }, { agent: "nexus", context: "MERIT suggested you take the announcement." }] });
+    const order = w.calls.map((c) => c.name);
+    assert.ok(order.indexOf("team_hub_stage_agent_suggestions") < order.indexOf("team_hub_post_agent_message"));
+    // CURA is named in the text but not suggested: it is never offered.
+    assert.deepEqual((r.body as any).bring_in, stage[0].args.p_suggestions);
+  });
+  it("a reply that only names agents in its text suggests nobody", async () => {
+    const w = world(), m = model([{ content: '{"reply":"@NEXUS and @ZION could help.","route":"answer"}' }]);
+    const r = await run(w, m);
+    assert.equal(named(w, "team_hub_stage_agent_suggestions").length, 0);
+    assert.equal((r.body as any).bring_in, undefined);
+  });
+  it("a refused or unavailable staging door posts the reply without Bring in, and says nothing it did not store", async () => {
+    const w = world({ stage: () => ({ ok: false, code: "invalid" }) }), m = model([{ content: '{"reply":"x","route":"answer","bring_in":[{"agent":"zion","take":"the plan"}]}' }]);
+    const r = await run(w, m);
+    assert.equal(r.body.outcome, "posted");
+    assert.equal((r.body as any).bring_in, undefined);
+  });
+  it("never with a private part, and never in a DM", async () => {
+    let w = world(), m = model([{ content: '{"reply":"","route":"private","bring_in":[{"agent":"zion","take":"the plan"}]}' }]);
+    await run(w, m);
+    assert.equal(named(w, "team_hub_stage_agent_suggestions").length, 0);
+    w = world(); m = model([{ content: '{"reply":"x","route":"answer","bring_in":[{"agent":"zion","take":"the plan"}]}' }]);
+    await run(w, m, turn({ privateFollowUp: true }));
+    assert.equal(named(w, "team_hub_stage_agent_suggestions").length, 0);
+  });
+  it("the channel prompt asks for bring_in; the DM prompt does not", async () => {
+    let w = world(), m = model([{ content: "x" }]);
+    await run(w, m);
+    assert.match(String(m.requests[0].request.messages[0].content), /"bring_in"/);
+    w = world(); m = model([{ content: "x" }]);
+    await run(w, m, turn({ privateFollowUp: true }));
+    assert.doesNotMatch(String(m.requests[0].request.messages[0].content), /bring_in/);
+  });
+});
+
+describe("receipts never tell an owner about a member's private DM turn", () => {
+  it("a DM turn's receipt carries no agent and no intent; a channel reply's names its agent", async () => {
+    let w = world(), m = model([{ content: "x" }]);
+    await run(w, m, turn({ privateFollowUp: true }));
+    let receipt = named(w, "record_capability_run").find((c) => c.args._capability_key === "team_hub_agent_post")!;
+    assert.equal(receipt.args._agent_slug, undefined);
+    assert.equal(JSON.stringify(receipt.args).includes("merit"), false);
+    assert.equal(JSON.stringify(receipt.args).includes('"dm"'), false);
+    w = world(); m = model([{ content: "x" }]);
+    await run(w, m);
+    receipt = named(w, "record_capability_run").find((c) => c.args._capability_key === "team_hub_agent_post")!;
+    assert.equal(receipt.args._agent_slug, "merit");
   });
 });

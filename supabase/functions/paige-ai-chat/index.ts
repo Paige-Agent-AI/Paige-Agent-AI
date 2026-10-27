@@ -1368,10 +1368,11 @@ serve(async (req) => {
     // nothing else). It runs here, after the verified actor and the ingress rate limit and before the chat
     // schema, and returns without reaching anything below. The logic is _shared/team-hub/agent-turn.ts;
     // this hands it only the asker's own session, the service role (turn accept/end, the agent's platform
-    // row and receipts), the verified actor and the one model seam (fabricCompletion).
+    // row and receipts), the verified actor and the one model seam (fabricCompletion). It also gets the
+    // control hint: a turn sent with one is refused, so agent turns stay on the chat's 20/min limit.
     if (isTeamHubAgentTurnRequest(rawData)) {
       const agentTurn = await runTeamHubAgentTurn({ caller: supabaseClient, service: supabase, userId: user.id,
-        complete: fabricCompletion, signal: req.signal }, rawData);
+        complete: fabricCompletion, signal: req.signal, controlHint }, rawData);
       return new Response(JSON.stringify(agentTurn.body),
         { status: agentTurn.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }

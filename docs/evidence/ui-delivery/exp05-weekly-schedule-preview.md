@@ -4,21 +4,21 @@ UI_DELIVERY_EVIDENCE_VERSION: 1
 FLOW_BY_FLOW: PASS: original ten/E5 packet and October26–27 schedule-review section in docs/delivery/experience-05-weekly-commitment-check.md map entry, intent, canonical read, preview, owner controls and recovery.
 PAIGE_UI_DESIGN: PASS: project UI routing, quality gates/review-and-testing and original weekly surface inspected; Impeccable context/clarify used. This is source review, not rendered verification.
 MATERIAL_FLOW_CHANGE: YES: one newly admitted Chat read compares a proposed weekly time with the saved responsibility and explains the existing native owner-control continuation.
-FLOW_PROTOTYPE: UNVERIFIED: the original weekly-native-review.html covers the supporting native pattern, not this exact newly admitted Chat comparison. Its owner-rendered-review.md explicitly retains approval/runtime limits. Do not promote that earlier artifact into proof of this new transition; release remains held for the actual flow evidence.
+FLOW_PROTOTYPE: PASS: actual new offline comparison/native-owner-control prototype, assets/exp05-weekly-schedule-preview/browser-proof.json and native-source-manifest.json;18 interaction checks and24 frame measurements, bounded delegated engineering review recorded in docs/evidence/experience-05-prototype/weekly-schedule-comparison-review.md. This is new evidence, not a relabel of the earlier artifact or owner product acceptance.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: current eligible SOLO owner compares one original responsibility's time before considering any change; no other actor or provider scope is granted.
 VISUAL_DIRECTION: PASS: existing PAIGE conversation and Weekly responsibility sheet; no new banner, page, tab, color, layout, focus code or animation.
 AUTOMATED_EVIDENCE: PASS: exact source8857f60f9 six-suite129/0/0, including actual Root branch with recording ports, original reader, schema, role/scope, budget, absent intent, binding withholding and receipt-wait withdrawal. Report e5cf1dd53a25653878d80b5a129ec73f234a4fb62dfc5c41e91e07567f79b4a1. Original83 hostile C0b controls also pass unchanged; neither is customer proof.
 STATIC_EVIDENCE: PASS: scoped lint0, six-file actual app compiler0 own/0 dependency errors; Spine245; original Kit/added admission controls pass. Final required hosted checks remain separate.
-RENDERED_EVIDENCE: UNVERIFIED: no actual new-preview render captured. E09 holds browser custody, E02 then E05 are queued; earlier weekly captures are supporting history only.
-BEHAVIORAL_EVIDENCE: UNVERIFIED: natural request, clarification, readable comparison, exact native responsibility reentry, close/return and reload are not yet driven on this source.
+RENDERED_EVIDENCE: PASS: returned neutral IAB rendered actual unchanged Markdown, weekly entry/sheet/panel/schedule components at829bf7cb0;24 local frame captures across required desktop sizes plus390/320, both themes and PAIGE open/closed. Four representative images and exact12 source hashes retained in assets/exp05-weekly-schedule-preview. Production shell, fonts, authentication and actual model wording are separate proof owed.
+BEHAVIORAL_EVIDENCE: PASS:18 bounded offline checks cover comparison/clarification/source states, native inspector reentry, exact keyboard schedule review, invalid-zone refusal, inner/outer Escape focus, uncertain-result no-repeat feedback, second neutral-context empty result and reduced motion. Original current-source components are real; owner data/read/control ports and Chat prose are explicitly synthetic. This proves no production request, permission, persistence, receipt or reload.
 AUTHENTICATED_RUNTIME: UNVERIFIED: ordinary owner preview/native reentry on actual deployed source, equivalent cohorts, wrong-role/tenant refusal and reload remain owed; no new Chat message or approval has been sent.
-KEYBOARD_FOCUS: UNVERIFIED: existing Chat and sheet implementations are unchanged; exact new response and owner-control reentry have not been keyboard-driven.
-ZOOM_REFLOW: UNVERIFIED: actual comparison response at narrow viewports/200% zoom remains owed, no geometry claim from source tests.
-REDUCED_MOTION: UNVERIFIED: no animation changed; existing preference behavior has not been re-certified for this path.
+KEYBOARD_FOCUS: PASS: real native time ArrowUp/ArrowRight/3/0 reachesTuesday10:30 while savedMonday09:00 remains distinct; review focuses Keep current schedule, innerEscape returns Change schedule with sheet retained, outerEscape restores Weekly responsibility. Browser automated fill did not update React state and is retained as INVALID driver evidence, not a product defect. See browser-proof.json and desktop-native-review.png.
+ZOOM_REFLOW: UNVERIFIED:390/320 local reflow and table reachability measured; actual200percent browser shortcuts did not change width/ratio and establish no zoom proof. Full production shell remains separate.
+REDUCED_MOTION: PASS: actual sheet under prefers-reduced-motion=reduce reports animation below0.02s; preference and viewport restored before tab closure. No motion source changed.
 STATE_COVERAGE: PASS: source covers valid preview, malformed/foreign target, wrong actor class, absent request, cancelled definition, native-read refusal, deadline, interrupted current scope and unknown history. Actual conversation/state presentation remains unverified.
 TRUTHFUL_STATE_LABELS: PASS: closed available/needs_input/refused/unavailable read envelope; no saved/authorized/enabled/executed claim, proposed next run stays null. Existing Listed/Unverified recipe labels and non-self-describing read metadata are preserved.
 SOLO_UI: YES: shared PAIGE Chat to original weekly owner controls; new and existing equally eligible SOLO businesses use the same code.
-UNVERIFIED: exact new-flow prototype/interaction, actual rendered/authenticated/viewport/keyboard/zoom/reload/panel proof and required new-head CI/deployment remain owed. Known material flow-evidence gate is held, not waived by129 source checks or an earlier native prototype.
+UNVERIFIED: ordinary authenticated natural request/current actor/tenant/model response, full production shell/font/200percent zoom/reload, exact native record/receipt readback, final current-main composition and required review/CI/deployment remain owed. New bounded prototype is now inspected;129 source checks and18 local checks do not close customer or complete EXP05 acceptance.
 OWNER_INTENT: complete reliable Run My Week and original owner authority, without intermediate founder testing or another scheduler.
 MUST_NOT_HAPPEN: expose writer bindings, grant approval, change or enable a schedule, repeat an unknown act, fabricate readiness or treat older prototype evidence as this path's acceptance.
 MUST_PRESERVE: original actor/tenant/role, native projection, saved process/revision, existing owner controls, provider/recurrence holds, all ten/E5/Builder/ZION/owner-away/Live obligations.
@@ -51,6 +51,29 @@ Impeccable clarification check: outcome, current/proposed time, authorization an
 next permitted action are distinct. Source-only finish review leaves actual
 comprehension, response length, reentry/accessibility and both themes unverified.
 The design sidecar was reported stale; no unrelated design-system rewrite was made.
+
+October27 new evidence: the neutral IAB resource was explicitly returned by E02
+in ANT1610fab13b2/351e37a3; E09's actual Chrome/Edge/customer custody remains intact.
+Only a private loopback fixture was opened. All original source/model/provider/
+write/approval ports were disconnected or deterministic mocks. Initial local
+socket denial was resolved by a normal approved loopback-only process; failed
+tabs/timeouts are not product proof. Server stopped, viewport/media override reset,
+own successful tab closed. No customer session, message, provider or business effect.
+
+The18 checks/24 captures concern target components in a neutral frame, not the
+full production SOLO shell or real tenant-isolation/provisioning proof. Twelve
+product input hashes and two explicit synthetic import ports are in the manifest.
+Static Impeccable detector returned[] on the three unchanged target components;
+sequential finish review is lower assurance under the owner's no-new-agent rule,
+not a dual-agent critique. Font loading was not certified in this offline host.
+Earlier no-prototype finding and candidate chronology remain preserved; final
+production adoption follows this new bounded review, not a backdated approval.
+
+Reproduce from the repo root with
+`node scripts/live-drive/harness/weekly-schedule-comparison/build.mjs`, then
+`node scripts/live-drive/harness/weekly-schedule-comparison/serve.mjs` and open
+http://127.0.0.1:5195 only in the allocated neutral browser. Stop withCtrl+C.
+This developer-only harness is not mounted or imported by product source.
 
 E08 has returned the prior window; its Team P1s remain separately owned. E05's
 semantic source is frozen in2961 and E02's next window is queued for receiving.

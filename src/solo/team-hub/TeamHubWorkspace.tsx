@@ -1,5 +1,5 @@
 import { createContext, Fragment, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type DragEvent as ReactDragEvent, type KeyboardEvent as ReactKeyboardEvent, type MutableRefObject, type ReactNode, type RefObject } from "react";
-import { ArrowLeft, AtSign, ClipboardList, CornerDownRight, Download, FileImage, FileSpreadsheet, FileText, Hash, Lock, MessageSquareOff, MessageSquareReply, PanelRight, Paperclip, Plus, Search, SendHorizontal, Slash, UserPlus, Users, WifiOff, X } from "lucide-react";
+import { ArrowLeft, AtSign, ClipboardList, CornerDownRight, Download, FileImage, FileSpreadsheet, FileText, Hash, Lock, MessageSquareOff, MessageSquareReply, PanelRight, Paperclip, Plus, Radio, Search, SendHorizontal, Slash, UserPlus, Users, WifiOff, X } from "lucide-react";
 import { useTenantContext } from "@/hooks/useTenantContext";
 import { handOffPaigePrompt } from "@/lib/paigePromptHandoff";
 import { clearPaigeClientScope } from "@/solo/paigeClientScope";
@@ -33,6 +33,12 @@ import {
   mentionCandidates,
   mentionLabel,
   mentionRuns,
+  mentionRank,
+  broadcastIn,
+  broadcastLabel,
+  broadcastMatches,
+  broadcastRuns,
+  type TeamHubBroadcast,
   mentionScope,
   normalizeChannelName,
   permissionLabel,
@@ -471,7 +477,9 @@ function ReadyHub({ hub, announce, announcement, onOpenTeamSettings, openPaige }
     setPicked((current) => ({ ...current, [channelId]: [] }));
     setComposerError(null);
     focusComposer();
-    const outcome = await hub.send({ channelId, parentId: null, body: draft, mentionIds: mentions.ids, withFiles: true, agentKeys });
+    // A1c: @channel / @here only in a channel; they never ask an agent (agentKeys is only the named agents).
+    const broadcast = active?.kind === "channel" ? broadcastIn(draft) : null;
+    const outcome = await hub.send({ channelId, parentId: null, body: draft, mentionIds: mentions.ids, withFiles: true, agentKeys, broadcast });
     if (outcome.kind === "sent") announce("Message sent");
     else if (outcome.kind === "failed") announce("Message not sent. Retry is available.");
     else {
@@ -499,7 +507,9 @@ function ReadyHub({ hub, announce, announcement, onOpenTeamSettings, openPaige }
     setThreadDraft("");
     setThreadError(null);
     window.requestAnimationFrame(() => threadComposerRef.current?.focus());
-    const outcome = await hub.send({ channelId: thread.channelId, parentId: thread.rootId, body, mentionIds: [], withFiles: true, agentKeys });
+    const threadIn = conversations.find((item) => item.id === thread.channelId);
+    const broadcast = threadIn?.kind === "channel" ? broadcastIn(body) : null;
+    const outcome = await hub.send({ channelId: thread.channelId, parentId: thread.rootId, body, mentionIds: [], withFiles: true, agentKeys, broadcast });
     if (outcome.kind === "sent") announce("Reply posted");
     else if (outcome.kind === "failed") announce("Reply not sent. Retry is available.");
     else { restoreReply(thread.rootId, outcome.body, outcome.message); announce(outcome.message); }
@@ -1448,11 +1458,17 @@ function shortName(person: TeamHubPerson | null, people: TeamHubPerson[]): strin
 /** A person's words: their picked mentions highlighted, and the agents the message asked as agent chips. */
 function PersonText({ message, people }: { message: TeamHubMessage; people: TeamHubPerson[] }) {
   const asked = new Set(message.agent_mentions ?? []);
+  // A1c: @channel / @here are a chip only on a message the server stored as one (never a typed lookalike).
+  const plain = (text: string, key: string) => message.broadcast
+    ? broadcastRuns(text).map((part, partIndex) => part.broadcast
+      ? <span key={`${key}-${partIndex}`} className="th-mention th-bc-chip">{part.text}</span>
+      : <span key={`${key}-${partIndex}`}>{part.text}</span>)
+    : <span key={key}>{text}</span>;
   return <p className="th-text">{mentionRuns(message.body, message.mentions, people).map((run, index) => run.mention
     ? <span key={index} className="th-mention">{run.text}</span>
     : <Fragment key={index}>{agentRuns(run.text, asked).map((part, partIndex) => part.agent
       ? <AgentChip key={partIndex} agent={part.agent} />
-      : <span key={partIndex}>{part.text}</span>)}</Fragment>)}</p>;
+      : plain(part.text, String(partIndex)))}</Fragment>)}</p>;
 }
 
 /** An @mention of an agent: its tint, its ink, its symbol. Always at tint strength (one message can hold four). */
@@ -1661,12 +1677,15 @@ type ComposerProps = {
   onRemoveAttachment: (localId: string) => void;
 };
 
-type MentionItem = { kind: "person"; key: string; person: TeamHubPerson } | { kind: "agent"; key: string; agent: TeamHubAgentKey };
+type MentionItem = { kind: "person"; key: string; person: TeamHubPerson } | { kind: "agent"; key: string; agent: TeamHubAgentKey }
+  | { kind: "everyone"; key: string; broadcast: TeamHubBroadcast };
 
-/** An agent matches a typed query from the start of its name (or key): "@CU" is CURA. */
+/** An agent matches a typed query from the start of its name (or key): "@CU" is CURA; an exact name comes first. */
 const agentMatches = (query: string) => {
   const needle = query.trim().toLowerCase();
-  return TEAM_HUB_AGENT_KEYS.filter((key) => !needle || agentName(key).toLowerCase().startsWith(needle) || key.startsWith(needle));
+  return TEAM_HUB_AGENT_KEYS.filter((key) => !needle || agentName(key).toLowerCase().startsWith(needle) || key.startsWith(needle))
+    .map((key, order) => ({ key, order, rank: mentionRank(agentName(key), needle) < 0 ? 1 : mentionRank(agentName(key), needle) }))
+    .sort((a, b) => a.rank - b.rank || a.order - b.order).map((item) => item.key);
 };
 
 function Composer({ conversation, people, meId, online, value, onChange, picked, onPick, error, onSend, inputRef, commands, onCommand, agentsOffered,
@@ -1682,14 +1701,18 @@ function Composer({ conversation, people, meId, online, value, onChange, picked,
   const peopleOffered = mentionCandidates(scope, people, meId, "").length > 0;
   // Offered when someone besides the author can see this conversation, or an agent can be asked.
   const mentionsOffered = peopleOffered || agentsOffered;
+  // A1c: @channel and @here, in a channel only (never a DM or an agent DM), and only when someone
+  // besides the author is in it: people the person could not address are never offered.
+  const everyoneOffered = conversation.kind === "channel" && peopleOffered;
   const items = useMemo<MentionItem[]>(() => {
     if (!mention) return [];
     const found: MentionItem[] = mention.agentsOnly ? []
       : mentionCandidates(scope, people, meId, mention.query).map((person) => ({ kind: "person", key: person.user_id, person }));
     if (agentsOffered) for (const agent of agentMatches(mention.query)) found.push({ kind: "agent", key: `ag-${agent}`, agent });
+    if (everyoneOffered && !mention.agentsOnly) for (const broadcast of broadcastMatches(mention.query)) found.push({ kind: "everyone", key: `bc-${broadcast}`, broadcast });
     return found;
   // eslint-disable-next-line react-hooks/exhaustive-deps -- scope derives from the conversation
-  }, [mention, people, meId, conversation, agentsOffered]);
+  }, [mention, people, meId, conversation, agentsOffered, everyoneOffered]);
   const commandOptions = command ? commandMatches(command.query, commands) : [];
   const mentionOpen = Boolean(mention && items.length);
   const commandOpen = Boolean(command && commandOptions.length);
@@ -1733,7 +1756,8 @@ function Composer({ conversation, people, meId, online, value, onChange, picked,
     if (at < 0 || (at > 0 && !/\s/.test(before[at - 1]))) { setMention(null); return; }
     const query = before.slice(at + 1);
     if (/\n/.test(query) || query.length > 60) { setMention(null); return; }
-    const matches = mentionCandidates(scope, people, meId, query).length + (agentsOffered ? agentMatches(query).length : 0);
+    const matches = mentionCandidates(scope, people, meId, query).length + (agentsOffered ? agentMatches(query).length : 0)
+      + (everyoneOffered ? broadcastMatches(query).length : 0);
     if (!matches && /\s/.test(query)) { setMention(null); return; }
     // Typing on in a list Ask an agent opened keeps it to the agents.
     setMention((current) => ({ start: at, query, agentsOnly: current?.start === at ? current.agentsOnly : undefined }));
@@ -1743,9 +1767,10 @@ function Composer({ conversation, people, meId, online, value, onChange, picked,
   const pick = (item: MentionItem) => {
     if (!mention) return;
     const end = mention.start + 1 + mention.query.length;
-    if (item.kind === "agent") {
+    if (item.kind === "agent" || item.kind === "everyone") {
       // An agent is written as @NAME; the message asks it when it is sent (at most three), nothing before.
-      const name = agentName(item.agent);
+      // A1c: @channel / @here are written the same way and stored with the message when it is sent.
+      const name = item.kind === "agent" ? agentName(item.agent) : item.broadcast;
       const next = `${value.slice(0, mention.start)}@${name} ${value.slice(end).replace(/^[ \t]+/, "")}`;
       caret.current = mention.start + name.length + 2;
       onChange(next);
@@ -1835,20 +1860,24 @@ function Composer({ conversation, people, meId, online, value, onChange, picked,
     {mentionOpen && <div className="th-pop" id={listId} role="listbox" aria-label="People and agents">
       {items.map((item, optionIndex) => {
         const first = optionIndex === 0 || items[optionIndex - 1].kind !== item.kind;
-        // The groups are named once there are two of them; the agents' heading is the list's own.
-        const heading = first ? item.kind === "agent" ? TEAM_HEAD : items.some((other) => other.kind === "agent") ? "People in this conversation" : null : null;
+        // The groups are named once there are two of them; the agents' and Everyone's headings are their own.
+        const heading = first ? item.kind === "agent" ? TEAM_HEAD : item.kind === "everyone" ? "Everyone"
+          : items.some((other) => other.kind !== "person") ? "People in this conversation" : null : null;
         return <Fragment key={item.key}>
           {heading && <div className="th-pop-head" aria-hidden="true">{heading}</div>}
           <div id={`${listId}-${item.key}`} role="option" aria-selected={optionIndex === index} className="th-option"
-            data-ag={item.kind === "agent" ? item.agent : undefined}
+            data-ag={item.kind === "agent" ? item.agent : undefined} data-bc={item.kind === "everyone" ? item.broadcast : undefined}
             onMouseDown={(event) => event.preventDefault()} onClick={() => pick(item)} onMouseEnter={() => setIndex(optionIndex)}>
             {item.kind === "person"
               ? <><span className="th-avatar" aria-hidden="true">{initials(item.person.display_name)}</span>
                 <span className="th-option-meta"><span>{mentionLabel(item.person, people)}</span>
                   <small>{[permissionLabel(item.person.permission) ?? "Member", item.person.title].filter(Boolean).join(" · ")}</small></span></>
-              : <><AgentPlate agent={item.agent} size="md" />
+              : item.kind === "agent" ? <><AgentPlate agent={item.agent} size="md" />
                 <span className="th-option-meta"><span><span className="th-ag-name">{agentName(item.agent)}</span> <AgentTag agent={item.agent} /></span>
-                  <small>{TEAM_HUB_AGENT_PROFILES[item.agent].short} · replies in this conversation</small></span></>}
+                  <small>{TEAM_HUB_AGENT_PROFILES[item.agent].short} · replies in this conversation</small></span></>
+              : <><span className="th-avatar th-bc-plate" aria-hidden="true">{item.broadcast === "channel" ? <Users /> : <Radio />}</span>
+                <span className="th-option-meta"><span>@{item.broadcast}</span>
+                  <small>{broadcastLabel(item.broadcast, conversation.name ?? "")}</small></span></>}
           </div>
         </Fragment>;
       })}

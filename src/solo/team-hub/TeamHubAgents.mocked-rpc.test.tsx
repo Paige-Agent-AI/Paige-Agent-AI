@@ -77,7 +77,8 @@ function backend(name: string, params: Row) {
       return { ok: true };
     case "team_hub_post_message": {
       const message = msg({ id: `m-sent-${calls.length}`, author_user_id: ME, body: String(params.p_body).trim(), mentions: params.p_mention_ids ?? [],
-        parent_message_id: params.p_parent_message_id ?? null, agent_mentions: params.p_agent_mention_keys ?? [] });
+        parent_message_id: params.p_parent_message_id ?? null, agent_mentions: params.p_agent_mention_keys ?? [],
+        ...(params.p_broadcast_mention ? { broadcast: params.p_broadcast_mention } : {}) });
       if (params.p_parent_message_id) (db.replies[String(params.p_parent_message_id)] ??= []).push(message);
       else (db.messages[String(params.p_channel_id)] ??= []).push(message);
       return { ok: true, duplicate: false, message };
@@ -715,7 +716,8 @@ describe("agent identity", () => {
     const host = await mount();
     await type(composer(host), "@");
     const box = host.querySelector<HTMLElement>("[role=listbox][aria-label='People and agents']")!;
-    expect(Array.from(box.querySelectorAll(".th-pop-head")).map((item) => item.textContent)).toEqual(["People in this conversation", "Your Paige team"]);
+    // A1c: Slack-style, one list for anyone you'd address: people, then the agents, then Everyone.
+    expect(Array.from(box.querySelectorAll(".th-pop-head")).map((item) => item.textContent)).toEqual(["People in this conversation", "Your Paige team", "Everyone"]);
     const agentOption = box.querySelector<HTMLElement>("[role=option][data-ag='zion']")!;
     expect(agentOption.textContent).toContain("ZION");
     expect(agentOption.querySelector(".th-ag-tag")!.textContent).toBe("Agent");
@@ -925,5 +927,114 @@ describe("A1c: \"<AGENT> is writing…\" for everyone who can see the conversati
     const before = stateReads();
     await tick(REFRESH_INTERVAL_MS - 1);
     expect(stateReads()).toBe(before);
+  });
+});
+
+describe("A1c: one @ list for anyone you'd address (Slack-style), and @channel / @here", () => {
+  const box = (host: HTMLElement) => host.querySelector<HTMLElement>("[role=listbox][aria-label='People and agents']");
+  const optionKeys = (host: HTMLElement) => Array.from(box(host)?.querySelectorAll<HTMLElement>("[role=option]") ?? [])
+    .map((option) => option.getAttribute("data-ag") ?? (option.getAttribute("data-bc") ? `@${option.getAttribute("data-bc")}` : option.querySelector(".th-option-meta span")!.textContent));
+
+  it("lists people who can see the conversation first, then Your Paige team, then Everyone with @channel and @here", async () => {
+    const host = await mount();
+    await type(composer(host), "@");
+    expect(optionKeys(host)).toEqual(["Priya Nair", "Sam Lee", "paige", "vera", "nexus", "cura", "mentor", "merit", "zion", "@channel", "@here"]);
+    const everyone = Array.from(box(host)!.querySelectorAll("[role=option][data-bc]"));
+    expect(everyone.map((option) => option.textContent)).toEqual(["@channelEveryone in #launch", "@hereEveryone active in #launch"]);
+    // Neutral: no agent colour on the Everyone options.
+    expect(everyone.every((option) => !option.hasAttribute("data-ag") && !option.querySelector("[data-ag]"))).toBe(true);
+  });
+
+  it("filters every group by the start of any word, closest first, and the keyboard moves, picks and closes", async () => {
+    const host = await mount();
+    await type(composer(host), "@le");
+    expect(optionKeys(host)).toEqual(["Sam Lee"]);
+    await type(composer(host), "@ri");
+    expect(box(host)).toBeNull();
+    await type(composer(host), "@me");
+    expect(optionKeys(host)).toEqual(["mentor", "merit"]);
+    await type(composer(host), "@merit");
+    expect(optionKeys(host)).toEqual(["merit"]);
+    await type(composer(host), "@ev");
+    expect(optionKeys(host)).toEqual(["@channel", "@here"]);
+    await type(composer(host), "@he");
+    expect(optionKeys(host)).toEqual(["@here"]);
+    // Up from the first option wraps to the last; Tab picks it; Esc closes a reopened list.
+    await type(composer(host), "@");
+    await press(composer(host), "ArrowUp");
+    expect(composer(host).getAttribute("aria-activedescendant")).toBe(box(host)!.querySelector("[role=option][data-bc='here']")!.id);
+    await press(composer(host), "ArrowUp");
+    expect(composer(host).getAttribute("aria-activedescendant")).toBe(box(host)!.querySelector("[role=option][data-bc='channel']")!.id);
+    await press(composer(host), "Tab");
+    expect(composer(host).value).toBe("@channel ");
+    await type(composer(host), "@channel @");
+    expect(box(host)).not.toBeNull();
+    await press(composer(host), "Escape");
+    expect(box(host)).toBeNull();
+  });
+
+  it("@channel is stored with the message, never asks an agent, and shows as a neutral chip", async () => {
+    const host = await mount();
+    await type(composer(host), "@channel the launch is Friday");
+    await press(composer(host), "Enter");
+    await flush();
+    const post = calls.find((call) => call.name === "team_hub_post_message")!;
+    expect(post.params.p_broadcast_mention).toBe("channel");
+    expect(post.params.p_agent_mention_keys).toBeUndefined();
+    expect(turns).toHaveLength(0);
+    expect(mocks.invoke).not.toHaveBeenCalled();
+    const chip = host.querySelector(".th-bc-chip")!;
+    expect(chip.textContent).toBe("@channel");
+    expect(chip.classList.contains("th-mention")).toBe(true);
+    expect(chip.hasAttribute("data-ag")).toBe(false);
+  });
+
+  it("@here and @channel together send @channel; a plain message sends neither", async () => {
+    const host = await mount();
+    await type(composer(host), "@here and @channel: standup moved");
+    await press(composer(host), "Enter");
+    await flush();
+    await type(composer(host), "standup moved");
+    await press(composer(host), "Enter");
+    await flush();
+    const posts = calls.filter((call) => call.name === "team_hub_post_message");
+    expect(posts[0].params.p_broadcast_mention).toBe("channel");
+    expect("p_broadcast_mention" in posts[1].params).toBe(false);
+  });
+
+  it("is never offered or sent in a person DM or an agent DM", async () => {
+    db.conversations.push(conv({ id: "c-dm-priya", kind: "dm", name: null, visibility: "private", member_count: 2, member_ids: [ME, "u-priya"], dm_user_id: "u-priya" }));
+    db.messages["c-dm-priya"] = [];
+    db.conversations.push(agentDm("cura"));
+    db.messages["c-dm-cura"] = [];
+    const host = await mount();
+    await click(host.querySelector<HTMLElement>("#th-conv-c-dm-priya"));
+    await type(composer(host), "@");
+    expect(box(host)!.querySelector("[data-bc]")).toBeNull();
+    await type(composer(host), "@here are you free?");
+    await press(composer(host), "Enter");
+    await flush();
+    await click(host.querySelector<HTMLElement>("#th-conv-c-dm-cura"));
+    await type(composer(host), "@here hello");
+    await press(composer(host), "Enter");
+    await flush();
+    const posts = calls.filter((call) => call.name === "team_hub_post_message");
+    expect(posts).toHaveLength(2);
+    expect(posts.every((call) => !("p_broadcast_mention" in call.params))).toBe(true);
+  });
+
+  it("renders a sent message's person, agent and @channel chips: the person and @channel neutral, the agent in its identity", async () => {
+    db.messages["c-launch"] = [
+      msg({ id: "m-chips", body: "@channel @Priya Nair and @CURA: Friday", mentions: ["u-priya"], agent_mentions: ["cura"], broadcast: "channel" }),
+      msg({ id: "m-typed", body: "a typed @channel the server did not store" }),
+    ];
+    const host = await mount();
+    const row = rowOf(host, "m-chips")!;
+    const person = Array.from(row.querySelectorAll(".th-mention")).find((chip) => chip.textContent === "@Priya Nair")!;
+    expect(person.hasAttribute("data-ag")).toBe(false);
+    expect(person.classList.contains("th-bc-chip")).toBe(false);
+    expect(row.querySelector(".th-ag-chip[data-ag='cura']")!.textContent).toBe("@CURA");
+    expect(row.querySelector(".th-bc-chip")!.textContent).toBe("@channel");
+    expect(rowOf(host, "m-typed")!.querySelector(".th-bc-chip")).toBeNull();
   });
 });

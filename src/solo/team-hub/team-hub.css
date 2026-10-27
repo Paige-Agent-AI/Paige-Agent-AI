@@ -139,6 +139,10 @@
 .th-role{color:var(--pg-muted);font-size:11px}
 .th-text{margin:2px 0 0;color:var(--pg-ink-2);overflow-wrap:anywhere;white-space:pre-wrap;max-width:75ch}
 .th-mention{padding:0 3px;border-radius:5px;background:color-mix(in srgb,var(--pg-violet) 20%,transparent);color:var(--pg-ink);font-weight:500}
+/* A1c: @channel / @here are the neutral mention chip people get, never an agent's colour; their option
+   in the @ list carries the graphite plate with a symbol (people for @channel, a signal for @here). */
+.th-bc-chip{font-weight:600;white-space:nowrap}
+.th-hub .th-bc-plate svg{width:13px;height:13px}
 .th-replies{display:inline-flex;align-items:center;gap:6px;min-height:40px;margin-top:6px;padding:0 11px;border:1px solid var(--pg-line-soft);border-radius:7px;background:transparent;color:var(--pg-violet);font-size:12px;cursor:pointer}
 .th-replies:hover{border-color:var(--pg-line)}
 .th-replies span{color:var(--pg-muted)}

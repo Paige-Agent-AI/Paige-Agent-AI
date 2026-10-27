@@ -25,6 +25,7 @@ import {
   postRefusalMessage,
   refusalMessage,
   TASK_COMMAND_TEXT,
+  type TeamHubBroadcast,
   type TeamHubChannelSummary,
   type TeamHubFileMime,
   type TeamHubFileRefusal,
@@ -158,6 +159,8 @@ export interface PendingMessage {
   parentId: string | null;
   body: string;
   mentionIds: string[];
+  /** A1c: @channel or @here, sent only when the message carries one. */
+  broadcast?: TeamHubBroadcast;
   /** Increment 3: the ready files this message posts, by record id, in the order they were attached. */
   files: AttachmentChip[];
   /** A1b: the agents this message asks (at most 3), stored by the post itself. */
@@ -838,6 +841,8 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
         p_file_ids: attempt.files.map((file) => file.fileId),
         // A1b: only when the message asks agents, so every other post keeps its exact call.
         ...(attempt.agentKeys?.length ? { p_agent_mention_keys: attempt.agentKeys } : {}),
+        // A1c: likewise only when the message says @channel or @here.
+        ...(attempt.broadcast ? { p_broadcast_mention: attempt.broadcast } : {}),
       });
     const parsed = isTask ? parseTaskRequested(answer.data, answer.error) : parsePosted(answer.data, answer.error);
     // For a task, the server's `unavailable` also means Operations refused (PLAN_FORBIDDEN, contract
@@ -896,7 +901,7 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
   }, [call, settle, readTaskStatuses, setScopeChips]);
 
   /** With `withFiles`, the composer's ready files leave it and travel with the message (and its Retry). */
-  const send = useCallback((input: { channelId: string; parentId: string | null; body: string; mentionIds: string[]; withFiles?: boolean; agentKeys?: TeamHubAgentKey[] }) => {
+  const send = useCallback((input: { channelId: string; parentId: string | null; body: string; mentionIds: string[]; withFiles?: boolean; agentKeys?: TeamHubAgentKey[]; broadcast?: TeamHubBroadcast | null }) => {
     const scope = attachmentScope(input.channelId, input.parentId);
     const files = input.withFiles ? (live.current.attachments[scope] ?? []).filter((chip) => chip.state === "ready" && chip.fileId) : [];
     if (files.length) setScopeChips(scope, (chips) => chips.filter((chip) => !files.some((file) => file.localId === chip.localId)));
@@ -910,6 +915,7 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
       mentionIds: input.mentionIds,
       files,
       ...(input.agentKeys?.length ? { agentKeys: input.agentKeys } : {}),
+      ...(input.broadcast ? { broadcast: input.broadcast } : {}),
       status: "sending",
     };
     setPending((current) => [...current, attempt]);

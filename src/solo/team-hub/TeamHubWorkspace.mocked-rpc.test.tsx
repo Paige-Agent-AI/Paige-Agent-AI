@@ -519,11 +519,13 @@ describe("mentions (mocked RPC)", () => {
     const { host } = await mount();
     expect(button(host, "Mention someone")).toBeDefined();
     await type(composer(host), "@");
-    const people = Array.from(host.querySelectorAll("[role=option]:not([data-ag])")).map((option) => option.textContent);
+    const people = Array.from(host.querySelectorAll("[role=option]:not([data-ag]):not([data-bc])")).map((option) => option.textContent);
     expect(people).toHaveLength(1);
     expect(people[0]).toContain("Sam Lee (Sales)");
-    // PAIGE and her agents follow, under their own heading.
+    // PAIGE and her agents follow, under their own heading; then (A1c) Everyone, for this channel's members.
     expect(host.querySelectorAll("[role=option][data-ag]")).toHaveLength(7);
+    expect(Array.from(host.querySelectorAll("[role=option][data-bc]")).map((option) => option.textContent))
+      .toEqual(["@channelEveryone in #leadership", "@hereEveryone active in #leadership"]);
   });
 
   it("offers no person in a private channel with nobody else in it, only the agents", async () => {
@@ -535,6 +537,8 @@ describe("mentions (mocked RPC)", () => {
     await type(composer(host), "@");
     expect(host.querySelectorAll("[role=option]:not([data-ag])")).toHaveLength(0);
     expect(host.querySelectorAll("[role=option][data-ag]")).toHaveLength(7);
+    // A1c: nobody else is here, so @channel / @here are not offered either.
+    expect(host.querySelector("[role=option][data-bc]")).toBeNull();
   });
 
   it("offers no mention list at all in a private channel with nobody else in it when the tier has no agents", async () => {

@@ -136,6 +136,35 @@ export interface TeamHubMessage {
   asked_in_message_id?: string | null;
   /** On a person's message: the agents it asks (at most 3). */
   agent_mentions?: TeamHubAgentKey[];
+  /** A1c: the @channel or @here the server stored on it (a channel message only), else null. */
+  broadcast?: TeamHubBroadcast | null;
+}
+
+/** A1c: @channel (everyone in the channel) and @here (everyone active in it now). Slack's meanings. */
+export type TeamHubBroadcast = "channel" | "here";
+export const TEAM_HUB_BROADCASTS: readonly TeamHubBroadcast[] = ["channel", "here"];
+
+/** The @channel / @here a draft says, as a whole word; @channel wins when both are there (it includes @here). */
+export function broadcastIn(body: string): TeamHubBroadcast | null {
+  const found = [...body.matchAll(/(?:^|\s)@(channel|here)(?![\p{L}\p{N}_])/giu)].map((match) => match[1].toLowerCase());
+  return found.includes("channel") ? "channel" : found.includes("here") ? "here" : null;
+}
+
+/** The words an @channel / @here option offers: "Everyone in #launch", "Everyone active in #launch". */
+export function broadcastLabel(kind: TeamHubBroadcast, channelName: string): string {
+  return kind === "channel" ? `Everyone in #${channelName}` : `Everyone active in #${channelName}`;
+}
+
+/** An @channel / @here option matches a typed query from the start of its word, or of "everyone". */
+export function broadcastMatches(query: string): TeamHubBroadcast[] {
+  const needle = query.trim().toLowerCase();
+  return TEAM_HUB_BROADCASTS.filter((kind) => !needle || kind.startsWith(needle) || "everyone".startsWith(needle));
+}
+
+/** Split text into plain runs and @channel / @here runs (shown as a chip only on a message the server marked). */
+export function broadcastRuns(text: string): Array<{ text: string; broadcast?: TeamHubBroadcast }> {
+  return text.split(/((?<=^|\s)@(?:channel|here)(?![\p{L}\p{N}_]))/iu).filter(Boolean)
+    .map((part) => /^@(channel|here)$/i.test(part) ? { text: part, broadcast: part.slice(1).toLowerCase() as TeamHubBroadcast } : { text: part });
 }
 
 /** True when an agent wrote this message (A1a). Such a message is not rendered until A1b. */
@@ -360,6 +389,8 @@ function parseMessage(value: unknown): TeamHubMessage | null {
     asked_in_message_id: askedIn,
     // An agent key this build does not know is a tag it cannot show, so it is dropped, not guessed at.
     agent_mentions: [...new Set((agentMentions as string[]).filter(isTeamHubAgentKey))],
+    // A1c: absent on every message that carries none; a kind this build does not know is not shown.
+    broadcast: value.broadcast === "channel" || value.broadcast === "here" ? value.broadcast : null,
   };
 }
 
@@ -748,9 +779,25 @@ export function mentionCandidates(scope: MentionScope, people: TeamHubPerson[], 
     // not offered: they couldn't read the conversation they would be told about.
     .filter((person) => !conversationsOff(person))
     .filter((person) => scope.kind === "everyone" || scope.ids.includes(person.user_id))
+    // A1c (Slack-style): a name matches from the start of any of its words ("@nai" is Priya Nair, never
+    // "Rainer"), and the closest come first: the exact name, then names that start with it, then the rest.
+    .map((person) => ({ person, rank: mentionRank(mentionLabel(person, people), needle) }))
+    .filter((item) => item.rank >= 0)
+    .sort((a, b) => a.rank - b.rank || a.person.display_name.localeCompare(b.person.display_name))
+    .map((item) => item.person);
+}
 
-    .filter((person) => !needle || mentionLabel(person, people).toLowerCase().includes(needle))
-    .sort((a, b) => a.display_name.localeCompare(b.display_name));
+/**
+ * How closely a name answers a typed @query: 0 the whole name, 1 the name starts with it, 2 one of its
+ * words starts with it, -1 no match. An empty query matches everything, equally.
+ */
+export function mentionRank(name: string, query: string): number {
+  const needle = query.trim().toLowerCase();
+  if (!needle) return 0;
+  const label = name.toLowerCase();
+  if (label === needle) return 0;
+  if (label.startsWith(needle)) return 1;
+  return label.split(/[\s()·,./-]+/u).some((word) => word && word.startsWith(needle)) ? 2 : -1;
 }
 
 export interface PickedMention { user_id: string; label: string }

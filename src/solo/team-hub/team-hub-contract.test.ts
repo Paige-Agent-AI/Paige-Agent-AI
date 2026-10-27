@@ -5,7 +5,12 @@ import {
   messageLength,
   channelNameProblem,
   incomingAnnouncement,
+  broadcastIn,
+  broadcastLabel,
+  broadcastMatches,
+  broadcastRuns,
   mentionCandidates,
+  mentionRank,
   mentionLabel,
   mentionRuns,
   mentionScope,
@@ -66,7 +71,7 @@ const message = (over: Partial<TeamHubMessage> = {}): TeamHubMessage => ({
   id: "m-1", author_user_id: "u-dana", body: "Hello", created_at: "2026-10-24T10:00:00.000Z",
   parent_message_id: null, reply_count: 0, last_reply_at: null, mentions: [], work_ref: null, files: [],
   // A1a: the server now says who wrote it; a person's message names no agent.
-  author_kind: "user", agent_key: null, asked_in_message_id: null, agent_mentions: [], ...over,
+  author_kind: "user", agent_key: null, asked_in_message_id: null, agent_mentions: [], broadcast: null, ...over,
 });
 const list = (over: Record<string, unknown> = {}) => ({
   ok: true, tenant_id: TENANT, me: { user_id: "u-me" },
@@ -195,6 +200,31 @@ describe("mentions", () => {
     expect(mentionCandidates(mentionScope(leadership), people, "u-me", "").map((p) => p.user_id)).toEqual(["u-sam-s"]);
     expect(mentionCandidates(mentionScope(conversation({ visibility: "private", member_count: 1, member_ids: ["u-me"] })), people, "u-me", "")).toEqual([]);
     expect(mentionCandidates(mentionScope(conversation()), people, "u-me", "sal").map((p) => p.user_id)).toEqual(["u-sam-s"]);
+  });
+
+  it("A1c: matches from the start of any word of the name, never the middle of one, and ranks exact, then prefix, then word", () => {
+    const team = mentionScope(conversation());
+    const roster = [
+      person({ user_id: "u-rainer", display_name: "Rainer Ost" }),
+      person({ user_id: "u-priya", display_name: "Priya Nair" }),
+      person({ user_id: "u-nai", display_name: "Nai" }),
+      person({ user_id: "u-naila", display_name: "Naila Brooks" }),
+      person({ user_id: "u-anna", display_name: "Anna Naidu" }),
+      me,
+    ];
+    const ids = (query: string) => mentionCandidates(team, roster, "u-me", query).map((p) => p.user_id);
+    // "nai": the exact name first, then the name that starts with it, then later words (A to Z); never Rainer.
+    expect(ids("nai")).toEqual(["u-nai", "u-naila", "u-anna", "u-priya"]);
+    expect(ids("NAI")).toEqual(["u-nai", "u-naila", "u-anna", "u-priya"]);
+    expect(ids("ost")).toEqual(["u-rainer"]);
+    expect(ids("ain")).toEqual([]);
+    expect(ids("priya n")).toEqual(["u-priya"]);
+    expect(mentionCandidates(mentionScope(conversation()), people, "u-me", "sal").map((p) => p.user_id)).toEqual(["u-sam-s"]);
+    expect(mentionRank("Priya Nair", "")).toBe(0);
+    expect(mentionRank("Priya Nair", "priya nair")).toBe(0);
+    expect(mentionRank("Priya Nair", "pri")).toBe(1);
+    expect(mentionRank("Priya Nair", "nair")).toBe(2);
+    expect(mentionRank("Priya Nair", "ya")).toBe(-1);
   });
 
   it("sends only picked people whose label is still in the text", () => {
@@ -703,5 +733,32 @@ describe("agent rows (A1a): tolerated, never misread, never emptying the list", 
   it("reads the roster's name-clash mark, and a person without one has none", () => {
     const result = parseConversationList(list({ people: [person({ display_name: "Vera Lane", agent_name_clash: true } as Partial<TeamHubPerson>), person({ user_id: "u-me" })] }), null, TENANT);
     expect(result.kind === "ok" && result.value.people.map((p) => p.agent_name_clash)).toEqual([true, false]);
+  });
+});
+
+describe("A1c: @channel / @here", () => {
+  it("reads the stored broadcast from a message: channel or here, absent or unknown is none", () => {
+    const parse = (over: Record<string, unknown>) => {
+      const result = parsePosted({ ok: true, message: { ...message(), broadcast: undefined, ...over } }, null);
+      return result.kind === "ok" ? result.value.message.broadcast : "refused";
+    };
+    expect(parse({})).toBeNull();
+    expect(parse({ broadcast: "channel" })).toBe("channel");
+    expect(parse({ broadcast: "here" })).toBe("here");
+    expect(parse({ broadcast: "everyone" })).toBeNull();
+  });
+
+  it("finds @channel / @here as whole words only, @channel winning when both are there", () => {
+    expect(broadcastIn("@channel launch Friday")).toBe("channel");
+    expect(broadcastIn("ping @here please")).toBe("here");
+    expect(broadcastIn("@here and @channel")).toBe("channel");
+    expect(broadcastIn("@HERE now")).toBe("here");
+    expect(broadcastIn("email@here.com and @channels and @herein")).toBeNull();
+    expect(broadcastMatches("")).toEqual(["channel", "here"]);
+    expect(broadcastMatches("ev")).toEqual(["channel", "here"]);
+    expect(broadcastMatches("h")).toEqual(["here"]);
+    expect(broadcastMatches("x")).toEqual([]);
+    expect(broadcastLabel("here", "launch")).toBe("Everyone active in #launch");
+    expect(broadcastRuns("hi @channel, see @here").map((run) => run.broadcast ?? run.text)).toEqual(["hi ", "channel", ", see ", "here"]);
   });
 });

@@ -349,7 +349,7 @@ function MessageBubble({
         // generic undo, which no longer touches a governed row). The time is the viewer's local time.
         governed === "scheduled" && m.comms_email_operation && m.comms_email_send_at ? (
           <p className="flex flex-wrap items-center gap-x-2 text-[11px] leading-4 text-muted-foreground">
-            <span className="whitespace-nowrap">Sends {scheduledForLabel(m.comms_email_send_at)}</span>
+            <span>Sends {scheduledForLabel(m.comms_email_send_at)}</span>
             <button
               type="button"
               data-governed-send="scheduled"
@@ -357,7 +357,7 @@ function MessageBubble({
               aria-busy={cancelPending || undefined}
               aria-label={cancelPending ? "Canceling the scheduled email" : `Cancel the email scheduled for ${scheduledForLabel(m.comms_email_send_at)}`}
               onClick={() => onCancelGovernedScheduled(m.comms_email_operation!)}
-              className="text-[11px] font-medium text-foreground underline underline-offset-2 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--ring))] disabled:cursor-not-allowed"
+              className="-my-1 inline-flex min-h-6 min-w-6 items-center px-1 text-[11px] font-medium text-foreground underline underline-offset-2 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--ring))] disabled:cursor-not-allowed"
             >
               {cancelPending ? "Canceling…" : "Cancel"}
             </button>

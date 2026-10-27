@@ -868,6 +868,16 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 This mechanical closeout records the preceding delivery only and is not logged recursively.
 
+**Later October27 source closeout — original Systems observation and recorded review.**
+
+| Increment | Exact released source and production readback | Acceptance boundary |
+| --- | --- | --- |
+| [#2982 original manual observation](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2982#issuecomment-6448668561) | Reviewed62a746702751c05b7fba33202e8fadd0a24a0b63, AUTHOR-REVIEW / LOWER ASSURANCE5670437495+5671097816; all13 exact checks/two webSUCCESS/zero threads. Actual mergeaea94a0e8a1c8ecf57fd01de17ca92ca17f90651/tree3040f9fc5c3bfdc7fadea18c6a5468ed60d652f8, parentsa4d76+62a746; six executed leaves/all16,904 outside entries/four whole histories exact. Native40545604229/deploy122335943451 SUCCESS:20271118100002 once, old unapplied17160002 absent; original OIDs294699/302701, ABI/ACL/owner/config retained and Workd953ea9965f31193d3dbf2f184114730/observer4faba2ef81b8e1af9f29c3bf4fa883f8 verified. Initial Edge40545604400 FAILED and did not certify; normal containing cc8c4ba2db88380c4c4aa71e8da48265472692d1 release40545937703/job122338977136 certifies all322 original source/compiler/emission hashes and JWT/config (Chat562/294, inbound131/28), exactedge-livecc8, unchanged six E02 leaves. Original ephemeral scratch-cleanup advisory retained. Own webdpl_DPJkiVcx8MP1K22zsYhSoBfN992T and containingdpl_EVLuB7QzNgpLupeZz9zC3L7rZqmZ READY; both publicorigins17:10:06UTC exactcc8-mvqxigy0/null/matching reachable assets/missing404. | SOURCE VERIFIED only. Same accepted-intent/current actor/tenant/original Work/run and exact original Rail observation; no raw activity matching, legacy authorization relaxation, scan, public registration, new grant, worker/provider/consequential activation or customer announcement.47 native+34 legacy+148 original Systems/38 client controls remain bounded proof. Actual authorized manual check/roles/cohorts/Chat/reload/Finance/full19/nine/founder acceptance owed; systems.check UNREGISTERED/UNAVAILABLE, CAP/ALG unchanged. |
+| [#2991 original recorded-run review](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2991#issuecomment-6448727259) | Reviewedb32029b3141c571d245644bda640cb6974e60be2/treef41cf4e6, LOWER5670806460+5671436998; all10 applicable exact checks/two webSUCCESS/no-SQL PreviewSKIP/zero threads. Actual merge8bbfa8fb350879de8b52746ac9a9bd5c5642303a/tree5da95975375b10b2e078e94c35ff02eb1f740ce7, exactparents231fd2+b32029;37 owning non-document/all16,931 outside leaves/three whole histories retained. Productiondpl_6tYxhYFEPyUjhcHckWubnFsFT1oY READY; bothorigins17:23:07UTC exact8bbfa-mvqycx1x/null/matching reachable bootstrap/entry/Solo assets, original return/period/run-review markers/missing404. SQL/Edge/permission/provider delta N/A. | Original caller/RLS read and same-router ?run= review; honest unfinished/zero/unknown counts and guarded conversation/focus return.180 source controls/five suites,28 supporting raw synthetic frames/eight shell layouts/320–390 states/native keyboard750.4000px return; causal unmount correction is not a fresh rendered-head claim. Authenticated customer run/Finance7/Chat/Live/roles/cohorts/reload/full19/nine/founder acceptance owed. No scan, receipt inference, replacement finding links, registry/activation/algorithm promotion or customer release announcement. |
+
+These rows close the preceding source deliveries; the private dependent consumer
+remains a separately reviewed release and does not activate customer scans.
+
 **2026-10-27 UTC — EXP02 original Executive invitation period.**
 
 #2981 merged `ecb28d4b896be2f2ce43e5454f740cc3f45e8329`; actual tree `01c2ab85ce9385df5b78985ca0421a2e1225a903` equals reviewed9d3b3de9/LOWER5666843311.
@@ -915,6 +925,33 @@ No native/Edge/authority/provider/action activation delta. Visual12 synthetic fr
 
 This mechanical identity closeout records only that preceding release; it adds no
 product, policy, capability readiness or acceptance change and is not logged recursively.
+
+**2026-10-27 17:52UTC — EXP02 preceding releases, authenticated read-proof addendum.**
+
+ANT52e8b9e9d8 binds the designated ordinary SOLO Owner's actual loaded bootstrap
+to production8bbfa8fb350879de8b52746ac9a9bd5c5642303a/dpl_6tYxhYFEPyUjhcHckWubnFsFT1oY,
+both publicorigins exact8bbfa-mvqycx1x/null/matching assets17:37–17:51UTC. Finance
+menu→Overview/all seven pages read AND reload, VERA unsent context/native Back,
+source Escape/focus, truthful missing financial coverage and empty target SAMPLE
+PASS. [Finance QA](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2967#issuecomment-6449596126).
+ONE new read-only weekly reply settled by51.167s observation/three steps38s;
+full reply/prior transcript persisted verbatim except the exact ephemeral Done/
+duration UI segment, original single request/three saved read steps/empty composer
+retained. [Weekly QA](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2455#issuecomment-6449597291).
+Actual saved source links→Executive/Systems, original recorded-run read/same
+bookmark/result reload/heading/Escape/Refresh focus PASS; no scan started.
+[#2991 QA](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2991#issuecomment-6449594737).
+All nine catalogue labels3Limited/3Unverified/3ComingSoon/allAccessUnverified.
+
+Raw customer values/IDs/browser evidence remain private. Several closed/narrow
+raster dimensions differ from requested CSS sizes; no exact eight-raster/native
+zoom/physical mobile/full AT claim. Other-role/tenant/cohort negatives, populated
+financial/target facts, revocation, Live, governed actions/receipts/full19/nine
+and FounderNOT_ACCEPTED remain owed. Original9-0/12-0-4/monthlyUNKNOWNUNRETRIED,
+CAP/ALG maturity and activation boundaries unchanged. QA resource returned to
+E05, temporary tab closed/viewport reset/original tabs/draft preserved. This
+records preceding deliveries' observed proof; no new runtime/customer release,
+capability promotion, policy or complete-Experience acceptance is introduced.
 
 **2026-10-27 UTC — EXP03: PAIGE's own email moves off Resend onto SendGrid (owner ruling 2026-10-26, Resend account emptied).**
 

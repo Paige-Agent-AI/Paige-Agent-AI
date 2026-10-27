@@ -93,11 +93,14 @@ export const REFRESH_INTERVAL_MS = 15_000;
 /**
  * A1c: while a reply in the open conversation is being written ("<AGENT> is writing…", shown to everyone
  * who can see the conversation), its state is re-read this often, so the row ends soon after the reply
- * posts. It stops when nothing is being written, when the tab is hidden, or after
- * AGENT_WRITING_POLL_MAX_MS; the 15 s refresh carries on as before.
+ * posts. It stops when nothing is being written, when the tab is hidden, or AGENT_WRITING_POLL_MAX_MS
+ * after fast re-reading BEGAN for the open conversation; the 15 s refresh carries on as before. The cap
+ * is not restarted when another reply starts (or one ends) while writing goes on; it starts again only
+ * when the conversation changes, or once nothing has been written for AGENT_WRITING_IDLE_RESET_MS.
  */
 export const AGENT_WRITING_POLL_MS = 3_000;
 export const AGENT_WRITING_POLL_MAX_MS = 120_000;
+export const AGENT_WRITING_IDLE_RESET_MS = 60_000;
 const PAGE_SIZE = 50;
 const THREAD_PAGE_SIZE = 50;
 
@@ -1112,15 +1115,26 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
     const now = new Set(writingKeys ? writingKeys.split(",") : []);
     if (before.keys.split(",").some((key) => !now.has(key))) void refreshRef.current();
   }, [openChannel, writingKeys]);
+  // When fast re-reading began for the open conversation, and since when nothing has been written there.
+  const fastReads = useRef<{ channel: string | null; startedAt: number | null; idleSince: number | null }>({ channel: null, startedAt: null, idleSince: null });
   useEffect(() => {
-    if (!openChannel || !writingKeys) return;
-    const started = Date.now();
+    const now = Date.now();
+    const fast = fastReads.current;
+    if (fast.channel !== openChannel) { fast.channel = openChannel; fast.startedAt = null; fast.idleSince = null; }
+    if (!openChannel || !writingKeys) {
+      if (fast.startedAt !== null && fast.idleSince === null) fast.idleSince = now;
+      return;
+    }
+    // A new burst of writing starts the cap; a change in WHICH replies are writing does not.
+    if (fast.startedAt === null || (fast.idleSince !== null && now - fast.idleSince >= AGENT_WRITING_IDLE_RESET_MS)) fast.startedAt = now;
+    fast.idleSince = null;
+    const started = fast.startedAt;
+    if (now - started >= AGENT_WRITING_POLL_MAX_MS) return;
     const timer = window.setInterval(() => {
       if (Date.now() - started >= AGENT_WRITING_POLL_MAX_MS) { window.clearInterval(timer); return; }
       if (document.visibilityState === "visible") setStatesTick((n) => n + 1);
     }, AGENT_WRITING_POLL_MS);
     return () => window.clearInterval(timer);
-    // Restarted only when the conversation or what is being written changes, so the 2-minute cap holds.
   }, [openChannel, writingKeys]);
 
   /** A person's DM with one agent: the listed one, or opened (made once) through its own door. */

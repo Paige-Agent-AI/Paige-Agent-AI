@@ -267,6 +267,8 @@ function ReadyHub({ hub, announce, announcement, onOpenTeamSettings, openPaige }
   const [picked, setPicked] = useState<Record<string, PickedMention[]>>({});
   const [composerError, setComposerError] = useState<string | null>(null);
   const [threadDraft, setThreadDraft] = useState("");
+  // A1c: the people picked from the thread's @ list (the same list as the conversation's composer).
+  const [threadPicked, setThreadPicked] = useState<PickedMention[]>([]);
   const [threadError, setThreadError] = useState<string | null>(null);
   const composerRef = useRef<HTMLTextAreaElement>(null);
   const threadComposerRef = useRef<HTMLTextAreaElement>(null);
@@ -499,17 +501,22 @@ function ReadyHub({ hub, announce, announcement, onOpenTeamSettings, openPaige }
     if (problem === "too_long") { const text = refusalMessage("too_long", "send"); setThreadError(text); announce(text); return; }
     const waiting = filesProblem(chips);
     if (waiting) { setThreadError(waiting); announce(waiting); return; }
+    // A1c: the people picked from the thread's @ list are mentioned, as in the conversation's composer.
+    const mentions = resolveMentions(threadDraft, threadPicked, people);
+    if (!mentions.ok) { setThreadError(mentions.problem); announce(mentions.problem); return; }
     // A1b: a thread reply may ask agents too; the agent answers in this thread.
     const inAgentDm = agentDms.some((dm) => dm.id === thread.channelId);
-    const agentKeys = agentsOn && !inAgentDm ? agentMentionsIn(threadDraft) : [];
+    const agentKeys = agentsOn && !inAgentDm ? agentMentionsIn(threadDraft, threadPicked.filter((item) => threadDraft.includes(`@${item.label}`)).map((item) => item.label)) : [];
     if (agentKeys.length > MAX_AGENTS_PER_MESSAGE) { setThreadError(TOO_MANY_AGENTS); announce(TOO_MANY_AGENTS); return; }
     const body = threadDraft;
     setThreadDraft("");
+    setThreadPicked([]);
     setThreadError(null);
     window.requestAnimationFrame(() => threadComposerRef.current?.focus());
+    // A1c: @channel / @here from a thread only when the thread is in a channel (never a DM or an agent DM).
     const threadIn = conversations.find((item) => item.id === thread.channelId);
     const broadcast = threadIn?.kind === "channel" ? broadcastIn(body) : null;
-    const outcome = await hub.send({ channelId: thread.channelId, parentId: thread.rootId, body, mentionIds: [], withFiles: true, agentKeys, broadcast });
+    const outcome = await hub.send({ channelId: thread.channelId, parentId: thread.rootId, body, mentionIds: mentions.ids, withFiles: true, agentKeys, broadcast });
     if (outcome.kind === "sent") announce("Reply posted");
     else if (outcome.kind === "failed") announce("Reply not sent. Retry is available.");
     else { restoreReply(thread.rootId, outcome.body, outcome.message); announce(outcome.message); }
@@ -618,6 +625,7 @@ function ReadyHub({ hub, announce, announcement, onOpenTeamSettings, openPaige }
     const held = heldReplies.current[rootId];
     delete heldReplies.current[rootId];
     setThreadDraft(held ?? "");
+    setThreadPicked([]);
     setThreadError(null);
     // The reply box exists only once the thread has loaded; focus moves there then, not before.
     focusThreadWhenReady.current = true;
@@ -752,7 +760,8 @@ function ReadyHub({ hub, announce, announcement, onOpenTeamSettings, openPaige }
   const mainScope = hub.activeId ? attachmentScope(hub.activeId, null) : null;
   const threadScope = thread ? attachmentScope(thread.channelId, thread.rootId) : null;
   const threadChips = threadScope ? hub.attachments[threadScope] ?? [] : [];
-  const threadFilesOk = threadChips.every((chip) => chip.state === "ready");
+  // The thread's own conversation (it is always the open one), for the reply box's @ list.
+  const threadConversation = thread && active && active.id === thread.channelId ? active : null;
   const removeThreadFile = (localId: string) => {
     if (!threadScope) return;
     hub.removeAttachment(threadScope, localId);
@@ -903,25 +912,18 @@ function ReadyHub({ hub, announce, announcement, onOpenTeamSettings, openPaige }
           {agentsOn && <AgentActivity turns={hub.agentTurns} conversationId={thread.channelId} threadRootId={thread.rootId} around={thread.replies} agent={agentProps} />}
         </>}
       </div>
-      {thread.status === "ready" && <div className="th-composer-wrap">
-        {/* Announced once, through the live region; shown here and tied to the field. */}
-        {threadError && <p id="th-thread-error" className="th-error">{threadError}</p>}
-        <DropZone online={hub.online} onFiles={(files) => { setThreadError(null); hub.attach(thread.channelId, thread.rootId, files); }}>
-          <label htmlFor="th-thread-reply" className="th-sr">Reply in thread</label>
-          <textarea id="th-thread-reply" ref={threadComposerRef} rows={1} placeholder="Reply in thread" value={threadDraft}
-            aria-describedby={threadError ? "th-thread-error" : undefined}
-            onChange={(event) => { setThreadDraft(event.target.value); setThreadError(null); }}
-            onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) { event.preventDefault(); void sendReply(); } }} />
-          <AttachmentTray chips={threadChips} onRemove={removeThreadFile}
-            onRetry={(localId) => threadScope && hub.retryAttachment(threadScope, localId)} />
-          <div className="th-composer-row">
-            <AttachButton online={hub.online} onFiles={(files) => { setThreadError(null); hub.attach(thread.channelId, thread.rootId, files); }} />
-            <span className="th-hint">{!hub.online ? "Offline · draft kept" : filesHint(threadChips) ?? "Replies stay in this thread"}</span>
-            <SendButton ready={(Boolean(threadDraft.trim()) || threadChips.length > 0) && threadFilesOk && hub.online && bodyProblem(threadDraft) !== "too_long"}
-              disabled={!hub.online || !threadFilesOk} label="Send reply" onClick={() => void sendReply()} />
-          </div>
-        </DropZone>
-      </div>}
+      {/* A1c: the thread's reply box is the conversation's Composer, so it carries the same @ list (people
+          who can see the conversation, Your Paige team, and Everyone only in a channel). No / menu here. */}
+      {thread.status === "ready" && threadConversation && <Composer key={thread.rootId} variant="thread" inputRef={threadComposerRef}
+        conversation={threadConversation} people={people} meId={meId} online={hub.online} value={threadDraft}
+        onChange={(value) => { setThreadDraft(value); setThreadError(null); }}
+        picked={threadPicked} onPick={(mention) => setThreadPicked((current) => [...current, mention])}
+        commands={[]} onCommand={() => undefined} agentsOffered={agentsOn && threadConversation.kind !== "agent_dm"}
+        attachments={threadChips}
+        onAttach={(files) => { setThreadError(null); hub.attach(thread.channelId, thread.rootId, files); }}
+        onRetryAttachment={(localId) => threadScope && hub.retryAttachment(threadScope, localId)}
+        onRemoveAttachment={removeThreadFile}
+        error={threadError} onSend={() => void sendReply()} />}
     </aside>}
     {workOpen && !thread && <WorkPanel hub={hub} people={people} conversations={conversations} headingRef={workHeadingRef}
       onClose={() => closeWork()} onJump={(item) => void jumpTo(item)} />}
@@ -1675,6 +1677,8 @@ type ComposerProps = {
   onAttach: (files: File[]) => void;
   onRetryAttachment: (localId: string) => void;
   onRemoveAttachment: (localId: string) => void;
+  /** A1c: "thread" is the thread's reply box: the same @ list, no / menu, its own ids and words. */
+  variant?: "message" | "thread";
 };
 
 type MentionItem = { kind: "person"; key: string; person: TeamHubPerson } | { kind: "agent"; key: string; agent: TeamHubAgentKey }
@@ -1689,7 +1693,8 @@ const agentMatches = (query: string) => {
 };
 
 function Composer({ conversation, people, meId, online, value, onChange, picked, onPick, error, onSend, inputRef, commands, onCommand, agentsOffered,
-  attachments, onAttach, onRetryAttachment, onRemoveAttachment }: ComposerProps) {
+  attachments, onAttach, onRetryAttachment, onRemoveAttachment, variant = "message" }: ComposerProps) {
+  const inThread = variant === "thread";
   const localRef = useRef<HTMLTextAreaElement | null>(null);
   // `agentsOnly`: opened by the / command Ask an agent, so the list shows the agents alone.
   const [mention, setMention] = useState<{ start: number; query: string; agentsOnly?: boolean } | null>(null);
@@ -1718,12 +1723,14 @@ function Composer({ conversation, people, meId, online, value, onChange, picked,
   const commandOpen = Boolean(command && commandOptions.length);
   const listOpen = mentionOpen || commandOpen;
   const optionCount = commandOpen ? commandOptions.length : items.length;
-  const label = conversation.kind === "channel" ? `Message #${conversation.name}` : `Message ${hubLabel(conversation, people)}`;
+  const label = inThread ? "Reply in thread" : conversation.kind === "channel" ? `Message #${conversation.name}` : `Message ${hubLabel(conversation, people)}`;
   const problem = bodyProblem(value);
   // Files only is a message too; every chip must be ready before anything leaves.
   const filesOk = attachments.every((chip) => chip.state === "ready");
   const ready = online && filesOk && (problem === null || (problem === "empty" && attachments.length > 0));
-  const listId = `th-mentions-${conversation.id}`;
+  const listId = inThread ? `th-thread-mentions-${conversation.id}` : `th-mentions-${conversation.id}`;
+  const fieldId = inThread ? "th-thread-reply" : `th-composer-${conversation.id}`;
+  const errorId = inThread ? "th-thread-error" : `${listId}-error`;
   const commandListId = `th-commands-${conversation.id}`;
   const disabledCommand = (item: TeamHubCommand) => item.kind === "task" && !online;
   const activeOption = commandOpen ? `${commandListId}-${commandOptions[index]?.kind}` : mentionOpen ? `${listId}-${items[index]?.key}` : undefined;
@@ -1747,7 +1754,8 @@ function Composer({ conversation, people, meId, online, value, onChange, picked,
   };
 
   const detect = (text: string, position: number) => {
-    const typedCommand = commandQuery(text);
+    // The thread's reply box has no / menu: a leading / is just text there.
+    const typedCommand = inThread ? null : commandQuery(text);
     if (typedCommand) {
       setMention(null);
       setCommand((current) => {
@@ -1903,15 +1911,15 @@ function Composer({ conversation, people, meId, online, value, onChange, picked,
     </div>}
     {command && !commandOptions.length && <p className="th-pop th-pop--note" role="status">No command matches. Try Draft a task.</p>}
     {/* Refusals are announced once, by the hub's live region; here they are shown and tied to the field. */}
-    {error && <p id={`${listId}-error`} className="th-error">{error}</p>}
+    {error && <p id={errorId} className="th-error">{error}</p>}
     {problem === "too_long" && !error && <p id={`${listId}-length`} className="th-error">{messageLength(value).toLocaleString()} of {MESSAGE_MAX_LENGTH.toLocaleString()} characters.</p>}
     <DropZone online={online} onFiles={onAttach}>
-      <label htmlFor={`th-composer-${conversation.id}`} className="th-sr">{label}</label>
-      <textarea id={`th-composer-${conversation.id}`} ref={setRefs} rows={1} value={value} placeholder={label}
+      <label htmlFor={fieldId} className="th-sr">{label}</label>
+      <textarea id={fieldId} ref={setRefs} rows={1} value={value} placeholder={label}
         role="combobox" aria-autocomplete="list" aria-haspopup="listbox" aria-expanded={listOpen}
         aria-controls={commandOpen ? commandListId : mentionOpen ? listId : undefined}
         aria-activedescendant={listOpen ? activeOption : undefined}
-        aria-describedby={error ? `${listId}-error` : problem === "too_long" ? `${listId}-length` : undefined}
+        aria-describedby={error ? errorId : problem === "too_long" ? `${listId}-length` : undefined}
         onChange={(event) => { onChange(event.target.value); detect(event.target.value, event.target.selectionStart ?? event.target.value.length); }}
         onKeyDown={onKeyDown}
         onBlur={() => { setMention(null); setCommand(null); }} />
@@ -1921,11 +1929,12 @@ function Composer({ conversation, people, meId, online, value, onChange, picked,
           onMouseDown={(event) => event.preventDefault()} onClick={insertAt}><AtSign aria-hidden="true" /></button>}
         {/* Between @ and /, as approved (§7). */}
         <AttachButton online={online} onFiles={onAttach} />
-        <button type="button" className="th-icon-btn" aria-label="PAIGE commands" aria-haspopup="listbox" aria-expanded={commandOpen}
-          onMouseDown={(event) => event.preventDefault()} onClick={openCommands}><Slash aria-hidden="true" /></button>
-        <span className="th-hint">{!online ? "Offline · draft kept" : filesHint(attachments) ?? (conversation.kind === "agent_dm" && conversation.agent_key
+        {!inThread && <button type="button" className="th-icon-btn" aria-label="PAIGE commands" aria-haspopup="listbox" aria-expanded={commandOpen}
+          onMouseDown={(event) => event.preventDefault()} onClick={openCommands}><Slash aria-hidden="true" /></button>}
+        <span className="th-hint">{!online ? "Offline · draft kept" : filesHint(attachments) ?? (inThread ? "Replies stay in this thread"
+          : conversation.kind === "agent_dm" && conversation.agent_key
           ? `${agentName(conversation.agent_key)} replies here` : mentionsOffered ? "@ to mention · / for PAIGE" : "/ for PAIGE · Shift+Enter for a new line")}</span>
-        <SendButton ready={ready} disabled={!online || !filesOk} label="Send" onClick={onSend} />
+        <SendButton ready={ready} disabled={!online || !filesOk} label={inThread ? "Send reply" : "Send"} onClick={onSend} />
       </div>
     </DropZone>
     {picked.length > 0 && <span className="th-sr">Mentioning {picked.map((item) => item.label).join(", ")}</span>}

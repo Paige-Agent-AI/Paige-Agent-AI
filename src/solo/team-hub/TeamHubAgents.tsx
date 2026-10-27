@@ -71,9 +71,11 @@ export function PrivateNote({ agent, status, onOpenDm, onAskAgain, onCheck, onli
   const name = agentName(agent);
   if (status === "failed" || status === "unknown") {
     // A failure is a status: its mark is the system warning, never the agent's colour. A1c (owner ruling
-    // 2026-10-27): the whole box is neutral here, with no data-ag, so no agent tint, ring or ink reaches
-    // it; the agent is named in the words. The same holds while its state is unknown.
-    return <div className={`th-ag-priv th-ag-priv--status${status === "failed" ? " th-ag-priv--failed" : ""}`}>
+    // 2026-10-27, the FAILED box only): a failed box is neutral, with no data-ag, so no agent tint, ring or
+    // ink reaches it; the agent is named in the words. While its state is unknown (it may still be
+    // writing) the box keeps its agent tint exactly as A1b had it (approved, §28).
+    const failed = status === "failed";
+    return <div className={failed ? "th-ag-priv th-ag-priv--status th-ag-priv--failed" : "th-ag-priv"} data-ag={failed ? undefined : agent}>
       {status === "failed" ? <TriangleAlert aria-hidden="true" /> : <Lock aria-hidden="true" />}
       <span>{status === "failed" ? `${name} couldn't finish your private answer.` : `${name} may still be writing your private answer.`}</span>
       <button type="button" className="th-btn" disabled={!online} onClick={status === "failed" ? onAskAgain : onCheck}>{status === "failed" ? "Ask again" : "Check again"}</button></div>;

@@ -12,7 +12,7 @@ import { act } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { TeamHubWorkspace } from "./TeamHubWorkspace";
-import { AGENT_WRITING_POLL_MAX_MS, AGENT_WRITING_POLL_MS, REFRESH_INTERVAL_MS } from "./useTeamHub";
+import { AGENT_WRITING_IDLE_RESET_MS, AGENT_WRITING_POLL_MAX_MS, AGENT_WRITING_POLL_MS, REFRESH_INTERVAL_MS } from "./useTeamHub";
 
 const TENANT = "tenant-a";
 const ME = "u-me";
@@ -597,6 +597,11 @@ describe("flow 5: the private part, answered in the asker's DM", () => {
     const host = await mount();
     const note = () => rowOf(host, "r-merit-m-ask")!.querySelector<HTMLElement>(".th-ag-priv")!;
     expect(note().textContent).toContain("MERIT may still be writing your private answer.");
+    // §28: the unknown box keeps MERIT's tint exactly as A1b had it; only the FAILED box is neutral.
+    expect(note().getAttribute("data-ag")).toBe("merit");
+    expect(note().classList.contains("th-ag-priv--status")).toBe(false);
+    expect(note().classList.contains("th-ag-priv--failed")).toBe(false);
+    expect(note().querySelector("svg.lucide-lock")).not.toBeNull();
     delete db.override.team_hub_agent_turn_states;
     db.states = { "m-ask:merit": { state: "replied_privately", private_part: true } };
     await click(button(note(), "Check again"));
@@ -920,6 +925,42 @@ describe("A1c: \"<AGENT> is writing…\" for everyone who can see the conversati
     expect(stateReads()).toBe(capped + 1);
   }, 60_000);
 
+  it("caps the 3 s reads 2 minutes from when they began, even when another reply starts writing; a pause resets it", async () => {
+    useClock();
+    const fast = () => [...intervals.values()].some((item) => item.ms === AGENT_WRITING_POLL_MS);
+    db.messages["c-launch"] = [theirs(), msg({ id: "m-q2", author_user_id: "u-sam", body: "@CURA who starts Monday?", agent_mentions: ["cura"] })];
+    db.states = { "m-q:merit": { state: "answering", asker_name: "Priya Nair" } };
+    await mount();
+    expect(fast()).toBe(true);
+    await tick(99_000);
+    // 99 s in, CURA starts writing too: the set of writing replies changes, the cap does not restart.
+    db.states = { ...db.states, "m-q2:cura": { state: "answering", asker_name: "Sam Lee" } };
+    await tick(AGENT_WRITING_POLL_MS);
+    expect(document.querySelectorAll(".th-ag-typing")).toHaveLength(2);
+    expect(fast()).toBe(true);
+    // At 2 minutes from the FIRST fast read the 3 s reads stop, though both are still writing (now 123 s in;
+    // a cap restarted when CURA began would run to 222 s).
+    await tick(AGENT_WRITING_POLL_MAX_MS - 99_000);
+    expect(fast()).toBe(false);
+    const capped = stateReads();
+    await tick(AGENT_WRITING_POLL_MS * 3);
+    expect(stateReads()).toBe(capped);
+    // MERIT finishes while CURA keeps writing: still capped (writing never paused).
+    db.states = { "m-q2:cura": { state: "answering", asker_name: "Sam Lee" } };
+    await tick(REFRESH_INTERVAL_MS);
+    expect(document.querySelectorAll(".th-ag-typing")).toHaveLength(1);
+    expect(fast()).toBe(false);
+    // Nothing written for a while, then a new reply starts: a new burst, so fast reads begin again.
+    db.states = {};
+    await tick(REFRESH_INTERVAL_MS);
+    expect(document.querySelectorAll(".th-ag-typing")).toHaveLength(0);
+    await tick(AGENT_WRITING_IDLE_RESET_MS);
+    db.states = { "m-q:merit": { state: "answering", asker_name: "Priya Nair" } };
+    await tick(REFRESH_INTERVAL_MS);
+    expect(document.querySelectorAll(".th-ag-typing")).toHaveLength(1);
+    expect(fast()).toBe(true);
+  }, 60_000);
+
   it("with nothing being written there are no 3 s reads at all", async () => {
     useClock();
     db.messages["c-launch"] = [theirs(), reply("merit", "m-q", "Done.", { author_user_id: "u-priya" })];
@@ -927,6 +968,77 @@ describe("A1c: \"<AGENT> is writing…\" for everyone who can see the conversati
     const before = stateReads();
     await tick(REFRESH_INTERVAL_MS - 1);
     expect(stateReads()).toBe(before);
+  });
+});
+
+describe("A1c: a thread's reply box carries the same @ list (Slack lets you @ in a thread)", () => {
+  const threadList = (host: HTMLElement) => host.querySelector<HTMLElement>(".th-thread [role=listbox][aria-label='People and agents']");
+  const threadKeys = (host: HTMLElement) => Array.from(threadList(host)?.querySelectorAll<HTMLElement>("[role=option]") ?? [])
+    .map((option) => option.getAttribute("data-ag") ?? (option.getAttribute("data-bc") ? `@${option.getAttribute("data-bc")}` : option.querySelector(".th-option-meta span")!.textContent));
+  const openThreadOf = async (host: HTMLElement) => { await click(button(host, /^1 reply/)); expect(threadBox(host)).toBeTruthy(); };
+  const withThread = (channel: string) => {
+    db.messages[channel] = [msg({ id: `m-root-${channel}`, body: "Kickoff agenda", reply_count: 1, last_reply_at: stamp() })];
+    db.replies[`m-root-${channel}`] = [msg({ id: `m-r1-${channel}`, parent_message_id: `m-root-${channel}`, body: "Looks good." })];
+  };
+
+  it("in a channel thread: people who can see it, Your Paige team, then Everyone; a picked person is mentioned and @here is sent", async () => {
+    withThread("c-launch");
+    const host = await mount();
+    await openThreadOf(host);
+    // The same Composer: an @ button, no / menu in a thread.
+    const thread = host.querySelector<HTMLElement>(".th-thread")!;
+    expect(button(thread, "Mention someone")).toBeTruthy();
+    expect(button(thread, "PAIGE commands")).toBeUndefined();
+    await type(threadBox(host), "@");
+    expect(threadKeys(host)).toEqual(["Priya Nair", "Sam Lee", "paige", "vera", "nexus", "cura", "mentor", "merit", "zion", "@channel", "@here"]);
+    await type(threadBox(host), "@pri");
+    await press(threadBox(host), "Enter");
+    expect(threadBox(host).value).toBe("@Priya Nair ");
+    await type(threadBox(host), "@Priya Nair @he");
+    await press(threadBox(host), "Tab");
+    expect(threadBox(host).value).toBe("@Priya Nair @here ");
+    await type(threadBox(host), "@Priya Nair @here can someone check?");
+    await press(threadBox(host), "Enter");
+    await flush();
+    const post = calls.find((call) => call.name === "team_hub_post_message")!;
+    expect(post.params.p_parent_message_id).toBe("m-root-c-launch");
+    expect(post.params.p_mention_ids).toEqual(["u-priya"]);
+    expect(post.params.p_broadcast_mention).toBe("here");
+    expect(post.params.p_agent_mention_keys).toBeUndefined();
+    expect(turns).toHaveLength(0);
+  });
+
+  it("in a person DM's thread: no Everyone group, and a typed @here is never sent as a broadcast", async () => {
+    db.conversations.push(conv({ id: "c-dm-priya", kind: "dm", name: null, visibility: "private", member_count: 2, member_ids: [ME, "u-priya"], dm_user_id: "u-priya" }));
+    withThread("c-dm-priya");
+    const host = await mount();
+    await click(host.querySelector<HTMLElement>("#th-conv-c-dm-priya"));
+    await openThreadOf(host);
+    await type(threadBox(host), "@");
+    expect(threadKeys(host)).toEqual(["Priya Nair", "paige", "vera", "nexus", "cura", "mentor", "merit", "zion"]);
+    expect(threadList(host)!.querySelector("[data-bc]")).toBeNull();
+    await type(threadBox(host), "@here are you free?");
+    await press(threadBox(host), "Enter");
+    await flush();
+    const post = calls.find((call) => call.name === "team_hub_post_message")!;
+    expect(post.params.p_parent_message_id).toBe("m-root-c-dm-priya");
+    expect("p_broadcast_mention" in post.params).toBe(false);
+  });
+
+  it("in an agent DM's thread: neither Your Paige team nor Everyone is offered, and @channel is never sent", async () => {
+    db.conversations.push(agentDm("cura"));
+    withThread("c-dm-cura");
+    const host = await mount();
+    await click(host.querySelector<HTMLElement>("#th-conv-c-dm-cura"));
+    await openThreadOf(host);
+    await type(threadBox(host), "@");
+    expect(threadList(host)).toBeNull();
+    await type(threadBox(host), "@channel ping");
+    await press(threadBox(host), "Enter");
+    await flush();
+    const post = calls.find((call) => call.name === "team_hub_post_message")!;
+    expect("p_broadcast_mention" in post.params).toBe(false);
+    expect(post.params.p_agent_mention_keys).toBeUndefined();
   });
 });
 

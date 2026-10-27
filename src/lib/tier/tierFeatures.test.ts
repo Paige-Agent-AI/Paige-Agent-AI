@@ -252,3 +252,17 @@ describe("§60 client_standing — declared on the direct-client-book tiers (E4-
     expect(hasFeature(GOD, "client_standing")).toBe(false);
   });
 });
+
+describe("§61 team_hub_agents — Solo + Sub-account only (EXP08 Team Hub agents contract §3)", () => {
+  it("Solo and Sub-account get it; God, Agency and Enterprise do not (no resell)", () => {
+    expect(hasFeature(SOLO, "team_hub_agents")).toBe(true);
+    expect(hasFeature(SUB, "team_hub_agents")).toBe(true);
+    expect(hasFeature(cls(null), "team_hub_agents")).toBe(true);
+    for (const c of [GOD, AGENCY, ENTERPRISE]) expect(hasFeature(c, "team_hub_agents")).toBe(false);
+  });
+  it("Enterprise still carries every other Solo feature (only the ruled exception is taken out)", () => {
+    for (const feature of getTierFeatureSet(SOLO)) {
+      if (feature !== "team_hub_agents") expect(hasFeature(ENTERPRISE, feature)).toBe(true);
+    }
+  });
+});

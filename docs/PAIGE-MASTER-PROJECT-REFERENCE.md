@@ -7941,8 +7941,24 @@ Current gaps:
   (the `accept-invite` edge function refuses a not-active seat 409 before any write, writes the seat
   before the global role and checks both). Proof `supabase/tests/exp08_team_lifecycle.sql` (20 PASS);
   deno tests `supabase/functions/accept-invite/team-seat.test.ts` and `consume-order.test.ts`.
-  `PROOF_OWED`: not merged, the Team screen and Team Hub browser surfaces for these acts are not
-  built, and PAIGE's tools for them are task #7.
+  Merged #2912 (`e0263aac0`); PAIGE's tools for these acts (suspend, reinstate, remove, Team
+  conversations, hand-over) merged #2957 (squash `2aa4d23e8`), their catalogue migration
+  `20271116100008` applied on production (read back in `schema_migrations` 2026-10-27), and `edge-live`
+  and `db-live` at or past `2aa4d23e8`. `PROOF_OWED`: the Team screen and Team Hub browser surfaces for
+  these acts are not built, and no authenticated drive of the acts (in the browser or through PAIGE) has
+  run.
+- Team Hub agents A1a (migrations `20271117010008` and `20271117010108`, 2026-10-27, owner-approved
+  design, personalities, Q1/Q2 and storage that day; branch `exp08-hub-agents-a1`, not yet merged):
+  storage and doors for PAIGE and her six agents to take part in Team Hub — agent-authored messages
+  backed by a single-use accepted-turn record (service-role acceptance, authenticated posting under the
+  asker's JWT), agent mentions (at most 3 per message), the person-to-agent `agent_dm` (one member,
+  invisible to owners), one reply per message and agent, at most 30 model turns started per seat per hour (re-arms counted) — plus
+  tolerant parsers in the Team Hub screen and PAIGE's `readRoster`, the MERIT/NEXUS roster correction
+  (§10 below), the channel allowlist, read-only DM scope and personalities as data on the six platform
+  rows, and the `team_hub_agents` tier feature (Solo + Sub-account, §61 exception). **No agent speaks
+  yet:** the `paige-ai-chat` turn and the agent UI are A1b; cards (A2), assignments (A3) and editable
+  personalities (A4) follow. `PROOF_OWED`. Proof `supabase/tests/exp08_team_hub_agents_a1.sql`.
+  Contract: [Team Hub agents contract](delivery/exp08-team-hub-agents-contract.md).
 - `/solo/{n}/team` still redirects to Settings → Team; Team Hub is a separate destination.
 - Team actions still emit no Rail outcome.
 
@@ -9911,6 +9927,10 @@ DOCTRINE_190/191/192, 194, 197, 198 + Addendum, 200, 201, 202, 203, 205, 208, 21
 - **2026-10-27 · EXP08 CO-OWNER AUTHORITY WAS RECORDED "NOT YET MERGED" AFTER IT WAS LIVE.** The tier matrix headed `20271116020008` "NOT YET MERGED — proof local, PROOF OWED on production" after PR #2945 merged (`51ede67eb`) and applied (`db-live` = `51ede67eb`).
   - **Corrected (I1 grounding, read-only production queries 2026-10-27).** Production md5(prosrc) of `grant_co_owner` `2a75180d…`, `revoke_co_owner` `e2ba8ca8…`, `guard_tenant_owner_only_columns` `d77a4bfa…` and `is_tenant_account_holder` `4a3cab59…` equal the repo bodies, and `authenticated`/`anon` cannot execute the helper. The tier-matrix heading now says so.
   - **Also recorded:** production's `peek_tenant_invite` is not reproducible verbatim from any one repo file (`20271108120100` patched it in place with `replace()`, and its earlier comment lines differ from `20260713050000`); `20271117020008` re-emits production's own body (md5 `276541d0…`) and its proof pins that body inline.
+
+- **2026-10-27 · ROSTER: MERIT WAS STILL "FINANCE & PEOPLE" AND NEXUS STILL OWNED SALES, AGAINST THE 23 OCT 2026 STANDARD.** The binding owner standard at the top of `docs/doctrine/paige-c-suite-roster.md` gives MERIT sales, commercial relationships, proposals, agreements and collections, and NEXUS marketing, advertising, growth and campaigns; VERA owns finance.
+  - **What was wrong.** `supabase/functions/_shared/paige-context/vp-address.ts` (the one persona composer behind PAIGE chat's "MERIT, …" addressing) still said MERIT was "VP Finance & People" (money spine, dunning, refunds, hiring and comp) and NEXUS "VP Growth" with sales sequences, pipeline management and lead scoring. The production `paige_subagents` rows `merit` and `nexus` (seeded `20270108000000_csuite_roster_mount.sql`, never remapped) said the same; read on production 2026-10-27, both are the untouched version-1 seeds. So two specialists answered for the same desk (VERA and MERIT on finance) and sales sat with marketing.
+  - **Corrected (EXP08 Team Hub agents A1a, not yet merged).** `vp-address.ts` and a forward-only, seed-guarded migration (`20271117010108`) give MERIT *VP Sales & Getting Paid* ("collections" is shown as "getting paid", §2) and NEXUS *VP Marketing & Growth*; name, slug, department, runtime, prompt and every authority field are unchanged, and a customised row is left alone. The historical roster tables lower in the roster doc are unchanged (the standard at its top supersedes them).
 
 - **2026-10-26 · ADMIN SCOPE: "ADMIN" MEANT "ADMIN OF ANY BUSINESS".** Owner ruling (Antonio, 2026-10-26): being the owner or admin of one business must never give admin power in another business the same person belongs to; in someone else's workspace a person has exactly the seat role that workspace gave them; operator authority (§53) is unaffected; owners/admins and PAIGE keep full power inside their own workspace. (Branch `exp08-admin-scope-s0`, migration `20271115030008`, not yet merged.)
   - **What was wrong.** `user_roles` has no tenant column and the seat sync writes global `admin` for every owner/admin seat, so `has_role(uid,'admin')` answered "admin somewhere". Functions and policies that bound no tenant, or let the caller name the tenant, therefore opened every business to every owner: rewrite the platform skills catalogue, read another person's encrypted profile, delete any credit upload, overwrite any row's webhook/MCP/Plaid secret, read or write another business's library, bookings, tasks, approvals, certifications and client goals. `grant_tenant_member_role` let a tenant admin mint global `admin` for anyone, held immediately even though the seat it also wrote was consent-pending. The `&& current_user_roles()` approval match made every owner see every approval whose `visible_to_roles` kept its `{admin,super_admin}` default.

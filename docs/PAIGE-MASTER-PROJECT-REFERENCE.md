@@ -8175,6 +8175,14 @@ Current gaps:
   SQLSTATE are settled by the end door (never *can't post here* for an error); Check again on an unknown
   state only re-reads it; model text cannot end with the private-part line; neutral clock for *may still
   be replying*; agent list rows fit prototype c05. Contract "A1b part 4 notes".
+  **A1c** (branch `exp08-hub-agents-a1c`, on A1b, not merged, 2026-10-27): migration `20271119030008`
+  — everyone who can see a conversation sees *<AGENT> is writing…* (the state read returns `answering`
+  to them, state only); @channel / @here through `team_hub_post_message`'s new `p_broadcast_mention`
+  (channel only, never asks an agent; recipients stored; @here = active in the last 10 minutes by read
+  or post, as no presence substrate exists); the @ list is people, *Your Paige team*, then *Everyone*,
+  matched from the start of any word; the failed private box is neutral (owner ruling); the specialist
+  handoff is stripped. **Gap:** Team Hub has no notification or unread-mention count for any mention.
+  Contract "A1c notes"; proof `exp08_team_hub_a1c.sql`.
 - `/solo/{n}/team` still redirects to Settings → Team; Team Hub is a separate destination.
 - Team actions still emit no Rail outcome.
 

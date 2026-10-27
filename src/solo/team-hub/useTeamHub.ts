@@ -30,6 +30,7 @@ import {
   type TeamHubFileRefusal,
   type TeamHubMessage,
   type TeamHubMessagePage,
+  type TeamHubPageCursor,
   type TeamHubOverview,
   type TeamHubRefusal,
   type TeamHubResult,
@@ -95,6 +96,8 @@ export interface StreamState {
    * between the last page and it.
    */
   listedNewest?: TeamHubMessage | null;
+  /** The oldest row any listed page returned, skipped rows included; "earlier" pages from here. */
+  olderCursor?: TeamHubPageCursor | null;
 }
 
 export interface ThreadState {
@@ -109,6 +112,8 @@ export interface ThreadState {
   olderFailed: boolean;
   /** As on StreamState: the newest reply a listed page returned, never a locally appended one. */
   listedNewest?: TeamHubMessage | null;
+  /** As on StreamState: where the next older page starts. */
+  olderCursor?: TeamHubPageCursor | null;
 }
 
 /** What a task request asks Operations for; kept with the attempt so Retry sends the same thing. */
@@ -199,7 +204,7 @@ function newRequestId(): string {
 }
 
 /** The compound cursor (A6): both halves of the oldest row shown, or neither. */
-function cursorBefore(oldest: TeamHubMessage | undefined): { p_before: string | null; p_before_id: string | null } {
+function cursorBefore(oldest: TeamHubPageCursor | null | undefined): { p_before: string | null; p_before_id: string | null } {
   return oldest ? { p_before: oldest.created_at, p_before_id: oldest.id } : { p_before: null, p_before_id: null };
 }
 
@@ -289,7 +294,7 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
   }, []);
 
   const loadStream = useCallback(async (channelId: string, mode: "open" | "refresh" | "older", unreadAtOpen = 0): Promise<LoadReport<TeamHubMessagePage>> => {
-    const cursor = cursorBefore(mode === "older" ? live.current.stream?.messages[0] : undefined);
+    const cursor = cursorBefore(mode === "older" ? live.current.stream?.olderCursor ?? live.current.stream?.messages[0] : undefined);
     if (mode === "open") {
       setStream({ channelId, status: "loading", channel: null, messages: [], hasMore: false, loadingOlder: false, olderFailed: false, dividerBefore: null });
     } else if (mode === "older") {
@@ -306,7 +311,7 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
       const held = mode === "open" || live.current.stream?.channelId !== channelId ? [] : live.current.stream.messages;
       const heldIds = new Set(held.map((message) => message.id));
       const anchor = mode === "open" ? null : live.current.stream?.listedNewest ?? null;
-      report.gap = mode === "refresh" && refreshLeavesGap(anchor ? [anchor] : [], top, result.value.has_more);
+      report.gap = mode === "refresh" && refreshLeavesGap(anchor ? [anchor] : [], top, result.value.has_more, result.value.oldest);
       report.incoming = mode === "refresh" ? top.filter((message) => !heldIds.has(message.id) && message.author_user_id !== meId).length : 0;
       report.newestId = newestOf(report.gap ? top : [...held, ...top])?.id ?? null;
     }
@@ -318,11 +323,11 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
         // A refresh that can't be joined to what is held replaces it (keeping anything newer than
         // the page, such as a message just sent) and offers the earlier messages instead.
         const anchor = mode === "open" ? null : base?.listedNewest ?? null;
-        const gap = mode === "refresh" && refreshLeavesGap(anchor ? [anchor] : [], top, page.has_more);
+        const gap = mode === "refresh" && refreshLeavesGap(anchor ? [anchor] : [], top, page.has_more, page.oldest);
         const pageNewest = newestOf(top);
         const kept = gap && pageNewest ? held.filter((message) => compareMessages(message, pageNewest) > 0) : held;
         const messages = mergeMessages(kept, top);
-        const listedNewest = mode === "older" ? anchor : gap ? pageNewest ?? null : newestOf([...(anchor ? [anchor] : []), ...top]) ?? null;
+        const listedNewest = mode === "older" ? anchor : gap ? pageNewest ?? anchor : newestOf([...(anchor ? [anchor] : []), ...top]) ?? null;
         return {
           channelId,
           status: "ready",
@@ -335,6 +340,9 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
           olderFailed: false,
           dividerBefore: mode === "open" ? newDividerBefore(messages, unreadAtOpen, meId) : base?.dividerBefore ?? null,
           listedNewest,
+          // A joined refresh says nothing about what lies below the held list; anything else starts
+          // (open, gap) or extends (older) it, so the page's own oldest raw row is the new floor.
+          olderCursor: mode === "refresh" && !gap ? base?.olderCursor ?? page.oldest ?? null : mode === "older" ? page.oldest ?? base?.olderCursor ?? null : page.oldest ?? null,
         };
       }
       if (result.kind === "refused" && result.code === "not_found") {
@@ -364,7 +372,7 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
   const loadThread = useCallback(async (channelId: string, rootId: string, mode: "open" | "refresh" | "older"): Promise<number> => {
     if (mode === "open") setThread({ channelId, rootId, status: "loading", root: null, replies: [], hasMore: false, loadingOlder: false, olderFailed: false });
     if (mode === "older") setThread((current) => current && current.rootId === rootId ? { ...current, loadingOlder: true, olderFailed: false } : current);
-    const cursor = cursorBefore(mode === "older" ? live.current.thread?.replies[0] : undefined);
+    const cursor = cursorBefore(mode === "older" ? live.current.thread?.olderCursor ?? live.current.thread?.replies[0] : undefined);
     const answer = await call("team_hub_list_messages", { p_channel_id: channelId, p_thread_root: rootId, ...cursor, p_limit: THREAD_PAGE_SIZE });
     const result = settle(parseThreadPage(answer.data, answer.error, channelId, rootId));
     if (!alive.current || live.current.thread?.rootId !== rootId) return 0;
@@ -380,14 +388,15 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
         const held = mode === "open" ? [] : current.replies;
         // Same rule as the stream: a newest page that can't be joined to the held replies replaces them.
         const anchor = mode === "open" ? null : current.listedNewest ?? null;
-        const gap = mode === "refresh" && refreshLeavesGap(anchor ? [anchor] : [], page.replies, page.has_more);
+        const gap = mode === "refresh" && refreshLeavesGap(anchor ? [anchor] : [], page.replies, page.has_more, page.oldest);
         const pageNewest = newestOf(page.replies);
         const kept = gap && pageNewest ? held.filter((reply) => compareMessages(reply, pageNewest) > 0) : held;
         // Newest-first from the server; mergeMessages keeps them oldest → newest for reading.
         const replies = mergeMessages(kept, page.replies);
-        const listedNewest = mode === "older" ? anchor : gap ? pageNewest ?? null : newestOf([...(anchor ? [anchor] : []), ...page.replies]) ?? null;
+        const listedNewest = mode === "older" ? anchor : gap ? pageNewest ?? anchor : newestOf([...(anchor ? [anchor] : []), ...page.replies]) ?? null;
         return {
           channelId, rootId, status: "ready", root: page.root, replies, listedNewest,
+          olderCursor: mode === "refresh" && !gap ? current.olderCursor ?? page.oldest ?? null : mode === "older" ? page.oldest ?? current.olderCursor ?? null : page.oldest ?? null,
           // A refresh that joins the held replies decides nothing about what lies above them.
           hasMore: gap ? true : mode === "refresh" ? current.hasMore : page.has_more,
           loadingOlder: false, olderFailed: false,

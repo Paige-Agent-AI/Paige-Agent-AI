@@ -56,6 +56,8 @@ export interface TeamHubPerson {
   /** EXP08: whether this person takes part in Team conversations (can be added, DM'd, mentioned).
    *  `null` when the server did not say (an answer from before the switch existed). */
   team_conversations?: boolean | null;
+  /** A1a: their first name is an agent's name, so a screen that shows agents adds a surname initial. */
+  agent_name_clash?: boolean;
 }
 
 /** True only when the server SAID this person's Team conversations are off. Unknown is not off. */
@@ -77,11 +79,37 @@ export interface TeamHubConversation {
   last_message_at: string | null;
 }
 
+/**
+ * EXP08 Team Hub agents (A1a). PAIGE and the six specialists of the roster, by their stored key. The
+ * order is the roster's. A key this build does not know is never shown as one of these.
+ */
+export const TEAM_HUB_AGENT_KEYS = ["paige", "vera", "nexus", "cura", "mentor", "merit", "zion"] as const;
+export type TeamHubAgentKey = typeof TEAM_HUB_AGENT_KEYS[number];
+export const isTeamHubAgentKey = (value: unknown): value is TeamHubAgentKey =>
+  typeof value === "string" && (TEAM_HUB_AGENT_KEYS as readonly string[]).includes(value);
+
+/**
+ * A person's DM with one agent (`kind = 'agent_dm'`): private, unnamed, one member (the person).
+ * Parsed apart from `conversations` so no list that does not yet know agents (A1b) ever renders one
+ * as a channel or a person DM.
+ */
+export interface TeamHubAgentConversation {
+  id: string;
+  agent_key: TeamHubAgentKey;
+  joined: boolean;
+  unread: number;
+  last_message_at: string | null;
+}
+
 export interface TeamHubOverview {
   tenant_id: string;
   me: { user_id: string };
   people: TeamHubPerson[];
   conversations: TeamHubConversation[];
+  /** A1a: the caller's DMs with agents. Not rendered until A1b. */
+  agent_dms: TeamHubAgentConversation[];
+  /** Conversations of a kind this build does not know, left out rather than guessed at. */
+  skipped: number;
 }
 
 export interface TeamHubMessage {
@@ -97,6 +125,22 @@ export interface TeamHubMessage {
   work_ref: TeamHubWorkRef | null;
   /** Increment 3: the files posted with it, in posting order. `[]` when there are none. */
   files: TeamHubFile[];
+  /**
+   * EXP08 Team Hub agents (A1a). `agent` when an agent wrote it; `author_user_id` is then the person
+   * who asked, accountable for it, and the message must never be shown in that person's name.
+   * Always set by the parser; optional here only so fixtures from before A1a still type-check.
+   */
+  author_kind?: "user" | "agent";
+  agent_key?: TeamHubAgentKey | null;
+  /** On an agent's reply: the person's message it answers, in the same conversation. */
+  asked_in_message_id?: string | null;
+  /** On a person's message: the agents it asks (at most 3). */
+  agent_mentions?: TeamHubAgentKey[];
+}
+
+/** True when an agent wrote this message (A1a). Such a message is not rendered until A1b. */
+export function isAgentAuthored(message: Pick<TeamHubMessage, "author_kind">): boolean {
+  return message.author_kind === "agent";
 }
 
 /**
@@ -158,6 +202,20 @@ export interface TeamHubMessagePage {
   channel: TeamHubChannelSummary;
   messages: TeamHubMessage[];
   has_more: boolean;
+  /** Messages of an author kind this build does not know, left out rather than guessed at. */
+  skipped?: number;
+  /**
+   * The oldest row the server returned, skipped rows included. "Earlier messages" pages from this,
+   * not from the oldest message kept: a page made only of skipped rows would otherwise ask for
+   * itself again for ever.
+   */
+  oldest?: TeamHubPageCursor | null;
+}
+
+/** Where the next older page starts: the server's (created_at, id) keyset. */
+export interface TeamHubPageCursor {
+  created_at: string;
+  id: string;
 }
 
 /** Thread mode (A7): the root, and its replies newest-first under the same compound cursor. */
@@ -166,6 +224,8 @@ export interface TeamHubThreadPage {
   root: TeamHubMessage;
   replies: TeamHubMessage[];
   has_more: boolean;
+  /** As on TeamHubMessagePage: the oldest row returned, skipped rows included. */
+  oldest?: TeamHubPageCursor | null;
 }
 
 export interface TeamHubPosted {
@@ -212,9 +272,26 @@ function parsePerson(value: unknown): TeamHubPerson | null {
   if (!(value.title === null || value.title === undefined || typeof value.title === "string")) return null;
   if (value.permission !== "owner" && value.permission !== "admin" && value.permission !== "member") return null;
   if (!(value.team_conversations === undefined || value.team_conversations === null || typeof value.team_conversations === "boolean")) return null;
+  if (!(value.agent_name_clash === undefined || typeof value.agent_name_clash === "boolean")) return null;
   const title = typeof value.title === "string" && value.title.trim() ? value.title.trim() : null;
   return { user_id: value.user_id, display_name: value.display_name.trim() || value.display_name, title, permission: value.permission,
-    team_conversations: typeof value.team_conversations === "boolean" ? value.team_conversations : null };
+    team_conversations: typeof value.team_conversations === "boolean" ? value.team_conversations : null,
+    agent_name_clash: value.agent_name_clash === true };
+}
+
+/** A conversation kind this build knows: a channel, a person DM, or (A1a) a person's DM with an agent. */
+const KNOWN_KINDS: readonly string[] = ["channel", "dm", "agent_dm"];
+
+/**
+ * A person's DM with an agent, checked against its storage rules: private, unnamed, no other person,
+ * one member, and an agent this build knows. A malformed one is null (the whole answer is refused).
+ */
+function parseAgentConversation(value: unknown): TeamHubAgentConversation | null {
+  if (!isRow(value) || !isText(value.id) || value.kind !== "agent_dm" || value.visibility !== "private") return null;
+  if (typeof value.joined !== "boolean" || !isCount(value.unread) || !isNullableInstant(value.last_message_at)) return null;
+  if ((value.name ?? null) !== null || (value.dm_user_id ?? null) !== null || !isTeamHubAgentKey(value.agent_key)) return null;
+  if (!isCount(value.member_count) || !Array.isArray(value.member_ids) || !value.member_ids.every(isText)) return null;
+  return { id: value.id, agent_key: value.agent_key, joined: value.joined, unread: value.unread, last_message_at: value.last_message_at };
 }
 
 function parseConversation(value: unknown): TeamHubConversation | null {
@@ -248,6 +325,17 @@ function parseConversation(value: unknown): TeamHubConversation | null {
 
 function parseMessage(value: unknown): TeamHubMessage | null {
   if (!isRow(value) || !isText(value.id) || !isText(value.author_user_id)) return null;
+  // A1a: who wrote it. Absent on an answer from before A1a (a person). An agent's row names a known
+  // agent; a person's row names none. The two kinds this build does not know are skipped by the page
+  // parsers before this is reached (`messageKind`).
+  const authorKind = value.author_kind === undefined ? "user" : value.author_kind;
+  if (authorKind !== "user" && authorKind !== "agent") return null;
+  const agentKey = value.agent_key ?? null;
+  if (authorKind === "agent" ? !isTeamHubAgentKey(agentKey) : agentKey !== null) return null;
+  const askedIn = value.asked_in_message_id ?? null;
+  if (!isNullableText(askedIn) || (askedIn !== null && authorKind !== "agent")) return null;
+  const agentMentions = value.agent_mentions === undefined ? [] : value.agent_mentions;
+  if (!Array.isArray(agentMentions) || !agentMentions.every((key) => typeof key === "string")) return null;
   if (typeof value.body !== "string" || !isInstant(value.created_at)) return null;
   if (!isNullableText(value.parent_message_id) || !isCount(value.reply_count)) return null;
   if (!isNullableInstant(value.last_reply_at)) return null;
@@ -266,7 +354,54 @@ function parseMessage(value: unknown): TeamHubMessage | null {
     reply_count: value.reply_count,
     last_reply_at: value.last_reply_at,
     mentions: [...new Set(value.mentions as string[])],
+    author_kind: authorKind,
+    agent_key: authorKind === "agent" ? agentKey as TeamHubAgentKey : null,
+    asked_in_message_id: askedIn,
+    // An agent key this build does not know is a tag it cannot show, so it is dropped, not guessed at.
+    agent_mentions: [...new Set((agentMentions as string[]).filter(isTeamHubAgentKey))],
   };
+}
+
+/**
+ * Sorts one message row into: a kind this build reads, or `skip` for an author kind or agent it does
+ * not know (a later increment's row is left out of the page, never shown in a person's name).
+ */
+function messageKind(value: unknown): "read" | "skip" {
+  if (!isRow(value)) return "read";
+  const kind = value.author_kind;
+  if (kind !== undefined && kind !== "user" && kind !== "agent") return "skip";
+  // An agent this build does not know is a later increment's; an agent row naming no agent is malformed.
+  if (kind === "agent" && typeof value.agent_key === "string" && !isTeamHubAgentKey(value.agent_key)) return "skip";
+  return "read";
+}
+
+/** The oldest (created_at, id) among a page's raw rows, read or skipped; null when none carries one. */
+function oldestRaw(value: unknown): TeamHubPageCursor | null {
+  if (!Array.isArray(value)) return null;
+  let oldest: TeamHubPageCursor | null = null;
+  for (const item of value) {
+    if (!isRow(item) || !isText(item.created_at) || !isText(item.id) || Number.isNaN(Date.parse(item.created_at))) continue;
+    const next = { created_at: item.created_at, id: item.id };
+    if (!oldest || compareMessages(next, oldest) < 0) oldest = next;
+  }
+  return oldest;
+}
+
+/**
+ * Every element must parse, except that rows `skip` sorts out are left out and counted: one unknown
+ * row never empties the whole list, and a malformed known row still refuses it.
+ */
+function parseKnown<T>(value: unknown, sort: (item: unknown) => "read" | "skip", parse: (item: unknown) => T | null): { items: T[]; skipped: number } | null {
+  if (!Array.isArray(value)) return null;
+  const items: T[] = [];
+  let skipped = 0;
+  for (const item of value) {
+    if (sort(item) === "skip") { skipped += 1; continue; }
+    const next = parse(item);
+    if (!next) return null;
+    items.push(next);
+  }
+  return { items, skipped };
 }
 
 /** A link this build understands, or null: absent, null, malformed and unknown sources all read as none. */
@@ -313,9 +448,15 @@ export function parseConversationList(data: unknown, error: unknown, expectedTen
   // A list for any workspace other than the one asked for is never shown.
   if (row.tenant_id !== expectedTenant || !isRow(row.me) || !isText(row.me.user_id)) return { kind: "unavailable" };
   const people = parseAll(row.people, parsePerson);
-  const conversations = parseAll(row.conversations, parseConversation);
-  if (!people || !conversations) return { kind: "unavailable" };
-  return { kind: "ok", value: { tenant_id: expectedTenant, me: { user_id: row.me.user_id }, people, conversations } };
+  // A1a: a kind this build does not know is skipped and counted, never allowed to empty the list; an
+  // agent DM is parsed into its own list, which nothing renders until A1b.
+  const listed = parseKnown(row.conversations,
+    (item) => isRow(item) && typeof item.kind === "string" && !KNOWN_KINDS.includes(item.kind) ? "skip" : "read",
+    (item): TeamHubConversation | TeamHubAgentConversation | null => isRow(item) && item.kind === "agent_dm" ? parseAgentConversation(item) : parseConversation(item));
+  if (!people || !listed) return { kind: "unavailable" };
+  const conversations = listed.items.filter((item): item is TeamHubConversation => "kind" in item);
+  const agentDms = listed.items.filter((item): item is TeamHubAgentConversation => !("kind" in item));
+  return { kind: "ok", value: { tenant_id: expectedTenant, me: { user_id: row.me.user_id }, people, conversations, agent_dms: agentDms, skipped: listed.skipped } };
 }
 
 export function parseChannelId(data: unknown, error: unknown): TeamHubResult<string> {
@@ -340,9 +481,9 @@ export function parseMessagePage(data: unknown, error: unknown, channelId: strin
   const answer = envelope(data, error);
   if (answer.kind !== "ok") return answer;
   const channel = parseChannelSummary(answer.value.channel);
-  const messages = parseAll(answer.value.messages, parseMessage);
-  if (!channel || channel.id !== channelId || !messages || typeof answer.value.has_more !== "boolean") return { kind: "unavailable" };
-  return { kind: "ok", value: { channel, messages, has_more: answer.value.has_more } };
+  const page = parseKnown(answer.value.messages, messageKind, parseMessage);
+  if (!channel || channel.id !== channelId || !page || typeof answer.value.has_more !== "boolean") return { kind: "unavailable" };
+  return { kind: "ok", value: { channel, messages: page.items, has_more: answer.value.has_more, skipped: page.skipped, oldest: oldestRaw(answer.value.messages) } };
 }
 
 export function parseThreadPage(data: unknown, error: unknown, channelId: string, rootId: string): TeamHubResult<TeamHubThreadPage> {
@@ -350,11 +491,11 @@ export function parseThreadPage(data: unknown, error: unknown, channelId: string
   if (answer.kind !== "ok") return answer;
   const channel = parseChannelSummary(answer.value.channel);
   const root = parseMessage(answer.value.root);
-  const replies = parseAll(answer.value.messages, parseMessage);
+  const replies = parseKnown(answer.value.messages, messageKind, parseMessage)?.items ?? null;
   if (!channel || channel.id !== channelId || !root || root.id !== rootId || root.parent_message_id !== null) return { kind: "unavailable" };
   // Every reply must belong to the root that was asked for; one stray row rejects the page.
   if (!replies || replies.some((reply) => reply.parent_message_id !== rootId) || typeof answer.value.has_more !== "boolean") return { kind: "unavailable" };
-  return { kind: "ok", value: { channel, root, replies, has_more: answer.value.has_more } };
+  return { kind: "ok", value: { channel, root, replies, has_more: answer.value.has_more, oldest: oldestRaw(answer.value.messages) } };
 }
 
 export function parsePosted(data: unknown, error: unknown): TeamHubResult<TeamHubPosted> {
@@ -714,11 +855,15 @@ export function mergeMessages(current: TeamHubMessage[], incoming: TeamHubMessag
  * oldest message is newer than the newest one held, the messages in between were never read: the
  * held list can't be joined to the page without a silent hole, so the page replaces it.
  */
-export function refreshLeavesGap(held: TeamHubMessage[], newestPage: TeamHubMessage[], pageHasMore: boolean): boolean {
-  if (!pageHasMore || !newestPage.length) return false;
+export function refreshLeavesGap(held: TeamHubMessage[], newestPage: TeamHubMessage[], pageHasMore: boolean, pageOldest?: TeamHubPageCursor | null): boolean {
+  // pageOldest is the page's oldest RAW row, skipped rows included: a newest page made only of
+  // rows this build skips still reaches down to it, and a message under it must not vanish.
+  if (!pageHasMore || (!newestPage.length && !pageOldest)) return false;
   const newestHeld = held[held.length - 1];
   if (!newestHeld) return true;
-  const oldestOnPage = newestPage.reduce((oldest, message) => compareMessages(message, oldest) < 0 ? message : oldest);
+  const parsedOldest = newestPage.length
+    ? newestPage.reduce((oldest, message) => compareMessages(message, oldest) < 0 ? message : oldest) : null;
+  const oldestOnPage = pageOldest && (!parsedOldest || compareMessages(pageOldest, parsedOldest) < 0) ? pageOldest : parsedOldest!;
   return compareMessages(oldestOnPage, newestHeld) > 0;
 }
 

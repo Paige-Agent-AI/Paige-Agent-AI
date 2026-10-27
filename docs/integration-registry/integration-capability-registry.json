@@ -2950,7 +2950,7 @@
       ],
       "connection_prerequisite": "Make.com platform app OAuth authorization (tenant-owned); API access level permitting scenario/execution operations; provider API terms verified at build time.",
       "required_scopes": [
-        "Make API OAuth scopes for scenarios:read, scenarios:run, logs:read (exact scope names verified against Make developer docs at build time)"
+        "Make API OAuth scopes: scenarios:run (fire) + scenarios:read (execution-status readback) — the verified minimal set (docs checked 2026-10-27: logs:read appears on no execution endpoint)"
       ],
       "safe_readable_context": "Connection status, scenario inventory and execution outcome states the tenant authorizes; never credentials or raw payload bodies, provider content fenced as untrusted data.",
       "allowed_writes_external_effects": "None implemented. Planned: scenario runs via a Layer C ActionAdapter with single-effect idempotency, governed approval and Make's original execution id as the canonical readback; never blind retries of uncertain outcomes.",
@@ -2962,8 +2962,8 @@
       "rail_mind_memory": "Rail: governed automation-run outcome with original execution id. Mind: only safe scenario facts. Memory: none of payloads or credentials.",
       "status": "PROPOSED",
       "owner": "EXP10 Connect My Business (zCod)",
-      "dependency": "Layer C ActionAdapter (the n8n adapter is the precedent); Make developer API terms + rate limits verification; mcp_providers is NOT the path (REST, not MCP) — a provider adapter in the orchestration layer is.",
-      "next_slice": "Verify Make API v2 scenario/execution operations + OAuth shape; then design the ActionAdapter slice against the n8n-adapter precedent.",
+      "dependency": "DESIGN COMPLETE 2026-10-27 (docs/delivery/exp10-connect-my-business/EXP10-MAKECOM-ACTION-ADAPTER-DESIGN.md, provider facts verified against official docs): run POST /scenarios/{id}/run (scopes scenarios:run+read only); real execution-status readback GET .../executions/{id} (SUCCESS/WARNING/ERROR/RUNNING/PAUSED-hitl); tenant-owned OAuth confidential client, 1h JWT + refresh. OWNER-HELD before implementation: the Make OAuth client registration (form f.make.com/oauth, <=10-business-day review; no self-service registration - the Teams-AAD class of prerequisite). Status stays PROPOSED: a design does not promote.",
+      "next_slice": "After the owner's OAuth client registration: (1) _shared/make-run.ts seam (base-URL allowlist eu1/eu2/us1/us2.make.com + celonis, server-side token refresh, safeFetch); (2) make-adapter.ts vs the n8n-adapter test template (mapping table in the design); (3) connection surface + promotion to PROOF_OWED with anchors; (4) authenticated scenario drive.",
       "tier_eligibility": {
         "platform": "eligible",
         "solo": "eligible",
@@ -2995,7 +2995,7 @@
         "rail_outcome": "Governed automation-run outcome on Rail (future)",
         "pause_revoke_path": "OAuth token revoked on disconnect; tenant may also remove authorization in Make settings",
         "next_owner": "EXP10 Connect My Business",
-        "next_slice": "Provider API facts verification"
+        "next_slice": "Pricing terms captured from Make's published plans at implementation time; metered per-scenario-operations cost recorded with the usual checked-as-of discipline"
       },
       "sources": [
         "docs/delivery/exp10-connect-my-business/EXP10-SOURCE-RECONCILIATION-REGISTER.md"

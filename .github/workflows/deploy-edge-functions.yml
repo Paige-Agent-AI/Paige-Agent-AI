@@ -174,6 +174,7 @@ jobs:
       # was present but expired, every deploy returned 401, and the run ended
       # before the retirement delete could matter.
       - name: Preflight — the provider accepts the credential
+        id: preflight
         if: steps.affected.outcome == 'success' && (steps.affected.outputs.count != '0' || steps.retired.outputs.count != '0')
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
@@ -265,9 +266,12 @@ jobs:
       # A successful upload is not evidence that the selected source is live.
       # Reuse this job's authenticated CLI; download only into temporary dirs.
       # Readback failure does not roll back already successful deployments.
+      # A failed upload command can still have changed deployed source. Inspect
+      # it without another upload; preserve cancellation/auth/source boundaries.
+      # The unchanged success-only record step never certifies a failed job.
       - name: Verify deployed source
         id: readback
-        if: steps.affected.outcome == 'success' && steps.affected.outputs.count != '0'
+        if: ${{ !cancelled() && steps.affected.outcome == 'success' && steps.affected.outputs.count != '0' && steps.preflight.outcome == 'success' }}
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
         run: |

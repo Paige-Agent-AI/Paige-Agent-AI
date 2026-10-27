@@ -111,6 +111,7 @@
     "test:email-composer-prompt": "node --import ./scripts/client-memory-authz/register.mjs --test supabase/functions/subagent-email-composer/prompt.test.ts",
     "test:comms-lead-reply-approval": "node --import ./scripts/client-memory-authz/register.mjs --test supabase/functions/comms-email-command/lead-reply-approval.test.ts",
     "test:sendgrid-webhook": "node --import ./scripts/client-memory-authz/register.mjs --test supabase/functions/handle-sendgrid-webhook/index.test.ts",
+    "test:inbound-email": "node --import ./scripts/client-memory-authz/register.mjs --test supabase/functions/handle-inbound-email/index.test.ts",
     "test:token-pricing": "node --import ./scripts/client-memory-authz/register.mjs scripts/token-pricing/check.mjs",
     "test:trace-wiring": "node --import ./scripts/client-memory-authz/register.mjs scripts/token-pricing/trace-wiring.mjs",
     "test:reasoning-tier": "node --import ./scripts/client-memory-authz/register.mjs scripts/model-migration/reasoning-tier-check.mjs",

@@ -113,6 +113,8 @@ jobs:
         run: psql -h 127.0.0.1 -U postgres -d postgres -v ON_ERROR_STOP=1 -f supabase/tests/exp08_team_lifecycle.sql
       - name: EXP08 co-owner authority, only the account holder or the platform owner grants or revokes, nobody revokes the holder, production holes, gate-only diff and mutants in a disposable database
         run: psql -h 127.0.0.1 -U postgres -d postgres -v ON_ERROR_STOP=1 -f supabase/tests/exp08_co_owner_authority.sql
+      - name: EXP08 Team Hub agents A1a, accepted-turn record, single-use agent posts, one-reply rule, per-seat cap, agent DM isolation, roster correction and mutants in a disposable database
+        run: psql -h 127.0.0.1 -U postgres -d postgres -v ON_ERROR_STOP=1 -f supabase/tests/exp08_team_hub_agents_a1.sql
       - name: EXP08 PAIGE team lifecycle catalogue, md5 guard against production's incumbent, replay guard, five Team rows and grants in a disposable database
         run: |
           psql -h 127.0.0.1 -U postgres -d postgres -v ON_ERROR_STOP=1 -c 'DROP DATABASE IF EXISTS exp08_lifecycle_cat' -c 'CREATE DATABASE exp08_lifecycle_cat'
@@ -1609,6 +1611,10 @@ jobs:
       - name: SendGrid webhook door (signed events only, acceptance is never delivery)
         if: ${{ !cancelled() }}
         run: npm run test:sendgrid-webhook
+
+      - name: Inbound email door (SendGrid Inbound Parse shared secret, envelope routing, tenant-scoped dedup; Resend arm unchanged)
+        if: ${{ !cancelled() }}
+        run: npm run test:inbound-email
 
   web-fetch-hardening-smoke:
     # Its own job, deliberately on Node 22: the smoke imports the real

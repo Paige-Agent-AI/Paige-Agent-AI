@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { supabase } from "@/integrations/supabase/client";
+import { readFunctionErrorBody } from "@/lib/integrations/connectError";
 import { toast } from "sonner";
 import { MessageSquare, Phone, Mail, Calendar, Loader2, Crown } from "lucide-react";
 
@@ -36,14 +37,27 @@ export function ContactSupport() {
       // planSlug is intentionally NOT sent: the support SLA + routing inbox are
       // entitlements resolved SERVER-SIDE from the subscription row (a client
       // value would be spoofable). The local planSlug only drives this UI's copy.
-      const { error } = await supabase.functions.invoke('send-support-request', {
+      const { data, error } = await supabase.functions.invoke('send-support-request', {
         body: {
           ...formData,
           userEmail: user.email,
         },
       });
 
-      if (error) throw error;
+      if (error) {
+        // The function answers a non-2xx with an honest body. An UNCONFIRMED send means the email
+        // service may already have the request: telling the person it failed would make them send it
+        // twice, so they hear exactly that, and the form keeps what they typed.
+        const body = await readFunctionErrorBody(error, data);
+        const said = typeof body?.error === "string" ? body.error : null;
+        if (body?.unconfirmed === true) {
+          toast.warning("We couldn't confirm it reached our team", {
+            description: said ?? "It may have. Please wait a few minutes before sending it again, or email support@paigeagent.ai.",
+          });
+          return;
+        }
+        throw new Error(said ?? error.message);
+      }
 
       toast.success("Request submitted!", {
         description: isEnterprise 

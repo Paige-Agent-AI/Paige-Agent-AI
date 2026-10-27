@@ -295,7 +295,8 @@ describe("skill-runner approved send through the SendGrid transport (stubbed net
   ])("reports %s as UNCONFIRMED, never a plain failure that invites a redraft-and-resend", async (_label, provider) => {
     const f = fixture({ claim: true, provider });
     const result = await f.invoke("test-owner-jwt", { confirm_token: "a1b2c3d4e5f60718" });
-    expect(result.status).toBe(502);
+    // 202, not 502: no caller that branches on HTTP status may read this as a plain failure to redo.
+    expect(result.status).toBe(202);
     expect(result.body).toMatchObject({ status: "unconfirmed", code: "send_unconfirmed" });
     expect(result.body.code).not.toBe("send_failed");
     expect(String(result.body.error)).not.toMatch(/re-draft to send again/i);

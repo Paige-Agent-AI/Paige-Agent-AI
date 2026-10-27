@@ -6848,7 +6848,7 @@ in the dispatch chain, never from Live, every write outcome with a workspace rec
 workspace there is no tenant to record against, so that refusal writes no receipt). Ledger:
 `docs/doctrine/tier-matrix.md`, "EXP08 PAIGE team-lifecycle tools". Authenticated runtime `UNVERIFIED`.
 
-**EXP08 co-owners and entity owners, I1 — owner invitations (2026-10-27; branch `exp08-owners-i1`, migration `20271117170008`, NOT MERGED; authenticated runtime `UNVERIFIED`).**
+**EXP08 co-owners and entity owners, I1 — owner invitations (2026-10-27; branch `exp08-owners-i1`, migration `20271118200008`, NOT MERGED; authenticated runtime `UNVERIFIED`).**
 Design owner-approved 2026-10-27; open questions answered the same day (contract R12–R15: recovery-only
 `set_account_holder`; a billing-paused holder is still the holder; admins keep inviting admins and members;
 billing/promotional restoration of the holder's own seat). The database now lets ONLY the account holder of
@@ -6881,7 +6881,10 @@ are not refused. Round 5 (2026-10-27): migration renamed to `20271117170008` (pr
 (sender still the account holder, so not while that holder is paused for billing; Solo account; under
 `max_uses`; a named legal owner still non-individual with its seat open), so a dead owner invitation no longer
 holds a person off other seats, and it also fires on an UPDATE that moves a seat to the person (BEFORE INSERT OR
-UPDATE OF `tenant_id`, `user_id`). **#227 residual, stated:** owner seats are not refused, and the sub-account
+UPDATE OF `tenant_id`, `user_id`). Round 6 (2026-10-27): migration renamed to `20271118200008`, because
+production's newest applied became `20271118100000` (so `20271117170008` no longer sorted after it) and remote
+branches hold versions up to `20271118110009`; the seat rule also requires the person's address to be confirmed,
+as `accept_solo_team_invite` does (N1). **#227 residual, stated:** owner seats are not refused, and the sub-account
 owner path seats a new owner wherever the business has NO ACTIVE OWNER, which includes a business whose holder
 is paused for billing with no other active owner: the agency's (or platform's) `subaccount_owner` token then
 seats a new owner beside the paused holder (owner ruling R13 says that holder is still the holder).
@@ -10014,7 +10017,7 @@ DOCTRINE_190/191/192, 194, 197, 198 + Addendum, 200, 201, 202, 203, 205, 208, 21
 
 - **2026-10-27 · EXP08 CO-OWNER AUTHORITY WAS RECORDED "NOT YET MERGED" AFTER IT WAS LIVE.** The tier matrix headed `20271116020008` "NOT YET MERGED — proof local, PROOF OWED on production" after PR #2945 merged (`51ede67eb`) and applied (`db-live` = `51ede67eb`).
   - **Corrected (I1 grounding, read-only production queries 2026-10-27).** Production md5(prosrc) of `grant_co_owner` `2a75180d…`, `revoke_co_owner` `e2ba8ca8…`, `guard_tenant_owner_only_columns` `d77a4bfa…` and `is_tenant_account_holder` `4a3cab59…` equal the repo bodies, and `authenticated`/`anon` cannot execute the helper. The tier-matrix heading now says so.
-  - **Also recorded:** production's `peek_tenant_invite` is not reproducible verbatim from any one repo file (`20271108120100` patched it in place with `replace()`, and its earlier comment lines differ from `20260713050000`); `20271117170008` re-emits production's own body (md5 `276541d0…`) and its proof pins that body inline.
+  - **Also recorded:** production's `peek_tenant_invite` is not reproducible verbatim from any one repo file (`20271108120100` patched it in place with `replace()`, and its earlier comment lines differ from `20260713050000`); `20271118200008` (named `20271117170008` until round 6) re-emits production's own body (md5 `276541d0…`) and its proof pins that body inline.
 
 - **2026-10-27 · ROSTER: MERIT WAS STILL "FINANCE & PEOPLE" AND NEXUS STILL OWNED SALES, AGAINST THE 23 OCT 2026 STANDARD.** The binding owner standard at the top of `docs/doctrine/paige-c-suite-roster.md` gives MERIT sales, commercial relationships, proposals, agreements and collections, and NEXUS marketing, advertising, growth and campaigns; VERA owns finance.
   - **What was wrong.** `supabase/functions/_shared/paige-context/vp-address.ts` (the one persona composer behind PAIGE chat's "MERIT, …" addressing) still said MERIT was "VP Finance & People" (money spine, dunning, refunds, hiring and comp) and NEXUS "VP Growth" with sales sequences, pipeline management and lead scoring. The production `paige_subagents` rows `merit` and `nexus` (seeded `20270108000000_csuite_roster_mount.sql`, never remapped) said the same; read on production 2026-10-27, both are the untouched version-1 seeds. So two specialists answered for the same desk (VERA and MERIT on finance) and sales sat with marketing.

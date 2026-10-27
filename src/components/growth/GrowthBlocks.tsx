@@ -8,6 +8,8 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import DOMPurify from "dompurify";
+import { assignBands, type GpBand } from "@/lib/growth/bands";
+import { embedUrl } from "@/lib/growth/media";
 import type { GrowthBlock, GrowthPageTheme } from "@/lib/growth";
 import { supabase } from "@/integrations/supabase/client";
 import { resolveGrowthFontPair, resolveGrowthTheme, type GrowthThemeVars } from "@/components/growth/growth-theme";
@@ -26,28 +28,7 @@ const WRAP_NARROW = "mx-auto w-full max-w-3xl";
 // every block body re-themes with ZERO per-block changes. Adjacent bands never repeat, so a real
 // color break always falls between sections. `--gp-accent`/`--gp-primary` are never rebound, so
 // gold stays emphasis-only and the hero scrim stays constant.
-type GpBand = "brand" | "contrast" | "deep";
-
-const BAND_CYCLE: GpBand[] = ["brand", "contrast", "deep", "contrast"];
-
-function assignBands(blocks: GrowthBlock[]): GpBand[] {
-  const out: GpBand[] = [];
-  let contentIdx = 0;
-  let prev: GpBand | null = null;
-  for (const b of blocks) {
-    let band: GpBand;
-    if (b.type === "hero" || b.type === "hero_scene") band = "brand"; // heroes own the brand tone (their own scrim/scene)
-    else if (b.type === "stats") band = "deep"; // a proof band reads best as a dark strip
-    else {
-      band = BAND_CYCLE[contentIdx % BAND_CYCLE.length];
-      contentIdx++;
-    }
-    if (band === prev) band = band === "contrast" ? "brand" : "contrast"; // never two same tones touching
-    out.push(band);
-    prev = band;
-  }
-  return out;
-}
+// The band rhythm lives in @/lib/growth/bands — one algorithm the React renderer and the portable export share.
 
 /** Per-band wrapper style that rebinds the base --gp-* to the band's set. `brand` inherits the
  *  scope (no override, transparent). */
@@ -147,38 +128,7 @@ function Frame({ children, className = "" }: { children: React.ReactNode; classN
   );
 }
 
-// ── media embed helpers (client-side render into a SANDBOXED iframe) ──────────
-function youTubeId(url: string): string | null {
-  const m = url.match(/(?:youtu\.be\/|v=|\/embed\/|\/shorts\/)([A-Za-z0-9_-]{6,})/);
-  return m ? m[1] : null;
-}
-function vimeoId(url: string): string | null {
-  const m = url.match(/vimeo\.com\/(?:video\/)?(\d+)/);
-  return m ? m[1] : null;
-}
-function loomId(url: string): string | null {
-  const m = url.match(/loom\.com\/(?:share|embed)\/([A-Za-z0-9]+)/);
-  return m ? m[1] : null;
-}
-
-function embedUrl(provider: string, url: string): string | null {
-  switch (provider) {
-    case "youtube": {
-      const id = youTubeId(url);
-      return id ? `https://www.youtube-nocookie.com/embed/${id}` : null;
-    }
-    case "vimeo": {
-      const id = vimeoId(url);
-      return id ? `https://player.vimeo.com/video/${id}` : null;
-    }
-    case "loom": {
-      const id = loomId(url);
-      return id ? `https://www.loom.com/embed/${id}` : null;
-    }
-    default:
-      return null;
-  }
-}
+// Media embed parsing lives in @/lib/growth/media — shared with the portable export.
 
 // ── individual block bodies ──────────────────────────────────────────────────
 function HeroBlock({ block }: { block: Extract<GrowthBlock, { type: "hero" }> }) {

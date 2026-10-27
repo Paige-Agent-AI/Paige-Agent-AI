@@ -51,7 +51,21 @@ interface Db {
   tenants: Row[];
 }
 
-type Faults = { connectorLookup?: "inbound_address" | "inbound_domain" };
+type Faults = {
+  /** A read error on this channel_connectors ilike column. */
+  connectorLookup?: "inbound_address" | "inbound_domain";
+  /** The next N messages inserts for this connector fail with a non-unique error. */
+  failMessageInsert?: { connector_id: string; times: number };
+  /** The next N paige_actions inserts fail. */
+  failActionInsertTimes?: number;
+  /** This RPC returns an error. */
+  failRpc?: string;
+};
+
+const pathValue = (r: Row, c: string): unknown => {
+  const m = /^(\w+)->>(\w+)$/.exec(c);
+  return m ? ((r[m[1]] ?? {}) as Row)[m[2]] : r[c];
+};
 
 function fakeAdmin(db: Db, faults: Faults = {}) {
   let seq = 0;
@@ -64,9 +78,23 @@ function fakeAdmin(db: Db, faults: Faults = {}) {
     const settle = (single: boolean) => {
       if (pendingInsert) {
         const row = pendingInsert;
+        // Production's GLOBAL unique indexes: messages(provider_message_id), paige_conversations(channel, source_message_id).
         if (name === "messages" && row.provider_message_id != null &&
             db.messages.some((m) => m.provider_message_id === row.provider_message_id)) {
           return { data: null, error: { code: "23505", message: "duplicate key value violates unique constraint" } };
+        }
+        if (name === "paige_conversations" && row.source_message_id != null &&
+            db.paige_conversations.some((c) => c.channel === row.channel && c.source_message_id === row.source_message_id)) {
+          return { data: null, error: { code: "23505", message: "duplicate key value violates unique constraint" } };
+        }
+        if (name === "messages" && faults.failMessageInsert && faults.failMessageInsert.times > 0 &&
+            row.connector_id === faults.failMessageInsert.connector_id) {
+          faults.failMessageInsert.times -= 1;
+          return { data: null, error: { code: "08006", message: "connection failure" } };
+        }
+        if (name === "paige_actions" && (faults.failActionInsertTimes ?? 0) > 0) {
+          faults.failActionInsertTimes = (faults.failActionInsertTimes ?? 0) - 1;
+          return { data: null, error: { code: "08006", message: "connection failure" } };
         }
         const stored = { id: `${String(name)}-${++seq}`, ...row };
         ((db as unknown as Record<string, Row[]>)[name] ??= []).push(stored);
@@ -80,7 +108,7 @@ function fakeAdmin(db: Db, faults: Faults = {}) {
     };
     const q = {
       select: () => q,
-      eq: (c: string, v: unknown) => { filters.push((r) => r[c] === v); return q; },
+      eq: (c: string, v: unknown) => { filters.push((r) => pathValue(r, c) === v); return q; },
       in: (c: string, vs: unknown[]) => { filters.push((r) => vs.includes(r[c])); return q; },
       ilike: (c: string, p: string) => { ilikeCol = c; filters.push((r) => ilikeMatches(r[c], p)); return q; },
       order: () => q,
@@ -99,6 +127,7 @@ function fakeAdmin(db: Db, faults: Faults = {}) {
       from: table,
       rpc: (fn: string, args: Row) => {
         rpcCalls.push({ fn, args });
+        if (faults.failRpc === fn) return Promise.resolve({ data: null, error: { code: "57014", message: "statement timeout" } });
         if (fn === "client_id_for_address") {
           const hit = db.clients.find((c) => c.tenant_id === args._tenant_id && c.email === args._value);
           return Promise.resolve({ data: hit ? hit.id : null, error: null });
@@ -174,13 +203,29 @@ function harness(env: Record<string, string | undefined>, db: Db = freshDb(), fa
 
 const ENV = { SUPABASE_URL: "https://example.invalid", SUPABASE_SERVICE_ROLE_KEY: "service-role-test", SENDGRID_INBOUND_PARSE_SECRET: SECRET };
 
-function parseForm(opts: { to?: string; envelopeTo?: string[] | null; messageId?: string | null; text?: string; subject?: string; attachments?: number } = {}): FormData {
+interface FormOpts {
+  to?: string;
+  envelopeTo?: string[] | null;
+  /** null = no Message-ID header; a string = used verbatim inside the header (so "" gives `<>`). */
+  messageId?: string | null;
+  text?: string;
+  html?: string;
+  subject?: string;
+  attachments?: number;
+  from?: string;
+  envelopeFrom?: string;
+  dkim?: string;
+  spf?: string;
+}
+
+function parseForm(opts: FormOpts = {}): FormData {
   const to = opts.to ?? "acme@mail.paigeagent.ai";
   const envelopeTo = opts.envelopeTo === undefined ? [to] : opts.envelopeTo;
+  const from = opts.from ?? "Ada Client <ada@client.example>";
   const headerLines = [
     "Received: by mx0047p1mdw1.sendgrid.net with SMTP id n02SRiHsLZ Tue, 27 Oct 2026 15:53:29 +0000 (UTC)",
     "MIME-Version: 1.0",
-    "From: Ada Client <ada@client.example>",
+    `From: ${from}`,
     "Date: Tue, 27 Oct 2026 15:53:29 +0000",
     ...(opts.messageId === null ? [] : [`Message-ID: <${opts.messageId ?? "CABQbZK-reply-1@mail.gmail.com"}>`]),
     "In-Reply-To: <sent-1@mail.paigeagent.ai>",
@@ -189,16 +234,16 @@ function parseForm(opts: { to?: string; envelopeTo?: string[] | null; messageId?
   ];
   const f = new FormData();
   f.set("headers", headerLines.join("\n"));
-  f.set("dkim", "{@client.example : pass}");
+  f.set("dkim", opts.dkim ?? "{@client.example : pass}");
   f.set("to", to);
-  f.set("from", "Ada Client <ada@client.example>");
+  f.set("from", from);
   f.set("subject", opts.subject ?? "Re: your proposal");
   f.set("text", opts.text ?? "Yes — Thursday works for me.");
-  f.set("html", "<p>Yes — Thursday works for me.</p>");
+  f.set("html", opts.html ?? "<p>Yes — Thursday works for me.</p>");
   f.set("sender_ip", "209.85.223.169");
-  if (envelopeTo !== null) f.set("envelope", JSON.stringify({ to: envelopeTo, from: "ada@client.example" }));
+  if (envelopeTo !== null) f.set("envelope", JSON.stringify({ to: envelopeTo, from: opts.envelopeFrom ?? "ada@client.example" }));
   f.set("charsets", JSON.stringify({ to: "UTF-8", from: "UTF-8", subject: "UTF-8", text: "UTF-8", html: "UTF-8" }));
-  f.set("SPF", "pass");
+  f.set("SPF", opts.spf ?? "pass");
   f.set("spam_score", "0.011");
   const n = opts.attachments ?? 0;
   f.set("attachments", String(n));
@@ -249,7 +294,7 @@ test("SendGrid arm: a valid reply lands as ONE inbound message for the tenant th
   assert.equal(res.status, 200);
   const body = await res.json();
   assert.equal(body.ok, true);
-  assert.equal(body.tenant_id, TENANT_A);
+  assert.deepEqual(body.results.map((r: Row) => [r.tenant_id, r.outcome]), [[TENANT_A, "persisted"]]);
   assert.equal(h.db.messages.length, 1);
   const m = h.db.messages[0];
   assert.equal(m.connector_id, "conn-a");
@@ -286,7 +331,7 @@ test("SendGrid arm: the same Message-ID delivered twice → one row (the retry i
   assert.equal((await h.handle(parseRequest(parseForm()))).status, 200);
   const again = await h.handle(parseRequest(parseForm()));
   assert.equal(again.status, 200);
-  assert.equal((await again.json()).deduped, true);
+  assert.equal((await again.json()).results[0].outcome, "deduped");
   assert.equal(h.db.messages.length, 1);
   assert.equal(h.db.paige_actions.length, 1);
 });
@@ -296,7 +341,7 @@ test("SendGrid arm: one email CC'd to two businesses lands once in EACH (the glo
   assert.equal((await h.handle(parseRequest(parseForm({ to: "acme@mail.paigeagent.ai" })))).status, 200);
   const second = await h.handle(parseRequest(parseForm({ to: "beta-co@mail.paigeagent.ai" })));
   assert.equal(second.status, 200);
-  assert.equal((await second.json()).tenant_id, TENANT_B);
+  assert.equal((await second.json()).results[0].tenant_id, TENANT_B);
   assert.deepEqual(h.db.messages.map((m) => m.connector_id).sort(), ["conn-a", "conn-b"]);
 });
 
@@ -338,8 +383,9 @@ test("SendGrid arm: routing is on the SMTP envelope, never on the header To a se
 
 for (const failing of ["inbound_address", "inbound_domain"] as const) {
   test(`SendGrid arm: a connector read failure (${failing}) is 503 (SendGrid retries), not a silent skip`, async () => {
-    // inbound_domain is only consulted when no address matched, so address the mail to nobody.
-    const to = failing === "inbound_address" ? "acme@mail.paigeagent.ai" : "nobody@mail.paigeagent.ai";
+    // inbound_domain is only consulted when no address matched, and never for a PAIGE domain,
+    // so the domain case addresses nobody at a business's own domain.
+    const to = failing === "inbound_address" ? "acme@mail.paigeagent.ai" : "nobody@acme-custom.example";
     const h = harness(ENV, freshDb(), { connectorLookup: failing });
     const res = await h.handle(parseRequest(parseForm({ to })));
     assert.equal(res.status, 503);
@@ -374,6 +420,204 @@ test("SendGrid arm: attachments are counted and described, their bytes are not s
   assert.deepEqual((meta.attachments_not_stored as Row[]).map((a) => [a.filename, a.type]), [
     ["doc1.pdf", "application/pdf"], ["doc2.pdf", "application/pdf"],
   ]);
+});
+
+// ── Review fixes (H1, M1–M4, L1–L6) ──────────────────────────────────────────────────────────
+const TENANT_C = "10000000-0000-4000-8000-00000000000c";
+
+test("H1: an admin-written inbound_domain on mail.paigeagent.ai captures nothing; a business's own domain still routes", async () => {
+  const db = freshDb();
+  db.channel_connectors.push(
+    { id: "conn-attacker", tenant_id: TENANT_C, channel_type: "email", provider: "resend", active: true,
+      inbound_address: null, inbound_domain: "mail.paigeagent.ai", from_address: null, from_name: null, reply_to: null, mailbox_class: null },
+    { id: "conn-custom", tenant_id: TENANT_A, channel_type: "email", provider: "resend", active: true,
+      inbound_address: null, inbound_domain: "acme-custom.example", from_address: null, from_name: null, reply_to: null, mailbox_class: null },
+  );
+  db.tenants.push({ id: TENANT_C, owner_user_id: OWNER });
+  const h = harness(ENV, db);
+  for (const to of ["nobody@mail.paigeagent.ai", "retired@mail.paigeagent.ai"]) {
+    const res = await h.handle(parseRequest(parseForm({ to })));
+    assert.equal((await res.json()).reason, "no_connector", to);
+  }
+  assert.equal(h.db.messages.length, 0);
+  const own = await h.handle(parseRequest(parseForm({ to: "anyone@acme-custom.example" })));
+  assert.equal(own.status, 200);
+  assert.equal(h.db.messages.length, 1);
+  assert.equal(h.db.messages[0].connector_id, "conn-custom");
+});
+
+test("M1: one post addressed to two businesses lands in BOTH, each row holding only its own recipient", async () => {
+  const h = harness(ENV);
+  const res = await h.handle(parseRequest(parseForm({
+    to: "acme@mail.paigeagent.ai", envelopeTo: ["acme@mail.paigeagent.ai", "beta-co@mail.paigeagent.ai"],
+  })));
+  assert.equal(res.status, 200);
+  assert.equal(h.db.messages.length, 2);
+  const byConn = Object.fromEntries(h.db.messages.map((m) => [m.connector_id as string, m]));
+  assert.deepEqual(byConn["conn-a"].recipients, [{ address: "acme@mail.paigeagent.ai" }]);
+  assert.deepEqual(byConn["conn-b"].recipients, [{ address: "beta-co@mail.paigeagent.ai" }]);
+  assert.deepEqual((byConn["conn-a"].meta as Row).to, ["acme@mail.paigeagent.ai"]);
+  assert.deepEqual((byConn["conn-b"].meta as Row).to, ["beta-co@mail.paigeagent.ai"]);
+  assert.equal(byConn["conn-a"].provider_message_id, `sendgrid-inbound:${TENANT_A}:CABQbZK-reply-1@mail.gmail.com`);
+  assert.equal(byConn["conn-b"].provider_message_id, `sendgrid-inbound:${TENANT_B}:CABQbZK-reply-1@mail.gmail.com`);
+  assert.deepEqual(h.db.paige_actions.map((a) => a.tenant_id).sort(), [TENANT_A, TENANT_B]);
+});
+
+test("M1: one business failing transiently does not lose the other; 503, and the redelivery completes it", async () => {
+  const faults: Faults = { failMessageInsert: { connector_id: "conn-b", times: 1 } };
+  const h = harness(ENV, freshDb(), faults);
+  const form = () => parseForm({ envelopeTo: ["acme@mail.paigeagent.ai", "beta-co@mail.paigeagent.ai"] });
+  const first = await h.handle(parseRequest(form()));
+  assert.equal(first.status, 503);
+  assert.deepEqual(h.db.messages.map((m) => m.connector_id), ["conn-a"]);
+  const retry = await h.handle(parseRequest(form()));
+  assert.equal(retry.status, 200);
+  assert.deepEqual(h.db.messages.map((m) => m.connector_id).sort(), ["conn-a", "conn-b"]);
+  assert.equal(h.db.paige_actions.length, 2);
+});
+
+test("M2: a From that neither SPF nor DKIM authenticates is kept, but not linked to the real contact and not auto-drafted", async () => {
+  const db = freshDb();
+  db.clients.push({ id: "client-real", tenant_id: TENANT_A, email: "ada@client.example" });
+  const h = harness(ENV, db);
+  const res = await h.handle(parseRequest(parseForm({
+    dkim: "{@attacker.example : pass}", spf: "fail", envelopeFrom: "bounce@attacker.example",
+  })));
+  assert.equal(res.status, 200);
+  assert.equal(h.db.messages.length, 1);
+  const m = h.db.messages[0];
+  assert.equal(m.contact_id, null);
+  assert.equal(m.thread_key, `email-unverified:${TENANT_A}:ada@client.example`);
+  assert.equal((m.meta as Row).sender_unauthenticated, true);
+  assert.equal(h.db.paige_actions.length, 0);
+  assert.equal(h.db.paige_conversations.length, 0);
+  assert.deepEqual(h.db.clients.map((c) => c.id), ["client-real"]);
+  assert.ok(!h.rpcCalls.some((c) => c.fn === "client_id_for_address"));
+});
+
+test("M2: an aligned SPF pass alone (no DKIM) authenticates; a DKIM pass for another domain does not", async () => {
+  const db = freshDb();
+  db.clients.push({ id: "client-real", tenant_id: TENANT_A, email: "ada@client.example" });
+  const h = harness(ENV, db);
+  await h.handle(parseRequest(parseForm({ dkim: "none", spf: "pass", envelopeFrom: "bounces@mail.client.example" })));
+  assert.equal(h.db.messages[0].contact_id, "client-real");
+  assert.equal(((h.db.messages[0].meta as Row).sender_unauthenticated), undefined);
+  await h.handle(parseRequest(parseForm({ messageId: "other-1@x", dkim: "{@sendgrid.net : pass}", spf: "softfail" })));
+  assert.equal((h.db.messages[1].meta as Row).sender_unauthenticated, true);
+  assert.equal(h.db.messages[1].contact_id, null);
+});
+
+test("M3: an attachment-only reply (empty body) is persisted, not dropped", async () => {
+  const h = harness(ENV);
+  const res = await h.handle(parseRequest(parseForm({ text: "", html: "", attachments: 1 })));
+  assert.equal(res.status, 200);
+  assert.equal(h.db.messages.length, 1);
+  assert.equal(h.db.messages[0].body_text, null);
+  assert.equal((h.db.messages[0].meta as Row).raw_attachment_count, 1);
+  // Still nothing to keep when there is no body AND no attachment.
+  const empty = await h.handle(parseRequest(parseForm({ messageId: "empty-1@x", text: "", html: "" })));
+  assert.equal((await empty.json()).reason, "missing_fields");
+  assert.equal(h.db.messages.length, 1);
+});
+
+test("M4a: a contact-lookup error is 503 with nothing misfiled", async () => {
+  const h = harness(ENV, freshDb(), { failRpc: "client_id_for_address" });
+  const res = await h.handle(parseRequest(parseForm()));
+  assert.equal(res.status, 503);
+  assert.equal(h.db.messages.length, 0);
+  assert.equal(h.db.clients.length, 0);
+});
+
+test("M4b: a failed draft-reply insert is 503, and the redelivery dedups AND files the draft exactly once", async () => {
+  const faults: Faults = { failActionInsertTimes: 1 };
+  const h = harness(ENV, freshDb(), faults);
+  const first = await h.handle(parseRequest(parseForm()));
+  assert.equal(first.status, 503);
+  assert.equal(h.db.messages.length, 1);
+  assert.equal(h.db.paige_actions.length, 0);
+  const retry = await h.handle(parseRequest(parseForm()));
+  assert.equal(retry.status, 200);
+  assert.equal((await retry.json()).results[0].outcome, "deduped");
+  assert.equal(h.db.paige_actions.length, 1);
+  assert.equal((h.db.paige_actions[0].payload as Row).message_id, h.db.messages[0].id);
+  // A further redelivery files nothing more.
+  assert.equal((await h.handle(parseRequest(parseForm()))).status, 200);
+  assert.equal(h.db.paige_actions.length, 1);
+});
+
+test("M4b: a message that landed before a crash (no draft yet) gets its draft on redelivery", async () => {
+  const db = freshDb();
+  db.clients.push({ id: "client-real", tenant_id: TENANT_A, email: "ada@client.example" });
+  db.messages.push({
+    id: "messages-pre", connector_id: "conn-a", contact_id: "client-real", thread_key: `contact:${TENANT_A}:client-real`,
+    provider_message_id: `sendgrid-inbound:${TENANT_A}:CABQbZK-reply-1@mail.gmail.com`,
+  });
+  const h = harness(ENV, db);
+  assert.equal((await h.handle(parseRequest(parseForm()))).status, 200);
+  assert.equal(h.db.paige_actions.length, 1);
+  assert.equal((h.db.paige_actions[0].payload as Row).message_id, "messages-pre");
+  assert.equal(h.db.paige_actions[0].contact_id, "client-real");
+});
+
+test("L1: the legacy mirror is keyed per business, so both businesses' copies are mirrored", async () => {
+  const h = harness(ENV);
+  await h.handle(parseRequest(parseForm({ envelopeTo: ["acme@mail.paigeagent.ai", "beta-co@mail.paigeagent.ai"] })));
+  assert.deepEqual(h.db.paige_conversations.map((c) => c.source_message_id).sort(), [
+    `sendgrid-inbound:${TENANT_A}:CABQbZK-reply-1@mail.gmail.com`,
+    `sendgrid-inbound:${TENANT_B}:CABQbZK-reply-1@mail.gmail.com`,
+  ]);
+});
+
+test("L2: an empty Message-ID `<>` is treated as absent (derived identity), not as the id `<>`", async () => {
+  const h = harness(ENV);
+  await h.handle(parseRequest(parseForm({ messageId: "" })));
+  assert.match(String(h.db.messages[0].provider_message_id), new RegExp(`^sendgrid-inbound:${TENANT_A}:derived:[0-9a-f]{64}$`));
+  // A different email with the same empty id is a different message, not a "duplicate".
+  await h.handle(parseRequest(parseForm({ messageId: "", text: "Another." })));
+  assert.equal(h.db.messages.length, 2);
+});
+
+test("L4: a body cut at the field cap is flagged body_truncated", async () => {
+  const h = harness(ENV);
+  await h.handle(parseRequest(parseForm({ text: "x".repeat(1_000_001) })));
+  const m = h.db.messages[0];
+  assert.equal(String(m.body_text).length, 1_000_000);
+  assert.equal((m.meta as Row).body_truncated, true);
+  await h.handle(parseRequest(parseForm({ messageId: "short-1@x" })));
+  assert.equal((h.db.messages[1].meta as Row).body_truncated, undefined);
+});
+
+test("L6: the comment-form From `addr (Name)` is parsed", async () => {
+  const h = harness(ENV);
+  await h.handle(parseRequest(parseForm({ from: "ada@client.example (Ada Client)" })));
+  assert.deepEqual(h.db.messages[0].sender, { address: "ada@client.example", display_name: "Ada Client" });
+});
+
+test("a chunked body over 32 MiB with no Content-Length is 413, cut off while streaming", async () => {
+  const h = harness(ENV);
+  const chunk = new Uint8Array(1024 * 1024);
+  let sent = 0;
+  const body = new ReadableStream<Uint8Array>({
+    pull(controller) {
+      if (sent >= 33) { controller.close(); return; }
+      sent += 1;
+      controller.enqueue(chunk);
+    },
+  });
+  const req = new Request("https://example.invalid/functions/v1/handle-inbound-email", {
+    method: "POST",
+    headers: {
+      authorization: `Basic ${Buffer.from(`inbound:${SECRET}`).toString("base64")}`,
+      "content-type": "multipart/form-data; boundary=x",
+    },
+    body,
+    duplex: "half",
+  } as RequestInit & { duplex: "half" });
+  assert.equal(req.headers.get("content-length"), null);
+  const res = await h.handle(req);
+  assert.equal(res.status, 413);
+  assert.ok(sent <= 33);
+  assert.equal(h.db.messages.length, 0);
 });
 
 // ── The Resend arm, unchanged ────────────────────────────────────────────────────────────────

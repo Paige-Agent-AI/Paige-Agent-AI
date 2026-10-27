@@ -100,6 +100,13 @@ export interface SendGridInboundFields {
   sender_ip: string;
   attachment_count: number;
   attachments: SendGridAttachmentInfo[];
+  /** True when `text` or `html` was longer than the per-field cap and was cut. */
+  body_truncated: boolean;
+}
+
+function overCap(form: FormData, name: string, max: number): boolean {
+  const v = form.get(name);
+  return typeof v === "string" && v.length > max;
 }
 
 function field(form: FormData, name: string, max: number): string {
@@ -151,6 +158,7 @@ export function sendgridFieldsFromForm(form: FormData): SendGridInboundFields {
     sender_ip: field(form, "sender_ip", 64),
     attachment_count: Math.max(Number.isFinite(declared) ? declared : 0, fileCount),
     attachments,
+    body_truncated: overCap(form, "text", FIELD_MAX_CHARS) || overCap(form, "html", FIELD_MAX_CHARS),
   };
 }
 
@@ -180,24 +188,72 @@ export function parseHeaderBlock(block: string): Map<string, string> {
   return out;
 }
 
-/** `<id@host>` → `id@host`; empty → null. */
+/** `<id@host>` → `id@host`; empty, `<>` or whitespace → null (the caller then derives an identity). */
 export function stripMessageId(v: string | undefined | null): string | null {
   const s = String(v ?? "").trim();
   if (!s) return null;
-  const m = /<([^<>]+)>/.exec(s);
-  const id = (m ? m[1] : s).trim();
+  const m = /<([^<>]*)>/.exec(s);
+  const id = (m ? m[1] : s.replace(/[<>]/g, "")).trim();
   return id ? id.slice(0, 998) : null;
 }
 
-/** One `Name <addr>` / `addr` / `"Last, First" <addr>` → a party; null when there is no address. */
+/**
+ * One `Name <addr>` / `addr` / `"Last, First" <addr>` / RFC 5322 comment form `addr (Name)` → a party;
+ * null when there is no address.
+ */
 export function parseParty(raw: string): MessageParty | null {
   const s = String(raw ?? "").trim();
   if (!s) return null;
   const angle = /<\s*([^<>\s]+@[^<>\s]+)\s*>/.exec(s);
-  const address = (angle ? angle[1] : s).trim().replace(/^mailto:/i, "").toLowerCase();
+  const comment = angle ? null : /^([^\s()<>]+@[^\s()<>]+)\s*\((.*)\)\s*$/.exec(s);
+  const address = (angle ? angle[1] : comment ? comment[1] : s).trim().replace(/^mailto:/i, "").toLowerCase();
   if (!/^[^@\s]+@[^@\s]+$/.test(address)) return null;
-  const name = angle ? s.slice(0, angle.index).trim().replace(/^"(.*)"$/, "$1").trim() : "";
+  const name = angle
+    ? s.slice(0, angle.index).trim().replace(/^"(.*)"$/, "$1").trim()
+    : comment
+    ? comment[2].trim().replace(/^"(.*)"$/, "$1").trim()
+    : "";
   return name ? { address, display_name: name } : { address };
+}
+
+function domainOf(address: string | null | undefined): string {
+  const a = String(address ?? "").trim().toLowerCase();
+  const at = a.lastIndexOf("@");
+  return at >= 0 ? a.slice(at + 1) : "";
+}
+
+/** Relaxed alignment (the DMARC sense, approximated without a public-suffix list): equal, or one a subdomain of the other. */
+function aligned(a: string, b: string): boolean {
+  if (!a || !b || !a.includes(".") || !b.includes(".")) return false;
+  return a === b || a.endsWith(`.${b}`) || b.endsWith(`.${a}`);
+}
+
+/** SendGrid's `dkim` field, e.g. `{@sendgrid.com : pass}` (one `@domain : result` pair per signature). */
+export function parseDkimResults(raw: string): Array<{ domain: string; result: string }> {
+  const out: Array<{ domain: string; result: string }> = [];
+  for (const m of String(raw ?? "").matchAll(/@([a-z0-9.-]+)\s*:\s*([a-z]+)/gi)) {
+    out.push({ domain: m[1].toLowerCase(), result: m[2].toLowerCase() });
+    if (out.length >= 20) break;
+  }
+  return out;
+}
+
+/**
+ * Did the From domain authenticate? True when SendGrid's DKIM result is `pass` for a signing domain
+ * aligned with the From domain, or its SPF result (`SPF` field, which SPF evaluates against the SMTP
+ * envelope sender) is `pass` and the envelope sender's domain is aligned with the From domain.
+ * Anything else — fail, softfail, neutral, none, missing, or a pass for some other domain — is not.
+ */
+export function senderAuthentication(
+  fromAddress: string,
+  envelopeFrom: string | null,
+  spf: string,
+  dkim: string,
+): { authenticated: boolean; spf_aligned_pass: boolean; dkim_aligned_pass: boolean } {
+  const fromDomain = domainOf(fromAddress);
+  const spfAlignedPass = String(spf ?? "").trim().toLowerCase() === "pass" && aligned(fromDomain, domainOf(envelopeFrom));
+  const dkimAlignedPass = parseDkimResults(dkim).some((d) => d.result === "pass" && aligned(fromDomain, d.domain));
+  return { authenticated: spfAlignedPass || dkimAlignedPass, spf_aligned_pass: spfAlignedPass, dkim_aligned_pass: dkimAlignedPass };
 }
 
 /** A header address list → parties. Commas inside quotes or angle brackets do not split. */
@@ -276,6 +332,7 @@ export const sendgridInboundAdapter: InboundChannelAdapter = {
     const inReplyTo = stripMessageId(headers.get("in-reply-to"));
     const headerTo = parsePartyList(f.to || headers.get("to") || "").map((p) => p.address);
     const headerCc = parsePartyList(f.cc || headers.get("cc") || "").map((p) => p.address);
+    const auth = senderAuthentication(sender.address, envelope?.from ?? null, f.spf, f.dkim);
     return {
       thread_key: sender.address,
       channel_type: "email",
@@ -302,6 +359,9 @@ export const sendgridInboundAdapter: InboundChannelAdapter = {
         sender_ip: f.sender_ip || null,
         raw_attachment_count: f.attachment_count,
         attachments_not_stored: f.attachments,
+        sender_auth: { spf_aligned_pass: auth.spf_aligned_pass, dkim_aligned_pass: auth.dkim_aligned_pass },
+        ...(auth.authenticated ? {} : { sender_unauthenticated: true }),
+        ...(f.body_truncated ? { body_truncated: true } : {}),
       },
       sent_at: isoDate(headers.get("date")),
     };

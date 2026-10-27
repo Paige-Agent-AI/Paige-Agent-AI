@@ -242,6 +242,13 @@ project_id = "xygzykjyynhzqytbqnzu"
     verify_jwt = false
   [functions.handle-inbound-email]
     verify_jwt = false
+  # handle-inbound-webhook — external systems post with their own `Authorization: Bearer <api key>`,
+  # which the function hashes and checks against platform_api_keys (401 otherwise). That key is not
+  # a Supabase JWT, so the gateway must not verify one. Production already runs it with
+  # verify_jwt=false; declaring it makes the deploy readback compare against the real setting
+  # (deploy run #878 refused it with jwt_configuration_mismatch).
+  [functions.handle-inbound-webhook]
+    verify_jwt = false
   [functions.handle-inbound-sms]
     verify_jwt = false
   # paige-operator-sms-inbound — Twilio inbound webhook for the OPERATOR number (+1 470

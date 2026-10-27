@@ -1,0 +1,74 @@
+{
+  "observedUtc": "2026-10-27T14:07:54.972Z",
+  "sourceBase": "cab5984932cf597731a2a34a5a312cda55b1b83e",
+  "originalPageBlob": "d499049d6dceec6e83fd1469efc6b997563d2d3d",
+  "sourceFiles": [
+    {
+      "file": "src/pages/BookingPage.tsx",
+      "sha256": "b38ad23e0438e30cf12ccb41cf4eaa4a11b9e9c7a361a5712868c0e03af27700"
+    },
+    {
+      "file": "src/lib/calendar/bookingCreateResult.ts",
+      "sha256": "c35c1ce65b6e94c00a6727cf929fa664988ff71e9049070457d7d7f202647a83"
+    },
+    {
+      "file": "src/pages/BookingPage.receipt.test.tsx",
+      "sha256": "48d28d906d277658edc9ff90dc53a6eea7898532ebad05a39c2c45414bd342bc"
+    },
+    {
+      "file": "src/lib/calendar/bookingCreateResult.test.ts",
+      "sha256": "55502e4ff4b425bd07f1701b6fd2de00eec84cbbf572935b44c4c4c19cb009be"
+    }
+  ],
+  "screenshots": [
+    {
+      "file": "baseline-unknown-fresh.jpg",
+      "bytes": 60139,
+      "sha256": "03a2a9d04a8147d3f0c006081b7c66e21f424c8c2fa7b298059a077069ef0eb5"
+    },
+    {
+      "file": "final-valid-desktop.jpg",
+      "bytes": 48262,
+      "sha256": "7460791c0ff63e3b5e05b3b3eaaf8300223a84168fe579738f233ec9a49902f7"
+    },
+    {
+      "file": "final-unknown-320-cdp.jpg",
+      "bytes": 22922,
+      "sha256": "08ab64b22f7e3e863def365aa7d403c187749222260fd5f0f3b419909e9dc31c"
+    },
+    {
+      "file": "final-slow-dark-390-bottom.jpg",
+      "bytes": 35099,
+      "sha256": "fffd7ec2961eb9a6c6ebbf518314aa435a5815f159f88fde53714dfdacb3f824"
+    },
+    {
+      "file": "final-conflict-desktop.jpg",
+      "bytes": 43168,
+      "sha256": "b14312d931a79385af5fb3b8f355983d3a2a9a9d1eeeb53f4836507c05c7d7f5"
+    }
+  ],
+  "scope": "Actual original and repaired components, neutral synthetic transport, original form and calendar, CSP connect-src none. No business request, Auth, booking, notification or provider mutation. Desktop1536x770/client1521; narrow390x844/client375;320x740/client305. Scroll width equals client width. The conflict screenshot includes the final visible409 notice; the other captures predate only that isolated notice addition.",
+  "nativeScreenshotErrors": "Initial native captures did not match current accessibility/geometry and are INVALID; only matched CDP captures are included. One Page.captureScreenshot timed out; no success is inferred.",
+  "motion": "Actual emulated prefers-reduced-motion reduce; pending animationName none.",
+  "behavior": "Keyboard Confirm to receipt heading; unknown status focus and retained details/held action; timeout followed by original late receipt, one create count; external helper control focus preserved. Genuine SDK409 returns to original picker and explains the refusal. A→B→A stale response containment in component tests.",
+  "inheritedAdvisories": [
+    "rgba(255,255,255,0.10)",
+    "#E7E8EC",
+    "text-[15px]",
+    "rgba(0,0,0,0.5)",
+    "rgba(16,24,40,0.10)",
+    "rgba(16,24,40,0.18)",
+    "text-[10px]"
+  ],
+  "proofOwed": [
+    "Native200% browser zoom",
+    "Physical iPhone/audio",
+    "Assistive technology",
+    "Embedded response behavior",
+    "Real provider/notification receipt",
+    "Private authenticated first booking",
+    "Customer Sessions and SOLO Calendar joined reload",
+    "Two legitimate business contexts/revocation",
+    "Complete seven pillars/founder acceptance"
+  ]
+}

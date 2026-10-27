@@ -264,6 +264,18 @@ All colors MUST be HSL.
     --pg-r-plate: 13px; --pg-r-chip: 9px; --pg-r-seal: 11px; --pg-r-pill: 999px;
     --k-skill: #c7a978; --k-automation: #8fa9c4; --k-integration: #8fb9a4;
     --k-template: #c2a3b8; --k-agent: #a99ad6;
+    /* EXP08 Team Hub agents (owner, 2026-10-27, APPROVED-FROZEN §28: "Colors and images are approved").
+       Who an agent is: tint (plate and chip ground), ink (glyph and the agent's name, >=4.5:1 on its tint
+       and on every surface), ring (the 1px plate edge) and fill (thin marks: a 2px line, writing dots),
+       both >=3:1. Generated and measured by the approved generator, never hand-tuned; status marks never
+       take these. Components reach them only through [data-ag] -> --agc-* (team-hub.css). */
+    --pg-agent-paige-fill: #ac8947; --pg-agent-paige-tint: #413317; --pg-agent-paige-ink: #ebcd96; --pg-agent-paige-ring: #ac8947;
+    --pg-agent-vera-fill: #148b8d; --pg-agent-vera-tint: #0a3232; --pg-agent-vera-ink: #50b7b8; --pg-agent-vera-ring: #2c8a8b;
+    --pg-agent-nexus-fill: #c46dbd; --pg-agent-nexus-tint: #3e1e3b; --pg-agent-nexus-ink: #e7a3e0; --pg-agent-nexus-ring: #a65aa0;
+    --pg-agent-cura-fill: #c24976; --pg-agent-cura-tint: #47192a; --pg-agent-cura-ink: #f275a0; --pg-agent-cura-ring: #bc5077;
+    --pg-agent-mentor-fill: #e1c2fe; --pg-agent-mentor-tint: #463455; --pg-agent-mentor-ink: #eedcff; --pg-agent-mentor-ring: #b990dd;
+    --pg-agent-merit-fill: #9ce6a1; --pg-agent-merit-tint: #2a452c; --pg-agent-merit-ink: #bef5c1; --pg-agent-merit-ring: #77b77b;
+    --pg-agent-zion-fill: #6ea4eb; --pg-agent-zion-tint: #1d314b; --pg-agent-zion-ink: #a4cafe; --pg-agent-zion-ring: #5886c5;
   }
 
   [data-pg="light"] {
@@ -310,6 +322,14 @@ All colors MUST be HSL.
     --pg-r-plate: 13px; --pg-r-chip: 9px; --pg-r-seal: 11px; --pg-r-pill: 999px;
     --k-skill: #9a7638; --k-automation: #4d6f92; --k-integration: #3f7a5f;
     --k-template: #8d5f7c; --k-agent: #6f5eb0;
+    /* EXP08 Team Hub agents, Mineral: the same four roles, measured for this theme. */
+    --pg-agent-paige-fill: #a38245; --pg-agent-paige-tint: #f4e7d2; --pg-agent-paige-ink: #745303; --pg-agent-paige-ring: #a38245;
+    --pg-agent-vera-fill: #057f80; --pg-agent-vera-tint: #d0ebeb; --pg-agent-vera-ink: #065c5d; --pg-agent-vera-ring: #3b8f90;
+    --pg-agent-nexus-fill: #bc65b5; --pg-agent-nexus-tint: #fee3fb; --pg-agent-nexus-ink: #8c4287; --pg-agent-nexus-ring: #b76eb1;
+    --pg-agent-cura-fill: #8b0f49; --pg-agent-cura-tint: #fee6ec; --pg-agent-cura-ink: #6b183a; --pg-agent-cura-ring: #cd6589;
+    --pg-agent-mentor-fill: #663a89; --pg-agent-mentor-tint: #e5d8f3; --pg-agent-mentor-ink: #4e276b; --pg-agent-mentor-ring: #7e599d;
+    --pg-agent-merit-fill: #176325; --pg-agent-merit-tint: #d0e5d0; --pg-agent-merit-ink: #034b14; --pg-agent-merit-ring: #417b46;
+    --pg-agent-zion-fill: #5286cb; --pg-agent-zion-tint: #e2eeff; --pg-agent-zion-ink: #3764a0; --pg-agent-zion-ring: #5d8ac4;
   }
 
   /* A default OS scrollbar in either theme reads as a defect, so this is load-bearing. */
@@ -747,7 +767,7 @@ All colors MUST be HSL.
      app rendered in the browser's default system font). Inter for UI/body,
      Bricolage Grotesque for headings — the single biggest "premium" lift. */
   body {
-    font-family: "Inter", system-ui, -apple-system, sans-serif; /* impeccable-disable-line overused-font -- pre-existing at base 862100fa9, not introduced by C3a; waived so the changed-file gate can pass, tracked as its own follow-up (see docs/delivery/paige-conversational-loop-c3.md) */
+    font-family: "Inter", system-ui, -apple-system, sans-serif; /* impeccable-disable-line overused-font, design-system-font -- pre-existing at base 862100fa9, not introduced by C3a; waived so the changed-file gate can pass, tracked as its own follow-up (see docs/delivery/paige-conversational-loop-c3.md) */
     font-feature-settings: "cv05" 1, "ss01" 1;
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;

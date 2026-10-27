@@ -65,9 +65,16 @@ proof, receipts on the PR threads).
 ## 4. Decisions only the owner can make (none block this evaluation)
 
 1. The evaluation verdict itself (accept / findings for repair).
-2. Cloudflare authority + spend ceiling — hosting (WEB-05) AND media (Stream/R2) sit behind
-   this one gate; a reviewable proposal arrives when activation is requested.
+2. **Service-enable decision — no monetary ceiling (owner supersession 2026-10-27, ANT-162
+   650ca4eb).** The earlier "authority + spend ceiling" framing is superseded: there is no
+   monetary ceiling to set. The concrete, reviewable service-enable decision for Cloudflare
+   static hosting (WEB-05) is prepared in
+   [EXP06-SERVICE-ENABLE-DECISION.md](EXP06-SERVICE-ENABLE-DECISION.md) — actor, action,
+   scope, permissions, cost basis, effect, rollback — ready when the owner says enable.
+   (Media Stream/R2 remains a separate service-enable decision on its own evidence.)
 3. The authenticated QA session scheduling (existing coordination).
+4. Team Hub both-chats completion (row 19): EXP08's A2 admits NEXUS's growth publish kit;
+   EXP06's handoff with exact tool IDs is posted (ANT-161 `833d33b1`).
 
 ## 5. Reporting format (how findings will be taken)
 

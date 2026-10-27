@@ -3,7 +3,7 @@
 // the tenant's OR the operator's latest scan run + its findings (joined to the shared
 // registry for the human check name + domain + priority) + the tenant's created_at, in
 // ONE round-trip (task #122 perf — replaced 2–3 serialized PostgREST queries per mount).
-// Optional original-record inspection adds one exact-ID read only when requested;
+// Optional original-record inspection uses the same caller-scoped tables only when requested;
 // it never replaces the latest completed snapshot or supplies execution authority.
 //
 // SCOPE ISOLATION (§9/§51/§53/§59): the default snapshot RPC receives ONLY scope, never a tenant id.
@@ -20,6 +20,7 @@
 // the repo's pre-typegen convention (rag_documents / rag_retrieval_log).
 import { useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { useTenantContext } from "@/hooks/useTenantContext";
 import { useTierFeatures } from "@/hooks/useTierFeatures";
@@ -110,11 +111,18 @@ export interface SystemsCheckSnapshot {
   refresh: () => void;
   /** Optional original-record inspection, separate from current health and action authority. */
   recordedFinding?: RecordedFindingRead;
+  recordedRun?: RecordedRunRead;
 }
 
 export type RecordedFindingRead =
   | { state: "not_requested" | "unavailable" | "loading" | "error" }
   | { state: "ready"; finding: SystemsCheckFinding; run: Pick<SystemsCheckRun, "id" | "started_at" | "completed_at"> };
+export type RecordedRunRead =
+  | { state: "not_requested" | "unavailable" | "loading" | "error" }
+  | { state: "ready"; run: SystemsCheckRun };
+type RecordedSourceValue =
+  | { finding: SystemsCheckFinding; run: Pick<SystemsCheckRun, "id" | "started_at" | "completed_at"> }
+  | { run: SystemsCheckRun };
 
 // How long after tenant creation we treat "no run yet" as "first scan in progress" rather than the
 // terminal empty state. The onboarding scan fires on creation (enqueue → edge fn → run row); this
@@ -164,8 +172,23 @@ interface RecordedRow extends RawFinding {
   run: Pick<SystemsCheckRun, "id" | "started_at" | "completed_at"> & { tenant_id: string };
 }
 const readableTimestamp = (value: unknown) => typeof value === "string" && Number.isFinite(Date.parse(value));
+// Match the existing opaque PostgreSQL UUID reference contract, including
+// historical IDs; UUID version bits do not determine record eligibility.
+const runReference = z.guid();
+function recordedRunFromRow(value: unknown, id: string, tenant: string): SystemsCheckRun | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const row = value as Record<string, unknown>;
+  if (row.id !== id || row.tenant_id !== tenant || !readableTimestamp(row.started_at)
+    || !(row.completed_at === null || (readableTimestamp(row.completed_at)
+      && Date.parse(row.completed_at as string) >= Date.parse(row.started_at as string)))) return null;
+  const count = (v: unknown) => typeof v === "number" && Number.isSafeInteger(v) && v >= 0 && v <= 2_147_483_647 ? v : null;
+  const total = count(row.check_count), passed = count(row.pass_count), failed = count(row.fail_count);
+  const consistent = total === null || passed === null || failed === null || passed + failed <= total;
+  return { id, started_at: row.started_at as string, completed_at: row.completed_at as string | null,
+    check_count: consistent ? total : null, pass_count: consistent ? passed : null, fail_count: consistent ? failed : null };
+}
 
-export function useSystemsCheck(scope: SystemsCheckScope, options?: { findingId?: string | null }): SystemsCheckSnapshot {
+export function useSystemsCheck(scope: SystemsCheckScope, options?: { findingId?: string | null; runId?: string | null }): SystemsCheckSnapshot {
   const { activeTenantId, activeUserId, accountContextStatus, activeTenant } = useTenantContext();
   const { soloStandalone, loading: tierLoading } = useTierFeatures();
   const qc = useQueryClient();
@@ -219,20 +242,55 @@ export function useSystemsCheck(scope: SystemsCheckScope, options?: { findingId?
   // The optional linked-source view reuses the original tables'
   // authenticated SELECT/RLS; client filters only narrow, never grant, access.
   // It does not use or widen the current-only signal-reference/approval contracts.
-  const recordRequested = options?.findingId !== undefined && options.findingId !== null;
-  const recordId = readRecordLinks([{ destination: "systems_check", record_id: options?.findingId }])[0]?.record_id;
-  const recordEnabled = scope === "tenant" && accountContextStatus === "ready"
+  const findingRequested = options?.findingId !== undefined && options.findingId !== null;
+  const runRequested = options?.runId !== undefined && options.runId !== null;
+  const recordRequested = findingRequested || runRequested;
+  const runId = runReference.safeParse(options?.runId);
+  const recordId = findingRequested && runRequested ? null : runRequested
+    ? runId.success ? runId.data.toLowerCase() : null
+    : readRecordLinks([{ destination: "systems_check", record_id: options?.findingId }])[0]?.record_id;
+  const recordEnabled = recordRequested && scope === "tenant" && accountContextStatus === "ready"
     && !!activeUserId && !!activeTenantId && activeTenant?.id === activeTenantId
     && soloStandalone && !tierLoading && !!recordId;
   const recordedQuery = useQuery({
-    queryKey: ["systems_check", scope, scopeKey, "recorded", activeUserId ?? "none", recordId ?? "none"],
+    queryKey: ["systems_check", scope, scopeKey, runRequested ? "recorded_run" : "recorded", activeUserId ?? "none", recordId ?? "none"],
     enabled: recordEnabled,
     retry: false,
     gcTime: 0,
     staleTime: 0,
     refetchOnMount: "always",
     refetchOnWindowFocus: "always",
-    queryFn: async ({ signal }) => {
+    queryFn: async ({ signal }): Promise<RecordedSourceValue | null> => {
+      if (!recordId || !activeUserId || !activeTenantId) return null;
+      if (runRequested) {
+        // Exact original record, not a new snapshot or execution result issuer.
+        // Caller/RLS remains the authority; context filters only narrow access.
+        const before = await supabase.auth.getUser();
+        if (signal.aborted || before.error || before.data?.user?.id !== activeUserId) return null;
+        const tenant = await supabase.rpc("current_user_tenant_id").abortSignal(signal);
+        if (signal.aborted || tenant.error || tenant.data !== activeTenantId) return null;
+        const read = () => {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          return (supabase as any).from("paige_systems_check_run")
+            .select("id,tenant_id,started_at,completed_at,check_count,pass_count,fail_count")
+            .eq("id", recordId).eq("tenant_id", activeTenantId).abortSignal(signal).maybeSingle();
+        };
+        const original = await read();
+        if (signal.aborted) return null;
+        if (original.error) throw new Error("Recorded check could not be read");
+        if (!recordedRunFromRow(original.data, recordId, activeTenantId)) return null;
+        const after = await supabase.auth.getUser();
+        if (signal.aborted || after.error || after.data?.user?.id !== activeUserId) return null;
+        const current = await supabase.rpc("current_user_tenant_id").abortSignal(signal);
+        if (signal.aborted || current.error || current.data !== activeTenantId) return null;
+        // Re-evaluate the original RLS after identity awaits; a previous read is
+        // not permission to retain a now-withheld result. Return its fresh row.
+        const final = await read();
+        if (signal.aborted) return null;
+        if (final.error) throw new Error("Recorded check could not be read");
+        const run = recordedRunFromRow(final.data, recordId, activeTenantId);
+        return run ? { run } : null;
+      }
       // These source tables are not generated yet, as with the original RPC above.
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data, error } = await (supabase as any).from("paige_systems_check_finding")
@@ -252,11 +310,16 @@ export function useSystemsCheck(scope: SystemsCheckScope, options?: { findingId?
       };
     },
   });
-  const recordedFinding: RecordedFindingRead = !recordRequested ? { state: "not_requested" }
+  const recordedFinding: RecordedFindingRead = !findingRequested || runRequested ? { state: "not_requested" }
     : !recordEnabled ? { state: "unavailable" }
       : recordedQuery.isError ? { state: "error" }
         : recordedQuery.isFetching || recordedQuery.isLoading ? { state: "loading" }
-          : recordedQuery.data ? { state: "ready", ...recordedQuery.data } : { state: "unavailable" };
+          : recordedQuery.data && "finding" in recordedQuery.data ? { state: "ready", ...recordedQuery.data } : { state: "unavailable" };
+  const recordedRun: RecordedRunRead = !runRequested ? { state: "not_requested" }
+    : !recordEnabled ? { state: "unavailable" }
+      : recordedQuery.isError ? { state: "error" }
+        : recordedQuery.isFetching || recordedQuery.isLoading ? { state: "loading" }
+          : recordedQuery.data && !("finding" in recordedQuery.data) ? { state: "ready", run: recordedQuery.data.run } : { state: "unavailable" };
 
   const refresh = useCallback(() => {
     qc.invalidateQueries({ queryKey: ["systems_check", scope, scopeKey] });
@@ -282,6 +345,6 @@ export function useSystemsCheck(scope: SystemsCheckScope, options?: { findingId?
     scanPending,
     scanInProgressSince: query.data?.scanInProgressSince ?? null,
     refresh,
-    ...(options ? { recordedFinding } : {}),
+    ...(options ? { recordedFinding, ...(runRequested ? { recordedRun } : {}) } : {}),
   };
 }

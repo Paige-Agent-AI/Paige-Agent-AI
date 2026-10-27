@@ -18,6 +18,42 @@ EXP02 retains Systems registration, accepted-intent binding and full scan proof;
 original shared Root/risk/C0b composition remains coordinated with EXP05/EXP08.
 No manual scan, worker, provider, action or new privilege is activated by that ACK.
 
+## EXP02 bounded Chat source coverage — October27 development
+
+The existing Operating Fabric projector now shares exact repeated long window
+notes within each original domain section when that strictly reduces emitted
+text. Every original figure keeps its basis and an explicit local reference;
+the quoted cutoff remains in the same complete section. Default6000, original
+reads/values/currencies/coverage, omission policy, risk order and authority stay
+unchanged. No new source or analytical capability is invented.
+[Source and remaining proof](../evidence/ui-delivery/e2-review-window-notes.md):
+347 focused checks passed; candidate exact-head review/CI, release/source parity
+and authorized weekly response/reload remain owed. Prior bounded authenticated
+weekly/Finance proof remains historical, not proof of this candidate. Nine
+analytics readiness, all nineteen outcomes and founder acceptance remain open.
+
+Supplement:43 original target/seam/catalogue checks also passed,390 distinct
+tests across13 suites. The actual-main composition receives released4a below;
+fresh final-head regression/review/CI and candidate deployment remain mandatory.
+
+## EXP02 original Systems compatibility and bounded QA released — October27
+
+[#2993 source receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2993#issuecomment-6451277935):
+actual merge195643b35f3fd8100ec8942ef943b15b7be1cfb9, reviewedf13/LOWER5672067557,
+all11 exact checks/two webSUCCESS. Original failed source certificate is retained;
+fresh existing workflow40566469199 on containing4a7d950589a1b9ebb7513b8da2a40f54ffc43216
+passed all165 source entries/58 unique Git sources and original four-host configs.
+The original wait is packaged; request/result helpers remain UNMOUNTED and
+systems.check UNREGISTERED/UNAVAILABLE. No scan, worker, provider or action activation.
+
+[#2994 evidence receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2994#issuecomment-6451295770)
+records the original bounded Finance7/VERA, weekly persistence and run-review QA;
+actual main4a/treefa4b39, LOWER5672120934+5672720701/all10 applicable checks and two
+webSUCCESS, no-schema PreviewSKIP. Productiondpl_7cMBprzkLN4zDPpThYD5PWpQLzSD is
+READY; both publicorigins19:13UTC exact4a build/assets/return-period-run markers.
+This is source/evidence release, not another customer drive. Full19/nine,
+roles/cohorts, populated Finance, Live/effects and founder acceptance remain OPEN.
+
 ## EXP02 Systems source receiving and receipt consumer — October27 17:25UTC
 
 Superseding the dated development checkpoints below: original observation

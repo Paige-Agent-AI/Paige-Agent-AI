@@ -15,7 +15,7 @@ AUTHENTICATED_RUNTIME: UNVERIFIED: no new candidate authenticated drive; existin
 KEYBOARD_FOCUS: NOT_APPLICABLE: no DOM/control/navigation/focus implementation changes.
 ZOOM_REFLOW: NOT_APPLICABLE: no layout, dimensions, typography or scroll changes.
 REDUCED_MOTION: NOT_APPLICABLE: no motion implementation.
-STATE_COVERAGE: PASS: controlled empty sample, permission refusal, unavailable/malformed source, private audience, unknown actor, changed identity/tenant/record, abort, timeout and quoted untrusted text covered. No false approval or completion state.
+STATE_COVERAGE: PASS: src/__tests__/business-review-recorded-activity.test.ts has67 actual-source checks covering empty sample, permission refusal, malformed source, private audience, unattributed actor, changed identity/tenant/record, abort, timeout and quoted untrusted text. Recorded read results remain distinct from approved or completed business actions.
 TRUTHFUL_STATE_LABELS: PASS: source always partial; empty sample does not prove no work. CAP009-017 retain 3Limited/3Unverified/3ComingSoon; AccessUnverified and no Live promotion. Runtime access requires native permissions, never a registry entry.
 SOLO_UI: NO: backend source consumer only; no Solo UI files changed. Every eligible current/future SOLO uses the same implementation with native owner/admin/tenant authority.
 UNVERIFIED: actual customer source availability, permissions/cohorts, saved response/reload, eligible Live, departmental result links, executed actions/receipts and complete nineteen-outcome acceptance remain open.
@@ -55,10 +55,10 @@ content, noisy diagnostics or false completion. No new rendered-quality claim.
 Functional: local development. Visual: unchanged. Experiential: customer proof
 owed. Founder Acceptance: not requested, full nineteen outcomes remain required.
 
-INTERNAL_BUILD_IDENTITY: 0fcd5a3317908c238951cf3dd24f0c2ffc84d8da; identity-role=supporting receiving main; exact candidate recorded in Git/PR review; deployment=none; environment=local; migrations=NOT_APPLICABLE; edge=PROOF_OWED(original affected closure/config verification).
+INTERNAL_BUILD_IDENTITY: 02c101f44f776e8bb937869466130be99655239c; identity-role=supporting receiving main; exact candidate recorded in Git/PR review; deployment=none; environment=local; migrations=NOT_APPLICABLE; edge=PROOF_OWED(original affected closure and config verification); evidence=docs/evidence/ui-delivery/e2-review-recorded-activity.md
 RELEASE_CHANNEL: development: no production behavior claimed.
 RELEASE_CLASSIFICATION: internal-only: existing review evidence integration, not complete capability acceptance.
 CUSTOMER_RELEASE_IDENTITY: none: no customer announcement earned.
 RELEASE_NOTE_REQUIRED: no: internal engineering increment.
 RELEASE_TRUTH_BOUNDARY: PARTIAL: controlled native-source consumer only; deployment and authenticated outcome remain owed.
-RELEASE_RECOVERY: position=reviewed forward fix of transient analytical evidence; original authoritative records unchanged; reference=docs/delivery/e2-customer-experience-integration-matrix.md.
+RELEASE_RECOVERY: position=reviewed forward fix of transient analytical evidence with original authoritative records retained; reference=docs/delivery/e2-customer-experience-integration-matrix.md

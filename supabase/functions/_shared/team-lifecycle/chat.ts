@@ -432,6 +432,26 @@ const MEMBER_RPC: Readonly<Record<string, string>> = Object.freeze({
   team_remove_member: "remove_solo_team_member",
 });
 
+/** The hand-over's own "answered without confirming the change": the same outcome-unknown shape (so
+ * the chat records capability_outcome_unknown and asks for review), pointing at where work is seen. */
+const handoverUnconfirmed = (error: string): TeamLifecycleWriteResult =>
+  ({ success: false, outcome_unknown: true, reason: "outcome_unknown", error,
+     note: "Tell the person plainly that you sent the hand-over but could not confirm who has the work now, and that reading this person's holdings again (or the receiver's work list) shows where it is. Do not try it again in this reply." });
+
+/** Who holds one work item now, read on the caller's own session after a hand-over (RLS decides what is
+ * visible). "confirmed" only for a visible row that is this item, in this workspace, assigned to the
+ * receiver the caller asked for; "elsewhere" when it is visible with anyone else (or nobody). */
+async function readHandoverBack(caller: TeamLifecycleCaller, tenant: string, itemId: string, receiverId: string): Promise<"confirmed" | "elsewhere" | "unreadable"> {
+  const reader = caller as TeamLifecycleCaller & Partial<TeamLifecycleTableReader>;
+  if (typeof reader.from !== "function") return "unreadable";
+  try {
+    const { data, error } = await reader.from("plan_items").select("id, tenant_id, assigned_to_user_id").eq("id", itemId).eq("tenant_id", tenant).maybeSingle();
+    const row = object(data);
+    if (error || !row || uuid(row.id) !== itemId || uuid(row.tenant_id) !== tenant) return "unreadable";
+    return uuid(row.assigned_to_user_id) === receiverId ? "confirmed" : "elsewhere";
+  } catch { return "unreadable"; }
+}
+
 /** Normalise the switch: a boolean, or the words for one. null when it is neither. */
 export function conversationsValue(v: unknown): boolean | null {
   if (typeof v === "boolean") return v;
@@ -462,14 +482,18 @@ export async function runTeamLifecycleWrite(tool: string, scope: TeamLifecycleSc
     if (!ack || ack.ok !== true || uuid(ack.item_id) !== parsed.itemId || uuid(ack.tenant_id) !== tenant || uuid(ack.actor_id) !== scope.userId.toLowerCase())
       return unknown("The work system answered without confirming the hand-over, so it is not known whether it moved.");
     // The writer answers {ok, item_id, tenant_id, actor_id} and nothing about the assignee
-    // (20271020000020), so the assignment itself is read back on the caller's session where it can be.
-    const reader = caller as TeamLifecycleCaller & Partial<TeamLifecycleTableReader>;
-    const after = typeof reader.from === "function" ? await readWorkItemForCard(reader as TeamLifecycleTableReader, scope.tenantId, parsed.itemId) : null;
-    if (after && after.assignee !== parsed.receiverId)
-      return unknown("The work system accepted the hand-over, but reading it back shows it with someone else, so it is not known where it is now.");
+    // (20271020000020), so its acknowledgement alone never proves who holds the work now. The hand-over
+    // is done ONLY when reading the item back on the caller's session shows this item, in this
+    // workspace, assigned to the requested receiver. A read that fails, finds no visible row or shows
+    // anyone else leaves the outcome unknown: it was sent, it may have landed, and it is not retried.
+    const after = await readHandoverBack(caller, tenant, parsed.itemId, parsed.receiverId);
+    if (after !== "confirmed")
+      return handoverUnconfirmed(after === "elsewhere"
+        ? "I sent the hand-over and the work system accepted it, but reading the work back shows it with someone else, so I can't confirm where it is now."
+        : "I sent the hand-over and the work system accepted it, but I couldn't read the work back to see who has it now, so I can't confirm it moved.");
     return { success: true, item_id: parsed.itemId, assigned_to_user_id: parsed.receiverId, record_locator: { table: "plan_items", id: parsed.itemId },
-      assignment_read_back: !!after,
-      note: `Handed over${after ? "; reading it back shows it on the receiver's work list" : ". The work system confirmed the update; I couldn't read it back to see the new assignee"}. Its status and due date did not change. Its version changed, so read their holdings again before handing over anything else from the same list.` };
+      assignment_read_back: true,
+      note: "Handed over; reading it back shows it on the receiver's work list. Its status and due date did not change. Its version changed, so read their holdings again before handing over anything else from the same list." };
   }
   const memberId = uuid(a.member_user_id);
   if (!memberId) return notApplied("invalid", "That needs the teammate's id exactly as the team list gave it, so nothing was changed.");

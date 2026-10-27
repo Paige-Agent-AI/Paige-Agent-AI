@@ -49,12 +49,17 @@ const mail=(e)=>{const p=e.payload;return {to:p.to??p.personalizations?.[0]?.to?
 for(const name of ['send-portal-invite','plan-reminder-cron','process-booking-notifications'])for(const providerOk of [true,false])test(`${name}: ordinary tenant keeps delivery payload and provider failure truthful (${providerOk})`,async()=>{
  const h=harness(name,true,{providerOk});const res=await h.run(name==='send-portal-invite'?{token:'valid',email:'guest@example.test'}:{});const out=await res.json();assert.equal(h.effects.length,1);assert.ok(SEND_URLS.includes(h.effects[0].url));assert.deepEqual(Array.from(mail(h.effects[0]).to),[name==='plan-reminder-cron'?'host@example.test':'guest@example.test']);assert.ok(mail(h.effects[0]).html);assert.ok(mail(h.effects[0]).subject);
  // A 503 is unconfirmed: SendGrid may have accepted it. process-booking-notifications keeps its claim
-// (counts it, never resends); the other two report not-emailed. A definitive 4xx is covered below.
-if(name==='send-portal-invite')assert.equal(out.emailed,providerOk);else if(name==='plan-reminder-cron')assert.equal(out.emailed,providerOk?1:0);else assert.equal(out.followups,1);
+// as `unconfirmed` (never counted as sent, never resent); the other two report not-emailed.
+if(name==='send-portal-invite')assert.equal(out.emailed,providerOk);else if(name==='plan-reminder-cron')assert.equal(out.emailed,providerOk?1:0);else{assert.equal(out.followups,providerOk?1:0);assert.equal(out.unconfirmed,providerOk?0:1);}
 });
-test('process-booking-notifications: a definitive SendGrid refusal releases the claim to retry; an unconfirmed send does not',async()=>{
- const refused=harness('process-booking-notifications',true,{providerStatus:400});assert.equal((await (await refused.run({})).json()).followups,0);assert.equal(refused.effects.length,1);
- const unknown=harness('process-booking-notifications',true,{providerStatus:503});assert.equal((await (await unknown.run({})).json()).followups,1);assert.equal(unknown.effects.length,1);
+test('process-booking-notifications: a refusal releases the claim; an unconfirmed send keeps it as unconfirmed, never sent',async()=>{
+ const ledger=h=>h.writes.filter(w=>w.table==='booking_notifications_sent').map(w=>w.kind==='insert'?`insert:${w.payload.status}`:w.kind==='update'?`update:${w.payload.status}`:'delete');
+ const accepted=harness('process-booking-notifications',true,{providerStatus:202});const a=await (await accepted.run({})).json();
+ assert.deepEqual([a.followups,a.unconfirmed],[1,0]);assert.deepEqual(ledger(accepted),['insert:sending','update:sent']);
+ const refused=harness('process-booking-notifications',true,{providerStatus:400});const r=await (await refused.run({})).json();
+ assert.deepEqual([r.followups,r.unconfirmed],[0,0]);assert.deepEqual(ledger(refused),['insert:sending','delete']);assert.equal(refused.effects.length,1);
+ const unknown=harness('process-booking-notifications',true,{providerStatus:503});const u=await (await unknown.run({})).json();
+ assert.deepEqual([u.followups,u.unconfirmed],[0,1]);assert.deepEqual(ledger(unknown),['insert:sending','update:unconfirmed']);assert.equal(unknown.effects.length,1);
 });
 test('public-booking ordinary validation remains unchanged',async()=>{const h=harness('public-booking',true);const res=await h.run({action:'create',slug:'normal'});assert.equal(res.status,400);assert.equal((await res.json()).error,'Invalid time.');});
 test('booking-manage ordinary cancel retains exact domain patch and dispatch',async()=>{const h=harness('booking-manage',true);const res=await h.run({action:'cancel',token:'valid'});assert.equal(res.status,200);assert.equal((await res.json()).status,'cancelled');assert.equal(h.effects.length,2);assert.deepEqual(JSON.parse(JSON.stringify(h.writes[0].payload)),{status:'cancelled',manage_token_version:1});});

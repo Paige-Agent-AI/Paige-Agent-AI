@@ -36,13 +36,13 @@ ACCEPTANCE_CRITERIA: on the real platform Team Hub loads, refreshes and searches
 MOTION_PURPOSE: NONE: no motion change
 PROTECTED_SEAMS: Team Hub list/message/search reads (tolerant parsing, tested); team_hub_post_message (eight-argument signature, every named and positional caller still resolves, proven); PAIGE's Team Hub reads in _shared/team-hub/chat.ts (tested); non-SOLO shells NONE_AFFECTED: no non-SOLO file changed
 
-INTERNAL_BUILD_IDENTITY: e5dfa7a07a3d8e4a0c4540f61813746ddf14b278; deployment=none-PR-not-merged (head of claude/practical-davinci-ij8hb8, base origin/main 45111f9e5); environment=local; migrations=NOT_APPLICABLE until merge (20271117010008, 20271117010108 apply through deploy-migrations.yml); edge=NOT_APPLICABLE until merge (paige-ai-chat redeploys through chat.ts and vp-address.ts); evidence=docs/evidence/ui-delivery/exp08-team-hub-agents-a1a.md
+INTERNAL_BUILD_IDENTITY: e5dfa7a07a3d8e4a0c4540f61813746ddf14b278; deployment=none-PR-not-merged (head of claude/practical-davinci-ij8hb8, base origin/main 45111f9e5); environment=local; migrations=PROOF_OWED(20271117010008 and 20271117010108 apply through deploy-migrations.yml on merge, read back after); edge=PROOF_OWED(paige-ai-chat redeploys on merge through chat.ts and vp-address.ts, edge-live read back after); evidence=docs/evidence/ui-delivery/exp08-team-hub-agents-a1a.md
 RELEASE_CHANNEL: development: branch claude/practical-davinci-ij8hb8; production on merge per the pre-launch stance (§4)
 RELEASE_CLASSIFICATION: internal-only: storage and server doors with no visible change and no customer release identity
 CUSTOMER_RELEASE_IDENTITY: none: agents cannot speak until A1b and authenticated runtime is unproven
 RELEASE_NOTE_REQUIRED: NO: nothing a customer can see changes in this increment
 RELEASE_TRUTH_BOUNDARY: PROOF OWED: agent storage and doors are LIVE on merge but unreachable from any screen; agent replies are UNAVAILABLE until A1b; the authenticated drive is PROOF OWED
-RELEASE_RECOVERY: position=forward-fix by migration (new tables and columns are additive; the re-emitted bodies have their prior bodies in the chain); reference=docs/delivery/exp08-team-hub-agents-contract.md A1a status block
+RELEASE_RECOVERY: position=forward-fix by migration, since the new tables and columns are additive and every re-emitted body has its prior body in the chain; reference=docs/delivery/exp08-team-hub-agents-contract.md A1a status block
 
 ## Scope and collisions
 

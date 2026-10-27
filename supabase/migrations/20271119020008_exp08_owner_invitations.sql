@@ -170,14 +170,17 @@ SET LOCAL lock_timeout = '2s';
 
 -- INCUMBENT GUARD (precedent 20271108233000, 20271116100008). Every production function this file
 -- replaces must still be the body it was written against, compared as a FINGERPRINT: md5 of prosrc
--- with LINE BREAKS KEPT, every other run of blanks (space, tab, CR, FF, VT) collapsed to one space, the
--- blanks on either side of each line break dropped, empty lines dropped and the ends trimmed. Comments
+-- with LINE BREAKS KEPT (LF, CRLF and a bare CR each count as one line break, because PostgreSQL's
+-- lexer ends a "--" comment at either LF or CR), every other run of blanks (space, tab, FF, VT)
+-- collapsed to one space, the blanks on either side of each line break dropped, empty lines dropped
+-- and the ends trimmed. Comments
 -- are KEPT (a marker such as E09_CONSUMER_INVITE_PEEK_V1 is part of the body), so any added, removed or
 -- changed token, comment included, is refused; a re-indented body, trailing blanks, CRLF line ends or
 -- blank lines are not. Line breaks are kept on purpose: collapsing them too would make "-- note" + a
 -- new line + "stmt;" fingerprint the same as "-- note stmt;", a statement silently commented out (the
 -- round-7 review found two such edits, one of them archive_solo_team_invite's authority check, that an
--- all-whitespace collapse let through). The fingerprints are computed from production's bodies (read
+-- all-whitespace collapse let through); and a CR counts as a line break for the same reason in reverse:
+-- read as a blank, "-- note" + CR + "stmt;" (live code) would fingerprint as "-- note stmt;" (a comment). The fingerprints are computed from production's bodies (read
 -- 2026-10-27). Every mismatch is collected and named in ONE error, so a reviewer sees all the drift at
 -- once. A different body means another change landed first: refuse, compose and review, rather than
 -- overwrite it.
@@ -185,8 +188,8 @@ SET LOCAL lock_timeout = '2s';
 --   (68d1971e) and the repository replay's (4c10ee1d): 20260713050000_invite_brand_cascade.sql (recorded
 --   on production as git_ledger_reconciliation, so production never ran it; it ran 20260713030834, which
 --   has no comment) adds three comment lines above "SELECT * INTO _rb", and 20271108120100 then patches
---   whichever body it finds with replace(). With comments removed the two are identical (fda7fafd on
---   both, read 2026-10-27). This file DROPs and re-creates peek_tenant_invite, so either is replaced whole.
+--   whichever body it finds with replace(). With comments removed and this same normalization the two
+--   are identical (9acc08bf on both, read 2026-10-27). This file DROPs and re-creates peek_tenant_invite, so either is replaced whole.
 --   The other nine replay to production's exact md5(prosrc) (rebuilt 2026-10-27 from every migration that
 --   creates or patches them, in version order).
 --   Limits, stated: a blank change INSIDE a string literal (two spaces in a message becoming one) passes;
@@ -207,7 +210,7 @@ BEGIN
     ('public.accept_tenant_invite(text)', ARRAY['83b20c6f99997b5299aa091458c4a3ff']),
     ('public.create_tenant_invite_token(uuid,text,public.tenant_role,integer,integer,uuid,text)', ARRAY['4f70c379bb88be99cf36722dfe1c9e92']),
     ('public.peek_tenant_invite(text)', ARRAY['68d1971e48f8023f7657b13f92d0dc42', '4c10ee1d6db3235d261feaf5a8bd8858'])) v(sig, want) LOOP
-    SELECT md5(btrim(regexp_replace(regexp_replace(p.prosrc, E'[ \\t\\r\\f\\v]*\\n[ \\t\\r\\f\\v\\n]*', E'\n', 'g'), E'[ \\t\\r\\f\\v]+', ' ', 'g'), E' \n')) INTO _have FROM pg_proc p WHERE p.oid = to_regprocedure(r.sig);
+    SELECT md5(btrim(regexp_replace(regexp_replace(p.prosrc, E'[ \\t\\f\\v]*(\\r\\n?|\\n)[ \\t\\r\\f\\v\\n]*', E'\n', 'g'), E'[ \\t\\f\\v]+', ' ', 'g'), E' \n')) INTO _have FROM pg_proc p WHERE p.oid = to_regprocedure(r.sig);
     IF _have IS NULL OR NOT (_have = ANY (r.want)) THEN
       _drift := _drift || format('%s (fingerprint %s, expected %s)', r.sig, COALESCE(_have, 'missing'), array_to_string(r.want, ' or '));
     END IF;

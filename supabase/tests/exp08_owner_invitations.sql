@@ -1185,9 +1185,15 @@ DO $$ BEGIN IF (SELECT count(*) FROM proof.prior) <> 10 THEN RAISE EXCEPTION 'FA
 --   D  each of the ten with one comment line added is refused, naming it and only it (10 cases).
 --   J  archive_solo_team_invite's authority check joined onto the comment line above it (so it becomes
 --      comment text) is refused, naming it and only it. The round-7 review's bypass, kept as a case.
+--   F  the guard's own fingerprint expression, read out of the guard text, on synthetic bodies: comment +
+--      CR + code differs from comment + space + code (a CR ends a comment, so that is live code);
+--      comment + LF + code differs from comment + space + code; CRLF equals LF. None of the ten real
+--      bodies holds a comment that a CR would turn into valid code, so this is checked on the
+--      expression, not on them.
 -- Guard mutants (§71.4), each a one-place rewrite of the guard text: M1 normalization removed (raw
 -- md5) must fail G3; M2 compares nothing must fail G4; M3 raises at the first mismatch must fail G6;
--- M4 every whitespace run collapsed, line breaks included (the round-7 guard), must fail J.
+-- M4 every whitespace run collapsed, line breaks included (the round-7 guard), must fail J; M5 a bare
+-- CR read as a blank (the first review fix) must fail F.
 -- Control C1 (the membership test written as an array containment) must fail none.
 \set d_guard `sed -n '/^-- exp08-owners-incumbent-guard:begin$/,/^-- exp08-owners-incumbent-guard:end$/p' supabase/migrations/20271119020008_exp08_owner_invitations.sql`
 \set d_replay_comment `sed -n '/^  -- Resolve brand up the parent chain/,/^  -- the operator master brand/p' supabase/migrations/20260713050000_invite_brand_cascade.sql`
@@ -1230,7 +1236,7 @@ BEGIN
 END $f$;
 -- The suite: returns the cases this guard text fails ('{}' = all pass).
 CREATE FUNCTION proof.guard_suite(_guard text) RETURNS text[] LANGUAGE plpgsql AS $f$
-DECLARE _fail text[] := '{}'; _err text; _all jsonb := '[]'; r record;
+DECLARE _fail text[] := '{}'; _err text; _all jsonb := '[]'; r record; _expr text; _same boolean;
   _ident jsonb := jsonb_build_object('f', 'public.accept_tenant_invite(text)',
     'from', 'IF _tok.revoked_at IS NOT NULL THEN', 'to', 'IF _tok.last_used_at IS NOT NULL THEN');
   _clause jsonb := jsonb_build_object('f', 'public.peek_tenant_invite(text)',
@@ -1272,6 +1278,16 @@ BEGIN
   IF _err IS NULL OR strpos(_err, _msg) = 0 OR strpos(_err, '1 of 10') = 0
      OR proof.guard_named(_err) <> ARRAY['archive_solo_team_invite'] THEN
     _fail := _fail || ('J a statement joined onto its comment line is refused and named: ' || coalesce(_err, 'no error')); END IF;
+  _expr := substring(_guard from 'SELECT (md5\(.*\)) INTO _have FROM pg_proc');
+  IF _expr IS NULL THEN RAISE EXCEPTION 'FAIL (S2): the fingerprint expression was not found in the guard' USING ERRCODE = 'P0097'; END IF;
+  FOR r IN SELECT * FROM (VALUES
+      ('comment + CR + code is not comment + space + code', E'-- note RETURN 2;', E'-- note\rRETURN 2;', false),
+      ('comment + LF + code is not comment + space + code', E'-- note x := 1;', E'-- note\nx := 1;', false),
+      ('CRLF is LF', E'a := 1;\r\nb := 2;', E'a := 1;\nb := 2;', true)) v(name, a, b, same) LOOP
+    EXECUTE format('SELECT (SELECT %s FROM (SELECT $1::text AS prosrc) p) = (SELECT %s FROM (SELECT $2::text AS prosrc) p)', _expr, _expr)
+      INTO _same USING r.a, r.b;
+    IF _same IS DISTINCT FROM r.same THEN _fail := _fail || ('F ' || r.name); END IF;
+  END LOOP;
   FOR r IN SELECT value->>'f' AS f FROM jsonb_array_elements(_all) LOOP
     _err := proof.guard_run(_guard, jsonb_build_array(jsonb_build_object('f', r.f, 'from', 'AS $function$', 'to', E'AS $function$\n-- drift')));
     IF _err IS NULL OR strpos(_err, _msg) = 0 OR proof.guard_named(_err) <> ARRAY[split_part(split_part(r.f, '(', 1), '.', 2)]
@@ -1286,8 +1302,9 @@ DO $$ DECLARE _g text := current_setting('proof.guard'); _f text[]; m record; _m
   _f := proof.guard_suite(_g);
   IF cardinality(_f) > 0 THEN RAISE EXCEPTION 'FAIL (S2): the incumbent guard fails: %', array_to_string(_f, ' | '); END IF;
   FOR m IN SELECT * FROM (VALUES
-    ('M1 normalization removed (raw md5)', $m$md5(btrim(regexp_replace(regexp_replace(p.prosrc, E'[ \\t\\r\\f\\v]*\\n[ \\t\\r\\f\\v\\n]*', E'\n', 'g'), E'[ \\t\\r\\f\\v]+', ' ', 'g'), E' \n'))$m$, 'md5(p.prosrc)', 'G3', false),
-    ('M4 line breaks collapsed too (the round-7 guard)', $m$md5(btrim(regexp_replace(regexp_replace(p.prosrc, E'[ \\t\\r\\f\\v]*\\n[ \\t\\r\\f\\v\\n]*', E'\n', 'g'), E'[ \\t\\r\\f\\v]+', ' ', 'g'), E' \n'))$m$, $m$md5(btrim(regexp_replace(p.prosrc, '\s+', ' ', 'g')))$m$, 'J', false),
+    ('M1 normalization removed (raw md5)', $m$md5(btrim(regexp_replace(regexp_replace(p.prosrc, E'[ \\t\\f\\v]*(\\r\\n?|\\n)[ \\t\\r\\f\\v\\n]*', E'\n', 'g'), E'[ \\t\\f\\v]+', ' ', 'g'), E' \n'))$m$, 'md5(p.prosrc)', 'G3', false),
+    ('M4 line breaks collapsed too (the round-7 guard)', $m$md5(btrim(regexp_replace(regexp_replace(p.prosrc, E'[ \\t\\f\\v]*(\\r\\n?|\\n)[ \\t\\r\\f\\v\\n]*', E'\n', 'g'), E'[ \\t\\f\\v]+', ' ', 'g'), E' \n'))$m$, $m$md5(btrim(regexp_replace(p.prosrc, '\s+', ' ', 'g')))$m$, 'J', false),
+    ('M5 a bare CR read as a blank (the first review fix)', $m$md5(btrim(regexp_replace(regexp_replace(p.prosrc, E'[ \\t\\f\\v]*(\\r\\n?|\\n)[ \\t\\r\\f\\v\\n]*', E'\n', 'g'), E'[ \\t\\f\\v]+', ' ', 'g'), E' \n'))$m$, $m$md5(btrim(regexp_replace(regexp_replace(p.prosrc, E'[ \\t\\r\\f\\v]*\\n[ \\t\\r\\f\\v\\n]*', E'\n', 'g'), E'[ \\t\\r\\f\\v]+', ' ', 'g'), E' \n'))$m$, 'F', false),
     ('M2 the guard compares nothing', 'IF _have IS NULL OR NOT (_have = ANY (r.want)) THEN', 'IF false THEN', 'G4', false),
     ('M3 raises at the first mismatch', '      _drift := _drift || format(',
        $m$      RAISE EXCEPTION 'EXP08 owner invitations: 1 of 10 functions are not the body this migration replaces: %', r.sig; _drift := _drift || format($m$, 'G6', false),
@@ -1305,7 +1322,7 @@ DO $$ DECLARE _g text := current_setting('proof.guard'); _f text[]; m record; _m
   -- And it is still production's bodies afterwards (every case was rolled back).
   EXECUTE _g;
 END $$;
-\echo 'PASS (S2): the incumbent guard (md5 with line breaks kept and other blanks normalized, comments kept) passes on production''s 10 bodies, on the repository replay''s peek_tenant_invite (md5 e9ea6eb2) and on all 10 re-formatted; refuses a changed identifier, a removed AND clause and a comment added to each of the 10, naming each, and two drifts in one error, and a statement joined onto its comment line; guard mutants M1 M2 M3 M4 killed, control C1 survives'
+\echo 'PASS (S2): the incumbent guard (md5 with line breaks kept and other blanks normalized, comments kept) passes on production''s 10 bodies, on the repository replay''s peek_tenant_invite (md5 e9ea6eb2) and on all 10 re-formatted; refuses a changed identifier, a removed AND clause and a comment added to each of the 10, naming each, and two drifts in one error, and a statement joined onto its comment line; the fingerprint keeps LF, CRLF and a bare CR as line breaks; guard mutants M1 M2 M3 M4 M5 killed, control C1 survives'
 
 -- ═════════════════════ PHASE 2: the migration under test ═════════════════════
 \ir ../migrations/20271119020008_exp08_owner_invitations.sql

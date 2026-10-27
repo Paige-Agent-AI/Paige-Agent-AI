@@ -654,8 +654,8 @@ Migrations `20271119020008_exp08_owner_invitations.sql` (I1; the contract first 
   `setup_provenance = {"source":"team_invite"}`. A non-holder inviting an address with a live owner
   invitation is refused. Audit records `business_owner_id`.
 - **I1 round 2:** the migration runs in one transaction (`SET LOCAL lock_timeout = '2s'`) behind an incumbent guard:
-  a fingerprint of each of the 10 production functions it replaces (md5 of `prosrc` with LINE BREAKS KEPT, every
-  other run of blanks collapsed to one space, the blanks around each line break and empty lines dropped, and the
+  a fingerprint of each of the 10 production functions it replaces (md5 of `prosrc` with LINE BREAKS KEPT (LF, CRLF and a bare
+  CR each one break, since the lexer ends a `--` comment at either LF or CR), every other run of blanks collapsed to one space, the blanks around each line break and empty lines dropped, and the
   ends trimmed; comments KEPT, so a marker such as `E09_CONSUMER_INVITE_PEEK_V1` counts) must equal the fingerprint
   of the body it was written against (production, read 2026-10-27), or it refuses, naming EVERY drifted function in
   one error. Re-indenting, trailing blanks and CRLF pass; any added, removed or changed token, a comment included,
@@ -665,7 +665,9 @@ Migrations `20271119020008_exp08_owner_invitations.sql` (I1; the contract first 
   named; guard mutants for no normalisation, no comparison, stop-at-first and line breaks collapsed are killed).
   Line breaks are kept because the round-7 guard collapsed them with everything else, and the review found that
   made `-- note` + line break + `stmt;` fingerprint the same as `-- note stmt;`: two statements could be silently
-  commented out, one of them that authority check. `peek_tenant_invite` accepts
+  commented out, one of them that authority check. A bare CR counts as a break for the same reason in reverse (second
+  review): read as a blank, `-- note` + CR + `stmt;`, which is live code, would fingerprint as the comment; proof case F
+  checks the guard's own expression on that pair, and mutant M5 (CR as a blank) is killed. `peek_tenant_invite` accepts
   a second fingerprint, the repository replay's: production never ran `20260713050000` (recorded as
   `git_ledger_reconciliation`), whose body carries three comment lines production's lacks, and `20271108120100`
   patches whichever it finds; with comments removed the two are identical (read 2026-10-27). The other nine

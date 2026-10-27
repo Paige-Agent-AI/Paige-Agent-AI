@@ -94,6 +94,26 @@ this contract left a detail open, and where the build departs from it (§13, §5
   request id (idempotent), then settled by `team_hub_end_agent_turn`, which can only end an unconsumed
   turn: "ended" proves nothing posted, "not_found" means it may have (reported *may not have posted*).
 
+**A1b part 2 notes (2026-10-27, the UI).** Built in `src/solo/team-hub/` to prototype v3 and the v5
+colours and symbols (§28 frozen); the 56 `--pg-agent-<key>-{fill,tint,ink,ring}` tokens join the shared
+layer in `src/index.css`, both themes. Where the build departs from the prototype or leaves a gap (§13,
+§58: recorded, not silent):
+- **Who runs the turn.** The asker's own tab calls `paige-ai-chat` after its post is confirmed, once per
+  agent the stored message names (`agent_mentions`), or the DM's own agent in an agent DM. Turn state is
+  per tab, keyed message + agent; a reload loses *is writing…* and the private note (no turn read).
+- **Bring in** offers every agent the reply names that the question did not already ask — the rule this
+  contract and the server handoff state. The prototype's hand-authored frame showed two; a reply naming a
+  third (e.g. CURA) offers three.
+- **The About tab is compiled approved copy** (`TEAM_HUB_AGENT_PROFILES`, extracted from the prototype).
+  A4 moves it to the stored personalities; the Edit tab is not shown until A4.
+- **Agents are offered in a private channel with no other people in it,** matching the server, which
+  allows the turn in any channel the asker can see.
+- **Agent DMs have no @ list** (the server refuses agent mentions there); the composer hint says
+  *<AGENT> replies here*.
+- **Other members' private-part lines are still not shown** — the member-safe turn read above is owed.
+- **The increment-2 specialist handoff is removed** from Team Hub, as section 2 reverses; the `/` command
+  that offered it now reads *Ask an agent* and opens the @ list on the seven.
+
 Increments 1–4 are in
 [collaboration](exp08-team-hub-collaboration-contract.md),
 [team work](exp08-team-hub-increment2-work-contract.md),

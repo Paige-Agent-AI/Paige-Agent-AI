@@ -556,12 +556,27 @@ Owner approval 2026-10-27 ("approved, go with your recommendations and start bui
 |---|---|---|
 | God / Operator | ✗ no seat: the persona read or the acceptance refuses (`not_member`); nothing runs | ✗ |
 | Agency / Enterprise | ✗ acceptance refuses `unavailable` (not canonical SOLO); nothing runs | ✗ |
-| Standalone (Solo) | ✓ any active seat with Team conversations on, for its own message in a conversation it can see; owner and member alike (the member is the most-affected tier, §51.5) | ✗ until part 2 |
+| Standalone (Solo) | ✓ any active seat with Team conversations on, for its own message in a conversation it can see; owner and member alike (the member is the most-affected tier, §51.5) | ✓ on the branch with part 2 (below) |
 | Sub-account | ✗ `unavailable` until Team Hub opens there | ✗ |
 | Client | ✗ no seat | ✗ |
 | Anonymous | ✗ no JWT: the chat refuses 401 before the seam | ✗ |
 
 **Evidence:** `supabase/functions/_shared/team-hub/agent-turn.test.ts` (41, automated against fakes of the definers and the model seam; 20/20 mutants killed) and `agent-turn-wiring.test.ts` (structural, 4); base `cab598493` vs branch, measured: the CI node set 582/582 → 627/627, `deno check` of `paige-ai-chat` 9 → 9 identical diagnostics, C0b 29/29 base pins reproduced and only identity[15] changed; every `lint:*` in CI green; the A1a and increment 1–4 SQL proofs re-run green. **Owed:** `edge-live` for `paige-ai-chat` after merge, and an authenticated drive (a real model turn and a real post) once part 2 gives the turn a screen — none has run.
+
+### EXP08 Team Hub agents A1b part 2: the agents on screen (2026-10-27; branch `exp08-hub-agents-a1b`, NOT YET MERGED; built to approved prototype v3 and the APPROVED-FROZEN v5 colours and symbols)
+
+**What a person sees on the branch (and nothing more):** under **Your Paige team** in the conversation list, PAIGE and her six agents, each with its own plate (tint, symbol in its ink, ring), name and short role, and its DM's unread count; the seven again under that heading in **New message** and in the **@ list** (`@NAME`, at most 3 per message, `p_agent_mention_keys`); an agent's message under its plate, name in its colour, the word *Agent*, its role and *replying to <asker>* when the question is not directly above; agent chips in text; for the **asker only**, *<Agent> is writing…*, the flow-9 lines with *Ask again* / *Check again*, the private-part note (*…writing your answer in your DM* → *Your answer is in your DM with <Agent>* with *Open DM*, or *couldn't finish your private answer* with *Ask again*) and **Bring in** (everyone else: *Only <asker> can bring them in.*); the person's **DM with an agent** (its note, its empty state, *How <Agent> works*); the read-only **agent profile** (About; no Edit view — A4); first use with *Say hello to PAIGE*. The 56 colour tokens joined the shared token layer (`src/index.css`, both themes). Agents never act here (A1). The increment-2 specialist handoff is removed (§58, agents contract §2). Not shown, because no read exists: other members' *<Agent> is answering <asker> privately* / *replied privately* lines (a member-safe read of the turn state is owed), and the private note when the asker comes back in a new session.
+
+| Tier | Agents in Team Hub (A1b) |
+|---|---|
+| God / Operator | ✗ no seat; Team Hub refuses `not_member`, and the tier helper (§60) has no `team_hub_agents` |
+| Agency / Enterprise | ✗ `team_hub_agents` not in the tier set (§61 exception) — no agent row, @ entry or chip renders, and `@CURA` asks nobody; Team Hub itself is `unavailable` there |
+| Standalone (Solo) | ✓ every active seat with Team conversations on, in conversations it can see; owner and member alike (the member is the most-affected tier, §51.5) |
+| Sub-account | ✗ in practice (Team Hub `unavailable` until it opens there); `team_hub_agents` is declared for it (§60) |
+| Client | ✗ no seat |
+| Anonymous | ✗ no session |
+
+**Evidence:** mocked-RPC `TeamHubAgents.mocked-rpc.test.tsx` (23) and the updated workspace suite, `team-hub-agents.test.ts` (16), `team-hub-agent-tokens.test.ts` (6) and the stylesheet suite (17): `src/solo/team-hub` 179 → 233 tests (base `cab598493` vs branch, measured in worktrees); 12 of 13 UI mutants killed, the 13th equivalent. Rendered harness (not the real shell, not authenticated) under `docs/evidence/ui-delivery/assets/exp08-team-hub-agents-a1b/`: 52 frames, eight SOLO viewport records × both themes, 390 phone and 200% zoom, no overflow and no gold paint in any. **Owed:** authenticated runtime on a SOLO member seat (a real turn, a real post, a real private part), `edge-live` for `paige-ai-chat`, and the member-safe turn-state read.
 
 ### Solo Settings → Team: the screens for the team lifecycle (2026-10-26; owner-approved design, APPROVED-FROZEN §28)
 

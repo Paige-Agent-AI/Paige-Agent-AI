@@ -7982,6 +7982,13 @@ Current gaps:
   acceptance, channel-safe context only, `fabricCompletion` with a read-only tool list, post under the
   asker's JWT, read-back, `team_hub_agent_post` receipt). Still no agent speaks to anyone: the UI is A1b
   part 2. `PROOF_OWED` (no authenticated drive).
+  **A1b part 2, the UI** (same branch, not merged, 2026-10-27): PAIGE and her six agents in Team Hub —
+  *Your Paige team* in the list and the @ list, agent plates, tag and role on every message, *replying
+  to*, asker-only *is writing…*, the flow-9 lines with Ask again, the private-part note, Bring in, the
+  agent DM and the read-only profile (About), gated on `team_hub_agents` (§60). 56 agent colour tokens in
+  `src/index.css`. Evidence: mocked-RPC tests and a rendered harness
+  (`docs/evidence/ui-delivery/exp08-team-hub-agents-a1b.md`); authenticated runtime `UNVERIFIED`. Other
+  members' private-part lines need a member-safe turn read that does not exist yet.
 - `/solo/{n}/team` still redirects to Settings → Team; Team Hub is a separate destination.
 - Team actions still emit no Rail outcome.
 

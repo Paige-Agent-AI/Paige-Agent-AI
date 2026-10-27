@@ -85,6 +85,11 @@ this contract left a detail open, and where the build departs from it (§13, §5
   style guidance. `buildVpAddressBlock` is not reused: its text carries PAIGE-chat tool guidance that
   would mislead in Team Hub. PAIGE's Team Hub personality is a constant from the approved personalities
   §2; a tenant's Playbook persona does not reach the Team Hub turn yet.
+- **Missing contract for flow 5's other-viewer lines.** *MERIT is answering Sam privately.* and
+  *MERIT replied to Sam privately.* read the accepted-turn state, and nothing exposes
+  `team_hub_agent_turns` to other members (RLS on, no grants, no read door). A member-safe read of
+  (asking message, agent) → answering / replied / none is owed before part 2 can show them; until then
+  other members see nothing new.
 - **Settling an unknown post.** A post whose answer is lost is retried once with the same token and
   request id (idempotent), then settled by `team_hub_end_agent_turn`, which can only end an unconsumed
   turn: "ended" proves nothing posted, "not_found" means it may have (reported *may not have posted*).

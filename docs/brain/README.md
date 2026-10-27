@@ -1,3 +1,30 @@
+## EXP02 endpoint correction and same-VERA handoff — October27 development
+
+PR #3004 remains a source-release HOLD: non-author finding4393680160 correctly
+identified that the real Executive/Chat endpoint supplied unresolved eligibility,
+so the new original Rail consumer refused genuine endpoint requests. The local
+correction resolves current caller-native membership and strict SOLO classification
+through existing contracts, with bounded lookup and actor/workspace revalidation.
+No native permission, provider, service client, registry or execution gate changes.
+Actual endpoint/composer tests cover both transport modes and authorization,
+classification, changed scope, revoked source and timeout negatives. The corrected
+endpoint passes the pinned production compiler; fresh final review/CI and actual
+release/customer readback remain owed. Earlier a1d2 green CI is historical only.
+
+Actually received the October27 SAME-specialist directive in ANT138/ANT161 and
+current Owner North Star. The original VERA identity/personality and approved
+teal/ShieldCheck presentation remain authoritative. Native registry metadata
+already permits get_business_snapshot/read_business_metric in capability_scope;
+Team Hub admission/result/reopen remains MISSING. Exact producer/consumer handoff
+is ANT161a25c1145; EXP08 owns its private-DM tool admission and result presentation.
+No Team Hub clone, runtime, role grant, shared-source takeover or activation.
+Original nineteen-outcome matrix now records this built-versus-missing boundary.
+
+Owner-requested four-hour daily Linear heartbeat is ACTIVE on this existing E02
+conversation (actual receiving ACK ANT16192c70179). It reads applicable updates
+and continues this full assignment without duplicate unchanged pings or agents;
+completion includes the remaining customer proof and single founder acceptance.
+
 ## EXP02 original recorded-activity review — October27 development
 
 Incoming [#2995 source release](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2995#issuecomment-6452429513)

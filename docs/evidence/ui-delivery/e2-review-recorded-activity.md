@@ -73,3 +73,43 @@ also tightened abort ordering so a cancelled read starts no subsequent RPC.
 The original Master shipped log records2995 source/web delivery using original
 receipt6452429513, not a new ledger or a customer-acceptance claim. No fixture,
 role, provider, registry engine, Root/risk/C0b or other Experience writer changed.
+
+## October27 — real endpoint finding and correction, release still held
+
+NON-AUTHOR finding4393680160/PRRT_kwDOSAAXqM6w3dDe is confirmed: direct composer
+fixtures did not prove the actual normal/chat endpoint, whose unresolved role
+and account shape correctly failed the adapter's gate. Do not reuse a1d2's green
+CI as proof of the correction. Original finding/initial compiler failures remain
+recorded; no merge, deployment, activation or customer acceptance is claimed.
+
+The endpoint now resolves only original has_tenant_role(active exact actor/tenant)
+owner/admin and incumbent readCalendarAccountShape(strict native SOLO row), then
+revalidates actor/current workspace. Two-second finite lookup/abort gives the
+legacy honest unresolved/partial result if authority cannot be confirmed. Each
+domain still re-proves original native authority. No global-role fallback,
+body/header authority, service client, SQL/grant, new source reader or action.
+
+New actual-handler tests execute original normal AND Chat dispatch/composer/Rail
+with locked app SDK2.112.4 and synthetic Auth/HTTP only. Corrected endpoint/seam
+44 checks pass; combined endpoint/seam/original Rail111 checks pass. The combined
+run also hit an original Calendar worker STARTUP timeout, so it is not a complete
+four-suite PASS; original classification is being rechecked separately unchanged.
+Pinned Deno2.1.4 with original server SDK2.75 passes the actual endpoint closure.
+The incumbent Calendar type describes an awaitable initial table selector; the
+bounded port preserves the real SDK select/filter/abort chain instead of faking
+thenability or weakening original source authority. Final review/CI remain owed.
+
+Required customer proof remains actual permitted recorded facts, refusal/scope
+negatives, persisted conversation/reload and source inspection. Existing Finance
+and weekly QA predates this candidate; it does not close this endpoint correction,
+Team Hub integration, O13 execution/receipt evidence or full nineteen outcomes.
+
+Final correction controls:458 PASS/13 suites, original Finance/Chat/Metric/source
+scope/window/priority regression coverage retained. Strict native test/source
+TypeScript and actual pinned production endpoint compilation pass; no baseline
+or compiler relaxation. Type checking also caught a parameterized-fixture mistake:
+classification arrays were being spread as test arguments. Explicit named rows
+now exercise the real empty/foreign/missing-parent/agency/operator/subaccount
+array responses; assertions were retained. Original Calendar isolated run gave
+124 PASS plus one5s in-process compiler-test timeout (not an assertion failure).
+This local limit remains recorded, not a complete125 PASS or hosted-CI waiver.

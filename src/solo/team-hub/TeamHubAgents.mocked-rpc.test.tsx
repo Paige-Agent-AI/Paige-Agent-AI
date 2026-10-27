@@ -322,6 +322,9 @@ describe("flow 9: when an agent doesn't answer", () => {
     const fail = host.querySelector(".th-ag-fail")!;
     // The line, then its one button: the recovery is never said twice.
     expect(fail.textContent).toBe(`${line}${action ?? ""}`);
+    // A1c: a failure row is a status and carries no agent colour.
+    expect(fail.hasAttribute("data-ag")).toBe(false);
+    expect(fail.querySelector("[data-ag]")).toBeNull();
     expect(host.querySelector(".th-msg--agent")).toBeNull();
     if (action) {
       answers.push(posted(reply("cura", String(turnBody(0).sourceMessageId), "Two people start Monday.")));
@@ -378,6 +381,7 @@ describe("after a reload: the turn's true state, never a failure for a turn that
     expect(line.textContent).toBe("MENTOR may still be replying.Check again");
     // Not a failure: a neutral clock, never the warning triangle.
     expect(line.classList.contains("th-ag-fail--pending")).toBe(true);
+    expect(line.hasAttribute("data-ag")).toBe(false);
     expect(line.querySelector("svg.lucide-clock")).not.toBeNull();
     expect(line.querySelector("svg.lucide-triangle-alert")).toBeNull();
   });
@@ -557,6 +561,10 @@ describe("flow 5: the private part, answered in the asker's DM", () => {
     await flush();
     const note = host.querySelector(".th-msg--agent .th-ag-priv")!;
     expect(note.textContent).toContain("MERIT couldn't finish your private answer.");
+    // A1c owner ruling: the failed box is neutral. It carries no agent, so no agent tint or ring reaches it.
+    expect(note.hasAttribute("data-ag")).toBe(false);
+    expect(note.classList.contains("th-ag-priv--status")).toBe(true);
+    expect(note.querySelector("[data-ag]")).toBeNull();
     answers.push(posted(reply("merit", null, "Two invoices.", { id: "r-dm" }), { intent: "dm", conversation_id: "c-dm-merit" }));
     await click(button(note as HTMLElement, "Ask again"));
     // Ask again re-runs the private part only, not the channel reply.

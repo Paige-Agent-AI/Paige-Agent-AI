@@ -434,6 +434,10 @@ button.th-ag-re:hover{color:var(--pg-muted);text-decoration:underline;text-under
 .th-ag-priv{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;margin-top:8px;max-width:560px;padding:4px 4px 4px 10px;border:1px solid color-mix(in srgb,var(--agc-ring) 35%,var(--pg-line-soft));border-radius:9px;background:color-mix(in srgb,var(--agc-tint) 45%,var(--pg-surface));color:var(--pg-ink-2);font-size:12px}
 .th-ag-priv>span{flex:1;min-width:0}
 .th-hub .th-ag-priv>svg{width:14px;height:14px;color:var(--agc-ink)}
+/* A1c (owner ruling 2026-10-27): a private answer that failed, or whose state is unknown, is a status
+   box: neutral line and surface, never the agent's tint or ring (an ancestor's data-ag cannot reach it). */
+.th-ag-priv--status{border-color:var(--pg-line);background:var(--pg-surface)}
+.th-hub .th-ag-priv--status>svg{color:var(--pg-muted)}
 .th-hub .th-ag-priv--failed>svg{color:var(--pg-warning)}
 .th-ag-priv .th-btn{min-height:40px}
 /* Another member's line about someone else's private answer is neutral, as the prototype's .priv: it is

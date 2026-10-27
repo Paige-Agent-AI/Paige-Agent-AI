@@ -135,3 +135,20 @@ describe("Team Hub stylesheet: agents (A1b, approved v5 colour rules)", () => {
     expect(rule(".th-hub .th-ag-fail--pending svg")).toBe("color:var(--pg-muted)");
   });
 });
+
+describe("Team Hub stylesheet: A1c status rows never take agent colour", () => {
+  it("draws the failed or unknown private box in neutral tokens, overriding any agent an ancestor names", () => {
+    const status = rule(".th-ag-priv--status");
+    expect(status).toContain("border-color:var(--pg-line)");
+    expect(status).toContain("background:var(--pg-surface)");
+    expect(status).not.toContain("--agc-");
+    expect(rule(".th-hub .th-ag-priv--status>svg")).toBe("color:var(--pg-muted)");
+    expect(rule(".th-hub .th-ag-priv--failed>svg")).toBe("color:var(--pg-warning)");
+  });
+
+  it("gives no failure row (didn't reply, may still be replying, couldn't start) an agent token", () => {
+    const failRules = [...css.matchAll(/([^{}]*\.th-ag-fail[^{}]*)\{([^}]*)\}/g)];
+    expect(failRules.length).toBeGreaterThan(0);
+    for (const [, selector, body] of failRules) expect(body, selector).not.toContain("--agc-");
+  });
+});

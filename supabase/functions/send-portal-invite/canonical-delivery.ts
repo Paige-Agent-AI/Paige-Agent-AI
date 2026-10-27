@@ -155,8 +155,12 @@ export async function sendCanonicalPortalInvite(req:Request,input:unknown,option
   dispatched=true;
   // The shared platform SendGrid transport: From moves onto Paige's own verified domain, X-Message-Id
   // is the receipt, 20s abort. It never throws; a 5xx, timeout or transport error is `unconfirmed`.
+  // The three claims ride every SendGrid event for this email and are journalled with it
+  // (sendgrid_receipt_processing.tenant_claim/operation_claim/message_claim), so an outcome_unknown
+  // invitation can later be settled from evidence instead of staying unknown for good.
   const sent=await sendPlatformEmail({from:payload.from,...(replyTo?{replyTo}:{}),to:payload.to,subject:payload.subject,
-   html:payload.html,text:payload.text,timeoutMs:20000},{apiKey:options.key});
+   html:payload.html,text:payload.text,timeoutMs:20000,
+   customArgs:{paige_tenant_id:tenant,paige_operation_id:operation,paige_message_id:String(claim.receipt_id)}},{apiKey:options.key});
   if(sent.ok&&typeof sent.id==='string'&&MESSAGE_ID.test(sent.id)){outcome='provider_accepted';message=sent.id;}
   // Only a definitive 4xx proves nothing was accepted. An accepted send without a readable id stays unknown.
   else if(!sent.ok&&!sent.unconfirmed&&sent.status>=400&&sent.status<500)outcome='failed';

@@ -7,8 +7,11 @@
 // FROM IS ALWAYS PAIGE'S OWN VERIFIED DOMAIN. SendGrid authenticates domains for the whole shared account,
 // so it would accept a From on ANY domain the account verified — including one a different business
 // verified (security H2, 20271031000100). This module therefore never sends from a domain outside
-// PLATFORM_FROM_DOMAINS: a From on any other domain keeps its display name and local part and moves to
-// the platform domain (e.g. "Paige Agent AI <hello@paigeagent.ai>" -> "<hello@mail.paigeagent.ai>").
+// PLATFORM_FROM_DOMAINS. Paige's own addresses on paigeagent.ai keep their local part (hello@, team@,
+// calendar@ — every one is on the reserved list no business can claim, 20260711170000). Any other domain
+// is a business's own, and its local part is NOT reused: a business sets that freely, so reusing it
+// could put one business's mail on another business's shared address (acme@mail.paigeagent.ai). It
+// sends as notifications@ (also reserved) under the business's display name instead.
 // Reply-To is not an identity claim and passes through unchanged.
 //
 // The key is the restricted Mail Send key (SENDGRID_MAIL_SEND_API_KEY) — never the admin key.
@@ -18,6 +21,8 @@
 
 export const PLATFORM_FROM_DOMAIN = "mail.paigeagent.ai";
 const PLATFORM_FROM_DOMAINS = new Set([PLATFORM_FROM_DOMAIN]);
+const PLATFORM_OWNED_DOMAINS = new Set(["paigeagent.ai"]);
+const BUSINESS_LOCAL_PART = "notifications";
 const SEND_URL = "https://api.sendgrid.com/v3/mail/send";
 const DEFAULT_TIMEOUT_MS = 20_000;
 
@@ -54,17 +59,20 @@ const ADDRESS = /^[^@\s<>]+@[^@\s<>]+\.[^@\s<>]+$/;
 export function platformFrom(from: string): { email: string; name?: string } {
   const raw = String(from ?? "").trim();
   const m = /^([\s\S]*?)\s*<\s*([^<>\s]+)\s*>$/.exec(raw);
-  const name = (m ? m[1] : "").replace(/^"|"$/g, "").replace(/[^\w \-.@'&]/g, " ").replace(/\s+/g, " ").trim();
+  // Letters and digits in any script survive (a brand name is not ASCII-only); quotes, @, <> and line
+  // breaks do not, so the name can neither break the header nor pose as an address.
+  const name = (m ? m[1] : "").replace(/[^\p{L}\p{M}\p{N} \-.'’&,()]/gu, " ").replace(/\s+/g, " ").trim();
   const address = (m ? m[2] : raw).toLowerCase();
-  const [local, domain] = ADDRESS.test(address) ? address.split("@") : ["no-reply", ""];
-  const email = PLATFORM_FROM_DOMAINS.has(domain) ? address : `${local}@${PLATFORM_FROM_DOMAIN}`;
+  const [local, domain] = ADDRESS.test(address) ? address.split("@") : ["no-reply", PLATFORM_FROM_DOMAIN];
+  const email = PLATFORM_FROM_DOMAINS.has(domain) ? `${local}@${domain}`
+    : PLATFORM_OWNED_DOMAINS.has(domain) ? `${local}@${PLATFORM_FROM_DOMAIN}`
+    : `${BUSINESS_LOCAL_PART}@${PLATFORM_FROM_DOMAIN}`;
   return name ? { email, name } : { email };
 }
 
 function envKey(): string | null {
   try {
-    // deno-lint-ignore no-explicit-any
-    const d = (globalThis as any).Deno;
+    const d = (globalThis as { Deno?: { env?: { get?: (k: string) => string | undefined } } }).Deno;
     return d?.env?.get?.("SENDGRID_MAIL_SEND_API_KEY") ?? null;
   } catch {
     return null;

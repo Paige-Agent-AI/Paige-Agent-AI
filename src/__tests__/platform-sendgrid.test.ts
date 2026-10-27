@@ -20,15 +20,26 @@ describe("platformFrom", () => {
     expect(platformFrom("Paige Agent AI <team@mail.paigeagent.ai>")).toEqual({ email: "team@mail.paigeagent.ai", name: "Paige Agent AI" });
     expect(platformFrom("notify@mail.paigeagent.ai")).toEqual({ email: "notify@mail.paigeagent.ai" });
   });
-  it("moves any other domain onto the platform domain, keeping name and local part", () => {
+  it("moves Paige's own addresses onto the platform domain, keeping name and local part", () => {
     expect(platformFrom("Paige Agent AI <hello@paigeagent.ai>")).toEqual({ email: "hello@mail.paigeagent.ai", name: "Paige Agent AI" });
-    expect(platformFrom("Cedar <news@cedar-studio.example>")).toEqual({ email: "news@mail.paigeagent.ai", name: "Cedar" });
-    // A domain another business verified in the shared account is never borrowed.
-    expect(platformFrom("x@sg-mail.paigeagent.ai").email).toBe("x@mail.paigeagent.ai");
+    expect(platformFrom("calendar@PAIGEAGENT.AI").email).toBe("calendar@mail.paigeagent.ai");
+  });
+  it("never reuses a business's own local part, so it cannot land on another business's shared address", () => {
+    expect(platformFrom("Cedar <news@cedar-studio.example>")).toEqual({ email: "notifications@mail.paigeagent.ai", name: "Cedar" });
+    // Business B setting its local part to business A's shared one (acme@mail.paigeagent.ai).
+    expect(platformFrom("B <acme@tenantb.example>").email).toBe("notifications@mail.paigeagent.ai");
+    // A domain another business verified in the shared account is never borrowed, nor is a subdomain.
+    expect(platformFrom("x@sg-mail.paigeagent.ai").email).toBe("notifications@mail.paigeagent.ai");
+    expect(platformFrom("x@evil.mail.paigeagent.ai").email).toBe("notifications@mail.paigeagent.ai");
+  });
+  it("keeps a brand name in any script", () => {
+    expect(platformFrom("José Müller Coaching <a@mail.paigeagent.ai>").name).toBe("José Müller Coaching");
+    expect(platformFrom("O’Neil & Co. <a@mail.paigeagent.ai>").name).toBe("O’Neil & Co.");
   });
   it("falls back to no-reply for an unreadable From and strips header-breaking characters from the name", () => {
     expect(platformFrom("garbage").email).toBe("no-reply@mail.paigeagent.ai");
-    expect(platformFrom('"Evil\r\nBcc: x" <a@mail.paigeagent.ai>').name).not.toMatch(/[\r\n]/);
+    expect(platformFrom('"Evil\r\nBcc: x" <a@mail.paigeagent.ai>').name).not.toMatch(/[\r\n"]/);
+    expect(platformFrom('"support@bank.example" <a@mail.paigeagent.ai>').name).not.toContain("@");
   });
 });
 

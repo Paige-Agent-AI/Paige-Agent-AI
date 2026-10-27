@@ -86,7 +86,7 @@ test('Actual internal sender uses canonical recipient, existing tenant template,
  const effect=h.effects[0],payload=JSON.parse(effect.options.body);assert.equal(effect.url,'https://api.sendgrid.com/v3/mail/send');
  assert.deepEqual(payload.personalizations,[{to:[{email:'customer@tests.invalid'}]}]);
  // The tenant's display name over Paige's own verified domain; Reply-To stays the tenant's.
- assert.deepEqual(payload.from,{email:'no-reply@mail.paigeagent.ai',name:'Test tenant'});assert.deepEqual(payload.reply_to,{email:'help@tests.invalid'});
+ assert.deepEqual(payload.from,{email:'notifications@mail.paigeagent.ai',name:'Test tenant'});assert.deepEqual(Object.keys(payload.custom_args).sort(),['paige_message_id','paige_operation_id','paige_tenant_id']);assert.ok(Object.values(payload.custom_args).every(v=>typeof v==='string'&&v.length>0));assert.deepEqual(payload.reply_to,{email:'help@tests.invalid'});
  assert.deepEqual(payload.content.map(c=>c.type),['text/plain','text/html']);assert.match(payload.content[1].value,/PRIVATE_INVITATION_TOKEN/);
  assert.equal(effect.options.headers.Authorization,'Bearer controlled-provider');assert.ok(effect.options.signal);
  assert.equal(h.calls.find(x=>x.name==='finalize_client_portal_invitation_delivery').args.p_message_id,'controlled-message');

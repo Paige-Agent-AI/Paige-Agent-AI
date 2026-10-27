@@ -86,10 +86,14 @@ async function manageUrl(bookingId: string, ver = 0): Promise<string> {
 
 // Sent through Paige's SendGrid transport (owner ruling 2026-10-26); the transport moves
 // EMAIL_FROM onto the platform's verified sending domain. False when the transport is
-// unconfigured, the recipient is invalid, or SendGrid did not accept it.
+// unconfigured, the recipient is invalid, or SendGrid definitively refused it — the only cases where
+// nothing went out, so releasing the claim to retry cannot duplicate. A timeout or 5xx is
+// `unconfirmed`: SendGrid may have accepted it and has no idempotent replay, so the claim is kept
+// (true) rather than resending a reminder every cron run.
 async function sendEmail(to: string, subject: string, html: string): Promise<boolean> {
   const sent = await sendPlatformEmail({ from: EMAIL_FROM, to, subject, html });
-  return sent.ok;
+  if (sent.unconfirmed) console.warn("[process-booking-notifications] send unconfirmed; not retrying", sent.error);
+  return sent.ok || sent.unconfirmed;
 }
 
 // to: who a reminder targets — 'guest' (default, back-compat), 'host', or 'both'.

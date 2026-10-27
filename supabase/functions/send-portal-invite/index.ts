@@ -367,8 +367,8 @@ Deno.serve(async (req) => {
       html: inviteHtml(tenantName, accent, logoUrl, joinUrl, firstName, kind),
       text: `${firstName ? `Hi ${firstName},` : "Hi there,"}\n\n${copy.textLead}\n\nOpen it: ${joinUrl}\n`,
     }, { apiKey: SENDGRID_KEY });
-    if (sent.status === 0 && sent.unconfirmed) {
-      // A transport failure or timeout is not proof the email did not go. It is proof we do not know.
+    if (sent.unconfirmed) {
+      // A transport failure, timeout or 5xx is not proof the email did not go. It is proof we do not know.
       await logSend("failed", null, { reason: "transport", detail: sent.error ?? "unknown" });
       return json({ ok: true, join_url: joinUrl, emailed: false, reason: "transport" });
     }

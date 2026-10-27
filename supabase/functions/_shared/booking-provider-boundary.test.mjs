@@ -8,7 +8,7 @@ import test from 'node:test';
 import { databaseAnswered } from './approval-outcome.ts';
 const base = new URL('../', import.meta.url);
 function source(name) { return (process.env.BOUNDARY_TEST_BASELINE ? execFileSync('git',['show',`${process.env.BOUNDARY_TEST_BASELINE}:supabase/functions/${name}/index.ts`],{encoding:'utf8'}) : readFileSync(new URL(`${name}/index.ts`, base),'utf8')).replace(/^import[\s\S]*?from\s+["'][^"']+["'];\s*/gm,''); }
-function harness(name, allowed, {providerOk=true,remindChannel='email',calendarTenant='tenant',fixtures,env}={}) {
+function harness(name, allowed, {providerOk=true,providerStatus,remindChannel='email',calendarTenant='tenant',fixtures,env}={}) {
  const writes=[], effects=[], scopes=[]; let planFired=false;
  const booking={id:'booking',tenant_id:'tenant',calendar_id:'calendar',host_user_id:'host',guest_email:'guest@example.test',guest_name:'Guest',status:'scheduled',start_at:new Date(Date.now()-120*60000).toISOString(),end_at:new Date(Date.now()-90*60000).toISOString(),timezone:'UTC',manage_token_version:0};
  const calendar={id:'calendar',tenant_id:calendarTenant,title:'Session',notify_config:{followup_guest:true,followup_offset_min:1}};
@@ -19,7 +19,7 @@ function harness(name, allowed, {providerOk=true,remindChannel='email',calendarT
  const data={internal_bookings:[booking],calendars:[calendar],tenants:[{id:'tenant',name:'Brand'}],plan_items:[reminder],tenant_invite_tokens:[{id:'invite',tenant_id:'tenant',contact_id:'contact',expires_at:'2099-01-01',email:'guest@example.test',kind:'consumer',revoked_at:null,uses:0,max_uses:1,last_used_at:null}],clients:[{id:'contact',tenant_id:'tenant',status:'active',merged_into_contact_id:null,do_not_contact:false,linked_user_id:null}],client_contact_methods:[{client_id:'contact',tenant_id:'tenant',kind:'email',is_primary:true,value:'guest@example.test'}]};
  fixtures?.({booking,calendar,data});
  const admin={rpc:async(rpc,args)=>{ if(rpc==='comms_provider_execution_allowed'){scopes.push(args);if(allowed==='throw')throw Error('database unavailable');return allowed==='error'?{data:true,error:{message:'unavailable'}}:{data:allowed,error:null};}return {data:rpc==='verify_cron_token'||(name==='send-portal-invite'&&rpc==='is_tenant_admin')?true:null,error:null};}, auth:{...(name==='send-portal-invite'?{getUser:async()=>({data:{user:{id:'controlled-owner'}},error:null})}:{}),admin:{getUserById:async()=>({data:{user:{email:'host@example.test'}}})}},from(table){let mutation=null,payload=null,write=null;const query=new Proxy({}, {get(_,prop){if(prop==='then')return resolve=>resolve({data:mutation?null:(table==='plan_items'&&planFired?[]:(data[table]||[])),error:null});if(prop==='maybeSingle'||prop==='single')return async()=>{if(table==='plan_items'&&mutation){if(payload?.reminded_at){if(planFired)return {data:null,error:null};planFired=true;reminder.updated_at='2026-01-02T00:00:00Z';}return {data:{id:'reminder',updated_at:reminder.updated_at},error:null};}return {data:mutation?{id:'reminder'}:(data[table]?.[0]??null),error:null};};return (...args)=>{if(['insert','update','delete'].includes(prop)){mutation=prop;payload=args[0];write={table,kind:prop,payload};writes.push(write);}else if(write&&['eq','is'].includes(prop))(write.filters??=[]).push([prop,...args]);return query;};}});return query;}};
- const ctx=vm.createContext({console,Response,Request,Headers,URL,TextEncoder,TextDecoder,crypto:webcrypto,btoa,atob,Date,AbortSignal,databaseAnswered,createClient:()=>admin,clientIp:()=> 'test',overRateLimit:async()=>false,parseLifecycle:()=>[],channelsOf:()=>[],targetsOf:()=>[],primaryPhonesForUsers:async()=>new Map(),renderTemplate:(x)=>x,sendSms:async(...args)=>{effects.push({sms:args});return true;},Deno:{env:{get:(k)=>(env&&Object.prototype.hasOwnProperty.call(env,k)?env[k]:'configured')},serve:fn=>ctx.handler=fn},fetch:async(url,options)=>{effects.push({url,payload:JSON.parse(options.body)});return new Response(JSON.stringify({id:'controlled-message'}),{status:providerOk?202:503,headers:{'X-Message-Id':'controlled-message'}});}});
+ const ctx=vm.createContext({console,Response,Request,Headers,URL,TextEncoder,TextDecoder,crypto:webcrypto,btoa,atob,Date,AbortSignal,databaseAnswered,createClient:()=>admin,clientIp:()=> 'test',overRateLimit:async()=>false,parseLifecycle:()=>[],channelsOf:()=>[],targetsOf:()=>[],primaryPhonesForUsers:async()=>new Map(),renderTemplate:(x)=>x,sendSms:async(...args)=>{effects.push({sms:args});return true;},Deno:{env:{get:(k)=>(env&&Object.prototype.hasOwnProperty.call(env,k)?env[k]:'configured')},serve:fn=>ctx.handler=fn},fetch:async(url,options)=>{effects.push({url,payload:JSON.parse(options.body)});return new Response(JSON.stringify({id:'controlled-message'}),{status:providerStatus??(providerOk?202:503),headers:{'X-Message-Id':'controlled-message'}});}});
  const helper=readFileSync(new URL('_shared/comms-provider-boundary.ts',base),'utf8').replace(/\bexport /g,'');
  vm.runInContext(stripTypeScriptTypes(helper),ctx);
  // The real shared send gates the handlers import (E09 Slice 6): runPreSend and the contact opt-out
@@ -48,7 +48,13 @@ const SEND_URLS=['https://api.resend.com/emails','https://api.sendgrid.com/v3/ma
 const mail=(e)=>{const p=e.payload;return {to:p.to??p.personalizations?.[0]?.to?.map(x=>x.email),subject:p.subject,html:p.html??p.content?.find(c=>c.type==='text/html')?.value,text:p.text??p.content?.find(c=>c.type==='text/plain')?.value,replyTo:p.reply_to?.email??p.reply_to,headers:p.headers};};
 for(const name of ['send-portal-invite','plan-reminder-cron','process-booking-notifications'])for(const providerOk of [true,false])test(`${name}: ordinary tenant keeps delivery payload and provider failure truthful (${providerOk})`,async()=>{
  const h=harness(name,true,{providerOk});const res=await h.run(name==='send-portal-invite'?{token:'valid',email:'guest@example.test'}:{});const out=await res.json();assert.equal(h.effects.length,1);assert.ok(SEND_URLS.includes(h.effects[0].url));assert.deepEqual(Array.from(mail(h.effects[0]).to),[name==='plan-reminder-cron'?'host@example.test':'guest@example.test']);assert.ok(mail(h.effects[0]).html);assert.ok(mail(h.effects[0]).subject);
- if(name==='send-portal-invite')assert.equal(out.emailed,providerOk);else if(name==='plan-reminder-cron')assert.equal(out.emailed,providerOk?1:0);else assert.equal(out.followups,providerOk?1:0);
+ // A 503 is unconfirmed: SendGrid may have accepted it. process-booking-notifications keeps its claim
+// (counts it, never resends); the other two report not-emailed. A definitive 4xx is covered below.
+if(name==='send-portal-invite')assert.equal(out.emailed,providerOk);else if(name==='plan-reminder-cron')assert.equal(out.emailed,providerOk?1:0);else assert.equal(out.followups,1);
+});
+test('process-booking-notifications: a definitive SendGrid refusal releases the claim to retry; an unconfirmed send does not',async()=>{
+ const refused=harness('process-booking-notifications',true,{providerStatus:400});assert.equal((await (await refused.run({})).json()).followups,0);assert.equal(refused.effects.length,1);
+ const unknown=harness('process-booking-notifications',true,{providerStatus:503});assert.equal((await (await unknown.run({})).json()).followups,1);assert.equal(unknown.effects.length,1);
 });
 test('public-booking ordinary validation remains unchanged',async()=>{const h=harness('public-booking',true);const res=await h.run({action:'create',slug:'normal'});assert.equal(res.status,400);assert.equal((await res.json()).error,'Invalid time.');});
 test('booking-manage ordinary cancel retains exact domain patch and dispatch',async()=>{const h=harness('booking-manage',true);const res=await h.run({action:'cancel',token:'valid'});assert.equal(res.status,200);assert.equal((await res.json()).status,'cancelled');assert.equal(h.effects.length,2);assert.deepEqual(JSON.parse(JSON.stringify(h.writes[0].payload)),{status:'cancelled',manage_token_version:1});});
@@ -87,6 +93,7 @@ test('process-booking-notifications: a reminder to both still reaches the host w
 // The booking engines' own sendEmail (guest confirmation / update / cancel, each with an .ics invite)
 // is not reached by the handler drives above, so it is exercised directly on the loaded handler.
 // The tenant From moves onto Paige's domain; because the guest is told "just reply to this email",
+// a business's own local part is never reused on the shared domain (it sends as the reserved notifications@);
 // the tenant's original address becomes the Reply-To unless the identity names its own.
 for(const [name,ics] of [['public-booking','BEGIN:VCALENDAR\r\nSUMMARY:Café — session\r\nEND:VCALENDAR'],['booking-manage',{name:'invite.ics',content:'BEGIN:VCALENDAR\r\nMETHOD:CANCEL\r\nSUMMARY:Café — session\r\nEND:VCALENDAR'}]]){
  const icsText=typeof ics==='string'?ics:ics.content;
@@ -95,7 +102,7 @@ for(const [name,ics] of [['public-booking','BEGIN:VCALENDAR\r\nSUMMARY:Café —
   assert.equal(await h.ctx.sendEmail('guest@example.test','Confirmed','<p>booked</p>',ics,{from:'Acme Studio <hello@acme.example>'}),true);
   assert.equal(h.effects.length,1);assert.equal(h.effects[0].url,SEND_URLS[1]);
   const p=h.effects[0].payload;
-  assert.deepEqual(p.from,{email:'hello@mail.paigeagent.ai',name:'Acme Studio'});
+  assert.deepEqual(p.from,{email:'notifications@mail.paigeagent.ai',name:'Acme Studio'});
   assert.deepEqual(p.reply_to,{email:'hello@acme.example'});
   assert.deepEqual(Array.from(mail(h.effects[0]).to),['guest@example.test']);assert.equal(mail(h.effects[0]).html,'<p>booked</p>');
   assert.equal(p.attachments.length,1);assert.equal(p.attachments[0].filename,'invite.ics');assert.equal(p.attachments[0].type,'text/calendar');

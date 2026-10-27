@@ -100,7 +100,7 @@ describe("canonical portal invitation sender authority",()=>{
  for(const authority of ["admin","agency","platform"] as const)it("preserves legitimate "+authority+" sender and current delivery evidence",async()=>{
   const r=await drive({authority});expect(r.status).toBe(200);expect(r.body.emailed).toBe(true);expect(r.sends).toHaveLength(1);
   // The business's display name and local part, moved onto Paige's own verified sending domain.
-  expect(r.sends[0]).toMatchObject({personalizations:[{to:[{email:recipient}]}],from:{email:"business@mail.paigeagent.ai",name:"Test business"}});
+  expect(r.sends[0]).toMatchObject({personalizations:[{to:[{email:recipient}]}],from:{email:"notifications@mail.paigeagent.ai",name:"Test business"}});
   expect(r.logs).toHaveLength(1);expect(r.logs[0]).toMatchObject({message_id:"synthetic-provider-message",metadata:{actor_user_id:actor,invite_id:invitation}});
   const authorityCalls=r.calls.filter(x=>["is_platform_owner","is_tenant_admin","agency_can_manage_child"].includes(x.name));
   expect(authorityCalls.length).toBeGreaterThanOrEqual(3);expect(authorityCalls.every(x=>x.kind==="jwt")).toBe(true);

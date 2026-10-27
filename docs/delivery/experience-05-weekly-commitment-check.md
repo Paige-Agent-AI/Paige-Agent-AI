@@ -837,3 +837,37 @@ the parent release hold. Incoming EXP03 and EXP04 source must be composed, then
 immutable review, scalar/dependency proof, full required exact-head CI, actual
 production source/native record/Rail and ordinary authenticated recovery remain
 owed. See exp05-weekly-native-chat.md for the full truthful flow boundary.
+
+## October26–27 next bounded connection — schedule review, not authorization
+
+Pre-edit routing: the intended usable outcome is an eligible SOLO owner asking
+PAIGE to compare a proposed weekly time with the original saved responsibility,
+then inspecting the existing owner controls before choosing any change. EXP05
+owns Planning/Operations; E08 has returned the shared Chat window after #2957.
+E02 consumes the original intent/budget ports after this slice; E04 retains its
+two source-dependent pin changes and E09 retains browser custody.
+
+REUSE the original configure-intent schema, canonical weekly projection and
+prepareWeeklyControlReview; EXTEND their existing Chat connection only. Layers
+A/B supply current actor/scope, Spine/Kit and ordinary read admission; the real
+Layer C engine remains the later authorized occurrence path, not this read.
+At the starting main2aa4d23e8 there is NO registered schedule-review capability
+or admitted tool: UNAVAILABLE, not a pre-existing Live key. Add the smallest
+canonical read declaration if the tests prove its connection. No new provider
+or connection is required; this reads the internal owner-private process.
+
+Risk is read_only, no MUTATION_VERB or approval is issued. Keep the existing
+one-approval gate/native owner controls and automation_set_state owner_only;
+neither review nor model assent can authorize, enable or execute recurrence.
+No durable job, new event producer, scheduler or ledger is needed for a review.
+Original process/revision/read_at and existing verified act/Rail references
+prove what was inspected; a read receipt never proves a saved schedule or run.
+
+Existing Operations/weekly surface-binding rows remain PARTIAL/PROOF OWED.
+No markup, navigation, new review surface, provider-readiness or catalogue Live
+promotion is planned. Preserve original E5-CV1/CV2/CV9 and all full ten outcomes.
+Required proof includes real original reader and declaration/Root integration,
+wrong role/tenant/persona, malformed intent, scope withdrawal, elapsed budget,
+no binding leakage, no writer/retry, exact-head CI and deployed source. Ordinary
+authenticated proposed-review -> native owner controls -> later-session original
+record proof remains separate, queued behind actual browser custody receiving.

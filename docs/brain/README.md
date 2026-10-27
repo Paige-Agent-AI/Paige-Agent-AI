@@ -4594,22 +4594,64 @@ Systems observation/original receipt handoff remains with EXP05; no purpose is
 silently admitted. Existing Mind/Vault/owner-memory boundaries remain intact.
 [Source, UX, orchestration and proof boundaries](../evidence/ui-delivery/e2-report-status-observation.md).
 
+## EXP02 original report thumbnail controls — development, October27
+
+The original report Card keeps its inert/aria-hidden/print-hidden document preview
+beside the native Open button rather than inside it. This removes invalid nested
+buttons from real paged documents while retaining the same80×96 tile, appearance,
+native label/handler, scoped original loader, original viewer and exact opener
+return. No Studio renderer, shared Chat shell, worker, native/schema/grant,
+registry, provider, approval or Rail writer changes; no implicit delegated Send.
+
+Source0e6a72cc on mainccce: original real-renderer regression1FAIL/2PASS before
+repair,15/3PASS after; lint0/build81s PASS. Actual compiler6 incumbent diagnostics
+match prior6 exactly under unchanged baseline10, not a clean-type claim. Visual13
+fresh original-source synthetic frames verify tile geometry,0nested native
+buttons, original custom Schibsted font, eight shell layouts/320/390/theme and
+bounded keyboard/draft return. Native zoom/full AT and incumbent pagination focus
+remain separate. FunctionalLOCAL/Visualsynthetic/Experientialbounded/FounderNOT_ACCEPTED.
+
+Hosted review/CI/web deployment/readback and authorized ordinary customer/cohort/
+reload/Chat-Live/Finance/full19/nine proof remain owed. Original CAP014/015 remain
+Unverified and canonical ALG maturity unchanged; a UI Open creates no Work or
+execution receipt. The separately held2973 status migration is not imported by
+this safe no-schema UI slice; normal Preview-capacity and original E05/E09
+receiving dependencies remain in their canonical Linear threads.
+[Bounded original-control evidence](../evidence/ui-delivery/e2-report-thumbnail-accessibility.md).
+
+### October27 08:00UTC — EXP02 original report status source released
+
+The earlier local/held report records are historical. #2973 merged6c448b6c5f5b536d6793dc11d0663ecb26906000,
+reviewed74d/LOWER5663415846, all13 checks/two web statuses SUCCESS. Actual normal
+merge tree89919c37 retains all owning source/incoming docs. Production
+dpl_68nGSfYoZhDZXGWCJovzB14c9NXy READY; both public origins exact6c448b6c-mvqe6fpy
+and matching reachable assets at07:59:15UTC. Native20271117140002 applied once;
+expected observation source and every original permission/ABI/metadata field
+verified. No Edge, worker/provider/action activation or protected retry.
+
+Functional bounded status source verified; Visual13 synthetic frames; Experiential
+authenticated report creation/return/reload, weekly recovery and Finance QA owed;
+Founder NOT_ACCEPTED. Original9-0+12-0-4/all19/nine/ALG/CAP and monthlyUNKNOWNUNRETRIED
+remain. [Release receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2973#issuecomment-6436707636).
+Separate thumbnail#2974 receives this actual main with all three tested UI blobs
+and18 render inputs intact; new-head review/CI/readback remain required.
+
 ### October27 — original campaign email evidence consumer, development
 
 EXP02 O03/O08/O16/O17 and CAP013 reuse the existing Marketing email producer,
-Metric issuer/resolver and business.operating_snapshot. Sourcefa30a8bd, composed
-784b593b on released main6c448b6c, reads only original sent/opened/clicked counts.
+Metric issuer/resolver and business.operating_snapshot. Source5dd0ac8f, receiving
+released mainc76eb5cd, reads only original sent/opened/clicked counts.
 Sent cohorts and subsequent tracking remain distinct; recorded sends are not
 delivery confirmations, image loads are not reading, own-mail tracking is excluded,
 and no rate/retention/revenue/prediction is inferred. EXP03/NEXUS retains every
 record/provider/writer; PAIGE/VERA remains the Executive analysis interface.
 
-Functional LOCAL: final293 controls/11 suites, original native catalogue/all prior
+Functional LOCAL: final305 controls/12 suites, original native catalogue/all prior
 controls plus guarded email cases PASS, strict Deno/lint/build73s PASS. Full app
 compiler retains the exact six incumbent diagnostics under unchanged baseline10;
-complete locked manifests match, initial incomplete-install attempt invalid.
-Visual fourteen final original-component synthetic frames/five preimplementation
-frames/22 exact declared inputs. Experiential PARTIAL: source disclosure and
+dependency/lock inputs match, incoming E03 test script retained; initial incomplete install invalid.
+Visual seventeen final original-component synthetic frames/five preimplementation
+frames/22 unchanged Executive inputs plus separately bound original Chat references. Experiential PARTIAL: source disclosure and
 current-account destination/query/synthetic Chat draft preserved, but original
 Executive Back scroll/focus restoration is an O14 follow-up. Founder NOT_ACCEPTED.
 
@@ -4621,3 +4663,17 @@ customer/cohort/permissions/reload/weekly/Live/full Finance/all19/nine proof rem
 owed. Protected monthlyUNKNOWNUNRETRIED/original9-0+12-0-4 retained. ALG03/06/11/12
 canonical maturity unchanged, ALG13 Unverified; no new algorithm or action system.
 [Source and rendered boundaries](../evidence/ui-delivery/e2-email-review-evidence.md).
+
+### October27 08:55UTC — EXP02 original report thumbnail source released
+
+#2974 mergedc76eb5cd62fc6cc4fa761b654bf18153b15ed395/tree d79e4e3b2920469d8aee6635daa6cf1b363413a8;
+reviewed1aa2c2fcafb8b50f22270bcd607979297b6d15c0, AUTHOR-REVIEW / LOWER ASSURANCE5663818856.
+All10 applicable checks/two web statuses SUCCESS; designed no-SQL Preview SKIPPED.
+Current-main union retains incoming Communications work; original31 inbound controls PASS.
+Production dpl_C2AQ9atUUiuXETJBiuHdG7DkzUGk READY, both public origins exact
+c76eb5cd-mvqg30cs/matching reachable entry/null update/missing404 at08:54:23UTC.
+No native/Edge/grant/provider/action activation delta; prior report17140002 remains verified.
+Functional bounded source deployed; Visual13 actual-source synthetic frames; Experiential
+authenticated viewer/Finance/roles/cohorts/reload/native zoom/full AT/full19/nine owed;
+Founder NOT_ACCEPTED. Algorithms/capability maturity and original9-0/12-0-4/monthly
+UNKNOWNUNRETRIED retained. [Release receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2974#issuecomment-6437655287).

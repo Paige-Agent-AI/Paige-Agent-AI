@@ -1,7 +1,7 @@
 {
   "rendered_source": "fa30a8bd245b489e96c4a13f481b8007baa394a0",
-  "verified_composition": "784b593b1e4aec3f2e98d01ddbf3d9028270c508",
-  "base": "6c448b6c5f5b536d6793dc11d0663ecb26906000",
+  "verified_composition": "receives actual main c76eb5cd62fc6cc4fa761b654bf18153b15ed395; unchanged original 22 rendered inputs and source5dd reference component inputs verified independently",
+  "base": "c76eb5cd62fc6cc4fa761b654bf18153b15ed395",
   "scope": "Declared original Executive/shared presenter/shell/formatter/styles/font/harness inputs; not a complete transitive bundle graph. Synthetic UI and actual native SQL are separate evidence legs. No authenticated account/model/provider/action operation.",
   "inputs": [
     {
@@ -265,5 +265,68 @@
       }
     ]
   },
-  "known_original_navigation_gap": "Browser Back preserves route and synthetic Chat draft; original Executive internal scroll and opener focus are not restored. O14 follow-up required; no whole-journey acceptance claim."
+  "known_original_navigation_gap": "Browser Back preserves route and synthetic Chat draft; original Executive internal scroll and opener focus are not restored. O14 follow-up required; no whole-journey acceptance claim.",
+  "chat_reference_component": {
+    "source": "5dd0ac8f13d032341c68773a401cfc27d0a04b96",
+    "scope": "Original pure reference factory executed in Node, frozen synthetic DTO, original browser-safe parser and reference renderer. Auxiliary proof route is not an authenticated Chat or complete department journey. No backend module imported into browser.",
+    "inputs": [
+      {
+        "path": "supabase/functions/_shared/paige-context/business-review-chat.ts",
+        "sha256": "e4164766fec3ab15190c38ebde0fc480fe9f3afd469faafcfbaf9c2cb70d7fb9",
+        "hash_mode": "text_lf"
+      },
+      {
+        "path": "src/components/chat/PaigeRecordLinks.tsx",
+        "sha256": "43a92f89a51c591068c5b5176d9c0318997eb6e903f6366d97f6bbfe919f3caf",
+        "hash_mode": "text_lf"
+      },
+      {
+        "path": "src/components/chat/CheckLinks.tsx",
+        "sha256": "ee9149270246b42dc725e9946f5b4714b64ba28f868fd8af9c309f546ddc5b15",
+        "hash_mode": "text_lf"
+      },
+      {
+        "path": "supabase/functions/_shared/paige-turn/record-links.ts",
+        "sha256": "a66d094680df5df1394b05ccd3ccd317c7382d4efe0d1c63aa2d10a602d622a3",
+        "hash_mode": "text_lf"
+      },
+      {
+        "path": "scripts/live-drive/harness/executive-mount/email-links.html",
+        "sha256": "5913bc05be2e6802d4540452b31fd7813d4dae41767140b76913e674a2a8f7ba",
+        "hash_mode": "text_lf"
+      },
+      {
+        "path": "scripts/live-drive/harness/executive-mount/email-links.tsx",
+        "sha256": "e1e159048651d8ef89a4bc420fa3b28e0da53c024627a841d41d0804e1b70287",
+        "hash_mode": "text_lf"
+      },
+      {
+        "path": "scripts/live-drive/harness/executive-mount/email-links-result.json",
+        "sha256": "238654506ca57e837c107390fc840ce9764938c7ab391743003108ccb2a9c838",
+        "hash_mode": "text_lf"
+      }
+    ],
+    "frames": [
+      {
+        "path": "1366x768-email-chat-references.jpg",
+        "sha256": "3afb5dbaff208c8f26103aef276e2e0e5a3791756ab2951627f2430d423b9d77",
+        "css_width": 1366,
+        "css_height": 768
+      },
+      {
+        "path": "390x844-email-chat-references.jpg",
+        "sha256": "0d995f355f1bddb606c0053203245fec6b1172aa649bd4d0d5257fce39bd6721",
+        "css_width": 390,
+        "css_height": 844
+      },
+      {
+        "path": "390x844-email-chat-denied.jpg",
+        "sha256": "a4d6972f0820bf7ed2416bdbad6ef472a2ec1b4ffd50b4f79f9bd10368f3fc21",
+        "css_width": 390,
+        "css_height": 844
+      }
+    ],
+    "observations": "chat-link-observations.json",
+    "authenticated": "UNVERIFIED"
+  }
 }

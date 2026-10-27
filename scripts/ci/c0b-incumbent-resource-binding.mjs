@@ -1066,13 +1066,27 @@ const SOURCES = {
   // their existing behavior. Renewed non-author review and actual retry controls are
   // recorded on PR #1897; no other incumbent snapshot is regenerated or accepted.
   "supabase/functions/_shared/twilio.ts": "afe6b57d9ed91c00e6517856f7b17c36f147fee5b88afb3450586c4393d6565a",
-  "supabase/functions/_shared/channel-adapters.ts": "f29fe7502ceb961ad886863c570970d48c4c19969ce2b6fce203a04867deef41",
+  // SendGrid Inbound Parse (2026-10-27), AUTHOR-REVIEW / LOWER ASSURANCE: the inbound registry gains an
+  // optional provider qualifier — InboundChannelAdapter.provider?, a `channel:provider` key when it is set,
+  // and getInboundAdapter(ch, provider?) — so handle-inbound-email can register its SendGrid adapter beside
+  // Resend's unqualified 'email' one. An adapter without `provider` keys exactly as before (bare channel), so
+  // every existing register/get call resolves the same adapter. Outbound registry, NormalizedMessage, Delivery,
+  // OutboundSendContext and buildListUnsubscribeHeaders are byte-identical. Prior f29fe750… reproduced from
+  // db0048ad7 (git show | TypeScript printer {removeComments:true}, sha256) before renewing. Renew this digest only.
+  "supabase/functions/_shared/channel-adapters.ts": "dc0cfccf25118be0a76b5599167e7440c8e80a8c63880a549f7f36e2d18d0977",
   // E09 Slice 6 bounded renewal (2026-10-18), integrating-crew source review (NOT non-author):
   // the only change vs main is one added `case "customer_request"` in suppressionReason (the plain
   // sentence a portal opt-out returns). Step order, every block/queue condition, the consent channel
   // list and the normalizers are byte-identical. Renew this one scalar only.
   "supabase/functions/_shared/pre-send-pipeline.ts": "dd7193c8f9663462f045de0eb937c6cf728a1c0ce0dce6451f4fa4cc9fd545b6",
-  "supabase/functions/_shared/contact-methods.ts": "cea64c7f9ac201150bfd28834eaac88a6ebe0333c2c0a42dc9b9a8476840eef6",
+  // SendGrid Inbound Parse review fix M4a (2026-10-27), AUTHOR-REVIEW / LOWER ASSURANCE: adds
+  // lookupClientIdByAddress (same client_id_for_address RPC, same log line, but returns the error instead of
+  // reading it as "not found"); findClientIdByAddress now delegates to it and returns its `.id`, so every
+  // existing caller (voice-twiml, public-booking, handle-inbound-sms x2, paige-mcp, growth-inbound,
+  // handle-inbound-email's Resend arm) gets the identical value and log. No other helper changed. Prior
+  // cea64c7f… reproduced from 5134fc4ec (git show | TypeScript printer {removeComments:true}, sha256) before
+  // renewing. Renew this digest only.
+  "supabase/functions/_shared/contact-methods.ts": "62ad629140b6feb5c096c45c878bc3b94b6383375202810955bff7409198bd3b",
   "supabase/functions/_shared/internal-vocabulary.ts": "9074425cc61d1a678e3a4ca03595fe8c4d1eac4572a4bd2daf31aff77f39d37a",
   "supabase/functions/_shared/paige-capability-status/resolver.ts": "ec8a5dad7df3426f30203aa1c8014372a60f51ed0decc829fc8541fba62a4142",
   "supabase/functions/paige-deep-research/fabric.ts": "23fd093b20d6f721ff07619aa5a4e34892d5346fd6b4934e0ae73fffb0b609bb",

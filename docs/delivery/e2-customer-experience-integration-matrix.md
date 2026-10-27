@@ -1,15 +1,31 @@
 # Experience 02 — Customer Experience Integration Matrix
 
+
+## October27 08:55UTC — EXP02 original report thumbnail source released
+
+#2974 mergedc76eb5cd62fc6cc4fa761b654bf18153b15ed395/tree d79e4e3b2920469d8aee6635daa6cf1b363413a8;
+reviewed1aa2c2fcafb8b50f22270bcd607979297b6d15c0, AUTHOR-REVIEW / LOWER ASSURANCE5663818856.
+All10 applicable checks/two web statuses SUCCESS; designed no-SQL Preview SKIPPED.
+Current-main union retains incoming Communications work; original31 inbound controls PASS.
+Production dpl_C2AQ9atUUiuXETJBiuHdG7DkzUGk READY, both public origins exact
+c76eb5cd-mvqg30cs/matching reachable entry/null update/missing404 at08:54:23UTC.
+No native/Edge/grant/provider/action activation delta; prior report17140002 remains verified.
+Functional bounded source deployed; Visual13 actual-source synthetic frames; Experiential
+authenticated viewer/Finance/roles/cohorts/reload/native zoom/full AT/full19/nine owed;
+Founder NOT_ACCEPTED. Algorithms/capability maturity and original9-0/12-0-4/monthly
+UNKNOWNUNRETRIED retained. [Release receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2974#issuecomment-6437655287).
+
 ## October27 — CAP013 original email source consumer, local proof
 
 The earlier missing-email-adapter snapshot below is historical: original Marketing
-already owns sent/tracked-open/click count producers. New E2 sourcefa30a8bd/
-composition784b593b consumes them through the original issuer/resolver and bounded
+already owns sent/tracked-open/click count producers. New E2 source5dd0ac8f/
+actual incoming mainc76eb5cd consumes them through the original issuer/resolver and bounded
 review. It does not establish human engagement, unique people, delivery, conversion,
 retention, revenue, a new anomaly or prediction. EXP03/NEXUS retains source ownership.
 
-Functional LOCAL293/11 plus original native catalogue/guarded copy proof; Visual14
-fresh original-component frames/5 preimplementation frames/22 exact inputs;
+Functional LOCAL305/12 plus original native catalogue/guarded copy proof; Visual17
+fresh original-component frames/5 preimplementation frames/22 unchanged Executive inputs
+plus separately bound original Chat-reference producer/parser/renderer;
 Experiential PARTIAL: original route/query/Chat draft retained, existing Back
 scroll/focus gap requires O14 follow-up; Founder NOT_ACCEPTED. Strict Deno/lint/
 build PASS; compiler6 incumbent/no new/unchanged baseline10. Unapplied17150002
@@ -21,6 +37,37 @@ Preview/deploy/web/Edge/native readback, actual account catalogue/counts/permiss
 cohorts/reload/weekly/Live/full Finance and founder proof remain owed. Original9-0/
 12-0-4/monthlyUNKNOWNUNRETRIED retained; canonical ALG03/06/11/12 unchanged,13
 Unverified. [Bounded evidence](../evidence/ui-delivery/e2-email-review-evidence.md).
+
+## October27 08:00UTC — original report status released, thumbnail receiving
+
+#2973 merged6c448b6c5f5b536d6793dc11d0663ecb26906000 after reviewed74d/LOWER5663415846,
+all13 checks/two web statuses SUCCESS. Production dpl_68nGSfYoZhDZXGWCJovzB14c9NXy
+READY; both public origins exact6c448b6c-mvqe6fpy at07:59:15UTC. Native17140002
+once/expected source/original OID/ABI/ACL/permission metadata retained. Source
+release is not authenticated report creation/reload, weekly recovery or Finance QA.
+Original9-0/supplement12-0-4/monthlyUNKNOWNUNRETRIED/all19/nine/ALG/CAP boundaries
+remain intact; Founder NOT_ACCEPTED. Original Master/Brain record this release.
+
+The distinct#2974 thumbnail repair receives that ACTUAL released main and complete
+incoming histories. Its three tested UI blobs/eighteen render inputs/thirteen
+raw frames remain exact; fresh9 original control tests pass after a prior invalid
+collection attempt. This UI change still needs its new exact-head review/CI and
+production readback. Its earlier local wording below is retained as history:
+the report source is now an incoming release, not an adopted held candidate.
+
+## October27 — original report thumbnail native control repair, local increment
+
+O01/O14/O16 original Card markup preserves its original preview/Open/view/return
+while removing invalid nested native buttons. Source0e6a72cc on actualccce,
+15/3 controlled checks/lint0/build PASS; Visual13 actual-source synthetic frames,
+same80×96 geometry/product font/narrow/theme and original draft return. Current
+compiler6 incumbent errors identical to prior6; no baseline change. Functional
+LOCAL/Visualsynthetic/Experientialbounded/FounderNOT_ACCEPTED; hosted review/CI/
+release/readback, ordinary roles/cohorts/reload/Chat-Live/Finance/native zoom/full
+AT and full19/nine remain owed. No native/grant/provider/action/catalogue/ALG
+delta, no held2973 source adopted, original outcome definitions and historical
+9PASS0FAIL+12PASS0FAIL4BLOCKED/monthlyUNKNOWNUNRETRIED unchanged.
+[Bounded evidence](../evidence/ui-delivery/e2-report-thumbnail-accessibility.md).
 
 ## October27 — original report observation compatibility, local increment
 

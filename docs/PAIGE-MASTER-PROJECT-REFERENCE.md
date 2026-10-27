@@ -856,6 +856,18 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**2026-10-27 UTC — EXP02 original report thumbnail accessibility.**
+
+| Increment | Exact released source and observed production | Acceptance boundary |
+| --- | --- | --- |
+| [#2974 original thumbnail controls](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2974#issuecomment-6437655287) | Reviewed1aa2c2fcafb8b50f22270bcd607979297b6d15c0, AUTHOR-REVIEW / LOWER ASSURANCE5663818856; all10 applicable checks/two web statuses SUCCESS, no-SQL Preview SKIPPED, zero unresolved threads. Mainc76eb5cd62fc6cc4fa761b654bf18153b15ed395/tree d79e4e3b2920469d8aee6635daa6cf1b363413a8 exactly matches the verified normal union; incoming Communications source retained and31 inbound controls PASS. Production dpl_C2AQ9atUUiuXETJBiuHdG7DkzUGk READY; both public origins exactc76eb5cd-mvqg30cs/matching reachable asset/null update/missing404 at08:54:23UTC. Native/Edge/activation delta N/A; preceding report17140002 remains verified. | Original document thumbnail no longer nests native buttons; existing Open/view/return/context retained. Original15 focused controls, fresh9 controls and13 actual-source synthetic frames remain bounded evidence. Authenticated viewer/Finance/roles/cohorts/reload/Chat-Live/native zoom/full AT/all19/nine and founder acceptance remain owed. Functional source deployed; Visual synthetic; Experiential incomplete; Founder NOT_ACCEPTED. No capability or algorithm maturity promotion, internal unannounced increment. |
+
+**2026-10-27 UTC — EXP02 original report status observation.**
+
+| Increment | Exact released source and observed production | Acceptance boundary |
+| --- | --- | --- |
+| [#2973 original report status](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2973#issuecomment-6436707636) | Reviewed74d6fa8b6681caebfdc475dd8bac47d62378d0c7, AUTHOR-REVIEW / LOWER ASSURANCE5663415846; all13 checks/two web statuses SUCCESS, findings resolved. Main6c448b6c5f5b536d6793dc11d0663ecb26906000/tree89919c37b62a77cc8dc9dfca271e8ccc1c77e548 preserves the reviewed source and incoming documentation. Production dpl_68nGSfYoZhDZXGWCJovzB14c9NXy READY; both public origins exact6c448b6c-mvqe6fpy, matching reachable assets/null customer update/missing404 at07:59:15UTC. Migration20271117140002 applied once; expected native source verified with original OIDs/ABI/ACL/owner/config/permissions retained. Edge delta N/A. | Original report status read recognizes the saved artifact under current original authority and association; no submit/retry/worker/provider activation. Native26 report/all34 legacy observation controls and13 synthetic viewer frames are bounded proof. Authenticated report creation/reload, weekly recovery, Finance/roles/cohorts/Live and full19/nine remain owed. Functional source verified; Visual synthetic; Experiential incomplete; Founder NOT_ACCEPTED. Algorithms/catalogue maturity unchanged; internal unannounced increment. |
+
 **2026-10-27 UTC — EXP02 original financial Play targets in Finance.**
 
 | Increment | Exact released source and observed production | Acceptance boundary |

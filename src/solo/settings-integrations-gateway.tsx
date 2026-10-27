@@ -202,7 +202,7 @@ function whyLine(c: GatewayConnection, now: number = Date.now()): string | null 
     switch (c.lastErrorCode) {
       case "http_rate_limited": return "The server is rate-limiting requests right now. Wait a moment and check it again — reconnecting will not help.";
       case "request_timed_out": return "The server did not answer in time. Check it again; if it keeps timing out, the server is likely down.";
-      case "mcp_http_error": return "The server refused the credential. Reconnect it with a fresh token or key.";
+      case "mcp_http_error": return "The server rejected the connection. Check the address; if it is right, reconnect with a fresh credential.";
       case "url_redirect_refused": return "The address redirects somewhere else, which Paige does not follow. Use the address it points at.";
       case "url_host_unresolvable": return "That address could not be looked up. Check it for typos.";
       case "url_host_not_allowed":

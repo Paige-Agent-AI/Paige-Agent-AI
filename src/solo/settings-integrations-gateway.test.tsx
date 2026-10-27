@@ -1607,11 +1607,12 @@ describe("Managing a tool", () => {
     expect(dialog(host)?.textContent).not.toMatch(/refused the credential/i);
   });
 
-  it("words a refused credential from its code, and never leaks a non-closed value", async () => {
+  it("words a rejected connection from its code, and never leaks a non-closed value", async () => {
     world({ rows: [row({ status: "error", health: "needs_attention", last_error_code: "mcp_http_error" })] });
     const { host } = await render();
     await click(host.querySelector('[data-gateway-tool="conn-1"]'));
-    expect(dialog(host)?.textContent).toMatch(/refused the credential/i);
+    expect(dialog(host)?.textContent).toMatch(/rejected the connection/i);
+    expect(dialog(host)?.textContent).toMatch(/if it is right, reconnect/i);
 
     // A value that is not a closed code (a regression shipping prose) reads as null: the
     // honest generic line renders and the prose never crosses to the browser.

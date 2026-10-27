@@ -19,7 +19,7 @@
 -- inviting admins and members, "keep as today".
 --
 -- WHAT CHANGES (each re-emitted function is production's body verbatim except the lines marked
--- "EXP08 owners (20271117170008)"; supabase/tests/exp08_owner_invitations.sql puts those lines back
+-- "EXP08 owners (20271118200008)"; supabase/tests/exp08_owner_invitations.sql puts those lines back
 -- and compares byte for byte against production's md5(prosrc), read 2026-10-27):
 --   Schema   tenant_business_owners: UNIQUE (tenant_id, id); owner_seat_vacant_since.
 --            tenant_members.business_owner_id (composite FK, NO ACTION; only on an owner seat; one
@@ -491,7 +491,7 @@ END;
 $function$;
 REVOKE ALL ON FUNCTION public.guard_tenant_invite_token_identity() FROM PUBLIC, anon, authenticated, service_role;
 COMMENT ON FUNCTION public.guard_tenant_invite_token_identity() IS
-  'EXP08 owners (20271117170008): an authenticated writer of tenant_invite_tokens may insert only its '
+  'EXP08 owners (20271118200008): an authenticated writer of tenant_invite_tokens may insert only its '
   'own (created_by = auth.uid()) non-owner tokens, may change only revoked_at (NULL -> value, once), '
   'and may not update or delete an owner token. Service role and postgres-owned code are exempt from '
   'those rules. Under any JWT, postgres-owned code included, an invitation of a seat-creating kind '
@@ -532,8 +532,9 @@ CREATE TRIGGER trg_tenant_invite_token_identity_guard
 -- is paused). (b) a write onto a seat the person already has (INSERT … ON CONFLICT re-accepting,
 -- which a BEFORE INSERT trigger also sees, and an UPDATE that keeps the same person and business).
 -- The account holder's own Settings → Team invitation withdraws the owner invitation first, as before.
--- The address compared is the one stored on the person's account, confirmed or not (a superset of
--- "confirmed": an unconfirmed account holding that address is the same person).
+-- The address compared is the one stored on the person's account, and only once it is CONFIRMED:
+-- accept_solo_team_invite refuses an unconfirmed address, so an owner invitation waiting on an
+-- unconfirmed account is not one accept would honour, and it does not hold that person off a seat.
 -- The sentence: the person (their JWT, or no JWT at all) reads the first-person one. A no-JWT write
 -- cannot say whose act it is; its one producer here, the accept-invite edge function, writes the
 -- person's own seat, so the first-person sentence is the right one there. A service-role write made
@@ -558,7 +559,7 @@ BEGIN
   END IF;
   IF EXISTS (SELECT 1 FROM auth.users u
                JOIN public.tenant_invite_tokens tk ON lower(btrim(tk.email)) = lower(btrim(u.email))
-              WHERE u.id = NEW.user_id AND NULLIF(btrim(u.email), '') IS NOT NULL
+              WHERE u.id = NEW.user_id AND NULLIF(btrim(u.email), '') IS NOT NULL AND u.email_confirmed_at IS NOT NULL
                 AND tk.tenant_id = NEW.tenant_id AND tk.kind = 'team' AND tk.default_role = 'owner'::public.tenant_role
                 AND tk.uses = 0 AND tk.revoked_at IS NULL AND tk.expires_at > now() AND tk.archived_at IS NULL
                 AND (tk.max_uses IS NULL OR tk.uses < tk.max_uses)
@@ -583,11 +584,11 @@ END;
 $function$;
 REVOKE ALL ON FUNCTION public._tenant_member_owner_invitation_waiting() FROM PUBLIC, anon, authenticated, service_role;
 COMMENT ON FUNCTION public._tenant_member_owner_invitation_waiting() IS
-  'EXP08 owners (20271117170008, rounds 4-5): a non-owner seat newly written for a person (INSERT, or an '
+  'EXP08 owners (20271118200008, rounds 4-5): a non-owner seat newly written for a person (INSERT, or an '
   'UPDATE moving a seat to them) is refused, whoever writes it, while their address has an owner '
   'invitation in that business that accept_solo_team_invite would still honour (team, Owner, unused, '
   'unrevoked, unexpired, unarchived, Solo account, sender still the account holder, its legal owner''s '
-  'seat still open). Not covered: owner seats (incl. the sub-account owner path, contract #227 residual) '
+  'seat still open, the person''s address confirmed). Not covered: owner seats (incl. the sub-account owner path, contract #227 residual) '
   'and seats the person already has. HINT OWNER_INVITE_WAITING.';
 CREATE TRIGGER trg_tenant_members_owner_invitation_waiting
   BEFORE INSERT OR UPDATE OF tenant_id, user_id ON public.tenant_members
@@ -630,7 +631,7 @@ CREATE OR REPLACE FUNCTION public.guard_tenant_member_owner_flag()
  SET search_path TO 'public'
 AS $function$
 BEGIN
-  -- EXP08 owners (20271117170008): which legal owner a seat acts for is written ONLY by trusted server code
+  -- EXP08 owners (20271118200008): which legal owner a seat acts for is written ONLY by trusted server code
   -- (accept_solo_team_invite now; the co-owner functions in a later increment). Unlike the ownership
   -- checks below, the platform owner is NOT exempt: a super admin changes owners only through audited
   -- owner recovery, never by editing a seat.
@@ -680,7 +681,7 @@ CREATE OR REPLACE FUNCTION public.guard_tenant_owner_only_columns()
 RETURNS trigger LANGUAGE plpgsql SECURITY INVOKER SET search_path TO 'public'
 AS $function$
 BEGIN
-  -- EXP08 owners (20271117170008): the platform owner keeps billing and hierarchy, but moves the account
+  -- EXP08 owners (20271118200008): the platform owner keeps billing and hierarchy, but moves the account
   -- holder of record only through owner recovery (below), never by a direct UPDATE.
   IF auth.uid() IS NULL
      OR (public.is_platform_owner() AND NEW.owner_user_id IS NOT DISTINCT FROM OLD.owner_user_id) THEN
@@ -689,7 +690,7 @@ BEGIN
 
   -- #227 DEFECT-2 carve-out, narrowed by EXP08 (20271116020008): an authenticated caller may only
   -- ESTABLISH themselves (NULL -> auth.uid()) as holder, and only as the tenant's SOLE active owner.
-  -- EXP08 owners (20271117170008): and only inside trusted postgres-owned code (accept_tenant_invite),
+  -- EXP08 owners (20271118200008): and only inside trusted postgres-owned code (accept_tenant_invite),
   -- never by a direct client UPDATE. This guard runs SECURITY INVOKER, so current_user is real.
   IF current_user = 'postgres'
      AND OLD.owner_user_id IS NULL
@@ -716,7 +717,7 @@ BEGIN
     RETURN NEW;
   END IF;
 
-  -- EXP08 owners (20271117170008): owner recovery. platform_owner_recovery (a later increment) sets
+  -- EXP08 owners (20271118200008): owner recovery. platform_owner_recovery (a later increment) sets
   -- paige.owner_recovery transaction-locally around its one UPDATE. The flag alone is no credential
   -- (any role can set_config it): it counts only inside postgres-owned code, and only for a super admin.
   IF current_user = 'postgres'
@@ -735,7 +736,7 @@ BEGIN
   RETURN NEW;
 END; $function$;
 COMMENT ON FUNCTION public.guard_tenant_owner_only_columns() IS
-  '#227 F.0 (§9), narrowed by EXP08 20271116020008 and 20271117170008. SECURITY INVOKER, so '
+  '#227 F.0 (§9), narrowed by EXP08 20271116020008 and 20271118200008. SECURITY INVOKER, so '
   'current_user is the real role. Service role and migrations (auth.uid() IS NULL) are exempt. The '
   'platform owner may change billing and hierarchy but NOT owner_user_id. owner_user_id changes for an '
   'authenticated caller only inside postgres-owned code, and only (a) NULL -> auth.uid() as the '
@@ -776,7 +777,7 @@ BEGIN
   IF _team_hub_access IS NULL THEN
     RAISE EXCEPTION 'say whether team conversations are on or off for this invitation';
   END IF;
-  -- EXP08 owners (20271117170008): only the ACCOUNT HOLDER invites an Owner (owner rulings R1, R4), on a
+  -- EXP08 owners (20271118200008): only the ACCOUNT HOLDER invites an Owner (owner rulings R1, R4), on a
   -- Solo account, with team conversations on, as a person or for ONE non-individual legal owner of
   -- this business that has no seat and no other live invitation. Everyone else keeps inviting Admins
   -- and Members exactly as before (R14, "keep as today").
@@ -901,7 +902,7 @@ BEGIN
   WHERE id = _invite_id AND tenant_id = _tenant AND kind = 'team' FOR UPDATE;
   IF _old.id IS NULL THEN RAISE EXCEPTION 'team invitation not found'; END IF;
   IF _old.uses > 0 THEN RAISE EXCEPTION 'an accepted invitation cannot be resent'; END IF;
-  -- EXP08 owners (20271117170008): an owner invitation is the account holder's to resend.
+  -- EXP08 owners (20271118200008): an owner invitation is the account holder's to resend.
   -- One whose legal owner was deleted is never reissued: the FK has nulled its link, and resending it
   -- would make it an owner invitation for the person in their own right.
   IF _old.default_role = 'owner'::public.tenant_role THEN
@@ -937,7 +938,7 @@ DECLARE
 BEGIN
   _tenant := public.solo_team_invite_authority(_actor, _expected_tenant_id);
 
-  -- EXP08 owners (20271117170008): an owner invitation is the account holder's to withdraw.
+  -- EXP08 owners (20271118200008): an owner invitation is the account holder's to withdraw.
   IF EXISTS (SELECT 1 FROM public.tenant_invite_tokens
               WHERE id = _invite_id AND tenant_id = _tenant AND kind = 'team'
                 AND default_role = 'owner'::public.tenant_role) THEN
@@ -982,7 +983,7 @@ BEGIN
     RAISE EXCEPTION 'that invitation is not on this workspace' USING ERRCODE = 'P0001';
   END IF;
 
-  -- EXP08 owners (20271117170008): an owner invitation is the account holder's to clear.
+  -- EXP08 owners (20271118200008): an owner invitation is the account holder's to clear.
   IF _invite.default_role = 'owner'::public.tenant_role THEN
     PERFORM public._assert_tenant_account_holder(_actor, _tenant, 'invitation');
   END IF;
@@ -1039,7 +1040,7 @@ BEGIN
   IF _invite.default_role NOT IN ('owner'::public.tenant_role, 'admin'::public.tenant_role, 'member'::public.tenant_role) THEN
     RAISE EXCEPTION 'team invitation has an unsupported permission';
   END IF;
-  -- EXP08 owners (20271117170008): an owner invitation is re-checked at the moment it is used, under the
+  -- EXP08 owners (20271118200008): an owner invitation is re-checked at the moment it is used, under the
   -- token lock: the sender must STILL be the account holder, the account a Solo one, and a legal
   -- owner's seat still open (owner rulings R1, R4, R6; contract §5.3). The tenant row (the holder of
   -- record) and the sender's seat (which a billing suspension rewrites) are locked FOR SHARE first,
@@ -1090,7 +1091,7 @@ BEGIN
   IF NOT FOUND THEN RAISE EXCEPTION 'team invitation was already accepted'; END IF;
 
   UPDATE public.profiles SET active_tenant_id = _invite.tenant_id WHERE user_id = _actor;
-  -- EXP08 owners (20271117170008): the seat is the only source of "Represented by …". The record's earlier
+  -- EXP08 owners (20271118200008): the seat is the only source of "Represented by …". The record's earlier
   -- representative, if any, is overwritten and kept in the audit row.
   IF _record.id IS NOT NULL THEN
     UPDATE public.tenant_business_owners
@@ -1301,7 +1302,7 @@ BEGIN
     END IF;
 
   ELSE
-    -- EXP08 owners (20271117170008): an owner invitation is accepted only by accept_solo_team_invite,
+    -- EXP08 owners (20271118200008): an owner invitation is accepted only by accept_solo_team_invite,
     -- which re-checks the account holder at that moment. Here it used to be silently turned into an
     -- Admin seat and reported as accepted (§13). It is refused instead, before anything is written.
     IF _tok.default_role = 'owner'::public.tenant_role THEN
@@ -1393,7 +1394,7 @@ BEGIN
       USING ERRCODE = '42501';
   END IF;
 
-  -- FIX-1 (§9), narrowed by EXP08 owners (20271117170008): no token minted here carries Owner, for any
+  -- FIX-1 (§9), narrowed by EXP08 owners (20271118200008): no token minted here carries Owner, for any
   -- kind or any caller, the platform owner included. An Owner is invited only by the account holder,
   -- through create_solo_team_invite (owner rulings R1, R4).
   -- The sentence is the one the Agency Team screen shows (it still offers Owner), so it says what that
@@ -1478,7 +1479,7 @@ BEGIN
                    AND (_tok.expires_at > now())
                    AND (_tok.max_uses IS NULL OR _tok.uses < _tok.max_uses)
                    AND (_tok.kind <> 'consumer' OR (_tok.uses = 0 AND _tok.last_used_at IS NULL));
-  -- EXP08 owners (20271117170008): an owner invitation for a legal owner names it, so the invitee knows
+  -- EXP08 owners (20271118200008): an owner invitation for a legal owner names it, so the invitee knows
   -- whom they would act for, and only while it can still be used. A deliberate exposure to whoever
   -- holds a live link: the name only, never the ownership interest or the representative.
   business_owner_display := NULL;

@@ -242,7 +242,7 @@ SELECT throws_ok(
       'a1000000-0000-0000-0000-000000000001'::uuid,
       'a1000000-0000-0000-0000-00000000aaaa'::uuid,
       'owner@tests.invalid', 'owner', NULL, NULL)$$,
-  -- EXP08 owners (20271117170008): Owner is now a permission the ACCOUNT HOLDER can choose (owner
+  -- EXP08 owners (20271118200008): Owner is now a permission the ACCOUNT HOLDER can choose (owner
   -- ruling R1). This business has no account holder of record (owner_user_id is not set), so even its
   -- owner is refused, with the authored no-holder sentence. Proven in full by exp08_owner_invitations.sql.
   'Invite Authority A has no account holder right now, so no one can add owners or change another owner''s access. Contact the Paige team.',

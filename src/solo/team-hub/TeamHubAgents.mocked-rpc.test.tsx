@@ -767,6 +767,119 @@ describe("a turn another tab owns is settled by the state read, never writing fo
     await focusRead();
     expect(note().textContent).toContain("Your answer is in your DM with MERIT. Only you can see it.");
   });
+
+  // The conversation read is held so the screen shows only what the STATE read settled: the reply
+  // itself cannot arrive and hide a writing row or a failure line that should not be there.
+  const holdConversationReads = () => {
+    let release!: () => void;
+    const gate = new Promise<void>((done) => { release = done; });
+    let holding = false;
+    const impl = mocks.rpc.getMockImplementation()!;
+    mocks.rpc.mockImplementation(async (name: string, params: Row) => {
+      if (holding && name === "team_hub_list_messages") await gate;
+      return impl(name, params);
+    });
+    return { hold: () => { holding = true; }, release: async () => { holding = false; await act(async () => { release(); await gate; }); await flush(); } };
+  };
+  it.each([
+    ["answering", "MERIT is writing your answer in your DM. Only you can see it."],
+    ["replied_privately", "Your answer is in your DM with MERIT. Only you can see it."],
+    ["failed", "MERIT couldn't finish your private answer."],
+  ])("in_flight, and the other tab's reply has a private part (%s): the row ends as replied, never writing forever and never didn't reply", async (state, note) => {
+    // The read reports the DM turn's state for a reply with a private part, never `replied`: the
+    // channel reply posted all the same, so this tab's in_flight row must end.
+    answers.push({ ok: false, outcome: "in_flight", agent: "merit" });
+    const reads = holdConversationReads();
+    const host = await mount();
+    const question = await ask(host, "@MERIT what did Harper & Co. pay us?");
+    expect(host.querySelector(".th-ag-typing")!.textContent).toBe("MERIT is writing…");
+    db.messages["c-launch"].push(reply("merit", question, `Quick one for everyone: dates close faster.\n\n${FIXED}`));
+    db.states = { [`${question}:merit`]: { state, private_part: true } };
+    reads.hold();
+    await focusRead();
+    expect(calls.filter((call) => call.name === "team_hub_agent_turn_states").at(-1)!.params.p_message_ids).toContain(question);
+    expect(host.querySelector(".th-ag-typing")).toBeNull();
+    expect(host.textContent).not.toContain("MERIT didn't reply.");
+    expect(rowOf(host, question)!.querySelector(".th-ag-fail")).toBeNull();
+    await reads.release();
+    const row = host.querySelector<HTMLElement>(".th-msg--agent")!;
+    expect(row.querySelector(".th-text--fixed")!.textContent).toBe(FIXED);
+    expect(row.querySelector(".th-ag-priv")!.textContent).toContain(note);
+    expect(host.querySelector(".th-ag-typing")).toBeNull();
+    expect(host.textContent).not.toContain("MERIT didn't reply.");
+    expect(turns).toHaveLength(1);
+  });
+
+  it("this tab's own Ask again on a private part is never ended by a read, even one that says failed", async () => {
+    const host = await mount();
+    const question = privateFirst(host);
+    answers.push(() => Promise.resolve(posted(reply("merit", question(), FIXED),
+      { private_followup: { conversationId: "c-launch", sourceMessageId: question(), threadRootId: null, agent: "merit", privateFollowUp: true, dm_conversation_id: "c-dm-merit" } })));
+    answers.push({ ok: false, outcome: "no_reply", agent: "merit" });
+    await type(composer(host), "@MERIT what did Harper & Co. pay us?");
+    await press(composer(host), "Enter");
+    await flush();
+    const note = () => host.querySelector<HTMLElement>(".th-msg--agent .th-ag-priv")!;
+    expect(note().textContent).toContain("MERIT couldn't finish your private answer.");
+    // The server still says the earlier DM turn failed; this tab asks for the private part again.
+    db.states = { [`${question()}:merit`]: { state: "failed", private_part: true } };
+    const pending = deferred();
+    answers.push(pending.answer);
+    await click(button(note(), "Ask again"));
+    expect(turnBody(2)).toEqual({ ...turnBody(0), privateFollowUp: true });
+    expect(note().textContent).toContain("MERIT is writing your answer in your DM.");
+    const reads = calls.filter((call) => call.name === "team_hub_agent_turn_states").length;
+    await focusRead();
+    expect(calls.filter((call) => call.name === "team_hub_agent_turn_states").length).toBeGreaterThan(reads);
+    // The stale failed read does not flicker the running turn to couldn't finish.
+    expect(note().textContent).toContain("MERIT is writing your answer in your DM.");
+    expect(host.textContent).not.toContain("couldn't finish");
+    await act(async () => pending.resolve(posted(reply("merit", null, "Two invoices.", { id: "r-dm" }), { intent: "dm", conversation_id: "c-dm-merit" })));
+    await flush();
+    expect(note().textContent).toContain("Your answer is in your DM with MERIT. Only you can see it.");
+  });
+
+  it("a read issued before the private part went in_flight cannot end it", async () => {
+    // The first state read is held until after this tab's DM turn hears in_flight; it says failed (stale).
+    let release!: () => void;
+    const gate = new Promise<void>((done) => { release = done; });
+    let held = false;
+    const impl = mocks.rpc.getMockImplementation()!;
+    mocks.rpc.mockImplementation(async (name: string, params: Row) => {
+      if (name === "team_hub_agent_turn_states" && !held && (params.p_message_ids as string[]).some((id) => id.startsWith("m-sent"))) {
+        held = true;
+        const stale = { ok: true, states: (params.p_message_ids as string[]).map((id) => ({ message_id: id, agent_key: "merit", state: "failed", private_part: true, asker_name: "Teammate" })) };
+        await gate;
+        calls.push({ name, params });
+        return { data: stale, error: null };
+      }
+      return impl(name, params);
+    });
+    const host = await mount();
+    const question = privateFirst(host);
+    const dmTurn = deferred();
+    answers.push(() => Promise.resolve(posted(reply("merit", question(), FIXED),
+      { private_followup: { conversationId: "c-launch", sourceMessageId: question(), threadRootId: null, agent: "merit", privateFollowUp: true, dm_conversation_id: "c-dm-merit" } })));
+    answers.push(dmTurn.answer);
+    await type(composer(host), "@MERIT what did Harper & Co. pay us?");
+    await press(composer(host), "Enter");
+    await flush();
+    const note = () => host.querySelector<HTMLElement>(".th-msg--agent .th-ag-priv")!;
+    // The read is out (held) while this tab's DM turn is still running; then that turn answers in_flight.
+    expect(held).toBe(true);
+    expect(turns).toHaveLength(2);
+    await act(async () => dmTurn.resolve({ ok: false, outcome: "in_flight", agent: "merit" }));
+    await flush();
+    expect(note().textContent).toContain("MERIT is writing your answer in your DM.");
+    await act(async () => { release(); await gate; });
+    await flush();
+    expect(note().textContent).toContain("MERIT is writing your answer in your DM.");
+    expect(host.textContent).not.toContain("couldn't finish");
+    // A read issued after it began waiting does end it.
+    db.states = { [`${question()}:merit`]: { state: "failed", private_part: true } };
+    await focusRead();
+    expect(note().textContent).toContain("MERIT couldn't finish your private answer.");
+  });
 });
 
 describe("flow 4: a DM with an agent", () => {

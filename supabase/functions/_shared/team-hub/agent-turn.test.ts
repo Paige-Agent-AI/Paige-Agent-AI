@@ -454,6 +454,23 @@ describe("the cap, a replay and a duplicate (contract sections 8 and 9)", () => 
     assert.equal(m.requests.length, 0);
     assert.equal(named(w, "team_hub_post_agent_message").length, 0);
   });
+  it("duplicate of a reply that only quotes the fixed line mid-body starts no DM turn: only the definer's line at the end counts", async () => {
+    // The definer appends the line LAST; a reply that carries it anywhere else (quoted, or followed by
+    // more words) had no private part, so a retry must not rebuild a DM follow-up from it.
+    const posted = message("f1f1f1f1-f1f1-4f1f-8f1f-f1f1f1f1f1f1", LAUNCH, SAM,
+      `You asked what "${PRIVATE_PART_LINE}" means.\n\nIt is the line I add when part of an answer goes to your DM. Nothing here does.`,
+      { author_kind: "agent", agent_key: "merit", asked_in_message_id: ASK });
+    const w = world({ accept: () => ({ ok: false, code: "duplicate", message_id: posted.id }) });
+    w.store.get(LAUNCH)!.unshift(posted);
+    const m = model([{ content: "x" }]);
+    const r = await run(w, m);
+    assert.equal(r.body.outcome, "posted");
+    assert.equal(r.body.duplicate, true);
+    const body = r.body as { message?: { id?: string }; private_followup?: unknown };
+    assert.equal(body.message?.id, posted.id);
+    assert.equal(body.private_followup, undefined, "the fixed line mid-body is not a private part");
+    assert.equal(m.requests.length, 0);
+  });
   it("duplicate of the DM answer itself never asks for another DM turn", async () => {
     const posted = message("f1f1f1f1-f1f1-4f1f-8f1f-f1f1f1f1f1f1", MERIT_DM, SAM, `Here it is.\n\n${PRIVATE_PART_LINE}`, { author_kind: "agent", agent_key: "merit" });
     const w = world({ accept: () => ({ ok: false, code: "duplicate", message_id: posted.id }) });

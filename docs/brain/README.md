@@ -670,6 +670,10 @@ Original [#2768](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2768) rev
 
 
 
+## EXP09 original booking acknowledgement — October27 development
+
+The original public booking screen now requires a matching saved-booking receipt before confirming. Missing, malformed, wrong-time, interrupted or slow results hold another submission; an original late receipt can resolve without another dispatch. Definite conflicts return to original availability with a visible explanation. No email delivery is inferred. The business brand, native labels, narrow touch controls and reduced-motion feedback are preserved or corrected. This is a consumer repair, not the private first-booking feature: actual verified CRM membership/contact binding, customer Sessions plus SOLO Calendar reload, canonical attribution/unknown recovery and authenticated production proof remain OPEN. Original public-booking, E03 sender, Calendar, Work and Chat/Spine contracts are unchanged. [Routing and boundaries](../delivery/e09-booking-result-contract.md); [actual rendered evidence](../evidence/ui-delivery/e09-booking-result-receipt.md). No capability or algorithm maturity promotion and no founder acceptance.
+
 ## EXP09 application startup recovery — October26 source released
 
 Original [#2900](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2900) exact reviewed7f9b53493b68d900bcd65153e22c576b1e15d7b2/LOWER5646544693, all10 applicable checks/two webSUCCESS/no-native Preview SKIP/zero threads, merged0617f6d8c5d1534d831a642bf4bf20c3486cb6d4/tree1914f3bd289a3bcf38ea12255aeb8cbe30e10c26. Actual c0d1+7f9 union retains10 own/16,379 outside entries. Normal webdpl_8ySMuLRKAmbW4CDwRdz9tjETXwk4 READY/exact0617; both origins exact0617-mvon01s9/null and actual app/assets/404/revalidation/native304 readback PASS at02:29:19UTC. [Release receipt6406895196](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2900#issuecomment-6406895196); [original UI evidence](../evidence/ui-delivery/e09-application-root-recovery.md).
@@ -4949,3 +4953,11 @@ Finance/catalogue/Chat/weekly/roles/cohorts/reload/Live/all19/nine still owed,
 Founder NOT_ACCEPTED. Original9PASS0FAIL+12PASS0FAIL4BLOCKED/monthlyUNKNOWNUNRETRIED
 and algorithm/capability boundaries remain; no business activation or new account.
 [Release receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2977#issuecomment-6439436313).
+
+October27 source-release closeout: #2946 reviewed59d519617/LOWER5661557153/all
+applicable exact-head CI, merged d4fcca1b48ba4115a15faefe05318a2d18991891.
+Normal BYSqPx1wRX5vaDcWv24PbeZ84f5R production READY; both public builds and
+original emitted reader/classifier match at03:14:57–03:15:02UTC, proof328b0741.
+Master §4.0 and the existing evidence retain exact identities. This proves source
+delivery only, not authenticated refusal/reload, ZION execution or full Experience
+acceptance. No own Edge/native/activation or catalogue/algorithm promotion.

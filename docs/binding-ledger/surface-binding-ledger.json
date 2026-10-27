@@ -918,8 +918,8 @@
         "state_reason": "Booking/Mind binding remains blocked by FU-3 and #786 attribution; those contracts are not repaired by E5. Owner2026-10-13 independently authorizes internal weekly responsibility visibility using the existing owner-only process/receipt projection in Calendar, with no booking, recurrence engine, Mind lens or authority grant. That connected UI is a development candidate; authenticated recurring acceptance remains UNVERIFIED.",
       "evidence_class": ["source_read", "production_catalog"],
       "linked": ["#786", "#673", "#648", "#646", "#638", "#644", "#776", "#777"],
-      "next_slice": "None; blocked. Resolve #786 (attribution) and FU-3 (Calendar Rail contract) first.",
-      "sources": ["docs/architecture/paige-mind-integration-matrix.md#calendar-bookings", "docs/doctrine/calendar-capability-contract.md"]
+      "next_slice": "Calendar Spine/Mind remains blocked by #786 attribution and FU-3. EXP09's bounded original public-booking result consumer validates a saved receipt and holds uncertain confirmation; it adds no authority or native writer. Private first-booking membership/contact binding and the same appointment in customer Sessions and SOLO Calendar remain OPEN; no maturity promotion.",
+      "sources": ["docs/architecture/paige-mind-integration-matrix.md#calendar-bookings", "docs/doctrine/calendar-capability-contract.md", "docs/delivery/e09-booking-result-contract.md", "docs/evidence/ui-delivery/e09-booking-result-receipt.md"]
     },
     {
       "id": "clients.portal",

@@ -101,3 +101,34 @@
   html.paige-doc-printing .campaigns-drawer{position:absolute!important;inset:0 auto auto 0!important;width:100%!important;height:auto!important;border:0!important;box-shadow:none!important}
   html.paige-doc-printing .campaigns-drawer :is(.campaigns-drawer-body,.mct-preview,.mct-doc,.mct-doc *){overflow:visible!important;height:auto!important;max-height:none!important}
 }
+
+/* ── Publish to a channel (the governed publish door's customer surface, EXP07 row 10) ────────
+ * Every state here mirrors what the door actually said; the colors only emphasize, never invent. */
+.mct-pubdoor{display:grid;gap:10px;margin-top:14px;padding:16px;border-radius:var(--r-m);background:var(--surface-2);border:1px solid var(--line-soft)}
+.mct-pubdoor h3{margin:0;font-size:14px;font-weight:650;color:var(--ink)}
+.mct-pubdoor h4{margin:0;font-size:12px;font-weight:600;color:var(--ink-2)}
+.mct-pubdoor-state{font-size:13px;line-height:1.5;color:var(--ink);margin:0}
+.mct-pubdoor-note{font-size:12px;line-height:1.5;color:var(--ink-2);margin:0}
+.mct-pubdoor-nets{display:flex;flex-wrap:wrap;gap:8px}
+.mct-pubdoor-net{display:grid;gap:2px;padding:8px 12px;border-radius:var(--r-s);border:1px solid var(--line);background:var(--surface);color:var(--ink);font-size:13px;font-weight:600;cursor:pointer;text-align:left}
+.mct-pubdoor-net small{font-size:11px;font-weight:500;color:var(--ink-2)}
+.mct-pubdoor-net[aria-pressed="true"]{border-color:var(--ink);box-shadow:var(--sh-1)}
+.mct-pubdoor-net-off{cursor:default;opacity:.72}
+.mct-pubdoor-net-off small a{pointer-events:auto}
+.mct-pubdoor-caption{font-size:12px;font-weight:600;color:var(--ink-2)}
+.mct-pubdoor textarea{width:100%;padding:10px 12px;border-radius:var(--r-s);border:1px solid var(--line);background:var(--surface);color:var(--ink);font:inherit;font-size:13px;line-height:1.5;resize:vertical}
+.mct-pubdoor-acts{display:flex;flex-wrap:wrap;gap:8px}
+.mct-pubdoor-summary{font-size:13px;line-height:1.5;color:var(--ink);margin:0;font-weight:600}
+.mct-pubdoor-preview{display:grid;gap:6px;padding:12px 14px;border-radius:var(--r-s);background:var(--surface);border:1px solid var(--line)}
+.mct-pubdoor-preview p{margin:0;font-size:13px;line-height:1.5;color:var(--ink);white-space:pre-wrap;overflow-wrap:anywhere}
+.mct-pubdoor-preview small{font-size:11px;color:var(--ink-2)}
+.mct-pubdoor-chip{justify-self:start;padding:2px 8px;border-radius:999px;border:1px solid var(--line);font-size:11px;font-weight:600;color:var(--ink-2)}
+.mct-pubdoor-result{display:grid;gap:6px;justify-items:start}
+.mct-pubdoor-result p{margin:0;font-size:13px;line-height:1.5;color:var(--ink)}
+.mct-pubdoor-ok{color:var(--ok)}
+.mct-pubdoor-warn{color:var(--bad)}
+.mct-pubdoor-history{display:grid;gap:6px;margin-top:4px;border-top:1px solid var(--line-soft);padding-top:10px}
+.mct-pubdoor-history ul{margin:0;padding:0;list-style:none;display:grid;gap:4px}
+.mct-pubdoor-history li{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px;font-size:12px;color:var(--ink-2)}
+.mct-pubdoor-history li span{font-weight:600;color:var(--ink)}
+.mct-pubdoor-history li em{font-style:normal}

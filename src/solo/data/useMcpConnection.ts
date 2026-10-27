@@ -128,6 +128,7 @@ export function mcpWriteMessage(code: unknown, kind: "write" | "probe" = "write"
     case "url_redirect_refused": return "That address redirects somewhere else, which is not followed. Use the address it points at.";
     case "request_timed_out": return "The server did not answer in time. It is saved but not working.";
     case "mcp_http_error": return "The server rejected the credential. It is saved but not working.";
+    case "http_rate_limited": return "The server is rate-limiting requests right now. It is saved; wait a moment and check again — reconnecting will not help.";
     case "mcp_malformed_response":
     case "mcp_protocol_error": return "That address answered, but not as an MCP server. It is saved but not working.";
     case "invalid_url": return "That address is not a valid URL.";

@@ -30,6 +30,7 @@ import { CustomerAssistantSettings } from "@/components/tenant-relationships/Cus
 import { assistantFields, assistantPatch } from "@/lib/portal/assistantSettings";
 import type { ClientPortalConfig } from "@/hooks/useClientPortalConfig";
 import { PortalSupportEmail } from "./PortalSupportEmail";
+import "./PortalStudio.css";
 
 /**
  * Client Portal (§9/§10/§11) — the ONE tenant-facing surface where a tenant skins
@@ -226,7 +227,7 @@ function PortalStudioEditor({ embedded = false, onDirtyChange, assistantFocusReq
   </section>;
 
   return (
-    <PageShell width="wide">
+    <PageShell width="wide" className="portal-studio-container">
       <PageHeader
         variant="plain"
         icon={Palette}
@@ -251,7 +252,7 @@ function PortalStudioEditor({ embedded = false, onDirtyChange, assistantFocusReq
       />
 
       {bk.isLoading || pc.isLoading || catalogInput.isLoading ? (
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,440px)]">
+        <div className="portal-studio-columns grid grid-cols-1 gap-6">
           <div className="space-y-4">{[0, 1, 2].map((i) => <Skeleton key={i} className="h-52 w-full rounded-xl" />)}</div>
           <Skeleton className="h-96 w-full rounded-xl" />
         </div>
@@ -266,7 +267,7 @@ function PortalStudioEditor({ embedded = false, onDirtyChange, assistantFocusReq
           onDirtyChange={setMenuDirty}
           onDraftChange={setMenuDraft}
         />
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,440px)]">
+        <div className="portal-studio-columns grid grid-cols-1 gap-6">
           {/* ── Authoring ── */}
           <fieldset disabled={busy} className="min-w-0 space-y-4" aria-label="Portal experience settings">
             {/* BRAND */}

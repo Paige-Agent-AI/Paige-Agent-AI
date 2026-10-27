@@ -228,11 +228,22 @@ export async function safeFetch(
   // The deadline starts BEFORE the guard, not after it. `assertPublicHttpUrl` resolves the
   // host, and a resolver that hangs is a wait like any other — outside the clock, a
   // "bounded" call could still sit for however long DNS took, which is the exact property
-  // the bound exists to remove.
+  // the bound exists to remove. The race below is what ENFORCES that during the guard: a
+  // timer nobody observes bounds nothing, and before it the signal was only checked AFTER
+  // the DNS await completed (found by the PR14 pin test — a never-settling resolver hung
+  // safeFetch past its own timeout).
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
+  const deadlineLoser = new Promise<never>((_, reject) => {
+    const onAbort = () => reject(new SsrfError("request_timed_out"));
+    if (controller.signal.aborted) {
+      onAbort();
+      return;
+    }
+    controller.signal.addEventListener("abort", onAbort, { once: true });
+  });
   try {
-    await assertPublicHttpUrl(url);
+    await Promise.race([assertPublicHttpUrl(url), deadlineLoser]);
     if (controller.signal.aborted) throw new SsrfError("request_timed_out");
 
     let res: Response;

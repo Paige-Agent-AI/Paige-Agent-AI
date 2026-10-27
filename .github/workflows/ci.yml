@@ -78,6 +78,8 @@ jobs:
           supabase/functions/_shared/team-hub/chat.test.ts
           supabase/functions/_shared/team-hub/chat-wiring.test.ts
           supabase/functions/_shared/team-hub/file-sweep.test.ts
+          supabase/functions/_shared/team-lifecycle/chat.test.ts
+          supabase/functions/_shared/team-lifecycle/chat-wiring.test.ts
           supabase/functions/send-message/attachment-validation.test.mjs
           supabase/functions/analyze-financial-document/document-source.test.mjs
           supabase/functions/subagent-email-composer/attachment-path.test.mjs
@@ -109,6 +111,13 @@ jobs:
         run: psql -h 127.0.0.1 -U postgres -d postgres -v ON_ERROR_STOP=1 -f supabase/tests/admin_scope_stage0.sql
       - name: EXP08 team lifecycle, suspend/reinstate/remove authority, consent, Team conversations switch, arrival join and departure review in a disposable database
         run: psql -h 127.0.0.1 -U postgres -d postgres -v ON_ERROR_STOP=1 -f supabase/tests/exp08_team_lifecycle.sql
+      - name: EXP08 co-owner authority, only the account holder or the platform owner grants or revokes, nobody revokes the holder, production holes, gate-only diff and mutants in a disposable database
+        run: psql -h 127.0.0.1 -U postgres -d postgres -v ON_ERROR_STOP=1 -f supabase/tests/exp08_co_owner_authority.sql
+      - name: EXP08 PAIGE team lifecycle catalogue, md5 guard against production's incumbent, replay guard, five Team rows and grants in a disposable database
+        run: |
+          psql -h 127.0.0.1 -U postgres -d postgres -v ON_ERROR_STOP=1 -c 'DROP DATABASE IF EXISTS exp08_lifecycle_cat' -c 'CREATE DATABASE exp08_lifecycle_cat'
+          psql -X -At -h 127.0.0.1 -U postgres -d exp08_lifecycle_cat -v ON_ERROR_STOP=1 -f supabase/tests/exp08_paige_team_lifecycle_catalogue.sql | tee /tmp/exp08-lifecycle-catalogue.txt
+          grep -qx 'all 20 assertions ran' /tmp/exp08-lifecycle-catalogue.txt
       - name: Communications executor coverage includes subsequently introduced mailbox paths
         run: node scripts/ci/comms-provider-boundary-wiring.mjs
       - name: Gmail native connection authority, private credential isolation and concurrent rollback
@@ -927,6 +936,10 @@ jobs:
           # EXP10 ALG-12: the connections_healthy runner — same --no-check rationale as the line above
           # (the shared runner graph carries prompt-forge's baselined type errors; the ratchet owns those).
           deno test --no-check --allow-import=esm.sh,deno.land --deny-net --deny-env --deny-read --deny-write --deny-run --deny-ffi --deny-sys supabase/functions/_shared/systems-check-runners/connections_healthy.test.ts
+          # EXP10 (AWS-ruling pin): safeFetch's deadline covers DNS/connect/body, and a 429 is its
+          # own closed code. Stubs DNS + fetch, so --deny-net is exact. --no-check matches the
+          # sibling steps' convention (this graph reaches no baselined-error module).
+          deno test --no-check --allow-import=esm.sh,deno.land --deny-net --deny-env --deny-read --deny-write --deny-run --deny-ffi --deny-sys supabase/functions/_shared/mcp-timeout-ratelimit.test.ts
 
       - name: Agreements engine — token contract, PDF seal, and database integrity (INT-163)
         if: ${{ !cancelled() }}

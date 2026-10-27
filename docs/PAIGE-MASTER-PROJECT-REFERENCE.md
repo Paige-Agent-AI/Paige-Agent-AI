@@ -854,6 +854,24 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**2026-10-27 UTC — EXP02 original private Systems host source; not customer admission.**
+
+| Increment | Exact released source and observed production | Acceptance boundary |
+| --- | --- | --- |
+| [#2952 original-host private purpose](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2952#issuecomment-6430581019) | Reviewed `d4a01866e568fa271cea7c2068dd904f4ffe0357`, AUTHOR-REVIEW / LOWER ASSURANCE5660549839; all11 exact checks/normal Preview/two webSUCCESS/zero threads. Preceding#2947 actually released first. Actual main `7ff9a6d884ec8ce6ec528cbb339e5bb74ced6874` / tree `eec1d6e58e986f8d3fdb8e884fb1f93ff5ad074f`, parentsd3e68daf1+d4a01866; whole incoming E09 closeout/all16,570 outside entries/original19 rows/four219-tested runtime-test blobs exact. Normal Edge40425564824/job121930322103 SUCCESS; API certificate12698824080 ZIP SHA25613df2bcbf905229c1d482f423e680e243350629b7fe4fe4952dfe4e97b238d64 verifies original onboarding155/all42 source files/complete closure/configuration, no emitted fallback. Separate current full42-entry API comparison exact with stable before/after identity/configuration155. Productiondpl_HVsGB6F3foQcJou2L7K4hi5aTsqw READY; both public200/exact7ff9a6d884ec8ce6ec528cbb339e5bb74ced6874-mvpxu08y/customerUpdate:null. | Original host private manual Work purpose source DEPLOYED; original native authorization/claim/heartbeat/Core/finalizer/Rail and ordinary onboarding preserved.202 is dispatch acknowledgement, never scan completion. Other flavors/Core/config/native/schema/grants unchanged; no scan/customer function invoked or public Spine/worker/provider/Chat activation. Manual systems.check remains UNAVAILABLE/unregistered; request/admission/run/findings/Rail/reload/role/cohort and full19/nine acceptance remain owed.219 synthetic source checks and unchanged3 compiler diagnostics are not customer proof. VisualN/A, ExperientialINCOMPLETE, FounderNOT_ACCEPTED; ALG/CAP/historical9-0+12-0-4/monthlyUNKNOWNUNRETRIED unchanged. Internal source increment, no customer release name/announcement. |
+
+This mechanical post-merge identity closeout records the preceding delivery;
+it adds no product, policy, capability readiness or acceptance change and is not logged recursively.
+
+**2026-10-26 UTC — EXP09 Portal settings fit beside PAIGE.**
+
+| Increment | Exact released source and observed production | Acceptance boundary |
+| --- | --- | --- |
+| [#2939 responsive Portal editor](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2939#issuecomment-6429707220) | Reviewed `4d26a917bb8a5d01a14b670d23478a6c287d4d17`, AUTHOR-REVIEW / LOWER ASSURANCE5658961509 and final receiving6429616047; all10 applicable checks and both web contexts SUCCESS, no-SQL Preview SKIPPED, zero threads. Actual main `50468eec27b2356ac3048d600206852eb39a29de` / tree `3fe13cade1a8cc7c973ba4aac4ec6a05a93c155e`, original792477+4d26 parents; all9 owning and16,566 incoming outside entries exact. Production `dpl_4SwsrqNzfH9w4k4HeTHg2rxNLSst` READY; both public origins exact50468-mvpvobl3/customerUpdate=null, entry/assets/cache/missing404 PASS at23:20:01.286UTC. Own native/Edge/provider delta N/A. | Existing48 regressions and final19 source-render cases PASS. Actual owner1514×822: PAIGE-open form708.3125/input666.7125px, folded form759.2/input717.6px with original440px preview; field44px and no measured document horizontal overflow. Saved contact remains clean; Tab reaches Headline; original PAIGE conversation restored open. No business write/send/activation. Full signed-in viewport/cohort matrix, physical phone/AT/zoom, external-client contact display, full42/seven-pillar and founder acceptance remain open. Internal repair, no customer version or announcement. |
+
+This mechanical post-merge identity closeout records the preceding delivery;
+it changes no product, policy, capability or acceptance status and is not logged recursively.
+
 **2026-10-26 UTC — EXP02 original Systems checkpoint and Work finalizer release receipts.**
 
 | Increment | Exact source and observed production evidence | Acceptance boundary |
@@ -873,6 +891,18 @@ not logged recursively. It adds no product, policy, capability or acceptance cha
 
 This mechanical post-merge identity closeout records the two preceding deliveries;
 it changes no product, policy, capability or acceptance status and is not logged recursively.
+
+**2026-10-26 UTC — EXP02 private original Systems Work consumer; not admitted.**
+
+| Increment | Exact source and observed production evidence | Acceptance boundary |
+| --- | --- | --- |
+| [#2944 private consumer](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2944#issuecomment-6429387101) | Reviewed `9ec3f387576a8d50a560758ca41ec9eabf477659`, LOWER5659772898 plus actual existing E05 NON-AUTHOR source review5659919149/receiving38072c6a, independently179PASS. Same-bot COMMENT is not distinct-account approval. All11 exact checks/normal Preview/two webSUCCESS/zero threads. Actual main `c4b2b2d937796cda64fe6a2d5702d40d573081e1` / tree `3fc22d44c9d22c882be38aebc1a282321c864244`, parents93f567749+9ec; all three tested source blobs/whole incoming docs/all16,557 outside entries/original19 matrix exact. Normal Edge40415606311/job121897039328 SUCCESS; API artifact12695856404 ZIP SHA25609543bc52cf509616574ecbd8e403a516670077e8263a124da38db991b6fdb39 independently matches all159 source entries/configs at certificate versions152/153/157/158, no emitted fallback. Later current versions153/154/158/159 independently verify all159 complete API sources/configs against the same Git merge,0mismatches/stable metadata; no cause for revision advance asserted. Webdpl_6q4kZLb58VjHzE8DPVrd4r7Tq6u8 READY; both public200/exactc4b2b2d937796cda64fe6a2d5702d40d573081e1-mvpupyff/customerUpdate:null. | Existing Core wait extraction deployed; private native claim→heartbeat→whole unfiltered Core→original finalizer/Rail adapter source merged, still unimported by HTTP hosts and UNADMITTED. Native/schema/grant delta N/A; original8/3/5-column/server-only contract metadata verified, no invocation.179 focused/207 affected-suite proof remains synthetic; original native148 separate. No manual scan, Spine/worker/provider/Chat activation or customer acceptance. Original-host adoption/bounded lifetimes, actual run/result/Rail/reload/corrective work and full19/nine remain incomplete; Visual N/A, Founder NOT_ACCEPTED, ALG/CAP/historical9-0+12-0-4/monthlyUNKNOWNUNRETRIED unchanged. |
+
+**2026-10-26 UTC — EXP02 original full-outcome reconciliation.**
+
+| Increment | Exact source and observed production evidence | Acceptance boundary |
+| --- | --- | --- |
+| [#2927 full19 audit and preceding safeguards receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2927#issuecomment-6426382518) | Reviewed `28341e918c4ead86457ab64db0d2499a2e843d67`, AUTHOR-REVIEW / LOWER ASSURANCE5657648881; all applicable exact checks/two web statuses SUCCESS, designed no-SQL Preview SKIPPED. Actual main `872c5b6ec0ea146a22a3c29efc776034b09ffd6c` / tree `494329e60abafe0300bc88dc5afd190f94fee979`; complete incoming documents/all16,542 outside entries/all19 original outcome rows retained,189 additive lines/four existing docs. Normal productiondpl_F19z5oMzomBtkcG97tKmBksBpCw2 READY. Both public origins200 observed the verified documentation-only containing successor56db711a82e6d97f4d4f04c95547b4b2ad730787-mvpp1juv/customerUpdate:null with872 as first parent; exact872 public alias was not observed. | Source audit preserves the nineteen original outcomes and adds their already-required Coordinator acceptance subcases, original-source dependencies, minimal approved Vault provenance/revocation and representative-week measurement obligations. No runtime, new registry, provider or action activation. Full19/nine/ALG/catalogue remain at their existing maturity; historical9-0+12-0-4 and monthlyUNKNOWN/UNRETRIED retained, representative week UNMEASURED, Founder NOT_ACCEPTED. This row records that broader reconciliation separately from its #2918 identity receipt; it is not customer acceptance. |
 
 **2026-10-26 UTC — EXP02 original private manual Work safeguards; no scan activation.**
 
@@ -895,6 +925,7 @@ mechanical identity closeout is not logged recursively.
 
 | Increment | Exact reviewed source and observed release | Completion boundary |
 | --- | --- | --- |
+| [#2937 SendGrid receipts accept real event ids](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2937) | Squash `146cf56590` of head `42011f4e` (author review, LOWER ASSURANCE). All 11 exact-head checks SUCCESS, including `verify` and `database-contract`. `deploy-edge-functions` run #864 redeployed `handle-sendgrid-webhook` at 21:21 UTC. | The SendGrid Event Webhook door now accepts SendGrid's real `sg_event_id` format (`=` padding dropped before the receipt id is formed; on the real function the padded id is `invalid`, normalized `processed`, redelivery `duplicate`). The owner connected the webhook by hand and installed `SENDGRID_WEBHOOK_PUBLIC_KEY` (probe 503 → 401), and turned Subscription Tracking and Google Analytics tracking OFF. A re-run of SendGrid's test events with a production log readback is PROOF OWED. No customer release. |
 | [#2930 email campaign lifecycle proof](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2930) | Squash `49d0a8a2a7` of reviewed head `11e513f73` ([review receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2930#issuecomment-6425587100), labelled AUTHOR-REVIEW / LOWER ASSURANCE: a reviewer agent dispatched by the author found 2 MAJOR and 9 MINOR issues in the proof and its record, none in product code; all were fixed). All 11 exact-head checks SUCCESS, including `database-contract`, which runs the new `supabase/tests/email_campaign_lifecycle.sql` (86 assertions) against production's reproduced grants, and `verify`. Local full replay (1,479 migrations, CLI 2.109.1) passed 86/86 on six runs, and ten reinstated defects each turned it red. No migration, edge function or web change. | Test, CI and records only. The campaign lifecycle guards are LIVE in source and now proven: saved drafts, member and foreign-business refusals, frozen versions, stale and generic approvals refused, PAIGE's filing waits for a person, decline, suppression and opt-out at plan and send, unknown and duplicate sends, cancel mid-send, and resends that never reach anyone twice. Real campaign delivery stays UNAVAILABLE (production: 1 campaign, 0 recipients, 0 sends ever). The authenticated drive and the founder evaluation are PROOF OWED. Journey §14 carries the successor's ACK and the full row-by-row matrix. No customer release. |
 
 **2026-10-26 UTC — EXP03 F8: the qualified handoff reads Sales' own records.**
@@ -6706,6 +6737,28 @@ when the seam's workspace is not the one the conversation is about.
 | `member_grant_role` | `high` | the real owner approval card |
 | `member_revoke_role` | `high` | the real owner approval card |
 | `team_set_work_profile` | `ordinary` | normal compact confirmation |
+| `team_suspend_member` | `high` | the real owner approval card (EXP08 lifecycle, LIVE on merge; authenticated runtime `UNVERIFIED`) |
+| `team_reinstate_member` | `high` | the real owner approval card (EXP08 lifecycle) |
+| `team_remove_member` | `high` | the real owner approval card, which states what the person still holds (EXP08 lifecycle) |
+| `team_set_conversations` | `high` | the real owner approval card (EXP08 lifecycle) |
+| `team_handover_work` | `high` | the real owner approval card (EXP08 lifecycle; standalone business account only) |
+| `team_list_members` / `team_member_holdings` | read | none — reads on the caller's JWT (EXP08 lifecycle) |
+
+**EXP08 PAIGE team-lifecycle tools (2026-10-26; LIVE on merge — the edge function deploys and migration `20271116100008` applies on the push to `main`; authenticated runtime `UNVERIFIED`).**
+PAIGE gains the lifecycle definers of migration `20271115040008` through one Spine domain
+(`_shared/paige-spine/domains/team_lifecycle.ts`) and one dispatch module
+(`_shared/team-lifecycle/chat.ts`): `team_list_members` (`get_solo_team_workspace`, suspended people
+included, never an email), `team_member_holdings` (`team_member_holdings`, every movable row carries
+the exact hand-over call), `team_suspend_member` / `team_reinstate_member` / `team_remove_member` /
+`team_set_conversations` (the four lifecycle definers, `_expected_tenant_id` = the persona tenant) and
+`team_handover_work` (`plan_update_item_versioned`, the caller as expected actor, status and due
+unchanged; it follows the Work writer's own rule — any owner or admin of the workspace, `is_tenant_admin`,
+for any open item, on a standalone business account only — not the one rule of the four person acts). CRM tasks, client relationships and deals hand over through the existing
+`crm_assign_task` / `crm_assign_coach` / `crm_assign_contact_owner` / `crm_assign_deal_owner`;
+approvals and mailboxes have no hand-over writer and are reported, never moved. Caller JWT only, last
+in the dispatch chain, never from Live, every write outcome with a workspace receipted (with no persona
+workspace there is no tenant to record against, so that refusal writes no receipt). Ledger:
+`docs/doctrine/tier-matrix.md`, "EXP08 PAIGE team-lifecycle tools". Authenticated runtime `UNVERIFIED`.
 
 `high` means the gate accepts only a fingerprint of the exact rendered card, carried in the request
 **body** — a channel the model cannot write. The model asserting consent is refused.
@@ -7973,7 +8026,7 @@ Backend record: §4.0 (2026-10-13 S3 entry). Journey record: [`delivery/exp03-gr
    6. Make sure `comms_provider_execution_allowed` admits the business and actor.
    7. Enable the SendGrid Event Webhook and set `SENDGRID_WEBHOOK_PUBLIC_KEY`.
    8. The owner signs off on the first live test send (test identity, consent, provider policy).
-   - **Policy reach.** The 2026-10-13 SendGrid policy is applied at the governed door, and `send-message` now refuses any SendGrid send that is not the door's. Marketing email's managed sender and `buildProvider`'s default still use the platform Resend key (decision log, 2026-10-13).
+   - **Policy reach.** The 2026-10-13 SendGrid policy is applied at the governed door, and `send-message` now refuses any SendGrid send that is not the door's. Marketing email's managed sender and `buildProvider`'s default still use the platform Resend key (decision log, 2026-10-13). *(2026-10-26, journey §14.6: `send-message` also admits an approved campaign email to a business's verified SendGrid sender through `email_campaign_sendgrid_admit`, migration `20271116020000`; its receipts land on the campaign recipient row. Inert until steps 3–5 are done for a business. Paige's managed sender is still Resend.)*
    - **Sign-off owed:** the 15-minute (`dispatching`) and 24-hour (`prepared`) windows for early SendGrid events are builder choices.
 2. **`client.followup` — owner decision owed.** `client.followup` is decline-only at both layers: `execute-approval` refuses it with 409 `decline_only`, and the database guard now refuses `approved`/`sent` for every send kind other than `owner.lead_followup` before reading any proof, so it can no longer be completed by citing an unrelated accepted email. Production on 2026-10-13: 125 pending approvals, plus the 6 falsely marked approved/done (§10). Approving one never sent anything. The owner decides between:
    - a governed review-and-send path for this kind (new work: a record path like `lead_reply_record_send`, and widening the guard to that kind); or

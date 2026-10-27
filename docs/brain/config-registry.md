@@ -1,5 +1,16 @@
 # Config Registry — infra & integration state
 
+## EXP02 original Systems host private purpose — October27 UTC, source verified
+
+Existing systems-check-run-onboarding155 now includes its private manual Work
+purpose, with original internal gate and registered bounded platform lifetime.
+Normal Edge40425564824 and complete42-file API/config readback match merge7ff9a6d8;
+JWT/import-map configuration, environment variables, secrets, native grants and
+other flavors are unchanged. No new function, worker, cron, queue or provider.
+HTTP202 is not a completed run; customer manualSpine/catalogue remains unavailable.
+The October26 development-only entry is historical. Full receipt:
+[original Systems evidence](../evidence/e2-systems-capture-mode.md).
+
 ## October20 — current-main composition preparation; NOT RELEASED
 
 Original2163/36ab and2189/9f sources/acceptance are preserved, with bounded successor b27e95 corrections independently reviewed. This own composition retains currentmain40c1 authority, source, Task recovery/navigation and all later Experience work. The inherited dated sections below remain historical; old deployment observations and ownership statements are not current proof or a formal Coordinator handoff. The draft writer/Edge and old090500 migration are absent/unapplied in current production; forward migration/schema proof, current source-pin derivation/review, final exact-head CI/deployment and ordinary authenticated acceptance remain owed. No recurrence, provider, Chat/Live activation or18/25/50 closure. Current owner EXP-only doctrine and the ten-outcome/E5-CV1–9 contract control.
@@ -560,11 +571,12 @@ Values intentionally omitted.
 - **PAIGE Email — SendGrid (tenant email under the 2026-10-13 owner policy; Resend stays the Platform Operator's own email).** Edge secret NAMES only; values are never recorded. Whether each one is set on production was NOT re-read by this record.
   - `SENDGRID_MAIL_SEND_API_KEY` is the restricted Mail Send key. Readers:
     - `_shared/email/providers.ts` no longer reads it: `buildProvider` resolves `sendgrid` to a provider that refuses to send, so SendGrid is reachable only through the governed door (Experience 03 round-4 security LOW-3; the `SendGridProvider` adapter was removed);
-    - `send-message/index.ts`: the governed SendGrid arm (20 s deadline, `custom_args` `paige_tenant_id`/`paige_operation_id`/`paige_message_id`). It sends through a SendGrid connector only for the email door's prepared operation; anything else is refused before any provider call (`paige_email_requires_governed_send`);
+    - `send-message/index.ts`: the governed SendGrid arm (20 s deadline, `custom_args` `paige_tenant_id`/`paige_operation_id`/`paige_message_id`). It sends through a SendGrid connector only for the email door's prepared operation, or (Experience 03, `20271116020000`) for an approved campaign email that `email_campaign_sendgrid_admit` admits for the dispatcher's leased recipient (custom_args: `paige_tenant_id` + the recipient id as both other claims); anything else is refused before any provider call (`paige_email_requires_governed_send`);
     - `growth-process-submission/lead-reply.ts`: presence only, so the lead-reply drafter counts a SendGrid sender with the door's own provider list (`emailProvidersFor`);
     - `_shared/comms-email/readiness.ts`: presence only, giving the `EMAIL_PROVIDER_NOT_CONFIGURED` state;
     - `comms-email-command/index.ts`: presence decides whether `sendgrid` counts as a sender provider (`emailProvidersFor`);
     - `comms-sendgrid-scopes/index.ts`: records the key's scopes, and returns `SENDGRID_EXECUTOR_KEY_NOT_CONFIGURED` when unset.
+  - **Production, 2026-10-26:** the owner turned SendGrid Subscription Tracking and Google Analytics tracking OFF (SendGrid → Settings → Tracking), so SendGrid adds no unsubscribe link of its own and does not rewrite link UTM tags.
   - `SENDGRID_WEBHOOK_PUBLIC_KEY` verifies Event Webhook signatures. Read only by `handle-sendgrid-webhook/index.ts`, which returns 503 until it is set. The `comms-sendgrid-webhook-admin` setup path does not read it; it hands back the key to install under this name. **Production, 2026-10-26: SET.** Verified by behaviour, not by reading it: an unsigned probe changed from 503 `webhook_not_configured` to 401 `invalid_signature`. The owner configured the Event Webhook by hand in SendGrid (enabled, signed, every event, the `handle-sendgrid-webhook` URL). SendGrid's "Test Your Integration" events passed the signature check but were quarantined, because real `sg_event_id`s carry `=` padding; the door fix is in the EXP03 PR that follows #2930.
   - `SENDGRID_WEBHOOK_ADMIN_API_KEY` is the scoped key used to configure the Event Webhook. **Production, 2026-10-26: NOT SET**, read by the broker as an operator: 503 `SENDGRID_WEBHOOK_ADMIN_API_KEY_NOT_CONFIGURED`. It is not needed while the webhook is configured by hand. Read ONLY by `comms-sendgrid-webhook-admin/index.ts`. `scripts/ci/forbid-sendgrid-admin-key-refs.mjs` fails CI on any other reference to it, or to `SENDGRID_PLATFORM_ADMIN_API_KEY`, which must never be read (rotation owed).
   - **Database facts, not secrets (`20271031000100`):**
@@ -702,3 +714,13 @@ added. The connection remains PARTIAL: this corrects client scope selection, not
 scope registration, consent or outbound execution. Automated and synthetic-browser evidence,
 independent review, and the exact remaining proof boundary are in
 `../evidence/ui-delivery/mcp-oauth-resource-scopes.md`.
+
+## EXP02 private Systems host purpose — October26, development only
+
+Existing `systems-check-run-onboarding?manual_work=1` reuses the current internal
+service/verified-cron gate and existing `EdgeRuntime.waitUntil` lifetime. No new
+function, config, environment variable, secret, provider, cron, grant or queue.
+Bounded5-second transport/90-second capture/fresh5-second settlement; hard host
+limits still apply.202 is not execution proof. Normal source deployment/readback
+and customer admission are not yet established. Original wiring/flavors retained.
+Canonical details: [Systems evidence](../evidence/e2-systems-capture-mode.md).

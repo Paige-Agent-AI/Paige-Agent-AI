@@ -1,5 +1,11 @@
 # Decision Log — chronological one-liners
 
+## October27 — EXP03 a released managed address is never re-issued; EXP03 record brought current
+
+- **Address reuse closed (migration `20271118100000`).** The #2983 review HIGH reproduced on production in a rolled-back transaction: after business B renamed, business A renaming to B's old slug was handed B's old `<slug>@mail.paigeagent.ai`. Now a released address on the shared domain is recorded in `paige_retired_managed_addresses` with the business that held it and refused to any other business; provisioning gives a slug-derived name a numbered variant so signup and renames never fail on it; Solo Setup reports it unavailable. Backfilled from message history (1 address on production was already released and unheld).
+- **Owner created `SENDGRID_DOMAIN_AUTH_API_KEY` (Sender Authentication only, 2026-10-27)** for the SendGrid rebuild of `manage-tenant-domain`; the full-access `SENDGRID_PLATFORM_ADMIN_API_KEY` stays unused and its rotation is still owed.
+- **Records:** journey §14.7 brings EXP03 current (SendGrid cutover, first real inbound reply, inbound routing guard); #2131 and #2152 superseded with their facts re-verified on main and production.
+
 ## October27 — EXP03 inbound routing fields are server-only (owner-approved)
 
 - **First real SendGrid Inbound Parse delivery (2026-10-27 13:28 UTC).** The owner set `SENDGRID_INBOUND_PARSE_SECRET` and the Inbound Parse host; a real reply posted by SendGrid (`Sendlib/1.0`) was accepted (200, basic auth in the URL works through the gateway), stored once with a business-scoped `sendgrid-inbound:` id on the contact's thread, sender authenticated, and a `comms-draft-reply` action filed (`confirm` lane). A no-credentials probe returns 401.

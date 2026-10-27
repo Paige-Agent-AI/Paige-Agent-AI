@@ -32,7 +32,7 @@ beforeEach(()=>{
  ports.command.mockImplementation(()=>({accountEpoch:epoch,approvals:[],metrics:[],attention:{at_risk_clients:0,follow_ups_due:0},departments:[],greeting:{name:"Example",dateLabel:"Today",summary:""},counts:{approvals:0},loading:false,empty:true,isError:false,departmentsConfigured:false,approve,decline,refresh:commandRefresh}));
  host=document.createElement("div");document.body.append(host);root=createRoot(host);
 });
-afterEach(()=>{act(()=>root.unmount());host.remove();expect(approve).not.toHaveBeenCalled();expect(decline).not.toHaveBeenCalled();expect(openPaige).not.toHaveBeenCalled();});
+afterEach(()=>{act(()=>root.unmount());host.remove();vi.unstubAllGlobals();expect(approve).not.toHaveBeenCalled();expect(decline).not.toHaveBeenCalled();expect(openPaige).not.toHaveBeenCalled();});
 
 describe("Original Systems Check run presentation",()=>{
  it("shows exact source counts and timestamps without current-health or receipt claims",()=>{
@@ -89,5 +89,15 @@ describe("Run inspection in the original workspace",()=>{
  });
  it("withdraws source details after permission or workspace context changes",()=>{
   renderPage(`/solo/1234567/command-center/systems-check?run=${ID}`);record={state:"unavailable"};epoch=2;renderPage();expect(dialog()?.querySelector('dl')).toBeNull();expect(dialog()?.textContent).toContain("unavailable in this workspace");
+ });
+ it("does not restore a shared conversation control after the originating workspace unmounts",async()=>{
+  const previous=document.createElement('textarea');document.body.append(previous);previous.focus();
+  renderPage(`/solo/1234567/command-center/systems-check?run=${ID}`);
+  const frames:FrameRequestCallback[]=[];vi.stubGlobal('requestAnimationFrame',(callback:FrameRequestCallback)=>{frames.push(callback);return frames.length;});
+  const restore=vi.spyOn(previous,'focus');
+  act(()=>root.render(<button>Current workspace control</button>));
+  const current=host.querySelector('button')!;current.focus();
+  await waitFor(()=>expect(frames.length).toBeGreaterThan(0));act(()=>{for(const callback of frames.splice(0))callback(0);});
+  expect(restore).not.toHaveBeenCalled();expect(document.activeElement).toBe(current);previous.remove();
  });
 });

@@ -13,7 +13,7 @@ NOT_ACCEPTED. No all19/nine/CAP/ALG/readiness promotion. [Current Finance bounda
 
 The existing Systems workspace now has a LOCAL read-only original-run review;
 [actual-source evidence](../evidence/ui-delivery/e2-systems-run-review.md) records
-179 passing source controls,28 raw synthetic frames, eight required shell layouts,
+180 passing source controls,28 raw synthetic frames, eight required shell layouts,
 320/390 state coverage, loaded product font, original unsent Chat/focus return,
 native750.4000px scroll preservation and production build5m6s. No source tests or
 fixture rendering establish customer/RLS/Finance/Live/founder acceptance. Current

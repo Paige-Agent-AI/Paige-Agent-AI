@@ -981,5 +981,24 @@
     "eligible Live/model completion",
     "final founder acceptance"
   ],
-  "cleanup": "temporary per-tab media override cleared through CDP and owned tab closed; current-chat viewport reset; own renderer stopped; no customer/browser lease bound"
+  "cleanup": "temporary per-tab media override cleared through CDP and owned tab closed; current-chat viewport reset; own renderer stopped; no customer/browser lease bound",
+  "postRenderCorrection": {
+    "reviewedRenderedHead": "332244c3677af18e2d1ac2793b42acde948af296",
+    "finding": "5670696800: deferred focus after complete workspace unmount",
+    "change": "retire the original workspace focus callback on unmount; no new focus engine",
+    "sourceHashes": {
+      "src/solo/SoloSystemsCheckWorkspace.tsx": {
+        "renderedSHA256": "88acfbe7ab4df543a74da5cd54b126287ddff65cc96240209b2057e7fb3ae566",
+        "correctedSHA256": "b4494c40bf14fec77c82b5da3ad011696c0374e51d0fe44fa5a829d9f860bf61"
+      },
+      "src/solo/SystemsCheckRunReview.test.tsx": {
+        "renderedSHA256": "857b1d53b09e3f02579937cc8767c8a4b9cd9fe8b567c4070f9e2bd37b9cfce2",
+        "correctedSHA256": "8324ed374dea822b04bf74a16f60ff97551053138aac7fb7707f848c805f1aa4"
+      }
+    },
+    "allReturnedJSXAndCSSAndOtherSixInputsUnchanged": true,
+    "same28RawImagesRetained": true,
+    "causal": "1 FAIL/17 selected skips before guard;180 PASS/5 disjoint suites/zero final skips after guard",
+    "proofBoundary": "functional unmount correction proven by original component negative control; earlier28 rendered frames remain supporting visual evidence, not a newly rendered final-head claim"
+  }
 }

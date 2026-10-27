@@ -7,8 +7,8 @@ MATERIAL_FLOW_CHANGE: YES: adds original run inspection, URL/reload recovery and
 FLOW_PROTOTYPE: PASS: disposable source-free prototype64 state/view/theme transitions and8 recovery paths preceded production edits; ANT138d1d02fe4 records E02 lead's selected direction under owner's standing creative authority. This is not specific founder prototype approval or final acceptance.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: an eligible ordinary SOLO actor reads the original recorded check, its real timestamp and exact counts, then returns without authorizing work.
 VISUAL_DIRECTION: PASS: restrained source review, clear typographic hierarchy and three exact count columns;720px desktop,320/390 narrow fit, Mineral/Obsidian. No decorative chart, invented health score or duplicate banner.
-AUTOMATED_EVIDENCE: PASS:179 actual-source cases across5 disjoint suites, no skips:27 new run-hook,38 original finding-hook,97 original workspace,17 new presentation/interaction cases. Legacy assertions retained. Earlier missing test-library setup was corrected using the existing helper; no dependency added.
-STATIC_EVIDENCE: PASS: production build5m6s, focused lint zero errors/five development-harness refresh advisories, whitespace clean. The resource-heavy local whole-app compiler was stopped without a result; no clean-typecheck claim. Required hosted type ratchet and all exact-head checks remain merge gates.
+AUTOMATED_EVIDENCE: PASS:180 actual-source cases across5 disjoint suites, no skips:27 new run-hook,38 original finding-hook,97 original workspace,18 new presentation/interaction cases. Legacy assertions retained. Earlier missing test-library setup was corrected using the existing helper; no dependency added.
+STATIC_EVIDENCE: PASS: supporting rendered-source production build5m6s, focused lint zero errors/five development-harness refresh advisories, whitespace clean. The resource-heavy local whole-app compiler was stopped without a result; no clean-typecheck claim. Required hosted type ratchet and all exact-head checks remain merge gates.
 RENDERED_EVIDENCE: PASS:28 untouched raw product screenshots and renderer-side loaded Schibsted proof in assets/e2-systems-run-review/source-index.json. Eight required shell layouts, eight states each at320 Mineral and390 Obsidian, reduced motion, reload, second neutral workspace and invalid reference. Four representative final frames visually inspected. Actual production components are mounted with explicitly synthetic input ports, not customer data.
 BEHAVIORAL_EVIDENCE: PASS: original shell/Chat unsent draft survives history-driven source inspection; return focuses the actual prior composer. Native untargeted Enter/Escape preserves750.4000244140625px original scroll; query/hash survive. Bookmarked original source reopens after reload. Read failure/retry, withheld source and alternate neutral workspace do not show old counts or invoke an action.
 AUTHENTICATED_RUNTIME: UNVERIFIED: EXP09 holds the ordinary-owner session until natural explicit handback, then E02→E05. This change has no authenticated current-role/RLS/cohort/source/Chat/Live/Finance acceptance yet. No customer page was bound during this proof.
@@ -83,7 +83,7 @@ context, clarity, craft floor, accessibility, state and restrained hierarchy che
 applied. Actual rendering caught shared Tailwind dialog precedence; the scoped
 selector now preserves720px/34px typography. Interaction review caught the need to
 return to the actual prior conversation control, with an epoch-fenced callback.
-Both are corrected and verified in the final28 frames/179 controls. Sequential
+Both are corrected and verified in the 28 supporting frames/180 final controls. Sequential
 author finish review is lower assurance, not a non-author design review.
 
 The existing cached Impeccable4.1 CLI reports zero primary findings and four
@@ -98,3 +98,14 @@ preserved750.4000244140625px; both probes remain in source-index.json. Cold-load
 timeouts and the resource-heavy local compiler produced no acceptance evidence.
 The local renderer required ordinary network-enabled process access; no customer
 session, security control or browser-origin restriction was bypassed.
+
+## Exact corrective-review boundary
+
+AUTHOR-REVIEW / LOWER ASSURANCE5670696800 identified a delayed focus return
+after complete workspace unmount. One causal source case failed before the guard;
+all180 cases/5 suites pass afterward. The correction retires that original callback
+on unmount. Returned JSX, CSS, six other declared inputs and all28 raw images stay
+exact; source-index.json records both original rendered and corrected hashes. The
+28 frames are supporting visual evidence, not a newly rendered corrective head.
+Final exact-head hosted type/build/required CI and production/customer proof remain
+mandatory. No new provider, permission, execution or state-store contract.

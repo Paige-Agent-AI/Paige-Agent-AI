@@ -331,6 +331,11 @@ export function SoloSystemsCheckWorkspace({ accountContext, openPaige, workspace
   const refreshTrigger = useRef<HTMLButtonElement | null>(null);
   const runTrigger = useRef<HTMLButtonElement | null>(null);
   const runReturn = useRef<{ target: HTMLElement; epoch: typeof command.accountEpoch } | null>(null);
+  const runReviewMounted = useRef(false);
+  useLayoutEffect(() => {
+    runReviewMounted.current = true;
+    return () => { runReviewMounted.current = false; runReturn.current = null; };
+  }, []);
   const currentRunEpoch = useRef(command.accountEpoch);
   currentRunEpoch.current = command.accountEpoch;
   const sourceWasRequested = useRef(false);
@@ -388,7 +393,7 @@ export function SoloSystemsCheckWorkspace({ accountContext, openPaige, workspace
     runReturn.current = null;
     // The callback is captured when this review opens. A later workspace may
     // reuse the Chat DOM, but must never inherit an earlier workspace's focus.
-    if (currentRunEpoch.current !== command.accountEpoch) return;
+    if (!runReviewMounted.current || currentRunEpoch.current !== command.accountEpoch) return;
     if (previous?.isConnected && previous !== document.body) previous.focus({ preventScroll: true });
     else if (saved?.epoch === command.accountEpoch && saved.target.isConnected) saved.target.focus({ preventScroll: true });
     else if (refreshTrigger.current?.isConnected) refreshTrigger.current.focus({ preventScroll: true });

@@ -641,6 +641,26 @@ describe("paging (mocked RPC)", () => {
     expect(host.querySelector(".th-conv")!.textContent).toContain("Person's older note");
   });
 
+  it("pages a thread past a page made only of replies this build skips", async () => {
+    db.messages["c-general"] = [msg({ id: "m-root", body: "Root post", reply_count: 51, created_at: at(90) })];
+    // The newest 50 replies are from an agent this build does not know; one person's reply is older.
+    db.replies["m-root"] = [
+      msg({ id: "r-old", parent_message_id: "m-root", body: "Person's early reply", created_at: at(85) }),
+      ...Array.from({ length: 50 }, (_, index) => ({ ...msg({ id: `a-${String(index).padStart(2, "0")}`, parent_message_id: "m-root", body: `Agent ${index}`, created_at: at(80 - index * 0.1) }), author_kind: "agent", agent_key: "nova" })),
+    ] as ReturnType<typeof msg>[];
+    const { host } = await mount();
+    await act(async () => button(host, /51 replies/)!.click());
+    await flush();
+    const drawer = host.querySelector("aside.th-thread")!;
+    expect(drawer.textContent).not.toContain("Person's early reply");
+    await act(async () => button(host, "Show earlier replies")!.click());
+    await flush();
+    const older = calls.filter((call) => call.name === "team_hub_list_messages" && call.params.p_thread_root).at(-1)!;
+    // From the oldest raw reply on the first page (a-00), not "nothing held" (which re-asks the newest page).
+    expect(older.params).toMatchObject({ p_thread_root: "m-root", p_before_id: "a-00" });
+    expect(drawer.textContent).toContain("Person's early reply");
+  });
+
   it("shows a thread's replies oldest first and pages back with Show earlier replies", async () => {
     db.messages["c-general"] = [msg({ id: "m-root", body: "Root post", reply_count: 52, created_at: at(90) })];
     db.replies["m-root"] = Array.from({ length: 52 }, (_, index) => msg({ id: `r-${String(index).padStart(2, "0")}`, parent_message_id: "m-root", body: `Reply ${index}`, created_at: at(80 - index) }));
@@ -783,6 +803,26 @@ async function typeInput(element: HTMLInputElement, value: string) {
 }
 
 describe("refresh merging and announcements (mocked RPC)", () => {
+  it("a refresh whose newest page is only skipped rows still offers the messages beneath it", async () => {
+    db.messages["c-general"] = [msg({ id: "m-old", body: "Held before the absence", created_at: at(600) })];
+    const { host } = await mount();
+    expect(host.textContent).toContain("Held before the absence");
+    // While away: one person's note, then 50 newer rows from an agent this build does not know.
+    db.messages["c-general"].push(msg({ id: "m-mid", body: "Person's note while away", created_at: at(300) }));
+    db.messages["c-general"].push(...Array.from({ length: 50 }, (_, index) => ({ ...msg({ id: `a-${String(index).padStart(2, "0")}`, body: `Agent ${index}`, created_at: at(100 - index) }), author_kind: "agent", agent_key: "nova" })) as ReturnType<typeof msg>[]);
+    await act(async () => { window.dispatchEvent(new Event("focus")); });
+    await flush();
+    // The note is not on the newest page, so the gap must be offered rather than hidden.
+    const conv = host.querySelector(".th-conv")!;
+    expect(conv.textContent).not.toContain("Person's note while away");
+    expect(button(host, "Load earlier messages")).toBeDefined();
+    await act(async () => button(host, "Load earlier messages")!.click());
+    await flush();
+    const older = calls.filter((call) => call.name === "team_hub_list_messages").at(-1)!;
+    expect(older.params).toMatchObject({ p_before_id: "a-00" });
+    expect(conv.textContent).toContain("Person's note while away");
+  });
+
   it("replaces the held stream and offers earlier messages when the newest page can't be joined to it", async () => {
     db.messages["c-general"] = [msg({ id: "m-old", body: "Held before the absence", created_at: at(600) })];
     const { host } = await mount();

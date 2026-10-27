@@ -375,10 +375,6 @@ function messageKind(value: unknown): "read" | "skip" {
   return "read";
 }
 
-/**
- * Every element must parse, except that rows `skip` sorts out are left out and counted: one unknown
- * row never empties the whole list, and a malformed known row still refuses it.
- */
 /** The oldest (created_at, id) among a page's raw rows, read or skipped; null when none carries one. */
 function oldestRaw(value: unknown): TeamHubPageCursor | null {
   if (!Array.isArray(value)) return null;
@@ -391,6 +387,10 @@ function oldestRaw(value: unknown): TeamHubPageCursor | null {
   return oldest;
 }
 
+/**
+ * Every element must parse, except that rows `skip` sorts out are left out and counted: one unknown
+ * row never empties the whole list, and a malformed known row still refuses it.
+ */
 function parseKnown<T>(value: unknown, sort: (item: unknown) => "read" | "skip", parse: (item: unknown) => T | null): { items: T[]; skipped: number } | null {
   if (!Array.isArray(value)) return null;
   const items: T[] = [];
@@ -855,11 +855,15 @@ export function mergeMessages(current: TeamHubMessage[], incoming: TeamHubMessag
  * oldest message is newer than the newest one held, the messages in between were never read: the
  * held list can't be joined to the page without a silent hole, so the page replaces it.
  */
-export function refreshLeavesGap(held: TeamHubMessage[], newestPage: TeamHubMessage[], pageHasMore: boolean): boolean {
-  if (!pageHasMore || !newestPage.length) return false;
+export function refreshLeavesGap(held: TeamHubMessage[], newestPage: TeamHubMessage[], pageHasMore: boolean, pageOldest?: TeamHubPageCursor | null): boolean {
+  // pageOldest is the page's oldest RAW row, skipped rows included: a newest page made only of
+  // rows this build skips still reaches down to it, and a message under it must not vanish.
+  if (!pageHasMore || (!newestPage.length && !pageOldest)) return false;
   const newestHeld = held[held.length - 1];
   if (!newestHeld) return true;
-  const oldestOnPage = newestPage.reduce((oldest, message) => compareMessages(message, oldest) < 0 ? message : oldest);
+  const parsedOldest = newestPage.length
+    ? newestPage.reduce((oldest, message) => compareMessages(message, oldest) < 0 ? message : oldest) : null;
+  const oldestOnPage = pageOldest && (!parsedOldest || compareMessages(pageOldest, parsedOldest) < 0) ? pageOldest : parsedOldest!;
   return compareMessages(oldestOnPage, newestHeld) > 0;
 }
 

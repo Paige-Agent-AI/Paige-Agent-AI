@@ -311,7 +311,7 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
       const held = mode === "open" || live.current.stream?.channelId !== channelId ? [] : live.current.stream.messages;
       const heldIds = new Set(held.map((message) => message.id));
       const anchor = mode === "open" ? null : live.current.stream?.listedNewest ?? null;
-      report.gap = mode === "refresh" && refreshLeavesGap(anchor ? [anchor] : [], top, result.value.has_more);
+      report.gap = mode === "refresh" && refreshLeavesGap(anchor ? [anchor] : [], top, result.value.has_more, result.value.oldest);
       report.incoming = mode === "refresh" ? top.filter((message) => !heldIds.has(message.id) && message.author_user_id !== meId).length : 0;
       report.newestId = newestOf(report.gap ? top : [...held, ...top])?.id ?? null;
     }
@@ -323,11 +323,11 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
         // A refresh that can't be joined to what is held replaces it (keeping anything newer than
         // the page, such as a message just sent) and offers the earlier messages instead.
         const anchor = mode === "open" ? null : base?.listedNewest ?? null;
-        const gap = mode === "refresh" && refreshLeavesGap(anchor ? [anchor] : [], top, page.has_more);
+        const gap = mode === "refresh" && refreshLeavesGap(anchor ? [anchor] : [], top, page.has_more, page.oldest);
         const pageNewest = newestOf(top);
         const kept = gap && pageNewest ? held.filter((message) => compareMessages(message, pageNewest) > 0) : held;
         const messages = mergeMessages(kept, top);
-        const listedNewest = mode === "older" ? anchor : gap ? pageNewest ?? null : newestOf([...(anchor ? [anchor] : []), ...top]) ?? null;
+        const listedNewest = mode === "older" ? anchor : gap ? pageNewest ?? anchor : newestOf([...(anchor ? [anchor] : []), ...top]) ?? null;
         return {
           channelId,
           status: "ready",
@@ -388,12 +388,12 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
         const held = mode === "open" ? [] : current.replies;
         // Same rule as the stream: a newest page that can't be joined to the held replies replaces them.
         const anchor = mode === "open" ? null : current.listedNewest ?? null;
-        const gap = mode === "refresh" && refreshLeavesGap(anchor ? [anchor] : [], page.replies, page.has_more);
+        const gap = mode === "refresh" && refreshLeavesGap(anchor ? [anchor] : [], page.replies, page.has_more, page.oldest);
         const pageNewest = newestOf(page.replies);
         const kept = gap && pageNewest ? held.filter((reply) => compareMessages(reply, pageNewest) > 0) : held;
         // Newest-first from the server; mergeMessages keeps them oldest → newest for reading.
         const replies = mergeMessages(kept, page.replies);
-        const listedNewest = mode === "older" ? anchor : gap ? pageNewest ?? null : newestOf([...(anchor ? [anchor] : []), ...page.replies]) ?? null;
+        const listedNewest = mode === "older" ? anchor : gap ? pageNewest ?? anchor : newestOf([...(anchor ? [anchor] : []), ...page.replies]) ?? null;
         return {
           channelId, rootId, status: "ready", root: page.root, replies, listedNewest,
           olderCursor: mode === "refresh" && !gap ? current.olderCursor ?? page.oldest ?? null : mode === "older" ? page.oldest ?? current.olderCursor ?? null : page.oldest ?? null,

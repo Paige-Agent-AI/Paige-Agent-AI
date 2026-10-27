@@ -82,11 +82,12 @@ export const PaigeAIChat = () => <p>Conversation is synthetic in this walkthroug
 
 // Synthetic public registry coverage only. This never registers or executes a skill.
 export function useSoloSkills() {
-  const state = useHarnessParams().get("state");
+  const params = useHarnessParams(), state = params.get("state");
   const skills = state === "empty" || state === "error" || state === "loading" ? [] : [
     { slug: "weekly_business_review", n: "Weekly Business Review", d: "Review the available business evidence and its gaps. This synthetic fixture grants no runtime access.", catalogueCoverage: { version: 1, state: "limited" } },
     { slug: "cohort_analysis", n: "Cohort Analysis Read", d: "Cohort comparisons need authoritative acquisition and retention evidence. These are synthetic catalogue inputs.", catalogueCoverage: { version: 1, state: "coming_soon" } },
     { slug: "monthly_qbr_draft", n: "Monthly Business Review Draft", d: "A filed review document and later retrieval require their own verified outcome.", catalogueCoverage: { version: 1, state: "unverified" } },
+    ...(params.get("email") === "1" ? [{ slug: "engagement_read", n: "Engagement Read", d: "Reviews original campaign email send counts and tracked open/click signals when permitted. Tracking excludes own-mail sends; image loads are not read receipts. Rates, retention, content and audience performance remain unavailable here. Customer verification is still owed.", catalogueCoverage: { version: 1, state: "unverified" } }] : []),
   ].map(row => ({ ...row, on: true }));
   return { skills, loading: state === "loading", error: state === "error" ? "Synthetic catalogue refusal" : null, empty: state === "empty", refresh: noop };
 }

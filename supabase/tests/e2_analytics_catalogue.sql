@@ -303,4 +303,6 @@ DO $$ BEGIN
 END $$;
 RESET ROLE;
 \echo 'PASS: disabled skills remain disabled and existing reader gains no write authority'
+-- Additive current consumer proof; every original catalogue control above remains.
+\ir e2_email_review_catalogue.sql
 ROLLBACK;

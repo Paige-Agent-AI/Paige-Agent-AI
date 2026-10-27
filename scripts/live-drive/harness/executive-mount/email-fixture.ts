@@ -6,7 +6,7 @@ export function withEmailFixture(snapshot: BusinessOperatingSnapshot, state: str
   const email: DomainSnapshot = {
     domain: 'email', owner: 'marketing', period: snapshot.period, as_of: snapshot.composed_at,
     freshness: 'live_read', coverage: 'partial',
-    coverage_note: 'Counts describe sends in this period. Opens and clicks were recorded since those sends; own-mail tracking is excluded. Image loads do not prove reading. No engagement rate, retention or revenue is inferred.',
+    coverage_note: 'Recorded sends in this period; not delivery confirmations. Later opens/clicks for these sends only. Own-mail tracking is excluded. Image loads do not prove reading. No rates, retention or revenue inferred.',
     headline: [
       { key: 'email.sent', label: 'Campaign emails sent', value: state === 'empty' ? 0 : 120, unit: 'count', basis: 'in_period' },
       { key: 'email.opened', label: 'Sent emails with a tracked open', value: state === 'empty' ? 0 : 38, unit: 'count', basis: 'point_in_time', window_note: 'For these sends, through this read. An image load is not a read receipt.' },

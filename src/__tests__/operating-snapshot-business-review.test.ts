@@ -649,8 +649,8 @@ describe('composeBusinessReview', () => {
     const f = fakeCaller({ scope: (n) => (n <= 3 ? TENANT : 'switched-workspace'), script: usdEverywhere });
     const r = await review(f);
     if (!('snapshot' in r)) throw new Error(r.reason);
-    // Existing four domains plus canonical Game Plan, Finance and Marketing.
-    expect(r.snapshot.budget.adapters_run).toBe(7);
+    // Existing four domains plus canonical Game Plan, Finance, Marketing and email.
+    expect(r.snapshot.budget.adapters_run).toBe(8);
     expect(f.issued().length).toBeGreaterThan(0);
     for (const d of r.snapshot.requested) expect(r.snapshot.domains[d].status).toBe('degraded');
     expect(r.snapshot.degradation.every((e) => e.reason === 'scope_changed')).toBe(true);
@@ -662,11 +662,11 @@ describe('composeBusinessReview', () => {
     // switching midway through newly mounted Marketing evidence.
     const settled = fakeCaller({ script: usdEverywhere }); await review(settled);
     const lastLookup = settled.calls.filter(c => c.name === 'current_user_tenant_id').length;
-    expect(settled.issued()).toHaveLength(20); // original14 + six Marketing reads
+    expect(settled.issued()).toHaveLength(23); // original14 + six intake and three email reads
     const f = fakeCaller({ scope: (n) => (n < lastLookup ? TENANT : 'switched-workspace'), script: usdEverywhere });
     const r = await review(f);
     if (!('snapshot' in r)) throw new Error(r.reason);
-    expect(f.issued()).toHaveLength(20);
+    expect(f.issued()).toHaveLength(23);
     expect(f.calls.filter((c) => c.name === 'current_user_tenant_id')).toHaveLength(lastLookup);
     for (const d of r.snapshot.requested) expect(r.snapshot.domains[d]).toEqual({ status: 'degraded', reason: 'scope_changed', data: null });
     expect(r.projection).not.toContain('USD 999.00');
@@ -683,11 +683,11 @@ describe('composeBusinessReview', () => {
   it('a workspace lookup that never answers after composing voids every domain', async () => {
     const settled = fakeCaller({ script: usdEverywhere }); await review(settled);
     const lastLookup = settled.calls.filter(c => c.name === 'current_user_tenant_id').length;
-    expect(settled.issued()).toHaveLength(20);
+    expect(settled.issued()).toHaveLength(23);
     const f = fakeCaller({ scopeHangs: (n) => n === lastLookup, script: usdEverywhere });
     const r = await composeBusinessReview(f.caller, WHO, { timezone: 'UTC' }, { now: NOW, timeoutMs: 500 });
     if (!('snapshot' in r)) throw new Error(r.reason);
-    expect(f.issued()).toHaveLength(20);
+    expect(f.issued()).toHaveLength(23);
     for (const d of r.snapshot.requested) expect(r.snapshot.domains[d]).toEqual({ status: 'degraded', reason: 'scope_changed', data: null });
     expect(r.projection).not.toContain('USD 999.00');
   }, 3000);

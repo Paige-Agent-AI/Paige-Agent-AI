@@ -1,0 +1,180 @@
+{
+  "channel": "development",
+  "source": "559b42fd9e9c7de2016eef6b741611cfdf38871b",
+  "scope": "Original report Card and Studio under explicit synthetic read port; separate from native SQL proof; no customer, backend, provider or model operation.",
+  "observations": [
+    {
+      "name": "1536-770-viewer",
+      "time": "2026-10-27T05:59:33.023Z",
+      "clientWidth": 1536,
+      "dialog": [
+        {
+          "client": 894,
+          "scroll": 894,
+          "width": 896
+        }
+      ],
+      "focus": "Print / Save as PDF",
+      "font": "Inter, system-ui, -apple-system, sans-serif",
+      "height": 770,
+      "scrollWidth": 1536,
+      "width": 1536
+    },
+    {
+      "name": "1536-770-closed",
+      "time": "2026-10-27T05:59:36.957Z",
+      "clientWidth": 1536,
+      "dialog": [],
+      "focus": "Open Recorded business review",
+      "font": "Inter, system-ui, -apple-system, sans-serif",
+      "height": 770,
+      "scrollWidth": 1536,
+      "width": 1536
+    },
+    {
+      "name": "1536-770-open",
+      "time": "2026-10-27T05:59:46.524Z",
+      "clientWidth": 1536,
+      "dialog": [],
+      "focus": "Synthetic message draft",
+      "font": "Inter, system-ui, -apple-system, sans-serif",
+      "height": 770,
+      "scrollWidth": 1536,
+      "width": 1536
+    },
+    {
+      "name": "1366-768-closed",
+      "time": "2026-10-27T05:59:46.924Z",
+      "clientWidth": 1366,
+      "dialog": [],
+      "focus": "Direct PAIGE",
+      "font": "Inter, system-ui, -apple-system, sans-serif",
+      "height": 768,
+      "scrollWidth": 1366,
+      "width": 1366
+    },
+    {
+      "name": "1366-768-open",
+      "time": "2026-10-27T05:59:47.339Z",
+      "clientWidth": 1366,
+      "dialog": [],
+      "focus": "Direct PAIGE",
+      "font": "Inter, system-ui, -apple-system, sans-serif",
+      "height": 768,
+      "scrollWidth": 1366,
+      "width": 1366
+    },
+    {
+      "name": "1024-768-closed",
+      "time": "2026-10-27T05:59:47.777Z",
+      "clientWidth": 1024,
+      "dialog": [],
+      "focus": "Direct PAIGE",
+      "font": "Inter, system-ui, -apple-system, sans-serif",
+      "height": 768,
+      "scrollWidth": 1024,
+      "width": 1024
+    },
+    {
+      "name": "1024-768-open",
+      "time": "2026-10-27T05:59:48.175Z",
+      "clientWidth": 1024,
+      "dialog": [],
+      "focus": "Direct PAIGE",
+      "font": "Inter, system-ui, -apple-system, sans-serif",
+      "height": 768,
+      "scrollWidth": 1024,
+      "width": 1024
+    },
+    {
+      "name": "900-1000-closed",
+      "time": "2026-10-27T05:59:55.291Z",
+      "clientWidth": 900,
+      "dialog": [],
+      "focus": "Direct PAIGE",
+      "font": "Inter, system-ui, -apple-system, sans-serif",
+      "height": 1000,
+      "scrollWidth": 900,
+      "width": 900
+    },
+    {
+      "name": "900-1000-open",
+      "time": "2026-10-27T05:59:55.700Z",
+      "clientWidth": 900,
+      "dialog": [],
+      "focus": "Direct PAIGE",
+      "font": "Inter, system-ui, -apple-system, sans-serif",
+      "height": 1000,
+      "scrollWidth": 900,
+      "width": 900
+    },
+    {
+      "name": "320-740-viewer",
+      "time": "2026-10-27T06:00:12.543Z",
+      "clientWidth": 320,
+      "dialog": [
+        {
+          "client": 302,
+          "scroll": 302,
+          "width": 304
+        }
+      ],
+      "focus": "Print / Save as PDF",
+      "font": "Inter, system-ui, -apple-system, sans-serif",
+      "height": 740,
+      "scrollWidth": 320,
+      "width": 320
+    },
+    {
+      "name": "320-740-page2",
+      "time": "2026-10-27T06:00:12.912Z",
+      "clientWidth": 320,
+      "dialog": [
+        {
+          "client": 302,
+          "scroll": 302,
+          "width": 304
+        }
+      ],
+      "focus": "!function(){try{var d=document.documentElement,c=d.classList;c.remove(",
+      "font": "Inter, system-ui, -apple-system, sans-serif",
+      "height": 740,
+      "scrollWidth": 320,
+      "width": 320
+    },
+    {
+      "name": "390-844-denied",
+      "time": "2026-10-27T06:00:40.409Z",
+      "clientWidth": 390,
+      "dialog": [
+        {
+          "client": 373,
+          "scroll": 373,
+          "width": 371.63330078125
+        }
+      ],
+      "focus": "Retry preview",
+      "font": "Inter, system-ui, -apple-system, sans-serif",
+      "height": 844,
+      "scrollWidth": 390,
+      "width": 390
+    },
+    {
+      "name": "390-844-denied-retry",
+      "time": "2026-10-27T06:00:54.367Z",
+      "clientWidth": 390,
+      "dialog": [
+        {
+          "client": 373,
+          "scroll": 373,
+          "width": 374.3999938964844
+        }
+      ],
+      "focus": "Recorded business reviewDocumentPreview unavailableThe document could ",
+      "font": "Inter, system-ui, -apple-system, sans-serif",
+      "height": 844,
+      "scrollWidth": 390,
+      "width": 390
+    }
+  ]
+}

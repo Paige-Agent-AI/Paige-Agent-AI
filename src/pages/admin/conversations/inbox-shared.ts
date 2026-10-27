@@ -453,12 +453,35 @@ export async function requestScheduledCancellation(messageId: string): Promise<b
 }
 
 export interface SendResult {
-  outcome: string;          // sent | queued | queued_scheduled | blocked_* | failed
+  outcome: string;          // sent | queued | queued_scheduled | blocked_* | outcome_unknown | failed
   reason: string | null;
   messageId: string | null;
   scheduledFor: string | null;
   deduped: boolean;
+  /** The email service may have taken it although its answer could not be read: never offer a resend. */
+  unconfirmed: boolean;
 }
+
+/**
+ * Experience 03: SendGrid has no idempotent replay, so an email whose answer was lost may already be in
+ * the client's inbox. send-message marks that send (outcome_unknown + unconfirmed) and its messages row
+ * (error = DELIVERY_UNCONFIRMED); every surface says so instead of "Failed — try again".
+ */
+export const DELIVERY_UNCONFIRMED = "delivery_unconfirmed";
+export const SEND_UNCONFIRMED_COPY = "We couldn't confirm it was sent — it may already be with them. Don't send it again until you've asked them.";
+/**
+ * Experience 03: a definite provider refusal is stored raw (`sendgrid_400: {"errors":[…]}`) for the audit
+ * trail. The owner sees what it means instead; any other stored error is already owner copy.
+ */
+export function ownerSendError(raw: string | null | undefined): string | null {
+  if (!raw) return null;
+  const m = /^(?:sendgrid|resend)_(\d{3})\b/i.exec(raw);
+  if (!m) return raw;
+  if (m[1] === "400" && /email|address|recipient/i.test(raw)) return "Not sent — that email address wasn't accepted. Check it and try again.";
+  return "Not sent — the email service turned it down.";
+}
+export const isUnconfirmedMessage = (m: { status?: string | null; error?: string | null }): boolean =>
+  m.status === "failed" && m.error === DELIVERY_UNCONFIRMED;
 
 /**
  * The ONE §37-aware parser of the send-message response. The TRUE disposition is
@@ -471,7 +494,7 @@ export interface SendResult {
 export function readSendResult(data: unknown): SendResult {
   const res = (data ?? {}) as {
     status?: string; outcome?: string; reason?: string;
-    message_id?: string; scheduled_for?: string; deduped?: boolean;
+    message_id?: string; scheduled_for?: string; deduped?: boolean; unconfirmed?: boolean;
   };
   const outcome = res.outcome ?? (
     res.status === "sent"    ? "sent" :
@@ -485,6 +508,7 @@ export function readSendResult(data: unknown): SendResult {
     messageId: res.message_id ?? null,
     scheduledFor: res.scheduled_for ?? null,
     deduped: res.deduped ?? false,
+    unconfirmed: res.unconfirmed === true || outcome === "outcome_unknown",
   };
 }
 

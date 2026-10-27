@@ -161,6 +161,7 @@ on:
       - "supabase/migrations/20271031000200_paige_email_sendgrid_receipts_and_history.sql"
       - "supabase/migrations/20271031000250_paige_email_sendgrid_sender_integrity.sql"
       - "supabase/tests/email_campaign_sendgrid_lane.sql"
+      - "supabase/tests/exp03_resend_retired.sql"
       - "supabase/tests/tenant_email_domain_normalization.sql"
       - "supabase/migrations/20271101042133_tenant_email_domains_normalize_domain.sql"
       - "supabase/functions/comms-email-command/**"
@@ -739,6 +740,12 @@ jobs:
       # all three claims and the address match (hard bounce and complaint suppress; blocked does not).
       - run: supabase test db supabase/tests/email_campaign_sendgrid_lane.sql
         if: ${{ !cancelled() }}
+      # EXP03 Resend retired (20271116200000): every 'resend'-labelled email goes out through SendGrid, so a
+      # Resend governed email of unknown outcome is never re-sent (no idempotent replay), PAIGE's managed
+      # sender freezes 'sendgrid', and SendGrid's events settle managed and Resend-connector campaigns under
+      # the same claims, address and suppression rules; Gmail-connector sends stay provider_mismatch.
+      - run: supabase test db supabase/tests/exp03_resend_retired.sql
+        if: ${{ !cancelled() }}
       # E09 K2: relevant retrieval — the asker re-resolved from the thread; authorized set first, candidates only
       # through the exact-chunk check, ranked by distance, five sources, eight passages within 4,800 characters
       # in index order; unrankable shares fill by recency; no embedding = the K1 read's documents, order and text; finance re-checked;
@@ -969,6 +976,10 @@ jobs:
       # re-key = reconnect (enabled restored), get_mcp_connections_v2.configured honest for url/none, and the
       # §51 per-tier write matrix + A1/A3 no-leak. Rides this replayed DB for the same §24 reason as above.
       - run: psql -v ON_ERROR_STOP=1 -f supabase/tests/mcp_gateway_connection_create.sql postgresql://postgres:postgres@127.0.0.1:54322/postgres
+      # EXP10 PR15: the tenant's own connection list carries the probe's CLOSED error code —
+      # verbatim (A), always closed-shaped (B), prose refused at the write (C), foreign-tenant
+      # clean (D). Rides this replayed DB for the same §24 reason as above.
+      - run: psql -v ON_ERROR_STOP=1 -f supabase/tests/mcp_connection_error_code_readback.sql postgresql://postgres:postgres@127.0.0.1:54322/postgres
       # Connected MCP Gateway — Slice ② foundation (migration 20270332000000): the OAuth-state store
       # (begin/consume single-use + encrypted verifier + expiry + §9 cross-tenant refusal), INT-152
       # (config_generation trigger bump on endpoint/credential/status-reset — never on a probe result;

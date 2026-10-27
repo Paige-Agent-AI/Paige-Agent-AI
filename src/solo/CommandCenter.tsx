@@ -145,7 +145,7 @@ const CommandHub = ({ account, accountContext, openPaige }: { account?: string |
       <div style={{ flex: 1, minHeight: 0, minWidth: 0, overflow: "hidden" }}>
         {effectiveTab === "exec" ? (
           <div role="tabpanel" id="command-panel-exec" aria-labelledby="command-tab-exec" style={{ height: "100%", overflow: "hidden" }}>
-            <ExecutiveOverview key={activeTenantId ?? "unresolved"} account={account} accountEpoch={activeTenantId} accountName={accountContext?.accountName} openPaige={openPaige} />
+            <ExecutiveOverview key={`${activeUserId ?? 'unresolved'}:${activeTenantId ?? 'unresolved'}`} account={account} accountEpoch={activeTenantId} actorId={activeUserId} accountName={accountContext?.accountName} openPaige={openPaige} />
           </div>
         ) : effectiveTab === "plan" ? (
           <div role="tabpanel" id="command-panel-plan" aria-labelledby="command-tab-plan" style={{ height: "100%", display: "flex", flexDirection: "column", minHeight: 0 }}>

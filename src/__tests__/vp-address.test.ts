@@ -1,10 +1,12 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest';
+import { readFileSync } from 'node:fs';
 import {
   VP_ROSTER,
   buildVpAddressBlock,
   detectVpAddress,
 } from '../../supabase/functions/_shared/paige-context/vp-address.ts';
+import { resolveRoleToolScope } from '../../supabase/functions/_shared/studio-scope.ts';
 import { looksLikeFinanceAgent } from '../../supabase/functions/_shared/finance-gate.ts';
 
 describe('detectVpAddress — the roster\'s addressing rule', () => {
@@ -109,5 +111,62 @@ describe('buildVpAddressBlock — identity firm, authority stated once', () => {
     const block = buildVpAddressBlock(a, 'T');
     expect(block).toContain("no action's authority changes because a name was said");
     expect(block).not.toContain('you are still one Paige');
+  });
+});
+
+// EXP08 Team Hub agents A1a (owner, 2026-10-27): MERIT and NEXUS follow the binding 23 Oct 2026 roster
+// standard, here and on their platform rows (migration 20271117010108), and say the same thing in both.
+describe("the 23 Oct roster standard: MERIT is Sales & getting paid, NEXUS is Marketing & growth", () => {
+  const migration = readFileSync("supabase/migrations/20271117010108_exp08_team_hub_agents_roster.sql", "utf8");
+  const vp = (slug: string) => VP_ROSTER.find((v) => v.slug === slug)!;
+  it("MERIT owns sales, proposals, agreements and getting paid, and is not a finance specialist", () => {
+    expect(vp("merit").role).toBe("VP Sales & Getting Paid");
+    expect(vp("merit").scope).toMatch(/proposals, agreements/);
+    expect(vp("merit").scope).not.toMatch(/dunning|hiring|comp\b|Money spine/);
+    expect(looksLikeFinanceAgent({ domain: "sales_getting_paid", name: "MERIT", description: vp("merit").scope })).toBe(false);
+    expect(migration).toContain("role = 'VP Sales & Getting Paid'");
+  });
+  it("NEXUS owns marketing and campaigns; sales sequences and the pipeline are MERIT's", () => {
+    expect(vp("nexus").role).toBe("VP Marketing & Growth");
+    expect(vp("nexus").scope).not.toMatch(/sales sequences|pipeline management|lead scoring/);
+    expect(migration).toContain("role = 'VP Marketing & Growth'");
+  });
+  it("the other four remits are unchanged by A1a", () => {
+    expect(VP_ROSTER.map((v) => [v.slug, v.role])).toEqual([
+      ["vera", "VP Intelligence, Finance & Risk"], ["nexus", "VP Marketing & Growth"], ["cura", "VP Client Success"],
+      ["mentor", "VP Discovery, Education & Strategy"], ["merit", "VP Sales & Getting Paid"], ["zion", "VP Operations & Automation"]]);
+  });
+});
+
+// A1a: the scopes the roster migration stores are read by the platform's one role-scope reader
+// (resolveRoleToolScope), so A1b needs no second parser; the channel allowlist carries no private read.
+describe("the roster migration's Team Hub scopes are valid for the one scope reader", () => {
+  const sql = readFileSync("supabase/migrations/20271117010108_exp08_team_hub_agents_roster.sql", "utf8");
+  const rows = [...sql.matchAll(/\('(\w+)', \$j\$(.+?)\$j\$::jsonb, \$j\$(.+?)\$j\$::jsonb, \$j\$(.+?)\$j\$::jsonb\)/g)]
+    .map((m) => ({ slug: m[1], personality: JSON.parse(m[2]), teamHubTools: JSON.parse(m[3]), scope: JSON.parse(m[4]) }));
+  const PRIVATE = ["team_hub_conversations", "team_hub_search", "crm_search_contacts", "crm_list_team", "list_subagents",
+    "web_search", "web_fetch", "get_business_snapshot", "read_business_metric", "read_calendar_agenda", "crm_list_deals"];
+  it("covers exactly the six specialists", () => {
+    expect(rows.map((r) => r.slug)).toEqual(["vera", "nexus", "cura", "mentor", "merit", "zion"]);
+  });
+  it("each DM scope and each channel allowlist reads as a valid allowlist", () => {
+    for (const r of rows) {
+      expect(resolveRoleToolScope({ capability_scope: r.scope }).valid).toBe(true);
+      expect(resolveRoleToolScope({ capability_scope: r.teamHubTools }).valid).toBe(true);
+    }
+  });
+  it("the channel allowlist is the same §6 list for every agent and names no private read", () => {
+    for (const r of rows) {
+      expect(r.teamHubTools.tools).toEqual(["team_hub_read_conversation", "read_business_time_zone", "ask_choices",
+        "capability_status", "marketplace_browse", "list_event_kinds", "team_hub_answer_privately"]);
+      expect(r.teamHubTools.tools.some((t: string) => PRIVATE.includes(t))).toBe(false);
+    }
+  });
+  it("each personality is presentation only and carries no finance-default wording outside MERIT's own getting-paid remit", () => {
+    for (const r of rows) {
+      expect(Object.keys(r.personality).sort()).toEqual(["energy", "formality", "house_words", "humour", "intro", "length",
+        "never_does", "role_line", "shared_rules", "short_role", "sounds_like", "things_to_avoid", "version", "warmth"]);
+      expect(JSON.stringify(r.personality)).not.toMatch(/credit|funding|loan|lend|financing|collections/i);
+    }
   });
 });

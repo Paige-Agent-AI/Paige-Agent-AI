@@ -119,10 +119,11 @@ const input = (over: Partial<Parameters<typeof fileLeadReply>[1]> = {}) => ({
   answers: [{ label: "What do you need?", value: "A strategy session" }, { label: "Budget", value: "$2,000" }],
   visitorName: "Rae Lead", now: NOW, ...over,
 });
-// The email door's environment and pre-send check, faked: Resend configured, recipient clear.
+// The email door's environment and pre-send check, faked: the platform SendGrid Mail Send key configured
+// (Experience 03: a "resend" sender now sends through SendGrid, so that key is what configures it), recipient clear.
 type PreSend = { proceed: boolean; outcome: string };
 const deps = (over: { env?: Record<string, string>; preSend?: PreSend | (() => Promise<PreSend>) } = {}): LeadReplyDeps & { preSendCalls: unknown[] } => {
-  const env = over.env ?? { RESEND_API_KEY: "set" };
+  const env = over.env ?? { SENDGRID_MAIL_SEND_API_KEY: "set" };
   const preSendCalls: unknown[] = [];
   return {
     env: (k: string) => env[k],
@@ -590,7 +591,7 @@ test("the step is planned after the intake steps, from the form row and the clai
 function loadExecutors(collab: { fileLeadReply: unknown; runPreSend?: unknown; env?: Record<string, string> }, identity: Row = {}) {
   const body = processor.slice(processor.indexOf("async function runExecutor("), processor.indexOf("// -- A form's alert address"));
   const js = ts.transpileModule(body, { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText;
-  const env = collab.env ?? { RESEND_API_KEY: "set" };
+  const env = collab.env ?? { SENDGRID_MAIL_SEND_API_KEY: "set" };
   return new Function("s", "extractIdentity", "labelledAnswers", "fileLeadReply", "LEAD_REPLY_ACTION_KIND", "leadReplyEnabled", "runPreSend", "Deno", `${js};return runExecutor;`)(
     (v: unknown) => (typeof v === "string" && v.trim() ? v.trim() : null),
     () => ({ firstName: "Rae", lastName: "Lead", email: "rae@visitor.test", ...identity }),
@@ -621,7 +622,7 @@ test("the synthesized step hands the claimed business, the intake's contact and 
     answers: [{ label: "from", value: "SCHEMA" }], visitorName: "Rae Lead",
   });
   const d = calls[0][2] as LeadReplyDeps;
-  assert.equal(d.env("RESEND_API_KEY"), "set");
+  assert.equal(d.env("SENDGRID_MAIL_SEND_API_KEY"), "set");
   assert.equal(typeof d.preSendCheck, "function");
 });
 

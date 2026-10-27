@@ -47,6 +47,7 @@ import {
   type TeamHubMessage,
   type TeamHubPerson,
   fileKind,
+  isAgentAuthored,
   fileRefusalMessage,
   fileSizeLabel,
   isImageMime,
@@ -765,7 +766,8 @@ function ReadyHub({ hub, announce, announcement, onOpenTeamSettings, openPaige }
         {(thread.status === "not_found" || thread.status === "unavailable") && <p className="th-note th-note--pad">
           {thread.status === "not_found" ? "This thread isn't available to you." : "This thread couldn't load. Close it and try again."}</p>}
         {thread.status === "ready" && thread.root && <>
-          <MessageRow message={thread.root} people={people} meId={meId} taskReads={hub.taskReads} />
+          {/* EXP08 agents A1a: an agent's message is not rendered until A1b gives it its own author. */}
+          {!isAgentAuthored(thread.root) && <MessageRow message={thread.root} people={people} meId={meId} taskReads={hub.taskReads} />}
           {/* A separator's own text is not read out, so its words are its accessible name too. */}
           <Separator className="th-day" label={thread.root.reply_count === 1 ? "1 reply" : `${thread.root.reply_count} replies`} />
           {thread.hasMore && <div className="th-older">
@@ -773,7 +775,7 @@ function ReadyHub({ hub, announce, announcement, onOpenTeamSettings, openPaige }
               onClick={() => void hub.loadEarlierReplies()}>{thread.loadingOlder ? "Loading earlier replies…" : "Show earlier replies"}</button>
             {thread.olderFailed && <p className="th-error" role="alert">Earlier replies couldn't load. Try again.</p>}
           </div>}
-          {thread.replies.map((reply) => <MessageRow key={reply.id} message={reply} people={people} meId={meId} taskReads={hub.taskReads} />)}
+          {thread.replies.filter((reply) => !isAgentAuthored(reply)).map((reply) => <MessageRow key={reply.id} message={reply} people={people} meId={meId} taskReads={hub.taskReads} />)}
           {pendingReplies.map((item) => <PendingRow key={item.localId} item={item} me={me} online={hub.online}
             onRetry={() => void retry(item)} onDiscard={() => { hub.discard(item.localId); announce("Unsent reply deleted"); window.requestAnimationFrame(() => threadComposerRef.current?.focus()); }} />)}
         </>}
@@ -1171,7 +1173,7 @@ function Stream({ hub, people, meId, title, kind, pending, onRetry, onDiscard, o
       <p className="th-empty-title">{kind === "dm" ? `This is the start of your conversation with ${title}.` : `No messages in #${title} yet.`}</p>
       <p>Say hello to start the conversation.</p>
     </div>}
-    {stream.messages.map((message) => {
+    {stream.messages.filter((message) => !isAgentAuthored(message)).map((message) => {
       const day = dayKey(message.created_at);
       const separator = day !== lastDay ? <Separator className="th-day" label={dayLabel(message.created_at)} /> : null;
       lastDay = day;

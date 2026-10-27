@@ -8,8 +8,8 @@
 //
 // Honesty (§13): `provider_accepted` means the email provider took the message. It is never
 // "delivered", "opened" or "read". Anything the database cannot confirm is `outcome_unknown`, and
-// an unknown send is reconciled under the SAME operation and provider idempotency key — never
-// retried as a new operation.
+// an unknown send is never retried as a new operation and never re-sent: it stays unknown for a
+// person to review (SendGrid, Gmail and SMTP have no idempotent replay; see reconcileCommsEmailSend).
 import { COMMS_EMAIL_ACTION, UUID, commsEmailBodyHtml, commsEmailContentDigest, parseCommsEmailCommand, type CommsEmailCommand } from "./contract.ts";
 import type { CommsEmailParties, CommsEmailReadiness } from "./readiness.ts";
 
@@ -164,34 +164,23 @@ export async function executeCommsEmailSend(input: CommsEmailExecutorInput, d: C
 }
 
 /**
- * Settle an operation whose provider outcome is unknown (or whose dispatch went stale). Only a
- * Resend operation inside its idempotency window is re-entered — send-message re-sends the SAME
- * prepared row under the SAME `comms-email:<operation>` key, so the provider returns the original
- * acceptance instead of sending twice. Everything else stays unknown for a person to review.
+ * Settle an operation whose provider outcome is unknown (or whose dispatch went stale). NOTHING IS EVER
+ * RE-SENT. A reconcile used to re-send a Resend operation under its `comms-email:<operation>`
+ * Idempotency-Key, which made the second request safe; every email now goes through SendGrid (Experience
+ * 03), Gmail or SMTP, and none of them has an idempotent replay, so re-POSTing an email the provider may
+ * already have accepted could deliver it twice. A recorded outcome is replayed; anything else stays
+ * unknown for a person to review (for SendGrid, the provider's own event may still settle it).
+ * The dependencies keep their shape for callers; `send` is deliberately never called here.
  */
-export async function reconcileCommsEmailSend(operationId: string, tenantId: string, d: Pick<CommsEmailExecutorDependencies, "readResult" | "readBinding" | "send" | "stillCurrent">): Promise<ObjectValue> {
-  const stuck = (reconcilable: boolean) => ({ ok: false, outcome: "outcome_unknown", operation_id: operationId, code: COMMS_EMAIL_RECONCILIATION_CODE, reconcilable, delivery_confirmed: false });
+export async function reconcileCommsEmailSend(operationId: string, _tenantId: string, d: Pick<CommsEmailExecutorDependencies, "readResult" | "readBinding" | "send" | "stillCurrent">): Promise<ObjectValue> {
+  const stuck = () => ({ ok: false, outcome: "outcome_unknown", operation_id: operationId, code: COMMS_EMAIL_RECONCILIATION_CODE, reconcilable: false, delivery_confirmed: false });
   try {
-    if (!UUID.test(operationId)) return stuck(false);
+    if (!UUID.test(operationId)) return stuck();
     const result = object(await d.readResult(operationId));
-    if (!result) return stuck(false);
+    if (!result) return stuck();
     if (TERMINAL.has(String(result.outcome))) return commsEmailSafeResult(result, { replayed: true });
-    if (result.reconcilable !== true || result.provider !== "resend" || typeof result.message_id !== "string" || !UUID.test(result.message_id)) return stuck(false);
-    const b = object(await d.readBinding(result.message_id));
-    if (!b || b.operation_id !== operationId || b.tenant_id !== tenantId || b.message_id !== result.message_id
-      || typeof b.recipient !== "string" || typeof b.contact_id !== "string" || typeof b.connector_id !== "string"
-      || typeof b.subject !== "string" || typeof b.body_html !== "string") return stuck(false);
-    if (!await d.stillCurrent()) return stuck(true);
-    try {
-      await d.send({
-        channel: "email", to: b.recipient, contact_id: b.contact_id, connector_id: b.connector_id, message_id: b.message_id,
-        subject: b.subject, body: b.body_html, comms_email_operation_id: operationId, comms_email_reconcile: true,
-        idempotency_key: `comms-email:${operationId}`,
-      });
-    } catch { /* settled by the readback */ }
-    const after = object(await d.readResult(operationId));
-    return after && TERMINAL.has(String(after.outcome)) ? commsEmailSafeResult(after, { reconciled: true }) : stuck(after?.reconcilable === true);
+    return stuck();
   } catch {
-    return stuck(false);
+    return stuck();
   }
 }

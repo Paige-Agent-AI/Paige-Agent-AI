@@ -1,0 +1,15 @@
+{
+  "producer": "Original businessReviewRecordLinks, executed in Node; synthetic snapshot, not actual authority proof",
+  "producerSha256": "e4164766fec3ab15190c38ebde0fc480fe9f3afd469faafcfbaf9c2cb70d7fb9",
+  "available": [
+    {
+      "destination": "executive",
+      "record_id": null
+    },
+    {
+      "destination": "marketing",
+      "record_id": null
+    }
+  ],
+  "denied": []
+}

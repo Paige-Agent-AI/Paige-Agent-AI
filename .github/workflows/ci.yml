@@ -77,6 +77,8 @@ jobs:
           supabase/functions/_shared/team-hub-file-type.test.ts
           supabase/functions/_shared/team-hub/chat.test.ts
           supabase/functions/_shared/team-hub/chat-wiring.test.ts
+          supabase/functions/_shared/team-hub/agent-turn.test.ts
+          supabase/functions/_shared/team-hub/agent-turn-wiring.test.ts
           supabase/functions/_shared/team-hub/file-sweep.test.ts
           supabase/functions/_shared/team-lifecycle/chat.test.ts
           supabase/functions/_shared/team-lifecycle/chat-wiring.test.ts

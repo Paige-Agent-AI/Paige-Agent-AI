@@ -4575,3 +4575,18 @@ Actual request Deno check is now clean; legacy Core retains exactly its original
 diagnostics. Lint passes. No Root/risk/registry/C0b, permission, provider, activation
 or customer operation. This refinement remains LOCAL/UNREGISTERED, awaiting the
 actual shared-source handback; all19/nine/ALG/customer/founder obligations remain.
+
+## EXP02 actual shared-source receiving — October27 UTC, still local
+
+E05 ANT161/a6dc3aba/883f returns current-main integration without indirectly
+shipping its held #2961 admission. Local7b2aa1459/treec88f2f3e composes actual5ec
+and retains all7 executed source/test blobs,16,669 outside incoming entries and
+whole incoming README/Systems-evidence inverses. Root/risk/registry/C0b remain
+byte-exact main; no idle source lease. Fresh locked255/three suites PASS; actual
+request Deno clean/legacy3 identical. Static dependency size is not runtime proof.
+The original request consumer remains LOCAL/UNREGISTERED/UNPUSHED, not activated
+or a separate orphaned capability release. Current native intent/authority,
+bounded host lifetime, original Work/run/findings/Rail and customer recovery still
+need the cohesive governed integration. Full19/nine/ALG/CAP, historical9-0 plus
+12-0-4, monthlyUNKNOWNUNRETRIED and one founder evaluation remain open. Details:
+[original Systems evidence](../evidence/e2-systems-capture-mode.md#october27-0355-utc--actual-shared-source-receiving-local-consumer-preserved).

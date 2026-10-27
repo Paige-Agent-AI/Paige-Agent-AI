@@ -52,16 +52,15 @@ it('returns focus after explicit version adoption while preserving exact invoice
  expect(changed).toHaveBeenCalledOnce();expect(saved).not.toHaveBeenCalled();expect(reviewed).not.toHaveBeenCalled();
  expect(host.textContent).toContain('$3,500.00');expect(host.textContent).toContain('$500.00');
 });
-it('keeps original source facts in review and focuses the heading only when changing review mode',()=>{
+it('keeps source facts in review without adding a competing parent navigation handler',()=>{
  const value={...initial,client_id:'client-a',commercial_terms_reference:{id:'terms-a',version:1}};
  const commercialTerms=[{id:'terms-a',clientId:'client-a',title:'Recorded plan',version:1,status:'active',termsCurrent:true,sourceAmount:{minor:30000,currency:'usd',basis:'per_installment' as const}}];
  act(()=>root.unmount());root=createRoot(host);act(()=>root.render(<Fixture value={value} commercialTerms={commercialTerms}/>));
  const note=label('Invoice note');note.focus();
  act(()=>root.render(<Fixture value={value} commercialTerms={commercialTerms}/>));expect(document.activeElement).toBe(note);
  act(()=>root.render(<Fixture value={value} commercialTerms={commercialTerms} review/>));
- expect(document.activeElement).toBe(host.querySelector('h2'));expect(document.activeElement?.textContent).toBe('Review invoice');
  expect(host.querySelector('[aria-label="Selected commercial source amount"]')?.textContent).toContain('Amount per installment');
  expect(host.textContent).toContain('original payment plan for the full engagement amount');
  act(()=>root.render(<Fixture value={value} commercialTerms={commercialTerms}/>));
- expect(document.activeElement?.textContent).toBe('Create invoice');expect(last).toEqual(value);expect(changed).not.toHaveBeenCalled();
+ expect(last).toEqual(value);expect(changed).not.toHaveBeenCalled();
 });

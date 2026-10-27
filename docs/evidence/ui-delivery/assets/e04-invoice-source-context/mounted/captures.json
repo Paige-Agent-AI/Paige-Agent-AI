@@ -1,0 +1,328 @@
+{
+  "note": "CSS viewport is measured from the DOM. Original JPEG dimensions differ by at most one pixel; both dimensions are retained, pixels unchanged. Locator-focus baseline images are withdrawn and not included as required-view evidence.",
+  "captures": [
+    {
+      "file": "1024x768-closed-light-native.jpg",
+      "format": "jpeg",
+      "cssViewport": {
+        "width": 1024,
+        "height": 768
+      },
+      "image": {
+        "width": 1024,
+        "height": 768
+      },
+      "deltaPixels": {
+        "width": 0,
+        "height": 0
+      },
+      "bytes": 71184,
+      "sha256": "71a8a40eb4283b96b0d7f517257b326bcc317ece6b193810d3bf5c4ed7013cb9",
+      "scope": "original shell/Sales/invoice, controlled providers; conversation/voice/backend unmounted; not customer acceptance"
+    },
+    {
+      "file": "1024x768-open-light-native.jpg",
+      "format": "jpeg",
+      "cssViewport": {
+        "width": 1024,
+        "height": 768
+      },
+      "image": {
+        "width": 1024,
+        "height": 768
+      },
+      "deltaPixels": {
+        "width": 0,
+        "height": 0
+      },
+      "bytes": 40328,
+      "sha256": "569f05649b10a07228714edffe07de29372e3f9ee0df9162e7975a76d8965b45",
+      "scope": "original shell/Sales/invoice, controlled providers; conversation/voice/backend unmounted; not customer acceptance"
+    },
+    {
+      "file": "1366x768-closed-dark-native.jpg",
+      "format": "jpeg",
+      "cssViewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "image": {
+        "width": 1366,
+        "height": 768
+      },
+      "deltaPixels": {
+        "width": 0,
+        "height": 0
+      },
+      "bytes": 75078,
+      "sha256": "f5688960a8f6639293f03e46ce7ebd37b217962b8acea549ab049664765a9401",
+      "scope": "original shell/Sales/invoice, controlled providers; conversation/voice/backend unmounted; not customer acceptance"
+    },
+    {
+      "file": "1366x768-closed-light-native.jpg",
+      "format": "jpeg",
+      "cssViewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "image": {
+        "width": 1366,
+        "height": 768
+      },
+      "deltaPixels": {
+        "width": 0,
+        "height": 0
+      },
+      "bytes": 76815,
+      "sha256": "6c5ef94ede3ef19a3abf80dfe4c4e474eee2a05c71c54f4917b0e4e57d35ad5c",
+      "scope": "original shell/Sales/invoice, controlled providers; conversation/voice/backend unmounted; not customer acceptance"
+    },
+    {
+      "file": "1366x768-open-dark-native.jpg",
+      "format": "jpeg",
+      "cssViewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "image": {
+        "width": 1366,
+        "height": 768
+      },
+      "deltaPixels": {
+        "width": 0,
+        "height": 0
+      },
+      "bytes": 83187,
+      "sha256": "c530ab23a9e7fd991c5d4406228808f794c106c46aaa262d000ede2f9fadfdad",
+      "scope": "original shell/Sales/invoice, controlled providers; conversation/voice/backend unmounted; not customer acceptance"
+    },
+    {
+      "file": "1366x768-open-light-native.jpg",
+      "format": "jpeg",
+      "cssViewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "image": {
+        "width": 1366,
+        "height": 768
+      },
+      "deltaPixels": {
+        "width": 0,
+        "height": 0
+      },
+      "bytes": 84693,
+      "sha256": "d9a25ee73732dbecd424f74b1390e6f08ddfe1eabc5247b6f03213f8cf2e2755",
+      "scope": "original shell/Sales/invoice, controlled providers; conversation/voice/backend unmounted; not customer acceptance"
+    },
+    {
+      "file": "1536x770-closed-light-native.jpg",
+      "format": "jpeg",
+      "cssViewport": {
+        "width": 1536,
+        "height": 770
+      },
+      "image": {
+        "width": 1535,
+        "height": 770
+      },
+      "deltaPixels": {
+        "width": -1,
+        "height": 0
+      },
+      "bytes": 83538,
+      "sha256": "c03aba61495eae5a5e67300b6e9d79d3ca2cf2991120d90573e53b009a9e403b",
+      "scope": "original shell/Sales/invoice, controlled providers; conversation/voice/backend unmounted; not customer acceptance"
+    },
+    {
+      "file": "1536x770-open-light-native.jpg",
+      "format": "jpeg",
+      "cssViewport": {
+        "width": 1536,
+        "height": 770
+      },
+      "image": {
+        "width": 1535,
+        "height": 770
+      },
+      "deltaPixels": {
+        "width": -1,
+        "height": 0
+      },
+      "bytes": 87369,
+      "sha256": "32596d9669866b9219940d8ce02d3473abba94179f681ef5e05d7a7f13e2a73c",
+      "scope": "original shell/Sales/invoice, controlled providers; conversation/voice/backend unmounted; not customer acceptance"
+    },
+    {
+      "file": "390x844-closed-dark-native.jpg",
+      "format": "jpeg",
+      "cssViewport": {
+        "width": 390,
+        "height": 844
+      },
+      "image": {
+        "width": 390,
+        "height": 843
+      },
+      "deltaPixels": {
+        "width": 0,
+        "height": -1
+      },
+      "bytes": 44730,
+      "sha256": "c722a9ef5a34bca873d4c70747ca0073c3a3a666bfb3abc639139c513207beaf",
+      "scope": "original shell/Sales/invoice, controlled providers; conversation/voice/backend unmounted; not customer acceptance"
+    },
+    {
+      "file": "390x844-open-dark-native.jpg",
+      "format": "jpeg",
+      "cssViewport": {
+        "width": 390,
+        "height": 844
+      },
+      "image": {
+        "width": 390,
+        "height": 843
+      },
+      "deltaPixels": {
+        "width": 0,
+        "height": -1
+      },
+      "bytes": 20074,
+      "sha256": "aee3cf9567916cba60120004332ffb31af6bd28a6b27f2b0518d11d6e61c2bd2",
+      "scope": "original shell/Sales/invoice, controlled providers; conversation/voice/backend unmounted; not customer acceptance"
+    },
+    {
+      "file": "900x1000-closed-light-native.jpg",
+      "format": "jpeg",
+      "cssViewport": {
+        "width": 900,
+        "height": 1000
+      },
+      "image": {
+        "width": 900,
+        "height": 1000
+      },
+      "deltaPixels": {
+        "width": 0,
+        "height": 0
+      },
+      "bytes": 81263,
+      "sha256": "36ab6e0e16de368b021a08059f116d7e29d624a1a7c99482f70b64a75daed0ce",
+      "scope": "original shell/Sales/invoice, controlled providers; conversation/voice/backend unmounted; not customer acceptance"
+    },
+    {
+      "file": "900x1000-open-light-native.jpg",
+      "format": "jpeg",
+      "cssViewport": {
+        "width": 900,
+        "height": 1000
+      },
+      "image": {
+        "width": 900,
+        "height": 1000
+      },
+      "deltaPixels": {
+        "width": 0,
+        "height": 0
+      },
+      "bytes": 43337,
+      "sha256": "8fe847495921fd4a670c511ad10a5aa5d9fc01ec3ba81e2ac64650571c373f18",
+      "scope": "original shell/Sales/invoice, controlled providers; conversation/voice/backend unmounted; not customer acceptance"
+    },
+    {
+      "file": "390x844-dirty-guard-dark.jpg",
+      "format": "jpeg",
+      "cssViewport": {
+        "width": 390,
+        "height": 844
+      },
+      "image": {
+        "width": 390,
+        "height": 843
+      },
+      "deltaPixels": {
+        "width": 0,
+        "height": -1
+      },
+      "bytes": 18348,
+      "sha256": "b64cf12a24493a88c2545ba8284c6630ae5c2f0bd5b9193eed73e934a4ffba1e",
+      "scope": "original shell/Sales/invoice, controlled providers; conversation/voice/backend unmounted; not customer acceptance"
+    },
+    {
+      "file": "390x844-review-baseline-dark.jpg",
+      "format": "jpeg",
+      "cssViewport": {
+        "width": 390,
+        "height": 844
+      },
+      "image": {
+        "width": 390,
+        "height": 843
+      },
+      "deltaPixels": {
+        "width": 0,
+        "height": -1
+      },
+      "bytes": 41242,
+      "sha256": "159c580e115b9beca1dfa587b54c22bdbcdf58a22c3aecb2ddd44133dadeae3c",
+      "scope": "retained original review failure"
+    },
+    {
+      "file": "390x844-review-scroll-proposal-dark.jpg",
+      "format": "jpeg",
+      "cssViewport": {
+        "width": 390,
+        "height": 844
+      },
+      "image": {
+        "width": 390,
+        "height": 843
+      },
+      "deltaPixels": {
+        "width": 0,
+        "height": -1
+      },
+      "bytes": 42401,
+      "sha256": "8eaa6c7224fbb26a45c1cdd46a25918253337e21c711377e3b85fd1f785d30e9",
+      "scope": "private scroll proposal"
+    },
+    {
+      "file": "390x844-review-repaired-actual-dark.jpg",
+      "format": "jpeg",
+      "cssViewport": {
+        "width": 390,
+        "height": 844
+      },
+      "image": {
+        "width": 390,
+        "height": 843
+      },
+      "deltaPixels": {
+        "width": 0,
+        "height": -1
+      },
+      "bytes": 41848,
+      "sha256": "04883d06e5433891f2157161eeb40b31387ca40b8713f45c47a49db8b47e239c",
+      "scope": "original shell/Sales/invoice, controlled providers; conversation/voice/backend unmounted; not customer acceptance"
+    },
+    {
+      "file": "390x844-save-intercepted-dark.jpg",
+      "format": "jpeg",
+      "cssViewport": {
+        "width": 390,
+        "height": 844
+      },
+      "image": {
+        "width": 390,
+        "height": 843
+      },
+      "deltaPixels": {
+        "width": 0,
+        "height": -1
+      },
+      "bytes": 28309,
+      "sha256": "5e5f74d63b8d5c3914c129e9dd9ebbca26204778d63f1eb0b2b02019481fa6c4",
+      "scope": "original shell/Sales/invoice, controlled providers; conversation/voice/backend unmounted; not customer acceptance"
+    }
+  ]
+}

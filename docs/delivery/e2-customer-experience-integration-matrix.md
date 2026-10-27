@@ -1,5 +1,36 @@
 # Experience 02 — Customer Experience Integration Matrix
 
+## October27 08:00UTC — original report status released, thumbnail receiving
+
+#2973 merged6c448b6c5f5b536d6793dc11d0663ecb26906000 after reviewed74d/LOWER5663415846,
+all13 checks/two web statuses SUCCESS. Production dpl_68nGSfYoZhDZXGWCJovzB14c9NXy
+READY; both public origins exact6c448b6c-mvqe6fpy at07:59:15UTC. Native17140002
+once/expected source/original OID/ABI/ACL/permission metadata retained. Source
+release is not authenticated report creation/reload, weekly recovery or Finance QA.
+Original9-0/supplement12-0-4/monthlyUNKNOWNUNRETRIED/all19/nine/ALG/CAP boundaries
+remain intact; Founder NOT_ACCEPTED. Original Master/Brain record this release.
+
+The distinct#2974 thumbnail repair receives that ACTUAL released main and complete
+incoming histories. Its three tested UI blobs/eighteen render inputs/thirteen
+raw frames remain exact; fresh9 original control tests pass after a prior invalid
+collection attempt. This UI change still needs its new exact-head review/CI and
+production readback. Its earlier local wording below is retained as history:
+the report source is now an incoming release, not an adopted held candidate.
+
+## October27 — original report thumbnail native control repair, local increment
+
+O01/O14/O16 original Card markup preserves its original preview/Open/view/return
+while removing invalid nested native buttons. Source0e6a72cc on actualccce,
+15/3 controlled checks/lint0/build PASS; Visual13 actual-source synthetic frames,
+same80×96 geometry/product font/narrow/theme and original draft return. Current
+compiler6 incumbent errors identical to prior6; no baseline change. Functional
+LOCAL/Visualsynthetic/Experientialbounded/FounderNOT_ACCEPTED; hosted review/CI/
+release/readback, ordinary roles/cohorts/reload/Chat-Live/Finance/native zoom/full
+AT and full19/nine remain owed. No native/grant/provider/action/catalogue/ALG
+delta, no held2973 source adopted, original outcome definitions and historical
+9PASS0FAIL+12PASS0FAIL4BLOCKED/monthlyUNKNOWNUNRETRIED unchanged.
+[Bounded evidence](../evidence/ui-delivery/e2-report-thumbnail-accessibility.md).
+
 ## October27 — original report observation compatibility, local increment
 
 O01/O14/O15/O16/O19 continuity: original native status can recognize the existing

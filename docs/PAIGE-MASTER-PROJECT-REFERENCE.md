@@ -856,6 +856,12 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**2026-10-27 UTC — EXP02 original campaign email evidence.**
+
+| Increment | Exact released source and observed production | Acceptance boundary |
+| --- | --- | --- |
+| [#2977 original email review](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2977#issuecomment-6439436313) | Reviewed963172019f81c08ba2d73790ea560a880f76c4bc, AUTHOR-REVIEW / LOWER ASSURANCE5664570719; all13 exact-head checks/two web statuses SUCCESS, zero unresolved threads. Main e30c0fe1727764724c447ff2d398e618a5f2fb6c/tree5c2cabc7fa22b683d9503147e1165d0dcab99260 retained original sources/history. Initial web dpl_BHtb9LkWrxNh7S32MDUntu4Cubyc/both public origins exacte30 at09:52UTC; native20271117150002 once/expected original catalogue copy and Unverified coverage. Initial Edge40483692466 FAILED before certification and remains historical. Actual E03#2978/main1ad5f13c4579c717248027687468c43de90bcd40 then certified the unchanged EXP02 source through original40484958924/job122124331143: all51 selected source/config readbacks PASS, including all seven EXP02 affected functions, original certification matches1ad. Current web dpl_BUGsBP5zgvkhuJndVRoiCXkVynBL READY; both public origins exact1ad-mvqikphg/matching reachable asset/null update/missing404 at10:25:25UTC. | Original Metric/Evidence campaign sends and subsequent tracked-open/click counts, source caveats and existing Executive/Chat Marketing references only. EXP03 retains original records/writers; no rate, human engagement, delivery, revenue or prediction inferred.305 local controls/12 suites/native catalogue guards and17 final synthetic frames/five prototype frames remain bounded proof. Functional source verified; Visual synthetic; Experiential authenticated catalogue/Finance/Chat/weekly/roles/cohorts/reload/Live/all19/nine owed; Founder NOT_ACCEPTED. No provider/worker/consequential activation, protected retry, algorithm maturity promotion or customer release announcement. |
+
 **2026-10-27 UTC — EXP02 original report thumbnail accessibility.**
 
 | Increment | Exact released source and observed production | Acceptance boundary |

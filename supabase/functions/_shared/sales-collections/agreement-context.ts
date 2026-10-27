@@ -1,5 +1,6 @@
 import { UUID, object, parseCollectionTerms } from './contract.ts';
 import { previewCollectionSchedule } from './model.ts';
+import { readCollectionAmountBasis } from './amount-basis.ts';
 
 const fail = (): never => { throw new TypeError('COLLECTION_CONTEXT_UNVERIFIED'); };
 const id = (value: unknown): string => typeof value === 'string' && UUID.test(value) ? value.toLowerCase() : fail();
@@ -23,6 +24,7 @@ export function projectCollectionAgreement(value: unknown, tenantId: string): Re
   const title = label(value.title, value.title_truncated), client = label(value.client_name, value.client_name_truncated);
   if (typeof value.status !== 'string' || !['draft', 'active', 'paused', 'completed', 'cancelled'].includes(value.status)) return fail();
   const amount = minor(value.agreed_amount_minor);
+  const amountBasis = readCollectionAmountBasis(value);
   const currency = value.agreed_currency;
   if (currency !== null && (typeof currency !== 'string' || !/^[a-z]{3}$/.test(currency))) return fail();
   if ((amount === null) !== (currency === null)) return fail();
@@ -36,7 +38,8 @@ export function projectCollectionAgreement(value: unknown, tenantId: string): Re
   return {
     id: agreementId, client_id: clientId, offer_id: offerId, title: title.value,
     title_truncated: title.truncated, client_name: client.value, client_name_truncated: client.truncated,
-    status: value.status, amount_cents: amount, currency, version, terms_current: current,
+    status: value.status, term_kind: value.term_kind ?? null, agreed_amount_basis: amountBasis,
+    amount_cents: amount, currency, version, terms_current: current,
     terms_state: terms === null ? 'absent' : current ? 'current' : 'stale',
     record_owner: 'commercial_collection_terms', signing_agreement_resolved: false,
     recorded_terms: terms ? {

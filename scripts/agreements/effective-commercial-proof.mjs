@@ -201,7 +201,7 @@ export async function proveEffectiveCommercialCurrent({sql:originalSql,read,quot
  // to this added proof; original assertions, adapter and timeouts are unchanged.
  const sql=input=>originalSql('\\set VERBOSITY verbose\n'+input);
  const literal=value=>quote(JSON.stringify(value))+'::jsonb',json=input=>JSON.parse(sql(input));
- const c=await makeCommercial(),agreementId=c.p.source.agreement_id,manifest=JSON.parse(c.p.manifest),prepared=manifest.commercial;
+ const c=await makeCommercial(process.argv.includes('--collection-source-continuity')?{currency:'usd'}:undefined),agreementId=c.p.source.agreement_id,manifest=JSON.parse(c.p.manifest),prepared=manifest.commercial;
  const freeze=json(`SET ROLE service_role;SELECT _freeze_paige_commercial_presentation('${actor}','${tenant}',${literal(prepared.payload)},${quote(prepared.payload_digest)},${quote(prepared.presented_body_markdown)},${quote(prepared.presented_body_sha256)},${quote(c.p.storage)},${quote(manifest.document.sha256)});`);
  assert.equal(freeze.state,'frozen');
  sql(`UPDATE paige_agreements SET status='sent',expires_at=clock_timestamp()+interval '1 day' WHERE id='${agreementId}';`);
@@ -244,5 +244,6 @@ export async function proveEffectiveCommercialCurrent({sql:originalSql,read,quot
  const {proveEffectiveCommercialCatalogue}=await import('./effective-commercial-catalogue-proof.mjs');
  const catalogue=proveEffectiveCommercialCatalogue({sql,read,tenant,actor});
  const clientRead=process.argv.includes('--effective-client-read')?(await import('./effective-client-read-proof.mjs')).proveEffectiveClientRead({sql,read,tenant,actor,c,prepared}):null;
- return {checks:checks+catalogue.checks+(clientRead?.checks??0),catalogue,...(clientRead?{clientRead}:{}),concurrentSessions:5,observedLockWaits:3,migrationReplay:2,scope:'Canonical native writers/operations/receipts with synthetic identity/Trust rung and metadata files; no real files/provider/customer acceptance'};
+ const continuity=process.argv.includes('--collection-source-continuity')?await(await import('./collection-source-continuity-proof.mjs')).proveAcceptedCollectionSource({sql,read,quote,tenant,actor,c,prepared}):null;
+ return {checks:checks+catalogue.checks+(clientRead?.checks??0)+(continuity?.checks??0),catalogue,...(clientRead?{clientRead}:{}),continuity,concurrentSessions:5,observedLockWaits:3,migrationReplay:2,scope:'Canonical native writers/operations/receipts with synthetic identity/Trust rung and metadata files; no real files/provider/customer acceptance'};
 }

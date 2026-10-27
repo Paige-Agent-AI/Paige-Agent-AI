@@ -1,13 +1,44 @@
 import {describe,it,expect,vi} from 'vitest';
 vi.mock('@/integrations/supabase/client',()=>({supabase:{rpc:vi.fn()}}));
-import {decodeInvoice,decodeReceipt,decodeRegister,escapeCsv,exportRegister} from './api';
+import {decodeAgreement,decodeInvoice,decodeReceipt,decodeRegister,escapeCsv,exportRegister,readAgreements} from './api';
 import {supabase} from '@/integrations/supabase/client';
 import {parseCsv,decodeImportBatch} from './importModel';
 import {collectionMoney,minorInput} from './presentation';
+import {assembleFixedRepaymentSchedule} from '../../../../supabase/functions/_shared/sales-collections/model';
 const tenant='11111111-1111-4111-8111-111111111111',id='22222222-2222-4222-8222-222222222222',client='33333333-3333-4333-8333-333333333333',time='2026-10-04T12:00:00Z';
 const invoice={id,tenant_id:tenant,client_id:client,client_name:'Example client',invoice_number:'IMPORTED-1',source_invoice_number:'SOURCE-1',status:'recorded',version:1,amount_cents:10000,currency:'usd',due_date:'2026-10-09',created_at:time,manual_recorded_cents:2500,remaining_cents:7500,receipt_count:1,record_kind:'imported',provenance:'owner_imported_unverified'};
 const page={rows:[invoice],has_more:false,next_cursor:null,snapshot_at:time,membership_captured_at:time,facts_read_at:time,export_completed_at:time,membership_count:1,balance_basis:'manual_recorded_only',membership_boundary:'canonical_ids_snapshot'};
 describe('Collections truth decoder',()=>{
+ it.each(['deposit','custom_quote'])('matches original %s accepted evidence through the existing scoped API without altering its source',async term_kind=>{
+  const plan=assembleFixedRepaymentSchedule({total_cents:350000,currency:'usd',deposit_cents:50000,deposit_date:'2026-11-01',installment_cents:30000,first_installment_date:'2026-12-01',cadence:'monthly'});
+  if(plan.state!=='ready')throw Error('Use the original fixed calculation');
+  const offer='44444444-4444-4444-8444-444444444444';
+  const evidence={schema_version:1,kind:'accepted_effective_principal',tenant_id:tenant,commercial_terms_id:id,client_id:client,offer_id:offer,principal_minor:350000,currency:'usd',current_terms_version:4,accepted_terms_version:1,signing_id:'55555555-5555-4555-8555-555555555555',signing_version:1,source_digest:'a'.repeat(64),operation_id:'66666666-6666-4666-8666-666666666666',receipt_id:'77777777-7777-4777-8777-777777777777'};
+  const source={id,tenant_id:tenant,client_id:client,offer_id:offer,client_name:'Example client',title:null,status:'active',term_kind,agreed_amount_basis:'unverified',agreed_amount_total_evidence:evidence,agreed_amount_minor:350000,agreed_currency:'usd',collection_terms:plan.terms,collection_terms_version:4,terms_current:true};
+  const rpc=vi.mocked(supabase.rpc);rpc.mockReset();rpc.mockResolvedValueOnce({data:{rows:[source],has_more:false,next_cursor:null},error:null} as never);
+  expect((await readAgreements(tenant)).rows[0]).toMatchObject({id,client_id:client,title:'Title not set',agreed_amount_basis:'total',collection_terms_version:4});
+  expect(source.agreed_amount_basis).toBe('unverified');expect(source.title).toBeNull();
+  expect(decodeAgreement({...source,agreed_amount_total_evidence:null},tenant)?.agreed_amount_basis).toBe('unverified');
+  expect(decodeAgreement({...source,agreed_amount_total_evidence:{...evidence,client_id:offer}},tenant)).toBeNull();
+ });
+ it('keeps a valid newly recorded untitled agreement accessible with its original source identity',async()=>{
+  const source={id,tenant_id:tenant,client_id:client,client_name:'Example client',title:null,status:'draft',term_kind:'installment',agreed_amount_basis:'total',agreed_amount_minor:350000,agreed_currency:'usd',collection_terms:null,collection_terms_version:0,terms_current:false};
+  const rpc=vi.mocked(supabase.rpc);rpc.mockReset();rpc.mockResolvedValueOnce({data:{rows:[source],has_more:false,next_cursor:null},error:null} as never);
+  const page=await readAgreements(tenant);expect(page.rows).toHaveLength(1);
+  expect(page.rows[0]).toMatchObject({id,tenant_id:tenant,client_id:client,title:'Title not set',agreed_amount_minor:350000,agreed_amount_basis:'total',collection_terms_version:0});
+  expect(source.title).toBeNull();expect(rpc).toHaveBeenCalledExactlyOnceWith('list_sales_collection_agreements',{_expected_tenant_id:tenant,_limit:50,_before_id:null});
+  expect(decodeAgreement({...source,title:'Exact original title'},tenant)?.title).toBe('Exact original title');
+  expect(decodeAgreement({...source,title:'   '},tenant)?.title).toBe('Title not set');
+  for(const title of [0,{},['Invented title']])expect(decodeAgreement({...source,title},tenant)).toBeNull();
+ });
+ it('keeps older agreement reads usable without upgrading unknown amount semantics',()=>{
+  const agreement={id,tenant_id:tenant,client_id:client,client_name:'Example client',title:'Terms',status:'draft',agreed_amount_minor:350000,agreed_currency:'usd',collection_terms:null,collection_terms_version:0,terms_current:false};
+  expect(decodeAgreement(agreement,tenant)).toMatchObject({id,agreed_amount_basis:'unverified'});
+  expect(decodeAgreement({...agreement,term_kind:'installment',agreed_amount_basis:'total'},tenant)).toMatchObject({agreed_amount_basis:'total'});
+  expect(decodeAgreement({...agreement,term_kind:'recurring',agreed_amount_basis:'per_cycle'},tenant)).toMatchObject({agreed_amount_basis:'per_cycle'});
+  for(const patch of [{term_kind:'recurring',agreed_amount_basis:'total'},{term_kind:'one_time'},{agreed_amount_basis:'total'}])expect(decodeAgreement({...agreement,...patch},tenant)).toBeNull();
+  expect(decodeAgreement({...agreement,term_kind:'one_time',agreed_amount_basis:'total'},client)).toBeNull();
+ });
  it('reads canonical mixed allocations without upgrading manual receipts',()=>{
   const mixed={...invoice,manual_recorded_cents:2500,provider_verified_cents:5000,remaining_cents:2500};
   expect(decodeInvoice(mixed,tenant)).toEqual(expect.objectContaining({manual_recorded_cents:2500,provider_verified_cents:5000,allocated_cents:7500,remaining_cents:2500}));

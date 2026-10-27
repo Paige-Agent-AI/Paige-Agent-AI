@@ -568,6 +568,14 @@ export async function runTeamHubAgentTurn(deps: AgentTurnDeps, raw: unknown): Pr
   const parentId = sameConversation ? sourceParent : null;
   const askedIn = sameConversation ? req.sourceMessageId : null;
   const requestId = await uuidFrom(req.sourceMessageId, agent, intent);
+  // The DM the private part will be answered in, so the screen can offer "Open DM" now. Opening it is
+  // idempotent and makes only the asker's own DM; if it cannot be opened, the follow-up turn opens it.
+  const privateFollowup = async (): Promise<Pick<AgentTurnResponse, "private_followup">> => {
+    const dm = await rpcSafe(caller, "team_hub_open_agent_dm", { p_expected_tenant: tenantId, p_agent_key: agent });
+    const dmEnv = dm && !dm.error ? object(dm.data) : null;
+    return { private_followup: { conversationId: req.conversationId, sourceMessageId: req.sourceMessageId, threadRootId: req.threadRootId,
+      agent, privateFollowUp: true, dm_conversation_id: dmEnv?.ok === true ? uuid(dmEnv.channel_id) : null } };
+  };
 
   // 3. Accept: the permission row (service role). The token never leaves this function.
   const { token, hash } = await newTurnToken(deps.random);
@@ -583,7 +591,16 @@ export async function runTeamHubAgentTurn(deps: AgentTurnDeps, raw: unknown): Pr
     if (acc.code === "duplicate" && uuid(acc.message_id)) {
       // This question already has this agent's reply: read it back, never post again.
       const back = await findMessage(caller, tenantId, target, parentId, uuid(acc.message_id)!);
-      if ("found" in back) return { status: 200, body: { ok: true, outcome: "posted", agent, intent, message: back.found, conversation_id: target, duplicate: true } };
+      if ("found" in back) {
+        // A reply with a private part whose answer was lost: the DM turn was never started, so the
+        // follow-up is rebuilt from the stored reply. Only the definer appends that line (the model's copy
+        // is stripped before posting), and only to a reply in a shared conversation.
+        const stored = back.found;
+        const hadPrivatePart = intent === "reply" && stored.author_kind === "agent" && stored.agent_key === agent
+          && typeof stored.body === "string" && stored.body.trimEnd().endsWith(PRIVATE_PART_LINE);
+        return { status: 200, body: { ok: true, outcome: "posted", agent, intent, message: stored, conversation_id: target, duplicate: true,
+          ...(hadPrivatePart ? await privateFollowup() : {}) } };
+      }
       return fail(agent, "unconfirmed", { intent, conversation_id: target });
     }
     return fail(agent, acceptRefusal(acc.code), { intent });
@@ -799,15 +816,7 @@ export async function runTeamHubAgentTurn(deps: AgentTurnDeps, raw: unknown): Pr
     return fail(agent, "unconfirmed", { intent, conversation_id: target });
   }
   await receipt("capability_succeeded", "posted");
-  let followUp: Pick<AgentTurnResponse, "private_followup"> = {};
-  if (privateAnswer) {
-    // The DM the private part will be answered in, so the screen can offer "Open DM" now. Opening it is
-    // idempotent and makes only the asker's own DM; if it cannot be opened, the follow-up turn opens it.
-    const dm = await rpcSafe(caller, "team_hub_open_agent_dm", { p_expected_tenant: tenantId, p_agent_key: agent });
-    const dmEnv = dm && !dm.error ? object(dm.data) : null;
-    followUp = { private_followup: { conversationId: req.conversationId, sourceMessageId: req.sourceMessageId, threadRootId: req.threadRootId,
-      agent, privateFollowUp: true, dm_conversation_id: dmEnv?.ok === true ? uuid(dmEnv.channel_id) : null } };
-  }
+  const followUp = privateAnswer ? await privateFollowup() : {};
   return { status: 200, body: { ok: true, outcome: "posted", agent, intent, message: back.found, conversation_id: target, duplicate: env.duplicate === true,
     ...(bringInStaged.length ? { bring_in: bringInStaged } : {}), ...followUp } };
 }

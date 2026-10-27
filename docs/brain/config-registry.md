@@ -583,8 +583,67 @@ Values intentionally omitted.
     (`_shared/comms-email/readiness.ts`, `_shared/sales-invoice-delivery/readiness-reader.ts`, agreement-send,
     `_shared/agreements/notify.ts`) now keys on `SENDGRID_MAIL_SEND_API_KEY`. Still reading `RESEND_API_KEY`:
     manage-tenant-domain only (tenant custom sending domains; no SendGrid domain-authentication code exists yet —
-    separate work), plus the Resend inbound/receipt webhooks (`handle-inbound-email`, `handle-resend-webhook`),
-    which receive nothing once nothing sends through Resend.
+    separate work), plus the Resend inbound/receipt webhooks (`handle-inbound-email`'s Resend arm,
+    `handle-resend-webhook`), which receive nothing once nothing sends through Resend.
+  - **Inbound replies — SendGrid Inbound Parse (2026-10-27, branch `feat/sendgrid-inbound-parse`, not yet merged or
+    deployed).** `handle-inbound-email` gained a second arm, selected by `Content-Type: multipart/form-data` (the Resend
+    Svix-JSON arm is unchanged). Edge secret NAME: **`SENDGRID_INBOUND_PARSE_SECRET`** (new; value never recorded).
+    Unset → every Inbound Parse POST gets 503 `inbound_parse_not_configured` and nothing is stored; wrong or missing
+    proof → 401. The proof is the secret as the HTTP basic-auth password (any username) or as the `t` query parameter,
+    compared in constant time. `verify_jwt = false` for the function is already declared in `config.toml`.
+    **Generate the secret as hex** (e.g. 32 random bytes → 64 hex characters) or another URL-safe alphabet: in the
+    `?t=` form a `+` decodes as a space and `%`/`&`/`#` break the query, and in the basic-auth form `:` `@` `/` break
+    the URL's userinfo — any of them makes every post a 401.
+    - **What the owner enters in SendGrid → Settings → Inbound Parse → Add Host & URL:** receiving domain
+      `mail.paigeagent.ai` (MX `10 mx.sendgrid.net` is already in place), destination URL
+      `https://inbound:<SENDGRID_INBOUND_PARSE_SECRET>@xygzykjyynhzqytbqnzu.supabase.co/functions/v1/handle-inbound-email`
+      — or, if SendGrid will not keep credentials in the URL, `https://xygzykjyynhzqytbqnzu.supabase.co/functions/v1/handle-inbound-email?t=<SENDGRID_INBOUND_PARSE_SECRET>`.
+      Leave "POST the raw, full MIME message" OFF (the arm reads the default parsed fields). Set the secret on the
+      function before saving the URL; until it is set SendGrid's posts are refused with 503 and retried.
+    - **Tenant routing:** EVERY SMTP envelope `to` address (never the header To) is resolved on its own, matched
+      exactly (LIKE wildcards escaped, `*` refused) against an active `channel_connectors.inbound_address`, then
+      `inbound_domain` — but the `inbound_domain` fallback is never used for a `paigeagent.ai` domain (review H1:
+      `channel_connectors` RLS lets a workspace admin write `inbound_domain='mail.paigeagent.ai'` on their own
+      connector, which would otherwise capture every reply to an unknown or retired slug). Every managed sender has
+      an exact address: `provision_paige_managed_email_connector` writes `inbound_address = <local>@mail.paigeagent.ai`
+      on the managed `provider='resend'` connector (read on production 2026-10-27: 7 active + 2 inactive managed
+      connectors, all on `mail.paigeagent.ai`; 0 rows with any `inbound_domain`). Each resolved business gets its OWN
+      row whose `recipients` / `meta.to` hold only that business's addresses (a Bcc to another business is never
+      revealed). No connector → 200 skip, logged. Any connector or contact read error, failed message insert or failed
+      draft-reply insert → 503 so SendGrid retries; businesses that already landed dedup on the retry.
+      **Follow-up (DB, not built here):** restrict `inbound_domain` writes (e.g. a guard trigger refusing
+      `paigeagent.ai` domains and any domain the business has not verified) — the edge fix only protects this arm.
+    - **Sender authentication (review M2):** a From whose domain has neither an aligned DKIM `pass` (SendGrid's `dkim`
+      field, `{@domain : pass}`) nor an SPF `pass` (`SPF` field) for an envelope sender aligned with it is stored with
+      `meta.sender_unauthenticated = true` on thread `email-unverified:<tenant>:<address>`: not linked to or minted as
+      a contact, no `comms-draft-reply` action, no legacy mirror. Alignment is relaxed DMARC alignment: the two domains
+      share an organizational domain (last two labels, or three under a two-letter country code with a known
+      second level such as `co.uk`), approximated without a full public-suffix list. An `SPF` value that starts with
+      `pass` counts as a pass. A data or integrity violation on one business's insert (SQLSTATE class 22/23 other
+      than 23505) is logged and acknowledged as `rejected`, so it does not make SendGrid redeliver the post for days.
+    - **Follow-ups from the re-review (2026-10-27, not built here):** (N1) two concurrent deliveries of one post can
+      file two draft replies — the partial unique index below closes it; (N2) the shared-domain guard is hardcoded to
+      `paigeagent.ai` while the shared domain is config data — the DB-side `inbound_domain` write restriction is the
+      durable fix; (N4) the inbox does not yet badge `meta.sender_unauthenticated` messages for the owner; (N6) a
+      display name containing `@` becomes a new contact's name; (N7) a failed contact create still stores the message
+      unlinked with 200 (both pre-existing).
+    - **Idempotency:** `messages.provider_message_id = sendgrid-inbound:<tenant>:<Message-ID>`, tenant-scoped because
+      `uq_messages_provider_message_id` is global (one email reaching two businesses must land in both, and a forged
+      Message-ID must not suppress another business's mail). No Message-ID (or an empty `<>`) →
+      `sendgrid-inbound:<tenant>:derived:<sha256(from \n to \n subject \n Date \n text)>`, flagged
+      `meta.provider_message_id_derived`. A redelivery whose message already landed re-files its draft reply if none
+      exists (a check-then-insert, not DB-enforced; a partial unique index on `paige_actions(tenant_id,
+      payload->>'message_id') where action_kind='comms-draft-reply'` would make it so — follow-up). The legacy
+      `paige_conversations` mirror uses the same business-scoped id (its `(channel, source_message_id)` index is
+      global too). Body cap 32 MiB (413 above, also when streamed without Content-Length); `text`/`html` over
+      1,000,000 characters are cut and flagged `meta.body_truncated`. An attachment-only reply is kept. Attachment
+      bytes are NOT stored (no store exists for them); they are counted and described in `meta.attachments_not_stored`.
+    - **UNVERIFIED:** (1) that SendGrid forwards URL userinfo as an `Authorization: Basic` header and that the
+      Supabase gateway passes it through with `verify_jwt = false` — the `?t=` form avoids both questions but puts the
+      secret into request-URL logs; (2) SendGrid's signed Inbound Parse (ECDSA) — mentioned by the SendGrid skill,
+      not found in the parse-webhook docs read 2026-10-27, so not implemented; (3) non-UTF-8 `charsets` are decoded
+      as UTF-8; (4) the exact `dkim` field format for several signatures (the docs show only one pair); (5) no live
+      SendGrid post has reached this arm — proof is the handler test `npm run test:inbound-email` only.
   - **Supabase Auth email (sign-up confirmation, password reset)** goes through the Auth custom-SMTP setting in the
     Supabase dashboard, not edge code. **Re-pointed by the owner on 2026-10-27** to `smtp.sendgrid.net:587`, user
     `apikey`, a restricted Mail Send key, sender name "Paige Agent AI" (seen in the owner's screenshot; the sender

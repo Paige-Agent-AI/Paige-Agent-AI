@@ -5006,3 +5006,46 @@ receipt:not_projected stays truthful. No Root/risk/registry/C0b/observer/codec e
 held2961 adoption, new grant, scan/worker/provider/customer invocation or activation.
 Functional LOCAL; Visual N/A; Experiential INCOMPLETE; Founder NOT_ACCEPTED.
 All19/nine/ALG/CAP maturity and historical9-0/12-0-4/monthlyUNKNOWNUNRETRIED remain.
+
+### October27 13:42UTC — original Systems receipt consumer, LOCAL dependent source
+
+Original manual request/result consumerd770 normally receives observer candidate
+78b9 ased15d9a35, preserving all nine original executed leaves and complete
+incoming/local evidence histories. The only merge conflict was append-only
+Systems evidence; the entire incoming file plus entire local suffix are retained.
+New source6f392ee07d6c8c2cbf29800007c38e2c017c815b/tree3fbe7508 consumes the SAME
+readDurableObservation only when an original accepted thread/intent/Work reference
+is supplied. It pins that reference before awaiting, bounds each canonical read
+with the original cancellation wait, and rechecks the exact RLS run, current
+actor/workspace and original native Work before returning. No raw Rail reader,
+activity-feed matching, guessed receipt or replacement result source is added.
+No-reference callers retain their exact original not_projected response shape;
+an unverified receipt stays separate from recorded completion. Original unknown,
+refused, cancelled or stale associations never become verified receipts.
+
+22 new receipt controls + all296 original consumer controls +38 canonical
+observation controls =356PASS/seven disjoint suites. All original296 assertion
+bodies remain exact; one existing fixture only receives the actual canonical
+dependency. Failing-first20FAIL is retained. A real late-response regression
+initially allowed another canonical read after interruption; per-read original
+bounded waiting fixes it without changing the original shared observer or retry
+semantics. Subsequent double-start SDK fixture error is separately retained;
+the fixture now models a single abortable promise. Pinned Deno2.1.4/SDK2.75.0 and
+focused lint/whitespace pass; no broad clean compiler or customer proof is claimed.
+
+Foundation#2982 exact78b9/LOWER5667772624 has normal PreviewSUCCESS, native160002
+once/observer4faba2ef/originalWorkd953/ACL retained/Auth0, and hosted native47+
+legacy34+originalSystems148PASS. Database-contract isSUCCESS; required broad
+verify remains pending. It is not yet merged/deployed. This dependent consumer is
+LOCAL/UNPUSHED/UNREGISTERED/no PR and cannot release ahead of that foundation.
+Root/risk/Spine/C0b/domain writers, scans/worker/provider/approval/action admission
+and held2961 remain untouched. Source investigation did not establish the
+separate report-cohort hypothesis: the original document producer retains its
+active-only Work predicate, so no legacy authorization was relaxed.
+
+Functional LOCAL; VisualN/A (no active UI/entry); ExperientialINCOMPLETE; Founder
+NOT_ACCEPTED. ALG03/06/11/12/13 and nine catalogue maturity unchanged; no prediction
+or causal improvement inferred. Original9PASS0FAIL/12PASS0FAIL4BLOCKED and protected
+monthlyUNKNOWNUNRETRIED stay unchanged. Existing ordinary-owner Edge handback,
+all seven Finance pages/roles/cohorts/reload/native zoom/AT, actual Chat/Live and
+the full19/nine integrated customer/founder acceptance remain open.

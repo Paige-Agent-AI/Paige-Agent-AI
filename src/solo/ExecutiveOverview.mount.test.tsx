@@ -5,6 +5,7 @@ import { MemoryRouter, Route, Routes, useLocation, useNavigate } from "react-rou
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { TEST_BUSINESS_REVIEW as SNAPSHOT } from "@/test/fixtures/business-review";
 import { ExecutiveOverview } from "./ExecutiveOverview";
+import { withTargetAndFinanceFixtures } from '../../scripts/live-drive/harness/executive-mount/slice-fixtures';
 
 const mocks = vi.hoisted(() => ({ review: vi.fn(), pending: vi.fn(), activity: vi.fn(), missions: vi.fn(), calendar: vi.fn(), prefill: vi.fn() }));
 vi.mock("./data/useBusinessReview", () => ({ useBusinessReview: mocks.review }));
@@ -128,6 +129,20 @@ function leaveReview() {
   opener.focus(); act(() => opener.click());
 }
 describe('Executive display-only history return', () => {
+  it('restores source freshness without opening a nested financial account disclosure', async () => {
+    mocks.review.mockReturnValue({ state: 'ready', snapshot: withTargetAndFinanceFixtures(structuredClone(SNAPSHOT), 'ready', true), refresh: vi.fn() });
+    await act(async () => root!.render(returnTree()));
+    const section = host.querySelector("[aria-labelledby='exec-domain-finance']")!;
+    const source = section.querySelector(':scope > details.exec-provenance') as HTMLDetailsElement;
+    source.open = true;
+    const node = host.querySelector('.executive-root') as HTMLElement; node.scrollTop = 420;
+    act(() => (section.querySelector('a.exec-link') as HTMLAnchorElement).click());
+    act(() => button('Test browser Back').click());
+    const returned = host.querySelector("[aria-labelledby='exec-domain-finance']")!;
+    expect((returned.querySelector(':scope > details.exec-provenance') as HTMLDetailsElement).open).toBe(true);
+    expect((returned.querySelector('.exec-finance-source') as HTMLDetailsElement).open).toBe(false);
+    expect((host.querySelector('.executive-root') as HTMLElement).scrollTop).toBe(420);
+  });
   it('retains original route state and source disclosure without retaining a business snapshot', async () => {
     await act(async () => root!.render(returnTree())); leaveReview();
     act(() => button('Test browser Back').click());

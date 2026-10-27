@@ -128,7 +128,7 @@ function ResolvedExecutiveOverview({ account, accountEpoch, actorId, accountName
     const peers = [...node.querySelectorAll<HTMLAnchorElement>('a[href]')].filter(a => a.getAttribute('href') === opener.getAttribute('href'));
     const bookmark: ReviewReturn = { version: 1, scope: returnScope, address, destination,
       ordinal: peers.indexOf(opener), scroll: node.scrollTop,
-      sources: [...node.querySelectorAll('section.exec-domain')].filter(section => section.querySelector('details.exec-provenance[open]')).map(section => section.getAttribute('aria-labelledby')!) };
+      sources: [...node.querySelectorAll('section.exec-domain')].filter(section => section.querySelector(':scope > details.exec-provenance[open]')).map(section => section.getAttribute('aria-labelledby')!) };
     // One display bookmark on the ORIGINAL history entry; no metrics, drafts or business records.
     // The existing Link performs the only destination navigation after this replacement.
     navigate({ pathname: location.pathname, search: location.search, hash: location.hash }, {
@@ -144,7 +144,7 @@ function ResolvedExecutiveOverview({ account, accountEpoch, actorId, accountName
     if (document.activeElement && document.activeElement !== document.body && document.activeElement !== node) return;
     for (const section of node.querySelectorAll('section.exec-domain')) {
       if (bookmark.sources.includes(section.getAttribute('aria-labelledby') ?? '')) {
-        const details = section.querySelector<HTMLDetailsElement>('details.exec-provenance');
+        const details = section.querySelector<HTMLDetailsElement>(':scope > details.exec-provenance');
         if (details) details.open = true;
       }
     }

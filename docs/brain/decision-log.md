@@ -1,5 +1,10 @@
 # Decision Log — chronological one-liners
 
+## October27 — EXP03 inbound routing fields are server-only (owner-approved)
+
+- **First real SendGrid Inbound Parse delivery (2026-10-27 13:28 UTC).** The owner set `SENDGRID_INBOUND_PARSE_SECRET` and the Inbound Parse host; a real reply posted by SendGrid (`Sendlib/1.0`) was accepted (200, basic auth in the URL works through the gateway), stored once with a business-scoped `sendgrid-inbound:` id on the contact's thread, sender authenticated, and a `comms-draft-reply` action filed (`confirm` lane). A no-credentials probe returns 401.
+- **Owner approved the DB guard (2026-10-27).** Migration `20271118090000` adds `trg_guard_channel_connector_inbound_routing`: a direct browser write may not set or change `channel_connectors.inbound_address`/`inbound_domain`; SECURITY DEFINER writers and the service role still can. Trust is `current_user`, not the JWT, because the managed-sender re-provision on a business rename runs from the owner's own write. Failing-first: on production, inside a rolled-back transaction, the owner's browser write of `inbound_address` succeeded before the guard (assertion 2 failed).
+
 ## October27 — EXP03 SendGrid Inbound Parse receiver: #2976 shipped
 
 - **EXP03 #2976 merged (squash `6f80e45d`, 2026-10-27).** `handle-inbound-email` gains a SendGrid Inbound Parse arm so replies to managed `<slug>@mail.paigeagent.ai` senders land in Conversations again; it is inert until the owner sets `SENDGRID_INBOUND_PARSE_SECRET` and the Inbound Parse host. Routing is on the SMTP envelope recipient against `inbound_address` only — never the `inbound_domain` fallback for `paigeagent.ai`, which review showed any workspace admin could claim. Unauthenticated senders (no aligned SPF/DKIM pass) are stored without a contact link or a draft reply.

@@ -611,8 +611,13 @@ Values intentionally omitted.
       row whose `recipients` / `meta.to` hold only that business's addresses (a Bcc to another business is never
       revealed). No connector → 200 skip, logged. Any connector or contact read error, failed message insert or failed
       draft-reply insert → 503 so SendGrid retries; businesses that already landed dedup on the retry.
-      **Follow-up (DB, not built here):** restrict `inbound_domain` writes (e.g. a guard trigger refusing
-      `paigeagent.ai` domains and any domain the business has not verified) — the edge fix only protects this arm.
+      **DB guard (20271118090000, owner-approved 2026-10-27):** `trg_guard_channel_connector_inbound_routing`
+      refuses (42501 `PAIGE_INBOUND_ROUTING_PROTECTED`) any direct browser (authenticated/anon) write that sets
+      `inbound_address`/`inbound_domain` on INSERT or changes either on UPDATE. SECURITY DEFINER writers (managed
+      sender re-provision on a business rename, domain verify, Gmail connect) and the service role still write them.
+      Trust is `current_user`, not the JWT, so a rename from the app keeps moving the managed address. Proof:
+      `supabase/tests/channel_connector_inbound_routing_server_only.sql` (CI: paige-spine-contract). Still owed: a
+      per-business DNS ownership proof before a custom `inbound_domain` is accepted.
     - **Sender authentication (review M2):** a From whose domain has neither an aligned DKIM `pass` (SendGrid's `dkim`
       field, `{@domain : pass}`) nor an SPF `pass` (`SPF` field) for an envelope sender aligned with it is stored with
       `meta.sender_unauthenticated = true` on thread `email-unverified:<tenant>:<address>`: not linked to or minted as
@@ -623,8 +628,8 @@ Values intentionally omitted.
       than 23505) is logged and acknowledged as `rejected`, so it does not make SendGrid redeliver the post for days.
     - **Follow-ups from the re-review (2026-10-27, not built here):** (N1) two concurrent deliveries of one post can
       file two draft replies — the partial unique index below closes it; (N2) the shared-domain guard is hardcoded to
-      `paigeagent.ai` while the shared domain is config data — the DB-side `inbound_domain` write restriction is the
-      durable fix; (N4) the inbox does not yet badge `meta.sender_unauthenticated` messages for the owner; (N6) a
+      `paigeagent.ai` while the shared domain is config data — the DB guard above (20271118090000) now
+      keeps browser sessions from writing it; (N4) the inbox does not yet badge `meta.sender_unauthenticated` messages for the owner; (N6) a
       display name containing `@` becomes a new contact's name; (N7) a failed contact create still stores the message
       unlinked with 200 (both pre-existing).
     - **Idempotency:** `messages.provider_message_id = sendgrid-inbound:<tenant>:<Message-ID>`, tenant-scoped because

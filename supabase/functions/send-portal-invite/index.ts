@@ -140,7 +140,8 @@ Deno.serve(async (req) => {
     .from("tenant_invite_tokens")
     // `id` is new here: it is the handle every later delivery event is matched back to. Without it
     // a webhook can prove an email was opened but not WHICH invitation it belonged to.
-    .select("id, tenant_id, contact_id, revoked_at, expires_at, email, kind, uses, max_uses, last_used_at")
+    // `default_role` (EXP08 owners, I1): without it an OWNER invitation cannot be told apart below.
+    .select("id, tenant_id, contact_id, revoked_at, expires_at, email, kind, default_role, uses, max_uses, last_used_at")
     .eq("token", token)
     .maybeSingle();
   if (!tok || tok.revoked_at || new Date(tok.expires_at as string) <= new Date()) {
@@ -153,6 +154,14 @@ Deno.serve(async (req) => {
     try {
       const current = await caller.auth.getUser();
       if (current.error || current.data.user?.id !== actorUserId) return false;
+      // EXP08 owners (I1, contract §5.3): an OWNER invitation is the account holder's alone, so no
+      // other authority below (platform owner, tenant admin, managing agency, Team invitation
+      // authority) can send or resend one. is_tenant_account_holder is executable by the service role
+      // only (20271116020008), so it runs through `admin`, for the actor verified above.
+      if (tok.default_role === "owner") {
+        const holder = await admin.rpc("is_tenant_account_holder", { _user: actorUserId, _tenant: tok.tenant_id });
+        return !holder.error && holder.data === true;
+      }
       const checks = await Promise.all([
         caller.rpc("is_platform_owner"),
         caller.rpc("is_tenant_admin", { _tenant: tok.tenant_id }),

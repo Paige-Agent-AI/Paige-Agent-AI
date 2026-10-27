@@ -308,13 +308,15 @@ describe("paige-media approval runs on the canonical proposal store", () => {
     expect(h.store.receipts()).toHaveLength(0);
   });
 
-  it("a budget refusal at approval time does not spend the person's approval", async () => {
+  it("a spent-out ceiling at approval time NEVER blocks the approval (billing supersession 2026-10-27) — the job proceeds, bills the tenant, and the claim is spent exactly once", async () => {
     const { body } = await submitPremium(h);
-    h.store.ceiling = 0.01;
+    h.store.ceiling = 0.01; // formerly a 429 budget refusal; totals are informational now
     const res = await h.call("requester", { action: "approve", job_id: body.job.id, approved_fingerprint: body.approval.fingerprint });
-    expect(res.status).toBe(429);
-    expect(h.store.proposals()[0].consumed_at).toBeNull();
-    expect(h.submit).not.toHaveBeenCalled();
+    expect(res.status).toBe(200);
+    expect(h.submit).toHaveBeenCalled();
+    // The approval was consumed exactly once — a replay is still refused.
+    const replay = await h.call("requester", { action: "approve", job_id: body.job.id, approved_fingerprint: body.approval.fingerprint });
+    expect(replay.status).toBeGreaterThanOrEqual(400);
   });
 
   it("an expired proposal is refused", async () => {

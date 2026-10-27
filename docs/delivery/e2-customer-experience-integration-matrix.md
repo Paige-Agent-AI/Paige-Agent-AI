@@ -1,5 +1,34 @@
 # Experience 02 — Customer Experience Integration Matrix
 
+
+## October27 — original Executive department-return repair, development
+
+O14 original Executive → canonical department → browser Back now has a bounded
+native history display bookmark, scoped to exact current actor/workspace/address.
+No business figures or source records are cached; original current evidence is
+re-read. Same route/period/query/hash/unrelated state, source-freshness disclosure,
+reading position and opener are retained. Modified/new-window navigation is left
+alone; genuine newer input wins, and a missing original source returns to the
+Executive heading. Original folded-shell command/content-focus contract reused;
+shared shell, registry, routes, permissions, source-domain writers and Chat untouched.
+
+Source4a18ae9b92a3dd2fb0c260953e266c28c256ab00 on actualc76eb5cd is LOCAL/unreleased.
+118 controls/seven suites/zero skips, lint0/build132s PASS; actual app compiler six
+unchanged incumbent diagnostics under unchanged baseline10. Native rendered review
+caught and corrected nested Finance disclosure, duplicate scroll anchoring and
+folded-shell automatic-focus integration defects before publication. Twelve final
+raw synthetic frames/22 exact declared inputs and four actual native return trips
+have scroll delta0, correct opener/source freshness; open-rail synthetic draft
+survives. Native zoom/full AT/authenticated roles/cohorts/reload/Finance/Chat-Live
+remain owed. Functional LOCAL, Visual synthetic, Experiential bounded local only,
+Founder NOT_ACCEPTED. No algorithm/capability promotion or execution receipt.
+
+All19/nine/original9PASS0FAIL+12PASS0FAIL4BLOCKED/monthlyUNKNOWNUNRETRIED retained.
+Shared read-only Finance QA custody and original E05 manual Work/receipt receiving
+remain pending. #2977 is a separate source-backed email consumer in hosted CI and
+normal Preview; no held feature source is adopted here.
+[Bounded evidence](../evidence/ui-delivery/e2-executive-return-context.md).
+
 ## October27 08:00UTC — original report status released, thumbnail receiving
 
 #2973 merged6c448b6c5f5b536d6793dc11d0663ecb26906000 after reviewed74d/LOWER5663415846,

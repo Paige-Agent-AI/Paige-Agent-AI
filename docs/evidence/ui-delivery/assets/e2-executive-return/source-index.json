@@ -1,0 +1,178 @@
+{
+  "source": "4a18ae9b92a3dd2fb0c260953e266c28c256ab00",
+  "base": "c76eb5cd62fc6cc4fa761b654bf18153b15ed395",
+  "scope": "Declared original Executive, shell, route consumer, presenter/style/font and synthetic fixture inputs; not a complete transitive graph. No authenticated department, model, provider or business operation.",
+  "inputs": [
+    {
+      "path": "src/solo/ExecutiveOverview.tsx",
+      "sha256": "0d3f7ef92c6bc32d086a2cde9f8d8706cd75f75a4c555806c8fdfb047debe90c",
+      "hash_mode": "text_lf"
+    },
+    {
+      "path": "src/solo/CommandCenter.tsx",
+      "sha256": "3a52bfeaa33c2d872dd5e0b699f74de04780c0922fdcb31647d4c761554caec8",
+      "hash_mode": "text_lf"
+    },
+    {
+      "path": "src/solo/executive-overview.css",
+      "sha256": "22abdcc48dac8c0c97199b7ea58089434e4a2645bb075c96e9e949571c759f9d",
+      "hash_mode": "text_lf"
+    },
+    {
+      "path": "src/solo/executive-review.ts",
+      "sha256": "8e80f725cfae09f05d21d358bb9b7f471fea87f932b25cef19601392e50f8627",
+      "hash_mode": "text_lf"
+    },
+    {
+      "path": "src/solo/ExecutiveTargets.tsx",
+      "sha256": "bf36ac3e0ae2a1f78366af98beb359d3b2ff63b77d14a0514dc45581680bac97",
+      "hash_mode": "text_lf"
+    },
+    {
+      "path": "src/solo/ExecutiveFinanceEvidence.tsx",
+      "sha256": "7aac2a23df2373d8e1c959446d0f8404fc6334078e28b399dbe2174dd4dd32cc",
+      "hash_mode": "text_lf"
+    },
+    {
+      "path": "src/components/tenant-shell/TenantCommandCenterShell.tsx",
+      "sha256": "7aaa24d867af1ac5e2222f3581ab361288ba54e6319e5c86db245875adb13e7c",
+      "hash_mode": "text_lf"
+    },
+    {
+      "path": "src/components/tenant-shell/tenant-command-center-shell.css",
+      "sha256": "e9756f8cfc04a330748711d798afeda35cb8f02bd133914dfee9a5fe4b0bf355",
+      "hash_mode": "text_lf"
+    },
+    {
+      "path": "src/components/tenant-shell/tenant-content-focus.ts",
+      "sha256": "7f32786447b99863e649add8d7f9acbf4486c780ca63de3ab66dd0e5fb312106",
+      "hash_mode": "text_lf"
+    },
+    {
+      "path": "src/lib/links/workspaceLinks.ts",
+      "sha256": "c8239322febf13eb83bbcc492244ace86d426608af5d5257d1a55e23fc57558f",
+      "hash_mode": "text_lf"
+    },
+    {
+      "path": "src/lib/routing/useSubtabRoute.ts",
+      "sha256": "02dd34efa28e4a11d25e13b8574f6c6f9893a6485ee1be06c50c5eb498277216",
+      "hash_mode": "text_lf"
+    },
+    {
+      "path": "src/solo/SoloPaigeWorkspace.tsx",
+      "sha256": "a13d385e06711b9410ea08cdd9341c4a9bbac04f4ad67cf8ff306174ca3ef270",
+      "hash_mode": "text_lf"
+    },
+    {
+      "path": "src/index.css",
+      "sha256": "f410966e5d565745efff907262d232925f6132d4a71a414ca8146db131fbddcc",
+      "hash_mode": "text_lf"
+    },
+    {
+      "path": "src/solo/solo-tokens.css",
+      "sha256": "77edc9fc35a6d2dab87318996fbb0dc6d80a0a04115d1757016c10da2c7b3197",
+      "hash_mode": "text_lf"
+    },
+    {
+      "path": "src/test/fixtures/business-review.ts",
+      "sha256": "cf6046734a45ccff3d66d41e83b9e6ff304097e9105fb5a2a75a4278a7ae31fa",
+      "hash_mode": "text_lf"
+    },
+    {
+      "path": "scripts/live-drive/harness/executive-mount/main.tsx",
+      "sha256": "5cc3429f4a35d2fd2ac488734cf2aa073e76a437ca5f7b9f2c87db91f52bf2cc",
+      "hash_mode": "text_lf"
+    },
+    {
+      "path": "scripts/live-drive/harness/executive-mount/stubs.tsx",
+      "sha256": "65f0a15233e39a103e16a793dee7d8a8cfd18fd899b4d822d8dc3f9dfc397b86",
+      "hash_mode": "text_lf"
+    },
+    {
+      "path": "scripts/live-drive/harness/executive-mount/slice-fixtures.ts",
+      "sha256": "8841c283f1cd99ac0de6ac84221d624b69fa92dbee5e6c47a0b9a39a602fe740",
+      "hash_mode": "text_lf"
+    },
+    {
+      "path": "scripts/live-drive/harness/executive-mount/vite.config.ts",
+      "sha256": "d727d65d9f4f0769854ff9bd442fb3dfb518da33fdf08841bcb4205ea6926f42",
+      "hash_mode": "text_lf"
+    },
+    {
+      "path": "scripts/live-drive/harness/executive-mount/index.html",
+      "sha256": "5ae436157119e1a702b87dbacb7122ca35cea9bf584f26ab499618fda7ff01eb",
+      "hash_mode": "text_lf"
+    },
+    {
+      "path": "public/fonts/schibsted-grotesk/schibsted-grotesk-latin-wght-normal.woff2",
+      "sha256": "4c8b93f431d462c696e12b9d6a033feb3394d36e66e781357c496b95d8a75e05",
+      "hash_mode": "original_binary"
+    },
+    {
+      "path": "public/fonts/schibsted-grotesk/schibsted-grotesk-latin-wght-italic.woff2",
+      "sha256": "4c72510c1a185a7b7ae2c9e402fbe531a58b74c95f4d2450f4d58482213c65f7",
+      "hash_mode": "original_binary"
+    }
+  ],
+  "frames": [
+    {
+      "path": "1024x768-closed.jpg",
+      "sha256": "226f32dca3b9f809f0cca49863b93d0fb2ccfd07cc77b684c23a307af84d02f8"
+    },
+    {
+      "path": "1024x768-open.jpg",
+      "sha256": "6008864e76f01d47e4252384dee93cbb6a36e725b9599f0eda5c7e682f60b8af"
+    },
+    {
+      "path": "1366x768-closed.jpg",
+      "sha256": "9385ad66635cbecf029584575d3c6c19e17c7a0e2cdfe96cd934ddb9c77edb79"
+    },
+    {
+      "path": "1366x768-open.jpg",
+      "sha256": "5be8ffd4e81c727cc0840011c333ea6fc1071f8e6ef914ee9632b8b568445df8"
+    },
+    {
+      "path": "1366x768-return-chat-draft.jpg",
+      "sha256": "713ba71355e6dd4a8a07d1c48c49143551c7299bbaea62643d9e4f4ba5483b75"
+    },
+    {
+      "path": "1366x768-return-source.jpg",
+      "sha256": "91dea9945d580eeec8854da8c1f0c3036ae63af5ba6905843e47f076f1201a16"
+    },
+    {
+      "path": "1536x770-closed.jpg",
+      "sha256": "057bcc73f7e0b0ccfb144b149e8d48f3cd3c65d9e6339b3646c184b654fdcccb"
+    },
+    {
+      "path": "1536x770-open.jpg",
+      "sha256": "ca6e774b2e5e8ff75deb3719e616f912c7465673c697b76c86d1212839e72bac"
+    },
+    {
+      "path": "320x740-obsidian-return.jpg",
+      "sha256": "ed26bd78ead998949a411706565907d971976790dd2432b18ccaf941a5c9cb3c"
+    },
+    {
+      "path": "390x844-obsidian-return.jpg",
+      "sha256": "82339eaa3d86fec2d97e5700407f69015045afcfe1dfde9c671d9e4a2c803c31"
+    },
+    {
+      "path": "900x1000-closed.jpg",
+      "sha256": "0403a386f42cc245f9ddf03e4a21ec43bbed6643b73133cc34d378dcc9ede52d"
+    },
+    {
+      "path": "900x1000-open.jpg",
+      "sha256": "51b71297af6a21d318ab8753ae78eedf8295cee38e13bd102cc9b5af3a81c42c"
+    }
+  ],
+  "observations": "render-observations.json",
+  "tests": {
+    "controls": 118,
+    "suites": 7,
+    "skips": 0,
+    "compiler_incumbent_diagnostics": 6,
+    "compiler_new_diagnostics": 0,
+    "baseline_unchanged": 10
+  },
+  "authenticated": "UNVERIFIED",
+  "founder": "NOT_ACCEPTED"
+}

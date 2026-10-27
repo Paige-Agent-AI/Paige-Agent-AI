@@ -1,0 +1,214 @@
+{
+  "source": "4a18ae9b92a3dd2fb0c260953e266c28c256ab00",
+  "scope": "Original components, synthetic ports only; no authenticated model/provider/department read",
+  "desktopClosed": {
+    "before": {
+      "focus": "Open Finance",
+      "scroll": 1719.199951171875
+    },
+    "after": {
+      "focus": "Open Finance",
+      "opened": [
+        "Source & freshness"
+      ],
+      "scroll": 1719.199951171875
+    },
+    "delta": 0
+  },
+  "desktopOpen": {
+    "before": {
+      "focus": "Open Finance",
+      "scroll": 1714.4000244140625
+    },
+    "after": {
+      "draft": "Keep this synthetic review question while I inspect the original source.",
+      "focus": "Open Finance",
+      "opened": [
+        "Source & freshness"
+      ],
+      "scroll": 1714.4000244140625
+    },
+    "delta": 0
+  },
+  "frames": [
+    {
+      "file": "1536x770-closed.jpg",
+      "viewport": [
+        1536,
+        770
+      ],
+      "mode": "closed",
+      "geometry": {
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "pageScroll": 1536,
+        "pageWidth": 1536,
+        "rootScroll": 1449,
+        "rootWidth": 1449
+      }
+    },
+    {
+      "file": "1536x770-open.jpg",
+      "viewport": [
+        1536,
+        770
+      ],
+      "mode": "open",
+      "geometry": {
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "pageScroll": 1536,
+        "pageWidth": 1536,
+        "rootScroll": 927,
+        "rootWidth": 927
+      }
+    },
+    {
+      "file": "1366x768-closed.jpg",
+      "viewport": [
+        1366,
+        768
+      ],
+      "mode": "closed",
+      "geometry": {
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "pageScroll": 1366,
+        "pageWidth": 1366,
+        "rootScroll": 1279,
+        "rootWidth": 1279
+      }
+    },
+    {
+      "file": "1366x768-open.jpg",
+      "viewport": [
+        1366,
+        768
+      ],
+      "mode": "open",
+      "geometry": {
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "pageScroll": 1366,
+        "pageWidth": 1366,
+        "rootScroll": 815,
+        "rootWidth": 815
+      }
+    },
+    {
+      "file": "1024x768-closed.jpg",
+      "viewport": [
+        1024,
+        768
+      ],
+      "mode": "closed",
+      "geometry": {
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "pageScroll": 1024,
+        "pageWidth": 1024,
+        "rootScroll": 937,
+        "rootWidth": 937
+      }
+    },
+    {
+      "file": "1024x768-open.jpg",
+      "viewport": [
+        1024,
+        768
+      ],
+      "mode": "open",
+      "geometry": {
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "pageScroll": 1024,
+        "pageWidth": 1024,
+        "rootScroll": 937,
+        "rootWidth": 937
+      }
+    },
+    {
+      "file": "900x1000-closed.jpg",
+      "viewport": [
+        900,
+        1000
+      ],
+      "mode": "closed",
+      "geometry": {
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "pageScroll": 900,
+        "pageWidth": 900,
+        "rootScroll": 813,
+        "rootWidth": 813
+      }
+    },
+    {
+      "file": "900x1000-open.jpg",
+      "viewport": [
+        900,
+        1000
+      ],
+      "mode": "open",
+      "geometry": {
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "pageScroll": 900,
+        "pageWidth": 900,
+        "rootScroll": 813,
+        "rootWidth": 813
+      }
+    }
+  ],
+  "fastFoldSequence": "Original folded-shell automatic focus was a real integration gap; corrected using its existing command/content-focus contract and actual-input guards, without shared-shell edits.",
+  "narrow": [
+    {
+      "file": "390x844-obsidian-return.jpg",
+      "viewport": [
+        390,
+        844
+      ],
+      "before": {
+        "focus": "Open Finance",
+        "opened": [
+          "Source & freshness"
+        ],
+        "scroll": 2372.800048828125,
+        "theme": "dark"
+      },
+      "after": {
+        "focus": "Open Finance",
+        "opened": [
+          "Source & freshness"
+        ],
+        "pageScroll": 390,
+        "pageWidth": 390,
+        "rootScroll": 303,
+        "rootWidth": 303,
+        "scroll": 2372.800048828125,
+        "theme": "dark"
+      },
+      "delta": 0
+    },
+    {
+      "file": "320x740-obsidian-return.jpg",
+      "viewport": [
+        320,
+        740
+      ],
+      "before": {
+        "focus": "Open Finance",
+        "opened": [
+          "Source & freshness"
+        ],
+        "scroll": 2867.199951171875
+      },
+      "after": {
+        "focus": "Open Finance",
+        "opened": [
+          "Source & freshness"
+        ],
+        "pageScroll": 320,
+        "pageWidth": 320,
+        "rootScroll": 233,
+        "rootWidth": 233,
+        "scroll": 2867.199951171875,
+        "theme": "dark"
+      },
+      "delta": 0
+    }
+  ],
+  "initialThemeAttempt": "Original proof wrapper pins its theme from the URL at entry; theme-button-only attempt remained Mineral. Final narrow frames recaptured after explicit dark proof-route entry."
+}

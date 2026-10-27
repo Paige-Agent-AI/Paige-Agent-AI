@@ -181,6 +181,36 @@ why, and what it proves (§13, §58: recorded, not silent).
   the tab order (one tab stop, the name carries *<AGENT>'s profile*); the profile overlay at 1024 casts
   the deeper shadow; the composer hint fits at 390.
 
+**A1b part 4 notes (2026-10-27, the second review's should-fixes and nits).** Recorded, not silent (§13,
+§58); each has a test that fails with the old behaviour reinstated.
+- **A refusal after a lost post answer is not proof (should-fix 1).** When the first post's answer was
+  lost (it may have committed and consumed the turn) and the retry is refused (`conversations_off`,
+  `not_found`, …), the turn asks the end door: only `ended` makes the refusal the outcome; otherwise it
+  is *may not have posted* with an outcome-unknown receipt, never a failure receipt for a reply that may
+  be stored.
+- **Receipts in any conversation the team cannot see (should-fix 2).** The `team_hub_agent_post` receipt
+  names the agent and the intent only for a reply in a **team channel**. A private channel, a DM
+  between teammates and an agent DM carry neither (part 3 covered DM turns only).
+- **A database error is transient (should-fix 3; reverses part 3's "a database refusal is not
+  retried").** A post error with a SQLSTATE (a statement timeout `57014`, a deadlock) is asked once more
+  with the same token and request id. Still failing, the end door settles it: `ended` is *didn't reply*
+  with Ask again, otherwise *may not have posted*. It is never *can't post here*, which has no recovery.
+  A PostgREST code never reached the function and is not asked again.
+- **Check again re-reads (nit).** For a state the screen could not know (*may still be replying*, *may
+  still be writing your private answer*), Check again re-reads that question's turn state
+  (`team_hub_agent_turn_states`) and never starts a model turn. Once the read says the turn ended, the
+  line becomes *didn't reply* with Ask again, and only that asks. *May not have posted* (the tab's own
+  turn) keeps its Check again, which re-sends the same request (it reads back before posting again).
+- **The private-part line is the definer's alone (nit).** Model text that ends with *That part is just
+  for you, so I'm answering it in our DM.* is posted without it (every trailing copy), so an injected
+  reply cannot imitate a private part; a reply that was only that line posts nothing. Done in the edge
+  (`agent-turn.ts`), leaving the A1a door untouched.
+- **Design nits.** *<AGENT> may still be replying.* carries a neutral clock (lucide, 14px, muted), not
+  the failure triangle. Agent rows in the list take a 5px gap and a 2px right edge: the list body's
+  stable scrollbar gutter made each row 15px narrower than the prototype's, and at 1024 five of seven
+  roles truncated earlier than frame c05; measured in the harness, all seven now truncate no earlier.
+  No agent colour or symbol changed (§28).
+
 Increments 1–4 are in
 [collaboration](exp08-team-hub-collaboration-contract.md),
 [team work](exp08-team-hub-increment2-work-contract.md),

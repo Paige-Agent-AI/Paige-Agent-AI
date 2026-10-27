@@ -8036,7 +8036,11 @@ Current gaps:
   Bring in staged from the agent's structured answer, same-token acceptance; transport errors are
   unknown outcomes, hinted agent turns are refused, DM-turn receipts omit agent and intent. Proof
   `supabase/tests/exp08_team_hub_agent_turn_states.sql` (CI). Open owner decision: whether a member's
-  agent DM turns should leave a Rail row at all.
+  agent DM turns should leave a Rail row at all. **A1b part 4** (same branch, not merged): receipts name
+  agent and intent only in a team channel; a refusal after a lost post answer and a post error with a
+  SQLSTATE are settled by the end door (never *can't post here* for an error); Check again on an unknown
+  state only re-reads it; model text cannot end with the private-part line; neutral clock for *may still
+  be replying*; agent list rows fit prototype c05. Contract "A1b part 4 notes".
 - `/solo/{n}/team` still redirects to Settings → Team; Team Hub is a separate destination.
 - Team actions still emit no Rail outcome.
 

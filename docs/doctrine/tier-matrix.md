@@ -591,6 +591,8 @@ Owner approval 2026-10-27 ("approved, go with your recommendations and start bui
 | Client | ✗ no seat |
 | Anonymous | ✗ no grant (`permission denied`) |
 
+**Part 4 (same branch):** the `team_hub_agent_post` Rail receipt, which a Solo workspace's owners and admins read, names the agent and intent only for a reply in a team channel; a private channel, a teammates' DM and an agent DM leave a row with neither (no tier gains or loses a surface).
+
 **Evidence:** `supabase/tests/exp08_team_hub_agent_turn_states.sql` (disposable PG16, in CI): every state, private channel non-member, another workspace, owner on a member's DM, removed person, foreign question ids, staging validation, and 14/14 mutants; the server unit tests (B1 transport mutants, S2, Bring in, receipts; 9 of 9 server mutants killed); `src/solo/team-hub` vitest 252 (10 UI mutants, 9 killed, the 10th equivalent); rendered harness 68 frames with the list column measured. **Owed:** the §32 persisted-apply read-back of `20271119010008` after merge, and the authenticated drive.
 
 ### Solo Settings → Team: the screens for the team lifecycle (2026-10-26; owner-approved design, APPROVED-FROZEN §28)

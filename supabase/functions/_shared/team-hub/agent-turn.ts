@@ -391,7 +391,8 @@ export async function runTeamHubAgentTurn(deps: AgentTurnDeps, raw: unknown): Pr
   const parsed = parseAgentTurnRequest(raw);
   if ("problem" in parsed) return { status: 400, body: { ok: false, outcome: "invalid_request", error: parsed.problem } };
   const req = parsed;
-  const { caller, service, userId } = deps;
+  const { caller, service } = deps;
+  const userId = deps.userId.toLowerCase();
   const agent = req.agent;
   if (!UUID.test(userId)) return fail(agent, "could_not_start");
 

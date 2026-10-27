@@ -165,13 +165,13 @@ SELECT ok(public.is_tenant_owner('0b0b0000-0000-4000-8000-000000000002','0b0b000
 SELECT throws_ok($$SELECT public.grant_tenant_member_role('0b0b0000-0000-4000-8000-000000000002'::uuid, 'client'::public.app_role, '0b0b0000-0000-4000-8000-00000000c001'::uuid)$$,
   '42501', 'TENANT_FORBIDDEN: membership of a company workspace is managed by the platform owner; operators act there through their role',
   'an operator cannot seat anyone, themselves included, in a company workspace');
--- EXP08 owners (20271116110008): create_tenant_invite_token now refuses Owner for every caller before
+-- EXP08 owners (20271116130008): create_tenant_invite_token now refuses Owner for every caller before
 -- any write, so the company-workspace refusal is proven with an Admin invitation, and Owner separately.
 SELECT throws_ok($$SELECT public.create_tenant_invite_token('0b0b0000-0000-4000-8000-00000000c001'::uuid, 'team', 'admin'::public.tenant_role)$$,
   '42501', 'TENANT_FORBIDDEN: a company workspace does not take invitations; the platform owner adds people to it directly',
   'nor mint an invitation into it for an account they control');
 SELECT throws_ok($$SELECT public.create_tenant_invite_token('0b0b0000-0000-4000-8000-00000000c001'::uuid, 'team', 'owner'::public.tenant_role)$$,
-  '42501', 'owner invitations are created only by the account holder, from Settings → Team',
+  '42501', 'Owner invitations aren''t available for this account.',
   'and no token minted here carries Owner, for anyone');
 SELECT throws_ok($$INSERT INTO public.invitations (email, invited_by) VALUES ('seat@tests.invalid','0b0b0000-0000-4000-8000-000000000002')$$,
   '42501', 'TENANT_FORBIDDEN: a company workspace does not take invitations; the platform owner adds people to it directly',

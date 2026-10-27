@@ -170,38 +170,44 @@ SET LOCAL lock_timeout = '2s';
 
 -- INCUMBENT GUARD (precedent 20271108233000, 20271116100008). Every production function this file
 -- replaces must still be the body it was written against, compared as a FINGERPRINT: md5 of prosrc
--- with every run of whitespace collapsed to one space and the ends trimmed. Comments are KEPT (a
--- marker such as E09_CONSUMER_INVITE_PEEK_V1 is part of the body), so any added, removed or changed
--- token, comment included, is refused; a re-indented or re-wrapped body is not. The fingerprints are
--- computed from production's bodies (read 2026-10-27). Every mismatch is collected and named in ONE
--- error, so a reviewer sees all the drift at once. A different body means another change landed
--- first: refuse, compose and review, rather than overwrite it.
+-- with LINE BREAKS KEPT, every other run of blanks (space, tab, CR, FF, VT) collapsed to one space, the
+-- blanks on either side of each line break dropped, empty lines dropped and the ends trimmed. Comments
+-- are KEPT (a marker such as E09_CONSUMER_INVITE_PEEK_V1 is part of the body), so any added, removed or
+-- changed token, comment included, is refused; a re-indented body, trailing blanks, CRLF line ends or
+-- blank lines are not. Line breaks are kept on purpose: collapsing them too would make "-- note" + a
+-- new line + "stmt;" fingerprint the same as "-- note stmt;", a statement silently commented out (the
+-- round-7 review found two such edits, one of them archive_solo_team_invite's authority check, that an
+-- all-whitespace collapse let through). The fingerprints are computed from production's bodies (read
+-- 2026-10-27). Every mismatch is collected and named in ONE error, so a reviewer sees all the drift at
+-- once. A different body means another change landed first: refuse, compose and review, rather than
+-- overwrite it.
 --   peek_tenant_invite(text) has TWO accepted fingerprints, both read, both the same logic. Production's
---   (80dab1cb) and the repository replay's (a128d2c0): 20260713050000_invite_brand_cascade.sql (recorded
+--   (68d1971e) and the repository replay's (4c10ee1d): 20260713050000_invite_brand_cascade.sql (recorded
 --   on production as git_ledger_reconciliation, so production never ran it; it ran 20260713030834, which
 --   has no comment) adds three comment lines above "SELECT * INTO _rb", and 20271108120100 then patches
 --   whichever body it finds with replace(). With comments removed the two are identical (fda7fafd on
 --   both, read 2026-10-27). This file DROPs and re-creates peek_tenant_invite, so either is replaced whole.
 --   The other nine replay to production's exact md5(prosrc) (rebuilt 2026-10-27 from every migration that
 --   creates or patches them, in version order).
---   Limits, stated: a whitespace change INSIDE a string literal (two spaces in a message becoming one)
---   passes; whitespace removed between two tokens ("a = b" to "a=b") is refused (the safe direction).
+--   Limits, stated: a blank change INSIDE a string literal (two spaces in a message becoming one) passes;
+--   blanks removed between two tokens ("a = b" to "a=b") and a line re-wrapped onto two lines are refused
+--   (the safe direction).
 -- exp08-owners-incumbent-guard:begin
 DO $guard$
 DECLARE r record; _have text; _drift text[] := '{}';
 BEGIN
   FOR r IN SELECT * FROM (VALUES
-    ('public.guard_tenant_member_owner_flag()', ARRAY['eee4ebeeb7857bbe7e3c523d52a91c70']),
-    ('public.guard_tenant_owner_only_columns()', ARRAY['29be287e537691027db03524507bb866']),
-    ('public.create_solo_team_invite(uuid,uuid,text,text,text,text,boolean)', ARRAY['e46f6c104440f576895b974457552e56']),
-    ('public.resend_solo_team_invite(uuid,uuid,uuid)', ARRAY['343ee1a88fd818d66cbee3fd3ab347f4']),
-    ('public.revoke_solo_team_invite(uuid,uuid,uuid)', ARRAY['0f3a759aabffbced19b0b2a6c6de8cf2']),
-    ('public.archive_solo_team_invite(uuid,uuid,uuid)', ARRAY['e82ee9a9df63ca300edfae1f9b2aaa3c']),
-    ('public.accept_solo_team_invite(text)', ARRAY['97df5ef979f613384e5e0a76ce09bbd3']),
-    ('public.accept_tenant_invite(text)', ARRAY['30945f57539d62fd75b3108fb3b7955d']),
-    ('public.create_tenant_invite_token(uuid,text,public.tenant_role,integer,integer,uuid,text)', ARRAY['38a8eb9e482563ef518df2733dc41c69']),
-    ('public.peek_tenant_invite(text)', ARRAY['80dab1cbb1bffe71f8714b8d36ecd67f', 'a128d2c03820d46ea72e55eb73000a96'])) v(sig, want) LOOP
-    SELECT md5(btrim(regexp_replace(p.prosrc, '\s+', ' ', 'g'))) INTO _have FROM pg_proc p WHERE p.oid = to_regprocedure(r.sig);
+    ('public.guard_tenant_member_owner_flag()', ARRAY['13b104130185c6963d98947bbd2a2031']),
+    ('public.guard_tenant_owner_only_columns()', ARRAY['20e81a742bccbb8e60f1bdf4faeb6958']),
+    ('public.create_solo_team_invite(uuid,uuid,text,text,text,text,boolean)', ARRAY['1c5f11389727ee9fba676e0ed37ed05d']),
+    ('public.resend_solo_team_invite(uuid,uuid,uuid)', ARRAY['eee16ef2f4976bf5340ea6e54585d68e']),
+    ('public.revoke_solo_team_invite(uuid,uuid,uuid)', ARRAY['591392dec7f1eac34bd6dfc3411fbd1c']),
+    ('public.archive_solo_team_invite(uuid,uuid,uuid)', ARRAY['eb309e2e20473d29aa4adfe54c2db5f2']),
+    ('public.accept_solo_team_invite(text)', ARRAY['98d289ee6c563d9c6b4b321a5fdc5693']),
+    ('public.accept_tenant_invite(text)', ARRAY['83b20c6f99997b5299aa091458c4a3ff']),
+    ('public.create_tenant_invite_token(uuid,text,public.tenant_role,integer,integer,uuid,text)', ARRAY['4f70c379bb88be99cf36722dfe1c9e92']),
+    ('public.peek_tenant_invite(text)', ARRAY['68d1971e48f8023f7657b13f92d0dc42', '4c10ee1d6db3235d261feaf5a8bd8858'])) v(sig, want) LOOP
+    SELECT md5(btrim(regexp_replace(regexp_replace(p.prosrc, E'[ \\t\\r\\f\\v]*\\n[ \\t\\r\\f\\v\\n]*', E'\n', 'g'), E'[ \\t\\r\\f\\v]+', ' ', 'g'), E' \n')) INTO _have FROM pg_proc p WHERE p.oid = to_regprocedure(r.sig);
     IF _have IS NULL OR NOT (_have = ANY (r.want)) THEN
       _drift := _drift || format('%s (fingerprint %s, expected %s)', r.sig, COALESCE(_have, 'missing'), array_to_string(r.want, ' or '));
     END IF;

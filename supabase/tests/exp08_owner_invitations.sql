@@ -1172,7 +1172,8 @@ DO $$ BEGIN IF (SELECT count(*) FROM proof.prior) <> 10 THEN RAISE EXCEPTION 'FA
 
 -- S2. The migration's INCUMBENT GUARD, read out of the migration file between its markers, run as a
 -- case suite (each case inside a rolled-back subtransaction). The guard compares a FINGERPRINT:
--- md5(prosrc) with whitespace runs collapsed to one space and the ends trimmed, comments kept.
+-- md5(prosrc) with line breaks kept, other blank runs collapsed to one space, the ends trimmed,
+-- comments kept.
 --   G1 production's ten bodies pass.
 --   G2 peek_tenant_invite as the REPOSITORY REPLAY builds it passes: production's body plus the three
 --      comment lines 20260713050000 adds (read out of that file), which must give md5(prosrc)
@@ -1182,8 +1183,11 @@ DO $$ BEGIN IF (SELECT count(*) FROM proof.prior) <> 10 THEN RAISE EXCEPTION 'FA
 --   G5 peek_tenant_invite with its consumer AND clause removed is refused, naming it and only it.
 --   G6 G4 and G5 at once: ONE error naming both ("2 of 10").
 --   D  each of the ten with one comment line added is refused, naming it and only it (10 cases).
+--   J  archive_solo_team_invite's authority check joined onto the comment line above it (so it becomes
+--      comment text) is refused, naming it and only it. The round-7 review's bypass, kept as a case.
 -- Guard mutants (§71.4), each a one-place rewrite of the guard text: M1 normalization removed (raw
--- md5) must fail G3; M2 compares nothing must fail G4; M3 raises at the first mismatch must fail G6.
+-- md5) must fail G3; M2 compares nothing must fail G4; M3 raises at the first mismatch must fail G6;
+-- M4 every whitespace run collapsed, line breaks included (the round-7 guard), must fail J.
 -- Control C1 (the membership test written as an array containment) must fail none.
 \set d_guard `sed -n '/^-- exp08-owners-incumbent-guard:begin$/,/^-- exp08-owners-incumbent-guard:end$/p' supabase/migrations/20271119020008_exp08_owner_invitations.sql`
 \set d_replay_comment `sed -n '/^  -- Resolve brand up the parent chain/,/^  -- the operator master brand/p' supabase/migrations/20260713050000_invite_brand_cascade.sql`
@@ -1262,6 +1266,12 @@ BEGIN
   IF _err IS NULL OR strpos(_err, _msg) = 0 OR strpos(_err, '2 of 10') = 0
      OR proof.guard_named(_err) <> ARRAY['accept_tenant_invite', 'peek_tenant_invite'] THEN
     _fail := _fail || ('G6 two drifts are both named in one error: ' || coalesce(_err, 'no error')); END IF;
+  _err := proof.guard_run(_guard, jsonb_build_array(jsonb_build_object('f', 'public.archive_solo_team_invite(uuid,uuid,uuid)',
+    'from', E'nobody named.\n  _tenant := public.solo_team_invite_authority(_actor, _expected_tenant_id);',
+    'to', 'nobody named. _tenant := public.solo_team_invite_authority(_actor, _expected_tenant_id);')));
+  IF _err IS NULL OR strpos(_err, _msg) = 0 OR strpos(_err, '1 of 10') = 0
+     OR proof.guard_named(_err) <> ARRAY['archive_solo_team_invite'] THEN
+    _fail := _fail || ('J a statement joined onto its comment line is refused and named: ' || coalesce(_err, 'no error')); END IF;
   FOR r IN SELECT value->>'f' AS f FROM jsonb_array_elements(_all) LOOP
     _err := proof.guard_run(_guard, jsonb_build_array(jsonb_build_object('f', r.f, 'from', 'AS $function$', 'to', E'AS $function$\n-- drift')));
     IF _err IS NULL OR strpos(_err, _msg) = 0 OR proof.guard_named(_err) <> ARRAY[split_part(split_part(r.f, '(', 1), '.', 2)]
@@ -1276,7 +1286,8 @@ DO $$ DECLARE _g text := current_setting('proof.guard'); _f text[]; m record; _m
   _f := proof.guard_suite(_g);
   IF cardinality(_f) > 0 THEN RAISE EXCEPTION 'FAIL (S2): the incumbent guard fails: %', array_to_string(_f, ' | '); END IF;
   FOR m IN SELECT * FROM (VALUES
-    ('M1 normalization removed (raw md5)', $m$md5(btrim(regexp_replace(p.prosrc, '\s+', ' ', 'g')))$m$, 'md5(p.prosrc)', 'G3', false),
+    ('M1 normalization removed (raw md5)', $m$md5(btrim(regexp_replace(regexp_replace(p.prosrc, E'[ \\t\\r\\f\\v]*\\n[ \\t\\r\\f\\v\\n]*', E'\n', 'g'), E'[ \\t\\r\\f\\v]+', ' ', 'g'), E' \n'))$m$, 'md5(p.prosrc)', 'G3', false),
+    ('M4 line breaks collapsed too (the round-7 guard)', $m$md5(btrim(regexp_replace(regexp_replace(p.prosrc, E'[ \\t\\r\\f\\v]*\\n[ \\t\\r\\f\\v\\n]*', E'\n', 'g'), E'[ \\t\\r\\f\\v]+', ' ', 'g'), E' \n'))$m$, $m$md5(btrim(regexp_replace(p.prosrc, '\s+', ' ', 'g')))$m$, 'J', false),
     ('M2 the guard compares nothing', 'IF _have IS NULL OR NOT (_have = ANY (r.want)) THEN', 'IF false THEN', 'G4', false),
     ('M3 raises at the first mismatch', '      _drift := _drift || format(',
        $m$      RAISE EXCEPTION 'EXP08 owner invitations: 1 of 10 functions are not the body this migration replaces: %', r.sig; _drift := _drift || format($m$, 'G6', false),
@@ -1294,7 +1305,7 @@ DO $$ DECLARE _g text := current_setting('proof.guard'); _f text[]; m record; _m
   -- And it is still production's bodies afterwards (every case was rolled back).
   EXECUTE _g;
 END $$;
-\echo 'PASS (S2): the incumbent guard (whitespace-normalized md5, comments kept) passes on production''s 10 bodies, on the repository replay''s peek_tenant_invite (md5 e9ea6eb2) and on all 10 re-formatted; refuses a changed identifier, a removed AND clause and a comment added to each of the 10, naming each, and two drifts in one error; guard mutants M1 M2 M3 killed, control C1 survives'
+\echo 'PASS (S2): the incumbent guard (md5 with line breaks kept and other blanks normalized, comments kept) passes on production''s 10 bodies, on the repository replay''s peek_tenant_invite (md5 e9ea6eb2) and on all 10 re-formatted; refuses a changed identifier, a removed AND clause and a comment added to each of the 10, naming each, and two drifts in one error, and a statement joined onto its comment line; guard mutants M1 M2 M3 M4 killed, control C1 survives'
 
 -- ═════════════════════ PHASE 2: the migration under test ═════════════════════
 \ir ../migrations/20271119020008_exp08_owner_invitations.sql

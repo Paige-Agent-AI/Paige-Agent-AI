@@ -25,7 +25,7 @@ MUST_PRESERVE: original actor/tenant/role, native projection, saved process/revi
 ACCEPTANCE_CRITERIA: owner can ask to compare a known responsibility's time, receive accurate current/proposed values, inspect its original native controls and return/reload without a change, duplicate or lost context; negatives refuse accurately.
 MOTION_PURPOSE: NONE: no motion implementation change.
 PROTECTED_SEAMS: actual read/Root scope, original intent, remaining budget and no-binding/retry boundaries tested; no SQL/native writer/approval/risk/Layer C/provider/Live/permission or provisioning change.
-INTERNAL_BUILD_IDENTITY: sha=aecbb98fef164062a4d975babc670c7107830025; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_DEPLOYED; evidence=docs/evidence/ui-delivery/exp05-weekly-schedule-preview.md; identity_scope=source before evidence correction, final head in PR2961.
+INTERNAL_BUILD_IDENTITY: sha=aecbb98fef164062a4d975babc670c7107830025; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(affected source is not deployed); evidence=docs/evidence/ui-delivery/exp05-weekly-schedule-preview.md; identity_scope=source before evidence correction, final head in PR2961.
 RELEASE_CHANNEL: development: source candidate with material flow-evidence hold; no production or activation claim.
 RELEASE_CLASSIFICATION: internal-only: bounded prelaunch read connection, not a completed weekly/automation customer release.
 CUSTOMER_RELEASE_IDENTITY: none: full Experience and owner acceptance remain open.

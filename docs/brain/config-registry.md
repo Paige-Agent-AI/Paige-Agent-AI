@@ -583,8 +583,38 @@ Values intentionally omitted.
     (`_shared/comms-email/readiness.ts`, `_shared/sales-invoice-delivery/readiness-reader.ts`, agreement-send,
     `_shared/agreements/notify.ts`) now keys on `SENDGRID_MAIL_SEND_API_KEY`. Still reading `RESEND_API_KEY`:
     manage-tenant-domain only (tenant custom sending domains; no SendGrid domain-authentication code exists yet —
-    separate work), plus the Resend inbound/receipt webhooks (`handle-inbound-email`, `handle-resend-webhook`),
-    which receive nothing once nothing sends through Resend.
+    separate work), plus the Resend inbound/receipt webhooks (`handle-inbound-email`'s Resend arm,
+    `handle-resend-webhook`), which receive nothing once nothing sends through Resend.
+  - **Inbound replies — SendGrid Inbound Parse (2026-10-27, branch `feat/sendgrid-inbound-parse`, not yet merged or
+    deployed).** `handle-inbound-email` gained a second arm, selected by `Content-Type: multipart/form-data` (the Resend
+    Svix-JSON arm is unchanged). Edge secret NAME: **`SENDGRID_INBOUND_PARSE_SECRET`** (new; value never recorded).
+    Unset → every Inbound Parse POST gets 503 `inbound_parse_not_configured` and nothing is stored; wrong or missing
+    proof → 401. The proof is the secret as the HTTP basic-auth password (any username) or as the `t` query parameter,
+    compared in constant time. `verify_jwt = false` for the function is already declared in `config.toml`.
+    - **What the owner enters in SendGrid → Settings → Inbound Parse → Add Host & URL:** receiving domain
+      `mail.paigeagent.ai` (MX `10 mx.sendgrid.net` is already in place), destination URL
+      `https://inbound:<SENDGRID_INBOUND_PARSE_SECRET>@xygzykjyynhzqytbqnzu.supabase.co/functions/v1/handle-inbound-email`
+      — or, if SendGrid will not keep credentials in the URL, `https://xygzykjyynhzqytbqnzu.supabase.co/functions/v1/handle-inbound-email?t=<SENDGRID_INBOUND_PARSE_SECRET>`.
+      Leave "POST the raw, full MIME message" OFF (the arm reads the default parsed fields). Set the secret on the
+      function before saving the URL; until it is set SendGrid's posts are refused with 503 and retried.
+    - **Tenant routing:** the SMTP envelope `to` (never the header To) is matched exactly (LIKE wildcards escaped,
+      `*` refused) against an active `channel_connectors.inbound_address`, then `inbound_domain`. Every managed sender
+      already has one: `provision_paige_managed_email_connector` writes `inbound_address = <local>@mail.paigeagent.ai`
+      on the managed `provider='resend'` connector (read on production 2026-10-27: 7 active + 2 inactive managed
+      connectors, all on `mail.paigeagent.ai`; 0 rows with any `inbound_domain`). No connector → 200 skip, logged.
+      A connector read error → 503 so SendGrid retries.
+    - **Idempotency:** `messages.provider_message_id = sendgrid-inbound:<tenant>:<Message-ID>`, tenant-scoped because
+      `uq_messages_provider_message_id` is global (one email reaching two businesses must land in both, and a forged
+      Message-ID must not suppress another business's mail). No Message-ID →
+      `sendgrid-inbound:<tenant>:derived:<sha256(from \n to \n subject \n Date \n text)>`, flagged
+      `meta.provider_message_id_derived`. Body cap 32 MiB (413 above). Attachment bytes are NOT stored (no store
+      exists for them); they are counted and described in `meta.attachments_not_stored`.
+    - **UNVERIFIED:** (1) that SendGrid forwards URL userinfo as an `Authorization: Basic` header and that the
+      Supabase gateway passes it through with `verify_jwt = false` — the `?t=` form avoids both questions but puts the
+      secret into request-URL logs; (2) SendGrid's signed Inbound Parse (ECDSA) — mentioned by the SendGrid skill,
+      not found in the parse-webhook docs read 2026-10-27, so not implemented; (3) non-UTF-8 `charsets` are decoded
+      as UTF-8; (4) no live SendGrid post has reached this arm — proof is the handler test
+      `npm run test:inbound-email` only.
   - **Supabase Auth email (sign-up confirmation, password reset)** goes through the Auth custom-SMTP setting in the
     Supabase dashboard, not edge code. **Re-pointed by the owner on 2026-10-27** to `smtp.sendgrid.net:587`, user
     `apikey`, a restricted Mail Send key, sender name "Paige Agent AI" (seen in the owner's screenshot; the sender

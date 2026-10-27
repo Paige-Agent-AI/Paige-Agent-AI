@@ -1066,7 +1066,14 @@ const SOURCES = {
   // their existing behavior. Renewed non-author review and actual retry controls are
   // recorded on PR #1897; no other incumbent snapshot is regenerated or accepted.
   "supabase/functions/_shared/twilio.ts": "afe6b57d9ed91c00e6517856f7b17c36f147fee5b88afb3450586c4393d6565a",
-  "supabase/functions/_shared/channel-adapters.ts": "f29fe7502ceb961ad886863c570970d48c4c19969ce2b6fce203a04867deef41",
+  // SendGrid Inbound Parse (2026-10-27), AUTHOR-REVIEW / LOWER ASSURANCE: the inbound registry gains an
+  // optional provider qualifier — InboundChannelAdapter.provider?, a `channel:provider` key when it is set,
+  // and getInboundAdapter(ch, provider?) — so handle-inbound-email can register its SendGrid adapter beside
+  // Resend's unqualified 'email' one. An adapter without `provider` keys exactly as before (bare channel), so
+  // every existing register/get call resolves the same adapter. Outbound registry, NormalizedMessage, Delivery,
+  // OutboundSendContext and buildListUnsubscribeHeaders are byte-identical. Prior f29fe750… reproduced from
+  // db0048ad7 (git show | TypeScript printer {removeComments:true}, sha256) before renewing. Renew this digest only.
+  "supabase/functions/_shared/channel-adapters.ts": "dc0cfccf25118be0a76b5599167e7440c8e80a8c63880a549f7f36e2d18d0977",
   // E09 Slice 6 bounded renewal (2026-10-18), integrating-crew source review (NOT non-author):
   // the only change vs main is one added `case "customer_request"` in suppressionReason (the plain
   // sentence a portal opt-out returns). Step order, every block/queue condition, the consent channel

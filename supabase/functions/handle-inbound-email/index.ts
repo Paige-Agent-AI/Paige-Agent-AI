@@ -1,6 +1,10 @@
-// Resend inbound email webhook receiver — Comms Slice C-1 (unified inbox).
+// Inbound email receiver — Comms Slice C-1 (unified inbox). Two provider arms, one home (§18):
+//   * SendGrid Inbound Parse (multipart/form-data) — the live path since Resend's retirement
+//     (owner, 2026-10-26). See "SendGrid Inbound Parse arm" below; it reuses steps 3–7.
+//   * Resend (Svix-signed JSON) — the original arm, behaviour unchanged; receives nothing now
+//     that nothing sends through Resend.
 //
-// Flow (doctrine-annotated):
+// Resend flow (doctrine-annotated):
 //   1. Svix HMAC verification (unchanged) — fail closed if RESEND_WEBHOOK_SECRET missing.
 //   2. Normalize the raw Resend payload THROUGH the channel-adapters registry
 //      (§32: getInboundAdapter("email").onEvent(raw) — the abstraction is exercised
@@ -22,7 +26,7 @@
 // row is wired yet. With no connector matching the recipient, every event is skipped
 // (logged). This function is correct and live, but processes nothing until a tenant
 // provisions an inbound email connector.
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { fireAndForgetBridge } from "../_shared/mmaOsBridge.ts";
 import { findClientIdByAddress, insertClientWithAddresses } from "../_shared/contact-methods.ts";
 import { classifyAndRecordMessage, type ClassifyAdmin } from "../_shared/inbox-intelligence/classify-message.ts";
@@ -35,6 +39,29 @@ import {
   type MessageParty,
   type NormalizedMessage,
 } from "../_shared/channel-adapters.ts";
+import {
+  SENDGRID_INBOUND_MAX_BYTES,
+  SENDGRID_INBOUND_PARSE_SECRET_NAME,
+  authenticateInboundParse,
+  fallbackIdentityInput,
+  sendgridFieldsFromForm,
+  sendgridInboundAdapter,
+} from "./sendgrid-inbound.ts";
+
+type Admin = SupabaseClient;
+
+/** How a provider arm hands a normalized message to the shared persistence steps. */
+interface PersistOptions {
+  /** The stored provider_message_id, given the resolved tenant (§9: never from the payload). */
+  providerMessageIdFor: (tenantId: string) => string;
+  /** True when that id is a derived hash rather than the provider's own id (flagged in meta). */
+  derivedProviderId: boolean;
+  /**
+   * SendGrid arm: match recipient addresses exactly (wildcards escaped) and answer a connector
+   * read error with 503 so the provider retries. Resend arm: false, its unchanged behaviour.
+   */
+  strictLookups: boolean;
+}
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -155,6 +182,8 @@ const emailInboundAdapter: InboundChannelAdapter = {
   },
 };
 registerInboundAdapter(emailInboundAdapter);
+// SendGrid Inbound Parse: the same channel, qualified by provider (pure mapping in ./sendgrid-inbound.ts).
+registerInboundAdapter(sendgridInboundAdapter);
 
 // -----------------------------------------------------------------------------
 Deno.serve(async (req) => {
@@ -164,6 +193,12 @@ Deno.serve(async (req) => {
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const admin = createClient(supabaseUrl, serviceKey);
+
+  // SendGrid Inbound Parse posts multipart/form-data; Resend posts Svix-signed JSON.
+  // The content type selects the arm before either reads the body.
+  if ((req.headers.get("content-type") ?? "").toLowerCase().startsWith("multipart/form-data")) {
+    return await handleSendgridInboundParse(req, admin);
+  }
 
   // -- 1. Svix HMAC verification. Fail closed if no secret resolves. ------------
   // Secret precedence: function env FIRST, then the platform-operator-managed
@@ -240,7 +275,127 @@ Deno.serve(async (req) => {
     providerMessageId = `resend-derived:${await sha256Hex(`${svixId}.${rawBody}`)}`;
     derivedProviderId = true;
   }
+  const resendProviderMessageId: string = providerMessageId;
 
+  return await persistInbound(admin, msg, {
+    providerMessageIdFor: () => resendProviderMessageId,
+    derivedProviderId,
+    strictLookups: false,
+  });
+});
+
+// -----------------------------------------------------------------------------
+// SendGrid Inbound Parse arm (multipart/form-data). Replies to PAIGE's managed
+// `<slug>@mail.paigeagent.ai` senders: the owner points SendGrid → Settings →
+// Inbound Parse (host mail.paigeagent.ai) at this function's URL carrying the
+// SENDGRID_INBOUND_PARSE_SECRET (basic-auth password or `?t=`). Steps:
+//   1. Shared-secret gate — 503 when the secret is unset (nothing processed),
+//      401 when the proof is missing or wrong. Constant-time compare.
+//   2. Body bounded at SENDGRID_INBOUND_MAX_BYTES (413 above it), parsed as form.
+//   3. Normalized THROUGH the registry (getInboundAdapter("email", "sendgrid")).
+//   4. Routed on the SMTP envelope `to` only — no envelope, no routing (skip 200).
+//   5. Then the SAME persistence as the Resend path, with strict lookups: a
+//      connector read error is a 503 so SendGrid retries, never a silent skip.
+// Idempotency: provider_message_id = `sendgrid-inbound:<tenant>:<Message-ID>`.
+// uq_messages_provider_message_id is GLOBAL, so the key is scoped to the resolved
+// tenant — otherwise one business receiving a copy of an email (or a sender
+// forging a Message-ID) would make another business's copy a "duplicate" and
+// drop it. No Message-ID header → `derived:<sha256(from\nto\nsubject\ndate\ntext)>`
+// (stable across SendGrid's retries of one email), flagged in meta.
+// -----------------------------------------------------------------------------
+async function readBodyWithLimit(req: Request, max: number): Promise<Uint8Array<ArrayBuffer> | null> {
+  if (!req.body) return new Uint8Array(0);
+  const reader = req.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let received = 0;
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    received += value.byteLength;
+    if (received > max) {
+      await reader.cancel();
+      return null;
+    }
+    chunks.push(value);
+  }
+  const out = new Uint8Array(received);
+  let offset = 0;
+  for (const c of chunks) {
+    out.set(c, offset);
+    offset += c.byteLength;
+  }
+  return out;
+}
+
+function jsonReply(body: Record<string, unknown>, status: number): Response {
+  return new Response(JSON.stringify(body), {
+    status, headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
+
+async function handleSendgridInboundParse(req: Request, admin: Admin): Promise<Response> {
+  const auth = authenticateInboundParse(req, Deno.env.get(SENDGRID_INBOUND_PARSE_SECRET_NAME));
+  if (!auth.ok) {
+    // The reason only — never the offered value or the configured one.
+    console.warn("[handle-inbound-email] sendgrid_inbound_rejected", auth.reason);
+    return jsonReply({ ok: false, reason: auth.reason }, auth.status);
+  }
+
+  const declared = Number(req.headers.get("content-length") ?? "0");
+  if (Number.isFinite(declared) && declared > SENDGRID_INBOUND_MAX_BYTES) {
+    console.warn("[handle-inbound-email] sendgrid_inbound_too_large", { declared });
+    return jsonReply({ ok: false, reason: "payload_too_large" }, 413);
+  }
+  const bytes = await readBodyWithLimit(req, SENDGRID_INBOUND_MAX_BYTES);
+  if (!bytes) {
+    console.warn("[handle-inbound-email] sendgrid_inbound_too_large", { streamed: true });
+    return jsonReply({ ok: false, reason: "payload_too_large" }, 413);
+  }
+  let form: FormData;
+  try {
+    form = await new Response(bytes, {
+      headers: { "content-type": req.headers.get("content-type") ?? "" },
+    }).formData();
+  } catch {
+    return jsonReply({ ok: false, reason: "invalid_form" }, 400);
+  }
+
+  const adapter = getInboundAdapter("email", "sendgrid");
+  if (!adapter) {
+    console.error("[handle-inbound-email] no_sendgrid_inbound_adapter_registered");
+    return jsonReply({ ok: false, reason: "no_adapter" }, 500);
+  }
+  const fields = sendgridFieldsFromForm(form);
+  const msg = adapter.onEvent(fields);
+
+  if (!(msg.recipients ?? []).length) {
+    // Routing is on the SMTP envelope only; a header To is whatever the sender wrote (§9).
+    console.warn("[handle-inbound-email] sendgrid_inbound_no_envelope_recipient");
+    return jsonReply({ ok: false, reason: "no_envelope_recipient" }, 200);
+  }
+
+  const rfcMessageId = msg.provider_message_id ?? null;
+  const identity = rfcMessageId ?? `derived:${await sha256Hex(fallbackIdentityInput(fields))}`;
+  return await persistInbound(admin, msg, {
+    providerMessageIdFor: (tenantId) => `sendgrid-inbound:${tenantId}:${identity}`,
+    derivedProviderId: !rfcMessageId,
+    strictLookups: true,
+  });
+}
+
+/** PostgREST `ilike` treats `%`, `_` (SQL) and `*` (PostgREST) as wildcards; an address must match exactly. */
+function ilikeExact(value: string): string | null {
+  if (value.includes("*")) return null;
+  return value.replace(/[\\%_]/g, (c) => `\\${c}`);
+}
+
+// -----------------------------------------------------------------------------
+// Persistence shared by both provider arms: steps 3–7 of the header comment.
+// The Resend arm calls it with strictLookups=false, which is exactly its prior
+// inline behaviour (raw ilike, a lookup error reads as "no connector").
+// -----------------------------------------------------------------------------
+async function persistInbound(admin: Admin, msg: NormalizedMessage, opts: PersistOptions): Promise<Response> {
+  const derivedProviderId = opts.derivedProviderId;
   const fromEmail = msg.sender?.address ?? "";
   if (!fromEmail || (!msg.body_text && !msg.body_html)) {
     return new Response(JSON.stringify({ ok: false, reason: "missing_fields" }), { status: 200 });
@@ -255,14 +410,22 @@ Deno.serve(async (req) => {
 
   // 3a. Try each recipient as an exact inbound_address (case-insensitive).
   for (const addr of recipientAddresses) {
-    const { data: byAddr } = await admin
+    const pattern = opts.strictLookups ? ilikeExact(addr) : addr;
+    if (pattern === null) continue;
+    const { data: byAddr, error: byAddrErr } = await admin
       .from("channel_connectors")
       .select("id, tenant_id, from_address, from_name, reply_to")
       .eq("channel_type", "email")
       .eq("active", true)
-      .ilike("inbound_address", addr)
+      .ilike("inbound_address", pattern)
       .limit(1)
       .maybeSingle();
+    if (byAddrErr && opts.strictLookups) {
+      console.error("[handle-inbound-email] connector_lookup_failed", byAddrErr.code ?? byAddrErr.message);
+      return new Response(JSON.stringify({ ok: false, reason: "connector_lookup_failed" }), {
+        status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
     if (byAddr?.tenant_id) { connector = byAddr; break; }
   }
 
@@ -272,14 +435,22 @@ Deno.serve(async (req) => {
       new Set(recipientAddresses.map((a) => a.split("@")[1]).filter(Boolean)),
     );
     for (const dom of domains) {
-      const { data: byDom } = await admin
+      const domPattern = opts.strictLookups ? ilikeExact(dom) : dom;
+      if (domPattern === null) continue;
+      const { data: byDom, error: byDomErr } = await admin
         .from("channel_connectors")
         .select("id, tenant_id, from_address, from_name, reply_to")
         .eq("channel_type", "email")
         .eq("active", true)
-        .ilike("inbound_domain", dom)
+        .ilike("inbound_domain", domPattern)
         .limit(1)
         .maybeSingle();
+      if (byDomErr && opts.strictLookups) {
+        console.error("[handle-inbound-email] connector_lookup_failed", byDomErr.code ?? byDomErr.message);
+        return new Response(JSON.stringify({ ok: false, reason: "connector_lookup_failed" }), {
+          status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
       if (byDom?.tenant_id) { connector = byDom; break; }
     }
   }
@@ -298,6 +469,7 @@ Deno.serve(async (req) => {
   }
 
   const tenantId = connector.tenant_id;
+  const providerMessageId = opts.providerMessageIdFor(tenantId);
 
   // -- 4. Upsert the contact in public.clients, tenant-scoped (§9). ---------------
   // A sender writing from ANY of a contact's addresses is that contact.
@@ -540,4 +712,4 @@ Deno.serve(async (req) => {
   return new Response(JSON.stringify({ ok: true, message_id: messageId, tenant_id: tenantId }), {
     status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
-});
+}

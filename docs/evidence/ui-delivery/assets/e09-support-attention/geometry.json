@@ -1,0 +1,74 @@
+[
+  {
+    "buttons": [
+      {
+        "height": 44,
+        "label": "Refresh"
+      },
+      {
+        "height": 44,
+        "label": "Review client "
+      }
+    ],
+    "ground": "rgb(16, 14, 20)",
+    "height": 844,
+    "ink": "rgb(172, 166, 157)",
+    "scrollWidth": 1536,
+    "theme": "dark",
+    "width": 1536
+  },
+  {
+    "buttons": [
+      {
+        "height": 44,
+        "label": "Refresh"
+      },
+      {
+        "height": 44,
+        "label": "Review client "
+      }
+    ],
+    "ground": "rgb(16, 14, 20)",
+    "height": 844,
+    "ink": "rgb(172, 166, 157)",
+    "scrollWidth": 900,
+    "theme": "dark",
+    "width": 900
+  },
+  {
+    "buttons": [
+      {
+        "height": 44,
+        "label": "Refresh"
+      },
+      {
+        "height": 44,
+        "label": "Review client "
+      }
+    ],
+    "ground": "rgb(16, 14, 20)",
+    "height": 844,
+    "ink": "rgb(172, 166, 157)",
+    "scrollWidth": 390,
+    "theme": "dark",
+    "width": 390
+  },
+  {
+    "buttons": [
+      {
+        "height": 44,
+        "label": "Refresh"
+      },
+      {
+        "height": 44,
+        "label": "Review client "
+      }
+    ],
+    "ground": "rgb(16, 14, 20)",
+    "height": 844,
+    "ink": "rgb(172, 166, 157)",
+    "scrollWidth": 320,
+    "theme": "dark",
+    "width": 320
+  }
+]

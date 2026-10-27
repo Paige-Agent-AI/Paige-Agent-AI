@@ -47,7 +47,7 @@ MOTION_PURPOSE: NONE: no motion change
 PROTECTED_SEAMS: provision_paige_managed_email_connector (body identical to 20270602000104 apart from the retired-address step); check_solo_setup_managed_email (identical to 20261104000000 apart from one clause); the #2983 inbound routing guard
 
 <!-- RELEASE_GOVERNANCE_POLICY — read docs/doctrine/release-governance-and-customer-update-policy.md -->
-INTERNAL_BUILD_IDENTITY: e20e63919695fd25e0ab7a28adb25bde54736ad7; deployment=none-pre-merge; environment=development; migrations=PROOF_OWED(20271118100000 applies on merge via deploy-migrations); edge=NOT_APPLICABLE; evidence=this-PR-checks-and-the-proof-above
+INTERNAL_BUILD_IDENTITY: 8ecc0951e1fad69f2bb8ba922051664ed4572057; deployment=none-pre-merge; environment=development; migrations=PROOF_OWED(20271118100000 applies on merge via deploy-migrations); edge=NOT_APPLICABLE; evidence=this-PR-checks-and-the-proof-above
 RELEASE_CHANNEL: development: code on the PR branch; the migration applies to production on merge via deploy-migrations (pre-launch §4 stance)
 RELEASE_CLASSIFICATION: patch: closes an address-reuse path; no new capability
 CUSTOMER_RELEASE_IDENTITY: none: internal security hardening, no owner-decided customer release

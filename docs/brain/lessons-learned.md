@@ -72,6 +72,33 @@ had NOT persisted. The file rolled back as a whole.
   reader that takes them in the other order. Taking the locks up front, in a fixed order, under a
   `lock_timeout`, narrows the window but does not close it.
 
+### A short lock_timeout cannot land on a production that is being dumped (2026-10-27, EXP08 I1)
+
+**Symptom.** Migration `20271120010008` (#3008) failed twice on `deploy-migrations` at the same
+statement, its first `ALTER TABLE`, with `canceling statement due to lock timeout (SQLSTATE 55P03)`.
+The file runs in one transaction, so nothing was applied. Production read-backs confirmed it both
+times.
+
+**Root cause.** The PAIGE Spine contract workflow takes a read-only `pg_dump` baseline of production
+on every run, and runs overlap (four at once were observed). Each dump holds ACCESS SHARE on every
+table for its whole run (`dumpFunc`, "idle in transaction", over a minute). The migration's 2 s
+`lock_timeout` waited behind them and lost. Between my "no locks now" check and the re-run's apply,
+55 s apart, a new dump had already started.
+
+**Why a longer lock_timeout is the wrong fix.** A waiting exclusive request queues every later query
+on that table behind it. `tenant_members` is read on every request.
+
+**Rule.** A migration that needs exclusive locks on hot tables takes them all up front, at the top of
+its transaction, with `LOCK TABLE … NOWAIT` in a `DO` retry loop (`EXCEPTION WHEN lock_not_available`,
+`pg_sleep(1)`, a bounded number of tries, and a `statement_timeout` above that bound).
+- NOWAIT never queues anyone, and a failed attempt releases what it took.
+- Once all the locks are held, nothing below waits.
+- It cannot deadlock with a reader that takes the tables in another order.
+
+Proved with a behavioural test: a reader holds a lock for 5 s, the block waits it out, and a new
+reader still gets in within 0.05 s. With NOWAIT removed, that new reader is blocked. Precedent:
+`20271120010008`.
+
 ### Verified enrollment can outpace the mounted workspace provider (2026-10-12, Experience01)
 
 **Symptom → root cause → rule.** Welcome received verified server enrollment and navigated, but real SoloEntry refused an empty workspace provider accepted before fulfillment. Server record writes emit no browser Auth event; a navigation-only mock missed this. Refresh the same canonical provider, prove an accepted new list has React-committed, and match fresh actor/profile/server-selected tenant/address before entry. The reference change is a completion marker, never authority. Failed refresh preserves old context, so merely awaiting its void Promise is insufficient. Subject invalidation must clear every prior actor status/error and scope its presentation to the corresponding current view; in-flight cancellation tests alone missed a settled-failure transition. Use the real provider/dispatcher in integration proof; keep native rendering, hosted release and protected ordinary-owner acceptance distinct. Post-merge #2096 review exposed a separate timing gap: verification late in polling exhausted canonical readback time. Budget sequential bounded phases independently and test a verified response both near and beyond the polling deadline; fast fulfillment alone misses that class. Current forward fix and evidence are in `docs/delivery/experience-01-admission-readback-window.md`.

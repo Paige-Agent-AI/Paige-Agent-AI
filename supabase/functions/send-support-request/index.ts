@@ -6,6 +6,9 @@ import { sendPlatformEmail } from "../_shared/email/platform-sendgrid.ts";
 // PAIGE's SendGrid transport (owner ruling 2026-10-26). support@paigeagent.ai is sent as
 // support@mail.paigeagent.ai — the local part is kept, the domain is the platform's verified one.
 const SUPPORT_FROM = "PaigeAgent.ai Support <support@paigeagent.ai>";
+// The From now sits on the sending-only mail. subdomain, so the person's reply goes to the support inbox
+// it always reached.
+const SUPPORT_REPLY_TO = "support@paigeagent.ai";
 const sendgridKey = () => Deno.env.get("SENDGRID_MAIL_SEND_API_KEY") ?? null;
 
 const corsHeaders = {
@@ -340,6 +343,7 @@ serve(async (req) => {
     // Send confirmation to user
     const userConfirmation = await sendPlatformEmail({
       from: SUPPORT_FROM,
+      replyTo: SUPPORT_REPLY_TO,
       to: [user.email!],
       subject: `Support Request Received: ${requestData.subject}`,
       html: `

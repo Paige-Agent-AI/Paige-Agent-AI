@@ -46,7 +46,7 @@ export function classifySendResult(httpOk: boolean, body: unknown): SendOutcome 
   // Before any other failure reading: an unconfirmed answer must never release the claim for a retry.
   // Keyed on send-message's explicit `unconfirmed` marker ONLY: its other outcome_unknown answers (e.g. the
   // 503 boundary_readback_failed, where the provider floor refused and nothing was sent) stay failures.
-  if (b.unconfirmed === true) {
+  if (b.unconfirmed === true || b.outcome === "outcome_unknown") {
     return { kind: "unconfirmed", auditId: typeof b.audit_id === "string" ? b.audit_id : null, messageId: typeof b.message_id === "string" ? b.message_id : null };
   }
   if (httpOk && typeof b.outcome === "string" && b.outcome.startsWith("queued_")) {

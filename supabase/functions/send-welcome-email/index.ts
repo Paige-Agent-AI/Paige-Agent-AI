@@ -6,6 +6,9 @@ import { sendPlatformEmail } from "../_shared/email/platform-sendgrid.ts";
 // paigeagent.ai address onto mail.paigeagent.ai keeping the local part (owner ruling 2026-10-26).
 const FROM = Deno.env.get("WELCOME_EMAIL_FROM") ?? "Paige Agent AI <hello@paigeagent.ai>";
 const APP_URL = "https://app.paigeagent.ai";
+// The From is now on the sending-only mail.paigeagent.ai subdomain, so replies are routed to PAIGE's real
+// inbox (the same Reply-To tenant-signup and backfill-welcome use).
+const REPLY_TO = Deno.env.get("PLATFORM_SUPPORT_EMAIL") ?? "hello@paigeagent.ai";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -52,6 +55,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     const sent = await sendPlatformEmail({
       from: FROM,
+      replyTo: REPLY_TO,
       to: [email],
       subject: "Welcome to Paige Agent AI",
       html: `<!doctype html><html><head><meta charset="utf-8"></head>

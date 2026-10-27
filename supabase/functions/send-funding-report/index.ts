@@ -114,6 +114,8 @@ serve(async (req) => {
     // sandbox address; it now goes from the platform's own verified domain under the same display name.
     const sent = await sendPlatformEmail({
       from: "Paige AI <notifications@mail.paigeagent.ai>",
+      // notifications@ is sending-only; a reply goes to PAIGE's real inbox (as tenant-signup's does).
+      replyTo: Deno.env.get('PLATFORM_SUPPORT_EMAIL') ?? 'hello@paigeagent.ai',
       to: [recipientEmail],
       subject: "Your Funding Readiness Report",
       html: htmlReport,

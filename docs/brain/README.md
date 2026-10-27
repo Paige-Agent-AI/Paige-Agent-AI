@@ -1,3 +1,24 @@
+## EXP02 October27 release and original19 continuation
+
+#3004 actual mergecea5d494/e510 is source-released through original containing
+5a4bfb1f/40595981667/artifact12777430258:27 closures/config/1263 source bindings,
+Chat567/Review107 and edge-live5a4 independently match Git. Earlier pre-upload
+compiler failure and cleanup advisory retained. Exact web/both-origin proof and
+bounded baseline Finance/weekly QA are separately recorded in the
+[ORIGINAL19 matrix](../delivery/e2-customer-experience-integration-matrix.md).
+Candidate recorded-activity authentication and full outcome acceptance remain
+owed. Actual browser resource was returned; original tabs/drafts preserved.
+
+Next Calendar consumer reuses original caller-native calendar.agenda_read,
+original booking records and canonical department navigation, without a new
+metric, scheduler, writer or execution runtime. It receives actual5a4 and repaired
+endpoint; local360/11 controls/native types/pinned endpoint compile pass, not
+reviewed/deployed/customer acceptance. Owner goal-driven PAIGE coordination,
+direct @VERA/DM preservation, legitimate standing authority, both-chat original
+task continuity and cost-aware ORIGINAL Model Fabric design are incorporated in
+that same matrix. E08-owned A2 business-read admission remains missing; no held
+runner/model/provider/scan/action activation. All19/nine/founder OPEN.
+
 ## EXP02 endpoint correction and same-VERA handoff — October27 development
 
 PR #3004 remains a source-release HOLD: non-author finding4393680160 correctly

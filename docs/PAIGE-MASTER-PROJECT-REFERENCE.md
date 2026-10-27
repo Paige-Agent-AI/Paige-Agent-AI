@@ -860,6 +860,12 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**2026-10-27 UTC — EXP02 original activity source and actual endpoint eligibility.**
+
+| Increment | Exact released source and production evidence | Acceptance boundary |
+| --- | --- | --- |
+| [#3004 original recorded activity](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3004#issuecomment-6455445721) | Reviewede510794e967264a25cd0dbe72a01105b5679b614/tree06b64460; final AUTHOR-REVIEW / LOWER ASSURANCE PRR_kwDOSAAXqM8AAAABUkbNNg; all11 exact required/two web checks SUCCESS; original P1 actual-endpoint finding fixed/resolved. Normal mergecea5d4942ef924f25373d1962616e3cfbf440219/tree162665fded160c8cdf4bee99aa5bd2d6d0e297bc preserves9 owning source/test leaves,17,138 outside incoming entries and four whole histories. Original containing5a4bfb1f0cdd8dbe13a41d12ca63f01a9b7f0a55/40595981667/job122512194990/artifact12777430258 certifies27 closures/config,967 raw+296 original pinned-emitter links/435 unique Git sources. ZIP8dfd578395c1b080c3555753863c693529eab39a9c7b6437cbdc66ac42d839f2 independently matched; own four production leaves exact. Chat567/Review107/edge-live5a4; earlier pre-upload compiler failure40595973202 and cleanup advisory retained. Webdpl_5EtWjwyUFc4EG36JcLoAFbzwMfM4 READY/both public origins22:43UTC exact5a4-mvr9l54s/null/matching original assets/missing404. | Native caller-JWT Rail partial sample only; actual Executive/Chat eligibility resolved through original active membership/strict SOLO contract, bounded lookup and scope revalidation.583 focused source checks/14 suites, original compiler/types/lint supporting. No service grant, provider/scan/action/algorithm activation or fabricated completion/domain link. Distinct baseline545 Finance7/reload/VERA/native Escape/narrow and one settled/persisted weekly drive is ANT52d0010fa0, not candidate activity acceptance. Actual recorded-activity customer/reload/roles/cohorts/Live/action receipts/full19/nine/founder proof owed. Internal engineering increment; no customer release identity or announcement earned. |
+
 **2026-10-27 UTC — EXP05 model-usage policy and original acceptance mapping.**
 
 | Increment | Exact released source and production evidence | Acceptance boundary |

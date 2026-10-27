@@ -35,6 +35,9 @@ import { canonicalAppUrl, type CanonicalDestination, type CanonicalTier } from "
 // PAIGE's one SendGrid transport (owner ruling 2026-10-26: everything moved off Resend). From is moved
 // onto mail.paigeagent.ai at send time; Reply-To passes through. 5xx/timeout/throw = `unconfirmed`.
 import { sendPlatformEmail, type PlatformSendResult } from "../_shared/email/platform-sendgrid.ts";
+// A BUSINESS's From (a sender identity, a model-supplied override) goes through tenantAddressing: it is
+// kept only as this business's own managed address, else sent as notifications@ with replies routed back.
+import { ownManagedAddresses, tenantAddressing } from "../_shared/email/tenant-sender.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -1638,7 +1641,14 @@ mcp.tool("send_btf_template_email", {
       operatorForReplyTo.support_email ??
       (operatorForReplyTo.sender as { reply_to?: string } | undefined)?.reply_to ??
       undefined;
-    const replyTo = args.reply_to ?? tenantReplyTo ?? scopeCfg.reply_to;
+    // The scope sender is PAIGE's own (code-chosen) and is platform-mapped by the transport. A
+    // `from_override` is model-supplied, so it is a BUSINESS claim: security H2 — it is kept only as the
+    // caller business's own managed address, and can never send as another business's
+    // mail.paigeagent.ai address or as a paigeagent.ai (PAIGE) address.
+    const overrideAddressing = args.from_override
+      ? tenantAddressing(fromAddr, await ownManagedAddresses(admin, tenantIdForReplyTo), args.reply_to ?? null)
+      : null;
+    const replyTo = args.reply_to ?? overrideAddressing?.replyTo ?? tenantReplyTo ?? scopeCfg.reply_to;
 
     // Paige's one SendGrid account sends all of these from mail.paigeagent.ai (platform-sendgrid.ts).
     // sender_account label retained as a constant for historical audit continuity.
@@ -1646,7 +1656,7 @@ mcp.tool("send_btf_template_email", {
     if (!SENDGRID_MAIL_SEND_API_KEY) return err("email_provider_not_configured");
 
     const sent = await sendPlatformEmail({
-      from: fromAddr,
+      from: overrideAddressing?.from ?? fromAddr,
       to: [args.to_email],
       subject: subjectR.out,
       html,
@@ -2545,6 +2555,10 @@ mcp.tool("send_transactional_email", {
     if (!SENDGRID_MAIL_SEND_API_KEY) return err("email_provider_not_configured");
     const send_id = crypto.randomUUID();
     const fromHeader = fromName ? `${fromName} <${fromAddress}>` : fromAddress;
+    // The business's sender (tenant_sender_identity, resolved server-side for tenant_id): kept only as its
+    // own managed address, else sent as notifications@ with replies routed back to the business.
+    const own = await ownManagedAddresses(admin, tenant_id, [fromAddress]);
+    const addressing = tenantAddressing(fromHeader, own, replyTo || null);
     // The field keeps its historical name; it now holds SendGrid's X-Message-Id.
     let resendId: string | null = null;
     // email_send_log.status stays 'sent'|'failed' (its CHECK); an unconfirmed send is 'failed' there with
@@ -2552,12 +2566,12 @@ mcp.tool("send_transactional_email", {
     let status: "sent" | "failed" | "unconfirmed" = "sent";
     let errorMsg: string | null = null;
     const sent = await sendPlatformEmail({
-      from: fromHeader,
+      from: addressing.from,
       to: [args.to],
       subject,
       html,
       text: text || null,
-      replyTo: replyTo || null,
+      replyTo: addressing.replyTo,
       headers: { "X-Paige-Send-Id": send_id },
     }, { apiKey: SENDGRID_MAIL_SEND_API_KEY });
     if (sent.ok) resendId = sent.id;
@@ -3541,17 +3555,21 @@ mcp.tool("send_composed_email", {
 
     const send_id = crypto.randomUUID();
     const fromHeader = fromName ? `${fromName} <${fromAddress}>` : fromAddress;
+    // The business's sender (tenant_sender_identity, resolved server-side for tenant_id): kept only as its
+    // own managed address, else sent as notifications@ with replies routed back to the business.
+    const own = await ownManagedAddresses(admin, tenant_id, [fromAddress]);
+    const addressing = tenantAddressing(fromHeader, own, replyTo || null);
     // The field keeps its historical name; it now holds SendGrid's X-Message-Id.
     let resendId: string | null = null;
     let status: "sent" | "failed" | "unconfirmed" = "sent";
     let errorMsg: string | null = null;
     const sent = await sendPlatformEmail({
-      from: fromHeader,
+      from: addressing.from,
       to: [args.to],
       subject: args.subject,
       html: args.body_html,
       text: args.body_text || null,
-      replyTo: replyTo || null,
+      replyTo: addressing.replyTo,
       headers: { "X-Paige-Send-Id": send_id, "X-Paige-Source": "compose_email" },
     }, { apiKey: SENDGRID_MAIL_SEND_API_KEY });
     if (sent.ok) resendId = sent.id;
@@ -4520,6 +4538,10 @@ mcp.tool("bulk_send_template_email", {
     const fromName = (idn as any)?.from_name as string | undefined;
     if (!fromAddress) return err("from_address_not_resolved");
     const fromHeader = fromName ? `${fromName} <${fromAddress}>` : fromAddress;
+    // The business's sender, resolved server-side: kept only as its own managed address, else sent as
+    // notifications@. tenant_sender_identity's reply_to wins; with none, replies go back to the sender.
+    const own = await ownManagedAddresses(admin, tenant_id, [fromAddress]);
+    const addressing = tenantAddressing(fromHeader, own, ((idn as any)?.reply_to as string | undefined) || null);
 
     // Each contact is mailed at their PRIMARY email, whichever of their addresses that is.
     const { data: contactRows, error: cErr } = await admin.from("clients")
@@ -4550,7 +4572,7 @@ mcp.tool("bulk_send_template_email", {
       // ONE request per recipient, never one multi-recipient personalization: every contact gets their
       // own rendered body, their own send id, and a recipient list that names nobody else.
       const sent = await sendPlatformEmail({
-        from: fromHeader, to: [ct.email], subject, html, text: text || null,
+        from: addressing.from, replyTo: addressing.replyTo, to: [ct.email], subject, html, text: text || null,
         headers: { "X-Paige-Send-Id": send_id },
       }, { apiKey: SENDGRID_MAIL_SEND_API_KEY });
       if (sent.ok) providerId = sent.id;

@@ -24,9 +24,11 @@ export default defineConfig({
       { find: /^@\/hooks\/useTenantContext$/, replacement: stubs },
       { find: /^@\/hooks\/useUserRoles$/, replacement: stubs },
       { find: /^\.\/useTenantRelationshipsData$/, replacement: stubs },
-      // EXP03_SRC points "@" at another checkout's src (the negative control: the base commit's inbox, where an
-      // unconfirmed email still read "Failed"). Unset, the harness renders this tree's src.
-      { find: "@", replacement: process.env.EXP03_SRC ?? path.join(repo, "src") },
+      // Negative control (§71.4): EXP03_BASE_SRC points the INBOX module (and, through its relative imports, its
+      // conversations/* helpers) at another checkout's src — the base commit, where an unconfirmed email still read
+      // "Failed". Everything else stays this tree's src. Unset, the harness renders this tree.
+      ...(process.env.EXP03_BASE_SRC ? [{ find: /^@\/pages\/admin\/ClientsConversations$/, replacement: path.join(process.env.EXP03_BASE_SRC, "pages/admin/ClientsConversations.tsx") }] : []),
+      { find: "@", replacement: path.join(repo, "src") },
     ],
   },
   define: {

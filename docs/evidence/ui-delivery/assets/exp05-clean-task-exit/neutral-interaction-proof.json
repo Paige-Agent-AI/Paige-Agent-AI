@@ -1,0 +1,45 @@
+[
+  {
+    "case": "clean Escape",
+    "dialogs": 0,
+    "focus": "Priority unknown · taskProtected neutral CRM inspectionStandalone workMLMorgan LeeNo due date",
+    "height": 822,
+    "width": 1514
+  },
+  {
+    "case": "dirty Escape",
+    "dialogs": 1,
+    "notice": true,
+    "value": "2026-12-03T10:30"
+  },
+  {
+    "case": "automated date clear",
+    "status": "UNVERIFIED",
+    "detail": "Visible field emptied but original editor still reported an unsaved draft; no review/save/command was invoked."
+  },
+  {
+    "case": "reopen then clean Escape",
+    "dialogs": 0,
+    "focus": "Priority unknown · taskProtected neutral CRM inspectionStandalone workMLMorgan LeeNo due date"
+  },
+  {
+    "case": "dark390 open",
+    "dialog": {
+      "right": 390.3999938964844,
+      "width": 390.3999938964844,
+      "x": 0
+    },
+    "scrollWidth": 390,
+    "width": 390,
+    "dialogsAfterEscape": 0,
+    "focus": "Priority unknown · taskProtected neutral CRM inspectionStandalone workMLMorgan LeeNo due date"
+  },
+  {
+    "case": "light320 settled",
+    "dialogWidth": 320,
+    "scrollWidth": 320,
+    "width": 320,
+    "dialogsAfterEscape": 0,
+    "focus": "Priority unknown · taskProtected neutral CRM inspectionStandalone workMLMorgan LeeNo due date"
+  }
+]

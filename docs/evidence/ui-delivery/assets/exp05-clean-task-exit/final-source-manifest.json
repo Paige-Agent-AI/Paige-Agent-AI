@@ -1,0 +1,68 @@
+{
+  "base": "195643b35",
+  "scope": "Final reviewed original component with pending-review hold; original Operations mount and neutral ports, not production/authentication.",
+  "files": [
+    {
+      "name": "final-clean-open.jpg",
+      "sha256": "22604311a05c2d016b59ca0b08ae47c9c518dd17a8ccbeccacc5ac33bba0ab23",
+      "bytes": 46608,
+      "width": 1280,
+      "height": 720,
+      "format": "jpeg"
+    },
+    {
+      "name": "final-interaction-proof.json",
+      "sha256": "83771266fa4233d4545070133010fe6fff9c7a8376f314870d379ada8b1ff898",
+      "bytes": 748
+    },
+    {
+      "name": "final-light-320-open.jpg",
+      "sha256": "2e52c99d7d614ef904907ba2a038e74c1430db8f83f065e5bb8889bca6db3d00",
+      "bytes": 23399,
+      "width": 320,
+      "height": 844,
+      "format": "jpeg"
+    },
+    {
+      "name": "final-prepared-review-held.jpg",
+      "sha256": "a6c58ab22155ab0db709508da22bbae4efb3d9ab1b6cd41ca1edb14f8a2b62e4",
+      "bytes": 49067,
+      "width": 1280,
+      "height": 720,
+      "format": "jpeg"
+    }
+  ],
+  "sources": [
+    {
+      "name": "src/solo/operations/OperationsWorkspace.tsx",
+      "sha256": "e86af425c43e24cc029c2b3dc091f2b87373ba551d6fe65c08377a85776ad506"
+    },
+    {
+      "name": "src/solo/operations/OperationsCrmWorkEditor.tsx",
+      "sha256": "9b3d84accd9dba81e03760f4d39dff1d5ec989a265be18d807bf764b384d320d"
+    },
+    {
+      "name": "src/solo/operations/OperationsWorkspace.test.tsx",
+      "sha256": "26ab9d4744023a86610119f882f04cac1f681a098ca12202036249e7516be5a4"
+    },
+    {
+      "name": "scripts/live-drive/harness/operations-clean-inspection/main.tsx",
+      "sha256": "1265d96672fb08ff068453ce0331a475148d1c3da3d14dfef74af762c113c432"
+    },
+    {
+      "name": "scripts/live-drive/harness/operations-clean-inspection/ports.ts",
+      "sha256": "019d3606955bb7a996fb156c27df8b644fe599b48bce8a40ae30b949b583c310"
+    },
+    {
+      "name": "scripts/live-drive/harness/operations-clean-inspection/vite.config.ts",
+      "sha256": "9304656c6611a604c7de78a7abaf036112723f9d44e2285948a961e186e07aa6"
+    },
+    {
+      "name": "scripts/live-drive/harness/operations-clean-inspection/index.html",
+      "sha256": "c74d674be22111e4ce222a8769780a85ce1eac13e5d66b80bd7e234b9140918d"
+    }
+  ],
+  "reviewCorrection": "Additional original-review transition control failed before correction; preserve a prepared review even while the preceding clean callback is unregistering. Full final source suites66PASS0FAIL0SKIP.",
+  "native": "Final original clean Escape/focus, prepared-review Escape retained, Back to details then clean Escape/focus, light320 Escape/focus/no page overflow; no confirmation/write. Initial source-manifest and four neutral images remain supporting evidence at their older exact hashes.",
+  "limitations": "Full shell/eight required raster pairs/native200percent zoom/AT/authenticated final behavior not claimed. Original automated date-clear observation remains UNVERIFIED. Initial navigation timeouts completed later; no repeat business action."
+}

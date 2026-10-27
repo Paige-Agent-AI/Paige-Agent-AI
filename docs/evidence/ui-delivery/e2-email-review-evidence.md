@@ -33,13 +33,13 @@ MUST_PRESERVE: Original issuer/resolver/current caller/tenant checks, producer d
 ACCEPTANCE_CRITERIA: Three original count keys only; source denial/scope loss withholds data, zero remains distinct from absent, tracking reflects subsequent observations of sends in the selected period, and shared catalogue remains Unverified. Positive authenticated/customer/continuity proof is still required.
 MOTION_PURPOSE: NONE: existing read/display interaction, no added animation.
 PROTECTED_SEAMS: Existing business.operating_snapshot/get_business_snapshot, original readBusinessMetricEvidence and Marketing producer; original skill registry row/presenter only. No Root, C0b, risk, approval, original provider/writer or Chat shell edit.
-INTERNAL_BUILD_IDENTITY: fa30a8bd245b489e96c4a13f481b8007baa394a0 tested/rendered source, composed784b593b1e4aec3f2e98d01ddbf3d9028270c508 on actual main6c448b6c5f5b536d6793dc11d0663ecb26906000; deployment=NOT_DEPLOYED; environment=development; migration=20271117150002_exp02_email_review_catalogue.sql UNAPPLIED; affected Edge graph=PROOF_OWED; source-index and final exact-head receipts govern later composition.
+INTERNAL_BUILD_IDENTITY: fa30a8bd245b489e96c4a13f481b8007baa394a0 tested/rendered source, composed784b593b1e4aec3f2e98d01ddbf3d9028270c508 on actual main6c448b6c5f5b536d6793dc11d0663ecb26906000; deployment=NOT_DEPLOYED; environment=development; migrations=PROOF_OWED(20271117150002_exp02_email_review_catalogue.sql remains unapplied local source); edge=PROOF_OWED(affected original review/Chat graph requires actual deployed-source readback); evidence=assets/e2-email-review/source-index.json and original native catalogue proof.
 RELEASE_CHANNEL: development: local consumer/native proof and rendered evidence only; normal review/exact-head CI/Preview/merge and web/Edge/native production readback required.
 RELEASE_CLASSIFICATION: internal-only: existing-source review integration with truthful Unverified catalogue copy, not a customer capability announcement.
 CUSTOMER_RELEASE_IDENTITY: none: no complete customer outcome/founder acceptance established.
 RELEASE_NOTE_REQUIRED: no: internal increment; customer announcement retains its outcome/owner gate.
 RELEASE_TRUTH_BOUNDARY: PROOF OWED: local source/native contract/synthetic UI are verified; actual customer/business effect, provider readiness, department return and complete Experience remain unproven.
-RELEASE_RECOVERY: position=bounded forward repair or reviewed consumer removal; never alter original Marketing records or replay uncertain work; reference=original shared read/registry contracts and exact final source receipts.
+RELEASE_RECOVERY: position=guarded forward repair or reviewed consumer removal while retaining original Marketing records and uncertain-work safety; reference=supabase/functions/_shared/paige-context/adapters/email-campaigns.ts and 20271117150002_exp02_email_review_catalogue.sql.
 
 ## Source truth and existing ownership
 

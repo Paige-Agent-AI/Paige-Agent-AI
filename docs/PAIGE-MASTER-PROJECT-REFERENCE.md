@@ -860,6 +860,12 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**2026-10-27 UTC — EXP05 clean original Task inspector recovery.**
+
+| Increment | Exact released source and production evidence | Acceptance boundary |
+| --- | --- | --- |
+| [#3000 clean Task exit](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3000#issuecomment-6452737670) | Reviewed `2b679682cf0d974f214b2c6d6fbe2efa69bae002` / tree `1eb3c6de51f8c5b0aee7d978387dff23c7fe458f`, AUTHOR-REVIEW / LOWER ASSURANCE5672943977; all10 applicable exact-head checks/two webSUCCESS/normal no-schema PreviewSKIP/zero threads. Normal merge `307c2a1b653ef0af45532e5768b7c4876de277e2` / tree `678458dc6456ff7d6a3a664fe84fb8a5a34f9d4e`; all18 owning leaves and17,029 outside incoming entries exact. Production `dpl_ALGxNu951C9hvV9rVZZGyDQ98ctL` READY/exact307; both official origins20:20:37–20:20:39UTC exact307-mvr4jnb6/null/matching original Operations asset. Original guard/mirror receipt SHA256c39943d4fe05a3dc156c7a7ccf8818750f0a99d4ea7e7af739e0831d9d706f7d; invalid compiler-lowering assumption retained before corrected PASS. | Authenticated ordinary-owner protected Task open→unchanged Escape→original-card focus→reload→same Task→reopen/Escape PASS, no false unsaved hold. No field/message/approval/Task/process/schedule/provider/account action. Raw identities/evidence private; temporary tab closed/original tabs and drafts preserved. Dirty/prepared-review negatives remain66 source tests plus neutral native interactions, not production mutation proof. Full eight-raster/native zoom/device/AT/cohort/isolation/Live and complete ten/E5/Builder/weekly execution/ZION/notice/founder acceptance remain OPEN. No SQL/Edge/permission/activation/catalogue/ALG or customer-announcement change. |
+
 **2026-10-27 UTC — EXP05 model-usage policy and original acceptance mapping.**
 
 | Increment | Exact released source and production evidence | Acceptance boundary |

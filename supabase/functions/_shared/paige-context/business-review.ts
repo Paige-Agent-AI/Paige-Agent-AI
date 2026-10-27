@@ -41,6 +41,7 @@ import { createSalesPipelineSnapshotAdapter } from "./adapters/sales-pipeline.ts
 import { createGamePlanSnapshotAdapter } from "./adapters/game-plan.ts";
 import { createMarketingIntakeSnapshotAdapter } from "./adapters/marketing-intake.ts";
 import { createEmailCampaignSnapshotAdapter } from "./adapters/email-campaigns.ts";
+import { createRecordedActivitySnapshotAdapter } from "./adapters/recorded-activity.ts";
 import { createFinanceSnapshotAdapter, type BusinessReviewCaller } from './adapters/finance.ts';
 import { createBookingsSnapshotAdapter, type CalendarReviewCaller } from './adapters/bookings.ts';
 
@@ -195,6 +196,7 @@ export async function composeBusinessReview(
     createClientsSnapshotAdapter(scope.caller, { tenantId }, clock),
     createMarketingIntakeSnapshotAdapter(scope.caller, { tenantId }, clock),
     createEmailCampaignSnapshotAdapter(scope.caller, { tenantId }, clock),
+    createRecordedActivitySnapshotAdapter(scope.caller, { tenantId }, clock),
     createGamePlanSnapshotAdapter(scope.caller, { tenantId }, clock),
     createBookingsSnapshotAdapter(caller, { tenantId }),
     ...(opts?.financeEvidence === false ? [] : [createFinanceSnapshotAdapter(scope.caller, { tenantId }, clock)]),

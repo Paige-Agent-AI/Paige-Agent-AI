@@ -1,3 +1,59 @@
+## EXP02 endpoint correction and same-VERA handoff — October27 development
+
+PR #3004 remains a source-release HOLD: non-author finding4393680160 correctly
+identified that the real Executive/Chat endpoint supplied unresolved eligibility,
+so the new original Rail consumer refused genuine endpoint requests. The local
+correction resolves current caller-native membership and strict SOLO classification
+through existing contracts, with bounded lookup and actor/workspace revalidation.
+No native permission, provider, service client, registry or execution gate changes.
+Actual endpoint/composer tests cover both transport modes and authorization,
+classification, changed scope, revoked source and timeout negatives. The corrected
+endpoint passes the pinned production compiler; fresh final review/CI and actual
+release/customer readback remain owed. Earlier a1d2 green CI is historical only.
+
+Actually received the October27 SAME-specialist directive in ANT138/ANT161 and
+current Owner North Star. The original VERA identity/personality and approved
+teal/ShieldCheck presentation remain authoritative. Native registry metadata
+already permits get_business_snapshot/read_business_metric in capability_scope;
+Team Hub admission/result/reopen remains MISSING. Exact producer/consumer handoff
+is ANT161a25c1145; EXP08 owns its private-DM tool admission and result presentation.
+No Team Hub clone, runtime, role grant, shared-source takeover or activation.
+Original nineteen-outcome matrix now records this built-versus-missing boundary.
+
+Owner-requested four-hour daily Linear heartbeat is ACTIVE on this existing E02
+conversation (actual receiving ACK ANT16192c70179). It reads applicable updates
+and continues this full assignment without duplicate unchanged pings or agents;
+completion includes the remaining customer proof and single founder acceptance.
+
+## EXP02 original recorded-activity review — October27 development
+
+Incoming [#2995 source release](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2995#issuecomment-6452429513)
+is now actual02c101f44f776e8bb937869466130be99655239c/tree72bd, all11 exact checks/
+two webSUCCESS/LOWER5673022179+5673549365. WebArRgjpF7 READY/bothorigins exact02c
+20:07UTC; original normal40574878028 verifies all9 closures/config first attempt,
+987 entries/359 Git identities. Original artifact digest and source bindings
+independently match; Chat565/review103/orchestrator149, edge-live02c. Original
+cleanup advisory retained. This verifies source delivery, not another customer
+drive. Actual candidate weekly/date/coverage/persisted reply/reload remains owed.
+
+The existing business.operating_snapshot outcomes area now has a LOCAL consumer
+of get_solo_rail_activity(p_limit=25), not a second ledger or metrics reader.
+Only original owner-visible readable facts/time/tenant-safe attribution enter
+the requested-period bounded sample. Client-only/unknown classifications,
+changed authority/source and late cancelled answers are withheld. An empty
+sample does not prove no activity; a recorded successful read is not a completed
+business action, approval, domain receipt or measured improvement. Original
+departmental record linking remains a distinct source integration obligation.
+[Source/authority/evidence](../evidence/ui-delivery/e2-review-recorded-activity.md)
+separates local proof from required review/CI/source release/customer reload.
+CAP/ALG maturity and all nineteen outcomes remain unchanged and open.
+
+EXP05 explicitly received the original Systems Work/result/optional Rail consumer
+in ANT161e13f07ca. Existing weekly-read preview is not the Systems action door.
+EXP02 retains Systems registration, accepted-intent binding and full scan proof;
+original shared Root/risk/C0b composition remains coordinated with EXP05/EXP08.
+No manual scan, worker, provider, action or new privilege is activated by that ACK.
+
 ## EXP02 bounded Chat source coverage — October27 development
 
 The existing Operating Fabric projector now shares exact repeated long window

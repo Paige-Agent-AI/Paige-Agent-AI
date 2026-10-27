@@ -263,3 +263,57 @@ describe("releaseScheduledCommsEmail — the drainer's release matrix", () => {
     expect(await releaseScheduledCommsEmail(await binding(), "not-a-uuid", release().d)).toEqual({ result: "invalid" });
   });
 });
+
+describe("executeCommsEmailSend — files the person approved", () => {
+  const SHA = "a".repeat(64);
+  const manifest = [{ path: `${T}/governed/${OP}/1-a.pdf`, source_path: `${T}/90000000-0000-4000-8000-000000000001-a.pdf`, name: "a.pdf", mime: "application/pdf", size: 12, sha256: SHA }];
+  const withFiles = async (extra: Record<string, unknown> = {}) => { const i = await input(); return { ...i, stored: { ...i.stored, attachments: manifest, ...extra } }; };
+  const DIGEST = "c".repeat(64);
+  it("prepares the 15-argument call (files + an explicit null time) and sends exactly the bound row", async () => {
+    const args: Record<string, unknown>[] = []; const sent: Record<string, unknown>[] = [];
+    const t = deps(); const prepare = t.d.prepare; t.d.prepare = async a => { args.push(a); return prepare(a); };
+    t.d.send = async b => { sent.push(b); t.set("provider_accepted"); return {}; };
+    expect(await executeCommsEmailSend(await withFiles(), t.d)).toMatchObject({ ok: true, outcome: "provider_accepted" });
+    expect(args[0]).toMatchObject({ _attachments: manifest, _send_at: null });
+    expect(Object.keys(args[0])).toHaveLength(15);
+    expect(sent[0]).not.toHaveProperty("attachments");
+  });
+  it("a scheduled email with files names both, and is only scheduled", async () => {
+    const args: Record<string, unknown>[] = [];
+    const t = deps({ prepare: async a => { args.push(a); return { data: { ok: true, replayed: false, state: "prepared", message_id: M, send_at: "2026-11-02T14:30:00.000Z" }, error: null }; } });
+    expect(await executeCommsEmailSend(await withFiles({ sendAt: "2026-11-02T14:30:00.000Z" }), t.d)).toMatchObject({ ok: true, outcome: "scheduled" });
+    expect(args[0]).toMatchObject({ _attachments: manifest, _send_at: "2026-11-02T14:30:00.000Z" });
+    expect(t.log).toEqual([]);
+  });
+  it("maps the database's file refusals", async () => {
+    for (const code of ["COMMS_EMAIL_ATTACHMENTS_PROVIDER_UNSUPPORTED", "COMMS_EMAIL_ATTACHMENTS_INVALID", "COMMS_EMAIL_ATTACHMENTS_NOT_SUPPORTED"]) {
+      const t = deps({ prepare: async () => ({ data: null, error: { code: "22023", message: code } }) });
+      expect(await executeCommsEmailSend(await withFiles(), t.d)).toMatchObject({ outcome: "refused", reason: code });
+      expect(t.log).toEqual([]);
+    }
+  });
+  it("a call approved WITHOUT files that reaches a row prepared WITH files sends nothing", async () => {
+    const t = deps({
+      prepare: async () => ({ data: { ok: true, replayed: true, state: "prepared", message_id: M }, error: null }),
+      readBinding: async () => ({ operation_id: OP, attachments: manifest }),
+    });
+    expect(await executeCommsEmailSend(await input(), t.d)).toMatchObject({ outcome: "refused", reason: "COMMS_EMAIL_ATTACHMENTS_CHANGED" });
+    expect(t.log).toEqual([]);
+    const fine = deps({ prepare: async () => ({ data: { ok: true, replayed: true, state: "prepared", message_id: M }, error: null }) });
+    fine.d.send = async () => { fine.set("provider_accepted"); return {}; };
+    expect(await executeCommsEmailSend(await input(), fine.d)).toMatchObject({ ok: true, outcome: "provider_accepted" });
+  });
+  it("a stored call whose files are not this operation's manifest is not the approved call", async () => {
+    const { parseCommsEmailStoredCall } = await import("./adapter.ts");
+    const i = await input();
+    const args = { expected_tenant_id: T, operation_id: OP, command, recipient: i.stored.recipient, from_address: i.stored.fromAddress, content_digest: i.stored.contentDigest };
+    expect(parseCommsEmailStoredCall({ ...args, attachments: manifest, attachments_digest: DIGEST }, T)?.attachments).toEqual(manifest);
+    expect(parseCommsEmailStoredCall({ ...args, attachments: [{ ...manifest[0], path: manifest[0].path.replace(OP, "20000000-0000-4000-8000-000000000009") }], attachments_digest: DIGEST }, T)).toBeNull();
+    expect(parseCommsEmailStoredCall({ ...args, attachments: [], attachments_digest: DIGEST }, T)).toBeNull();
+    // The digest rides with the manifest: both or neither, and only a real sha256.
+    expect(parseCommsEmailStoredCall({ ...args, attachments: manifest }, T)).toBeNull();
+    expect(parseCommsEmailStoredCall({ ...args, attachments_digest: DIGEST }, T)).toBeNull();
+    expect(parseCommsEmailStoredCall({ ...args, attachments: manifest, attachments_digest: "XYZ" }, T)).toBeNull();
+    expect(parseCommsEmailStoredCall(args, T)).not.toHaveProperty("attachments");
+  });
+});

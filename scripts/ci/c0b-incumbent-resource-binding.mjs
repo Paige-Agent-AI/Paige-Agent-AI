@@ -1,3 +1,21 @@
+// EXP08 Team Hub agents A1b, part 3 (the agent turn refuses a chat control hint), AUTHOR-REVIEW /
+// LOWER ASSURANCE before renewal (owner ruling 2026-10-27: EXP08 owns Team Hub end to end). Base
+// HEAD 1c243694a (origin/main aea94a0e8 merged) reproduces all29 dispatch pins from its own
+// paige-ai-chat source. The only source change is inside enclosing identity[15], insertion-only:
+// the agent-turn seam's deps object gains `controlHint` (the request's own x-paige-chat-control
+// value, read once before the ingress limit), plus two comment lines. No dispatch, control,
+// authority or verifier logic changed; action-risk.ts is byte-identical. Renew those 29 dispatch
+// scalars only; extractor, metadata, validator, hostile controls and every source pin unchanged.
+// EXP08 Team Hub agents A1b (the agent turn), AUTHOR-REVIEW / LOWER ASSURANCE before renewal (owner
+// ruling 2026-10-27: EXP08 owns Team Hub end to end, including the edits it needs in shared files).
+// Base origin/main cab598493 reproduces all29 dispatch pins from its own paige-ai-chat source.
+// Decomposition of all29 against the branch: dispatch branches, dominating controls, local helpers
+// and import sets equal; ONLY enclosing identity[15] changes, insertion-only (0 removed / 13 added
+// lines): one import of _shared/team-hub/agent-turn.ts and one early branch, after the verified actor
+// and the ingress rate limit and before the chat schema, that hands a { teamHubAgentTurn } request
+// to that module and returns. No dispatch, control, authority or verifier logic changed;
+// action-risk.ts is byte-identical (its pin is unchanged). Renew those 29 dispatch scalars only;
+// extractor, metadata, validator, hostile controls and every source pin unchanged.
 // EXP08 PAIGE team-lifecycle tools, AUTHOR-REVIEW / LOWER ASSURANCE before renewal (ANT-161 window),
 // re-renewed after merging origin/main 93f567749 and the review fixes, then re-checked unchanged after
 // merging 50468eec2 and d3e68daf1 (docs only). Each of those mains reproduces all29 dispatch pins and
@@ -603,7 +621,7 @@ const CONTRACTS = {
     "seatAuthority": "workspace-admin",
     "selfDescribe": true,
     "readiness": "none",
-    "fingerprint": "8096ff9a9b630b99b05d88cf15fe4548d61b37545f57401ff66918d2ceb81442"
+    "fingerprint": "da7a5e1d1f4f7df519495b2938a44866ff5da41a7496a44468b3cf75b7e28791"
   },
   "calendar_book_meeting": {
     "key": "calendar.book_meeting",
@@ -615,7 +633,7 @@ const CONTRACTS = {
     "seatAuthority": "workspace-admin",
     "selfDescribe": true,
     "readiness": "none",
-    "fingerprint": "d6747c61cca772e9c722e3e0b0f16b5c30587b4255293277e23517fa07ed11c2"
+    "fingerprint": "b08255dc1e9697ca12c8f049620623d9db7df296ab8d41806d3367443ad37527"
   },
   "calendar_link_send": {
     "key": "calendar.link_send",
@@ -627,7 +645,7 @@ const CONTRACTS = {
     "seatAuthority": "member",
     "selfDescribe": true,
     "readiness": "none",
-    "fingerprint": "44d8f3a53c67bc6e27ef90ceac72fb0861b629da41ac0caf165f4890cc1d37e9"
+    "fingerprint": "a711d4b8f5af7d91b7a4a75e798db4903dd4738731b48b57ace17ea425e9c53d"
   },
   "propose_business_brief_update": {
     "key": "business_profile.propose_brief_update",
@@ -639,7 +657,7 @@ const CONTRACTS = {
     "seatAuthority": "workspace-admin",
     "selfDescribe": true,
     "readiness": "none",
-    "fingerprint": "9ef1cbf3deb3f8190de99cad91bec351f2ed0eedc96de4fd1cc805a59d6c07f5"
+    "fingerprint": "dfcc8381a4006dbeea04d351276bbdeaff3bf6b3814adb0bba1da0e94d02266f"
   },
   "update_business_profile": {
     "key": "business_profile.update_legacy",
@@ -651,7 +669,7 @@ const CONTRACTS = {
     "seatAuthority": "workspace-admin",
     "selfDescribe": false,
     "readiness": "none",
-    "fingerprint": "7e67d262fdf7f0168df1fae1eba0258f2ace7a9ddb2ab7d2916154c09b34c6ad"
+    "fingerprint": "8146f26fad412b091d15ae7d8a37cf645ac5ce2db9a87e879df428f56a5f3e3d"
   },
   "capability_status": {
     "key": "platform_meta.capability_status",
@@ -663,7 +681,7 @@ const CONTRACTS = {
     "seatAuthority": "member",
     "selfDescribe": false,
     "readiness": "none",
-    "fingerprint": "7189639060f5b18608ee68a7d3dbd5dc86182407a77d77b414b65935c6a74bcf"
+    "fingerprint": "35d05614b9c5b7d8a1ae381e4b35a14c9d56ad9e9ec5e13dd3f1e809fd71fec5"
   },
   "improvement_propose": {
     "key": "platform_meta.improvement_propose",
@@ -675,7 +693,7 @@ const CONTRACTS = {
     "seatAuthority": "workspace-admin",
     "selfDescribe": false,
     "readiness": "none",
-    "fingerprint": "f883f6d14be20a5d6a9232e8bf0732051d6da87afd93d99a6121759d21db9adf"
+    "fingerprint": "9c810029f0c326d59bdde6853fe98147607ce791c4b83e835c8e4c668cdb958d"
   },
   "improvement_decide": {
     "key": "platform_meta.improvement_decide",
@@ -687,7 +705,7 @@ const CONTRACTS = {
     "seatAuthority": "workspace-admin",
     "selfDescribe": false,
     "readiness": "none",
-    "fingerprint": "ea261da914de4ee975abca9ecc795cbf858a2b465174febd42c71d3581d93249"
+    "fingerprint": "5867d3d93ac018b4dfa066695c35421945d0076c84b1ba9f4adc1a5fede2ce73"
   },
   "list_subagents": {
     "key": "agents.list",
@@ -699,7 +717,7 @@ const CONTRACTS = {
     "seatAuthority": "workspace-admin",
     "selfDescribe": true,
     "readiness": "none",
-    "fingerprint": "1bd75f3a23c89438459514e6abab0f63cb88504b63ad0dfdea36621271a835cf"
+    "fingerprint": "ec5b67e95d110f21b7975b0b4223b99e59f135db38667a0aa83469fb52187c86"
   },
   "delegate_to_subagent": {
     "key": "agents.delegate",
@@ -711,7 +729,7 @@ const CONTRACTS = {
     "seatAuthority": "workspace-admin",
     "selfDescribe": true,
     "readiness": "none",
-    "fingerprint": "1bd75f3a23c89438459514e6abab0f63cb88504b63ad0dfdea36621271a835cf"
+    "fingerprint": "ec5b67e95d110f21b7975b0b4223b99e59f135db38667a0aa83469fb52187c86"
   },
   "forge_subagent": {
     "key": "agents.forge",
@@ -723,7 +741,7 @@ const CONTRACTS = {
     "seatAuthority": "workspace-admin",
     "selfDescribe": true,
     "readiness": "none",
-    "fingerprint": "f6ebd6ab5d6527b5f71fa9eb677c534dd3c40be5e3464d533adb7312b03e17f7"
+    "fingerprint": "a4a492aef47006b816c0d1f438ab0841e5f5258ff558e2b0e3defbf3a2f8b511"
   },
   "author_event_kind": {
     "key": "crm_clients.author_event_kind",
@@ -735,7 +753,7 @@ const CONTRACTS = {
     "seatAuthority": "member",
     "selfDescribe": true,
     "readiness": "none",
-    "fingerprint": "2fca0cd7a5e8805ec7d9e8f80875adb76b9e76f93c645259e386cab430724da8"
+    "fingerprint": "33f0d7f2e41c30352e1f81c2444c4c62c14c85f740b0fec12ea6a1eb5668bfd4"
   },
   "crm_add_note": {
     "key": "crm_clients.add_note",
@@ -747,7 +765,7 @@ const CONTRACTS = {
     "seatAuthority": "workspace-admin",
     "selfDescribe": true,
     "readiness": "none",
-    "fingerprint": "92ec9ed71ed93c0c448088162cc5eee192a93285e9e88fdebce04d27378a6fa9"
+    "fingerprint": "519047d621cbf57a3371ecf9d1046c4b6fa81c7d259c15ba8b7487ff6dfe1ab9"
   },
   "crm_file_document": {
     "key": "crm_clients.file_document",
@@ -759,7 +777,7 @@ const CONTRACTS = {
     "seatAuthority": "workspace-admin",
     "selfDescribe": true,
     "readiness": "none",
-    "fingerprint": "7cf2bba85931c79772364adf016086483b60913d7806ababf7e8b59a05e670b7"
+    "fingerprint": "9dec498a265e6912675615bb19622253b65eb0ede8fb870d660bb34718c53753"
   },
   "update_client_data": {
     "key": "crm_clients.update_client_data",
@@ -771,7 +789,7 @@ const CONTRACTS = {
     "seatAuthority": "member",
     "selfDescribe": true,
     "readiness": "none",
-    "fingerprint": "04801b401700484a60dc824be8fca3286fc1fbfba618a0182cf03857cc6431b8"
+    "fingerprint": "455ce868623be9cdef8743cc741ffb7328a10e913c860d03a2ceb5d37304b296"
   },
   "pipeline_configure": {
     "key": "sales.pipeline_configure",
@@ -783,7 +801,7 @@ const CONTRACTS = {
     "seatAuthority": "workspace-admin",
     "selfDescribe": true,
     "readiness": "none",
-    "fingerprint": "434855ce3da1086f535ce2c7abb1f7af5211c96c8cea652e7a07bfa04e449107"
+    "fingerprint": "6b35a11f5b4a93fbaeab5cb1cb7910eb1f47effa8c196b5c576d1ca809433aff"
   },
   "deep_research": {
     "key": "research_knowledge.deep_research",
@@ -795,7 +813,7 @@ const CONTRACTS = {
     "seatAuthority": "member",
     "selfDescribe": true,
     "readiness": "research_provider",
-    "fingerprint": "37f86ca8adcd1e641f3e197c37586a2ddd6a7a3a341c8569aa6bbdf0e2e253f5"
+    "fingerprint": "53a4f30161b83eaabc36ee85c8d2afaf5ec9d7fa737da9fb19caf8923584bbac"
   },
   "web_search": {
     "key": "research_knowledge.web_search",
@@ -807,7 +825,7 @@ const CONTRACTS = {
     "seatAuthority": "member",
     "selfDescribe": true,
     "readiness": "research_provider",
-    "fingerprint": "dbd37cf69297309726e710b5b7214e3972f9874601ad35f305122d172b212668"
+    "fingerprint": "11436cbd319f5247c2e7dca4c762194e263ac6bb9e1a544e2276e28e64753fb7"
   },
   "web_fetch": {
     "key": "research_knowledge.web_fetch",
@@ -819,7 +837,7 @@ const CONTRACTS = {
     "seatAuthority": "member",
     "selfDescribe": true,
     "readiness": "none",
-    "fingerprint": "41ef5d6698615fa45dfaddb266fb084f945c4ade7ce9e331545414ed69795b47"
+    "fingerprint": "eb0a040a7df06b89a71af79ec99afa13ff37c0f7b599164273db7f548d7de2b6"
   },
   "save_to_knowledge_base": {
     "key": "research_knowledge.save_to_knowledge_base",
@@ -831,7 +849,7 @@ const CONTRACTS = {
     "seatAuthority": "member",
     "selfDescribe": true,
     "readiness": "none",
-    "fingerprint": "14c4ccd98f62b6fd0c9750d676064adcae51d1b3810c9769d17c84323b1bb876"
+    "fingerprint": "8d95257b43990e4e3de7bb27cd3f4bbeb34c2779b37a9297ea5a7717e11843c9"
   },
   "automation_draft": {
     "key": "automations.automation_draft",
@@ -843,7 +861,7 @@ const CONTRACTS = {
     "seatAuthority": "member",
     "selfDescribe": true,
     "readiness": "none",
-    "fingerprint": "8cc81872b06aef6ec2a5e5faccdf5e31ded18ba633c8ae74ec197ff9b3eb9eb5"
+    "fingerprint": "f7785dc6e1098423326d2ae4c28044b708c3b17678c9acb891536f35c60dd3b3"
   },
   "comms_connection_summary": {
     "key": "communications.comms_connection_summary",
@@ -855,7 +873,7 @@ const CONTRACTS = {
     "seatAuthority": "workspace-admin",
     "selfDescribe": true,
     "readiness": "none",
-    "fingerprint": "8b7b5930b7228e85c55eb7d515ea8104fed776b0870b6555524620a193769f3e"
+    "fingerprint": "718df956448d4244d984d6b34ad094769d74aea775a07aeffa28d86e1b3ed035"
   },
   "comms_registration_status": {
     "key": "communications.comms_registration_status",
@@ -867,7 +885,7 @@ const CONTRACTS = {
     "seatAuthority": "workspace-admin",
     "selfDescribe": true,
     "readiness": "none",
-    "fingerprint": "359f7c65786a99945c09e6a6baff354d4f225c1bc667e7c3dc88917b60cd5418"
+    "fingerprint": "b3b35b0a1ce20c3e07a38c4b44cf6202f9e231736f1b4d1c47fd70e9785f8dc9"
   },
   "comms_list_numbers": {
     "key": "communications.comms_list_numbers",
@@ -879,7 +897,7 @@ const CONTRACTS = {
     "seatAuthority": "workspace-admin",
     "selfDescribe": true,
     "readiness": "none",
-    "fingerprint": "e8468dd240ea908bd45736fb5b4abb8309c32431d916f519b64cac1329c18fc6"
+    "fingerprint": "262746fcf7e1348084fbb670cee6a85e51fabaa7ee839da2f1365266fda6e170"
   },
   "comms_search_numbers": {
     "key": "communications.comms_search_numbers",
@@ -891,7 +909,7 @@ const CONTRACTS = {
     "seatAuthority": "workspace-admin",
     "selfDescribe": true,
     "readiness": "none",
-    "fingerprint": "eb9ebb6650d961dfc22bad56e070c48832962e5afb4aace3b6c1b411a4ecde41"
+    "fingerprint": "36972f6876089ad8c005a99133a11501957c62307e9a437df6c1b96c859c6cd5"
   },
   "comms_buy_number": {
     "key": "communications.comms_buy_number",
@@ -903,7 +921,7 @@ const CONTRACTS = {
     "seatAuthority": "workspace-admin",
     "selfDescribe": true,
     "readiness": "none",
-    "fingerprint": "4d09721705313ca964d76325d71d55895ddc3d2f8982dd0e3e26fee0ca6f6deb"
+    "fingerprint": "1f79680d5fa645b137227174629c5786814b05895e1e6467cc03999abc286b7c"
   },
   "comms_draft_registration": {
     "key": "communications.comms_draft_registration",
@@ -915,7 +933,7 @@ const CONTRACTS = {
     "seatAuthority": "workspace-admin",
     "selfDescribe": true,
     "readiness": "none",
-    "fingerprint": "f6ac4626c8fdbe32486d9fce1c5bad42b02b6a834133a358d76612d4569fc501"
+    "fingerprint": "9aefe22177b518cf77df5ce8af2e8f73e6f1e443dbd676ecabcf3ace2168f72e"
   },
   "comms_name_number": {
     "key": "communications.comms_name_number",
@@ -927,7 +945,7 @@ const CONTRACTS = {
     "seatAuthority": "workspace-admin",
     "selfDescribe": false,
     "readiness": "none",
-    "fingerprint": "4abebe3badb3a7082635e95323ba315bfbd8689e985c23e801015fb1496b13a2"
+    "fingerprint": "dc6b591541c14010557f13d369e5bb1869b6f864c6b27c7d11d0badeaecdeb7b"
   },
   "comms_set_primary_number": {
     "key": "communications.comms_set_primary_number",
@@ -939,7 +957,7 @@ const CONTRACTS = {
     "seatAuthority": "workspace-admin",
     "selfDescribe": true,
     "readiness": "none",
-    "fingerprint": "2b1b037fe328c2719ca9aee9c48311b6ffb4fbb1dc8bfdbba1a35522e244db3c"
+    "fingerprint": "edbaba64f432f04afed8aca77333f74564346903bbaf4b79985abf1c5916c8e5"
   }
 };
 const SOURCES = {
@@ -1069,7 +1087,19 @@ const SOURCES = {
   // generic scheduled_binding block and terminalizeScheduledRelease's direct row writes are skipped for a bound
   // row (it is closed through the finalizer). (4) Nothing else: no authority, verifier, recipient, tenant gate,
   // provider arm or dispatch branch changed. Old e1c22250… reproduced from main 9e325d91 first.
-  "supabase/functions/send-message/index.ts": "fffd0a7faae3f0c6150784ddda33e280e2786d03e05bfd53d9a0d8aa5a0d5f51",
+  // EXP03 O12 piece 2 renewal (2026-10-27), governed email attachments, reviewed by two independent §39 adversarial reviews (c6276d507, then the follow-up 090d85257; no TOCTOU, no cross-tenant read; round-1 M1/M3/M4 and the LOWs fixed; H1 fixed on the card, though no product surface produces a file send yet; round 2 found no new HIGH) — the follow-up's delta in this file is listed:
+  // send-message/index.ts changes in four places. (1) parseCommsEmailBinding parses an optional
+  // binding.attachments with the shared strict manifest parser (governed copies of THIS tenant and operation
+  // only); anything else marks it "invalid". (2) Before the claim, a binding with files is refused through the
+  // existing unclaimed finalizer (COMMS_EMAIL_ATTACHMENT_CHANGED with zero storage reads when invalid;
+  // COMMS_EMAIL_ATTACHMENTS_PROVIDER_UNSUPPORTED unless binding and connector are on the SendGrid arm), else the
+  // governed copies are read with the service role, re-hashed against the binding and handed to the adapter as
+  // ctx.governedFileAttachments. (3) The SendGrid arm sends those as attachments; the Gmail and SMTP arms refuse
+  // a send carrying them before any network call, classified failed/COMMS_EMAIL_ATTACHMENTS_PROVIDER_UNSUPPORTED.
+  // (4) Nothing else: the door-path refusal of body.attachments, serverAttachments, the invoice PDF path, the H2
+  // refusal, authority, recipient, tenant gate and dispatch branches are unchanged. Old fffd0a7f… reproduced from
+  // main 0fcd5a331 first.
+  "supabase/functions/send-message/index.ts": "0acfd997a123d5b73cc3a5fb13a1dff2d841f5d8ae9f17e86147bd0bfbc5ae82",
   "supabase/functions/_shared/paige-spine/contracts.ts": "2d771686d636c04d2e07d9b8c336e19cde246b9a303ddd034d7ae8500f7eefb4",
   // Operator retirement adds opt-in timeout/no-retry controls; ordinary callers retain
   // their existing behavior. Renewed non-author review and actual retry controls are
@@ -1082,7 +1112,11 @@ const SOURCES = {
   // every existing register/get call resolves the same adapter. Outbound registry, NormalizedMessage, Delivery,
   // OutboundSendContext and buildListUnsubscribeHeaders are byte-identical. Prior f29fe750… reproduced from
   // db0048ad7 (git show | TypeScript printer {removeComments:true}, sha256) before renewing. Renew this digest only.
-  "supabase/functions/_shared/channel-adapters.ts": "dc0cfccf25118be0a76b5599167e7440c8e80a8c63880a549f7f36e2d18d0977",
+  // EXP03 O12 piece 2 renewal (2026-10-27), same review: channel-adapters.ts ADDS one optional
+  // OutboundSendContext field, governedFileAttachments ({content, filename, type}[]), read only by the email
+  // adapter. No existing field, adapter contract or registry function changed. Old dc0cfccf… reproduced from
+  // main 0fcd5a331 first.
+  "supabase/functions/_shared/channel-adapters.ts": "515ad56691be9b00b9cd894f53522236a23e78efba40b20adb0806fc6df15984",
   // E09 Slice 6 bounded renewal (2026-10-18), integrating-crew source review (NOT non-author):
   // the only change vs main is one added `case "customer_request"` in suppressionReason (the plain
   // sentence a portal opt-out returns). Step order, every block/queue condition, the consent channel
@@ -1204,7 +1238,11 @@ const SOURCES = {
   // EXP03 Resend retirement (2026-10-27), AUTHOR-REVIEW / LOWER ASSURANCE: readCommsEmailReadiness's
   // resendConfigured fact reads SENDGRID_MAIL_SEND_API_KEY presence instead of RESEND_API_KEY. Decision
   // function, result shape and every reason unchanged. Old 325b6bae… reproduced from b39fda02 first.
-  "supabase/functions/_shared/comms-email/readiness.ts": "035c108e210bb7912250cac4000959e58c172cc4eb57a639b05839c4700762e9",
+  // EXP03 O12 piece 2 renewal (2026-10-27), same review: readiness.ts — readCommsEmailReadiness adds
+  // sender_provider (the chosen connector's provider name, never a credential) to a READY answer only, and the
+  // CommsEmailReadiness type gains that optional field. Every state, reason and read is unchanged. Old 035c108e…
+  // reproduced from main 0fcd5a331 first.
+  "supabase/functions/_shared/comms-email/readiness.ts": "e2790d93390114ce9b799b53d1106279b2626e0c40bf5bb92b676885daf4f8e8",
   "supabase/functions/_shared/openai-models.ts": "a76ac476a2cbd298421a9d7d37f3605cf384e4a4e53a1635719405d52e70905e",
   "supabase/functions/_shared/openai-responses.ts": "bec9943dcb725b592cdba219a5e349f14bcf1f259adbc17522fceb5c6fe0ec81",
   "supabase/functions/_shared/provider-failure.ts": "3a3507a6ddc6f6e5051a5d17b7a5ff30624643c6bd39d07793224eb0177873b5",
@@ -1216,7 +1254,13 @@ const SOURCES = {
   // parseCommsEmailSendAt (whole minute, 2 min–30 days at proposal, format-only at confirm) and
   // COMMS_EMAIL_SCHEDULED_RELEASE_GRACE_MS. The command, its keys, commsEmailBodyHtml and the content digest
   // are unchanged. Old 733eb988… reproduced from main 9e325d91 first.
-  "supabase/functions/_shared/comms-email/contract.ts": "3fc25e779d16073b317508ab77637ae00f8c1de48bb078909928aff37505ffc6",
+  // EXP03 O12 piece 2 renewal (2026-10-27), same review: contract.ts ADDS the attachment limits (10 files,
+  // 10 MiB each, 10 MiB together — the follow-up lowered the total from 15 MiB), COMMS_EMAIL_FILE_PROVIDERS
+  // (sendgrid, resend), parseCommsEmailAttachmentRequest (server-tenant composer paths only),
+  // commsEmailAttachmentName and commsEmailGovernedAttachmentPath. The command, its keys, commsEmailBodyHtml,
+  // the content digest and the send-time functions are unchanged. Old 3fc25e77… reproduced from main 0fcd5a331
+  // first.
+  "supabase/functions/_shared/comms-email/contract.ts": "40208d3cc65b42150e162e4d062d33d23f244a68cb7c3b75d0494aa989a1e334",
   "supabase/functions/_shared/paige-turn/continuity.ts": "ca8c258d200a59a573a3c0cc2a3ad253cbed1239da24afdd1efc0fdbc90dec69",
   "supabase/functions/_shared/paige-turn/contract.ts": "317424344aeb669ef5885b36bbe61c66f94ad3fce994c966203cd6c8f42763f4"
 };

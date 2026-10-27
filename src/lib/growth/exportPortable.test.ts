@@ -44,6 +44,12 @@ describe("buildPortableExport — the published artifact only", () => {
     expect(r.html.startsWith("<!DOCTYPE html>")).toBe(true);
     expect(r.html).toContain("<title>Referral Workshop</title>");
     expect(r.html).toContain('name="description" content="One honest line about the workshop."');
+    // og parity with the live page (PR8): title + description unfurl even without an image;
+    // with no approved og image there is no image tag and no large-card claim.
+    expect(r.html).toContain('property="og:title" content="Referral Workshop"');
+    expect(r.html).toContain('property="og:description" content="One honest line about the workshop."');
+    expect(r.html).not.toContain('property="og:image"');
+    expect(r.html).not.toContain('twitter:card');
     // The same token seam the live page resolves — the export's :root carries the resolved --gp-* set.
     expect(r.html).toContain("--gp-primary:");
     // Text is escaped; nothing tenant-authored reaches the document as markup.

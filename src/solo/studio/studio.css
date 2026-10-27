@@ -467,3 +467,9 @@
 .vs-domain-hostpath ul { margin: 0 0 8px; padding-left: 16px; }
 .vs-domain-hostpath li { margin: 0 0 8px; font-size: 12px; color: var(--vs-faint, #9a9a9a); line-height: 1.5; }
 .vs-domain-note { font-size: 11px; font-style: italic; }
+
+/* Sharing preview in the publish panel (PR8): what search and share will show of the page.
+   Quiet and typographic — it reads like the checks above it, not a second editor. */
+.vs-seo-preview { margin: 2px 0; }
+.vs-seo-line { font-size: 12px; color: var(--vs-dim); line-height: 1.5; }
+.vs-seo-missing { color: var(--vs-faint); font-style: italic; }

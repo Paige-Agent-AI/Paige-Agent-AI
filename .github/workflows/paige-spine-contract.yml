@@ -164,6 +164,9 @@ on:
       # "Approve now, send later" for the governed email door: its rollback proof and migration.
       - "supabase/tests/comms_email_scheduled_send.sql"
       - "supabase/migrations/20271119000000_comms_email_scheduled_send.sql"
+      # Files through the governed email door: its rollback proof and migration.
+      - "supabase/tests/comms_email_governed_attachments.sql"
+      - "supabase/migrations/20271120000000_comms_email_governed_attachments.sql"
       - "supabase/functions/comms-scheduled-drain/**"
       - "supabase/tests/exp03_resend_retired.sql"
       - "supabase/tests/tenant_email_domain_normalization.sql"
@@ -515,6 +518,14 @@ jobs:
       - name: Governed email scheduled send (rolled back)
         if: ${{ !cancelled() }}
         run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/comms_email_scheduled_send.sql
+      # Files through the governed email door (20271120000000): the 13- and 14-argument prepares are
+      # untouched; the 15-argument prepare binds only this business's and operation's governed copies
+      # (existing, at their size), refuses a replay with other files or time, another business's
+      # manifest, a drafted reply, a non-seat and a non-SendGrid-arm sender (no row left); members read
+      # governed copies but never insert, update or delete one; retention lists only unneeded copies.
+      - name: Governed email attachments (rolled back)
+        if: ${{ !cancelled() }}
+        run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/comms_email_governed_attachments.sql
       # One spelling of a sending domain (#2133): stored as lower(btrim(domain)), so the readiness read
       # and _comms_email_sendgrid_sender_verified agree; the backfill refuses rather than merging.
       - name: Experience 03 sending-domain normalization (rolled back)

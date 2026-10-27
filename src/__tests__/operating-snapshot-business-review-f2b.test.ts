@@ -536,7 +536,10 @@ describe('composeBusinessReview with F2b', () => {
     expect(d.email.reason).not.toMatch(/^no_adapter/);
     // The original Calendar reader is mounted, but this old metric-only caller has no query/auth ports.
     expect(d.bookings).toEqual({ status: 'degraded', reason: 'calendar_review_original_caller_unavailable', data: null });
-    for (const area of ['work', 'revenue', 'communications', 'outcomes']) {
+    // The original Rail read is mounted, but this old fixture has no caller auth.
+    // It must refuse honestly without borrowing service authority or claiming zero activity.
+    expect(d.outcomes).toEqual({ status: 'degraded', reason: 'recorded_activity_caller_auth_unavailable', data: null });
+    for (const area of ['work', 'revenue', 'communications']) {
       expect(d[area].status).toBe('unavailable');
       expect(d[area].reason).toMatch(/^no_adapter/);
     }

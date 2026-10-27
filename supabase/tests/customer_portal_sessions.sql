@@ -5,7 +5,7 @@
 -- admission refuses everything that is not the caller's own changeable booking with one "not found";
 -- request-id and state replay; and admission never writes public.internal_bookings.
 BEGIN;
-SELECT plan(131);
+SELECT plan(175);
 INSERT INTO auth.users(id,aud,role,email,email_confirmed_at,raw_app_meta_data) VALUES
  ('e0961000-0000-4000-8000-000000000001','authenticated','authenticated','sessions-host-a@tests.invalid',now(),'{"comms_provider_execution":"disabled"}'),
  ('e0961000-0000-4000-8000-000000000002','authenticated','authenticated','sessions-host-b@tests.invalid',now(),'{"comms_provider_execution":"disabled"}'),
@@ -470,6 +470,146 @@ SELECT is((SELECT count(*) FROM jsonb_array_elements(pg_temp.as_user('e0961000-0
  now(),now()+interval '13 days',NULL::uuid[],'e0962000-0000-4000-8000-000000000001') b$q$)) e
  WHERE e->>'id'=(SELECT r#>>'{}' FROM calendar_portal_guest)),1::bigint,
  'the guest appointment remains visible exactly once to its legitimate business Calendar');
+
+-- 21. Discover original published calendars for the exact current customer.
+-- No availability/writer/provider surface is introduced by this read.
+CREATE FUNCTION pg_temp.booking_calendars(
+ _actor uuid DEFAULT 'e0961000-0000-4000-8000-000000000003',
+ _tenant uuid DEFAULT 'e0962000-0000-4000-8000-000000000001',
+ _client uuid DEFAULT 'e0963000-0000-4000-8000-000000000001',
+ _after text DEFAULT NULL,_limit integer DEFAULT 20,_headers jsonb DEFAULT '{}'
+) RETURNS jsonb LANGUAGE plpgsql AS $test$
+DECLARE r jsonb;
+BEGIN
+ PERFORM set_config('request.headers',_headers::text,true);
+ r:=pg_temp.as_user(_actor,format('SELECT public.client_portal_booking_calendars(%L,%L,%L,%L)',
+  _tenant,_client,_after,_limit));
+ PERFORM set_config('request.headers','{}',true);
+ RETURN r;
+END $test$;
+SELECT has_function('public','client_portal_booking_calendars',ARRAY['uuid','uuid','text','integer'],
+ 'published Calendar discovery is an additive native read');
+SELECT ok((SELECT pg_get_userbyid(proowner)='postgres' AND prosecdef AND provolatile='s'
+ AND proconfig=ARRAY['search_path=""'] FROM pg_proc
+ WHERE oid='public.client_portal_booking_calendars(uuid,uuid,text,integer)'::regprocedure),
+ 'discovery has the original safe postgres/STABLE/definer/empty-path reader shape');
+SELECT ok(has_function_privilege('authenticated','public.client_portal_booking_calendars(uuid,uuid,text,integer)','EXECUTE')
+ AND NOT has_function_privilege('anon','public.client_portal_booking_calendars(uuid,uuid,text,integer)','EXECUTE')
+ AND NOT has_function_privilege('service_role','public.client_portal_booking_calendars(uuid,uuid,text,integer)','EXECUTE'),
+ 'only the ordinary authenticated lane can execute discovery');
+SELECT is(pg_temp.booking_calendars(_actor=>NULL)->>'sqlstate','42501','a database role without an Auth subject is refused');
+SELECT is(pg_temp.booking_calendars(_actor=>'e0961000-0000-4000-8000-000000000001')->>'sqlstate','42501',
+ 'business owner credentials do not substitute for customer membership');
+SELECT is(pg_temp.booking_calendars(_actor=>'e0961000-0000-4000-8000-000000000005')->>'sqlstate','42501',
+ 'business staff credentials do not substitute for customer membership');
+SELECT is(pg_temp.booking_calendars(_client=>'e0963000-0000-4000-8000-000000000002')->>'sqlstate','42501',
+ 'another customer id cannot supply authority');
+SELECT is(pg_temp.booking_calendars(_tenant=>'e0962000-0000-4000-8000-000000000002')->>'sqlstate','42501',
+ 'another business id cannot supply authority');
+SELECT is(pg_temp.booking_calendars(_tenant=>NULL)->>'sqlstate','42501','the business intent is required');
+SELECT is(pg_temp.booking_calendars(_client=>NULL)->>'sqlstate','42501','the customer intent is required');
+SELECT is(pg_temp.booking_calendars(_headers=>'{"x-client-portal-business":"e0962000-0000-4000-8000-000000000002"}')->>'sqlstate',
+ '42501','a stale business request header cannot widen the selected relationship');
+SELECT is(pg_temp.booking_calendars(_headers=>'{"x-client-portal-business":"invalid"}')->>'sqlstate','42501',
+ 'malformed request business is refused by the original resolver');
+SELECT is(pg_temp.booking_calendars()->'calendars','[]'::jsonb,'an enabled calendar with no roster is not offered');
+
+INSERT INTO public.calendar_hosts(calendar_id,user_id) VALUES
+ ('e0964000-0000-4000-8000-000000000001','e0961000-0000-4000-8000-000000000001'),
+ ('e0964000-0000-4000-8000-000000000002','e0961000-0000-4000-8000-000000000001'),
+ ('e0964000-0000-4000-8000-000000000003','e0961000-0000-4000-8000-000000000002');
+INSERT INTO public.calendars(id,tenant_id,created_by,slug,title,description,duration_min,enabled,type) VALUES
+ ('e0964000-0000-4000-8000-000000000004','e0962000-0000-4000-8000-000000000001','e0961000-0000-4000-8000-000000000001',
+  'test-e09-sessions-class','Group session',repeat('Public description ',100),45,true,'event'),
+ ('e0964000-0000-4000-8000-000000000005','e0962000-0000-4000-8000-000000000001','e0961000-0000-4000-8000-000000000001',
+  'test-e09-sessions-team','Team session',NULL,30,true,'collective'),
+ ('e0964000-0000-4000-8000-000000000006','e0962000-0000-4000-8000-000000000001','e0961000-0000-4000-8000-000000000001',
+  'test-e09-sessions-unrostered','No host',NULL,30,true,'personal'),
+ ('e0964000-0000-4000-8000-000000000007','e0962000-0000-4000-8000-000000000001','e0961000-0000-4000-8000-000000000001',
+  'test-e09-sessions-wrong-host','Wrong business host',NULL,30,true,'personal');
+INSERT INTO public.calendar_hosts(calendar_id,user_id) VALUES
+ ('e0964000-0000-4000-8000-000000000004','e0961000-0000-4000-8000-000000000001'),
+ ('e0964000-0000-4000-8000-000000000005','e0961000-0000-4000-8000-000000000001'),
+ ('e0964000-0000-4000-8000-000000000005','e0961000-0000-4000-8000-000000000005'),
+ ('e0964000-0000-4000-8000-000000000007','e0961000-0000-4000-8000-000000000002');
+CREATE TEMP TABLE calendar_discovery_before AS SELECT
+ md5(string_agg(to_jsonb(b)::text,'|' ORDER BY b.id)) h FROM public.internal_bookings b;
+CREATE TEMP TABLE calendar_discovery AS SELECT pg_temp.booking_calendars() r;
+SELECT is((SELECT r->>'tenant_id' FROM calendar_discovery),'e0962000-0000-4000-8000-000000000001',
+ 'discovery returns the original selected business identity');
+SELECT is((SELECT r->>'client_id' FROM calendar_discovery),'e0963000-0000-4000-8000-000000000001',
+ 'discovery returns the verified CRM relationship identity');
+SELECT is((SELECT jsonb_agg(c->>'slug' ORDER BY c->>'slug') FROM calendar_discovery,jsonb_array_elements(r->'calendars') c),
+ '["test-e09-sessions-class","test-e09-sessions-northwind","test-e09-sessions-team"]'::jsonb,
+ 'only this business published, properly rostered single, class and collective calendars are discoverable');
+SELECT ok((SELECT bool_and((SELECT array_agg(k ORDER BY k)=ARRAY['description','duration_min','id','slug','timezone','title']
+ FROM jsonb_object_keys(c) k)) FROM calendar_discovery,jsonb_array_elements(r->'calendars') c),
+ 'calendar rows expose only presentation fields, never hosts, guest data, notes, intake, notifications or providers');
+SELECT is((SELECT length(c->>'description') FROM calendar_discovery,jsonb_array_elements(r->'calendars') c
+ WHERE c->>'slug'='test-e09-sessions-class'),1200,'published descriptions are bounded without reading private materials');
+SELECT is((SELECT r->>'has_more' FROM calendar_discovery),'false','a complete page truthfully reports no additional calendars');
+SELECT is((SELECT r->'next_after_slug' FROM calendar_discovery),'null'::jsonb,'a complete page has no continuation cursor');
+CREATE TEMP TABLE calendar_discovery_first AS SELECT pg_temp.booking_calendars(_limit=>1) r;
+SELECT is((SELECT jsonb_array_length(r->'calendars') FROM calendar_discovery_first),1,'the requested page bound is enforced');
+SELECT is((SELECT r->>'has_more' FROM calendar_discovery_first),'true','a bounded first page reports genuine additional calendars');
+SELECT is((SELECT r->>'next_after_slug' FROM calendar_discovery_first),'test-e09-sessions-class',
+ 'continuation binds the last actual returned native slug');
+SELECT is(pg_temp.booking_calendars(_after=>'test-e09-sessions-class',_limit=>1)->'calendars'->0->>'slug',
+ 'test-e09-sessions-northwind','the next page returns the next original calendar without a duplicate');
+SELECT is(pg_temp.booking_calendars(_after=>'test-e09-sessions-northwind',_limit=>1)->'calendars'->0->>'slug',
+ 'test-e09-sessions-team','keyset paging reaches the final permitted calendar');
+SELECT is(pg_temp.booking_calendars(_after=>'test-e09-sessions-team')->'calendars','[]'::jsonb,
+ 'exhausted paging does not expose another business or a paused calendar');
+SELECT is(pg_temp.booking_calendars(_limit=>0)->>'sqlstate','22023','zero page size is refused');
+SELECT is(pg_temp.booking_calendars(_limit=>51)->>'sqlstate','22023','unbounded page size is refused');
+SELECT is(pg_temp.booking_calendars(_limit=>NULL)->>'sqlstate','22023','null page size is refused');
+SELECT is(pg_temp.booking_calendars(_after=>repeat('x',241))->>'sqlstate','22023','oversized continuation is refused');
+SELECT is(pg_temp.booking_calendars(),(SELECT r FROM calendar_discovery),'returning reads preserve the exact native list');
+
+-- The same real login can resolve two original relationships; selection must
+-- choose each business's own list, never combine them or borrow a staff scope.
+INSERT INTO public.clients(id,tenant_id,linked_user_id,created_by,first_name,last_name,status) VALUES
+ ('e0963000-0000-4000-8000-000000000005','e0962000-0000-4000-8000-000000000002',
+  'e0961000-0000-4000-8000-000000000006','e0961000-0000-4000-8000-000000000002','Two','Businesses','active');
+SELECT is(pg_temp.booking_calendars(_actor=>'e0961000-0000-4000-8000-000000000006',
+ _client=>'e0963000-0000-4000-8000-000000000004')->'calendars',(SELECT r->'calendars' FROM calendar_discovery),
+ 'a multi-business customer selecting this relationship sees only this business calendars');
+SELECT is(pg_temp.booking_calendars(_actor=>'e0961000-0000-4000-8000-000000000006',
+ _tenant=>'e0962000-0000-4000-8000-000000000002',_client=>'e0963000-0000-4000-8000-000000000005')
+ ->'calendars'->0->>'slug','test-e09-sessions-tenant-b','switching the verified relationship resolves only the other business list');
+SELECT is(pg_temp.booking_calendars(_actor=>'e0961000-0000-4000-8000-000000000006',
+ _client=>'e0963000-0000-4000-8000-000000000005')->>'sqlstate','42501',
+ 'a customer relationship from the previous business is refused');
+UPDATE public.tenant_members SET status='suspended' WHERE tenant_id='e0962000-0000-4000-8000-000000000001'
+ AND user_id='e0961000-0000-4000-8000-000000000005';
+SELECT is(jsonb_array_length(pg_temp.booking_calendars()->'calendars'),2,
+ 'a published collective calendar with a no-longer-active host is withheld');
+UPDATE public.tenant_members SET status='active' WHERE tenant_id='e0962000-0000-4000-8000-000000000001'
+ AND user_id='e0961000-0000-4000-8000-000000000005';
+UPDATE public.calendars SET enabled=false WHERE id='e0964000-0000-4000-8000-000000000001';
+SELECT is(jsonb_array_length(pg_temp.booking_calendars()->'calendars'),2,'pausing the original calendar immediately removes it from discovery');
+UPDATE public.calendars SET enabled=true WHERE id='e0964000-0000-4000-8000-000000000001';
+SELECT is((SELECT md5(string_agg(to_jsonb(b)::text,'|' ORDER BY b.id)) FROM public.internal_bookings b),
+ (SELECT h FROM calendar_discovery_before),'all discovery and paging calls leave every original appointment unchanged');
+SELECT is(pg_temp.booking_calendars(_actor=>'e0961000-0000-4000-8000-000000000007',
+ _client=>'e0963000-0000-4000-8000-000000000006')->>'sqlstate','42501','a merged-away customer cannot discover calendars');
+UPDATE public.profiles SET active_tenant_id='e0962000-0000-4000-8000-000000000001'
+ WHERE user_id='e0961000-0000-4000-8000-000000000001';
+CREATE FUNCTION pg_temp.booking_access(_action text) RETURNS jsonb LANGUAGE plpgsql AS $test$
+DECLARE v jsonb;
+BEGIN
+ v:=pg_temp.as_user('e0961000-0000-4000-8000-000000000001',$q$SELECT public.read_client_portal_access(
+  'e0962000-0000-4000-8000-000000000001','e0963000-0000-4000-8000-000000000001')$q$);
+ RETURN pg_temp.as_user('e0961000-0000-4000-8000-000000000001',format($q$SELECT public.set_client_portal_access(
+  'e0961000-0000-4000-8000-000000000001','e0962000-0000-4000-8000-000000000001',
+  'e0963000-0000-4000-8000-000000000001',%L,'engagement_paused',NULL,%L)$q$,_action,v->>'since'));
+END $test$;
+SELECT is(pg_temp.booking_access('pause')->>'ok','true','the original owner control can pause this fixture customer');
+SELECT is(pg_temp.booking_calendars()->>'sqlstate','42501','paused access invalidates the discovery read immediately');
+SELECT is(pg_temp.booking_access('restore')->>'ok','true','the original owner control restores the same relationship');
+SELECT is(pg_temp.booking_calendars(),(SELECT r FROM calendar_discovery),'restored access returns the same original calendar facts');
+SELECT is(pg_temp.booking_access('end')->>'ok','true','the original owner control ends this fixture relationship');
+SELECT is(pg_temp.booking_calendars()->>'sqlstate','42501','ended access cannot use a retained login to discover the business calendars');
 
 SELECT * FROM finish();
 ROLLBACK;

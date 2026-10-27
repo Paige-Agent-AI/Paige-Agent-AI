@@ -1,5 +1,5 @@
 {
-  "source": "5682b88ab1fca4687890c30e2d78a188ae7f92da",
+  "source": "3bfe79e18cb619af79de928f2b7e748e8b6e38e9",
   "classification": "SYNTHETIC ACTUAL COMPONENT, NOT CUSTOMER ACCEPTANCE",
   "captures": [
     {
@@ -12,7 +12,7 @@
         1024,
         768
       ],
-      "sha256": "fd4f8b20f39e078559154ccffde40904a818cd0f7ba5b5f5b8e227a326186d92"
+      "sha256": "5943e5a7764b4646b268ce6b1e79b981fbbe736a116bd19b61aefcd212734661"
     },
     {
       "file": "mineral-1024x768-open.jpg",
@@ -24,7 +24,7 @@
         1024,
         768
       ],
-      "sha256": "17aa3efa27aca524f835b9c147f1bbdcf1ae7043c512e3f42ebf1e93da726a51"
+      "sha256": "be3f3588cefc364669f92b2568955c18494d9bff0e82df74f0886bb14ce68a19"
     },
     {
       "file": "mineral-1366x768-closed.jpg",
@@ -36,7 +36,7 @@
         1366,
         768
       ],
-      "sha256": "2316f8196c2751d85a515ecaad0647aec4002480bd9e7de7bf9f307b0ff756a9"
+      "sha256": "2c98d79a2400eeaaed8cd9df211ce3f8f2d36687493d9f20a508ceb9b35c1f1f"
     },
     {
       "file": "mineral-1366x768-open.jpg",
@@ -48,7 +48,7 @@
         1366,
         768
       ],
-      "sha256": "c52f48b91726cdb8125823a2db2b05d91c9a3d8832043ff737fe89d0f33c365c"
+      "sha256": "9ee7b6329716a38081e54343ff3cdaa0a5216df41589abb6cc56cb2b28cf8a60"
     },
     {
       "file": "mineral-1536x770-closed.jpg",
@@ -60,7 +60,7 @@
         1535,
         770
       ],
-      "sha256": "367a669f7959bd5f891516ed1b8358c984e814805bb3b757b174ab6889733e04"
+      "sha256": "1abb9385769328cb6b8e8b6cde83faf117b44760ace5189f2c975564b929a1b5"
     },
     {
       "file": "mineral-1536x770-open.jpg",
@@ -72,7 +72,7 @@
         1535,
         770
       ],
-      "sha256": "ec44a7bcce50037b7dcba3f57b9e6c355846ea3bb90e2a84d3c90c031c142e61"
+      "sha256": "bc49a50cd0dd98635edbf208cfe9eb9b4732175ffa2c14f1be77b8da06f88e1a"
     },
     {
       "file": "mineral-390x844-empty.jpg",
@@ -84,7 +84,7 @@
         390,
         843
       ],
-      "sha256": "69672316d38e187d966240bd4c059682cfc847a5710221cb3745849382f51236"
+      "sha256": "58757056b828021ed848270d040b6c686c2aff35ba350ac239980a4c56c0b09d"
     },
     {
       "file": "mineral-390x844-error.jpg",
@@ -96,7 +96,7 @@
         390,
         843
       ],
-      "sha256": "f0fc8e28f5cededf5e80c78b23bda8f722ddceef8bfae93fabd9ed7ba914b514"
+      "sha256": "b60f151a37ab05de3fe737bdae5c73918f252caaae4d8887ea8e28689d8fc82f"
     },
     {
       "file": "mineral-390x844-expired.jpg",
@@ -108,7 +108,7 @@
         390,
         843
       ],
-      "sha256": "2c070e2bef9b515b7bbe2834d00374f967b8bf9803db306cac5247e906814037"
+      "sha256": "1fd3e61d06ce56f620efe5f412985a34430fa1ee64f05c5f0680eebf79a1e6ac"
     },
     {
       "file": "mineral-390x844-loading.jpg",
@@ -120,7 +120,7 @@
         390,
         843
       ],
-      "sha256": "3e5b3436f6cd6d65c839683440ef7238aa0136dedfed22b2fedb9a5d277b129c"
+      "sha256": "e1432ed22d7e76ef1ed3b71372ed1a8af518698899ed8d2d0ce8a075fc4a51b5"
     },
     {
       "file": "mineral-390x844-member.jpg",
@@ -144,7 +144,7 @@
         390,
         843
       ],
-      "sha256": "a0028dfdded37b4c7a48c8fe4c2a5b22220830db96716b7157c498a25e645638"
+      "sha256": "d486841c57328994543079b112ce6cc2cf0109a3f17647ceedbc7f2eec608244"
     },
     {
       "file": "mineral-390x844-ready.jpg",
@@ -156,7 +156,7 @@
         390,
         843
       ],
-      "sha256": "ef3e58eb1a101215624067c79d385cdae002cc239665133a88e4687a36822113"
+      "sha256": "8e1b4dab3e3ab3a3abd5b8f0b7815bad9c41cf5e4f7e265f83b479e85b8cae02"
     },
     {
       "file": "mineral-390x844-unavailable.jpg",
@@ -168,7 +168,7 @@
         390,
         843
       ],
-      "sha256": "cc898d6abe02fac6f10be5037fe4e4236566408a1d1b0e028213f4a01b7d353f"
+      "sha256": "9de8139df160ee85e0bb2b697db9ffc5263655077b8696cd1ef14bf2fd66c61a"
     },
     {
       "file": "mineral-900x1000-closed.jpg",
@@ -180,7 +180,7 @@
         900,
         1000
       ],
-      "sha256": "bb8d2f9eb73d149ba06f9938415b722a150b6eb0af77c4a70267d0dc45f9dcd5"
+      "sha256": "e4430b9f74ad521eb0016014748845d4b084bca0e3e55d35bbafeb0dc30e0f6f"
     },
     {
       "file": "mineral-900x1000-open.jpg",
@@ -192,7 +192,7 @@
         900,
         1000
       ],
-      "sha256": "2b46d1e4062f82064e0ac7249d9d6b3f3b42b272a75b208fa6c5beef0fbb4b6e"
+      "sha256": "4a1de4640080b12dc7ca4e79e308b2b562baffdc492f0d8aed69b2e7362342dd"
     },
     {
       "file": "obsidian-1536x770.jpg",
@@ -204,7 +204,7 @@
         1535,
         770
       ],
-      "sha256": "d1a05cbb69f32e255523de07795adfdf375680e47af658b3ab7756b92263408d"
+      "sha256": "4c4f9f8bc386bc63fa909d704028803dcec5fd500552b1e8604697ac23c5d5a1"
     },
     {
       "file": "obsidian-320x844.jpg",
@@ -216,7 +216,7 @@
         320,
         844
       ],
-      "sha256": "5088c6082ccedf0d7d6c4f2c9d441fbebfea8922d3197fd4c6eccf4f56226449"
+      "sha256": "3bcb731d2fbc1229173351448a0e52fc159fce3b7413c4c62eced92e4b89e77a"
     },
     {
       "file": "obsidian-390x844.jpg",
@@ -228,7 +228,7 @@
         390,
         843
       ],
-      "sha256": "39f001a6017930225220bfbba9f1aeb8d6c7cdf9ccdd5ad12ec575401ffe50a5"
+      "sha256": "83c8662105b6510e80b9f2fa907dd7fe82add3b624050853d600190c88f3bee2"
     }
   ]
 }

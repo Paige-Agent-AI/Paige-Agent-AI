@@ -16,7 +16,7 @@ REDUCED_MOTION: PASS: this change adds no animation or transition, retaining the
 STATE_COVERAGE: PASS: settled populated/partial/expired/empty-sample/unavailable/loading/error/denied source states rendered. Controlled tests withhold wrong actor/tenant/foreign target, unresolved account, expired actual/variance and unsupported attainment, and retry the existing source only.
 TRUTHFUL_STATE_LABELS: PASS: original finance.department classification is preserved in the binding-ledger JSON. CAP009–017 retains its original Limited/Coming Soon/Unverified presentation and ALG03/06/11/12/13 maturity is unchanged. Original target arithmetic adds no predictive or provider-readiness claim.
 SOLO_UI: YES: original account-neutral Finance route and canonical active actor/tenant for all eligible existing/future SOLO accounts. No account-number allowlist, provisioning or role change. Controlled sample identities never select production authority.
-INTERNAL_BUILD_IDENTITY: source=5682b88ab1fca4687890c30e2d78a188ae7f92da; deployment=NOT_DEPLOYED; environment=local; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=assets/e2-financial-play-targets
+INTERNAL_BUILD_IDENTITY: source=3bfe79e18cb619af79de928f2b7e748e8b6e38e9; deployment=NOT_DEPLOYED; environment=local; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=assets/e2-financial-play-targets
 RELEASE_CHANNEL: development: source increment must earn exact-head required CI/current-main composition and production readback before release.
 RELEASE_CLASSIFICATION: internal-only: bounded original financial Play target consumer, no customer release name or platform activation.
 CUSTOMER_RELEASE_IDENTITY: none: complete integrated EXP02 remains for one founder evaluation.
@@ -88,3 +88,31 @@ local disclosure/navigation/Back/discussion retention only. Founder Acceptance:
 NOT_ACCEPTED. Algorithm Support: unchanged partial/unverified original sources,
 no new predictive/scoring model or business-impact proof. Capabilities readiness:
 unchanged; actual new target panel proof is owed after deployment.
+
+## Finish-review contrast correction before release
+
+The subsequent finish check found the newly added fourteen-pixel target links
+used Mineral gold, actual rendered rgb139/112/73 on rgb251/249/245. Contrast4.426
+fails the4.5 normal-text requirement. PR2967 was returned to draft/release hold
+before merge; the earlier848a review and CI remain historical, not acceptance of
+the corrected head. No checker or contrast threshold was loosened.
+
+Source3bfe79e18cb619af79de928f2b7e748e8b6e38e9 changes only that scoped link color
+to the existing Executive ink token. Actual rendered measurements in
+contrast-correction.json verify15.7077 in Mineral and17.1766 in Obsidian. All eight
+required layouts and eleven narrow/state/theme frames were recaptured on that
+source with unchanged dimension checks, width observations and44px controls.
+The previous frames/manifest are retained privately as pre-correction history.
+All TypeScript, source reads, tests, target calculations, permissions and original
+default Executive styling are unchanged.85 controlled assertions and the earlier
+source compiler/build results retain that stated scope; corrected exact-head
+hosted review/CI/build and release readback are separately required.
+
+Production prerequisite: original paige-business-review97 ACTIVE/JWT-required,
+all32 API source files exactly match released2aa4d23e8f10095cc4becd15f0d8ed43a7c79f3e,
+with unchanged full pre/post packet/configuration. No new Edge deployment is
+needed for this UI-only consumer. This is source proof only, no invocation,
+customer target/role/reload or provider-readiness inference. Original customer
+Edge handoff and native zoom remain unverified; no customer/browser/business
+operation was used for the corrective local proof. Owned tab/server closed and
+viewport reset.

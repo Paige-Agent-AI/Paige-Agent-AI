@@ -2645,3 +2645,80 @@ Read-only analysis/inspection produces no Layer C execution or Rail result.
 All19 required outcomes, nine analytics, historical9/0 and16-case12/0/4 remain;
 ALG03/06/11/12 Partial,ALG13 usefulness Unverified and original monthly
 UNKNOWN/UNRETRIED stay unchanged. No provider/spend/Live/consequential activation.
+
+## October27 — agentic continuity and sandbox subcases
+
+This extends the ORIGINAL O01–O19 definitions, owners, records and evidence above;
+it changes neither their denominator nor acceptance. Coordinator ANT163/653f6b81,
+fae508a4 and f53d5f6d were received in71cfc791. All19/nine remain mandatory. The
+consultant launch journey connects this work without narrowing the full scope.
+
+For EACH outcome: **A** understand the goal/current context, clarifying only
+missing material facts; **B** form/adapt a scoped plan and select original tools;
+**C** perform permitted original-domain steps; **D** inspect actual source/result/
+receipt; **E** preserve permitted context and save/reopen/reload/resume; **F**
+handle failure/stale/revoked/partial/unknown without duplicate effects; **G**
+continue independent useful work and permitted proactive follow-through; **H**
+ask a concrete human question only beyond existing authority. A fixed workflow,
+dispatch acknowledgment or successful fixture does not prove this complete loop.
+
+Below **P=PARTIAL, W=PROOF OWED, M=MISSING IMPLEMENTATION, HOLD=HELD DEPENDENCY**.
+No full row is authenticated/accepted. Source and original writer references in
+the existing outcome table remain authoritative; none is replaced here.
+
+| Original outcome | A/B/C/D/E/F/G/H | Next original-owner deliverable and actual proof owed |
+| --- | --- | --- |
+| O01 | P/P/P/P/P/P/M/W | E02: fresh weekly changed-context review, actual multi-domain evidence, useful response and original request/reload. Historical52s saved reply is bounded evidence only. |
+| O02 | P/P/P/P/P/P/M/W | E02: actual Chat/Executive source/window/currency agreement and retrieval. #2979 return and #2981 period invitations are source/web verified, not completed analytical reasoning. |
+| O03 | P/P/P/P/P/P/M/W | EXP03 acquisition/CRM and EXP04 commercial producers: populated period/currency comparisons and original-record handoff; E02 explanation, permission-filtered drill-down/return and useful next step. |
+| O04 | P/P/P/P/P/P/M/W | E02: current Finance seven-page read/reload/focus and populated currency/source/permission proof. EXP04 remains commercial writer; verified banking/accounting/budget/liability depth remains heldEXP11. |
+| O05 | P/P/P/P/P/P/M/W | EXP09 service, EXP04 accepted obligations and EXP05 delivery: exact authorized record/version/result; E02 supported customer-risk interpretation and verified original-domain follow-through. Counts/absent Portal usage are insufficient. |
+| O06 | P/P/P/P/P/P/M/W | E02 original-run review is LOCAL:180 source controls/28 raw synthetic frames and original Chat/scroll/focus return. Finish exact-head release and current RLS/source/role/cohort/reload proof; original finding review remains separately released. |
+| O07 | P/P/HOLD/P/P/W/M/HOLD | Original private runner/claim/heartbeat/finalizer/Rail remain authoritative. #2982 observer62a7467 is reviewed/CI pending; original request/result/receipt consumer356 controls is LOCAL. Finish release/consumer, legitimate activation, real new Work/run/result and cancellation/unknown recovery. |
+| O08 | P/P/P/P/P/P/M/W | E02/VERA: source-backed top1–3 priorities, genuinely available next steps, actual original-domain results and later measurements; EXP03/04/05/09 remain writers. Completion alone is not causal improvement. |
+| O09 | P/P/P/P/P/W/M/W | E02: existing Mission create/revise/transition, original mutation receipt, stale/replay/unknown and same-Play return. Lifecycle Complete is not verified business success. |
+| O10 | P/P/P/P/P/W/M/W | E02: owner-approved Play-linked F7 target/actual/window/currency, revision/readback/reload and Chat continuity; original Metric issuer retains actuals. |
+| O11 | P/P/P/P/P/W/M/W | Existing Trust: current-role save/readback/revocation/stale behavior and actual executor enforcement. E02 integrates the original authority, not specialist-name permission. |
+| O12 | P/P/HOLD/W/W/W/M/HOLD | Original approval/Harness/LayerC/domain writer: exact eligible proposal → current authority → action → original result/receipt, including stale/cancelled/unknown no-replay. Consequential activation remains separate when the concrete path is ready. |
+| O13 | P/P/P/P/P/W/M/W | E02: explain accomplished/blocked/pending work from original Rail/Work/domain records and persist/reopen the context. #2982 projection is not active acceptance; an activity line is not proof of effect. |
+| O14 | P/P/P/P/P/P/M/W | E02: actual record reauthorization/return/reload/cohorts. EXP04 owns future shared run-link variant; existing semantic systems_check means finding, while the local same-page run reference reads its original run. |
+| O15 | P/P/HOLD/W/W/W/M/HOLD | Original Mind/Knowledge/Memory/Vault: approved minimum context, provenance, current actor/tenant/ABA, correction/revocation and later retrieval. E02 consumes a verified seam, never secrets or a copied store. |
+| O16 | P/P/P/P/P/P/M/W | E02 plus existing Chat/eligible Live: fresh weekly settlement, interruption, original source/request/authority retention, mobile/permission/recovery. Protected monthly stays UNKNOWN/UNRETRIED; historical CPU failures remain recorded. |
+| O17 | P/P/HOLD/W/W/W/M/HOLD | EXP03 Conversations/Communications: actual authorized thread, original approval/provider state and readiness; E02 distinguishes prepared/accepted/delivered/failed/unknown and verifies source/privacy/reload. |
+| O18 | P/P/HOLD/W/W/W/M/HOLD | Existing Deep Research/Model Fabric and original run/source/Knowledge records: supported citations, saved original research/retrieval and distinct publication consent. E02 owns the consumer and names missing originating/provider contracts. |
+| O19 | P/P/HOLD/W/W/W/M/HOLD | E02 integrates registered specialist/capability → original Trust/Harness/LayerC → original department writer → verified result/Rail → review update, for changed-context multi-step goals and safe recovery. Honest refusal does not close positive execution. |
+
+**Sandbox applicability:** O01–O14/O16/O17 ordinarily use native source reads or
+governed original capabilities, so general untrusted-code execution is **NOT
+APPLICABLE to those native paths**. A sandbox does not grant action authority.
+O15/O18/O19 must additionally test applicable untrusted-input/execution subcases:
+server-resolved tenant/task identity; minimum approved input/Vault projection;
+quarantine/prompt-injection handling; secret-free tools/output/logs; host/network/
+file/process isolation; actual risk/approval; original run→artifact/receipt→save/
+reopen/handoff; timeout/cancel/crash/unknown/no-replay; cleanup/retention/revocation;
+cross-tenant/task refusal and no unintended effects. Original Knowledge/Vault/
+Trust retain their boundaries. Where general executable code/file/data handling
+is genuinely needed, isolated runner and authenticated proof remain **HOLD /
+VERIFICATION OWED** under heldEXP19/ZION, E05 original Work/result and E10
+connection custody. Browser/dev/CI/iframe proof is insufficient. E02 consumes a
+legitimate original contract; it activates neither EXP19 nor PO25 and builds no
+runner, browser, ledger or second registry.
+
+**Usage-billing supersession:** October27 owner policy removes PAIGE-imposed
+monetary/sending ceilings. Tenant-attributed published-rate usage and original
+meters/receipts/collection, with25percent contribution target, supersede historical
+spend-stop language. Estimates inform; technical throughput/time/token/link,
+anti-abuse, privacy, permissions and real business-action consent remain distinct.
+A bounded scan of eight E02 review/evidence/manual-read source files found no
+monetary/sending stop; matches were elapsed-read and six-link technical limits.
+This is not proof of platform-wide removal or actual billing. Original usage/
+invoice/provider handoff evidence remains owed; no duplicate meter or activation.
+
+**Algorithm Support:** ALG03 original severity/source ordering Partial; ALG06
+supported metric/variance/cash-flow inputs Partial, without unverified forecast;
+ALG11 original quality/cost foundations Partial; ALG12 source exceptions Partial;
+ALG13 next-action utility Unverified. ALG02/04 require actual activation/retention
+inputs. Where no supporting implementation is verified above, the gap stays open.
+No prediction, ROI, business benefit or causal improvement is inferred from a
+receipt, UI or directive. All source/review/CI/merge/deploy/activation/customer/
+founder evidence legs remain separate; no complete-outcome acceptance promotion.

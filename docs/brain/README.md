@@ -9,6 +9,23 @@ grant/action/provider delta N/A. Functional bounded source DEPLOYED; Visual19
 actual synthetic frames, Experiential/customer proof still incomplete, Founder
 NOT_ACCEPTED. No all19/nine/CAP/ALG/readiness promotion. [Current Finance boundaries](finance-department.md#october27--financial-play-target-consumer-released-acceptance-still-owed).
 
+## EXP02 original run review and launch acceptance — October27 development
+
+The existing Systems workspace now has a LOCAL read-only original-run review;
+[actual-source evidence](../evidence/ui-delivery/e2-systems-run-review.md) records
+180 passing source controls,28 raw synthetic frames, eight required shell layouts,
+320/390 state coverage, loaded product font, original unsent Chat/focus return,
+native750.4000px scroll preservation and production build5m6s. No source tests or
+fixture rendering establish customer/RLS/Finance/Live/founder acceptance. Current
+review/CI/release remain owed. No scan, receipt inference or new shared link kind.
+
+The SAME [19-outcome matrix](../delivery/e2-customer-experience-integration-matrix.md#october27--agentic-continuity-and-sandbox-subcases)
+now identifies goal-directed A–H subcases and original sandbox dependencies for
+every existing outcome. Owner uncapped tenant-attributed usage billing supersedes
+historical monetary ceilings; no production cap removal is inferred from this
+record. Existing native capabilities, original meters/writers and real business
+authorization remain authoritative; held EXP19/PO25 are not activated.
+
 ## EXP02 financial Play target consumer — October27 UTC
 
 The original Finance Forecast view now presents sampled financial F7 targets and

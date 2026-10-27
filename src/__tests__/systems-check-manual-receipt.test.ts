@@ -1,6 +1,34 @@
 // @vitest-environment node
 import {expect,it,vi} from 'vitest';
-import {readManualSystemsRun} from '../../supabase/functions/_shared/systems-check-manual-result';
+import {readFileSync} from 'node:fs';
+import {resolve} from 'node:path';
+import ts from 'typescript';
+
+// Match the original request/result source-execution harness. Deno's remote SDK
+// types are checked by the pinned Deno gate, not imported into Vite's app graph.
+// Every runtime dependency is the actual source; undeclared imports fail closed.
+function load(path:string,require:(name:string)=>unknown){
+ const compiled=ts.transpileModule(readFileSync(resolve(path),'utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2020,module:ts.ModuleKind.CommonJS},reportDiagnostics:true});
+ expect(compiled.diagnostics).toEqual([]);
+ const exports:Record<string,unknown>={};
+ new Function('exports','require',compiled.outputText)(exports,require);
+ return exports;
+}
+const wait=load('supabase/functions/_shared/systems-check-wait.ts',()=>{throw Error('Unexpected wait dependency');});
+const states=load('supabase/functions/_shared/durable-job/mod.ts',()=>{throw Error('Unexpected state dependency');});
+const observation=load('supabase/functions/_shared/durable-job/observation.ts',()=>{throw Error('Unexpected observation dependency');});
+const request=load('supabase/functions/_shared/systems-check-manual-request.ts',name=>{
+ if(name==='./systems-check-wait.ts')return wait;
+ if(name==='./durable-job/mod.ts')return states;
+ throw Error('Unexpected request dependency: '+name);
+});
+const result=load('supabase/functions/_shared/systems-check-manual-result.ts',name=>{
+ if(name==='./systems-check-wait.ts')return wait;
+ if(name==='./systems-check-manual-request.ts')return request;
+ if(name==='./durable-job/observation.ts')return observation;
+ throw Error('Unexpected result dependency: '+name);
+});
+const readManualSystemsRun=result.readManualSystemsRun as (ports:Record<string,unknown>)=>Promise<Record<string,unknown>>;
 
 const id=(n:number)=>`00000000-0000-4000-8000-${String(n).padStart(12,'0')}`;
 const tick=()=>new Promise(resolve=>setImmediate(resolve));
@@ -23,7 +51,7 @@ function fixture(){
   if(name==='get_paige_durable_work')return {abortSignal:workAbort};
   if(name==='read_paige_durable_observation')return bounded(observe);
   throw Error('Unexpected RPC '+name);
- }),from:vi.fn(()=>query)};
+ }),from:vi.fn((_table:string)=>query)};
  const controller=new AbortController(),current=vi.fn(()=>true);
  const ports={actorId:id(4),tenantId:id(5),workId:id(3),caller,signal:controller.signal,current,observation:ref};
  return {ref,work,run,observation,observe,getUser,tenant,workRead,runRead,query,caller,controller,current,ports};

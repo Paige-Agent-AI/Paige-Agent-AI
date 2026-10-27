@@ -1697,3 +1697,22 @@ Historical9PASS0FAIL/12PASS0FAIL4BLOCKED, protected monthlyUNKNOWNUNRETRIED,
 ALG03/06/11/12Partial/ALG13usefulnessUnverified/CAP3Limited3Unverified3ComingSoon
 remain unchanged. Full [consumer evidence](ui-delivery/e2-manual-systems-receipt-consumer.md)
 and canonical Master §4.0 record source release separately from customer acceptance.
+
+### October27 18:01UTC — original consumer CI correction, no runtime change
+
+Initial #2993/e70f29e4 required frontend TypeScript check failed. A bounded native
+compiler reproduction finds the new receipt suite's direct Deno SDK graph import
+and a zero-argument mock whose actual table argument is inspected. The correction
+uses the ORIGINAL request/result source-executed test idiom with actual source
+dependencies and fail-closed import bindings; only the mock argument declaration
+changes. All22 receipt assertions/fixture values and all five runtime leaves are
+preserved. Same bounded compiler nonzero→zero; fresh356PASS/seven suites/8.06s.
+No baseline/tsconfig/workflow/source permission change or waiver; new exact-head
+review and required hosted CI remain mandatory, original failure retained.
+
+Separate ANT52e8b9e9d8 authenticated evidence on RELEASED8bbfa confirms the original
+recorded-run UI, same bookmark/result reload, heading/Escape/Refresh focus and
+saved weekly conversation, without starting a scan. Finance7/current weekly read
+also passed bounded checks; original other-role/cohort/Live/populated/action/full19
+and founder gates remain open. E02 browser turn is released to E05, viewport reset
+and original owner/customer tabs/draft preserved. This consumer stays inactive.

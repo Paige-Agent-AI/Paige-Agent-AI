@@ -8,7 +8,7 @@ FLOW_PROTOTYPE: NOT_REQUIRED: no new or changed visible interaction; the separat
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: future original governed caller prepares one authorized check and reads its own authoritative Work/run/receipt; this release alone exposes no customer action.
 VISUAL_DIRECTION: NOT_APPLICABLE: existing recorded-run interface/design tokens remain unchanged.
 AUTOMATED_EVIDENCE: PASS: fresh356 controls/seven suites on received released main; original296 bodies retained plus22 receipt and38 observer controls; causal interruption baseline/fix retained in ../e2-systems-capture-mode.md.
-STATIC_EVIDENCE: PASS: actual pinnedDeno2.1.4/SDK2.75.0 request/result graphs and focused lint; ten original source/test leaves and16,965 outside incoming entries/whole document histories retained. Broad Core compilation is not claimed clean.
+STATIC_EVIDENCE: PASS: actual pinnedDeno2.1.4/SDK2.75.0 request/result graphs and focused lint; original receiving retained ten leaves. The later frontend-test boundary correction preserves all five runtime/four incumbent test leaves and all22 receipt assertion bodies. Bounded native TypeScript red-to-green verifies the corrected fixture graph; full hosted ratchet remains mandatory. Broad Core compilation is not claimed clean.
 RENDERED_EVIDENCE: NOT_APPLICABLE: no mounted UI delta; e2-systems-run-review.md retains separately released synthetic rendered proof, not authenticated consumer acceptance.
 BEHAVIORAL_EVIDENCE: PASS: src/__tests__/systems-check-manual-request.test.ts, src/__tests__/systems-check-manual-result.test.ts and src/__tests__/systems-check-manual-receipt.test.ts execute original source for one dispatch, read-only resume, lost/late acknowledgements, cancellation, authority changes, exact original association and inconclusive outcomes. Actual customer verification is separately excluded under AUTHENTICATED_RUNTIME.
 AUTHENTICATED_RUNTIME: UNVERIFIED: scan activation and protected shared admission are unavailable; E09 currently holds the ordinary customer session. No actual scan, receipt, Finance or Chat acceptance claim.
@@ -46,6 +46,30 @@ An earlier restricted Windows rename failure executed zero tests; it was resolve
 by ordinary local temporary-file access, without changing source/tests or gates.
 Exact publication-head review/CI, actual merge and source readback remain mandatory.
 Original Core retains its three incumbent compiler findings; no broad clean type claim.
+
+## Required-CI correction: frontend test boundary
+
+Initial published e70f29e4 failed the required frontend TypeScript ratchet. A
+bounded real TypeScript run reproduced the new test importing Deno remote SDK
+types into the Vite application graph, plus one mock declaring zero arguments
+while its recorded source calls were inspected with a table argument. This is a
+test-boundary defect, not a failing native SDK contract or permission change.
+
+The receipt suite now uses the SAME source-executed loader as the original
+request/result suites. Every runtime dependency is the actual file; undeclared
+imports fail. The mock declares its actual table argument. All22 assertion bodies
+and fixture values remain exact; no assertion, negative or gate is removed.
+The identical bounded compiler invocation changes nonzero→zero; all356 controls/
+seven suites rerun PASS in8.06s. All five production modules remain byte-exact.
+Pinned Deno retains responsibility for the actual remote SDK type graph. No
+tsconfig/baseline, production module or CI workflow is changed. Fresh exact-head
+review and ALL hosted required checks are still required before release; the
+initial failed hosted check remains historical evidence.
+
+Separately, released-source authenticated read QA in ANT52e8b9e9d8 verifies the
+existing recorded-run view and current Finance/weekly read/reload pathway. It
+does not exercise this unregistered consumer, authorize a scan, or close the
+full19/nine matrix, original other-role/cohort negatives, Live or founder acceptance.
 
 Prerequisites are actually released: #2982/AEA/native18100002/original observer
 and normalcc8 Edge source certification; #2991/8bbfa original run review web source.

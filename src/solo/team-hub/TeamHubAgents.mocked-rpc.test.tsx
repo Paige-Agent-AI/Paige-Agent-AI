@@ -959,10 +959,18 @@ describe("A1c: one @ list for anyone you'd address (Slack-style), and @channel /
     expect(optionKeys(host)).toEqual(["@channel", "@here"]);
     await type(composer(host), "@he");
     expect(optionKeys(host)).toEqual(["@here"]);
-    // Up from the first option wraps to the last; Tab picks it; Esc closes a reopened list.
+    // Up from the first option wraps to the last, which is scrolled into view; Tab picks; Esc closes a reopened list.
+    const seen: Element[] = [];
+    const scroll = vi.fn(function (this: Element) { seen.push(this); });
+    const original = Object.getOwnPropertyDescriptor(Element.prototype, "scrollIntoView");
+    Object.defineProperty(Element.prototype, "scrollIntoView", { configurable: true, writable: true, value: scroll });
     await type(composer(host), "@");
     await press(composer(host), "ArrowUp");
     expect(composer(host).getAttribute("aria-activedescendant")).toBe(box(host)!.querySelector("[role=option][data-bc='here']")!.id);
+    expect(seen.at(-1)).toBe(box(host)!.querySelector("[role=option][data-bc='here']"));
+    expect(scroll).toHaveBeenLastCalledWith({ block: "nearest" });
+    if (original) Object.defineProperty(Element.prototype, "scrollIntoView", original);
+    else delete (Element.prototype as { scrollIntoView?: unknown }).scrollIntoView;
     await press(composer(host), "ArrowUp");
     expect(composer(host).getAttribute("aria-activedescendant")).toBe(box(host)!.querySelector("[role=option][data-bc='channel']")!.id);
     await press(composer(host), "Tab");

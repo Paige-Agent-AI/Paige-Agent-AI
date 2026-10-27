@@ -1728,6 +1728,13 @@ function Composer({ conversation, people, meId, online, value, onChange, picked,
   const disabledCommand = (item: TeamHubCommand) => item.kind === "task" && !online;
   const activeOption = commandOpen ? `${commandListId}-${commandOptions[index]?.kind}` : mentionOpen ? `${listId}-${items[index]?.key}` : undefined;
 
+  // A1c: the list now runs to three groups and scrolls on its own; the option the arrows reach is kept in
+  // view (a keyboard user would otherwise move the selection out of sight, to @here at the bottom).
+  useEffect(() => {
+    if (!listOpen || !activeOption) return;
+    document.getElementById(activeOption)?.scrollIntoView?.({ block: "nearest" });
+  }, [listOpen, activeOption]);
+
   useLayoutEffect(() => {
     if (caret.current === null || !localRef.current) return;
     localRef.current.setSelectionRange(caret.current, caret.current);

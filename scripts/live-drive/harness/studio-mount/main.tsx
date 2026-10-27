@@ -2,6 +2,8 @@ import * as React from "react";
 import { createRoot } from "react-dom/client";
 import { VibeStudio } from "@/solo/vibe";
 import { DomainGuidanceCard } from "@/solo/studio/DomainGuidanceCard";
+import { SharingPreviewLine } from "@/solo/studio/PublishPanel";
+import { applyPublishedSeo } from "@/lib/growth/seo";
 import "@/index.css";
 import "@/solo/solo-tokens.css";
 import "@/components/tenant-shell/tenant-command-center-shell.css";
@@ -87,6 +89,41 @@ function Harness() {
   // dock, and the pop anchors at its true geometry (absolute, top 50px / right 12px / width 360px
   // — no inline overrides). ?paige=open|closed still toggles the dock in the shell beneath, so a
   // drive can PROVE the panel's geometry is invariant to the dock state instead of asserting it.
+  // ?seo=1: the EXP06 PR8 sharing-truth surfaces, exercisable in a real browser. The REAL
+  // applyPublishedSeo runs against the REAL document (title + meta tags land in this page's own
+  // head, and the drive asserts them from the DOM), beside the REAL SharingPreviewLine the
+  // publish panel mounts — so the head behavior and the owner-visible line are both proven in
+  // a browser, not only at jsdom level. NOT the live app.
+  const seo = params.get("seo");
+  if (seo) {
+    const applied = applyPublishedSeo(document, {
+      title: "Referral Workshop",
+      description: "Ninety minutes to a Monday-ready referral plan.",
+      ogImage: "https://media.example.com/og/workshop.png",
+      canonicalUrl: window.location.href,
+    });
+    const meta = (attr: string, key: string) => document.head.querySelector(`meta[${attr}="${key}"]`)?.getAttribute("content") ?? "(absent)";
+    return (
+      <div className="vs-studio" style={{ padding: "48px 16px", display: "flex", justifyContent: "center", alignItems: "flex-start", minHeight: "100dvh" }}>
+        <div className="vs-pop" role="dialog" aria-label="Put your changes live" style={{ maxWidth: 560, width: "100%" }}>
+          <h2>Ready to go live?</h2>
+          <p>It gets a public link and moves to Marketing › Overview.</p>
+          <p className="vs-pop-address">Goes live at <b>https://acme-coaching.paigeagent.ai/p/acme-coaching/workshop</b></p>
+          <SharingPreviewLine title="Referral Workshop" draftSeo={{ description: "Ninety minutes to a Monday-ready referral plan." }} />
+          <div className="vs-seo-preview" data-harness-seo-applied="1" style={{ marginTop: 10 }}>
+            <p className="vs-seo-line"><strong>Applied to this page's own head by the real module:</strong></p>
+            <ul className="vs-domain-hostpath" style={{ marginTop: 6 }}>
+              <li className="vs-domain-note">document.title = “{applied.title}”</li>
+              <li className="vs-domain-note">meta[name=description] = “{meta("name", "description")}”</li>
+              <li className="vs-domain-note">meta[property=og:image] = “{meta("property", "og:image")}”</li>
+              <li className="vs-domain-note">meta[property=og:url] = “{meta("property", "og:url")}”</li>
+            </ul>
+          </div>
+          <div className="vs-pop-foot"><button type="button" className="vs-btn">Not yet</button></div>
+        </div>
+      </div>
+    );
+  }
   const domain = params.get("domain");
   if (domain) {
     return (

@@ -36,6 +36,25 @@ function absolute(u: string): string {
   return /^https?:\/\//i.test(u) ? u : `${window.location.origin}${u.startsWith("/") ? "" : "/"}${u}`;
 }
 
+/** The sharing truth shown before a page goes live (PR8, row 12): what the title and the
+ *  description will read like in a search result or a shared link — or the honest fact that
+ *  no description is set and where to get one. Reading only: edits go through the owner's
+ *  chat with Paige; this is never a second SEO editor. */
+export function SharingPreviewLine({ title, draftSeo }: {
+  title: string;
+  draftSeo: { description?: string; og_image?: string } | null;
+}) {
+  return (
+    <div className="vs-seo-preview">
+      <p className="vs-seo-line"><strong>What search and share will show:</strong> “{title}”
+        {draftSeo?.description
+          ? <> — “{draftSeo.description}”</>
+          : <span className="vs-seo-missing"> No description is set, so sharers show the title alone. Ask Paige to add a one-line description.</span>}
+      </p>
+    </div>
+  );
+}
+
 function CheckList({ checks, label }: { checks: PublishCheck[]; label: string }) {
   if (!checks.length) return null;
   return (
@@ -407,6 +426,7 @@ export function PublishPanel({ artifact, onNexusHandoff, onClose, onDone, onRefr
           )}
           {blocked && <p>Fix what's marked, or ask Paige to, then publish.</p>}
           {address && <p className="vs-pop-address">Goes live at <b>{address}</b></p>}
+          {ready && artifact.kind === "page" && <SharingPreviewLine title={pub.preview.title} draftSeo={artifact.page.draftSeo} />}
           {onNexusHandoff && ready && !notPublishable && (
             <p className="vs-pop-note">
               Marketing review is {nexusDisplayName()}'s department.

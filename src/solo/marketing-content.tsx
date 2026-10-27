@@ -26,6 +26,7 @@ import {
 } from "./marketing-content-model";
 import "./marketing-overview.css";
 import "./marketing-content.css";
+import { PublishPiece } from "./publish-piece";
 
 const DocumentPreview = React.lazy(() => import("@/components/admin/studio/DocumentPreview").then((module) => ({ default: module.DocumentPreview })));
 
@@ -132,7 +133,7 @@ export function MarketingContent({ tenantId, published, onOpenCapture, onRetryPu
         : <FilteredGallery key={`${tenantId}:${kind}`} tenantId={tenantId} kind={kind} onOpen={onPiece} onAll={() => onKind("all")}/>}
     </section>}
     <Published published={published} onOpenCapture={onOpenCapture} onRetry={onRetryPublished}/>
-    <p className="mct-foot">Posting and scheduling aren’t connected yet: PAIGE drafts and plans (see Calendar), and you post.</p>
+    <p className="mct-foot">Publishing is connected: open a piece to publish it to a connected channel — you approve the exact post before it goes out, and nothing is scheduled. Scheduling stays with your Calendar plan.</p>
     {host && piece && access === "allowed" && createPortal(<PiecePreview key={`${tenantId}:${piece}`} tenantId={tenantId} id={piece} known={pieces.find((p) => p.id === piece) ?? null} listPhase={phase} onClose={() => onPiece(null)}/>, host)}
   </div>;
 }
@@ -262,6 +263,7 @@ function PiecePreview({ tenantId, id, known, listPhase, onClose }: { tenantId: s
       ? <div className="mct-adfull">{ad.headline && <b>{ad.headline}</b>}{ad.primary && <p>{plainCopy(ad.primary)}</p>}{ad.cta ? <i>{ad.cta}</i> : <small>No call to action written</small>}</div>
       : parts && (parts.lead || parts.rest ? <div className="mct-copy">{parts.lead && <b>{parts.lead}</b>}{parts.rest}</div> : <p className="mct-note">No words were saved with this piece.</p>)}
     {asked && (kind === "image" || kind === "video") && <div className="mct-asked"><span>What PAIGE was asked</span><p>{asked}</p></div>}
+    <PublishPiece piece={piece} tenantId={tenantId}/>
   </div>;
   return <DetailDrawer detail={{ key: piece.id, eyebrow: "Content", wide: true, title: title.text, rows: [], body, actions: <PieceActions piece={piece} hasDoc={Boolean(doc)} onClose={onClose}/> }} onClose={onClose}/>;
 }

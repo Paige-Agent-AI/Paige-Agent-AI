@@ -854,6 +854,15 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**2026-10-26 UTC — EXP09 Portal settings fit beside PAIGE.**
+
+| Increment | Exact released source and observed production | Acceptance boundary |
+| --- | --- | --- |
+| [#2939 responsive Portal editor](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2939#issuecomment-6429707220) | Reviewed `4d26a917bb8a5d01a14b670d23478a6c287d4d17`, AUTHOR-REVIEW / LOWER ASSURANCE5658961509 and final receiving6429616047; all10 applicable checks and both web contexts SUCCESS, no-SQL Preview SKIPPED, zero threads. Actual main `50468eec27b2356ac3048d600206852eb39a29de` / tree `3fe13cade1a8cc7c973ba4aac4ec6a05a93c155e`, original792477+4d26 parents; all9 owning and16,566 incoming outside entries exact. Production `dpl_4SwsrqNzfH9w4k4HeTHg2rxNLSst` READY; both public origins exact50468-mvpvobl3/customerUpdate=null, entry/assets/cache/missing404 PASS at23:20:01.286UTC. Own native/Edge/provider delta N/A. | Existing48 regressions and final19 source-render cases PASS. Actual owner1514×822: PAIGE-open form708.3125/input666.7125px, folded form759.2/input717.6px with original440px preview; field44px and no measured document horizontal overflow. Saved contact remains clean; Tab reaches Headline; original PAIGE conversation restored open. No business write/send/activation. Full signed-in viewport/cohort matrix, physical phone/AT/zoom, external-client contact display, full42/seven-pillar and founder acceptance remain open. Internal repair, no customer version or announcement. |
+
+This mechanical post-merge identity closeout records the preceding delivery;
+it changes no product, policy, capability or acceptance status and is not logged recursively.
+
 **2026-10-26 UTC — EXP02 original Systems checkpoint and Work finalizer release receipts.**
 
 | Increment | Exact source and observed production evidence | Acceptance boundary |

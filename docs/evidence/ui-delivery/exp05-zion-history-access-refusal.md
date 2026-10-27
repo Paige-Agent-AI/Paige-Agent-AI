@@ -79,3 +79,23 @@ d5f6a371a95f28b7a2d278c9b399af6ecc82b7ae6f493c62223c52d2b80e58d9.
 Original unit network-denial setup and all source assertions unchanged; serial
 file execution only, no deadline or test limit changed. Scoped lint0 and original
 SOLO structural/mutation checks PASS; full compiler result remains a separate gate.
+
+## Current-main composition checkpoint — October 26–27
+
+Received actual main `2aa4d23e8f10095cc4becd15f0d8ed43a7c79f3e` in
+`921678c825c091c938b15e2c89d5f6671041552d`. The only conflict was the Brain
+append: preserve the entire incoming file, then the original eleven-line entry.
+All three executed reader/test blobs remain exact functional source `2dcbfc2a`;
+all other incoming runtime, E08 Team and E02/E03/E04/E07/E09/E10 source is retained.
+Fresh composed four-suite run: **140 PASS / 0 FAIL / 0 skipped**, report SHA256
+`f8fabdb429b5e1ed29502a31a6896ce61f3041f4bd7ff3adfbbd62b011bf5529`.
+Scoped lint, diff and original evidence guard PASS. Prior head `4c26e176` completed
+all applicable hosted checks, including the type ratchet; those checks are
+historical and do not replace review and required CI on this composed head.
+
+E08 explicitly returned the bounded shared Chat window in original ANT161 thread
+`ae7c7fec`; its two post-merge findings remain E08-owned and unaccepted. E04's
+two dependency-pin renewal is on its own corresponding source carrier, never a
+reason to copy hashes into incompatible source. This frontend repair touches
+neither shared seam. E09 retains browser custody, E02 then E05 are queued;
+authenticated refusal/reload and complete Experience acceptance remain proof owed.

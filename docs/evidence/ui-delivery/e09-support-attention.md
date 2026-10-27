@@ -61,3 +61,7 @@ disposition: ship
 **keep:** retain original records, explicit source window, named client route, privacy boundary and recoverable unavailable states.
 
 Documenter: No changes to DESIGN.md or its existing sidecar; checked original owner CSS, new component and scoped44px rule against incumbent tokens and captures. Palette: Mineral/Obsidian. Type: original18px heading/14px base/13px list. Layout: original wrapping attention list. Controls: original button/focus language,44px minimum here. Motion: none. Existing product-wide style drift is not canonized or repaired by this bounded extension.
+
+## Compatibility correction before release
+
+The first hosted type gate failed; no merge was attempted. The project targets ES2020, while the new closed parser initially used ES2022 Object.hasOwn. Replaying the original parser under the exact project compiler settings reproduces two TS2550 errors; replacing only those calls with the incumbent Object.prototype.hasOwnProperty.call retains the same own-key security check and passes the isolated original parser/scope type check. All65 focused tests pass again, including a one-worker recovery run. The exploratory whole-project local type diagnostic was cancelled without a result; no clean-install full-type PASS is inferred. Native SQL/body, UI/geometry and authority contracts are unchanged; fresh final-head review and required hosted checks remain separate release gates.

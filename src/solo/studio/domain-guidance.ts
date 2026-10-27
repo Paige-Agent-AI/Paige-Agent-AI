@@ -238,7 +238,7 @@ export const HOST_PATH_PACKAGE: readonly HostPathStep[] = [
 ] as const;
 
 export const HOST_PATH_COST_LINE =
-  "Static hosting of this shape sits in Cloudflare's free tier today. Anything beyond it is scoped, priced and approved by the workspace owner BEFORE activation — PAIGE never provisions hosting, buys domains, or changes DNS silently, and any spend stays under an owner-set ceiling with alerts.";
+  "Static hosting of this shape sits in Cloudflare's free tier today — static-asset requests are free and unlimited. Anything billable is scoped, priced and approved by the workspace owner BEFORE activation — PAIGE never provisions hosting, buys domains, or changes DNS silently, and real usage is attributed to the workspace and metered, not capped.";
 
 /** The one-line promise the guidance surface always keeps in view (WEB-09). */
 export const DNS_PRESERVATION_LINE =

@@ -8,7 +8,11 @@
  *   A4 replaces the profile's source with the tenant-editable `paige_agent_profiles_get`.
  * - Which agents a person's draft asks (`@PAIGE`…`@ZION`, capitals, at most three).
  * - How an agent's reply is split into its words and the system's fixed private-part line.
- * - The *Bring in* suggestions an agent's reply carries for the person who asked (flow 3).
+ * - The *Bring in* suggestions an agent's reply carries for the person who asked (flow 3): only the
+ *   agents the replying agent's structured answer suggested, each with its one line of context. An
+ *   @mention in the reply's text is never read as a suggestion.
+ * - The member-safe turn-state read (`team_hub_agent_turn_states`): what the asker sees after a reload
+ *   or in another tab, and the two private-part lines everyone else sees (flow 5).
  * - The agent-turn answer from `paige-ai-chat` (`{ teamHubAgentTurn }`), parsed strictly, and the
  *   exact flow-9 line each outcome shows the asker. Nothing is ever shown as posted unless the server
  *   answered `posted` with the read-back message.
@@ -204,26 +208,42 @@ export function splitPrivateLine(body: string): { text: string; privatePart: boo
 }
 
 export interface BringIn { agent: TeamHubAgentKey; prefill: string }
+/** One stored suggestion. `context` is the line its button writes; only the person who asked receives it. */
+export interface BringInSuggestion { agent: TeamHubAgentKey; context: string | null }
 
 /**
- * Flow 3: the agents an agent's reply names with `@NAME`, for the person who asked to bring in. The
- * replying agent itself and agents the question already asked are left out. Each prefill is the
- * mention plus one line of context — the sentence of the reply that names that agent, with every `@`
- * taken off so the prefilled message asks only the one agent. Nothing is sent: the person sends it.
+ * Flow 3: the agents the replying agent suggested bringing in, for the person who asked. The server
+ * stores them with the reply's turn (`bring_in`, from the agent's structured answer); the reply's text
+ * is never searched for mentions. The replying agent itself and agents the question already asked are
+ * left out. Each prefill is exactly the approved form: the mention, then the stored line
+ * ("@NEXUS PAIGE suggested you take the workshop announcement."). Nothing is sent: the person sends it.
  */
-export function bringInSuggestions(reply: Pick<TeamHubMessage, "body" | "agent_key">, alreadyAsked: readonly TeamHubAgentKey[] = []): BringIn[] {
+export function bringInSuggestions(reply: Pick<TeamHubMessage, "agent_key">, stored: readonly BringInSuggestion[], alreadyAsked: readonly TeamHubAgentKey[] = []): BringIn[] {
   const author = reply.agent_key ?? null;
-  const { text } = splitPrivateLine(reply.body);
-  const sentences = text.split(/(?<=[.!?])\s+|\n+/).map((sentence) => sentence.trim()).filter(Boolean);
+  const from = author ? agentName(author) : "PAIGE";
   const out: BringIn[] = [];
-  for (const key of agentMentionsIn(text)) {
-    if (key === author || alreadyAsked.includes(key)) continue;
-    const name = agentName(key);
-    const sentence = sentences.find((item) => new RegExp(`@${escapeRegExp(name)}(?![\\p{L}\\p{N}_])`, "u").test(item)) ?? "";
-    const plain = sentence.replace(/@(?=[\p{L}\p{N}])/gu, "");
-    const clipped = [...plain].length > 280 ? `${[...plain].slice(0, 279).join("")}…` : plain;
-    const from = author ? agentName(author) : "PAIGE";
-    out.push({ agent: key, prefill: clipped ? `@${name} ${from} suggested: “${clipped}”` : `@${name} ` });
+  for (const item of stored) {
+    if (item.agent === author || alreadyAsked.includes(item.agent) || out.some((x) => x.agent === item.agent)) continue;
+    out.push({ agent: item.agent, prefill: `@${agentName(item.agent)} ${item.context ?? `${from} suggested you take this.`}` });
+  }
+  return out;
+}
+
+/** A stored suggestion list, checked: at most three distinct agents of the seven; a context is one short line. */
+export function parseBringIn(value: unknown, withContext: boolean): BringInSuggestion[] | null {
+  if (value === undefined || value === null) return [];
+  if (!Array.isArray(value) || value.length > MAX_AGENTS_PER_MESSAGE) return null;
+  const out: BringInSuggestion[] = [];
+  for (const item of value) {
+    if (!isRow(item) || !isTeamHubAgentKey(item.agent) || out.some((x) => x.agent === item.agent)) return null;
+    const context = item.context;
+    if (withContext) {
+      if (typeof context !== "string" || !context.trim() || context.length > 200 || /[\r\n]/.test(context)) return null;
+      out.push({ agent: item.agent, context: context.trim() });
+    } else {
+      if (context !== undefined) return null;
+      out.push({ agent: item.agent, context: null });
+    }
   }
   return out;
 }
@@ -245,6 +265,8 @@ export interface AgentTurnRequest {
 
 export type AgentTurnAnswer =
   | { outcome: "posted"; message: TeamHubMessage; conversationId: string; duplicate: boolean;
+    /** The agents this reply suggests bringing in (flow 3), with the lines their buttons write. */
+    bringIn: BringInSuggestion[];
     /** The reply has a private part: its DM turn must start now. `dmId` is null until that turn opens the DM. */
     privateFollowUp: { dmId: string | null } | null }
   | { outcome: Exclude<AgentTurnOutcome, "posted"> };
@@ -276,7 +298,9 @@ export function parseAgentTurn(data: unknown, error: unknown, request: AgentTurn
       || !(follow.dm_conversation_id === null || isText(follow.dm_conversation_id))) return { outcome: "unconfirmed" };
     privateFollowUp = { dmId: typeof follow.dm_conversation_id === "string" ? follow.dm_conversation_id : null };
   }
-  return { outcome: "posted", message, conversationId: data.conversation_id, duplicate: data.duplicate === true, privateFollowUp };
+  const bringIn = parseBringIn(data.bring_in, true);
+  if (!bringIn) return { outcome: "unconfirmed" };
+  return { outcome: "posted", message, conversationId: data.conversation_id, duplicate: data.duplicate === true, privateFollowUp, bringIn };
 }
 
 /** The exact request body: the five keys and nothing else (the server answers 400 to anything more). */
@@ -290,18 +314,61 @@ export function agentTurnBody(request: AgentTurnRequest): { teamHubAgentTurn: Ag
   } };
 }
 
-/** What the asker is told when a turn ends without a reply (flow 9), and the one recovery it offers. */
-export function agentOutcomeLine(outcome: Exclude<AgentTurnOutcome, "posted" | "in_flight">, agent: TeamHubAgentKey, privatePart = false): { text: string; action: "ask_again" | "check_again" | null } {
+/**
+ * Outcomes the screen adds to the server's: `unknown` (after a reload the turn's state could not be
+ * read, so it may still be running) and `other_workspace` (the person is working in another workspace
+ * now, so the turn ran against a conversation that is not in it).
+ */
+export type AgentLineOutcome = Exclude<AgentTurnOutcome, "posted" | "in_flight"> | "unknown" | "other_workspace";
+
+/**
+ * What the asker is told when a turn ends without a reply (flow 9), and the one recovery it offers.
+ * The recovery is said once, by its button: the line never repeats "Ask again" or "Check again".
+ */
+export function agentOutcomeLine(outcome: AgentLineOutcome, agent: TeamHubAgentKey, privatePart = false): { text: string; action: "ask_again" | "check_again" | null } {
   const name = agentName(agent);
   switch (outcome) {
     case "conversations_off": return { text: refusalMessage("conversations_off", "send"), action: null };
     case "not_visible": return { text: `${name} couldn't reply: you can't see this conversation any more.`, action: null };
+    case "other_workspace": return { text: `${name} couldn't reply: you're working in another workspace now.`, action: null };
     case "rate_limited": return { text: "You've reached 30 agent replies this hour. Try again later.", action: null };
-    case "could_not_start": return { text: privatePart ? `${name} couldn't finish your private answer.` : `${name} couldn't start just now. Ask again.`, action: "ask_again" };
-    case "no_reply": return { text: privatePart ? `${name} couldn't finish your private answer.` : `${name} didn't reply. Ask again.`, action: "ask_again" };
+    case "could_not_start": return { text: privatePart ? `${name} couldn't finish your private answer.` : `${name} couldn't start just now.`, action: "ask_again" };
+    case "no_reply": return { text: privatePart ? `${name} couldn't finish your private answer.` : `${name} didn't reply.`, action: "ask_again" };
     case "cannot_post_here": return { text: `${name} can't post here.`, action: null };
-    case "unconfirmed": return { text: `${name}'s reply may not have posted. Check again.`, action: "check_again" };
+    case "unconfirmed": return { text: `${name}'s reply may not have posted.`, action: "check_again" };
+    case "unknown": return { text: privatePart ? `${name} may still be writing your private answer.` : `${name} may still be replying.`, action: "check_again" };
   }
+}
+
+// ── The member-safe turn-state read (`team_hub_agent_turn_states`, 20271118220008) ──
+
+export const TURN_STATES = ["answering", "replied", "replied_privately", "failed", "none"] as const;
+export type TurnStateValue = typeof TURN_STATES[number];
+/**
+ * What the server says about one (question, agent). The person who asked reads every state of their own
+ * question; everyone else reads only the private part's two lines (`answering` / `replied_privately`
+ * with `privatePart`) and who a reply suggested bringing in (no context).
+ */
+export interface ServerTurnState { state: TurnStateValue; privatePart: boolean; askerName: string; bringIn: BringInSuggestion[] }
+
+/** The read's answer, checked; a malformed row is dropped, never guessed. `null` when the read failed. */
+export function parseTurnStates(data: unknown, error: unknown): Record<string, ServerTurnState> | null {
+  if (error || !isRow(data) || data.ok !== true || !Array.isArray(data.states)) return null;
+  const out: Record<string, ServerTurnState> = {};
+  for (const row of data.states) {
+    if (!isRow(row) || !isText(row.message_id) || !isTeamHubAgentKey(row.agent_key) || typeof row.state !== "string"
+      || !(TURN_STATES as readonly string[]).includes(row.state) || typeof row.private_part !== "boolean" || typeof row.asker_name !== "string") continue;
+    const bringIn = parseBringIn(row.bring_in, Array.isArray(row.bring_in) && row.bring_in.some((item) => isRow(item) && "context" in item));
+    if (!bringIn) continue;
+    out[`${row.message_id}:${row.agent_key}`] = { state: row.state as TurnStateValue, privatePart: row.private_part, askerName: row.asker_name, bringIn };
+  }
+  return out;
+}
+
+/** Questions to read the state of: a person's messages that ask agents (any message, in an agent DM). Newest 100. */
+export function askingMessageIds(messages: readonly TeamHubMessage[], agentDm: boolean): string[] {
+  return messages.filter((m) => m.author_kind !== "agent" && (agentDm || (m.agent_mentions?.length ?? 0) > 0))
+    .map((m) => m.id).slice(-100);
 }
 
 /** Whether an agent message answers this person's question for this agent (top level or in its thread). */

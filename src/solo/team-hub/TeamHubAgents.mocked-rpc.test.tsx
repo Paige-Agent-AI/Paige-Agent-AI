@@ -50,7 +50,9 @@ const msg = (over: Row = {}) => ({ id: `m-${clock}`, author_user_id: "u-priya", 
 const reply = (agent: string, askedIn: string | null, body: string, over: Row = {}) =>
   msg({ id: `r-${agent}-${askedIn}`, author_user_id: ME, body, author_kind: "agent", agent_key: agent, asked_in_message_id: askedIn, ...over });
 
-let db: { people: Row[]; conversations: Row[]; messages: Record<string, Row[]>; replies: Record<string, Row[]>; override: Record<string, (params: Row) => unknown> };
+let db: { people: Row[]; conversations: Row[]; messages: Record<string, Row[]>; replies: Record<string, Row[]>; override: Record<string, (params: Row) => unknown>;
+  /** The member-safe turn-state read's facts, keyed `${question}:${agent}` (anything not listed: the asker reads none, or replied). */
+  states: Record<string, Row> };
 let calls: Array<{ name: string; params: Row }>;
 let turns: Row[];
 
@@ -78,6 +80,32 @@ function backend(name: string, params: Row) {
       if (params.p_parent_message_id) (db.replies[String(params.p_parent_message_id)] ??= []).push(message);
       else (db.messages[String(params.p_channel_id)] ??= []).push(message);
       return { ok: true, duplicate: false, message };
+    }
+    case "team_hub_agent_turn_states": {
+      // A double of the read's contract (proved in exp08_team_hub_agent_turn_states.sql): the asker reads
+      // every state of their own questions; anyone else only the two private-part lines and who a reply
+      // suggested bringing in, without the line of context.
+      const cid = String(params.p_channel_id);
+      const c = db.conversations.find((item) => item.id === cid);
+      if (!c) return { ok: false, code: "not_found" };
+      const all = [...(db.messages[cid] ?? []), ...Object.values(db.replies).flat()];
+      const states: Row[] = [];
+      for (const id of params.p_message_ids as string[]) {
+        const question = all.find((item) => item.id === id && item.author_kind !== "agent");
+        if (!question) continue;
+        const keys = c.kind === "agent_dm" ? [String(c.agent_key)] : (question.agent_mentions as string[]) ?? [];
+        for (const key of keys) {
+          const answered = all.some((item) => item.author_kind === "agent" && item.agent_key === key && item.asked_in_message_id === id);
+          const fact = { state: answered ? "replied" : "none", private_part: false, asker_name: "Teammate", ...db.states[`${id}:${key}`] } as Row;
+          const mine = question.author_user_id === ME;
+          const bring = Array.isArray(fact.bring_in) ? (mine ? fact.bring_in : (fact.bring_in as Row[]).map((item) => ({ agent: item.agent }))) : undefined;
+          const approved = fact.private_part === true && (fact.state === "answering" || fact.state === "replied_privately");
+          if (!mine && !approved && !bring) continue;
+          states.push({ message_id: id, agent_key: key, state: mine || approved ? fact.state : "replied", private_part: fact.private_part,
+            asker_name: fact.asker_name, ...(bring ? { bring_in: bring } : {}) });
+        }
+      }
+      return { ok: true, states };
     }
     case "team_hub_open_agent_dm": {
       const key = String(params.p_agent_key);
@@ -128,6 +156,7 @@ beforeEach(() => {
     messages: { "c-launch": [msg({ id: "m-hello", body: "Workshop is Nov 14." })] },
     replies: {},
     override: {},
+    states: {},
   };
   Object.defineProperty(navigator, "onLine", { configurable: true, get: () => true });
 });
@@ -240,7 +269,7 @@ describe("flow 2: mention an agent in a channel", () => {
     const question = String(turnBody(0).sourceMessageId);
     // No reply was queued, so the double said no_reply: the thread shows it to the asker, with Ask again.
     const thread = host.querySelector(".th-thread")!;
-    expect(thread.textContent).toContain("MENTOR didn't reply. Ask again.");
+    expect(thread.querySelector(".th-ag-fail")!.textContent).toBe("MENTOR didn't reply.Ask again");
     answers.push(posted(reply("mentor", question, "Start with one decision they own.", { parent_message_id: "m-root" })));
     await click(button(thread, "Ask again"));
     expect(turnBody(1)).toEqual(turnBody(0));
@@ -278,10 +307,10 @@ describe("flow 2: mention an agent in a channel", () => {
 
 describe("flow 9: when an agent doesn't answer", () => {
   it.each([
-    [{ ok: false, outcome: "no_reply", agent: "cura" }, "CURA didn't reply. Ask again.", "Ask again"],
-    [{ error: { message: "Edge Function returned a non-2xx status code" } }, "CURA couldn't start just now. Ask again.", "Ask again"],
-    [{ ok: false, outcome: "unconfirmed", agent: "cura" }, "CURA's reply may not have posted. Check again.", "Check again"],
-    [{ ok: true, outcome: "posted", agent: "cura", message: { id: "x" } }, "CURA's reply may not have posted. Check again.", "Check again"],
+    [{ ok: false, outcome: "no_reply", agent: "cura" }, "CURA didn't reply.", "Ask again"],
+    [{ error: { message: "Edge Function returned a non-2xx status code" } }, "CURA couldn't start just now.", "Ask again"],
+    [{ ok: false, outcome: "unconfirmed", agent: "cura" }, "CURA's reply may not have posted.", "Check again"],
+    [{ ok: true, outcome: "posted", agent: "cura", message: { id: "x" } }, "CURA's reply may not have posted.", "Check again"],
     [{ ok: false, outcome: "rate_limited", agent: "cura" }, "You've reached 30 agent replies this hour. Try again later.", null],
     [{ ok: false, outcome: "cannot_post_here", agent: "cura" }, "CURA can't post here.", null],
   ])("shows the asker the exact line for %j, and the one recovery it offers", async (answer, line, action) => {
@@ -291,7 +320,8 @@ describe("flow 9: when an agent doesn't answer", () => {
     await press(composer(host), "Enter");
     await flush();
     const fail = host.querySelector(".th-ag-fail")!;
-    expect(fail.textContent).toContain(line);
+    // The line, then its one button: the recovery is never said twice.
+    expect(fail.textContent).toBe(`${line}${action ?? ""}`);
     expect(host.querySelector(".th-msg--agent")).toBeNull();
     if (action) {
       answers.push(posted(reply("cura", String(turnBody(0).sourceMessageId), "Two people start Monday.")));
@@ -315,16 +345,61 @@ describe("flow 9: when an agent doesn't answer", () => {
     expect(host.querySelector(".th-ag-fail")).toBeNull();
   });
 
-  it("coming back: the asker sees didn't reply under a question no agent answered; nobody else does", async () => {
+  it("coming back: the asker sees didn't reply under a question whose turn ended; nobody else does", async () => {
     db.messages["c-launch"] = [msg({ id: "m-mine", author_user_id: ME, body: "@MENTOR should the workshop be free?", agent_mentions: ["mentor"] }),
       msg({ id: "m-theirs", author_user_id: "u-priya", body: "@VERA how did last year's do?", agent_mentions: ["vera"] })];
+    db.states = { "m-mine:mentor": { state: "failed" }, "m-theirs:vera": { state: "failed" } };
     const host = await mount();
-    expect(rowOf(host, "m-mine")!.querySelector(".th-ag-fail")!.textContent).toContain("MENTOR didn't reply. Ask again.");
+    expect(rowOf(host, "m-mine")!.querySelector(".th-ag-fail")!.textContent).toBe("MENTOR didn't reply.Ask again");
     expect(rowOf(host, "m-theirs")!.querySelector(".th-ag-fail")).toBeNull();
     answers.push(posted(reply("mentor", "m-mine", "Free gets a crowd; paid gets commitment.")));
     await click(button(rowOf(host, "m-mine")!, "Ask again"));
     expect(turnBody(0)).toEqual({ conversationId: "c-launch", sourceMessageId: "m-mine", threadRootId: null, agent: "mentor" });
     expect(host.textContent).toContain("Free gets a crowd; paid gets commitment.");
+  });
+});
+
+describe("after a reload: the turn's true state, never a failure for a turn that may still be running (S3)", () => {
+  const mine = (over: Row = {}) => msg({ id: "m-mine", author_user_id: ME, body: "@MENTOR should the workshop be free?", agent_mentions: ["mentor"], ...over });
+
+  it("a turn still answering keeps MENTOR is writing… and no failure line", async () => {
+    db.messages["c-launch"] = [mine()];
+    db.states = { "m-mine:mentor": { state: "answering" } };
+    const host = await mount();
+    expect(host.querySelector(".th-ag-typing")!.textContent).toBe("MENTOR is writing…");
+    expect(host.querySelector(".th-ag-fail")).toBeNull();
+    expect(host.textContent).not.toContain("didn't reply");
+  });
+
+  it("a question asked moments ago with no turn yet (another tab is starting it) says only that it may still be coming, with Check again", async () => {
+    db.messages["c-launch"] = [mine({ created_at: new Date(Date.now() - 20_000).toISOString() })];
+    const host = await mount();
+    expect(rowOf(host, "m-mine")!.querySelector(".th-ag-fail")!.textContent).toBe("MENTOR may still be replying.Check again");
+    answers.push(posted(reply("mentor", "m-mine", "Paid, with a free first session.")));
+    await click(button(rowOf(host, "m-mine")!, "Check again"));
+    expect(turnBody(0)).toEqual({ conversationId: "c-launch", sourceMessageId: "m-mine", threadRootId: null, agent: "mentor" });
+    expect(host.textContent).toContain("Paid, with a free first session.");
+  });
+
+  it("an old question no turn ever started for reads didn't reply", async () => {
+    db.messages["c-launch"] = [mine({ created_at: "2026-10-01T09:00:00.000Z" })];
+    const host = await mount();
+    expect(rowOf(host, "m-mine")!.querySelector(".th-ag-fail")!.textContent).toBe("MENTOR didn't reply.Ask again");
+  });
+
+  it("when the state cannot be read, nothing claims a failure: Check again only", async () => {
+    db.messages["c-launch"] = [mine({ created_at: "2026-10-01T09:00:00.000Z" })];
+    db.override.team_hub_agent_turn_states = () => ({ ok: false, code: "invalid" });
+    const host = await mount();
+    expect(rowOf(host, "m-mine")!.querySelector(".th-ag-fail")!.textContent).toBe("MENTOR may still be replying.Check again");
+    expect(host.textContent).not.toContain("didn't reply");
+  });
+
+  it("reads only this conversation's asking messages, under the reader's own session", async () => {
+    db.messages["c-launch"] = [mine(), msg({ id: "m-plain", body: "No agent here." })];
+    await mount();
+    const read = calls.find((call) => call.name === "team_hub_agent_turn_states")!;
+    expect(read.params).toEqual({ p_expected_tenant: TENANT, p_channel_id: "c-launch", p_message_ids: ["m-mine"] });
   });
 });
 
@@ -334,16 +409,22 @@ describe("flow 3: Bring in", () => {
     reply("paige", "m-ask", "Tight, but doable. @CURA already has the welcome emails. I'd put @NEXUS on the announcement and @ZION on the task plan. Want me to bring them in?", { author_user_id: asker }),
   ];
 
-  it("gives only the asker Bring in buttons; one writes the mention and one line of context into the composer and sends nothing", async () => {
+  const suggested = { state: "replied", bring_in: [{ agent: "nexus", context: "PAIGE suggested you take the workshop announcement." },
+    { agent: "zion", context: "PAIGE suggested you take the launch task plan." }] };
+
+  it("gives only the asker Bring in buttons, for the agents PAIGE suggested; one writes the mention and its line into the composer and sends nothing", async () => {
     db.messages["c-launch"] = paigeReply(ME);
+    db.states = { "m-ask:paige": suggested };
     const host = await mount();
     const row = rowOf(host, "r-paige-m-ask")!;
     // Agents named in PAIGE's text show as chips in their colours; nothing was asked by them.
     expect(Array.from(row.querySelectorAll(".th-ag-chip")).map((chip) => chip.getAttribute("data-ag"))).toEqual(["cura", "nexus", "zion"]);
+    // CURA is named ("already has the welcome emails") but not suggested: only the suggestions are offered.
     const bring = Array.from(row.querySelectorAll<HTMLButtonElement>(".th-ag-bring-btn")).map((item) => item.textContent);
-    expect(bring).toEqual(["Bring in CURA", "Bring in NEXUS", "Bring in ZION"]);
+    expect(bring).toEqual(["Bring in NEXUS", "Bring in ZION"]);
     await click(button(row, "Bring in NEXUS"));
-    expect(composer(host).value).toBe("@NEXUS PAIGE suggested: “I'd put NEXUS on the announcement and ZION on the task plan.”");
+    // Exactly the approved prefill: the mention, then the one line.
+    expect(composer(host).value).toBe("@NEXUS PAIGE suggested you take the workshop announcement.");
     expect(document.activeElement).toBe(composer(host));
     expect(liveRegion(host).textContent).toContain("The mention for NEXUS is in your message box. Send it to bring them in.");
     expect(calls.some((call) => call.name === "team_hub_post_message")).toBe(false);
@@ -356,8 +437,26 @@ describe("flow 3: Bring in", () => {
     expect(button(rowOf(host, "r-paige-m-ask")!, "Bring in NEXUS")).toBeUndefined();
   });
 
-  it("tells everyone else who can bring them in, with no buttons", async () => {
+  it("a reply that names agents but suggested nobody offers no Bring in", async () => {
+    db.messages["c-launch"] = paigeReply(ME);
+    const host = await mount();
+    expect(rowOf(host, "r-paige-m-ask")!.querySelector(".th-ag-bring")).toBeNull();
+  });
+
+  it("the asker's own fresh reply offers its suggestions from the turn's answer", async () => {
+    const host = await mount();
+    answers.push(() => Promise.resolve(posted(reply("paige", String(turnBody(0).sourceMessageId), "I'd put @NEXUS on the announcement."),
+      { bring_in: [{ agent: "nexus", context: "PAIGE suggested you take the announcement." }] })));
+    await type(composer(host), "@PAIGE who takes the announcement?");
+    await press(composer(host), "Enter");
+    await flush();
+    await click(button(host.querySelector<HTMLElement>(".th-msg--agent")!, "Bring in NEXUS"));
+    expect(composer(host).value).toBe("@NEXUS PAIGE suggested you take the announcement.");
+  });
+
+  it("tells everyone else who can bring them in, with no buttons and no line of context", async () => {
     db.messages["c-launch"] = paigeReply("u-priya");
+    db.states = { "m-ask:paige": suggested };
     const host = await mount();
     const row = rowOf(host, "r-paige-m-ask")!;
     expect(row.querySelector(".th-ag-bring-btn")).toBeNull();
@@ -414,6 +513,29 @@ describe("flow 5: the private part, answered in the asker's DM", () => {
     // Ask again re-runs the private part only, not the channel reply.
     expect(turnBody(2)).toEqual({ ...turnBody(0), privateFollowUp: true });
     expect(host.querySelector(".th-msg--agent .th-ag-priv")!.textContent).toContain("Your answer is in your DM with MERIT.");
+  });
+
+  it.each([
+    ["answering", "MERIT is answering Sam privately."],
+    ["replied_privately", "MERIT replied to Sam privately."],
+  ])("shows another member the approved line while the private part is %s, and nothing else", async (state, line) => {
+    db.messages["c-launch"] = [msg({ id: "m-ask", author_user_id: "u-sam", body: "@MERIT what did Harper pay?", agent_mentions: ["merit"] }),
+      reply("merit", "m-ask", FIXED, { author_user_id: "u-sam" })];
+    db.states = { "m-ask:merit": { state, private_part: true, asker_name: "Sam Lee" } };
+    const host = await mount();
+    const row = rowOf(host, "r-merit-m-ask")!;
+    expect(row.querySelector(".th-ag-priv--others")!.textContent).toBe(line);
+    expect(button(row, /Open DM/)).toBeUndefined();
+    expect(row.textContent).not.toContain("Ask again");
+  });
+
+  it("after a reload the asker sees the private part's true state from the read", async () => {
+    db.messages["c-launch"] = [msg({ id: "m-ask", author_user_id: ME, body: "@MERIT what did Harper pay?", agent_mentions: ["merit"] }),
+      reply("merit", "m-ask", FIXED)];
+    db.states = { "m-ask:merit": { state: "replied_privately", private_part: true } };
+    const host = await mount();
+    expect(rowOf(host, "r-merit-m-ask")!.querySelector(".th-ag-priv")!.textContent).toContain("Your answer is in your DM with MERIT. Only you can see it.");
+    expect(host.querySelector(".th-ag-fail")).toBeNull();
   });
 
   it("shows another member only the fixed line: no note, no Open DM, nothing private", async () => {
@@ -489,6 +611,11 @@ describe("agent identity", () => {
     }
     // PAIGE carries her Command Mark, not a stock icon.
     expect(rows[0].querySelector(".th-ag-mark")).not.toBeNull();
+    // One tab stop per author: the plate is a pointer target only; the name carries the label.
+    const plateButton = rowOf(host, "r-cura-m-ask")!.querySelector<HTMLButtonElement>(".th-ag-avbtn")!;
+    expect(plateButton.tabIndex).toBe(-1);
+    expect(plateButton.getAttribute("aria-hidden")).toBe("true");
+    expect(rowOf(host, "r-cura-m-ask")!.querySelector(".th-ag-namebtn")!.getAttribute("aria-label")).toBe("CURA's profile");
     const trigger = rowOf(host, "r-cura-m-ask")!.querySelector<HTMLButtonElement>(".th-ag-namebtn")!;
     await click(trigger);
     const panel = host.querySelector<HTMLElement>("aside.th-profile")!;
@@ -533,5 +660,46 @@ describe("agent identity", () => {
     await flush();
     expect(calls.find((call) => call.name === "team_hub_post_message")!.params.p_agent_mention_keys).toBeUndefined();
     expect(turns).toHaveLength(0);
+  });
+});
+
+describe("a turn answered not_visible because the person is now in another workspace", () => {
+  it("says it is another workspace, not that they can't see the conversation", async () => {
+    const host = await mount();
+    // The turn's server resolved another workspace (another tab switched it). The hub's own door answers
+    // scope_changed to exactly that question, once; the hub then re-reads as usual.
+    answers.push(() => {
+      let once = true;
+      db.override.team_hub_list_conversations = (params) => {
+        if (once) { once = false; return { ok: false, code: "scope_changed" }; }
+        delete db.override.team_hub_list_conversations;
+        return backend("team_hub_list_conversations", params);
+      };
+      return Promise.resolve({ ok: false, outcome: "not_visible", agent: "cura" });
+    });
+    await type(composer(host), "@CURA who's onboarding?");
+    await press(composer(host), "Enter");
+    await flush();
+    expect(host.querySelector(".th-ag-fail")!.textContent).toBe("CURA couldn't reply: you're working in another workspace now.");
+  });
+  it("a conversation that is really gone still says so", async () => {
+    const host = await mount();
+    answers.push({ ok: false, outcome: "not_visible", agent: "cura" });
+    await type(composer(host), "@CURA who's onboarding?");
+    await press(composer(host), "Enter");
+    await flush();
+    expect(host.querySelector(".th-ag-fail")!.textContent).toBe("CURA couldn't reply: you can't see this conversation any more.");
+  });
+});
+
+describe("the agent DM header", () => {
+  it("carries the long and the approved short Profile label; the container query shows one", async () => {
+    db.conversations.push(agentDm("mentor"));
+    db.messages["c-dm-mentor"] = [];
+    const host = await mount();
+    await click(host.querySelector<HTMLElement>("#th-conv-c-dm-mentor"));
+    const head = host.querySelector(".th-conv-head--agent .th-head-actions button")!;
+    expect(head.querySelector(".th-label-wide")!.textContent).toBe("How MENTOR works");
+    expect(head.querySelector(".th-label-narrow")!.textContent).toBe("Profile");
   });
 });

@@ -9,9 +9,12 @@ import {
   agentRuns,
   agentTurnBody,
   answers,
+  askingMessageIds,
   bringInSuggestions,
   FIXED_PRIVATE_LINE,
   parseAgentTurn,
+  parseBringIn,
+  parseTurnStates,
   splitPrivateLine,
   TEAM_HUB_AGENT_PROFILES,
 } from "./team-hub-agents";
@@ -76,14 +79,63 @@ describe("splitPrivateLine", () => {
 });
 
 describe("bringInSuggestions (flow 3)", () => {
-  it("offers each agent the reply names, except the author and anyone the question already asked, with the naming sentence as context", () => {
-    const reply = { agent_key: "paige" as const, body: "Okay, tight but doable. @CURA already has the welcome emails. I'd put @NEXUS on the announcement and @ZION on the task plan. Want me to bring them in?" };
-    const out = bringInSuggestions(reply, ["cura"]);
-    expect(out.map((item) => item.agent)).toEqual(["nexus", "zion"]);
-    expect(out[0].prefill).toBe("@NEXUS PAIGE suggested: “I'd put NEXUS on the announcement and ZION on the task plan.”");
+  it("offers only the agents the reply's agent suggested, each prefilled exactly as approved: the mention, then its one line", () => {
+    const stored = [{ agent: "nexus" as const, context: "PAIGE suggested you take the workshop announcement." },
+      { agent: "zion" as const, context: "PAIGE suggested you take the launch task plan." }];
+    const out = bringInSuggestions({ agent_key: "paige" }, stored, ["cura"]);
+    expect(out).toEqual([
+      { agent: "nexus", prefill: "@NEXUS PAIGE suggested you take the workshop announcement." },
+      { agent: "zion", prefill: "@ZION PAIGE suggested you take the launch task plan." }]);
     // The prefill asks exactly one agent.
     expect(agentMentionsIn(out[0].prefill)).toEqual(["nexus"]);
-    expect(bringInSuggestions({ agent_key: "paige", body: "Ask @PAIGE again." })).toEqual([]);
+  });
+  it("never offers the replying agent or one the question already asked, and never reads the reply's text", () => {
+    expect(bringInSuggestions({ agent_key: "paige" }, [{ agent: "paige", context: "x" }, { agent: "cura", context: "y" }], ["cura"])).toEqual([]);
+    // A reply that names agents in its text but suggested nobody offers nobody.
+    expect(bringInSuggestions({ agent_key: "paige" }, [])).toEqual([]);
+  });
+  it("a suggestion without its line (another viewer's read) still names who; the asker's fallback is the approved default", () => {
+    expect(bringInSuggestions({ agent_key: "merit" }, [{ agent: "nexus", context: null }])[0].prefill).toBe("@NEXUS MERIT suggested you take this.");
+  });
+});
+
+describe("parseBringIn", () => {
+  it("accepts at most three distinct agents of the seven, with one-line contexts for the asker or none for anyone else", () => {
+    expect(parseBringIn([{ agent: "nexus", context: "A line." }], true)).toEqual([{ agent: "nexus", context: "A line." }]);
+    expect(parseBringIn([{ agent: "nexus" }], false)).toEqual([{ agent: "nexus", context: null }]);
+    expect(parseBringIn(undefined, true)).toEqual([]);
+    for (const bad of [[{ agent: "bogus", context: "x" }], [{ agent: "nexus", context: "a\nb" }], [{ agent: "nexus", context: "" }],
+      [{ agent: "nexus", context: "x" }, { agent: "nexus", context: "y" }], "nexus",
+      [{ agent: "nexus", context: "a" }, { agent: "vera", context: "b" }, { agent: "zion", context: "c" }, { agent: "cura", context: "d" }]]) {
+      expect(parseBringIn(bad, true)).toBeNull();
+    }
+    expect(parseBringIn([{ agent: "nexus", context: "x" }], false)).toBeNull();
+  });
+});
+
+describe("parseTurnStates (the member-safe read)", () => {
+  it("keys each row by question and agent, and drops a malformed row rather than guessing", () => {
+    const states = parseTurnStates({ ok: true, states: [
+      { message_id: "m-1", agent_key: "cura", state: "answering", private_part: false, asker_name: "Sam Lee" },
+      { message_id: "m-2", agent_key: "merit", state: "replied_privately", private_part: true, asker_name: "Sam Lee" },
+      { message_id: "m-3", agent_key: "paige", state: "replied", private_part: false, asker_name: "Sam Lee", bring_in: [{ agent: "nexus" }] },
+      { message_id: "m-4", agent_key: "cura", state: "exploded", private_part: false, asker_name: "Sam Lee" },
+      { message_id: "m-5", agent_key: "bogus", state: "none", private_part: false, asker_name: "Sam Lee" },
+    ] }, null);
+    expect(Object.keys(states ?? {})).toEqual(["m-1:cura", "m-2:merit", "m-3:paige"]);
+    expect(states?.["m-3:paige"].bringIn).toEqual([{ agent: "nexus", context: null }]);
+    expect(states?.["m-2:merit"]).toMatchObject({ state: "replied_privately", privatePart: true, askerName: "Sam Lee" });
+  });
+  it("a failed or refused read is null, so the screen never invents a state", () => {
+    expect(parseTurnStates(null, { message: "boom" })).toBeNull();
+    expect(parseTurnStates({ ok: false, code: "not_found" }, null)).toBeNull();
+    expect(parseTurnStates({ ok: true }, null)).toBeNull();
+  });
+  it("asks about a person's questions that name agents, or every person message in an agent DM", () => {
+    const msgs = [{ id: "a", author_kind: "user", agent_mentions: ["cura"] }, { id: "b", author_kind: "user", agent_mentions: [] },
+      { id: "c", author_kind: "agent", agent_mentions: [] }] as unknown as Parameters<typeof askingMessageIds>[0];
+    expect(askingMessageIds(msgs, false)).toEqual(["a"]);
+    expect(askingMessageIds(msgs, true)).toEqual(["a", "b"]);
   });
 });
 
@@ -130,10 +182,16 @@ describe("parseAgentTurn", () => {
 });
 
 describe("agentOutcomeLine (flow 9 copy)", () => {
-  it("says each outcome in the contract's words, with Ask again or Check again where they help", () => {
-    expect(agentOutcomeLine("no_reply", "mentor")).toEqual({ text: "MENTOR didn't reply. Ask again.", action: "ask_again" });
-    expect(agentOutcomeLine("could_not_start", "cura")).toEqual({ text: "CURA couldn't start just now. Ask again.", action: "ask_again" });
-    expect(agentOutcomeLine("unconfirmed", "cura")).toEqual({ text: "CURA's reply may not have posted. Check again.", action: "check_again" });
+  it("says each outcome in the contract's words; the recovery is said once, by its button, never repeated in the line", () => {
+    expect(agentOutcomeLine("no_reply", "mentor")).toEqual({ text: "MENTOR didn't reply.", action: "ask_again" });
+    expect(agentOutcomeLine("could_not_start", "cura")).toEqual({ text: "CURA couldn't start just now.", action: "ask_again" });
+    expect(agentOutcomeLine("unconfirmed", "cura")).toEqual({ text: "CURA's reply may not have posted.", action: "check_again" });
+    // After a reload whose state is unknown: never a failure, only Check again.
+    expect(agentOutcomeLine("unknown", "cura")).toEqual({ text: "CURA may still be replying.", action: "check_again" });
+    expect(agentOutcomeLine("other_workspace", "cura")).toEqual({ text: "CURA couldn't reply: you're working in another workspace now.", action: null });
+    for (const outcome of ["no_reply", "could_not_start", "unconfirmed", "unknown"] as const) {
+      expect(agentOutcomeLine(outcome, "cura").text).not.toMatch(/Ask again|Check again/);
+    }
     expect(agentOutcomeLine("not_visible", "cura").text).toBe("CURA couldn't reply: you can't see this conversation any more.");
     expect(agentOutcomeLine("rate_limited", "cura")).toEqual({ text: "You've reached 30 agent replies this hour. Try again later.", action: null });
     expect(agentOutcomeLine("cannot_post_here", "cura").text).toBe("CURA can't post here.");

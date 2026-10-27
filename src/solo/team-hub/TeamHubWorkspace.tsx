@@ -59,9 +59,9 @@ import {
   TEAM_HUB_FILE_TYPES_NOTE,
   type TeamHubFile,
 } from "./team-hub-contract";
-import { agentTurnKey, attachmentScope, teamHubNavigation, useTeamHub, type AgentTurn, type AttachmentChip, type PendingMessage, type TaskDraft, type TeamHub } from "./useTeamHub";
-import { agentMentionsIn, agentName, agentOutcomeLine, agentRuns, answers, bringInSuggestions, FIXED_PRIVATE_LINE, MAX_AGENTS_PER_MESSAGE, splitPrivateLine, TEAM_HEAD, TEAM_HUB_AGENT_PROFILES, TOO_MANY_AGENTS } from "./team-hub-agents";
-import { AgentDmEmpty, AgentDmNote, AgentFailRow, AgentGlyph, AgentPlate, AgentProfilePanel, AgentTag, AgentTyping, BringInRow, PrivateNote } from "./TeamHubAgents";
+import { agentTurnKey, attachmentScope, teamHubNavigation, useTeamHub, type AgentTurn, type AttachmentChip, type PendingMessage, type TaskDraft, type TeamHub, type TurnStateRead } from "./useTeamHub";
+import { agentMentionsIn, agentName, agentOutcomeLine, agentRuns, answers, bringInSuggestions, FIXED_PRIVATE_LINE, MAX_AGENTS_PER_MESSAGE, splitPrivateLine, TEAM_HEAD, TEAM_HUB_AGENT_PROFILES, TOO_MANY_AGENTS, type AgentLineOutcome } from "./team-hub-agents";
+import { AgentDmEmpty, AgentDmNote, AgentFailRow, AgentGlyph, AgentPlate, AgentProfilePanel, AgentTag, AgentTyping, BringInRow, PrivateNote, PrivateOthersNote } from "./TeamHubAgents";
 import "./team-hub.css";
 
 /**
@@ -646,10 +646,18 @@ function ReadyHub({ hub, announce, announcement, onOpenTeamSettings, openPaige }
 
   // ── A1b: agents ──
 
-  /** Open (or make, once) the reader's DM with one agent. */
-  const openAgent = async (agent: TeamHubAgentKey) => {
+  /** Open (or make, once) the reader's DM with one agent; `prefill` goes in its message box, unsent. */
+  const openAgent = async (agent: TeamHubAgentKey, prefill?: string) => {
+    const fill = (id: string) => {
+      if (!prefill) return;
+      setDrafts((current) => current[id] ? current : { ...current, [id]: prefill });
+      window.requestAnimationFrame(() => {
+        const box = composerRef.current;
+        if (box) { box.focus(); box.setSelectionRange(box.value.length, box.value.length); }
+      });
+    };
     const existing = agentDms.find((dm) => dm.agent_key === agent);
-    if (existing) { await open(existing.id); return { ok: true as const }; }
+    if (existing) { await open(existing.id); fill(existing.id); return { ok: true as const }; }
     if (dmBusy) return { ok: false as const };
     setDmBusy(agent);
     const result = await hub.openAgentDm(agent);
@@ -660,6 +668,7 @@ function ReadyHub({ hub, announce, announcement, onOpenTeamSettings, openPaige }
     setMobileView("conv");
     hub.setStreamVisible(true);
     focusComposer();
+    fill(result.value);
     return { ok: true as const };
   };
 
@@ -699,7 +708,7 @@ function ReadyHub({ hub, announce, announcement, onOpenTeamSettings, openPaige }
   };
 
   const agentProps: AgentView = {
-    on: agentsOn, turns: hub.agentTurns, online: hub.online, meId,
+    on: agentsOn, turns: hub.agentTurns, states: hub.turnStates, online: hub.online, meId,
     onProfile: openProfile,
     onOpenDm: (agent) => void openAgent(agent),
     onAskAgain: (request) => void hub.askAgain(request),
@@ -715,7 +724,7 @@ function ReadyHub({ hub, announce, announcement, onOpenTeamSettings, openPaige }
   const pendingTop = hub.pending.filter((item) => item.channelId === hub.activeId && !item.parentId);
   const pendingReplies = hub.pending.filter((item) => hub.thread && item.parentId === hub.thread.rootId);
   const firstUseState = (where: "list" | "conv") => <FirstUse teammates={teammates} canInvite={canInvite} onOpenTeamSettings={onOpenTeamSettings}
-    compact={where === "list"} onSayHello={agentsOn ? () => void openAgent("paige") : undefined}
+    compact={where === "list"} onSayHello={agentsOn ? () => void openAgent("paige", SAY_HELLO_PREFILL) : undefined}
     onCreate={() => { setForm({ kind: "channel" }); setMobileView("list"); }}
     onMessage={() => { setForm({ kind: "dm" }); setMobileView("list"); }} />;
   const thread = hub.thread;
@@ -1128,13 +1137,15 @@ function Conversation({ hub, people, meId, active, onBack, onOpenThread, announc
 
   if (dmAgent) {
     const profile = TEAM_HUB_AGENT_PROFILES[dmAgent];
+    // The approved narrow header says "Profile": the long label would clip the agent's name at 390.
     return <div className="th-conv-main">
       <header className="th-conv-head th-conv-head--agent" data-ag={dmAgent}>
         {back}
         <h2><AgentPlate agent={dmAgent} size="sm" /><span className="th-conv-title th-ag-name">{title}</span><AgentTag agent={dmAgent} /></h2>
         <p>{profile.role}</p>
         <div className="th-head-actions">
-          <button type="button" className="th-btn" onClick={(event) => agent.onProfile(dmAgent, event.currentTarget)}>How {title} works</button>
+          <button type="button" className="th-btn" onClick={(event) => agent.onProfile(dmAgent, event.currentTarget)}>
+            <span className="th-label-wide">How {title} works</span><span className="th-label-narrow">Profile</span></button>
         </div>
       </header>
       {stream.status === "loading" ? <StreamSkeleton rows={3} /> : <Stream hub={hub} people={people} meId={meId} title={title} kind="agent_dm" agentDm={dmAgent}
@@ -1357,6 +1368,18 @@ function AgentActivity({ turns, conversationId, threadRootId, around, agent }: {
   turns: Record<string, AgentTurn>; conversationId: string; threadRootId: string | null; around: TeamHubMessage[]; agent: AgentView;
 }) {
   const rows: ReactNode[] = [];
+  // After a reload (or from another tab), a turn the server says is still answering keeps its writing
+  // row, for the asker only: the read returns the public answering state to nobody else.
+  const read = agent.states[conversationId];
+  for (const [key, state] of Object.entries(read?.states ?? {})) {
+    if (state.state !== "answering" || state.privatePart || turns[key]) continue;
+    const [questionId, agentKey] = key.split(":") as [string, TeamHubAgentKey];
+    const question = around.find((message) => message.id === questionId)
+      ?? (threadRootId === null ? undefined : around.find((message) => message.id === threadRootId && message.id === questionId));
+    if (!question || question.author_user_id !== agent.meId || (question.parent_message_id ?? null) !== threadRootId) continue;
+    if (around.some((message) => answers(message, questionId, agentKey))) continue;
+    rows.push(<AgentTyping key={`s-${key}`} agent={agentKey} />);
+  }
   for (const turn of Object.values(turns)) {
     const { request } = turn;
     const here = request.conversationId === conversationId && (request.threadRootId ?? null) === threadRootId;
@@ -1397,6 +1420,8 @@ function Author({ person, people, meId, at }: { person: TeamHubPerson | null; pe
 type AgentView = {
   on: boolean;
   turns: Record<string, AgentTurn>;
+  /** The member-safe turn-state read, per conversation (what a reload or another viewer can know). */
+  states: Record<string, TurnStateRead>;
   online: boolean;
   meId: string;
   onProfile: (agent: TeamHubAgentKey, trigger: HTMLElement | null) => void;
@@ -1461,6 +1486,40 @@ function MessageRow({ message, people, meId, onOpenThread, taskReads, agent, pla
   </article>;
 }
 
+/** First use: Say hello to PAIGE opens her DM with this in the message box, unsent (prototype v3). */
+const SAY_HELLO_PREFILL = "Hi PAIGE, where should I start?";
+
+/** How long a question may sit with no turn recorded before "didn't reply" is true: the asker's tab starts its turns at once. */
+const UNSTARTED_GRACE_MS = 2 * 60_000;
+const olderThanGrace = (at: string) => Date.now() - new Date(at).getTime() > UNSTARTED_GRACE_MS;
+
+/**
+ * The asker's line for a question this tab ran no turn for, from the member-safe read. Nothing while
+ * the read is pending, while the turn is answering (its writing row shows) or once it replied;
+ * "didn't reply" only for a turn that ended, or none that started; Check again when the state is unknown.
+ */
+function serverQuestionOutcome(read: TurnStateRead | undefined, message: TeamHubMessage, key: TeamHubAgentKey): AgentLineOutcome | null {
+  if (!read) return null;
+  if (read.read === "unavailable") return "unknown";
+  const state = read.states[agentTurnKey(message.id, key)];
+  if (!state) return "unknown";
+  if (state.privatePart || state.state === "answering" || state.state === "replied" || state.state === "replied_privately") return null;
+  if (state.state === "failed") return "no_reply";
+  return olderThanGrace(message.created_at) ? "no_reply" : "unknown";
+}
+
+/** The asker's private-part status for a reply this tab did not run, from the member-safe read. */
+function serverPrivateStatus(read: TurnStateRead | undefined, questionId: string, key: TeamHubAgentKey, replyAt: string): "writing" | "posted" | "failed" | "unknown" | null {
+  if (!read) return null;
+  if (read.read === "unavailable") return "unknown";
+  const state = read.states[agentTurnKey(questionId, key)];
+  if (!state?.privatePart) return state ? null : "unknown";
+  if (state.state === "answering") return "writing";
+  if (state.state === "replied_privately") return "posted";
+  if (state.state === "failed") return "failed";
+  return olderThanGrace(replyAt) ? "failed" : "unknown";
+}
+
 /**
  * Under the asker's own question, for the asker only: an agent's turn that ended without a reply
  * (flow 9's line, with Ask again or Check again), or — coming back after a closed tab — an agent the
@@ -1473,8 +1532,11 @@ function AskedAgentsStatus({ message, agent, place }: { message: TeamHubMessage;
     if (place.around.some((other) => answers(other, message.id, key))) return [];
     const request = turn?.request ?? { conversationId: place.conversationId, sourceMessageId: message.id, threadRootId: message.parent_message_id, agent: key };
     if (turn?.status === "failed" && turn.outcome) return [{ key, request, ...agentOutcomeLine(turn.outcome, key) }];
-    if (!turn) return [{ key, request, ...agentOutcomeLine("no_reply", key) }];
-    return [];
+    if (turn) return [];
+    // No turn in this tab (a reload, or another tab asked): what the server knows, and only that.
+    // A turn that may still be running is never called a failure.
+    const outcome = serverQuestionOutcome(agent.states[place.conversationId], message, key);
+    return outcome ? [{ key, request, ...agentOutcomeLine(outcome, key) }] : [];
   });
   if (!lines.length) return null;
   return <>{lines.map((line) => <AgentFailRow key={line.key} text={line.text} action={line.action} online={agent.online}
@@ -1494,22 +1556,32 @@ function AgentMessageRow({ message, agentKey, people, meId, onOpenThread, agent,
   // "replying to Sam", only when Sam's question is not the row directly above.
   const showReplyingTo = Boolean(message.asked_in_message_id) && !place?.inThread && !place?.agentDm && place?.prev?.id !== message.asked_in_message_id;
   const turn = message.asked_in_message_id ? agent?.turns[agentTurnKey(message.asked_in_message_id, agentKey)] : undefined;
-  // Bring in (flow 3): the agents this reply names, less any the question already asked or the asker
-  // has since asked in this conversation.
+  const read = place ? agent?.states[place.conversationId] : undefined;
+  const server = message.asked_in_message_id ? read?.states[agentTurnKey(message.asked_in_message_id, agentKey)] : undefined;
+  // Bring in (flow 3): only the agents this reply's agent suggested (stored with its turn), less any
+  // the question already asked or the asker has since asked in this conversation.
   const askedSince = new Set((place?.around ?? []).filter((item) => item.author_user_id === message.author_user_id && item.author_kind !== "agent"
     && compareMessages(item, message) > 0).flatMap((item) => item.agent_mentions ?? []));
-  const bring = agent?.on && !place?.agentDm ? bringInSuggestions(message, question?.agent_mentions ?? []).filter((item) => !askedSince.has(item.agent)) : [];
+  const stored = (isAsker ? turn?.bringIn : undefined) ?? server?.bringIn ?? [];
+  const bring = agent?.on && !place?.agentDm ? bringInSuggestions(message, stored, question?.agent_mentions ?? []).filter((item) => !askedSince.has(item.agent)) : [];
+  // Flow 5: the asker's own note (this tab's turn, or the read after a reload); everyone else's line.
+  const privateStatus = turn?.privatePart?.status
+    ?? (privatePart && isAsker && message.asked_in_message_id ? serverPrivateStatus(read, message.asked_in_message_id, agentKey, message.created_at) : null);
+  const othersLine = privatePart && !isAsker && server?.privatePart && (server.state === "answering" || server.state === "replied_privately") ? server.state : null;
+  const askerShort = asker ? shortName(asker, people) : server?.askerName.split(/\s+/)[0] || "Former teammate";
   const jumpToQuestion = () => {
     const element = message.asked_in_message_id ? document.getElementById(`th-msg-${message.asked_in_message_id}`) : null;
     element?.scrollIntoView?.({ block: "center" });
     element?.focus();
   };
   return <article id={`th-msg-${message.id}`} tabIndex={-1} className="th-msg th-msg--agent" data-ag={agentKey} aria-label={`${name}, agent, at ${timeLabel(message.created_at)}`}>
-    <button type="button" className="th-ag-avbtn" aria-label={`${name}'s profile`} onClick={(event) => agent?.onProfile(agentKey, event.currentTarget)}>
+    {/* One tab stop per author: the plate is the name button's larger pointer target, so it is left out of
+        the tab order and the accessibility tree; the name carries the action and its label. */}
+    <button type="button" className="th-ag-avbtn" tabIndex={-1} aria-hidden="true" onClick={(event) => agent?.onProfile(agentKey, event.currentTarget)}>
       <AgentPlate agent={agentKey} size="lg" /></button>
     <div className="th-msg-body">
       <div className="th-who">
-        <button type="button" className="th-ag-namebtn th-ag-name" onClick={(event) => agent?.onProfile(agentKey, event.currentTarget)}>{name}</button>
+        <button type="button" className="th-ag-namebtn th-ag-name" aria-label={`${name}'s profile`} onClick={(event) => agent?.onProfile(agentKey, event.currentTarget)}>{name}</button>
         <AgentTag agent={agentKey} />
         <span className="th-role">{profile.short}</span>
         <time dateTime={message.created_at}>{timeLabel(message.created_at)}</time>
@@ -1520,10 +1592,13 @@ function AgentMessageRow({ message, agentKey, people, meId, onOpenThread, agent,
       {text && <p className="th-text">{agentRuns(text, "all").map((part, index) => part.agent
         ? <AgentChip key={index} agent={part.agent} /> : <span key={index}>{part.text}</span>)}</p>}
       {privatePart && !place?.agentDm && <p className="th-text th-text--fixed">{FIXED_PRIVATE_LINE}</p>}
-      {privatePart && isAsker && turn?.privatePart && agent && <PrivateNote agent={agentKey} status={turn.privatePart.status} online={agent.online}
-        onOpenDm={() => agent.onOpenDm(agentKey)} onAskAgain={() => agent.onAskAgain(turn.request)} />}
+      {privatePart && isAsker && privateStatus && agent && message.asked_in_message_id && <PrivateNote agent={agentKey} status={privateStatus} online={agent.online}
+        onOpenDm={() => agent.onOpenDm(agentKey)}
+        onAskAgain={() => agent.onAskAgain(turn?.request
+          ?? { conversationId: place?.conversationId ?? "", sourceMessageId: message.asked_in_message_id!, threadRootId: message.parent_message_id, agent: agentKey, privateFollowUp: true })} />}
+      {othersLine && <PrivateOthersNote agent={agentKey} askerName={askerShort} state={othersLine} />}
       {message.files.length > 0 && <MessageFiles files={message.files} />}
-      {bring.length > 0 && agent && <BringInRow agents={bring.map((item) => item.agent)} askerName={shortName(asker, people)} isAsker={isAsker}
+      {bring.length > 0 && agent && <BringInRow agents={bring.map((item) => item.agent)} askerName={askerShort} isAsker={isAsker}
         onBring={(key) => { const item = bring.find((entry) => entry.agent === key); if (item) agent.onBringIn(message, item.prefill, key); }} />}
       {onOpenThread && message.reply_count > 0 && <button type="button" className="th-replies"
         onClick={(event) => onOpenThread(message.id, event.currentTarget)}>

@@ -33,7 +33,10 @@
 .th-search:focus-within{border-color:var(--pg-line-strong)}
 .th-search input{flex:1;min-width:0;width:100%;border:0;background:transparent;outline:0;color:var(--pg-ink)}
 .th-search input::placeholder{color:var(--pg-faint)}
-.th-list-body{flex:1;min-height:0;overflow-y:auto;padding:4px 8px 16px;display:grid;gap:16px;align-content:start;scrollbar-gutter:stable}
+.th-list-body{flex:1;min-height:0;overflow-y:auto;padding:4px 8px 16px;display:grid;grid-template-columns:minmax(0,1fr);gap:16px;align-content:start;scrollbar-gutter:stable}
+/* The prototype's guard: a long name or role ellipsises inside the list column, never widens it. */
+.th-group{min-width:0}
+.th-conv-item{min-width:0;max-width:100%}
 .th-group{display:grid;gap:2px}
 .th-group h2{display:flex;align-items:center;justify-content:space-between;margin:0 2px 2px 6px;font-size:11px;font-weight:600;color:var(--pg-faint)}
 .th-conv-item{display:flex;align-items:center;gap:9px;width:100%;min-height:40px;padding:0 8px;border:1px solid transparent;border-radius:8px;background:transparent;color:var(--pg-muted);text-align:left;cursor:pointer}
@@ -325,6 +328,9 @@
   .th-grid,.th-grid[data-thread="open"],.th-grid[data-work="open"]{grid-template-columns:212px minmax(0,1fr)}
   /* --pg-e3 is the shell's own side-panel elevation: a soft shadow cast leftward over the stream. */
   .th-thread{position:absolute;top:0;right:0;bottom:0;width:min(360px,92%);z-index:6;box-shadow:var(--pg-e3)}
+  /* The agent profile over the stream carries the prototype's deeper cast shadow (frame 33), from the
+     shared elevation tokens, so it reads as a panel above the conversation in both themes. */
+  .th-profile{box-shadow:var(--pg-e3),var(--pg-lift-3)}
 }
 @media (prefers-reduced-motion:no-preference){
   @container th-hub (max-width:1149.98px){.th-thread{animation:th-slide .2s cubic-bezier(.16,1,.3,1)}}
@@ -342,6 +348,9 @@
   .th-conv-head p{display:none}
   .th-stream{padding-inline:8px}
   .th-composer-wrap{padding:8px 8px 12px}
+  /* At phone width the row keeps its whole one-line hint (prototype frame 34): tighter tools, smaller hint. */
+  .th-composer-row{gap:0}
+  .th-hint{margin-left:2px;font-size:10.5px}
   .th-thread,.th-work{width:100%}
   .th-work-close{display:none}
   .th-preview{margin:0 8px 8px}
@@ -440,7 +449,8 @@ button.th-ag-re:hover{color:var(--pg-muted);text-decoration:underline;text-under
 .th-conv-name--agent{flex:none;max-width:60%}
 .th-conv-role{flex:1;min-width:0;color:var(--pg-faint);font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .th-conv-item--agent[aria-current="page"]{background:color-mix(in srgb,var(--agc-tint) 55%,var(--pg-surface));border-color:color-mix(in srgb,var(--agc-ring) 45%,var(--pg-line))}
-.th-conv-item--agent[aria-current="page"] .th-conv-name,.th-conv-item--agent[data-unread] .th-conv-name{color:var(--agc-ink)}
+/* The name stays neutral (ink, bold when unread, as every row): the plate carries the agent's colour. */
+.th-conv-item--agent .th-conv-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .th-option[data-ag][aria-selected="true"]{background:color-mix(in srgb,var(--agc-tint) 55%,var(--pg-surface))}
 .th-pop .th-option[data-ag][aria-selected="true"],.th-pop .th-option[data-ag]:hover{background:color-mix(in srgb,var(--agc-tint) 55%,var(--pg-surface))}
 .th-pick-head{margin:8px 4px 2px}
@@ -449,6 +459,9 @@ button.th-ag-re:hover{color:var(--pg-muted);text-decoration:underline;text-under
 .th-conv-head--agent{box-shadow:inset 0 -2px 0 var(--agc-fill)}
 .th-conv-head--agent h2{gap:8px}
 .th-head-actions .th-btn{white-space:nowrap}
+/* The agent DM's profile button: the long label on wide hubs, the approved short "Profile" when narrow. */
+.th-label-narrow{display:none}
+@container th-hub (max-width:759.98px){.th-label-wide{display:none}.th-label-narrow{display:inline}}
 .th-ag-dmnote{display:flex;align-items:center;gap:8px;margin:2px 0 10px;padding:8px 10px;border:1px solid var(--pg-line-soft);border-radius:9px;background:var(--pg-surface);color:var(--pg-muted);font-size:12px}
 .th-hub .th-ag-dmnote svg{width:14px;height:14px}
 .th-ag-empty h2{margin-top:2px}

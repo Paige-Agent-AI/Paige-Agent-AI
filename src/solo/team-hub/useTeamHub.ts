@@ -38,7 +38,10 @@ import {
   type TeamHubWorkItem,
   type TeamHubAgentKey,
 } from "./team-hub-contract";
-import { agentTurnBody, parseAgentTurn, type AgentTurnAnswer, type AgentTurnOutcome, type AgentTurnRequest } from "./team-hub-agents";
+import {
+  agentTurnBody, askingMessageIds, parseAgentTurn, parseTurnStates,
+  type AgentLineOutcome, type AgentTurnAnswer, type AgentTurnRequest, type BringInSuggestion, type ServerTurnState,
+} from "./team-hub-agents";
 
 /**
  * EXP08 Team Hub data hook. Every call goes through `supabase.rpc` with the
@@ -163,13 +166,23 @@ export interface AgentTurn {
   request: AgentTurnRequest;
   /** `in_flight`: another tab is running this same turn. `failed`: it ended with `outcome`, nothing posted here. */
   status: "writing" | "in_flight" | "posted" | "failed";
-  outcome?: Exclude<AgentTurnOutcome, "posted" | "in_flight">;
+  outcome?: AgentLineOutcome;
   replyId?: string;
+  /** Flow 3: the agents the posted reply suggests bringing in, with the lines their buttons write. */
+  bringIn?: BringInSuggestion[];
   /** Flow 5: the reply had a private part, answered in the asker's DM with this agent. */
-  privatePart?: { status: "writing" | "posted" | "failed"; dmId: string | null; outcome?: Exclude<AgentTurnOutcome, "posted" | "in_flight"> };
+  privatePart?: { status: "writing" | "posted" | "failed"; dmId: string | null; outcome?: AgentLineOutcome };
 }
 
+/**
+ * What the member-safe read (`team_hub_agent_turn_states`) said, per conversation. `states` is keyed
+ * like `agentTurns`. `read` is `unavailable` when the read failed (or is not deployed): the screen then
+ * says nothing it cannot know, and offers Check again instead of a failure.
+ */
+export interface TurnStateRead { read: "ready" | "unavailable"; states: Record<string, ServerTurnState> }
+
 export const agentTurnKey = (sourceMessageId: string, agent: TeamHubAgentKey) => `${sourceMessageId}:${agent}`;
+const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === "object" && value !== null && !Array.isArray(value);
 
 export const TEAM_HUB_FILE_BUCKET = "comms-attachments";
 export const SIGNED_URL_SECONDS = 60;
@@ -272,6 +285,10 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
   const [taskReads, setTaskReads] = useState<Record<string, TeamHubTaskRead>>({});
   const [attachments, setAttachments] = useState<Record<string, AttachmentChip[]>>({});
   const [agentTurns, setAgentTurns] = useState<Record<string, AgentTurn>>({});
+  const [turnStates, setTurnStates] = useState<Record<string, TurnStateRead>>({});
+  // Bumped by the same focus, reconnect and 15 s ticks that refresh the hub, so a turn's state is read
+  // again even when no message changed (a turn that ended elsewhere without posting).
+  const [statesTick, setStatesTick] = useState(0);
 
   // Latest values for async continuations; a response for a conversation that is no
   // longer open is dropped instead of painted over the one that is.
@@ -310,7 +327,7 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
   /** Refusals that end the whole hub are handled here, for every call alike. */
   const settle = useCallback(<T,>(result: TeamHubResult<T>): TeamHubResult<T> => {
     if (!alive.current || result.kind !== "refused") return result;
-    const clear = () => { setOverview(null); setStream(null); setThread(null); setPending([]); setWork({ status: "idle", items: [] }); setTaskReads({}); setAttachments({}); setAgentTurns({}); };
+    const clear = () => { setOverview(null); setStream(null); setThread(null); setPending([]); setWork({ status: "idle", items: [] }); setTaskReads({}); setAttachments({}); setAgentTurns({}); setTurnStates({}); };
     if (result.code === "unavailable" && !unavailableRetried.current) {
       // The account type may have been read from a stale workspace context. Re-read it once and ask
       // again before settling on "not available for this account type".
@@ -560,14 +577,14 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
 
   // Focus, reconnect and a visible-tab interval. Nothing here claims live delivery.
   useEffect(() => {
-    const onFocus = () => { void refreshRef.current(); };
-    const onOnline = () => { setOnline(true); void refreshRef.current(); };
+    const onFocus = () => { void refreshRef.current(); setStatesTick((n) => n + 1); };
+    const onOnline = () => { setOnline(true); void refreshRef.current(); setStatesTick((n) => n + 1); };
     const onOffline = () => setOnline(false);
     window.addEventListener("focus", onFocus);
     window.addEventListener("online", onOnline);
     window.addEventListener("offline", onOffline);
     const timer = window.setInterval(() => {
-      if (document.visibilityState === "visible") void refreshRef.current();
+      if (document.visibilityState === "visible") { void refreshRef.current(); setStatesTick((n) => n + 1); }
     }, REFRESH_INTERVAL_MS);
     return () => {
       window.removeEventListener("focus", onFocus);
@@ -979,18 +996,29 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
     const answer = await invokeTurn(request);
     if (!alive.current) return;
     if (answer.outcome === "posted") {
-      patchTurn(key, () => ({ key, request, status: "posted", replyId: answer.message.id }));
+      patchTurn(key, () => ({ key, request, status: "posted", replyId: answer.message.id, bringIn: answer.bringIn }));
       placeReply(answer.message, answer.conversationId, answer.duplicate);
       if (answer.privateFollowUp) void runPrivatePart(key, request, answer.privateFollowUp.dmId);
       else void refreshAfterAction.current();
       return;
     }
     if (answer.outcome === "in_flight") { patchTurn(key, () => ({ key, request, status: "in_flight" })); return; }
-    const outcome = answer.outcome;
-    patchTurn(key, () => ({ key, request, status: "failed", outcome }));
-    // The hub settles what it means for everyone: Team conversations off, or the conversation gone.
-    if (outcome === "conversations_off" || outcome === "not_visible") void refreshAfterAction.current();
-  }, [invokeTurn, patchTurn, placeReply, runPrivatePart]);
+    let outcome: AgentLineOutcome = answer.outcome;
+    // Not visible to the server can mean the person is now working in another workspace (another tab
+    // switched it): the server resolves the workspace from the session, never from this screen. Ask
+    // the hub's own door, which answers scope_changed in exactly that case, and say which it is.
+    if (outcome === "not_visible") {
+      const check = await call("team_hub_list_conversations", {});
+      const code = isRecord(check.data) && check.data.ok === false ? check.data.code : null;
+      if (code === "scope_changed") outcome = "other_workspace";
+      if (!alive.current) return;
+    }
+    const settled = outcome;
+    patchTurn(key, () => ({ key, request, status: "failed", outcome: settled }));
+    // The hub settles what it means for everyone: Team conversations off, the conversation gone, or
+    // another workspace.
+    if (outcome === "conversations_off" || outcome === "not_visible" || outcome === "other_workspace") void refreshAfterAction.current();
+  }, [call, invokeTurn, patchTurn, placeReply, runPrivatePart]);
   askAgentRef.current = askAgent;
 
   /**
@@ -999,10 +1027,48 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
    * this tab never saw a turn for (the asker came back after a closed tab) is asked from its message.
    */
   const askAgain = useCallback((request: AgentTurnRequest) => {
-    const turn = live.current.agentTurns[agentTurnKey(request.sourceMessageId, request.agent)];
+    const key = agentTurnKey(request.sourceMessageId, request.agent);
+    const turn = live.current.agentTurns[key];
     if (turn?.privatePart?.status === "failed") return runPrivatePart(turn.key, turn.request, turn.privatePart.dmId);
+    // A private part this tab never ran (the asker came back after a reload): ask for it from the question.
+    if (request.privateFollowUp) {
+      const { privateFollowUp: _private, ...base } = request;
+      return runPrivatePart(key, base, null);
+    }
     return askAgent(turn?.request ?? request);
   }, [askAgent, runPrivatePart]);
+
+  /**
+   * The member-safe turn-state read for one conversation's questions. It answers only for questions the
+   * reader can see, in a conversation the reader can see now; a failed read is kept as `unavailable`.
+   */
+  const readTurnStates = useCallback(async (conversationId: string, ids: string[]) => {
+    if (!ids.length) return;
+    const answer = await call("team_hub_agent_turn_states", { p_channel_id: conversationId, p_message_ids: ids });
+    if (!alive.current) return;
+    const states = parseTurnStates(answer.data, answer.error);
+    setTurnStates((current) => {
+      const before = current[conversationId];
+      if (!states) return { ...current, [conversationId]: { read: "unavailable", states: before?.states ?? {} } };
+      // Merge: the stream and the open thread read different questions of one conversation.
+      const kept = Object.fromEntries(Object.entries(before?.states ?? {}).filter(([key]) => !ids.includes(key.split(":")[0])));
+      return { ...current, [conversationId]: { read: "ready", states: { ...kept, ...states } } };
+    });
+  }, [call]);
+
+  // Read the states when the open conversation or thread opens, when its questions change, and on the
+  // hub's own focus / reconnect / 15 s ticks. Nothing here polls on its own.
+  const agentDmIds = useMemo(() => new Set((overview?.agent_dms ?? []).map((dm) => dm.id)), [overview]);
+  const streamAsking = stream && stream.status === "ready" ? askingMessageIds(stream.messages, agentDmIds.has(stream.channelId)).join(",") : "";
+  const threadAsking = thread && thread.status === "ready" ? askingMessageIds([...(thread.root ? [thread.root] : []), ...thread.replies], false).join(",") : "";
+  useEffect(() => {
+    if (stream && streamAsking) void readTurnStates(stream.channelId, streamAsking.split(","));
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- read on a new conversation, new questions or the refresh tick, not on every stream edit
+  }, [stream?.channelId, streamAsking, statesTick, readTurnStates]);
+  useEffect(() => {
+    if (thread && threadAsking) void readTurnStates(thread.channelId, threadAsking.split(","));
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- as above, for the open thread
+  }, [thread?.channelId, threadAsking, statesTick, readTurnStates]);
 
   /** A person's DM with one agent: the listed one, or opened (made once) through its own door. */
   const openAgentDm = useCallback(async (agent: TeamHubAgentKey): Promise<ActionOutcome<string>> => {
@@ -1150,6 +1216,7 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
     leaveChannel,
     addMembers,
     agentTurns,
+    turnStates,
     askAgent,
     askAgain,
     openAgentDm,

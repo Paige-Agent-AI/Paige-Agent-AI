@@ -57,21 +57,36 @@ export function AgentFailRow({ text, action, onAction, online }: { text: string;
 
 /**
  * Flow 5, the asker's note under the channel reply: the DM turn writing, the answer in the DM, or the
- * DM turn failed with Ask again. It carries no link to the DM message, so no private text flows back.
+ * DM turn failed with Ask again. After a reload whose turn state could not be read it says only that
+ * the answer may still be coming, with Check again (the same request: it reads back, or runs once).
+ * It carries no link to the DM message, so no private text flows back.
  */
 export function PrivateNote({ agent, status, onOpenDm, onAskAgain, online }: {
-  agent: TeamHubAgentKey; status: "writing" | "posted" | "failed"; onOpenDm: () => void; onAskAgain: () => void; online: boolean;
+  agent: TeamHubAgentKey; status: "writing" | "posted" | "failed" | "unknown"; onOpenDm: () => void; onAskAgain: () => void; online: boolean;
 }) {
   const name = agentName(agent);
-  if (status === "failed") {
+  if (status === "failed" || status === "unknown") {
     // A failure is a status: its mark is the system warning, never the agent's colour.
-    return <div className="th-ag-priv th-ag-priv--failed" data-ag={agent}><TriangleAlert aria-hidden="true" /><span>{name} couldn't finish your private answer.</span>
-      <button type="button" className="th-btn" disabled={!online} onClick={onAskAgain}>Ask again</button></div>;
+    return <div className={`th-ag-priv${status === "failed" ? " th-ag-priv--failed" : ""}`} data-ag={agent}>
+      {status === "failed" ? <TriangleAlert aria-hidden="true" /> : <Lock aria-hidden="true" />}
+      <span>{status === "failed" ? `${name} couldn't finish your private answer.` : `${name} may still be writing your private answer.`}</span>
+      <button type="button" className="th-btn" disabled={!online} onClick={onAskAgain}>{status === "failed" ? "Ask again" : "Check again"}</button></div>;
   }
   return <div className="th-ag-priv" data-ag={agent}><Lock aria-hidden="true" />
     <span>{status === "writing" ? `${name} is writing your answer in your DM. Only you can see it.` : `Your answer is in your DM with ${name}. Only you can see it.`}</span>
     <button type="button" className="th-link th-ag-open" onClick={onOpenDm}>Open DM<ExternalLink aria-hidden="true" /></button>
   </div>;
+}
+
+/**
+ * Flow 5, what everyone else in the conversation sees under the reply: that the agent is answering the
+ * asker privately, then that it did. Read from the member-safe turn state; if the private part fails
+ * they see nothing new. No DM, no text and no link.
+ */
+export function PrivateOthersNote({ agent, askerName, state }: { agent: TeamHubAgentKey; askerName: string; state: "answering" | "replied_privately" }) {
+  const name = agentName(agent);
+  return <div className="th-ag-priv th-ag-priv--others" data-ag={agent}><Lock aria-hidden="true" />
+    <span>{state === "answering" ? `${name} is answering ${askerName} privately.` : `${name} replied to ${askerName} privately.`}</span></div>;
 }
 
 /** Flow 3: Bring in buttons for the asker only; everyone else is told who can. */

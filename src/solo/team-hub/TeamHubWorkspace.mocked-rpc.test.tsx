@@ -290,6 +290,9 @@ describe("Team Hub workspace (mocked RPC)", () => {
     expect(host.querySelector(".th-conv-head--agent")!.textContent).toContain("PAIGE");
     expect(host.textContent).toContain("Ask PAIGE anything");
     expect(document.activeElement).toBe(composer(host));
+    // Say hello opens her DM with the approved first line in the box, unsent.
+    expect(composer(host).value).toBe("Hi PAIGE, where should I start?");
+    expect(calls.some((call) => call.name === "team_hub_post_message")).toBe(false);
   });
 
   it("first use without agents (a tier that has none) shows one empty list, Create a channel, and invites only for an owner — nobody invented", async () => {

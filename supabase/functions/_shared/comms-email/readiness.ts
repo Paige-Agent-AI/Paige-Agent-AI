@@ -258,7 +258,9 @@ export async function readCommsEmailReadiness(
   preSendCheck: CommsEmailPreSendCheck,
 ): Promise<CommsEmailReadiness> {
   // Presence checks only: no credential value is read into a fact, logged or returned.
-  const facts = { recipient: input.recipient, sender: null as EmailSenderFacts | null, resendConfigured: !!env("RESEND_API_KEY"), googleConfigured: !!env("GOOGLE_OAUTH_CLIENT_ID") && !!env("GOOGLE_OAUTH_CLIENT_SECRET"),
+  // Experience 03: a "resend" sender (PAIGE's managed sender, a custom-domain connector) now sends through
+  // SendGrid with the platform Mail Send key, so it is configured exactly when that key is present.
+  const facts = { recipient: input.recipient, sender: null as EmailSenderFacts | null, resendConfigured: !!env("SENDGRID_MAIL_SEND_API_KEY"), googleConfigured: !!env("GOOGLE_OAUTH_CLIENT_ID") && !!env("GOOGLE_OAUTH_CLIENT_SECRET"),
     sendgridConfigured: !!env("SENDGRID_MAIL_SEND_API_KEY") };
   try {
     if (input.connectorId) facts.sender = await readEmailSenderFacts(admin, input.tenantId, input.connectorId, input.actorUserId);

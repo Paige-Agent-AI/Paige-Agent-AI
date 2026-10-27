@@ -10,11 +10,17 @@
 // the database admits it for this business; every other shape is still refused before any provider
 // call. An unreadable SendGrid answer is reported outcome_unknown (never failed), so the worker never
 // sends that email again; only a 4xx is a definitive failure.
+//
+// Experience 03 (owner, 2026-10-26: "I am moving EVERYTHING to SendGrid"): a campaign from PAIGE's managed
+// sender or a custom-domain connector (provider 'resend') now goes through SendGrid too — with no
+// admission call (that gate is for a business's own SendGrid domain), the From moved onto
+// mail.paigeagent.ai per H2, the same correlation ids and tracking, and the same unknown-outcome rule.
 import { commsProviderExecutionAllowed, COMMS_PROVIDER_EXECUTION_DISABLED } from "../../supabase/functions/_shared/comms-provider-boundary.ts";
 import { readFileSync } from "node:fs";
 import { transpileModule, ModuleKind, ScriptTarget } from "typescript";
 import { describe, it, expect } from "vitest";
 import { senderDisplayName } from "../../supabase/functions/_shared/email/sender-display-name.ts";
+import { tenantFrom, PLATFORM_FROM_DOMAIN } from "../../supabase/functions/_shared/email/platform-sendgrid.ts";
 import { decideContentRead } from "../../supabase/functions/_shared/inbox-intelligence/policy.ts";
 import { mapSendResult } from "../../supabase/functions/email-campaign-worker/logic.ts";
 
@@ -29,8 +35,8 @@ const raw = readFileSync("supabase/functions/send-message/index.ts", "utf8").rep
 const compiled = transpileModule(raw, { compilerOptions: { module: ModuleKind.None, target: ScriptTarget.ES2022 } }).outputText;
 
 type Admit = { data: unknown; error: unknown };
-type Provider = "accept" | "throw" | 500 | 400;
-function setup(opts: { caller?: "user" | "service"; admit?: Admit; provider?: Provider } = {}) {
+type Provider = "accept" | "throw" | 500 | 503 | 400;
+function setup(opts: { caller?: "user" | "service"; admit?: Admit; provider?: Provider; connectorProvider?: string; fromAddress?: string } = {}) {
   const rpcCalls: { name: string; args: unknown }[] = [];
   const fetchCalls: { url: string; body: Record<string, unknown> }[] = [];
   const adapters: Record<string, { send: (...a: unknown[]) => Promise<unknown> }> = {};
@@ -45,7 +51,7 @@ function setup(opts: { caller?: "user" | "service"; admit?: Admit; provider?: Pr
       const result = () => {
         if (mode !== "select") return { data: { id: "row-id" }, error: null };
         if (table === "clients") return { data: { tenant_id: TENANT, emails: ["lead@example.test"] }, error: null };
-        if (table === "channel_connectors") return { data: { tenant_id: TENANT, status: "active", active: true, channel_type: "email", mailbox_class: "shared_support", mailbox_owner_user_id: null, provider: "sendgrid", from_address: "news@cedar.example.test", from_name: "Cedar", reply_to: null, credentials_vault_ref: null, config: null }, error: null };
+        if (table === "channel_connectors") return { data: { tenant_id: TENANT, status: "active", active: true, channel_type: "email", mailbox_class: "shared_support", mailbox_owner_user_id: null, provider: opts.connectorProvider ?? "sendgrid", from_address: opts.fromAddress ?? "news@cedar.example.test", from_name: "Cedar", reply_to: null, credentials_vault_ref: null, config: null }, error: null };
         return { data: null, error: null };
       };
       q.maybeSingle = async () => result();
@@ -59,7 +65,8 @@ function setup(opts: { caller?: "user" | "service"; admit?: Admit; provider?: Pr
       if (name === "comms_provider_execution_allowed" || name === "has_role") return { data: true, error: null };
       if (name === "current_user_tenant_id") return { data: TENANT, error: null };
       if (name === "is_platform_owner") return { data: false, error: null };
-      if (name === "tenant_sender_identity") return { data: { from_name: "Cedar", from_address: "hello@managed.example.test" }, error: null };
+      // The business's own managed address, as the server resolves it (security H2: the only shared-domain From kept).
+      if (name === "tenant_sender_identity") return { data: { from_name: "Cedar", from_address: "cedar@mail.paigeagent.ai" }, error: null };
       return { data: null, error: null };
     },
   };
@@ -69,11 +76,11 @@ function setup(opts: { caller?: "user" | "service"; admit?: Admit; provider?: Pr
     if (typeof opts.provider === "number") return Promise.resolve(new Response("{\"errors\":[]}", { status: opts.provider }));
     return Promise.resolve(new Response(null, { status: 202, headers: { "X-Message-Id": "sgCampaign1" } }));
   };
-  const scope = { decideContentRead, commsProviderExecutionAllowed, COMMS_PROVIDER_EXECUTION_DISABLED, PAIGE_APP_ORIGIN: "https://app.example.test",
+  const scope = { decideContentRead, commsProviderExecutionAllowed, COMMS_PROVIDER_EXECUTION_DISABLED, tenantFrom, PLATFORM_FROM_DOMAIN, PAIGE_APP_ORIGIN: "https://app.example.test",
     // isPreparedAgreementMessage is read only for a stored draft (message_id); a marketing send has none.
     isPreparedAgreementMessage: () => { throw new Error("prepared agreement path reached"); },
     Deno: {
-      env: { get: (k: string) => k === "SUPABASE_SERVICE_ROLE_KEY" ? SERVICE : k === "SENDGRID_MAIL_SEND_API_KEY" ? "SG.platform-key" : k === "RESEND_API_KEY" ? "re_key" : k === "SUPABASE_URL" ? "https://proj.example.test" : "configured" },
+      env: { get: (k: string) => k === "SUPABASE_SERVICE_ROLE_KEY" ? SERVICE : k === "SENDGRID_MAIL_SEND_API_KEY" ? "SG.platform-key" : k === "RESEND_API_KEY" ? undefined : k === "SUPABASE_URL" ? "https://proj.example.test" : "configured" },
       serve: (fn: typeof handler) => { handler = fn; },
     },
     createClient: () => client,
@@ -99,9 +106,9 @@ function setup(opts: { caller?: "user" | "service"; admit?: Admit; provider?: Pr
     }));
     return { status: res.status, body: await res.json() as Record<string, unknown> };
   };
-  const sendgridCalls = () => fetchCalls.filter((c) => c.url.includes("api.sendgrid.com"));
+  const sendgridCalls = () => fetchCalls.filter((c) => c.url === "https://api.sendgrid.com/v3/mail/send");
   const admitCalls = () => rpcCalls.filter((c) => c.name === "email_campaign_sendgrid_admit");
-  return { request, sendgridCalls, admitCalls };
+  return { request, sendgridCalls, admitCalls, fetchCalls };
 }
 
 // Exactly what email-campaign-worker sends (sendOne).
@@ -179,5 +186,57 @@ describe("send-message admits an approved campaign email to SendGrid only as the
     const r = await s.request(campaign);
     expect(r.body.outcome).toBe("failed");
     expect(mapSendResult(r.status, r.body).outcome).toBe("failed");
+  });
+});
+
+describe("a campaign from PAIGE's managed sender (or a custom-domain connector) now goes through SendGrid", () => {
+  const managed = { connectorProvider: "resend", fromAddress: "cedar@mail.paigeagent.ai" };
+
+  it("reaches SendGrid once (never Resend), with no admission call, the recipient's correlation ids and tracking", async () => {
+    const s = setup(managed);
+    const r = await s.request(campaign);
+    expect(s.admitCalls()).toEqual([]);
+    expect(s.fetchCalls.map((c) => c.url)).toEqual(["https://api.sendgrid.com/v3/mail/send"]);
+    const p = s.sendgridCalls()[0].body;
+    expect(p.custom_args).toEqual({ paige_tenant_id: TENANT, paige_operation_id: RECIPIENT, paige_message_id: RECIPIENT });
+    expect(p.tracking_settings).toEqual({ open_tracking: { enable: true }, click_tracking: { enable: true, enable_text: false } });
+    expect(p.from).toEqual({ email: "cedar@mail.paigeagent.ai", name: "Cedar" });
+    expect(r.body).toMatchObject({ status: "sent", outcome: "sent", vendor_message_id: "sgCampaign1" });
+    expect(mapSendResult(r.status, r.body)).toMatchObject({ outcome: "sent", providerMessageId: "sgCampaign1" });
+  });
+
+  it("H2: a custom-domain connector's From becomes notifications@mail.paigeagent.ai under the business's name", async () => {
+    const s = setup({ connectorProvider: "resend", fromAddress: "news@cedar.example.test" });
+    await s.request(campaign);
+    const p = s.sendgridCalls()[0].body;
+    expect(p.from).toEqual({ email: "notifications@mail.paigeagent.ai", name: "Cedar" });
+    expect(p.reply_to).toEqual({ email: "news@cedar.example.test" });
+  });
+
+  it("a 503, 500 or thrown SendGrid answer is outcome_unknown — never failed, which the worker would requeue and send twice", async () => {
+    for (const provider of [503, 500, "throw"] as const) {
+      const s = setup({ ...managed, provider });
+      const r = await s.request(campaign);
+      expect(s.sendgridCalls().length, String(provider)).toBe(1);
+      expect(r.body.outcome, String(provider)).toBe("outcome_unknown");
+      expect(mapSendResult(r.status, r.body).outcome, String(provider)).toBe("outcome_unknown");
+    }
+  });
+
+  it("a 4xx is a definitive failure", async () => {
+    const s = setup({ ...managed, provider: 400 });
+    const r = await s.request(campaign);
+    expect(r.body.outcome).toBe("failed");
+    expect(mapSendResult(r.status, r.body).outcome).toBe("failed");
+  });
+
+  it("a send that is not the worker's campaign send (no ecr key, or a signed-in caller) carries no campaign ids or tracking", async () => {
+    for (const [caller, body] of [["service", { ...campaign, idempotency_key: undefined }], ["user", campaign]] as const) {
+      const s = setup({ ...managed, caller });
+      const r = await s.request(body as Record<string, unknown>);
+      expect(r.body.outcome, caller).toBe("sent");
+      expect(s.sendgridCalls()[0].body.custom_args, caller).toBeUndefined();
+      expect(s.sendgridCalls()[0].body.tracking_settings, caller).toBeUndefined();
+    }
   });
 });

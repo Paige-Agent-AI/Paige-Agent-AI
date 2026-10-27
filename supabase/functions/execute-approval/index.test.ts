@@ -323,6 +323,35 @@ describe("execute-approval: a quiet-hours / do-not-disturb hold is HELD, never q
     expect(fetchCalls).toHaveLength(1);
   });
 
+  // Experience 03: SendGrid has no idempotent replay. An answer that could not be read (5xx, timeout) may
+  // have been accepted, so releasing the claim would let a second Approve email a second copy.
+  it("an unconfirmed send keeps the claim, records why, says so plainly, and a second Approve sends nothing", async () => {
+    sendAnswer = { status: 200, body: { status: "failed", outcome: "outcome_unknown", unconfirmed: true, audit_id: "aud-9", message_id: "m9", error: "delivery_unconfirmed: sendgrid_503" } };
+    const db = fakeDb({ paige_pending_approvals: [pending()], clients: [contact] });
+    await load(db);
+    const r = await approve();
+    expect(r.status).toBe(200);
+    expect(r.body).toMatchObject({ ok: false, executed: false, unconfirmed: true, already: "in_progress", link_recorded: true, message_id: "m9", approval_id: A });
+    expect(String(r.body.error)).toMatch(/couldn't confirm this went out/i);
+    expect(fetchCalls).toHaveLength(1);
+    const row = db.tables.paige_pending_approvals[0];
+    expect(row.status).toBe("pending");
+    expect(row.claimed_at).not.toBeNull();
+    expect((row.metadata as Row).send_unconfirmed).toMatchObject({ audit_id: "aud-9", message_id: "m9" });
+    const again = await approve();
+    expect(fetchCalls).toHaveLength(1);
+    expect(again.body).toMatchObject({ ok: false, executed: false, unconfirmed: true, already: "in_progress", message_id: "m9" });
+  });
+
+  it("a definitive failure still releases the claim for a genuine retry (unchanged)", async () => {
+    sendAnswer = { status: 200, body: { status: "failed", outcome: "failed", error: "sendgrid_400: bad recipient" } };
+    const db = fakeDb({ paige_pending_approvals: [pending()], clients: [contact] });
+    await load(db);
+    const r = await approve();
+    expect(r.status).toBe(502);
+    expect(db.tables.paige_pending_approvals[0]).toMatchObject({ status: "pending", claimed_at: null });
+  });
+
   it("a contact on do-not-disturb is still refused by send-message's own check (blocked, never sent, claim released)", async () => {
     sendAnswer = { status: 200, body: { status: "failed", outcome: "blocked_client_dnd", reason: "This contact is on a do-not-disturb hold." } };
     const db = fakeDb({ paige_pending_approvals: [pending()], clients: [{ ...contact, dnd_active: true }] });

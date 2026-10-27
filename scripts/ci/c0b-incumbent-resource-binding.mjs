@@ -947,7 +947,14 @@ const SOURCES = {
   // EXP05 mandatory-confirm catalogue projection, reviewed e20298af0 / original sequential review.
   "supabase/functions/_shared/paige-spine/domains/automations.ts": "f0e2b5e100c979724337c1ffb9e3a1aca4360cc7fcba683506b5d2daa677533b",
   "supabase/functions/_shared/workspace-authority.ts": "b5fb2d35bf32fd4280f9e7e2c53488e6a0d4248cdbd42a5beb67ea91d18d5fc1",
-  "supabase/functions/_shared/calendar-link-tenant-brain.ts": "28748e315a12caa855ec906192743cdad5298d37ccbd35ad83539949124800f4",
+  // EXP03 unconfirmed-send (2026-10-27), AUTHOR-REVIEW / LOWER ASSURANCE: mapSendOutcome reads send-message's
+  // new outcome_unknown explicitly (SendGrid has no idempotent replay), and sendCalendarLink's note for an
+  // outcome_unknown says it may have reached the contact and must not be sent again (it said "NOT sent").
+  // Gates, reads, send seam and the other outcomes unchanged. Old 28748e31… reproduced from b39fda02 first.
+  // EXP03 (2026-10-27), AUTHOR-REVIEW / LOWER ASSURANCE: the three `if (!share.ok)` guards read
+  // `share.ok === false` so the shareability union narrows under the app's strict:false typecheck (CI tsc
+  // ratchet). Same branches, same returns; prior ac47de4e… reproduced from 739b2fa6 first.
+  "supabase/functions/_shared/calendar-link-tenant-brain.ts": "77a50c2cc43bc05df9164b63941943fe0ff9d6b33d03c4eb3ce70b92ac525f66",
   "supabase/functions/_shared/client-seat-reply.ts": "6b2ed9c2342da886f8dff44a46bc9dadd4bcd3b079839f62b470ea363564b44d",
   "supabase/functions/_shared/outbound-draft-check.ts": "eda79597ac86a489f916075844f535fcf228518d953b48c55b2e9901920ee961",
   // EXP04 C20 source review, AUTHOR-REVIEW / LOWER ASSURANCE at5ba2664f.
@@ -1017,7 +1024,43 @@ const SOURCES = {
   // verifier or adapter selection changed; paige-ai-chat is untouched, so all dispatch fingerprints are
   // unchanged. Old digest 2405fceb… reproduced from main 3d541038 and from 146cf565 with the same canonical
   // form (TypeScript printer {removeComments:true}, sha256) before renewing. Renew this digest only.
-  "supabase/functions/send-message/index.ts": "2753af0d96a4b8f1220b87e72ca106129b695becb30737991b9f7b3e1154e0ff",
+  // EXP03 Resend retirement renewal (2026-10-27), AUTHOR-REVIEW / LOWER ASSURANCE (an independent §39 reviewer
+  // must confirm): branch exp03-resend-retire-local. Production's Resend account was emptied 2026-10-26 (owner:
+  // "I am moving EVERYTHING to SendGrid"), so every send through the old Resend arm failed. send-message/index.ts
+  // changes in five places. (1) The email adapter's Resend arm is removed; every non-Gmail, non-SMTP email goes
+  // through the existing SendGrid arm with SENDGRID_MAIL_SEND_API_KEY (never RESEND_API_KEY, never the admin
+  // key). (2) That arm's From: a SendGrid connector's (H2-bound by the door/campaign admission) is unchanged;
+  // every other goes through _shared/email/platform-sendgrid.ts platformFrom (mail.paigeagent.ai kept, a
+  // business's own domain sent as notifications@ under its name, Reply-To defaulting to the old address); the
+  // no-op X-Idempotency-Key header is dropped. (3) comms_email_reconcile is refused before any claim (no
+  // idempotent replay, so a re-send could deliver twice). (4) A managed campaign send (`ecr:` key, service
+  // role, marketing) gets the campaign lane's custom_args, tracking and outcome_unknown on an unreadable answer;
+  // other sends with a message row carry tenant + message ids. (5) The missing-key string the comms classifier
+  // reads is the SendGrid one. No authority, verifier, recipient, tenant gate or dispatch branch changed;
+  // CORRECTION (independent §39 review, 2026-10-27): change (2) WAS an H2 change, not "H2 untouched" — keeping
+  // any mail.paigeagent.ai From and remapping paigeagent.ai let a workspace admin's own 'resend' connector send
+  // as another business's managed address or as PAIGE; fixed by the H2 renewal below.
+  // paige-ai-chat untouched, so all dispatch fingerprints are unchanged. Old digest 2753af0d… reproduced
+  // from b39fda02 (git show HEAD:… | TypeScript printer {removeComments:true}, sha256) before renewing.
+  // Renew this digest only.
+  // EXP03 unconfirmed-send follow-up (2026-10-27, same branch), AUTHOR-REVIEW / LOWER ASSURANCE: the campaign-only
+  // unreadable-answer flag becomes providerUnconfirmed for EVERY SendGrid email (Gmail/SMTP and the missing-key
+  // refusal excluded): the generic answer adds outcome "outcome_unknown" + `unconfirmed: true` (status stays
+  // "failed"); the audit error is prefixed "delivery_unconfirmed:", a released row's error is
+  // "delivery_unconfirmed", and a direct send with a contact/connector gets one thread row marked the same
+  // (both status CHECKs admit no "unknown"). No authority, recipient, tenant gate, H2 refusal, provider payload
+  // or dispatch branch changed. Prior value 72f6da30… (above, this branch) reproduced before renewing.
+  // EXP03 H2 + review-fix renewal (2026-10-27, same branch), AUTHOR-REVIEW / LOWER ASSURANCE (an independent §39
+  // reviewer found the H2 hole and must confirm the fix): (a) H2 — every non-SendGrid-connector From is the
+  // business's data, so the adapter uses platform-sendgrid.ts tenantFrom: a mail.paigeagent.ai From is kept ONLY
+  // when it equals THIS tenant's own managed address resolved server-side (tenant_sender_identity's address and
+  // its active tenant_email_identities row, for the derived tenantId; never a connector field); everything else,
+  // including any paigeagent.ai address (never remapped), sends as notifications@ under the business's name, and
+  // the Reply-To fallback never points at paigeagent.ai. (b) A row already marked delivery_unconfirmed is refused
+  // (outcome_unknown + unconfirmed, no provider call) after the §9 tenant gate and before the provider floor;
+  // the message read adds the `error` column. No authority, recipient, tenant gate, H2 SendGrid-connector
+  // refusal or dispatch branch changed. Prior e6fc6c24… reproduced from 0999a6a3 before renewing.
+  "supabase/functions/send-message/index.ts": "e1c22250edaa73de87a979a4642298e785f71a08c88b405d27a6427905683872",
   "supabase/functions/_shared/paige-spine/contracts.ts": "2d771686d636c04d2e07d9b8c336e19cde246b9a303ddd034d7ae8500f7eefb4",
   // Operator retirement adds opt-in timeout/no-retry controls; ordinary callers retain
   // their existing behavior. Renewed non-author review and actual retry controls are
@@ -1081,7 +1124,10 @@ const SOURCES = {
   "supabase/functions/_shared/sales-invoice-document.ts": "5ae255569a861722b09868da12dac1e43c104a593d3f3cb0c16f29e47eb55649",
   "supabase/functions/_shared/document-pdf.ts": "e88f697d5d79af5feb0d6952fc5029633d488434b232798bc42fffd0fccd9a8e",
   "supabase/functions/_shared/email-attachments.ts": "becc41d2968a75ba07c1ec077c142f625ccb0239f5dd3423073dbbbe0186069e",
-  "supabase/functions/_shared/sales-invoice-delivery/readiness-reader.ts": "8ea30924c24b27244d413ee167e43f08b18a0589df53e2d2b65fde4998ca2ba2",
+  // EXP03 Resend retirement (2026-10-27), AUTHOR-REVIEW / LOWER ASSURANCE: one fact's source key changes,
+  // resendConfigured now reads the presence of SENDGRID_MAIL_SEND_API_KEY (a "resend" sender sends through
+  // SendGrid). Shape, reads and every refusal unchanged. Old 8ea30924… reproduced from b39fda02 first.
+  "supabase/functions/_shared/sales-invoice-delivery/readiness-reader.ts": "4d4620552e5912e0c37f546e23df0caf81024db37407eef411b6b1ce51b9926a",
   // E04 exact invoice navigation: independently compared incumbent route outputs; authority unchanged.
   // E02 AUTHOR-REVIEW / LOWER ASSURANCE: add UUID-only Play focus beside current
   // invoice/Deal/Task routes; all existing route entries and authority remain unchanged.
@@ -1132,7 +1178,10 @@ const SOURCES = {
   "supabase/functions/_shared/paige-orchestration/subject-tenant.ts": "79bfca5cada98f8226a533684556c2b6035ec8aaf0855c06846b035ef4d778bd",
   "supabase/functions/_shared/sales-payments/balance-projection.ts": "089be3509f1a784659f86ceaa8e21238a765b744ebc5f75ecdb870be58070a92",
   "supabase/functions/_shared/sales-invoice-delivery/readiness.ts": "951b29afbdab2ad6480fdaadde38ae6f927bf5686f7bbf5518109128c91bb140",
-  "supabase/functions/_shared/comms-email/readiness.ts": "325b6bae21a323b849b23d02fe2d0df19baa0be6385a7810d289af0238ac5c7b",
+  // EXP03 Resend retirement (2026-10-27), AUTHOR-REVIEW / LOWER ASSURANCE: readCommsEmailReadiness's
+  // resendConfigured fact reads SENDGRID_MAIL_SEND_API_KEY presence instead of RESEND_API_KEY. Decision
+  // function, result shape and every reason unchanged. Old 325b6bae… reproduced from b39fda02 first.
+  "supabase/functions/_shared/comms-email/readiness.ts": "035c108e210bb7912250cac4000959e58c172cc4eb57a639b05839c4700762e9",
   "supabase/functions/_shared/openai-models.ts": "a76ac476a2cbd298421a9d7d37f3605cf384e4a4e53a1635719405d52e70905e",
   "supabase/functions/_shared/openai-responses.ts": "bec9943dcb725b592cdba219a5e349f14bcf1f259adbc17522fceb5c6fe0ec81",
   "supabase/functions/_shared/provider-failure.ts": "3a3507a6ddc6f6e5051a5d17b7a5ff30624643c6bd39d07793224eb0177873b5",

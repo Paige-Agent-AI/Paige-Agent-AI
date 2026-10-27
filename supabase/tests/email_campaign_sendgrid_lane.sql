@@ -12,7 +12,8 @@
 --   4. receipts land on the recipient row (delivered / opened / clicked / bounced / complained), first
 --      time wins, a redelivery is a duplicate; hard bounce and complaint suppress, a blocked bounce does
 --      not; forged, missing or mismatched claims change nothing; an early event is redelivered; a
---      Resend-sent recipient is never touched by a SendGrid event.
+--      recipient sent through the business's own Gmail is never touched by a SendGrid event. (Since
+--      20271116200000 a Resend-labelled send IS SendGrid's: proved in exp03_resend_retired.sql.)
 BEGIN;
 SELECT plan(70);
 
@@ -33,11 +34,11 @@ UPDATE public.profiles SET active_tenant_id='e03f0200-0000-4000-8000-00000000000
 INSERT INTO public.tenant_legal_profile(tenant_id,legal_business_name,registered_address) VALUES
  ('e03f0200-0000-4000-8000-000000000001','Cedar Studio LLC','3 Test Way, Springfield, ZZ 00000'),
  ('e03f0200-0000-4000-8000-000000000002','Dune Studio LLC','4 Test Way, Springfield, ZZ 00000');
--- Cedar: a SendGrid sender (01) and a Resend sender (02). Dune: its own SendGrid sender (03).
+-- Cedar: a SendGrid sender (01) and its own Gmail mailbox (02). Dune: its own SendGrid sender (03).
 -- A non-JWT session may create sendgrid connectors (guard_channel_connector_sendgrid_writer, 000250).
 INSERT INTO public.channel_connectors(id,tenant_id,channel_type,provider,from_name,from_address,status,active) VALUES
  ('e03f0900-0000-4000-8000-000000000001','e03f0200-0000-4000-8000-000000000001','email','sendgrid','Cedar Studio','news@cedar.tests.invalid','active',true),
- ('e03f0900-0000-4000-8000-000000000002','e03f0200-0000-4000-8000-000000000001','email','resend','Cedar Studio','hello@cedar-rs.tests.invalid','active',true),
+ ('e03f0900-0000-4000-8000-000000000002','e03f0200-0000-4000-8000-000000000001','email','gmail','Cedar Studio','hello@cedar-gm.tests.invalid','active',true),
  ('e03f0900-0000-4000-8000-000000000003','e03f0200-0000-4000-8000-000000000002','email','sendgrid','Dune Studio','news@dune.tests.invalid','active',true);
 -- Cedar's domain row, NOT yet verified in SendGrid.
 INSERT INTO public.tenant_email_domains(id,tenant_id,domain,from_name) VALUES
@@ -225,13 +226,14 @@ SELECT is(pg_temp.ev('sg:lane-e-late', 'sgxE', 'delivered', 'e.sglane@tests.inva
 SELECT is((SELECT provider_message_id||'/'||(delivered_at IS NOT NULL) FROM public.email_campaign_recipients WHERE id = pg_temp.k('rE')::uuid),
   'sgxE/true', 'the event supplies E''s provider id and records the delivery');
 
--- A Resend-sent recipient is never touched by a SendGrid event, even one naming its provider id and
--- carrying its own claims. A second campaign, through the Resend connector, to A (still eligible).
-INSERT INTO k SELECT 'rs', pg_temp.draft('Cedar resend note', '{"mode":"connector","connector_id":"e03f0900-0000-4000-8000-000000000002"}')::text;
+-- A recipient sent through another provider (the business's own Gmail) is never touched by a SendGrid
+-- event, even one naming its provider id and carrying its own claims. A second campaign, through the
+-- Gmail connector, to A (still eligible). (Resend-labelled sends go through SendGrid since 20271116200000.)
+INSERT INTO k SELECT 'rs', pg_temp.draft('Cedar gmail note', '{"mode":"connector","connector_id":"e03f0900-0000-4000-8000-000000000002"}')::text;
 SELECT ok(NOT (pg_temp.owner(format('SELECT public.email_campaign_request_approval(%L::uuid)', (pg_temp.k('rs')::jsonb)->>'version_id')) ? 'error')
       AND NOT (pg_temp.owner(format('SELECT public.email_campaign_approve(%L::uuid)', (pg_temp.k('rs')::jsonb)->>'version_id')) ? 'error')
       AND pg_temp.svc('SELECT public.email_campaign_dispatch_claim(25)') ? 'recipients',
-  'a Resend campaign is filed, approved and leased');
+  'a Gmail-connector campaign is filed, approved and leased');
 INSERT INTO k SELECT 'rsA', pg_temp.rid(((pg_temp.k('rs')::jsonb)->>'version_id')::uuid, 'A')::text;
 SELECT is(pg_temp.svc(format('SELECT to_jsonb(public.email_campaign_dispatch_record(%L::uuid, %L, %L))', pg_temp.k('rsA'), 'sent', 'rsx-a')) #>> '{}',
   'sent', 'its email to A is recorded sent');

@@ -34,6 +34,7 @@ import {
   MESSAGE_COLS, THREAD_COLS, messageRowsFromDb, threadsFromDb, CHANNEL_ICON, CHANNEL_LABEL,
   partyLabel, bodyPreview, msgTime, contactNameFromClient,
   INBOX_VIEWS, endOfTodayMs, readSendResult, resolveMergeVars, UNDO_WINDOW_MS,
+  SEND_UNCONFIRMED_COPY, isUnconfirmedMessage, ownerSendError,
   useCommsAttachments,
 } from "./conversations/inbox-shared";
 import { voiceHistoryStatus } from "@/lib/voice/voiceCallSafety";
@@ -136,20 +137,33 @@ function mergeContext(sel: SelectedView | null, sig?: Signature, snip?: Snippet)
 // ported email-template picker resolve merge vars through the exact same helper).
 
 // ── Status pill mapping for a single message ─────────────────────────────────────
+// The plain error/success pill text measured below AA in light at 10px (Failed 3.98:1, Sent 3.70:1,
+// exp03-measurements.json); deepened toward ink exactly like the governed "Not sent" pill.
+const PILL_INK_ERROR = "text-[color-mix(in_oklab,hsl(var(--destructive))_62%,hsl(var(--foreground)))]";
+const PILL_INK_SUCCESS = "text-[color-mix(in_oklab,hsl(var(--success))_62%,hsl(var(--foreground)))]";
+
 function messageStatusPill(m: MessageRow & GovernedSendFields) {
   // A send the server stopped before it left (suppressed, do-not-disturb, no consent) is written
   // 'blocked'. Without a pill it read as an ordinary sent bubble.
-  if ((m.status as string) === "blocked") return <StatePill state="error">Not sent</StatePill>;
-  if (m.status === "failed") return <StatePill state="error">Failed</StatePill>;
+  if ((m.status as string) === "blocked") return <StatePill state="error" className={PILL_INK_ERROR}>Not sent</StatePill>;
+  // An email the service may have taken (its answer was lost) is never shown as a plain failure (Experience 03).
+  if (isUnconfirmedMessage(m)) {
+    return (
+      <StatePill state="warning" className="text-[color-mix(in_oklab,hsl(var(--warning))_62%,hsl(var(--foreground)))]">
+        {GOVERNED_SEND_COPY.unconfirmed.pill}
+      </StatePill>
+    );
+  }
+  if (m.status === "failed") return <StatePill state="error" className={PILL_INK_ERROR}>Failed</StatePill>;
   if (m.status === "sent" || m.status === "delivered" || m.status === "read") {
     // A settled governed email never says plain "Sent" — that reads as delivered to a
     // non-technical owner. Only the provider's own delivered event says Delivered; an
     // accepted operation with a sent/read marker says Accepted (the email service took it,
     // delivery not confirmed). Everything else (no binding, not accepted) keeps "Sent".
     const receipt = governedEmailReceiptLabel(m);
-    if (receipt === "Delivered") return <StatePill state="success">Delivered</StatePill>;
-    if (receipt === "Accepted") return <StatePill state="success">Accepted</StatePill>;
-    return <StatePill state="success">Sent</StatePill>;
+    if (receipt === "Delivered") return <StatePill state="success" className={PILL_INK_SUCCESS}>Delivered</StatePill>;
+    if (receipt === "Accepted") return <StatePill state="success" className={PILL_INK_SUCCESS}>Accepted</StatePill>;
+    return <StatePill state="success" className={PILL_INK_SUCCESS}>Sent</StatePill>;
   }
   if (m.status === "queued") return <StatePill state="pending">Queued</StatePill>;
   return null;
@@ -287,7 +301,8 @@ function MessageBubble({
         )
         : messageStatusPill(m)
       }
-      error={m.status === "failed" && !governedOpen ? m.error : null}
+      // An unconfirmed send is not a failure: its line renders in ink through `footer`, never the error colour.
+      error={m.status === "failed" && !governedOpen && !isUnconfirmedMessage(m) ? ownerSendError(m.error) : null}
       subject={isCall || isHelpRequest ? undefined : (m.subject ?? undefined)}
       foldable={!isCall && shouldFoldEmail(m.channel_type, body)}
       call={
@@ -315,7 +330,7 @@ function MessageBubble({
         ) : undefined
       }
       footer={
-        governed === "unconfirmed" ? (
+        governed === "unconfirmed" || (m.status === "failed" && !governedOpen && isUnconfirmedMessage(m)) ? (
           <p data-governed-send="unconfirmed" className="text-[11px] leading-4 text-foreground">
             {GOVERNED_SEND_COPY.unconfirmed.line}
           </p>
@@ -1054,12 +1069,14 @@ export default function ClientsConversations() {
       if (!accountEpochRef.current.accept(epoch)) return;
       if (error) throw new Error(error.message);
       // §37: read `outcome` first so a gated/blocked approval reports the true reason.
-      const res = data as { status?: string; outcome?: string; reason?: string } | null;
-      const outcome = res?.outcome ?? (res?.status === "sent" ? "sent" : "failed");
+      // The ONE shared parser (inbox-shared): an unconfirmed send is never reported as a plain failure.
+      const r = readSendResult(data);
+      const outcome = r.outcome;
       if (outcome === "sent") { toast.success("Approved — Paige sent it."); }
-      else if (outcome.startsWith("blocked_")) { toast.error(res?.reason ?? "Blocked — can't message this contact."); }
-      else if (outcome.startsWith("queued_")) { toast(`Held: ${res?.reason ?? "will send when allowed."}`); }
-      else { throw new Error(res?.reason ?? "send_failed"); }
+      else if (r.unconfirmed) { toast.warning(SEND_UNCONFIRMED_COPY); }
+      else if (outcome.startsWith("blocked_")) { toast.error(r.reason ?? "Blocked — can't message this contact."); }
+      else if (outcome.startsWith("queued_")) { toast(`Held: ${r.reason ?? "will send when allowed."}`); }
+      else { throw new Error(r.reason ?? "send_failed"); }
       void load();
     } catch (e) {
       if (!accountEpochRef.current.accept(epoch)) return;
@@ -1177,7 +1194,7 @@ export default function ClientsConversations() {
     // R7-outcome via the ONE shared parser (inbox-shared) — the compose-new modal reads the
     // send result through the exact same helper, so reply and compose can never drift (§18/§37).
     const r = readSendResult(data);
-    return { outcome: r.outcome, reason: r.reason, messageId: r.messageId, scheduledFor: r.scheduledFor };
+    return { outcome: r.outcome, reason: r.reason, messageId: r.messageId, scheduledFor: r.scheduledFor, unconfirmed: r.unconfirmed };
   }, [buildSendBody]);
 
   const cancelUndo = useCallback(async (messageId: string) => {
@@ -1382,6 +1399,10 @@ export default function ClientsConversations() {
         }
       } else if (r.outcome === "sent") {
         toast.success("Sent."); resetComposer();
+      } else if (r.unconfirmed) {
+        // It may already be in their inbox, and the thread now shows it as unconfirmed: clear the
+        // composer so one more click can't send a second copy.
+        toast.warning(SEND_UNCONFIRMED_COPY); resetComposer();
       } else if (r.outcome.startsWith("blocked_")) {
         toast.error(r.reason ?? "Blocked — can't message this contact.");
       } else if (r.outcome.startsWith("queued_")) {

@@ -115,8 +115,9 @@ export type EmailContext = {
 
 /**
  * Resolve branding + sender + provider for a tenant. Pass tenantId=null (or an
- * unresolved user) to get the Paige Agent AI platform default on the platform
- * Resend account.
+ * unresolved user) to get the Paige Agent AI platform default. `provider` is the
+ * tenant's bring-your-own seam (providers.ts), which does not send today; callers
+ * read `branding` only, and PAIGE's own email goes through platform-sendgrid.ts.
  */
 export async function resolveTenantEmailContext(
   admin: SupabaseClient,

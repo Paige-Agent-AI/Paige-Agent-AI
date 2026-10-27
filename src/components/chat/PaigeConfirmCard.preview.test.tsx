@@ -203,3 +203,52 @@ describe("the envelope at phone width — one surface, full card width", () => {
     expect(batch.preview()!.className).not.toContain("-ml-");
   });
 });
+
+describe("an email with files: the owner sees every file he is approving", () => {
+  const FILES = [
+    { name: "Proposal_v3.pdf", size: 2.4 * 1024 * 1024, mime: "application/pdf" },
+    { name: "site-photo.png", size: 48 * 1024, mime: "image/png" },
+  ];
+  it("lists each file by its name and size under the envelope, before Approve", () => {
+    const ui = render(<PaigeConfirmCard actions={[action({ preview: { ...EMAIL, attachments: FILES } })]} onApprove={() => {}} onDeny={() => {}} />);
+    const list = ui.host.querySelector<HTMLElement>("[data-confirm-attachments]");
+    expect(list).not.toBeNull();
+    expect(list!.querySelector("dt")!.textContent).toBe("Files");
+    const rows = Array.from(list!.querySelectorAll("li")).map((li) => li.textContent);
+    expect(rows).toEqual(["Proposal_v3.pdf2.4 MB", "site-photo.png48 KB"]);
+    expect(list!.querySelector("ul")!.getAttribute("aria-label")).toBe("2 files attached");
+    expect(ui.preview()!.contains(list)).toBe(true);
+  });
+  it("one file says File; a path, a type code or a hash never reaches the card", () => {
+    const ui = render(<PaigeConfirmCard actions={[action({ preview: { ...EMAIL, attachments: [FILES[0]] } })]} onApprove={() => {}} onDeny={() => {}} />);
+    const list = ui.host.querySelector<HTMLElement>("[data-confirm-attachments]")!;
+    expect(list.querySelector("dt")!.textContent).toBe("File");
+    expect(ui.host.textContent).not.toMatch(/application\/pdf|governed|sha256|[0-9a-f]{8}-[0-9a-f]{4}/);
+  });
+  it("the file list is drawn from tokens only and its icon is hidden from screen readers", () => {
+    const ui = render(<PaigeConfirmCard actions={[action({ preview: { ...EMAIL, attachments: FILES } })]} onApprove={() => {}} onDeny={() => {}} />);
+    const list = ui.host.querySelector<HTMLElement>("[data-confirm-attachments]")!;
+    expect(list.innerHTML).not.toMatch(/#[0-9a-f]{3,6}\b|rgb\(|text-(?:gray|slate|zinc|neutral|amber|yellow)-/i);
+    expect(Array.from(list.querySelectorAll("svg")).every((svg) => svg.getAttribute("aria-hidden") === "true")).toBe(true);
+  });
+  it("each name sits over its size, breaks only at its own seams, and more than one file shows the total", () => {
+    const long = { name: "Spring-planting_proposal.final.pdf", size: 1024 * 1024, mime: "application/pdf" };
+    const ui = render(<PaigeConfirmCard actions={[action({ preview: { ...EMAIL, attachments: [long, FILES[0]] } })]} onApprove={() => {}} onDeny={() => {}} />);
+    const list = ui.host.querySelector<HTMLElement>("[data-confirm-attachments]")!;
+    const first = list.querySelector("li")!;
+    const [name, size] = Array.from(first.querySelectorAll("span.block"));
+    expect(name.textContent).toBe(long.name);
+    expect(size.textContent).toBe("1 MB");
+    expect(name.querySelectorAll("wbr")).toHaveLength(4);
+    expect(name.className).not.toContain("anywhere");
+    expect(list.textContent).toContain("3.4 MB in all");
+  });
+  it("a single file shows no total", () => {
+    const ui = render(<PaigeConfirmCard actions={[action({ preview: { ...EMAIL, attachments: [FILES[0]] } })]} onApprove={() => {}} onDeny={() => {}} />);
+    expect(ui.host.querySelector("[data-confirm-attachments]")!.textContent).not.toContain("in all");
+  });
+  it("an email without files shows no file row (unchanged)", () => {
+    const ui = render(<PaigeConfirmCard actions={[action()]} onApprove={() => {}} onDeny={() => {}} />);
+    expect(ui.host.querySelector("[data-confirm-attachments]")).toBeNull();
+  });
+});

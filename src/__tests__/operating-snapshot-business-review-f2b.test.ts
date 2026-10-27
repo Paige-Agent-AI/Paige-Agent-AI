@@ -534,7 +534,10 @@ describe('composeBusinessReview with F2b', () => {
     expect(d.email.status).toBe('degraded');
     expect(d.email.data).toBeNull();
     expect(d.email.reason).not.toMatch(/^no_adapter/);
-    for (const area of ['work', 'revenue', 'communications', 'bookings', 'outcomes']) {
+    // The original Rail read is mounted, but this old fixture has no caller auth.
+    // It must refuse honestly without borrowing service authority or claiming zero activity.
+    expect(d.outcomes).toEqual({ status: 'degraded', reason: 'recorded_activity_caller_auth_unavailable', data: null });
+    for (const area of ['work', 'revenue', 'communications', 'bookings']) {
       expect(d[area].status).toBe('unavailable');
       expect(d[area].reason).toMatch(/^no_adapter/);
     }

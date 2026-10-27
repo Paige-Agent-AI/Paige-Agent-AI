@@ -27,7 +27,7 @@ ACCEPTANCE_CRITERIA: on Agency Team an admin picks Owner, sends, and reads the A
 MOTION_PURPOSE: NONE: no motion change
 PROTECTED_SEAMS: create_tenant_invite_token (Owner refused; other roles unchanged, proof), accept_tenant_invite (owner tokens refused), peek_tenant_invite, create_/resend_/revoke_/archive_/accept_solo_team_invite (byte-identical outside marked edits, proof case 13); Solo and Sub-account shells NONE_AFFECTED: no UI file changed
 
-INTERNAL_BUILD_IDENTITY: 7bdbbb4e019060ed4a84f2bace5196421dc440f5; deployment=none (PR #3008 branch head; this record is the next commit, documentation only); environment=local; migrations=PROOF_OWED(20271119020008_exp08_owner_invitations applies on merge through deploy-migrations); edge=PROOF_OWED(paige-ai-chat redeploys on merge for _shared/team-hub/agent-turn.ts); evidence=this record and supabase/tests/exp08_owner_invitations.sql
+INTERNAL_BUILD_IDENTITY: 7bdbbb4e019060ed4a84f2bace5196421dc440f5; deployment=none (PR #3008 branch head; this record is the next commit, documentation only); environment=local; migrations=PROOF_OWED(20271120010008_exp08_owner_invitations applies on merge through deploy-migrations); edge=PROOF_OWED(paige-ai-chat redeploys on merge for _shared/team-hub/agent-turn.ts); evidence=this record and supabase/tests/exp08_owner_invitations.sql
 RELEASE_CHANNEL: development: branch build; ships to production on merge to main per the pre-launch stance (§4)
 RELEASE_CLASSIFICATION: internal-only: pre-launch platform with no live customers
 CUSTOMER_RELEASE_IDENTITY: none: internal-only pre-launch work
@@ -47,4 +47,4 @@ RELEASE_RECOVERY: position=forward migration re-emitting the 10 prior bodies, pi
 
 - Proof: `bash` run of `supabase/tests/exp08_owner_invitations.sql` on PostgreSQL 16, 2026-10-27, exit 0, counts above.
 - Client trace: `src/agency/team.tsx:275-279`, `src/agency/data/useAgencyPeople.ts:385-408`.
-- Server sentences: `supabase/migrations/20271119020008_exp08_owner_invitations.sql`, `create_tenant_invite_token` FIX-1 block.
+- Server sentences: `supabase/migrations/20271120010008_exp08_owner_invitations.sql`, `create_tenant_invite_token` FIX-1 block.

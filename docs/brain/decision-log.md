@@ -1,5 +1,11 @@
 # Decision Log — chronological one-liners
 
+## October27 — EXP03 SendGrid Inbound Parse receiver: #2976 shipped
+
+- **EXP03 #2976 merged (squash `6f80e45d`, 2026-10-27).** `handle-inbound-email` gains a SendGrid Inbound Parse arm so replies to managed `<slug>@mail.paigeagent.ai` senders land in Conversations again; it is inert until the owner sets `SENDGRID_INBOUND_PARSE_SECRET` and the Inbound Parse host. Routing is on the SMTP envelope recipient against `inbound_address` only — never the `inbound_domain` fallback for `paigeagent.ai`, which review showed any workspace admin could claim. Unauthenticated senders (no aligned SPF/DKIM pass) are stored without a contact link or a draft reply.
+- **Deploy run #878 (§32).** Attempt 1: three functions importing `_shared/contact-methods.ts` had their uploads acknowledged but production kept the old versions; attempt 2 updated them and they read back PASS — a provider-side one-off, not reproduced. `handle-inbound-webhook` failed readback on both attempts with `jwt_configuration_mismatch`: it authenticates its own Bearer API key and runs with `verify_jwt=false` on production, but `config.toml` never declared it. Declared in the follow-up PR, which also re-runs the deploy so `edge-live` can advance past `db0048ad`.
+- **Observation, unconfirmed:** several functions show a second update at 08:52 with `/app/...` entrypoints after the CI deploy had finished — possibly a Supabase GitHub integration also deploying production. Not investigated further.
+
 ## October27 — EXP03 Resend retired: #2966 shipped
 
 - **EXP03 #2966 merged and deployed (squash `db0048ad`, 2026-10-27).** Every remaining PAIGE email path sends through SendGrid; an unconfirmed send (lost answer, SendGrid has no idempotent replay) is never re-sent by any caller and the inbox shows Couldn't confirm. `edge-live` and `db-live` both at `db0048ad`; prod `schema_migrations` has `20271116200000`. Still on Resend: `manage-tenant-domain`. Real delivery proof owed until a real send is journalled.

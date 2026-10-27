@@ -43,6 +43,7 @@ import { mutatingTools } from "../action-risk.ts";
 import { recordCapabilityRun, stableRunId, type CapabilityOutcome } from "../capability-record.ts";
 import { dispatchBusinessTimeZoneChat } from "../client-engagement/chat.ts";
 import { BUSINESS_TIME_ZONE_READ_CAPABILITY } from "../paige-spine/domains/client-engagement.ts";
+import type { TraceCtx } from "../llm-trace.ts";
 
 // ---------------------------------------------------------------- the request
 
@@ -162,7 +163,7 @@ export type ToolDef = { type: "function"; function: { name: string; description:
 /** The shape of paige-ai-chat's fabricCompletion, narrowed to what a turn uses. */
 export type CompleteFn = (
   request: { cognitive_class: "operational"; job: string; messages: ChatMessage[]; tools?: ToolDef[]; max_tokens?: number },
-  opts: { trace?: Record<string, unknown>; signal?: AbortSignal; beforeProviderAttempt?: () => boolean | Promise<boolean> },
+  opts: { trace?: TraceCtx; signal?: AbortSignal; beforeProviderAttempt?: () => boolean | Promise<boolean> },
 ) => Promise<{ ok: boolean; response?: Record<string, unknown> }>;
 
 export interface AgentTurnDeps {
@@ -517,7 +518,7 @@ export async function runTeamHubAgentTurn(deps: AgentTurnDeps, raw: unknown): Pr
   const toolDefs = tools.map((t) => TOOL_DEFS[t]).filter(Boolean);
 
   // 6. The model, through the injected seam, with the narrowed tools.
-  const trace = { tenant_id: tenantId, working_context_tenant_id: tenantId, agent_id: agent, job_kind: "team_hub_agent_turn", content_policy: "metadata_only" };
+  const trace: TraceCtx = { tenant_id: tenantId, working_context_tenant_id: tenantId, agent_id: agent, job_kind: "team_hub_agent_turn", content_policy: "metadata_only" };
   let control: "private" | "act" | null = null;
   let text = "";
   const writes = mutatingTools();

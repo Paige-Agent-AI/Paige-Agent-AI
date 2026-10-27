@@ -4,6 +4,7 @@ import { Link, useLocation } from "react-router-dom";
 import { TEST_BUSINESS_REVIEW, TEST_REVIEW_TENANT } from "@/test/fixtures/business-review";
 import { SECOND_REVIEW_TENANT, withTargetAndFinanceFixtures } from "./slice-fixtures";
 import { reportFixtureFrom } from "./report-fixture";
+import { withEmailFixture } from "./email-fixture";
 export { businessDateLabel, businessCalendarHeldNote } from "@/solo/data/useBusinessTimeZone";
 const Presence = createContext({ railExpanded: false, expandRail: () => {}, collapseRail: () => {} });
 export function HarnessPresence({ children }: { children: React.ReactNode }) {
@@ -27,7 +28,7 @@ export function useBusinessReview() {
   if (p.get("workspace") === "b") { input.tenant_id = SECOND_REVIEW_TENANT; input.domains.clients.data!.headline = [{ ...input.domains.clients.data!.headline[0], value: 2 }]; }
   const snapshot = withTargetAndFinanceFixtures(input, variant ?? "ready", ["finance", "catalogue"].includes(import.meta.env.E2_HARNESS_SLICE));
   if (variant === "unavailable") for (const d of snapshot.requested) snapshot.domains[d] = { status: "degraded", data: null, reason: "scope_changed" };
-  return { state: "ready", snapshot, refresh: noop };
+  return { state: "ready", snapshot: import.meta.env.E2_HARNESS_SLICE === "email" ? withEmailFixture(snapshot, variant ?? "ready") : snapshot, refresh: noop };
 }
 export function useSoloPendingActions() {
   const state = useHarnessParams().get("state");

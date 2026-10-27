@@ -577,10 +577,21 @@ Values intentionally omitted.
     send-payment-confirmation-email, send-support-request and send-funding-report onto the same transport, removed the
     dead Resend adapter from `_shared/email/providers.ts` (every provider string there now refuses), and deleted the
     `resend-admin-probe` diagnostic from the repo (the copy already deployed to production is not removed by a merge).
-    Still reading it at that point: send-message's Resend arm and manage-tenant-domain (separate work).
+    The same EXP03 PR moved send-message's Resend arm into its SendGrid arm: PAIGE's managed
+    `<slug>@mail.paigeagent.ai` sender, connectorless sends and `provider='resend'` connectors all send through
+    SendGrid (the `'resend'` label stays on connector rows and `paige_messages_audit.pipe_used`). Readiness
+    (`_shared/comms-email/readiness.ts`, `_shared/sales-invoice-delivery/readiness-reader.ts`, agreement-send,
+    `_shared/agreements/notify.ts`) now keys on `SENDGRID_MAIL_SEND_API_KEY`. Still reading `RESEND_API_KEY`:
+    manage-tenant-domain only (tenant custom sending domains; no SendGrid domain-authentication code exists yet —
+    separate work), plus the Resend inbound/receipt webhooks (`handle-inbound-email`, `handle-resend-webhook`),
+    which receive nothing once nothing sends through Resend.
   - **Supabase Auth email (sign-up confirmation, password reset)** goes through the Auth custom-SMTP setting in the
-    Supabase dashboard, not edge code. It pointed at Resend SMTP and must be re-pointed by the owner to
-    `smtp.sendgrid.net:587`, user `apikey`, a restricted Mail Send key (owner action, 2026-10-27, not yet confirmed).
+    Supabase dashboard, not edge code. **Re-pointed by the owner on 2026-10-27** to `smtp.sendgrid.net:587`, user
+    `apikey`, a restricted Mail Send key, sender name "Paige Agent AI" (seen in the owner's screenshot; the sender
+    address field and a test sign-up are not yet confirmed).
+  - **DNS (owner, 2026-10-27, read back via Cloudflare DNS):** every Resend record was deleted, including the
+    `inbound-smtp.us-east-1.amazonaws.com` MX records (Resend's inbound, not the owner's AWS). Root `paigeagent.ai`
+    MX is Private Email only; `mail.paigeagent.ai` MX is `10 mx.sendgrid.net` ahead of SendGrid Inbound Parse.
 - **PAIGE Email — SendGrid (tenant email under the 2026-10-13 owner policy; Resend stays the Platform Operator's own email).** Edge secret NAMES only; values are never recorded. Whether each one is set on production was NOT re-read by this record.
   - `SENDGRID_MAIL_SEND_API_KEY` is the restricted Mail Send key. Readers:
     - `_shared/email/platform-sendgrid.ts` (`sendPlatformEmail`, EXP03 #2958): the one transport for PAIGE's own email — every function listed under **Email** above. From is forced onto `mail.paigeagent.ai`; a 5xx/timeout is reported `unconfirmed` and never resent automatically;

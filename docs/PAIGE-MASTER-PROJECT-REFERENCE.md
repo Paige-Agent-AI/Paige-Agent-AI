@@ -856,6 +856,13 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**2026-10-27 UTC — EXP03: PAIGE's own email moves off Resend onto SendGrid (owner ruling 2026-10-26, Resend account emptied).**
+
+| Increment | Exact reviewed source and observed release | Completion boundary |
+| --- | --- | --- |
+| [#2958 platform email on SendGrid](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2958) | Squash `5ec0a34d66` of head `b39fda02`. All 11 exact-head checks SUCCESS (incl. `verify`, `database-contract`, UI delivery evidence). Independent adversarial review (2 HIGH fixed: business local-part reuse on the shared domain; unknown portal invites carried no settle key) and Codex review (2 P1 fixed: booking reminder unconfirmed recorded as sent; missing visible-flow evidence). `deploy-edge-functions` run #874 deployed all 9 converted functions; source readback PASS for 7, `jwt_configuration_mismatch` for `send-platform-invite` and `backfill-welcome` (both run verify_jwt=false on prod and were never declared in config.toml — declared in the next EXP03 PR), so `edge-live` did not advance. | The shared transport `_shared/email/platform-sendgrid.ts` and welcome, backfill, platform and client-portal invites, plan reminders, booking emails and transactional email are LIVE on SendGrid from `@mail.paigeagent.ai`. Real delivery PROOF OWED until a real send is observed with SendGrid events journalled. Settling an `outcome_unknown` canonical invite from evidence UNAVAILABLE (custom_args now carried; settle step is a follow-up). No customer release. |
+| [#2941 SendGrid lane for approved campaigns](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2941) | Squash `79247765`. All exact-head checks SUCCESS after the c0b digest renewal and the tsc-ratchet fix. Migration `20271116020000` is on production (applied out of band before `deploy-migrations` ran; prod function bodies md5-match main; the renumbering PR #2948 was closed unmerged). | A campaign approved on a business's own verified SendGrid connector sends through SendGrid and its receipts settle recipients. Inert until a business has a verified SendGrid sender. No customer release. |
+
 **2026-10-27 UTC — EXP02 original private Systems host source; not customer admission.**
 
 | Increment | Exact released source and observed production | Acceptance boundary |

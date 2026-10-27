@@ -1043,9 +1043,9 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
    * reader can see, in a conversation the reader can see now; a failed read is kept as `unavailable`.
    */
   const readTurnStates = useCallback(async (conversationId: string, ids: string[]) => {
-    if (!ids.length) return;
+    if (!ids.length) return true;
     const answer = await call("team_hub_agent_turn_states", { p_channel_id: conversationId, p_message_ids: ids });
-    if (!alive.current) return;
+    if (!alive.current) return true;
     const states = parseTurnStates(answer.data, answer.error);
     setTurnStates((current) => {
       const before = current[conversationId];
@@ -1054,14 +1054,21 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
       const kept = Object.fromEntries(Object.entries(before?.states ?? {}).filter(([key]) => !ids.includes(key.split(":")[0])));
       return { ...current, [conversationId]: { read: "ready", states: { ...kept, ...states } } };
     });
+    return Boolean(states);
   }, [call]);
 
   /**
    * Check again for a state this screen could not know ("may still be replying", "may still be writing
    * your private answer"): re-read that question's turn state and nothing else. It never starts a model
-   * turn; once the read says the turn ended, the line offers Ask again, and only that asks.
+   * turn while the read answers; once it says the turn ended, the line offers Ask again, and only that
+   * asks. When the read itself fails (not deployed yet, or down) the asker would otherwise be stuck on
+   * "may still be replying", so Check again falls back to Ask again: the accept door answers
+   * `in_flight` or `duplicate` for a turn that is running or posted, so this can never post twice.
    */
-  const checkTurn = useCallback((request: AgentTurnRequest) => readTurnStates(request.conversationId, [request.sourceMessageId]), [readTurnStates]);
+  const checkTurn = useCallback(async (request: AgentTurnRequest) => {
+    if (await readTurnStates(request.conversationId, [request.sourceMessageId])) return;
+    if (alive.current) await askAgain(request);
+  }, [readTurnStates, askAgain]);
 
   // Read the states when the open conversation or thread opens, when its questions change, and on the
   // hub's own focus / reconnect / 15 s ticks. Nothing here polls on its own.

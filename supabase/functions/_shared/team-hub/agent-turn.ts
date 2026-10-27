@@ -472,7 +472,7 @@ async function readNames(caller: TeamHubCaller, tenantId: string, conversationId
     if (o && typeof o.user_id === "string") people.set(o.user_id, typeof o.display_name === "string" && o.display_name.trim() ? o.display_name : "Teammate");
   }
   const c = (Array.isArray(env.conversations) ? env.conversations : []).map(object).find((x) => x && typeof x.id === "string" && x.id.toLowerCase() === conversationId) ?? null;
-  return { people, conversation: c ? { kind: String(c.kind), name: typeof c.name === "string" ? c.name : null, visibility: c.visibility === "private" ? "private" : "team",
+  return { people, conversation: c ? { kind: String(c.kind), name: typeof c.name === "string" ? c.name : null, visibility: c.visibility === "team" ? "team" : "private",
     dm_user_id: typeof c.dm_user_id === "string" ? c.dm_user_id : null, agent_key: typeof c.agent_key === "string" ? c.agent_key : null } : null };
 }
 

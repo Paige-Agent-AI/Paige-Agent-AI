@@ -44,7 +44,7 @@ function message(id: string, channel: string, author: string, body: string, extr
 type Opts = {
   sourceAuthor?: string; mentions?: string[]; config?: unknown; configThrows?: boolean;
   accept?: (args: Record<string, unknown>) => unknown; end?: () => unknown; recordFails?: string[];
-  post?: (args: Record<string, unknown>, attempt: number) => unknown; readbackHides?: boolean;
+  post?: (args: Record<string, unknown>, attempt: number) => unknown; readbackHides?: boolean; launchVisibility?: unknown;
   sourceIn?: string; sourceThread?: string | null; stage?: (args: Record<string, unknown>) => unknown;
 };
 /** A raw client answer (`{ data, error }`), for the transport failures the Supabase client returns instead of throwing. */
@@ -74,7 +74,7 @@ function world(opts: Opts = {}) {
           case "team_hub_list_conversations": return { ok: true, me: { user_id: SAM },
             people: [{ user_id: SAM, display_name: "Sam Lee" }, { user_id: PRIYA, display_name: "Priya Shah" }],
             conversations: [
-              { id: LAUNCH, kind: "channel", name: "launch", visibility: "team", joined: true, unread: 0 },
+              { id: LAUNCH, kind: "channel", name: "launch", visibility: "launchVisibility" in opts ? opts.launchVisibility : "team", joined: true, unread: 0 },
               { id: SECRET_CHANNEL, kind: "channel", name: "acquisition-talks", visibility: "private", joined: true, unread: 3 },
               { id: SAM_PRIYA_DM, kind: "dm", name: null, visibility: "private", dm_user_id: PRIYA, joined: true, unread: 1 },
               { id: MERIT_DM, kind: "agent_dm", name: null, visibility: "private", agent_key: "merit", joined: true, unread: 0 },
@@ -712,6 +712,14 @@ describe("receipts never tell an owner about a turn the whole team cannot see", 
       const r = await run(w, m, turn({ conversationId }));
       assert.equal(r.body.outcome, "posted", where);
       silent(w, where);
+    }
+  });
+  it("a conversation whose visibility is missing or unrecognised is treated as private: the receipt names no agent", async () => {
+    for (const launchVisibility of [undefined, null, "", "Team", "public"]) {
+      const w = world({ launchVisibility }), m = model([{ content: "x" }]);
+      const r = await run(w, m);
+      assert.equal(r.body.outcome, "posted", String(launchVisibility));
+      silent(w, `visibility ${JSON.stringify(launchVisibility)}`);
     }
   });
   it("a refused turn in a private channel says nothing about the agent either", async () => {

@@ -431,6 +431,19 @@ describe("after a reload: the turn's true state, never a failure for a turn that
     expect(host.textContent).not.toContain("didn't reply");
   });
 
+  it("when Check again's own read fails too, it falls back to Ask again so the asker is never stuck (the accept door cannot post twice)", async () => {
+    db.messages["c-launch"] = [mine({ created_at: "2026-10-01T09:00:00.000Z" })];
+    db.override.team_hub_agent_turn_states = () => ({ ok: false, code: "invalid" });
+    const host = await mount();
+    expect(rowOf(host, "m-mine")!.querySelector(".th-ag-fail")!.textContent).toBe("MENTOR may still be replying.Check again");
+    answers.push(posted(reply("mentor", "m-mine", "Paid, with a free first session.")));
+    await click(button(rowOf(host, "m-mine")!, "Check again"));
+    await flush();
+    expect(turns).toHaveLength(1);
+    expect(turnBody(0)).toEqual({ conversationId: "c-launch", sourceMessageId: "m-mine", threadRootId: null, agent: "mentor" });
+    expect(host.textContent).toContain("Paid, with a free first session.");
+  });
+
   it("reads only this conversation's asking messages, under the reader's own session", async () => {
     db.messages["c-launch"] = [mine(), msg({ id: "m-plain", body: "No agent here." })];
     await mount();

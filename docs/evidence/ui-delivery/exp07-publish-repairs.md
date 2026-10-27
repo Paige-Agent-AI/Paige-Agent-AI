@@ -39,7 +39,7 @@ RELEASE_CLASSIFICATION: internal-only: review repairs to an internal-only surfac
 CUSTOMER_RELEASE_IDENTITY: none: internal-only
 RELEASE_NOTE_REQUIRED: NO: internal-only
 RELEASE_TRUTH_BOUNDARY: PROOF OWED: the repaired approve flow is live only after merge and the frontend deploy; the authenticated owner drive remains the customer proof
-RELEASE_RECOVERY: position=revert-frontend-and-edge (a revert restores the prior door and panel; no data or schema to unwind); reference=this record and the deploy of the revert
+RELEASE_RECOVERY: position=revert-frontend-and-edge (a revert restores the prior door and panel with no data or schema to unwind); reference=this record and the deploy of the revert
 
 ## Scope
 

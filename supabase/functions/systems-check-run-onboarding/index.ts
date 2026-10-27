@@ -25,10 +25,20 @@
 import { runSystemsCheck } from "../_shared/systems-check-runner.ts";
 import "../_shared/systems-check-runners/index.ts"; // side-effect: registers the 10 runner modules (§18)
 import { adminClient, corsHeaders, isAuthorizedInternalCaller, json, resolveTenantFromJwt } from "../_shared/systems-check-http.ts";
+import { handleManualSystemsWork } from "../_shared/systems-check-manual-http.ts";
+
+declare const EdgeRuntime: { waitUntil(task: Promise<void>): void } | undefined;
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "POST") return json(405, { error: "method_not_allowed" });
+
+  // Explicit private Work purpose; ordinary onboarding/provisioning stays below.
+  if (new URL(req.url).searchParams.has("manual_work")) {
+    return handleManualSystemsWork(req, { admin: adminClient(),
+      defer: typeof EdgeRuntime !== "undefined" && typeof EdgeRuntime.waitUntil === "function"
+        ? task => EdgeRuntime.waitUntil(task) : undefined });
+  }
 
   let body: { tenant_id?: string } = {};
   body = (await req.json().catch(() => ({}))) as { tenant_id?: string };

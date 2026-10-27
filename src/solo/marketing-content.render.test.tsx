@@ -204,7 +204,9 @@ describe("Marketing › Content", () => {
     await renderContent({ piece: "x1" });
     expect(host.querySelector(".mct-card img")).toBeNull();
     expect(host.querySelector(".mct-missing")?.textContent).toBe("No file saved with this image");
-    expect(dialog()!.querySelector("a")).toBeNull();
+    // The publish panel's own static Settings link is expected; what must NEVER appear is an
+    // anchor built from the stored address — every anchor outside the publish panel is absent.
+    expect(dialog()!.querySelectorAll("a").length).toBe(dialog()!.querySelectorAll(".mct-pubdoor a").length);
     expect(button("Download", dialog()!)).toBeUndefined();
   });
 

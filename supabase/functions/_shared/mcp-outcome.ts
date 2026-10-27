@@ -272,6 +272,18 @@ export async function callApprovedCapability(opts: {
     // The provider's own error text is not carried. It is provider-controlled prose and
     // has, in practice, contained internal paths, addresses and rejected credentials.
     const code = e instanceof McpError ? e.code : "request_failed";
+    if (code === "http_rate_limited") {
+      // The provider WAS reached and answered "later, please" — classifying it with the
+      // transport failures (unavailable / could-not-be-reached) or the rejections would
+      // each tell the owner the wrong remedy. Status stays "failed" (attempted, reached,
+      // not run); the copy carries the one honest remediation: wait and retry.
+      return {
+        outcome: outcomeOf(provider, capability, "failed",
+          "The provider was reached but is rate-limiting requests right now, so nothing was run. This is temporary — wait a moment and try again; reconnecting will not help.",
+          null),
+        evidence: null,
+      };
+    }
     const transportFailure = code !== "mcp_http_error" && code !== "mcp_protocol_error";
     return {
       outcome: outcomeOf(provider, capability, transportFailure ? "unavailable" : "failed",

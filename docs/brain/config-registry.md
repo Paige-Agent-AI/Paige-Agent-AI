@@ -1,5 +1,16 @@
 # Config Registry — infra & integration state
 
+## EXP02 original Systems host private purpose — October27 UTC, source verified
+
+Existing systems-check-run-onboarding155 now includes its private manual Work
+purpose, with original internal gate and registered bounded platform lifetime.
+Normal Edge40425564824 and complete42-file API/config readback match merge7ff9a6d8;
+JWT/import-map configuration, environment variables, secrets, native grants and
+other flavors are unchanged. No new function, worker, cron, queue or provider.
+HTTP202 is not a completed run; customer manualSpine/catalogue remains unavailable.
+The October26 development-only entry is historical. Full receipt:
+[original Systems evidence](../evidence/e2-systems-capture-mode.md).
+
 ## October20 — current-main composition preparation; NOT RELEASED
 
 Original2163/36ab and2189/9f sources/acceptance are preserved, with bounded successor b27e95 corrections independently reviewed. This own composition retains currentmain40c1 authority, source, Task recovery/navigation and all later Experience work. The inherited dated sections below remain historical; old deployment observations and ownership statements are not current proof or a formal Coordinator handoff. The draft writer/Edge and old090500 migration are absent/unapplied in current production; forward migration/schema proof, current source-pin derivation/review, final exact-head CI/deployment and ordinary authenticated acceptance remain owed. No recurrence, provider, Chat/Live activation or18/25/50 closure. Current owner EXP-only doctrine and the ten-outcome/E5-CV1–9 contract control.
@@ -703,3 +714,13 @@ added. The connection remains PARTIAL: this corrects client scope selection, not
 scope registration, consent or outbound execution. Automated and synthetic-browser evidence,
 independent review, and the exact remaining proof boundary are in
 `../evidence/ui-delivery/mcp-oauth-resource-scopes.md`.
+
+## EXP02 private Systems host purpose — October26, development only
+
+Existing `systems-check-run-onboarding?manual_work=1` reuses the current internal
+service/verified-cron gate and existing `EdgeRuntime.waitUntil` lifetime. No new
+function, config, environment variable, secret, provider, cron, grant or queue.
+Bounded5-second transport/90-second capture/fresh5-second settlement; hard host
+limits still apply.202 is not execution proof. Normal source deployment/readback
+and customer admission are not yet established. Original wiring/flavors retained.
+Canonical details: [Systems evidence](../evidence/e2-systems-capture-mode.md).

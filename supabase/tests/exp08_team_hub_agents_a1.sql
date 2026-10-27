@@ -1485,11 +1485,50 @@ SELECT pg_temp.agent_post(:'u6', :'ta', :'mch', 'cura', 'Answer to A', :'r13', N
 SELECT pg_temp.accept(:'ta', :'u6', :'mch', :'m13b', 'cura', 'reply', pg_temp.tok('M13B'))->>'turn_id' AS m13turn_b \gset
 SELECT pg_temp.check(:'m13acc_a'='true' AND :'m13post_a'='true' AND :'m13turn_b'<>'', 'mutants: M13 setup');
 BEGIN;
+-- Turn A's binding is cleared (the race state the earlier probe builds), so only the question-and-place
+-- check stands between turn B and A's reply; the another-turn's-reply guard is M24's.
+UPDATE public.team_hub_agent_turns SET consumed_at=NULL, posted_message_id=NULL WHERE source_message_id=:'m13a' AND agent_key='cura';
 SELECT pg_temp.mutate('public.team_hub_post_agent_message(uuid,uuid,text,text,uuid,uuid,uuid,text,text,boolean)',
  E'\n    OR msg.asked_in_message_id IS DISTINCT FROM p_asked_in_message_id\n    OR msg.parent_message_id IS DISTINCT FROM p_parent_message_id THEN', ' THEN');
 SELECT coalesce((pg_temp.agent_post(:'u6', :'ta', :'mch', 'cura', 'Answer to B', :'r13', NULL, :'m13b', 'reply', pg_temp.tok('M13B'))->>'code'='invalid'),false) AS g \gset
 ROLLBACK;
 INSERT INTO mutant_results VALUES ('M13 reused request id binds another question''s reply', :'g');
+-- M24: the conflict-recovery path no longer refuses a row that is already another turn's reply. Vera Lane
+-- asks CURA question X in #mutants and Y in #m24-two; both are accepted as dm turns into her CURA DM, where
+-- each answer posts unlinked at the top level, so place and link cannot tell X's answer from Y's. X's
+-- answer posts under request id R24; Y's answer then arrives under the same R24.
+SELECT pg_temp.j(:'u1', format('public.team_hub_create_channel(%L::uuid,%L,%L,%L::uuid[],gen_random_uuid())', :'ta','m24-two','team','{}'))->>'channel_id' AS m24ch \gset
+SELECT pg_temp.j(:'u6', format('public.team_hub_join_channel(%L::uuid,%L::uuid)', :'ta', :'m24ch'))->>'ok' AS m24join \gset
+SELECT pg_temp.post(:'u6', :'ta', :'mch', '@CURA m24 question X', '{cura}')#>>'{message,id}' AS m24x \gset
+SELECT pg_temp.post(:'u6', :'ta', :'m24ch', '@CURA m24 question Y', '{cura}')#>>'{message,id}' AS m24y \gset
+SELECT pg_temp.j(:'u6', format('public.team_hub_open_agent_dm(%L::uuid,%L)', :'ta', 'cura'))->>'channel_id' AS m24dm \gset
+SELECT gen_random_uuid() AS r24 \gset
+SELECT pg_temp.accept(:'ta', :'u6', :'m24dm', :'m24x', 'cura', 'dm', pg_temp.tok('M24X'))->>'turn_id' AS m24turn_x \gset
+SELECT pg_temp.agent_post(:'u6', :'ta', :'m24dm', 'cura', 'Answer to X', :'r24', NULL, NULL, 'dm', pg_temp.tok('M24X'))#>>'{message,id}' AS m24reply_x \gset
+SELECT pg_temp.accept(:'ta', :'u6', :'m24dm', :'m24y', 'cura', 'dm', pg_temp.tok('M24Y'))->>'turn_id' AS m24turn_y \gset
+SELECT pg_temp.check(:'m24join'='true' AND :'m24x'<>'' AND :'m24y'<>'' AND :'m24turn_x'<>'' AND :'m24reply_x'<>'' AND :'m24turn_y'<>''
+ AND (SELECT posted_message_id=(:'m24reply_x')::uuid FROM public.team_hub_agent_turns WHERE id=:'m24turn_x'),
+ 'mutants: M24 setup, two dm turns into one agent DM from two conversations; X answered under R24');
+-- Unmutated: Y's answer under R24 is refused invalid; turn Y stays open and unbound, turn X keeps its reply.
+SELECT pg_temp.agent_post(:'u6', :'ta', :'m24dm', 'cura', 'Answer to Y', :'r24', NULL, NULL, 'dm', pg_temp.tok('M24Y')) AS m24y_reused \gset
+SELECT pg_temp.check((:'m24y_reused')::jsonb->>'code'='invalid'
+ AND (SELECT consumed_at IS NULL AND posted_message_id IS NULL FROM public.team_hub_agent_turns WHERE id=:'m24turn_y')
+ AND (SELECT posted_message_id=(:'m24reply_x')::uuid FROM public.team_hub_agent_turns WHERE id=:'m24turn_x')
+ AND (SELECT count(*) FROM public.team_hub_messages WHERE channel_id=:'m24dm' AND author_kind='agent')=1,
+ 'a dm answer sent under the request id another dm turn''s reply holds is refused invalid; turn Y is neither consumed nor bound to X''s reply');
+BEGIN;
+SELECT pg_temp.mutate('public.team_hub_post_agent_message(uuid,uuid,text,text,uuid,uuid,uuid,text,text,boolean)',
+ E'\n    OR EXISTS(SELECT 1 FROM public.team_hub_agent_turns o WHERE o.posted_message_id=msg.id AND o.id<>turn.id)', '');
+SELECT pg_temp.agent_post(:'u6', :'ta', :'m24dm', 'cura', 'Answer to Y', :'r24', NULL, NULL, 'dm', pg_temp.tok('M24Y')) AS m24mut \gset
+SELECT coalesce(((:'m24mut')::jsonb->>'code'='invalid'
+ AND (SELECT consumed_at IS NULL AND posted_message_id IS NULL FROM public.team_hub_agent_turns WHERE id=:'m24turn_y')),false) AS g \gset
+ROLLBACK;
+INSERT INTO mutant_results VALUES ('M24 recovery binds another turn''s reply', :'g');
+-- Turn Y then posts its own answer under a fresh request id, bound to itself.
+SELECT pg_temp.agent_post(:'u6', :'ta', :'m24dm', 'cura', 'Answer to Y', gen_random_uuid()::text, NULL, NULL, 'dm', pg_temp.tok('M24Y')) AS m24y_reply \gset
+SELECT pg_temp.check((:'m24y_reply')::jsonb->>'ok'='true' AND (:'m24y_reply')::jsonb->>'duplicate' IS NULL
+ AND (SELECT posted_message_id=((:'m24y_reply')::jsonb#>>'{message,id}')::uuid FROM public.team_hub_agent_turns WHERE id=:'m24turn_y'),
+ 'turn Y then posts its own answer, bound to turn Y');
 -- M14: a re-arm skips the cap. M15: the cap counts rows, not starts. Both re-probed by accept-and-end
 -- cycles on one source for a seat with no turns yet (Person 8, in #mutants-two so #mutants' unread
 -- counts stay as the M9 control reads them), rolled back each time.
@@ -1612,9 +1651,9 @@ ROLLBACK;
 SELECT pg_temp.cycle(:'ta', :'u8', :'mch2', :'m14src', 'zion', 'c14', 31) AS c14 \gset
 SELECT pg_temp.check(:'c21'::boolean AND (:'c14')::text[]=ARRAY['ok']||array_fill('rearmed'::text, ARRAY[29])||ARRAY['rate_limited'],
  'mutants: unmutated, a seat end keeps the agent DM holding a file (and drops the one without), and the cycles stop at 30 starts (controls)');
-SELECT pg_temp.check((SELECT count(*) FROM mutant_results)=23 AND NOT EXISTS(SELECT 1 FROM mutant_results WHERE guarded IS NOT FALSE),
- 'mutants: all 23 weakened guards break the property they protect: '||(SELECT string_agg(mutant||'='||coalesce(guarded::text,'null'), '; ' ORDER BY mutant) FROM mutant_results));
-\echo 'PASS: 23 of 23 mutants (token, replay, one-reply index, acceptance grant, rule 2, conversation binding, cap, stale re-arm, unread, agent DM member, seat end, cross-conversation link, reused request id, re-arm off the cap, rows not starts, reply source elsewhere, dm source not asking, dm source not visible, post on a deleted question, acceptance of a deleted question, seat-end file guard, search DM label, search agent author) each fail their probe; controls hold'
+SELECT pg_temp.check((SELECT count(*) FROM mutant_results)=24 AND NOT EXISTS(SELECT 1 FROM mutant_results WHERE guarded IS NOT FALSE),
+ 'mutants: all 24 weakened guards break the property they protect: '||(SELECT string_agg(mutant||'='||coalesce(guarded::text,'null'), '; ' ORDER BY mutant) FROM mutant_results));
+\echo 'PASS: 24 of 24 mutants (token, replay, one-reply index, acceptance grant, rule 2, conversation binding, cap, stale re-arm, unread, agent DM member, seat end, cross-conversation link, reused request id, another turn''s reply, re-arm off the cap, rows not starts, reply source elsewhere, dm source not asking, dm source not visible, post on a deleted question, acceptance of a deleted question, seat-end file guard, search DM label, search agent author) each fail their probe; controls hold'
 
 -- 6. The roster correction (20271116120108) on the six platform rows. The table carries production's
 -- columns for these rows and the rows production holds (read 2026-10-27), with two customisations made

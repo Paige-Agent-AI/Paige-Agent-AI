@@ -147,6 +147,10 @@ CREATE INDEX IF NOT EXISTS team_hub_agent_turns_cap_idx
  ON public.team_hub_agent_turns (tenant_id, asker_user_id, accepted_at DESC);
 CREATE INDEX IF NOT EXISTS team_hub_agent_turns_source_idx
  ON public.team_hub_agent_turns (source_message_id);
+-- The post door's recovery path asks whether another turn already holds a reply; the reply's
+-- delete cascades here too.
+CREATE INDEX IF NOT EXISTS team_hub_agent_turns_posted_idx
+ ON public.team_hub_agent_turns (posted_message_id) WHERE posted_message_id IS NOT NULL;
 
 ALTER TABLE public.team_hub_message_agent_mentions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.team_hub_agent_turns ENABLE ROW LEVEL SECURITY;
@@ -738,9 +742,12 @@ BEGIN
     AND m.asked_in_message_id=p_asked_in_message_id AND m.channel_id=ch.id;
   END IF;
   -- The row must also answer THIS turn's question in THIS place: a request id reused for another
-  -- question by the same agent is refused, never bound to the turn as if it were its reply.
+  -- question by the same agent is refused, never bound to the turn as if it were its reply. A row
+  -- another turn already posted is that turn's reply, never this one's: two DM questions asked
+  -- elsewhere both answer in the agent DM unlinked, so place and link alone cannot tell them apart.
   IF NOT FOUND OR msg.author_user_id<>actor OR msg.author_kind<>'agent' OR msg.agent_key<>p_agent_key
     OR msg.channel_id<>ch.id
+    OR EXISTS(SELECT 1 FROM public.team_hub_agent_turns o WHERE o.posted_message_id=msg.id AND o.id<>turn.id)
     OR msg.asked_in_message_id IS DISTINCT FROM p_asked_in_message_id
     OR msg.parent_message_id IS DISTINCT FROM p_parent_message_id THEN RETURN jsonb_build_object('ok',false,'code','invalid'); END IF;
   UPDATE public.team_hub_agent_turns t SET consumed_at=now(), posted_message_id=msg.id WHERE t.id=turn.id;

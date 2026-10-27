@@ -29,7 +29,7 @@ interface Db {
   user_roles: Role[];
   calls: Call[];
   /** Injected failures by "<table>.<op>" (op: select, upsert, delete, update). Nth = 1-based. */
-  fail: Record<string, { message: string; code?: string; nth?: number }>;
+  fail: Record<string, { message: string; code?: string; hint?: string; nth?: number }>;
   counts: Record<string, number>;
   /** Runs after the Nth successful write of "<table>.<op>": a concurrent act landing in between. */
   after: Record<string, { nth: number; run: (db: Db) => void }>;
@@ -100,7 +100,7 @@ class Query {
     this.d.calls.push({ table: this.table, op: this.op, args: [this.payload, [...this.filters]] });
     this.d.counts[key] = (this.d.counts[key] ?? 0) + 1;
     const f = this.d.fail[key];
-    if (f && (!f.nth || f.nth === this.d.counts[key])) return Promise.resolve({ data: null, error: { message: f.message, code: f.code } });
+    if (f && (!f.nth || f.nth === this.d.counts[key])) return Promise.resolve({ data: null, error: { message: f.message, code: f.code, hint: f.hint } });
     const out = this.apply();
     if (out.error) return Promise.resolve(out);
     const a = this.d.after[key];
@@ -304,6 +304,23 @@ Deno.test("another membership guard (42501 on an active seat) is a 403, not 'on 
   d.fail["tenant_members.upsert"] = { message: "archived workspace", code: "42501" };
   const r = await accept(d, "admin");
   assertEquals(r.ok ? 0 : r.status, 403);
+});
+
+Deno.test("an owner invitation waiting for the person: their own sentence, 409, and no role written", async () => {
+  // EXP08 owner invitations, round 4 (B1): the seat-side trigger refuses a new non-owner seat for a
+  // person whose owner invitation is waiting, with HINT OWNER_INVITE_WAITING.
+  const sentence = "You have an owner invitation to Northstar Studio waiting. Open that invitation to join as an owner. Nothing changed.";
+  const d = db();
+  d.fail["tenant_members.upsert"] = { message: sentence, code: "42501", hint: "OWNER_INVITE_WAITING" };
+  const r = await accept(d, "admin");
+  assertEquals(r, { ok: false, status: 409, code: "owner_invite_waiting", error: sentence });
+  assertEquals(seat(d), undefined);
+  assertEquals(d.calls.filter((x) => x.table === "user_roles" && x.op === "upsert").length, 0);
+  // Recognised by the HINT only: the same 42501 without it stays the generic 403.
+  const e = db();
+  e.fail["tenant_members.upsert"] = { message: sentence, code: "42501" };
+  const r2 = await accept(e, "admin");
+  assertEquals(r2.ok ? "" : r2.code, "seat_refused");
 });
 
 Deno.test("the role write failing undoes a seat this call created", async () => {

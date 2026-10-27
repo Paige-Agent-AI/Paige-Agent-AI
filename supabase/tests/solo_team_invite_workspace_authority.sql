@@ -9,15 +9,15 @@
 -- raise. That the outcome tests PASS with no JWT present is the regression test for it.
 BEGIN;
 
-SELECT plan(42);
+SELECT plan(43);
 
 -- ── Reachability ────────────────────────────────────────────────────────────────────────────────
 SELECT ok(
-  NOT has_function_privilege('anon', 'public.create_solo_team_invite(uuid,uuid,text,text,text,text,boolean)', 'EXECUTE'),
+  NOT has_function_privilege('anon', 'public.create_solo_team_invite(uuid,uuid,text,text,text,text,boolean,uuid,jsonb)', 'EXECUTE'),
   'anonymous callers cannot create a team invitation'
 );
 SELECT ok(
-  NOT has_function_privilege('authenticated', 'public.create_solo_team_invite(uuid,uuid,text,text,text,text,boolean)', 'EXECUTE'),
+  NOT has_function_privilege('authenticated', 'public.create_solo_team_invite(uuid,uuid,text,text,text,text,boolean,uuid,jsonb)', 'EXECUTE'),
   'browser callers cannot create a team invitation directly'
 );
 SELECT ok(
@@ -29,7 +29,7 @@ SELECT ok(
   'browser callers cannot revoke a team invitation directly'
 );
 SELECT ok(
-  has_function_privilege('service_role', 'public.create_solo_team_invite(uuid,uuid,text,text,text,text,boolean)', 'EXECUTE'),
+  has_function_privilege('service_role', 'public.create_solo_team_invite(uuid,uuid,text,text,text,text,boolean,uuid,jsonb)', 'EXECUTE'),
   'the edge function''s service role can reach create'
 );
 -- Asserted for all three, symmetrically. Coverage gap caught by adversarial review: with only
@@ -242,8 +242,19 @@ SELECT throws_ok(
       'a1000000-0000-0000-0000-000000000001'::uuid,
       'a1000000-0000-0000-0000-00000000aaaa'::uuid,
       'owner@tests.invalid', 'owner', NULL, NULL)$$,
-  'team invitations may grant only Admin or Member',
-  'an invitation still cannot grant ownership'
+  -- EXP08 owners (20271120010008): Owner is now a permission the ACCOUNT HOLDER can choose (owner
+  -- ruling R1). This business has no account holder of record (owner_user_id is not set), so even its
+  -- owner is refused, with the authored no-holder sentence. Proven in full by exp08_owner_invitations.sql.
+  'Invite Authority A has no account holder right now, so no one can add owners or change another owner''s access. Contact the Paige team.',
+  'an invitation still cannot grant ownership without the account holder'
+);
+SELECT throws_ok(
+  $$SELECT public.create_solo_team_invite(
+      'a1000000-0000-0000-0000-000000000001'::uuid,
+      'a1000000-0000-0000-0000-00000000aaaa'::uuid,
+      'viewer@tests.invalid', 'viewer', NULL, NULL)$$,
+  'team invitations may grant only Owner, Admin or Member',
+  'an unknown permission is still refused'
 );
 SELECT throws_ok(
   $$SELECT public.create_solo_team_invite(

@@ -6935,6 +6935,62 @@ in the dispatch chain, never from Live, every write outcome with a workspace rec
 workspace there is no tenant to record against, so that refusal writes no receipt). Ledger:
 `docs/doctrine/tier-matrix.md`, "EXP08 PAIGE team-lifecycle tools". Authenticated runtime `UNVERIFIED`.
 
+**EXP08 co-owners and entity owners, I1 — owner invitations (2026-10-27; branch `exp08-owners-i1`, migration `20271120010008`, NOT MERGED; authenticated runtime `UNVERIFIED`).**
+Design owner-approved 2026-10-27; open questions answered the same day (contract R12–R15: recovery-only
+`set_account_holder`; a billing-paused holder is still the holder; admins keep inviting admins and members;
+billing/promotional restoration of the holder's own seat). The database now lets ONLY the account holder of
+a Solo account invite an Owner (`create_solo_team_invite`, a person or one non-individual legal owner from
+`tenant_business_owners`, inline records allowed), re-checks that sender at acceptance
+(`accept_solo_team_invite`, which seats `is_owner` and names the legal owner's representative), refuses an
+owner token at the legacy `accept_tenant_invite` (it used to seat an Admin silently) and at
+`create_tenant_invite_token` (for everyone), freezes every browser-written invitation column but
+`revoked_at` (`guard_tenant_invite_token_identity`), and audits every move of `tenants.owner_user_id`.
+`send-portal-invite` sends an owner invitation for the account holder only; `solo-team-invitations` shows
+the owner refusals as written (by HINT code, 403/400/409) instead of a 500. Round 2 (2026-10-27): the
+migration runs in one transaction behind an md5 incumbent guard on the 10 production functions it replaces;
+nobody but the account holder may invite an address that has a live owner invitation (Settings → Team, and
+any token INSERT under a person's JWT of a kind that seats someone; that rule alone does not stop the service
+role, an invitation created before the owner invitation, or one with no or another address being created); the
+representative's legal-owner record is no longer stamped with the invitee (it would block deleting their
+account); `peek_tenant_invite` names the legal owner only while the invitation is valid. Round 3 (2026-10-27):
+that address rule covers every seat-creating kind (all but `consumer` and `agency_team`; round 2 checked `team`
+only) and such an INSERT must store its address trimmed and lower case; an owner invitation whose legal owner
+was deleted is marked (`business_owner_removed_at`) and never resent; acceptance locks the tenant row and the
+sender's seat FOR SHARE before re-checking the sender (lock asserted on the body, the race not driven). Round 4
+(2026-10-27, B1): the address rule compared addresses only when an invitation was created, so an admin's
+invitation with no or a made-up address (or one from before the owner invitation, or from the service role)
+could still be accepted through `/join` by the owner invitee, whose owner invitation then failed "already
+belongs". Now a new non-owner seat is refused at the seat, whoever writes it, for a person whose address has a
+live owner invitation in that business (`trg_tenant_members_owner_invitation_waiting`, HINT
+`OWNER_INVITE_WAITING`): every accept path and grant is covered; owner seats and seats the person already has
+are not refused. Round 5 (2026-10-27): migration renamed to `20271117170008` (production's newest applied became
+`20271117150002`); the seat rule now counts only an owner invitation `accept_solo_team_invite` would still honour
+(sender still the account holder, so not while that holder is paused for billing; Solo account; under
+`max_uses`; a named legal owner still non-individual with its seat open), so a dead owner invitation no longer
+holds a person off other seats, and it also fires on an UPDATE that moves a seat to the person (BEFORE INSERT OR
+UPDATE OF `tenant_id`, `user_id`). Round 6 (2026-10-27): migration renamed to `20271118200008`, because
+production's newest applied became `20271118100000` (so `20271117170008` no longer sorted after it) and remote
+branches hold versions up to `20271118110009` (final re-check: production's newest `20271118110000`, branches still at most
+`20271118110009`; it sorts after both); the seat rule also requires the person's address to be confirmed,
+as `accept_solo_team_invite` does (N1). Round 7 (2026-10-27): migration renamed to `20271119020008` (renamed in round 8 to `20271120010008`: production applied `20271120000000` on 2026-10-27, so `20271119020008` no longer sorted after its newest), because a remote branch (`claude/great-heisenberg-u7kyd9`) now carries `20271119000000` and the migration deploy is a plain push that refuses an out-of-order version; production's newest applied is `20271118110009` (ledger and every `origin/*` ref re-read 2026-10-27); it sorts after both. Pins renewed for the 10 bodies whose text carries the version. **#227 residual, stated:** owner seats are not refused, and the sub-account
+owner path seats a new owner wherever the business has NO ACTIVE OWNER, which includes a business whose holder
+is paused for billing with no other active owner: the agency's (or platform's) `subaccount_owner` token then
+seats a new owner beside the paused holder (owner ruling R13 says that holder is still the holder).
+**Residual until I2, stated:** a co-owner with Setup `owner_full` can withdraw or disable the
+holder's legal-owner invitation through Setup (delete the record, leave it out of the saved list, or retype it
+to an individual). Settings → Team does
+not offer Owner yet (I3); PAIGE has no owner path yet (I4). **Correction (§13, 2026-10-27): the first entry
+said no screen offers Owner — the mounted Agency Team screen does** (`src/agency/team.tsx` `INVITE_ROLES`,
+`useAgencyPeople.ts` → `create_tenant_invite_token`). That choice used to report "Invite created" and never
+produced an owner; it is now refused with "Agency accounts add Admins and Members. An owner is added by the
+account holder of a business account, from its Settings → Team." (inside a sub-account: "Owners are added
+only by this business's account holder, from Settings → Team. You can invite an Admin or Member here."). The
+option stays until the owner decides. **OWNER DECISION OWED: remove Agency Team's Owner option (I3) — it never
+produced an owner.** **Operator powers over Solo accounts are unchanged** (owner ruling 2026-10-27: super_admin
+and platform_admin keep archive, restore, delete, `revoke_platform_access` and `admin-delete-user` as shipped;
+contract decisions B3, D-A, D-B reversed). Ledger: `docs/doctrine/tier-matrix.md`, "EXP08 co-owners and
+entity owners, I1".
+
 `high` means the gate accepts only a fingerprint of the exact rendered card, carried in the request
 **body** — a channel the model cannot write. The model asserting consent is refused.
 **`team_set_work_profile` is `ordinary` and is NEVER a permission change**: the RPC writes a job
@@ -10065,6 +10121,15 @@ DOCTRINE_190/191/192, 194, 197, 198 + Addendum, 200, 201, 202, 203, 205, 208, 21
 ---
 
 ## 10. §13 corrections log
+
+- **2026-10-27 · EXP08 I1 SAID "NO SHIPPED SCREEN OFFERS OWNER YET"; THE AGENCY TEAM SCREEN DOES.** The I1 ledger (tier matrix and §4) said no shipped screen offered Owner. Review found the mounted Agency Team screen (`src/agency/team.tsx` `INVITE_ROLES` includes Owner; `src/agency/data/useAgencyPeople.ts` sends `_default_role: 'owner'` to `create_tenant_invite_token`).
+  - **What it did before (read from the shipped bodies, not assumed).** For an agency owner the mint succeeded ("Invite created — the join link is ready."), but it never produced an owner: the join page (`accept_solo_team_invite`) refused it as an unsupported permission; the legacy `accept_tenant_invite` refused it on an agency account and silently seated an Admin on a sub-account.
+  - **Corrected (I1 round 2).** The refusal the Agency person now reads is true for where they are ("Agency accounts add Admins and Members. An owner is added by the account holder of a business account, from its Settings → Team."; inside a sub-account and elsewhere, "Owners are added only by this business's account holder, from Settings → Team. You can invite an Admin or Member here."; a company workspace, "Owner invitations aren't available for this account."). Named in the migration's §58 block and the tier matrix. The option stays until the owner decides (§58): **owner decision owed for I3.**
+- **2026-10-27 · EXP08 CO-OWNER CONTRACT HAD OPERATORS UNABLE TO REMOVE SOLO OWNERS; THE OWNER KEPT THE SHIPPED POWERS.** The co-owner contract (decisions B3, D-A, D-B) and the decision log said `revoke_platform_access` and `admin-delete-user` would refuse while the person holds a Solo owner seat ("operators can't remove Solo owners"), and round 5 had proposed gating restore/archive. Owner ruling (Antonio, 2026-10-27): "Platform Operator Owner and Admin should have the power to remove, Archive and Delete a Solo Account. That was created already and I want to keep it that way." **Reversed:** super_admin and platform_admin keep archive, restore, delete, `revoke_platform_access` and `admin-delete-user` on Solo accounts exactly as shipped. Nothing was ever built against them (they were I2/I3 plans). The co-owner rules still govern who owns a live business.
+
+- **2026-10-27 · EXP08 CO-OWNER AUTHORITY WAS RECORDED "NOT YET MERGED" AFTER IT WAS LIVE.** The tier matrix headed `20271116020008` "NOT YET MERGED — proof local, PROOF OWED on production" after PR #2945 merged (`51ede67eb`) and applied (`db-live` = `51ede67eb`).
+  - **Corrected (I1 grounding, read-only production queries 2026-10-27).** Production md5(prosrc) of `grant_co_owner` `2a75180d…`, `revoke_co_owner` `e2ba8ca8…`, `guard_tenant_owner_only_columns` `d77a4bfa…` and `is_tenant_account_holder` `4a3cab59…` equal the repo bodies, and `authenticated`/`anon` cannot execute the helper. The tier-matrix heading now says so.
+  - **Also recorded:** production's `peek_tenant_invite` is not reproducible verbatim from any one repo file (`20271108120100` patched it in place with `replace()`, and its earlier comment lines differ from `20260713050000`); `20271120010008` (named `20271117170008` until round 6, then `20271118200008` until round 7, then `20271120010008` until round 8) re-emits production's own body (md5 `276541d0…`) and its proof pins that body inline.
 
 - **2026-10-27 · ROSTER: MERIT WAS STILL "FINANCE & PEOPLE" AND NEXUS STILL OWNED SALES, AGAINST THE 23 OCT 2026 STANDARD.** The binding owner standard at the top of `docs/doctrine/paige-c-suite-roster.md` gives MERIT sales, commercial relationships, proposals, agreements and collections, and NEXUS marketing, advertising, growth and campaigns; VERA owns finance.
   - **What was wrong.** `supabase/functions/_shared/paige-context/vp-address.ts` (the one persona composer behind PAIGE chat's "MERIT, …" addressing) still said MERIT was "VP Finance & People" (money spine, dunning, refunds, hiring and comp) and NEXUS "VP Growth" with sales sequences, pipeline management and lead scoring. The production `paige_subagents` rows `merit` and `nexus` (seeded `20270108000000_csuite_roster_mount.sql`, never remapped) said the same; read on production 2026-10-27, both are the untouched version-1 seeds. So two specialists answered for the same desk (VERA and MERIT on finance) and sales sat with marketing.

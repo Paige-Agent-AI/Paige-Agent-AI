@@ -1,0 +1,388 @@
+[
+ {
+  "n": "review-fix-ev-1536x770-closed-paige-panel-light",
+  "overflow": 0,
+  "panelWidth": 1120,
+  "lanes": [
+   {
+    "cls": "stw-now",
+    "width": 450
+   },
+   {
+    "cls": "stw-soon",
+    "width": 450
+   }
+  ],
+  "today": [
+   "Invite someone",
+   "Resend or withdraw an invitation",
+   "Edit someone's title and responsibilities",
+   "Change a permission (owner only)"
+  ],
+  "soon": 1,
+  "rule": "She's held to the same rules you are, and nobody can be made an owner from a conversation. Access changes and invitations are read back to you and wait for your approval, even on autopilot. Approvals assigned to someone and a mailbox they connected can't be handed over, by her or anyone, and open work can be handed over only on a standalone business account. Until her new actions have been checked, you can always do them here.",
+  "errors": [
+   "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ]
+ },
+ {
+  "n": "review-fix-ev-1536x770-closed-paige-panel-dark",
+  "overflow": 0,
+  "panelWidth": 1120,
+  "lanes": [
+   {
+    "cls": "stw-now",
+    "width": 450
+   },
+   {
+    "cls": "stw-soon",
+    "width": 450
+   }
+  ],
+  "today": [
+   "Invite someone",
+   "Resend or withdraw an invitation",
+   "Edit someone's title and responsibilities",
+   "Change a permission (owner only)"
+  ],
+  "soon": 1,
+  "rule": "She's held to the same rules you are, and nobody can be made an owner from a conversation. Access changes and invitations are read back to you and wait for your approval, even on autopilot. Approvals assigned to someone and a mailbox they connected can't be handed over, by her or anyone, and open work can be handed over only on a standalone business account. Until her new actions have been checked, you can always do them here.",
+  "errors": []
+ },
+ {
+  "n": "review-fix-ev-1536x770-open-paige-panel-light",
+  "overflow": 0,
+  "panelWidth": 1009,
+  "lanes": [
+   {
+    "cls": "stw-now",
+    "width": 394
+   },
+   {
+    "cls": "stw-soon",
+    "width": 394
+   }
+  ],
+  "today": [
+   "Invite someone",
+   "Resend or withdraw an invitation",
+   "Edit someone's title and responsibilities",
+   "Change a permission (owner only)"
+  ],
+  "soon": 1,
+  "rule": "She's held to the same rules you are, and nobody can be made an owner from a conversation. Access changes and invitations are read back to you and wait for your approval, even on autopilot. Approvals assigned to someone and a mailbox they connected can't be handed over, by her or anyone, and open work can be handed over only on a standalone business account. Until her new actions have been checked, you can always do them here.",
+  "errors": []
+ },
+ {
+  "n": "review-fix-ev-1536x770-open-paige-panel-dark",
+  "overflow": 0,
+  "panelWidth": 1009,
+  "lanes": [
+   {
+    "cls": "stw-now",
+    "width": 394
+   },
+   {
+    "cls": "stw-soon",
+    "width": 394
+   }
+  ],
+  "today": [
+   "Invite someone",
+   "Resend or withdraw an invitation",
+   "Edit someone's title and responsibilities",
+   "Change a permission (owner only)"
+  ],
+  "soon": 1,
+  "rule": "She's held to the same rules you are, and nobody can be made an owner from a conversation. Access changes and invitations are read back to you and wait for your approval, even on autopilot. Approvals assigned to someone and a mailbox they connected can't be handed over, by her or anyone, and open work can be handed over only on a standalone business account. Until her new actions have been checked, you can always do them here.",
+  "errors": []
+ },
+ {
+  "n": "review-fix-ev-1366x768-closed-paige-panel-light",
+  "overflow": 0,
+  "panelWidth": 1120,
+  "lanes": [
+   {
+    "cls": "stw-now",
+    "width": 450
+   },
+   {
+    "cls": "stw-soon",
+    "width": 450
+   }
+  ],
+  "today": [
+   "Invite someone",
+   "Resend or withdraw an invitation",
+   "Edit someone's title and responsibilities",
+   "Change a permission (owner only)"
+  ],
+  "soon": 1,
+  "rule": "She's held to the same rules you are, and nobody can be made an owner from a conversation. Access changes and invitations are read back to you and wait for your approval, even on autopilot. Approvals assigned to someone and a mailbox they connected can't be handed over, by her or anyone, and open work can be handed over only on a standalone business account. Until her new actions have been checked, you can always do them here.",
+  "errors": []
+ },
+ {
+  "n": "review-fix-ev-1366x768-closed-paige-panel-dark",
+  "overflow": 0,
+  "panelWidth": 1120,
+  "lanes": [
+   {
+    "cls": "stw-now",
+    "width": 450
+   },
+   {
+    "cls": "stw-soon",
+    "width": 450
+   }
+  ],
+  "today": [
+   "Invite someone",
+   "Resend or withdraw an invitation",
+   "Edit someone's title and responsibilities",
+   "Change a permission (owner only)"
+  ],
+  "soon": 1,
+  "rule": "She's held to the same rules you are, and nobody can be made an owner from a conversation. Access changes and invitations are read back to you and wait for your approval, even on autopilot. Approvals assigned to someone and a mailbox they connected can't be handed over, by her or anyone, and open work can be handed over only on a standalone business account. Until her new actions have been checked, you can always do them here.",
+  "errors": []
+ },
+ {
+  "n": "review-fix-ev-1366x768-open-paige-panel-light",
+  "overflow": 0,
+  "panelWidth": 898,
+  "lanes": [
+   {
+    "cls": "stw-now",
+    "width": 339
+   },
+   {
+    "cls": "stw-soon",
+    "width": 339
+   }
+  ],
+  "today": [
+   "Invite someone",
+   "Resend or withdraw an invitation",
+   "Edit someone's title and responsibilities",
+   "Change a permission (owner only)"
+  ],
+  "soon": 1,
+  "rule": "She's held to the same rules you are, and nobody can be made an owner from a conversation. Access changes and invitations are read back to you and wait for your approval, even on autopilot. Approvals assigned to someone and a mailbox they connected can't be handed over, by her or anyone, and open work can be handed over only on a standalone business account. Until her new actions have been checked, you can always do them here.",
+  "errors": []
+ },
+ {
+  "n": "review-fix-ev-1366x768-open-paige-panel-dark",
+  "overflow": 0,
+  "panelWidth": 898,
+  "lanes": [
+   {
+    "cls": "stw-now",
+    "width": 339
+   },
+   {
+    "cls": "stw-soon",
+    "width": 339
+   }
+  ],
+  "today": [
+   "Invite someone",
+   "Resend or withdraw an invitation",
+   "Edit someone's title and responsibilities",
+   "Change a permission (owner only)"
+  ],
+  "soon": 1,
+  "rule": "She's held to the same rules you are, and nobody can be made an owner from a conversation. Access changes and invitations are read back to you and wait for your approval, even on autopilot. Approvals assigned to someone and a mailbox they connected can't be handed over, by her or anyone, and open work can be handed over only on a standalone business account. Until her new actions have been checked, you can always do them here.",
+  "errors": []
+ },
+ {
+  "n": "review-fix-ev-1024x768-closed-paige-panel-light",
+  "overflow": 0,
+  "panelWidth": 907,
+  "lanes": [
+   {
+    "cls": "stw-now",
+    "width": 343
+   },
+   {
+    "cls": "stw-soon",
+    "width": 343
+   }
+  ],
+  "today": [
+   "Invite someone",
+   "Resend or withdraw an invitation",
+   "Edit someone's title and responsibilities",
+   "Change a permission (owner only)"
+  ],
+  "soon": 1,
+  "rule": "She's held to the same rules you are, and nobody can be made an owner from a conversation. Access changes and invitations are read back to you and wait for your approval, even on autopilot. Approvals assigned to someone and a mailbox they connected can't be handed over, by her or anyone, and open work can be handed over only on a standalone business account. Until her new actions have been checked, you can always do them here.",
+  "errors": []
+ },
+ {
+  "n": "review-fix-ev-1024x768-closed-paige-panel-dark",
+  "overflow": 0,
+  "panelWidth": 907,
+  "lanes": [
+   {
+    "cls": "stw-now",
+    "width": 343
+   },
+   {
+    "cls": "stw-soon",
+    "width": 343
+   }
+  ],
+  "today": [
+   "Invite someone",
+   "Resend or withdraw an invitation",
+   "Edit someone's title and responsibilities",
+   "Change a permission (owner only)"
+  ],
+  "soon": 1,
+  "rule": "She's held to the same rules you are, and nobody can be made an owner from a conversation. Access changes and invitations are read back to you and wait for your approval, even on autopilot. Approvals assigned to someone and a mailbox they connected can't be handed over, by her or anyone, and open work can be handed over only on a standalone business account. Until her new actions have been checked, you can always do them here.",
+  "errors": []
+ },
+ {
+  "n": "review-fix-ev-1024x768-open-paige-panel-light",
+  "overflow": 0,
+  "panelWidth": 907,
+  "lanes": [
+   {
+    "cls": "stw-now",
+    "width": 343
+   },
+   {
+    "cls": "stw-soon",
+    "width": 343
+   }
+  ],
+  "today": [
+   "Invite someone",
+   "Resend or withdraw an invitation",
+   "Edit someone's title and responsibilities",
+   "Change a permission (owner only)"
+  ],
+  "soon": 1,
+  "rule": "She's held to the same rules you are, and nobody can be made an owner from a conversation. Access changes and invitations are read back to you and wait for your approval, even on autopilot. Approvals assigned to someone and a mailbox they connected can't be handed over, by her or anyone, and open work can be handed over only on a standalone business account. Until her new actions have been checked, you can always do them here.",
+  "errors": []
+ },
+ {
+  "n": "review-fix-ev-1024x768-open-paige-panel-dark",
+  "overflow": 0,
+  "panelWidth": 907,
+  "lanes": [
+   {
+    "cls": "stw-now",
+    "width": 343
+   },
+   {
+    "cls": "stw-soon",
+    "width": 343
+   }
+  ],
+  "today": [
+   "Invite someone",
+   "Resend or withdraw an invitation",
+   "Edit someone's title and responsibilities",
+   "Change a permission (owner only)"
+  ],
+  "soon": 1,
+  "rule": "She's held to the same rules you are, and nobody can be made an owner from a conversation. Access changes and invitations are read back to you and wait for your approval, even on autopilot. Approvals assigned to someone and a mailbox they connected can't be handed over, by her or anyone, and open work can be handed over only on a standalone business account. Until her new actions have been checked, you can always do them here.",
+  "errors": []
+ },
+ {
+  "n": "review-fix-ev-900x1000-closed-paige-panel-light",
+  "overflow": 0,
+  "panelWidth": 788,
+  "lanes": [
+   {
+    "cls": "stw-now",
+    "width": 284
+   },
+   {
+    "cls": "stw-soon",
+    "width": 284
+   }
+  ],
+  "today": [
+   "Invite someone",
+   "Resend or withdraw an invitation",
+   "Edit someone's title and responsibilities",
+   "Change a permission (owner only)"
+  ],
+  "soon": 1,
+  "rule": "She's held to the same rules you are, and nobody can be made an owner from a conversation. Access changes and invitations are read back to you and wait for your approval, even on autopilot. Approvals assigned to someone and a mailbox they connected can't be handed over, by her or anyone, and open work can be handed over only on a standalone business account. Until her new actions have been checked, you can always do them here.",
+  "errors": []
+ },
+ {
+  "n": "review-fix-ev-900x1000-closed-paige-panel-dark",
+  "overflow": 0,
+  "panelWidth": 788,
+  "lanes": [
+   {
+    "cls": "stw-now",
+    "width": 284
+   },
+   {
+    "cls": "stw-soon",
+    "width": 284
+   }
+  ],
+  "today": [
+   "Invite someone",
+   "Resend or withdraw an invitation",
+   "Edit someone's title and responsibilities",
+   "Change a permission (owner only)"
+  ],
+  "soon": 1,
+  "rule": "She's held to the same rules you are, and nobody can be made an owner from a conversation. Access changes and invitations are read back to you and wait for your approval, even on autopilot. Approvals assigned to someone and a mailbox they connected can't be handed over, by her or anyone, and open work can be handed over only on a standalone business account. Until her new actions have been checked, you can always do them here.",
+  "errors": []
+ },
+ {
+  "n": "review-fix-ev-900x1000-open-paige-panel-light",
+  "overflow": 0,
+  "panelWidth": 788,
+  "lanes": [
+   {
+    "cls": "stw-now",
+    "width": 284
+   },
+   {
+    "cls": "stw-soon",
+    "width": 284
+   }
+  ],
+  "today": [
+   "Invite someone",
+   "Resend or withdraw an invitation",
+   "Edit someone's title and responsibilities",
+   "Change a permission (owner only)"
+  ],
+  "soon": 1,
+  "rule": "She's held to the same rules you are, and nobody can be made an owner from a conversation. Access changes and invitations are read back to you and wait for your approval, even on autopilot. Approvals assigned to someone and a mailbox they connected can't be handed over, by her or anyone, and open work can be handed over only on a standalone business account. Until her new actions have been checked, you can always do them here.",
+  "errors": []
+ },
+ {
+  "n": "review-fix-ev-900x1000-open-paige-panel-dark",
+  "overflow": 0,
+  "panelWidth": 788,
+  "lanes": [
+   {
+    "cls": "stw-now",
+    "width": 284
+   },
+   {
+    "cls": "stw-soon",
+    "width": 284
+   }
+  ],
+  "today": [
+   "Invite someone",
+   "Resend or withdraw an invitation",
+   "Edit someone's title and responsibilities",
+   "Change a permission (owner only)"
+  ],
+  "soon": 1,
+  "rule": "She's held to the same rules you are, and nobody can be made an owner from a conversation. Access changes and invitations are read back to you and wait for your approval, even on autopilot. Approvals assigned to someone and a mailbox they connected can't be handed over, by her or anyone, and open work can be handed over only on a standalone business account. Until her new actions have been checked, you can always do them here.",
+  "errors": []
+ }
+]

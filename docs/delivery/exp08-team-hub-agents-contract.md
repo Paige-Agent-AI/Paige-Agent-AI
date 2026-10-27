@@ -1,8 +1,10 @@
 # EXP08 Team Hub agents: PAIGE and the six specialists as Team Hub participants
 
 Status: **APPROVED by the owner 2026-10-27** ("approved, go with your recommendations and start
-building"): prototype v3 approved and frozen (§28) with the owner's colour-and-symbol direction of the
-same day (section 5, A1 UI); the seven personalities in
+building"). Two design authorities, each frozen under §28 for its own part: **prototype v3,
+approved-frozen, is the authority for behaviour** (layout, placement, states and flows); **the v5
+colours and symbols are APPROVED-FROZEN 2026-10-27** ("Colors and images are approved", artifact
+version 1793069117-3333; section 5, A1 UI), and where they differ from v3's colour rule v5 wins. The seven personalities in
 [the personalities](exp08-team-hub-agents-personalities.md) approved as drafted; Q1 answered as the
 draft's default (owners and admins assign agent work) and Q2 as its default (a top-level question gets
 a top-level reply linked to the asker's message; a thread reply is answered in its thread); MERIT =
@@ -21,7 +23,16 @@ where this contract left a detail open, or where review changed it; the approved
   hour. Try again later.*
 - **A reused request id** never binds another question's reply: the post door's conflict path accepts a
   stored row only when it answers this turn's question in this place (`asked_in_message_id` and
-  `parent_message_id` match), otherwise `invalid`.
+  `parent_message_id` match) and no other turn already posted it, otherwise `invalid`. The second
+  check matters in an agent DM: two DM questions asked in two other conversations both answer there
+  unlinked at the top level, so place and link alone cannot tell X's answer from Y's (proved, with
+  mutant M24).
+- **The seat lock in `team_hub_open_agent_dm` and `team_hub_post_message` is defence in depth, not a
+  proved race.** Both doors call `_team_hub_hold_seats` (FOR SHARE on the caller's seat) before they
+  add a membership, so a seat ended concurrently waits for the door to commit and the seat-ended
+  trigger then removes what it made. The sequential cases are proved (a seat that ended is refused; a
+  seat end drops the agent DM, M11). The concurrent interleaving needs two live sessions and is not in
+  the psql proof: `UNVERIFIED` as a race.
 - **Two triggers are re-created with a wider column list**, each because its guard now reads the column:
   `team_hub_member_scope` adds `user_id`, `team_hub_message_scope` adds `asked_in_message_id`,
   `author_kind` and `agent_key`. Both are listed in the migration header and checked against

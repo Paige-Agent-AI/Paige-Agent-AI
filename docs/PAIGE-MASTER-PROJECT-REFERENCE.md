@@ -7901,7 +7901,7 @@ Current gaps:
   Merged #2912 (`e0263aac0`); PAIGE's tools for these acts (suspend, reinstate, remove, Team
   conversations, hand-over) merged #2957 (squash `2aa4d23e8`), their catalogue migration
   `20271116100008` applied on production (read back in `schema_migrations` 2026-10-27), and `edge-live`
-  and `db-live` both at `2aa4d23e8`. `PROOF_OWED`: the Team screen and Team Hub browser surfaces for
+  and `db-live` at or past `2aa4d23e8`. `PROOF_OWED`: the Team screen and Team Hub browser surfaces for
   these acts are not built, and no authenticated drive of the acts (in the browser or through PAIGE) has
   run.
 - Team Hub agents A1a (migrations `20271116120008` and `20271116120108`, 2026-10-27, owner-approved

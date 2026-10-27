@@ -15,7 +15,7 @@ const calendar = { id: id(4), slug: "test-consultation", title: "Client check-in
 const slots = ["2026-11-09T10:00:00Z", "2026-11-09T11:00:00Z"];
 const saved = { state: "saved", booking: { id: id(6), title: "Client check-in", start_at: slots[0], end_at: "2026-11-09T10:30:00Z", status: "scheduled", timezone: "UTC" } };
 const key = customerBookingRecoveryKey(id(1), id(2), id(3));
-let root: Root, host: HTMLDivElement, onSaved: ReturnType<typeof vi.fn>;
+let root: Root, host: HTMLDivElement, onSaved = vi.fn<() => void>();
 const flush = async () => { for (let i = 0; i < 25; i++) await Promise.resolve(); };
 const render = async (value: unknown = identity()) => act(async () => { f.identity = value; root.render(<MemoryRouter><CustomerBooking onSaved={onSaved} /></MemoryRouter>); await flush(); });
 const button = (text: string | RegExp) => [...document.querySelectorAll<HTMLButtonElement>("button")].find(b => typeof text === "string" ? b.textContent?.trim() === text : text.test(b.textContent ?? ""));
@@ -26,7 +26,7 @@ const dialogText = () => document.querySelector('[role="dialog"]')?.textContent 
 const chooseDetails = async () => { await click("Book a time"); await click(/^Client check-in/); await click(/Nov 9/); };
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 beforeEach(() => {
-  vi.clearAllMocks(); localStorage.clear(); onSaved = vi.fn();
+  vi.clearAllMocks(); localStorage.clear(); onSaved = vi.fn<() => void>();
   f.calendars.mockResolvedValue({ calendars: [calendar], next: null });
   f.availability.mockResolvedValue({ slots, timezone: "UTC", durationMin: 30, horizonDays: 60, services: [], questions: [], locations: ["phone"] });
   f.create.mockResolvedValue(saved); f.reconcile.mockResolvedValue(saved);

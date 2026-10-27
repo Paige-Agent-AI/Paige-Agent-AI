@@ -5,7 +5,7 @@
 -- admission refuses everything that is not the caller's own changeable booking with one "not found";
 -- request-id and state replay; and admission never writes public.internal_bookings.
 BEGIN;
-SELECT plan(211);
+SELECT plan(212);
 INSERT INTO auth.users(id,aud,role,email,email_confirmed_at,raw_app_meta_data) VALUES
  ('e0961000-0000-4000-8000-000000000001','authenticated','authenticated','sessions-host-a@tests.invalid',now(),'{"comms_provider_execution":"disabled"}'),
  ('e0961000-0000-4000-8000-000000000002','authenticated','authenticated','sessions-host-b@tests.invalid',now(),'{"comms_provider_execution":"disabled"}'),
@@ -769,6 +769,23 @@ SELECT is(pg_temp.as_user('e0961000-0000-4000-8000-000000000008',
 -- into business A. Remove only that synthetic anomaly after all original tests;
 -- real cross-account dependencies must continue to block permanent deletion.
 DELETE FROM public.internal_bookings WHERE id='e0965000-0000-4000-8000-000000000022';
+-- Keep this compatibility case about the Portal booking seal, rather than
+-- silently changing the ORIGINAL Operator's generic CTID cleanup contract.
+-- Its existing contact-method DELETE trigger rewrites the owning clients row;
+-- a plan captured before that rewrite holds a stale clients CTID. The prior
+-- full-schema run actually refused/rolled back with55000 at this unrelated
+-- legacy boundary. Finish ONLY this rollback fixture's contact-method cleanup
+-- BEFORE the original preflight; retain its trusted appointment and actor.
+-- This is not a production workaround or proof of general account retirement.
+CREATE TEMP TABLE private_booking_contact_before_cleanup AS
+ SELECT ctid::text AS tuple_id FROM public.clients
+ WHERE id='e0963000-0000-4000-8000-000000000001';
+DELETE FROM public.client_contact_methods
+ WHERE tenant_id='e0962000-0000-4000-8000-000000000001'
+ AND client_id='e0963000-0000-4000-8000-000000000001';
+SELECT isnt((SELECT ctid::text FROM public.clients WHERE id='e0963000-0000-4000-8000-000000000001'),
+ (SELECT tuple_id FROM private_booking_contact_before_cleanup),
+ 'the original contact-method cleanup rewrites the synthetic contact before retirement preflight');
 CREATE TEMP TABLE private_booking_other_business AS SELECT to_jsonb(t) r FROM public.tenants t
  WHERE id='e0962000-0000-4000-8000-000000000002';
 CREATE TEMP TABLE private_booking_archive_preview AS SELECT pg_temp.as_user(

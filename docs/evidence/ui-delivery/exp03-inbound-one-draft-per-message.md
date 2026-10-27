@@ -44,7 +44,7 @@ RELEASE_CLASSIFICATION: patch: closes a duplicate-draft race and a contact-name 
 CUSTOMER_RELEASE_IDENTITY: none: internal hardening, no owner-decided customer release
 RELEASE_NOTE_REQUIRED: NO: nothing a customer sees changes beyond a duplicate no longer appearing
 RELEASE_TRUTH_BOUNDARY: PARTIAL: index and fix LIVE after merge; real concurrent redelivery PROOF OWED
-RELEASE_RECOVERY: position=forward-fix only — DROP INDEX public.uq_paige_actions_draft_reply_message; revert the handle-inbound-email change; reference=this PR and docs/brain/config-registry.md
+RELEASE_RECOVERY: position=forward-fix only — DROP INDEX public.uq_paige_actions_draft_reply_message and revert the handle-inbound-email change; reference=this PR and docs/brain/config-registry.md
 
 ## Scope and collisions
 

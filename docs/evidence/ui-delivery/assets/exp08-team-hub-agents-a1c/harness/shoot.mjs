@@ -22,6 +22,11 @@ for (const theme of ["dark", "light"]) {
 shots.push({ ...phone, theme: "dark", act: "writing-others", name: "ev-a1c-writing-others-390-dark" });
 shots.push({ ...phone, theme: "dark", act: "atlist-everyone", name: "ev-a1c-atlist-everyone-390-dark" });
 shots.push({ ...phone, theme: "light", act: "atlist-top", name: "ev-a1c-atlist-top-390-light" });
+// Round 2: the private box whose state cannot be read ("may still be writing", MERIT's tint kept, §28) and the thread's @ list.
+for (const theme of ["dark", "light"]) {
+  for (const act of ["private-still-writing-merit", "thread-atlist"]) shots.push({ ...desk, theme, act, name: `ev-a1c-${act}-1366-${theme}` });
+}
+shots.push({ ...phone, theme: "dark", act: "thread-atlist", name: "ev-a1c-thread-atlist-390-dark" });
 
 const GOLD = ["--pg-gold-core", "--pg-gold", "--pg-gold-deep", "--pg-gold-fill"];
 const report = [];
@@ -31,8 +36,8 @@ for (const shot of shots) {
   const errors = [];
   page.on("console", (message) => { if (message.type() === "error") errors.push(message.text()); });
   page.on("pageerror", (error) => errors.push(String(error)));
-  const scenario = shot.act === "writing-others" ? "writing" : shot.act === "chips" ? "chips" : "populated";
-  const url = `${BASE}?s=${scenario}&theme=${shot.theme}&vw=${shot.vw}&vh=${shot.vh}&rail=${shot.rail}&row=${shot.row ?? 66}&paige=${shot.paige}&pw=${shot.pw ?? 0}`;
+  const scenario = shot.act === "writing-others" ? "writing" : shot.act === "chips" ? "chips" : shot.act === "private-still-writing-merit" ? "unknown" : "populated";
+  const url = `${BASE}?s=${scenario}${scenario === "unknown" ? "&states=down" : ""}&theme=${shot.theme}&vw=${shot.vw}&vh=${shot.vh}&rail=${shot.rail}&row=${shot.row ?? 66}&paige=${shot.paige}&pw=${shot.pw ?? 0}`;
   await page.goto(url);
   await page.waitForSelector(".th-hub");
   await page.waitForTimeout(400);
@@ -58,6 +63,15 @@ for (const shot of shots) {
     } else {
       await page.evaluate(() => { const list = document.querySelector("[role=listbox][aria-label='People and agents']"); if (list) list.scrollTop = 0; });
     }
+  } else if (act === "private-still-writing-merit") {
+    await openConv("launch"); await page.waitForSelector(".th-ag-priv[data-ag='merit']");
+    await page.evaluate(() => document.querySelector(".th-ag-priv[data-ag='merit']")?.scrollIntoView({ block: "center" }));
+  } else if (act === "thread-atlist") {
+    await openConv("client-delivery");
+    await page.locator(".th-conv button", { hasText: /^2 replies/ }).first().click();
+    const reply = page.locator("#th-thread-reply"); await reply.waitFor();
+    await reply.fill("@"); await reply.press("End");
+    await page.waitForSelector(".th-thread [role=listbox][aria-label='People and agents']");
   } else if (act === "chips") {
     await openConv("launch"); await page.waitForSelector(".th-bc-chip");
   }
@@ -114,6 +128,13 @@ for (const shot of shots) {
       failedBox: (() => { const box = document.querySelector(".th-ag-priv--failed"); if (!box) return null; const s = getComputedStyle(box);
         return { text: box.textContent, dataAg: box.getAttribute("data-ag"), border: s.borderTopColor, background: s.backgroundColor,
           surface: resolveColor(root.getPropertyValue("--pg-surface").trim()), line: resolveColor(root.getPropertyValue("--pg-line").trim()) }; })(),
+      unknownBox: (() => { const box = Array.from(document.querySelectorAll(".th-ag-priv")).find((row) => row.textContent?.includes("may still be writing")); if (!box) return null; const s = getComputedStyle(box);
+        return { text: box.textContent, dataAg: box.getAttribute("data-ag"), statusClass: box.classList.contains("th-ag-priv--status"), border: s.borderTopColor, background: s.backgroundColor,
+          icon: box.querySelector("svg") ? getComputedStyle(box.querySelector("svg")).color : null,
+          surface: resolveColor(root.getPropertyValue("--pg-surface").trim()), agentInk: resolveColor(root.getPropertyValue("--pg-agent-merit-ink").trim()) }; })(),
+      threadAtList: Array.from(document.querySelectorAll(".th-thread [role=listbox][aria-label='People and agents'] .th-pop-head, .th-thread [role=listbox][aria-label='People and agents'] [role=option]"))
+        .map((item) => item.getAttribute("role") === "option" ? `${item.getAttribute("data-ag") ?? item.getAttribute("data-bc") ?? item.querySelector(".th-option-meta span")?.textContent}` : `# ${item.textContent}`),
+      threadHint: document.querySelector(".th-thread .th-hint")?.textContent ?? null,
       chips: Array.from(document.querySelectorAll(".th-msg .th-mention")).map((chip) => ({ text: chip.textContent, kind: chip.classList.contains("th-bc-chip") ? "everyone" : chip.getAttribute("data-ag") ? "agent" : "person",
         background: getComputedStyle(chip).backgroundColor })),
       fails: Array.from(document.querySelectorAll(".th-ag-fail")).map((row) => row.textContent),

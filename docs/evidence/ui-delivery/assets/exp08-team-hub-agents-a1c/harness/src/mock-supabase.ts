@@ -1,8 +1,8 @@
 // Harness-only in-memory double for EXP08 Team Hub agents A1c (copied from the A1b harness; A1c changes:
 // the turn-state read returns a reply being written to everyone who can see the conversation, the post
-// door takes p_broadcast_mention and the message carries `broadcast`, and two scenarios: `writing`,
-// another member's question MERIT is answering, and `chips`, a sent message with a person, an agent and
-// @channel).
+// door takes p_broadcast_mention and the message carries `broadcast`, and scenarios: `writing`,
+// another member's question MERIT is answering, `chips`, a sent message with a person, an agent and
+// @channel, and (round 2) `unknown`, the viewer's own private part whose state cannot be read).
 // Originally: the in-memory double for EXP08 Team Hub agents A1b. It answers the Team Hub doors in the
 // A1a shapes (team_hub_list_conversations with agent DMs and agent_key, team_hub_list_messages with
 // author_kind / agent_key / asked_in_message_id / agent_mentions, team_hub_post_message with
@@ -57,6 +57,10 @@ const db = {
       ...(scenario === "chips" ? [msg({ id: "l9", author_user_id: "u-priya", body: "@channel the workshop moves to Nov 14. @Sam Lee owns the banner; @ZION can turn the run sheet into tasks.",
         mentions: ["u-sam"], agent_mentions: ["zion"], broadcast: "channel", created_at: today(9, 38) }),
         agentMsg("zion", "l9", "u-priya", "Done. Run sheet split into four tasks: venue walkthrough (Marcus, Oct 30), run sheet (Priya, Nov 7), slides (Sam, Nov 10), banner (Sam, Nov 12).", { created_at: today(9, 39) })] : []),
+      // A1c round 2: Morgan's own question whose private part's state cannot be read (open with &states=down):
+      // the box says MERIT may still be writing, in MERIT's tint (only the FAILED box is neutral).
+      ...(scenario === "unknown" ? [msg({ id: "l10", author_user_id: "u-me", body: "@MERIT what did Harper & Co. pay us last quarter?", agent_mentions: ["merit"], created_at: today(9, 37) }),
+        agentMsg("merit", "l10", "u-me", `Harper & Co. are paid up through October. ${FIXED}`, { created_at: today(9, 38) })] : []),
     ],
     "c-delivery": [
       msg({ id: "d1", author_user_id: "u-marcus", body: "Kickoff agenda for the Harper & Co. onboarding. Comments in the thread please.", created_at: today(9, 2), reply_count: 2, last_reply_at: today(9, 9) }),

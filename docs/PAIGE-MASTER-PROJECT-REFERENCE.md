@@ -8178,10 +8178,14 @@ Current gaps:
   **A1c** (branch `exp08-hub-agents-a1c`, on A1b, not merged, 2026-10-27): migration `20271119030008`
   — everyone who can see a conversation sees *<AGENT> is writing…* (the state read returns `answering`
   to them, state only); @channel / @here through `team_hub_post_message`'s new `p_broadcast_mention`
-  (channel only, never asks an agent; recipients stored; @here = active in the last 10 minutes by read
-  or post, as no presence substrate exists); the @ list is people, *Your Paige team*, then *Everyone*,
-  matched from the start of any word; the failed private box is neutral (owner ruling); the specialist
-  handoff is stripped. **Gap:** Team Hub has no notification or unread-mention count for any mention.
+  (channel only, never asks an agent; recipients stored; @here = posted in the channel, or the person's
+  own read door ran for it, in the last 10 minutes — a new `last_active_at` only `team_hub_mark_read`
+  writes, never `last_read_at`, which joining, a seat start and the toggle also set; a broadcast that
+  reaches nobody is stored plain); the @ list — the conversation's and, round 2, a thread's reply box —
+  is people, *Your Paige team*, then *Everyone*, matched from the start of any word; only the FAILED
+  private box is neutral (owner ruling; the unknown box keeps the agent tint); the specialist handoff is
+  stripped. **Gap:** Team Hub has no notification or unread-mention count for ANY mention yet;
+  @channel / @here store recipients and show a chip; alerts are a later increment.
   Contract "A1c notes"; proof `exp08_team_hub_a1c.sql`.
 - `/solo/{n}/team` still redirects to Settings → Team; Team Hub is a separate destination.
 - Team actions still emit no Rail outcome.

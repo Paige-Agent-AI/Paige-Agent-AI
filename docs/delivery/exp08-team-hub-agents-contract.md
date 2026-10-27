@@ -213,15 +213,20 @@ why, and what it proves (§13, §58: recorded, not silent).
 
 **A1c notes (2026-10-27, the owner's rulings on mentions and the failed private box).** Recorded, not
 silent (§13, §58); each has a test that fails with the defect reinstated (§71.4). Migration
-`20271119030008` (re-checked at build: production's newest applied version is `20271118110009`; the
-newest on any `origin/*` ref is `20271119010008`, A1b, unmerged; no `20271119020008` exists anywhere, so
-the version sorts above both).
-- **The failed private answer box is neutral (owner ruling 2026-10-27, "go with your recommendations").**
-  *<AGENT> couldn't finish your private answer.* + Ask again — and its unknown-state twin *may still be
-  writing your private answer* + Check again — is a status box: no `data-ag`, its own neutral line and
-  surface (`.th-ag-priv--status`), so no agent tint, ring or ink reaches it from an ancestor. The agent is
-  named in the words. This is the owner-named exception to the APPROVED-FROZEN colours (§28); agent
-  colour and symbol stay everywhere else. Confirmed: no failure row (*didn't reply*, *may still be
+`20271119030008`, not applied anywhere yet. Re-checked 2026-10-27 (round 2), read-only SELECT on
+production: newest applied version `20271119000000`. Across every `origin/*` ref (1,898) the versions
+above it are `20271119010008` (A1b, `claude/practical-davinci-ij8hb8`, unmerged) and `20271120000000`
+(`claude/great-heisenberg-u7kyd9`, comms email, unmerged); I1's `20271119020008` is on the local
+`exp08-owners-i1` branch only. So `20271119030008` sorts above production, A1b and I1, which must apply
+first. **Risk named:** if `20271120000000` reaches production first, this file would sort below an
+applied version and must be renumbered above it before it merges.
+- **Only the FAILED private answer box is neutral (owner ruling 2026-10-27, "go with your
+  recommendations").** *<AGENT> couldn't finish your private answer.* + Ask again is a status box: no
+  `data-ag`, its own neutral line and surface (`.th-ag-priv--status`), so no agent tint, ring or ink
+  reaches it from an ancestor; the agent is named in the words. The ruling named the failed box only, so
+  its unknown-state twin, *<AGENT> may still be writing your private answer* + Check again, keeps the
+  agent tint and lock exactly as A1b had it (§28; round 1 had wrongly neutralised it too, corrected).
+  Agent colour and symbol stay everywhere else. Confirmed: no failure row (*didn't reply*, *may still be
   replying*, *couldn't start*) takes an agent token.
 - **"<AGENT> is writing…" for everyone (owner, Team Hub mentions).** While a reply is being written,
   everyone who can see the conversation sees the writing row at the end of the stream (or thread), as
@@ -231,8 +236,11 @@ the version sorts above both).
   its one member's (the owner is refused `not_found`); another workspace reads nothing. Client: the
   writing row is drawn from the read for every viewer; the asker's own tab still draws its local row
   once (never twice). While any reply in the open conversation is being written the state is re-read
-  every 3 s, only while the tab is visible, for at most 2 minutes; when a row ends the conversation is
-  refreshed so the reply appears; otherwise the 15 s tick is unchanged. Reduced motion stills the dots.
+  every 3 s, only while the tab is visible, for at most 2 minutes counted from when fast re-reading
+  began for that conversation: another reply starting (or one ending) while writing goes on does not
+  restart it; it starts again only on a conversation change or once nothing has been written there for
+  60 s. When a row ends the conversation is refreshed so the reply appears; otherwise the 15 s tick is
+  unchanged. Reduced motion stills the dots.
 - **The dead specialist handoff is stripped (§30).** No `specialist` command kind, no specialist branch in
   `paigeHandoffDraft`, no `SPECIALIST_NAMES` / `specialistMentioned` / `withoutSpecialists`, no specialist
   avatar CSS; the tests that existed only for it are replaced by tests that it cannot appear (the / menu
@@ -246,29 +254,46 @@ the version sorts above both).
   in its approved identity. Fixed in A1c: a name now matches from the start of any of its words (it
   matched anywhere, so "@ri" offered Priya), ranked exact, then names that start with it, then later
   words; the option the arrow keys reach is scrolled into view (with three groups the list scrolls on its
-  own, and @here could be selected out of sight). The thread reply box still has no @ list (as built in
-  increment 1); a typed @AGENT there asks the agent, as before.
+  own, and @here could be selected out of sight). **Threads (round 2):** the thread's reply box is the
+  same `Composer` (`variant="thread"`), not a fork, so it carries the same @ list: people who can see the
+  conversation, *Your Paige team* (never in an agent DM), and *Everyone* only when the thread is in a
+  channel; a picked person is mentioned (`p_mention_ids`), as in the conversation's composer. It has no
+  / menu. @channel / @here are sent from a thread only when the thread is in a channel.
 - **@channel and @here (owner: no prototype needed, Slack semantics).** Grounded first (§71): searched
   `mention`, `mentions`, `notify`, `unread`, `highlight`, `presence`, `last_seen`, `last_active`,
   `heartbeat`, `online` across the Team Hub migrations, `src/solo/team-hub` and `src/hooks`. What a
   person mention does today: a `team_hub_message_mentions` row, the id in the message's `mentions`, and
   the highlighted run in the message — there is **no notification and no unread-mention count** in Team
-  Hub. There is **no presence substrate**; `team_hub_channel_members.last_read_at` exists and
-  `team_hub_mark_read` moves it to the time of the message read through, so a recent `last_read_at`
-  proves a recent read. Built: in a channel with someone besides the author, a third *Everyone* group
+  Hub. There is **no presence substrate**. `team_hub_channel_members.last_read_at` is NOT an activity
+  signal: besides the read door it is set to now() by `team_hub_join_channel`, by the seat-start trigger
+  `_team_hub_seat_started` (an invitation accepted) and by the Team conversations toggle
+  (`set_solo_team_member_team_hub_access`), so round 1's @here, which read it, reached people who had
+  only joined, been seated or been switched on (the verifier's blocking finding, fixed). Built: in a channel with someone besides the author, a third *Everyone* group
   offers *@channel — Everyone in #name* and *@here — Everyone active in #name* (never in a DM or an agent
   DM). Sent through the existing post door: `team_hub_post_message` gains `p_broadcast_mention`
   (`channel` | `here`, refused `invalid` outside a channel; @channel wins when both are typed; the client
   sends it only when the message carries one). Stored: `team_hub_messages.broadcast_mention` and
   `team_hub_message_broadcast_recipients` — who it reached, as a mention row records its person:
   @channel every other member of the channel who takes part in Team conversations; **@here, defined
-  honestly from stored data**: those of them who read a message posted in the channel in the last 10
-  minutes, or posted in it themselves in the last 10 minutes (someone with the channel open and nothing
-  new to read is not counted). The author is never a recipient. `_team_hub_message_json` adds
+  honestly from stored data**: those of them who, in the last 10 minutes, posted in the channel (their
+  own message or thread reply, `author_kind='user'`: an agent reply to their question is not their post)
+  or whose own read door ran for it. The read door is `team_hub_mark_read`, which the browser calls when
+  the person opens the conversation or reads new messages in it on screen; it now also writes
+  `team_hub_channel_members.last_active_at = now()`, a new nullable column nothing else writes (the
+  proof checks every function body). So someone with the conversation open and nothing new arriving
+  drops out after 10 minutes. The author is never a recipient. **A broadcast that would reach nobody**
+  (the author alone, or nobody else active for @here) **is stored as a plain message**: no
+  `broadcast_mention`, no recipients, no chip. `_team_hub_message_json` adds
   `broadcast` only on a row that carries one. @channel / @here never ask an agent: no agent-mention row,
   and the acceptance door refuses a turn for it. Shown as the neutral mention chip, only on a message the
-  server stored as one. **Not built (no substrate):** a notification or unread-mention badge for anyone
-  mentioned — person, @channel or @here; the recipient rows are stored for when one is.
+  server stored as one. **Team Hub has no notification or unread-mention count for ANY mention yet** —
+  a person, an agent, @channel or @here. @channel / @here store their recipients and show a chip; nobody
+  is alerted. Alerts are a later increment; the recipient rows are stored for it.
+- **The migration checks what it was written against.** Before changing anything it compares
+  md5(prosrc) of every body it calls (`_team_hub_refusal`, `_team_hub_visible`, `_team_hub_is_active`,
+  `_team_hub_participates`) with production's (read 2026-10-27), and of every body it replaces
+  (`_team_hub_message_json`, `team_hub_mark_read`, the eight-argument `team_hub_post_message`) with
+  production's or its own; `team_hub_agent_turn_states` with A1b's body or its own. Any drift stops it.
 - **Producer inventory for `team_hub_post_message` (§37).** Browser `useTeamHub` deliver (named call;
   `p_broadcast_mention` only when set), PAIGE's `_shared/team-hub/chat.ts` `postTeamHubReply` (named,
   seven arguments), `team_hub_request_task` (positional, six), the tests and the evidence harnesses

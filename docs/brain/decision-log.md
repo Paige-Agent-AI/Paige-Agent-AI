@@ -1,5 +1,11 @@
 # Decision Log — chronological one-liners
 
+## October27 — EXP03: a send scheduled for later is not refused by the business's do-not-disturb now
+
+- **Found by the independent review of piece 3.** The door ran readiness against the current time even for a send with `send_at`, so during the business's own do-not-disturb the owner's "ask to schedule" answer was a dead end: picking a later time was refused again with `QUEUED_TENANT_DND`.
+- **Fix:** readiness takes `scheduled`; when set, ONLY `queued_tenant_dnd` stops holding the check (on the card and on the confirm). Suppression, consent, client do-not-disturb, quiet hours and an errored check still refuse. The drainer re-runs every pre-send check at release, so a hold still in force then refuses the email and closes it with its reason; it is never sent into a hold. The door's 202 also carries `expires_in_ms` (the server's own count) so a browser with a wrong clock can time the check.
+- C0b pin for `_shared/comms-email/readiness.ts` renewed (old `e2790d93…` reproduced from main `5a4bfb1f0` first). Failing-first: the readiness test and both door tests fail on the old source.
+
 ## October27 — EXP03 O12 piece 2: governed email attachments (the bytes approved are the bytes sent)
 
 - **#2997 (piece 1) merged and LIVE** (`f1439806`; migrations 40569803370, edge 40569803136; bodies and grants read back).

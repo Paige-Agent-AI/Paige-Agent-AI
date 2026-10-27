@@ -320,7 +320,7 @@ Deno.serve(async req => {
   }
 
   // 4 — Readiness before any proposal: no card is raised for an email that cannot go out.
-  const readiness = await readCommsEmailReadiness(admin as unknown as CommsEmailAdmin, { tenantId, actorUserId: user.id, contactId: command.contact_id, recipient: parties.recipient, connectorId: parties.connectorId }, key => Deno.env.get(key), runPreSend);
+  const readiness = await readCommsEmailReadiness(admin as unknown as CommsEmailAdmin, { tenantId, actorUserId: user.id, contactId: command.contact_id, recipient: parties.recipient, connectorId: parties.connectorId, scheduled: body.send_at !== undefined }, key => Deno.env.get(key), runPreSend);
   if (!readiness.eligible || !parties.fromAddress) return response(422, { ok: false, outcome: readiness.eligible ? "needs_setup" : commsEmailReadinessOutcome(readiness), reason: readiness.eligible ? "TENANT_EMAIL_SENDER_MISSING" : readiness.reason });
 
   // 4b — The files, read only now that the email can go out. Only a sender whose email leaves through the
@@ -469,7 +469,9 @@ Deno.serve(async req => {
       proposal = existing.data; proposalError = existing.error;
     }
     if (proposalError || !proposal) return response(503, { ok: false, outcome: preparedRecovery ? "outcome_unknown" : "refused", code: "APPROVAL_STORE_UNAVAILABLE" });
-    return response(202, { ok: false, outcome: "approval_required", capability: COMMS_EMAIL_TOOL, fingerprint, operation_id: body.operation_id, summary: proposal.summary, expires_at: proposal.expires_at, preview });
+    return response(202, { ok: false, outcome: "approval_required", capability: COMMS_EMAIL_TOOL, fingerprint, operation_id: body.operation_id, summary: proposal.summary, expires_at: proposal.expires_at,
+    // The check's remaining life by the server's clock, so a browser with a wrong clock can still time it.
+    expires_in_ms: Math.max(0, Date.parse(String(proposal.expires_at)) - Date.now()), preview });
   }
 
   // 9 — Execute the STORED call only. The request's own command was used to find this proposal;
@@ -517,7 +519,7 @@ Deno.serve(async req => {
   const result = await executeCommsEmailSend({ actorUserId: user.id, tenantId, operationId: stored.operationId, stored, governance }, {
     stillCurrent, readResult, send, readBinding,
     resolveParties: () => resolveCommsEmailParties(admin as unknown as CommsEmailAdmin, { tenantId, actorUserId: user.id, contactId: stored.command.contact_id, connectorId: stored.command.connector_id }, senderProviders),
-    readiness: resolved => readCommsEmailReadiness(admin as unknown as CommsEmailAdmin, { tenantId, actorUserId: user.id, contactId: resolved.contactId, recipient: resolved.recipient, connectorId: resolved.connectorId }, key => Deno.env.get(key), runPreSend),
+    readiness: resolved => readCommsEmailReadiness(admin as unknown as CommsEmailAdmin, { tenantId, actorUserId: user.id, contactId: resolved.contactId, recipient: resolved.recipient, connectorId: resolved.connectorId, scheduled: stored.sendAt !== undefined }, key => Deno.env.get(key), runPreSend),
     prepare: async args => {
       const { data, error } = await admin.rpc("prepare_comms_email_send", args);
       approvalPrepareRefusal.code = error ? leadReplyPrepareRefusal(error) : null;

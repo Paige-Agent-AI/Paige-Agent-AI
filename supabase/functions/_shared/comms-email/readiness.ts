@@ -92,6 +92,12 @@ export interface CommsEmailReadinessFacts extends EmailProviderEnvironment {
   /** How many usable senders the workspace has when none was chosen. */
   senderChoices?: number;
   preSend?: { proceed: boolean; outcome: string };
+  /**
+   * The email carries a later send time. The business's own do-not-disturb hold is about NOW, so it does not
+   * stop scheduling for later: the drainer re-runs every pre-send check when the email is released, and a
+   * hold still in force then refuses it (closed with its reason, never sent). Every other answer still binds.
+   */
+  scheduled?: boolean;
 }
 
 const PRE_SEND_REASON: Record<string, CommsEmailReadinessReason> = {
@@ -111,7 +117,8 @@ export function commsEmailReadiness(f: CommsEmailReadinessFacts): CommsEmailRead
   if (sender) return result(sender.state, sender.reason);
   // Recipient-specific preferences are part of readiness: no verified pre-send answer, no send.
   if (!f.preSend) return result("held", "RECIPIENT_PREFERENCES_UNVERIFIED");
-  if (!f.preSend.proceed || f.preSend.outcome !== "proceed") return result("held", PRE_SEND_REASON[f.preSend.outcome] ?? "RECIPIENT_PREFERENCES_UNVERIFIED");
+  const heldNow = !f.preSend.proceed || f.preSend.outcome !== "proceed";
+  if (heldNow && !(f.scheduled === true && f.preSend.outcome === "queued_tenant_dnd")) return result("held", PRE_SEND_REASON[f.preSend.outcome] ?? "RECIPIENT_PREFERENCES_UNVERIFIED");
   return result("ready", "READY_FOR_GOVERNED_REVIEW");
 }
 
@@ -258,7 +265,7 @@ export type CommsEmailPreSendCheck = (
 /** Same reads as invoice delivery readiness: the tenant's connector row, provider environment, then the pre-send check. */
 export async function readCommsEmailReadiness(
   admin: CommsEmailAdmin,
-  input: { tenantId: string; actorUserId?: string | null; contactId: string; recipient: string | null; connectorId: string | null },
+  input: { tenantId: string; actorUserId?: string | null; contactId: string; recipient: string | null; connectorId: string | null; scheduled?: boolean },
   env: (key: string) => string | undefined,
   preSendCheck: CommsEmailPreSendCheck,
 ): Promise<CommsEmailReadiness> {
@@ -272,7 +279,7 @@ export async function readCommsEmailReadiness(
     const setup = commsEmailReadiness(facts);
     if (setup.state === "needs_setup") return setup;
     const preSend = await preSendCheck(admin as never, { tenantId: input.tenantId, channel: "email", to: input.recipient ?? "", contactId: input.contactId });
-    const ready = commsEmailReadiness({ ...facts, preSend });
+    const ready = commsEmailReadiness({ ...facts, preSend, scheduled: input.scheduled === true });
     return ready.eligible && facts.sender ? { ...ready, sender_provider: facts.sender.provider } : ready;
   } catch {
     return { eligible: false, state: "unavailable", reason: "EMAIL_READINESS_UNVERIFIED", provider_execution_verified: false };

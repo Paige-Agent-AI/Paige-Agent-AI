@@ -7,9 +7,9 @@ MATERIAL_FLOW_CHANGE: NO: correction to the existing department-return interacti
 FLOW_PROTOTYPE: NOT_REQUIRED: unchanged flow; prior original-component walkthrough reproduced the lost reading context before the correction. Native regression0-versus420 failed before implementation.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: an eligible SOLO owner inspects the original department and returns to the same business-review reading context; original department permissions and writers remain authoritative.
 VISUAL_DIRECTION: PASS: preserve the Executive composition and source disclosure; no new screen, dashboard, chart, navigation or specialist runtime.
-AUTOMATED_EVIDENCE: PASS: 118 controls across seven suites, zero skips, including46 original Executive cases. Causal original return and nested Finance disclosure failures were reproduced before their respective fixes. Original route, Finance, target, review-hook and shell-focus controls retained.
-STATIC_EVIDENCE: PASS: focused production lint0 and normal production build132s. Actual app compiler has the same six incumbent diagnostics under the unchanged ten-count baseline; no clean-compiler claim. Four changed source/test inputs match the rendered source.
-RENDERED_EVIDENCE: PASS: twelve raw synthetic JPEGs at source4a18ae9b; eight required open/closed shell layouts plus desktop closed/open return and390/320 Obsidian return. Original-component source/input/frame hashes in assets/e2-executive-return/source-index.json; not a complete transitive graph or authenticated customer proof.
+AUTOMATED_EVIDENCE: PASS: 119 controls across seven suites, zero skips, including47 original Executive cases. Causal original return and nested Finance disclosure failures were reproduced before their respective fixes. Original route, Finance, target, review-hook and shell-focus controls retained.
+STATIC_EVIDENCE: PASS: focused production lint0 and normal production build63s. Actual app compiler has the same six incumbent diagnostics under the unchanged ten-count baseline; no clean-compiler claim. Four changed source/test inputs match the rendered source.
+RENDERED_EVIDENCE: PASS: twelve raw synthetic JPEGs at source3bbf3436; eight required open/closed shell layouts plus desktop closed/open return and390/320 Obsidian return. Original-component source/input/frame hashes in assets/e2-executive-return/source-index.json; not a complete transitive graph or authenticated customer proof.
 BEHAVIORAL_EVIDENCE: PASS: native Enter and browser Back preserve exact scroll delta0 at1366 closed/open,390 and320, correct source disclosure and original Finance opener. Original synthetic Chat draft survives the open-rail trip. The department target is the existing closed canonical-route fixture; the original department data service is not invoked.
 AUTHENTICATED_RUNTIME: UNVERIFIED: shared ordinary-owner read-only QA custody remains pending. Actual customer Finance/all subpages, roles/cohorts, reload, full Chat/Live and full19/nine acceptance remain owed. No model, business/provider operation or protected monthly retry occurred.
 KEYBOARD_FOCUS: PASS: original summary Enter/Tab, native link Enter, browser Back and exact opener focus observed. Automatic folded-shell command focus uses the existing content-focus contract; actual newer input while a fresh read loads wins. Missing source falls back to the focusable Executive heading in component proof. This field covers the declared local native keyboard interactions only.
@@ -33,7 +33,7 @@ MUST_PRESERVE: Original canonical resolver/Link destination, history stack, unre
 ACCEPTANCE_CRITERIA: Only a bounded display bookmark on the original history entry; exact actor/workspace/address match, fresh source settles before restoration, original link and source-freshness disclosure restored when available, genuine newer input wins, unavailable source has a safe heading fallback.
 MOTION_PURPOSE: NONE: two native frames temporarily suppress duplicate scroll anchoring during source restoration, then restore the original anchoring style. No visual animation added.
 PROTECTED_SEAMS: Original ExecutiveOverview, CommandCenter actor prop and existing Executive focus-ring selector only. Shared Chat/shell/router/registry/issuer/writer/approval/LayerC/Rail and provider sources unchanged.
-INTERNAL_BUILD_IDENTITY: 4a18ae9b92a3dd2fb0c260953e266c28c256ab00 tested/rendered source on actual mainc76eb5cd62fc6cc4fa761b654bf18153b15ed395; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=assets/e2-executive-return/source-index.json and render-observations.json.
+INTERNAL_BUILD_IDENTITY: 3bbf343676dd3f6b447f02d2739de6af994a10de tested/rendered source on actual mainc76eb5cd62fc6cc4fa761b654bf18153b15ed395; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=assets/e2-executive-return/source-index.json and render-observations.json.
 RELEASE_CHANNEL: development: local source/rendered proof, normal review/exact-head CI/safe release and production readback still required.
 RELEASE_CLASSIFICATION: internal-only: bounded original continuity repair, no customer capability announcement.
 CUSTOMER_RELEASE_IDENTITY: none: full customer outcome and founder acceptance not established.
@@ -43,11 +43,12 @@ RELEASE_RECOVERY: position=guarded forward correction or removal of the display 
 
 ## Review findings and disposition
 
-Actual rendered review caught three integration defects before publication:
+Actual rendered review caught three integration defects before initial publication; the repository review then found one further input case:
 
 - An unqualified nested selector opened a financial-account disclosure instead of source freshness. Corrected to the original direct-child provenance disclosure, with a causal real-Finance-fixture regression.
 - Native scroll anchoring added the reopened disclosure's height a second time. Corrected by temporarily suspending that container's anchoring for the restoration layout; actual native return now has delta0.
 - The original folded shell automatically focused its command on route changes. Reused its existing command/content-focus contract, distinguishing automatic focus from a person's newer input; no shared-shell edit.
+- Repository review found that wheel/trackpad scrolling during a loading read also needs to cancel restoration. Reproduced the140-versus420 failure, added passive wheel capture and matching cleanup to the existing input guard, then passed119 controls. All twelve rendered frames/four native return trips were recaptured from the corrected source. The delayed-wheel case is component-tested, not a separate authenticated or native-wheel acceptance claim.
 
 All final twelve frames were inspected. Early phone theme-button proof remained
 Mineral because the existing fixture wrapper pins theme from its entry URL;

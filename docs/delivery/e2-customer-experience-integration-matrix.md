@@ -12,8 +12,8 @@ alone; genuine newer input wins, and a missing original source returns to the
 Executive heading. Original folded-shell command/content-focus contract reused;
 shared shell, registry, routes, permissions, source-domain writers and Chat untouched.
 
-Source4a18ae9b92a3dd2fb0c260953e266c28c256ab00 on actualc76eb5cd is LOCAL/unreleased.
-118 controls/seven suites/zero skips, lint0/build132s PASS; actual app compiler six
+Source3bbf343676dd3f6b447f02d2739de6af994a10de on actualc76eb5cd is LOCAL/unreleased.
+119 controls/seven suites/zero skips, lint0/build63s PASS; actual app compiler six
 unchanged incumbent diagnostics under unchanged baseline10. Native rendered review
 caught and corrected nested Finance disclosure, duplicate scroll anchoring and
 folded-shell automatic-focus integration defects before publication. Twelve final
@@ -22,6 +22,9 @@ have scroll delta0, correct opener/source freshness; open-rail synthetic draft
 survives. Native zoom/full AT/authenticated roles/cohorts/reload/Finance/Chat-Live
 remain owed. Functional LOCAL, Visual synthetic, Experiential bounded local only,
 Founder NOT_ACCEPTED. No algorithm/capability promotion or execution receipt.
+Repository review wheel-input finding reproduced and corrected with passive input
+capture/matching cleanup; all twelve frames/four native return trips recaptured.
+New-head review and CI still required; the earlier review remains historical.
 
 All19/nine/original9PASS0FAIL+12PASS0FAIL4BLOCKED/monthlyUNKNOWNUNRETRIED retained.
 Shared read-only Finance QA custody and original E05 manual Work/receipt receiving

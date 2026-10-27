@@ -1,35 +1,7 @@
 {
-  "source": "4a18ae9b92a3dd2fb0c260953e266c28c256ab00",
-  "scope": "Original components, synthetic ports only; no authenticated model/provider/department read",
-  "desktopClosed": {
-    "before": {
-      "focus": "Open Finance",
-      "scroll": 1719.199951171875
-    },
-    "after": {
-      "focus": "Open Finance",
-      "opened": [
-        "Source & freshness"
-      ],
-      "scroll": 1719.199951171875
-    },
-    "delta": 0
-  },
-  "desktopOpen": {
-    "before": {
-      "focus": "Open Finance",
-      "scroll": 1714.4000244140625
-    },
-    "after": {
-      "draft": "Keep this synthetic review question while I inspect the original source.",
-      "focus": "Open Finance",
-      "opened": [
-        "Source & freshness"
-      ],
-      "scroll": 1714.4000244140625
-    },
-    "delta": 0
-  },
+  "source": "3bbf343676dd3f6b447f02d2739de6af994a10de",
+  "scope": "Original components and synthetic ports only; no authenticated department/model/provider/business operation",
+  "reviewCorrection": "Wheel/trackpad input during a pending fresh read now cancels restoration; causal140-versus420 regression before fix,119 controls/seven suites after. Native delayed-wheel itself remains component-tested, not authenticated or separately browser-driven.",
   "frames": [
     {
       "file": "1536x770-closed.jpg",
@@ -152,7 +124,42 @@
       }
     }
   ],
-  "fastFoldSequence": "Original folded-shell automatic focus was a real integration gap; corrected using its existing command/content-focus contract and actual-input guards, without shared-shell edits.",
+  "desktopOpen": {
+    "before": {
+      "focus": "Open Finance",
+      "opened": [
+        "Source & freshness"
+      ],
+      "scroll": 1714.4000244140625
+    },
+    "after": {
+      "draft": "Keep this synthetic review question while I inspect the original source.",
+      "focus": "Open Finance",
+      "opened": [
+        "Source & freshness"
+      ],
+      "scroll": 1714.4000244140625
+    },
+    "delta": 0
+  },
+  "desktopClosed": {
+    "before": {
+      "focus": "Open Finance",
+      "opened": [
+        "Source & freshness"
+      ],
+      "scroll": 1719.199951171875
+    },
+    "after": {
+      "draft": "Keep this synthetic review question while I inspect the original source.",
+      "focus": "Open Finance",
+      "opened": [
+        "Source & freshness"
+      ],
+      "scroll": 1719.199951171875
+    },
+    "delta": 0
+  },
   "narrow": [
     {
       "file": "390x844-obsidian-return.jpg",
@@ -165,8 +172,7 @@
         "opened": [
           "Source & freshness"
         ],
-        "scroll": 2372.800048828125,
-        "theme": "dark"
+        "scroll": 2372.800048828125
       },
       "after": {
         "focus": "Open Finance",
@@ -209,6 +215,5 @@
       },
       "delta": 0
     }
-  ],
-  "initialThemeAttempt": "Original proof wrapper pins its theme from the URL at entry; theme-button-only attempt remained Mineral. Final narrow frames recaptured after explicit dark proof-route entry."
+  ]
 }

@@ -1,11 +1,11 @@
 {
-  "source": "4a18ae9b92a3dd2fb0c260953e266c28c256ab00",
+  "source": "3bbf343676dd3f6b447f02d2739de6af994a10de",
   "base": "c76eb5cd62fc6cc4fa761b654bf18153b15ed395",
   "scope": "Declared original Executive, shell, route consumer, presenter/style/font and synthetic fixture inputs; not a complete transitive graph. No authenticated department, model, provider or business operation.",
   "inputs": [
     {
       "path": "src/solo/ExecutiveOverview.tsx",
-      "sha256": "0d3f7ef92c6bc32d086a2cde9f8d8706cd75f75a4c555806c8fdfb047debe90c",
+      "sha256": "75e1ead771e6894180cd7350f30cf33444e2a7ef10510db8420af74d83d7b1e7",
       "hash_mode": "text_lf"
     },
     {
@@ -117,7 +117,7 @@
   "frames": [
     {
       "path": "1024x768-closed.jpg",
-      "sha256": "226f32dca3b9f809f0cca49863b93d0fb2ccfd07cc77b684c23a307af84d02f8"
+      "sha256": "c0686cf760015d1114b444a4a29aa23194e5558ab0d14d8b4e9f429b6d96de7b"
     },
     {
       "path": "1024x768-open.jpg",
@@ -125,39 +125,39 @@
     },
     {
       "path": "1366x768-closed.jpg",
-      "sha256": "9385ad66635cbecf029584575d3c6c19e17c7a0e2cdfe96cd934ddb9c77edb79"
+      "sha256": "35845e22228ab636995a8e869c5f1e4a09e3acb919a9a7657262154caebc0b0e"
     },
     {
       "path": "1366x768-open.jpg",
-      "sha256": "5be8ffd4e81c727cc0840011c333ea6fc1071f8e6ef914ee9632b8b568445df8"
+      "sha256": "bc4e1b829873765e02e7ba15a918ee42f7787f7bb15de21f0d10b5d2b728008f"
     },
     {
       "path": "1366x768-return-chat-draft.jpg",
-      "sha256": "713ba71355e6dd4a8a07d1c48c49143551c7299bbaea62643d9e4f4ba5483b75"
+      "sha256": "861679227d06bb8d06c647138cbd7bec22a0d40a8ba8c9ab7856dfe32a8bff3b"
     },
     {
       "path": "1366x768-return-source.jpg",
-      "sha256": "91dea9945d580eeec8854da8c1f0c3036ae63af5ba6905843e47f076f1201a16"
+      "sha256": "0624b8ac3dcc35ca6d20d5e2bd47f815df31629d3f8a235dcfd67a3a9b1ea0a5"
     },
     {
       "path": "1536x770-closed.jpg",
-      "sha256": "057bcc73f7e0b0ccfb144b149e8d48f3cd3c65d9e6339b3646c184b654fdcccb"
+      "sha256": "027f8f91efa6294e01a8258928280bec346f646e7d18bff00c1b00e451dfed95"
     },
     {
       "path": "1536x770-open.jpg",
-      "sha256": "ca6e774b2e5e8ff75deb3719e616f912c7465673c697b76c86d1212839e72bac"
+      "sha256": "10dbdba4cd666c640d838d49924b5e0ca88fe31f684966bfdebbe5c17121df12"
     },
     {
       "path": "320x740-obsidian-return.jpg",
-      "sha256": "ed26bd78ead998949a411706565907d971976790dd2432b18ccaf941a5c9cb3c"
+      "sha256": "94e31a714adb8c305c711f6534a6fdb06d0ed26818eff1b7f9e32fe6bda2d049"
     },
     {
       "path": "390x844-obsidian-return.jpg",
-      "sha256": "82339eaa3d86fec2d97e5700407f69015045afcfe1dfde9c671d9e4a2c803c31"
+      "sha256": "4b04a8ec0c2a97b6affef19b40e2f00ff4ed193b03e305d4d8b53da4719f0463"
     },
     {
       "path": "900x1000-closed.jpg",
-      "sha256": "0403a386f42cc245f9ddf03e4a21ec43bbed6643b73133cc34d378dcc9ede52d"
+      "sha256": "499a4766dd654e364c5c50528e0a05b5ca480e48450884c17a44aa91c0137665"
     },
     {
       "path": "900x1000-open.jpg",
@@ -166,7 +166,7 @@
   ],
   "observations": "render-observations.json",
   "tests": {
-    "controls": 118,
+    "controls": 119,
     "suites": 7,
     "skips": 0,
     "compiler_incumbent_diagnostics": 6,

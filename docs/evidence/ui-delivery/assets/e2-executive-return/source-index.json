@@ -1,0 +1,183 @@
+{
+  "source": "bc10362fa2471d855159c9242988945a822e6643",
+  "base": "1ad5f13c4579c717248027687468c43de90bcd40",
+  "scope": "Declared original Executive, shell, route consumer, presenter/style/font and synthetic fixture inputs; not a complete transitive graph. No authenticated department, model, provider or business operation.",
+  "inputs": [
+    {
+      "path": "src/solo/ExecutiveOverview.tsx",
+      "sha256": "75e1ead771e6894180cd7350f30cf33444e2a7ef10510db8420af74d83d7b1e7",
+      "hash_mode": "text_lf"
+    },
+    {
+      "path": "src/solo/CommandCenter.tsx",
+      "sha256": "3a52bfeaa33c2d872dd5e0b699f74de04780c0922fdcb31647d4c761554caec8",
+      "hash_mode": "text_lf"
+    },
+    {
+      "path": "src/solo/executive-overview.css",
+      "sha256": "22abdcc48dac8c0c97199b7ea58089434e4a2645bb075c96e9e949571c759f9d",
+      "hash_mode": "text_lf"
+    },
+    {
+      "path": "src/solo/executive-review.ts",
+      "sha256": "99cbde2cba5706f66571d6c1135787df1fda75435704b51312bb35e292c269af",
+      "hash_mode": "text_lf"
+    },
+    {
+      "path": "src/solo/ExecutiveTargets.tsx",
+      "sha256": "bf36ac3e0ae2a1f78366af98beb359d3b2ff63b77d14a0514dc45581680bac97",
+      "hash_mode": "text_lf"
+    },
+    {
+      "path": "src/solo/ExecutiveFinanceEvidence.tsx",
+      "sha256": "7aac2a23df2373d8e1c959446d0f8404fc6334078e28b399dbe2174dd4dd32cc",
+      "hash_mode": "text_lf"
+    },
+    {
+      "path": "src/components/tenant-shell/TenantCommandCenterShell.tsx",
+      "sha256": "7aaa24d867af1ac5e2222f3581ab361288ba54e6319e5c86db245875adb13e7c",
+      "hash_mode": "text_lf"
+    },
+    {
+      "path": "src/components/tenant-shell/tenant-command-center-shell.css",
+      "sha256": "e9756f8cfc04a330748711d798afeda35cb8f02bd133914dfee9a5fe4b0bf355",
+      "hash_mode": "text_lf"
+    },
+    {
+      "path": "src/components/tenant-shell/tenant-content-focus.ts",
+      "sha256": "7f32786447b99863e649add8d7f9acbf4486c780ca63de3ab66dd0e5fb312106",
+      "hash_mode": "text_lf"
+    },
+    {
+      "path": "src/lib/links/workspaceLinks.ts",
+      "sha256": "c8239322febf13eb83bbcc492244ace86d426608af5d5257d1a55e23fc57558f",
+      "hash_mode": "text_lf"
+    },
+    {
+      "path": "src/lib/routing/useSubtabRoute.ts",
+      "sha256": "02dd34efa28e4a11d25e13b8574f6c6f9893a6485ee1be06c50c5eb498277216",
+      "hash_mode": "text_lf"
+    },
+    {
+      "path": "src/solo/SoloPaigeWorkspace.tsx",
+      "sha256": "a13d385e06711b9410ea08cdd9341c4a9bbac04f4ad67cf8ff306174ca3ef270",
+      "hash_mode": "text_lf"
+    },
+    {
+      "path": "src/index.css",
+      "sha256": "f410966e5d565745efff907262d232925f6132d4a71a414ca8146db131fbddcc",
+      "hash_mode": "text_lf"
+    },
+    {
+      "path": "src/solo/solo-tokens.css",
+      "sha256": "77edc9fc35a6d2dab87318996fbb0dc6d80a0a04115d1757016c10da2c7b3197",
+      "hash_mode": "text_lf"
+    },
+    {
+      "path": "src/test/fixtures/business-review.ts",
+      "sha256": "cf6046734a45ccff3d66d41e83b9e6ff304097e9105fb5a2a75a4278a7ae31fa",
+      "hash_mode": "text_lf"
+    },
+    {
+      "path": "scripts/live-drive/harness/executive-mount/main.tsx",
+      "sha256": "5cc3429f4a35d2fd2ac488734cf2aa073e76a437ca5f7b9f2c87db91f52bf2cc",
+      "hash_mode": "text_lf"
+    },
+    {
+      "path": "scripts/live-drive/harness/executive-mount/stubs.tsx",
+      "sha256": "cf73b03bb27a951ac8c5897d8eba451c34c8e2679a0a0d22b108d813caa5736a",
+      "hash_mode": "text_lf"
+    },
+    {
+      "path": "scripts/live-drive/harness/executive-mount/email-fixture.ts",
+      "sha256": "475f6a9cf836b5f130e0c52dd8d625f63319f9aefb1cdfae77fa6a15d29ce77e",
+      "hash_mode": "text_lf"
+    },
+    {
+      "path": "scripts/live-drive/harness/executive-mount/slice-fixtures.ts",
+      "sha256": "8841c283f1cd99ac0de6ac84221d624b69fa92dbee5e6c47a0b9a39a602fe740",
+      "hash_mode": "text_lf"
+    },
+    {
+      "path": "scripts/live-drive/harness/executive-mount/vite.config.ts",
+      "sha256": "f3cbee419e47505dce4f94dbe090c8c64c79e127e1b5011374650953fa320ba1",
+      "hash_mode": "text_lf"
+    },
+    {
+      "path": "scripts/live-drive/harness/executive-mount/index.html",
+      "sha256": "5ae436157119e1a702b87dbacb7122ca35cea9bf584f26ab499618fda7ff01eb",
+      "hash_mode": "text_lf"
+    },
+    {
+      "path": "public/fonts/schibsted-grotesk/schibsted-grotesk-latin-wght-normal.woff2",
+      "sha256": "4c8b93f431d462c696e12b9d6a033feb3394d36e66e781357c496b95d8a75e05",
+      "hash_mode": "original_binary"
+    },
+    {
+      "path": "public/fonts/schibsted-grotesk/schibsted-grotesk-latin-wght-italic.woff2",
+      "sha256": "4c72510c1a185a7b7ae2c9e402fbe531a58b74c95f4d2450f4d58482213c65f7",
+      "hash_mode": "original_binary"
+    }
+  ],
+  "frames": [
+    {
+      "path": "1024x768-closed.jpg",
+      "sha256": "51b9104be9e5f960d2e6b568960b05cacf9ed5a3765d3db441d5c9c6a425f144"
+    },
+    {
+      "path": "1024x768-open.jpg",
+      "sha256": "6008864e76f01d47e4252384dee93cbb6a36e725b9599f0eda5c7e682f60b8af"
+    },
+    {
+      "path": "1366x768-closed.jpg",
+      "sha256": "35845e22228ab636995a8e869c5f1e4a09e3acb919a9a7657262154caebc0b0e"
+    },
+    {
+      "path": "1366x768-open.jpg",
+      "sha256": "bc4e1b829873765e02e7ba15a918ee42f7787f7bb15de21f0d10b5d2b728008f"
+    },
+    {
+      "path": "1366x768-return-chat-draft.jpg",
+      "sha256": "ad1042a21b53d1131de2b3d09a8f8fc99753f23f5c5cb49971e190e1b3806297"
+    },
+    {
+      "path": "1366x768-return-source.jpg",
+      "sha256": "a2a614df73c327c9988ae150cad6995326e24eae123e2a4d2239ef39b45c1d21"
+    },
+    {
+      "path": "1536x770-closed.jpg",
+      "sha256": "027f8f91efa6294e01a8258928280bec346f646e7d18bff00c1b00e451dfed95"
+    },
+    {
+      "path": "1536x770-open.jpg",
+      "sha256": "10dbdba4cd666c640d838d49924b5e0ca88fe31f684966bfdebbe5c17121df12"
+    },
+    {
+      "path": "320x740-obsidian-return.jpg",
+      "sha256": "392b33d193fd1219edb96ee8a37ddc63eebe2db51e53c2a5dd75633964123f8f"
+    },
+    {
+      "path": "390x844-obsidian-return.jpg",
+      "sha256": "ab7c8fbdc43396ae0ee47fcff7d9f87b2b8d95ab0309bbe0165ca1c56f318613"
+    },
+    {
+      "path": "900x1000-closed.jpg",
+      "sha256": "499a4766dd654e364c5c50528e0a05b5ca480e48450884c17a44aa91c0137665"
+    },
+    {
+      "path": "900x1000-open.jpg",
+      "sha256": "51b71297af6a21d318ab8753ae78eedf8295cee38e13bd102cc9b5af3a81c42c"
+    }
+  ],
+  "observations": "render-observations.json",
+  "tests": {
+    "controls": 136,
+    "suites": 8,
+    "skips": 0,
+    "compiler_incumbent_diagnostics": 6,
+    "compiler_new_diagnostics": 0,
+    "baseline_unchanged": 10
+  },
+  "authenticated": "UNVERIFIED",
+  "founder": "NOT_ACCEPTED"
+}

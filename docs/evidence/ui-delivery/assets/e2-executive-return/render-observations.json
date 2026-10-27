@@ -1,0 +1,255 @@
+{
+  "source": "bc10362fa2471d855159c9242988945a822e6643",
+  "base": "1ad5f13c4579c717248027687468c43de90bcd40",
+  "scope": "Original components and synthetic ports only; no authenticated department/model/provider/business operation",
+  "reviewCorrection": "Original wheel/trackpad input causal regression and119 controls retained. Composed email-source regression136/eight suites; fresh12 frames/four native return trips. Delayed-wheel itself remains component-tested, not separately browser-driven.",
+  "frames": [
+    {
+      "file": "1536x770-closed.jpg",
+      "viewport": [
+        1536,
+        770
+      ],
+      "mode": "closed",
+      "geometry": {
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "pageScroll": 1536,
+        "pageWidth": 1536,
+        "rootScroll": 1449,
+        "rootWidth": 1449
+      }
+    },
+    {
+      "file": "1536x770-open.jpg",
+      "viewport": [
+        1536,
+        770
+      ],
+      "mode": "open",
+      "geometry": {
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "pageScroll": 1536,
+        "pageWidth": 1536,
+        "rootScroll": 927,
+        "rootWidth": 927
+      }
+    },
+    {
+      "file": "1366x768-closed.jpg",
+      "viewport": [
+        1366,
+        768
+      ],
+      "mode": "closed",
+      "geometry": {
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "pageScroll": 1366,
+        "pageWidth": 1366,
+        "rootScroll": 1279,
+        "rootWidth": 1279
+      }
+    },
+    {
+      "file": "1366x768-open.jpg",
+      "viewport": [
+        1366,
+        768
+      ],
+      "mode": "open",
+      "geometry": {
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "pageScroll": 1366,
+        "pageWidth": 1366,
+        "rootScroll": 815,
+        "rootWidth": 815
+      }
+    },
+    {
+      "file": "1024x768-closed.jpg",
+      "viewport": [
+        1024,
+        768
+      ],
+      "mode": "closed",
+      "geometry": {
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "pageScroll": 1024,
+        "pageWidth": 1024,
+        "rootScroll": 937,
+        "rootWidth": 937
+      }
+    },
+    {
+      "file": "1024x768-open.jpg",
+      "viewport": [
+        1024,
+        768
+      ],
+      "mode": "open",
+      "geometry": {
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "pageScroll": 1024,
+        "pageWidth": 1024,
+        "rootScroll": 937,
+        "rootWidth": 937
+      }
+    },
+    {
+      "file": "900x1000-closed.jpg",
+      "viewport": [
+        900,
+        1000
+      ],
+      "mode": "closed",
+      "geometry": {
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "pageScroll": 900,
+        "pageWidth": 900,
+        "rootScroll": 813,
+        "rootWidth": 813
+      }
+    },
+    {
+      "file": "900x1000-open.jpg",
+      "viewport": [
+        900,
+        1000
+      ],
+      "mode": "open",
+      "geometry": {
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "pageScroll": 900,
+        "pageWidth": 900,
+        "rootScroll": 813,
+        "rootWidth": 813
+      }
+    }
+  ],
+  "desktopClosed": {
+    "before": {
+      "draft": "",
+      "focus": "Open Finance",
+      "opened": [
+        "Source & freshness"
+      ],
+      "pageScroll": 1366,
+      "pageWidth": 1366,
+      "rootScroll": 1279,
+      "rootWidth": 1279,
+      "scroll": 1719.199951171875,
+      "theme": "light"
+    },
+    "after": {
+      "draft": "",
+      "focus": "Open Finance",
+      "opened": [
+        "Source & freshness"
+      ],
+      "pageScroll": 1366,
+      "pageWidth": 1366,
+      "rootScroll": 1279,
+      "rootWidth": 1279,
+      "scroll": 1719.199951171875,
+      "theme": "light"
+    },
+    "delta": 0
+  },
+  "desktopOpen": {
+    "before": {
+      "draft": "Keep this synthetic question while I inspect the original source.",
+      "focus": "Open Finance",
+      "opened": [
+        "Source & freshness"
+      ],
+      "pageScroll": 1366,
+      "pageWidth": 1366,
+      "rootScroll": 815,
+      "rootWidth": 815,
+      "scroll": 1714.4000244140625,
+      "theme": "light"
+    },
+    "after": {
+      "draft": "Keep this synthetic question while I inspect the original source.",
+      "focus": "Open Finance",
+      "opened": [
+        "Source & freshness"
+      ],
+      "pageScroll": 1366,
+      "pageWidth": 1366,
+      "rootScroll": 815,
+      "rootWidth": 815,
+      "scroll": 1714.4000244140625,
+      "theme": "light"
+    },
+    "delta": 0
+  },
+  "narrow": [
+    {
+      "viewport": [
+        390,
+        844
+      ],
+      "before": {
+        "draft": "",
+        "focus": "Open Finance",
+        "opened": [
+          "Source & freshness"
+        ],
+        "pageScroll": 390,
+        "pageWidth": 390,
+        "rootScroll": 303,
+        "rootWidth": 303,
+        "scroll": 2372.800048828125,
+        "theme": "dark"
+      },
+      "after": {
+        "draft": "",
+        "focus": "Open Finance",
+        "opened": [
+          "Source & freshness"
+        ],
+        "pageScroll": 390,
+        "pageWidth": 390,
+        "rootScroll": 303,
+        "rootWidth": 303,
+        "scroll": 2372.800048828125,
+        "theme": "dark"
+      },
+      "delta": 0
+    },
+    {
+      "viewport": [
+        320,
+        740
+      ],
+      "before": {
+        "draft": "",
+        "focus": "Open Finance",
+        "opened": [
+          "Source & freshness"
+        ],
+        "pageScroll": 320,
+        "pageWidth": 320,
+        "rootScroll": 233,
+        "rootWidth": 233,
+        "scroll": 2867.199951171875,
+        "theme": "dark"
+      },
+      "after": {
+        "draft": "",
+        "focus": "Open Finance",
+        "opened": [
+          "Source & freshness"
+        ],
+        "pageScroll": 320,
+        "pageWidth": 320,
+        "rootScroll": 233,
+        "rootWidth": 233,
+        "scroll": 2867.199951171875,
+        "theme": "dark"
+      },
+      "delta": 0
+    }
+  ],
+  "invalidAttempt": "An initial320 control toggled an already open disclosure due to an invalid aria-label-only harness query; corrected through visible region summary and freshly verified open state before the final native trip."
+}

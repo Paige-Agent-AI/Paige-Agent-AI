@@ -753,7 +753,7 @@ export type MentionScope = { kind: "everyone" } | { kind: "people"; ids: string[
  * A team channel is visible to every active person. A private channel or DM is visible to
  * its members, which `member_ids` lists (A4) — the server refuses anyone else (`invalid`).
  */
-export function mentionScope(conversation: TeamHubConversation): MentionScope {
+export function mentionScope(conversation: Pick<TeamHubConversation, "visibility" | "member_ids">): MentionScope {
   return conversation.visibility === "team" ? { kind: "everyone" } : { kind: "people", ids: conversation.member_ids ?? [] };
 }
 

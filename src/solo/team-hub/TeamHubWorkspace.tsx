@@ -1,25 +1,25 @@
 import { createContext, Fragment, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type DragEvent as ReactDragEvent, type KeyboardEvent as ReactKeyboardEvent, type MutableRefObject, type ReactNode, type RefObject } from "react";
-import { ArrowLeft, AtSign, ClipboardList, Download, FileImage, FileSpreadsheet, FileText, Hash, Lock, MessageSquareOff, MessageSquareReply, PanelRight, Paperclip, Plus, Search, SendHorizontal, Slash, UserPlus, Users, WifiOff, X } from "lucide-react";
+import { ArrowLeft, AtSign, ClipboardList, CornerDownRight, Download, FileImage, FileSpreadsheet, FileText, Hash, Lock, MessageSquareOff, MessageSquareReply, PanelRight, Paperclip, Plus, Search, SendHorizontal, Slash, UserPlus, Users, WifiOff, X } from "lucide-react";
 import { useTenantContext } from "@/hooks/useTenantContext";
 import { handOffPaigePrompt } from "@/lib/paigePromptHandoff";
 import { clearPaigeClientScope } from "@/solo/paigeClientScope";
 import { clearPaigePublicPresenceScope } from "@/solo/paigePublicPresenceScope";
 import { workStatusLabel } from "@/solo/operations/operations-presentation";
-import { VP_ROSTER } from "../../../supabase/functions/_shared/paige-context/vp-address";
+import { useTierFeatures } from "@/hooks/useTierFeatures";
 import {
   bodyProblem,
   commandMatches,
   commandQuery,
   commandRemainder,
+  compareMessages,
   dueAtFor,
   dueProblem,
   paigeHandoffDraft,
-  specialistMentioned,
   taskTitleProblem,
-  withoutSpecialists,
-  SPECIALIST_NAMES,
+  TEAM_HUB_AGENT_KEYS,
   TEAM_HUB_COMMANDS,
-  type SpecialistName,
+  type TeamHubAgentConversation,
+  type TeamHubAgentKey,
   type TeamHubCommand,
   type TeamHubCommandKind,
   type TeamHubTaskRead,
@@ -59,18 +59,29 @@ import {
   TEAM_HUB_FILE_TYPES_NOTE,
   type TeamHubFile,
 } from "./team-hub-contract";
-import { attachmentScope, teamHubNavigation, useTeamHub, type AttachmentChip, type PendingMessage, type TaskDraft, type TeamHub } from "./useTeamHub";
+import { agentTurnKey, attachmentScope, teamHubNavigation, useTeamHub, type AgentTurn, type AttachmentChip, type PendingMessage, type TaskDraft, type TeamHub } from "./useTeamHub";
+import { agentMentionsIn, agentName, agentOutcomeLine, agentRuns, answers, bringInSuggestions, FIXED_PRIVATE_LINE, MAX_AGENTS_PER_MESSAGE, splitPrivateLine, TEAM_HEAD, TEAM_HUB_AGENT_PROFILES, TOO_MANY_AGENTS } from "./team-hub-agents";
+import { AgentDmEmpty, AgentDmNote, AgentFailRow, AgentGlyph, AgentPlate, AgentProfilePanel, AgentTag, AgentTyping, BringInRow, PrivateNote } from "./TeamHubAgents";
 import "./team-hub.css";
 
 /**
  * EXP08 Team Hub: channels, direct messages and one-level threads between the active teammates of
  * this workspace (increment 1), plus team work (increment 2): the `/` command menu, Draft a task
  * (one real task in Operations, its card reading status from the original record), the PAIGE
- * handoffs for specialists, approvals and meetings, and the Team work panel. Approved prototype v2.
+ * handoffs for approvals and meetings, and the Team work panel. Approved prototype v2.
  *
- * Team Hub never delegates, approves or books anything itself. A specialist, approval or meeting
- * request only PREFILLS PAIGE (`handOffPaigePrompt` + the shell's `openPaige`); the person presses
- * send there, and PAIGE keeps the approval card and the owner/admin delegation check.
+ * Team Hub never delegates, approves or books anything itself. An approval or meeting request only
+ * PREFILLS PAIGE (`handOffPaigePrompt` + the shell's `openPaige`); the person presses send there, and
+ * PAIGE keeps the approval card and the owner/admin delegation check.
+ *
+ * EXP08 agents A1b (docs/delivery/exp08-team-hub-agents-contract.md, approved prototype v3 and the
+ * approved v5 colours and symbols, §28 frozen): PAIGE and her six agents take part here. They are
+ * listed under "Your Paige team", offered in the @ list and the New message picker, and answer in
+ * Team Hub when a person @mentions them or writes in their DM — never on their own, and never acting
+ * (A1: an agent that wants to act says it can't yet). This REVERSES increment 2's specialist handoff
+ * (§58, recorded in the agents contract §2): `@ZION` no longer opens a PAIGE preview, and the `/`
+ * command *Ask a specialist* became *Ask an agent*. Everything an agent shows is gated by
+ * `hasFeature("team_hub_agents")`; the server decides what runs.
  *
  * Increment 3 adds attachments (docs/delivery/exp08-team-hub-increment3-attachments-contract.md §7):
  * the paperclip and drop target in both composers, file chips that show each upload's real state,
@@ -202,7 +213,28 @@ function useHubLayout(ref: RefObject<HTMLElement>): { layout: HubLayout; workOve
 /** An inline preview above the composer. Only Draft a task writes; the others continue in PAIGE. */
 type Preview =
   | { kind: "task"; channelId: string; title: string; assigneeId: string; due: string; restoreDraft: string; busy: boolean; error: string | null }
-  | { kind: "specialist" | "approval" | "meeting"; channelId: string; specialist: SpecialistName; ask: string; restoreDraft: string; alsoPost: boolean; busy: boolean; error: string | null };
+  | { kind: "approval" | "meeting"; channelId: string; ask: string; restoreDraft: string; busy: boolean; error: string | null };
+
+/**
+ * A conversation as the workspace shows it: a channel, a person DM, or (A1b) the reader's DM with an
+ * agent, which the list read parses apart (`agent_dms`) so nothing that does not know agents shows one.
+ */
+type HubConversation = Omit<TeamHubConversation, "kind"> & { kind: TeamHubConversation["kind"] | "agent_dm"; agent_key: TeamHubAgentKey | null };
+
+function asHub(conversation: TeamHubConversation): HubConversation {
+  return { ...conversation, agent_key: null };
+}
+
+/** An agent DM in the workspace's shape: private, its one member the reader (the server's own rule). */
+function agentDmConversation(dm: TeamHubAgentConversation, meId: string): HubConversation {
+  return { id: dm.id, kind: "agent_dm", name: null, visibility: "private", joined: dm.joined, member_count: 1, member_ids: [meId],
+    dm_user_id: null, unread: dm.unread, last_message_at: dm.last_message_at, agent_key: dm.agent_key };
+}
+
+function hubLabel(conversation: HubConversation, people: TeamHubPerson[]): string {
+  if (conversation.kind === "agent_dm") return conversation.agent_key ? agentName(conversation.agent_key) : "Agent";
+  return conversationLabel({ ...conversation, kind: conversation.kind }, people);
+}
 
 const localDay = (instant: string | null) => {
   if (!instant) return "";
@@ -218,6 +250,9 @@ function ReadyHub({ hub, announce, announcement, onOpenTeamSettings, openPaige }
   const meId = overview.me.user_id;
   const me = people.find((person) => person.user_id === meId) ?? null;
   const teammates = people.filter((person) => person.user_id !== meId);
+  // A1b: PAIGE and her agents, only where the tier has them (§60); the server still decides what runs.
+  const { has } = useTierFeatures();
+  const agentsOn = has("team_hub_agents");
   const canInvite = Boolean(onOpenTeamSettings) && (me?.permission === "owner" || me?.permission === "admin");
   const [search, setSearch] = useState("");
   const [form, setForm] = useState<Form>(null);
@@ -237,6 +272,11 @@ function ReadyHub({ hub, announce, announcement, onOpenTeamSettings, openPaige }
   const { layout, workOverlays } = useHubLayout(hubRef);
   const [preview, setPreview] = useState<Preview | null>(null);
   const [workOpen, setWorkOpen] = useState(false);
+  // A1b: the agent profile shares the thread's slot; only one of thread, Team work and profile is open.
+  const [profile, setProfile] = useState<TeamHubAgentKey | null>(null);
+  const profileReturn = useRef<HTMLElement | null>(null);
+  const profileHeadingRef = useRef<HTMLHeadingElement>(null);
+  const [dmBusy, setDmBusy] = useState<TeamHubAgentKey | null>(null);
   const workToggleRef = useRef<HTMLButtonElement>(null);
   const previewFirstRef = useRef<HTMLElement | null>(null);
   const { fileUrl } = hub;
@@ -244,11 +284,15 @@ function ReadyHub({ hub, announce, announcement, onOpenTeamSettings, openPaige }
   // Assigning someone else is Operations' own rule: an owner or admin may, a member only themselves.
   const canAssignOthers = me?.permission === "owner" || me?.permission === "admin";
   // The PAIGE handoffs exist only where the shell can open PAIGE; without it they're omitted, not dead.
-  const commands = useMemo(() => TEAM_HUB_COMMANDS.filter((command) => command.kind === "task" || Boolean(openPaige)), [openPaige]);
+  const commands = useMemo(() => TEAM_HUB_COMMANDS.filter((command) => command.kind === "task"
+    || (command.kind === "agent" ? has("team_hub_agents") : command.kind !== "specialist" && Boolean(openPaige))), [openPaige, has]);
   const oneColumn = layout === "one-column";
   const multiColumn = layout === "wide" || layout === "overlay";
   const conversations = overview.conversations;
-  const active = hub.activeConversation;
+  const agentDms = agentsOn ? overview.agent_dms : [];
+  const activeAgentDm = agentsOn ? hub.activeAgentDm : null;
+  const active: HubConversation | null = hub.activeConversation ? asHub(hub.activeConversation)
+    : activeAgentDm ? agentDmConversation(activeAgentDm, meId) : null;
   const opened = useRef(false);
   const threadOpen = Boolean(hub.thread);
 
@@ -319,10 +363,10 @@ function ReadyHub({ hub, announce, announcement, onOpenTeamSettings, openPaige }
     setComposerError(null);
     setPreview({ kind: "task", channelId: hub.activeId, title, assigneeId: meId, due: "", restoreDraft, busy: false, error: null });
   };
-  const openHandoffPreview = (kind: "specialist" | "approval" | "meeting", ask: string, restoreDraft: string, options: { specialist?: SpecialistName; alsoPost?: boolean } = {}) => {
+  const openHandoffPreview = (kind: "approval" | "meeting", ask: string, restoreDraft: string) => {
     if (!hub.activeId || !openPaige) return;
     setComposerError(null);
-    setPreview({ kind, channelId: hub.activeId, specialist: options.specialist ?? "ZION", ask, restoreDraft, alsoPost: options.alsoPost ?? false, busy: false, error: null });
+    setPreview({ kind, channelId: hub.activeId, ask, restoreDraft, busy: false, error: null });
   };
 
   /** A command picked from the `/` menu: its text leaves the composer and the person's words prefill the preview. */
@@ -330,19 +374,12 @@ function ReadyHub({ hub, announce, announcement, onOpenTeamSettings, openPaige }
     if (!hub.activeId) return;
     const channelId = hub.activeId;
     const remainder = commandRemainder(currentDraft, command);
+    // Ask an agent is handled in the composer itself (it starts an @mention); it never reaches here.
+    if (command.kind !== "task" && command.kind !== "approval" && command.kind !== "meeting") return;
     setDrafts((current) => ({ ...current, [channelId]: "" }));
     if (command.kind === "task") openTaskPreview(remainder, remainder);
     else openHandoffPreview(command.kind, remainder, remainder);
     announce(command.kind === "task" ? "Draft a task. Review it before it's created." : `${command.title}. Review it before PAIGE opens.`);
-  };
-
-  /** A specialist picked from the @ list: the preview opens with the rest of the draft as the ask. */
-  const pickSpecialist = (name: SpecialistName, draftWithoutQuery: string) => {
-    if (!hub.activeId) return;
-    const channelId = hub.activeId;
-    setDrafts((current) => ({ ...current, [channelId]: draftWithoutQuery }));
-    openHandoffPreview("specialist", withoutSpecialists(draftWithoutQuery), draftWithoutQuery, { specialist: name });
-    announce(`Ask ${name}. Review it before PAIGE opens.`);
   };
 
   const closePreview = useCallback(() => {
@@ -391,38 +428,12 @@ function ReadyHub({ hub, announce, announcement, onOpenTeamSettings, openPaige }
   const continueInPaige = async () => {
     const open = previewRef.current;
     if (!open || open.kind === "task" || open.busy || !openPaige) return;
-    let messageId: string | null = null;
-    if (open.kind === "specialist" && open.alsoPost) {
-      // The person's own message, posted as plain text: the specialist's name is never a stored mention.
-      // What the person wrote, as written; a preview opened without a draft posts the ask instead.
-      const body = (open.restoreDraft.trim() || `@${open.specialist} ${open.ask.trim()}`).trim();
-      const problem = bodyProblem(body);
-      if (!hub.online || problem === "empty") return;
-      if (problem === "too_long") { const text = refusalMessage("too_long", "send"); setPreview({ ...open, error: text }); announce(text); return; }
-      // The message posts with the files attached to it, so they must all be ready first.
-      const waiting = filesProblem(hub.attachments[attachmentScope(open.channelId, null)] ?? []);
-      if (waiting) { setPreview({ ...open, error: waiting }); announce(waiting); return; }
-      const mentions = resolveMentions(body, pickedHere, people);
-      if (!mentions.ok) { setPreview({ ...open, error: mentions.problem }); announce(mentions.problem); return; }
-      setPreview({ ...open, busy: true, error: null });
-      const outcome = await hub.send({ channelId: open.channelId, parentId: null, body, mentionIds: mentions.ids, withFiles: true });
-      if (outcome.kind !== "sent") {
-        // Not posted, so PAIGE isn't opened yet. A lost answer leaves the message below with Retry, and
-        // turns posting off here so Continue can't post it a second time.
-        const text = outcome.kind === "refused" ? outcome.message : "Your message wasn't confirmed. It's kept below with Retry; Continue now opens PAIGE without posting it again.";
-        setPreview((current) => current && current.kind !== "task" ? { ...current, busy: false, error: text, alsoPost: outcome.kind === "refused" ? current.alsoPost : false } : current);
-        announce(text);
-        return;
-      }
-      messageId = outcome.messageId;
-      setPicked((current) => ({ ...current, [open.channelId]: [] }));
-    }
     const conversation = conversations.find((item) => item.id === open.channelId);
     handOffPaigePrompt(paigeHandoffDraft(open.kind, open.ask, {
       conversation: conversation ? conversationTitle(conversation, people) : "Team Hub conversation",
       channel_id: open.channelId,
-      message_id: messageId,
-    }, open.kind === "specialist" ? open.specialist : null));
+      message_id: null,
+    }, null));
     // The words went to PAIGE's composer; they don't also stay here.
     setDrafts((current) => ({ ...current, [open.channelId]: "" }));
     setPreview(null);
@@ -447,22 +458,18 @@ function ReadyHub({ hub, announce, announcement, onOpenTeamSettings, openPaige }
       const text = "Pick a command from the list, or remove /PAIGE to send this as a message.";
       setComposerError(text); announce(text); return;
     }
-    const specialist = openPaige ? specialistMentioned(draft) : null;
-    if (specialist) {
-      // A message to a specialist continues in PAIGE; the preview says so before anything happens.
-      openHandoffPreview("specialist", withoutSpecialists(draft), draft, { specialist, alsoPost: true });
-      announce(`Ask ${specialist}. Review it before PAIGE opens.`);
-      return;
-    }
     if (problem === "too_long") { const text = refusalMessage("too_long", "send"); setComposerError(text); announce(text); return; }
     const mentions = resolveMentions(draft, pickedHere, people);
     if (!mentions.ok) { setComposerError(mentions.problem); announce(mentions.problem); return; }
+    // A1b: the agents this message asks. In an agent DM its own agent answers; no other is asked there.
+    const agentKeys = agentsOn && !activeAgentDm ? agentMentionsIn(draft, pickedHere.filter((item) => draft.includes(`@${item.label}`)).map((item) => item.label)) : [];
+    if (agentKeys.length > MAX_AGENTS_PER_MESSAGE) { setComposerError(TOO_MANY_AGENTS); announce(TOO_MANY_AGENTS); return; }
     const channelId = hub.activeId;
     setDrafts((current) => ({ ...current, [channelId]: "" }));
     setPicked((current) => ({ ...current, [channelId]: [] }));
     setComposerError(null);
     focusComposer();
-    const outcome = await hub.send({ channelId, parentId: null, body: draft, mentionIds: mentions.ids, withFiles: true });
+    const outcome = await hub.send({ channelId, parentId: null, body: draft, mentionIds: mentions.ids, withFiles: true, agentKeys });
     if (outcome.kind === "sent") announce("Message sent");
     else if (outcome.kind === "failed") announce("Message not sent. Retry is available.");
     else {
@@ -482,11 +489,15 @@ function ReadyHub({ hub, announce, announcement, onOpenTeamSettings, openPaige }
     if (problem === "too_long") { const text = refusalMessage("too_long", "send"); setThreadError(text); announce(text); return; }
     const waiting = filesProblem(chips);
     if (waiting) { setThreadError(waiting); announce(waiting); return; }
+    // A1b: a thread reply may ask agents too; the agent answers in this thread.
+    const inAgentDm = agentDms.some((dm) => dm.id === thread.channelId);
+    const agentKeys = agentsOn && !inAgentDm ? agentMentionsIn(threadDraft) : [];
+    if (agentKeys.length > MAX_AGENTS_PER_MESSAGE) { setThreadError(TOO_MANY_AGENTS); announce(TOO_MANY_AGENTS); return; }
     const body = threadDraft;
     setThreadDraft("");
     setThreadError(null);
     window.requestAnimationFrame(() => threadComposerRef.current?.focus());
-    const outcome = await hub.send({ channelId: thread.channelId, parentId: thread.rootId, body, mentionIds: [], withFiles: true });
+    const outcome = await hub.send({ channelId: thread.channelId, parentId: thread.rootId, body, mentionIds: [], withFiles: true, agentKeys });
     if (outcome.kind === "sent") announce("Reply posted");
     else if (outcome.kind === "failed") announce("Reply not sent. Retry is available.");
     else { restoreReply(thread.rootId, outcome.body, outcome.message); announce(outcome.message); }
@@ -534,6 +545,7 @@ function ReadyHub({ hub, announce, announcement, onOpenTeamSettings, openPaige }
   const workHeadingRef = useRef<HTMLHeadingElement>(null);
   const openWork = () => {
     if (hub.thread) hub.closeThread();
+    setProfile(null);
     workReturn.current = workToggleRef.current;
     setWorkOpen(true);
     void hub.listWork("open");
@@ -589,6 +601,7 @@ function ReadyHub({ hub, announce, announcement, onOpenTeamSettings, openPaige }
   const focusThreadWhenReady = useRef(false);
   const openThread = (rootId: string, trigger: HTMLElement) => {
     if (workOpen) closeWork(false);
+    setProfile(null);
     threadReturn.current = trigger;
     const held = heldReplies.current[rootId];
     delete heldReplies.current[rootId];
@@ -625,7 +638,70 @@ function ReadyHub({ hub, announce, announcement, onOpenTeamSettings, openPaige }
     const inConversation = event.target instanceof Element && Boolean(event.target.closest(".th-conv"));
     if (open && open.channelId === hub.activeId && inConversation) { event.preventDefault(); if (!open.busy) closePreview(); return; }
     if (hub.thread) { event.preventDefault(); closeThread(); return; }
-    if (workOpen) { event.preventDefault(); closeWork(); }
+    if (workOpen) { event.preventDefault(); closeWork(); return; }
+    if (profile) { event.preventDefault(); closeProfile(); }
+  };
+
+  // ── A1b: agents ──
+
+  /** Open (or make, once) the reader's DM with one agent. */
+  const openAgent = async (agent: TeamHubAgentKey) => {
+    const existing = agentDms.find((dm) => dm.agent_key === agent);
+    if (existing) { await open(existing.id); return { ok: true as const }; }
+    if (dmBusy) return { ok: false as const };
+    setDmBusy(agent);
+    const result = await hub.openAgentDm(agent);
+    setDmBusy(null);
+    if (!result.ok) { announce(result.message); return { ok: false as const, message: result.message }; }
+    setForm(null);
+    setComposerError(null);
+    setMobileView("conv");
+    hub.setStreamVisible(true);
+    focusComposer();
+    return { ok: true as const };
+  };
+
+  const openProfile = (agent: TeamHubAgentKey, trigger: HTMLElement | null) => {
+    if (hub.thread) hub.closeThread();
+    if (workOpen) closeWork(false);
+    profileReturn.current = trigger;
+    setProfile(agent);
+    window.requestAnimationFrame(() => profileHeadingRef.current?.focus());
+  };
+  const closeProfile = useCallback((returnFocus = true) => {
+    setProfile(null);
+    const target = profileReturn.current;
+    profileReturn.current = null;
+    if (returnFocus) window.requestAnimationFrame(() => (target?.isConnected ? target : composerRef.current)?.focus());
+  }, []);
+
+  /** Flow 3: the mention and one line of context go into the composer the reply sits under; nothing is sent. */
+  const bringIn = (reply: TeamHubMessage, prefill: string, agent: TeamHubAgentKey) => {
+    if (reply.parent_message_id) {
+      setThreadDraft(prefill);
+      setThreadError(null);
+      window.requestAnimationFrame(() => {
+        const box = threadComposerRef.current;
+        if (box) { box.focus(); box.setSelectionRange(prefill.length, prefill.length); }
+      });
+    } else if (hub.activeId) {
+      const id = hub.activeId;
+      setDrafts((current) => ({ ...current, [id]: prefill }));
+      setComposerError(null);
+      window.requestAnimationFrame(() => {
+        const box = composerRef.current;
+        if (box) { box.focus(); box.setSelectionRange(prefill.length, prefill.length); }
+      });
+    }
+    announce(`The mention for ${agentName(agent)} is in your message box. Send it to bring them in.`);
+  };
+
+  const agentProps: AgentView = {
+    on: agentsOn, turns: hub.agentTurns, online: hub.online, meId,
+    onProfile: openProfile,
+    onOpenDm: (agent) => void openAgent(agent),
+    onAskAgain: (request) => void hub.askAgain(request),
+    onBringIn: bringIn,
   };
 
   const closeForm = (returnTo: "channel" | "dm") => {
@@ -637,15 +713,18 @@ function ReadyHub({ hub, announce, announcement, onOpenTeamSettings, openPaige }
   const pendingTop = hub.pending.filter((item) => item.channelId === hub.activeId && !item.parentId);
   const pendingReplies = hub.pending.filter((item) => hub.thread && item.parentId === hub.thread.rootId);
   const firstUseState = (where: "list" | "conv") => <FirstUse teammates={teammates} canInvite={canInvite} onOpenTeamSettings={onOpenTeamSettings}
-    compact={where === "list"}
+    compact={where === "list"} onSayHello={agentsOn ? () => void openAgent("paige") : undefined}
     onCreate={() => { setForm({ kind: "channel" }); setMobileView("list"); }}
     onMessage={() => { setForm({ kind: "dm" }); setMobileView("list"); }} />;
   const thread = hub.thread;
   // While the thread drawer is drawn over a pane, that pane is inert: nothing under the drawer can
   // be reached by keyboard or pointer. It overlays the conversation below 1150px, and in one column
   // it covers everything.
-  const conversationCovered = (threadOpen && (layout === "overlay" || oneColumn)) || (workOpen && (workOverlays || oneColumn));
-  const listCovered = (threadOpen || workOpen) && oneColumn;
+  const profileOpen = Boolean(profile) && !thread && !workOpen;
+  const conversationCovered = ((threadOpen || profileOpen) && (layout === "overlay" || oneColumn)) || (workOpen && (workOverlays || oneColumn));
+  const listCovered = (threadOpen || workOpen || profileOpen) && oneColumn;
+  const agentRows = agentsOn ? TEAM_HUB_AGENT_KEYS.filter((key) => !query
+    || agentName(key).toLowerCase().includes(query) || TEAM_HUB_AGENT_PROFILES[key].short.toLowerCase().includes(query)) : [];
   const assignable = canAssignOthers ? people : people.filter((person) => person.user_id === meId);
   const previewHere = preview && preview.channelId === hub.activeId ? preview : null;
   const mainScope = hub.activeId ? attachmentScope(hub.activeId, null) : null;
@@ -660,7 +739,7 @@ function ReadyHub({ hub, announce, announcement, onOpenTeamSettings, openPaige }
   };
 
   return <FileAccess.Provider value={fileAccess}><div ref={hubRef} className="th-hub" onKeyDown={onHubKeyDown}>
-   <div className="th-grid" data-view={mobileView} data-thread={thread ? "open" : "closed"} data-work={workOpen && !thread ? "open" : "closed"}>
+   <div className="th-grid" data-view={mobileView} data-thread={thread || profileOpen ? "open" : "closed"} data-work={workOpen && !thread ? "open" : "closed"}>
     <section className="th-list" aria-label="Conversations" {...(listCovered ? { inert: "" } : {})}>
       <div className="th-list-head">
         <label className="th-search">
@@ -699,6 +778,8 @@ function ReadyHub({ hub, announce, announcement, onOpenTeamSettings, openPaige }
               onClick={() => setForm((current) => current?.kind === "dm" ? null : { kind: "dm" })}><Plus aria-hidden="true" /></button>
           </h2>
           {form?.kind === "dm" && <PersonPicker teammates={teammates} people={people} online={hub.online}
+            agents={agentsOn ? TEAM_HUB_AGENT_KEYS : []} agentBusy={dmBusy}
+            onAgent={async (key) => { const result = await openAgent(key); return result.ok ? { ok: true } : { ok: false, message: result.message }; }}
             onCancel={() => closeForm("dm")}
             onPick={async (person) => {
               const result = await hub.openDm(person.user_id);
@@ -710,6 +791,24 @@ function ReadyHub({ hub, announce, announcement, onOpenTeamSettings, openPaige }
             current={conversation.id === hub.activeId} onOpen={() => void open(conversation.id)} />)}
           {!dms.length && <p className="th-note">{query ? "No direct messages match." : "No direct messages yet."}</p>}
         </div>
+        {agentsOn && <div className="th-group">
+          <h2>{TEAM_HEAD}</h2>
+          {agentRows.map((key) => {
+            const dm = agentDms.find((item) => item.agent_key === key) ?? null;
+            const unread = dm?.joined ? dm.unread : 0;
+            const short = TEAM_HUB_AGENT_PROFILES[key].short;
+            return <button key={key} type="button" id={`th-conv-${dm?.id ?? `agent-${key}`}`} className="th-conv-item th-conv-item--agent" data-ag={key}
+              data-unread={unread > 0 ? "true" : undefined} aria-current={dm && dm.id === hub.activeId ? "page" : undefined}
+              aria-busy={dmBusy === key || undefined} aria-label={`${agentName(key)}, agent, ${short}${unread > 0 ? `, ${unread} unread` : ""}`}
+              onClick={() => void openAgent(key)}>
+              <AgentPlate agent={key} size="md" />
+              <span className="th-conv-name th-conv-name--agent">{agentName(key)}</span>
+              <small className="th-conv-role">{short}</small>
+              {unread > 0 && <span className="th-badge" aria-hidden="true">{unread}</span>}
+            </button>;
+          })}
+          {!agentRows.length && <p className="th-note">No agents match.</p>}
+        </div>}
         {query && <p className="th-note">Search covers the conversations you can see.</p>}
       </div>
     </section>
@@ -721,7 +820,7 @@ function ReadyHub({ hub, announce, announcement, onOpenTeamSettings, openPaige }
         You're offline. Your draft stays here and nothing is sent until you're back.</p>}
       {firstUse && !hub.activeId
         ? (oneColumn ? null : firstUseState("conv"))
-        : <Conversation hub={hub} people={people} meId={meId} active={active}
+        : <Conversation hub={hub} people={people} meId={meId} active={active} agent={agentProps}
           onBack={() => { setMobileView("list"); window.requestAnimationFrame(() => document.getElementById(`th-conv-${hub.activeId}`)?.focus()); }}
           onOpenThread={openThread} announce={announce} pending={pendingTop} onRetry={retry}
           onMembershipDone={(left) => { if (left) window.requestAnimationFrame(() => searchRef.current?.focus()); else focusComposer(); }}
@@ -733,7 +832,7 @@ function ReadyHub({ hub, announce, announcement, onOpenTeamSettings, openPaige }
                 where={conversationTitle(active, people)} online={hub.online} firstRef={previewFirstRef}
                 onChange={(next) => setPreview((current) => current && current.kind === "task" ? { ...current, ...next, error: null } : current)}
                 onCancel={closePreview} onCreate={() => void createTask()} />
-              : <HandoffPreview preview={previewHere} where={conversationTitle(active, people)} online={hub.online} canDelegate={canAssignOthers}
+              : <HandoffPreview preview={previewHere}
                 firstRef={previewFirstRef}
                 onChange={(next) => setPreview((current) => current && current.kind !== "task" ? { ...current, ...next, error: null } : current)}
                 onCancel={closePreview} onContinue={() => void continueInPaige()} />
@@ -741,8 +840,8 @@ function ReadyHub({ hub, announce, announcement, onOpenTeamSettings, openPaige }
           composer={active && hub.stream?.status === "ready" ? <Composer key={active.id} inputRef={composerRef} conversation={active} people={people} meId={meId}
             online={hub.online} value={draft} onChange={(value) => { setDraft(value); setComposerError(null); }}
             picked={pickedHere} onPick={(mention) => hub.activeId && setPicked((current) => ({ ...current, [hub.activeId!]: [...(current[hub.activeId!] ?? []), mention] }))}
-            commands={commands} specialistsOffered={Boolean(openPaige)}
-            onCommand={pickCommand} onSpecialist={pickSpecialist}
+            commands={commands} agentsOffered={agentsOn && active.kind !== "agent_dm"}
+            onCommand={pickCommand}
             attachments={mainScope ? hub.attachments[mainScope] ?? [] : []}
             onAttach={(files) => { if (hub.activeId) { setComposerError(null); hub.attach(hub.activeId, null, files); } }}
             onRetryAttachment={(localId) => mainScope && hub.retryAttachment(mainScope, localId)}
@@ -766,8 +865,8 @@ function ReadyHub({ hub, announce, announcement, onOpenTeamSettings, openPaige }
         {(thread.status === "not_found" || thread.status === "unavailable") && <p className="th-note th-note--pad">
           {thread.status === "not_found" ? "This thread isn't available to you." : "This thread couldn't load. Close it and try again."}</p>}
         {thread.status === "ready" && thread.root && <>
-          {/* EXP08 agents A1a: an agent's message is not rendered until A1b gives it its own author. */}
-          {!isAgentAuthored(thread.root) && <MessageRow message={thread.root} people={people} meId={meId} taskReads={hub.taskReads} />}
+          <MessageRow message={thread.root} people={people} meId={meId} taskReads={hub.taskReads} agent={agentProps}
+            place={{ around: [thread.root, ...thread.replies], inThread: true, agentDm: activeAgentDm?.agent_key ?? null, conversationId: thread.channelId }} />
           {/* A separator's own text is not read out, so its words are its accessible name too. */}
           <Separator className="th-day" label={thread.root.reply_count === 1 ? "1 reply" : `${thread.root.reply_count} replies`} />
           {thread.hasMore && <div className="th-older">
@@ -775,9 +874,11 @@ function ReadyHub({ hub, announce, announcement, onOpenTeamSettings, openPaige }
               onClick={() => void hub.loadEarlierReplies()}>{thread.loadingOlder ? "Loading earlier replies…" : "Show earlier replies"}</button>
             {thread.olderFailed && <p className="th-error" role="alert">Earlier replies couldn't load. Try again.</p>}
           </div>}
-          {thread.replies.filter((reply) => !isAgentAuthored(reply)).map((reply) => <MessageRow key={reply.id} message={reply} people={people} meId={meId} taskReads={hub.taskReads} />)}
+          {thread.replies.map((reply) => <MessageRow key={reply.id} message={reply} people={people} meId={meId} taskReads={hub.taskReads} agent={agentProps}
+            place={{ around: [thread.root!, ...thread.replies], inThread: true, agentDm: activeAgentDm?.agent_key ?? null, conversationId: thread.channelId }} />)}
           {pendingReplies.map((item) => <PendingRow key={item.localId} item={item} me={me} online={hub.online}
             onRetry={() => void retry(item)} onDiscard={() => { hub.discard(item.localId); announce("Unsent reply deleted"); window.requestAnimationFrame(() => threadComposerRef.current?.focus()); }} />)}
+          {agentsOn && <AgentActivity turns={hub.agentTurns} conversationId={thread.channelId} threadRootId={thread.rootId} around={thread.replies} agent={agentProps} />}
         </>}
       </div>
       {thread.status === "ready" && <div className="th-composer-wrap">
@@ -802,6 +903,12 @@ function ReadyHub({ hub, announce, announcement, onOpenTeamSettings, openPaige }
     </aside>}
     {workOpen && !thread && <WorkPanel hub={hub} people={people} conversations={conversations} headingRef={workHeadingRef}
       onClose={() => closeWork()} onJump={(item) => void jumpTo(item)} />}
+    {profileOpen && profile && <AgentProfilePanel agent={profile} headingRef={profileHeadingRef} onClose={() => closeProfile()}
+      messageBusy={dmBusy !== null} onMessage={() => {
+        // On a narrow hub the profile covers the conversation, so it steps aside for the DM.
+        if (layout !== "wide") closeProfile(false);
+        void openAgent(profile);
+      }} />}
    </div>
     <div className="th-sr" aria-live="polite" role="status">{announcement}</div>
     {/* The one description every file row carries (§1.4): files are not scanned. */}
@@ -809,8 +916,9 @@ function ReadyHub({ hub, announce, announcement, onOpenTeamSettings, openPaige }
   </div></FileAccess.Provider>;
 }
 
-function conversationTitle(conversation: TeamHubConversation, people: TeamHubPerson[]): string {
-  return conversation.kind === "channel" ? `#${conversation.name}` : conversationLabel(conversation, people);
+function conversationTitle(conversation: HubConversation | TeamHubConversation, people: TeamHubPerson[]): string {
+  const hub = "agent_key" in conversation ? conversation : asHub(conversation);
+  return hub.kind === "channel" ? `#${hub.name}` : hubLabel(hub, people);
 }
 
 function ConversationButton({ conversation, people, current, onOpen }: {
@@ -886,9 +994,11 @@ function NewChannelForm({ teammates, people, online, onCancel, onCreate }: {
   </form>;
 }
 
-function PersonPicker({ teammates, people, online, onCancel, onPick }: {
+function PersonPicker({ teammates, people, online, onCancel, onPick, agents = [], agentBusy = null, onAgent }: {
   teammates: TeamHubPerson[]; people: TeamHubPerson[]; online: boolean; onCancel: () => void;
   onPick: (person: TeamHubPerson) => Promise<{ ok: boolean; message?: string }>;
+  /** A1b: PAIGE and her agents, under "Your Paige team" (flow 4). */
+  agents?: readonly TeamHubAgentKey[]; agentBusy?: TeamHubAgentKey | null; onAgent?: (agent: TeamHubAgentKey) => Promise<{ ok: boolean; message?: string }>;
 }) {
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -910,14 +1020,39 @@ function PersonPicker({ teammates, people, online, onCancel, onPick }: {
           <small>{[permissionLabel(person.permission) ?? "Member", person.title, conversationsOff(person) ? "Team conversations off" : null].filter(Boolean).join(" · ")}</small></span>
       </button>)
       : <p className="th-note">No one else is on the team yet.</p>}
+    {agents.length > 0 && onAgent && <>
+      <h3 className="th-pop-head th-pick-head">{TEAM_HEAD}</h3>
+      {agents.map((key, index) => <button key={key} ref={!teammates.length && index === 0 ? firstRef : undefined} type="button" className="th-option" data-ag={key} disabled={!online || Boolean(busy) || Boolean(agentBusy)}
+        onClick={async () => { setError(null); const result = await onAgent(key); if (!result.ok && result.message) setError(result.message); }}>
+        <AgentPlate agent={key} size="md" />
+        <span className="th-option-meta"><span><span className="th-ag-name">{agentName(key)}</span> <AgentTag agent={key} /></span>
+          <small>{TEAM_HUB_AGENT_PROFILES[key].short} · only you see this DM</small></span>
+      </button>)}
+    </>}
     {error && <p className="th-error">{error}</p>}
-    <button ref={teammates.length ? undefined : firstRef} type="button" className="th-btn th-btn--ghost" onClick={onCancel}>Cancel</button>
+    <button ref={teammates.length || agents.length ? undefined : firstRef} type="button" className="th-btn th-btn--ghost" onClick={onCancel}>Cancel</button>
   </div>;
 }
 
-function FirstUse({ teammates, canInvite, onOpenTeamSettings, onCreate, onMessage, compact = false }: {
-  teammates: TeamHubPerson[]; canInvite: boolean; onOpenTeamSettings?: () => void; onCreate: () => void; onMessage: () => void; compact?: boolean;
+function FirstUse({ teammates, canInvite, onOpenTeamSettings, onCreate, onMessage, onSayHello, compact = false }: {
+  teammates: TeamHubPerson[]; canInvite: boolean; onOpenTeamSettings?: () => void; onCreate: () => void; onMessage: () => void;
+  /** A1b (flow 1): PAIGE and her agents are here from the start; saying hello to PAIGE is the one primary act. */
+  onSayHello?: () => void; compact?: boolean;
 }) {
+  if (onSayHello) {
+    return <CenterState icon={<Users aria-hidden="true" />} title="Your team's conversations start here" compact={compact}
+      action={<div className="th-first-acts">
+        <button type="button" className="th-btn th-btn--primary" onClick={onSayHello}><AgentPlate agent="paige" size="sm" />Say hello to PAIGE</button>
+        <div className="th-actions">
+          <button type="button" className="th-btn th-btn--ghost" onClick={onCreate}>Create a channel</button>
+          {teammates.length > 0 && <button type="button" className="th-btn th-btn--ghost" onClick={onMessage}>Message a teammate</button>}
+          {canInvite && <button type="button" className="th-btn th-btn--ghost" onClick={onOpenTeamSettings}>Invite teammates in Settings → Team</button>}
+        </div>
+        {teammates.length === 0 && <p className="th-note">Right now it's you, PAIGE and her six agents.</p>}
+      </div>}>
+      Talk with your team in channels and direct messages. Mention <b>@PAIGE</b> or one of her agents and they reply right here.
+    </CenterState>;
+  }
   return <CenterState icon={<Users aria-hidden="true" />} title="Your team's conversations start here" compact={compact}
     action={<div className="th-actions">
       <button type="button" className="th-btn" onClick={onCreate}>Create a channel</button>
@@ -929,11 +1064,11 @@ function FirstUse({ teammates, canInvite, onOpenTeamSettings, onCreate, onMessag
   </CenterState>;
 }
 
-function Conversation({ hub, people, meId, active, onBack, onOpenThread, announce, pending, onRetry, onDiscard, onMembershipDone, composer, preview, taskReads }: {
-  hub: TeamHub; people: TeamHubPerson[]; meId: string; active: TeamHubConversation | null; onMembershipDone: (leftPrivate: boolean) => void;
+function Conversation({ hub, people, meId, active, onBack, onOpenThread, announce, pending, onRetry, onDiscard, onMembershipDone, composer, preview, taskReads, agent }: {
+  hub: TeamHub; people: TeamHubPerson[]; meId: string; active: HubConversation | null; onMembershipDone: (leftPrivate: boolean) => void;
   onBack: () => void; onOpenThread: (rootId: string, trigger: HTMLElement) => void; announce: (text: string) => void;
   pending: PendingMessage[]; onRetry: (item: PendingMessage) => void; onDiscard: (item: PendingMessage) => void; composer: ReactNode;
-  preview: ReactNode; taskReads: Record<string, TeamHubTaskRead>;
+  preview: ReactNode; taskReads: Record<string, TeamHubTaskRead>; agent: AgentView;
 }) {
   const stream = hub.stream;
   const [adding, setAdding] = useState(false);
@@ -965,8 +1100,10 @@ function Conversation({ hub, people, meId, active, onBack, onOpenThread, announc
   const kind = active?.kind ?? channel?.kind ?? "channel";
   const visibility = active?.visibility ?? channel?.visibility ?? "team";
   const joined = active?.joined ?? channel?.joined ?? false;
-  const title = active ? conversationLabel(active, people) : channel?.name ?? "";
+  const title = active ? hubLabel(active, people) : channel?.name ?? "";
   const dmPerson = active?.kind === "dm" ? people.find((person) => person.user_id === active.dm_user_id) : null;
+  // A1b: the reader's DM with an agent: the agent's own header, and no channel actions.
+  const dmAgent = active?.kind === "agent_dm" ? active.agent_key : null;
   const subtitle = kind === "dm"
     ? dmPerson?.title ?? (dmPerson ? permissionLabel(dmPerson.permission) ?? "Member" : "No longer on the team")
     : visibility === "private"
@@ -986,6 +1123,23 @@ function Conversation({ hub, people, meId, active, onBack, onOpenThread, announc
     // The pressed button is replaced (Join ⇄ Leave) or the channel is gone: put focus somewhere real.
     onMembershipDone(action === "leave" && visibility === "private");
   };
+
+  if (dmAgent) {
+    const profile = TEAM_HUB_AGENT_PROFILES[dmAgent];
+    return <div className="th-conv-main">
+      <header className="th-conv-head th-conv-head--agent" data-ag={dmAgent}>
+        {back}
+        <h2><AgentPlate agent={dmAgent} size="sm" /><span className="th-conv-title th-ag-name">{title}</span><AgentTag agent={dmAgent} /></h2>
+        <p>{profile.role}</p>
+        <div className="th-head-actions">
+          <button type="button" className="th-btn" onClick={(event) => agent.onProfile(dmAgent, event.currentTarget)}>How {title} works</button>
+        </div>
+      </header>
+      {stream.status === "loading" ? <StreamSkeleton rows={3} /> : <Stream hub={hub} people={people} meId={meId} title={title} kind="agent_dm" agentDm={dmAgent}
+        pending={pending} onRetry={onRetry} onDiscard={onDiscard} onOpenThread={onOpenThread} taskReads={taskReads} agent={agent} />}
+      {composer}
+    </div>;
+  }
 
   return <div className="th-conv-main">
     <header className="th-conv-head">
@@ -1013,7 +1167,7 @@ function Conversation({ hub, people, meId, active, onBack, onOpenThread, announc
     {adding && hub.activeId && <AddPeople channelId={hub.activeId} memberIds={active?.member_ids ?? []} people={people} meId={meId} online={hub.online} hub={hub} announce={announce}
       onClose={() => { setAdding(false); window.requestAnimationFrame(() => addRef.current?.focus()); }} />}
     {stream.status === "loading" ? <StreamSkeleton rows={4} /> : <Stream hub={hub} people={people} meId={meId} title={title} kind={kind}
-      pending={pending} onRetry={onRetry} onDiscard={onDiscard} onOpenThread={onOpenThread} taskReads={taskReads} />}
+      pending={pending} onRetry={onRetry} onDiscard={onDiscard} onOpenThread={onOpenThread} taskReads={taskReads} agent={agent} />}
     {preview}
     {composer}
   </div>;
@@ -1076,8 +1230,8 @@ function AddPeople({ channelId, memberIds, people, meId, online, hub, announce, 
   </form>;
 }
 
-function Stream({ hub, people, meId, title, kind, pending, onRetry, onDiscard, onOpenThread, taskReads }: {
-  hub: TeamHub; people: TeamHubPerson[]; meId: string; title: string; kind: "channel" | "dm";
+function Stream({ hub, people, meId, title, kind, pending, onRetry, onDiscard, onOpenThread, taskReads, agent, agentDm = null }: {
+  hub: TeamHub; people: TeamHubPerson[]; meId: string; title: string; kind: HubConversation["kind"]; agent: AgentView; agentDm?: TeamHubAgentKey | null;
   pending: PendingMessage[]; onRetry: (item: PendingMessage) => void; onDiscard: (item: PendingMessage) => void;
   onOpenThread: (rootId: string, trigger: HTMLElement) => void; taskReads: Record<string, TeamHubTaskRead>;
 }) {
@@ -1169,24 +1323,54 @@ function Stream({ hub, people, meId, title, kind, pending, onRetry, onDiscard, o
         {stream.loadingOlder ? "Loading earlier messages…" : "Load earlier messages"}</button>
       {stream.olderFailed && <p className="th-error" role="alert">Earlier messages couldn't load. Try again.</p>}
     </div>}
-    {!stream.messages.length && !pending.length && <div className="th-empty">
+    {agentDm && (stream.messages.length > 0 || pending.length > 0) && <AgentDmNote agent={agentDm} />}
+    {!stream.messages.length && !pending.length && (agentDm ? <AgentDmEmpty agent={agentDm} /> : <div className="th-empty">
       <p className="th-empty-title">{kind === "dm" ? `This is the start of your conversation with ${title}.` : `No messages in #${title} yet.`}</p>
       <p>Say hello to start the conversation.</p>
-    </div>}
-    {stream.messages.filter((message) => !isAgentAuthored(message)).map((message) => {
+    </div>)}
+    {stream.messages.map((message, index) => {
       const day = dayKey(message.created_at);
       const separator = day !== lastDay ? <Separator className="th-day" label={dayLabel(message.created_at)} /> : null;
       lastDay = day;
       return <div key={message.id}>
         {separator}
         {stream.dividerBefore === message.id && <Separator className="th-new" label="New messages" text="New" newDivider />}
-        <MessageRow message={message} people={people} meId={meId} onOpenThread={onOpenThread} taskReads={taskReads} />
+        <MessageRow message={message} people={people} meId={meId} onOpenThread={onOpenThread} taskReads={taskReads} agent={agent}
+          place={{ around: stream.messages, prev: separator ? null : stream.messages[index - 1] ?? null, agentDm, conversationId: stream.channelId }} />
       </div>;
     })}
     {pending.map((item) => <PendingRow key={item.localId} item={item} me={me} online={hub.online}
       onRetry={() => onRetry(item)} onDiscard={() => onDiscard(item)} />)}
+    {agent.on && <AgentActivity turns={agent.turns} conversationId={stream.channelId} threadRootId={null} around={stream.messages} agent={agent} />}
     </div>
   </div>;
+}
+
+/**
+ * The asker's live rows at the end of a conversation or thread: "<agent> is writing…" for each turn this
+ * tab is waiting on here (a reply, or a private part being written in this DM), and, in the DM, a
+ * private part that couldn't be finished, with Ask again. A reply that has arrived ends its row.
+ */
+function AgentActivity({ turns, conversationId, threadRootId, around, agent }: {
+  turns: Record<string, AgentTurn>; conversationId: string; threadRootId: string | null; around: TeamHubMessage[]; agent: AgentView;
+}) {
+  const rows: ReactNode[] = [];
+  for (const turn of Object.values(turns)) {
+    const { request } = turn;
+    const here = request.conversationId === conversationId && (request.threadRootId ?? null) === threadRootId;
+    const answered = around.some((message) => answers(message, request.sourceMessageId, request.agent));
+    if (here && (turn.status === "writing" || turn.status === "in_flight") && !answered) {
+      rows.push(<AgentTyping key={`w-${turn.key}`} agent={request.agent} />);
+    }
+    if (!threadRootId && turn.privatePart && turn.privatePart.dmId === conversationId) {
+      if (turn.privatePart.status === "writing") rows.push(<AgentTyping key={`p-${turn.key}`} agent={request.agent} />);
+      if (turn.privatePart.status === "failed") {
+        rows.push(<AgentFailRow key={`f-${turn.key}`} text={agentOutcomeLine("no_reply", request.agent, true).text} action="ask_again"
+          online={agent.online} onAction={() => agent.onAskAgain(request)} />);
+      }
+    }
+  }
+  return rows.length ? <>{rows}</> : null;
 }
 
 function Separator({ className, label, text = label, newDivider = false }: { className: string; label: string; text?: string; newDivider?: boolean }) {
@@ -1204,10 +1388,53 @@ function Author({ person, people, meId, at }: { person: TeamHubPerson | null; pe
   </div>;
 }
 
-function MessageRow({ message, people, meId, onOpenThread, taskReads }: {
+/**
+ * A1b: what a message row needs to show agents: whether they are on for this tier, this tab's turns,
+ * and the actions an agent row offers. One object so the stream, the thread and the agent DM share it.
+ */
+type AgentView = {
+  on: boolean;
+  turns: Record<string, AgentTurn>;
+  online: boolean;
+  meId: string;
+  onProfile: (agent: TeamHubAgentKey, trigger: HTMLElement | null) => void;
+  onOpenDm: (agent: TeamHubAgentKey) => void;
+  onAskAgain: (request: AgentTurn["request"]) => void;
+  onBringIn: (reply: TeamHubMessage, prefill: string, agent: TeamHubAgentKey) => void;
+};
+
+/** Where a row sits: the rows around it (the stream, or a thread's root and replies) and its kind of place. */
+type RowPlace = { around: TeamHubMessage[]; prev?: TeamHubMessage | null; inThread?: boolean; agentDm?: TeamHubAgentKey | null; conversationId: string };
+
+/** A person's first name as other people read it; a namesake keeps the label that tells them apart. */
+function shortName(person: TeamHubPerson | null, people: TeamHubPerson[]): string {
+  if (!person) return "Former teammate";
+  const namesakes = people.filter((other) => other.display_name === person.display_name).length > 1;
+  return namesakes ? mentionLabel(person, people) : person.display_name.split(/\s+/)[0] || person.display_name;
+}
+
+/** A person's words: their picked mentions highlighted, and the agents the message asked as agent chips. */
+function PersonText({ message, people }: { message: TeamHubMessage; people: TeamHubPerson[] }) {
+  const asked = new Set(message.agent_mentions ?? []);
+  return <p className="th-text">{mentionRuns(message.body, message.mentions, people).map((run, index) => run.mention
+    ? <span key={index} className="th-mention">{run.text}</span>
+    : <Fragment key={index}>{agentRuns(run.text, asked).map((part, partIndex) => part.agent
+      ? <AgentChip key={partIndex} agent={part.agent} />
+      : <span key={partIndex}>{part.text}</span>)}</Fragment>)}</p>;
+}
+
+/** An @mention of an agent: its tint, its ink, its symbol. Always at tint strength (one message can hold four). */
+function AgentChip({ agent }: { agent: TeamHubAgentKey }) {
+  return <span className="th-mention th-ag-chip" data-ag={agent}><AgentGlyph agent={agent} />@{agentName(agent)}</span>;
+}
+
+function MessageRow({ message, people, meId, onOpenThread, taskReads, agent, place }: {
   message: TeamHubMessage; people: TeamHubPerson[]; meId: string; onOpenThread?: (rootId: string, trigger: HTMLElement) => void;
-  taskReads?: Record<string, TeamHubTaskRead>;
+  taskReads?: Record<string, TeamHubTaskRead>; agent?: AgentView; place?: RowPlace;
 }) {
+  if (isAgentAuthored(message) && message.agent_key) {
+    return <AgentMessageRow message={message} agentKey={message.agent_key} people={people} meId={meId} onOpenThread={onOpenThread} agent={agent} place={place} />;
+  }
   const author = people.find((person) => person.user_id === message.author_user_id) ?? null;
   const name = author?.display_name ?? "Former teammate";
   return <article id={`th-msg-${message.id}`} tabIndex={-1} className="th-msg" aria-label={`${name} at ${timeLabel(message.created_at)}`}>
@@ -1218,10 +1445,84 @@ function MessageRow({ message, people, meId, onOpenThread, taskReads }: {
         // A command message: its fixed words are a tag, and the task itself is read from Operations.
         ? <p className="th-text"><span className="th-cmdtag">{message.body}</span></p>
         // A files-only message has no text line at all, not an empty one.
-        : message.body || !message.files.length ? <p className="th-text">{mentionRuns(message.body, message.mentions, people).map((run, index) =>
-          run.mention ? <span key={index} className="th-mention">{run.text}</span> : <span key={index}>{run.text}</span>)}</p> : null}
+        : message.body || !message.files.length ? <PersonText message={message} people={people} /> : null}
       {message.files.length > 0 && <MessageFiles files={message.files} />}
       {message.work_ref && <TaskCard id={message.work_ref.id} read={taskReads?.[message.work_ref.id]} people={people} meId={meId} />}
+      {onOpenThread && message.reply_count > 0 && <button type="button" className="th-replies"
+        onClick={(event) => onOpenThread(message.id, event.currentTarget)}>
+        <MessageSquareReply aria-hidden="true" />{message.reply_count === 1 ? "1 reply" : `${message.reply_count} replies`}
+        {message.last_reply_at && <span> · last {timeLabel(message.last_reply_at)}</span>}</button>}
+      {agent?.on && place && message.author_user_id === meId && <AskedAgentsStatus message={message} agent={agent} place={place} />}
+    </div>
+    {onOpenThread && <button type="button" className="th-icon-btn th-reply-action" aria-label={`Reply in thread to ${name}`}
+      onClick={(event) => onOpenThread(message.id, event.currentTarget)}><MessageSquareReply aria-hidden="true" /></button>}
+  </article>;
+}
+
+/**
+ * Under the asker's own question, for the asker only: an agent's turn that ended without a reply
+ * (flow 9's line, with Ask again or Check again), or — coming back after a closed tab — an agent the
+ * question asked that never answered. A turn still running shows its writing row at the stream's end.
+ */
+function AskedAgentsStatus({ message, agent, place }: { message: TeamHubMessage; agent: AgentView; place: RowPlace }) {
+  const asked = place.agentDm ? [place.agentDm] : message.agent_mentions ?? [];
+  const lines = asked.flatMap((key) => {
+    const turn = agent.turns[agentTurnKey(message.id, key)];
+    if (place.around.some((other) => answers(other, message.id, key))) return [];
+    const request = turn?.request ?? { conversationId: place.conversationId, sourceMessageId: message.id, threadRootId: message.parent_message_id, agent: key };
+    if (turn?.status === "failed" && turn.outcome) return [{ key, request, ...agentOutcomeLine(turn.outcome, key) }];
+    if (!turn) return [{ key, request, ...agentOutcomeLine("no_reply", key) }];
+    return [];
+  });
+  if (!lines.length) return null;
+  return <>{lines.map((line) => <AgentFailRow key={line.key} text={line.text} action={line.action} online={agent.online}
+    onAction={() => agent.onAskAgain(line.request)} />)}</>;
+}
+
+function AgentMessageRow({ message, agentKey, people, meId, onOpenThread, agent, place }: {
+  message: TeamHubMessage; agentKey: TeamHubAgentKey; people: TeamHubPerson[]; meId: string;
+  onOpenThread?: (rootId: string, trigger: HTMLElement) => void; agent?: AgentView; place?: RowPlace;
+}) {
+  const name = agentName(agentKey);
+  const profile = TEAM_HUB_AGENT_PROFILES[agentKey];
+  const asker = people.find((person) => person.user_id === message.author_user_id) ?? null;
+  const isAsker = message.author_user_id === meId;
+  const { text, privatePart } = splitPrivateLine(message.body);
+  const question = message.asked_in_message_id ? place?.around.find((item) => item.id === message.asked_in_message_id) ?? null : null;
+  // "replying to Sam", only when Sam's question is not the row directly above.
+  const showReplyingTo = Boolean(message.asked_in_message_id) && !place?.inThread && !place?.agentDm && place?.prev?.id !== message.asked_in_message_id;
+  const turn = message.asked_in_message_id ? agent?.turns[agentTurnKey(message.asked_in_message_id, agentKey)] : undefined;
+  // Bring in (flow 3): the agents this reply names, less any the question already asked or the asker
+  // has since asked in this conversation.
+  const askedSince = new Set((place?.around ?? []).filter((item) => item.author_user_id === message.author_user_id && item.author_kind !== "agent"
+    && compareMessages(item, message) > 0).flatMap((item) => item.agent_mentions ?? []));
+  const bring = agent?.on && !place?.agentDm ? bringInSuggestions(message, question?.agent_mentions ?? []).filter((item) => !askedSince.has(item.agent)) : [];
+  const jumpToQuestion = () => {
+    const element = message.asked_in_message_id ? document.getElementById(`th-msg-${message.asked_in_message_id}`) : null;
+    element?.scrollIntoView?.({ block: "center" });
+    element?.focus();
+  };
+  return <article id={`th-msg-${message.id}`} tabIndex={-1} className="th-msg th-msg--agent" data-ag={agentKey} aria-label={`${name}, agent, at ${timeLabel(message.created_at)}`}>
+    <button type="button" className="th-ag-avbtn" aria-label={`${name}'s profile`} onClick={(event) => agent?.onProfile(agentKey, event.currentTarget)}>
+      <AgentPlate agent={agentKey} size="lg" /></button>
+    <div className="th-msg-body">
+      <div className="th-who">
+        <button type="button" className="th-ag-namebtn th-ag-name" onClick={(event) => agent?.onProfile(agentKey, event.currentTarget)}>{name}</button>
+        <AgentTag agent={agentKey} />
+        <span className="th-role">{profile.short}</span>
+        <time dateTime={message.created_at}>{timeLabel(message.created_at)}</time>
+        {showReplyingTo && (question
+          ? <button type="button" className="th-ag-re" onClick={jumpToQuestion}><CornerDownRight aria-hidden="true" />replying to {shortName(asker, people)}</button>
+          : <span className="th-ag-re"><CornerDownRight aria-hidden="true" />replying to {shortName(asker, people)}</span>)}
+      </div>
+      {text && <p className="th-text">{agentRuns(text, "all").map((part, index) => part.agent
+        ? <AgentChip key={index} agent={part.agent} /> : <span key={index}>{part.text}</span>)}</p>}
+      {privatePart && !place?.agentDm && <p className="th-text th-text--fixed">{FIXED_PRIVATE_LINE}</p>}
+      {privatePart && isAsker && turn?.privatePart && agent && <PrivateNote agent={agentKey} status={turn.privatePart.status} online={agent.online}
+        onOpenDm={() => agent.onOpenDm(agentKey)} onAskAgain={() => agent.onAskAgain(turn.request)} />}
+      {message.files.length > 0 && <MessageFiles files={message.files} />}
+      {bring.length > 0 && agent && <BringInRow agents={bring.map((item) => item.agent)} askerName={shortName(asker, people)} isAsker={isAsker}
+        onBring={(key) => { const item = bring.find((entry) => entry.agent === key); if (item) agent.onBringIn(message, item.prefill, key); }} />}
       {onOpenThread && message.reply_count > 0 && <button type="button" className="th-replies"
         onClick={(event) => onOpenThread(message.id, event.currentTarget)}>
         <MessageSquareReply aria-hidden="true" />{message.reply_count === 1 ? "1 reply" : `${message.reply_count} replies`}
@@ -1261,15 +1562,14 @@ function PendingRow({ item, me, online, onRetry, onDiscard }: {
 }
 
 type ComposerProps = {
-  conversation: TeamHubConversation; people: TeamHubPerson[]; meId: string; online: boolean;
+  conversation: HubConversation; people: TeamHubPerson[]; meId: string; online: boolean;
   value: string; onChange: (value: string) => void; picked: PickedMention[]; onPick: (mention: PickedMention) => void;
   error: string | null; onSend: () => void; inputRef: MutableRefObject<HTMLTextAreaElement | null>;
   /** The `/` menu's commands (increment 2); the PAIGE handoffs are left out where PAIGE can't open. */
   commands: readonly TeamHubCommand[];
   onCommand: (command: TeamHubCommand, draft: string) => void;
-  /** The six specialists join the @ list only where a pick can continue in PAIGE. */
-  specialistsOffered: boolean;
-  onSpecialist: (name: SpecialistName, draftWithoutQuery: string) => void;
+  /** A1b: PAIGE and her agents join the @ list under "Your Paige team" (never in an agent DM). */
+  agentsOffered: boolean;
   /** Increment 3: this composer's file chips, and what picking, retrying and removing one does. */
   attachments: AttachmentChip[];
   onAttach: (files: File[]) => void;
@@ -1277,38 +1577,41 @@ type ComposerProps = {
   onRemoveAttachment: (localId: string) => void;
 };
 
-const SPECIALIST_ROLES: Record<string, string> = Object.fromEntries(VP_ROSTER.map((vp) => [vp.name, vp.role.replace(/^VP /, "")]));
+type MentionItem = { kind: "person"; key: string; person: TeamHubPerson } | { kind: "agent"; key: string; agent: TeamHubAgentKey };
 
-type MentionItem = { kind: "person"; key: string; person: TeamHubPerson } | { kind: "specialist"; key: string; name: SpecialistName };
+/** An agent matches a typed query from the start of its name (or key): "@CU" is CURA. */
+const agentMatches = (query: string) => {
+  const needle = query.trim().toLowerCase();
+  return TEAM_HUB_AGENT_KEYS.filter((key) => !needle || agentName(key).toLowerCase().startsWith(needle) || key.startsWith(needle));
+};
 
-function Composer({ conversation, people, meId, online, value, onChange, picked, onPick, error, onSend, inputRef, commands, onCommand, specialistsOffered, onSpecialist,
+function Composer({ conversation, people, meId, online, value, onChange, picked, onPick, error, onSend, inputRef, commands, onCommand, agentsOffered,
   attachments, onAttach, onRetryAttachment, onRemoveAttachment }: ComposerProps) {
   const localRef = useRef<HTMLTextAreaElement | null>(null);
-  const [mention, setMention] = useState<{ start: number; query: string } | null>(null);
+  // `agentsOnly`: opened by the / command Ask an agent, so the list shows the agents alone.
+  const [mention, setMention] = useState<{ start: number; query: string; agentsOnly?: boolean } | null>(null);
   // The `/` menu: typed (the draft starts with `/` or `/PAIGE`) or opened by the slash button over a draft.
   const [command, setCommand] = useState<{ query: string; fromButton: boolean } | null>(null);
   const [index, setIndex] = useState(0);
   const caret = useRef<number | null>(null);
   const scope = mentionScope(conversation);
   const peopleOffered = mentionCandidates(scope, people, meId, "").length > 0;
-  // Offered when someone besides the author can see this conversation, or a specialist can be asked.
-  const mentionsOffered = peopleOffered || specialistsOffered;
+  // Offered when someone besides the author can see this conversation, or an agent can be asked.
+  const mentionsOffered = peopleOffered || agentsOffered;
   const items = useMemo<MentionItem[]>(() => {
     if (!mention) return [];
-    const needle = mention.query.trim().toLowerCase();
-    const found: MentionItem[] = mentionCandidates(scope, people, meId, mention.query).map((person) => ({ kind: "person", key: person.user_id, person }));
-    if (specialistsOffered) {
-      for (const name of SPECIALIST_NAMES) if (name.toLowerCase().startsWith(needle)) found.push({ kind: "specialist", key: `sp-${name}`, name });
-    }
+    const found: MentionItem[] = mention.agentsOnly ? []
+      : mentionCandidates(scope, people, meId, mention.query).map((person) => ({ kind: "person", key: person.user_id, person }));
+    if (agentsOffered) for (const agent of agentMatches(mention.query)) found.push({ kind: "agent", key: `ag-${agent}`, agent });
     return found;
   // eslint-disable-next-line react-hooks/exhaustive-deps -- scope derives from the conversation
-  }, [mention, people, meId, conversation, specialistsOffered]);
+  }, [mention, people, meId, conversation, agentsOffered]);
   const commandOptions = command ? commandMatches(command.query, commands) : [];
   const mentionOpen = Boolean(mention && items.length);
   const commandOpen = Boolean(command && commandOptions.length);
   const listOpen = mentionOpen || commandOpen;
   const optionCount = commandOpen ? commandOptions.length : items.length;
-  const label = conversation.kind === "dm" ? `Message ${conversationLabel(conversation, people)}` : `Message #${conversation.name}`;
+  const label = conversation.kind === "channel" ? `Message #${conversation.name}` : `Message ${hubLabel(conversation, people)}`;
   const problem = bodyProblem(value);
   // Files only is a message too; every chip must be ready before anything leaves.
   const filesOk = attachments.every((chip) => chip.state === "ready");
@@ -1346,21 +1649,24 @@ function Composer({ conversation, people, meId, online, value, onChange, picked,
     if (at < 0 || (at > 0 && !/\s/.test(before[at - 1]))) { setMention(null); return; }
     const query = before.slice(at + 1);
     if (/\n/.test(query) || query.length > 60) { setMention(null); return; }
-    const matches = mentionCandidates(scope, people, meId, query).length
-      + (specialistsOffered ? SPECIALIST_NAMES.filter((name) => name.toLowerCase().startsWith(query.trim().toLowerCase())).length : 0);
+    const matches = mentionCandidates(scope, people, meId, query).length + (agentsOffered ? agentMatches(query).length : 0);
     if (!matches && /\s/.test(query)) { setMention(null); return; }
-    setMention({ start: at, query });
+    // Typing on in a list Ask an agent opened keeps it to the agents.
+    setMention((current) => ({ start: at, query, agentsOnly: current?.start === at ? current.agentsOnly : undefined }));
     setIndex(0);
   };
 
   const pick = (item: MentionItem) => {
     if (!mention) return;
     const end = mention.start + 1 + mention.query.length;
-    if (item.kind === "specialist") {
-      // A specialist isn't a stored mention: the pick opens the PAIGE preview with the rest of the draft.
-      const next = `${value.slice(0, mention.start)}${value.slice(end)}`.replace(/[ \t]{2,}/g, " ");
+    if (item.kind === "agent") {
+      // An agent is written as @NAME; the message asks it when it is sent (at most three), nothing before.
+      const name = agentName(item.agent);
+      const next = `${value.slice(0, mention.start)}@${name} ${value.slice(end).replace(/^[ \t]+/, "")}`;
+      caret.current = mention.start + name.length + 2;
+      onChange(next);
       setMention(null);
-      onSpecialist(item.name, next);
+      localRef.current?.focus();
       return;
     }
     const text = mentionLabel(item.person, people);
@@ -1375,6 +1681,17 @@ function Composer({ conversation, people, meId, online, value, onChange, picked,
   const pickCommand = (item: TeamHubCommand | undefined) => {
     if (!item || disabledCommand(item)) return;
     setCommand(null);
+    if (item.kind === "agent") {
+      // Ask an agent starts an @mention: the command's words leave, the person's own words stay after it.
+      const rest = commandQuery(value) ? commandRemainder(value, item) : value.trim();
+      const next = rest ? `@ ${rest}` : "@";
+      caret.current = 1;
+      onChange(next);
+      setMention({ start: 0, query: "", agentsOnly: true });
+      setIndex(0);
+      localRef.current?.focus();
+      return;
+    }
     onCommand(item, value);
   };
 
@@ -1431,25 +1748,28 @@ function Composer({ conversation, people, meId, online, value, onChange, picked,
   };
 
   return <div className="th-composer-wrap">
-    {mentionOpen && <div className="th-pop" id={listId} role="listbox" aria-label="People and specialists">
+    {mentionOpen && <div className="th-pop" id={listId} role="listbox" aria-label="People and agents">
       {items.map((item, optionIndex) => {
-        const heading = item.kind === "specialist" && (optionIndex === 0 || items[optionIndex - 1].kind !== "specialist");
+        const first = optionIndex === 0 || items[optionIndex - 1].kind !== item.kind;
+        // The groups are named once there are two of them; the agents' heading is the list's own.
+        const heading = first ? item.kind === "agent" ? TEAM_HEAD : items.some((other) => other.kind === "agent") ? "People in this conversation" : null : null;
         return <Fragment key={item.key}>
-          {heading && <div className="th-pop-head" aria-hidden="true">PAIGE's specialists</div>}
+          {heading && <div className="th-pop-head" aria-hidden="true">{heading}</div>}
           <div id={`${listId}-${item.key}`} role="option" aria-selected={optionIndex === index} className="th-option"
+            data-ag={item.kind === "agent" ? item.agent : undefined}
             onMouseDown={(event) => event.preventDefault()} onClick={() => pick(item)} onMouseEnter={() => setIndex(optionIndex)}>
             {item.kind === "person"
               ? <><span className="th-avatar" aria-hidden="true">{initials(item.person.display_name)}</span>
                 <span className="th-option-meta"><span>{mentionLabel(item.person, people)}</span>
                   <small>{[permissionLabel(item.person.permission) ?? "Member", item.person.title].filter(Boolean).join(" · ")}</small></span></>
-              : <><span className="th-avatar th-avatar--sp" aria-hidden="true">{item.name.slice(0, 3)}</span>
-                <span className="th-option-meta"><span>{item.name}</span>
-                  <small>{SPECIALIST_ROLES[item.name] ?? "Specialist"} · continues in PAIGE</small></span></>}
+              : <><AgentPlate agent={item.agent} size="md" />
+                <span className="th-option-meta"><span><span className="th-ag-name">{agentName(item.agent)}</span> <AgentTag agent={item.agent} /></span>
+                  <small>{TEAM_HUB_AGENT_PROFILES[item.agent].short} · replies in this conversation</small></span></>}
           </div>
         </Fragment>;
       })}
     </div>}
-    {mention && !items.length && <p className="th-pop th-pop--note" role="status">No active teammate in this conversation matches.</p>}
+    {mention && !items.length && <p className="th-pop th-pop--note" role="status">{agentsOffered ? "No one in this conversation, and no agent, matches." : "No active teammate in this conversation matches."}</p>}
     {commandOpen && <div className="th-pop" id={commandListId} role="listbox" aria-label="PAIGE commands">
       <div className="th-pop-head" aria-hidden="true">PAIGE</div>
       {commandOptions.map((item, optionIndex) => <div key={item.kind} id={`${commandListId}-${item.kind}`} role="option"
@@ -1483,7 +1803,8 @@ function Composer({ conversation, people, meId, online, value, onChange, picked,
         <AttachButton online={online} onFiles={onAttach} />
         <button type="button" className="th-icon-btn" aria-label="PAIGE commands" aria-haspopup="listbox" aria-expanded={commandOpen}
           onMouseDown={(event) => event.preventDefault()} onClick={openCommands}><Slash aria-hidden="true" /></button>
-        <span className="th-hint">{!online ? "Offline · draft kept" : filesHint(attachments) ?? (mentionsOffered ? "@ to mention · / for PAIGE" : "/ for PAIGE · Shift+Enter for a new line")}</span>
+        <span className="th-hint">{!online ? "Offline · draft kept" : filesHint(attachments) ?? (conversation.kind === "agent_dm" && conversation.agent_key
+          ? `${agentName(conversation.agent_key)} replies here` : mentionsOffered ? "@ to mention · / for PAIGE" : "/ for PAIGE · Shift+Enter for a new line")}</span>
         <SendButton ready={ready} disabled={!online || !filesOk} label="Send" onClick={onSend} />
       </div>
     </DropZone>
@@ -1580,42 +1901,28 @@ function TaskPreview({ preview, people, assignable, meId, canAssignOthers, where
   </form>;
 }
 
-const HANDOFF_TITLES = { specialist: "Ask a specialist", approval: "Request approval", meeting: "Schedule a meeting" } as const;
+const HANDOFF_TITLES = { approval: "Request approval", meeting: "Schedule a meeting" } as const;
 
-function HandoffPreview({ preview, where, online, canDelegate, firstRef, onChange, onCancel, onContinue }: {
-  preview: Extract<Preview, { kind: "specialist" | "approval" | "meeting" }>; where: string; online: boolean; canDelegate: boolean;
+function HandoffPreview({ preview, firstRef, onChange, onCancel, onContinue }: {
+  preview: Extract<Preview, { kind: "approval" | "meeting" }>;
   firstRef: MutableRefObject<HTMLElement | null>;
-  onChange: (next: Partial<Pick<Extract<Preview, { kind: "specialist" | "approval" | "meeting" }>, "specialist" | "ask" | "alsoPost">>) => void;
+  onChange: (next: Partial<Pick<Extract<Preview, { kind: "approval" | "meeting" }>, "ask">>) => void;
   onCancel: () => void; onContinue: () => void;
 }) {
   const busy = preview.busy;
   const kind: TeamHubCommandKind = preview.kind;
-  const specialist = preview.specialist;
-  const field = preview.kind === "specialist" ? `What ${specialist} should do` : preview.kind === "approval" ? "What needs approval" : "What the meeting is for";
-  const why = preview.kind === "specialist"
-    ? `The request goes to PAIGE, addressed to ${specialist}. You press send there, and PAIGE shows the approval card before ${specialist} starts anything.`
-    : preview.kind === "approval"
-      ? "The request goes to PAIGE. PAIGE shows the approval there, through the one approval queue, before anything is sent."
-      : "The request goes to PAIGE. PAIGE checks Calendar and shows the slot there before anything is booked.";
-  const posting = preview.kind === "specialist" && preview.alsoPost;
+  const field = preview.kind === "approval" ? "What needs approval" : "What the meeting is for";
+  const why = preview.kind === "approval"
+    ? "The request goes to PAIGE. PAIGE shows the approval there, through the one approval queue, before anything is sent."
+    : "The request goes to PAIGE. PAIGE checks Calendar and shows the slot there before anything is booked.";
   return <form className="th-preview" aria-labelledby={`th-pv-${kind}`} noValidate onKeyDown={previewEscape(busy, onCancel)}
     onSubmit={(event) => { event.preventDefault(); onContinue(); }}>
     <PreviewHead id={`th-pv-${kind}`} title={HANDOFF_TITLES[preview.kind]} busy={busy} onCancel={onCancel} />
     <div className="th-pv-body">
-      {preview.kind === "specialist" && <div className="th-field"><span>Specialist</span>
-        <RadioChips label="Specialist" value={specialist} disabled={busy} onChange={(next) => onChange({ specialist: next })}
-          options={SPECIALIST_NAMES.map((name) => ({ value: name, text: name, detail: SPECIALIST_ROLES[name] }))} />
-      </div>}
       <label className="th-field">{field}
         <input ref={(node) => { firstRef.current = node; }} value={preview.ask} autoComplete="off" maxLength={2000} disabled={busy}
           aria-describedby={preview.error ? `th-pv-${kind}-error` : undefined} onChange={(event) => onChange({ ask: event.target.value })} />
       </label>
-      {preview.kind === "specialist" && <>
-        <button type="button" className="th-chip th-pv-toggle" aria-pressed={preview.alsoPost} disabled={busy}
-          onClick={() => onChange({ alsoPost: !preview.alsoPost })}>Also post my message in {where}</button>
-        {preview.alsoPost && <p className="th-note">Posted as @{specialist} in plain text. It doesn't notify anyone or start any work.</p>}
-        {!canDelegate && <p className="th-pv-notice" role="note">Only an owner or admin can hand work to a specialist. PAIGE checks this before anything starts.</p>}
-      </>}
       {preview.error && <p id={`th-pv-${kind}-error`} className="th-error">{preview.error}</p>}
       <p className="th-pv-why">{why} Nothing is created in Team Hub.</p>
     </div>
@@ -1623,8 +1930,7 @@ function HandoffPreview({ preview, where, online, canDelegate, firstRef, onChang
       <span className="th-pv-risk">Opens PAIGE · you confirm there</span>
       <button type="button" className="th-btn th-btn--ghost" disabled={busy} onClick={onCancel}>Cancel</button>
       {/* Neutral, never gold: PAIGE holds the act. */}
-      <button type="submit" className="th-btn" disabled={busy || (posting && !online)} aria-busy={busy || undefined}>
-        {busy ? "Posting…" : "Continue in PAIGE"}</button>
+      <button type="submit" className="th-btn" disabled={busy} aria-busy={busy || undefined}>Continue in PAIGE</button>
     </div>
   </form>;
 }

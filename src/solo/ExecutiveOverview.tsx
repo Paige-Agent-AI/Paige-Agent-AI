@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, type MouseEvent } from "react";
+import { useEffect, useLayoutEffect, useRef, type MouseEvent } from "react";
 import { Link, useLocation, useNavigate, useNavigationType } from "react-router-dom";
 import { ArrowRight, MessageSquareText, RefreshCw } from "lucide-react";
 import { PaigePresence } from "@/components/paige/live/PaigePresence";
@@ -85,6 +85,7 @@ function ResolvedExecutiveOverview({ account, accountEpoch, actorId, accountName
   const navigationType = useNavigationType();
   const root = useRef<HTMLDivElement>(null);
   const returnedEntry = useRef<string | null>(null);
+  const newerInput = useRef(false);
   const routePeriod = new URLSearchParams(location.search).get("review_period");
   const period = PERIODS.find(item => item.key === routePeriod)?.key ?? "last_7_days";
   const setPeriod = (value: string) => {
@@ -116,6 +117,14 @@ function ResolvedExecutiveOverview({ account, accountEpoch, actorId, accountName
   const plays = missions.items.filter((play) => play.state !== "stopped").slice(0, 3);
   const address = location.pathname + location.search + location.hash;
   const returnScope = actorId && account && accountEpoch ? JSON.stringify([actorId, accountEpoch, account]) : null;
+  useEffect(() => {
+    if (navigationType !== 'POP' || review.state !== 'loading' || !returnScope
+      || !reviewReturn(location.state?.executiveReviewReturn, returnScope, address)) return;
+    const noteInput = () => { newerInput.current = true; };
+    document.addEventListener('pointerdown', noteInput, true);
+    document.addEventListener('keydown', noteInput, true);
+    return () => { document.removeEventListener('pointerdown', noteInput, true); document.removeEventListener('keydown', noteInput, true); };
+  }, [address, location.state, navigationType, returnScope, review.state]);
   const rememberDepartment = (event: MouseEvent<HTMLDivElement>) => {
     if (!returnScope || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.defaultPrevented) return;
     const opener = event.target instanceof Element ? event.target.closest<HTMLAnchorElement>('a[href]') : null;
@@ -141,7 +150,11 @@ function ResolvedExecutiveOverview({ account, accountEpoch, actorId, accountName
     if (!bookmark || !node) return;
     returnedEntry.current = location.key;
     // A person who moved focus while the fresh read was pending keeps it.
-    if (document.activeElement && document.activeElement !== document.body && document.activeElement !== node) return;
+    const active = document.activeElement;
+    // The incumbent folded shell can automatically focus its command on a route
+    // change. Its existing content-focus guard respects this destination's focus.
+    // A real newer interaction, including one on that command, still wins.
+    if (newerInput.current || (active && active !== document.body && active !== node && !active.matches('[data-tenant-paige-command]'))) return;
     // Reopening source details above the viewport must not add a second native
     // scroll-anchoring adjustment to the explicit original reading position.
     const priorAnchor = node.style.overflowAnchor;

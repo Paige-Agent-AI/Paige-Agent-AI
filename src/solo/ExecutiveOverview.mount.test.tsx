@@ -179,6 +179,18 @@ describe('Executive display-only history return', () => {
     expect(document.activeElement).toBe(select);
     expect((host.querySelector('.executive-root') as HTMLElement).scrollTop).toBe(0);
   });
+  it.each([false, true])('distinguishes automatic folded-shell focus from newer user input (%s)', async userInput => {
+    const command = document.createElement('button'); command.dataset.tenantPaigeCommand = ''; command.textContent = 'Existing PAIGE command'; document.body.appendChild(command);
+    try {
+      await act(async () => root!.render(returnTree())); leaveReview(); command.focus();
+      mocks.review.mockReturnValue({ state: 'loading', refresh: vi.fn() }); act(() => button('Test browser Back').click());
+      if (userInput) command.dispatchEvent(new Event('pointerdown', { bubbles: true }));
+      mocks.review.mockReturnValue({ state: 'ready', snapshot: structuredClone(SNAPSHOT), refresh: vi.fn() });
+      await act(async () => root!.render(returnTree()));
+      expect(document.activeElement).toBe(userInput ? command : link('/solo/1234567/finance'));
+      expect((host.querySelector('.executive-root') as HTMLElement).scrollTop).toBe(userInput ? 0 : 420);
+    } finally { command.remove(); }
+  });
   it('returns to the review heading if fresh evidence no longer offers the original link', async () => {
     await act(async () => root!.render(returnTree())); leaveReview();
     mocks.review.mockReturnValue({ state: 'failed', message: 'Fresh evidence unavailable', refresh: vi.fn() });

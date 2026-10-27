@@ -28,7 +28,13 @@ function harness(config={}){
    if(config.createTimeout)throw Error('controlled lost acknowledgement');return {data:{...operation,replayed},error:null};
   }
   if(name==='read_client_portal_invitation_delivery')return {data:delivery&&delivery.operation_id===args.p_operation_id?delivery:{actor_id:ids.actor,tenant_id:ids.tenant,operation_id:args.p_operation_id,found:false},error:null};
-  if(name==='claim_client_portal_invitation_delivery'){delivery=delivery??nativeDelivery('pending');return {data:{...delivery,disposition:'dispatch',claim_id:ids.claim,provider_key:`customer-portal-delivery/v1/${ids.tenant}/${args.p_operation_id}`},error:null}};
+  // As claim_client_portal_invitation_delivery decides it: a recorded outcome is 'recorded'; an earlier
+  // pending/unknown attempt whose lease lapsed is 'reconcile'; only a first attempt is 'dispatch'.
+  if(name==='claim_client_portal_invitation_delivery'){
+   if(delivery&&['provider_accepted','failed','refused'].includes(delivery.outcome))return {data:{...delivery,disposition:'recorded'},error:null};
+   const disposition=delivery?'reconcile':'dispatch';delivery=delivery??nativeDelivery('pending');
+   return {data:{...delivery,disposition,claim_id:ids.claim,provider_key:`customer-portal-delivery/v1/${ids.tenant}/${args.p_operation_id}`},error:null};
+  }
   throw Error('unexpected caller RPC '+name);
  }};
  function query(table){let kind=null,payload=null,singleResult=false;const filters=[];
@@ -74,9 +80,10 @@ function harness(config={}){
   if(name==='record_capability_run')return {data:true,error:config.railError?{message:'controlled refusal'}:null};
   throw Error('unexpected service RPC '+name);
  }};
- const context=vm.createContext({Response,Request,Headers,URL,TextEncoder,TextDecoder,Date,AbortController,setTimeout,clearTimeout,crypto:webcrypto,
-  console:{error:()=>{},warn:()=>{}},Deno:{env:{get:name=>({SUPABASE_URL:'https://sdk.invalid',SUPABASE_ANON_KEY:'controlled-anon',SUPABASE_SERVICE_ROLE_KEY:'controlled-service',RESEND_API_KEY:'controlled-provider',PLATFORM_DEFAULT_EMAIL_FROM:'no-reply@tests.invalid',PUBLIC_SITE_URL:'https://portal.invalid'}[name])},serve:fn=>handler=fn},
-  fetch:async(url,options)=>{effects.push({url,options});if(config.transport)throw Error('controlled failure');return new Response(JSON.stringify({id:'controlled-message'}),{status:200})}
+ const context=vm.createContext({Response,Request,Headers,URL,TextEncoder,TextDecoder,Date,AbortController,AbortSignal,setTimeout,clearTimeout,crypto:webcrypto,
+  console:{error:()=>{},warn:()=>{}},Deno:{env:{get:name=>({SUPABASE_URL:'https://sdk.invalid',SUPABASE_ANON_KEY:'controlled-anon',SUPABASE_SERVICE_ROLE_KEY:'controlled-service',SENDGRID_MAIL_SEND_API_KEY:'controlled-provider',PLATFORM_DEFAULT_EMAIL_FROM:'no-reply@tests.invalid',PUBLIC_SITE_URL:'https://portal.invalid'}[name])},serve:fn=>handler=fn},
+  // SendGrid's Mail Send contract: 202, empty body, the id in X-Message-Id.
+  fetch:async(url,options)=>{effects.push({url,options});if(config.transport)throw Error('controlled failure');return new Response(null,{status:202,headers:{'x-message-id':'controlled-message'}})}
  });
  const cache=new Map();
  function load(file){
@@ -96,7 +103,7 @@ test('Actual HTTP command proposes through the real high-risk kernel without min
  const h=harness(),proposal=await h.run();assert.equal(proposal.status,202);assert.equal(proposal.body.outcome,'approval_required');assert.match(proposal.body.fingerprint,/^[0-9a-f]{16}$/);
  assert.equal(h.effects.length,0);assert(!h.calls.some(x=>x.name==='create_client_portal_invitation'));assert.equal(h.proposals.length,1);
  const sent=await h.run({...input,approved_fingerprint:proposal.body.fingerprint});assert.equal(sent.status,200);assert.equal(sent.body.outcome,'provider_accepted');assert.equal(sent.body.rail_recorded,true);
- assert.equal(h.effects.length,1);assert.equal(h.proposals[0].consumed_at!==null,true);assert(h.calls.some(x=>x.name==='record_capability_run'));
+ assert.equal(h.effects.length,1);assert.equal(h.effects[0].url,'https://api.sendgrid.com/v3/mail/send');assert.equal(h.effects[0].options.headers.Authorization,'Bearer controlled-provider');assert.equal(h.proposals[0].consumed_at!==null,true);assert(h.calls.some(x=>x.name==='record_capability_run'));
  const replay=await h.run({...input,approved_fingerprint:proposal.body.fingerprint});assert.equal(replay.body.replayed,true);assert.equal(h.effects.length,1);
  for(const field of ['PRIVATE_INVITATION_TOKEN','join_url','claim_id','provider_key','payload_digest','approved_fingerprint'])assert(!JSON.stringify(sent.body).includes(field));
 });
@@ -116,9 +123,10 @@ test('A new turn or interface recovers the original unknown operation, never min
  const h=harness({transport:true}),p=await h.run();await h.run({...input,approved_fingerprint:p.body.fingerprint});
  const again=await h.run({...input,operation_id:ids.contact});assert.equal(again.body.outcome,'approval_required');assert.equal(again.body.operation_id,ids.operation);
  assert.equal(h.calls.filter(x=>x.name==='create_client_portal_invitation').length,1);assert.equal(h.effects.length,1);
- h.config.transport=false;const finished=await h.run({...input,approved_fingerprint:again.body.fingerprint});assert.equal(finished.body.outcome,'provider_accepted');
- assert.equal(h.calls.filter(x=>x.name==='create_client_portal_invitation').length,1);assert.equal(h.effects.length,2);
- assert.equal(h.effects[0].options.headers['Idempotency-Key'],h.effects[1].options.headers['Idempotency-Key']);
+ // SendGrid has no idempotent replay, so approving the recovery checks the original send; it never POSTs a second one.
+ h.config.transport=false;const finished=await h.run({...input,approved_fingerprint:again.body.fingerprint});assert.equal(finished.body.outcome,'outcome_unknown');assert.equal(finished.body.ok,false);
+ assert.equal(h.calls.filter(x=>x.name==='create_client_portal_invitation').length,1);assert.equal(h.effects.length,1);
+ assert.equal(h.effects[0].url,'https://api.sendgrid.com/v3/mail/send');
 });
 test('Actual shared Chat dispatcher reaches the same HTTP confirmation, stored target, sender and receipt',async()=>{
  const h=harness(),p=await h.chat();assert.equal(p.content.needs_confirm,true);assert.equal(h.effects.length,0);assert.equal(h.proposals.length,1);

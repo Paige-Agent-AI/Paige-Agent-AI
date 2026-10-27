@@ -11,16 +11,10 @@ function load(path: string, require: (name: string) => unknown) {
   new Function('exports', 'require', source.outputText)(exports, require);
   return exports;
 }
-const core = load('supabase/functions/_shared/systems-check-runner.ts', name => {
-  if (name !== './prompt-forge.ts') throw new Error('Unexpected Core dependency'); return { forge: vi.fn(() => { throw new Error('No model effect allowed'); }) };
-});
+const wait = load('supabase/functions/_shared/systems-check-wait.ts', () => { throw new Error('Wait must have no runtime dependencies'); });
 const states = load('supabase/functions/_shared/durable-job/mod.ts', () => { throw new Error('Unexpected state dependency'); });
-const work = load('supabase/functions/_shared/systems-check-manual-work.ts', name => {
-  if (name !== './systems-check-runner.ts') throw new Error('Unexpected consumer dependency'); return core;
-});
 const module = load('supabase/functions/_shared/systems-check-manual-request.ts', name => {
-  if (name === './systems-check-runner.ts') return core;
-  if (name === './systems-check-manual-work.ts') return work;
+  if (name === './systems-check-wait.ts') return wait;
   if (name === './durable-job/mod.ts') return states;
   throw new Error('Unexpected request dependency: ' + name);
 });

@@ -1,12 +1,11 @@
 // Unregistered original-Systems consumer. The eventual canonical Gateway/Trust
 // caller must supply its verified context and ORIGINAL bounded private dispatch.
 // These ports are internal, never HTTP/model arguments or a new approval/runtime.
-import { awaitSystemsCheckRequest } from "./systems-check-runner.ts";
-import type { RunSystemsCheckOptions } from "./systems-check-runner.ts";
-import { isManualSystemsWorkId as uuid } from "./systems-check-manual-work.ts";
+import { awaitSystemsCheckRequest, isManualSystemsWorkId as uuid } from "./systems-check-wait.ts";
+import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
 import { DURABLE_JOB_STATES, type DurableJobState } from "./durable-job/mod.ts";
 
-type Client = RunSystemsCheckOptions["admin"];
+type Client = SupabaseClient;
 export type ManualSystemsRequestContext = { actorId: string; tenantId: string; intentId: string; threadId: string | null };
 export type ManualSystemsRequestResult = {
   readback: "unconfirmed";

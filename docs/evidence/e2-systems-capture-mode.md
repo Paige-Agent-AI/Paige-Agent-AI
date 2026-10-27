@@ -1365,3 +1365,35 @@ Functional LOCAL prerequisite; VisualN/A; ExperientialINCOMPLETE; Founder
 NOT_ACCEPTED. Manual systems.check/catalogue UNAVAILABLE/unregistered, all19/nine,
 ALG03/06/11/12/13, historical9-0+12-0-4, monthlyUNKNOWNUNRETRIED and representative
 weekUNMEASURED remain unchanged. No browser/model/provider/business action.
+
+## October27 UTC — LOCAL request dependency isolation, not a runtime-performance claim
+
+The original edge runtime-closure reader found that the first local request
+consumer would add14 local modules/236,888 raw source bytes to Chat, including
+the unused scan/model/image-provider chain. The request only needs native request
+preparation/dispatch/status observation. Existing wait/error class/UUID validation
+therefore move to dependency-free systems-check-wait.ts, with the same Core and
+private-consumer compatibility exports. Nothing is duplicated into a new timer,
+authority, execution engine or state registry. The exact same runtime-closure
+method now reports only request+wait:2 local modules/8,030 raw source bytes beyond
+the original291-file Chat closure. No protected Root source was edited. Neither
+this static byte reduction nor clean compilation closes the historical CPU cases,
+weekly reliability, provider cost or authenticated customer acceptance.
+
+All255 original control bodies are byte-identical and PASS. The existing test
+harnesses bind the ACTUAL extracted dependency-free module and still reject
+unbound imports; the request harness can no longer load Core/forge. Whole original
+Core outside the moved helper section and original native Work consumer after its
+helper definitions remain exact. The already-tested wait/class/UUID logic is moved,
+not reimplemented. Scoped lint passes. Actual Deno2.1.4/TS5.6.2/original SDK2.75.0
+checks request consumer CLEAN and compares legacy Core against the original full
+three prompt-forge diagnostics with zero new. The first private fidelity script
+hit the existing large Root's default child-output limit before comparison;
+increased output capacity only and unchanged proof rerun PASS. A separate initial
+graph-display path-type mismatch was INVALID before counts; corrected path display
+only, not source, graph algorithm or any release gate.
+
+LOCAL only; no registry, Root/risk/C0b/approval/permission/provider/worker/scan/model
+activation or customer operation. Original request/risk/readiness/admission and
+actual run/result/Rail/reload still require the existing shared-source handback and
+customer proof. Full19/nine/ALG/CAP/historical/monthly/founder boundaries unchanged.

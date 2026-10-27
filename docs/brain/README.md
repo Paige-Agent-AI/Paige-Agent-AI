@@ -4527,3 +4527,18 @@ No Root/risk/registry/C0b edit, new grant/provider/scan/customer action or catal
 promotion. Functional partial-source, VisualN/A, ExperientialINCOMPLETE,
 FounderNOT_ACCEPTED; all19/nine/ALG and existing acceptance boundaries unchanged.
 Details stay in the [original Systems evidence](../evidence/e2-systems-capture-mode.md).
+
+## EXP02 local request transport stays lightweight — October27 UTC
+
+The canonical runtime dependency graph showed the first local consumer would add
+14 modules/236,888 raw source bytes to Chat, including scan/model/image providers.
+Its existing wait/class/UUID shape now have one dependency-free home with backward
+Core/consumer exports; the request adapter imports that home and only the original
+SDK type. The same graph now adds2 local modules/8,030 source bytes. This is a
+source-only dependency result, not measured worker CPU, latency or weekly recovery.
+All255 original control bodies pass unchanged; only actual-module harness bindings
+were extended. Original Core/native consumer outside moved helpers are exact.
+Actual request Deno check is now clean; legacy Core retains exactly its original3
+diagnostics. Lint passes. No Root/risk/registry/C0b, permission, provider, activation
+or customer operation. This refinement remains LOCAL/UNREGISTERED, awaiting the
+actual shared-source handback; all19/nine/ALG/customer/founder obligations remain.

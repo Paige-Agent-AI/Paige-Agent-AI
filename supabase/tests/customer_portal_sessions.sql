@@ -658,6 +658,9 @@ SELECT is(pg_temp.private_booking_create(_client=>'e0963000-0000-4000-8000-00000
 SELECT is(pg_temp.private_booking_create(_override=>'{"guest_email":"other@tests.invalid"}')->>'sqlstate','40001',
  'the saved customer recipient cannot be replaced with a typed email');
 CREATE TEMP TABLE private_booking_saved AS SELECT pg_temp.private_booking_create() r;
+-- Diagnostic contains only this rolled-back synthetic fixture, never customer data.
+SELECT diag('private booking native response: '||r::text) FROM private_booking_saved
+ WHERE r->>'state' IS DISTINCT FROM 'saved';
 SELECT is((SELECT r->>'state' FROM private_booking_saved),'saved','native admission commits a real original appointment');
 SELECT is((SELECT r->>'replayed' FROM private_booking_saved),'false','a new result is distinguished from recovery');
 SELECT is((SELECT count(*) FROM public.internal_bookings WHERE portal_request_id='e0968000-0000-4000-8000-000000000001'),
@@ -685,7 +688,7 @@ CREATE TEMP TABLE private_booking_recovery AS SELECT pg_temp.jordan($q$SELECT pu
  'e0968000-0000-4000-8000-000000000001')$q$) r;
 SELECT is((SELECT r->'booking' FROM private_booking_recovery),(SELECT r->'booking' FROM private_booking_saved),
  'returning customer recovery reads the same saved native result');
-SELECT is((SELECT pg_temp.keys(r->'booking') FROM private_booking_recovery),
+SELECT is((SELECT pg_temp.keys(CASE WHEN jsonb_typeof(r->'booking')='object' THEN r->'booking' ELSE '{}'::jsonb END) FROM private_booking_recovery),
  'end_at,id,start_at,status,timezone,title','recovery withholds host identities, intake, provider ids and guest PII');
 SELECT is(pg_temp.private_booking_create()->>'replayed','true','retrying the exact original request returns its result');
 SELECT is(pg_temp.private_booking_create()->'execution','null'::jsonb,'replay never repeats provider instructions');

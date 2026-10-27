@@ -1462,3 +1462,53 @@ native preparation/dispatch/readback, original run/findings/Rail, interruption,
 roles/cohorts/reload and permitted customer result still owe integration/proof.
 Founder NOT_ACCEPTED. No browser/model/scan/provider/business operation. Original
 all19/nine/ALG/CAP/9-0+12-0-4/monthlyUNKNOWNUNRETRIED boundaries remain unchanged.
+
+## October27 — original manual run result, LOCAL only
+
+Source `a1598f80e5965503e44acdd45db2b19d664558ca` follows actual main45111f9e
+through a normal local composition. This is still the original unpublished
+request-consumer lane, not an independent orphaned release or activated workflow.
+
+`systems-check-manual-result.ts` consumes the ORIGINAL twelve-field caller-JWT
+Work projection and the existing caller SELECT/RLS contract on
+`paige_systems_check_run`. The shared Work DTO's validation moves once within
+the existing request module; its original preparation/dispatch behavior stays
+covered by all255 unchanged controls. No SQL, ABI, grant, direct service read,
+state store, authority engine, original writer or shared Root/risk/registry/C0b
+change. The host supplies its existing bounded signal and current-context fence.
+
+Only actual native succeeded Work permits a run lookup. The original10352
+finalizer's canonical equality is checked against the actual row:
+`Work.id = run.id = run.work_id`, matching current tenant, manual/none purpose,
+original times and nonnegative source counts. An unfinished/malformed/denied run
+is unconfirmed, never empty or successful. The validated closed source snapshot
+is pinned before subsequent context reads; actor/current tenant and the original
+native Work authority are checked again before return. Lost/late reads do not
+retry, dispatch, relabel an intent as a run or select a newer unrelated run.
+
+Rail remains the ORIGINAL atomic `system_check/check_completed` completion.
+Its exact receipt identity is **not projected** by these sources. Raw workspace
+Rail reads are revoked; the existing activity feed's display text/time cannot
+establish source correlation. No guessed receipt, extra ledger or widened
+twelve-column Work ABI. The precise existing observation/receipt receiving
+request is ANT161/fe91d798 under the original EXP05 Work thread. The generic
+document/research observation contract is not silently widened to manual checks.
+Systems semantic record links identify FINDINGS, so a run/Work UUID is not placed
+in `?finding=`. Full original finding navigation and receipt return remain owed.
+
+Evidence:41 result controls plus the original255 =296PASS/four suites/zero skips.
+Three actual failing-first controls caught authority loss/change before return
+and mutable source retargeting; those failures are retained and repaired without
+weakening assertions. Source association/purpose/count/time/foreign-row negatives,
+all six non-success native states, denied reads, scope changes and interrupted
+late result are included. Scoped lint exit0. Actual Deno2.1.4/TS5.6.2/original
+SDK2.75.0 checks result/request clean; full original Core diagnostic bodies remain
+the same three errors. No clean Core compiler, hosted CI or customer claim.
+
+Functional LOCAL source only; Visual N/A; Experiential INCOMPLETE; Founder
+NOT_ACCEPTED. Manual systems.check/catalogue remains UNAVAILABLE/unregistered.
+No scan, worker, provider, Chat action or customer operation. All19/nine/ALG/CAP,
+historical9PASS0FAIL+12PASS0FAIL4BLOCKED, protected monthlyUNKNOWN/UNRETRIED and
+representative-weekUNMEASURED remain unchanged. Original question→current native
+authority→original Work/run/findings→original Rail→permitted return/reload is
+still the complete contract; a source projection alone does not close it.

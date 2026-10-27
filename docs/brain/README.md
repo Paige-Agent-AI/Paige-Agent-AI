@@ -4590,3 +4590,23 @@ bounded host lifetime, original Work/run/findings/Rail and customer recovery sti
 need the cohesive governed integration. Full19/nine/ALG/CAP, historical9-0 plus
 12-0-4, monthlyUNKNOWNUNRETRIED and one founder evaluation remain open. Details:
 [original Systems evidence](../evidence/e2-systems-capture-mode.md#october27-0355-utc--actual-shared-source-receiving-local-consumer-preserved).
+
+## EXP02 original manual-result projection — October27 LOCAL
+
+Source `a1598f80e5965503e44acdd45db2b19d664558ca` extends the existing local
+request consumer with the original completed Systems run read. The caller's
+existing native Work projection and Systems RLS remain authoritative; no new
+database seam, grant, status store, executor or receipt stream. Prepared/202 is
+never completion. Exact run/Work/tenant association, source counts/times and fresh
+native authority precede the closed result. A Rail receipt identity is explicitly
+not projected; it is never guessed from feed wording or timestamps.
+
+All296 controls/four suites PASS, including the original255 unchanged controls;
+three failing-first authority/snapshot cases were repaired. Scoped lint passes;
+actual Deno2.1.4 checks result/request clean while original Core retains its same
+three diagnostics. Source remains LOCAL/UNREGISTERED/UNPUSHED pending the cohesive
+governed Chat consumer and original observation/receipt handoff. No shared
+Root/risk/registry/C0b edit, scan/provider/worker/customer action or activation.
+Functional LOCAL; Visual N/A; Experiential INCOMPLETE; Founder NOT_ACCEPTED.
+All19/nine, ALG/CAP maturity, original9-0 plus12-0-4 and protected monthly
+UNKNOWN/UNRETRIED remain unchanged. [Exact boundaries](../evidence/e2-systems-capture-mode.md#october27--original-manual-run-result-local-only).

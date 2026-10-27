@@ -6893,7 +6893,8 @@ are not refused. Round 5 (2026-10-27): migration renamed to `20271117170008` (pr
 holds a person off other seats, and it also fires on an UPDATE that moves a seat to the person (BEFORE INSERT OR
 UPDATE OF `tenant_id`, `user_id`). Round 6 (2026-10-27): migration renamed to `20271118200008`, because
 production's newest applied became `20271118100000` (so `20271117170008` no longer sorted after it) and remote
-branches hold versions up to `20271118110009`; the seat rule also requires the person's address to be confirmed,
+branches hold versions up to `20271118110009` (final re-check: production's newest `20271118110000`, branches still at most
+`20271118110009`; it sorts after both); the seat rule also requires the person's address to be confirmed,
 as `accept_solo_team_invite` does (N1). **#227 residual, stated:** owner seats are not refused, and the sub-account
 owner path seats a new owner wherever the business has NO ACTIVE OWNER, which includes a business whose holder
 is paused for billing with no other active owner: the agency's (or platform's) `subaccount_owner` token then

@@ -1,3 +1,80 @@
+## October27 UTC — original private host source release verified; customer unadmitted
+
+[#2952 actual receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2952#issuecomment-6430581019):
+reviewedd4a01866e568fa271cea7c2068dd904f4ffe0357/LOWER5660549839;
+all11 exact checks/normal Preview/two webSUCCESS/zero threads. Actual
+merge7ff9a6d884ec8ce6ec528cbb339e5bb74ced6874/treeeec1d6e58e986f8d3fdb8e884fb1f93ff5ad074f,
+parentsd3e68daf1+d4a01866. Fresh union preserves whole incoming E09 closeout,
+all16,570 outside entries/original19 rows/four219-tested blobs. Prior comparison
+against an obsolete tree after main advanced was INVALID; actual fresh union
+passed the unchanged proof. Native/Core/other hosts/config unchanged. Preceding
+mechanical#2947 releasedb0c8e7d10e9c3d9ff0e2d6d092aa765f1f6ae37c first, after its
+genuine old-branch grant-parity failure was repaired with original current main.
+
+Normal deploy-edge-functions40425564824/job121930322103 SUCCESS. Original API
+certificate12698824080 ZIP SHA25613df2bcbf905229c1d482f423e680e243350629b7fe4fe4952dfe4e97b238d64
+independently matches selected original onboarding155/all42 source files and
+complete expected closure/configuration using the original repository reader and
+exact merged checkout. API mode, no emitted fallback. A SEPARATE complete current
+API source comparison matches all42 files/configs with identical before/after
+metadata155; no version increase/equivalence is assumed. Other three original
+flavors were not selected/redeployed. Native/schema/grant delta N/A; no native
+function, scan, provider or customer operation was invoked.
+
+Productiondpl_HVsGB6F3foQcJou2L7K4hi5aTsqw READY; both public origins200/exact
+7ff9a6d884ec8ce6ec528cbb339e5bb74ced6874-mvpxu08y/customerUpdate:null. Original
+private purpose is now imported by the original host, preserving onboarding and
+its original internal authorization. Registered bounded lifetime/native original
+Work/claim/heartbeat/Core/finalizer/Rail remain authoritative;202 is not completion.
+The prior HTTP-unimported status at#2944 and development entries remain dated history.
+Manual systems.check/catalogue remains UNAVAILABLE/unregistered, no public entry,
+worker/Chat/provider or scan activation. Functional source DEPLOYED/API VERIFIED;
+VisualN/A, prior Finance retained; ExperientialINCOMPLETE; FounderNOT_ACCEPTED.
+Original actor/tenant/admission/run/findings/Rail/reload/recovery/corrective-work
+and complete19/nine acceptance remain owed. ALG/CAP/historical9-0+12-0-4/monthly
+UNKNOWNUNRETRIED/representative-weekUNMEASURED unchanged; no customer release name.
+
+## October26 — original private consumer source release verified; not admitted
+
+Source [#2944](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2944#issuecomment-6429387101):
+reviewed9ec3f387576a8d50a560758ca41ec9eabf477659/tree1bb125cf,
+LOWER5659772898 and actual existing E05 NON-AUTHOR source5659919149/receiving38072c6a.
+Independent179PASS/0FAIL/0skip retains all143 original controls; native148 proof
+is separate. Same-bot COMMENT is not distinct-account approval. All11 exact
+checks/normal Preview/two webSUCCESS/zero threads; preceding #2942 actually
+released first. Actual mergec4b2b2d937796cda64fe6a2d5702d40d573081e1/tree3fc22d44,
+parents93f567749+9ec; actual current-main union, three tested source blobs,
+whole incoming docs/all16,557 outside entries/original19 matrix exact.
+
+Normal Edge40415606311/job121897039328 SUCCESS. API certificate12695856404,
+ZIP SHA25609543bc52cf509616574ecbd8e403a516670077e8263a124da38db991b6fdb39 independently
+verified using the original expected-release reader/exact c4 checkout: all159
+source entries/configs, no emitted fallback; certificate versions152/153/157/158.
+Later observed current versions153/154/158/159 were not assumed equivalent:
+all four complete current API source sets (159 entries) were independently
+compared, EVERY local file/config exact to the same Git merge,0mismatches,
+complete closures and stable subsequent metadata/archive identities. No cause
+for the revision advance is asserted. Original Core SHA256
+4323a217ace23822ac26777a7c029cc7513f223328dc0c83aeb674f5fc6252d2.
+Initial local current-source decode used Windows' default encoding and was
+INVALID before that comparison; corrected explicit UTF8 only, not source,
+normalization, identity or release gates. Earlier source failures remain dated.
+
+Normal webdpl_6q4kZLb58VjHzE8DPVrd4r7Tq6u8 READY; both public origins200/exact
+c4b2b2d937796cda64fe6a2d5702d40d573081e1-mvpupyff/customerUpdate:null. Fresh production
+catalogue metadata verifies original claim/heartbeat/finalizer8/3/5-column ABI,
+bodies11a08/f1e7/48e85, original owner/config/server-only ACL and anon/auth execute
+denial; no function invoked, no schema/grant change.
+
+Functional: original Core wait extraction DEPLOYED, private adapter source
+MERGED/UNADMITTED. It remains unimported by HTTP hosts; no manual Spine, worker,
+provider, Chat or scan activation. Original-host adoption/bounded lifetimes and
+authorized original run/result/Rail/reload/corrective work remain incomplete.
+Visual N/A; prior Finance proof retained. Experiential INCOMPLETE; Founder
+NOT_ACCEPTED. All19/nine/ALG/CAP, original9-0+12-0-4, protected monthlyUNKNOWN
+UNRETRIED and representative-weekUNMEASURED unchanged. The development-only
+entry later in this document is historical and cannot establish customer proof.
+
 ## October26 — optional original manual capture checkpoints, source only
 
 O07/O16 EXTEND only `RunSystemsCheckOptions`/the existing `manualBoundary` in
@@ -1194,3 +1271,76 @@ UNAVAILABLE/unregistered, original Binding Ledger state unchanged. All19/nine,
 historical9PASS0FAIL + supplement12PASS0FAIL4BLOCKED and protected monthlyUNKNOWN
 UNRETRIED/representative-weekUNMEASURED remain open. No scan, finalizer invocation,
 worker/Chat/provider activation or customer acceptance is claimed.
+
+# October26 — original host private manual purpose (development only)
+
+O07/O14/O16/O19 now extend the EXISTING `systems-check-run-onboarding` host
+with an explicit internal `?manual_work=1` purpose. Its original runner barrel,
+HTTP internal service/verified-cron gate, native Work claim/heartbeat/finalizer,
+Core and original result/Rail remain the only execution path. There is no new
+Edge function, config, secret, SQL/grant, producer, worker loop, queue, scheduler,
+public Spine registration or customer activation. Other flavors and the entire
+ordinary onboarding/provisioning handler outside the additive dispatch branch
+remain exact; onboarding still uses its original tenant resolution and
+`actionFiling:all`. The private manual purpose fixes tenant/manual/none using
+only the ORIGINAL native claim, never body-supplied tenant/actor/runner filters.
+
+The transport accepts POST, exactly one purpose query and one canonical WorkUUID
+field. It reads at most4KiB/64 chunks using fatal UTF8/JSON validation within one
+5-second body/auth budget, reuses the existing strict internal gate, and refuses
+ordinary JWT/anonymous callers. Invalid or ambiguous private markers cannot fall
+through into onboarding/remediation. The original platform `EdgeRuntime.waitUntil`
+must register the task before its claim microtask can run; missing/throwing
+registration fails closed. The HTTP202 means delivery acknowledged and explicitly
+`execution_confirmed:false`; it never asserts a Work claim, run or receipt. One
+90-second native capture scope and one fresh5-second settlement scope bound the
+existing consumer. Lost replies/expiry/interruption remain unconfirmed with the
+original Work identity and no replay or manufactured terminal record. Platform
+hard CPU/wall limits still apply; waitUntil is lifetime registration, not proof
+that a business operation settles reliably.
+
+**Proportional evidence:**40 new whole-source host/actual-entry tests plus all179
+original Core/consumer controls =219PASS/0FAIL. Tests exercise the ORIGINAL HTTP
+credential and verified-JWT resolution code with controlled SDK/native ports;
+private deferred consumption and legacy Core writes are controlled here, not
+production scans. Separate original148 native controls remain historical proof.
+Actual entry tests preserve CORS/method handling, internal provisioning tenant
+requirement, full onboarding flavor/action filing, verified-user tenant derivation
+ignoring a foreign body tenant, invalidJWT refusal and original failure behavior.
+Transport controls cover malformed/extra fields, byte/deadline bounds, cron
+strictness, late auth, disconnect, unavailable registration, constant error output
+and one deferred dispatch. Scoped lint passes. Entire original onboarding inverse,
+three other hosts, Core, HTTP, config and179-case fixture remain exact; consumer
+logic after its row predicate is unchanged. Actual Deno2.1.4/TypeScript5.6.2 with
+original Supabase SDK2.75.0 compares the full original/candidate host diagnostic
+bodies: the same3 pre-existing prompt-forge errors, zero new; not a clean compiler
+claim or hosted-gate waiver. An initial restricted-network import failed before
+semantic checking and is INVALID; normal public-dependency access rerun passed
+the comparison, with neither source nor diagnostics suppressed. Linear's shared
+field-notes endpoint returned unavailable; actual source/contracts govern.
+
+**Orchestration contract:** (1) the original owner's read-only Systems request;
+(2) future Executive/Chat entry, THIS branch internal transport only;
+(3) original Work/native-current tenant/actor authorization, no caller metrics;
+(4) manual `systems.check` still UNAVAILABLE/unregistered, no fabricated specialist
+or Spine admission; (5) original Systems Core/private Work consumer, not LayerC
+for ordinary analysis; (6) current native role/lease/scope checks, manual/none,
+no corrective/customer/provider action; (7) original Systems run/finding writer
+and E05 native Work issuer; (8) SAME WorkUUID/run identity, native finalizer and
+`system_check/check_completed` Rail only on actual source-derived success;
+(9) native expiry, bounded wait/settlement and original authorized Work read,
+no second retry/recovery engine or assumed cancellation rollback; (10)202 is
+transport only, original Work/run/Rail/customer readback still required.
+
+**Status:** development only; exact-head review/CI/current-main composition,
+normal Edge/source readback, permitted original admission/request producer and
+authenticated result/Rail/reload/recovery remain owed. Functional: bounded host
+source verified locally, complete manual/customer workflow INCOMPLETE. Visual:
+N/A, no changed customer UI; prior Finance evidence retained. Experiential:
+INCOMPLETE. Founder: NOT_ACCEPTED. ALG03/06/11/12/13 and CAP009–017 readiness
+unchanged: no prediction, prioritization or Finance algorithm was added. The
+manual catalogue remains unavailable; no Live promotion based on source. Original
+19 definitions/nine analytics,9PASS0FAIL +12PASS0FAIL4BLOCKED, representative-week
+UNMEASURED and protected monthlyUNKNOWN/UNRETRIED remain separate. Root/risk/
+registry/C0b stays with EXP08 then EXP05; source coordination is ANT161/b2c547b3,
+full grounding/sequence ANT138/5c6f60f4. No browser or customer/model operation.

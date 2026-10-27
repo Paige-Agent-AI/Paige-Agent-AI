@@ -1,5 +1,5 @@
 // Private original-Systems adapter, not an HTTP entry point, drainer or authority
-// engine. No caller installs this yet. The eventual original host must supply its
+// engine. The original host's private purpose branch supplies its
 // service client, registered original runners and bounded native cancellation
 // scopes AFTER governed admission. Native RPCs remain the permission/lease issuer.
 import { awaitSystemsCheckCapture, runSystemsCheck } from "./systems-check-runner.ts";
@@ -17,6 +17,8 @@ export type ManualSystemsWorkResult = {
 
 const uuid = (value: unknown): value is string => typeof value === "string"
   && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(value);
+/** Shared transport shape only, never actor, lease or execution authority. */
+export const isManualSystemsWorkId = uuid;
 const record = (value: unknown): value is Record<string, unknown> =>
   value !== null && typeof value === "object" && !Array.isArray(value);
 const counter = (value: unknown) => Number.isSafeInteger(value) && Number(value) > 0;

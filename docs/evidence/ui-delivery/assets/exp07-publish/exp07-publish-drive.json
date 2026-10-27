@@ -1,0 +1,472 @@
+{
+  "frames": [
+    {
+      "frame": "solo-1536x770-paige-closed",
+      "pickable": 1,
+      "off": 5,
+      "overflowX": 0,
+      "pageErrors": []
+    },
+    {
+      "frame": "solo-1536x770-paige-open",
+      "pickable": 1,
+      "off": 5,
+      "overflowX": 0,
+      "pageErrors": []
+    },
+    {
+      "frame": "solo-1366x768-paige-closed",
+      "pickable": 1,
+      "off": 5,
+      "overflowX": 0,
+      "pageErrors": []
+    },
+    {
+      "frame": "solo-1366x768-paige-open",
+      "pickable": 1,
+      "off": 5,
+      "overflowX": 0,
+      "pageErrors": []
+    },
+    {
+      "frame": "solo-1024x768-paige-closed",
+      "pickable": 1,
+      "off": 5,
+      "overflowX": 0,
+      "pageErrors": []
+    },
+    {
+      "frame": "solo-1024x768-paige-open",
+      "pickable": 1,
+      "off": 5,
+      "overflowX": 0,
+      "pageErrors": []
+    },
+    {
+      "frame": "solo-900x1000-paige-closed",
+      "pickable": 1,
+      "off": 5,
+      "overflowX": 0,
+      "pageErrors": []
+    },
+    {
+      "frame": "solo-900x1000-paige-open",
+      "pickable": 1,
+      "off": 5,
+      "overflowX": 0,
+      "pageErrors": []
+    }
+  ],
+  "results": [
+    {
+      "ok": true,
+      "name": "solo-1536x770-paige-closed renders without error",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-1536x770-paige-closed the connected channel is offered",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-1536x770-paige-closed exactly one channel is pickable (the connected one)",
+      "detail": "pickable=1"
+    },
+    {
+      "ok": true,
+      "name": "solo-1536x770-paige-closed needs_reauth says its state instead of hiding",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-1536x770-paige-closed unconnected channels say so",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-1536x770-paige-closed the way to connect is named",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-1536x770-paige-closed the approval promise is on the surface",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-1536x770-paige-closed no horizontal overflow",
+      "detail": "drawer=0 page=0"
+    },
+    {
+      "ok": true,
+      "name": "solo-1536x770-paige-open renders without error",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-1536x770-paige-open the connected channel is offered",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-1536x770-paige-open exactly one channel is pickable (the connected one)",
+      "detail": "pickable=1"
+    },
+    {
+      "ok": true,
+      "name": "solo-1536x770-paige-open needs_reauth says its state instead of hiding",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-1536x770-paige-open unconnected channels say so",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-1536x770-paige-open the way to connect is named",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-1536x770-paige-open the approval promise is on the surface",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-1536x770-paige-open no horizontal overflow",
+      "detail": "drawer=0 page=0"
+    },
+    {
+      "ok": true,
+      "name": "solo-1366x768-paige-closed renders without error",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-1366x768-paige-closed the connected channel is offered",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-1366x768-paige-closed exactly one channel is pickable (the connected one)",
+      "detail": "pickable=1"
+    },
+    {
+      "ok": true,
+      "name": "solo-1366x768-paige-closed needs_reauth says its state instead of hiding",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-1366x768-paige-closed unconnected channels say so",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-1366x768-paige-closed the way to connect is named",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-1366x768-paige-closed the approval promise is on the surface",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-1366x768-paige-closed no horizontal overflow",
+      "detail": "drawer=0 page=0"
+    },
+    {
+      "ok": true,
+      "name": "solo-1366x768-paige-open renders without error",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-1366x768-paige-open the connected channel is offered",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-1366x768-paige-open exactly one channel is pickable (the connected one)",
+      "detail": "pickable=1"
+    },
+    {
+      "ok": true,
+      "name": "solo-1366x768-paige-open needs_reauth says its state instead of hiding",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-1366x768-paige-open unconnected channels say so",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-1366x768-paige-open the way to connect is named",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-1366x768-paige-open the approval promise is on the surface",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-1366x768-paige-open no horizontal overflow",
+      "detail": "drawer=0 page=0"
+    },
+    {
+      "ok": true,
+      "name": "solo-1024x768-paige-closed renders without error",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-1024x768-paige-closed the connected channel is offered",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-1024x768-paige-closed exactly one channel is pickable (the connected one)",
+      "detail": "pickable=1"
+    },
+    {
+      "ok": true,
+      "name": "solo-1024x768-paige-closed needs_reauth says its state instead of hiding",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-1024x768-paige-closed unconnected channels say so",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-1024x768-paige-closed the way to connect is named",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-1024x768-paige-closed the approval promise is on the surface",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-1024x768-paige-closed no horizontal overflow",
+      "detail": "drawer=0 page=0"
+    },
+    {
+      "ok": true,
+      "name": "solo-1024x768-paige-open renders without error",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-1024x768-paige-open the connected channel is offered",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-1024x768-paige-open exactly one channel is pickable (the connected one)",
+      "detail": "pickable=1"
+    },
+    {
+      "ok": true,
+      "name": "solo-1024x768-paige-open needs_reauth says its state instead of hiding",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-1024x768-paige-open unconnected channels say so",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-1024x768-paige-open the way to connect is named",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-1024x768-paige-open the approval promise is on the surface",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-1024x768-paige-open no horizontal overflow",
+      "detail": "drawer=0 page=0"
+    },
+    {
+      "ok": true,
+      "name": "solo-900x1000-paige-closed renders without error",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-900x1000-paige-closed the connected channel is offered",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-900x1000-paige-closed exactly one channel is pickable (the connected one)",
+      "detail": "pickable=1"
+    },
+    {
+      "ok": true,
+      "name": "solo-900x1000-paige-closed needs_reauth says its state instead of hiding",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-900x1000-paige-closed unconnected channels say so",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-900x1000-paige-closed the way to connect is named",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-900x1000-paige-closed the approval promise is on the surface",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-900x1000-paige-closed no horizontal overflow",
+      "detail": "drawer=0 page=0"
+    },
+    {
+      "ok": true,
+      "name": "solo-900x1000-paige-open renders without error",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-900x1000-paige-open the connected channel is offered",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-900x1000-paige-open exactly one channel is pickable (the connected one)",
+      "detail": "pickable=1"
+    },
+    {
+      "ok": true,
+      "name": "solo-900x1000-paige-open needs_reauth says its state instead of hiding",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-900x1000-paige-open unconnected channels say so",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-900x1000-paige-open the way to connect is named",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-900x1000-paige-open the approval promise is on the surface",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "solo-900x1000-paige-open no horizontal overflow",
+      "detail": "drawer=0 page=0"
+    },
+    {
+      "ok": true,
+      "name": "flow the door's summary leads the preview",
+      "detail": "Publish to a channel\n\nPublish “Before you hire help, ask three questions 1. What will be different in 90 days? 2. Who ow"
+    },
+    {
+      "ok": true,
+      "name": "flow the preview carries the door's own scope sentence",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "flow the channel's real identity is named",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "flow the preview states when approval expires",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "flow approval posts once and offers the receipt link",
+      "detail": "Publish to a channel\n\nPublished — see the post\n\nPublish somewhere else"
+    },
+    {
+      "ok": true,
+      "name": "caption prefills from the piece's own copy",
+      "detail": "Before you hire help, ask three questions\n1. What will be different in 90 days?\n"
+    },
+    {
+      "ok": true,
+      "name": "decline states nothing was published",
+      "detail": "Publish to a channel\n\nNothing was published.\n\nBack"
+    },
+    {
+      "ok": true,
+      "name": "failed states the door's sentence verbatim",
+      "detail": "Publish to a channel\n\nThe channel refused the post. Nothing was published.\n\nBack"
+    },
+    {
+      "ok": true,
+      "name": "outcome unknown states the door's sentence verbatim",
+      "detail": "Publish to a channel\n\nThe channel accepted the post but hasn't confirmed it. It may have posted — check the channel before trying again; this door will refuse a"
+    },
+    {
+      "ok": true,
+      "name": "post-claim refusal states the door's sentence verbatim",
+      "detail": "Publish to a channel\n\nThat channel's connection changed before the post could go out. Reconnect it, then approve again. Nothing was published.\n\nBack"
+    },
+    {
+      "ok": true,
+      "name": "needs re-auth refuses before approval with the door's sentence",
+      "detail": "Publish to a channel\n\nThat channel's connection needs you to sign in again before anything can post. Reconnect it in Settings → Integrations.\n\nSettings → Integr"
+    },
+    {
+      "ok": true,
+      "name": "no connection refuses before approval with the door's sentence",
+      "detail": "Publish to a channel\n\nThat channel isn't connected yet. Connect it in Settings → Integrations first.\n\nSettings → Integrations\nBack"
+    },
+    {
+      "ok": true,
+      "name": "not configured refuses before approval with the door's sentence",
+      "detail": "Publish to a channel\n\nPublishing isn't configured on this account yet. Nothing was published.\n\nSettings → Integrations\nBack"
+    },
+    {
+      "ok": true,
+      "name": "retry gate refuses before approval with the door's sentence",
+      "detail": "Publish to a channel\n\nA previous attempt to publish this piece to that channel never reported an outcome. Check the channel before publishing again — a duplicat"
+    },
+    {
+      "ok": true,
+      "name": "receipts the history heading renders",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "receipts a published attempt is listed with its link",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "name": "receipts an unresolved attempt says exactly what it is",
+      "detail": "Publish to a channel\nInstagram\nConnected\nFacebook\nNot connected — Settings → Integrations\nLinkedIn\nNot connected — Settings → Integrations\nYouTube\nNot connected — Settings → Integrations\nTikTok\nNot co"
+    },
+    {
+      "ok": true,
+      "name": "library foot states the connected truth",
+      "detail": "Publishing is connected: open a piece to publish it to a connected channel — you approve the exact post before it goes out, and nothing is scheduled. Scheduling stays with your Calendar plan."
+    }
+  ]
+}

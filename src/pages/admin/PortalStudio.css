@@ -1,0 +1,16 @@
+/* PAIGE can occupy part of a wide window. Size this editor from its actual
+   available space, so the preview never squeezes the owner's form. */
+.portal-studio-container {
+  container-name: portal-studio;
+  container-type: inline-size;
+}
+
+.portal-studio-container #portal-support-email {
+  min-height: 2.75rem;
+}
+
+@container portal-studio (min-width: 1000px) {
+  .portal-studio-columns {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 440px);
+  }
+}

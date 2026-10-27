@@ -27,6 +27,8 @@ The CLI generated `20261027173825_e09_private_booking_atomic.sql`; production fr
 
 The original CLI also generated `20261027175931_e09_private_booking_commit.sql`; only its never-applied filename advanced to `20271118120019_e09_private_booking_commit.sql`, following the actor component at `20271118120009`. Production metadata confirmed both generated and forward versions absent. The atomic actor file and native commit/receipt file are one development unit, not separate product releases.
 
+Fresh read-only production metadata now reports frontier20271119000000 with neither EXP09 candidate applied. At the October27 Coordinator checkpoint, EXP08 reserves19010008/19020008/19030008 and EXP04 reserves19100004 through19100504. The never-applied EXP09 files and exact proof references therefore advance to20271119110009 and20271119110019, beyond that known frontier and those declared ranges. SQL bodies and applied history are preserved. Operator authority/deletion fingerprints remain f7f5281162f757fcbaa67ea088049208/b720b2142b186adda5d359502bac9980 with unchanged ACLs. Fresh exact-head replay remains required.
+
 ## Development checkpoint — not a release
 
 The local branch was advanced normally to current main `9e325d9185d824103e341f329f508f0d029d88e9`, preserving the incoming EXP02/EXP06 source and all existing untracked work. #2992 merely closes the already verified #2985 Master entry: actual merge/tree/parents, exact-head checks, READY deployment and both-origin public delivery were verified in its canonical PR receipt. No customer capability is promoted by that documentation closeout.
@@ -52,6 +54,10 @@ The existing full-schema Sessions suite retains every original175 assertion and 
 Sequence: fail-first internal actor/lock proof; build atomic native create/reconcile through original booking source; compose server-verified Auth and original availability/provider guards; finish the existing Sessions booking interaction and its original Calendar readback; review and ship the coherent outcome. Do not release a disconnected lock helper as private booking completion.
 
 ## Orchestration and algorithms
+
+Coordinator receipt: read original ANT-163 description updated2026-10-27T20:57:45.894Z and ANT-161 updated21:01:03.594Z, plus comments63d1a7cd/c8ea4f79/ae482d19/10cca85b and EXP08 receiving contractc727d13c. Reuse the same existing CURA identity and approved rose/HeartHandshake/client-first personality; EXP08 owns shared presentation and Team Hub admission/result UI. No specialist clone, private-history sharing, new tool registry or execution system is introduced here. Private customer booking is not the owner-only calendar.book_meeting capability and is not automatically admitted to either business chat by this PR. Team Hub A1b is read-only per its original lead; A2 action admission/approval/result-reopen is MISSING INTEGRATION, not established by this Portal writer. Document existing EXP09 capability/tool handoffs in the original outcome matrix; do not edit EXP08/Chat/roster sources in this booking change.
+
+The same checkpoint receives the original agentic A–H, sandbox-boundary and uncapped tenant-usage billing requirements (ANT-163 comments653f6b81/fae508a4/e5cd5cd2/f53d5f6d). Exact source/receipt/reopen/recovery and held generic untrusted-code execution remain separate; no sandbox or monetary meter is introduced. The monetary/sending-stop audit and actual canonical meter proof are still owed, not claimed complete from an ACK. Anti-abuse, technical throughput, consent and action authorization remain distinct gates. All original42 outcomes/seven pillars continue; this is no scope reduction or acceptance promotion.
 
 ### Coherent consumer and authorized compatibility checkpoint — October27
 

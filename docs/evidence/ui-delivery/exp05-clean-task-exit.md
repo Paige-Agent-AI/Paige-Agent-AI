@@ -1,5 +1,6 @@
 # EXP05 original task inspection — clean exit correction
 
+UI_DELIVERY_EVIDENCE_VERSION: 1
 UI_SCOPE: Original Operations CRM task sheet exit; existing editor and recovery guards, no new workflow or domain writer.
 FLOW_BY_FLOW: PASS: inspected actual production9e325 clean task, reproduced false unsaved hold, source failure-first59PASS1FAIL/60. Sequential review exposed a pending-review cleanup transition, separately0PASS1FAIL/60 filtered skips. Final full Workspace/CRM suites66PASS0FAIL0SKIP. No new route or execution path.
 PAIGE_UI_DESIGN: PASS: incumbent compact Operations sheet, tokens, layout and controls retained; rendered existing components in the original neutral Operations mount. No visual-world redesign.
@@ -16,28 +17,28 @@ KEYBOARD_FOCUS: PASS: final actual native clean Escape/original-card focus at128
 ZOOM_REFLOW: PASS: scoped neutral390/320 CSS widths, no document horizontal overflow; original sheet fits within subpixel rounding and remains scrollable. No actual200percent zoom or physical-device proof claimed; geometry/CSS unchanged.
 REDUCED_MOTION: NOT_APPLICABLE: no motion source or duration change; existing sheet motion/reduced-motion contracts retained, no new native reduced-motion execution claimed.
 STATE_COVERAGE: PASS: clean, dirty, absent and delayed-cleanup review source controls; final clean/prepared-review/back/narrow interactions. Existing unknown/recovery/foreign/stale controls retained. Earlier date-clear limitation remains explicitly unverified.
-TRUTHFUL_STATE_LABELS: PASS: null from a registered editor means clean, not absent. Unknown/missing editor retains original refusal; no business result/approval is implied by dismissal.
+TRUTHFUL_STATE_LABELS: PASS: registered clean result remains clean; absent editor retains original refusal. Dismissal grants no execution permission and reports no completed business action.
 SOLO_UI: YES: operations.department original Work/Overview CRM inspection. No registered capability, permission or displayed availability changes; existing catalogue states remain unchanged, no Live promotion.
-SOLO_1536X770_PAIGE_CLOSED: NOT_RUN: this bounded interaction capture uses native1514x822 CSS; unchanged full-shell layout is not recertified.
-SOLO_1536X770_PAIGE_OPEN: NOT_RUN: no dock/layout source change; full-shell eight-case proof remains in existing EXP05 acceptance.
-SOLO_1366X768_PAIGE_CLOSED: NOT_RUN: no geometry change; actual neutral desktop/narrow interaction proof only.
-SOLO_1366X768_PAIGE_OPEN: NOT_RUN: no dock/layout source change; not inferred from a neutral mount.
-SOLO_1024X768_PAIGE_CLOSED: NOT_RUN: existing full-Experience responsive obligations retained.
-SOLO_1024X768_PAIGE_OPEN: NOT_RUN: existing dock/scroll-owner contract unchanged, no new full-shell claim.
-SOLO_900X1000_PAIGE_CLOSED: NOT_RUN: actual390/320 neutral cases do not substitute for this exact shell.
-SOLO_900X1000_PAIGE_OPEN: NOT_RUN: full Experience matrix remains open and separately owed.
+SOLO_1536X770_PAIGE_CLOSED: UNVERIFIED: this bounded interaction capture uses native1280x720 CSS; unchanged full-shell layout is not recertified.
+SOLO_1536X770_PAIGE_OPEN: UNVERIFIED: no dock/layout source change; full-shell eight-case proof remains in existing EXP05 acceptance.
+SOLO_1366X768_PAIGE_CLOSED: UNVERIFIED: no geometry change; actual neutral desktop/narrow interaction proof only.
+SOLO_1366X768_PAIGE_OPEN: UNVERIFIED: no dock/layout source change; not inferred from a neutral mount.
+SOLO_1024X768_PAIGE_CLOSED: UNVERIFIED: existing full-Experience responsive obligations retained.
+SOLO_1024X768_PAIGE_OPEN: UNVERIFIED: existing dock/scroll-owner contract unchanged, no new full-shell claim.
+SOLO_900X1000_PAIGE_CLOSED: UNVERIFIED: actual390/320 neutral cases do not substitute for this exact shell.
+SOLO_900X1000_PAIGE_OPEN: UNVERIFIED: full Experience matrix remains open and separately owed.
 UNVERIFIED: final review/CI/merge/deployment/source readback, candidate authenticated behavior, exact full-shell matrix/200percent zoom/AT and original whole EXP05 outcomes.
 OWNER_INTENT: Reliable premium Operations where inspection, protected edits, original results and safe return form one workflow.
 MUST_NOT_HAPPEN: Interpret known clean as missing; drop dirty/uncertain work; bypass approval or tenant authority; claim executed work from a closed sheet.
 MUST_PRESERVE: Original Work/Planning/CRM writer, current versions, editor/recovery guards, domain results/Rails, no duplicate execution and shared Team Hub ownership.
 ACCEPTANCE_CRITERIA: Known clean original editor may exit; dirty original reason and absent-editor recovery fallback still refuse; original task-card focus returns; no provider or business mutation occurs during inspection.
 PROTECTED_SEAMS: Only original navigationReason selection changes. No Root/risk/registry/C0b/adapter/provider/approval/native/migration or architecture edit.
-INTERNAL_BUILD_IDENTITY: sha=195643b35; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/exp05-clean-task-exit.md; identity_scope=current main plus the exact candidate patch and recorded source hashes.
+INTERNAL_BUILD_IDENTITY: sha=195643b35f3fd8100ec8942ef943b15b7be1cfb9; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/exp05-clean-task-exit.md; identity_scope=current main plus the exact candidate patch and recorded source hashes.
 RELEASE_CHANNEL: development: bounded original task-exit correction, not full EXP05 acceptance.
 RELEASE_CLASSIFICATION: internal-only: no customer release name or completed Experience announcement.
 CUSTOMER_RELEASE_IDENTITY: none: complete Operations/ZION/Builder/weekly execution/recovery remains unfinished.
 RELEASE_NOTE_REQUIRED: NO: existing original evidence receives correction; no customer publication.
-RELEASE_TRUTH_BOUNDARY: Source/native synthetic interface proof is not deployed customer behavior, canonical mutation or receipt.
+RELEASE_TRUTH_BOUNDARY: PROOF OWED: source/native synthetic interface checks do not establish deployed customer behavior, canonical mutation or receipt.
 RELEASE_RECOVERY: position=withhold on failed required gates; reference=normal reviewed source release and current source readback; no data replay/migration.
 
 ## Cause, original architecture and review

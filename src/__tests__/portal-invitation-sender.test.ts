@@ -15,7 +15,8 @@ const actor="e0919000-0000-4000-8000-000000000001",tenant="e0929000-0000-4000-80
 const recipient="client@tests.invalid";
 type Options={header?:boolean;authenticated?:boolean;authThrows?:boolean;authority?:"admin"|"agency"|"platform"|"team_owner"|"none";
  token?:Record<string,unknown>;client?:Record<string,unknown>|null;emails?:unknown[];rpcError?:boolean;
- providerAllowed?:boolean;lateChange?:"role"|"actor"|"email"|"token"|"provider"|"holder";holder?:boolean|"error";transportUnknown?:boolean;body?:Record<string,unknown>;teamAction?:"create"|"resend"};
+ providerAllowed?:boolean;lateChange?:"role"|"actor"|"email"|"token"|"provider"|"holder";holder?:boolean|"error";transportUnknown?:boolean;body?:Record<string,unknown>;teamAction?:"create"|"resend";
+ teamRefusal?:{message:string;hint:string|null;code:string}};
 async function drive(options:Options={}){
  let handler:(request:Request)=>Promise<Response>,brandRead=false;
  const calls:Array<{kind:string;name:string;args:unknown}>=[],sends:unknown[]=[],logs:unknown[]=[];
@@ -40,6 +41,8 @@ async function drive(options:Options={}){
    }},
    rpc:async(name:string,args:unknown)=>{
     calls.push({kind,name,args});
+    if((name==="create_solo_team_invite"||name==="resend_solo_team_invite")&&options.teamRefusal)
+     return {data:null,error:Object.assign(new Error(options.teamRefusal.message),{code:options.teamRefusal.code,details:null,hint:options.teamRefusal.hint})};
     if(name==="create_solo_team_invite"||name==="resend_solo_team_invite")return options.authority==="none"
      ?{data:null,error:new Error("only an owner or admin may manage team invitations in that workspace")}
      :{data:{id:invitation,token:"synthetic-invite-token",email:recipient,tenant_id:tenant,expires_at:token.expires_at},error:null};
@@ -85,11 +88,18 @@ async function drive(options:Options={}){
  let entry=handler!;
  if(options.teamAction){
   const teamSource=readFileSync("supabase/functions/solo-team-invitations/index.ts","utf8");
-  if((teamSource.match(/^import .*;\r?$/gm)??[]).length!==1)throw Error("Review the changed team module boundary");
+  // EXP08 owner invitations (I1 round 2): the handler's second import is its own owner-refusal map,
+  // loaded here as the real module too (it imports nothing), so the drive still runs the real code.
+  if(JSON.stringify(teamSource.match(/^import .*;\r?$/gm)??[])!==JSON.stringify(['import { createClient } from "npm:@supabase/supabase-js@2";',
+   'import { ownerRefusal } from "./owner-refusals.ts";']))throw Error("Review the changed team module boundary");
+  const refusalSource=readFileSync("supabase/functions/solo-team-invitations/owner-refusals.ts","utf8");
+  if(/^import /m.test(refusalSource))throw Error("Review the changed owner-refusal module boundary");
+  const ownerRefusal=new Function(ts.transpileModule(refusalSource.replace(/^export /gm,""),{
+   compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext}}).outputText+"\nreturn ownerRefusal;")();
   const teamJavascript=ts.transpileModule(teamSource.replace(/^import .*;\r?\n/gm,""),{
    compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext}}).outputText;
-  new Function("createClient","Deno","console",teamJavascript)(makeClient,
-   {env:{get:(key:string)=>env[key]??""},serve:(value:typeof entry)=>{entry=value;}},{error:()=>{}});
+  new Function("createClient","Deno","console","ownerRefusal",teamJavascript)(makeClient,
+   {env:{get:(key:string)=>env[key]??""},serve:(value:typeof entry)=>{entry=value;}},{error:()=>{}},ownerRefusal);
  }
  const response=await entry(new Request("https://invitation.tests.invalid",{method:"POST",
   headers:{...(options.header===false?{}:{Authorization:"Bearer synthetic-local-only"}),"Content-Type":"application/json"},
@@ -167,6 +177,22 @@ describe("canonical portal invitation sender authority",()=>{
   expect(r.calls).toContainEqual({kind:"service",name:"solo_team_invite_authority",args:{_actor:actor,_expected_tenant_id:tenant}});
   const consumer=await drive({authority:"team_owner"});expect(consumer.status).toBe(403);expect(consumer.sends).toHaveLength(0);
   expect(consumer.calls.some(x=>x.name==="solo_team_invite_authority")).toBe(false);
+ });
+ // EXP08 owner invitations (I1 round 2, S5): the real team handler shows the database's owner refusal as written,
+ // with its status, instead of the 500 "tell us" — and sends nothing.
+ for(const [teamAction,hint,status,message] of [
+  ["create","OWNER_NO_ACCOUNT_HOLDER",403,"Northstar Studio has no account holder right now, so no one can add owners or change another owner's access. Contact the Paige team."],
+  ["create","OWNER_INVITE_EXISTS_FOR_ADDRESS",403,"There's already an owner invitation for this address. Only the account holder can change it."],
+  ["resend","OWNER_INVITATION_HOLDER_ONLY",403,"Only the account holder can change an owner invitation."],
+  ["create","OWNER_TEAM_CONVERSATIONS",400,"Owners always take part in team conversations."],
+ ] as const)it("shows the owner refusal "+hint+" from the real team "+teamAction+" as written, HTTP "+status,async()=>{
+  const r=await drive({teamAction,token:{kind:"team",contact_id:null},teamRefusal:{message,hint,code:hint==="OWNER_TEAM_CONVERSATIONS"?"P0001":"42501"}});
+  expect(r.status).toBe(status);expect(r.body).toEqual({ok:false,error:message});expect(r.sends).toHaveLength(0);
+  expect(r.calls.some(x=>x.name==="send-portal-invite")).toBe(false);
+ });
+ it("still hides an unrecognised 42501 from the real team create behind the generic line, HTTP 500",async()=>{
+  const r=await drive({teamAction:"create",token:{kind:"team",contact_id:null},teamRefusal:{message:"permission denied for table tenant_invite_tokens",hint:null,code:"42501"}});
+  expect(r.status).toBe(500);expect(String(r.body.error)).toContain("could not be completed just now");expect(r.sends).toHaveLength(0);
  });
  for(const teamAction of ["create","resend"] as const)it("preserves the real team "+teamAction+" caller through the shared sender",async()=>{
   const r=await drive({teamAction,token:{kind:"team",contact_id:null}});

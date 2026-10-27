@@ -24,9 +24,11 @@ STATE_COVERAGE: PASS: each state is covered by an assertion:
 - B renames: the address follows the rename and the old one is retired to B
 - A renames to B's old slug: the rename succeeds and A gets the numbered variant
 - direct claim of B's retired address: refused
+- direct claim of an address only the retired list holds: refused
 - an owner setting the From to a retired address: refused
 - a new business with a retired slug: connector and From on the same numbered variant
 - a variant another business holds: skipped, the signup succeeds
+- an address held only by another business's connector: skipped by both the connector and the From
 - a changed identity: its old address retired
 - Solo Setup: B's old name unavailable, a free name available
 - B takes its own address back: allowed
@@ -35,7 +37,7 @@ STATE_COVERAGE: PASS: each state is covered by an assertion:
 - browser read of the retired list: refused
 TRUTHFUL_STATE_LABELS: PASS: a refused claim raises 23505 `PAIGE_MANAGED_ADDRESS_RETIRED` naming the address; Solo Setup says unavailable rather than offering an address it would then refuse.
 SOLO_UI: NO: no Solo interface file changed; the Setup screen's existing unavailable state is reused
-UNVERIFIED: the with-migration proof on production data (CI runs it); the business web hostname <slug>.paigeagent.ai is still reused when a slug is freed (separate surface, not changed here)
+UNVERIFIED: the with-migration proof on production data (CI runs it); the business web hostname <slug>.paigeagent.ai is still reused when a slug is freed (separate surface, not changed here); known limits from the second review, recorded rather than built: resolve_tenant_sender's no-identity fallback (one prod business, not live) prints a slug address without a retired check, the connector's variant loop has no attempt cap while the identity stops at 64, and the backfill attributes a message copied to two businesses to the receiving one
 
 OWNER_INTENT: the owner (Antonio, 2026-10-27) asked that the review's remaining address-claim path be closed after approving the inbound routing guard.
 MUST_NOT_HAPPEN: a business receiving replies to another business's past mail; signup or a business rename failing because a name was used before; an existing business losing its current address

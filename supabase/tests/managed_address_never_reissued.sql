@@ -122,6 +122,20 @@ SELECT pg_temp.require_true(
   AND NOT EXISTS (SELECT 1 FROM public.tenant_email_identities WHERE lower(local_part) = 'mani-b-moved'),
   'fixture: nobody holds mani-b-moved@ now, so only the retired list can make it unavailable');
 
+-- 5b. The connector backstop refuses a retired-only address too (no connector or identity holds it).
+DO $$
+BEGIN
+  BEGIN
+    UPDATE public.channel_connectors SET inbound_address = 'mani-b-moved@' || pg_temp.dom()
+     WHERE tenant_id = 'd2c00000-0000-4000-8000-0000000000a1' AND config ->> 'managed_default' = 'true';
+    RAISE EXCEPTION 'FAIL: 5b: A''s connector took B''s retired-only address';
+  EXCEPTION WHEN unique_violation THEN
+    IF SQLERRM NOT LIKE 'PAIGE_MANAGED_ADDRESS_RETIRED%' THEN
+      RAISE EXCEPTION 'FAIL: 5b: refused by something else: %', SQLERRM;
+    END IF;
+  END;
+END $$;
+
 -- 6. A's owner may not set A's From to B's retired address.
 SELECT pg_temp.as_owner_a();
 SET LOCAL ROLE authenticated;
@@ -148,7 +162,9 @@ RESET ROLE;
 SELECT pg_temp.as_service();
 
 -- 8. A NEW business whose slug produces a retired address is created, and its connector and its
---    identity (the From) land on the same numbered variant.
+--    identity (the From) land on the same numbered variant. B renames once more first so its slug is free;
+--    mani-b-moved@ stays retired to B either way.
+UPDATE public.tenants SET slug = 'mani-b-final' WHERE id = 'd2c00000-0000-4000-8000-0000000000b1';
 INSERT INTO public.tenants (id, slug, name, status, account_type, account_number_prefix, features) VALUES
   ('d2c00000-0000-4000-8000-0000000000e1', 'mani-b-moved', 'MANI E', 'active', 'standalone', 'MNE', '{}');
 SELECT public.provision_paige_managed_email_connector('d2c00000-0000-4000-8000-0000000000e1');
@@ -159,6 +175,23 @@ SELECT pg_temp.require_true(
 SELECT pg_temp.require_true(
   pg_temp.identity_local('d2c00000-0000-4000-8000-0000000000e1') = 'mani-b-moved-2',
   '8: the new business''s From is mani-b-moved-2, matching its connector');
+
+-- 8b. An address held only by another business's CONNECTOR (A holds mani-b-2@; no identity or retired row
+--     carries it) is skipped by both the connector loop and the From.
+SELECT pg_temp.require_true(
+  NOT EXISTS (SELECT 1 FROM public.tenant_email_identities WHERE lower(local_part) = 'mani-b-2')
+  AND NOT EXISTS (SELECT 1 FROM public.paige_retired_managed_addresses WHERE address = 'mani-b-2@' || pg_temp.dom()),
+  'fixture: mani-b-2@ is held only by A''s connector');
+INSERT INTO public.tenants (id, slug, name, status, account_type, account_number_prefix, features) VALUES
+  ('d2c00000-0000-4000-8000-0000000000e2', 'mani-b-2', 'MANI G', 'active', 'standalone', 'MNG', '{}');
+SELECT public.provision_paige_managed_email_connector('d2c00000-0000-4000-8000-0000000000e2');
+SELECT public.provision_tenant_email_identity('d2c00000-0000-4000-8000-0000000000e2');
+SELECT pg_temp.require_true(
+  pg_temp.managed_address('d2c00000-0000-4000-8000-0000000000e2') = 'mani-b-2-2@' || pg_temp.dom(),
+  '8b: the connector skipped A''s mani-b-2@');
+SELECT pg_temp.require_true(
+  pg_temp.identity_local('d2c00000-0000-4000-8000-0000000000e2') = 'mani-b-2-2',
+  '8b: the From skipped the address A''s connector holds');
 
 -- 9. A variant another business already holds is skipped, not a failed signup or rename.
 INSERT INTO public.tenants (id, slug, name, status, account_type, account_number_prefix, features) VALUES
@@ -191,6 +224,12 @@ SELECT pg_temp.require_true(
   EXISTS (SELECT 1 FROM public.paige_retired_managed_addresses
            WHERE address = 'mani-c-3@' || pg_temp.dom() AND retired_tenant_id = 'd2c00000-0000-4000-8000-0000000000f1'),
   '10: a changed identity''s old address is retired to its business');
+
+-- 10b. The retired list never blocks deleting a business: account deletion does not plan it as tenant data.
+SELECT pg_temp.require_true(
+  NOT ((public.operator_account_deletion_plan(ARRAY['d2c00000-0000-4000-8000-0000000000b1'::uuid]) -> 'tables')
+       ? 'paige_retired_managed_addresses'),
+  '10b: B''s retired rows are not in its account-deletion plan');
 
 -- 11. The retired list is not readable from a browser session.
 SET LOCAL ROLE authenticated;

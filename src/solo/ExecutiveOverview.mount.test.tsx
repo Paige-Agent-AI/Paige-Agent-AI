@@ -41,6 +41,7 @@ const link = (path: string) => host.querySelector("a[href='" + path + "']");
 function PeriodRouteProbe() {
   const location = useLocation(), navigate = useNavigate();
   return <><output data-testid="route-address">{location.pathname + location.search + location.hash}</output>
+    <output data-testid="route-state">{JSON.stringify(location.state)}</output>
     <button onClick={() => navigate(-1)}>Test browser Back</button></>;
 }
 const EXECUTIVE = '/solo/1234567/command-center/executive';
@@ -58,6 +59,22 @@ function choosePeriod(value: string) {
 }
 
 describe('Executive period continuity through the existing route', () => {
+  it('restores the original department opener and reading position on browser Back', async () => {
+    await act(async () => root!.render(<MemoryRouter initialEntries={[EXECUTIVE + '?review_period=last_30_days']}><Routes>
+      <Route path="/solo/:account/command-center/executive" element={<ExecutiveOverview account="1234567" accountEpoch="test-tenant-1" actorId="test-owner" />} />
+      <Route path="/solo/:account/finance" element={<h1>Original Finance destination</h1>} />
+    </Routes><PeriodRouteProbe /></MemoryRouter>));
+    const originalRoot = host.querySelector('.executive-root') as HTMLElement;
+    originalRoot.scrollTop = 420;
+    const opener = link('/solo/1234567/finance') as HTMLAnchorElement;
+    opener.focus(); act(() => opener.click());
+    expect(text()).toContain('Original Finance destination');
+    act(() => button('Test browser Back').click());
+    expect((host.querySelector('.executive-root') as HTMLElement).scrollTop).toBe(420);
+    expect(document.activeElement).toBe(link('/solo/1234567/finance'));
+    expect(selectedPeriod()).toBe('last_30_days');
+    expect(mocks.prefill).not.toHaveBeenCalled();
+  });
   it('opens and reloads the selected period from the exact address', async () => {
     const entry = EXECUTIVE + '?review_period=last_30_days';
     await mountPeriodRoute(entry);
@@ -94,6 +111,114 @@ describe('Executive period continuity through the existing route', () => {
     await mountPeriodRoute(entry, 'first-page', 'test-tenant-2');
     expect(mocks.review).toHaveBeenLastCalledWith('test-tenant-2', 'last_30_days');
     expect(mocks.prefill).not.toHaveBeenCalled();
+  });
+});
+
+function returnTree(actorId: string | null = 'test-owner', epoch = 'test-tenant-1') {
+  return <MemoryRouter initialEntries={[{ pathname: EXECUTIVE, search: '?source=review&review_period=last_30_days', state: { existingContext: 'retained' } }]}><Routes>
+    <Route path="/solo/:account/command-center/executive" element={<ExecutiveOverview account="1234567" accountEpoch={epoch} actorId={actorId} />} />
+    <Route path="/solo/:account/finance" element={<h1>Original Finance destination</h1>} />
+  </Routes><PeriodRouteProbe /></MemoryRouter>;
+}
+function leaveReview() {
+  const node = host.querySelector('.executive-root') as HTMLElement;
+  node.scrollTop = 420;
+  const opener = link('/solo/1234567/finance') as HTMLAnchorElement;
+  const disclosure = opener.closest('section.exec-domain')?.querySelector('details');
+  if (disclosure) disclosure.open = true;
+  opener.focus(); act(() => opener.click());
+}
+describe('Executive display-only history return', () => {
+  it('restores source freshness without opening a nested financial account disclosure', async () => {
+    mocks.review.mockReturnValue({ state: 'ready', snapshot: withTargetAndFinanceFixtures(structuredClone(SNAPSHOT), 'ready', true), refresh: vi.fn() });
+    await act(async () => root!.render(returnTree()));
+    const section = host.querySelector("[aria-labelledby='exec-domain-finance']")!;
+    const source = section.querySelector(':scope > details.exec-provenance') as HTMLDetailsElement;
+    source.open = true;
+    const node = host.querySelector('.executive-root') as HTMLElement; node.scrollTop = 420;
+    act(() => (section.querySelector('a.exec-link') as HTMLAnchorElement).click());
+    act(() => button('Test browser Back').click());
+    const returned = host.querySelector("[aria-labelledby='exec-domain-finance']")!;
+    expect((returned.querySelector(':scope > details.exec-provenance') as HTMLDetailsElement).open).toBe(true);
+    expect((returned.querySelector('.exec-finance-source') as HTMLDetailsElement).open).toBe(false);
+    expect((host.querySelector('.executive-root') as HTMLElement).scrollTop).toBe(420);
+  });
+  it('retains original route state and source disclosure without retaining a business snapshot', async () => {
+    await act(async () => root!.render(returnTree())); leaveReview();
+    act(() => button('Test browser Back').click());
+    const state = host.querySelector('[data-testid="route-state"]')!.textContent!;
+    expect(JSON.parse(state).existingContext).toBe('retained');
+    expect(state).not.toMatch(/headline|as_of|evidence_ref|PRIVATE|pending/);
+    expect(link('/solo/1234567/finance')?.closest('section.exec-domain')?.querySelector('details')?.open).toBe(true);
+    expect(routeAddress()).toBe(EXECUTIVE + '?source=review&review_period=last_30_days');
+  });
+  it.each(['actor', 'workspace', 'unresolved actor'])('does not restore a preceding %s context', async change => {
+    await act(async () => root!.render(returnTree())); leaveReview();
+    await act(async () => root!.render(returnTree(change === 'actor' ? 'other-owner' : change === 'unresolved actor' ? null : 'test-owner', change === 'workspace' ? 'test-tenant-2' : 'test-tenant-1')));
+    act(() => button('Test browser Back').click());
+    expect((host.querySelector('.executive-root') as HTMLElement).scrollTop).toBe(0);
+    expect(document.activeElement).not.toBe(link('/solo/1234567/finance'));
+    expect(mocks.review).toHaveBeenLastCalledWith(change === 'workspace' ? 'test-tenant-2' : 'test-tenant-1', 'last_30_days');
+  });
+  it('waits for the original fresh read before restoring context', async () => {
+    await act(async () => root!.render(returnTree())); leaveReview();
+    mocks.review.mockReturnValue({ state: 'loading', refresh: vi.fn() });
+    act(() => button('Test browser Back').click());
+    expect((host.querySelector('.executive-root') as HTMLElement).scrollTop).toBe(0);
+    mocks.review.mockReturnValue({ state: 'ready', snapshot: structuredClone(SNAPSHOT), refresh: vi.fn() });
+    await act(async () => root!.render(returnTree()));
+    expect((host.querySelector('.executive-root') as HTMLElement).scrollTop).toBe(420);
+    expect(document.activeElement).toBe(link('/solo/1234567/finance'));
+  });
+  it('preserves a person’s newer focus while the fresh read is pending', async () => {
+    await act(async () => root!.render(returnTree())); leaveReview();
+    mocks.review.mockReturnValue({ state: 'loading', refresh: vi.fn() }); act(() => button('Test browser Back').click());
+    const select = host.querySelector('select')!; select.focus();
+    mocks.review.mockReturnValue({ state: 'ready', snapshot: structuredClone(SNAPSHOT), refresh: vi.fn() });
+    await act(async () => root!.render(returnTree()));
+    expect(document.activeElement).toBe(select);
+    expect((host.querySelector('.executive-root') as HTMLElement).scrollTop).toBe(0);
+  });
+  it.each([false, true])('distinguishes automatic folded-shell focus from newer user input (%s)', async userInput => {
+    const command = document.createElement('button'); command.dataset.tenantPaigeCommand = ''; command.textContent = 'Existing PAIGE command'; document.body.appendChild(command);
+    try {
+      await act(async () => root!.render(returnTree())); leaveReview(); command.focus();
+      mocks.review.mockReturnValue({ state: 'loading', refresh: vi.fn() }); act(() => button('Test browser Back').click());
+      if (userInput) command.dispatchEvent(new Event('pointerdown', { bubbles: true }));
+      mocks.review.mockReturnValue({ state: 'ready', snapshot: structuredClone(SNAPSHOT), refresh: vi.fn() });
+      await act(async () => root!.render(returnTree()));
+      expect(document.activeElement).toBe(userInput ? command : link('/solo/1234567/finance'));
+      expect((host.querySelector('.executive-root') as HTMLElement).scrollTop).toBe(userInput ? 0 : 420);
+    } finally { command.remove(); }
+  });
+  it('preserves resumed wheel scrolling while the fresh review is loading', async () => {
+    await act(async () => root!.render(returnTree())); leaveReview();
+    mocks.review.mockReturnValue({ state: 'loading', refresh: vi.fn() }); act(() => button('Test browser Back').click());
+    const node = host.querySelector('.executive-root') as HTMLElement;
+    node.scrollTop = 140;
+    node.dispatchEvent(new WheelEvent('wheel', { bubbles: true, deltaY: 200 }));
+    mocks.review.mockReturnValue({ state: 'ready', snapshot: structuredClone(SNAPSHOT), refresh: vi.fn() });
+    await act(async () => root!.render(returnTree()));
+    expect(node.scrollTop).toBe(140);
+    expect(document.activeElement).not.toBe(link('/solo/1234567/finance'));
+  });
+  it('returns to the review heading if fresh evidence no longer offers the original link', async () => {
+    await act(async () => root!.render(returnTree())); leaveReview();
+    mocks.review.mockReturnValue({ state: 'failed', message: 'Fresh evidence unavailable', refresh: vi.fn() });
+    act(() => button('Test browser Back').click());
+    expect(document.activeElement).toBe(host.querySelector('h1'));
+    expect((host.querySelector('.executive-root') as HTMLElement).scrollTop).toBe(0);
+    expect(text()).toContain('Fresh evidence unavailable');
+    expect(mocks.prefill).not.toHaveBeenCalled();
+  });
+  it.each(['modified', 'new-window'])('leaves %s navigation and original history untouched', async mode => {
+    await act(async () => root!.render(returnTree()));
+    const opener = link('/solo/1234567/finance') as HTMLAnchorElement;
+    if (mode === 'new-window') opener.target = '_blank';
+    opener.addEventListener('click', event => event.preventDefault());
+    act(() => opener.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, ctrlKey: mode === 'modified', button: 0 })));
+    expect(JSON.parse(host.querySelector('[data-testid="route-state"]')!.textContent!)).toEqual({ existingContext: 'retained' });
+    expect(routeAddress()).toContain('/command-center/executive');
   });
 });
 

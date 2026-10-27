@@ -4690,6 +4690,74 @@ owed. Protected monthlyUNKNOWNUNRETRIED/original9-0+12-0-4 retained. ALG03/06/11
 canonical maturity unchanged, ALG13 Unverified; no new algorithm or action system.
 [Source and rendered boundaries](../evidence/ui-delivery/e2-email-review-evidence.md).
 
+
+### October27 — original Executive department-return repair, development
+
+O14 original Executive → canonical department → browser Back now has a bounded
+native history display bookmark, scoped to exact current actor/workspace/address.
+No business figures or source records are cached; original current evidence is
+re-read. Same route/period/query/hash/unrelated state, source-freshness disclosure,
+reading position and opener are retained. Modified/new-window navigation is left
+alone; genuine newer input wins, and a missing original source returns to the
+Executive heading. Original folded-shell command/content-focus contract reused;
+shared shell, registry, routes, permissions, source-domain writers and Chat untouched.
+
+Source3bbf343676dd3f6b447f02d2739de6af994a10de on actualc76eb5cd is LOCAL/unreleased.
+119 controls/seven suites/zero skips, lint0/build63s PASS; actual app compiler six
+unchanged incumbent diagnostics under unchanged baseline10. Native rendered review
+caught and corrected nested Finance disclosure, duplicate scroll anchoring and
+folded-shell automatic-focus integration defects before publication. Twelve final
+raw synthetic frames/22 exact declared inputs and four actual native return trips
+have scroll delta0, correct opener/source freshness; open-rail synthetic draft
+survives. Native zoom/full AT/authenticated roles/cohorts/reload/Finance/Chat-Live
+remain owed. Functional LOCAL, Visual synthetic, Experiential bounded local only,
+Founder NOT_ACCEPTED. No algorithm/capability promotion or execution receipt.
+Repository review wheel-input finding reproduced and corrected with passive input
+capture/matching cleanup; all twelve frames/four native return trips recaptured.
+New-head review and CI still required; the earlier review remains historical.
+
+All19/nine/original9PASS0FAIL+12PASS0FAIL4BLOCKED/monthlyUNKNOWNUNRETRIED retained.
+Shared read-only Finance QA custody and original E05 manual Work/receipt receiving
+remain pending. #2977 is a separate source-backed email consumer in hosted CI and
+normal Preview; no held feature source is adopted here.
+[Bounded evidence](../evidence/ui-delivery/e2-executive-return-context.md).
+
+### October27 10:40UTC — Executive return receives actual released sources
+
+Later11:14UTC actual release receiving: #2980 mergedb9659598cfbcb3a9c74283722de00e8d9093b0f2,
+treef7320a6a/LOWER5665610194/all10+two webSUCCESS/no-SQL PreviewSKIP. Normal
+Edge40494321413/job122155800348SUCCESS/124 controls; no affected source/config,
+so upload/readback/tag correctly skipped, original1ad certificate retained.
+Webdpl_Bx7CbcQQ3gqCLmPaaQ6WfjJP2AW1 READY/both public exactb965-mvql694f/null/
+entry/missing404 at11:14:16UTC, receipt6440521272. Current continuation receives
+that ACTUAL source without any application/rendered-input change and records its
+verified Master row. Original source/activation/customer/founder boundaries stay.
+Own complete checkpoint blocks are disjoint from parallel existing E02 records;
+exact inverse retains every incoming byte. New-head review/CI remains required.
+
+
+#2979 now composes original released email evidence#2977 and source-certified
+configuration main1ad5f13c4579c717248027687468c43de90bcd40. Rendered/tested source
+bc10362fa2471d855159c9242988945a822e6643; original three production repair blobs
+remain exact to reviewed3bbf3436, and the incoming Executive/email tests are kept.
+136 controls/eight suites/zero skips, fresh build98s/focused lint and unchanged
+six incumbent compiler findings/baseline10. Twelve raw synthetic frames/23 exact
+declared inputs and four native desktop/phone return trips freshly recaptured;
+scroll delta0, correct source disclosure/opener and original synthetic draft.
+Earlier119/seven/3bb and earlier CI are historical, never borrowed for this head.
+
+Functional LOCAL composition verified; Visual synthetic, all twelve inspected;
+Experiential bounded local navigation only; Founder NOT_ACCEPTED. Exact final
+review/CI/merge/deployment/readback remain required. Original read-only source
+authority, canonical department links and all incoming histories/config remain.
+#2977 source-deployment hold is RESOLVED by original E03run40484958924/all51
+selected source/config readbacks and certified tag1ad; #2980 remains a distinct
+reliability follow-up, not an artificial prerequisite. Original nine catalogue
+metadata3Limited/3Unverified/3ComingSoon, no Live or account acceptance inferred.
+All19/nine, shared read-only Finance QA custody/Overview+all subpages/reload/
+nativezoom/roles/cohorts/Chat-Live, original manual Work receiving and founder
+evaluation remain owed. Protected monthly UNKNOWN/UNRETRIED. No algorithm,
+provider/worker/scan/business activation, approval, grant or receipt promotion.
 ### October27 08:55UTC — EXP02 original report thumbnail source released
 
 #2974 mergedc76eb5cd62fc6cc4fa761b654bf18153b15ed395/tree d79e4e3b2920469d8aee6635daa6cf1b363413a8;

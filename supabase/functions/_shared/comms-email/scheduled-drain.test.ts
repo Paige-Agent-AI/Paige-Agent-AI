@@ -147,6 +147,17 @@ describe("comms-scheduled-drain governed file retention", () => {
     expect(await failed.run()).toMatchObject({ governed_files_removed: 0 });
     expect(failed.removed).toEqual([]);
   });
+  it("decides 'the hour's sweep run' from when the run STARTED, not when it ended", async () => {
+    const row = { ...governed, id: "60000000-0000-4000-8000-000000000401" };
+    // Started at 6:50, ended at 7:05: not the sweep run.
+    const late = drain([row], { startMs: minute(6) + 50_000, stepMs: 15_000, orphans: [orphan] });
+    await late.run();
+    expect(late.rpcs.map((c) => c.name)).not.toContain("list_governed_comms_attachment_orphans");
+    // Started at 7:50, ended at 8:05: the sweep run (and 25 s of budget is left).
+    const early = drain([row], { startMs: minute(7) + 50_000, stepMs: 15_000, orphans: [orphan] });
+    await early.run();
+    expect(early.removed).toEqual([["comms-attachments", orphan]]);
+  });
   it("is skipped when the run has used up its time budget", async () => {
     const rows = Array.from({ length: 3 }, (_, i) => ({ ...governed, id: `60000000-0000-4000-8000-00000000030${i}` }));
     const t = drain(rows, { startMs: minute(7), stepMs: 15_000, orphans: [orphan] });
@@ -167,24 +178,31 @@ describe("releaseScheduledCommsEmail with files", () => {
     subject: "Hi", body_text: "Hello there", body_html: commsEmailBodyHtml("Hello there"), state: "prepared", send_at: SEND_AT, attachments: files,
     content_digest: await commsEmailContentDigest({ recipient: "dana@x.test", connectorId: S, subject: "Hi", bodyText: "Hello there" }) });
   const deps = (after: string, code: string | null) => {
-    const sends: Record<string, unknown>[] = []; const closes: unknown[] = []; let reads = 0;
+    const sends: Record<string, unknown>[] = []; const closes: unknown[] = []; const options: unknown[] = []; let reads = 0;
     const d: ScheduledReleaseDependencies = {
       now: () => Date.parse(SEND_AT) + 30_000,
       providerExecutionAllowed: async () => true,
       resolveParties: async () => ({ kind: "resolved", contactId: C, contactName: "Dana", recipient: "dana@x.test", connectorId: S, fromAddress: "owner@biz.test" }),
       readiness: async () => ({ eligible: true, state: "ready", reason: "READY_FOR_GOVERNED_REVIEW", provider_execution_verified: false }),
       readBinding: async () => ({ operation_id: OP, send_at: SEND_AT, state: ++reads === 1 ? "prepared" : after, eligible: true, attachments: files }),
-      send: async (b) => { sends.push(b); return { answered: true, code }; },
+      send: async (b, o) => { sends.push(b); options.push(o); return { answered: true, code }; },
       closeRefused: async (c) => { closes.push(c); return true; },
       markSupportCase: async () => {},
     };
-    return { d, sends, closes };
+    return { d, sends, closes, options };
   };
   it("is released through send-message exactly as a release without files", async () => {
     const t = deps("provider_accepted", null);
     expect(await releaseScheduledCommsEmail(await binding(), M, t.d)).toEqual({ result: "released" });
     expect(t.sends).toEqual([{ channel: "email", to: "dana@x.test", contact_id: C, connector_id: S, message_id: M, subject: "Hi", body: commsEmailBodyHtml("Hello there"),
       comms_email_operation_id: OP, idempotency_key: `comms-email:${OP}`, comms_email_scheduled_release: true }]);
+    // The release tells the drainer the email carries files, so it waits long enough for send-message to
+    // re-read and re-hash them before its claim.
+    expect(t.options).toEqual([{ withFiles: true }]);
+    const plain = deps("provider_accepted", null);
+    const { attachments: _none, ...noFiles } = await binding();
+    await releaseScheduledCommsEmail(noFiles, M, plain.d);
+    expect(plain.options).toEqual([{ withFiles: false }]);
   });
   it("a file send-message found changed is settled from the readback (refused there), never closed again here", async () => {
     const t = deps("refused", null);

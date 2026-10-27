@@ -10,9 +10,9 @@ import {
 import {
   commsEmailAttachmentMatches, canonicalCommsEmailAttachmentMime, parseCommsEmailAttachmentManifest, commsEmailManifestsEqual,
   commsEmailAttachmentPreview, commsEmailAttachmentSummary, readCommsEmailAttachmentSources, copyCommsEmailAttachmentsToGoverned,
-  readGovernedCommsEmailAttachments, commsEmailSha256Hex, commsEmailBase64, type CommsEmailStorage,
+  readGovernedCommsEmailAttachments, commsEmailSha256Hex, commsEmailBase64, commsEmailManifestDigest, type CommsEmailStorage,
 } from "../../supabase/functions/_shared/comms-email/attachments";
-import { parseConfirmPreview } from "@/components/chat/confirmPreview";
+import { parseConfirmPreview, formatFileSize } from "@/components/chat/confirmPreview";
 import { governedAttachmentRequest } from "@/pages/admin/conversations/governedSend";
 
 const T = "10000000-0000-4000-8000-000000000001";
@@ -22,6 +22,27 @@ const U = "90000000-0000-4000-8000-000000000001";
 const enc = (s: string) => new TextEncoder().encode(s);
 const PDF = enc("%PDF-1.4\n%%EOF\n");
 const sig = (...b: number[]) => new Uint8Array([...b, 1, 2, 3, 4, 5, 6, 7, 8]);
+// A real (empty-entry, stored) ZIP: local headers, the central directory every Office reader uses, and
+// the end-of-central-directory record pointing at it.
+function zip(names: string[]): Uint8Array {
+  const out: number[] = [], central: number[] = [], offsets: number[] = [];
+  const u16 = (n: number) => [n & 255, (n >> 8) & 255], u32 = (n: number) => [n & 255, (n >> 8) & 255, (n >> 16) & 255, (n >>> 24) & 255];
+  for (const name of names) {
+    const nb = [...enc(name)];
+    offsets.push(out.length);
+    out.push(...u32(0x04034b50), ...u16(20), ...u16(0), ...u16(0), ...u16(0), ...u16(0), ...u32(0), ...u32(0), ...u32(0), ...u16(nb.length), ...u16(0), ...nb);
+  }
+  const cdStart = out.length;
+  names.forEach((name, i) => {
+    const nb = [...enc(name)];
+    central.push(...u32(0x02014b50), ...u16(20), ...u16(20), ...u16(0), ...u16(0), ...u16(0), ...u16(0), ...u32(0), ...u32(0), ...u32(0),
+      ...u16(nb.length), ...u16(0), ...u16(0), ...u16(0), ...u16(0), ...u32(0), ...u32(offsets[i]), ...nb);
+  });
+  out.push(...central, ...u32(0x06054b50), ...u16(0), ...u16(0), ...u16(names.length), ...u16(names.length), ...u32(central.length), ...u32(cdStart), ...u16(0));
+  return new Uint8Array(out);
+}
+const OLE_SIG = [0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1];
+const oleWith = (stream: string) => new Uint8Array([...OLE_SIG, ...new Array(64).fill(0), ...[...stream].flatMap((c) => [c.charCodeAt(0), 0]), 0, 0]);
 
 describe("parseCommsEmailAttachmentRequest", () => {
   it("takes 1..10 composer paths of the server tenant, in order", () => {
@@ -52,10 +73,11 @@ describe("what a file may be: type, signature and extension together", () => {
       [PDF, "application/pdf", "a.pdf"], [sig(0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a), "image/png", "a.png"],
       [sig(0xff, 0xd8, 0xff, 0xe0), "image/jpeg", "a.jpeg"], [sig(0xff, 0xd8, 0xff, 0xe1), "image/jpeg", "a.JPG"],
       [enc("GIF89a......"), "image/gif", "a.gif"], [enc("RIFF\u0000\u0000\u0000\u0000WEBPVP8 "), "image/webp", "a.webp"],
-      [sig(0x50, 0x4b, 0x03, 0x04), "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "a.docx"],
-      [sig(0x50, 0x4b, 0x03, 0x04), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "a.xlsx"],
-      [sig(0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1), "application/msword", "a.doc"],
-      [sig(0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1), "application/vnd.ms-excel", "a.xls"],
+      [zip(["[Content_Types].xml", "_rels/.rels", "word/document.xml"]), "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "a.docx"],
+      [zip(["[Content_Types].xml", "xl/workbook.xml"]), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "a.xlsx"],
+      [oleWith("WordDocument"), "application/msword", "a.doc"],
+      [oleWith("Workbook"), "application/vnd.ms-excel", "a.xls"], [oleWith("Book"), "application/vnd.ms-excel", "a.xls"],
+      [enc("\uFEFFname,amount\n<b>,1\n"), "text/csv", "a.csv"],
       [enc("hello, world — café"), "text/plain", "a.txt"], [enc("a,b\n1,2\n"), "text/csv", "a.csv"],
     ];
     for (const [b, m, n] of ok) expect(commsEmailAttachmentMatches(b, m, n), `${m} ${n}`).toBe(true);
@@ -67,6 +89,15 @@ describe("what a file may be: type, signature and extension together", () => {
       [new Uint8Array([0x61, 0xff, 0xfe]), "text/plain", "a.txt"], [new Uint8Array([0x61, 0x00, 0x62]), "text/csv", "a.csv"],
       [enc("MZ\u0090"), "application/x-msdownload", "a.exe"], [enc("<svg/>"), "image/svg+xml", "a.svg"],
       [sig(0x50, 0x4b, 0x03, 0x04), "application/msword", "a.doc"],
+      // An Office file must really be one: a bare ZIP signature, a ZIP with no content-types part, a Word
+      // package called a spreadsheet, a compound file without the document's own stream (an installer).
+      [sig(0x50, 0x4b, 0x03, 0x04), "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "a.docx"],
+      [zip(["word/document.xml"]), "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "a.docx"],
+      [zip(["[Content_Types].xml", "word/document.xml"]), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "a.xlsx"],
+      [sig(...OLE_SIG), "application/msword", "a.doc"], [oleWith("Workbook"), "application/msword", "a.doc"], [oleWith("WordDocument"), "application/vnd.ms-excel", "a.xls"],
+      [oleWith("WordDocument"), "application/msword", "a.msi"],
+      // Text that is really markup is not a text file.
+      [enc("<!DOCTYPE html><p>hi"), "text/plain", "a.txt"], [enc("  \n<html>"), "text/plain", "a.txt"], [enc("\uFEFF<svg onload=x>"), "text/csv", "a.csv"], [enc("<?xml version='1.0'?>"), "text/plain", "a.txt"],
     ];
     for (const [b, m, n] of no) expect(commsEmailAttachmentMatches(b, m, n), `${m} ${n}`).toBe(false);
   });
@@ -89,7 +120,7 @@ describe("the manifest, strictly", () => {
     expect(Object.keys(parsed![0])).toEqual(["path", "source_path", "name", "mime", "size", "sha256"]);
     expect(commsEmailManifestsEqual(parsed, [e])).toBe(true);
   });
-  it("refuses another tenant's or operation's copy, a renumbered file, an extra key, a bad hash or size, and totals over 15 MiB", async () => {
+  it("refuses another tenant's or operation's copy, a renumbered file, an extra key, a bad hash or size, and totals over 10 MiB", async () => {
     const e = await entry(0, "a.pdf", PDF);
     const cases: unknown[] = [
       [{ ...e, path: e.path.replace(T, F) }], [{ ...e, path: e.path.replace(OP, OP.replace(/1$/, "9")) }], [{ ...e, path: `${T}/governed/${OP}/2-a.pdf` }],
@@ -100,6 +131,11 @@ describe("the manifest, strictly", () => {
     const two = [await entry(0, "a.pdf", PDF), await entry(1, "b.pdf", PDF)].map((x) => ({ ...x, size: COMMS_EMAIL_ATTACHMENT_MAX_BYTES }));
     expect(2 * COMMS_EMAIL_ATTACHMENT_MAX_BYTES).toBeGreaterThan(COMMS_EMAIL_ATTACHMENTS_TOTAL_MAX_BYTES);
     expect(parseCommsEmailAttachmentManifest(two, T, OP)).toBeNull();
+    // 10 MiB together (raw; ~14 MB once base64-encoded): two 6 MiB files are over, one 10 MiB file is not.
+    expect(COMMS_EMAIL_ATTACHMENTS_TOTAL_MAX_BYTES).toBe(10 * 1024 * 1024);
+    const six = [await entry(0, "a.pdf", PDF), await entry(1, "b.pdf", PDF)].map((x) => ({ ...x, size: 6 * 1024 * 1024 }));
+    expect(parseCommsEmailAttachmentManifest(six, T, OP)).toBeNull();
+    expect(parseCommsEmailAttachmentManifest([{ ...(await entry(0, "a.pdf", PDF)), size: 10 * 1024 * 1024 }], T, OP)).not.toBeNull();
   });
   it("two manifests are one approval only when every field of every file, in order, is equal", async () => {
     const a = await entry(0, "a.pdf", PDF);
@@ -188,5 +224,33 @@ describe("governedAttachmentRequest — what the composer will hand the door", (
     const many = Array.from({ length: 11 }, (_, i) => ({ url: `${T}/${U.slice(0, -2)}${String(i).padStart(2, "0")}-f.pdf`, name: `f${i}.pdf` }));
     expect(governedAttachmentRequest(T, many)).toMatchObject({ refused: ["f10.pdf"] });
     expect(governedAttachmentRequest(T, many).attachments).toHaveLength(10);
+  });
+});
+
+describe("review round 2 — sizes, the digest and parallel reads", () => {
+  it("a file's size reads the way a person says it", () => {
+    expect([1, 820, 1024, 1536, 48 * 1024, 1024 * 1024 - 1, 1024 * 1024, 2.4 * 1024 * 1024, 10 * 1024 * 1024].map(formatFileSize))
+      .toEqual(["1 byte", "820 bytes", "1 KB", "2 KB", "48 KB", "1024 KB", "1 MB", "2.4 MB", "10 MB"]);
+  });
+  it("the manifest digest is the sha256 of its canonical text: key order cannot change it, any field does", async () => {
+    const e = await entry(0, "a.pdf", PDF);
+    const shuffled = { sha256: e.sha256, size: e.size, mime: e.mime, name: e.name, source_path: e.source_path, path: e.path };
+    expect(await commsEmailManifestDigest([shuffled])).toBe(await commsEmailManifestDigest([e]));
+    expect(await commsEmailManifestDigest([{ ...e, size: e.size + 1 }])).not.toBe(await commsEmailManifestDigest([e]));
+    expect(await commsEmailManifestDigest([e])).toMatch(/^[0-9a-f]{64}$/);
+  });
+  it("send-time reads of the governed copies run in parallel, and still refuse on any one changed", async () => {
+    const m = [await entry(0, "a.pdf", PDF), await entry(1, "b.pdf", PDF), await entry(2, "c.pdf", PDF)];
+    let inFlight = 0, peak = 0;
+    const storage: CommsEmailStorage = {
+      getBucket: async () => ({ data: null, error: null }),
+      from: () => ({
+        download: async () => { inFlight++; peak = Math.max(peak, inFlight); await new Promise((r) => setTimeout(r, 5)); inFlight--; return { data: new Blob([PDF], { type: "application/pdf" }), error: null }; },
+        upload: async () => ({ data: null, error: null }),
+      }),
+    };
+    expect(await readGovernedCommsEmailAttachments(storage, m)).toMatchObject({ ok: true });
+    expect(peak).toBe(3);
+    expect(await readGovernedCommsEmailAttachments(storage, [...m.slice(0, 2), { ...m[2], sha256: "0".repeat(64) }])).toEqual({ ok: false, code: "COMMS_EMAIL_ATTACHMENT_CHANGED" });
   });
 });

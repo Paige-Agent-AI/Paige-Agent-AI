@@ -25,6 +25,18 @@ export type ConfirmEmailPreview = {
 /** One file on a confirm card: what the person needs to recognise it — never its path or contents. */
 export type ConfirmEmailAttachment = { name: string; size: number; mime: string };
 
+/**
+ * A file's size the way a person says it: "820 bytes", "48 KB", "2.4 MB". Binary units (1 KB = 1024
+ * bytes), the convention every operating system's file view uses. Never "0 KB" for a real file.
+ */
+export function formatFileSize(bytes: number): string {
+  if (!Number.isFinite(bytes) || bytes < 0) return "";
+  if (bytes < 1024) return `${Math.round(bytes)} ${Math.round(bytes) === 1 ? "byte" : "bytes"}`;
+  if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+  const mb = bytes / (1024 * 1024);
+  return `${mb >= 10 ? Math.round(mb) : Number(mb.toFixed(1))} MB`;
+}
+
 /** The card's file list, or undefined when it is not a well-formed list of 1..10 named files. */
 function parseConfirmAttachments(raw: unknown): ConfirmEmailAttachment[] | undefined {
   if (!Array.isArray(raw) || raw.length < 1 || raw.length > 10) return undefined;

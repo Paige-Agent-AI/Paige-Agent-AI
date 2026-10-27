@@ -11,7 +11,7 @@
 --  1. NEW _comms_email_attachment_manifest_ok(tenant, operation, manifest) — true only for a manifest of
 --     1..10 files, each exactly {path, source_path, name, mime, size, sha256}: the governed path of THIS
 --     tenant and operation numbered in order, the composer source path of the same tenant, a known type,
---     1 B..10 MiB each and 15 MiB together, no repeat, and a governed object that EXISTS in storage with
+--     1 B..10 MiB each and 10 MiB together, no repeat, and a governed object that EXISTS in storage with
 --     exactly that size. The edge function checked the bytes themselves; this is the database's own check
 --     that the binding can only ever name copies the door wrote for this operation.
 --  2. NEW prepare_comms_email_send(<the 13 args>, _send_at timestamptz, _attachments jsonb) — a 15-argument
@@ -86,7 +86,7 @@ BEGIN
   IF NOT EXISTS (SELECT 1 FROM storage.objects o WHERE o.bucket_id='comms-attachments' AND o.name=e->>'path'
     AND o.metadata->>'size' ~ '^[0-9]{1,12}$' AND (o.metadata->>'size')::bigint=size) THEN RETURN false; END IF;
  END LOOP;
- RETURN total<=15728640;
+ RETURN total<=10485760;
 END $$;
 
 -- 2. The prepare with files. No defaults: an email without files can never reach it.

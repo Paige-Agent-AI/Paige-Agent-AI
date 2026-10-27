@@ -122,13 +122,14 @@ CREATE TEMP TABLE _t AS SELECT date_trunc('minute', now()) + interval '1 hour' A
 GRANT SELECT ON _t TO service_role;
 
 -- Governed copies the door would have written: op 1 (two files), op 2 (one), op 3 (scheduled), op 5
--- (Gmail), op 6 (a reply), op 7/8/9 (retention), op 30 (two 8 MiB files), a foreign business's copy.
+-- (Gmail), op 6 (a reply), op 7/8/9 (retention), op 30 (two 6 MiB files), op 31 (one 10 MiB file), a foreign business's copy.
 SELECT pg_temp.put(pg_temp.e(1,1,'proposal.pdf')->>'path', 1000), pg_temp.put(pg_temp.e(1,2,'photo.png',2000)->>'path', 2000),
        pg_temp.put(pg_temp.e(2,1,'a.pdf')->>'path', 1000), pg_temp.put(pg_temp.e(3,1,'a.pdf')->>'path', 1000),
        pg_temp.put(pg_temp.e(5,1,'a.pdf')->>'path', 1000), pg_temp.put(pg_temp.e(6,1,'a.pdf')->>'path', 1000),
        pg_temp.put(pg_temp.e(7,1,'a.pdf')->>'path', 1000), pg_temp.put(pg_temp.e(8,1,'a.pdf')->>'path', 1000),
        pg_temp.put(pg_temp.e(9,1,'a.pdf')->>'path', 1000),
-       pg_temp.put(pg_temp.e(30,1,'big1.pdf',8388608)->>'path', 8388608), pg_temp.put(pg_temp.e(30,2,'big2.pdf',8388608)->>'path', 8388608),
+       pg_temp.put(pg_temp.e(30,1,'big1.pdf',6291456)->>'path', 6291456), pg_temp.put(pg_temp.e(30,2,'big2.pdf',6291456)->>'path', 6291456),
+       pg_temp.put(pg_temp.e(31,1,'max.pdf',10485760)->>'path', 10485760),
        pg_temp.put(pg_temp.e(4,1,'a.pdf',1000,'5f11e100-0000-4000-8000-000000000002')->>'path', 1000);
 -- A member's own composer upload (not governed), the control for the storage policies.
 SELECT pg_temp.put(pg_temp.t1()::text||'/5f11e900-0000-4000-8000-0000000000aa-mine.pdf', 10);
@@ -154,9 +155,10 @@ SELECT pg_temp.ok(14, NOT pg_temp.ok_manifest(2, jsonb_build_array(pg_temp.e(2,1
   AND NOT pg_temp.ok_manifest(2, jsonb_build_array(pg_temp.e(2,1,'a.pdf') || '{"name":"b.pdf"}'))
   AND NOT pg_temp.ok_manifest(2, '[]'::jsonb) AND NOT pg_temp.ok_manifest(2, '{}'::jsonb) AND NOT pg_temp.ok_manifest(2, NULL),
   'an extra or missing key, a bad hash, an unknown type, a string size, a name not the source''s, and no files are refused');
-SELECT pg_temp.ok(15, NOT pg_temp.ok_manifest(30, jsonb_build_array(pg_temp.e(30,1,'big1.pdf',8388608), pg_temp.e(30,2,'big2.pdf',8388608)))
-  AND pg_temp.ok_manifest(30, jsonb_build_array(pg_temp.e(30,1,'big1.pdf',8388608))),
-  'two 8 MiB files exceed the 15 MiB total; one is admitted');
+SELECT pg_temp.ok(15, NOT pg_temp.ok_manifest(30, jsonb_build_array(pg_temp.e(30,1,'big1.pdf',6291456), pg_temp.e(30,2,'big2.pdf',6291456)))
+  AND pg_temp.ok_manifest(30, jsonb_build_array(pg_temp.e(30,1,'big1.pdf',6291456)))
+  AND pg_temp.ok_manifest(31, jsonb_build_array(pg_temp.e(31,1,'max.pdf',10485760))),
+  'two 6 MiB files exceed the 10 MiB total; one 6 MiB file, and one file of exactly 10 MiB, are admitted');
 
 -- ── 2. the prepare with files ────────────────────────────────────────────────────────────────
 SET LOCAL ROLE service_role;
@@ -239,7 +241,7 @@ RESET ROLE;
 SELECT set_config('request.jwt.claims', '{}', true);
 SELECT pg_temp.ok(53, (SELECT n=0 FROM _w WHERE k='update_governed') AND (SELECT coalesce(sum(n),0)=0 FROM _w WHERE k LIKE 'delete_governed%')
   AND (SELECT count(*)=1 FROM storage.objects WHERE name = pg_temp.e(1,1,'proposal.pdf')->>'path' AND metadata->>'size'='1000')
-  AND (SELECT count(*)=12 FROM storage.objects WHERE bucket_id='comms-attachments' AND name LIKE '%/governed/%'),
+  AND (SELECT count(*)=13 FROM storage.objects WHERE bucket_id='comms-attachments' AND name LIKE '%/governed/%'),
   'a member''s UPDATE and DELETE of governed copies touch nothing');
 SELECT pg_temp.ok(54, (SELECT n=1 FROM _w WHERE k='update_own'),
   'a member still updates their own composer upload (the boundary covers only the governed folder)');

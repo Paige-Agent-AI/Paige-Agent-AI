@@ -268,6 +268,7 @@ describe("executeCommsEmailSend — files the person approved", () => {
   const SHA = "a".repeat(64);
   const manifest = [{ path: `${T}/governed/${OP}/1-a.pdf`, source_path: `${T}/90000000-0000-4000-8000-000000000001-a.pdf`, name: "a.pdf", mime: "application/pdf", size: 12, sha256: SHA }];
   const withFiles = async (extra: Record<string, unknown> = {}) => { const i = await input(); return { ...i, stored: { ...i.stored, attachments: manifest, ...extra } }; };
+  const DIGEST = "c".repeat(64);
   it("prepares the 15-argument call (files + an explicit null time) and sends exactly the bound row", async () => {
     const args: Record<string, unknown>[] = []; const sent: Record<string, unknown>[] = [];
     const t = deps(); const prepare = t.d.prepare; t.d.prepare = async a => { args.push(a); return prepare(a); };
@@ -306,9 +307,13 @@ describe("executeCommsEmailSend — files the person approved", () => {
     const { parseCommsEmailStoredCall } = await import("./adapter.ts");
     const i = await input();
     const args = { expected_tenant_id: T, operation_id: OP, command, recipient: i.stored.recipient, from_address: i.stored.fromAddress, content_digest: i.stored.contentDigest };
-    expect(parseCommsEmailStoredCall({ ...args, attachments: manifest }, T)?.attachments).toEqual(manifest);
-    expect(parseCommsEmailStoredCall({ ...args, attachments: [{ ...manifest[0], path: manifest[0].path.replace(OP, "20000000-0000-4000-8000-000000000009") }] }, T)).toBeNull();
-    expect(parseCommsEmailStoredCall({ ...args, attachments: [] }, T)).toBeNull();
+    expect(parseCommsEmailStoredCall({ ...args, attachments: manifest, attachments_digest: DIGEST }, T)?.attachments).toEqual(manifest);
+    expect(parseCommsEmailStoredCall({ ...args, attachments: [{ ...manifest[0], path: manifest[0].path.replace(OP, "20000000-0000-4000-8000-000000000009") }], attachments_digest: DIGEST }, T)).toBeNull();
+    expect(parseCommsEmailStoredCall({ ...args, attachments: [], attachments_digest: DIGEST }, T)).toBeNull();
+    // The digest rides with the manifest: both or neither, and only a real sha256.
+    expect(parseCommsEmailStoredCall({ ...args, attachments: manifest }, T)).toBeNull();
+    expect(parseCommsEmailStoredCall({ ...args, attachments_digest: DIGEST }, T)).toBeNull();
+    expect(parseCommsEmailStoredCall({ ...args, attachments: manifest, attachments_digest: "XYZ" }, T)).toBeNull();
     expect(parseCommsEmailStoredCall(args, T)).not.toHaveProperty("attachments");
   });
 });

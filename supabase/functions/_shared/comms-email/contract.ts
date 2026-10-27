@@ -156,8 +156,13 @@ export const COMMS_EMAIL_ATTACHMENTS_BUCKET = "comms-attachments" as const;
 export const COMMS_EMAIL_ATTACHMENTS_MAX = 10;
 /** Per file: the bucket's own file_size_limit (10 MiB). */
 export const COMMS_EMAIL_ATTACHMENT_MAX_BYTES = 10 * 1024 * 1024;
-/** All files of one email together, under SendGrid's 20 MB message ceiling once base64-encoded. */
-export const COMMS_EMAIL_ATTACHMENTS_TOTAL_MAX_BYTES = 15 * 1024 * 1024;
+/**
+ * All files of one email together: 10 MiB raw is ~14 MB once base64-encoded, so the whole message stays
+ * well under SendGrid's 30 MB request limit AND under the ~20-25 MB that many receiving mail servers accept
+ * (above that, a message SendGrid accepted can still bounce at the recipient). It also bounds what
+ * send-message must read and hash before its claim (see the door's send wait).
+ */
+export const COMMS_EMAIL_ATTACHMENTS_TOTAL_MAX_BYTES = 10 * 1024 * 1024;
 /**
  * The sender providers whose email leaves through send-message's SendGrid arm, the only arm that sends
  * governed files. 'sendgrid' is a PAIGE Email connector; 'resend' is the legacy label of PAIGE's managed

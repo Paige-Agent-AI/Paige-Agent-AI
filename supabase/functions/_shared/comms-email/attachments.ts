@@ -48,10 +48,63 @@ const startsWith = (b: Uint8Array, sig: number[], at = 0) => b.length >= at + si
 const ascii = (s: string) => [...s].map((c) => c.charCodeAt(0));
 const OLE = [0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1];
 const ZIP = [0x50, 0x4b, 0x03, 0x04];
+// Text that is really markup (a page, an image, an XML document) is not a plain-text or CSV file.
+const MARKUP_START = /^(?:\uFEFF)?\s*<(?:!doctype|html|svg|\?xml)/i;
 const utf8Text = (b: Uint8Array) => {
   if (b.includes(0)) return false;
-  try { new TextDecoder("utf-8", { fatal: true }).decode(b); return true; } catch { return false; }
+  let text: string;
+  try { text = new TextDecoder("utf-8", { fatal: true, ignoreBOM: true }).decode(b); } catch { return false; }
+  return !MARKUP_START.test(text.slice(0, 1024));
 };
+
+/**
+ * The entry names of a ZIP file's central directory (the index every Office reader uses), or null when
+ * the end-of-central-directory record or any entry is not where the format says. Bounds-checked; reads
+ * at most 65 535 entries. ZIP64 archives (> 4 GiB) are out of scope at a 10 MiB limit and refused.
+ */
+function zipEntryNames(b: Uint8Array): string[] | null {
+  const u16 = (o: number) => b[o] | (b[o + 1] << 8);
+  const u32 = (o: number) => (b[o] | (b[o + 1] << 8) | (b[o + 2] << 16)) + b[o + 3] * 0x1000000;
+  let eocd = -1;
+  for (let i = b.length - 22; i >= Math.max(0, b.length - 22 - 65535); i--) {
+    if (b[i] === 0x50 && b[i + 1] === 0x4b && b[i + 2] === 0x05 && b[i + 3] === 0x06) { eocd = i; break; }
+  }
+  if (eocd < 0) return null;
+  const count = u16(eocd + 10), size = u32(eocd + 12), offset = u32(eocd + 16);
+  if (offset + size > eocd) return null;
+  const names: string[] = [];
+  let p = offset;
+  for (let n = 0; n < count; n++) {
+    if (p + 46 > eocd || u32(p) !== 0x02014b50) return null;
+    const nameLength = u16(p + 28), extra = u16(p + 30), comment = u16(p + 32);
+    if (p + 46 + nameLength > eocd) return null;
+    names.push(new TextDecoder().decode(b.subarray(p + 46, p + 46 + nameLength)));
+    p += 46 + nameLength + extra + comment;
+  }
+  return names;
+}
+/** An Office Open XML package: a ZIP whose index lists [Content_Types].xml and the part folder. */
+const ooxml = (folder: string) => (b: Uint8Array) => {
+  if (!startsWith(b, ZIP)) return false;
+  const names = zipEntryNames(b);
+  return !!names && names.includes("[Content_Types].xml") && names.some((n) => n.startsWith(folder));
+};
+/**
+ * A legacy Office (OLE compound) file whose directory names the document's own stream: `WordDocument`
+ * for Word, `Workbook` or `Book` for Excel. Directory names are stored as UTF-16LE, so the name is looked
+ * for as those bytes anywhere in the file. Best effort, stated honestly: it tells a Word or Excel file
+ * from other compound files (an .msi installer's streams are named differently), but a crafted compound
+ * file can still carry the name; the receiving program decides how to open it.
+ */
+const utf16 = (s: string) => [...s].flatMap((c) => [c.charCodeAt(0), 0]);
+const holds = (b: Uint8Array, needle: number[]) => {
+  outer: for (let i = 0; i + needle.length <= b.length; i++) {
+    for (let j = 0; j < needle.length; j++) if (b[i + j] !== needle[j]) continue outer;
+    return true;
+  }
+  return false;
+};
+const ole = (...streams: string[]) => (b: Uint8Array) => startsWith(b, OLE) && streams.some((s) => holds(b, utf16(s)));
 
 /**
  * The types a governed email may carry, each with the extensions its name may end in and the
@@ -64,10 +117,10 @@ const TYPES: Record<string, { ext: string[]; sniff: (b: Uint8Array) => boolean }
   "image/jpeg": { ext: ["jpg", "jpeg"], sniff: (b) => startsWith(b, [0xff, 0xd8, 0xff]) },
   "image/gif": { ext: ["gif"], sniff: (b) => startsWith(b, ascii("GIF87a")) || startsWith(b, ascii("GIF89a")) },
   "image/webp": { ext: ["webp"], sniff: (b) => startsWith(b, ascii("RIFF")) && startsWith(b, ascii("WEBP"), 8) },
-  [DOCX]: { ext: ["docx"], sniff: (b) => startsWith(b, ZIP) },
-  [XLSX]: { ext: ["xlsx"], sniff: (b) => startsWith(b, ZIP) },
-  "application/msword": { ext: ["doc"], sniff: (b) => startsWith(b, OLE) },
-  "application/vnd.ms-excel": { ext: ["xls"], sniff: (b) => startsWith(b, OLE) },
+  [DOCX]: { ext: ["docx"], sniff: ooxml("word/") },
+  [XLSX]: { ext: ["xlsx"], sniff: ooxml("xl/") },
+  "application/msword": { ext: ["doc"], sniff: ole("WordDocument") },
+  "application/vnd.ms-excel": { ext: ["xls"], sniff: ole("Workbook", "Book") },
   "text/plain": { ext: ["txt"], sniff: utf8Text },
   "text/csv": { ext: ["csv"], sniff: utf8Text },
 };
@@ -135,10 +188,21 @@ export function parseCommsEmailAttachmentManifest(value: unknown, tenantId: stri
   return out;
 }
 
+/** The manifest's canonical text: every field of every file, in order (key order cannot change it). */
+const manifestText = (m: CommsEmailAttachmentManifest) => JSON.stringify(m.map((e) => ENTRY_KEYS.map((k) => e[k as keyof CommsEmailAttachmentEntry])));
+
+/**
+ * sha256 of the manifest's canonical text. It rides in the approved call beside the manifest so the
+ * confirm redeems ONLY the proposal holding exactly these files with one short, exact filter (a jsonb
+ * containment filter on the whole manifest would put kilobytes in the request URL, and is a superset match).
+ */
+export async function commsEmailManifestDigest(m: CommsEmailAttachmentManifest): Promise<string> {
+  return await commsEmailSha256Hex(new TextEncoder().encode(manifestText(m)));
+}
+
 /** Two manifests are the same approval only when every field of every file, in order, is equal. */
 export function commsEmailManifestsEqual(a: CommsEmailAttachmentManifest | null | undefined, b: CommsEmailAttachmentManifest | null | undefined): boolean {
-  const text = (m: CommsEmailAttachmentManifest | null | undefined) =>
-    m && m.length ? JSON.stringify(m.map((e) => ENTRY_KEYS.map((k) => e[k as keyof CommsEmailAttachmentEntry]))) : "";
+  const text = (m: CommsEmailAttachmentManifest | null | undefined) => m && m.length ? manifestText(m) : "";
   return text(a) === text(b);
 }
 
@@ -229,17 +293,26 @@ export async function copyCommsEmailAttachmentsToGoverned(storage: CommsEmailSto
 export interface GovernedFileAttachment { content: string; filename: string; type: string }
 
 /**
- * At send: read every governed copy the binding names and prove it is the approved bytes (size and
- * sha256). Any copy missing, unreadable or different is CHANGED — the caller refuses, nothing is sent.
+ * Read every governed copy a manifest names, IN PARALLEL (the manifest is already bounded: at most ten
+ * files and 10 MiB together, checked here again and by the database), and prove each is the approved
+ * bytes (size and sha256). Any copy missing, unreadable or different is CHANGED — nothing is sent.
  */
-export async function readGovernedCommsEmailAttachments(storage: CommsEmailStorage, manifest: CommsEmailAttachmentManifest): Promise<Read<{ files: GovernedFileAttachment[] }>> {
+export async function readGovernedCommsEmailAttachmentFiles(storage: CommsEmailStorage, manifest: CommsEmailAttachmentManifest): Promise<Read<{ files: CommsEmailAttachmentFile[] }>> {
+  if (!manifest.length || manifest.length > COMMS_EMAIL_ATTACHMENTS_MAX
+    || manifest.reduce((n, e) => n + e.size, 0) > COMMS_EMAIL_ATTACHMENTS_TOTAL_MAX_BYTES) return { ok: false, code: "COMMS_EMAIL_ATTACHMENT_CHANGED" };
   const bucket = storage.from(COMMS_EMAIL_ATTACHMENTS_BUCKET);
-  const files: GovernedFileAttachment[] = [];
-  for (const entry of manifest) {
+  const read = await Promise.all(manifest.map(async (entry) => {
     let bytes: Uint8Array | null = null;
     try { const { data, error } = await bucket.download(entry.path); bytes = error ? null : await bytesOf(data); } catch { bytes = null; }
-    if (!bytes || bytes.length !== entry.size || await commsEmailSha256Hex(bytes) !== entry.sha256) return { ok: false, code: "COMMS_EMAIL_ATTACHMENT_CHANGED" };
-    files.push({ content: commsEmailBase64(bytes), filename: entry.name, type: entry.mime });
-  }
-  return { ok: true, files };
+    return bytes && bytes.length === entry.size && await commsEmailSha256Hex(bytes) === entry.sha256 ? { entry, bytes } : null;
+  }));
+  if (read.some((f) => f === null)) return { ok: false, code: "COMMS_EMAIL_ATTACHMENT_CHANGED" };
+  return { ok: true, files: read as CommsEmailAttachmentFile[] };
+}
+
+/** At send: the verified governed copies, base64-encoded exactly as SendGrid receives them. */
+export async function readGovernedCommsEmailAttachments(storage: CommsEmailStorage, manifest: CommsEmailAttachmentManifest): Promise<Read<{ files: GovernedFileAttachment[] }>> {
+  const read = await readGovernedCommsEmailAttachmentFiles(storage, manifest);
+  if (!read.ok) return read;
+  return { ok: true, files: read.files.map(({ entry, bytes }) => ({ content: commsEmailBase64(bytes), filename: entry.name, type: entry.mime })) };
 }

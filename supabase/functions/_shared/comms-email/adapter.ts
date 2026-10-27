@@ -73,10 +73,13 @@ export function parseCommsEmailStoredCall(args: unknown, tenantId: string): (Com
     if (sendAt !== a.send_at) return null;
   }
   // Stored files must be exactly a manifest of THIS tenant and operation; anything else was not approved.
+  // The manifest's digest rides beside it (the confirm's exact redemption filter): both or neither. The
+  // door recomputes the digest from the manifest before it keeps any bytes.
   let attachments: CommsEmailAttachmentManifest | undefined;
+  if ((a.attachments === undefined) !== (a.attachments_digest === undefined)) return null;
   if (a.attachments !== undefined) {
     const parsed = parseCommsEmailAttachmentManifest(a.attachments, tenantId, a.operation_id);
-    if (!parsed) return null;
+    if (!parsed || typeof a.attachments_digest !== "string" || !/^[0-9a-f]{64}$/.test(a.attachments_digest)) return null;
     attachments = parsed;
   }
   return { operationId: a.operation_id, command: command as CommsEmailCommand & { connector_id: string }, recipient: a.recipient, fromAddress: a.from_address, contentDigest: a.content_digest,
@@ -282,8 +285,12 @@ export interface ScheduledReleaseDependencies {
   readiness(input: { tenantId: string; actorUserId: string; parties: Extract<CommsEmailParties, { kind: "resolved" }> }): Promise<CommsEmailReadiness>;
   /** read_comms_email_send_binding. On a database refusal it throws an Error whose message carries the database's code. */
   readBinding(messageId: string): Promise<unknown>;
-  /** POST send-message (service role). `answered` = it finished (HTTP < 500 with a JSON body); `code` = its code/error, if any. */
-  send(body: ObjectValue): Promise<{ answered: boolean; code: string | null }>;
+  /**
+   * POST send-message (service role). `answered` = it finished (HTTP < 500 with a JSON body); `code` = its
+   * code/error, if any. `withFiles`: the bound email carries governed files, which send-message reads and
+   * re-hashes before its claim, so the caller waits longer (the request itself never carries them).
+   */
+  send(body: ObjectValue, options?: { withFiles: boolean }): Promise<{ answered: boolean; code: string | null }>;
   /**
    * close_scheduled_comms_email(.., reason, NULL) — the one close of a scheduled send still 'prepared'.
    * Unlike finalize it succeeds even when the scheduler has left the business (the Rail is then honestly
@@ -397,7 +404,7 @@ export async function releaseScheduledCommsEmail(rawBinding: unknown, messageId:
         message_id: messageId, subject: binding.subject, body: binding.bodyHtml,
         comms_email_operation_id: binding.operationId, idempotency_key: `comms-email:${binding.operationId}`,
         comms_email_scheduled_release: true,
-      });
+      }, { withFiles: Array.isArray(object(rawBinding)?.attachments) });
     } catch { /* an unanswered send is settled by the readback below, never by this throw */ }
 
     const after = await read();

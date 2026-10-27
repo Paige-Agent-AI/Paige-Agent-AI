@@ -5,7 +5,7 @@ import { confirmFingerprint } from "../_shared/confirm-fingerprint.ts";
 import { decideDeclaredCapability } from "../_shared/capability-kit/decision.ts";
 import { COMMS_EMAIL_SEND_CAPABILITY } from "../_shared/paige-spine/domains/comms.ts";
 import { COMMS_EMAIL_TOOL, COMMS_EMAIL_ACTION, FINGERPRINT, UUID, parseCommsEmailCommand, commsEmailBodyHtml, commsEmailContentDigest, parseCommsEmailSendAt, canonicalCommsEmailSendAt, COMMS_EMAIL_SCHEDULED_RELEASE_GRACE_MS, parseCommsEmailAttachmentRequest, COMMS_EMAIL_FILE_PROVIDERS } from "../_shared/comms-email/contract.ts";
-import { readCommsEmailAttachmentSources, copyCommsEmailAttachmentsToGoverned, parseCommsEmailAttachmentManifest, commsEmailManifestsEqual, commsEmailAttachmentPreview, commsEmailAttachmentSummary, type CommsEmailAttachmentFile, type CommsEmailAttachmentManifest, type CommsEmailStorage } from "../_shared/comms-email/attachments.ts";
+import { readCommsEmailAttachmentSources, copyCommsEmailAttachmentsToGoverned, parseCommsEmailAttachmentManifest, commsEmailManifestsEqual, commsEmailAttachmentPreview, commsEmailAttachmentSummary, commsEmailManifestDigest, readGovernedCommsEmailAttachmentFiles, type CommsEmailAttachmentFile, type CommsEmailAttachmentManifest, type CommsEmailStorage } from "../_shared/comms-email/attachments.ts";
 import { resolveCommsEmailParties, readCommsEmailReadiness, commsEmailReadinessOutcome, emailProvidersFor, type CommsEmailAdmin } from "../_shared/comms-email/readiness.ts";
 import { verifyLeadReplyApproval, storedApprovalMatches, recordLeadReplySend, bindingApprovalMatches, leadReplyPrepareRefusal, type LeadReplyApprovalAdmin } from "./lead-reply-approval.ts";
 import { executeCommsEmailSend, reconcileCommsEmailSend, parseCommsEmailStoredCall, commsEmailSafeResult } from "../_shared/comms-email/adapter.ts";
@@ -26,6 +26,12 @@ const object = (value: unknown): Record<string, unknown> | null => value && type
 const refusedBeforeDispatch = (status: number, code: string) => response(status, { ok: false, outcome: "refused", code });
 const REPLAY_MISMATCH = "COMMS_EMAIL_REPLAY_MISMATCH";
 const statusOf = (result: Record<string, unknown>) => result.ok === true ? 200 : result.outcome === "outcome_unknown" ? 503 : result.outcome === "sender_choice_required" ? 409 : 422;
+// How long the door waits on send-message. Without files: 25 s (send-message's provider call has its own
+// 20 s deadline). With files, send-message first reads and re-hashes up to 10 MiB of governed copies (in
+// parallel) before its claim, so the wait is 40 s. A send-message that does not answer in time is never
+// read as "not sent": the result is read back from the database, and an unanswered send stays unknown.
+const SEND_WAIT_MS = 25_000;
+const SEND_WAIT_WITH_FILES_MS = 40_000;
 
 Deno.serve(async req => {
   if (req.method === "OPTIONS") return new Response("ok", { headers });
@@ -144,9 +150,10 @@ Deno.serve(async req => {
   // Whether send-message ANSWERED (finished) rather than timing out or failing at the gateway. Only
   // an answered call that left the row 'prepared' proves nothing was dispatched for this operation.
   let sendAnswered = false;
+  let sendWaitMs = SEND_WAIT_MS;
   const send = async (payload: Record<string, unknown>) => {
     sendAnswered = false;
-    const abort = new AbortController(); const timer = setTimeout(() => abort.abort(), 25000);
+    const abort = new AbortController(); const timer = setTimeout(() => abort.abort(), sendWaitMs);
     try {
       const sent = await fetch(`${url}/functions/v1/send-message`, { method: "POST", headers: { Authorization: `Bearer ${serviceKey}`, "Content-Type": "application/json" }, body: JSON.stringify(payload), signal: abort.signal });
       const answer = await sent.json().catch(() => null);
@@ -286,8 +293,23 @@ Deno.serve(async req => {
     // The finder searches the whole workspace; the result read is tied to its actor. An identical
     // unresolved email that a TEAMMATE asked for is theirs to settle: name it, never send, and never
     // promise that asking again will check it (for this person it cannot).
-    try { await readResult(pending); } catch (error) {
+    let pendingResult: Record<string, unknown> | null = null;
+    try { pendingResult = object(await readResult(pending)); } catch (error) {
       if (error instanceof Error && error.message === REPLAY_MISMATCH) return response(503, { ok: false, outcome: "outcome_unknown", code: "COMMS_EMAIL_TEAMMATE_IN_FLIGHT", operation_id: body.operation_id });
+    }
+    // The text matches, but files make it a different email: when this request names files, or the
+    // unsettled one carried them, that send's result is NOT this one's (its files, or this request's,
+    // never went with it). Nothing is sent; the owner is told a matching email is still settling.
+    let pendingCarriesFiles = false;
+    if (!attachmentPaths) {
+      try {
+        const pendingMessage = typeof pendingResult?.message_id === "string" && UUID.test(pendingResult.message_id) ? pendingResult.message_id : null;
+        const pendingBinding = pendingMessage ? object(await readBinding(pendingMessage)) : null;
+        pendingCarriesFiles = pendingBinding !== null && pendingBinding.attachments !== undefined && pendingBinding.attachments !== null;
+      } catch { return response(503, { ok: false, outcome: "refused", code: "COMMS_EMAIL_RECONCILIATION_UNVERIFIED" }); }
+    }
+    if (attachmentPaths || pendingCarriesFiles) {
+      return response(503, { ok: false, outcome: "outcome_unknown", code: "COMMS_EMAIL_IDENTICAL_IN_FLIGHT", reconciled_operation_id: pending, operation_id: body.operation_id, delivery_confirmed: false });
     }
     const settled = await reconcile(pending);
     await settleSupportCase(settled);
@@ -304,14 +326,39 @@ Deno.serve(async req => {
   // manifest is part of the approved call, so a card and its confirm must have read the same bytes.
   let attachmentManifest: CommsEmailAttachmentManifest | null = null;
   let attachmentFiles: CommsEmailAttachmentFile[] = [];
+  let attachmentsDigest: string | null = null;
   if (attachmentPaths) {
     if (!COMMS_EMAIL_FILE_PROVIDERS.includes(String(readiness.sender_provider ?? ""))) return refusedBeforeDispatch(422, "COMMS_EMAIL_ATTACHMENTS_PROVIDER_UNSUPPORTED");
-    let read: Awaited<ReturnType<typeof readCommsEmailAttachmentSources>>;
-    try { read = await readCommsEmailAttachmentSources(admin.storage as unknown as CommsEmailStorage, { tenantId, operationId: body.operation_id, paths: attachmentPaths }); }
-    catch { return refusedBeforeDispatch(503, "COMMS_EMAIL_ATTACHMENT_UNAVAILABLE"); }
-    if (!read.ok) return refusedBeforeDispatch(read.code === "COMMS_EMAIL_ATTACHMENT_UNAVAILABLE" ? 503 : 422, read.code);
-    attachmentManifest = read.manifest;
-    attachmentFiles = read.files;
+    // A prepared operation (its send never answered) already holds its approved files: the binding is the
+    // record and the governed copies are the bytes. Recovery re-sends exactly those — read back and
+    // re-hashed — whatever has happened to the composer uploads since (the composer deletes an upload the
+    // person removes). The request must still name the same uploads, in the same order, as that approval.
+    let boundManifest: CommsEmailAttachmentManifest | null = null;
+    if (preparedRecovery) {
+      let bound: Record<string, unknown> | null;
+      try { bound = typeof replay?.message_id === "string" && UUID.test(replay.message_id) ? object(await readBinding(replay.message_id)) : null; }
+      catch { return response(503, { ok: false, outcome: "outcome_unknown", code: "COMMS_EMAIL_BINDING_UNAVAILABLE", operation_id: body.operation_id }); }
+      if (bound && bound.attachments !== undefined && bound.attachments !== null) {
+        boundManifest = parseCommsEmailAttachmentManifest(bound.attachments, tenantId, body.operation_id);
+        if (!boundManifest || boundManifest.map(e => e.source_path).join("\n") !== attachmentPaths.join("\n")) return refusedBeforeDispatch(409, "COMMS_EMAIL_ATTACHMENTS_CHANGED");
+      }
+    }
+    if (boundManifest) {
+      let kept: Awaited<ReturnType<typeof readGovernedCommsEmailAttachmentFiles>>;
+      try { kept = await readGovernedCommsEmailAttachmentFiles(admin.storage as unknown as CommsEmailStorage, boundManifest); }
+      catch { return refusedBeforeDispatch(503, "COMMS_EMAIL_ATTACHMENT_UNAVAILABLE"); }
+      if (!kept.ok) return refusedBeforeDispatch(409, "COMMS_EMAIL_ATTACHMENT_CHANGED");
+      attachmentManifest = boundManifest;
+      attachmentFiles = kept.files;
+    } else {
+      let read: Awaited<ReturnType<typeof readCommsEmailAttachmentSources>>;
+      try { read = await readCommsEmailAttachmentSources(admin.storage as unknown as CommsEmailStorage, { tenantId, operationId: body.operation_id, paths: attachmentPaths }); }
+      catch { return refusedBeforeDispatch(503, "COMMS_EMAIL_ATTACHMENT_UNAVAILABLE"); }
+      if (!read.ok) return refusedBeforeDispatch(read.code === "COMMS_EMAIL_ATTACHMENT_UNAVAILABLE" ? 503 : 422, read.code);
+      attachmentManifest = read.manifest;
+      attachmentFiles = read.files;
+    }
+    attachmentsDigest = await commsEmailManifestDigest(attachmentManifest);
   }
 
   // 5 — The proposed call: the exact recipient address, sender address and content digest are part
@@ -326,7 +373,7 @@ Deno.serve(async req => {
   if (body.send_at !== undefined) requestArgs.send_at = body.send_at;
   // The files are part of what is fingerprinted (each one's governed path, size, type and sha256). Absent
   // without files: every existing fingerprint, summary and preview is unchanged.
-  if (attachmentManifest) requestArgs.attachments = attachmentManifest;
+  if (attachmentManifest) { requestArgs.attachments = attachmentManifest; requestArgs.attachments_digest = attachmentsDigest; }
   const summary = `Email ${parties.contactName} at ${parties.recipient} from ${parties.fromAddress}: "${command.subject}"`
     + (attachmentManifest ? commsEmailAttachmentSummary(attachmentManifest) : "")
     + (body.send_at !== undefined ? ` — scheduled for ${body.send_at.slice(0, 16).replace("T", " ")} UTC` : "");
@@ -345,8 +392,8 @@ Deno.serve(async req => {
     if (cycleError) return response(503, { ok: false, outcome: preparedRecovery ? "outcome_unknown" : "refused", code: "APPROVAL_STORE_UNAVAILABLE" });
     const cycle = object(pendingCycle?.args);
     // A live cycle carries exactly the files this request read (none when none were named).
-    const cycleAttachmentsMatch = (stored: unknown) => stored === undefined ? attachmentManifest === null
-      : attachmentManifest !== null && commsEmailManifestsEqual(parseCommsEmailAttachmentManifest(stored, tenantId, body.operation_id), attachmentManifest);
+    const cycleAttachmentsMatch = (stored: unknown, digest: unknown) => stored === undefined ? attachmentManifest === null && digest === undefined
+      : attachmentManifest !== null && digest === attachmentsDigest && commsEmailManifestsEqual(parseCommsEmailAttachmentManifest(stored, tenantId, body.operation_id), attachmentManifest);
     if (cycle) {
       let cycleCommand: ReturnType<typeof parseCommsEmailCommand>;
       try { cycleCommand = parseCommsEmailCommand(cycle.command); } catch { return response(409, { ok: false, outcome: "refused", code: "APPROVAL_CYCLE_INVALID" }); }
@@ -354,7 +401,7 @@ Deno.serve(async req => {
         || cycle.recipient !== parties.recipient || cycle.from_address !== parties.fromAddress || cycle.content_digest !== contentDigest
         || !storedApprovalMatches(cycle, body.approval_id)
         || cycle.send_at !== body.send_at
-        || !cycleAttachmentsMatch(cycle.attachments)
+        || !cycleAttachmentsMatch(cycle.attachments, cycle.attachments_digest)
         || typeof cycle.approval_cycle_nonce !== "string" || !UUID.test(cycle.approval_cycle_nonce))
         return response(409, { ok: false, outcome: "refused", code: "APPROVAL_CYCLE_INVALID" });
       requestArgs.approval_cycle_nonce = cycle.approval_cycle_nonce;
@@ -375,9 +422,10 @@ Deno.serve(async req => {
       .is("thread_id", null).is("scoped_client_id", null).is("consumed_at", null)
       .not("server_issued_at", "is", null).not("issued_in_request", "is", null)
       .neq("issued_in_request", requestNonce).gt("expires_at", new Date().toISOString());
-    // With files, only a proposal holding exactly the bytes just read is redeemed: a file changed since the
-    // card was shown hashes differently, so its approval stays unspent and nothing runs.
-    if (attachmentManifest) redeem = redeem.contains("args", { attachments: attachmentManifest });
+    // With files, only a proposal holding exactly the files just read is redeemed — an exact match on the
+    // manifest's digest (a short value, never the manifest itself in the request URL). A file changed since
+    // the card was shown, or a confirm naming fewer or other files, has another digest: nothing is spent.
+    if (attachmentsDigest) redeem = redeem.eq("args->>attachments_digest", attachmentsDigest);
     const { data: claimed, error } = await redeem.select("args").maybeSingle();
     if (!error) claimedArgs = object(claimed?.args);
   }
@@ -439,7 +487,8 @@ Deno.serve(async req => {
     || typeof object(decision.args)?.approval_cycle_nonce !== "string")) return response(403, { ok: false, outcome: "refused", code: "APPROVAL_CYCLE_INVALID" });
   // The approved files must be exactly the ones this request read (a confirm without them, or with other
   // bytes, is not this approval): the bytes about to be kept are the bytes the person approved.
-  if (!commsEmailManifestsEqual(stored.attachments, attachmentManifest)) return refusedBeforeDispatch(409, "COMMS_EMAIL_ATTACHMENTS_CHANGED");
+  if (!commsEmailManifestsEqual(stored.attachments, attachmentManifest)
+    || (stored.attachments && object(decision.args)?.attachments_digest !== await commsEmailManifestDigest(stored.attachments))) return refusedBeforeDispatch(409, "COMMS_EMAIL_ATTACHMENTS_CHANGED");
   if (!(await stillCurrent())) return refusedBeforeDispatch(409, "WORKSPACE_CHANGED");
   // Copy-on-approve: the bytes hashed above are kept at the operation's governed paths (never overwritten;
   // a replay must find the same bytes there). send-message sends only these copies, re-hashed at send time.
@@ -448,6 +497,7 @@ Deno.serve(async req => {
     try { copied = await copyCommsEmailAttachmentsToGoverned(admin.storage as unknown as CommsEmailStorage, attachmentFiles); }
     catch { return refusedBeforeDispatch(503, "COMMS_EMAIL_ATTACHMENT_UNAVAILABLE"); }
     if (!copied.ok) return refusedBeforeDispatch(copied.code === "COMMS_EMAIL_ATTACHMENT_UNAVAILABLE" ? 503 : 409, copied.code);
+    sendWaitMs = SEND_WAIT_WITH_FILES_MS;
   }
   const governance = { actor_user_id: user.id, tenant_id: tenantId, tool: COMMS_EMAIL_TOOL, action: COMMS_EMAIL_ACTION,
     approval_channel: decision.audit.laneEffective === "confirm" ? "operator_card" : "standing_autonomy_setting",

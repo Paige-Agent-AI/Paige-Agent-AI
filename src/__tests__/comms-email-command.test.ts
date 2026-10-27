@@ -11,7 +11,7 @@ import { decideDeclaredCapability } from "../../supabase/functions/_shared/capab
 import { confirmFingerprint } from "../../supabase/functions/_shared/confirm-fingerprint";
 import { COMMS_EMAIL_SEND_CAPABILITY } from "../../supabase/functions/_shared/paige-spine/domains/comms";
 import { COMMS_EMAIL_TOOL, COMMS_EMAIL_ACTION, FINGERPRINT, UUID, parseCommsEmailCommand, commsEmailBodyHtml, commsEmailContentDigest, parseCommsEmailSendAt, canonicalCommsEmailSendAt, COMMS_EMAIL_SCHEDULED_RELEASE_GRACE_MS, parseCommsEmailAttachmentRequest, COMMS_EMAIL_FILE_PROVIDERS } from "../../supabase/functions/_shared/comms-email/contract";
-import { readCommsEmailAttachmentSources, copyCommsEmailAttachmentsToGoverned, parseCommsEmailAttachmentManifest, commsEmailManifestsEqual, commsEmailAttachmentPreview, commsEmailAttachmentSummary } from "../../supabase/functions/_shared/comms-email/attachments";
+import { readCommsEmailAttachmentSources, copyCommsEmailAttachmentsToGoverned, parseCommsEmailAttachmentManifest, commsEmailManifestsEqual, commsEmailAttachmentPreview, commsEmailAttachmentSummary, commsEmailManifestDigest, readGovernedCommsEmailAttachmentFiles } from "../../supabase/functions/_shared/comms-email/attachments";
 import { resolveCommsEmailParties, commsEmailReadinessOutcome, emailProvidersFor, type CommsEmailReadiness } from "../../supabase/functions/_shared/comms-email/readiness";
 import { verifyLeadReplyApproval, storedApprovalMatches, recordLeadReplySend, bindingApprovalMatches, leadReplyPrepareRefusal } from "../../supabase/functions/comms-email-command/lead-reply-approval";
 import { executeCommsEmailSend, reconcileCommsEmailSend, parseCommsEmailStoredCall, commsEmailSafeResult } from "../../supabase/functions/_shared/comms-email/adapter";
@@ -44,7 +44,9 @@ function jsonContains(v: unknown, x: unknown): boolean {
 }
 function matches(row: Row, filters: Filter[]) {
   return filters.every(({ method, args: [col, a, b] }) => {
-    const v = row[col as string];
+    // PostgREST's JSON text path (`args->>key`) reads one key of a jsonb column as text.
+    const [column, jsonKey] = String(col).split("->>");
+    const v = jsonKey === undefined ? row[column] : (() => { const x = (row[column] as Row | undefined)?.[jsonKey]; return x === undefined || x === null ? null : String(x); })();
     if (method === "eq") return v === a;
     if (method === "neq") return v !== a;
     if (method === "is") return a === null ? v == null : v === a;
@@ -85,6 +87,7 @@ function setup(options: Setup = {}) {
   const bindings = new Map<string, Row>(); // operation_id -> binding (with message_id)
   const calls: { name: string; args: Row }[] = [];
   const sends: Row[] = [];
+  const sendWaits: number[] = [];
   const builder = (table: string) => {
     const filters: Filter[] = [];
     let mutation: { kind: "update" | "insert"; value: Row } | null = null;
@@ -256,6 +259,9 @@ function setup(options: Setup = {}) {
     executeCommsEmailSend, reconcileCommsEmailSend, parseCommsEmailStoredCall, commsEmailSafeResult,
     parseCommsEmailAttachmentRequest, COMMS_EMAIL_FILE_PROVIDERS, readCommsEmailAttachmentSources, copyCommsEmailAttachmentsToGoverned,
     parseCommsEmailAttachmentManifest, commsEmailManifestsEqual, commsEmailAttachmentPreview, commsEmailAttachmentSummary,
+    commsEmailManifestDigest, readGovernedCommsEmailAttachmentFiles,
+    // The door's send-message wait, recorded (the real timer still runs).
+    setTimeout: (fn: () => void, ms: number) => { sendWaits.push(ms); return setTimeout(fn, ms); },
   };
   new Function(...Object.keys(scope), compiled)(...Object.values(scope));
   const request = async (extra: Row = {}) => {
@@ -267,7 +273,7 @@ function setup(options: Setup = {}) {
     const response = await handler!(new Request("https://example.test/comms-email-command", { headers: { Authorization: "Bearer signed-session" }, ...init }));
     return { status: response.status, body: await response.json() as Row };
   };
-  return { request, raw, calls, sends, tables, bindings, named, options, objects, storageCalls };
+  return { request, raw, calls, sends, tables, bindings, named, options, objects, storageCalls, sendWaits };
 }
 // The comms-attachments bucket's live allowlist (storage.buckets, read 2026-10-27).
 const BUCKET_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp", "image/gif", "application/pdf", "text/plain", "text/csv", "application/msword",
@@ -1000,5 +1006,106 @@ describe("comms-email-command: files the approved email carries", () => {
     const plain = setup();
     await plain.request();
     expect(plain.storageCalls).toEqual([]);
+  });
+});
+
+describe("comms-email-command: files — review round 2", () => {
+  const enc = (s: string) => new TextEncoder().encode(s);
+  const PDF = enc("%PDF-1.7\n1 0 obj << >> endobj\n%%EOF\n");
+  const PNG = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 13, 73, 72, 68, 82]);
+  const UP1 = "90000000-0000-4000-8000-000000000001", UP2 = "90000000-0000-4000-8000-000000000002";
+  const src1 = `${TENANT}/${UP1}-proposal.pdf`, src2 = `${TENANT}/${UP2}-site_photo.png`;
+  const gov = (n: number, name: string, op = OP) => `${TENANT}/governed/${op}/${n}-${name}`;
+  const files = () => ({ [src1]: { bytes: PDF, type: "application/pdf" }, [src2]: { bytes: PNG, type: "image/png" } });
+  const ready = { sender_provider: "resend" } as Partial<CommsEmailReadiness>;
+  const attachments = [{ path: src1 }, { path: src2 }];
+  const OTHER = "20000000-0000-4000-8000-0000000000ee";
+  // An identical-text email to Dana under another operation whose outcome is not settled yet.
+  const pendingTwin = async (t: ReturnType<typeof setup>, withFiles: boolean) => {
+    const digest = await commsEmailContentDigest({ recipient: "dana@example.test", connectorId: SENDER, subject: command.subject, bodyText: command.body });
+    t.bindings.set(OTHER, { operation_id: OTHER, tenant_id: TENANT, actor_user_id: ACTOR, contact_id: CONTACT, recipient: "dana@example.test", connector_id: SENDER,
+      from_address: "owner@business.test", provider: "resend", subject: command.subject, body_text: command.body, body_html: commsEmailBodyHtml(command.body),
+      content_digest: digest, command: { ...command, connector_id: SENDER }, state: "dispatching", message_id: "60000000-0000-4000-8000-0000000000ee",
+      ...(withFiles ? { attachments: [{ path: gov(1, "proposal.pdf", OTHER) }] } : {}) });
+  };
+
+  it("M1: a request WITH files is never handed an identical-text send's result — refused as in flight, nothing read or sent", async () => {
+    const t = setup({ objects: files(), readiness: ready });
+    await pendingTwin(t, false);
+    const r = await t.request({ attachments });
+    expect(r).toMatchObject({ status: 503, body: { ok: false, outcome: "outcome_unknown", code: "COMMS_EMAIL_IDENTICAL_IN_FLIGHT", reconciled_operation_id: OTHER, operation_id: OP } });
+    expect(t.storageCalls).toEqual([]);
+    expect(t.named("insert:paige_pending_confirmations")).toEqual([]);
+    expect(t.sends).toEqual([]);
+    expect(t.bindings.get(OTHER)?.state).toBe("dispatching");
+  });
+  it("M1: a request WITHOUT files is never handed the result of an identical-text send that carried files", async () => {
+    const t = setup();
+    await pendingTwin(t, true);
+    const r = await t.request();
+    expect(r).toMatchObject({ status: 503, body: { outcome: "outcome_unknown", code: "COMMS_EMAIL_IDENTICAL_IN_FLIGHT", reconciled_operation_id: OTHER } });
+    expect(r.body).not.toHaveProperty("replayed");
+    expect(t.sends).toEqual([]);
+  });
+  it("M1 control: two identical emails without files still settle as one (unchanged)", async () => {
+    const t = setup();
+    await pendingTwin(t, false);
+    const r = await t.request();
+    expect(r.body).toMatchObject({ reconciled_operation_id: OTHER });
+    expect(r.body.code).not.toBe("COMMS_EMAIL_IDENTICAL_IN_FLIGHT");
+  });
+  it("M3: the approved call carries the manifest's digest, and the confirm redeems by that digest alone", async () => {
+    const t = setup({ objects: files(), readiness: ready });
+    const card = await t.request({ attachments });
+    const stored = t.named("insert:paige_pending_confirmations")[0].args.args as Row;
+    expect(stored.attachments_digest).toBe(await commsEmailManifestDigest(stored.attachments as never));
+    await t.request({ attachments, approved_fingerprint: card.body.fingerprint });
+    const redeem = t.named("update:paige_pending_confirmations").find(c => (c.args.filters as Filter[]).some(f => f.method === "neq" && f.args[0] === "issued_in_request"))!;
+    expect((redeem.args.filters as Filter[]).filter(f => f.method === "eq" && f.args[0] === "args->>attachments_digest").map(f => f.args[1])).toEqual([stored.attachments_digest]);
+    expect((redeem.args.filters as Filter[]).some(f => f.method === "contains")).toBe(false);
+    expect(redeem.args.hit).toBe(1);
+  });
+  it("M3: a confirm naming FEWER files (a subset) redeems nothing: the card stays unspent and nothing is copied", async () => {
+    const t = setup({ objects: files(), readiness: ready });
+    const card = await t.request({ attachments });
+    const r = await t.request({ attachments: [{ path: src1 }], approved_fingerprint: card.body.fingerprint });
+    expect(r.body.outcome).toBe("approval_required");
+    expect(t.tables.paige_pending_confirmations.find(p => p.fingerprint === card.body.fingerprint)?.consumed_at ?? null).toBeNull();
+    expect(t.storageCalls.filter(c => c.op === "upload")).toEqual([]);
+    expect(t.named("prepare_comms_email_send")).toEqual([]); expect(t.sends).toEqual([]);
+  });
+  it("M4: the door waits 40 s on send-message only when the email carries files", async () => {
+    const withFiles = setup({ objects: files(), readiness: ready });
+    const card = await withFiles.request({ attachments });
+    await withFiles.request({ attachments, approved_fingerprint: card.body.fingerprint });
+    expect(withFiles.sendWaits).toEqual([40_000]);
+    const plain = setup();
+    const p = await plain.request();
+    await plain.request({ approved_fingerprint: p.body.fingerprint });
+    expect(plain.sendWaits).toEqual([25_000]);
+  });
+  it("(c) recovering a prepared send uses the governed copies it approved, even after the uploads are gone", async () => {
+    const t = setup({ objects: files(), readiness: ready, sendBehavior: "hang_prepared" });
+    const first = await t.request({ attachments });
+    await t.request({ attachments, approved_fingerprint: first.body.fingerprint });
+    expect(t.bindings.get(OP)?.state).toBe("prepared");
+    t.objects.delete(src1); t.objects.delete(src2);
+    t.options.sendBehavior = "accept";
+    const before = t.storageCalls.length;
+    const again = await t.request({ attachments });
+    expect(again.body).toMatchObject({ outcome: "approval_required" });
+    expect(t.storageCalls.slice(before).filter(c => c.op === "download").map(c => c.path)).toEqual([gov(1, "proposal.pdf"), gov(2, "site_photo.png")]);
+    const done = await t.request({ attachments, approved_fingerprint: again.body.fingerprint });
+    expect(done.body).toMatchObject({ ok: true, outcome: "provider_accepted" });
+    expect(t.sends).toHaveLength(2);
+  });
+  it("(c) …but a governed copy that changed, or uploads named differently, is refused — nothing is re-sent", async () => {
+    const t = setup({ objects: files(), readiness: ready, sendBehavior: "hang_prepared" });
+    const first = await t.request({ attachments });
+    await t.request({ attachments, approved_fingerprint: first.body.fingerprint });
+    t.objects.set(gov(2, "site_photo.png"), { bytes: new Uint8Array([...PNG, 1]), type: "image/png" });
+    expect(await t.request({ attachments })).toMatchObject({ status: 409, body: { code: "COMMS_EMAIL_ATTACHMENT_CHANGED" } });
+    expect(await t.request({ attachments: [{ path: src2 }, { path: src1 }] })).toMatchObject({ status: 409, body: { code: "COMMS_EMAIL_ATTACHMENTS_CHANGED" } });
+    expect(t.sends).toHaveLength(1);
   });
 });

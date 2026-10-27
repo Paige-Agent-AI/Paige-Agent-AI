@@ -21,6 +21,12 @@ const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
 const DRAIN_BUDGET_MS = 40_000;
 // The same bound the governed release puts on its send-message call.
 const GENERIC_RELEASE_TIMEOUT_MS = 25_000;
+// A governed email with files: send-message first reads and re-hashes up to 10 MiB of governed copies (in
+// parallel) before its claim, so the release waits 40 s (the door's own wait with files). One such release
+// can therefore run past DRAIN_BUDGET_MS, which is checked only before a row is taken; the run stays well
+// inside the function's wall-clock limit.
+const GOVERNED_RELEASE_TIMEOUT_MS = 25_000;
+const GOVERNED_RELEASE_WITH_FILES_TIMEOUT_MS = 40_000;
 // Governed email files no send will ever need (list_governed_comms_attachment_orphans) are removed once an
 // hour — the run whose minute is this one — at most this many per run, and only with this much budget left.
 const ORPHAN_SWEEP_MINUTE = 7;
@@ -42,8 +48,9 @@ const releaseDependencies: ScheduledReleaseDependencies = {
     if (error) throw new Error(String(error.message ?? "comms_email_binding_unavailable"));
     return data;
   },
-  send: async (payload) => {
-    const abort = new AbortController(); const timer = setTimeout(() => abort.abort(), 25000);
+  send: async (payload, options) => {
+    const abort = new AbortController();
+    const timer = setTimeout(() => abort.abort(), options?.withFiles ? GOVERNED_RELEASE_WITH_FILES_TIMEOUT_MS : GOVERNED_RELEASE_TIMEOUT_MS);
     try {
       const sent = await fetch(`${SUPABASE_URL.replace(/\/$/, "")}/functions/v1/send-message`, {
         method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${SERVICE_ROLE_KEY}` },
@@ -184,7 +191,9 @@ Deno.serve(async (req) => {
   // day, and the copies of a send that was refused or failed a week after it closed. A sent email's files
   // are kept as its record. Once an hour, bounded, inside this run's time budget; a failure only logs.
   let orphansRemoved = 0;
-  if (Math.floor(Date.now() / 60_000) % 60 === ORPHAN_SWEEP_MINUTE && DRAIN_BUDGET_MS - (Date.now() - startedAt) > ORPHAN_SWEEP_MIN_BUDGET_MS) {
+  // "Is this the hour's sweep run" is decided from when the run STARTED: a long run that ends in the next
+  // minute must neither skip the hour's sweep nor run a second one.
+  if (Math.floor(startedAt / 60_000) % 60 === ORPHAN_SWEEP_MINUTE && DRAIN_BUDGET_MS - (Date.now() - startedAt) > ORPHAN_SWEEP_MIN_BUDGET_MS) {
     try {
       const { data: orphans, error: orphanErr } = await admin.rpc("list_governed_comms_attachment_orphans", { _limit: ORPHAN_SWEEP_LIMIT });
       const paths = Array.isArray(orphans)

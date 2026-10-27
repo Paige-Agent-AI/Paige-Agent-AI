@@ -1,5 +1,43 @@
 # Finance department — current source and full operating target
 
+## October27 — current seven-view read, VERA context and reload verified
+
+The existing designated ordinary SOLO Owner completed a new, explicitly read-only
+drive against actual production8bbfa8fb350879de8b52746ac9a9bd5c5642303a /
+dpl_6tYxhYFEPyUjhcHckWubnFsFT1oY. The loaded bootstrap matched both public
+origins' exact build/assets before17:37 and after17:51UTC; no customer values,
+record identifiers, browser identity or raw screenshots are published.
+
+Finance menu landed on Overview. All seven actual pages read AND reloaded with
+VERA attribution, the original saved conversation and a present empty composer:
+Overview, Banking & Cash, Debt & Credit, Receivables, Expenses & Payables,
+Profitability and Budgeting & Forecasting. The original source sheet disclosed
+basis/window/as-of/coverage and receipt/test-population limitations. Escape closed
+it and restored the original evidence-button focus. Missing bank/accounting/
+profit/forecast facts remained unavailable/not calculated, never invented zeros.
+This proves neither disconnected providers nor complete company financial coverage.
+
+The financial Play section correctly described its empty returned SAMPLE, not the
+absence of every target. Review with VERA retained the actual Finance route and
+inserted only an UNSENT Play/period/currency/coverage hint. Native department
+navigation/Back retained that draft exactly; only the known QA draft was cleared,
+restoring the prior empty composer. No new numeric target, financial record,
+approval, payment, provider or other business action was created.
+
+Canonical acceptance evidence: ANT52e8b9e9d8 and [#2967 bounded QA](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2967#issuecomment-6449596126).
+Functional/Experiential: bounded current read/navigation/context/reload PASS.
+Visual: actual private desktop and responsive captures retained; several closed/
+narrow raster dimensions differ from requested CSS viewports, so exact eight-
+raster, physical-mobile, native200percent-zoom and full AT acceptance remain
+UNVERIFIED. These captures do not replace earlier valid synthetic source proof.
+
+Populated company/source/currency evidence, genuine other-role/tenant/cohort
+negatives, revocation, new-target mutations, banking/accounting/forecast depth,
+eligible Live, governed follow-through and full19/nine remain OPEN. Founder
+NOT_ACCEPTED. CAP/ALG maturity and historical9-0/12-0-4/monthlyUNKNOWNUNRETRIED
+remain unchanged. This dated addendum supersedes only the matching read/reload
+proof owed below; prior source and acceptance records remain historical evidence.
+
 ## October27 — financial Play target consumer released, acceptance still owed
 
 [#2967 observed release](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2967#issuecomment-6434154203)

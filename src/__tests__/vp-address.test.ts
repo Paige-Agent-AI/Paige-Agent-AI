@@ -6,6 +6,7 @@ import {
   buildVpAddressBlock,
   detectVpAddress,
 } from '../../supabase/functions/_shared/paige-context/vp-address.ts';
+import { resolveRoleToolScope } from '../../supabase/functions/_shared/studio-scope.ts';
 import { looksLikeFinanceAgent } from '../../supabase/functions/_shared/finance-gate.ts';
 
 describe('detectVpAddress — the roster\'s addressing rule', () => {
@@ -134,5 +135,38 @@ describe("the 23 Oct roster standard: MERIT is Sales & getting paid, NEXUS is Ma
     expect(VP_ROSTER.map((v) => [v.slug, v.role])).toEqual([
       ["vera", "VP Intelligence, Finance & Risk"], ["nexus", "VP Marketing & Growth"], ["cura", "VP Client Success"],
       ["mentor", "VP Discovery, Education & Strategy"], ["merit", "VP Sales & Getting Paid"], ["zion", "VP Operations & Automation"]]);
+  });
+});
+
+// A1a: the scopes the roster migration stores are read by the platform's one role-scope reader
+// (resolveRoleToolScope), so A1b needs no second parser; the channel allowlist carries no private read.
+describe("the roster migration's Team Hub scopes are valid for the one scope reader", () => {
+  const sql = readFileSync("supabase/migrations/20271116030108_exp08_team_hub_agents_roster.sql", "utf8");
+  const rows = [...sql.matchAll(/\('(\w+)', \$j\$(.+?)\$j\$::jsonb, \$j\$(.+?)\$j\$::jsonb, \$j\$(.+?)\$j\$::jsonb\)/g)]
+    .map((m) => ({ slug: m[1], personality: JSON.parse(m[2]), teamHubTools: JSON.parse(m[3]), scope: JSON.parse(m[4]) }));
+  const PRIVATE = ["team_hub_conversations", "team_hub_search", "crm_search_contacts", "crm_list_team", "list_subagents",
+    "web_search", "web_fetch", "get_business_snapshot", "read_business_metric", "read_calendar_agenda", "crm_list_deals"];
+  it("covers exactly the six specialists", () => {
+    expect(rows.map((r) => r.slug)).toEqual(["vera", "nexus", "cura", "mentor", "merit", "zion"]);
+  });
+  it("each DM scope and each channel allowlist reads as a valid allowlist", () => {
+    for (const r of rows) {
+      expect(resolveRoleToolScope({ capability_scope: r.scope }).valid).toBe(true);
+      expect(resolveRoleToolScope({ capability_scope: r.teamHubTools }).valid).toBe(true);
+    }
+  });
+  it("the channel allowlist is the same §6 list for every agent and names no private read", () => {
+    for (const r of rows) {
+      expect(r.teamHubTools.tools).toEqual(["team_hub_read_conversation", "read_business_time_zone", "ask_choices",
+        "capability_status", "marketplace_browse", "list_event_kinds", "team_hub_answer_privately"]);
+      expect(r.teamHubTools.tools.some((t: string) => PRIVATE.includes(t))).toBe(false);
+    }
+  });
+  it("each personality is presentation only and carries no finance-default wording outside MERIT's own getting-paid remit", () => {
+    for (const r of rows) {
+      expect(Object.keys(r.personality).sort()).toEqual(["energy", "formality", "house_words", "humour", "intro", "length",
+        "never_does", "role_line", "shared_rules", "short_role", "sounds_like", "things_to_avoid", "version", "warmth"]);
+      expect(JSON.stringify(r.personality)).not.toMatch(/credit|funding|loan|lend|financing|collections/i);
+    }
   });
 });

@@ -36,7 +36,9 @@ import {
   type TeamHubResult,
   type TeamHubTaskRead,
   type TeamHubWorkItem,
+  type TeamHubAgentKey,
 } from "./team-hub-contract";
+import { agentTurnBody, parseAgentTurn, type AgentTurnAnswer, type AgentTurnOutcome, type AgentTurnRequest } from "./team-hub-agents";
 
 /**
  * EXP08 Team Hub data hook. Every call goes through `supabase.rpc` with the
@@ -71,6 +73,16 @@ import {
  * `p_file_ids`. A chip keeps one client request id for every Retry, so a retry never makes a second
  * record; removing a chip discards its record (best-effort). Downloads mint a fresh 60-second URL on
  * every click and are never cached here.
+ *
+ * EXP08 agents A1b (docs/delivery/exp08-team-hub-agents-contract.md flows 2, 4, 5 and 9): a post
+ * may ask up to three agents (`p_agent_mention_keys`); once it is stored, THIS tab — the asker's —
+ * starts one agent turn per agent through `paige-ai-chat` (`{ teamHubAgentTurn }`). The turn's answer
+ * is the read-back reply, which is put in place at once; everyone else gets it on the 15 s refresh.
+ * A private part starts its DM turn straight away. `agentTurns` holds what this tab knows of each
+ * turn (writing, posted, or the outcome that ended it) so the asker sees "is writing…", the private
+ * note, or the failure with Ask again. Ask again sends the same request: the server derives the
+ * request id, so at most one reply is ever posted. A person's DM with an agent (`agent_dm`) opens
+ * through `team_hub_open_agent_dm` and is listed apart from channels and person DMs.
  */
 
 export const REFRESH_INTERVAL_MS = 15_000;
@@ -137,8 +149,27 @@ export interface PendingMessage {
   mentionIds: string[];
   /** Increment 3: the ready files this message posts, by record id, in the order they were attached. */
   files: AttachmentChip[];
+  /** A1b: the agents this message asks (at most 3), stored by the post itself. */
+  agentKeys?: TeamHubAgentKey[];
   status: "sending" | "failed";
 }
+
+/**
+ * What this tab knows of one agent turn, keyed by `${sourceMessageId}:${agent}`. Only the asker's
+ * tab has these; it is never a claim about another tab or another person.
+ */
+export interface AgentTurn {
+  key: string;
+  request: AgentTurnRequest;
+  /** `in_flight`: another tab is running this same turn. `failed`: it ended with `outcome`, nothing posted here. */
+  status: "writing" | "in_flight" | "posted" | "failed";
+  outcome?: Exclude<AgentTurnOutcome, "posted" | "in_flight">;
+  replyId?: string;
+  /** Flow 5: the reply had a private part, answered in the asker's DM with this agent. */
+  privatePart?: { status: "writing" | "posted" | "failed"; dmId: string | null; outcome?: Exclude<AgentTurnOutcome, "posted" | "in_flight"> };
+}
+
+export const agentTurnKey = (sourceMessageId: string, agent: TeamHubAgentKey) => `${sourceMessageId}:${agent}`;
 
 export const TEAM_HUB_FILE_BUCKET = "comms-attachments";
 export const SIGNED_URL_SECONDS = 60;
@@ -219,6 +250,15 @@ const ENDS_HUB = new Set<TeamHubRefusal>(["not_member", "unavailable", "scope_ch
 
 const newestOf = (messages: TeamHubMessage[]) => messages.length ? [...messages].sort(compareMessages)[messages.length - 1] : undefined;
 
+/** A1b: an agent's message is never the reader's own, though its author_user_id is the person who asked. */
+const byOther = (message: TeamHubMessage, meId: string) => message.author_user_id !== meId || message.author_kind === "agent";
+
+/** A listed conversation's membership and unread count: a channel, a person DM, or (A1b) an agent DM. */
+function listedIn(overview: TeamHubOverview | null | undefined, id: string | null): { joined: boolean; unread: number } | null {
+  if (!overview || !id) return null;
+  return overview.conversations.find((item) => item.id === id) ?? overview.agent_dms.find((item) => item.id === id) ?? null;
+}
+
 export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => unknown; onIncoming?: (announcement: string) => void; onAttachment?: (announcement: string) => void } = {}) {
   const [status, setStatus] = useState<HubStatus>("loading");
   const [overview, setOverview] = useState<TeamHubOverview | null>(null);
@@ -231,11 +271,12 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
   const [work, setWork] = useState<WorkState>({ status: "idle", items: [] });
   const [taskReads, setTaskReads] = useState<Record<string, TeamHubTaskRead>>({});
   const [attachments, setAttachments] = useState<Record<string, AttachmentChip[]>>({});
+  const [agentTurns, setAgentTurns] = useState<Record<string, AgentTurn>>({});
 
   // Latest values for async continuations; a response for a conversation that is no
   // longer open is dropped instead of painted over the one that is.
-  const live = useRef({ activeId, stream, thread, overview, status, work, taskReads, attachments });
-  live.current = { activeId, stream, thread, overview, status, work, taskReads, attachments };
+  const live = useRef({ activeId, stream, thread, overview, status, work, taskReads, attachments, agentTurns });
+  live.current = { activeId, stream, thread, overview, status, work, taskReads, attachments, agentTurns };
   const alive = useRef(true);
   // Set on every setup, not only at creation: React StrictMode runs setup, cleanup, setup in
   // development, and a ref left false after that first cleanup would drop every response.
@@ -263,11 +304,13 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
 
   const refreshRef = useRef<() => Promise<void>>(async () => undefined);
   const refreshAfterAction = useRef<() => Promise<void>>(async () => undefined);
+  // A1b: set below, once the turn runner exists; a stored post asks its agents through it.
+  const askAgentRef = useRef<(request: AgentTurnRequest) => Promise<void>>(async () => undefined);
 
   /** Refusals that end the whole hub are handled here, for every call alike. */
   const settle = useCallback(<T,>(result: TeamHubResult<T>): TeamHubResult<T> => {
     if (!alive.current || result.kind !== "refused") return result;
-    const clear = () => { setOverview(null); setStream(null); setThread(null); setPending([]); setWork({ status: "idle", items: [] }); setTaskReads({}); setAttachments({}); };
+    const clear = () => { setOverview(null); setStream(null); setThread(null); setPending([]); setWork({ status: "idle", items: [] }); setTaskReads({}); setAttachments({}); setAgentTurns({}); };
     if (result.code === "unavailable" && !unavailableRetried.current) {
       // The account type may have been read from a stale workspace context. Re-read it once and ask
       // again before settling on "not available for this account type".
@@ -312,7 +355,7 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
       const heldIds = new Set(held.map((message) => message.id));
       const anchor = mode === "open" ? null : live.current.stream?.listedNewest ?? null;
       report.gap = mode === "refresh" && refreshLeavesGap(anchor ? [anchor] : [], top, result.value.has_more, result.value.oldest);
-      report.incoming = mode === "refresh" ? top.filter((message) => !heldIds.has(message.id) && message.author_user_id !== meId).length : 0;
+      report.incoming = mode === "refresh" ? top.filter((message) => !heldIds.has(message.id) && byOther(message, meId)).length : 0;
       report.newestId = newestOf(report.gap ? top : [...held, ...top])?.id ?? null;
     }
     setStream((current) => {
@@ -364,6 +407,7 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
       setOverview((current) => current && {
         ...current,
         conversations: current.conversations.map((conversation) => conversation.id === channelId ? { ...conversation, unread: 0 } : conversation),
+        agent_dms: current.agent_dms.map((dm) => dm.id === channelId ? { ...dm, unread: 0 } : dm),
       });
     }
     return result;
@@ -380,7 +424,7 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
     const meId = live.current.overview?.me.user_id ?? "";
     const heldIds = new Set((live.current.thread?.replies ?? []).map((reply) => reply.id));
     const incoming = mode === "refresh" && result.kind === "ok"
-      ? result.value.replies.filter((reply) => !heldIds.has(reply.id) && reply.author_user_id !== meId).length : 0;
+      ? result.value.replies.filter((reply) => !heldIds.has(reply.id) && byOther(reply, meId)).length : 0;
     setThread((current) => {
       if (!current || current.rootId !== rootId) return current;
       if (result.kind === "ok") {
@@ -467,7 +511,7 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
       setStatus("ready");
       setRefreshFailed(false);
       const { activeId: current, stream: openStream, thread: openThread } = live.current;
-      const listed = current ? result.value.conversations.find((conversation) => conversation.id === current) : null;
+      const listed = listedIn(result.value, current);
       const tabVisible = document.visibilityState === "visible";
       let newMessages = 0;
       let orMore = false;
@@ -534,7 +578,7 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
   }, []);
 
   const openConversation = useCallback(async (channelId: string) => {
-    const conversation = live.current.overview?.conversations.find((item) => item.id === channelId);
+    const conversation = listedIn(live.current.overview, channelId);
     setActiveId(channelId);
     live.current.activeId = channelId;
     setThread(null);
@@ -554,7 +598,7 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
     streamVisible.current = visible;
     if (!visible || was) return;
     const { activeId: current, stream: openStream, overview: listedNow } = live.current;
-    const listed = current ? listedNow?.conversations.find((conversation) => conversation.id === current) : null;
+    const listed = listedIn(listedNow, current);
     const newest = openStream?.messages[openStream.messages.length - 1];
     if (current && newest && openStream?.channelId === current && openStream.status === "ready" && openStream.channel?.joined && (listed?.unread ?? 0) > 0) {
       void markRead(current, newest.id);
@@ -767,6 +811,8 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
         p_parent_message_id: attempt.parentId,
         p_mention_ids: attempt.mentionIds,
         p_file_ids: attempt.files.map((file) => file.fileId),
+        // A1b: only when the message asks agents, so every other post keeps its exact call.
+        ...(attempt.agentKeys?.length ? { p_agent_mention_keys: attempt.agentKeys } : {}),
       });
     const parsed = isTask ? parseTaskRequested(answer.data, answer.error) : parsePosted(answer.data, answer.error);
     // For a task, the server's `unavailable` also means Operations refused (PLAN_FORBIDDEN, contract
@@ -796,8 +842,17 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
         conversations: current.conversations.map((conversation) => conversation.id === attempt.channelId
           ? { ...conversation, joined: true, last_message_at: message.created_at }
           : conversation),
+        agent_dms: current.agent_dms.map((dm) => dm.id === attempt.channelId ? { ...dm, last_message_at: message.created_at } : dm),
       });
       if (message.work_ref) void readTaskStatuses([message.work_ref.id]);
+      // A1b: the message is stored, so its agents may be asked now — from this tab only, once each.
+      // A retry that returns the stored message asks again too: the server answers a turn that already
+      // ran (posted or in flight) without running it twice.
+      const agentDm = live.current.overview?.agent_dms.find((dm) => dm.id === attempt.channelId);
+      const asked = agentDm ? [agentDm.agent_key] : message.agent_mentions?.length ? message.agent_mentions : attempt.agentKeys ?? [];
+      for (const agent of asked) {
+        void askAgentRef.current({ conversationId: attempt.channelId, sourceMessageId: message.id, threadRootId: message.parent_message_id, agent });
+      }
       return { kind: "sent", duplicate: result.value.duplicate, messageId: message.id };
     }
     if (result.kind === "refused") {
@@ -816,7 +871,7 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
   }, [call, settle, readTaskStatuses, setScopeChips]);
 
   /** With `withFiles`, the composer's ready files leave it and travel with the message (and its Retry). */
-  const send = useCallback((input: { channelId: string; parentId: string | null; body: string; mentionIds: string[]; withFiles?: boolean }) => {
+  const send = useCallback((input: { channelId: string; parentId: string | null; body: string; mentionIds: string[]; withFiles?: boolean; agentKeys?: TeamHubAgentKey[] }) => {
     const scope = attachmentScope(input.channelId, input.parentId);
     const files = input.withFiles ? (live.current.attachments[scope] ?? []).filter((chip) => chip.state === "ready" && chip.fileId) : [];
     if (files.length) setScopeChips(scope, (chips) => chips.filter((chip) => !files.some((file) => file.localId === chip.localId)));
@@ -829,6 +884,7 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
       body: input.body.trim(),
       mentionIds: input.mentionIds,
       files,
+      ...(input.agentKeys?.length ? { agentKeys: input.agentKeys } : {}),
       status: "sending",
     };
     setPending((current) => [...current, attempt]);
@@ -864,6 +920,104 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
     const unread = shownWorkIds.split(",").filter((id) => !live.current.taskReads[id]);
     if (unread.length) void readTaskStatuses(unread);
   }, [shownWorkIds, readTaskStatuses]);
+
+  // ── A1b: agent turns ──
+
+  /** One agent turn through `paige-ai-chat`, under this person's session. Never throws. */
+  const invokeTurn = useCallback(async (request: AgentTurnRequest): Promise<AgentTurnAnswer> => {
+    try {
+      const answer = await supabase.functions.invoke("paige-ai-chat", { body: agentTurnBody(request) });
+      return parseAgentTurn(answer?.data, answer?.error ?? (answer ? null : new Error("no answer")), request);
+    } catch {
+      return { outcome: "could_not_start" };
+    }
+  }, []);
+
+  const patchTurn = useCallback((key: string, update: (turn: AgentTurn | undefined) => AgentTurn) => {
+    setAgentTurns((current) => ({ ...current, [key]: update(current[key]) }));
+  }, []);
+
+  /** A reply the server read back goes where it belongs at once: the open stream, or the open thread. */
+  const placeReply = useCallback((message: TeamHubMessage, conversationId: string, duplicate: boolean) => {
+    if (!message.parent_message_id) {
+      setStream((current) => current && current.channelId === conversationId
+        ? { ...current, messages: mergeMessages(current.messages, [message]) } : current);
+      return;
+    }
+    const known = live.current.thread?.replies.some((reply) => reply.id === message.id) ?? false;
+    setThread((current) => current && current.rootId === message.parent_message_id
+      ? { ...current, replies: mergeMessages(current.replies, [message]),
+        root: current.root && (duplicate || known ? current.root : { ...current.root, reply_count: current.root.reply_count + 1, last_reply_at: message.created_at }) }
+      : current);
+    if (!duplicate && !known) {
+      setStream((current) => current && current.channelId === conversationId
+        ? { ...current, messages: current.messages.map((item) => item.id === message.parent_message_id ? { ...item, reply_count: item.reply_count + 1, last_reply_at: message.created_at } : item) }
+        : current);
+    }
+  }, []);
+
+  /** Flow 5: the private part's DM turn, started by this tab right after the channel reply posted. */
+  const runPrivatePart = useCallback(async (key: string, request: AgentTurnRequest, dmId: string | null) => {
+    patchTurn(key, (turn) => ({ ...(turn ?? { key, request, status: "posted" }), privatePart: { status: "writing", dmId } }));
+    const answer = await invokeTurn({ ...request, privateFollowUp: true });
+    if (!alive.current) return;
+    if (answer.outcome === "posted") {
+      patchTurn(key, (turn) => ({ ...(turn ?? { key, request, status: "posted" }), privatePart: { status: "posted", dmId: answer.conversationId } }));
+      placeReply(answer.message, answer.conversationId, answer.duplicate);
+      void refreshAfterAction.current();
+      return;
+    }
+    // In flight elsewhere still counts as writing here; anything else ended without a private answer.
+    const outcome = answer.outcome;
+    patchTurn(key, (turn) => ({ ...(turn ?? { key, request, status: "posted" }), privatePart: outcome === "in_flight"
+      ? { status: "writing", dmId } : { status: "failed", dmId, outcome } }));
+  }, [invokeTurn, patchTurn, placeReply]);
+
+  const askAgent = useCallback(async (request: AgentTurnRequest) => {
+    const key = agentTurnKey(request.sourceMessageId, request.agent);
+    patchTurn(key, () => ({ key, request, status: "writing" }));
+    const answer = await invokeTurn(request);
+    if (!alive.current) return;
+    if (answer.outcome === "posted") {
+      patchTurn(key, () => ({ key, request, status: "posted", replyId: answer.message.id }));
+      placeReply(answer.message, answer.conversationId, answer.duplicate);
+      if (answer.privateFollowUp) void runPrivatePart(key, request, answer.privateFollowUp.dmId);
+      else void refreshAfterAction.current();
+      return;
+    }
+    if (answer.outcome === "in_flight") { patchTurn(key, () => ({ key, request, status: "in_flight" })); return; }
+    const outcome = answer.outcome;
+    patchTurn(key, () => ({ key, request, status: "failed", outcome }));
+    // The hub settles what it means for everyone: Team conversations off, or the conversation gone.
+    if (outcome === "conversations_off" || outcome === "not_visible") void refreshAfterAction.current();
+  }, [invokeTurn, patchTurn, placeReply, runPrivatePart]);
+  askAgentRef.current = askAgent;
+
+  /**
+   * Ask again / Check again: the same request, so the server either reads back a reply that already
+   * posted or runs the turn once. A failed private part asks for the private part again. A question
+   * this tab never saw a turn for (the asker came back after a closed tab) is asked from its message.
+   */
+  const askAgain = useCallback((request: AgentTurnRequest) => {
+    const turn = live.current.agentTurns[agentTurnKey(request.sourceMessageId, request.agent)];
+    if (turn?.privatePart?.status === "failed") return runPrivatePart(turn.key, turn.request, turn.privatePart.dmId);
+    return askAgent(turn?.request ?? request);
+  }, [askAgent, runPrivatePart]);
+
+  /** A person's DM with one agent: the listed one, or opened (made once) through its own door. */
+  const openAgentDm = useCallback(async (agent: TeamHubAgentKey): Promise<ActionOutcome<string>> => {
+    const existing = live.current.overview?.agent_dms.find((dm) => dm.agent_key === agent);
+    if (existing) {
+      await openConversation(existing.id);
+      return { ok: true, value: existing.id };
+    }
+    const answer = await call("team_hub_open_agent_dm", { p_agent_key: agent });
+    const result = settle(parseChannelId(answer.data, answer.error));
+    if (result.kind !== "ok") return { ok: false, message: refusalMessage(failureCode(result), "dm") };
+    await refresh();
+    await openConversation(result.value);
+    return { ok: true, value: result.value };
+  }, [call, settle, refresh, openConversation]);
 
   const pendingRef = useRef(pending);
   pendingRef.current = pending;
@@ -950,6 +1104,10 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
     () => overview?.conversations.find((conversation) => conversation.id === activeId) ?? null,
     [overview, activeId],
   );
+  const activeAgentDm = useMemo(
+    () => overview?.agent_dms.find((dm) => dm.id === activeId) ?? null,
+    [overview, activeId],
+  );
 
   return {
     status,
@@ -958,6 +1116,7 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
     online,
     activeId,
     activeConversation,
+    activeAgentDm,
     stream,
     thread,
     pending,
@@ -990,6 +1149,10 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
     joinChannel,
     leaveChannel,
     addMembers,
+    agentTurns,
+    askAgent,
+    askAgain,
+    openAgentDm,
   };
 }
 

@@ -821,12 +821,14 @@ export function mentionRuns(body: string, mentionIds: string[], people: TeamHubP
 export function newDividerBefore(messages: TeamHubMessage[], unread: number, meId: string): string | null {
   if (unread <= 0) return null;
   let seen = 0;
+  // A1b: an agent's reply carries the asker's id but is not their own message (the server counts it).
+  const mine = (message: TeamHubMessage) => message.author_user_id === meId && message.author_kind !== "agent";
   for (let index = messages.length - 1; index >= 0; index -= 1) {
-    if (messages[index].author_user_id === meId) continue;
+    if (mine(messages[index])) continue;
     seen += 1;
     if (seen === unread) return messages[index].id;
   }
-  return messages.find((message) => message.author_user_id !== meId)?.id ?? null;
+  return messages.find((message) => !mine(message))?.id ?? null;
 }
 
 export function dayKey(instant: string): string {

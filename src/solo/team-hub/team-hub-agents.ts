@@ -274,7 +274,7 @@ export function parseAgentTurn(data: unknown, error: unknown, request: AgentTurn
     // Only a reply turn in a shared conversation has a private part, and it names this same question.
     if (!isRow(follow) || request.privateFollowUp || follow.sourceMessageId !== request.sourceMessageId || follow.agent !== request.agent
       || !(follow.dm_conversation_id === null || isText(follow.dm_conversation_id))) return { outcome: "unconfirmed" };
-    privateFollowUp = { dmId: follow.dm_conversation_id };
+    privateFollowUp = { dmId: typeof follow.dm_conversation_id === "string" ? follow.dm_conversation_id : null };
   }
   return { outcome: "posted", message, conversationId: data.conversation_id, duplicate: data.duplicate === true, privateFollowUp };
 }

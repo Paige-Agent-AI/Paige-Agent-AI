@@ -1,0 +1,297 @@
+{
+  "source": "0afddbd82e66e2986bdd6c0164da915c7ffe478f",
+  "scope": "Original Executive/router/handoff/shell and closed synthetic composer ports only. Original data fixture uses a fixed sample window; this proves selected-period draft transport, not backend period-consistency or customer acceptance.",
+  "reviewFinding": "Rendered draft review found awkward inherited Use the This quarter wording. Final common Reporting period label removes that redundant prose and is freshly recaptured; earlier829 source remains private history.",
+  "frames": [
+    {
+      "file": "1536x770-closed.jpg",
+      "viewport": [
+        1536,
+        770
+      ],
+      "mode": "closed",
+      "geometry": {
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "pageScroll": 1536,
+        "pageWidth": 1536,
+        "rootScroll": 1449,
+        "rootWidth": 1449
+      }
+    },
+    {
+      "file": "1536x770-open.jpg",
+      "viewport": [
+        1536,
+        770
+      ],
+      "mode": "open",
+      "geometry": {
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "pageScroll": 1536,
+        "pageWidth": 1536,
+        "rootScroll": 927,
+        "rootWidth": 927
+      }
+    },
+    {
+      "file": "1366x768-closed.jpg",
+      "viewport": [
+        1366,
+        768
+      ],
+      "mode": "closed",
+      "geometry": {
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "pageScroll": 1366,
+        "pageWidth": 1366,
+        "rootScroll": 1279,
+        "rootWidth": 1279
+      }
+    },
+    {
+      "file": "1366x768-open.jpg",
+      "viewport": [
+        1366,
+        768
+      ],
+      "mode": "open",
+      "geometry": {
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "pageScroll": 1366,
+        "pageWidth": 1366,
+        "rootScroll": 815,
+        "rootWidth": 815
+      }
+    },
+    {
+      "file": "1024x768-closed.jpg",
+      "viewport": [
+        1024,
+        768
+      ],
+      "mode": "closed",
+      "geometry": {
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "pageScroll": 1024,
+        "pageWidth": 1024,
+        "rootScroll": 937,
+        "rootWidth": 937
+      }
+    },
+    {
+      "file": "1024x768-open.jpg",
+      "viewport": [
+        1024,
+        768
+      ],
+      "mode": "open",
+      "geometry": {
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "pageScroll": 1024,
+        "pageWidth": 1024,
+        "rootScroll": 937,
+        "rootWidth": 937
+      }
+    },
+    {
+      "file": "900x1000-closed.jpg",
+      "viewport": [
+        900,
+        1000
+      ],
+      "mode": "closed",
+      "geometry": {
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "pageScroll": 900,
+        "pageWidth": 900,
+        "rootScroll": 813,
+        "rootWidth": 813
+      }
+    },
+    {
+      "file": "900x1000-open.jpg",
+      "viewport": [
+        900,
+        1000
+      ],
+      "mode": "open",
+      "geometry": {
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+        "pageScroll": 900,
+        "pageWidth": 900,
+        "rootScroll": 813,
+        "rootWidth": 813
+      }
+    }
+  ],
+  "invitations": [
+    {
+      "viewport": [
+        1366,
+        768
+      ],
+      "name": "How's my business doing?",
+      "pageScroll": 1366,
+      "pageWidth": 1366,
+      "period": "last_30_days",
+      "prompt": "How's my business doing, what needs attention, and what should we work on today? Reporting period: Last 30 days.",
+      "rootScroll": 815,
+      "rootWidth": 815,
+      "sendDisabled": true
+    },
+    {
+      "viewport": [
+        1366,
+        768
+      ],
+      "name": "Ask VERA to review the evidence",
+      "pageScroll": 1366,
+      "pageWidth": 1366,
+      "period": "last_30_days",
+      "prompt": "VERA, review my business performance, financial evidence and risks. Use permitted business evidence, explain sources, periods and unavailable information, and recommend one to three grounded priorities. PAIGE remains my COO. Do not take an action. Reporting period: Last 30 days.",
+      "rootScroll": 815,
+      "rootWidth": 815,
+      "sendDisabled": true
+    },
+    {
+      "viewport": [
+        1366,
+        768
+      ],
+      "name": "Review targets with PAIGE",
+      "pageScroll": 1366,
+      "pageWidth": 1366,
+      "period": "last_30_days",
+      "prompt": "Review my saved Strategic Play targets and compatible actuals. Focus the business review on game_plan. Explain variance, periods and unknowns, and link me to the owning Plays. Do not take an action. Reporting period: Last 30 days.",
+      "rootScroll": 815,
+      "rootWidth": 815,
+      "sendDisabled": true
+    },
+    {
+      "viewport": [
+        1366,
+        768
+      ],
+      "name": "Discuss with PAIGE",
+      "pageScroll": 1366,
+      "pageWidth": 1366,
+      "period": "last_30_days",
+      "prompt": "Help me understand this Operations & Systems Check finding and recommend a next step: 2 blocking operating findings. Re-read the current business evidence; do not take an action. Reporting period: Last 30 days.",
+      "rootScroll": 815,
+      "rootWidth": 815,
+      "sendDisabled": true
+    },
+    {
+      "viewport": [
+        1366,
+        768
+      ],
+      "name": "Review with PAIGE",
+      "pageScroll": 1366,
+      "pageWidth": 1366,
+      "period": "last_30_days",
+      "prompt": "Explain my prepared work and what is awaiting review. Re-read the current records and do not execute anything. Reporting period: Last 30 days.",
+      "rootScroll": 815,
+      "rootWidth": 815,
+      "sendDisabled": true
+    },
+    {
+      "viewport": [
+        390,
+        844
+      ],
+      "name": "How's my business doing?",
+      "pageScroll": 390,
+      "pageWidth": 390,
+      "period": "current_quarter",
+      "prompt": "How's my business doing, what needs attention, and what should we work on today? Reporting period: This quarter.",
+      "rootScroll": 303,
+      "rootWidth": 303,
+      "sendDisabled": true
+    },
+    {
+      "viewport": [
+        390,
+        844
+      ],
+      "name": "Ask VERA to review the evidence",
+      "pageScroll": 390,
+      "pageWidth": 390,
+      "period": "current_quarter",
+      "prompt": "VERA, review my business performance, financial evidence and risks. Use permitted business evidence, explain sources, periods and unavailable information, and recommend one to three grounded priorities. PAIGE remains my COO. Do not take an action. Reporting period: This quarter.",
+      "rootScroll": 303,
+      "rootWidth": 303,
+      "sendDisabled": true
+    },
+    {
+      "viewport": [
+        390,
+        844
+      ],
+      "name": "Review targets with PAIGE",
+      "pageScroll": 390,
+      "pageWidth": 390,
+      "period": "current_quarter",
+      "prompt": "Review my saved Strategic Play targets and compatible actuals. Focus the business review on game_plan. Explain variance, periods and unknowns, and link me to the owning Plays. Do not take an action. Reporting period: This quarter.",
+      "rootScroll": 303,
+      "rootWidth": 303,
+      "sendDisabled": true
+    },
+    {
+      "viewport": [
+        390,
+        844
+      ],
+      "name": "Discuss with PAIGE",
+      "pageScroll": 390,
+      "pageWidth": 390,
+      "period": "current_quarter",
+      "prompt": "Help me understand this Operations & Systems Check finding and recommend a next step: 2 blocking operating findings. Re-read the current business evidence; do not take an action. Reporting period: This quarter.",
+      "rootScroll": 303,
+      "rootWidth": 303,
+      "sendDisabled": true
+    },
+    {
+      "viewport": [
+        390,
+        844
+      ],
+      "name": "Review with PAIGE",
+      "pageScroll": 390,
+      "pageWidth": 390,
+      "period": "current_quarter",
+      "prompt": "Explain my prepared work and what is awaiting review. Re-read the current records and do not execute anything. Reporting period: This quarter.",
+      "rootScroll": 303,
+      "rootWidth": 303,
+      "sendDisabled": true
+    }
+  ],
+  "authenticated": "UNVERIFIED",
+  "founder": "NOT_ACCEPTED",
+  "darkKeyboard": [
+    {
+      "viewport": [
+        390,
+        844
+      ],
+      "focus": "Synthetic message draft",
+      "pageScroll": 390,
+      "pageWidth": 390,
+      "period": "current_quarter",
+      "prompt": "Help me understand this Operations & Systems Check finding and recommend a next step: 2 blocking operating findings. Re-read the current business evidence; do not take an action. Reporting period: This quarter.",
+      "theme": "dark"
+    },
+    {
+      "viewport": [
+        320,
+        740
+      ],
+      "focus": "Synthetic message draft",
+      "pageScroll": 320,
+      "pageWidth": 320,
+      "period": "current_quarter",
+      "prompt": "Help me understand this Operations & Systems Check finding and recommend a next step: 2 blocking operating findings. Re-read the current business evidence; do not take an action. Reporting period: This quarter.",
+      "theme": "dark"
+    }
+  ]
+}

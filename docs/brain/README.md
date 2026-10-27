@@ -4677,3 +4677,29 @@ Functional bounded source deployed; Visual13 actual-source synthetic frames; Exp
 authenticated viewer/Finance/roles/cohorts/reload/native zoom/full AT/full19/nine owed;
 Founder NOT_ACCEPTED. Algorithms/capability maturity and original9-0/12-0-4/monthly
 UNKNOWNUNRETRIED retained. [Release receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2974#issuecomment-6437655287).
+
+### October27 11:05UTC — original Executive-to-Chat reporting context
+
+Existing O02/O08/O10/O16 invitations now carry the selected reporting period
+through the same unsent prompt producer. Default company, VERA, target, priority
+and held-work questions each include it once; original source-specific target
+and metric windows stay authoritative. Three original-component period failures
+were reproduced before repair. Source0afddbd82e66e2986bdd6c0164da915c7ffe478f on
+actualmain1ad5f13c has84 controls/four suites/zero skips, lint0/build59.23s and the
+same six incumbent compiler findings/baseline10. Original test bodies retained.
+Fourteen raw synthetic frames/24 declared inputs, ten native desktop/phone Enter
+invitations and two Obsidian phone textarea keyboard checks passed. Fixed sample
+figures are not backend period-consistency or authenticated customer proof.
+No Send/model request, new runtime, writer, approval, provider/scan/worker action
+or receipt. Functional LOCAL, Visual synthetic, Experiential draft-only bounded,
+Founder NOT_ACCEPTED. Final review/CI/release/readback/authenticated full19/nine
+remain required; canonical ALG/CAP maturity unchanged, monthlyUNKNOWN/UNRETRIED.
+
+Original shared records also reconciled in place: DEL131 F/G/H/J132 only,29
+protected cells/metadata/history exact and near-limit K132 untouched; original
+CAP009–017 rows10–18 I/M/N/T/Y only,45 values/207 protected cells exact, all
+IDs/owners/inventory/closure/algorithm/style/note/link/history preserved. Current
+3Limited/3Unverified/3ComingSoon are catalogue metadata, not account acceptance.
+Neutral local-proof window returned to E05 (ANT1610fab13b2); ordinary-owner
+E09→E02→E05 custody/Finance QA and original manual Work receiving stay separate.
+[Bounded source/visual proof](../evidence/ui-delivery/e2-executive-chat-period.md).

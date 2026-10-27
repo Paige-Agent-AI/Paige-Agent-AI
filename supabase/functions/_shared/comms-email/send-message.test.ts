@@ -5,12 +5,15 @@ import { commsProviderExecutionAllowed, COMMS_PROVIDER_EXECUTION_DISABLED } from
 // Mirrors _shared/sales-invoice-delivery/send-message.test.ts: the actual handler source is
 // transpiled and executed with only its imports and the network substituted. The registered
 // email adapter is the REAL one from send-message (captured through registerOutboundAdapter),
-// so the Resend request it builds — Idempotency-Key, abort signal — is the request under test.
+// so the SendGrid request it builds — From, custom_args, abort signal, no idempotency reliance — is the
+// request under test. Experience 03: a "resend" sender (PAIGE's managed sender, a custom-domain connector)
+// now sends through SendGrid with the platform Mail Send key; Resend is never called.
 import { readFileSync } from "node:fs";
 import { transpileModule, ModuleKind, ScriptTarget } from "typescript";
 import { describe, it, expect } from "vitest";
 import { senderDisplayName } from "../email/sender-display-name.ts";
 import { isPreparedAgreementMessage } from "../agreements/prepared-signature-message.ts";
+import { platformFrom } from "../email/platform-sendgrid.ts";
 
 const OP = "22222222-2222-4222-8222-222222222222";
 const MSG = "33333333-3333-4333-8333-333333333333";
@@ -19,8 +22,9 @@ const CONTACT = "55555555-5555-4555-8555-555555555555";
 const CONNECTOR = "66666666-6666-4666-8666-666666666666";
 const ACTOR = "77777777-7777-4777-8777-777777777777";
 const OTHER = "88888888-8888-4888-8888-888888888888";
-const RESEND_KEY = "re_secret_key_do_not_leak";
-const PROVIDER_ID = "re_provider_receipt_123";
+const SG_KEY = "SG.secret_key_do_not_leak";
+const PROVIDER_ID = "sg_provider_receipt_123";
+const SENDGRID_URL = "https://api.sendgrid.com/v3/mail/send";
 
 const binding = {
   operation_id: OP, tenant_id: TENANT, actor_user_id: ACTOR, contact_id: CONTACT,
@@ -56,10 +60,14 @@ interface Options {
   mailboxOwner?: unknown;
   freshMailboxOwner?: unknown;
   freshProvider?: string;
+  // The sender address on both the binding and the connector (default: a business's own domain).
+  fromAddress?: string;
+  // false = the platform SendGrid Mail Send key is not configured.
+  key?: boolean;
 }
 
 function setup(options: Options = {}) {
-  const b = { ...binding, provider: options.provider ?? "resend", ...options.bindingOverride };
+  const b = { ...binding, provider: options.provider ?? "resend", ...(options.fromAddress ? { from_address: options.fromAddress } : {}), ...options.bindingOverride };
   const writes: { table: string; op: string; value: unknown }[] = [];
   const logs: unknown[] = [];
   const rpcCalls: { name: string; args: Record<string, unknown> }[] = [];
@@ -89,7 +97,7 @@ function setup(options: Options = {}) {
         if (table === "clients") return { data: { tenant_id: options.clientTenant ?? TENANT, emails: options.contactEmails ?? ["Client@Example.test"] }, error: null };
         if (table === "channel_connectors") {
           connectorReads++;
-          return { data: { tenant_id: TENANT, status: "active", active: true, channel_type: "email", mailbox_class: options.mailboxClass ?? "shared_support", mailbox_owner_user_id: connectorReads > 1 && options.freshMailboxOwner !== undefined ? options.freshMailboxOwner : options.mailboxOwner ?? null, provider: connectorReads > 1 && options.freshProvider ? options.freshProvider : options.provider ?? "resend", from_address: "owner@business.test", from_name: "Owner Co", reply_to: null, credentials_vault_ref: null, config: null }, error: null };
+          return { data: { tenant_id: TENANT, status: "active", active: true, channel_type: "email", mailbox_class: options.mailboxClass ?? "shared_support", mailbox_owner_user_id: connectorReads > 1 && options.freshMailboxOwner !== undefined ? options.freshMailboxOwner : options.mailboxOwner ?? null, provider: connectorReads > 1 && options.freshProvider ? options.freshProvider : options.provider ?? "resend", from_address: options.fromAddress ?? "owner@business.test", from_name: "Owner Co", reply_to: null, credentials_vault_ref: null, config: null }, error: null };
         }
         if (table === "email_unsubscribe_tokens") return { data: null, error: null };
         return { data: null, error: null };
@@ -131,22 +139,24 @@ function setup(options: Options = {}) {
     fetchCalls.push({ url, init });
     const mode = options.fetch ?? "ok";
     const json = (status: number, body: unknown) => Promise.resolve(new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } }));
-    if (mode === "ok") return json(200, { id: PROVIDER_ID });
-    if (mode === "no_id") return json(200, {});
+    // SendGrid answers 202 with an EMPTY body; the id is the X-Message-Id header.
+    if (mode === "ok") return Promise.resolve(new Response(null, { status: 202, headers: { "X-Message-Id": PROVIDER_ID } }));
+    if (mode === "no_id") return Promise.resolve(new Response(null, { status: 202 }));
     if (mode === "reject422") return json(422, { message: "provider says secret-detail about the key" });
     if (mode === "status500") return json(500, { message: "provider exploded" });
     if (mode === "status429") return json(429, { message: "slow down" });
     if (mode === "status409") return json(409, { message: "idempotency in flight" });
-    if (mode === "throw") return Promise.reject(new TypeError(`network down near ${RESEND_KEY}`));
+    if (mode === "throw") return Promise.reject(new TypeError(`network down near ${SG_KEY}`));
     return new Promise<Response>((_, reject) => {
       init.signal?.addEventListener("abort", () => reject(new DOMException("aborted", "AbortError")));
     });
   };
 
-  const scope = { decideContentRead, commsProviderExecutionAllowed, COMMS_PROVIDER_EXECUTION_DISABLED,isPreparedAgreementMessage,
+  const scope = { decideContentRead, commsProviderExecutionAllowed, COMMS_PROVIDER_EXECUTION_DISABLED,isPreparedAgreementMessage, platformFrom,
     PAIGE_APP_ORIGIN: "https://app.example.test",
     Deno: {
-      env: { get: (k: string) => (k === "SUPABASE_SERVICE_ROLE_KEY" ? "internal" : k === "RESEND_API_KEY" ? RESEND_KEY : k === "SUPABASE_URL" ? "https://proj.example.test" : "configured") },
+      // A RESEND_API_KEY is present as a decoy: nothing may use it (Resend is never called).
+      env: { get: (k: string) => (k === "SUPABASE_SERVICE_ROLE_KEY" ? "internal" : k === "SENDGRID_MAIL_SEND_API_KEY" ? (options.key === false ? undefined : SG_KEY) : k === "RESEND_API_KEY" ? "re_decoy_must_not_be_used" : k === "SUPABASE_URL" ? "https://proj.example.test" : "configured") },
       serve: (fn: typeof handler) => { handler = fn; },
     },
     createClient: () => admin,
@@ -181,20 +191,30 @@ function setup(options: Options = {}) {
   };
   const names = () => rpcCalls.map((c) => c.name);
   const finalizeCalls = () => rpcCalls.filter((c) => c.name === "finalize_comms_email_send").map((c) => c.args);
-  return { request, writes, logs, rpcCalls, fetchCalls, timeouts, names, finalizeCalls, db };
+  const payload = (i = 0) => JSON.parse(String(fetchCalls[i].init.body)) as Record<string, unknown>;
+  return { request, writes, logs, rpcCalls, fetchCalls, timeouts, names, finalizeCalls, db, payload, adapters };
 }
 
 const leaks = (s: ReturnType<typeof setup>, response: unknown) => JSON.stringify(response);
 
 describe("send-message comms_email path (real handler source, network substituted only)", () => {
-  it("provider id → provider_accepted, finalized once, Idempotency-Key and abort signal on the Resend call", async () => {
+  it("X-Message-Id → provider_accepted, finalized once; the SendGrid call carries the Mail Send key, correlation ids and an abort signal", async () => {
     const s = setup();
     const r = await s.request();
     expect(r.status).toBe(200);
     expect(r.body).toMatchObject({ ok: true, outcome: "provider_accepted", message_id: MSG, delivery_confirmed: false });
     expect(s.fetchCalls).toHaveLength(1);
+    expect(s.fetchCalls[0].url).toBe(SENDGRID_URL);
     const headers = s.fetchCalls[0].init.headers as Record<string, string>;
-    expect(headers["Idempotency-Key"]).toBe(`comms-email:${OP}`);
+    expect(JSON.stringify(s.fetchCalls[0].init)).not.toContain("re_decoy_must_not_be_used");
+    expect(headers.Authorization).toBe(`Bearer ${SG_KEY}`);
+    // SendGrid has no idempotent replay: no idempotency header of any spelling is relied on.
+    expect(Object.keys(headers).filter((h) => /idempotency/i.test(h))).toEqual([]);
+    const p = s.payload();
+    expect(p.personalizations).toEqual([{ to: [{ email: binding.recipient }] }]);
+    expect(p.custom_args).toEqual({ paige_tenant_id: TENANT, paige_operation_id: OP, paige_message_id: MSG });
+    expect(p.tracking_settings).toBeUndefined();
+    expect(p.content).toEqual([{ type: "text/html", value: binding.body_html }]);
     expect(s.fetchCalls[0].init.signal).toBeInstanceOf(AbortSignal);
     expect(s.timeouts).toContain(20_000);
     expect(s.rpcCalls.find((c) => c.name === "claim_comms_email_send")?.args).toEqual({ _message_id: MSG, _operation_id: OP, _reconcile: false });
@@ -202,13 +222,44 @@ describe("send-message comms_email path (real handler source, network substitute
     // No second messages row, and finalize (not the generic write) owns the prepared row's status.
     expect(s.writes.filter((w) => w.table === "messages")).toEqual([]);
     expect(leaks(s, r.body)).not.toContain(PROVIDER_ID);
-    expect(leaks(s, r.body)).not.toContain(RESEND_KEY);
+    expect(leaks(s, r.body)).not.toContain(SG_KEY);
   });
 
-  it("the idempotency key is the operation's, never a caller-supplied one", async () => {
+  it("H2: a business's own domain is sent as notifications@mail.paigeagent.ai under its name; replies still reach the business", async () => {
+    const s = setup();
+    await s.request();
+    expect(s.payload().from).toEqual({ email: "notifications@mail.paigeagent.ai", name: "Owner Co" });
+    expect(s.payload().reply_to).toEqual({ email: "owner@business.test" });
+  });
+
+  it("PAIGE's managed <slug>@mail.paigeagent.ai sender is sent as is, with no Reply-To invented", async () => {
+    const s = setup({ fromAddress: "acme@mail.paigeagent.ai" });
+    expect((await s.request()).body.outcome).toBe("provider_accepted");
+    expect(s.payload().from).toEqual({ email: "acme@mail.paigeagent.ai", name: "Owner Co" });
+    expect(s.payload().reply_to).toBeUndefined();
+  });
+
+  it("a caller-supplied idempotency key reaches no provider header", async () => {
     const s = setup();
     await s.request({ idempotency_key: "attacker-chosen-key" });
-    expect((s.fetchCalls[0].init.headers as Record<string, string>)["Idempotency-Key"]).toBe(`comms-email:${OP}`);
+    expect(JSON.stringify(s.fetchCalls[0].init.headers)).not.toContain("attacker-chosen-key");
+    expect(String(s.fetchCalls[0].init.body)).not.toContain("attacker-chosen-key");
+  });
+
+  it("no SendGrid Mail Send key → failed before any claim or provider call (nothing was sent)", async () => {
+    const s = setup({ key: false });
+    const r = await s.request();
+    expect(r.body).toMatchObject({ ok: false, outcome: "failed", reason: "PROVIDER_NOT_ATTEMPTED" });
+    expect(s.fetchCalls).toHaveLength(0);
+    expect(s.names()).not.toContain("claim_comms_email_send");
+    expect(s.finalizeCalls().map((c) => [c._outcome, c._claimed_attempt])).toEqual([["failed", null]]);
+  });
+
+  it("the adapter itself refuses a send with no key, without a network call", async () => {
+    const s = setup();
+    const out = await s.adapters.email.send({ subject: "Hi", body_html: "<p>x</p>" }, { from: { address: "a@mail.paigeagent.ai" }, to: "c@example.test", providerApiKey: null });
+    expect(out).toEqual({ ok: false, status: "failed", error: "SENDGRID_MAIL_SEND_API_KEY missing" });
+    expect(s.fetchCalls).toHaveLength(0);
   });
 
   it("rejects altered recipient / subject / body / contact / connector before claim or provider", async () => {
@@ -332,9 +383,9 @@ describe("send-message comms_email path (real handler source, network substitute
       expect(r.body.ok, fetch).toBe(false);
       expect(s.finalizeCalls()[0]?._outcome, fetch).toBe(outcome);
       const text = JSON.stringify(r.body);
-      for (const secret of [RESEND_KEY, "secret-detail", "provider exploded", "network down", "slow down"]) expect(text, fetch).not.toContain(secret);
+      for (const secret of [SG_KEY, "secret-detail", "provider exploded", "network down", "slow down"]) expect(text, fetch).not.toContain(secret);
       // Durable audit text is a code, not the provider's words.
-      expect(JSON.stringify(s.writes), fetch).not.toContain(RESEND_KEY);
+      expect(JSON.stringify(s.writes), fetch).not.toContain(SG_KEY);
       expect(JSON.stringify(s.writes), fetch).not.toContain("secret-detail");
     }
   });
@@ -345,11 +396,16 @@ describe("send-message comms_email path (real handler source, network substitute
     expect(r.body).toMatchObject({ ok: false, outcome: "outcome_unknown", delivery_confirmed: false });
   });
 
-  it("reconcile flag reaches the claim; a non-prepared row is not re-dispatched by the dedupe guard", async () => {
-    const s = setup({ bindingOverride: { state: "unknown" } });
-    const r = await s.request({ comms_email_reconcile: true });
-    expect(s.rpcCalls.find((c) => c.name === "claim_comms_email_send")?.args).toEqual({ _message_id: MSG, _operation_id: OP, _reconcile: true });
-    expect(r.body.outcome).toBe("provider_accepted");
+  it("a reconcile is refused before any claim and never re-sends (SendGrid has no idempotent replay); a non-prepared row is not re-dispatched by the dedupe guard", async () => {
+    for (const state of ["unknown", "dispatching", "prepared"]) {
+      const s = setup({ bindingOverride: { state } });
+      const r = await s.request({ comms_email_reconcile: true });
+      expect(r.status, state).toBe(409);
+      expect(r.body, state).toMatchObject({ ok: false, outcome: "outcome_unknown", code: "COMMS_EMAIL_RECONCILIATION_REQUIRED" });
+      expect(s.fetchCalls, state).toHaveLength(0);
+      expect(s.names(), state).not.toContain("claim_comms_email_send");
+      expect(s.names(), state).not.toContain("finalize_comms_email_send");
+    }
     const sent = setup({ draftStatus: "sent" });
     const res = await sent.request();
     expect(res.body).toMatchObject({ ok: false, outcome: "outcome_unknown", code: "COMMS_EMAIL_NOT_CLAIMABLE" });
@@ -410,8 +466,8 @@ describe("send-message comms_email path (real handler source, network substitute
   });
 
   it("the claimant finalizes with the attempt number its own claim returned", async () => {
-    const s = setup({ bindingOverride: { state: "unknown", attempts: 2 }, claim: { data: { state: "dispatching", attempts: 3, admitted: true }, error: null } });
-    const r = await s.request({ comms_email_reconcile: true });
+    const s = setup({ bindingOverride: { attempts: 2 }, claim: { data: { state: "dispatching", attempts: 3, admitted: true }, error: null } });
+    const r = await s.request();
     expect(r.body.outcome).toBe("provider_accepted");
     expect(s.finalizeCalls()).toEqual([expect.objectContaining({ _outcome: "provider_accepted", _claimed_attempt: 3 })]);
   });
@@ -462,13 +518,18 @@ describe("send-message comms_email path (real handler source, network substitute
     expect(s.names()).not.toContain("claim_comms_email_send");
   });
 
-  it("legacy email sends are untouched: no abort signal, no 20 s deadline, no forced key", async () => {
+  it("a legacy email send goes through SendGrid too, without the governed claim, deadline race or correlation ids", async () => {
     const s = setup();
     const r = await s.request({ comms_email_operation_id: undefined, idempotency_key: undefined, message_id: undefined }, "user-jwt");
     expect(r.body.status).toBe("sent");
+    expect(r.body.vendor_message_id).toBe(PROVIDER_ID);
     expect(s.fetchCalls).toHaveLength(1);
-    expect("signal" in s.fetchCalls[0].init).toBe(false);
-    expect((s.fetchCalls[0].init.headers as Record<string, string>)["Idempotency-Key"]).toBeUndefined();
+    expect(s.fetchCalls[0].url).toBe(SENDGRID_URL);
+    // SendGrid's own request deadline, never the comms_email race.
+    expect(s.fetchCalls[0].init.signal).toBeInstanceOf(AbortSignal);
+    expect(Object.keys(s.fetchCalls[0].init.headers as Record<string, string>).filter((h) => /idempotency/i.test(h))).toEqual([]);
+    expect(s.payload().custom_args).toBeUndefined();
+    expect(s.payload().from).toEqual({ email: "notifications@mail.paigeagent.ai", name: "Owner Co" });
     expect(s.timeouts).not.toContain(20_000);
     expect(s.names()).not.toContain("claim_comms_email_send");
   });

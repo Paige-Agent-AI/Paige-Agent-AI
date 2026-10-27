@@ -1,7 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
-import { Resend } from "https://esm.sh/resend@4.0.0";
 import { primaryEmailForUser } from "../_shared/user-contact-methods.ts";
+import { sendPlatformEmail } from "../_shared/email/platform-sendgrid.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -22,7 +22,6 @@ serve(async (req) => {
   }
 
   try {
-    const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
@@ -111,15 +110,30 @@ serve(async (req) => {
       includeFundingOffers,
     });
 
-    // Send email via Resend
-    const emailResponse = await resend.emails.send({
-      from: "Paige AI <onboarding@resend.dev>",
+    // Send through PAIGE's SendGrid transport (owner ruling 2026-10-26). It used to go from Resend's
+    // sandbox address; it now goes from the platform's own verified domain under the same display name.
+    const sent = await sendPlatformEmail({
+      from: "Paige AI <notifications@mail.paigeagent.ai>",
       to: [recipientEmail],
       subject: "Your Funding Readiness Report",
       html: htmlReport,
-    });
+    }, { apiKey: Deno.env.get('SENDGRID_MAIL_SEND_API_KEY') ?? null });
+    // Kept in the shape the Resend SDK returned ({ data: { id }, error }) for readers of emailData and
+    // of the notification metadata; the id is SendGrid's X-Message-Id.
+    const emailResponse = sent.ok
+      ? { data: { id: sent.id }, error: null }
+      : { data: null, error: { message: sent.error, unconfirmed: sent.unconfirmed } };
 
-    console.log('Funding report sent successfully:', emailResponse);
+    if (!sent.ok) {
+      // A 5xx/timeout/throw is UNCONFIRMED: SendGrid may have accepted it, so it is neither "sent" nor a
+      // plain failure to resend, and no "sent" notification is recorded for it.
+      console.error('Funding report not accepted:', sent.error, sent.unconfirmed ? '(unconfirmed)' : '');
+      return new Response(
+        JSON.stringify({ success: false, error: sent.unconfirmed ? 'email_unconfirmed' : sent.error, unconfirmed: sent.unconfirmed, emailData: emailResponse }),
+        { status: 502, headers: { 'Content-Type': 'application/json', ...corsHeaders } },
+      );
+    }
+    console.log('Funding report accepted by SendGrid:', sent.id);
 
     // Log the notification
     await supabase.from('plaid_notifications').insert({

@@ -29,6 +29,8 @@ const db = vi.hoisted(() => ({
   contact: null as Record<string, unknown> | null,
   invokes: [] as string[],
   draft: null as null | (() => Promise<{ data: unknown; error: unknown }>),
+  /** send-message's answer (default: the undo-window queue). */
+  sendAnswer: null as null | { data: unknown; error: unknown },
 }));
 
 vi.mock("@/integrations/supabase/client", () => {
@@ -68,7 +70,7 @@ vi.mock("@/integrations/supabase/client", () => {
         getUser: () => Promise.resolve({ data: { user: { id: "owner-1" } } }),
         onAuthStateChange: () => ({ data: { subscription: { unsubscribe: vi.fn() } } }),
       },
-      functions: { invoke: (name: string) => { db.invokes.push(name); if (name === "subagent-email-composer" && db.draft) return db.draft(); return Promise.resolve({ data: { outcome: "queued_scheduled", message_id: "queued-1" }, error: null }); } },
+      functions: { invoke: (name: string) => { db.invokes.push(name); if (name === "subagent-email-composer" && db.draft) return db.draft(); if (name === "send-message" && db.sendAnswer) return Promise.resolve(db.sendAnswer); return Promise.resolve({ data: { outcome: "queued_scheduled", message_id: "queued-1" }, error: null }); } },
       storage: { from: () => ({ upload: () => Promise.resolve({ data: null, error: null }), createSignedUrl: () => Promise.resolve({ data: null, error: null }) }) },
     },
   };
@@ -86,7 +88,7 @@ vi.mock("framer-motion", async (importOriginal) => ({
   ...(await importOriginal<typeof import("framer-motion")>()),
   useReducedMotion: () => true,
 }));
-vi.mock("sonner", () => ({ toast: Object.assign(vi.fn(), { success: vi.fn(), error: vi.fn(), message: vi.fn() }) }));
+vi.mock("sonner", () => ({ toast: Object.assign(vi.fn(), { success: vi.fn(), error: vi.fn(), message: vi.fn(), warning: vi.fn() }) }));
 
 import ClientsConversations from "@/pages/admin/ClientsConversations";
 import { ComposeThreadDialog } from "./ComposeThreadDialog";
@@ -129,7 +131,7 @@ const flush = async () => {
 
 const mounted: Array<() => Promise<void>> = [];
 beforeEach(() => {
-  vi.clearAllMocks(); db.cancellations = []; db.invokes = []; db.contact = client; db.draft = null;
+  vi.clearAllMocks(); db.cancellations = []; db.invokes = []; db.contact = client; db.draft = null; db.sendAnswer = null;
   db.cancel = async () => ({ data: true, error: null });
 });
 afterEach(async () => { while (mounted.length) await mounted.pop()!(); });
@@ -582,4 +584,69 @@ describe("Conversations governed-send render harness", () => {
     writeFileSync(`${dir}/conversations-governed-send.light.html`, page("light"), "utf8");
     writeFileSync(`${dir}/conversations-governed-send.dark.html`, page("dark"), "utf8");
   }, 60_000);
+});
+
+// Experience 03: SendGrid has no idempotent replay, so an email whose answer was lost may already be in the
+// client's inbox. send-message answers it outcome_unknown + unconfirmed, and marks its row
+// error = "delivery_unconfirmed". The inbox must say so — never "Failed", never an invitation to resend.
+describe("an email the service may have taken (its answer was lost)", () => {
+  const UNCONFIRMED = { data: { status: "failed", outcome: "outcome_unknown", unconfirmed: true, error: "delivery_unconfirmed: sendgrid_503", reason: "delivery_unconfirmed: sendgrid_503", message_id: "m-1" }, error: null };
+  const COPY = "We couldn't confirm it was sent. It may already have reached them — check before sending it again.";
+
+  it("a row marked unconfirmed reads Couldn't confirm with the don't-resend line, never Failed", async () => {
+    db.messages = [message({ status: "failed", error: "delivery_unconfirmed" })];
+    db.threads = [thread];
+    const host = await mountInbox("/admin/clients/conversations");
+    expect(host.textContent).toContain("Couldn't confirm");
+    expect(host.textContent).toContain("Couldn't confirm this went out — don't resend.");
+    expect(host.textContent).not.toContain("Failed");
+    expect(host.textContent).not.toContain("delivery_unconfirmed");
+  });
+
+  it("a plain failure still reads Failed (unchanged)", async () => {
+    db.messages = [message({ status: "failed", error: "sendgrid_400: bad recipient" })];
+    db.threads = [thread];
+    const host = await mountInbox("/admin/clients/conversations");
+    expect(host.textContent).toContain("Failed");
+    expect(host.textContent).not.toContain("Couldn't confirm");
+  });
+
+  it("Approve & send whose answer was lost warns honestly instead of reporting a failure", async () => {
+    db.messages = [message({})];
+    db.threads = [thread];
+    db.sendAnswer = UNCONFIRMED;
+    const host = await mountInbox("/admin/clients/conversations");
+    const approve = [...host.querySelectorAll("button")].find((b) => b.textContent?.trim() === "Approve & send")!;
+    expect(approve).toBeTruthy();
+    await act(async () => { approve.click(); await flush(); });
+    expect(db.invokes).toEqual(["send-message"]);
+    expect(toast.warning).toHaveBeenCalledWith(COPY);
+    expect(toast.error).not.toHaveBeenCalled();
+  });
+
+  it("the new-conversation dialog warns honestly and closes, leaving no Send that would mail a second copy", async () => {
+    db.sendAnswer = UNCONFIRMED;
+    const onOpenChange = vi.fn(); const onSent = vi.fn();
+    const holder = document.createElement("div"); document.body.appendChild(holder);
+    const root = createRoot(holder);
+    await act(async () => { root.render(<MemoryRouter><ComposeThreadDialog open onOpenChange={onOpenChange} activeConnectors={[{id:"conn-1",channel_type:"email",provider:"resend",display_name:"Test business email",from_address:"hello@business.example"}]} tenantId="tenant-a" initialContact={{id:"contact-1",name:"Test lead"}} onSent={onSent} /></MemoryRouter>); await flush(); });
+    for (let i = 0; i < 3; i++) await act(async () => { await flush(); });
+    mounted.push(async () => { await act(async () => { root.unmount(); }); holder.remove(); });
+    const host = document.querySelector<HTMLElement>('[role="dialog"]')!;
+    const subject = host.querySelector<HTMLInputElement>('input[placeholder="Subject"]')!;
+    const body = host.querySelector<HTMLTextAreaElement>("textarea")!;
+    await act(async () => {
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,"value")!.set!.call(subject,"Checking in");
+      subject.dispatchEvent(new Event("input",{bubbles:true}));
+      Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,"value")!.set!.call(body,"Hello there.");
+      body.dispatchEvent(new Event("input",{bubbles:true})); await flush();
+    });
+    const send = [...host.querySelectorAll("button")].find(b=>b.textContent?.trim()==="Send")!;
+    await act(async () => { send.click(); await flush(); });
+    expect(db.invokes).toEqual(["send-message"]);
+    expect(toast.warning).toHaveBeenCalledWith(COPY);
+    expect(toast.error).not.toHaveBeenCalled();
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+    expect(onSent).toHaveBeenCalled();
+  });
 });

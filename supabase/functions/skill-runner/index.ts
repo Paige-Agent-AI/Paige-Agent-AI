@@ -36,6 +36,8 @@ import { confirmFingerprint } from "../_shared/confirm-fingerprint.ts";
 import { classifyBusinessVerifyResponse } from "../_shared/business-verify-outcome.ts";
 import { gamePlanContext, readGamePlanCompletion, recordedGamePlan } from "../_shared/paige-skill/client-game-plan.ts";
 import { CLIENT_CONTACT_METHODS_EMBED, withPrimaryAddresses } from "../_shared/contact-methods.ts";
+// PAIGE's one SendGrid transport (owner ruling 2026-10-26: everything moved off Resend).
+import { sendPlatformEmail } from "../_shared/email/platform-sendgrid.ts";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -358,7 +360,8 @@ async function sha256Hex(s: string): Promise<string> {
 /**
  * THE HOST WIRING for the external-SEND skill. Resolves the contact SCOPED to the caller's tenant,
  * then drives the pure `governedDraftAndEmail` flow with real deps (LLM draft, get_tenant_sender, the
- * canonical confirm fingerprint, a single-use claim against paige_pending_confirmations, Resend, and
+ * canonical confirm fingerprint, a single-use claim against paige_pending_confirmations, the SendGrid
+ * platform transport, and
  * the durable receipt). Every branch below is one of the pure module's outcomes — the I/O lives here,
  * the decision lives there, so the whole matrix is unit-tested without this runtime.
  */
@@ -393,6 +396,10 @@ async function runDraftAndEmailDocument(
   // Whether the durable run receipt actually persisted. A successful SEND whose receipt write fails
   // must not be reported as a clean success (§13/§32/AGENTS.md — no completed action without its receipt).
   let receiptPersisted = false;
+  // SendGrid has no idempotent replay: a thrown request, a timeout or a 5xx may still have delivered
+  // the email. The pure flow only knows ok / not ok, so the host remembers "we do not know" here and
+  // reports it as its own outcome — never as a plain failure that invites a redraft-and-resend.
+  let sendUnconfirmed = false;
 
   const outcome = await governedDraftAndEmail(
     {
@@ -488,20 +495,21 @@ async function runDraftAndEmailDocument(
       // The same runPreSend every client send passes (E09 Slice 6): an opted-out recipient never reaches send.
       preSend: emailPreSend(admin as unknown as Parameters<typeof emailPreSend>[0], callerTenantId),
       send: async ({ fromHeader, to, subject, html }) => {
-        const resendKey = Deno.env.get("RESEND_API_KEY");
-        if (!resendKey) return { ok: false, id: null };
-        try {
-          const emailRes = await fetch("https://api.resend.com/emails", {
-            method: "POST",
-            headers: { "Authorization": `Bearer ${resendKey}`, "Content-Type": "application/json" },
-            body: JSON.stringify({ from: fromHeader, to: [to], subject, html }),
-          });
-          const emailData = await emailRes.json().catch(() => ({}));
-          return { ok: emailRes.ok, id: (emailData as { id?: string })?.id ?? null };
-        } catch (e) {
-          console.error("skill-runner draft_and_email send threw", String(e));
-          return { ok: false, id: null };
-        }
+        // THE APPROVED BYTES ARE SENT UNCHANGED; ONLY THE SENDING ADDRESS IS THE PLATFORM'S. The approval
+        // fingerprint froze `fromHeader` exactly as the tenant's sender resolved it (email-approval.ts),
+        // and that is what is passed here. The transport moves the ADDRESS onto mail.paigeagent.ai at
+        // send time (platformFrom): the tenant's display name is kept, a business's own domain sends as
+        // notifications@, and the tenant's own address becomes Reply-To so replies still reach them.
+        const replyTo = /<\s*([^<>\s]+)\s*>\s*$/.exec(fromHeader)?.[1] ?? fromHeader;
+        const sent = await sendPlatformEmail(
+          { from: fromHeader, replyTo, to: [to], subject, html },
+          { apiKey: Deno.env.get("SENDGRID_MAIL_SEND_API_KEY") ?? null },
+        );
+        sendUnconfirmed = sent.unconfirmed;
+        if (!sent.ok) console.error("skill-runner draft_and_email send not accepted", sent.error, sent.unconfirmed ? "(unconfirmed)" : "");
+        // `id` is SendGrid's X-Message-Id. The receipt keeps its historical `resend_id` field name
+        // because the pure flow's outcome type and the run-receipt readers use that key.
+        return { ok: sent.ok, id: sent.id };
       },
       recordReceipt: async (r) => {
         // The durable, readable execution receipt — written at most once per approval (only after a
@@ -519,7 +527,8 @@ async function runDraftAndEmailDocument(
           // email is sent from the stored claim, so the receipt must describe the claim, not the redemption.
           inputs: { doc_type: r.doc_type, contact_id: r.contact_id, content_sha256: r.content_sha256 },
           status,
-          steps_log: [{ step: "draft", ok: true }, { step: "send", ok: r.ok, id: r.resendId }],
+          ...(!r.ok && sendUnconfirmed ? { error: "send_unconfirmed" } : {}),
+          steps_log: [{ step: "draft", ok: true }, { step: "send", ok: r.ok, id: r.resendId, ...(sendUnconfirmed ? { unconfirmed: true } : {}) }],
           outputs: { resend_id: r.resendId, recipient: r.recipient },
           completed_at: new Date().toISOString(),
         }).select("id").maybeSingle();
@@ -537,8 +546,9 @@ async function runDraftAndEmailDocument(
           );
         }
         // §13 — only record a client-facing OUTBOUND communication when the send actually succeeded.
-        // A failed/never-sent email (e.g. no RESEND_API_KEY) must NOT appear in the client's comm
-        // history as though it went out; the failed run is still recorded on paige_skill_runs above.
+        // A failed/never-sent email (e.g. no SENDGRID_MAIL_SEND_API_KEY) must NOT appear in the client's
+        // comm history as though it went out; the failed run is still recorded on paige_skill_runs above.
+        // An UNCONFIRMED send is not written there either: it may have gone, but it is not proven.
         if (r.ok) {
           const { error: commErr } = await admin.from("communication_log").insert({
             client_id: r.contact_id,
@@ -602,6 +612,21 @@ async function runDraftAndEmailDocument(
       code: receiptPersisted ? "send_held" : "send_held_unrecorded",
       error: `Not sent: ${outcome.held_reason} The one-time approval has been used — re-draft once that changes.`,
       outputs: { resend_id: null, recipient: outcome.recipient },
+    });
+  }
+
+  if (outcome.kind === "send_failed" && sendUnconfirmed) {
+    // §13 — SendGrid may have accepted it (a 5xx, timeout or dropped connection after the request left).
+    // This is NOT a plain failure: telling the person to re-draft and send again could email the client
+    // twice. The one-time approval is spent; the run receipt records `send_unconfirmed`.
+    return json(502, {
+      run_id: sentRunId,
+      status: "unconfirmed",
+      code: receiptPersisted ? "send_unconfirmed" : "send_unconfirmed_unrecorded",
+      error: receiptPersisted
+        ? "The document was approved and handed to the email service, but we could not confirm it was accepted. It may already be in their inbox — check with them before sending it again. The one-time approval has been used."
+        : "The document was handed to the email service, but we could not confirm it was accepted, AND its receipt could not be recorded (the audit row is missing). It may already be in their inbox — check with them before sending it again.",
+      outputs: { resend_id: outcome.resend_id, recipient: outcome.recipient },
     });
   }
 
@@ -970,7 +995,7 @@ Deno.serve(async (req) => {
         // NOTE: `draft_and_email_document` is NOT dispatched here. As the one EXTERNAL-SEND skill it is
         // handled before this switch by `runDraftAndEmailDocument`, which binds a durable, single-use,
         // fingerprint-bound approval to the exact send (tenant + contact + recipient + sender + doc +
-        // content) and only then calls Resend. Leaving a case here would be a second, un-gated send path.
+        // content) and only then calls the SendGrid transport. Leaving a case here would be a second, un-gated send path.
         default:
           // Unreachable in practice: a non-bespoke slug is handled by the interpreter above. Kept as a
           // defensive guard in case BESPOKE_SKILL_SLUGS and the switch ever drift.

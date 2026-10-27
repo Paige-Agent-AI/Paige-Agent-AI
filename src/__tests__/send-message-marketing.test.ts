@@ -7,6 +7,7 @@ import { describe, it, expect } from "vitest";
 import { commsProviderExecutionAllowed, COMMS_PROVIDER_EXECUTION_DISABLED } from "../../supabase/functions/_shared/comms-provider-boundary";
 import { buildListUnsubscribeHeaders } from "../../supabase/functions/_shared/channel-adapters";
 import { senderDisplayName } from "../../supabase/functions/_shared/email/sender-display-name";
+import { platformFrom } from "../../supabase/functions/_shared/email/platform-sendgrid";
 
 const tenant = "11111111-1111-4111-8111-111111111111";
 const contact = "22222222-2222-4222-8222-222222222222";
@@ -62,7 +63,7 @@ function setup(opts: { existingToken?: string | null; mintError?: boolean; hold?
     },
     createClient: () => admin,
     registerOutboundAdapter: (a: (typeof adapters)[number]) => { adapters.push(a); },
-    buildListUnsubscribeHeaders, senderDisplayName,
+    buildListUnsubscribeHeaders, senderDisplayName, platformFrom,
     commsProviderExecutionAllowed, COMMS_PROVIDER_EXECUTION_DISABLED,
     getOutboundAdapter: () => ({
       send: async (msg: Sent["msg"], ctx: Sent["ctx"]) => {
@@ -77,7 +78,7 @@ function setup(opts: { existingToken?: string | null; mintError?: boolean; hold?
     clientAddresses: () => ({ email: "one@example.test", emails: ["one@example.test"], phones: [] }),
     fetch: async (url: string, init: RequestInit) => {
       fetchCalls.push({ url, init });
-      return new Response(JSON.stringify({ id: "re_abc" }), { status: 200 });
+      return new Response(null, { status: 202, headers: { "X-Message-Id": "sg_abc" } });
     },
     console: { warn: () => {}, error: () => {}, log: () => {} },
   };
@@ -180,30 +181,56 @@ describe("send-message marketing mode", () => {
   });
 });
 
-describe("email adapter (Resend route) headers", () => {
-  it("sends List-Unsubscribe, List-Unsubscribe-Post and Idempotency-Key when given", async () => {
+describe("email adapter (SendGrid route, Experience 03) headers", () => {
+  it("sends List-Unsubscribe and List-Unsubscribe-Post when given, and no idempotency header (SendGrid has no replay)", async () => {
     const s = setup();
     const email = s.adapters.find((a) => a.channel_type === "email")!;
-    await email.send(
+    const out = await email.send(
       { subject: "Hi", body_html: "<p>x</p>" },
       { from: { address: "acme@mail.paigeagent.ai" }, to: "one@example.test", providerApiKey: "k",
         listUnsubscribeUrl: "https://db.example.test/u?token=t", idempotencyKey: "ecr:1" },
     );
-    const call = s.fetchCalls.find((c) => c.url === "https://api.resend.com/emails")!;
+    expect(out).toEqual({ ok: true, status: "sent", provider_message_id: "sg_abc" });
+    expect(s.fetchCalls.map((c) => c.url)).toEqual(["https://api.sendgrid.com/v3/mail/send"]);
+    const call = s.fetchCalls[0];
     const reqHeaders = call.init.headers as Record<string, string>;
-    expect(reqHeaders["Idempotency-Key"]).toBe("ecr:1");
+    expect(reqHeaders.Authorization).toBe("Bearer k");
+    expect(Object.keys(reqHeaders).filter((h) => /idempotency/i.test(h))).toEqual([]);
     const payload = JSON.parse(String(call.init.body));
     expect(payload.headers["List-Unsubscribe"]).toBe("<https://db.example.test/u?token=t>, <mailto:unsubscribe@mail.paigeagent.ai>");
     expect(payload.headers["List-Unsubscribe-Post"]).toBe("List-Unsubscribe=One-Click");
+    expect(payload.from).toEqual({ email: "acme@mail.paigeagent.ai" });
   });
 
-  it("sends no unsubscribe headers and no idempotency key when there is none", async () => {
+  it("sends no unsubscribe headers when there is none; In-Reply-To is carried as a header", async () => {
     const s = setup();
     const email = s.adapters.find((a) => a.channel_type === "email")!;
-    await email.send({ subject: "Hi", body_html: "<p>x</p>" }, { from: { address: "a@b.test" }, to: "one@example.test", providerApiKey: "k" });
-    const call = s.fetchCalls.find((c) => c.url === "https://api.resend.com/emails")!;
-    expect((call.init.headers as Record<string, string>)["Idempotency-Key"]).toBeUndefined();
-    expect(JSON.parse(String(call.init.body)).headers).toBeUndefined();
+    await email.send({ subject: "Hi", body_html: "<p>x</p>" }, { from: { address: "a@mail.paigeagent.ai" }, to: "one@example.test", providerApiKey: "k" });
+    expect(JSON.parse(String(s.fetchCalls[0].init.body)).headers).toBeUndefined();
+    await email.send({ subject: "Re: Hi", body_html: "<p>y</p>", in_reply_to_provider_id: "<abc@mail>" }, { from: { address: "a@mail.paigeagent.ai" }, to: "one@example.test", providerApiKey: "k" });
+    expect(JSON.parse(String(s.fetchCalls[1].init.body)).headers).toEqual({ "In-Reply-To": "<abc@mail>" });
+  });
+
+  it("H2: a business's own domain never appears as the From; Paige's own paigeagent.ai moves to mail.paigeagent.ai", async () => {
+    const s = setup();
+    const email = s.adapters.find((a) => a.channel_type === "email")!;
+    await email.send({ subject: "Hi", body_html: "<p>x</p>" }, { from: { address: "hello@acme.example", display_name: "Acme Studio" }, to: "one@example.test", providerApiKey: "k", provider: "resend" });
+    await email.send({ subject: "Hi", body_html: "<p>x</p>" }, { from: { address: "hello@acme.example", display_name: "Acme" }, to: "one@example.test", replyTo: "desk@acme.example", providerApiKey: "k" });
+    await email.send({ subject: "Hi", body_html: "<p>x</p>" }, { from: { address: "team@paigeagent.ai", display_name: "Paige" }, to: "one@example.test", providerApiKey: "k" });
+    const p = s.fetchCalls.map((c) => JSON.parse(String(c.init.body)));
+    expect(p[0].from).toEqual({ email: "notifications@mail.paigeagent.ai", name: "Acme Studio" });
+    expect(p[0].reply_to).toEqual({ email: "hello@acme.example" });
+    expect(p[1].from).toEqual({ email: "notifications@mail.paigeagent.ai", name: "Acme" });
+    expect(p[1].reply_to).toEqual({ email: "desk@acme.example" });
+    expect(p[2].from).toEqual({ email: "team@mail.paigeagent.ai", name: "Paige" });
+  });
+
+  it("an attachment (an invoice PDF) rides the SendGrid request", async () => {
+    const s = setup();
+    const email = s.adapters.find((a) => a.channel_type === "email")!;
+    await email.send({ subject: "Invoice", body_html: "<p>x</p>" }, { from: { address: "a@mail.paigeagent.ai" }, to: "one@example.test", providerApiKey: "k",
+      serverAttachments: [{ filename: "INV-1.pdf", content: "JVBERi0=", contentType: "application/pdf" }] } as never);
+    expect(JSON.parse(String(s.fetchCalls[0].init.body)).attachments).toEqual([{ content: "JVBERi0=", filename: "INV-1.pdf", type: "application/pdf", disposition: "attachment" }]);
   });
 });
 

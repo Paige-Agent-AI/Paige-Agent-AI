@@ -572,8 +572,12 @@ Values intentionally omitted.
     SendGrid").** `RESEND_API_KEY` / `RESEND_WEBHOOK_SECRET` no longer deliver anything. EXP03 PR #2958 removed the
     `RESEND_API_KEY` read from tenant-signup, backfill-welcome, send-platform-invite, plan-reminder-cron,
     public-booking, booking-manage, process-booking-notifications, send-portal-invite (both paths) and
-    send-transactional-email. Still reading it (next PR): send-message's Resend arm, skill-runner, paige-mcp,
-    manage-tenant-domain, resend-admin-probe, `_shared/email/providers.ts`.
+    send-transactional-email. The follow-up moved skill-runner (`draft_and_email_document`; an unconfirmed send is
+    reported `send_unconfirmed`, never `send_failed`), paige-mcp's four send tools, send-welcome-email,
+    send-payment-confirmation-email, send-support-request and send-funding-report onto the same transport, removed the
+    dead Resend adapter from `_shared/email/providers.ts` (every provider string there now refuses), and deleted the
+    `resend-admin-probe` diagnostic from the repo (the copy already deployed to production is not removed by a merge).
+    Still reading it at that point: send-message's Resend arm and manage-tenant-domain (separate work).
   - **Supabase Auth email (sign-up confirmation, password reset)** goes through the Auth custom-SMTP setting in the
     Supabase dashboard, not edge code. It pointed at Resend SMTP and must be re-pointed by the owner to
     `smtp.sendgrid.net:587`, user `apikey`, a restricted Mail Send key (owner action, 2026-10-27, not yet confirmed).

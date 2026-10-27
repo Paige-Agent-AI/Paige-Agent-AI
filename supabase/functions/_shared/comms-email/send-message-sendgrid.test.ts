@@ -13,6 +13,7 @@ import { readFileSync } from "node:fs";
 import { transpileModule, ModuleKind, ScriptTarget } from "typescript";
 import { describe, it, expect } from "vitest";
 import { senderDisplayName } from "../email/sender-display-name.ts";
+import { platformFrom } from "../email/platform-sendgrid.ts";
 import { createHash } from "node:crypto";
 import { capturePreparedSignatureMessage,isPreparedAgreementMessage,prepareSignatureMessage,assertPreparedSignatureSenderEnvelope } from "../agreements/prepared-signature-message.ts";
 import { PREPARED_SIGNING_LINK_MARKER } from "../agreements/prepared-signature-review-contract.ts";
@@ -124,7 +125,7 @@ function setup(opts: { fetch?: Mode; eligible?: boolean; key?: boolean; agreemen
     registerOutboundAdapter: (a: { channel_type: string; send: (...x: unknown[]) => Promise<unknown> }) => { adapters[a.channel_type] = a; },
     getOutboundAdapter: (channel: string) => adapters[channel],
     buildListUnsubscribeHeaders: () => ({}),
-    senderDisplayName,
+    senderDisplayName, platformFrom,
     runPreSend: async () => ({ proceed: true, outcome: "proceed" }),
     CLIENT_CONTACT_METHODS_EMBED: "client_contact_methods",
     clientAddresses: (row: { emails?: string[] }) => ({ emails: row.emails ?? [], phones: [] }),
@@ -162,7 +163,11 @@ describe("send-message SendGrid arm on the governed comms_email path", () => {
     expect(call.init.signal).toBeInstanceOf(AbortSignal);
     const payload = JSON.parse(String(call.init.body));
     expect(payload.custom_args).toEqual({ paige_tenant_id: TENANT, paige_operation_id: OP, paige_message_id: MSG });
+    // A SendGrid connector's From is bound to a domain THIS business verified (H2), so it is sent as is,
+    // and no idempotency header is relied on: SendGrid has no idempotent replay.
     expect(payload.from).toEqual({ email: "hello@own.example.test", name: "Own Co" });
+    expect(payload.reply_to).toBeUndefined();
+    expect(Object.keys(call.init.headers as Record<string, string>).filter((h) => /idempotency/i.test(h))).toEqual([]);
     expect(payload.personalizations).toEqual([{ to: [{ email: "lead@example.test" }] }]);
     expect(s.finalizeCalls()).toEqual([{ _message_id: MSG, _operation_id: OP, _outcome: "provider_accepted", _provider_message_id: SG_ID, _reason: null, _claimed_attempt: 1 }]);
     expect(JSON.stringify(r.body)).not.toContain(SG_KEY);

@@ -200,6 +200,13 @@ describe("classifySendResult", () => {
     expect(classifySendResult(true, { status: "failed", outcome: "queued_tenant_dnd" }).kind).toBe("queued");
     expect(classifySendResult(false, { outcome: "queued_quiet_hours" }).kind).toBe("failed");
   });
+  it("Experience 03: an unconfirmed answer (SendGrid may have taken it) is never a failure that releases the claim", () => {
+    expect(classifySendResult(true, { status: "failed", outcome: "outcome_unknown", unconfirmed: true, audit_id: "a9", message_id: "m9" }))
+      .toEqual({ kind: "unconfirmed", auditId: "a9", messageId: "m9" });
+    expect(classifySendResult(true, { status: "failed", outcome: "outcome_unknown" }).kind).toBe("unconfirmed");
+    expect(classifySendResult(true, { status: "failed", unconfirmed: true }).kind).toBe("unconfirmed");
+    expect(classifySendResult(true, { status: "failed", outcome: "failed", error: "sendgrid_400" }).kind).toBe("failed");
+  });
   it("a block or an error stays a failure", () => {
     expect(classifySendResult(true, { status: "failed", outcome: "blocked_suppressed" })).toEqual({ kind: "failed", error: "blocked_suppressed" });
     expect(classifySendResult(true, { status: "failed", error: "RESEND_API_KEY missing" })).toEqual({ kind: "failed", error: "RESEND_API_KEY missing" });

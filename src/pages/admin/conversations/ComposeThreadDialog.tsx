@@ -33,7 +33,7 @@ import { CustomerSelector } from "@/components/paige/CustomerSelector";
 import type { FocusedClient } from "@/components/paige/commandCenterTypes";
 import {
   type ChannelType, type EmailTemplate, CHANNEL_ICON, CHANNEL_LABEL,
-  canonicalThreadKey, readSendResult, resolveMergeVars, UNDO_WINDOW_MS,
+  canonicalThreadKey, readSendResult, resolveMergeVars, UNDO_WINDOW_MS, SEND_UNCONFIRMED_COPY,
   useCommsAttachments, requestScheduledCancellation, CANCELLATION_UNCONFIRMED_COPY,
 } from "./inbox-shared";
 import { AttachmentChip } from "./AttachmentChip";
@@ -486,6 +486,12 @@ export function ComposeThreadDialog({
         onSent(threadKey);
       } else if (r.outcome === "sent") {
         toast.success("Message sent.");
+        onOpenChange(false);
+        onSent(threadKey);
+      } else if (r.unconfirmed) {
+        // It may already have reached them (Experience 03): close and open the thread, where it shows as
+        // unconfirmed, rather than leave a Send button that would mail a second copy.
+        toast.warning(SEND_UNCONFIRMED_COPY);
         onOpenChange(false);
         onSent(threadKey);
       } else if (r.outcome.startsWith("blocked_")) {

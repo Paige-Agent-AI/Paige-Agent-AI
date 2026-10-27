@@ -32,12 +32,24 @@ import {
 } from "../_shared/paige-mcp/contact-method-edits.ts";
 import { resolveClientRef } from "../_shared/client-ref.ts";
 import { canonicalAppUrl, type CanonicalDestination, type CanonicalTier } from "../_shared/canonical-app-url.ts";
+// PAIGE's one SendGrid transport (owner ruling 2026-10-26: everything moved off Resend). From is moved
+// onto mail.paigeagent.ai at send time; Reply-To passes through. 5xx/timeout/throw = `unconfirmed`.
+import { sendPlatformEmail, type PlatformSendResult } from "../_shared/email/platform-sendgrid.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const PLATFORM_KEY = Deno.env.get("PAIGE_MCP_PLATFORM_KEY") ?? "";
 const PAIGE_OS_CLAUDE_PLATFORM_KEY = Deno.env.get("PAIGE_OS_CLAUDE_PLATFORM_KEY") ?? "";
-const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY") ?? "";
+// The restricted SendGrid Mail Send key — never the admin key.
+const SENDGRID_MAIL_SEND_API_KEY = Deno.env.get("SENDGRID_MAIL_SEND_API_KEY") ?? "";
+/** SendGrid has no idempotent replay. A 5xx, a timeout or a dropped request may still have delivered
+ *  the email, so it is reported as UNCONFIRMED — never as sent, and never as a plain failure that
+ *  invites a blind resend. email_send_log has no 'unconfirmed' status, so the row is 'failed' with
+ *  this marker in error_message (the same convention send-transactional-email writes). */
+const UNCONFIRMED_NOTE = "outcome_unconfirmed: the email service may have accepted this email; check before resending";
+function platformSendError(sent: PlatformSendResult): string {
+  return `sendgrid_${sent.status}: ${sent.error ?? "unknown"}${sent.unconfirmed ? ` (${UNCONFIRMED_NOTE})` : ""}`.slice(0, 300);
+}
 
 // Registered platform keys: label → secret value. Empty values are filtered.
 const PLATFORM_KEYS: Array<{ label: string; value: string }> = [
@@ -1545,9 +1557,9 @@ function mdToHtml(md: string): string {
   return blocks.join("\n");
 }
 
-// Per-product_scope sender map. Each `from` must be on a domain verified in the Resend
-// account that holds RESEND_API_KEY. All scopes route through Paige's verified
-// paigeagent.ai subdomain post-Ship #2 (MMA sender identities retired).
+// Per-product_scope sender map. All scopes are Paige's own paigeagent.ai addresses; the SendGrid
+// transport sends them from mail.paigeagent.ai keeping the local part (alerts@, hello@) — post-Ship #2
+// (MMA sender identities retired).
 // §45: reply_to defaults to the platform-neutral support inbox; the actual per-send
 // reply_to is resolved present-only from the CALLER'S tenant operator identity in the
 // handler (support_email / sender.reply_to) — never a hardcoded operator address.
@@ -1572,14 +1584,14 @@ const DEFAULT_SCOPE_SENDER = SCOPE_SENDERS.paige;
 
 mcp.tool("send_btf_template_email", {
   description:
-    "Look up an email_templates row by template_key, render {{vars}}, and send via Resend. From-address is auto-selected by the template's product_scope; all scopes currently route through paigeagent.ai. Override with `from_override` for one-off sends. Sends real customer email — use idempotency in the caller.",
+    "Look up an email_templates row by template_key, render {{vars}}, and send via SendGrid. From-address is auto-selected by the template's product_scope; all scopes currently route through paigeagent.ai. Override with `from_override` for one-off sends. Sends real customer email — use idempotency in the caller.",
   inputSchema: z.object({
     to_email: z.string().describe("Recipient email"),
     template_key: z.string().describe("public.email_templates.template_key"),
     vars: z.record(z.any()).optional().describe("Variable values for {{var}} substitution"),
     from_name: z.string().optional(),
     from_override: z.string().email().optional()
-      .describe("Full from address (e.g. 'alerts@paigeagent.ai'). Must be a domain verified in Resend. Overrides product_scope default."),
+      .describe("Full from address (e.g. 'alerts@paigeagent.ai'). Overrides product_scope default. It is sent from mail.paigeagent.ai: a paigeagent.ai address keeps its local part, any other domain sends as notifications@ under the display name."),
     reply_to: z.string().optional(),
   }),
   annotations: { destructiveHint: true },
@@ -1628,40 +1640,35 @@ mcp.tool("send_btf_template_email", {
       undefined;
     const replyTo = args.reply_to ?? tenantReplyTo ?? scopeCfg.reply_to;
 
-    // Single shared Resend account authenticates all sends from paigeagent.ai.
+    // Paige's one SendGrid account sends all of these from mail.paigeagent.ai (platform-sendgrid.ts).
     // sender_account label retained as a constant for historical audit continuity.
-    const apiKey = RESEND_API_KEY;
     const senderAccount = "mma_os_shared" as const;
-    if (!apiKey) return err("resend_not_configured");
+    if (!SENDGRID_MAIL_SEND_API_KEY) return err("email_provider_not_configured");
 
-    const resendRes = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        from: fromAddr,
-        to: [args.to_email],
-        subject: subjectR.out,
-        html,
-        reply_to: replyTo,
-        tags: [
-          { name: "template_key", value: tpl.template_key.replace(/[^a-zA-Z0-9_-]/g, "_") },
-          { name: "product_scope", value: tpl.product_scope },
-          { name: "sender_account", value: senderAccount },
-        ],
-      }),
-    });
-    const payload = await resendRes.json().catch(() => ({}));
-    if (!resendRes.ok) {
-      await audit("send_btf_template_email_failed", "email_template", tpl.template_key, {
-        to: args.to_email, from: fromEmail, sender_account: senderAccount, status: resendRes.status, payload,
+    const sent = await sendPlatformEmail({
+      from: fromAddr,
+      to: [args.to_email],
+      subject: subjectR.out,
+      html,
+      replyTo,
+      // Resend `tags` → SendGrid `categories` (values only; SendGrid categories carry no name).
+      categories: [
+        tpl.template_key.replace(/[^a-zA-Z0-9_-]/g, "_"),
+        String(tpl.product_scope ?? ""),
+        senderAccount,
+      ].filter(Boolean),
+    }, { apiKey: SENDGRID_MAIL_SEND_API_KEY });
+    if (!sent.ok) {
+      await audit(sent.unconfirmed ? "send_btf_template_email_unconfirmed" : "send_btf_template_email_failed", "email_template", tpl.template_key, {
+        to: args.to_email, from: fromEmail, sender_account: senderAccount, status: sent.status, error: sent.error, unconfirmed: sent.unconfirmed,
       });
-      return err(`resend_${resendRes.status}: ${JSON.stringify(payload)}`);
+      return err(sent.unconfirmed
+        ? `send_unconfirmed: ${platformSendError(sent)}`
+        : platformSendError(sent));
     }
 
-    const messageId = payload?.id ?? null;
+    // SendGrid's X-Message-Id — the id its Event Webhook echoes as the first segment of sg_message_id.
+    const messageId = sent.id;
     const sentAt = new Date().toISOString();
     await admin.from("email_send_log").insert({
       template_name: tpl.template_key,
@@ -2535,33 +2542,26 @@ mcp.tool("send_transactional_email", {
       text = interp(tpl.body_text ?? "");
     }
 
-    if (!RESEND_API_KEY) return err("resend_not_configured");
+    if (!SENDGRID_MAIL_SEND_API_KEY) return err("email_provider_not_configured");
     const send_id = crypto.randomUUID();
     const fromHeader = fromName ? `${fromName} <${fromAddress}>` : fromAddress;
+    // The field keeps its historical name; it now holds SendGrid's X-Message-Id.
     let resendId: string | null = null;
-    let status: "sent" | "failed" = "sent";
+    // email_send_log.status stays 'sent'|'failed' (its CHECK); an unconfirmed send is 'failed' there with
+    // the marker in error_message, and 'unconfirmed' in this tool's response so nobody resends blindly.
+    let status: "sent" | "failed" | "unconfirmed" = "sent";
     let errorMsg: string | null = null;
-    try {
-      const r = await fetch("https://api.resend.com/emails", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${RESEND_API_KEY}` },
-        body: JSON.stringify({
-          from: fromHeader,
-          to: [args.to],
-          subject,
-          html,
-          text: text || undefined,
-          reply_to: replyTo || undefined,
-          headers: { "X-Paige-Send-Id": send_id },
-        }),
-      });
-      const j = await r.json().catch(() => ({} as any));
-      if (!r.ok) { status = "failed"; errorMsg = (j as any)?.message ?? `resend_${r.status}`; }
-      else resendId = (j as any)?.id ?? null;
-    } catch (e) {
-      status = "failed";
-      errorMsg = (e as Error).message.slice(0, 300);
-    }
+    const sent = await sendPlatformEmail({
+      from: fromHeader,
+      to: [args.to],
+      subject,
+      html,
+      text: text || null,
+      replyTo: replyTo || null,
+      headers: { "X-Paige-Send-Id": send_id },
+    }, { apiKey: SENDGRID_MAIL_SEND_API_KEY });
+    if (sent.ok) resendId = sent.id;
+    else { status = sent.unconfirmed ? "unconfirmed" : "failed"; errorMsg = platformSendError(sent); }
     try {
       await admin.from("email_send_log").insert({
         id: send_id,
@@ -2572,7 +2572,7 @@ mcp.tool("send_transactional_email", {
         subject,
         template_key: args.template_key ?? null,
         product_scope: args.product_scope ?? null,
-        status,
+        status: status === "unconfirmed" ? "failed" : status,
         provider_message_id: resendId,
         error_message: errorMsg,
       });
@@ -2580,7 +2580,7 @@ mcp.tool("send_transactional_email", {
     await audit("send_transactional_email", "email", send_id, {
       to: args.to, template_key: args.template_key ?? null, status, tenant_id,
     });
-    return ok({ send_id, resend_id: resendId, status, from: fromHeader, to: args.to, error: errorMsg });
+    return ok({ send_id, resend_id: resendId, status, ...(status === "unconfirmed" ? { unconfirmed: true } : {}), from: fromHeader, to: args.to, error: errorMsg });
   },
 });
 
@@ -3537,34 +3537,25 @@ mcp.tool("send_composed_email", {
     const fromName = (idn as any)?.from_name as string | undefined;
     const replyTo = (idn as any)?.reply_to as string | undefined;
     if (!fromAddress) return err("from_address_not_resolved");
-    if (!RESEND_API_KEY) return err("resend_not_configured");
+    if (!SENDGRID_MAIL_SEND_API_KEY) return err("email_provider_not_configured");
 
     const send_id = crypto.randomUUID();
     const fromHeader = fromName ? `${fromName} <${fromAddress}>` : fromAddress;
+    // The field keeps its historical name; it now holds SendGrid's X-Message-Id.
     let resendId: string | null = null;
-    let status: "sent" | "failed" = "sent";
+    let status: "sent" | "failed" | "unconfirmed" = "sent";
     let errorMsg: string | null = null;
-    try {
-      const r = await fetch("https://api.resend.com/emails", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${RESEND_API_KEY}` },
-        body: JSON.stringify({
-          from: fromHeader,
-          to: [args.to],
-          subject: args.subject,
-          html: args.body_html,
-          text: args.body_text || undefined,
-          reply_to: replyTo || undefined,
-          headers: { "X-Paige-Send-Id": send_id, "X-Paige-Source": "compose_email" },
-        }),
-      });
-      const j = await r.json().catch(() => ({} as any));
-      if (!r.ok) { status = "failed"; errorMsg = (j as any)?.message ?? `resend_${r.status}`; }
-      else resendId = (j as any)?.id ?? null;
-    } catch (e) {
-      status = "failed";
-      errorMsg = (e as Error).message.slice(0, 300);
-    }
+    const sent = await sendPlatformEmail({
+      from: fromHeader,
+      to: [args.to],
+      subject: args.subject,
+      html: args.body_html,
+      text: args.body_text || null,
+      replyTo: replyTo || null,
+      headers: { "X-Paige-Send-Id": send_id, "X-Paige-Source": "compose_email" },
+    }, { apiKey: SENDGRID_MAIL_SEND_API_KEY });
+    if (sent.ok) resendId = sent.id;
+    else { status = sent.unconfirmed ? "unconfirmed" : "failed"; errorMsg = platformSendError(sent); }
     try {
       await admin.from("email_send_log").insert({
         id: send_id,
@@ -3575,7 +3566,7 @@ mcp.tool("send_composed_email", {
         subject: args.subject,
         template_key: null,
         product_scope: "composed",
-        status,
+        status: status === "unconfirmed" ? "failed" : status,
         provider_message_id: resendId,
         error_message: errorMsg,
       });
@@ -3585,7 +3576,7 @@ mcp.tool("send_composed_email", {
       acknowledged_flags: args.acknowledged_compliance_flags ?? [],
       status,
     });
-    return ok({ send_id, resend_id: resendId, status, from: fromHeader, to: args.to, error: errorMsg });
+    return ok({ send_id, resend_id: resendId, status, ...(status === "unconfirmed" ? { unconfirmed: true } : {}), from: fromHeader, to: args.to, error: errorMsg });
   },
 });
 
@@ -4507,7 +4498,7 @@ mcp.tool("list_communication_log", {
 
 mcp.tool("bulk_send_template_email", {
   description:
-    "Send the same email template to multiple contacts (max 100 per call). Renders each via `email_templates` + per-contact `template_variables` overrides, sends via Resend with the tenant's default sender, and logs each result to email_send_log. Returns per-contact status. Use sparingly — for true broadcasts prefer a workflow.",
+    "Send the same email template to multiple contacts (max 100 per call). Renders each via `email_templates` + per-contact `template_variables` overrides, sends via SendGrid (one request per recipient) with the tenant's default sender, and logs each result to email_send_log. Returns per-contact status. Use sparingly — for true broadcasts prefer a workflow.",
   inputSchema: z.object({
     contact_ids: z.array(z.string()).min(1).max(100),
     template_key: z.string(),
@@ -4517,7 +4508,7 @@ mcp.tool("bulk_send_template_email", {
   handler: async ({ contact_ids, template_key, shared_variables, per_contact_variables }) => {
     const tenant_id = await actorTenantId();
     if (!tenant_id) return err("tenant_not_resolved");
-    if (!RESEND_API_KEY) return err("resend_not_configured");
+    if (!SENDGRID_MAIL_SEND_API_KEY) return err("email_provider_not_configured");
 
     const { data: tpl, error: tErr } = await admin.from("email_templates")
       .select("subject, body_html, body_text").eq("key", template_key).maybeSingle();
@@ -4551,25 +4542,23 @@ mcp.tool("bulk_send_template_email", {
       const html = interp(tpl.body_html ?? "", vars);
       const text = interp(tpl.body_text ?? "", vars);
       const send_id = crypto.randomUUID();
-      let status: "sent" | "failed" = "sent";
+      // An unconfirmed send is 'failed' in email_send_log (its CHECK) with the marker in error_message,
+      // and 'unconfirmed' in the per-contact result. This loop never retries a recipient.
+      let status: "sent" | "failed" | "unconfirmed" = "sent";
       let providerId: string | null = null;
       let errorMsg: string | null = null;
-      try {
-        const r = await fetch("https://api.resend.com/emails", {
-          method: "POST",
-          headers: { "Content-Type": "application/json", Authorization: `Bearer ${RESEND_API_KEY}` },
-          body: JSON.stringify({ from: fromHeader, to: [ct.email], subject, html, text: text || undefined, headers: { "X-Paige-Send-Id": send_id } }),
-        });
-        const j = await r.json().catch(() => ({} as any));
-        if (!r.ok) { status = "failed"; errorMsg = (j as any)?.message ?? `resend_${r.status}`; }
-        else providerId = (j as any)?.id ?? null;
-      } catch (e) {
-        status = "failed"; errorMsg = (e as Error).message.slice(0, 300);
-      }
+      // ONE request per recipient, never one multi-recipient personalization: every contact gets their
+      // own rendered body, their own send id, and a recipient list that names nobody else.
+      const sent = await sendPlatformEmail({
+        from: fromHeader, to: [ct.email], subject, html, text: text || null,
+        headers: { "X-Paige-Send-Id": send_id },
+      }, { apiKey: SENDGRID_MAIL_SEND_API_KEY });
+      if (sent.ok) providerId = sent.id;
+      else { status = sent.unconfirmed ? "unconfirmed" : "failed"; errorMsg = platformSendError(sent); }
       try {
         await admin.from("email_send_log").insert({
           id: send_id, tenant_id, contact_id: ct.id, recipient_email: ct.email,
-          from_address: fromAddress, subject, template_key, status,
+          from_address: fromAddress, subject, template_key, status: status === "unconfirmed" ? "failed" : status,
           provider_message_id: providerId, error_message: errorMsg,
         });
       } catch { /* non-fatal */ }

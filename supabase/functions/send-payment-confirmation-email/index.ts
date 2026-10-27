@@ -1,10 +1,9 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { Resend } from "npm:resend@4.0.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+import { sendPlatformEmail } from "../_shared/email/platform-sendgrid.ts";
 
-const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
-
-// Billing / receipts — sends from billing@ on the verified domain.
+// Billing / receipts — sends from billing@ through PAIGE's SendGrid transport, which moves a
+// paigeagent.ai address onto mail.paigeagent.ai keeping the local part (owner ruling 2026-10-26).
 const FROM = Deno.env.get("BILLING_EMAIL_FROM") ?? "Paige Agent AI <billing@paigeagent.ai>";
 const APP_URL = "https://app.paigeagent.ai";
 
@@ -65,7 +64,7 @@ const handler = async (req: Request): Promise<Response> => {
       ? new Date(subscriptionEnd).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
       : null;
 
-    const emailResponse = await resend.emails.send({
+    const sent = await sendPlatformEmail({
       from: FROM,
       to: [user.email!],
       subject: "Payment confirmed — Paige Agent AI",
@@ -102,11 +101,23 @@ const handler = async (req: Request): Promise<Response> => {
           </table>
           <p style="color:#b3b8c2;font-size:11px;margin:16px 0 0;">© 2026 Paige Agent AI</p>
         </td></tr></table></body></html>`,
-    });
+    }, { apiKey: Deno.env.get("SENDGRID_MAIL_SEND_API_KEY") ?? null });
 
-    console.log("Payment confirmation email sent successfully:", emailResponse);
+    if (!sent.ok) {
+      // A 5xx/timeout/throw is UNCONFIRMED: SendGrid may have accepted it, so it is neither "sent" nor a
+      // plain failure to resend. The receipt is not retried here either way.
+      console.error("Payment confirmation email not accepted:", sent.error, sent.unconfirmed ? "(unconfirmed)" : "");
+      return new Response(JSON.stringify({
+        success: false,
+        error: sent.unconfirmed ? "email_unconfirmed" : sent.error,
+        unconfirmed: sent.unconfirmed,
+        data: { data: null, error: { message: sent.error } },
+      }), { status: 502, headers: { "Content-Type": "application/json", ...corsHeaders } });
+    }
+    console.log("Payment confirmation email accepted by SendGrid:", sent.id);
 
-    return new Response(JSON.stringify({ success: true, data: emailResponse }), {
+    // `data` keeps the shape the Resend SDK returned ({ data: { id }, error }); the id is SendGrid's X-Message-Id.
+    return new Response(JSON.stringify({ success: true, data: { data: { id: sent.id }, error: null } }), {
       status: 200,
       headers: { "Content-Type": "application/json", ...corsHeaders },
     });

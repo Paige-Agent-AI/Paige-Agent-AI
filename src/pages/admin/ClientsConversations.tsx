@@ -34,6 +34,7 @@ import {
   MESSAGE_COLS, THREAD_COLS, messageRowsFromDb, threadsFromDb, CHANNEL_ICON, CHANNEL_LABEL,
   partyLabel, bodyPreview, msgTime, contactNameFromClient,
   INBOX_VIEWS, endOfTodayMs, readSendResult, resolveMergeVars, UNDO_WINDOW_MS,
+  SEND_UNCONFIRMED_COPY, isUnconfirmedMessage,
   useCommsAttachments,
 } from "./conversations/inbox-shared";
 import { voiceHistoryStatus } from "@/lib/voice/voiceCallSafety";
@@ -140,6 +141,14 @@ function messageStatusPill(m: MessageRow & GovernedSendFields) {
   // A send the server stopped before it left (suppressed, do-not-disturb, no consent) is written
   // 'blocked'. Without a pill it read as an ordinary sent bubble.
   if ((m.status as string) === "blocked") return <StatePill state="error">Not sent</StatePill>;
+  // An email the service may have taken (its answer was lost) is never shown as a plain failure (Experience 03).
+  if (isUnconfirmedMessage(m)) {
+    return (
+      <StatePill state="warning" className="text-[color-mix(in_oklab,hsl(var(--warning))_62%,hsl(var(--foreground)))]">
+        {GOVERNED_SEND_COPY.unconfirmed.pill}
+      </StatePill>
+    );
+  }
   if (m.status === "failed") return <StatePill state="error">Failed</StatePill>;
   if (m.status === "sent" || m.status === "delivered" || m.status === "read") {
     // A settled governed email never says plain "Sent" — that reads as delivered to a
@@ -287,7 +296,7 @@ function MessageBubble({
         )
         : messageStatusPill(m)
       }
-      error={m.status === "failed" && !governedOpen ? m.error : null}
+      error={m.status === "failed" && !governedOpen ? (isUnconfirmedMessage(m) ? GOVERNED_SEND_COPY.unconfirmed.line : m.error) : null}
       subject={isCall || isHelpRequest ? undefined : (m.subject ?? undefined)}
       foldable={!isCall && shouldFoldEmail(m.channel_type, body)}
       call={
@@ -1054,12 +1063,14 @@ export default function ClientsConversations() {
       if (!accountEpochRef.current.accept(epoch)) return;
       if (error) throw new Error(error.message);
       // §37: read `outcome` first so a gated/blocked approval reports the true reason.
-      const res = data as { status?: string; outcome?: string; reason?: string } | null;
-      const outcome = res?.outcome ?? (res?.status === "sent" ? "sent" : "failed");
+      // The ONE shared parser (inbox-shared): an unconfirmed send is never reported as a plain failure.
+      const r = readSendResult(data);
+      const outcome = r.outcome;
       if (outcome === "sent") { toast.success("Approved — Paige sent it."); }
-      else if (outcome.startsWith("blocked_")) { toast.error(res?.reason ?? "Blocked — can't message this contact."); }
-      else if (outcome.startsWith("queued_")) { toast(`Held: ${res?.reason ?? "will send when allowed."}`); }
-      else { throw new Error(res?.reason ?? "send_failed"); }
+      else if (r.unconfirmed) { toast.warning(SEND_UNCONFIRMED_COPY); }
+      else if (outcome.startsWith("blocked_")) { toast.error(r.reason ?? "Blocked — can't message this contact."); }
+      else if (outcome.startsWith("queued_")) { toast(`Held: ${r.reason ?? "will send when allowed."}`); }
+      else { throw new Error(r.reason ?? "send_failed"); }
       void load();
     } catch (e) {
       if (!accountEpochRef.current.accept(epoch)) return;
@@ -1382,6 +1393,10 @@ export default function ClientsConversations() {
         }
       } else if (r.outcome === "sent") {
         toast.success("Sent."); resetComposer();
+      } else if (r.unconfirmed) {
+        // It may already be in their inbox, and the thread now shows it as unconfirmed: clear the
+        // composer so one more click can't send a second copy.
+        toast.warning(SEND_UNCONFIRMED_COPY); resetComposer();
       } else if (r.outcome.startsWith("blocked_")) {
         toast.error(r.reason ?? "Blocked — can't message this contact.");
       } else if (r.outcome.startsWith("queued_")) {

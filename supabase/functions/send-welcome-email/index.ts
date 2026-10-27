@@ -1,10 +1,9 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { Resend } from "npm:resend@4.0.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+import { sendPlatformEmail } from "../_shared/email/platform-sendgrid.ts";
 
-const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
-
-// Welcome / onboarding email — sends from hello@ on the verified domain.
+// Welcome / onboarding email — sends from hello@ through PAIGE's SendGrid transport, which moves a
+// paigeagent.ai address onto mail.paigeagent.ai keeping the local part (owner ruling 2026-10-26).
 const FROM = Deno.env.get("WELCOME_EMAIL_FROM") ?? "Paige Agent AI <hello@paigeagent.ai>";
 const APP_URL = "https://app.paigeagent.ai";
 
@@ -51,7 +50,7 @@ const handler = async (req: Request): Promise<Response> => {
     console.log("Sending welcome email to:", email);
     const name = esc(fullName || "there");
 
-    const emailResponse = await resend.emails.send({
+    const sent = await sendPlatformEmail({
       from: FROM,
       to: [email],
       subject: "Welcome to Paige Agent AI",
@@ -88,9 +87,10 @@ const handler = async (req: Request): Promise<Response> => {
           </table>
           <p style="color:#b3b8c2;font-size:11px;margin:16px 0 0;">© 2026 Paige Agent AI</p>
         </td></tr></table></body></html>`,
-    });
+    }, { apiKey: Deno.env.get("SENDGRID_MAIL_SEND_API_KEY") ?? null });
 
-    console.log("Email sent successfully:", emailResponse);
+    if (sent.ok) console.log("Welcome email accepted by SendGrid:", sent.id);
+    else console.error("Welcome email not accepted:", sent.error, sent.unconfirmed ? "(unconfirmed)" : "");
 
     // Create in-app notification (coaching-only).
     const { error: notifError } = await supabaseClient
@@ -107,7 +107,19 @@ const handler = async (req: Request): Promise<Response> => {
       console.error("Error creating notification:", notifError);
     }
 
-    return new Response(JSON.stringify({ success: true, data: emailResponse }), {
+    if (!sent.ok) {
+      // A 5xx/timeout/throw is UNCONFIRMED: SendGrid may have accepted it, so it is neither "sent" nor a
+      // plain failure to resend. The in-app welcome above is written either way.
+      return new Response(JSON.stringify({
+        success: false,
+        error: sent.unconfirmed ? "email_unconfirmed" : sent.error,
+        unconfirmed: sent.unconfirmed,
+        data: { data: null, error: { message: sent.error } },
+      }), { status: 502, headers: { "Content-Type": "application/json", ...corsHeaders } });
+    }
+
+    // `data` keeps the shape the Resend SDK returned ({ data: { id }, error }); the id is SendGrid's X-Message-Id.
+    return new Response(JSON.stringify({ success: true, data: { data: { id: sent.id }, error: null } }), {
       status: 200,
       headers: { "Content-Type": "application/json", ...corsHeaders },
     });

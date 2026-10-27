@@ -1661,3 +1661,39 @@ or causal improvement inferred. Original9PASS0FAIL/12PASS0FAIL4BLOCKED and prote
 monthlyUNKNOWNUNRETRIED stay unchanged. Existing ordinary-owner Edge handback,
 all seven Finance pages/roles/cohorts/reload/native zoom/AT, actual Chat/Live and
 the full19/nine integrated customer/founder acceptance remain open.
+
+### October27 17:25UTC — released prerequisites received; original consumer pending release
+
+This supersedes the dated candidate/frontier statements above, preserving them as
+history. #2982 is actually mergedAEA/tree3040/native18100002 once, original native
+Work/observer OIDs/ABI/ACL/body verified. Initial own Edge failure retained; normal
+containingcc8 release certifies all322 source/compiler/emission files/config,
+Chat562/inbound131/edge-livecc8. Own+containing webREADY/both publicorigins17:10UTC
+exactcc8/null/assets. [Exact source receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2982#issuecomment-6448668561).
+#2991 original-run review is actually released8bbfa/tree5da95975/production6tYxh,
+both publicorigins17:23UTC exact8bbfa/null/assets/run markers; [receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2991#issuecomment-6448727259).
+
+Private source c3c9bd57e receives both through normal current-main composition:
+all ten consumer source/test leaves and16,965 outside entries/whole incoming and
+private document histories retained. Fresh356 controls/seven suites PASS in6.24s;
+actual pinnedDeno2.1.4/SDK2.75.0 request/result graphs and focused lint PASS. One
+restricted Windows temp-file rename failure executed no tests; ordinary Windows
+access ran the exact same source and all seven suites without gate/code changes.
+No broad clean Core compilation, runtime-latency or production execution claim.
+
+No mounted entry imports the request/result helper. Exact-head author-review,
+required CI, normal release/source readback and future legitimately authorized
+Root/Spine/Trust admission remain separate. Manual systems.check stays UNREGISTERED/
+UNAVAILABLE; no new SQL/grant/runner/provider activation. Original request/claim/
+finalizer/accepted-intent observation/Rail are authoritative. No-reference callers
+retain their exact original receipt:not_projected response. The optional receipt
+can be verified only through the original canonical observation and fresh same-run,
+actor/tenant/native Work rechecks. Unknown/withdrawn/late/ambiguous results never
+become completed work and resumed requests never redispatch.
+
+Functional LOCAL consumer; Visual no interface delta; Experiential Finance7/actual
+Chat/Live/manual action/permissions/cohorts/reload/full19/nine OPEN; Founder NOT_ACCEPTED.
+Historical9PASS0FAIL/12PASS0FAIL4BLOCKED, protected monthlyUNKNOWNUNRETRIED,
+ALG03/06/11/12Partial/ALG13usefulnessUnverified/CAP3Limited3Unverified3ComingSoon
+remain unchanged. Full [consumer evidence](ui-delivery/e2-manual-systems-receipt-consumer.md)
+and canonical Master §4.0 record source release separately from customer acceptance.

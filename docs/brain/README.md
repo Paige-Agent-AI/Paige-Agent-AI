@@ -1,3 +1,33 @@
+## EXP02 Systems source receiving and receipt consumer — October27 17:25UTC
+
+Superseding the dated development checkpoints below: original observation
+[#2982 released source](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2982#issuecomment-6448668561)
+is actualAEA/tree3040/native18100002 once. Original native OIDs/ABI/ACL/body are
+verified. Initial Edge mismatch is retained; normal containingcc8 release certifies
+all322 source/emission hashes, Chat562/inbound131/config and original edge-live.
+Own/containing webREADY and both publicorigins exactcc8/null/assets17:10UTC.
+Original recorded-run [#2991 released source](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2991#issuecomment-6448727259)
+is actual8bbfa8fb/tree5da95975/all10 applicable checks+two webSUCCESS/LOWER567080+567143;
+production6tYxh READY/bothorigins exact8bbfa/null/assets/run markers17:23UTC.
+Canonical Master §4.0 now records both exact deliveries without replacing history.
+
+The SAME original manual consumer now receives released8bbfa as c3c9bd57e,
+preserving ten source/test leaves, all16,965 outside entries and whole histories.
+Fresh356 controls/seven suites, pinnedDeno2.1.4/SDK2.75.0 and focused lint pass;
+the restricted Windows temp-file attempt executed no tests and is not proof.
+Request→original Work→original run→optional canonical accepted-intent/Rail receipt
+uses current caller authority and the original bounded wait.202 is acknowledgement;
+lost/late acknowledgements and resumed Work never cause a second dispatch.
+No-reference result shape remains receipt:not_projected. Full packet and ten-part
+orchestration contract: [consumer evidence](../evidence/ui-delivery/e2-manual-systems-receipt-consumer.md).
+
+Functional consumer LOCAL, unregistered/unmounted; exact review/CI/release owed.
+Visual N/A for this unchanged interface; earlier28 frames remain synthetic.
+Experiential actual scans, Finance7/Chat/Live/permissions/cohorts/reload/all19/nine
+remain owed under E09's current QA custody. Founder NOT_ACCEPTED. No Root/risk/
+C0b/Spine edit, new grant, provider/scan/worker/consequential activation or new queue.
+systems.check stays UNAVAILABLE; Mind SCR2/3, CAP3/3/3 and ALG maturity unchanged.
+
 ## EXP02 Finance target source released — October27 UTC
 
 [#2967 exact receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2967#issuecomment-6434154203):

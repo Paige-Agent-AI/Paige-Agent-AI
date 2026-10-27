@@ -285,7 +285,7 @@ function ReadyHub({ hub, announce, announcement, onOpenTeamSettings, openPaige }
   const canAssignOthers = me?.permission === "owner" || me?.permission === "admin";
   // The PAIGE handoffs exist only where the shell can open PAIGE; without it they're omitted, not dead.
   const commands = useMemo(() => TEAM_HUB_COMMANDS.filter((command) => command.kind === "task"
-    || (command.kind === "agent" ? has("team_hub_agents") : command.kind !== "specialist" && Boolean(openPaige))), [openPaige, has]);
+    || (command.kind === "agent" ? has("team_hub_agents") : Boolean(openPaige))), [openPaige, has]);
   const oneColumn = layout === "one-column";
   const multiColumn = layout === "wide" || layout === "overlay";
   const conversations = overview.conversations;
@@ -435,7 +435,7 @@ function ReadyHub({ hub, announce, announcement, onOpenTeamSettings, openPaige }
       conversation: conversation ? conversationTitle(conversation, people) : "Team Hub conversation",
       channel_id: open.channelId,
       message_id: null,
-    }, null));
+    }));
     // The words went to PAIGE's composer; they don't also stay here.
     setDrafts((current) => ({ ...current, [open.channelId]: "" }));
     setPreview(null);

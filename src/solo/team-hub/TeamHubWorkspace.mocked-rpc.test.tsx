@@ -1479,6 +1479,18 @@ describe("PAIGE handoffs (increment 2, mocked RPC)", () => {
     expect(mocks.invoke).toHaveBeenCalledWith("paige-ai-chat", expect.anything());
   });
 
+  it("A1c strip (§30): the / menu offers four commands and never Ask a specialist, wherever PAIGE can open", async () => {
+    const { host } = await mount({ openPaige: vi.fn() });
+    await type(composer(host), "/");
+    const box = listbox(host, "PAIGE commands")!;
+    expect(options(box).map((option) => option.textContent)).toEqual([
+      expect.stringContaining("Draft a task"), expect.stringContaining("Ask an agent"),
+      expect.stringContaining("Request approval"), expect.stringContaining("Schedule a meeting")]);
+    expect(host.textContent).not.toMatch(/specialist/i);
+    await type(composer(host), "/PAIGE spec");
+    expect(listbox(host, "PAIGE commands")).toBeNull();
+  });
+
   it("A1b reversal: the / command Ask an agent starts an @mention that lists PAIGE and her agents only", async () => {
     const { host } = await mount({ openPaige: vi.fn() });
     await type(composer(host), "/PAIGE ask");

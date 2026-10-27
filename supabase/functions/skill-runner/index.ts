@@ -618,8 +618,12 @@ async function runDraftAndEmailDocument(
   if (outcome.kind === "send_failed" && sendUnconfirmed) {
     // §13 — SendGrid may have accepted it (a 5xx, timeout or dropped connection after the request left).
     // This is NOT a plain failure: telling the person to re-draft and send again could email the client
-    // twice. The one-time approval is spent; the run receipt records `send_unconfirmed`.
-    return json(502, {
+    // twice. The one-time approval is spent; the run receipt records `send_unconfirmed` (its status column
+    // stays 'failed' — the paige_skill_runs CHECK has no 'unconfirmed').
+    // 202, NOT 502: every caller that branches on HTTP status (paige-mcp run_skill errors on >= 300,
+    // supabase.functions.invoke raises on non-2xx) would otherwise read this as a plain failure to redo.
+    // 202 = handed over, outcome not known; the body's `status: "unconfirmed"` says which.
+    return json(202, {
       run_id: sentRunId,
       status: "unconfirmed",
       code: receiptPersisted ? "send_unconfirmed" : "send_unconfirmed_unrecorded",

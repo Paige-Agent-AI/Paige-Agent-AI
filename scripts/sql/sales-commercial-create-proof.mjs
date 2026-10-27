@@ -80,7 +80,7 @@ try {
  const originalDefinition=readDefinition();
  const originalMetadata=run(`SELECT jsonb_build_object('security',prosecdef,'config',proconfig,'acl',proacl::text) FROM pg_proc WHERE oid=${routine};`).trim();
  assert(!JSON.parse(run(`SELECT list_sales_collection_agreements('${tenant}');`).trim()).rows[0].agreed_amount_basis,'original reader has no basis evidence');
- const basisMigration=read('supabase/migrations/20271117170104_sales_collection_amount_basis.sql');
+ const basisMigration=read('supabase/migrations/20271118100104_sales_collection_amount_basis.sql');
  run(basisMigration);const appliedDefinition=readDefinition();run(basisMigration);
  assert.equal(readDefinition(),appliedDefinition,'read migration replays exactly');
  assert.equal(run(`SELECT jsonb_build_object('security',prosecdef,'config',proconfig,'acl',proacl::text) FROM pg_proc WHERE oid=${routine};`).trim(),originalMetadata,'original security/search path/ACL retained');
@@ -156,7 +156,7 @@ try {
  const finite={action:'collection.save_terms',agreement_id:first.row.id,expected_version:0,terms:fixed.terms};
  const previewFinite=(value=finite)=>`SELECT preview_sales_collection_command('${actor}','${tenant}',${literal(value)});`;
  const readPreview=(prefix='',value=finite)=>JSON.parse(run('BEGIN;'+prefix+previewFinite(value)+'ROLLBACK;').split(/\r?\n/).find(line=>line.startsWith('{')));
- const sourceGuard=read('supabase/migrations/20271117170204_sales_collection_fixed_source_guard.sql');
+ const sourceGuard=read('supabase/migrations/20271118100204_sales_collection_fixed_source_guard.sql');
  const commandRoutine="'public.preview_sales_collection_command(uuid,uuid,jsonb)'::regprocedure";
  const executeRoutine="'public.execute_sales_collection_command(uuid,uuid,uuid,jsonb,jsonb)'::regprocedure";
  const definitionOf=identity=>run(`SELECT pg_get_functiondef(${identity});`).replaceAll('\r\n','\n').trim();

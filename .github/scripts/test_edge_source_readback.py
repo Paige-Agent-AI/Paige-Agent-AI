@@ -21,6 +21,47 @@ SPEC.loader.exec_module(readback)
 
 
 class WorkflowContract(unittest.TestCase):
+    def workflow_condition(self, name, *, success=True, cancelled=False, **changes):
+        """Evaluate the actual bounded Actions gate, including implicit success()."""
+        workflow = (ROOT / '.github/workflows/deploy-edge-functions.yml').read_text(encoding='utf-8')
+        step = workflow.split('- name: ' + name, 1)[1].split('\n      - name:', 1)[0]
+        expression = step.split('if:', 1)[1].splitlines()[0].strip().removeprefix('${{').removesuffix('}}').strip()
+        if not success and not any(fn + '()' in expression for fn in ['success', 'always', 'cancelled', 'failure']):
+            return False
+        values = {'steps.affected.outcome': 'success', 'steps.affected.outputs.count': '2',
+                  'steps.preflight.outcome': 'success', 'steps.retired.outputs.count': '0',
+                  'steps.readback.outcome': 'success', **changes}
+        for key, value in values.items():
+            expression = expression.replace(key, repr(value))
+        for key, value in [('!cancelled()', not cancelled), ('cancelled()', cancelled),
+                           ('success()', success), ('always()', True)]:
+            expression = expression.replace(key, repr(value))
+        expression = expression.replace('&&', ' and ').replace('||', ' or ')
+        tree = ast.parse(expression, mode='eval')
+        allowed = (ast.Expression, ast.BoolOp, ast.And, ast.Or, ast.UnaryOp, ast.Not,
+                   ast.Compare, ast.Eq, ast.NotEq, ast.Constant)
+        self.assertTrue(all(isinstance(node, allowed) for node in ast.walk(tree)), 'Only the declared literal gate grammar may run')
+        return eval(compile(tree, '<actual-workflow-condition>', 'eval'), {'__builtins__': {}}, {})
+
+    def test_readback_after_failed_upload_does_not_certify_a_failed_job(self):
+        self.assertTrue(self.workflow_condition('Verify deployed source', success=False))
+        self.assertFalse(self.workflow_condition('Record deployed commit', success=False))
+        self.assertTrue(self.workflow_condition('Verify deployed source'))
+        self.assertTrue(self.workflow_condition('Record deployed commit'))
+        for state in ['failure', 'skipped']:
+            self.assertFalse(self.workflow_condition('Record deployed commit', **{'steps.readback.outcome': state}))
+
+    def test_readback_requires_valid_source_preflight_and_uncancelled_work(self):
+        for changes in [{'steps.affected.outcome': 'failure'}, {'steps.affected.outcome': 'skipped'},
+                        {'steps.affected.outputs.count': '0'}, {'steps.preflight.outcome': 'failure'},
+                        {'steps.preflight.outcome': 'skipped'}]:
+            with self.subTest(changes=changes):
+                self.assertFalse(self.workflow_condition('Verify deployed source', success=False, **changes))
+        self.assertFalse(self.workflow_condition('Verify deployed source', success=False, cancelled=True))
+        workflow = (ROOT / '.github/workflows/deploy-edge-functions.yml').read_text(encoding='utf-8')
+        preflight = workflow.split('- name: Preflight — the provider accepts the credential', 1)[1].split('\n      - name:', 1)[0]
+        self.assertIn('id: preflight', preflight)
+
     def test_pinned_expected_compiler_precedes_each_mandatory_contract_suite(self):
         for path, marker in [('.github/workflows/ci.yml', '- name: Edge release source'),
                              ('.github/workflows/deploy-edge-functions.yml', '- name: Test deployed-source')]:

@@ -1,5 +1,92 @@
 # Finance department — current source and full operating target
 
+## October27 — current seven-view read, VERA context and reload verified
+
+The existing designated ordinary SOLO Owner completed a new, explicitly read-only
+drive against actual production8bbfa8fb350879de8b52746ac9a9bd5c5642303a /
+dpl_6tYxhYFEPyUjhcHckWubnFsFT1oY. The loaded bootstrap matched both public
+origins' exact build/assets before17:37 and after17:51UTC; no customer values,
+record identifiers, browser identity or raw screenshots are published.
+
+Finance menu landed on Overview. All seven actual pages read AND reloaded with
+VERA attribution, the original saved conversation and a present empty composer:
+Overview, Banking & Cash, Debt & Credit, Receivables, Expenses & Payables,
+Profitability and Budgeting & Forecasting. The original source sheet disclosed
+basis/window/as-of/coverage and receipt/test-population limitations. Escape closed
+it and restored the original evidence-button focus. Missing bank/accounting/
+profit/forecast facts remained unavailable/not calculated, never invented zeros.
+This proves neither disconnected providers nor complete company financial coverage.
+
+The financial Play section correctly described its empty returned SAMPLE, not the
+absence of every target. Review with VERA retained the actual Finance route and
+inserted only an UNSENT Play/period/currency/coverage hint. Native department
+navigation/Back retained that draft exactly; only the known QA draft was cleared,
+restoring the prior empty composer. No new numeric target, financial record,
+approval, payment, provider or other business action was created.
+
+Canonical acceptance evidence: ANT52e8b9e9d8 and [#2967 bounded QA](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2967#issuecomment-6449596126).
+Functional/Experiential: bounded current read/navigation/context/reload PASS.
+Visual: actual private desktop and responsive captures retained; several closed/
+narrow raster dimensions differ from requested CSS viewports, so exact eight-
+raster, physical-mobile, native200percent-zoom and full AT acceptance remain
+UNVERIFIED. These captures do not replace earlier valid synthetic source proof.
+
+Populated company/source/currency evidence, genuine other-role/tenant/cohort
+negatives, revocation, new-target mutations, banking/accounting/forecast depth,
+eligible Live, governed follow-through and full19/nine remain OPEN. Founder
+NOT_ACCEPTED. CAP/ALG maturity and historical9-0/12-0-4/monthlyUNKNOWNUNRETRIED
+remain unchanged. This dated addendum supersedes only the matching read/reload
+proof owed below; prior source and acceptance records remain historical evidence.
+
+## October27 — financial Play target consumer released, acceptance still owed
+
+[#2967 observed release](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2967#issuecomment-6434154203)
+merged `f9722f5c77e19f2838c8657ca28edc646794d29e`, after reviewed487/LOWER5662137133,
+all10 applicable checksSUCCESS/designed no-SQL PreviewSKIP/two webSUCCESS.
+Actual tree5aa3e667 equals the reviewed normal union with incoming45111; all42
+owning/all16,696 outside entries and whole Master retained. Production
+`dpl_6gMbStvqYRjxXz9iVh2PVLC4Bpcz` READY; both public origins200/exactf972-mvq7rg8q/null,
+same reachable entry asset hash/missing404 at04:59:06UTC. Native/Edge/grant delta
+N/A; original review API97/all32/config/JWT prerequisite verified separately.
+
+Functional bounded target consumer DEPLOYED/source verified. Visual19 synthetic
+actual-component frames/current contrast/font/reflow/keyboard; Experiential
+local disclosure/route/return only, authenticated new-target/roles/cohorts/reload/
+native zoom/Live/full Finance still proof owed. Founder NOT_ACCEPTED. Existing
+finance.department/CAP009–017/ALG03/06/11/12/13/all19/nine remain at their actual
+acceptance boundaries; no provider/action activation or customer announcement.
+The source-preparation paragraph below is preserved as development history.
+
+## October27 — original financial Play targets, source consumer
+
+Budgeting & Forecasting now consumes the existing focused `game_plan` review
+through the page's original `useBusinessReview` port. It presents original F7
+financial targets, issued actuals, variance, periods, currencies and owning-Play
+links using the shared Executive target component. The canonical Mission/native
+owner checks, Metric issuer, expiry and record resolver remain authoritative.
+The source sample is at most six total targets: an empty financial subset never
+claims that the business has no financial goals. A Play target is not a budget or
+cash forecast; the original unsupported forecast-input states remain visible.
+
+This is a read-only source increment under EXP02 O04/O10/O14/O16. It creates no
+ledger, target store, calculation, domain writer, provider permission, budget,
+forecast, approval, execution, Rail receipt or specialist runtime. Current
+actor/business resolution and a matching focused envelope precede facts; failure,
+scope change and expired measurements withhold unsupported values. Refresh reuses
+the original reader. VERA receives an unsent context hint, not copied actuals or
+write authority. Banking and all seven Finance destinations remain intact.
+
+Functional:85 controlled assertions across five original/new suites pass. Visual: actual component
+rendering in Mineral/Obsidian, desktop/narrow layouts and product Schibsted font
+verified with synthetic inputs. Experiential: local keyboard disclosure,
+original-record routing/Back and preserved synthetic discussion verified; the
+owning Play is outside this fixture. Authenticated new-target, roles/cohorts,
+native200percent zoom and Live proof remain owed while browser custody is pending.
+Founder Acceptance: NOT_ACCEPTED. ALG03/06/11/12/13 and CAP009–017 readiness do not
+advance from this presentation. [Bounded evidence](../evidence/ui-delivery/e2-financial-play-targets.md)
+tracks source, review, CI, merge, deployment and customer QA separately. Prior
+authenticated seven-view/source evidence below remains historical and valid.
+
 ## October25 — fresh seven-view Finance read and reload
 
 The existing designated ordinary SOLO Owner completed a fresh read of Overview,

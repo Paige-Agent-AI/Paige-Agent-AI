@@ -62,6 +62,8 @@ import { PLANNING_CLIENT_SHARE_TOOLS } from '../_shared/paige-spine/domains/plan
 // EXP08 Team Hub increment 4: three caller-JWT reads and one approved reply (contract docs/delivery/exp08-team-hub-increment4-paige-contract.md).
 import { TEAM_HUB_READ_TOOLS, TEAM_HUB_POST_TOOLS, TEAM_HUB_READ_TOOL_NAMES, TEAM_HUB_POST_TOOL_NAME, TEAM_HUB_CHAT_TOOL_NAMES } from '../_shared/paige-spine/domains/team_hub.ts';
 import { TEAM_HUB_READERS, postTeamHubReply, teamHubPostConfirmSummary, teamHubSessionTainted, COULD_NOT_READ as TEAM_HUB_COULD_NOT_READ, TEAM_HUB_EGRESS_WITHHELD_TOOLS, TEAM_HUB_EGRESS_REFUSAL } from '../_shared/team-hub/chat.ts';
+// EXP08 Team Hub agents A1b: one agent turn (mention or agent DM), its own closed request and module.
+import { isTeamHubAgentTurnRequest, runTeamHubAgentTurn } from '../_shared/team-hub/agent-turn.ts';
 import { TEAM_LIFECYCLE_TOOLS, TEAM_LIFECYCLE_READ_TOOL_NAMES, TEAM_LIFECYCLE_WRITE_TOOL_NAMES, TEAM_LIFECYCLE_MEMBER_TOOL_NAMES } from '../_shared/paige-spine/domains/team_lifecycle.ts';
 import { TEAM_LIFECYCLE_READERS, runTeamLifecycleWrite, teamLifecycleConfirmSummary, readHoldingsForCard, readWorkItemForCard, parseHandoverArgs, conversationsValue, teamLifecyclePreCardProblem, findTeamRosterMember, HANDOVER_SOLO_ONLY } from '../_shared/team-lifecycle/chat.ts';
 import { setPlanItemClientShare, type ClientShareFailure } from '../_shared/planning/scoped-write.ts';
@@ -1363,6 +1365,18 @@ serve(async (req) => {
     catch {
       return new Response(JSON.stringify({ error: 'Invalid input format', message_accepted: false }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+    // EXP08 Team Hub agents A1b: an agent turn is its own closed request ({ teamHubAgentTurn: {...} },
+    // nothing else). It runs here, after the verified actor and the ingress rate limit and before the chat
+    // schema, and returns without reaching anything below. The logic is _shared/team-hub/agent-turn.ts;
+    // this hands it only the asker's own session, the service role (turn accept/end, the agent's platform
+    // row and receipts), the verified actor and the one model seam (fabricCompletion). It also gets the
+    // control hint: a turn sent with one is refused, so agent turns stay on the chat's 20/min limit.
+    if (isTeamHubAgentTurnRequest(rawData)) {
+      const agentTurn = await runTeamHubAgentTurn({ caller: supabaseClient, service: supabase, userId: user.id,
+        complete: fabricCompletion, signal: req.signal, controlHint }, rawData);
+      return new Response(JSON.stringify(agentTurn.body),
+        { status: agentTurn.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
     let validatedData;
     try {

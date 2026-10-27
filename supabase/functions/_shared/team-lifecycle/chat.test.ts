@@ -53,7 +53,10 @@ describe("each approved write calls exactly its definer, on the caller, with the
   });
   it("team_handover_work -> plan_update_item_versioned with the caller as expected actor and status/due unchanged", async () => {
     const at = "2026-10-26T10:00:00.123456+00:00";
-    const { c, calls } = caller(ok({ ok: true, item_id: ITEM, tenant_id: T, actor_id: ME }));
+    const { c: rpcOnly, calls } = caller(ok({ ok: true, item_id: ITEM, tenant_id: T, actor_id: ME }));
+    // The read-back that confirms the receiver (see "the hand-over is done only when …" below).
+    const c = Object.assign(rpcOnly, { from: () => ({ select() { return this; }, eq() { return this; },
+      maybeSingle: async () => ({ data: { id: ITEM, tenant_id: T, assigned_to_user_id: SAM }, error: null }) }) });
     const r = await runTeamLifecycleWrite("team_handover_work", scope, c, { item_id: ITEM, expected_updated_at: at, assigned_to_user_id: SAM, status: "done", p_expected_actor_id: SAM });
     assert.deepEqual(calls, [{ name: "plan_update_item_versioned", args: {
       p_item_id: ITEM, p_expected_actor_id: ME, p_expected_tenant_id: T, p_expected_updated_at: at,
@@ -368,28 +371,71 @@ describe("the cards", () => {
   });
 });
 
-describe("the hand-over reads the assignment back", () => {
+describe("the hand-over is done only when the read-back shows the requested receiver", () => {
+  // The writer's acknowledgement carries no assignee (20271020000020), so it never proves the hand-over
+  // alone. Every case below has the writer acknowledge the update exactly; only the read-back differs.
   const at = "2026-10-26T10:00:00Z";
-  const withRow = (row: unknown) => ({
-    rpc: async () => ({ data: { ok: true, item_id: ITEM, tenant_id: T, actor_id: ME }, error: null }),
-    from: () => ({ select() { return this; }, eq() { return this; }, maybeSingle: async () => ({ data: row, error: null }) }),
-  });
-  it("success says it read the new assignee back", async () => {
-    const r = await runTeamLifecycleWrite("team_handover_work", scope, withRow({ id: ITEM, tenant_id: T, title: "Prep", status: "open", assigned_to_user_id: SAM }) as any,
-      { item_id: ITEM, expected_updated_at: at, assigned_to_user_id: SAM }) as any;
+  const args = { item_id: ITEM, expected_updated_at: at, assigned_to_user_id: SAM };
+  const withRead = (read: () => Promise<{ data: unknown; error: unknown }>) => {
+    const filters: Array<[string, unknown]> = [];
+    const c = {
+      rpc: async () => ({ data: { ok: true, item_id: ITEM, tenant_id: T, actor_id: ME }, error: null }),
+      from: (table: string) => { filters.push(["from", table]); return { select() { return this; }, eq(k: string, v: unknown) { filters.push([k, v]); return this; }, maybeSingle: read }; },
+    };
+    return { c, filters };
+  };
+  const row = (assignee: string | null, over: Record<string, unknown> = {}) => async () => ({ data: { id: ITEM, tenant_id: T, assigned_to_user_id: assignee, ...over }, error: null });
+  const assertUnconfirmed = (r: any, sentence: RegExp) => {
+    assert.equal(r.success, false);
+    assert.equal(r.outcome_unknown, true);
+    assert.equal(r.reason, "outcome_unknown");
+    assert.equal(r.not_applied, undefined);
+    assert.match(r.error, /I sent the hand-over/);
+    assert.match(r.error, sentence);
+    assert.match(r.note, /holdings again/);
+    assert.doesNotMatch(JSON.stringify(r), /Handed over/);
+  };
+  it("confirmed: the row is this item, in this workspace, with the receiver", async () => {
+    const { c, filters } = withRead(row(SAM));
+    const r = await runTeamLifecycleWrite("team_handover_work", scope, c as any, args) as any;
     assert.equal(r.success, true);
     assert.equal(r.assignment_read_back, true);
+    assert.match(r.note, /^Handed over; reading it back shows it on the receiver's work list/);
+    assert.deepEqual(filters, [["from", "plan_items"], ["id", ITEM], ["tenant_id", T]]);
   });
-  it("a read-back showing someone else is outcome unknown, never success", async () => {
-    const r = await runTeamLifecycleWrite("team_handover_work", scope, withRow({ id: ITEM, tenant_id: T, title: "Prep", status: "open", assigned_to_user_id: ME }) as any,
-      { item_id: ITEM, expected_updated_at: at, assigned_to_user_id: SAM }) as any;
-    assert.equal(r.outcome_unknown, true);
+  it("the read fails (an error) -> outcome unknown, never success", async () => {
+    const { c } = withRead(async () => ({ data: null, error: { code: "42501", message: "permission denied" } }));
+    assertUnconfirmed(await runTeamLifecycleWrite("team_handover_work", scope, c as any, args), /couldn't read the work back/);
   });
-  it("no read-back possible keeps the writer's confirmation and says it was not re-read", async () => {
-    const r = await runTeamLifecycleWrite("team_handover_work", scope, withRow(null) as any, { item_id: ITEM, expected_updated_at: at, assigned_to_user_id: SAM }) as any;
-    assert.equal(r.success, true);
-    assert.equal(r.assignment_read_back, false);
-    assert.match(r.note, /couldn't read it back/);
+  it("the read answers an error alongside a matching row -> outcome unknown, never success", async () => {
+    const { c } = withRead(async () => ({ data: { id: ITEM, tenant_id: T, assigned_to_user_id: SAM }, error: { code: "57014", message: "canceling statement due to statement timeout" } }));
+    assertUnconfirmed(await runTeamLifecycleWrite("team_handover_work", scope, c as any, args), /couldn't read the work back/);
+  });
+  it("the read throws -> outcome unknown, never success", async () => {
+    const { c } = withRead(async () => { throw new Error("socket hang up"); });
+    assertUnconfirmed(await runTeamLifecycleWrite("team_handover_work", scope, c as any, args), /couldn't read the work back/);
+  });
+  it("no visible row -> outcome unknown, never success", async () => {
+    const { c } = withRead(async () => ({ data: null, error: null }));
+    assertUnconfirmed(await runTeamLifecycleWrite("team_handover_work", scope, c as any, args), /couldn't read the work back/);
+  });
+  it("a caller that cannot read tables at all -> outcome unknown, never success", async () => {
+    const { c } = caller(ok({ ok: true, item_id: ITEM, tenant_id: T, actor_id: ME }));
+    assertUnconfirmed(await runTeamLifecycleWrite("team_handover_work", scope, c, args), /couldn't read the work back/);
+  });
+  it("the wrong assignee -> outcome unknown, never success", async () => {
+    const { c } = withRead(row(ME));
+    assertUnconfirmed(await runTeamLifecycleWrite("team_handover_work", scope, c as any, args), /shows it with someone else/);
+  });
+  it("nobody assigned after the write -> outcome unknown, never success", async () => {
+    const { c } = withRead(row(null));
+    assertUnconfirmed(await runTeamLifecycleWrite("team_handover_work", scope, c as any, args), /shows it with someone else/);
+  });
+  it("a row for another item or another workspace is not a read-back", async () => {
+    for (const over of [{ id: "99999999-9999-4999-8999-999999999999" }, { tenant_id: "99999999-9999-4999-8999-999999999999" }]) {
+      const { c } = withRead(row(SAM, over));
+      assertUnconfirmed(await runTeamLifecycleWrite("team_handover_work", scope, c as any, args), /couldn't read the work back/);
+    }
   });
 });
 

@@ -1,5 +1,7 @@
 -- ─────────────────────────────────────────────────────────────────────────────────────────────
 -- INT-328 — rollback proof for 20270597000000_comms_email_send.sql (comms.email_send).
+-- Since 20271116200000 (Resend retired) it applies that file's reconcile rule after it: nothing is
+-- reconcilable by re-sending, which §4 and §6 now prove.
 --
 -- HOW TO RUN: node scripts/sql/run-rollback-proof.mjs --lean scripts/sql/comms-email-send-proof.sql
 --   and execute the printed batch (psql, or the Supabase MCP execute_sql tool). BEGIN..ROLLBACK:
@@ -49,6 +51,9 @@ INSERT INTO public.channel_connectors (id, tenant_id, channel_type, provider, fr
 
 -- ── the migration under proof ───────────────────────────────────────────────────────────────
 \i supabase/migrations/20270597000000_comms_email_send.sql
+-- ...and the reconcile rule production runs since 20271116200000 (Resend retired: SendGrid, which now
+-- sends every Resend-labelled email, has no idempotent replay, so NOTHING is reconcilable by re-sending).
+\i supabase/migrations/20271116200000_exp03_resend_retired.sql
 
 -- ── helpers ─────────────────────────────────────────────────────────────────────────────────
 CREATE FUNCTION pg_temp.ok(_ord int, _cond boolean, _label text) RETURNS void LANGUAGE sql AS $$
@@ -153,7 +158,7 @@ RESET ROLE;
 SELECT pg_temp.ok(43, (SELECT count(*)=1 FROM public.paige_workspace_events WHERE source_id=pg_temp.op(1) AND source_kind='capability_run'
   AND capability_key='comms_send_email' AND outcome='capability_succeeded' AND tenant_id='aaaaaaaa-3280-4000-8000-000000000001'), 'one capability_succeeded Rail row');
 
--- ── 4. unknown blocks an identical new send; reconcile is resend-only ───────────────────────
+-- ── 4. unknown blocks an identical new send; nothing is reconcilable by re-sending (20271116200000) ─
 SET LOCAL ROLE service_role;
 SELECT pg_temp.prep(2,'Second note','Body two.');
 SELECT public.claim_comms_email_send(pg_temp.msg(2),pg_temp.op(2));
@@ -161,13 +166,14 @@ SELECT pg_temp.ok(50, public.finalize_comms_email_send(pg_temp.msg(2),pg_temp.op
 SELECT pg_temp.ok(51, (SELECT status='draft' AND provider_message_id IS NULL FROM public.messages WHERE id=pg_temp.msg(2)), 'unknown never claims the email was sent');
 SELECT pg_temp.err(52, 'identical new operation refused while unknown', $q$SELECT pg_temp.prep(3,'Second note','Body two.')$q$, '55000', 'COMMS_EMAIL_RECONCILIATION_REQUIRED');
 SELECT pg_temp.ok(53, public.find_comms_email_pending_reconciliation('aaaaaaaa-3280-4000-8000-000000000001','Client.One@example.invalid',pg_temp.dg('client.one@example.invalid','cccccccc-3280-4000-8000-000000000001','Second note','Body two.'))=pg_temp.op(2), 'finder returns the unknown operation');
-SELECT pg_temp.ok(54, public.read_comms_email_send_result('ffffffff-3280-4000-8000-000000000001','aaaaaaaa-3280-4000-8000-000000000001',pg_temp.op(2))->>'reconcilable'='true', 'unknown resend within 23h reads reconcilable');
+SELECT pg_temp.ok(54, public.read_comms_email_send_result('ffffffff-3280-4000-8000-000000000001','aaaaaaaa-3280-4000-8000-000000000001',pg_temp.op(2))->>'reconcilable'='false', 'an unknown Resend operation within 23h reads NOT reconcilable (no idempotent replay since 20271116200000)');
 SELECT pg_temp.ok(55, public.claim_comms_email_send(pg_temp.msg(2),pg_temp.op(2))->>'state'='unknown', 'normal claim cannot re-enter unknown');
-SELECT pg_temp.ok(56, (SELECT r->>'state'='dispatching' AND r->>'attempts'='2' AND r->'admitted'='true'::jsonb FROM (SELECT public.claim_comms_email_send(pg_temp.msg(2),pg_temp.op(2),true) r) x), 'reconcile claim re-enters dispatching, attempt 2');
-SELECT pg_temp.ok(57, public.finalize_comms_email_send(pg_temp.msg(2),pg_temp.op(2),'provider_accepted','re_proof_2',NULL,2)->>'outcome'='provider_accepted', 'reconciled send finalizes accepted');
+SELECT pg_temp.ok(56, (SELECT r->>'state'='unknown' AND r->>'attempts'='1' AND r->'admitted'='false'::jsonb FROM (SELECT public.claim_comms_email_send(pg_temp.msg(2),pg_temp.op(2),true) r) x), 'a reconcile claim is NOT admitted: the operation stays unknown on attempt 1');
+SELECT pg_temp.err(57, 'no second attempt exists to finalize', $q$SELECT public.finalize_comms_email_send(pg_temp.msg(2),pg_temp.op(2),'provider_accepted','re_proof_2',NULL,2)$q$, '40001', 'COMMS_EMAIL_RECEIPT_CONFLICT');
 RESET ROLE;
-SELECT pg_temp.ok(58, (SELECT count(*)=2 FROM public.paige_workspace_events WHERE source_id=pg_temp.op(2) AND outcome IN ('capability_outcome_unknown','capability_succeeded')), 'Rail keeps both the unknown and the reconciled outcome');
-SELECT pg_temp.ok(59, (SELECT count(*)=1 FROM public.messages WHERE meta#>>'{comms_email_binding,content_digest}'=pg_temp.dg('client.one@example.invalid','cccccccc-3280-4000-8000-000000000001','Second note','Body two.')), 'reconcile minted no new operation');
+SELECT pg_temp.ok(58, (SELECT count(*)=1 FROM public.paige_workspace_events WHERE source_id=pg_temp.op(2) AND outcome='capability_outcome_unknown')
+  AND NOT EXISTS (SELECT 1 FROM public.paige_workspace_events WHERE source_id=pg_temp.op(2) AND outcome='capability_succeeded'), 'Rail keeps the one unknown outcome and invents no success');
+SELECT pg_temp.ok(59, (SELECT count(*)=1 AND bool_and(status='draft' AND provider_message_id IS NULL AND meta#>>'{comms_email_binding,state}'='unknown') FROM public.messages WHERE meta#>>'{comms_email_binding,content_digest}'=pg_temp.dg('client.one@example.invalid','cccccccc-3280-4000-8000-000000000001','Second note','Body two.')), 'the reconcile attempt minted no operation and changed nothing');
 -- gmail cannot be reconciled (no provider idempotency key).
 SET LOCAL ROLE service_role;
 SELECT pg_temp.prep(4,'Gmail note','Body four.',_connector=>'cccccccc-3280-4000-8000-000000000002',_from=>'Second@Biz.example.invalid');
@@ -182,15 +188,15 @@ RESET ROLE;
 UPDATE public.messages SET meta=jsonb_set(meta,'{comms_email_binding,prepared_at}',to_jsonb(now()-interval '24 hours')) WHERE id=pg_temp.msg(5);
 SET LOCAL ROLE service_role;
 SELECT pg_temp.ok(61, public.claim_comms_email_send(pg_temp.msg(5),pg_temp.op(5),true)->>'state'='unknown', 'resend older than 23h is not reconcilable');
--- dispatching: fresh is not reconcilable, older than 120 s is.
+-- dispatching: fresh is not reconcilable, and (since 20271116200000) neither is one older than 120 s.
 SELECT pg_temp.prep(6,'Stale note','Body six.');
 SELECT public.claim_comms_email_send(pg_temp.msg(6),pg_temp.op(6));
 SELECT pg_temp.ok(62, (SELECT r->>'state'='dispatching' AND r->>'attempts'='1' AND r->'admitted'='false'::jsonb FROM (SELECT public.claim_comms_email_send(pg_temp.msg(6),pg_temp.op(6),true) r) x), 'fresh dispatching cannot be reconciled');
 RESET ROLE;
 UPDATE public.messages SET meta=jsonb_set(meta,'{comms_email_binding,claimed_at}',to_jsonb(now()-interval '200 seconds')) WHERE id=pg_temp.msg(6);
 SET LOCAL ROLE service_role;
-SELECT pg_temp.ok(63, (SELECT r->>'attempts'='2' AND r->'admitted'='true'::jsonb FROM (SELECT public.claim_comms_email_send(pg_temp.msg(6),pg_temp.op(6),true) r) x), 'stale dispatching re-claims through reconcile');
-SELECT public.finalize_comms_email_send(pg_temp.msg(6),pg_temp.op(6),'provider_accepted','re_proof_6',NULL,2);
+SELECT pg_temp.ok(63, (SELECT r->>'attempts'='1' AND r->'admitted'='false'::jsonb FROM (SELECT public.claim_comms_email_send(pg_temp.msg(6),pg_temp.op(6),true) r) x), 'a stale dispatching operation is NOT re-claimed through reconcile');
+SELECT public.finalize_comms_email_send(pg_temp.msg(6),pg_temp.op(6),'provider_accepted','re_proof_6',NULL,1); -- the one claimant still records its outcome
 
 -- ── 5. two approvals of identical content cannot both be admitted ───────────────────────────
 SELECT pg_temp.prep(7,'Twin note','Twin body.');
@@ -228,15 +234,16 @@ SELECT pg_temp.ok(105, (SELECT status='sent' AND provider_message_id='re_proof_3
 -- An unclaimed caller cannot pose as a claimant on a still-prepared operation.
 SELECT pg_temp.prep(31,'Unclaimed note','Body thirty-one.');
 SELECT pg_temp.err(106, 'prepared op: a claimed attempt number without a claim raises', $q$SELECT public.finalize_comms_email_send(pg_temp.msg(31),pg_temp.op(31),'failed',NULL,'provider_not_attempted',1)$q$, '42501', 'COMMS_EMAIL_NOT_CLAIMED');
--- A superseded attempt (stale dispatching re-claimed through reconcile) can no longer finalize.
+-- A stale dispatch is never superseded any more (20271116200000): reconcile admits nothing, so no attempt 2
+-- exists, and the original claimant alone may finalize.
 SELECT pg_temp.prep(32,'Superseded note','Body thirty-two.');
 SELECT public.claim_comms_email_send(pg_temp.msg(32),pg_temp.op(32));
 RESET ROLE;
 UPDATE public.messages SET meta=jsonb_set(meta,'{comms_email_binding,claimed_at}',to_jsonb(now()-interval '200 seconds')) WHERE id=pg_temp.msg(32);
 SET LOCAL ROLE service_role;
-SELECT pg_temp.ok(107, (SELECT r->>'attempts'='2' AND r->'admitted'='true'::jsonb FROM (SELECT public.claim_comms_email_send(pg_temp.msg(32),pg_temp.op(32),true) r) x), 'superseded: reconcile takes attempt 2');
-SELECT pg_temp.err(108, 'superseded: attempt 1 can no longer finalize', $q$SELECT public.finalize_comms_email_send(pg_temp.msg(32),pg_temp.op(32),'unknown',NULL,NULL,1)$q$, '42501', 'COMMS_EMAIL_NOT_CLAIMED');
-SELECT pg_temp.ok(109, public.finalize_comms_email_send(pg_temp.msg(32),pg_temp.op(32),'provider_accepted','re_proof_32',NULL,2)->>'outcome'='provider_accepted', 'superseded: attempt 2 finalizes');
+SELECT pg_temp.ok(107, (SELECT r->>'attempts'='1' AND r->'admitted'='false'::jsonb FROM (SELECT public.claim_comms_email_send(pg_temp.msg(32),pg_temp.op(32),true) r) x), 'stale: reconcile takes no attempt 2');
+SELECT pg_temp.err(108, 'stale: a never-issued attempt 2 cannot finalize', $q$SELECT public.finalize_comms_email_send(pg_temp.msg(32),pg_temp.op(32),'unknown',NULL,NULL,2)$q$, '42501', 'COMMS_EMAIL_NOT_CLAIMED');
+SELECT pg_temp.ok(109, public.finalize_comms_email_send(pg_temp.msg(32),pg_temp.op(32),'provider_accepted','re_proof_32',NULL,1)->>'outcome'='provider_accepted', 'stale: the original attempt 1 still finalizes');
 RESET ROLE;
 SELECT pg_temp.ok(110, (SELECT count(*)=1 FROM public.paige_workspace_events WHERE source_id=pg_temp.op(30)), 'race: exactly one Rail row (the claimant''s)');
 SELECT pg_temp.ok(86, (SELECT count(*)=1 FROM public.paige_workspace_events WHERE source_id=pg_temp.op(10) AND outcome='capability_refused' AND capability_key='comms_send_email'), 'refusal recorded on the Rail');

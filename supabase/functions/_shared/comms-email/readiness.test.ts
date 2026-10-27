@@ -75,7 +75,15 @@ describe("personal sender authority", () => {
 });
 
 describe("readCommsEmailReadiness", () => {
-  const env = (k: string) => ({ RESEND_API_KEY: "set" } as Record<string, string>)[k];
+  // Experience 03: a "resend" sender sends through SendGrid, so the platform Mail Send key configures it.
+  const env = (k: string) => ({ SENDGRID_MAIL_SEND_API_KEY: "set" } as Record<string, string>)[k];
+  it("a \"resend\" sender is configured by the SendGrid Mail Send key, never by RESEND_API_KEY", async () => {
+    preSend.calls.length = 0; preSend.result = { proceed: true, outcome: "proceed" };
+    const onlyResend = (k: string) => ({ RESEND_API_KEY: "set" } as Record<string, string>)[k];
+    expect((await readCommsEmailReadiness(admin({ channel_connectors: [conn(S1)] }), { tenantId: T, contactId: C, recipient: "primary@x.test", connectorId: S1 }, onlyResend)).reason).toBe("EMAIL_PROVIDER_NOT_CONFIGURED");
+    expect(preSend.calls).toEqual([]);
+    expect((await readCommsEmailReadiness(admin({ channel_connectors: [conn(S1)] }), { tenantId: T, contactId: C, recipient: "primary@x.test", connectorId: S1 }, env)).reason).toBe("READY_FOR_GOVERNED_REVIEW");
+  });
   it("is ready only after the recipient-specific pre-send check proceeds", async () => {
     preSend.calls.length = 0; preSend.result = { proceed: true, outcome: "proceed" };
     const r = await readCommsEmailReadiness(admin({ channel_connectors: [conn(S1)] }), { tenantId: T, contactId: C, recipient: "primary@x.test", connectorId: S1 }, env);

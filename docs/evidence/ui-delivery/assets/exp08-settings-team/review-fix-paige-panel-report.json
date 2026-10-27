@@ -1,0 +1,126 @@
+[
+ {
+  "n": "1366-light",
+  "overflow": 0,
+  "lanes": [
+   {
+    "cls": "stw-now",
+    "h3": "She can do this for you today",
+    "items": [
+     "Invite someone",
+     "Resend or withdraw an invitation",
+     "Edit someone's title and responsibilities",
+     "Change a permission (owner only)"
+    ],
+    "width": 450,
+    "iconColor": "rgb(50, 116, 88)"
+   },
+   {
+    "cls": "stw-soon",
+    "h3": "New to Paige, still being checked",
+    "items": [
+     "Suspend or reinstate someone",
+     "Remove someone and hand over their work",
+     "Turn someone's team conversations on or off"
+    ],
+    "width": 450,
+    "iconColor": "rgb(106, 100, 110)"
+   }
+  ],
+  "rule": "She's held to the same rules you are, and nobody can be made an owner from a conversation. Access changes and invitations are read back to you and wait for your approval, even on autopilot. Approvals assigned to someone and a mailbox they connected can't be handed over, by her or anyone, and open work can be handed over only on a standalone business account. Until her new actions have been checked, you can always do them here.",
+  "errors": []
+ },
+ {
+  "n": "1366-dark",
+  "overflow": 0,
+  "lanes": [
+   {
+    "cls": "stw-now",
+    "h3": "She can do this for you today",
+    "items": [
+     "Invite someone",
+     "Resend or withdraw an invitation",
+     "Edit someone's title and responsibilities",
+     "Change a permission (owner only)"
+    ],
+    "width": 450,
+    "iconColor": "rgb(143, 209, 174)"
+   },
+   {
+    "cls": "stw-soon",
+    "h3": "New to Paige, still being checked",
+    "items": [
+     "Suspend or reinstate someone",
+     "Remove someone and hand over their work",
+     "Turn someone's team conversations on or off"
+    ],
+    "width": 450,
+    "iconColor": "rgb(150, 144, 137)"
+   }
+  ],
+  "rule": "She's held to the same rules you are, and nobody can be made an owner from a conversation. Access changes and invitations are read back to you and wait for your approval, even on autopilot. Approvals assigned to someone and a mailbox they connected can't be handed over, by her or anyone, and open work can be handed over only on a standalone business account. Until her new actions have been checked, you can always do them here.",
+  "errors": []
+ },
+ {
+  "n": "390-light",
+  "overflow": 0,
+  "lanes": [
+   {
+    "cls": "stw-now",
+    "h3": "She can do this for you today",
+    "items": [
+     "Invite someone",
+     "Resend or withdraw an invitation",
+     "Edit someone's title and responsibilities",
+     "Change a permission (owner only)"
+    ],
+    "width": 252,
+    "iconColor": "rgb(50, 116, 88)"
+   },
+   {
+    "cls": "stw-soon",
+    "h3": "New to Paige, still being checked",
+    "items": [
+     "Suspend or reinstate someone",
+     "Remove someone and hand over their work",
+     "Turn someone's team conversations on or off"
+    ],
+    "width": 252,
+    "iconColor": "rgb(106, 100, 110)"
+   }
+  ],
+  "rule": "She's held to the same rules you are, and nobody can be made an owner from a conversation. Access changes and invitations are read back to you and wait for your approval, even on autopilot. Approvals assigned to someone and a mailbox they connected can't be handed over, by her or anyone, and open work can be handed over only on a standalone business account. Until her new actions have been checked, you can always do them here.",
+  "errors": []
+ },
+ {
+  "n": "390-dark",
+  "overflow": 0,
+  "lanes": [
+   {
+    "cls": "stw-now",
+    "h3": "She can do this for you today",
+    "items": [
+     "Invite someone",
+     "Resend or withdraw an invitation",
+     "Edit someone's title and responsibilities",
+     "Change a permission (owner only)"
+    ],
+    "width": 252,
+    "iconColor": "rgb(143, 209, 174)"
+   },
+   {
+    "cls": "stw-soon",
+    "h3": "New to Paige, still being checked",
+    "items": [
+     "Suspend or reinstate someone",
+     "Remove someone and hand over their work",
+     "Turn someone's team conversations on or off"
+    ],
+    "width": 252,
+    "iconColor": "rgb(150, 144, 137)"
+   }
+  ],
+  "rule": "She's held to the same rules you are, and nobody can be made an owner from a conversation. Access changes and invitations are read back to you and wait for your approval, even on autopilot. Approvals assigned to someone and a mailbox they connected can't be handed over, by her or anyone, and open work can be handed over only on a standalone business account. Until her new actions have been checked, you can always do them here.",
+  "errors": []
+ }
+]

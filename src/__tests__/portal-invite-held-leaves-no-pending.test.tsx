@@ -3,6 +3,7 @@ import ts from "typescript";
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { sendPlatformEmail } from "../../supabase/functions/_shared/email/platform-sendgrid";
 
 // E09 Slice 6 round 4 (verifier MEDIUM 1). A legacy invitation that Paige HOLDS (the client turned email
 // off, the business's quiet hours, or the check could not run) must not leave its freshly minted token live:
@@ -77,9 +78,10 @@ const { ContactPortalPanel } = await import("@/components/admin/contacts/Contact
 const { PortalInvitationManager } = await import("@/components/tenant-relationships/PortalInvitationManager");
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
-// The real handler, with only its four module boundaries replaced (same pattern as portal-invitation-sender).
+// The real handler, with only its five module boundaries replaced (same pattern as portal-invitation-sender);
+// the platform transport is the real one, with only its network edge controlled.
 const source = readFileSync("supabase/functions/send-portal-invite/index.ts", "utf8");
-if ((source.match(/^import .*;\r?$/gm) ?? []).length !== 4) throw Error("Review the changed invitation module boundary");
+if ((source.match(/^import .*;\r?$/gm) ?? []).length !== 5) throw Error("Review the changed invitation module boundary");
 const javascript = ts.transpileModule(source.replace(/^import .*;\r?\n/gm, ""), { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext } }).outputText;
 const fakeClient = () => ({
   auth: { getUser: async () => ({ data: { user: { id: ACTOR } }, error: null }) },
@@ -88,13 +90,17 @@ const fakeClient = () => ({
   from: (table: string) => query(table),
 });
 const sends: unknown[] = [];
-new Function("createClient", "commsProviderExecutionAllowed", "handlePortalInvitationCommand", "runPreSend", "Deno", "fetch", "console", javascript)(
+new Function("createClient", "commsProviderExecutionAllowed", "handlePortalInvitationCommand", "runPreSend", "Deno", "fetch", "console", "sendPlatformEmail", javascript)(
   fakeClient, async () => true, () => { throw Error("legacy cases never enter the canonical command"); },
   async () => { if (s.preSend === "throw") throw Error("synthetic pre-send read unavailable"); return s.preSend; },
-  { env: { get: (k: string) => ({ SUPABASE_URL: "https://test.supabase.co", SUPABASE_ANON_KEY: "anon", SUPABASE_SERVICE_ROLE_KEY: "service", RESEND_API_KEY: "synthetic" } as Row)[k] ?? "" },
+  { env: { get: (k: string) => ({ SUPABASE_URL: "https://test.supabase.co", SUPABASE_ANON_KEY: "anon", SUPABASE_SERVICE_ROLE_KEY: "service", SENDGRID_MAIL_SEND_API_KEY: "synthetic" } as Row)[k] ?? "" },
     serve: (h: typeof s.handler) => { s.handler = h; } },
-  async (...args: unknown[]) => { sends.push(args); return new Response(JSON.stringify({ id: "m" }), { status: 200 }); },
+  async () => { throw Error("the handler reaches the network only through the platform transport"); },
   { error: () => undefined },
+  (input: Parameters<typeof sendPlatformEmail>[0], deps: Parameters<typeof sendPlatformEmail>[1] = {}) => sendPlatformEmail(input, {
+    ...deps,
+    fetch: (async (...args: unknown[]) => { sends.push(args); return new Response(null, { status: 202, headers: { "X-Message-Id": "m" } }); }) as unknown as typeof fetch,
+  }),
 );
 
 let root: Root, host: HTMLDivElement;

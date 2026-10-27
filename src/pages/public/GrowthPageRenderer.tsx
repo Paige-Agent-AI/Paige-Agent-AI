@@ -11,6 +11,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import type { GrowthBlock, GrowthPageTheme } from "@/lib/growth";
+import { applyPublishedSeo } from "@/lib/growth/seo";
 import { GrowthPageView } from "@/components/growth/GrowthPageView";
 import { resolveGrowthTheme } from "@/components/growth/growth-theme";
 import { useGrowthVisit } from "@/hooks/useGrowthVisit";
@@ -90,9 +91,18 @@ export default function GrowthPageRenderer() {
     })();
   }, [tenantSlug, pageSlug]);
 
+  // The PUBLISHED sharing truth (row 12): title, description and og image come from the
+  // published columns only — applied through DOM APIs so a hostile value can never become
+  // markup, and absent fields stay absent (the app default title is never blanked).
   useEffect(() => {
-    if (page?.title) document.title = page.title;
-  }, [page?.title]);
+    if (!page) return;
+    applyPublishedSeo(document, {
+      title: page.title,
+      description: page.seo_json?.description ?? null,
+      ogImage: page.seo_json?.og_image ?? page.og_image_url,
+      canonicalUrl: window.location.href,
+    });
+  }, [page]);
 
   // A visit is recorded once the published page has loaded (MBC 7a); the server decides whether it counts.
   useGrowthVisit("page", page?.id);

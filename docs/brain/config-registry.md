@@ -565,19 +565,134 @@ Values intentionally omitted.
   (1600), `PAIGE_RENDER_MAX_SLICES` (8), `PAIGE_RENDER_JPEG_QUALITY` (80), `PAIGE_RENDER_READY_TIMEOUT_MS`
   (12000, and always shortened to fit the run deadline), `PAIGE_RENDER_MAX_SLICE_BYTES` (3500000). Audit rail: `paige_browser_usage` (written by the
   CALLER edge fn via service_role; the Fly host is DB-free, §9/§34).
-- **Email:** `RESEND_API_KEY`, `RESEND_WEBHOOK_SECRET`, plus from-address names
-  `PLATFORM_DEFAULT_EMAIL_FROM`, `BILLING_EMAIL_FROM`, `WELCOME_EMAIL_FROM`, `CALENDAR_EMAIL_FROM`,
-  `PLATFORM_SUPPORT_EMAIL`.
-- **PAIGE Email — SendGrid (tenant email under the 2026-10-13 owner policy; Resend stays the Platform Operator's own email).** Edge secret NAMES only; values are never recorded. Whether each one is set on production was NOT re-read by this record.
+- **Email:** from-address names `PLATFORM_DEFAULT_EMAIL_FROM`, `BILLING_EMAIL_FROM`, `WELCOME_EMAIL_FROM`,
+  `CALENDAR_EMAIL_FROM`, `PLATFORM_SUPPORT_EMAIL` (the SendGrid transport moves any of them onto
+  `mail.paigeagent.ai`, keeping the display name and local part).
+  - **Resend is being retired (owner, 2026-10-26: the Resend account was emptied — "I am moving EVERYTHING to
+    SendGrid").** `RESEND_API_KEY` / `RESEND_WEBHOOK_SECRET` no longer deliver anything. EXP03 PR #2958 removed the
+    `RESEND_API_KEY` read from tenant-signup, backfill-welcome, send-platform-invite, plan-reminder-cron,
+    public-booking, booking-manage, process-booking-notifications, send-portal-invite (both paths) and
+    send-transactional-email. The follow-up moved skill-runner (`draft_and_email_document`; an unconfirmed send is
+    reported `send_unconfirmed`, never `send_failed`), paige-mcp's four send tools, send-welcome-email,
+    send-payment-confirmation-email, send-support-request and send-funding-report onto the same transport, removed the
+    dead Resend adapter from `_shared/email/providers.ts` (every provider string there now refuses), and deleted the
+    `resend-admin-probe` diagnostic from the repo; production carries no deployed copy (function list read 2026-10-27 after the #2966 deploy — only `resend-webhook` remains, and it receives nothing).
+    The same EXP03 PR moved send-message's Resend arm into its SendGrid arm: PAIGE's managed
+    `<slug>@mail.paigeagent.ai` sender, connectorless sends and `provider='resend'` connectors all send through
+    SendGrid (the `'resend'` label stays on connector rows and `paige_messages_audit.pipe_used`). Readiness
+    (`_shared/comms-email/readiness.ts`, `_shared/sales-invoice-delivery/readiness-reader.ts`, agreement-send,
+    `_shared/agreements/notify.ts`) now keys on `SENDGRID_MAIL_SEND_API_KEY`. Still reading `RESEND_API_KEY`:
+    manage-tenant-domain only (tenant custom sending domains; no SendGrid domain-authentication code exists yet —
+    separate work), plus the Resend inbound/receipt webhooks (`handle-inbound-email`'s Resend arm,
+    `handle-resend-webhook`), which receive nothing once nothing sends through Resend.
+  - **Inbound replies — SendGrid Inbound Parse (2026-10-27, branch `feat/sendgrid-inbound-parse`, not yet merged or
+    deployed).** `handle-inbound-email` gained a second arm, selected by `Content-Type: multipart/form-data` (the Resend
+    Svix-JSON arm is unchanged). Edge secret NAME: **`SENDGRID_INBOUND_PARSE_SECRET`** (new; value never recorded).
+    Unset → every Inbound Parse POST gets 503 `inbound_parse_not_configured` and nothing is stored; wrong or missing
+    proof → 401. The proof is the secret as the HTTP basic-auth password (any username) or as the `t` query parameter,
+    compared in constant time. `verify_jwt = false` for the function is already declared in `config.toml`.
+    **Generate the secret as hex** (e.g. 32 random bytes → 64 hex characters) or another URL-safe alphabet: in the
+    `?t=` form a `+` decodes as a space and `%`/`&`/`#` break the query, and in the basic-auth form `:` `@` `/` break
+    the URL's userinfo — any of them makes every post a 401.
+    - **What the owner enters in SendGrid → Settings → Inbound Parse → Add Host & URL:** receiving domain
+      `mail.paigeagent.ai` (MX `10 mx.sendgrid.net` is already in place), destination URL
+      `https://inbound:<SENDGRID_INBOUND_PARSE_SECRET>@xygzykjyynhzqytbqnzu.supabase.co/functions/v1/handle-inbound-email`
+      — or, if SendGrid will not keep credentials in the URL, `https://xygzykjyynhzqytbqnzu.supabase.co/functions/v1/handle-inbound-email?t=<SENDGRID_INBOUND_PARSE_SECRET>`.
+      Leave "POST the raw, full MIME message" OFF (the arm reads the default parsed fields). Set the secret on the
+      function before saving the URL; until it is set SendGrid's posts are refused with 503 and retried.
+    - **Tenant routing:** EVERY SMTP envelope `to` address (never the header To) is resolved on its own, matched
+      exactly (LIKE wildcards escaped, `*` refused) against an active `channel_connectors.inbound_address`, then
+      `inbound_domain` — but the `inbound_domain` fallback is never used for a `paigeagent.ai` domain (review H1:
+      `channel_connectors` RLS lets a workspace admin write `inbound_domain='mail.paigeagent.ai'` on their own
+      connector, which would otherwise capture every reply to an unknown or retired slug). Every managed sender has
+      an exact address: `provision_paige_managed_email_connector` writes `inbound_address = <local>@mail.paigeagent.ai`
+      on the managed `provider='resend'` connector (read on production 2026-10-27: 7 active + 2 inactive managed
+      connectors, all on `mail.paigeagent.ai`; 0 rows with any `inbound_domain`). Each resolved business gets its OWN
+      row whose `recipients` / `meta.to` hold only that business's addresses (a Bcc to another business is never
+      revealed). No connector → 200 skip, logged. Any connector or contact read error, failed message insert or failed
+      draft-reply insert → 503 so SendGrid retries; businesses that already landed dedup on the retry.
+      **DB guard (20271118090000, owner-approved 2026-10-27):** `trg_guard_channel_connector_inbound_routing`
+      refuses (42501 `PAIGE_INBOUND_ROUTING_PROTECTED`) any direct browser (authenticated/anon) write that sets
+      `inbound_address`/`inbound_domain` on INSERT or changes either on UPDATE, and — on a row that already routes —
+      re-enables it or changes its `channel_type`/`provider`/`config`/`tenant_id`. SECURITY DEFINER writers (managed
+      sender re-provision on a business rename, domain verify, Gmail connect) and the service role still write them.
+      Trust is `current_user`, not the JWT, so a rename from the app keeps moving the managed address. Proof:
+      `supabase/tests/channel_connector_inbound_routing_server_only.sql` (CI: paige-spine-contract). **Retired addresses
+      (20271118100000):** a shared-domain address that a connector (`inbound_address`) or a shared sending
+      identity (`tenant_email_identities.local_part`, the From) stops holding is recorded in
+      `paige_retired_managed_addresses` (service-only, no FK to tenants on purpose) with the business that held
+      it; triggers on both tables refuse it, or an address another business holds, to any other business (23505
+      `PAIGE_MANAGED_ADDRESS_RETIRED` / `IDENTITY_LOCAL_PART_TAKEN`); provisioning gives a slug-derived name the
+      first free numbered variant (`left(name,36)||'-'||n`) so signup and renames never fail and connector and
+      From match; Solo Setup's availability check reports it unavailable. An identity's local part still does not
+      follow a rename (pre-existing). Backfilled from message history. Proof: `supabase/tests/managed_address_never_reissued.sql`.
+      Still owed: (b) a per-business DNS ownership proof before a custom `inbound_domain` is
+      accepted, with the provider domain id bound server-side (today `resend_domain_id` is admin-writable).
+    - **Sender authentication (review M2):** a From whose domain has neither an aligned DKIM `pass` (SendGrid's `dkim`
+      field, `{@domain : pass}`) nor an SPF `pass` (`SPF` field) for an envelope sender aligned with it is stored with
+      `meta.sender_unauthenticated = true` on thread `email-unverified:<tenant>:<address>`: not linked to or minted as
+      a contact, no `comms-draft-reply` action, no legacy mirror. Alignment is relaxed DMARC alignment: the two domains
+      share an organizational domain (last two labels, or three under a two-letter country code with a known
+      second level such as `co.uk`), approximated without a full public-suffix list. An `SPF` value that starts with
+      `pass` counts as a pass. A data or integrity violation on one business's insert (SQLSTATE class 22/23 other
+      than 23505) is logged and acknowledged as `rejected`, so it does not make SendGrid redeliver the post for days.
+    - **Follow-ups from the re-review (2026-10-27, not built here):** (N1) two concurrent deliveries of one post can
+      file two draft replies — the partial unique index below closes it; (N2) the shared-domain guard is hardcoded to
+      `paigeagent.ai` while the shared domain is config data — the DB guard above (20271118090000) now
+      keeps browser sessions from writing it; (N4) the inbox does not yet badge `meta.sender_unauthenticated` messages for the owner; (N6) a
+      display name containing `@` becomes a new contact's name; (N7) a failed contact create still stores the message
+      unlinked with 200 (both pre-existing).
+    - **Idempotency:** `messages.provider_message_id = sendgrid-inbound:<tenant>:<Message-ID>`, tenant-scoped because
+      `uq_messages_provider_message_id` is global (one email reaching two businesses must land in both, and a forged
+      Message-ID must not suppress another business's mail). No Message-ID (or an empty `<>`) →
+      `sendgrid-inbound:<tenant>:derived:<sha256(from \n to \n subject \n Date \n text)>`, flagged
+      `meta.provider_message_id_derived`. A redelivery whose message already landed re-files its draft reply if none
+      exists; one draft per message is DB-enforced by `uq_paige_actions_draft_reply_message` (partial unique index on
+      `paige_actions(tenant_id, payload->>'message_id') where action_kind='comms-draft-reply'`, migration
+      `20271118110000`), and a concurrent redelivery's 23505 reads as already filed. A sender display name holding `@`
+      is never used as a new contact's first name. A reply whose contact cannot be created is stored unlinked, not
+      refused (a refusal makes SendGrid redeliver for days). The legacy
+      `paige_conversations` mirror uses the same business-scoped id (its `(channel, source_message_id)` index is
+      global too). Body cap 32 MiB (413 above, also when streamed without Content-Length); `text`/`html` over
+      1,000,000 characters are cut and flagged `meta.body_truncated`. An attachment-only reply is kept. Attachment
+      bytes are NOT stored (no store exists for them); they are counted and described in `meta.attachments_not_stored`.
+    - **UNVERIFIED:** (1) that SendGrid forwards URL userinfo as an `Authorization: Basic` header and that the
+      Supabase gateway passes it through with `verify_jwt = false` — the `?t=` form avoids both questions but puts the
+      secret into request-URL logs; (2) SendGrid's signed Inbound Parse (ECDSA) — mentioned by the SendGrid skill,
+      not found in the parse-webhook docs read 2026-10-27, so not implemented; (3) non-UTF-8 `charsets` are decoded
+      as UTF-8; (4) the exact `dkim` field format for several signatures (the docs show only one pair); (5) no live
+      SendGrid post has reached this arm — proof is the handler test `npm run test:inbound-email` only.
+  - **Supabase Auth email (sign-up confirmation, password reset)** goes through the Auth custom-SMTP setting in the
+    Supabase dashboard, not edge code. **Re-pointed by the owner on 2026-10-27** to `smtp.sendgrid.net:587`, user
+    `apikey`, a restricted Mail Send key, sender name "Paige Agent AI" (seen in the owner's screenshot; the sender
+    address field and a test sign-up are not yet confirmed).
+  - **DNS (owner, 2026-10-27, read back via Cloudflare DNS):** every Resend record was deleted, including the
+    `inbound-smtp.us-east-1.amazonaws.com` MX records (Resend's inbound, not the owner's AWS). Root `paigeagent.ai`
+    MX is Private Email only; `mail.paigeagent.ai` MX is `10 mx.sendgrid.net` ahead of SendGrid Inbound Parse.
+- **PAIGE Email — SendGrid (tenant email under the 2026-10-13 owner policy; since EXP03 #2958/#2966 also all of PAIGE's own email — Resend is retired).** Edge secret NAMES only; values are never recorded. Whether each one is set on production was NOT re-read by this record.
   - `SENDGRID_MAIL_SEND_API_KEY` is the restricted Mail Send key. Readers:
+    - `_shared/email/platform-sendgrid.ts` (`sendPlatformEmail`, EXP03 #2958): the one transport for PAIGE's own email — every function listed under **Email** above. From is forced onto `mail.paigeagent.ai`; a 5xx/timeout is reported `unconfirmed` and never resent automatically. Two From rules live there (EXP03 #2966): `platformFrom` for PAIGE's own senders, and `tenantFrom(from, own)` for any From a business can influence — it keeps a `mail.paigeagent.ai` address only when it is that business's own server-resolved managed address and otherwise sends as `notifications@mail.paigeagent.ai` under the business's name (security H2). `_shared/email/tenant-sender.ts` (`ownManagedAddresses`, `tenantAddressing`) reads the business's own address from `tenant_sender_identity` + its active `tenant_email_identities` row and keeps replies on the original address when the From had to change; paige-mcp's four email tools and skill-runner's send port use it. PAIGE's welcome, payment-confirmation and funding-report emails send Reply-To `PLATFORM_SUPPORT_EMAIL` (fallback `hello@paigeagent.ai`), the support-request confirmation Reply-To `support@paigeagent.ai`;
     - `_shared/email/providers.ts` no longer reads it: `buildProvider` resolves `sendgrid` to a provider that refuses to send, so SendGrid is reachable only through the governed door (Experience 03 round-4 security LOW-3; the `SendGridProvider` adapter was removed);
     - `send-message/index.ts`: the governed SendGrid arm (20 s deadline, `custom_args` `paige_tenant_id`/`paige_operation_id`/`paige_message_id`). It sends through a SendGrid connector only for the email door's prepared operation, or (Experience 03, `20271116020000`) for an approved campaign email that `email_campaign_sendgrid_admit` admits for the dispatcher's leased recipient (custom_args: `paige_tenant_id` + the recipient id as both other claims); anything else is refused before any provider call (`paige_email_requires_governed_send`);
     - `growth-process-submission/lead-reply.ts`: presence only, so the lead-reply drafter counts a SendGrid sender with the door's own provider list (`emailProvidersFor`);
     - `_shared/comms-email/readiness.ts`: presence only, giving the `EMAIL_PROVIDER_NOT_CONFIGURED` state;
     - `comms-email-command/index.ts`: presence decides whether `sendgrid` counts as a sender provider (`emailProvidersFor`);
+      **Scheduled governed email (`20271119000000`, EXP03 O12 piece 1):** the door takes a top-level `send_at`
+      (whole minute, 2 min–30 days ahead when the card is raised; fingerprinted only when present, never in the
+      content digest) and a `cancel:true` body. A 14-argument `prepare_comms_email_send` overload (no default) marks
+      the bound row `queued` with `scheduled_for` and `binding.send_at`; `comms-scheduled-drain` releases a due bound
+      row through `releaseScheduledCommsEmail` → send-message (`comms_email_scheduled_release`) → the same claim.
+      A due release checks the scheduler's active owner/admin seat (`_comms_email_seat`), not their open workspace.
+      `cancel_comms_email_send` (any active owner/admin), `close_scheduled_comms_email` (always reaches a terminal,
+      owner-visible state; the Rail names the closer, else the scheduler while a member, else no Rail row and the
+      audit row says why), `close_missed_scheduled_comms_emails` (past the 15-minute grace), and
+      `unlease_scheduled_messages(ids, stamp)` (only this run's lease) are service-role only. `claim_due_scheduled_messages`
+      skips rows the provider floor would refuse and governed rows past their grace. Lead replies, agreement sends
+      and chat stay immediate.
     - `comms-sendgrid-scopes/index.ts`: records the key's scopes, and returns `SENDGRID_EXECUTOR_KEY_NOT_CONFIGURED` when unset.
   - **Production, 2026-10-26:** the owner turned SendGrid Subscription Tracking and Google Analytics tracking OFF (SendGrid → Settings → Tracking), so SendGrid adds no unsubscribe link of its own and does not rewrite link UTM tags.
   - `SENDGRID_WEBHOOK_PUBLIC_KEY` verifies Event Webhook signatures. Read only by `handle-sendgrid-webhook/index.ts`, which returns 503 until it is set. The `comms-sendgrid-webhook-admin` setup path does not read it; it hands back the key to install under this name. **Production, 2026-10-26: SET.** Verified by behaviour, not by reading it: an unsigned probe changed from 503 `webhook_not_configured` to 401 `invalid_signature`. The owner configured the Event Webhook by hand in SendGrid (enabled, signed, every event, the `handle-sendgrid-webhook` URL). SendGrid's "Test Your Integration" events passed the signature check but were quarantined, because real `sg_event_id`s carry `=` padding; the door fix is in the EXP03 PR that follows #2930.
+  - `SENDGRID_DOMAIN_AUTH_API_KEY` — restricted key, **Sender Authentication: Full Access only** (owner-created 2026-10-27, value never seen by an agent; presence UNVERIFIED by any agent until the domain rebuild's first read-only call). For the SendGrid rebuild of `manage-tenant-domain` (domain authentication for a business's own domain). Read by nothing yet.
   - `SENDGRID_WEBHOOK_ADMIN_API_KEY` is the scoped key used to configure the Event Webhook. **Production, 2026-10-26: NOT SET**, read by the broker as an operator: 503 `SENDGRID_WEBHOOK_ADMIN_API_KEY_NOT_CONFIGURED`. It is not needed while the webhook is configured by hand. Read ONLY by `comms-sendgrid-webhook-admin/index.ts`. `scripts/ci/forbid-sendgrid-admin-key-refs.mjs` fails CI on any other reference to it, or to `SENDGRID_PLATFORM_ADMIN_API_KEY`, which must never be read (rotation owed).
   - **Database facts, not secrets (`20271031000100`):**
     - `tenant_email_domains.sendgrid_domain_id`, `.sendgrid_status` and `.sendgrid_verified_at`, writable only by the service role (`guard_tenant_email_domain_sendgrid_facts`);

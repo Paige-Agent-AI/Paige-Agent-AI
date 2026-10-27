@@ -6,9 +6,12 @@ import { afterEach, beforeEach, expect, it, vi, beforeAll } from "vitest";
 // Real SoloApp, boundary, Finance and route hook. Only account/source transports
 // and unrelated departments are doubles; this does not establish customer QA.
 const port = vi.hoisted(() => ({ actor: "test-owner-a", tenant: "test-business-a", metricPhase: "ready", metrics: [] as unknown[] }));
-vi.mock("@/hooks/useTenantContext", () => ({ useTenantContext: () => ({ activeUserId: port.actor,
+vi.mock("@/hooks/useTenantContext", () => {
+ const tenantContext = () => ({ activeUserId: port.actor,
   activeTenantId: port.tenant, loading: false, accountContextStatus: "ready", isPlatformStaff: false,
-  activeTenant: { account_number: "123", name: "Synthetic company", account_type: "standalone", features: { solo_setup_completed: true } } }) }));
+  activeTenant: { account_number: "123", name: "Synthetic company", account_type: "standalone", features: { solo_setup_completed: true } } });
+ return { useTenantContext: tenantContext, useOptionalTenantContext: tenantContext };
+});
 vi.mock("@/hooks/usePlanList", () => ({ usePlanList: () => ({ plans: [], allItems: [], loading: false, error: null, forbidden: false, refresh: vi.fn() }) }));
 vi.mock("@/integrations/supabase/client", () => {
   const chain = new Proxy(function () {} as never, {

@@ -6,11 +6,11 @@
 // same rules the migration does (one binding per operation, replay, recipient/sender re-check).
 import { readFileSync } from "node:fs";
 import { transpileModule, ModuleKind, ScriptTarget } from "typescript";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { decideDeclaredCapability } from "../../supabase/functions/_shared/capability-kit/decision";
 import { confirmFingerprint } from "../../supabase/functions/_shared/confirm-fingerprint";
 import { COMMS_EMAIL_SEND_CAPABILITY } from "../../supabase/functions/_shared/paige-spine/domains/comms";
-import { COMMS_EMAIL_TOOL, COMMS_EMAIL_ACTION, FINGERPRINT, UUID, parseCommsEmailCommand, commsEmailBodyHtml, commsEmailContentDigest } from "../../supabase/functions/_shared/comms-email/contract";
+import { COMMS_EMAIL_TOOL, COMMS_EMAIL_ACTION, FINGERPRINT, UUID, parseCommsEmailCommand, commsEmailBodyHtml, commsEmailContentDigest, parseCommsEmailSendAt, canonicalCommsEmailSendAt, COMMS_EMAIL_SCHEDULED_RELEASE_GRACE_MS } from "../../supabase/functions/_shared/comms-email/contract";
 import { resolveCommsEmailParties, commsEmailReadinessOutcome, emailProvidersFor, type CommsEmailReadiness } from "../../supabase/functions/_shared/comms-email/readiness";
 import { verifyLeadReplyApproval, storedApprovalMatches, recordLeadReplySend, bindingApprovalMatches, leadReplyPrepareRefusal } from "../../supabase/functions/comms-email-command/lead-reply-approval";
 import { executeCommsEmailSend, reconcileCommsEmailSend, parseCommsEmailStoredCall, commsEmailSafeResult } from "../../supabase/functions/_shared/comms-email/adapter";
@@ -57,6 +57,7 @@ type Setup = {
   // a replay read that errors, and a finalize that the database refuses.
   actor?: string; activeTenant?: string | null; readResultFails?: boolean; finalizeFails?: boolean;
   providerExecution?: unknown; providerBoundaryError?: boolean;
+  cancelFails?: boolean;
 };
 function setup(options: Setup = {}) {
   const tables: Record<string, Row[]> = {
@@ -101,7 +102,11 @@ function setup(options: Setup = {}) {
   };
   const resultOf = (binding: Row) => ({ ok: binding.state === "provider_accepted", outcome: binding.state, operation_id: binding.operation_id, message_id: binding.message_id,
     provider_receipt_available: binding.state === "provider_accepted", delivery_confirmed: false, provider: binding.provider,
-    reconcilable: binding.provider === "resend" && binding.state === "unknown", ...(binding.outcome_reason && ["refused", "failed"].includes(String(binding.state)) ? { reason: binding.outcome_reason } : {}) });
+    // The database's former answer for a Resend operation. Experience 03 retires it in SQL too, but the
+    // adapter must never re-send even when a stale database still says so (SendGrid has no idempotent replay).
+    reconcilable: binding.provider === "resend" && binding.state === "unknown", ...(binding.outcome_reason && ["refused", "failed"].includes(String(binding.state)) ? { reason: binding.outcome_reason } : {}),
+    // "Approve now, send later": the database names a scheduled operation's time (20271119000000).
+    ...(typeof binding.send_at === "string" ? { send_at: binding.send_at } : {}) });
   const admin = {
     from: builder,
     rpc: async (name: string, args: Row) => {
@@ -131,10 +136,23 @@ function setup(options: Setup = {}) {
         return { data: hit?.operation_id ?? null, error: null };
       }
       if (name === "read_comms_email_send_binding") { const b = [...bindings.values()].find(x => x.message_id === args._message_id); return { data: b ? { ...b } : null, error: null }; }
+      // cancel_comms_email_send, as the SQL decides it: not found / not scheduled raise; a claimed or
+      // settled operation answers cancelled:false with its state; a prepared one is closed as refused.
+      if (name === "cancel_comms_email_send") {
+        if (options.cancelFails) return { data: null, error: { message: "network" } };
+        const b = bindings.get(String(args._operation_id));
+        if (!b || b.tenant_id !== args._expected_tenant_id) return { data: null, error: { code: "P0002", message: "COMMS_EMAIL_OPERATION_NOT_FOUND" } };
+        if (typeof b.send_at !== "string") return { data: null, error: { code: "55000", message: "COMMS_EMAIL_NOT_SCHEDULED" } };
+        if (b.state !== "prepared") return { data: { cancelled: false, outcome: b.state, reason: b.outcome_reason ?? null, operation_id: b.operation_id, message_id: b.message_id }, error: null };
+        b.state = "refused"; b.outcome_reason = "cancelled_by_owner";
+        return { data: { cancelled: true, outcome: "refused", reason: "cancelled_by_owner", operation_id: b.operation_id, message_id: b.message_id, send_at: b.send_at }, error: null };
+      }
       if (name === "prepare_comms_email_send") {
         const op = String(args._operation_id).toLowerCase(); // a uuid parameter: stored as lowercase text
         const existing = bindings.get(op);
-        if (existing) return { data: { ok: true, replayed: true, state: existing.state, message_id: existing.message_id }, error: null };
+        // The 14-argument overload: a stored send time must equal the requested one (including none).
+        if (existing && "_send_at" in args && existing.send_at !== args._send_at) return { data: null, error: { code: "22023", message: "COMMS_EMAIL_REPLAY_MISMATCH" } };
+        if (existing) return { data: { ok: true, replayed: true, state: existing.state, message_id: existing.message_id, ...("_send_at" in args ? { send_at: existing.send_at } : {}) }, error: null };
         const contact = tables.clients.find(c => c.id === args._contact_id && c.tenant_id === args._expected_tenant_id);
         if (!contact) return { data: null, error: { code: "42501", message: "COMMS_EMAIL_CONTACT_NOT_IN_WORKSPACE" } };
         if (!(contact.client_contact_methods as Row[]).some(m => m.kind === "email" && String(m.value).trim().toLowerCase() === args._recipient)) return { data: null, error: { code: "40001", message: "COMMS_EMAIL_RECIPIENT_CHANGED" } };
@@ -145,8 +163,9 @@ function setup(options: Setup = {}) {
         const governance = args._governance as Row;
         if (governance.approval_channel !== "operator_card" || !FINGERPRINT.test(String(governance.approved_fingerprint)) || governance.tool !== COMMS_EMAIL_TOOL) return { data: null, error: { code: "42501", message: "COMMS_EMAIL_GOVERNANCE_REQUIRED" } };
         const message_id = `60000000-0000-4000-8000-${String(bindings.size + 1).padStart(12, "0")}`;
-        bindings.set(op, { operation_id: op, tenant_id: args._expected_tenant_id, actor_user_id: args._actor_user_id, contact_id: args._contact_id, recipient: args._recipient, connector_id: args._connector_id, from_address: args._from_address, provider: c.provider, subject: args._subject, body_text: args._body_text, body_html: args._body_html, content_digest: digest, command: args._command, state: "prepared", message_id });
-        return { data: { ok: true, replayed: false, state: "prepared", message_id }, error: null };
+        bindings.set(op, { operation_id: op, tenant_id: args._expected_tenant_id, actor_user_id: args._actor_user_id, contact_id: args._contact_id, recipient: args._recipient, connector_id: args._connector_id, from_address: args._from_address, provider: c.provider, subject: args._subject, body_text: args._body_text, body_html: args._body_html, content_digest: digest, command: args._command, state: "prepared", message_id,
+          ...("_send_at" in args ? { send_at: args._send_at, status: "queued" } : {}) });
+        return { data: { ok: true, replayed: false, state: "prepared", message_id, ...("_send_at" in args ? { send_at: args._send_at } : {}) }, error: null };
       }
       return { data: null, error: { code: "42883", message: "unknown rpc" } };
     },
@@ -185,6 +204,7 @@ function setup(options: Setup = {}) {
     commsProviderExecutionAllowed, COMMS_PROVIDER_EXECUTION_DISABLED,
     confirmFingerprint, decideDeclaredCapability, COMMS_EMAIL_SEND_CAPABILITY,
     COMMS_EMAIL_TOOL, COMMS_EMAIL_ACTION, FINGERPRINT, UUID, parseCommsEmailCommand, commsEmailBodyHtml, commsEmailContentDigest,
+    parseCommsEmailSendAt, canonicalCommsEmailSendAt, COMMS_EMAIL_SCHEDULED_RELEASE_GRACE_MS,
     resolveCommsEmailParties, commsEmailReadinessOutcome, emailProvidersFor,
     verifyLeadReplyApproval, storedApprovalMatches, recordLeadReplySend, bindingApprovalMatches, leadReplyPrepareRefusal, runPreSend: async () => { throw new Error("readiness is substituted in this suite"); },
     readCommsEmailReadiness: async (_admin: unknown, input: Row) => { calls.push({ name: "readiness", args: input }); return readiness; },
@@ -404,7 +424,7 @@ describe("comms-email-command: the canonical approval cycle", () => {
     const r = await t.request({ approved_fingerprint: proposal.body.fingerprint });
     expect(r.body).toMatchObject({ ok: false, outcome: "failed", reason: "PROVIDER_REJECTED", provider_receipt_available: false });
   });
-  it("an unanswered send is outcome_unknown, and the next identical request reconciles it instead of minting a new operation", async () => {
+  it("an unanswered send is outcome_unknown, and the next identical request is routed to it — never a new operation, never a second send", async () => {
     const t = setup({ sendBehavior: "throw" });
     const proposal = await t.request();
     const first = await t.request({ approved_fingerprint: proposal.body.fingerprint });
@@ -416,7 +436,9 @@ describe("comms-email-command: the canonical approval cycle", () => {
     expect(retry.body.reconciled_operation_id).toBe(OP);
     expect(t.named("insert:paige_pending_confirmations")).toHaveLength(before);
     expect(t.named("prepare_comms_email_send")).toHaveLength(1);
-    expect(t.sends.slice(t2sends)).toEqual([expect.objectContaining({ comms_email_operation_id: OP, comms_email_reconcile: true, idempotency_key: `comms-email:${OP}` })]);
+    expect(retry.body).toMatchObject({ ok: false, outcome: "outcome_unknown", code: "COMMS_EMAIL_RECONCILIATION_REQUIRED", reconcilable: false });
+    // SendGrid has no idempotent replay, so the email that may already have gone out is not POSTed again.
+    expect(t.sends.slice(t2sends)).toEqual([]);
     expect(t.bindings.has(OP_2)).toBe(false);
   });
   it("records the governed decision, and refuses when that receipt cannot be written", async () => {
@@ -599,5 +621,196 @@ describe("comms-email-command: a teammate's identical email of unknown outcome (
     t.options.actor = ACTOR;
     const own = await t.request({ operation_id: OP_2 });
     expect(own.body.reconciled_operation_id).toBe(OP);
+  });
+});
+
+describe("comms-email-command: approve now, send later", () => {
+  afterEach(() => { vi.useRealTimers(); });
+  // A whole-minute instant an hour ahead, in the canonical text the door stores.
+  const later = (ms = 3_600_000) => new Date(Math.floor((Date.now() + ms) / 60_000) * 60_000).toISOString();
+
+  it("a card for a scheduled email fingerprints the time, names it, and prepares or sends nothing", async () => {
+    const t = setup();
+    const sendAt = later();
+    const scheduled = await t.request({ send_at: sendAt });
+    expect(scheduled.status).toBe(202);
+    expect(scheduled.body).toMatchObject({ outcome: "approval_required", preview: { send_at: sendAt } });
+    expect(String(scheduled.body.summary)).toMatch(new RegExp(` — scheduled for ${sendAt.slice(0, 16).replace("T", " ")} UTC$`));
+    const stored = t.named("insert:paige_pending_confirmations")[0].args.args as Row;
+    expect(stored.send_at).toBe(sendAt);
+    expect(scheduled.body.fingerprint).toBe(await confirmFingerprint(COMMS_EMAIL_TOOL, stored));
+    const { send_at: _drop, ...immediate } = stored;
+    expect(await confirmFingerprint(COMMS_EMAIL_TOOL, immediate)).not.toBe(scheduled.body.fingerprint);
+    expect(t.named("prepare_comms_email_send")).toEqual([]); expect(t.sends).toEqual([]);
+  });
+  it("an immediate card is byte-for-byte what it was: no send_at in its args, preview or summary", async () => {
+    const t = setup();
+    const r = await t.request();
+    const stored = t.named("insert:paige_pending_confirmations")[0].args.args as Row;
+    expect(stored).not.toHaveProperty("send_at");
+    expect(r.body.preview).not.toHaveProperty("send_at");
+    expect(r.body.summary).toBe('Email Dana Reyes at dana@example.test from owner@business.test: "Checking in"');
+    const sent = await t.request({ approved_fingerprint: r.body.fingerprint });
+    expect(sent.body.outcome).toBe("provider_accepted");
+    expect(t.named("prepare_comms_email_send")[0].args).not.toHaveProperty("_send_at");
+  });
+  it("refuses an unreadable, zone-less, past or too-distant time before any read", async () => {
+    for (const send_at of ["tomorrow at 9", "2030-01-01T09:00:00", new Date(Date.now() - 60_000).toISOString(), later(60_000), later(31 * 86_400_000), 1234]) {
+      const t = setup();
+      const r = await t.request({ send_at });
+      expect(r, String(send_at)).toMatchObject({ status: 400, body: { ok: false, outcome: "refused", code: "COMMS_EMAIL_SEND_AT_INVALID" } });
+      expect(t.calls.filter(c => c.name !== "comms_provider_execution_allowed")).toEqual([]);
+    }
+  });
+  it("a drafted lead reply is never scheduled", async () => {
+    const t = setup();
+    const r = await t.request({ send_at: later(), approval_id: "70000000-0000-4000-8000-000000000001" });
+    expect(r).toMatchObject({ status: 400, body: { outcome: "refused", code: "COMMS_EMAIL_SCHEDULE_NOT_SUPPORTED" } });
+    expect(t.calls.filter(c => c.name !== "comms_provider_execution_allowed")).toEqual([]);
+  });
+  it("approving prepares the row with the approved time and answers 'scheduled': send-message is never called", async () => {
+    const t = setup();
+    const sendAt = later();
+    const proposal = await t.request({ send_at: sendAt });
+    const r = await t.request({ send_at: sendAt, approved_fingerprint: proposal.body.fingerprint });
+    expect(r.status).toBe(200);
+    expect(r.body).toMatchObject({ ok: true, outcome: "scheduled", send_at: sendAt, operation_id: OP, delivery_confirmed: false });
+    expect(r.body.message_id).toMatch(UUID);
+    expect(t.named("prepare_comms_email_send")).toHaveLength(1);
+    expect(t.named("prepare_comms_email_send")[0].args._send_at).toBe(sendAt);
+    expect(t.sends).toEqual([]);
+    // ok:true is not "sent": the support case is moved only by a provider-accepted send.
+    expect(t.named("mark_support_case_outbound")).toEqual([]);
+    expect(t.bindings.get(OP)).toMatchObject({ state: "prepared", send_at: sendAt, status: "queued" });
+  });
+  it("the stored call's time runs, whatever a confirm names", async () => {
+    const t = setup();
+    const sendAt = later();
+    const proposal = await t.request({ send_at: sendAt });
+    const r = await t.request({ approved_fingerprint: proposal.body.fingerprint });
+    expect(r.body).toMatchObject({ ok: true, outcome: "scheduled", send_at: sendAt });
+    expect(t.sends).toEqual([]);
+  });
+  it("a scheduled operation asked about again is answered 'scheduled' — never a fresh card, never a send", async () => {
+    const t = setup();
+    const sendAt = later();
+    const proposal = await t.request({ send_at: sendAt });
+    await t.request({ send_at: sendAt, approved_fingerprint: proposal.body.fingerprint });
+    const cards = t.named("insert:paige_pending_confirmations").length;
+    for (const extra of [{}, { send_at: sendAt }, { send_at: later(7_200_000) }]) {
+      const again = await t.request(extra);
+      expect(again.status).toBe(200);
+      expect(again.body).toMatchObject({ ok: true, outcome: "scheduled", send_at: sendAt, operation_id: OP, replayed: true });
+    }
+    expect(t.named("insert:paige_pending_confirmations")).toHaveLength(cards);
+    expect(t.named("prepare_comms_email_send")).toHaveLength(1);
+    expect(t.sends).toEqual([]);
+  });
+  it("past its release grace and still prepared, a scheduled operation is neither 'scheduled' nor a resend: outcome_unknown", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    const t = setup();
+    const sendAt = later(180_000);
+    const proposal = await t.request({ send_at: sendAt });
+    await t.request({ send_at: sendAt, approved_fingerprint: proposal.body.fingerprint });
+    // Inside the grace it is still being released: still answered as scheduled.
+    vi.setSystemTime(Date.parse(sendAt) + COMMS_EMAIL_SCHEDULED_RELEASE_GRACE_MS - 1000);
+    expect((await t.request()).body).toMatchObject({ ok: true, outcome: "scheduled" });
+    vi.setSystemTime(Date.parse(sendAt) + COMMS_EMAIL_SCHEDULED_RELEASE_GRACE_MS + 1000);
+    const late = await t.request();
+    expect(late).toMatchObject({ status: 503, body: { ok: false, outcome: "outcome_unknown", code: "COMMS_EMAIL_SCHEDULED_RELEASE_UNSETTLED", operation_id: OP, replayed: true } });
+    expect(t.sends).toEqual([]);
+    expect(t.named("prepare_comms_email_send")).toHaveLength(1);
+  });
+  it("a live card for another time is a different approval cycle on the same operation", async () => {
+    const t = setup();
+    await t.request({ send_at: later() });
+    const r = await t.request({ send_at: later(7_200_000) });
+    expect(r).toMatchObject({ status: 409, body: { outcome: "refused", code: "APPROVAL_CYCLE_INVALID" } });
+  });
+  it("a scheduled approval confirmed after its time is refused before anything is prepared", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    const t = setup();
+    const sendAt = later(180_000);
+    const proposal = await t.request({ send_at: sendAt });
+    vi.setSystemTime(Date.parse(sendAt) - 30_000);
+    const r = await t.request({ approved_fingerprint: proposal.body.fingerprint });
+    expect(r).toMatchObject({ status: 409, body: { ok: false, outcome: "refused", code: "COMMS_EMAIL_SEND_AT_PASSED" } });
+    expect(t.named("prepare_comms_email_send")).toEqual([]); expect(t.sends).toEqual([]);
+  });
+
+  describe("cancel", () => {
+    const schedule = async (t: ReturnType<typeof setup>) => {
+      const sendAt = later();
+      const proposal = await t.request({ send_at: sendAt });
+      await t.request({ send_at: sendAt, approved_fingerprint: proposal.body.fingerprint });
+      return sendAt;
+    };
+    const cancel = (t: ReturnType<typeof setup>, extra: Row = {}) =>
+      t.raw({ method: "POST", body: JSON.stringify({ expected_tenant_id: TENANT, operation_id: OP, cancel: true, ...extra }) });
+
+    it("closes a scheduled email that has not gone out, under the database's decision", async () => {
+      const t = setup();
+      await schedule(t);
+      const r = await cancel(t);
+      expect(r.status).toBe(200);
+      expect(r.body).toMatchObject({ ok: true, cancelled: true, outcome: "refused", reason: "CANCELLED_BY_OWNER", operation_id: OP, delivery_confirmed: false });
+      expect(t.named("cancel_comms_email_send")[0].args).toEqual({ _actor_user_id: ACTOR, _expected_tenant_id: TENANT, _operation_id: OP });
+      expect(t.bindings.get(OP)?.state).toBe("refused");
+      expect(t.sends).toEqual([]);
+    });
+    it("too late once the release has taken it: the send's own state is reported, never 'cancelled'", async () => {
+      const t = setup();
+      await schedule(t);
+      t.bindings.get(OP)!.state = "dispatching";
+      expect(await cancel(t)).toMatchObject({ status: 409, body: { ok: false, cancelled: false, code: "COMMS_EMAIL_CANCEL_TOO_LATE", outcome: "outcome_unknown" } });
+      t.bindings.get(OP)!.state = "provider_accepted";
+      expect(await cancel(t)).toMatchObject({ status: 409, body: { cancelled: false, code: "COMMS_EMAIL_CANCEL_TOO_LATE", outcome: "provider_accepted" } });
+    });
+    it("too late on a closed send carries the recorded reason, and only a well-formed one", async () => {
+      const t = setup();
+      await schedule(t);
+      Object.assign(t.bindings.get(OP)!, { state: "refused", outcome_reason: "scheduled_release_missed" });
+      expect(await cancel(t)).toMatchObject({ status: 409, body: { code: "COMMS_EMAIL_CANCEL_TOO_LATE", outcome: "refused", reason: "scheduled_release_missed" } });
+      Object.assign(t.bindings.get(OP)!, { outcome_reason: "<b>not a code</b>" });
+      expect((await cancel(t)).body).not.toHaveProperty("reason");
+      Object.assign(t.bindings.get(OP)!, { state: "provider_accepted", outcome_reason: "scheduled_release_missed" });
+      expect((await cancel(t)).body).not.toHaveProperty("reason");
+    });
+    it("an immediate send cannot be cancelled here, and an unknown operation is not found", async () => {
+      const t = setup();
+      const proposal = await t.request();
+      await t.request({ approved_fingerprint: proposal.body.fingerprint });
+      expect(await cancel(t)).toMatchObject({ status: 409, body: { cancelled: false, code: "COMMS_EMAIL_NOT_SCHEDULED" } });
+      expect(await cancel(t, { operation_id: OP_2 })).toMatchObject({ status: 404, body: { cancelled: false, code: "COMMS_EMAIL_NOT_FOUND" } });
+    });
+    it("a teammate owner/admin may cancel (a brake needs no special authority); a read-only member may not", async () => {
+      const t = setup();
+      await schedule(t);
+      t.options.actor = ACTOR_2;
+      expect((await cancel(t)).body).toMatchObject({ ok: true, cancelled: true });
+      const m = setup({ role: "member" });
+      expect(await cancel(m)).toMatchObject({ status: 403, body: { code: "COMMS_EMAIL_FORBIDDEN" } });
+      expect(m.named("cancel_comms_email_send")).toEqual([]);
+    });
+    it("is not held behind the provider kill switch, but is behind the open workspace", async () => {
+      const t = setup();
+      await schedule(t);
+      t.options.providerExecution = false;
+      expect((await cancel(t)).body).toMatchObject({ cancelled: true });
+      const other = setup({ activeTenant: FOREIGN });
+      expect(await cancel(other)).toMatchObject({ status: 409, body: { code: "WORKSPACE_CHANGED" } });
+      expect(other.named("cancel_comms_email_send")).toEqual([]);
+    });
+    it("the body is exactly the three keys; nothing else may ride with a cancel", async () => {
+      for (const extra of [{ command }, { send_at: later() }, { approved_fingerprint: "0123456789abcdef" }, { cancel: false }, { cancel: "yes" }]) {
+        const t = setup();
+        expect(await cancel(t, extra), JSON.stringify(extra)).toMatchObject({ status: 400, body: { code: "COMMS_EMAIL_COMMAND_INVALID" } });
+        expect(t.named("cancel_comms_email_send")).toEqual([]);
+      }
+    });
+    it("an unreadable cancel answer says it could not be verified, never 'cancelled'", async () => {
+      const t = setup({ cancelFails: true });
+      expect(await cancel(t)).toMatchObject({ status: 503, body: { ok: false, cancelled: false, code: "COMMS_EMAIL_CANCEL_UNVERIFIED" } });
+    });
   });
 });

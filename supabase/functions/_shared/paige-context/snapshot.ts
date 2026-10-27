@@ -1403,11 +1403,33 @@ function domainSection(domain: SnapshotDomain, result: ContextSourceResult<Domai
   const lines = [`[${title}] ${s.freshness === "snapshot" ? "stored snapshot as of" : "read at"} ${t(s.as_of)}`];
   if (s.coverage === "partial") lines.push(`- Coverage is partial: ${s.coverage_note === undefined ? "no note" : q(s.coverage_note)}`);
   if (s.headline.length === 0) lines.push("- No figures reported.");
+  // Share only exact repeated notes within this original source section, and only when doing so
+  // saves space. Every figure retains its basis and explicit reference; the original quoted note
+  // travels with the whole section through the existing budget/omission policy.
+  const noteCounts = new Map<string, number>();
+  for (const metric of s.headline) {
+    if (typeof metric.window_note === "string" && metric.window_note !== "") {
+      noteCounts.set(metric.window_note, (noteCounts.get(metric.window_note) ?? 0) + 1);
+    }
+  }
+  const sharedNotes = new Map<string, { reference: string; definition: string }>();
+  for (const [note, count] of noteCounts) {
+    if (count < 2) continue;
+    const id = sharedNotes.size + 1;
+    const reference = `window note ${id}`;
+    const definition = `- Window note ${id} for this area: ${q(note)}`;
+    if (count * q(note).length > count * reference.length + definition.length + 1) {
+      sharedNotes.set(note, { reference, definition });
+    }
+  }
   for (const m of s.headline) {
     const tags = [BASIS_TAG[m.basis]];
-    if (typeof m.window_note === "string" && m.window_note !== "") tags.push(q(m.window_note));
+    if (typeof m.window_note === "string" && m.window_note !== "") {
+      tags.push(sharedNotes.get(m.window_note)?.reference ?? q(m.window_note));
+    }
     lines.push(`- ${q(m.label)}: ${formatSnapshotMetricValue(m)} (${tags.join("; ")})`);
   }
+  for (const note of sharedNotes.values()) lines.push(note.definition);
   for (const c of s.changes) lines.push(`- Change${c.direction ? ` (${t(c.direction)})` : ""}: ${q(c.summary)}`);
   for (const o of s.outcomes) {
     lines.push(`- Outcome ${q(o.capability_key)}: ${o.succeeded} succeeded, ${o.failed} failed`);

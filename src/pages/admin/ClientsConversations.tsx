@@ -34,6 +34,7 @@ import {
   MESSAGE_COLS, THREAD_COLS, messageRowsFromDb, threadsFromDb, CHANNEL_ICON, CHANNEL_LABEL,
   partyLabel, bodyPreview, msgTime, contactNameFromClient,
   INBOX_VIEWS, endOfTodayMs, readSendResult, resolveMergeVars, UNDO_WINDOW_MS,
+  SEND_UNCONFIRMED_COPY, isUnconfirmedMessage, ownerSendError,
   useCommsAttachments,
 } from "./conversations/inbox-shared";
 import { voiceHistoryStatus } from "@/lib/voice/voiceCallSafety";
@@ -47,7 +48,7 @@ import { ThreadFilters, useLabelCatalog } from "./conversations/ThreadFilters";
 import { ContactCardRail } from "./conversations/ContactCardRail";
 import { readableMessageBody, shouldFoldEmail } from "./conversations/messageReading";
 // INT-328 — a governed send (an email or invoice already approved and on its way) is never a draft.
-import { GOVERNED_SEND_COLS, GOVERNED_SEND_COPY, governedEmailReceiptLabel, governedSendView, isApprovableDraft, type GovernedSendFields } from "./conversations/governedSend";
+import { GOVERNED_SEND_COLS, GOVERNED_SEND_COPY, cancelTooLateLine, governedEmailReceiptLabel, governedNotSentLine, governedSendView, isApprovableDraft, isScheduledMessage, scheduledForLabel, type GovernedSendFields } from "./conversations/governedSend";
 // E09 — the portal channel: recognise portal rows and reply through comms_portal_reply (no provider).
 import {
   PORTAL_BODY_MAX, PORTAL_IDENTITY_ID, createPortalRequestIds, isPortalHelpRequest, isPortalMessage, portalBodyError,
@@ -136,20 +137,33 @@ function mergeContext(sel: SelectedView | null, sig?: Signature, snip?: Snippet)
 // ported email-template picker resolve merge vars through the exact same helper).
 
 // ── Status pill mapping for a single message ─────────────────────────────────────
+// The plain error/success pill text measured below AA in light at 10px (Failed 3.98:1, Sent 3.70:1,
+// exp03-measurements.json); deepened toward ink exactly like the governed "Not sent" pill.
+const PILL_INK_ERROR = "text-[color-mix(in_oklab,hsl(var(--destructive))_62%,hsl(var(--foreground)))]";
+const PILL_INK_SUCCESS = "text-[color-mix(in_oklab,hsl(var(--success))_62%,hsl(var(--foreground)))]";
+
 function messageStatusPill(m: MessageRow & GovernedSendFields) {
   // A send the server stopped before it left (suppressed, do-not-disturb, no consent) is written
   // 'blocked'. Without a pill it read as an ordinary sent bubble.
-  if ((m.status as string) === "blocked") return <StatePill state="error">Not sent</StatePill>;
-  if (m.status === "failed") return <StatePill state="error">Failed</StatePill>;
+  if ((m.status as string) === "blocked") return <StatePill state="error" className={PILL_INK_ERROR}>Not sent</StatePill>;
+  // An email the service may have taken (its answer was lost) is never shown as a plain failure (Experience 03).
+  if (isUnconfirmedMessage(m)) {
+    return (
+      <StatePill state="warning" className="text-[color-mix(in_oklab,hsl(var(--warning))_62%,hsl(var(--foreground)))]">
+        {GOVERNED_SEND_COPY.unconfirmed.pill}
+      </StatePill>
+    );
+  }
+  if (m.status === "failed") return <StatePill state="error" className={PILL_INK_ERROR}>Failed</StatePill>;
   if (m.status === "sent" || m.status === "delivered" || m.status === "read") {
     // A settled governed email never says plain "Sent" — that reads as delivered to a
     // non-technical owner. Only the provider's own delivered event says Delivered; an
     // accepted operation with a sent/read marker says Accepted (the email service took it,
     // delivery not confirmed). Everything else (no binding, not accepted) keeps "Sent".
     const receipt = governedEmailReceiptLabel(m);
-    if (receipt === "Delivered") return <StatePill state="success">Delivered</StatePill>;
-    if (receipt === "Accepted") return <StatePill state="success">Accepted</StatePill>;
-    return <StatePill state="success">Sent</StatePill>;
+    if (receipt === "Delivered") return <StatePill state="success" className={PILL_INK_SUCCESS}>Delivered</StatePill>;
+    if (receipt === "Accepted") return <StatePill state="success" className={PILL_INK_SUCCESS}>Accepted</StatePill>;
+    return <StatePill state="success" className={PILL_INK_SUCCESS}>Sent</StatePill>;
   }
   if (m.status === "queued") return <StatePill state="pending">Queued</StatePill>;
   return null;
@@ -179,13 +193,19 @@ function MessageBubble({
   onApprove,
   onEdit,
   onCancelScheduled,
+  onCancelGovernedScheduled,
+  cancelPending = false,
   approving,
   sendDisabled = false,
 }: {
-  m: MessageRow;
+  m: MessageRow & GovernedSendFields;
   onApprove: (m: MessageRow) => void;
   onEdit: (m: MessageRow) => void;
   onCancelScheduled: (id: string) => void;
+  /** Cancel an approved, scheduled governed email (by its operation) through the governed email door. */
+  onCancelGovernedScheduled: (operationId: string) => void;
+  /** This scheduled email's Cancel is already on its way: the control is disabled until it answers. */
+  cancelPending?: boolean;
   approving: boolean;
   sendDisabled?: boolean;
 }) {
@@ -270,7 +290,11 @@ function MessageBubble({
       }
       status={
         isCall ? voiceStatusPill(m)
+        : governed === "scheduled" ? <StatePill state="pending">{GOVERNED_SEND_COPY.scheduled.pill}</StatePill>
         : governed === "sending" ? <StatePill state="pending">{GOVERNED_SEND_COPY.sending.pill}</StatePill>
+        : governed === "not_sent" && m.comms_email_reason === "cancelled_by_owner" ? (
+          <StatePill state="off">{GOVERNED_SEND_COPY.canceled.pill}</StatePill>
+        )
         : governed === "not_sent" ? (
           // Red deepened toward ink: the plain error pill measured 4.21:1 in light at 10px
           // (render-results.json), the same fix the "Couldn't confirm" pill needed.
@@ -287,7 +311,8 @@ function MessageBubble({
         )
         : messageStatusPill(m)
       }
-      error={m.status === "failed" && !governedOpen ? m.error : null}
+      // An unconfirmed send is not a failure: its line renders in ink through `footer`, never the error colour.
+      error={m.status === "failed" && !governedOpen && !isUnconfirmedMessage(m) ? ownerSendError(m.error) : null}
       subject={isCall || isHelpRequest ? undefined : (m.subject ?? undefined)}
       foldable={!isCall && shouldFoldEmail(m.channel_type, body)}
       call={
@@ -315,11 +340,36 @@ function MessageBubble({
         ) : undefined
       }
       footer={
-        governed === "unconfirmed" ? (
+        governed === "unconfirmed" || (m.status === "failed" && !governedOpen && isUnconfirmedMessage(m)) ? (
           <p data-governed-send="unconfirmed" className="text-[11px] leading-4 text-foreground">
             {GOVERNED_SEND_COPY.unconfirmed.line}
           </p>
         ) :
+        // An approved email set to go out later: cancelled through the governed email door (never the
+        // generic undo, which no longer touches a governed row). The time is the viewer's local time.
+        governed === "scheduled" && m.comms_email_operation && m.comms_email_send_at ? (
+          <p className="flex flex-wrap items-center gap-x-2 text-[11px] leading-4 text-muted-foreground">
+            <span>Sends {scheduledForLabel(m.comms_email_send_at)}</span>
+            <button
+              type="button"
+              data-governed-send="scheduled"
+              disabled={cancelPending}
+              aria-busy={cancelPending || undefined}
+              aria-label={cancelPending ? "Canceling the scheduled email" : `Cancel the email scheduled for ${scheduledForLabel(m.comms_email_send_at)}`}
+              onClick={() => onCancelGovernedScheduled(m.comms_email_operation!)}
+              className="-my-1 inline-flex min-h-6 min-w-6 items-center px-1 text-[11px] font-medium text-foreground underline underline-offset-2 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--ring))] disabled:cursor-not-allowed"
+            >
+              {cancelPending ? "Canceling…" : "Cancel"}
+            </button>
+          </p>
+        ) :
+        governed === "not_sent" && m.comms_email_send_at ? (
+          <p data-governed-send="not_sent" className="text-[11px] leading-4 text-foreground">
+            {governedNotSentLine(m.comms_email_reason)}
+          </p>
+        ) :
+        // A governed email is never offered the generic undo below (its row may still read 'queued').
+        governed !== null ? undefined :
         // R-B1/R3: a queued scheduled outbound is findable + cancellable in the thread.
         m.status === "queued" && m.scheduled_for ? (
           <button
@@ -437,6 +487,8 @@ export default function ClientsConversations() {
   } = useCommsAttachments(() => tenantIdRef.current);
   const [dragOver, setDragOver] = useState(false);
   const [scheduledFor, setScheduledFor] = useState<string | null>(null); // ISO | null
+  // Scheduled governed emails whose Cancel is on its way to the door (the button is disabled meanwhile).
+  const [cancellingOperations, setCancellingOperations] = useState<ReadonlySet<string>>(() => new Set());
   const [, setUndo] = useState<{ messageId: string; expiresAt: number } | null>(null);
   const [snippets, setSnippets] = useState<Snippet[]>([]);
   const [signatures, setSignatures] = useState<Signature[]>([]);
@@ -718,7 +770,7 @@ export default function ClientsConversations() {
         return !!t.snoozed_until && new Date(t.snoozed_until).getTime() > nowMs
           && new Date(t.snoozed_until).getTime() <= endOfTodayMs();
       case "scheduled":
-        return msgs.some((m) => m.status === "queued" && !!m.scheduled_for);
+        return msgs.some((m) => isScheduledMessage(m, nowMs));
       case "unread":
         // rides the 'active' server base (baseFilter falls through to active); narrows to
         // genuinely-unread, non-archived, not-future-snoozed threads (§13 real state).
@@ -1028,6 +1080,41 @@ export default function ClientsConversations() {
     toast.success("Canceled — back to your draft."); void load(); void loadThreads();
   };
 
+  // Cancel an approved email set to go out later. Only the governed email door can: it closes the
+  // operation under the row lock, or says it is too late because the release already took it.
+  const cancelPendingFor = (m: MessageRow & GovernedSendFields) =>
+    !!m.comms_email_operation && cancellingOperations.has(m.comms_email_operation);
+  const cancelGovernedScheduled = async (operationId: string) => {
+    if (!activeTenantId || cancellingOperations.has(operationId)) return;
+    setCancellingOperations((s) => new Set(s).add(operationId));
+    const epoch = accountEpochRef.current.capture();
+    try {
+      const { data, error } = await supabase.functions.invoke("comms-email-command", {
+        body: { expected_tenant_id: activeTenantId, operation_id: operationId, cancel: true },
+      });
+      if (!accountEpochRef.current.accept(epoch)) return;
+      // A refusal arrives as an HTTP error whose body is the door's answer.
+      let answer = (data ?? null) as Record<string, unknown> | null;
+      if (error) {
+        const context = (error as { context?: { json?: () => Promise<unknown> } }).context;
+        answer = await context?.json?.().then((v) => (v && typeof v === "object" ? v as Record<string, unknown> : null)).catch(() => null) ?? null;
+      }
+      if (answer?.cancelled === true) toast.success("Canceled — it won't be sent.");
+      // Too late: say what actually happened to the send, from its recorded state. Nothing going out is
+      // what the owner asked for, so only "already on its way" is an error.
+      else if (answer?.code === "COMMS_EMAIL_CANCEL_TOO_LATE") {
+        const line = cancelTooLateLine(answer.outcome, answer.reason);
+        if (answer.outcome === "refused" || answer.outcome === "failed") toast(line); else toast.error(line);
+      }
+      else toast.error("Couldn't cancel it. Refresh the conversation to see where it stands.");
+      void load(); void loadThreads();
+      // The Cancel control is gone once the row re-reads: keep keyboard focus in the conversation.
+      requestAnimationFrame(() => document.querySelector<HTMLTextAreaElement>('[data-composer-writing-surface="true"] textarea')?.focus({ preventScroll: true }));
+    } finally {
+      setCancellingOperations((s) => { const next = new Set(s); next.delete(operationId); return next; });
+    }
+  };
+
   // ── One-click approve: send the existing draft row via the single outbound seam ──
   const approveDraft = async (m: MessageRow) => {
     if (!selected) return;
@@ -1054,12 +1141,14 @@ export default function ClientsConversations() {
       if (!accountEpochRef.current.accept(epoch)) return;
       if (error) throw new Error(error.message);
       // §37: read `outcome` first so a gated/blocked approval reports the true reason.
-      const res = data as { status?: string; outcome?: string; reason?: string } | null;
-      const outcome = res?.outcome ?? (res?.status === "sent" ? "sent" : "failed");
+      // The ONE shared parser (inbox-shared): an unconfirmed send is never reported as a plain failure.
+      const r = readSendResult(data);
+      const outcome = r.outcome;
       if (outcome === "sent") { toast.success("Approved — Paige sent it."); }
-      else if (outcome.startsWith("blocked_")) { toast.error(res?.reason ?? "Blocked — can't message this contact."); }
-      else if (outcome.startsWith("queued_")) { toast(`Held: ${res?.reason ?? "will send when allowed."}`); }
-      else { throw new Error(res?.reason ?? "send_failed"); }
+      else if (r.unconfirmed) { toast.warning(SEND_UNCONFIRMED_COPY); }
+      else if (outcome.startsWith("blocked_")) { toast.error(r.reason ?? "Blocked — can't message this contact."); }
+      else if (outcome.startsWith("queued_")) { toast(`Held: ${r.reason ?? "will send when allowed."}`); }
+      else { throw new Error(r.reason ?? "send_failed"); }
       void load();
     } catch (e) {
       if (!accountEpochRef.current.accept(epoch)) return;
@@ -1177,7 +1266,7 @@ export default function ClientsConversations() {
     // R7-outcome via the ONE shared parser (inbox-shared) — the compose-new modal reads the
     // send result through the exact same helper, so reply and compose can never drift (§18/§37).
     const r = readSendResult(data);
-    return { outcome: r.outcome, reason: r.reason, messageId: r.messageId, scheduledFor: r.scheduledFor };
+    return { outcome: r.outcome, reason: r.reason, messageId: r.messageId, scheduledFor: r.scheduledFor, unconfirmed: r.unconfirmed };
   }, [buildSendBody]);
 
   const cancelUndo = useCallback(async (messageId: string) => {
@@ -1382,6 +1471,10 @@ export default function ClientsConversations() {
         }
       } else if (r.outcome === "sent") {
         toast.success("Sent."); resetComposer();
+      } else if (r.unconfirmed) {
+        // It may already be in their inbox, and the thread now shows it as unconfirmed: clear the
+        // composer so one more click can't send a second copy.
+        toast.warning(SEND_UNCONFIRMED_COPY); resetComposer();
       } else if (r.outcome.startsWith("blocked_")) {
         toast.error(r.reason ?? "Blocked — can't message this contact.");
       } else if (r.outcome.startsWith("queued_")) {
@@ -1454,7 +1547,7 @@ export default function ClientsConversations() {
       archivedAt: t.archived_at,
       channel: p?.channel_type ?? "email",
       hasDraft: !!p && isApprovableDraft(p),
-      scheduled: p?.status === "queued" && !!p.scheduled_for,
+      scheduled: !!p && isScheduledMessage(p),
       raw: t,
     };
   });
@@ -1889,6 +1982,8 @@ export default function ClientsConversations() {
                   onApprove={approveDraft}
                   onEdit={editDraft}
                   onCancelScheduled={cancelScheduled}
+                  onCancelGovernedScheduled={cancelGovernedScheduled}
+                  cancelPending={cancelPendingFor(m)}
                   approving={approvingId === m.id}
                   sendDisabled={isSolo && handlingMode === "governed"}
                 />
@@ -1904,6 +1999,8 @@ export default function ClientsConversations() {
                     onApprove={approveDraft}
                     onEdit={editDraft}
                     onCancelScheduled={cancelScheduled}
+                    onCancelGovernedScheduled={cancelGovernedScheduled}
+                    cancelPending={cancelPendingFor(m)}
                     approving={approvingId === m.id}
                     sendDisabled={isSolo && handlingMode === "governed"}
                   />

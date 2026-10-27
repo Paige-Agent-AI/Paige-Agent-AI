@@ -1,8 +1,21 @@
-// EXP05 schedule REVIEW, source8857f60f9 / pre-renewal AUTHOR-REVIEW / LOWER
-// ASSURANCE in ANT161 d646055a. Actual2aa baseline reproduced all29 scalars;
-// only enclosing identity[15] changes, every incumbent branch/control/helper/import
-// exact. Renew29 literals and original automations domain digest only. Preserve
-// all other dependency pins, E04 source pair, extractor/metadata and hostile tests.
+// EXP08 Team Hub agents A1b, part 3 (the agent turn refuses a chat control hint), AUTHOR-REVIEW /
+// LOWER ASSURANCE before renewal (owner ruling 2026-10-27: EXP08 owns Team Hub end to end). Base
+// HEAD 1c243694a (origin/main aea94a0e8 merged) reproduces all29 dispatch pins from its own
+// paige-ai-chat source. The only source change is inside enclosing identity[15], insertion-only:
+// the agent-turn seam's deps object gains `controlHint` (the request's own x-paige-chat-control
+// value, read once before the ingress limit), plus two comment lines. No dispatch, control,
+// authority or verifier logic changed; action-risk.ts is byte-identical. Renew those 29 dispatch
+// scalars only; extractor, metadata, validator, hostile controls and every source pin unchanged.
+// EXP08 Team Hub agents A1b (the agent turn), AUTHOR-REVIEW / LOWER ASSURANCE before renewal (owner
+// ruling 2026-10-27: EXP08 owns Team Hub end to end, including the edits it needs in shared files).
+// Base origin/main cab598493 reproduces all29 dispatch pins from its own paige-ai-chat source.
+// Decomposition of all29 against the branch: dispatch branches, dominating controls, local helpers
+// and import sets equal; ONLY enclosing identity[15] changes, insertion-only (0 removed / 13 added
+// lines): one import of _shared/team-hub/agent-turn.ts and one early branch, after the verified actor
+// and the ingress rate limit and before the chat schema, that hands a { teamHubAgentTurn } request
+// to that module and returns. No dispatch, control, authority or verifier logic changed;
+// action-risk.ts is byte-identical (its pin is unchanged). Renew those 29 dispatch scalars only;
+// extractor, metadata, validator, hostile controls and every source pin unchanged.
 // EXP08 PAIGE team-lifecycle tools, AUTHOR-REVIEW / LOWER ASSURANCE before renewal (ANT-161 window),
 // re-renewed after merging origin/main 93f567749 and the review fixes, then re-checked unchanged after
 // merging 50468eec2 and d3e68daf1 (docs only). Each of those mains reproduces all29 dispatch pins and
@@ -608,7 +621,7 @@ const CONTRACTS = {
     "seatAuthority": "workspace-admin",
     "selfDescribe": true,
     "readiness": "none",
-    "fingerprint": "cf21b1ccfa7bb020affa6053b05ea2848098e00f2f5423d25a8e96ab969295c0"
+    "fingerprint": "da7a5e1d1f4f7df519495b2938a44866ff5da41a7496a44468b3cf75b7e28791"
   },
   "calendar_book_meeting": {
     "key": "calendar.book_meeting",
@@ -620,7 +633,7 @@ const CONTRACTS = {
     "seatAuthority": "workspace-admin",
     "selfDescribe": true,
     "readiness": "none",
-    "fingerprint": "001e7ff412b8bf8bd93c4dc4dad049cacc351643aee43621e3f0cc68f6b4080e"
+    "fingerprint": "b08255dc1e9697ca12c8f049620623d9db7df296ab8d41806d3367443ad37527"
   },
   "calendar_link_send": {
     "key": "calendar.link_send",
@@ -632,7 +645,7 @@ const CONTRACTS = {
     "seatAuthority": "member",
     "selfDescribe": true,
     "readiness": "none",
-    "fingerprint": "435f98436ebedbdfe66ba48c5b66032aa611f62b851266340c787b0edd0303f2"
+    "fingerprint": "a711d4b8f5af7d91b7a4a75e798db4903dd4738731b48b57ace17ea425e9c53d"
   },
   "propose_business_brief_update": {
     "key": "business_profile.propose_brief_update",
@@ -644,7 +657,7 @@ const CONTRACTS = {
     "seatAuthority": "workspace-admin",
     "selfDescribe": true,
     "readiness": "none",
-    "fingerprint": "d88b03326c818aaaf9470a4ec69db91902e60e6a5ef572bc43dbb27b07eec1df"
+    "fingerprint": "dfcc8381a4006dbeea04d351276bbdeaff3bf6b3814adb0bba1da0e94d02266f"
   },
   "update_business_profile": {
     "key": "business_profile.update_legacy",
@@ -656,7 +669,7 @@ const CONTRACTS = {
     "seatAuthority": "workspace-admin",
     "selfDescribe": false,
     "readiness": "none",
-    "fingerprint": "fcbe3cf648a5560efa432a26abb7d41d601d452447ea03f3adaf6847687780df"
+    "fingerprint": "8146f26fad412b091d15ae7d8a37cf645ac5ce2db9a87e879df428f56a5f3e3d"
   },
   "capability_status": {
     "key": "platform_meta.capability_status",
@@ -668,7 +681,7 @@ const CONTRACTS = {
     "seatAuthority": "member",
     "selfDescribe": false,
     "readiness": "none",
-    "fingerprint": "530fc51341f0078e829d24e1fb83a973fd317548b9ccdac3be91165b9ca19390"
+    "fingerprint": "35d05614b9c5b7d8a1ae381e4b35a14c9d56ad9e9ec5e13dd3f1e809fd71fec5"
   },
   "improvement_propose": {
     "key": "platform_meta.improvement_propose",
@@ -680,7 +693,7 @@ const CONTRACTS = {
     "seatAuthority": "workspace-admin",
     "selfDescribe": false,
     "readiness": "none",
-    "fingerprint": "91f4c8bd10d366b7b46c793afbd8221e84d99151b60b6b77024de740db7745a4"
+    "fingerprint": "9c810029f0c326d59bdde6853fe98147607ce791c4b83e835c8e4c668cdb958d"
   },
   "improvement_decide": {
     "key": "platform_meta.improvement_decide",
@@ -692,7 +705,7 @@ const CONTRACTS = {
     "seatAuthority": "workspace-admin",
     "selfDescribe": false,
     "readiness": "none",
-    "fingerprint": "fab1ef3a11e2994b65ada48fc44188f44b0ad346b9e740068110d7d147ce98dc"
+    "fingerprint": "5867d3d93ac018b4dfa066695c35421945d0076c84b1ba9f4adc1a5fede2ce73"
   },
   "list_subagents": {
     "key": "agents.list",
@@ -704,7 +717,7 @@ const CONTRACTS = {
     "seatAuthority": "workspace-admin",
     "selfDescribe": true,
     "readiness": "none",
-    "fingerprint": "936deba990bbd7058828974f1f82feff0b8fd991cf44c18290b00ca650cd2b39"
+    "fingerprint": "ec5b67e95d110f21b7975b0b4223b99e59f135db38667a0aa83469fb52187c86"
   },
   "delegate_to_subagent": {
     "key": "agents.delegate",
@@ -716,7 +729,7 @@ const CONTRACTS = {
     "seatAuthority": "workspace-admin",
     "selfDescribe": true,
     "readiness": "none",
-    "fingerprint": "936deba990bbd7058828974f1f82feff0b8fd991cf44c18290b00ca650cd2b39"
+    "fingerprint": "ec5b67e95d110f21b7975b0b4223b99e59f135db38667a0aa83469fb52187c86"
   },
   "forge_subagent": {
     "key": "agents.forge",
@@ -728,7 +741,7 @@ const CONTRACTS = {
     "seatAuthority": "workspace-admin",
     "selfDescribe": true,
     "readiness": "none",
-    "fingerprint": "46370c3ce0e5da84974d04675ac1719696308b37ae859b1945a7974b97cee246"
+    "fingerprint": "a4a492aef47006b816c0d1f438ab0841e5f5258ff558e2b0e3defbf3a2f8b511"
   },
   "author_event_kind": {
     "key": "crm_clients.author_event_kind",
@@ -740,7 +753,7 @@ const CONTRACTS = {
     "seatAuthority": "member",
     "selfDescribe": true,
     "readiness": "none",
-    "fingerprint": "3a99e21953df6e767bded52e3e1d5743f16ae96fb38b43a059e28900ce4e9c8f"
+    "fingerprint": "33f0d7f2e41c30352e1f81c2444c4c62c14c85f740b0fec12ea6a1eb5668bfd4"
   },
   "crm_add_note": {
     "key": "crm_clients.add_note",
@@ -752,7 +765,7 @@ const CONTRACTS = {
     "seatAuthority": "workspace-admin",
     "selfDescribe": true,
     "readiness": "none",
-    "fingerprint": "bdc81527aef76e1069376a1a9d4747de9006a3284b9de448aa943b62132a6f1b"
+    "fingerprint": "519047d621cbf57a3371ecf9d1046c4b6fa81c7d259c15ba8b7487ff6dfe1ab9"
   },
   "crm_file_document": {
     "key": "crm_clients.file_document",
@@ -764,7 +777,7 @@ const CONTRACTS = {
     "seatAuthority": "workspace-admin",
     "selfDescribe": true,
     "readiness": "none",
-    "fingerprint": "6f89a0195629437859b0b356047c0a45150be071ce80934b5ac92b7e32a8122b"
+    "fingerprint": "9dec498a265e6912675615bb19622253b65eb0ede8fb870d660bb34718c53753"
   },
   "update_client_data": {
     "key": "crm_clients.update_client_data",
@@ -776,7 +789,7 @@ const CONTRACTS = {
     "seatAuthority": "member",
     "selfDescribe": true,
     "readiness": "none",
-    "fingerprint": "6d959f071fb0407c76648468d973b09c884b5d4624691ad0f1346d245f9a0820"
+    "fingerprint": "455ce868623be9cdef8743cc741ffb7328a10e913c860d03a2ceb5d37304b296"
   },
   "pipeline_configure": {
     "key": "sales.pipeline_configure",
@@ -788,7 +801,7 @@ const CONTRACTS = {
     "seatAuthority": "workspace-admin",
     "selfDescribe": true,
     "readiness": "none",
-    "fingerprint": "012c5423b9ac008f0b311b470a869b76a027c9c66ba861edd2c26a79bb359da1"
+    "fingerprint": "6b35a11f5b4a93fbaeab5cb1cb7910eb1f47effa8c196b5c576d1ca809433aff"
   },
   "deep_research": {
     "key": "research_knowledge.deep_research",
@@ -800,7 +813,7 @@ const CONTRACTS = {
     "seatAuthority": "member",
     "selfDescribe": true,
     "readiness": "research_provider",
-    "fingerprint": "1f71bdaffb1228cb600a31000f28d2540498cc8a968d6c13661ae1d5e8f2a444"
+    "fingerprint": "53a4f30161b83eaabc36ee85c8d2afaf5ec9d7fa737da9fb19caf8923584bbac"
   },
   "web_search": {
     "key": "research_knowledge.web_search",
@@ -812,7 +825,7 @@ const CONTRACTS = {
     "seatAuthority": "member",
     "selfDescribe": true,
     "readiness": "research_provider",
-    "fingerprint": "4cc8827fca398fc08a77a5a75cc1f72c61ef36fe7b3535e39f5b227f586a1bd4"
+    "fingerprint": "11436cbd319f5247c2e7dca4c762194e263ac6bb9e1a544e2276e28e64753fb7"
   },
   "web_fetch": {
     "key": "research_knowledge.web_fetch",
@@ -824,7 +837,7 @@ const CONTRACTS = {
     "seatAuthority": "member",
     "selfDescribe": true,
     "readiness": "none",
-    "fingerprint": "a7a6af87caf02d299906eef3aeea889277f996786016dc4b50acf0fb399dd139"
+    "fingerprint": "eb0a040a7df06b89a71af79ec99afa13ff37c0f7b599164273db7f548d7de2b6"
   },
   "save_to_knowledge_base": {
     "key": "research_knowledge.save_to_knowledge_base",
@@ -836,7 +849,7 @@ const CONTRACTS = {
     "seatAuthority": "member",
     "selfDescribe": true,
     "readiness": "none",
-    "fingerprint": "17d4ffd973bc14984d60c88c86640ef1ebe9b32d6a9f24f5c4645e8984306d3d"
+    "fingerprint": "8d95257b43990e4e3de7bb27cd3f4bbeb34c2779b37a9297ea5a7717e11843c9"
   },
   "automation_draft": {
     "key": "automations.automation_draft",
@@ -848,7 +861,7 @@ const CONTRACTS = {
     "seatAuthority": "member",
     "selfDescribe": true,
     "readiness": "none",
-    "fingerprint": "ba708e78a95f128fdd84be9274b520d55897d4099c943cc073c063295758d372"
+    "fingerprint": "f7785dc6e1098423326d2ae4c28044b708c3b17678c9acb891536f35c60dd3b3"
   },
   "comms_connection_summary": {
     "key": "communications.comms_connection_summary",
@@ -860,7 +873,7 @@ const CONTRACTS = {
     "seatAuthority": "workspace-admin",
     "selfDescribe": true,
     "readiness": "none",
-    "fingerprint": "58f302544d404a34509859a650887f44cda49c484fa8792a835175c7b5dc22d1"
+    "fingerprint": "718df956448d4244d984d6b34ad094769d74aea775a07aeffa28d86e1b3ed035"
   },
   "comms_registration_status": {
     "key": "communications.comms_registration_status",
@@ -872,7 +885,7 @@ const CONTRACTS = {
     "seatAuthority": "workspace-admin",
     "selfDescribe": true,
     "readiness": "none",
-    "fingerprint": "6cbc9640f6a5ebffd39dec3ab275712b60d1a1f3a0747ecb55b1537af49b5071"
+    "fingerprint": "b3b35b0a1ce20c3e07a38c4b44cf6202f9e231736f1b4d1c47fd70e9785f8dc9"
   },
   "comms_list_numbers": {
     "key": "communications.comms_list_numbers",
@@ -884,7 +897,7 @@ const CONTRACTS = {
     "seatAuthority": "workspace-admin",
     "selfDescribe": true,
     "readiness": "none",
-    "fingerprint": "ff4656a813fbdb00952f65621ff5ff8882a305bd719d206110f3c0f4cf67a7fb"
+    "fingerprint": "262746fcf7e1348084fbb670cee6a85e51fabaa7ee839da2f1365266fda6e170"
   },
   "comms_search_numbers": {
     "key": "communications.comms_search_numbers",
@@ -896,7 +909,7 @@ const CONTRACTS = {
     "seatAuthority": "workspace-admin",
     "selfDescribe": true,
     "readiness": "none",
-    "fingerprint": "7304d55b9d9080a5777a4d0cb616cb64d8f3b75437f236e809fb9ed996560f6d"
+    "fingerprint": "36972f6876089ad8c005a99133a11501957c62307e9a437df6c1b96c859c6cd5"
   },
   "comms_buy_number": {
     "key": "communications.comms_buy_number",
@@ -908,7 +921,7 @@ const CONTRACTS = {
     "seatAuthority": "workspace-admin",
     "selfDescribe": true,
     "readiness": "none",
-    "fingerprint": "998d95e9985ee3a0e710307698f10c1748c0ae5b2b6f1cbe89dee6e25dece330"
+    "fingerprint": "1f79680d5fa645b137227174629c5786814b05895e1e6467cc03999abc286b7c"
   },
   "comms_draft_registration": {
     "key": "communications.comms_draft_registration",
@@ -920,7 +933,7 @@ const CONTRACTS = {
     "seatAuthority": "workspace-admin",
     "selfDescribe": true,
     "readiness": "none",
-    "fingerprint": "95c131f7b13284838a8b10b6266f2c4998d0e90509ce5125dd7adbee4e0aa44c"
+    "fingerprint": "9aefe22177b518cf77df5ce8af2e8f73e6f1e443dbd676ecabcf3ace2168f72e"
   },
   "comms_name_number": {
     "key": "communications.comms_name_number",
@@ -932,7 +945,7 @@ const CONTRACTS = {
     "seatAuthority": "workspace-admin",
     "selfDescribe": false,
     "readiness": "none",
-    "fingerprint": "62880a9467b7d94ae84487916d5559c1ec713615d9cc3ca42e7469ea15ee5fe5"
+    "fingerprint": "dc6b591541c14010557f13d369e5bb1869b6f864c6b27c7d11d0badeaecdeb7b"
   },
   "comms_set_primary_number": {
     "key": "communications.comms_set_primary_number",
@@ -944,15 +957,22 @@ const CONTRACTS = {
     "seatAuthority": "workspace-admin",
     "selfDescribe": true,
     "readiness": "none",
-    "fingerprint": "6eabf354c1b79cd9ba16b1fffb97a754cd26cb8fe8a2470797c826f31ae62152"
+    "fingerprint": "edbaba64f432f04afed8aca77333f74564346903bbaf4b79985abf1c5916c8e5"
   }
 };
 const SOURCES = {
   "supabase/functions/_shared/paige-orchestration/weekly-draft-deadline.ts": "9603cb202bee4ccd0daad1f306dd24deff9c65fda8a69df7f46424167be5c42d",
   // EXP05 mandatory-confirm catalogue projection, reviewed e20298af0 / original sequential review.
-  "supabase/functions/_shared/paige-spine/domains/automations.ts": "dba9a2bbf012b3e5430509463972a87e77b7be4be08b53a7479714e01bf3f9af",
+  "supabase/functions/_shared/paige-spine/domains/automations.ts": "f0e2b5e100c979724337c1ffb9e3a1aca4360cc7fcba683506b5d2daa677533b",
   "supabase/functions/_shared/workspace-authority.ts": "b5fb2d35bf32fd4280f9e7e2c53488e6a0d4248cdbd42a5beb67ea91d18d5fc1",
-  "supabase/functions/_shared/calendar-link-tenant-brain.ts": "28748e315a12caa855ec906192743cdad5298d37ccbd35ad83539949124800f4",
+  // EXP03 unconfirmed-send (2026-10-27), AUTHOR-REVIEW / LOWER ASSURANCE: mapSendOutcome reads send-message's
+  // new outcome_unknown explicitly (SendGrid has no idempotent replay), and sendCalendarLink's note for an
+  // outcome_unknown says it may have reached the contact and must not be sent again (it said "NOT sent").
+  // Gates, reads, send seam and the other outcomes unchanged. Old 28748e31… reproduced from b39fda02 first.
+  // EXP03 (2026-10-27), AUTHOR-REVIEW / LOWER ASSURANCE: the three `if (!share.ok)` guards read
+  // `share.ok === false` so the shareability union narrows under the app's strict:false typecheck (CI tsc
+  // ratchet). Same branches, same returns; prior ac47de4e… reproduced from 739b2fa6 first.
+  "supabase/functions/_shared/calendar-link-tenant-brain.ts": "77a50c2cc43bc05df9164b63941943fe0ff9d6b33d03c4eb3ce70b92ac525f66",
   "supabase/functions/_shared/client-seat-reply.ts": "6b2ed9c2342da886f8dff44a46bc9dadd4bcd3b079839f62b470ea363564b44d",
   "supabase/functions/_shared/outbound-draft-check.ts": "eda79597ac86a489f916075844f535fcf228518d953b48c55b2e9901920ee961",
   // EXP04 C20 source review, AUTHOR-REVIEW / LOWER ASSURANCE at5ba2664f.
@@ -1022,19 +1042,78 @@ const SOURCES = {
   // verifier or adapter selection changed; paige-ai-chat is untouched, so all dispatch fingerprints are
   // unchanged. Old digest 2405fceb… reproduced from main 3d541038 and from 146cf565 with the same canonical
   // form (TypeScript printer {removeComments:true}, sha256) before renewing. Renew this digest only.
-  "supabase/functions/send-message/index.ts": "2753af0d96a4b8f1220b87e72ca106129b695becb30737991b9f7b3e1154e0ff",
+  // EXP03 Resend retirement renewal (2026-10-27), AUTHOR-REVIEW / LOWER ASSURANCE (an independent §39 reviewer
+  // must confirm): branch exp03-resend-retire-local. Production's Resend account was emptied 2026-10-26 (owner:
+  // "I am moving EVERYTHING to SendGrid"), so every send through the old Resend arm failed. send-message/index.ts
+  // changes in five places. (1) The email adapter's Resend arm is removed; every non-Gmail, non-SMTP email goes
+  // through the existing SendGrid arm with SENDGRID_MAIL_SEND_API_KEY (never RESEND_API_KEY, never the admin
+  // key). (2) That arm's From: a SendGrid connector's (H2-bound by the door/campaign admission) is unchanged;
+  // every other goes through _shared/email/platform-sendgrid.ts platformFrom (mail.paigeagent.ai kept, a
+  // business's own domain sent as notifications@ under its name, Reply-To defaulting to the old address); the
+  // no-op X-Idempotency-Key header is dropped. (3) comms_email_reconcile is refused before any claim (no
+  // idempotent replay, so a re-send could deliver twice). (4) A managed campaign send (`ecr:` key, service
+  // role, marketing) gets the campaign lane's custom_args, tracking and outcome_unknown on an unreadable answer;
+  // other sends with a message row carry tenant + message ids. (5) The missing-key string the comms classifier
+  // reads is the SendGrid one. No authority, verifier, recipient, tenant gate or dispatch branch changed;
+  // CORRECTION (independent §39 review, 2026-10-27): change (2) WAS an H2 change, not "H2 untouched" — keeping
+  // any mail.paigeagent.ai From and remapping paigeagent.ai let a workspace admin's own 'resend' connector send
+  // as another business's managed address or as PAIGE; fixed by the H2 renewal below.
+  // paige-ai-chat untouched, so all dispatch fingerprints are unchanged. Old digest 2753af0d… reproduced
+  // from b39fda02 (git show HEAD:… | TypeScript printer {removeComments:true}, sha256) before renewing.
+  // Renew this digest only.
+  // EXP03 unconfirmed-send follow-up (2026-10-27, same branch), AUTHOR-REVIEW / LOWER ASSURANCE: the campaign-only
+  // unreadable-answer flag becomes providerUnconfirmed for EVERY SendGrid email (Gmail/SMTP and the missing-key
+  // refusal excluded): the generic answer adds outcome "outcome_unknown" + `unconfirmed: true` (status stays
+  // "failed"); the audit error is prefixed "delivery_unconfirmed:", a released row's error is
+  // "delivery_unconfirmed", and a direct send with a contact/connector gets one thread row marked the same
+  // (both status CHECKs admit no "unknown"). No authority, recipient, tenant gate, H2 refusal, provider payload
+  // or dispatch branch changed. Prior value 72f6da30… (above, this branch) reproduced before renewing.
+  // EXP03 H2 + review-fix renewal (2026-10-27, same branch), AUTHOR-REVIEW / LOWER ASSURANCE (an independent §39
+  // reviewer found the H2 hole and must confirm the fix): (a) H2 — every non-SendGrid-connector From is the
+  // business's data, so the adapter uses platform-sendgrid.ts tenantFrom: a mail.paigeagent.ai From is kept ONLY
+  // when it equals THIS tenant's own managed address resolved server-side (tenant_sender_identity's address and
+  // its active tenant_email_identities row, for the derived tenantId; never a connector field); everything else,
+  // including any paigeagent.ai address (never remapped), sends as notifications@ under the business's name, and
+  // the Reply-To fallback never points at paigeagent.ai. (b) A row already marked delivery_unconfirmed is refused
+  // (outcome_unknown + unconfirmed, no provider call) after the §9 tenant gate and before the provider floor;
+  // the message read adds the `error` column. No authority, recipient, tenant gate, H2 SendGrid-connector
+  // refusal or dispatch branch changed. Prior e6fc6c24… reproduced from 0999a6a3 before renewing.
+  // EXP03 O12 piece 1 renewal (2026-10-27), PR #2997, reviewed by two independent §39 adversarial reviews
+  // (round 1 + round 2, both on the real diff): send-message/index.ts changes in four places. (1) The door
+  // path accepts the internal comms_email_scheduled_release flag only with comms_email_operation_id, never with
+  // a reconcile, and releases a bound 'queued' row only when binding.send_at is due (60 s drift tolerance; the
+  // database claim's not_before is the authority); a bound row with send_at is refused without the flag and the
+  // flag on an immediate binding is refused. (2) parseCommsEmailBinding parses an optional send_at. (3) The
+  // generic scheduled_binding block and terminalizeScheduledRelease's direct row writes are skipped for a bound
+  // row (it is closed through the finalizer). (4) Nothing else: no authority, verifier, recipient, tenant gate,
+  // provider arm or dispatch branch changed. Old e1c22250… reproduced from main 9e325d91 first.
+  "supabase/functions/send-message/index.ts": "fffd0a7faae3f0c6150784ddda33e280e2786d03e05bfd53d9a0d8aa5a0d5f51",
   "supabase/functions/_shared/paige-spine/contracts.ts": "2d771686d636c04d2e07d9b8c336e19cde246b9a303ddd034d7ae8500f7eefb4",
   // Operator retirement adds opt-in timeout/no-retry controls; ordinary callers retain
   // their existing behavior. Renewed non-author review and actual retry controls are
   // recorded on PR #1897; no other incumbent snapshot is regenerated or accepted.
   "supabase/functions/_shared/twilio.ts": "afe6b57d9ed91c00e6517856f7b17c36f147fee5b88afb3450586c4393d6565a",
-  "supabase/functions/_shared/channel-adapters.ts": "f29fe7502ceb961ad886863c570970d48c4c19969ce2b6fce203a04867deef41",
+  // SendGrid Inbound Parse (2026-10-27), AUTHOR-REVIEW / LOWER ASSURANCE: the inbound registry gains an
+  // optional provider qualifier — InboundChannelAdapter.provider?, a `channel:provider` key when it is set,
+  // and getInboundAdapter(ch, provider?) — so handle-inbound-email can register its SendGrid adapter beside
+  // Resend's unqualified 'email' one. An adapter without `provider` keys exactly as before (bare channel), so
+  // every existing register/get call resolves the same adapter. Outbound registry, NormalizedMessage, Delivery,
+  // OutboundSendContext and buildListUnsubscribeHeaders are byte-identical. Prior f29fe750… reproduced from
+  // db0048ad7 (git show | TypeScript printer {removeComments:true}, sha256) before renewing. Renew this digest only.
+  "supabase/functions/_shared/channel-adapters.ts": "dc0cfccf25118be0a76b5599167e7440c8e80a8c63880a549f7f36e2d18d0977",
   // E09 Slice 6 bounded renewal (2026-10-18), integrating-crew source review (NOT non-author):
   // the only change vs main is one added `case "customer_request"` in suppressionReason (the plain
   // sentence a portal opt-out returns). Step order, every block/queue condition, the consent channel
   // list and the normalizers are byte-identical. Renew this one scalar only.
   "supabase/functions/_shared/pre-send-pipeline.ts": "dd7193c8f9663462f045de0eb937c6cf728a1c0ce0dce6451f4fa4cc9fd545b6",
-  "supabase/functions/_shared/contact-methods.ts": "cea64c7f9ac201150bfd28834eaac88a6ebe0333c2c0a42dc9b9a8476840eef6",
+  // SendGrid Inbound Parse review fix M4a (2026-10-27), AUTHOR-REVIEW / LOWER ASSURANCE: adds
+  // lookupClientIdByAddress (same client_id_for_address RPC, same log line, but returns the error instead of
+  // reading it as "not found"); findClientIdByAddress now delegates to it and returns its `.id`, so every
+  // existing caller (voice-twiml, public-booking, handle-inbound-sms x2, paige-mcp, growth-inbound,
+  // handle-inbound-email's Resend arm) gets the identical value and log. No other helper changed. Prior
+  // cea64c7f… reproduced from 5134fc4ec (git show | TypeScript printer {removeComments:true}, sha256) before
+  // renewing. Renew this digest only.
+  "supabase/functions/_shared/contact-methods.ts": "62ad629140b6feb5c096c45c878bc3b94b6383375202810955bff7409198bd3b",
   "supabase/functions/_shared/internal-vocabulary.ts": "9074425cc61d1a678e3a4ca03595fe8c4d1eac4572a4bd2daf31aff77f39d37a",
   "supabase/functions/_shared/paige-capability-status/resolver.ts": "ec8a5dad7df3426f30203aa1c8014372a60f51ed0decc829fc8541fba62a4142",
   "supabase/functions/paige-deep-research/fabric.ts": "23fd093b20d6f721ff07619aa5a4e34892d5346fd6b4934e0ae73fffb0b609bb",
@@ -1086,7 +1165,10 @@ const SOURCES = {
   "supabase/functions/_shared/sales-invoice-document.ts": "5ae255569a861722b09868da12dac1e43c104a593d3f3cb0c16f29e47eb55649",
   "supabase/functions/_shared/document-pdf.ts": "e88f697d5d79af5feb0d6952fc5029633d488434b232798bc42fffd0fccd9a8e",
   "supabase/functions/_shared/email-attachments.ts": "becc41d2968a75ba07c1ec077c142f625ccb0239f5dd3423073dbbbe0186069e",
-  "supabase/functions/_shared/sales-invoice-delivery/readiness-reader.ts": "8ea30924c24b27244d413ee167e43f08b18a0589df53e2d2b65fde4998ca2ba2",
+  // EXP03 Resend retirement (2026-10-27), AUTHOR-REVIEW / LOWER ASSURANCE: one fact's source key changes,
+  // resendConfigured now reads the presence of SENDGRID_MAIL_SEND_API_KEY (a "resend" sender sends through
+  // SendGrid). Shape, reads and every refusal unchanged. Old 8ea30924… reproduced from b39fda02 first.
+  "supabase/functions/_shared/sales-invoice-delivery/readiness-reader.ts": "4d4620552e5912e0c37f546e23df0caf81024db37407eef411b6b1ce51b9926a",
   // E04 exact invoice navigation: independently compared incumbent route outputs; authority unchanged.
   // E02 AUTHOR-REVIEW / LOWER ASSURANCE: add UUID-only Play focus beside current
   // invoice/Deal/Task routes; all existing route entries and authority remain unchanged.
@@ -1119,7 +1201,7 @@ const SOURCES = {
   "supabase/functions/_shared/prompt-forge.ts": "0abdeb7a887ac7b566dd8f21c11140122985d2acf0b5b6020596974ffd3e11ee",
   "supabase/functions/_shared/voyage.ts": "4eb1a516b2ce4679e83bfa62bb908a4b2e3be4d48dcdc89df75bb160bd6569b2",
   "supabase/functions/_shared/claude.ts": "cfbb18ce156d2259bf1904d6f6eaed8262e007c70929958c7261f185e20747ff",
-  "supabase/functions/_shared/router-budget/mod.ts": "d77811a61d1833990e2c1e65c62d476112fd7a0e6326552582e7949a1cc6c008",
+  "supabase/functions/_shared/router-budget/mod.ts": "9b12ac32282e4223238688feef1d3e384406e9d9e1378fc94c9d937d7d6a20c4",
   "supabase/functions/_shared/model-router-gates.ts": "551cf84756d3a5b56a82c645c96ce51f0318f065b5969d19885ba591a506a566",
   "supabase/functions/_shared/model-allowlist.ts": "3b1e162f042a34357eb4ba6fb2e9bd7cafeb9725f07df655ac43f3233d215377",
   "supabase/functions/_shared/env-key.ts": "bbf7dd1e08f48f272e8311f49f9951a850154ed451c4eb3be99a0de8a57c3878",
@@ -1137,7 +1219,10 @@ const SOURCES = {
   "supabase/functions/_shared/paige-orchestration/subject-tenant.ts": "79bfca5cada98f8226a533684556c2b6035ec8aaf0855c06846b035ef4d778bd",
   "supabase/functions/_shared/sales-payments/balance-projection.ts": "089be3509f1a784659f86ceaa8e21238a765b744ebc5f75ecdb870be58070a92",
   "supabase/functions/_shared/sales-invoice-delivery/readiness.ts": "951b29afbdab2ad6480fdaadde38ae6f927bf5686f7bbf5518109128c91bb140",
-  "supabase/functions/_shared/comms-email/readiness.ts": "325b6bae21a323b849b23d02fe2d0df19baa0be6385a7810d289af0238ac5c7b",
+  // EXP03 Resend retirement (2026-10-27), AUTHOR-REVIEW / LOWER ASSURANCE: readCommsEmailReadiness's
+  // resendConfigured fact reads SENDGRID_MAIL_SEND_API_KEY presence instead of RESEND_API_KEY. Decision
+  // function, result shape and every reason unchanged. Old 325b6bae… reproduced from b39fda02 first.
+  "supabase/functions/_shared/comms-email/readiness.ts": "035c108e210bb7912250cac4000959e58c172cc4eb57a639b05839c4700762e9",
   "supabase/functions/_shared/openai-models.ts": "a76ac476a2cbd298421a9d7d37f3605cf384e4a4e53a1635719405d52e70905e",
   "supabase/functions/_shared/openai-responses.ts": "bec9943dcb725b592cdba219a5e349f14bcf1f259adbc17522fceb5c6fe0ec81",
   "supabase/functions/_shared/provider-failure.ts": "3a3507a6ddc6f6e5051a5d17b7a5ff30624643c6bd39d07793224eb0177873b5",
@@ -1145,7 +1230,11 @@ const SOURCES = {
   "supabase/functions/_shared/brand-tokens.ts": "225f25c0ed74155012b7959766adfe51d4fd8c8341ad7da57c26b650caad06ca",
   "supabase/functions/_shared/cheesy-tells.ts": "7710d88a2999f0ab23870ff22f9ce46999d35d598982ce7f517a7fea0f4fab9a",
   "supabase/functions/_shared/claude-models.ts": "026a3b83753bd302319a1f671cfb560bb788c96b4f27bc44222cd6650fcc34fd",
-  "supabase/functions/_shared/comms-email/contract.ts": "733eb988e3541ab06727888c70d04146b6d59321bcbef6583363e5da917121c2",
+  // EXP03 O12 piece 1 renewal (2026-10-27), PR #2997, same two §39 reviews: contract.ts ADDS
+  // parseCommsEmailSendAt (whole minute, 2 min–30 days at proposal, format-only at confirm) and
+  // COMMS_EMAIL_SCHEDULED_RELEASE_GRACE_MS. The command, its keys, commsEmailBodyHtml and the content digest
+  // are unchanged. Old 733eb988… reproduced from main 9e325d91 first.
+  "supabase/functions/_shared/comms-email/contract.ts": "3fc25e779d16073b317508ab77637ae00f8c1de48bb078909928aff37505ffc6",
   "supabase/functions/_shared/paige-turn/continuity.ts": "ca8c258d200a59a573a3c0cc2a3ad253cbed1239da24afdd1efc0fdbc90dec69",
   "supabase/functions/_shared/paige-turn/contract.ts": "317424344aeb669ef5885b36bbe61c66f94ad3fce994c966203cd6c8f42763f4"
 };

@@ -1,5 +1,28 @@
 # Paige Router Budget Enforcement Contract — PROPOSAL (Stage 1 piece ④)
 
+> **October27,2026 owner billing supersession — current policy.** ANT11 owner
+> ruling69816972 / receiving143b7cae and ANT1616a27e37d supersede this historical
+> financial-stop proposal. All attributable PAIGE-provided consumption is billed
+> to the consuming tenant at published rates; the accepted contribution target
+> is25% after actual attributable variable/payment costs. Collection thresholds
+> trigger collection, not cessation; direct-provider charges are not billed twice.
+> No default/tenant/session/turn monetary allowance or exhausted-wallet stop may
+> block permitted use. Cost estimates and thresholds are informational.
+>
+> The original router-budget API/settings/trace fields remain compatible, but
+> every model band continues above those markers without model downgrade.
+> Missing usage observations remain unknown, never invented zero. Original
+> read-only continuation cannot hide a verified work result for prior spending
+> or an unavailable cost source. Tenant attribution stays in paige_llm_trace;
+> original domain/capability receipts remain authoritative. This source repair
+> does not prove actual meter→collection→usage-invoice reconciliation or final
+> dollar rates. Technical throughput, anti-abuse, provider readiness, routing,
+> current authority, exact business-action approvals and activation stay intact.
+>
+> The text below is preserved historical context, not current release authority.
+> Candidate source/tests are not production cap-removal evidence; exact review,
+> CI, affected Edge graph deployment/readback and authenticated proof are required.
+
 > **Status:** PROPOSAL. Documentation only. Extends the Paige Runtime Harness doctrine
 > (`docs/PAIGE-MASTER-PROJECT-REFERENCE.md` §3, responsibility #2 "Model routing") as the
 > fourth and final Stage 1 contract, sibling to the durable-job (#1083), receipt/Rail

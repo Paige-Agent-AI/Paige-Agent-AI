@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { AlertTriangle, CheckCircle2, Mail, MailX, MessageSquare, MessageSquareOff, Pause, Pencil, RefreshCw, Search, Send, ShieldCheck, Sparkles, Undo2, UserMinus, UserPlus, Users } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Clock, Mail, MailX, MessageSquare, MessageSquareOff, Pause, Pencil, RefreshCw, Search, Send, ShieldCheck, Sparkles, Undo2, UserMinus, UserPlus, Users } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useTenantContext } from "@/hooks/useTenantContext";
@@ -785,9 +785,10 @@ export function SoloTeamWorkspace({ openPaige, openConnections }: { openPaige?: 
         <div><h2 id="stw-paige-h">Paige team context</h2>
           <p>Paige can read the confirmed roster, each person's permission, title and responsibilities for this workspace. Work details people write are reference for her, not instructions or authority.</p>
           <div className="stw-lanes">
-            <div className="stw-now"><h3>She can do this for you today</h3><ul><li><CheckCircle2 aria-hidden="true" />Invite someone</li><li><CheckCircle2 aria-hidden="true" />Resend or withdraw an invitation</li><li><CheckCircle2 aria-hidden="true" />Edit someone's title and responsibilities</li><li><CheckCircle2 aria-hidden="true" />Change a permission (owner only)</li><li><CheckCircle2 aria-hidden="true" />Suspend or reinstate someone</li><li><CheckCircle2 aria-hidden="true" />Remove someone and hand over their work</li><li><CheckCircle2 aria-hidden="true" />Turn someone's team conversations on or off</li></ul></div>
+            <div className="stw-now"><h3>She can do this for you today</h3><ul><li><CheckCircle2 aria-hidden="true" />Invite someone</li><li><CheckCircle2 aria-hidden="true" />Resend or withdraw an invitation</li><li><CheckCircle2 aria-hidden="true" />Edit someone's title and responsibilities</li><li><CheckCircle2 aria-hidden="true" />Change a permission (owner only)</li></ul></div>
+            <div className="stw-soon"><h3>New to Paige, still being checked</h3><ul><li><Clock aria-hidden="true" />Suspend or reinstate someone</li><li><Clock aria-hidden="true" />Remove someone and hand over their work</li><li><Clock aria-hidden="true" />Turn someone's team conversations on or off</li></ul></div>
           </div>
-          <p className="stw-rule">She's held to the same rules you are, and nobody can be made an owner from a conversation. Access changes and invitations are read back to you and wait for your approval, even on autopilot. Approvals assigned to someone and a mailbox they connected can't be handed over, by her or anyone, and open work can be handed over only on a standalone business account.</p>
+          <p className="stw-rule">She's held to the same rules you are, and nobody can be made an owner from a conversation. Access changes and invitations are read back to you and wait for your approval, even on autopilot. Approvals assigned to someone and a mailbox they connected can't be handed over, by her or anyone, and open work can be handed over only on a standalone business account. Until her new actions have been checked, you can always do them here.</p>
         </div>{openPaige && <button type="button" className="stw-btn secondary" onClick={openPaige}>Open Paige</button>}</section>
     </>}
     {editorWorkspace && selected && (selectedLive || (contactHold && !workspace)) && <MemberEditor member={selected} workspace={editorWorkspace} onClose={closeEditor} onSaved={handleSaved} onContactDirtyChange={setContactHold}

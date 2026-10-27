@@ -120,13 +120,20 @@ await check('unlinked CRM customer gets a private brief without invented login o
  const r=await drive({unlinked:true});assert.equal(r.body.status,'succeeded');assert.equal(r.rec.from.filter(q=>q.table==='client_memory').length,0);
  assert(!JSON.stringify(r.state.models).includes('Confirmed historical service goal'));
 });
+await check('usage above the former allowance preserves the original acknowledged private draft and usage attribution',async()=>{
+ const r=await drive({budgetBlocked:true});assert.equal(r.body.status,'succeeded');assert.equal(r.state.models.length,1);
+ assert.equal(r.body.outputs.game_plan,r.state.run.outputs.game_plan);assert.equal(r.state.run.invoker_user_id,actor);
+ const traces=r.rec.inserts.filter(q=>q.table==='paige_llm_trace');assert.equal(traces.length,1);
+ assert.equal(traces[0].row.tenant_id,tenant);assert.equal(traces[0].row.doctrine_gate_hits?.budget?.level,'hard');
+ assert.notEqual(traces[0].row.error_class,'budget_exceeded');
+});
 await check('Memory denial is missing context, never a confirmed fact or fake zero-success write',async()=>{
  const r=await drive({memoryError:true});assert.equal(r.body.status,'succeeded');assert(!JSON.stringify(r.state.models).includes('Confirmed historical service goal'));
  assert.equal(r.state.run.steps_log.find(x=>x.step==='context').memory_available,false);
 });
 for(const [name,options]of [['foreign business',{foreignBusiness:true}],['foreign customer',{foreignContact:true}],['native RLS denial',{rlsDenied:true}],
  ['late workspace switch while reading Memory',{switchInMemory:true}],['abort before model dispatch',{abortInMemory:true}],
- ['existing budget ceiling',{budgetBlocked:true}],['unauthenticated actor',{unauthenticated:true}],['service principal',{service:true}],['inactive recipe',{inactive:true}],
+ ['unauthenticated actor',{unauthenticated:true}],['service principal',{service:true}],['inactive recipe',{inactive:true}],
  ['external client seat',{clientSeat:true}],['foreign native business access',{foreignAccess:true}],['unavailable native business authority',{accessError:true}],['thrown native authority read',{accessThrow:true}]])
  await check(name+' prevents model dispatch and never claims a saved draft',async()=>{const r=await drive(options);assert.equal(r.state.models.length,0);assert.notEqual(r.body.status,'succeeded');assert(!r.body.outputs?.game_plan);});
 for(const [name,options]of [['provider transport failure',{providerThrow:true}],['provider HTTP failure',{providerHttp:true}],['malformed provider JSON',{providerJson:true}],

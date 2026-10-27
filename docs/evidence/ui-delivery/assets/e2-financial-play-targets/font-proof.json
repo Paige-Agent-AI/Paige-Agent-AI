@@ -1,0 +1,10 @@
+{
+  "fonts": [
+    {
+      "familyName": "Schibsted Grotesk",
+      "glyphCount": 22,
+      "isCustomFont": true,
+      "postScriptName": "Schibsted-Grotesk-Medium"
+    }
+  ]
+}

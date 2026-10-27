@@ -25,8 +25,8 @@
 --      custom_args claims (an absent one is claims_missing); a binding not provider_accepted, or whose
 --      stored id differs, is refused.
 --   3. Settle: a SendGrid send finalized 'unknown' (or a stale 'dispatching') is settled by an event only
---      when all three claims AND the recipient match — and never a failed or refused SendGrid send, a Resend
---      send, or a send whose binding already holds another provider id, even with every claim matching; early events for a 'prepared'/'dispatching' send
+--      when all three claims AND the recipient match — and never a failed or refused SendGrid send, a Gmail
+--      send (a Resend-bound send IS SendGrid's since 20271116200000: exp03_resend_retired.sql), or a send whose binding already holds another provider id, even with every claim matching; early events for a 'prepared'/'dispatching' send
 --      come back 'pending' (nothing journalled, nothing appended) and are bounded; a failing applier
 --      still journals (apply_failed) and keeps its email_send_log row.
 --   4. History filters: a rejected approval, or a reply action about another contact, writes no history;
@@ -81,8 +81,9 @@ SELECT p.oid AS function_oid, pg_get_functiondef(p.oid) AS definition, e.expecte
 FROM (VALUES
  ('public.advance_action(uuid,text,jsonb,text,uuid,uuid,jsonb,text,text,uuid)'::regprocedure,'0d412f9c0a734aeb2815dca39ab061a3'),
  ('public.prepare_comms_email_send(uuid,uuid,uuid,uuid,text,uuid,text,text,text,text,text,jsonb,jsonb)'::regprocedure,'8da3b64c24552123b973db96a74ab986'),
- ('public.read_comms_email_send_binding(uuid)'::regprocedure,'6bc0d581e141cfaf0221002d71564eaa'),
- ('public.claim_comms_email_send(uuid,uuid,boolean)'::regprocedure,'7b1173ff7d53da5836e33c2d77366c77'),
+ -- read_binding + claim: the scheduled-send bodies (20271119000000 — release actor, not-before, queued -> draft).
+ ('public.read_comms_email_send_binding(uuid)'::regprocedure,'7cdafa1530f75a2d7c02b08f5c6ccc7d'),
+ ('public.claim_comms_email_send(uuid,uuid,boolean)'::regprocedure,'a9dfb75621838268a961152d19de954d'),
  ('public.paige_guard_send_approval_requires_governed_send()'::regprocedure,'0018e0f9a1b5c63b836cb4ef72558332'),
  ('public._lead_reply_record_send(uuid,uuid,uuid)'::regprocedure,'f0ecd87330486f154d5ffec709a5b579')
 ) AS e(function_oid,expected_md5) JOIN pg_proc p ON p.oid=e.function_oid;
@@ -97,6 +98,9 @@ SELECT pg_temp.check_true((SELECT count(*)=6 AND bool_and(md5(p.prosrc)=s.expect
 -- 20271116020000 redefines ingest_sendgrid_receipt (campaign fall-through): replay it after 000200 so every
 -- governed-reply assertion below runs against the ingest production actually has.
 \ir ../migrations/20271116020000_exp03_campaign_sendgrid_lane.sql
+-- 20271116200000 redefines the campaign applier and the sender resolver after it (Resend retired): replay it
+-- too, so nothing above is left on the older body.
+\ir ../migrations/20271116200000_exp03_resend_retired.sql
 
 SELECT pg_temp.check_true(to_regprocedure('public.ingest_sendgrid_receipt(text,text,text,text,timestamptz)') IS NULL
   AND to_regprocedure('public.ingest_sendgrid_receipt(text,text,text,text,timestamptz,text,text,text,text,text)') IS NOT NULL,
@@ -417,7 +421,9 @@ SELECT pg_temp.check_true(pg_temp.b(20)->>'state'='provider_accepted' AND pg_tem
 -- More governed sends of business A for receipt outcomes.
 SELECT pg_temp.prep_a(6,'e5000000-0000-4000-8000-0000000c0003','client.three@example.invalid'); SELECT pg_temp.accept(6,'sgDrop6');
 SELECT pg_temp.prep_a(7,'e5000000-0000-4000-8000-0000000c0003','client.three@example.invalid'); SELECT pg_temp.accept(7,'sgSpam7');
-SELECT pg_temp.prep_a(8,'e5000000-0000-4000-8000-0000000c0003','client.three@example.invalid'); SELECT pg_temp.accept(8,'resendId8',false);
+SELECT pg_temp.prep_a(8,'e5000000-0000-4000-8000-0000000c0003','client.three@example.invalid'); SELECT pg_temp.accept(8,'gmailId8',false);
+-- 8 is another provider's send: marked a Gmail binding (a Resend-bound one goes through SendGrid since 20271116200000).
+UPDATE public.messages SET meta=jsonb_set(meta,'{comms_email_binding,provider}','"gmail"') WHERE id=pg_temp.msg(8);
 SELECT pg_temp.prep_a(9,'e5000000-0000-4000-8000-0000000c0003','client.three@example.invalid'); SELECT pg_temp.accept(9,'sgDefer9');
 -- SendGrid sends with NO stored provider id (the settle cases):
 --   12: finalized 'unknown' (the door could not read the provider's answer);
@@ -443,7 +449,8 @@ GRANT ALL ON snap, ap TO service_role;
 -- (round-4 verifier finding 2):
 --   41: a SendGrid send that FAILED (the provider refused it at dispatch);
 --   42: a SendGrid send REFUSED before dispatch;
---   43: a Resend send whose outcome is unknown (a SendGrid event is never about a Resend send);
+--   43: a Gmail send whose outcome is unknown (a SendGrid event is never about a Gmail send; a Resend-bound
+--       one is, since 20271116200000 — exp03_resend_retired.sql);
 --   44: a SendGrid send whose outcome is unknown but whose binding already holds another provider id.
 SELECT pg_temp.prep_a(41,'e5000000-0000-4000-8000-0000000c0003','client.three@example.invalid');
 SELECT public.finalize_comms_email_send(pg_temp.msg(41),pg_temp.op(41),'failed',NULL,'provider_rejected',pg_temp.claim_sg(41));
@@ -453,15 +460,16 @@ UPDATE public.messages SET meta=jsonb_set(meta,'{comms_email_binding,provider}',
 SELECT pg_temp.prep_a(43,'e5000000-0000-4000-8000-0000000c0003','client.three@example.invalid');
 SELECT public.finalize_comms_email_send(pg_temp.msg(43),pg_temp.op(43),'unknown',NULL,'provider_timeout',
   (public.claim_comms_email_send(pg_temp.msg(43),pg_temp.op(43))->>'attempts')::int);
+UPDATE public.messages SET meta=jsonb_set(meta,'{comms_email_binding,provider}','"gmail"') WHERE id=pg_temp.msg(43);
 SELECT pg_temp.prep_a(44,'e5000000-0000-4000-8000-0000000c0003','client.three@example.invalid');
 SELECT public.finalize_comms_email_send(pg_temp.msg(44),pg_temp.op(44),'unknown',NULL,'provider_timeout',pg_temp.claim_sg(44));
 UPDATE public.messages SET meta=jsonb_set(meta,'{comms_email_binding,provider_message_id}','"sgOther44"') WHERE id=pg_temp.msg(44);
 SELECT pg_temp.check_true(pg_temp.b(41)->>'state'='failed' AND pg_temp.b(41)->>'provider'='sendgrid'
   AND pg_temp.b(42)->>'state'='refused' AND pg_temp.b(42)->>'provider'='sendgrid'
-  AND pg_temp.b(43)->>'state'='unknown' AND pg_temp.b(43)->>'provider'='resend'
+  AND pg_temp.b(43)->>'state'='unknown' AND pg_temp.b(43)->>'provider'='gmail'
   AND pg_temp.b(44)->>'state'='unknown' AND pg_temp.b(44)->>'provider'='sendgrid' AND pg_temp.b(44)->>'provider_message_id'='sgOther44'
   AND (SELECT bool_and(provider_message_id IS NULL) FROM public.messages WHERE id IN (pg_temp.msg(41),pg_temp.msg(42),pg_temp.msg(43),pg_temp.msg(44))),
-  'fixture: a failed and a refused SendGrid send, an unknown Resend send, and an unknown SendGrid send already holding another id');
+  'fixture: a failed and a refused SendGrid send, an unknown Gmail send, and an unknown SendGrid send already holding another id');
 INSERT INTO snap SELECT 'never_settled', md5(string_agg(id::text||status||meta::text||coalesce(error,'')||coalesce(provider_message_id,''),'|' ORDER BY id))
   FROM public.messages WHERE id IN (pg_temp.msg(41),pg_temp.msg(42),pg_temp.msg(43),pg_temp.msg(44));
 
@@ -503,7 +511,7 @@ SELECT pg_temp.check_true(pg_temp.ev('f4','sgLeadOne1','delivered','lead.one@exa
 SELECT pg_temp.check_true(pg_temp.ev('f6','sgLeadOne1','delivered','lead.one@example.invalid','2027-10-31T10:00:00Z','e5000000-0000-4000-8000-00000000aaaa',pg_temp.op(1)::text,NULL,NULL,pg_temp.msg(5)::text)='processed'
   AND pg_temp.j('f6')->>'correlation_reason'='message_mismatch' AND pg_temp.status(1)='sent',
   'a custom_args message id that names another message (here: business B''s) is refused (message_mismatch)');
-SELECT pg_temp.check_true(pg_temp.evm('f5','resendId8',8,'delivered','client.three@example.invalid')='processed'
+SELECT pg_temp.check_true(pg_temp.evm('f5','gmailId8',8,'delivered','client.three@example.invalid')='processed'
   AND pg_temp.j('f5')->>'correlation_reason'='provider_mismatch' AND pg_temp.status(8)='sent',
   'a SendGrid event never updates an email another provider accepted (provider_mismatch)');
 -- L1: every governed SendGrid send carries all three claims; an event missing any one is not about it.
@@ -662,7 +670,7 @@ SELECT pg_temp.check_true(pg_temp.evm('ns42','sgSettle42',42,'delivered','client
   'settle: a REFUSED SendGrid send is never settled by an event (not_provider_accepted)');
 SELECT pg_temp.check_true(pg_temp.evm('ns43','sgSettle43',43,'delivered','client.three@example.invalid')='processed'
   AND pg_temp.b(43)->>'state'='unknown' AND pg_temp.j('ns43')->>'correlation'='uncorrelated' AND pg_temp.j('ns43')->>'correlation_reason'='provider_mismatch',
-  'settle: a Resend send whose outcome is unknown is never settled by a SendGrid event (provider_mismatch)');
+  'settle: a Gmail send whose outcome is unknown is never settled by a SendGrid event (provider_mismatch)');
 SELECT pg_temp.check_true(pg_temp.evm('ns44','sgSettle44',44,'delivered','client.three@example.invalid')='processed'
   AND pg_temp.b(44)->>'state'='unknown' AND pg_temp.b(44)->>'provider_message_id'='sgOther44' AND pg_temp.j('ns44')->>'correlation'='uncorrelated' AND pg_temp.j('ns44')->>'correlation_reason'='binding_id_mismatch',
   'settle: an unknown send whose binding already holds another provider id is not overwritten (binding_id_mismatch)');

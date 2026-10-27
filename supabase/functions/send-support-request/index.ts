@@ -1,9 +1,15 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { Resend } from "https://esm.sh/resend@4.0.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
 import { primaryPhonesForUsers } from "../_shared/user-contact-methods.ts";
+import { sendPlatformEmail } from "../_shared/email/platform-sendgrid.ts";
 
-const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+// PAIGE's SendGrid transport (owner ruling 2026-10-26). support@paigeagent.ai is sent as
+// support@mail.paigeagent.ai — the local part is kept, the domain is the platform's verified one.
+const SUPPORT_FROM = "PaigeAgent.ai Support <support@paigeagent.ai>";
+// The From now sits on the sending-only mail. subdomain, so the person's reply goes to the support inbox
+// it always reached.
+const SUPPORT_REPLY_TO = "support@paigeagent.ai";
+const sendgridKey = () => Deno.env.get("SENDGRID_MAIL_SEND_API_KEY") ?? null;
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -217,8 +223,8 @@ serve(async (req) => {
                             (requestData.requestConsultation && isEnterprise);
 
     // Send notification to support team
-    const supportEmail = await resend.emails.send({
-      from: "PaigeAgent.ai Support <support@paigeagent.ai>",
+    const supportEmail = await sendPlatformEmail({
+      from: SUPPORT_FROM,
       to: [support.routingInbox],
       subject: `${priority} | ${requestData.category.toUpperCase()} | ${requestData.subject}`,
       html: `
@@ -316,13 +322,28 @@ serve(async (req) => {
           </body>
         </html>
       `,
-    });
+      // Replies to the team notification go to the person who asked.
+      ...(user.email ? { replyTo: user.email } : {}),
+    }, { apiKey: sendgridKey() });
 
-    logStep("Support team notified", { messageId: supportEmail.data?.id });
+    if (!supportEmail.ok) {
+      // The request only exists once the team has it. Nothing is confirmed to the person below unless it
+      // does. A 5xx/timeout/throw is UNCONFIRMED: it may have arrived, so the person is told to check
+      // before sending it again rather than told it failed.
+      logStep("Support team notification not accepted", { error: supportEmail.error, unconfirmed: supportEmail.unconfirmed });
+      return new Response(
+        JSON.stringify(supportEmail.unconfirmed
+          ? { error: "We couldn't confirm your request reached our team. It may have — please don't send it again; email support@paigeagent.ai if you haven't heard back.", unconfirmed: true }
+          : { error: "We couldn't deliver your request to our team. Please try again or email support@paigeagent.ai.", unconfirmed: false }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 502 },
+      );
+    }
+    logStep("Support team notified", { messageId: supportEmail.id });
 
     // Send confirmation to user
-    const userConfirmation = await resend.emails.send({
-      from: "PaigeAgent.ai Support <support@paigeagent.ai>",
+    const userConfirmation = await sendPlatformEmail({
+      from: SUPPORT_FROM,
+      replyTo: SUPPORT_REPLY_TO,
       to: [user.email!],
       subject: `Support Request Received: ${requestData.subject}`,
       html: `
@@ -375,9 +396,12 @@ serve(async (req) => {
           </body>
         </html>
       `,
-    });
+    }, { apiKey: sendgridKey() });
 
-    logStep("User confirmation sent", { messageId: userConfirmation.data?.id });
+    // The request reached the team; a missing confirmation copy does not undo that, so it is logged and
+    // reported, not turned into a failure.
+    if (userConfirmation.ok) logStep("User confirmation sent", { messageId: userConfirmation.id });
+    else logStep("User confirmation not accepted", { error: userConfirmation.error, unconfirmed: userConfirmation.unconfirmed });
 
     // Log the support request in audit trail
     await supabaseClient
@@ -397,7 +421,8 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         success: true,
-        message: "Support request submitted successfully" 
+        message: "Support request submitted successfully",
+        confirmation_emailed: userConfirmation.ok,
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },

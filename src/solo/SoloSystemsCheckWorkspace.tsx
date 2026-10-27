@@ -1,5 +1,5 @@
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { Link, useLocation, useParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { routeLinkTarget } from "@/lib/links/workspaceLinks";
 import { readRecordLinks } from "../../supabase/functions/_shared/paige-turn/record-links";
 import {
@@ -13,6 +13,7 @@ import {
   SYSTEMS_CHECK_AREAS, destinationForCheck, areaForCheck,
 } from "./systems-check-areas";
 import "./solo-systems-check-workspace.css";
+import { SystemsCheckRunReview } from "./SystemsCheckRunReview";
 
 interface Props {
   accountContext?: TenantAccountContext | null;
@@ -302,12 +303,19 @@ export function SoloSystemsCheckWorkspace({ accountContext, openPaige, workspace
   const resolvedAccount = resolveTenantAccountContext(accountContext);
   const account = useParams().account ?? "";
   const location = useLocation();
+  const navigate = useNavigate();
   const sourceQuery = new URLSearchParams(location.search);
   const sourceValues = sourceQuery.getAll("finding");
   const sourceRequested = sourceValues.length > 0;
   const sourceId = sourceValues.length === 1
     ? readRecordLinks([{ destination: "systems_check", record_id: sourceValues[0] }])[0]?.record_id : null;
-  const systems = useSystemsCheck("tenant", { findingId: sourceId });
+  const runValues = sourceQuery.getAll("run");
+  const runRequested = runValues.length > 0;
+  // Finding IDs and run IDs are different original records. An ambiguous URL
+  // never chooses one silently or passes a Work/run identity as a finding.
+  const systems = useSystemsCheck("tenant", runRequested
+    ? { runId: !sourceRequested && runValues.length === 1 ? runValues[0] : "" }
+    : { findingId: sourceId });
   sourceQuery.delete("finding");
   const remainingSearch = sourceQuery.toString();
   const businessReview = routeLinkTarget({ destination: "executive", record_id: null }, "solo", account);
@@ -321,6 +329,15 @@ export function SoloSystemsCheckWorkspace({ accountContext, openPaige, workspace
   const [decisionMessage, setDecisionMessage] = useState("");
   const returnFocus = useRef<HTMLElement | null>(null);
   const refreshTrigger = useRef<HTMLButtonElement | null>(null);
+  const runTrigger = useRef<HTMLButtonElement | null>(null);
+  const runReturn = useRef<{ target: HTMLElement; epoch: typeof command.accountEpoch } | null>(null);
+  const runReviewMounted = useRef(false);
+  useLayoutEffect(() => {
+    runReviewMounted.current = true;
+    return () => { runReviewMounted.current = false; runReturn.current = null; };
+  }, []);
+  const currentRunEpoch = useRef(command.accountEpoch);
+  currentRunEpoch.current = command.accountEpoch;
   const sourceWasRequested = useRef(false);
   const linkedInspectionActive = useRef(false);
   const restoreFindingFocus = useRef(false);
@@ -364,6 +381,23 @@ export function SoloSystemsCheckWorkspace({ accountContext, openPaige, workspace
   const selectedIsHistorical = !!recordedSelection && !selectedIsCurrent;
   const selectedCanPrepare = selectedIsCurrent && !selectedReadUnavailable;
   const visibleProposal = proposal && selectedCanPrepare;
+  const runReviewOpen = runRequested && !sourceRequested && !selected && !visibleProposal && !decision;
+  const closeRunReview = () => {
+    const next = new URLSearchParams(location.search);
+    next.delete("run");
+    navigate({ pathname: location.pathname, search: next.size ? `?${next}` : "", hash: location.hash },
+      { replace: true, preventScrollReset: true });
+  };
+  const returnFromRunReview = (previous: HTMLElement | null) => {
+    const saved = runReturn.current;
+    runReturn.current = null;
+    // The callback is captured when this review opens. A later workspace may
+    // reuse the Chat DOM, but must never inherit an earlier workspace's focus.
+    if (!runReviewMounted.current || currentRunEpoch.current !== command.accountEpoch) return;
+    if (previous?.isConnected && previous !== document.body) previous.focus({ preventScroll: true });
+    else if (saved?.epoch === command.accountEpoch && saved.target.isConnected) saved.target.focus({ preventScroll: true });
+    else if (refreshTrigger.current?.isConnected) refreshTrigger.current.focus({ preventScroll: true });
+  };
   const linkedMessage = !sourceId ? "This source reference is not valid. Clear the selection to continue."
     : originalRead?.state === "loading" ? "Reading the original finding…"
       : originalRead?.state === "error" ? "The original finding could not be read. Refresh records to retry."
@@ -507,7 +541,7 @@ export function SoloSystemsCheckWorkspace({ accountContext, openPaige, workspace
   }, [decision]);
 
   useLayoutEffect(() => {
-    if (scrollOwnerRef.current) scrollOwnerRef.current.inert = Boolean(selected || visibleProposal || decision);
+    if (scrollOwnerRef.current) scrollOwnerRef.current.inert = Boolean(selected || visibleProposal || decision || runReviewOpen);
     if (drawerRef.current) drawerRef.current.inert = visibleProposal;
     // Native browsers refuse focus while the original trigger is inert. Restore
     // only after the original layer is interactive again and its scope still matches.
@@ -522,7 +556,7 @@ export function SoloSystemsCheckWorkspace({ accountContext, openPaige, workspace
       if (target?.isConnected) target.focus();
       else refreshTrigger.current?.focus();
     }
-  }, [command.accountEpoch, decision, visibleProposal, selected]);
+  }, [command.accountEpoch, decision, visibleProposal, selected, runReviewOpen]);
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -766,7 +800,7 @@ export function SoloSystemsCheckWorkspace({ accountContext, openPaige, workspace
   const isReading = systems.loading || command.loading;
   return (
     <main className="sc-workspace" aria-label="Solo Systems Check">
-      <div ref={scrollOwnerRef} className="sc-scroll-owner" aria-hidden={Boolean(selected || proposal || decision) || undefined}>
+      <div ref={scrollOwnerRef} className="sc-scroll-owner" aria-hidden={Boolean(selected || proposal || decision || runReviewOpen) || undefined}>
         <header className="sc-heading">
           <div>
             {/* OWNER RULING 2026-09-05: the sub-tab strip directly above already reads "Systems
@@ -858,6 +892,13 @@ export function SoloSystemsCheckWorkspace({ accountContext, openPaige, workspace
               )}
             </div>
             <div className="sc-strip-a">
+              {!systems.loading && !systems.isError && systems.run && <button ref={runTrigger} type="button" className="sc-button sc-button--quiet"
+                onClick={event => {
+                  runReturn.current = { target: event.currentTarget, epoch: command.accountEpoch };
+                  const next = new URLSearchParams(location.search);
+                  next.delete("finding"); next.set("run", systems.run!.id);
+                  navigate({ pathname: location.pathname, search: `?${next}`, hash: location.hash }, { preventScrollReset: true });
+                }}>View recorded check</button>}
               <button
                 ref={refreshTrigger}
                 type="button"
@@ -1139,6 +1180,9 @@ export function SoloSystemsCheckWorkspace({ accountContext, openPaige, workspace
           </>}
         </div>
       )}
+
+      <SystemsCheckRunReview open={runReviewOpen} record={systems.recordedRun ?? { state: "unavailable" }}
+        onClose={closeRunReview} onRefresh={systems.refresh} onReturnFocus={returnFromRunReview} />
 
       {decision && (
         <div className="sc-modal-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) closeDecision(); }}>

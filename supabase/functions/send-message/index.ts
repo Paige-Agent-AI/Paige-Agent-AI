@@ -1,12 +1,14 @@
 import { commsProviderExecutionAllowed, COMMS_PROVIDER_EXECUTION_DISABLED } from "../_shared/comms-provider-boundary.ts";
 import {collectInvoiceLedger} from '../_shared/sales-invoice-ledger.ts';
 import { senderDisplayName } from "../_shared/email/sender-display-name.ts";
+import { PLATFORM_FROM_DOMAIN, tenantFrom } from "../_shared/email/platform-sendgrid.ts";
 import {renderSalesInvoiceDocument} from '../_shared/sales-invoice-document.ts';
 import {renderDocumentPdf} from '../_shared/document-pdf.ts';
 import {pdfEmailAttachment} from '../_shared/email-attachments.ts';
 import { readInvoiceDeliveryReadiness, type InvoiceReadinessAdmin } from "../_shared/sales-invoice-delivery/readiness-reader.ts";
 import { PAIGE_APP_ORIGIN } from "../_shared/canonical-app-url.ts";
-// Unified send dispatcher — routes email via Resend, SMS via Twilio.
+// Unified send dispatcher — routes email via SendGrid (or the business's own Gmail/SMTP), SMS via Twilio.
+// Resend is no longer called: its account was emptied 2026-10-26 (owner: "I am moving EVERYTHING to SendGrid").
 // SMS is a tenant-configurable channel: it sends only when the tenant's Twilio
 // A2P registration is approved (config.twilio_a2p_status). Email is the default.
 // Writes every send to paige_messages_audit and mirrors outbound to paige_conversations.
@@ -84,16 +86,21 @@ interface SendBody {
   // blocked_unsubscribe_unavailable) unless a token is minted and the body carries {{unsubscribe_url}},
   // which is replaced per recipient. List-Unsubscribe headers go out on every provider route.
   marketing?: boolean;
-  // A stable per-recipient send identity (the campaign worker passes its recipient id). Forwarded to
-  // the provider as Idempotency-Key where the provider supports one (Resend).
+  // A stable per-recipient send identity (the campaign worker passes `ecr:<recipient id>`). SendGrid has
+  // no idempotent replay, so this is never a provider key: it names the campaign recipient (see
+  // CAMPAIGN_RECIPIENT_KEY) and is otherwise only carried on the context.
   idempotency_key?: string;
   // ── INT-328 comms.email_send (additive; only comms-email-command sends these, service role). ──
   // The governed one-recipient business email. The prepared messages row carries
   // meta.comms_email_binding; this path re-reads it, sends exactly that, and finalizes it.
   comms_email_operation_id?: string;
-  // true = re-enter an 'unknown'/stale-'dispatching' Resend operation under the SAME
-  // provider idempotency key (the claim RPC decides whether that is allowed).
+  // A request to re-enter an 'unknown'/stale-'dispatching' operation. Refused before any claim: every
+  // email now goes through SendGrid, which has no idempotent replay, so a re-send could deliver twice.
   comms_email_reconcile?: boolean;
+  // "Approve now, send later": the scheduled drainer releasing a SCHEDULED governed email (its binding
+  // carries send_at, its row is 'queued'). Only `true`, only service role, only with
+  // comms_email_operation_id, never with a reconcile. An immediate binding never accepts it.
+  comms_email_scheduled_release?: boolean;
   // Internal, one-use signing credential. It is never copied into the draft,
   // audit, Work, Conversation, receipt, error or any other provider pathway.
   agreement_signature_token?: string;
@@ -104,25 +111,36 @@ const COMMS_EMAIL_PROVIDER_TIMEOUT_MS = 20_000;
 const COMMS_EMAIL_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 // Refusal code for any SendGrid send that is not the governed email door's dispatch (security H2).
 const PAIGE_EMAIL_DOOR_REQUIRED = "paige_email_requires_governed_send";
+// The platform's restricted Mail Send credential is absent: nothing was sent (a definitive failure).
+const SENDGRID_KEY_MISSING = "SENDGRID_MAIL_SEND_API_KEY missing";
+// A SendGrid send whose answer could not be read (5xx, timeout, thrown request): it may have been
+// accepted. Written as the messages row's error and the first word of the audit error, so no reader
+// takes it for a definitive "not sent" (both tables' status CHECKs admit no "unknown" value).
+const DELIVERY_UNCONFIRMED = "delivery_unconfirmed";
 // email-campaign-worker's provider idempotency key: `ecr:<email_campaign_recipients.id>`.
 const CAMPAIGN_RECIPIENT_KEY = /^ecr:([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i;
 interface CommsEmailBinding {
   operation_id: string; tenant_id: string; actor_user_id: string; contact_id: string; connector_id: string;
   recipient: string; from_address: string; provider: "resend" | "gmail" | "smtp" | "sendgrid";
   subject: string; body_html: string; state: string;
+  /** A scheduled governed email's canonical send time (ISO, UTC, whole minute). null = an immediate send. */
+  send_at: string | null;
 }
 type CommsEmailOutcome = "provider_accepted" | "failed" | "refused" | "unknown";
 type OutboundDelivery = Awaited<ReturnType<OutboundChannelAdapter["send"]>>;
-// The Resend and SendGrid branches of the email adapter honour this signal; Gmail/SMTP seams take
+// The SendGrid branch of the email adapter honours this signal; Gmail/SMTP seams take
 // none, so the deadline below also races them. Never set on any other path.
-// sendgridCustomArgs (comms_email path only): correlation ids SendGrid echoes on every Event Webhook
+// sendgridCustomArgs (comms_email and campaign sends): correlation ids SendGrid echoes on every Event Webhook
 // event for this message. They are HINTS for finding the stored governed send, never proof: a receipt
 // is accepted only after it is verified server-side against the stored message (tenant, operation,
 // message id and the recorded X-Message-Id), never trusted from the event.
 type CommsEmailSendContext = OutboundSendContext & { abortSignal?: AbortSignal | null; sendgridCustomArgs?: Record<string, string> | null;
   // Experience 03: a campaign email asks SendGrid to track opens and clicks itself, so campaign analytics
   // never depend on the account's tracking defaults.
-  sendgridTrackEngagement?: boolean };
+  sendgridTrackEngagement?: boolean;
+  // Security H2: THIS business's own managed address(es) on mail.paigeagent.ai, resolved server-side for
+  // the derived tenant (never from a connector or the request). The only shared-domain From kept as is.
+  ownManagedAddresses?: string[] };
 
 // read_comms_email_send_binding returns the binding (flat, like the invoice read) plus the
 // message's tenant. A nested `comms_email_binding` object is accepted too. Anything malformed,
@@ -147,11 +165,19 @@ function parseCommsEmailBinding(value: unknown, messageTenantId: string | null):
   if (typeof v.subject !== "string" || !v.subject.trim() || v.subject.length > 200 || /[\r\n]/.test(v.subject)) return null;
   if (typeof v.body_html !== "string" || !v.body_html) return null;
   if (typeof v.state !== "string") return null;
+  // A present send_at must be exactly the canonical text prepare stored (Date#toISOString, whole minute).
+  let sendAt: string | null = null;
+  if (v.send_at !== undefined && v.send_at !== null) {
+    if (typeof v.send_at !== "string" || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:00\.000Z$/.test(v.send_at)) return null;
+    const ms = Date.parse(v.send_at);
+    if (!Number.isFinite(ms) || new Date(ms).toISOString() !== v.send_at) return null;
+    sendAt = v.send_at;
+  }
   return {
     operation_id: v.operation_id as string, tenant_id: v.tenant_id as string, actor_user_id: v.actor_user_id as string,
     contact_id: v.contact_id as string, connector_id: v.connector_id as string,
     recipient: v.recipient, from_address: v.from_address, provider: v.provider,
-    subject: v.subject, body_html: v.body_html, state: v.state,
+    subject: v.subject, body_html: v.body_html, state: v.state, send_at: sendAt,
   };
 }
 
@@ -174,7 +200,7 @@ function commsEmailDeliveryOutcome(
     "smtp_requires_admin", "smtp_not_configured", "smtp_creds_failed",
   ]);
   if (delivery.reason && notSent.has(delivery.reason)) return { outcome: "failed", reason: "EMAIL_PROVIDER_NOT_CONFIGURED" };
-  if (!delivery.reason && delivery.error === "RESEND_API_KEY missing") return { outcome: "failed", reason: "EMAIL_PROVIDER_NOT_CONFIGURED" };
+  if (!delivery.reason && delivery.error === SENDGRID_KEY_MISSING) return { outcome: "failed", reason: "EMAIL_PROVIDER_NOT_CONFIGURED" };
   // An SMTP exception may land after DATA was accepted; only the pre-socket host guard is definitive.
   if (delivery.reason === "smtp_send_failed") {
     return String(delivery.error ?? "").startsWith("smtp_send_failed:")
@@ -251,7 +277,7 @@ function attachmentValidationError(
 }
 
 // -----------------------------------------------------------------------------
-// §32 — register the EMAIL outbound adapter (Resend) into the shared registry, then
+// §32 — register the EMAIL outbound adapter (SendGrid, Gmail, SMTP) into the shared registry, then
 // send THROUGH it. C-2..C-5 register sms/whatsapp/etc. against the same contract.
 // -----------------------------------------------------------------------------
 const emailOutboundAdapter: OutboundChannelAdapter = {
@@ -261,9 +287,9 @@ const emailOutboundAdapter: OutboundChannelAdapter = {
     return null;
   },
   async send(msg: NormalizedMessage, ctx: OutboundSendContext) {
-    // ── #141b: Gmail-vs-Resend dispatch INSIDE the email path (§18 — NOT a second
+    // ── #141b: Gmail-vs-SendGrid dispatch INSIDE the email path (§18 — NOT a second
     //    'email' registry entry). When the connector's provider is 'gmail', send through
-    //    the Gmail seam using the token resolved from its Vault ref; otherwise Resend. ──
+    //    the Gmail seam using the token resolved from its Vault ref; otherwise SendGrid. ──
     if (ctx.provider === "gmail") {
       // ctx.admin (OutboundAdminClient) is structurally { from, rpc } — identical to the
       // Gmail seam's SupabaseAdminLike (imported from twilio.ts, same shape), so it assigns.
@@ -365,111 +391,91 @@ const emailOutboundAdapter: OutboundChannelAdapter = {
       return { ok: true, status: "sent" as const, provider_message_id: sent.data?.messageId ?? null };
     }
 
+    // Experience 03 (owner ruling 2026-10-26, "I am moving EVERYTHING to SendGrid"): every email that is
+    // not Gmail or SMTP goes through SendGrid with the platform's restricted Mail Send key — a SendGrid
+    // connector, and everything that used to go through Resend: PAIGE's managed <slug>@mail.paigeagent.ai
+    // sender, a connectorless send, and a custom-domain connector provisioned as provider 'resend'.
+    const sgKey = ctx.providerApiKey;
+    if (!sgKey) return { ok: false, status: "failed" as const, error: SENDGRID_KEY_MISSING };
+    // From (security H2). SendGrid authenticates domains for the whole shared account, so it would accept
+    // a From on any domain the account verified, including one another business verified. A SendGrid
+    // connector's From reaches this arm only through the governed door or the campaign admission, both of
+    // which bind it to a domain THIS business verified, so it is sent as is. Every other From is the
+    // business's data (a workspace admin can write any connector address), so it goes through tenantFrom:
+    // a mail.paigeagent.ai address stays ONLY when it is this business's own managed address as resolved
+    // server-side; another business's managed address, any PAIGE address (paigeagent.ai is never
+    // remapped) and a business's own domain are sent as notifications@mail.paigeagent.ai under its name.
+    let sgFrom: { email: string; name?: string };
+    let sgReplyTo = ctx.replyTo || null;
     if (ctx.provider === "sendgrid") {
-      const sgKey = ctx.providerApiKey as string;
       const name0 = ctx.from.display_name?.replace(/[^\w \-.@'"]/g, " ").replace(/\s+/g, " ").trim();
-      const sgHeaders: Record<string, string> = { ...buildListUnsubscribeHeaders(ctx.listUnsubscribeUrl) };
-      if (msg.in_reply_to_provider_id) sgHeaders["In-Reply-To"] = msg.in_reply_to_provider_id;
-      // A SendGrid request never hangs a send: its own deadline (the comms_email provider deadline),
-      // combined with the comms_email abort when that path set one. An abort is an UNCONFIRMED
-      // outcome (no http_status below), never a definitive rejection.
-      const sgComms = ctx as CommsEmailSendContext;
-      const sgTimeout = AbortSignal.timeout(COMMS_EMAIL_PROVIDER_TIMEOUT_MS);
-      const sgSignal = sgComms.abortSignal ? AbortSignal.any([sgComms.abortSignal, sgTimeout]) : sgTimeout;
-      const sgCustomArgs = sgComms.sendgridCustomArgs && Object.keys(sgComms.sendgridCustomArgs).length ? sgComms.sendgridCustomArgs : null;
-      try {
-        const res = await fetch("https://api.sendgrid.com/v3/mail/send", {
-          signal: sgSignal,
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${sgKey}`,
-            "Content-Type": "application/json",
-            ...(ctx.idempotencyKey ? { "X-Idempotency-Key": ctx.idempotencyKey } : {}),
-          },
-          body: JSON.stringify({
-            personalizations: [{ to: [{ email: ctx.to }] }],
-            ...(sgCustomArgs ? { custom_args: sgCustomArgs } : {}),
-            ...(sgComms.sendgridTrackEngagement ? {
-              tracking_settings: { open_tracking: { enable: true }, click_tracking: { enable: true, enable_text: false } },
-            } : {}),
-            from: name0 ? { email: ctx.from.address, name: name0 } : { email: ctx.from.address },
-            ...(ctx.replyTo ? { reply_to: { email: ctx.replyTo } } : {}),
-            subject: msg.subject || "(no subject)",
-            content: [
-              // SendGrid requires text/plain FIRST when both are present
-              // ("If present, text/plain must be first, followed by text/html").
-              ...(msg.body_text ? [{ type: "text/plain", value: msg.body_text }] : []),
-              ...(msg.body_html ? [{ type: "text/html", value: msg.body_html }] : []),
-            ],
-            ...(Object.keys(sgHeaders).length ? { headers: sgHeaders } : {}),
-            // Same attachments contract as every sibling arm — a sendgrid
-            // connector must never silently drop an invoice PDF.
-            ...(ctx.serverAttachments?.length ? {
-              attachments: ctx.serverAttachments.map((a) => ({
-                content: a.content, // EmailAttachment.content is already base64
-                filename: a.filename,
-                type: a.contentType,
-                disposition: "attachment",
-              })),
-            } : {}),
-          }),
-        });
-        if (!res.ok) {
-          const errBody = await res.text().catch(() => "");
-          // meta.http_status lets the comms_email path tell a definitive 4xx rejection (nothing sent)
-          // from an outcome that is merely unconfirmed — the same additive contract as the Resend arm.
-          return { ok: false, status: "failed" as const, error: `sendgrid_${res.status}: ${errBody.slice(0, 200)}`, meta: { http_status: res.status } };
-        }
-        // v3/mail/send returns an EMPTY 202 body; X-Message-Id is the durable id
-        // (it corresponds to the Event Webhook's sg_message_id).
-        return { ok: true, status: "sent" as const, provider_message_id: res.headers.get("x-message-id") };
-      } catch (e) {
-        return { ok: false, status: "failed" as const, error: `sendgrid_exception: ${(e as Error).message}` };
+      sgFrom = name0 ? { email: ctx.from.address, name: name0 } : { email: ctx.from.address };
+    } else {
+      const name = ctx.from.display_name?.replace(/[<>",\r\n]/g, " ").replace(/\s+/g, " ").trim();
+      sgFrom = tenantFrom(name ? `${name} <${ctx.from.address}>` : ctx.from.address, (ctx as CommsEmailSendContext).ownManagedAddresses ?? []);
+      // A business's own-domain address is no longer the From, so a reply would reach the shared
+      // notifications@ address instead of the business. With no Reply-To of its own, replies go to the
+      // address the email used to come from — but never to a paigeagent.ai address, which no business owns.
+      const original = String(ctx.from.address ?? "").trim();
+      if (!sgReplyTo && sgFrom.email !== original.toLowerCase() && /^[^@\s<>]+@[^@\s<>]+\.[^@\s<>]+$/.test(original)
+          && !/@(?:[^@]+\.)?paigeagent\.ai$/i.test(original)) sgReplyTo = original;
+    }
+    const sgHeaders: Record<string, string> = { ...buildListUnsubscribeHeaders(ctx.listUnsubscribeUrl) };
+    if (msg.in_reply_to_provider_id) sgHeaders["In-Reply-To"] = msg.in_reply_to_provider_id;
+    // A SendGrid request never hangs a send: its own deadline (the comms_email provider deadline),
+    // combined with the comms_email abort when that path set one. An abort is an UNCONFIRMED
+    // outcome (no http_status below), never a definitive rejection.
+    const sgComms = ctx as CommsEmailSendContext;
+    const sgTimeout = AbortSignal.timeout(COMMS_EMAIL_PROVIDER_TIMEOUT_MS);
+    const sgSignal = sgComms.abortSignal ? AbortSignal.any([sgComms.abortSignal, sgTimeout]) : sgTimeout;
+    const sgCustomArgs = sgComms.sendgridCustomArgs && Object.keys(sgComms.sendgridCustomArgs).length ? sgComms.sendgridCustomArgs : null;
+    try {
+      // SendGrid has no idempotent replay (Resend's Idempotency-Key made a re-sent request safe; nothing
+      // here does), so no idempotency header is sent and no caller may re-POST an unconfirmed send.
+      const res = await fetch("https://api.sendgrid.com/v3/mail/send", {
+        signal: sgSignal,
+        method: "POST",
+        headers: { Authorization: `Bearer ${sgKey}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          personalizations: [{ to: [{ email: ctx.to }] }],
+          ...(sgCustomArgs ? { custom_args: sgCustomArgs } : {}),
+          ...(sgComms.sendgridTrackEngagement ? {
+            tracking_settings: { open_tracking: { enable: true }, click_tracking: { enable: true, enable_text: false } },
+          } : {}),
+          from: sgFrom,
+          ...(sgReplyTo ? { reply_to: { email: sgReplyTo } } : {}),
+          subject: msg.subject || "(no subject)",
+          content: [
+            // SendGrid requires text/plain FIRST when both are present
+            // ("If present, text/plain must be first, followed by text/html").
+            ...(msg.body_text ? [{ type: "text/plain", value: msg.body_text }] : []),
+            ...(msg.body_html ? [{ type: "text/html", value: msg.body_html }] : []),
+          ],
+          ...(Object.keys(sgHeaders).length ? { headers: sgHeaders } : {}),
+          // Same attachments contract as every sibling arm — a send must never
+          // silently drop an invoice PDF.
+          ...(ctx.serverAttachments?.length ? {
+            attachments: ctx.serverAttachments.map((a) => ({
+              content: a.content, // EmailAttachment.content is already base64
+              filename: a.filename,
+              type: a.contentType,
+              disposition: "attachment",
+            })),
+          } : {}),
+        }),
+      });
+      if (!res.ok) {
+        const errBody = await res.text().catch(() => "");
+        // meta.http_status lets the comms_email, campaign and invoice paths tell a definitive 4xx
+        // rejection (nothing sent) from an outcome that is merely unconfirmed (a 5xx may have been taken).
+        return { ok: false, status: "failed" as const, error: `sendgrid_${res.status}: ${errBody.slice(0, 200)}`, meta: { http_status: res.status } };
       }
+      // v3/mail/send returns an EMPTY 202 body; X-Message-Id is the durable id
+      // (it corresponds to the Event Webhook's sg_message_id).
+      return { ok: true, status: "sent" as const, provider_message_id: res.headers.get("x-message-id") };
+    } catch (e) {
+      return { ok: false, status: "failed" as const, error: `sendgrid_exception: ${(e as Error).message}` };
     }
-
-    const resendKey = ctx.providerApiKey;
-    if (!resendKey) {
-      return { ok: false, status: "failed" as const, error: "RESEND_API_KEY missing" };
-    }
-    const name = ctx.from.display_name?.replace(/[<>",\r\n]/g, " ").replace(/\s+/g, " ").trim();
-    const fromHeader = name ? `${name} <${ctx.from.address}>` : ctx.from.address;
-
-    // List-Unsubscribe / List-Unsubscribe-Post (RFC 8058) whenever the dispatcher minted a one-click URL.
-    const headers: Record<string, string> = { ...buildListUnsubscribeHeaders(ctx.listUnsubscribeUrl) };
-    if (msg.in_reply_to_provider_id) headers["In-Reply-To"] = msg.in_reply_to_provider_id;
-
-    // INT-328: only the comms_email path sets abortSignal; every other send's request is unchanged.
-    const abortSignal = (ctx as CommsEmailSendContext).abortSignal ?? null;
-    const res = await fetch("https://api.resend.com/emails", {
-      ...(abortSignal ? { signal: abortSignal } : {}),
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${resendKey}`,
-        "Content-Type": "application/json",
-        // A retried request with the same key is not sent twice by Resend.
-        ...(ctx.idempotencyKey ? { "Idempotency-Key": ctx.idempotencyKey } : {}),
-      },
-      body: JSON.stringify({
-        from: fromHeader,
-        to: [ctx.to],
-        reply_to: ctx.replyTo || undefined,
-        subject: msg.subject || "(no subject)",
-        html: msg.body_html || msg.body_text || "",
-        headers: Object.keys(headers).length ? headers : undefined,
-        attachments: ctx.serverAttachments?.map(a=>({filename:a.filename,content:a.content,content_type:a.contentType})),
-      }),
-    });
-    const json = await res.json().catch(() => ({}));
-    if (!res.ok) {
-      return {
-        ok: false,
-        status: "failed" as const,
-        error: `resend_${res.status}: ${JSON.stringify(json).slice(0, 300)}`,
-        meta: { http_status: res.status }, // INT-328 additive (see the Gmail branch above)
-      };
-    }
-    return { ok: true, status: "sent" as const, provider_message_id: json?.id ?? null };
   },
 };
 registerOutboundAdapter(emailOutboundAdapter);
@@ -677,7 +683,8 @@ Deno.serve(async (req) => {
   // ── INT-328 comms.email_send: a governed one-recipient business email is an immediate, single,
   //    attachment-free email of a PREPARED row, sent only by comms-email-command under the service
   //    role. It never rides marketing, the invoice binding, or the scheduler.
-  const commsEmailRequested = body?.comms_email_operation_id !== undefined || body?.comms_email_reconcile !== undefined;
+  const commsEmailRequested = body?.comms_email_operation_id !== undefined || body?.comms_email_reconcile !== undefined
+    || body?.comms_email_scheduled_release !== undefined;
   if(body?.agreement_signature_token!==undefined&&(!isInternal||!commsEmailRequested||body.channel!=="email")){
     return new Response(JSON.stringify({error:"agreement_signature_binding_required"}),{
       status:403,headers:{...corsHeaders,"Content-Type":"application/json"},
@@ -686,6 +693,8 @@ Deno.serve(async (req) => {
   if (commsEmailRequested) {
     if (typeof body.comms_email_operation_id !== "string" || !COMMS_EMAIL_UUID.test(body.comms_email_operation_id) ||
         (body.comms_email_reconcile !== undefined && typeof body.comms_email_reconcile !== "boolean") ||
+        // A scheduled release is `true` or absent, and never a reconcile.
+        (body.comms_email_scheduled_release !== undefined && (body.comms_email_scheduled_release !== true || body.comms_email_reconcile === true)) ||
         body.channel !== "email" || body.marketing !== undefined || body.scheduled_for !== undefined ||
         body.attachments !== undefined || body.invoice_delivery_operation_id !== undefined) {
       return new Response(JSON.stringify({ error: "comms_email_send_shape_invalid" }), {
@@ -725,7 +734,7 @@ Deno.serve(async (req) => {
     | "sent" | "failed"
     | "blocked_client_dnd" | "blocked_suppressed" | "blocked_no_consent"
     | "queued_tenant_dnd" | "queued_quiet_hours" | "queued_scheduled"
-    // Experience 03: a campaign email SendGrid may have accepted without saying so (never "failed").
+    // Experience 03: an email SendGrid may have accepted without saying so (never a plain "failed").
     | "outcome_unknown" = "failed";
   let reason: string | null = null;
 
@@ -737,7 +746,7 @@ Deno.serve(async (req) => {
   // the channel_connectors row (from_address/from_name/reply_to) is the fallback;
   // the platform default sender is the last resort. This never forks §38.
   let tenantId: string | null = null;
-  let draftRow: { status?: string | null; connector_id?: string | null; contact_id?: string | null; thread_key?: string | null; channel_type?: string | null; meta?: Record<string, unknown> | null } | null = null;
+  let draftRow: { status?: string | null; connector_id?: string | null; contact_id?: string | null; thread_key?: string | null; channel_type?: string | null; meta?: Record<string, unknown> | null; error?: string | null } | null = null;
   // The contact's workspace and every address it holds (its contact methods).
   let contactRow: { tenant_id?: string | null; emails: string[]; phones: string[] } | null = null;
   let connectorRow:
@@ -756,7 +765,7 @@ Deno.serve(async (req) => {
   if (body.message_id) {
     const { data, error: messageError } = await admin
       .from("messages")
-      .select("tenant_id, status, connector_id, contact_id, thread_key, channel_type, meta")
+      .select("tenant_id, status, connector_id, contact_id, thread_key, channel_type, meta, error")
       .eq("id", body.message_id)
       .maybeSingle();
     if (messageError) {
@@ -778,6 +787,9 @@ Deno.serve(async (req) => {
     tenantId = data.tenant_id ?? null;
   }
   const terminalizeScheduledRelease = async (failure: string): Promise<Response> => {
+    // A scheduled GOVERNED email is never written directly here: finalize_comms_email_send owns its row
+    // (an unclaimed close as refused, with this failure as the code-shaped reason).
+    if (commsBinding) return await refuseCommsEmail(failure);
     if (!isInternal || !body.message_id || !tenantId || draftRow?.status !== "queued") {
       return new Response(JSON.stringify({ error: failure }), {
         status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -848,9 +860,11 @@ Deno.serve(async (req) => {
   let commsBindingEligible = false;
   // Experience 03: an approved campaign email the database admitted to SendGrid (see the H2 refusal).
   let campaignSendgrid: { tenant_id: string; recipient_id: string } | null = null;
-  // True when SendGrid's answer to that send could not be read: it may have been accepted, so the
-  // worker records outcome_unknown and never sends it again.
-  let campaignSendgridUnconfirmed = false;
+  // True when SendGrid's answer to an email could not be read (5xx, timeout, thrown request): it may
+  // have been accepted. SendGrid has no idempotent replay, so a caller re-sending after this would mail
+  // the person twice: the answer says outcome_unknown + unconfirmed (a campaign worker records
+  // outcome_unknown and never sends it again; every other caller must not offer a plain resend).
+  let providerUnconfirmed = false;
   if (commsEmailRequested || draftRow?.meta?.comms_email_binding) {
     if (!commsEmailRequested || !isInternal || !body.message_id) {
       return new Response(JSON.stringify({ error: "comms_email_binding_required" }), {
@@ -919,11 +933,35 @@ Deno.serve(async (req) => {
   };
   // INT-328: a governed email row that is no longer a draft has a recorded outcome (or one in
   // flight); it is never re-sent here and never answered with the generic "deduped: sent".
-  if (commsBinding && draftRow?.status !== "draft") {
+  //
+  // "Approve now, send later": a SCHEDULED governed email (binding.send_at) waits as a 'queued' row and
+  // is released only by the drainer's flagged request, once due. Edge clocks drift, so "due" here is
+  // generous (a minute early is admitted to the claim); the claim's own database clock is the real
+  // not-before (it answers not_before, below). Neither crossing is allowed: the flag on an immediate
+  // binding, or a scheduled binding released without the flag. Nothing is finalized on these refusals.
+  const commsScheduledRelease = body.comms_email_scheduled_release === true;
+  if (commsBinding && commsScheduledRelease !== (commsBinding.send_at !== null)) {
+    return commsEmailResponse("outcome_unknown", null, { code: commsScheduledRelease ? "COMMS_EMAIL_NOT_SCHEDULED" : "COMMS_EMAIL_SCHEDULED_RELEASE_REQUIRED" }, 409);
+  }
+  const commsReleasable = !!commsBinding && commsScheduledRelease && draftRow?.status === "queued"
+    && Date.parse(commsBinding.send_at ?? "") <= Date.now() + 60_000;
+  if (commsBinding && commsScheduledRelease && draftRow?.status === "queued" && !commsReleasable) {
+    return commsEmailResponse("outcome_unknown", null, { code: "COMMS_EMAIL_NOT_YET_DUE" }, 409);
+  }
+  if (commsBinding && draftRow?.status !== "draft" && !commsReleasable) {
     return commsEmailResponse("outcome_unknown", null, { code: "COMMS_EMAIL_NOT_CLAIMABLE" }, 409);
   }
+  // Experience 03: a reconcile used to re-send the prepared email under Resend's Idempotency-Key, which
+  // made a second request safe. Every email now goes through SendGrid, which has no idempotent replay,
+  // so a re-send could deliver it twice: a reconcile is refused before any claim and nothing is sent.
+  // The operation stays unknown for a person to review (the database no longer admits one either).
+  if (commsBinding && commsReconcile) {
+    return commsEmailResponse("outcome_unknown", null, { code: "COMMS_EMAIL_RECONCILIATION_REQUIRED" }, 409);
+  }
   const scheduledBinding = draftRow?.meta?.scheduled_binding as Record<string, unknown> | undefined;
-  if (isInternal && draftRow?.status === "queued") {
+  // A governed email carries its own binding (checked above, field for field); the generic schedule
+  // binding below is for an ordinary queued draft and never applies to it.
+  if (isInternal && draftRow?.status === "queued" && !commsBinding) {
     if (!scheduledBinding || (typeof scheduledBinding.contact_id !== "string" && typeof scheduledBinding.connector_id !== "string")) {
       return await terminalizeScheduledRelease("scheduled_binding_unavailable");
     }
@@ -1042,6 +1080,17 @@ Deno.serve(async (req) => {
   // the queued row's own.)
   if (!isInternal && !tenantId && !isOwner) tenantId = callerTenant ?? null;
 
+  // Experience 03: a row whose SendGrid answer was lost (error = delivery_unconfirmed) may already be in
+  // the client's inbox, and SendGrid has no idempotent replay. A second send of that row (a stale tab's
+  // Approve, any caller) is refused before any provider call — after the §9 tenant gate, and before the
+  // provider floor, which would rewrite the row as blocked — and answered unconfirmed like the first.
+  if (body.message_id && draftRow?.status === "failed" && draftRow.error === DELIVERY_UNCONFIRMED) {
+    return new Response(JSON.stringify({
+      status: "failed", outcome: "outcome_unknown", unconfirmed: true, error: DELIVERY_UNCONFIRMED,
+      reason: "This message's earlier send could not be confirmed, so it is not sent again.",
+      message_id: body.message_id, scheduled_for: null,
+    }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+  }
   // Server-owned execution floor applies independently of approvals, active connectors,
   // sender fallback and the service-role queue/retry caller. No provider or schedule admission.
   if (!await commsProviderExecutionAllowed(admin, { tenantId, actorUserId: user?.id ?? null })) {
@@ -1113,19 +1162,20 @@ Deno.serve(async (req) => {
   // email-campaign-worker (service role, marketing, idempotency key `ecr:<recipient id>`), and only
   // when email_campaign_sendgrid_admit says so: the recipient the dispatcher has leased right now, its
   // own address, the campaign's approved connector, still SendGrid, still verified for THIS business.
-  if (connectorRow?.provider === "sendgrid" && !commsBinding && isInternal && body.marketing === true) {
-    const ecr = typeof body.idempotency_key === "string" ? CAMPAIGN_RECIPIENT_KEY.exec(body.idempotency_key) : null;
-    if (ecr) {
-      const { data: admitted, error: admitError } = await admin.rpc("email_campaign_sendgrid_admit", {
-        p_recipient_id: ecr[1], p_connector_id: effectiveConnectorId, p_to: body.to,
-      });
-      const a = (admitted ?? null) as { ok?: unknown; tenant_id?: unknown; recipient_id?: unknown } | null;
-      if (!admitError && a?.ok === true && typeof a.tenant_id === "string" && a.tenant_id === tenantId &&
-          typeof a.recipient_id === "string" && a.recipient_id.toLowerCase() === ecr[1].toLowerCase()) {
-        campaignSendgrid = { tenant_id: a.tenant_id, recipient_id: a.recipient_id };
-      } else if (admitError) {
-        console.warn("[send-message] campaign SendGrid admission unavailable:", admitError.message);
-      }
+  // email-campaign-worker's send: service role, marketing, keyed `ecr:<email_campaign_recipients.id>`.
+  const campaignEcr = isInternal && body.marketing === true && typeof body.idempotency_key === "string"
+    ? CAMPAIGN_RECIPIENT_KEY.exec(body.idempotency_key) : null;
+  if (connectorRow?.provider === "sendgrid" && !commsBinding && campaignEcr) {
+    const ecr = campaignEcr;
+    const { data: admitted, error: admitError } = await admin.rpc("email_campaign_sendgrid_admit", {
+      p_recipient_id: ecr[1], p_connector_id: effectiveConnectorId, p_to: body.to,
+    });
+    const a = (admitted ?? null) as { ok?: unknown; tenant_id?: unknown; recipient_id?: unknown } | null;
+    if (!admitError && a?.ok === true && typeof a.tenant_id === "string" && a.tenant_id === tenantId &&
+        typeof a.recipient_id === "string" && a.recipient_id.toLowerCase() === ecr[1].toLowerCase()) {
+      campaignSendgrid = { tenant_id: a.tenant_id, recipient_id: a.recipient_id };
+    } else if (admitError) {
+      console.warn("[send-message] campaign SendGrid admission unavailable:", admitError.message);
     }
   }
   if (connectorRow?.provider === "sendgrid" && !commsBinding && !campaignSendgrid) {
@@ -1442,20 +1492,21 @@ Deno.serve(async (req) => {
 
   try {
     if (body.channel === "email") {
-      // #141b: a Gmail connector sends via the Gmail seam (its own OAuth creds), so it does
-      // NOT need RESEND_API_KEY. #141c: an SMTP connector sends via the tenant's own SMTP host,
-      // also NOT needing RESEND_API_KEY. Only the Resend path requires it.
+      // #141b: a Gmail connector sends via the Gmail seam (its own OAuth creds), and #141c: an SMTP
+      // connector sends via the tenant's own SMTP host, so neither needs a platform key.
       const isGmail = connectorRow?.provider === "gmail";
       const isSmtp = connectorRow?.provider === "smtp";
-      // ANT-43/S7: a sendgrid connector sends through the platform's restricted
-      // Mail Send executor credential (SENDGRID_MAIL_SEND_API_KEY) — never the
-      // full-access admin key, and never a caller-supplied key. Platform default
-      // stays Resend; SendGrid is selected ONLY by an explicit connector.
       const isSendgrid = connectorRow?.provider === "sendgrid";
-      const resendKey = Deno.env.get("RESEND_API_KEY");
-      if (!resendKey && !isGmail && !isSmtp && !isSendgrid) throw new Error("RESEND_API_KEY missing");
-      const sendgridKey = isSendgrid ? Deno.env.get("SENDGRID_MAIL_SEND_API_KEY") : null;
-      if (isSendgrid && !sendgridKey) throw new Error("SENDGRID_MAIL_SEND_API_KEY missing");
+      // ANT-43/S7 + Experience 03: every other email — a SendGrid connector, PAIGE's managed sender, a
+      // custom-domain connector, a connectorless send — goes through SendGrid with the platform's
+      // restricted Mail Send executor credential (SENDGRID_MAIL_SEND_API_KEY): never the full-access admin
+      // key, never a caller-supplied key, and never RESEND_API_KEY (Resend is no longer called).
+      const sendgridKey = isGmail || isSmtp ? null : Deno.env.get("SENDGRID_MAIL_SEND_API_KEY") ?? null;
+      if (!isGmail && !isSmtp && !sendgridKey) throw new Error(SENDGRID_KEY_MISSING);
+      // A campaign email from any other SendGrid sender than an admitted SendGrid connector (that one is
+      // campaignSendgrid): its recipient id, for correlation and for an honest unconfirmed outcome.
+      const managedCampaignRecipient = campaignEcr && !campaignSendgrid && !isGmail && !isSmtp && !isSendgrid
+        ? campaignEcr[1].toLowerCase() : null;
 
       // §38 PRIMARY: tenant-owned sender identity via the shared RPC (service role =>
       // auth.uid() NULL => trusted cross-tenant resolve of the passed tenant).
@@ -1573,26 +1624,42 @@ Deno.serve(async (req) => {
         from: { address: resolvedSenderEmail, display_name: senderName ?? undefined },
         to: body.to,
         replyTo,
-        providerApiKey: isSendgrid ? sendgridKey : resendKey,
+        providerApiKey: sendgridKey,
         // #141c: thread the connector's non-secret SMTP transport config (host/port/secure) so
-        // the provider==='smtp' branch can send through the tenant's own host. null for Resend/Gmail.
+        // the provider==='smtp' branch can send through the tenant's own host. null for SendGrid/Gmail.
         connectorConfig: isSmtp ? (connectorRow?.config ?? null) : null,
         // OutboundSendContext field is listUnsubscribeUrl (the adapter reads it → buildListUnsubscribeHeaders).
         // Only a marketing send advertises List-Unsubscribe: on a 1:1 reply, a thread or an invoice a
         // one-click "Unsubscribe" would write a channel-wide suppression (channel-adapters.ts doc).
         listUnsubscribeUrl: body.marketing === true ? (oneClickUrl ?? null) : null,
-        // INT-328: a governed email's provider key is ALWAYS its operation's — never a caller's — so a
-        // reconcile re-enters Resend under the very key the first attempt used.
+        // INT-328: a governed email's send identity is ALWAYS its operation's — never a caller's. SendGrid
+        // honours no idempotency key, so this identifies the send; it never makes a re-send safe.
         idempotencyKey: commsBinding
           ? `comms-email:${commsBinding.operation_id}`
           : typeof body.idempotency_key === "string" && /^[A-Za-z0-9:_-]{1,128}$/.test(body.idempotency_key)
             ? body.idempotency_key : null,
         // #141b: Gmail dispatch INSIDE the email adapter (§18 — not a second 'email' entry).
-        // provider!=='gmail' leaves the Resend path byte-for-byte unchanged.
+        // provider!=='gmail' and !=='smtp' sends through SendGrid.
         provider: connectorRow?.provider ?? null,
         credentialsVaultRef: connectorRow?.credentials_vault_ref ?? null,
         admin,                     // service-role client the Gmail seam uses to read the Vault ref
       };
+      // Security H2: the From kept on mail.paigeagent.ai must be THIS business's own managed address, read
+      // server-side for the derived tenant: the resolver's shared identity (the managed sender) and the
+      // business's registered identity row (present even when a custom domain wins the resolver). Never a
+      // connector's from_address, which any workspace admin can write.
+      const ownManaged: string[] = [];
+      if (identRow?.from_address) ownManaged.push(identRow.from_address);
+      if (tenantId) {
+        try {
+          const { data: own } = await admin.from("tenant_email_identities").select("local_part, status").eq("tenant_id", tenantId).maybeSingle();
+          const o = (own ?? null) as { local_part?: unknown; status?: unknown } | null;
+          if (o && typeof o.local_part === "string" && o.local_part && o.status === "active") ownManaged.push(`${o.local_part}@${PLATFORM_FROM_DOMAIN}`);
+        } catch (e) {
+          console.warn("[send-message] own managed identity read failed; only the resolver's address is kept:", (e as Error)?.message);
+        }
+      }
+      (ctx as CommsEmailSendContext).ownManagedAddresses = ownManaged;
       if (invoiceBinding) {
         // A separate delivery grant is minted at the one atomic provider-admission point.
         // body.body stays token-free for every existing persistence/audit/preview path.
@@ -1637,7 +1704,9 @@ Deno.serve(async (req) => {
         if (claimError || !claimed || (claimed as { admitted?: unknown }).admitted !== true ||
             (claimed as { state?: unknown }).state !== "dispatching" ||
             typeof claimedAttempt !== "number" || !Number.isInteger(claimedAttempt) || claimedAttempt < 1) {
-          return commsEmailResponse("outcome_unknown", null, { code: "COMMS_EMAIL_NOT_CLAIMABLE" }, 409);
+          // A scheduled email the database's own clock says is not due yet: nothing happened, try later.
+          const notYetDue = !claimError && commsBinding.send_at !== null && typeof (claimed as { not_before?: unknown } | null)?.not_before === "string";
+          return commsEmailResponse("outcome_unknown", null, { code: notYetDue ? "COMMS_EMAIL_NOT_YET_DUE" : "COMMS_EMAIL_NOT_CLAIMABLE" }, 409);
         }
         commsDispatchClaimed = true;
         commsClaimedAttempt = claimedAttempt;
@@ -1656,6 +1725,17 @@ Deno.serve(async (req) => {
           paige_operation_id: campaignSendgrid.recipient_id, paige_message_id: campaignSendgrid.recipient_id,
         };
         (ctx as CommsEmailSendContext).sendgridTrackEngagement = true;
+      } else if (managedCampaignRecipient && tenantId) {
+        // A campaign email from PAIGE's managed sender (or a custom-domain connector) now goes through
+        // SendGrid too: the same correlation ids and the same open/click tracking as the SendGrid lane.
+        (ctx as CommsEmailSendContext).sendgridCustomArgs = {
+          paige_tenant_id: tenantId, paige_operation_id: managedCampaignRecipient, paige_message_id: managedCampaignRecipient,
+        };
+        (ctx as CommsEmailSendContext).sendgridTrackEngagement = true;
+      } else if (!commsBinding && !isGmail && !isSmtp && tenantId && body.message_id) {
+        // Every other SendGrid send with a stored message row (a released draft, an invoice): the business
+        // and that row, so its events can be found. Hints only: a receipt is matched by X-Message-Id.
+        (ctx as CommsEmailSendContext).sendgridCustomArgs = { paige_tenant_id: tenantId, paige_message_id: String(body.message_id) };
       }
       await assertCurrentEmailSender();
       if(signingMessage&&preparedAgreement){
@@ -1680,20 +1760,24 @@ Deno.serve(async (req) => {
         : await adapter.send(outMsg, ctx);
       if (commsBinding) commsDelivery = delivery;
       // SendGrid has no idempotent replay: only a 4xx proves nothing was accepted. A thrown request, a
-      // timeout or a 5xx may have been accepted, so the campaign send is reported unknown, not failed.
-      if (campaignSendgrid && !delivery.ok) {
+      // timeout or a 5xx may have been accepted, so the send is reported unknown, not failed (a campaign
+      // worker requeues `failed`, and a person resends one — an email that was in fact accepted would go
+      // twice). Gmail and SMTP keep their own answers.
+      if (!isGmail && !isSmtp && !delivery.ok && delivery.error !== SENDGRID_KEY_MISSING) {
         const httpStatus = delivery.meta?.http_status;
-        campaignSendgridUnconfirmed = !(typeof httpStatus === "number" && httpStatus >= 400 && httpStatus < 500);
+        providerUnconfirmed = !(typeof httpStatus === "number" && httpStatus >= 400 && httpStatus < 500);
       }
       // #141b/#141c HONEST NOTE (§13): the paige_messages_audit.pipe_used CHECK is
       // ('resend','twilio','ghl_fallback') — 'gmail'/'smtp' are not yet legal values, so widening
       // it is a tracked follow-up (an enum migration carries its own §37 producer inventory). The
       // Gmail/SMTP send is recorded here as the email pipe; the TRUE transport is recoverable from
       // the connector row (connector_id → provider='gmail'|'smtp'), so no information is lost.
+      // Experience 03: 'resend' is now only the CHECK's label for the email pipe. Every non-Gmail,
+      // non-SMTP email goes through SendGrid; the value is kept rather than migrating the CHECK.
       pipe_used = "resend";
       if (!delivery.ok) {
         throw new Error(
-          invoiceBinding ? "invoice_provider_result_unconfirmed" : commsBinding ? "comms_email_provider_not_accepted" : delivery.error || (isGmail ? "gmail_send_failed" : isSmtp ? "smtp_send_failed" : "resend_send_failed"),
+          invoiceBinding ? "invoice_provider_result_unconfirmed" : commsBinding ? "comms_email_provider_not_accepted" : delivery.error || (isGmail ? "gmail_send_failed" : isSmtp ? "smtp_send_failed" : "sendgrid_send_failed"),
         );
       }
       vendor_message_id = delivery.provider_message_id ?? null;
@@ -1777,6 +1861,9 @@ Deno.serve(async (req) => {
       : (e as Error).message.slice(0, 500);
     status = "failed";
   }
+  // The audit keeps the provider's words after the marker; the messages row (below) carries the marker only.
+  if (providerUnconfirmed && !invoiceBinding && !commsBinding) errorText = `${DELIVERY_UNCONFIRMED}: ${errorText ?? ""}`.slice(0, 500);
+  const messageRowError = providerUnconfirmed && !invoiceBinding && !commsBinding ? DELIVERY_UNCONFIRMED : errorText;
 
   const { data: auditRow } = await admin
     .from("paige_messages_audit")
@@ -1872,11 +1959,37 @@ Deno.serve(async (req) => {
     } else if (body.message_id) {
       const { data: failed } = await admin
         .from("messages")
-        .update({ status: "failed", error: errorText })
+        .update({ status: "failed", error: messageRowError })
         .eq("id", body.message_id)
         .select("id")
         .maybeSingle();
       messageRowId = failed?.id ?? body.message_id;
+    } else if (providerUnconfirmed && !invoiceBinding && (effectiveContactId || effectiveConnectorId)) {
+      // An email that may have gone out is recorded on its thread, marked unconfirmed (never as a plain
+      // failure), so the business sees it there instead of sending it again from an empty composer.
+      const { data: inserted } = await admin
+        .from("messages")
+        .insert({
+          thread_key: body.thread_key || perContactKey || `${body.channel}:${body.to}`,
+          contact_id: effectiveContactId,
+          connector_id: effectiveConnectorId,
+          channel_type: body.channel,
+          direction: "outbound",
+          status: "failed",
+          error: DELIVERY_UNCONFIRMED,
+          sender: fromAddress ? { address: (fromAddress.match(/<([^>]+)>/)?.[1] ?? fromAddress) } : null,
+          recipients: [{ address: body.to }],
+          subject: body.subject ?? null,
+          body_html: body.body,
+          body_text: null,
+          provider_message_id: null,
+          in_reply_to_provider_id: body.in_reply_to ?? null,
+          attachments: body.attachments ?? [],
+          meta: { source: "send-message", pipe_used, delivery_unconfirmed: true },
+        })
+        .select("id")
+        .maybeSingle();
+      messageRowId = inserted?.id ?? null;
     }
   } catch (e) {
     console.warn("[send-message] messages row write skipped:", (e as Error)?.message);
@@ -2047,10 +2160,11 @@ Deno.serve(async (req) => {
   // reason: prefer the SMS reason code the branch set, else the raw error text on failure.
   outcome = status; // 'sent' | 'failed'
   if (status === "failed" && !reason) reason = errorText;
-  // email-campaign-worker reads an outcome it does not know as outcome_unknown (mapSendResult).
-  if (campaignSendgridUnconfirmed && status === "failed") outcome = "outcome_unknown";
+  // email-campaign-worker reads outcome_unknown and never resends it (mapSendResult); every other caller
+  // reads `unconfirmed` (below) and must not offer a plain resend.
+  if (providerUnconfirmed && status === "failed") outcome = "outcome_unknown";
   if (commsBinding) {
-    // A throw before the claim (e.g. no Resend key) never reached a provider. A reconcile that did not
+    // A throw before the claim (e.g. no SendGrid Mail Send key) never reached a provider. A reconcile that did not
     // win its claim cannot finalize an operation that is not 'prepared' — it stays for review.
     if (!commsDispatchClaimed && commsReconcile) {
       return commsEmailResponse("outcome_unknown", null, { code: "COMMS_EMAIL_RECONCILIATION_REQUIRED" }, 409);
@@ -2082,8 +2196,11 @@ Deno.serve(async (req) => {
       // Additive (§37): the unified-inbox messages row id, when one was written/patched.
       message_id: messageRowId,
       // ── C-2a additive (§37 / contract §5) ──
-      outcome,                      // sent|failed here; blocked_*/queued_* from the pre-send seam
+      outcome,                      // sent|failed|outcome_unknown here; blocked_*/queued_* from the pre-send seam
       reason,                       // 'a2p_not_approved' | 'needs_config' | error text | null
+      // Additive (§37, Experience 03): SendGrid may have accepted this email although its answer could
+      // not be read. status stays "failed" (no caller ever reads it as a success); do NOT resend it.
+      ...(providerUnconfirmed ? { unconfirmed: true } : {}),
       scheduled_for: null,          // C-1.5 owns non-null echo; null on the send path
     }),
     {

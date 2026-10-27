@@ -14,6 +14,7 @@ import { transpileModule, ModuleKind, ScriptTarget } from "typescript";
 import { describe, it, expect } from "vitest";
 import { senderDisplayName } from "../email/sender-display-name.ts";
 import { isPreparedAgreementMessage } from "../agreements/prepared-signature-message.ts";
+import { tenantFrom, PLATFORM_FROM_DOMAIN } from "../email/platform-sendgrid.ts";
 
 const MSG = "33333333-3333-4333-8333-3333333333bb";
 const TENANT = "44444444-4444-4444-8444-4444444444bb";
@@ -26,10 +27,14 @@ const raw = readFileSync("supabase/functions/send-message/index.ts", "utf8").rep
 const compiled = transpileModule(raw, { compilerOptions: { module: ModuleKind.None, target: ScriptTarget.ES2022 } }).outputText;
 
 type Caller = "user" | "service";
-function setup(opts: { provider?: string; caller?: Caller; queued?: boolean } = {}) {
+function setup(opts: { provider?: string; caller?: Caller; queued?: boolean; answer?: number | "throw"; row?: { status: string; error: string | null };
+  // A governed email row (meta.comms_email_binding) and what claim_comms_email_send answers for it.
+  binding?: Record<string, unknown>; claim?: Record<string, unknown>; connectorActive?: boolean } = {}) {
   const provider = opts.provider ?? "sendgrid";
   const rpcCalls: string[] = [];
+  const rpcArgs: { name: string; args: Record<string, unknown> }[] = [];
   const fetchCalls: string[] = [];
+  const fetchBodies: Record<string, unknown>[] = [];
   const writes: { table: string; mode: string; values: unknown }[] = [];
   const adapters: Record<string, { send: (...a: unknown[]) => Promise<unknown> }> = {};
   let handler: (req: Request) => Promise<Response>;
@@ -42,9 +47,10 @@ function setup(opts: { provider?: string; caller?: Caller; queued?: boolean } = 
       for (const m of ["insert", "upsert", "update"]) q[m] = (values: unknown) => { mode = m; writes.push({ table, mode: m, values }); return q; };
       const result = () => {
         if (mode !== "select") return { data: { id: table === "messages" ? MSG : "row-id" }, error: null };
-        if (table === "messages") return { data: { tenant_id: TENANT, status: opts.queued ? "queued" : "draft", connector_id: CONNECTOR, contact_id: CONTACT, thread_key: `contact:${TENANT}:${CONTACT}`, channel_type: "email", meta: { scheduled_binding: { contact_id: CONTACT, connector_id: CONNECTOR } } }, error: null };
+        if (table === "messages") return { data: { tenant_id: TENANT, status: opts.row?.status ?? (opts.queued ? "queued" : "draft"), error: opts.row?.error ?? null, connector_id: CONNECTOR, contact_id: CONTACT, thread_key: `contact:${TENANT}:${CONTACT}`, channel_type: "email",
+          meta: opts.binding ? { comms_email_binding: opts.binding } : { scheduled_binding: { contact_id: CONTACT, connector_id: CONNECTOR } } }, error: null };
         if (table === "clients") return { data: { tenant_id: TENANT, emails: ["lead@example.test"] }, error: null };
-        if (table === "channel_connectors") return { data: { tenant_id: TENANT, status: "active", active: true, channel_type: "email", mailbox_class: "shared_support", mailbox_owner_user_id: null, provider, from_address: "hello@someone-elses.example.test", from_name: "Spoof", reply_to: null, credentials_vault_ref: null, config: null }, error: null };
+        if (table === "channel_connectors") return { data: { tenant_id: TENANT, status: "active", active: opts.connectorActive ?? true, channel_type: "email", mailbox_class: "shared_support", mailbox_owner_user_id: null, provider, from_address: opts.binding ? String(opts.binding.from_address) : "hello@someone-elses.example.test", from_name: "Spoof", reply_to: null, credentials_vault_ref: null, config: null }, error: null };
         return { data: null, error: null };
       };
       q.maybeSingle = async () => result();
@@ -52,21 +58,28 @@ function setup(opts: { provider?: string; caller?: Caller; queued?: boolean } = 
       q.then = (res: (v: unknown) => unknown, rej: (r: unknown) => unknown) => Promise.resolve(result()).then(res, rej);
       return q;
     },
-    rpc: async (name: string) => {
+    rpc: async (name: string, args: Record<string, unknown> = {}) => {
       rpcCalls.push(name);
+      rpcArgs.push({ name, args });
+      if (opts.binding && name === "read_comms_email_send_binding") return { data: { ...opts.binding, message_id: MSG, eligible: true }, error: null };
+      if (opts.binding && name === "claim_comms_email_send") return { data: opts.claim ?? { state: "dispatching", attempts: 1, admitted: true }, error: null };
+      if (opts.binding && name === "finalize_comms_email_send") return { data: { ok: args._outcome === "provider_accepted", outcome: args._outcome }, error: null };
       if (name === "comms_provider_execution_allowed" || name === "has_role") return { data: true, error: null };
       if (name === "current_user_tenant_id") return { data: TENANT, error: null };
       if (name === "is_platform_owner") return { data: false, error: null };
       return { data: null, error: null };
     },
   };
-  const fetchMock = (url: string) => {
+  const fetchMock = (url: string, init?: { body?: string }) => {
     fetchCalls.push(url);
+    fetchBodies.push(init?.body ? JSON.parse(init.body) : {});
+    if (opts.answer === "throw") return Promise.reject(new TypeError("socket hang up"));
+    if (typeof opts.answer === "number") return Promise.resolve(new Response("{\"errors\":[]}", { status: opts.answer }));
     return Promise.resolve(new Response(JSON.stringify({ id: "provider-id" }), { status: url.includes("sendgrid") ? 202 : 200, headers: { "X-Message-Id": "sg-id" } }));
   };
-  const scope = { decideContentRead, commsProviderExecutionAllowed, COMMS_PROVIDER_EXECUTION_DISABLED, PAIGE_APP_ORIGIN: "https://app.example.test",isPreparedAgreementMessage,
+  const scope = { decideContentRead, commsProviderExecutionAllowed, COMMS_PROVIDER_EXECUTION_DISABLED, PAIGE_APP_ORIGIN: "https://app.example.test",isPreparedAgreementMessage, tenantFrom, PLATFORM_FROM_DOMAIN,
     Deno: {
-      env: { get: (k: string) => k === "SUPABASE_SERVICE_ROLE_KEY" ? SERVICE : k === "SENDGRID_MAIL_SEND_API_KEY" ? "SG.platform-key" : k === "RESEND_API_KEY" ? "re_key" : k === "SUPABASE_URL" ? "https://proj.example.test" : "configured" },
+      env: { get: (k: string) => k === "SUPABASE_SERVICE_ROLE_KEY" ? SERVICE : k === "SENDGRID_MAIL_SEND_API_KEY" ? "SG.platform-key" : k === "RESEND_API_KEY" ? undefined : k === "SUPABASE_URL" ? "https://proj.example.test" : "configured" },
       serve: (fn: typeof handler) => { handler = fn; },
     },
     createClient: () => client,
@@ -92,7 +105,7 @@ function setup(opts: { provider?: string; caller?: Caller; queued?: boolean } = 
     }));
     return { status: res.status, body: await res.json() as Record<string, unknown> };
   };
-  return { request, rpcCalls, fetchCalls, writes };
+  return { request, rpcCalls, rpcArgs, fetchCalls, fetchBodies, writes };
 }
 
 const generic = { channel: "email", to: "lead@example.test", contact_id: CONTACT, connector_id: CONNECTOR, subject: "Hi", body: "<p>Hi</p>" };
@@ -125,11 +138,140 @@ describe("send-message refuses PAIGE Email (SendGrid) outside the governed email
     expect(s.writes.some((w) => w.table === "messages" && w.mode === "update" && (w.values as { status?: string }).status === "failed")).toBe(true);
   });
 
-  it("control: the identical generic request through a Resend connector still reaches its provider", async () => {
+  it("control: the identical generic request through a managed (\"resend\") connector is not refused, and goes through SendGrid", async () => {
+    // Experience 03: Resend is never called. The H2 refusal is for a SendGrid CONNECTOR outside the door;
+    // a managed sender is sent through SendGrid with its From decided by tenantFrom.
     const s = setup({ caller: "user", provider: "resend" });
     const r = await s.request(generic);
     expect(r.body.error).not.toBe("paige_email_requires_governed_send");
     expect(s.fetchCalls.length).toBe(1);
-    expect(s.fetchCalls[0]).not.toMatch(/sendgrid/);
+    expect(s.fetchCalls[0]).toBe("https://api.sendgrid.com/v3/mail/send");
+    // H2: the connector names a domain this business never verified; SendGrid would accept it on the
+    // shared account, so it is never the From. The email goes as notifications@ under the sender's name.
+    expect(s.fetchBodies[0].from).toEqual({ email: "notifications@mail.paigeagent.ai", name: "Spoof" });
+    expect(JSON.stringify(s.fetchBodies[0].from)).not.toContain("someone-elses");
+  });
+});
+
+// Experience 03: SendGrid has no idempotent replay, so an ordinary email whose answer was lost (5xx, a
+// thrown request) may already be in the client's inbox. send-message must say so — never a plain
+// "failed" a caller or a person would resend — and its rows must not record a definitive failure.
+describe("an ordinary SendGrid send whose answer could not be read", () => {
+  const audit = (s: ReturnType<typeof setup>) => s.writes.find((w) => w.table === "paige_messages_audit")?.values as Record<string, unknown>;
+  const messageWrites = (s: ReturnType<typeof setup>) => s.writes.filter((w) => w.table === "messages").map((w) => ({ mode: w.mode, ...(w.values as Record<string, unknown>) }));
+
+  it.each([503, 500, "throw"] as const)("a direct send answered %s → outcome_unknown + unconfirmed; the thread records it as unconfirmed", async (answer) => {
+    const s = setup({ caller: "user", provider: "resend", answer });
+    const r = await s.request(generic);
+    expect(s.fetchCalls).toEqual(["https://api.sendgrid.com/v3/mail/send"]);
+    expect(r.body).toMatchObject({ status: "failed", outcome: "outcome_unknown", unconfirmed: true });
+    expect(String(audit(s).error)).toMatch(/^delivery_unconfirmed: /);
+    expect(messageWrites(s)).toEqual([expect.objectContaining({ mode: "insert", status: "failed", error: "delivery_unconfirmed", provider_message_id: null })]);
+  });
+
+  it("a scheduled release answered 503 → the released row is marked unconfirmed, not a plain failure", async () => {
+    const s = setup({ caller: "service", provider: "resend", queued: true, answer: 503 });
+    const r = await s.request({ ...generic, message_id: MSG });
+    expect(r.body).toMatchObject({ outcome: "outcome_unknown", unconfirmed: true });
+    expect(messageWrites(s)).toEqual([expect.objectContaining({ mode: "update", status: "failed", error: "delivery_unconfirmed" })]);
+  });
+
+  it("a definitive 4xx stays a plain failure: no unconfirmed marker, no thread row (unchanged)", async () => {
+    const s = setup({ caller: "user", provider: "resend", answer: 400 });
+    const r = await s.request(generic);
+    expect(r.body).toMatchObject({ status: "failed", outcome: "failed" });
+    expect(r.body).not.toHaveProperty("unconfirmed");
+    expect(String(audit(s).error)).toMatch(/^sendgrid_400/);
+    expect(messageWrites(s)).toEqual([]);
+  });
+
+  it("Gmail keeps its own answer (unchanged): a Gmail failure is never marked unconfirmed by this rule", async () => {
+    const s = setup({ caller: "user", provider: "gmail", answer: 503 });
+    const r = await s.request(generic);
+    expect(r.body).not.toHaveProperty("unconfirmed");
+    expect(r.body.outcome).not.toBe("outcome_unknown");
+  });
+
+  it("a second send of a row already marked unconfirmed is refused with no provider call (SendGrid has no replay)", async () => {
+    const s = setup({ caller: "user", provider: "resend", row: { status: "failed", error: "delivery_unconfirmed" } });
+    const r = await s.request({ ...generic, message_id: MSG });
+    expect(s.fetchCalls).toEqual([]);
+    expect(r.status).toBe(200);
+    expect(r.body).toMatchObject({ status: "failed", outcome: "outcome_unknown", unconfirmed: true, error: "delivery_unconfirmed", message_id: MSG });
+    expect(s.writes.filter((w) => w.table === "messages")).toEqual([]);
+  });
+
+  it("a row with a plain definitive failure may still be sent again (unchanged)", async () => {
+    const s = setup({ caller: "user", provider: "resend", row: { status: "failed", error: "sendgrid_400: bad recipient" } });
+    await s.request({ ...generic, message_id: MSG });
+    expect(s.fetchCalls).toEqual(["https://api.sendgrid.com/v3/mail/send"]);
+  });
+});
+
+// "Approve now, send later": a scheduled governed email waits as a 'queued' row and is released only
+// by the drainer's flagged request once due; every refusal is finalized, never written directly.
+describe("send-message — a scheduled governed email", () => {
+  const OP = "88888888-8888-4888-8888-8888888888bb";
+  const due = new Date(Math.floor((Date.now() - 60_000) / 60_000) * 60_000).toISOString();
+  const later = new Date(Math.floor((Date.now() + 3_600_000) / 60_000) * 60_000).toISOString();
+  const bound = (over: Record<string, unknown> = {}) => ({ operation_id: OP, tenant_id: TENANT, actor_user_id: ACTOR, contact_id: CONTACT, connector_id: CONNECTOR,
+    recipient: "lead@example.test", from_address: "hello@own.example.test", provider: "sendgrid", subject: "Hi", body_html: "<p>Hi</p>", state: "prepared", send_at: due, ...over });
+  const release = { ...generic, message_id: MSG, comms_email_operation_id: OP, idempotency_key: `comms-email:${OP}`, comms_email_scheduled_release: true };
+  const finalizes = (s: ReturnType<typeof setup>) => s.rpcArgs.filter((c) => c.name === "finalize_comms_email_send").map((c) => c.args);
+  const directMessageWrites = (s: ReturnType<typeof setup>) => s.writes.filter((w) => w.table === "messages");
+
+  it("the drainer's flagged release of a due, queued row is claimed and sent exactly once", async () => {
+    const s = setup({ caller: "service", queued: true, binding: bound() });
+    const r = await s.request(release);
+    expect(s.rpcCalls).toContain("claim_comms_email_send");
+    expect(s.fetchCalls).toEqual(["https://api.sendgrid.com/v3/mail/send"]);
+    expect(r.body).toMatchObject({ ok: true, outcome: "provider_accepted" });
+    expect(finalizes(s)).toEqual([expect.objectContaining({ _outcome: "provider_accepted", _claimed_attempt: 1 })]);
+    expect(directMessageWrites(s)).toEqual([]);
+  });
+  it("a scheduled binding released WITHOUT the flag is refused before any claim, and nothing is finalized", async () => {
+    const s = setup({ caller: "service", queued: true, binding: bound() });
+    const { comms_email_scheduled_release: _flag, ...unflagged } = release;
+    const r = await s.request(unflagged);
+    expect(r).toMatchObject({ status: 409, body: { outcome: "outcome_unknown", code: "COMMS_EMAIL_SCHEDULED_RELEASE_REQUIRED" } });
+    expect(s.rpcCalls).not.toContain("claim_comms_email_send");
+    expect(finalizes(s)).toEqual([]); expect(s.fetchCalls).toEqual([]); expect(directMessageWrites(s)).toEqual([]);
+  });
+  it("the flag on an immediate binding is refused (an immediate send is never a release)", async () => {
+    const s = setup({ caller: "service", binding: bound({ send_at: undefined }) });
+    const r = await s.request(release);
+    expect(r).toMatchObject({ status: 409, body: { code: "COMMS_EMAIL_NOT_SCHEDULED" } });
+    expect(s.rpcCalls).not.toContain("claim_comms_email_send"); expect(s.fetchCalls).toEqual([]); expect(finalizes(s)).toEqual([]);
+  });
+  it("before its time: not yet due, no claim, nothing written (and the claim's own clock is honoured too)", async () => {
+    const early = setup({ caller: "service", queued: true, binding: bound({ send_at: later }) });
+    expect(await early.request(release)).toMatchObject({ status: 409, body: { code: "COMMS_EMAIL_NOT_YET_DUE" } });
+    expect(early.rpcCalls).not.toContain("claim_comms_email_send"); expect(finalizes(early)).toEqual([]);
+    const dbClock = setup({ caller: "service", queued: true, binding: bound(), claim: { state: "prepared", attempts: 0, admitted: false, not_before: due } });
+    expect(await dbClock.request(release)).toMatchObject({ status: 409, body: { code: "COMMS_EMAIL_NOT_YET_DUE" } });
+    expect(dbClock.fetchCalls).toEqual([]); expect(finalizes(dbClock)).toEqual([]);
+  });
+  it("a queued governed row whose sender is no longer active is FINALIZED refused — never terminalized by a direct write", async () => {
+    const s = setup({ caller: "service", queued: true, binding: bound(), connectorActive: false });
+    await s.request(release);
+    expect(finalizes(s)).toEqual([expect.objectContaining({ _outcome: "refused", _reason: "scheduled_connector_unavailable", _claimed_attempt: null })]);
+    expect(directMessageWrites(s)).toEqual([]);
+    expect(s.fetchCalls).toEqual([]);
+  });
+  it("only the service role may release, and the flag is `true` or absent, never a reconcile", async () => {
+    const user = setup({ caller: "user", queued: true, binding: bound() });
+    expect(await user.request(release)).toMatchObject({ status: 403, body: { error: "comms_email_binding_required" } });
+    for (const bad of [{ comms_email_scheduled_release: false }, { comms_email_scheduled_release: "yes" }, { comms_email_reconcile: true }]) {
+      const s = setup({ caller: "service", queued: true, binding: bound() });
+      expect(await s.request({ ...release, ...bad }), JSON.stringify(bad)).toMatchObject({ status: 400, body: { error: "comms_email_send_shape_invalid" } });
+      expect(s.fetchCalls).toEqual([]);
+    }
+  });
+  it("an immediate governed send is unchanged: a draft row with no send_at is claimed and sent", async () => {
+    const s = setup({ caller: "service", binding: bound({ send_at: undefined }) });
+    const { comms_email_scheduled_release: _flag, ...immediate } = release;
+    const r = await s.request(immediate);
+    expect(r.body).toMatchObject({ ok: true, outcome: "provider_accepted" });
+    expect(s.fetchCalls).toEqual(["https://api.sendgrid.com/v3/mail/send"]);
   });
 });

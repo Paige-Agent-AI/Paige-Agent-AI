@@ -39,7 +39,7 @@ function mkDb(tables: Record<string, { single?: unknown; list?: unknown[]; error
   return { db, queries };
 }
 
-describe('enforceBudget — the pure ladder', () => {
+describe('enforceBudget — informational tenant usage thresholds', () => {
   it('under 80%: allow, no gate', () => {
     const d = enforceBudget({ accrued_usd: 10, ceiling_usd: 50, band: 'chat' as never });
     expect(d.decision).toBe('allow');
@@ -60,17 +60,24 @@ describe('enforceBudget — the pure ladder', () => {
     expect(d.gate).toBe('budget_hard');
   });
 
-  it('at/over 100%: REASONING and SENSITIVE fail closed — never silently degraded', () => {
+  it('at/over 100%: reasoning and sensitive work continue without a financial stop or downgrade', () => {
     for (const band of ['reasoning', 'sensitive'] as const) {
       const d = enforceBudget({ accrued_usd: 50, ceiling_usd: 50, band });
-      expect(d.decision).toBe('block');
-      expect(d.gate).toBe('budget_exceeded');
+      expect(d.decision).toBe('allow_gated');
+      expect(d.gate).toBe('budget_hard');
     }
   });
 
-  it('a non-positive ceiling fails toward fully spent, never toward unlimited', () => {
+  it('a non-positive legacy threshold cannot stop any model band', () => {
     expect(enforceBudget({ accrued_usd: 0, ceiling_usd: 0, band: 'cheap' }).decision).toBe('allow_gated');
-    expect(enforceBudget({ accrued_usd: 0, ceiling_usd: 0, band: 'reasoning' }).decision).toBe('block');
+    expect(enforceBudget({ accrued_usd: 0, ceiling_usd: 0, band: 'reasoning' }).decision).toBe('allow_gated');
+  });
+
+  it('large accrued usage remains attributable and never becomes provider or action authority', () => {
+    for (const band of ['cheap', 'reasoning', 'sensitive'] as const) {
+      const decision = enforceBudget({ accrued_usd: 1_000_000, ceiling_usd: 0.01, band });
+      expect(decision).toEqual({ decision: 'allow_gated', gate: 'budget_hard', accrued_usd: 1_000_000, ceiling_usd: 0.01, band });
+    }
   });
 
   it('negative accrual is clamped to 0 (never invents spend)', () => {

@@ -1,6 +1,6 @@
 import { projectDurableContinuation, type ContinuationProjection } from './continuation.ts';
 import { PAIGE_SPINE_CAPABILITIES } from '../paige-spine/registry.ts';
-import { accruedSpendToday, enforceBudget, resolveCeiling, type BudgetDb } from '../router-budget/mod.ts';
+import type { BudgetDb } from '../router-budget/mod.ts';
 
 /** The server adapter half of the C4d eligibility projection (INT-304 CL-3). The SQL half
  *  (`read_paige_durable_continuation`, migration 20270602000412) revalidates the frozen
@@ -11,8 +11,9 @@ import { accruedSpendToday, enforceBudget, resolveCeiling, type BudgetDb } from 
  *  re-read discipline of observation.ts and the CONTEXT booleans, each from a real source:
  *
  *  - authorized: the caller's own JWT re-read after the RPC (identity pin, like observation.ts);
- *  - budgetAllowed: the canonical router-budget ladder (resolveCeiling + accruedSpendToday +
- *    enforceBudget) over the admin client — the same seam the chat path enforces with;
+ *  - budgetAllowed: true under the October27 owner billing policy. Financial usage
+ *    and missing cost observations cannot hide an original verified work result.
+ *    This is context eligibility, never business-action or provider authority;
  *  - capabilityAvailable: the Spine registry membership of the work's capability key;
  *  - approvalPending: the SQL's real derivation (blocked + approval_expired);
  *  - superseded/interrupted/alreadyContinued: false BY CONSTRUCTION AND SAID SO — the SQL
@@ -37,7 +38,7 @@ const object = (v: unknown): v is Record<string, unknown> => !!v && typeof v ===
 export async function readDurableContinuation(
   reference: DurableContinuationReference,
   caller: ContinuationReadCaller,
-  budgetDb: BudgetDb | null,
+  _budgetDb: BudgetDb | null,
 ): Promise<ContinuationProjection | null> {
   try {
     if (!reference || ![reference.threadId, reference.intentId, reference.workId].every(UUID)) return null;
@@ -62,14 +63,10 @@ export async function readDurableContinuation(
     // the awaited read (the same discipline the durable observation applies).
     const after = await caller.auth.getUser();
     if (after.error || after.data.user?.id !== auth.data.user!.id) return null;
-    let budgetAllowed = false;
-    if (budgetDb) {
-      const tenantId = r.tenantId;
-      const [ceiling, accrued] = [await resolveCeiling(budgetDb, tenantId), await accruedSpendToday(budgetDb, tenantId)];
-      // Accrual unknown is NOT budget-allowed: the ladder's own conservative posture.
-      budgetAllowed = accrued !== null &&
-        enforceBudget({ accrued_usd: accrued, ceiling_usd: ceiling, band: 'sensitive' }).decision !== 'block';
-    }
+    // Original actor/thread/tenant/intent/native-lineage checks above still apply.
+    // Cost attribution belongs to the actual model invocation, not this read-only
+    // retrieval. No usage read, invented $0, financial stop or second meter here.
+    const budgetAllowed = true;
     // The envelope's capability_key is the chat-facing tool name; the registry carries it
     // as action.chatTool (keys are domain-namespaced, e.g. research_knowledge.document_generate;
     // entries without an action/chatTool binding are not continuable capabilities).

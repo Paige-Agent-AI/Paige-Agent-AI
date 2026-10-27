@@ -4,7 +4,7 @@ import { runPreSend } from "../_shared/pre-send-pipeline.ts";
 import { confirmFingerprint } from "../_shared/confirm-fingerprint.ts";
 import { decideDeclaredCapability } from "../_shared/capability-kit/decision.ts";
 import { COMMS_EMAIL_SEND_CAPABILITY } from "../_shared/paige-spine/domains/comms.ts";
-import { COMMS_EMAIL_TOOL, COMMS_EMAIL_ACTION, FINGERPRINT, UUID, parseCommsEmailCommand, commsEmailBodyHtml, commsEmailContentDigest } from "../_shared/comms-email/contract.ts";
+import { COMMS_EMAIL_TOOL, COMMS_EMAIL_ACTION, FINGERPRINT, UUID, parseCommsEmailCommand, commsEmailBodyHtml, commsEmailContentDigest, parseCommsEmailSendAt, canonicalCommsEmailSendAt, COMMS_EMAIL_SCHEDULED_RELEASE_GRACE_MS } from "../_shared/comms-email/contract.ts";
 import { resolveCommsEmailParties, readCommsEmailReadiness, commsEmailReadinessOutcome, emailProvidersFor, type CommsEmailAdmin } from "../_shared/comms-email/readiness.ts";
 import { verifyLeadReplyApproval, storedApprovalMatches, recordLeadReplySend, bindingApprovalMatches, leadReplyPrepareRefusal, type LeadReplyApprovalAdmin } from "./lead-reply-approval.ts";
 import { executeCommsEmailSend, reconcileCommsEmailSend, parseCommsEmailStoredCall, commsEmailSafeResult } from "../_shared/comms-email/adapter.ts";
@@ -35,26 +35,49 @@ Deno.serve(async req => {
   const admin = createClient(url, serviceKey);
   const { data: { user }, error: userError } = await caller.auth.getUser();
   if (userError || !user) return refusedBeforeDispatch(401, "UNAUTHENTICATED");
-  let body: Record<string, unknown> & { expected_tenant_id: string; operation_id: string; approval_id?: string }, command: ReturnType<typeof parseCommsEmailCommand>;
+  let body: Record<string, unknown> & { expected_tenant_id: string; operation_id: string; approval_id?: string; send_at?: string; cancel?: true }, command: ReturnType<typeof parseCommsEmailCommand>;
   try {
     const raw = await req.text();
     if (raw.length > 100000) throw new TypeError("BODY_TOO_LARGE");
     const parsed = object(JSON.parse(raw));
-    if (!parsed || Object.keys(parsed).some(key => !["expected_tenant_id", "operation_id", "command", "approved_fingerprint", "approval_id"].includes(key))) throw new TypeError("INVALID_BODY");
+    if (!parsed || Object.keys(parsed).some(key => !["expected_tenant_id", "operation_id", "command", "approved_fingerprint", "approval_id", "send_at", "cancel"].includes(key))) throw new TypeError("INVALID_BODY");
     if (typeof parsed.expected_tenant_id !== "string" || !UUID.test(parsed.expected_tenant_id) || typeof parsed.operation_id !== "string" || !UUID.test(parsed.operation_id)) throw new TypeError("INVALID_SCOPE");
-    if (parsed.approved_fingerprint !== undefined && (typeof parsed.approved_fingerprint !== "string" || !FINGERPRINT.test(parsed.approved_fingerprint))) throw new TypeError("INVALID_FINGERPRINT");
-    // Experience 03: the drafted lead reply this email answers (paige_pending_approvals.id). Optional.
-    if (parsed.approval_id !== undefined && (typeof parsed.approval_id !== "string" || !UUID.test(parsed.approval_id))) throw new TypeError("INVALID_APPROVAL");
-    command = parseCommsEmailCommand(parsed.command);
-    // The binding, the unique index and send-message all compare the operation id as lowercase
-    // text; an uppercase id from a direct caller would otherwise never match its own binding.
-    body = { ...parsed, expected_tenant_id: parsed.expected_tenant_id.toLowerCase(), operation_id: parsed.operation_id.toLowerCase(),
-      ...(typeof parsed.approval_id === "string" ? { approval_id: parsed.approval_id.toLowerCase() } : {}) };
+    // Cancel of a scheduled send: exactly { expected_tenant_id, operation_id, cancel: true } — no command,
+    // no approval, no time. It is answered further down, after the workspace/seat/profile checks.
+    if (parsed.cancel !== undefined) {
+      if (parsed.cancel !== true || Object.keys(parsed).length !== 3) throw new TypeError("INVALID_CANCEL");
+      body = { expected_tenant_id: parsed.expected_tenant_id.toLowerCase(), operation_id: parsed.operation_id.toLowerCase(), cancel: true };
+      // Never read: the cancel path returns before step 2, the first use of the command.
+      command = null as unknown as ReturnType<typeof parseCommsEmailCommand>;
+    } else {
+      if (parsed.approved_fingerprint !== undefined && (typeof parsed.approved_fingerprint !== "string" || !FINGERPRINT.test(parsed.approved_fingerprint))) throw new TypeError("INVALID_FINGERPRINT");
+      // Experience 03: the drafted lead reply this email answers (paige_pending_approvals.id). Optional.
+      if (parsed.approval_id !== undefined && (typeof parsed.approval_id !== "string" || !UUID.test(parsed.approval_id))) throw new TypeError("INVALID_APPROVAL");
+      command = parseCommsEmailCommand(parsed.command);
+      // "Approve now, send later": a top-level send time, never part of the command (the command and its
+      // content digest are unchanged). Raising a card checks the window (2 min .. 30 days ahead); a
+      // confirm only canonicalizes it — the STORED call's time is what runs, and the execute step below
+      // refuses one that has already passed.
+      let sendAt: string | undefined;
+      if (parsed.send_at !== undefined) {
+        try { sendAt = parsed.approved_fingerprint === undefined ? parseCommsEmailSendAt(parsed.send_at, Date.now()) : canonicalCommsEmailSendAt(parsed.send_at); }
+        catch { return refusedBeforeDispatch(400, "COMMS_EMAIL_SEND_AT_INVALID"); }
+      }
+      // A drafted lead reply is answered now; its one-send-per-approval record is not scheduled.
+      if (sendAt !== undefined && parsed.approval_id !== undefined) return refusedBeforeDispatch(400, "COMMS_EMAIL_SCHEDULE_NOT_SUPPORTED");
+      // The binding, the unique index and send-message all compare the operation id as lowercase
+      // text; an uppercase id from a direct caller would otherwise never match its own binding.
+      const { send_at: _requestedSendAt, ...rest } = parsed;
+      body = { ...rest, expected_tenant_id: parsed.expected_tenant_id.toLowerCase(), operation_id: parsed.operation_id.toLowerCase(),
+        ...(typeof parsed.approval_id === "string" ? { approval_id: parsed.approval_id.toLowerCase() } : {}),
+        ...(sendAt !== undefined ? { send_at: sendAt } : {}) };
+    }
   } catch { return refusedBeforeDispatch(400, "COMMS_EMAIL_COMMAND_INVALID"); }
 
   const { data: tenantId, error: tenantError } = await caller.rpc("current_user_tenant_id");
   if (tenantError || typeof tenantId !== "string" || tenantId !== body.expected_tenant_id) return refusedBeforeDispatch(409, "WORKSPACE_CHANGED");
-  if (!await commsProviderExecutionAllowed(admin, { tenantId, actorUserId: user.id })) return refusedBeforeDispatch(403, COMMS_PROVIDER_EXECUTION_DISABLED);
+  // A cancel is a brake, not a send: it is not held behind the provider kill switch.
+  if (body.cancel !== true && !await commsProviderExecutionAllowed(admin, { tenantId, actorUserId: user.id })) return refusedBeforeDispatch(403, COMMS_PROVIDER_EXECUTION_DISABLED);
   const stillCurrent = async () => {
     const { data, error } = await caller.rpc("current_user_tenant_id");
     return !error && data === tenantId;
@@ -68,6 +91,37 @@ Deno.serve(async req => {
   const { data: profile, error: profileError } = await admin.from("profiles").select("active_tenant_id").eq("user_id", user.id).maybeSingle();
   if (profileError) return refusedBeforeDispatch(503, "COMMS_EMAIL_AUTHORITY_UNAVAILABLE");
   if (typeof profile?.active_tenant_id !== "string" || profile.active_tenant_id.toLowerCase() !== tenantId) return refusedBeforeDispatch(409, "WORKSPACE_CHANGED");
+
+  // 1b — Cancel a scheduled email (any owner/admin of this business may: a brake needs no special
+  // authority). The database decides under the row lock: a scheduled operation still 'prepared' is
+  // closed as refused `cancelled_by_owner`; once the drainer's claim has taken it, it is too late and
+  // the answer says what the send's state is. Nothing is ever sent from here.
+  if (body.cancel === true) {
+    if (!(await stillCurrent())) return refusedBeforeDispatch(409, "WORKSPACE_CHANGED");
+    const { data: cancelled, error: cancelError } = await admin.rpc("cancel_comms_email_send", { _actor_user_id: user.id, _expected_tenant_id: tenantId, _operation_id: body.operation_id });
+    if (cancelError) {
+      const message = String(object(cancelError)?.message ?? "");
+      if (message.includes("COMMS_EMAIL_NOT_SCHEDULED")) return response(409, { ok: false, cancelled: false, code: "COMMS_EMAIL_NOT_SCHEDULED", operation_id: body.operation_id });
+      if (message.includes("COMMS_EMAIL_OPERATION_NOT_FOUND")) return response(404, { ok: false, cancelled: false, code: "COMMS_EMAIL_NOT_FOUND", operation_id: body.operation_id });
+      if (message.includes("COMMS_EMAIL_WORKSPACE_CHANGED")) return response(409, { ok: false, cancelled: false, code: "WORKSPACE_CHANGED" });
+      if (object(cancelError)?.code === "42501") return response(403, { ok: false, cancelled: false, code: "COMMS_EMAIL_FORBIDDEN" });
+      // No answer we can read: the cancel may or may not have landed. Say so; the thread re-reads it.
+      return response(503, { ok: false, cancelled: false, code: "COMMS_EMAIL_CANCEL_UNVERIFIED", operation_id: body.operation_id });
+    }
+    const c = object(cancelled);
+    // The cancel and its audit row (comms.email_scheduled_cancelled) are one database transaction.
+    if (c?.cancelled === true) {
+      return response(200, { ok: true, cancelled: true, outcome: "refused", reason: "CANCELLED_BY_OWNER", operation_id: body.operation_id,
+        ...(typeof c.message_id === "string" && UUID.test(c.message_id) ? { message_id: c.message_id } : {}) });
+    }
+    // Too late: the drainer already took it (or it has an outcome). Report the send's own state honestly.
+    const state = typeof c?.outcome === "string" ? c.outcome : "";
+    const outcome = ["provider_accepted", "failed", "refused"].includes(state) ? state : "outcome_unknown";
+    // The recorded reason (a lower-case code such as cancelled_by_owner or scheduled_release_missed) lets
+    // the thread say WHY nothing went out; anything not shaped like one is dropped.
+    const reason = outcome === "refused" && typeof c?.reason === "string" && /^[a-z][a-z0-9_]{0,63}$/.test(c.reason) ? c.reason : undefined;
+    return response(409, { ok: false, cancelled: false, code: "COMMS_EMAIL_CANCEL_TOO_LATE", outcome, ...(reason ? { reason } : {}), operation_id: body.operation_id });
+  }
 
   const readResult = async (operationId: string) => {
     const { data, error } = await admin.rpc("read_comms_email_send_result", { _actor_user_id: user.id, _expected_tenant_id: tenantId, _operation_id: operationId });
@@ -129,7 +183,8 @@ Deno.serve(async req => {
   // bounded no-chase rule. Best-effort and NEVER blocking: a failure here changes
   // nothing about the send's own result, which the readback below still owns.
   const settleSupportCase = async (settled: Record<string, unknown>) => {
-    if (settled.ok !== true || typeof settled.message_id !== "string" || !UUID.test(settled.message_id)) return;
+    // ok:true alone is not "sent": a scheduled email is ok:true, outcome 'scheduled', and nothing went out.
+    if (settled.ok !== true || settled.outcome !== "provider_accepted" || typeof settled.message_id !== "string" || !UUID.test(settled.message_id)) return;
     try { await admin.rpc("mark_support_case_outbound", { _message_id: settled.message_id }); } catch { /* next inbound re-syncs the case */ }
   };
 
@@ -155,7 +210,10 @@ Deno.serve(async req => {
   // A failed replay read proves nothing about this operation: it may already have been sent on an
   // earlier attempt. Never "Not sent" — unknown, and no send is attempted.
   try { replay = object(await readResult(body.operation_id)); } catch { return response(503, { ok: false, outcome: "outcome_unknown", code: "COMMS_EMAIL_REPLAY_UNAVAILABLE" }); }
-  const preparedRecovery = replay?.outcome === "prepared";
+  // A scheduled operation is 'prepared' for days by design: it is answered as scheduled, never taken
+  // into the prepared-recovery path (which would mint a fresh card and send it at once).
+  const scheduledReplay = replay?.outcome === "prepared" && typeof replay.send_at === "string";
+  const preparedRecovery = replay?.outcome === "prepared" && !scheduledReplay;
   // A replay that names an approval must name the one this operation was prepared for: the request's
   // approval_id is a claim, the binding is the record. An operation prepared for no approval, or for
   // another, is never recorded against this one (round-3 MAJOR-2). A replay naming NO approval records
@@ -168,6 +226,18 @@ Deno.serve(async req => {
     } catch { return response(503, { ok: false, outcome: "outcome_unknown", code: "COMMS_EMAIL_REPLAY_UNAVAILABLE" }); }
     // The operation exists, so it may have been (or may still be) dispatched: never "refused"/"Not sent".
     if (!matches) return response(403, { ok: false, outcome: "outcome_unknown", code: "LEAD_REPLY_APPROVAL_MISMATCH", operation_id: body.operation_id });
+  }
+  if (replay && scheduledReplay) {
+    // Past its release grace and still 'prepared': no claim ever admitted it, so the email service has
+    // not received it — but the database has not recorded that yet (the drainer's sweep closes it as
+    // missed), and a release leased at the very end of the grace may still be finishing. So it is not
+    // "scheduled" any more, and not yet a recorded "not sent": outcome_unknown, never a resend prompt.
+    if (Date.parse(String(replay.send_at)) + COMMS_EMAIL_SCHEDULED_RELEASE_GRACE_MS < Date.now()) {
+      return response(503, { ok: false, outcome: "outcome_unknown", code: "COMMS_EMAIL_SCHEDULED_RELEASE_UNSETTLED", send_at: replay.send_at,
+        operation_id: body.operation_id, replayed: true });
+    }
+    return response(200, { ok: true, outcome: "scheduled", send_at: replay.send_at, operation_id: body.operation_id,
+      ...(typeof replay.message_id === "string" && UUID.test(replay.message_id) ? { message_id: replay.message_id } : {}), replayed: true });
   }
   if (replay && !preparedRecovery) {
     if (replay.outcome === "unknown" || replay.outcome === "dispatching") {
@@ -223,8 +293,14 @@ Deno.serve(async req => {
   // The approval is part of what is fingerprinted: a card approved for one approval cannot be confirmed
   // against another. Absent when no approval is named, so every other send's fingerprint is unchanged.
   if (body.approval_id !== undefined) requestArgs.approval_id = body.approval_id;
-  const summary = `Email ${parties.contactName} at ${parties.recipient} from ${parties.fromAddress}: "${command.subject}"`;
-  const preview = { kind: "email", to_name: parties.contactName, to_address: parties.recipient, from_address: parties.fromAddress, subject: command.subject, body_text: command.body };
+  // "Approve now, send later": the send time is part of what is fingerprinted, so a card approved for
+  // one time cannot be confirmed for another. Absent for an immediate send: every existing fingerprint,
+  // summary and preview is unchanged.
+  if (body.send_at !== undefined) requestArgs.send_at = body.send_at;
+  const summary = `Email ${parties.contactName} at ${parties.recipient} from ${parties.fromAddress}: "${command.subject}"`
+    + (body.send_at !== undefined ? ` — scheduled for ${body.send_at.slice(0, 16).replace("T", " ")} UTC` : "");
+  const preview = { kind: "email", to_name: parties.contactName, to_address: parties.recipient, from_address: parties.fromAddress, subject: command.subject, body_text: command.body,
+    ...(body.send_at !== undefined ? { send_at: body.send_at } : {}) };
   if (preparedRecovery || body.approved_fingerprint === undefined) {
     // Reuse a live server-issued proposal cycle for this operation, or mint a fresh one. A consumed
     // fingerprint never becomes authority again (same rule as the invoice door).
@@ -242,6 +318,7 @@ Deno.serve(async req => {
       if (cycle.expected_tenant_id !== tenantId || cycle.operation_id !== body.operation_id || JSON.stringify(cycleCommand) !== JSON.stringify(proposedCommand)
         || cycle.recipient !== parties.recipient || cycle.from_address !== parties.fromAddress || cycle.content_digest !== contentDigest
         || !storedApprovalMatches(cycle, body.approval_id)
+        || cycle.send_at !== body.send_at
         || typeof cycle.approval_cycle_nonce !== "string" || !UUID.test(cycle.approval_cycle_nonce))
         return response(409, { ok: false, outcome: "refused", code: "APPROVAL_CYCLE_INVALID" });
       requestArgs.approval_cycle_nonce = cycle.approval_cycle_nonce;
@@ -308,6 +385,9 @@ Deno.serve(async req => {
   // it is not what runs.
   const stored = parseCommsEmailStoredCall(decision.args, tenantId);
   if (!stored) return response(403, { ok: false, outcome: "refused", code: "APPROVAL_CLAIM_INVALID" });
+  // A scheduled call whose time has (nearly) come is not quietly turned into "send now": nothing is
+  // prepared, nothing is sent, and the owner picks a new time. (The database refuses < 30 s too.)
+  if (stored.sendAt !== undefined && Date.parse(stored.sendAt) <= Date.now() + 60_000) return refusedBeforeDispatch(409, "COMMS_EMAIL_SEND_AT_PASSED");
   // The approved call carries the approval it was approved for; a confirm naming a different (or no)
   // approval is a swap. Then the approval is re-proved against the STORED call's contact.
   if (!storedApprovalMatches(decision.args, body.approval_id)) return refusedBeforeDispatch(403, "LEAD_REPLY_APPROVAL_MISMATCH");

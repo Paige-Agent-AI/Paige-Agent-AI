@@ -96,14 +96,18 @@ function ScopedOperations({ tenantId, userId, openPaige, onOpenAgreements, onOpe
   const desiredDestination = view === undefined ? destination : DESTINATIONS.find(name => name.toLowerCase() === view) ?? "Overview";
   const editorGuard = useRef<(() => string | null) | null>(null);
   const crmInspectionHeld = useRef(false);
+  const crmReviewHeld = useRef(false);
   const [navigationNotice, setNavigationNotice] = useState("");
   const deliveryGuards = useRef(new Set<(showNotice?: boolean) => boolean>());
   // The shell reads this during render to retain this subtree. Reading must not
   // publish a notice or update state in a child while its parent is rendering.
   const navigationReason = useCallback(() => {
-    const original = editorGuard.current?.() ?? (crmInspectionHeld.current
-      ? "Review unsaved changes or close this task before leaving it." : null);
+    // A registered editor's null is clean, not missing. A prepared review still
+    // holds while that editor's passive cleanup is pending.
+    const original = editorGuard.current?.();
     if (original) return original;
+    if (crmInspectionHeld.current && (!editorGuard.current || crmReviewHeld.current))
+      return "Review unsaved changes or close this task before leaving it.";
     try {
       if (Array.from(deliveryGuards.current).some(check => !check(false))) return "Finish or inspect the current delivery decision before leaving.";
     } catch { return "The current delivery decision could not be checked. Keep this inspection open."; }
@@ -193,6 +197,7 @@ function ScopedOperations({ tenantId, userId, openPaige, onOpenAgreements, onOpe
   const crm = useOperationsCrmWork(readsCrm ? userId : null, readsCrm ? tenantId : null);
   const {readTask}=crm;
   const [crmReview,setCrmReview] = useState<CrmWorkOperation|null>(null);
+  crmReviewHeld.current = crmReview !== null;
   const [pendingCrmRecovery,setPendingCrmRecovery] = useState<CrmWorkOperation|null>(null);
   const [crmFeedback,setCrmFeedback] = useState("");
   const readRetainedCrm = () => {

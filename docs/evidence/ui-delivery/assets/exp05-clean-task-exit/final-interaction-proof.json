@@ -1,0 +1,28 @@
+[
+  {
+    "case": "final clean Escape",
+    "dialogs": 0,
+    "focus": "Priority unknown · taskProtected neutral CRM inspectionStandalone workMLMorgan LeeNo due date",
+    "height": 720,
+    "width": 1280
+  },
+  {
+    "case": "final prepared review Escape",
+    "confirmation": true,
+    "dialogs": 1,
+    "notice": true
+  },
+  {
+    "case": "final back to clean details",
+    "dialogs": 0,
+    "focus": "Priority unknown · taskProtected neutral CRM inspectionStandalone workMLMorgan LeeNo due date"
+  },
+  {
+    "case": "final light320 clean Escape",
+    "dialogs": 0,
+    "focus": "Priority unknown · taskProtected neutral CRM inspectionStandalone workMLMorgan LeeNo due date",
+    "height": 844,
+    "scrollWidth": 320,
+    "width": 320
+  }
+]

@@ -1,7 +1,9 @@
 import {createClient} from 'npm:@supabase/supabase-js@2';
 import {commsProviderExecutionAllowed} from '../_shared/comms-provider-boundary.ts';
 import {runPreSend} from '../_shared/pre-send-pipeline.ts';
+import {sendPlatformEmail} from '../_shared/email/platform-sendgrid.ts';
 
+// `key` is the platform SendGrid Mail Send key (SENDGRID_MAIL_SEND_API_KEY), handed to the shared transport.
 export type Options={key:string;site:string;defaultFrom:string;
  senderFrom:(name:string,fallback:string)=>string;
  copy:(kind:string,name:string)=>{subject:string;textLead:string};
@@ -125,34 +127,50 @@ export async function sendCanonicalPortalInvite(req:Request,input:unknown,option
   if(claimed.error)return refused(409,'INVITATION_DELIVERY_REQUIRES_READBACK','outcome_unknown');
   claim=deliveryReceipt(claimed.data,actor,tenant,operation,true);if(claim.invitation_id!==invitationId)throw Error('invalid_claim_scope');
   if(!['dispatch','reconcile'].includes(String(claim.disposition)))return savedDelivery(claim,true);
+  // RECOVERY NEVER SENDS. The provider (SendGrid) has no idempotent replay, so a second POST for an
+  // operation whose first attempt is unknown could deliver the invitation twice. A reconcile claim
+  // therefore records that the original attempt is still unknown and reads it back. Only evidence
+  // (a provider receipt) may later settle it; this adapter never re-dispatches it.
+  if(claim.disposition==='reconcile'){
+   await finish('outcome_unknown');
+   if(!await current())return refused(409,'WORKSPACE_CHANGED','outcome_unknown');
+   const actual=await read();
+   if(actual.found!==true||actual.invitation_id!==invitationId||actual.receipt_id!==claim.receipt_id)throw Error('readback_unavailable');
+   return savedDelivery(actual,true);
+  }
   // Re-resolve actual Auth/workspace/owner/contact/lifecycle/policy/floor immediately before egress.
   try{
    if(!await current())throw Error('context_changed');await target();const latest=await loadToken();
    if(latest.token!==token.token||String(latest.email).trim().toLowerCase()!==recipient)throw Error('invitation_changed');
    if(!(await preSend()).proceed||!await commsProviderExecutionAllowed(admin,{tenantId:tenant,actorUserId:actor,recipientEmail:recipient}))throw Error('policy_changed');
   }catch{
+   // Only a first dispatch reaches here (recovery returned above), so nothing has left Paige yet.
    await finish('refused');
-   // A stopped recovery says nothing about the ORIGINAL uncertain attempt.
    if(!await current())return refused(409,'WORKSPACE_CHANGED','outcome_unknown');
    const actual=await read();
    if(actual.found!==true||actual.invitation_id!==invitationId||actual.receipt_id!==claim.receipt_id)throw Error('readback_unavailable');
-   return savedDelivery(actual,claim.disposition==='reconcile');
+   return savedDelivery(actual,false);
   }
-  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),20000);
   let outcome='outcome_unknown',message:string|null=null;
-  try{
-   dispatched=true;
-   const result=await fetch('https://api.resend.com/emails',{method:'POST',signal:controller.signal,
-    headers:{Authorization:`Bearer ${options.key}`,'Content-Type':'application/json','Idempotency-Key':String(claim.provider_key)},body:encoded});
-   const value:unknown=await result.json().catch(()=>null);
-   if(result.ok&&object(value)&&typeof value.id==='string'&&MESSAGE_ID.test(value.id)){outcome='provider_accepted';message=value.id;}
-   else if([400,401,403,404,422].includes(result.status))outcome='failed';
-  }catch{/* Transport/timeout is unknown; never persist provider errors or invitation-bearing payloads. */}
-  finally{clearTimeout(timer);}
+  dispatched=true;
+  // The shared platform SendGrid transport: From moves onto Paige's own verified domain, X-Message-Id
+  // is the receipt, 20s abort. It never throws; a 5xx, timeout or transport error is `unconfirmed`.
+  // The three claims ride every SendGrid event for this email and are journalled with it
+  // (sendgrid_receipt_processing.tenant_claim/operation_claim/message_claim), so an outcome_unknown
+  // invitation can later be settled from evidence instead of staying unknown for good.
+  const sent=await sendPlatformEmail({from:payload.from,...(replyTo?{replyTo}:{}),to:payload.to,subject:payload.subject,
+   html:payload.html,text:payload.text,timeoutMs:20000,
+   customArgs:{paige_tenant_id:tenant,paige_operation_id:operation,paige_message_id:String(claim.receipt_id)}},{apiKey:options.key});
+  if(sent.ok&&typeof sent.id==='string'&&MESSAGE_ID.test(sent.id)){outcome='provider_accepted';message=sent.id;}
+  // Only a definitive 4xx proves nothing was accepted. An accepted send without a readable id stays unknown.
+  else if(!sent.ok&&!sent.unconfirmed&&sent.status>=400&&sent.status<500)outcome='failed';
+  // Refused locally before any request (no key/recipient/content): nothing left Paige.
+  else if(!sent.ok&&!sent.unconfirmed&&sent.status===0)outcome='refused';
+  /* Never persist provider errors or invitation-bearing payloads. */
   await finish(outcome,message);
   if(!await current())return refused(409,'WORKSPACE_CHANGED','outcome_unknown');
   const actual=await read();if(actual.found!==true||actual.invitation_id!==invitationId||actual.receipt_id!==claim.receipt_id)throw Error('readback_unavailable');
-  return savedDelivery(actual,claim.disposition==='reconcile');
+  return savedDelivery(actual,false);
  }catch{
   return refused(dispatched||claim?503:409,dispatched||claim?'INVITATION_OUTCOME_UNCONFIRMED':'INVITATION_CHANGED',dispatched||claim?'outcome_unknown':'refused');
  }

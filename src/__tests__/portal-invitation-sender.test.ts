@@ -2,11 +2,12 @@ import {readFileSync} from "node:fs";
 import ts from "typescript";
 import {describe,expect,it} from "vitest";
 import {commsProviderExecutionAllowed} from "../../supabase/functions/_shared/comms-provider-boundary";
+import {sendPlatformEmail} from "../../supabase/functions/_shared/email/platform-sendgrid";
 
 // The incumbent actual-handler test pattern: replace the three inspected module
-// boundaries only, execute the real handler, never permit a network effect.
+// boundaries only, execute the real handler and the real platform SendGrid transport, never permit a network effect.
 const source=readFileSync("supabase/functions/send-portal-invite/index.ts","utf8");
-if((source.match(/^import .*;\r?$/gm)??[]).length!==4)throw Error("Review the changed invitation module boundary");
+if((source.match(/^import .*;\r?$/gm)??[]).length!==5)throw Error("Review the changed invitation module boundary");
 const javascript=ts.transpileModule(source.replace(/^import .*;\r?\n/gm,""),{
  compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext}}).outputText;
 const actor="e0919000-0000-4000-8000-000000000001",tenant="e0929000-0000-4000-8000-000000000001",
@@ -68,16 +69,19 @@ async function drive(options:Options={}){
    }};
  }
  const env:Record<string,string>={SUPABASE_URL:"https://test.supabase.co",SUPABASE_ANON_KEY:"test-anon-key",
-  SUPABASE_SERVICE_ROLE_KEY:"test-service-key",RESEND_API_KEY:"synthetic-provider-key",PUBLIC_SITE_URL:"https://portal.tests.invalid"};
- new Function("createClient","commsProviderExecutionAllowed","handlePortalInvitationCommand","runPreSend","Deno","fetch","console",javascript)(makeClient,commsProviderExecutionAllowed,
+  SUPABASE_SERVICE_ROLE_KEY:"test-service-key",SENDGRID_MAIL_SEND_API_KEY:"synthetic-provider-key",PUBLIC_SITE_URL:"https://portal.tests.invalid"};
+ new Function("createClient","commsProviderExecutionAllowed","handlePortalInvitationCommand","runPreSend","Deno","fetch","console","sendPlatformEmail",javascript)(makeClient,commsProviderExecutionAllowed,
   ()=>{throw Error("Legacy sender cases must not enter the canonical command branch");},
   async()=>({proceed:true,outcome:"proceed"}),
   {env:{get:(key:string)=>env[key]??""},serve:(value:typeof handler)=>{handler=value;}},
-  async(url:string,request:{body:string})=>{
-   if(url!=="https://api.resend.com/emails")throw Error("Unexpected network destination; network is forbidden");
+  async()=>{throw Error("The handler must not reach the network except through the platform transport");},{error:()=>{}},
+  // The real shared transport, with only its network edge controlled (SendGrid: 202, id in X-Message-Id).
+  (input:Parameters<typeof sendPlatformEmail>[0],deps:Parameters<typeof sendPlatformEmail>[1]={})=>sendPlatformEmail(input,{...deps,fetch:(async(url:string,request:{body:string;headers:Record<string,string>})=>{
+   if(url!=="https://api.sendgrid.com/v3/mail/send")throw Error("Unexpected network destination; network is forbidden");
+   if(request.headers.Authorization!=="Bearer synthetic-provider-key")throw Error("Unexpected provider credential");
    sends.push(JSON.parse(request.body));if(options.transportUnknown)throw Error("synthetic lost acknowledgement");
-   return new Response(JSON.stringify({id:"synthetic-provider-message"}),{status:200,headers:{"Content-Type":"application/json"}});
-  },{error:()=>{}});
+   return new Response(null,{status:202,headers:{"X-Message-Id":"synthetic-provider-message"}});
+  }) as unknown as typeof fetch}));
  let entry=handler!;
  if(options.teamAction){
   const teamSource=readFileSync("supabase/functions/solo-team-invitations/index.ts","utf8");
@@ -122,7 +126,8 @@ describe("canonical portal invitation sender authority",()=>{
  });
  for(const authority of ["admin","agency","platform"] as const)it("preserves legitimate "+authority+" sender and current delivery evidence",async()=>{
   const r=await drive({authority});expect(r.status).toBe(200);expect(r.body.emailed).toBe(true);expect(r.sends).toHaveLength(1);
-  expect(r.sends[0]).toMatchObject({to:[recipient],from:"Test business <business@tests.invalid>"});
+  // The business's display name and local part, moved onto Paige's own verified sending domain.
+  expect(r.sends[0]).toMatchObject({personalizations:[{to:[{email:recipient}]}],from:{email:"notifications@mail.paigeagent.ai",name:"Test business"}});
   expect(r.logs).toHaveLength(1);expect(r.logs[0]).toMatchObject({message_id:"synthetic-provider-message",metadata:{actor_user_id:actor,invite_id:invitation}});
   const authorityCalls=r.calls.filter(x=>["is_platform_owner","is_tenant_admin","agency_can_manage_child"].includes(x.name));
   expect(authorityCalls.length).toBeGreaterThanOrEqual(3);expect(authorityCalls.every(x=>x.kind==="jwt")).toBe(true);

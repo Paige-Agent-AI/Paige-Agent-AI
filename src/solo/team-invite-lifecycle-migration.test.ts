@@ -149,10 +149,11 @@ describe("the webhook is authenticated by its signature", () => {
 describe("the sender stops throwing away the only handle a delivery event has", () => {
   const ts = code(SENDER);
 
-  it("reads the provider's response body for the message id", () => {
-    // The defect in one line: it returned `emailed: res.ok` and never parsed the body.
-    expect(ts).toMatch(/await res\.json\(\)/);
-    expect(ts).toMatch(/messageId/);
+  it("keeps the provider's message id and files it against the send", () => {
+    // The defect in one line: it returned `emailed: res.ok` and never kept the id. The platform
+    // SendGrid transport now hands back X-Message-Id as `id`, and that is what is logged.
+    expect(ts).toMatch(/const messageId = sent\.id;/);
+    expect(ts).toMatch(/logSend\(sent\.ok \? "sent" : "failed", messageId,/);
   });
 
   it("records the send against the invitation and the tenant", () => {
@@ -171,7 +172,7 @@ describe("the sender stops throwing away the only handle a delivery event has", 
     // Still true — the try/catch survives. But it no longer SWALLOWS the failure; it logs it.
     // Scoped to logSend's own body, not just any try/catch in the file (there are several,
     // including the request-body parse at the top which is a different single-line catch).
-    const logSend = ts.slice(ts.indexOf("const logSend"), ts.indexOf("if (!RESEND_KEY)"));
+    const logSend = ts.slice(ts.indexOf("const logSend"), ts.indexOf("if (!SENDGRID_KEY)"));
     expect(logSend).toMatch(/try \{[\s\S]*catch \(e\)/);
   });
 
@@ -179,13 +180,13 @@ describe("the sender stops throwing away the only handle a delivery event has", 
     // The gap Codex found reviewing #857's own correction (§39, a review catching a review's own
     // documentation claim): supabase-js resolves an insert failure as `{ error }`, it does not
     // reject. A bare try/catch around the await alone would never see that class of failure.
-    const logSend = ts.slice(ts.indexOf("const logSend"), ts.indexOf("if (!RESEND_KEY)"));
+    const logSend = ts.slice(ts.indexOf("const logSend"), ts.indexOf("if (!SENDGRID_KEY)"));
     expect(logSend).toMatch(/const \{ error \} = await admin\.from\("email_send_log"\)\.insert/);
     expect(logSend).toMatch(/if \(error\) console\.error/);
   });
 
   it("logs a THROWN failure too, not just a returned one", () => {
-    const logSend = ts.slice(ts.indexOf("const logSend"), ts.indexOf("if (!RESEND_KEY)"));
+    const logSend = ts.slice(ts.indexOf("const logSend"), ts.indexOf("if (!SENDGRID_KEY)"));
     expect(logSend).toMatch(/catch \(e\) \{[\s\S]{0,120}console\.error/);
   });
 });

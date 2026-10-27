@@ -50,6 +50,8 @@ function startVite() {
 
 // Measured in the page. Returns contrast for every visible text run, tagging the EXP03 elements.
 function measure({ PILL, LINE, TOAST }) {
+  // A surface that never mounted is a failed frame with nothing to measure — never a crash that hides why.
+  if (!document.querySelector("#tenant-shell-main")) return { mounted: false, font: { schibsted: false }, exp03: [], low: [], goldOutsideAct: [], goldElsewhere: [], warningInExp03: [], toasts: [], calls: [], counts: { pill: 0, line: 0, failed: 0, rawUnconfirmed: 0, approve: 0 }, overflowX: false };
   // Every computed colour is normalised through a 1×1 canvas: color-mix(in oklab, …) computes to an oklab()
   // string in this Chromium, which a channel regex would misread as near-black (a false 14:1 / 1.8:1).
   const cv = document.createElement("canvas"); cv.width = cv.height = 1; const cx = cv.getContext("2d", { willReadFrequently: true });

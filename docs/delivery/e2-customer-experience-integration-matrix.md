@@ -1,5 +1,22 @@
 # Experience 02 — Customer Experience Integration Matrix
 
+## October27 08:00UTC — original report status released, thumbnail receiving
+
+#2973 merged6c448b6c5f5b536d6793dc11d0663ecb26906000 after reviewed74d/LOWER5663415846,
+all13 checks/two web statuses SUCCESS. Production dpl_68nGSfYoZhDZXGWCJovzB14c9NXy
+READY; both public origins exact6c448b6c-mvqe6fpy at07:59:15UTC. Native17140002
+once/expected source/original OID/ABI/ACL/permission metadata retained. Source
+release is not authenticated report creation/reload, weekly recovery or Finance QA.
+Original9-0/supplement12-0-4/monthlyUNKNOWNUNRETRIED/all19/nine/ALG/CAP boundaries
+remain intact; Founder NOT_ACCEPTED. Original Master/Brain record this release.
+
+The distinct#2974 thumbnail repair receives that ACTUAL released main and complete
+incoming histories. Its three tested UI blobs/eighteen render inputs/thirteen
+raw frames remain exact; fresh9 original control tests pass after a prior invalid
+collection attempt. This UI change still needs its new exact-head review/CI and
+production readback. Its earlier local wording below is retained as history:
+the report source is now an incoming release, not an adopted held candidate.
+
 ## October27 — original report thumbnail native control repair, local increment
 
 O01/O14/O16 original Card markup preserves its original preview/Open/view/return
@@ -13,6 +30,25 @@ AT and full19/nine remain owed. No native/grant/provider/action/catalogue/ALG
 delta, no held2973 source adopted, original outcome definitions and historical
 9PASS0FAIL+12PASS0FAIL4BLOCKED/monthlyUNKNOWNUNRETRIED unchanged.
 [Bounded evidence](../evidence/ui-delivery/e2-report-thumbnail-accessibility.md).
+
+## October27 — original report observation compatibility, local increment
+
+O01/O14/O15/O16/O19 continuity: original native status can recognize the existing
+saved business_review only under original accepted intent/current actor/tenant/
+thread, canonical Metric permission and exact artifact/completion association.
+No new report, permission, store, writer, scheduler, provider or execution path.
+Source559b/composedf837/baseccce is LOCAL; native17140002 UNAPPLIED. Original
+producer/status26 plus all34 unchanged Document/Research controls and complete
+document native proof PASS; original permission regression caught and corrected.
+
+Functional LOCAL verified; Visual13 actual-source synthetic frames/current input
+hashes; Experiential bounded local report return only; Founder NOT_ACCEPTED.
+Required exact-head review/CI/normal Preview/merge/native source and web readback
+remain separate. Authenticated report/reload/current roles/two cohorts/Chat-Live/
+native zoom/full Finance/full19/nine remain owed. CAP014/015 Unverified, algorithms,
+original19 definitions,9PASS0FAIL+12PASS0FAIL4BLOCKED, protected monthlyUNKNOWN/
+UNRETRIED and existing Memory/Knowledge boundaries are unchanged. No Shipped Log
+row before merge; no customer announcement. [Bounded evidence](../evidence/ui-delivery/e2-report-status-observation.md).
 
 ## October27 — Finance target source release, original19 definitions retained
 

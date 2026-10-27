@@ -33,7 +33,7 @@ MUST_PRESERVE: Original native Open label/action,80×96 tile, inert/aria-hidden/
 ACCEPTANCE_CRITERIA: Same real paged document has no native button inside Open; native Open/view/close retains original record and context. Original tests and actual desktop/narrow rendering pass; authenticated production proof remains separate.
 MOTION_PURPOSE: NONE: no motion change, same existing reduced-motion branch.
 PROTECTED_SEAMS: Original Card loader/actor-tenant props, late-read disposal and opener guard unchanged and tested. Chat shell/Root/risk/registry/C0b/native/schema/grants/worker/Spine/Harness/Trust/LayerC/provider/Rail writers untouched.
-INTERNAL_BUILD_IDENTITY: 0e6a72cc53193b67ea08838dc89d8b70d7d8dde2 source; base=ccce6f1f58168f26e227205f8f40607368c22141; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=source-index.json, render-observations.json and final exact-head receipts.
+INTERNAL_BUILD_IDENTITY: 0e6a72cc53193b67ea08838dc89d8b70d7d8dde2 rendered/tested UI source; current incoming main=6c448b6c5f5b536d6793dc11d0663ecb26906000; own UI deployment=NOT_DEPLOYED; environment=development; own migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=source-index.json, render-observations.json and final exact-head receipts. Incoming report17140002 is a separately verified release, not this patch's native delta.
 RELEASE_CHANNEL: development: source candidate, exact-head hosted review/CI and normal safe web deployment/readback still required.
 RELEASE_CLASSIFICATION: internal-only: focused original control semantics repair, not a new report capability release.
 CUSTOMER_RELEASE_IDENTITY: none: full19/nine and authenticated/founder acceptance remain incomplete.

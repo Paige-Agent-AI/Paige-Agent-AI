@@ -576,7 +576,7 @@ Values intentionally omitted.
     reported `send_unconfirmed`, never `send_failed`), paige-mcp's four send tools, send-welcome-email,
     send-payment-confirmation-email, send-support-request and send-funding-report onto the same transport, removed the
     dead Resend adapter from `_shared/email/providers.ts` (every provider string there now refuses), and deleted the
-    `resend-admin-probe` diagnostic from the repo (the copy already deployed to production is not removed by a merge).
+    `resend-admin-probe` diagnostic from the repo; production carries no deployed copy (function list read 2026-10-27 after the #2966 deploy — only `resend-webhook` remains, and it receives nothing).
     The same EXP03 PR moved send-message's Resend arm into its SendGrid arm: PAIGE's managed
     `<slug>@mail.paigeagent.ai` sender, connectorless sends and `provider='resend'` connectors all send through
     SendGrid (the `'resend'` label stays on connector rows and `paige_messages_audit.pipe_used`). Readiness

@@ -1,5 +1,10 @@
 # Decision Log — chronological one-liners
 
+## October27 — EXP03 Resend retired: #2966 shipped
+
+- **EXP03 #2966 merged and deployed (squash `db0048ad`, 2026-10-27).** Every remaining PAIGE email path sends through SendGrid; an unconfirmed send (lost answer, SendGrid has no idempotent replay) is never re-sent by any caller and the inbox shows Couldn't confirm. `edge-live` and `db-live` both at `db0048ad`; prod `schema_migrations` has `20271116200000`. Still on Resend: `manage-tenant-domain`. Real delivery proof owed until a real send is journalled.
+- **§13 correction: `resend-admin-probe` was never on production at this point.** The #2966 PR text, its evidence record and the config registry said the deployed copy would survive the merge and need removing by hand; the production function list read after the deploy shows no such function (only `resend-webhook`). Registry corrected; nothing to remove.
+
 ## October27 — EXP08 Team Hub agents: design approved, A1a built
 
 - **EXP08 Team Hub agents: APPROVED (owner, 2026-10-27, EXP08 Claude Code session), verbatim "approved, go with your recommendations and start building".** Prototype v3 approved and frozen (§28), with the owner's direction of the same day that each agent has its own colour and symbol and "PAIGE obviously gets Gold" (contract §5 A1 UI). The seven personalities approved as drafted (`docs/delivery/exp08-team-hub-agents-personalities.md`). **Q1:** owners and admins of the workspace assign work to an agent (A3); every member sees assignments. **Q2:** a top-level question gets a top-level reply linked to the asker's message; a thread reply is answered in its thread. **MERIT = Sales & getting paid** (the 23 Oct 2026 standard) confirmed. The new storage (contract §5 A1) approved. The owner rulings of 2026-10-26 (privacy, speaking only when asked, acts as asker-only approval cards, CC-drafted personalities a tenant can edit) and the §58 reversals they make are recorded in the contract §1–§2. Contract: `docs/delivery/exp08-team-hub-agents-contract.md`.

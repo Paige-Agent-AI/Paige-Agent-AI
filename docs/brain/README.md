@@ -4567,6 +4567,33 @@ receipts, providers and activation unchanged. Source/review/CI/deployment and
 authenticated proof remain separate; full ten/E5/Builder/ZION/owner-away/Live and
 founder acceptance stay open. [Bounded evidence](../evidence/ui-delivery/exp05-zion-history-access-refusal.md).
 
+## EXP02 original report status compatibility — development, October27
+
+The existing native `read_paige_durable_observation` omitted the already supported
+`business_review` artifact type. The bounded repair reuses original Work, accepted
+intent, current tenant/actor/thread and original Metric report-read authority;
+only an exactly associated saved report may verify. Same function/OID/ABI/ACL and
+response keys; no reader, worker, grant, registry, queue, dispatch or action is
+added. Historical capture/provenance stays historical. Original Document/Research
+behavior is preserved, including refusal and unknown-outcome reconciliation.
+
+Local original PostgreSQL16.14 producer/status proof adds26 controls and retains
+all34 original observation controls, unchanged. The original negative suite caught
+an unintended report-permission dependency on old reads; a report-only nested IF
+corrects it. Complete original document/concurrency/replay/atomic Rail proof also
+passes. Source559b, composedf837 on actual mainccce; candidate native17140002 is
+UNAPPLIED and hosted release/Preview/current native readback remain owed.
+
+Functional LOCAL source verified; Visual13 fresh actual-source synthetic frames,
+18 declared current-main inputs exact; Experiential bounded local report/draft
+return only; Founder NOT_ACCEPTED. Ordinary customer permissions/cohorts/reload,
+Chat/Live, native zoom/full AT, all19/nine remain owed. Protected monthly stays
+UNKNOWN/UNRETRIED. CAP014/015 remain Unverified, other CAP/ALG maturity unchanged;
+ordinary observation is read only, not a LayerC executor. The separate manual
+Systems observation/original receipt handoff remains with EXP05; no purpose is
+silently admitted. Existing Mind/Vault/owner-memory boundaries remain intact.
+[Source, UX, orchestration and proof boundaries](../evidence/ui-delivery/e2-report-status-observation.md).
+
 ## EXP02 original report thumbnail controls — development, October27
 
 The original report Card keeps its inert/aria-hidden/print-hidden document preview
@@ -4591,3 +4618,20 @@ execution receipt. The separately held2973 status migration is not imported by
 this safe no-schema UI slice; normal Preview-capacity and original E05/E09
 receiving dependencies remain in their canonical Linear threads.
 [Bounded original-control evidence](../evidence/ui-delivery/e2-report-thumbnail-accessibility.md).
+
+### October27 08:00UTC — EXP02 original report status source released
+
+The earlier local/held report records are historical. #2973 merged6c448b6c5f5b536d6793dc11d0663ecb26906000,
+reviewed74d/LOWER5663415846, all13 checks/two web statuses SUCCESS. Actual normal
+merge tree89919c37 retains all owning source/incoming docs. Production
+dpl_68nGSfYoZhDZXGWCJovzB14c9NXy READY; both public origins exact6c448b6c-mvqe6fpy
+and matching reachable assets at07:59:15UTC. Native20271117140002 applied once;
+expected observation source and every original permission/ABI/metadata field
+verified. No Edge, worker/provider/action activation or protected retry.
+
+Functional bounded status source verified; Visual13 synthetic frames; Experiential
+authenticated report creation/return/reload, weekly recovery and Finance QA owed;
+Founder NOT_ACCEPTED. Original9-0+12-0-4/all19/nine/ALG/CAP and monthlyUNKNOWNUNRETRIED
+remain. [Release receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2973#issuecomment-6436707636).
+Separate thumbnail#2974 receives this actual main with all three tested UI blobs
+and18 render inputs intact; new-head review/CI/readback remain required.

@@ -8074,6 +8074,30 @@ Current gaps:
   yet:** the `paige-ai-chat` turn and the agent UI are A1b; cards (A2), assignments (A3) and editable
   personalities (A4) follow. `PROOF_OWED`. Proof `supabase/tests/exp08_team_hub_agents_a1.sql`.
   Contract: [Team Hub agents contract](delivery/exp08-team-hub-agents-contract.md).
+  **§13 correction (2026-10-27):** A1a is merged (#2969) and both migrations are applied on production
+  (`schema_migrations`, the four doors and the six rows' config keys read back). **A1b part 1** (branch
+  `exp08-hub-agents-a1b`, not merged): the server agent turn — a closed `{ teamHubAgentTurn }` request in
+  `paige-ai-chat`, logic in `_shared/team-hub/agent-turn.ts` (re-read under the asker's JWT, service-role
+  acceptance, channel-safe context only, `fabricCompletion` with a read-only tool list, post under the
+  asker's JWT, read-back, `team_hub_agent_post` receipt). Still no agent speaks to anyone: the UI is A1b
+  part 2. `PROOF_OWED` (no authenticated drive).
+  **A1b part 2, the UI** (same branch, not merged, 2026-10-27): PAIGE and her six agents in Team Hub —
+  *Your Paige team* in the list and the @ list, agent plates, tag and role on every message, *replying
+  to*, asker-only *is writing…*, the flow-9 lines with Ask again, the private-part note, Bring in, the
+  agent DM and the read-only profile (About), gated on `team_hub_agents` (§60). 56 agent colour tokens in
+  `src/index.css`. Evidence: mocked-RPC tests and a rendered harness
+  (`docs/evidence/ui-delivery/exp08-team-hub-agents-a1b.md`); authenticated runtime `UNVERIFIED`.
+  **A1b part 3** (same branch, not merged, 2026-10-27): migration `20271119010008` (renumbered from `20271118220008` to sort after `20271119000000`) adds the member-safe
+  turn-state read `team_hub_agent_turn_states` (authenticated, caller-scoped; other members see
+  *<AGENT> is answering / replied to <Name> privately.*, the asker sees the true state after a reload),
+  Bring in staged from the agent's structured answer, same-token acceptance; transport errors are
+  unknown outcomes, hinted agent turns are refused, DM-turn receipts omit agent and intent. Proof
+  `supabase/tests/exp08_team_hub_agent_turn_states.sql` (CI). Open owner decision: whether a member's
+  agent DM turns should leave a Rail row at all. **A1b part 4** (same branch, not merged): receipts name
+  agent and intent only in a team channel; a refusal after a lost post answer and a post error with a
+  SQLSTATE are settled by the end door (never *can't post here* for an error); Check again on an unknown
+  state only re-reads it; model text cannot end with the private-part line; neutral clock for *may still
+  be replying*; agent list rows fit prototype c05. Contract "A1b part 4 notes".
 - `/solo/{n}/team` still redirects to Settings → Team; Team Hub is a separate destination.
 - Team actions still emit no Rail outcome.
 

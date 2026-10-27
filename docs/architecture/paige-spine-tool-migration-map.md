@@ -450,6 +450,19 @@ Column notes, so the table is read correctly:
 | 41 | `team_invite_resend` | 5206 | external action | high | edge:solo-team-invitations | `paige_audit_log` only | **No** — no Rail row; audit log has no reader | SCR-1 | **Spine Change Request** | 4 |
 | 42 | `team_invite_revoke` | 5221 | write | high | — | `paige_audit_log` only | **No** — no Rail row; audit log has no reader | SCR-1 | **Spine Change Request** | 4 |
 
+**Added after this map was drawn, and outside its count (EXP08 team lifecycle, 2026-10-26; LIVE on
+merge, authenticated runtime UNVERIFIED).** Seven Team tools are born Spine-declared, so they
+are not migration backlog: `team_list_members` (read, `public.get_solo_team_workspace`),
+`team_member_holdings` (read, `public.team_member_holdings`), and the `high` writes
+`team_suspend_member`, `team_reinstate_member`, `team_remove_member`, `team_set_conversations`
+(the four lifecycle definers of `20271115040008`) and `team_handover_work`
+(`public.plan_update_item_versioned`). Declared in `_shared/paige-spine/domains/team_lifecycle.ts`,
+entering Chat through the adapter spread (no inline tool), dispatched last in the chain on the caller's
+JWT by `_shared/team-lifecycle/chat.ts`, and each write outcome with a persona workspace is a capability receipt
+(`recordCapabilityRun`) besides the `paige_audit_log` row, whose `target_id` is now the membership or
+work row the definer answered about. The Rail gap above (no workspace-level outcome projection) is
+unchanged for them.
+
 ### W5 Growth, Campaigns & Studio — 11 tools
 
 | # | Tool | Line | Behaviour | Risk class | Server target | Outcome path | Owner sees it today | Blocker / related | Disposition | Stage |

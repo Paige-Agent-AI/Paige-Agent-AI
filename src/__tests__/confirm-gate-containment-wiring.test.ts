@@ -222,6 +222,9 @@ describe("the write trail skips only what declares it never ran", () => {
       "supabase/functions/_shared/paige-turn/reducer.ts",
       "supabase/functions/_shared/paige-turn/resume.test.ts",
       "supabase/functions/_shared/paige-turn/resume.ts",
+      // EXP08 team lifecycle: a structural test that READS the handler's pre-card refusals (which
+      // live in paige-ai-chat/index.ts, already a producer above); it produces nothing.
+      "supabase/functions/_shared/team-lifecycle/chat-wiring.test.ts",
       "supabase/functions/crm-command/index.ts",
       "supabase/functions/paige-ai-chat/index.ts",
     ]);

@@ -101,6 +101,16 @@ describe("C0b canonical read declaration convergence", () => {
         }
         continue;
       }
+      // EXP08 team lifecycle: the departure review and the five approved team writes, absent from the
+      // frozen roster. Every definer admits only an ACTIVE owner/admin seat in the acting workspace, so
+      // the Chat gate is the door seat: no agency manager without a seat, no seatless Operator.
+      if (["team_member_holdings", "team_suspend_member", "team_reinstate_member", "team_remove_member", "team_set_conversations", "team_handover_work"].includes(tool)) {
+        expect(requiresWorkspaceAdmin(tool, new Set()), tool).toBe(true);
+        for (const workspaceAdmin of [false, true]) for (const platformOperator of [false, true]) for (const seat of [false, true]) {
+          expect(authorityAdmits(tool, { workspaceAdmin, platformOperator, seat }, new Set())).toBe(seat);
+        }
+        continue;
+      }
       expect(requiresWorkspaceAdmin(tool, new Set()), tool).toBe(tool !== "capability_status" && (OWNER_OPS_BEFORE.includes(tool) || outsideBefore.has(tool)));
     }
   });

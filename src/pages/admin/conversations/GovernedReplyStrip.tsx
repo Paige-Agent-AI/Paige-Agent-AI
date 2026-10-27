@@ -31,6 +31,9 @@ export interface GovernedReplyStripProps {
 }
 
 const EASE = [0.16, 1, 0.3, 1] as const;
+// The outline variant hovers to --secondary, which in light is dark navy under the same dark text (measured
+// 1.11:1 under the pointer). The strip's quiet controls hover to the muted surface and keep ink text.
+const QUIET_HOVER = "h-9 hover:bg-muted hover:text-foreground";
 
 function StripFrame({ label, children }: { label: string; children: ReactNode }) {
   const reduce = useReducedMotion();
@@ -68,7 +71,7 @@ function Foot({ note, children }: { note: string; children: ReactNode }) {
 function Quiet({ onClick, children, focus, busy = false, label }: { onClick: () => void; children: ReactNode; focus?: string; busy?: boolean; label?: string }) {
   return (
     <Button
-      type="button" variant="outline" size="sm" className="h-9"
+      type="button" variant="outline" size="sm" className={QUIET_HOVER}
       data-strip-focus={focus} aria-label={label}
       aria-disabled={busy || undefined}
       onClick={() => { if (!busy) onClick(); }}
@@ -163,7 +166,7 @@ export function GovernedReplyStrip({ state, onEdit, onConfirm, onAction, onChoos
       <Message icon={offline ? WifiOff : AlertTriangle} head={view.head} body={view.body} />
       <Foot note="Your words are kept.">
         {view.action === "settings" && (
-          <Button type="button" variant="outline" size="sm" className="h-9" asChild>
+          <Button type="button" variant="outline" size="sm" className={QUIET_HOVER} asChild>
             <Link to={settingsHref} data-strip-focus="settings">Open email settings</Link>
           </Button>
         )}

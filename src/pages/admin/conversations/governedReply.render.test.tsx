@@ -37,10 +37,13 @@ const db = vi.hoisted(() => ({
   tenant: "",
   rpcTenant: "",
   reduce: true,
+  /** Every table read, in order (the thread re-reads after a confirm's answer). */
+  reads: [] as string[],
 }));
 
 vi.mock("@/integrations/supabase/client", () => {
   const builder = (table: string) => {
+    db.reads.push(table);
     const rows = () => table === "messages" ? db.messages : table === "threads" ? db.threads
       : table === "channel_connectors" ? db.connectors : table === "signatures" ? db.signatures : [];
     const result = () => ({ data: rows(), error: null, count: rows().length });
@@ -161,7 +164,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   db.messages = [message()]; db.threads = [thread]; db.signatures = [];
   db.connectors = [emailConnector(CONN, "Northlight Advisory", "jordan@northlightadvisory.example")];
-  db.invokes = []; db.sendBodies = []; db.doorBodies = []; db.door = []; db.cancellations = [];
+  db.invokes = []; db.sendBodies = []; db.doorBodies = []; db.door = []; db.cancellations = []; db.reads = [];
   db.tenant = TENANT; db.rpcTenant = TENANT; db.reduce = true;
   Object.defineProperty(navigator, "onLine", { configurable: true, get: () => true });
 });
@@ -542,6 +545,16 @@ describe("the confirm's answers", () => {
     await click(stripButton(host, "confirm"));
     return host;
   }
+  it("an answer that keeps the words still re-reads the thread, so its row shows what the server recorded", async () => {
+    const host = await mount();
+    await write(host);
+    await click(sendButton(host));
+    const before = db.reads.filter((t) => t === "messages").length;
+    db.door = [httpError(503, { ok: false, outcome: "outcome_unknown" })];
+    await click(stripButton(host, "confirm"));
+    expect(db.reads.filter((t) => t === "messages").length).toBeGreaterThan(before);
+    expect(textarea(host).value).toBe("Following up on Thursday.");
+  });
   it("an unknown outcome KEEPS the words and the operation: don't resend, Check status asks the same operation", async () => {
     const host = await toCheck(httpError(503, { ok: false, outcome: "outcome_unknown", code: "COMMS_EMAIL_RECONCILIATION_REQUIRED" }));
     expect(stripText(host)).toContain("Couldn't confirm this went out — don't resend.");

@@ -47,8 +47,11 @@ export interface GovernedEmailReplyInput {
   settingsHref: string;
   /** The sender the owner picked from a choice: the parent selects it; the check runs again. */
   onChooseSender: (connectorId: string) => void;
-  /** A send that is done (or may be): the parent clears the composer and re-reads the thread. */
+  /** A definite send (accepted or scheduled): the parent clears the composer and re-reads the thread. */
   onRecorded: (r: { outcome: string; contactId: string; already: boolean }) => void;
+  /** A confirm's answer that keeps the words (unknown, failed, refused): the thread re-reads, so the row the
+   *  server may have written (Couldn't confirm, Failed, Not sent) shows without waiting for realtime. */
+  onRefresh?: () => void;
 }
 
 type Phase = "composing" | "checking" | "check" | "sending" | "choose" | "cant" | "expired";
@@ -155,6 +158,7 @@ export function useGovernedEmailReply(input: GovernedEmailReplyInput) {
     if (view.keepId && held) idsRef.current.markUnknown(scope, held.request.operation_id);
     else if (view.settle || conflict) idsRef.current.settle(scope);
     showCant(view);
+    if (stage !== "check") i.onRefresh?.();
   };
 
   /** One door call. Every answer is checked against the call that asked: same business, same request. */

@@ -1234,6 +1234,7 @@ export default function ClientsConversations() {
       if (key && key !== selected?.key) pendingSelectRef.current = key;
       void load(); void loadThreads();
     },
+    onRefresh: () => { void load(); void loadThreads(); },
   });
   useBeforeUnloadGuard(!!leadReplyApprovalId && (!!subject.trim() || !!body.trim() || leadReplyReview.blocksEditing));
   const cancelLeadReply=()=>{

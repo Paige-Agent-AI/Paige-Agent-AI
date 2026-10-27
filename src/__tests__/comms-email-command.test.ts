@@ -686,6 +686,26 @@ describe("comms-email-command: approve now, send later", () => {
   // A whole-minute instant an hour ahead, in the canonical text the door stores.
   const later = (ms = 3_600_000) => new Date(Math.floor((Date.now() + ms) / 60_000) * 60_000).toISOString();
 
+  it("tells readiness the email is scheduled — on the check and again on the confirm — and an immediate send is not", async () => {
+    const immediate = setup();
+    expect((await immediate.request({})).status).toBe(202);
+    expect(immediate.named("readiness").at(-1)!.args.scheduled).toBe(false);
+    const t = setup();
+    const sendAt = later();
+    const card = await t.request({ send_at: sendAt });
+    expect(card.status).toBe(202);
+    expect(t.named("readiness").at(-1)!.args.scheduled).toBe(true);
+    await t.request({ send_at: sendAt, approved_fingerprint: card.body.fingerprint });
+    expect(t.named("readiness").at(-1)!.args.scheduled).toBe(true);
+  });
+  it("a check carries its remaining life by the server's clock", async () => {
+    const t = setup();
+    const card = await t.request({});
+    expect(card.status).toBe(202);
+    const left = Number(card.body.expires_in_ms);
+    expect(left).toBeGreaterThan(9 * 60_000);
+    expect(left).toBeLessThanOrEqual(10 * 60_000);
+  });
   it("a card for a scheduled email fingerprints the time, names it, and prepares or sends nothing", async () => {
     const t = setup();
     const sendAt = later();

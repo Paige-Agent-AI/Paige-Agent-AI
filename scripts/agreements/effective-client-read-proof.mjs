@@ -11,7 +11,7 @@ export function proveEffectiveClientRead({sql,read,tenant,c,prepared}){
  let checks=0;
  const equal=(a,b,message)=>{assert.deepEqual(a,b,message);checks++;};
  const json=q=>JSON.parse(sql(q));
- const path='supabase/migrations/20271117120004_e04_client_effective_terms_read.sql';
+ const path='supabase/migrations/20271117170004_e04_client_effective_terms_read.sql';
  const migration=read(path),start=migration.indexOf('CREATE OR REPLACE FUNCTION public._sales_client_effective_terms(');
  assert(start>0);checks++;
  equal(sql('SELECT current_user;'),'postgres','Complete guard proof uses the canonical stock local schema owner');

@@ -6,6 +6,7 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import {stripTypeScriptTypes} from 'node:module';
 import {webcrypto} from 'node:crypto';
+import {btoa} from 'node:buffer';
 import * as portal from '../_shared/client-portal-booking.ts';
 
 const id=n=>`e09b9000-0000-4000-8000-${String(n).padStart(12,'0')}`;
@@ -13,7 +14,7 @@ function fixture({type='personal',allowed=true}={}){
  const actor=id(1),tenant=id(2),client=id(3),host=id(4),secondHost=id(5),calendar=id(6);
  const profile={id:client,tenant_id:tenant,linked_user_id:actor,first_name:'Avery',last_name:'River',email:'client@example.test',phone:null};
  let activeActor=actor,visibleProfile=profile,lost=false,handler;
- const traces=[],commits=[],records=new Map(),rows=[],effects=[];
+ const traces=[],commits=[],records=new Map(),rows=[],effects=[],tailErrors=[];
  let sequence=100;
  const cal={id:calendar,tenant_id:tenant,slug:'test-consultation',type,title:'Consultation',description:'Business-approved session',logo_url:null,accent:null,
   duration_min:30,buffer_before_min:0,buffer_after_min:0,min_notice_min:0,timezone:'UTC',enabled:true,theme:'light',subtitle:null,
@@ -85,7 +86,14 @@ function fixture({type='personal',allowed=true}={}){
    return {data:null,error:null};
   }};
  let currentAllowed=allowed;
- const context=vm.createContext({Request,Response,Headers,URL,URLSearchParams,TextEncoder,TextDecoder,Intl,Date,console,crypto:webcrypto,
+ const context=vm.createContext({Request,Response,Headers,URL,URLSearchParams,TextEncoder,TextDecoder,Intl,Date,btoa,crypto:webcrypto,
+  console:{...console,error:(...args)=>tailErrors.push(args)},
+  fetch:async(url,options)=>{
+   assert.equal(url,'https://example.invalid/functions/v1/notify-team-event');
+   assert.equal(options.method,'POST');
+   effects.push({kind:'team-notification',body:JSON.parse(options.body)});
+   return new Response('{}',{status:200});
+  },
   setTimeout,clearTimeout,structuredClone,...portal,
   Deno:{env:{get:name=>({SUPABASE_URL:'https://example.invalid',SUPABASE_ANON_KEY:'synthetic-public',SUPABASE_SERVICE_ROLE_KEY:'synthetic-service'})[name]},serve:fn=>{handler=fn;}},
   createClient:(_url,key)=>{traces.push({kind:'sdk',key});return key==='synthetic-public'?caller:service;},
@@ -93,14 +101,14 @@ function fixture({type='personal',allowed=true}={}){
   findClientIdByAddress:async()=>{traces.push({kind:'email-identity-lookup'});return client;},insertClientWithAddresses:async()=>{throw Error('Unexpected duplicate CRM');},
   primaryPhonesForUsers:async()=>[],emailOptOut:async()=> 'clear',parseLifecycle:()=>[],channelsOf:()=>[],targetsOf:()=>[],renderTemplate:v=>v,
   lifecycleEmailHtml:()=>'',sendSms:async()=>{effects.push({kind:'external-sms'});return true;},
-  sendPlatformEmail:async()=>{effects.push({kind:'external-email'});return {ok:true};},createZoomMeeting:async()=>{effects.push({kind:'external-zoom'});return null;},
+  sendPlatformEmail:async(args)=>{effects.push({kind:'external-email',args});return {ok:true};},createZoomMeeting:async()=>{effects.push({kind:'external-zoom'});return null;},
  });
  const raw=fs.readFileSync(new URL('./index.ts',import.meta.url),'utf8').replace(/^import[\s\S]*?from\s+["'][^"']+["'];\s*/gm,'');
  vm.runInContext(stripTypeScriptTypes(raw,{mode:'transform'}),context);
  const date=new Date(Date.now()+2*86400000);date.setUTCHours(12,0,0,0);
  const body={mode:'customer',action:'create',slug:'test-consultation',calendar_id:calendar,tenant_id:tenant,client_id:client,request_id:id(7),start:date.toISOString(),
   guest:{name:'Forged Guest',email:'unrelated@example.test',phone:'+15550009999'},actor_id:id(99),role:'owner',p_plan:{host_ids:[id(99)]}};
- return {actor,tenant,client,host,secondHost,calendar,body,cal,rows,records,traces,commits,effects,
+ return {actor,tenant,client,host,secondHost,calendar,body,cal,rows,records,traces,commits,effects,tailErrors,
   setActor:v=>{activeActor=v;},setProfile:v=>{visibleProfile=v;},setAllowed:v=>{currentAllowed=v;},loseResponse:()=>{lost=true;},
   run:async(value=body,{authorization='Bearer synthetic-customer'}={})=>{
    const req=new Request('https://example.invalid/functions/v1/public-booking',{method:'POST',headers:authorization?{authorization}:{},body:JSON.stringify(value)});
@@ -117,6 +125,7 @@ for(const type of ['personal','round_robin','collective','event'])test('actual h
  assert.equal(f.traces.filter(x=>x.kind==='email-identity-lookup').length,0);
  assert.equal(f.traces.filter(x=>x.kind==='table'&&x.table==='internal_bookings'&&x.operation==='insert').length,0);
  assert.equal(f.traces.filter(x=>x.kind==='service'&&x.name==='create_class_booking').length,0);
+ assert.equal(f.tailErrors.length,0,'successful private booking reaches the real notification tail without a hidden exception');
  assert(f.traces.findIndex(x=>x.kind==='auth')<f.traces.findIndex(x=>x.kind==='sdk'&&x.key==='synthetic-service'));
  for(const hidden of ['calendar_source','hosts_source','guest_email','host_ids',f.actor])assert(!JSON.stringify(r.data).includes(hidden));
 });
@@ -127,11 +136,27 @@ for(const type of ['personal','round_robin','collective','event'])test('the orig
  assert.equal(f.traces.filter(x=>x.kind==='email-identity-lookup').length,1);
  assert.equal(f.traces.filter(x=>x.kind==='auth').length,0);
  assert.equal(f.traces.filter(x=>x.kind==='service'&&x.name==='create_class_booking').length,type==='event'?1:0);
+ assert.equal(f.tailErrors.length,0,'successful public booking reaches the real notification tail without a hidden exception');
 });
-test('same exact request recovers before a closed calendar, with no second native write or notification',async()=>{
- const f=fixture(),first=await f.run();assert.equal(first.status,200);f.cal.enabled=false;
+for(const type of ['personal','round_robin','collective','event'])test('same exact request preserves the first notification and never dispatches again: '+type,async()=>{
+ const f=fixture({type});f.cal.notify_config={confirm_guest:true,confirm_host:true};
+ const first=await f.run();assert.equal(first.status,200);
+ assert.equal(f.effects.filter(x=>x.kind==='external-email').length,type==='collective'?3:2,'the first commit must actually reach guest and host confirmations');
+ assert.equal(f.effects.filter(x=>x.kind==='team-notification').length,1,'the first commit must reach the original staff notifier');
+ assert.equal(f.tailErrors.length,0);
+ const emails=f.effects.filter(x=>x.kind==='external-email').map(x=>x.args);
+ assert.equal(emails[0].to,'client@example.test','confirmation uses the saved recipient, never the typed guest');
+ assert(emails.slice(1).every(x=>x.to==='host@example.test'));
+ for(const mail of emails){
+  assert.equal(mail.attachments[0].filename,'invite.ics');
+  assert(Buffer.from(mail.attachments[0].content,'base64').toString('utf8').includes(`UID:${first.data.booking.id}@paigeagent.ai`));
+ }
+ const notice=f.effects.find(x=>x.kind==='team-notification').body;
+ assert.deepEqual(notice,{event:'booking_created',booking_id:first.data.booking.id,host_user_ids:type==='collective'?[f.host,f.secondHost]:[f.host]});
+ f.cal.enabled=false;
  const original=f.rows[0],effects=f.effects.length,second=await f.run();assert.equal(second.status,200);assert.equal(second.data.replayed,true);
  assert.equal(second.data.booking.id,original.id);assert.equal(f.commits.length,1);assert.equal(f.effects.length,effects);
+ assert.equal(f.tailErrors.length,0);
 });
 test('lost native response returns unverified and later read-only recovery finds the same real work',async()=>{
  const f=fixture();f.loseResponse();const lost=await f.run();assert.equal(lost.status,202);assert.equal(lost.data.state,'unverified');

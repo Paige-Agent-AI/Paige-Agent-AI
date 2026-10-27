@@ -26,16 +26,16 @@ SOLO_1024X768_PAIGE_CLOSED: UNVERIFIED: Final composed UI proof remains owed.
 SOLO_1024X768_PAIGE_OPEN: UNVERIFIED: Final composed UI proof remains owed.
 SOLO_900X1000_PAIGE_CLOSED: UNVERIFIED: Final composed UI proof remains owed.
 SOLO_900X1000_PAIGE_OPEN: UNVERIFIED: Final composed UI proof remains owed.
-UNVERIFIED: New plan211 full-schema replay, final composed-shell rendered matrix, authenticated owner/customer journey, physical iPhone, provider acknowledgment/delivery, deployment and complete founder acceptance.
+UNVERIFIED: Final exact-head complete database/CI and Preview, final composed-shell rendered matrix, authenticated owner/customer journey, physical iPhone, provider acknowledgment/delivery, deployment and complete founder acceptance. The plan212 Sessions step passed at supporting head d8d5717a3a6962bbe42b84eff650596058cb0a14; it does not establish those separate claims.
 
 INTERNAL_BUILD_IDENTITY: implementation=4ea5a7ebe390640d3089b4ceb05ad5daaa2c68cb; deployment=NOT_DEPLOYED; environment=development; migrations=PROOF_OWED(candidate20271119110009 and20271119110019 have not reached production); edge=PROOF_OWED(original public-booking candidate is not deployed); evidence=docs/evidence/ui-delivery/e09-private-customer-booking.md
-RELEASE_CHANNEL: development: draft PR3001; no production promotion or new customer booking control.
+RELEASE_CHANNEL: development: open PR3001 under review; no production promotion or new customer booking control.
 RELEASE_CLASSIFICATION: internal-only: original booking composition under active development and full-schema repair, not a finished private booking flow.
 CUSTOMER_RELEASE_IDENTITY: none: no customer name, version, announcement or publication.
 RELEASE_NOTE_REQUIRED: NO: draft engineering preparation; any eventual customer release must satisfy the canonical announcement gate.
 RELEASE_TRUTH_BOUNDARY: PROOF OWED: The original fixture collision is corrected and preceding native replay passes; new retirement/privacy tests, final UI review, exact-head CI/Preview and real owner/customer readback remain required. No private booking availability, deployment or authenticated outcome is claimed LIVE.
 RELEASE_RECOVERY: position=compatible original domain forward correction preserving original appointments and uncertain request identity; reference=docs/delivery/e09-private-customer-booking.md
 
-The owner authorizes ordinary safe engineering and final integrated evaluation. This development record does not waive design, independent review, exact-head CI, Preview, authorization or activation gates. The PR remains draft while the coherent consumer and required evidence are completed. Backend tests use synthetic identities and simulated provider IO; no real customer record, communication, payment, microphone or provider was activated.
+The owner authorizes ordinary safe engineering and final integrated evaluation. This development record does not waive design, independent review, exact-head CI, Preview, authorization or activation gates. The PR was marked ready for normal review and managed Preview preparation; it remains on release hold while required evidence is completed. Backend tests use synthetic identities and simulated provider IO; no real customer record, communication, payment, microphone or provider was activated.
 
 Impeccable finish review is an inline sequential author pass, LOWER ASSURANCE. The captured narrow confirmation preserves the existing visual language, visible saved recipient, one primary confirmation and reachable business Message exit. Desktop options preserve the existing Sheet. Disposition: recapture for the final source and composed-shell viewport set; existing captures cannot establish that untested set. The browser connection timed out during final recapture; no alternate browser-control engine or security-setting workaround was introduced.

@@ -856,6 +856,15 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**2026-10-27 UTC — EXP02 original private Systems host source; not customer admission.**
+
+| Increment | Exact released source and observed production | Acceptance boundary |
+| --- | --- | --- |
+| [#2952 original-host private purpose](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2952#issuecomment-6430581019) | Reviewed `d4a01866e568fa271cea7c2068dd904f4ffe0357`, AUTHOR-REVIEW / LOWER ASSURANCE5660549839; all11 exact checks/normal Preview/two webSUCCESS/zero threads. Preceding#2947 actually released first. Actual main `7ff9a6d884ec8ce6ec528cbb339e5bb74ced6874` / tree `eec1d6e58e986f8d3fdb8e884fb1f93ff5ad074f`, parentsd3e68daf1+d4a01866; whole incoming E09 closeout/all16,570 outside entries/original19 rows/four219-tested runtime-test blobs exact. Normal Edge40425564824/job121930322103 SUCCESS; API certificate12698824080 ZIP SHA25613df2bcbf905229c1d482f423e680e243350629b7fe4fe4952dfe4e97b238d64 verifies original onboarding155/all42 source files/complete closure/configuration, no emitted fallback. Separate current full42-entry API comparison exact with stable before/after identity/configuration155. Productiondpl_HVsGB6F3foQcJou2L7K4hi5aTsqw READY; both public200/exact7ff9a6d884ec8ce6ec528cbb339e5bb74ced6874-mvpxu08y/customerUpdate:null. | Original host private manual Work purpose source DEPLOYED; original native authorization/claim/heartbeat/Core/finalizer/Rail and ordinary onboarding preserved.202 is dispatch acknowledgement, never scan completion. Other flavors/Core/config/native/schema/grants unchanged; no scan/customer function invoked or public Spine/worker/provider/Chat activation. Manual systems.check remains UNAVAILABLE/unregistered; request/admission/run/findings/Rail/reload/role/cohort and full19/nine acceptance remain owed.219 synthetic source checks and unchanged3 compiler diagnostics are not customer proof. VisualN/A, ExperientialINCOMPLETE, FounderNOT_ACCEPTED; ALG/CAP/historical9-0+12-0-4/monthlyUNKNOWNUNRETRIED unchanged. Internal source increment, no customer release name/announcement. |
+
+This mechanical post-merge identity closeout records the preceding delivery;
+it adds no product, policy, capability readiness or acceptance change and is not logged recursively.
+
 **2026-10-26 UTC — EXP09 Portal settings fit beside PAIGE.**
 
 | Increment | Exact released source and observed production | Acceptance boundary |

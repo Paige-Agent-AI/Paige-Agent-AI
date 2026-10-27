@@ -119,5 +119,48 @@ export const supabase = {
       row.status = String(args.p_status);
       return answer(row);
     }
+    if (fn === "content_publication_list") {
+      // EXP07 row 10 — the receipts a piece already carries: one published (with its link) and
+      // one outcome_unknown (the state that blocks a retry). Only rows for the asked piece.
+      const asked = args.p_content_id as string | null;
+      const receipts = [
+        { id: "pub-1", platform: "instagram", status: "published", provider_post_url: "https://example.com/post/1", created_at: day(3) },
+        { id: "pub-2", platform: "x", status: "outcome_unknown", provider_post_url: null, created_at: day(1) },
+      ].filter((row) => !asked || (asked === "mc-4" && row.id === "pub-1") || (asked === "mc-2" && row.id === "pub-2"));
+      return answer(receipts);
+    }
     return answer(identity);
-  } };
+  },
+  // EXP07 row 10 — the governed publish door as the harness answers it. `?door=` picks the
+  // scenario; the FIRST publish call (no approved_fingerprint) always returns the door's own
+  // 202 preview, and the approval call answers the scenario's truth. Non-2xx refusals ride the
+  // same shape the real client produces: { data: null, error: { message, context: Response } }.
+  functions: (() => {
+    const scenario = new URLSearchParams(window.location.search).get("door") ?? "published";
+    const invoke = async (_name: string, { body }: { body: Record<string, unknown> }) => {
+      const ok = (data: Record<string, unknown>) => ({ data, error: null });
+      const refused = (status: number, data: Record<string, unknown>) => ({
+        data: null,
+        error: { message: "Edge Function returned a non-2xx status code", context: new Response(JSON.stringify(data), { status, headers: { "Content-Type": "application/json" } }) },
+      });
+      if (body.action === "decline") return ok({ ok: true, state: "declined" });
+      // The door's PRE-approval refusals (the channel's own state, account setup, the retry
+      // gate) happen on the FIRST call, exactly as the real door refuses before any approval.
+      if (!body.approved_fingerprint) {
+        if (scenario === "needs_reauth") return refused(409, { ok: false, code: "NEEDS_REAUTH", error: "That channel's connection needs you to sign in again before anything can post. Reconnect it in Settings → Integrations." });
+        if (scenario === "no_connection") return refused(409, { ok: false, code: "NO_CONNECTION", error: "That channel isn't connected yet. Connect it in Settings → Integrations first." });
+        if (scenario === "not_configured") return refused(503, { ok: false, code: "PUBLISHING_NOT_CONFIGURED", error: "Publishing isn't configured on this account yet. Nothing was published." });
+        if (scenario === "retry_blocked") return refused(409, { ok: false, code: "RETRY_PENDING_RECONCILIATION", error: "A previous attempt to publish this piece to that channel never reported an outcome. Check the channel before publishing again — a duplicate post is worse than a delay." });
+        return ok({
+          ok: false, state: "approval_required",
+          approval: { fingerprint: "a1b2c3d4e5f60718", summary: `Publish “${body.caption ?? "the piece"}” to instagram (Northfield Coaching (main)). Nothing else is included, and nothing is scheduled.`, expires_at: new Date(Date.now() + 600_000).toISOString() },
+          preview: { piece_id: body.content_id, piece_title: "Three questions to ask before hiring help", platform: "instagram", channel_label: "Northfield Coaching (main)", caption: body.caption ?? "" },
+        });
+      }
+      if (scenario === "outcome_unknown") return ok({ ok: false, state: "outcome_unknown", publication_id: "pub-4", request_id: "req-9", error: "The channel accepted the post but hasn't confirmed it. It may have posted — check the channel before trying again; this door will refuse a retry until it's reconciled." });
+      if (scenario === "failed") return refused(502, { ok: false, state: "failed", code: "PROVIDER_REJECTED", error: "The channel refused the post. Nothing was published.", publication_id: "pub-5" });
+      if (scenario === "refused") return refused(409, { ok: false, state: "refused", code: "connection_no_longer_connected", error: "That channel's connection changed before the post could go out. Reconnect it, then approve again. Nothing was published." });
+      return ok({ ok: true, state: "published", platform: "instagram", post_url: "https://example.com/post/3", post_id: "p3", publication_id: "pub-3" });
+    };
+    return { invoke };
+  })() };

@@ -46,20 +46,20 @@ describe('durable continuation eligibility adapter', () => {
     const result = await readDurableContinuation(ref, caller(), budgetDb(50, 1));
     expect(result).toEqual({ eligibleForContext: true, state: 'succeeded', reason: 'canonical_terminal', workId: ref.workId });
   });
-  it('a hard budget block denies with the budget reason', async () => {
+  it('previous usage cannot hide a verified original terminal result', async () => {
     clearCeilingCacheForTests();
     const result = await readDurableContinuation(ref, caller(), budgetDb(1, 5));
-    expect(result?.eligibleForContext).toBe(false);
-    expect(result?.reason).toBe('budget_unavailable');
+    expect(result?.eligibleForContext).toBe(true);
+    expect(result?.reason).toBe('canonical_terminal');
   });
-  it('an unknown accrual is never budget-allowed', async () => {
+  it('unknown usage does not block context or claim zero cost', async () => {
     clearCeilingCacheForTests();
     const result = await readDurableContinuation(ref, caller(), budgetDb(50, null));
-    expect(result?.reason).toBe('budget_unavailable');
+    expect(result?.reason).toBe('canonical_terminal');
   });
-  it('no budget source denies with the budget reason', async () => {
+  it('a missing usage source does not hide an original verified result', async () => {
     const result = await readDurableContinuation(ref, caller(), null);
-    expect(result?.reason).toBe('budget_unavailable');
+    expect(result?.reason).toBe('canonical_terminal');
   });
   it('a capability outside the Spine registry denies', async () => {
     clearCeilingCacheForTests();

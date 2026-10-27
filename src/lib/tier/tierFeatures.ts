@@ -158,6 +158,19 @@ export type Feature =
   // operator, not a tenants row, so the server list has no God entry; God carries the flag here for
   // §35 dogfooding of the surface.
   | "lead_reply"
+  // Team Hub agents (EXP08, contract docs/delivery/exp08-team-hub-agents-contract.md §3) — PAIGE and her
+  // six agents as Team Hub participants: @mention them, DM them, and read their replies, in the one
+  // Harness under the asker's own authority. §61 EXCEPTION: Solo + Sub-account only (§60 Solo ≡
+  // Sub-account). God, Agency and Enterprise are excluded, with no resell, because Team Hub itself has
+  // been canonical-SOLO-only since increment 1 and the agents live inside Team Hub; Enterprise is
+  // therefore taken OUT of its Solo union below rather than inheriting it. Effective only where Team
+  // Hub exists, which today is canonical SOLO, so a sub-account sees nothing until Team Hub opens there.
+  //
+  // WHERE THIS IS ENFORCED (§60's honesty clause). NOT here. The database answers: every team_hub_*
+  // door re-runs _team_hub_refusal (canonical SOLO, an active seat, Team conversations on), and the
+  // agent doors (migration 20271117010008) add the accepted-turn token. This declaration only decides
+  // what renders; nothing uses it until A1b. It grants nothing.
+  | "team_hub_agents"
   // Parent-tier only.
   | "subaccount_management"
   // Operator only.
@@ -277,6 +290,7 @@ const SOLO_FEATURES: ReadonlySet<Feature> = new Set<Feature>([
   "trust_compass", // Solo governs its own per-capability autonomy (Command Center 3rd sub-tab)
   "live_conversation", // Solo can speak with Paige in real time on its own workspace (server-enforced)
   "lead_reply", // §61 default — PAIGE drafts a reply to each new lead on an opted-in form
+  "team_hub_agents", // §61 exception — Solo + Sub-account; Team Hub agents (server-enforced in the definers)
 ]);
 
 const SUB_ACCOUNT_FEATURES: ReadonlySet<Feature> = new Set<Feature>([
@@ -288,6 +302,7 @@ const SUB_ACCOUNT_FEATURES: ReadonlySet<Feature> = new Set<Feature>([
   "client_standing", // declared, NOT mounted: no rich sub-account client record yet (§60 parity gap)
   "skills", // §61 self-use — a sub-account runs the skills engine on its own book
   "lead_reply", // §61 default — same lead book as Solo
+  "team_hub_agents", // §60 Solo ≡ Sub-account; effective only once Team Hub opens on a sub-account
   // NO "trust_compass" — sub-account release DEFERRED pending explicit owner release
   // (owner ruling 2026-09-06). The Command Center shell is universal, but this sub-tab
   // is gated OFF sub-accounts for now.
@@ -314,8 +329,11 @@ const AGENCY_FEATURES: ReadonlySet<Feature> = new Set<Feature>([
 // customer_portal_invite, an internal inconsistency (creation-capable yet unable to
 // invite the very clients those campaigns are for). Per-tenant Enterprise
 // customization layers ON TOP per the §60 Enterprise carve-out.
+// The Solo features Enterprise does NOT inherit: §61 exceptions ruled Solo + Sub-account only.
+const NOT_ENTERPRISE: ReadonlySet<Feature> = new Set<Feature>(["team_hub_agents"]);
+
 const ENTERPRISE_FEATURES: ReadonlySet<Feature> = new Set<Feature>([
-  ...SOLO_FEATURES, // the full doing surface: CRM + creation + customer_portal_invite
+  ...[...SOLO_FEATURES].filter((feature) => !NOT_ENTERPRISE.has(feature)), // the full doing surface: CRM + creation + customer_portal_invite
   ...AGENCY_FEATURES, // + the managing surface: subaccount_management
   ...CREATION_SURFACES, // explicit (already in SOLO) — enterprise is never non-creation
 ]);

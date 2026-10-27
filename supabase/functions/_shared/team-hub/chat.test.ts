@@ -409,3 +409,42 @@ describe("the memory fence reads only server-recorded rows, and fails closed", (
     assert.equal(await tainted(service(() => ({ data: [], error: null })), null), true);
   });
 });
+
+// EXP08 Team Hub agents (A1a): the readers ship tolerant of an agent DM and an agent-written message
+// BEFORE the migration can create either (contract §5 A1, ship-order hazard).
+describe("an agent DM and an agent's message are named for what they are", () => {
+  const AGENT_DM = "dddddddd-dddd-4ddd-8ddd-dddddddddddd";
+  const FUTURE = "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee";
+  const withAgents = { ...roster, conversations: [...roster.conversations,
+    { id: AGENT_DM, kind: "agent_dm", name: null, visibility: "private", joined: true, agent_key: "cura", dm_user_id: null, unread: 2, member_count: 1, last_message_at: "2026-10-24T12:00:00.000Z" },
+    { id: FUTURE, kind: "huddle", name: "standup", visibility: "team", joined: true, unread: 0 }] };
+  it("lists an agent DM as a DM with that agent, never as #channel, and leaves out a kind it does not know", async () => {
+    const { caller } = fakeCaller({ team_hub_list_conversations: withAgents });
+    const r = await TEAM_HUB_READERS.team_hub_conversations(scope, caller, {});
+    const p = r.envelope.projection ?? "";
+    assert.match(p, /DM with CURA[^\n]*direct message with an agent; unread 2/);
+    assert.doesNotMatch(p, /#channel|#standup|huddle/);
+    assert.doesNotMatch(p, new RegExp(FUTURE));
+  });
+  it("resolves \"my DM with CURA\" by the agent's name", async () => {
+    const { caller, calls } = fakeCaller({ team_hub_list_conversations: withAgents, team_hub_list_messages: { ...messages, channel: { id: AGENT_DM, kind: "agent_dm", name: null, visibility: "private", joined: true }, messages: [] } });
+    await TEAM_HUB_READERS.team_hub_read_conversation(scope, caller, { conversation: "DM with cura" });
+    assert.equal(calls.find((c) => c.name === "team_hub_list_messages")?.args.p_channel_id, AGENT_DM);
+  });
+  it("puts an agent's message in the agent's name, never in the name of the person who asked it", async () => {
+    const reply = { id: "ffffffff-ffff-4fff-8fff-ffffffffffff", author_user_id: SAM, author_kind: "agent", agent_key: "cura", body: "Two people start Monday.",
+      created_at: "2026-10-24T09:30:00.000Z", reply_count: 0, files: [], asked_in_message_id: MSG };
+    const { caller } = fakeCaller({ team_hub_list_conversations: roster, team_hub_list_messages: { ...messages, messages: [reply] } });
+    const r = await TEAM_HUB_READERS.team_hub_read_conversation(scope, caller, { conversation_id: LAUNCH });
+    const p = r.envelope.projection ?? "";
+    assert.match(p, /"CURA \(agent, asked by Sam Ortiz\)": "Two people start Monday\."/);
+    assert.doesNotMatch(p, /\] "Sam Ortiz": "Two people/);
+  });
+  it("a search hit in an agent DM reads as a DM with that agent", async () => {
+    const { caller } = fakeCaller({ team_hub_search: { ok: true, results: [{ message_id: MSG, conversation_id: AGENT_DM, conversation_kind: "agent_dm",
+      conversation_label: "CURA", author_name: "CURA", created_at: "2026-10-24T09:30:00.000Z", snippet: "start Monday" }] } });
+    const r = await TEAM_HUB_READERS.team_hub_search(scope, caller, { query: "Monday" });
+    assert.match(r.envelope.projection ?? "", /"CURA" in "DM with CURA": "start Monday"/);
+    assert.doesNotMatch(r.envelope.projection ?? "", /#CURA/);
+  });
+});

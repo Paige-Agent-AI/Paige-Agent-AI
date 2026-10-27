@@ -65,9 +65,9 @@
     {
       "function": "public.team_hub_list_conversations(uuid)",
       "purpose": "display",
-      "reason": "Returns each active teammate's title in the Team Hub roster so namesakes can be told apart in the @ picker; who may see the roster is the caller's active seat in a canonical SOLO workspace, and permission is derived from role and is_owner, never the title.",
-      "defined_in": "20271115040008_exp08_team_lifecycle.sql",
-      "fingerprint": "71e0780a24da227f"
+      "reason": "Returns each active teammate's title in the Team Hub roster so namesakes can be told apart in the @ picker; who may see the roster is the caller's active seat in a canonical SOLO workspace, and permission is derived from role and is_owner, never the title. Re-read for EXP08 Team Hub agents A1a: the re-emit adds agent_key, agent_name_clash (from the display name, not the title) and counts an agent's row as unread; the title is still only echoed for display.",
+      "defined_in": "20271117010008_exp08_team_hub_agents.sql",
+      "fingerprint": "5c332dbe6c0ebed7"
     }
   ],
   "non_identity_columns": {

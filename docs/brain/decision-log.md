@@ -1,5 +1,12 @@
 # Decision Log — chronological one-liners
 
+## October27 — EXP03 O12 piece 2: governed email attachments (the bytes approved are the bytes sent)
+
+- **#2997 (piece 1) merged and LIVE** (`f1439806`; migrations 40569803370, edge 40569803136; bodies and grants read back).
+- **Piece 2 built (migration `20271120000000`):** the door takes `attachments:[{path}]` (the composer's upload paths, under the server-derived tenant), reads and hashes each file after readiness (≤10 per email, ≤10 MiB each and in total, mime allowlist checked against content), binds a manifest into the approval (fingerprint and an exact `attachments_digest` for redemption), copies the approved bytes to `comms-attachments/<tenant>/governed/<operation>/…` (member writes there blocked by restrictive storage policies), and send-message re-hashes the copies before the claim and sends them through the SendGrid arm only. Providers `sendgrid` and `resend` (production's 9 email connectors all carry the legacy `resend` label and send through SendGrid) may carry files; Gmail/SMTP refuse them. The approval card lists the files by name and size.
+- **Two independent reviews.** Round 1: the card did not show the files; dedupe could hand back another operation's result; manifest-in-URL redemption with superset matching; timing at 15 MiB. All fixed (file row on the card, honest `COMMS_EMAIL_IDENTICAL_IN_FLIGHT`, exact digest redemption, 10 MiB total, parallel reads, 40 s wait only with files) plus stricter type checks, retention from the run's start minute, recovery from the governed copies.
+- **Still not reachable from the product:** the composer sends files through the door in piece 3.
+
 ## October27 — EXP03 O12 piece 1: scheduled governed email (approve now, send later, cancel)
 
 - **Built (migration `20271119000000`):** the door accepts a send time bound into the approval; the scheduler releases the bound row through the same one-send claim; any active owner/admin cancels from the thread; the thread shows Scheduled, then Not sent with a plain reason if it never went out. Defaults recorded while the owner had not answered: any owner/admin may cancel; lead replies, agreement sends and chat stay immediate.

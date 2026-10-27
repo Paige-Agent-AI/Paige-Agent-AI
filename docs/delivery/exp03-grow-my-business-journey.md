@@ -980,8 +980,14 @@ Both closed as superseded with links; their branches are kept.
   creates a scheduled email until piece 3 (the composer), so it is groundwork, not an owner capability yet.
   Found while mapping: Conversations email attachments have never been sent; piece 2 builds them.
 
-**Open, in order:** O12 piece 2 (real email attachments, bound into the approval) and piece 3 (the composer's
-inline check on the door, with Schedule and Attach), then the New conversation dialog and draft approval on the door;
+- **#2997 merged (`f1439806`) and LIVE** — piece 1 read back on production (migration, bodies, grants, scheduler).
+- **O12 piece 2 (this PR, migration `20271120000000`): governed email attachments.** The bytes approved are the bytes
+  sent: read and hashed at the card, copied on approval to a member-unwritable path, re-hashed before the claim, sent
+  through SendGrid only; the approval card lists the files. Two independent reviews, all findings fixed. Not reachable
+  from the product until piece 3.
+
+**Open, in order:** O12 piece 3 (the composer's inline check on the door, with Schedule and Attach), then the New
+conversation dialog and draft approval on the door;
 inbound follow-ups (unauthenticated-sender badge — UI, needs design);
 custom-domain rebuild; owner-seen designs for the reply screen, S4b activation and company/personal mailbox
 access (owner direction 2026-10-27: the account holder grants each team member none / read / read and reply

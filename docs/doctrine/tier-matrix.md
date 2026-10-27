@@ -5482,3 +5482,16 @@ onto the door in the next piece, so every row below is reachable by data only to
 
 Lead replies (`approval_id`), agreement signing requests and Paige chat sends stay immediate. SQL proof:
 `supabase/tests/comms_email_scheduled_send.sql` (CI: paige-spine-contract).
+
+### Conversations — governed email attachments (EXP03 O12 piece 2, 2026-10-27)
+
+Files attached to a governed email are read and hashed when the approval card is raised, copied on approval into a
+member-unwritable path, re-checked before sending, and sent only through PAIGE Email (SendGrid). Migration
+`20271120000000`. No product surface sends files yet (the composer moves onto the door in piece 3).
+
+| Capability | God (operator desk) | Agency-as-tenant | Standalone Solo | Sub-account | Client | Anonymous | Deploy state |
+|---|---|---|---|---|---|---|---|
+| Attach files to a governed email (door `attachments`) | Only inside a workspace it administers | ✓ owner/admin | ✓ owner/admin | ✓ owner/admin | — | — | PROOF OWED (no producer yet) |
+| See the files on the approval card | Only inside a workspace it administers | ✓ | ✓ | ✓ | — | — | PROOF OWED |
+| Write under `comms-attachments/<tenant>/governed/` | Service role only | Refused | Refused | Refused | Refused | Refused | PROOF OWED |
+| Read governed copies | Platform-owner read | ✓ members of that workspace | ✓ members | ✓ members | — | — | PROOF OWED |

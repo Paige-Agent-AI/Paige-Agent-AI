@@ -5527,6 +5527,11 @@ onto the door in the next piece, so every row below is reachable by data only to
 | Cancel a scheduled email from the thread | Only inside a workspace it administers | ✓ any owner/admin | ✓ any owner/admin | ✓ any owner/admin | — | — | PROOF OWED |
 | "Scheduled" / "Not sent" with reason in the thread | — | ✓ | ✓ | ✓ | — | — | PROOF OWED |
 
+**Do-not-disturb (2026-10-27, door change):** a send with a time is no longer refused because the
+business's own do-not-disturb is on *now*; that one hold is judged when the email is released, and a hold
+still in force then refuses and closes it with its reason. Every other hold (suppression, consent, client
+do-not-disturb) still refuses at the card. Same tiers as the rows above.
+
 Lead replies (`approval_id`), agreement signing requests and Paige chat sends stay immediate. SQL proof:
 `supabase/tests/comms_email_scheduled_send.sql` (CI: paige-spine-contract).
 
@@ -5538,7 +5543,7 @@ member-unwritable path, re-checked before sending, and sent only through PAIGE E
 
 | Capability | God (operator desk) | Agency-as-tenant | Standalone Solo | Sub-account | Client | Anonymous | Deploy state |
 |---|---|---|---|---|---|---|---|
-| Attach files to a governed email (door `attachments`) | Only inside a workspace it administers | ✓ owner/admin | ✓ owner/admin | ✓ owner/admin | — | — | PROOF OWED (no producer yet) |
+| Attach files to a governed email (door `attachments`) | Only inside a workspace it administers | ✓ owner/admin | ✓ owner/admin | ✓ owner/admin | — | — | LIVE backend (`5a4bfb1f`); no producer until piece 3 |
 | See the files on the approval card | Only inside a workspace it administers | ✓ | ✓ | ✓ | — | — | PROOF OWED |
 | Write under `comms-attachments/<tenant>/governed/` | Service role only | Refused | Refused | Refused | Refused | Refused | PROOF OWED |
 | Read governed copies | Platform-owner read | ✓ members of that workspace | ✓ members | ✓ members | — | — | PROOF OWED |

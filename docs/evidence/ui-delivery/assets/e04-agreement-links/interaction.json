@@ -1,0 +1,39 @@
+{
+  "runtime": "c5059ad9a936109ccae6b6bda7a886268286256f",
+  "scope": "actual ClientStanding/PaigeRecordLinks/CheckLinks/useSalesDraftExit with controlled neutral data/authority; no destination workspace, shell or backend mounted",
+  "authenticated": false,
+  "viewport": {
+    "requested": {
+      "width": 1366,
+      "height": 768
+    },
+    "observed": {
+      "width": 735,
+      "height": 743,
+      "scrollWidth": 720,
+      "scrollHeight": 1285
+    },
+    "disposition": "Requested browser override did not match observed dimensions. No laptop/tablet/phone or full-shell claim; temporary override reset."
+  },
+  "results": [
+    "exact original document href in Clients and original Chat reference renderer",
+    "dirty route blocked before transition",
+    "Continue editing retained wording and original link focus",
+    "Enter/Tab/Shift+Tab/Escape preserved original dialog focus and return",
+    "busy save refused navigation without false cancellation",
+    "unconfirmed save retained original recovery explanation",
+    "explicit Leave and check later alone followed original target"
+  ],
+  "remaining": [
+    "full shell and viewport matrix",
+    "actual browser zoom and roles/cohorts",
+    "candidate backend/persistence/target/customer/provider proof",
+    "founder acceptance"
+  ],
+  "capture": {
+    "path": "controlled-guard.jpg",
+    "sha256": "eb78a411f07343272331c507093543d35cb458d414929f85387ba985a1db3236",
+    "width": 720,
+    "height": 1284
+  }
+}

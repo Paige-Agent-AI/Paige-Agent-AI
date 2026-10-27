@@ -226,10 +226,10 @@ export function storedToolNames(list: unknown): string[] | null {
  * list is the agent's registered scope (capability_scope) and the control tool is never offered (there
  * is no room to keep anything from). Fail closed: no list, no tools.
  */
-export function effectiveAgentTools(stored: string[] | null, where: "shared" | "agent_dm"): string[] {
+export function effectiveAgentTools(stored: string[] | null, where: "shared" | "agent_dm", runnable: ReadonlySet<string> = EXECUTABLE_AGENT_TOOLS): string[] {
   if (!stored) return [];
   const writes = mutatingTools();
-  return [...new Set(stored)].filter((t) => EXECUTABLE_AGENT_TOOLS.has(t) && !writes.has(t)
+  return [...new Set(stored)].filter((t) => runnable.has(t) && !writes.has(t)
     && (where === "shared" || t !== ANSWER_PRIVATELY_TOOL));
 }
 

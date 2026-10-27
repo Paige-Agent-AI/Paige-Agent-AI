@@ -9,7 +9,7 @@ import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import {
-  ANSWER_PRIVATELY_TOOL, PINNED_READ_TOOL, effectiveAgentTools, isTeamHubAgentTurnRequest, parseAgentTurnRequest,
+  ANSWER_PRIVATELY_TOOL, EXECUTABLE_AGENT_TOOLS, PINNED_READ_TOOL, effectiveAgentTools, isTeamHubAgentTurnRequest, parseAgentTurnRequest,
   runTeamHubAgentTurn, storedToolNames, uuidFrom, type AgentTurnDeps, type CompleteFn,
 } from "./agent-turn.ts";
 
@@ -276,6 +276,12 @@ describe("the tool scope is read-only and fails closed", () => {
     const w = world(), m = model([{ content: "ok" }]);
     await run(w, m);
     assert.deepEqual(m.requests[0].request.tools!.map((t) => t.function.name).sort(), [PINNED_READ_TOOL, "read_business_time_zone", ANSWER_PRIVATELY_TOOL].sort());
+  });
+  it("what this module can run is exactly three tools: no write and no private read (reinstating one fails here)", () => {
+    assert.deepEqual([...EXECUTABLE_AGENT_TOOLS].sort(), [PINNED_READ_TOOL, "read_business_time_zone", ANSWER_PRIVATELY_TOOL].sort());
+  });
+  it("a write is filtered out even where a runnable set would admit it", () => {
+    assert.deepEqual(effectiveAgentTools(["team_hub_post_reply", PINNED_READ_TOOL], "shared", new Set(["team_hub_post_reply", PINNED_READ_TOOL])), [PINNED_READ_TOOL]);
   });
   it("a write tool smuggled into the stored list is still never offered", () => {
     assert.deepEqual(effectiveAgentTools(["team_hub_post_reply", "crm_create_contact", PINNED_READ_TOOL], "shared"), [PINNED_READ_TOOL]);

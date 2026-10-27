@@ -65,7 +65,7 @@ type Setup = {
   tenantSequence?: string[]; approvalStoreFails?: boolean;
   // Who is signed in (mutable between requests), the profile's active workspace (null = none set),
   // a replay read that errors, and a finalize that the database refuses.
-  actor?: string; activeTenant?: string | null; readResultFails?: boolean; finalizeFails?: boolean;
+  actor?: string; activeTenant?: string | null; readResultFails?: boolean; readResultFailsFor?: string; finalizeFails?: boolean;
   providerExecution?: unknown; providerBoundaryError?: boolean;
   cancelFails?: boolean;
   // The private bucket the composer uploads into: object path -> bytes + stored type. `storageFails`
@@ -156,6 +156,7 @@ function setup(options: Setup = {}) {
       }
       if (name === "read_comms_email_send_result") {
         if (options.readResultFails) return { data: null, error: { code: "PGRST000", message: "readback down" } };
+        if (options.readResultFailsFor && String(args._operation_id).toLowerCase() === options.readResultFailsFor) return { data: null, error: { code: "PGRST000", message: "readback down" } };
         const b = bindings.get(String(args._operation_id).toLowerCase());
         // The SQL read is tied to the actor: another actor's operation raises, never reads.
         if (b && b.actor_user_id !== args._actor_user_id) return { data: null, error: { code: "22023", message: "COMMS_EMAIL_REPLAY_MISMATCH" } };
@@ -1046,6 +1047,15 @@ describe("comms-email-command: files — review round 2", () => {
     expect(r).toMatchObject({ status: 503, body: { outcome: "outcome_unknown", code: "COMMS_EMAIL_IDENTICAL_IN_FLIGHT", reconciled_operation_id: OTHER } });
     expect(r.body).not.toHaveProperty("replayed");
     expect(t.sends).toEqual([]);
+  });
+  it("M1: when the identical-text send cannot be read, its result is never handed back — refused, nothing sent", async () => {
+    const t = setup({ readResultFailsFor: OTHER });
+    await pendingTwin(t, true);
+    const r = await t.request();
+    expect(r).toMatchObject({ status: 503, body: { ok: false, outcome: "refused", code: "COMMS_EMAIL_RECONCILIATION_UNVERIFIED" } });
+    expect(r.body).not.toHaveProperty("reconciled_operation_id");
+    expect(t.sends).toEqual([]);
+    expect(t.bindings.get(OTHER)?.state).toBe("dispatching");
   });
   it("M1 control: two identical emails without files still settle as one (unchanged)", async () => {
     const t = setup();

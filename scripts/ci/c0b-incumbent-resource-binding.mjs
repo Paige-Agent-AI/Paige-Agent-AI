@@ -1069,7 +1069,7 @@ const SOURCES = {
   // generic scheduled_binding block and terminalizeScheduledRelease's direct row writes are skipped for a bound
   // row (it is closed through the finalizer). (4) Nothing else: no authority, verifier, recipient, tenant gate,
   // provider arm or dispatch branch changed. Old e1c22250… reproduced from main 9e325d91 first.
-  // EXP03 O12 piece 2 renewal (2026-10-27), governed email attachments, reviewed by the independent §39 adversarial review of c6276d507 (no TOCTOU, no cross-tenant read; its findings H1/M1/M3/M4/LOW fixed in the follow-up commit, whose delta in this file is listed):
+  // EXP03 O12 piece 2 renewal (2026-10-27), governed email attachments, reviewed by two independent §39 adversarial reviews (c6276d507, then the follow-up 090d85257; no TOCTOU, no cross-tenant read; round-1 M1/M3/M4 and the LOWs fixed; H1 fixed on the card, though no product surface produces a file send yet; round 2 found no new HIGH) — the follow-up's delta in this file is listed:
   // send-message/index.ts changes in four places. (1) parseCommsEmailBinding parses an optional
   // binding.attachments with the shared strict manifest parser (governed copies of THIS tenant and operation
   // only); anything else marks it "invalid". (2) Before the claim, a binding with files is refused through the

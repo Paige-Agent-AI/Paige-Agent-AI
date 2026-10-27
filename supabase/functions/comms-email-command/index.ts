@@ -300,6 +300,9 @@ Deno.serve(async req => {
     // The text matches, but files make it a different email: when this request names files, or the
     // unsettled one carried them, that send's result is NOT this one's (its files, or this request's,
     // never went with it). Nothing is sent; the owner is told a matching email is still settling.
+    // Unreadable (a read error, or no answer): whether that send carried files cannot be told, so its result is
+    // never handed back as this one's. Nothing is sent; asking again re-checks it.
+    if (!attachmentPaths && pendingResult === null) return response(503, { ok: false, outcome: "refused", code: "COMMS_EMAIL_RECONCILIATION_UNVERIFIED" });
     let pendingCarriesFiles = false;
     if (!attachmentPaths) {
       try {

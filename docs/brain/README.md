@@ -1,3 +1,28 @@
+## EXP02 private Systems consumer source released, not admitted — October26
+
+[#2944 actual source receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2944#issuecomment-6429387101):
+reviewed9ec3f387/LOWER5659772898 plus actual existing E05 NON-AUTHOR5659919149/
+receiving38072c6a/independent179PASS, all11 exact checks/Preview/two webSUCCESS.
+Same-bot COMMENT is not distinct-account approval. Actual mergec4b2b2d937796cda64fe6a2d5702d40d573081e1,
+whole incoming docs/all16,557 outside entries/original19 matrix and all three
+tested blobs exact. Normal Edge40415606311/job121897039328/API certificate12695856404
+verified159 source entries/configs. Later current versions153/154/158/159 were
+independently compared in full to the same merge:159 API sources,0mismatches,
+stable metadata/config; no inferred cause for revision advance. Web READY; both
+public origins200/exactc4b2-mvpupyff/customerUpdate:null. Initial local UTF8 loader
+setup was INVALID and corrected without changing source, comparison or gates.
+
+The original Core abort wait is deployed; the thin adapter remains unimported by
+HTTP hosts, with no manual Spine/worker/scan activation. Original-host adoption,
+bounded lifetime, genuine authorized run/result/Rail/reload and corrective work
+remain next integration/proof obligations. Native/schema/grants unchanged. The
+development entry below is dated history; no customer acceptance is inferred.
+Functional bounded source RELEASED, Visual N/A, Experiential INCOMPLETE, Founder
+NOT_ACCEPTED. All19/nine/ALG/CAP/historical9-0+12-0-4/monthlyUNKNOWNUNRETRIED and
+representative-weekUNMEASURED retained. Existing
+[Systems evidence](../evidence/e2-systems-capture-mode.md) and Master §4.0 hold the
+exact receipts; no new registry or ledger.
+
 ## EXP02 original Systems source releases verified — October26
 
 The development entries below are dated history. Original checkpoint port
@@ -4468,3 +4493,19 @@ Functional LOCAL/unadmitted; final review/exact CI/release proof owed. Visual N/
 Experiential manual workflow INCOMPLETE; Founder NOT_ACCEPTED. All19/nine,
 ALG03/06/11/12/13, catalogue readiness and historical9-0+12-0-4/monthlyUNKNOWN
 UNRETRIED remain unchanged. [Original Systems evidence](../evidence/e2-systems-capture-mode.md).
+
+## EXP02 original Systems private host purpose — development only, October26
+
+The existing onboarding host now has a private manual Work transport; its entire
+ordinary onboarding/provisioning contract remains intact. Existing internal gate,
+platform bounded lifetime, original Core and native claim/heartbeat/finalizer/Rail
+are reused, with no new function/config/grant/queue/worker or public activation.
+A202 acknowledges delivery only, never execution; actual original Work/result
+still decides.40 new host/entry controls plus179 original cases pass (219 total),
+scoped lint passes, full real-compiler diagnostics match the original3 existing
+errors with zero new. Source review/exact CI/normal release/readback and original
+customer admission/run/Rail/reload/recovery remain owed. Manual Spine/catalogue
+UNAVAILABLE; all19/nine/ALG maturity unchanged, VisualN/A, ExperientialINCOMPLETE,
+FounderNOT_ACCEPTED. Details and complete orchestration contract stay in the
+[existing Systems evidence](../evidence/e2-systems-capture-mode.md); prior dated
+source releases remain history. No customer/model/provider operation.

@@ -1022,7 +1022,13 @@ const SOURCES = {
   "supabase/functions/_shared/paige-capability-status/resolver.ts": "ec8a5dad7df3426f30203aa1c8014372a60f51ed0decc829fc8541fba62a4142",
   "supabase/functions/paige-deep-research/fabric.ts": "23fd093b20d6f721ff07619aa5a4e34892d5346fd6b4934e0ae73fffb0b609bb",
   "supabase/functions/_shared/reasoning/strategize.ts": "ace59eadcd60f18c8fa673002626a5fe869099acdc8dd704c71c9b7aa9b3b46a",
-  "supabase/functions/_shared/ssrfGuard.ts": "ab192431c1d51594a551184bc0e029a2a47a96a408f9f5935e0e13c8bbfe4db8",
+  // EXP10 PR14 (2026-10-26): the DNS-phase deadline race in safeFetch — a deadlineLoser promise
+  // rejecting on abort now races assertPublicHttpUrl, so a never-settling resolver can no longer
+  // hang the call past its own timeout. Nothing else in the file changed (guards, reasons,
+  // redirect refusal and size caps byte-identical; pinned by the new 8-test suite). Old pin
+  // ab192431c1d51594a551184bc0e029a2a47a96a408f9f5935e0e13c8bbfe4db8 reproduced from main with
+  // printer {removeComments:true}+sha256 before renewing. Renew this digest only.
+  "supabase/functions/_shared/ssrfGuard.ts": "656797b1b724d61b766a88787a803286bf56637050d8d8e715b3310628d51490",
   "supabase/functions/_shared/kb-ingest-core.ts": "7001d69379463479e816922b58e911effa3ce0bf0d6f4377ce5b71b21aad070a",
   "supabase/functions/_shared/knowledge-ingest-scope.ts": "d7d21c4f3f76bdab286c3ef89132584358d3b5f5d05c087d0c27c1117c75904c",
   "supabase/functions/_shared/twilio-webhook-auth.ts": "70015f70ca2250b4a991d7c15d54f27bc7fb17d937c386d48621af749f48bf05",

@@ -1,5 +1,28 @@
 # Experience 02 — Customer Experience Integration Matrix
 
+## October26 — private consumer source released, actual manual journey still open
+
+O07/O14/O16/O19 prerequisite #2944 is now mergedc4b2b2d937796cda64fe6a2d5702d40d573081e1,
+after actual E05 non-author source receiving, all11 exact-head checks/Preview/
+two webSUCCESS. All three tested blobs/incoming docs/original19 rows are retained.
+Normal Edge source deployment and independent complete159-entry API/config
+certificate/current-source comparison verify the original Core wait extraction;
+normal web READY/both public200/exactc4b2-mvpupyff/null. The adapter is still
+unimported by HTTP hosts, manual systems.check UNAVAILABLE/unregistered, no scan
+or worker/provider/Chat activation. A merged private adapter is not an admitted
+customer workflow or receipt. Native/schema/grant delta N/A.
+
+Next: original-host adoption with bounded lifetimes and actual governed admission,
+then original run/result/Rail, interruption/reload, permission/isolation and
+corrective-work customer proof. No shared Root/risk/registry window or original
+failure-semantic lease is inferred. Functional bounded source RELEASED; Visual
+N/A/current Finance evidence retained; Experiential INCOMPLETE; Founder
+NOT_ACCEPTED. Original all19/nine outcomes/definitions, ALG/CAP maturity,
+historical9PASS0FAIL+12PASS0FAIL4BLOCKED, protected monthlyUNKNOWN/UNRETRIED and
+representative-weekUNMEASURED remain unchanged.
+[Exact source receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2944#issuecomment-6429387101)
+and existing Systems evidence/Master §4.0 preserve all prior failures and limits.
+
 ## October26 — checkpoint/finalizer source released; full manual journey still open
 
 The original definitions and statuses of all19 outcome rows below are preserved.

@@ -1,3 +1,39 @@
+## October27 UTC — original private host source release verified; customer unadmitted
+
+[#2952 actual receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2952#issuecomment-6430581019):
+reviewedd4a01866e568fa271cea7c2068dd904f4ffe0357/LOWER5660549839;
+all11 exact checks/normal Preview/two webSUCCESS/zero threads. Actual
+merge7ff9a6d884ec8ce6ec528cbb339e5bb74ced6874/treeeec1d6e58e986f8d3fdb8e884fb1f93ff5ad074f,
+parentsd3e68daf1+d4a01866. Fresh union preserves whole incoming E09 closeout,
+all16,570 outside entries/original19 rows/four219-tested blobs. Prior comparison
+against an obsolete tree after main advanced was INVALID; actual fresh union
+passed the unchanged proof. Native/Core/other hosts/config unchanged. Preceding
+mechanical#2947 releasedb0c8e7d10e9c3d9ff0e2d6d092aa765f1f6ae37c first, after its
+genuine old-branch grant-parity failure was repaired with original current main.
+
+Normal deploy-edge-functions40425564824/job121930322103 SUCCESS. Original API
+certificate12698824080 ZIP SHA25613df2bcbf905229c1d482f423e680e243350629b7fe4fe4952dfe4e97b238d64
+independently matches selected original onboarding155/all42 source files and
+complete expected closure/configuration using the original repository reader and
+exact merged checkout. API mode, no emitted fallback. A SEPARATE complete current
+API source comparison matches all42 files/configs with identical before/after
+metadata155; no version increase/equivalence is assumed. Other three original
+flavors were not selected/redeployed. Native/schema/grant delta N/A; no native
+function, scan, provider or customer operation was invoked.
+
+Productiondpl_HVsGB6F3foQcJou2L7K4hi5aTsqw READY; both public origins200/exact
+7ff9a6d884ec8ce6ec528cbb339e5bb74ced6874-mvpxu08y/customerUpdate:null. Original
+private purpose is now imported by the original host, preserving onboarding and
+its original internal authorization. Registered bounded lifetime/native original
+Work/claim/heartbeat/Core/finalizer/Rail remain authoritative;202 is not completion.
+The prior HTTP-unimported status at#2944 and development entries remain dated history.
+Manual systems.check/catalogue remains UNAVAILABLE/unregistered, no public entry,
+worker/Chat/provider or scan activation. Functional source DEPLOYED/API VERIFIED;
+VisualN/A, prior Finance retained; ExperientialINCOMPLETE; FounderNOT_ACCEPTED.
+Original actor/tenant/admission/run/findings/Rail/reload/recovery/corrective-work
+and complete19/nine acceptance remain owed. ALG/CAP/historical9-0+12-0-4/monthly
+UNKNOWNUNRETRIED/representative-weekUNMEASURED unchanged; no customer release name.
+
 ## October26 — original private consumer source release verified; not admitted
 
 Source [#2944](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2944#issuecomment-6429387101):

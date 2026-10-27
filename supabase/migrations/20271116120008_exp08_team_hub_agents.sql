@@ -148,8 +148,10 @@ CREATE INDEX IF NOT EXISTS team_hub_agent_turns_cap_idx
 CREATE INDEX IF NOT EXISTS team_hub_agent_turns_source_idx
  ON public.team_hub_agent_turns (source_message_id);
 -- The post door's recovery path asks whether another turn already holds a reply; the reply's
--- delete cascades here too.
-CREATE INDEX IF NOT EXISTS team_hub_agent_turns_posted_idx
+-- delete cascades here too. UNIQUE is the storage backstop for "one reply, one turn": the door
+-- refuses a second binding first (request ids derived as uuidFrom(source, agent, intent) do not
+-- collide, so this guards against a caller bug), and a direct write that skips it still fails.
+CREATE UNIQUE INDEX IF NOT EXISTS team_hub_agent_turns_posted_idx
  ON public.team_hub_agent_turns (posted_message_id) WHERE posted_message_id IS NOT NULL;
 
 ALTER TABLE public.team_hub_message_agent_mentions ENABLE ROW LEVEL SECURITY;

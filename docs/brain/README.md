@@ -4531,3 +4531,14 @@ UNAVAILABLE; all19/nine/ALG maturity unchanged, VisualN/A, ExperientialINCOMPLET
 FounderNOT_ACCEPTED. Details and complete orchestration contract stay in the
 [existing Systems evidence](../evidence/e2-systems-capture-mode.md); prior dated
 source releases remain history. No customer/model/provider operation.
+
+## EXP05 original weekly schedule preview — source candidate, October26–27
+
+The existing owner conversation can prepare a minimized schedule comparison from
+the original weekly process/revision. It reuses configure intent, caller JWT,
+current owner checks, original request/budget and native owner controls; it cannot
+save, authorize, enable or execute.129 original-reader/actual-Root/negative checks,
+scoped compiler and Kit admission controls pass. Catalogue and algorithm maturity
+are not promoted. Source/review/CI/deployment and ordinary authenticated proof
+remain separate; all ten/E5/Builder/ZION/owner-away/Live/founder acceptance remain
+open. [Original weekly record](../delivery/experience-05-weekly-commitment-check.md).

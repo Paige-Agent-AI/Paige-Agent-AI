@@ -19,6 +19,7 @@ const request = load('supabase/functions/_shared/systems-check-manual-request.ts
   throw new Error('Unexpected request dependency: ' + name);
 });
 const module = load('supabase/functions/_shared/systems-check-manual-result.ts', name => {
+  if (name === './durable-job/observation.ts') return load('supabase/functions/_shared/durable-job/observation.ts', () => { throw new Error('Unexpected observation dependency'); });
   if (name === './systems-check-wait.ts') return wait;
   if (name === './systems-check-manual-request.ts') return request;
   throw new Error('Unexpected result dependency: ' + name);

@@ -15,7 +15,7 @@ AUTHENTICATED_RUNTIME: UNVERIFIED: this support-case projection is not yet deplo
 KEYBOARD_FOCUS: PASS: real rendered named button, solid visible outline, exact client callback and return. Native controls retain original DOM order and no modal or focus trap is added. Physical assistive technology remains unverified.
 ZOOM_REFLOW: UNVERIFIED: native320–1536px reflow measured; real200percent zoom/physical phone keyboard and full shell combinations remain separate proof owed.
 REDUCED_MOTION: NOT_APPLICABLE: no new animation, transition, polling or attention pulse; incumbent reduced-motion handling is unchanged.
-STATE_COVERAGE: PASS: loading, no client, bounded empty, populated, explicit permission refusal, transport/source error, retry and successful canonical read. Approval-pending/executing/unknown external effect do not apply to a pure read; they are not fabricated.
+STATE_COVERAGE: PASS: actual component loading, no-client, bounded empty, populated, permission refusal and transport/source error states; source and hook tests verify retry, successful canonical read and retirement of prior-business rows. This read has no effectful execution state.
 TRUTHFUL_STATE_LABELS: PASS: original case status labels, fifty-case source limit and loaded CRM limit; absence never means all business support is clear. Portal help remains Messages. No personal mailbox, private body, full queue/SLA, recipient-read or delivery claim.
 SOLO_UI: YES: existing Clients → Portal → Overview for every eligible standalone/no-parent SOLO business under original server owner authority. Expected hints only narrow; they do not grant a membership or role.
 UNVERIFIED: full-schema execution, exact-head review/CI, merge, migration/deployment/source readback, authenticated original case read/reload/isolation, two eligible cohorts, full42/seven-pillar founder evaluation. The E03 Portal help→case owner/SLA/escalation/remedy/confirmation/reopen handoff is a separate unresolved original-source dependency.
@@ -27,7 +27,7 @@ ACCEPTANCE_CRITERIA: Same original authorized case identity and state, exact kno
 MOTION_PURPOSE: NONE: ordinary bounded read and native reflow only.
 PROTECTED_SEAMS: Original case, connector, Communications, authority helper, shared runtime and workflow source bodies are untouched. Additive invoker wrapper, native read-only negatives and the narrow Portal presentation are owned by EXP09.
 
-INTERNAL_BUILD_IDENTITY: source=development on original50468 plus compatible current-main composition; migrations=20271116040009 unapplied; edge=NOT_APPLICABLE; deployment=NOT_DEPLOYED; evidence=this original packet and owning PR
+INTERNAL_BUILD_IDENTITY: base=d3af486af51d67adbbf26f385235dcf62f0073f5; deployment=NOT_DEPLOYED; environment=development; migrations=PROOF_OWED(20271116040009 original full-schema385 and Preview execution have not run); edge=NOT_APPLICABLE; evidence=this original packet and owning PR
 RELEASE_CHANNEL: development: controlled source/render proof; no native production availability claim
 RELEASE_CLASSIFICATION: internal-only: existing-owner original-record projection, no activation or customer announcement
 CUSTOMER_RELEASE_IDENTITY: none: no named release or What's New entry

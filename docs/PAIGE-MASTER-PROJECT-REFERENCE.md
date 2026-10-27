@@ -6760,6 +6760,19 @@ in the dispatch chain, never from Live, every write outcome with a workspace rec
 workspace there is no tenant to record against, so that refusal writes no receipt). Ledger:
 `docs/doctrine/tier-matrix.md`, "EXP08 PAIGE team-lifecycle tools". Authenticated runtime `UNVERIFIED`.
 
+**EXP08 co-owners and entity owners, I1 — owner invitations (2026-10-27; branch `exp08-owners-i1`, migration `20271116110008`, NOT MERGED; authenticated runtime `UNVERIFIED`).**
+Design owner-approved 2026-10-27; open questions answered the same day (contract R12–R15: recovery-only
+`set_account_holder`; a billing-paused holder is still the holder; admins keep inviting admins and members;
+billing/promotional restoration of the holder's own seat). The database now lets ONLY the account holder of
+a Solo account invite an Owner (`create_solo_team_invite`, a person or one non-individual legal owner from
+`tenant_business_owners`, inline records allowed), re-checks that sender at acceptance
+(`accept_solo_team_invite`, which seats `is_owner` and names the legal owner's representative), refuses an
+owner token at the legacy `accept_tenant_invite` (it used to seat an Admin silently) and at
+`create_tenant_invite_token` (for everyone), freezes every browser-written invitation column but
+`revoked_at` (`guard_tenant_invite_token_identity`), and audits every move of `tenants.owner_user_id`.
+`send-portal-invite` sends an owner invitation for the account holder only. No screen offers Owner yet (I3);
+PAIGE has no owner path yet (I4). Ledger: `docs/doctrine/tier-matrix.md`, "EXP08 co-owners and entity owners, I1".
+
 `high` means the gate accepts only a fingerprint of the exact rendered card, carried in the request
 **body** — a channel the model cannot write. The model asserting consent is refused.
 **`team_set_work_profile` is `ordinary` and is NEVER a permission change**: the RPC writes a job
@@ -9850,6 +9863,10 @@ DOCTRINE_190/191/192, 194, 197, 198 + Addendum, 200, 201, 202, 203, 205, 208, 21
 ---
 
 ## 10. §13 corrections log
+
+- **2026-10-27 · EXP08 CO-OWNER AUTHORITY WAS RECORDED "NOT YET MERGED" AFTER IT WAS LIVE.** The tier matrix headed `20271116020008` "NOT YET MERGED — proof local, PROOF OWED on production" after PR #2945 merged (`51ede67eb`) and applied (`db-live` = `51ede67eb`).
+  - **Corrected (I1 grounding, read-only production queries 2026-10-27).** Production md5(prosrc) of `grant_co_owner` `2a75180d…`, `revoke_co_owner` `e2ba8ca8…`, `guard_tenant_owner_only_columns` `d77a4bfa…` and `is_tenant_account_holder` `4a3cab59…` equal the repo bodies, and `authenticated`/`anon` cannot execute the helper. The tier-matrix heading now says so.
+  - **Also recorded:** production's `peek_tenant_invite` is not reproducible verbatim from any one repo file (`20271108120100` patched it in place with `replace()`, and its earlier comment lines differ from `20260713050000`); `20271116110008` re-emits production's own body (md5 `276541d0…`) and its proof pins that body inline.
 
 - **2026-10-26 · ADMIN SCOPE: "ADMIN" MEANT "ADMIN OF ANY BUSINESS".** Owner ruling (Antonio, 2026-10-26): being the owner or admin of one business must never give admin power in another business the same person belongs to; in someone else's workspace a person has exactly the seat role that workspace gave them; operator authority (§53) is unaffected; owners/admins and PAIGE keep full power inside their own workspace. (Branch `exp08-admin-scope-s0`, migration `20271115030008`, not yet merged.)
   - **What was wrong.** `user_roles` has no tenant column and the seat sync writes global `admin` for every owner/admin seat, so `has_role(uid,'admin')` answered "admin somewhere". Functions and policies that bound no tenant, or let the caller name the tenant, therefore opened every business to every owner: rewrite the platform skills catalogue, read another person's encrypted profile, delete any credit upload, overwrite any row's webhook/MCP/Plaid secret, read or write another business's library, bookings, tasks, approvals, certifications and client goals. `grant_tenant_member_role` let a tenant admin mint global `admin` for anyone, held immediately even though the seat it also wrote was consent-pending. The `&& current_user_roles()` approval match made every owner see every approval whose `visible_to_roles` kept its `{admin,super_admin}` default.

@@ -450,3 +450,20 @@
 .vs-export-card h3 { margin: 0 0 4px; font-size: 13px; }
 .vs-export-card p { margin: 0 0 10px; font-size: 12px; color: var(--vs-faint, #9a9a9a); line-height: 1.5; }
 .vs-export-card > div { display: flex; gap: 8px; }
+
+/* "Use my own address" — quiet guidance disclosure in the live views (never gold: connecting a
+   domain is the owner's decision, not a second going-live act). */
+.vs-domain-card { margin-top: 12px; padding: 10px 12px; border: 1px solid var(--vs-border, rgba(128,128,128,.35)); border-radius: 10px; }
+.vs-domain-card > summary { cursor: pointer; font-size: 12px; font-weight: 600; color: var(--vs-ink, inherit); }
+.vs-domain-card[open] > summary { margin-bottom: 8px; }
+.vs-domain-card p { margin: 0 0 8px; font-size: 12px; color: var(--vs-faint, #9a9a9a); line-height: 1.5; }
+.vs-domain-card strong { color: var(--vs-ink, inherit); font-weight: 600; }
+.vs-domain-next { color: var(--vs-ink, inherit); }
+.vs-domain-providers { margin: 10px 0; padding: 10px; border: 1px solid var(--vs-border, rgba(128,128,128,.25)); border-radius: 8px; }
+.vs-domain-providers label { display: block; margin-bottom: 4px; font-size: 12px; color: var(--vs-faint, #9a9a9a); }
+.vs-domain-providers select { margin-bottom: 8px; font: inherit; font-size: 12px; padding: 4px 6px; border-radius: 6px; border: 1px solid var(--vs-border, rgba(128,128,128,.4)); background: var(--vs-panel, #fff); color: inherit; max-width: 100%; }
+.vs-domain-mail { margin: 10px 0; padding: 10px; border-radius: 8px; background: var(--vs-quiet, rgba(128,128,128,.08)); }
+.vs-domain-hostpath { margin-top: 10px; }
+.vs-domain-hostpath ul { margin: 0 0 8px; padding-left: 16px; }
+.vs-domain-hostpath li { margin: 0 0 8px; font-size: 12px; color: var(--vs-faint, #9a9a9a); line-height: 1.5; }
+.vs-domain-note { font-size: 11px; font-style: italic; }

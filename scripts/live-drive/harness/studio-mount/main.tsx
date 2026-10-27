@@ -1,6 +1,7 @@
 import * as React from "react";
 import { createRoot } from "react-dom/client";
 import { VibeStudio } from "@/solo/vibe";
+import { DomainGuidanceCard } from "@/solo/studio/DomainGuidanceCard";
 import "@/index.css";
 import "@/solo/solo-tokens.css";
 import "@/components/tenant-shell/tenant-command-center-shell.css";
@@ -79,6 +80,32 @@ function Harness() {
   // window.__nexusHandoffs — the harness never mounts PAIGE's composer, so the prefill stays
   // visible as "handed off, not sent".
   const nexus = params.get("nexus") === "1";
+  // ?domain=1|conflict: the EXP06 PR7 domain-guidance disclosure standalone, inside the same
+  // live-view pop the publish panel uses — "conflict" feeds the overridden observation so the
+  // truth-when-blocked state is framed too. The Studio stays unmounted (css loads via the import).
+  const domain = params.get("domain");
+  if (domain) {
+    return (
+      <div data-tenant-shell data-nav="expanded" data-paige="closed">
+        <nav className="tcs-nav" />
+        <section className="tcs-canvas">
+          <header className="tcs-command-row"><div className="tcs-context"><span>Campaigns · structural harness</span></div></header>
+          <main id="tenant-shell-main" className="tcs-main paige-solo" data-theme={theme}>
+            <div className="vs-pop" role="dialog" aria-label="It's live" style={{ maxWidth: 620, margin: "48px auto" }}>
+              <h2>It's live</h2>
+              <p>Anyone with the link can open it, and it's in Marketing › Overview.</p>
+              <a className="vs-link" href="#" onClick={(e) => e.preventDefault()} style={{ wordBreak: "break-all" }}>https://acme-coaching.paigeagent.ai/p/acme-coaching/workshop</a>
+              <DomainGuidanceCard
+                tenantSlug="acme-coaching"
+                observations={domain === "conflict" ? { customDomain: "www.acme-coaching.com", recordConflict: true } : undefined}
+              />
+              <div className="vs-pop-foot"><button type="button" className="vs-btn">Done</button></div>
+            </div>
+          </main>
+        </section>
+      </div>
+    );
+  }
   if (nexus && !(window as unknown as { __nexusArmed?: boolean }).__nexusArmed) {
     (window as unknown as { __nexusArmed?: boolean }).__nexusArmed = true;
     (window as unknown as { __nexusHandoffs: string[] }).__nexusHandoffs = [];

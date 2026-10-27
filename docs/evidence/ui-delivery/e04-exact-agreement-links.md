@@ -25,7 +25,7 @@ MUST_PRESERVE: original native authorization and record/version identities; froz
 ACCEPTANCE_CRITERIA: owner opens the same original document from Clients/PAIGE, retains or explicitly leaves edits, and verifies it after authorized reload; integrated acceptance remains owed.
 MOTION_PURPOSE: NONE: existing link/focus feedback only.
 PROTECTED_SEAMS: shared record reader/canonical route and CheckLinks only as noticed ANT161d6c72490; no handler/risk/registry/C0b/Portal/writer/provider or native schema edit.
-INTERNAL_BUILD_IDENTITY: sha=c5059ad9a936109ccae6b6bda7a886268286256f; tree=0482b8cdd11e999500ea154922a5e3e82687a906; deployment=NOT_DEPLOYED; environment=local controlled components; migrations=parent20104 PROOF_OWED; edge=PROOF_OWED; evidence=docs/evidence/ui-delivery/assets/e04-agreement-links/interaction.json
+INTERNAL_BUILD_IDENTITY: sha=c5059ad9a936109ccae6b6bda7a886268286256f; tree=0482b8cdd11e999500ea154922a5e3e82687a906; deployment=NOT_DEPLOYED; environment=local controlled components; migrations=NOT_APPLICABLE; edge=PROOF_OWED(17 original affected functions need actual deployment readback); evidence=docs/evidence/ui-delivery/assets/e04-agreement-links/interaction.json
 RELEASE_CHANNEL: development: bounded original-record navigation and recovery increment, full Experience open.
 RELEASE_CLASSIFICATION: patch: existing document focus and private-work preservation; no new execution.
 CUSTOMER_RELEASE_IDENTITY: none: full O1-O12 and founder acceptance remain open.

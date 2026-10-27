@@ -1,6 +1,6 @@
 -- EXP08 Team Hub agents, A1a: agent-authored messages, agent mentions, the person-to-agent DM, the
 -- accepted-turn record, the per-seat cap and the one-reply rule.
--- Migration: supabase/migrations/20271116030008_exp08_team_hub_agents.sql.
+-- Migration: supabase/migrations/20271116120008_exp08_team_hub_agents.sql.
 -- Contract: docs/delivery/exp08-team-hub-agents-contract.md, section 5 A1 "Proof -> SQL".
 -- Disposable PostgreSQL only. Never target the linked project. Every migration commits its own
 -- BEGIN/COMMIT, so this proof runs in a database it creates and drops.
@@ -771,7 +771,7 @@ CREATE TEMP TABLE before_src AS SELECT p.oid::regprocedure::text AS sig, p.prona
  FROM pg_proc p WHERE p.pronamespace='public'::regnamespace AND p.proname LIKE '%team_hub%';
 
 -- 2. The change, then a second apply: a no-op.
-\ir ../migrations/20271116030008_exp08_team_hub_agents.sql
+\ir ../migrations/20271116120008_exp08_team_hub_agents.sql
 CREATE TEMP VIEW agents_state AS
 SELECT 'fn:'||p.oid::regprocedure::text AS k, concat_ws('|', p.proacl::text, p.prosecdef::text, p.provolatile::text,
   p.proconfig::text, md5(p.prosrc)) AS v
@@ -792,7 +792,7 @@ UNION ALL
 SELECT 'rel:'||c.oid::regclass::text, concat_ws('|', c.relacl::text, c.relrowsecurity::text) FROM pg_class c
  WHERE c.relnamespace='public'::regnamespace AND c.relkind='r' AND c.relname LIKE 'team_hub%';
 CREATE TEMP TABLE agents_before AS SELECT * FROM agents_state;
-\ir ../migrations/20271116030008_exp08_team_hub_agents.sql
+\ir ../migrations/20271116120008_exp08_team_hub_agents.sql
 DO $$ BEGIN
  IF EXISTS(SELECT k,v FROM agents_before EXCEPT SELECT k,v FROM agents_state)
    OR EXISTS(SELECT k,v FROM agents_state EXCEPT SELECT k,v FROM agents_before) THEN
@@ -1407,7 +1407,7 @@ SELECT pg_temp.check((SELECT count(*) FROM mutant_results)=12 AND NOT EXISTS(SEL
  'mutants: all 12 weakened guards break the property they protect: '||(SELECT string_agg(mutant||'='||coalesce(guarded::text,'null'), '; ' ORDER BY mutant) FROM mutant_results));
 \echo 'PASS: 12 of 12 mutants (token, replay, one-reply index, acceptance grant, rule 2, conversation binding, cap, stale re-arm, unread, agent DM member, seat end, cross-conversation link) each fail their probe; controls hold'
 
--- 6. The roster correction (20271116030108) on the six platform rows. The table carries production's
+-- 6. The roster correction (20271116120108) on the six platform rows. The table carries production's
 -- columns for these rows and the rows production holds (read 2026-10-27), with two customisations made
 -- first to prove the guards: NEXUS's description edited (so its remit is NOT corrected), VERA already
 -- carrying its own team_hub_tools (kept).
@@ -1426,9 +1426,9 @@ INSERT INTO public.paige_subagents(slug,name,department,domain,rail_display_name
  ('zion','ZION','owner_ops','operations_automation','ZION','VP Operations & Automation','VP Operations & Automation. Weekly planning, work ownership, tasks, deadlines, reminders, Calendar commitments, governed workflow design, automation monitoring and safe recovery through original records and receipts.','The owner understands current responsibilities, reviews a realistic plan, authorizes permitted work and can verify what actually happened.','ZION is PAIGE''s operations specialist.',3,'soft','zion prompt','{"job_kind":"plan"}',6),
  ('design-studio','Design Studio','owner_ops','design','DESIGN','Designer','Builds pages.','g','b',1,'soft',NULL,'{"capability_scope":{"mode":"allowlist","tools":["ask_choices"]}}',50);
 CREATE TEMP TABLE subagents_before AS SELECT * FROM public.paige_subagents;
-\ir ../migrations/20271116030108_exp08_team_hub_agents_roster.sql
+\ir ../migrations/20271116120108_exp08_team_hub_agents_roster.sql
 CREATE TEMP TABLE subagents_once AS SELECT * FROM public.paige_subagents;
-\ir ../migrations/20271116030108_exp08_team_hub_agents_roster.sql
+\ir ../migrations/20271116120108_exp08_team_hub_agents_roster.sql
 SELECT pg_temp.check(NOT EXISTS(SELECT to_jsonb(a)-'updated_at' FROM subagents_once a EXCEPT SELECT to_jsonb(b)-'updated_at' FROM public.paige_subagents b),
  'roster: a second apply changes nothing');
 SELECT pg_temp.check((SELECT role='VP Sales & Getting Paid' AND domain='sales_getting_paid' AND version=2 AND name='MERIT' AND department='owner_ops'
@@ -1464,7 +1464,7 @@ SELECT pg_temp.check((SELECT bool_and((SELECT array_agg(k ORDER BY k) FROM jsonb
 -- NEXUS as production holds it (the untouched seed): the remit is corrected; its config keys stay.
 UPDATE public.paige_subagents SET description='VP Growth. Content strategy and creation, campaigns, sales sequences, pipeline management, lead scoring, brand voice enforcement, competitive positioning. Energetic, market-aware.',
  config='{}' WHERE slug='nexus';
-\ir ../migrations/20271116030108_exp08_team_hub_agents_roster.sql
+\ir ../migrations/20271116120108_exp08_team_hub_agents_roster.sql
 SELECT pg_temp.check((SELECT role='VP Marketing & Growth' AND domain='marketing_growth' AND version=2 AND name='NEXUS'
    AND description NOT ILIKE '%sales sequences%' AND description NOT ILIKE '%pipeline%' AND config ?& ARRAY['team_hub_tools','capability_scope','personality']
    FROM public.paige_subagents WHERE slug='nexus'),

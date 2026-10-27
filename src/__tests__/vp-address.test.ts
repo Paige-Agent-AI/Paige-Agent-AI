@@ -115,9 +115,9 @@ describe('buildVpAddressBlock — identity firm, authority stated once', () => {
 });
 
 // EXP08 Team Hub agents A1a (owner, 2026-10-27): MERIT and NEXUS follow the binding 23 Oct 2026 roster
-// standard, here and on their platform rows (migration 20271116030108), and say the same thing in both.
+// standard, here and on their platform rows (migration 20271116120108), and say the same thing in both.
 describe("the 23 Oct roster standard: MERIT is Sales & getting paid, NEXUS is Marketing & growth", () => {
-  const migration = readFileSync("supabase/migrations/20271116030108_exp08_team_hub_agents_roster.sql", "utf8");
+  const migration = readFileSync("supabase/migrations/20271116120108_exp08_team_hub_agents_roster.sql", "utf8");
   const vp = (slug: string) => VP_ROSTER.find((v) => v.slug === slug)!;
   it("MERIT owns sales, proposals, agreements and getting paid, and is not a finance specialist", () => {
     expect(vp("merit").role).toBe("VP Sales & Getting Paid");
@@ -141,7 +141,7 @@ describe("the 23 Oct roster standard: MERIT is Sales & getting paid, NEXUS is Ma
 // A1a: the scopes the roster migration stores are read by the platform's one role-scope reader
 // (resolveRoleToolScope), so A1b needs no second parser; the channel allowlist carries no private read.
 describe("the roster migration's Team Hub scopes are valid for the one scope reader", () => {
-  const sql = readFileSync("supabase/migrations/20271116030108_exp08_team_hub_agents_roster.sql", "utf8");
+  const sql = readFileSync("supabase/migrations/20271116120108_exp08_team_hub_agents_roster.sql", "utf8");
   const rows = [...sql.matchAll(/\('(\w+)', \$j\$(.+?)\$j\$::jsonb, \$j\$(.+?)\$j\$::jsonb, \$j\$(.+?)\$j\$::jsonb\)/g)]
     .map((m) => ({ slug: m[1], personality: JSON.parse(m[2]), teamHubTools: JSON.parse(m[3]), scope: JSON.parse(m[4]) }));
   const PRIVATE = ["team_hub_conversations", "team_hub_search", "crm_search_contacts", "crm_list_team", "list_subagents",

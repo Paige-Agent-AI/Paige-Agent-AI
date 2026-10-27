@@ -8,7 +8,7 @@ draft's default (owners and admins assign agent work) and Q2 as its default (a t
 a top-level reply linked to the asker's message; a thread reply is answered in its thread); MERIT =
 Sales & getting paid confirmed; the storage in section 5 approved. Owner rulings of 2026-10-26 and
 2026-10-27 are in the decision log ("EXP08 Team Hub agents"). **Built so far: A1a** (storage, doors,
-tolerant parsers and the roster correction, migrations `20271116030008` and `20271116030108`); A1b
+tolerant parsers and the roster correction, migrations `20271116120008` and `20271116120108`); A1b
 (the Chat-lane turn and the UI) and A2–A4 are not built. This contract was grounded against
 origin/main `e8197859e`. Line numbers come from the grounding notes, which were read at `9dc021ee`.
 Where the two differ, re-check before building (§71.1).

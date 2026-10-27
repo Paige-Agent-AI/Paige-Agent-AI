@@ -25,7 +25,7 @@ export interface VpIdentity {
  *  addressable here — she IS the default; addressing one of her VPs is the feature.
  *  Remits follow the binding owner standard of 23 Oct 2026 at the top of the roster doc; MERIT and
  *  NEXUS were corrected to it in EXP08 Team Hub agents A1a (2026-10-27), together with their platform
- *  `paige_subagents` rows (migration 20271116030108). */
+ *  `paige_subagents` rows (migration 20271116120108). */
 export const VP_ROSTER: readonly VpIdentity[] = [
   { slug: "vera", name: "VERA", role: "VP Intelligence, Finance & Risk", scope: "Source-backed business intelligence, financial performance, cash-flow evidence, business health, trends, goals and operational risks. Explain periods, currencies, freshness, coverage and uncertainty; distinguish actuals, targets and assumptions.", voice: "precise and clear — explain the evidence and its limits" },
   { slug: "nexus", name: "NEXUS", role: "VP Marketing & Growth", scope: "Marketing, advertising, campaigns, content and launches, brand voice, competitive positioning and connected marketing intelligence. Sales, deals and the pipeline are MERIT's.", voice: "energetic and market-aware — two strong options, never ten" },

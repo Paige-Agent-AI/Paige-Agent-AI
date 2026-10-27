@@ -1,47 +1,54 @@
 -- ============================================================================
--- Experience 03 — a managed address a business gives up is never issued to another business.
+-- Experience 03 — a shared-domain address a business gives up is never issued to another business.
 --
--- WHY. Review HIGH on #2983. A business's managed address is <slug>@mail.paigeagent.ai. Renaming the
--- business re-provisions its connector in place, so the old address is released, and the next business
--- whose slug (or Solo-registered name) produces it is given it by PAIGE's own provisioning. Replies to the
--- first business's past mail then reach the second. Production (read 2026-10-27): 1 address on the shared
--- domain appears in a business's message history and is held by no connector today.
+-- WHY. Review HIGH on #2983, reproduced on production in a rolled-back transaction: after business B
+-- renamed, business A renaming itself to B's old slug was handed B's old <slug>@mail.paigeagent.ai, so it
+-- would receive replies to B's past mail. Production (read 2026-10-27): 1 shared-domain address appears in
+-- a business's message history and is held by no connector or identity today.
+--
+-- Two records carry a business's shared-domain address: channel_connectors.inbound_address decides where
+-- replies are delivered, tenant_email_identities.local_part is the From printed on mail
+-- (resolve_tenant_sender). Both are covered.
 --
 -- WHAT.
---   1. paige_retired_managed_addresses — one row per released address on the shared domain, with the
---      business that held it (NULL = more than one did, so nobody may take it). Service-only.
---   2. trg_retire_channel_connector_managed_address (AFTER UPDATE/DELETE on channel_connectors): when a
---      connector stops holding an address on the shared domain, the address is recorded as retired.
---   3. trg_refuse_retired_managed_address (BEFORE INSERT/UPDATE): no connector may take an address
---      retired by another business (23505 PAIGE_MANAGED_ADDRESS_RETIRED). The business that gave it up may
---      take it back (renaming back to its old name).
---   4. provision_paige_managed_email_connector: a slug-derived name skips a retired address with a
---      numbered variant (left(name,36) || '-' || n, as provision_tenant_email_identity does), so creating or
---      renaming a business never fails on it. Body otherwise identical to 20270602000104.
---   5. check_solo_setup_managed_email reports a retired address as unavailable, so the Solo Setup screen
---      says so before registering. Body otherwise identical to 20261104000000.
---   6. Backfill from message history: shared-domain addresses that appear as a business's sender (outbound)
---      or recipient (inbound) and that no connector holds now.
+--   1. paige_retired_managed_addresses — a shared-domain address a business stopped holding, with that
+--      business. Service-only. No foreign key to tenants on purpose: operator_delete_archived_account refuses
+--      any tenant dependency it does not clean up, and a deleted business's address must stay retired
+--      (its tenant_id then matches no business, so nobody may take it).
+--   2. Release: AFTER UPDATE/DELETE triggers on channel_connectors (inbound_address) and
+--      tenant_email_identities (shared local_part) record the address they stop holding.
+--   3. Refusal: BEFORE INSERT/UPDATE triggers refuse a shared-domain address that is retired by, or held
+--      (connector or identity) by, another business, with 23505. provision_tenant_email_identity already
+--      retries a 23505 with its next numbered variant, so it needs no change; set_tenant_email_identity and
+--      register_solo_setup_managed_email are refused with a clear reason.
+--   4. provision_paige_managed_email_connector: a slug-derived name takes the first numbered variant free of
+--      another business's connector, its identity and the retired list, so creating or renaming a business
+--      never fails on it and lands on the same address as the identity. Otherwise identical to
+--      20270602000104.
+--   5. check_solo_setup_managed_email reports a retired address unavailable. Otherwise identical to
+--      20261104000000.
+--   6. Backfill from message history.
 --
--- NOT HERE: the business web hostname <slug>.paigeagent.ai is also reused when a slug is freed; that is a
--- separate surface. Releasing a retired address is a service-role delete, deliberately without an API.
+-- NOT HERE: an identity's local part does not follow a rename (pre-existing; the old address stays reserved
+-- to the business by this list). The business web hostname <slug>.paigeagent.ai is also reused when a slug is
+-- freed. Release and take are not serialised per address (a race between two businesses' writes in the same
+-- instant can still slip through; the unique indexes keep it to one holder). Releasing a retired address is a
+-- service-role delete, deliberately without an API.
 --
--- REVERSAL: drop both triggers, restore the two function bodies from the migrations named above; the table
--- can stay (it is only read by those).
+-- REVERSAL: drop the four triggers, restore the two function bodies from the migrations named above.
 -- Proof: supabase/tests/managed_address_never_reissued.sql.
 -- ============================================================================
 
 CREATE TABLE IF NOT EXISTS public.paige_retired_managed_addresses (
   address text PRIMARY KEY CHECK (address = lower(address) AND position('@' in address) > 1),
-  tenant_id uuid REFERENCES public.tenants(id) ON DELETE SET NULL,
+  tenant_id uuid,
   retired_at timestamptz NOT NULL DEFAULT now(),
-  source text NOT NULL CHECK (source IN ('connector_released', 'history_backfill'))
+  source text NOT NULL CHECK (source IN ('connector_released', 'identity_released', 'history_backfill'))
 );
 COMMENT ON TABLE public.paige_retired_managed_addresses IS
-  'Managed addresses on the shared PAIGE email domain that a business gave up. Never issued to another business. tenant_id NULL = nobody may take it. Written only by triggers and migrations (20271118100000).';
+  'Shared PAIGE email domain addresses a business stopped holding. Never issued to another business. tenant_id NULL = nobody may take it. No FK to tenants on purpose (20271118100000). Written by triggers, migrations and, to release, the service role.';
 ALTER TABLE public.paige_retired_managed_addresses ENABLE ROW LEVEL SECURITY;
 REVOKE ALL ON public.paige_retired_managed_addresses FROM PUBLIC, anon, authenticated;
-GRANT SELECT ON public.paige_retired_managed_addresses TO service_role;
 
 CREATE OR REPLACE FUNCTION public._paige_shared_email_domain()
 RETURNS text
@@ -68,6 +75,26 @@ AS $$
 $$;
 REVOKE ALL ON FUNCTION public._managed_address_retired_for_other(text, uuid) FROM PUBLIC, anon, authenticated;
 
+-- Retired by, or held (connector or shared identity) by, a business other than p_tenant_id.
+CREATE OR REPLACE FUNCTION public._shared_address_taken_by_other(p_address text, p_tenant_id uuid)
+RETURNS boolean
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = pg_catalog, public
+AS $$
+  SELECT public._managed_address_retired_for_other(p_address, p_tenant_id)
+      OR EXISTS (SELECT 1 FROM public.channel_connectors c
+                  WHERE c.channel_type = 'email' AND lower(btrim(c.inbound_address)) = lower(btrim(p_address))
+                    AND c.tenant_id IS DISTINCT FROM p_tenant_id)
+      OR EXISTS (SELECT 1 FROM public.tenant_email_identities i
+                  WHERE i.kind = 'shared'
+                    AND lower(i.local_part) || '@' || public._paige_shared_email_domain() = lower(btrim(p_address))
+                    AND i.tenant_id IS DISTINCT FROM p_tenant_id)
+$$;
+REVOKE ALL ON FUNCTION public._shared_address_taken_by_other(text, uuid) FROM PUBLIC, anon, authenticated;
+
+-- ── channel_connectors ────────────────────────────────────────────────────────
 CREATE OR REPLACE FUNCTION public.retire_channel_connector_managed_address()
 RETURNS trigger
 LANGUAGE plpgsql
@@ -83,11 +110,8 @@ BEGIN
   IF TG_OP = 'DELETE'
      OR lower(btrim(NEW.inbound_address)) IS DISTINCT FROM _old
      OR NEW.tenant_id IS DISTINCT FROM OLD.tenant_id THEN
-    -- A connector removed because its business is being deleted retires the address to nobody: the
-    -- business row is already gone, and a deleted business's address must not be re-issued either.
     INSERT INTO public.paige_retired_managed_addresses (address, tenant_id, source)
-    SELECT _old, t.id, 'connector_released'
-      FROM (SELECT 1) one LEFT JOIN public.tenants t ON t.id = OLD.tenant_id
+    VALUES (_old, OLD.tenant_id, 'connector_released')
     ON CONFLICT (address) DO NOTHING;
   END IF;
   RETURN NULL;
@@ -103,11 +127,12 @@ SET search_path = pg_catalog, public
 AS $$
 BEGIN
   IF NEW.inbound_address IS NOT NULL
+     AND split_part(lower(btrim(NEW.inbound_address)), '@', 2) = public._paige_shared_email_domain()
      AND (TG_OP = 'INSERT'
           OR lower(btrim(NEW.inbound_address)) IS DISTINCT FROM lower(btrim(OLD.inbound_address))
           OR NEW.tenant_id IS DISTINCT FROM OLD.tenant_id)
-     AND public._managed_address_retired_for_other(NEW.inbound_address, NEW.tenant_id) THEN
-    RAISE EXCEPTION 'PAIGE_MANAGED_ADDRESS_RETIRED: % was used by another business and is never issued again', lower(btrim(NEW.inbound_address))
+     AND public._shared_address_taken_by_other(NEW.inbound_address, NEW.tenant_id) THEN
+    RAISE EXCEPTION 'PAIGE_MANAGED_ADDRESS_RETIRED: % belongs or belonged to another business and is never issued here', lower(btrim(NEW.inbound_address))
       USING ERRCODE = '23505';
   END IF;
   RETURN NEW;
@@ -125,7 +150,75 @@ CREATE TRIGGER trg_retire_channel_connector_managed_address
 AFTER UPDATE OF inbound_address, tenant_id OR DELETE ON public.channel_connectors
 FOR EACH ROW EXECUTE FUNCTION public.retire_channel_connector_managed_address();
 
--- 4. Provisioning skips a retired address for a slug-derived name.
+-- ── tenant_email_identities (the From on mail) ───────────────────────────────
+CREATE OR REPLACE FUNCTION public.retire_tenant_email_identity_address()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = pg_catalog, public
+AS $$
+BEGIN
+  IF OLD.kind IS DISTINCT FROM 'shared' OR nullif(btrim(OLD.local_part), '') IS NULL THEN
+    RETURN NULL;
+  END IF;
+  IF TG_OP = 'DELETE'
+     OR lower(NEW.local_part) IS DISTINCT FROM lower(OLD.local_part)
+     OR NEW.kind IS DISTINCT FROM OLD.kind
+     OR NEW.tenant_id IS DISTINCT FROM OLD.tenant_id THEN
+    INSERT INTO public.paige_retired_managed_addresses (address, tenant_id, source)
+    VALUES (lower(btrim(OLD.local_part)) || '@' || public._paige_shared_email_domain(), OLD.tenant_id, 'identity_released')
+    ON CONFLICT (address) DO NOTHING;
+  END IF;
+  RETURN NULL;
+END;
+$$;
+REVOKE ALL ON FUNCTION public.retire_tenant_email_identity_address() FROM PUBLIC, anon, authenticated;
+
+CREATE OR REPLACE FUNCTION public.refuse_taken_tenant_email_identity()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = pg_catalog, public
+AS $$
+DECLARE
+  _address text;
+BEGIN
+  IF NEW.kind IS DISTINCT FROM 'shared' OR nullif(btrim(NEW.local_part), '') IS NULL THEN
+    RETURN NEW;
+  END IF;
+  IF TG_OP = 'UPDATE'
+     AND lower(NEW.local_part) IS NOT DISTINCT FROM lower(OLD.local_part)
+     AND NEW.kind IS NOT DISTINCT FROM OLD.kind
+     AND NEW.tenant_id IS NOT DISTINCT FROM OLD.tenant_id THEN
+    RETURN NEW;
+  END IF;
+  _address := lower(btrim(NEW.local_part)) || '@' || public._paige_shared_email_domain();
+  -- Another business's identity is already refused by tenant_email_identities_local_part_uniq; this adds
+  -- the retired list and another business's connector. 23505 lets provision_tenant_email_identity move on
+  -- to its next numbered variant.
+  IF public._managed_address_retired_for_other(_address, NEW.tenant_id)
+     OR EXISTS (SELECT 1 FROM public.channel_connectors c
+                 WHERE c.channel_type = 'email' AND lower(btrim(c.inbound_address)) = _address
+                   AND c.tenant_id IS DISTINCT FROM NEW.tenant_id) THEN
+    RAISE EXCEPTION 'IDENTITY_LOCAL_PART_TAKEN: % belongs or belonged to another business', lower(btrim(NEW.local_part))
+      USING ERRCODE = '23505';
+  END IF;
+  RETURN NEW;
+END;
+$$;
+REVOKE ALL ON FUNCTION public.refuse_taken_tenant_email_identity() FROM PUBLIC, anon, authenticated;
+
+DROP TRIGGER IF EXISTS trg_refuse_taken_tenant_email_identity ON public.tenant_email_identities;
+CREATE TRIGGER trg_refuse_taken_tenant_email_identity
+BEFORE INSERT OR UPDATE OF local_part, kind, tenant_id ON public.tenant_email_identities
+FOR EACH ROW EXECUTE FUNCTION public.refuse_taken_tenant_email_identity();
+
+DROP TRIGGER IF EXISTS trg_retire_tenant_email_identity_address ON public.tenant_email_identities;
+CREATE TRIGGER trg_retire_tenant_email_identity_address
+AFTER UPDATE OF local_part, kind, tenant_id OR DELETE ON public.tenant_email_identities
+FOR EACH ROW EXECUTE FUNCTION public.retire_tenant_email_identity_address();
+
+-- 4. Provisioning gives a slug-derived name the first variant no other business holds or gave up.
 CREATE OR REPLACE FUNCTION public.provision_paige_managed_email_connector(p_tenant_id uuid)
  RETURNS uuid
  LANGUAGE plpgsql
@@ -205,13 +298,15 @@ BEGIN
   END IF;
   _address := _local_part || '@' || _shared_domain;
 
-  -- A managed address another business gave up is never issued again (20271118100000). A name
-  -- derived from the slug takes the next free numbered variant, the way provision_tenant_email_identity
-  -- already does, so creating or renaming a business never fails on it. A registered identity was
-  -- checked by check_solo_setup_managed_email; the connector trigger refuses it as a backstop.
+  -- A shared-domain address another business holds, or gave up, is never issued here (20271118100000).
+  -- A name derived from the slug takes the first numbered variant free of all three (another business's
+  -- connector, its sending identity, the retired list), the scheme provision_tenant_email_identity uses,
+  -- so the connector and the identity land on the same address and creating or renaming a business
+  -- never fails on it. A registered identity was checked by check_solo_setup_managed_email; the
+  -- connector trigger refuses it as a backstop.
   IF NOT _registered THEN
     _base_local := _local_part;
-    WHILE public._managed_address_retired_for_other(_address, p_tenant_id) LOOP
+    WHILE public._shared_address_taken_by_other(_address, p_tenant_id) LOOP
       _n := _n + 1;
       _local_part := left(_base_local, 36) || '-' || _n::text;
       _address := _local_part || '@' || _shared_domain;
@@ -310,9 +405,9 @@ grant execute on function public.provision_paige_managed_email_connector(uuid) t
 revoke all on function public.check_solo_setup_managed_email(text) from public,anon;
 grant execute on function public.check_solo_setup_managed_email(text) to authenticated;
 
-
 -- 6. Backfill from message history. An address on the shared domain that a business sent from or
---    received at, and that no connector holds now, is retired to that business (NULL if several used it).
+--    received at, and that no connector or identity holds now, is retired to that business (NULL if several
+--    used it).
 WITH used AS (
   SELECT m.tenant_id, lower(btrim(m.sender ->> 'address')) AS address
     FROM public.messages m
@@ -333,4 +428,6 @@ INSERT INTO public.paige_retired_managed_addresses (address, tenant_id, source)
 SELECT s.address, s.tenant_id, 'history_backfill'
   FROM shared s
  WHERE NOT EXISTS (SELECT 1 FROM public.channel_connectors c WHERE lower(btrim(c.inbound_address)) = s.address)
+   AND NOT EXISTS (SELECT 1 FROM public.tenant_email_identities i
+                    WHERE i.kind = 'shared' AND lower(i.local_part) || '@' || public._paige_shared_email_domain() = s.address)
 ON CONFLICT (address) DO NOTHING;

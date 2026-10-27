@@ -12,7 +12,7 @@ MATERIAL_FLOW_CHANGE: NO: no screen, state, transition or exit is added or remov
 FLOW_PROTOTYPE: NOT_REQUIRED: no interface state, copy or transition changes.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: audience is every business with a PAIGE-managed address. Primary action: replies reach only the business that sent the original email. Purpose: close the address-reuse path found by the #2983 review.
 VISUAL_DIRECTION: NOT_APPLICABLE: no visual surface changed
-AUTOMATED_EVIDENCE: PASS: `supabase/tests/managed_address_never_reissued.sql`, run by paige-spine-contract on the rebuilt database. Failing-first on production inside a rolled-back transaction: without the migration, after B renamed, A renaming to B's old slug was given B's old address (`FAIL: 3 ... A has: mani-b@mail.paigeagent.ai`).
+AUTOMATED_EVIDENCE: PASS: `supabase/tests/managed_address_never_reissued.sql`, run by paige-spine-contract on the rebuilt database. Failing-first on production inside rolled-back transactions: without the migration, after B renamed, A renaming to B's old slug was given B's old address (`FAIL: 3 ... A has: mani-b@mail.paigeagent.ai`), and A's owner could set A's From to B's released address (`FAIL: 6`). An independent review of the first version found the identity (From) path, a rename failing on a held variant, and a foreign key that broke account deletion in CI; all fixed.
 STATIC_EVIDENCE: PASS: the two replaced function bodies were extracted verbatim from the migrations that last defined them, and their md5 matched production before editing; migration-version-collision-lint, definer-fn-lint and view-security-invoker-lint pass.
 RENDERED_EVIDENCE: NOT_APPLICABLE: no visual surface is rendered or changed.
 BEHAVIORAL_EVIDENCE: PASS: the proof drives the real paths: provisioning through the tenants trigger on insert and on a browser rename, Solo Setup's availability RPC as a signed-in owner, a direct connector write as the service role, a connector delete, and a browser read of the retired list.
@@ -24,6 +24,10 @@ STATE_COVERAGE: PASS: each state is covered by an assertion:
 - B renames: the address follows the rename and the old one is retired to B
 - A renames to B's old slug: the rename succeeds and A gets the numbered variant
 - direct claim of B's retired address: refused
+- an owner setting the From to a retired address: refused
+- a new business with a retired slug: connector and From on the same numbered variant
+- a variant another business holds: skipped, the signup succeeds
+- a changed identity: its old address retired
 - Solo Setup: B's old name unavailable, a free name available
 - B takes its own address back: allowed
 - new business with a retired slug: created with a numbered variant

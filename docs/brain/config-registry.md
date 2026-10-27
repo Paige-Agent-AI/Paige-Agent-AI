@@ -618,12 +618,14 @@ Values intentionally omitted.
       sender re-provision on a business rename, domain verify, Gmail connect) and the service role still write them.
       Trust is `current_user`, not the JWT, so a rename from the app keeps moving the managed address. Proof:
       `supabase/tests/channel_connector_inbound_routing_server_only.sql` (CI: paige-spine-contract). **Retired addresses
-      (20271118100000):** an address on the shared domain that a connector stops holding (rename, delete,
-      tenant change) is recorded in `paige_retired_managed_addresses` (service-only) with the business that held
-      it; `trg_refuse_retired_managed_address` refuses it to any other business (23505
-      `PAIGE_MANAGED_ADDRESS_RETIRED`); provisioning gives a slug-derived name the next numbered variant
-      (`left(name,36)||'-'||n`) so signup and renames never fail on it; Solo Setup's availability check reports it
-      unavailable. Backfilled from message history. Proof: `supabase/tests/managed_address_never_reissued.sql`.
+      (20271118100000):** a shared-domain address that a connector (`inbound_address`) or a shared sending
+      identity (`tenant_email_identities.local_part`, the From) stops holding is recorded in
+      `paige_retired_managed_addresses` (service-only, no FK to tenants on purpose) with the business that held
+      it; triggers on both tables refuse it, or an address another business holds, to any other business (23505
+      `PAIGE_MANAGED_ADDRESS_RETIRED` / `IDENTITY_LOCAL_PART_TAKEN`); provisioning gives a slug-derived name the
+      first free numbered variant (`left(name,36)||'-'||n`) so signup and renames never fail and connector and
+      From match; Solo Setup's availability check reports it unavailable. An identity's local part still does not
+      follow a rename (pre-existing). Backfilled from message history. Proof: `supabase/tests/managed_address_never_reissued.sql`.
       Still owed: (b) a per-business DNS ownership proof before a custom `inbound_domain` is
       accepted, with the provider domain id bound server-side (today `resend_domain_id` is admin-writable).
     - **Sender authentication (review M2):** a From whose domain has neither an aligned DKIM `pass` (SendGrid's `dkim`

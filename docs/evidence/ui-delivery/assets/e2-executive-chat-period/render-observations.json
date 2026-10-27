@@ -1,0 +1,325 @@
+{
+  "source": "45eb4e90fdcba00f367c93cd2190dc80299b3ba5",
+  "base": "b9659598cfbcb3a9c74283722de00e8d9093b0f2",
+  "boundary": "Prospective composition of own reviewed2979/1442 and2981/63; synthetic original renderer/closed composer; no actual release or customer/backend/model operation",
+  "frames": [
+    {
+      "file": "1536x770-closed.jpg",
+      "open": false,
+      "geometry": {
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Display\", \"SF Pro Display\", system-ui, sans-serif",
+        "h": 770,
+        "pageScroll": 1536,
+        "pageWidth": 1536,
+        "rootScroll": 1449,
+        "rootTop": 0,
+        "rootWidth": 1449,
+        "w": 1536
+      }
+    },
+    {
+      "file": "1536x770-open.jpg",
+      "open": true,
+      "geometry": {
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Display\", \"SF Pro Display\", system-ui, sans-serif",
+        "h": 770,
+        "pageScroll": 1536,
+        "pageWidth": 1536,
+        "rootScroll": 927,
+        "rootTop": 0,
+        "rootWidth": 927,
+        "w": 1536
+      }
+    },
+    {
+      "file": "1366x768-closed.jpg",
+      "open": false,
+      "geometry": {
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Display\", \"SF Pro Display\", system-ui, sans-serif",
+        "h": 768,
+        "pageScroll": 1366,
+        "pageWidth": 1366,
+        "rootScroll": 1279,
+        "rootTop": 0,
+        "rootWidth": 1279,
+        "w": 1366
+      }
+    },
+    {
+      "file": "1366x768-open.jpg",
+      "open": true,
+      "geometry": {
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Display\", \"SF Pro Display\", system-ui, sans-serif",
+        "h": 768,
+        "pageScroll": 1366,
+        "pageWidth": 1366,
+        "rootScroll": 815,
+        "rootTop": 0,
+        "rootWidth": 815,
+        "w": 1366
+      }
+    },
+    {
+      "file": "1024x768-closed.jpg",
+      "open": false,
+      "geometry": {
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Display\", \"SF Pro Display\", system-ui, sans-serif",
+        "h": 768,
+        "pageScroll": 1024,
+        "pageWidth": 1024,
+        "rootScroll": 937,
+        "rootTop": 0,
+        "rootWidth": 937,
+        "w": 1024
+      }
+    },
+    {
+      "file": "1024x768-open.jpg",
+      "open": true,
+      "geometry": {
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Display\", \"SF Pro Display\", system-ui, sans-serif",
+        "h": 768,
+        "pageScroll": 1024,
+        "pageWidth": 1024,
+        "rootScroll": 937,
+        "rootTop": 0,
+        "rootWidth": 937,
+        "w": 1024
+      }
+    },
+    {
+      "file": "900x1000-closed.jpg",
+      "open": false,
+      "geometry": {
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Display\", \"SF Pro Display\", system-ui, sans-serif",
+        "h": 1000,
+        "pageScroll": 900,
+        "pageWidth": 900,
+        "rootScroll": 813,
+        "rootTop": 0,
+        "rootWidth": 813,
+        "w": 900
+      }
+    },
+    {
+      "file": "900x1000-open.jpg",
+      "open": true,
+      "geometry": {
+        "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Display\", \"SF Pro Display\", system-ui, sans-serif",
+        "h": 1000,
+        "pageScroll": 900,
+        "pageWidth": 900,
+        "rootScroll": 813,
+        "rootTop": 0,
+        "rootWidth": 813,
+        "w": 900
+      }
+    }
+  ],
+  "invitations": [
+    {
+      "width": 1366,
+      "height": 768,
+      "kind": "briefing",
+      "period": "last_30_days",
+      "prompt": "How's my business doing, what needs attention, and what should we work on today? Reporting period: Last 30 days.",
+      "sendDisabled": true
+    },
+    {
+      "width": 1366,
+      "height": 768,
+      "kind": "vera",
+      "period": "last_30_days",
+      "prompt": "VERA, review my business performance, financial evidence and risks. Use permitted business evidence, explain sources, periods and unavailable information, and recommend one to three grounded priorities. PAIGE remains my COO. Do not take an action. Reporting period: Last 30 days.",
+      "sendDisabled": true
+    },
+    {
+      "width": 1366,
+      "height": 768,
+      "kind": "targets",
+      "period": "last_30_days",
+      "prompt": "Review my saved Strategic Play targets and compatible actuals. Focus the business review on game_plan. Explain variance, periods and unknowns, and link me to the owning Plays. Do not take an action. Reporting period: Last 30 days.",
+      "sendDisabled": true
+    },
+    {
+      "width": 1366,
+      "height": 768,
+      "kind": "priority",
+      "period": "last_30_days",
+      "prompt": "Help me understand this Operations & Systems Check finding and recommend a next step: 2 blocking operating findings. Re-read the current business evidence; do not take an action. Reporting period: Last 30 days.",
+      "sendDisabled": true
+    },
+    {
+      "width": 1366,
+      "height": 768,
+      "kind": "prepared",
+      "period": "last_30_days",
+      "prompt": "Explain my prepared work and what is awaiting review. Re-read the current records and do not execute anything. Reporting period: Last 30 days.",
+      "sendDisabled": true
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "kind": "briefing",
+      "period": "current_quarter",
+      "prompt": "Explain my prepared work and what is awaiting review. Re-read the current records and do not execute anything. Reporting period: Last 30 days.\n\nHow's my business doing, what needs attention, and what should we work on today? Reporting period: This quarter.",
+      "sendDisabled": true
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "kind": "vera",
+      "period": "current_quarter",
+      "prompt": "VERA, review my business performance, financial evidence and risks. Use permitted business evidence, explain sources, periods and unavailable information, and recommend one to three grounded priorities. PAIGE remains my COO. Do not take an action. Reporting period: This quarter.",
+      "sendDisabled": true
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "kind": "targets",
+      "period": "current_quarter",
+      "prompt": "Review my saved Strategic Play targets and compatible actuals. Focus the business review on game_plan. Explain variance, periods and unknowns, and link me to the owning Plays. Do not take an action. Reporting period: This quarter.",
+      "sendDisabled": true
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "kind": "priority",
+      "period": "current_quarter",
+      "prompt": "Help me understand this Operations & Systems Check finding and recommend a next step: 2 blocking operating findings. Re-read the current business evidence; do not take an action. Reporting period: This quarter.",
+      "sendDisabled": true
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "kind": "prepared",
+      "period": "current_quarter",
+      "prompt": "Explain my prepared work and what is awaiting review. Re-read the current records and do not execute anything. Reporting period: This quarter.",
+      "sendDisabled": true
+    }
+  ],
+  "darkKeyboard": [
+    {
+      "focus": "Synthetic message draft",
+      "h": 844,
+      "pageScroll": 390,
+      "pageWidth": 390,
+      "prompt": "Help me understand this Operations & Systems Check finding and recommend a next step: 2 blocking operating findings. Re-read the current business evidence; do not take an action. Reporting period: This quarter.",
+      "theme": "dark",
+      "w": 390
+    },
+    {
+      "focus": "Synthetic message draft",
+      "h": 740,
+      "pageScroll": 320,
+      "pageWidth": 320,
+      "prompt": "Help me understand this Operations & Systems Check finding and recommend a next step: 2 blocking operating findings. Re-read the current business evidence; do not take an action. Reporting period: This quarter.",
+      "theme": "dark",
+      "w": 320
+    }
+  ],
+  "returns": [
+    {
+      "width": 1366,
+      "height": 768,
+      "open": false,
+      "theme": "light",
+      "destination": true,
+      "before": {
+        "draft": "",
+        "focus": "Open Finance",
+        "period": "current_quarter",
+        "scroll": 1784.800048828125
+      },
+      "after": {
+        "draft": "",
+        "focus": "Open Finance",
+        "pageScroll": 1366,
+        "pageWidth": 1366,
+        "period": "current_quarter",
+        "rootScroll": 1279,
+        "rootWidth": 1279,
+        "scroll": 1784.800048828125,
+        "sourceOpen": true
+      },
+      "delta": 0
+    },
+    {
+      "width": 1366,
+      "height": 768,
+      "open": true,
+      "theme": "light",
+      "destination": true,
+      "before": {
+        "draft": "Keep this original synthetic review draft.",
+        "focus": "Open Finance",
+        "period": "current_quarter",
+        "scroll": 1870.4000244140625
+      },
+      "after": {
+        "draft": "Keep this original synthetic review draft.",
+        "focus": "Open Finance",
+        "pageScroll": 1366,
+        "pageWidth": 1366,
+        "period": "current_quarter",
+        "rootScroll": 815,
+        "rootWidth": 815,
+        "scroll": 1870.4000244140625,
+        "sourceOpen": true
+      },
+      "delta": 0
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "open": false,
+      "theme": "dark",
+      "destination": true,
+      "before": {
+        "draft": "",
+        "focus": "Open Finance",
+        "period": "current_quarter",
+        "scroll": 2547.199951171875
+      },
+      "after": {
+        "draft": "",
+        "focus": "Open Finance",
+        "pageScroll": 390,
+        "pageWidth": 390,
+        "period": "current_quarter",
+        "rootScroll": 303,
+        "rootWidth": 303,
+        "scroll": 2547.199951171875,
+        "sourceOpen": true
+      },
+      "delta": 0
+    },
+    {
+      "width": 320,
+      "height": 740,
+      "open": false,
+      "theme": "dark",
+      "destination": true,
+      "before": {
+        "draft": "",
+        "focus": "Open Finance",
+        "period": "current_quarter",
+        "scroll": 3144.800048828125
+      },
+      "after": {
+        "draft": "",
+        "focus": "Open Finance",
+        "pageScroll": 320,
+        "pageWidth": 320,
+        "period": "current_quarter",
+        "rootScroll": 233,
+        "rootWidth": 233,
+        "scroll": 3144.800048828125,
+        "sourceOpen": true
+      },
+      "delta": 0
+    }
+  ],
+  "actual_received_source": "0a408ef9b214292258fc5760ce03b586542ca1c8",
+  "actual_received_tree": "8b7e37e5163f5c0ce892a2eeae81639b7fda8fae"
+}

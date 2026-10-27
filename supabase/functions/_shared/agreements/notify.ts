@@ -24,8 +24,9 @@ interface NotifyInput {
 export async function notify(input: NotifyInput): Promise<NotifyOutcome> {
   // Absent provider is an honest outcome, not an error to bury. The send path refuses BEFORE
   // freezing an agreement for exactly this reason; by the time we are notifying, the act has
-  // already happened and there is nothing to undo.
-  if (!Deno.env.get("RESEND_API_KEY")) {
+  // already happened and there is nothing to undo. send-transactional-email sends through SendGrid with the
+  // platform Mail Send key (Experience 03), so that key is the provider this checks for.
+  if (!Deno.env.get("SENDGRID_MAIL_SEND_API_KEY")) {
     console.warn("[agreements] no email provider configured — notification not sent", {
       template: input.templateName,
     });

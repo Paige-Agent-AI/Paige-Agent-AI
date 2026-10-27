@@ -88,11 +88,11 @@
         "solo standalone"
       ],
       "owner_component": "src/solo/finance/FinanceWorkspace.tsx",
-      "canonical_source": "Sales list_sales_invoices parser and issue_analytics_evidence_bundle; company accounting/banking/budget/forecast sources unavailable",
+      "canonical_source": "Original Sales list_sales_invoices and Metric issuer; permitted Finance source projection and game_plan/F7 Play-linked financial targets through the existing business review. Verified company accounting/bank/budget/cash-forecast depth remains proof owed or unavailable by source.",
       "chain": {
         "canonical_source": {
           "status": "partial",
-          "note": "Existing Sales invoice and metric reads are reused; no company accounting/bank source or local aggregate is invented."
+          "note": "Existing Sales invoice/Metric reads and original focused game_plan/F7 target definitions/issued actuals are reused. Target sampling, own period/currency and issuer expiry remain explicit. No local aggregate, budget or cash forecast is invented."
         },
         "tenant_scope": {
           "status": "inherited_contract",
@@ -100,7 +100,7 @@
         },
         "safe_context": {
           "status": "partial",
-          "note": "Bounded metric key/evidence reference handed to existing PAIGE bridge. Canonical analytics resolver must re-authorize scope/expiry; no raw invoice/client facts are copied. Finance domain snapshots absent."
+          "note": "Bounded metric key/evidence reference or focused game_plan review hint enters the existing PAIGE bridge. Original resolvers re-authorize scope/expiry. No raw invoice/client/target actuals are copied as authority. Finance projection does not establish full banking/accounting coverage."
         },
         "authority": {
           "status": "inherited",
@@ -112,7 +112,7 @@
         },
         "verified_outcome": {
           "status": "proof_owed",
-          "note": "Source, automated and local synthetic rendered proof do not establish authenticated Finance behavior."
+          "note": "Historical bounded ordinary-owner seven-view/source/VERA/reload proof is retained in the Finance Brain. New financial Play target presentation has controlled/synthetic proof only; full populated sources, permissions/cohorts, governed outcomes and complete Finance acceptance remain owed."
         },
         "rail_evidence": {
           "producer": "none",
@@ -122,7 +122,7 @@
         "mind_eligibility": {
           "axis_a": "n/a",
           "axis_b": "NO",
-          "note": "No new Mind promotion or Fabric composition; Financial domain snapshot contract remains unavailable."
+          "note": "No new Mind promotion. Existing permitted Finance and game_plan review projections remain source-bound; their presence is not full provider or analytical readiness."
         },
         "memory_retention": {
           "status": "none",
@@ -138,8 +138,8 @@
         "completion_criterion": "Authenticated owner completes a source-backed financial review; PAIGE prepares and executes an authorized governed follow-up, verifies readback and records the canonical Rail outcome."
       },
       "state": "PROOF_OWED",
-      "state_reason": "Dedicated Finance destination and canonical Sales consumers are implemented; authenticated UI and Chat/Live proof absent. Company accounting/banking/debt, budgets, forecasts and Finance snapshots remain unavailable. Owner-approved Debt & Credit UI supports multiple accounts but its live source binding is absent. The full department mission remains open.",
-      "next_slice": "Prove authenticated scoped UI; coordinate safe company accounting/bank reads through Integrations; complete canonical budgets/forecast assumptions and Finance Spine/Fabric bindings with governed outcome/readback.",
+      "state_reason": "Bounded ordinary-owner seven-view/source/VERA/reload proof exists; it does not close full Finance. Original sampled F7 financial Play targets are integrated locally, not yet released/customer-verified. Company bank/accounting/debt depth, budgets, cash forecasts, populated roles/cohorts and complete Chat/Live/action outcomes remain proof owed or source-unavailable. No readiness promotion.",
+      "next_slice": "Release and verify the original financial Play target consumer; finish authorized current-owner/reload/native-zoom and legitimate role/cohort proof. Reuse originating Finance/Integrations for verified company depth and canonical planning contracts for budget/forecast assumptions, without activation by this presentation.",
       "evidence_class": [
         "source_read",
         "automated_test",
@@ -148,6 +148,8 @@
       "linked": [],
       "sources": [
         "src/solo/finance/FinanceWorkspace.tsx",
+        "src/solo/finance/FinancePlayTargets.tsx",
+        "src/solo/ExecutiveTargets.tsx",
         "src/solo/finance/useFinanceInvoices.ts",
         "src/solo/sales/performance/useSalesPerformanceMetrics.ts",
         "docs/brain/finance-department.md",
@@ -916,8 +918,8 @@
         "state_reason": "Booking/Mind binding remains blocked by FU-3 and #786 attribution; those contracts are not repaired by E5. Owner2026-10-13 independently authorizes internal weekly responsibility visibility using the existing owner-only process/receipt projection in Calendar, with no booking, recurrence engine, Mind lens or authority grant. That connected UI is a development candidate; authenticated recurring acceptance remains UNVERIFIED.",
       "evidence_class": ["source_read", "production_catalog"],
       "linked": ["#786", "#673", "#648", "#646", "#638", "#644", "#776", "#777"],
-      "next_slice": "None; blocked. Resolve #786 (attribution) and FU-3 (Calendar Rail contract) first.",
-      "sources": ["docs/architecture/paige-mind-integration-matrix.md#calendar-bookings", "docs/doctrine/calendar-capability-contract.md"]
+      "next_slice": "Calendar Spine/Mind remains blocked by #786 attribution and FU-3. EXP09's bounded original public-booking result consumer validates a saved receipt and holds uncertain confirmation; it adds no authority or native writer. Private first-booking membership/contact binding and the same appointment in customer Sessions and SOLO Calendar remain OPEN; no maturity promotion.",
+      "sources": ["docs/architecture/paige-mind-integration-matrix.md#calendar-bookings", "docs/doctrine/calendar-capability-contract.md", "docs/delivery/e09-booking-result-contract.md", "docs/evidence/ui-delivery/e09-booking-result-receipt.md"]
     },
     {
       "id": "clients.portal",
@@ -934,7 +936,7 @@
       "group": "clients",
       "tier_scope": ["solo"],
       "owner_component": "src/components/tenant-relationships/OwnerPortalDashboard.tsx (Solo mount in TenantRelationshipsClientsWorkspace)",
-      "canonical_source": "Canonical clients, tenant_invite_tokens, useBrandKit/usePortalConfig and the existing shared Rail reader; native configuration writers and selected-client standing are reused",
+      "canonical_source": "Canonical clients, tenant_invite_tokens, useBrandKit/usePortalConfig and the existing shared Rail reader; native configuration writers and selected-client standing are reused. Candidate owner support attention consumes original E03 read_support_cases through a closed actor/business/known-client projection; release/authenticated proof owed, no Portal-help case bridge claimed",
       "chain": {
         "canonical_source": {"status": "partial", "note": "approved owner dashboard replaces the six static capability cards; client, invitation, brand/config and shared-activity projections reuse canonical records; complete customer convergence and authenticated proof remain owed"},
         "tenant_scope": {"status": "server_resolved"},
@@ -1074,7 +1076,7 @@
         "solo"
       ],
       "owner_component": "src/solo/team-hub/TeamHubWorkspace.tsx",
-      "canonical_source": "team_hub_channels; team_hub_channel_members; team_hub_messages; team_hub_message_mentions (migration 20271113850008); team_hub_work_refs, a link only, with task status read from EXP05 plan_items through the caller's RLS (migration 20271113860008); team_hub_files, with the bytes in the private comms-attachments bucket at <tenant>/team-hub/<file_id> behind restrictive storage policies (migration 20271114160008; retirement provider team_hub_files, migration 20271114160108)",
+      "canonical_source": "team_hub_channels; team_hub_channel_members; team_hub_messages; team_hub_message_mentions (migration 20271113850008); team_hub_work_refs, a link only, with task status read from EXP05 plan_items through the caller's RLS (migration 20271113860008); team_hub_files, with the bytes in the private comms-attachments bucket at <tenant>/team-hub/<file_id> behind restrictive storage policies (migration 20271114160008; retirement provider team_hub_files, migration 20271114160108); Team Hub agents A1a (migration 20271117010008): team_hub_messages.author_kind/agent_key/asked_in_message_id (an agent row keeps the accountable asker as author_user_id), the agent_dm conversation kind (one person and one agent), team_hub_message_agent_mentions and team_hub_agent_turns (the accepted-turn record)",
       "prohibited_context": [
         "another workspace's channels or messages",
         "private channel names, members, counts or text for non-members",
@@ -1099,7 +1101,7 @@
         },
         "governed_write": {
           "status": "wired",
-          "note": "SECURITY DEFINER team_hub_* functions; tables have no browser grants. Increment 2: team_hub_request_task posts the command message, calls the existing plan_assign_task_scoped as the caller and inserts one team_hub_work_refs row in one transaction, exactly-once on (author, client_request_id); team_hub_list_work returns links only. Increment 3: team_hub_begin_file records a pending file and the server builds its path; the team-hub-file edge function checks the real bytes and calls the service-role team_hub_file_verdict, which also matches Storage's recorded owner, size and type; team_hub_post_message gains p_file_ids and stamps up to 5 ready files in the same transaction as the message; four AS RESTRICTIVE storage.objects policies limit the Team Hub prefix to the uploader's own pending path for INSERT and to current conversation viewers for SELECT, and refuse UPDATE and DELETE"
+          "note": "SECURITY DEFINER team_hub_* functions; tables have no browser grants. Increment 2: team_hub_request_task posts the command message, calls the existing plan_assign_task_scoped as the caller and inserts one team_hub_work_refs row in one transaction, exactly-once on (author, client_request_id); team_hub_list_work returns links only. Increment 3: team_hub_begin_file records a pending file and the server builds its path; the team-hub-file edge function checks the real bytes and calls the service-role team_hub_file_verdict, which also matches Storage's recorded owner, size and type; team_hub_post_message gains p_file_ids and stamps up to 5 ready files in the same transaction as the message; four AS RESTRICTIVE storage.objects policies limit the Team Hub prefix to the uploader's own pending path for INSERT and to current conversation viewers for SELECT, and refuse UPDATE and DELETE. Team Hub agents A1a (no caller yet; paige-ai-chat calls them in A1b): team_hub_accept_agent_turn and team_hub_end_agent_turn are service_role only and write the accepted-turn record and nothing else; team_hub_open_agent_dm and team_hub_post_agent_message are authenticated only, and an agent row is posted only against an unconsumed accepted turn whose single-use token matches, once per (asking message, agent), at most 30 accepted turns per seat per hour"
         },
         "verified_outcome": {
           "status": "partial",
@@ -1121,7 +1123,7 @@
         }
       },
       "state": "PROOF_OWED",
-      "state_reason": "Increments 1-4 source with disposable-PostgreSQL proofs (increment 2 loads the real plan_assign_task_scoped over fixture doubles; increment 3 adds a storage-schema stub, the file proof and a retirement proof; increment 4 adds the search proof), Node tests of the byte check, the service-role reader guards and the PAIGE Team Hub dispatch and wiring, and mocked-RPC tests plus a rendered harness. Increments 1-3 are applied to production and read back (team-hub-file active); increment 4 is not yet merged; nothing is driven on an authenticated SOLO account. Files are not malware-scanned (owner decision).",
+      "state_reason": "Increments 1-4 source with disposable-PostgreSQL proofs (increment 2 loads the real plan_assign_task_scoped over fixture doubles; increment 3 adds a storage-schema stub, the file proof and a retirement proof; increment 4 adds the search proof), Node tests of the byte check, the service-role reader guards and the PAIGE Team Hub dispatch and wiring, and mocked-RPC tests plus a rendered harness. Increments 1-3 are applied to production and read back (team-hub-file active); increment 4 is not yet merged; nothing is driven on an authenticated SOLO account. Files are not malware-scanned (owner decision). Team Hub agents A1a adds storage, doors and tolerant parsers with a disposable-PostgreSQL proof (supabase/tests/exp08_team_hub_agents_a1.sql, 12 mutants); no agent speaks until A1b wires paige-ai-chat and the UI.",
       "evidence_class": [
         "automated_test",
         "rendered_structural",
@@ -1131,7 +1133,8 @@
         "docs/delivery/exp08-team-hub-collaboration-contract.md",
         "docs/delivery/exp08-team-hub-increment2-work-contract.md",
         "docs/delivery/exp08-team-hub-increment3-attachments-contract.md",
-        "docs/delivery/exp08-team-hub-increment4-paige-contract.md"
+        "docs/delivery/exp08-team-hub-increment4-paige-contract.md",
+        "docs/delivery/exp08-team-hub-agents-contract.md"
       ],
       "next_slice": "An authenticated SOLO drive of increments 1-4 (including a PAIGE read, search, an approved reply and a declined card), the §32 readback of 20271114240008 and 20271114240108, a scheduled stale-file sweep, a Team Hub record-link destination so PAIGE can link to a conversation, and the four rendered defects from the increment-3 evidence record.",
       "sources": [
@@ -1145,7 +1148,9 @@
         "docs/evidence/ui-delivery/exp08-team-hub-increment3.md",
         "docs/delivery/exp08-team-hub-increment4-paige-contract.md",
         "supabase/tests/exp08_team_hub_search.sql",
-        "supabase/functions/_shared/team-hub/chat.ts"
+        "supabase/functions/_shared/team-hub/chat.ts",
+        "docs/delivery/exp08-team-hub-agents-contract.md",
+        "supabase/tests/exp08_team_hub_agents_a1.sql"
       ]
     },
     {

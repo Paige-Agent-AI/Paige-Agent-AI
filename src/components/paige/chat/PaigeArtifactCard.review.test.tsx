@@ -62,7 +62,7 @@ describe('original artifact review context and return', () => {
   });
   it('keeps the decorative thumbnail out of keyboard interaction', async () => {
     state.load.mockResolvedValue(doc); await paint();
-    const thumbnail = host.querySelector('button[aria-label="Open Original review"]')!;
+    const thumbnail = host.querySelector('button[aria-label="Open Original review"]')!.parentElement!;
     expect(thumbnail.querySelector('[inert][aria-hidden="true"]')).toBeTruthy();
     expect(Array.from(thumbnail.querySelectorAll('button')).some(button => button.textContent?.includes('Print'))).toBe(false);
   });

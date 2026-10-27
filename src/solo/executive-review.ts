@@ -11,7 +11,7 @@ const AREAS: Record<string, { label: string; destination?: ReadLinkDestination; 
   clients: { label: "Clients", destination: "contacts", recommendation: "Review the client records and choose where to focus." },
   revenue: { label: "Revenue", recommendation: "Review the available financial sources." },
   communications: { label: "Conversations", recommendation: "Review communications readiness." },
-  email: { label: "Email", recommendation: "Review email readiness." },
+  email: { label: "Email", destination: "marketing", recommendation: "Inspect the original campaign sends and tracking limits in Marketing." },
   campaigns: { label: "Marketing intake", destination: "marketing", recommendation: "Review routing and processing in the existing Marketing records. No correction has run." },
   bookings: { label: "Bookings", recommendation: "Review the recorded bookings." },
   work: { label: "Delivery work", destination: "operations_work", recommendation: "Review the delivery records." },

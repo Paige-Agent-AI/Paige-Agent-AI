@@ -1,11 +1,12 @@
 // backfill-welcome — one-off sender for the branded Paige welcome email to the
 // accounts that were created before the welcome build shipped. Targets a FIXED
 // internal recipient list (the owner's own company accounts) and is gated by a
-// static token so it can't be drive-by triggered. Returns the Resend per-email
-// result so delivery is verifiable. Safe to remove once the backfill is done.
+// static token so it can't be drive-by triggered. Returns the SendGrid per-email
+// result (X-Message-Id as `id`) so delivery is verifiable. Safe to remove once the
+// backfill is done.
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { sendPlatformEmail } from "../_shared/email/platform-sendgrid.ts";
 
-const RESEND_KEY = Deno.env.get("RESEND_API_KEY") ?? "";
 const EMAIL_FROM =
   Deno.env.get("PLATFORM_DEFAULT_EMAIL_FROM") ?? "Paige Agent AI <hello@paigeagent.ai>";
 const PUBLIC_BASE = (Deno.env.get("PUBLIC_SITE_URL") ?? "https://paigeagent.ai").replace(/\/$/, "");
@@ -89,35 +90,32 @@ Deno.serve(async (req) => {
       status: 403, headers: { ...cors, "Content-Type": "application/json" },
     });
   }
-  if (!RESEND_KEY) {
-    return new Response(JSON.stringify({ ok: false, error: "no RESEND_API_KEY" }), {
-      status: 500, headers: { ...cors, "Content-Type": "application/json" },
-    });
-  }
 
   const results: Array<Record<string, unknown>> = [];
   for (const r of RECIPIENTS) {
-    try {
-      const res = await fetch("https://api.resend.com/emails", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${RESEND_KEY}`, "Content-Type": "application/json" },
-        body: JSON.stringify({
-          from: EMAIL_FROM,
-          to: [r.email],
-          reply_to: REPLY_TO,
-          subject: "Welcome to Paige — your workspace is ready to build",
-          html: welcomeHtml(r.name),
-          text: welcomeText(r.name),
-          headers: {
-            "List-Unsubscribe": `<${UNSUB_URL}>, <mailto:unsubscribe@paigeagent.ai>`,
-            "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
-          },
-        }),
+    const sent = await sendPlatformEmail({
+      from: EMAIL_FROM,
+      to: [r.email],
+      replyTo: REPLY_TO,
+      subject: "Welcome to Paige — your workspace is ready to build",
+      html: welcomeHtml(r.name),
+      text: welcomeText(r.name),
+      headers: {
+        "List-Unsubscribe": `<${UNSUB_URL}>, <mailto:unsubscribe@paigeagent.ai>`,
+        "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+      },
+    });
+    // No key: the transport answers before any request, so nothing was sent to anyone.
+    if (sent.error === "email_provider_not_configured") {
+      return new Response(JSON.stringify({ ok: false, error: sent.error }), {
+        status: 500, headers: { ...cors, "Content-Type": "application/json" },
       });
-      const jsonRes = await res.json().catch(() => ({}));
-      results.push({ email: r.email, status: res.status, ok: res.ok, id: (jsonRes as { id?: string }).id ?? null, error: res.ok ? null : jsonRes });
-    } catch (e) {
-      results.push({ email: r.email, ok: false, error: String(e) });
+    }
+    if (sent.status === 0) {
+      // No provider answer (unreachable/timeout) or a refused recipient/content.
+      results.push({ email: r.email, ok: false, error: sent.error, unconfirmed: sent.unconfirmed });
+    } else {
+      results.push({ email: r.email, status: sent.status, ok: sent.ok, id: sent.id, error: sent.ok ? null : sent.error });
     }
   }
 

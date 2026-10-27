@@ -1,0 +1,221 @@
+{
+  "source_head": "f837c594dbfd7846f414b268ac1666bbbc28e211",
+  "current_main": "ccce6f1f58168f26e227205f8f40607368c22141",
+  "scope": "Declared original viewer, shell, formatter and harness inputs only; not a complete transitive bundle graph. Synthetic UI read ports and native SQL proof are separate evidence legs. No customer operation or protected monthly retry.",
+  "inputs": [
+    {
+      "path": "src/components/admin/studio/DocumentPreview.tsx",
+      "sha256": "03511d34e9c2b52592f01bee91990b3e80731ae15b0261d46c7947607fb70d56",
+      "hash_mode": "text_lf",
+      "exact_current_main_blob": true
+    },
+    {
+      "path": "src/components/admin/studio/studio-document.ts",
+      "sha256": "945cee2cd9dffaec24db4e571ad71a65ca07638d25cb30938e66226ca958fb1b",
+      "hash_mode": "text_lf",
+      "exact_current_main_blob": true
+    },
+    {
+      "path": "src/components/admin/studio/studio-types.ts",
+      "sha256": "91e10916e4267b7edb63a0b988c01eaf5712ff3fba056a768fd6f0aa6a48bf05",
+      "hash_mode": "text_lf",
+      "exact_current_main_blob": true
+    },
+    {
+      "path": "src/components/paige/chat/PaigeArtifactCard.tsx",
+      "sha256": "7bce0f610af4d0edd215253005e926894a3badc76517d067c89bf7e49acddc15",
+      "hash_mode": "text_lf",
+      "exact_current_main_blob": true
+    },
+    {
+      "path": "src/components/ui/dialog.tsx",
+      "sha256": "9107e63b84d67eafb311c13cb52bc48f32ef3b36eddebe65365b10fdfbd9d2ca",
+      "hash_mode": "text_lf",
+      "exact_current_main_blob": true
+    },
+    {
+      "path": "src/components/tenant-shell/TenantCommandCenterShell.tsx",
+      "sha256": "7aaa24d867af1ac5e2222f3581ab361288ba54e6319e5c86db245875adb13e7c",
+      "hash_mode": "text_lf",
+      "exact_current_main_blob": true
+    },
+    {
+      "path": "src/components/tenant-shell/tenant-command-center-shell.css",
+      "sha256": "e9756f8cfc04a330748711d798afeda35cb8f02bd133914dfee9a5fe4b0bf355",
+      "hash_mode": "text_lf",
+      "exact_current_main_blob": true
+    },
+    {
+      "path": "src/index.css",
+      "sha256": "f410966e5d565745efff907262d232925f6132d4a71a414ca8146db131fbddcc",
+      "hash_mode": "text_lf",
+      "exact_current_main_blob": true
+    },
+    {
+      "path": "src/solo/solo-tokens.css",
+      "sha256": "77edc9fc35a6d2dab87318996fbb0dc6d80a0a04115d1757016c10da2c7b3197",
+      "hash_mode": "text_lf",
+      "exact_current_main_blob": true
+    },
+    {
+      "path": "scripts/live-drive/harness/executive-mount/index.html",
+      "sha256": "5ae436157119e1a702b87dbacb7122ca35cea9bf584f26ab499618fda7ff01eb",
+      "hash_mode": "text_lf",
+      "exact_current_main_blob": true
+    },
+    {
+      "path": "scripts/live-drive/harness/executive-mount/main.tsx",
+      "sha256": "5cc3429f4a35d2fd2ac488734cf2aa073e76a437ca5f7b9f2c87db91f52bf2cc",
+      "hash_mode": "text_lf",
+      "exact_current_main_blob": true
+    },
+    {
+      "path": "scripts/live-drive/harness/executive-mount/stubs.tsx",
+      "sha256": "65f0a15233e39a103e16a793dee7d8a8cfd18fd899b4d822d8dc3f9dfc397b86",
+      "hash_mode": "text_lf",
+      "exact_current_main_blob": true
+    },
+    {
+      "path": "scripts/live-drive/harness/executive-mount/vite.config.ts",
+      "sha256": "d727d65d9f4f0769854ff9bd442fb3dfb518da33fdf08841bcb4205ea6926f42",
+      "hash_mode": "text_lf",
+      "exact_current_main_blob": true
+    },
+    {
+      "path": "scripts/live-drive/harness/executive-mount/report-fixture.tsx",
+      "sha256": "f3de676a84c606e042f8f81a3fe1e324a1e859948f61244e55f7813a4962daed",
+      "hash_mode": "text_lf",
+      "exact_current_main_blob": true
+    },
+    {
+      "path": "supabase/functions/_shared/document-business-review-evidence.ts",
+      "sha256": "de7805d9c8f8ee5352b7802711adeabeaa88a640858f2b71f1db5dee4f1dde58",
+      "hash_mode": "text_lf",
+      "exact_current_main_blob": true
+    },
+    {
+      "path": "public/fonts/schibsted-grotesk/schibsted-grotesk-latin-wght-italic.woff2",
+      "sha256": "4c72510c1a185a7b7ae2c9e402fbe531a58b74c95f4d2450f4d58482213c65f7",
+      "hash_mode": "original_binary",
+      "exact_current_main_blob": true
+    },
+    {
+      "path": "public/fonts/schibsted-grotesk/schibsted-grotesk-latin-wght-normal.woff2",
+      "sha256": "4c8b93f431d462c696e12b9d6a033feb3394d36e66e781357c496b95d8a75e05",
+      "hash_mode": "original_binary",
+      "exact_current_main_blob": true
+    },
+    {
+      "path": "src/components/admin/studio/ArtifactStrip.tsx",
+      "sha256": "8c0a6483419ad8fca95d96bc617dcac125bb40b629c138f0d45190f7a13eb211",
+      "hash_mode": "text_lf",
+      "exact_current_main_blob": true
+    }
+  ],
+  "frames": [
+    {
+      "path": "1536-770-viewer.jpg",
+      "sha256": "5d04f3c86d4e248c7d4d9c7cd434f3a8b7826e74112aa6efb8a34bef8415503f",
+      "raster_width": 1535,
+      "raster_height": 770,
+      "css_width": 1536,
+      "css_height": 770
+    },
+    {
+      "path": "1536-770-closed.jpg",
+      "sha256": "071b3c7fa7c913b5de6bf8f4af74a529806e279701a9b2900f95f7ee7f1b52f7",
+      "raster_width": 1535,
+      "raster_height": 770,
+      "css_width": 1536,
+      "css_height": 770
+    },
+    {
+      "path": "1536-770-open.jpg",
+      "sha256": "118206c76a06f70dd96366dd16427273ce84282aa37d08c6c9f6bba81c571525",
+      "raster_width": 1535,
+      "raster_height": 770,
+      "css_width": 1536,
+      "css_height": 770
+    },
+    {
+      "path": "1366-768-closed.jpg",
+      "sha256": "28d9cbb0f074c79bc8c0d5353a0136ac2c01c860aecd4d363757bd8c33485a58",
+      "raster_width": 1366,
+      "raster_height": 768,
+      "css_width": 1366,
+      "css_height": 768
+    },
+    {
+      "path": "1366-768-open.jpg",
+      "sha256": "bbe7c7416a1fd34cac5fb5fe6b32e1e4337e200da844bd1b4ddb698b682e9afc",
+      "raster_width": 1366,
+      "raster_height": 768,
+      "css_width": 1366,
+      "css_height": 768
+    },
+    {
+      "path": "1024-768-closed.jpg",
+      "sha256": "85c51dfa8e5bf57c9447211b8988dba09be1c31a598ab3863bc63d98acbd01f1",
+      "raster_width": 1024,
+      "raster_height": 768,
+      "css_width": 1024,
+      "css_height": 768
+    },
+    {
+      "path": "1024-768-open.jpg",
+      "sha256": "f84a75c7b179c229a413919d0b697642e94088ba6a51a3f55d8d36aed144617d",
+      "raster_width": 1024,
+      "raster_height": 768,
+      "css_width": 1024,
+      "css_height": 768
+    },
+    {
+      "path": "900-1000-closed.jpg",
+      "sha256": "2413a938baa4df9a4a48430ad98a117702dbc7f265bec251bcb7a892aef79356",
+      "raster_width": 900,
+      "raster_height": 1000,
+      "css_width": 900,
+      "css_height": 1000
+    },
+    {
+      "path": "900-1000-open.jpg",
+      "sha256": "11a9f30d848eb0c8c95ea8741902d50db9349eb298bb10120b82315278e146c0",
+      "raster_width": 900,
+      "raster_height": 1000,
+      "css_width": 900,
+      "css_height": 1000
+    },
+    {
+      "path": "320-740-viewer.jpg",
+      "sha256": "c4a1a58a7866c925c3a4b6683b837ec55a134406e33333b84b7a80de54d159e6",
+      "raster_width": 320,
+      "raster_height": 740,
+      "css_width": 320,
+      "css_height": 740
+    },
+    {
+      "path": "320-740-page2.jpg",
+      "sha256": "e2899e6d780e61c77a708c64ae2e174a4f1097a0248bcd3786dd0c071decb635",
+      "raster_width": 320,
+      "raster_height": 740,
+      "css_width": 320,
+      "css_height": 740
+    },
+    {
+      "path": "390-844-denied.jpg",
+      "sha256": "9c63da6fd9e1cd28ac29126b496c48c95a1896c5137421e29b4216d24ea11178",
+      "raster_width": 390,
+      "raster_height": 843,
+      "css_width": 390,
+      "css_height": 844
+    },
+    {
+      "path": "390-844-denied-retry.jpg",
+      "sha256": "f4aec7b837aef2a6f193957dcfb99d32c3d8882eaf3eff2e85a266e348104fb5",
+      "raster_width": 390,
+      "raster_height": 843,
+      "css_width": 390,
+      "css_height": 844
+    }
+  ]
+}

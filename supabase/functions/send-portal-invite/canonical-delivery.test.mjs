@@ -60,28 +60,36 @@ function harness(config={}){
   };
   const query=new Proxy({}, {get(_,prop){if(prop==='then')return resolve=>resolve(result());if(prop==='maybeSingle')return async()=>result();return(...args)=>{filters.push([prop,...args]);return query}}});return query;
  }};
- const ctx=vm.createContext({Response,Request,Headers,URL,TextEncoder,TextDecoder,crypto:webcrypto,Date:ClockDate,AbortController,setTimeout,clearTimeout,
+ const ctx=vm.createContext({Response,Request,Headers,URL,TextEncoder,TextDecoder,crypto:webcrypto,Date:ClockDate,AbortController,AbortSignal,setTimeout,clearTimeout,
   console:{warn:()=>{},error:()=>{}},createClient:(_url,key)=>key==='controlled-anon'?caller:admin,
-  Deno:{env:{get:name=>({SUPABASE_URL:'https://sdk.invalid',SUPABASE_ANON_KEY:'controlled-anon',SUPABASE_SERVICE_ROLE_KEY:'controlled-service',RESEND_API_KEY:'controlled-provider',PLATFORM_DEFAULT_EMAIL_FROM:'no-reply@tests.invalid',PUBLIC_SITE_URL:'https://portal.invalid'}[name])},serve:fn=>ctx.handler=fn},
-  fetch:async(url,options)=>{effects.push({url,options});if(config.transport)throw Error('controlled transport failure');return new Response(JSON.stringify(config.providerBody??{id:'controlled-message'}),{status:config.providerStatus??200});}
+  Deno:{env:{get:name=>({SUPABASE_URL:'https://sdk.invalid',SUPABASE_ANON_KEY:'controlled-anon',SUPABASE_SERVICE_ROLE_KEY:'controlled-service',SENDGRID_MAIL_SEND_API_KEY:'controlled-provider',PLATFORM_DEFAULT_EMAIL_FROM:'no-reply@tests.invalid',PUBLIC_SITE_URL:'https://portal.invalid'}[name])},serve:fn=>ctx.handler=fn},
+  // SendGrid's Mail Send contract: 202, empty body, the id in X-Message-Id.
+  fetch:async(url,options)=>{effects.push({url,options});if(config.transport)throw Object.assign(Error('controlled transport failure'),{name:config.transport===true?'TypeError':config.transport});
+   const status=config.providerStatus??202;return new Response(null,{status,headers:status<300&&!config.noMessageId?{'x-message-id':config.messageId??'controlled-message'}:{}});}
  });
  vm.runInContext(code('../_shared/comms-provider-boundary.ts').replace(/\bexport /g,''),ctx);
  vm.runInContext(code('../_shared/pre-send-pipeline.ts').replace(/\bexport /g,''),ctx);
+ // The actual shared platform SendGrid transport the sender imports.
+ vm.runInContext('globalThis.sendPlatformEmail=(()=>{'+code('../_shared/email/platform-sendgrid.ts').replace(/\bexport /g,'')+';return sendPlatformEmail;})();',ctx);
  vm.runInContext('globalThis.sendCanonicalPortalInvite=(()=>{'+code('./canonical-delivery.ts').replace(/\bexport /g,'')+';return sendCanonicalPortalInvite;})();',ctx);
  vm.runInContext(code('./index.ts'),ctx);
- vm.runInContext('globalThis.senderOptions={key:RESEND_KEY,site:PUBLIC_BASE,defaultFrom:EMAIL_FROM,senderFrom,copy:inviteCopy,html:inviteHtml};',ctx);
+ vm.runInContext('globalThis.senderOptions={key:SENDGRID_KEY,site:PUBLIC_BASE,defaultFrom:EMAIL_FROM,senderFrom,copy:inviteCopy,html:inviteHtml};',ctx);
  return {calls,effects,reads,native,run:async(body=input,auth=true)=>{
   const req=new Request('https://handler.invalid',{method:'POST',headers:{'Content-Type':'application/json',...(auth?{Authorization:'Bearer controlled-user'}:{})},body:JSON.stringify(body)});
   const res=await ctx.sendCanonicalPortalInvite(req,body,ctx.senderOptions,{contactId:ids.contact,recipient:'customer@tests.invalid',proposalHash:'a'.repeat(64)});
   return {status:res.status,body:await res.json()};
  }};
 }
-test('Actual internal sender uses canonical recipient, existing tenant template, same provider key and durable receipt',async()=>{
+test('Actual internal sender uses canonical recipient, existing tenant template, the Mail Send key and durable receipt',async()=>{
  const h=harness(),result=await h.run();assert.equal(result.status,200);assert.equal(result.body.outcome,'provider_accepted');assert.equal(result.body.delivery_confirmed,false);
  assert.equal(result.body.receipt_id,ids.receipt);assert.equal(h.effects.length,1);
- const effect=h.effects[0],payload=JSON.parse(effect.options.body);assert.equal(effect.url,'https://api.resend.com/emails');assert.deepEqual(payload.to,['customer@tests.invalid']);
- assert.equal(payload.from,'Test tenant <no-reply@tests.invalid>');assert.equal(payload.reply_to,'help@tests.invalid');assert.match(payload.html,/PRIVATE_INVITATION_TOKEN/);
- assert.equal(effect.options.headers['Idempotency-Key'],`customer-portal-delivery/v1/${ids.tenant}/${ids.operation}`);
+ const effect=h.effects[0],payload=JSON.parse(effect.options.body);assert.equal(effect.url,'https://api.sendgrid.com/v3/mail/send');
+ assert.deepEqual(payload.personalizations,[{to:[{email:'customer@tests.invalid'}]}]);
+ // The tenant's display name over Paige's own verified domain; Reply-To stays the tenant's.
+ assert.deepEqual(payload.from,{email:'notifications@mail.paigeagent.ai',name:'Test tenant'});assert.deepEqual(Object.keys(payload.custom_args).sort(),['paige_message_id','paige_operation_id','paige_tenant_id']);assert.ok(Object.values(payload.custom_args).every(v=>typeof v==='string'&&v.length>0));assert.deepEqual(payload.reply_to,{email:'help@tests.invalid'});
+ assert.deepEqual(payload.content.map(c=>c.type),['text/plain','text/html']);assert.match(payload.content[1].value,/PRIVATE_INVITATION_TOKEN/);
+ assert.equal(effect.options.headers.Authorization,'Bearer controlled-provider');assert.ok(effect.options.signal);
+ assert.equal(h.calls.find(x=>x.name==='finalize_client_portal_invitation_delivery').args.p_message_id,'controlled-message');
  const claim=h.calls.find(x=>x.name==='claim_client_portal_invitation_delivery'),final=h.calls.find(x=>x.name==='finalize_client_portal_invitation_delivery');
  assert.match(claim.args.p_payload_digest,/^[0-9a-f]{64}$/);assert.equal(final.args.p_payload_digest,claim.args.p_payload_digest);
  for(const forbidden of ['PRIVATE_INVITATION_TOKEN','join_url','claim_id','provider_key','payload_digest'])assert(!JSON.stringify(result.body).includes(forbidden));
@@ -92,11 +100,14 @@ for(const [label,config,auth]of [['no bearer',{},false],['no Auth',{noAuth:true}
 for(const disposition of ['busy','held'])test(disposition+' never grants a second provider request',async()=>{const h=harness({disposition}),r=await h.run();assert.equal(r.body.ok,false);assert.equal(h.effects.length,0)});
 for(const outcome of ['provider_accepted','failed','refused'])test('Known '+outcome+' is read back without provider/privileged data access',async()=>{const h=harness({saved:outcome}),r=await h.run();assert.equal(r.body.outcome,outcome);assert.equal(r.body.replayed,true);assert.equal(h.effects.length,0);assert.equal(h.reads.length,0)});
 for(const config of [{switchAt:2},{revokeAt:2},{dndAt:2}])test('Changed pre-egress scope/policy never dispatches '+JSON.stringify(config),async()=>{const h=harness(config),r=await h.run();assert.equal(r.body.ok,false);assert.equal(h.effects.length,0);assert.equal(h.calls.find(x=>x.name==='finalize_client_portal_invitation_delivery').args.p_outcome,'refused')});
-for(const config of [{transport:true},{providerStatus:503},{providerBody:{id:'bad/message'}},{providerBody:{unexpected:true}},{finalizeError:true}])test('Uncertain provider/storage result remains unknown '+JSON.stringify(config),async()=>{const h=harness(config),r=await h.run();assert.equal(r.body.ok,false);assert.equal(r.body.outcome,'outcome_unknown');assert.equal(h.effects.length,1)});
+for(const config of [{transport:true},{transport:'TimeoutError'},{providerStatus:503},{providerStatus:500},{messageId:'bad/message'},{noMessageId:true},{finalizeError:true}])test('Uncertain provider/storage result remains unknown '+JSON.stringify(config),async()=>{const h=harness(config),r=await h.run();assert.equal(r.body.ok,false);assert.equal(r.body.outcome,'outcome_unknown');assert.equal(h.effects.length,1)});
+for(const providerStatus of [400,401,403,413,429])test('A definitive provider refusal '+providerStatus+' is recorded failed, once',async()=>{const h=harness({providerStatus}),r=await h.run();assert.equal(r.body.outcome,'failed');assert.equal(r.status,422);assert.equal(h.effects.length,1);assert.equal(h.calls.find(x=>x.name==='finalize_client_portal_invitation_delivery').args.p_message_id,null)});
 test('An uncertain claim is not retried or reported as failed',async()=>{const h=harness({claimError:true}),r=await h.run();assert.equal(r.body.outcome,'outcome_unknown');assert.equal(h.effects.length,0)});
-test('Native recovery uses the same key and is explicitly effectful',async()=>{const h=harness({saved:'outcome_unknown',disposition:'reconcile'}),r=await h.run();assert.equal(r.body.replayed,true);assert.equal(h.effects.length,1);assert.equal(h.effects[0].options.headers['Idempotency-Key'],`customer-portal-delivery/v1/${ids.tenant}/${ids.operation}`)});
+// SendGrid has no idempotent replay: a recovery POST could deliver the invitation twice.
+for(const saved of ['outcome_unknown','pending'])test('Native recovery of a '+saved+' attempt never sends again and stays unknown',async()=>{const h=harness({saved,disposition:'reconcile'}),r=await h.run();assert.equal(r.status,503);assert.equal(r.body.outcome,'outcome_unknown');assert.equal(r.body.replayed,true);assert.equal(h.effects.length,0);
+ assert.deepEqual(h.calls.filter(x=>x.name==='finalize_client_portal_invitation_delivery').map(x=>x.args.p_outcome),['outcome_unknown'])});
 test('A revoked invitation stops recovery without declaring the original uncertain send refused',async()=>{const h=harness({saved:'outcome_unknown',disposition:'reconcile',revokeAt:2}),r=await h.run();assert.equal(r.body.outcome,'outcome_unknown');assert.equal(r.body.replayed,true);assert.equal(h.effects.length,0)});
-test('A rejected provider recovery preserves original uncertainty',async()=>{const h=harness({saved:'outcome_unknown',disposition:'reconcile',providerStatus:400}),r=await h.run();assert.equal(r.body.outcome,'outcome_unknown');assert.equal(h.effects.length,1)});
+test('A recovery never reaches the provider, whatever it would have answered',async()=>{const h=harness({saved:'outcome_unknown',disposition:'reconcile',providerStatus:400}),r=await h.run();assert.equal(r.body.outcome,'outcome_unknown');assert.equal(h.effects.length,0)});
 for(const body of [{...input,email:'changed@tests.invalid'},{...input,approved:true},{...input,token:'FORBIDDEN'},{...input,invitation_id:'invalid'}])test('Request cannot override authority/recipient '+Object.keys(body).join(','),async()=>{const h=harness(),r=await h.run(body);assert.equal(r.status,400);assert.equal(h.calls.length,0);assert.equal(h.effects.length,0)});
 
 // Preserve the real [start,end) policy; fixing the test clock must not turn a

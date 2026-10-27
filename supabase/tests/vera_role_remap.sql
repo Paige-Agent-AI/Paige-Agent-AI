@@ -6,7 +6,6 @@ BEGIN IF v IS DISTINCT FROM true THEN RAISE EXCEPTION 'VERA_PROOF_FAILED: %',lab
 RAISE NOTICE 'PASS: %',label; END $$;
 SELECT pg_temp.check_vera((SELECT count(*)=1 FROM public.paige_subagents WHERE slug='vera' AND tenant_id IS NULL),'one existing global VERA');
 SELECT pg_temp.check_vera((SELECT role='VP Intelligence, Finance & Risk' AND domain='intelligence_finance_risk' FROM public.paige_subagents WHERE slug='vera'),'fresh migrated remit');
-CREATE TEMP TABLE vera_protected AS SELECT to_jsonb(s)-ARRAY['domain','role','description','goal','backstory','version','updated_at'] AS fields FROM public.paige_subagents s WHERE slug='vera';
 CREATE TEMP TABLE vera_other AS SELECT slug,to_jsonb(s) AS fields FROM public.paige_subagents s WHERE slug<>'vera';
 CREATE TEMP TABLE vera_acl AS SELECT relacl,relrowsecurity,relforcerowsecurity FROM pg_class WHERE oid='public.paige_subagents'::regclass;
 CREATE FUNCTION pg_temp.restore_vera_seed() RETURNS void LANGUAGE plpgsql AS $$
@@ -19,6 +18,10 @@ BEGIN
   WHERE slug='vera';
 END $$;
 SELECT pg_temp.restore_vera_seed();
+-- The protected snapshot is taken from the restored seed, not the fresh chain: later migrations
+-- (EXP08 Team Hub agents roster, 20271117010108) legitimately add config keys to the platform row,
+-- and what this proof asserts is that THIS migration leaves every protected field as it found it.
+CREATE TEMP TABLE vera_protected AS SELECT to_jsonb(s)-ARRAY['domain','role','description','goal','backstory','version','updated_at'] AS fields FROM public.paige_subagents s WHERE slug='vera';
 \ir ../migrations/20271112140000_e2_vera_intelligence_role.sql
 SELECT pg_temp.check_vera((SELECT role='VP Intelligence, Finance & Risk' AND domain='intelligence_finance_risk' AND version=2 FROM public.paige_subagents WHERE slug='vera'),'guarded existing seed corrected');
 SELECT pg_temp.check_vera((SELECT (to_jsonb(s)-ARRAY['domain','role','description','goal','backstory','version','updated_at'])=p.fields FROM public.paige_subagents s CROSS JOIN vera_protected p WHERE s.slug='vera'),'identity permissions runtime caps and parent unchanged');

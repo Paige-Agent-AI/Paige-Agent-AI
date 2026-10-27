@@ -4,6 +4,7 @@ import { Link, useLocation } from "react-router-dom";
 import { TEST_BUSINESS_REVIEW, TEST_REVIEW_TENANT } from "@/test/fixtures/business-review";
 import { SECOND_REVIEW_TENANT, withTargetAndFinanceFixtures } from "./slice-fixtures";
 import { reportFixtureFrom } from "./report-fixture";
+import { withEmailFixture } from "./email-fixture";
 export { businessDateLabel, businessCalendarHeldNote } from "@/solo/data/useBusinessTimeZone";
 const Presence = createContext({ railExpanded: false, expandRail: () => {}, collapseRail: () => {} });
 export function HarnessPresence({ children }: { children: React.ReactNode }) {
@@ -27,7 +28,7 @@ export function useBusinessReview() {
   if (p.get("workspace") === "b") { input.tenant_id = SECOND_REVIEW_TENANT; input.domains.clients.data!.headline = [{ ...input.domains.clients.data!.headline[0], value: 2 }]; }
   const snapshot = withTargetAndFinanceFixtures(input, variant ?? "ready", ["finance", "catalogue"].includes(import.meta.env.E2_HARNESS_SLICE));
   if (variant === "unavailable") for (const d of snapshot.requested) snapshot.domains[d] = { status: "degraded", data: null, reason: "scope_changed" };
-  return { state: "ready", snapshot, refresh: noop };
+  return { state: "ready", snapshot: import.meta.env.E2_HARNESS_SLICE === "email" ? withEmailFixture(snapshot, variant ?? "ready") : snapshot, refresh: noop };
 }
 export function useSoloPendingActions() {
   const state = useHarnessParams().get("state");
@@ -81,11 +82,12 @@ export const PaigeAIChat = () => <p>Conversation is synthetic in this walkthroug
 
 // Synthetic public registry coverage only. This never registers or executes a skill.
 export function useSoloSkills() {
-  const state = useHarnessParams().get("state");
+  const params = useHarnessParams(), state = params.get("state");
   const skills = state === "empty" || state === "error" || state === "loading" ? [] : [
     { slug: "weekly_business_review", n: "Weekly Business Review", d: "Review the available business evidence and its gaps. This synthetic fixture grants no runtime access.", catalogueCoverage: { version: 1, state: "limited" } },
     { slug: "cohort_analysis", n: "Cohort Analysis Read", d: "Cohort comparisons need authoritative acquisition and retention evidence. These are synthetic catalogue inputs.", catalogueCoverage: { version: 1, state: "coming_soon" } },
     { slug: "monthly_qbr_draft", n: "Monthly Business Review Draft", d: "A filed review document and later retrieval require their own verified outcome.", catalogueCoverage: { version: 1, state: "unverified" } },
+    ...(params.get("email") === "1" ? [{ slug: "engagement_read", n: "Engagement Read", d: "Reviews original campaign email send counts and tracked open/click signals when permitted. Tracking excludes own-mail sends; image loads are not read receipts. Rates, retention, content and audience performance remain unavailable here. Customer verification is still owed.", catalogueCoverage: { version: 1, state: "unverified" } }] : []),
   ].map(row => ({ ...row, on: true }));
   return { skills, loading: state === "loading", error: state === "error" ? "Synthetic catalogue refusal" : null, empty: state === "empty", refresh: noop };
 }

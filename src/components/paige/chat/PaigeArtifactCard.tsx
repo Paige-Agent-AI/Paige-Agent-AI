@@ -232,15 +232,17 @@ export function PaigeArtifactCard({ artifact, tenantId, onSend, className }: Pai
       transition={{ type: "spring", stiffness: 400, damping: 30 }}
     >
       <div className="flex gap-3 p-3">
-        {/* The tile doubles as an Open affordance. Indigo focus ring (never gold, §11). */}
-        <button
-          type="button"
-          onClick={openPreview}
-          aria-label={`Open ${artifact.title}`}
-          className="relative h-24 w-20 shrink-0 overflow-hidden rounded-lg border border-border bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card"
-        >
-          {thumb}
-        </button>
+        {/* Keep the real inert preview beside the native Open target: a paged
+            preview contains its own controls and must not nest inside a button. */}
+        <div className="relative h-24 w-20 shrink-0">
+          <div className="absolute inset-0 overflow-hidden rounded-lg border border-border bg-muted/30">{thumb}</div>
+          <button
+            type="button"
+            onClick={openPreview}
+            aria-label={`Open ${artifact.title}`}
+            className="absolute inset-0 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card"
+          />
+        </div>
 
         <div className="flex min-w-0 flex-1 flex-col">
           <p className="truncate text-sm font-medium text-foreground" title={artifact.title}>

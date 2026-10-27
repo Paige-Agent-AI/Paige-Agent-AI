@@ -40,6 +40,7 @@ import { createPaymentsSnapshotAdapter } from "./adapters/payments.ts";
 import { createSalesPipelineSnapshotAdapter } from "./adapters/sales-pipeline.ts";
 import { createGamePlanSnapshotAdapter } from "./adapters/game-plan.ts";
 import { createMarketingIntakeSnapshotAdapter } from "./adapters/marketing-intake.ts";
+import { createEmailCampaignSnapshotAdapter } from "./adapters/email-campaigns.ts";
 import { createFinanceSnapshotAdapter, type BusinessReviewCaller } from './adapters/finance.ts';
 
 // Finance extends this same composition with its existing caller-JWT source
@@ -192,6 +193,7 @@ export async function composeBusinessReview(
     createOperationsSnapshotAdapter(scope.caller, { tenantId }, clock),
     createClientsSnapshotAdapter(scope.caller, { tenantId }, clock),
     createMarketingIntakeSnapshotAdapter(scope.caller, { tenantId }, clock),
+    createEmailCampaignSnapshotAdapter(scope.caller, { tenantId }, clock),
     createGamePlanSnapshotAdapter(scope.caller, { tenantId }, clock),
     ...(opts?.financeEvidence === false ? [] : [createFinanceSnapshotAdapter(scope.caller, { tenantId }, clock)]),
   ];

@@ -8,14 +8,16 @@
 // we create the user with email_confirm:true via the service role so signup
 // works immediately; the client then signs in and is routed into onboarding.
 //
-// The sign-up email is a WELCOME (not a verification link), sent through Resend
-// with the same sender + brand styling the booking flow uses (§6 continuity).
+// The sign-up email is a WELCOME (not a verification link), sent through the
+// platform SendGrid transport with the same sender + brand styling the booking
+// flow uses (§6 continuity).
 // It's fire-and-forget: a mail failure never blocks account creation.
 //
-// To restore real email verification later: wire Auth SMTP (Resend), drop the
+// To restore real email verification later: wire Auth SMTP (SendGrid), drop the
 // email_confirm flag, and let auth.signUp send the confirmation link again.
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { commsProviderExecutionAllowed } from "../_shared/comms-provider-boundary.ts";
+import { sendPlatformEmail } from "../_shared/email/platform-sendgrid.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -29,8 +31,7 @@ function json(data: Record<string, unknown>, status = 200): Response {
   });
 }
 
-// --- Welcome email (Resend) -------------------------------------------------
-const RESEND_KEY = Deno.env.get("RESEND_API_KEY") ?? "";
+// --- Welcome email (SendGrid) -----------------------------------------------
 const EMAIL_FROM =
   Deno.env.get("PLATFORM_DEFAULT_EMAIL_FROM") ?? "Paige Agent AI <hello@paigeagent.ai>";
 const PUBLIC_BASE = (Deno.env.get("PUBLIC_SITE_URL") ?? "https://paigeagent.ai").replace(/\/$/, "");
@@ -95,25 +96,22 @@ function welcomeText(firstName: string): string {
 }
 
 async function sendWelcome(to: string, firstName: string): Promise<void> {
-  if (!RESEND_KEY) return;
+  // The transport never throws: no key answers email_provider_not_configured and
+  // any provider failure is a returned result. Either way, email never blocks signup.
   try {
-    await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${RESEND_KEY}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        from: EMAIL_FROM,
-        to: [to],
-        reply_to: REPLY_TO,
-        subject: "Welcome to Paige — your workspace is ready to build",
-        html: welcomeHtml(firstName),
-        text: welcomeText(firstName),
-        // Deliverability: a text/plain part + List-Unsubscribe are two of the
-        // biggest inbox-placement signals for transactional mail.
-        headers: {
-          "List-Unsubscribe": `<${UNSUB_URL}>, <mailto:unsubscribe@paigeagent.ai>`,
-          "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
-        },
-      }),
+    await sendPlatformEmail({
+      from: EMAIL_FROM,
+      to: [to],
+      replyTo: REPLY_TO,
+      subject: "Welcome to Paige — your workspace is ready to build",
+      html: welcomeHtml(firstName),
+      text: welcomeText(firstName),
+      // Deliverability: a text/plain part + List-Unsubscribe are two of the
+      // biggest inbox-placement signals for transactional mail.
+      headers: {
+        "List-Unsubscribe": `<${UNSUB_URL}>, <mailto:unsubscribe@paigeagent.ai>`,
+        "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+      },
     });
   } catch {
     /* email never blocks signup */
@@ -222,7 +220,7 @@ Deno.serve(async (req) => {
     }
   }
 
-  // Sign-up email — the platform welcome, sent through Resend. Fire-and-forget.
+  // Sign-up email — the platform welcome, sent through SendGrid. Fire-and-forget.
   // Skipped for a client-invite signup (they got the tenant's branded invite).
   if (!suppressWelcome && await commsProviderExecutionAllowed(admin, { actorUserId: data.user?.id ?? null, recipientEmail: email })) {
     await sendWelcome(email, (fullName ?? "").split(/\s+/)[0] ?? "");

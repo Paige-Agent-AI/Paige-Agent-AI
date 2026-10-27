@@ -46,19 +46,19 @@ describe("allowanceNoticeBand — the 50/80/100 notices", () => {
   });
 });
 
-describe("decidePlatformSpendGuard — the enforced platform cap's IO posture", () => {
-  it("blocks when the marginal spend crosses the platform ceiling", () => {
+describe("decidePlatformSpendGuard — informational totals (billing supersession 2026-10-27)", () => {
+  it("NEVER blocks: totals past any former ceiling still allow, riding along for alerting", () => {
     const v = decidePlatformSpendGuard({ platformAccruedUsd: 24.9, platformCeilingUsd: 25, estimatedCostUsd: 0.2 });
-    expect(v.ok).toBe(false);
-    expect(v.explanation).toMatch(/Platform media spend is paused/);
+    expect(v.ok).toBe(true);
+    expect(v.platformAccruedUsd).toBe(24.9);
   });
-  it("allows within the ceiling", () => {
-    expect(decidePlatformSpendGuard({ platformAccruedUsd: 1, platformCeilingUsd: 25, estimatedCostUsd: 0.04 })).toEqual({ ok: true });
-  });
-  it("degrades open on an unreadable accrual — a backstop, not the customer gate (documented posture)", () => {
-    expect(decidePlatformSpendGuard({ platformAccruedUsd: null, platformCeilingUsd: 25, estimatedCostUsd: 5 })).toEqual({ ok: true });
+  it("an unreadable accrual also allows (the total renders as unknown)", () => {
+    const v = decidePlatformSpendGuard({ platformAccruedUsd: null, platformCeilingUsd: 25, estimatedCostUsd: 0.2 });
+    expect(v.ok).toBe(true);
+    expect(v.platformAccruedUsd).toBeNull();
   });
 });
+
 
 describe("MEDIA_CREDIT_PACKS — the >=20% contribution-margin product rule", () => {
   const PROCESSING_PCT = 0.029;

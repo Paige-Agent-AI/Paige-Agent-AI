@@ -2,7 +2,7 @@
 // 2026-09-12; implements docs/VIBE-MEDIA-PROVIDER-DUE-DILIGENCE.md).
 //
 // THE SEAM. One front door for every governed media generation: estimate →
-// approval boundary → budget ladder → idempotent durable job → provider
+// approval boundary → informational spend totals (billing supersession 2026-10-27) → idempotent durable job → provider
 // dispatch → (webhook | sweeper) completion → asset in Paige Storage → library
 // row with rich media metadata → Rail receipt. fal.ai is the primary provider;
 // the four existing image providers remain reachable through their PROVEN
@@ -387,18 +387,12 @@ serve(async (req: Request) => {
         return json({ error: "Image editing needs at least one reference asset." }, 400);
       }
 
-      // Video gates: flag → daily cap → provider config (fail closed, in order).
-      if (entry.mode === "video") {
-        if (!config.videoEnabled) {
-          return json({ error: "Video generation is switched off during the controlled beta.", unavailable: "video" }, 403);
-        }
-        const { data: done } = await admin.rpc("media_video_completed_today", { _tenant: tenantId });
-        if ((done ?? 0) >= config.videoDailyLimit) {
-          return json({
-            error: `This workspace already completed ${done} of its ${config.videoDailyLimit} daily video job${config.videoDailyLimit > 1 ? "s" : ""}. The limit resets at UTC midnight.`,
-            limit_reached: true,
-          }, 429);
-        }
+      // Video gate: the FEATURE FLAG only (a product switch, not money). The
+      // daily video-job allowance was an arbitrary send-allowance stop and is
+      // REMOVED by the owner billing supersession (2026-10-27): usage bills the
+      // tenant through the canonical meter instead of stopping.
+      if (entry.mode === "video" && !config.videoEnabled) {
+        return json({ error: "Video generation is switched off during the controlled beta.", unavailable: "video" }, 403);
       }
 
       // fal spend gates: secret + the owner's prepaid provider ceiling.
@@ -409,18 +403,14 @@ serve(async (req: Request) => {
             needs_config: true,
           });
         }
-        if (config.providerCeilingUsd === null) {
-          return json({
-            error: "Provider spend is gated until the owner sets the prepaid provider ceiling (media_provider_ceiling_usd).",
-            needs_ceiling: true,
-          });
-        }
       }
 
       const estimate = falAdapter.estimateCost({ mode: entry.mode, model: entry.id, videoSeconds })
         ?? { estimatedCostUsd: entry.estCostPerUnitUsd, basis: "estimate: curated price table", unit: entry.unit as "image" | "second" };
 
-      // Budget ladder (media: explicit ceiling + fail-closed on unknown).
+      // Spend totals are INFORMATIONAL (owner billing supersession 2026-10-27):
+      // the ladder never denies — the job proceeds and bills the tenant through
+      // the canonical usage meter. Totals stay visible in the status read below.
       const accrued = await readMediaAccrual((n: string, a: Record<string, unknown>) => admin.rpc(n, a), tenantId);
       const budget = decideMediaBudget({
         accruedUsd: accrued,
@@ -429,16 +419,6 @@ serve(async (req: Request) => {
         tier: entry.tier,
         estimatedCostUsd: estimate.estimatedCostUsd,
       });
-      if (budget.verdict === "deny") {
-        await recordCapabilityRun(admin, {
-          tenantId,
-          actorId: user.id,
-          capabilityKey: entry.mode === "video" ? "vibe_media_video" : "vibe_media_image",
-          outcome: "capability_refused",
-          detail: { reason: budget.gate, explanation: budget.explanation, model: entry.id },
-        });
-        return json({ error: budget.explanation, budget_denied: true, gate: budget.gate }, 429);
-      }
 
       const policy = resolveApprovalPolicy({
         mode: entry.mode,
@@ -529,7 +509,7 @@ serve(async (req: Request) => {
           approval_state: policy.approvalRequired ? "pending" : "not_required",
           idempotency_key: idempotencyKey,
           estimated_cost_usd: estimate.estimatedCostUsd,
-          budget_decision: { ...budget.decision, policy: policy.reason },
+          budget_decision: { ...budget.decision, policy: policy.reason, spend: budget.spend, post_supersession: "informational-only" },
           video_seconds: entry.mode === "video" ? (videoSeconds ?? 5) : null,
           prompt_hash: promptHash,
         })
@@ -588,26 +568,11 @@ serve(async (req: Request) => {
         return json({ error: "This approval didn't come from the approval card. Open it again and approve from there.", approval_required: true }, 400);
       }
 
-      // Approve: re-check the daily video cap at approval time (M6) and the
-      // budget (the world may have changed since the estimate).
-      if (job.mode === "video") {
-        const { data: done } = await admin.rpc("media_video_completed_today", { _tenant: tenantId });
-        if ((done ?? 0) >= config.videoDailyLimit) {
-          return json({ error: `Daily video limit already reached (${done}/${config.videoDailyLimit}); resets at UTC midnight.`, limit_reached: true }, 429);
-        }
-      }
-      const accrued = await readMediaAccrual((n: string, a: Record<string, unknown>) => admin.rpc(n, a), tenantId);
-      const budget = decideMediaBudget({
-        accruedUsd: accrued,
-        ceilingUsd,
-        mode: job.mode,
-        tier: (job.params?.quality_tier === "premium" ? "premium" : "standard"),
-        estimatedCostUsd: job.estimated_cost_usd ?? 0,
-      });
-      if (budget.verdict === "deny") return json({ error: budget.explanation, budget_denied: true, gate: budget.gate }, 429);
+      // Approve: the monetary rechecks (daily video cap, budget ceiling) are
+      // REMOVED by the owner billing supersession (2026-10-27) — spend bills
+      // the tenant through the canonical meter instead of refusing the approval.
 
-      // Redeem the proposal ONCE — after the rechecks, so a limit or budget refusal does not spend
-      // the person's approval. Bound to the caller, the tenant, this job and its estimate.
+      // Redeem the proposal ONCE — bound to the caller, the tenant, this job and its estimate. Bound to the caller, the tenant, this job and its estimate.
       const claim = await claimMediaProposal(admin, {
         job: job as unknown as MediaApprovalJob,
         callerId: user.id,
@@ -739,30 +704,30 @@ async function dispatchJob(
     return json({ job, dispatched: false, note: "Job is not dispatchable (already claimed, awaiting approval, or terminal)." });
   }
 
-  // ── PLATFORM SPEND GUARD (owner correction 2026-09-12): the enforced
-  // platform-wide daily cap, actually metered (media_spend_today_all). ──
-  const platformAccrued = await readPlatformMediaAccrual((n: string, a: Record<string, unknown>) => admin.rpc(n, a));
-  const guard = decidePlatformSpendGuard({
-    platformAccruedUsd: platformAccrued,
-    platformCeilingUsd: config.platformSpendCeilingUsd,
-    estimatedCostUsd: Number(job.estimated_cost_usd) || 0,
-  });
-  if (!guard.ok) {
-    await failMediaJob(admin, { ...job, attempts: claimed.attempts } as never, guard.explanation ?? "platform media spend guard");
-    return json({ job: { ...job, state: "failed", error: guard.explanation }, platform_guard: true, error: guard.explanation }, 429);
-  }
+  // ── PLATFORM SPEND TOTALS (billing supersession 2026-10-27): informational
+  // only — the platform-wide accrual feeds alerts/display; it never pauses a
+  // job. The 2026-09-12 enforced daily guard is superseded. ──
+  void (async () => {
+    const platformAccrued = await readPlatformMediaAccrual((n: string, a: Record<string, unknown>) => admin.rpc(n, a));
+    void decidePlatformSpendGuard({
+      platformAccruedUsd: platformAccrued,
+      platformCeilingUsd: config.platformSpendCeilingUsd,
+      estimatedCostUsd: Number(job.estimated_cost_usd) || 0,
+    });
+  })();
 
-  // ── CREDIT GATE: reserve the estimate BEFORE any provider call (owner rule:
-  // no unbounded overage, no provider-cost leakage). Insufficient credits fail
-  // the job truthfully with the balance — never a silent negative. ──
+  // ── PREPAID CREDITS, BEST-EFFORT (billing supersession 2026-10-27): any
+  // remaining credit balance is reserved FIRST as already-paid value, so it is
+  // never double-billed. But an insufficient (or unreadable) balance NO LONGER
+  /// stops the job — the uncovered cost is attributed to the tenant at settle
+  /// through platform_usage_events and reaches collection from there. ──
   const creditsNeeded = estimateCredits(Number(job.estimated_cost_usd) || 0, config.creditUsd);
   const hold = await holdMediaCredits((n: string, a: Record<string, unknown>) => admin.rpc(n, a), String(job.tenant_id), jobId, creditsNeeded, Number(job.estimated_cost_usd) || undefined);
   if (!hold.ok) {
-    const message = hold.insufficient
-      ? `Media credits needed: this job requires about ${creditsNeeded} credits and ${hold.balance ?? 0} remain in this workspace's allowance. Add Media Credits in Settings → Billing to continue.`
-      : `Media credit reservation failed: ${hold.error ?? "unknown"}. The job was not sent.`;
-    await failMediaJob(admin, { ...job, attempts: claimed.attempts } as never, message);
-    return json({ job: { ...job, state: "failed", error: message }, credits_insufficient: hold.insufficient === true, error: message }, 402);
+    console.warn(
+      "[media] no credit hold placed (job proceeds, uncovered cost meters at settle):",
+      hold.insufficient ? `insufficient (${hold.balance ?? 0} of ${creditsNeeded})` : `error ${hold.error ?? "unknown"}`,
+    );
   }
 
   if (provider === "fal") {

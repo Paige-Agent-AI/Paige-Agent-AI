@@ -1,4 +1,5 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { ownerRefusal } from "./owner-refusals.ts";
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -204,6 +205,11 @@ Deno.serve(async (req) => {
       emailed,
     });
   } catch (error) {
+    // EXP08 owner invitations: a refusal the database raised on purpose, known by its HINT code. Its
+    // sentence names the business or the account holder, so it cannot be on the equality list below;
+    // without this it reached the person as a 500 "tell us" (review S5).
+    const owner = ownerRefusal(error);
+    if (owner) return json({ ok: false, error: owner.message }, owner.status);
     const message = error instanceof Error ? error.message : "Team invitation failed";
     // An authority refusal is a 403, not a generic 400. `was not named` is listed explicitly: it is
     // an authorization refusal from the same resolver, but its wording contains none of the older

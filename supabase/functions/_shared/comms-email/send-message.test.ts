@@ -13,7 +13,7 @@ import { transpileModule, ModuleKind, ScriptTarget } from "typescript";
 import { describe, it, expect } from "vitest";
 import { senderDisplayName } from "../email/sender-display-name.ts";
 import { isPreparedAgreementMessage } from "../agreements/prepared-signature-message.ts";
-import { platformFrom } from "../email/platform-sendgrid.ts";
+import { tenantFrom, PLATFORM_FROM_DOMAIN } from "../email/platform-sendgrid.ts";
 
 const OP = "22222222-2222-4222-8222-222222222222";
 const MSG = "33333333-3333-4333-8333-333333333333";
@@ -152,7 +152,7 @@ function setup(options: Options = {}) {
     });
   };
 
-  const scope = { decideContentRead, commsProviderExecutionAllowed, COMMS_PROVIDER_EXECUTION_DISABLED,isPreparedAgreementMessage, platformFrom,
+  const scope = { decideContentRead, commsProviderExecutionAllowed, COMMS_PROVIDER_EXECUTION_DISABLED,isPreparedAgreementMessage, tenantFrom, PLATFORM_FROM_DOMAIN,
     PAIGE_APP_ORIGIN: "https://app.example.test",
     Deno: {
       // A RESEND_API_KEY is present as a decoy: nothing may use it (Resend is never called).

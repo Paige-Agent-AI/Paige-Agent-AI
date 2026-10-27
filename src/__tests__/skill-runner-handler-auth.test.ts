@@ -29,6 +29,10 @@ function fixture(options: {
   claim?: boolean;
   /** The SendGrid answer for the one transport request (a stub; nothing leaves the process). */
   provider?: () => Response;
+  /** The sender frozen into the approved proposal (default: the business's own-domain sender). */
+  fromHeader?: string;
+  /** This business's active managed identity local part (tenant_email_identities), if any. */
+  ownIdentity?: string;
 } = {}) {
   const writes: Array<{ table: string; operation: string; values: Row; filters: Row }> = [];
   const reads: Array<{ table: string; filters: Row }> = [];
@@ -42,7 +46,7 @@ function fixture(options: {
   let handler: ((req: Request) => Promise<Response>) | undefined;
   const providerCalls: Array<{ url: string; headers: Record<string, string>; body: Row }> = [];
   const claimedArgs = {
-    recipient: "client@example.invalid", fromHeader: "Fixture Business <sender@example.invalid>",
+    recipient: "client@example.invalid", fromHeader: options.fromHeader ?? "Fixture Business <sender@example.invalid>",
     subject: "Your summary from Paige", html: "<p>Approved draft</p>", doc_type: "summary",
     contact_id: "test-contact-a", content_sha256: "a".repeat(64),
   };
@@ -73,6 +77,9 @@ function fixture(options: {
         return { data: filters.user_id === "test-owner-a"
           ? { active_tenant_id: options.noWorkspace ? null
             : options.workspaceChangedAfterFirstCheck && workspaceChecks > 1 ? "test-tenant-b" : "test-tenant-a" } : null, error: null };
+      }
+      if (table === "tenant_email_identities") {
+        return { data: filters.tenant_id === "test-tenant-a" && options.ownIdentity ? { local_part: options.ownIdentity, status: "active" } : null, error: null };
       }
       if (table === "clients") return { data: contacts.find(row => row.id === filters.id && row.tenant_id === filters.tenant_id) ?? null, error: null };
       throw new Error(`Unexpected fixture read ${table}`);
@@ -287,6 +294,28 @@ describe("skill-runner approved send through the SendGrid transport (stubbed net
     expect(runRow(f)).toMatchObject({ status: "succeeded", outputs: { resend_id: "sgFixture1" } });
     expect(f.writes.some(w => w.table === "communication_log")).toBe(true);
     expect(f.network).toBe(0);
+  });
+
+  it("keeps THIS business's own managed address as the From, with no Reply-To rewrite", async () => {
+    const f = fixture({ claim: true, fromHeader: "Fixture Business <fixture-biz@mail.paigeagent.ai>", ownIdentity: "fixture-biz",
+      provider: () => new Response(null, { status: 202, headers: { "X-Message-Id": "sgOwn" } }) });
+    const result = await f.invoke("test-owner-jwt", { confirm_token: "a1b2c3d4e5f60718" });
+    expect(result.status).toBe(200);
+    expect(f.providerCalls[0].body.from).toEqual({ email: "fixture-biz@mail.paigeagent.ai", name: "Fixture Business" });
+    expect(f.providerCalls[0].body.reply_to).toBeUndefined();
+    expect(f.reads.find(r => r.table === "tenant_email_identities")?.filters).toEqual({ tenant_id: "test-tenant-a" });
+  });
+
+  it.each([
+    ["another business's managed address", "Fixture Business <other-biz@mail.paigeagent.ai>"],
+    ["a PAIGE address", "Fixture Business <support@paigeagent.ai>"],
+  ])("never sends as %s: it goes as notifications@ and replies are not pointed at PAIGE", async (_label, fromHeader) => {
+    const f = fixture({ claim: true, fromHeader, ownIdentity: "fixture-biz",
+      provider: () => new Response(null, { status: 202, headers: { "X-Message-Id": "sgX" } }) });
+    await f.invoke("test-owner-jwt", { confirm_token: "a1b2c3d4e5f60718" });
+    expect(f.providerCalls[0].body.from).toEqual({ email: "notifications@mail.paigeagent.ai", name: "Fixture Business" });
+    // Both originals are on a paigeagent.ai domain, which no business reads, so no Reply-To points there.
+    expect(f.providerCalls[0].body.reply_to).toBeUndefined();
   });
 
   it.each([

@@ -14,7 +14,7 @@ import { transpileModule, ModuleKind, ScriptTarget } from "typescript";
 import { describe, it, expect } from "vitest";
 import { senderDisplayName } from "../email/sender-display-name.ts";
 import { isPreparedAgreementMessage } from "../agreements/prepared-signature-message.ts";
-import { platformFrom } from "../email/platform-sendgrid.ts";
+import { tenantFrom, PLATFORM_FROM_DOMAIN } from "../email/platform-sendgrid.ts";
 
 const MSG = "33333333-3333-4333-8333-3333333333bb";
 const TENANT = "44444444-4444-4444-8444-4444444444bb";
@@ -69,7 +69,7 @@ function setup(opts: { provider?: string; caller?: Caller; queued?: boolean; ans
     if (typeof opts.answer === "number") return Promise.resolve(new Response("{\"errors\":[]}", { status: opts.answer }));
     return Promise.resolve(new Response(JSON.stringify({ id: "provider-id" }), { status: url.includes("sendgrid") ? 202 : 200, headers: { "X-Message-Id": "sg-id" } }));
   };
-  const scope = { decideContentRead, commsProviderExecutionAllowed, COMMS_PROVIDER_EXECUTION_DISABLED, PAIGE_APP_ORIGIN: "https://app.example.test",isPreparedAgreementMessage, platformFrom,
+  const scope = { decideContentRead, commsProviderExecutionAllowed, COMMS_PROVIDER_EXECUTION_DISABLED, PAIGE_APP_ORIGIN: "https://app.example.test",isPreparedAgreementMessage, tenantFrom, PLATFORM_FROM_DOMAIN,
     Deno: {
       env: { get: (k: string) => k === "SUPABASE_SERVICE_ROLE_KEY" ? SERVICE : k === "SENDGRID_MAIL_SEND_API_KEY" ? "SG.platform-key" : k === "RESEND_API_KEY" ? undefined : k === "SUPABASE_URL" ? "https://proj.example.test" : "configured" },
       serve: (fn: typeof handler) => { handler = fn; },
@@ -132,7 +132,7 @@ describe("send-message refuses PAIGE Email (SendGrid) outside the governed email
 
   it("control: the identical generic request through a managed (\"resend\") connector is not refused, and goes through SendGrid", async () => {
     // Experience 03: Resend is never called. The H2 refusal is for a SendGrid CONNECTOR outside the door;
-    // a managed sender is sent through SendGrid with its From kept on mail.paigeagent.ai by platformFrom.
+    // a managed sender is sent through SendGrid with its From decided by tenantFrom.
     const s = setup({ caller: "user", provider: "resend" });
     const r = await s.request(generic);
     expect(r.body.error).not.toBe("paige_email_requires_governed_send");

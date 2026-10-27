@@ -13,7 +13,7 @@ import { readFileSync } from "node:fs";
 import { transpileModule, ModuleKind, ScriptTarget } from "typescript";
 import { describe, it, expect } from "vitest";
 import { senderDisplayName } from "../email/sender-display-name.ts";
-import { platformFrom } from "../email/platform-sendgrid.ts";
+import { tenantFrom, PLATFORM_FROM_DOMAIN } from "../email/platform-sendgrid.ts";
 import { createHash } from "node:crypto";
 import { capturePreparedSignatureMessage,isPreparedAgreementMessage,prepareSignatureMessage,assertPreparedSignatureSenderEnvelope } from "../agreements/prepared-signature-message.ts";
 import { PREPARED_SIGNING_LINK_MARKER } from "../agreements/prepared-signature-review-contract.ts";
@@ -125,7 +125,7 @@ function setup(opts: { fetch?: Mode; eligible?: boolean; key?: boolean; agreemen
     registerOutboundAdapter: (a: { channel_type: string; send: (...x: unknown[]) => Promise<unknown> }) => { adapters[a.channel_type] = a; },
     getOutboundAdapter: (channel: string) => adapters[channel],
     buildListUnsubscribeHeaders: () => ({}),
-    senderDisplayName, platformFrom,
+    senderDisplayName, tenantFrom, PLATFORM_FROM_DOMAIN,
     runPreSend: async () => ({ proceed: true, outcome: "proceed" }),
     CLIENT_CONTACT_METHODS_EMBED: "client_contact_methods",
     clientAddresses: (row: { emails?: string[] }) => ({ emails: row.emails ?? [], phones: [] }),

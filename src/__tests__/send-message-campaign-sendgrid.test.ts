@@ -20,7 +20,7 @@ import { readFileSync } from "node:fs";
 import { transpileModule, ModuleKind, ScriptTarget } from "typescript";
 import { describe, it, expect } from "vitest";
 import { senderDisplayName } from "../../supabase/functions/_shared/email/sender-display-name.ts";
-import { platformFrom } from "../../supabase/functions/_shared/email/platform-sendgrid.ts";
+import { tenantFrom, PLATFORM_FROM_DOMAIN } from "../../supabase/functions/_shared/email/platform-sendgrid.ts";
 import { decideContentRead } from "../../supabase/functions/_shared/inbox-intelligence/policy.ts";
 import { mapSendResult } from "../../supabase/functions/email-campaign-worker/logic.ts";
 
@@ -75,7 +75,7 @@ function setup(opts: { caller?: "user" | "service"; admit?: Admit; provider?: Pr
     if (typeof opts.provider === "number") return Promise.resolve(new Response("{\"errors\":[]}", { status: opts.provider }));
     return Promise.resolve(new Response(null, { status: 202, headers: { "X-Message-Id": "sgCampaign1" } }));
   };
-  const scope = { decideContentRead, commsProviderExecutionAllowed, COMMS_PROVIDER_EXECUTION_DISABLED, platformFrom, PAIGE_APP_ORIGIN: "https://app.example.test",
+  const scope = { decideContentRead, commsProviderExecutionAllowed, COMMS_PROVIDER_EXECUTION_DISABLED, tenantFrom, PLATFORM_FROM_DOMAIN, PAIGE_APP_ORIGIN: "https://app.example.test",
     // isPreparedAgreementMessage is read only for a stored draft (message_id); a marketing send has none.
     isPreparedAgreementMessage: () => { throw new Error("prepared agreement path reached"); },
     Deno: {

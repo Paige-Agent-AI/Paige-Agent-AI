@@ -64,6 +64,9 @@ interface Options {
   fromAddress?: string;
   // false = the platform SendGrid Mail Send key is not configured.
   key?: boolean;
+  // What the server resolves as THIS business's sender (tenant_sender_identity) and identity row.
+  identity?: Record<string, unknown> | null;
+  ownIdentity?: Record<string, unknown> | null;
 }
 
 function setup(options: Options = {}) {
@@ -100,6 +103,7 @@ function setup(options: Options = {}) {
           return { data: { tenant_id: TENANT, status: "active", active: true, channel_type: "email", mailbox_class: options.mailboxClass ?? "shared_support", mailbox_owner_user_id: connectorReads > 1 && options.freshMailboxOwner !== undefined ? options.freshMailboxOwner : options.mailboxOwner ?? null, provider: connectorReads > 1 && options.freshProvider ? options.freshProvider : options.provider ?? "resend", from_address: options.fromAddress ?? "owner@business.test", from_name: "Owner Co", reply_to: null, credentials_vault_ref: null, config: null }, error: null };
         }
         if (table === "email_unsubscribe_tokens") return { data: null, error: null };
+        if (table === "tenant_email_identities") return { data: options.ownIdentity ?? null, error: null };
         return { data: null, error: null };
       };
       q.maybeSingle = async () => result();
@@ -110,6 +114,7 @@ function setup(options: Options = {}) {
     rpc: async (name: string, args: Record<string, unknown> = {}) => {
       rpcCalls.push({ name, args });
       if (name === "comms_provider_execution_allowed") return { data: options.providerAllowed ?? true, error: options.boundaryError ? { message: "boundary unavailable" } : null };
+      if (name === "tenant_sender_identity") return { data: options.identity ?? null, error: null };
       if (name === "read_comms_email_send_binding") return { data: { ...b, message_id: MSG, tenant_id: TENANT, channel_type: "email", message_status: options.draftStatus ?? "draft", eligible: options.eligible ?? true }, error: null };
       if (name === "claim_comms_email_send") {
         const claimed = options.claim ?? { data: { state: "dispatching", attempts: 1, admitted: true }, error: null };
@@ -232,11 +237,52 @@ describe("send-message comms_email path (real handler source, network substitute
     expect(s.payload().reply_to).toEqual({ email: "owner@business.test" });
   });
 
-  it("PAIGE's managed <slug>@mail.paigeagent.ai sender is sent as is, with no Reply-To invented", async () => {
-    const s = setup({ fromAddress: "acme@mail.paigeagent.ai" });
+  it("PAIGE's managed <slug>@mail.paigeagent.ai sender is sent as is — it is THIS business's own, as the server resolves it", async () => {
+    const s = setup({ fromAddress: "acme@mail.paigeagent.ai", identity: { from_address: "acme@mail.paigeagent.ai", from_name: "Owner Co" } });
     expect((await s.request()).body.outcome).toBe("provider_accepted");
     expect(s.payload().from).toEqual({ email: "acme@mail.paigeagent.ai", name: "Owner Co" });
     expect(s.payload().reply_to).toBeUndefined();
+  });
+
+  // Security H2: any workspace admin can write a connector's from_address. Only the business's OWN managed
+  // address (resolved server-side) is kept on the shared domain; nothing tenant-supplied sends as another
+  // business or as PAIGE.
+  describe("H2: a connector address is a claim, never an identity", () => {
+    const own = { from_address: "acme@mail.paigeagent.ai", from_name: "Owner Co", reply_to: "desk@acme.example" };
+    it.each([
+      ["another business's managed address", "otherbiz@mail.paigeagent.ai"],
+      ["PAIGE's support address", "support@paigeagent.ai"],
+      ["PAIGE's shared-domain support address", "support@mail.paigeagent.ai"],
+      ["PAIGE's team address, upper case", "TEAM@PAIGEAGENT.AI"],
+      ["another business's managed address, mixed case", "OtherBiz@Mail.PaigeAgent.ai"],
+    ])("%s → notifications@ under the business's name, never as written", async (_label, fromAddress) => {
+      const s = setup({ fromAddress, identity: own });
+      await s.request();
+      expect(s.payload().from).toEqual({ email: "notifications@mail.paigeagent.ai", name: "Owner Co" });
+      // Reply-To is the business's own reply address, never a PAIGE one.
+      expect(s.payload().reply_to).toEqual({ email: "desk@acme.example" });
+    });
+    it("with no Reply-To on record, a forged PAIGE address never becomes the Reply-To either", async () => {
+      const s = setup({ fromAddress: "support@paigeagent.ai", identity: { from_address: "acme@mail.paigeagent.ai" } });
+      await s.request();
+      expect(s.payload().from).toEqual({ email: "notifications@mail.paigeagent.ai", name: "Owner Co" });
+      expect(s.payload().reply_to).toBeUndefined();
+    });
+    it("the business's own managed address in another case is still its own", async () => {
+      const s = setup({ fromAddress: "ACME@Mail.PaigeAgent.AI", identity: { from_address: " Acme@MAIL.paigeagent.ai " } });
+      await s.request();
+      expect(s.payload().from).toEqual({ email: "acme@mail.paigeagent.ai", name: "Owner Co" });
+    });
+    it("its own managed address is kept when a verified custom domain wins the resolver (read from its identity row)", async () => {
+      const s = setup({ fromAddress: "acme@mail.paigeagent.ai", identity: { from_address: "hello@acme.example" }, ownIdentity: { local_part: "acme", status: "active" } });
+      await s.request();
+      expect(s.payload().from).toEqual({ email: "acme@mail.paigeagent.ai", name: "Owner Co" });
+    });
+    it("an inactive identity row proves nothing", async () => {
+      const s = setup({ fromAddress: "acme@mail.paigeagent.ai", identity: { from_address: "hello@acme.example" }, ownIdentity: { local_part: "acme", status: "suspended" } });
+      await s.request();
+      expect(s.payload().from).toEqual({ email: "notifications@mail.paigeagent.ai", name: "Owner Co" });
+    });
   });
 
   it("a caller-supplied idempotency key reaches no provider header", async () => {

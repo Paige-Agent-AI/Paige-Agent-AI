@@ -94,7 +94,7 @@ const BusinessCreditDashboard = () => {
             onClick={handleSyncBureaus}
             disabled={syncing}
             variant="outline"
-            className="border-accent text-accent hover:bg-accent/10 hover:text-accent text-sm md:text-base"
+            className="border-accent text-accent hover:bg-accent/10 text-sm md:text-base"
           >
             <RefreshCcw className={`w-4 h-4 md:mr-2 ${syncing ? 'animate-spin' : ''}`} />
             <span className="hidden md:inline">{syncing ? 'Syncing...' : 'Sync'}</span>

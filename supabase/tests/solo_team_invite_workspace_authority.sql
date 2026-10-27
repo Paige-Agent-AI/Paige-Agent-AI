@@ -13,11 +13,11 @@ SELECT plan(43);
 
 -- ── Reachability ────────────────────────────────────────────────────────────────────────────────
 SELECT ok(
-  NOT has_function_privilege('anon', 'public.create_solo_team_invite(uuid,uuid,text,text,text,text,boolean)', 'EXECUTE'),
+  NOT has_function_privilege('anon', 'public.create_solo_team_invite(uuid,uuid,text,text,text,text,boolean,uuid,jsonb)', 'EXECUTE'),
   'anonymous callers cannot create a team invitation'
 );
 SELECT ok(
-  NOT has_function_privilege('authenticated', 'public.create_solo_team_invite(uuid,uuid,text,text,text,text,boolean)', 'EXECUTE'),
+  NOT has_function_privilege('authenticated', 'public.create_solo_team_invite(uuid,uuid,text,text,text,text,boolean,uuid,jsonb)', 'EXECUTE'),
   'browser callers cannot create a team invitation directly'
 );
 SELECT ok(
@@ -29,7 +29,7 @@ SELECT ok(
   'browser callers cannot revoke a team invitation directly'
 );
 SELECT ok(
-  has_function_privilege('service_role', 'public.create_solo_team_invite(uuid,uuid,text,text,text,text,boolean)', 'EXECUTE'),
+  has_function_privilege('service_role', 'public.create_solo_team_invite(uuid,uuid,text,text,text,text,boolean,uuid,jsonb)', 'EXECUTE'),
   'the edge function''s service role can reach create'
 );
 -- Asserted for all three, symmetrically. Coverage gap caught by adversarial review: with only

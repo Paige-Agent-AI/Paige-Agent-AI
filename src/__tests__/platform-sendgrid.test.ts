@@ -2,7 +2,7 @@
 // The one SendGrid transport for PAIGE's own email (_shared/email/platform-sendgrid.ts). fetch is a stub:
 // nothing leaves this process.
 import { describe, it, expect } from "vitest";
-import { platformFrom, sendPlatformEmail } from "../../supabase/functions/_shared/email/platform-sendgrid.ts";
+import { platformFrom, sendPlatformEmail, tenantFrom } from "../../supabase/functions/_shared/email/platform-sendgrid.ts";
 
 type Call = { url: string; init: { headers: Record<string, string>; body: string } };
 function stub(res: Response | Error) {
@@ -40,6 +40,37 @@ describe("platformFrom", () => {
     expect(platformFrom("garbage").email).toBe("no-reply@mail.paigeagent.ai");
     expect(platformFrom('"Evil\r\nBcc: x" <a@mail.paigeagent.ai>').name).not.toMatch(/[\r\n"]/);
     expect(platformFrom('"support@bank.example" <a@mail.paigeagent.ai>').name).not.toContain("@");
+  });
+});
+
+// Security H2: a From from a business's data (any workspace admin can write a connector) keeps a
+// shared-domain address ONLY when it is that business's own managed address, resolved server-side.
+describe("tenantFrom", () => {
+  const OWN = "acme@mail.paigeagent.ai";
+  it("keeps the business's own managed address, in any case or spacing on either side", () => {
+    expect(tenantFrom("Acme <acme@mail.paigeagent.ai>", OWN)).toEqual({ email: OWN, name: "Acme" });
+    expect(tenantFrom("Acme < ACME@Mail.PaigeAgent.AI >", [" Acme@MAIL.paigeagent.ai "])).toEqual({ email: OWN, name: "Acme" });
+    expect(tenantFrom("  acme@mail.paigeagent.ai  ", ["hello@acme.example", OWN])).toEqual({ email: OWN });
+  });
+  it("another business's managed address is never kept (its slug, any case)", () => {
+    expect(tenantFrom("Acme <otherbiz@mail.paigeagent.ai>", OWN)).toEqual({ email: "notifications@mail.paigeagent.ai", name: "Acme" });
+    expect(tenantFrom("OTHERBIZ@MAIL.PAIGEAGENT.AI", OWN).email).toBe("notifications@mail.paigeagent.ai");
+  });
+  it("never sends as PAIGE: a paigeagent.ai address is never remapped, a shared-domain PAIGE address never kept", () => {
+    for (const a of ["support@paigeagent.ai", "Support@PaigeAgent.ai", "team@paigeagent.ai", "support@mail.paigeagent.ai", " TEAM@mail.paigeagent.ai "]) {
+      expect(tenantFrom(`Acme <${a.trim()}>`, OWN), a).toEqual({ email: "notifications@mail.paigeagent.ai", name: "Acme" });
+    }
+  });
+  it("with no own managed address on record, nothing on the shared domain is kept", () => {
+    expect(tenantFrom("acme@mail.paigeagent.ai", null).email).toBe("notifications@mail.paigeagent.ai");
+    expect(tenantFrom("acme@mail.paigeagent.ai", []).email).toBe("notifications@mail.paigeagent.ai");
+    // An "own" value that is not on the shared domain never widens what is kept.
+    expect(tenantFrom("hello@acme.example", "hello@acme.example").email).toBe("notifications@mail.paigeagent.ai");
+  });
+  it("a business's own domain and an unreadable From go as notifications@", () => {
+    expect(tenantFrom("Cedar <news@cedar.example>", OWN)).toEqual({ email: "notifications@mail.paigeagent.ai", name: "Cedar" });
+    expect(tenantFrom("garbage", OWN).email).toBe("notifications@mail.paigeagent.ai");
+    expect(tenantFrom("x@evil.mail.paigeagent.ai", "x@evil.mail.paigeagent.ai").email).toBe("notifications@mail.paigeagent.ai");
   });
 });
 

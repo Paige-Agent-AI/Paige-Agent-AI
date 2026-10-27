@@ -27,7 +27,7 @@ const raw = readFileSync("supabase/functions/send-message/index.ts", "utf8").rep
 const compiled = transpileModule(raw, { compilerOptions: { module: ModuleKind.None, target: ScriptTarget.ES2022 } }).outputText;
 
 type Caller = "user" | "service";
-function setup(opts: { provider?: string; caller?: Caller; queued?: boolean; answer?: number | "throw" } = {}) {
+function setup(opts: { provider?: string; caller?: Caller; queued?: boolean; answer?: number | "throw"; row?: { status: string; error: string | null } } = {}) {
   const provider = opts.provider ?? "sendgrid";
   const rpcCalls: string[] = [];
   const fetchCalls: string[] = [];
@@ -44,7 +44,7 @@ function setup(opts: { provider?: string; caller?: Caller; queued?: boolean; ans
       for (const m of ["insert", "upsert", "update"]) q[m] = (values: unknown) => { mode = m; writes.push({ table, mode: m, values }); return q; };
       const result = () => {
         if (mode !== "select") return { data: { id: table === "messages" ? MSG : "row-id" }, error: null };
-        if (table === "messages") return { data: { tenant_id: TENANT, status: opts.queued ? "queued" : "draft", connector_id: CONNECTOR, contact_id: CONTACT, thread_key: `contact:${TENANT}:${CONTACT}`, channel_type: "email", meta: { scheduled_binding: { contact_id: CONTACT, connector_id: CONNECTOR } } }, error: null };
+        if (table === "messages") return { data: { tenant_id: TENANT, status: opts.row?.status ?? (opts.queued ? "queued" : "draft"), error: opts.row?.error ?? null, connector_id: CONNECTOR, contact_id: CONTACT, thread_key: `contact:${TENANT}:${CONTACT}`, channel_type: "email", meta: { scheduled_binding: { contact_id: CONTACT, connector_id: CONNECTOR } } }, error: null };
         if (table === "clients") return { data: { tenant_id: TENANT, emails: ["lead@example.test"] }, error: null };
         if (table === "channel_connectors") return { data: { tenant_id: TENANT, status: "active", active: true, channel_type: "email", mailbox_class: "shared_support", mailbox_owner_user_id: null, provider, from_address: "hello@someone-elses.example.test", from_name: "Spoof", reply_to: null, credentials_vault_ref: null, config: null }, error: null };
         return { data: null, error: null };
@@ -182,5 +182,20 @@ describe("an ordinary SendGrid send whose answer could not be read", () => {
     const r = await s.request(generic);
     expect(r.body).not.toHaveProperty("unconfirmed");
     expect(r.body.outcome).not.toBe("outcome_unknown");
+  });
+
+  it("a second send of a row already marked unconfirmed is refused with no provider call (SendGrid has no replay)", async () => {
+    const s = setup({ caller: "user", provider: "resend", row: { status: "failed", error: "delivery_unconfirmed" } });
+    const r = await s.request({ ...generic, message_id: MSG });
+    expect(s.fetchCalls).toEqual([]);
+    expect(r.status).toBe(200);
+    expect(r.body).toMatchObject({ status: "failed", outcome: "outcome_unknown", unconfirmed: true, error: "delivery_unconfirmed", message_id: MSG });
+    expect(s.writes.filter((w) => w.table === "messages")).toEqual([]);
+  });
+
+  it("a row with a plain definitive failure may still be sent again (unchanged)", async () => {
+    const s = setup({ caller: "user", provider: "resend", row: { status: "failed", error: "sendgrid_400: bad recipient" } });
+    await s.request({ ...generic, message_id: MSG });
+    expect(s.fetchCalls).toEqual(["https://api.sendgrid.com/v3/mail/send"]);
   });
 });

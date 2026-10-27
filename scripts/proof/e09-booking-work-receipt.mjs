@@ -15,6 +15,21 @@ export async function bookingWorkReceiptProof({sql,check,assert,fs,fixture,spawn
  REVOKE ALL ON FUNCTION public._client_portal_request_business() FROM PUBLIC,anon,authenticated,service_role;
  REVOKE ALL ON FUNCTION public._client_portal_lock_relationship(uuid,text) FROM PUBLIC,anon,authenticated,service_role;
  ALTER TABLE client_contact_methods ADD is_primary boolean DEFAULT true;
+ -- Reduced-schema authority fixtures ONLY; the full Sessions suite exercises
+ -- the original real Operator registry and retirement functions separately.
+ CREATE TABLE fixture_operator_authority(actor uuid PRIMARY KEY);
+ CREATE TABLE operator_account_archives(id uuid PRIMARY KEY,state text,scope_ids uuid[]);
+ REVOKE ALL ON fixture_operator_authority,operator_account_archives FROM PUBLIC,anon,authenticated,service_role;
+ CREATE FUNCTION public.is_platform_admin() RETURNS boolean LANGUAGE sql STABLE AS $a$
+  SELECT EXISTS(SELECT 1 FROM fixture_operator_authority WHERE actor=auth.uid()) $a$;
+ CREATE FUNCTION public.operator_may(text) RETURNS boolean LANGUAGE sql STABLE AS $a$
+  SELECT $1='fleet.account.permanent_delete' AND public.is_platform_admin() $a$;
+ CREATE FUNCTION public.operator_can_permanently_delete_accounts() RETURNS boolean
+ LANGUAGE sql STABLE SECURITY DEFINER SET search_path=public AS $a$
+ SELECT auth.uid() IS NOT NULL AND public.is_platform_admin() AND public.operator_may('fleet.account.permanent_delete')
+$a$;
+ REVOKE ALL ON FUNCTION public.operator_can_permanently_delete_accounts() FROM PUBLIC,anon,authenticated,service_role;
+ GRANT EXECUTE ON FUNCTION public.operator_can_permanently_delete_accounts() TO authenticated;
  CREATE TABLE calendars(id uuid PRIMARY KEY,tenant_id uuid,type text DEFAULT 'personal',title text,description text,
   logo_url text,accent text,duration_min integer DEFAULT 30,buffer_before_min integer DEFAULT 0,buffer_after_min integer DEFAULT 0,
   min_notice_min integer DEFAULT 0,timezone text DEFAULT 'UTC',availability_json jsonb DEFAULT '[]',enabled boolean DEFAULT true,
@@ -183,6 +198,18 @@ export async function bookingWorkReceiptProof({sql,check,assert,fs,fixture,spawn
   const before=snapshot();assert.throws(()=>commit(singlePlan,requestId(1),{intent:{...requestIntent(singlePlan),notes:'Changed request'}}),/conflicts with its original intent/);
   assert.equal(snapshot(),before);
  });
+ check('Original request recovery never exposes later staff-only title or notes',()=>{
+  sql(`UPDATE internal_bookings SET title='PRIVATE STAFF TITLE',notes='PRIVATE STAFF NOTE' WHERE id='${single.booking.id}'`);
+  const r=readReceipt({rid:requestId(1)});assert.equal(r.state,'saved');assert.equal(r.booking.title,'Consultation');
+  assert(!JSON.stringify(r).includes('PRIVATE STAFF'));
+ });
+ check('An inconsistent foreign calendar cannot supply another business title to the receipt',()=>{
+  const foreignCalendar='e09b5000-0000-4000-8000-000000000099';
+  sql(`INSERT INTO calendars(id,tenant_id,title) VALUES('${foreignCalendar}','${f.foreign}','PRIVATE FOREIGN CALENDAR');
+   UPDATE internal_bookings SET calendar_id='${foreignCalendar}' WHERE id='${single.booking.id}'`);
+  const r=readReceipt({rid:requestId(1)});assert.equal(r.booking.title,'Session');assert(!JSON.stringify(r).includes('PRIVATE FOREIGN'));
+  sql(`UPDATE internal_bookings SET calendar_id='${calendar}' WHERE id='${single.booking.id}'`);
+ });
  check('Native committed audit attribution is the verified customer and exact original work',()=>{
   assert(single);assert.equal(sql(`SELECT count(*) FROM audit_logs WHERE user_id='${f.actor}' AND entity_id='${single.booking.id}'
    AND action='client_portal_create' AND data->>'portal_request_id'='${requestId(1)}'`),'1');
@@ -335,6 +362,27 @@ SELECT jsonb_build_object('stage','replayed','result',${expression(p,rid)});COMM
   for(const s of sessions)if(!s.closed){if(!s.child.stdin.writableEnded&&!s.child.stdin.destroyed)s.child.stdin.end('ROLLBACK;\n');s.child.kill();}
   await Promise.allSettled(sessions.map(s=>s.done));
  }
+ // Gate behavior with explicitly synthetic Operator dependencies. The full
+ // schema suite separately runs the REAL original registry/archive/delete path.
+ const retirement='e09b8000-0000-4000-8000-000000000001';
+ sql(`INSERT INTO fixture_operator_authority(actor) VALUES('${f.other}')`);
+ const removeMarked=()=>sql(`BEGIN;SELECT set_config('test.actor','${f.other}',true);SET LOCAL ROLE authenticated;
+  DELETE FROM internal_bookings WHERE id='${single.booking.id}' RETURNING id;ROLLBACK;`);
+ check('A fixture Operator permission without the original deleting scope cannot erase a marked request',()=>{
+  assert.throws(removeMarked,/retain the original request receipt/);
+ });
+ sql(`INSERT INTO operator_account_archives(id,state,scope_ids) VALUES('${retirement}','deleting',ARRAY['${f.foreign}']::uuid[])`);
+ check('A deleting operation for another business cannot erase this original request',()=>{
+  assert.throws(removeMarked,/retain the original request receipt/);
+ });
+ sql(`UPDATE operator_account_archives SET scope_ids=ARRAY['${f.tenant}']::uuid[] WHERE id='${retirement}'`);
+ check('The marked deletion guard admits only the exact permitted deleting scope (rolled back synthetic authority)',()=>{
+  assert(removeMarked().includes(single.booking.id));assert.equal(readReceipt({rid:requestId(1)}).booking.id,single.booking.id);
+ });
+ sql(`UPDATE operator_account_archives SET state='deleted' WHERE id='${retirement}'`);
+ check('A finished old retirement record cannot be replayed as deletion permission',()=>{
+  assert.throws(removeMarked,/retain the original request receipt/);
+ });
  for(const access of ['paused','ended']){
   sql(`UPDATE clients SET portal_access_state='${access}' WHERE id='${f.contact}'`);
   check(`${access} customer access withholds the original booking receipt`,()=>assert.throws(()=>readReceipt()));

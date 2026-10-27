@@ -5,7 +5,7 @@
 -- admission refuses everything that is not the caller's own changeable booking with one "not found";
 -- request-id and state replay; and admission never writes public.internal_bookings.
 BEGIN;
-SELECT plan(201);
+SELECT plan(211);
 INSERT INTO auth.users(id,aud,role,email,email_confirmed_at,raw_app_meta_data) VALUES
  ('e0961000-0000-4000-8000-000000000001','authenticated','authenticated','sessions-host-a@tests.invalid',now(),'{"comms_provider_execution":"disabled"}'),
  ('e0961000-0000-4000-8000-000000000002','authenticated','authenticated','sessions-host-b@tests.invalid',now(),'{"comms_provider_execution":"disabled"}'),
@@ -697,6 +697,16 @@ SELECT is((SELECT r->'booking' FROM private_booking_recovery),(SELECT r->'bookin
  'returning customer recovery reads the same saved native result');
 SELECT is((SELECT pg_temp.keys(CASE WHEN jsonb_typeof(r->'booking')='object' THEN r->'booking' ELSE '{}'::jsonb END) FROM private_booking_recovery),
  'end_at,id,start_at,status,timezone,title','recovery withholds host identities, intake, provider ids and guest PII');
+UPDATE public.internal_bookings SET title='PRIVATE STAFF BOOKING TITLE',notes='PRIVATE STAFF BOOKING NOTE'
+ WHERE id=(SELECT (r#>>'{booking,id}')::uuid FROM private_booking_saved);
+SELECT is(pg_temp.jordan($q$SELECT public.client_portal_booking_request(
+ 'e0962000-0000-4000-8000-000000000001','e0963000-0000-4000-8000-000000000001',
+ 'e0968000-0000-4000-8000-000000000001')$q$)#>>'{booking,title}','Strategy call',
+ 'returning recovery uses the original client-visible service name instead of an internal staff title');
+SELECT ok(strpos(pg_temp.jordan($q$SELECT public.client_portal_booking_request(
+ 'e0962000-0000-4000-8000-000000000001','e0963000-0000-4000-8000-000000000001',
+ 'e0968000-0000-4000-8000-000000000001')$q$)::text,'PRIVATE STAFF BOOKING')=0,
+ 'internal staff title and notes cannot leak through recovery after the owner edits the native record');
 SELECT is(pg_temp.private_booking_create()->>'replayed','true','retrying the exact original request returns its result');
 SELECT is(pg_temp.private_booking_create()->'execution','null'::jsonb,'replay never repeats provider instructions');
 SELECT is((SELECT count(*) FROM public.audit_logs WHERE action='client_portal_create' AND
@@ -732,6 +742,56 @@ SELECT is(pg_temp.jordan($q$SELECT public.client_portal_booking_request(
  'e0962000-0000-4000-8000-000000000001','e0963000-0000-4000-8000-000000000001',
  'e0968000-0000-4000-8000-000000000001')$q$)->>'sqlstate','42501','revocation invalidates retained customer recovery');
 SELECT is(pg_temp.booking_calendars()->>'sqlstate','42501','ended access cannot use a retained login to discover the business calendars');
+
+-- Owner-authorized retirement compatibility. This is a fully rolled-back
+-- synthetic Operator fixture, not an actual permission grant or account deletion.
+-- Exercise the ORIGINAL protected role/capability registry and retirement APIs.
+SELECT is(pg_temp.as_user('e0961000-0000-4000-8000-000000000001',format($q$
+ WITH removed AS (DELETE FROM public.internal_bookings WHERE id=%L::uuid RETURNING id)
+ SELECT to_jsonb(count(*)) FROM removed$q$,(SELECT r#>>'{booking,id}' FROM private_booking_saved)))->>'sqlstate',
+ '42501','an ordinary host must cancel rather than erase a trusted customer request');
+SELECT set_config('paige.operator_retirement_claim','e0969000-0000-4000-8000-000000000099',true);
+SELECT is(pg_temp.as_user('e0961000-0000-4000-8000-000000000001',format($q$
+ WITH removed AS (DELETE FROM public.internal_bookings WHERE id=%L::uuid RETURNING id)
+ SELECT to_jsonb(count(*)) FROM removed$q$,(SELECT r#>>'{booking,id}' FROM private_booking_saved)))->>'sqlstate',
+ '42501','an arbitrary retirement flag does not authorize deletion of the native request');
+SELECT set_config('paige.operator_retirement_claim','',true);
+SELECT is(pg_temp.as_user('e0961000-0000-4000-8000-000000000001',
+ $q$SELECT to_jsonb(public.operator_can_permanently_delete_accounts())$q$),'false'::jsonb,
+ 'SOLO business ownership never becomes permanent-account deletion authority');
+INSERT INTO auth.users(id,aud,role,email,email_confirmed_at) VALUES
+ ('e0961000-0000-4000-8000-000000000008','authenticated','authenticated','test-operator-e09-retirement@tests.invalid',now());
+INSERT INTO public.user_roles(user_id,role) VALUES('e0961000-0000-4000-8000-000000000008','platform_admin');
+SELECT is(pg_temp.as_user('e0961000-0000-4000-8000-000000000008',
+ $q$SELECT to_jsonb(public.operator_can_permanently_delete_accounts())$q$),'true'::jsonb,
+ 'the original protected registry resolves this synthetic Platform Operator permission');
+-- The earlier negative deliberately contains a mis-tenanted booking pointing
+-- into business A. Remove only that synthetic anomaly after all original tests;
+-- real cross-account dependencies must continue to block permanent deletion.
+DELETE FROM public.internal_bookings WHERE id='e0965000-0000-4000-8000-000000000022';
+CREATE TEMP TABLE private_booking_other_business AS SELECT to_jsonb(t) r FROM public.tenants t
+ WHERE id='e0962000-0000-4000-8000-000000000002';
+CREATE TEMP TABLE private_booking_archive_preview AS SELECT pg_temp.as_user(
+ 'e0961000-0000-4000-8000-000000000008',$q$SELECT public.operator_preview_account_archive(
+ 'e0962000-0000-4000-8000-000000000001')$q$) r;
+CREATE TEMP TABLE private_booking_archived AS SELECT pg_temp.as_user('e0961000-0000-4000-8000-000000000008',format($q$
+ SELECT public.operator_archive_account('e0962000-0000-4000-8000-000000000001',%L,'Northwind Studio',
+ 'e0969000-0000-4000-8000-000000000001')$q$,(SELECT r->>'version' FROM private_booking_archive_preview))) r;
+SELECT diag('synthetic canonical archive response: '||r::text) FROM private_booking_archived WHERE r->>'state' IS DISTINCT FROM 'archived';
+SELECT is((SELECT r->>'state' FROM private_booking_archived),'archived',
+ 'the existing authorized archive process retains the marked appointment before permanent cleanup');
+CREATE TEMP TABLE private_booking_delete_preview AS SELECT pg_temp.as_user('e0961000-0000-4000-8000-000000000008',
+ $q$SELECT public.operator_preview_account_deletion('e0962000-0000-4000-8000-000000000001')$q$) r;
+CREATE TEMP TABLE private_booking_deleted AS SELECT pg_temp.as_user('e0961000-0000-4000-8000-000000000008',format($q$
+ SELECT public.operator_delete_archived_account('e0962000-0000-4000-8000-000000000001',%L,'Northwind Studio',
+ 'e0969000-0000-4000-8000-000000000001')$q$,(SELECT r->>'version' FROM private_booking_delete_preview))) r;
+SELECT diag('synthetic canonical deletion response: '||r::text) FROM private_booking_deleted WHERE r->>'state' IS DISTINCT FROM 'deleted';
+SELECT is((SELECT r->>'state' FROM private_booking_deleted),'deleted',
+ 'only the original authorized permanent-account process can remove the scoped marked appointment');
+SELECT is((SELECT count(*) FROM public.internal_bookings WHERE id=(SELECT (r#>>'{booking,id}')::uuid FROM private_booking_saved)),
+ 0::bigint,'the original permanent cleanup removes its native appointment without a parallel deletion writer');
+SELECT is((SELECT to_jsonb(t) FROM public.tenants t WHERE id='e0962000-0000-4000-8000-000000000002'),
+ (SELECT r FROM private_booking_other_business),'the canonical cleanup preserves the other business exactly');
 
 SELECT * FROM finish();
 ROLLBACK;

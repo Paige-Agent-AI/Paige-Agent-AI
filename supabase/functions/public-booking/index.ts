@@ -971,9 +971,9 @@ Deno.serve(async (req) => {
         branding: await loadBranding(admin, host),
         slots: slots.map((s) => new Date(s).toISOString()),
         ...(classSpots ? { classSpots } : {}),
-        ...(withHosts ? { withHosts } : {}),
+        ...(!portalCustomer && withHosts ? { withHosts } : {}),
         ...(portalCustomer ? { calendar: { id: host.calendarId, slug, title: host.title,
-          appointmentTypes: host.appointmentTypes, intakeQuestions: host.intakeQuestions,
+          appointmentTypes: host.appointmentTypes, intakeQuestions: host.intakeQuestions, bookingHorizonDays: host.horizonDays,
           locationOptions: host.locationOptions.map((option) => ({ type: option.type })) } } : {}),
       });
     }

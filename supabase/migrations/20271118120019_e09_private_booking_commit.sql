@@ -9,7 +9,8 @@ BEGIN
  FOR expected IN SELECT value FROM pg_catalog.jsonb_array_elements($contracts$[
   {"signature":"_client_portal_lock_relationship(uuid,text)","body":"416002c40cb71ed54cc4c3387c37563f","owner":"postgres","definer":true,"volatility":"v","language":"plpgsql","config":["search_path=\"\""],"acl":["postgres:EXECUTE:false"]},
   {"signature":"_client_portal_lock_verified_customer(uuid,uuid,uuid)","body":"2092a38c5d5b3810fd93fad108ccb19c","owner":"postgres","definer":true,"volatility":"v","language":"plpgsql","config":["search_path=\"\""],"acl":["postgres:EXECUTE:false"]},
-  {"signature":"create_class_booking(uuid,uuid,uuid,timestamptz,timestamptz,text,integer,text,text,text,text,text,text,text,jsonb,text,uuid)","body":"8dee4ee76b1b4de00d52573fa7a8cb09","owner":"postgres","definer":true,"volatility":"v","language":"plpgsql","config":["search_path=public"],"acl":["postgres:EXECUTE:false","service_role:EXECUTE:false"]}
+  {"signature":"create_class_booking(uuid,uuid,uuid,timestamptz,timestamptz,text,integer,text,text,text,text,text,text,text,jsonb,text,uuid)","body":"8dee4ee76b1b4de00d52573fa7a8cb09","owner":"postgres","definer":true,"volatility":"v","language":"plpgsql","config":["search_path=public"],"acl":["postgres:EXECUTE:false","service_role:EXECUTE:false"]},
+  {"signature":"operator_can_permanently_delete_accounts()","body":"f7f5281162f757fcbaa67ea088049208","owner":"postgres","definer":true,"volatility":"s","language":"sql","config":["search_path=public"],"acl":["authenticated:EXECUTE:false","postgres:EXECUTE:false"]}
  ]$contracts$::jsonb) LOOP
   SELECT pg_catalog.jsonb_build_object('signature',expected->>'signature','body',pg_catalog.md5(p.prosrc),
    'owner',pg_catalog.pg_get_userbyid(p.proowner),'definer',p.prosecdef,'volatility',p.provolatile,
@@ -55,6 +56,13 @@ BEGIN
  IF TG_OP='DELETE' THEN
   IF OLD.portal_request_id IS NOT NULL OR (OLD.booking_kind='class_session' AND EXISTS(
    SELECT 1 FROM public.internal_bookings seat WHERE seat.class_session_id=OLD.id AND seat.portal_request_id IS NOT NULL)) THEN
+   -- Owner-authorized compatibility correction, October27: preserve the
+   -- ORIGINAL governed permanent-account retirement, without a new writer,
+   -- permission, approval path or body/GUC bypass. Its protected `deleting`
+   -- state is visible only inside the original atomic retirement operation.
+   IF public.operator_can_permanently_delete_accounts() AND EXISTS(
+    SELECT 1 FROM public.operator_account_archives r WHERE r.state='deleting'
+     AND OLD.tenant_id=ANY(r.scope_ids)) THEN RETURN OLD; END IF;
    RAISE EXCEPTION 'Cancel customer bookings to retain the original request receipt' USING ERRCODE='42501';
   END IF;
   RETURN OLD;
@@ -105,12 +113,12 @@ CREATE FUNCTION public._client_portal_booking_original_receipt(
  p_actor_id uuid,p_tenant_id uuid,p_client_id uuid,p_request_id uuid
 ) RETURNS jsonb LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path=''
 AS $receipt$
-DECLARE n integer; expected integer; groups integer; shape_count integer; b public.internal_bookings%ROWTYPE; result jsonb;
+DECLARE n integer; expected integer; groups integer; shape_count integer; b public.internal_bookings%ROWTYPE; result jsonb; public_title text;
 BEGIN
  result:=pg_catalog.jsonb_build_object('schema_version',1,'actor_id',p_actor_id,'tenant_id',p_tenant_id,
   'client_id',p_client_id,'request_id',p_request_id,'state','not_found','booking',NULL);
  SELECT count(*),min(portal_group_size),count(DISTINCT portal_group_size),
-  count(DISTINCT ROW(start_at,end_at,timezone,status,title,booking_kind,collective_group_id))
+  count(DISTINCT ROW(start_at,end_at,timezone,status,calendar_id,appointment_type->>'name',booking_kind,collective_group_id))
  INTO n,expected,groups,shape_count FROM public.internal_bookings
  WHERE portal_request_id=p_request_id AND portal_actor_user_id=p_actor_id
   AND tenant_id=p_tenant_id AND portal_origin_contact_id=p_client_id AND contact_id=p_client_id;
@@ -121,8 +129,13 @@ BEGIN
  WHERE portal_request_id=p_request_id AND portal_actor_user_id=p_actor_id
   AND tenant_id=p_tenant_id AND portal_origin_contact_id=p_client_id AND contact_id=p_client_id
  ORDER BY id LIMIT 1;
+ -- Match ORIGINAL client_portal_sessions presentation: an internal staff
+ -- booking title is not customer-visible knowledge, including after a reload.
+ SELECT coalesce(nullif(pg_catalog.btrim(b.appointment_type->>'name'),''),
+  nullif(pg_catalog.btrim(c.title),''),'Session') INTO public_title
+ FROM (SELECT 1) anchor LEFT JOIN public.calendars c ON c.id=b.calendar_id AND c.tenant_id=b.tenant_id;
  RETURN result||pg_catalog.jsonb_build_object('state','saved','booking',pg_catalog.jsonb_build_object(
-  'id',b.id,'title',b.title,'start_at',b.start_at,'end_at',b.end_at,'timezone',b.timezone,'status',b.status));
+  'id',b.id,'title',public_title,'start_at',b.start_at,'end_at',b.end_at,'timezone',b.timezone,'status',b.status));
 END $receipt$;
 REVOKE ALL ON FUNCTION public._client_portal_booking_original_receipt(uuid,uuid,uuid,uuid)
  FROM PUBLIC,anon,authenticated,service_role;

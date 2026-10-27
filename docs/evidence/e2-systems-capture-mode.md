@@ -1512,3 +1512,26 @@ historical9PASS0FAIL+12PASS0FAIL4BLOCKED, protected monthlyUNKNOWN/UNRETRIED and
 representative-weekUNMEASURED remain unchanged. Original question→current native
 authority→original Work/run/findings→original Rail→permitted return/reload is
 still the complete contract; a source projection alone does not close it.
+
+## October27 12:21UTC — original manual consumer reconciled, still local
+
+Actual released main d0ab7820dbba5e0cbb4aac2f03902a2e2761e8fc is received as
+049266629c19fdf74e2cdd3d487056e65e33bed2/tree c28c4d6ed335be4448530a7ee37b37ba7cf9ee8f.
+Frozen4b remains preserved. All nine executed source/test blobs are exact, all
+16,866 outside entries and whole incoming documents retained. The sole append
+conflict in this Brain was resolved by retaining the full released document and
+the entire original68-line local history, never choosing away another owner.
+Fresh296 controls/four suites PASS, including all255 unchanged original control
+bodies. Actual pinned Deno request/result graphs are clean; legacy Core retains
+exactly its original three diagnostics after normalizing only checkout paths.
+No clean whole-Core, runtime latency or customer claim.
+
+This remains LOCAL/UNREGISTERED/UNPUSHED/NO PR, awaiting the cohesive governed
+consumer and original latest-intent/Work observation/exact Rail receipt seam.
+ANT161 proposal9cf7de3c keeps that same observer/codec; it is PROPOSED, not a new
+canonical field contract or implemented permission. Current caller-RLS run result
+already exists and must not be replaced. artifactVerified is not a Systems result;
+receipt:not_projected stays truthful. No Root/risk/registry/C0b/observer/codec edit,
+held2961 adoption, new grant, scan/worker/provider/customer invocation or activation.
+Functional LOCAL; Visual N/A; Experiential INCOMPLETE; Founder NOT_ACCEPTED.
+All19/nine/ALG/CAP maturity and historical9-0/12-0-4/monthlyUNKNOWNUNRETRIED remain.

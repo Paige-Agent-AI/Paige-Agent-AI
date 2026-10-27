@@ -625,6 +625,22 @@ describe("paging (mocked RPC)", () => {
     expect(button(host, "Load earlier messages")).toBeUndefined();
   });
 
+  it("pages past a page made only of rows this build skips, instead of asking for it again", async () => {
+    // The 50 newest rows are from an agent this build does not know; the one person's note is older.
+    db.messages["c-general"] = [
+      ...Array.from({ length: 50 }, (_, index) => ({ ...msg({ id: `a-${String(index).padStart(2, "0")}`, body: `Agent ${index}`, created_at: at(29 - index * 0.1) }), author_kind: "agent", agent_key: "nova" })),
+      msg({ id: "m-old", body: "Person's older note", created_at: at(90) }),
+    ] as ReturnType<typeof msg>[];
+    const { host } = await mount();
+    expect(host.querySelector(".th-conv")!.textContent).not.toContain("Person's older note");
+    await act(async () => button(host, "Load earlier messages")!.click());
+    await flush();
+    const older = calls.filter((call) => call.name === "team_hub_list_messages").at(-1)!;
+    // The cursor is the oldest raw row of the first page (a-00), not "nothing held" (which re-asks the newest page).
+    expect(older.params).toMatchObject({ p_before_id: "a-00" });
+    expect(host.querySelector(".th-conv")!.textContent).toContain("Person's older note");
+  });
+
   it("shows a thread's replies oldest first and pages back with Show earlier replies", async () => {
     db.messages["c-general"] = [msg({ id: "m-root", body: "Root post", reply_count: 52, created_at: at(90) })];
     db.replies["m-root"] = Array.from({ length: 52 }, (_, index) => msg({ id: `r-${String(index).padStart(2, "0")}`, parent_message_id: "m-root", body: `Reply ${index}`, created_at: at(80 - index) }));

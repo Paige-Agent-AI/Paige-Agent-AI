@@ -41,7 +41,7 @@ RELEASE_CHANNEL: development: branch claude/practical-davinci-ij8hb8; production
 RELEASE_CLASSIFICATION: internal-only: storage and server doors with no visible change and no customer release identity
 CUSTOMER_RELEASE_IDENTITY: none: agents cannot speak until A1b and authenticated runtime is unproven
 RELEASE_NOTE_REQUIRED: NO: nothing a customer can see changes in this increment
-RELEASE_TRUTH_BOUNDARY: PROOF OWED: agent storage and doors are LIVE on merge but unreachable from any screen; agent replies are UNAVAILABLE until A1b; the authenticated drive is PROOF OWED
+RELEASE_TRUTH_BOUNDARY: PROOF OWED: agent storage and doors stay PROOF OWED after merge until both migrations (20271117010008, 20271117010108) and the six roster rows are read back persisted on production (§32), and they are unreachable from any screen either way; agent replies are UNAVAILABLE until A1b; the authenticated drive is PROOF OWED
 RELEASE_RECOVERY: position=forward-fix by migration, since the new tables and columns are additive and every re-emitted body has its prior body in the chain; reference=docs/delivery/exp08-team-hub-agents-contract.md A1a status block
 
 ## Scope and collisions

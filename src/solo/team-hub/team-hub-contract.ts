@@ -204,6 +204,18 @@ export interface TeamHubMessagePage {
   has_more: boolean;
   /** Messages of an author kind this build does not know, left out rather than guessed at. */
   skipped?: number;
+  /**
+   * The oldest row the server returned, skipped rows included. "Earlier messages" pages from this,
+   * not from the oldest message kept: a page made only of skipped rows would otherwise ask for
+   * itself again for ever.
+   */
+  oldest?: TeamHubPageCursor | null;
+}
+
+/** Where the next older page starts: the server's (created_at, id) keyset. */
+export interface TeamHubPageCursor {
+  created_at: string;
+  id: string;
 }
 
 /** Thread mode (A7): the root, and its replies newest-first under the same compound cursor. */
@@ -212,6 +224,8 @@ export interface TeamHubThreadPage {
   root: TeamHubMessage;
   replies: TeamHubMessage[];
   has_more: boolean;
+  /** As on TeamHubMessagePage: the oldest row returned, skipped rows included. */
+  oldest?: TeamHubPageCursor | null;
 }
 
 export interface TeamHubPosted {
@@ -365,6 +379,18 @@ function messageKind(value: unknown): "read" | "skip" {
  * Every element must parse, except that rows `skip` sorts out are left out and counted: one unknown
  * row never empties the whole list, and a malformed known row still refuses it.
  */
+/** The oldest (created_at, id) among a page's raw rows, read or skipped; null when none carries one. */
+function oldestRaw(value: unknown): TeamHubPageCursor | null {
+  if (!Array.isArray(value)) return null;
+  let oldest: TeamHubPageCursor | null = null;
+  for (const item of value) {
+    if (!isRow(item) || !isText(item.created_at) || !isText(item.id) || Number.isNaN(Date.parse(item.created_at))) continue;
+    const next = { created_at: item.created_at, id: item.id };
+    if (!oldest || compareMessages(next, oldest) < 0) oldest = next;
+  }
+  return oldest;
+}
+
 function parseKnown<T>(value: unknown, sort: (item: unknown) => "read" | "skip", parse: (item: unknown) => T | null): { items: T[]; skipped: number } | null {
   if (!Array.isArray(value)) return null;
   const items: T[] = [];
@@ -457,7 +483,7 @@ export function parseMessagePage(data: unknown, error: unknown, channelId: strin
   const channel = parseChannelSummary(answer.value.channel);
   const page = parseKnown(answer.value.messages, messageKind, parseMessage);
   if (!channel || channel.id !== channelId || !page || typeof answer.value.has_more !== "boolean") return { kind: "unavailable" };
-  return { kind: "ok", value: { channel, messages: page.items, has_more: answer.value.has_more, skipped: page.skipped } };
+  return { kind: "ok", value: { channel, messages: page.items, has_more: answer.value.has_more, skipped: page.skipped, oldest: oldestRaw(answer.value.messages) } };
 }
 
 export function parseThreadPage(data: unknown, error: unknown, channelId: string, rootId: string): TeamHubResult<TeamHubThreadPage> {
@@ -469,7 +495,7 @@ export function parseThreadPage(data: unknown, error: unknown, channelId: string
   if (!channel || channel.id !== channelId || !root || root.id !== rootId || root.parent_message_id !== null) return { kind: "unavailable" };
   // Every reply must belong to the root that was asked for; one stray row rejects the page.
   if (!replies || replies.some((reply) => reply.parent_message_id !== rootId) || typeof answer.value.has_more !== "boolean") return { kind: "unavailable" };
-  return { kind: "ok", value: { channel, root, replies, has_more: answer.value.has_more } };
+  return { kind: "ok", value: { channel, root, replies, has_more: answer.value.has_more, oldest: oldestRaw(answer.value.messages) } };
 }
 
 export function parsePosted(data: unknown, error: unknown): TeamHubResult<TeamHubPosted> {

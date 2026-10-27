@@ -673,6 +673,19 @@ describe("agent rows (A1a): tolerated, never misread, never emptying the list", 
       expect(result.value.skipped).toBe(2);
     }
   });
+  it("a page of only skipped rows still reports where the next older page starts", () => {
+    const result = parseMessagePage(page([
+      { ...message({ id: "m-9", created_at: "2026-10-24T11:00:00.000Z" }), author_kind: "agent", agent_key: "nova" },
+      { ...message({ id: "m-8", created_at: "2026-10-24T10:00:00.000Z" }), author_kind: "system" },
+    ]), null, "c-general");
+    expect(result.kind).toBe("ok");
+    if (result.kind === "ok") {
+      expect(result.value.messages).toEqual([]);
+      expect(result.value.oldest).toEqual({ created_at: "2026-10-24T10:00:00.000Z", id: "m-8" });
+    }
+    const thread = parseThreadPage({ ...page([{ ...message({ id: "r-9", parent_message_id: "m-root" }), author_kind: "system" }]), root: message({ id: "m-root" }) }, null, "c-general", "m-root");
+    expect(thread.kind === "ok" && thread.value.oldest?.id).toBe("r-9");
+  });
   it("an agent row without its agent, or a person's row naming one, is malformed and refuses the page", () => {
     for (const bad of [{ ...message(), author_kind: "agent", agent_key: null }, { ...message(), author_kind: "user", agent_key: "cura" },
       { ...message(), author_kind: "user", asked_in_message_id: "m-0" }, { ...message(), agent_mentions: "cura" }]) {

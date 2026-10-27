@@ -5,9 +5,13 @@ CREATE FUNCTION pg_temp.check_zion_plan(v boolean,label text) RETURNS void LANGU
 BEGIN IF v IS DISTINCT FROM true THEN RAISE EXCEPTION 'ZION_PLAN_PROOF_FAILED: %',label; END IF;
 RAISE NOTICE 'PASS: %',label; END $$;
 SELECT pg_temp.check_zion_plan((SELECT count(*)=1 FROM public.paige_subagents WHERE slug='zion' AND tenant_id IS NULL),'one original global identity');
-SELECT pg_temp.check_zion_plan((SELECT version=3 AND runtime='soft' AND enabled
+-- End of the full chain: later migrations may revise the row (EXP08 Team Hub agents roster,
+-- 20271117010108, adds Team Hub keys to config and bumps version), so this checks the planning
+-- route and instructions are still there rather than pinning the whole config or the exact version.
+-- What THIS migration writes is pinned exactly by the factory replays below.
+SELECT pg_temp.check_zion_plan((SELECT version>=3 AND runtime='soft' AND enabled
   AND domain='operations_automation' AND role='VP Operations & Automation'
-  AND length(system_prompt)>0 AND config='{"job_kind":"plan"}'::jsonb
+  AND length(system_prompt)>0 AND config->>'job_kind'='plan'
   FROM public.paige_subagents WHERE slug='zion'),'fresh migrated original planning instructions and route');
 CREATE TEMP TABLE zion_plan_other AS SELECT slug,to_jsonb(s) AS fields FROM public.paige_subagents s WHERE slug<>'zion';
 CREATE TEMP TABLE zion_plan_acl AS SELECT relacl,relrowsecurity,relforcerowsecurity FROM pg_class WHERE oid='public.paige_subagents'::regclass;

@@ -4542,3 +4542,11 @@ repeated. Five causal failures corrected; four exact-source regression suites
 receipts, providers and activation unchanged. Source/review/CI/deployment and
 authenticated proof remain separate; full ten/E5/Builder/ZION/owner-away/Live and
 founder acceptance stay open. [Bounded evidence](../evidence/ui-delivery/exp05-zion-history-access-refusal.md).
+
+October27 source-release closeout: #2946 reviewed59d519617/LOWER5661557153/all
+applicable exact-head CI, merged d4fcca1b48ba4115a15faefe05318a2d18991891.
+Normal BYSqPx1wRX5vaDcWv24PbeZ84f5R production READY; both public builds and
+original emitted reader/classifier match at03:14:57–03:15:02UTC, proof328b0741.
+Master §4.0 and the existing evidence retain exact identities. This proves source
+delivery only, not authenticated refusal/reload, ZION execution or full Experience
+acceptance. No own Edge/native/activation or catalogue/algorithm promotion.

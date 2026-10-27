@@ -647,8 +647,11 @@ Values intentionally omitted.
       Message-ID must not suppress another business's mail). No Message-ID (or an empty `<>`) →
       `sendgrid-inbound:<tenant>:derived:<sha256(from \n to \n subject \n Date \n text)>`, flagged
       `meta.provider_message_id_derived`. A redelivery whose message already landed re-files its draft reply if none
-      exists (a check-then-insert, not DB-enforced; a partial unique index on `paige_actions(tenant_id,
-      payload->>'message_id') where action_kind='comms-draft-reply'` would make it so — follow-up). The legacy
+      exists; one draft per message is DB-enforced by `uq_paige_actions_draft_reply_message` (partial unique index on
+      `paige_actions(tenant_id, payload->>'message_id') where action_kind='comms-draft-reply'`, migration
+      `20271118110000`), and a concurrent redelivery's 23505 reads as already filed. A sender display name holding `@`
+      is never used as a new contact's first name. A reply whose contact cannot be created is stored unlinked, not
+      refused (a refusal makes SendGrid redeliver for days). The legacy
       `paige_conversations` mirror uses the same business-scoped id (its `(channel, source_message_id)` index is
       global too). Body cap 32 MiB (413 above, also when streamed without Content-Length); `text`/`html` over
       1,000,000 characters are cut and flagged `meta.body_truncated`. An attachment-only reply is kept. Attachment

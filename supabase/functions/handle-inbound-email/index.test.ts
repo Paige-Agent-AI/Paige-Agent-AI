@@ -58,6 +58,9 @@ type Faults = {
   failMessageInsert?: { connector_id: string; times: number; code?: string };
   /** The next N paige_actions inserts fail. */
   failActionInsertTimes?: number;
+  /** The next N paige_actions inserts lose a race: a concurrent delivery of the same post files the
+   *  same draft first, so the insert meets the one-draft-per-message unique index (23505). */
+  raceActionInsertTimes?: number;
   /** This RPC returns an error. */
   failRpc?: string;
 };
@@ -91,6 +94,11 @@ function fakeAdmin(db: Db, faults: Faults = {}) {
             row.connector_id === faults.failMessageInsert.connector_id) {
           faults.failMessageInsert.times -= 1;
           return { data: null, error: { code: faults.failMessageInsert.code ?? "08006", message: "insert failed" } };
+        }
+        if (name === "paige_actions" && (faults.raceActionInsertTimes ?? 0) > 0) {
+          faults.raceActionInsertTimes = (faults.raceActionInsertTimes ?? 0) - 1;
+          db.paige_actions.push({ id: `paige_actions-race-${++seq}`, ...row });
+          return { data: null, error: { code: "23505", message: "duplicate key value violates unique constraint \"uq_paige_actions_draft_reply_message\"" } };
         }
         if (name === "paige_actions" && (faults.failActionInsertTimes ?? 0) > 0) {
           faults.failActionInsertTimes = (faults.failActionInsertTimes ?? 0) - 1;
@@ -577,6 +585,30 @@ test("M4b: a failed draft-reply insert is 503, and the redelivery dedups AND fil
   // A further redelivery files nothing more.
   assert.equal((await h.handle(parseRequest(parseForm()))).status, 200);
   assert.equal(h.db.paige_actions.length, 1);
+});
+
+test("N1: two deliveries of one post racing to file the draft keep exactly one, and neither answers 503", async () => {
+  const faults: Faults = { raceActionInsertTimes: 1 };
+  const h = harness(ENV, freshDb(), faults);
+  const res = await h.handle(parseRequest(parseForm()));
+  assert.equal(res.status, 200);
+  assert.equal(h.db.messages.length, 1);
+  assert.equal(h.db.paige_actions.length, 1);
+  assert.equal((h.db.paige_actions[0].payload as Row).message_id, h.db.messages[0].id);
+});
+
+test("N6: a display name that is itself an address never becomes the new contact's name", async () => {
+  const h = harness(ENV);
+  const res = await h.handle(parseRequest(parseForm({ from: '"ada@client.example" <ada@client.example>' })));
+  assert.equal(res.status, 200);
+  assert.equal(h.db.clients.length, 1);
+  assert.equal(h.db.clients[0].first_name, "ada");
+});
+
+test("N6: a real display name is still used as the new contact's name", async () => {
+  const h = harness(ENV);
+  await h.handle(parseRequest(parseForm()));
+  assert.equal(h.db.clients[0].first_name, "Ada Client");
 });
 
 test("M4b: a message that landed before a crash (no draft yet) gets its draft on redelivery", async () => {

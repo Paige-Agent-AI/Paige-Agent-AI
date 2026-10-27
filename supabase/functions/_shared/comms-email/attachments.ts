@@ -313,6 +313,7 @@ export async function readGovernedCommsEmailAttachmentFiles(storage: CommsEmailS
 /** At send: the verified governed copies, base64-encoded exactly as SendGrid receives them. */
 export async function readGovernedCommsEmailAttachments(storage: CommsEmailStorage, manifest: CommsEmailAttachmentManifest): Promise<Read<{ files: GovernedFileAttachment[] }>> {
   const read = await readGovernedCommsEmailAttachmentFiles(storage, manifest);
-  if (!read.ok) return { ok: false, code: read.code };
+  // Narrowed by hand: the app tsconfig (strict: false) does not narrow this union on `ok`.
+  if (read.ok === false) return { ok: false, code: (read as { code: CommsEmailAttachmentRefusal }).code };
   return { ok: true, files: read.files.map(({ entry, bytes }) => ({ content: commsEmailBase64(bytes), filename: entry.name, type: entry.mime })) };
 }

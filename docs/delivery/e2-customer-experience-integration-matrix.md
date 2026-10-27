@@ -22,12 +22,15 @@ preflight, never when cancelled. Original upload/no-retry, retirement, compiler,
 configuration and success-only certification remain unchanged. No extra upload,
 alternate verifier, secret/permission/provider/worker/business activation.
 Causal actual-condition regression failed before correction; five gate controls
-PASS. Original122 test AST is exact, with two added cases; full124 local run with
-required pinned compiler is in progress and hosted exact-head CI remains required.
+PASS. Original122 test AST is exact, with two added cases; full124 local tests
+with pinned Deno2.1.4 PASS/zero skips in183.327s. Hosted exact-head CI remains required.
 Earlier compiler-path setup errors are retained, not counted as source failures
 or a passing suite. Original local provider readback remains unverified at CLI
-access; no credential workaround. Existing EXP03#2978 retains configuration
-ownership and is a receiving dependency before final shared certification.
+access; no credential workaround. Existing EXP03#2978 has now merged actual
+1ad5f13c4579c717248027687468c43de90bcd40. Its complete Master/decision log and
+original configuration are received intact; EXP03 retains ownership. Its actual
+normal deploy/readback remains distinct from source merge. This helper-only
+repair follows that original configuration release in the shared ordering.
 
 Functional source/local gate proof, Visual N/A for the workflow repair (preceding
 email17 synthetic frames remain bounded), Experiential authenticated Finance/

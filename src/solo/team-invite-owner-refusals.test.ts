@@ -10,7 +10,7 @@ import {
 // solo-team-invitations as HTTP 500 "tell us". They are recognised by HINT and shown as written.
 
 const MIGRATION = readFileSync(
-  resolve(process.cwd(), "supabase/migrations/20271117020008_exp08_owner_invitations.sql"),
+  resolve(process.cwd(), "supabase/migrations/20271117170008_exp08_owner_invitations.sql"),
   "utf8",
 );
 const HANDLER = readFileSync(

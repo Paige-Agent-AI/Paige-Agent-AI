@@ -23,15 +23,15 @@
     {
       "function": "public.accept_solo_team_invite(text)",
       "purpose": "invite-copy",
-      "reason": "Copies the accepted invitation's title and responsibilities onto the new membership; the membership's role comes from default_role, never from the title. Re-read for EXP08 owners 20271117020008: an owner invitation now seats an owner only after re-checking that the sender is still the account holder (is_tenant_account_holder) and that the legal owner's seat is open; the title is still only copied. Re-read again for round 2 (2026-10-27): the record's updated_by is no longer stamped with the invitee; the title is still only copied. Re-read for round 3 (2026-10-27): the tenant row and the sender's seat are locked FOR SHARE before the sender check; the title is still only copied.",
-      "defined_in": "20271117020008_exp08_owner_invitations.sql",
+      "reason": "Copies the accepted invitation's title and responsibilities onto the new membership; the membership's role comes from default_role, never from the title. Re-read for EXP08 owners 20271117170008: an owner invitation now seats an owner only after re-checking that the sender is still the account holder (is_tenant_account_holder) and that the legal owner's seat is open; the title is still only copied. Re-read again for round 2 (2026-10-27): the record's updated_by is no longer stamped with the invitee; the title is still only copied. Re-read for round 3 (2026-10-27): the tenant row and the sender's seat are locked FOR SHARE before the sender check; the title is still only copied.",
+      "defined_in": "20271117170008_exp08_owner_invitations.sql",
       "fingerprint": "8b06334c56f9eaea"
     },
     {
       "function": "public.create_solo_team_invite(uuid, uuid, text, text, text, text, boolean, uuid, jsonb)",
       "purpose": "write",
-      "reason": "Stores the invited person's title and responsibilities (and, since EXP08, the Team conversations choice) on the invitation row after solo_team_invite_authority() authorizes the actor; the access granted is _permission, checked against owner | admin | member, and Owner additionally requires the account holder (_assert_tenant_account_holder, EXP08 owners 20271117020008). The title never enters either check.",
-      "defined_in": "20271117020008_exp08_owner_invitations.sql",
+      "reason": "Stores the invited person's title and responsibilities (and, since EXP08, the Team conversations choice) on the invitation row after solo_team_invite_authority() authorizes the actor; the access granted is _permission, checked against owner | admin | member, and Owner additionally requires the account holder (_assert_tenant_account_holder, EXP08 owners 20271117170008). The title never enters either check.",
+      "defined_in": "20271117170008_exp08_owner_invitations.sql",
       "fingerprint": "722815f55fd8d234"
     },
     {
@@ -51,8 +51,8 @@
     {
       "function": "public.resend_solo_team_invite(uuid, uuid, uuid)",
       "purpose": "invite-copy",
-      "reason": "Carries the old invitation's title and responsibilities into its replacement through create_solo_team_invite; authority is resolved by solo_team_invite_authority(), and for an owner invitation by _assert_tenant_account_holder (EXP08 owners 20271117020008). Re-read for round 3 (2026-10-27): an owner invitation whose legal owner was deleted (business_owner_removed_at) is refused before anything is copied; the title is still only copied.",
-      "defined_in": "20271117020008_exp08_owner_invitations.sql",
+      "reason": "Carries the old invitation's title and responsibilities into its replacement through create_solo_team_invite; authority is resolved by solo_team_invite_authority(), and for an owner invitation by _assert_tenant_account_holder (EXP08 owners 20271117170008). Re-read for round 3 (2026-10-27): an owner invitation whose legal owner was deleted (business_owner_removed_at) is refused before anything is copied; the title is still only copied.",
+      "defined_in": "20271117170008_exp08_owner_invitations.sql",
       "fingerprint": "d0cd1582a0e8818d"
     },
     {

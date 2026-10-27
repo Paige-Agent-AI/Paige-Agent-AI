@@ -75,11 +75,11 @@ SELECT is(pg_temp.invite_op('create',proposal=>(SELECT saved->>'proposal_hash' F
 UPDATE public.tenant_members SET status='revoked' WHERE user_id='e0913300-0000-4000-8000-000000000001' AND tenant_id='e0923300-0000-4000-8000-000000000001';
 SELECT is(pg_temp.invite_op('read')->>'sqlstate','42501','revoked owner loses readback');
 SELECT is(pg_temp.invite_op('create',proposal=>(SELECT saved->>'proposal_hash' FROM e09_op_fixture))->>'sqlstate','42501','revoked owner loses replay');
--- Renewed for EXP08 owners 20271117020008 (was 3a91af3aeb67fb8dbbf450eb3d612ade): only its FIX-1 owner
+-- Renewed for EXP08 owners 20271117170008 (was 3a91af3aeb67fb8dbbf450eb3d612ade): only its FIX-1 owner
 -- block changed (no token minted there carries Owner, with a sentence per account type);
 -- exp08_owner_invitations.sql proves byte for byte
 -- that nothing else in the body moved, consumer minting included.
-SELECT is((SELECT md5(prosrc) FROM pg_proc WHERE oid='public.create_tenant_invite_token(uuid,text,public.tenant_role,integer,integer,uuid,text)'::regprocedure),'0f71ac608edaf0c458b653529a12d96b','incumbent producer unchanged beyond its owner refusal');
+SELECT is((SELECT md5(prosrc) FROM pg_proc WHERE oid='public.create_tenant_invite_token(uuid,text,public.tenant_role,integer,integer,uuid,text)'::regprocedure),'c57d2f0c5a2f17005e33a783e9950c63','incumbent producer unchanged beyond its owner refusal');
 SELECT ok(NOT has_function_privilege(r,s,'EXECUTE'),r||' cannot execute '||s)
  FROM unnest(ARRAY['anon','service_role'])r CROSS JOIN unnest(ARRAY[
  'public.prepare_client_portal_invitation(uuid,uuid)','public.create_client_portal_invitation(uuid,uuid,text,uuid)',

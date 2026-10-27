@@ -38,6 +38,7 @@ import { gamePlanContext, readGamePlanCompletion, recordedGamePlan } from "../_s
 import { CLIENT_CONTACT_METHODS_EMBED, withPrimaryAddresses } from "../_shared/contact-methods.ts";
 // PAIGE's one SendGrid transport (owner ruling 2026-10-26: everything moved off Resend).
 import { sendPlatformEmail } from "../_shared/email/platform-sendgrid.ts";
+import { ownManagedAddresses, tenantAddressing } from "../_shared/email/tenant-sender.ts";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -495,14 +496,24 @@ async function runDraftAndEmailDocument(
       // The same runPreSend every client send passes (E09 Slice 6): an opted-out recipient never reaches send.
       preSend: emailPreSend(admin as unknown as Parameters<typeof emailPreSend>[0], callerTenantId),
       send: async ({ fromHeader, to, subject, html }) => {
-        // THE APPROVED BYTES ARE SENT UNCHANGED; ONLY THE SENDING ADDRESS IS THE PLATFORM'S. The approval
+        // THE APPROVED BYTES ARE SENT UNCHANGED; ONLY THE SENDING ADDRESS MAY CHANGE. The approval
         // fingerprint froze `fromHeader` exactly as the tenant's sender resolved it (email-approval.ts),
-        // and that is what is passed here. The transport moves the ADDRESS onto mail.paigeagent.ai at
-        // send time (platformFrom): the tenant's display name is kept, a business's own domain sends as
-        // notifications@, and the tenant's own address becomes Reply-To so replies still reach them.
-        const replyTo = /<\s*([^<>\s]+)\s*>\s*$/.exec(fromHeader)?.[1] ?? fromHeader;
+        // and that is what is passed here. tenantAddressing applies security H2 at send time: the From
+        // stays only if it is THIS business's own managed mail.paigeagent.ai address (re-read now,
+        // server-side, for the caller's tenant); anything else — a business's own domain, another
+        // business's managed address, any PAIGE address — goes as notifications@mail.paigeagent.ai under
+        // the business's name, with Reply-To on the original address unless that is a paigeagent.ai one.
+        let resolvedSender: string | null = null;
+        try {
+          const { data: s } = await admin.rpc("get_tenant_sender", { _tenant_id: callerTenantId });
+          resolvedSender = (s as { from_email?: string } | null)?.from_email ?? null;
+        } catch (e) {
+          console.warn("skill-runner draft_and_email sender re-read failed; only the registered identity is kept", String(e));
+        }
+        const own = await ownManagedAddresses(admin, callerTenantId, [resolvedSender]);
+        const addressing = tenantAddressing(fromHeader, own);
         const sent = await sendPlatformEmail(
-          { from: fromHeader, replyTo, to: [to], subject, html },
+          { from: addressing.from, replyTo: addressing.replyTo, to: [to], subject, html },
           { apiKey: Deno.env.get("SENDGRID_MAIL_SEND_API_KEY") ?? null },
         );
         sendUnconfirmed = sent.unconfirmed;

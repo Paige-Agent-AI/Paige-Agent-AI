@@ -14,6 +14,7 @@ import * as contactMethods from "../../supabase/functions/_shared/contact-method
 import * as businessVerify from "../../supabase/functions/_shared/business-verify-outcome.ts";
 import * as clientGamePlan from "../../supabase/functions/_shared/paige-skill/client-game-plan.ts";
 import * as platformSendgrid from "../../supabase/functions/_shared/email/platform-sendgrid.ts";
+import * as tenantSender from "../../supabase/functions/_shared/email/tenant-sender.ts";
 
 type Row = Record<string, unknown>;
 const source = readFileSync("supabase/functions/skill-runner/index.ts", "utf8");
@@ -146,6 +147,7 @@ function fixture(options: {
     "../_shared/paige-skill/email-approval.ts": options.claim
       ? { ...emailApproval, emailPreSend: () => async () => ({ proceed: true, reason: null }) }
       : emailApproval,
+    "../_shared/email/tenant-sender.ts": tenantSender,
     // The REAL SendGrid transport, with its network port stubbed: it builds the actual request.
     "../_shared/email/platform-sendgrid.ts": { ...platformSendgrid, sendPlatformEmail: (input: platformSendgrid.PlatformEmail, deps: platformSendgrid.PlatformDeps = {}) =>
       platformSendgrid.sendPlatformEmail(input, { ...deps, fetch: (async (url: string, init: { headers: Record<string, string>; body: string }) => {

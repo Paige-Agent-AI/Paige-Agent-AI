@@ -113,6 +113,8 @@ jobs:
         run: psql -h 127.0.0.1 -U postgres -d postgres -v ON_ERROR_STOP=1 -f supabase/tests/exp08_team_lifecycle.sql
       - name: EXP08 co-owner authority, only the account holder or the platform owner grants or revokes, nobody revokes the holder, production holes, gate-only diff and mutants in a disposable database
         run: psql -h 127.0.0.1 -U postgres -d postgres -v ON_ERROR_STOP=1 -f supabase/tests/exp08_co_owner_authority.sql
+      - name: EXP08 owner invitations (I1), only the account holder invites an Owner, owner-token guard, accept-time re-checks, legal-owner links, production holes, byte-identity and mutants in a disposable database
+        run: psql -h 127.0.0.1 -U postgres -d postgres -v ON_ERROR_STOP=1 -f supabase/tests/exp08_owner_invitations.sql
       - name: EXP08 PAIGE team lifecycle catalogue, md5 guard against production's incumbent, replay guard, five Team rows and grants in a disposable database
         run: |
           psql -h 127.0.0.1 -U postgres -d postgres -v ON_ERROR_STOP=1 -c 'DROP DATABASE IF EXISTS exp08_lifecycle_cat' -c 'CREATE DATABASE exp08_lifecycle_cat'

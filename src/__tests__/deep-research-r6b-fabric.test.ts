@@ -177,13 +177,13 @@ describe("native Research — actual legacy router budget and trace integration"
     expect(result.route).toBeNull();
   });
 
-  it.each(["unit_synthesis", "dossier_synthesis"] as const)("%s is refused at the hard ceiling before reasoning spend", async phase => {
+  it.each(["unit_synthesis", "dossier_synthesis"] as const)("%s continues on its original route above the informational threshold", async phase => {
     const port = budgetedRouter({ accrued: 10 });
-    await expect(call(phase, port)).rejects.toBeInstanceOf(BudgetExceeded);
-    expect(port.events).toEqual([`ceiling:${tenantId}`, `accrual:${tenantId}`]);
+    await call(phase, port);
+    expect(port.events).toEqual([`ceiling:${tenantId}`, `accrual:${tenantId}`, "provider:anthropic"]);
     expect(port.traces).toHaveLength(1);
-    expect(port.traces[0]).toMatchObject({ tenant_id: tenantId, task_id: runId, provider: "router_budget", error_class: "budget_exceeded",
-      doctrine_gate_hits: { budget: { level: "exceeded", band: "reasoning" } } });
+    expect(port.traces[0]).toMatchObject({ tenant_id: tenantId, task_id: runId, provider: "anthropic", status: "success",
+      doctrine_gate_hits: { budget: { level: "hard", band: "reasoning" } } });
   });
 
   it.each(["hop_query_planner", "unit_planner"] as const)("%s retains the incumbent cheap-band continuation and records its hard gate", async phase => {
@@ -194,16 +194,15 @@ describe("native Research — actual legacy router budget and trace integration"
     expect(port.traces[0]).toMatchObject({ doctrine_gate_hits: { budget: { level: "hard", band: "cheap" } } });
   });
 
-  it("waits for accrual before dispatch and cannot turn a delayed hard stop into a provider call", async () => {
+  it("retains the original accrual wait then continues without a monetary stop", async () => {
     let resolve!: (spend: number) => void;
     const port = budgetedRouter({ waitForAccrual: new Promise<number>(done => { resolve = done; }) });
     const task = call("unit_synthesis", port);
-    const refused = expect(task).rejects.toBeInstanceOf(BudgetExceeded);
     for (let index = 0; index < 8; index++) await Promise.resolve();
     expect(port.events).toEqual([`ceiling:${tenantId}`, `accrual:${tenantId}`]);
     resolve(10);
-    await refused;
-    expect(port.events).toEqual([`ceiling:${tenantId}`, `accrual:${tenantId}`]);
+    await task;
+    expect(port.events).toEqual([`ceiling:${tenantId}`, `accrual:${tenantId}`, "provider:anthropic"]);
   });
 
   it("retains observable unknown-accrual policy rather than inventing zero spend or a new cap", async () => {

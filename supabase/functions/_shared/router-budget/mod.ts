@@ -1,5 +1,5 @@
 /**
- * Paige Router Budget Enforcement — shared seam module.
+ * Paige tenant model-usage observations — original shared seam.
  *
  * Implements `docs/brain/paige-router-budget-contract.md` (merged 2026-09-10, #1100),
  * which extends the Paige Runtime Harness doctrine in
@@ -7,24 +7,24 @@
  * The doctrine's line this module exists to close: "estimates are not budget
  * enforcement."
  *
- * EVERY model call crosses a budget decision before it is made. The decision is a
- * pure function of (accrued spend, ceiling, job band) — never of the caller's hopes:
+ * October27 owner billing supersession: attributable consumption is billed to the
+ * consuming tenant. A PAIGE financial allowance must never stop a permitted call.
+ * Existing exports/settings/trace fields remain compatible, but their thresholds
+ * are informational. Technical limits, provider readiness, current caller authority,
+ * business-action approvals and provider routing are separate and unchanged.
  *
  *   soft  (≥80% of ceiling) — all bands continue; gate hit `budget_soft` recorded.
- *   hard  (≥100%)           — CHEAP kinds continue (they ARE the economy tier) with
- *                             `budget_hard` recorded; REASONING kinds fail closed;
- *                             SENSITIVE kinds fail closed — never silently degraded,
- *                             the same cost-for-safety direction as the router's
- *                             existing sensitive-never-open-model wall.
+ *   hard  (≥100%)           — all bands continue; `budget_hard` is an observation,
+ *                             never a stop or a reason to downgrade a model.
  *
  * Ceilings are config-as-data (§10/§200 precedent): `admin_app_settings` key
  * `llm_budget_daily_usd` (platform default) with per-tenant override
  * `llm_budget_daily_usd__t_<tenantId>`. Absent or malformed → the finite platform
- * DEFAULT. `unlimited` is not a settable value — it parses to null and falls back.
+ * DEFAULT informational marker. No value can impose a financial usage stop.
  *
  * Accrual basis: the tenant's `SUM(cost_estimate_usd)` over the rolling UTC day from
  * `paige_llm_trace` — the ONE cost ledger (no new store). Estimates, honestly labeled;
- * the ceiling guards against runaway spend, not invoice reconciliation.
+ * these estimates and threshold observations are not reconciled invoices.
  *
  * HONEST DEGRADATION NOTE (deliberate, documented deviation): if the accrual READ
  * itself fails, the caller proceeds UNGATED with `budget_accrual_unknown` audited —
@@ -38,7 +38,7 @@
 /** The router's three bands, as the CALLER (model-router) classifies them. */
 export type BudgetBand = "cheap" | "reasoning" | "sensitive";
 
-/** Finite, conservative platform default. Changing it is a settings change, not a deploy. */
+/** Legacy exported name: a default informational marker, never a monetary cap. */
 export const DEFAULT_CEILING_USD = 50;
 
 export const PLATFORM_CEILING_KEY = "llm_budget_daily_usd";
@@ -60,21 +60,20 @@ export interface BudgetDecision {
   readonly band: BudgetBand;
 }
 
-/** The pure enforcement ladder. No IO, no clock, no exceptions — safe to log/inspect/test. */
+/** Original pure decision seam, now informational under the owner billing policy.
+ * `block`/`budget_exceeded` remain in the compatibility types for historical callers;
+ * this financial observation never emits them. It grants no execution authority. */
 export function enforceBudget(input: {
   accrued_usd: number;
   ceiling_usd: number;
   band: BudgetBand;
 }): BudgetDecision {
   const accrued = Math.max(0, Number(input.accrued_usd) || 0);
-  // A non-positive ceiling is treated as fully spent (fail toward the safe side),
-  // because the resolver is the component that guarantees a positive default.
+  // Preserve legacy threshold normalization and telemetry without creating a stop.
   const ceiling = Number(input.ceiling_usd) > 0 ? Number(input.ceiling_usd) : 0;
   const ratio = ceiling > 0 ? accrued / ceiling : 1;
   if (ratio >= 1) {
-    return input.band === "cheap"
-      ? { decision: "allow_gated", gate: "budget_hard", accrued_usd: accrued, ceiling_usd: ceiling, band: input.band }
-      : { decision: "block", gate: "budget_exceeded", accrued_usd: accrued, ceiling_usd: ceiling, band: input.band };
+    return { decision: "allow_gated", gate: "budget_hard", accrued_usd: accrued, ceiling_usd: ceiling, band: input.band };
   }
   if (ratio >= SOFT_THRESHOLD) {
     return { decision: "allow_gated", gate: "budget_soft", accrued_usd: accrued, ceiling_usd: ceiling, band: input.band };
@@ -96,8 +95,8 @@ export function utcDayStartIso(now: Date): string {
   return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())).toISOString();
 }
 
-/** Thrown by the adopter when the ladder blocks. Carries the numbers so the caller can
- *  surface an honest "resets at UTC midnight / raise it in settings" message. */
+/** Historical compatibility error. The current usage policy never emits a block;
+ * keep old records/error readers compatible without using this as admission policy. */
 export class BudgetExceeded extends Error {
   readonly code = "budget_exceeded";
   readonly ceilingUsd: number;

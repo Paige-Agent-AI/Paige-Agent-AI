@@ -53,7 +53,9 @@ describe("cards: nobody is asked to approve a change to an unnamed person", () =
     assert.match(GATE, /target: target && \(await describeLifecycleMember\(gateArgs\?\.member_user_id\)\) \? target : null,\s*viewerId: user\.id, viewerPermission: \(await teamCardRoster\(\)\)\?\.viewer_permission \?\? null,/);
   });
   it("every refusal before a card carries both never-ran markers", () => {
-    const refusals = GATE.match(/refused_before_run: true[^}]*/g) ?? [];
+    // Written as (?:true) so this test is never counted as a producer of the marker by
+    // src/__tests__/confirm-gate-containment-wiring.test.ts; it only reads the handler.
+    const refusals = GATE.match(/refused_before_run: (?:true)[^}]*/g) ?? [];
     assert.equal(refusals.length, 3);
     for (const r of refusals) assert.match(r, /not_applied: true/);
   });

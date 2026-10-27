@@ -31,8 +31,8 @@ export interface GovernedReplyStripProps {
 }
 
 const EASE = [0.16, 1, 0.3, 1] as const;
-// The outline variant hovers to --secondary, which in light is dark navy under the same dark text (measured
-// 1.11:1 under the pointer). The strip's quiet controls hover to the muted surface and keep ink text.
+// The strip's quiet controls hover to the muted surface and keep ink text. The shared outline/ghost variants
+// now do the same (owner fix 2026-10-27); this stays explicit so the strip never depends on the variant again.
 const QUIET_HOVER = "h-9 hover:bg-muted hover:text-foreground";
 
 function StripFrame({ label, children }: { label: string; children: ReactNode }) {

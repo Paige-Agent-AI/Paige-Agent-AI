@@ -275,7 +275,7 @@ function WorkspaceBody({ tenantName }: { tenantName: string }) {
           onClick={() => openConsole("persona")}
           size="icon"
           variant="outline"
-          className="shrink-0 border-accent/50 text-accent hover:bg-accent/10"
+          className="shrink-0 border-accent/50 text-accent hover:bg-accent/10 hover:text-accent"
           aria-label="Customize Paige"
         >
           <SlidersHorizontal className="h-4 w-4" />

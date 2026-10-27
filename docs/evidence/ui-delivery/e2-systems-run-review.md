@@ -15,8 +15,8 @@ AUTHENTICATED_RUNTIME: UNVERIFIED: EXP09 holds the ordinary-owner session until 
 KEYBOARD_FOCUS: PASS: readable heading receives initial focus without a page jump; native Tab/Shift+Tab wrap between original Return and Close; Escape returns to original opener or prior conversation. Current account epoch fences deferred focus; no retired-workspace restoration.
 ZOOM_REFLOW: UNVERIFIED: actual320–1536 CSS viewports fit without document/dialog horizontal overflow; native OS200percent zoom, assistive technology and physical-device proof remain owed.
 REDUCED_MOTION: PASS: scoped browser media emulation reports reduce=true, dialog animation:none and transition0s. Override cleared through original CDP control; owned tab then closed, current-chat viewport reset. Native OS preference was not independently accepted.
-STATE_COVERAGE: PASS: complete, zero, unknown, unfinished, loading, error, withheld/permission, invalid/ambiguous references, workspace change, close, history, reload and retry. Approval-pending/executed are not applicable: this read creates neither an approval nor Work.
-TRUTHFUL_STATE_LABELS: PASS: unknown stays unknown; zero is not readiness; unfinished never shows final counts or liveness. A recorded check is not current business health, a verified Rail receipt, completed correction or measured business improvement.
+STATE_COVERAGE: PASS: complete, zero, absent-count, unfinished, loading, error, withheld/permission, invalid/ambiguous references, workspace change, close, history, reload and retry all have actual source/rendered evidence. This read creates neither an approval nor Work.
+TRUTHFUL_STATE_LABELS: PASS: absent counts remain unavailable; numeric zero is not readiness; unfinished records show neither final tallies nor liveness. Recorded source totals establish neither current business health, a verified Rail receipt, completed correction nor measured business improvement.
 SOLO_UI: YES: canonical Systems workspace for every eligible existing/future SOLO account, no account allowlist or private fixture branch. Second neutral workspace refusal is synthetic, not authenticated tenant isolation.
 UNVERIFIED: final exact-head review/CI/merge/deployment/source readback; ordinary customer/current roles, tenant/cohort/revocation, original source reload, real Chat/eligible Live, native zoom/AT/device, all19/nine and founder acceptance.
 SOLO_1536X770_PAIGE_CLOSED: PASS: assets/e2-systems-run-review/final-1536-paige-closed.jpg; readable review and original shell.
@@ -35,13 +35,13 @@ ACCEPTANCE_CRITERIA: correct original run/date/exact totals, honest missing stat
 MOTION_PURPOSE: no new animation; shared Dialog retains appropriate reduced-motion treatment.
 PROTECTED_SEAMS: original snapshot and38 finding-hook/97 workspace cases remain intact; same caller-scoped table read with before/after identity and final RLS reread, aborting on context retirement. No schema/grant/Spine/risk/C0b/Chat runtime/LayerC/Rail/Memory writer change.
 
-INTERNAL_BUILD_IDENTITY: development source on current main53d3f16d0717ec7e901df3830038334a270ef1a3; eight exact changed-source hashes plus original rendered-base equivalence in source-index.json; no production deployment.
+INTERNAL_BUILD_IDENTITY: source=e622313682b5c5560cd9b7416558a5e33c2f8862 on current main53d3f16d0717ec7e901df3830038334a270ef1a3; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=assets/e2-systems-run-review/source-index.json.
 RELEASE_CHANNEL: development: actual-source synthetic proof only.
-RELEASE_CLASSIFICATION: bounded original-record inspection increment, not a complete Experience or activation release.
-CUSTOMER_RELEASE_IDENTITY: none; no version or announcement assigned.
-RELEASE_NOTE_REQUIRED: no customer announcement for an unaccepted internal increment.
-RELEASE_TRUTH_BOUNDARY: source/local/rendered proof does not establish original RLS/customer/Finance/Chat-Live/full19 acceptance.
-RELEASE_RECOVERY: remove this optional consumer or forward-fix; original current snapshot and source records remain unchanged. No writes to reverse.
+RELEASE_CLASSIFICATION: internal-only: bounded original-record inspection, no complete Experience or activation claim.
+CUSTOMER_RELEASE_IDENTITY: none: full authenticated outcome and founder acceptance not established.
+RELEASE_NOTE_REQUIRED: NO: no customer announcement for an unaccepted internal increment.
+RELEASE_TRUTH_BOUNDARY: PROOF OWED: actual original RLS/customer/Finance/Chat-Live/full19 acceptance is separate from source/local/rendered proof.
+RELEASE_RECOVERY: position=remove the optional consumer or forward-fix while retaining the original snapshot and source records; reference=src/solo/SoloSystemsCheckWorkspace.tsx.
 
 ## Scope, canonical contract and release order
 

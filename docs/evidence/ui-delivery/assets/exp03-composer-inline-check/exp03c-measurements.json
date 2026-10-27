@@ -251,7 +251,7 @@
         "name": "functions:comms-email-command",
         "args": {
           "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
-          "operation_id": "4a8de287-cec4-4d32-b5c1-3f468a764e55",
+          "operation_id": "fd0dd246-058f-4925-a8e0-1ac7e29905c0",
           "command": {
             "action": "comms.email_send",
             "contact_id": "e0300000-0000-4000-8000-0000000c0001",
@@ -495,7 +495,7 @@
         "name": "functions:comms-email-command",
         "args": {
           "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
-          "operation_id": "a7417660-e0e2-4d7e-926d-4062d13e5f73",
+          "operation_id": "0a409d20-0374-4d0b-9b04-b8b72b0f2baa",
           "command": {
             "action": "comms.email_send",
             "contact_id": "e0300000-0000-4000-8000-0000000c0001",
@@ -761,7 +761,7 @@
         "name": "functions:comms-email-command",
         "args": {
           "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
-          "operation_id": "4818eb98-2c81-4c57-b79e-6b9929bf46b9",
+          "operation_id": "c6fb3319-d46e-4f42-8fe9-33192fbf3cbf",
           "command": {
             "action": "comms.email_send",
             "contact_id": "e0300000-0000-4000-8000-0000000c0001",
@@ -1005,7 +1005,7 @@
         "name": "functions:comms-email-command",
         "args": {
           "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
-          "operation_id": "1cdbee7c-abfd-47d4-a413-163c52a5d59e",
+          "operation_id": "52bd7fc3-8d07-40d8-bca6-612dc886b660",
           "command": {
             "action": "comms.email_send",
             "contact_id": "e0300000-0000-4000-8000-0000000c0001",
@@ -1271,7 +1271,7 @@
         "name": "functions:comms-email-command",
         "args": {
           "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
-          "operation_id": "70df856e-0720-4359-955e-3a3dc231d589",
+          "operation_id": "1b535e8d-8ac8-430c-8f9f-ad144be00258",
           "command": {
             "action": "comms.email_send",
             "contact_id": "e0300000-0000-4000-8000-0000000c0001",
@@ -1515,7 +1515,7 @@
         "name": "functions:comms-email-command",
         "args": {
           "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
-          "operation_id": "30be647f-80d8-4a48-b1b5-7cb2aed9bac5",
+          "operation_id": "4324993b-85f1-4df5-8f27-67cfafc23df0",
           "command": {
             "action": "comms.email_send",
             "contact_id": "e0300000-0000-4000-8000-0000000c0001",
@@ -1781,7 +1781,7 @@
         "name": "functions:comms-email-command",
         "args": {
           "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
-          "operation_id": "cdf069f2-c5a1-4c12-9422-584a3a0a1473",
+          "operation_id": "c2ac11b8-26f6-44b6-8b97-61000e93a930",
           "command": {
             "action": "comms.email_send",
             "contact_id": "e0300000-0000-4000-8000-0000000c0001",
@@ -2025,7 +2025,7 @@
         "name": "functions:comms-email-command",
         "args": {
           "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
-          "operation_id": "c866d277-3013-4a99-ae0f-d1f2ab6b9496",
+          "operation_id": "58067656-9691-40d5-ab13-eb2b86787b8a",
           "command": {
             "action": "comms.email_send",
             "contact_id": "e0300000-0000-4000-8000-0000000c0001",
@@ -2291,7 +2291,7 @@
         "name": "functions:comms-email-command",
         "args": {
           "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
-          "operation_id": "cd44151d-9aa8-45e9-809e-7c1ab14d6eb4",
+          "operation_id": "7b80bff7-1858-46ca-81ea-16f7ef8a8ce7",
           "command": {
             "action": "comms.email_send",
             "contact_id": "e0300000-0000-4000-8000-0000000c0001",
@@ -2535,7 +2535,7 @@
         "name": "functions:comms-email-command",
         "args": {
           "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
-          "operation_id": "5f028f40-b809-4da7-a115-a17e5e3e2a14",
+          "operation_id": "832aeb02-16e6-4382-bee2-623b04331958",
           "command": {
             "action": "comms.email_send",
             "contact_id": "e0300000-0000-4000-8000-0000000c0001",
@@ -2795,7 +2795,7 @@
         "name": "functions:comms-email-command",
         "args": {
           "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
-          "operation_id": "cb63456d-b89f-41c2-b89c-95f656d5ee43",
+          "operation_id": "9f557c14-358c-4bfc-af6a-684fea364e1f",
           "command": {
             "action": "comms.email_send",
             "contact_id": "e0300000-0000-4000-8000-0000000c0001",
@@ -3033,7 +3033,7 @@
         "name": "functions:comms-email-command",
         "args": {
           "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
-          "operation_id": "b7af9410-2714-41bb-82d2-63cf5f005660",
+          "operation_id": "06730b27-77a9-406b-977d-7ae444a7f7d7",
           "command": {
             "action": "comms.email_send",
             "contact_id": "e0300000-0000-4000-8000-0000000c0001",
@@ -3299,7 +3299,7 @@
         "name": "functions:comms-email-command",
         "args": {
           "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
-          "operation_id": "d796a190-0e30-4769-9c15-ddf3201f693c",
+          "operation_id": "636af869-a50b-43e3-83c5-596ee3db6863",
           "command": {
             "action": "comms.email_send",
             "contact_id": "e0300000-0000-4000-8000-0000000c0001",
@@ -3543,7 +3543,7 @@
         "name": "functions:comms-email-command",
         "args": {
           "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
-          "operation_id": "e7211161-938b-40d2-a1ec-9fd6266d09a6",
+          "operation_id": "462ffdc9-f2c7-4ccf-aec4-ac227d3d61ef",
           "command": {
             "action": "comms.email_send",
             "contact_id": "e0300000-0000-4000-8000-0000000c0001",
@@ -3803,7 +3803,7 @@
         "name": "functions:comms-email-command",
         "args": {
           "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
-          "operation_id": "7be641f6-faf4-4744-bb9b-c9ea9d0b248c",
+          "operation_id": "835b98a0-9fcf-4464-9480-87134e857d52",
           "command": {
             "action": "comms.email_send",
             "contact_id": "e0300000-0000-4000-8000-0000000c0001",
@@ -4041,7 +4041,7 @@
         "name": "functions:comms-email-command",
         "args": {
           "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
-          "operation_id": "c5037933-b9d8-4df1-bcb0-973196aa22e5",
+          "operation_id": "53e69f6c-9650-4db6-87a5-6e52d1e720f0",
           "command": {
             "action": "comms.email_send",
             "contact_id": "e0300000-0000-4000-8000-0000000c0001",
@@ -4296,7 +4296,7 @@
         "name": "functions:comms-email-command",
         "args": {
           "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
-          "operation_id": "f0896f57-36da-4579-8e1d-de5d41747954",
+          "operation_id": "9cf7ce38-458e-4781-8278-52c6dc1487d2",
           "command": {
             "action": "comms.email_send",
             "contact_id": "e0300000-0000-4000-8000-0000000c0001",
@@ -4540,7 +4540,7 @@
         "name": "functions:comms-email-command",
         "args": {
           "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
-          "operation_id": "e3d81cf9-36c1-47dc-be39-b8504375a2e6",
+          "operation_id": "3119b48d-0563-4962-a0a5-87f6bfd8a4d9",
           "command": {
             "action": "comms.email_send",
             "contact_id": "e0300000-0000-4000-8000-0000000c0001",
@@ -5238,7 +5238,7 @@
         "name": "functions:comms-email-command",
         "args": {
           "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
-          "operation_id": "c304744f-fc39-40af-92a0-edcb07ad34fc",
+          "operation_id": "5ab58839-e796-4cc8-a7ec-07663d3b146c",
           "command": {
             "action": "comms.email_send",
             "contact_id": "e0300000-0000-4000-8000-0000000c0001",
@@ -5506,7 +5506,7 @@
         "name": "functions:comms-email-command",
         "args": {
           "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
-          "operation_id": "a1b226a9-9004-426a-a462-4a8bdc68c075",
+          "operation_id": "2d37a961-289e-4072-bcb0-9333814c097c",
           "command": {
             "action": "comms.email_send",
             "contact_id": "e0300000-0000-4000-8000-0000000c0001",
@@ -5796,7 +5796,7 @@
         "name": "functions:comms-email-command",
         "args": {
           "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
-          "operation_id": "8912cb59-6c0d-44ae-aed3-4bb4d3289294",
+          "operation_id": "0b6d612d-0864-455a-a1da-5e10248d7e4a",
           "command": {
             "action": "comms.email_send",
             "contact_id": "e0300000-0000-4000-8000-0000000c0001",
@@ -6064,7 +6064,7 @@
         "name": "functions:comms-email-command",
         "args": {
           "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
-          "operation_id": "c7d1ab39-bfa4-4955-ad86-b2b6f614bb4c",
+          "operation_id": "520c8f88-a94d-4c70-ae27-2dff09bc11ea",
           "command": {
             "action": "comms.email_send",
             "contact_id": "e0300000-0000-4000-8000-0000000c0001",
@@ -6336,7 +6336,7 @@
         "name": "functions:comms-email-command",
         "args": {
           "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
-          "operation_id": "f7152a1b-a684-458c-8baa-80a53bb99396",
+          "operation_id": "317fbea2-253d-4491-b220-5fa6b6b1e503",
           "command": {
             "action": "comms.email_send",
             "contact_id": "e0300000-0000-4000-8000-0000000c0001",
@@ -6350,7 +6350,7 @@
         "name": "functions:comms-email-command",
         "args": {
           "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
-          "operation_id": "f7152a1b-a684-458c-8baa-80a53bb99396",
+          "operation_id": "317fbea2-253d-4491-b220-5fa6b6b1e503",
           "command": {
             "action": "comms.email_send",
             "contact_id": "e0300000-0000-4000-8000-0000000c0001",
@@ -6589,7 +6589,7 @@
         "name": "functions:comms-email-command",
         "args": {
           "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
-          "operation_id": "addfc7c6-68cc-4325-b412-6705dbbf870f",
+          "operation_id": "e81c1c49-31b2-40ea-902e-6d39fbf61ccc",
           "command": {
             "action": "comms.email_send",
             "contact_id": "e0300000-0000-4000-8000-0000000c0001",
@@ -6603,7 +6603,7 @@
         "name": "functions:comms-email-command",
         "args": {
           "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
-          "operation_id": "addfc7c6-68cc-4325-b412-6705dbbf870f",
+          "operation_id": "e81c1c49-31b2-40ea-902e-6d39fbf61ccc",
           "command": {
             "action": "comms.email_send",
             "contact_id": "e0300000-0000-4000-8000-0000000c0001",
@@ -6864,7 +6864,7 @@
         "name": "functions:comms-email-command",
         "args": {
           "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
-          "operation_id": "7262b412-dd31-4c17-99c4-3ebef37ec568",
+          "operation_id": "78980a5f-0689-4fe4-945f-26b83cb50335",
           "command": {
             "action": "comms.email_send",
             "contact_id": "e0300000-0000-4000-8000-0000000c0001",
@@ -6878,7 +6878,7 @@
         "name": "functions:comms-email-command",
         "args": {
           "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
-          "operation_id": "7262b412-dd31-4c17-99c4-3ebef37ec568",
+          "operation_id": "78980a5f-0689-4fe4-945f-26b83cb50335",
           "command": {
             "action": "comms.email_send",
             "contact_id": "e0300000-0000-4000-8000-0000000c0001",
@@ -7117,7 +7117,7 @@
         "name": "functions:comms-email-command",
         "args": {
           "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
-          "operation_id": "d4f2839b-86a3-412b-9117-089daf50df82",
+          "operation_id": "d2a7e27d-8995-44ef-a686-e532c58e0bc1",
           "command": {
             "action": "comms.email_send",
             "contact_id": "e0300000-0000-4000-8000-0000000c0001",
@@ -7131,7 +7131,7 @@
         "name": "functions:comms-email-command",
         "args": {
           "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
-          "operation_id": "d4f2839b-86a3-412b-9117-089daf50df82",
+          "operation_id": "d2a7e27d-8995-44ef-a686-e532c58e0bc1",
           "command": {
             "action": "comms.email_send",
             "contact_id": "e0300000-0000-4000-8000-0000000c0001",
@@ -7298,7 +7298,7 @@
         "name": "functions:comms-email-command",
         "args": {
           "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
-          "operation_id": "f455dc85-23e5-4c5a-90a8-632a1a985324",
+          "operation_id": "9f737159-0a45-4fc6-a8a5-900f41b9e7b3",
           "command": {
             "action": "comms.email_send",
             "contact_id": "e0300000-0000-4000-8000-0000000c0001",
@@ -7312,7 +7312,7 @@
         "name": "functions:comms-email-command",
         "args": {
           "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
-          "operation_id": "f455dc85-23e5-4c5a-90a8-632a1a985324",
+          "operation_id": "9f737159-0a45-4fc6-a8a5-900f41b9e7b3",
           "command": {
             "action": "comms.email_send",
             "contact_id": "e0300000-0000-4000-8000-0000000c0001",
@@ -7457,7 +7457,7 @@
         "name": "functions:comms-email-command",
         "args": {
           "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
-          "operation_id": "87b263a3-c263-46f4-9dc3-70d87b53d7f1",
+          "operation_id": "50242168-0759-4081-80b3-6b0a49062aed",
           "command": {
             "action": "comms.email_send",
             "contact_id": "e0300000-0000-4000-8000-0000000c0001",
@@ -7471,7 +7471,7 @@
         "name": "functions:comms-email-command",
         "args": {
           "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
-          "operation_id": "87b263a3-c263-46f4-9dc3-70d87b53d7f1",
+          "operation_id": "50242168-0759-4081-80b3-6b0a49062aed",
           "command": {
             "action": "comms.email_send",
             "contact_id": "e0300000-0000-4000-8000-0000000c0001",
@@ -7616,7 +7616,7 @@
         "name": "functions:comms-email-command",
         "args": {
           "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
-          "operation_id": "72a3b8f8-c390-453b-999e-1359fb4c3573",
+          "operation_id": "803eba8b-a202-48b9-a7fc-73735c9bd9ad",
           "command": {
             "action": "comms.email_send",
             "contact_id": "e0300000-0000-4000-8000-0000000c0001",
@@ -7630,7 +7630,7 @@
         "name": "functions:comms-email-command",
         "args": {
           "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
-          "operation_id": "72a3b8f8-c390-453b-999e-1359fb4c3573",
+          "operation_id": "803eba8b-a202-48b9-a7fc-73735c9bd9ad",
           "command": {
             "action": "comms.email_send",
             "contact_id": "e0300000-0000-4000-8000-0000000c0001",
@@ -7764,7 +7764,7 @@
         "name": "functions:comms-email-command",
         "args": {
           "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
-          "operation_id": "39f54bb3-e23c-4321-ad4b-f9faf2151c5c",
+          "operation_id": "99369c87-ebf2-466b-b4b2-f3fb3f176c6a",
           "command": {
             "action": "comms.email_send",
             "contact_id": "e0300000-0000-4000-8000-0000000c0001",
@@ -7778,7 +7778,7 @@
         "name": "functions:comms-email-command",
         "args": {
           "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
-          "operation_id": "39f54bb3-e23c-4321-ad4b-f9faf2151c5c",
+          "operation_id": "99369c87-ebf2-466b-b4b2-f3fb3f176c6a",
           "command": {
             "action": "comms.email_send",
             "contact_id": "e0300000-0000-4000-8000-0000000c0001",
@@ -7955,7 +7955,7 @@
         "name": "functions:comms-email-command",
         "args": {
           "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
-          "operation_id": "9acc6905-687e-413e-9fa6-3dd990d87667",
+          "operation_id": "fc1ebe71-fb77-4435-b1f5-296db5d7118c",
           "command": {
             "action": "comms.email_send",
             "contact_id": "e0300000-0000-4000-8000-0000000c0001",
@@ -7970,7 +7970,7 @@
         "name": "functions:comms-email-command",
         "args": {
           "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
-          "operation_id": "9acc6905-687e-413e-9fa6-3dd990d87667",
+          "operation_id": "fc1ebe71-fb77-4435-b1f5-296db5d7118c",
           "command": {
             "action": "comms.email_send",
             "contact_id": "e0300000-0000-4000-8000-0000000c0001",
@@ -8126,7 +8126,7 @@
         "name": "functions:comms-email-command",
         "args": {
           "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
-          "operation_id": "ed356bb1-f9eb-4392-a96f-c6351ba811bd",
+          "operation_id": "9e2376e0-076f-4e10-870c-54ba633bb24f",
           "command": {
             "action": "comms.email_send",
             "contact_id": "e0300000-0000-4000-8000-0000000c0001",
@@ -8141,7 +8141,7 @@
         "name": "functions:comms-email-command",
         "args": {
           "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
-          "operation_id": "ed356bb1-f9eb-4392-a96f-c6351ba811bd",
+          "operation_id": "9e2376e0-076f-4e10-870c-54ba633bb24f",
           "command": {
             "action": "comms.email_send",
             "contact_id": "e0300000-0000-4000-8000-0000000c0001",
@@ -8308,7 +8308,7 @@
         "name": "functions:comms-email-command",
         "args": {
           "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
-          "operation_id": "e16dbf69-a433-46a9-95d7-ae2ef97cae9e",
+          "operation_id": "dd4c2ef0-770c-4dc9-a4eb-5c1d5bef47d4",
           "command": {
             "action": "comms.email_send",
             "contact_id": "e0300000-0000-4000-8000-0000000c0001",
@@ -8323,7 +8323,7 @@
         "name": "functions:comms-email-command",
         "args": {
           "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
-          "operation_id": "e16dbf69-a433-46a9-95d7-ae2ef97cae9e",
+          "operation_id": "dd4c2ef0-770c-4dc9-a4eb-5c1d5bef47d4",
           "command": {
             "action": "comms.email_send",
             "contact_id": "e0300000-0000-4000-8000-0000000c0001",
@@ -8468,7 +8468,7 @@
         "name": "functions:comms-email-command",
         "args": {
           "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
-          "operation_id": "1aacccff-010a-46f0-b272-136b857f4ece",
+          "operation_id": "549dbcbe-cf5b-4148-97be-c34da5a3a884",
           "command": {
             "action": "comms.email_send",
             "contact_id": "e0300000-0000-4000-8000-0000000c0001",
@@ -8483,7 +8483,7 @@
         "name": "functions:comms-email-command",
         "args": {
           "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
-          "operation_id": "1aacccff-010a-46f0-b272-136b857f4ece",
+          "operation_id": "549dbcbe-cf5b-4148-97be-c34da5a3a884",
           "command": {
             "action": "comms.email_send",
             "contact_id": "e0300000-0000-4000-8000-0000000c0001",
@@ -8499,12 +8499,12 @@
     "selectedJordan": true,
     "errors": []
   },
-  "exp03c-unknown-light-1366x768-paige-closed": {
+  "exp03c-unconfirmed-light-1366x768-paige-closed": {
     "ok": true,
     "viewport": "1366x768",
     "theme": "light",
     "paige": "closed",
-    "state": "unknown",
+    "state": "unconfirmed",
     "door": "unknown",
     "checks": {
       "noOverflow": true,
@@ -8705,7 +8705,7 @@
         "name": "functions:comms-email-command",
         "args": {
           "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
-          "operation_id": "eef1a97b-9c16-47ef-ae6c-8ef8b0a181b0",
+          "operation_id": "41141894-b99a-4d04-9c00-7dab23d1b210",
           "command": {
             "action": "comms.email_send",
             "contact_id": "e0300000-0000-4000-8000-0000000c0001",
@@ -8719,7 +8719,7 @@
         "name": "functions:comms-email-command",
         "args": {
           "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
-          "operation_id": "eef1a97b-9c16-47ef-ae6c-8ef8b0a181b0",
+          "operation_id": "41141894-b99a-4d04-9c00-7dab23d1b210",
           "command": {
             "action": "comms.email_send",
             "contact_id": "e0300000-0000-4000-8000-0000000c0001",
@@ -8734,12 +8734,12 @@
     "selectedJordan": true,
     "errors": []
   },
-  "exp03c-unknown-dark-1366x768-paige-closed": {
+  "exp03c-unconfirmed-dark-1366x768-paige-closed": {
     "ok": true,
     "viewport": "1366x768",
     "theme": "dark",
     "paige": "closed",
-    "state": "unknown",
+    "state": "unconfirmed",
     "door": "unknown",
     "checks": {
       "noOverflow": true,
@@ -8918,7 +8918,7 @@
         "name": "functions:comms-email-command",
         "args": {
           "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
-          "operation_id": "dcc26cdb-f735-48f1-b141-5f405d221689",
+          "operation_id": "0e27c69d-d3a3-4eb2-bc69-8794658117da",
           "command": {
             "action": "comms.email_send",
             "contact_id": "e0300000-0000-4000-8000-0000000c0001",
@@ -8932,7 +8932,7 @@
         "name": "functions:comms-email-command",
         "args": {
           "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
-          "operation_id": "dcc26cdb-f735-48f1-b141-5f405d221689",
+          "operation_id": "0e27c69d-d3a3-4eb2-bc69-8794658117da",
           "command": {
             "action": "comms.email_send",
             "contact_id": "e0300000-0000-4000-8000-0000000c0001",
@@ -8947,12 +8947,12 @@
     "selectedJordan": true,
     "errors": []
   },
-  "exp03c-unknown-light-390x844": {
+  "exp03c-unconfirmed-light-390x844": {
     "ok": true,
     "viewport": "390x844",
     "theme": "light",
     "paige": "closed",
-    "state": "unknown",
+    "state": "unconfirmed",
     "door": "unknown",
     "checks": {
       "noOverflow": true,
@@ -9131,7 +9131,7 @@
         "name": "functions:comms-email-command",
         "args": {
           "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
-          "operation_id": "66dee156-fce3-4c70-9c5d-96069ff398d0",
+          "operation_id": "e6965370-1a04-4249-8962-441214a4cc83",
           "command": {
             "action": "comms.email_send",
             "contact_id": "e0300000-0000-4000-8000-0000000c0001",
@@ -9145,7 +9145,7 @@
         "name": "functions:comms-email-command",
         "args": {
           "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
-          "operation_id": "66dee156-fce3-4c70-9c5d-96069ff398d0",
+          "operation_id": "e6965370-1a04-4249-8962-441214a4cc83",
           "command": {
             "action": "comms.email_send",
             "contact_id": "e0300000-0000-4000-8000-0000000c0001",
@@ -9160,12 +9160,12 @@
     "selectedJordan": true,
     "errors": []
   },
-  "exp03c-unknown-dark-390x844": {
+  "exp03c-unconfirmed-dark-390x844": {
     "ok": true,
     "viewport": "390x844",
     "theme": "dark",
     "paige": "closed",
-    "state": "unknown",
+    "state": "unconfirmed",
     "door": "unknown",
     "checks": {
       "noOverflow": true,
@@ -9333,7 +9333,7 @@
         "name": "functions:comms-email-command",
         "args": {
           "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
-          "operation_id": "8011a579-008e-4fde-a371-88c3f7d63498",
+          "operation_id": "362ea47d-725f-4363-8408-83dfb91c3660",
           "command": {
             "action": "comms.email_send",
             "contact_id": "e0300000-0000-4000-8000-0000000c0001",
@@ -9347,7 +9347,7 @@
         "name": "functions:comms-email-command",
         "args": {
           "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
-          "operation_id": "8011a579-008e-4fde-a371-88c3f7d63498",
+          "operation_id": "362ea47d-725f-4363-8408-83dfb91c3660",
           "command": {
             "action": "comms.email_send",
             "contact_id": "e0300000-0000-4000-8000-0000000c0001",
@@ -9544,7 +9544,7 @@
         "name": "functions:comms-email-command",
         "args": {
           "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
-          "operation_id": "47cb42ee-0990-4ccb-853b-a1cb2b62567f",
+          "operation_id": "a71a0d4b-8b72-4d2d-9381-88afb1482972",
           "command": {
             "action": "comms.email_send",
             "contact_id": "e0300000-0000-4000-8000-0000000c0001",
@@ -9718,7 +9718,7 @@
         "name": "functions:comms-email-command",
         "args": {
           "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
-          "operation_id": "b911932a-df45-4ec5-b06b-ee7fa49476ef",
+          "operation_id": "4286f609-6c1c-4ac1-8a40-22b4344d8383",
           "command": {
             "action": "comms.email_send",
             "contact_id": "e0300000-0000-4000-8000-0000000c0001",
@@ -9903,7 +9903,7 @@
         "name": "functions:comms-email-command",
         "args": {
           "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
-          "operation_id": "6b06036a-e650-4ebe-9bdc-3dda31fa8ae5",
+          "operation_id": "19a5bb29-440a-4fab-b9fc-36acbdee6a63",
           "command": {
             "action": "comms.email_send",
             "contact_id": "e0300000-0000-4000-8000-0000000c0001",
@@ -10077,7 +10077,7 @@
         "name": "functions:comms-email-command",
         "args": {
           "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
-          "operation_id": "27ed1d51-939c-4c51-a7e7-caf06860f427",
+          "operation_id": "28f30907-fdb1-4b3d-a7c2-3a0b799d6664",
           "command": {
             "action": "comms.email_send",
             "contact_id": "e0300000-0000-4000-8000-0000000c0001",
@@ -10357,7 +10357,7 @@
         "name": "functions:comms-email-command",
         "args": {
           "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
-          "operation_id": "057bed02-2cf5-4720-b8c5-3c9616af4db2",
+          "operation_id": "25a16777-e84f-4bbd-83f1-1e12c86a4759",
           "command": {
             "action": "comms.email_send",
             "contact_id": "e0300000-0000-4000-8000-0000000c0001",
@@ -10371,7 +10371,7 @@
         "name": "functions:comms-email-command",
         "args": {
           "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
-          "operation_id": "057bed02-2cf5-4720-b8c5-3c9616af4db2",
+          "operation_id": "25a16777-e84f-4bbd-83f1-1e12c86a4759",
           "command": {
             "action": "comms.email_send",
             "contact_id": "e0300000-0000-4000-8000-0000000c0001",
@@ -10619,7 +10619,7 @@
         "name": "functions:comms-email-command",
         "args": {
           "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
-          "operation_id": "6577d823-843f-4c1b-9ec4-2b99f8fdd428",
+          "operation_id": "e49db42a-61d0-4a25-b483-90613b15cefd",
           "command": {
             "action": "comms.email_send",
             "contact_id": "e0300000-0000-4000-8000-0000000c0001",
@@ -10633,7 +10633,7 @@
         "name": "functions:comms-email-command",
         "args": {
           "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
-          "operation_id": "6577d823-843f-4c1b-9ec4-2b99f8fdd428",
+          "operation_id": "e49db42a-61d0-4a25-b483-90613b15cefd",
           "command": {
             "action": "comms.email_send",
             "contact_id": "e0300000-0000-4000-8000-0000000c0001",
@@ -10903,7 +10903,7 @@
         "name": "functions:comms-email-command",
         "args": {
           "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
-          "operation_id": "f8b0c5d0-c614-48f5-8031-f59521d99a13",
+          "operation_id": "6a59514a-5723-40a6-a8ab-142ce88906f9",
           "command": {
             "action": "comms.email_send",
             "contact_id": "e0300000-0000-4000-8000-0000000c0001",
@@ -10917,7 +10917,7 @@
         "name": "functions:comms-email-command",
         "args": {
           "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
-          "operation_id": "f8b0c5d0-c614-48f5-8031-f59521d99a13",
+          "operation_id": "6a59514a-5723-40a6-a8ab-142ce88906f9",
           "command": {
             "action": "comms.email_send",
             "contact_id": "e0300000-0000-4000-8000-0000000c0001",
@@ -11165,7 +11165,7 @@
         "name": "functions:comms-email-command",
         "args": {
           "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
-          "operation_id": "644269a2-4b23-42a4-932d-12d8ddb8fd85",
+          "operation_id": "286a3f3f-95c4-4e8d-81a7-e0661a4308d1",
           "command": {
             "action": "comms.email_send",
             "contact_id": "e0300000-0000-4000-8000-0000000c0001",
@@ -11179,7 +11179,7 @@
         "name": "functions:comms-email-command",
         "args": {
           "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
-          "operation_id": "644269a2-4b23-42a4-932d-12d8ddb8fd85",
+          "operation_id": "286a3f3f-95c4-4e8d-81a7-e0661a4308d1",
           "command": {
             "action": "comms.email_send",
             "contact_id": "e0300000-0000-4000-8000-0000000c0001",
@@ -11358,7 +11358,7 @@
         "name": "functions:comms-email-command",
         "args": {
           "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
-          "operation_id": "86536fca-7b56-4594-bd3b-b7dc894c5a8e",
+          "operation_id": "ac48e42f-c9dc-47c8-8ce2-edebeefb4915",
           "command": {
             "action": "comms.email_send",
             "contact_id": "e0300000-0000-4000-8000-0000000c0001",
@@ -11514,7 +11514,7 @@
         "name": "functions:comms-email-command",
         "args": {
           "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
-          "operation_id": "3378707d-1100-4603-9ba0-c952a1abef6c",
+          "operation_id": "b6e2cdda-8811-4673-bee2-bfd503f9eb8d",
           "command": {
             "action": "comms.email_send",
             "contact_id": "e0300000-0000-4000-8000-0000000c0001",
@@ -11681,7 +11681,7 @@
         "name": "functions:comms-email-command",
         "args": {
           "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
-          "operation_id": "56baefa9-99c8-4764-842d-bc11e20c2c73",
+          "operation_id": "1bcbc865-6e8a-4315-aff5-cc0441c1feb1",
           "command": {
             "action": "comms.email_send",
             "contact_id": "e0300000-0000-4000-8000-0000000c0001",
@@ -11837,7 +11837,7 @@
         "name": "functions:comms-email-command",
         "args": {
           "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
-          "operation_id": "96d95314-2cf6-43fd-9f13-603ad696bebb",
+          "operation_id": "1c5ac686-1222-4ab2-a5ff-ec018b6429b6",
           "command": {
             "action": "comms.email_send",
             "contact_id": "e0300000-0000-4000-8000-0000000c0001",
@@ -12015,7 +12015,7 @@
         "name": "functions:comms-email-command",
         "args": {
           "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
-          "operation_id": "7d23d5df-5939-4ca7-8cdb-b2fce65463fa",
+          "operation_id": "e73071df-9fd0-4be2-9e0c-cd8f51fd723c",
           "command": {
             "action": "comms.email_send",
             "contact_id": "e0300000-0000-4000-8000-0000000c0001",
@@ -12171,7 +12171,7 @@
         "name": "functions:comms-email-command",
         "args": {
           "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
-          "operation_id": "49af92d6-f002-4b0f-9e76-1c53dbfeb057",
+          "operation_id": "a8437832-ca07-42fd-8c65-13a889e05191",
           "command": {
             "action": "comms.email_send",
             "contact_id": "e0300000-0000-4000-8000-0000000c0001",
@@ -12338,7 +12338,7 @@
         "name": "functions:comms-email-command",
         "args": {
           "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
-          "operation_id": "3a47461e-c42c-4faa-9ee0-da91caf54a28",
+          "operation_id": "36925432-afed-45d0-aeeb-4692e8923c48",
           "command": {
             "action": "comms.email_send",
             "contact_id": "e0300000-0000-4000-8000-0000000c0001",
@@ -12494,7 +12494,7 @@
         "name": "functions:comms-email-command",
         "args": {
           "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
-          "operation_id": "8faced4f-947c-4b57-bb7e-e43b9123cfda",
+          "operation_id": "a23abb13-19a6-4c24-b6a3-e92120031d13",
           "command": {
             "action": "comms.email_send",
             "contact_id": "e0300000-0000-4000-8000-0000000c0001",
@@ -12672,7 +12672,7 @@
         "name": "functions:comms-email-command",
         "args": {
           "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
-          "operation_id": "1b328d34-4e63-452e-9580-c9651fab9d09",
+          "operation_id": "ffa5042e-cfb9-4f71-bc75-d901935d8cc0",
           "command": {
             "action": "comms.email_send",
             "contact_id": "e0300000-0000-4000-8000-0000000c0001",
@@ -12828,7 +12828,7 @@
         "name": "functions:comms-email-command",
         "args": {
           "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
-          "operation_id": "1d077a1c-032e-473d-bca3-99a0c1887097",
+          "operation_id": "b12dc5d2-efd0-4dce-85b3-c04c27899d0c",
           "command": {
             "action": "comms.email_send",
             "contact_id": "e0300000-0000-4000-8000-0000000c0001",
@@ -12995,7 +12995,7 @@
         "name": "functions:comms-email-command",
         "args": {
           "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
-          "operation_id": "8233c3e7-16ee-4113-84a3-c0fe7079c010",
+          "operation_id": "deefbee4-168c-4cb4-89a9-2c8f4fff5f3c",
           "command": {
             "action": "comms.email_send",
             "contact_id": "e0300000-0000-4000-8000-0000000c0001",
@@ -13151,7 +13151,7 @@
         "name": "functions:comms-email-command",
         "args": {
           "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
-          "operation_id": "f302a551-ae98-498b-b9b5-3929c9603537",
+          "operation_id": "d25b3735-e13b-4aac-9cd5-b3a1ab8d3fd1",
           "command": {
             "action": "comms.email_send",
             "contact_id": "e0300000-0000-4000-8000-0000000c0001",
@@ -13329,7 +13329,7 @@
         "name": "functions:comms-email-command",
         "args": {
           "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
-          "operation_id": "97e3c944-e9f2-45ec-a655-8f95cb600e0a",
+          "operation_id": "36f55f01-59f6-4fa6-aa43-29adf582fc01",
           "command": {
             "action": "comms.email_send",
             "contact_id": "e0300000-0000-4000-8000-0000000c0001",
@@ -13485,7 +13485,7 @@
         "name": "functions:comms-email-command",
         "args": {
           "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
-          "operation_id": "af888b58-ca67-445e-ad6c-529aa4c94deb",
+          "operation_id": "821dc48a-10b7-4271-905b-25e97949686c",
           "command": {
             "action": "comms.email_send",
             "contact_id": "e0300000-0000-4000-8000-0000000c0001",
@@ -13652,7 +13652,7 @@
         "name": "functions:comms-email-command",
         "args": {
           "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
-          "operation_id": "3ad67e53-9875-4eb3-9eb8-a874837d2206",
+          "operation_id": "4d227fdf-f1da-4c59-82e0-5eea86a45c5d",
           "command": {
             "action": "comms.email_send",
             "contact_id": "e0300000-0000-4000-8000-0000000c0001",
@@ -13808,7 +13808,7 @@
         "name": "functions:comms-email-command",
         "args": {
           "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
-          "operation_id": "707acfb4-08ea-46bb-aa99-083971346ad8",
+          "operation_id": "86ac1673-8a9f-41a3-8d17-e74f58f74202",
           "command": {
             "action": "comms.email_send",
             "contact_id": "e0300000-0000-4000-8000-0000000c0001",
@@ -13986,7 +13986,7 @@
         "name": "functions:comms-email-command",
         "args": {
           "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
-          "operation_id": "b1879a5f-b0e1-463f-9288-816825248b59",
+          "operation_id": "bd6a338b-9519-4948-b6e6-03767d84221f",
           "command": {
             "action": "comms.email_send",
             "contact_id": "e0300000-0000-4000-8000-0000000c0001",
@@ -14142,7 +14142,7 @@
         "name": "functions:comms-email-command",
         "args": {
           "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
-          "operation_id": "49beb65b-26d3-4a0b-a1c4-62c9faf70771",
+          "operation_id": "7cf848cb-932b-4d3e-99e9-0b9670e02b01",
           "command": {
             "action": "comms.email_send",
             "contact_id": "e0300000-0000-4000-8000-0000000c0001",
@@ -14309,7 +14309,7 @@
         "name": "functions:comms-email-command",
         "args": {
           "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
-          "operation_id": "12e67113-cdea-4e4b-aca7-0382e84ae78d",
+          "operation_id": "adad56cd-c42b-4f50-a7e8-ca1836b40c24",
           "command": {
             "action": "comms.email_send",
             "contact_id": "e0300000-0000-4000-8000-0000000c0001",
@@ -14465,7 +14465,7 @@
         "name": "functions:comms-email-command",
         "args": {
           "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
-          "operation_id": "c337ef73-837e-479a-afd1-595cef405e82",
+          "operation_id": "f2e7edba-81e5-47a4-9d4c-f7534fb0af36",
           "command": {
             "action": "comms.email_send",
             "contact_id": "e0300000-0000-4000-8000-0000000c0001",
@@ -14644,7 +14644,7 @@
         "name": "functions:comms-email-command",
         "args": {
           "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
-          "operation_id": "0d776612-f088-44ab-bebc-e52df294bf57",
+          "operation_id": "74b2ea12-e1df-4f6f-81c2-0297c303abad",
           "command": {
             "action": "comms.email_send",
             "contact_id": "e0300000-0000-4000-8000-0000000c0001",
@@ -14801,7 +14801,7 @@
         "name": "functions:comms-email-command",
         "args": {
           "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
-          "operation_id": "9b47fe38-3ccb-4ceb-abe9-1969dcd41404",
+          "operation_id": "c8acd718-d519-4334-b924-4d3f68457732",
           "command": {
             "action": "comms.email_send",
             "contact_id": "e0300000-0000-4000-8000-0000000c0001",
@@ -14969,7 +14969,7 @@
         "name": "functions:comms-email-command",
         "args": {
           "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
-          "operation_id": "efa6babe-06e7-46ce-a06a-55111911e566",
+          "operation_id": "68d41984-aa9e-41b1-a1ae-ba735424f538",
           "command": {
             "action": "comms.email_send",
             "contact_id": "e0300000-0000-4000-8000-0000000c0001",
@@ -15126,7 +15126,7 @@
         "name": "functions:comms-email-command",
         "args": {
           "expected_tenant_id": "e0300000-0000-4000-8000-00000000b003",
-          "operation_id": "77c1ab2c-6d54-4afa-b1af-e24a66903cf4",
+          "operation_id": "ce2975c6-6ceb-4687-86aa-076800e8ed6e",
           "command": {
             "action": "comms.email_send",
             "contact_id": "e0300000-0000-4000-8000-0000000c0001",

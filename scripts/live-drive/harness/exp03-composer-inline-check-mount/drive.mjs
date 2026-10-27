@@ -1,6 +1,6 @@
 // EXP03 O12 piece 3 — render the owner's canonical inbox (exp03-composer-inline-check-mount) and drive the email
 // reply's inline check through every face it has: composing (the note), the check open (send now and scheduled),
-// Sending…, sent, scheduled, a lost/unknown answer with Check status, each refusal, an expired check, and the
+// Sending…, sent, scheduled, a lost/unconfirmed answer with Check status, each refusal, an expired check, and the
 // conversation switch held while a confirm is out. Every frame is MEASURED before it is labelled: AA text contrast
 // against the real composited background for every element this change adds (the strip's text and buttons, the
 // composer note, "Checking…", the toast) and for everything else on screen (reported), horizontal overflow, gold
@@ -46,7 +46,8 @@ const STATES = {
   sending: { door: "hang" },
   sent: { door: "ok" },
   scheduled: { door: "ok", schedule: true },
-  unknown: { door: "unknown" },
+  // The confirm's answer is outcome_unknown (named "unconfirmed" here, as the owner reads it).
+  unconfirmed: { door: "unknown" },
   expired: { door: "expire" },
   "switch-held": { door: "hang" },
   ...Object.fromEntries(Object.keys(REFUSALS).map((k) => [`refused-${k}`, { door: k }])),
@@ -239,12 +240,12 @@ try {
       // Focus as it lands when the check opens — read BEFORE anything else moves it.
       behaviour.focusOnOpen = await page.evaluate(() => document.activeElement?.getAttribute?.("data-strip-focus") ?? document.activeElement?.tagName ?? null);
       const confirm = page.locator('[data-strip-focus="confirm"]');
-      if (["sending", "sent", "scheduled", "unknown", "switch-held"].includes(s.state)) {
+      if (["sending", "sent", "scheduled", "unconfirmed", "switch-held"].includes(s.state)) {
         await confirm.click();
         if (s.state === "sending" || s.state === "switch-held") await page.getByText("Sending…").first().waitFor({ timeout: 5_000 });
         if (s.state === "sent") await page.getByText("Accepted", { exact: true }).first().waitFor({ timeout: 10_000 });
         if (s.state === "scheduled") await page.getByText("Scheduled", { exact: true }).first().waitFor({ timeout: 10_000 });
-        if (s.state === "unknown") await page.getByRole("button", { name: "Check status" }).waitFor({ timeout: 10_000 });
+        if (s.state === "unconfirmed") await page.getByRole("button", { name: "Check status" }).waitFor({ timeout: 10_000 });
         if (s.state === "switch-held") {
           await page.locator("[data-thread-key]").filter({ hasText: "Priya Okafor" }).first().click();
           await page.locator("[data-sonner-toast]").filter({ hasText: "Wait for this email to finish sending before changing conversation." }).first().waitFor({ timeout: 5_000 });
@@ -314,7 +315,7 @@ try {
     });
     if (s.state === "sent") Object.assign(checks, { cleared: m.composer.body === "" && m.composer.subject === "" && !m.strip, acceptedPill: m.pills.accepted >= 1, announced: m.status === "Accepted by the email service.", focusBody: m.focus.tag === "TEXTAREA" && m.focus.inComposer, pillAA: aa("pill-accepted") });
     if (s.state === "scheduled") Object.assign(checks, { cleared: m.composer.body === "" && !m.strip, scheduledPill: m.pills.scheduled >= 1, announced: /^Scheduled for \w{3}, \w{3} \d+, 9:00 AM\.$/.test(m.status), pillAA: aa("pill-scheduled", "sends-time") });
-    if (s.state === "unknown") Object.assign(checks, { dontResend: stripText.includes("Couldn't confirm this went out — don't resend."), checkStatus: stripText.includes("Check status"), wordsKept: m.composer.body === BODY && m.composer.subject === SUBJECT, rowUnconfirmed: m.pills.unconfirmed >= 1, focusCheckStatus: m.focus.text === "Check status", wordsKeptNote: stripText.includes("Your words are kept.") });
+    if (s.state === "unconfirmed") Object.assign(checks, { dontResend: stripText.includes("Couldn't confirm this went out — don't resend."), checkStatus: stripText.includes("Check status"), wordsKept: m.composer.body === BODY && m.composer.subject === SUBJECT, rowUnconfirmed: m.pills.unconfirmed >= 1, focusCheckStatus: m.focus.text === "Check status", wordsKeptNote: stripText.includes("Your words are kept.") });
     if (s.state === "expired") Object.assign(checks, { expiredCopy: stripText.includes("This check expired — check again."), noAct: m.goldButtons.length === 0, checkAgain: stripText.includes("Check again"), oneCall: doorCalls.length === 1 });
     if (s.state === "switch-held") Object.assign(checks, { toast: behaviour.toastSeen === true && m.toasts.some((t) => t.text.includes("Wait for this email to finish sending before changing conversation.")), stillJordan: m.composer.body === BODY && /Sending…/.test(stripText) });
     if (s.state.startsWith("refused-")) {

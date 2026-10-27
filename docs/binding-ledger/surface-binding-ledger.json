@@ -934,7 +934,7 @@
       "group": "clients",
       "tier_scope": ["solo"],
       "owner_component": "src/components/tenant-relationships/OwnerPortalDashboard.tsx (Solo mount in TenantRelationshipsClientsWorkspace)",
-      "canonical_source": "Canonical clients, tenant_invite_tokens, useBrandKit/usePortalConfig and the existing shared Rail reader; native configuration writers and selected-client standing are reused",
+      "canonical_source": "Canonical clients, tenant_invite_tokens, useBrandKit/usePortalConfig and the existing shared Rail reader; native configuration writers and selected-client standing are reused. Candidate owner support attention consumes original E03 read_support_cases through a closed actor/business/known-client projection; release/authenticated proof owed, no Portal-help case bridge claimed",
       "chain": {
         "canonical_source": {"status": "partial", "note": "approved owner dashboard replaces the six static capability cards; client, invitation, brand/config and shared-activity projections reuse canonical records; complete customer convergence and authenticated proof remain owed"},
         "tenant_scope": {"status": "server_resolved"},

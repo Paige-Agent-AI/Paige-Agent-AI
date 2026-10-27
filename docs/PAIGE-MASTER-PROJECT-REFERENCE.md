@@ -1,5 +1,7 @@
 # Paige Agent AI — Master Project Reference
 
+> **EXP09 support attention — source candidate, 2026-10-26:** the existing owner Portal consumes original E03 support cases for loaded CRM clients through a closed expected-actor/business read. Original owner authority, case/connector/client identities, fifty-case source window and no-write behavior are retained; no second inbox, provider path, SLA or Portal-help case bridge is claimed. Focused local65 tests pass; full-schema385 assertions are prepared, not yet executed. Review, exact-head CI, merge/deployment and actual owner readback remain owed. The full42/seven-pillar customer Experience and founder acceptance remain incomplete. [Original source and routing](delivery/e09-customer-messages-business-scope.md), [UI proof](evidence/ui-delivery/e09-support-attention.md). No shipped-log row is added before a real merge.
+
 > **October24 EXP02 bounded Finance acceptance:** one new original-reference
 > VERA read matches the released Finance measurement and retains its saved reply,
 > source-step badge and original conversation after reload; [sanitized receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2684#issuecomment-6391322055).

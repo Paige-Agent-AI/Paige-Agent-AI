@@ -22,6 +22,7 @@ vi.mock("@/hooks/useRailEvents", () => ({ useRailEvents: () => fixture.rail }));
 // The owner-side menu catalog (E09 Slice M): the same input the menu editor reads.
 vi.mock("@/hooks/usePortalConfig", () => ({ usePortalCatalogInput: () => ({ data: { slug: null, authoredUsable: true, modules: [{ key: "home", label: "Home" }, { key: "agreements", label: "Agreements" }, { key: "sessions", label: "Coaching calls" }] }, isLoading: false, isError: false, refetch: vi.fn() }) }));
 vi.mock("./usePortalInvitations", () => ({ usePortalInvitations: () => fixture.invitations }));
+vi.mock("./usePortalSupportAttention", () => ({ usePortalSupportAttention: () => ({phase:'ready',value:{cases:[],source_count:0,read_at:'2026-10-26T12:00:00Z'},refresh:vi.fn()}) }));
 vi.mock("./PortalConfigurationGate", () => ({ PortalConfigurationGate: ({ children }: { children: React.ReactNode }) => fixture.allowed ? <>{children}</> : <p>Configuration access required</p> }));
 vi.mock("./PortalInvitationManager", () => ({ PortalInvitationManager: ({ person }: { person: RelationshipPerson }) => <div data-invite-for={person.id}>{person.email}</div> }));
 vi.mock("./OwnerCustomerResources", () => ({OwnerCustomerResources:({onBack,onPendingChange}:{onBack:()=>void;onPendingChange:(blocked:boolean)=>void})=>{React.useEffect(()=>{onPendingChange(fixture.resourcesPending);return()=>onPendingChange(false);},[onPendingChange]);return <button onClick={onBack}>Back to client access</button>;}}));

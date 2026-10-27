@@ -4664,19 +4664,6 @@ owed. Protected monthlyUNKNOWNUNRETRIED/original9-0+12-0-4 retained. ALG03/06/11
 canonical maturity unchanged, ALG13 Unverified; no new algorithm or action system.
 [Source and rendered boundaries](../evidence/ui-delivery/e2-email-review-evidence.md).
 
-### October27 08:55UTC — EXP02 original report thumbnail source released
-
-#2974 mergedc76eb5cd62fc6cc4fa761b654bf18153b15ed395/tree d79e4e3b2920469d8aee6635daa6cf1b363413a8;
-reviewed1aa2c2fcafb8b50f22270bcd607979297b6d15c0, AUTHOR-REVIEW / LOWER ASSURANCE5663818856.
-All10 applicable checks/two web statuses SUCCESS; designed no-SQL Preview SKIPPED.
-Current-main union retains incoming Communications work; original31 inbound controls PASS.
-Production dpl_C2AQ9atUUiuXETJBiuHdG7DkzUGk READY, both public origins exact
-c76eb5cd-mvqg30cs/matching reachable entry/null update/missing404 at08:54:23UTC.
-No native/Edge/grant/provider/action activation delta; prior report17140002 remains verified.
-Functional bounded source deployed; Visual13 actual-source synthetic frames; Experiential
-authenticated viewer/Finance/roles/cohorts/reload/native zoom/full AT/full19/nine owed;
-Founder NOT_ACCEPTED. Algorithms/capability maturity and original9-0/12-0-4/monthly
-UNKNOWNUNRETRIED retained. [Release receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2974#issuecomment-6437655287).
 
 ### October27 — original Executive department-return repair, development
 
@@ -4733,3 +4720,16 @@ All19/nine, shared read-only Finance QA custody/Overview+all subpages/reload/
 nativezoom/roles/cohorts/Chat-Live, original manual Work receiving and founder
 evaluation remain owed. Protected monthly UNKNOWN/UNRETRIED. No algorithm,
 provider/worker/scan/business activation, approval, grant or receipt promotion.
+### October27 08:55UTC — EXP02 original report thumbnail source released
+
+#2974 mergedc76eb5cd62fc6cc4fa761b654bf18153b15ed395/tree d79e4e3b2920469d8aee6635daa6cf1b363413a8;
+reviewed1aa2c2fcafb8b50f22270bcd607979297b6d15c0, AUTHOR-REVIEW / LOWER ASSURANCE5663818856.
+All10 applicable checks/two web statuses SUCCESS; designed no-SQL Preview SKIPPED.
+Current-main union retains incoming Communications work; original31 inbound controls PASS.
+Production dpl_C2AQ9atUUiuXETJBiuHdG7DkzUGk READY, both public origins exact
+c76eb5cd-mvqg30cs/matching reachable entry/null update/missing404 at08:54:23UTC.
+No native/Edge/grant/provider/action activation delta; prior report17140002 remains verified.
+Functional bounded source deployed; Visual13 actual-source synthetic frames; Experiential
+authenticated viewer/Finance/roles/cohorts/reload/native zoom/full AT/full19/nine owed;
+Founder NOT_ACCEPTED. Algorithms/capability maturity and original9-0/12-0-4/monthly
+UNKNOWNUNRETRIED retained. [Release receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2974#issuecomment-6437655287).

@@ -1,5 +1,11 @@
 # Decision Log — chronological one-liners
 
+## October27 — EXP03: PAIGE's own email moves off Resend onto SendGrid
+
+- **Owner rulings (Antonio, 2026-10-26).** The Resend account was emptied ("I had to delete all the emails inside of Resend"); "No Resend — move to SendGrid now"; "I am moving EVERYTHING to SendGrid"; keep the From on `@mail.paigeagent.ai`; SendGrid Subuser Management is not needed.
+- **Built (EXP03 PR #2958).** One shared transport `_shared/email/platform-sendgrid.ts`; welcome, backfill, platform invites, plan reminders, booking emails (with .ics), client-portal invites and transactional email converted. From is always on `mail.paigeagent.ai` (security H2); booking emails keep the business as Reply-To. Because SendGrid has no idempotent replay, a canonical portal-invite `reconcile` no longer re-sends: it settles `outcome_unknown`. Settling those from SendGrid receipts, or an owner-approved "send again", is a tracked follow-up.
+- **Owner actions owed.** Re-point Supabase Auth SMTP to SendGrid; say whether the `mail.paigeagent.ai` MX (`inbound-smtp.us-east-1.amazonaws.com`) is the owner's AWS or Resend's; DNS cleanup of Resend records; a SendGrid paid plan before the trial ends 2026-12-10.
+
 ## October26 — EXP08 co-owner authority: live defect found and fixed (provisional owner default)
 
 - **Live defect found (integrator, verified on production 2026-10-26).** `grant_co_owner` / `revoke_co_owner` (SECURITY DEFINER, executable by `authenticated`; prod md5(prosrc) `b62661d7…` / `8b1cb22a…`, = `20260803190000` L241–361, never re-emitted) gated only on `is_tenant_owner(caller) OR is_platform_owner()`. Any co-owner seat could mint co-owners and revoke the account holder of record (`tenants.owner_user_id`), demoting them to admin; the last-owner floor protected only the final owner. No app, edge, MCP, cron or script caller exists (SQL only), so it was reachable by a direct RPC from any co-owner session.

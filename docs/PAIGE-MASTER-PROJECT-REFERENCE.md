@@ -858,6 +858,14 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**2026-10-27 UTC — EXP05 ZION assignment access-refusal source repair.**
+
+| Increment | Exact released source and production evidence | Acceptance boundary |
+| --- | --- | --- |
+| [#2946 original inspector refusal](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2946#issuecomment-6432856627) | Reviewed `59d51961723a4b24e1139723a494aec40b5ed048`, AUTHOR-REVIEW / LOWER ASSURANCE5661557153, all10 applicable exact-head checks/two webSUCCESS/normal PreviewSKIP/zero threads. Actual main `d4fcca1b48ba4115a15faefe05318a2d18991891` / tree `d6e20d95a9c87897f84b489291f0dcdf9f346472`, whole incoming691ce/E06 and five owning blobs exact. Normal production `dpl_BYSqPx1wRX5vaDcWv24PbeZ84f5R` READY/exact. Both paigeagent.ai and paige-agent-ai.vercel.app public builds exactd4fcca-mvq41uxz at03:14:57–03:15:02UTC; original shipped reader44b60404/classifierc1648ecc confirms genuine SDK/native Response401/403 handling. Proof SHA256328b0741b1db38c52288a3dc148de39d2b3e1969b4cc86fe0818167cc80c3b7c. | SOURCE/WEB VERIFIED; original140 source controls pass. No own Edge/native/permission/activation change. Actual authenticated private-sample withdrawal, refusal/reload/keyboard/cohort/isolation and full ten/E5/Builder/weekly execution/ZION useful result/notice/separate Live/founder acceptance remain PROOF OWED. No catalogue or algorithm maturity promotion, customer release name or announcement. |
+
+This mechanical closeout records the preceding delivery only and is not logged recursively.
+
 **2026-10-27 UTC — EXP02 Executive department return.**
 
 #2979 merged `d0ab7820dbba5e0cbb4aac2f03902a2e2761e8fc`; actual tree `db8af66f26898d2035009d4feb744e55f598e9e5` equals reviewed1442/

@@ -42,6 +42,7 @@ import { PortalInvitationManager, type PortalInvitationActionLock } from "./Port
 import { PortalInvitationHistory } from "./PortalInvitationHistory";
 import { invitationDeliveryText } from "./portalInvitationEvidence";
 import { OwnerCustomerResources } from "./OwnerCustomerResources";
+import { PortalSupportAttention } from "./PortalSupportAttention";
 import { curaKnowledgeReferenceKey, type CuraKnowledgeReference } from "@/lib/cura-knowledge-reference";
 import "./owner-portal-dashboard.css";
 
@@ -653,6 +654,7 @@ export function OwnerPortalDashboard({
                   />
                 )}
               </section>
+              {!data.peopleLoading && !data.peopleError && <PortalSupportAttention tenantId={tenantId} people={data.people} openClient={openClient} />}
               <div className="opd-paige">
                 <Sparkles aria-hidden />
                 <div>

@@ -80,3 +80,58 @@ describe("Team Hub stylesheet: increment 3 rendered-evidence fixes", () => {
     for (const declaration of [failed, refused]) expect(declaration).not.toMatch(/gold/);
   });
 });
+
+describe("Team Hub stylesheet: agents (A1b, approved v5 colour rules)", () => {
+  it("maps each of the seven agents to its own shared tokens, and paints identity only through them", () => {
+    for (const agent of ["paige", "vera", "nexus", "cura", "mentor", "merit", "zion"]) {
+      expect(rule(`[data-ag="${agent}"]`)).toBe(`--agc-fill:var(--pg-agent-${agent}-fill);--agc-tint:var(--pg-agent-${agent}-tint);--agc-ink:var(--pg-agent-${agent}-ink);--agc-ring:var(--pg-agent-${agent}-ring)`);
+    }
+    // No hex in an agent rule: every colour is a token.
+    const agentRules = css.slice(css.indexOf("EXP08 Team Hub agents (A1b)"));
+    expect(agentRules).not.toMatch(/#[0-9a-f]{3,8}\b/i);
+  });
+
+  it("keeps @mention chips at tint strength (one message can hold four) and the plate on tint with a ring", () => {
+    expect(rule(".th-mention.th-ag-chip")).toContain("background:var(--agc-tint)");
+    expect(rule(".th-mention.th-ag-chip")).not.toContain("--agc-fill");
+    expect(rule(".th-ag-plate")).toContain("background:var(--agc-tint);color:var(--agc-ink);box-shadow:inset 0 0 0 1px var(--agc-ring)");
+  });
+
+  it("never gives a status mark an agent colour: status dots keep the system colours", () => {
+    for (const status of ["open", "in_progress", "blocked", "done"]) expect(rule(`.th-state[data-status="${status}"]::before`)).not.toContain("--agc");
+    expect(css).not.toMatch(/\.th-state[^{]*\{[^}]*--agc/);
+    expect(rule(".th-hub .th-ag-fail svg")).toContain("color:var(--pg-warning)");
+    // The private part that couldn't finish is a status too: its mark is warning, not the agent's ink.
+    expect(rule(".th-hub .th-ag-priv--failed>svg")).toBe("color:var(--pg-warning)");
+  });
+
+  it("spends no gold on any agent element (PAIGE's gold is her tint and ring tokens), and Say hello to PAIGE is ink", () => {
+    const agentRules = css.slice(css.indexOf("EXP08 Team Hub agents (A1b)"));
+    expect(agentRules).not.toMatch(/--pg-gold/);
+    expect(rule(".th-btn--primary")).toContain("background:var(--pg-ink)");
+  });
+
+  it("never lets the composer row's one-line hint widen the composer past a narrow hub (390 phone overflow, A1b rendered pass)", () => {
+    expect(rule(".th-composer-wrap")).toContain("grid-template-columns:minmax(0,1fr)");
+  });
+
+  it("lays the writing row and the failure row out as rows even as direct children of the stream (the A1b rendered pass found the stream's column rule centring them)", () => {
+    expect(css).toMatch(/\.th-ag-typing,\.th-stream-content > \.th-ag-typing\{display:grid;grid-template-columns:32px minmax\(0,1fr\)/);
+    expect(css).toMatch(/\.th-ag-fail,\.th-stream-content > \.th-ag-fail\{display:flex;flex-direction:row/);
+  });
+
+  it("caps the @ list by the screen height, so at 200% zoom it scrolls instead of rising behind the command row", () => {
+    expect(rule(".th-pop")).toContain("max-height:min(320px,max(132px,calc(100dvh - 190px)))");
+  });
+
+  it("moves the writing dots only when motion is welcome; the words stay either way", () => {
+    expect(css).toContain("@media (prefers-reduced-motion:no-preference){.th-ag-dots i{animation:th-dot 1.1s ease-in-out infinite}");
+    expect(rule(".th-ag-dots i")).not.toContain("animation");
+  });
+  it("gives an agent row back the scrollbar gutter's width (roles truncate no earlier than prototype c05), and marks an unknown turn state neutrally", () => {
+    // Measured in the rendered harness at 1024: with 9px gaps every role but two truncated earlier than c05.
+    expect(rule(".th-hub .th-conv-item--agent")).toBe("gap:5px;padding-right:2px");
+    expect(rule(".th-hub .th-ag-fail svg")).toContain("color:var(--pg-warning)");
+    expect(rule(".th-hub .th-ag-fail--pending svg")).toBe("color:var(--pg-muted)");
+  });
+});

@@ -231,6 +231,15 @@ describe("the new divider", () => {
     expect(newDividerBefore(messages, 1, "u-me")).toBe("d");
     expect(newDividerBefore(messages, 0, "u-me")).toBeNull();
   });
+
+  it("A1b: counts an agent's reply to the reader as unread, as the server does, though it carries the reader's id", () => {
+    const messages = [
+      message({ id: "a", author_user_id: "u-other" }), message({ id: "q", author_user_id: "u-me" }),
+      message({ id: "r", author_user_id: "u-me", author_kind: "agent", agent_key: "cura", asked_in_message_id: "q" }),
+    ];
+    expect(newDividerBefore(messages, 1, "u-me")).toBe("r");
+    expect(newDividerBefore(messages, 2, "u-me")).toBe("a");
+  });
 });
 
 describe("refresh joining (A6 order)", () => {
@@ -355,8 +364,9 @@ describe("the / command menu (increment 2)", () => {
 
   it("filters from the start of a word, and keeps a command whose words are followed by text", () => {
     const titles = (query: string) => commandMatches(query).map((command) => command.title);
-    expect(titles("")).toEqual(["Draft a task", "Ask a specialist", "Request approval", "Schedule a meeting"]);
-    expect(titles("ask")).toEqual(["Ask a specialist"]);
+    // EXP08 agents A1b (§58, agents contract §2): Ask a specialist became Ask an agent.
+    expect(titles("")).toEqual(["Draft a task", "Ask an agent", "Request approval", "Schedule a meeting"]);
+    expect(titles("ask")).toEqual(["Ask an agent"]);
     expect(titles("meet")).toEqual(["Schedule a meeting"]);
     expect(titles("draft a task Send the packet")).toEqual(["Draft a task"]);
     expect(titles("make coffee")).toEqual([]);

@@ -10,8 +10,10 @@ draft's default (owners and admins assign agent work) and Q2 as its default (a t
 a top-level reply linked to the asker's message; a thread reply is answered in its thread); MERIT =
 Sales & getting paid confirmed; the storage in section 5 approved. Owner rulings of 2026-10-26 and
 2026-10-27 are in the decision log ("EXP08 Team Hub agents"). **Built so far: A1a** (storage, doors,
-tolerant parsers and the roster correction, migrations `20271117010008` and `20271117010108`); A1b
-(the Chat-lane turn and the UI) and A2–A4 are not built. This contract was grounded against
+tolerant parsers and the roster correction, migrations `20271117010008` and `20271117010108`; merged
+and applied on production, read back 2026-10-27), **A1b part 1, the server turn**, **A1b part 2, the
+UI** and **A1b part 3, the turn-state read and review fixes** (branch `exp08-hub-agents-a1b`, not
+merged; notes below). A2–A4 are not built. This contract was grounded against
 origin/main `e8197859e`. Line numbers come from the grounding notes, which were read at `9dc021ee`.
 Where the two differ, re-check before building (§71.1).
 
@@ -48,6 +50,166 @@ where this contract left a detail open, or where review changed it; the approved
   [the personalities](exp08-team-hub-agents-personalities.md) are left out deliberately: MERIT's names a
   doctrine section, internal jargon that must never reach a person (§11), and VERA's and MENTOR's explain
   a refusal rather than state one.
+
+**A1b part 1 notes (2026-10-27, the server turn; the UI is part 2).** How the turn was built where
+this contract left a detail open, and where the build departs from it (§13, §58: recorded, not silent).
+- **Where it runs (§18).** One early branch in `paige-ai-chat/index.ts` hands a request
+  `{ teamHubAgentTurn: {conversationId, sourceMessageId, threadRootId, agent, privateFollowUp} }` to
+  `_shared/team-hub/agent-turn.ts` and returns. The chat already owns the verified actor, the ingress
+  rate limit, the one model seam (`fabricCompletion`) and the service client receipts use, so a second
+  edge function would have duplicated all four; the logic stays out of the handler. The seam sits after
+  the verified actor and the ingress rate limit and before the chat schema (C0b: identity[15] only,
+  29 scalars renewed).
+- **Not an interactive chat turn.** The request and response are plain JSON, not the streamed interactive
+  protocol, and no `paige_chat_threads` row is written (the per-(asker, channel, agent) thread is the
+  Chat-lane thread migration, not built). The browser waits for the JSON; the agent's posted message is
+  in it, read back.
+- **The control is a reply field, not a tool.** The model answers `{"reply", "route"}`; `route` is
+  `answer`, `private` or `act`. A tool needs a capability declaration, and the control has no executor
+  to declare. Semantics are unchanged: `private` (only in a shared conversation whose stored allowlist
+  names `team_hub_answer_privately`) posts the public part with `p_private_answer`, so the definer
+  appends the fixed line; `act` posts *I can't take actions here yet.* after any public part. A tool the
+  model was not offered never runs: a read moves to the DM, a write gets the A1 line.
+- **What the agent can run in part 1.** `team_hub_read_conversation` (pinned: only the turn's own
+  conversation, plus the asking conversation on a DM follow-up) and `read_business_time_zone`, each
+  with its existing definition. `ask_choices`, `capability_status`, `marketplace_browse`,
+  `list_event_kinds` and every DM-scope read beyond those two (`crm_*`, `agreement_*`, `growth_list`,
+  …) are `UNAVAILABLE` here: their executors live inside the chat's general loop. So a private answer
+  that needs CRM says the agent can't see it from Team Hub yet; it never guesses.
+- **Receipts.** The `team_hub_read_conversation` receipt (the memory-taint marker, increment 4 §5) is
+  recorded before any Team Hub text reaches the model, or the turn ends unrun. Every accepted turn
+  records `team_hub_agent_post` (non-dotted, metadata only) with its real outcome. No Spine capability
+  `team.hub_agent_post` is registered and no action-risk / receipt-ledger row is added: the registry
+  and the risk policy both model a chat tool, and the agent post is not one (the model can never call
+  it).
+- **Persona.** Identity from `VP_ROSTER`, presentation from the stored `config.personality`, fenced as
+  style guidance. `buildVpAddressBlock` is not reused: its text carries PAIGE-chat tool guidance that
+  would mislead in Team Hub. PAIGE's Team Hub personality is a constant from the approved personalities
+  §2; a tenant's Playbook persona does not reach the Team Hub turn yet.
+- **Missing contract for flow 5's other-viewer lines** — built in part 3
+  (`team_hub_agent_turn_states`, below).
+- **Settling an unknown post.** A post whose answer is lost is retried once with the same token and
+  request id (idempotent), then settled by `team_hub_end_agent_turn`, which can only end an unconsumed
+  turn: "ended" proves nothing posted, "not_found" means it may have (reported *may not have posted*).
+  Part 3 corrects what "lost" means (below): the client returns a transport failure as `{ error }`, not
+  a throw.
+
+**A1b part 2 notes (2026-10-27, the UI).** Built in `src/solo/team-hub/` to prototype v3 and the v5
+colours and symbols (§28 frozen); the 56 `--pg-agent-<key>-{fill,tint,ink,ring}` tokens join the shared
+layer in `src/index.css`, both themes. Where the build departs from the prototype or leaves a gap (§13,
+§58: recorded, not silent):
+- **Who runs the turn.** The asker's own tab calls `paige-ai-chat` after its post is confirmed, once per
+  agent the stored message names (`agent_mentions`), or the DM's own agent in an agent DM. Turn state is
+  per tab, keyed message + agent; after a reload the screen reads it from the server (part 3).
+- **Bring in** — reversed in part 3: it offered every agent the reply's text named; it now offers only
+  the agents the replying agent's structured answer suggested, as the prototype does.
+- **The About tab is compiled approved copy** (`TEAM_HUB_AGENT_PROFILES`, extracted from the prototype).
+  A4 moves it to the stored personalities; the Edit tab is not shown until A4.
+- **Agents are offered in a private channel with no other people in it,** matching the server, which
+  allows the turn in any channel the asker can see.
+- **Agent DMs have no @ list** (the server refuses agent mentions there); the composer hint says
+  *<AGENT> replies here*.
+- **Other members' private-part lines** — shown from part 3's member-safe read.
+- **The increment-2 specialist handoff is removed** from Team Hub, as section 2 reverses; the `/` command
+  that offered it now reads *Ask an agent* and opens the @ list on the seven.
+
+**A1b part 3 notes (2026-10-27, after independent verification and the design critic).** What changed,
+why, and what it proves (§13, §58: recorded, not silent).
+- **The member-safe turn-state read (approved flow 5's missing backend).** Migration
+  `20271119010008` (renumbered from `20271118220008` on 2026-10-27 so it sorts after `20271119000000`,
+  the newest version on any `origin/*` branch, and after production's newest `20271118110009`; the
+  deploy's plain `db push` refuses an out-of-order version), in EXP08's own tables. `team_hub_agent_turn_states(p_expected_tenant, p_channel_id,
+  p_message_ids)` is a `SECURITY DEFINER` function on an empty search path, executable by
+  `authenticated` only, and scoped in its body (§59): the caller's own seat and workspace
+  (`_team_hub_refusal`), a conversation the caller can see now (`_team_hub_visible`), and only person
+  messages in that conversation that ask an agent (at most 100 ids). Each row is only (message id, agent,
+  state ∈ answering | replied | replied_privately | failed | none, private_part, asker name, bring_in):
+  never message text, a DM's id, a turn id or token, or anything from a conversation the caller cannot
+  see. The person who asked reads every state of their own question; everyone else reads only the two
+  approved private-part lines (answering / replied_privately, with private_part) and, once a reply has
+  posted, who it suggested bringing in (agent names, no line of context); any other state of another
+  person's question reads as `replied`. A turn left running for 10 minutes reads `failed`, as acceptance
+  takes it. Proof `supabase/tests/exp08_team_hub_agent_turn_states.sql` (disposable PG16, in CI):
+  another member, a non-member of a private channel, another workspace's owner, an owner on a member's
+  agent DM, a removed person and a question id passed through another conversation, plus 14 mutants
+  each breaking the property it guards.
+- **What the screen does with it (S3).** The open conversation and thread read their questions' states
+  on open, when their questions change, and on the hub's focus / reconnect / 15 s ticks. For the asker,
+  a turn still answering keeps *<AGENT> is writing…*; *didn't reply* appears only for a turn that ended,
+  or none that started more than two minutes after the question; a state the read could not give (it
+  failed, or the row is missing) says *<AGENT> may still be replying.* with **Check again** (the same
+  request). The private note follows the read too. Other members see *<AGENT> is answering <Name>
+  privately.* and *<AGENT> replied to <Name> privately.* under the reply, and nothing if it fails.
+- **Bring in from the agent's structured answer (design critic 3).** The model's JSON answer now carries
+  `bring_in: [{agent, take}]`; the server keeps up to three of the seven, never the replying agent or one
+  the question already asked, writes each line as *<FROM> suggested you take <take>.*, and stages them
+  on the accepted turn (`team_hub_stage_agent_suggestions`, service role, the turn's own token, before
+  the post) so they land with the reply or not at all. The button pre-fills exactly *@NEXUS PAIGE
+  suggested you take the workshop announcement.* A reply's @mentions are never read as suggestions. If
+  staging fails, the reply posts without Bring in. Suggestions are never made for a private part or in a
+  DM.
+- **Transport errors are unknown outcomes (B1).** The Supabase client returns a network or gateway
+  failure as `{ error }` without a database code; the turn now treats that like a throw on the
+  acceptance and the post: retried once with the same token, then the post is settled by the end door.
+  A database refusal (a SQLSTATE or PostgREST code) is not retried, and is reported *can't post here*
+  only once the end door proves nothing posted. A reply that posted is never reported or receipted as a
+  failure. The acceptance door now hands an unconsumed turn back to the same token (`repeated`, counted
+  once), so a retried acceptance never reads as `in_flight`.
+- **One rate limit (S2).** An agent turn carrying `x-paige-chat-control` is refused with a 400 before
+  anything runs. Agent turns therefore share the chat's ingress limit — 20 requests a minute per person,
+  counted together with that person's ordinary PAIGE chat messages — on top of the 30 agent turns an
+  hour per seat.
+- **Receipts and who can read them.** Every accepted turn records `team_hub_agent_post` (metadata only:
+  the outcome, never the question, the reply or a conversation name) and the memory-taint marker. Read
+  on production 2026-10-27: `paige_workspace_events` is RLS-on with no policy and no browser grant; the
+  Rail reads it through `get_solo_rail_activity`, which shows a workspace's **owners and admins** every
+  receipt's title, agent label and time (never its actor or detail). So a DM turn's receipt (a private
+  follow-up or a question in an agent DM) now names neither its agent nor that it was a DM: an owner
+  sees only that a Team Hub agent post happened at that time. **Open owner decision:** whether a
+  member's agent DM turns should leave any Rail row at all, since the time alone tells an owner that
+  some private agent turn happened in the workspace.
+- **Another workspace.** A turn answered `not_visible` because the person is now working in another
+  workspace (another tab switched it) says *<AGENT> couldn't reply: you're working in another workspace
+  now.*, checked with the hub's own door (`scope_changed`), instead of *you can't see this conversation
+  any more*.
+- **Design critic fixes, to the approved prototype:** the conversation list column has the prototype's
+  `minmax(0,1fr)` guard and long names and roles ellipsise (the harness measures the list column, not
+  only the hub); the agent DM header says *Profile* on a narrow hub so the agent's name is never clipped
+  (frame 38); failure rows say their recovery once, by the button (*MENTOR didn't reply.* + Ask again);
+  agent names in the list stay neutral (the plate carries the colour); *Say hello to PAIGE* opens her DM
+  with *Hi PAIGE, where should I start?* in the box, unsent; the plate beside an agent's name is out of
+  the tab order (one tab stop, the name carries *<AGENT>'s profile*); the profile overlay at 1024 casts
+  the deeper shadow; the composer hint fits at 390.
+
+**A1b part 4 notes (2026-10-27, the second review's should-fixes and nits).** Recorded, not silent (§13,
+§58); each has a test that fails with the old behaviour reinstated.
+- **A refusal after a lost post answer is not proof (should-fix 1).** When the first post's answer was
+  lost (it may have committed and consumed the turn) and the retry is refused (`conversations_off`,
+  `not_found`, …), the turn asks the end door: only `ended` makes the refusal the outcome; otherwise it
+  is *may not have posted* with an outcome-unknown receipt, never a failure receipt for a reply that may
+  be stored.
+- **Receipts in any conversation the team cannot see (should-fix 2).** The `team_hub_agent_post` receipt
+  names the agent and the intent only for a reply in a **team channel**. A private channel, a DM
+  between teammates and an agent DM carry neither (part 3 covered DM turns only).
+- **A database error is transient (should-fix 3; reverses part 3's "a database refusal is not
+  retried").** A post error with a SQLSTATE (a statement timeout `57014`, a deadlock) is asked once more
+  with the same token and request id. Still failing, the end door settles it: `ended` is *didn't reply*
+  with Ask again, otherwise *may not have posted*. It is never *can't post here*, which has no recovery.
+  A PostgREST code never reached the function and is not asked again.
+- **Check again re-reads (nit).** For a state the screen could not know (*may still be replying*, *may
+  still be writing your private answer*), Check again re-reads that question's turn state
+  (`team_hub_agent_turn_states`) and never starts a model turn. Once the read says the turn ended, the
+  line becomes *didn't reply* with Ask again, and only that asks. *May not have posted* (the tab's own
+  turn) keeps its Check again, which re-sends the same request (it reads back before posting again).
+- **The private-part line is the definer's alone (nit).** Model text that ends with *That part is just
+  for you, so I'm answering it in our DM.* is posted without it (every trailing copy), so an injected
+  reply cannot imitate a private part; a reply that was only that line posts nothing. Done in the edge
+  (`agent-turn.ts`), leaving the A1a door untouched.
+- **Design nits.** *<AGENT> may still be replying.* carries a neutral clock (lucide, 14px, muted), not
+  the failure triangle. Agent rows in the list take a 5px gap and a 2px right edge: the list body's
+  stable scrollbar gutter made each row 15px narrower than the prototype's, and at 1024 five of seven
+  roles truncated earlier than frame c05; measured in the harness, all seven now truncate no earlier.
+  No agent colour or symbol changed (§28).
 
 Increments 1–4 are in
 [collaboration](exp08-team-hub-collaboration-contract.md),

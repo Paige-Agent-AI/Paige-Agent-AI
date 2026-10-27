@@ -367,6 +367,26 @@ describe("Vibe Studio project workspace", () => {
     expect(button("Publish now")).toBeUndefined();
   });
 
+  it("a role change MID-APPROVAL: the armed redeem is refused, nothing ran, and the next permitted step is named", async () => {
+    // The approval was prepared while the actor could publish; by the redeem, their role no longer
+    // permits it (row 16 recovery: the approval dies with the authority, never the artifact).
+    let redeemed = false;
+    h.door = (body) => {
+      if (!body.approved_fingerprint) return ready("fp-armed");
+      redeemed = true;
+      return http(403, { ok: false, refused: true, forbidden: true, code: "NOT_ADMIN", error: "Only the workspace owner or an admin can publish." });
+    };
+    await openPiece();
+    await openPanel();
+    await press("Publish now");
+    // The redeem was attempted exactly once with the armed fingerprint — no automatic retry of the act.
+    expect(h.doorCalls.filter((c) => c.approved_fingerprint)).toEqual([{ action: "publish", kind: "form", id: "f-1", approved_fingerprint: "fp-armed" }]);
+    expect(text()).toContain("Only an owner or admin can publish");
+    expect(text()).toContain("Ask this workspace's owner to publish it");
+    expect(text()).not.toContain("It's live");
+    expect(button("Publish now")).toBeUndefined(); // the forbidden view replaces the panel body
+  });
+
   it("a stale approval is checked again once, and the owner's next click is the new approval", async () => {
     let redeems = 0;
     h.door = (body) => {

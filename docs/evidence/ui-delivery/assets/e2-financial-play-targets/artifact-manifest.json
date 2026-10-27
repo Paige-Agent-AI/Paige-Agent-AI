@@ -1,0 +1,234 @@
+{
+  "source": "5682b88ab1fca4687890c30e2d78a188ae7f92da",
+  "classification": "SYNTHETIC ACTUAL COMPONENT, NOT CUSTOMER ACCEPTANCE",
+  "captures": [
+    {
+      "file": "mineral-1024x768-closed.jpg",
+      "requestedCssViewport": [
+        1024,
+        768
+      ],
+      "capturePixels": [
+        1024,
+        768
+      ],
+      "sha256": "fd4f8b20f39e078559154ccffde40904a818cd0f7ba5b5f5b8e227a326186d92"
+    },
+    {
+      "file": "mineral-1024x768-open.jpg",
+      "requestedCssViewport": [
+        1024,
+        768
+      ],
+      "capturePixels": [
+        1024,
+        768
+      ],
+      "sha256": "17aa3efa27aca524f835b9c147f1bbdcf1ae7043c512e3f42ebf1e93da726a51"
+    },
+    {
+      "file": "mineral-1366x768-closed.jpg",
+      "requestedCssViewport": [
+        1366,
+        768
+      ],
+      "capturePixels": [
+        1366,
+        768
+      ],
+      "sha256": "2316f8196c2751d85a515ecaad0647aec4002480bd9e7de7bf9f307b0ff756a9"
+    },
+    {
+      "file": "mineral-1366x768-open.jpg",
+      "requestedCssViewport": [
+        1366,
+        768
+      ],
+      "capturePixels": [
+        1366,
+        768
+      ],
+      "sha256": "c52f48b91726cdb8125823a2db2b05d91c9a3d8832043ff737fe89d0f33c365c"
+    },
+    {
+      "file": "mineral-1536x770-closed.jpg",
+      "requestedCssViewport": [
+        1536,
+        770
+      ],
+      "capturePixels": [
+        1535,
+        770
+      ],
+      "sha256": "367a669f7959bd5f891516ed1b8358c984e814805bb3b757b174ab6889733e04"
+    },
+    {
+      "file": "mineral-1536x770-open.jpg",
+      "requestedCssViewport": [
+        1536,
+        770
+      ],
+      "capturePixels": [
+        1535,
+        770
+      ],
+      "sha256": "ec44a7bcce50037b7dcba3f57b9e6c355846ea3bb90e2a84d3c90c031c142e61"
+    },
+    {
+      "file": "mineral-390x844-empty.jpg",
+      "requestedCssViewport": [
+        390,
+        844
+      ],
+      "capturePixels": [
+        390,
+        843
+      ],
+      "sha256": "69672316d38e187d966240bd4c059682cfc847a5710221cb3745849382f51236"
+    },
+    {
+      "file": "mineral-390x844-error.jpg",
+      "requestedCssViewport": [
+        390,
+        844
+      ],
+      "capturePixels": [
+        390,
+        843
+      ],
+      "sha256": "f0fc8e28f5cededf5e80c78b23bda8f722ddceef8bfae93fabd9ed7ba914b514"
+    },
+    {
+      "file": "mineral-390x844-expired.jpg",
+      "requestedCssViewport": [
+        390,
+        844
+      ],
+      "capturePixels": [
+        390,
+        843
+      ],
+      "sha256": "2c070e2bef9b515b7bbe2834d00374f967b8bf9803db306cac5247e906814037"
+    },
+    {
+      "file": "mineral-390x844-loading.jpg",
+      "requestedCssViewport": [
+        390,
+        844
+      ],
+      "capturePixels": [
+        390,
+        843
+      ],
+      "sha256": "3e5b3436f6cd6d65c839683440ef7238aa0136dedfed22b2fedb9a5d277b129c"
+    },
+    {
+      "file": "mineral-390x844-member.jpg",
+      "requestedCssViewport": [
+        390,
+        844
+      ],
+      "capturePixels": [
+        390,
+        843
+      ],
+      "sha256": "7121d98f727a6567684e42a6f8112b5d1d3c373e0d61383fe2c65a513c99b37e"
+    },
+    {
+      "file": "mineral-390x844-partial.jpg",
+      "requestedCssViewport": [
+        390,
+        844
+      ],
+      "capturePixels": [
+        390,
+        843
+      ],
+      "sha256": "a0028dfdded37b4c7a48c8fe4c2a5b22220830db96716b7157c498a25e645638"
+    },
+    {
+      "file": "mineral-390x844-ready.jpg",
+      "requestedCssViewport": [
+        390,
+        844
+      ],
+      "capturePixels": [
+        390,
+        843
+      ],
+      "sha256": "ef3e58eb1a101215624067c79d385cdae002cc239665133a88e4687a36822113"
+    },
+    {
+      "file": "mineral-390x844-unavailable.jpg",
+      "requestedCssViewport": [
+        390,
+        844
+      ],
+      "capturePixels": [
+        390,
+        843
+      ],
+      "sha256": "cc898d6abe02fac6f10be5037fe4e4236566408a1d1b0e028213f4a01b7d353f"
+    },
+    {
+      "file": "mineral-900x1000-closed.jpg",
+      "requestedCssViewport": [
+        900,
+        1000
+      ],
+      "capturePixels": [
+        900,
+        1000
+      ],
+      "sha256": "bb8d2f9eb73d149ba06f9938415b722a150b6eb0af77c4a70267d0dc45f9dcd5"
+    },
+    {
+      "file": "mineral-900x1000-open.jpg",
+      "requestedCssViewport": [
+        900,
+        1000
+      ],
+      "capturePixels": [
+        900,
+        1000
+      ],
+      "sha256": "2b46d1e4062f82064e0ac7249d9d6b3f3b42b272a75b208fa6c5beef0fbb4b6e"
+    },
+    {
+      "file": "obsidian-1536x770.jpg",
+      "requestedCssViewport": [
+        1536,
+        770
+      ],
+      "capturePixels": [
+        1535,
+        770
+      ],
+      "sha256": "d1a05cbb69f32e255523de07795adfdf375680e47af658b3ab7756b92263408d"
+    },
+    {
+      "file": "obsidian-320x844.jpg",
+      "requestedCssViewport": [
+        320,
+        844
+      ],
+      "capturePixels": [
+        320,
+        844
+      ],
+      "sha256": "5088c6082ccedf0d7d6c4f2c9d441fbebfea8922d3197fd4c6eccf4f56226449"
+    },
+    {
+      "file": "obsidian-390x844.jpg",
+      "requestedCssViewport": [
+        390,
+        844
+      ],
+      "capturePixels": [
+        390,
+        843
+      ],
+      "sha256": "39f001a6017930225220bfbba9f1aeb8d6c7cdf9ccdd5ad12ec575401ffe50a5"
+    }
+  ]
+}

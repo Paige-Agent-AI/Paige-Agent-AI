@@ -113,3 +113,14 @@ now exercise the real empty/foreign/missing-parent/agency/operator/subaccount
 array responses; assertions were retained. Original Calendar isolated run gave
 124 PASS plus one5s in-process compiler-test timeout (not an assertion failure).
 This local limit remains recorded, not a complete125 PASS or hosted-CI waiver.
+
+Additive final original-suite result: unchanged Calendar125 PASS/one suite in an
+isolated ordinary fork, retaining its original5s test deadline, assertions and
+configuration. Earlier worker startup and compiler-timeout attempts stay above;
+no test timeout/config/baseline was changed. Together with458/13, this is583
+focused checks across fourteen suites, not customer acceptance or hosted CI.
+Normal composition13b3a1bf receives original Team Hub/main956b47ef; all nine
+reviewed source/test leaves,17,137 outside incoming entries and four whole
+original document histories are preserved. Actual-input/dependency bytes are
+unchanged by that composition. UI evidence attestation guard passes; it proves
+structure only. New exact-head review/required CI/release/readback still follow.

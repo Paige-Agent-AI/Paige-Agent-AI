@@ -464,7 +464,9 @@ async function createInboundContact(admin: Admin, tenantId: string, msg: Normali
     return null;
   }
   const localPart = fromEmail.split("@")[0];
-  const firstName = msg.sender?.display_name?.trim() || localPart || "Inbound";
+  // A display name that is itself an address ("ada@x.com" <ada@x.com>) is not a name (re-review N6).
+  const displayName = msg.sender?.display_name?.trim() ?? "";
+  const firstName = (displayName.includes("@") ? "" : displayName) || localPart || "Inbound";
   // The sender's address becomes the new contact's first (primary) email.
   const { data: created } = await insertClientWithAddresses(
     admin,
@@ -636,6 +638,9 @@ async function fileDraftReplyAction(
       },
     });
     if (actionErr) {
+      // One draft per inbound message (uq_paige_actions_draft_reply_message): a unique violation means a
+      // concurrent delivery of the same post already filed it, which is the outcome this call wanted.
+      if (actionErr.code === "23505") return true;
       // Non-fatal: the inbound message is safely persisted; the action can be
       // re-filed. Report honestly, do not fake success (§13).
       console.error("[handle-inbound-email] action_insert_error", actionErr);

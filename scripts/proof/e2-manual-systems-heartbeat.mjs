@@ -426,6 +426,8 @@ try{
   check('successful capture retains actual failed/skipped findings without implying healthy checks',()=>{assert.equal(finish(mixed).work_status,'succeeded');const result=JSON.parse(snapshot(mixed.id)).terminal_outcome;assert.equal(result.check_count,2);assert.equal(result.pass_count,0);assert.equal(result.fail_count,1);});
   check('finalizer metadata/source remain exact after native controls',()=>{assert.equal(finalizerMetadata(),incumbentMetadata);assert.equal(finalizerBody(),candidateFinalizerBody);});
 
+  await (await import('./e2-manual-systems-observation.mjs')).proveManualSystemsObservation({fixture,ids,read,create,sourceRun,finding,finish});
+
  }
 }finally{
  fixture.role='';fixture.run(`DROP DATABASE ${fixture.database} WITH (FORCE)`,[],'postgres');

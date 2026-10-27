@@ -5,6 +5,9 @@ const root=path.resolve(import.meta.dirname,'..');const read=p=>fs.readFileSync(
 let migration=read('supabase/migrations/20270601000014_int304_durable_observation.sql');
 const reportPermission=read('supabase/migrations/20271113430002_exp02_metric_report_artifact_scope.sql').split('CREATE POLICY')[0].replace(/^BEGIN;\r?\n/m,'');
 const reportObservation=read('supabase/migrations/20271117140002_exp02_report_observation.sql').replace(/^BEGIN;\r?\n/m,'').replace(/^COMMIT;\r?$/m,'');
+// Optional actual native definition from the original manual-finalizer proof;
+// only a fixed task-owned artifact, in this already loopback-only empty fixture.
+const manualCandidate=process.env.E2_OBSERVATION_CANDIDATE==='manual'?read('outputs/e2-manual-observation-candidate.sql'):'';
 if(process.env.OBSERVATION_MUTATION==='artifact') migration=migration.replace(' recovery:=', " verified:=w.status='succeeded'; recovery:=");
 const sql=`begin;${schema}
 create function auth.role()returns text language sql stable as $$select current_setting('request.jwt.claim.role',true)$$;
@@ -24,6 +27,7 @@ alter table public.paige_durable_work add column request_payload jsonb;
 ${migration}
 ${reportPermission}
 ${reportObservation}
+${manualCandidate}
 ${read('supabase/tests/int304_durable_observation.sql')}
 rollback;`;
 const result=spawnSync(process.env.PSQL_BIN??'psql',['-X','--no-password','-v','ON_ERROR_STOP=1',url],{input:sql,encoding:'utf8',timeout:45000,windowsHide:true});if(result.status!==0){console.error(result.stderr);process.exit(1)}console.log((result.stdout+'\n'+result.stderr).split('\n').filter(l=>l.includes('OBSERVATION_PROOF')).join('\n'));

@@ -1,0 +1,138 @@
+# UI delivery evidence: EXP03 email reply checked inline — Send asks the governed door to check, Send now confirms
+
+Branch `build/composer-inline-check` (from `claude/great-heisenberg-u7kyd9` at 4e0c2b56), commits cbc917a9 (feature), 616966fc and 2bda6ca4 (test and recheck fix), 58f7100b (review round) and d76ad0c8 (fixes found in these frames, plus the harness and frames). Frontend only. Changed: `src/pages/admin/ClientsConversations.tsx`, `src/pages/admin/conversations/{MessageComposer.tsx, AttachmentChip.tsx, GovernedReplyStrip.tsx, governedReply.ts, useGovernedEmailReply.tsx}`, `src/pages/admin/conversations/shell/{ConversationsRichComposer.tsx, conversationsAdapter.ts}`. No edge function, migration or send-message change in this slice: it calls the comms-email-command door that pieces 1 and 2 built.
+
+What a person sees change in Clients → Conversations when replying by **email** (owner decision 2026-10-27, "B with (ii)"):
+
+- **Send checks; it does not send.** "Send" reads **"Checking…"** (aria-busy, stays focused) while comms-email-command checks the email. The composer's action row then becomes the **check**, in place:
+  - **To:** the contact's name and main email, as the server resolved them.
+  - **From:** the sender's name and address.
+  - **Subject**, and when present **Files** (name · size) and **When** ("Sends Wed, Oct 28, 9:00 AM").
+  - The note "Nothing has been sent yet. Changing the words closes this check."
+  - A quiet **Edit** and the one gold act, **Send now** (or **Schedule send**).
+  - The composer's own gold Send is gone while the check stands, so gold appears once. Focus lands on **Edit**, never on the gold act.
+- **Send now** spends the single-use fingerprint on the same operation. It reads **"Sending…"** and the words are locked until the answer.
+  - Only a definite answer clears the composer: accepted (thread row "Accepted"), or scheduled (thread row "Scheduled · Sends … · Cancel").
+  - An unknown, failed or lost answer keeps the words, says "Couldn't confirm this went out — don't resend." and offers **Check status**. That re-asks about the same operation.
+- **Changing the words, Edit or Esc** closes the check, sends nothing, and keeps the words. A check that runs out ("This check expired — check again.") offers **Check again** on the same operation.
+- **Refusals** read in owner words with "Your words are kept." No code ever reaches the screen:
+  - unsubscribed/bounced, no consent, do-not-contact;
+  - business Do not disturb ("Schedule it for later");
+  - no usable sender;
+  - no email on the contact card.
+- **While a confirm is out** the conversation can't be switched: "Wait for this email to finish sending before changing conversation."
+- **The composer note** under an email reply reads "Goes to {name}'s main email." (or "{name} has no email address on their contact card yet."). It no longer reads a thread address, and it is hidden while the check stands.
+- SMS, portal replies, lead-reply review, Approve & send on a Paige draft, and Send edited are unchanged.
+
+UI_DELIVERY_EVIDENCE_VERSION: 1
+FLOW_BY_FLOW: PASS: flow trace in this record and the branch's commits — actor = the business owner or an admin seat (Solo/Sub-account) replying by email in Clients → Conversations; goal = send exactly the email they wrote, to the right person from the right address, once; central acts = Send (check), Send now / Schedule send (confirm), Edit; exits mapped per door answer: check shown, sender choice, refusal with its reason (words kept), sent (cleared, Accepted row), scheduled (cleared, Scheduled row), unknown/failed/lost (words kept, don't resend, Check status), expired (Check again, same operation), conversation switch held while a confirm is out
+PAIGE_UI_DESIGN: PASS: .agents/skills/paige-ui-design/SKILL.md read; .claude/skills/impeccable/SKILL.md and reference/craft-floor.md read before building and again before judging these frames; the strip follows the owner-approved prototype (raised surface, hairline border, dt/dd facts, quiet Edit, one gold act, 180 ms opacity + 4 px rise, instant under reduced motion); two defects found in the first frames were fixed and re-shot (list below)
+MATERIAL_FLOW_CHANGE: YES: an email reply no longer sends on Send with a 30-second Undo; Send now checks (server-resolved To/From, exact words bound to a single-use fingerprint) and a second act confirms; new states (check, sending, refused, unknown with Check status, expired, conversation switch held); the owner confirms before rather than undoing after
+FLOW_PROTOTYPE: PASS: the owner-approved "Reply Check Prototype" artifact (https://claude.ai/artifact/1Nuv5dV892no1q9dMxSUte; owner decision 2026-10-27 "B with (ii)") plus the real-component harness frames of every state in docs/evidence/ui-delivery/assets/exp03-composer-inline-check/ (exp03c-*.jpg); the owner has not yet seen these harness frames — under the CLAUDE.md §4/§69 pre-launch override they travel with the PR and he reviews the live inbox after merge
+PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: audience = the business owner and admin teammates replying to clients by email (Solo and Sub-account); primary action = check the email, then Send now (or Schedule send); purpose = the email that goes out is exactly the one the owner read, to the address the server resolved, once — and the screen never claims more than the server knows
+VISUAL_DIRECTION: PASS: no new visual language — popover raised surface with the pg hairline (--pg-line-strong) and lift-1 shadow, the composer's own type scale (14px facts, 12px muted note), the lucide icons already in the composer, StatePill for the thread rows; tokens only (0 hex/rgb literals added in src); gold only on Send now / Schedule send / Sending… (measured: exactly one gold control in the composer whenever the check stands, none in the strip otherwise, none in any toast); Mineral (light) and Obsidian (dark) both rendered and clearly distinct
+AUTOMATED_EVIDENCE: PASS: npx vitest run src/pages/admin src/components/chat src/components/voice src/components/tenant-relationships src/prototype → 75 files, 1733 passed, 1 skipped (this session, on d76ad0c8), including governedReply.render.test.tsx (87 cases on the real ClientsConversations, each fix failing first) and governedReply.test.ts (27 unit cases); npm run ci:tsc → no new type errors; eslint on changed files → clean; impeccable detect on the strip, chip and hook → exit 0; harness drive scripts/live-drive/harness/exp03-composer-inline-check-mount/drive.mjs → exit 0, 74/74 frames and 2/2 keyboard passes OK (exp03c-measurements.json); negative control (§71.4): the same drive with the strip's hover fix reverted fails hoverAA on exp03c-unknown-light-1366x768 (Check status under the pointer 1.11:1)
+STATIC_EVIDENCE: PASS: contract inspection of supabase/functions/comms-email-command/index.ts at 4e0c2b56 — request {expected_tenant_id, operation_id, command{action, contact_id, connector_id, subject, body}, send_at?, attachments?, approved_fingerprint?}; outcome vocabulary approval_required · sender_choice_required · needs_setup · refused · held · scheduled · outcome_unknown · provider_accepted · failed; refusals before dispatch carry outcome 'refused'; a check without a fingerprint can only propose (comms_send_email is risk high, so decideGovernedExecution clamps an auto lane to confirm); the door's 202 carries expires_at but no server time (the Date header is not exposed cross-origin), so the browser counts the check's lifetime from receipt, bounded by the door's 10 minutes
+RENDERED_EVIDENCE: PASS: 74 harness frames + 2 keyboard crops of the REAL ClientsConversations inside the real Solo Clients workspace and shell CSS (scripts/live-drive/harness/exp03-composer-inline-check-mount, mocked auth/data and a stubbed comms-email-command answering in the door's own shapes), timezone America/Chicago, locale en-US, prefers-reduced-motion reduce, in docs/evidence/ui-delivery/assets/exp03-composer-inline-check/: the check open at 1536x770, 1366x768, 1024x768, 900x1000 × PAIGE closed/open × light/dark and 390x844 light/dark (exp03c-check-*); and in light and dark at 1366x768 PAIGE closed and 390x844 — composing with the note (exp03c-compose-*), the scheduled check (exp03c-check-scheduled-*), Sending… (exp03c-sending-*), sent (exp03c-sent-*), scheduled (exp03c-scheduled-*), unknown with Check status (exp03c-unknown-*), refusals suppressed / no consent / client DND / business DND / no sender / no email on the card (exp03c-refused-{suppressed,noconsent,clientdnd,tenantdnd,nosender,noemail}-*), expired (exp03c-expired-*), conversation switch held (exp03c-switch-held-*); the label "harness render · not live" is burned in after measurement and checked topmost; Schibsted Grotesk loaded in every frame; measured AA, worst case light/dark: strip text 5.95/7.01 (12px muted note), strip controls at rest 7.78/9.43 and under the pointer 14.99/16.45, composer note 5.32/7.52, Accepted pill 5.86/8.13, Scheduled pill 5.47/7.70, "Sends …" 4.93/6.95, Couldn't confirm pill 5.76/8.20, toast 17.26/18.26; no page, inbox or strip overflow and no clipped strip text in any frame; strip targets ≥ 50×36 (Edit), Send now 126×36, Schedule send 158×36, Check status 110×36, Check again 106×36
+BEHAVIORAL_EVIDENCE: PASS: the drive types a reply as a person would and clicks Send; observed in both themes at 1366x768 and 390x844 — exactly one door call with no fingerprint, the check showing the server's To ("Jordan Rivera · jordan.rivera@example.com") and From ("Northwind Studio · studio@northwindstudio.example"), focus on Edit, the announcement "Ready to send to Jordan Rivera. Check To and From, then Send now."; Send now makes a second call on the same operation with the fingerprint; accepted clears the words and focuses the reply box, announcing "Accepted by the email service."; a scheduled send floors to the whole minute and the thread reads Scheduled with "Sends Wed, Oct 28, 9:00 AM"; an unknown answer keeps subject and words, the thread re-reads and shows "Couldn't confirm", and focus lands on Check status; every refusal shows its owner line with "Your words are kept." and no gold act; an expired check makes no second call until Check again; a click on another conversation while Sending… is held with the notice and the words stay; no raw code on screen in any frame; NOT exercised here: the real door, real readiness and fingerprint redemption, a real SendGrid send
+AUTHENTICATED_RUNTIME: UNVERIFIED: no signed-in drive of the deployed inbox in this session; a real check, confirm, refusal and send through the deployed comms-email-command from the Solo inbox are owed to a §32.c session (a test tenant with a verified PAIGE Email sender and a contact with a main email)
+KEYBOARD_FOCUS: PASS: in the harness at 1366x768, light and dark, keyboard only: typing the reply, one Tab from the reply box reaches Send (data-composer-send), Enter opens the check with focus on Edit (:focus-visible, 2px outline plus the indigo ring, seen in exp03c-keyboard-edit-focus-{light,dark}-1366x768.jpg), one Tab reaches Send now, Enter sends; the door was called twice, the announcement reads "Accepted by the email service." and focus returns to the reply box (TEXTAREA in the composer writing surface); Esc anywhere in the composer closes the check (render test)
+ZOOM_REFLOW: PASS: the facts wrap inside the strip at every desktop width with no overflow or clipping; at the 390px harness width the strip stacks its facts and acts inside the narrow pane without overflow (the harness keeps the desktop three-pane inbox there, so the real phone layout is not shown); browser 200%/400% zoom was not exercised
+REDUCED_MOTION: PASS: every frame rendered with prefers-reduced-motion: reduce — the strip appears at rest and "Checking…"/"Sending…" show a still clock instead of a spinner; with motion allowed the strip enters with 180 ms opacity and a 4px rise (render test asserts both)
+STATE_COVERAGE: PASS: composing (note), checking (render test — the stubbed door answers too fast to frame it), check shown (send now, scheduled), sender choice (render test), sending, sent, scheduled, unknown with Check status, failed (render test), each refusal named above, offline / no contact / other business (render test), expired, conversation switch held; SMS, portal, lead-reply review, Approve & send and Send edited unchanged (render test)
+TRUTHFUL_STATE_LABELS: PASS: To and From are what the server resolved, never the thread's address; nothing claims "sent" before the provider accepted it; only a definite accepted/scheduled answer clears the words; an unknown or lost answer says "don't resend" and Check status never claims nothing went out unless the record says so; the composer note names the contact card's main email — the same address the door sends to — and says so plainly when there is none
+SOLO_UI: YES: the shared Clients → Conversations inbox (ClientsConversations, mounted by TenantRelationshipsClientsWorkspace) for every Solo/Sub-account business; no account-specific path
+SOLO_1536X770_PAIGE_CLOSED: PASS: exp03c-check-{light,dark}-1536x770-paige-closed.jpg — check open, gold only on Send now, focus on Edit; checks pass
+SOLO_1536X770_PAIGE_OPEN: PASS: exp03c-check-{light,dark}-1536x770-paige-open.jpg — the check in the narrower thread pane; checks pass (the PAIGE dock is a harness stand-in)
+SOLO_1366X768_PAIGE_CLOSED: PASS: exp03c-check-{light,dark}-1366x768-paige-closed.jpg plus every other state at this size; checks pass
+SOLO_1366X768_PAIGE_OPEN: PASS: exp03c-check-{light,dark}-1366x768-paige-open.jpg; checks pass (the PAIGE dock is a harness stand-in)
+SOLO_1024X768_PAIGE_CLOSED: PASS: exp03c-check-{light,dark}-1024x768-paige-closed.jpg; checks pass
+SOLO_1024X768_PAIGE_OPEN: UNVERIFIED: the harness PAIGE dock is a stand-in panel laid over the inbox at this width (it covers the right of the thread and the strip's Send now in exp03c-check-*-1024x768-paige-open.jpg; the state was reached with a DOM click), so the app's overlay layout is owed to an authenticated Solo drive
+SOLO_900X1000_PAIGE_CLOSED: PASS: exp03c-check-{light,dark}-900x1000-paige-closed.jpg; checks pass
+SOLO_900X1000_PAIGE_OPEN: UNVERIFIED: same harness stand-in dock limitation as 1024 (exp03c-check-*-900x1000-paige-open.jpg); owed to an authenticated Solo drive
+UNVERIFIED: authenticated runtime of every state and a real send (above); the PAIGE-open overlay layouts at 1024 and 900; the phone layout — at 390x844 the harness keeps the desktop three-pane inbox, so the reply box is one letter wide there (exp03c-*-390x844.jpg) and those frames show the strip's copy, controls and contrast at phone width but not the app's phone layout; the "Checking…" frame (attributes asserted by the render and MessageComposer tests, not framed); browser zoom; the door's own behaviour (proven by its Deno and SQL tests in CI, not observed live)
+
+OWNER_INTENT: the owner (Antonio) chose, on 2026-10-27 in the Reply Check Prototype, option "B with (ii)": target actor = the business owner (or an admin seat) replying to a client by email; user job = see exactly who it goes to and from, then send it once — now or at a chosen time, with files; required outcome = confirm before rather than undo after, the email that goes out is exactly the one checked, and the words stay until the server gives a definite answer
+MUST_NOT_HAPPEN: an email sent on Send (before the owner confirms); an email sent twice, including after an unknown answer; the words cleared before a definite sent or scheduled answer; a check that shows the browser's guess of To/From instead of the server's; a keystroke (Enter, Ctrl+Enter) confirming an unread check; a raw code (BLOCKED_*, COMMS_EMAIL_*, QUEUED_*) on screen; gold anywhere in the composer but the one act
+MUST_PRESERVE: SMS replies and their 30-second Undo; portal replies; the lead-reply review path; Approve & send on a Paige draft and Send edited (send-message, unchanged); the scheduled-send Cancel and the thread's Sending… / Couldn't confirm / Not sent / Scheduled / Accepted readings; the operator Fleet inbox composer (MessageComposer without the new props renders as before)
+ACCEPTANCE_CRITERIA: in Clients → Conversations, Send on an email reply shows the server-resolved To/From/Subject (and Files/When) with Edit focused and Send now as the only gold control; Send now sends once and clears the reply; Schedule send schedules once; a refusal says why in owner words and keeps the words; an unknown answer says don't resend and keeps the words with Check status; changing the words, Edit or Esc closes the check without sending; a keyboard user can Tab to Send, Enter, Tab to Send now, Enter
+MOTION_PURPOSE: STATE_FEEDBACK: the strip's 180 ms opacity + 4 px rise marks the action row turning into the check in place (the one authored moment); reduced motion shows it at rest and a still clock replaces the spinner
+PROTECTED_SEAMS: comms-email-command request/response contract (§37 — read, not changed: the reply builds the closed command with the door's own parser and reads its outcome vocabulary) — governedReply.test.ts and governedReply.render.test.tsx (this session); MessageComposer's existing contract for the operator Fleet inbox (MessageComposer.test.tsx, unchanged cases pass); the scheduled-send Cancel now reads its answer through the same readDoorAnswer (governedSend.render.test.tsx cancel cases pass); SMS undo, portal reply, lead-reply review, Approve & send and Send edited (render tests pass on their own paths); ClientsConversations.solo-contract.test.ts pins (pass)
+<!-- RELEASE_GOVERNANCE_POLICY — read docs/doctrine/release-governance-and-customer-update-policy.md -->
+INTERNAL_BUILD_IDENTITY: d76ad0c85959c2c68234716458bc38c040aff6ad; deployment=none-pre-merge; environment=development; migrations=none (frontend-only slice); edge=none in this slice (it calls comms-email-command from pieces 1 and 2, whose deploy proof their own records carry); evidence=docs/evidence/ui-delivery/assets/exp03-composer-inline-check/exp03c-measurements.json and the commands in this record (frames rendered from the tree committed as d76ad0c8)
+RELEASE_CHANNEL: development: code on branch build/composer-inline-check; the frontend deploys to production on merge (pre-launch §4 stance, no staged rollout)
+RELEASE_CLASSIFICATION: customer-visible: every Solo/Sub-account owner replying by email in Clients → Conversations sees the check and the new confirm step after merge
+CUSTOMER_RELEASE_IDENTITY: none: no customer release is assigned; the platform is pre-launch and the owner decides a customer release and its note
+RELEASE_NOTE_REQUIRED: YES: the email reply now checks before it sends (the 30-second Undo is gone for email), sends only to the contact's main email, carries the signature as text without images, and needs the business's own owner or admin seat — the note belongs to the owner's customer release
+RELEASE_TRUTH_BOUNDARY: PARTIAL: the check, confirm and every state above are LIVE on the frontend after merge for any business whose door path is deployed; a real send, refusal and scheduled release through the deployed door from the inbox are PROOF OWED until a signed-in drive observes them
+RELEASE_RECOVERY: position=forward-fix preferred — the slice is frontend-only and reverts cleanly as one range (cbc917a9..d76ad0c8), which restores send-message with the Undo window for email replies; reference=branch build/composer-inline-check commits cbc917a9, 616966fc, 2bda6ca4, 58f7100b, d76ad0c8
+
+## Scope and collisions
+
+- Classification: UI change (8 files under `src/`) with no backend change in this slice.
+- Affected flows: replying by email in Clients → Conversations (check, confirm, refusals, unknown answers, expiry, scheduling, files). The composer note on email replies. The scheduled-send Cancel's answer reader (shared, same behaviour).
+- Neighbouring regressions checked: SMS undo, portal reply, lead-reply review, Approve & send and Send edited (render tests); the operator Fleet composer (MessageComposer tests); the scheduled Cancel (governedSend render tests).
+- **§58 call-outs.** Previously shipped behaviour this change removes or narrows, named so the owner signs off on each:
+  1. **The 30-second Undo is gone for email replies.** Confirm-before replaces undo-after, by the owner's choice of option B. SMS keeps its Undo.
+  2. **Signature images are dropped.** The governed email carries plain text, and the server builds the HTML from it. A signature is read as text: link targets are kept in brackets and every entity decodes, but a logo image does not go out.
+  3. **Who may send email changes.** The send is now gated on the business's own owner/admin seat (`tenant_members` role owner/admin, checked by the door), not the old global admin role. On prod that means one global admin who is not an owner/admin of the business loses it, and one business owner/admin who was not a global admin gains it.
+  4. **Email replies need the contact's main email.** The door sends only to the contact card's primary email (owner-chosen "Contact's main email"). A contact whose card has no email, but whose thread knows an address, can no longer be replied to by email until one is added. The composer says so.
+- Active-owner/file collisions: none known on these files. The door-side follow-ups are the coordinator's in a separate PR: the DND skip when send_at is set, replies filing into the open thread, the role-gate change, Gmail/SMTP file sends, and `expires_in_ms` on the 202.
+- Explicit exclusions: the chat's own email approval card; the new-conversation dialog (still send-message); Gmail/SMTP file sends.
+
+## User job and state map
+
+The owner writes a reply to a client and sends it. The scroll owner is the thread column; the composer sits at its foot and the check replaces the composer's action row in place.
+
+- **Composing:** subject, words, files, an optional time. The note reads "Goes to {name}'s main email."
+- **Checking:** Send reads "Checking…" (busy, focused). Typing closes it.
+- **Check:** To · From · Subject · Files · When; Edit (focused) and Send now / Schedule send. Changing the words, Edit or Esc closes it.
+- **Sending:** "Sending…", words locked. A switch of conversation is held.
+- **Sent / Scheduled:** cleared, with the thread row Accepted / Scheduled.
+- **Unknown, failed or lost:** words kept, "don't resend", Check status re-asks the same operation.
+- **Refused:** the reason in owner words, words kept, Edit (or the most useful action).
+- **Expired:** "This check expired — check again.", then Check again on the same operation.
+- **Sender choice:** pick a sender, and the check runs again.
+
+## Evidence index
+
+- Harness: `scripts/live-drive/harness/exp03-composer-inline-check-mount/` (`vite.config.ts`, `main.tsx`, `index.html`, `stubs.ts`, `drive.mjs`), modelled on `exp03-scheduled-send-mount`. Only these are stubbed: the session/tenant context, the role read, the relationship-data hook, and the Supabase transport (comms-email-command answering in the door's own shapes and writing the row prepare/send-message would). Run: `PW_EXECUTABLE_PATH=/opt/pw-browsers/chromium-1243/chrome-linux64/chrome node scripts/live-drive/harness/exp03-composer-inline-check-mount/drive.mjs` (starts its own `vite --host 127.0.0.1 --port 5199`). Exit 0; 74/74 frames and 2/2 keyboard passes OK.
+- Negative control: with the strip's hover override reverted, `--only unknown-light-1366x768` exits 1, failing `hoverAA` (Check status under the pointer 1.11:1).
+- Frames and measurements: `docs/evidence/ui-delivery/assets/exp03-composer-inline-check/` (74 state frames, 2 keyboard crops and `exp03c-measurements.json`; 4.9 MB total).
+- Tests: the vitest run under AUTOMATED_EVIDENCE.
+- Data: all synthetic and fictional (Northwind Studio, Jordan Rivera, Priya Okafor). No secrets or customer data.
+
+## Review and limitations
+
+**Impeccable craft findings (judged against `reference/craft-floor.md`, §11, §23).**
+
+Fixed after the first capture, then re-shot (all 74 frames and both keyboard passes OK):
+
+1. **FIXED — illegible quiet controls under the pointer (light).** The outline Button variant hovers to `--secondary`, which is dark navy in light, under the same dark ink. "Check status" under the pointer measured **1.11:1** in the first unknown frame. The strip's quiet buttons and its settings link now hover to the muted surface with ink text: 14.99 / 16.45 under the pointer. The drive now measures every quiet strip control under the pointer, and the negative control fails without the fix.
+2. **FIXED — the thread didn't show what the server wrote after an unknown answer.** An answer that keeps the words (unknown, failed, refused after a confirm) now re-reads the thread. The row the server wrote ("Couldn't confirm") appears beside the kept words without waiting for realtime. A failing-first render test was added.
+
+Still open:
+
+1. **MEDIUM (pre-existing, outside this diff, app-wide) — every outline and ghost button is illegible on hover in light.** It is the same `--secondary` hover described above. It shows in these frames on the composer's own toolbar: "Schedule" sits under the pointer after a send. The global fix is a one-line Button variant change, but it touches every surface (some §28-frozen), so it is for the owner/coordinator to schedule.
+2. **LOW — "Schedule it for later" offers no schedule control in the strip.** For a business-DND hold the Schedule button is in the action row, which the strip stands in for, so it is one Edit away.
+3. **LOW — the toast can overlap the strip.** The conversation-held toast (sonner, bottom-right) covers part of "Sending…" at 1366.
+4. **LOW — the locked words read as disabled text while Sending.** The words in the disabled reply box measure 3.19:1 in light. They are inactive (WCAG-exempt) and locked on purpose.
+5. **Harness — the phone and overlay layouts are not the app's** (see UNVERIFIED).
+
+What passed:
+- Tokens only, with 0 colour literals added.
+- Exactly one gold control in the composer while the check stands; none in any refusal, expiry or unknown strip, and none in any toast.
+- AA in both themes for every element this change adds, at rest and under the pointer.
+- Strip targets ≥ 36px tall.
+- Focus lands on Edit when the check opens and on the most useful action on a refusal.
+- No codes on screen.
+- Light and dark are clearly distinct.
+
+Still below AA and NOT part of this diff (measured in these frames, light/dark): the bubble timestamp "· less than a minute ago" 2.36/3.39, the list "You:" prefix 2.46/3.55, the 8px "LIVE" chip 3.69 (light), and "PROFILE · LIVE" 4.37 (light). These are the same pre-existing items the scheduled-send record lists.
+
+**Limits of this harness.** It proves the real component renders every state from the door's real answer shapes and that the flows behave as claimed. It does not prove:
+- the authenticated inbox;
+- the real door, readiness or fingerprint redemption, or a real send;
+- the phone or PAIGE-overlay layouts.
+
+The local Schibsted files render punctuation with a gap before it ("Re : Kitchen", "Oct 28 , 9 :00"), the same artefact earlier harness frames show. It is not attributed to this change.

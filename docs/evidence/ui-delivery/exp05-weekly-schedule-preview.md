@@ -79,3 +79,38 @@ E08 has returned the prior window; its Team P1s remain separately owned. E05's
 semantic source is frozen in2961 and E02's next window is queued for receiving.
 E04 retains the corresponding-source two-pin pair. E09 browser custody remains;
 no new browser use, account, approval, provider or business effect occurred.
+
+## October27 merged Team Hub composition — source, not acceptance
+
+Current source0667478177e5420d16f698e41bea41b9fa9bc71b composes original17aa
+with main545e086b2f94de9704a8ea2de9bf8c4d7b6748f7 / merged A1b956. Chat's
+teamHubAgentTurn/controlHint and all incoming E03/E04/E02/model code remain.
+Both Brain histories are retained. PRE-RENEWAL sequential AUTHOR-REVIEW / LOWER
+ASSURANCE5675206554 inspected actual Chat SHA256
+ef0714c0838014da9196b497fd2db18070bb4b649aa7371816bd56bd6967e4d2.
+Actual main reproduces29 original dispatches/126 dependencies. Independent AST
+decomposition changes only enclosing identity[15] for each29; branches, controls,
+other identities, helpers and imports exact. Only original automations domain
+digest f0e2b5e1…→dba9a2bb… changes. Selective29 literals/one domain renewal;
+reviewed proposal SHA256e2cb042e8c6d5204ae700cd550fc18a4bca43170d44bb912c815c109e827137a
+has a complete inverse to the incoming contract. Extractor/metadata/validator,
+other125 dependencies and all hostile refusal controls preserved. First private
+probe's duplicate-shared-fingerprint assertion was corrected to address each
+original named binding; no accepted source was changed by that failed probe.
+
+Fresh composed reader/control/input/actual-Root159/159 PASS, zero skips; original
+83 hostile controls PASS; Kit lint288/296 shrink-only baseline, self-test40 and
+focused48 (202 classified keys) PASS. Registry245 PASS. Final registry self-test,
+exact-head review/hosted CI, Edge/web readback and ordinary customer proof remain
+separate gates. Earlier129/prototype18/24 and actual source hashes remain dated
+proof, never relabeled a new production drive. The original native preview has
+no presentation changes in this composition.
+
+Ownerc797df3b/33906e73 goal-driven coordination and retained direct ZION access
+remain the intended full Experience, not activation permission from this read.
+EXP08 owns Team Hub A2/workshop/privacy/presentation and current3008's request
+contract repair. A malformed400 must be corrected at its source, not retried or
+upgraded to a stronger model as a substitute. No Team Hub module/router change
+is made here. Original owner_only controls/INT346/held recurrence/provider/Live
+remain. All ten outcomes/E5-CV1–9/Builder/ZION/useful independent execution,
+notifications/recovery/both-chat/cohort/founder acceptance stay OPEN.

@@ -30,6 +30,12 @@
 --     (20271115040008), team_hub_search (20271114300008), team_hub_leave_channel (20271113850008),
 --     _team_hub_seat_ended (20271115040008), _team_hub_member_scope_guard and
 --     _team_hub_message_scope_guard (20271113850008), and the retirement-disposition patch.
+--   Two triggers re-created with a wider column list, each because its re-emitted guard now reads
+--     another column: team_hub_member_scope (production: UPDATE OF channel_id, tenant_id) adds user_id,
+--     since the agent-DM rule compares the member to the DM's person and an UPDATE of user_id alone
+--     must not slip past it; team_hub_message_scope (production: UPDATE OF channel_id, tenant_id,
+--     parent_message_id) adds asked_in_message_id, author_kind and agent_key, the three columns the new
+--     rules read. Both definitions are checked against production's in the proof (section 3).
 -- No UI uses any of it yet (A1b), and paige-ai-chat does not call it yet (A1b, Chat lane).
 --
 -- Tables are RLS-on with no policies and no browser grant; every door re-checks the caller in its
@@ -112,8 +118,10 @@ CREATE TABLE IF NOT EXISTS public.team_hub_message_agent_mentions (
 -- source is in), 'dm' (in the asker's DM with the agent) or, from A3, 'report:<action>:<run>'.
 -- Accepted and not consumed: the turn is running. Consumed with a posted message: it replied.
 -- Consumed with none: it ended without posting (failed, or the tab closed); a retry re-arms the same
--- row with a new token, so it is still one turn toward the per-seat cap. The token itself is never
--- stored, only its SHA-256.
+-- row with a new token rather than inserting a second. attempts holds the start time of every model
+-- turn this row has armed in the last hour (its first acceptance and each re-arm), and the per-seat
+-- cap counts those, so a retried or abandoned turn costs one more toward the 30 each time it runs
+-- again. Its last entry is always accepted_at. The token itself is never stored, only its SHA-256.
 CREATE TABLE IF NOT EXISTS public.team_hub_agent_turns (
  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
  tenant_id uuid NOT NULL,
@@ -125,10 +133,15 @@ CREATE TABLE IF NOT EXISTS public.team_hub_agent_turns (
   OR intent ~ '^report:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'),
  token_hash text NOT NULL CHECK (token_hash ~ '^[0-9a-f]{64}$'),
  accepted_at timestamptz NOT NULL DEFAULT now(),
+ attempts timestamptz[] NOT NULL,
  consumed_at timestamptz,
  posted_message_id uuid REFERENCES public.team_hub_messages(id) ON DELETE CASCADE,
  CONSTRAINT team_hub_agent_turns_intent_key UNIQUE (asker_user_id, source_message_id, agent_key, intent),
- CONSTRAINT team_hub_agent_turns_state_chk CHECK (posted_message_id IS NULL OR consumed_at IS NOT NULL)
+ CONSTRAINT team_hub_agent_turns_state_chk CHECK (posted_message_id IS NULL OR consumed_at IS NOT NULL),
+ -- The newest attempt is the current acceptance, so every attempt inside the cap's window belongs to
+ -- a row whose accepted_at is inside it too (the cap reads only those rows, by the cap index).
+ CONSTRAINT team_hub_agent_turns_attempts_chk CHECK (cardinality(attempts)>=1
+  AND array_lower(attempts,1)=1 AND attempts[cardinality(attempts)]=accepted_at)
 );
 CREATE INDEX IF NOT EXISTS team_hub_agent_turns_cap_idx
  ON public.team_hub_agent_turns (tenant_id, asker_user_id, accepted_at DESC);
@@ -573,12 +586,16 @@ GRANT EXECUTE ON FUNCTION public.team_hub_open_agent_dm(uuid,text) TO authentica
 --            asker's own live message in it, or the asker's own live message elsewhere that asks
 --            this agent (the private part of a channel question). Reports ('report:...') arrive in A3
 --            and are refused until then.
--- Per-seat cap (contract §9): 30 accepted turns per person per rolling hour in a workspace. A retry of
--- a turn that ended without posting re-arms the same row and is not counted again.
+-- Per-seat cap (contract §9): at most 30 model turns started per person per rolling hour in a workspace.
+-- What is counted is every start: each new acceptance, and each re-arm of a turn that ended without
+-- posting or was abandoned ("Ask again" re-runs a full model turn, so it costs one more). A refusal
+-- (duplicate, in_flight, rate_limited or any other) starts nothing and counts nothing. At the cap a
+-- re-arm is refused rate_limited like a new turn, and works again once the window has room.
 CREATE OR REPLACE FUNCTION public.team_hub_accept_agent_turn(p_tenant uuid, p_asker uuid, p_channel_id uuid,
  p_source_message_id uuid, p_agent_key text, p_intent text, p_token_hash text)
 RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
 DECLARE ch public.team_hub_channels; src public.team_hub_messages; turn public.team_hub_agent_turns; used bigint;
+ existing boolean;
 BEGIN
  IF auth.uid() IS NOT NULL THEN RETURN jsonb_build_object('ok',false,'code','not_allowed'); END IF;
  IF p_tenant IS NULL OR p_asker IS NULL OR p_channel_id IS NULL OR p_source_message_id IS NULL
@@ -612,7 +629,8 @@ BEGIN
  PERFORM pg_advisory_xact_lock(hashtextextended('team_hub_agent_turn:'||p_tenant::text||':'||p_asker::text,0));
  SELECT * INTO turn FROM public.team_hub_agent_turns t WHERE t.asker_user_id=p_asker AND t.source_message_id=src.id
   AND t.agent_key=p_agent_key AND t.intent=p_intent FOR UPDATE;
- IF FOUND THEN
+ existing:=FOUND;
+ IF existing THEN
   IF turn.posted_message_id IS NOT NULL THEN
    RETURN jsonb_build_object('ok',false,'code','duplicate','message_id',turn.posted_message_id); END IF;
   -- Still running. A turn left unended for 10 minutes is taken as ended: no edge invocation outlives
@@ -622,17 +640,24 @@ BEGIN
   IF turn.consumed_at IS NULL AND turn.accepted_at>now()-interval '10 minutes' THEN
    RETURN jsonb_build_object('ok',false,'code','in_flight'); END IF;
   IF turn.channel_id<>ch.id THEN RETURN jsonb_build_object('ok',false,'code','invalid'); END IF;
-  -- Ended without posting (or abandoned): re-arm the same turn with the new token. Still one turn
-  -- toward the cap.
-  UPDATE public.team_hub_agent_turns t SET token_hash=p_token_hash, accepted_at=now(), consumed_at=NULL
+ END IF;
+ -- The cap: every model turn this person started here in the last hour, re-arms included. Only rows
+ -- accepted inside the window can hold an attempt inside it (team_hub_agent_turns_attempts_chk).
+ SELECT coalesce(sum((SELECT count(*) FROM unnest(t.attempts) a(at) WHERE a.at>now()-interval '1 hour')),0) INTO used
+  FROM public.team_hub_agent_turns t
+  WHERE t.tenant_id=p_tenant AND t.asker_user_id=p_asker AND t.accepted_at>now()-interval '1 hour';
+ IF used>=30 THEN RETURN jsonb_build_object('ok',false,'code','rate_limited'); END IF;
+ IF existing THEN
+  -- Ended without posting (or abandoned): re-arm the same turn with the new token, and count this
+  -- start. Attempts older than the window are dropped, so the list stays bounded.
+  UPDATE public.team_hub_agent_turns t SET token_hash=p_token_hash, accepted_at=now(), consumed_at=NULL,
+   attempts=ARRAY(SELECT a.at FROM unnest(t.attempts) a(at) WHERE a.at>now()-interval '1 hour' ORDER BY a.at)||now()
    WHERE t.id=turn.id;
   RETURN jsonb_build_object('ok',true,'turn_id',turn.id,'rearmed',true);
  END IF;
- SELECT count(*) INTO used FROM public.team_hub_agent_turns t
-  WHERE t.tenant_id=p_tenant AND t.asker_user_id=p_asker AND t.accepted_at>now()-interval '1 hour';
- IF used>=30 THEN RETURN jsonb_build_object('ok',false,'code','rate_limited'); END IF;
- INSERT INTO public.team_hub_agent_turns(tenant_id,channel_id,asker_user_id,source_message_id,agent_key,intent,token_hash)
-  VALUES (p_tenant,ch.id,p_asker,src.id,p_agent_key,p_intent,p_token_hash) RETURNING * INTO turn;
+ INSERT INTO public.team_hub_agent_turns(tenant_id,channel_id,asker_user_id,source_message_id,agent_key,intent,token_hash,
+  accepted_at,attempts)
+  VALUES (p_tenant,ch.id,p_asker,src.id,p_agent_key,p_intent,p_token_hash,now(),ARRAY[now()]) RETURNING * INTO turn;
  RETURN jsonb_build_object('ok',true,'turn_id',turn.id);
 END $$;
 REVOKE ALL ON FUNCTION public.team_hub_accept_agent_turn(uuid,uuid,uuid,uuid,text,text,text) FROM PUBLIC, anon, authenticated;
@@ -712,8 +737,12 @@ BEGIN
    SELECT * INTO msg FROM public.team_hub_messages m WHERE m.author_kind='agent' AND m.agent_key=p_agent_key
     AND m.asked_in_message_id=p_asked_in_message_id AND m.channel_id=ch.id;
   END IF;
+  -- The row must also answer THIS turn's question in THIS place: a request id reused for another
+  -- question by the same agent is refused, never bound to the turn as if it were its reply.
   IF NOT FOUND OR msg.author_user_id<>actor OR msg.author_kind<>'agent' OR msg.agent_key<>p_agent_key
-    OR msg.channel_id<>ch.id THEN RETURN jsonb_build_object('ok',false,'code','invalid'); END IF;
+    OR msg.channel_id<>ch.id
+    OR msg.asked_in_message_id IS DISTINCT FROM p_asked_in_message_id
+    OR msg.parent_message_id IS DISTINCT FROM p_parent_message_id THEN RETURN jsonb_build_object('ok',false,'code','invalid'); END IF;
   UPDATE public.team_hub_agent_turns t SET consumed_at=now(), posted_message_id=msg.id WHERE t.id=turn.id;
   RETURN jsonb_build_object('ok',true,'message',public._team_hub_message_json(msg),'duplicate',true);
  END IF;

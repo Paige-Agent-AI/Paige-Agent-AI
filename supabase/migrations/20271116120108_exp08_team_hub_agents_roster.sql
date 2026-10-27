@@ -29,6 +29,8 @@
 -- equal), so a customised or tenant row is never overwritten, and it changes display metadata only. No
 -- new agent, prompt, tool grant, provider, runtime, enabled state, cap, parent or activation; name, slug,
 -- department, rail_display_name, system_prompt and every other config key are preserved.
+-- Each row that gains a key also gains one version, like any config write; a remit correction is
+-- its own version before that, so an untouched MERIT or NEXUS seed goes from 1 to 3.
 -- Forward-only and replay-safe: a second apply changes nothing.
 BEGIN;
 SET LOCAL lock_timeout = '2s';
@@ -79,6 +81,10 @@ UPDATE public.paige_subagents a SET
     || CASE WHEN coalesce(a.config, '{}'::jsonb) ? 'team_hub_tools' THEN '{}'::jsonb ELSE jsonb_build_object('team_hub_tools', s.team_hub_tools) END
     || CASE WHEN coalesce(a.config, '{}'::jsonb) ? 'capability_scope' THEN '{}'::jsonb ELSE jsonb_build_object('capability_scope', s.capability_scope) END
     || CASE WHEN coalesce(a.config, '{}'::jsonb) ? 'personality' THEN '{}'::jsonb ELSE jsonb_build_object('personality', s.personality) END,
+  -- A config change is a new version of the row, as the orchestrator's own config writer does
+  -- (paige-orchestrator setAgentJobKind: merge, preserve every other key, bump version), so a reader holding the old
+  -- version can tell the row changed.
+  version = a.version + 1,
   updated_at = statement_timestamp()
 FROM seed s
 WHERE a.slug = s.slug AND a.tenant_id IS NULL

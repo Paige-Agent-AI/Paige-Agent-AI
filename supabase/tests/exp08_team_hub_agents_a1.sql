@@ -769,6 +769,8 @@ END $$;
 
 CREATE TEMP TABLE before_src AS SELECT p.oid::regprocedure::text AS sig, p.proname::text AS name, p.prosrc AS src
  FROM pg_proc p WHERE p.pronamespace='public'::regnamespace AND p.proname LIKE '%team_hub%';
+CREATE TEMP TABLE before_trg AS SELECT t.tgname::text AS name, replace(pg_get_triggerdef(t.oid),'FUNCTION public.','FUNCTION ') AS def
+ FROM pg_trigger t WHERE NOT t.tgisinternal AND t.tgname IN ('team_hub_member_scope','team_hub_message_scope');
 
 -- 2. The change, then a second apply: a no-op.
 \ir ../migrations/20271116120008_exp08_team_hub_agents.sql
@@ -910,6 +912,24 @@ DO $$ DECLARE bad text; changed text[]; BEGIN
   RAISE EXCEPTION 'FAIL: the functions that changed are %', changed; END IF;
 END $$;
 \echo 'PASS: byte identity: each of the 8 re-emitted bodies, with only its listed A1 hunks undone, is production''s md5; the other 28 team_hub functions are unchanged'
+-- The two re-created triggers: before the change each is production's definition (pg_trigger, read
+-- 2026-10-27); after it, each differs only by the columns the migration header lists.
+DO $$ DECLARE now_def text; BEGIN
+ IF (SELECT def FROM before_trg WHERE name='team_hub_member_scope') IS DISTINCT FROM
+   'CREATE TRIGGER team_hub_member_scope BEFORE INSERT OR UPDATE OF channel_id, tenant_id ON public.team_hub_channel_members FOR EACH ROW EXECUTE FUNCTION _team_hub_member_scope_guard()'
+   OR (SELECT def FROM before_trg WHERE name='team_hub_message_scope') IS DISTINCT FROM
+   'CREATE TRIGGER team_hub_message_scope BEFORE INSERT OR UPDATE OF channel_id, tenant_id, parent_message_id ON public.team_hub_messages FOR EACH ROW EXECUTE FUNCTION _team_hub_message_scope_guard()' THEN
+  RAISE EXCEPTION 'FAIL: before the change, the two scope triggers are not production''s definitions'; END IF;
+ SELECT replace(pg_get_triggerdef(t.oid),'FUNCTION public.','FUNCTION ') INTO now_def FROM pg_trigger t WHERE t.tgname='team_hub_member_scope';
+ IF now_def IS DISTINCT FROM replace((SELECT def FROM before_trg WHERE name='team_hub_member_scope'),
+   'OF channel_id, tenant_id ON','OF channel_id, tenant_id, user_id ON') THEN
+  RAISE EXCEPTION 'FAIL: team_hub_member_scope differs from production by more than user_id: %', now_def; END IF;
+ SELECT replace(pg_get_triggerdef(t.oid),'FUNCTION public.','FUNCTION ') INTO now_def FROM pg_trigger t WHERE t.tgname='team_hub_message_scope';
+ IF now_def IS DISTINCT FROM replace((SELECT def FROM before_trg WHERE name='team_hub_message_scope'),
+   'parent_message_id ON','parent_message_id, asked_in_message_id, author_kind, agent_key ON') THEN
+  RAISE EXCEPTION 'FAIL: team_hub_message_scope differs from production by more than the three agent columns: %', now_def; END IF;
+END $$;
+\echo 'PASS: the two re-created scope triggers are production''s definitions plus only the listed columns (member: user_id; message: asked_in_message_id, author_kind, agent_key)'
 
 -- 4. Structure, grants and the incumbent guards.
 DO $$ DECLARE f text; BEGIN
@@ -966,6 +986,9 @@ DO $$ DECLARE f text; BEGIN
    AND (p.prosrc ~* '(paige_orchestrator|delegate_to_subagent|file_action|advance_action|approval|calendar|booking)'
     OR p.prosrc ILIKE '%is_tenant_member%')) THEN
   RAISE EXCEPTION 'FAIL: a team_hub body names a delegation, approval, calendar or booking path'; END IF;
+ IF NOT EXISTS(SELECT 1 FROM pg_constraint WHERE conrelid='public.team_hub_agent_turns'::regclass
+   AND conname='team_hub_agent_turns_attempts_chk' AND convalidated) THEN
+  RAISE EXCEPTION 'FAIL: team_hub_agent_turns_attempts_chk (the newest attempt is accepted_at) is missing'; END IF;
  IF position('''work_ref''' IN (SELECT prosrc FROM pg_proc WHERE oid='public._team_hub_message_json(team_hub_messages)'::regprocedure))=0 THEN
   RAISE EXCEPTION 'FAIL: _team_hub_message_json no longer carries work_ref'; END IF;
 END $$;
@@ -1118,6 +1141,23 @@ SELECT pg_temp.check((:'race')::jsonb @> jsonb_build_object('ok',true,'duplicate
  AND (SELECT count(*) FROM public.team_hub_messages WHERE author_kind='agent' AND asked_in_message_id=:'src1')=1
  AND (SELECT posted_message_id=(:'reply1_id')::uuid FROM public.team_hub_agent_turns WHERE id=((:'a1')::jsonb->>'turn_id')::uuid),
  'a second reply for the same (message, agent) returns the first and stores nothing');
+-- A request id reused for another question is refused, never bound to the other turn. Priya asks CURA
+-- two things; the reply to B arrives under the request id A's reply already holds.
+SELECT pg_temp.post(:'u3', :'ta', :'launch', '@CURA question A', '{cura}')#>>'{message,id}' AS qa \gset
+SELECT pg_temp.post(:'u3', :'ta', :'launch', '@CURA question B', '{cura}')#>>'{message,id}' AS qb \gset
+SELECT pg_temp.accept(:'ta', :'u3', :'launch', :'qa', 'cura', 'reply', pg_temp.tok('QA'))->>'turn_id' AS qa_turn \gset
+SELECT gen_random_uuid() AS rq \gset
+SELECT pg_temp.agent_post(:'u3', :'ta', :'launch', 'cura', 'Answer to A', :'rq', NULL, :'qa', 'reply', pg_temp.tok('QA'))#>>'{message,id}' AS qa_reply \gset
+SELECT pg_temp.accept(:'ta', :'u3', :'launch', :'qb', 'cura', 'reply', pg_temp.tok('QB'))->>'turn_id' AS qb_turn \gset
+SELECT pg_temp.agent_post(:'u3', :'ta', :'launch', 'cura', 'Answer to B', :'rq', NULL, :'qb', 'reply', pg_temp.tok('QB')) AS qb_reused \gset
+SELECT pg_temp.check(:'qa_reply'<>'' AND :'qb_turn'<>'' AND (:'qb_reused')::jsonb->>'code'='invalid'
+ AND (SELECT consumed_at IS NULL AND posted_message_id IS NULL FROM public.team_hub_agent_turns WHERE id=:'qb_turn')
+ AND (SELECT posted_message_id=(:'qa_reply')::uuid FROM public.team_hub_agent_turns WHERE id=:'qa_turn'),
+ 'a reply sent under the request id another question''s reply holds is refused invalid; turn B stays unbound, turn A keeps its reply');
+SELECT pg_temp.agent_post(:'u3', :'ta', :'launch', 'cura', 'Answer to B', gen_random_uuid()::text, NULL, :'qb', 'reply', pg_temp.tok('QB')) AS qb_reply \gset
+SELECT pg_temp.check((:'qb_reply')::jsonb @> jsonb_build_object('ok',true,'message',jsonb_build_object('asked_in_message_id',:'qb'))
+ AND (SELECT posted_message_id=((:'qb_reply')::jsonb#>>'{message,id}')::uuid FROM public.team_hub_agent_turns WHERE id=:'qb_turn'),
+ 'turn B then posts its own reply, linked to question B');
 
 -- 5g. The person-to-agent DM: one member, invisible to everyone else, owners included.
 SELECT pg_temp.j(:'u2', format('public.team_hub_open_agent_dm(%L::uuid,%L)', :'ta', 'merit'))->>'channel_id' AS dm_merit \gset
@@ -1198,8 +1238,12 @@ SELECT pg_temp.check((SELECT bool_and((p->>'agent_name_clash')::boolean=(p->>'us
  'the roster marks exactly the teammate whose first name is an agent''s name (Vera Lane), so the screen can add a surname initial');
 \echo 'PASS: agent mentions, acceptance (rule 2, service role only), single-use posting, replay and wrong-token refusal, the one-reply rule, unread for everyone, the agent DM, the private-part line, thread placement and labels'
 
--- 5j. The per-seat cap: 30 accepted turns per person per rolling hour; a retry of an ended turn does
--- not count again; another person is unaffected.
+-- 5j. The per-seat cap: at most 30 model turns started per person per rolling hour in a workspace.
+-- Every start counts, each acceptance and each re-arm of an ended or abandoned turn ("Ask again"
+-- re-runs a full model turn). A refusal starts nothing. Another person is unaffected.
+CREATE FUNCTION pg_temp.used(asker text) RETURNS int LANGUAGE sql AS $$
+ SELECT coalesce(sum((SELECT count(*) FROM unnest(t.attempts) a(at) WHERE a.at>now()-interval '1 hour')),0)::int
+ FROM public.team_hub_agent_turns t WHERE t.asker_user_id=asker::uuid $$;
 CREATE FUNCTION pg_temp.burst(tenant text, asker text, channel text, n int) RETURNS text[] LANGUAGE plpgsql AS $$
 DECLARE codes text[]:='{}'; m jsonb; i int; a jsonb;
 BEGIN
@@ -1210,39 +1254,66 @@ BEGIN
  END LOOP;
  RETURN codes;
 END $$;
-SELECT count(*) AS used_before FROM public.team_hub_agent_turns WHERE asker_user_id=:'u2' AND accepted_at>now()-interval '1 hour' \gset
+-- Accept, then end without posting, n times on ONE source: the first start is a new turn, every later
+-- one re-arms it. Returns ok / rearmed / the refusal code for each start.
+CREATE FUNCTION pg_temp.cycle(tenant text, asker text, channel text, src text, agent text, tag text, n int) RETURNS text[] LANGUAGE plpgsql AS $$
+DECLARE codes text[]:='{}'; i int; a jsonb; e jsonb;
+BEGIN
+ FOR i IN 1..n LOOP
+  a:=pg_temp.accept(tenant, asker, channel, src, agent, 'reply', pg_temp.tok(tag||'-'||i));
+  IF a->>'ok'='true' THEN
+   e:=pg_temp.j(NULL, format('public.team_hub_end_agent_turn(%L::uuid,%L)', a->>'turn_id', pg_temp.h(pg_temp.tok(tag||'-'||i))), 'service_role');
+   IF e->>'ok' IS DISTINCT FROM 'true' THEN codes:=codes||('end:'||coalesce(e->>'code',e->>'error')); CONTINUE; END IF;
+  END IF;
+  codes:=codes||coalesce(a->>'code',CASE WHEN a->>'rearmed'='true' THEN 'rearmed' WHEN a->>'ok'='true' THEN 'ok' END, a->>'error');
+ END LOOP;
+ RETURN codes;
+END $$;
+SELECT pg_temp.used(:'u2') AS used_before \gset
 SELECT pg_temp.burst(:'ta', :'u2', :'launch', 31-:used_before) AS burst \gset
 SELECT pg_temp.check(:'used_before'::int=5
  AND (:'burst')::text[]=array_fill('ok'::text, ARRAY[30-:used_before])||ARRAY['rate_limited']
- AND (SELECT count(*) FROM public.team_hub_agent_turns WHERE asker_user_id=:'u2')=30,
- 'the 31st accepted turn for one seat in an hour is refused rate_limited');
-SELECT id, token_hash FROM public.team_hub_agent_turns WHERE asker_user_id=:'u2' AND consumed_at IS NULL ORDER BY accepted_at DESC LIMIT 1 \gset last_
+ AND (SELECT count(*) FROM public.team_hub_agent_turns WHERE asker_user_id=:'u2')=30 AND pg_temp.used(:'u2')=30,
+ 'the 31st start for one seat in an hour is refused rate_limited');
+SELECT id, token_hash FROM public.team_hub_agent_turns WHERE asker_user_id=:'u2' AND consumed_at IS NULL ORDER BY accepted_at DESC, id LIMIT 1 \gset last_
 SELECT coalesce(pg_temp.j(NULL, format('public.team_hub_end_agent_turn(%L::uuid,%L)', :'last_id', pg_temp.h('wrong')), 'service_role')->>'code','none') AS end_wrong \gset
 SELECT coalesce(pg_temp.j(NULL, format('public.team_hub_end_agent_turn(%L::uuid,%L)', :'last_id', :'last_token_hash'), 'service_role')->>'ok','none') AS end_ok \gset
 SELECT coalesce((SELECT consumed_at IS NOT NULL AND posted_message_id IS NULL FROM public.team_hub_agent_turns WHERE id=:'last_id'),false) AS ended \gset
 SELECT pg_temp.accept(:'ta', :'u2', :'launch', (SELECT source_message_id::text FROM public.team_hub_agent_turns WHERE id=:'last_id'), 'zion', 'reply', pg_temp.tok('rearm')) AS rearm \gset
 SELECT pg_temp.check(:'end_wrong'='not_found' AND :'end_ok'='true' AND :'ended'::boolean
- AND (:'rearm')::jsonb @> jsonb_build_object('ok',true,'rearmed',true,'turn_id',:'last_id')
- AND (SELECT count(*) FROM public.team_hub_agent_turns WHERE asker_user_id=:'u2')=30
- AND (SELECT consumed_at IS NULL FROM public.team_hub_agent_turns WHERE id=:'last_id'),
- 'a turn ends only with its own token; a retry of an ended turn re-arms the same row, at the cap, without counting again');
+ AND (:'rearm')::jsonb->>'code'='rate_limited'
+ AND (SELECT consumed_at IS NOT NULL AND token_hash=:'last_token_hash' FROM public.team_hub_agent_turns WHERE id=:'last_id')
+ AND (SELECT count(*) FROM public.team_hub_agent_turns WHERE asker_user_id=:'u2')=30 AND pg_temp.used(:'u2')=30,
+ 'a turn ends only with its own token; at the cap, Ask again on an ended turn is refused rate_limited and the turn stays ended with its old token');
 SELECT pg_temp.check(pg_temp.accept(:'ta', :'u5', :'launch', :'src_marcus', 'cura', 'reply', pg_temp.tok('marcus'))->>'ok'='true',
  'another seat''s turns are counted separately');
+-- Accept-and-end on one source, again and again: each re-arm runs a model turn, so it counts.
+SELECT pg_temp.post(:'u4', :'ta', :'launch', '@ZION one question, asked over and over', '{zion}')#>>'{message,id}' AS src_cycle \gset
+SELECT pg_temp.used(:'u4') AS u4_before \gset
+SELECT pg_temp.cycle(:'ta', :'u4', :'launch', :'src_cycle', 'zion', 'cyc', 31) AS cycles \gset
+SELECT pg_temp.check(:'u4_before'::int=0
+ AND (:'cycles')::text[]=ARRAY['ok']||array_fill('rearmed'::text, ARRAY[29])||ARRAY['rate_limited']
+ AND (SELECT count(*) FROM public.team_hub_agent_turns WHERE source_message_id=:'src_cycle')=1
+ AND pg_temp.used(:'u4')=30,
+ 'accept-and-end cycles on one source: a new turn, 29 re-arms (Ask again works under the cap), then rate_limited; one row, 30 starts');
 -- A turn whose edge invocation died without ending it is not "running" for ever: after 10 minutes a
--- retry re-arms it, and the abandoned invocation's token stops working.
+-- retry re-arms it (and counts), and the abandoned invocation's token stops working.
 SELECT pg_temp.post(:'u3', :'ta', :'launch', '@NEXUS stale check', '{nexus}')#>>'{message,id}' AS src_stale \gset
 SELECT pg_temp.accept(:'ta', :'u3', :'launch', :'src_stale', 'nexus', 'reply', pg_temp.tok('S1'))->>'turn_id' AS stale_turn \gset
 SELECT pg_temp.accept(:'ta', :'u3', :'launch', :'src_stale', 'nexus', 'reply', pg_temp.tok('S2'))->>'code' AS stale_running \gset
-UPDATE public.team_hub_agent_turns SET accepted_at=now()-interval '11 minutes' WHERE id=:'stale_turn';
+-- The invocation started 11 minutes ago (its attempt with it: the newest attempt is always accepted_at).
+UPDATE public.team_hub_agent_turns SET accepted_at=now()-interval '11 minutes', attempts=ARRAY[now()-interval '11 minutes'] WHERE id=:'stale_turn';
+SELECT pg_temp.used(:'u3') AS u3_before_stale \gset
 SELECT pg_temp.accept(:'ta', :'u3', :'launch', :'src_stale', 'nexus', 'reply', pg_temp.tok('S2')) AS stale_rearm \gset
 SELECT pg_temp.agent_post(:'u3', :'ta', :'launch', 'nexus', 'late', gen_random_uuid()::text, NULL, :'src_stale', 'reply', pg_temp.tok('S1'))->>'code' AS stale_old \gset
 SELECT pg_temp.check(:'stale_running'='in_flight'
  AND (:'stale_rearm')::jsonb @> jsonb_build_object('ok',true,'rearmed',true,'turn_id',:'stale_turn')
+ AND pg_temp.used(:'u3')=:'u3_before_stale'::int+1
  AND :'stale_old'='not_allowed'
  AND pg_temp.agent_post(:'u3', :'ta', :'launch', 'nexus', 'On time', gen_random_uuid()::text, NULL, :'src_stale', 'reply', pg_temp.tok('S2'))->>'ok'='true'
  AND (SELECT count(*) FROM public.team_hub_agent_turns WHERE source_message_id=:'src_stale')=1,
- 'a running turn answers in_flight; one left unended for 10 minutes re-arms on retry (one row), and the abandoned token is refused');
-\echo 'PASS: the per-seat cap of 30 accepted turns per hour, the end door and the re-arm that counts once'
+ 'a running turn answers in_flight; one left unended for 10 minutes re-arms on retry (one row, one more start counted), and the abandoned token is refused');
+\echo 'PASS: the per-seat cap of 30 starts per hour (re-arms counted), the end door, Ask again under the cap, and the stale re-arm'
 
 -- 5k. A seat that ends takes its agent DMs and running turns with it; a hold keeps them; an agent DM
 -- holding a file record is left for the files retirement provider, never stranded in Storage.
@@ -1349,7 +1420,7 @@ SELECT coalesce((pg_temp.agent_post(:'u3', :'ta', :'mch2', 'mentor', 'elsewhere'
 ROLLBACK;
 INSERT INTO mutant_results VALUES ('M6 turn not bound to its conversation', :'g');
 -- M7: the per-seat cap is off by one.
-SELECT count(*) AS m7_used FROM public.team_hub_agent_turns WHERE asker_user_id=:'u3' AND accepted_at>now()-interval '1 hour' \gset
+SELECT pg_temp.used(:'u3') AS m7_used \gset
 SELECT pg_temp.burst(:'ta', :'u3', :'mch', 29-:m7_used) AS m7_fill \gset
 BEGIN;
 SELECT pg_temp.mutate('public.team_hub_accept_agent_turn(uuid,uuid,uuid,uuid,text,text,text)', 'IF used>=30 THEN', 'IF used>=31 THEN');
@@ -1359,7 +1430,7 @@ INSERT INTO mutant_results VALUES ('M7 cap 31 not 30', :'g');
 -- M8: a stale turn is "running" for ever.
 SELECT pg_temp.post(:'u6', :'ta', :'mch', '@NEXUS m8', '{nexus}')#>>'{message,id}' AS m8src \gset
 SELECT pg_temp.accept(:'ta', :'u6', :'mch', :'m8src', 'nexus', 'reply', pg_temp.tok('M8a'))->>'turn_id' AS m8turn \gset
-UPDATE public.team_hub_agent_turns SET accepted_at=now()-interval '11 minutes' WHERE id=:'m8turn';
+UPDATE public.team_hub_agent_turns SET accepted_at=now()-interval '11 minutes', attempts=ARRAY[now()-interval '11 minutes'] WHERE id=:'m8turn';
 BEGIN;
 SELECT pg_temp.mutate('public.team_hub_accept_agent_turn(uuid,uuid,uuid,uuid,text,text,text)', E'turn.accepted_at>now()-interval ''10 minutes''', 'true');
 SELECT coalesce((pg_temp.accept(:'ta', :'u6', :'mch', :'m8src', 'nexus', 'reply', pg_temp.tok('M8b'))->>'ok'='true'),false) AS g \gset
@@ -1431,15 +1502,17 @@ CREATE TEMP TABLE subagents_once AS SELECT * FROM public.paige_subagents;
 \ir ../migrations/20271116120108_exp08_team_hub_agents_roster.sql
 SELECT pg_temp.check(NOT EXISTS(SELECT to_jsonb(a)-'updated_at' FROM subagents_once a EXCEPT SELECT to_jsonb(b)-'updated_at' FROM public.paige_subagents b),
  'roster: a second apply changes nothing');
-SELECT pg_temp.check((SELECT role='VP Sales & Getting Paid' AND domain='sales_getting_paid' AND version=2 AND name='MERIT' AND department='owner_ops'
+SELECT pg_temp.check((SELECT role='VP Sales & Getting Paid' AND domain='sales_getting_paid' AND version=3 AND name='MERIT' AND department='owner_ops'
    AND rail_display_name='MERIT' AND runtime='soft' AND enabled AND system_prompt IS NULL AND description LIKE 'VP Sales & Getting Paid.%'
    FROM public.paige_subagents WHERE slug='merit'),
- 'roster: MERIT is corrected to Sales & getting paid (the 23 Oct standard), name, department, runtime and prompt unchanged');
-SELECT pg_temp.check((SELECT role='VP Growth' AND description='VP Growth (edited by this business).' AND version=1 FROM public.paige_subagents WHERE slug='nexus'),
- 'roster: an edited NEXUS seed is not overwritten (seed guard)');
+ 'roster: MERIT is corrected to Sales & getting paid (the 23 Oct standard), name, department, runtime and prompt unchanged; version 1 to 3 (remit, then config)');
+SELECT pg_temp.check((SELECT role='VP Growth' AND description='VP Growth (edited by this business).' AND version=2 FROM public.paige_subagents WHERE slug='nexus'),
+ 'roster: an edited NEXUS seed is not overwritten (seed guard); it gains only the config version');
 SELECT pg_temp.check(NOT EXISTS(SELECT 1 FROM subagents_before b JOIN public.paige_subagents a USING (slug)
-   WHERE a.slug NOT IN ('merit') AND (to_jsonb(a)-'config'-'updated_at') IS DISTINCT FROM (to_jsonb(b)-'config'-'updated_at')),
- 'roster: every other row keeps every non-config field, the version included');
+   WHERE a.slug NOT IN ('merit') AND (to_jsonb(a)-'config'-'updated_at'-'version') IS DISTINCT FROM (to_jsonb(b)-'config'-'updated_at'-'version'))
+ AND NOT EXISTS(SELECT 1 FROM subagents_before b JOIN public.paige_subagents a USING (slug)
+   WHERE a.version IS DISTINCT FROM b.version + CASE WHEN a.slug='merit' THEN 2 WHEN a.slug IN ('vera','nexus','cura','mentor','zion') THEN 1 ELSE 0 END),
+ 'roster: every other row keeps every non-config field; a row whose config changed gains exactly one version (as the orchestrator''s config writer does), design-studio none');
 SELECT pg_temp.check((SELECT config->'job_kind'='"plan"' FROM public.paige_subagents WHERE slug='zion')
  AND (SELECT config->'team_hub_tools'='{"custom":true}' FROM public.paige_subagents WHERE slug='vera')
  AND (SELECT config FROM public.paige_subagents WHERE slug='design-studio')=(SELECT config FROM subagents_before WHERE slug='design-studio')
@@ -1463,9 +1536,9 @@ SELECT pg_temp.check((SELECT bool_and((SELECT array_agg(k ORDER BY k) FROM jsonb
  'roster: each personality is presentation only (the A4 keys, within limits, no tool, scope, lane or authority field); MERIT reads Sales & getting paid');
 -- NEXUS as production holds it (the untouched seed): the remit is corrected; its config keys stay.
 UPDATE public.paige_subagents SET description='VP Growth. Content strategy and creation, campaigns, sales sequences, pipeline management, lead scoring, brand voice enforcement, competitive positioning. Energetic, market-aware.',
- config='{}' WHERE slug='nexus';
+ config='{}', version=1 WHERE slug='nexus';
 \ir ../migrations/20271116120108_exp08_team_hub_agents_roster.sql
-SELECT pg_temp.check((SELECT role='VP Marketing & Growth' AND domain='marketing_growth' AND version=2 AND name='NEXUS'
+SELECT pg_temp.check((SELECT role='VP Marketing & Growth' AND domain='marketing_growth' AND version=3 AND name='NEXUS'
    AND description NOT ILIKE '%sales sequences%' AND description NOT ILIKE '%pipeline%' AND config ?& ARRAY['team_hub_tools','capability_scope','personality']
    FROM public.paige_subagents WHERE slug='nexus'),
  'roster: the untouched NEXUS seed is corrected to Marketing & growth (sales and pipeline belong to MERIT)');

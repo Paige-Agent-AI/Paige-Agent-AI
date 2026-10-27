@@ -25,7 +25,7 @@ MUST_PRESERVE: the publish door's sole authority; the panel's live-view layout (
 ACCEPTANCE_CRITERIA: a published page tells browsers and unfurlers exactly what its published columns say (and nothing more); an owner about to publish sees the same truth in the panel, or the honest missing-description line with where to get one; a downloaded export unfurls like the live page; none of it changes what visitors see on the page itself.
 MOTION_PURPOSE: NONE: no motion added.
 PROTECTED_SEAMS: NONE_AFFECTED: no authority, write, provider, or isolation surface touched. Not affected: tenant isolation, auth, entitlements, approvals (door untouched; panel names no SEO write), Spine, canonical writes, Rail, chat transcript, Live, Vault, connections, jobs, shell geometry, privacy (the head application adds NO data flow — it renders columns the public page already loads).
-INTERNAL_BUILD_IDENTITY: PENDING-CODE-COMMIT; deployment=vercel-preview-of-PR; environment=preview; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=this record + assets/exp06-seo-quality/
+INTERNAL_BUILD_IDENTITY: b312e820fbdfa95a01a5c5b3982d0376a428b304; deployment=vercel-preview-of-PR; environment=preview; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=this record + assets/exp06-seo-quality/
 RELEASE_CHANNEL: preview: ordinary PR preview of the Solo shell; no staged rollout, no external eligibility.
 RELEASE_CLASSIFICATION: internal-only: sharing-truth capability increment within EXP06; not a customer release event.
 CUSTOMER_RELEASE_IDENTITY: none: coherent owner-visible EXP06 evaluation has not occurred.

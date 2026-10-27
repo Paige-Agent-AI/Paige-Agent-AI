@@ -330,7 +330,7 @@
   .th-thread{position:absolute;top:0;right:0;bottom:0;width:min(360px,92%);z-index:6;box-shadow:var(--pg-e3)}
   /* The agent profile over the stream carries the prototype's deeper cast shadow (frame 33), from the
      shared elevation tokens, so it reads as a panel above the conversation in both themes. */
-  .th-profile{box-shadow:var(--pg-e3),var(--pg-lift-3)}
+  .th-profile{box-shadow:var(--pg-e3),var(--pg-e3),var(--pg-lift-2)}
 }
 @media (prefers-reduced-motion:no-preference){
   @container th-hub (max-width:1149.98px){.th-thread{animation:th-slide .2s cubic-bezier(.16,1,.3,1)}}
@@ -436,6 +436,10 @@ button.th-ag-re:hover{color:var(--pg-muted);text-decoration:underline;text-under
 .th-hub .th-ag-priv>svg{width:14px;height:14px;color:var(--agc-ink)}
 .th-hub .th-ag-priv--failed>svg{color:var(--pg-warning)}
 .th-ag-priv .th-btn{min-height:40px}
+/* Another member's line about someone else's private answer is neutral, as the prototype's .priv: it is
+   a fact about the conversation, not the reader's own note, so it carries no agent tint. */
+.th-ag-priv--others{padding:7px 10px;border-color:var(--pg-line-soft);background:var(--pg-surface);color:var(--pg-muted)}
+.th-hub .th-ag-priv--others>svg{color:var(--pg-muted)}
 .th-ag-open{display:inline-flex;align-items:center;gap:4px;margin-left:auto;font-size:12px}
 .th-hub .th-ag-open svg{width:13px;height:13px}
 

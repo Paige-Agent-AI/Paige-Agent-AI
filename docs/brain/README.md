@@ -1,3 +1,16 @@
+## EXP02 financial Play target consumer — October27 UTC
+
+The original Finance Forecast view now presents sampled financial F7 targets and
+their issued actuals through the existing focused Game Plan review and shared
+Executive target component. No budget, forecast engine, provider, permission,
+writer or action receipt is added. Current actor/tenant, sample, currency, period
+and expiry limits remain explicit. Source/controlled and synthetic rendered proof
+are separate from required review/CI/release and ordinary customer acceptance.
+[Finance Brain](finance-department.md#october27--original-financial-play-targets-source-consumer)
+and [UI evidence](../evidence/ui-delivery/e2-financial-play-targets.md) retain exact
+boundaries. All19/nine, governed follow-through, native zoom, roles/cohorts/Live and
+one complete founder evaluation remain open. No catalogue/algorithm promotion.
+
 ## EXP02 original private Systems host released — October27 UTC
 
 [#2952 actual source receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2952#issuecomment-6430581019):

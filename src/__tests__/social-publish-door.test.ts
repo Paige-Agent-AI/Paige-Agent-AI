@@ -12,12 +12,17 @@ vi.mock("../../supabase/functions/_shared/social-provider/governance.ts", () => 
   // Track fingerprints the double has issued and consumed — mirrors the REAL module's single-use
   // CAS on paige_pending_confirmations.consumed_at.
   const consumed = new Set<string>();
+  const proposals = new Map<string, Record<string, unknown>>();
   return {
     governSocialMutation: vi.fn(async (input: {
       approvedFingerprint?: string | null;
       requestArgs: Record<string, unknown>;
       summary: string;
     }) => {
+      if (input.approvedFingerprint && !consumed.has(input.approvedFingerprint)) {
+        const stored = proposals.get(input.approvedFingerprint);
+        if (stored) { consumed.add(input.approvedFingerprint); return { kind: "execute", args: stored, confirmationId: "conf-" + input.approvedFingerprint, decision: { kind: "execute" } }; }
+      }
       if (input.approvedFingerprint) {
         if (consumed.has(input.approvedFingerprint)) {
           return { kind: "refuse", code: "approval_claim_missing", message: "The approval was already used.", decision: { kind: "refuse" } };
@@ -25,9 +30,11 @@ vi.mock("../../supabase/functions/_shared/social-provider/governance.ts", () => 
         consumed.add(input.approvedFingerprint);
         return { kind: "execute", args: input.requestArgs, confirmationId: "conf-" + input.approvedFingerprint, decision: { kind: "execute" } };
       }
+      const fingerprint = consumed.size.toString(16).padStart(16, "0");
+      proposals.set(fingerprint, input.requestArgs);
       return {
         kind: "approval_required",
-        fingerprint: consumed.size.toString(16).padStart(16, "0"),
+        fingerprint,
         summary: input.summary,
         expiresAt: new Date(Date.now() + 600000).toISOString(),
         revalidate: false,
@@ -217,5 +224,40 @@ describe("social publish door — proposal, owner approval, provider execution, 
     const r = await w.call(publishBody({ approved_fingerprint: (first.body.approval as Record<string, string>).fingerprint, caption: "Join us Thursday! #workshop" }));
     expect(r.body.state).toBe("published");
     expect(w.seen.createPost[0].text).toBe("Join us Thursday! #workshop");
+  });
+
+  it("independent review #1 — an approve whose body names a DIFFERENT piece/channel than the proposal is refused; the claim never executes", async () => {
+    const w = world();
+    const first = await w.call(publishBody());
+    const fp = (first.body.approval as Record<string, string>).fingerprint;
+    // The proposal was for instagram/PIECE; the approve call swaps the channel in its body.
+    // Both channels are connected so the pre-claim readiness check passes on the WRONG channel —
+    // only the claim binding check can catch it.
+    w.tables.paige_social_connections.push(connectedRow({ id: "55555555-5555-4555-8555-555555555556", requested_platform: "facebook", provider_profile_key: "ps_bbbb000000000000000000000000000000000000" }) as never);
+    const r = await w.call(publishBody({ approved_fingerprint: fp, platform: "facebook" }));
+    expect(r.status).toBe(409);
+    expect(r.body.code).toBe("CLAIM_MISMATCH");
+    expect(w.seen.createPost).toHaveLength(0); // the provider was never called
+  });
+
+  it("independent review #2 — an in-flight or crashed attempt (approved/publishing) blocks a second approval entirely", async () => {
+    const w = world({ tables: { content_publications: [{ id: "pub-stuck", tenant_id: MINE, content_id: PIECE, platform: "instagram", status: "publishing", created_at: new Date().toISOString() }] as never } });
+    const first = await w.call(publishBody()); // a NEW proposal is still allowed…
+    expect(first.status).toBe(202);
+    const fp = (first.body.approval as Record<string, string>).fingerprint;
+    const r = await w.call(publishBody({ approved_fingerprint: fp })); // …but the approve is refused
+    expect(r.status).toBe(409);
+    expect(r.body.code).toBe("RETRY_PENDING_RECONCILIATION");
+    expect(w.seen.createPost).toHaveLength(0);
+  });
+
+  it("the exact body the shipped UI sends on approve (piece + channel + caption + fingerprint) executes and publishes", async () => {
+    const w = world();
+    const first = await w.call(publishBody());
+    const fp = (first.body.approval as Record<string, string>).fingerprint;
+    const r = await w.call(publishBody({ approved_fingerprint: fp, caption: "Spring workshop reminder" }));
+    expect(r.status).toBe(200);
+    expect(r.body.state).toBe("published");
+    expect(w.seen.createPost).toHaveLength(1);
   });
 });

@@ -35,6 +35,9 @@
 
 import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
 import { forge } from "./prompt-forge.ts";
+import { awaitSystemsCheckCapture, SystemsCheckCaptureUnconfirmed } from "./systems-check-wait.ts";
+import type { CaptureReadbackPhase } from "./systems-check-wait.ts";
+export { awaitSystemsCheckCapture, SystemsCheckCaptureUnconfirmed } from "./systems-check-wait.ts";
 import type { Tier } from "./model-router-gates.ts";
 
 // The remediation draft is plain text, cost-low (§14): a fix draft is neither a customer send nor an
@@ -179,39 +182,6 @@ export interface RunSystemsCheckSummary {
     finding_id: string;
     resolution_action_id: string | null;
   }>;
-}
-
-type CaptureReadbackPhase = "context_read" | "catalog_read" | "check_read"
-  | "run_insert" | "finding_write" | "finding_readback" | "run_finalize" | "run_readback";
-
-/** A known original run owes reconciliation. This never proves absence or permits replay. */
-export class SystemsCheckCaptureUnconfirmed extends Error {
-  constructor(readonly runId: string, readonly reason: CaptureReadbackPhase | "work_claim" | "work_settlement") {
-    super("SYSTEMS_CHECK_CAPTURE_UNCONFIRMED");
-    this.name = "SystemsCheckCaptureUnconfirmed";
-  }
-}
-
-/** The original capture wait, also used by its private native Work adapter.
- * The host owns the deadline. Aborting awaiting never rolls back issued I/O. */
-export async function awaitSystemsCheckCapture<T>(operation: () => PromiseLike<T>,
-  signal: AbortSignal, runId: string, phase: SystemsCheckCaptureUnconfirmed["reason"]): Promise<T> {
-  const unconfirmed = () => new SystemsCheckCaptureUnconfirmed(runId, phase);
-  if (signal.aborted) throw unconfirmed();
-  let onAbort!: () => void;
-  const aborted = new Promise<never>((_, reject) => { onAbort = () => reject(unconfirmed()); });
-  signal.addEventListener("abort", onAbort, { once: true });
-  try {
-    const pending = Promise.resolve().then(() => {
-      if (signal.aborted) throw unconfirmed();
-      return operation();
-    });
-    const result = await Promise.race([pending, aborted]);
-    if (signal.aborted) throw unconfirmed();
-    return result;
-  } finally {
-    signal.removeEventListener("abort", onAbort);
-  }
 }
 
 // ── Token resolution ───────────────────────────────────────────────────────────────────────────

@@ -18,7 +18,9 @@ function load(path: string, require: (name: string) => unknown, deno: unknown = 
 const env = { SUPABASE_URL: 'https://unit-test.invalid', SUPABASE_ANON_KEY: 'synthetic-anon', SUPABASE_SERVICE_ROLE_KEY: 'synthetic-internal-service' };
 const deno = { env: { get: (key: keyof typeof env) => env[key] } };
 let activeAdmin: Record<string, unknown>;
+const wait = load('supabase/functions/_shared/systems-check-wait.ts', () => { throw new Error('Wait must have no runtime dependencies'); });
 const core = load('supabase/functions/_shared/systems-check-runner.ts', name => {
+  if (name === './systems-check-wait.ts') return wait;
   if (name !== './prompt-forge.ts') throw new Error('Unexpected Core dependency'); return { forge: vi.fn() };
 });
 const http = load('supabase/functions/_shared/systems-check-http.ts', name => {
@@ -26,6 +28,7 @@ const http = load('supabase/functions/_shared/systems-check-http.ts', name => {
   return { createClient: () => activeAdmin };
 }, deno);
 const work = load('supabase/functions/_shared/systems-check-manual-work.ts', name => {
+  if (name === './systems-check-wait.ts') return wait;
   if (name !== './systems-check-runner.ts') throw new Error('Unexpected adapter dependency'); return core;
 });
 const consume = vi.fn();

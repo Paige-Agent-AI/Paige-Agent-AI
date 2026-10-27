@@ -1,0 +1,72 @@
+{
+  "base": "195643b35",
+  "scope": "Actual original Operations components, neutral existing mount/data ports only; not production shell/authentication.",
+  "files": [
+    {
+      "name": "neutral-clean-open.jpg",
+      "sha256": "1aa690d64c5dbc6f66a45ebd6663a08391ebd4616541ea879b1e45b682f2e5ad",
+      "bytes": 54073,
+      "width": 1514,
+      "height": 821,
+      "format": "jpeg"
+    },
+    {
+      "name": "neutral-dark-390-open.jpg",
+      "sha256": "6d0f69a6dadfb8c0e03f76e55010af327c8fb5ebe459f70dbbf1000375c089aa",
+      "bytes": 29233,
+      "width": 390,
+      "height": 843,
+      "format": "jpeg"
+    },
+    {
+      "name": "neutral-dirty-held.jpg",
+      "sha256": "e5ca05b8c59f916072471369256742c8dcb42746ab96f6d98e12a698d3104f4c",
+      "bytes": 53194,
+      "width": 1514,
+      "height": 821,
+      "format": "jpeg"
+    },
+    {
+      "name": "neutral-interaction-proof.json",
+      "sha256": "fa6a3d4442a493ead704727f4bc99d41f3e8a2534c9db55b77fb79159d1ce8ed",
+      "bytes": 1257
+    },
+    {
+      "name": "neutral-light-320-open.jpg",
+      "sha256": "2e52c99d7d614ef904907ba2a038e74c1430db8f83f065e5bb8889bca6db3d00",
+      "bytes": 23399,
+      "width": 320,
+      "height": 844,
+      "format": "jpeg"
+    }
+  ],
+  "sources": [
+    {
+      "name": "src/solo/operations/OperationsWorkspace.tsx",
+      "sha256": "1fbd2f66564ddfa55c9943f232102286b6255409c58474b88658c68ff1275fc5"
+    },
+    {
+      "name": "src/solo/operations/OperationsCrmWorkEditor.tsx",
+      "sha256": "9b3d84accd9dba81e03760f4d39dff1d5ec989a265be18d807bf764b384d320d"
+    },
+    {
+      "name": "src/solo/operations/OperationsWorkspace.test.tsx",
+      "sha256": "28078a7982e252a7f19cfb25e8fcd6cef9797f129f67a833a4dd9e0394b4ccc4"
+    },
+    {
+      "name": "scripts/live-drive/harness/operations-release-mount/main.tsx",
+      "sha256": "5576ac3ef976cc4aa4da1ef9c48f4b9a24128455a05661369cfac15404aa9162"
+    },
+    {
+      "name": "scripts/live-drive/harness/operations-release-mount/stubs.ts",
+      "sha256": "3f4329a958e5176c4fb75e2429f7a2fa4507da3fe98058b74b67322e57e2ced2"
+    }
+  ],
+  "invalid": [
+    "Initial sandbox listener socket refusal and navigation timeouts are infrastructure observations, not product failures.",
+    "The automated datetime clear visibly emptied the field but did not clear original editor state; UNVERIFIED, no save or command.",
+    "Failed initial temporary IAB error tab could not be rebound for close under URL policy; left unmarked for automatic cleanup.",
+    "Initial filenames/metadata incorrectly assumed PNG; actual JPEG signatures checked and filenames/metadata corrected, with bytes unchanged."
+  ],
+  "reproduce": "node node_modules/vite/bin/vite.js --config scripts/live-drive/harness/operations-clean-inspection/vite.config.ts; open /solo/42/operations/work?state=single. Private captured wrapper differs only in relative import/cache/root paths and comments; original product modules and four JPEG bytes retained."
+}

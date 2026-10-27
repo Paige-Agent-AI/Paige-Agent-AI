@@ -1,0 +1,1004 @@
+{
+  "evidenceClass": "SYNTHETIC original-source renderer, no backend/customer/model/action proof",
+  "renderedBase": "cab5984932cf597731a2a34a5a312cda55b1b83e",
+  "currentMainReceived": "53d3f16d0717ec7e901df3830038334a270ef1a3",
+  "sameOriginalConsumerAndHarnessBlobsAcrossReceive": true,
+  "changedSourcesSHA256": {
+    "src/hooks/useSystemsCheck.ts": "9fbde9b77f8fdb768c435cc192cb58fb63ae1bc8b04733269c96d16589ad87ce",
+    "src/hooks/useSystemsCheck.run.test.tsx": "6dd5e22de558389ed1599abe136127395986bec4ac1bc6155122ee4fb16ed305",
+    "src/solo/SoloSystemsCheckWorkspace.tsx": "88acfbe7ab4df543a74da5cd54b126287ddff65cc96240209b2057e7fb3ae566",
+    "src/solo/SystemsCheckRunReview.tsx": "3cc005722979f6c2f6f55fa6db998ca964d5ebafaaf193f15b417d204f2656f1",
+    "src/solo/SystemsCheckRunReview.test.tsx": "857b1d53b09e3f02579937cc8767c8a4b9cd9fe8b567c4070f9e2bd37b9cfce2",
+    "src/solo/systems-check-run-review.css": "c16eea08095e44972ee4aafb1123a511bdb57f28b23e7473ce6fc908aaec9fef",
+    "scripts/live-drive/harness/executive-mount/main.tsx": "ab955e4ab29c911594d4cddd90c8cbd53a762e80716bd51acbd62127e619e228",
+    "scripts/live-drive/harness/executive-mount/systems-check-fixtures.ts": "fa513725578b2347578f1ebccfb06283ba1a161088f63bf7afa9544d3dd84bc1"
+  },
+  "frames": [
+    {
+      "name": "final-1536-paige-open",
+      "counts": [
+        "10",
+        "8",
+        "2"
+      ],
+      "dialog": {
+        "height": 610.9500122070312,
+        "overflow": false,
+        "scrollTop": 0,
+        "width": 720,
+        "x": 408,
+        "y": 79.7249984741211
+      },
+      "draft": "Retain this unsent question while inspecting the original check.",
+      "focus": "Recorded check",
+      "font": [
+        "Product font: Schibsted Grotesk · 100 900 · loaded"
+      ],
+      "heading": "Recorded check",
+      "overflow": false,
+      "pageScroll": 0,
+      "railWidth": 522.2374877929688,
+      "status": "SYSTEMS CHECK\n\nRecorded check\n\nThe original recorded result. Reading it starts no new check.\n\nCompleted\nOct 22, 2026, 5:00 AM EDT\nRecorded result\nOriginal check record loaded.\nChecks recorded\n10\nPassed\n8\nFailed\n2\n\nThese totals describe this recorded check. Current readiness is shown in the workspace.\n\nOriginal source\n\nSystems Check record · Your workspace\n\nStarted Oct 22, 2026, 5:00 AM EDT\n\nReturn to Systems Check\nRead only\nClose",
+      "url": "/solo/1234567/command-center/systems-check?theme=light&keep=review&run=c1000000-0000-0000-0000-000000000001#evidence",
+      "viewport": [
+        1536,
+        770
+      ],
+      "file": "final-1536-paige-open.jpg",
+      "sha256": "c481ef4e2429c3463c1e2aaae9003c5d8cdf18ba983d176e39eed32b8de7562d",
+      "bytes": 58675
+    },
+    {
+      "name": "final-1366-paige-open",
+      "counts": [
+        "10",
+        "8",
+        "2"
+      ],
+      "dialog": {
+        "height": 610.9500122070312,
+        "overflow": false,
+        "scrollTop": 0,
+        "width": 720,
+        "x": 323.20001220703125,
+        "y": 78.5250015258789
+      },
+      "draft": "Retain this unsent question while inspecting the original check.",
+      "focus": "Recorded check",
+      "font": [
+        "Product font: Schibsted Grotesk · 100 900 · loaded"
+      ],
+      "heading": "Recorded check",
+      "overflow": false,
+      "pageScroll": 0,
+      "railWidth": 464.5750122070313,
+      "status": "SYSTEMS CHECK\n\nRecorded check\n\nThe original recorded result. Reading it starts no new check.\n\nCompleted\nOct 22, 2026, 5:00 AM EDT\nRecorded result\nOriginal check record loaded.\nChecks recorded\n10\nPassed\n8\nFailed\n2\n\nThese totals describe this recorded check. Current readiness is shown in the workspace.\n\nOriginal source\n\nSystems Check record · Your workspace\n\nStarted Oct 22, 2026, 5:00 AM EDT\n\nReturn to Systems Check\nRead only\nClose",
+      "url": "/solo/1234567/command-center/systems-check?theme=light&keep=review&run=c1000000-0000-0000-0000-000000000001#evidence",
+      "viewport": [
+        1366,
+        768
+      ],
+      "file": "final-1366-paige-open.jpg",
+      "sha256": "4702342c43a8b8cd68eb0c7fbb36c309be12ebac8dfbb34970f809ef98272d1f",
+      "bytes": 52464
+    },
+    {
+      "name": "final-1024-paige-open",
+      "counts": [
+        "10",
+        "8",
+        "2"
+      ],
+      "dialog": {
+        "height": 610.9500122070312,
+        "overflow": false,
+        "scrollTop": 0,
+        "width": 720,
+        "x": 152,
+        "y": 78.5250015258789
+      },
+      "draft": "Retain this unsent question while inspecting the original check.",
+      "focus": "Recorded check",
+      "font": [
+        "Product font: Schibsted Grotesk · 100 900 · loaded"
+      ],
+      "heading": "Recorded check",
+      "overflow": false,
+      "pageScroll": 0,
+      "railWidth": 410,
+      "status": "SYSTEMS CHECK\n\nRecorded check\n\nThe original recorded result. Reading it starts no new check.\n\nCompleted\nOct 22, 2026, 5:00 AM EDT\nRecorded result\nOriginal check record loaded.\nChecks recorded\n10\nPassed\n8\nFailed\n2\n\nThese totals describe this recorded check. Current readiness is shown in the workspace.\n\nOriginal source\n\nSystems Check record · Your workspace\n\nStarted Oct 22, 2026, 5:00 AM EDT\n\nReturn to Systems Check\nRead only\nClose",
+      "url": "/solo/1234567/command-center/systems-check?theme=light&keep=review&run=c1000000-0000-0000-0000-000000000001#evidence",
+      "viewport": [
+        1024,
+        768
+      ],
+      "file": "final-1024-paige-open.jpg",
+      "sha256": "56e3af444c5538dede83a79707ab4c04ba16dc495d96fae783f33ab5d68bf397",
+      "bytes": 30744
+    },
+    {
+      "name": "final-900-paige-open",
+      "counts": [
+        "10",
+        "8",
+        "2"
+      ],
+      "dialog": {
+        "height": 610.9500122070312,
+        "overflow": false,
+        "scrollTop": 0,
+        "width": 720,
+        "x": 90,
+        "y": 194.52500915527344
+      },
+      "draft": "Retain this unsent question while inspecting the original check.",
+      "focus": "Recorded check",
+      "font": [
+        "Product font: Schibsted Grotesk · 100 900 · loaded"
+      ],
+      "heading": "Recorded check",
+      "overflow": false,
+      "pageScroll": 0,
+      "railWidth": 410,
+      "status": "SYSTEMS CHECK\n\nRecorded check\n\nThe original recorded result. Reading it starts no new check.\n\nCompleted\nOct 22, 2026, 5:00 AM EDT\nRecorded result\nOriginal check record loaded.\nChecks recorded\n10\nPassed\n8\nFailed\n2\n\nThese totals describe this recorded check. Current readiness is shown in the workspace.\n\nOriginal source\n\nSystems Check record · Your workspace\n\nStarted Oct 22, 2026, 5:00 AM EDT\n\nReturn to Systems Check\nRead only\nClose",
+      "url": "/solo/1234567/command-center/systems-check?theme=light&keep=review&run=c1000000-0000-0000-0000-000000000001#evidence",
+      "viewport": [
+        900,
+        1000
+      ],
+      "file": "final-900-paige-open.jpg",
+      "sha256": "07ea182219adb6350c697749197c2779c50e46ef65e5587a55c633e19427b3db",
+      "bytes": 40894
+    },
+    {
+      "name": "final-1536-paige-closed",
+      "counts": [
+        "10",
+        "8",
+        "2"
+      ],
+      "dialog": {
+        "height": 610.9500122070312,
+        "overflow": false,
+        "scrollTop": 0,
+        "width": 720,
+        "x": 408,
+        "y": 79.7249984741211
+      },
+      "draft": "Retain this unsent question while inspecting the original check.",
+      "focus": "Recorded check",
+      "font": [
+        "Product font: Schibsted Grotesk · 100 900 · loaded"
+      ],
+      "heading": "Recorded check",
+      "overflow": false,
+      "pageScroll": 0,
+      "railWidth": 0,
+      "status": "SYSTEMS CHECK\n\nRecorded check\n\nThe original recorded result. Reading it starts no new check.\n\nCompleted\nOct 22, 2026, 5:00 AM EDT\nRecorded result\nOriginal check record loaded.\nChecks recorded\n10\nPassed\n8\nFailed\n2\n\nThese totals describe this recorded check. Current readiness is shown in the workspace.\n\nOriginal source\n\nSystems Check record · Your workspace\n\nStarted Oct 22, 2026, 5:00 AM EDT\n\nReturn to Systems Check\nRead only\nClose",
+      "url": "/solo/1234567/command-center/systems-check?theme=light&keep=review&run=c1000000-0000-0000-0000-000000000001#evidence",
+      "viewport": [
+        1536,
+        770
+      ],
+      "file": "final-1536-paige-closed.jpg",
+      "sha256": "ffb89a2877117aa479d759a604ad8f6833e41f8ac64f6433361e9ec5af1a32a1",
+      "bytes": 57079
+    },
+    {
+      "name": "final-1366-paige-closed",
+      "counts": [
+        "10",
+        "8",
+        "2"
+      ],
+      "dialog": {
+        "height": 610.9500122070312,
+        "overflow": false,
+        "scrollTop": 0,
+        "width": 720,
+        "x": 323.20001220703125,
+        "y": 78.5250015258789
+      },
+      "draft": "Retain this unsent question while inspecting the original check.",
+      "focus": "Recorded check",
+      "font": [
+        "Product font: Schibsted Grotesk · 100 900 · loaded"
+      ],
+      "heading": "Recorded check",
+      "overflow": false,
+      "pageScroll": 0,
+      "railWidth": 0,
+      "status": "SYSTEMS CHECK\n\nRecorded check\n\nThe original recorded result. Reading it starts no new check.\n\nCompleted\nOct 22, 2026, 5:00 AM EDT\nRecorded result\nOriginal check record loaded.\nChecks recorded\n10\nPassed\n8\nFailed\n2\n\nThese totals describe this recorded check. Current readiness is shown in the workspace.\n\nOriginal source\n\nSystems Check record · Your workspace\n\nStarted Oct 22, 2026, 5:00 AM EDT\n\nReturn to Systems Check\nRead only\nClose",
+      "url": "/solo/1234567/command-center/systems-check?theme=light&keep=review&run=c1000000-0000-0000-0000-000000000001#evidence",
+      "viewport": [
+        1366,
+        768
+      ],
+      "file": "final-1366-paige-closed.jpg",
+      "sha256": "7643e8affa32c99ca86dda2466689ec5d4cf10a8d19e7308eee85b4d6c975a89",
+      "bytes": 54403
+    },
+    {
+      "name": "final-1024-paige-closed",
+      "counts": [
+        "10",
+        "8",
+        "2"
+      ],
+      "dialog": {
+        "height": 610.9500122070312,
+        "overflow": false,
+        "scrollTop": 0,
+        "width": 720,
+        "x": 152,
+        "y": 78.5250015258789
+      },
+      "draft": "Retain this unsent question while inspecting the original check.",
+      "focus": "Recorded check",
+      "font": [
+        "Product font: Schibsted Grotesk · 100 900 · loaded"
+      ],
+      "heading": "Recorded check",
+      "overflow": false,
+      "pageScroll": 0,
+      "railWidth": 0,
+      "status": "SYSTEMS CHECK\n\nRecorded check\n\nThe original recorded result. Reading it starts no new check.\n\nCompleted\nOct 22, 2026, 5:00 AM EDT\nRecorded result\nOriginal check record loaded.\nChecks recorded\n10\nPassed\n8\nFailed\n2\n\nThese totals describe this recorded check. Current readiness is shown in the workspace.\n\nOriginal source\n\nSystems Check record · Your workspace\n\nStarted Oct 22, 2026, 5:00 AM EDT\n\nReturn to Systems Check\nRead only\nClose",
+      "url": "/solo/1234567/command-center/systems-check?theme=light&keep=review&run=c1000000-0000-0000-0000-000000000001#evidence",
+      "viewport": [
+        1024,
+        768
+      ],
+      "file": "final-1024-paige-closed.jpg",
+      "sha256": "2258d2f7f822d74eec1ff8aef9eb47681d3144823390365fb564bd15c4c498cc",
+      "bytes": 43389
+    },
+    {
+      "name": "final-900-paige-closed",
+      "counts": [
+        "10",
+        "8",
+        "2"
+      ],
+      "dialog": {
+        "height": 610.9500122070312,
+        "overflow": false,
+        "scrollTop": 0,
+        "width": 720,
+        "x": 90,
+        "y": 194.52500915527344
+      },
+      "draft": "Retain this unsent question while inspecting the original check.",
+      "focus": "Recorded check",
+      "font": [
+        "Product font: Schibsted Grotesk · 100 900 · loaded"
+      ],
+      "heading": "Recorded check",
+      "overflow": false,
+      "pageScroll": 0,
+      "railWidth": 0,
+      "status": "SYSTEMS CHECK\n\nRecorded check\n\nThe original recorded result. Reading it starts no new check.\n\nCompleted\nOct 22, 2026, 5:00 AM EDT\nRecorded result\nOriginal check record loaded.\nChecks recorded\n10\nPassed\n8\nFailed\n2\n\nThese totals describe this recorded check. Current readiness is shown in the workspace.\n\nOriginal source\n\nSystems Check record · Your workspace\n\nStarted Oct 22, 2026, 5:00 AM EDT\n\nReturn to Systems Check\nRead only\nClose",
+      "url": "/solo/1234567/command-center/systems-check?theme=light&keep=review&run=c1000000-0000-0000-0000-000000000001#evidence",
+      "viewport": [
+        900,
+        1000
+      ],
+      "file": "final-900-paige-closed.jpg",
+      "sha256": "23d82ea3c3ac82f94e99282525761a24c589982f9a243f89e4e0e9e09f0dc923",
+      "bytes": 46093
+    },
+    {
+      "name": "final-320-light-complete",
+      "counts": [
+        "10",
+        "8",
+        "2"
+      ],
+      "dialog": {
+        "height": 646.2999877929688,
+        "overflow": false,
+        "scrollTop": 0,
+        "width": 300,
+        "x": 10,
+        "y": 46.85000228881836
+      },
+      "draft": "",
+      "focus": "Recorded check",
+      "font": [
+        "Product font: Schibsted Grotesk · 100 900 · loaded"
+      ],
+      "heading": "Recorded check",
+      "overflow": false,
+      "pageScroll": 0,
+      "railWidth": 0,
+      "status": "SYSTEMS CHECK\n\nRecorded check\n\nThe original recorded result. Reading it starts no new check.\n\nCompleted\nOct 22, 2026, 5:00 AM EDT\nRecorded result\nOriginal check record loaded.\nChecks recorded\n10\nPassed\n8\nFailed\n2\n\nThese totals describe this recorded check. Current readiness is shown in the workspace.\n\nOriginal source\n\nSystems Check record · Your workspace\n\nStarted Oct 22, 2026, 5:00 AM EDT\n\nReturn to Systems Check\nRead only\nClose",
+      "url": "/solo/1234567/command-center/systems-check?theme=light&run=c1000000-0000-0000-0000-000000000001",
+      "viewport": [
+        320,
+        740
+      ],
+      "file": "final-320-light-complete.jpg",
+      "sha256": "53e07750a8a111b242ea1021f0065b49c53e9f560b54a157461e9c6f7ae1bad2",
+      "bytes": 25749
+    },
+    {
+      "name": "final-320-light-zero",
+      "counts": [
+        "0",
+        "0",
+        "0"
+      ],
+      "dialog": {
+        "height": 646.2999877929688,
+        "overflow": false,
+        "scrollTop": 0,
+        "width": 300,
+        "x": 10,
+        "y": 46.85000228881836
+      },
+      "draft": "",
+      "focus": "Recorded check",
+      "font": [
+        "Product font: Schibsted Grotesk · 100 900 · loaded"
+      ],
+      "heading": "Recorded check",
+      "overflow": false,
+      "pageScroll": 0,
+      "railWidth": 0,
+      "status": "SYSTEMS CHECK\n\nRecorded check\n\nThe original recorded result. Reading it starts no new check.\n\nCompleted\nOct 22, 2026, 5:00 AM EDT\nRecorded result\nOriginal check record loaded.\nChecks recorded\n0\nPassed\n0\nFailed\n0\n\nZero recorded checks do not establish business readiness.\n\nOriginal source\n\nSystems Check record · Your workspace\n\nStarted Oct 22, 2026, 5:00 AM EDT\n\nReturn to Systems Check\nRead only\nClose",
+      "url": "/solo/1234567/command-center/systems-check?theme=light&run=c1000000-0000-0000-0000-000000000001&record=zero",
+      "viewport": [
+        320,
+        740
+      ],
+      "file": "final-320-light-zero.jpg",
+      "sha256": "fa13c8f0dcd5cd362bb787c47f542522320f465a40119f8cb96e4c26e1adf54e",
+      "bytes": 24582
+    },
+    {
+      "name": "final-320-light-unknown",
+      "counts": [
+        "—",
+        "—",
+        "—"
+      ],
+      "dialog": {
+        "height": 646.2999877929688,
+        "overflow": false,
+        "scrollTop": 0,
+        "width": 300,
+        "x": 10,
+        "y": 46.85000228881836
+      },
+      "draft": "",
+      "focus": "Recorded check",
+      "font": [
+        "Product font: Schibsted Grotesk · 100 900 · loaded"
+      ],
+      "heading": "Recorded check",
+      "overflow": false,
+      "pageScroll": 0,
+      "railWidth": 0,
+      "status": "SYSTEMS CHECK\n\nRecorded check\n\nThe original recorded result. Reading it starts no new check.\n\nCompleted\nOct 22, 2026, 5:00 AM EDT\nRecorded result\nOriginal check record loaded.\nChecks recorded\n—\nPassed\n—\nFailed\n—\n\nSome original counts are unavailable. They remain unknown.\n\nOriginal source\n\nSystems Check record · Your workspace\n\nStarted Oct 22, 2026, 5:00 AM EDT\n\nReturn to Systems Check\nRead only\nClose",
+      "url": "/solo/1234567/command-center/systems-check?theme=light&run=c1000000-0000-0000-0000-000000000001&record=unknown",
+      "viewport": [
+        320,
+        740
+      ],
+      "file": "final-320-light-unknown.jpg",
+      "sha256": "b648c727d3767896d72c7d9c12f534e4e5716065851d2fcf75be0af390ca838f",
+      "bytes": 24163
+    },
+    {
+      "name": "final-320-light-unfinished",
+      "counts": [],
+      "dialog": {
+        "height": 616.2999877929688,
+        "overflow": false,
+        "scrollTop": 0,
+        "width": 300,
+        "x": 10,
+        "y": 61.85000228881836
+      },
+      "draft": "",
+      "focus": "Started check",
+      "font": [
+        "Product font: Schibsted Grotesk · 100 900 · loaded"
+      ],
+      "heading": "Started check",
+      "overflow": false,
+      "pageScroll": 0,
+      "railWidth": 0,
+      "status": "SYSTEMS CHECK\n\nStarted check\n\nThe original recorded result. Reading it starts no new check.\n\nStarted\nOct 22, 2026, 5:00 AM EDT\nNo completed result\nNo completed result was recorded.\n\nCurrent progress is unconfirmed.\n\nOriginal source\n\nSystems Check record · Your workspace\n\nReturn to Systems Check\nRead only\nClose",
+      "url": "/solo/1234567/command-center/systems-check?theme=light&run=c1000000-0000-0000-0000-000000000001&record=unfinished",
+      "viewport": [
+        320,
+        740
+      ],
+      "file": "final-320-light-unfinished.jpg",
+      "sha256": "554625b36426149c11a6e1b1ea0764901821c8ac253abf166ce4946e41052bdf",
+      "bytes": 22981
+    },
+    {
+      "name": "final-320-light-loading",
+      "counts": [],
+      "dialog": {
+        "height": 392.7000122070313,
+        "overflow": false,
+        "scrollTop": 0,
+        "width": 300,
+        "x": 10,
+        "y": 173.65000915527344
+      },
+      "draft": "",
+      "focus": "Original check",
+      "font": [
+        "Product font: Schibsted Grotesk · 100 900 · loaded"
+      ],
+      "heading": "Original check",
+      "overflow": false,
+      "pageScroll": 0,
+      "railWidth": 0,
+      "status": "SYSTEMS CHECK\n\nOriginal check\n\nThe original recorded result. Reading it starts no new check.\n\nReading the recorded check…\n\nWaiting for the original source.\n\nReturn to Systems Check\nRead only\nClose",
+      "url": "/solo/1234567/command-center/systems-check?theme=light&run=c1000000-0000-0000-0000-000000000001&record=loading",
+      "viewport": [
+        320,
+        740
+      ],
+      "file": "final-320-light-loading.jpg",
+      "sha256": "61397b6f325b8ab192c65d35ce6ba53f2ec6946c1a5ac58b09dbb93072678cec",
+      "bytes": 20314
+    },
+    {
+      "name": "final-320-light-error",
+      "counts": [],
+      "dialog": {
+        "height": 403.5,
+        "overflow": false,
+        "scrollTop": 0,
+        "width": 300,
+        "x": 10,
+        "y": 168.25
+      },
+      "draft": "",
+      "focus": "Original check",
+      "font": [
+        "Product font: Schibsted Grotesk · 100 900 · loaded"
+      ],
+      "heading": "Original check",
+      "overflow": false,
+      "pageScroll": 0,
+      "railWidth": 0,
+      "status": "SYSTEMS CHECK\n\nOriginal check\n\nThe original recorded result. Reading it starts no new check.\n\nThe record could not be read.\n\nYour business view is still here. Try reading it again.\n\nRead again\nReturn to Systems Check\nRead only\nClose",
+      "url": "/solo/1234567/command-center/systems-check?theme=light&run=c1000000-0000-0000-0000-000000000001&record=error",
+      "viewport": [
+        320,
+        740
+      ],
+      "file": "final-320-light-error.jpg",
+      "sha256": "65c62806dd59de9da5c82a81ed8a0170500439ee9e15844654bea25c989d1936",
+      "bytes": 21044
+    },
+    {
+      "name": "final-320-light-unavailable",
+      "counts": [],
+      "dialog": {
+        "height": 408.7000122070313,
+        "overflow": false,
+        "scrollTop": 0,
+        "width": 300,
+        "x": 10,
+        "y": 165.65000915527344
+      },
+      "draft": "",
+      "focus": "Original check",
+      "font": [
+        "Product font: Schibsted Grotesk · 100 900 · loaded"
+      ],
+      "heading": "Original check",
+      "overflow": false,
+      "pageScroll": 0,
+      "railWidth": 0,
+      "status": "SYSTEMS CHECK\n\nOriginal check\n\nThe original recorded result. Reading it starts no new check.\n\nThis check is unavailable in this workspace.\n\nIts result and supporting information have not been returned.\n\nReturn to Systems Check\nRead only\nClose",
+      "url": "/solo/1234567/command-center/systems-check?theme=light&run=c1000000-0000-0000-0000-000000000001&record=unavailable",
+      "viewport": [
+        320,
+        740
+      ],
+      "file": "final-320-light-unavailable.jpg",
+      "sha256": "954d4c9371617e608b8bff14c5f309abd340429fca4750a26511283152457849",
+      "bytes": 22102
+    },
+    {
+      "name": "final-320-light-permission",
+      "counts": [],
+      "dialog": {
+        "height": 408.7000122070313,
+        "overflow": false,
+        "scrollTop": 0,
+        "width": 300,
+        "x": 10,
+        "y": 165.65000915527344
+      },
+      "draft": "",
+      "focus": "Original check",
+      "font": [
+        "Product font: Schibsted Grotesk · 100 900 · loaded"
+      ],
+      "heading": "Original check",
+      "overflow": false,
+      "pageScroll": 0,
+      "railWidth": 0,
+      "status": "SYSTEMS CHECK\n\nOriginal check\n\nThe original recorded result. Reading it starts no new check.\n\nThis check is unavailable in this workspace.\n\nIts result and supporting information have not been returned.\n\nReturn to Systems Check\nRead only\nClose",
+      "url": "/solo/1234567/command-center/systems-check?theme=light&run=c1000000-0000-0000-0000-000000000001&record=permission",
+      "viewport": [
+        320,
+        740
+      ],
+      "file": "final-320-light-permission.jpg",
+      "sha256": "954d4c9371617e608b8bff14c5f309abd340429fca4750a26511283152457849",
+      "bytes": 22102
+    },
+    {
+      "name": "final-390-dark-complete",
+      "counts": [
+        "10",
+        "8",
+        "2"
+      ],
+      "dialog": {
+        "height": 628.2999877929688,
+        "overflow": false,
+        "scrollTop": 0,
+        "width": 370.3999938964844,
+        "x": 10,
+        "y": 107.8499984741211
+      },
+      "draft": "",
+      "focus": "Recorded check",
+      "font": [
+        "Product font: Schibsted Grotesk · 100 900 · loaded"
+      ],
+      "heading": "Recorded check",
+      "overflow": false,
+      "pageScroll": 0,
+      "railWidth": 0,
+      "status": "SYSTEMS CHECK\n\nRecorded check\n\nThe original recorded result. Reading it starts no new check.\n\nCompleted\nOct 22, 2026, 5:00 AM EDT\nRecorded result\nOriginal check record loaded.\nChecks recorded\n10\nPassed\n8\nFailed\n2\n\nThese totals describe this recorded check. Current readiness is shown in the workspace.\n\nOriginal source\n\nSystems Check record · Your workspace\n\nStarted Oct 22, 2026, 5:00 AM EDT\n\nReturn to Systems Check\nRead only\nClose",
+      "url": "/solo/1234567/command-center/systems-check?theme=dark&run=c1000000-0000-0000-0000-000000000001",
+      "viewport": [
+        390,
+        844
+      ],
+      "file": "final-390-dark-complete.jpg",
+      "sha256": "f36a0899834739b40fef060ec2087c8d24c2b80e6a66b020f403d3bd13414cfc",
+      "bytes": 28817
+    },
+    {
+      "name": "final-390-dark-zero",
+      "counts": [
+        "0",
+        "0",
+        "0"
+      ],
+      "dialog": {
+        "height": 608.5,
+        "overflow": false,
+        "scrollTop": 0,
+        "width": 370.3999938964844,
+        "x": 10,
+        "y": 117.75
+      },
+      "draft": "",
+      "focus": "Recorded check",
+      "font": [
+        "Product font: Schibsted Grotesk · 100 900 · loaded"
+      ],
+      "heading": "Recorded check",
+      "overflow": false,
+      "pageScroll": 0,
+      "railWidth": 0,
+      "status": "SYSTEMS CHECK\n\nRecorded check\n\nThe original recorded result. Reading it starts no new check.\n\nCompleted\nOct 22, 2026, 5:00 AM EDT\nRecorded result\nOriginal check record loaded.\nChecks recorded\n0\nPassed\n0\nFailed\n0\n\nZero recorded checks do not establish business readiness.\n\nOriginal source\n\nSystems Check record · Your workspace\n\nStarted Oct 22, 2026, 5:00 AM EDT\n\nReturn to Systems Check\nRead only\nClose",
+      "url": "/solo/1234567/command-center/systems-check?theme=dark&run=c1000000-0000-0000-0000-000000000001&record=zero",
+      "viewport": [
+        390,
+        844
+      ],
+      "file": "final-390-dark-zero.jpg",
+      "sha256": "00e29fcc33ff94935389eba0c1d39d2800b7245843548be6e08c88da84de0825",
+      "bytes": 29082
+    },
+    {
+      "name": "final-390-dark-unknown",
+      "counts": [
+        "—",
+        "—",
+        "—"
+      ],
+      "dialog": {
+        "height": 628.2999877929688,
+        "overflow": false,
+        "scrollTop": 0,
+        "width": 370.3999938964844,
+        "x": 10,
+        "y": 107.8499984741211
+      },
+      "draft": "",
+      "focus": "Recorded check",
+      "font": [
+        "Product font: Schibsted Grotesk · 100 900 · loaded"
+      ],
+      "heading": "Recorded check",
+      "overflow": false,
+      "pageScroll": 0,
+      "railWidth": 0,
+      "status": "SYSTEMS CHECK\n\nRecorded check\n\nThe original recorded result. Reading it starts no new check.\n\nCompleted\nOct 22, 2026, 5:00 AM EDT\nRecorded result\nOriginal check record loaded.\nChecks recorded\n—\nPassed\n—\nFailed\n—\n\nSome original counts are unavailable. They remain unknown.\n\nOriginal source\n\nSystems Check record · Your workspace\n\nStarted Oct 22, 2026, 5:00 AM EDT\n\nReturn to Systems Check\nRead only\nClose",
+      "url": "/solo/1234567/command-center/systems-check?theme=dark&run=c1000000-0000-0000-0000-000000000001&record=unknown",
+      "viewport": [
+        390,
+        844
+      ],
+      "file": "final-390-dark-unknown.jpg",
+      "sha256": "567cf4233479445f3093fcb8d1fc4979b8b895a6af40f69448171cdbc8483bbf",
+      "bytes": 26961
+    },
+    {
+      "name": "final-390-dark-unfinished",
+      "counts": [],
+      "dialog": {
+        "height": 616.2999877929688,
+        "overflow": false,
+        "scrollTop": 0,
+        "width": 370.3999938964844,
+        "x": 10,
+        "y": 113.8499984741211
+      },
+      "draft": "",
+      "focus": "Started check",
+      "font": [
+        "Product font: Schibsted Grotesk · 100 900 · loaded"
+      ],
+      "heading": "Started check",
+      "overflow": false,
+      "pageScroll": 0,
+      "railWidth": 0,
+      "status": "SYSTEMS CHECK\n\nStarted check\n\nThe original recorded result. Reading it starts no new check.\n\nStarted\nOct 22, 2026, 5:00 AM EDT\nNo completed result\nNo completed result was recorded.\n\nCurrent progress is unconfirmed.\n\nOriginal source\n\nSystems Check record · Your workspace\n\nReturn to Systems Check\nRead only\nClose",
+      "url": "/solo/1234567/command-center/systems-check?theme=dark&run=c1000000-0000-0000-0000-000000000001&record=unfinished",
+      "viewport": [
+        390,
+        844
+      ],
+      "file": "final-390-dark-unfinished.jpg",
+      "sha256": "5f450a762eec28e8e41e161a3832922d4943bae6420317902c804b25ac81d332",
+      "bytes": 26913
+    },
+    {
+      "name": "final-390-dark-loading",
+      "counts": [],
+      "dialog": {
+        "height": 392.7000122070313,
+        "overflow": false,
+        "scrollTop": 0,
+        "width": 370.3999938964844,
+        "x": 10,
+        "y": 225.65000915527344
+      },
+      "draft": "",
+      "focus": "Original check",
+      "font": [
+        "Product font: Schibsted Grotesk · 100 900 · loaded"
+      ],
+      "heading": "Original check",
+      "overflow": false,
+      "pageScroll": 0,
+      "railWidth": 0,
+      "status": "SYSTEMS CHECK\n\nOriginal check\n\nThe original recorded result. Reading it starts no new check.\n\nReading the recorded check…\n\nWaiting for the original source.\n\nReturn to Systems Check\nRead only\nClose",
+      "url": "/solo/1234567/command-center/systems-check?theme=dark&run=c1000000-0000-0000-0000-000000000001&record=loading",
+      "viewport": [
+        390,
+        844
+      ],
+      "file": "final-390-dark-loading.jpg",
+      "sha256": "717f750c674fecddc503d862efbd8825ee28102cae6ef771e8d0e48e4abcbe53",
+      "bytes": 24009
+    },
+    {
+      "name": "final-390-dark-error",
+      "counts": [],
+      "dialog": {
+        "height": 392.7000122070313,
+        "overflow": false,
+        "scrollTop": 0,
+        "width": 370.3999938964844,
+        "x": 10,
+        "y": 225.65000915527344
+      },
+      "draft": "",
+      "focus": "Original check",
+      "font": [
+        "Product font: Schibsted Grotesk · 100 900 · loaded"
+      ],
+      "heading": "Original check",
+      "overflow": false,
+      "pageScroll": 0,
+      "railWidth": 0,
+      "status": "SYSTEMS CHECK\n\nOriginal check\n\nThe original recorded result. Reading it starts no new check.\n\nThe record could not be read.\n\nYour business view is still here. Try reading it again.\n\nRead again\nReturn to Systems Check\nRead only\nClose",
+      "url": "/solo/1234567/command-center/systems-check?theme=dark&run=c1000000-0000-0000-0000-000000000001&record=error",
+      "viewport": [
+        390,
+        844
+      ],
+      "file": "final-390-dark-error.jpg",
+      "sha256": "2002078970e4323f4f3c90d148de0c2b74539bbe0609d1f9ed1988aaed6fab9b",
+      "bytes": 25346
+    },
+    {
+      "name": "final-390-dark-unavailable",
+      "counts": [],
+      "dialog": {
+        "height": 408.7000122070313,
+        "overflow": false,
+        "scrollTop": 0,
+        "width": 370.3999938964844,
+        "x": 10,
+        "y": 217.65000915527344
+      },
+      "draft": "",
+      "focus": "Original check",
+      "font": [
+        "Product font: Schibsted Grotesk · 100 900 · loaded"
+      ],
+      "heading": "Original check",
+      "overflow": false,
+      "pageScroll": 0,
+      "railWidth": 0,
+      "status": "SYSTEMS CHECK\n\nOriginal check\n\nThe original recorded result. Reading it starts no new check.\n\nThis check is unavailable in this workspace.\n\nIts result and supporting information have not been returned.\n\nReturn to Systems Check\nRead only\nClose",
+      "url": "/solo/1234567/command-center/systems-check?theme=dark&run=c1000000-0000-0000-0000-000000000001&record=unavailable",
+      "viewport": [
+        390,
+        844
+      ],
+      "file": "final-390-dark-unavailable.jpg",
+      "sha256": "97e5fe02a4a15706294ce2f83bb6c001c592f02d170f68be4768d2c619e62df5",
+      "bytes": 25802
+    },
+    {
+      "name": "final-390-dark-permission",
+      "counts": [],
+      "dialog": {
+        "height": 408.7000122070313,
+        "overflow": false,
+        "scrollTop": 0,
+        "width": 370.3999938964844,
+        "x": 10,
+        "y": 217.65000915527344
+      },
+      "draft": "",
+      "focus": "Original check",
+      "font": [
+        "Product font: Schibsted Grotesk · 100 900 · loaded"
+      ],
+      "heading": "Original check",
+      "overflow": false,
+      "pageScroll": 0,
+      "railWidth": 0,
+      "status": "SYSTEMS CHECK\n\nOriginal check\n\nThe original recorded result. Reading it starts no new check.\n\nThis check is unavailable in this workspace.\n\nIts result and supporting information have not been returned.\n\nReturn to Systems Check\nRead only\nClose",
+      "url": "/solo/1234567/command-center/systems-check?theme=dark&run=c1000000-0000-0000-0000-000000000001&record=permission",
+      "viewport": [
+        390,
+        844
+      ],
+      "file": "final-390-dark-permission.jpg",
+      "sha256": "97e5fe02a4a15706294ce2f83bb6c001c592f02d170f68be4768d2c619e62df5",
+      "bytes": 25802
+    },
+    {
+      "name": "final-390-dark-reduced-motion",
+      "counts": [
+        "10",
+        "8",
+        "2"
+      ],
+      "dialog": {
+        "height": 628.2999877929688,
+        "overflow": false,
+        "scrollTop": 0,
+        "width": 370.3999938964844,
+        "x": 10,
+        "y": 107.8499984741211
+      },
+      "draft": "",
+      "focus": "Recorded check",
+      "font": [
+        "Product font: Schibsted Grotesk · 100 900 · loaded"
+      ],
+      "heading": "Recorded check",
+      "overflow": false,
+      "pageScroll": 0,
+      "railWidth": 0,
+      "status": "SYSTEMS CHECK\n\nRecorded check\n\nThe original recorded result. Reading it starts no new check.\n\nCompleted\nOct 22, 2026, 5:00 AM EDT\nRecorded result\nOriginal check record loaded.\nChecks recorded\n10\nPassed\n8\nFailed\n2\n\nThese totals describe this recorded check. Current readiness is shown in the workspace.\n\nOriginal source\n\nSystems Check record · Your workspace\n\nStarted Oct 22, 2026, 5:00 AM EDT\n\nReturn to Systems Check\nRead only\nClose",
+      "url": "/solo/1234567/command-center/systems-check?theme=dark&run=c1000000-0000-0000-0000-000000000001",
+      "viewport": [
+        390,
+        844
+      ],
+      "file": "final-390-dark-reduced-motion.jpg",
+      "sha256": "f36a0899834739b40fef060ec2087c8d24c2b80e6a66b020f403d3bd13414cfc",
+      "bytes": 28817
+    },
+    {
+      "name": "final-900-bookmark-reload",
+      "counts": [
+        "10",
+        "8",
+        "2"
+      ],
+      "dialog": {
+        "height": 610.9500122070312,
+        "overflow": false,
+        "scrollTop": 0,
+        "width": 720,
+        "x": 90,
+        "y": 194.52500915527344
+      },
+      "draft": "",
+      "focus": "Recorded check",
+      "font": [
+        "Product font: Schibsted Grotesk · 100 900 · loaded"
+      ],
+      "heading": "Recorded check",
+      "overflow": false,
+      "pageScroll": 0,
+      "railWidth": 0,
+      "status": "SYSTEMS CHECK\n\nRecorded check\n\nThe original recorded result. Reading it starts no new check.\n\nCompleted\nOct 22, 2026, 5:00 AM EDT\nRecorded result\nOriginal check record loaded.\nChecks recorded\n10\nPassed\n8\nFailed\n2\n\nThese totals describe this recorded check. Current readiness is shown in the workspace.\n\nOriginal source\n\nSystems Check record · Your workspace\n\nStarted Oct 22, 2026, 5:00 AM EDT\n\nReturn to Systems Check\nRead only\nClose",
+      "url": "/solo/1234567/command-center/systems-check?theme=light&keep=review&run=c1000000-0000-0000-0000-000000000001#evidence",
+      "viewport": [
+        900,
+        1000
+      ],
+      "file": "final-900-bookmark-reload.jpg",
+      "sha256": "797c6353c8987ae43c09d046a04d4755fd23addc1dc0c8b7d9569c1dcd44448c",
+      "bytes": 46095
+    },
+    {
+      "name": "final-900-other-workspace",
+      "counts": [],
+      "dialog": {
+        "height": 400,
+        "overflow": false,
+        "scrollTop": 0,
+        "width": 720,
+        "x": 90,
+        "y": 300
+      },
+      "draft": "",
+      "focus": "Original check",
+      "font": [
+        "Product font: Schibsted Grotesk · 100 900 · loaded"
+      ],
+      "heading": "Original check",
+      "overflow": false,
+      "pageScroll": 0,
+      "railWidth": 0,
+      "status": "SYSTEMS CHECK\n\nOriginal check\n\nThe original recorded result. Reading it starts no new check.\n\nThis check is unavailable in this workspace.\n\nIts result and supporting information have not been returned.\n\nReturn to Systems Check\nRead only\nClose",
+      "url": "/solo/1234567/command-center/systems-check?theme=light&workspace=b&run=c1000000-0000-0000-0000-000000000001",
+      "viewport": [
+        900,
+        1000
+      ],
+      "file": "final-900-other-workspace.jpg",
+      "sha256": "e3139712f79f3963e1eae65ccb100f30f68b0c266a132d29c597877e6d8ae253",
+      "bytes": 44000
+    },
+    {
+      "name": "final-900-invalid-reference",
+      "counts": [],
+      "dialog": {
+        "height": 400,
+        "overflow": false,
+        "scrollTop": 0,
+        "width": 720,
+        "x": 90,
+        "y": 300
+      },
+      "draft": "",
+      "focus": "Original check",
+      "font": [
+        "Product font: Schibsted Grotesk · 100 900 · loaded"
+      ],
+      "heading": "Original check",
+      "overflow": false,
+      "pageScroll": 0,
+      "railWidth": 0,
+      "status": "SYSTEMS CHECK\n\nOriginal check\n\nThe original recorded result. Reading it starts no new check.\n\nThis check is unavailable in this workspace.\n\nIts result and supporting information have not been returned.\n\nReturn to Systems Check\nRead only\nClose",
+      "url": "/solo/1234567/command-center/systems-check?theme=light&run=invalid",
+      "viewport": [
+        900,
+        1000
+      ],
+      "file": "final-900-invalid-reference.jpg",
+      "sha256": "46776f5a4da483a86a7d72e54acfaac793d2ece01e52c693f0df5277b4d66afd",
+      "bytes": 44072
+    }
+  ],
+  "interactionProof": {
+    "chatReturn": {
+      "dialog": false,
+      "draft": "Retain this unsent question while inspecting the original check.",
+      "focus": "Synthetic message draft",
+      "scroll": 0,
+      "url": "?theme=light&keep=review#evidence"
+    },
+    "nativeScrollReturn": {
+      "dialog": false,
+      "focus": "View recorded check",
+      "scroll": 750.4000244140625,
+      "url": "?theme=light&keep=review#evidence"
+    },
+    "reducedMotion": {
+      "animation": "none",
+      "reduced": true,
+      "transition": "0s"
+    },
+    "keyboard": [
+      {
+        "focus": "Recorded check",
+        "step": "heading backward"
+      },
+      {
+        "focus": "Return to Systems Check",
+        "step": "last wraps forward"
+      },
+      {
+        "focus": "Close",
+        "step": "first wraps backward"
+      },
+      {
+        "counts": 0,
+        "step": "error retry preserves source",
+        "text": "SYSTEMS CHECK\n\nOriginal check\n\nThe original recorded result. Reading it starts no new check.\n\nThe record could not be read.\n\nYour business view is still here. Try reading it again.\n\nRead again\nReturn to Systems Check\nRead only\nClose",
+        "url": "?theme=dark&record=error&run=c1000000-0000-0000-0000-000000000001"
+      }
+    ],
+    "locatorRefocusProbe": {
+      "before": {
+        "focus": "View recorded check",
+        "scroll": 750.4000244140625
+      },
+      "during": {
+        "dialog": true,
+        "scroll": 0
+      },
+      "after": {
+        "focus": "View recorded check",
+        "scroll": 0,
+        "url": "?theme=light&keep=review#evidence"
+      },
+      "classification": "INVALID as product scroll evidence: locator.press refocused its offscreen target; supported untargeted native Return/Escape preserved750.4000244140625px"
+    }
+  },
+  "remaining": [
+    "authenticated SOLO/source RLS/cohort proof",
+    "native OS zoom and assistive technology",
+    "eligible Live/model completion",
+    "final founder acceptance"
+  ],
+  "cleanup": "temporary per-tab media override cleared through CDP and owned tab closed; current-chat viewport reset; own renderer stopped; no customer/browser lease bound",
+  "postRenderCorrection": {
+    "reviewedRenderedHead": "332244c3677af18e2d1ac2793b42acde948af296",
+    "finding": "5670696800: deferred focus after complete workspace unmount",
+    "change": "retire the original workspace focus callback on unmount; no new focus engine",
+    "sourceHashes": {
+      "src/solo/SoloSystemsCheckWorkspace.tsx": {
+        "renderedSHA256": "88acfbe7ab4df543a74da5cd54b126287ddff65cc96240209b2057e7fb3ae566",
+        "correctedSHA256": "b4494c40bf14fec77c82b5da3ad011696c0374e51d0fe44fa5a829d9f860bf61"
+      },
+      "src/solo/SystemsCheckRunReview.test.tsx": {
+        "renderedSHA256": "857b1d53b09e3f02579937cc8767c8a4b9cd9fe8b567c4070f9e2bd37b9cfce2",
+        "correctedSHA256": "8324ed374dea822b04bf74a16f60ff97551053138aac7fb7707f848c805f1aa4"
+      }
+    },
+    "allReturnedJSXAndCSSAndOtherSixInputsUnchanged": true,
+    "same28RawImagesRetained": true,
+    "causal": "1 FAIL/17 selected skips before guard;180 PASS/5 disjoint suites/zero final skips after guard",
+    "proofBoundary": "functional unmount correction proven by original component negative control; earlier28 rendered frames remain supporting visual evidence, not a newly rendered final-head claim"
+  }
+}

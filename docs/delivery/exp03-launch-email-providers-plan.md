@@ -2,6 +2,8 @@
 
 Date: 2026-10-13 · Journey Lead: Experience 03 · Owner decision: Gmail and iCloud Mail are public-launch targets; businesses keep the address they already use. Policy preserved: PAIGE-managed tenant email = SendGrid · customer Gmail = Gmail OAuth · customer iCloud Mail = provider-supported IMAP/SMTP · Platform Operator system mail = Resend.
 
+> **Superseded in part (2026-10-27).** "Platform Operator system mail = Resend" was reversed by the owner on 2026-10-14 (#2152) and again on 2026-10-26 when the Resend account was emptied. Every PAIGE email now sends through SendGrid (#2958, #2966); replies to managed addresses return through SendGrid Inbound Parse (#2976). The Gmail and iCloud sections below stand. Current state: journey §14.7.
+
 **Status: GROUNDED PLAN, NOT BUILT.** Read-only grounding (four investigators plus an adversarial checker, production SELECT only, no provider calls, no secrets read). Evidence classes: code reading, production read, official provider documentation. Nothing here is authenticated runtime proof.
 
 Full investigator reports are not committed. This file is the reviewed synthesis. Rows marked UNVERIFIED stay unverified until the named proof runs.

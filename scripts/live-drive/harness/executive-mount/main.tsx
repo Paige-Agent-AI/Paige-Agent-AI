@@ -50,5 +50,15 @@ function App() {
     <nav aria-label="Development-only scenario controls" style={{ position: "fixed", bottom: 0, insetInline: 0, height: 32, overflow: "auto", display: "flex", alignItems: "center", gap: 12, padding: "0 12px", fontSize: 11, background: "var(--pg-raised)", color: "var(--pg-ink)", whiteSpace: "nowrap" }}><strong>SYNTHETIC WALKTHROUGH · NO BACKEND</strong>{import.meta.env.E2_HARNESS_SLICE === "desk" && <span>Alt+R: hold/release synthetic reread</span>}{["ready", "loading", "error", "unavailable", "empty", "member"].map((state) => <Link key={state} to={"/solo/1234567/command-center/executive?state=" + state + "&theme=" + theme}>{state}</Link>)}<Link to="/solo/1234567/command-center/executive?workspace=b">workspace B</Link></nav>
   </>;
 }
+// Renderer-side diagnostic: FontFaceSet iteration belongs to the real page,
+// rather than the read-only inspection bridge. Synthetic evidence only.
+function ProductFontProof() {
+  const [status,setStatus]=useState("Product font: waiting");
+  useEffect(()=>{let current=true;void document.fonts.ready.then(()=>{
+    const face=Array.from(document.fonts).find(item=>item.family.replaceAll('"',"")==="Schibsted Grotesk"&&item.style==="normal"&&item.status==="loaded");
+    if(current)setStatus(face?`Product font: Schibsted Grotesk · ${face.weight} · ${face.status}`:"Product font: unverified");
+  });return()=>{current=false;};},[]);
+  return <output style={{position:"fixed",bottom:32,right:4,zIndex:60,fontSize:10,color:"var(--pg-muted)"}}>{status}</output>;
+}
 const theme = new URLSearchParams(location.search).get("theme") === "light" ? "light" : "dark";
-createRoot(document.getElementById("root")!).render(<BrowserRouter><ThemeProvider attribute="class" defaultTheme={theme} enableSystem={false} storageKey="paige.e2.walkthrough.theme"><HarnessPresence><App /></HarnessPresence></ThemeProvider></BrowserRouter>);
+createRoot(document.getElementById("root")!).render(<BrowserRouter><ThemeProvider attribute="class" defaultTheme={theme} enableSystem={false} storageKey="paige.e2.walkthrough.theme"><HarnessPresence><App /><ProductFontProof /></HarnessPresence></ThemeProvider></BrowserRouter>);

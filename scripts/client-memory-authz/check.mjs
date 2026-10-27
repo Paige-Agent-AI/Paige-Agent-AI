@@ -10297,7 +10297,15 @@ console.log("\nlegacy session summaries use attributable Fabric and fresh origin
   const hard = fixture();
   const hardResult = await drive({ summaryFixture: hard, stream: true, extraBody: body(),
     serviceTablesExtra: { paige_llm_trace: () => [{ cost_estimate_usd: 1_000 }] } });
-  assert("LS7 operational reasoning hard budget stops all providers and writes", hard.calls.length === 0 && writes(hardResult).length === 0);
+  assert("LS7 usage above the former allowance preserves all three original OpenAI summary jobs and five acknowledged proposed writes",
+    hard.calls.length === 3 && hard.calls.every(c => c.provider === "openai") && writes(hardResult).length === 5
+    && hardResult.rec.rpc.filter(c => c.name === "record_paige_memory").every(c => c.args.p_tenant_id === CALLER_TENANT
+      && c.args.p_user_id === USER && c.args.p_confirmation_state === "proposed")
+    && JSON.parse(hardResult.bodyText).memory_write_status === "acknowledged");
+  const hardTraces = hardResult.rec.inserts.filter(i => i.table === "paige_llm_trace" && i.row?.job_kind === "session-summary");
+  assert("LS7b above-marker summaries retain three attributed usage rows without a fictional refusal",
+    hardTraces.length === 3 && hardTraces.every(i => i.row.tenant_id === CALLER_TENANT && i.row.provider === "openai"
+      && i.row.doctrine_gate_hits?.budget?.level === "hard" && i.row.error_class !== "budget_exceeded"));
   for (const mode of ["missing", "actor", "tenant", "client", "version", "unattributed", "unattributed-owner", "malformed-canonical"]) {
     const f = fixture(); const request = body();
     if (mode === "missing") delete request.sessionMemoryScope;

@@ -328,7 +328,12 @@ export function buildPortableExport(
   }).join("\n");
 
   const description = src.seo?.description ? `  <meta name="description" content="${esc(src.seo.description)}">\n` : "";
-  const ogMeta = og ? `  <meta property="og:image" content="${esc(og)}">\n` : "";
+  // The static export unfurls exactly like the live page: og:title mirrors the <title>,
+  // og:description mirrors the description, og:image only when an approved absolute one exists.
+  const ogDesc = src.seo?.description ? `  <meta property="og:description" content="${esc(src.seo.description)}">\n` : "";
+  const ogMeta = og
+    ? `  <meta property="og:title" content="${esc(src.pageTitle)}">\n${ogDesc}  <meta property="og:image" content="${esc(og)}">\n  <meta name="twitter:card" content="summary_large_image">\n`
+    : (src.seo?.description ? `  <meta property="og:title" content="${esc(src.pageTitle)}">\n${ogDesc}` : "");
   const published = src.publishedAt ? src.publishedAt.slice(0, 10) : "unknown-date";
 
   const html = `<!DOCTYPE html>

@@ -5464,3 +5464,21 @@ or the reused invitation command's act, gradient gold included. The Slice 1 inbo
 inbox (4 frames). Chat: the approval card is bound to the version it was built from (`access_version`, round 3).
 Authenticated owner pause/restore/end and the customer page on production are owed; the QA relationship is
 to be ended by that business's owner by 2026-10-30 (D11).
+
+### Conversations — scheduled governed email: approve now, send later, cancel (EXP03 O12 piece 1, 2026-10-27)
+
+The governed email door (`comms-email-command`) accepts a send time. The approval binds the exact words,
+recipient, sender and time; the row waits as `queued` and the one-minute scheduler releases it through
+the same one-send claim. Any active owner or admin of the business can cancel it from the thread before
+it goes. Migration `20271119000000`. No product control creates one yet: the Conversations composer moves
+onto the door in the next piece, so every row below is reachable by data only today.
+
+| Capability | God (operator desk) | Agency-as-tenant | Standalone Solo | Sub-account | Client | Anonymous | Deploy state |
+|---|---|---|---|---|---|---|---|
+| Approve an email with a send time (door `send_at`) | Only inside a workspace it administers | ✓ owner/admin of the current workspace | ✓ owner/admin | ✓ owner/admin | — | — | PROOF OWED (no producer yet) |
+| Scheduled release when due (seat checked, not the open workspace) | — | ✓ | ✓ | ✓ | — | — | PROOF OWED |
+| Cancel a scheduled email from the thread | Only inside a workspace it administers | ✓ any owner/admin | ✓ any owner/admin | ✓ any owner/admin | — | — | PROOF OWED |
+| "Scheduled" / "Not sent" with reason in the thread | — | ✓ | ✓ | ✓ | — | — | PROOF OWED |
+
+Lead replies (`approval_id`), agreement signing requests and Paige chat sends stay immediate. SQL proof:
+`supabase/tests/comms_email_scheduled_send.sql` (CI: paige-spine-contract).

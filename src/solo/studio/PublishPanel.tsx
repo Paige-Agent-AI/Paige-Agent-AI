@@ -13,6 +13,7 @@ import {
 import { artifactId, hasPendingChanges, isLive, type LoadedArtifact } from "./artifact-state";
 import { nexusDisplayName, reviewWithNexusPrompt } from "./nexus";
 import { EmbedCode } from "./EmbedCode";
+import { DomainGuidanceCard } from "./DomainGuidanceCard";
 import { buildPortableExport, PortableExportRefused } from "@/lib/growth/exportPortable";
 import type { GrowthPageTheme } from "@/lib/growth";
 
@@ -33,6 +34,29 @@ const CHECK_FAILED = "Paige couldn't check this just now. Try again in a moment.
 /** The door may return a path; the owner always sees a full address they can copy. */
 function absolute(u: string): string {
   return /^https?:\/\//i.test(u) ? u : `${window.location.origin}${u.startsWith("/") ? "" : "/"}${u}`;
+}
+
+/** The sharing truth shown before a page goes live (PR8, row 12): what the title and the
+ *  description will read like in a search result or a shared link — or the honest fact that
+ *  no description is set and where to get one. Reading only: edits go through the owner's
+ *  chat with Paige; this is never a second SEO editor. */
+export function SharingPreviewLine({ title, draftSeo }: {
+  title: string;
+  draftSeo: { description?: string; og_image?: string } | null;
+}) {
+  return (
+    <div className="vs-seo-preview">
+      <p className="vs-seo-line"><strong>What search and share will show:</strong> “{title}”
+        {draftSeo?.description
+          ? <> — “{draftSeo.description}”</>
+          : <span className="vs-seo-missing"> No description is set, so sharers show the title alone. Ask Paige to add a one-line description.</span>}
+      </p>
+      {/* The honest boundary (review finding): the page applies its sharing details in the
+          visitor's browser. A preview tool that never loads the page can still show the
+          platform's defaults — said here, not hidden in docs. */}
+      <p className="vs-seo-missing">Applied when the page loads in a browser; a link preview that never loads it may show the platform's own details.</p>
+    </div>
+  );
 }
 
 function CheckList({ checks, label }: { checks: PublishCheck[]; label: string }) {
@@ -304,6 +328,7 @@ export function PublishPanel({ artifact, onNexusHandoff, onClose, onDone, onRefr
         <p>Anyone with the link can open it, and it's in Marketing › Overview.</p>
         <a href={url} target="_blank" rel="noreferrer" className="vs-link" style={{ wordBreak: "break-all" }}>{url}</a>
         {artifact.kind === "form" && <EmbedCode formId={id} formName={artifact.form.name} />}
+        {tenantSlug && <DomainGuidanceCard tenantSlug={tenantSlug} />}
         <div className="vs-pop-foot"><button ref={doneRef} type="button" className="vs-btn" onClick={onClose}>Done</button></div>
       </div>
     );
@@ -360,6 +385,7 @@ export function PublishPanel({ artifact, onNexusHandoff, onClose, onDone, onRefr
         {!confirming && artifact.kind === "page" && artifact.page.published && tenantSlug && brandFloor && (
           <PortableExportCard artifact={artifact} tenantSlug={tenantSlug} tenantName={tenantName ?? null} brandFloor={brandFloor} onError={setError} />
         )}
+        {!confirming && tenantSlug && <DomainGuidanceCard tenantSlug={tenantSlug} />}
         {!confirming && out?.state === "blocked" && <CheckList checks={out.preview.checks.filter((c) => !c.ok && c.blocking)} label="Why it can't come down yet" />}
         {!confirming && unpublishOff}
         {!confirming && (out?.state === "refused" || out?.state === "error") && (
@@ -404,6 +430,7 @@ export function PublishPanel({ artifact, onNexusHandoff, onClose, onDone, onRefr
           )}
           {blocked && <p>Fix what's marked, or ask Paige to, then publish.</p>}
           {address && <p className="vs-pop-address">Goes live at <b>{address}</b></p>}
+          {ready && artifact.kind === "page" && <SharingPreviewLine title={pub.preview.title} draftSeo={artifact.page.draftSeo} />}
           {onNexusHandoff && ready && !notPublishable && (
             <p className="vs-pop-note">
               Marketing review is {nexusDisplayName()}'s department.

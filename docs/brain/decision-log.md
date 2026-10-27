@@ -1,5 +1,23 @@
 # Decision Log — chronological one-liners
 
+## October27 — EXP03 O12 piece 1: scheduled governed email (approve now, send later, cancel)
+
+- **Built (migration `20271119000000`):** the door accepts a send time bound into the approval; the scheduler releases the bound row through the same one-send claim; any active owner/admin cancels from the thread; the thread shows Scheduled, then Not sent with a plain reason if it never went out. Defaults recorded while the owner had not answered: any owner/admin may cancel; lead replies, agreement sends and chat stay immediate.
+- **Two independent reviews.** Round 1: a scheduler who left the business left the email stuck and uncancellable, crowding the platform-wide queue (H2); transient errors permanently cancelled; one paused business could stop every business's drain; untruthful cancel toasts. Round 2: handing back a lease did not check the lease was this run's, so an ordinary scheduled message could be released twice. All fixed with failing-first tests.
+- **Found while mapping:** Conversations email attachments have never been sent (send-message only ever attaches invoice PDFs); production has no outbound message that ever carried one. Real attachments are piece 2.
+
+## October27 — EXP03 email reply box: owner chose B with (ii); one draft per inbound reply
+
+- **Owner decision (2026-10-27): B with (ii).** The Conversations email composer sends through the governed door `comms-email-command`. Pressing Send shows an inline check (server-resolved To/From, subject, files, send time); **Send now** / **Schedule send** is the approval. Email loses the 30-second undo; SMS keeps it. The door is extended first so attachments and a send time are bound into the approval. Reviewed on the mocked "Reply Check Prototype" artifact.
+- **#2986 live (`a4d76c41`, deploy-migrations 40538014513):** migration row, four triggers, RLS, no browser read, 1 backfilled row, both replaced bodies read back on production.
+- **Inbound N1/N6 (migration `20271118110000`):** one `comms-draft-reply` action per inbound message (partial unique index; 23505 = already filed); a display name holding `@` is not a first name. N7 kept: a reply whose contact cannot be created is stored unlinked, not refused, so SendGrid does not redeliver for days.
+
+## October27 — EXP03 a released managed address is never re-issued; EXP03 record brought current
+
+- **Address reuse closed (migration `20271118100000`).** The #2983 review HIGH reproduced on production in a rolled-back transaction: after business B renamed, business A renaming to B's old slug was handed B's old `<slug>@mail.paigeagent.ai`. Now a released shared-domain address — from a connector (where replies are delivered) or a sending identity (the From on mail) — is recorded in `paige_retired_managed_addresses` with the business that held it and refused to any other business on both records; provisioning gives a slug-derived name the first numbered variant no other business holds or gave up, so signup and renames never fail and the connector and From match; Solo Setup reports it unavailable; an owner cannot set the From to it (also reproduced failing-first on production). The table has no foreign key to tenants: the operator's account-deletion function refuses unknown tenant dependencies (CI caught it). Backfilled from message history (1 address on production was already released and unheld).
+- **Owner created `SENDGRID_DOMAIN_AUTH_API_KEY` (Sender Authentication only, 2026-10-27)** for the SendGrid rebuild of `manage-tenant-domain`; the full-access `SENDGRID_PLATFORM_ADMIN_API_KEY` stays unused and its rotation is still owed.
+- **Records:** journey §14.7 brings EXP03 current (SendGrid cutover, first real inbound reply, inbound routing guard); #2131 and #2152 superseded with their facts re-verified on main and production.
+
 ## October27 — EXP03 inbound routing fields are server-only (owner-approved)
 
 - **First real SendGrid Inbound Parse delivery (2026-10-27 13:28 UTC).** The owner set `SENDGRID_INBOUND_PARSE_SECRET` and the Inbound Parse host; a real reply posted by SendGrid (`Sendlib/1.0`) was accepted (200, basic auth in the URL works through the gateway), stored once with a business-scoped `sendgrid-inbound:` id on the contact's thread, sender authenticated, and a `comms-draft-reply` action filed (`confirm` lane). A no-credentials probe returns 401.

@@ -10,6 +10,9 @@ import { isProofDescendant } from './e09-proof-path.mjs';
 
 const baselineOnly = process.argv.includes('--baseline');
 const supportContact = process.argv.includes('--support-contact');
+const bookingCalendarsBaseline = process.argv.includes('--booking-calendars-baseline');
+const bookingCalendars = process.argv.includes('--booking-calendars') || bookingCalendarsBaseline;
+let bookingCalendarsEvidence;
 const documents = process.argv.includes('--documents');
 const privateRequestBaseline = process.argv.includes('--private-request-baseline');
 const privateRequestHistoryBaseline = process.argv.includes('--private-request-history-baseline');
@@ -47,12 +50,12 @@ assert(isProofDescendant(path.resolve(root, '../..'), work), 'Proof directory mu
 fs.mkdirSync(work, { recursive: true });
 const cluster = fs.mkdtempSync(path.join(work, 'cluster-'));
 const transcripts = [];
-function run(name,args,input) {
+function run(name,args,input,timeout=60000) {
  // PostgreSQL's detached Windows server can inherit pipe handles from pg_ctl.
  // Real files keep successful startup from looking like a timeout waiting on those handles.
  const out=path.join(work,`${transcripts.length}-${name}.stdout`), err=path.join(work,`${transcripts.length}-${name}.stderr`);
  const stdout=fs.openSync(out,'w'),stderr=fs.openSync(err,'w');let r;
- try { r=spawnSync(exe(name),args,{input,encoding:'utf8',windowsHide:true,timeout:60000,stdio:['pipe',stdout,stderr]}); }
+ try { r=spawnSync(exe(name),args,{input,encoding:'utf8',windowsHide:true,timeout,stdio:['pipe',stdout,stderr]}); }
  finally {fs.closeSync(stdout);fs.closeSync(stderr);}
  r.stdout=fs.readFileSync(out,'utf8');r.stderr=fs.readFileSync(err,'utf8');
  transcripts.push({command:name,args,exitCode:r.status,stdout:r.stdout??'',stderr:r.stderr??''});
@@ -106,7 +109,7 @@ function denied(name,options={},role='authenticated',tokenOverride) {
 }
 let started=false;
 try {
- run('initdb',['-D',cluster,'-U','postgres','-A','trust','--no-locale','-E','UTF8']);
+ run('initdb',['-D',cluster,'-U','postgres','-A','trust','--no-locale','-E','UTF8'],undefined,180000);
  try {
   // Same TCP-only startup as the original durable-document proof. A Linux
   // package's system Unix-socket directory is not part of this isolated test.
@@ -425,6 +428,7 @@ try {
  if(privateRequest){const {privateRequestProof}=await import('./e09-private-request.mjs');privateRequestEvidence=await privateRequestProof({sql,check,assert,fs,root,path,fixture,spawn,exe,args,transcripts,baseline:privateRequestBaseline,historyBaseline:privateRequestHistoryBaseline,publicationBaseline:privateRequestPublicationBaseline,publicationCandidate:privateRequestPublication,focusCandidate:privateRequestFocus,focusBaseline:privateRequestFocusBaseline});}
  if(requestShareCatalogue){const {requestShareCatalogueProof}=await import('./e09-request-share-catalogue.mjs');requestShareCatalogueEvidence=requestShareCatalogueProof({sql,check,assert,fs,fixture,baseline:requestShareCatalogueBaseline});}
  if(supportContact){const {supportContactProof}=await import('./e09-support-contact.mjs');supportContactProof({sql,check,assert,fs,fixture});}
+ if(bookingCalendars){const {bookingCalendarsProof}=await import('./e09-booking-calendars.mjs');bookingCalendarsEvidence=bookingCalendarsProof({sql,check,assert,fs,fixture,baseline:bookingCalendarsBaseline});}
  if(documents){const {documentProof}=await import('./e09-documents-native.mjs');documentProof({sql,check,assert,fs,root,path});}
  const failed=results.filter(x=>x.status==='FAIL');
  const report={mode:documents?'documents-candidate':actionsBaseline?'actions-baseline':actions?'actions-candidate':baselineOnly?'baseline':'candidate',evidenceClass:'synthetic-native-postgresql',fullSupabaseReplay:'UNVERIFIED',authenticatedAcceptance:'NOT_RUN',host:'127.0.0.1',port,platform:os.platform(),node:process.version,migrationSHA256:createHash('sha256').update(migration).digest('hex'),...(documents?{documentMigrationSHA256:createHash('sha256').update(fs.readFileSync('supabase/migrations/20271108150000_e09_customer_documents.sql')).digest('hex'),physicalStorage:'NOT_RUN',realtimeTransport:'NOT_RUN'}:{}),...(actions?{actionPredecessors,actionMigrationSHA256:createHash('sha256').update(fs.readFileSync('supabase/migrations/20271108122000_e09_customer_action_scope.sql')).digest('hex')}:{}),results,passed:results.length-failed.length,failed:failed.length};
@@ -434,6 +438,7 @@ try {
  if(messageActivity){report.mode=messageActivityBaseline?'message-activity-baseline':'message-activity-candidate';report.messageActivity={source:'original S7 Portal RPCs and original Rail writer, exact production fingerprints',threadTriggers:'NOT_RECONSTRUCTED; full-schema original suite remains required',authenticatedCustomer:'NOT_RUN',...messageActivityEvidence};}
  if(privateRequest){report.mode=privateRequestFocus?(privateRequestFocusBaseline?'private-request-focused-publication-baseline':'private-request-focused-publication-candidate'):privateRequestPublication?'private-request-publication-candidate':privateRequestPublicationBaseline?'private-request-publication-baseline':privateRequestHistoryBaseline?'private-request-history-baseline':privateRequestBaseline?'private-request-baseline':'private-request-candidate';report.privateRequest=privateRequestEvidence;}
  if(requestShareCatalogue){report.mode=requestShareCatalogueBaseline?'request-share-catalogue-baseline':'request-share-catalogue-candidate';report.requestShareCatalogue=requestShareCatalogueEvidence;}
+ if(bookingCalendars){report.mode=bookingCalendarsBaseline?'booking-calendars-baseline':'booking-calendars-candidate';report.bookingCalendars=bookingCalendarsEvidence;}
  fs.writeFileSync(path.join(work,baselineOnly||actionsBaseline||actionActTimeBaseline||inviteActTimeBaseline?'baseline.json':'candidate.json'),JSON.stringify(report,null,2));
  console.log(JSON.stringify({passed:report.passed,failed:report.failed,failures:failed,evidenceDir:work},null,2));
  if(failed.length)process.exitCode=1;

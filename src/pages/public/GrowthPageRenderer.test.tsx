@@ -121,6 +121,52 @@ describe("published page readiness for URL-mode screenshots", () => {
   });
 });
 
+describe("published sharing truth (row 12 — WEB-12)", () => {
+  const cleanHead = () => {
+    for (const sel of ['meta[name="description"]', 'meta[property^="og:"]', 'meta[name="twitter:card"]']) {
+      document.head.querySelectorAll(sel).forEach((m) => m.remove());
+    }
+  };
+
+  it("the PUBLISHED description and og image reach the head; title becomes the page's", async () => {
+    cleanHead();
+    state.rows = {
+      tenants: { id: "t1" },
+      growth_pages: { ...PAGE, title: "Referral workshop", seo_json: { description: "Ninety minutes to a referral plan.", og_image: "https://media.example.com/og.png" } },
+    };
+    await mount();
+    expect(document.title).toBe("Referral workshop");
+    expect(document.head.querySelector('meta[name="description"]')?.getAttribute("content")).toBe("Ninety minutes to a referral plan.");
+    expect(document.head.querySelector('meta[property="og:image"]')?.getAttribute("content")).toBe("https://media.example.com/og.png");
+    // og:url is the visitor's own address for the page — here, whatever the host (jsdom) says.
+    expect(document.head.querySelector('meta[property="og:url"]')?.getAttribute("content")).toBe(window.location.href);
+    cleanHead();
+  });
+
+  it("empty seo columns ship NO tags — absent honestly beats invented", async () => {
+    cleanHead();
+    await mount();
+    expect(document.title).toBe("Northwind"); // title is a real column, always truthfully applied
+    expect(document.head.querySelector('meta[name="description"]')).toBeNull();
+    expect(document.head.querySelector('meta[property="og:image"]')).toBeNull();
+    expect(document.head.querySelector('meta[name="twitter:card"]')).toBeNull();
+    cleanHead();
+  });
+
+  it("SECURITY (row 13): a hostile published description never becomes markup", async () => {
+    cleanHead();
+    state.rows = {
+      tenants: { id: "t1" },
+      growth_pages: { ...PAGE, seo_json: { description: `"><script>window.pwnedSeo=1</script>` } },
+    };
+    await mount();
+    expect(document.head.querySelector("script")).toBeNull();
+    expect((window as typeof window & { pwnedSeo?: number }).pwnedSeo).toBeUndefined();
+    expect(document.head.querySelector('meta[name="description"]')?.getAttribute("content")).toContain("script"); // inert text
+    cleanHead();
+  });
+});
+
 describe("supabase-js sends rpc({ get: true }) as a GET", () => {
   it("issues GET /rest/v1/rpc/peek_tenant_portal_brand with the slug in the query string", async () => {
     const seen: Array<{ method: string; url: string }> = [];

@@ -213,7 +213,9 @@ export function PublishPiece({ piece, tenantId }: { piece: ContentPiece; tenantI
     if (face.face !== "approval_required" || busy) return;
     setBusy(true);
     setFace({ face: "calling", sentence: "Publishing the approved post…" });
-    const next = await callDoor({ action: "publish", expected_tenant_id: tenantId, approved_fingerprint: face.fingerprint });
+    // The door requires the piece and channel on EVERY publish action (it re-validates them
+    // against the claimed args before executing) — an approve body naming nothing is refused 400.
+    const next = await callDoor({ action: "publish", expected_tenant_id: tenantId, content_id: piece.id, platform: face.platform, caption: face.caption, approved_fingerprint: face.fingerprint });
     setFace(next); setBusy(false); void readAll();
   };
   const decline = async () => {
@@ -221,8 +223,9 @@ export function PublishPiece({ piece, tenantId }: { piece: ContentPiece; tenantI
     setBusy(true);
     setFace({ face: "calling", sentence: "Cancelling…" });
     const next = await callDoor({ action: "decline", expected_tenant_id: tenantId, fingerprint: face.fingerprint });
-    setFace(next.face === "unreachable" && !next.sentence ? { face: "declined" } : next);
-    setBusy(false); void readAll();
+    // The door answers decline with { ok: true, state: "declined" }; a refusal to record the
+    // decline is the door's own failure sentence, never a silent success.
+    setFace(next); setBusy(false); void readAll();
   };
   const reset = () => { setFace({ face: "idle" }); };
 

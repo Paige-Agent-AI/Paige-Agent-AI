@@ -1,10 +1,12 @@
 // Synthetic input ports only; the original shell, workspace, finding drawer and CSS are mounted.
 const keys = ['company_info_populated','website_connected','crm_has_customers','sales_pipeline_configured','revenue_tracking_configured','payment_processor_connected','payment_method_options','comms_configured','social_accounts_connected','automation_wired'];
 const at = '2026-10-22T09:00:00Z';
-export function useSystemsCheck() {
-  const state = new URLSearchParams(location.search).get('state');
+export function useSystemsCheck(_scope?: unknown, options?: {runId?: string}) {
+  const query = new URLSearchParams(location.search);
+  const state = query.get('state');
+  const runId = 'c1000000-0000-0000-0000-000000000001';
   const findings = keys.filter(key => !(state === 'missing' && key === 'website_connected')).map((key, i) => ({
-    id: 'e2000000-0000-4000-8000-' + String(i + 1).padStart(12, '0'), run_id:'test-run', check_id:key,
+    id: 'e2000000-0000-4000-8000-' + String(i + 1).padStart(12, '0'), run_id:runId, check_id:key,
     status: key === 'payment_processor_connected' || key === 'payment_method_options' ? 'fail' : 'pass',
     severity_at_finding: key === 'payment_processor_connected' ? 'blocking' : 'low',
     evidence: key === 'social_accounts_connected' ? {social_handle_count:1,declared_capture_only:true} : {state:'Recorded setup only'},
@@ -14,7 +16,18 @@ export function useSystemsCheck() {
     resolution_action_id:null, created_at:at,check_name:key,domain:'setup',priority:i,
   }));
   const empty = state === 'empty';
-  return {run:empty ? null : {id:'test-run',started_at:at,completed_at:at,check_count:10,pass_count:8,fail_count:2},
+  const run = {id:runId,started_at:at,completed_at:at,check_count:10,pass_count:8,fail_count:2};
+  const requested = options?.runId;
+  const recordState = query.get('record');
+  const readable = requested === runId && query.get('workspace') !== 'b';
+  const recordedRun = !requested ? {state:'not_requested'}
+    : !readable || recordState === 'permission' || recordState === 'unavailable' ? {state:'unavailable'}
+      : recordState === 'loading' || recordState === 'error' ? {state:recordState}
+        : {state:'ready',run:{...run,
+            ...(recordState === 'unfinished' ? {completed_at:null} : {}),
+            ...(recordState === 'zero' ? {check_count:0,pass_count:0,fail_count:0} : {}),
+            ...(recordState === 'unknown' ? {check_count:null,pass_count:null,fail_count:null} : {})}};
+  return {run:empty ? null : run,
     findings:empty ? [] : findings,loading:state==='loading',isError:state==='error',scanPending:false,scanInProgressSince:null,
-    refresh:()=>undefined};
+    refresh:()=>undefined,recordedRun};
 }

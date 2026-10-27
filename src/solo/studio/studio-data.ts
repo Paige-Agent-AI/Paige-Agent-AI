@@ -290,6 +290,10 @@ export interface StudioPage {
   changesPending: boolean;
   blocks: GrowthBlock[];
   theme: GrowthPageTheme | null;
+  /** The SEO the NEXT publish would put live (draft-preferred, like every editor view) — shown
+   *  in the publish preview as the sharing truth. Reading only: the edit path stays the owner's
+   *  chat with Paige through the door; the Studio never becomes a second SEO editor. */
+  draftSeo: { description?: string; og_image?: string } | null;
   /** The PUBLISHED columns of the same row — what visitors see, and the ONLY thing a portable
    *  export may carry (drafts never ship). Null until the page has been published once. */
   published: { blocks: GrowthBlock[]; theme: GrowthPageTheme | null; seo: { description?: string; og_image?: string } | null; publishedAt: string | null } | null;
@@ -318,6 +322,7 @@ export function pageFromRow(r: Record<string, unknown>): StudioPage {
       r[`draft_${k}_json`] != null && JSON.stringify(r[`draft_${k}_json`]) !== JSON.stringify(r[`${k}_json`])),
     blocks: Array.isArray(blocks) ? blocks : [],
     theme: ((r.draft_theme_json ?? r.theme_json) as GrowthPageTheme | null) ?? null,
+    draftSeo: ((r.draft_seo_json ?? r.seo_json) as { description?: string; og_image?: string } | null) ?? null,
     // The published face is complete only for a published page (an unpublished draft keeps its
     // last live columns readable but it is NOT live; export refuses unless status is published).
     published: live && pubBlocks

@@ -333,7 +333,7 @@ serve(async (req) => {
       logStep("Support team notification not accepted", { error: supportEmail.error, unconfirmed: supportEmail.unconfirmed });
       return new Response(
         JSON.stringify(supportEmail.unconfirmed
-          ? { error: "We couldn't confirm your request reached our team. It may have — please wait a few minutes before sending it again, or email support@paigeagent.ai.", unconfirmed: true }
+          ? { error: "We couldn't confirm your request reached our team. It may have — please don't send it again; email support@paigeagent.ai if you haven't heard back.", unconfirmed: true }
           : { error: "We couldn't deliver your request to our team. Please try again or email support@paigeagent.ai.", unconfirmed: false }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 502 },
       );

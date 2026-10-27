@@ -591,7 +591,7 @@ describe("Conversations governed-send render harness", () => {
 // error = "delivery_unconfirmed". The inbox must say so — never "Failed", never an invitation to resend.
 describe("an email the service may have taken (its answer was lost)", () => {
   const UNCONFIRMED = { data: { status: "failed", outcome: "outcome_unknown", unconfirmed: true, error: "delivery_unconfirmed: sendgrid_503", reason: "delivery_unconfirmed: sendgrid_503", message_id: "m-1" }, error: null };
-  const COPY = "We couldn't confirm it was sent. It may already have reached them — check before sending it again.";
+  const COPY = "We couldn't confirm it was sent — it may already be with them. Don't send it again until you've asked them.";
 
   it("a row marked unconfirmed reads Couldn't confirm with the don't-resend line, never Failed", async () => {
     db.messages = [message({ status: "failed", error: "delivery_unconfirmed" })];
@@ -601,6 +601,18 @@ describe("an email the service may have taken (its answer was lost)", () => {
     expect(host.textContent).toContain("Couldn't confirm this went out — don't resend.");
     expect(host.textContent).not.toContain("Failed");
     expect(host.textContent).not.toContain("delivery_unconfirmed");
+    // The line means "not a failure", so it is never painted in the failure colour.
+    const line = [...host.querySelectorAll("p")].find((p) => p.textContent?.trim() === "Couldn't confirm this went out — don't resend.");
+    expect(line).toBeTruthy();
+    expect(line!.className).not.toContain("destructive");
+  });
+
+  it("a provider refusal reads as owner copy, never the raw provider error", async () => {
+    db.messages = [message({ status: "failed", error: 'sendgrid_400: {"errors":[{"message":"Does not contain a valid address.","field":"personalizations.0.to.0.email"}]}' })];
+    db.threads = [thread];
+    const host = await mountInbox("/admin/clients/conversations");
+    expect(host.textContent).toContain("Not sent — that email address wasn't accepted. Check it and try again.");
+    expect(host.textContent).not.toContain("sendgrid_400");
   });
 
   it("a plain failure still reads Failed (unchanged)", async () => {
@@ -609,6 +621,7 @@ describe("an email the service may have taken (its answer was lost)", () => {
     const host = await mountInbox("/admin/clients/conversations");
     expect(host.textContent).toContain("Failed");
     expect(host.textContent).not.toContain("Couldn't confirm");
+    expect(host.textContent).not.toContain("sendgrid_400");
   });
 
   it("Approve & send whose answer was lost warns honestly instead of reporting a failure", async () => {

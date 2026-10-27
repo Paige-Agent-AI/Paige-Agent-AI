@@ -34,8 +34,8 @@
         "kind": "pill-sent",
         "incidental": false,
         "text": "Sent",
-        "ratio": 3.7,
-        "color": "rgb(50, 118, 90)",
+        "ratio": 5.86,
+        "color": "oklab(0.410071 -0.04683 0.0111805)",
         "bg": "rgb(208,215,209)",
         "size": "10px",
         "weight": "600"
@@ -44,21 +44,11 @@
         "kind": "pill-failed",
         "incidental": false,
         "text": "Failed",
-        "ratio": 3.98,
-        "color": "rgb(164, 71, 61)",
+        "ratio": 6.07,
+        "color": "oklab(0.412425 0.0704803 0.0338449)",
         "bg": "rgb(225,208,205)",
         "size": "10px",
         "weight": "600"
-      },
-      {
-        "kind": "line-failed",
-        "incidental": false,
-        "text": "sendgrid_400: {\"errors\":[{\"message\":\"Does not contain a vali",
-        "ratio": 4.86,
-        "color": "rgb(164, 71, 61)",
-        "bg": "rgb(236,232,230)",
-        "size": "11px",
-        "weight": "400"
       },
       {
         "kind": "pill-unconfirmed",
@@ -74,8 +64,8 @@
         "kind": "line-unconfirmed",
         "incidental": false,
         "text": "Couldn't confirm this went out — don't resend.",
-        "ratio": 4.86,
-        "color": "rgb(164, 71, 61)",
+        "ratio": 13.52,
+        "color": "rgb(33, 30, 36)",
         "bg": "rgb(236,232,230)",
         "size": "11px",
         "weight": "400"
@@ -113,26 +103,6 @@
         "weight": "600"
       },
       {
-        "kind": "pill-sent",
-        "incidental": false,
-        "text": "Sent",
-        "ratio": 3.7,
-        "color": "rgb(50, 118, 90)",
-        "bg": "rgb(208,215,209)",
-        "size": "10px",
-        "weight": "600"
-      },
-      {
-        "kind": "pill-failed",
-        "incidental": false,
-        "text": "Failed",
-        "ratio": 3.98,
-        "color": "rgb(164, 71, 61)",
-        "bg": "rgb(225,208,205)",
-        "size": "10px",
-        "weight": "600"
-      },
-      {
         "kind": null,
         "incidental": false,
         "text": "PROFILE · LIVE",
@@ -143,7 +113,7 @@
         "weight": "600"
       }
     ],
-    "textCount": 169,
+    "textCount": 170,
     "gold": 15,
     "goldOutsideAct": [],
     "warningInExp03": [],
@@ -168,11 +138,11 @@
       "destructive": "rgb(164, 71, 61)"
     },
     "line": {
-      "rgb": "rgb(164,71,61)",
+      "rgb": "rgb(33,30,36)",
       "destructiveRgb": "rgb(164,71,61)",
-      "color": "rgb(164, 71, 61)",
-      "isDestructive": true,
-      "className": "mt-1.5 text-[11px] text-destructive"
+      "color": "rgb(33, 30, 36)",
+      "isDestructive": false,
+      "className": "text-[11px] leading-4 text-foreground"
     },
     "pill": {
       "rgb": "rgb(102,71,41)",
@@ -229,8 +199,8 @@
         "kind": "pill-sent",
         "incidental": false,
         "text": "Sent",
-        "ratio": 6.77,
-        "color": "rgb(143, 209, 174)",
+        "ratio": 8.13,
+        "color": "oklab(0.865459 -0.0487846 0.0219309)",
         "bg": "rgb(48,56,60)",
         "size": "10px",
         "weight": "600"
@@ -239,21 +209,11 @@
         "kind": "pill-failed",
         "incidental": false,
         "text": "Failed",
-        "ratio": 5.9,
-        "color": "rgb(237, 160, 146)",
+        "ratio": 7.57,
+        "color": "oklab(0.846699 0.0510728 0.0341136)",
         "bg": "rgb(62,49,56)",
         "size": "10px",
         "weight": "600"
-      },
-      {
-        "kind": "line-failed",
-        "incidental": false,
-        "text": "sendgrid_400: {\"errors\":[{\"message\":\"Does not contain a vali",
-        "ratio": 7.92,
-        "color": "rgb(237, 160, 146)",
-        "bg": "rgb(32,29,40)",
-        "size": "11px",
-        "weight": "400"
       },
       {
         "kind": "pill-unconfirmed",
@@ -269,8 +229,8 @@
         "kind": "line-unconfirmed",
         "incidental": false,
         "text": "Couldn't confirm this went out — don't resend.",
-        "ratio": 7.92,
-        "color": "rgb(237, 160, 146)",
+        "ratio": 14.83,
+        "color": "rgb(246, 242, 234)",
         "bg": "rgb(32,29,40)",
         "size": "11px",
         "weight": "400"
@@ -298,7 +258,7 @@
         "weight": "400"
       }
     ],
-    "textCount": 169,
+    "textCount": 170,
     "gold": 15,
     "goldOutsideAct": [],
     "warningInExp03": [
@@ -325,11 +285,11 @@
       "destructive": "rgb(237, 160, 146)"
     },
     "line": {
-      "rgb": "rgb(237,160,146)",
+      "rgb": "rgb(246,242,234)",
       "destructiveRgb": "rgb(237,160,146)",
-      "color": "rgb(237, 160, 146)",
-      "isDestructive": true,
-      "className": "mt-1.5 text-[11px] text-destructive"
+      "color": "rgb(246, 242, 234)",
+      "isDestructive": false,
+      "className": "text-[11px] leading-4 text-foreground"
     },
     "pill": {
       "rgb": "rgb(241,211,168)",
@@ -386,8 +346,8 @@
         "kind": "pill-sent",
         "incidental": false,
         "text": "Sent",
-        "ratio": 3.7,
-        "color": "rgb(50, 118, 90)",
+        "ratio": 5.86,
+        "color": "oklab(0.410071 -0.04683 0.0111805)",
         "bg": "rgb(208,215,209)",
         "size": "10px",
         "weight": "600"
@@ -396,21 +356,11 @@
         "kind": "pill-failed",
         "incidental": false,
         "text": "Failed",
-        "ratio": 3.98,
-        "color": "rgb(164, 71, 61)",
+        "ratio": 6.07,
+        "color": "oklab(0.412425 0.0704803 0.0338449)",
         "bg": "rgb(225,208,205)",
         "size": "10px",
         "weight": "600"
-      },
-      {
-        "kind": "line-failed",
-        "incidental": false,
-        "text": "sendgrid_400: {\"errors\":[{\"message\":\"Does not contain a vali",
-        "ratio": 4.86,
-        "color": "rgb(164, 71, 61)",
-        "bg": "rgb(236,232,230)",
-        "size": "11px",
-        "weight": "400"
       },
       {
         "kind": "pill-unconfirmed",
@@ -426,8 +376,8 @@
         "kind": "line-unconfirmed",
         "incidental": false,
         "text": "Couldn't confirm this went out — don't resend.",
-        "ratio": 4.86,
-        "color": "rgb(164, 71, 61)",
+        "ratio": 13.52,
+        "color": "rgb(33, 30, 36)",
         "bg": "rgb(236,232,230)",
         "size": "11px",
         "weight": "400"
@@ -462,26 +412,6 @@
         "color": "rgb(50, 118, 90)",
         "bg": "rgb(217,212,211)",
         "size": "8px",
-        "weight": "600"
-      },
-      {
-        "kind": "pill-sent",
-        "incidental": false,
-        "text": "Sent",
-        "ratio": 3.7,
-        "color": "rgb(50, 118, 90)",
-        "bg": "rgb(208,215,209)",
-        "size": "10px",
-        "weight": "600"
-      },
-      {
-        "kind": "pill-failed",
-        "incidental": false,
-        "text": "Failed",
-        "ratio": 3.98,
-        "color": "rgb(164, 71, 61)",
-        "bg": "rgb(225,208,205)",
-        "size": "10px",
         "weight": "600"
       },
       {
@@ -520,11 +450,11 @@
       "destructive": "rgb(164, 71, 61)"
     },
     "line": {
-      "rgb": "rgb(164,71,61)",
+      "rgb": "rgb(33,30,36)",
       "destructiveRgb": "rgb(164,71,61)",
-      "color": "rgb(164, 71, 61)",
-      "isDestructive": true,
-      "className": "mt-1.5 text-[11px] text-destructive"
+      "color": "rgb(33, 30, 36)",
+      "isDestructive": false,
+      "className": "text-[11px] leading-4 text-foreground"
     },
     "pill": {
       "rgb": "rgb(102,71,41)",
@@ -581,8 +511,8 @@
         "kind": "pill-sent",
         "incidental": false,
         "text": "Sent",
-        "ratio": 6.77,
-        "color": "rgb(143, 209, 174)",
+        "ratio": 8.13,
+        "color": "oklab(0.865459 -0.0487846 0.0219309)",
         "bg": "rgb(48,56,60)",
         "size": "10px",
         "weight": "600"
@@ -591,21 +521,11 @@
         "kind": "pill-failed",
         "incidental": false,
         "text": "Failed",
-        "ratio": 5.9,
-        "color": "rgb(237, 160, 146)",
+        "ratio": 7.57,
+        "color": "oklab(0.846699 0.0510728 0.0341136)",
         "bg": "rgb(62,49,56)",
         "size": "10px",
         "weight": "600"
-      },
-      {
-        "kind": "line-failed",
-        "incidental": false,
-        "text": "sendgrid_400: {\"errors\":[{\"message\":\"Does not contain a vali",
-        "ratio": 7.92,
-        "color": "rgb(237, 160, 146)",
-        "bg": "rgb(32,29,40)",
-        "size": "11px",
-        "weight": "400"
       },
       {
         "kind": "pill-unconfirmed",
@@ -621,8 +541,8 @@
         "kind": "line-unconfirmed",
         "incidental": false,
         "text": "Couldn't confirm this went out — don't resend.",
-        "ratio": 7.92,
-        "color": "rgb(237, 160, 146)",
+        "ratio": 14.83,
+        "color": "rgb(246, 242, 234)",
         "bg": "rgb(32,29,40)",
         "size": "11px",
         "weight": "400"
@@ -677,11 +597,11 @@
       "destructive": "rgb(237, 160, 146)"
     },
     "line": {
-      "rgb": "rgb(237,160,146)",
+      "rgb": "rgb(246,242,234)",
       "destructiveRgb": "rgb(237,160,146)",
-      "color": "rgb(237, 160, 146)",
-      "isDestructive": true,
-      "className": "mt-1.5 text-[11px] text-destructive"
+      "color": "rgb(246, 242, 234)",
+      "isDestructive": false,
+      "className": "text-[11px] leading-4 text-foreground"
     },
     "pill": {
       "rgb": "rgb(241,211,168)",
@@ -738,8 +658,8 @@
         "kind": "pill-sent",
         "incidental": false,
         "text": "Sent",
-        "ratio": 3.7,
-        "color": "rgb(50, 118, 90)",
+        "ratio": 5.86,
+        "color": "oklab(0.410071 -0.04683 0.0111805)",
         "bg": "rgb(208,215,209)",
         "size": "10px",
         "weight": "600"
@@ -748,21 +668,11 @@
         "kind": "pill-failed",
         "incidental": false,
         "text": "Failed",
-        "ratio": 3.98,
-        "color": "rgb(164, 71, 61)",
+        "ratio": 6.07,
+        "color": "oklab(0.412425 0.0704803 0.0338449)",
         "bg": "rgb(225,208,205)",
         "size": "10px",
         "weight": "600"
-      },
-      {
-        "kind": "line-failed",
-        "incidental": false,
-        "text": "sendgrid_400: {\"errors\":[{\"message\":\"Does not contain a vali",
-        "ratio": 4.86,
-        "color": "rgb(164, 71, 61)",
-        "bg": "rgb(236,232,230)",
-        "size": "11px",
-        "weight": "400"
       },
       {
         "kind": "pill-unconfirmed",
@@ -778,8 +688,8 @@
         "kind": "line-unconfirmed",
         "incidental": false,
         "text": "Couldn't confirm this went out — don't resend.",
-        "ratio": 4.86,
-        "color": "rgb(164, 71, 61)",
+        "ratio": 13.52,
+        "color": "rgb(33, 30, 36)",
         "bg": "rgb(236,232,230)",
         "size": "11px",
         "weight": "400"
@@ -817,26 +727,6 @@
         "weight": "600"
       },
       {
-        "kind": "pill-sent",
-        "incidental": false,
-        "text": "Sent",
-        "ratio": 3.7,
-        "color": "rgb(50, 118, 90)",
-        "bg": "rgb(208,215,209)",
-        "size": "10px",
-        "weight": "600"
-      },
-      {
-        "kind": "pill-failed",
-        "incidental": false,
-        "text": "Failed",
-        "ratio": 3.98,
-        "color": "rgb(164, 71, 61)",
-        "bg": "rgb(225,208,205)",
-        "size": "10px",
-        "weight": "600"
-      },
-      {
         "kind": null,
         "incidental": false,
         "text": "PROFILE · LIVE",
@@ -847,7 +737,7 @@
         "weight": "600"
       }
     ],
-    "textCount": 169,
+    "textCount": 170,
     "gold": 15,
     "goldOutsideAct": [],
     "warningInExp03": [],
@@ -872,11 +762,11 @@
       "destructive": "rgb(164, 71, 61)"
     },
     "line": {
-      "rgb": "rgb(164,71,61)",
+      "rgb": "rgb(33,30,36)",
       "destructiveRgb": "rgb(164,71,61)",
-      "color": "rgb(164, 71, 61)",
-      "isDestructive": true,
-      "className": "mt-1.5 text-[11px] text-destructive"
+      "color": "rgb(33, 30, 36)",
+      "isDestructive": false,
+      "className": "text-[11px] leading-4 text-foreground"
     },
     "pill": {
       "rgb": "rgb(102,71,41)",
@@ -933,8 +823,8 @@
         "kind": "pill-sent",
         "incidental": false,
         "text": "Sent",
-        "ratio": 6.77,
-        "color": "rgb(143, 209, 174)",
+        "ratio": 8.13,
+        "color": "oklab(0.865459 -0.0487846 0.0219309)",
         "bg": "rgb(48,56,60)",
         "size": "10px",
         "weight": "600"
@@ -943,21 +833,11 @@
         "kind": "pill-failed",
         "incidental": false,
         "text": "Failed",
-        "ratio": 5.9,
-        "color": "rgb(237, 160, 146)",
+        "ratio": 7.57,
+        "color": "oklab(0.846699 0.0510728 0.0341136)",
         "bg": "rgb(62,49,56)",
         "size": "10px",
         "weight": "600"
-      },
-      {
-        "kind": "line-failed",
-        "incidental": false,
-        "text": "sendgrid_400: {\"errors\":[{\"message\":\"Does not contain a vali",
-        "ratio": 7.92,
-        "color": "rgb(237, 160, 146)",
-        "bg": "rgb(32,29,40)",
-        "size": "11px",
-        "weight": "400"
       },
       {
         "kind": "pill-unconfirmed",
@@ -973,8 +853,8 @@
         "kind": "line-unconfirmed",
         "incidental": false,
         "text": "Couldn't confirm this went out — don't resend.",
-        "ratio": 7.92,
-        "color": "rgb(237, 160, 146)",
+        "ratio": 14.83,
+        "color": "rgb(246, 242, 234)",
         "bg": "rgb(32,29,40)",
         "size": "11px",
         "weight": "400"
@@ -1002,7 +882,7 @@
         "weight": "400"
       }
     ],
-    "textCount": 169,
+    "textCount": 170,
     "gold": 15,
     "goldOutsideAct": [],
     "warningInExp03": [
@@ -1029,11 +909,11 @@
       "destructive": "rgb(237, 160, 146)"
     },
     "line": {
-      "rgb": "rgb(237,160,146)",
+      "rgb": "rgb(246,242,234)",
       "destructiveRgb": "rgb(237,160,146)",
-      "color": "rgb(237, 160, 146)",
-      "isDestructive": true,
-      "className": "mt-1.5 text-[11px] text-destructive"
+      "color": "rgb(246, 242, 234)",
+      "isDestructive": false,
+      "className": "text-[11px] leading-4 text-foreground"
     },
     "pill": {
       "rgb": "rgb(241,211,168)",
@@ -1090,21 +970,11 @@
         "kind": "pill-failed",
         "incidental": false,
         "text": "Failed",
-        "ratio": 3.98,
-        "color": "rgb(164, 71, 61)",
+        "ratio": 6.07,
+        "color": "oklab(0.412425 0.0704803 0.0338449)",
         "bg": "rgb(225,208,205)",
         "size": "10px",
         "weight": "600"
-      },
-      {
-        "kind": "line-failed",
-        "incidental": false,
-        "text": "sendgrid_400: {\"errors\":[{\"message\":\"Does not contain a vali",
-        "ratio": 4.86,
-        "color": "rgb(164, 71, 61)",
-        "bg": "rgb(236,232,230)",
-        "size": "11px",
-        "weight": "400"
       },
       {
         "kind": "pill-unconfirmed",
@@ -1120,8 +990,8 @@
         "kind": "line-unconfirmed",
         "incidental": false,
         "text": "Couldn't confirm this went out — don't resend.",
-        "ratio": 4.86,
-        "color": "rgb(164, 71, 61)",
+        "ratio": 13.52,
+        "color": "rgb(33, 30, 36)",
         "bg": "rgb(236,232,230)",
         "size": "11px",
         "weight": "400"
@@ -1159,16 +1029,6 @@
         "weight": "600"
       },
       {
-        "kind": "pill-failed",
-        "incidental": false,
-        "text": "Failed",
-        "ratio": 3.98,
-        "color": "rgb(164, 71, 61)",
-        "bg": "rgb(225,208,205)",
-        "size": "10px",
-        "weight": "600"
-      },
-      {
         "kind": null,
         "incidental": false,
         "text": "PROFILE · LIVE",
@@ -1179,7 +1039,7 @@
         "weight": "600"
       }
     ],
-    "textCount": 162,
+    "textCount": 163,
     "gold": 15,
     "goldOutsideAct": [],
     "warningInExp03": [],
@@ -1204,11 +1064,11 @@
       "destructive": "rgb(164, 71, 61)"
     },
     "line": {
-      "rgb": "rgb(164,71,61)",
+      "rgb": "rgb(33,30,36)",
       "destructiveRgb": "rgb(164,71,61)",
-      "color": "rgb(164, 71, 61)",
-      "isDestructive": true,
-      "className": "mt-1.5 text-[11px] text-destructive"
+      "color": "rgb(33, 30, 36)",
+      "isDestructive": false,
+      "className": "text-[11px] leading-4 text-foreground"
     },
     "pill": {
       "rgb": "rgb(102,71,41)",
@@ -1265,21 +1125,11 @@
         "kind": "pill-failed",
         "incidental": false,
         "text": "Failed",
-        "ratio": 5.9,
-        "color": "rgb(237, 160, 146)",
+        "ratio": 7.57,
+        "color": "oklab(0.846699 0.0510728 0.0341136)",
         "bg": "rgb(62,49,56)",
         "size": "10px",
         "weight": "600"
-      },
-      {
-        "kind": "line-failed",
-        "incidental": false,
-        "text": "sendgrid_400: {\"errors\":[{\"message\":\"Does not contain a vali",
-        "ratio": 7.92,
-        "color": "rgb(237, 160, 146)",
-        "bg": "rgb(32,29,40)",
-        "size": "11px",
-        "weight": "400"
       },
       {
         "kind": "pill-unconfirmed",
@@ -1295,8 +1145,8 @@
         "kind": "line-unconfirmed",
         "incidental": false,
         "text": "Couldn't confirm this went out — don't resend.",
-        "ratio": 7.92,
-        "color": "rgb(237, 160, 146)",
+        "ratio": 14.83,
+        "color": "rgb(246, 242, 234)",
         "bg": "rgb(32,29,40)",
         "size": "11px",
         "weight": "400"
@@ -1324,7 +1174,7 @@
         "weight": "400"
       }
     ],
-    "textCount": 162,
+    "textCount": 163,
     "gold": 15,
     "goldOutsideAct": [],
     "warningInExp03": [
@@ -1351,11 +1201,11 @@
       "destructive": "rgb(237, 160, 146)"
     },
     "line": {
-      "rgb": "rgb(237,160,146)",
+      "rgb": "rgb(246,242,234)",
       "destructiveRgb": "rgb(237,160,146)",
-      "color": "rgb(237, 160, 146)",
-      "isDestructive": true,
-      "className": "mt-1.5 text-[11px] text-destructive"
+      "color": "rgb(246, 242, 234)",
+      "isDestructive": false,
+      "className": "text-[11px] leading-4 text-foreground"
     },
     "pill": {
       "rgb": "rgb(241,211,168)",
@@ -1412,21 +1262,11 @@
         "kind": "pill-failed",
         "incidental": false,
         "text": "Failed",
-        "ratio": 3.98,
-        "color": "rgb(164, 71, 61)",
+        "ratio": 6.07,
+        "color": "oklab(0.412425 0.0704803 0.0338449)",
         "bg": "rgb(225,208,205)",
         "size": "10px",
         "weight": "600"
-      },
-      {
-        "kind": "line-failed",
-        "incidental": false,
-        "text": "sendgrid_400: {\"errors\":[{\"message\":\"Does not contain a vali",
-        "ratio": 4.86,
-        "color": "rgb(164, 71, 61)",
-        "bg": "rgb(236,232,230)",
-        "size": "11px",
-        "weight": "400"
       },
       {
         "kind": "pill-unconfirmed",
@@ -1442,8 +1282,8 @@
         "kind": "line-unconfirmed",
         "incidental": false,
         "text": "Couldn't confirm this went out — don't resend.",
-        "ratio": 4.86,
-        "color": "rgb(164, 71, 61)",
+        "ratio": 13.52,
+        "color": "rgb(33, 30, 36)",
         "bg": "rgb(236,232,230)",
         "size": "11px",
         "weight": "400"
@@ -1481,16 +1321,6 @@
         "weight": "600"
       },
       {
-        "kind": "pill-failed",
-        "incidental": false,
-        "text": "Failed",
-        "ratio": 3.98,
-        "color": "rgb(164, 71, 61)",
-        "bg": "rgb(225,208,205)",
-        "size": "10px",
-        "weight": "600"
-      },
-      {
         "kind": null,
         "incidental": false,
         "text": "PROFILE · LIVE",
@@ -1501,7 +1331,7 @@
         "weight": "600"
       }
     ],
-    "textCount": 162,
+    "textCount": 163,
     "gold": 15,
     "goldOutsideAct": [],
     "warningInExp03": [],
@@ -1526,11 +1356,11 @@
       "destructive": "rgb(164, 71, 61)"
     },
     "line": {
-      "rgb": "rgb(164,71,61)",
+      "rgb": "rgb(33,30,36)",
       "destructiveRgb": "rgb(164,71,61)",
-      "color": "rgb(164, 71, 61)",
-      "isDestructive": true,
-      "className": "mt-1.5 text-[11px] text-destructive"
+      "color": "rgb(33, 30, 36)",
+      "isDestructive": false,
+      "className": "text-[11px] leading-4 text-foreground"
     },
     "pill": {
       "rgb": "rgb(102,71,41)",
@@ -1587,21 +1417,11 @@
         "kind": "pill-failed",
         "incidental": false,
         "text": "Failed",
-        "ratio": 5.9,
-        "color": "rgb(237, 160, 146)",
+        "ratio": 7.57,
+        "color": "oklab(0.846699 0.0510728 0.0341136)",
         "bg": "rgb(62,49,56)",
         "size": "10px",
         "weight": "600"
-      },
-      {
-        "kind": "line-failed",
-        "incidental": false,
-        "text": "sendgrid_400: {\"errors\":[{\"message\":\"Does not contain a vali",
-        "ratio": 7.92,
-        "color": "rgb(237, 160, 146)",
-        "bg": "rgb(32,29,40)",
-        "size": "11px",
-        "weight": "400"
       },
       {
         "kind": "pill-unconfirmed",
@@ -1617,8 +1437,8 @@
         "kind": "line-unconfirmed",
         "incidental": false,
         "text": "Couldn't confirm this went out — don't resend.",
-        "ratio": 7.92,
-        "color": "rgb(237, 160, 146)",
+        "ratio": 14.83,
+        "color": "rgb(246, 242, 234)",
         "bg": "rgb(32,29,40)",
         "size": "11px",
         "weight": "400"
@@ -1646,7 +1466,7 @@
         "weight": "400"
       }
     ],
-    "textCount": 162,
+    "textCount": 163,
     "gold": 15,
     "goldOutsideAct": [],
     "warningInExp03": [
@@ -1673,11 +1493,11 @@
       "destructive": "rgb(237, 160, 146)"
     },
     "line": {
-      "rgb": "rgb(237,160,146)",
+      "rgb": "rgb(246,242,234)",
       "destructiveRgb": "rgb(237,160,146)",
-      "color": "rgb(237, 160, 146)",
-      "isDestructive": true,
-      "className": "mt-1.5 text-[11px] text-destructive"
+      "color": "rgb(246, 242, 234)",
+      "isDestructive": false,
+      "className": "text-[11px] leading-4 text-foreground"
     },
     "pill": {
       "rgb": "rgb(241,211,168)",
@@ -1734,21 +1554,11 @@
         "kind": "pill-failed",
         "incidental": false,
         "text": "Failed",
-        "ratio": 3.98,
-        "color": "rgb(164, 71, 61)",
+        "ratio": 6.07,
+        "color": "oklab(0.412425 0.0704803 0.0338449)",
         "bg": "rgb(225,208,205)",
         "size": "10px",
         "weight": "600"
-      },
-      {
-        "kind": "line-failed",
-        "incidental": false,
-        "text": "sendgrid_400: {\"errors\":[{\"message\":\"Does not contain a vali",
-        "ratio": 4.86,
-        "color": "rgb(164, 71, 61)",
-        "bg": "rgb(236,232,230)",
-        "size": "11px",
-        "weight": "400"
       },
       {
         "kind": "pill-unconfirmed",
@@ -1764,8 +1574,8 @@
         "kind": "line-unconfirmed",
         "incidental": false,
         "text": "Couldn't confirm this went out — don't resend.",
-        "ratio": 4.86,
-        "color": "rgb(164, 71, 61)",
+        "ratio": 13.52,
+        "color": "rgb(33, 30, 36)",
         "bg": "rgb(236,232,230)",
         "size": "11px",
         "weight": "400"
@@ -1803,16 +1613,6 @@
         "weight": "600"
       },
       {
-        "kind": "pill-failed",
-        "incidental": false,
-        "text": "Failed",
-        "ratio": 3.98,
-        "color": "rgb(164, 71, 61)",
-        "bg": "rgb(225,208,205)",
-        "size": "10px",
-        "weight": "600"
-      },
-      {
         "kind": null,
         "incidental": false,
         "text": "PROFILE · LIVE",
@@ -1823,7 +1623,7 @@
         "weight": "600"
       }
     ],
-    "textCount": 162,
+    "textCount": 163,
     "gold": 15,
     "goldOutsideAct": [],
     "warningInExp03": [],
@@ -1848,11 +1648,11 @@
       "destructive": "rgb(164, 71, 61)"
     },
     "line": {
-      "rgb": "rgb(164,71,61)",
+      "rgb": "rgb(33,30,36)",
       "destructiveRgb": "rgb(164,71,61)",
-      "color": "rgb(164, 71, 61)",
-      "isDestructive": true,
-      "className": "mt-1.5 text-[11px] text-destructive"
+      "color": "rgb(33, 30, 36)",
+      "isDestructive": false,
+      "className": "text-[11px] leading-4 text-foreground"
     },
     "pill": {
       "rgb": "rgb(102,71,41)",
@@ -1909,21 +1709,11 @@
         "kind": "pill-failed",
         "incidental": false,
         "text": "Failed",
-        "ratio": 5.9,
-        "color": "rgb(237, 160, 146)",
+        "ratio": 7.57,
+        "color": "oklab(0.846699 0.0510728 0.0341136)",
         "bg": "rgb(62,49,56)",
         "size": "10px",
         "weight": "600"
-      },
-      {
-        "kind": "line-failed",
-        "incidental": false,
-        "text": "sendgrid_400: {\"errors\":[{\"message\":\"Does not contain a vali",
-        "ratio": 7.92,
-        "color": "rgb(237, 160, 146)",
-        "bg": "rgb(32,29,40)",
-        "size": "11px",
-        "weight": "400"
       },
       {
         "kind": "pill-unconfirmed",
@@ -1939,8 +1729,8 @@
         "kind": "line-unconfirmed",
         "incidental": false,
         "text": "Couldn't confirm this went out — don't resend.",
-        "ratio": 7.92,
-        "color": "rgb(237, 160, 146)",
+        "ratio": 14.83,
+        "color": "rgb(246, 242, 234)",
         "bg": "rgb(32,29,40)",
         "size": "11px",
         "weight": "400"
@@ -1968,7 +1758,7 @@
         "weight": "400"
       }
     ],
-    "textCount": 162,
+    "textCount": 163,
     "gold": 15,
     "goldOutsideAct": [],
     "warningInExp03": [
@@ -1995,11 +1785,11 @@
       "destructive": "rgb(237, 160, 146)"
     },
     "line": {
-      "rgb": "rgb(237,160,146)",
+      "rgb": "rgb(246,242,234)",
       "destructiveRgb": "rgb(237,160,146)",
-      "color": "rgb(237, 160, 146)",
-      "isDestructive": true,
-      "className": "mt-1.5 text-[11px] text-destructive"
+      "color": "rgb(246, 242, 234)",
+      "isDestructive": false,
+      "className": "text-[11px] leading-4 text-foreground"
     },
     "pill": {
       "rgb": "rgb(241,211,168)",
@@ -2056,8 +1846,8 @@
         "kind": "pill-sent",
         "incidental": false,
         "text": "Sent",
-        "ratio": 3.7,
-        "color": "rgb(50, 118, 90)",
+        "ratio": 5.86,
+        "color": "oklab(0.410071 -0.04683 0.0111805)",
         "bg": "rgb(208,215,209)",
         "size": "10px",
         "weight": "600"
@@ -2066,21 +1856,11 @@
         "kind": "pill-failed",
         "incidental": false,
         "text": "Failed",
-        "ratio": 3.98,
-        "color": "rgb(164, 71, 61)",
+        "ratio": 6.07,
+        "color": "oklab(0.412425 0.0704803 0.0338449)",
         "bg": "rgb(225,208,205)",
         "size": "10px",
         "weight": "600"
-      },
-      {
-        "kind": "line-failed",
-        "incidental": false,
-        "text": "sendgrid_400: {\"errors\":[{\"message\":\"Does not contain a vali",
-        "ratio": 4.86,
-        "color": "rgb(164, 71, 61)",
-        "bg": "rgb(236,232,230)",
-        "size": "11px",
-        "weight": "400"
       },
       {
         "kind": "pill-unconfirmed",
@@ -2096,8 +1876,8 @@
         "kind": "line-unconfirmed",
         "incidental": false,
         "text": "Couldn't confirm this went out — don't resend.",
-        "ratio": 4.86,
-        "color": "rgb(164, 71, 61)",
+        "ratio": 13.52,
+        "color": "rgb(33, 30, 36)",
         "bg": "rgb(236,232,230)",
         "size": "11px",
         "weight": "400"
@@ -2132,26 +1912,6 @@
         "color": "rgb(50, 118, 90)",
         "bg": "rgb(217,212,211)",
         "size": "8px",
-        "weight": "600"
-      },
-      {
-        "kind": "pill-sent",
-        "incidental": false,
-        "text": "Sent",
-        "ratio": 3.7,
-        "color": "rgb(50, 118, 90)",
-        "bg": "rgb(208,215,209)",
-        "size": "10px",
-        "weight": "600"
-      },
-      {
-        "kind": "pill-failed",
-        "incidental": false,
-        "text": "Failed",
-        "ratio": 3.98,
-        "color": "rgb(164, 71, 61)",
-        "bg": "rgb(225,208,205)",
-        "size": "10px",
         "weight": "600"
       },
       {
@@ -2190,11 +1950,11 @@
       "destructive": "rgb(164, 71, 61)"
     },
     "line": {
-      "rgb": "rgb(164,71,61)",
+      "rgb": "rgb(33,30,36)",
       "destructiveRgb": "rgb(164,71,61)",
-      "color": "rgb(164, 71, 61)",
-      "isDestructive": true,
-      "className": "mt-1.5 text-[11px] text-destructive"
+      "color": "rgb(33, 30, 36)",
+      "isDestructive": false,
+      "className": "text-[11px] leading-4 text-foreground"
     },
     "pill": {
       "rgb": "rgb(102,71,41)",
@@ -2251,8 +2011,8 @@
         "kind": "pill-sent",
         "incidental": false,
         "text": "Sent",
-        "ratio": 6.77,
-        "color": "rgb(143, 209, 174)",
+        "ratio": 8.13,
+        "color": "oklab(0.865459 -0.0487846 0.0219309)",
         "bg": "rgb(48,56,60)",
         "size": "10px",
         "weight": "600"
@@ -2261,21 +2021,11 @@
         "kind": "pill-failed",
         "incidental": false,
         "text": "Failed",
-        "ratio": 5.9,
-        "color": "rgb(237, 160, 146)",
+        "ratio": 7.57,
+        "color": "oklab(0.846699 0.0510728 0.0341136)",
         "bg": "rgb(62,49,56)",
         "size": "10px",
         "weight": "600"
-      },
-      {
-        "kind": "line-failed",
-        "incidental": false,
-        "text": "sendgrid_400: {\"errors\":[{\"message\":\"Does not contain a vali",
-        "ratio": 7.92,
-        "color": "rgb(237, 160, 146)",
-        "bg": "rgb(32,29,40)",
-        "size": "11px",
-        "weight": "400"
       },
       {
         "kind": "pill-unconfirmed",
@@ -2291,8 +2041,8 @@
         "kind": "line-unconfirmed",
         "incidental": false,
         "text": "Couldn't confirm this went out — don't resend.",
-        "ratio": 7.92,
-        "color": "rgb(237, 160, 146)",
+        "ratio": 14.83,
+        "color": "rgb(246, 242, 234)",
         "bg": "rgb(32,29,40)",
         "size": "11px",
         "weight": "400"
@@ -2347,11 +2097,11 @@
       "destructive": "rgb(237, 160, 146)"
     },
     "line": {
-      "rgb": "rgb(237,160,146)",
+      "rgb": "rgb(246,242,234)",
       "destructiveRgb": "rgb(237,160,146)",
-      "color": "rgb(237, 160, 146)",
-      "isDestructive": true,
-      "className": "mt-1.5 text-[11px] text-destructive"
+      "color": "rgb(246, 242, 234)",
+      "isDestructive": false,
+      "className": "text-[11px] leading-4 text-foreground"
     },
     "pill": {
       "rgb": "rgb(241,211,168)",
@@ -2408,8 +2158,8 @@
         "kind": "pill-sent",
         "incidental": false,
         "text": "Sent",
-        "ratio": 3.7,
-        "color": "rgb(50, 118, 90)",
+        "ratio": 5.86,
+        "color": "oklab(0.410071 -0.04683 0.0111805)",
         "bg": "rgb(208,215,209)",
         "size": "10px",
         "weight": "600"
@@ -2418,21 +2168,11 @@
         "kind": "pill-failed",
         "incidental": false,
         "text": "Failed",
-        "ratio": 3.98,
-        "color": "rgb(164, 71, 61)",
+        "ratio": 6.07,
+        "color": "oklab(0.412425 0.0704803 0.0338449)",
         "bg": "rgb(225,208,205)",
         "size": "10px",
         "weight": "600"
-      },
-      {
-        "kind": "line-failed",
-        "incidental": false,
-        "text": "sendgrid_400: {\"errors\":[{\"message\":\"Does not contain a vali",
-        "ratio": 4.86,
-        "color": "rgb(164, 71, 61)",
-        "bg": "rgb(236,232,230)",
-        "size": "11px",
-        "weight": "400"
       },
       {
         "kind": "pill-unconfirmed",
@@ -2448,8 +2188,8 @@
         "kind": "line-unconfirmed",
         "incidental": false,
         "text": "Couldn't confirm this went out — don't resend.",
-        "ratio": 4.86,
-        "color": "rgb(164, 71, 61)",
+        "ratio": 13.52,
+        "color": "rgb(33, 30, 36)",
         "bg": "rgb(236,232,230)",
         "size": "11px",
         "weight": "400"
@@ -2484,26 +2224,6 @@
         "color": "rgb(50, 118, 90)",
         "bg": "rgb(217,212,211)",
         "size": "8px",
-        "weight": "600"
-      },
-      {
-        "kind": "pill-sent",
-        "incidental": false,
-        "text": "Sent",
-        "ratio": 3.7,
-        "color": "rgb(50, 118, 90)",
-        "bg": "rgb(208,215,209)",
-        "size": "10px",
-        "weight": "600"
-      },
-      {
-        "kind": "pill-failed",
-        "incidental": false,
-        "text": "Failed",
-        "ratio": 3.98,
-        "color": "rgb(164, 71, 61)",
-        "bg": "rgb(225,208,205)",
-        "size": "10px",
         "weight": "600"
       },
       {
@@ -2542,11 +2262,11 @@
       "destructive": "rgb(164, 71, 61)"
     },
     "line": {
-      "rgb": "rgb(164,71,61)",
+      "rgb": "rgb(33,30,36)",
       "destructiveRgb": "rgb(164,71,61)",
-      "color": "rgb(164, 71, 61)",
-      "isDestructive": true,
-      "className": "mt-1.5 text-[11px] text-destructive"
+      "color": "rgb(33, 30, 36)",
+      "isDestructive": false,
+      "className": "text-[11px] leading-4 text-foreground"
     },
     "pill": {
       "rgb": "rgb(102,71,41)",
@@ -2603,8 +2323,8 @@
         "kind": "pill-sent",
         "incidental": false,
         "text": "Sent",
-        "ratio": 6.77,
-        "color": "rgb(143, 209, 174)",
+        "ratio": 8.13,
+        "color": "oklab(0.865459 -0.0487846 0.0219309)",
         "bg": "rgb(48,56,60)",
         "size": "10px",
         "weight": "600"
@@ -2613,21 +2333,11 @@
         "kind": "pill-failed",
         "incidental": false,
         "text": "Failed",
-        "ratio": 5.9,
-        "color": "rgb(237, 160, 146)",
+        "ratio": 7.57,
+        "color": "oklab(0.846699 0.0510728 0.0341136)",
         "bg": "rgb(62,49,56)",
         "size": "10px",
         "weight": "600"
-      },
-      {
-        "kind": "line-failed",
-        "incidental": false,
-        "text": "sendgrid_400: {\"errors\":[{\"message\":\"Does not contain a vali",
-        "ratio": 7.92,
-        "color": "rgb(237, 160, 146)",
-        "bg": "rgb(32,29,40)",
-        "size": "11px",
-        "weight": "400"
       },
       {
         "kind": "pill-unconfirmed",
@@ -2643,8 +2353,8 @@
         "kind": "line-unconfirmed",
         "incidental": false,
         "text": "Couldn't confirm this went out — don't resend.",
-        "ratio": 7.92,
-        "color": "rgb(237, 160, 146)",
+        "ratio": 14.83,
+        "color": "rgb(246, 242, 234)",
         "bg": "rgb(32,29,40)",
         "size": "11px",
         "weight": "400"
@@ -2699,11 +2409,11 @@
       "destructive": "rgb(237, 160, 146)"
     },
     "line": {
-      "rgb": "rgb(237,160,146)",
+      "rgb": "rgb(246,242,234)",
       "destructiveRgb": "rgb(237,160,146)",
-      "color": "rgb(237, 160, 146)",
-      "isDestructive": true,
-      "className": "mt-1.5 text-[11px] text-destructive"
+      "color": "rgb(246, 242, 234)",
+      "isDestructive": false,
+      "className": "text-[11px] leading-4 text-foreground"
     },
     "pill": {
       "rgb": "rgb(241,211,168)",
@@ -2757,16 +2467,6 @@
     },
     "exp03": [
       {
-        "kind": "line-failed",
-        "incidental": false,
-        "text": "sendgrid_400: {\"errors\":[{\"message\":\"Does not contain a vali",
-        "ratio": 4.86,
-        "color": "rgb(164, 71, 61)",
-        "bg": "rgb(236,232,230)",
-        "size": "11px",
-        "weight": "400"
-      },
-      {
         "kind": "pill-unconfirmed",
         "incidental": false,
         "text": "Couldn't confirm",
@@ -2780,8 +2480,8 @@
         "kind": "line-unconfirmed",
         "incidental": false,
         "text": "Couldn't confirm this went out — don't resend.",
-        "ratio": 4.86,
-        "color": "rgb(164, 71, 61)",
+        "ratio": 13.52,
+        "color": "rgb(33, 30, 36)",
         "bg": "rgb(236,232,230)",
         "size": "11px",
         "weight": "400"
@@ -2844,11 +2544,11 @@
       "destructive": "rgb(164, 71, 61)"
     },
     "line": {
-      "rgb": "rgb(164,71,61)",
+      "rgb": "rgb(33,30,36)",
       "destructiveRgb": "rgb(164,71,61)",
-      "color": "rgb(164, 71, 61)",
-      "isDestructive": true,
-      "className": "mt-1.5 text-[11px] text-destructive"
+      "color": "rgb(33, 30, 36)",
+      "isDestructive": false,
+      "className": "text-[11px] leading-4 text-foreground"
     },
     "pill": {
       "rgb": "rgb(102,71,41)",
@@ -2902,16 +2602,6 @@
     },
     "exp03": [
       {
-        "kind": "line-failed",
-        "incidental": false,
-        "text": "sendgrid_400: {\"errors\":[{\"message\":\"Does not contain a vali",
-        "ratio": 7.92,
-        "color": "rgb(237, 160, 146)",
-        "bg": "rgb(32,29,40)",
-        "size": "11px",
-        "weight": "400"
-      },
-      {
         "kind": "pill-unconfirmed",
         "incidental": false,
         "text": "Couldn't confirm",
@@ -2925,8 +2615,8 @@
         "kind": "line-unconfirmed",
         "incidental": false,
         "text": "Couldn't confirm this went out — don't resend.",
-        "ratio": 7.92,
-        "color": "rgb(237, 160, 146)",
+        "ratio": 14.83,
+        "color": "rgb(246, 242, 234)",
         "bg": "rgb(32,29,40)",
         "size": "11px",
         "weight": "400"
@@ -2981,11 +2671,11 @@
       "destructive": "rgb(237, 160, 146)"
     },
     "line": {
-      "rgb": "rgb(237,160,146)",
+      "rgb": "rgb(246,242,234)",
       "destructiveRgb": "rgb(237,160,146)",
-      "color": "rgb(237, 160, 146)",
-      "isDestructive": true,
-      "className": "mt-1.5 text-[11px] text-destructive"
+      "color": "rgb(246, 242, 234)",
+      "isDestructive": false,
+      "className": "text-[11px] leading-4 text-foreground"
     },
     "pill": {
       "rgb": "rgb(241,211,168)",
@@ -3042,8 +2732,8 @@
         "kind": "pill-sent",
         "incidental": false,
         "text": "Sent",
-        "ratio": 3.7,
-        "color": "rgb(50, 118, 90)",
+        "ratio": 5.86,
+        "color": "oklab(0.410071 -0.04683 0.0111805)",
         "bg": "rgb(208,215,209)",
         "size": "10px",
         "weight": "600"
@@ -3052,21 +2742,11 @@
         "kind": "pill-failed",
         "incidental": false,
         "text": "Failed",
-        "ratio": 3.98,
-        "color": "rgb(164, 71, 61)",
+        "ratio": 6.07,
+        "color": "oklab(0.412425 0.0704803 0.0338449)",
         "bg": "rgb(225,208,205)",
         "size": "10px",
         "weight": "600"
-      },
-      {
-        "kind": "line-failed",
-        "incidental": false,
-        "text": "sendgrid_400: {\"errors\":[{\"message\":\"Does not contain a vali",
-        "ratio": 4.86,
-        "color": "rgb(164, 71, 61)",
-        "bg": "rgb(236,232,230)",
-        "size": "11px",
-        "weight": "400"
       },
       {
         "kind": "pill-unconfirmed",
@@ -3082,8 +2762,8 @@
         "kind": "line-unconfirmed",
         "incidental": false,
         "text": "Couldn't confirm this went out — don't resend.",
-        "ratio": 4.86,
-        "color": "rgb(164, 71, 61)",
+        "ratio": 13.52,
+        "color": "rgb(33, 30, 36)",
         "bg": "rgb(236,232,230)",
         "size": "11px",
         "weight": "400"
@@ -3091,7 +2771,7 @@
       {
         "kind": "toast",
         "incidental": false,
-        "text": "We couldn't confirm it was sent. It may already have reached",
+        "text": "We couldn't confirm it was sent — it may already be with the",
         "ratio": 17.26,
         "color": "rgb(4, 20, 57)",
         "bg": "rgb(249, 250, 251)",
@@ -3131,26 +2811,6 @@
         "weight": "600"
       },
       {
-        "kind": "pill-sent",
-        "incidental": false,
-        "text": "Sent",
-        "ratio": 3.7,
-        "color": "rgb(50, 118, 90)",
-        "bg": "rgb(208,215,209)",
-        "size": "10px",
-        "weight": "600"
-      },
-      {
-        "kind": "pill-failed",
-        "incidental": false,
-        "text": "Failed",
-        "ratio": 3.98,
-        "color": "rgb(164, 71, 61)",
-        "bg": "rgb(225,208,205)",
-        "size": "10px",
-        "weight": "600"
-      },
-      {
         "kind": null,
         "incidental": false,
         "text": "PROFILE · LIVE",
@@ -3161,7 +2821,7 @@
         "weight": "600"
       }
     ],
-    "textCount": 169,
+    "textCount": 170,
     "gold": 15,
     "goldOutsideAct": [],
     "warningInExp03": [],
@@ -3186,11 +2846,11 @@
       "destructive": "rgb(164, 71, 61)"
     },
     "line": {
-      "rgb": "rgb(164,71,61)",
+      "rgb": "rgb(33,30,36)",
       "destructiveRgb": "rgb(164,71,61)",
-      "color": "rgb(164, 71, 61)",
-      "isDestructive": true,
-      "className": "mt-1.5 text-[11px] text-destructive"
+      "color": "rgb(33, 30, 36)",
+      "isDestructive": false,
+      "className": "text-[11px] leading-4 text-foreground"
     },
     "pill": {
       "rgb": "rgb(102,71,41)",
@@ -3211,7 +2871,7 @@
     "toasts": [
       {
         "type": "warning",
-        "text": "We couldn't confirm it was sent. It may already have reached them — check before sending it again."
+        "text": "We couldn't confirm it was sent — it may already be with them. Don't send it again until you've asked them."
       }
     ],
     "calls": [
@@ -3254,8 +2914,8 @@
         "kind": "pill-sent",
         "incidental": false,
         "text": "Sent",
-        "ratio": 6.77,
-        "color": "rgb(143, 209, 174)",
+        "ratio": 8.13,
+        "color": "oklab(0.865459 -0.0487846 0.0219309)",
         "bg": "rgb(48,56,60)",
         "size": "10px",
         "weight": "600"
@@ -3264,21 +2924,11 @@
         "kind": "pill-failed",
         "incidental": false,
         "text": "Failed",
-        "ratio": 5.9,
-        "color": "rgb(237, 160, 146)",
+        "ratio": 7.57,
+        "color": "oklab(0.846699 0.0510728 0.0341136)",
         "bg": "rgb(62,49,56)",
         "size": "10px",
         "weight": "600"
-      },
-      {
-        "kind": "line-failed",
-        "incidental": false,
-        "text": "sendgrid_400: {\"errors\":[{\"message\":\"Does not contain a vali",
-        "ratio": 7.92,
-        "color": "rgb(237, 160, 146)",
-        "bg": "rgb(32,29,40)",
-        "size": "11px",
-        "weight": "400"
       },
       {
         "kind": "pill-unconfirmed",
@@ -3294,8 +2944,8 @@
         "kind": "line-unconfirmed",
         "incidental": false,
         "text": "Couldn't confirm this went out — don't resend.",
-        "ratio": 7.92,
-        "color": "rgb(237, 160, 146)",
+        "ratio": 14.83,
+        "color": "rgb(246, 242, 234)",
         "bg": "rgb(32,29,40)",
         "size": "11px",
         "weight": "400"
@@ -3303,7 +2953,7 @@
       {
         "kind": "toast",
         "incidental": false,
-        "text": "We couldn't confirm it was sent. It may already have reached",
+        "text": "We couldn't confirm it was sent — it may already be with the",
         "ratio": 18.26,
         "color": "rgb(245, 245, 245)",
         "bg": "rgb(12, 7, 18)",
@@ -3333,7 +2983,7 @@
         "weight": "400"
       }
     ],
-    "textCount": 169,
+    "textCount": 170,
     "gold": 15,
     "goldOutsideAct": [],
     "warningInExp03": [
@@ -3360,11 +3010,11 @@
       "destructive": "rgb(237, 160, 146)"
     },
     "line": {
-      "rgb": "rgb(237,160,146)",
+      "rgb": "rgb(246,242,234)",
       "destructiveRgb": "rgb(237,160,146)",
-      "color": "rgb(237, 160, 146)",
-      "isDestructive": true,
-      "className": "mt-1.5 text-[11px] text-destructive"
+      "color": "rgb(246, 242, 234)",
+      "isDestructive": false,
+      "className": "text-[11px] leading-4 text-foreground"
     },
     "pill": {
       "rgb": "rgb(241,211,168)",
@@ -3385,7 +3035,7 @@
     "toasts": [
       {
         "type": "warning",
-        "text": "We couldn't confirm it was sent. It may already have reached them — check before sending it again."
+        "text": "We couldn't confirm it was sent — it may already be with them. Don't send it again until you've asked them."
       }
     ],
     "calls": [
@@ -3425,16 +3075,6 @@
     },
     "exp03": [
       {
-        "kind": "line-failed",
-        "incidental": false,
-        "text": "sendgrid_400: {\"errors\":[{\"message\":\"Does not contain a vali",
-        "ratio": 4.86,
-        "color": "rgb(164, 71, 61)",
-        "bg": "rgb(236,232,230)",
-        "size": "11px",
-        "weight": "400"
-      },
-      {
         "kind": "pill-unconfirmed",
         "incidental": false,
         "text": "Couldn't confirm",
@@ -3448,8 +3088,8 @@
         "kind": "line-unconfirmed",
         "incidental": false,
         "text": "Couldn't confirm this went out — don't resend.",
-        "ratio": 4.86,
-        "color": "rgb(164, 71, 61)",
+        "ratio": 13.52,
+        "color": "rgb(33, 30, 36)",
         "bg": "rgb(236,232,230)",
         "size": "11px",
         "weight": "400"
@@ -3457,7 +3097,7 @@
       {
         "kind": "toast",
         "incidental": false,
-        "text": "We couldn't confirm it was sent. It may already have reached",
+        "text": "We couldn't confirm it was sent — it may already be with the",
         "ratio": 17.26,
         "color": "rgb(4, 20, 57)",
         "bg": "rgb(249, 250, 251)",
@@ -3522,11 +3162,11 @@
       "destructive": "rgb(164, 71, 61)"
     },
     "line": {
-      "rgb": "rgb(164,71,61)",
+      "rgb": "rgb(33,30,36)",
       "destructiveRgb": "rgb(164,71,61)",
-      "color": "rgb(164, 71, 61)",
-      "isDestructive": true,
-      "className": "mt-1.5 text-[11px] text-destructive"
+      "color": "rgb(33, 30, 36)",
+      "isDestructive": false,
+      "className": "text-[11px] leading-4 text-foreground"
     },
     "pill": {
       "rgb": "rgb(102,71,41)",
@@ -3547,7 +3187,7 @@
     "toasts": [
       {
         "type": "warning",
-        "text": "We couldn't confirm it was sent. It may already have reached them — check before sending it again."
+        "text": "We couldn't confirm it was sent — it may already be with them. Don't send it again until you've asked them."
       }
     ],
     "calls": [
@@ -3587,16 +3227,6 @@
     },
     "exp03": [
       {
-        "kind": "line-failed",
-        "incidental": false,
-        "text": "sendgrid_400: {\"errors\":[{\"message\":\"Does not contain a vali",
-        "ratio": 7.92,
-        "color": "rgb(237, 160, 146)",
-        "bg": "rgb(32,29,40)",
-        "size": "11px",
-        "weight": "400"
-      },
-      {
         "kind": "pill-unconfirmed",
         "incidental": false,
         "text": "Couldn't confirm",
@@ -3610,8 +3240,8 @@
         "kind": "line-unconfirmed",
         "incidental": false,
         "text": "Couldn't confirm this went out — don't resend.",
-        "ratio": 7.92,
-        "color": "rgb(237, 160, 146)",
+        "ratio": 14.83,
+        "color": "rgb(246, 242, 234)",
         "bg": "rgb(32,29,40)",
         "size": "11px",
         "weight": "400"
@@ -3619,7 +3249,7 @@
       {
         "kind": "toast",
         "incidental": false,
-        "text": "We couldn't confirm it was sent. It may already have reached",
+        "text": "We couldn't confirm it was sent — it may already be with the",
         "ratio": 18.26,
         "color": "rgb(245, 245, 245)",
         "bg": "rgb(12, 7, 18)",
@@ -3676,11 +3306,11 @@
       "destructive": "rgb(237, 160, 146)"
     },
     "line": {
-      "rgb": "rgb(237,160,146)",
+      "rgb": "rgb(246,242,234)",
       "destructiveRgb": "rgb(237,160,146)",
-      "color": "rgb(237, 160, 146)",
-      "isDestructive": true,
-      "className": "mt-1.5 text-[11px] text-destructive"
+      "color": "rgb(246, 242, 234)",
+      "isDestructive": false,
+      "className": "text-[11px] leading-4 text-foreground"
     },
     "pill": {
       "rgb": "rgb(241,211,168)",
@@ -3701,7 +3331,7 @@
     "toasts": [
       {
         "type": "warning",
-        "text": "We couldn't confirm it was sent. It may already have reached them — check before sending it again."
+        "text": "We couldn't confirm it was sent — it may already be with them. Don't send it again until you've asked them."
       }
     ],
     "calls": [

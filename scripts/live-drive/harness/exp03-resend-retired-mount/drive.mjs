@@ -28,7 +28,7 @@ fs.mkdirSync(out, { recursive: true });
 const PORT = 5199;
 const PILL = "Couldn't confirm";
 const LINE = "Couldn't confirm this went out — don't resend.";
-const TOAST = "We couldn't confirm it was sent. It may already have reached them — check before sending it again.";
+const TOAST = "We couldn't confirm it was sent — it may already be with them. Don't send it again until you've asked them.";
 const LABEL = "harness render · not live";
 
 const shots = [];

@@ -47,7 +47,7 @@ afterEach(() => { act(() => root?.unmount()); root = null; host?.remove(); });
 
 describe("ContactSupport — the person hears what actually happened", () => {
   it("an unconfirmed send says it may have reached the team and to wait, never 'failed' / 'try again'", async () => {
-    const said = "We couldn't confirm your request reached our team. It may have — please wait a few minutes before sending it again, or email support@paigeagent.ai.";
+    const said = "We couldn't confirm your request reached our team. It may have — please don't send it again; email support@paigeagent.ai if you haven't heard back.";
     state.invoke.mockResolvedValue(httpError(502, { error: said, unconfirmed: true }));
     await submit();
     expect(state.error).not.toHaveBeenCalled();

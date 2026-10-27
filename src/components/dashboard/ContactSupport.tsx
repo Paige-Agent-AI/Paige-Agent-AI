@@ -52,7 +52,7 @@ export function ContactSupport() {
         const said = typeof body?.error === "string" ? body.error : null;
         if (body?.unconfirmed === true) {
           toast.warning("We couldn't confirm it reached our team", {
-            description: said ?? "It may have. Please wait a few minutes before sending it again, or email support@paigeagent.ai.",
+            description: said ?? "It may have. Please don't send it again; email support@paigeagent.ai if you haven't heard back.",
           });
           return;
         }

@@ -34,7 +34,7 @@ import {
   MESSAGE_COLS, THREAD_COLS, messageRowsFromDb, threadsFromDb, CHANNEL_ICON, CHANNEL_LABEL,
   partyLabel, bodyPreview, msgTime, contactNameFromClient,
   INBOX_VIEWS, endOfTodayMs, readSendResult, resolveMergeVars, UNDO_WINDOW_MS,
-  SEND_UNCONFIRMED_COPY, isUnconfirmedMessage,
+  SEND_UNCONFIRMED_COPY, isUnconfirmedMessage, ownerSendError,
   useCommsAttachments,
 } from "./conversations/inbox-shared";
 import { voiceHistoryStatus } from "@/lib/voice/voiceCallSafety";
@@ -137,10 +137,15 @@ function mergeContext(sel: SelectedView | null, sig?: Signature, snip?: Snippet)
 // ported email-template picker resolve merge vars through the exact same helper).
 
 // ── Status pill mapping for a single message ─────────────────────────────────────
+// The plain error/success pill text measured below AA in light at 10px (Failed 3.98:1, Sent 3.70:1,
+// exp03-measurements.json); deepened toward ink exactly like the governed "Not sent" pill.
+const PILL_INK_ERROR = "text-[color-mix(in_oklab,hsl(var(--destructive))_62%,hsl(var(--foreground)))]";
+const PILL_INK_SUCCESS = "text-[color-mix(in_oklab,hsl(var(--success))_62%,hsl(var(--foreground)))]";
+
 function messageStatusPill(m: MessageRow & GovernedSendFields) {
   // A send the server stopped before it left (suppressed, do-not-disturb, no consent) is written
   // 'blocked'. Without a pill it read as an ordinary sent bubble.
-  if ((m.status as string) === "blocked") return <StatePill state="error">Not sent</StatePill>;
+  if ((m.status as string) === "blocked") return <StatePill state="error" className={PILL_INK_ERROR}>Not sent</StatePill>;
   // An email the service may have taken (its answer was lost) is never shown as a plain failure (Experience 03).
   if (isUnconfirmedMessage(m)) {
     return (
@@ -149,16 +154,16 @@ function messageStatusPill(m: MessageRow & GovernedSendFields) {
       </StatePill>
     );
   }
-  if (m.status === "failed") return <StatePill state="error">Failed</StatePill>;
+  if (m.status === "failed") return <StatePill state="error" className={PILL_INK_ERROR}>Failed</StatePill>;
   if (m.status === "sent" || m.status === "delivered" || m.status === "read") {
     // A settled governed email never says plain "Sent" — that reads as delivered to a
     // non-technical owner. Only the provider's own delivered event says Delivered; an
     // accepted operation with a sent/read marker says Accepted (the email service took it,
     // delivery not confirmed). Everything else (no binding, not accepted) keeps "Sent".
     const receipt = governedEmailReceiptLabel(m);
-    if (receipt === "Delivered") return <StatePill state="success">Delivered</StatePill>;
-    if (receipt === "Accepted") return <StatePill state="success">Accepted</StatePill>;
-    return <StatePill state="success">Sent</StatePill>;
+    if (receipt === "Delivered") return <StatePill state="success" className={PILL_INK_SUCCESS}>Delivered</StatePill>;
+    if (receipt === "Accepted") return <StatePill state="success" className={PILL_INK_SUCCESS}>Accepted</StatePill>;
+    return <StatePill state="success" className={PILL_INK_SUCCESS}>Sent</StatePill>;
   }
   if (m.status === "queued") return <StatePill state="pending">Queued</StatePill>;
   return null;
@@ -296,7 +301,8 @@ function MessageBubble({
         )
         : messageStatusPill(m)
       }
-      error={m.status === "failed" && !governedOpen ? (isUnconfirmedMessage(m) ? GOVERNED_SEND_COPY.unconfirmed.line : m.error) : null}
+      // An unconfirmed send is not a failure: its line renders in ink through `footer`, never the error colour.
+      error={m.status === "failed" && !governedOpen && !isUnconfirmedMessage(m) ? ownerSendError(m.error) : null}
       subject={isCall || isHelpRequest ? undefined : (m.subject ?? undefined)}
       foldable={!isCall && shouldFoldEmail(m.channel_type, body)}
       call={
@@ -324,7 +330,7 @@ function MessageBubble({
         ) : undefined
       }
       footer={
-        governed === "unconfirmed" ? (
+        governed === "unconfirmed" || (m.status === "failed" && !governedOpen && isUnconfirmedMessage(m)) ? (
           <p data-governed-send="unconfirmed" className="text-[11px] leading-4 text-foreground">
             {GOVERNED_SEND_COPY.unconfirmed.line}
           </p>

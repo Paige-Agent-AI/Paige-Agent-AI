@@ -1,5 +1,11 @@
 # Decision Log — chronological one-liners
 
+## October27 — EXP03 email reply box: owner chose B with (ii); one draft per inbound reply
+
+- **Owner decision (2026-10-27): B with (ii).** The Conversations email composer sends through the governed door `comms-email-command`. Pressing Send shows an inline check (server-resolved To/From, subject, files, send time); **Send now** / **Schedule send** is the approval. Email loses the 30-second undo; SMS keeps it. The door is extended first so attachments and a send time are bound into the approval. Reviewed on the mocked "Reply Check Prototype" artifact.
+- **#2986 live (`a4d76c41`, deploy-migrations 40538014513):** migration row, four triggers, RLS, no browser read, 1 backfilled row, both replaced bodies read back on production.
+- **Inbound N1/N6 (migration `20271118110000`):** one `comms-draft-reply` action per inbound message (partial unique index; 23505 = already filed); a display name holding `@` is not a first name. N7 kept: a reply whose contact cannot be created is stored unlinked, not refused, so SendGrid does not redeliver for days.
+
 ## October27 — EXP03 a released managed address is never re-issued; EXP03 record brought current
 
 - **Address reuse closed (migration `20271118100000`).** The #2983 review HIGH reproduced on production in a rolled-back transaction: after business B renamed, business A renaming to B's old slug was handed B's old `<slug>@mail.paigeagent.ai`. Now a released shared-domain address — from a connector (where replies are delivered) or a sending identity (the From on mail) — is recorded in `paige_retired_managed_addresses` with the business that held it and refused to any other business on both records; provisioning gives a slug-derived name the first numbered variant no other business holds or gave up, so signup and renames never fail and the connector and From match; Solo Setup reports it unavailable; an owner cannot set the From to it (also reproduced failing-first on production). The table has no foreign key to tenants: the operator's account-deletion function refuses unknown tenant dependencies (CI caught it). Backfilled from message history (1 address on production was already released and unheld).

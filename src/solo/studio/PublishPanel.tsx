@@ -13,6 +13,7 @@ import {
 import { artifactId, hasPendingChanges, isLive, type LoadedArtifact } from "./artifact-state";
 import { nexusDisplayName, reviewWithNexusPrompt } from "./nexus";
 import { EmbedCode } from "./EmbedCode";
+import { DomainGuidanceCard } from "./DomainGuidanceCard";
 import { buildPortableExport, PortableExportRefused } from "@/lib/growth/exportPortable";
 import type { GrowthPageTheme } from "@/lib/growth";
 
@@ -304,6 +305,7 @@ export function PublishPanel({ artifact, onNexusHandoff, onClose, onDone, onRefr
         <p>Anyone with the link can open it, and it's in Marketing › Overview.</p>
         <a href={url} target="_blank" rel="noreferrer" className="vs-link" style={{ wordBreak: "break-all" }}>{url}</a>
         {artifact.kind === "form" && <EmbedCode formId={id} formName={artifact.form.name} />}
+        {tenantSlug && <DomainGuidanceCard tenantSlug={tenantSlug} />}
         <div className="vs-pop-foot"><button ref={doneRef} type="button" className="vs-btn" onClick={onClose}>Done</button></div>
       </div>
     );
@@ -360,6 +362,7 @@ export function PublishPanel({ artifact, onNexusHandoff, onClose, onDone, onRefr
         {!confirming && artifact.kind === "page" && artifact.page.published && tenantSlug && brandFloor && (
           <PortableExportCard artifact={artifact} tenantSlug={tenantSlug} tenantName={tenantName ?? null} brandFloor={brandFloor} onError={setError} />
         )}
+        {!confirming && tenantSlug && <DomainGuidanceCard tenantSlug={tenantSlug} />}
         {!confirming && out?.state === "blocked" && <CheckList checks={out.preview.checks.filter((c) => !c.ok && c.blocking)} label="Why it can't come down yet" />}
         {!confirming && unpublishOff}
         {!confirming && (out?.state === "refused" || out?.state === "error") && (

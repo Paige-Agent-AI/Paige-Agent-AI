@@ -955,8 +955,28 @@ Both closed as superseded with links; their branches are kept.
   never issued to another business; a new or renamed business takes a numbered variant. The review HIGH on #2983
   reproduced on production first (rolled back): A renaming to B's old slug was handed B's old address.
 
-**Open, in order:** Conversations composer through the governed door (O12); inbound follow-ups (duplicate
-draft on concurrent redelivery, unauthenticated-sender badge, `@` in display names, failed contact create);
+### 14.8 Retired addresses live, reply-box decision, inbound follow-ups (2026-10-27)
+
+- **#2986 merged as `a4d76c41` and LIVE.** deploy-migrations run 40538014513 pushed and verified
+  `20271118100000`. Read back on production: the migration row exists; the four triggers exist (connector
+  release/refuse, identity release/refuse); RLS is on; `authenticated` cannot read the table; the backfill holds
+  exactly 1 row; `provision_paige_managed_email_connector` carries the variant loop and
+  `check_solo_setup_managed_email` the retired clause. Known limit from the second review: a server-side write that
+  changes only a connector's `tenant_id` is not refused (a browser cannot do it — #2983 — and no product writer
+  does); recorded, not built.
+- **Owner decision on O12 (2026-10-27): B with (ii).** Pressing Send in the Conversations email composer shows an
+  inline check in place of the action row — server-resolved To and From, subject, files and send time — and
+  **Send now** (or **Schedule send**) is the approval. The 30-second undo for email goes away; SMS is unchanged.
+  (ii): the governed door is extended first so attachments and a scheduled send time keep working and are bound into
+  the approval. Prototype: the published "Reply Check Prototype" artifact (mocked, nothing sent). Build sequenced next.
+- **Inbound follow-ups in this PR:** N1 — one draft reply per inbound message (migration `20271118110000`, a partial
+  unique index on `paige_actions (tenant_id, payload->>'message_id')` for `comms-draft-reply`; a concurrent
+  redelivery's 23505 reads as already filed). N6 — a sender display name containing `@` is not used as the new
+  contact's first name. N7 stays as is on purpose: when the contact cannot be created, the reply is stored unlinked
+  rather than refused, because a refusal makes SendGrid redeliver for days and the reply is visible either way.
+
+**Open, in order:** Conversations composer through the governed door with files and scheduling (O12, B+(ii));
+inbound follow-ups (unauthenticated-sender badge — UI, needs design);
 custom-domain rebuild; owner-seen designs for the reply screen, S4b activation and company/personal mailbox
 access (owner direction 2026-10-27: the account holder grants each team member none / read / read and reply
 on the company mailbox; personal mailboxes stay private).

@@ -7,10 +7,10 @@ MATERIAL_FLOW_CHANGE: NO: repairs lost reporting context on existing invitations
 FLOW_PROTOTYPE: NOT_REQUIRED: original mounted component reproduced three period failures before the repair; the existing actual-component walkthrough verifies the same flow.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: eligible SOLO owner discusses the same selected business-review period through PAIGE's existing Chat, including VERA's specialist invitation.
 VISUAL_DIRECTION: PASS: preserve the Executive/Chat composition; compact Reporting period wording instead of duplicate context prose. No new banner, card or decorative control.
-AUTOMATED_EVIDENCE: PASS: 84 controls/four suites/zero skips. Three causal original-component failures before repair; all original Executive test source retained. Each of three periods exercises all five invitation families, one prefill/open and exactly one period label.
-STATIC_EVIDENCE: PASS: focused lint0 and normal build59.23s. Actual application compiler has the same six incumbent diagnostics under unchanged baseline10, no new findings or clean-compiler claim. Declared source/input/frame hashes in assets/e2-executive-chat-period/source-index.json.
-RENDERED_EVIDENCE: PASS: fourteen raw actual-source synthetic frames at0afddbd82e66e2986bdd6c0164da915c7ffe478f, eight required shell states plus desktop/phone target and priority drafts and390/320 Obsidian keyboard drafts.24 declared inputs, not a complete transitive graph.
-BEHAVIORAL_EVIDENCE: PASS: ten native Enter invitations across desktop Last30days and phone Thisquarter retain exactly the selected period in the original draft; two Obsidian phone invitations reach the original textarea by keyboard. Send remains disabled in the closed walkthrough; no model/backend/business operation ran.
+AUTOMATED_EVIDENCE: PASS: actual composed source269 controls/13 disjoint suites/zero skips. Three causal period failures preceded repair. Full tracked tree of actual receiving0a408 equals tested/rendered prospective45eb; all original controls and new assertions retained.
+STATIC_EVIDENCE: PASS: current combined normal build71s; focused lint0 retained on unchanged producer. Actual combined app compiler has six exactly unchanged incumbent diagnostics under unchanged baseline10; no new findings or clean-compiler claim.24 declared input and18 raw frame hashes in the original source-index.
+RENDERED_EVIDENCE: PASS: eighteen raw actual-component synthetic frames at45eb4e90fdcba00f367c93cd2190dc80299b3ba5, full tracked tree identical to actual received0a408ef9b214292258fc5760ce03b586542ca1c8. Eight required shell layouts, desktop/phone target/priority drafts,390/320 Obsidian keyboard drafts and four department-return frames.24 declared inputs, not a complete transitive graph. Actual CSS sizes and up-to1px raw native JPEG rounding recorded; no image resizing.
+BEHAVIORAL_EVIDENCE: PASS: ten native Enter invitations across desktop Last30days and phone Thisquarter plus two Obsidian phone invitations retain selected period exactly once in the original draft. Four native department→Back trips preserve selected period/source/opener/reading position delta0; original open-rail synthetic draft survives. Send is disabled; no model/backend/business operation.
 AUTHENTICATED_RUNTIME: UNVERIFIED: shared ordinary-owner QA custody remains pending; no real account/session, Finance, model, weekly settlement, Live or complete outcome is accepted from these fixtures.
 KEYBOARD_FOCUS: PASS: original period control and native Enter invitation, existing fold control, and original textarea End/focus observed. No new focus manager or shared-shell edit.
 ZOOM_REFLOW: UNVERIFIED: declared CSS widths320–1536 fit without document/root horizontal overflow; native200percent zoom and physical-device proof not performed.
@@ -33,7 +33,7 @@ MUST_PRESERVE: Original selected route period, source-specific metric/target win
 ACCEPTANCE_CRITERIA: All five existing invitations carry exactly the current selected period, including after route selection; unavailable conversation stays disabled and receiving evidence must still be read through original current authority.
 MOTION_PURPOSE: NONE: no animation or motion change.
 PROTECTED_SEAMS: Original Executive prompt producer only. Shared Chat/Root/router/handoff implementation, registry, issuer, domain writers, Trust/LayerC/Rail and provider contracts untouched.
-INTERNAL_BUILD_IDENTITY: 0afddbd82e66e2986bdd6c0164da915c7ffe478f source/render on actual main1ad5f13c4579c717248027687468c43de90bcd40; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=assets/e2-executive-chat-period/source-index.json.
+INTERNAL_BUILD_IDENTITY: rendered45eb4e90fdcba00f367c93cd2190dc80299b3ba5/tree8b7e37e5163f5c0ce892a2eeae81639b7fda8fae equals full tracked actual receiving0a408ef9b214292258fc5760ce03b586542ca1c8 on released maind0ab7820dbba5e0cbb4aac2f03902a2e2761e8fc; handoff deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=assets/e2-executive-chat-period/source-index.json.
 RELEASE_CHANNEL: development: local source and synthetic rendering only; exact-head review/CI and safe normal release/readback remain required.
 RELEASE_CLASSIFICATION: internal-only: current-context correction, no customer capability announcement.
 CUSTOMER_RELEASE_IDENTITY: none: full outcome/authenticated proof and founder acceptance not established.
@@ -60,3 +60,16 @@ draft. ALG03 ordering and canonical ALG06/11/12 maturity unchanged; ALG13 utilit
 Unverified. Catalogue3Limited/3Unverified/3ComingSoon and partial Executive binding
 remain unchanged. Historical9PASS0FAIL/12PASS0FAIL4BLOCKED and protected monthly
 UNKNOWN/UNRETRIED remain intact.
+
+Current-source composition: the earlier0af fourteen-frame proof remains historical
+in Git. The final eighteen raw frames are freshly captured from both own changes,
+including actual Back/scroll/source/focus/draft behavior. All eighteen inspected;
+no material visual or interaction finding. Current-chat IAB only; no shared
+native window, Edge or customer Chrome used. Working proof tab/viewport/server
+cleaned. Initial restricted local socket/warm-navigation and optional-Pillow
+setup failures are INVALID, as was the exact-JPEG-size assumption. The actual
+CSS viewport and raw JPEG sizes/deltas are recorded without modifying images.
+The original direct-entry public readback assumption also earned no PASS;
+the released source probe follows the bootstrap's explicit same-origin link.
+Actual customer access fallback stopped WRONG_SCOPE; it is not Finance evidence.
+Original nine-point briefing and all19/nine/final founder obligations remain.

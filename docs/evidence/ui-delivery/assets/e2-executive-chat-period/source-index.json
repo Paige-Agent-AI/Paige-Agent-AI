@@ -1,21 +1,21 @@
 {
-  "source": "0afddbd82e66e2986bdd6c0164da915c7ffe478f",
-  "base": "1ad5f13c4579c717248027687468c43de90bcd40",
-  "scope": "Declared original Executive, period/router, handoff, shell, presenters, fixture/style/font inputs; not a complete transitive graph. Closed synthetic composer; fixed source data window is not current backend period proof.",
+  "source": "45eb4e90fdcba00f367c93cd2190dc80299b3ba5",
+  "base": "b9659598cfbcb3a9c74283722de00e8d9093b0f2",
+  "scope": "Declared original composed Executive/period/return, router, handoff, shell, presenters, closed fixture/style/font inputs; not a complete transitive graph. Fixed source data window is not backend period proof. Prospective own-source composition, not released main.",
   "inputs": [
     {
       "path": "src/solo/ExecutiveOverview.tsx",
-      "sha256": "33eaf7899c4da2184d902bd73c5238aff7adb4bd6aa228ccec470b3e1eb7c400",
+      "sha256": "cfda5d3c4ef9e530dabee60dc836253c57d3cb4cd266c7753138dbdb4dce52a0",
       "hash_mode": "text_lf"
     },
     {
       "path": "src/solo/CommandCenter.tsx",
-      "sha256": "f16ada48b0c2cbb8748fa253db3000c3bd5ec0cfd9081746b611fac282ef4a61",
+      "sha256": "3a52bfeaa33c2d872dd5e0b699f74de04780c0922fdcb31647d4c761554caec8",
       "hash_mode": "text_lf"
     },
     {
       "path": "src/solo/executive-overview.css",
-      "sha256": "fcaca294d527c37f7a61207382b5347028e07f72d6a9259c4f2555e0d9b6856a",
+      "sha256": "22abdcc48dac8c0c97199b7ea58089434e4a2645bb075c96e9e949571c759f9d",
       "hash_mode": "text_lf"
     },
     {
@@ -127,81 +127,239 @@
   "frames": [
     {
       "path": "1024x768-closed.jpg",
-      "sha256": "f7f4e50c8f58c5bffedec0ac3ff3518d387b32f437ccf48f61e979427c6ca7d2"
+      "sha256": "80b76e9efd5baf83781b7b625ea4b5c5302e700b3e456c49f136fc765f903f52",
+      "width": 1024,
+      "height": 768,
+      "requested_css_width": 1024,
+      "requested_css_height": 768,
+      "raw_native_transport_rounding": [
+        0,
+        0
+      ]
     },
     {
       "path": "1024x768-open.jpg",
-      "sha256": "6008864e76f01d47e4252384dee93cbb6a36e725b9599f0eda5c7e682f60b8af"
+      "sha256": "6008864e76f01d47e4252384dee93cbb6a36e725b9599f0eda5c7e682f60b8af",
+      "width": 1024,
+      "height": 768,
+      "requested_css_width": 1024,
+      "requested_css_height": 768,
+      "raw_native_transport_rounding": [
+        0,
+        0
+      ]
+    },
+    {
+      "path": "1366x768-closed-return.jpg",
+      "sha256": "56888db24c697a920b565f148e59ad7184546c352b4e1cc36a31f48f1998f175",
+      "width": 1366,
+      "height": 768,
+      "requested_css_width": 1366,
+      "requested_css_height": 768,
+      "raw_native_transport_rounding": [
+        0,
+        0
+      ]
     },
     {
       "path": "1366x768-closed.jpg",
-      "sha256": "98ae7a5d235d2dd4452f14bd3e96d8a173dfaf705388f22016471f3a8abd6bdd"
+      "sha256": "eeeb6760df20a34e4714b0de84da7e480b02c8e59c34528971977c13ecb32690",
+      "width": 1366,
+      "height": 768,
+      "requested_css_width": 1366,
+      "requested_css_height": 768,
+      "raw_native_transport_rounding": [
+        0,
+        0
+      ]
+    },
+    {
+      "path": "1366x768-open-return.jpg",
+      "sha256": "4ac39c1dd6b0cfd2e367bf0eb722c7b22450cdd2d29966b54cb0388da1cf15e6",
+      "width": 1366,
+      "height": 768,
+      "requested_css_width": 1366,
+      "requested_css_height": 768,
+      "raw_native_transport_rounding": [
+        0,
+        0
+      ]
     },
     {
       "path": "1366x768-open.jpg",
-      "sha256": "bc4e1b829873765e02e7ba15a918ee42f7787f7bb15de21f0d10b5d2b728008f"
+      "sha256": "cb7a1ff58e16eb2b22e62bbc976d12f7892862f376e6b3ea3085f6ac710fd39a",
+      "width": 1366,
+      "height": 768,
+      "requested_css_width": 1366,
+      "requested_css_height": 768,
+      "raw_native_transport_rounding": [
+        0,
+        0
+      ]
     },
     {
       "path": "1366x768-priority-draft.jpg",
-      "sha256": "c95ee1d77c8524baacd79688671b289908f016e789000e363fb29c362aaa87fc"
+      "sha256": "c95ee1d77c8524baacd79688671b289908f016e789000e363fb29c362aaa87fc",
+      "width": 1366,
+      "height": 768,
+      "requested_css_width": 1366,
+      "requested_css_height": 768,
+      "raw_native_transport_rounding": [
+        0,
+        0
+      ]
     },
     {
       "path": "1366x768-targets-draft.jpg",
-      "sha256": "7d82f248bd8122e3a6a07830f65f66733a66acb784b3eb2141d870a9b76ad9fe"
+      "sha256": "205c2ea4f6ac6b2ca4d3e0b3dfea167e5c520f9bc74db8bb0e0233826164c98a",
+      "width": 1366,
+      "height": 768,
+      "requested_css_width": 1366,
+      "requested_css_height": 768,
+      "raw_native_transport_rounding": [
+        0,
+        0
+      ]
     },
     {
       "path": "1536x770-closed.jpg",
-      "sha256": "bb06af73659efdaa79e695c8445ae5d034ed1ea298a8260769c0bbf8744d582d"
+      "sha256": "7cdbe8968a21f9193de30475f1029ff74153e638f0e22e1136459fb70223afa9",
+      "width": 1535,
+      "height": 770,
+      "requested_css_width": 1536,
+      "requested_css_height": 770,
+      "raw_native_transport_rounding": [
+        -1,
+        0
+      ]
     },
     {
       "path": "1536x770-open.jpg",
-      "sha256": "10dbdba4cd666c640d838d49924b5e0ca88fe31f684966bfdebbe5c17121df12"
+      "sha256": "be8143660c527583cf74a0c3e36c6b7c77899b40ed3585c05df392ce2ae4289d",
+      "width": 1535,
+      "height": 770,
+      "requested_css_width": 1536,
+      "requested_css_height": 770,
+      "raw_native_transport_rounding": [
+        -1,
+        0
+      ]
+    },
+    {
+      "path": "320x740-closed-return.jpg",
+      "sha256": "fff8edef464ef7f2d942e668d59306e2f060b38a6c48b1f5f92fb82d4488db66",
+      "width": 320,
+      "height": 740,
+      "requested_css_width": 320,
+      "requested_css_height": 740,
+      "raw_native_transport_rounding": [
+        0,
+        0
+      ]
     },
     {
       "path": "320x740-obsidian-priority.jpg",
-      "sha256": "7122e17b340b3c105ce5fc6c91836145724a77ca819cc11187963bd60aedd547"
+      "sha256": "0196c705595871aeae8fc5b8e92b99f7545ab606b3caf69e950d2dc5f2d74158",
+      "width": 320,
+      "height": 740,
+      "requested_css_width": 320,
+      "requested_css_height": 740,
+      "raw_native_transport_rounding": [
+        0,
+        0
+      ]
+    },
+    {
+      "path": "390x844-closed-return.jpg",
+      "sha256": "ac686c4ae303242b7d04752ef792d62c86049dcdf08f345baa547a9d3c6ddf56",
+      "width": 390,
+      "height": 843,
+      "requested_css_width": 390,
+      "requested_css_height": 844,
+      "raw_native_transport_rounding": [
+        0,
+        -1
+      ]
     },
     {
       "path": "390x844-obsidian-priority.jpg",
-      "sha256": "142f983a4c584a604499bb35761ed7e237a4e9563834f0f7c4eaae07800f81dc"
+      "sha256": "142f983a4c584a604499bb35761ed7e237a4e9563834f0f7c4eaae07800f81dc",
+      "width": 390,
+      "height": 843,
+      "requested_css_width": 390,
+      "requested_css_height": 844,
+      "raw_native_transport_rounding": [
+        0,
+        -1
+      ]
     },
     {
       "path": "390x844-priority-draft.jpg",
-      "sha256": "9e40ae59e760f8ec7c1bd8f94d9af7732e6eedc7ac571d51834e21e3efebc2b3"
+      "sha256": "9e40ae59e760f8ec7c1bd8f94d9af7732e6eedc7ac571d51834e21e3efebc2b3",
+      "width": 390,
+      "height": 843,
+      "requested_css_width": 390,
+      "requested_css_height": 844,
+      "raw_native_transport_rounding": [
+        0,
+        -1
+      ]
     },
     {
       "path": "390x844-targets-draft.jpg",
-      "sha256": "e7c3a0647727299adc0abd4bfe96c269f529ba566f411f6de8aa8c708a163b8c"
+      "sha256": "e7c3a0647727299adc0abd4bfe96c269f529ba566f411f6de8aa8c708a163b8c",
+      "width": 390,
+      "height": 843,
+      "requested_css_width": 390,
+      "requested_css_height": 844,
+      "raw_native_transport_rounding": [
+        0,
+        -1
+      ]
     },
     {
       "path": "900x1000-closed.jpg",
-      "sha256": "75c813c46b4c051ed5d2bc85f9eb196b5341bcfdd8735dc1263fb4362a176d66"
+      "sha256": "55cb39be88732052a6efa7e6064425c5f6baeab471508cd15a8d9f33540803c3",
+      "width": 900,
+      "height": 1000,
+      "requested_css_width": 900,
+      "requested_css_height": 1000,
+      "raw_native_transport_rounding": [
+        0,
+        0
+      ]
     },
     {
       "path": "900x1000-open.jpg",
-      "sha256": "51b71297af6a21d318ab8753ae78eedf8295cee38e13bd102cc9b5af3a81c42c"
+      "sha256": "51b71297af6a21d318ab8753ae78eedf8295cee38e13bd102cc9b5af3a81c42c",
+      "width": 900,
+      "height": 1000,
+      "requested_css_width": 900,
+      "requested_css_height": 1000,
+      "raw_native_transport_rounding": [
+        0,
+        0
+      ]
     }
   ],
   "observations": "render-observations.json",
   "tests": {
-    "controls": 84,
-    "suites": 4,
+    "controls": 269,
+    "suites": 13,
     "skips": 0,
-    "original_Executive_test_source_retained": true,
+    "newly_rendered_native_invitations": 12,
+    "newly_rendered_native_returns": 4,
     "incumbent_compiler_diagnostics": 6,
     "new_compiler_diagnostics": 0,
     "baseline_unchanged": 10
   },
-  "recaptured_layouts_pixel_identical_to_visually_inspected_pre_clarity": [
-    "1536x770-closed.jpg",
-    "1536x770-open.jpg",
-    "1366x768-closed.jpg",
-    "1366x768-open.jpg",
-    "1024x768-closed.jpg",
-    "1024x768-open.jpg",
-    "900x1000-closed.jpg",
-    "900x1000-open.jpg"
-  ],
+  "image_boundary": "Required CSS viewports independently read from actual DOM. Raw JPEG transport differs by at most one pixel; every actual/requested size and delta is recorded without resizing images. Initial exact-JPEG-size assumption was invalid.",
+  "initial_setup_attempts": "INVALID: restricted local socket, first warm navigation and unavailable optional Pillow; no product assertion counted",
   "authenticated": "UNVERIFIED",
-  "founder": "NOT_ACCEPTED"
+  "founder": "NOT_ACCEPTED",
+  "actual_received_source": "0a408ef9b214292258fc5760ce03b586542ca1c8",
+  "actual_received_base": "d0ab7820dbba5e0cbb4aac2f03902a2e2761e8fc",
+  "actual_received_tree": "8b7e37e5163f5c0ce892a2eeae81639b7fda8fae",
+  "composition_binding": "Full tracked actual received tree is byte-identical to the previously rendered prospective tree. Render source provenance is retained; no customer or deployed proof inferred.",
+  "reviewed_frames": 18
 }

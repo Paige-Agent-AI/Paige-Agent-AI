@@ -3,14 +3,17 @@
  *
  * EXP08 PAIGE team-lifecycle tools put suspend/reinstate, remove-and-hand-over and the Team
  * conversations switch into PAIGE's chat. The approved, frozen panel (§28) listed those three as
- * "Coming to Paige, not yet available" and told the person to do them here "until then". Once the
- * tools ship that copy is false (§13), so only its list membership and that one sentence change; this
- * suite pins the result. jsdom against the real component, Supabase mocked: it proves the copy a
- * person reads, not the tools themselves.
+ * "Coming to Paige, not yet available". #2957 moved them under "She can do this for you today", but
+ * the tools have never been driven through the deployed chat on a signed-in account (the evidence
+ * record keeps authenticated runtime UNVERIFIED), so "today" claimed more than is proven (§13). They
+ * now sit in the panel's own second lane with its waiting mark, under a label that says they are new
+ * and still being checked, and the closing sentence says they can still be done here. This suite pins
+ * that. jsdom against the real component, Supabase mocked: it proves the copy a person reads, not the
+ * tools themselves.
  */
 import { act } from "react";
 import { createRoot } from "react-dom/client";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { SoloTeamWorkspace } from "./team-workspace";
 
 const mocks = vi.hoisted(() => ({ rpc: vi.fn(), invoke: vi.fn() }));
@@ -37,12 +40,15 @@ const TEAM = {
   invitations: [],
 };
 
+const mounted: Array<ReturnType<typeof createRoot>> = [];
+
 async function mountScreen() {
   mocks.rpc.mockImplementation(async (name: string) =>
     name === "get_solo_team_workspace" ? { data: TEAM, error: null } : { data: null, error: { message: "not in this test" } });
   const host = document.createElement("div");
   document.body.append(host);
   const root = createRoot(host);
+  mounted.push(root);
   await act(async () => root.render(<SoloTeamWorkspace />));
   for (let i = 0; i < 50 && !(host.textContent ?? "").includes("Paige team context"); i++) {
     await act(async () => { await new Promise((resolve) => setTimeout(resolve, 10)); });
@@ -51,14 +57,21 @@ async function mountScreen() {
   return host.querySelector(".stw-paige") as HTMLElement;
 }
 
+// Unmount and let React's scheduler drain inside the test, so no work runs after jsdom is torn
+// down (an unhandled scheduler error after teardown fails the whole vitest run).
+afterEach(async () => {
+  for (const root of mounted.splice(0)) await act(async () => { root.unmount(); });
+  await act(async () => { await new Promise((resolve) => setTimeout(resolve, 0)); });
+});
+
 beforeEach(() => {
   document.body.innerHTML = "";
   mocks.rpc.mockReset();
   mocks.invoke.mockReset();
 });
 
-describe("Settings → Team says what PAIGE can do with the team today", () => {
-  it("lists the lifecycle acts with the others she can do today, in the approved list", async () => {
+describe("Settings → Team says what PAIGE can do with the team, and only what is proven as today", () => {
+  it("lists only the proven acts under \"She can do this for you today\"", async () => {
     const panel = await mountScreen();
     const today = panel.querySelector(".stw-now");
     expect(today?.querySelector("h3")?.textContent).toBe("She can do this for you today");
@@ -67,24 +80,34 @@ describe("Settings → Team says what PAIGE can do with the team today", () => {
       "Resend or withdraw an invitation",
       "Edit someone's title and responsibilities",
       "Change a permission (owner only)",
+    ]);
+    expect(today?.querySelectorAll("li svg").length).toBe(4);
+  });
+
+  it("puts the new lifecycle acts in the second lane, labelled new and still being checked, never \"today\"", async () => {
+    const panel = await mountScreen();
+    const checking = panel.querySelector(".stw-soon");
+    expect(checking?.querySelector("h3")?.textContent).toBe("New to Paige, still being checked");
+    expect(checking?.textContent).not.toMatch(/today/i);
+    expect(Array.from(checking?.querySelectorAll("li") ?? []).map((li) => li.textContent)).toEqual([
       "Suspend or reinstate someone",
       "Remove someone and hand over their work",
       "Turn someone's team conversations on or off",
     ]);
-    // Each carries the "can do" mark, not the waiting one.
-    expect(today?.querySelectorAll("li svg").length).toBe(7);
+    // Each carries the lane's waiting mark, not the "can do" one.
+    expect(checking?.querySelectorAll("li svg").length).toBe(3);
+    expect(checking?.querySelector("li svg")?.getAttribute("class") ?? "").toMatch(/lucide-clock/);
+    // And none of them is claimed as available today anywhere in the panel.
+    const todayText = panel.querySelector(".stw-now")?.textContent ?? "";
+    for (const act of ["Suspend or reinstate", "Remove someone", "team conversations"]) expect(todayText).not.toContain(act);
   });
 
-  it("no longer says any of them is coming, or that the person must do them here until then", async () => {
-    const panel = await mountScreen();
-    expect(panel.querySelector(".stw-soon")).toBeNull();
-    expect(panel.textContent).not.toMatch(/Coming to Paige|not yet available|still coming|Until then, do them here/);
-  });
-
-  it("keeps the true limits: approvals and mailboxes are never handed over, and work only on a standalone business", async () => {
+  it("keeps the true limits, and says the new acts can still be done here", async () => {
     const panel = await mountScreen();
     const rule = panel.querySelector(".stw-rule")?.textContent ?? "";
     expect(rule).toContain("She's held to the same rules you are, and nobody can be made an owner from a conversation.");
     expect(rule).toContain("Approvals assigned to someone and a mailbox they connected can't be handed over, by her or anyone, and open work can be handed over only on a standalone business account.");
+    expect(rule).toContain("Until her new actions have been checked, you can always do them here.");
+    expect(panel.textContent).not.toMatch(/not yet available/);
   });
 });

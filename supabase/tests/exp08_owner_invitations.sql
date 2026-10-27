@@ -1,5 +1,5 @@
 -- EXP08 co-owners and entity owners, increment I1: OWNER INVITATIONS.
--- Migration under test: supabase/migrations/20271118200008_exp08_owner_invitations.sql.
+-- Migration under test: supabase/migrations/20271119020008_exp08_owner_invitations.sql.
 -- Contract cases 1 (escalation), 2 (accept-time), 6 (cross-tenant / shape), 7 (direct DML),
 -- 12 (membership oracle) and 13 (byte-identity), plus peek_tenant_invite (§5.5).
 -- Disposable PostgreSQL only (it creates and drops its own database). Never target a linked project.
@@ -1173,7 +1173,7 @@ DO $$ BEGIN IF (SELECT count(*) FROM proof.prior) <> 10 THEN RAISE EXCEPTION 'FA
 -- S2. The migration's INCUMBENT GUARD, read out of the migration file between its markers. On
 -- production's bodies it passes; with ANY ONE of the ten replaced bodies drifted (one comment line
 -- added, inside a rolled-back subtransaction) it refuses, naming that function.
-\set d_guard `sed -n '/^-- exp08-owners-incumbent-guard:begin$/,/^-- exp08-owners-incumbent-guard:end$/p' supabase/migrations/20271118200008_exp08_owner_invitations.sql`
+\set d_guard `sed -n '/^-- exp08-owners-incumbent-guard:begin$/,/^-- exp08-owners-incumbent-guard:end$/p' supabase/migrations/20271119020008_exp08_owner_invitations.sql`
 SELECT set_config('proof.guard', :'d_guard', false) IS NOT NULL AS guard_loaded \gset
 DO $$ DECLARE r record; _caught text; _n int := 0; BEGIN
   IF length(current_setting('proof.guard')) < 500 THEN RAISE EXCEPTION 'FAIL: the incumbent guard was not read out of the migration'; END IF;
@@ -1199,7 +1199,7 @@ END $$;
 \echo 'PASS (S2): the incumbent guard passes on production''s 10 bodies and refuses each one drifted (10 of 10)'
 
 -- ═════════════════════ PHASE 2: the migration under test ═════════════════════
-\ir ../migrations/20271118200008_exp08_owner_invitations.sql
+\ir ../migrations/20271119020008_exp08_owner_invitations.sql
 
 DO $$ DECLARE r record; BEGIN
  FOR r IN SELECT * FROM (VALUES
@@ -1211,16 +1211,16 @@ DO $$ DECLARE r record; BEGIN
    ('_business_owner_revoke_invitations()','f73040703141190e38b2cf6c4e2cf1f3'),
    ('guard_tenant_invite_token_identity()','ce27899afe1b56d845cdabbe0d4cf9c3'),
    ('_tenant_account_holder_changed()','0e4fb930e0e08d14005d3cafbabd2429'),
-   ('guard_tenant_member_owner_flag()','a13a160538947e7df95016ae050e8630'),
-   ('guard_tenant_owner_only_columns()','95981e8e4287745abb9b7b440d1f75cf'),
-   ('create_solo_team_invite(uuid,uuid,text,text,text,text,boolean,uuid,jsonb)','886180905efee008326cca4481986100'),
-   ('resend_solo_team_invite(uuid,uuid,uuid)','59c129b220d4fb128832a61b56f3c06f'),
-   ('revoke_solo_team_invite(uuid,uuid,uuid)','c19d1e3865b3dbd941aaf28afd693ab8'),
-   ('archive_solo_team_invite(uuid,uuid,uuid)','ad018aabf9f2cba5ce3699f8f348ed99'),
-   ('accept_solo_team_invite(text)','dc7a9bd0d146e61a75a324e647594e9e'),
-   ('accept_tenant_invite(text)','43608f7d228ea3a675d538594284178d'),
-   ('create_tenant_invite_token(uuid,text,tenant_role,integer,integer,uuid,text)','5a6eb5a7b288babe0f16f5e3f95ecb34'),
-   ('peek_tenant_invite(text)','54c2ce12a2f259856a23d24dfe7eed24'),
+   ('guard_tenant_member_owner_flag()','43d3200e76dc48a2a47997a246b1b30b'),
+   ('guard_tenant_owner_only_columns()','e87af8856e175f6be1f3fb5441c6e928'),
+   ('create_solo_team_invite(uuid,uuid,text,text,text,text,boolean,uuid,jsonb)','5f34e2b64c05997e9f774134cacd6665'),
+   ('resend_solo_team_invite(uuid,uuid,uuid)','6001fdaf0e038d3ab321cc4d3a328b59'),
+   ('revoke_solo_team_invite(uuid,uuid,uuid)','42bc300b33d754388057bc33a591d9af'),
+   ('archive_solo_team_invite(uuid,uuid,uuid)','e759e3a5b3237b5413de8181cc1c2c00'),
+   ('accept_solo_team_invite(text)','49c772306ac53deda3183c9a89c91331'),
+   ('accept_tenant_invite(text)','e36c5df4983e1de902f868dcfb2e8094'),
+   ('create_tenant_invite_token(uuid,text,tenant_role,integer,integer,uuid,text)','298f12324cacc7512898daa86c0a120f'),
+   ('peek_tenant_invite(text)','d0617ee8ccd7d980935cc0f75242c0fa'),
    ('is_tenant_account_holder(uuid,uuid)','4a3cab59aad7a70ff06a9054aa4aa60e'),
    ('_tenant_member_owner_invitation_waiting()','105e79e9571515d76b4e916681791fd3')
    ) v(sig, want) LOOP
@@ -1317,7 +1317,7 @@ END $$;
 DO $$ DECLARE _x text; _n int := 0; _e int := 0; BEGIN
   SELECT prosrc INTO _x FROM pg_proc WHERE oid='public.guard_tenant_member_owner_flag()'::regprocedure;
   _x := proof.swap(_x, $sw$BEGIN
-  -- EXP08 owners (20271118200008): which legal owner a seat acts for is written ONLY by trusted server code
+  -- EXP08 owners (20271119020008): which legal owner a seat acts for is written ONLY by trusted server code
   -- (accept_solo_team_invite now; the co-owner functions in a later increment). Unlike the ownership
   -- checks below, the platform owner is NOT exempt: a super admin changes owners only through audited
   -- owner recovery, never by editing a seat.
@@ -1337,7 +1337,7 @@ DO $$ DECLARE _x text; _n int := 0; _e int := 0; BEGIN
   _x := proof.swap(_x, $sw$    RETURN NEW;
   END IF;
 
-  -- EXP08 owners (20271118200008): owner recovery. platform_owner_recovery (a later increment) sets
+  -- EXP08 owners (20271119020008): owner recovery. platform_owner_recovery (a later increment) sets
   -- paige.owner_recovery transaction-locally around its one UPDATE. The flag alone is no credential
   -- (any role can set_config it): it counts only inside postgres-owned code, and only for a super admin.
   IF current_user = 'postgres'
@@ -1351,14 +1351,14 @@ DO $$ DECLARE _x text; _n int := 0; _e int := 0; BEGIN
 
   IF NEW.owner_user_id       IS DISTINCT FROM$sw$);
   _x := proof.swap(_x, $sw$  -- ESTABLISH themselves (NULL -> auth.uid()) as holder, and only as the tenant's SOLE active owner.
-  -- EXP08 owners (20271118200008): and only inside trusted postgres-owned code (accept_tenant_invite),
+  -- EXP08 owners (20271119020008): and only inside trusted postgres-owned code (accept_tenant_invite),
   -- never by a direct client UPDATE. This guard runs SECURITY INVOKER, so current_user is real.
   IF current_user = 'postgres'
      AND OLD.owner_user_id IS NULL
 $sw$, $sw$  -- ESTABLISH themselves (NULL -> auth.uid()) as holder, and only as the tenant's SOLE active owner.
   IF OLD.owner_user_id IS NULL
 $sw$);
-  _x := proof.swap(_x, $sw$  -- EXP08 owners (20271118200008): the platform owner keeps billing and hierarchy, but moves the account
+  _x := proof.swap(_x, $sw$  -- EXP08 owners (20271119020008): the platform owner keeps billing and hierarchy, but moves the account
   -- holder of record only through owner recovery (below), never by a direct UPDATE.
   IF auth.uid() IS NULL
      OR (public.is_platform_owner() AND NEW.owner_user_id IS NOT DISTINCT FROM OLD.owner_user_id) THEN
@@ -1383,7 +1383,7 @@ $sw$, $sw$     team_hub_access)
 $sw$);
   _x := proof.swap(_x, $sw$    RAISE EXCEPTION 'say whether team conversations are on or off for this invitation';
   END IF;
-  -- EXP08 owners (20271118200008): only the ACCOUNT HOLDER invites an Owner (owner rulings R1, R4), on a
+  -- EXP08 owners (20271119020008): only the ACCOUNT HOLDER invites an Owner (owner rulings R1, R4), on a
   -- Solo account, with team conversations on, as a person or for ONE non-individual legal owner of
   -- this business that has no seat and no other live invitation. Everyone else keeps inviting Admins
   -- and Members exactly as before (R14, "keep as today").
@@ -1463,7 +1463,7 @@ BEGIN$sw$);
   SELECT prosrc INTO _x FROM pg_proc WHERE oid='public.resend_solo_team_invite(uuid,uuid,uuid)'::regprocedure;
   _x := proof.swap(_x, $sw$                                        _old.team_hub_access, _old.business_owner_id);$sw$, $sw$                                        _old.team_hub_access);$sw$);
   _x := proof.swap(_x, $sw$  IF _old.uses > 0 THEN RAISE EXCEPTION 'an accepted invitation cannot be resent'; END IF;
-  -- EXP08 owners (20271118200008): an owner invitation is the account holder's to resend.
+  -- EXP08 owners (20271119020008): an owner invitation is the account holder's to resend.
   -- One whose legal owner was deleted is never reissued: the FK has nulled its link, and resending it
   -- would make it an owner invitation for the person in their own right.
   IF _old.default_role = 'owner'::public.tenant_role THEN
@@ -1480,7 +1480,7 @@ $sw$);
   SELECT prosrc INTO _x FROM pg_proc WHERE oid='public.revoke_solo_team_invite(uuid,uuid,uuid)'::regprocedure;
   _x := proof.swap(_x, $sw$  _tenant := public.solo_team_invite_authority(_actor, _expected_tenant_id);
 
-  -- EXP08 owners (20271118200008): an owner invitation is the account holder's to withdraw.
+  -- EXP08 owners (20271119020008): an owner invitation is the account holder's to withdraw.
   IF EXISTS (SELECT 1 FROM public.tenant_invite_tokens
               WHERE id = _invite_id AND tenant_id = _tenant AND kind = 'team'
                 AND default_role = 'owner'::public.tenant_role) THEN
@@ -1496,7 +1496,7 @@ $sw$);
   _x := proof.swap(_x, $sw$    RAISE EXCEPTION 'that invitation is not on this workspace' USING ERRCODE = 'P0001';
   END IF;
 
-  -- EXP08 owners (20271118200008): an owner invitation is the account holder's to clear.
+  -- EXP08 owners (20271119020008): an owner invitation is the account holder's to clear.
   IF _invite.default_role = 'owner'::public.tenant_role THEN
     PERFORM public._assert_tenant_account_holder(_actor, _tenant, 'invitation');
   END IF;
@@ -1508,7 +1508,7 @@ $sw$);
   SELECT prosrc INTO _x FROM pg_proc WHERE oid='public.accept_solo_team_invite(text)'::regprocedure;
   _x := proof.swap(_x, $sw$                             'team_hub_access', _invite.team_hub_access, 'business_owner_id', _invite.business_owner_id));$sw$, $sw$                             'team_hub_access', _invite.team_hub_access));$sw$);
   _x := proof.swap(_x, $sw$  UPDATE public.profiles SET active_tenant_id = _invite.tenant_id WHERE user_id = _actor;
-  -- EXP08 owners (20271118200008): the seat is the only source of "Represented by …". The record's earlier
+  -- EXP08 owners (20271119020008): the seat is the only source of "Represented by …". The record's earlier
   -- representative, if any, is overwritten and kept in the audit row.
   IF _record.id IS NOT NULL THEN
     UPDATE public.tenant_business_owners
@@ -1535,7 +1535,7 @@ $sw$);
      _invite.job_title, _invite.responsibilities, _invite.team_hub_access);$sw$);
   _x := proof.swap(_x, $sw$    RAISE EXCEPTION 'team invitation has an unsupported permission';
   END IF;
-  -- EXP08 owners (20271118200008): an owner invitation is re-checked at the moment it is used, under the
+  -- EXP08 owners (20271119020008): an owner invitation is re-checked at the moment it is used, under the
   -- token lock: the sender must STILL be the account holder, the account a Solo one, and a legal
   -- owner's seat still open (owner rulings R1, R4, R6; contract §5.3). The tenant row (the holder of
   -- record) and the sender's seat (which a billing suspension rewrites) are locked FOR SHARE first,
@@ -1574,7 +1574,7 @@ BEGIN$sw$);
   _n := _n + 1; _e := _e + 6;
   SELECT prosrc INTO _x FROM pg_proc WHERE oid='public.accept_tenant_invite(text)'::regprocedure;
   _x := proof.swap(_x, $sw$  ELSE
-    -- EXP08 owners (20271118200008): an owner invitation is accepted only by accept_solo_team_invite,
+    -- EXP08 owners (20271119020008): an owner invitation is accepted only by accept_solo_team_invite,
     -- which re-checks the account holder at that moment. Here it used to be silently turned into an
     -- Admin seat and reported as accepted (§13). It is refused instead, before anything is written.
     IF _tok.default_role = 'owner'::public.tenant_role THEN
@@ -1585,7 +1585,7 @@ BEGIN$sw$);
   IF _x IS DISTINCT FROM (SELECT prosrc FROM proof.prior WHERE name='accept_tenant_invite') THEN RAISE EXCEPTION 'FAIL: accept_tenant_invite differs from production beyond its marked lines'; END IF;
   _n := _n + 1; _e := _e + 1;
   SELECT prosrc INTO _x FROM pg_proc WHERE oid='public.create_tenant_invite_token(uuid,text,tenant_role,integer,integer,uuid,text)'::regprocedure;
-  _x := proof.swap(_x, $sw$  -- FIX-1 (§9), narrowed by EXP08 owners (20271118200008): no token minted here carries Owner, for any
+  _x := proof.swap(_x, $sw$  -- FIX-1 (§9), narrowed by EXP08 owners (20271119020008): no token minted here carries Owner, for any
   -- kind or any caller, the platform owner included. An Owner is invited only by the account holder,
   -- through create_solo_team_invite (owner rulings R1, R4).
   -- The sentence is the one the Agency Team screen shows (it still offers Owner), so it says what that
@@ -1610,7 +1610,7 @@ BEGIN$sw$);
   _n := _n + 1; _e := _e + 1;
   SELECT prosrc INTO _x FROM pg_proc WHERE oid='public.peek_tenant_invite(text)'::regprocedure;
   _x := proof.swap(_x, $sw$                   AND (_tok.kind <> 'consumer' OR (_tok.uses = 0 AND _tok.last_used_at IS NULL));
-  -- EXP08 owners (20271118200008): an owner invitation for a legal owner names it, so the invitee knows
+  -- EXP08 owners (20271119020008): an owner invitation for a legal owner names it, so the invitee knows
   -- whom they would act for, and only while it can still be used. A deliberate exposure to whoever
   -- holds a live link: the name only, never the ownership interest or the representative.
   business_owner_display := NULL;

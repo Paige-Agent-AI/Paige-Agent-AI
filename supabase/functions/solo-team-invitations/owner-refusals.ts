@@ -1,5 +1,5 @@
 /**
- * EXP08 owner invitations (migration 20271118200008): the refusals the database raises on purpose for
+ * EXP08 owner invitations (migration 20271119020008): the refusals the database raises on purpose for
  * owner invitations, recognised by their stable HINT code rather than by their sentence.
  *
  * Why by HINT. These sentences name the business, the account holder or the legal owner ("Northstar

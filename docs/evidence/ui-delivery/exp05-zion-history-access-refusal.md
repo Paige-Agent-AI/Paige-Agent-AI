@@ -99,3 +99,29 @@ two dependency-pin renewal is on its own corresponding source carrier, never a
 reason to copy hashes into incompatible source. This frontend repair touches
 neither shared seam. E09 retains browser custody, E02 then E05 are queued;
 authenticated refusal/reload and complete Experience acceptance remain proof owed.
+
+## Actual production source release — October27 UTC
+
+Exact reviewed59d519617 / LOWER5661557153 completed all10 applicable required
+checks and both web contexts; normal no-schema PreviewSKIP, zero review threads.
+Actual merge `d4fcca1b48ba4115a15faefe05318a2d18991891`, tree
+`d6e20d95a9c87897f84b489291f0dcdf9f346472`, preserves all five owning blobs and
+all16,655 incoming outside entries, including E06's disjoint portable export.
+Normal production `dpl_BYSqPx1wRX5vaDcWv24PbeZ84f5R` is READY on that exact SHA.
+Both paigeagent.ai and paige-agent-ai.vercel.app served exactd4fcca-mvq41uxz,
+customerUpdate:null, at03:14:57–03:15:02UTC. The original
+OperationsRoute-ksDdJXd5.js reader SHA256
+`44b60404fa30bead8dcd25b3cf75d07ad3d19b33531196d3fb776ef64cc3e054`
+and classifier SHA256
+`c1648ecc8625e6e34914dd9f07994163eecaf34f69c25420ab1268df69fe2640`
+confirm genuine SDK/native Response and401/403 checks, versus the retained old93
+source baseline. Readback proof SHA256
+`328b0741b1db38c52288a3dc148de39d2b3e1969b4cc86fe0818167cc80c3b7c`.
+GitHub release receipt6432856627; Master §4.0 records this exact bounded delivery.
+
+This is public static-source evidence only. No browser, customer record, actual
+authenticated refusal/reload, delegation, provider or recurring effect was run.
+Own Edge/native/activation delta N/A. Functional source/deployment VERIFIED;
+Visual implementation unchanged; actual experiential/customer proof and all full
+ten/E5/Builder/ZION/owner-away/Live/founder acceptance remain OPEN. Existing
+Listed/Unverified recipes and algorithm maturity are not promoted.

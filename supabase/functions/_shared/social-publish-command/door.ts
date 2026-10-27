@@ -171,6 +171,30 @@ export async function handleSocialPublishCommand(req: Request, deps: SocialPubli
   // EXECUTE — under the claimed args, once. The publication row is the receipt.
   const confirmationId = governed.confirmationId;
   const claimArgs = object(governed.args) ?? {};
+
+  // The claim is the authority, so the request that presents it must name the SAME piece and
+  // channel the proposal was issued for. Without this, an approve call carrying a proposal's
+  // fingerprint but a DIFFERENT platform/piece would sail through the readiness and reconcile
+  // checks on the wrong target, then execute the claimed args against a connection that was
+  // never rechecked (independent review finding #1).
+  if (claimArgs.content_id !== contentId || claimArgs.platform !== platform) {
+    return respond(409, { ok: false, state: "refused", code: "CLAIM_MISMATCH", error: "That approval belongs to a different piece or channel. Start again from the piece you want to publish. Nothing was published." });
+  }
+
+  // No second attempt while one is in flight. The reconcile gate covers outcome_unknown; this
+  // covers the OTHER duplicate window — two live approvals with different fingerprints (owner +
+  // a second admin, two tabs) racing the provider call, and a crashed attempt left at
+  // 'approved'/'publishing' that never reached a receipt (independent review finding #2).
+  const inFlight = await deps.admin.from("content_publications")
+    .select("id,status").eq("tenant_id", tenantId).eq("content_id", contentId).eq("platform", platform)
+    .in("status", ["approved", "publishing"]).limit(1);
+  if (!inFlight.error && Array.isArray(inFlight.data) && inFlight.data.length > 0) {
+    return respond(409, {
+      ok: false, code: "RETRY_PENDING_RECONCILIATION",
+      error: "An attempt to publish this piece to that channel is already under way or never finished reporting. Check the channel before publishing again — a duplicate post is worse than a delay.",
+    });
+  }
+
   const runCaption = typeof claimArgs.caption === "string" ? claimArgs.caption : text;
   const runPlatform = typeof claimArgs.platform === "string" && PLATFORMS.has(claimArgs.platform) ? claimArgs.platform : platform;
   const runProfile = typeof claimArgs.profile_key === "string" ? claimArgs.profile_key : profileKey;

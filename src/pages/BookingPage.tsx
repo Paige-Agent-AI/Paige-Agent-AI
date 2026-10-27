@@ -9,7 +9,7 @@
  * Google Meet / Zoom / in-person / custom / ask-the-invitee). No login, no
  * external provider required — booking creates an internal_bookings appointment.
  */
-import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
+import { cloneElement, isValidElement, useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useReducedMotion } from "framer-motion";
 import {
@@ -24,7 +24,8 @@ import { isEmbedded, useEmbedHeight } from "@/hooks/useEmbedHeight";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { PaigeCommandMark } from "@/components/brand/PaigeCommandMark";
+import { trustedAppOrigin } from "@/lib/hostRouting";
+import { BOOKING_CONFIRMATION_UNKNOWN, readBookingCreateResult, type BookingReceipt } from "@/lib/calendar/bookingCreateResult";
 
 type Phase = "loading" | "service" | "pick" | "form" | "done" | "error";
 const browserTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -233,6 +234,33 @@ export default function BookingPage() {
   // Self-serve manage link, if the create response carries one (see integrator
   // note): powers "Reschedule or cancel" on the confirmation.
   const [manageLink, setManageLink] = useState<string | null>(null);
+  const [bookingReceipt, setBookingReceipt] = useState<BookingReceipt | null>(null);
+  const [confirmedMeeting, setConfirmedMeeting] = useState<LocationOption | null>(null);
+  const [confirmationUnknown, setConfirmationUnknown] = useState(false);
+  const bookingScope = useRef({ slug, alive: true, inFlight: false, unknown: false, confirmed: false, timer: undefined as ReturnType<typeof setTimeout> | undefined });
+  const confirmButton = useRef<HTMLButtonElement>(null);
+  const outcomeNotice = useRef<HTMLParagraphElement>(null);
+  const confirmationTitle = useRef<HTMLHeadingElement>(null);
+  const focusAfterCompletion = useRef(false);
+  useLayoutEffect(() => {
+    const scope = { slug, alive: true, inFlight: false, unknown: false, confirmed: false, timer: undefined as ReturnType<typeof setTimeout> | undefined };
+    bookingScope.current = scope;
+    focusAfterCompletion.current = false;
+    setSubmitting(false); setConfirmationUnknown(false); setBookingReceipt(null); setConfirmedMeeting(null); setManageLink(null);
+    setForm({ name: "", email: "", phone: "", notes: "" }); setAnswers({}); setErrorMsg("");
+    selectedTypeRef.current = null; setSelectedType(null); setSelectedSlot(null); setSelectedDay(null);
+    setSlots([]); setBrand(DEFAULT_BRAND); setWithHosts(null); setClassSpots({}); setPhase("loading");
+    loadedToRef.current = 0; setLoadingMore(false);
+    return () => { scope.alive = false; if (scope.timer !== undefined) clearTimeout(scope.timer); };
+  }, [slug]);
+  useLayoutEffect(() => {
+    if (confirmationUnknown && bookingScope.current.unknown && (document.activeElement === document.body || document.activeElement === confirmButton.current)) outcomeNotice.current?.focus();
+  }, [confirmationUnknown]);
+  useLayoutEffect(() => {
+    if (phase === "done" && bookingReceipt && bookingScope.current.confirmed && (focusAfterCompletion.current || document.activeElement === document.body)) {
+      confirmationTitle.current?.focus(); focusAfterCompletion.current = false;
+    }
+  }, [phase, bookingReceipt]);
   const reduceMotion = useReducedMotion();
   const tzOptions = useMemo(() => allTimezones().map((z) => ({ value: z, label: tzLabel(z) })), []);
 
@@ -249,10 +277,16 @@ export default function BookingPage() {
   // On the first load, if the calendar offers a service menu and none is picked
   // yet, land on the service step instead of the date picker.
   const fetchAvailability = useCallback(async (toIso?: string) => {
+    const scope = bookingScope.current;
+    if (!scope.alive || scope.slug !== slug) return;
     const typeId = selectedTypeRef.current?.id;
-    const { data, error } = await supabase.functions.invoke("public-booking", {
-      body: { action: "availability", slug, ...(toIso ? { to: toIso } : {}), ...(typeId ? { appointmentTypeId: typeId } : {}) },
-    });
+    let data: unknown, error: unknown;
+    try {
+      ({ data, error } = await supabase.functions.invoke("public-booking", {
+        body: { action: "availability", slug, ...(toIso ? { to: toIso } : {}), ...(typeId ? { appointmentTypeId: typeId } : {}) },
+      }));
+    } catch { error = true; }
+    if (!scope.alive || bookingScope.current !== scope || scope.inFlight || scope.unknown || scope.confirmed) return;
     const res = data as (Partial<Brand> & {
       error?: string; slots?: string[]; durationMin?: number; branding?: Partial<Brand>;
       classSpots?: Record<string, { capacity: number; remaining: number }>; withHosts?: string;
@@ -358,41 +392,54 @@ export default function BookingPage() {
   }, [monthCursor]);
 
   const book = async () => {
-    if (!selectedSlot) return;
+    const scope = bookingScope.current;
+    if (!selectedSlot || !scope.alive || scope.slug !== slug || scope.inFlight || scope.unknown || scope.confirmed) return;
+    scope.inFlight = true;
     setSubmitting(true);
-    const { data, error } = await supabase.functions.invoke("public-booking", {
-      body: {
-        action: "create", slug, start: selectedSlot,
-        guest: { name: form.name, email: form.email, phone: form.phone }, notes: form.notes,
-        ...(meetMulti ? { location: inviteeLocation } : {}),
-        ...(selectedType ? { appointmentTypeId: selectedType.id } : {}),
-        ...(intakeQuestions.length ? { answers } : {}),
-      },
-    });
-    setSubmitting(false);
-    const res = data as {
-      error?: string; manageUrl?: string;
-      booking?: { id: string; start_at: string; end_at: string; title: string; manageUrl?: string; manage_url?: string };
-    } | null;
-    if (error || res?.error) {
-      setErrorMsg(res?.error ?? "Couldn't book that time.");
-      if (res?.error?.includes("no longer available") || res?.error?.includes("just booked")) {
-        setSelectedSlot(null);
-        // Reuse the normal fetch path so the selected service (appointmentTypeId)
-        // stays intact — a raw refetch here previously fell back to the first
-        // service's grid while the UI still showed the chosen one's duration.
-        void fetchAvailability();
+    const current = () => scope.alive && bookingScope.current === scope;
+    const hold = () => { scope.unknown = true; setConfirmationUnknown(true); setErrorMsg(BOOKING_CONFIRMATION_UNKNOWN); };
+    const submittedMeeting = { ...(meetMulti ? meetOptions.find(option => option.type === inviteeLocation) ?? meetOptions[0] : fixedMeet) };
+    // A UI deadline does not cancel or repeat the original booking. A late acknowledgement
+    // from this same request can still settle its outcome while the original scope is current.
+    scope.timer = setTimeout(() => { if (current()) { hold(); setSubmitting(false); } }, 30_000);
+    try {
+      const { data, error } = await supabase.functions.invoke("public-booking", {
+          body: {
+            action: "create", slug, start: selectedSlot,
+            guest: { name: form.name, email: form.email, phone: form.phone }, notes: form.notes,
+            ...(meetMulti ? { location: inviteeLocation } : {}),
+            ...(selectedType ? { appointmentTypeId: selectedType.id } : {}),
+            ...(intakeQuestions.length ? { answers } : {}),
+          },
+      });
+      if (!current()) return;
+      const result = readBookingCreateResult(data, error, { startAt: selectedSlot, durationMin, pageOrigin: window.location.origin, appOrigin: trustedAppOrigin(window.location) });
+      if (result.kind === "unknown") { hold(); return; }
+      const ownedFocus = document.activeElement === document.body || document.activeElement === confirmButton.current || document.activeElement === outcomeNotice.current;
+      const wasUnknown = scope.unknown;
+      scope.unknown = false; setConfirmationUnknown(false);
+      if (result.kind === "refused") {
+        setErrorMsg(result.message);
+        if (result.chooseAnotherTime) {
+          setSelectedSlot(null);
+          // Keep the original service-aware availability path; no booking is retried.
+          void fetchAvailability();
+        }
+        return;
       }
-      return;
+      scope.confirmed = true;
+      focusAfterCompletion.current = ownedFocus;
+      setBookingReceipt(result.booking); setConfirmedMeeting(submittedMeeting); setManageLink(result.manageUrl); setErrorMsg("");
+      const redirect = (brand.redirectUrl ?? "").trim();
+      if (!wasUnknown && /^https?:\/\//i.test(redirect)) { window.location.assign(redirect); return; }
+      setPhase("done");
+    } catch {
+      if (current()) hold();
+    } finally {
+      if (scope.timer !== undefined) clearTimeout(scope.timer);
+      scope.inFlight = false;
+      if (current()) setSubmitting(false);
     }
-    // Self-serve manage link, when the create response carries one (the edge
-    // function currently only emails it — see the integrator note).
-    setManageLink(res?.booking?.manageUrl ?? res?.booking?.manage_url ?? res?.manageUrl ?? null);
-    // Owner-set redirect: send the guest to their own thank-you / community page.
-    // Only http(s) — never javascript: or other schemes from tenant-authored input.
-    const redirect = (brand.redirectUrl ?? "").trim();
-    if (/^https?:\/\//i.test(redirect)) { window.location.assign(redirect); return; }
-    setPhase("done");
   };
 
   // ---- Left brand panel (persists across steps) ----
@@ -401,7 +448,7 @@ export default function BookingPage() {
       <div className="flex items-center gap-2.5 mb-5">
         {brand.logoUrl
           ? <img src={brand.logoUrl} alt={brand.name} className="h-11 w-11 rounded-xl object-cover" style={{ border: `1px solid ${c.border}` }} />
-          : <span className="h-11 w-11 rounded-xl grid place-items-center" style={{ background: brand.accent + "1f" }}><PaigeCommandMark plated={false} className="h-6 w-6" /></span>}
+          : <span aria-hidden="true" className="h-11 w-11 shrink-0 rounded-xl grid place-items-center font-semibold" style={{ background: brand.accent + "1f", color: c.text }}>{brand.showCompanyName && brand.name?.trim() ? brand.name.trim().slice(0, 1).toLocaleUpperCase() : <CalendarDays className="h-6 w-6" />}</span>}
         {brand.showCompanyName && <span className="font-semibold tracking-tight" style={{ color: c.text }}>{brand.name}</span>}
       </div>
       {brand.subtitle && <div className="text-xs font-medium uppercase tracking-wide mb-1.5" style={{ color: c.sub }}>{brand.subtitle}</div>}
@@ -481,6 +528,7 @@ export default function BookingPage() {
         </button>
       )}
       <h2 className="text-base font-semibold mb-4" style={{ color: c.text }}>Select Date &amp; Time</h2>
+      {errorMsg && <p role="status" className="mb-4 text-sm" style={{ color: c.text }}>{errorMsg}</p>}
       {/* The month grid + prev/next nav always render so a visitor with no
           openings this month can still page forward to one — an empty window is
           not a dead-end (audit fix). */}
@@ -491,7 +539,7 @@ export default function BookingPage() {
               <button onClick={() => goMonth(-1)} className="h-8 w-8 grid place-items-center rounded-full" style={{ color: c.sub }} aria-label="Previous month"><ChevronLeft className="h-4 w-4" /></button>
               <span className="text-sm font-semibold inline-flex items-center gap-1.5" style={{ color: c.text }}>
                 {format(monthCursor, "MMMM yyyy")}
-                {loadingMore && <Loader2 className="h-3.5 w-3.5 animate-spin" style={{ color: c.sub }} />}
+                {loadingMore && <Loader2 className="h-3.5 w-3.5 animate-spin motion-reduce:animate-none" style={{ color: c.sub }} />}
               </span>
               <button onClick={() => goMonth(1)} className="h-8 w-8 grid place-items-center rounded-full" style={{ color: c.sub }} aria-label="Next month"><ChevronRight className="h-4 w-4" /></button>
             </div>
@@ -584,11 +632,11 @@ export default function BookingPage() {
   // ---- Right: details form (location chosen here, after a time is picked) ----
   const detailsForm = (
     <div className="p-6 sm:p-7">
-      <button onClick={() => setPhase("pick")} className="inline-flex items-center gap-1.5 text-sm mb-4" style={{ color: c.sub }}>
+      <button onClick={() => setPhase("pick")} disabled={submitting || confirmationUnknown} className="inline-flex min-h-[44px] items-center gap-1.5 text-sm mb-4 disabled:opacity-50" style={{ color: c.sub }}>
         <ArrowLeft className="h-4 w-4" /> Back
       </button>
       <h2 className="text-base font-semibold mb-4" style={{ color: c.text }}>Enter Details</h2>
-      <div className="space-y-3">
+      <fieldset disabled={submitting} className="space-y-3">
         <Field label="Name *" c={c}><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} style={fieldStyle(c)} /></Field>
         <Field label="Email *" c={c}><Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} style={fieldStyle(c)} /></Field>
         <Field label={meetMulti && inviteeLocation === "phone" ? "Phone *" : "Phone"} c={c}>
@@ -619,7 +667,7 @@ export default function BookingPage() {
               {fixedMeet.type === "custom" ? (fixedMeet.value || "Details will be shared after booking")
                 : fixedMeet.type === "in_person" ? (fixedMeet.value || "In person")
                 : fixedMeet.type === "phone" ? "We'll call the number you provide"
-                : `${LOCATION_META[fixedMeet.type]?.label ?? "Meeting"} — link sent after you book`}
+                : `${LOCATION_META[fixedMeet.type]?.label ?? "Meeting"} — contact the business if you need a meeting link`}
             </span>
           </div>
         )}
@@ -684,25 +732,25 @@ export default function BookingPage() {
           const inputType = q.type === "url" ? "url" : q.type === "phone" ? "tel" : q.type === "number" ? "number" : "text";
           return <Field key={q.id} label={label} c={c}><Input type={inputType} required={q.required} aria-required={q.required} value={(val as string) ?? ""} placeholder={q.placeholder ?? ""} onChange={(e) => setAnswer(q.id, e.target.value)} style={fieldStyle(c)} /></Field>;
         })}
-      </div>
-      {errorMsg && <p className="text-sm mt-3" style={{ color: "#ef4444" }} aria-live="polite">{errorMsg}</p>}
-      <button onClick={book}
-        disabled={submitting || !form.name.trim() || !form.email.trim() || !requiredAnswered || (meetMulti && inviteeLocation === "phone" && !form.phone.trim())}
+      </fieldset>
+      {errorMsg && <p ref={outcomeNotice} tabIndex={confirmationUnknown ? -1 : undefined} role={confirmationUnknown ? "status" : undefined} className="text-sm mt-3" style={{ color: c.text }} aria-live="polite">{errorMsg}</p>}
+      <button ref={confirmButton} onClick={book}
+        disabled={submitting || confirmationUnknown || !form.name.trim() || !form.email.trim() || !requiredAnswered || (meetMulti && inviteeLocation === "phone" && !form.phone.trim())}
         className="w-full mt-5 rounded-lg py-2.5 font-semibold transition-opacity disabled:opacity-50 inline-flex items-center justify-center gap-2"
         style={{ background: brand.accent, color: accentText }}>
-        {submitting && <Loader2 className="h-4 w-4 animate-spin" />} Confirm booking
+        {submitting && <Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none" />} {confirmationUnknown ? "Awaiting confirmation" : "Confirm booking"}
       </button>
     </div>
   );
 
   // ---- Right: confirmation ----
   const confirmation = (() => {
-    const startMs = selectedSlot ? Date.parse(selectedSlot) : NaN;
-    const endMs = Number.isFinite(startMs) ? startMs + durationMin * 60000 : NaN;
-    const evtTitle = selectedType?.name || brand.title || (brand.showCompanyName ? `${brand.name} booking` : "Your booking");
+    const startMs = bookingReceipt ? Date.parse(bookingReceipt.startAt) : NaN;
+    const endMs = bookingReceipt ? Date.parse(bookingReceipt.endAt) : NaN;
+    const evtTitle = bookingReceipt?.title ?? "Your booking";
     // The meeting method the guest actually gets: their pick when several were
     // offered, otherwise the single fixed method.
-    const chosenMeet = meetMulti ? (meetOptions.find((o) => o.type === inviteeLocation) ?? meetOptions[0]) : fixedMeet;
+    const chosenMeet = confirmedMeeting ?? (meetMulti ? (meetOptions.find((o) => o.type === inviteeLocation) ?? meetOptions[0]) : fixedMeet);
     const meetIsLink = !!chosenMeet.value && /^https?:\/\//i.test(chosenMeet.value);
     const evtLocation = chosenMeet.type === "phone"
       ? (chosenMeet.value ? `Phone: ${chosenMeet.value}` : "Phone call")
@@ -715,9 +763,9 @@ export default function BookingPage() {
         <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full" style={{ background: brand.accent + "22", color: brand.accent }}>
           <Check className="h-7 w-7" />
         </div>
-        <h2 className="text-xl font-bold" style={{ color: c.text }}>You're booked</h2>
-        <p className="mt-2 font-medium" style={{ color: c.text }}>{selectedSlot && longLabelInTz(selectedSlot, tz, hour12)}</p>
-        <p className="text-sm mt-1" style={{ color: c.sub }}>A confirmation is on its way to {form.email}.</p>
+        <h2 ref={confirmationTitle} tabIndex={-1} className="text-xl font-bold" style={{ color: c.text }}>You're booked</h2>
+        <p className="mt-2 font-medium" style={{ color: c.text }}>{bookingReceipt && longLabelInTz(bookingReceipt.startAt, tz, hour12)}</p>
+        <p className="text-sm mt-1" style={{ color: c.sub }}>Your booking is saved. Keep these details for your records.</p>
 
         {withHosts && (
           <div className="mt-3 flex items-center gap-2 text-sm" style={{ color: c.sub }}>
@@ -736,7 +784,7 @@ export default function BookingPage() {
             </a>
           ) : (
             <span>{chosenMeet.type === "google_meet" || chosenMeet.type === "zoom"
-              ? `${LOCATION_META[chosenMeet.type]?.label} — link is in your email`
+              ? `${LOCATION_META[chosenMeet.type]?.label} — contact the business if you need a meeting link`
               : chosenMeet.type === "phone" ? (chosenMeet.value ? `Phone: ${chosenMeet.value}` : "We'll call the number you provided")
               : evtLocation}</span>
           )}
@@ -771,7 +819,7 @@ export default function BookingPage() {
   })();
 
   const rightContent =
-    phase === "loading" ? <div className="p-8 flex items-center gap-2" style={{ color: c.sub }}><Loader2 className="h-4 w-4 animate-spin" /> Loading availability…</div>
+    phase === "loading" ? <div className="p-8 flex items-center gap-2" style={{ color: c.sub }}><Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none" /> Loading availability…</div>
     : phase === "error" ? (
       <div className="p-8 text-center min-h-[280px] flex flex-col items-center justify-center">
         <CalendarDays className="h-8 w-8 mb-3" style={{ color: c.faint }} />
@@ -779,7 +827,7 @@ export default function BookingPage() {
         <p className="text-sm mt-1" style={{ color: c.sub }}>{errorMsg}</p>
       </div>
     )
-    : phase === "done" ? confirmation
+    : phase === "done" && bookingReceipt ? confirmation
     : phase === "service" ? serviceStep
     : phase === "form" ? detailsForm
     : picker;
@@ -935,10 +983,13 @@ function fieldStyle(c: ReturnType<typeof palette>): React.CSSProperties {
   return { background: c.field, borderColor: c.border, color: c.text };
 }
 function Field({ label, c, children }: { label: string; c: ReturnType<typeof palette>; children: React.ReactNode }) {
+  const generatedId = useId();
+  const directInput = isValidElement<{ id?: string; className?: string }>(children) && (children.type === Input || children.type === Textarea) ? children : null;
+  const controlId = directInput ? directInput.props.id ?? generatedId : undefined;
   return (
     <div className="space-y-1.5">
-      <Label className="text-xs" style={{ color: c.sub }}>{label}</Label>
-      {children}
+      <Label htmlFor={controlId} className="text-xs" style={{ color: c.sub }}>{label}</Label>
+      {directInput ? cloneElement(directInput, { id: controlId, className: `${directInput.props.className ?? ""} ${directInput.type === Input ? "min-h-11 " : ""}text-base sm:text-sm` }) : children}
     </div>
   );
 }

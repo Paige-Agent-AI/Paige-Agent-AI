@@ -611,8 +611,23 @@ Values intentionally omitted.
       row whose `recipients` / `meta.to` hold only that business's addresses (a Bcc to another business is never
       revealed). No connector → 200 skip, logged. Any connector or contact read error, failed message insert or failed
       draft-reply insert → 503 so SendGrid retries; businesses that already landed dedup on the retry.
-      **Follow-up (DB, not built here):** restrict `inbound_domain` writes (e.g. a guard trigger refusing
-      `paigeagent.ai` domains and any domain the business has not verified) — the edge fix only protects this arm.
+      **DB guard (20271118090000, owner-approved 2026-10-27):** `trg_guard_channel_connector_inbound_routing`
+      refuses (42501 `PAIGE_INBOUND_ROUTING_PROTECTED`) any direct browser (authenticated/anon) write that sets
+      `inbound_address`/`inbound_domain` on INSERT or changes either on UPDATE, and — on a row that already routes —
+      re-enables it or changes its `channel_type`/`provider`/`config`/`tenant_id`. SECURITY DEFINER writers (managed
+      sender re-provision on a business rename, domain verify, Gmail connect) and the service role still write them.
+      Trust is `current_user`, not the JWT, so a rename from the app keeps moving the managed address. Proof:
+      `supabase/tests/channel_connector_inbound_routing_server_only.sql` (CI: paige-spine-contract). **Retired addresses
+      (20271118100000):** a shared-domain address that a connector (`inbound_address`) or a shared sending
+      identity (`tenant_email_identities.local_part`, the From) stops holding is recorded in
+      `paige_retired_managed_addresses` (service-only, no FK to tenants on purpose) with the business that held
+      it; triggers on both tables refuse it, or an address another business holds, to any other business (23505
+      `PAIGE_MANAGED_ADDRESS_RETIRED` / `IDENTITY_LOCAL_PART_TAKEN`); provisioning gives a slug-derived name the
+      first free numbered variant (`left(name,36)||'-'||n`) so signup and renames never fail and connector and
+      From match; Solo Setup's availability check reports it unavailable. An identity's local part still does not
+      follow a rename (pre-existing). Backfilled from message history. Proof: `supabase/tests/managed_address_never_reissued.sql`.
+      Still owed: (b) a per-business DNS ownership proof before a custom `inbound_domain` is
+      accepted, with the provider domain id bound server-side (today `resend_domain_id` is admin-writable).
     - **Sender authentication (review M2):** a From whose domain has neither an aligned DKIM `pass` (SendGrid's `dkim`
       field, `{@domain : pass}`) nor an SPF `pass` (`SPF` field) for an envelope sender aligned with it is stored with
       `meta.sender_unauthenticated = true` on thread `email-unverified:<tenant>:<address>`: not linked to or minted as
@@ -623,8 +638,8 @@ Values intentionally omitted.
       than 23505) is logged and acknowledged as `rejected`, so it does not make SendGrid redeliver the post for days.
     - **Follow-ups from the re-review (2026-10-27, not built here):** (N1) two concurrent deliveries of one post can
       file two draft replies — the partial unique index below closes it; (N2) the shared-domain guard is hardcoded to
-      `paigeagent.ai` while the shared domain is config data — the DB-side `inbound_domain` write restriction is the
-      durable fix; (N4) the inbox does not yet badge `meta.sender_unauthenticated` messages for the owner; (N6) a
+      `paigeagent.ai` while the shared domain is config data — the DB guard above (20271118090000) now
+      keeps browser sessions from writing it; (N4) the inbox does not yet badge `meta.sender_unauthenticated` messages for the owner; (N6) a
       display name containing `@` becomes a new contact's name; (N7) a failed contact create still stores the message
       unlinked with 200 (both pre-existing).
     - **Idempotency:** `messages.provider_message_id = sendgrid-inbound:<tenant>:<Message-ID>`, tenant-scoped because
@@ -662,6 +677,7 @@ Values intentionally omitted.
     - `comms-sendgrid-scopes/index.ts`: records the key's scopes, and returns `SENDGRID_EXECUTOR_KEY_NOT_CONFIGURED` when unset.
   - **Production, 2026-10-26:** the owner turned SendGrid Subscription Tracking and Google Analytics tracking OFF (SendGrid → Settings → Tracking), so SendGrid adds no unsubscribe link of its own and does not rewrite link UTM tags.
   - `SENDGRID_WEBHOOK_PUBLIC_KEY` verifies Event Webhook signatures. Read only by `handle-sendgrid-webhook/index.ts`, which returns 503 until it is set. The `comms-sendgrid-webhook-admin` setup path does not read it; it hands back the key to install under this name. **Production, 2026-10-26: SET.** Verified by behaviour, not by reading it: an unsigned probe changed from 503 `webhook_not_configured` to 401 `invalid_signature`. The owner configured the Event Webhook by hand in SendGrid (enabled, signed, every event, the `handle-sendgrid-webhook` URL). SendGrid's "Test Your Integration" events passed the signature check but were quarantined, because real `sg_event_id`s carry `=` padding; the door fix is in the EXP03 PR that follows #2930.
+  - `SENDGRID_DOMAIN_AUTH_API_KEY` — restricted key, **Sender Authentication: Full Access only** (owner-created 2026-10-27, value never seen by an agent; presence UNVERIFIED by any agent until the domain rebuild's first read-only call). For the SendGrid rebuild of `manage-tenant-domain` (domain authentication for a business's own domain). Read by nothing yet.
   - `SENDGRID_WEBHOOK_ADMIN_API_KEY` is the scoped key used to configure the Event Webhook. **Production, 2026-10-26: NOT SET**, read by the broker as an operator: 503 `SENDGRID_WEBHOOK_ADMIN_API_KEY_NOT_CONFIGURED`. It is not needed while the webhook is configured by hand. Read ONLY by `comms-sendgrid-webhook-admin/index.ts`. `scripts/ci/forbid-sendgrid-admin-key-refs.mjs` fails CI on any other reference to it, or to `SENDGRID_PLATFORM_ADMIN_API_KEY`, which must never be read (rotation owed).
   - **Database facts, not secrets (`20271031000100`):**
     - `tenant_email_domains.sendgrid_domain_id`, `.sendgrid_status` and `.sendgrid_verified_at`, writable only by the service role (`guard_tenant_email_domain_sendgrid_facts`);

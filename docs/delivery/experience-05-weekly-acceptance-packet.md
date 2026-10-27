@@ -11,6 +11,132 @@ permission, catalogue, algorithm or acceptance state changes.
 
 # Weekly Internal Commitment Check — protected acceptance handoff
 
+## October27 agentic and sandbox subcases — same original acceptance matrix
+
+Receive ANT-11/88623a8d and7f5b84d2; ACKb46eaf35. These are subcases of the
+ten original outcomes and E5-CV1–9, not a new inventory or closed scorecard.
+Current source inspected at9e325d9185d824103e341f329f508f0d029d88e9. Every
+`PARTIAL` below means the named original source exists, with the stated missing
+integration/proof. No row is a full customer PASS. Pending source is not released.
+
+Original source references (paths remain authoritative; no duplicate services):
+
+- **R1:** `src/solo/operations/operations-weekly-source.ts`, `OperationsOverview.tsx`
+  and `OperationsWorkspace.tsx`: permitted current Work/Planning inspection.
+- **R2:** `_shared/paige-orchestration/weekly-commitment-read.ts` and
+  `src/solo/weekly/weekly-owner-read.ts`: original process/revision/history.
+- **R3:** `OperationsWorkEditor.tsx`, `OperationsCrmWorkEditor.tsx` and original
+  Work/CRM writers: versioned human changes, not a second task store.
+- **R4:** `_shared/paige-orchestration/weekly-draft-command.ts` and
+  `src/solo/weekly/weekly-draft-command.ts`: original prepare/save boundaries.
+- **R5:** `_shared/paige-orchestration/engine.ts`, `adapters.ts`,
+  `weekly-commitment-adapter.ts` and original Trust/Work/native command/receipt.
+- **R6:** `subagent-forge/index.ts`, `_shared/subagent-authority.ts`,
+  `_shared/paige-turn/interactive-specialist-history.ts` and
+  `src/solo/operations/zion-assignment-read.ts`: bounded specialist and history.
+- **R7:** `src/solo/operations/OperationsPlaybooks.tsx`, original Automation
+  draft/definition/event/act records and their domain capability adapters.
+- **R8:** original `_shared/model-fabric.ts`, router-budget observations and
+  E02 Metric/Evidence/Operating sources; canonical ALG contracts below apply.
+
+`_shared` paths above are under `supabase/functions/`. These are exact-main source
+references, not blanket Edge certification. Original releases/receipts elsewhere
+in this packet remain bound to their own commits. #2961/17aa is DRAFT: neutral
+native-component prototype18 checks/24 frames and source129 controls do not prove
+production admission, actual model preview or native200percent zoom. #2989/43525
+is reviewed5672530165 LOWER ASSURANCE with fresh required CI pending: original
+137 policy controls plus corrected172 Fabric/1243 memory/31 thread/31 E09 checks
+are synthetic ports, not actual usage invoices or high-usage customer acceptance.
+
+Each line states the original accountable writer and next proof. E05 retains
+integration; named other Experiences retain their own records/permissions.
+
+| Original outcome / cases | A — understand | B — scoped adaptive plan | C — authorized steps | D — inspect actual result |
+| --- | --- | --- | --- | --- |
+| 01 Responsibilities / CV3,4,9 | PARTIAL R1; E05 must clarify missing week/zone without fabricating dates. | PARTIAL R1/R8; E05 combine actual deadlines and E02 priorities, changed-context proof owed. | PARTIAL R1/R2; E05 reads original Work; E04 obligations/E08 people input handoffs owed. | PROOF OWED R1; compare every reported state with original records and source coverage. |
+| 02 Plan week / CV1,2,5,9 | PARTIAL R1/R2; E05 obtain actual goals, zone and capacity gaps. | MISSING IMPLEMENTATION: E05 feasible dependency/capacity-aware correction loop; ALG08 proof owed. | PARTIAL R4/R5; prepare versus approve versus schedule must remain distinct. | PROOF OWED: inspect accepted plan and original scheduled records, not generated prose. |
+| 03 Manage work / CV4,5,6 | PARTIAL R3; E05 resolve exact task/owner/version and material ambiguity. | PARTIAL R3; choose original task or Planning writer, preserve correction context. | PARTIAL R3/R5; actual create/assign/reschedule/complete chain still owed. E08 consumes same Work. | PROOF OWED: exact patch/readback/version/domain and Rail; task completion is not client acceptance. |
+| 04 Calendar/reminders / CV2,5,7 | PARTIAL R2; E05 clarify zone/recurrence/subject, no hidden booking. | PARTIAL R2; conflicts/DST/capacity-aware plan still owed; E03 owns customer booking. | PARTIAL R2/R5; #2961 is held preview, not an authorized writer or enabled recurrence. | PROOF OWED: actual next versus intended slot, original process revision and delivered occurrence. |
+| 05 Build automations / CV1,5,9 | PARTIAL R4/R7; E05 clarify trigger, conditions, participants and supported actions. | MISSING IMPLEMENTATION: full bounded multi-step preview/correction using original definitions. | PARTIAL R4/R5; exact draft save only; E10 provider readiness is separate input. | PROOF OWED: original saved draft/steps and durable save receipt; draft is not execution. |
+| 06 Execute / CV1,3,7 | PARTIAL R5; bind requested effect and exact stored arguments, not broad conversation assent. | PARTIAL R5; choose original adapter per registered action; end-to-end composition gap. | PARTIAL R5/R6; exact approval/current actor/tenant/technical limits; useful owner-away outcome missing. | PROOF OWED: original act→domain artifact→Rail, not queue/dispatch/finalizer alone. |
+| 07 Monitor / CV3,6,8 | PARTIAL R1/R6; distinguish stale/absent/failed/unknown before explaining exception. | MISSING IMPLEMENTATION: E05 useful stuck/exception triage consuming E02/E10 facts. | PARTIAL R5/R8; inspection is not remediation authority; domain owners retain remedies. | PROOF OWED: original exception, time/impact/coverage and false-positive controls, ALG12. |
+| 08 Recover / CV5,6,7,9 | PARTIAL R2/R5/R6; identify original attempt and what is known, never infer absence. | PARTIAL R5; original reconciliation before permitted bounded recovery, cross-step adaptation owed. | PARTIAL R5/R6; exact original approval/claim/receipt; no replay of uncertain effects. | PROOF OWED: original result identity after lost acknowledgement, concurrency and interruption. |
+| 09 Keep informed / CV8 | PARTIAL R1/R8; explain material result/exception and actual owner preference. | MISSING IMPLEMENTATION: E05 relevant notice selection using existing authorized delivery controls. | HELD DEPENDENCY: original notice producer/presentation and permitted communication consumer; no substitute inbox. | PROOF OWED: actual owner attention/delivery state; stored receipt alone is insufficient. |
+| 10 Results/resume / CV3,4,6,9 | PARTIAL R1/R2/R6; recover exact original work and distinguish then versus now. | PARTIAL R1/R8; explain next permitted step using actual progress; changed goals proof owed. | PARTIAL R3/R5/R6; continuation uses original writer, E08 references only; same approvals apply. | PROOF OWED: positive ZION result/domain/Rail and later session; empty history is not an executed assignment. |
+
+| Original outcome / cases | E — durable context | F — refusal/recovery | G — independent follow-through | H — justified human question |
+| --- | --- | --- | --- | --- |
+| 01 / CV3,4,9 | PARTIAL R1/R2; same original items/read_at after reload and later session owed. | PARTIAL R1; stale/denied/missing sources must withdraw data; tenant/role runtime negatives owed. | PARTIAL R1; finish independent authorized reads despite one unavailable source, no invented coverage. | PROOF OWED: ask only material goal/zone ambiguity; ordinary inspection needs no release permission. |
+| 02 / CV1,2,5,9 | PARTIAL R4; retain corrected plan, source links and owner decisions on resume. | PARTIAL R2/R4; stale plan/capacity/zone and declined recommendation must not schedule work. | MISSING IMPLEMENTATION: continued plan refinement/follow-through via existing permitted trigger. | PROOF OWED: concrete feasible alternatives only for unresolved capacity or action authority. |
+| 03 / CV4,5,6 | PARTIAL R3; original Work/native visibility, reload and same-version edits owed. | PARTIAL R3/R5; dirty/unknown guard retained; clean inspector Escape incorrectly warns (October27 finding). | PARTIAL R5; independently finish approved steps, do not prompt after each safe internal read. | PROOF OWED: exact consequential patch/assignee approval; no blanket approval from task inspection. |
+| 04 / CV2,5,7 | PARTIAL R2; same process/zone/revision in Calendar and Operations after return. | PARTIAL R2/R5; pause/revoke/cancel/concurrent edit/DST/late delivery negatives still owed. | HELD DEPENDENCY: first authorized recurring occurrence and meaningful result; no new cron. | PROOF OWED: exact recurrence/zone correction or held authority; never ask owner to troubleshoot CI. |
+| 05 / CV1,5,9 | PARTIAL R4/R7; preserve one draft/revision through correction and reopening. | PARTIAL R4; rejected/expired/unknown-save result reads original draft, no duplicate. | MISSING IMPLEMENTATION: full clarification→design→save continuation without routine prompting. | PROOF OWED: ask concrete missing trigger/action/participant or unsupported-step choice. |
+| 06 / CV1,3,7 | PARTIAL R5/R6; original policy/process/act and specialist return context must persist. | PARTIAL R5; revoked/expired/concurrent/late/unknown controls retain original identity; runtime proof owed. | MISSING IMPLEMENTATION: useful authorized owner-away domain artifact and truthful follow-through. | PROOF OWED: exact effect authorization only; no monetary allowance approval or provider activation inferred. |
+| 07 / CV3,6,8 | PARTIAL R1/R6; preserve original observations separately from current state. | PARTIAL R5/R8; degraded provider/heartbeat is not automatic failure or permission to retry. | MISSING IMPLEMENTATION: bounded ongoing anomaly observation and meaningful escalation. | PROOF OWED: escalate only unresolvable authority/decision with evidence and permitted next action. |
+| 08 / CV5,6,7,9 | PARTIAL R5/R6; original operation/receipt/context, no duplicate memory/execution ledger. | PARTIAL R5/R6; changed actor/tenant/intent and lost acknowledgement source controls; full live negatives owed. | PARTIAL R5; continue safe independent reconciliation; uncertain effect must remain held. | PROOF OWED: exact irreducible unknown/authority decision, not a routine retry request. |
+| 09 / CV8 | HELD DEPENDENCY: canonical notice/delivery lifecycle and later result retrieval. | PROOF OWED: revoked consent/quiet hours/frequency/provider absence and failed delivery no-repeat. | MISSING IMPLEMENTATION: actual permitted proactive follow-through, not a returning Chat answer. | PROOF OWED: original channel consent/action authority only; no new provider send granted. |
+| 10 / CV3,4,6,9 | PARTIAL R1/R2/R6; October27 existing conversation/empty composer and empty ZION sample survived reload only. | PARTIAL R5/R6; preserve failed/unknown beside older verified result; actual refusal/revocation proof owed. | PARTIAL R1/R5; resume permitted unfinished steps and explain next choice; full multi-step proof owed. | PROOF OWED: ask only new material choice/beyond-authority effect, preserving prior approved decisions. |
+
+### Sandbox S1–S12 — applicable subcases on those same outcomes
+
+Native Work/Planning/Calendar/Automation capabilities remain the first choice.
+Existing `services/paige-browser/server.js`/`ssrf-guard.mjs` read-only browser
+isolation is source-present, not a general isolated code/file/data runner.
+EXP19/ZION external Computer/runner remains HELD; E05 owns original Work/Harness/
+result integration, E10 connection/secret custody, E02 research artifacts and
+held E13 Knowledge/Vault and E12 Trust keep their original domains. PO25 is held
+separately. No general-runner absence is asserted from this bounded source read.
+
+| Subcase | Required contract / present status / original owner and next proof |
+| --- | --- |
+| S1 Native vs isolated | PARTIAL R1–R7 native routes; E05 must explain supported native choice. EXP19 HELD for a genuinely necessary isolated runner. |
+| S2 Server tenant/task | PARTIAL R5/R6 original identities; E05/Harness actual cross-task and cross-tenant denial proof owed. Never trust model-supplied identity. |
+| S3 Minimum input/Vault | PARTIAL R6 scoped context; E05 minimum-input handoff proof owed. E13 Vault projection HELD where genuinely required. |
+| S4 Untrusted inputs | PROOF OWED for E05 treating source text as data. Document quarantine/parsing belongs E13 HELD; no attachment text may confer authority. |
+| S5 Secret-free output | PROOF OWED E05 redacted context/result/log boundaries; E10 retains credentials. General-runner output boundary HELD EXP19. |
+| S6 Physical isolation | HELD EXP19 for code/file/data process/filesystem/network/host isolation. Existing browser guards are separate, not proof of this runner. |
+| S7 Action separation | PARTIAL R5/R6 original approval/adapters; actual denied/expired/revoked effect proof owed. Sandbox output cannot approve business work. |
+| S8 Durable artifact | PARTIAL R5/R6 native act/result/Rail; E05 must prove same artifact/save/reopen/handoff, not generic dispatch success. |
+| S9 Interrupted/unknown | PARTIAL R5/R6 original reconciliation; timeout/cancel/crash/lost acknowledgement and no replay runtime proof owed. |
+| S10 Cleanup/revocation | PROOF OWED E05 permitted context/result lifetime; physical isolated-session cleanup/retention/revocation HELD EXP19/E13. |
+| S11 Isolation/no effect | PARTIAL original native controls; E05 wrong actor/task/tenant and no unintended effect customer proof owed; runner denial HELD EXP19. |
+| S12 Usage/billing | PARTIAL original model traces, pending #2989 correction. Actual attributable usage→collection→invoice belongs original billing owner; no monetary ceilings. |
+
+| Original outcome | Applicable S-subcases and reason; next evidence remains attached to original outcome |
+| --- | --- |
+| 01 Responsibilities | S1–5,7–9,11–12 for native source analysis; S6/10 physical runner NOT APPLICABLE while native reads suffice, HELD EXP19 if isolated work is requested. |
+| 02 Plan week | S1–5,7–9,11–12 for scoped planning/context/result; S6/10 physical runner NOT APPLICABLE to current native plan, HELD for future isolated analysis. |
+| 03 Manage work | S1–3,5,7–12 for native edits/results and context lifetime; S4 untrusted text is data, no file parser claimed; S6 physical runner NOT APPLICABLE to domain writer. |
+| 04 Calendar/reminders | S1–3,5,7–12 for original schedule/occurrence/unknown; S4 untrusted calendar text never authority; S6 physical runner NOT APPLICABLE to canonical scheduler. |
+| 05 Build automations | S1–5,7–12 for untrusted design/preview/draft save; S6 physical runner HELD if required, never execute generated code as a draft feature. |
+| 06 Execute | S1–3,5,7–12 for native approved domain execution; S4 any tool text remains untrusted; S6 HELD for isolated external execution, no promotion to effects. |
+| 07 Monitor | S1–5,7–12 for original observations and safe result lifetime; S6 physical runner NOT APPLICABLE to native monitoring, HELD if later needed. |
+| 08 Recover | S1–3,5,7–12 for original attempt/receipt/unknown and cleanup; S4 recovered text cannot grant authority; S6 runner crash/isolation HELD EXP19. |
+| 09 Keep informed | S1–3,5,7–12 for minimal permitted message/context and delivery result; S4 untrusted result never consent; S6 physical runner NOT APPLICABLE to canonical communications. |
+| 10 Results/resume | S1–5,7–12 for artifact/source/history handoff and revocation; S6 physical runner NOT APPLICABLE to native retrieval, HELD for isolated-artifact continuation. |
+
+ALG01/08/12/13/03/11/02 and applicable ALG10 retain the inputs, bounded rules,
+output and honest maturity in the original Algorithm Support table below.
+This addendum provides no new verified supporting algorithm, score or readiness.
+No monetary stop is a legitimate recovery/authority gate under October27 policy;
+elapsed technical limits, abuse controls and exact action approval remain real.
+
+### October27 bounded current-production read evidence — no outcome closure
+
+Original ANT52e8b9e9d8 explicitly returned the existing E02→E05 browser turn.
+One temporary ordinary-owner tab; production9e325d918, loaded main-CtI32QY0.js,
+both public origins/source assets bound18:47UTC. Existing protected task read and
+reload, same prior conversation/empty composer, and the same honest recent-sample-
+empty ZION history passed. This is not positive assignment execution, actual401/
+403 withdrawal, stale-role/foreign-tenant proof, a new Chat turn or Live. Native
+Escape incorrectly warned about unsaved changes on an unchanged CRM inspection;
+explicit Close exited, deferred focus return remained UNVERIFIED. E05 owns the
+next bounded guard correction with dirty/unknown/concurrency negatives preserved.
+Raw customer values/record IDs/captures remain private. Own tab closed; no viewport
+override, account switch, new message, approval, edit, recurring/provider action or
+protected monthly request inspection/retry. Original Team Hub/customer tabs and
+drafts remain intact. Founder acceptance and all whole-outcome rows stay OPEN.
+
 ## October26 whole-Experience reconciliation — original scope retained
 
 Received owner-directed ANT-11/7d47cc68 and current ANT-161 assignments at

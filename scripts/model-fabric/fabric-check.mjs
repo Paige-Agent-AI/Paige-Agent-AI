@@ -297,17 +297,23 @@ openaiPlan = { status: 200 }; anthropicPlan = { status: 200 };
     "C3 an invalid request never moves — the other provider would get the same broken request");
   openaiPlan = { status: 200 };
 
-  // C4 — the budget gate runs on the seam's own candidates, and a stop is terminal (never falls over).
+  // C4 — October27 owner policy: the old allowance is informational. Preserve the
+  // original route and tenant-attributed usage, without an invented billing stop.
   setScenario({ tables: {
-    admin_app_settings: [{ key: "llm_budget_daily_usd__t_tenant-seam", value: 1 }],
-    paige_llm_trace: [{ tenant_id: "tenant-seam", cost_estimate_usd: 99, created_at: new Date().toISOString() }],
+    admin_app_settings: [{ key: "llm_budget_daily_usd__t_6e5a0000-0000-4000-8000-0000000000c4", value: 1 }],
+    paige_llm_trace: [{ tenant_id: "6e5a0000-0000-4000-8000-0000000000c4", cost_estimate_usd: 99, created_at: new Date().toISOString() }],
   } });
-  const traceSeam = { tenant_id: "tenant-seam", agent_id: "fabric-check-seam" };
-  let threw = null;
+  const traceSeam = { tenant_id: "6e5a0000-0000-4000-8000-0000000000c4", agent_id: "fabric-check-seam" };
+  const recC4 = recorder();
   calls.length = 0;
-  try { await fabric.fabricCompletion(REQ("operational", "research_unit_synthesis"), { openaiFetch, trace: traceSeam }); } catch (e) { threw = e; }
-  ok(threw?.code === "budget_exceeded" && calls.length === 0,
-    "C4 a budget stop throws before any provider call and never tries another");
+  const aboveMarker = await fabric.fabricCompletion(REQ("operational", "research_unit_synthesis"), { ...ON, openaiFetch, trace: traceSeam });
+  ok(aboveMarker.ok && aboveMarker.response?.choices?.[0]?.message?.content === "synthesis"
+    && aboveMarker.route.served?.provider === "openai" && calls.length === 1,
+    "C4 usage above the old marker preserves the original successful route without fallback");
+  const c4rows = recC4.inserts.filter(i => i.table === "paige_llm_trace");
+  ok(c4rows.length === 1 && c4rows[0].row?.tenant_id === traceSeam.tenant_id
+    && c4rows[0].row?.provider === "openai" && c4rows[0].row?.doctrine_gate_hits?.budget?.level === "hard",
+    "C4 the original provider usage row retains tenant attribution and the informational marker");
   setScenario({});
 
   // C5 — the judge carve-out: a pinned route ignores the class policy and never falls back.
@@ -499,22 +505,23 @@ openaiPlan = { status: 200 }; anthropicPlan = { status: 200 };
     return { stream, calls };
   };
 
-  // E1 — the streaming OpenAI leg sits under the canonical budget gate: a reasoning-band block
-  // throws BEFORE any transport moves, is traced, and NEVER falls back to Anthropic.
+  // E1 — usage above the former marker does not stop the original streaming leg.
+  // Trace its actual provider usage, rather than recording a fictional refusal.
   setScenario({ tables: {
     admin_app_settings: [{ key: "llm_budget_daily_usd__t_6e5a0000-0000-4000-8000-0000000000e1", value: 1 }],
     paige_llm_trace: [{ tenant_id: "6e5a0000-0000-4000-8000-0000000000e1", cost_estimate_usd: 99, created_at: new Date().toISOString() }],
   } });
   const recE1 = recorder();
   const beforeE1 = recE1.inserts.filter((i) => i.table === "paige_llm_trace").length;
-  let threwE1 = null;
   calls.length = 0;
-  try { await streamRun("operational", { ...ON, trace: { tenant_id: "6e5a0000-0000-4000-8000-0000000000e1", agent_id: "fabric-check" } }); } catch (e) { threwE1 = e; }
+  const aboveMarkerE1 = await streamRun("operational", { ...ON, trace: { tenant_id: "6e5a0000-0000-4000-8000-0000000000e1", agent_id: "fabric-check" } });
   const e1rows = recE1.inserts.filter((i) => i.table === "paige_llm_trace").slice(beforeE1);
-  ok(threwE1?.code === "budget_exceeded" && calls.length === 0,
-    `E1 a streaming block throws before any transport and never falls back (threw=${threwE1?.code}, calls=${calls.length})`);
-  ok(e1rows.length === 1 && e1rows[0].row?.provider === "router_budget" && e1rows[0].row?.error_class === "budget_exceeded",
-    "E1 the streaming block is auditable (one attributed router_budget row)");
+  ok(aboveMarkerE1.stream.ok && aboveMarkerE1.calls.length === 1 && aboveMarkerE1.calls[0]?.provider === "openai",
+    "E1 usage above the old marker streams on OpenAI primary without fallback");
+  ok(e1rows.length === 1 && e1rows[0].row?.provider === "openai"
+    && e1rows[0].row?.tenant_id === "6e5a0000-0000-4000-8000-0000000000e1"
+    && e1rows[0].row?.doctrine_gate_hits?.budget?.level === "hard" && e1rows[0].row?.error_class !== "budget_exceeded",
+    "E1 actual streamed usage retains one tenant-attributed trace and its informational marker");
 
   // E2 — a soft-gate zone streams AND the hit rides the drained stream's own trace row.
   setScenario({ tables: {

@@ -213,13 +213,11 @@ why, and what it proves (§13, §58: recorded, not silent).
 
 **A1c notes (2026-10-27, the owner's rulings on mentions and the failed private box).** Recorded, not
 silent (§13, §58); each has a test that fails with the defect reinstated (§71.4). Migration
-`20271119030008`, not applied anywhere yet. Re-checked 2026-10-27 (round 2), read-only SELECT on
-production: newest applied version `20271119000000`. Across every `origin/*` ref (1,898) the versions
-above it are `20271119010008` (A1b, `claude/practical-davinci-ij8hb8`, unmerged) and `20271120000000`
-(`claude/great-heisenberg-u7kyd9`, comms email, unmerged); I1's `20271119020008` is on the local
-`exp08-owners-i1` branch only. So `20271119030008` sorts above production, A1b and I1, which must apply
-first. **Risk named:** if `20271120000000` reaches production first, this file would sort below an
-applied version and must be renumbered above it before it merges.
+`20271120020008`, not applied anywhere yet. It was `20271119030008` until round 3 (2026-10-27): the
+risk named in round 2 happened. Production applied `20271120000000` (EXP03 governed email
+attachments, read-only SELECT 2026-10-27), so `20271119030008` sorted below an applied version, and
+I1 moved to `20271120010008` for the same reason. `20271120020008` sorts above production, A1b
+(`20271119010008`, applied) and I1, which must apply first.
 - **Only the FAILED private answer box is neutral (owner ruling 2026-10-27, "go with your
   recommendations").** *<AGENT> couldn't finish your private answer.* + Ask again is a status box: no
   `data-ag`, its own neutral line and surface (`.th-ag-priv--status`), so no agent tint, ring or ink

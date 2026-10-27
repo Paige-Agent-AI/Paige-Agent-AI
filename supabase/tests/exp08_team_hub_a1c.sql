@@ -1,6 +1,6 @@
 -- EXP08 Team Hub agents, A1c: "<AGENT> is writing…" for everyone who can see the conversation, and
 -- @channel / @here.
--- Migration: supabase/migrations/20271119030008_exp08_team_hub_a1c_writing_and_broadcast.sql.
+-- Migration: supabase/migrations/20271120020008_exp08_team_hub_a1c_writing_and_broadcast.sql.
 -- Contract: docs/delivery/exp08-team-hub-agents-contract.md, "A1c notes".
 -- Disposable PostgreSQL only. Never target the linked project. The proof runs in a database it creates
 -- and drops.
@@ -741,7 +741,7 @@ CREATE TEMP TABLE before_src AS SELECT p.oid::regprocedure::text AS sig, p.prona
 CREATE TEMP TABLE a1b_states AS SELECT md5(prosrc) AS v FROM pg_proc WHERE oid='public.team_hub_agent_turn_states(uuid,uuid,uuid[])'::regprocedure;
 
 -- 2. The change, then a second apply: a no-op.
-\ir ../migrations/20271119030008_exp08_team_hub_a1c_writing_and_broadcast.sql
+\ir ../migrations/20271120020008_exp08_team_hub_a1c_writing_and_broadcast.sql
 CREATE TEMP VIEW a1c_state AS
 SELECT 'fn:'||p.oid::regprocedure::text AS k, concat_ws('|', p.proacl::text, p.prosecdef::text, p.provolatile::text, p.proconfig::text, md5(p.prosrc)) AS v
  FROM pg_proc p WHERE p.pronamespace='public'::regnamespace AND (p.proname LIKE '%team_hub%' OR p.proname='operator_retirement_disposition')
@@ -758,7 +758,7 @@ UNION ALL
 SELECT 'tg:'||t.tgname, t.tgrelid::regclass::text||'|'||t.tgfoid::regprocedure::text FROM pg_trigger t
  WHERE NOT t.tgisinternal AND t.tgrelid::regclass::text LIKE '%team_hub%';
 CREATE TEMP TABLE a1c_before AS SELECT * FROM a1c_state;
-\ir ../migrations/20271119030008_exp08_team_hub_a1c_writing_and_broadcast.sql
+\ir ../migrations/20271120020008_exp08_team_hub_a1c_writing_and_broadcast.sql
 DO $$ BEGIN
  IF EXISTS(SELECT k,v FROM a1c_before EXCEPT SELECT k,v FROM a1c_state)
    OR EXISTS(SELECT k,v FROM a1c_state EXCEPT SELECT k,v FROM a1c_before) THEN
@@ -1275,7 +1275,7 @@ INSERT INTO mutant_results VALUES ('B11 empty broadcast stored as one', :'g');
 
 -- The migration's own guard: run on its own, it accepts the bodies as they are now (this file's) and
 -- refuses a dependency or a replaced body that differs.
-\set guardsql `sed -n '/^DO \$guard\$/,/^END \$guard\$;/p' supabase/migrations/20271119030008_exp08_team_hub_a1c_writing_and_broadcast.sql`
+\set guardsql `sed -n '/^DO \$guard\$/,/^END \$guard\$;/p' supabase/migrations/20271120020008_exp08_team_hub_a1c_writing_and_broadcast.sql`
 CREATE FUNCTION pg_temp.try(q text) RETURNS text LANGUAGE plpgsql AS $$
 BEGIN EXECUTE q; RETURN 'ran'; EXCEPTION WHEN OTHERS THEN RETURN SQLERRM; END $$;
 SELECT pg_temp.try(:'guardsql') AS gd0 \gset

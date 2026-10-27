@@ -1,7 +1,9 @@
 -- ============================================================================
 -- EXP08 co-owners and entity owners, increment I1 — OWNER INVITATIONS.
--- Contract: EXP08 co-owners and entity owners delivery contract, round 6 (design owner-approved
+-- Contract: docs/delivery/exp08-co-owners-entity-owners-contract.md, round 7 (design owner-approved
 -- 2026-10-27), §5.1, §5.2, §5.3 and peek_tenant_invite (§5.5). Applies to EVERY Solo account (§63).
+-- Owner ruling R16 (2026-10-27): platform operators keep archive, restore, delete, revoke_platform_access
+-- and admin-delete-user on Solo accounts as shipped; this file touches none of them.
 --
 -- definer-anon-exempt: peek_tenant_invite is re-created here (its result gains one column, which
 -- CREATE OR REPLACE cannot do) and keeps its grant to anon: it is the pre-auth /join reader, keyed

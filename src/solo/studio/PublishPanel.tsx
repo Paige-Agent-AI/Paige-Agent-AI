@@ -13,6 +13,8 @@ import {
 import { artifactId, hasPendingChanges, isLive, type LoadedArtifact } from "./artifact-state";
 import { nexusDisplayName, reviewWithNexusPrompt } from "./nexus";
 import { EmbedCode } from "./EmbedCode";
+import { buildPortableExport, PortableExportRefused } from "@/lib/growth/exportPortable";
+import type { GrowthPageTheme } from "@/lib/growth";
 
 // "error": nothing armed. The message says why; the button re-prepares ("Try again" when the door
 // said nothing ran, "Check again" otherwise). A used fingerprint is never left armed.
@@ -51,6 +53,74 @@ function CheckList({ checks, label }: { checks: PublishCheck[]; label: string })
   );
 }
 
+/** The portable export card (WEB-04): a static HTML download of the PUBLISHED columns. It is
+ *  presented as a download, never a deployment — and it can only exist for a live page, because
+ *  the export refuses anything but the approved public version. */
+export function PortableExportCard({ artifact, tenantSlug, tenantName, brandFloor, onError }: {
+  artifact: Extract<LoadedArtifact, { kind: "page" }>;
+  tenantSlug: string;
+  tenantName: string | null;
+  brandFloor: GrowthPageTheme;
+  onError: (m: string) => void;
+}) {
+  const download = (file: string, body: string, type: string) => {
+    const url = URL.createObjectURL(new Blob([body], { type }));
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = file;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+  const build = () => {
+    const pub = artifact.page.published;
+    if (!pub) return null; // nothing published to carry — the card is not rendered in that case
+    return buildPortableExport(
+      {
+        status: "published",
+        tenantSlug,
+        tenantName,
+        pageId: artifact.page.id,
+        pageSlug: artifact.page.slug,
+        pageTitle: artifact.page.title,
+        publishedAt: pub.publishedAt,
+        blocks: pub.blocks,
+        theme: pub.theme,
+        seo: pub.seo,
+        brandFloor,
+      },
+      { origin: window.location.origin, exportedAt: new Date().toISOString() },
+    );
+  };
+  const onDownload = () => {
+    try {
+      const r = build();
+      if (!r) return;
+      download(r.fileName, r.html, "text/html");
+    } catch (e) {
+      onError(e instanceof PortableExportRefused ? e.message : "The export couldn't be built just now. Try again.");
+    }
+  };
+  const onManifest = () => {
+    try {
+      const r = build();
+      if (!r) return;
+      download(r.fileName.replace(/\.html$/, "-manifest.json"), JSON.stringify(r.manifest, null, 2), "application/json");
+    } catch (e) {
+      onError(e instanceof PortableExportRefused ? e.message : "The manifest couldn't be built just now. Try again.");
+    }
+  };
+  return (
+    <div className="vs-export-card">
+      <h3>Portable export</h3>
+      <p>A static HTML copy of the published version — no scripts ship, and its form and chat link back to the live page. A download, not a deployment: the live page stays the source of truth.</p>
+      <div>
+        <button type="button" className="vs-btn" onClick={onDownload}>Download HTML</button>
+        <button type="button" className="vs-btn vs-btn-quiet" onClick={onManifest}>manifest.json</button>
+      </div>
+    </div>
+  );
+}
+
 /** While the server checks: three quiet rows in the checklist's own shape, and a line naming the work. */
 function Checking({ text }: { text: string }) {
   return (
@@ -61,7 +131,7 @@ function Checking({ text }: { text: string }) {
   );
 }
 
-export function PublishPanel({ artifact, onNexusHandoff, onClose, onDone, onRefresh }: {
+export function PublishPanel({ artifact, onNexusHandoff, onClose, onDone, onRefresh, tenantSlug, tenantName, brandFloor }: {
   artifact: LoadedArtifact;
   /** "Review with NEXUS" pre-approval handoff to the global PAIGE chat; absent ⇒ no affordance. */
   onNexusHandoff?: (prompt: string) => void;
@@ -69,6 +139,10 @@ export function PublishPanel({ artifact, onNexusHandoff, onClose, onDone, onRefr
   onDone: (message: string) => void;
   /** Re-read the artifact without announcing success (an unverified publish). */
   onRefresh?: () => void;
+  /** Tenant identity + brand floor for the page's portable export (WEB-04); absent ⇒ no card. */
+  tenantSlug?: string;
+  tenantName?: string | null;
+  brandFloor?: GrowthPageTheme;
 }) {
   const live = isLive(artifact);
   const pending = hasPendingChanges(artifact);
@@ -283,6 +357,9 @@ export function PublishPanel({ artifact, onNexusHandoff, onClose, onDone, onRefr
         <p>Visitors see the published version. Unpublishing moves it back to a draft here; anything that depends on it stays as it is.</p>
         {kind === "funnel" && <p>Changed one of its pages or forms? Publish again to put every step's latest saved version live.</p>}
         {artifact.kind === "form" && !confirming && <EmbedCode formId={id} formName={artifact.form.name} />}
+        {!confirming && artifact.kind === "page" && artifact.page.published && tenantSlug && brandFloor && (
+          <PortableExportCard artifact={artifact} tenantSlug={tenantSlug} tenantName={tenantName ?? null} brandFloor={brandFloor} onError={setError} />
+        )}
         {!confirming && out?.state === "blocked" && <CheckList checks={out.preview.checks.filter((c) => !c.ok && c.blocking)} label="Why it can't come down yet" />}
         {!confirming && unpublishOff}
         {!confirming && (out?.state === "refused" || out?.state === "error") && (
@@ -337,6 +414,9 @@ export function PublishPanel({ artifact, onNexusHandoff, onClose, onDone, onRefr
         </>
       )}
       {messages}
+      {live && artifact.kind === "page" && artifact.page.published && tenantSlug && brandFloor && (
+        <PortableExportCard artifact={artifact} tenantSlug={tenantSlug} tenantName={tenantName ?? null} brandFloor={brandFloor} onError={setError} />
+      )}
       {confirming ? confirmOut : (
         <div className="vs-pop-foot">
           {live && <button type="button" className="vs-btn vs-btn-danger" disabled={!!busy} onClick={startUnpublish}>Unpublish</button>}

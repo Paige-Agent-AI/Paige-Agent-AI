@@ -142,6 +142,10 @@ function ResolvedExecutiveOverview({ account, accountEpoch, actorId, accountName
     returnedEntry.current = location.key;
     // A person who moved focus while the fresh read was pending keeps it.
     if (document.activeElement && document.activeElement !== document.body && document.activeElement !== node) return;
+    // Reopening source details above the viewport must not add a second native
+    // scroll-anchoring adjustment to the explicit original reading position.
+    const priorAnchor = node.style.overflowAnchor;
+    node.style.overflowAnchor = 'none';
     for (const section of node.querySelectorAll('section.exec-domain')) {
       if (bookmark.sources.includes(section.getAttribute('aria-labelledby') ?? '')) {
         const details = section.querySelector<HTMLDetailsElement>(':scope > details.exec-provenance');
@@ -154,6 +158,10 @@ function ResolvedExecutiveOverview({ account, accountEpoch, actorId, accountName
     const focus = peers[bookmark.ordinal] ?? node.querySelector('h1');
     focus?.focus({ preventScroll: true });
     node.scrollTop = peers[bookmark.ordinal] ? bookmark.scroll : 0;
+    let frame = window.requestAnimationFrame(() => {
+      frame = window.requestAnimationFrame(() => { node.style.overflowAnchor = priorAnchor; });
+    });
+    return () => { window.cancelAnimationFrame(frame); node.style.overflowAnchor = priorAnchor; };
   }, [address, location.key, location.state, navigationType, returnScope, review.state]);
 
   return <div className="executive-root" aria-label="Executive Command Center" ref={root} onClickCapture={rememberDepartment}>

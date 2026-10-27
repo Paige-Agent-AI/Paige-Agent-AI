@@ -36,5 +36,5 @@ export default defineConfig({
     "import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY": JSON.stringify("harness-not-a-real-key"),
   },
   appType: "spa",
-  server: { host: "127.0.0.1", port: 5199, strictPort: true, fs: { allow: [repo, ...(process.env.EXP03_BASE_SRC ? [process.env.EXP03_BASE_SRC] : [])] } },
+  server: { host: "127.0.0.1", port: 5199, strictPort: true, fs: { allow: [repo, ...(process.env.EXP03_BASE_SRC ? [path.dirname(process.env.EXP03_BASE_SRC)] : [])] } },
 });

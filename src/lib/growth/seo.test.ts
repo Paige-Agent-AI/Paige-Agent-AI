@@ -96,8 +96,26 @@ describe("applyPublishedSeo — the published truth reaches the head, honestly",
     expect(doc.head.querySelector("meta[charset]")).not.toBeNull();
     const managed = [...doc.head.querySelectorAll("meta")].filter((m) =>
       MANAGED_SEO_TAGS.some(({ attr, key }) => m.getAttribute(attr) === key));
-    // description + og:title + og:description + og:image + og:url + twitter:card (image set → large)
-    expect(managed).toHaveLength(6);
+    expect(managed).toHaveLength(9);
+  });
+
+  it("REVIEW (twitter parity): pre-existing static-shell twitter values are replaced — never left contradicting", () => {
+    const doc = freshDoc();
+    for (const [k, v] of [["twitter:card", "summary"], ["twitter:title", "Paige Agent AI"], ["twitter:description", "Marketing on autopilot"], ["twitter:image", "https://paigeagent.ai/og.png"]] as const) {
+      const m = doc.createElement("meta");
+      m.setAttribute("name", k);
+      m.setAttribute("content", v);
+      doc.head.append(m);
+    }
+    applyPublishedSeo(doc, { title: "Referral Workshop", description: "Ninety minutes.", ogImage: "https://media.example.com/og.png", canonicalUrl: null });
+    expect(doc.head.querySelector('meta[name="twitter:title"]')?.getAttribute("content")).toBe("Referral Workshop");
+    expect(doc.head.querySelector('meta[name="twitter:description"]')?.getAttribute("content")).toBe("Ninety minutes.");
+    expect(doc.head.querySelector('meta[name="twitter:image"]')?.getAttribute("content")).toBe("https://media.example.com/og.png");
+    expect(doc.head.querySelector('meta[name="twitter:card"]')?.getAttribute("content")).toBe("summary_large_image");
+    // And when a field is absent, the stale shell value is CLEARED, not kept.
+    applyPublishedSeo(doc, { title: "Referral Workshop", description: null, ogImage: null, canonicalUrl: null });
+    expect(doc.head.querySelector('meta[name="twitter:description"]')).toBeNull();
+    expect(doc.head.querySelector('meta[name="twitter:image"]')).toBeNull();
   });
 });
 

@@ -51,6 +51,10 @@ export function SharingPreviewLine({ title, draftSeo }: {
           ? <> — “{draftSeo.description}”</>
           : <span className="vs-seo-missing"> No description is set, so sharers show the title alone. Ask Paige to add a one-line description.</span>}
       </p>
+      {/* The honest boundary (review finding): the page applies its sharing details in the
+          visitor's browser. A preview tool that never loads the page can still show the
+          platform's defaults — said here, not hidden in docs. */}
+      <p className="vs-seo-missing">Applied when the page loads in a browser; a link preview that never loads it may show the platform's own details.</p>
     </div>
   );
 }

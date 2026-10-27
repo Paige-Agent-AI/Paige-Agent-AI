@@ -35,6 +35,9 @@ async function coreAssertions(page, label) {
     ogImage: document.head.querySelector('meta[property="og:image"]')?.getAttribute("content") ?? null,
     ogUrl: document.head.querySelector('meta[property="og:url"]')?.getAttribute("content") ?? null,
     card: document.head.querySelector('meta[name="twitter:card"]')?.getAttribute("content") ?? null,
+    twTitle: document.head.querySelector('meta[name="twitter:title"]')?.getAttribute("content") ?? null,
+    twDesc: document.head.querySelector('meta[name="twitter:description"]')?.getAttribute("content") ?? null,
+    twImage: document.head.querySelector('meta[name="twitter:image"]')?.getAttribute("content") ?? null,
   }));
   if (head.title !== "Referral Workshop") errors.push(`${label}: document.title is "${head.title}"`);
   if (head.description !== "Ninety minutes to a Monday-ready referral plan.") errors.push(`${label}: meta description wrong: ${head.description}`);
@@ -42,11 +45,16 @@ async function coreAssertions(page, label) {
   if (head.ogImage !== "https://media.example.com/og/workshop.png") errors.push(`${label}: og:image wrong: ${head.ogImage}`);
   if (head.ogUrl !== page.url()) errors.push(`${label}: og:url is not the page's own address`);
   if (head.card !== "summary_large_image") errors.push(`${label}: twitter:card wrong: ${head.card}`);
+  // Review finding honored: the twitter trio must MATCH the published truth, not the shell's.
+  if (head.twTitle !== "Referral Workshop") errors.push(`${label}: twitter:title wrong: ${head.twTitle}`);
+  if (head.twDesc !== "Ninety minutes to a Monday-ready referral plan.") errors.push(`${label}: twitter:description wrong: ${head.twDesc}`);
+  if (head.twImage !== "https://media.example.com/og/workshop.png") errors.push(`${label}: twitter:image wrong: ${head.twImage}`);
   // The owner-visible truth: the panel's sharing line says exactly what will ship.
   const text = await page.textContent(".vs-seo-preview");
   if (!text.includes("What search and share will show:")) errors.push(`${label}: sharing-preview label missing`);
   if (!text.includes("Referral Workshop")) errors.push(`${label}: sharing-preview title missing`);
   if (!text.includes("Ninety minutes to a Monday-ready referral plan.")) errors.push(`${label}: sharing-preview description missing`);
+  if (!text.includes("Applied when the page loads in a browser")) errors.push(`${label}: client-rendering boundary line missing`);
   // The line never claims ranking or placement.
   if (/rank|first on google|top of search/i.test(text)) errors.push(`${label}: ranking claim present`);
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth);

@@ -19,7 +19,9 @@ export interface PublishedSeo {
   canonicalUrl: string | null;
 }
 
-/** Meta tags this module owns. Anything else in <head> was there before and stays. */
+/** Meta tags this module owns. Anything else in <head> was there before and stays. The
+ *  twitter:* trio is managed alongside og:* because the app's static index.html ships its own
+ *  twitter values — leaving them would contradict the page's truth even after JS runs. */
 const MANAGED = [
   { attr: "name", key: "description" },
   { attr: "property", key: "og:title" },
@@ -27,6 +29,9 @@ const MANAGED = [
   { attr: "property", key: "og:image" },
   { attr: "property", key: "og:url" },
   { attr: "name", key: "twitter:card" },
+  { attr: "name", key: "twitter:title" },
+  { attr: "name", key: "twitter:description" },
+  { attr: "name", key: "twitter:image" },
 ] as const;
 
 const trim = (v: unknown, max: number): string | null =>
@@ -74,6 +79,11 @@ export function applyPublishedSeo(doc: Document, seo: PublishedSeo): { title: st
   upsertMeta(doc, "property", "og:image", ogImage);
   upsertMeta(doc, "property", "og:url", canonicalUrl);
   upsertMeta(doc, "name", "twitter:card", ogImage ? "summary_large_image" : description ? "summary" : null);
+  // The static shell ships its own twitter:* values; a published page replaces ALL of them
+  // (or clears them) so no reader ever sees two contradictory truths in one head.
+  upsertMeta(doc, "name", "twitter:title", title);
+  upsertMeta(doc, "name", "twitter:description", description);
+  upsertMeta(doc, "name", "twitter:image", ogImage);
 
   return { title, description, ogImage };
 }

@@ -26,7 +26,9 @@ describe("SharingPreviewLine", () => {
     expect(host.textContent).toContain("What search and share will show:");
     expect(host.textContent).toContain("Referral Workshop");
     expect(host.textContent).toContain("Ninety minutes to a Monday-ready referral plan.");
-    expect(host.querySelector(".vs-seo-missing")).toBeNull();
+    // The client-rendering boundary is ON the card (review finding), not hidden in docs.
+    expect(host.textContent).toContain("Applied when the page loads in a browser");
+    expect(host.textContent).toContain("may show the platform's own details");
   });
 
   it("no description set: says so honestly and points at Paige — never invents one", () => {
@@ -34,8 +36,9 @@ describe("SharingPreviewLine", () => {
     expect(host.textContent).toContain("Referral Workshop");
     expect(host.textContent).toContain("No description is set");
     expect(host.textContent).toContain("Ask Paige to add a one-line description.");
-    // And nothing pretends a ranking or a preview image exists.
-    expect(host.textContent).not.toMatch(/rank|preview image|thumbnail/i);
+    expect(host.textContent).toContain("Applied when the page loads in a browser");
+    // And nothing pretends a ranking or a guaranteed link preview exists.
+    expect(host.textContent).not.toMatch(/rank|first on google|top of search/i);
   });
 
   it("an empty-string description is the honest missing state, not a blank quote", () => {

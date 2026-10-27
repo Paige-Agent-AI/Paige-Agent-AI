@@ -16,8 +16,8 @@ REDUCED_MOTION: PASS: this change adds no animation or transition, retaining the
 STATE_COVERAGE: PASS: settled populated/partial/expired/empty-sample/unavailable/loading/error/denied source states rendered. Controlled tests withhold wrong actor/tenant/foreign target, unresolved account, expired actual/variance and unsupported attainment, and retry the existing source only.
 TRUTHFUL_STATE_LABELS: PASS: original finance.department classification is preserved in the binding-ledger JSON. CAP009–017 retains its original Limited/Coming Soon/Unverified presentation and ALG03/06/11/12/13 maturity is unchanged. Original target arithmetic adds no predictive or provider-readiness claim.
 SOLO_UI: YES: original account-neutral Finance route and canonical active actor/tenant for all eligible existing/future SOLO accounts. No account-number allowlist, provisioning or role change. Controlled sample identities never select production authority.
-INTERNAL_BUILD_IDENTITY: source=3bfe79e18cb619af79de928f2b7e748e8b6e38e9; deployment=NOT_DEPLOYED; environment=local; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=assets/e2-financial-play-targets
-RELEASE_CHANNEL: development: source increment must earn exact-head required CI/current-main composition and production readback before release.
+INTERNAL_BUILD_IDENTITY: source=f9722f5c77e19f2838c8657ca28edc646794d29e; deployment=dpl_6gMbStvqYRjxXz9iVh2PVLC4Bpcz; environment=production; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=assets/e2-financial-play-targets
+RELEASE_CHANNEL: production: original consumer merged after reviewed487/all required exact-head gates, actual normal source union and observed production readback. Rendered-source3b remains bound separately in the artifact manifest.
 RELEASE_CLASSIFICATION: internal-only: bounded original financial Play target consumer, no customer release name or platform activation.
 CUSTOMER_RELEASE_IDENTITY: none: complete integrated EXP02 remains for one founder evaluation.
 RELEASE_NOTE_REQUIRED: no: sanitized engineering receipts only until the complete customer outcome earns announcement.
@@ -62,7 +62,20 @@ PROTECTED_SEAMS: affected: tenant/workspace isolation, actor/expiry/readback pro
 FLOW_PROTOTYPE: PASS: local throwaway target-preview.html traversed eight deterministic states, retry, original-record read/return and preserved synthetic discussion/link focus; actual1536x770 and390x844 inspected without horizontal document overflow. Prototype data is synthetic and has no backend. Standing owner creative/design authority chooses inline reuse; no individual founder evaluation or acceptance is inferred.
 VISUAL_DIRECTION: PASS: existing Finance and Executive target system; no new design system, decorative chart or card mosaic.
 MOTION_PURPOSE: NONE: no new product motion; preserve original reduced-motion behavior.
-UNVERIFIED: final review/required CI/current-main merge/deployment/readback, authenticated new-target current owner/negative roles/cohorts/reload/owning-Play continuation, native200percent zoom, Live and complete19/nine/founder acceptance remain outstanding. Isolated local tabs/servers were closed and viewport overrides reset; no Edge/client/Operator tab was used. Protected monthly remains UNKNOWN/UNRETRIED.
+UNVERIFIED: authenticated new-target current owner/negative roles/cohorts/reload/owning-Play continuation, native200percent zoom, Live and complete19/nine/founder acceptance remain outstanding. Isolated local tabs/servers were closed and viewport overrides reset; no customer tab was used for the synthetic proof. Protected monthly remains UNKNOWN/UNRETRIED.
+
+## October27 — observed source release
+
+Reviewed487ea202f8218449722470969d6ce8f631a38628/LOWER5662137133 earned all10 applicable
+checksSUCCESS, designed no-SQL PreviewSKIP/two webSUCCESS/zero threads. Actual
+mergef9722f5c77e19f2838c8657ca28edc646794d29e/tree5aa3e667 equals the verified normal
+incoming45111 union/all42 owning/all16,696 outside entries. Production
+dpl_6gMbStvqYRjxXz9iVh2PVLC4Bpcz READY; both public origins200/exactf972-mvq7rg8q/null,
+same reachable entry hash/missing404 at04:59:06UTC. Native/Edge/grant delta N/A.
+Original review API97/all32/config/JWT prerequisite separately verified. Exact
+[release receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2967#issuecomment-6434154203).
+This changes source-release evidence only; synthetic render/behavior and the
+unverified customer/Live/cohort/full19/nine/founder obligations stay distinct.
 
 ## Ownership, capability and orchestration
 

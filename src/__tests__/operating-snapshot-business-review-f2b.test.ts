@@ -529,7 +529,12 @@ describe('composeBusinessReview with F2b', () => {
     expect(d.campaigns.status).toBe('degraded');
     expect(d.campaigns.data).toBeNull();
     expect(d.campaigns.reason).not.toMatch(/^no_adapter/);
-    for (const area of ['work', 'revenue', 'communications', 'email', 'bookings', 'outcomes']) {
+    // The same old fixture has no email issuer port: the mounted reader must
+    // withhold its data, rather than fabricate a zero or pretend it is absent.
+    expect(d.email.status).toBe('degraded');
+    expect(d.email.data).toBeNull();
+    expect(d.email.reason).not.toMatch(/^no_adapter/);
+    for (const area of ['work', 'revenue', 'communications', 'bookings', 'outcomes']) {
       expect(d[area].status).toBe('unavailable');
       expect(d[area].reason).toMatch(/^no_adapter/);
     }

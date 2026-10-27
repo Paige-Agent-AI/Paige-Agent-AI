@@ -125,6 +125,12 @@ export interface ThreadContext {
 /** Inbound: a raw provider webhook event -> a NormalizedMessage (direction 'inbound'). */
 export interface InboundChannelAdapter {
   channel_type: ChannelType;
+  /**
+   * Optional provider qualifier, for a channel that receives from more than one provider
+   * (email: Resend's signed JSON is the unqualified 'email' adapter; SendGrid Inbound Parse
+   * registers as provider 'sendgrid'). Omitted = the channel's default adapter, exactly as before.
+   */
+  provider?: string;
   onEvent(raw: unknown): NormalizedMessage;
 }
 
@@ -211,17 +217,22 @@ export function buildListUnsubscribeHeaders(
 // Registries — the one place channel adapters are looked up (§18 one home).
 // C-1 registers only email; C-2..C-5 add their adapters here, no new dispatcher.
 // -----------------------------------------------------------------------------
-const INBOUND = new Map<ChannelType, InboundChannelAdapter>();
+const INBOUND = new Map<string, InboundChannelAdapter>();
 const OUTBOUND = new Map<ChannelType, OutboundChannelAdapter>();
 
+/** Registry key: the bare channel for its default adapter, `channel:provider` for a qualified one. */
+function inboundKey(ch: ChannelType, provider?: string | null): string {
+  return provider ? `${ch}:${provider}` : ch;
+}
+
 export function registerInboundAdapter(a: InboundChannelAdapter): void {
-  INBOUND.set(a.channel_type, a);
+  INBOUND.set(inboundKey(a.channel_type, a.provider), a);
 }
 export function registerOutboundAdapter(a: OutboundChannelAdapter): void {
   OUTBOUND.set(a.channel_type, a);
 }
-export function getInboundAdapter(ch: ChannelType): InboundChannelAdapter | undefined {
-  return INBOUND.get(ch);
+export function getInboundAdapter(ch: ChannelType, provider?: string | null): InboundChannelAdapter | undefined {
+  return INBOUND.get(inboundKey(ch, provider));
 }
 export function getOutboundAdapter(ch: ChannelType): OutboundChannelAdapter | undefined {
   return OUTBOUND.get(ch);

@@ -502,6 +502,96 @@ try {
   }
   console.log('PASS: original native report artifact/closed provenance/type/readback/turn/Rail, replay, immutable facts, current-scope read and refusal scenarios; isolated only, no public admission or worker/customer proof.');
 
+  // The actual original producer above supplies this report. Observation must
+  // recognize that same artifact without creating, retrying or waking any work.
+  const reportObservationIntent = randomUUID();
+  await psql(`CREATE FUNCTION auth.role() RETURNS text LANGUAGE sql STABLE AS $$
+      SELECT current_setting('request.jwt.claim.role',true) $$;
+    ALTER TABLE public.paige_chat_threads ADD COLUMN interactive_latest_intent uuid;
+    ALTER TABLE public.paige_chat_turns ADD COLUMN interactive_intent_id uuid,
+      ADD COLUMN interactive_actor_id uuid,ADD COLUMN interactive_tenant_id uuid,
+      ADD COLUMN interactive_terminal_state text;
+    UPDATE public.paige_chat_threads SET interactive_latest_intent='${reportObservationIntent}' WHERE id='${threadId}';
+    INSERT INTO public.paige_chat_turns(thread_id,role,content,interactive_intent_id,
+      interactive_actor_id,interactive_tenant_id,interactive_terminal_state,bundle_ref)
+    VALUES('${threadId}','assistant','Original report accepted','${reportObservationIntent}',
+      '${userId}','${tenantId}','WAIT_WORK','${JSON.stringify({interactive:{effects:[{tool:'document_generate',outcome:'durable_accepted',work_id:report.id}]}})}'::jsonb);`);
+  await psql(readFileSync(join(root,'supabase/migrations/20270601000014_int304_durable_observation.sql'),'utf8'));
+  const reportObservationMigration=readFileSync(join(root,'supabase/migrations/20271117140002_exp02_report_observation.sql'),'utf8');
+  const observationMetadataSql="SELECT jsonb_build_array(p.oid,p.proowner,p.proacl::text,p.prosecdef,p.provolatile,p.proconfig,p.proargnames,p.prorettype)::text FROM pg_proc p WHERE p.oid='public.read_paige_durable_observation(uuid,uuid,uuid)'::regprocedure";
+  const observationMetadata=(await psql(observationMetadataSql)).stdout;
+  await psql(reportObservationMigration);await psql(reportObservationMigration);
+  assert.equal((await psql(observationMetadataSql)).stdout,observationMetadata,'Original observation OID/ABI/ACL/metadata are unchanged');
+  const reportObservationQuery=`SET request.jwt.claim.sub='${userId}'; SET request.jwt.claim.tenant_id='${tenantId}'; SET request.jwt.claim.role='authenticated';
+    SET ROLE authenticated; SELECT public.read_paige_durable_observation('${threadId}','${reportObservationIntent}','${report.id}')::text;`;
+  const observeReport = () => psql(reportObservationQuery);
+  const observationText = (await observeReport()).stdout;
+  assert.ok(observationText,'Original caller/thread/intent/Work fixture must be readable before artifact verification');
+  const originalReportObservation = JSON.parse(observationText);
+  assert.equal(originalReportObservation.artifactVerified,true,'The original completed Business Review report must be verified by the SAME native observation');
+  assert.equal(originalReportObservation.artifactRef,report.id);
+  assert.equal(originalReportObservation.state,'succeeded');
+  assert.equal(originalReportObservation.approvalState,'unavailable');
+  assert.doesNotMatch(observationText,/aneb_v1_|report_evidence|request_payload|metric_provenance|isolated-private-canary/);
+  assert.deepEqual(JSON.parse((await observeReport()).stdout),originalReportObservation,'Repeated observation is stable');
+  let observationCases=6;
+  for(const [retire,restore] of changes){
+    await psql(retire);
+    assert.equal((await observeReport()).stdout,'','Current Metric authority must still permit the report read');
+    await psql(restore);
+    assert.equal(JSON.parse((await observeReport()).stdout).artifactVerified,true,'Restored original authority rereads the same saved report');
+    observationCases+=2;
+  }
+  const probeObservation=async change=>{
+    const response=await psql(`BEGIN;${change}\n${reportObservationQuery}ROLLBACK;`);
+    return response.stdout ? JSON.parse(response.stdout) : null;
+  };
+  assert.equal((await probeObservation(`UPDATE public.marketing_content SET status='archived' WHERE id='${report.id}';`)).artifactVerified,true,'Archiving does not invent a new report or discard its immutable source');
+  assert.equal((await probeObservation(`UPDATE public.paige_durable_work SET status='outcome_unknown',terminal_outcome=NULL,settled_at=NULL WHERE id='${report.id}';`)).recoveryState,'reconciliation_required');
+  for(const change of [
+    `UPDATE public.paige_durable_work SET settled_at=now()+interval '1 day' WHERE id='${report.id}';`,
+    `UPDATE public.paige_durable_work SET terminal_outcome=jsonb_set(terminal_outcome,'{content_id}','"${randomUUID()}"'::jsonb) WHERE id='${report.id}';`,
+    `UPDATE public.paige_chat_turns SET bundle_ref=bundle_ref-'paige_artifact' WHERE work_id='${report.id}';`,
+  ]){assert.equal((await probeObservation(change)).artifactVerified,false,'Original source association is required');observationCases++;}
+  for(const change of [
+    `UPDATE public.paige_chat_threads SET is_archived=true WHERE id='${threadId}';`,
+    `UPDATE public.paige_chat_threads SET interactive_latest_intent='${randomUUID()}' WHERE id='${threadId}';`,
+    `UPDATE public.paige_chat_turns SET bundle_ref=jsonb_set(bundle_ref,'{interactive,effects}',(bundle_ref->'interactive'->'effects')||(bundle_ref->'interactive'->'effects'->0)) WHERE interactive_intent_id='${reportObservationIntent}';`,
+  ]){assert.equal(await probeObservation(change),null,'Missing current original context cannot verify a report');observationCases++;}
+  observationCases+=2;
+  const observationCounts="SELECT jsonb_build_array((SELECT count(*) FROM net.proof_wakeups),(SELECT count(*) FROM public.proof_capability_runs),(SELECT md5(jsonb_agg(to_jsonb(w) ORDER BY id)::text) FROM public.paige_durable_work w))::text";
+  const countsBefore=(await psql(observationCounts)).stdout;
+  for(let i=0;i<3;i++)await observeReport();
+  assert.equal((await psql(observationCounts)).stdout,countsBefore,'Observation neither wakes work, writes receipts nor mutates original Work');observationCases++;
+  const observationBodySql="SELECT md5(prosrc) FROM pg_proc WHERE oid='public.read_paige_durable_observation(uuid,uuid,uuid)'::regprocedure";
+  const observationBody=(await psql(observationBodySql)).stdout;
+  for(const [change,reason] of [
+    ["GRANT EXECUTE ON FUNCTION public.read_paige_durable_observation(uuid,uuid,uuid) TO anon;",/REPORT_OBSERVATION_METADATA_CHANGED/],
+    ["DO $$DECLARE d text;BEGIN SELECT pg_get_functiondef('public.read_paige_durable_observation(uuid,uuid,uuid)'::regprocedure) INTO d;EXECUTE replace(d,E'\\nbegin\\n',E'\\nbegin\\n -- unreviewed local source probe\\n');END$$;",/REPORT_OBSERVATION_SOURCE_CHANGED/],
+    ["DO $$DECLARE d text;BEGIN SELECT pg_get_functiondef('public._paige_metric_report_readable(uuid)'::regprocedure) INTO d;EXECUTE replace(d,'SELECT auth.uid()','SELECT /* unreviewed local permission probe */ auth.uid()');END$$;",/REPORT_OBSERVATION_PERMISSION_CHANGED/],
+  ]){
+    // Each deliberate local alteration is rolled back when the migration
+    // refuses it. No source guard, privilege or assertion is disabled.
+    assert.match((await psql(`BEGIN;${change}\n${reportObservationMigration}`,true)).stderr,reason);
+    observationCases++;
+  }
+  assert.equal((await psql(observationBodySql)).stdout,observationBody,'Rejected guard probes leave the reviewed function unchanged');
+  assert.equal((await psql(observationMetadataSql)).stdout,observationMetadata);
+  console.log(`PASS: ${observationCases} original produced-report observation controls; actual saved artifact, current Metric authority, immutable association, original context, stable metadata and no replay/write.`);
+  // Reuse the ORIGINAL legacy Document/Research proof against this candidate in
+  // its own rollback-only database, inside this same owned disposable cluster.
+  await psql('CREATE DATABASE int336_test_report_observation;');
+  const oldObservationUrl=process.env.INT336_DATABASE_URL,oldPsqlBin=process.env.PSQL_BIN;
+  try{
+    process.env.INT336_DATABASE_URL=`postgresql://postgres@127.0.0.1:${port}/int336_test_report_observation`;
+    process.env.PSQL_BIN=executable('psql');
+    const legacy=await command(process.execPath,[join(root,'scripts/int304-durable-observation-check.mjs')]);
+    console.log(legacy.stdout);
+  }finally{
+    if(oldObservationUrl===undefined)delete process.env.INT336_DATABASE_URL;else process.env.INT336_DATABASE_URL=oldObservationUrl;
+    if(oldPsqlBin===undefined)delete process.env.PSQL_BIN;else process.env.PSQL_BIN=oldPsqlBin;
+  }
+
   // Original PUBLIC submit/capture-once stage. Resolver IO below is an explicit
   // isolated port; the full-schema suite separately uses the real Metric issuer.
   await psql(`CREATE TABLE public.proof_evidence_references(token text PRIMARY KEY,bundle jsonb,reads integer NOT NULL DEFAULT 0);

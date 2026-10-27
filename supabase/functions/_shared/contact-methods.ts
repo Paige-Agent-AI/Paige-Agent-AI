@@ -73,13 +73,28 @@ export async function findClientIdByAddress(
   value: string | null | undefined,
   caller: string,
 ): Promise<string | null> {
-  if (!tenantId || !isMatchableAddress(kind, value)) return null;
+  return (await lookupClientIdByAddress(admin, tenantId, kind, value, caller)).id;
+}
+
+/**
+ * findClientIdByAddress for a caller that must tell "no such contact" from "the lookup failed"
+ * (a provider webhook that can answer 5xx and be retried, rather than misfile the message).
+ * Same query and the same loud log; the failure is returned instead of read as "not found".
+ */
+export async function lookupClientIdByAddress(
+  admin: Client,
+  tenantId: string,
+  kind: ContactMethodKind,
+  value: string | null | undefined,
+  caller: string,
+): Promise<{ id: string | null; error: { code?: string; message: string } | null }> {
+  if (!tenantId || !isMatchableAddress(kind, value)) return { id: null, error: null };
   const { data, error } = await admin.rpc("client_id_for_address", { _tenant_id: tenantId, _kind: kind, _value: value });
   if (error) {
     console.error(`[${caller}] contact_address_lookup_failed`, { kind, code: error.code, message: error.message });
-    return null;
+    return { id: null, error: { code: error.code, message: error.message } };
   }
-  return typeof data === "string" ? data : null;
+  return { id: typeof data === "string" ? data : null, error: null };
 }
 
 /**

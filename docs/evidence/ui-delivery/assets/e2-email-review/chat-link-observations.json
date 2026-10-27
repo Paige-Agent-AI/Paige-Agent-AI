@@ -1,0 +1,57 @@
+{
+  "kind": "Original server reference factory in Node → frozen closed synthetic references → original browser-safe parser and PaigeRecordLinks renderer",
+  "frames": [
+    {
+      "file": "1366x768-email-chat-references.jpg",
+      "links": [
+        {
+          "href": "/solo/1234567/command-center/executive",
+          "label": "Open Executive"
+        },
+        {
+          "href": "/solo/1234567/growth/overview",
+          "label": "Open Marketing"
+        }
+      ],
+      "pageWidth": 1366,
+      "scroll": 416,
+      "viewport": [
+        1366,
+        768
+      ],
+      "width": 416
+    },
+    {
+      "file": "390x844-email-chat-references.jpg",
+      "links": [
+        {
+          "href": "/solo/1234567/command-center/executive",
+          "label": "Open Executive"
+        },
+        {
+          "href": "/solo/1234567/growth/overview",
+          "label": "Open Marketing"
+        }
+      ],
+      "pageWidth": 390,
+      "scroll": 270,
+      "viewport": [
+        390,
+        844
+      ],
+      "width": 270
+    },
+    {
+      "file": "390x844-email-chat-denied.jpg",
+      "links": 0,
+      "status": "No authorized source reference was returned.",
+      "viewport": [
+        390,
+        844
+      ]
+    }
+  ],
+  "errors": [],
+  "initialAttempt": "Invalid backend-module browser import preserved privately and corrected; no product frontend imports it.",
+  "authenticated": "UNVERIFIED"
+}

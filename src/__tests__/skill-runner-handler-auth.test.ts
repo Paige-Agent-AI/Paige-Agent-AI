@@ -13,6 +13,8 @@ import * as interpreterCore from "../../supabase/functions/_shared/skill-interpr
 import * as contactMethods from "../../supabase/functions/_shared/contact-methods.ts";
 import * as businessVerify from "../../supabase/functions/_shared/business-verify-outcome.ts";
 import * as clientGamePlan from "../../supabase/functions/_shared/paige-skill/client-game-plan.ts";
+import * as platformSendgrid from "../../supabase/functions/_shared/email/platform-sendgrid.ts";
+import * as tenantSender from "../../supabase/functions/_shared/email/tenant-sender.ts";
 
 type Row = Record<string, unknown>;
 const source = readFileSync("supabase/functions/skill-runner/index.ts", "utf8");
@@ -24,6 +26,14 @@ function fixture(options: {
   noWorkspace?: boolean; providerHeld?: boolean; browser?: boolean; notMember?: boolean;
   authError?: boolean; authThrows?: boolean; revokedAfterFirstCheck?: boolean; roleRevokedAfterFirstCheck?: boolean;
   workspaceChangedAfterFirstCheck?: boolean; inactiveSkill?: boolean;
+  /** Phase 2: the single-use claim succeeds and returns the stored, approved send. */
+  claim?: boolean;
+  /** The SendGrid answer for the one transport request (a stub; nothing leaves the process). */
+  provider?: () => Response;
+  /** The sender frozen into the approved proposal (default: the business's own-domain sender). */
+  fromHeader?: string;
+  /** This business's active managed identity local part (tenant_email_identities), if any. */
+  ownIdentity?: string;
 } = {}) {
   const writes: Array<{ table: string; operation: string; values: Row; filters: Row }> = [];
   const reads: Array<{ table: string; filters: Row }> = [];
@@ -35,6 +45,12 @@ function fixture(options: {
   let drafts = 0;
   let network = 0;
   let handler: ((req: Request) => Promise<Response>) | undefined;
+  const providerCalls: Array<{ url: string; headers: Record<string, string>; body: Row }> = [];
+  const claimedArgs = {
+    recipient: "client@example.invalid", fromHeader: options.fromHeader ?? "Fixture Business <sender@example.invalid>",
+    subject: "Your summary from Paige", html: "<p>Approved draft</p>", doc_type: "summary",
+    contact_id: "test-contact-a", content_sha256: "a".repeat(64),
+  };
   const contact = (id: string, tenant: string) => ({
     id, tenant_id: tenant, first_name: "Fixture", last_name: "Client",
     client_contact_methods: [{ kind: "email", value: "client@example.invalid", is_primary: true, position: 0 }],
@@ -52,6 +68,7 @@ function fixture(options: {
       if (operation !== "read") {
         writes.push({ table, operation, values, filters: { ...filters } });
         if (table === "paige_skill_runs" && operation === "insert") return { data: { id: "test-run" }, error: null };
+        if (table === "paige_pending_confirmations" && operation === "update" && options.claim) return { data: { args: claimedArgs }, error: null };
         return { data: null, error: null };
       }
       reads.push({ table, filters: { ...filters } });
@@ -61,6 +78,9 @@ function fixture(options: {
         return { data: filters.user_id === "test-owner-a"
           ? { active_tenant_id: options.noWorkspace ? null
             : options.workspaceChangedAfterFirstCheck && workspaceChecks > 1 ? "test-tenant-b" : "test-tenant-a" } : null, error: null };
+      }
+      if (table === "tenant_email_identities") {
+        return { data: filters.tenant_id === "test-tenant-a" && options.ownIdentity ? { local_part: options.ownIdentity, status: "active" } : null, error: null };
       }
       if (table === "clients") return { data: contacts.find(row => row.id === filters.id && row.tenant_id === filters.tenant_id) ?? null, error: null };
       throw new Error(`Unexpected fixture read ${table}`);
@@ -122,7 +142,19 @@ function fixture(options: {
       decisions.push(input);
       return governed.decideSkillRun(input);
     } },
-    "../_shared/paige-skill/email-approval.ts": emailApproval,
+    // The real approval flow. Only the pre-send gate port is held open on the claim fixture, because
+    // runPreSend's own matrix is proven in its own suite and reads tables this fixture does not model.
+    "../_shared/paige-skill/email-approval.ts": options.claim
+      ? { ...emailApproval, emailPreSend: () => async () => ({ proceed: true, reason: null }) }
+      : emailApproval,
+    "../_shared/email/tenant-sender.ts": tenantSender,
+    // The REAL SendGrid transport, with its network port stubbed: it builds the actual request.
+    "../_shared/email/platform-sendgrid.ts": { ...platformSendgrid, sendPlatformEmail: (input: platformSendgrid.PlatformEmail, deps: platformSendgrid.PlatformDeps = {}) =>
+      platformSendgrid.sendPlatformEmail(input, { ...deps, fetch: (async (url: string, init: { headers: Record<string, string>; body: string }) => {
+        providerCalls.push({ url, headers: init.headers, body: JSON.parse(init.body) });
+        if (!options.provider) throw new Error("Unexpected provider send");
+        return options.provider();
+      }) as unknown as typeof fetch }) },
     "../_shared/confirm-fingerprint.ts": fingerprint,
     "../_shared/business-verify-outcome.ts": businessVerify,
     "../_shared/paige-skill/client-game-plan.ts": clientGamePlan,
@@ -133,14 +165,14 @@ function fixture(options: {
     return modules[id];
   };
   const deno = {
-    env: { get: (name: string) => ({ SUPABASE_URL: "https://fixture.invalid", SUPABASE_SERVICE_ROLE_KEY: "test-internal-service" } as Record<string, string>)[name] },
+    env: { get: (name: string) => ({ SUPABASE_URL: "https://fixture.invalid", SUPABASE_SERVICE_ROLE_KEY: "test-internal-service", SENDGRID_MAIL_SEND_API_KEY: "test-mail-send-key" } as Record<string, string>)[name] },
     serve: (fn: typeof handler) => { handler = fn; },
   };
   new Function("require", "exports", "Deno", "crypto", "fetch", compiled)(
     load, {}, deno, webcrypto, () => { network++; throw new Error("Network forbidden in protected handler fixture"); },
   );
   return {
-    writes, reads, decisions, tokens, interpreterCalls,
+    writes, reads, decisions, tokens, interpreterCalls, providerCalls,
     get drafts() { return drafts; },
     get network() { return network; },
     async invoke(token?: string, overrides: Row = {}, method = "POST") {
@@ -241,6 +273,76 @@ describe("skill-runner actual handler authentication ports (no provider effects)
     expect(f.writes.some(w => w.table === "paige_skill_runs" || w.table === "communication_log")).toBe(false);
     expect(f.drafts).toBe(0);
     expect(f.network).toBe(0);
+  });
+});
+
+describe("skill-runner approved send through the SendGrid transport (stubbed network)", () => {
+  const runRow = (f: ReturnType<typeof fixture>) => f.writes.find(w => w.table === "paige_skill_runs" && w.operation === "insert")?.values;
+
+  it("sends the approved draft once, From moved onto Paige's domain, replies still reaching the business", async () => {
+    const f = fixture({ claim: true, provider: () => new Response(null, { status: 202, headers: { "X-Message-Id": "sgFixture1" } }) });
+    const result = await f.invoke("test-owner-jwt", { confirm_token: "a1b2c3d4e5f60718" });
+    expect(result).toMatchObject({ status: 200, body: { status: "succeeded", outputs: { resend_id: "sgFixture1", recipient: "client@example.invalid" } } });
+    expect(f.providerCalls).toHaveLength(1);
+    expect(f.providerCalls[0].url).toBe("https://api.sendgrid.com/v3/mail/send");
+    expect(f.providerCalls[0].headers.Authorization).toBe("Bearer test-mail-send-key");
+    expect(f.providerCalls[0].body).toMatchObject({
+      personalizations: [{ to: [{ email: "client@example.invalid" }] }],
+      from: { email: "notifications@mail.paigeagent.ai", name: "Fixture Business" },
+      reply_to: { email: "sender@example.invalid" },
+      subject: "Your summary from Paige",
+      content: [{ type: "text/html", value: "<p>Approved draft</p>" }],
+    });
+    expect(runRow(f)).toMatchObject({ status: "succeeded", outputs: { resend_id: "sgFixture1" } });
+    expect(f.writes.some(w => w.table === "communication_log")).toBe(true);
+    expect(f.network).toBe(0);
+  });
+
+  it("keeps THIS business's own managed address as the From, with no Reply-To rewrite", async () => {
+    const f = fixture({ claim: true, fromHeader: "Fixture Business <fixture-biz@mail.paigeagent.ai>", ownIdentity: "fixture-biz",
+      provider: () => new Response(null, { status: 202, headers: { "X-Message-Id": "sgOwn" } }) });
+    const result = await f.invoke("test-owner-jwt", { confirm_token: "a1b2c3d4e5f60718" });
+    expect(result.status).toBe(200);
+    expect(f.providerCalls[0].body.from).toEqual({ email: "fixture-biz@mail.paigeagent.ai", name: "Fixture Business" });
+    expect(f.providerCalls[0].body.reply_to).toBeUndefined();
+    expect(f.reads.find(r => r.table === "tenant_email_identities")?.filters).toEqual({ tenant_id: "test-tenant-a" });
+  });
+
+  it.each([
+    ["another business's managed address", "Fixture Business <other-biz@mail.paigeagent.ai>"],
+    ["a PAIGE address", "Fixture Business <support@paigeagent.ai>"],
+  ])("never sends as %s: it goes as notifications@ and replies are not pointed at PAIGE", async (_label, fromHeader) => {
+    const f = fixture({ claim: true, fromHeader, ownIdentity: "fixture-biz",
+      provider: () => new Response(null, { status: 202, headers: { "X-Message-Id": "sgX" } }) });
+    await f.invoke("test-owner-jwt", { confirm_token: "a1b2c3d4e5f60718" });
+    expect(f.providerCalls[0].body.from).toEqual({ email: "notifications@mail.paigeagent.ai", name: "Fixture Business" });
+    // Both originals are on a paigeagent.ai domain, which no business reads, so no Reply-To points there.
+    expect(f.providerCalls[0].body.reply_to).toBeUndefined();
+  });
+
+  it.each([
+    ["a 5xx", () => new Response("upstream", { status: 503 })],
+    ["a thrown request", () => { throw new TypeError("connection reset"); }],
+  ])("reports %s as UNCONFIRMED, never a plain failure that invites a redraft-and-resend", async (_label, provider) => {
+    const f = fixture({ claim: true, provider });
+    const result = await f.invoke("test-owner-jwt", { confirm_token: "a1b2c3d4e5f60718" });
+    // 202, not 502: no caller that branches on HTTP status may read this as a plain failure to redo.
+    expect(result.status).toBe(202);
+    expect(result.body).toMatchObject({ status: "unconfirmed", code: "send_unconfirmed" });
+    expect(result.body.code).not.toBe("send_failed");
+    expect(String(result.body.error)).not.toMatch(/re-draft to send again/i);
+    expect(f.providerCalls).toHaveLength(1);
+    expect(runRow(f)).toMatchObject({ status: "failed", error: "send_unconfirmed" });
+    // It may have gone, but it is not proven: never written into the client's history as sent.
+    expect(f.writes.some(w => w.table === "communication_log")).toBe(false);
+  });
+
+  it("keeps a definitive 4xx refusal as send_failed", async () => {
+    const f = fixture({ claim: true, provider: () => new Response("bad", { status: 400 }) });
+    const result = await f.invoke("test-owner-jwt", { confirm_token: "a1b2c3d4e5f60718" });
+    expect(result).toMatchObject({ status: 502, body: { status: "failed", code: "send_failed" } });
+    expect(runRow(f)).toMatchObject({ status: "failed" });
+    expect(f.writes.some(w => w.table === "communication_log")).toBe(false);
   });
 });
 

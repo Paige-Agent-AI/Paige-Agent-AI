@@ -1,4 +1,5 @@
-// buildProvider never sends PAIGE Email (SendGrid) — mocked fetch, no network, no credentials.
+// buildProvider never sends — not PAIGE Email (SendGrid), not the retired Resend default — mocked fetch,
+// no network, no credentials.
 //
 // SendGrid email goes out only through the governed email door (comms-email-command → send-message).
 // This generic seam reads a tenant-controlled `email_provider`, so it must never reach SendGrid on the
@@ -11,6 +12,7 @@ import { buildProvider, type TenantEmailProviderConfig } from "./providers.ts";
 // key to send with; values are obviously fake and never sent anywhere (fetch is mocked).
 Deno.env.set("SENDGRID_MAIL_SEND_API_KEY", "SG.synthetic-test-key-not-real");
 Deno.env.set("TENANT_EMAIL_KEY_SYNTHETIC", "SG.synthetic-tenant-key-not-real");
+Deno.env.set("RESEND_API_KEY", "re_synthetic-test-key-not-real");
 
 const MSG = {
   from: "PAIGE Email <test@sg-mail.paigeagent.ai>",
@@ -49,7 +51,24 @@ for (const config of [
   });
 }
 
-Deno.test("unknown providers still fail safe to platform Resend", () => {
-  const provider = buildProvider({ provider: "not-a-provider" });
-  assertEquals(provider.key, "resend");
-});
+// The Resend adapter was removed (the account was emptied 2026-10-26 and nothing called provider.send()).
+// No config, the retired "resend" default and an unknown string all refuse — none reaches any provider.
+for (const [config, key] of [
+  [null, "platform"],
+  [{ provider: "resend" }, "resend"],
+  [{ provider: "resend", api_key_secret: "TENANT_EMAIL_KEY_SYNTHETIC" }, "resend"],
+  [{ provider: "not-a-provider" }, "platform"],
+] as Array<[TenantEmailProviderConfig | null, string]>) {
+  Deno.test(`buildProvider(${JSON.stringify(config)}) refuses as "${key}" and makes no provider call`, async () => {
+    const mock = withFetchMock();
+    try {
+      const provider = buildProvider(config);
+      assertEquals(provider.key, key);
+      const result = await provider.send(MSG);
+      assertEquals(result, { ok: false, provider: key, error: `provider_not_implemented:${key}` });
+      assertEquals(mock.calls.length, 0);
+    } finally {
+      mock.restore();
+    }
+  });
+}

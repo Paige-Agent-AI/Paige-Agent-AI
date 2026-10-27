@@ -101,12 +101,18 @@ describe("Team Hub stylesheet: agents (A1b, approved v5 colour rules)", () => {
     for (const status of ["open", "in_progress", "blocked", "done"]) expect(rule(`.th-state[data-status="${status}"]::before`)).not.toContain("--agc");
     expect(css).not.toMatch(/\.th-state[^{]*\{[^}]*--agc/);
     expect(rule(".th-hub .th-ag-fail svg")).toContain("color:var(--pg-warning)");
+    // The private part that couldn't finish is a status too: its mark is warning, not the agent's ink.
+    expect(rule(".th-hub .th-ag-priv--failed>svg")).toBe("color:var(--pg-warning)");
   });
 
   it("spends no gold on any agent element (PAIGE's gold is her tint and ring tokens), and Say hello to PAIGE is ink", () => {
     const agentRules = css.slice(css.indexOf("EXP08 Team Hub agents (A1b)"));
     expect(agentRules).not.toMatch(/--pg-gold/);
     expect(rule(".th-btn--primary")).toContain("background:var(--pg-ink)");
+  });
+
+  it("never lets the composer row's one-line hint widen the composer past a narrow hub (390 phone overflow, A1b rendered pass)", () => {
+    expect(rule(".th-composer-wrap")).toContain("grid-template-columns:minmax(0,1fr)");
   });
 
   it("moves the writing dots only when motion is welcome; the words stay either way", () => {

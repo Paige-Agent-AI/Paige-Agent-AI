@@ -151,7 +151,8 @@
 .th-empty-title{color:var(--pg-ink);font-weight:600}
 
 /* Composer and the @ list anchored above it */
-.th-composer-wrap{position:relative;display:grid;gap:6px;padding:8px 16px 14px}
+/* minmax(0,1fr): the composer row's one-line hint must never widen the composer past a narrow hub. */
+.th-composer-wrap{position:relative;display:grid;grid-template-columns:minmax(0,1fr);gap:6px;padding:8px 16px 14px}
 .th-composer{border:1px solid var(--pg-line);border-radius:12px;background:var(--pg-surface);box-shadow:var(--pg-rim)}
 .th-composer:focus-within{border-color:var(--pg-line-strong)}
 /* The ring belongs to the whole composer box, not a square cut across the textarea inside it. */
@@ -392,10 +393,11 @@
 
 /* A message from an agent: its plate and name open its profile. */
 .th-ag-avbtn{display:block;width:32px;height:32px;padding:0;border:0;border-radius:9px;background:transparent;cursor:pointer}
-.th-ag-namebtn{padding:0;border:0;background:transparent;font:inherit;font-weight:600;cursor:pointer}
+/* Inline text controls keep their line, but get a taller hit area (a 24px target or more). */
+.th-ag-namebtn{padding:4px 0;margin:-4px 0;border:0;background:transparent;font:inherit;font-weight:600;cursor:pointer}
 .th-ag-namebtn:hover{text-decoration:underline;text-underline-offset:3px}
 .th-ag-re{display:inline-flex;align-items:center;gap:4px;padding:0;border:0;background:transparent;color:var(--pg-faint);font-size:11px}
-button.th-ag-re{cursor:pointer}
+button.th-ag-re{padding:4px 0;margin:-4px 0;cursor:pointer}
 button.th-ag-re:hover{color:var(--pg-muted);text-decoration:underline;text-underline-offset:3px}
 .th-hub .th-ag-re svg{width:12px;height:12px}
 .th-text--fixed{margin-top:4px}
@@ -416,6 +418,7 @@ button.th-ag-re:hover{color:var(--pg-muted);text-decoration:underline;text-under
 .th-ag-priv{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;margin-top:8px;max-width:560px;padding:4px 4px 4px 10px;border:1px solid color-mix(in srgb,var(--agc-ring) 35%,var(--pg-line-soft));border-radius:9px;background:color-mix(in srgb,var(--agc-tint) 45%,var(--pg-surface));color:var(--pg-ink-2);font-size:12px}
 .th-ag-priv>span{flex:1;min-width:0}
 .th-hub .th-ag-priv>svg{width:14px;height:14px;color:var(--agc-ink)}
+.th-hub .th-ag-priv--failed>svg{color:var(--pg-warning)}
 .th-ag-priv .th-btn{min-height:40px}
 .th-ag-open{display:inline-flex;align-items:center;gap:4px;margin-left:auto;font-size:12px}
 .th-hub .th-ag-open svg{width:13px;height:13px}

@@ -64,7 +64,8 @@ export function PrivateNote({ agent, status, onOpenDm, onAskAgain, online }: {
 }) {
   const name = agentName(agent);
   if (status === "failed") {
-    return <div className="th-ag-priv" data-ag={agent}><TriangleAlert aria-hidden="true" /><span>{name} couldn't finish your private answer.</span>
+    // A failure is a status: its mark is the system warning, never the agent's colour.
+    return <div className="th-ag-priv th-ag-priv--failed" data-ag={agent}><TriangleAlert aria-hidden="true" /><span>{name} couldn't finish your private answer.</span>
       <button type="button" className="th-btn" disabled={!online} onClick={onAskAgain}>Ask again</button></div>;
   }
   return <div className="th-ag-priv" data-ag={agent}><Lock aria-hidden="true" />

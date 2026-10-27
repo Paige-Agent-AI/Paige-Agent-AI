@@ -223,6 +223,22 @@ describe('Executive display-only history return', () => {
 });
 
 describe("Executive — integrated customer flow", () => {
+  it('keeps email counts, source limits and the original Marketing destination together', async () => {
+    const snapshot = { ...structuredClone(SNAPSHOT), requested: [...SNAPSHOT.requested, 'email' as const] };
+    snapshot.domains.email = { status: 'available', data: { ...snapshot.domains.clients!.data!, domain: 'email', owner: 'marketing', coverage: 'partial',
+      coverage_note: 'Image loads do not prove reading; own-mail tracking is excluded.',
+      headline: [{ key: 'email.opened', label: 'Sent emails with a tracked open', value: 0, unit: 'count', basis: 'point_in_time', window_note: 'For these sends, through this read. Not a read receipt.' }] } };
+    mocks.review.mockReturnValue({ state: 'ready', snapshot, refresh: vi.fn() });
+    await mount();
+    const section = host.querySelector("[aria-labelledby='exec-domain-email']")!;
+    expect(section.textContent).toContain('Image loads do not prove reading');
+    expect(section.textContent).toContain('As of the source read');
+    expect(section.textContent).toContain('For these sends, through this read');
+    expect(section.querySelector('.exec-figures dd')?.textContent).toContain('0');
+    expect(section.querySelector('a')?.getAttribute('href')).toBe('/solo/1234567/growth/overview');
+    expect(section.querySelector('summary')?.textContent).toBe('Source & freshness');
+    expect(mocks.prefill).not.toHaveBeenCalled();
+  });
   it('presents recorded Marketing intake, its limits and the current-account originating destination', async () => {
     const snapshot = structuredClone(SNAPSHOT);
     snapshot.domains.campaigns = { status: 'available', data: { ...snapshot.domains.clients!.data!, domain: 'campaigns', owner: 'marketing',

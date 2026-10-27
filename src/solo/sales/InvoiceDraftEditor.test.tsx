@@ -42,3 +42,26 @@ it('refuses stale terms version and distinguishes incomplete paging from unavail
 it('keeps plan-with-missing-schedule selectable without claiming signing or payment activation',()=>{act(()=>root.render(<Fixture commercialTerms={[{id:'terms-a',clientId:'client-a',title:'Recorded terms',version:0,status:'draft',termsCurrent:false}]}/>));set(label('Client'),'client-a');set(host.querySelector('[aria-label="Commercial terms / payment plan"]')!,'terms-a');click('Save draft');expect(saved).toHaveBeenCalledOnce();expect(host.textContent).toContain('schedule missing or stale');expect(host.textContent).toContain('separate from the signing agreement')});
 it('explicitly adopts changed terms version without treating it as approval',()=>{const ref={id:'terms-a',version:1};act(()=>root.unmount());root=createRoot(host);act(()=>root.render(<Fixture value={{...initial,client_id:'client-a',recipient_email:'owner@example.test',commercial_terms_reference:ref}} commercialTerms={[{id:'terms-a',clientId:'client-a',title:'Plan',version:2,status:'active',termsCurrent:true}]}/>));click('Use current terms version');expect(last.commercial_terms_reference).toEqual({id:'terms-a',version:2});expect(saved).not.toHaveBeenCalled();click('Save draft');expect(saved).toHaveBeenCalledOnce()});
 it('refuses unavailable terms source and foreign client reference without losing selected draft input',()=>{const ref={id:'terms-a',version:1};act(()=>root.unmount());root=createRoot(host);act(()=>root.render(<Fixture value={{...initial,client_id:'client-a',recipient_email:'owner@example.test',commercial_terms_reference:ref}} commercialTerms={[{id:'terms-a',clientId:'client-b',title:'Foreign',version:1,status:'active',termsCurrent:true}]} termsPhase="error"/>));click('Save draft');expect(saved).not.toHaveBeenCalled();expect(last.commercial_terms_reference).toEqual(ref);expect(host.textContent).toContain('Refresh the terms source');act(()=>root.render(<Fixture commercialTerms={[{id:'terms-a',clientId:'client-b',title:'Foreign',version:1,status:'active',termsCurrent:true}]}/>));click('Save draft');expect(host.textContent).toContain('unavailable for this client');});
+it('returns focus after explicit version adoption while preserving exact invoice economics and unrelated edits',()=>{
+ const value:InvoiceSnapshotInput={...initial,schema_version:3,kind:'deposit',deposit_basis_points:null,deposit_minor:50000,client_id:'client-a',recipient_email:'manual@example.test',items:[{price_id:null,item:'Consulting engagement',description:'Owner-edited scope',unit_minor:350000,quantity:1}],commercial_terms_reference:{id:'terms-a',version:1},memo:'Owner-edited invoice note'};
+ const commercialTerms=[{id:'terms-a',clientId:'client-a',title:'Recorded plan',version:2,status:'active',termsCurrent:true,sourceAmount:{minor:350000,currency:'usd',basis:'total' as const}}];
+ act(()=>root.unmount());root=createRoot(host);act(()=>root.render(<Fixture value={value} commercialTerms={commercialTerms}/>));
+ const source=host.querySelector('[aria-label="Commercial terms / payment plan"]');
+ click('Use current terms version');expect(document.activeElement).toBe(source);
+ expect(last).toEqual({...value,commercial_terms_reference:{id:'terms-a',version:2}});
+ expect(changed).toHaveBeenCalledOnce();expect(saved).not.toHaveBeenCalled();expect(reviewed).not.toHaveBeenCalled();
+ expect(host.textContent).toContain('$3,500.00');expect(host.textContent).toContain('$500.00');
+});
+it('keeps original source facts in review and focuses the heading only when changing review mode',()=>{
+ const value={...initial,client_id:'client-a',commercial_terms_reference:{id:'terms-a',version:1}};
+ const commercialTerms=[{id:'terms-a',clientId:'client-a',title:'Recorded plan',version:1,status:'active',termsCurrent:true,sourceAmount:{minor:30000,currency:'usd',basis:'per_installment' as const}}];
+ act(()=>root.unmount());root=createRoot(host);act(()=>root.render(<Fixture value={value} commercialTerms={commercialTerms}/>));
+ const note=label('Invoice note');note.focus();
+ act(()=>root.render(<Fixture value={value} commercialTerms={commercialTerms}/>));expect(document.activeElement).toBe(note);
+ act(()=>root.render(<Fixture value={value} commercialTerms={commercialTerms} review/>));
+ expect(document.activeElement).toBe(host.querySelector('h2'));expect(document.activeElement?.textContent).toBe('Review invoice');
+ expect(host.querySelector('[aria-label="Selected commercial source amount"]')?.textContent).toContain('Amount per installment');
+ expect(host.textContent).toContain('original payment plan for the full engagement amount');
+ act(()=>root.render(<Fixture value={value} commercialTerms={commercialTerms}/>));
+ expect(document.activeElement?.textContent).toBe('Create invoice');expect(last).toEqual(value);expect(changed).not.toHaveBeenCalled();
+});

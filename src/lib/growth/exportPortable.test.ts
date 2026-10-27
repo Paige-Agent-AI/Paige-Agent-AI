@@ -127,7 +127,7 @@ describe("buildPortableExport — block honesty in a static file", () => {
     // No autoplay ATTRIBUTE on any media element — the `allow` list is the provider permission
     // set the live iframe already carries (accelerometer; autoplay; …), promising nothing itself.
     for (const r of [ok, broken, mp4]) {
-      expect(r.html).not.toMatch(/<(video|iframe)\b[^>]*\sautoplay(?:\s|>|=)/i);
+      expect(r.html).not.toMatch(/<(video|iframe)\b[^>]*\sautoplay(?=[\s/>=]|$)/i);
     }
   });
 
@@ -169,7 +169,8 @@ describe("buildPortableExport — block honesty in a static file", () => {
     // assignBands: hero=brand, feature_grid cycles to contrast, stats is always deep.
     expect(r.html).toContain('data-band="contrast"');
     expect(r.html).toContain('data-band="deep"');
-    expect(r.manifest).toBeTruthy();
+    expect(r.manifest.format).toBe("paige-portable-export/1");
+    expect(r.manifest.staticOnly).toBe(true);
   });
 
   it("renders gallery and image assets with their alt text", () => {

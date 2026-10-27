@@ -243,7 +243,7 @@ function renderBlock(b: GrowthBlock, ctx: Ctx): string {
           inner = `<iframe src="${esc(src)}" title="${title}" loading="lazy" sandbox="allow-scripts allow-same-origin allow-presentation" referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen" allowfullscreen></iframe>`;
         } else inner = unavailable();
       }
-      return `${b.title ? `<h2>${b.title.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")}</h2>` : ""}<div class="gp-video">${inner}</div>${b.caption ? `<p class="gp-caption">${esc(b.caption)}</p>` : ""}`;
+      return `${b.title ? `<h2>${esc(b.title)}</h2>` : ""}<div class="gp-video">${inner}</div>${b.caption ? `<p class="gp-caption">${esc(b.caption)}</p>` : ""}`;
     }
     case "stats":
       return `${heading(b.title, "h2")}<div class="gp-grid gp-stat">${b.items.map((i) => `<div><b>${esc(i.value)}</b><span style="color:var(--gp-muted)">${esc(i.label)}</span></div>`).join("")}</div>`;

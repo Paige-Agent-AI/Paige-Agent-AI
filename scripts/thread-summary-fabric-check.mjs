@@ -112,7 +112,12 @@ await check('proven primary failure falls back once to Anthropic with same cap',
  assert.deepEqual(r.folds.map(call=>call.provider),['openai','anthropic']);assert.equal(r.folds[1].body.max_tokens,2048);assert.equal(r.summaryWrites,1);
 });
 await check('invalid primary request never falls back or claims compaction',{failPrimary:true,invalidPrimary:true},r=>{assert.deepEqual(r.folds.map(call=>call.provider),['openai']);assert.equal(r.summaryWrites,0);assert.ok(r.wire.includes('"state":"skipped"'));});
-await check('reasoning hard budget blocks every fold provider',{budget:true},r=>{assert.equal(r.folds.length,0);assert.equal(r.summaryWrites,0);assert.ok(r.rec.inserts.some(row=>row.table==='paige_llm_trace'&&row.row.job_kind==='thread-summary-fold'&&row.row.error_class==='budget_exceeded'));});
+await check('usage above the former allowance preserves original fold and attributed usage',{budget:true},r=>{
+ assert.deepEqual(r.folds.map(call=>call.provider),['openai']);assert.equal(r.summaryWrites,1);assert.equal(r.row.summary_through_seq,4);
+ const traces=r.rec.inserts.filter(row=>row.table==='paige_llm_trace'&&row.row.job_kind==='thread-summary-fold');
+ assert.equal(traces.length,1);assert.equal(traces[0].row.tenant_id,tenant);assert.equal(traces[0].row.provider,'openai');
+ assert.equal(traces[0].row.doctrine_gate_hits?.budget?.level,'hard');assert.notEqual(traces[0].row.error_class,'budget_exceeded');
+});
 await check('scope change before transcript read refuses all transcript/model egress',{beforeTranscript:true},r=>{assert.equal(r.transcriptReads,0);assert.equal(r.folds.length,0);assert.equal(r.summaryWrites,0);});
 await check('scope change after transcript read refuses provider egress',{beforeProvider:true},r=>{assert.ok(r.transcriptReads>0);assert.equal(r.folds.length,0);assert.equal(r.summaryWrites,0);});
 await check('scope change during Fabric budget read refuses provider egress',{duringBudget:true},r=>{assert.equal(r.folds.length,0);assert.equal(r.summaryWrites,0);});

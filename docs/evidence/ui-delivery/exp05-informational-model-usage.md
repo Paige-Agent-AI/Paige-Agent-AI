@@ -84,3 +84,33 @@ incoming verifier byte-exact. Extractor, all29 dispatch and every other source
 scalar/metadata/negative control remain unchanged. Original83 hostile tests pass.
 All six tested source/test blobs remain exactly61389 after normal main composition;
 the137 source results are retained, not represented as a new provider invocation.
+
+## Required verify reconciliation — October27
+
+Exact0e2 verify job122305944792 FAILED. Four existing proof consumers still
+asserted monetary refusal: thread-summary-fold, session-summary LS7, Model Fabric
+C4/E1 and E09's private game-plan draft. Local reproduction retained30/31 thread
+checks,1241/1242 memory checks,168/171 Fabric checks and30/31 E09 checks. These are
+genuine failures under the new policy, not infrastructure noise or waived checks.
+
+Normal main9e325d918 is received intact. Only the superseded monetary-stop
+assertions change: original generation, acknowledged result/proposed memory and
+single tenant-attributed usage rows must now succeed above the former allowance.
+Fabric C4 explicitly uses the incumbent OpenAI-admitted fixture, rather than
+assuming its default route; the first replacement's incorrect route expectation
+is retained as a failed local observation. One local thread invocation used the
+wrong loader and never captured the handler; that run is INVALID, not product
+proof. The corrected invocation uses the exact existing workflow's loader.
+
+Final unchanged original runners pass:172 Fabric,1243 memory-authorization,
+31 actual-handler thread and31 E09 game-plan checks, zero failures. Their original
+role/tenant/refusal/revocation/abort/provider-health/unknown-outcome negatives
+remain. Synthetic provider and database ports mean no paid invocation, actual
+customer memory write, billing invoice or production acceptance is claimed.
+The original137 policy tests and83 hostile contract controls remain separately
+bound to their recorded source; neither is relabeled as this hosted verify run.
+
+No further runtime or source-pin change was needed. Fresh final-head review,
+required CI, normal production Edge graph deployment and source readback remain
+required before calling this repair released. No Team Hub Root/risk/registry
+semantic edits, customer browser allocation or held weekly-preview release.

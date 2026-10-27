@@ -1,5 +1,12 @@
 # Decision Log — chronological one-liners
 
+## October27 — EXP03 O12 piece 3: the Conversations email reply is checked inline through the governed door
+
+- **Owner decision "B with (ii)" (2026-10-27) completed in the composer.** Send opens an inline check (To the contact's main email · From · Subject · when · files); Send now confirms with the fingerprint. Owner answers applied: quiet hours / do-not-disturb → ask to schedule; recipient → the contact's main email; words locked until a definite answer.
+- **Independent adversarial review:** BLOCKER — a non-door answer after a confirm (gateway/worker crash body) read as "Nothing was sent" and settled the id, inviting a duplicate. Fixed: after a confirm only `refused | needs_setup | held` is a refusal; anything else keeps the words and the same operation id ("don't resend", Check status). Also fixed: words cleared on unknown/failed; the note line contradicting the strip; removable files mid-send; silent thread switch; ids not kept per scope; Check status over-claiming; focus on Send now; clock skew (now the door's `expires_in_ms`, #3011); live region; signature links/entities.
+- **Owner-approved platform-wide (2026-10-27, "Yes" to "Want me to fix it everywhere?"):** outline/ghost `Button` hover → `bg-muted` + ink text (was `bg-secondary`, navy under dark text in light: 1.1:1). Six consumers that relied on the old hover adjusted to look exactly as before. Applies to frozen surfaces by that explicit instruction, hover only.
+- **§58 call-outs (in the PR and evidence record):** email's 30-second Undo replaced by the check; signature images dropped; sending needs the business's own owner/admin (prod: one global admin without a business role loses it, one business owner/admin gains it); an email reply needs the contact's main email.
+
 ## October27 — EXP03: a send scheduled for later is not refused by the business's do-not-disturb now
 
 - **Found by the independent review of piece 3.** The door ran readiness against the current time even for a send with `send_at`, so during the business's own do-not-disturb the owner's "ask to schedule" answer was a dead end: picking a later time was refused again with `QUEUED_TENANT_DND`.

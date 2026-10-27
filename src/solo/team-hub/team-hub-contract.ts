@@ -192,7 +192,8 @@ export type TeamHubTaskRead =
 
 export interface TeamHubChannelSummary {
   id: string;
-  kind: "channel" | "dm";
+  /** A1b: `agent_dm` is a person's DM with one agent (unnamed, private, one member). */
+  kind: "channel" | "dm" | "agent_dm";
   name: string | null;
   visibility: "team" | "private";
   joined: boolean;
@@ -362,6 +363,11 @@ function parseMessage(value: unknown): TeamHubMessage | null {
   };
 }
 
+/** One message row as the read doors return it (A1b: an agent turn's read-back reply), or null. */
+export function parseTeamHubMessage(value: unknown): TeamHubMessage | null {
+  return messageKind(value) === "read" ? parseMessage(value) : null;
+}
+
 /**
  * Sorts one message row into: a kind this build reads, or `skip` for an author kind or agent it does
  * not know (a later increment's row is left out of the page, never shown in a person's name).
@@ -423,7 +429,9 @@ export function parseFile(value: unknown): TeamHubFile | null {
 }
 
 function parseChannelSummary(value: unknown): TeamHubChannelSummary | null {
-  if (!isRow(value) || !isText(value.id) || !isKind(value.kind) || !isVisibility(value.visibility)) return null;
+  if (!isRow(value) || !isText(value.id) || !(isKind(value.kind) || value.kind === "agent_dm") || !isVisibility(value.visibility)) return null;
+  // A1b: an agent DM is private and unnamed, as its list row is.
+  if (value.kind === "agent_dm" && (value.visibility !== "private" || (value.name ?? null) !== null)) return null;
   if (typeof value.joined !== "boolean" || !isNullableText(value.name)) return null;
   if (value.kind === "channel" && !value.name) return null;
   return { id: value.id, kind: value.kind, name: value.kind === "channel" ? value.name : null, visibility: value.visibility, joined: value.joined };
@@ -569,13 +577,17 @@ export function parseTaskReads(data: unknown, error: unknown, ids: string[], rea
 /** The fixed command text a task message carries; the title lives in Operations (contract §4). */
 export const TASK_COMMAND_TEXT = "/PAIGE draft a task";
 
-export type TeamHubCommandKind = "task" | "specialist" | "approval" | "meeting";
+export type TeamHubCommandKind = "task" | "agent" | "specialist" | "approval" | "meeting";
 export interface TeamHubCommand { kind: TeamHubCommandKind; title: string; description: string; risk: string }
 
-/** The four increment-2 commands, in the prototype's order. Only Draft a task writes anything. */
+/**
+ * The four commands, in the prototype's order. Only Draft a task writes anything. EXP08 agents A1b
+ * (§58, recorded in the agents contract §2): *Ask a specialist* (a PAIGE handoff) became *Ask an
+ * agent*, which starts an @mention of PAIGE or one of her agents; the agent replies in Team Hub.
+ */
 export const TEAM_HUB_COMMANDS: readonly TeamHubCommand[] = [
   { kind: "task", title: "Draft a task", description: "One task in Operations, linked to this conversation.", risk: "Creates a task" },
-  { kind: "specialist", title: "Ask a specialist", description: "Continues in PAIGE, where the specialist's work is approved.", risk: "Opens PAIGE" },
+  { kind: "agent", title: "Ask an agent", description: "Mention PAIGE or one of her agents. They reply right here.", risk: "Replies here" },
   { kind: "approval", title: "Request approval", description: "Continues in PAIGE, which shows the approval there.", risk: "Opens PAIGE" },
   { kind: "meeting", title: "Schedule a meeting", description: "Continues in PAIGE, which checks Calendar and shows the slot.", risk: "Opens PAIGE" },
 ];
@@ -741,7 +753,7 @@ export type MentionScope = { kind: "everyone" } | { kind: "people"; ids: string[
  * A team channel is visible to every active person. A private channel or DM is visible to
  * its members, which `member_ids` lists (A4) — the server refuses anyone else (`invalid`).
  */
-export function mentionScope(conversation: TeamHubConversation): MentionScope {
+export function mentionScope(conversation: Pick<TeamHubConversation, "visibility" | "member_ids">): MentionScope {
   return conversation.visibility === "team" ? { kind: "everyone" } : { kind: "people", ids: conversation.member_ids ?? [] };
 }
 
@@ -809,12 +821,14 @@ export function mentionRuns(body: string, mentionIds: string[], people: TeamHubP
 export function newDividerBefore(messages: TeamHubMessage[], unread: number, meId: string): string | null {
   if (unread <= 0) return null;
   let seen = 0;
+  // A1b: an agent's reply carries the asker's id but is not their own message (the server counts it).
+  const mine = (message: TeamHubMessage) => message.author_user_id === meId && message.author_kind !== "agent";
   for (let index = messages.length - 1; index >= 0; index -= 1) {
-    if (messages[index].author_user_id === meId) continue;
+    if (mine(messages[index])) continue;
     seen += 1;
     if (seen === unread) return messages[index].id;
   }
-  return messages.find((message) => message.author_user_id !== meId)?.id ?? null;
+  return messages.find((message) => !mine(message))?.id ?? null;
 }
 
 export function dayKey(instant: string): string {

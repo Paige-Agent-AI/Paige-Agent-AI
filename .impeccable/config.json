@@ -1,3 +1,8 @@
 {
-  "buildPath": "comp"
+  "buildPath": "comp",
+  "detector": {
+    "ignoreValues": [
+      { "rule": "design-system-font", "value": "Bricolage Grotesque" }
+    ]
+  }
 }

@@ -324,15 +324,23 @@ gold exception: contract section 5, A1 UI.
 
 | | Colour, and the feeling it carries | Symbol |
 |---|---|---|
-| PAIGE | Champagne gold: authority, the brand | Command Mark |
-| VERA | Clear teal: calm, exact, trustworthy | ShieldCheck |
-| NEXUS | Magenta: creative energy, a launch | Megaphone |
-| CURA | Warm coral: care, a welcome | HeartHandshake |
-| MENTOR | Orchid violet: curiosity, depth | GraduationCap |
-| MERIT | Emerald: momentum, getting paid | Target |
-| ZION | Cobalt: steady, systematic | Cog |
+| PAIGE | Champagne gold (h82): authority, the brand | Command Mark |
+| VERA | Cool teal (h196): calm, exact, trustworthy; kept clear of the success green | ShieldCheck |
+| NEXUS | Magenta (h330): creative energy, a launch | Megaphone |
+| CURA | Rose (h0): care, warmth, a welcome; kept clear of the error coral | HeartHandshake |
+| MENTOR | Orchid violet (h308): curiosity, depth | GraduationCap |
+| MERIT | Emerald (h146): momentum, getting paid | Target |
+| ZION | Cobalt (h256): steady, systematic | Cog |
 
 Renaming an agent (section 10) keeps its colour and symbol: they belong to the role, not the name.
+
+**v5 changes (2026-10-27, design critique).** CURA moved from coral to rose because coral read as the
+error colour; VERA moved to a cooler teal because her name read as the success green; NEXUS sits at a
+deeper magenta so it and CURA's rose are two families, not two pinks. An agent's colour never appears
+on a status dot: whether work is running, waiting, done or failed is always shown in the system status
+colours, so MERIT's green never means "done" and CURA's rose never means "failed". Under tritanopia
+(blue-yellow colour blindness) PAIGE's gold looks pink and cannot be told from NEXUS by colour; there,
+as everywhere, her Command Mark and her name are what identify her.
 
 ---
 

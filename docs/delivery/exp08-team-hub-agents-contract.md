@@ -460,6 +460,7 @@ take actions here yet.* Acts arrive in A2.
 
 **UI** (after owner approval of v3):
 - The roster: the 23 Oct standard, with display names from `VP_ROSTER` (section 2).
+- **APPROVED-FROZEN (§28), owner 2026-10-27: "Colors and images are approved"** — the colours, symbols and placement rules below are locked for the build (artifact version 1793069117-3333).
 - Avatars: **each agent has its own colour and symbol** (owner direction 2026-10-27, replacing the
   v3 rule "all seven on the same violet agent plate"; recorded below). People keep the graphite
   initials plate. Each specialist keeps the lucide glyph from `src/pages/PaigeTeamDirectory.tsx:97-105`
@@ -468,12 +469,57 @@ take actions here yet.* Acts arrive in A2.
   | Agent | Hue (OKLCH h) and feeling (§23) | Symbol | Why the symbol |
   |---|---|---|---|
   | PAIGE | 82, champagne gold: authority, the brand | Command Mark | She is the brand; the mark is her signature, never a stock icon |
-  | VERA | 180, clear teal: calm, exact, trustworthy | ShieldCheck | Checked numbers and guarded risk: "what I can and can't see" |
-  | NEXUS | 334, magenta: creative energy, a launch | Megaphone | Getting the word out: campaigns and announcements |
-  | CURA | 28, warm coral: care, a welcome | HeartHandshake | Care plus commitment to each client |
+  | VERA | 196, cool teal: calm, exact, trustworthy | ShieldCheck | Checked numbers and guarded risk: "what I can and can't see" |
+  | NEXUS | 330, magenta: creative energy, a launch | Megaphone | Getting the word out: campaigns and announcements |
+  | CURA | 0, rose: care, warmth, a welcome | HeartHandshake | Care plus commitment to each client |
   | MENTOR | 308, orchid violet: curiosity, depth | GraduationCap | Learning and the next direction |
-  | MERIT | 154, emerald: momentum, getting paid | Target | A deal aimed at and closed, with a next step and a date |
-  | ZION | 264, cobalt: steady, systematic | Cog | The machinery that keeps the work moving |
+  | MERIT | 146, emerald: momentum, getting paid | Target | A deal aimed at and closed, with a next step and a date |
+  | ZION | 256, cobalt: steady, systematic | Cog | The machinery that keeps the work moving |
+
+  **v5 colour corrections (design critique, 2026-10-27).** Three hues collided with system meaning and
+  moved; the generator now refuses any token set that repeats the collision (STATUS rules below).
+  - **CURA: coral (h28) → rose (h0).** Her v4 ink sat ΔE 2.3 (dark) / 2.2 (light) from
+    `--pg-negative`, so an assignment for CURA looked like an error. Apricot (h45-55) was tried first
+    and cannot work in this system: it sits between the error coral (h≈30) and the warning amber /
+    PAIGE gold (h≈78-82), and no apricot reached ΔE 10 from the error while staying ΔE 8 from warning
+    and gold (best case ΔE 5.3 to PAIGE's ink, `tools/explore5.mjs`, `frames/token-search.txt`). Rose
+    now sits ΔE 10.8 (dark ink) / 12.8 (light fill) or more from the error, 18.5+ from warning and gold.
+  - **VERA: h180 → h196.** Her v4 ink was ΔE 2.6 (light) / 3.0 (dark) from `--pg-positive`, so her
+    name read as success. Now 8.9 (light) / 10.3 (dark). AA holds (ink 6.22 light, 5.81 dark on tint).
+  - **NEXUS: h334 → h330**, held there by hand (open search runs landed it at 334-342, nearer CURA's
+    rose) so magenta and rose are 30° apart and read as two families, not two pinks. Cost: the
+    colour-blind minimum drops from 4.8-4.9 to 4.3 (deuteranopia, NEXUS·ZION ink, dark). Both runs
+    are in `frames/token-search.txt`.
+  - **MERIT h154 → 146, ZION h264 → 256, PAIGE and VERA lightness per theme** come from the search
+    (`tools/search.mjs`): status rules hard, then the colour-blind spread. ZION's dark fill moves from
+    ΔE 5.9 to 7.5 from the violet focus ring.
+  - **PAIGE's fill is her ring value** (`#ac8947` dark, `#a38245` light). Her v4 dark fill `#d2ab5f`
+    was ΔE 1.3 from the Approve fill `--pg-gold-fill` `#d4a752`, so the 2px line on her card WAS the
+    act colour. Now ΔE 10.6 (dark) / 12.4 (light). The difference between her identity and the act is
+    carried by **shape and label** (a 2px line and a small plate next to "PAIGE", against a solid 32px
+    button reading "Approve"), not by hue: both stay gold-family by owner ruling.
+
+  | Agent | Dark tint · ink · fill · ring | Dark ink · fill · ring (worst surface, :1) | Light tint · ink · fill · ring | Light ink · fill · ring (:1) |
+  |---|---|---|---|---|
+  | PAIGE | `#413317` `#ebcd96` `#ac8947` `#ac8947` | 8.01 · 5.06 · 5.06 | `#f4e7d2` `#745303` `#a38245` `#a38245` | 5.77 · 3.11 · 3.11 |
+  | VERA | `#0a3232` `#50b7b8` `#148b8d` `#2c8a8b` | 5.81 · 4.02 · 4.03 | `#d0ebeb` `#065c5d` `#057f80` `#3b8f90` | 6.22 · 4.17 · 3.29 |
+  | NEXUS | `#3e1e3b` `#e7a3e0` `#c46dbd` `#a65aa0` | 7.37 · 4.94 · 3.62 | `#fee3fb` `#8c4287` `#bc65b5` `#b76eb1` | 5.42 · 3.20 · 3.08 |
+  | CURA | `#47192a` `#f275a0` `#c24976` `#bc5077` | 5.43 · 3.55 · 3.59 | `#fee6ec` `#6b183a` `#8b0f49` `#cd6589` | 9.77 · 8.02 · 3.12 |
+  | MENTOR | `#463455` `#eedcff` `#e1c2fe` `#b990dd` | 8.67 · 10.51 · 6.38 | `#e5d8f3` `#4e276b` `#663a89` `#7e599d` | 8.46 · 7.16 · 4.77 |
+  | MERIT | `#2a452c` `#bef5c1` `#9ce6a1` `#77b77b` | 8.57 · 11.22 · 6.97 | `#d0e5d0` `#034b14` `#176325` `#417b46` | 7.82 · 6.37 · 4.37 |
+  | ZION | `#1d314b` `#a4cafe` `#6ea4eb` `#5886c5` | 7.82 · 6.44 · 4.44 | `#e2eeff` `#3764a0` `#5286cb` `#5d8ac4` | 5.13 · 3.22 · 3.07 |
+
+  The ink figure is the lower of its ratio on its own tint and on its worst surface. The full, current
+  numbers (including every ΔE to every status colour) are generated into `frames/agent-tokens.json`
+  and `frames/agent-tokens.txt` on each run; that output, not this table, is the record.
+
+  **STATUS rules the generator enforces** (`tools/agent-tokens.mjs`, exits non-zero on a breach;
+  ΔE = OKLab×100, normal vision): every agent's ink and fill ≥10 from `--pg-negative`; every agent's
+  ink ≥8 from `--pg-positive`; every non-PAIGE agent's ink and fill ≥8 from `--pg-warning`,
+  `--pg-gold-fill` and PAIGE's ink and fill; PAIGE's fill ≥8 from `--pg-gold-fill`. **Reported, not
+  gated, and accepted:** PAIGE's ink vs `--pg-warning` (3.3 dark, 8.4 light: both gold-family by
+  design); MERIT's fill vs `--pg-positive` (6.8 dark, 8.3 light: emerald is green; MERIT's ink is 11.5 /
+  15.3); MENTOR's ring vs `--pg-violet` (4.8 / 4.4) and ZION's fill vs `--pg-violet` (7.5 dark).
 
   **Tokens** (`--pg-agent-{name}-{fill|tint|ink|ring}`, authored separately for Obsidian and Mineral
   in the prototype's `agent-tokens.css`, generated and measured by `tools/agent-tokens.mjs`): *tint*
@@ -482,22 +528,53 @@ take actions here yet.* Acts arrive in A2.
   (2px lines, writing dots), both ≥3:1 on every surface. In the app they join the `--pg-*` theme root
   in `src/index.css`. `--k-agent` is still not used: it marks Admin in Settings → Team.
 
+  **Production note (v5, critique nit 11).** `--pg-agent-*` exists only in the prototype today. In
+  production the 56 values (7 agents × 4 roles × 2 themes) live in the **shared token layer**, the
+  `--pg-*` theme roots in `src/index.css`, defined for both Obsidian and Mineral exactly as
+  `agent-tokens.css` emits them, and components reach them only through the `[data-ag]` →
+  `--agc-*` mapping. They are never copied into a component stylesheet, and the generator
+  (`tools/agent-tokens.mjs`, with its AA and STATUS gates) moves with them so a token change is
+  re-measured, not hand-edited. If a system status token (`--pg-negative`, `--pg-positive`,
+  `--pg-warning`, `--pg-gold-fill`) ever changes, the generator must be re-run against the new value.
+
   **Where colour appears (it marks who, never decoration):** the plate everywhere an agent appears;
   the agent's name in its ink in messages, headers, the @ list, the DM picker and the profile; the
   *Agent* tag and @mention chips on its tint; the open agent DM row and the @ list's selected row as
   a faint wash; a 2px line under an agent DM's header; assignment and approval cards' top strip (a
-  wash under half strength, a 2px line, the kind line in the agent's ink, the running dot in its
-  fill); the Team work → Agents group heading; the writing dots and the name in *is writing…*; the
+  wash under half strength, a 2px line, the kind line in the agent's ink, and the agent's plate in
+  every state, including a done card); the Team work → Agents group heading; the writing dots and the name in *is writing…*; the
   private-part note; the report chip; the profile header (a soft wash, a 2px line, the selected tab
   underline). The edit controls in *Edit for your business* stay the system violet: they are
   controls, not identity.
 
+  **Where agent colour never appears:** status indicators. A status dot, the waiting clock and the
+  unknown ring only ever take the system status colours (running violet, waiting/unknown warning,
+  completed positive, failed negative, queued muted). v4 painted a running assignment's dot in the
+  agent's fill, so a running MERIT read "completed" and a running CURA read "failed"; that rule is
+  deleted, and `tools/a11y.mjs` now fails if any status indicator is not exactly its status token or
+  equals any agent token (150 indicators checked across 20 path/theme combinations, including every
+  assignment state for all seven agents; proven to bite by re-injecting the v4 rule: 14 failures).
+  **@mention chips stay at tint strength permanently** (one PAIGE message holds four of them, and only
+  tints keep that calm); `tools/a11y.mjs` fails if a chip's background is anything but its agent's tint.
+
   **Colour is never the only signal.** Every coloured element sits next to the agent's name and
   symbol, and the word *Agent* still appears on the role line. Measured separation under simulated
-  colour-vision deficiency (Machado 2009, OKLab ΔE×100, nearest pair): glyph/text ink 4.5
-  (deuteranopia and protanopia, dark theme) to 5.5 (deuteranopia, light); thin-mark fill 5.1-7.0;
-  normal vision 10.1 or more; tritanopia 4.2 (ink, dark) and 3.8 (fill, light). The plate tints are close under deficiency (1.1-3.2), which is why the
+  colour-vision deficiency (Machado 2009, OKLab ΔE×100, nearest pair, v5): glyph/text ink 4.3 (deuteranopia, NEXUS·ZION, dark) to 6.1 (protanopia, light);
+  thin-mark fill 4.7-8.1; normal vision 10.4 or more (ink) and 11.3 or more (fill); tritanopia 5.2-7.3
+  (ink) and 5.1-5.3 (fill). The plate tints are close under deficiency (0.4-3.1), which is why the
   glyph, not the tint, carries identity.
+
+  **Under tritanopia PAIGE's gold is not separable, and we say so.** Blue-yellow deficiency turns her
+  gold pink; her nearest neighbour is then NEXUS (ΔE 5.1 fill and 7.3 ink, dark; 5.3 fill and 5.2 ink,
+  light), which is not a difference anyone should be asked to rely on. For a tritanope, **PAIGE's
+  identity is carried by her Command Mark and her name**, which sit beside every gold mark she has.
+  The same holds, less sharply, for every pair whose colour-blind ΔE is under about 6: colour helps
+  most readers; the glyph and the name are what everyone can rely on.
+  **For colour-blind viewers, agent colour is not separable from status colour either; the status words
+  carry state.** Measured: ZION vs the violet running dot ΔE 2.0–2.5 (deuteranopia/protanopia), NEXUS vs
+  violet 2.9 (deuteranopia, light), MERIT's line vs red 3.5 (protanopia, light) and vs amber 4.1
+  (deuteranopia, dark). The system's own status colours already collide at a similar level (red vs green
+  3.8 under deuteranopia), which is why every status dot carries its word.
 
   **Owner-ruled exception to the gold rule (§11; recorded §58-style, owner direction 2026-10-27:
   "PAIGE obviously gets Gold").** Gold was spent only on the act. It is now spent in exactly two
@@ -509,12 +586,27 @@ take actions here yet.* Acts arrive in A2.
   - **The Approve act** is the only solid gold-fill surface with words on it: `--pg-gold-fill`,
     label *Approve* in `--pg-on-gold`, a 32px-high 8px-radius button at the right end of a card's
     footer, next to *Not now*, shown only to the asker on a pending card. Agent colour never enters
-    a card footer, so gold there is only ever the act.
-  - The prototype's gold audit (`tools/a11y.mjs`) now fails on any gold-hued paint outside `.btn.act`,
-    `[data-ag="PAIGE"]` and the v2 brand mark and rail marker, and on any solid gold block with words
-    other than `.btn.act`. It passes on every path, including the stress case where PAIGE herself asks
-    to act (her identity in the card's top strip, Approve in its footer: frames
-    `c62/c64/c66/c68-*-colour-paige-asks-approve.png`).
+    a card footer.
+  - **Correction (v5): the footer is not gold-free apart from Approve.** v4 said "gold there is only
+    ever the act". That was not true. When someone other than the asker views a pending card, the
+    footer shows a waiting clock, and an *unknown* card shows a hollow ring; both are the system
+    `--pg-warning` amber, which is gold-family by system design: ΔE 3.3 from PAIGE's ink and 8.5 from
+    the Approve fill in Obsidian (8.4 and 20.6 in Mineral). It cannot be fixed inside the agent layer:
+    the only lever there would be to recolour a status mark on PAIGE's cards, which is exactly what
+    the status rule above forbids. Changing `--pg-warning` is a system-token decision outside this
+    slice. What holds instead: **the only gold *fill* in a footer is Approve**; the amber marks are a
+    14px clock icon and a 6px hollow ring, each beside words ("Waiting on Priya…", "Couldn't confirm
+    it ran"), never a solid block, never next to the word Approve on the same card.
+  - The prototype's gold audit (`tools/a11y.mjs`) fails on any gold-hued paint outside `.btn.act`,
+    PAIGE's identity marks and the v2 brand mark and rail marker, and on any solid gold block with
+    words other than `.btn.act`. **v5 closes two holes in it:** v4 counted everything inside a PAIGE
+    card as her identity, so its footer and body were never checked (now judged on their own, and
+    proven to bite: a gold-ink footer injected into PAIGE's card gives 4 leaks); and v4 never read
+    `::before`, so status dots and the unknown ring were invisible to it. **Warning paint is now held
+    to the gold rule:** gold-hued warning paint passes only on a status indicator, and each one is
+    reported with its ΔE to the Approve fill and to PAIGE's ink. It passes on 20 path/role/theme
+    combinations, including PAIGE asking to act (frames `c62/c64/c66/c68-*-colour-paige-asks-approve.png`)
+    and every PAIGE act-card decision (`frames/v5-cards-{dark,light}-a.png`).
 - The word *Agent* on the role line in messages, the @ list and conversation headers, but not on
   the conversation-list rows (flow 1). **Not** the `--k-agent` token alone: it already marks Admin in
   Settings → Team (`src/solo/settings.css:742`).
@@ -598,7 +690,8 @@ take actions here yet.* Acts arrive in A2.
   - the claim predicate refuses a declined row.
 - **UI:** mount `PaigeConfirmCard` and `PaigeConfirmRecord` as they are inside `.th-msg`. Do not fork
   them. Gold fill only on Approve. The card's top strip takes the asking agent's colour (A1 UI),
-  which for PAIGE is a gold tint, never a fill; the footer stays neutral.
+  which for PAIGE is a gold tint and a 2px line in her ring value, never a fill; the footer carries
+  no agent colour (its status marks use the system warning amber; see the v5 correction in A1 UI).
 
 **Proof:**
 - only the asker's fingerprint redeems;

@@ -269,7 +269,7 @@ export async function prepareCalendarLinkShare(input: PrepareCalendarLinkInput):
   if (tenant !== input.expectedTenantId) return { ok: false, code: "ACTIVE_ACCOUNT_CHANGED" };
 
   const share = await readShareability(input.caller, input.calendarId);
-  if (!share.ok) return { ok: false, code: share.code };
+  if (share.ok === false) return { ok: false, code: share.code };
 
   if (!share.shareable || !share.slug) {
     // No public link exists to share — refuse truthfully, emit no url/copy.
@@ -388,7 +388,7 @@ export async function sendCalendarLink(input: SendCalendarLinkInput): Promise<Re
 
   // Shareability FIRST: a non-public calendar has no link to send.
   const share = await readShareability(input.caller, input.calendarId);
-  if (!share.ok) return { success: false, code: share.code };
+  if (share.ok === false) return { success: false, code: share.code };
   if (!share.shareable || !share.slug) {
     return { success: false, code: "CALENDAR_NOT_SHAREABLE", reason: share.reason, note: "This calendar isn't public, so there's no booking link to send. Publish it first." };
   }
@@ -454,7 +454,7 @@ export async function calendarLinkSocialCopy(input: CalendarLinkSocialCopyInput)
   if (tenant !== input.expectedTenantId) return { ok: false, code: "ACTIVE_ACCOUNT_CHANGED" };
 
   const share = await readShareability(input.caller, input.calendarId);
-  if (!share.ok) return { ok: false, code: share.code };
+  if (share.ok === false) return { ok: false, code: share.code };
   if (!share.shareable || !share.slug) {
     return { ok: true, shareable: false, posted: false, sent: false, reason: share.reason, note: "This calendar isn't public yet, so there's no booking link to post. Publish it first." };
   }

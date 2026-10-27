@@ -951,7 +951,10 @@ const SOURCES = {
   // new outcome_unknown explicitly (SendGrid has no idempotent replay), and sendCalendarLink's note for an
   // outcome_unknown says it may have reached the contact and must not be sent again (it said "NOT sent").
   // Gates, reads, send seam and the other outcomes unchanged. Old 28748e31… reproduced from b39fda02 first.
-  "supabase/functions/_shared/calendar-link-tenant-brain.ts": "ac47de4eb930e65e6c03a61ad500280d91e86a9d9082e0f2b37e45dfed3ebf7c",
+  // EXP03 (2026-10-27), AUTHOR-REVIEW / LOWER ASSURANCE: the three `if (!share.ok)` guards read
+  // `share.ok === false` so the shareability union narrows under the app's strict:false typecheck (CI tsc
+  // ratchet). Same branches, same returns; prior ac47de4e… reproduced from 739b2fa6 first.
+  "supabase/functions/_shared/calendar-link-tenant-brain.ts": "77a50c2cc43bc05df9164b63941943fe0ff9d6b33d03c4eb3ce70b92ac525f66",
   "supabase/functions/_shared/client-seat-reply.ts": "6b2ed9c2342da886f8dff44a46bc9dadd4bcd3b079839f62b470ea363564b44d",
   "supabase/functions/_shared/outbound-draft-check.ts": "eda79597ac86a489f916075844f535fcf228518d953b48c55b2e9901920ee961",
   // EXP04 C20 source review, AUTHOR-REVIEW / LOWER ASSURANCE at5ba2664f.

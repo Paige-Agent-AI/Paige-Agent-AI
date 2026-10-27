@@ -637,6 +637,30 @@ describe("an email the service may have taken (its answer was lost)", () => {
     expect(toast.error).not.toHaveBeenCalled();
   });
 
+  it("the reply composer whose answer was lost warns honestly, never as a failure, and clears", async () => {
+    db.messages = [message({ status: "sent" })];
+    db.threads = [thread];
+    db.sendAnswer = UNCONFIRMED;
+    const host = await mountInbox("/admin/clients/conversations");
+    const body = host.querySelector<HTMLTextAreaElement>("textarea")!;
+    const subject = host.querySelector<HTMLInputElement>('input[placeholder="Subject"]')!;
+    expect(body).toBeTruthy(); expect(subject).toBeTruthy();
+    await act(async () => {
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!.call(subject, "Thursday");
+      subject.dispatchEvent(new Event("input", { bubbles: true }));
+      Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, "value")!.set!.call(body, "Following up on Thursday.");
+      body.dispatchEvent(new Event("input", { bubbles: true })); await flush();
+    });
+    const send = [...host.querySelectorAll("button")].find((b) => b.textContent?.trim() === "Send")!;
+    expect(send).toBeTruthy();
+    await act(async () => { send.click(); await flush(); });
+    for (let i = 0; i < 3; i++) await act(async () => { await flush(); });
+    expect(db.invokes).toContain("send-message");
+    expect(toast.warning).toHaveBeenCalledWith(COPY);
+    expect(toast.error).not.toHaveBeenCalled();
+    expect(host.querySelector<HTMLTextAreaElement>("textarea")!.value).toBe("");
+  });
+
   it("the new-conversation dialog warns honestly and closes, leaving no Send that would mail a second copy", async () => {
     db.sendAnswer = UNCONFIRMED;
     const onOpenChange = vi.fn(); const onSent = vi.fn();

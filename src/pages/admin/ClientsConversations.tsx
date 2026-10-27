@@ -1194,7 +1194,7 @@ export default function ClientsConversations() {
     // R7-outcome via the ONE shared parser (inbox-shared) — the compose-new modal reads the
     // send result through the exact same helper, so reply and compose can never drift (§18/§37).
     const r = readSendResult(data);
-    return { outcome: r.outcome, reason: r.reason, messageId: r.messageId, scheduledFor: r.scheduledFor };
+    return { outcome: r.outcome, reason: r.reason, messageId: r.messageId, scheduledFor: r.scheduledFor, unconfirmed: r.unconfirmed };
   }, [buildSendBody]);
 
   const cancelUndo = useCallback(async (messageId: string) => {

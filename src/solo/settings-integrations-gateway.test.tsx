@@ -1594,6 +1594,48 @@ describe("Managing a tool", () => {
     await click(host.querySelector('[data-gateway-tool="conn-1"]'));
     expect(dialog(host)?.textContent).toMatch(/fix the address or re-key/i);
   });
+
+  // ── The WHY under the chip: the closed code's owner sentence (PR15) ─────────────────
+  const daysAgoIso = (days: number) => new Date(Date.now() - days * 86_400_000).toISOString();
+
+  it("tells a rate-limited tool to wait — not to reconnect", async () => {
+    world({ rows: [row({ status: "error", health: "needs_attention", last_error_code: "http_rate_limited" })] });
+    const { host } = await render();
+    await click(host.querySelector('[data-gateway-tool="conn-1"]'));
+    expect(dialog(host)?.textContent).toMatch(/rate-limiting requests right now/i);
+    expect(dialog(host)?.textContent).toMatch(/reconnecting will not help/i);
+    expect(dialog(host)?.textContent).not.toMatch(/refused the credential/i);
+  });
+
+  it("words a refused credential from its code, and never leaks a non-closed value", async () => {
+    world({ rows: [row({ status: "error", health: "needs_attention", last_error_code: "mcp_http_error" })] });
+    const { host } = await render();
+    await click(host.querySelector('[data-gateway-tool="conn-1"]'));
+    expect(dialog(host)?.textContent).toMatch(/refused the credential/i);
+
+    // A value that is not a closed code (a regression shipping prose) reads as null: the
+    // honest generic line renders and the prose never crosses to the browser.
+    world({ rows: [row({ status: "error", health: "needs_attention", last_error_code: "Server said BAD THING" })] });
+    const again = await render();
+    await click(again.host.querySelector('[data-gateway-tool="conn-1"]'));
+    expect(dialog(again.host)?.textContent).toMatch(/last check could not get through/i);
+    expect(dialog(again.host)?.textContent).not.toContain("BAD THING");
+  });
+
+  it("flags a connected tool nobody has re-verified in over a week", async () => {
+    world({ rows: [row({ last_checked_at: daysAgoIso(8) })] });
+    const { host } = await render();
+    await click(host.querySelector('[data-gateway-tool="conn-1"]'));
+    expect(dialog(host)?.textContent).toMatch(/not checked in over a week/i);
+  });
+
+  it("shows no warning line for a healthy, recently checked tool", async () => {
+    world({ rows: [row({ last_checked_at: daysAgoIso(1) })] });
+    const { host } = await render();
+    await click(host.querySelector('[data-gateway-tool="conn-1"]'));
+    expect(dialog(host)?.textContent).not.toMatch(/over a week/i);
+    expect(dialog(host)?.textContent).not.toMatch(/could not get through/i);
+  });
 });
 
 /* ── One tool, one tile ───────────────────────────────────────────────────────

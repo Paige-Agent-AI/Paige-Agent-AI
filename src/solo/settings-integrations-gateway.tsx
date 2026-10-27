@@ -191,6 +191,34 @@ function statusChip(c: GatewayConnection): { label: string; tone: ChipTone } {
   if (c.status === "connected") return { label: "Not checked yet", tone: "pending" };
   return { label: "Not set up", tone: "off" };
 }
+/** The honest WHY under the chip, in this surface's own voice. Keyed ONLY on the closed
+ * refusal vocabulary (the same codes describeMcpError words for chat) plus the one derived
+ * fact — a connected-claiming row nobody has re-verified in over a week. Null means the row
+ * has earned no warning line and nothing extra renders. Copy names the problem and the
+ * recovery; the rate-limit line is the PR14 truth — wait, never reconnect. */
+function whyLine(c: GatewayConnection, now: number = Date.now()): string | null {
+  if (!c.enabled) return null;
+  if (c.status === "error") {
+    switch (c.lastErrorCode) {
+      case "http_rate_limited": return "The server is rate-limiting requests right now. Wait a moment and check it again — reconnecting will not help.";
+      case "request_timed_out": return "The server did not answer in time. Check it again; if it keeps timing out, the server is likely down.";
+      case "mcp_http_error": return "The server refused the credential. Reconnect it with a fresh token or key.";
+      case "url_redirect_refused": return "The address redirects somewhere else, which Paige does not follow. Use the address it points at.";
+      case "url_host_unresolvable": return "That address could not be looked up. Check it for typos.";
+      case "url_host_not_allowed":
+      case "url_resolves_to_private_address": return "The address points somewhere private, so Paige will not contact it.";
+      case "response_too_large": return "The server sent more than Paige can read safely.";
+      case "provider_reflected_credential": return "The server echoed the credential back, so Paige stopped. Rotate the token, then reconnect.";
+      default: return "The last check could not get through. Check it again; if it keeps failing, reconnect it with a fresh credential.";
+    }
+  }
+  if (c.status === "connected" && c.lastCheckedAt) {
+    const ageDays = (now - new Date(c.lastCheckedAt).getTime()) / 86_400_000;
+    if (ageDays > 7) return "Connected, but not checked in over a week. Run the check to confirm it still works.";
+  }
+  return null;
+}
+
 function usable(c: GatewayConnection): boolean {
   return c.enabled && c.status === "connected" && c.health === "healthy";
 }
@@ -1291,6 +1319,13 @@ function ToolDetail({ gw, tool, onClose, onOlderSetup, returnedFromSignIn = fals
         <div><dt>{noOutboundAddress ? "Outbound status" : "Status"}</dt><dd><span className="ig-gw-chip" data-tone={noOutboundAddress ? "neutral" : chip.tone}>{noOutboundAddress ? "No outbound address" : chip.label}</span></dd></div>
         {!noOutboundAddress && <div><dt>Last checked</dt><dd>{tool.lastCheckedAt ? new Date(tool.lastCheckedAt).toLocaleString() : "No successful check yet"}</dd></div>}
       </dl>
+
+      {/* The WHY under the status, when there is one: the closed code's owner sentence, or the
+          over-a-week staleness truth. It renders only when the row has earned a warning — a
+          healthy, recently checked connection shows nothing extra. */}
+      {(() => { const why = whyLine(tool); return why ? (
+        <div className="ig-gw-warn" role="status"><span>{why}</span></div>
+      ) : null; })()}
 
       {mode === "view" && (
         <>

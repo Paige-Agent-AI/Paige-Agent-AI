@@ -33,7 +33,7 @@ MUST_PRESERVE: Original selected route period, source-specific metric/target win
 ACCEPTANCE_CRITERIA: All five existing invitations carry exactly the current selected period, including after route selection; unavailable conversation stays disabled and receiving evidence must still be read through original current authority.
 MOTION_PURPOSE: NONE: no animation or motion change.
 PROTECTED_SEAMS: Original Executive prompt producer only. Shared Chat/Root/router/handoff implementation, registry, issuer, domain writers, Trust/LayerC/Rail and provider contracts untouched.
-INTERNAL_BUILD_IDENTITY: rendered45eb4e90fdcba00f367c93cd2190dc80299b3ba5/tree8b7e37e5163f5c0ce892a2eeae81639b7fda8fae equals full tracked actual receiving0a408ef9b214292258fc5760ce03b586542ca1c8 on released maind0ab7820dbba5e0cbb4aac2f03902a2e2761e8fc; handoff deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=assets/e2-executive-chat-period/source-index.json.
+INTERNAL_BUILD_IDENTITY: rendered 45eb4e90fdcba00f367c93cd2190dc80299b3ba5 / tree 8b7e37e5163f5c0ce892a2eeae81639b7fda8fae equals full tracked actual receiving 0a408ef9b214292258fc5760ce03b586542ca1c8 on released main d0ab7820dbba5e0cbb4aac2f03902a2e2761e8fc; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=assets/e2-executive-chat-period/source-index.json.
 RELEASE_CHANNEL: development: local source and synthetic rendering only; exact-head review/CI and safe normal release/readback remain required.
 RELEASE_CLASSIFICATION: internal-only: current-context correction, no customer capability announcement.
 CUSTOMER_RELEASE_IDENTITY: none: full outcome/authenticated proof and founder acceptance not established.
@@ -73,3 +73,5 @@ The original direct-entry public readback assumption also earned no PASS;
 the released source probe follows the bootstrap's explicit same-origin link.
 Actual customer access fallback stopped WRONG_SCOPE; it is not Finance evidence.
 Original nine-point briefing and all19/nine/final founder obligations remain.
+The first composed evidence guard rejected joined SHA wording; its original
+identity field format was corrected without changing the guard or source proof.

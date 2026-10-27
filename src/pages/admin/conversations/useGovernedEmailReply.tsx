@@ -18,9 +18,8 @@ import { useCallback, useEffect, useMemo, useRef, useState, type MutableRefObjec
 import { supabase } from "@/integrations/supabase/client";
 import type { AccountEpochToken } from "./solo/soloConversationModel";
 import type { Attachment } from "./inbox-shared";
-import { createPortalRequestIds } from "./portalReply";
 import {
-  LOCAL_COPY, buildGovernedReplyRequest, checkGovernedSendAt, classifyDoorAnswer, governedReplyFiles,
+  LOCAL_COPY, buildGovernedReplyRequest, createGovernedOperationIds, checkGovernedSendAt, classifyDoorAnswer, governedReplyFiles,
   governedReplyScope, readDoorAnswer, sendAtProblemCopy,
   type DoorAnswer, type DoorView, type GovernedReplyDraft, type GovernedReplyRequest, type ReadyCheck, type StripAction,
 } from "./governedReply";
@@ -54,7 +53,7 @@ export interface GovernedEmailReplyInput {
 
 type Phase = "composing" | "checking" | "check" | "sending" | "choose" | "cant" | "expired";
 type Held = { scope: string; draft: GovernedReplyDraft; request: GovernedReplyRequest };
-type Focus = "confirm" | "edit" | "first-option" | "recheck" | "body" | "send";
+type Focus = "confirm" | "edit" | "first-option" | "recheck" | "settings" | "body" | "send";
 
 const OPEN: ReadonlySet<Phase> = new Set(["check", "sending", "choose", "cant", "expired"]);
 
@@ -73,7 +72,7 @@ export function useGovernedEmailReply(input: GovernedEmailReplyInput) {
   const expiryRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const focusRef = useRef<Focus | null>(null);
   const recheckOnScopeRef = useRef(false);
-  const idsRef = useRef(createPortalRequestIds());
+  const idsRef = useRef(createGovernedOperationIds());
   const inputRef = useRef(input);
   inputRef.current = input;
 
@@ -109,20 +108,26 @@ export function useGovernedEmailReply(input: GovernedEmailReplyInput) {
 
   const showCant = (view: Extract<DoorView, { kind: "cant" }>, isOffline = false) => {
     clearExpiry();
-    setCantView(view); setOffline(isOffline); go("cant"); focusRef.current = "edit"; say(view.say);
+    setCantView(view); setOffline(isOffline); go("cant");
+    // Focus the most useful next step: Check status / Try again / Check again, the settings link, else Edit.
+    focusRef.current = view.action === "settings" ? "settings" : view.action ? "recheck" : "edit";
+    say(view.say);
   };
 
   const finish = (scope: string, view: DoorView, answer: DoorAnswer | null, stage: "check" | "confirm" | "status") => {
     const i = inputRef.current;
     const held = heldRef.current;
     if (view.kind === "ready") {
-      setCheck(view.check); go("check"); focusRef.current = "confirm";
+      // Focus Edit, never the gold act: a second Enter must not confirm a check nobody has read.
+      setCheck(view.check); go("check"); focusRef.current = "edit";
       const act = view.check.when ? "Schedule send" : "Send now";
       say(stage === "check"
         ? `Ready to send to ${view.check.preview.to_name || i.contactName}. Check To and From, then ${act}.`
-        : stage === "status" ? `Nothing went out. Checked again — confirm with ${act}.` : `Checked again — confirm with ${act}.`);
+        // Check status found no recorded answer: it may still be going out. Never "nothing went out".
+        : stage === "status" ? `Couldn't confirm the last try went out — don't resend unless you're sure it didn't. ${act} is there if it didn't.`
+        : `Checked again — confirm with ${act}.`);
       clearExpiry();
-      const wait = view.check.expiresAt - 5_000 - Date.now();
+      const wait = view.check.deadlineMs - 5_000 - Date.now();
       expiryRef.current = setTimeout(() => {
         expiryRef.current = null;
         if (phaseRef.current !== "check") return;
@@ -144,9 +149,11 @@ export function useGovernedEmailReply(input: GovernedEmailReplyInput) {
       if (held) i.onRecorded({ outcome: view.outcome, contactId: held.draft.contactId, already: view.already });
       return;
     }
-    // Nothing went out. A final answer spends the id; so does a conflict (it can never succeed as is).
+    // No definite answer: the id is kept for good, so these words always ask about THIS operation.
+    // Otherwise nothing went out: a final answer spends the id; so does a conflict (it can never succeed as is).
     const conflict = !!answer && !answer.transport && answer.status === 409;
-    if (view.settle || conflict) idsRef.current.settle(scope);
+    if (view.keepId && held) idsRef.current.markUnknown(scope, held.request.operation_id);
+    else if (view.settle || conflict) idsRef.current.settle(scope);
     showCant(view);
   };
 
@@ -164,7 +171,7 @@ export function useGovernedEmailReply(input: GovernedEmailReplyInput) {
     if (seq !== seqRef.current || !inputRef.current.epoch.accept(token)) return; // superseded: dropped, never painted
     inFlightRef.current = false;
     const connector = inputRef.current.connectors.find((c) => c.id === held.request.command.connector_id);
-    const view = classifyDoorAnswer(answer, stage === "check" ? "check" : "confirm", held.request,
+    const view = classifyDoorAnswer(answer, stage, held.request,
       { name: inputRef.current.contactName, from: connector?.from_address || connector?.display_name || "" }, Date.now());
     finish(held.scope, view, answer, stage);
   };
@@ -179,7 +186,8 @@ export function useGovernedEmailReply(input: GovernedEmailReplyInput) {
     const scope = governedReplyScope(d.draft);
     const built = buildGovernedReplyRequest(d.draft, idsRef.current.idFor(scope));
     if (!built.ok) {
-      const view = built.problem === "subject" ? LOCAL_COPY.subjectTooLong() : built.problem === "body" ? LOCAL_COPY.bodyTooLong() : LOCAL_COPY.cantBuild();
+      const view = built.problem === "subject" ? LOCAL_COPY.subjectTooLong() : built.problem === "body" ? LOCAL_COPY.bodyTooLong()
+        : built.problem === "sender" ? LOCAL_COPY.badSender() : built.problem === "contact" ? LOCAL_COPY.badContact(inputRef.current.contactName) : LOCAL_COPY.cantBuild();
       if (view.kind === "cant") showCant(view);
       return;
     }
@@ -255,7 +263,7 @@ export function useGovernedEmailReply(input: GovernedEmailReplyInput) {
     close("reset"); heldRef.current = null;
     return () => { seqRef.current += 1; clearExpiry(); };
   }, [input.activeTenantId, input.threadKey, close]);
-  useEffect(() => { idsRef.current.clear(); }, [input.activeTenantId]);
+  useEffect(() => { idsRef.current.clearPending(); }, [input.activeTenantId]);
 
   // Focus follows the strip (§70: keyboard users land on the next thing to do).
   useEffect(() => {
@@ -316,6 +324,8 @@ export function useGovernedEmailReply(input: GovernedEmailReplyInput) {
     checking: phase === "checking",
     /** The confirm is out: the words stay exactly as approved until it answers. */
     blocksEditing: phase === "sending",
+    /** A check is running, shown, or being confirmed: the staged files stay exactly as checked. */
+    filesLocked: phase === "checking" || phase === "check" || phase === "sending",
     actions,
     liveRegion,
   };

@@ -801,7 +801,7 @@ describe("an email the service may have taken (its answer was lost)", () => {
   // EXP03 O12 piece 3: the reply composer's email no longer goes through send-message's undo window. It is
   // checked and confirmed through the governed door; a confirm whose answer is unknown clears the composer
   // (it may already be with them) and says not to resend — never a failure.
-  it("the reply composer's email whose confirm answer is unknown says don't resend, never a failure, and clears", async () => {
+  it("the reply composer's email whose confirm answer is unknown says don't resend, never a failure, and keeps the words", async () => {
     const contact = "0c1d2e3f-4a5b-4c6d-8e7f-a0b1c2d3e4f5";
     const key = `contact:tenant-a:${contact}`;
     db.connectorId = "1d2e3f4a-5b6c-4d7e-8f90-a1b2c3d4e5f6";
@@ -832,9 +832,10 @@ describe("an email the service may have taken (its answer was lost)", () => {
     for (let i = 0; i < 3; i++) await act(async () => { await flush(); });
     expect(db.invokes).toEqual(["comms-email-command", "comms-email-command"]);
     expect(db.doorBodies[1]).toMatchObject({ operation_id: db.doorBodies[0].operation_id, approved_fingerprint: "0123456789abcdef" });
-    expect(host.querySelector("[data-governed-reply-status]")?.textContent).toBe("Couldn't confirm this went out. Don't resend.");
+    expect(host.querySelector("[data-governed-reply-strip]")?.textContent).toContain("Couldn't confirm this went out — don't resend.");
     expect(toast.error).not.toHaveBeenCalled();
-    expect(host.querySelector<HTMLTextAreaElement>("textarea")!.value).toBe("");
+    // Words stay until a definite answer: asking again replays the same operation.
+    expect(host.querySelector<HTMLTextAreaElement>("textarea")!.value).toBe("Following up on Thursday.");
   });
 
   it("the new-conversation dialog warns honestly and closes, leaving no Send that would mail a second copy", async () => {

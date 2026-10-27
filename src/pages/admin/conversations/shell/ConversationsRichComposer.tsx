@@ -39,7 +39,7 @@ export function ConversationsRichComposer(model: ConversationsComposerModel) {
     actions, checking,
     identities, identityId, onIdentityChange, showIdentity = true,
     showSubject = false, subject = "", onSubjectChange,
-    attachments = [], uploading = false, onAttachFiles, onRemoveAttachment,
+    attachments = [], uploading = false, onAttachFiles, onRemoveAttachment, attachmentsLocked = false,
     showDraftWithPaige = false, onDraftWithPaige, drafting = false, draftReadingDoc = false,
     draftFlags = [], canDraft = true,
     templates = [], onApplyTemplate, snippets = [], onApplySnippet, showCombinedInsert = false,
@@ -126,7 +126,7 @@ export function ConversationsRichComposer(model: ConversationsComposerModel) {
       {renderAttach && attachments.length > 0 && (
         <div className="flex flex-wrap gap-1.5">
           {attachments.map((a) => (
-            <AttachmentChip key={a.url} a={a} onRemove={() => a.url && onRemoveAttachment?.(a)} />
+            <AttachmentChip key={a.url} a={a} disabled={disabled || attachmentsLocked} onRemove={() => a.url && onRemoveAttachment?.(a)} />
           ))}
         </div>
       )}

@@ -101,7 +101,10 @@ export function GovernedReplyStrip({ state, onEdit, onConfirm, onAction, onChoos
           )}
           {check.when && <Fact term="When"><b className="font-semibold">{check.when}</b></Fact>}
         </dl>
-        <Foot note={`${scheduled ? `Nothing has been sent. It goes out ${check.when!.replace(/^Sends /, "")}.` : "Nothing has been sent yet."} Changing the words closes this check.`}>
+        <Foot note={check.uncertain
+          // Re-asked after a lost answer: the earlier try may still be going out. Never "nothing has been sent".
+          ? "Couldn't confirm the last try went out. Don't send again unless you're sure it didn't."
+          : `${scheduled ? `Nothing has been sent. It goes out ${check.when!.replace(/^Sends /, "")}.` : "Nothing has been sent yet."} Changing the words closes this check.`}>
           <Quiet onClick={onEdit} focus="edit" busy={sending}>Edit</Quiet>
           {/* The ONE gold act while the strip stands in for the action row (§11). */}
           <Button
@@ -161,7 +164,7 @@ export function GovernedReplyStrip({ state, onEdit, onConfirm, onAction, onChoos
       <Foot note="Your words are kept.">
         {view.action === "settings" && (
           <Button type="button" variant="outline" size="sm" className="h-9" asChild>
-            <Link to={settingsHref}>Open email settings</Link>
+            <Link to={settingsHref} data-strip-focus="settings">Open email settings</Link>
           </Button>
         )}
         {view.action === "retry" && <Quiet onClick={() => onAction("retry")} focus="recheck" busy={busy}>{busy ? "Checking…" : "Try again"}</Quiet>}

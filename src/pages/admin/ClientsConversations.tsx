@@ -1066,6 +1066,8 @@ export default function ClientsConversations() {
 
   const selectThread = (key: string) => {
     if (followupHoldRef.current && key !== selectedKey) { toast.error("Finish or cancel the original reply before changing conversation."); return; }
+    // An email confirm is out: its answer lands on THIS conversation's words, so the switch waits for it.
+    if (governedReply.blocksEditing && key !== selectedKey) { toast("Wait for this email to finish sending before changing conversation."); return; }
     setSelectedKey(key);
     // The Gmail-style keyboard cursor lives in ConversationsThreadList and follows the open
     // thread there; multi-select, bulk, and keyboard nav are all list-internal now (§18).
@@ -1734,7 +1736,15 @@ export default function ClientsConversations() {
       : `Reply to ${selected.name}…  (drop a file to attach)`,
     rows: 2,
     sendLabel: governedReply.checking ? "Checking…" : leadReplyApprovalId ? "Review reply" : portalMode ? "Send" : scheduledFor ? "Schedule" : editingDraftId ? "Send edited" : "Send",
-    note: leadReplyApprovalId ? <>Review the exact sender and message before approving. <button type="button" className="underline" disabled={leadReplyReview.blocksEditing} onClick={cancelLeadReply}>Cancel reply edit</button></> : portalUnreachable ? undefined : portalMode ? portalNote : selected.toAddress ? `To ${selected.toAddress}` : "No address on this thread",
+    note: leadReplyApprovalId ? <>Review the exact sender and message before approving. <button type="button" className="underline" disabled={leadReplyReview.blocksEditing} onClick={cancelLeadReply}>Cancel reply edit</button></> : portalUnreachable ? undefined : portalMode ? portalNote
+      // A governed email goes to the address the door resolves (the contact's main email); while the
+      // check is open the strip names it, so the note says nothing that could contradict it.
+      // The door sends only to the contact card's main email (the same primary address read here).
+      : composeChannel === "email" && !editingDraftId ? (governedReply.stripOpen ? undefined
+        : !selected.contactId ? "No contact on this thread yet."
+        : selectedThread?.clients?.email ? `Goes to ${selected.name}'s main email.`
+        : `${selected.name} has no email address on their contact card yet.`)
+      : selected.toAddress ? `To ${selected.toAddress}` : "No address on this thread",
     textareaClassName: "h-24 min-h-24 max-h-24",
     identities: [
       ...composerConnectors.map((c) => ({
@@ -1770,6 +1780,7 @@ export default function ClientsConversations() {
     uploading,
     onAttachFiles: uploadComposerFiles,
     onRemoveAttachment: (a) => void removeAttachment(a),
+    attachmentsLocked: governedReply.filesLocked,
     showDraftWithPaige: composeChannel === "email",
     onDraftWithPaige: ({ guide, tone }) => void draftWithPaige({ guide, tone }),
     drafting,
@@ -2105,7 +2116,6 @@ export default function ClientsConversations() {
                 >
                   <ConversationsRichComposer {...composerModel} />
                 </div>
-                {governedReply.liveRegion}
               </>
             ) : null}
           </div>
@@ -2118,6 +2128,9 @@ export default function ClientsConversations() {
   return (
     <PageShell width="full" fill className={cn("lg:flex-1 lg:overflow-hidden", isSolo && "solo-conversations-page-shell")}>
       <h1 className="sr-only">Conversations</h1>
+      {/* The email check's announcements live outside any one conversation, so a jump to the thread a
+          send landed on (or no thread at all) never drops what is being said. */}
+      {governedReply.liveRegion}
       {/* The three-column conversation shell (§18 one home) — pure layout: the §36 first-run
           swap, the railOpen 3↔2-col toggle, and the mobile contact Sheet. The container feeds it
           the rendered LEFT rail, the container-owned MIDDLE pane, and the RIGHT contact panel. */}

@@ -234,6 +234,8 @@ interface ConversationsComposerModelBase {
   uploading?: boolean;
   onAttachFiles?: (files: FileList | File[]) => void;
   onRemoveAttachment?: (a: Attachment) => void;
+  /** The staged files are held exactly as checked (an email check is open or being confirmed). */
+  attachmentsLocked?: boolean;
 
   // "Draft with Paige" (gated by capabilities.canDraftWithPaige && showDraftWithPaige)
   showDraftWithPaige?: boolean;

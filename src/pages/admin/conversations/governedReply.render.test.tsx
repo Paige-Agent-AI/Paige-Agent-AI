@@ -240,7 +240,7 @@ describe("Send on an email reply checks it with the governed door — nothing is
     await act(async () => { release(null); await flush(); });
   });
 
-  it("a 202 becomes the inline check: server To, gold Send now in place of the action row, focus on Send now, announced", async () => {
+  it("a 202 becomes the inline check: server To, gold Send now in place of the action row, focus on Edit, announced", async () => {
     const host = await mount();
     await write(host);
     await click(sendButton(host));
@@ -256,10 +256,20 @@ describe("Send on an email reply checks it with the governed door — nothing is
     expect(buttonByText(host, "Attach")).toBeUndefined();
     expect(buttonByText(host, "Draft with Paige")).toBeUndefined();
     expect(stripButton(host, "confirm")!.textContent).toBe("Send now");
-    expect(document.activeElement).toBe(stripButton(host, "confirm"));
+    // Focus lands on Edit, never on the gold act: a second Enter cannot confirm what was not read.
+    expect(document.activeElement).toBe(stripButton(host, "edit"));
     expect(status(host)).toBe("Ready to send to Maya Ortiz. Check To and From, then Send now.");
     // The words stay editable above the check.
     expect(textarea(host).disabled).toBe(false);
+    // The strip is the one place that says where it goes: no thread address under it.
+    expect(host.textContent).not.toContain("To maya@ortizlandscaping.example");
+    expect(host.textContent).not.toContain("No address on this thread");
+  });
+
+  it("while composing an email reply the note names who it goes to, not a thread address", async () => {
+    const host = await mount();
+    expect(host.textContent).toContain("Goes to Maya Ortiz's main email.");
+    expect(host.textContent).not.toContain("To maya@ortizlandscaping.example");
   });
 
   it("Send now spends the fingerprint on the same operation; Accepted clears the reply, focuses it; a double click is one request", async () => {
@@ -326,7 +336,8 @@ describe("Send on an email reply checks it with the governed door — nothing is
     const host = await mount();
     await write(host);
     await click(sendButton(host));
-    expect(document.activeElement).toBe(stripButton(host, "confirm"));
+    expect(document.activeElement).toBe(stripButton(host, "edit"));
+    stripButton(host, "confirm")!.focus();
     await act(async () => { await new Promise((r) => setTimeout(r, 650)); await flush(); });
     await settle();
     expect(stripText(host)).toContain("This check expired — check again.");
@@ -445,7 +456,6 @@ describe("every refusal reads in owner words, and the words are kept", () => {
     ["no consent", httpError(422, { ok: false, outcome: "refused", reason: "BLOCKED_NO_CONSENT" }), "Can't send to Maya Ortiz. This person hasn't agreed to get email from you."],
     ["client dnd", httpError(422, { ok: false, outcome: "refused", reason: "BLOCKED_CLIENT_DND" }), "Can't send to Maya Ortiz. This person asked not to be contacted right now."],
     ["not a contact", httpError(422, { ok: false, outcome: "refused", reason: "CONTACT_NOT_IN_WORKSPACE" }), "This person isn't a contact in this business."],
-    ["quiet hours", httpError(422, { ok: false, outcome: "held", reason: "QUEUED_QUIET_HOURS" }), "It can't go out right now — it's quiet hours. Schedule it for later."],
     ["business dnd", httpError(422, { ok: false, outcome: "held", reason: "QUEUED_TENANT_DND" }), "It can't go out right now — Do not disturb is on. Schedule it for later."],
     ["preferences unverified", httpError(422, { ok: false, outcome: "held", reason: "RECIPIENT_PREFERENCES_UNVERIFIED" }), "Couldn't check just now. Nothing was sent."],
     ["readiness unverified", httpError(422, { ok: false, outcome: "refused", reason: "EMAIL_READINESS_UNVERIFIED" }), "Couldn't check just now. Nothing was sent."],
@@ -485,8 +495,22 @@ describe("every refusal reads in owner words, and the words are kept", () => {
     expect(stripButton(host, "confirm")).toBeNull();
     expect(textarea(host).value).toBe("Following up on Thursday.");
     expect(subjectInput(host).value).toBe("Thursday");
-    expect(document.activeElement).toBe(stripButton(host, "edit"));
+    // Focus lands on the most useful action: Try again / Open email settings, else Edit.
+    const useful = stripButton(host, "recheck") ?? strip(host)!.querySelector<HTMLElement>('[data-strip-focus="settings"]') ?? stripButton(host, "edit");
+    expect(document.activeElement).toBe(useful);
     if (/unknown|IN_FLIGHT|UNSETTLED/.test(JSON.stringify(door))) expect(stripButton(host, "recheck")).toBeNull();
+  });
+
+  it.each([
+    ["readiness unverified", httpError(422, { ok: false, outcome: "refused", reason: "EMAIL_READINESS_UNVERIFIED" }), "Try again"],
+    ["sender not verified", httpError(422, { ok: false, outcome: "needs_setup", reason: "SENDER_VERIFICATION_MISSING" }), "Open email settings"],
+    ["suppressed", httpError(422, { ok: false, outcome: "refused", reason: "BLOCKED_SUPPRESSED" }), "Edit"],
+  ])("%s focuses its most useful action", async (_n, door, label) => {
+    db.door = [door];
+    const host = await mount();
+    await write(host);
+    await click(sendButton(host));
+    expect(document.activeElement?.textContent?.trim()).toBe(label);
   });
 
   it("the unverified sender offers the way to fix it", async () => {
@@ -518,12 +542,53 @@ describe("the confirm's answers", () => {
     await click(stripButton(host, "confirm"));
     return host;
   }
-  it("an unknown outcome clears the reply (it may have gone out), with no retry offered", async () => {
+  it("an unknown outcome KEEPS the words and the operation: don't resend, Check status asks the same operation", async () => {
     const host = await toCheck(httpError(503, { ok: false, outcome: "outcome_unknown", code: "COMMS_EMAIL_RECONCILIATION_REQUIRED" }));
-    expect(strip(host)).toBeNull();
-    expect(textarea(host).value).toBe("");
-    expect(status(host)).toBe("Couldn't confirm this went out. Don't resend.");
-    expect(db.doorBodies).toHaveLength(2);
+    expect(stripText(host)).toContain("Couldn't confirm this went out — don't resend.");
+    expect(textarea(host).value).toBe("Following up on Thursday.");
+    expect(subjectInput(host).value).toBe("Thursday");
+    expect(buttonByText(host, "Check status")).toBeTruthy();
+    expect(document.activeElement?.textContent?.trim()).toBe("Check status");
+    // Edit, then Send with the same words: the SAME operation, so the door replays and reconciles it.
+    await click(stripButton(host, "edit"));
+    await click(sendButton(host));
+    expect(db.doorBodies[2].operation_id).toBe(db.doorBodies[0].operation_id);
+  });
+  it("a failed confirm keeps the words, the files' place and the operation (only sent or scheduled clears)", async () => {
+    const host = await toCheck(httpError(422, { ok: false, outcome: "failed", reason: "SENDGRID_400" }));
+    expect(stripText(host)).toContain("The email service didn't accept it.");
+    expect(textarea(host).value).toBe("Following up on Thursday.");
+    await click(stripButton(host, "edit"));
+    await click(sendButton(host));
+    expect(db.doorBodies[2].operation_id).toBe(db.doorBodies[0].operation_id);
+  });
+  it.each([
+    ["a gateway body", 546, { code: "WORKER_LIMIT", message: "Function failed due to not having enough compute resources" }],
+    ["a boot error", 504, { code: "BOOT_ERROR", message: "Function failed to start" }],
+    ["no outcome", 500, { ok: false }],
+    ["an outcome the door never sends", 422, { ok: false, outcome: "maybe", reason: "BLOCKED_SUPPRESSED" }],
+    ["accepted without ok", 200, { outcome: "provider_accepted" }],
+  ])("on a confirm, %s is a lost answer: words kept, don't resend, Check status, same operation", async (_n, code, body) => {
+    const host = await toCheck(httpError(code, body as Record<string, unknown>));
+    expect(stripText(host)).toContain("Couldn't confirm this went out — don't resend.");
+    expect(buttonByText(host, "Check status")).toBeTruthy();
+    expect(textarea(host).value).toBe("Following up on Thursday.");
+    expect(stripText(host)).not.toMatch(/[A-Z_]{6,}/);
+    await click(stripButton(host, "edit"));
+    await click(sendButton(host));
+    expect(db.doorBodies[2].operation_id).toBe(db.doorBodies[0].operation_id);
+  });
+  it("an unknown operation keeps its id even when other words were checked in between", async () => {
+    const host = await toCheck(httpError(503, { ok: false, outcome: "outcome_unknown" }));
+    const unknownOp = db.doorBodies[0].operation_id;
+    await click(stripButton(host, "edit"));
+    await type(textarea(host), "Something else entirely.");
+    await click(sendButton(host));
+    expect(db.doorBodies[2].operation_id).not.toBe(unknownOp);
+    await click(stripButton(host, "edit"));
+    await type(textarea(host), "Following up on Thursday.");
+    await click(sendButton(host));
+    expect(db.doorBodies[3].operation_id).toBe(unknownOp);
   });
   it.each([
     [409, "COMMS_EMAIL_ATTACHMENTS_CHANGED", "A file changed after the check."],
@@ -567,9 +632,81 @@ describe("the confirm's answers", () => {
     expect(textarea(host).value).toBe("");
     expect(status(host)).toBe("Already sent. Accepted by the email service.");
   });
+  it("Check status that finds no answer yet never claims nothing went out", async () => {
+    const host = await toCheck(() => ({ data: null, error: { name: "FunctionsFetchError", context: new Error("network") } }));
+    // An empty or in-progress record answers with a fresh check: still unconfirmed, still don't resend.
+    await click(buttonByText(host, "Check status"));
+    expect(status(host)).not.toMatch(/Nothing went out/);
+    expect(status(host)).toMatch(/don't resend/i);
+    expect(stripText(host)).not.toContain("Nothing has been sent");
+    expect(stripText(host)).toContain("Couldn't confirm the last try");
+  });
+  it("Check status that is still unknown keeps saying don't resend, with the words and the operation kept", async () => {
+    const host = await toCheck(() => ({ data: null, error: { name: "FunctionsFetchError", context: new Error("network") } }));
+    db.door = [httpError(503, { ok: false, outcome: "outcome_unknown", replayed: true })];
+    await click(buttonByText(host, "Check status"));
+    expect(stripText(host)).toContain("don't resend");
+    expect(buttonByText(host, "Check status")).toBeTruthy();
+    expect(textarea(host).value).toBe("Following up on Thursday.");
+  });
+  it("files cannot be removed while a check is open or a confirm is out", async () => {
+    const host = await mount();
+    await write(host);
+    await attach(host, ["proposal.pdf"]);
+    const remove = () => host.querySelector<HTMLButtonElement>('button[aria-label="Remove proposal.pdf"]')!;
+    expect(remove().disabled).toBe(false);
+    await click(sendButton(host));
+    expect(remove().disabled).toBe(true);
+    let release!: (v: unknown) => void;
+    db.door = [(b) => new Promise((r) => { release = () => r(accepted()(b)); })];
+    await act(async () => { stripButton(host, "confirm")!.click(); await flush(); });
+    expect(remove().disabled).toBe(true);
+    await act(async () => { release(null); await flush(); });
+    await settle();
+  });
+  it("a conversation switch while a confirm is out is held until the answer, which is then announced", async () => {
+    const OTHER = "9d8c7b6a-5f4e-4d3c-8b2a-1f0e9d8c7b6a";
+    const otherKey = `contact:${TENANT}:${OTHER}`;
+    const otherClient = { ...client, id: OTHER, first_name: "Test", last_name: "Recipient" };
+    db.threads = [thread, { ...thread, id: "t-2", thread_key: otherKey, contact_id: OTHER, clients: otherClient }];
+    db.messages = [message(), message({ id: "m-2", thread_key: otherKey, contact_id: OTHER })];
+    const host = await mount();
+    const rowFor = (key: string) => [...host.querySelectorAll<HTMLElement>("[data-thread-key]")].find((el) => el.dataset.threadKey === key)!;
+    await click(rowFor(KEY));
+    await write(host);
+    await click(sendButton(host));
+    let release!: (v: unknown) => void;
+    db.door = [(b) => new Promise((r) => { release = () => r(accepted()(b)); })];
+    await act(async () => { stripButton(host, "confirm")!.click(); await flush(); });
+    await click(rowFor(otherKey));
+    // Still on the email that is going out; the switch is refused with a reason.
+    expect(stripButton(host, "confirm")!.textContent).toBe("Sending…");
+    expect(toast).toHaveBeenCalledWith("Wait for this email to finish sending before changing conversation.");
+    await act(async () => { release(null); await flush(); });
+    await settle();
+    expect(status(host)).toBe("Accepted by the email service.");
+  });
+});
+
+describe("the announcement region", () => {
+  it("lives outside the conversation, so it survives a jump to another thread (and exists with none open)", async () => {
+    db.threads = []; db.messages = [];
+    const host = await mount();
+    expect(host.querySelector("[data-governed-reply-status]")).toBeTruthy();
+  });
 });
 
 describe("checks that never reach the door", () => {
+  it("a sender id the door cannot take says so, about the sender", async () => {
+    db.connectors = [emailConnector("conn-legacy", "Northlight Advisory", "jordan@northlightadvisory.example")];
+    db.messages = [message({ connector_id: "conn-legacy" })];
+    const host = await mount();
+    await write(host);
+    await click(sendButton(host));
+    expect(db.doorBodies).toEqual([]);
+    expect(stripText(host)).toContain("This sending address can't send email from here.");
+    expect(stripText(host)).not.toContain("Check the subject and message");
+  });
   it("offline: no call, the offline strip with Try again", async () => {
     Object.defineProperty(navigator, "onLine", { configurable: true, get: () => false });
     const host = await mount();

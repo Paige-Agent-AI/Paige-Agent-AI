@@ -1,5 +1,27 @@
 # Experience 02 — Customer Experience Integration Matrix
 
+## October27 — CAP013 original email source consumer, local proof
+
+The earlier missing-email-adapter snapshot below is historical: original Marketing
+already owns sent/tracked-open/click count producers. New E2 sourcefa30a8bd/
+composition784b593b consumes them through the original issuer/resolver and bounded
+review. It does not establish human engagement, unique people, delivery, conversion,
+retention, revenue, a new anomaly or prediction. EXP03/NEXUS retains source ownership.
+
+Functional LOCAL293/11 plus original native catalogue/guarded copy proof; Visual14
+fresh original-component frames/5 preimplementation frames/22 exact inputs;
+Experiential PARTIAL: original route/query/Chat draft retained, existing Back
+scroll/focus gap requires O14 follow-up; Founder NOT_ACCEPTED. Strict Deno/lint/
+build PASS; compiler6 incumbent/no new/unchanged baseline10. Unapplied17150002
+prepares only exact canonical engagement_read copy/Unverified coverage, never
+activation. Current production copy remains Coming Soon until actual release.
+
+All19 definitions/IDs and nine capability assignments remain. Hosted review/CI/
+Preview/deploy/web/Edge/native readback, actual account catalogue/counts/permissions/
+cohorts/reload/weekly/Live/full Finance and founder proof remain owed. Original9-0/
+12-0-4/monthlyUNKNOWNUNRETRIED retained; canonical ALG03/06/11/12 unchanged,13
+Unverified. [Bounded evidence](../evidence/ui-delivery/e2-email-review-evidence.md).
+
 ## October27 — original report observation compatibility, local increment
 
 O01/O14/O15/O16/O19 continuity: original native status can recognize the existing

@@ -4593,3 +4593,31 @@ ordinary observation is read only, not a LayerC executor. The separate manual
 Systems observation/original receipt handoff remains with EXP05; no purpose is
 silently admitted. Existing Mind/Vault/owner-memory boundaries remain intact.
 [Source, UX, orchestration and proof boundaries](../evidence/ui-delivery/e2-report-status-observation.md).
+
+### October27 — original campaign email evidence consumer, development
+
+EXP02 O03/O08/O16/O17 and CAP013 reuse the existing Marketing email producer,
+Metric issuer/resolver and business.operating_snapshot. Sourcefa30a8bd, composed
+784b593b on released main6c448b6c, reads only original sent/opened/clicked counts.
+Sent cohorts and subsequent tracking remain distinct; recorded sends are not
+delivery confirmations, image loads are not reading, own-mail tracking is excluded,
+and no rate/retention/revenue/prediction is inferred. EXP03/NEXUS retains every
+record/provider/writer; PAIGE/VERA remains the Executive analysis interface.
+
+Functional LOCAL: final293 controls/11 suites, original native catalogue/all prior
+controls plus guarded email cases PASS, strict Deno/lint/build73s PASS. Full app
+compiler retains the exact six incumbent diagnostics under unchanged baseline10;
+complete locked manifests match, initial incomplete-install attempt invalid.
+Visual fourteen final original-component synthetic frames/five preimplementation
+frames/22 exact declared inputs. Experiential PARTIAL: source disclosure and
+current-account destination/query/synthetic Chat draft preserved, but original
+Executive Back scroll/focus restoration is an O14 follow-up. Founder NOT_ACCEPTED.
+
+Original engagement_read production still has Coming Soon copy at inspection.
+Unapplied17150002 changes only exact canonical copy/coverage to Unverified,
+preserving custom/disabled/permission/execution state; shared presenter reused.
+Hosted review/exact-head CI/Preview/web/affected Edge/native readback and real
+customer/cohort/permissions/reload/weekly/Live/full Finance/all19/nine proof remain
+owed. Protected monthlyUNKNOWNUNRETRIED/original9-0+12-0-4 retained. ALG03/06/11/12
+canonical maturity unchanged, ALG13 Unverified; no new algorithm or action system.
+[Source and rendered boundaries](../evidence/ui-delivery/e2-email-review-evidence.md).

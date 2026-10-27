@@ -301,6 +301,25 @@ applied version and must be renumbered above it before it merges.
   `exp08_team_hub_a1c.sql`); no overload is left. Response consumers: the browser parser (tolerant of the
   added key; reads it), `chat.ts` (reads `message.id` only), `agent-turn.ts` (does not read the post
   door's message).
+- **Two Codex P2 findings on A1b (PR #2999), fixed here (2026-10-27).** (1) *A lost answer dropped the
+  private part.* When a reply with a private part committed but its answer was lost, the retry's accept
+  door answers `duplicate` and the turn returned the read-back reply with no `private_followup`, so the
+  browser never started the DM turn. `agent-turn.ts` now rebuilds `private_followup` in the duplicate
+  branch when the stored reply is this agent's, the intent is `reply`, and its body ends with
+  `PRIVATE_PART_LINE` (the one constant; only the definer appends that line and the model's copy is
+  stripped before posting), in the same shape and with the DM resolved the same way (or null) as the
+  normal posted path, which now shares that one helper. (2) *A turn another tab owns wrote forever.* A
+  local turn stored `in_flight`, or a private part left `writing` after `in_flight`, was never compared
+  with later `team_hub_agent_turn_states` reads, so the asker saw "is writing…" until a reload.
+  `useTeamHub` now settles such a turn from the read: ended without a post (`failed`) → the failure line
+  with Ask again; replied (or the reply carries a private part) → the local row is dropped and the
+  conversation is read again so the reply shows; a private part `replied_privately` → the DM note; still
+  answering, or no turn yet → unchanged. A turn this tab is running is never settled by a read, and only a
+  read issued after the turn began waiting can settle it (a stale read cannot). A waiting turn outside the
+  open conversation (a private part while the asker is in the DM) is read on the same focus / reconnect /
+  15 s ticks. Producers and consumers (§37): the accept door's `duplicate` answer is read only here; the
+  added `private_followup` is read only by `parseAgentTurn` in `team-hub-agents.ts`, which already reads it
+  on the posted path.
 
 Increments 1–4 are in
 [collaboration](exp08-team-hub-collaboration-contract.md),

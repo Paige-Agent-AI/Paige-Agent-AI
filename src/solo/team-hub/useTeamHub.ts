@@ -971,6 +971,14 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
     setAgentTurns((current) => ({ ...current, [key]: update(current[key]) }));
   }, []);
 
+  // A turn this tab is running right now (`key`, or `p:key` for its private part): a state read never
+  // overrides it, since this tab's own answer is the newer fact. A turn left waiting on another tab (an
+  // `in_flight` answer) is settled by the state reads instead, but only by a read issued AFTER it began
+  // waiting (`waitingSince` holds the read sequence then), so a stale read cannot end it.
+  const runningTurns = useRef(new Set<string>());
+  const readSeq = useRef(0);
+  const waitingSince = useRef(new Map<string, number>());
+
   /** A reply the server read back goes where it belongs at once: the open stream, or the open thread. */
   const placeReply = useCallback((message: TeamHubMessage, conversationId: string, duplicate: boolean) => {
     if (!message.parent_message_id) {
@@ -993,7 +1001,8 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
   /** Flow 5: the private part's DM turn, started by this tab right after the channel reply posted. */
   const runPrivatePart = useCallback(async (key: string, request: AgentTurnRequest, dmId: string | null) => {
     patchTurn(key, (turn) => ({ ...(turn ?? { key, request, status: "posted" }), privatePart: { status: "writing", dmId } }));
-    const answer = await invokeTurn({ ...request, privateFollowUp: true });
+    runningTurns.current.add(`p:${key}`);
+    const answer = await invokeTurn({ ...request, privateFollowUp: true }).finally(() => runningTurns.current.delete(`p:${key}`));
     if (!alive.current) return;
     if (answer.outcome === "posted") {
       patchTurn(key, (turn) => ({ ...(turn ?? { key, request, status: "posted" }), privatePart: { status: "posted", dmId: answer.conversationId } }));
@@ -1003,6 +1012,7 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
     }
     // In flight elsewhere still counts as writing here; anything else ended without a private answer.
     const outcome = answer.outcome;
+    if (outcome === "in_flight") waitingSince.current.set(`p:${key}`, readSeq.current);
     patchTurn(key, (turn) => ({ ...(turn ?? { key, request, status: "posted" }), privatePart: outcome === "in_flight"
       ? { status: "writing", dmId } : { status: "failed", dmId, outcome } }));
   }, [invokeTurn, patchTurn, placeReply]);
@@ -1010,7 +1020,8 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
   const askAgent = useCallback(async (request: AgentTurnRequest) => {
     const key = agentTurnKey(request.sourceMessageId, request.agent);
     patchTurn(key, () => ({ key, request, status: "writing" }));
-    const answer = await invokeTurn(request);
+    runningTurns.current.add(key);
+    const answer = await invokeTurn(request).finally(() => runningTurns.current.delete(key));
     if (!alive.current) return;
     if (answer.outcome === "posted") {
       patchTurn(key, () => ({ key, request, status: "posted", replyId: answer.message.id, bringIn: answer.bringIn }));
@@ -1019,7 +1030,11 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
       else void refreshAfterAction.current();
       return;
     }
-    if (answer.outcome === "in_flight") { patchTurn(key, () => ({ key, request, status: "in_flight" })); return; }
+    if (answer.outcome === "in_flight") {
+      waitingSince.current.set(key, readSeq.current);
+      patchTurn(key, () => ({ key, request, status: "in_flight" }));
+      return;
+    }
     let outcome: AgentLineOutcome = answer.outcome;
     // Not visible to the server can mean the person is now working in another workspace (another tab
     // switched it): the server resolves the workspace from the session, never from this screen. Ask
@@ -1056,14 +1071,57 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
   }, [askAgent, runPrivatePart]);
 
   /**
+   * A turn this tab is waiting on but not running (another tab owns it: `in_flight`, or a private part
+   * left writing) is settled by the server's state, so its "is writing…" row cannot outlive the turn:
+   * ended without a post → the failure line with Ask again; replied → this tab's row is dropped and the
+   * reply (read by the refresh this asks for) shows; still answering, or no turn yet → unchanged.
+   * Returns whether a reply posted, so the conversation should be read again.
+   */
+  const settleWaiting = useCallback((conversationId: string, states: Record<string, ServerTurnState>, seq: number) => {
+    const fresh = (id: string) => !runningTurns.current.has(id) && (waitingSince.current.get(id) ?? -1) < seq;
+    // `undefined`: unchanged. `null`: dropped. `replied`: a reply posted, so the conversation is read again.
+    const settle = (turn: AgentTurn): { next: AgentTurn | null; replied: boolean } | undefined => {
+      const server = states[turn.key];
+      if (!server || turn.request.conversationId !== conversationId) return undefined;
+      if ((turn.status === "in_flight" || turn.status === "writing") && fresh(turn.key)) {
+        // A private part implies the channel reply posted (the read sees its fixed line).
+        if (server.privatePart || server.state === "replied") return { next: null, replied: true };
+        if (server.state === "failed") return { next: { ...turn, status: "failed", outcome: "no_reply" }, replied: false };
+        return undefined;
+      }
+      if (turn.privatePart?.status === "writing" && server.privatePart && fresh(`p:${turn.key}`)) {
+        if (server.state === "replied_privately") { const { privatePart: _done, ...rest } = turn; return { next: rest, replied: true }; }
+        if (server.state === "failed") return { next: { ...turn, privatePart: { ...turn.privatePart, status: "failed", outcome: "no_reply" } }, replied: false };
+      }
+      return undefined;
+    };
+    const changes = Object.values(live.current.agentTurns).flatMap((turn) => { const out = settle(turn); return out ? [{ key: turn.key, ...out }] : []; });
+    if (!changes.length) return false;
+    // Re-checked against the latest turns, so a turn this tab has since started again is left alone.
+    setAgentTurns((current) => {
+      const next = { ...current };
+      for (const { key } of changes) {
+        const turn = current[key];
+        const settled = turn ? settle(turn) : undefined;
+        if (!settled) continue;
+        if (settled.next === null) delete next[key]; else next[key] = settled.next;
+      }
+      return next;
+    });
+    return changes.some((change) => change.replied);
+  }, []);
+
+  /**
    * The member-safe turn-state read for one conversation's questions. It answers only for questions the
    * reader can see, in a conversation the reader can see now; a failed read is kept as `unavailable`.
    */
   const readTurnStates = useCallback(async (conversationId: string, ids: string[]) => {
     if (!ids.length) return true;
+    const seq = ++readSeq.current;
     const answer = await call("team_hub_agent_turn_states", { p_channel_id: conversationId, p_message_ids: ids });
     if (!alive.current) return true;
     const states = parseTurnStates(answer.data, answer.error);
+    if (states && settleWaiting(conversationId, states, seq)) void refreshRef.current();
     setTurnStates((current) => {
       const before = current[conversationId];
       if (!states) return { ...current, [conversationId]: { read: "unavailable", states: before?.states ?? {} } };
@@ -1072,7 +1130,7 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
       return { ...current, [conversationId]: { read: "ready", states: { ...kept, ...states } } };
     });
     return Boolean(states);
-  }, [call]);
+  }, [call, settleWaiting]);
 
   /**
    * Check again for a state this screen could not know ("may still be replying", "may still be writing
@@ -1100,6 +1158,25 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
     if (thread && threadAsking) void readTurnStates(thread.channelId, threadAsking.split(","));
     // eslint-disable-next-line react-hooks/exhaustive-deps -- as above, for the open thread
   }, [thread?.channelId, threadAsking, statesTick, readTurnStates]);
+
+  // A turn this tab is waiting on in another conversation (a private part left writing while the asker
+  // is in the DM, or an in_flight question elsewhere) is read on the same ticks, so it is settled too.
+  const waitingReads = Object.values(agentTurns)
+    .filter((turn) => turn.status === "in_flight" || turn.privatePart?.status === "writing")
+    .map((turn) => `${turn.request.conversationId}|${turn.request.sourceMessageId}`).sort().join(",");
+  useEffect(() => {
+    if (!waitingReads) return;
+    const byConversation = new Map<string, Set<string>>();
+    for (const item of waitingReads.split(",")) {
+      const [conversationId, id] = item.split("|");
+      // The open conversation's and thread's questions are already read by the effects above.
+      if (conversationId === stream?.channelId && streamAsking.split(",").includes(id)) continue;
+      if (conversationId === thread?.channelId && threadAsking.split(",").includes(id)) continue;
+      byConversation.set(conversationId, (byConversation.get(conversationId) ?? new Set()).add(id));
+    }
+    for (const [conversationId, ids] of byConversation) void readTurnStates(conversationId, [...ids]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- read when what is waiting changes, or on the refresh tick
+  }, [waitingReads, statesTick, readTurnStates]);
 
   // A1c: a reply being written in the open conversation (or its thread) is re-read every 3 s, for at
   // most 2 minutes, and only while the tab is visible; when a row that was being written ends, the

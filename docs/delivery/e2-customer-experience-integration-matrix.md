@@ -201,6 +201,66 @@ delta, no held2973 source adopted, original outcome definitions and historical
 9PASS0FAIL+12PASS0FAIL4BLOCKED/monthlyUNKNOWNUNRETRIED unchanged.
 [Bounded evidence](../evidence/ui-delivery/e2-report-thumbnail-accessibility.md).
 
+## October27 11:05UTC — original Executive-to-Chat reporting context
+
+Existing O02/O08/O10/O16 invitations now carry the selected reporting period
+through the same unsent prompt producer. Default company, VERA, target, priority
+and held-work questions each include it once; original source-specific target
+and metric windows stay authoritative. Three original-component period failures
+were reproduced before repair. Source0afddbd82e66e2986bdd6c0164da915c7ffe478f on
+actualmain1ad5f13c has84 controls/four suites/zero skips, lint0/build59.23s and the
+same six incumbent compiler findings/baseline10. Original test bodies retained.
+Fourteen raw synthetic frames/24 declared inputs, ten native desktop/phone Enter
+invitations and two Obsidian phone textarea keyboard checks passed. Fixed sample
+figures are not backend period-consistency or authenticated customer proof.
+No Send/model request, new runtime, writer, approval, provider/scan/worker action
+or receipt. Functional LOCAL, Visual synthetic, Experiential draft-only bounded,
+Founder NOT_ACCEPTED. Final review/CI/release/readback/authenticated full19/nine
+remain required; canonical ALG/CAP maturity unchanged, monthlyUNKNOWN/UNRETRIED.
+
+Original shared records also reconciled in place: DEL131 F/G/H/J132 only,29
+protected cells/metadata/history exact and near-limit K132 untouched; original
+CAP009–017 rows10–18 I/M/N/T/Y only,45 values/207 protected cells exact, all
+IDs/owners/inventory/closure/algorithm/style/note/link/history preserved. Current
+3Limited/3Unverified/3ComingSoon are catalogue metadata, not account acceptance.
+Neutral local-proof window returned to E05 (ANT1610fab13b2); ordinary-owner
+E09→E02→E05 custody/Finance QA and original manual Work receiving stay separate.
+[Bounded source/visual proof](../evidence/ui-delivery/e2-executive-chat-period.md).
+
+## October27 12:08UTC — actual return release and composed period handoff
+
+#2979 actually released d0ab7820dbba5e0cbb4aac2f03902a2e2761e8fc/tree db8af66f,
+exact reviewed1442/LOWER5666216936, all10+two webSUCCESS/no-SQL PreviewSKIP/zero
+unresolved threads. Productiondpl_DrWx5RF49nghLLuRWA6jfqN7LwNW READY; both public
+origins exactd0ab-mvqn2h1x/null update/matching reachable original bootstrap,
+application and Solo return source/missing404 at12:08:30UTC. No native/Edge,
+authority, provider or business activation delta. [Release receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2979#issuecomment-6441504603).
+
+#2981 normally receives ACTUAL d0ab as0a408ef9b214292258fc5760ce03b586542ca1c8.
+Its complete tracked tree8b7e37e5163f5c0ce892a2eeae81639b7fda8fae is identical to
+rendered prospective45eb4e90fdcba00f367c93cd2190dc80299b3ba5.269 local controls/
+13 disjoint suites/zero skips and18 inspected raw synthetic frames/24 declared
+inputs therefore bind to this actual composition. Twelve native keyboard period
+invitations/four department→Back trips preserve period/source/opener/scroll
+delta0 and the original synthetic draft. Required CSS viewports are verified;
+unresized native JPEG transport rounding up to1px is recorded individually.
+Initial local socket/warm-navigation/optional-image-library setup attempts and
+the exact-JPEG-size assumption are INVALID verification setup, not product PASS.
+Normal combined build71s PASS. Actual app compiler has the same six incumbent
+diagnostics under unchanged baseline10; no new finding or clean-compiler claim.
+Old63 green is historical, never a new-head CI waiver. Final review/CI/release
+for the composed handoff remains required; no shared Chat/runtime/issuer edit.
+
+Functional bounded return SOURCE RELEASED; Visual synthetic; Experiential local
+navigation/draft proof only; Founder NOT_ACCEPTED. Alternate in-app customer
+access resolved another workspace and stopped INVALID/WRONG_SCOPE. Explicit
+ordinary-owner Edge receiving and Finance Overview+six subpages/permissions/
+cohorts/reload/nativezoom/full AT/Chat-Live/all19/nine still owed. Original manual
+accepted-intent/Work observation/exact Rail projection receiving remains open.
+Historical9PASS0FAIL+12PASS0FAIL4BLOCKED/monthlyUNKNOWNUNRETRIED retained. Canonical
+ALG03/06/11/12/13 and catalogue3Limited/3Unverified/3ComingSoon stay unchanged;
+no action approval, scan/worker/provider activation or receipt promotion.
+
 ## October27 — original report observation compatibility, local increment
 
 O01/O14/O15/O16/O19 continuity: original native status can recognize the existing

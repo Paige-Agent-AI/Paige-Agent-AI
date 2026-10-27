@@ -616,8 +616,17 @@ Values intentionally omitted.
     - **Sender authentication (review M2):** a From whose domain has neither an aligned DKIM `pass` (SendGrid's `dkim`
       field, `{@domain : pass}`) nor an SPF `pass` (`SPF` field) for an envelope sender aligned with it is stored with
       `meta.sender_unauthenticated = true` on thread `email-unverified:<tenant>:<address>`: not linked to or minted as
-      a contact, no `comms-draft-reply` action, no legacy mirror. Alignment is "equal or one a subdomain of the other",
-      approximated without a public-suffix list.
+      a contact, no `comms-draft-reply` action, no legacy mirror. Alignment is relaxed DMARC alignment: the two domains
+      share an organizational domain (last two labels, or three under a two-letter country code with a known
+      second level such as `co.uk`), approximated without a full public-suffix list. An `SPF` value that starts with
+      `pass` counts as a pass. A data or integrity violation on one business's insert (SQLSTATE class 22/23 other
+      than 23505) is logged and acknowledged as `rejected`, so it does not make SendGrid redeliver the post for days.
+    - **Follow-ups from the re-review (2026-10-27, not built here):** (N1) two concurrent deliveries of one post can
+      file two draft replies — the partial unique index below closes it; (N2) the shared-domain guard is hardcoded to
+      `paigeagent.ai` while the shared domain is config data — the DB-side `inbound_domain` write restriction is the
+      durable fix; (N4) the inbox does not yet badge `meta.sender_unauthenticated` messages for the owner; (N6) a
+      display name containing `@` becomes a new contact's name; (N7) a failed contact create still stores the message
+      unlinked with 200 (both pre-existing).
     - **Idempotency:** `messages.provider_message_id = sendgrid-inbound:<tenant>:<Message-ID>`, tenant-scoped because
       `uq_messages_provider_message_id` is global (one email reaching two businesses must land in both, and a forged
       Message-ID must not suppress another business's mail). No Message-ID (or an empty `<>`) →

@@ -491,7 +491,7 @@ function inboundThreadKey(tenantId: string, contactId: string | null, fromEmail:
     : `email:${tenantId}:${fromEmail}`;
 }
 
-type InsertResult = { kind: "inserted"; id: string } | { kind: "deduped" } | { kind: "error"; message: string };
+type InsertResult = { kind: "inserted"; id: string } | { kind: "deduped" } | { kind: "error"; message: string; code: string | null };
 
 /** Step 5: the inbound public.messages row (tenant_id omitted → set_message_tenant()). */
 async function insertInboundMessage(
@@ -533,7 +533,7 @@ async function insertInboundMessage(
     // Unique violation on provider_message_id = webhook retry already processed.
     if (insertErr.code === "23505") return { kind: "deduped" };
     console.error("[handle-inbound-email] messages_insert_error", insertErr);
-    return { kind: "error", message: insertErr.message };
+    return { kind: "error", message: insertErr.message, code: insertErr.code ?? null };
   }
   return { kind: "inserted", id: inserted!.id as string };
 }
@@ -824,7 +824,8 @@ async function persistResendInbound(
 type TenantOutcome =
   | { tenant_id: string; outcome: "persisted"; message_id: string }
   | { tenant_id: string; outcome: "deduped"; message_id: string | null }
-  | { tenant_id: string; outcome: "transient_failure"; reason: string };
+  | { tenant_id: string; outcome: "transient_failure"; reason: string }
+  | { tenant_id: string; outcome: "rejected"; reason: string };
 
 /**
  * On a redelivery (23505): if the first attempt landed the message but never filed its draft
@@ -918,6 +919,12 @@ async function persistSendgridForTenant(
     meta,
   });
   if (inserted.kind === "error") {
+    // A data or integrity violation (SQLSTATE class 22/23; 23505 is the dedup above) will fail the
+    // same way on every redelivery, so retrying it would only make SendGrid redeliver the whole post
+    // to every business for days. It is logged and acknowledged; anything else is retried.
+    if (inserted.code && /^2[23]/.test(inserted.code)) {
+      return { tenant_id: tenantId, outcome: "rejected", reason: `message_insert_rejected_${inserted.code}` };
+    }
     return { tenant_id: tenantId, outcome: "transient_failure", reason: "message_insert_failed" };
   }
   if (inserted.kind === "deduped") {

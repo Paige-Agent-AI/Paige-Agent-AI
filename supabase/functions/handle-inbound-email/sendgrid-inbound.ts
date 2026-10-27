@@ -222,10 +222,26 @@ function domainOf(address: string | null | undefined): string {
   return at >= 0 ? a.slice(at + 1) : "";
 }
 
-/** Relaxed alignment (the DMARC sense, approximated without a public-suffix list): equal, or one a subdomain of the other. */
+// Second-level labels that sit under a two-letter country code as part of the public suffix
+// (`client.co.uk`, `firm.com.au`). Without a full public-suffix list this keeps the common cases
+// from collapsing to a shared suffix; an unknown multi-part suffix falls back to the last two labels.
+const COUNTRY_SECOND_LEVEL = new Set(["co", "com", "net", "org", "gov", "ac", "edu", "ltd", "plc", "or", "ne", "go"]);
+
+/** The organizational domain, approximating the DMARC definition without a public-suffix list. */
+function organizationalDomain(domain: string): string {
+  const labels = domain.split(".").filter(Boolean);
+  if (labels.length <= 2) return labels.join(".");
+  const tld = labels[labels.length - 1];
+  const second = labels[labels.length - 2];
+  const keep = tld.length === 2 && COUNTRY_SECOND_LEVEL.has(second) ? 3 : 2;
+  return labels.slice(-keep).join(".");
+}
+
+/** Relaxed alignment in the DMARC sense: both domains share an organizational domain. */
 function aligned(a: string, b: string): boolean {
   if (!a || !b || !a.includes(".") || !b.includes(".")) return false;
-  return a === b || a.endsWith(`.${b}`) || b.endsWith(`.${a}`);
+  const orgA = organizationalDomain(a);
+  return orgA.includes(".") && orgA === organizationalDomain(b);
 }
 
 /** SendGrid's `dkim` field, e.g. `{@sendgrid.com : pass}` (one `@domain : result` pair per signature). */
@@ -251,7 +267,8 @@ export function senderAuthentication(
   dkim: string,
 ): { authenticated: boolean; spf_aligned_pass: boolean; dkim_aligned_pass: boolean } {
   const fromDomain = domainOf(fromAddress);
-  const spfAlignedPass = String(spf ?? "").trim().toLowerCase() === "pass" && aligned(fromDomain, domainOf(envelopeFrom));
+  // SendGrid documents a bare `pass`; a result with a trailing explanation ("pass (…)") is still a pass.
+  const spfAlignedPass = /^pass\b/.test(String(spf ?? "").trim().toLowerCase()) && aligned(fromDomain, domainOf(envelopeFrom));
   const dkimAlignedPass = parseDkimResults(dkim).some((d) => d.result === "pass" && aligned(fromDomain, d.domain));
   return { authenticated: spfAlignedPass || dkimAlignedPass, spf_aligned_pass: spfAlignedPass, dkim_aligned_pass: dkimAlignedPass };
 }

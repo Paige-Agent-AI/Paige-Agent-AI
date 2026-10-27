@@ -55,7 +55,7 @@ type Faults = {
   /** A read error on this channel_connectors ilike column. */
   connectorLookup?: "inbound_address" | "inbound_domain";
   /** The next N messages inserts for this connector fail with a non-unique error. */
-  failMessageInsert?: { connector_id: string; times: number };
+  failMessageInsert?: { connector_id: string; times: number; code?: string };
   /** The next N paige_actions inserts fail. */
   failActionInsertTimes?: number;
   /** This RPC returns an error. */
@@ -90,7 +90,7 @@ function fakeAdmin(db: Db, faults: Faults = {}) {
         if (name === "messages" && faults.failMessageInsert && faults.failMessageInsert.times > 0 &&
             row.connector_id === faults.failMessageInsert.connector_id) {
           faults.failMessageInsert.times -= 1;
-          return { data: null, error: { code: "08006", message: "connection failure" } };
+          return { data: null, error: { code: faults.failMessageInsert.code ?? "08006", message: "insert failed" } };
         }
         if (name === "paige_actions" && (faults.failActionInsertTimes ?? 0) > 0) {
           faults.failActionInsertTimes = (faults.failActionInsertTimes ?? 0) - 1;
@@ -505,6 +505,40 @@ test("M2: an aligned SPF pass alone (no DKIM) authenticates; a DKIM pass for ano
   await h.handle(parseRequest(parseForm({ messageId: "other-1@x", dkim: "{@sendgrid.net : pass}", spf: "softfail" })));
   assert.equal((h.db.messages[1].meta as Row).sender_unauthenticated, true);
   assert.equal(h.db.messages[1].contact_id, null);
+});
+
+test("N3: a sibling-subdomain DKIM signer and an SPF result with a trailing comment both authenticate", async () => {
+  const db = freshDb();
+  db.clients.push({ id: "client-real", tenant_id: TENANT_A, email: "ada@corp.client.example" });
+  const h = harness(ENV, db);
+  await h.handle(parseRequest(parseForm({
+    from: "Ada <ada@corp.client.example>", dkim: "{@em.client.example : pass}", spf: "none",
+  })));
+  assert.equal((h.db.messages[0].meta as Row).sender_unauthenticated, undefined);
+  assert.equal(h.db.messages[0].contact_id, "client-real");
+  await h.handle(parseRequest(parseForm({
+    messageId: "spf-comment@x", from: "Ada <ada@corp.client.example>", dkim: "none",
+    spf: "pass (sender SPF authorized)", envelopeFrom: "bounce@client.example",
+  })));
+  assert.equal((h.db.messages[1].meta as Row).sender_unauthenticated, undefined);
+  // A signer whose organizational domain differs still does not authenticate, under a country suffix too.
+  await h.handle(parseRequest(parseForm({
+    messageId: "cc-tld@x", from: "Ada <ada@firm.co.uk>", dkim: "{@attacker.co.uk : pass}", spf: "none",
+  })));
+  assert.equal((h.db.messages[2].meta as Row).sender_unauthenticated, true);
+});
+
+test("N5: a permanent integrity violation on one business is acknowledged (no retry storm); a transient one is still 503", async () => {
+  const permanent: Faults = { failMessageInsert: { connector_id: "conn-b", times: 1, code: "23514" } };
+  const h = harness(ENV, freshDb(), permanent);
+  const res = await h.handle(parseRequest(parseForm({ envelopeTo: ["acme@mail.paigeagent.ai", "beta-co@mail.paigeagent.ai"] })));
+  assert.equal(res.status, 200);
+  const body = await res.json() as { results: Array<{ outcome: string }> };
+  assert.deepEqual(body.results.map((r) => r.outcome).sort(), ["persisted", "rejected"]);
+  const transient: Faults = { failMessageInsert: { connector_id: "conn-b", times: 1 } };
+  const h2 = harness(ENV, freshDb(), transient);
+  const res2 = await h2.handle(parseRequest(parseForm({ envelopeTo: ["acme@mail.paigeagent.ai", "beta-co@mail.paigeagent.ai"] })));
+  assert.equal(res2.status, 503);
 });
 
 test("M3: an attachment-only reply (empty body) is persisted, not dropped", async () => {

@@ -101,6 +101,8 @@ function setup(options: Setup = {}) {
   };
   const resultOf = (binding: Row) => ({ ok: binding.state === "provider_accepted", outcome: binding.state, operation_id: binding.operation_id, message_id: binding.message_id,
     provider_receipt_available: binding.state === "provider_accepted", delivery_confirmed: false, provider: binding.provider,
+    // The database's former answer for a Resend operation. Experience 03 retires it in SQL too, but the
+    // adapter must never re-send even when a stale database still says so (SendGrid has no idempotent replay).
     reconcilable: binding.provider === "resend" && binding.state === "unknown", ...(binding.outcome_reason && ["refused", "failed"].includes(String(binding.state)) ? { reason: binding.outcome_reason } : {}) });
   const admin = {
     from: builder,
@@ -404,7 +406,7 @@ describe("comms-email-command: the canonical approval cycle", () => {
     const r = await t.request({ approved_fingerprint: proposal.body.fingerprint });
     expect(r.body).toMatchObject({ ok: false, outcome: "failed", reason: "PROVIDER_REJECTED", provider_receipt_available: false });
   });
-  it("an unanswered send is outcome_unknown, and the next identical request reconciles it instead of minting a new operation", async () => {
+  it("an unanswered send is outcome_unknown, and the next identical request is routed to it — never a new operation, never a second send", async () => {
     const t = setup({ sendBehavior: "throw" });
     const proposal = await t.request();
     const first = await t.request({ approved_fingerprint: proposal.body.fingerprint });
@@ -416,7 +418,9 @@ describe("comms-email-command: the canonical approval cycle", () => {
     expect(retry.body.reconciled_operation_id).toBe(OP);
     expect(t.named("insert:paige_pending_confirmations")).toHaveLength(before);
     expect(t.named("prepare_comms_email_send")).toHaveLength(1);
-    expect(t.sends.slice(t2sends)).toEqual([expect.objectContaining({ comms_email_operation_id: OP, comms_email_reconcile: true, idempotency_key: `comms-email:${OP}` })]);
+    expect(retry.body).toMatchObject({ ok: false, outcome: "outcome_unknown", code: "COMMS_EMAIL_RECONCILIATION_REQUIRED", reconcilable: false });
+    // SendGrid has no idempotent replay, so the email that may already have gone out is not POSTed again.
+    expect(t.sends.slice(t2sends)).toEqual([]);
     expect(t.bindings.has(OP_2)).toBe(false);
   });
   it("records the governed decision, and refuses when that receipt cannot be written", async () => {

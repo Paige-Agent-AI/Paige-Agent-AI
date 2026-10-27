@@ -29,7 +29,7 @@ function harness(name,allowed,{provider='resend',queued=false,foreign=false,seat
    }
    return {data:null,error:null};
  },from(table){let mutation=false;const result=()=>{let data=mutation?{id:'message'}:rows[table]??null;if(!mutation&&table==='channel_connectors'){connectorReads++;data=structuredClone(data);if(ownerChangedAtBoundary&&connectorReads>1)data.mailbox_owner_user_id=otherOwner;}return {data,error:null};};const q=new Proxy({},{get(_,p){if(p==='then')return r=>r(result());if(p==='maybeSingle'||p==='single')return async()=>result();return(...args)=>{if(['update','insert','upsert','delete'].includes(p)){mutation=true;writes.push({table,kind:p,payload:args[0]});}return q;};}});return q;}};
- const ctx=vm.createContext({console,Response,Request,Headers,URL,URLSearchParams,TextEncoder,TextDecoder,AbortController,setTimeout,clearTimeout,crypto:webcrypto,btoa,atob,Date,
+ const ctx=vm.createContext({console,Response,Request,Headers,URL,URLSearchParams,TextEncoder,TextDecoder,AbortController,AbortSignal,setTimeout,clearTimeout,crypto:webcrypto,btoa,atob,Date,
  createClient:()=>admin,createLimiterClient:()=>admin,adminClient:()=>admin,TEMPLATES:{test:{category:'transactional',component:()=>'',subject:'Subject'}},React:{createElement:()=>''},renderAsync:async()=>'<p>Body</p>',resolveTenantEmailContext:async()=>({branding:{logoUrl:null,brandName:'Tenant'}}),
  decideSendAuthority:async()=>({ok:true,kind:'internal'}),safeFromDisplayName:x=>x,isAuthorizedInternalCaller:async()=>true,operatorUserId:async()=>null,overRateLimit:async()=>false,
  CLIENT_CONTACT_METHODS_EMBED:'contact_methods',clientAddresses:()=>({emails:['guest@example.test'],phones:[]}),
@@ -43,6 +43,8 @@ function harness(name,allowed,{provider='resend',queued=false,foreign=false,seat
  if(name==='send-message')vm.runInContext(stripTypeScriptTypes(readFileSync(new URL('inbox-intelligence/policy.ts',import.meta.url),'utf8').replace(/\bexport /g,'')),ctx);
  // send-message also imports the business-first From-name rule; load its real body too.
  if(name==='send-message')vm.runInContext(stripTypeScriptTypes(readFileSync(new URL('email/sender-display-name.ts',import.meta.url),'utf8').replace(/\bexport /g,'')),ctx);
+ // ...and the H2 From rule every non-Gmail, non-SMTP email now goes through (Experience 03: SendGrid).
+ if(name==='send-message')vm.runInContext(stripTypeScriptTypes(readFileSync(new URL('email/platform-sendgrid.ts',import.meta.url),'utf8').replace(/\bexport /g,'')),ctx);
  // The actual callback now imports this authority reader. Load its real body,
  // rather than silently stripping the import and failing before the floor.
  if(name==='gmail-oauth-callback')vm.runInContext(stripTypeScriptTypes(readFileSync(new URL('gmail-connection-authority.ts',import.meta.url),'utf8').replace(/\bexport /g,'')),ctx);
@@ -66,13 +68,14 @@ test('Gmail ordinary callback retains token exchange payload and confirms the na
 for(const [label,options,status,error] of [['ordinary member',{seatAllowed:false},403,'forbidden'],['unavailable workspace authority',{scopeError:true},503,'gmail_authority_unavailable']])test(`Gmail ${label} cannot reach an otherwise allowed provider floor`,async()=>{const h=harness('gmail-oauth-callback',true,options);const r=await h.run({code:'controlled',state:'controlled',origin:'https://unit.test'});assert.equal(r.status,status);assert.deepEqual(await r.json(),{error});assert.equal(h.scopes.length,0);assert.equal(h.effects.length,0);assert.equal(h.writes.length,0);});
 test('Gmail workspace switch after allowed provider floor refuses before token exchange or native persistence',async()=>{const h=harness('gmail-oauth-callback',true,{switchAfterFloor:true});const r=await h.run({code:'controlled',state:'controlled',origin:'https://unit.test'});assert.equal(r.status,409);assert.deepEqual(await r.json(),{error:'workspace_changed'});assert.equal(h.scopes.length,1);assert.equal(h.effects.length,0);assert.equal(h.writes.length,0);});
 
-test('ordinary managed Resend still dispatches exactly once',async()=>{const h=harness('send-message',true);await h.run({channel:'email',to:'guest@example.test',subject:'Subject',body:'Body',connector_id:'connector'});assert.equal(h.effects.filter(x=>x.url==='https://api.resend.com/emails').length,1);const sent=JSON.parse(h.effects.find(x=>x.url==='https://api.resend.com/emails').payload);assert.deepEqual(sent.to,['guest@example.test']);assert.equal(sent.subject,'Subject');});
+const SENDGRID_URL='https://api.sendgrid.com/v3/mail/send';
+test('ordinary managed sender dispatches exactly once, through SendGrid (never Resend)',async()=>{const h=harness('send-message',true);await h.run({channel:'email',to:'guest@example.test',subject:'Subject',body:'Body',connector_id:'connector'});assert.equal(h.effects.filter(x=>x.url===SENDGRID_URL).length,1);assert.equal(h.effects.filter(x=>String(x.url).includes('resend.com')).length,0);const sent=JSON.parse(h.effects.find(x=>x.url===SENDGRID_URL).payload);assert.deepEqual(sent.personalizations,[{to:[{email:'guest@example.test'}]}]);assert.equal(sent.subject,'Subject');assert.equal(sent.from.email,'notifications@mail.paigeagent.ai');});
 
 test('personal sender owner uses the real mailbox policy and dispatches once',async()=>{
  const h=harness('send-message',true,{personal:true});
  const r=await h.run({channel:'email',to:'guest@example.test',subject:'Subject',body:'Body',connector_id:'connector'});
  assert.equal(r.status,200);assert.equal((await r.json()).status,'sent');
- assert.equal(h.connectorReads,2);assert.equal(h.effects.filter(x=>x.url==='https://api.resend.com/emails').length,1);
+ assert.equal(h.connectorReads,2);assert.equal(h.effects.filter(x=>x.url===SENDGRID_URL).length,1);
 });
 test('personal sender nonowner is refused by the real policy despite an allowed provider floor',async()=>{
  const h=harness('send-message',true,{personal:true,initialOtherOwner:true});

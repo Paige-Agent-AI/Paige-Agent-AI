@@ -2,8 +2,11 @@
 //
 // Creates and drops one fresh database in the explicitly verified disposable local cluster, applies
 // scripts/sql/comms-email-send-concurrency-schema.sql (dependency stub) and then the migration
-// supabase/migrations/20270597000000_comms_email_send.sql VERBATIM, seeds two tenants, and races
-// separate psql sessions (separate backends, separate transactions) against the SQL.
+// supabase/migrations/20270597000000_comms_email_send.sql VERBATIM, then the reconcile predicate exactly
+// as production runs it since 20271116200000 (Resend retired: nothing is reconcilable by re-sending —
+// that function and its exact grants only, because the file's other functions need campaign tables this
+// stub does not carry), seeds two tenants, and races separate psql sessions (separate backends,
+// separate transactions) against the SQL.
 //
 // Usage: node scripts/sql/comms-email-send-concurrency-proof.mjs <psql> <local-port> <local-user> <verified-disposable-data-directory>
 //
@@ -15,6 +18,7 @@
 //
 // COMMS_EMAIL_MIGRATION_OVERRIDE (optional) applies a different migration file instead — used ONLY to
 // prove the assertions bite against a deliberately broken scratch copy. The path used is printed.
+// COMMS_EMAIL_RECONCILE_OVERRIDE (optional) does the same for the file the reconcile predicate is read from.
 import { readFileSync } from 'node:fs';
 import { spawn, spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
@@ -30,6 +34,8 @@ if (!binary || !/^\d+$/.test(port ?? '') || !user || !expectedDirectory) throw n
 const cwd = fileURLToPath(new URL('.', import.meta.url));
 const migrationPath = process.env.COMMS_EMAIL_MIGRATION_OVERRIDE
   || fileURLToPath(new URL('../../supabase/migrations/20270597000000_comms_email_send.sql', import.meta.url));
+const reconcilePath = process.env.COMMS_EMAIL_RECONCILE_OVERRIDE
+  || fileURLToPath(new URL('../../supabase/migrations/20271116200000_exp03_resend_retired.sql', import.meta.url));
 const args = database => ['-h', '127.0.0.1', '-p', port, '-U', user, '-d', database, '-v', 'ON_ERROR_STOP=1', '-t', '-A', '-q'];
 function sync(database, sql) {
   const result = spawnSync(binary, args(database), { cwd, input: sql, encoding: 'utf8', maxBuffer: 16 * 1024 * 1024 });
@@ -222,20 +228,40 @@ scenario('(d-claimant) the claimant itself cannot record refused after its claim
 });
 
 // (g) Two simultaneous RECONCILE claims of one stale dispatching operation (same admission shape as b).
-scenario('(g-db) stale-dispatching reconcile race: re-admitted exactly once, attempts=2', async () => {
+// Since 20271116200000 nothing is reconcilable by re-sending: Resend's Idempotency-Key made a re-sent
+// request safe, SendGrid (which now sends every Resend-labelled email) has no idempotent replay, so a
+// stale dispatch is NEVER re-admitted — no caller is told to call the provider again.
+scenario('(g-db) stale-dispatching reconcile race: never re-admitted, attempts stay 1, no write', async () => {
   asService(`SELECT ${prepareCall({ op: op(7), subject: 'Reconcile race' })};`);
   asService(`SELECT ${claimCall(7)};`);
   sync(database, `UPDATE public.messages SET meta=jsonb_set(meta,'{comms_email_binding,claimed_at}',to_jsonb(now()-interval '200 seconds')) WHERE id=${msg(7)};`);
+  const before = transitions(7);
   const runs = await race([selectResult(claimCall(7, true)), selectResult(claimCall(7, true))]);
   globalThis.reconcileRace = runs;
   assert(runs.every(r => r.code === 0), brief(runs));
-  assert.equal(binding(7).attempts, 2, 'DB attempts must be 2');
-  assert.equal(JSON.parse(transitions(7)).filter(x => x.new_attempts === '2').length, 1, 'exactly one write of attempt 2: ' + transitions(7));
+  const b = binding(7);
+  assert.equal(b.state, 'dispatching', 'the stale dispatch keeps its state'); assert.equal(b.attempts, 1, 'DB attempts must stay 1');
+  assert.equal(transitions(7), before, 'a reconcile claim writes nothing: ' + transitions(7));
 });
-scenario('(g-api) stale-dispatching reconcile race: exactly ONE caller is told dispatching', async () => {
+scenario('(g-api) stale-dispatching reconcile race: NO caller is told dispatching (zero extra sends)', async () => {
   const runs = globalThis.reconcileRace;
   assert(runs, 'depends on (g-db)');
-  assert.equal(runs.filter(admitted).length, 1, 'only one reconcile may pass send-message\'s admission check; returns were ' + brief(runs));
+  assert.equal(runs.filter(admitted).length, 0, 'no reconcile may pass send-message\'s admission check; returns were ' + brief(runs));
+  assert(runs.every(r => r.result?.admitted === false && r.result?.state === 'dispatching' && r.result?.attempts === 1), brief(runs));
+});
+scenario('(g-unknown) reconcile race on an unknown Resend operation: never re-admitted, stays unknown', async () => {
+  asService(`SELECT ${prepareCall({ op: op(9), subject: 'Reconcile unknown' })};`);
+  asService(`SELECT ${claimCall(9)};`);
+  asService(`SELECT ${finalizeCall(9, 'unknown', null, 'provider_timeout', 1)};`);
+  assert.equal(binding(9).provider, 'resend', 'a Resend-bound operation');
+  const before = transitions(9);
+  const runs = await race([selectResult(claimCall(9, true)), selectResult(claimCall(9, true))]);
+  assert(runs.every(r => r.code === 0), brief(runs));
+  assert.equal(runs.filter(admitted).length, 0, 'zero extra sends: ' + brief(runs));
+  assert.deepEqual([binding(9).state, binding(9).attempts], ['unknown', 1], 'the operation stays unknown on its first attempt');
+  assert.equal(transitions(9), before, 'nothing was written');
+  const read = JSON.parse(sync(database, `SELECT public.read_comms_email_send_result(${q(uA)}::uuid,${q(tA)}::uuid,${q(op(9))}::uuid)::text;`));
+  assert.equal(read.reconcilable, false, 'its result reads reconcilable=false');
 });
 
 // (e) Second-tenant isolation, every probe its own session, all released together.
@@ -289,6 +315,14 @@ try {
   console.log(`Migration under test: ${migrationPath}${process.env.COMMS_EMAIL_MIGRATION_OVERRIDE ? '   (OVERRIDE — scratch mutant, not the repo migration)' : ''}`);
   sync(database, readFileSync(new URL('comms-email-send-concurrency-schema.sql', import.meta.url), 'utf8'));
   sync(database, readFileSync(migrationPath, 'utf8'));
+  // The reconcile predicate production runs (20271116200000): its exact body and its exact REVOKE/GRANT.
+  const retired = readFileSync(reconcilePath, 'utf8');
+  const reconcileBody = /CREATE OR REPLACE FUNCTION public\._comms_email_reconcilable\([\s\S]*?\bAS\s+(\$[A-Za-z_0-9]*\$)[\s\S]*?\1\s*;/i.exec(retired);
+  const reconcileAcl = [...retired.matchAll(/(?:REVOKE|GRANT)\s+[^;]*?\bFUNCTION\s+public\._comms_email_reconcilable\s*\([^;]*;/gi)].map(m => m[0]);
+  assert(reconcileBody, 'the current reconcile predicate in ' + reconcilePath);
+  assert.equal(reconcileAcl.length, 2, 'its REVOKE and GRANT');
+  sync(database, reconcileBody[0] + '\n' + reconcileAcl.join('\n'));
+  console.log(`Reconcile predicate under test: ${reconcilePath}${process.env.COMMS_EMAIL_RECONCILE_OVERRIDE ? '   (OVERRIDE — scratch mutant, not the repo migration)' : ''}`);
   if (personalSender) installPersonalSenderProof({ sql: source => sync(database, source), baseline: process.argv.includes('--personal-sender-baseline') });
   if (originAdmission) installOriginAdmissionProof({ sql: source => sync(database, source), baseline: process.argv.includes('--origin-admission-baseline') });
   if (process.argv.includes('--agreement-origin-compatibility')) {

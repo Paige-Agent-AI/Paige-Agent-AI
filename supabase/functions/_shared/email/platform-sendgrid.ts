@@ -55,18 +55,49 @@ export type PlatformDeps = { fetch?: typeof fetch; apiKey?: string | null };
 
 const ADDRESS = /^[^@\s<>]+@[^@\s<>]+\.[^@\s<>]+$/;
 
-/** "Name <a@b>" | "a@b" -> { name, address } with the address moved onto the platform domain. */
-export function platformFrom(from: string): { email: string; name?: string } {
+/** "Name <a@b>" | "a@b" -> a header-safe display name and the lowercased address. */
+function parseFrom(from: string): { name: string; address: string } {
   const raw = String(from ?? "").trim();
   const m = /^([\s\S]*?)\s*<\s*([^<>\s]+)\s*>$/.exec(raw);
   // Letters and digits in any script survive (a brand name is not ASCII-only); quotes, @, <> and line
   // breaks do not, so the name can neither break the header nor pose as an address.
   const name = (m ? m[1] : "").replace(/[^\p{L}\p{M}\p{N} \-.'’&,()]/gu, " ").replace(/\s+/g, " ").trim();
-  const address = (m ? m[2] : raw).toLowerCase();
+  return { name, address: (m ? m[2] : raw).trim().toLowerCase() };
+}
+
+/**
+ * For PAIGE's OWN platform senders only (a From PAIGE's code chose, never a business's data):
+ * "Name <a@b>" | "a@b" -> { name, address } with the address moved onto the platform domain.
+ */
+export function platformFrom(from: string): { email: string; name?: string } {
+  const { name, address } = parseFrom(from);
   const [local, domain] = ADDRESS.test(address) ? address.split("@") : ["no-reply", PLATFORM_FROM_DOMAIN];
   const email = PLATFORM_FROM_DOMAINS.has(domain) ? `${local}@${domain}`
     : PLATFORM_OWNED_DOMAINS.has(domain) ? `${local}@${PLATFORM_FROM_DOMAIN}`
     : `${BUSINESS_LOCAL_PART}@${PLATFORM_FROM_DOMAIN}`;
+  return name ? { email, name } : { email };
+}
+
+/**
+ * For a From that comes from a BUSINESS's data (a connector's from_address, a sender identity, a request
+ * body) — security H2. Any workspace admin can write a connector, so its address is a claim, not a fact.
+ * A mail.paigeagent.ai address is kept ONLY when it is this business's own managed address as resolved
+ * server-side (`ownManagedAddresses`, compared trimmed and case-insensitively). Anything else — another
+ * business's managed address, PAIGE's own (support@, team@ on either paigeagent.ai domain), a business's
+ * own domain — is sent as notifications@mail.paigeagent.ai under the business's display name. Unlike
+ * platformFrom, a paigeagent.ai address is never remapped: that would let a business send as PAIGE.
+ */
+export function tenantFrom(
+  from: string,
+  ownManagedAddresses: string | readonly (string | null | undefined)[] | null | undefined,
+): { email: string; name?: string } {
+  const { name, address } = parseFrom(from);
+  const own = new Set(
+    (Array.isArray(ownManagedAddresses) ? ownManagedAddresses : [ownManagedAddresses])
+      .map((a) => String(a ?? "").trim().toLowerCase())
+      .filter((a) => ADDRESS.test(a) && a.split("@")[1] === PLATFORM_FROM_DOMAIN),
+  );
+  const email = ADDRESS.test(address) && own.has(address) ? address : `${BUSINESS_LOCAL_PART}@${PLATFORM_FROM_DOMAIN}`;
   return name ? { email, name } : { email };
 }
 

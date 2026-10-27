@@ -97,7 +97,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
 
   // The exact prepared-request REVIEW is an ordinary private read, not a send.
-  // Keep it before legacy Resend readiness, document freezing, token creation,
+  // Keep it before legacy provider readiness, document freezing, token creation,
   // message/provider work and the consequential send rate bucket.
   const ownerSource:OwnerPreparationService={rpc:(name,args)=>admin.rpc(name,args),storage:admin.storage,originalUploadPath:async(tenant,agreement)=>{
     const r=await admin.from('paige_agreements').select('document_path').eq('id',agreement).eq('tenant_id',tenant).maybeSingle();
@@ -219,7 +219,9 @@ Deno.serve(async (req: Request): Promise<Response> => {
   if (!agreementId) return json({ ok: false, error: "Which agreement?" }, 400);
 
   // ── 2) PROVIDER FIRST. Nothing is rendered, minted or moved until we know a send can happen.
-  if (!Deno.env.get("RESEND_API_KEY")) {
+  // The signer emails go out through send-transactional-email, which sends through SendGrid with the
+  // platform Mail Send key (Experience 03), so that key is the provider this checks for.
+  if (!Deno.env.get("SENDGRID_MAIL_SEND_API_KEY")) {
     return json({
       ok: false,
       status: "needs_config",

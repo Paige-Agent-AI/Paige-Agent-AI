@@ -129,6 +129,11 @@ describe("honest residuals and gates", () => {
     expect(text).toMatch(/SMTP returns no provider receipt/);
     expect(text).toMatch(/reported only as unknown, never as accepted/);
     expect(text).toMatch(/from_name and reply_to are read at send time/);
+    // Experience 03: every email goes through SendGrid, which has no idempotent replay, so nothing is
+    // reconciled by sending again (Resend's Idempotency-Key is what made that safe).
+    expect(text).toMatch(/never re-sent/);
+    expect(text).toMatch(/SendGrid has none/);
+    expect(text).not.toMatch(/Resend operation inside/);
   });
 
   it("the receipt ledger does not claim coverage the MCP senders of comms_send_email do not have", () => {

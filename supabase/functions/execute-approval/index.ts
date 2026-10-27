@@ -51,7 +51,7 @@ import { CLIENT_CONTACT_METHODS_EMBED, clientAddresses } from "../_shared/contac
 import { runPreSend } from "../_shared/pre-send-pipeline.ts";
 import {
   ALREADY_SENT_STATUSES, DECIDED_MID_SEND_HELD, DECIDED_MID_SEND_QUEUED, HELD_DRAFT_CHANGED, HELD_DRAFT_KEY, HELD_DRAFT_UNCONFIRMED, HELD_EMAIL_REQUIRES_REVIEW,
-  QUEUED_UNCANCELLABLE, SCHEDULED_FROM_CONVERSATIONS, SENT_FROM_CONVERSATIONS, classifySendResult, heldDraftChange, heldPayload,
+  QUEUED_UNCANCELLABLE, SCHEDULED_FROM_CONVERSATIONS, SENT_FROM_CONVERSATIONS, SEND_UNCONFIRMED, classifySendResult, heldDraftChange, heldPayload,
   holdReasonOf, refuseSendKindApproval, type HeldDraftContent, type HoldReason, type SendKindAdmin,
 } from "./action-email.ts";
 import { resolveWorkspaceAuthority } from "../_shared/workspace-authority.ts";
@@ -216,6 +216,13 @@ Deno.serve(async (req) => {
     if (sq && typeof sq === "object" && (sq as Record<string, unknown>).cancel_failed === true) {
       const q = sq as Record<string, unknown>;
       return json(200, { ok: false, executed: false, already: "in_progress", message_id: q.message_id ?? null, error: QUEUED_UNCANCELLABLE, approval_id: approvalId });
+    }
+    // An earlier Approve whose send could not be confirmed keeps its claim: answering ok:true here would
+    // read as handled, and a released claim would send a second copy. Say exactly what is known.
+    const su = (typeof approval.metadata === "object" && approval.metadata) ? (approval.metadata as Record<string, unknown>).send_unconfirmed : null;
+    if (su && typeof su === "object") {
+      return json(200, { ok: false, executed: false, already: "in_progress", unconfirmed: true, error: SEND_UNCONFIRMED,
+        message_id: (su as Record<string, unknown>).message_id ?? null, approval_id: approvalId });
     }
     if (metaLc && Object.prototype.hasOwnProperty.call(metaLc, HELD_DRAFT_KEY)) {
       return json(200, { ok: false, executed: false, already: "in_progress", error: HELD_DRAFT_UNCONFIRMED,
@@ -540,6 +547,21 @@ Deno.serve(async (req) => {
         ok: false, executed: false, already: "in_progress", link_recorded: true, message_id: sendOutcome.messageId, channel,
         error: QUEUED_UNCANCELLABLE,
         approval_id: approvalId,
+      });
+    }
+    if (sendOutcome.kind === "unconfirmed") {
+      // Experience 03: SendGrid may have accepted it, and it has no idempotent replay, so the claim is KEPT
+      // (a second Approve would email a second copy) and the approval records why, checked onto exactly
+      // one row still pending. The person is told it could not be confirmed, never that it failed.
+      const { data: noted, error: noteErr } = await admin.from("paige_pending_approvals").update({
+        metadata: { ...apprMeta, send_unconfirmed: { at: new Date().toISOString(), audit_id: sendOutcome.auditId, message_id: sendOutcome.messageId } },
+      }).eq("id", approvalId).eq("status", "pending").eq("claimed_at", claimAt).eq("reviewed_by_user_id", user.id).select("id");
+      if (noteErr || !noted || noted.length !== 1) {
+        console.error(`[execute-approval] approval ${approvalId}: unconfirmed send could not be recorded on the approval${noteErr ? `: ${noteErr.message}` : ""}`);
+      }
+      return json(200, {
+        ok: false, executed: false, already: "in_progress", unconfirmed: true, link_recorded: !noteErr && noted?.length === 1,
+        error: SEND_UNCONFIRMED, message_id: sendOutcome.messageId, channel, approval_id: approvalId,
       });
     }
     if (sendOutcome.kind !== "sent") {

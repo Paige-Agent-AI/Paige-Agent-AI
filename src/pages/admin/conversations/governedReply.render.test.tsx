@@ -539,6 +539,14 @@ describe("the confirm's answers", () => {
     expect(textarea(host).value).toBe("Following up on Thursday.");
     expect(stripText(host)).not.toMatch(/[A-Z_]{6,}/);
   });
+  it("Check again after a refused confirm starts a NEW operation (the refused one's answer is final)", async () => {
+    const host = await toCheck(httpError(422, { ok: false, outcome: "refused", reason: "SEND_NOT_ADMITTED", operation_id: "x" }));
+    await click(stripButton(host, "recheck"));
+    expect(db.doorBodies).toHaveLength(3);
+    expect(db.doorBodies[2].operation_id).not.toBe(db.doorBodies[0].operation_id);
+    expect(db.doorBodies[2].approved_fingerprint).toBeUndefined();
+    expect(stripButton(host, "confirm")).toBeTruthy();
+  });
   it("a 202 on the confirm is a fresh check to confirm again", async () => {
     const host = await mount();
     await write(host);

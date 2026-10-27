@@ -222,7 +222,14 @@ export function useGovernedEmailReply(input: GovernedEmailReplyInput) {
 
   const onAction = (action: StripAction) => {
     if (action === "retry") { close("reset"); focusRef.current = "send"; void runCheckRef.current(); return; }
-    if (action === "recheck") { if (heldRef.current && liveScopeRef.current === heldRef.current.scope) reask("check"); else { close("reset"); void runCheckRef.current(); } return; }
+    // An expired check asks again about the SAME operation (nothing happened to it). A "check again"
+    // after a confirm was refused starts afresh: that operation's answer is final, and re-asking it
+    // would only replay the refusal.
+    if (action === "recheck") {
+      if (phaseRef.current === "expired" && heldRef.current && liveScopeRef.current === heldRef.current.scope) reask("check");
+      else { close("reset"); focusRef.current = "send"; void runCheckRef.current(); }
+      return;
+    }
     if (action === "check_status") reask("status");
   };
 

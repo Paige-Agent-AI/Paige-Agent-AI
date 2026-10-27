@@ -268,3 +268,18 @@ owner-owed — don't paper over the disagreement.*
   fixture. Enforces nothing; dragging it is lost on reload; no server code reads it.
 
 Say which one you mean. Approval authority today is the action-risk policy plus the confirm gate.
+
+## Team Hub agents (recorded 2026-10-27, EXP08 A1a)
+
+- **Agent row** — a `team_hub_messages` row with `author_kind = 'agent'` and an `agent_key` (paige, vera,
+  nexus, cura, mentor, merit, zion). Its `author_user_id` is the **accountable asker**, never the author:
+  show it in the agent's name, never the person's.
+- **`agent_dm`** — a conversation kind: one person and one agent, private, unnamed, keyed
+  `agent:<agent>:<person>`. Not a `dm` (no person-pair key), invisible to owners, dropped when the
+  person's seat ends, unless it holds a file record: then it is kept, memberless, and returns with its
+  history if the person is re-invited.
+- **Accepted turn** — a `team_hub_agent_turns` row written by the service-role-only
+  `team_hub_accept_agent_turn` when `paige-ai-chat` accepts an agent turn for a person's own message.
+  The only proof an agent row came from a real turn: `team_hub_post_agent_message` posts only against an
+  unconsumed one whose single-use token (held only in the edge function) matches. Intents: `reply`,
+  `dm`, later `report:<action>:<run>`. At most 30 model turns started per seat per rolling hour: each acceptance and each re-arm is one start, recorded in the row's `attempts`.

@@ -1094,7 +1094,7 @@ export default function ClientsConversations() {
       }
       if (answer?.cancelled === true) toast.success("Canceled — it won't be sent.");
       // Too late: say what actually happened to the send, from its recorded state.
-      else if (answer?.code === "COMMS_EMAIL_CANCEL_TOO_LATE") toast.error(cancelTooLateLine(answer.outcome));
+      else if (answer?.code === "COMMS_EMAIL_CANCEL_TOO_LATE") toast.error(cancelTooLateLine(answer.outcome, answer.reason));
       else toast.error("Couldn't cancel it. Refresh the conversation to see where it stands.");
       void load(); void loadThreads();
     } finally {

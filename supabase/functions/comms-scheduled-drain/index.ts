@@ -19,6 +19,8 @@ const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
 // How long one run keeps taking rows. Cron fires every minute; one governed release may take ~25 s.
 const DRAIN_BUDGET_MS = 40_000;
+// The same bound the governed release puts on its send-message call.
+const GENERIC_RELEASE_TIMEOUT_MS = 25_000;
 
 // The release's database/network edges, bound to the service client. Every read is keyed by the
 // binding's own tenant and scheduler; nothing is taken from the leased row beyond what the binding says.
@@ -124,30 +126,52 @@ Deno.serve(async (req) => {
       failed++;
       continue;
     }
-    const resp = await fetch(`${SUPABASE_URL.replace(/\/$/, "")}/functions/v1/send-message`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${SERVICE_ROLE_KEY}` },
-      body: JSON.stringify({
-        channel: m.channel_type,
-        to,
-        subject: m.subject ?? undefined,
-        body: bodyStr,
-        contact_id: m.contact_id ?? undefined,
-        thread_key: m.thread_key ?? undefined,
-        connector_id: m.connector_id ?? undefined,
-        message_id: m.id,          // patch THIS queued row (release)
-        attachments: m.attachments ?? undefined,
-        // scheduled_for OMITTED → send-message runs the full pipeline, no re-queue-for-schedule
-      }),
-    });
+    // Bounded like the governed release: an answer that never comes leaves the row to send-message's own
+    // write (or the next lease), and the run moves on instead of hanging past its budget.
+    const abort = new AbortController();
+    const timer = setTimeout(() => abort.abort(), GENERIC_RELEASE_TIMEOUT_MS);
+    let resp: Response;
+    try {
+      resp = await fetch(`${SUPABASE_URL.replace(/\/$/, "")}/functions/v1/send-message`, {
+        method: "POST",
+        signal: abort.signal,
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${SERVICE_ROLE_KEY}` },
+        body: JSON.stringify({
+          channel: m.channel_type,
+          to,
+          subject: m.subject ?? undefined,
+          body: bodyStr,
+          contact_id: m.contact_id ?? undefined,
+          thread_key: m.thread_key ?? undefined,
+          connector_id: m.connector_id ?? undefined,
+          message_id: m.id,          // patch THIS queued row (release)
+          attachments: m.attachments ?? undefined,
+          // scheduled_for OMITTED → send-message runs the full pipeline, no re-queue-for-schedule
+        }),
+      });
+    } catch {
+      console.warn("[comms-scheduled-drain] release did not answer in time", m.id);
+      failed++;
+      continue;
+    } finally { clearTimeout(timer); }
     const r = (await resp.json().catch(() => ({}))) as Record<string, unknown>;
     const outcome = String(r.outcome ?? r.status ?? "");
     if (outcome === "sent") released++;
     else if (outcome.startsWith("queued_")) requeued++;   // hit DND/quiet-hours on release — correct
     else failed++;
   }
-  if (unreached.length) {
-    const { error: unleaseErr } = await admin.rpc("unlease_scheduled_messages", { _ids: unreached });
+  // Hand back only THIS run's leases: each row carries the drain_claimed_at stamp this run's claim wrote,
+  // and the database frees a row only while that stamp is still on it (a row another run has re-leased
+  // since is left alone, so it can never be released twice).
+  const unreachedByStamp = new Map<string, string[]>();
+  for (const m of rows) {
+    if (!unreached.includes(m.id)) continue;
+    const stamp = m.meta?.drain_claimed_at;
+    if (typeof stamp !== "string" || !stamp) continue;
+    unreachedByStamp.set(stamp, [...(unreachedByStamp.get(stamp) ?? []), m.id]);
+  }
+  for (const [stamp, ids] of unreachedByStamp) {
+    const { error: unleaseErr } = await admin.rpc("unlease_scheduled_messages", { _ids: ids, _stamp: stamp });
     if (unleaseErr) console.warn("[comms-scheduled-drain] unlease failed; rows re-lease in 5 min", unleaseErr.message);
   }
   return json(200, { claimed: rows.length, released, requeued, failed, governed, unreached: unreached.length,

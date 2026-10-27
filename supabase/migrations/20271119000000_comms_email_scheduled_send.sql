@@ -44,7 +44,7 @@
 --         (a kill-switched, archived or paused business, or a restricted recipient) — is not selected.
 --         Before, that trigger aborted this function's single UPDATE, so ONE such business made the
 --         drain fail (claim_failed) for EVERY business.
--- 11. NEW unlease_scheduled_messages(ids) — the drainer hands back leases on rows it did not reach
+-- 11. NEW unlease_scheduled_messages(ids, stamp) — the drainer hands back leases on rows it did not reach
 --     inside its run-time budget, so they are picked up next minute instead of five minutes later.
 -- 12. cancel_scheduled_message — never touches a governed row (AND NOT (meta ? 'comms_email_binding')).
 --
@@ -73,8 +73,9 @@
 -- HONEST RESIDUALS (§13):
 --  * The release re-checks recipient preferences at send time; a quiet-hours / do-not-disturb hold at
 --    that moment closes the scheduled send as refused with that reason (it is not re-queued).
---  * A business that is kill-switched / archived / paused keeps its queued rows queued (not leased).
---    When it is re-enabled, its governed rows past their grace are closed as missed by the sweep.
+--  * A business that is kill-switched / archived / paused is never leased. Its governed rows are closed
+--    as missed by the sweep once their grace passes, whatever the business's state. Its ordinary
+--    (non-governed) queued rows stay queued with no terminal state until it is re-enabled.
 BEGIN;
 SET LOCAL lock_timeout='3s';
 DO $guard$
@@ -386,7 +387,7 @@ BEGIN
  END IF;
  IF b->>'send_at' IS NULL THEN RAISE EXCEPTION 'COMMS_EMAIL_NOT_SCHEDULED' USING ERRCODE='55000'; END IF;
  IF b->>'state' IS DISTINCT FROM 'prepared' THEN
-  RETURN jsonb_build_object('cancelled',false,'outcome',b->>'state','operation_id',_operation_id,'message_id',m.id);
+  RETURN jsonb_build_object('cancelled',false,'outcome',b->>'state','reason',b->>'outcome_reason','operation_id',_operation_id,'message_id',m.id);
  END IF;
  -- Closed through (7) with the canceller as the closing actor: the Rail and the audit row name the
  -- person who cancelled, and a scheduler who has since left the business does not block the brake.
@@ -461,12 +462,16 @@ end;
 $function$;
 
 -- 11. Hand back the lease on rows the drainer did not reach inside its run-time budget.
-CREATE OR REPLACE FUNCTION public.unlease_scheduled_messages(_ids uuid[]) RETURNS integer
+--    Only THIS run's lease is handed back: the stamp must equal the drain_claimed_at the run's own
+--    claim_due wrote. A run that outlived its five-minute lease must never release a row another run
+--    has since leased and is releasing, or a third run could take it and send an ordinary row twice.
+CREATE OR REPLACE FUNCTION public.unlease_scheduled_messages(_ids uuid[],_stamp text) RETURNS integer
 LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public AS $$
 DECLARE n integer;
 BEGIN
+ IF _stamp IS NULL OR btrim(_stamp)='' THEN RETURN 0; END IF;
  UPDATE public.messages SET meta=meta-'drain_claimed_at'
-  WHERE id=ANY(coalesce(_ids,'{}'::uuid[])) AND status='queued' AND meta ? 'drain_claimed_at';
+  WHERE id=ANY(coalesce(_ids,'{}'::uuid[])) AND status='queued' AND meta->>'drain_claimed_at'=_stamp;
  GET DIAGNOSTICS n=ROW_COUNT;
  RETURN n;
 END $$;
@@ -521,7 +526,7 @@ REVOKE ALL ON FUNCTION public.close_scheduled_comms_email(uuid,uuid,text,uuid) F
 GRANT EXECUTE ON FUNCTION public.close_scheduled_comms_email(uuid,uuid,text,uuid) TO service_role;
 REVOKE ALL ON FUNCTION public.close_missed_scheduled_comms_emails(integer) FROM PUBLIC,anon,authenticated;
 GRANT EXECUTE ON FUNCTION public.close_missed_scheduled_comms_emails(integer) TO service_role;
-REVOKE ALL ON FUNCTION public.unlease_scheduled_messages(uuid[]) FROM PUBLIC,anon,authenticated;
-GRANT EXECUTE ON FUNCTION public.unlease_scheduled_messages(uuid[]) TO service_role;
+REVOKE ALL ON FUNCTION public.unlease_scheduled_messages(uuid[],text) FROM PUBLIC,anon,authenticated;
+GRANT EXECUTE ON FUNCTION public.unlease_scheduled_messages(uuid[],text) TO service_role;
 -- claim_due_scheduled_messages: CREATE OR REPLACE keeps its existing service_role-only grants.
 COMMIT;

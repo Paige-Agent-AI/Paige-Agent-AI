@@ -147,9 +147,11 @@ export function isScheduledMessage(m: MessageRow & GovernedSendFields, nowMs: nu
 }
 
 /** What the owner is told when a cancel came too late, from the send's own recorded state. */
-export function cancelTooLateLine(outcome: unknown): string {
-  if (outcome === "refused") return "Already canceled — it won't be sent.";
-  if (outcome === "failed") return "It didn't go out.";
+export function cancelTooLateLine(outcome: unknown, reason?: unknown): string {
+  // Only a recorded cancel is "already canceled"; a send closed for any other reason (a missed release,
+  // a quiet-hours hold, an opt-out) simply did not go out.
+  if (outcome === "refused" && reason === "cancelled_by_owner") return "Already canceled — it won't be sent.";
+  if (outcome === "refused" || outcome === "failed") return "It didn't go out.";
   return "Too late — it's already on its way.";
 }
 

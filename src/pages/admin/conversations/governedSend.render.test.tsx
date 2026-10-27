@@ -384,14 +384,16 @@ describe.each([
     expect(toast.success).toHaveBeenCalledWith("Canceled — it won't be sent.");
   });
   it.each([
-    ["refused", "Already canceled — it won't be sent."],
-    ["failed", "It didn't go out."],
-    ["outcome_unknown", "Too late — it's already on its way."],
-    ["provider_accepted", "Too late — it's already on its way."],
-  ])("a cancel that came too late (%s) says what really happened, never 'canceled'", async (outcome, line) => {
+    ["refused", "cancelled_by_owner", "Already canceled — it won't be sent."],
+    ["refused", "scheduled_release_missed", "It didn't go out."],
+    ["refused", undefined, "It didn't go out."],
+    ["failed", undefined, "It didn't go out."],
+    ["outcome_unknown", undefined, "Too late — it's already on its way."],
+    ["provider_accepted", undefined, "Too late — it's already on its way."],
+  ])("a cancel that came too late (%s, %s) says what really happened", async (outcome, reason, line) => {
     db.messages = [scheduledRow()];
     db.threads = [thread];
-    db.doorAnswer = { data: null, error: { context: { json: async () => ({ ok: false, cancelled: false, code: "COMMS_EMAIL_CANCEL_TOO_LATE", outcome }) } } };
+    db.doorAnswer = { data: null, error: { context: { json: async () => ({ ok: false, cancelled: false, code: "COMMS_EMAIL_CANCEL_TOO_LATE", outcome, ...(reason ? { reason } : {}) }) } } };
     const host = await mountInbox(path);
     await act(async () => { host.querySelector<HTMLButtonElement>('[data-governed-send="scheduled"]')!.click(); await flush(); });
     expect(toast.error).toHaveBeenCalledWith(line);
@@ -473,7 +475,8 @@ describe("a scheduled governed email's state, with the clock injected", () => {
     expect(isScheduledMessage({ ...ordinary, status: "sent" } as MessageRow, T0)).toBe(false);
   });
   it("cancelTooLateLine reads the send's recorded state", () => {
-    expect(cancelTooLateLine("refused")).toBe("Already canceled — it won't be sent.");
+    expect(cancelTooLateLine("refused", "cancelled_by_owner")).toBe("Already canceled — it won't be sent.");
+    for (const r of ["scheduled_release_missed", "blocked_quiet_hours", undefined]) expect(cancelTooLateLine("refused", r)).toBe("It didn't go out.");
     expect(cancelTooLateLine("failed")).toBe("It didn't go out.");
     for (const o of ["dispatching", "unknown", "outcome_unknown", "provider_accepted", undefined]) expect(cancelTooLateLine(o)).toBe("Too late — it's already on its way.");
   });

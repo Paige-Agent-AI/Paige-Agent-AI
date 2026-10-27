@@ -117,7 +117,10 @@ Deno.serve(async req => {
     // Too late: the drainer already took it (or it has an outcome). Report the send's own state honestly.
     const state = typeof c?.outcome === "string" ? c.outcome : "";
     const outcome = ["provider_accepted", "failed", "refused"].includes(state) ? state : "outcome_unknown";
-    return response(409, { ok: false, cancelled: false, code: "COMMS_EMAIL_CANCEL_TOO_LATE", outcome, operation_id: body.operation_id });
+    // The recorded reason (a lower-case code such as cancelled_by_owner or scheduled_release_missed) lets
+    // the thread say WHY nothing went out; anything not shaped like one is dropped.
+    const reason = outcome === "refused" && typeof c?.reason === "string" && /^[a-z][a-z0-9_]{0,63}$/.test(c.reason) ? c.reason : undefined;
+    return response(409, { ok: false, cancelled: false, code: "COMMS_EMAIL_CANCEL_TOO_LATE", outcome, ...(reason ? { reason } : {}), operation_id: body.operation_id });
   }
 
   const readResult = async (operationId: string) => {

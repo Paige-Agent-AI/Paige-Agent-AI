@@ -51,7 +51,7 @@ SELECT pg_temp.ok(1, (SELECT bool_and(p.prosecdef AND array_to_string(p.proconfi
   FROM pg_proc p WHERE p.oid IN ('public._comms_email_seat(uuid,uuid)'::regprocedure, 'public._comms_email_release_actor(jsonb,uuid)'::regprocedure,
    'public.prepare_comms_email_send(uuid,uuid,uuid,uuid,text,uuid,text,text,text,text,text,jsonb,jsonb,timestamptz)'::regprocedure,
    'public.cancel_comms_email_send(uuid,uuid,uuid)'::regprocedure, 'public.close_scheduled_comms_email(uuid,uuid,text,uuid)'::regprocedure,
-   'public.close_missed_scheduled_comms_emails(integer)'::regprocedure, 'public.unlease_scheduled_messages(uuid[])'::regprocedure)),
+   'public.close_missed_scheduled_comms_emails(integer)'::regprocedure, 'public.unlease_scheduled_messages(uuid[],text)'::regprocedure)),
   'the seven new functions are SECURITY DEFINER, search_path pinned, service_role only');
 SELECT pg_temp.ok(5, (SELECT md5(prosrc)='6f73777a47948368222f1d0e216fa325' AND prosecdef
     AND NOT has_function_privilege('authenticated',oid,'EXECUTE') AND NOT has_function_privilege('anon',oid,'EXECUTE') AND has_function_privilege('service_role',oid,'EXECUTE')
@@ -342,7 +342,14 @@ SELECT pg_temp.ok(93, (SELECT n>=1 FROM _swept)
   AND (SELECT status='blocked' AND meta#>>'{comms_email_binding,outcome_reason}'='scheduled_release_missed' FROM public.messages WHERE id=pg_temp.msg(8))
   AND (SELECT status='queued' AND meta#>>'{comms_email_binding,state}'='prepared' FROM public.messages WHERE id=pg_temp.msg(9)),
   'the sweep closes the one past its grace as missed, and leaves the one still inside it');
-CREATE TEMP TABLE _unleased AS SELECT public.unlease_scheduled_messages(ARRAY[pg_temp.msg(9)]) AS n;
+-- A stamp from another run hands nothing back (a run that outlived its lease never frees a row another
+-- run has since leased); this run's own stamp does.
+CREATE TEMP TABLE _unleased_foreign AS SELECT public.unlease_scheduled_messages(ARRAY[pg_temp.msg(9)],'2000-01-01T00:00:00+00:00') AS n;
+SELECT pg_temp.ok(95, (SELECT n=0 FROM _unleased_foreign)
+  AND (SELECT meta ? 'drain_claimed_at' FROM public.messages WHERE id=pg_temp.msg(9)),
+  'a lease stamped by another run is not handed back');
+CREATE TEMP TABLE _unleased AS SELECT public.unlease_scheduled_messages(ARRAY[pg_temp.msg(9)],
+  (SELECT meta->>'drain_claimed_at' FROM public.messages WHERE id=pg_temp.msg(9))) AS n;
 CREATE TEMP TABLE _released_again AS SELECT id FROM public.claim_due_scheduled_messages(200);
 SELECT pg_temp.ok(94, (SELECT n=1 FROM _unleased) AND (SELECT count(*)=1 FROM _released_again WHERE id=pg_temp.msg(9)),
   'a lease handed back is taken again by the very next run');

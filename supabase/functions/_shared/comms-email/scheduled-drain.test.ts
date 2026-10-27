@@ -23,7 +23,7 @@ describe("scheduledDrainRoute", () => {
 const raw = readFileSync("supabase/functions/comms-scheduled-drain/index.ts", "utf8").replace(/^import[\s\S]*?;\r?\n/gm, "");
 const compiled = transpileModule(raw, { compilerOptions: { module: ModuleKind.None, target: ScriptTarget.ES2022 } }).outputText;
 
-function drain(rows: Record<string, unknown>[], opts: { stepMs?: number } = {}) {
+function drain(rows: Record<string, unknown>[], opts: { stepMs?: number; failFetch?: boolean } = {}) {
   const releases: { binding: unknown; id: string }[] = [];
   const posts: Record<string, unknown>[] = [];
   const rpcs: { name: string; args: Record<string, unknown> }[] = [];
@@ -51,7 +51,7 @@ function drain(rows: Record<string, unknown>[], opts: { stepMs?: number } = {}) 
     emailProvidersFor: () => [],
     commsProviderExecutionAllowed: async () => true,
     runPreSend: async () => ({ proceed: true, outcome: "proceed" }),
-    fetch: async (_url: string, init: { body: string }) => { posts.push(JSON.parse(init.body)); return new Response(JSON.stringify({ outcome: "sent" }), { status: 200 }); },
+    fetch: async (_url: string, init: { body: string }) => { posts.push(JSON.parse(init.body)); if (opts.failFetch) throw new DOMException("aborted", "AbortError"); return new Response(JSON.stringify({ outcome: "sent" }), { status: 200 }); },
     console: { warn: () => {}, error: () => {}, log: () => {} },
   };
   new Function(...Object.keys(scope), compiled)(...Object.values(scope));
@@ -82,6 +82,12 @@ describe("comms-scheduled-drain routing", () => {
     expect(t.releases.map((r) => r.id)).toEqual([governed.id]);
     expect(out).toMatchObject({ claimed: 2, released: 1 });
   });
+  it("an ordinary release that never answers is counted failed and the run moves on", async () => {
+    const t = drain([ordinary, { ...ordinary, id: "60000000-0000-4000-8000-000000000003" }], { failFetch: true });
+    const out = await t.run();
+    expect(t.posts.map((p) => p.message_id)).toEqual([ordinary.id, "60000000-0000-4000-8000-000000000003"]);
+    expect(out).toMatchObject({ claimed: 2, released: 0, failed: 2 });
+  });
   it("every run first closes governed emails past their grace (the sweep), then leases", async () => {
     const t = drain([governed]);
     const out = await t.run();
@@ -94,8 +100,17 @@ describe("comms-scheduled-drain routing", () => {
     const out = await t.run();
     // 0 s, 15 s, 30 s are under the 40 s budget; at 45 s the run stops taking rows.
     expect(t.releases.map((r) => r.id)).toEqual(rows.slice(0, 3).map((r) => r.id));
-    expect(t.rpcs.find((c) => c.name === "unlease_scheduled_messages")?.args).toEqual({ _ids: rows.slice(3).map((r) => r.id) });
+    expect(t.rpcs.find((c) => c.name === "unlease_scheduled_messages")?.args).toEqual({ _ids: rows.slice(3).map((r) => r.id), _stamp: "now" });
     expect(out).toMatchObject({ claimed: 5, unreached: 2 });
+  });
+  it("hands back each lease only under the stamp this run's claim wrote, and never a row with no stamp", async () => {
+    const stamped = (i: number, stamp?: string) => ({ ...governed, id: `60000000-0000-4000-8000-00000000020${i}`,
+      meta: { ...governed.meta, ...(stamp ? { drain_claimed_at: stamp } : { drain_claimed_at: undefined }) } });
+    const rows = [stamped(0, "a"), stamped(1, "a"), stamped(2, "b"), stamped(3, "a"), stamped(4)];
+    const t = drain(rows, { stepMs: 45_000 });
+    await t.run();
+    const calls = t.rpcs.filter((c) => c.name === "unlease_scheduled_messages").map((c) => c.args);
+    expect(calls).toEqual([{ _ids: [rows[1].id, rows[3].id], _stamp: "a" }, { _ids: [rows[2].id], _stamp: "b" }]);
   });
   it("within budget nothing is handed back", async () => {
     const t = drain([governed, governed]);

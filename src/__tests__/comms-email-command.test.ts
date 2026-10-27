@@ -143,7 +143,7 @@ function setup(options: Setup = {}) {
         const b = bindings.get(String(args._operation_id));
         if (!b || b.tenant_id !== args._expected_tenant_id) return { data: null, error: { code: "P0002", message: "COMMS_EMAIL_OPERATION_NOT_FOUND" } };
         if (typeof b.send_at !== "string") return { data: null, error: { code: "55000", message: "COMMS_EMAIL_NOT_SCHEDULED" } };
-        if (b.state !== "prepared") return { data: { cancelled: false, outcome: b.state, operation_id: b.operation_id, message_id: b.message_id }, error: null };
+        if (b.state !== "prepared") return { data: { cancelled: false, outcome: b.state, reason: b.outcome_reason ?? null, operation_id: b.operation_id, message_id: b.message_id }, error: null };
         b.state = "refused"; b.outcome_reason = "cancelled_by_owner";
         return { data: { cancelled: true, outcome: "refused", reason: "cancelled_by_owner", operation_id: b.operation_id, message_id: b.message_id, send_at: b.send_at }, error: null };
       }
@@ -765,6 +765,16 @@ describe("comms-email-command: approve now, send later", () => {
       expect(await cancel(t)).toMatchObject({ status: 409, body: { ok: false, cancelled: false, code: "COMMS_EMAIL_CANCEL_TOO_LATE", outcome: "outcome_unknown" } });
       t.bindings.get(OP)!.state = "provider_accepted";
       expect(await cancel(t)).toMatchObject({ status: 409, body: { cancelled: false, code: "COMMS_EMAIL_CANCEL_TOO_LATE", outcome: "provider_accepted" } });
+    });
+    it("too late on a closed send carries the recorded reason, and only a well-formed one", async () => {
+      const t = setup();
+      await schedule(t);
+      Object.assign(t.bindings.get(OP)!, { state: "refused", outcome_reason: "scheduled_release_missed" });
+      expect(await cancel(t)).toMatchObject({ status: 409, body: { code: "COMMS_EMAIL_CANCEL_TOO_LATE", outcome: "refused", reason: "scheduled_release_missed" } });
+      Object.assign(t.bindings.get(OP)!, { outcome_reason: "<b>not a code</b>" });
+      expect((await cancel(t)).body).not.toHaveProperty("reason");
+      Object.assign(t.bindings.get(OP)!, { state: "provider_accepted", outcome_reason: "scheduled_release_missed" });
+      expect((await cancel(t)).body).not.toHaveProperty("reason");
     });
     it("an immediate send cannot be cancelled here, and an unknown operation is not found", async () => {
       const t = setup();

@@ -86,3 +86,11 @@ approval, LayerC execution or Rail receipt. Existing document_generate/Spine/
 Harness/Trust/domain writer and original persisted Work/turn/Rail remain canonical.
 Capability status delta N/A: no capability activated, restricted or retired;
 monthly/quarterly catalogue Unverified stays separate from this UI repair.
+
+Current-main composition d03a9952e184fcb403a26083b49fe502c75c4564 receives actual
+e4d8d1d22ff1e211e9155c2c5865c6328f78f760 and all26 incoming EXP08 paths without
+owning-path overlap. The three tested source blobs and all18 declared rendered
+inputs remain byte-exact to source0e6a72cc; no fresh browser run or whole-graph
+claim is invented by composition. source-index distinguishes actual render source
+from subsequently verified composed source. Incoming Master/CI/tier/Team Hub/
+roster and all other sources are retained; held2973 source is not imported.

@@ -1,7 +1,8 @@
 {
   "source": "0e6a72cc53193b67ea08838dc89d8b70d7d8dde2",
-  "base": "ccce6f1f58168f26e227205f8f40607368c22141",
-  "scope": "Declared original Card, Studio, shell, style/font and backend-refusing harness inputs only; not a full transitive graph or authenticated customer acceptance. Only original Card differs from incoming main.",
+  "verified_composed_source": "d03a9952e184fcb403a26083b49fe502c75c4564",
+  "base": "e4d8d1d22ff1e211e9155c2c5865c6328f78f760",
+  "scope": "Frames rendered on source named by render-observations; all declared inputs verified unchanged on the composed source. Declared original Card, Studio, shell, style/font and backend-refusing harness inputs only; not a full transitive graph or authenticated customer acceptance. Only original Card differs from incoming main.",
   "inputs": [
     {
       "path": "src/components/admin/studio/DocumentPreview.tsx",

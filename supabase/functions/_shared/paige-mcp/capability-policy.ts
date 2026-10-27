@@ -824,7 +824,7 @@ export const MCP_CAPABILITY_POLICY: Readonly<Record<string, McpCapability>> = {
     canonical: "comms_send_email",
     effect: "mutate",
     category: "external_send",
-    evidence: "supabase/functions/paige-mcp/index.ts:2568 — await sendPlatformEmail(...) (the shared SendGrid transport) delivering to the caller-supplied `to` address with the tenant's resolved from-address. Followed by admin.from(\"email_send_log\").insert({...}) at :2594 and audit at :2580.",
+    evidence: "supabase/functions/paige-mcp/index.ts:2568 — await sendPlatformEmail(...) (the shared SendGrid transport) delivering to the caller-supplied `to` address with the tenant's resolved from-address. Followed by admin.from(\"email_send_log\").insert({...}) at :2580 and audit at :2594.",
     paigeHome: false,
   },
 

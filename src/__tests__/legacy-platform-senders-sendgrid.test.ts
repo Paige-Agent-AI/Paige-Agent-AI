@@ -95,7 +95,8 @@ describe("send-welcome-email", () => {
     expect(f.calls).toHaveLength(1);
     expect(f.calls[0].url).toBe("https://api.sendgrid.com/v3/mail/send");
     expect(f.calls[0].headers.Authorization).toBe("Bearer test-mail-send-key");
-    expect(f.calls[0].body).toMatchObject({ from: { email: "hello@mail.paigeagent.ai", name: "Paige Agent AI" }, personalizations: [{ to: [{ email: "owner@example.invalid" }] }], subject: "Welcome to Paige Agent AI" });
+    // "Just reply to this email" — the reply reaches PAIGE's real inbox, not the sending-only mail. subdomain.
+    expect(f.calls[0].body).toMatchObject({ from: { email: "hello@mail.paigeagent.ai", name: "Paige Agent AI" }, reply_to: { email: "hello@paigeagent.ai" }, personalizations: [{ to: [{ email: "owner@example.invalid" }] }], subject: "Welcome to Paige Agent AI" });
     expect(f.inserts.map(i => i.table)).toEqual(["notifications"]);
   });
   it("reports a definitive refusal as a failure, not as sent", async () => {
@@ -112,7 +113,7 @@ describe("send-payment-confirmation-email", () => {
     const f = load("send-payment-confirmation-email", [accepted("sgPay")]);
     const r = await f.invoke(body);
     expect(r).toEqual({ status: 200, body: { success: true, data: { data: { id: "sgPay" }, error: null } } });
-    expect(f.calls[0].body).toMatchObject({ from: { email: "billing@mail.paigeagent.ai" }, subject: "Payment confirmed — Paige Agent AI" });
+    expect(f.calls[0].body).toMatchObject({ from: { email: "billing@mail.paigeagent.ai" }, reply_to: { email: "hello@paigeagent.ai" }, subject: "Payment confirmed — Paige Agent AI" });
   });
   it("reports a 5xx as UNCONFIRMED — neither sent nor a plain failure", async () => {
     const f = load("send-payment-confirmation-email", [unavailable]);
@@ -131,7 +132,7 @@ describe("send-support-request", () => {
     expect(r).toEqual({ status: 200, body: { success: true, message: "Support request submitted successfully", confirmation_emailed: true } });
     expect(f.calls).toHaveLength(2);
     expect(f.calls[0].body).toMatchObject({ from: { email: "support@mail.paigeagent.ai" }, reply_to: { email: "owner@example.invalid" } });
-    expect(f.calls[1].body).toMatchObject({ from: { email: "support@mail.paigeagent.ai" }, personalizations: [{ to: [{ email: "owner@example.invalid" }] }] });
+    expect(f.calls[1].body).toMatchObject({ from: { email: "support@mail.paigeagent.ai" }, reply_to: { email: "support@paigeagent.ai" }, personalizations: [{ to: [{ email: "owner@example.invalid" }] }] });
   });
   it("an UNCONFIRMED team notification is not confirmed to the person, and says to check before resending", async () => {
     const f = load("send-support-request", [unavailable]);
@@ -148,7 +149,7 @@ describe("send-funding-report", () => {
     const f = load("send-funding-report", [accepted("sgFund")]);
     const r = await f.invoke({ userId: "owner-1" });
     expect(r).toEqual({ status: 200, body: { success: true, emailData: { data: { id: "sgFund" }, error: null } } });
-    expect(f.calls[0].body).toMatchObject({ from: { email: "notifications@mail.paigeagent.ai", name: "Paige AI" }, personalizations: [{ to: [{ email: "owner@example.invalid" }] }], subject: "Your Funding Readiness Report" });
+    expect(f.calls[0].body).toMatchObject({ from: { email: "notifications@mail.paigeagent.ai", name: "Paige AI" }, reply_to: { email: "hello@paigeagent.ai" }, personalizations: [{ to: [{ email: "owner@example.invalid" }] }], subject: "Your Funding Readiness Report" });
     expect(f.inserts).toEqual([{ table: "plaid_notifications", row: expect.objectContaining({ template: "funding_report", metadata: { email: "owner@example.invalid", response: { data: { id: "sgFund" }, error: null } } }) }]);
   });
   it("a refused send is a failure and records no sent notification", async () => {

@@ -89,6 +89,14 @@ import {
  */
 
 export const REFRESH_INTERVAL_MS = 15_000;
+/**
+ * A1c: while a reply in the open conversation is being written ("<AGENT> is writing…", shown to everyone
+ * who can see the conversation), its state is re-read this often, so the row ends soon after the reply
+ * posts. It stops when nothing is being written, when the tab is hidden, or after
+ * AGENT_WRITING_POLL_MAX_MS; the 15 s refresh carries on as before.
+ */
+export const AGENT_WRITING_POLL_MS = 3_000;
+export const AGENT_WRITING_POLL_MAX_MS = 120_000;
 const PAGE_SIZE = 50;
 const THREAD_PAGE_SIZE = 50;
 
@@ -1083,6 +1091,31 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
     if (thread && threadAsking) void readTurnStates(thread.channelId, threadAsking.split(","));
     // eslint-disable-next-line react-hooks/exhaustive-deps -- as above, for the open thread
   }, [thread?.channelId, threadAsking, statesTick, readTurnStates]);
+
+  // A1c: a reply being written in the open conversation (or its thread) is re-read every 3 s, for at
+  // most 2 minutes, and only while the tab is visible; when a row that was being written ends, the
+  // conversation is refreshed so the reply itself appears. Otherwise the 15 s tick is all there is.
+  const openChannel = stream?.channelId ?? null;
+  const writingKeys = Object.entries(openChannel ? turnStates[openChannel]?.states ?? {} : {})
+    .filter(([, state]) => state.state === "answering").map(([key]) => key).sort().join(",");
+  const wasWriting = useRef<{ channel: string | null; keys: string }>({ channel: null, keys: "" });
+  useEffect(() => {
+    const before = wasWriting.current;
+    wasWriting.current = { channel: openChannel, keys: writingKeys };
+    if (before.channel !== openChannel || !before.keys) return;
+    const now = new Set(writingKeys ? writingKeys.split(",") : []);
+    if (before.keys.split(",").some((key) => !now.has(key))) void refreshRef.current();
+  }, [openChannel, writingKeys]);
+  useEffect(() => {
+    if (!openChannel || !writingKeys) return;
+    const started = Date.now();
+    const timer = window.setInterval(() => {
+      if (Date.now() - started >= AGENT_WRITING_POLL_MAX_MS) { window.clearInterval(timer); return; }
+      if (document.visibilityState === "visible") setStatesTick((n) => n + 1);
+    }, AGENT_WRITING_POLL_MS);
+    return () => window.clearInterval(timer);
+    // Restarted only when the conversation or what is being written changes, so the 2-minute cap holds.
+  }, [openChannel, writingKeys]);
 
   /** A person's DM with one agent: the listed one, or opened (made once) through its own door. */
   const openAgentDm = useCallback(async (agent: TeamHubAgentKey): Promise<ActionOutcome<string>> => {

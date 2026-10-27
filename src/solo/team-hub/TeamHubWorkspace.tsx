@@ -1361,23 +1361,25 @@ function Stream({ hub, people, meId, title, kind, pending, onRetry, onDiscard, o
 }
 
 /**
- * The asker's live rows at the end of a conversation or thread: "<agent> is writing…" for each turn this
- * tab is waiting on here (a reply, or a private part being written in this DM), and, in the DM, a
- * private part that couldn't be finished, with Ask again. A reply that has arrived ends its row.
+ * The live rows at the end of a conversation or thread: "<agent> is writing…" for each reply the server
+ * says is being written here (for everyone who can see it, A1c) and each turn this tab is waiting on (a
+ * reply, or a private part being written in this DM), and, in the DM, a private part that couldn't be
+ * finished, with Ask again. A reply that has arrived ends its row.
  */
 function AgentActivity({ turns, conversationId, threadRootId, around, agent }: {
   turns: Record<string, AgentTurn>; conversationId: string; threadRootId: string | null; around: TeamHubMessage[]; agent: AgentView;
 }) {
   const rows: ReactNode[] = [];
-  // After a reload (or from another tab), a turn the server says is still answering keeps its writing
-  // row, for the asker only: the read returns the public answering state to nobody else.
+  // A turn the server says is answering shows its writing row to everyone who can see the conversation
+  // (A1c owner ruling: like a person typing), the asker after a reload or in another tab included. The
+  // asker's own tab tracks its turn locally, and that row is drawn below instead (never twice).
   const read = agent.states[conversationId];
   for (const [key, state] of Object.entries(read?.states ?? {})) {
     if (state.state !== "answering" || state.privatePart || turns[key]) continue;
     const [questionId, agentKey] = key.split(":") as [string, TeamHubAgentKey];
     const question = around.find((message) => message.id === questionId)
       ?? (threadRootId === null ? undefined : around.find((message) => message.id === threadRootId && message.id === questionId));
-    if (!question || question.author_user_id !== agent.meId || (question.parent_message_id ?? null) !== threadRootId) continue;
+    if (!question || (question.parent_message_id ?? null) !== threadRootId) continue;
     if (around.some((message) => answers(message, questionId, agentKey))) continue;
     rows.push(<AgentTyping key={`s-${key}`} agent={agentKey} />);
   }

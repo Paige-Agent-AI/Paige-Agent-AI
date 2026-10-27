@@ -12,6 +12,7 @@ import { act } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { TeamHubWorkspace } from "./TeamHubWorkspace";
+import { AGENT_WRITING_POLL_MAX_MS, AGENT_WRITING_POLL_MS, REFRESH_INTERVAL_MS } from "./useTeamHub";
 
 const TENANT = "tenant-a";
 const ME = "u-me";
@@ -82,9 +83,10 @@ function backend(name: string, params: Row) {
       return { ok: true, duplicate: false, message };
     }
     case "team_hub_agent_turn_states": {
-      // A double of the read's contract (proved in exp08_team_hub_agent_turn_states.sql): the asker reads
-      // every state of their own questions; anyone else only the two private-part lines and who a reply
-      // suggested bringing in, without the line of context.
+      // A double of the read's contract (proved in exp08_team_hub_agent_turn_states.sql and, for A1c,
+      // exp08_team_hub_a1c.sql): the asker reads every state of their own questions; anyone else only a
+      // reply being written (A1c), the two private-part lines and who a reply suggested bringing in,
+      // without the line of context.
       const cid = String(params.p_channel_id);
       const c = db.conversations.find((item) => item.id === cid);
       if (!c) return { ok: false, code: "not_found" };
@@ -99,7 +101,8 @@ function backend(name: string, params: Row) {
           const fact = { state: answered ? "replied" : "none", private_part: false, asker_name: "Teammate", ...db.states[`${id}:${key}`] } as Row;
           const mine = question.author_user_id === ME;
           const bring = Array.isArray(fact.bring_in) ? (mine ? fact.bring_in : (fact.bring_in as Row[]).map((item) => ({ agent: item.agent }))) : undefined;
-          const approved = fact.private_part === true && (fact.state === "answering" || fact.state === "replied_privately");
+          const approved = (fact.private_part === true && (fact.state === "answering" || fact.state === "replied_privately"))
+            || (fact.private_part !== true && fact.state === "answering");
           if (!mine && !approved && !bring) continue;
           states.push({ message_id: id, agent_key: key, state: mine || approved ? fact.state : "replied", private_part: fact.private_part,
             asker_name: fact.asker_name, ...(bring ? { bring_in: bring } : {}) });
@@ -774,5 +777,153 @@ describe("the agent DM header", () => {
     const head = host.querySelector(".th-conv-head--agent .th-head-actions button")!;
     expect(head.querySelector(".th-label-wide")!.textContent).toBe("How MENTOR works");
     expect(head.querySelector(".th-label-narrow")!.textContent).toBe("Profile");
+  });
+});
+
+describe("A1c: \"<AGENT> is writing…\" for everyone who can see the conversation (owner ruling)", () => {
+  const theirs = (over: Row = {}) => msg({ id: "m-q", author_user_id: "u-priya", body: "@MERIT what should the workshop cost?", agent_mentions: ["merit"], ...over });
+  const stateReads = () => calls.filter((call) => call.name === "team_hub_agent_turn_states").length;
+  // A manual clock for the hub's intervals (window.setInterval) and Date.now only: React's scheduling
+  // and jsdom's animation frames keep real time, so the screen still settles between ticks.
+  let now = 0;
+  let intervals: Map<number, { fn: () => void; ms: number; next: number }>;
+  const useClock = () => {
+    now = Date.parse("2026-10-27T09:30:00Z");
+    intervals = new Map();
+    let ids = 0;
+    vi.spyOn(Date, "now").mockImplementation(() => now);
+    const realSet = window.setInterval.bind(window);
+    const realClear = window.clearInterval.bind(window);
+    vi.spyOn(window, "setInterval").mockImplementation(((fn: () => void, ms?: number, ...rest: unknown[]) => {
+      // Only the hub's own two cadences; anything else (jsdom's animation frames) keeps real time.
+      if (ms !== AGENT_WRITING_POLL_MS && ms !== REFRESH_INTERVAL_MS) return realSet(fn, ms, ...rest);
+      ids += 1;
+      intervals.set(ids, { fn, ms: ms ?? 0, next: now + (ms ?? 0) });
+      return 1_000_000 + ids;
+    }) as unknown as typeof window.setInterval);
+    vi.spyOn(window, "clearInterval").mockImplementation(((id?: number) => {
+      if (id !== undefined && id > 1_000_000) intervals.delete(id - 1_000_000); else realClear(id);
+    }) as typeof window.clearInterval);
+  };
+  const tick = async (ms: number) => {
+    const end = now + ms;
+    for (;;) {
+      const due = [...intervals.entries()].filter(([, item]) => item.next <= end).sort((a, b) => a[1].next - b[1].next)[0];
+      if (!due) break;
+      now = due[1].next;
+      due[1].next += due[1].ms;
+      await act(async () => { due[1].fn(); });
+      await flush();
+    }
+    now = end;
+  };
+
+  it("another member sees MERIT is writing… under Priya's question, with the dots in MERIT's colour, and never a failure", async () => {
+    db.messages["c-launch"] = [theirs()];
+    db.states = { "m-q:merit": { state: "answering", asker_name: "Priya Nair" } };
+    const host = await mount();
+    const typing = host.querySelectorAll(".th-ag-typing");
+    expect(typing).toHaveLength(1);
+    expect(typing[0].textContent).toBe("MERIT is writing…");
+    expect(typing[0].getAttribute("data-ag")).toBe("merit");
+    expect(typing[0].getAttribute("role")).toBe("status");
+    expect(typing[0].querySelectorAll(".th-ag-dots i")).toHaveLength(3);
+    // At the end of the stream, after the question.
+    expect(host.querySelector(".th-stream-content")!.lastElementChild).toBe(typing[0]);
+    expect(host.querySelector(".th-ag-fail")).toBeNull();
+    // Nothing of the asker's own: no Ask again, no private note, no turn of this tab.
+    expect(button(host, "Ask again")).toBeUndefined();
+    expect(turns).toHaveLength(0);
+  });
+
+  it("another member sees it in a thread too, at the end of the thread", async () => {
+    db.messages["c-launch"] = [msg({ id: "m-root", body: "Kickoff agenda", reply_count: 1, last_reply_at: stamp() })];
+    db.replies["m-root"] = [theirs({ id: "m-tq", parent_message_id: "m-root", body: "@MERIT and the price?" })];
+    db.states = { "m-tq:merit": { state: "answering", asker_name: "Priya Nair" } };
+    const host = await mount();
+    expect(host.querySelector(".th-conv .th-ag-typing")).toBeNull();
+    await click(button(host, /^1 reply/));
+    const thread = host.querySelector(".th-thread")!;
+    expect(thread.querySelectorAll(".th-ag-typing")).toHaveLength(1);
+    expect(thread.querySelector(".th-ag-typing")!.textContent).toBe("MERIT is writing…");
+  });
+
+  it("a private part being written stays the approved line for others, never a writing row", async () => {
+    db.messages["c-launch"] = [theirs(), reply("merit", "m-q", FIXED, { author_user_id: "u-priya" })];
+    db.states = { "m-q:merit": { state: "answering", private_part: true, asker_name: "Priya Nair" } };
+    const host = await mount();
+    expect(host.textContent).toContain("MERIT is answering Priya privately.");
+    expect(host.querySelector(".th-ag-typing")).toBeNull();
+  });
+
+  it("the asker's own question shows one writing row, not two, while the server also says answering", async () => {
+    const pending = deferred();
+    answers.push(pending.answer);
+    const host = await mount();
+    await type(composer(host), "@CURA who's onboarding?");
+    await press(composer(host), "Enter");
+    await flush();
+    const question = String(turnBody(0).sourceMessageId);
+    db.states = { [`${question}:cura`]: { state: "answering" } };
+    await act(async () => { window.dispatchEvent(new Event("focus")); });
+    await flush();
+    expect(calls.filter((call) => call.name === "team_hub_agent_turn_states").some((call) => (call.params.p_message_ids as string[]).includes(question))).toBe(true);
+    expect(host.querySelectorAll(".th-ag-typing")).toHaveLength(1);
+    pending.resolve(posted(reply("cura", question, "Two people start Monday.")));
+    await flush();
+  });
+
+  it("re-reads every 3 s while MERIT is writing, then the reply appears and the row ends; the 3 s reads stop", async () => {
+    useClock();
+    db.messages["c-launch"] = [theirs()];
+    db.states = { "m-q:merit": { state: "answering", asker_name: "Priya Nair" } };
+    const host = await mount();
+    const before = stateReads();
+    await tick(AGENT_WRITING_POLL_MS);
+    expect(stateReads()).toBe(before + 1);
+    await tick(AGENT_WRITING_POLL_MS);
+    expect(stateReads()).toBe(before + 2);
+    // The reply posts: the next read says replied (others read nothing), and the stream is read again.
+    db.messages["c-launch"].push(reply("merit", "m-q", "Charge for the outcome, not the hours.", { author_user_id: "u-priya" }));
+    db.states = {};
+    const lists = calls.filter((call) => call.name === "team_hub_list_messages").length;
+    await tick(AGENT_WRITING_POLL_MS);
+    expect(calls.filter((call) => call.name === "team_hub_list_messages").length).toBeGreaterThan(lists);
+    expect(host.querySelector(".th-ag-typing")).toBeNull();
+    expect(host.textContent).toContain("Charge for the outcome, not the hours.");
+    // Nothing is being written now: the 3 s interval is gone (the 15 s tick is the next read, at 15 s).
+    expect([...intervals.values()].some((item) => item.ms === AGENT_WRITING_POLL_MS)).toBe(false);
+    const settled = stateReads();
+    await tick(AGENT_WRITING_POLL_MS - 1);
+    expect(stateReads()).toBe(settled);
+  });
+
+  it("stops the 3 s reads while the tab is hidden, and after 2 minutes; the 15 s tick carries on", async () => {
+    useClock();
+    db.messages["c-launch"] = [theirs()];
+    db.states = { "m-q:merit": { state: "answering", asker_name: "Priya Nair" } };
+    let visibility = "hidden";
+    vi.spyOn(document, "visibilityState", "get").mockImplementation(() => visibility as DocumentVisibilityState);
+    await mount();
+    const hidden = stateReads();
+    await tick(AGENT_WRITING_POLL_MS * 4);
+    expect(stateReads()).toBe(hidden);
+    visibility = "visible";
+    await tick(AGENT_WRITING_POLL_MAX_MS);
+    const capped = stateReads();
+    // Inside the window the 3 s reads ran (and the 15 s tick too); past it only the 15 s tick reads.
+    expect(capped).toBeGreaterThan(hidden + 20);
+    expect([...intervals.values()].some((item) => item.ms === AGENT_WRITING_POLL_MS)).toBe(false);
+    await tick(REFRESH_INTERVAL_MS);
+    expect(stateReads()).toBe(capped + 1);
+  }, 60_000);
+
+  it("with nothing being written there are no 3 s reads at all", async () => {
+    useClock();
+    db.messages["c-launch"] = [theirs(), reply("merit", "m-q", "Done.", { author_user_id: "u-priya" })];
+    await mount();
+    const before = stateReads();
+    await tick(REFRESH_INTERVAL_MS - 1);
+    expect(stateReads()).toBe(before);
   });
 });

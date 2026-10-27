@@ -40,7 +40,7 @@ export function AgentTag({ agent }: { agent: TeamHubAgentKey }) {
   return <span className="th-ag-tag" data-ag={agent}>Agent</span>;
 }
 
-/** "CURA is writing…": only the person who asked sees it, while their own tab waits for the reply. */
+/** "CURA is writing…": everyone who can see the conversation sees it while the reply is written (A1c). */
 export function AgentTyping({ agent, label }: { agent: TeamHubAgentKey; label?: string }) {
   return <div className="th-ag-typing" role="status" data-ag={agent}>
     <AgentPlate agent={agent} size="lg" />

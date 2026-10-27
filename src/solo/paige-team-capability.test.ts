@@ -37,11 +37,12 @@ describe("the Team actions are classified, and classified correctly", () => {
     expect(classifyAction("team_set_work_profile")).toBe("ordinary");
   });
 
-  it("refuses a sixth Team tool nobody classified", () => {
-    // The whole point of the fail-closed default. Someone adding `team_remove_member` next month
-    // gets an inert tool and a red build, not an ungoverned write.
-    expect(classifyAction("team_remove_member")).toBe("unclassified");
-    expect(unclassifiedWriteReason("team_remove_member")).toMatch(/no risk classification/);
+  it("refuses a Team tool nobody classified", () => {
+    // The whole point of the fail-closed default. Someone adding `team_delete_member` next month
+    // gets an inert tool and a red build, not an ungoverned write. (This used `team_remove_member`
+    // until EXP08 classified that one, deliberately, as `high`; see the lifecycle block below.)
+    expect(classifyAction("team_delete_member")).toBe("unclassified");
+    expect(unclassifiedWriteReason("team_delete_member")).toMatch(/no risk classification/);
   });
 
   it("does not let any Team tool slip past the runtime write backstop", () => {
@@ -137,7 +138,9 @@ describe("the handler's Team call sites (source-level proof, not runtime proof)"
     // the number — which is how a ratchet stops being one. Count the executor branches instead, so
     // the assertion is "every branch is guarded" rather than "there are three of them".
     const executorBranches = HANDLER.split('} else if (tc.function.name === "team_').length - 1
-      + HANDLER.split('tc.function.name === "team_invite_resend" ? "resend"').length - 1;
+      + HANDLER.split('tc.function.name === "team_invite_resend" ? "resend"').length - 1
+      // EXP08: the lifecycle tools share ONE dispatch branch, guarded once for all seven.
+      + HANDLER.split("} else if (TEAM_LIFECYCLE_READ_TOOL_NAMES.has(tc.function.name) || TEAM_LIFECYCLE_WRITE_TOOL_NAMES.has(tc.function.name)) {").length - 1;
     const guarded = HANDLER.split("const wrongTenant = await teamSeamTenantMismatch();").length - 1;
     expect(guarded, "every Team executor branch consults the tenant guard").toBe(executorBranches);
     expect(guarded).toBeGreaterThan(0);
@@ -313,5 +316,60 @@ describe("the handler's Team call sites (source-level proof, not runtime proof)"
     const branch = HANDLER.slice(start, HANDLER.indexOf('} else if (tc.function.name === "member_grant_role")', start));
     expect(branch).toContain("emailed");
     expect(branch).toContain("did NOT go out");
+  });
+});
+
+// ── EXP08 team lifecycle: PAIGE suspends, reinstates, removes, switches Team conversations and hands
+// work over (_shared/paige-spine/domains/team_lifecycle.ts, _shared/team-lifecycle/chat.ts). Same two
+// evidence classes as above: real classification code, then the handler's source.
+const LIFECYCLE_WRITES = ["team_suspend_member", "team_reinstate_member", "team_remove_member", "team_set_conversations", "team_handover_work"] as const;
+const LIFECYCLE_READS = ["team_list_members", "team_member_holdings"] as const;
+
+describe("the EXP08 lifecycle writes are classified high, and the reads are not writes", () => {
+  it("puts every lifecycle write behind the rendered card on every lane", () => {
+    for (const tool of LIFECYCLE_WRITES) {
+      expect(classifyAction(tool), tool).toBe("high");
+      expect(clampLaneByRisk("auto", tool), tool).toBe("confirm");
+      expect(unclassifiedWriteReason(tool), tool).toBeNull();
+    }
+  });
+  it("keeps the two reads out of the write gate", () => {
+    for (const tool of LIFECYCLE_READS) {
+      expect(classifyAction(tool), tool).toBe("unclassified");
+      expect(unclassifiedWriteReason(tool), tool).toBeNull();
+    }
+  });
+});
+
+describe("the handler's lifecycle call sites (source-level proof, not runtime proof)", () => {
+  const branchStart = HANDLER.indexOf("} else if (TEAM_LIFECYCLE_READ_TOOL_NAMES.has(tc.function.name) || TEAM_LIFECYCLE_WRITE_TOOL_NAMES.has(tc.function.name)) {");
+  const branch = HANDLER.slice(branchStart, HANDLER.indexOf("error: `Unknown tool: ${tc.function.name}`", branchStart));
+  it("has one dispatch branch, after every incumbent one", () => {
+    expect(branchStart).toBeGreaterThan(-1);
+    expect(HANDLER.split("TEAM_LIFECYCLE_READ_TOOL_NAMES.has(tc.function.name) || TEAM_LIFECYCLE_WRITE_TOOL_NAMES.has").length - 1).toBe(1);
+  });
+  it("runs on the caller's own client, never the service role", () => {
+    expect(branch).toContain("runTeamLifecycleWrite(tc.function.name, lifecycleScope, supabaseClient, lifecycleArgs)");
+    expect(branch).toContain("TEAM_LIFECYCLE_READERS[tc.function.name](lifecycleScope, supabaseClient, lifecycleArgs)");
+    expect(branch).not.toMatch(/runTeamLifecycleWrite\([^)]*\bsupabase,/);
+  });
+  it("asks the same tenant question the other Team tools ask, before anything runs", () => {
+    const guard = branch.indexOf("const wrongTenant = await teamSeamTenantMismatch();");
+    expect(guard).toBeGreaterThan(-1);
+    expect(guard).toBeLessThan(branch.indexOf("runTeamLifecycleWrite("));
+  });
+  it("records a capability receipt in the branch", () => {
+    expect(branch).toContain("await recordCapabilityRun(supabase, { tenantId: lifecycleScope.tenantId, actorId: user.id, capabilityKey: tc.function.name,");
+  });
+  it("refuses an unnamed person, or an act the definers' rule forbids, before any card, for every person-write", () => {
+    const gate = HANDLER.slice(HANDLER.indexOf("// EXP08 team lifecycle — the same rule for every lifecycle write"), HANDLER.indexOf("// ── AN OMITTED FIELD MEANS"));
+    expect(gate).toContain("if (TEAM_LIFECYCLE_MEMBER_TOOL_NAMES.has(tc.function.name)) {");
+    expect(gate).toContain("const target = await teamMemberRow(gateArgs?.member_user_id);");
+    expect(gate).toContain("target: target && (await describeLifecycleMember(gateArgs?.member_user_id)) ? target : null,");
+    expect(gate).toContain("const problem = teamLifecyclePreCardProblem(tc.function.name, {");
+  });
+  it("is never added to the owner-ops branch set", async () => {
+    const { OWNER_OPS_BRANCH_TOOLS } = await import("../../supabase/functions/_shared/workspace-authority");
+    for (const tool of [...LIFECYCLE_WRITES, ...LIFECYCLE_READS]) expect(OWNER_OPS_BRANCH_TOOLS.has(tool), tool).toBe(false);
   });
 });

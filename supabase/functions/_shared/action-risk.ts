@@ -110,6 +110,20 @@ const RISK: ReadonlyArray<readonly [string, ActionRisk, string]> = [
   // grant somebody may already be acting on, and the person on the other end of that email finds
   // out by failing.
   ["team_invite_revoke", "high", "withdraws an access grant that is already in flight"],
+  // EXP08 team lifecycle (owner, 2026-10-26: PAIGE may suspend, reinstate, remove, switch Team
+  // conversations and hand work over, each behind the person's approval card). Every one changes
+  // what a real person can do in this workspace, or whose queue a piece of work sits on, so all five
+  // are `high`: the card is forced on every lane and no standing grant runs them alone. Reinstating
+  // and switching conversations back on are access GRANTS; suspending, switching off and removing
+  // end access somebody may be using right now; removing cannot be undone in place (a new invitation
+  // is the only way back). The hand-over is `high` for crm_assign_task's reason. The definers
+  // (migration 20271115040008, plan_update_item_versioned) re-prove owner/admin authority in their
+  // bodies; this class does not lean on that.
+  ["team_suspend_member", "high", "stops a teammate using the workspace until they are reinstated"],
+  ["team_reinstate_member", "high", "gives a suspended teammate their access back"],
+  ["team_remove_member", "high", "ends a teammate's access to the workspace; only a new invitation brings them back"],
+  ["team_set_conversations", "high", "turns a teammate's Team Hub channels and direct messages on or off"],
+  ["team_handover_work", "high", "moves work onto another workspace member's queue"],
   // Runs as service role against the orchestrator, so whatever the specialist then does is outside
   // this gate. Until that path is itself governed, delegating IS the authority decision.
   ["delegate_to_subagent", "high", "dispatches work that executes outside this gate"],

@@ -6739,6 +6739,28 @@ when the seam's workspace is not the one the conversation is about.
 | `member_grant_role` | `high` | the real owner approval card |
 | `member_revoke_role` | `high` | the real owner approval card |
 | `team_set_work_profile` | `ordinary` | normal compact confirmation |
+| `team_suspend_member` | `high` | the real owner approval card (EXP08 lifecycle, LIVE on merge; authenticated runtime `UNVERIFIED`) |
+| `team_reinstate_member` | `high` | the real owner approval card (EXP08 lifecycle) |
+| `team_remove_member` | `high` | the real owner approval card, which states what the person still holds (EXP08 lifecycle) |
+| `team_set_conversations` | `high` | the real owner approval card (EXP08 lifecycle) |
+| `team_handover_work` | `high` | the real owner approval card (EXP08 lifecycle; standalone business account only) |
+| `team_list_members` / `team_member_holdings` | read | none — reads on the caller's JWT (EXP08 lifecycle) |
+
+**EXP08 PAIGE team-lifecycle tools (2026-10-26; LIVE on merge — the edge function deploys and migration `20271116100008` applies on the push to `main`; authenticated runtime `UNVERIFIED`).**
+PAIGE gains the lifecycle definers of migration `20271115040008` through one Spine domain
+(`_shared/paige-spine/domains/team_lifecycle.ts`) and one dispatch module
+(`_shared/team-lifecycle/chat.ts`): `team_list_members` (`get_solo_team_workspace`, suspended people
+included, never an email), `team_member_holdings` (`team_member_holdings`, every movable row carries
+the exact hand-over call), `team_suspend_member` / `team_reinstate_member` / `team_remove_member` /
+`team_set_conversations` (the four lifecycle definers, `_expected_tenant_id` = the persona tenant) and
+`team_handover_work` (`plan_update_item_versioned`, the caller as expected actor, status and due
+unchanged; it follows the Work writer's own rule — any owner or admin of the workspace, `is_tenant_admin`,
+for any open item, on a standalone business account only — not the one rule of the four person acts). CRM tasks, client relationships and deals hand over through the existing
+`crm_assign_task` / `crm_assign_coach` / `crm_assign_contact_owner` / `crm_assign_deal_owner`;
+approvals and mailboxes have no hand-over writer and are reported, never moved. Caller JWT only, last
+in the dispatch chain, never from Live, every write outcome with a workspace receipted (with no persona
+workspace there is no tenant to record against, so that refusal writes no receipt). Ledger:
+`docs/doctrine/tier-matrix.md`, "EXP08 PAIGE team-lifecycle tools". Authenticated runtime `UNVERIFIED`.
 
 `high` means the gate accepts only a fingerprint of the exact rendered card, carried in the request
 **body** — a channel the model cannot write. The model asserting consent is refused.

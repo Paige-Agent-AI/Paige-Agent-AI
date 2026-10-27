@@ -718,6 +718,14 @@ if (chatSrc.includes('...TEAM_HUB_POST_TOOLS')) {
   if (hubTools.length !== 1) throw new Error('Team Hub catalog could not be parsed');
   importedTools.push(...hubTools);
 }
+// EXP08 team lifecycle: the two reads and five approved writes enter Chat through their domain catalog, the same way.
+if (chatSrc.includes('...TEAM_LIFECYCLE_TOOLS')) {
+  if (!/import\s*\{[^}]*TEAM_LIFECYCLE_TOOLS[^}]*\}\s*from\s*['"]\.\.\/_shared\/paige-spine\/domains\/team_lifecycle\.ts['"]/.test(chatSrc)) throw new Error('Unresolved team lifecycle catalog import');
+  const source = fs.readFileSync('supabase/functions/_shared/paige-spine/domains/team_lifecycle.ts', 'utf8');
+  const lifecycleTools = [...source.matchAll(/\bname:\s*"(team_(?:list_members|member_holdings|suspend_member|reinstate_member|remove_member|set_conversations|handover_work))"/g)].map(m => m[1]);
+  if (lifecycleTools.length !== 7) throw new Error('Team lifecycle catalog could not be parsed');
+  importedTools.push(...lifecycleTools);
+}
 // E09 Slice M: the customer portal menu tools enter Chat through their domain catalog, the same way.
 if (chatSrc.includes('...PORTAL_MENU_TOOLS')) {
   if (!/import\s*\{[^}]*PORTAL_MENU_TOOLS[^}]*\}\s*from\s*['"]\.\.\/_shared\/paige-spine\/domains\/client_portal\.ts['"]/.test(chatSrc)) throw new Error('Unresolved portal menu catalog import');

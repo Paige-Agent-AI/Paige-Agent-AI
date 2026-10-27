@@ -9,7 +9,7 @@ import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import {
-  ANSWER_PRIVATELY_TOOL, EXECUTABLE_AGENT_TOOLS, PINNED_READ_TOOL, effectiveAgentTools, isTeamHubAgentTurnRequest, parseAgentTurnRequest,
+  ANSWER_PRIVATELY_TOOL, EXECUTABLE_AGENT_TOOLS, PINNED_READ_TOOL, effectiveAgentTools, isTeamHubAgentTurnRequest, parseAgentAnswer, parseAgentTurnRequest, privateRouteAllowed,
   runTeamHubAgentTurn, storedToolNames, uuidFrom, type AgentTurnDeps, type CompleteFn,
 } from "./agent-turn.ts";
 
@@ -275,10 +275,11 @@ describe("the tool scope is read-only and fails closed", () => {
   it("offers only the stored allowlist ∩ what this module runs, never a write", async () => {
     const w = world(), m = model([{ content: "ok" }]);
     await run(w, m);
-    assert.deepEqual(m.requests[0].request.tools!.map((t) => t.function.name).sort(), [PINNED_READ_TOOL, "read_business_time_zone", ANSWER_PRIVATELY_TOOL].sort());
+    assert.deepEqual(m.requests[0].request.tools!.map((t) => t.function.name).sort(), [PINNED_READ_TOOL, "read_business_time_zone"].sort());
+    assert.deepEqual(m.requests[0].request.response_format, { type: "json_object" });
   });
   it("what this module can run is exactly three tools: no write and no private read (reinstating one fails here)", () => {
-    assert.deepEqual([...EXECUTABLE_AGENT_TOOLS].sort(), [PINNED_READ_TOOL, "read_business_time_zone", ANSWER_PRIVATELY_TOOL].sort());
+    assert.deepEqual([...EXECUTABLE_AGENT_TOOLS].sort(), [PINNED_READ_TOOL, "read_business_time_zone"].sort());
   });
   it("a write is filtered out even where a runnable set would admit it", () => {
     assert.deepEqual(effectiveAgentTools(["team_hub_post_reply", PINNED_READ_TOOL], "shared", new Set(["team_hub_post_reply", PINNED_READ_TOOL])), [PINNED_READ_TOOL]);
@@ -315,8 +316,29 @@ describe("the tool scope is read-only and fails closed", () => {
 });
 
 describe("the private part (flow 5)", () => {
+  it("the answer is JSON {reply, route}; anything else is plain text that can only say less", () => {
+    assert.deepEqual(parseAgentAnswer('{"reply":"Hi","route":"private"}'), { reply: "Hi", route: "private" });
+    assert.deepEqual(parseAgentAnswer('```json\n{"reply":"Hi","route":"act"}\n```'), { reply: "Hi", route: "act" });
+    assert.deepEqual(parseAgentAnswer('{"reply":"Hi","route":"delete_everything"}'), { reply: "Hi", route: "answer" });
+    assert.deepEqual(parseAgentAnswer("Just text."), { reply: "Just text.", route: "answer" });
+    assert.deepEqual(parseAgentAnswer("{not json"), { reply: "{not json", route: "answer" });
+  });
+  it("the private route exists only in a shared conversation whose stored allowlist names the control", () => {
+    assert.equal(privateRouteAllowed(storedToolNames(SHARED_LIST), "shared"), true);
+    assert.equal(privateRouteAllowed(storedToolNames(SHARED_LIST), "agent_dm"), false);
+    assert.equal(privateRouteAllowed([PINNED_READ_TOOL], "shared"), false);
+    assert.equal(privateRouteAllowed(null, "shared"), false);
+  });
+  it("a private route in the agent DM is answered there, never moved", async () => {
+    const w = world(), m = model([{ content: JSON.stringify({ reply: "Here's what I can see.", route: "private" }) }]);
+    const r = await run(w, m, turn({ privateFollowUp: true }));
+    const [post] = named(w, "team_hub_post_agent_message");
+    assert.equal(post.args.p_private_answer, false);
+    assert.equal(post.args.p_body, "Here's what I can see.");
+    assert.equal((r.body as any).private_followup, undefined);
+  });
   it("the public part posts with the fixed line appended by the definer, and the browser is told to start the DM turn", async () => {
-    const w = world(), m = model([{ content: "Quick one for everyone: proposals with dates close faster.", tool_calls: [{ name: ANSWER_PRIVATELY_TOOL, args: { reason: "private" } }] }]);
+    const w = world(), m = model([{ content: JSON.stringify({ reply: "Quick one for everyone: proposals with dates close faster.", route: "private" }) }]);
     const r = await run(w, m);
     const [post] = named(w, "team_hub_post_agent_message");
     assert.equal(post.args.p_private_answer, true);
@@ -325,7 +347,7 @@ describe("the private part (flow 5)", () => {
     assert.deepEqual((r.body as any).private_followup, { conversationId: LAUNCH, sourceMessageId: ASK, threadRootId: null, agent: "merit", privateFollowUp: true, dm_conversation_id: MERIT_DM });
   });
   it("an act in A1 posts the A1 line after any public part, and nothing moves to the DM", async () => {
-    const w = world(), m = model([{ content: "Happy to help with that.", tool_calls: [{ name: ANSWER_PRIVATELY_TOOL, args: { reason: "act" } }] }]);
+    const w = world(), m = model([{ content: JSON.stringify({ reply: "Happy to help with that.", route: "act" }) }]);
     const r = await run(w, m);
     const [post] = named(w, "team_hub_post_agent_message");
     assert.equal(post.args.p_body, "Happy to help with that.\n\nI can't take actions here yet.");
@@ -345,7 +367,7 @@ describe("the private part (flow 5)", () => {
     assert.equal(post.args.p_asked_in_message_id, null, "an answer in the DM links only to a message in the DM itself");
     assert.equal(post.args.p_parent_message_id, null);
     assert.equal(post.args.p_client_request_id, await uuidFrom(ASK, "merit", "dm"));
-    assert.ok(!m.requests[0].request.tools!.some((t) => t.function.name === ANSWER_PRIVATELY_TOOL), "no control tool in a DM");
+    assert.ok(!String(m.requests[0].request.messages[0].content).includes('"private"'), "no private route offered in a DM");
     assert.ok(!m.requests[0].request.tools!.some((t) => t.function.name === "crm_list_deals"), "a DM-scope read this module cannot run is not offered");
   });
   it("a question asked in the agent's own DM is answered there under the dm intent, linked to it", async () => {

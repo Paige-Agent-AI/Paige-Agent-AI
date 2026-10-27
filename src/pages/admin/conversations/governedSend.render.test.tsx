@@ -17,7 +17,7 @@ import { createRoot } from "react-dom/client";
 import { MemoryRouter } from "react-router-dom";
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { GOVERNED_SEND_COLS, SENDING_WINDOW_MS, governedEmailReceiptLabel, governedSendView, isApprovableDraft } from "./governedSend";
+import { GOVERNED_SEND_COLS, SCHEDULED_RELEASE_GRACE_MS, SENDING_WINDOW_MS, governedEmailReceiptLabel, governedNotSentLine, governedSendView, isApprovableDraft } from "./governedSend";
 import type { MessageRow } from "./inbox-shared";
 
 const db = vi.hoisted(() => ({
@@ -31,6 +31,9 @@ const db = vi.hoisted(() => ({
   draft: null as null | (() => Promise<{ data: unknown; error: unknown }>),
   /** send-message's answer (default: the undo-window queue). */
   sendAnswer: null as null | { data: unknown; error: unknown },
+  /** Bodies handed to the governed email door, and its answer (default: cancelled). */
+  doorBodies: [] as Array<Record<string, unknown>>,
+  doorAnswer: null as null | { data: unknown; error: unknown },
 }));
 
 vi.mock("@/integrations/supabase/client", () => {
@@ -70,7 +73,9 @@ vi.mock("@/integrations/supabase/client", () => {
         getUser: () => Promise.resolve({ data: { user: { id: "owner-1" } } }),
         onAuthStateChange: () => ({ data: { subscription: { unsubscribe: vi.fn() } } }),
       },
-      functions: { invoke: (name: string) => { db.invokes.push(name); if (name === "subagent-email-composer" && db.draft) return db.draft(); if (name === "send-message" && db.sendAnswer) return Promise.resolve(db.sendAnswer); return Promise.resolve({ data: { outcome: "queued_scheduled", message_id: "queued-1" }, error: null }); } },
+      functions: { invoke: (name: string, opts?: { body?: Record<string, unknown> }) => { db.invokes.push(name);
+        if (name === "comms-email-command") { db.doorBodies.push(opts?.body ?? {}); return Promise.resolve(db.doorAnswer ?? { data: { ok: true, cancelled: true }, error: null }); }
+        if (name === "subagent-email-composer" && db.draft) return db.draft(); if (name === "send-message" && db.sendAnswer) return Promise.resolve(db.sendAnswer); return Promise.resolve({ data: { outcome: "queued_scheduled", message_id: "queued-1" }, error: null }); } },
       storage: { from: () => ({ upload: () => Promise.resolve({ data: null, error: null }), createSignedUrl: () => Promise.resolve({ data: null, error: null }) }) },
     },
   };
@@ -132,6 +137,7 @@ const flush = async () => {
 const mounted: Array<() => Promise<void>> = [];
 beforeEach(() => {
   vi.clearAllMocks(); db.cancellations = []; db.invokes = []; db.contact = client; db.draft = null; db.sendAnswer = null;
+  db.doorBodies = []; db.doorAnswer = null;
   db.cancel = async () => ({ data: true, error: null });
 });
 afterEach(async () => { while (mounted.length) await mounted.pop()!(); });
@@ -351,6 +357,89 @@ describe.each([
     const host = await mountInbox(path);
     expect(buttons(host)).not.toContain("Approve & send");
     expect(host.textContent).toContain("Sending…");
+  });
+
+  // "Approve now, send later" — an approved email set for later reads Scheduled, can be cancelled
+  // through the governed email door (never the generic undo), and says plainly why it did not go out.
+  const OPERATION = "0b6d8c43-5a77-4f3b-9d0e-1c2f3a4b5c6d";
+  const inAnHour = new Date(Math.floor((Date.now() + 3_600_000) / 60_000) * 60_000).toISOString();
+  const scheduledRow = (over: Record<string, unknown> = {}) => message({ status: "queued", scheduled_for: inAnHour,
+    comms_email_operation: OPERATION, comms_email_state: "prepared", comms_email_prepared_at: NOW, comms_email_send_at: inAnHour, ...over });
+
+  it("a scheduled email reads Scheduled with its local time, and Cancel goes to the governed email door", async () => {
+    db.messages = [scheduledRow()];
+    db.threads = [thread];
+    const host = await mountInbox(path);
+    expect(host.textContent).toContain("Scheduled");
+    expect(host.textContent).not.toContain("Not sent");
+    expect(host.textContent).not.toContain("Sending…");
+    expect(buttons(host)).not.toContain("Approve & send");
+    const cancel = host.querySelector<HTMLButtonElement>('[data-governed-send="scheduled"]');
+    expect(cancel?.textContent).toBe(`Scheduled for ${new Date(inAnHour).toLocaleString(undefined, { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })} · Cancel`);
+    await act(async () => { cancel!.click(); await flush(); });
+    expect(db.doorBodies).toEqual([{ expected_tenant_id: "tenant-a", operation_id: OPERATION, cancel: true }]);
+    expect(db.cancellations).toEqual([]);
+    expect(toast.success).toHaveBeenCalledWith("Canceled — it won't be sent.");
+  });
+  it("a cancel the release beat is reported as too late, never as canceled", async () => {
+    db.messages = [scheduledRow()];
+    db.threads = [thread];
+    db.doorAnswer = { data: null, error: { context: { json: async () => ({ ok: false, cancelled: false, code: "COMMS_EMAIL_CANCEL_TOO_LATE", outcome: "provider_accepted" }) } } };
+    const host = await mountInbox(path);
+    await act(async () => { host.querySelector<HTMLButtonElement>('[data-governed-send="scheduled"]')!.click(); await flush(); });
+    expect(toast.error).toHaveBeenCalledWith("Too late — it already went out.");
+    expect(toast.success).not.toHaveBeenCalled();
+  });
+  it.each([
+    ["cancelled_by_owner", "Canceled — it won't be sent."],
+    ["blocked_suppressed", "Not sent — this person opted out of email since it was scheduled."],
+    ["sender_changed", "Not sent — the sending address or this person's email changed since it was scheduled."],
+    ["scheduler_authority_removed", "Not sent — the person who scheduled it no longer has access to this business."],
+    ["scheduled_release_missed", "Nothing went out."],
+  ])("a scheduled email closed as %s reads Not sent with one plain line and no cancel", async (reason, line) => {
+    db.messages = [scheduledRow({ status: "blocked", scheduled_for: null, comms_email_state: "refused", comms_email_reason: reason })];
+    db.threads = [thread];
+    const host = await mountInbox(path);
+    expect(host.textContent).toContain("Not sent");
+    expect(host.querySelector('[data-governed-send="not_sent"]')?.textContent).toBe(line);
+    expect(host.querySelector('[data-governed-send="scheduled"]')).toBeNull();
+    expect(host.textContent).not.toMatch(/cancelled_by_owner|blocked_suppressed|scheduler_authority_removed|scheduled_release_missed|sender_changed/);
+  });
+});
+
+describe("a scheduled governed email's state, with the clock injected", () => {
+  const T0 = Date.parse("2026-11-02T14:30:00.000Z");
+  const row = (over: Record<string, unknown>) => ({ comms_email_operation: "op", comms_email_state: "prepared", comms_email_prepared_at: "2026-11-01T10:00:00.000Z",
+    comms_email_send_at: "2026-11-02T14:30:00.000Z", status: "queued", created_at: "2026-11-01T10:00:00.000Z", direction: "outbound", ...over }) as unknown as MessageRow;
+  it("Scheduled before its time, Sending… inside the release grace, Not sent after it", () => {
+    expect(governedSendView(row({}), T0 - 1)).toBe("scheduled");
+    expect(governedSendView(row({}), T0)).toBe("sending");
+    expect(governedSendView(row({}), T0 + SCHEDULED_RELEASE_GRACE_MS)).toBe("sending");
+    expect(governedSendView(row({}), T0 + SCHEDULED_RELEASE_GRACE_MS + 1)).toBe("not_sent");
+  });
+  it("only a queued row is Scheduled; the release grace is the server's", () => {
+    expect(governedSendView(row({ status: "draft" }), T0 - 60_000)).toBe("not_sent");
+    expect(SCHEDULED_RELEASE_GRACE_MS).toBe(15 * 60_000);
+  });
+  it("claimed, refused and accepted scheduled rows follow the ordinary rules", () => {
+    expect(governedSendView(row({ comms_email_state: "refused", status: "blocked" }), T0 - 1)).toBe("not_sent");
+    expect(governedSendView(row({ comms_email_state: "dispatching", status: "draft", comms_email_claimed_at: new Date(T0 - 1000).toISOString() }), T0)).toBe("sending");
+    expect(governedSendView(row({ comms_email_state: "provider_accepted", status: "sent" }), T0)).toBe("settled");
+  });
+  it("a scheduled row is never an approvable draft", () => {
+    expect(isApprovableDraft(row({}))).toBe(false);
+  });
+  it("governedNotSentLine never shows a code", () => {
+    expect(governedNotSentLine("cancelled_by_owner")).toBe("Canceled — it won't be sent.");
+    expect(governedNotSentLine("blocked_no_consent")).toMatch(/^Not sent — this person opted out/);
+    expect(governedNotSentLine("send_no_longer_eligible")).toMatch(/changed since it was scheduled/);
+    expect(governedNotSentLine(null)).toBe("Nothing went out.");
+    expect(governedNotSentLine("weird_code")).toBe("Nothing went out.");
+  });
+  it("the select reads the send time and the refusal reason (and still nothing else from meta)", () => {
+    expect(GOVERNED_SEND_COLS).toContain("comms_email_send_at:meta->comms_email_binding->>send_at");
+    expect(GOVERNED_SEND_COLS).toContain("comms_email_reason:meta->comms_email_binding->>outcome_reason");
+    expect(GOVERNED_SEND_COLS).not.toMatch(/->>(command|governance|body)/);
   });
 });
 

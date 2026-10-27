@@ -48,7 +48,7 @@ import { ThreadFilters, useLabelCatalog } from "./conversations/ThreadFilters";
 import { ContactCardRail } from "./conversations/ContactCardRail";
 import { readableMessageBody, shouldFoldEmail } from "./conversations/messageReading";
 // INT-328 — a governed send (an email or invoice already approved and on its way) is never a draft.
-import { GOVERNED_SEND_COLS, GOVERNED_SEND_COPY, governedEmailReceiptLabel, governedSendView, isApprovableDraft, type GovernedSendFields } from "./conversations/governedSend";
+import { GOVERNED_SEND_COLS, GOVERNED_SEND_COPY, governedEmailReceiptLabel, governedNotSentLine, governedSendView, isApprovableDraft, scheduledForLabel, type GovernedSendFields } from "./conversations/governedSend";
 // E09 — the portal channel: recognise portal rows and reply through comms_portal_reply (no provider).
 import {
   PORTAL_BODY_MAX, PORTAL_IDENTITY_ID, createPortalRequestIds, isPortalHelpRequest, isPortalMessage, portalBodyError,
@@ -193,13 +193,16 @@ function MessageBubble({
   onApprove,
   onEdit,
   onCancelScheduled,
+  onCancelGovernedScheduled,
   approving,
   sendDisabled = false,
 }: {
-  m: MessageRow;
+  m: MessageRow & GovernedSendFields;
   onApprove: (m: MessageRow) => void;
   onEdit: (m: MessageRow) => void;
   onCancelScheduled: (id: string) => void;
+  /** Cancel an approved, scheduled governed email (by its operation) through the governed email door. */
+  onCancelGovernedScheduled: (operationId: string) => void;
   approving: boolean;
   sendDisabled?: boolean;
 }) {
@@ -284,6 +287,7 @@ function MessageBubble({
       }
       status={
         isCall ? voiceStatusPill(m)
+        : governed === "scheduled" ? <StatePill state="pending">{GOVERNED_SEND_COPY.scheduled.pill}</StatePill>
         : governed === "sending" ? <StatePill state="pending">{GOVERNED_SEND_COPY.sending.pill}</StatePill>
         : governed === "not_sent" ? (
           // Red deepened toward ink: the plain error pill measured 4.21:1 in light at 10px
@@ -335,6 +339,25 @@ function MessageBubble({
             {GOVERNED_SEND_COPY.unconfirmed.line}
           </p>
         ) :
+        // An approved email set to go out later: cancelled through the governed email door (never the
+        // generic undo, which no longer touches a governed row). The time is the viewer's local time.
+        governed === "scheduled" && m.comms_email_operation && m.comms_email_send_at ? (
+          <button
+            type="button"
+            data-governed-send="scheduled"
+            onClick={() => onCancelGovernedScheduled(m.comms_email_operation!)}
+            className="text-[11px] text-muted-foreground underline hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--ring))]"
+          >
+            Scheduled for {scheduledForLabel(m.comms_email_send_at)} · Cancel
+          </button>
+        ) :
+        governed === "not_sent" && m.comms_email_send_at ? (
+          <p data-governed-send="not_sent" className="text-[11px] leading-4 text-foreground">
+            {governedNotSentLine(m.comms_email_reason)}
+          </p>
+        ) :
+        // A governed email is never offered the generic undo below (its row may still read 'queued').
+        governed !== null ? undefined :
         // R-B1/R3: a queued scheduled outbound is findable + cancellable in the thread.
         m.status === "queued" && m.scheduled_for ? (
           <button
@@ -1041,6 +1064,27 @@ export default function ClientsConversations() {
     if (!accountEpochRef.current.accept(epoch)) return;
     if (error || data === false) { toast.error("Too late — Paige already sent it."); return; }
     toast.success("Canceled — back to your draft."); void load(); void loadThreads();
+  };
+
+  // Cancel an approved email set to go out later. Only the governed email door can: it closes the
+  // operation under the row lock, or says it is too late because the release already took it.
+  const cancelGovernedScheduled = async (operationId: string) => {
+    if (!activeTenantId) return;
+    const epoch = accountEpochRef.current.capture();
+    const { data, error } = await supabase.functions.invoke("comms-email-command", {
+      body: { expected_tenant_id: activeTenantId, operation_id: operationId, cancel: true },
+    });
+    if (!accountEpochRef.current.accept(epoch)) return;
+    // A refusal arrives as an HTTP error whose body is the door's answer.
+    let answer = (data ?? null) as Record<string, unknown> | null;
+    if (error) {
+      const context = (error as { context?: { json?: () => Promise<unknown> } }).context;
+      answer = await context?.json?.().then((v) => (v && typeof v === "object" ? v as Record<string, unknown> : null)).catch(() => null) ?? null;
+    }
+    if (answer?.cancelled === true) toast.success("Canceled — it won't be sent.");
+    else if (answer?.code === "COMMS_EMAIL_CANCEL_TOO_LATE") toast.error(answer.outcome === "provider_accepted" ? "Too late — it already went out." : "Too late — it's already on its way.");
+    else toast.error("Couldn't cancel it. Refresh the conversation to see where it stands.");
+    void load(); void loadThreads();
   };
 
   // ── One-click approve: send the existing draft row via the single outbound seam ──
@@ -1910,6 +1954,7 @@ export default function ClientsConversations() {
                   onApprove={approveDraft}
                   onEdit={editDraft}
                   onCancelScheduled={cancelScheduled}
+                  onCancelGovernedScheduled={cancelGovernedScheduled}
                   approving={approvingId === m.id}
                   sendDisabled={isSolo && handlingMode === "governed"}
                 />
@@ -1925,6 +1970,7 @@ export default function ClientsConversations() {
                     onApprove={approveDraft}
                     onEdit={editDraft}
                     onCancelScheduled={cancelScheduled}
+                    onCancelGovernedScheduled={cancelGovernedScheduled}
                     approving={approvingId === m.id}
                     sendDisabled={isSolo && handlingMode === "governed"}
                   />

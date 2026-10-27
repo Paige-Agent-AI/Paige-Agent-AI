@@ -16,6 +16,8 @@ export type ConfirmEmailPreview = {
   subject: string;
   /** Plain text. Rendered as text — markup in a draft is shown, never interpreted. */
   body_text: string;
+  /** "Approve now, send later": the instant (ISO, UTC) the approved email will go out. Absent = now. */
+  send_at?: string;
 };
 
 const nonEmpty = (v: unknown): v is string => typeof v === "string" && v.trim() !== "";
@@ -37,6 +39,9 @@ export function parseConfirmPreview(raw: unknown): ConfirmEmailPreview | undefin
     from_address: r.from_address,
     subject: r.subject,
     body_text: r.body_text,
+    // Only a readable instant passes; anything else is dropped (the card then shows no time, and the
+    // server's summary sentence still names it).
+    ...(typeof r.send_at === "string" && r.send_at.length <= 40 && Number.isFinite(Date.parse(r.send_at)) ? { send_at: r.send_at } : {}),
   };
 }
 

@@ -4,11 +4,52 @@
 // the service role with message_id set + scheduled_for OMITTED — so the FULL pre-send
 // pipeline (steps 1-5, C-2a) re-runs on release (SEND-MESSAGE-CONTRACT §4). A row that now
 // hits quiet hours / DND simply re-queues; that is correct, not an error (§13).
+//
+// "Approve now, send later": a row carrying meta.comms_email_binding is a SCHEDULED GOVERNED EMAIL.
+// It never takes the generic re-post below; releaseScheduledCommsEmail (_shared/comms-email/adapter.ts)
+// re-proves it as the person who approved it and asks send-message to send exactly the bound row.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { releaseScheduledCommsEmail, scheduledDrainRoute, type ScheduledReleaseDependencies } from "../_shared/comms-email/adapter.ts";
+import { resolveCommsEmailParties, readCommsEmailReadiness, emailProvidersFor, type CommsEmailAdmin } from "../_shared/comms-email/readiness.ts";
+import { commsProviderExecutionAllowed } from "../_shared/comms-provider-boundary.ts";
+import { runPreSend } from "../_shared/pre-send-pipeline.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
+
+// The release's database/network edges, bound to the service client. Every read is keyed by the
+// binding's own tenant and scheduler; nothing is taken from the leased row beyond what the binding says.
+const senderProviders = () => emailProvidersFor({ sendgridConfigured: !!Deno.env.get("SENDGRID_MAIL_SEND_API_KEY") });
+const releaseDependencies: ScheduledReleaseDependencies = {
+  now: () => Date.now(),
+  providerExecutionAllowed: ({ tenantId, actorUserId }) => commsProviderExecutionAllowed(admin, { tenantId, actorUserId }),
+  resolveParties: (input) => resolveCommsEmailParties(admin as unknown as CommsEmailAdmin, input, senderProviders()),
+  readiness: ({ tenantId, actorUserId, parties }) => readCommsEmailReadiness(admin as unknown as CommsEmailAdmin,
+    { tenantId, actorUserId, contactId: parties.contactId, recipient: parties.recipient, connectorId: parties.connectorId }, (key) => Deno.env.get(key), runPreSend),
+  readBinding: async (messageId) => {
+    const { data, error } = await admin.rpc("read_comms_email_send_binding", { _message_id: messageId });
+    if (error) throw new Error(String(error.message ?? "comms_email_binding_unavailable"));
+    return data;
+  },
+  send: async (payload) => {
+    const abort = new AbortController(); const timer = setTimeout(() => abort.abort(), 25000);
+    try {
+      const sent = await fetch(`${SUPABASE_URL.replace(/\/$/, "")}/functions/v1/send-message`, {
+        method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${SERVICE_ROLE_KEY}` },
+        body: JSON.stringify(payload), signal: abort.signal,
+      });
+      const answer = await sent.json().catch(() => null) as Record<string, unknown> | null;
+      const code = typeof answer?.code === "string" ? answer.code : typeof answer?.error === "string" ? answer.error : null;
+      return { answered: sent.status < 500 && answer !== null, code };
+    } finally { clearTimeout(timer); }
+  },
+  finalizeRefused: async ({ messageId, operationId, reason }) => {
+    const { error } = await admin.rpc("finalize_comms_email_send", { _message_id: messageId, _operation_id: operationId, _outcome: "refused", _provider_message_id: null, _reason: reason, _claimed_attempt: null });
+    return !error;
+  },
+  markSupportCase: async (messageId) => { await admin.rpc("mark_support_case_outbound", { _message_id: messageId }); },
+};
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -42,11 +83,22 @@ Deno.serve(async (req) => {
     id: string; channel_type: string; recipients: { address?: string }[] | null;
     body_text: string | null; body_html: string | null; subject: string | null;
     contact_id: string | null; connector_id: string | null; thread_key: string | null;
-    attachments: unknown[] | null;
+    attachments: unknown[] | null; meta: Record<string, unknown> | null;
   }>;
 
   let released = 0, requeued = 0, failed = 0;
+  // Scheduled governed emails, counted apart: released (the email service took it), refused (closed,
+  // nothing went out), left (nothing written; the next lease decides).
+  const governed = { released: 0, refused: 0, left: 0 };
   for (const m of rows) {
+    if (scheduledDrainRoute(m) === "comms_email") {
+      const r = await releaseScheduledCommsEmail(m.meta?.comms_email_binding, m.id, releaseDependencies);
+      if (r.result === "released") governed.released++;
+      else if (r.result === "refused") governed.refused++;
+      else governed.left++;
+      if (r.result === "left" || r.result === "invalid") console.warn("[comms-scheduled-drain] governed email left", m.id, r.result === "left" ? r.reason : "invalid_binding");
+      continue;
+    }
     const to = m.recipients?.[0]?.address ?? "";
     const bodyStr = m.channel_type === "email"
       ? (m.body_html ?? m.body_text ?? "")
@@ -79,5 +131,5 @@ Deno.serve(async (req) => {
     else if (outcome.startsWith("queued_")) requeued++;   // hit DND/quiet-hours on release — correct
     else failed++;
   }
-  return json(200, { claimed: rows.length, released, requeued, failed });
+  return json(200, { claimed: rows.length, released, requeued, failed, governed });
 });

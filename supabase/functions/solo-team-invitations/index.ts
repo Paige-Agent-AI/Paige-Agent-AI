@@ -61,6 +61,9 @@ const AUTHORED_REFUSALS = [
   "the workspace for this invitation was not named",
   "only an owner or admin may manage team invitations in that workspace",
   // create_solo_team_invite
+  "team invitations may grant only Admin or Member",
+  // EXP08 owners (20271116110008) rewords it now that the account holder may choose Owner. Both stay
+  // listed: the database answers with the old sentence until that migration is applied.
   "team invitations may grant only Owner, Admin or Member",
   "a valid email address is required",
   "work profile is too long",

@@ -6,6 +6,11 @@ import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.75.0
 import { DURABLE_JOB_STATES, type DurableJobState } from "./durable-job/mod.ts";
 
 type Client = SupabaseClient;
+export type ManualSystemsWork = {
+  id: string; status: DurableJobState; createdAt: string; updatedAt: string; settledAt: string | null;
+  /** Last stored owner-safe wording, not present worker liveness or instructions. */
+  safeSummary: string | null;
+};
 export type ManualSystemsRequestContext = { actorId: string; tenantId: string; intentId: string; threadId: string | null };
 export type ManualSystemsRequestResult = {
   readback: "unconfirmed";
@@ -15,9 +20,7 @@ export type ManualSystemsRequestResult = {
   resumedExisting: boolean;
   /** A transport receipt only. False never proves absence of delivery/effect. */
   dispatchAcknowledged: boolean;
-  work: { id: string; status: DurableJobState; createdAt: string; updatedAt: string; settledAt: string | null;
-    /** Last stored owner-safe wording, not present worker liveness or instructions. */
-    safeSummary: string | null };
+  work: ManualSystemsWork;
 };
 const record = (value: unknown): value is Record<string, unknown> => !!value && typeof value === "object" && !Array.isArray(value);
 const state = (value: unknown): value is DurableJobState => typeof value === "string" && DURABLE_JOB_STATES.some(s => s === value);
@@ -25,6 +28,20 @@ const time = (value: unknown): value is string => typeof value === "string" && N
 function oneRow(value: unknown): Record<string, unknown> {
   if (!Array.isArray(value) || value.length !== 1 || !record(value[0])) throw new Error("SYSTEMS_WORK_REQUEST_UNCONFIRMED");
   return value[0];
+}
+
+/** One home for the ORIGINAL twelve-field caller-JWT Work projection. The native
+ * reader owns current authority; this helper creates no eligibility or state. */
+export async function readManualSystemsWork(caller: Client, workId: string, signal: AbortSignal): Promise<ManualSystemsWork | null> {
+  const reply = await awaitSystemsCheckRequest(() => caller.rpc("get_paige_durable_work", { _work_id: workId }).abortSignal(signal), signal);
+  if (reply.error) return null;
+  const row = oneRow(reply.data);
+  if (Object.keys(row).length !== 12 || row.work_id !== workId || row.capability_key !== "systems.check"
+    || row.work_kind !== "systems_check" || !state(row.work_status) || row.attempt_count !== 1 || row.max_attempts !== 1
+    || !(row.safe_summary === null || (typeof row.safe_summary === "string" && row.safe_summary.length <= 1_200))
+    || !time(row.created_at) || !time(row.updated_at) || !(row.settled_at === null || time(row.settled_at))
+    || (row.work_status === "succeeded" && !time(row.settled_at))) return null;
+  return { id: workId, status: row.work_status, createdAt: row.created_at, updatedAt: row.updated_at, settledAt: row.settled_at, safeSummary: row.safe_summary };
 }
 
 /** No timers/retry/state store. The original host owns native cancellation scopes.
@@ -72,15 +89,8 @@ export async function prepareManualSystemsRequest(ports: {
   try {
     const signal = observationSignal();
     if (!(signal instanceof AbortSignal) || signal === requestSignal || signal.aborted) return { readback: "unconfirmed", workId };
-    const reply = await awaitSystemsCheckRequest(() => caller.rpc("get_paige_durable_work", { _work_id: workId }).abortSignal(signal), signal);
-    if (reply.error) return { readback: "unconfirmed", workId };
-    const row = oneRow(reply.data);
-    if (Object.keys(row).length !== 12 || row.work_id !== workId || row.capability_key !== "systems.check"
-      || row.work_kind !== "systems_check" || !state(row.work_status) || row.attempt_count !== 1 || row.max_attempts !== 1
-      || !(row.safe_summary === null || (typeof row.safe_summary === "string" && row.safe_summary.length <= 1_200))
-      || !time(row.created_at) || !time(row.updated_at) || !(row.settled_at === null || time(row.settled_at))
-      || (row.work_status === "succeeded" && !time(row.settled_at))) return { readback: "unconfirmed", workId };
-    return { readback: "available", resumedExisting: resumed, dispatchAcknowledged,
-      work: { id: workId, status: row.work_status, createdAt: row.created_at, updatedAt: row.updated_at, settledAt: row.settled_at, safeSummary: row.safe_summary } };
+    const work = await readManualSystemsWork(caller, workId, signal);
+    return work ? { readback: "available", resumedExisting: resumed, dispatchAcknowledged, work }
+      : { readback: "unconfirmed", workId };
   } catch { return { readback: "unconfirmed", workId }; }
 }

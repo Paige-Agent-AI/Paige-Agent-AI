@@ -1326,6 +1326,7 @@ SELECT pg_temp.j(:'u5', format('public.team_hub_open_agent_dm(%L::uuid,%L)', :'t
 INSERT INTO public.team_hub_files(id,tenant_id,channel_id,uploaded_by,client_request_id,storage_path,file_name,mime_type,size_bytes)
  VALUES ('51000000-0000-4000-8000-000000000001',:'ta',:'dm_marcus_files',:'u5',gen_random_uuid(),
   :'ta'||'/team-hub/51000000-0000-4000-8000-000000000001','notes.txt','text/plain',10);
+SELECT pg_temp.post(:'u5', :'ta', :'dm_marcus_files', 'Notes for the Harper call')#>>'{message,id}' AS marcus_note \gset
 SELECT count(*) AS consumed_before FROM public.team_hub_agent_turns WHERE asker_user_id=:'u2' AND consumed_at IS NOT NULL AND channel_id=:'launch' \gset
 DELETE FROM public.tenant_members WHERE tenant_id=:'ta' AND user_id IN (:'u2', :'u5');
 SELECT pg_temp.check(NOT EXISTS(SELECT 1 FROM public.team_hub_channels WHERE id=:'dm_merit')
@@ -1335,6 +1336,13 @@ SELECT pg_temp.check(NOT EXISTS(SELECT 1 FROM public.team_hub_channels WHERE id=
  AND EXISTS(SELECT 1 FROM public.team_hub_channels WHERE id=:'dm_marcus_files')
  AND NOT EXISTS(SELECT 1 FROM public.team_hub_channel_members WHERE channel_id=:'dm_marcus_files'),
  'when a seat ends its agent DMs and running turns go; replies already posted in a channel stay; an agent DM with a file record stays, memberless');
+-- Marcus is re-invited: his kept agent DM comes back with its history, as a person DM does.
+INSERT INTO public.tenant_members(tenant_id,user_id,role,status,is_owner,joined_at) VALUES (:'ta',:'u5','member','active',false,now());
+SELECT pg_temp.j(:'u5', format('public.team_hub_open_agent_dm(%L::uuid,%L)', :'ta', 'cura'))->>'channel_id' AS dm_marcus_back \gset
+SELECT pg_temp.check(:'dm_marcus_back'=:'dm_marcus_files'
+ AND (SELECT bool_or(m->>'id'=:'marcus_note') FROM jsonb_array_elements(pg_temp.j(:'u5', format('public.team_hub_list_messages(%L::uuid,%L::uuid)', :'ta', :'dm_marcus_files'))->'messages') m),
+ 'a re-invited person reopens the agent DM kept for its file, with its history');
+DELETE FROM public.tenant_members WHERE tenant_id=:'ta' AND user_id=:'u5';
 
 -- 5l. Deleting a workspace still cascades through Team Hub, agent rows included.
 SELECT pg_temp.j(:'u7', format('public.team_hub_create_channel(%L::uuid,%L,%L,%L::uuid[],gen_random_uuid())', :'tb','general','team','{}'))->>'channel_id' AS b_general \gset
@@ -1347,7 +1355,7 @@ SELECT pg_temp.check(:'b_a'='true' AND :'b_p'='true' AND :'b_dm'='true' AND :'b_
  AND NOT EXISTS(SELECT 1 FROM public.team_hub_agent_turns WHERE tenant_id=:'tb')
  AND NOT EXISTS(SELECT 1 FROM public.team_hub_channels WHERE tenant_id=:'tb'),
  'deleting a workspace cascades through tenant_members and Team Hub, agent turns and agent DMs included, without error');
-\echo 'PASS: a seat that ends drops its agent DMs and running turns (a hold keeps them; a DM holding a file is left); deleting a workspace cascades cleanly'
+\echo 'PASS: a seat that ends drops its agent DMs and running turns (a hold keeps them; a DM holding a file is left, and returns with its history on re-invite); deleting a workspace cascades cleanly'
 
 -- 5m. MUTANTS (§71.4). Each guard is weakened on its own, inside a transaction that is rolled back,
 -- and the property it protects is re-probed: every mutant must make its probe fail. Setup runs outside

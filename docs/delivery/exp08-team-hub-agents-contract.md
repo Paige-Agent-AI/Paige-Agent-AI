@@ -13,6 +13,31 @@ tolerant parsers and the roster correction, migrations `20271116120008` and `202
 origin/main `e8197859e`. Line numbers come from the grounding notes, which were read at `9dc021ee`.
 Where the two differ, re-check before building (§71.1).
 
+**A1a notes (2026-10-27, after verification and compliance review).** These record how A1a was built
+where this contract left a detail open, or where review changed it; the approved design is unchanged.
+- **What the per-seat cap counts** (section 9, corrected): every model turn started, each acceptance and
+  each re-arm, in `team_hub_agent_turns.attempts`. *Ask again* works under the cap and is refused
+  `rate_limited` at it, which the UI shows with the approved line *You've reached 30 agent replies this
+  hour. Try again later.*
+- **A reused request id** never binds another question's reply: the post door's conflict path accepts a
+  stored row only when it answers this turn's question in this place (`asked_in_message_id` and
+  `parent_message_id` match), otherwise `invalid`.
+- **Two triggers are re-created with a wider column list**, each because its guard now reads the column:
+  `team_hub_member_scope` adds `user_id`, `team_hub_message_scope` adds `asked_in_message_id`,
+  `author_kind` and `agent_key`. Both are listed in the migration header and checked against
+  production's definitions in the proof.
+- **The roster's config change bumps each row's `version`**, as the orchestrator's config writer
+  (`setAgentJobKind`) does; an untouched MERIT or NEXUS seed goes from 1 to 3 (remit, then config).
+- **An agent DM kept at seat end because it holds a file** comes back with its history if the person is
+  re-invited, as a person DM does (proved).
+- **`team_hub_open_agent_dm` is callable by authenticated users in A1a**, before any UI reaches it. It
+  leaks nothing: it acts only for the caller's own JWT, needs an active seat with Team conversations on in
+  a canonical SOLO workspace, and makes only the caller's own DM, with the caller as its one member.
+- **The stored *never does* lists hold the refusals only.** Three bracketed explanations in
+  [the personalities](exp08-team-hub-agents-personalities.md) are left out deliberately: MERIT's names a
+  doctrine section, internal jargon that must never reach a person (§11), and VERA's and MENTOR's explain
+  a refusal rather than state one.
+
 Increments 1–4 are in
 [collaboration](exp08-team-hub-collaboration-contract.md),
 [team work](exp08-team-hub-increment2-work-contract.md),
@@ -208,7 +233,8 @@ Priya (admin), Marcus and Sam (members).
      - The state comes from the DM turn's accepted-turn record (A1), which carries no DM content:
        accepted and not consumed is *answering*; consumed with a posted message is *replied*;
        consumed with no posted message (the turn failed, or the tab closed) shows nothing new.
-       *Ask again* re-arms that same record (A1), so the per-seat count is kept.
+       *Ask again* re-arms that same record (A1). *Corrected at A1a:* each re-arm runs a model turn,
+       so it counts toward the per-seat cap (section 9); the record is kept, the count is not.
    - Nothing ever says the private answer was sent. The fixed line is present tense.
    - The channel note carries no link to the DM message, so no private text can flow back into the
      channel.
@@ -364,8 +390,9 @@ take actions here yet.* Acts arrive in A2.
   - Single use: `consumed_at` is set in the same transaction as the post.
   - A turn that ends without posting (a failure, or a closed tab) is marked ended: the server sets
     `consumed_at` and leaves `posted_message_id` null. A retry with the same intent re-arms that
-    row with a new `token_hash` instead of inserting a second one, so it still counts once toward
-    the per-seat cap (section 9). Flow 5's other-viewer line reads these three states.
+    row with a new `token_hash` instead of inserting a second one. *Corrected at A1a:* every start,
+    the first and each re-arm, is recorded in the row's `attempts` and counts toward the per-seat cap
+    (section 9). Flow 5's other-viewer line reads these three states.
 - **New definers** (SECURITY DEFINER, `search_path=''`, returning `{ok, code}`):
   - `team_hub_accept_agent_turn(p_tenant, p_asker, p_channel_id, p_source_message_id, p_agent_key,
     p_intent, p_token_hash)`: **`service_role` only**, called only by `paige-ai-chat` when it
@@ -975,6 +1002,11 @@ L11755-11758).
   - **Fan-out is bounded twice,** on top of the existing chat rate limit: at most 3 agents per
     message, and at most 30 agent turns per seat per rolling hour, counted in
     `team_hub_agent_turns` at acceptance. DM answers and assignment runs count toward the 30.
+    *Corrected at A1a, exactly what is counted:* every model turn started, which is each new
+    acceptance and each re-arm of a turn that ended without posting or was abandoned (*Ask again*
+    re-runs a full model turn). Each start is recorded in the row's `attempts`; the cap is the number
+    of those inside the rolling hour, for that person in that workspace. A refusal (`duplicate`,
+    `in_flight`, `rate_limited` or any other) starts nothing and counts nothing.
   - Spend is traced, not billed.
   - **Assignments cannot run unattended** (scheduled, background, or "work on it overnight") until:
     - M1 lands;

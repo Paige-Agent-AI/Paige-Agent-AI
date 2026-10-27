@@ -7907,7 +7907,7 @@ Current gaps:
   storage and doors for PAIGE and her six agents to take part in Team Hub — agent-authored messages
   backed by a single-use accepted-turn record (service-role acceptance, authenticated posting under the
   asker's JWT), agent mentions (at most 3 per message), the person-to-agent `agent_dm` (one member,
-  invisible to owners), one reply per message and agent, 30 accepted turns per seat per hour — plus
+  invisible to owners), one reply per message and agent, at most 30 model turns started per seat per hour (re-arms counted) — plus
   tolerant parsers in the Team Hub screen and PAIGE's `readRoster`, the MERIT/NEXUS roster correction
   (§10 below), the channel allowlist, read-only DM scope and personalities as data on the six platform
   rows, and the `team_hub_agents` tier feature (Solo + Sub-account, §61 exception). **No agent speaks

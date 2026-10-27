@@ -1033,8 +1033,11 @@ const SOURCES = {
   // idempotent replay, so a re-send could deliver twice). (4) A managed campaign send (`ecr:` key, service
   // role, marketing) gets the campaign lane's custom_args, tracking and outcome_unknown on an unreadable answer;
   // other sends with a message row carry tenant + message ids. (5) The missing-key string the comms classifier
-  // reads is the SendGrid one. No authority, verifier, recipient, tenant gate, H2 refusal or dispatch branch
-  // changed; paige-ai-chat untouched, so all dispatch fingerprints are unchanged. Old digest 2753af0d… reproduced
+  // reads is the SendGrid one. No authority, verifier, recipient, tenant gate or dispatch branch changed;
+  // CORRECTION (independent §39 review, 2026-10-27): change (2) WAS an H2 change, not "H2 untouched" — keeping
+  // any mail.paigeagent.ai From and remapping paigeagent.ai let a workspace admin's own 'resend' connector send
+  // as another business's managed address or as PAIGE; fixed by the H2 renewal below.
+  // paige-ai-chat untouched, so all dispatch fingerprints are unchanged. Old digest 2753af0d… reproduced
   // from b39fda02 (git show HEAD:… | TypeScript printer {removeComments:true}, sha256) before renewing.
   // Renew this digest only.
   // EXP03 unconfirmed-send follow-up (2026-10-27, same branch), AUTHOR-REVIEW / LOWER ASSURANCE: the campaign-only
@@ -1044,7 +1047,17 @@ const SOURCES = {
   // "delivery_unconfirmed", and a direct send with a contact/connector gets one thread row marked the same
   // (both status CHECKs admit no "unknown"). No authority, recipient, tenant gate, H2 refusal, provider payload
   // or dispatch branch changed. Prior value 72f6da30… (above, this branch) reproduced before renewing.
-  "supabase/functions/send-message/index.ts": "e6fc6c245300763302329b84ffe4bffdc7b6aad39b5c9f860ccfb55cc365594c",
+  // EXP03 H2 + review-fix renewal (2026-10-27, same branch), AUTHOR-REVIEW / LOWER ASSURANCE (an independent §39
+  // reviewer found the H2 hole and must confirm the fix): (a) H2 — every non-SendGrid-connector From is the
+  // business's data, so the adapter uses platform-sendgrid.ts tenantFrom: a mail.paigeagent.ai From is kept ONLY
+  // when it equals THIS tenant's own managed address resolved server-side (tenant_sender_identity's address and
+  // its active tenant_email_identities row, for the derived tenantId; never a connector field); everything else,
+  // including any paigeagent.ai address (never remapped), sends as notifications@ under the business's name, and
+  // the Reply-To fallback never points at paigeagent.ai. (b) A row already marked delivery_unconfirmed is refused
+  // (outcome_unknown + unconfirmed, no provider call) after the §9 tenant gate and before the provider floor;
+  // the message read adds the `error` column. No authority, recipient, tenant gate, H2 SendGrid-connector
+  // refusal or dispatch branch changed. Prior e6fc6c24… reproduced from 0999a6a3 before renewing.
+  "supabase/functions/send-message/index.ts": "e1c22250edaa73de87a979a4642298e785f71a08c88b405d27a6427905683872",
   "supabase/functions/_shared/paige-spine/contracts.ts": "2d771686d636c04d2e07d9b8c336e19cde246b9a303ddd034d7ae8500f7eefb4",
   // Operator retirement adds opt-in timeout/no-retry controls; ordinary callers retain
   // their existing behavior. Renewed non-author review and actual retry controls are

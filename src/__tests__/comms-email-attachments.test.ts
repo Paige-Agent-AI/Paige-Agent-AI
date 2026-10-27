@@ -166,7 +166,7 @@ function bucket(initial: Record<string, { bytes: Uint8Array; type: string }>, op
   const storage: CommsEmailStorage = {
     getBucket: async () => ({ data: { allowed_mime_types: opts.types === undefined ? ["application/pdf", "image/png"] : opts.types }, error: null }),
     from: () => ({
-      download: async (p: string) => { calls.push(`download ${p}`); const o = objects.get(p); return o ? { data: new Blob([o.bytes], { type: o.type }), error: null } : { data: null, error: { message: "not found" } }; },
+      download: async (p: string) => { calls.push(`download ${p}`); const o = objects.get(p); return o ? { data: new Blob([o.bytes.slice()], { type: o.type }), error: null } : { data: null, error: { message: "not found" } }; },
       upload: async (p: string, body: Uint8Array | Blob, o: { contentType: string; upsert: boolean }) => {
         calls.push(`upload ${p} upsert=${o.upsert}`);
         if (objects.has(p) && !o.upsert) return { data: null, error: { statusCode: "409" } };
@@ -245,7 +245,7 @@ describe("review round 2 — sizes, the digest and parallel reads", () => {
     const storage: CommsEmailStorage = {
       getBucket: async () => ({ data: null, error: null }),
       from: () => ({
-        download: async () => { inFlight++; peak = Math.max(peak, inFlight); await new Promise((r) => setTimeout(r, 5)); inFlight--; return { data: new Blob([PDF], { type: "application/pdf" }), error: null }; },
+        download: async () => { inFlight++; peak = Math.max(peak, inFlight); await new Promise((r) => setTimeout(r, 5)); inFlight--; return { data: new Blob([PDF.slice()], { type: "application/pdf" }), error: null }; },
         upload: async () => ({ data: null, error: null }),
       }),
     };

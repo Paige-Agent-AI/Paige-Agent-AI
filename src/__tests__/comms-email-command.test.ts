@@ -70,7 +70,7 @@ type Setup = {
   cancelFails?: boolean;
   // The private bucket the composer uploads into: object path -> bytes + stored type. `storageFails`
   // makes every read answer an error.
-  objects?: Record<string, { bytes: Uint8Array; type: string }>; storageFails?: boolean; bucketTypes?: string[] | null;
+  objects?: Record<string, { bytes: Uint8Array; type: string }>; storageFails?: boolean; bucketTypes?: readonly string[] | null;
 };
 function setup(options: Setup = {}) {
   const tables: Record<string, Row[]> = {
@@ -127,13 +127,13 @@ function setup(options: Setup = {}) {
     getBucket: async (id: string) => {
       storageCalls.push({ op: "getBucket", path: id });
       if (options.storageFails) return { data: null, error: { message: "storage down" } };
-      return { data: { id, allowed_mime_types: options.bucketTypes === undefined ? BUCKET_TYPES : options.bucketTypes }, error: null };
+      return { data: { id, allowed_mime_types: options.bucketTypes === undefined ? BUCKET_TYPES : options.bucketTypes && [...options.bucketTypes] }, error: null };
     },
     from: (bucket: string) => ({
       download: async (path: string) => {
         storageCalls.push({ op: "download", path });
         const o = bucket === "comms-attachments" && !options.storageFails ? objects.get(path) : undefined;
-        return o ? { data: new Blob([o.bytes], { type: o.type }), error: null } : { data: null, error: { message: "Object not found" } };
+        return o ? { data: new Blob([o.bytes.slice()], { type: o.type }), error: null } : { data: null, error: { message: "Object not found" } };
       },
       upload: async (path: string, body: Uint8Array, opts: { contentType: string; upsert: boolean }) => {
         storageCalls.push({ op: "upload", path, upsert: opts.upsert });
@@ -882,7 +882,7 @@ describe("comms-email-command: files the approved email carries", () => {
   const files = () => ({ [src1]: { bytes: PDF, type: "application/pdf" }, [src2]: { bytes: PNG, type: "image/png" } });
   const ready = { sender_provider: "resend" } as Partial<CommsEmailReadiness>;
   const attachments = [{ path: src1 }, { path: src2 }];
-  const sha = async (b: Uint8Array) => [...new Uint8Array(await crypto.subtle.digest("SHA-256", b))].map(x => x.toString(16).padStart(2, "0")).join("");
+  const sha = async (b: Uint8Array) => [...new Uint8Array(await crypto.subtle.digest("SHA-256", b.slice()))].map(x => x.toString(16).padStart(2, "0")).join("");
   // The fingerprint this exact request had before files existed (fe98354b0), with a fixed cycle nonce.
   const GOLDEN_NO_FILES_FINGERPRINT = "c36cec82fca15481";
 

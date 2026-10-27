@@ -1,5 +1,35 @@
 # Finance department — current source and full operating target
 
+## October27 — original financial Play targets, source consumer
+
+Budgeting & Forecasting now consumes the existing focused `game_plan` review
+through the page's original `useBusinessReview` port. It presents original F7
+financial targets, issued actuals, variance, periods, currencies and owning-Play
+links using the shared Executive target component. The canonical Mission/native
+owner checks, Metric issuer, expiry and record resolver remain authoritative.
+The source sample is at most six total targets: an empty financial subset never
+claims that the business has no financial goals. A Play target is not a budget or
+cash forecast; the original unsupported forecast-input states remain visible.
+
+This is a read-only source increment under EXP02 O04/O10/O14/O16. It creates no
+ledger, target store, calculation, domain writer, provider permission, budget,
+forecast, approval, execution, Rail receipt or specialist runtime. Current
+actor/business resolution and a matching focused envelope precede facts; failure,
+scope change and expired measurements withhold unsupported values. Refresh reuses
+the original reader. VERA receives an unsent context hint, not copied actuals or
+write authority. Banking and all seven Finance destinations remain intact.
+
+Functional:85 controlled assertions across five original/new suites pass. Visual: actual component
+rendering in Mineral/Obsidian, desktop/narrow layouts and product Schibsted font
+verified with synthetic inputs. Experiential: local keyboard disclosure,
+original-record routing/Back and preserved synthetic discussion verified; the
+owning Play is outside this fixture. Authenticated new-target, roles/cohorts,
+native200percent zoom and Live proof remain owed while browser custody is pending.
+Founder Acceptance: NOT_ACCEPTED. ALG03/06/11/12/13 and CAP009–017 readiness do not
+advance from this presentation. [Bounded evidence](../evidence/ui-delivery/e2-financial-play-targets.md)
+tracks source, review, CI, merge, deployment and customer QA separately. Prior
+authenticated seven-view/source evidence below remains historical and valid.
+
 ## October25 — fresh seven-view Finance read and reload
 
 The existing designated ordinary SOLO Owner completed a fresh read of Overview,

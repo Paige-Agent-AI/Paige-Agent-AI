@@ -1,0 +1,288 @@
+{
+  "source": "3bfe79e18cb619af79de928f2b7e748e8b6e38e9",
+  "before": {
+    "backgrounds": [
+      {
+        "color": "rgb(251, 249, 245)",
+        "tag": "DIV"
+      },
+      {
+        "color": "rgb(246, 245, 241)",
+        "tag": "DIV"
+      },
+      {
+        "color": "rgb(251, 249, 245)",
+        "tag": "MAIN"
+      },
+      {
+        "color": "rgb(251, 249, 245)",
+        "tag": "SECTION"
+      },
+      {
+        "color": "rgb(232, 229, 223)",
+        "tag": "DIV"
+      },
+      {
+        "color": "rgb(249, 250, 251)",
+        "tag": "BODY"
+      },
+      {
+        "color": "rgb(249, 250, 251)",
+        "tag": "HTML"
+      }
+    ],
+    "color": "rgb(139, 112, 73)",
+    "fontSize": "14px",
+    "text": "Open owning Play",
+    "ratio": 4.42643968602047
+  },
+  "corrected": [
+    {
+      "theme": "Mineral",
+      "backgrounds": [
+        {
+          "color": "rgb(251, 249, 245)",
+          "tag": "DIV"
+        },
+        {
+          "color": "rgb(246, 245, 241)",
+          "tag": "DIV"
+        },
+        {
+          "color": "rgb(251, 249, 245)",
+          "tag": "MAIN"
+        },
+        {
+          "color": "rgb(251, 249, 245)",
+          "tag": "SECTION"
+        },
+        {
+          "color": "rgb(232, 229, 223)",
+          "tag": "DIV"
+        },
+        {
+          "color": "rgb(249, 250, 251)",
+          "tag": "BODY"
+        },
+        {
+          "color": "rgb(249, 250, 251)",
+          "tag": "HTML"
+        }
+      ],
+      "color": "rgb(32, 30, 35)",
+      "fontSize": "14px",
+      "text": "Open owning Play",
+      "ratio": 15.70766206024138
+    },
+    {
+      "theme": "Obsidian",
+      "backgrounds": [
+        {
+          "color": "rgb(16, 14, 20)",
+          "tag": "DIV"
+        },
+        {
+          "color": "rgb(12, 10, 27)",
+          "tag": "DIV"
+        },
+        {
+          "color": "rgb(16, 14, 20)",
+          "tag": "MAIN"
+        },
+        {
+          "color": "rgb(16, 14, 20)",
+          "tag": "SECTION"
+        },
+        {
+          "color": "rgb(8, 7, 11)",
+          "tag": "DIV"
+        },
+        {
+          "color": "rgb(12, 7, 18)",
+          "tag": "BODY"
+        },
+        {
+          "color": "rgb(12, 7, 18)",
+          "tag": "HTML"
+        }
+      ],
+      "color": "rgb(246, 242, 234)",
+      "fontSize": "14px",
+      "text": "Open owning Play",
+      "ratio": 17.176628146214266
+    }
+  ],
+  "layouts": [
+    {
+      "state": "closed",
+      "color": "rgb(32, 30, 35)",
+      "documentWidth": 1536,
+      "viewport": [
+        1536,
+        770
+      ]
+    },
+    {
+      "state": "open",
+      "documentWidth": 1536,
+      "draft": "Keep this discussion while I review Finance.",
+      "viewport": [
+        1536,
+        770
+      ]
+    },
+    {
+      "state": "closed",
+      "color": "rgb(32, 30, 35)",
+      "documentWidth": 1366,
+      "viewport": [
+        1366,
+        768
+      ]
+    },
+    {
+      "state": "open",
+      "documentWidth": 1366,
+      "draft": "Keep this discussion while I review Finance.",
+      "viewport": [
+        1366,
+        768
+      ]
+    },
+    {
+      "state": "closed",
+      "color": "rgb(32, 30, 35)",
+      "documentWidth": 1024,
+      "viewport": [
+        1024,
+        768
+      ]
+    },
+    {
+      "state": "open",
+      "documentWidth": 1024,
+      "draft": "Keep this discussion while I review Finance.",
+      "viewport": [
+        1024,
+        768
+      ]
+    },
+    {
+      "state": "closed",
+      "color": "rgb(32, 30, 35)",
+      "documentWidth": 900,
+      "viewport": [
+        900,
+        1000
+      ]
+    },
+    {
+      "state": "open",
+      "documentWidth": 900,
+      "draft": "Keep this discussion while I review Finance.",
+      "viewport": [
+        900,
+        1000
+      ]
+    },
+    {
+      "theme": "Obsidian",
+      "documentWidth": 1536,
+      "viewport": [
+        1536,
+        770
+      ]
+    },
+    {
+      "theme": "Obsidian",
+      "documentWidth": 390,
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "theme": "Obsidian",
+      "documentWidth": 320,
+      "viewport": [
+        320,
+        844
+      ]
+    }
+  ],
+  "states": [
+    {
+      "state": "partial",
+      "documentWidth": 390,
+      "linkColor": "rgb(32, 30, 35)",
+      "view": "Financial Play targetsSaved targets and issued actuals, separate from a company budget or cash forecast.Recorded receipts targetactive · revision 1At least USD 15000.00Grow the recurring service business · Oct 1, 2026–Oct 31, 2026 · UTCActualUSD 12000.00VarianceUnverifiedAttainment unverified · Partial coverage · Oct 27, 2026, 4:10 AMMeasurement caveatsSynthetic layout input. Recorded receipts are not bank deposits.Open owning PlaySource & coverageOnly financial targets included in the current review sample appear here. Open Business Game Plan for all saved targets.Synthetic target projection; no saved customer record or executed work.Open Business Game Plan",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "state": "expired",
+      "documentWidth": 390,
+      "linkColor": "rgb(32, 30, 35)",
+      "view": "Financial Play targetsSaved targets and issued actuals, separate from a company budget or cash forecast.Recorded receipts targetactive · revision 1At least USD 15000.00Grow the recurring service business · Oct 1, 2026–Oct 31, 2026 · UTCActual unavailable. No zero or attainment is assumed.Open owning PlaySource & coverageOnly financial targets included in the current review sample appear here. Open Business Game Plan for all saved targets.Synthetic target projection; no saved customer record or executed work.Open Business Game Plan",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "state": "empty",
+      "documentWidth": 390,
+      "linkColor": "rgb(32, 30, 35)",
+      "view": "Financial Play targetsSaved targets and issued actuals, separate from a company budget or cash forecast.No financial targets were returned in this review sample. Other targets may exist.Source & coverageOnly financial targets included in the current review sample appear here. Open Business Game Plan for all saved targets.Synthetic target projection; no saved customer record or executed work.Open Business Game Plan",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "state": "unavailable",
+      "documentWidth": 390,
+      "linkColor": "rgb(32, 30, 35)",
+      "view": "Financial Play targetsSaved targets and issued actuals, separate from a company budget or cash forecast.Financial targets are unavailable in this review. No target or actual is inferred.Open Business Game Plan",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "state": "loading",
+      "documentWidth": 390,
+      "linkColor": "rgb(32, 30, 35)",
+      "view": "Financial Play targetsSaved targets and issued actuals, separate from a company budget or cash forecast.Reading permitted Play targets…Open Business Game Plan",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "state": "error",
+      "alert": "Play targets could not be verified. No target or actual is inferred.Retry target read",
+      "documentWidth": 390,
+      "linkColor": "rgb(32, 30, 35)",
+      "view": "Financial Play targetsSaved targets and issued actuals, separate from a company budget or cash forecast.Play targets could not be verified. No target or actual is inferred.Retry target readOpen Business Game Plan",
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "state": "member",
+      "alert": "Financial access is restrictedAn active workspace owner or administrator must authorize this read.Retry access check",
+      "documentWidth": 390,
+      "linkColor": null,
+      "viewport": [
+        390,
+        844
+      ]
+    }
+  ],
+  "backend": "NONE",
+  "customerAcceptance": "UNVERIFIED"
+}

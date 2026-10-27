@@ -44,7 +44,7 @@ export function useSalesPerformanceMetrics() {
   return { phase, metrics, unavailableKeys: {}, retry: noop };
 }
 export function useFinanceInvoices() { return { phase: useHarnessParams().get('state') === 'member' ? 'denied' : 'ready', rows: [], identity: 'synthetic', hasMore: false, readAt: null, retry: noop, loadMore: noop }; }
-export function useBusinessReview() {
+export function useBusinessReview(_epoch?: string | null, _period?: string, focused?: { actorId: string }) {
   const p = useHarnessParams(), state = p.get('state') ?? 'ready';
   const [generation, setGeneration] = useState(0);
   const refresh = () => setGeneration(value => value + 1);
@@ -53,6 +53,23 @@ export function useBusinessReview() {
   const input = structuredClone(TEST_BUSINESS_REVIEW);
   input.tenant_id = p.get('workspace') === 'b' ? SECOND_REVIEW_TENANT : TEST_REVIEW_TENANT;
   const snapshot = withTargetAndFinanceFixtures(input, state, true);
+  if (focused) {
+    const original = snapshot.domains.game_plan;
+    if (original?.status === 'available') {
+      const targets = original.data.mission_targets?.map(row => ({ ...row,
+        target: { ...row.target, title: 'Recorded receipts target', desired_value: '1500000',
+          metric: { ...row.target.metric, key: 'sales.cash.recorded_received', unit: 'currency_minor', value_kind: 'currency_totals' as const, currency: 'usd', semantics: 'event_timestamp_cohort' as const } },
+        observation: state === 'expired' ? { state: 'unavailable' as const, reason: 'evidence_unverified' as const }
+          : { state: state === 'partial' ? 'partial' as const : 'available' as const, actual: '1200000',
+            variance: state === 'partial' ? null : '-300000', attainment: state === 'partial' ? 'unknown' as const : 'not_met' as const,
+            period_complete: false, as_of: new Date().toISOString(), source_revision_ref: 'sr_v1_' + 'a'.repeat(64),
+            reference_expires_at: new Date(Date.now() + 3600000).toISOString(), caveats: ['Synthetic layout input. Recorded receipts are not bank deposits.'] },
+      }));
+      return { state: 'ready', snapshot: { ...snapshot, actor_id: 'synthetic-owner', requested: ['game_plan'],
+        domains: { game_plan: state === 'unavailable' ? { status: 'unavailable', data: null, reason: 'synthetic_unavailable' }
+          : { status: 'available', data: { ...original.data, mission_targets: targets } } } }, refresh };
+    }
+  }
   if (state === 'unavailable') snapshot.domains.finance = { status: 'unavailable', data: null, reason: 'Synthetic source unavailable' };
   if (generation && snapshot.domains.finance?.data?.finance_evidence?.sources[0]) snapshot.domains.finance.data.finance_evidence.sources[0].company_label = 'Example refreshed source';
   return { state: 'ready', snapshot, refresh };

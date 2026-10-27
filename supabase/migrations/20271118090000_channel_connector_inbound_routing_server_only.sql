@@ -6,12 +6,22 @@
 -- workspace admin (channel_connectors_insert/_update RLS). The global unique indexes stop an admin
 -- taking an address or domain another business already holds, but not one nobody holds yet: a
 -- retired business's old <slug>@mail.paigeagent.ai, the slug a future business will be given, or
--- a customer domain before its real owner connects it. Whoever claims it first receives that mail.
+-- a customer domain before its real owner connects it, by writing the column directly.
 -- Recorded as a follow-up of #2976 (config-registry); owner approved 2026-10-27.
 --
 -- WHAT. guard_channel_connector_inbound_routing (BEFORE INSERT OR UPDATE): a write that comes
 -- DIRECTLY from an authenticated or anon session may not set inbound_address/inbound_domain on
--- INSERT, nor change either on UPDATE. Every other column keeps its current RLS behaviour.
+-- INSERT, nor change either on UPDATE. On a row that already carries a routing value it also may
+-- not switch the row back on (active false -> true, or a status other than 'disabled'), nor change
+-- channel_type, provider, config or tenant_id: the router matches on channel_type + active, server
+-- paths disable a row while keeping its address (domain unverified or deleted, business suspended,
+-- comms restricted), and dropping config.managed_default would let the next re-provision mint a
+-- second managed row while the first stays routable. Switching a routing row OFF stays allowed.
+-- No browser code writes channel_connectors at all (src/ only reads it).
+--
+-- NOT CLOSED HERE (review of #2983): a managed address a business gives up by renaming becomes
+-- free, and another business can take it through PAIGE's own provisioning (a rename to that slug,
+-- register_solo_setup_managed_email). That needs a retired-address list; tracked as its own change.
 --
 -- TRUST is the role the statement runs as (current_user), not the JWT, ON PURPOSE. The legitimate
 -- writers are all SECURITY DEFINER functions owned by postgres, and two of them are reached from a
@@ -51,10 +61,18 @@ BEGIN
     _routing_written := NEW.inbound_address IS NOT NULL OR NEW.inbound_domain IS NOT NULL;
   ELSE
     _routing_written := NEW.inbound_address IS DISTINCT FROM OLD.inbound_address
-      OR NEW.inbound_domain IS DISTINCT FROM OLD.inbound_domain;
+      OR NEW.inbound_domain IS DISTINCT FROM OLD.inbound_domain
+      -- A row that routes mail keeps what makes it route; it may only be switched off.
+      OR ((OLD.inbound_address IS NOT NULL OR OLD.inbound_domain IS NOT NULL) AND (
+            (NEW.active AND NOT OLD.active)
+         OR (NEW.status IS DISTINCT FROM OLD.status AND NEW.status IS DISTINCT FROM 'disabled')
+         OR NEW.channel_type IS DISTINCT FROM OLD.channel_type
+         OR NEW.provider IS DISTINCT FROM OLD.provider
+         OR NEW.config IS DISTINCT FROM OLD.config
+         OR NEW.tenant_id IS DISTINCT FROM OLD.tenant_id));
   END IF;
   IF _routing_written THEN
-    RAISE EXCEPTION 'PAIGE_INBOUND_ROUTING_PROTECTED: which address or domain delivers mail to a business is set by PAIGE, not directly from the app'
+    RAISE EXCEPTION 'PAIGE_INBOUND_ROUTING_PROTECTED: which address or domain delivers mail to a business, and whether it is on, is set by PAIGE, not directly from the app'
       USING ERRCODE = '42501';
   END IF;
   RETURN NEW;

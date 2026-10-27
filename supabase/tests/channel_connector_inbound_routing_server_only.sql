@@ -5,10 +5,12 @@
 -- Failing-first contract: before 20271118090000_channel_connector_inbound_routing_server_only the
 -- four "refused" assertions FAIL — a workspace admin's browser session can set or change either
 -- column on its own connector, and so claim an unheld address or domain and receive its mail.
--- After it they are refused (42501) while: other columns stay editable by the admin, a connector
--- with neither column set can still be created, renaming the business from the app still moves its
--- managed address (a SECURITY DEFINER trigger reached from the admin's own write), and the service
--- role still writes both columns.
+-- After it they are refused with PAIGE_INBOUND_ROUTING_PROTECTED (42501), and so are a browser's
+-- attempts to re-enable a switched-off routing row or change its channel type, provider or config,
+-- while: other columns stay editable by the admin, a routing row can still be switched off, a
+-- connector with neither column set can still be created, renaming the business from the app still
+-- moves its managed address (a SECURITY DEFINER trigger reached from the admin's own write), and the
+-- service role still writes both columns.
 --
 -- Synthetic fixtures only; the transaction always rolls back.
 -- Run: psql "$DB_URL" -1 -f supabase/tests/channel_connector_inbound_routing_server_only.sql
@@ -19,6 +21,19 @@ BEGIN;
 
 CREATE FUNCTION pg_temp.require_true(value boolean, label text) RETURNS void LANGUAGE plpgsql AS $$
 BEGIN IF value IS DISTINCT FROM true THEN RAISE EXCEPTION 'FAIL: %', label; END IF; END $$;
+
+-- Runs one statement and requires THIS guard's refusal: any other error (an RLS refusal included,
+-- which is also 42501) or no error at all fails the proof.
+CREATE FUNCTION pg_temp.require_guard_refusal(stmt text, label text) RETURNS void LANGUAGE plpgsql AS $$
+BEGIN
+  BEGIN
+    EXECUTE stmt;
+  EXCEPTION WHEN insufficient_privilege THEN
+    IF SQLERRM LIKE 'PAIGE_INBOUND_ROUTING_PROTECTED%' THEN RETURN; END IF;
+    RAISE EXCEPTION 'FAIL: % (refused by something else: %)', label, SQLERRM;
+  END;
+  RAISE EXCEPTION 'FAIL: % (was allowed)', label;
+END $$;
 
 SELECT set_config('request.jwt.claims', '{"role":"service_role"}', true);
 
@@ -65,33 +80,36 @@ SELECT pg_temp.require_true(
   '1: owner can still edit a non-routing column');
 
 -- 2-5. Setting or changing either routing column is refused.
-DO $$
-BEGIN
-  BEGIN
-    UPDATE public.channel_connectors SET inbound_address = 'unheld-slug@mail.paigeagent.ai'
-     WHERE tenant_id = 'c1b00000-0000-4000-8000-0000000000a1' AND config ->> 'managed_default' = 'true';
-    RAISE EXCEPTION 'FAIL: 2: owner changed inbound_address from the browser';
-  EXCEPTION WHEN insufficient_privilege THEN NULL;
-  END;
-  BEGIN
-    UPDATE public.channel_connectors SET inbound_domain = 'unclaimed-customer.example'
-     WHERE tenant_id = 'c1b00000-0000-4000-8000-0000000000a1' AND config ->> 'managed_default' = 'true';
-    RAISE EXCEPTION 'FAIL: 3: owner set inbound_domain from the browser';
-  EXCEPTION WHEN insufficient_privilege THEN NULL;
-  END;
-  BEGIN
-    INSERT INTO public.channel_connectors (tenant_id, channel_type, provider, inbound_address, from_address, status, active)
-    VALUES ('c1b00000-0000-4000-8000-0000000000a1', 'email', 'resend', 'another-unheld@mail.paigeagent.ai', 'x@irso.test', 'active', true);
-    RAISE EXCEPTION 'FAIL: 4: owner inserted a connector with inbound_address';
-  EXCEPTION WHEN insufficient_privilege THEN NULL;
-  END;
-  BEGIN
-    INSERT INTO public.channel_connectors (tenant_id, channel_type, provider, inbound_domain, from_address, status, active)
-    VALUES ('c1b00000-0000-4000-8000-0000000000a1', 'email', 'resend', 'unclaimed-customer.example', 'x@irso.test', 'active', true);
-    RAISE EXCEPTION 'FAIL: 5: owner inserted a connector with inbound_domain';
-  EXCEPTION WHEN insufficient_privilege THEN NULL;
-  END;
-END $$;
+SELECT pg_temp.require_guard_refusal($q$
+  UPDATE public.channel_connectors SET inbound_address = 'unheld-slug@mail.paigeagent.ai'
+   WHERE tenant_id = 'c1b00000-0000-4000-8000-0000000000a1' AND config ->> 'managed_default' = 'true' $q$,
+  '2: owner changed inbound_address from the browser');
+SELECT pg_temp.require_guard_refusal($q$
+  UPDATE public.channel_connectors SET inbound_domain = 'unclaimed-customer.example'
+   WHERE tenant_id = 'c1b00000-0000-4000-8000-0000000000a1' AND config ->> 'managed_default' = 'true' $q$,
+  '3: owner set inbound_domain from the browser');
+SELECT pg_temp.require_guard_refusal($q$
+  INSERT INTO public.channel_connectors (tenant_id, channel_type, provider, inbound_address, from_address, status, active)
+  VALUES ('c1b00000-0000-4000-8000-0000000000a1', 'email', 'resend', 'another-unheld@mail.paigeagent.ai', 'x@irso.test', 'active', true) $q$,
+  '4: owner inserted a connector with inbound_address');
+SELECT pg_temp.require_guard_refusal($q$
+  INSERT INTO public.channel_connectors (tenant_id, channel_type, provider, inbound_domain, from_address, status, active)
+  VALUES ('c1b00000-0000-4000-8000-0000000000a1', 'email', 'resend', 'unclaimed-customer.example', 'x@irso.test', 'active', true) $q$,
+  '5: owner inserted a connector with inbound_domain');
+
+-- 5a-5c. A routing row keeps what makes it route: no config, provider or channel-type change.
+SELECT pg_temp.require_guard_refusal($q$
+  UPDATE public.channel_connectors SET config = config - 'managed_default'
+   WHERE tenant_id = 'c1b00000-0000-4000-8000-0000000000a1' AND config ->> 'managed_default' = 'true' $q$,
+  '5a: owner dropped managed_default from the managed row');
+SELECT pg_temp.require_guard_refusal($q$
+  UPDATE public.channel_connectors SET provider = 'smtp'
+   WHERE tenant_id = 'c1b00000-0000-4000-8000-0000000000a1' AND config ->> 'managed_default' = 'true' $q$,
+  '5b: owner changed the managed row''s provider');
+SELECT pg_temp.require_guard_refusal($q$
+  UPDATE public.channel_connectors SET channel_type = 'sms'
+   WHERE tenant_id = 'c1b00000-0000-4000-8000-0000000000a1' AND config ->> 'managed_default' = 'true' $q$,
+  '5c: owner changed the managed row''s channel type');
 
 -- 6. A connector with neither routing column can still be created.
 INSERT INTO public.channel_connectors (tenant_id, channel_type, provider, from_address, status, active)
@@ -113,20 +131,40 @@ SELECT pg_temp.require_true(
     WHERE tenant_id = 'c1b00000-0000-4000-8000-0000000000a1' AND config ->> 'managed_default' = 'true'
       AND split_part(lower(inbound_address), '@', 1) = 'irso-biz-a-renamed'),
   '7: renaming the business from the app moved its managed address');
-SELECT pg_temp.require_true(
-  (SELECT count(*) = 0 FROM public.channel_connectors
-    WHERE lower(inbound_address) IN ('unheld-slug@mail.paigeagent.ai', 'another-unheld@mail.paigeagent.ai')
-       OR inbound_domain = 'unclaimed-customer.example'),
-  '2-5: no refused claim persisted');
 
--- 8. The service role (edge functions) still writes both columns.
-SET LOCAL ROLE service_role;
-UPDATE public.channel_connectors SET inbound_domain = 'irso-verified.example'
- WHERE tenant_id = 'c1b00000-0000-4000-8000-0000000000a1' AND channel_type = 'sms';
+-- 7a-7b. The owner may switch the routing row off, but not back on.
+SET LOCAL ROLE authenticated;
+SELECT set_config('request.jwt.claims', '{"sub":"c1b00000-0000-4000-8000-000000000001","role":"authenticated"}', true);
+UPDATE public.channel_connectors SET active = false, status = 'disabled'
+ WHERE tenant_id = 'c1b00000-0000-4000-8000-0000000000a1' AND config ->> 'managed_default' = 'true';
 SELECT pg_temp.require_true(
   (SELECT count(*) = 1 FROM public.channel_connectors
-    WHERE tenant_id = 'c1b00000-0000-4000-8000-0000000000a1' AND inbound_domain = 'irso-verified.example'),
-  '8: the service role still writes routing columns');
+    WHERE tenant_id = 'c1b00000-0000-4000-8000-0000000000a1' AND config ->> 'managed_default' = 'true'
+      AND NOT active AND status = 'disabled'),
+  '7a: owner can still switch a routing row off');
+SELECT pg_temp.require_guard_refusal($q$
+  UPDATE public.channel_connectors SET active = true, status = 'active'
+   WHERE tenant_id = 'c1b00000-0000-4000-8000-0000000000a1' AND config ->> 'managed_default' = 'true' $q$,
+  '7b: owner switched a disabled routing row back on');
+RESET ROLE;
+SELECT set_config('request.jwt.claims', '{"role":"service_role"}', true);
+
+-- 8. The service role (edge functions) still writes both columns and re-enables a routing row.
+SET LOCAL ROLE service_role;
+UPDATE public.channel_connectors
+   SET inbound_address = 'irso-service@irso-verified.example', inbound_domain = 'irso-verified.example'
+ WHERE tenant_id = 'c1b00000-0000-4000-8000-0000000000a1' AND channel_type = 'sms';
+UPDATE public.channel_connectors SET active = true, status = 'active'
+ WHERE tenant_id = 'c1b00000-0000-4000-8000-0000000000a1' AND config ->> 'managed_default' = 'true';
+SELECT pg_temp.require_true(
+  (SELECT count(*) = 1 FROM public.channel_connectors
+    WHERE tenant_id = 'c1b00000-0000-4000-8000-0000000000a1'
+      AND inbound_address = 'irso-service@irso-verified.example' AND inbound_domain = 'irso-verified.example'),
+  '8: the service role still writes both routing columns');
+SELECT pg_temp.require_true(
+  (SELECT count(*) = 1 FROM public.channel_connectors
+    WHERE tenant_id = 'c1b00000-0000-4000-8000-0000000000a1' AND config ->> 'managed_default' = 'true' AND active),
+  '8: the service role still re-enables a routing row');
 RESET ROLE;
 
 SELECT 'INBOUND_ROUTING_SERVER_ONLY_PROVEN' AS result;

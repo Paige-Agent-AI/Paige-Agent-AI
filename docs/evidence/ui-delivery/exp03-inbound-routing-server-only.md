@@ -6,7 +6,7 @@ The commit range carries a `Visible-Flow-Impact: yes` trailer. The trailers come
 - **Renaming a business still moves its managed address.** The rename runs PAIGE's SECURITY DEFINER provisioning from the owner's own write, which the guard deliberately allows.
 
 UI_DELIVERY_EVIDENCE_VERSION: 1
-FLOW_BY_FLOW: PASS: flow packet in PR #2983. Actors: a business admin signed in to the app, PAIGE's server code (edge functions and SECURITY DEFINER provisioning). Goal: only PAIGE decides which address or domain delivers mail to a business. Central act: a write to the two routing columns. Exits mapped: browser insert with either column set (refused), browser change of either column (refused), browser edit of any other column (allowed), browser insert with neither column (allowed), business rename from the app (managed address moves), service-role write (allowed).
+FLOW_BY_FLOW: PASS: flow packet in PR #2983. Actors: a business admin signed in to the app, PAIGE's server code (edge functions and SECURITY DEFINER provisioning). Goal: only PAIGE decides which address or domain delivers mail to a business. Central act: a write to the two routing columns. Exits mapped: browser insert with either column set (refused), browser change of either column (refused), browser re-enable or config/provider/channel-type change of a routing row (refused), browser switch-off (allowed), browser edit of any other column (allowed), browser insert with neither column (allowed), business rename from the app (managed address moves), service-role write (allowed).
 PAIGE_UI_DESIGN: PASS: paige-ui-design router read. No visual surface, pack, token or layout is added or changed.
 MATERIAL_FLOW_CHANGE: NO: no screen, state, transition or exit is added or removed. No app path writes the guarded columns from a browser session (src/ only reads them).
 FLOW_PROTOTYPE: NOT_REQUIRED: no interface state, copy or transition changes. Not a convenience skip: the change is a database write guard.
@@ -15,7 +15,7 @@ VISUAL_DIRECTION: NOT_APPLICABLE: no visual surface changed
 AUTOMATED_EVIDENCE: PASS: `supabase/tests/channel_connector_inbound_routing_server_only.sql`, run by paige-spine-contract on the rebuilt database. Failing-first on production inside a rolled-back transaction: without the migration the fixture and assertion 1 pass and assertion 2 fails (the owner's browser write of inbound_address succeeded).
 STATIC_EVIDENCE: PASS: migration-version-collision-lint PASS; definer-fn-lint PASS; view-security-invoker-lint PASS. The guard is SECURITY INVOKER with EXECUTE revoked from PUBLIC, anon and authenticated.
 RENDERED_EVIDENCE: NOT_APPLICABLE: no visual surface is rendered or changed.
-BEHAVIORAL_EVIDENCE: PASS: the proof drives the real paths: the owner's browser session editing a non-routing column, setting and changing each routing column, inserting connectors with and without them, renaming the business through `tenants` (the real trigger into `provision_paige_managed_email_connector`), and a service-role write. An independent adversarial review is running on the PR.
+BEHAVIORAL_EVIDENCE: PASS: the proof drives the real paths: the owner's browser session editing a non-routing column, setting and changing each routing column, inserting connectors with and without them, renaming the business through `tenants` (the real trigger into `provision_paige_managed_email_connector`), and a service-role write. An independent adversarial review found the guard correct and three remaining claim paths; the re-enable and config paths are closed in this PR, address reuse after a rename is tracked separately.
 AUTHENTICATED_RUNTIME: UNVERIFIED: the with-migration proof has not run on production; it runs in CI on the rebuilt database. After merge the deploy-migrations pipeline applies it and the trigger's presence on production is checked.
 KEYBOARD_FOCUS: NOT_APPLICABLE: no interactive visual surface changed
 ZOOM_REFLOW: NOT_APPLICABLE: no visual surface changed
@@ -27,11 +27,13 @@ STATE_COVERAGE: PASS: each state is covered by an assertion:
 - browser insert with inbound_address (refused)
 - browser insert with inbound_domain (refused)
 - browser insert with neither (allowed)
+- browser change of config, provider or channel type on a routing row (refused)
+- browser switch-off of a routing row (allowed); switching it back on (refused)
 - business rename from the app (managed address moves)
 - service-role write (allowed)
 TRUTHFUL_STATE_LABELS: PASS: a refused write raises 42501 with a reason naming the protected columns; nothing is silently dropped or rewritten.
 SOLO_UI: NO: no Solo interface file changed; database guard only
-UNVERIFIED: the with-migration proof on production data (CI runs it on the rebuilt database); a per-business DNS ownership proof before a custom inbound_domain is accepted is still not built
+UNVERIFIED: the with-migration proof on production data (CI runs it on the rebuilt database); a managed address freed by a business rename can still be provisioned to another business through PAIGE's own provisioning (needs a retired-address list, its own change); a per-business DNS ownership proof before a custom inbound_domain is accepted is still not built
 
 OWNER_INTENT: the owner (Antonio, 2026-10-27) approved restricting the incoming-address fields so only PAIGE's server code can set which address a business owns.
 MUST_NOT_HAPPEN: a business admin claiming an address or domain another business should receive; a business rename from the app failing; an existing connector being changed or refused by the migration

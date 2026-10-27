@@ -613,11 +613,14 @@ Values intentionally omitted.
       draft-reply insert → 503 so SendGrid retries; businesses that already landed dedup on the retry.
       **DB guard (20271118090000, owner-approved 2026-10-27):** `trg_guard_channel_connector_inbound_routing`
       refuses (42501 `PAIGE_INBOUND_ROUTING_PROTECTED`) any direct browser (authenticated/anon) write that sets
-      `inbound_address`/`inbound_domain` on INSERT or changes either on UPDATE. SECURITY DEFINER writers (managed
+      `inbound_address`/`inbound_domain` on INSERT or changes either on UPDATE, and — on a row that already routes —
+      re-enables it or changes its `channel_type`/`provider`/`config`/`tenant_id`. SECURITY DEFINER writers (managed
       sender re-provision on a business rename, domain verify, Gmail connect) and the service role still write them.
       Trust is `current_user`, not the JWT, so a rename from the app keeps moving the managed address. Proof:
-      `supabase/tests/channel_connector_inbound_routing_server_only.sql` (CI: paige-spine-contract). Still owed: a
-      per-business DNS ownership proof before a custom `inbound_domain` is accepted.
+      `supabase/tests/channel_connector_inbound_routing_server_only.sql` (CI: paige-spine-contract). Still owed: (a) a
+      retired-address list so a managed address freed by a business rename cannot be re-provisioned to another
+      business (review HIGH on #2983); (b) a per-business DNS ownership proof before a custom `inbound_domain` is
+      accepted, with the provider domain id bound server-side (today `resend_domain_id` is admin-writable).
     - **Sender authentication (review M2):** a From whose domain has neither an aligned DKIM `pass` (SendGrid's `dkim`
       field, `{@domain : pass}`) nor an SPF `pass` (`SPF` field) for an envelope sender aligned with it is stored with
       `meta.sender_unauthenticated = true` on thread `email-unverified:<tenant>:<address>`: not linked to or minted as

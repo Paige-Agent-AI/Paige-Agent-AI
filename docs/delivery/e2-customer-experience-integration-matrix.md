@@ -2722,3 +2722,41 @@ inputs. Where no supporting implementation is verified above, the gap stays open
 No prediction, ROI, business benefit or causal improvement is inferred from a
 receipt, UI or directive. All source/review/CI/merge/deploy/activation/customer/
 founder evidence legs remain separate; no complete-outcome acceptance promotion.
+
+## October27 17:52UTC — bounded current customer reads and recovery
+
+This addendum changes no original outcome ID, denominator, owning writer or full
+acceptance definition. Canonical ANT52e8b9e9d8 records actual ordinary-owner read
+QA against8bbfa8fb350879de8b52746ac9a9bd5c5642303a/dpl_6tYxhYFEPyUjhcHckWubnFsFT1oY;
+loaded bootstrap and both publicorigins/assets were bound around17:37–17:51UTC.
+
+- O01/O16: ONE fresh weekly response settled by51.167s observation, three steps/
+  38s displayed. Current/weekly/UTC-cutoff, zero/unavailable, financial distinctions,
+  one-to-three source-supported proposed priorities and missing coverage explained.
+  Full reply/prior transcript reloaded verbatim except the exact ephemeral Done/
+  duration segment; single original request/three saved read steps/empty composer
+  retained. No action, monthly inspection or retry. This adds one current case,
+  not universal latency/reliability, eligible Live or complete O01/O16 acceptance.
+- O04/O10/O14: Finance menu→Overview and all seven views read AND reloaded with
+  VERA and existing conversation. Original source Escape/focus and UNSENT Finance/
+  Play-context navigation/Back pass. Empty target SAMPLE remains distinct from no
+  targets anywhere; missing bank/accounting/profit/forecast values are not zero.
+  No new target/mutation, populated-source/currency, role/cohort or full Finance proof.
+- O06/O14: saved source links reached Executive and Systems Check. Original run
+  source opened; same bookmark/result reloaded; heading focus/Escape/reference
+  removal/Refresh-current-data focus preserved the conversation. No scan occurred;
+  this does not close O07 manual execution or O12/O19 governed effects/Rail.
+- Nine analytics: actual catalogue coverage3Limited/3Unverified/3ComingSoon and all
+  nine AccessUnverified read back. Display verification grants no capability or
+  algorithm promotion and does not close any missing analytics outcome.
+
+[Finance receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2967#issuecomment-6449596126),
+[weekly receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2455#issuecomment-6449597291),
+[original-run receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2991#issuecomment-6449594737).
+Actual private captures support this bounded drive. Closed/narrow raster mismatch
+is NOT exact eight-raster/device/native-zoom/full-AT acceptance. Browser/viewport
+returned to E05, original owner/customer tabs and Team Hub draft preserved.
+Raw company values, record IDs and browser metadata remain private. All19/nine,
+other-role/tenant/cohort negatives, revocation, populated data, Live, actual governed
+action receipts and final founder acceptance remain OPEN. Original9PASS0FAIL and
+supplement12PASS0FAIL4BLOCKED stay historical; monthlyUNKNOWNUNRETRIED unchanged.

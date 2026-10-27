@@ -30,6 +30,7 @@ export type McpAuth = (
 export type McpErrorCode =
   | SsrfReason
   | "mcp_http_error"
+  | "http_rate_limited"
   | "mcp_malformed_response"
   | "mcp_protocol_error";
 
@@ -233,6 +234,15 @@ async function post(
 
 /** The JSON-RPC result, or the mapped failure. Shared by the handshake and the call. */
 function resultOf(res: Awaited<ReturnType<typeof safeFetch>>): unknown {
+  if (res.status === 429) {
+    // Rate-limiting is a TRANSIENT provider state with a different remediation from every
+    // other refusal: reconnecting does not help, waiting does. Collapsing it into
+    // mcp_http_error made the honest owner answer ("wait a moment and retry") and the
+    // reconnect answer indistinguishable — on the recorded error code, in chat, and in the
+    // scheduled health loop. A closed code of its own keeps the refusal vocabulary closed
+    // while splitting the ONE status whose remedy differs. (EXP10 PR14.)
+    throw new McpError("http_rate_limited", undefined, res.status);
+  }
   if (res.status < 200 || res.status >= 300) {
     // The STATUS is carried and the body is not. Nothing reads the detail — every surface
     // words these failures from the code — so a bounded slice of provider text bought
@@ -311,6 +321,9 @@ async function withMcpSession<T>(
     // A notification has no id and expects no result. A server answering 202 with an empty
     // body is the normal case, so its response is not parsed as an envelope.
     const ackRes = await post(opts, { jsonrpc: "2.0", method: "notifications/initialized" }, sessionId);
+    if (ackRes.status === 429) {
+      throw new McpError("http_rate_limited", undefined, ackRes.status);
+    }
     if (ackRes.status < 200 || ackRes.status >= 300) {
       throw new McpError("mcp_http_error", undefined, ackRes.status);
     }
@@ -642,6 +655,7 @@ export function describeMcpError(code: McpErrorCode): string {
     case "url_redirect_refused": return "That address redirects somewhere else, which is not followed. Use the address it points at.";
     case "request_timed_out": return "The server did not answer in time.";
     case "response_too_large": return "The server sent more than can be read safely.";
+    case "http_rate_limited": return "The server is rate-limiting requests right now. This is temporary — wait a moment and try again; reconnecting will not help.";
     case "mcp_http_error": return "The server rejected the connection. Check the credential and the address.";
     case "mcp_malformed_response":
     case "mcp_protocol_error": return "That address answered, but not as an MCP server.";

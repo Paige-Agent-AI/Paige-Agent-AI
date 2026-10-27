@@ -14,7 +14,7 @@ const HEADERS={'Cache-Control':'no-store','Referrer-Policy':'no-referrer','X-Con
 
 // Closed diagnostic vocabulary only: never serialize an exception or request.
 type CallbackStage='callback_validation'|'token_exchange'|'scope_validation'|'mcp_discovery'|'credential_commit';
-const CALLBACK_REASONS=new Set(['invalid_callback','expired','provider_scope_refused','provider_unavailable','workflow_inventory_incomplete','workflow_discovery_unavailable','token_exchange_failed','malformed_token_response','mcp_http_error','mcp_malformed_response','mcp_protocol_error','request_timed_out','request_failed','response_too_large','url_redirect_refused','url_host_unresolvable','url_resolves_to_private_address','url_host_not_allowed','operation_refused','forbidden','tenant_changed','stale_operation','busy']);
+const CALLBACK_REASONS=new Set(['invalid_callback','expired','provider_scope_refused','provider_unavailable','workflow_inventory_incomplete','workflow_discovery_unavailable','token_exchange_failed','malformed_token_response','mcp_http_error','http_rate_limited','mcp_malformed_response','mcp_protocol_error','request_timed_out','request_failed','response_too_large','url_redirect_refused','url_host_unresolvable','url_resolves_to_private_address','url_host_not_allowed','operation_refused','forbidden','tenant_changed','stale_operation','busy']);
 function logCallbackFailure(stage:CallbackStage,error:unknown):void {
  const known=error instanceof OAuthError||error instanceof N8nSafeError||error instanceof McpError;
  const reason=known&&CALLBACK_REASONS.has(error.code)?error.code:'unexpected_failure';

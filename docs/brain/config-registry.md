@@ -565,11 +565,21 @@ Values intentionally omitted.
   (1600), `PAIGE_RENDER_MAX_SLICES` (8), `PAIGE_RENDER_JPEG_QUALITY` (80), `PAIGE_RENDER_READY_TIMEOUT_MS`
   (12000, and always shortened to fit the run deadline), `PAIGE_RENDER_MAX_SLICE_BYTES` (3500000). Audit rail: `paige_browser_usage` (written by the
   CALLER edge fn via service_role; the Fly host is DB-free, §9/§34).
-- **Email:** `RESEND_API_KEY`, `RESEND_WEBHOOK_SECRET`, plus from-address names
-  `PLATFORM_DEFAULT_EMAIL_FROM`, `BILLING_EMAIL_FROM`, `WELCOME_EMAIL_FROM`, `CALENDAR_EMAIL_FROM`,
-  `PLATFORM_SUPPORT_EMAIL`.
+- **Email:** from-address names `PLATFORM_DEFAULT_EMAIL_FROM`, `BILLING_EMAIL_FROM`, `WELCOME_EMAIL_FROM`,
+  `CALENDAR_EMAIL_FROM`, `PLATFORM_SUPPORT_EMAIL` (the SendGrid transport moves any of them onto
+  `mail.paigeagent.ai`, keeping the display name and local part).
+  - **Resend is being retired (owner, 2026-10-26: the Resend account was emptied — "I am moving EVERYTHING to
+    SendGrid").** `RESEND_API_KEY` / `RESEND_WEBHOOK_SECRET` no longer deliver anything. EXP03 PR #2958 removed the
+    `RESEND_API_KEY` read from tenant-signup, backfill-welcome, send-platform-invite, plan-reminder-cron,
+    public-booking, booking-manage, process-booking-notifications, send-portal-invite (both paths) and
+    send-transactional-email. Still reading it (next PR): send-message's Resend arm, skill-runner, paige-mcp,
+    manage-tenant-domain, resend-admin-probe, `_shared/email/providers.ts`.
+  - **Supabase Auth email (sign-up confirmation, password reset)** goes through the Auth custom-SMTP setting in the
+    Supabase dashboard, not edge code. It pointed at Resend SMTP and must be re-pointed by the owner to
+    `smtp.sendgrid.net:587`, user `apikey`, a restricted Mail Send key (owner action, 2026-10-27, not yet confirmed).
 - **PAIGE Email — SendGrid (tenant email under the 2026-10-13 owner policy; Resend stays the Platform Operator's own email).** Edge secret NAMES only; values are never recorded. Whether each one is set on production was NOT re-read by this record.
   - `SENDGRID_MAIL_SEND_API_KEY` is the restricted Mail Send key. Readers:
+    - `_shared/email/platform-sendgrid.ts` (`sendPlatformEmail`, EXP03 #2958): the one transport for PAIGE's own email — every function listed under **Email** above. From is forced onto `mail.paigeagent.ai`; a 5xx/timeout is reported `unconfirmed` and never resent automatically;
     - `_shared/email/providers.ts` no longer reads it: `buildProvider` resolves `sendgrid` to a provider that refuses to send, so SendGrid is reachable only through the governed door (Experience 03 round-4 security LOW-3; the `SendGridProvider` adapter was removed);
     - `send-message/index.ts`: the governed SendGrid arm (20 s deadline, `custom_args` `paige_tenant_id`/`paige_operation_id`/`paige_message_id`). It sends through a SendGrid connector only for the email door's prepared operation, or (Experience 03, `20271116020000`) for an approved campaign email that `email_campaign_sendgrid_admit` admits for the dispatcher's leased recipient (custom_args: `paige_tenant_id` + the recipient id as both other claims); anything else is refused before any provider call (`paige_email_requires_governed_send`);
     - `growth-process-submission/lead-reply.ts`: presence only, so the lead-reply drafter counts a SendGrid sender with the door's own provider list (`emailProvidersFor`);

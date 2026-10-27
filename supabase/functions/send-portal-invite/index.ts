@@ -1,11 +1,13 @@
 import { commsProviderExecutionAllowed } from "../_shared/comms-provider-boundary.ts";
 import { handlePortalInvitationCommand } from "./command.ts";
 import { runPreSend } from "../_shared/pre-send-pipeline.ts";
+import { sendPlatformEmail } from "../_shared/email/platform-sendgrid.ts";
 // send-portal-invite — emails a customer their branded invite to a tenant's
 // client portal (roadmap #2). The token is minted by create_tenant_invite_token
 // (admin-gated RPC) on the client; this function validates it server-side, reads
 // the TENANT's brand (the tenant is inviting their own customer, so the email
-// wears the tenant's brand, not Paige's — §6), and sends via Resend.
+// wears the tenant's brand, not Paige's — §6), and sends through Paige's platform
+// SendGrid transport (_shared/email/platform-sendgrid.ts; owner ruling 2026-10-26).
 //
 // Anti-relay: it only sends for a real, non-revoked, unexpired token, and only
 // to the address that token was bound to at mint time (create_tenant_invite_token,
@@ -16,7 +18,8 @@ const cors = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
-const RESEND_KEY = Deno.env.get("RESEND_API_KEY") ?? "";
+// The restricted SendGrid Mail Send key — never the admin key. Read once and handed to the shared transport.
+const SENDGRID_KEY = Deno.env.get("SENDGRID_MAIL_SEND_API_KEY") ?? "";
 const EMAIL_FROM = Deno.env.get("PLATFORM_DEFAULT_EMAIL_FROM") ?? "Paige Agent AI <hello@paigeagent.ai>";
 const PUBLIC_BASE = (Deno.env.get("PUBLIC_SITE_URL") ?? "https://paigeagent.ai").replace(/\/$/, "");
 
@@ -104,7 +107,7 @@ Deno.serve(async (req) => {
   let body: { token?: string; email?: string; first_name?: string; operation_id?: unknown; contact_id?: unknown; expected_tenant_id?: unknown };
   try { body = await req.json(); } catch { return json({ ok: false, error: "bad request" }, 400); }
   if (body && (Object.prototype.hasOwnProperty.call(body,"operation_id") || (!Object.prototype.hasOwnProperty.call(body,"token") && (Object.prototype.hasOwnProperty.call(body,"contact_id") || Object.prototype.hasOwnProperty.call(body,"expected_tenant_id"))))) {
-    return handlePortalInvitationCommand(req,body,{key:RESEND_KEY,site:PUBLIC_BASE,defaultFrom:EMAIL_FROM,senderFrom,copy:inviteCopy,html:inviteHtml});
+    return handlePortalInvitationCommand(req,body,{key:SENDGRID_KEY,site:PUBLIC_BASE,defaultFrom:EMAIL_FROM,senderFrom,copy:inviteCopy,html:inviteHtml});
   }
   const token = String(body.token ?? "").trim();
   const email = String(body.email ?? "").trim().toLowerCase();
@@ -339,7 +342,7 @@ Deno.serve(async (req) => {
     }
   };
 
-  if (!RESEND_KEY) {
+  if (!SENDGRID_KEY) {
     // Honest: nothing was attempted. Previously this returned `emailed: false` and wrote nothing,
     // so the screen could not tell "no provider configured" apart from "provider rejected it".
     await logSend("failed", null, { reason: "no_provider_configured" });
@@ -354,28 +357,30 @@ Deno.serve(async (req) => {
     if (!finalGate.clear) return notSent(finalGate);
     if (!(await commsProviderExecutionAllowed(admin, { tenantId: tok.tenant_id, actorUserId, recipientEmail: recipient })))
       return json({ ok: false, emailed: false, status: "blocked", code: "COMMS_PROVIDER_EXECUTION_DISABLED" }, 403);
-    const res = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${RESEND_KEY}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        from: fromHeader,
-        ...(replyTo ? { reply_to: replyTo } : {}),
-        to: [recipient],
-        subject: copy.subject,
-        html: inviteHtml(tenantName, accent, logoUrl, joinUrl, firstName, kind),
-        text: `${firstName ? `Hi ${firstName},` : "Hi there,"}\n\n${copy.textLead}\n\nOpen it: ${joinUrl}\n`,
-      }),
+    // From moves onto Paige's own verified sending domain (mail.paigeagent.ai) keeping the tenant's
+    // display name and local part; Reply-To stays the tenant's. The transport never throws.
+    const sent = await sendPlatformEmail({
+      from: fromHeader,
+      ...(replyTo ? { replyTo } : {}),
+      to: [recipient],
+      subject: copy.subject,
+      html: inviteHtml(tenantName, accent, logoUrl, joinUrl, firstName, kind),
+      text: `${firstName ? `Hi ${firstName},` : "Hi there,"}\n\n${copy.textLead}\n\nOpen it: ${joinUrl}\n`,
+    }, { apiKey: SENDGRID_KEY });
+    if (sent.unconfirmed) {
+      // A transport failure, timeout or 5xx is not proof the email did not go. It is proof we do not know.
+      await logSend("failed", null, { reason: "transport", detail: sent.error ?? "unknown" });
+      return json({ ok: true, join_url: joinUrl, emailed: false, reason: "transport" });
+    }
+    // THE ID WAS ONCE BEING THROWN AWAY. SendGrid's X-Message-Id is the ONLY thing a later
+    // delivered/opened/clicked event carries (as the first segment of sg_message_id) to identify
+    // this email. Without it the platform could never say more than "the POST was accepted".
+    const messageId = sent.id;
+    await logSend(sent.ok ? "sent" : "failed", messageId, {
+      http_status: sent.status,
+      ...(sent.ok ? {} : { provider_error: sent.error }),
     });
-    // THE BODY WAS BEING THROWN AWAY. Resend answers with `{ id }`, and that id is the ONLY thing
-    // a later delivered/opened/clicked webhook carries to identify this email. Discarding it is why
-    // the platform could never say more than "the POST was accepted".
-    const payload = await res.json().catch(() => ({}));
-    const messageId = (payload as { id?: string })?.id ?? null;
-    await logSend(res.ok ? "sent" : "failed", messageId, {
-      http_status: res.status,
-      ...(res.ok ? {} : { provider_error: (payload as { message?: string })?.message ?? null }),
-    });
-    return json({ ok: true, join_url: joinUrl, emailed: res.ok, messageId });
+    return json({ ok: true, join_url: joinUrl, emailed: sent.ok, messageId });
   } catch (e) {
     // A transport failure is not proof the email did not go. It is proof we do not know.
     await logSend("failed", null, { reason: "transport", detail: e instanceof Error ? e.message : "unknown" });

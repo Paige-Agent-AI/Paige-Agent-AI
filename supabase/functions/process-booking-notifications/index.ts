@@ -1,4 +1,5 @@
 import { commsProviderExecutionAllowed } from "../_shared/comms-provider-boundary.ts";
+import { sendPlatformEmail } from "../_shared/email/platform-sendgrid.ts";
 // Scheduled-send worker: booking reminders + post-meeting follow-ups.
 // Invoked by pg_cron every ~5 min (guarded by a shared token). Reads each
 // calendar-backed booking's notify_config, and for every due reminder offset
@@ -15,7 +16,6 @@ import { emailOptOut } from "../_shared/contact-opt-outs.ts";
 // source or env. The request handler authorizes each trigger by calling the
 // service-role RPC public.verify_cron_token against the x-cron-token header the
 // cron job builds via public.cron_token_header(); no literal token exists here.
-const RESEND_KEY = Deno.env.get("RESEND_API_KEY") ?? "";
 const EMAIL_FROM = Deno.env.get("CALENDAR_EMAIL_FROM") ?? Deno.env.get("PLATFORM_DEFAULT_EMAIL_FROM") ?? "Paige Agent AI <calendar@paigeagent.ai>";
 // SMS (Twilio) reminders fire on 'sms'/'both' via the shared sender
 // (_shared/bookingNotify.ts), which owns the Twilio credential env.
@@ -84,16 +84,22 @@ async function manageUrl(bookingId: string, ver = 0): Promise<string> {
   return `${PUBLIC_BASE}/booking/manage?token=${payload}.${sig}`;
 }
 
-async function sendEmail(to: string, subject: string, html: string): Promise<boolean> {
-  if (!RESEND_KEY) return false;
-  try {
-    const res = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${RESEND_KEY}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ from: EMAIL_FROM, to: [to], subject, html }),
-    });
-    return res.ok;
-  } catch { return false; }
+// Sent through Paige's SendGrid transport (owner ruling 2026-10-26); the transport moves
+// EMAIL_FROM onto the platform's verified sending domain. Three outcomes, kept apart:
+//  - "sent": SendGrid accepted it.
+//  - "failed": nothing went out (no key, invalid recipient, or a definitive 4xx refusal), so the
+//    claim is released and a later run may retry without duplicating.
+//  - "unconfirmed": a timeout or 5xx. SendGrid may have accepted it and has no idempotent replay, so
+//    the claim is KEPT (never resent every cron run) but recorded as unconfirmed, never as sent.
+type SendOutcome = "sent" | "failed" | "unconfirmed";
+async function sendEmail(to: string, subject: string, html: string): Promise<SendOutcome> {
+  const sent = await sendPlatformEmail({ from: EMAIL_FROM, to, subject, html });
+  if (sent.ok) return "sent";
+  if (sent.unconfirmed) {
+    console.warn("[process-booking-notifications] send unconfirmed; claim kept, not retried", sent.error);
+    return "unconfirmed";
+  }
+  return "failed";
 }
 
 // to: who a reminder targets — 'guest' (default, back-compat), 'host', or 'both'.
@@ -197,9 +203,9 @@ Deno.serve(async (req) => {
       .insert({ booking_id: bookingId, notif_key: key, recipient_email: email, status: "sending" });
     return !error; // unique violation => already claimed
   }
-  async function finish(bookingId: string, key: string, ok: boolean) {
-    if (ok) await admin.from("booking_notifications_sent").update({ status: "sent" }).eq("booking_id", bookingId).eq("notif_key", key);
-    else await admin.from("booking_notifications_sent").delete().eq("booking_id", bookingId).eq("notif_key", key); // let it retry
+  async function finish(bookingId: string, key: string, outcome: SendOutcome) {
+    if (outcome === "failed") await admin.from("booking_notifications_sent").delete().eq("booking_id", bookingId).eq("notif_key", key); // let it retry
+    else await admin.from("booking_notifications_sent").update({ status: outcome }).eq("booking_id", bookingId).eq("notif_key", key);
   }
 
   // Host contact for host-targeted reminders (email from auth, phone = the host's
@@ -227,7 +233,7 @@ Deno.serve(async (req) => {
 
   // Truthful, per-channel counters — an SMS send is reported separately from an
   // email send, and each counts only on an actual provider acceptance (§13).
-  let reminders = 0, smsReminders = 0, followups = 0, blocked = 0, guestEmailOptedOut = 0;
+  let reminders = 0, smsReminders = 0, followups = 0, unconfirmed = 0, blocked = 0, guestEmailOptedOut = 0;
   const blockedPersistenceFailures: string[] = [];
   for (const b of bookings) {
     const cal = calById.get(b.calendar_id as string);
@@ -316,24 +322,25 @@ Deno.serve(async (req) => {
           const recipient = ch === "email" ? contact.email : (contact.email || contact.phone);
           if (!(await claim(b.id as string, key, recipient))) continue;
           const mUrl = await manageUrl(b.id as string, ver);
-          let ok = false;
+          let outcome: SendOutcome = "failed";
           if (ch === "email") {
             const subject = rem.subject ? renderTemplate(rem.subject, vars) : `Reminder: ${title} · ${whenLabel}`;
             const lead = rem.body ? renderTemplate(rem.body, vars) : "A quick heads-up — your session is coming up.";
             const html = shell(brandName, accent, "Reminder: you're booked", lead,
               [["Session", title], ["When", whenLabel], ["Where", loc]],
               "Or just reply to this email.", mUrl);
-            ok = await sendEmail(contact.email, subject, html);
+            outcome = await sendEmail(contact.email, subject, html);
           } else {
             const line = rem.body
               ? renderTemplate(rem.body, vars)
               : `Reminder: ${title} on ${whenLabel}. ${loc}.`;
             // The manage link is appended (not part of the authorable copy) so an
             // SMS reminder can still reschedule/cancel with the same signed link.
-            ok = await sendSms(contact.phone, `${line}\nReschedule or cancel: ${mUrl}`);
+            outcome = (await sendSms(contact.phone, `${line}\nReschedule or cancel: ${mUrl}`)) ? "sent" : "failed";
           }
-          await finish(b.id as string, key, ok);
-          if (ok) { if (ch === "sms") smsReminders++; else reminders++; }
+          await finish(b.id as string, key, outcome);
+          if (outcome === "sent") { if (ch === "sms") smsReminders++; else reminders++; }
+          else if (outcome === "unconfirmed") unconfirmed++;
         }
       }
     }
@@ -353,14 +360,15 @@ Deno.serve(async (req) => {
         const html = shell(brandName, accent, "Thanks for the time", lead,
           [["Session", title], ["When", whenLabel]],
           "Want to book again or have a question? Just reply — we're here.", mUrl);
-        const ok = await sendEmail(email, subject, html);
-        await finish(b.id as string, key, ok);
-        if (ok) followups++;
+        const outcome = await sendEmail(email, subject, html);
+        await finish(b.id as string, key, outcome);
+        if (outcome === "sent") followups++;
+        else if (outcome === "unconfirmed") unconfirmed++;
       }
     }
   }
 
-  return new Response(JSON.stringify({ ok: true, scanned: bookings.length, reminders, smsReminders, followups, blocked, guest_email_opted_out: guestEmailOptedOut, blocked_persistence_failures: blockedPersistenceFailures }), {
+  return new Response(JSON.stringify({ ok: true, scanned: bookings.length, reminders, smsReminders, followups, unconfirmed, blocked, guest_email_opted_out: guestEmailOptedOut, blocked_persistence_failures: blockedPersistenceFailures }), {
     headers: { "Content-Type": "application/json" },
   });
 });

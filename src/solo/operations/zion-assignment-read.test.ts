@@ -1,4 +1,5 @@
 import { afterEach, expect, it, vi } from 'vitest';
+import { createClient, FunctionsHttpError } from '@supabase/supabase-js';
 import { readZionAssignments } from './zion-assignment-read';
 
 const actor = '10000000-0000-4000-8000-000000000001';
@@ -14,7 +15,7 @@ const detail = () => ({ ok: true, matches: [], invocation: { ...summary, created
   response_truncated: false, completion_scope: 'specialist_response_only', note: 'Response only, no business effect.' } });
 function ports(data: unknown = sample()) {
   return { auth: { getSession: vi.fn(async () => ({ data: { session: { user: { id: actor } } }, error: null as unknown })) },
-    functions: { invoke: vi.fn(async () => ({ data, error: null as unknown })) } };
+    functions: { invoke: vi.fn(async (_name: string, _options: { body: Record<string, unknown> }) => ({ data, error: null as unknown })) } };
 }
 afterEach(() => vi.useRealTimers());
 it('uses only caller-bound original discovery and keeps non-ZION sample coverage honest', async () => {
@@ -92,3 +93,37 @@ it('discards an already-issued result after current scope changes and does not r
   expect(await pending).toEqual({ status: 'refused' });
   expect(caller.functions.invoke).toHaveBeenCalledTimes(1);
 });
+
+// The installed SDK, not a name-like error object. The only fetch is an explicit
+// local transport fixture; no browser Auth, native record or provider is used.
+it.each(['http-401', 'http-403', 'http-400', 'http-404', 'http-409', 'http-500',
+  'relay', 'offline', 'name-only', 'fake-response'] as const)(
+  'classifies the original inspector transport without consuming its body or replaying: %s', async kind => {
+    let response: Response | undefined, receivedError: unknown;
+    let calls = 0;
+    const sdk = createClient('https://unit-test.invalid', 'synthetic-nonsecret-fixture', {
+      auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+      global: { fetch: async () => {
+        calls++;
+        if (kind === 'offline') throw Error('synthetic offline');
+        response = new Response('ignored private transport body', { status: kind.startsWith('http-') ? Number(kind.slice(5)) : 403,
+          ...(kind === 'relay' ? { headers: { 'x-relay-error': 'true' } } : {}) });
+        return response;
+      } },
+    });
+    const caller = ports();
+    caller.functions.invoke.mockImplementation(async (name, options) => {
+      if (kind === 'name-only') return { data: null, error: { name: 'FunctionsHttpError', context: new Response(null, { status: 403 }) } };
+      if (kind === 'fake-response') return { data: null, error: new FunctionsHttpError({ status: 403 }) };
+      const reply = await sdk.functions.invoke(name, options); receivedError = reply.error; return reply;
+    });
+    expect(await readZionAssignments(scope, caller, () => scope)).toEqual({ status: ['http-401', 'http-403'].includes(kind) ? 'refused' : 'unavailable' });
+    expect(caller.functions.invoke).toHaveBeenCalledExactlyOnceWith('paige-orchestrator', {
+      body: { action: 'tool_search', tenant_id: tenant, recent_assignments: true },
+    });
+    expect(calls).toBe(['name-only', 'fake-response'].includes(kind) ? 0 : 1);
+    if (response) {
+      expect(response.bodyUsed).toBe(false);
+      if (kind !== 'relay') expect(receivedError).toBeInstanceOf(FunctionsHttpError);
+    }
+  });

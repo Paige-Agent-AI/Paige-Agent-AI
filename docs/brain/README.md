@@ -1,3 +1,25 @@
+## EXP02 original private Systems host released — October27 UTC
+
+[#2952 actual source receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2952#issuecomment-6430581019):
+reviewedd4a01866/LOWER5660549839/all11 exact checks/Preview/two webSUCCESS;
+actual merge7ff9a6d884ec8ce6ec528cbb339e5bb74ced6874/treeeec1d6e5 preserves full
+incoming docs/all16,570 outside entries/original19 rows and219-tested blobs.
+Normal Edge40425564824/121930322103/API certificate12698824080 and separate
+current full API readback verify onboarding155/all42 source files/closure/config
+with stable metadata, no emitted fallback. WebREADY/both public200/exact
+7ff9a6d884ec8ce6ec528cbb339e5bb74ced6874-mvpxu08y/customerUpdate:null.
+
+The original host now imports the private manual Work adapter. The prior
+HTTP-unimported statement was accurate at#2944 and is retained as dated history.
+202 remains dispatch acknowledgement; native original Work/run/Rail establishes
+the result. No new host/config/grant/worker/queue/provider or customer activation.
+Functional bounded source DEPLOYED/API VERIFIED; VisualN/A/prior Finance retained;
+Experiential full manual journey INCOMPLETE; FounderNOT_ACCEPTED. Manual Spine/
+catalogue UNAVAILABLE/unregistered; all19/nine/ALG/historical9-0+12-0-4/monthly
+UNKNOWNUNRETRIED remain at existing bounds. Original request/admission/result/
+Rail/reload/permission/cohort proof remains owed. Full source evidence stays in
+[Systems evidence](../evidence/e2-systems-capture-mode.md) and Master §4.0.
+
 ## EXP02 private Systems consumer source released, not admitted — October26
 
 [#2944 actual source receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2944#issuecomment-6429387101):
@@ -4509,6 +4531,17 @@ UNAVAILABLE; all19/nine/ALG maturity unchanged, VisualN/A, ExperientialINCOMPLET
 FounderNOT_ACCEPTED. Details and complete orchestration contract stay in the
 [existing Systems evidence](../evidence/e2-systems-capture-mode.md); prior dated
 source releases remain history. No customer/model/provider operation.
+
+## EXP05 original ZION access-refusal correction — development, October26
+
+The original Operations assignment reader now distinguishes genuine installed-SDK
+HTTP401/403 from relay/offline/name-like errors. Existing refused-state handling
+withdraws the prior sample and original text; no body is consumed or action
+repeated. Five causal failures corrected; four exact-source regression suites
+140PASS. UI markup, caller-JWT inspector, scope/deadline, permissions, original
+receipts, providers and activation unchanged. Source/review/CI/deployment and
+authenticated proof remain separate; full ten/E5/Builder/ZION/owner-away/Live and
+founder acceptance stay open. [Bounded evidence](../evidence/ui-delivery/exp05-zion-history-access-refusal.md).
 
 ## EXP02 original request/recovery consumer — October27 UTC, local only
 

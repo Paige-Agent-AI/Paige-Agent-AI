@@ -1,4 +1,5 @@
 import { commsProviderExecutionAllowed } from "../_shared/comms-provider-boundary.ts";
+import { sendPlatformEmail } from "../_shared/email/platform-sendgrid.ts";
 // Native booking engine — public availability + appointment creation.
 // Anon-callable (verify_jwt=false); all writes go through the service role after
 // server-side validation, so the public never touches tables directly.
@@ -654,7 +655,6 @@ async function findOrCreateContact(
 }
 
 // --- Confirmation emails (guest + host) + .ics invite -----------------------
-const RESEND_KEY = Deno.env.get("RESEND_API_KEY") ?? "";
 const EMAIL_FROM = Deno.env.get("CALENDAR_EMAIL_FROM") ?? Deno.env.get("PLATFORM_DEFAULT_EMAIL_FROM") ?? "Paige Agent AI <calendar@paigeagent.ai>";
 // Signed self-serve link (matches booking-manage's verifier: HMAC over the
 // base64url payload, keyed by the service-role key).
@@ -721,19 +721,27 @@ function buildIcs(o: { uid: string; startMs: number; endMs: number; title: strin
     "END:VEVENT", "END:VCALENDAR",
   ].join("\r\n");
 }
+// The SendGrid transport always sends From Paige's own verified domain (it moves a
+// tenant From onto mail.paigeagent.ai, keeping the display name and local part).
+// The guest email says "just reply to this email", so when a tenant identity has
+// no explicit Reply-To, its original address becomes the Reply-To: replies keep
+// reaching the same mailbox they reached before the move.
+function bareAddress(from: string): string {
+  const m = /<\s*([^<>\s]+)\s*>\s*$/.exec(from);
+  return (m ? m[1] : from).trim();
+}
+// Sent through Paige's SendGrid transport (owner ruling 2026-10-26). False when the
+// transport is unconfigured, the recipient is invalid, or SendGrid did not accept it.
 async function sendEmail(to: string, subject: string, html: string, ics?: string, opts?: { from?: string; replyTo?: string }): Promise<boolean> {
-  if (!RESEND_KEY) return false;
-  const body: Record<string, unknown> = { from: opts?.from || EMAIL_FROM, to: [to], subject, html };
-  if (opts?.replyTo) body.reply_to = opts.replyTo;
-  if (ics) body.attachments = [{ filename: "invite.ics", content: b64utf8(ics) }];
-  try {
-    const res = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${RESEND_KEY}`, "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    return res.ok;
-  } catch { return false; }
+  const sent = await sendPlatformEmail({
+    from: opts?.from || EMAIL_FROM,
+    to,
+    subject,
+    html,
+    replyTo: opts?.replyTo || (opts?.from ? bareAddress(opts.from) : null),
+    attachments: ics ? [{ filename: "invite.ics", content: b64utf8(ics), type: "text/calendar" }] : null,
+  });
+  return sent.ok;
 }
 function guestEmailHtml(brandName: string, accent: string, title: string, whenLabel: string, location: string, host: string | null, manageLink: string): string {
   const on = textOn(accent);

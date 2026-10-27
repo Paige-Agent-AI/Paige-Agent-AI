@@ -2,15 +2,16 @@
 import React, { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
+import { createClient } from '@supabase/supabase-js';
 import { OperationsZionHistory } from './OperationsZionHistory';
 import type { ZionAssignmentRead } from './zion-assignment-read';
 type AuthSnapshot = { user: { id: string; last_sign_in_at?: string } };
 const port = vi.hoisted(() => ({ read: vi.fn(), changed: null as ((event: string, session?: AuthSnapshot | null) => void) | null,
-  initial: null as AuthSnapshot | null, unsubscribe: vi.fn() }));
+  initial: null as AuthSnapshot | null, unsubscribe: vi.fn(), getSession: vi.fn(), invoke: vi.fn() }));
 vi.mock('./zion-assignment-read', () => ({ readZionAssignments: port.read }));
 vi.mock('@/integrations/supabase/client', () => ({ supabase: { auth: { onAuthStateChange: (cb: (event: string, session?: AuthSnapshot | null) => void) => {
   port.changed = cb; cb('INITIAL_SESSION', port.initial); return { data: { subscription: { unsubscribe: port.unsubscribe } } };
-} } } }));
+}, getSession: port.getSession }, functions: { invoke: port.invoke } } }));
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 const actor = '10000000-0000-4000-8000-000000000001', tenant = '20000000-0000-4000-8000-000000000001';
 const id = '30000000-0000-4000-8000-000000000001', receipt = '40000000-0000-4000-8000-000000000001';
@@ -22,6 +23,8 @@ const result: ZionAssignmentRead = { status: 'ready', invocation: { ...entry, ob
   response_truncated: false, completion_scope: 'specialist_response_only', note: 'response only' } };
 let root: Root, host: HTMLDivElement;
 beforeEach(() => { vi.clearAllMocks(); port.changed = null; port.initial = sameSession(); port.read.mockResolvedValue(sample);
+  port.getSession.mockResolvedValue({ data: { session: { user: { id: actor } } }, error: null });
+  port.invoke.mockRejectedValue(Error('unbound inspector fixture'));
   host = document.createElement('div'); document.body.append(host); root = createRoot(host); });
 afterEach(() => { act(() => root.unmount()); host.remove(); });
 async function render(tenantId = tenant, userId = actor) { await act(async () => root.render(<OperationsZionHistory tenantId={tenantId} userId={userId} />)); }
@@ -114,4 +117,33 @@ it('never revives an inspection from a late initial notification after sign-out 
   await act(async () => { port.changed?.('INITIAL_SESSION', sameSession()); port.changed?.('SIGNED_IN', sameSession()); });
   expect(host.textContent).not.toContain('Response recorded'); expect(port.read.mock.calls[0][2]()).toBeNull();
   expect(port.read).toHaveBeenCalledTimes(1);
+});
+
+it.each([401, 403])('withdraws prior original text and the whole sample after an actual SDK HTTP%d refusal', async status => {
+  const actual = await vi.importActual<typeof import('./zion-assignment-read')>('./zion-assignment-read');
+  port.read.mockImplementation(actual.readZionAssignments);
+  let calls = 0, refusal: Response | undefined;
+  if (result.status !== 'ready' || !('invocation' in result)) throw Error('fixture');
+  const replies = [{ ok: true, matches: [], recent_invocations: [entry], sample_only: true, limit: 5, note: 'sample only' },
+    { ok: true, matches: [], invocation: { ...result.invocation, note: 'response only' } }];
+  const sdk = createClient('https://unit-test.invalid', 'synthetic-nonsecret-fixture', {
+    auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+    global: { fetch: async () => {
+      const reply = replies[calls++];
+      if (reply) return new Response(JSON.stringify(reply), { headers: { 'Content-Type': 'application/json' } });
+      refusal = new Response('ignored private refusal body', { status }); return refusal;
+    } },
+  });
+  port.invoke.mockImplementation((name, options) => sdk.functions.invoke(name, options));
+  await render(); await click('Inspect recent work'); await click('Inspect original response');
+  expect(host.textContent).toContain('untrusted original text');
+  await click('Refresh original response');
+  expect(host.textContent).toContain('Current owner or admin access is required');
+  expect(host.textContent).not.toContain('Response recorded');
+  expect(host.textContent).not.toContain('untrusted original text');
+  expect(host.textContent).not.toContain('ignored private refusal body');
+  expect(host.textContent).not.toContain('Original receipt needs review');
+  expect(refusal?.bodyUsed).toBe(false); expect(calls).toBe(3);
+  expect(port.invoke).toHaveBeenCalledTimes(3);
+  expect(host.querySelector('script')).toBeNull();
 });

@@ -16,7 +16,8 @@ vi.mock("@/hooks/usePortalConfig", () => ({ usePortalCatalogInput: () => ({ data
 vi.mock("./usePortalInvitations", () => ({ usePortalInvitations: () => ({ data: [], isLoading: false, isError: false, invalidate: fixture.readback }) }));
 vi.mock("./PortalConfigurationGate", () => ({ PortalConfigurationGate: ({ children }: { children: React.ReactNode }) => <>{children}</> }));
 vi.mock("@/integrations/supabase/client", () => ({ supabase: {
-  auth: { getUser: () => fixture.getUser() }, rpc: (...args: unknown[]) => fixture.rpc(...args), functions: { invoke: (...args: unknown[]) => fixture.invoke(...args) },
+  // The sibling support read subscribes to Auth; this invitation-only fixture keeps its original invalid scope IDs.
+  auth: { getUser: () => fixture.getUser(), onAuthStateChange: () => ({ data: { subscription: { unsubscribe: vi.fn() } } }) }, rpc: (...args: unknown[]) => fixture.rpc(...args), functions: { invoke: (...args: unknown[]) => fixture.invoke(...args) },
   from: () => {
     const chain = { select: () => chain, eq: () => chain, maybeSingle: async () => ({ data: { id: "client-a", status: "active", merged_into_contact_id: null, do_not_contact: false, linked_user_id: null, client_contact_methods: [{ kind: "email", is_primary: true, value: "client@example.test" }] }, error: null }) };
     return chain;

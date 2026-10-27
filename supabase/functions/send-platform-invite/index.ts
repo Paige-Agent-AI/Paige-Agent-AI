@@ -2,6 +2,7 @@
 // invite and emails the /join-platform link, branded as Paige Agent AI (a
 // platform-originated email — NOT a tenant email, so it wears the platform brand).
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { sendPlatformEmail } from "../_shared/email/platform-sendgrid.ts";
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -69,31 +70,26 @@ Deno.serve(async (req) => {
 
     const link = `${origin}/join-platform?token=${token}`;
 
-    // Send the Paige Agent AI-branded email.
-    const apiKey = Deno.env.get("RESEND_API_KEY");
+    // Send the Paige Agent AI-branded email through SendGrid. With no key the transport
+    // answers email_provider_not_configured before any request: nothing sent, nothing logged.
     let emailed = false;
-    if (apiKey) {
-      const res = await fetch("https://api.resend.com/emails", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-        body: JSON.stringify({
-          from: FROM,
-          to: [email],
-          subject: "You're invited to the Paige Agent AI team",
-          html: inviteHtml(link),
-          tags: [{ name: "type", value: "platform_invite" }],
-        }),
-      });
-      emailed = res.ok;
+    const sent = await sendPlatformEmail({
+      from: FROM,
+      to: [email],
+      subject: "You're invited to the Paige Agent AI team",
+      html: inviteHtml(link),
+      categories: ["platform_invite"],
+    });
+    if (sent.error !== "email_provider_not_configured") {
+      emailed = sent.ok;
       const admin = createClient(url, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
-      const payload = await res.json().catch(() => ({}));
       await admin.from("email_send_log").insert({
         template_name: "platform_invite",
         recipient_email: email,
-        message_id: (payload as { id?: string })?.id ?? null,
-        status: res.ok ? "sent" : "failed",
+        message_id: sent.id,
+        status: sent.ok ? "sent" : "failed",
         sender_account: "platform",
-        metadata: { via: "send-platform-invite", status: res.status },
+        metadata: { via: "send-platform-invite", status: sent.status },
       }).then(() => {}, () => {});
     }
 

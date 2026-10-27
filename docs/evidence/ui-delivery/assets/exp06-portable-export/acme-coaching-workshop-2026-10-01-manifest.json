@@ -1,0 +1,34 @@
+{
+  "format": "paige-portable-export/1",
+  "generatedAt": "2026-10-26T00:00:00Z",
+  "origin": "https://acme-coaching.paigeagent.ai",
+  "tenant": {
+    "slug": "acme-coaching",
+    "name": "ACME Coaching"
+  },
+  "page": {
+    "id": "p-fixture",
+    "slug": "workshop",
+    "title": "Turn your next ten clients into a referral engine",
+    "publishedAt": "2026-10-01T12:00:00Z"
+  },
+  "source": "growth_pages published columns (blocks_json/theme_json/seo_json) via Studio",
+  "distinctFromDeployment": true,
+  "staticOnly": true,
+  "assets": [
+    {
+      "url": "https://images.unsplash.com/photo-1517245421214-74ac55b4f75e?w=1200",
+      "origin": "block",
+      "blockType": "hero"
+    },
+    {
+      "url": "https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ",
+      "origin": "block",
+      "blockType": "media"
+    }
+  ],
+  "notes": [
+    "embedded_form “workshop-signup”: a static export links to the live page instead of fabricating intake — submissions stay on the live form.",
+    "Static export: no scripts ship; anything interactive links or snapshots honestly."
+  ]
+}

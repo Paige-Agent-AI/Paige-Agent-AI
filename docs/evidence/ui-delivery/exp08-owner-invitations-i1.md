@@ -27,12 +27,12 @@ ACCEPTANCE_CRITERIA: on Agency Team an admin picks Owner, sends, and reads the A
 MOTION_PURPOSE: NONE: no motion change
 PROTECTED_SEAMS: create_tenant_invite_token (Owner refused; other roles unchanged, proof), accept_tenant_invite (owner tokens refused), peek_tenant_invite, create_/resend_/revoke_/archive_/accept_solo_team_invite (byte-identical outside marked edits, proof case 13); Solo and Sub-account shells NONE_AFFECTED: no UI file changed
 
-INTERNAL_BUILD_IDENTITY: 7bdbbb4e019060ed4a84f2bace5196421dc440f5; deployment=none (PR #3008 branch head; this record is the next commit, documentation only); environment=local; migrations=PROOF_OWED(20271120010008_exp08_owner_invitations applies on merge through deploy-migrations); edge=PROOF_OWED(paige-ai-chat redeploys on merge for _shared/team-hub/agent-turn.ts); evidence=this record and supabase/tests/exp08_owner_invitations.sql
+INTERNAL_BUILD_IDENTITY: 06d95f0274a9a35aba970774896a76774425752c; deployment=none (PR #3016 branch, the lock fix on top of #3008's merge ccb14485c); environment=local; migrations=PROOF_OWED(20271120010008_exp08_owner_invitations: two production applies of #3008's version timed out on a table lock and rolled back whole, production read back unchanged; #3016 applies it on merge through deploy-migrations); edge=APPLIED(paige-ai-chat, accept-invite, send-portal-invite, solo-team-invitations from ccb14485c, deployed-source readback PASS, deploy-edge-functions run 40601337825); evidence=this record, supabase/tests/exp08_owner_invitations.sql and the lock contention test described in PR #3016
 RELEASE_CHANNEL: development: branch build; ships to production on merge to main per the pre-launch stance (§4)
 RELEASE_CLASSIFICATION: internal-only: pre-launch platform with no live customers
 CUSTOMER_RELEASE_IDENTITY: none: internal-only pre-launch work
 RELEASE_NOTE_REQUIRED: NO: internal-only; no customer release
-RELEASE_TRUTH_BOUNDARY: PROOF OWED: the database refusals are proven on disposable PostgreSQL and go LIVE on merge; the Agency Team screen showing the sentence is a static trace until a signed-in drive
+RELEASE_TRUTH_BOUNDARY: PROOF OWED: the database refusals are proven on disposable PostgreSQL and are NOT yet live (the migration is unapplied until #3016's deploy reads back); the edge functions shipped with #3008 are live and degrade safely without it (send-portal-invite's new account-holder check runs only for owner tokens, of which production had none); the Agency Team screen showing the sentence stays a static trace until a signed-in drive
 RELEASE_RECOVERY: position=forward migration re-emitting the 10 prior bodies, pinned by md5 in the proof; reference=supabase/tests/exp08_owner_invitations.sql and the contract I1 row
 
 ## Scope and collisions

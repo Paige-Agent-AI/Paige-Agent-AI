@@ -1043,6 +1043,17 @@ Deno.serve(async (req) => {
   // the queued row's own.)
   if (!isInternal && !tenantId && !isOwner) tenantId = callerTenant ?? null;
 
+  // Experience 03: a row whose SendGrid answer was lost (error = delivery_unconfirmed) may already be in
+  // the client's inbox, and SendGrid has no idempotent replay. A second send of that row (a stale tab's
+  // Approve, any caller) is refused before any provider call — after the §9 tenant gate, and before the
+  // provider floor, which would rewrite the row as blocked — and answered unconfirmed like the first.
+  if (body.message_id && draftRow?.status === "failed" && draftRow.error === DELIVERY_UNCONFIRMED) {
+    return new Response(JSON.stringify({
+      status: "failed", outcome: "outcome_unknown", unconfirmed: true, error: DELIVERY_UNCONFIRMED,
+      reason: "This message's earlier send could not be confirmed, so it is not sent again.",
+      message_id: body.message_id, scheduled_for: null,
+    }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+  }
   // Server-owned execution floor applies independently of approvals, active connectors,
   // sender fallback and the service-role queue/retry caller. No provider or schedule admission.
   if (!await commsProviderExecutionAllowed(admin, { tenantId, actorUserId: user?.id ?? null })) {
@@ -1196,16 +1207,6 @@ Deno.serve(async (req) => {
       JSON.stringify({ status: "sent", message_id: body.message_id, deduped: true }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
-  }
-  // Experience 03: a row whose SendGrid answer was lost (error = delivery_unconfirmed) may already be in
-  // the client's inbox, and SendGrid has no idempotent replay. A second send of that row (a stale tab's
-  // Approve, any service caller) is refused before any provider call, answered unconfirmed like the first.
-  if (body.message_id && draftRow?.status === "failed" && draftRow.error === DELIVERY_UNCONFIRMED) {
-    return new Response(JSON.stringify({
-      status: "failed", outcome: "outcome_unknown", unconfirmed: true, error: DELIVERY_UNCONFIRMED,
-      reason: "This message's earlier send could not be confirmed, so it is not sent again.",
-      message_id: body.message_id, scheduled_for: null,
-    }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   }
 
   // INT-328: anything else the read RPC found changed since approval (e.g. the contact method was

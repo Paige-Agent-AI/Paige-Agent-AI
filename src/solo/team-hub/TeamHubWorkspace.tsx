@@ -314,7 +314,9 @@ function ReadyHub({ hub, announce, announcement, onOpenTeamSettings, openPaige }
 
   // A conversation that disappears from the list (left, removed from a private channel) closes.
   useEffect(() => {
-    if (hub.activeId && hub.stream?.status !== "loading" && !conversations.some((conversation) => conversation.id === hub.activeId)) {
+    // A1b: the reader's agent DMs are listed apart from channels and person DMs; one is still listed.
+    if (hub.activeId && hub.stream?.status !== "loading" && !conversations.some((conversation) => conversation.id === hub.activeId)
+      && !hub.overview?.agent_dms.some((dm) => dm.id === hub.activeId)) {
       if (hub.stream?.status !== "not_found") hub.clearConversation();
     }
   }, [conversations, hub]);

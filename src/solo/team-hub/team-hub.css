@@ -354,3 +354,119 @@
 /* EXP08 owner colour pass (2026-10-26): "Team conversations are off" carries the conversations
    indigo on a soft plate rather than flat graphite. Token-only; other centre states unchanged. */
 .th-hub[data-state="conversations-off"] .th-center-mark{color:var(--pg-violet);background:color-mix(in srgb,var(--pg-violet) 16%,var(--pg-canvas));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--pg-violet) 28%,var(--pg-canvas))}
+
+/* ---------- EXP08 Team Hub agents (A1b): PAIGE and her six agents, built to approved prototype v3
+   and the approved v5 colours and symbols (owner 2026-10-27, APPROVED-FROZEN §28). Colour marks WHO,
+   never state: every agent element carries data-ag, which maps to that agent's tokens from the shared
+   token layer (src/index.css). It is spent as a plate tint, a name, a chip and one thin line, never as
+   a flood, and never without the agent's symbol and name beside it. PAIGE's gold is a tint and a ring
+   only; status marks keep the system colours. ---------- */
+[data-ag="paige"]{--agc-fill:var(--pg-agent-paige-fill);--agc-tint:var(--pg-agent-paige-tint);--agc-ink:var(--pg-agent-paige-ink);--agc-ring:var(--pg-agent-paige-ring)}
+[data-ag="vera"]{--agc-fill:var(--pg-agent-vera-fill);--agc-tint:var(--pg-agent-vera-tint);--agc-ink:var(--pg-agent-vera-ink);--agc-ring:var(--pg-agent-vera-ring)}
+[data-ag="nexus"]{--agc-fill:var(--pg-agent-nexus-fill);--agc-tint:var(--pg-agent-nexus-tint);--agc-ink:var(--pg-agent-nexus-ink);--agc-ring:var(--pg-agent-nexus-ring)}
+[data-ag="cura"]{--agc-fill:var(--pg-agent-cura-fill);--agc-tint:var(--pg-agent-cura-tint);--agc-ink:var(--pg-agent-cura-ink);--agc-ring:var(--pg-agent-cura-ring)}
+[data-ag="mentor"]{--agc-fill:var(--pg-agent-mentor-fill);--agc-tint:var(--pg-agent-mentor-tint);--agc-ink:var(--pg-agent-mentor-ink);--agc-ring:var(--pg-agent-mentor-ring)}
+[data-ag="merit"]{--agc-fill:var(--pg-agent-merit-fill);--agc-tint:var(--pg-agent-merit-tint);--agc-ink:var(--pg-agent-merit-ink);--agc-ring:var(--pg-agent-merit-ring)}
+[data-ag="zion"]{--agc-fill:var(--pg-agent-zion-fill);--agc-tint:var(--pg-agent-zion-tint);--agc-ink:var(--pg-agent-zion-ink);--agc-ring:var(--pg-agent-zion-ring)}
+
+/* The plate: the agent's tint behind its symbol in its ink, inside a 1px ring (>=3:1 on any surface). */
+.th-ag-plate{width:22px;height:22px;flex:none;display:grid;place-items:center;border-radius:7px;background:var(--agc-tint);color:var(--agc-ink);box-shadow:inset 0 0 0 1px var(--agc-ring)}
+.th-hub .th-ag-plate svg{width:13px;height:13px;stroke-width:1.9}
+.th-hub .th-ag-plate .th-ag-mark{width:14px;height:14px}
+.th-ag-plate--xs{width:16px;height:16px;border-radius:5px}
+.th-hub .th-ag-plate--xs svg{width:10px;height:10px}
+.th-ag-plate--sm{width:20px;height:20px;border-radius:6px}
+.th-hub .th-ag-plate--sm svg{width:12px;height:12px}
+.th-ag-plate--lg{width:32px;height:32px;border-radius:9px}
+.th-hub .th-ag-plate--lg svg{width:16px;height:16px}
+.th-hub .th-ag-plate--lg .th-ag-mark{width:17px;height:17px}
+.th-ag-plate--xl{width:46px;height:46px;border-radius:13px}
+.th-hub .th-ag-plate--xl svg{width:22px;height:22px}
+/* The word "Agent": never colour alone. */
+.th-ag-tag{display:inline-flex;align-items:center;height:17px;padding:0 6px;border-radius:5px;background:var(--agc-tint);color:var(--agc-ink);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--agc-ring) 45%,transparent);font-size:10.5px;font-weight:650;letter-spacing:.03em;line-height:1;white-space:nowrap;align-self:center}
+/* The name is the agent's ink wherever it is the subject: a message author, a list title, a header. */
+.th-ag-name{color:var(--agc-ink);font-weight:600}
+/* @mention chips stay at TINT strength: one message can hold four of them. */
+.th-mention.th-ag-chip{display:inline-flex;align-items:center;gap:2px;padding:0 5px 0 4px;background:var(--agc-tint);color:var(--agc-ink);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--agc-ring) 40%,transparent);font-weight:600;white-space:nowrap;vertical-align:baseline}
+.th-hub .th-ag-chip svg{width:11px;height:11px}
+
+/* A message from an agent: its plate and name open its profile. */
+.th-ag-avbtn{display:block;width:32px;height:32px;padding:0;border:0;border-radius:9px;background:transparent;cursor:pointer}
+.th-ag-namebtn{padding:0;border:0;background:transparent;font:inherit;font-weight:600;cursor:pointer}
+.th-ag-namebtn:hover{text-decoration:underline;text-underline-offset:3px}
+.th-ag-re{display:inline-flex;align-items:center;gap:4px;padding:0;border:0;background:transparent;color:var(--pg-faint);font-size:11px}
+button.th-ag-re{cursor:pointer}
+button.th-ag-re:hover{color:var(--pg-muted);text-decoration:underline;text-underline-offset:3px}
+.th-hub .th-ag-re svg{width:12px;height:12px}
+.th-text--fixed{margin-top:4px}
+
+/* The asker's writing row: the dots in the agent's colour, the words always there (motion off still reads). */
+.th-ag-typing{display:grid;grid-template-columns:32px minmax(0,1fr);gap:10px;align-items:center;padding:8px;color:var(--pg-muted);font-size:12.5px}
+.th-ag-dots{display:inline-flex;gap:3px;margin-right:8px;vertical-align:middle}
+.th-ag-dots i{width:5px;height:5px;border-radius:50%;background:var(--agc-fill)}
+@media (prefers-reduced-motion:no-preference){.th-ag-dots i{animation:th-dot 1.1s ease-in-out infinite}.th-ag-dots i:nth-child(2){animation-delay:.15s}.th-ag-dots i:nth-child(3){animation-delay:.3s}}
+@keyframes th-dot{0%,80%,100%{opacity:.3}40%{opacity:1}}
+
+/* Couldn't answer: a warning mark and words, with Ask again. Never agent colour. */
+.th-ag-fail{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:6px;color:var(--pg-ink-2);font-size:12px}
+.th-hub .th-ag-fail svg{width:14px;height:14px;color:var(--pg-warning)}
+.th-ag-fail .th-btn{min-height:40px}
+
+/* The private-part note: the agent speaking, so it wears a faint wash of its tint. */
+.th-ag-priv{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;margin-top:8px;max-width:560px;padding:4px 4px 4px 10px;border:1px solid color-mix(in srgb,var(--agc-ring) 35%,var(--pg-line-soft));border-radius:9px;background:color-mix(in srgb,var(--agc-tint) 45%,var(--pg-surface));color:var(--pg-ink-2);font-size:12px}
+.th-ag-priv>span{flex:1;min-width:0}
+.th-hub .th-ag-priv>svg{width:14px;height:14px;color:var(--agc-ink)}
+.th-ag-priv .th-btn{min-height:40px}
+.th-ag-open{display:inline-flex;align-items:center;gap:4px;margin-left:auto;font-size:12px}
+.th-hub .th-ag-open svg{width:13px;height:13px}
+
+/* Bring in: a neutral button carrying the agent's plate; the edge takes its ring. */
+.th-ag-bring{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:8px}
+.th-ag-bring .th-note{margin:0}
+.th-ag-bring-btn{border-color:color-mix(in srgb,var(--agc-ring) 50%,var(--pg-line))}
+.th-ag-bring-btn:hover{background:color-mix(in srgb,var(--agc-tint) 50%,var(--pg-raised))}
+
+/* The conversation list's Your Paige team rows; the open agent DM takes a faint wash of its colour. */
+.th-conv-name--agent{flex:none;max-width:60%}
+.th-conv-role{flex:1;min-width:0;color:var(--pg-faint);font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.th-conv-item--agent[aria-current="page"]{background:color-mix(in srgb,var(--agc-tint) 55%,var(--pg-surface));border-color:color-mix(in srgb,var(--agc-ring) 45%,var(--pg-line))}
+.th-conv-item--agent[aria-current="page"] .th-conv-name,.th-conv-item--agent[data-unread] .th-conv-name{color:var(--agc-ink)}
+.th-option[data-ag][aria-selected="true"]{background:color-mix(in srgb,var(--agc-tint) 55%,var(--pg-surface))}
+.th-pop .th-option[data-ag][aria-selected="true"],.th-pop .th-option[data-ag]:hover{background:color-mix(in srgb,var(--agc-tint) 55%,var(--pg-surface))}
+.th-pick-head{margin:8px 4px 2px}
+
+/* An agent DM: one 2px line in the agent's colour under the header says whose room this is. */
+.th-conv-head--agent{box-shadow:inset 0 -2px 0 var(--agc-fill)}
+.th-conv-head--agent h2{gap:8px}
+.th-head-actions .th-btn{white-space:nowrap}
+.th-ag-dmnote{display:flex;align-items:center;gap:8px;margin:2px 0 10px;padding:8px 10px;border:1px solid var(--pg-line-soft);border-radius:9px;background:var(--pg-surface);color:var(--pg-muted);font-size:12px}
+.th-hub .th-ag-dmnote svg{width:14px;height:14px}
+.th-ag-empty h2{margin-top:2px}
+
+/* First use: Say hello to PAIGE is the one primary act (ink, never gold); the rest sit beside it. */
+.th-btn--primary{background:var(--pg-ink);border-color:transparent;color:var(--pg-canvas);font-weight:600}
+.th-btn--primary:hover{border-color:transparent;filter:brightness(1.08)}
+.th-first-acts{display:grid;gap:8px;justify-items:center}
+.th-center--compact .th-first-acts{justify-items:start}
+.th-first-acts .th-note{margin:0}
+
+/* The agent profile, in the thread's slot: the header is the agent's (a soft wash and a 2px line). */
+.th-prof-id{display:grid;grid-template-columns:46px minmax(0,1fr);gap:12px;align-items:center;padding:14px 14px 12px;border-bottom:1px solid var(--pg-line-soft);background:linear-gradient(180deg,color-mix(in srgb,var(--agc-tint) 58%,var(--pg-workspace)),var(--pg-workspace) 92%);box-shadow:inset 0 2px 0 var(--agc-fill)}
+.th-prof-id h3{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:0;font-size:17px;font-weight:650;letter-spacing:-.015em;line-height:1.2}
+.th-prof-id p{margin:4px 0 0;color:var(--pg-ink-2);font-size:12px;line-height:1.35}
+.th-prof-body{padding:12px 14px 16px;gap:4px}
+.th-prof-intro{margin:2px 0 4px;color:var(--pg-ink);font-size:13.5px;line-height:1.45}
+.th-prof-body > .th-note{margin:0 0 6px}
+.th-prof-sec{display:grid;gap:8px;padding:14px 2px 4px;border-top:1px solid var(--pg-line-soft)}
+.th-prof-sec h4{margin:0;font-size:12.5px;font-weight:650;color:var(--pg-ink)}
+.th-prof-sec > p{margin:0;color:var(--pg-ink-2);font-size:12.5px}
+.th-prof-sec .th-facts{font-size:12.5px;gap:5px 12px}
+.th-facts-row{display:contents}
+.th-prof-trait{display:grid;gap:1px}
+.th-prof-trait b{font-size:12.5px;font-weight:600;color:var(--pg-ink)}
+.th-prof-trait span{color:var(--pg-muted);font-size:12.5px}
+.th-prof-list{margin:0;padding-left:17px;display:grid;gap:4px;color:var(--pg-ink-2);font-size:12.5px}
+.th-prof-foot{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:10px 12px;border-top:1px solid var(--pg-line-soft);background:var(--pg-workspace)}
+.th-profile .th-thread-head h2:focus{outline:0}
+.th-profile .th-thread-head h2:focus-visible{outline:2px solid var(--pg-violet);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){.th-ag-dots i{animation:none}}

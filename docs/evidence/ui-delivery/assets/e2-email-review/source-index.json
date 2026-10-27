@@ -1,0 +1,332 @@
+{
+  "rendered_source": "fa30a8bd245b489e96c4a13f481b8007baa394a0",
+  "verified_composition": "receives actual main c76eb5cd62fc6cc4fa761b654bf18153b15ed395; unchanged original 22 rendered inputs and source5dd reference component inputs verified independently",
+  "base": "c76eb5cd62fc6cc4fa761b654bf18153b15ed395",
+  "scope": "Declared original Executive/shared presenter/shell/formatter/styles/font/harness inputs; not a complete transitive bundle graph. Synthetic UI and actual native SQL are separate evidence legs. No authenticated account/model/provider/action operation.",
+  "inputs": [
+    {
+      "path": "src/solo/ExecutiveOverview.tsx",
+      "sha256": "cd26365db6ea041339dd5c72fa8932e7b57666d6cd82213038b09190d7a4d38f",
+      "hash_mode": "text_lf"
+    },
+    {
+      "path": "src/solo/executive-review.ts",
+      "sha256": "99cbde2cba5706f66571d6c1135787df1fda75435704b51312bb35e292c269af",
+      "hash_mode": "text_lf"
+    },
+    {
+      "path": "src/solo/executive-overview.css",
+      "sha256": "fcaca294d527c37f7a61207382b5347028e07f72d6a9259c4f2555e0d9b6856a",
+      "hash_mode": "text_lf"
+    },
+    {
+      "path": "src/solo/CommandCenter.tsx",
+      "sha256": "f16ada48b0c2cbb8748fa253db3000c3bd5ec0cfd9081746b611fac282ef4a61",
+      "hash_mode": "text_lf"
+    },
+    {
+      "path": "src/solo/ExecutiveTargets.tsx",
+      "sha256": "bf36ac3e0ae2a1f78366af98beb359d3b2ff63b77d14a0514dc45581680bac97",
+      "hash_mode": "text_lf"
+    },
+    {
+      "path": "src/solo/ExecutiveFinanceEvidence.tsx",
+      "sha256": "7aac2a23df2373d8e1c959446d0f8404fc6334078e28b399dbe2174dd4dd32cc",
+      "hash_mode": "text_lf"
+    },
+    {
+      "path": "src/components/tenant-shell/TenantCommandCenterShell.tsx",
+      "sha256": "7aaa24d867af1ac5e2222f3581ab361288ba54e6319e5c86db245875adb13e7c",
+      "hash_mode": "text_lf"
+    },
+    {
+      "path": "src/components/tenant-shell/tenant-command-center-shell.css",
+      "sha256": "e9756f8cfc04a330748711d798afeda35cb8f02bd133914dfee9a5fe4b0bf355",
+      "hash_mode": "text_lf"
+    },
+    {
+      "path": "src/solo/SoloPaigeWorkspace.tsx",
+      "sha256": "a13d385e06711b9410ea08cdd9341c4a9bbac04f4ad67cf8ff306174ca3ef270",
+      "hash_mode": "text_lf"
+    },
+    {
+      "path": "src/solo/SoloWorkspacePanels.tsx",
+      "sha256": "d005acb05ef181a0cf3e752593999450c348dc6b3c339a2d2389a6da1f32e104",
+      "hash_mode": "text_lf"
+    },
+    {
+      "path": "src/solo/catalogue-coverage.ts",
+      "sha256": "de41b8b4a2ceff34043da027308aa46ff2fdc2732cbcd9044573548cef0d3919",
+      "hash_mode": "text_lf"
+    },
+    {
+      "path": "src/index.css",
+      "sha256": "f410966e5d565745efff907262d232925f6132d4a71a414ca8146db131fbddcc",
+      "hash_mode": "text_lf"
+    },
+    {
+      "path": "src/solo/solo-tokens.css",
+      "sha256": "77edc9fc35a6d2dab87318996fbb0dc6d80a0a04115d1757016c10da2c7b3197",
+      "hash_mode": "text_lf"
+    },
+    {
+      "path": "src/test/fixtures/business-review.ts",
+      "sha256": "cf6046734a45ccff3d66d41e83b9e6ff304097e9105fb5a2a75a4278a7ae31fa",
+      "hash_mode": "text_lf"
+    },
+    {
+      "path": "scripts/live-drive/harness/executive-mount/main.tsx",
+      "sha256": "5cc3429f4a35d2fd2ac488734cf2aa073e76a437ca5f7b9f2c87db91f52bf2cc",
+      "hash_mode": "text_lf"
+    },
+    {
+      "path": "scripts/live-drive/harness/executive-mount/stubs.tsx",
+      "sha256": "cf73b03bb27a951ac8c5897d8eba451c34c8e2679a0a0d22b108d813caa5736a",
+      "hash_mode": "text_lf"
+    },
+    {
+      "path": "scripts/live-drive/harness/executive-mount/slice-fixtures.ts",
+      "sha256": "8841c283f1cd99ac0de6ac84221d624b69fa92dbee5e6c47a0b9a39a602fe740",
+      "hash_mode": "text_lf"
+    },
+    {
+      "path": "scripts/live-drive/harness/executive-mount/email-fixture.ts",
+      "sha256": "475f6a9cf836b5f130e0c52dd8d625f63319f9aefb1cdfae77fa6a15d29ce77e",
+      "hash_mode": "text_lf"
+    },
+    {
+      "path": "scripts/live-drive/harness/executive-mount/vite.config.ts",
+      "sha256": "f3cbee419e47505dce4f94dbe090c8c64c79e127e1b5011374650953fa320ba1",
+      "hash_mode": "text_lf"
+    },
+    {
+      "path": "scripts/live-drive/harness/executive-mount/index.html",
+      "sha256": "5ae436157119e1a702b87dbacb7122ca35cea9bf584f26ab499618fda7ff01eb",
+      "hash_mode": "text_lf"
+    },
+    {
+      "path": "public/fonts/schibsted-grotesk/schibsted-grotesk-latin-wght-normal.woff2",
+      "sha256": "4c8b93f431d462c696e12b9d6a033feb3394d36e66e781357c496b95d8a75e05",
+      "hash_mode": "original_binary"
+    },
+    {
+      "path": "public/fonts/schibsted-grotesk/schibsted-grotesk-latin-wght-italic.woff2",
+      "sha256": "4c72510c1a185a7b7ae2c9e402fbe531a58b74c95f4d2450f4d58482213c65f7",
+      "hash_mode": "original_binary"
+    }
+  ],
+  "frames": [
+    {
+      "path": "1536x770-email-closed.jpg",
+      "sha256": "2fd57d5c63f4dc37f7a1d394361e269e52560b9873d8565dfad4f4ab391ae180",
+      "raster_width": 1535,
+      "raster_height": 770,
+      "css_width": 1536,
+      "css_height": 770
+    },
+    {
+      "path": "1536x770-email-open.jpg",
+      "sha256": "2eec037f690c515d6df6623f1a6a5e0029c1f348103061de58bc10ad3495d5c3",
+      "raster_width": 1535,
+      "raster_height": 770,
+      "css_width": 1536,
+      "css_height": 770
+    },
+    {
+      "path": "1366x768-email-closed.jpg",
+      "sha256": "2a3c3f4cc3888998db79f3300125cfc47580e304b780a4b68f44666c32856dba",
+      "raster_width": 1366,
+      "raster_height": 768,
+      "css_width": 1366,
+      "css_height": 768
+    },
+    {
+      "path": "1366x768-email-open.jpg",
+      "sha256": "c9f81fbd47a223a773c0d471cd0ba16018f9a407f66830e68cd5a55de60e4691",
+      "raster_width": 1366,
+      "raster_height": 768,
+      "css_width": 1366,
+      "css_height": 768
+    },
+    {
+      "path": "1024x768-email-closed.jpg",
+      "sha256": "df1d4a36040ace54771cc737e0edc7acb116bf6eb6eca4e942b0a4a0f3fd08ef",
+      "raster_width": 1024,
+      "raster_height": 768,
+      "css_width": 1024,
+      "css_height": 768
+    },
+    {
+      "path": "1024x768-email-open.jpg",
+      "sha256": "86e199994477acff38d90294f4c169201e0ac4e5c992fa777dfd3767fb68bd9c",
+      "raster_width": 1024,
+      "raster_height": 768,
+      "css_width": 1024,
+      "css_height": 768
+    },
+    {
+      "path": "900x1000-email-closed.jpg",
+      "sha256": "6ea7d1c29c3a5289912de56bbcf104a1c12e978b44e111d5025b65dccc7ab8ab",
+      "raster_width": 900,
+      "raster_height": 1000,
+      "css_width": 900,
+      "css_height": 1000
+    },
+    {
+      "path": "900x1000-email-open.jpg",
+      "sha256": "5f8a15185f2f2d44e6c21b9c92b5c8fe795a348051f7464ece9645310045602c",
+      "raster_width": 900,
+      "raster_height": 1000,
+      "css_width": 900,
+      "css_height": 1000
+    },
+    {
+      "path": "390x844-email-obsidian.jpg",
+      "sha256": "06a390061b258f0640c0ceafd8cd5b4aa7cd80f025f3ea6f17d0ad25155b5a8e",
+      "raster_width": 390,
+      "raster_height": 843,
+      "css_width": 390,
+      "css_height": 844
+    },
+    {
+      "path": "320x740-email-obsidian.jpg",
+      "sha256": "9306abd4de25b8890177af4cfe53d0eabd339cdb8d19913a1f1c311e9e8c9685",
+      "raster_width": 320,
+      "raster_height": 740,
+      "css_width": 320,
+      "css_height": 740
+    },
+    {
+      "path": "320x740-email-zero.jpg",
+      "sha256": "d9f7c0ea9a14af20844a0e6142cef3a6d32db219d616d3acaf1e1a82ad1d8def",
+      "raster_width": 320,
+      "raster_height": 740,
+      "css_width": 320,
+      "css_height": 740
+    },
+    {
+      "path": "320x740-review-denied.jpg",
+      "sha256": "06d1a309152b728a9c5d0851c0c6a6c83e935b7df8b5f5e84e41c4522af9ed44",
+      "raster_width": 320,
+      "raster_height": 740,
+      "css_width": 320,
+      "css_height": 740
+    },
+    {
+      "path": "1366x768-engagement-catalogue.jpg",
+      "sha256": "c03389fa3b64a9e306b38f6ef224cc96aa24291d25a08b883031ddba8ecb384f",
+      "raster_width": 1366,
+      "raster_height": 768,
+      "css_width": 1366,
+      "css_height": 768
+    },
+    {
+      "path": "390x844-engagement-catalogue.jpg",
+      "sha256": "fbc38f777660c65d27ce9edcc8c334890fda399f03828ec9094c2d86a78e4fde",
+      "raster_width": 390,
+      "raster_height": 843,
+      "css_width": 390,
+      "css_height": 844
+    }
+  ],
+  "prototype": {
+    "source": "d58e9058f3f11e9f178c3e12d6d60a692b49176a",
+    "interactive": "Original Executive, source disclosure Enter, zero, denied and open/closed synthetic Chat; performed before production adapter implementation.",
+    "frames": [
+      {
+        "path": "prototype-1366-email-closed.jpg",
+        "sha256": "86451a8bbcde6a6569a5680e2c67ddd5d189f3d4a5cd57dce9afe6df2a656e4a",
+        "raster_width": 1366,
+        "raster_height": 768
+      },
+      {
+        "path": "prototype-1366-email-open.jpg",
+        "sha256": "0ed77f84bca77841afb5925db6cff14caddfda470d009bc9b4beb607395c0036",
+        "raster_width": 1366,
+        "raster_height": 768
+      },
+      {
+        "path": "prototype-390-email-closed.jpg",
+        "sha256": "b767a70c1ce2aa472501008e2d9c7e48b0daefb03d35fc937347d66d6239d7f2",
+        "raster_width": 390,
+        "raster_height": 843
+      },
+      {
+        "path": "prototype-390-zero-source-expanded.jpg",
+        "sha256": "831a6c0b90a0dc8c34804986a5cab28208520f7919df1d0487c0d6a541e08281",
+        "raster_width": 390,
+        "raster_height": 843
+      },
+      {
+        "path": "prototype-390-review-denied.jpg",
+        "sha256": "9b044c539787fca429c7777bbc31f71d2992fb3edf05b643dc086373c05b6fad",
+        "raster_width": 390,
+        "raster_height": 843
+      }
+    ]
+  },
+  "known_original_navigation_gap": "Browser Back preserves route and synthetic Chat draft; original Executive internal scroll and opener focus are not restored. O14 follow-up required; no whole-journey acceptance claim.",
+  "chat_reference_component": {
+    "source": "5dd0ac8f13d032341c68773a401cfc27d0a04b96",
+    "scope": "Original pure reference factory executed in Node, frozen synthetic DTO, original browser-safe parser and reference renderer. Auxiliary proof route is not an authenticated Chat or complete department journey. No backend module imported into browser.",
+    "inputs": [
+      {
+        "path": "supabase/functions/_shared/paige-context/business-review-chat.ts",
+        "sha256": "e4164766fec3ab15190c38ebde0fc480fe9f3afd469faafcfbaf9c2cb70d7fb9",
+        "hash_mode": "text_lf"
+      },
+      {
+        "path": "src/components/chat/PaigeRecordLinks.tsx",
+        "sha256": "43a92f89a51c591068c5b5176d9c0318997eb6e903f6366d97f6bbfe919f3caf",
+        "hash_mode": "text_lf"
+      },
+      {
+        "path": "src/components/chat/CheckLinks.tsx",
+        "sha256": "ee9149270246b42dc725e9946f5b4714b64ba28f868fd8af9c309f546ddc5b15",
+        "hash_mode": "text_lf"
+      },
+      {
+        "path": "supabase/functions/_shared/paige-turn/record-links.ts",
+        "sha256": "a66d094680df5df1394b05ccd3ccd317c7382d4efe0d1c63aa2d10a602d622a3",
+        "hash_mode": "text_lf"
+      },
+      {
+        "path": "scripts/live-drive/harness/executive-mount/email-links.html",
+        "sha256": "5913bc05be2e6802d4540452b31fd7813d4dae41767140b76913e674a2a8f7ba",
+        "hash_mode": "text_lf"
+      },
+      {
+        "path": "scripts/live-drive/harness/executive-mount/email-links.tsx",
+        "sha256": "e1e159048651d8ef89a4bc420fa3b28e0da53c024627a841d41d0804e1b70287",
+        "hash_mode": "text_lf"
+      },
+      {
+        "path": "scripts/live-drive/harness/executive-mount/email-links-result.json",
+        "sha256": "238654506ca57e837c107390fc840ce9764938c7ab391743003108ccb2a9c838",
+        "hash_mode": "text_lf"
+      }
+    ],
+    "frames": [
+      {
+        "path": "1366x768-email-chat-references.jpg",
+        "sha256": "3afb5dbaff208c8f26103aef276e2e0e5a3791756ab2951627f2430d423b9d77",
+        "css_width": 1366,
+        "css_height": 768
+      },
+      {
+        "path": "390x844-email-chat-references.jpg",
+        "sha256": "0d995f355f1bddb606c0053203245fec6b1172aa649bd4d0d5257fce39bd6721",
+        "css_width": 390,
+        "css_height": 844
+      },
+      {
+        "path": "390x844-email-chat-denied.jpg",
+        "sha256": "a4d6972f0820bf7ed2416bdbad6ef472a2ec1b4ffd50b4f79f9bd10368f3fc21",
+        "css_width": 390,
+        "css_height": 844
+      }
+    ],
+    "observations": "chat-link-observations.json",
+    "authenticated": "UNVERIFIED"
+  }
+}

@@ -856,6 +856,12 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**2026-10-27 UTC — EXP02 original report thumbnail accessibility.**
+
+| Increment | Exact released source and observed production | Acceptance boundary |
+| --- | --- | --- |
+| [#2974 original thumbnail controls](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2974#issuecomment-6437655287) | Reviewed1aa2c2fcafb8b50f22270bcd607979297b6d15c0, AUTHOR-REVIEW / LOWER ASSURANCE5663818856; all10 applicable checks/two web statuses SUCCESS, no-SQL Preview SKIPPED, zero unresolved threads. Mainc76eb5cd62fc6cc4fa761b654bf18153b15ed395/tree d79e4e3b2920469d8aee6635daa6cf1b363413a8 exactly matches the verified normal union; incoming Communications source retained and31 inbound controls PASS. Production dpl_C2AQ9atUUiuXETJBiuHdG7DkzUGk READY; both public origins exactc76eb5cd-mvqg30cs/matching reachable asset/null update/missing404 at08:54:23UTC. Native/Edge/activation delta N/A; preceding report17140002 remains verified. | Original document thumbnail no longer nests native buttons; existing Open/view/return/context retained. Original15 focused controls, fresh9 controls and13 actual-source synthetic frames remain bounded evidence. Authenticated viewer/Finance/roles/cohorts/reload/Chat-Live/native zoom/full AT/all19/nine and founder acceptance remain owed. Functional source deployed; Visual synthetic; Experiential incomplete; Founder NOT_ACCEPTED. No capability or algorithm maturity promotion, internal unannounced increment. |
+
 **2026-10-27 UTC — EXP02 original report status observation.**
 
 | Increment | Exact released source and observed production | Acceptance boundary |

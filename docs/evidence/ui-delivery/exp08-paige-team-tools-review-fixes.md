@@ -35,13 +35,13 @@ ACCEPTANCE_CRITERIA: on the live platform the owner hands one piece of Work over
 MOTION_PURPOSE: NONE: no motion change
 PROTECTED_SEAMS: plan_update_item_versioned and the plan_items read on the caller session (tested); suspend_/reinstate_/remove_solo_team_member and set_solo_team_member_team_hub_access unchanged (existing tests pass); the paige-ai-chat team-lifecycle dispatch branch unchanged (read only, mapping verified); non-SOLO shells NONE_AFFECTED: no non-SOLO shell file changed
 
-INTERNAL_BUILD_IDENTITY: 16061b08c64e499266734f7a92675f554823ce32; deployment=none (branch exp08-2957-p1-fixes, local commits only, not pushed); environment=local; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE (the _shared/team-lifecycle/chat.ts change reaches paige-ai-chat only through deploy-edge-functions on a future merge, not deployed from this session); evidence=docs/evidence/ui-delivery/exp08-paige-team-tools-review-fixes.md
+INTERNAL_BUILD_IDENTITY: 16061b08c64e499266734f7a92675f554823ce32; deployment=none (branch exp08-2957-p1-fixes, local commits only, not pushed); environment=local; migrations=NOT_APPLICABLE; edge=PROOF_OWED(paige-ai-chat picks up the _shared/team-lifecycle/chat.ts change through deploy-edge-functions on a future merge, not deployed from this session); evidence=docs/evidence/ui-delivery/exp08-paige-team-tools-review-fixes.md
 RELEASE_CHANNEL: development: local branch build; ships to production only on a later merge to main per the pre-launch stance (§4)
 RELEASE_CLASSIFICATION: internal-only: pre-launch platform with no live customers; review fixes to unreleased chat tools and panel copy
 CUSTOMER_RELEASE_IDENTITY: none: internal-only pre-launch work, authenticated runtime not yet proven
 RELEASE_NOTE_REQUIRED: NO: internal-only; correctness fixes to an internal-only change
 RELEASE_TRUTH_BOUNDARY: PROOF OWED: both fixes are proven by unit, jsdom and rendered-harness evidence only; nothing here is deployed; the hand-over and the panel stay PROOF OWED until the authenticated drive on the owner's SOLO account
-RELEASE_RECOVERY: position=revert the three commits on exp08-2957-p1-fixes, which restores #2957's hand-over behaviour and panel copy; no migration or data change to undo; reference=docs/doctrine/tier-matrix.md "EXP08 PAIGE team-lifecycle tools" and docs/evidence/ui-delivery/exp08-paige-team-tools.md
+RELEASE_RECOVERY: position=revert the commits on exp08-2957-p1-fixes, which restores the #2957 hand-over behaviour and panel copy with no migration or data change to undo; reference=docs/doctrine/tier-matrix.md "EXP08 PAIGE team-lifecycle tools" and docs/evidence/ui-delivery/exp08-paige-team-tools.md
 
 ## Scope and collisions
 

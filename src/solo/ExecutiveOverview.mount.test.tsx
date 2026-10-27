@@ -191,6 +191,17 @@ describe('Executive display-only history return', () => {
       expect((host.querySelector('.executive-root') as HTMLElement).scrollTop).toBe(userInput ? 0 : 420);
     } finally { command.remove(); }
   });
+  it('preserves resumed wheel scrolling while the fresh review is loading', async () => {
+    await act(async () => root!.render(returnTree())); leaveReview();
+    mocks.review.mockReturnValue({ state: 'loading', refresh: vi.fn() }); act(() => button('Test browser Back').click());
+    const node = host.querySelector('.executive-root') as HTMLElement;
+    node.scrollTop = 140;
+    node.dispatchEvent(new WheelEvent('wheel', { bubbles: true, deltaY: 200 }));
+    mocks.review.mockReturnValue({ state: 'ready', snapshot: structuredClone(SNAPSHOT), refresh: vi.fn() });
+    await act(async () => root!.render(returnTree()));
+    expect(node.scrollTop).toBe(140);
+    expect(document.activeElement).not.toBe(link('/solo/1234567/finance'));
+  });
   it('returns to the review heading if fresh evidence no longer offers the original link', async () => {
     await act(async () => root!.render(returnTree())); leaveReview();
     mocks.review.mockReturnValue({ state: 'failed', message: 'Fresh evidence unavailable', refresh: vi.fn() });

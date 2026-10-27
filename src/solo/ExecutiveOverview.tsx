@@ -123,7 +123,12 @@ function ResolvedExecutiveOverview({ account, accountEpoch, actorId, accountName
     const noteInput = () => { newerInput.current = true; };
     document.addEventListener('pointerdown', noteInput, true);
     document.addEventListener('keydown', noteInput, true);
-    return () => { document.removeEventListener('pointerdown', noteInput, true); document.removeEventListener('keydown', noteInput, true); };
+    document.addEventListener('wheel', noteInput, { capture: true, passive: true });
+    return () => {
+      document.removeEventListener('pointerdown', noteInput, true);
+      document.removeEventListener('keydown', noteInput, true);
+      document.removeEventListener('wheel', noteInput, true);
+    };
   }, [address, location.state, navigationType, returnScope, review.state]);
   const rememberDepartment = (event: MouseEvent<HTMLDivElement>) => {
     if (!returnScope || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.defaultPrevented) return;

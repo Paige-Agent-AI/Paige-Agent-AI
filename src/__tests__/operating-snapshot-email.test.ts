@@ -2,6 +2,7 @@
 import { describe, expect, it } from 'vitest';
 import { composeBusinessReview } from '../../supabase/functions/_shared/paige-context/business-review.ts';
 import { validateDomainSnapshot } from '../../supabase/functions/_shared/paige-context/snapshot.ts';
+import { businessReviewRecordLinks } from '../../supabase/functions/_shared/paige-context/business-review-chat.ts';
 
 const TENANT = 'e2020000-0000-4000-8000-000000000001';
 const NOW = new Date('2026-10-12T12:00:00.000Z');
@@ -46,6 +47,16 @@ function harness(opts: { denied?: boolean; denyAt?: string; switchAt?: number; e
 }
 
 describe('Original campaign email evidence in Business Review', () => {
+  it('returns original Executive and aggregate Marketing references for a permitted focused email read', async () => {
+    const result = await harness().review(); if (!result.ok) throw Error('Expected review');
+    expect(businessReviewRecordLinks(result.snapshot)).toEqual([
+      { destination: 'executive', record_id: null }, { destination: 'marketing', record_id: null },
+    ]);
+  });
+  it('returns no email department reference for a denied source', async () => {
+    const result = await harness({ denied: true }).review(); if (!result.ok) throw Error('Expected review');
+    expect(businessReviewRecordLinks(result.snapshot)).toEqual([]);
+  });
   it('uses the same review composer and only the three existing issuer/resolver keys', async () => {
     const h = harness(), result = await h.review(); expect(result.ok).toBe(true); if (!result.ok) return;
     const domain = result.snapshot.domains.email?.data;

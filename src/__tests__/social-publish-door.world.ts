@@ -80,6 +80,7 @@ export function world(o: WorldOptions = {}) {
       case "is": return value === null ? v == null : v === value;
       case "not": return v != null;
       case "gt": return v != null && String(v) > String(value);
+      case "in": return Array.isArray(value) && value.includes(v as never);
       default: throw new Error(`unsupported filter ${op}`);
     }
   });
@@ -97,6 +98,8 @@ export function world(o: WorldOptions = {}) {
     };
     const q: Record<string, unknown> = {
       select: () => q, order: () => q,
+      in: (c: string, v: unknown[]) => { filters.push(["in", c, v]); return q; },
+      limit: () => q,
       eq: (c: string, v: unknown) => { filters.push(["eq", c, v]); return q; },
       neq: (c: string, v: unknown) => { filters.push(["neq", c, v]); return q; },
       is: (c: string, v: unknown) => { filters.push(["is", c, v]); return q; },
@@ -175,7 +178,7 @@ export function world(o: WorldOptions = {}) {
   };
   admin.from = fromWrapped as typeof from;
 
-  return { tables, seen, call };
+  return { tables, seen, call, caller, adapter };
 }
 
 /** The happy-path publish body. */

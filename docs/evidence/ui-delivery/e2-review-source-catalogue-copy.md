@@ -54,7 +54,11 @@ exact deployed copy inspection owed. Experiential: actual panel/read/reload owed
 Founder Acceptance: OPEN for all19/nine; historical9/0,12/0/4 and protected monthly
 UNKNOWN/UNRETRIED preserved.
 
-INTERNAL_BUILD_IDENTITY: 43c9d9660d4e7a67aceda24dae6d3737c6ba7db2; identity-role=unreleased Calendar dependency; candidate=Git exact review; deployment=none; environment=local; migrations=PROOF_OWED(20271120101002); edge=NOT_APPLICABLE(own metadata copy); evidence=docs/evidence/ui-delivery/e2-review-source-catalogue-copy.md
+The first attestation check rejected a parenthetical suffix on the literal
+NOT_APPLICABLE Edge state. Corrected the record grammar only; the original guard
+is unchanged. This metadata increment has no own Edge source/configuration delta.
+
+INTERNAL_BUILD_IDENTITY: 43c9d9660d4e7a67aceda24dae6d3737c6ba7db2; identity-role=unreleased Calendar dependency; candidate=Git exact review; deployment=none; environment=local; migrations=PROOF_OWED(20271120101002); edge=NOT_APPLICABLE; evidence=docs/evidence/ui-delivery/e2-review-source-catalogue-copy.md
 RELEASE_CHANNEL: development: dependency/source/migration gates still pending.
 RELEASE_CLASSIFICATION: internal-only: honest existing catalogue copy, no complete capability acceptance.
 CUSTOMER_RELEASE_IDENTITY: none: no customer announcement earned.

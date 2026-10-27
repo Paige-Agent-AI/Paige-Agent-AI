@@ -864,6 +864,145 @@ INSERT INTO proof.checks(id, kind, as_role, actor, call, expect, msg, post) VALU
       PERFORM public.accept_solo_team_invite('tok-own-nohub'); END $d$$c$, '00000', NULL,
    proof.seat('A','INV1', $q$is_owner AND role = 'owner' AND team_hub_access$q$));
 
+-- ── Round 4 (2026-10-27): review finding B1 (accept-side pre-emption) and S1 (the address rule's conditions) ──
+-- Helpers. A person with a confirmed address; an invitation written as trusted code (no JWT, so no
+-- guard is involved in creating it: "created before the owner invitation" or by the service role);
+-- switching the JWT to another person inside one case.
+CREATE FUNCTION proof.person(_p text) RETURNS void LANGUAGE plpgsql SECURITY DEFINER AS $$
+BEGIN INSERT INTO auth.users(id, email, email_confirmed_at) VALUES (proof.u(_p), proof.e(_p), now()) ON CONFLICT (id) DO NOTHING; END $$;
+CREATE FUNCTION proof.put_token(_t text, _token text, _kind text, _role text, _by text, _email text,
+  _uses int DEFAULT 0, _revoked boolean DEFAULT false, _expired boolean DEFAULT false, _archived boolean DEFAULT false)
+ RETURNS void LANGUAGE plpgsql SECURITY DEFINER AS $$
+DECLARE _c text := current_setting('request.jwt.claims', true);
+BEGIN
+  PERFORM set_config('request.jwt.claims', '', true);
+  INSERT INTO public.tenant_invite_tokens(tenant_id, token, kind, default_role, created_by, email, max_uses, uses,
+    revoked_at, expires_at, archived_at)
+  VALUES (proof.u(_t), _token, _kind, _role::public.tenant_role, proof.u(_by), _email, 1, _uses,
+    CASE WHEN _revoked THEN now() END, CASE WHEN _expired THEN now() - interval '1 day' ELSE now() + interval '7 days' END,
+    CASE WHEN _archived THEN now() END);
+  PERFORM set_config('request.jwt.claims', COALESCE(_c, ''), true);
+END $$;
+CREATE FUNCTION proof.as_person(_p text) RETURNS void LANGUAGE sql AS
+ $$ SELECT set_config('request.jwt.claims', json_build_object('sub', proof.u(_p), 'role', 'authenticated')::text, true) $$;
+GRANT EXECUTE ON FUNCTION proof.person(text), proof.put_token(text, text, text, text, text, text, int, boolean, boolean, boolean),
+ proof.as_person(text) TO anon, authenticated, service_role;
+
+INSERT INTO proof.checks(id, kind, as_role, actor, call, expect, msg, post) VALUES
+ -- B1 / V1. An admin's invitation of another kind with NO address, accepted through accept_tenant_invite
+ -- (which /join uses for every kind but team) by the person the owner invitation is for.
+ ('4.01 V1: an admin''s staff invitation with no address, accepted by the owner invitation''s person', 'hole', 'authenticated', 'AD',
+   $c$DO $d$ BEGIN
+      INSERT INTO public.tenant_invite_tokens(tenant_id, token, kind, default_role, created_by, email, max_uses) VALUES (proof.u('A'), 'v1-staff', 'staff', 'member', proof.u('AD'), NULL, 1);
+      PERFORM proof.as_person('OWN1');
+      PERFORM public.accept_tenant_invite('v1-staff'); END $d$$c$, '42501',
+   'You have an owner invitation to Northstar Studio waiting. Open that invitation to join as an owner. Nothing changed.', NULL),
+ ('4.02 V1 end to end: refused, nothing written, and the owner invitation then seats them as an owner', 'new', 'authenticated', 'AD',
+   $c$DO $d$ BEGIN
+      INSERT INTO public.tenant_invite_tokens(tenant_id, token, kind, default_role, created_by, email, max_uses) VALUES (proof.u('A'), 'v1-staff', 'staff', 'member', proof.u('AD'), NULL, 1);
+      PERFORM proof.as_person('OWN1');
+      BEGIN PERFORM public.accept_tenant_invite('v1-staff'); EXCEPTION WHEN insufficient_privilege THEN NULL; END;
+      PERFORM proof.expect(NOT EXISTS(SELECT 1 FROM public.tenant_invite_tokens WHERE token = 'v1-staff' AND uses > 0), 'the staff invitation was not used');
+      PERFORM public.accept_solo_team_invite('tok-own'); END $d$$c$, '00000', NULL,
+   proof.seat('A','OWN1', $q$is_owner AND role = 'owner' AND status = 'active'$q$)),
+ -- B1 / V1b. The same with a made-up address.
+ ('4.03 V1b: an admin''s staff invitation to a made-up address, accepted by the owner invitation''s person', 'hole', 'authenticated', 'AD',
+   $c$DO $d$ BEGIN
+      INSERT INTO public.tenant_invite_tokens(tenant_id, token, kind, default_role, created_by, email, max_uses) VALUES (proof.u('A'), 'v1b-staff', 'staff', 'member', proof.u('AD'), 'decoy@tests.invalid', 1);
+      PERFORM proof.as_person('OWN1');
+      PERFORM public.accept_tenant_invite('v1b-staff'); END $d$$c$, '42501', 'You have an owner invitation to Northstar Studio waiting.', NULL),
+ -- B1 / V2. A sub-account owner invitation with no address on a Solo account: its Admin path.
+ ('4.04 V2: an admin''s sub-account owner invitation with no address, accepted by the owner invitation''s person', 'hole', 'authenticated', 'AD',
+   $c$DO $d$ BEGIN
+      INSERT INTO public.tenant_invite_tokens(tenant_id, token, kind, default_role, created_by, email, max_uses) VALUES (proof.u('A'), 'v2-sub', 'subaccount_owner', 'member', proof.u('AD'), NULL, 1);
+      PERFORM proof.as_person('OWN1');
+      PERFORM public.accept_tenant_invite('v2-sub'); END $d$$c$, '42501', 'You have an owner invitation to Northstar Studio waiting.', NULL),
+ -- The stated residuals of round 3: another kind created BEFORE the owner invitation, and service-role inserts.
+ ('4.05 a sub-account owner invitation to that address created before the owner invitation', 'hole', 'authenticated', 'OWN1',
+   $c$DO $d$ BEGIN PERFORM proof.put_token('A', 'pre-sub', 'subaccount_owner', 'admin', 'AD', proof.e('OWN1'));
+      PERFORM public.accept_tenant_invite('pre-sub'); END $d$$c$, '42501', 'You have an owner invitation to Northstar Studio waiting.', NULL),
+ ('4.06 a team Member invitation to that address inserted by the service role, accepted on the join page', 'hole', 'authenticated', 'OWN1',
+   $c$DO $d$ BEGIN PERFORM proof.put_token('A', 'svc-team', 'team', 'member', 'AD', proof.e('OWN1'));
+      PERFORM public.accept_solo_team_invite('svc-team'); END $d$$c$, '42501', 'You have an owner invitation to Northstar Studio waiting.', NULL),
+ ('4.07 a team Member invitation to that address from before the owner invitation, through the legacy accept', 'hole', 'authenticated', 'OWN1',
+   $c$DO $d$ BEGIN PERFORM proof.put_token('A', 'pre-team', 'team', 'member', 'AD', proof.e('OWN1'));
+      PERFORM public.accept_tenant_invite('pre-team'); END $d$$c$, '42501', 'You have an owner invitation to Northstar Studio waiting.', NULL),
+ ('4.08 a service-role seat write for that person (the accept-invite edge function''s path)', 'hole', 'service_role', NULL,
+   $c$INSERT INTO public.tenant_members(tenant_id, user_id, role, status) VALUES (proof.u('A'), proof.u('OWN1'), 'member', 'active')$c$, '42501',
+   'You have an owner invitation to Northstar Studio waiting.', NULL),
+ ('4.09 an admin grants that person a seat (postgres-owned code under the admin''s JWT, as grant_tenant_member_role)', 'hole', 'authenticated', 'AD',
+   $c$SELECT proof.as_definer($s$INSERT INTO public.tenant_members(tenant_id, user_id, role, status) VALUES (proof.u('A'), proof.u('OWN1'), 'member', 'active')$s$)$c$, '42501',
+   'This person has an owner invitation to Northstar Studio waiting, so they join by accepting it. Only the account holder can change it, from Settings → Team. Nothing changed.', NULL),
+ -- V3 / V4 stay refused (an invitation of kind team with no address is never accepted).
+ ('4.10 V3: a team invitation with no address through accept_solo_team_invite', 'kept', 'authenticated', 'AD',
+   $c$DO $d$ BEGIN
+      INSERT INTO public.tenant_invite_tokens(tenant_id, token, kind, default_role, created_by, email, max_uses) VALUES (proof.u('A'), 'v3-team', 'team', 'member', proof.u('AD'), NULL, 1);
+      PERFORM proof.as_person('OWN1');
+      PERFORM public.accept_solo_team_invite('v3-team'); END $d$$c$, '42501', 'team invitation belongs to a different email address', NULL),
+ ('4.11 V4: a team invitation with no address minted by create_tenant_invite_token, through accept_tenant_invite', 'kept', 'authenticated', 'AD',
+   $c$DO $d$ DECLARE r public.tenant_invite_tokens; BEGIN
+      r := public.create_tenant_invite_token(proof.u('A'), 'team', 'member'::public.tenant_role, 7, 1, NULL, NULL);
+      PERFORM proof.as_person('OWN1');
+      PERFORM public.accept_tenant_invite(r.token); END $d$$c$, '42501', 'team invitation belongs to a different email address', NULL),
+ -- The seat-side rule's conditions, each pinned (round 4 mutants S01-S11).
+ ('4.20 an owner invitation in ANOTHER business does not stop a seat here', 'kept', 'authenticated', 'Q1',
+   $c$DO $d$ BEGIN PERFORM proof.person('Q1'); PERFORM proof.put_token('B', 'q1-own-b', 'team', 'owner', 'HB', proof.e('Q1'));
+      PERFORM proof.put_token('A', 'q1-staff', 'staff', 'member', 'AD', NULL);
+      PERFORM public.accept_tenant_invite('q1-staff'); END $d$$c$, '00000', NULL, proof.seat('A','Q1', $q$role = 'member' AND status = 'active'$q$)),
+ ('4.21 a USED owner invitation does not stop a seat', 'kept', 'authenticated', 'Q2',
+   $c$DO $d$ BEGIN PERFORM proof.person('Q2'); PERFORM proof.put_token('A', 'q2-own', 'team', 'owner', 'H', proof.e('Q2'), 1);
+      PERFORM proof.put_token('A', 'q2-staff', 'staff', 'member', 'AD', NULL);
+      PERFORM public.accept_tenant_invite('q2-staff'); END $d$$c$, '00000', NULL, proof.seat('A','Q2', $q$status = 'active'$q$)),
+ ('4.22 a WITHDRAWN owner invitation does not stop a seat', 'kept', 'authenticated', 'Q3',
+   $c$DO $d$ BEGIN PERFORM proof.person('Q3'); PERFORM proof.put_token('A', 'q3-own', 'team', 'owner', 'H', proof.e('Q3'), 0, true);
+      PERFORM proof.put_token('A', 'q3-staff', 'staff', 'member', 'AD', NULL);
+      PERFORM public.accept_tenant_invite('q3-staff'); END $d$$c$, '00000', NULL, proof.seat('A','Q3', $q$status = 'active'$q$)),
+ ('4.23 an EXPIRED owner invitation does not stop a seat', 'kept', 'authenticated', 'Q4',
+   $c$DO $d$ BEGIN PERFORM proof.person('Q4'); PERFORM proof.put_token('A', 'q4-own', 'team', 'owner', 'H', proof.e('Q4'), 0, false, true);
+      PERFORM proof.put_token('A', 'q4-staff', 'staff', 'member', 'AD', NULL);
+      PERFORM public.accept_tenant_invite('q4-staff'); END $d$$c$, '00000', NULL, proof.seat('A','Q4', $q$status = 'active'$q$)),
+ ('4.24 an ARCHIVED owner invitation does not stop a seat', 'kept', 'authenticated', 'Q5',
+   $c$DO $d$ BEGIN PERFORM proof.person('Q5'); PERFORM proof.put_token('A', 'q5-own', 'team', 'owner', 'H', proof.e('Q5'), 0, false, false, true);
+      PERFORM proof.put_token('A', 'q5-staff', 'staff', 'member', 'AD', NULL);
+      PERFORM public.accept_tenant_invite('q5-staff'); END $d$$c$, '00000', NULL, proof.seat('A','Q5', $q$status = 'active'$q$)),
+ ('4.25 a live MEMBER team invitation to the address does not stop a seat', 'kept', 'authenticated', 'Q6',
+   $c$DO $d$ BEGIN PERFORM proof.person('Q6'); PERFORM proof.put_token('A', 'q6-member', 'team', 'member', 'AD', proof.e('Q6'));
+      PERFORM proof.put_token('A', 'q6-staff', 'staff', 'member', 'AD', NULL);
+      PERFORM public.accept_tenant_invite('q6-staff'); END $d$$c$, '00000', NULL, proof.seat('A','Q6', $q$status = 'active'$q$)),
+ ('4.26 a person who already has a seat re-accepts an invitation: unaffected', 'kept', 'authenticated', 'ME',
+   $c$DO $d$ BEGIN PERFORM proof.put_token('A', 'me-own', 'team', 'owner', 'H', proof.e('ME'));
+      PERFORM proof.put_token('A', 'me-staff', 'staff', 'member', 'AD', NULL);
+      PERFORM public.accept_tenant_invite('me-staff'); END $d$$c$, '00000', NULL, proof.seat('A','ME', $q$role = 'member' AND status = 'active' AND NOT is_owner$q$)),
+ ('4.27 the address is compared trimmed and in any case (an owner invitation stored padded, upper case, by the service role)', 'hole', 'authenticated', 'Q7',
+   $c$DO $d$ BEGIN PERFORM proof.person('Q7'); PERFORM proof.put_token('A', 'q7-own', 'team', 'owner', 'H', ' '||upper(proof.e('Q7'))||' ');
+      PERFORM proof.put_token('A', 'q7-staff', 'staff', 'member', 'AD', NULL);
+      PERFORM public.accept_tenant_invite('q7-staff'); END $d$$c$, '42501', 'You have an owner invitation to Northstar Studio waiting.', NULL),
+ ('4.28 an Owner-role invitation of another kind (never accepted as an owner anywhere) does not stop a seat', 'kept', 'authenticated', 'Q8',
+   $c$DO $d$ BEGIN PERFORM proof.person('Q8'); PERFORM proof.put_token('A', 'q8-own-staff', 'staff', 'owner', 'H', proof.e('Q8'));
+      PERFORM proof.put_token('A', 'q8-staff', 'staff', 'member', 'AD', NULL);
+      PERFORM public.accept_tenant_invite('q8-staff'); END $d$$c$, '00000', NULL, proof.seat('A','Q8', $q$status = 'active'$q$)),
+ -- S1. The token guard's address rule: pin each condition (kills the verifier's X01-X05).
+ ('4.30 X01: another business''s owner invitation does not block an admin''s invitation here', 'kept', 'authenticated', 'AD',
+   $c$DO $d$ BEGIN PERFORM proof.put_token('B', 'ob1-own', 'team', 'owner', 'HB', proof.e('OB1'));
+      -- Through postgres-owned code (create_tenant_invite_token): a browser INSERT's own read of the
+      -- tokens table is already scoped to its business by RLS, so only definer code can see B's row.
+      PERFORM public.create_tenant_invite_token(proof.u('A'), 'team', 'member'::public.tenant_role, 7, 1, NULL, proof.e('OB1')); END $d$$c$, '00000', NULL,
+   $p$EXISTS(SELECT 1 FROM public.tenant_invite_tokens WHERE tenant_id = proof.u('A') AND email = proof.e('OB1') AND created_by = proof.u('AD'))$p$),
+ ('4.31 X02: a USED owner invitation does not block an admin''s invitation', 'kept', 'authenticated', 'AD',
+   $c$DO $d$ BEGIN PERFORM proof.put_token('A', 'ou1-own', 'team', 'owner', 'H', proof.e('OU1'), 1);
+      INSERT INTO public.tenant_invite_tokens(tenant_id, token, kind, default_role, created_by, email, max_uses) VALUES (proof.u('A'), 'x-ou1', 'team', 'member', proof.u('AD'), proof.e('OU1'), 1); END $d$$c$, '00000', NULL,
+   $p$EXISTS(SELECT 1 FROM public.tenant_invite_tokens WHERE token = 'x-ou1')$p$),
+ ('4.32 X03: a WITHDRAWN owner invitation does not block an admin''s invitation', 'kept', 'authenticated', 'AD',
+   $c$DO $d$ BEGIN PERFORM proof.put_token('A', 'or1-own', 'team', 'owner', 'H', proof.e('OR1'), 0, true);
+      INSERT INTO public.tenant_invite_tokens(tenant_id, token, kind, default_role, created_by, email, max_uses) VALUES (proof.u('A'), 'x-or1', 'team', 'member', proof.u('AD'), proof.e('OR1'), 1); END $d$$c$, '00000', NULL,
+   $p$EXISTS(SELECT 1 FROM public.tenant_invite_tokens WHERE token = 'x-or1')$p$),
+ ('4.33 X04: a live MEMBER team invitation to the address does not block an admin''s invitation', 'kept', 'authenticated', 'AD',
+   $c$INSERT INTO public.tenant_invite_tokens(tenant_id, token, kind, default_role, created_by, email, max_uses) VALUES (proof.u('A'), 'x-inv2', 'team', 'member', proof.u('AD'), proof.e('INV2'), 1)$c$, '00000', NULL,
+   $p$EXISTS(SELECT 1 FROM public.tenant_invite_tokens WHERE token = 'x-inv2')$p$),
+ ('4.34 X05: a service-role INSERT to an owner invitation''s address is exempt from the token guard (it cannot be used: 4.06)', 'kept', 'service_role', NULL,
+   $c$INSERT INTO public.tenant_invite_tokens(tenant_id, token, kind, default_role, created_by, email, max_uses) VALUES (proof.u('A'), 'x-svc-own1', 'team', 'member', proof.u('AD'), proof.e('OWN1'), 1)$c$, '00000', NULL,
+   $p$EXISTS(SELECT 1 FROM public.tenant_invite_tokens WHERE token = 'x-svc-own1')$p$);
+
 -- One case, isolated: claims + role set, call caught, post-state read as postgres, then all rolled back.
 CREATE FUNCTION proof.run_check(_id text) RETURNS text LANGUAGE plpgsql AS $$
 DECLARE c proof.checks; _state text; _msg text; _post boolean := true; _verdict text;
@@ -967,13 +1106,14 @@ DO $$ DECLARE r record; BEGIN
    ('accept_tenant_invite(text)','cb5de58a6345043220ddd655f0d599a6'),
    ('create_tenant_invite_token(uuid,text,tenant_role,integer,integer,uuid,text)','0f71ac608edaf0c458b653529a12d96b'),
    ('peek_tenant_invite(text)','86bdee29d4e043394306b6ca5369c6ca'),
-   ('is_tenant_account_holder(uuid,uuid)','4a3cab59aad7a70ff06a9054aa4aa60e')
+   ('is_tenant_account_holder(uuid,uuid)','4a3cab59aad7a70ff06a9054aa4aa60e'),
+   ('_tenant_member_owner_invitation_waiting()','41fdd8552e929cd4d042bec8cb720e32')
    ) v(sig, want) LOOP
   IF (SELECT md5(prosrc) FROM pg_proc WHERE oid=('public.'||r.sig)::regprocedure) IS DISTINCT FROM r.want THEN
    RAISE EXCEPTION 'FAIL: % body is not the pinned one (md5(prosrc) is %, pinned %)', r.sig,
      (SELECT md5(prosrc) FROM pg_proc WHERE oid=('public.'||r.sig)::regprocedure), r.want; END IF;
  END LOOP; END $$;
-\echo 'PASS: every new and re-emitted body is the pinned one (md5(prosrc), 19 of 19)'
+\echo 'PASS: every new and re-emitted body is the pinned one (md5(prosrc), 20 of 20)'
 
 -- Signatures, owner, definer, search_path, volatility and ACL: unchanged where nothing was meant to change.
 DO $$ DECLARE _bad text; BEGIN
@@ -1007,13 +1147,15 @@ DO $$ DECLARE _bad text; BEGIN
   SELECT string_agg(p.oid::regprocedure::text, ', ') INTO _bad FROM pg_proc p
    WHERE p.pronamespace='public'::regnamespace AND p.proname IN ('_solo_shell_tenant','_tenant_account_holder_state',
      '_assert_tenant_account_holder','_business_owner_link_is_legal_owner','_business_owner_seated_kind_guard',
-     '_business_owner_revoke_invitations','guard_tenant_invite_token_identity','_tenant_account_holder_changed')
+     '_business_owner_revoke_invitations','guard_tenant_invite_token_identity','_tenant_account_holder_changed',
+     '_tenant_member_owner_invitation_waiting')
      AND (p.proacl::text IS DISTINCT FROM '{postgres=X/postgres}' OR p.proowner <> 'postgres'::regrole);
   IF _bad IS NOT NULL THEN RAISE EXCEPTION 'FAIL: a new function is client-executable or not postgres-owned: %', _bad; END IF;
   IF (SELECT count(*) FROM pg_proc WHERE pronamespace='public'::regnamespace AND proname IN ('_solo_shell_tenant','_tenant_account_holder_state',
      '_assert_tenant_account_holder','_business_owner_link_is_legal_owner','_business_owner_seated_kind_guard',
-     '_business_owner_revoke_invitations','guard_tenant_invite_token_identity','_tenant_account_holder_changed')) <> 8 THEN
-    RAISE EXCEPTION 'FAIL: expected 8 new functions'; END IF;
+     '_business_owner_revoke_invitations','guard_tenant_invite_token_identity','_tenant_account_holder_changed',
+     '_tenant_member_owner_invitation_waiting')) <> 9 THEN
+    RAISE EXCEPTION 'FAIL: expected 9 new functions'; END IF;
   IF (SELECT prosecdef FROM pg_proc WHERE oid = 'public.guard_tenant_invite_token_identity()'::regprocedure) THEN
     RAISE EXCEPTION 'FAIL: the token guard must be SECURITY INVOKER (current_user must be the real role)'; END IF;
   -- Triggers wired as intended.
@@ -1025,11 +1167,16 @@ DO $$ DECLARE _bad text; BEGIN
         ('public.tenant_business_owners'::regclass, 'trg_tenant_business_owners_revoke_invitations', 'public._business_owner_revoke_invitations()'::regprocedure),
         ('public.tenants'::regclass, 'trg_tenant_account_holder_changed', 'public._tenant_account_holder_changed()'::regprocedure),
         ('public.tenants'::regclass, 'trg_guard_tenant_owner_cols', 'public.guard_tenant_owner_only_columns()'::regprocedure),
-        ('public.tenant_members'::regclass, 'trg_tenant_members_owner_guard', 'public.guard_tenant_member_owner_flag()'::regprocedure))) <> 8 THEN
+        ('public.tenant_members'::regclass, 'trg_tenant_members_owner_guard', 'public.guard_tenant_member_owner_flag()'::regprocedure),
+        ('public.tenant_members'::regclass, 'trg_tenant_members_owner_invitation_waiting', 'public._tenant_member_owner_invitation_waiting()'::regprocedure))) <> 9 THEN
     RAISE EXCEPTION 'FAIL: a trigger is missing, disabled or wired to the wrong function'; END IF;
   -- The token guard fires on INSERT, UPDATE and DELETE, BEFORE, per row (tgtype 1|2|4|8|16 = 31).
   IF (SELECT tgtype FROM pg_trigger WHERE tgrelid = 'public.tenant_invite_tokens'::regclass AND tgname = 'trg_tenant_invite_token_identity_guard') <> 31 THEN
     RAISE EXCEPTION 'FAIL: the token guard is not BEFORE INSERT OR UPDATE OR DELETE FOR EACH ROW'; END IF;
+  -- The seat-side rule fires BEFORE INSERT, per row (tgtype 1|2|4 = 7), and is a definer (it reads auth.users).
+  IF (SELECT tgtype FROM pg_trigger WHERE tgrelid = 'public.tenant_members'::regclass AND tgname = 'trg_tenant_members_owner_invitation_waiting') <> 7
+     OR NOT (SELECT prosecdef FROM pg_proc WHERE oid = 'public._tenant_member_owner_invitation_waiting()'::regprocedure) THEN
+    RAISE EXCEPTION 'FAIL: the seat-side rule is not a BEFORE INSERT FOR EACH ROW definer trigger'; END IF;
   -- Constraints as drawn (§5.1).
   IF (SELECT count(*) FROM pg_constraint WHERE conname IN ('tenant_business_owners_tenant_id_id_key','tenant_members_business_owner_fkey',
       'tenant_members_business_owner_only_on_owner_seat','tenant_invite_tokens_business_owner_fkey','tenant_invite_tokens_business_owner_only_on_owner_invite')) <> 5
@@ -1038,7 +1185,7 @@ DO $$ DECLARE _bad text; BEGIN
      OR (SELECT array_length(confdelsetcols, 1) FROM pg_constraint WHERE conname = 'tenant_invite_tokens_business_owner_fkey') <> 1 THEN
     RAISE EXCEPTION 'FAIL: the legal-owner constraints are not as drawn'; END IF;
 END $$;
-\echo 'PASS: signatures/owner/definer/search_path/volatility/ACL unchanged except the three intended (tenants guard INVOKER, create_solo_team_invite 9 args, peek one more column); 8 new functions postgres-owned with no client EXECUTE; 8 triggers wired; 5 constraints as drawn'
+\echo 'PASS: signatures/owner/definer/search_path/volatility/ACL unchanged except the three intended (tenants guard INVOKER, create_solo_team_invite 9 args, peek one more column); 9 new functions postgres-owned with no client EXECUTE; 9 triggers wired; 5 constraints as drawn'
 
 -- Case 13. Put back ONLY the marked lines: each re-emitted body must be production's byte for byte.
 CREATE FUNCTION proof.swap(_src text, _from text, _to text) RETURNS text LANGUAGE plpgsql AS $$
@@ -1373,6 +1520,40 @@ SELECT format('PASS: after the migration all %s cases pass (%s kept, %s holes cl
 -- ═════════════════════ PHASE 3: mutants (§71.4) ═════════════════════
 CREATE TABLE proof.mutants(n serial, name text, sig text, from_text text, to_text text, control boolean NOT NULL DEFAULT false, failing text[]);
 INSERT INTO proof.mutants(name, sig, from_text, to_text, control) VALUES
+ ('S01 seat rule: an owner seat no longer exempt', '_tenant_member_owner_invitation_waiting()',
+   $m$IF NEW.is_owner IS TRUE THEN$m$, $m$IF false THEN$m$, false),
+ ('S02 seat rule: an existing seat no longer exempt', '_tenant_member_owner_invitation_waiting()',
+   $m$IF EXISTS (SELECT 1 FROM public.tenant_members m WHERE m.tenant_id = NEW.tenant_id AND m.user_id = NEW.user_id) THEN$m$, $m$IF false THEN$m$, false),
+ ('S03 seat rule: another business''s owner invitation counts', '_tenant_member_owner_invitation_waiting()',
+   $m$AND tk.tenant_id = NEW.tenant_id AND tk.kind$m$, $m$AND tk.kind$m$, false),
+ ('S04 seat rule: an Owner-role invitation of any kind counts', '_tenant_member_owner_invitation_waiting()',
+   $m$tk.kind = 'team' AND tk.default_role$m$, $m$tk.default_role$m$, false),
+ ('S05 seat rule: a non-owner invitation counts', '_tenant_member_owner_invitation_waiting()',
+   $m$AND tk.default_role = 'owner'::public.tenant_role$m$, $m$$m$, false),
+ ('S06 seat rule: a used owner invitation counts', '_tenant_member_owner_invitation_waiting()',
+   $m$AND tk.uses = 0 AND tk.revoked_at$m$, $m$AND tk.revoked_at$m$, false),
+ ('S07 seat rule: a withdrawn owner invitation counts', '_tenant_member_owner_invitation_waiting()',
+   $m$AND tk.revoked_at IS NULL AND tk.expires_at$m$, $m$AND tk.expires_at$m$, false),
+ ('S08 seat rule: an expired owner invitation counts', '_tenant_member_owner_invitation_waiting()',
+   $m$AND tk.expires_at > now() AND tk.archived_at$m$, $m$AND tk.archived_at$m$, false),
+ ('S09 seat rule: an archived owner invitation counts', '_tenant_member_owner_invitation_waiting()',
+   $m$ AND tk.archived_at IS NULL) THEN$m$, $m$) THEN$m$, false),
+ ('S10 seat rule: the address compared exactly as stored', '_tenant_member_owner_invitation_waiting()',
+   $m$ON lower(btrim(tk.email)) = lower(btrim(u.email))$m$, $m$ON tk.email = u.email$m$, false),
+ ('S11 seat rule: the person and a granter read each other''s sentence', '_tenant_member_owner_invitation_waiting()',
+   $m$IF auth.uid() IS NULL OR auth.uid() = NEW.user_id THEN$m$, $m$IF auth.uid() IS NULL OR auth.uid() <> NEW.user_id THEN$m$, false),
+ ('X01 token guard: the address rule ignores the business', 'guard_tenant_invite_token_identity()',
+   $m$WHERE tk.tenant_id = NEW.tenant_id AND tk.kind = 'team'$m$, $m$WHERE tk.kind = 'team'$m$, false),
+ ('X02 token guard: a used owner invitation counts', 'guard_tenant_invite_token_identity()',
+   $m$AND tk.uses = 0 AND tk.revoked_at IS NULL AND tk.expires_at > now()) THEN$m$, $m$AND tk.revoked_at IS NULL AND tk.expires_at > now()) THEN$m$, false),
+ ('X03 token guard: a withdrawn owner invitation counts', 'guard_tenant_invite_token_identity()',
+   $m$AND tk.uses = 0 AND tk.revoked_at IS NULL AND tk.expires_at > now()) THEN$m$, $m$AND tk.uses = 0 AND tk.expires_at > now()) THEN$m$, false),
+ ('X04 token guard: a non-owner team invitation counts', 'guard_tenant_invite_token_identity()',
+   $m$tk.kind = 'team' AND tk.default_role = 'owner'::public.tenant_role$m$, $m$tk.kind = 'team'$m$, false),
+ ('X05 token guard: the service role no longer exempt from the address rule', 'guard_tenant_invite_token_identity()',
+   $m$IF TG_OP = 'INSERT' AND auth.uid() IS NOT NULL AND NEW.kind NOT IN ('consumer', 'agency_team')
+     AND NULLIF$m$, $m$IF TG_OP = 'INSERT' AND NEW.kind NOT IN ('consumer', 'agency_team')
+     AND NULLIF$m$, false),
  ('M01 create: the account-holder gate removed', 'create_solo_team_invite(uuid,uuid,text,text,text,text,boolean,uuid,jsonb)',
    $m$PERFORM public._assert_tenant_account_holder(_actor, _tenant, 'add');$m$, $m$NULL;$m$, false),
  ('M02 create: the Solo-account gate removed', 'create_solo_team_invite(uuid,uuid,text,text,text,text,boolean,uuid,jsonb)',

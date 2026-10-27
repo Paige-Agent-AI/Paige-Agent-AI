@@ -55,6 +55,9 @@ describe("solo-team-invitations shows the owner refusals as written, with the ri
     // Round 3 (S-B): resending an owner invitation whose legal owner was deleted.
     const removed = "This owner invitation was for a legal owner that has since been removed, so it can't be sent again. Send a new owner invitation instead.";
     expect(ownerRefusal(pgError(removed, "OWNER_INVITE_RECORD_REMOVED", "P0001"))).toEqual({ status: 409, message: removed });
+    // Round 4 (B1): a person whose owner invitation is waiting takes no other seat in that business.
+    const waiting = "You have an owner invitation to Northstar Studio waiting. Open that invitation to join as an owner. Nothing changed.";
+    expect(ownerRefusal(pgError(waiting, "OWNER_INVITE_WAITING"))).toEqual({ status: 409, message: waiting });
   });
 
   it("passes nothing else: no hint, a foreign hint, a non-string hint or an empty message", () => {

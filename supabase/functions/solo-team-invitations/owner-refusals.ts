@@ -37,6 +37,9 @@ export const OWNER_REFUSAL_HINTS: Readonly<Record<string, 400 | 403 | 409>> = Ob
   OWNER_RECORD_INVITED: 409,
   OWNER_INVITE_SEAT_CHANGED: 409,
   OWNER_INVITE_RECORD_REMOVED: 409,
+  // Round 4 (B1): a new non-owner seat for a person whose owner invitation is waiting. Raised by the
+  // seat-side trigger, so it reaches every path that writes a seat (the join page shows the sentence).
+  OWNER_INVITE_WAITING: 409,
 });
 
 /** The plain sentence and status for an owner refusal, or null when `error` is not one. */

@@ -37,6 +37,9 @@
 --            tenant_members (every kind but consumer and agency_team), an INSERT is refused for an
 --            address with a live owner invitation in the same business, and its address must be
 --            stored trimmed and in lower case.
+--            _tenant_member_owner_invitation_waiting (new, round 4, BEFORE INSERT on tenant_members):
+--            a NEW non-owner seat is refused for a person whose address has a live owner invitation in
+--            that business, whoever writes the seat (service role and postgres-owned code included).
 --            guard_tenant_member_owner_flag also refuses any client write of business_owner_id.
 --            guard_tenant_owner_only_columns becomes SECURITY INVOKER; the platform owner keeps
 --            billing/hierarchy but no longer moves owner_user_id directly; the #227 carve-out now also
@@ -83,11 +86,23 @@
 --     direct insert of " Pat@X " would otherwise survive the holder's withdraw query). They read:
 --     "There's already an owner invitation for this address. Only the account holder can change it."
 --     (the token INSERT paths add ", from Settings → Team"). The account holder's own Settings → Team
---     invitation replaces it as before. NOT covered, stated: the service role (send-portal-invite,
---     agency-invite-member: auth.uid() IS NULL, exempt throughout this guard); and an invitation of
---     another seat-creating kind (e.g. subaccount_owner) that already existed BEFORE the owner
---     invitation was created, which the holder's create does not withdraw (it withdraws live team
---     invitations to that address only, as production does).
+--     invitation replaces it as before. The token guard does not cover the service role
+--     (send-portal-invite, agency-invite-member: auth.uid() IS NULL, exempt throughout that guard), an
+--     invitation that already existed BEFORE the owner invitation (the holder's create withdraws live
+--     team invitations to that address only, as production does), or one inserted with no address
+--     or another address. Those can still be CREATED; since round 4 none of them can be USED by that
+--     person, because the seat-side rule refuses the seat (next bullet).
+--   * NEW REFUSAL AT ACCEPT (round 4, B1): while a person's address has a live owner invitation in a
+--     business, no new non-owner seat is created for them there, by any path: accept_tenant_invite
+--     (its generic branch, which never compared addresses, and its sub-account-owner Admin path,
+--     which compared one only when stored), accept_solo_team_invite for a non-owner invitation,
+--     accept_invitation and the accept-invite edge function (public.invitations), and a grant such
+--     as grant_tenant_member_role. The person reads "You have an owner invitation to <business>
+--     waiting. Open that invitation to join as an owner. Nothing changed."; someone granting a seat to
+--     them reads "This person has an owner invitation to <business> waiting, so they join by accepting
+--     it. Only the account holder can change it, from Settings → Team. Nothing changed." (HINT
+--     OWNER_INVITE_WAITING). A person who already has a seat there is not affected (their owner
+--     invitation could not seat them anyway).
 --   * accept_tenant_invite turned an owner token into an Admin seat and reported success. It refuses.
 --   * The sole active owner of a holderless tenant could set owner_user_id to themselves with a direct
 --     client UPDATE (the #227 carve-out). Now only through postgres-owned code (accept_tenant_invite's
@@ -136,6 +151,14 @@
 --   * Setup's authored refusal for deleting a seated or invited legal owner is I2
 --     (save_solo_setup_context). Until then a Setup delete of a record with a LIVE invitation revokes
 --     that invitation (the safe direction), and a seated record cannot exist (above).
+--   * RESIDUAL UNTIL I2, stated (review round 4, S2): a co-owner whose Setup access is owner_full can
+--     withdraw or disable the account holder's invitation for a LEGAL owner through Setup
+--     (save_solo_setup_context, unchanged here): deleting that legal owner's record, or saving the
+--     owners list without it (which deletes it), revokes the invitation; retyping the record to an
+--     individual makes the invitation refuse at accept ("that owner seat has changed"). Nothing is
+--     granted to anyone that way, and a person-owner invitation is untouched, but it is a change to
+--     an owner invitation by someone other than the account holder. I2's save_solo_setup_context
+--     refusal closes it.
 -- ============================================================================
 
 BEGIN;
@@ -473,6 +496,66 @@ COMMENT ON FUNCTION public.guard_tenant_invite_token_identity() IS
 CREATE TRIGGER trg_tenant_invite_token_identity_guard
   BEFORE INSERT OR UPDATE OR DELETE ON public.tenant_invite_tokens
   FOR EACH ROW EXECUTE FUNCTION public.guard_tenant_invite_token_identity();
+
+-- ── 5.3 The seat-side rule: a person with an owner invitation waiting joins through it ─────────────
+-- The token guard above stops a new invitation being created to an owner invitation's address. It
+-- cannot stop an invitation that names no address, a different address, or that already existed, from
+-- being ACCEPTED by that person: accept_tenant_invite's generic branch never compares addresses, and
+-- its sub-account-owner branch compares one only when it is stored. Taking a seat that way first left
+-- the owner invitation failing "this account already belongs to the workspace" (review round 4, B1).
+-- So the rule is enforced where every such path meets: the INSERT of a new seat. A NEW non-owner seat
+-- is refused for a person whose stored address (trimmed, any case) has a live owner invitation in
+-- that business: kind 'team', role Owner, not used, not revoked, not expired, not archived. Whoever
+-- writes the seat (no exemption: browser, postgres-owned code, the service role), so it covers
+-- accept_tenant_invite (generic and sub-account Admin paths), accept_solo_team_invite for a non-owner
+-- invitation, accept_invitation and the accept-invite edge function's service-role seat write
+-- (public.invitations), grant_tenant_member_role and agency_enter_subaccount, and an invitation of any
+-- kind created before the owner invitation or by the service role. Not refused: an owner seat (the
+-- owner invitation's own acceptance, and accept_tenant_invite's first owner of a shell, which needs a
+-- holderless business where no owner invitation can be accepted anyway), and a write onto a seat the
+-- person already has (INSERT … ON CONFLICT re-accepting, which a BEFORE INSERT trigger also sees).
+-- The account holder's own Settings → Team invitation withdraws the owner invitation first, as before.
+-- The address compared is the one stored on the person's account, confirmed or not (a superset of
+-- "confirmed": an unconfirmed account holding that address is the same person).
+CREATE OR REPLACE FUNCTION public._tenant_member_owner_invitation_waiting()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO ''
+AS $function$
+DECLARE
+  _name text;
+BEGIN
+  IF NEW.is_owner IS TRUE THEN
+    RETURN NEW;
+  END IF;
+  IF EXISTS (SELECT 1 FROM public.tenant_members m WHERE m.tenant_id = NEW.tenant_id AND m.user_id = NEW.user_id) THEN
+    RETURN NEW;
+  END IF;
+  IF EXISTS (SELECT 1 FROM auth.users u
+               JOIN public.tenant_invite_tokens tk ON lower(btrim(tk.email)) = lower(btrim(u.email))
+              WHERE u.id = NEW.user_id AND NULLIF(btrim(u.email), '') IS NOT NULL
+                AND tk.tenant_id = NEW.tenant_id AND tk.kind = 'team' AND tk.default_role = 'owner'::public.tenant_role
+                AND tk.uses = 0 AND tk.revoked_at IS NULL AND tk.expires_at > now() AND tk.archived_at IS NULL) THEN
+    SELECT NULLIF(btrim(t.name), '') INTO _name FROM public.tenants t WHERE t.id = NEW.tenant_id;
+    IF auth.uid() IS NULL OR auth.uid() = NEW.user_id THEN
+      RAISE EXCEPTION 'You have an owner invitation to % waiting. Open that invitation to join as an owner. Nothing changed.',
+        COALESCE(_name, 'this business') USING ERRCODE = '42501', HINT = 'OWNER_INVITE_WAITING';
+    END IF;
+    RAISE EXCEPTION 'This person has an owner invitation to % waiting, so they join by accepting it. Only the account holder can change it, from Settings → Team. Nothing changed.',
+      COALESCE(_name, 'this business') USING ERRCODE = '42501', HINT = 'OWNER_INVITE_WAITING';
+  END IF;
+  RETURN NEW;
+END;
+$function$;
+REVOKE ALL ON FUNCTION public._tenant_member_owner_invitation_waiting() FROM PUBLIC, anon, authenticated, service_role;
+COMMENT ON FUNCTION public._tenant_member_owner_invitation_waiting() IS
+  'EXP08 owners (20271117020008, round 4): a NEW non-owner seat is refused for a person whose address '
+  'has a live owner invitation (team, Owner, unused, unrevoked, unexpired, unarchived) in that business, '
+  'whoever writes it, so no other invitation or grant pre-empts the owner invitation. HINT OWNER_INVITE_WAITING.';
+CREATE TRIGGER trg_tenant_members_owner_invitation_waiting
+  BEFORE INSERT ON public.tenant_members
+  FOR EACH ROW EXECUTE FUNCTION public._tenant_member_owner_invitation_waiting();
 
 -- ── 5.2 Every move of the account holder of record is audited ─────────────────────────────────────
 CREATE OR REPLACE FUNCTION public._tenant_account_holder_changed()

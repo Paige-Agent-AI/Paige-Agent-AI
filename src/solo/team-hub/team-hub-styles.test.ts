@@ -115,6 +115,11 @@ describe("Team Hub stylesheet: agents (A1b, approved v5 colour rules)", () => {
     expect(rule(".th-composer-wrap")).toContain("grid-template-columns:minmax(0,1fr)");
   });
 
+  it("lays the writing row and the failure row out as rows even as direct children of the stream (the A1b rendered pass found the stream's column rule centring them)", () => {
+    expect(css).toMatch(/\.th-ag-typing,\.th-stream-content > \.th-ag-typing\{display:grid;grid-template-columns:32px minmax\(0,1fr\)/);
+    expect(css).toMatch(/\.th-ag-fail,\.th-stream-content > \.th-ag-fail\{display:flex;flex-direction:row/);
+  });
+
   it("moves the writing dots only when motion is welcome; the words stay either way", () => {
     expect(css).toContain("@media (prefers-reduced-motion:no-preference){.th-ag-dots i{animation:th-dot 1.1s ease-in-out infinite}");
     expect(rule(".th-ag-dots i")).not.toContain("animation");

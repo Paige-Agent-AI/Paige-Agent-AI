@@ -4509,3 +4509,21 @@ UNAVAILABLE; all19/nine/ALG maturity unchanged, VisualN/A, ExperientialINCOMPLET
 FounderNOT_ACCEPTED. Details and complete orchestration contract stay in the
 [existing Systems evidence](../evidence/e2-systems-capture-mode.md); prior dated
 source releases remain history. No customer/model/provider operation.
+
+## EXP02 original request/recovery consumer — October27 UTC, local only
+
+Local preparation under ANT138/2564553b reuses the verified original caller,
+private native Work creator, original host dispatch port and caller-scoped
+get_paige_durable_work. It snapshots original context, prepares once, and resumes
+by reading the original Work without automatic dispatch/replay.36 new controls
+plus219 original host/Core cases pass (255 total); lint and original Deno3→same3
+diagnostic comparison pass, no clean-compile or customer claim. Native `claimed`
+can mean PREPARED before dispatch: show the stored safe summary with its timestamp,
+never infer current worker liveness or scan completion from that state or HTTP202.
+The exact original wait loop is reused before Work identity exists, without
+inventing a run ID, timer, queue or authority. Source remains LOCAL/UNREGISTERED;
+#2952 release and the actual EXP08→EXP05 shared Chat handback precede integration.
+No Root/risk/registry/C0b edit, new grant/provider/scan/customer action or catalogue
+promotion. Functional partial-source, VisualN/A, ExperientialINCOMPLETE,
+FounderNOT_ACCEPTED; all19/nine/ALG and existing acceptance boundaries unchanged.
+Details stay in the [original Systems evidence](../evidence/e2-systems-capture-mode.md).

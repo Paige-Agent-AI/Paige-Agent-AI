@@ -196,7 +196,15 @@ export class SystemsCheckCaptureUnconfirmed extends Error {
  * The host owns the deadline. Aborting awaiting never rolls back issued I/O. */
 export async function awaitSystemsCheckCapture<T>(operation: () => PromiseLike<T>,
   signal: AbortSignal, runId: string, phase: SystemsCheckCaptureUnconfirmed["reason"]): Promise<T> {
-  const unconfirmed = () => new SystemsCheckCaptureUnconfirmed(runId, phase);
+  return awaitSystemsCheckBoundary(operation, signal, () => new SystemsCheckCaptureUnconfirmed(runId, phase));
+}
+
+/** Same original wait before Work identity exists. Never relabel an intent as a run. */
+export async function awaitSystemsCheckRequest<T>(operation: () => PromiseLike<T>, signal: AbortSignal): Promise<T> {
+  return awaitSystemsCheckBoundary(operation, signal, () => new Error("SYSTEMS_WORK_REQUEST_UNCONFIRMED"));
+}
+
+async function awaitSystemsCheckBoundary<T>(operation: () => PromiseLike<T>, signal: AbortSignal, unconfirmed: () => Error): Promise<T> {
   if (signal.aborted) throw unconfirmed();
   let onAbort!: () => void;
   const aborted = new Promise<never>((_, reject) => { onAbort = () => reject(unconfirmed()); });

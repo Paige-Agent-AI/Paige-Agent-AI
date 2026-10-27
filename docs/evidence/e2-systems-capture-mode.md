@@ -1308,3 +1308,60 @@ manual catalogue remains unavailable; no Live promotion based on source. Origina
 UNMEASURED and protected monthlyUNKNOWN/UNRETRIED remain separate. Root/risk/
 registry/C0b stays with EXP08 then EXP05; source coordination is ANT161/b2c547b3,
 full grounding/sequence ANT138/5c6f60f4. No browser or customer/model operation.
+
+# October27 UTC — original request and return consumer, LOCAL/UNREGISTERED
+
+Plan ANT138/2564553b extends only the original Systems consumer while #2952's
+host release completes. The caller is verified using the EXISTING JWT client's
+getUser and matched to the original server context, which is snapshotted before
+awaiting. Original _create_manual_systems_check_work receives only that actor,
+tenant, original intent and optional original thread; its native current-role/
+active-profile/SOLO/thread/replay restrictions remain the authority. The adapter
+accepts its exact4-column tuple, dispatches a NEW preparation once through the
+original private host port, then reads exact12-column get_paige_durable_work
+under the ORIGINAL caller. Resumed preparations ONLY read; none starts a second
+dispatch. No direct service read of Work, new creator, grant, queue or result store.
+
+The existing Core wait loop is reused with a request-specific error factory
+before a Work identity exists. Its entire original loop/remaining Core are exact,
+and the old capture error identity/phase interface is preserved. No intent is
+relabeled as a run UUID. Native cancellation scopes remain original-host-owned;
+one fresh observation scope follows acknowledgement, error or interrupted waiting.
+Lost/late auth cannot prepare; unknown preparation cannot dispatch; ambiguous
+delivery cannot authorize replay; refused or late RLS reads cannot establish a
+terminal state. Errors expose no raw credential or native-detail text.
+
+Important original-state distinction: the native creator already returns
+`claimed` with summary "Your Systems Check request is prepared." The dispatch CAS
+keeps `claimed` while changing the stored summary. Neither that state nor202
+proves a started/completed scan or current worker liveness. The consumer returns
+the original state, bounded owner-safe summary and original timestamps; summary
+is last stored source data, never instructions. Only original native `succeeded`
+with a real settlement timestamp supports recorded completion. It does not prove
+that any risk was corrected or that business performance improved. Original run/
+finding/Rail inspection and correctly bound navigation remain necessary.
+
+Evidence:36 new whole-original-source request controls plus all219 existing
+host/Core controls =255PASS/0FAIL. Controlled caller/SDK/dispatch ports exercise
+identity mismatch, pinned context, exact native arguments/tuple/state refusals,
+all seven original states on return without replay, late identity/preparation/
+dispatch/observation, lost acknowledgement with actual native success, denied RLS,
+foreign/malformed Work and bounded source-summary handling. Native47/40/57/148
+proof remains separate history; no new native or customer operation was run.
+Scoped lint passes. Actual Deno2.1.4/TS5.6.2/original SDK2.75.0 complete diagnostic
+bodies match original3 prompt-forge errors exactly, zero new; no clean compile,
+hosted-gate waiver or production acceptance. Existing host/consumer/original219
+fixture files remain exact. No runtime imports this request consumer yet.
+
+Release boundary: LOCAL only, not a separate orphaned capability release. Actual
+#2952 source release, canonical Gateway/Trust/INT346 classification/readiness and
+the actual EXP08→EXP05 shared Root/risk/registry/C0b handback precede the integrated
+request consumer. No shared path/registry edit or activation is taken by this work.
+The eventual full10-point contract retains original question/context→registered
+capability and original native authority→original Systems run/findings→original
+native finalizer/Rail→permitted result/reload. This adapter is preparation and
+observation, not a second execution engine or proof of a completed action.
+Functional LOCAL prerequisite; VisualN/A; ExperientialINCOMPLETE; Founder
+NOT_ACCEPTED. Manual systems.check/catalogue UNAVAILABLE/unregistered, all19/nine,
+ALG03/06/11/12/13, historical9-0+12-0-4, monthlyUNKNOWNUNRETRIED and representative
+weekUNMEASURED remain unchanged. No browser/model/provider/business action.

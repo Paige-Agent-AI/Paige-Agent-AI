@@ -649,8 +649,8 @@ describe('composeBusinessReview', () => {
     const f = fakeCaller({ scope: (n) => (n <= 3 ? TENANT : 'switched-workspace'), script: usdEverywhere });
     const r = await review(f);
     if (!('snapshot' in r)) throw new Error(r.reason);
-    // Existing four domains plus canonical Game Plan, Finance, Marketing and email.
-    expect(r.snapshot.budget.adapters_run).toBe(8);
+    // Existing four domains plus canonical Game Plan, Finance, Marketing, email and Calendar.
+    expect(r.snapshot.budget.adapters_run).toBe(9);
     expect(f.issued().length).toBeGreaterThan(0);
     for (const d of r.snapshot.requested) expect(r.snapshot.domains[d].status).toBe('degraded');
     expect(r.snapshot.degradation.every((e) => e.reason === 'scope_changed')).toBe(true);

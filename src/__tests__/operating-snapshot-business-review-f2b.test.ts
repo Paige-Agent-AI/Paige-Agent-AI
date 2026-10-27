@@ -534,7 +534,9 @@ describe('composeBusinessReview with F2b', () => {
     expect(d.email.status).toBe('degraded');
     expect(d.email.data).toBeNull();
     expect(d.email.reason).not.toMatch(/^no_adapter/);
-    for (const area of ['work', 'revenue', 'communications', 'bookings', 'outcomes']) {
+    // The original Calendar reader is mounted, but this old metric-only caller has no query/auth ports.
+    expect(d.bookings).toEqual({ status: 'degraded', reason: 'calendar_review_original_caller_unavailable', data: null });
+    for (const area of ['work', 'revenue', 'communications', 'outcomes']) {
       expect(d[area].status).toBe('unavailable');
       expect(d[area].reason).toMatch(/^no_adapter/);
     }

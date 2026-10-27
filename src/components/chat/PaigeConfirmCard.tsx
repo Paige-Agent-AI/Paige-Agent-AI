@@ -1,4 +1,4 @@
-import { useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode } from "react";
+import { Fragment, useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Check, X, ShieldQuestion, Loader2, AlertTriangle, CircleHelp, RotateCcw, Paperclip } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -48,6 +48,11 @@ export type { ConfirmEmailPreview } from "./confirmPreview";
 
 /** The card's own state. `mixed` exists only at card level: some actions ran and some did not. */
 type CardState = ConfirmActionState | "mixed";
+
+/** A file name with break opportunities after - _ . and spaces, so it wraps at its own seams. */
+function breakableFileName(name: string): ReactNode[] {
+  return name.split(/(?<=[-_. ])/).map((part, i) => <Fragment key={i}>{i > 0 ? <wbr /> : null}{part}</Fragment>);
+}
 
 export type ConfirmAction = {
   /** The server-authored sentence describing the exact call. Never model prose re-rendered. */
@@ -175,11 +180,20 @@ function EmailPreview({ email, bleed = false }: { email: ConfirmEmailPreview; bl
                 {email.attachments.map((file, i) => (
                   <li key={`${i}-${file.name}`} className="flex min-w-0 items-start gap-1.5">
                     <Paperclip aria-hidden="true" className="mt-[3px] h-3 w-3 shrink-0 text-muted-foreground" />
-                    <span className="min-w-0 text-foreground [overflow-wrap:anywhere]">{file.name}</span>
-                    <span className="shrink-0 tabular-nums text-muted-foreground">{formatFileSize(file.size)}</span>
+                    {/* Name over size, so a narrow dock gives the name the whole width; a long name breaks
+                        after - _ . or a space before it ever breaks mid-word. */}
+                    <span className="min-w-0">
+                      <span className="block text-foreground [overflow-wrap:break-word]">{breakableFileName(file.name)}</span>
+                      <span className="block tabular-nums text-muted-foreground">{formatFileSize(file.size)}</span>
+                    </span>
                   </li>
                 ))}
               </ul>
+              {email.attachments.length > 1 ? (
+                <p className="mt-1 tabular-nums text-muted-foreground">
+                  {formatFileSize(email.attachments.reduce((sum, file) => sum + file.size, 0))} in all
+                </p>
+              ) : null}
             </dd>
           </div>
         ) : null}

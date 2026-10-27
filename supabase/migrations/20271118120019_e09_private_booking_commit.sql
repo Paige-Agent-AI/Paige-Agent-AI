@@ -190,7 +190,7 @@ DECLARE calendar public.calendars%ROWTYPE; current_source jsonb; current_roster 
  customer uuid; hosts uuid[]; host uuid; member_count integer; wanted_kind text;
  starts timestamptz; ends timestamptz; group_id uuid; written public.internal_bookings%ROWTYPE;
  receipt jsonb; representative uuid; existing_intent jsonb; existing_actor uuid;
- existing_contact uuid; existing_tenant uuid;
+ existing_contact uuid; existing_tenant uuid; email_count integer; actual_email text; phone_count integer; actual_phone text;
 BEGIN
  customer:=public._client_portal_lock_verified_customer(p_verified_actor_id,p_tenant_id,p_expected_client_id);
  IF p_request_id IS NULL OR p_request_intent IS NULL OR pg_catalog.jsonb_typeof(p_request_intent)<>'object'
@@ -216,6 +216,20 @@ BEGIN
   OR pg_catalog.jsonb_typeof(p_plan->'hosts_source') IS DISTINCT FROM 'array'
   OR pg_catalog.jsonb_typeof(p_plan->'host_ids') IS DISTINCT FROM 'array' THEN
   RAISE EXCEPTION 'invalid booking plan' USING ERRCODE='22023';
+ END IF;
+ -- Destination comes from this verified customer's ORIGINAL primary contact
+ -- methods, never a typed guest address. Serialize existing primary methods
+ -- with the native write and refuse absent/ambiguous/changed recipients.
+ PERFORM cm.id FROM public.client_contact_methods cm WHERE cm.tenant_id=p_tenant_id AND cm.client_id=customer
+  AND cm.kind IN ('email','phone') AND cm.is_primary ORDER BY cm.id FOR SHARE;
+ SELECT count(*) FILTER(WHERE cm.kind='email'),max(pg_catalog.lower(pg_catalog.btrim(cm.value))) FILTER(WHERE cm.kind='email'),
+  count(*) FILTER(WHERE cm.kind='phone'),max(pg_catalog.btrim(cm.value)) FILTER(WHERE cm.kind='phone')
+ INTO email_count,actual_email,phone_count,actual_phone FROM public.client_contact_methods cm
+ WHERE cm.tenant_id=p_tenant_id AND cm.client_id=customer AND cm.kind IN ('email','phone') AND cm.is_primary;
+ IF email_count<>1 OR coalesce(actual_email,'')='' OR phone_count>1
+  OR actual_email IS DISTINCT FROM pg_catalog.lower(pg_catalog.btrim(p_plan->>'guest_email'))
+  OR nullif(actual_phone,'') IS DISTINCT FROM nullif(pg_catalog.btrim(p_plan->>'guest_phone'),'') THEN
+  RAISE EXCEPTION 'booking recipient changed or unavailable' USING ERRCODE='40001';
  END IF;
  SELECT c.* INTO calendar FROM public.calendars c
  WHERE c.id=(p_plan->>'calendar_id')::uuid AND c.tenant_id=p_tenant_id AND c.enabled IS TRUE FOR SHARE;
@@ -265,12 +279,19 @@ BEGIN
   RAISE EXCEPTION 'booking model changed' USING ERRCODE='40001';
  END IF;
  starts:=(p_plan->>'start_at')::timestamptz;ends:=(p_plan->>'end_at')::timestamptz;
- IF starts IS NULL OR ends IS NULL OR ends<=starts OR starts<=pg_catalog.clock_timestamp()
+ IF starts IS NULL OR ends IS NULL OR NOT pg_catalog.isfinite(starts) OR NOT pg_catalog.isfinite(ends)
+  OR ends<=starts OR starts<=pg_catalog.clock_timestamp()
   OR starts IS DISTINCT FROM (p_request_intent->>'start')::timestamptz
   OR coalesce(pg_catalog.btrim(p_plan->>'title'),'')='' OR pg_catalog.length(p_plan->>'title')>500
   OR coalesce(pg_catalog.btrim(p_plan->>'guest_name'),'')='' OR pg_catalog.length(p_plan->>'guest_name')>120
   OR coalesce(pg_catalog.btrim(p_plan->>'guest_email'),'')='' OR pg_catalog.length(p_plan->>'guest_email')>200 THEN
   RAISE EXCEPTION 'invalid booking plan' USING ERRCODE='22023';
+ END IF;
+ -- Recheck the original notice/horizon policy at the actual write, after all
+ -- Auth, source and lock waits. This is admission, not another slot engine.
+ IF starts<pg_catalog.clock_timestamp()+pg_catalog.make_interval(mins=>greatest(0,coalesce(calendar.min_notice_min,60)))
+  OR starts>pg_catalog.clock_timestamp()+pg_catalog.make_interval(days=>greatest(1,coalesce(calendar.booking_horizon_days,60))) THEN
+  RAISE EXCEPTION 'booking policy window changed' USING ERRCODE='40001';
  END IF;
 
  IF wanted_kind='class_seat' THEN

@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {resolvePortalBookingActor,readPortalBookingReceipt,commitPortalBooking} from './client-portal-booking.ts';
+import {resolvePortalBookingActor,resolvePortalBookingCustomer,readPortalBookingReceipt,commitPortalBooking,reconcilePortalBooking,portalBookingRequest} from './client-portal-booking.ts';
 
 const id=(n:number)=>`e09b2000-0000-4000-8000-${String(n).padStart(12,'0')}`;
 const intent=()=>({tenantId:id(1),clientId:id(2),requestId:id(3)});
@@ -23,6 +23,16 @@ test('booking actor comes from verified Auth and the existing selected-business 
  assert.deepEqual(r,{actorId:id(4),tenantId:id(1),clientId:id(2)});
  assert.deepEqual(f.calls.map(x=>x.kind),['auth','rpc','auth']);
  assert.equal(f.calls[1].name,'client_portal_self_profile');assert.deepEqual(f.calls[1].args,{p_tenant_id:id(1)});
+});
+test('booking recipient is the current verified customer original primary contact, never a typed guest',async()=>{
+ const f=fixture();f.setProfile({...profile(),email:'  CUSTOMER@example.test  ',phone:' +15550000123 ',private_note:'withheld'});
+ const r=await resolvePortalBookingCustomer(f.caller,{...intent(),guest:{email:'unrelated@example.test'}});
+ assert.deepEqual(r,{binding:{actorId:id(4),tenantId:id(1),clientId:id(2)},guest:{name:'Avery River',email:'customer@example.test',phone:'+15550000123'}});
+ assert.deepEqual(f.calls.map(x=>x.kind),['auth','rpc','auth']);
+});
+test('a missing primary booking recipient does not invent an address or block ordinary authorized reads',async()=>{
+ const f=fixture(),r=await resolvePortalBookingCustomer(f.caller,intent());
+ assert.equal(r?.guest,null);assert.equal(r?.binding.actorId,id(4));
 });
 for(const [name,mutate] of [
  ['no current session',(f:ReturnType<typeof fixture>)=>f.setUser(null)],
@@ -138,6 +148,19 @@ test('a request retired in the Auth continuation cannot dispatch a booking',asyn
 test('a provider gate closed in the Auth continuation cannot dispatch a booking',async()=>{
  const f=commitFixture();f.f.during(()=>f.setAllowed(false));assert.equal((await f.run()).state,'refused');assert.deepEqual(f.writes,[]);
 });
+test('the actual asynchronous provider predicate is awaited; its Promise is never treated as permission',async()=>{
+ const f=commitFixture();const r=await commitPortalBooking({...f.deps,executionAllowed:async()=>false},f.i,f.request,f.plan);
+ assert.equal(r.state,'refused');assert.deepEqual(f.writes,[]);
+});
+test('a request retired while awaiting the provider predicate cannot dispatch',async()=>{
+ const f=commitFixture();const r=await commitPortalBooking({...f.deps,executionAllowed:async()=>{f.setCurrent(false);return true;}},f.i,f.request,f.plan);
+ assert.equal(r.state,'refused');assert.deepEqual(f.writes,[]);
+});
+test('a late asynchronous provider restriction retains saved work and withholds follow-ups',async()=>{
+ const f=commitFixture();let calls=0;
+ const r=await commitPortalBooking({...f.deps,executionAllowed:async()=>++calls<3},f.i,f.request,f.plan);
+ assert.equal(r.state,'saved');if(r.state==='saved')assert.equal(r.execution,null);
+});
 test('a native SQL refusal proves rollback and is not represented as saved work',async()=>{
  const f=commitFixture();f.setError({code:'23P01',message:'exclusion constraint'});assert.equal((await f.run()).state,'refused');assert.equal(f.writes.length,1);
 });
@@ -168,4 +191,49 @@ test('an in-flight input change withholds the preceding booking result',async()=
 test('a gate closed after a genuine native save retains the appointment and holds provider follow-ups',async()=>{
  const f=commitFixture();f.during(()=>f.setAllowed(false));const r=await f.run();assert.equal(r.state,'saved');
  if(r.state==='saved'){assert.equal(r.replayed,false);assert.equal(r.execution,null);assert.equal(r.booking.id,id(5));}
+});
+
+test('exact-intent reconciliation is one read of original work, with no create or provider instruction',async()=>{
+ const f=commitFixture();f.setNative({...receipt(),replayed:true,execution:null});
+ const r=await reconcilePortalBooking(f.deps,f.i,f.request);assert.equal(r.state,'saved');
+ assert.equal(f.writes.length,1);assert.deepEqual(f.writes[0],{name:'client_portal_reconcile_booking',args:{p_verified_actor_id:id(4),
+  p_tenant_id:id(1),p_expected_client_id:id(2),p_request_id:id(3),p_expected_intent:f.request}});
+ if(r.state==='saved'){assert.equal(r.replayed,true);assert.equal(r.execution,null);}
+});
+for(const state of ['not_found','conflict','unverified'] as const)test('source-backed reconciliation state never dispatches a create: '+state,async()=>{
+ const f=commitFixture();f.setNative({...receipt(),state,booking:null,replayed:true,execution:null});
+ assert.deepEqual(await reconcilePortalBooking(f.deps,f.i,f.request),{state});
+ assert.deepEqual(f.writes.map(x=>x.name),['client_portal_reconcile_booking']);
+});
+test('provider restrictions do not block read-only recovery of an already saved appointment',async()=>{
+ const f=commitFixture();f.setAllowed(false);f.setNative({...receipt(),replayed:true,execution:null});
+ assert.equal((await reconcilePortalBooking(f.deps,f.i,f.request)).state,'saved');
+});
+test('reconciliation with a wrong actor or an execution instruction is withheld',async()=>{
+ for(const change of [{actor_id:id(90)},{execution:{booking_kind:'single',host_ids:[id(6)],collective_group_id:null}}]){
+  const f=commitFixture();f.setNative({...receipt(),replayed:true,execution:null,...change});
+  assert.deepEqual(await reconcilePortalBooking(f.deps,f.i,f.request),{state:'unverified'});
+ }
+});
+test('reconciliation lost response never falls through to a new native create',async()=>{
+ const f=commitFixture();f.throwCall();assert.deepEqual(await reconcilePortalBooking(f.deps,f.i,f.request),{state:'unverified'});
+ assert.deepEqual(f.writes.map(x=>x.name),['client_portal_reconcile_booking']);
+});
+test('reconciliation revalidates current Auth/relationship before returning saved work',async()=>{
+ const f=commitFixture();f.setNative({...receipt(),replayed:true,execution:null});f.during(()=>f.f.setProfile(null));
+ assert.deepEqual(await reconcilePortalBooking(f.deps,f.i,f.request),{state:'unverified'});
+});
+const bookingBody=()=>({tenant_id:id(1),client_id:id(2),request_id:id(3),calendar_id:id(10),start:'2026-11-01T10:00:00-05:00',
+ appointmentTypeId:'consultation',location:'phone',notes:'  A question  ',answers:{goal:'Plan the next month'},
+ guest:{email:'unrelated@example.test',name:'Ignored body name'},actor_id:id(90),role:'owner',p_plan:{host_ids:[id(90)]}});
+test('customer request normalization captures explicit booking input without body identity or a supplied execution plan',()=>{
+ assert.deepEqual(portalBookingRequest(bookingBody()),{scope:intent(),request:{calendar_id:id(10),start:'2026-11-01T15:00:00.000Z',
+  appointment_type_id:'consultation',location:'phone',notes:'A question',answers:{goal:'Plan the next month'}}});
+});
+for(const [name,change]of [['missing business',{tenant_id:null}],['missing client',{client_id:null}],
+ ['invalid request',{request_id:'not-a-uuid'}],['invalid calendar',{calendar_id:'not-a-uuid'}],
+ ['invalid time',{start:'not-a-time'}],['oversized answers',{answers:{goal:'x'.repeat(66000)}}]] as const)
+test('customer request refuses invalid input before execution: '+name,()=>assert.equal(portalBookingRequest({...bookingBody(),...change}),null));
+test('normalized request is a detached snapshot of user answers, not a mutable body alias',()=>{
+ const body=bookingBody(),r=portalBookingRequest(body);body.answers.goal='Changed';assert.equal(r?.request.answers.goal,'Plan the next month');
 });

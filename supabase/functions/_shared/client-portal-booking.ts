@@ -25,7 +25,17 @@ function sameIntent(value:unknown,captured:Intent):boolean{
 /** Reuse the original selected-business self projection on the actual caller's
  * client. A body email, role, actor label or route number is never authority.
  */
-export async function resolvePortalBookingActor(caller:PortalBookingCaller,value:unknown):Promise<ClientPortalChatBinding|null>{
+export type PortalBookingGuest=Readonly<{name:string;email:string;phone:string|null}>;
+type BookingCustomer=Readonly<{binding:ClientPortalChatBinding;guest:PortalBookingGuest|null}>;
+function guestFromProfile(value:unknown):PortalBookingGuest|null{
+ if(!object(value)||typeof value.email!=='string')return null;
+ const email=value.email.trim().toLowerCase(),phone=typeof value.phone==='string'?value.phone.trim()||null:null;
+ if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)||email.length>200||(phone!==null&&phone.length>40))return null;
+ const words=[value.first_name,value.last_name].filter((x):x is string=>typeof x==='string'&&!!x.trim()).map(x=>x.trim()).join(' ');
+ const name=(words||(typeof value.entity_name==='string'?value.entity_name.trim():'')||'Customer').slice(0,120);
+ return Object.freeze({name,email,phone});
+}
+async function resolveBookingCustomer(caller:PortalBookingCaller,value:unknown):Promise<BookingCustomer|null>{
  const intent=parseIntent(value);if(!intent)return null;
  try{
   const before=await caller.auth.getUser(),actor=before.data?.user?.id;
@@ -34,10 +44,20 @@ export async function resolvePortalBookingActor(caller:PortalBookingCaller,value
   if(response.error||!sameIntent(value,intent))return null;
   const binding=clientPortalBindingFromProfile(response.data,actor);
   if(!binding||binding.tenantId!==intent.tenantId||binding.clientId!==intent.clientId)return null;
+  const guest=guestFromProfile(response.data);
   const after=await caller.auth.getUser();
   if(after.error||after.data?.user?.id!==actor||!sameIntent(value,intent))return null;
-  return Object.freeze({...binding});
+  return Object.freeze({binding:Object.freeze({...binding}),guest});
  }catch{return null;}
+}
+export async function resolvePortalBookingActor(caller:PortalBookingCaller,value:unknown):Promise<ClientPortalChatBinding|null>{
+ return (await resolveBookingCustomer(caller,value))?.binding??null;
+}
+/** The same original self read, with only this customer's canonical booking
+ * contact details. No body guest, email lookup, staff data or other CRM row.
+ */
+export async function resolvePortalBookingCustomer(caller:PortalBookingCaller,value:unknown):Promise<BookingCustomer|null>{
+ return await resolveBookingCustomer(caller,value);
 }
 
 function decodeReceipt(value:unknown,binding:ClientPortalChatBinding,requestId:string):PortalBookingReceipt|null{
@@ -88,13 +108,72 @@ export type PortalBookingCommitResult=
  |{state:'refused';reason:'blocked'|'access_unavailable'|'bad_request'|'changed'|'slot_unavailable'|'unavailable'}
  |{state:'unverified'};
 type CommitDependencies={caller:PortalBookingCaller;service:{rpc(name:string,args:Record<string,unknown>):PromiseLike<Reply>};
- current:()=>boolean;executionAllowed:()=>boolean};
+ current:()=>boolean;executionAllowed:()=>boolean|PromiseLike<boolean>};
 function capturedJSON(value:unknown,maximum:number):{text:string;copy:Record<string,unknown>}|null{
  try{
   if(!object(value))return null;const text=JSON.stringify(value);
   if(new TextEncoder().encode(text).byteLength>maximum)return null;
   const copy:unknown=JSON.parse(text);return object(copy)?{text,copy}:null;
  }catch{return null;}
+}
+export type PortalBookingRequest={scope:Intent&{requestId:string};request:{calendar_id:string;start:string;
+ appointment_type_id:string|null;location:string;notes:string|null;answers:Record<string,unknown>}};
+/** Data normalization only. A body cannot provide the verified actor, recipient,
+ * availability decision, host assignment or native execution plan.
+ */
+export function portalBookingRequest(body:unknown):PortalBookingRequest|null{
+ try{
+  if(!object(body)||!uuid(body.tenant_id)||!uuid(body.client_id)||!uuid(body.request_id)||!uuid(body.calendar_id)
+   ||typeof body.start!=='string'||!Number.isFinite(Date.parse(body.start)))return null;
+  const answers=capturedJSON(object(body.answers)?body.answers:{},65536);if(!answers)return null;
+  const request={calendar_id:body.calendar_id.toLowerCase(),start:new Date(body.start).toISOString(),
+   appointment_type_id:typeof body.appointmentTypeId==='string'?body.appointmentTypeId:null,
+   location:typeof body.location==='string'?body.location.trim():'',
+   notes:String(body.notes??'').trim().slice(0,1000)||null,answers:answers.copy};
+  if(!capturedJSON(request,65536))return null;
+  return {scope:{tenantId:body.tenant_id.toLowerCase(),clientId:body.client_id.toLowerCase(),requestId:body.request_id.toLowerCase()},request};
+ }catch{return null;}
+}
+
+export type PortalBookingReconciliation=
+ |{state:'saved';booking:PortalBookingReceipt;replayed:true;execution:null}
+ |{state:'not_found'|'conflict'|'unverified'}
+ |{state:'refused';reason:'bad_request'|'access_unavailable'|'blocked'};
+/** Exact-intent lookup through the original native record. Read-only even when
+ * provider execution is held. No state returned here dispatches a create.
+ */
+export async function reconcilePortalBooking(
+ deps:Pick<CommitDependencies,'caller'|'service'|'current'>,scope:unknown,request:unknown
+):Promise<PortalBookingReconciliation>{
+ try{
+  if(!object(scope)||!uuid(scope.requestId))return {state:'refused',reason:'bad_request'};
+  const requestId=scope.requestId.toLowerCase(),intent=parseIntent(scope),r=capturedJSON(request,65536);
+  if(!intent||!r)return {state:'refused',reason:'bad_request'};
+  const current=()=>deps.current()&&sameIntent(scope,intent)&&uuid(scope.requestId)&&scope.requestId.toLowerCase()===requestId
+   &&JSON.stringify(request)===r.text;
+  if(!current())return {state:'refused',reason:'blocked'};
+  const binding=await resolvePortalBookingActor(deps.caller,scope);
+  if(!binding||!current())return {state:'refused',reason:'access_unavailable'};
+  const response=await deps.service.rpc('client_portal_reconcile_booking',{
+   p_verified_actor_id:binding.actorId,p_tenant_id:binding.tenantId,p_expected_client_id:binding.clientId,
+   p_request_id:requestId,p_expected_intent:r.copy,
+  });
+  const native=response.data;
+  if(response.error||!object(native)||!current()
+   ||!exact(native,['schema_version','actor_id','tenant_id','client_id','request_id','state','booking','replayed','execution'])
+   ||native.schema_version!==1||native.actor_id!==binding.actorId||native.tenant_id!==binding.tenantId
+   ||native.client_id!==binding.clientId||native.request_id!==requestId||native.replayed!==true||native.execution!==null
+   ||typeof native.state!=='string'||!['saved','not_found','conflict','unverified'].includes(native.state))return {state:'unverified'};
+  const {replayed:_replayed,execution:_execution,...original}=native;
+  const state=native.state,booking=state==='saved'?decodeReceipt(original,binding,requestId):null;
+  if((state==='saved'&&!booking)||(state!=='saved'&&native.booking!==null))return {state:'unverified'};
+  const after=await resolvePortalBookingActor(deps.caller,scope);
+  if(!after||after.actorId!==binding.actorId||after.clientId!==binding.clientId||after.tenantId!==binding.tenantId||!current())return {state:'unverified'};
+  if(booking)return {state:'saved',booking,replayed:true,execution:null};
+  if(state==='not_found')return {state:'not_found'};
+  if(state==='conflict')return {state:'conflict'};
+  return {state:'unverified'};
+ }catch{return {state:'unverified'};}
 }
 function executionFromNative(value:unknown,plan:Record<string,unknown>):PortalBookingExecution|null{
  if(!object(value)||!exact(value,['booking_kind','host_ids','collective_group_id'])
@@ -126,10 +205,10 @@ export async function commitPortalBooking(
   if(!intent||!r||!p)return {state:'refused',reason:'bad_request'};
   const current=()=>deps.current()&&sameIntent(scope,intent)&&uuid(scope.requestId)&&scope.requestId.toLowerCase()===requestId
    &&JSON.stringify(request)===r.text&&JSON.stringify(preparedPlan)===p.text;
-  if(!current()||!deps.executionAllowed())return {state:'refused',reason:'blocked'};
+  if(!current()||!(await deps.executionAllowed())||!current())return {state:'refused',reason:'blocked'};
   const binding=await resolvePortalBookingActor(deps.caller,scope);
   if(!binding||!current())return {state:'refused',reason:'access_unavailable'};
-  if(!deps.executionAllowed())return {state:'refused',reason:'blocked'};
+  if(!(await deps.executionAllowed())||!current())return {state:'refused',reason:'blocked'};
   // Fixed native method and actor from the verified caller. Body/model actor,
   // role, address and plan labels cannot replace the original Auth subject.
   dispatched=true;
@@ -161,6 +240,8 @@ export async function commitPortalBooking(
   if(!after||after.actorId!==binding.actorId||after.clientId!==binding.clientId||after.tenantId!==binding.tenantId||!current())return {state:'unverified'};
   // A late restriction does not undo the saved appointment. Retain its real
   // result while withholding provider follow-ups. A replay ALWAYS withholds.
-  return {state:'saved',booking,replayed,execution:!replayed&&deps.executionAllowed()?actualExecution:null};
+  const followupsAllowed=!replayed&&await deps.executionAllowed();
+  if(!current())return {state:'unverified'};
+  return {state:'saved',booking,replayed,execution:followupsAllowed?actualExecution:null};
  }catch{return dispatched?{state:'unverified'}:{state:'refused',reason:'unavailable'};}
 }

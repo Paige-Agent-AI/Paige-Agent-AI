@@ -14,6 +14,7 @@ export async function bookingWorkReceiptProof({sql,check,assert,fs,fixture,spawn
  ${original('supabase/migrations/20271111010000_e09_customer_portal_access.sql','_client_portal_lock_relationship')}
  REVOKE ALL ON FUNCTION public._client_portal_request_business() FROM PUBLIC,anon,authenticated,service_role;
  REVOKE ALL ON FUNCTION public._client_portal_lock_relationship(uuid,text) FROM PUBLIC,anon,authenticated,service_role;
+ ALTER TABLE client_contact_methods ADD is_primary boolean DEFAULT true;
  CREATE TABLE calendars(id uuid PRIMARY KEY,tenant_id uuid,type text DEFAULT 'personal',title text,description text,
   logo_url text,accent text,duration_min integer DEFAULT 30,buffer_before_min integer DEFAULT 0,buffer_after_min integer DEFAULT 0,
   min_notice_min integer DEFAULT 0,timezone text DEFAULT 'UTC',availability_json jsonb DEFAULT '[]',enabled boolean DEFAULT true,
@@ -135,6 +136,8 @@ export async function bookingWorkReceiptProof({sql,check,assert,fs,fixture,spawn
   ('${f.tenant}','${f.other}','owner','active',true),('${f.tenant}','${other.other}','member','active',false);
   INSERT INTO clients(id,tenant_id,linked_user_id,status,portal_access_state)
   VALUES('${secondCustomer}','${f.tenant}','${other.actor}','active','open');
+  INSERT INTO client_contact_methods(client_id,tenant_id,kind,value,match_key)
+  VALUES('${secondCustomer}','${f.tenant}','email','second@example.test','second@example.test');
   INSERT INTO calendars(id,tenant_id,type,title) VALUES('${calendar}','${f.tenant}','personal','Consultation'),
    ('${team}','${f.tenant}','collective','Team session'),('${event}','${f.tenant}','event','Workshop');
   INSERT INTO calendar_hosts(calendar_id,user_id,priority) VALUES('${calendar}','${f.other}',0),
@@ -152,7 +155,7 @@ export async function bookingWorkReceiptProof({sql,check,assert,fs,fixture,spawn
     'availability_json',h.availability_json,'timezone',h.timezone) ORDER BY h.user_id) FROM calendar_hosts h WHERE h.calendar_id=c.id),
    'host_ids',${literal(JSON.stringify(hostIds))}::jsonb,'booking_kind',${literal(kind)},'title',c.title,
    'start_at',clock_timestamp()+interval '${hours} hours','end_at',clock_timestamp()+interval '${hours} hours 30 minutes',
-   'guest_name','Avery River','guest_email','client@example.test','guest_phone',NULL,'notes',NULL,
+   'guest_name','Avery River','guest_email',${literal(f.email)},'guest_phone',NULL,'notes',NULL,
    'location_type','phone','location_value',NULL,'intake_answers',NULL,'appointment_type',NULL)
    FROM calendars c WHERE c.id='${cal}'`));
   const end=new Date(Date.parse(raw.start_at)+30*60000).toISOString();raw.end_at=end;return raw;
@@ -183,6 +186,25 @@ export async function bookingWorkReceiptProof({sql,check,assert,fs,fixture,spawn
  check('Native committed audit attribution is the verified customer and exact original work',()=>{
   assert(single);assert.equal(sql(`SELECT count(*) FROM audit_logs WHERE user_id='${f.actor}' AND entity_id='${single.booking.id}'
    AND action='client_portal_create' AND data->>'portal_request_id'='${requestId(1)}'`),'1');
+ });
+ check('A typed or stale guest address cannot replace the verified customer primary recipient',()=>{
+  const before=snapshot(),p={...plan(calendar,[f.other],'single'),guest_email:'unrelated@example.test'};
+  assert.throws(()=>commit(p,requestId(92)),/booking recipient changed or unavailable/);assert.equal(snapshot(),before);
+ });
+ check('A typed phone cannot become a new notification recipient',()=>{
+  const before=snapshot(),p={...plan(calendar,[f.other],'single'),guest_phone:'+15550000123'};
+  assert.throws(()=>commit(p,requestId(93)),/booking recipient changed or unavailable/);assert.equal(snapshot(),before);
+ });
+ check('Native admission rechecks the same calendar notice window at the actual write',()=>{
+  sql(`UPDATE calendars SET min_notice_min=90 WHERE id='${calendar}'`);
+  const p=plan(calendar,[f.other],'single');p.start_at=new Date(Date.now()+10*60000).toISOString();p.end_at=new Date(Date.now()+40*60000).toISOString();
+  const before=snapshot();assert.throws(()=>commit(p,requestId(94)),/booking policy window changed/);assert.equal(snapshot(),before);
+  sql(`UPDATE calendars SET min_notice_min=0 WHERE id='${calendar}'`);
+ });
+ check('Native admission cannot pass an original calendar booking horizon',()=>{
+  sql(`UPDATE calendars SET booking_horizon_days=1 WHERE id='${calendar}'`);const p=plan(calendar,[f.other],'single'),before=snapshot();
+  assert.throws(()=>commit(p,requestId(95)),/booking policy window changed/);assert.equal(snapshot(),before);
+  sql(`UPDATE calendars SET booking_horizon_days=60 WHERE id='${calendar}'`);
  });
  for(const role of ['anon','authenticated'])check(`The ${role} API role cannot invoke the private native constructor`,()=>{
   assert.equal(sql(`SELECT has_function_privilege('${role}','public.client_portal_commit_booking(uuid,uuid,uuid,uuid,jsonb,jsonb)','EXECUTE')`),'f');
@@ -226,7 +248,7 @@ export async function bookingWorkReceiptProof({sql,check,assert,fs,fixture,spawn
  check('Changed actual class timing refuses another seat without a partial native write',()=>{
   sql(`UPDATE internal_bookings SET end_at=end_at+interval '15 minutes' WHERE calendar_id='${event}' AND booking_kind='class_session'`);
   const before=snapshot(),audits=sql('SELECT count(*) FROM audit_logs');
-  assert.throws(()=>commit(eventPlan,requestId(66),{actor:other.actor,client:secondCustomer}),/booking class changed/);
+  assert.throws(()=>commit({...eventPlan,guest_email:'second@example.test'},requestId(66),{actor:other.actor,client:secondCustomer}),/booking class changed/);
   assert.equal(snapshot(),before);assert.equal(sql('SELECT count(*) FROM audit_logs'),audits);
   sql(`UPDATE internal_bookings SET end_at=end_at-interval '15 minutes' WHERE calendar_id='${event}' AND booking_kind='class_session'`);
  });

@@ -5,7 +5,7 @@ import { sendPlatformEmail } from "../_shared/email/platform-sendgrid.ts";
 // server-side validation, so the public never touches tables directly.
 // Source of truth is internal_bookings + staff_calendar_settings — no external
 // provider required (Google/Cal.com/Apple sync is optional, layered on later).
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 // Shared notification primitives (§12): the Twilio sender, merge-field renderer,
 // and opt-in lifecycle-trigger parsing/rendering — the same code the scheduled
 // worker and the self-serve reschedule/cancel path use.
@@ -18,6 +18,11 @@ import {
 import { clientIp, overRateLimit } from "../_shared/rateLimit.ts";
 import { findClientIdByAddress, insertClientWithAddresses } from "../_shared/contact-methods.ts";
 import { primaryPhonesForUsers } from "../_shared/user-contact-methods.ts";
+import {
+  commitPortalBooking, portalBookingRequest, readPortalBookingReceipt,
+  reconcilePortalBooking, resolvePortalBookingCustomer,
+  type PortalBookingCommitResult, type PortalBookingExecution, type PortalBookingReceipt,
+} from "../_shared/client-portal-booking.ts";
 import { emailOptOut } from "../_shared/contact-opt-outs.ts";
 // Per-host Zoom (§9): when a calendar meets over Zoom and the assigned host has
 // connected their own Zoom, mint the meeting on THEIR account and drop the real
@@ -33,10 +38,11 @@ const RL_AVAIL_PER_IP = 60; // one visitor paging forward fires a handful/min
 const RL_AVAIL_PER_SLUG = 240; // distributed hammering of one page (many IPs)
 const RL_CREATE_PER_IP = 15; // a real booking is ~1; 15/min still stops a flood
 const TOO_MANY = "Too many requests — please try again shortly.";
+const PORTAL_UUID = /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i;
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-client-portal-business",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 const json = (body: unknown, status = 200) =>
@@ -100,6 +106,8 @@ function ymdInTz(ms: number, tz: string): { y: number; mo: number; d: number; wd
 }
 
 interface HostSettings {
+  /** Server-only original source snapshot. Never included in a public reply. */
+  portalSource?: { calendar: Record<string, unknown>; hosts: Record<string, unknown>[] };
   user_id: string; // primary / fallback host (top priority)
   hosts: string[]; // full host pool, priority-ordered (single-host = [user_id])
   roundRobin: boolean; // distribute bookings across hosts instead of always the primary
@@ -394,7 +402,7 @@ function classSlots(h: HostSettings, busy: Busy[], sessions: Map<number, { capac
 }
 /** Existing (non-cancelled) class sessions in the window + their live seat
  *  counts — two queries total regardless of session count, not one-per-session. */
-async function loadClassSessions(admin: ReturnType<typeof createClient>, calendarId: string, fromMs: number, toMs: number): Promise<Map<number, { capacity: number; booked: number }>> {
+async function loadClassSessions(admin: SupabaseClient, calendarId: string, fromMs: number, toMs: number): Promise<Map<number, { capacity: number; booked: number }>> {
   const { data: sessions } = await admin
     .from("internal_bookings")
     .select("id, start_at, capacity")
@@ -423,12 +431,13 @@ async function loadClassSessions(admin: ReturnType<typeof createClient>, calenda
 // First-class calendar (the `calendars` entity) resolved by slug. This is the
 // path created via the Calendars manager — many branded calendars per tenant.
 // The availability owner is the calendar's top-priority host.
-async function loadCalendar(admin: ReturnType<typeof createClient>, slug: string): Promise<HostSettings | null> {
-  const { data: cal } = await admin
+async function loadCalendar(admin: SupabaseClient, slug: string, portalScope?: { tenantId: string; calendarId: string }): Promise<HostSettings | null> {
+  let query = admin
     .from("calendars")
     .select("id, tenant_id, type, title, description, logo_url, accent, duration_min, buffer_before_min, buffer_after_min, min_notice_min, timezone, availability_json, enabled, theme, subtitle, show_company_name, location_type, location_value, notify_config, location_options, booking_horizon_days, redirect_url, intake_questions, appointment_types, date_overrides, capacity, assignment_strategy")
-    .eq("slug", slug)
-    .maybeSingle();
+    .eq("slug", slug);
+  if (portalScope) query = query.eq("tenant_id", portalScope.tenantId).eq("id", portalScope.calendarId);
+  const { data: cal } = await query.maybeSingle();
   // `enabled` is the authoritative bookability gate and the ONLY lifecycle state
   // a public visitor is allowed past. A Draft (never published) and a Paused
   // preset both carry enabled=false, so both are refused here — an unauthenticated
@@ -463,6 +472,11 @@ async function loadCalendar(admin: ReturnType<typeof createClient>, slug: string
   const assignmentStrategy: HostSettings["assignmentStrategy"] =
     stratMode === "priority" || stratMode === "availability" ? stratMode : "balanced";
   return {
+    ...(portalScope ? { portalSource: {
+      calendar: { ...cal },
+      hosts: hostRows.map((h) => ({ user_id: h.user_id, priority: h.priority, availability_json: h.availability_json, timezone: h.timezone }))
+        .sort((a, b) => a.user_id < b.user_id ? -1 : a.user_id > b.user_id ? 1 : 0),
+    } } : {}),
     user_id: hostIds[0],
     hosts: hostIds,
     roundRobin: cal.type === "round_robin" && hostIds.length > 1,
@@ -500,7 +514,7 @@ async function loadCalendar(admin: ReturnType<typeof createClient>, slug: string
 }
 
 // Legacy per-staff booking page (staff_calendar_settings) — kept for back-compat.
-async function loadHost(admin: ReturnType<typeof createClient>, slug: string): Promise<HostSettings | null> {
+async function loadHost(admin: SupabaseClient, slug: string): Promise<HostSettings | null> {
   const { data } = await admin
     .from("staff_calendar_settings")
     .select("user_id, tenant_id, availability_json, default_meeting_duration_min, buffer_before_min, buffer_after_min, timezone, booking_page_enabled, booking_page_title, booking_page_description, booking_page_accent")
@@ -546,7 +560,7 @@ async function loadHost(admin: ReturnType<typeof createClient>, slug: string): P
 }
 
 /** White-label branding for the booking page: tenant brand + host overrides. */
-async function loadBranding(admin: ReturnType<typeof createClient>, host: HostSettings) {
+async function loadBranding(admin: SupabaseClient, host: HostSettings) {
   let name: string | null = null;
   let logoUrl: string | null = host.logoUrl; // per-calendar logo wins
   let accent = host.accent;
@@ -583,7 +597,7 @@ async function loadBranding(admin: ReturnType<typeof createClient>, host: HostSe
  *  `/book` callers, so leaking a staff email here is an anon PII disclosure
  *  (E6 §39 MED-2, 2026-09-13). Dropping the per-host auth lookup also removes an
  *  unnecessary N calls to `auth.admin.getUserById`. */
-async function resolveHostNames(admin: ReturnType<typeof createClient>, hostIds: string[]): Promise<string | null> {
+async function resolveHostNames(admin: SupabaseClient, hostIds: string[]): Promise<string | null> {
   const { data: profs } = await admin.from("profiles").select("user_id, full_name").in("user_id", hostIds);
   const nameByUid = new Map((profs ?? []).map((p) => [p.user_id as string, p.full_name as string | null]));
   const names = hostIds
@@ -592,7 +606,7 @@ async function resolveHostNames(admin: ReturnType<typeof createClient>, hostIds:
   return names.length ? names.join(", ") : null;
 }
 
-async function loadBusy(admin: ReturnType<typeof createClient>, userId: string, fromMs: number, toMs: number): Promise<Busy[]> {
+async function loadBusy(admin: SupabaseClient, userId: string, fromMs: number, toMs: number): Promise<Busy[]> {
   const { data } = await admin
     .from("internal_bookings")
     .select("start_at, end_at, status")
@@ -617,13 +631,18 @@ async function loadBusy(admin: ReturnType<typeof createClient>, userId: string, 
 // Never throws: a CRM hiccup must not block a guest's booking from
 // succeeding — the caller treats a null return as "no contact, proceed anyway."
 async function findOrCreateContact(
-  admin: ReturnType<typeof createClient>,
+  admin: SupabaseClient,
   tenantId: string | null,
   createdBy: string,
   name: string,
   email: string,
   phone: string | null,
+  portalCustomer?: { tenantId: string; clientId: string },
 ): Promise<string | null> {
+  // This already-resolved id is only a narrowing input to the atomic private
+  // writer, which re-proves actual actor/relationship. Never look up a Portal
+  // customer's identity by typed email or create another CRM contact.
+  if (portalCustomer) return portalCustomer.tenantId === tenantId ? portalCustomer.clientId : null;
   try {
     // The guest is the contact holding this address as ANY of its emails, in the host's
     // workspace, matched exactly on the address (no pattern, so no wildcard can misattribute).
@@ -789,19 +808,89 @@ function hostEmailHtml(accent: string, title: string, whenLabel: string, guestNa
     </table></td></tr></table></body></html>`;
 }
 
+type PortalScope = { tenantId: string; clientId: string; requestId: string };
+function portalBookingResponse(
+  result: { state: string; booking?: PortalBookingReceipt; replayed?: boolean; reason?: string }, scope: PortalScope,
+): Response {
+  const context = { tenant_id: scope.tenantId, client_id: scope.clientId, request_id: scope.requestId };
+  if (result.state === "saved" && result.booking) {
+    const b = result.booking;
+    return json({ ...context, ok: true, state: "saved", replayed: result.replayed ?? true,
+      booking: { id: b.id, title: b.title, start_at: b.start_at, end_at: b.end_at, timezone: b.timezone, status: b.status } });
+  }
+  if (result.state === "conflict") return json({ ...context, ok: false, state: "refused", code: "REQUEST_ID_CONFLICT" }, 409);
+  if (result.state === "access_unavailable" || result.reason === "access_unavailable")
+    return json({ ...context, ok: false, state: "refused", code: "CUSTOMER_RELATIONSHIP_UNAVAILABLE" }, 403);
+  if (result.state === "refused") {
+    const code = result.reason === "blocked" ? "COMMS_PROVIDER_EXECUTION_DISABLED" : result.reason === "slot_unavailable" ? "SLOT_UNAVAILABLE"
+      : result.reason === "changed" ? "BOOKING_CHANGED" : "BOOKING_UNAVAILABLE";
+    return json({ ...context, ok: false, state: "refused", code }, result.reason === "blocked" ? 403 : 409);
+  }
+  return json({ ...context, ok: false, state: "unverified", code: "BOOKING_OUTCOME_UNVERIFIED" }, 202);
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
+  let portalMode = false;
+  // Preserve public-page wording while giving the private consumer an exact,
+  // recoverable refusal. Validation happens before any appointment is written.
+  const bookingError = (code: string, error: string, status: number): Response =>
+    json(portalMode ? { ok: false, state: "refused", code, error } : { error }, status);
   try {
-    const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
     const body = await req.json().catch(() => ({}));
     const action = body?.action;
-    const slug = typeof body?.slug === "string" ? body.slug.toLowerCase() : "";
-    if (!slug) return json({ error: "slug required" }, 400);
+    portalMode = body?.mode === "customer";
+    let portalCaller: SupabaseClient | null = null;
+    let portalCustomer: Awaited<ReturnType<typeof resolvePortalBookingCustomer>> = null;
+    let portalRequest: ReturnType<typeof portalBookingRequest> = null;
+    let portalCalendarId: string | null = null;
+    if (portalMode) {
+      const authorization = req.headers.get("authorization") ?? "", anonKey = Deno.env.get("SUPABASE_ANON_KEY");
+      if (!/^Bearer\s+\S+$/i.test(authorization)) return json({ ok: false, state: "refused", code: "AUTH_REQUIRED" }, 401);
+      if (!anonKey) return json({ ok: false, state: "refused", code: "BOOKING_UNAVAILABLE" }, 503);
+      const businessHeader = req.headers.get("x-client-portal-business");
+      portalCaller = createClient(Deno.env.get("SUPABASE_URL")!, anonKey, {
+        global: { headers: { Authorization: authorization, ...(businessHeader === null ? {} : { "x-client-portal-business": businessHeader }) } },
+        auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+      });
+      if (action === "reconcile") {
+        if (![body.tenant_id, body.client_id, body.request_id].every((v) => typeof v === "string" && PORTAL_UUID.test(v)))
+          return json({ ok: false, state: "refused", code: "INVALID_BOOKING_REQUEST" }, 400);
+        const scope = { tenantId: body.tenant_id.toLowerCase(), clientId: body.client_id.toLowerCase(), requestId: body.request_id.toLowerCase() };
+        return portalBookingResponse(await readPortalBookingReceipt(portalCaller, scope), scope);
+      }
+      if (action !== "create" && action !== "availability") return json({ ok: false, state: "refused", code: "INVALID_BOOKING_REQUEST" }, 400);
+      if (typeof body.calendar_id !== "string" || !PORTAL_UUID.test(body.calendar_id))
+        return json({ ok: false, state: "refused", code: "INVALID_BOOKING_REQUEST" }, 400);
+      portalCalendarId = body.calendar_id.toLowerCase();
+      if (action === "create") {
+        portalRequest = portalBookingRequest(body);
+        if (!portalRequest) return json({ ok: false, state: "refused", code: "INVALID_BOOKING_REQUEST" }, 400);
+      }
+      portalCustomer = await resolvePortalBookingCustomer(portalCaller, portalRequest?.scope ?? { tenantId: body.tenant_id, clientId: body.client_id });
+      if (!portalCustomer || req.signal.aborted) return json({ ok: false, state: "refused", code: "CUSTOMER_RELATIONSHIP_UNAVAILABLE" }, 403);
+    }
+    // Private requests reach privileged service reads only AFTER real Auth and
+    // the original selected-business/customer projection. Public mode retains
+    // the original published-page admission; no private identity is inferred.
+    const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
     const ip = clientIp(req);
+    if (portalRequest && portalCaller) {
+      if (await overRateLimit(admin, `pb:create:ip:${ip}`, RL_CREATE_PER_IP)) return json({ ok: false, state: "refused", code: "RATE_LIMITED" }, 429);
+      const previous = await reconcilePortalBooking({ caller: portalCaller, service: admin, current: () => !req.signal.aborted }, portalRequest.scope, portalRequest.request);
+      // Read before availability: a saved request remains recoverable after a
+      // calendar fills/closes. A retry never runs the provider tail again.
+      if (previous.state !== "not_found") return portalBookingResponse(previous, portalRequest.scope);
+      if (!portalCustomer?.guest) return json({ ok: false, state: "refused", code: "CUSTOMER_CONTACT_REQUIRED" }, 400);
+    }
+    const slug = typeof body?.slug === "string" ? body.slug.toLowerCase() : "";
+    if (!slug) return bookingError("INVALID_BOOKING_REQUEST", "slug required", 400);
 
     // Prefer a first-class calendar; fall back to the legacy per-staff page.
-    const host = (await loadCalendar(admin, slug)) ?? (await loadHost(admin, slug));
-    if (!host) return json({ error: "This booking page isn't available." }, 404);
+    const host = portalCustomer && portalCalendarId
+      ? await loadCalendar(admin, slug, { tenantId: portalCustomer.binding.tenantId, calendarId: portalCalendarId })
+      : (await loadCalendar(admin, slug)) ?? (await loadHost(admin, slug));
+    if (!host) return bookingError("BOOKING_UNAVAILABLE", "This booking page isn't available.", 404);
 
     const now = Date.now();
 
@@ -819,7 +908,7 @@ Deno.serve(async (req) => {
       // circuits so an already-blocked IP doesn't also charge the slug bucket.
       if (await overRateLimit(admin, `pb:avail:ip:${ip}`, RL_AVAIL_PER_IP) ||
           await overRateLimit(admin, `pb:avail:slug:${slug}`, RL_AVAIL_PER_SLUG)) {
-        return json({ error: TOO_MANY }, 429);
+        return bookingError("RATE_LIMITED", TOO_MANY, 429);
       }
       const selType = selectType(body?.appointmentTypeId);
       const effHost = selType ? { ...host, durationMin: selType.duration_min } : host;
@@ -871,6 +960,11 @@ Deno.serve(async (req) => {
       const withHosts = effHost.collective && effHost.hosts.length > 1
         ? await resolveHostNames(admin, effHost.hosts)
         : null;
+      if (portalCustomer && portalCaller) {
+        const current = await resolvePortalBookingCustomer(portalCaller, portalCustomer.binding);
+        if (!current || current.binding.actorId !== portalCustomer.binding.actorId || req.signal.aborted)
+          return json({ ok: false, state: "refused", code: "CUSTOMER_RELATIONSHIP_UNAVAILABLE" }, 403);
+      }
       return json({
         durationMin: effHost.durationMin,
         timezone: host.timezone,
@@ -878,11 +972,15 @@ Deno.serve(async (req) => {
         slots: slots.map((s) => new Date(s).toISOString()),
         ...(classSpots ? { classSpots } : {}),
         ...(withHosts ? { withHosts } : {}),
+        ...(portalCustomer ? { calendar: { id: host.calendarId, slug, title: host.title,
+          appointmentTypes: host.appointmentTypes, intakeQuestions: host.intakeQuestions,
+          locationOptions: host.locationOptions.map((option) => ({ type: option.type })) } } : {}),
       });
     }
 
     if (action === "create") {
       if (!(await commsProviderExecutionAllowed(admin, { tenantId: host.tenant_id }))) {
+        if (portalMode) return json({ ok: false, state: "refused", code: "COMMS_PROVIDER_EXECUTION_DISABLED" }, 403);
         return json({ ok: false, status: "blocked", code: "COMMS_PROVIDER_EXECUTION_DISABLED" }, 403);
       }
       // Per-IP throttle for the expensive write path, in ADDITION to the
@@ -890,32 +988,32 @@ Deno.serve(async (req) => {
       // spraying bookings across many slugs/hosts from one IP, which those
       // per-target caps miss. Fail-open on limiter error (never block a real
       // booking); fail-closed 429 on a genuine limit.
-      if (await overRateLimit(admin, `pb:create:ip:${ip}`, RL_CREATE_PER_IP)) {
+      if (!portalRequest && await overRateLimit(admin, `pb:create:ip:${ip}`, RL_CREATE_PER_IP)) {
         return json({ error: TOO_MANY }, 429);
       }
       const startMs = Date.parse(body?.start);
-      const name = String(body?.guest?.name ?? "").trim().slice(0, 120);
-      const email = String(body?.guest?.email ?? "").trim().toLowerCase().slice(0, 200);
-      const phone = String(body?.guest?.phone ?? "").trim().slice(0, 40) || null;
+      const name = portalCustomer?.guest?.name ?? String(body?.guest?.name ?? "").trim().slice(0, 120);
+      const email = portalCustomer?.guest?.email ?? String(body?.guest?.email ?? "").trim().toLowerCase().slice(0, 200);
+      const phone = portalCustomer ? portalCustomer.guest?.phone ?? null : String(body?.guest?.phone ?? "").trim().slice(0, 40) || null;
       const notes = String(body?.notes ?? "").trim().slice(0, 1000) || null;
-      if (!Number.isFinite(startMs)) return json({ error: "Invalid time." }, 400);
-      if (startMs > now + host.horizonDays * 86_400_000) return json({ error: "That time is too far out." }, 400);
-      if (!name) return json({ error: "Name is required." }, 400);
-      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return json({ error: "A valid email is required." }, 400);
+      if (!Number.isFinite(startMs)) return bookingError("INVALID_BOOKING_REQUEST", "Invalid time.", 400);
+      if (startMs > now + host.horizonDays * 86_400_000) return bookingError("SLOT_UNAVAILABLE", "That time is too far out.", 400);
+      if (!name) return bookingError("CUSTOMER_CONTACT_REQUIRED", "Name is required.", 400);
+      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return bookingError("CUSTOMER_CONTACT_REQUIRED", "A valid email is required.", 400);
 
       // Appointment type (service menu): if the calendar offers types, require a
       // valid pick — its duration drives the meeting length and is stored.
       let selType: AppointmentType | null = null;
       if (host.appointmentTypes.length) {
         selType = host.appointmentTypes.find((t) => t.id === body?.appointmentTypeId) ?? null;
-        if (!selType) return json({ error: "Please choose a service." }, 400);
+        if (!selType) return bookingError("SERVICE_REQUIRED", "Please choose a service.", 400);
       }
       const effHost = selType ? { ...host, durationMin: selType.duration_min } : host;
 
       // Owner-authored intake questions: validate required, keep only known
       // options, cap lengths. A missing required answer blocks the booking.
       const intake = collectAnswers(host.intakeQuestions, body?.answers);
-      if ("error" in intake) return json({ error: intake.error }, 400);
+      if ("error" in intake) return bookingError("INTAKE_REQUIRED", intake.error, 400);
 
       // Abuse control: class registration bursts are legitimate (many guests
       // signing up for one popular session inside a minute is normal, not
@@ -927,7 +1025,7 @@ Deno.serve(async (req) => {
           .select("id", { count: "exact", head: true })
           .eq("calendar_id", host.calendarId).eq("booking_kind", "class_seat")
           .gte("created_at", new Date(now - 60_000).toISOString());
-        if ((recentClass ?? 0) >= 30) return json({ error: "Too many requests — please try again shortly." }, 429);
+        if ((recentClass ?? 0) >= 30) return bookingError("RATE_LIMITED", "Too many requests — please try again shortly.", 429);
       } else {
         const { count: recent } = await admin
           .from("internal_bookings")
@@ -935,7 +1033,7 @@ Deno.serve(async (req) => {
           .eq("host_user_id", host.user_id)
           .eq("source", "booking_page")
           .gte("created_at", new Date(now - 60_000).toISOString());
-        if ((recent ?? 0) >= 5) return json({ error: "Too many requests — please try again shortly." }, 429);
+        if ((recent ?? 0) >= 5) return bookingError("RATE_LIMITED", "Too many requests — please try again shortly.", 429);
       }
 
       // Re-validate the slot is a real window start (for the selected duration)
@@ -952,7 +1050,7 @@ Deno.serve(async (req) => {
       } else {
         winValid = isHostWindowStart(effHost, effHost.user_id, startMs, now);
       }
-      if (!winValid) return json({ error: "That time is no longer available. Please pick another." }, 409);
+      if (!winValid) return bookingError("SLOT_UNAVAILABLE", "That time is no longer available. Please pick another.", 409);
 
       // Resolve the meeting method from the owner's offered options. One option →
       // fixed; several → the invitee's validated choice. Phone uses their number.
@@ -967,7 +1065,9 @@ Deno.serve(async (req) => {
       // contact before writing the booking, so it's never a dead end. One
       // contact per guest regardless of booking type — a collective booking's
       // N host-leg rows all point at the same contact.
-      const contactId = await findOrCreateContact(admin, host.tenant_id, host.user_id, name, email, phone);
+      const contactId = await findOrCreateContact(admin, host.tenant_id, host.user_id, name, email, phone, portalCustomer?.binding);
+      if (portalCustomer && contactId !== portalCustomer.binding.clientId)
+        return json({ ok: false, state: "refused", code: "CUSTOMER_RELATIONSHIP_UNAVAILABLE" }, 403);
 
       // Assign host(s) + write the booking. Each branch produces the same
       // shape (a row with id/start_at/end_at/title, plus which host(s) to
@@ -977,8 +1077,34 @@ Deno.serve(async (req) => {
       // Set on a collective booking so the Zoom mint below can stamp every leg
       // (the one meeting on the primary host) with the join link / meeting id.
       let collectiveGroupId: string | null = null;
+      let portalSavedReceipt: PortalBookingReceipt | null = null;
+      const reservePortal = async (hostIds: string[], kind: "single" | "collective" | "class_seat"):
+        Promise<Response | { booking: typeof bookingRow; execution: PortalBookingExecution }> => {
+        if (!portalRequest || !portalCaller || !host.portalSource)
+          return json({ ok: false, state: "refused", code: "BOOKING_UNAVAILABLE" }, 503);
+        const result: PortalBookingCommitResult = await commitPortalBooking({ caller: portalCaller, service: admin,
+          current: () => !req.signal.aborted, executionAllowed: () => commsProviderExecutionAllowed(admin, { tenantId: host.tenant_id }) },
+          portalRequest.scope, portalRequest.request, {
+            calendar_id: host.calendarId, calendar_source: host.portalSource.calendar, hosts_source: host.portalSource.hosts,
+            booking_kind: kind, host_ids: hostIds, title: selType ? `${selType.name}${kind === "class_seat" ? " — " : " with "}${name}`
+              : kind === "class_seat" ? `${host.title || "Class"} — ${name}` : `Meeting with ${name}`,
+            start_at: new Date(startMs).toISOString(), end_at: new Date(endMs).toISOString(), guest_name: name, guest_email: email,
+            guest_phone: phone, notes, location_type: locationType, location_value: locationValue,
+            intake_answers: Object.keys(intake.answers).length ? intake.answers : null,
+            appointment_type: selType ? { id: selType.id, name: selType.name, duration_min: selType.duration_min,
+              ...(selType.price_cents != null ? { price_cents: selType.price_cents, currency: selType.currency } : {}) } : null,
+          });
+        if (result.state !== "saved" || !result.execution) return portalBookingResponse(result, portalRequest.scope);
+        portalSavedReceipt = result.booking;
+        return { booking: { id: result.booking.id, title: result.booking.title, start_at: result.booking.start_at, end_at: result.booking.end_at }, execution: result.execution };
+      };
 
       if (effHost.isClass) {
+        if (portalCustomer) {
+          const reserved = await reservePortal([host.user_id], "class_seat");
+          if (reserved instanceof Response) return reserved;
+          bookingRow = reserved.booking; hostsToNotify = reserved.execution.host_ids;
+        } else {
         // Race-safe capacity: lock/find-or-create the session, count, insert
         // the seat — all inside one Postgres function call (an EXCLUDE
         // constraint can't express "≤ N rows share this key", only pairwise
@@ -1009,7 +1135,13 @@ Deno.serve(async (req) => {
         const seatRow = seat as { id: string; start_at: string; end_at: string; title: string };
         bookingRow = { id: seatRow.id, start_at: seatRow.start_at, end_at: seatRow.end_at, title: seatRow.title };
         hostsToNotify = [host.user_id];
+        }
       } else if (effHost.collective) {
+        if (portalCustomer) {
+          const reserved = await reservePortal(effHost.hosts, "collective");
+          if (reserved instanceof Response) return reserved;
+          bookingRow = reserved.booking; hostsToNotify = reserved.execution.host_ids; collectiveGroupId = reserved.execution.collective_group_id;
+        } else {
         // Everyone must attend: one symmetric row per host, sharing a group id.
         // Every row is independently protected by the (rescoped) EXCLUDE
         // constraint — this is the direct fix for a host's busy time being
@@ -1038,6 +1170,7 @@ Deno.serve(async (req) => {
         }
         bookingRow = (rowsInserted as (typeof bookingRow)[])[0];
         hostsToNotify = effHost.hosts;
+        }
       } else {
         // Single / round-robin — unchanged.
         let chosenHost = host.user_id;
@@ -1056,7 +1189,7 @@ Deno.serve(async (req) => {
           // per-host hours. Priority order is preserved by filtering `hosts`.
           const free = effHost.hosts.filter((uid) =>
             isFree(effHost, busyByHost[uid] ?? [], startMs) && isHostWindowStart(effHost, uid, startMs, now));
-          if (!free.length) return json({ error: "That time is no longer available. Please pick another." }, 409);
+          if (!free.length) return bookingError("SLOT_UNAVAILABLE", "That time is no longer available. Please pick another.", 409);
 
           if (effHost.assignmentStrategy === "priority") {
             // Strict roster order: the highest-priority free host takes it.
@@ -1097,9 +1230,14 @@ Deno.serve(async (req) => {
           }
         } else {
           const busy = await loadBusy(admin, host.user_id, startMs - 86_400_000, startMs + 86_400_000);
-          if (!isFree(effHost, busy, startMs)) return json({ error: "That time is no longer available. Please pick another." }, 409);
+          if (!isFree(effHost, busy, startMs)) return bookingError("SLOT_UNAVAILABLE", "That time is no longer available. Please pick another.", 409);
         }
 
+        if (portalCustomer) {
+          const reserved = await reservePortal([chosenHost], "single");
+          if (reserved instanceof Response) return reserved;
+          bookingRow = reserved.booking; hostsToNotify = reserved.execution.host_ids;
+        } else {
         const { data, error } = await admin.from("internal_bookings").insert({
           tenant_id: host.tenant_id,
           host_user_id: chosenHost,
@@ -1133,6 +1271,20 @@ Deno.serve(async (req) => {
         }
         bookingRow = data as typeof bookingRow;
         hostsToNotify = [chosenHost];
+        }
+      }
+
+      if (portalRequest && portalCaller) {
+        const current = await readPortalBookingReceipt(portalCaller, portalRequest.scope);
+        if (current.state !== "saved") return portalBookingResponse({ state: "unverified" }, portalRequest.scope);
+        portalSavedReceipt = current.booking;
+        const recipient = await resolvePortalBookingCustomer(portalCaller, portalRequest.scope);
+        if (!recipient || recipient.binding.actorId !== portalCustomer?.binding.actorId || req.signal.aborted)
+          return portalBookingResponse({ state: "unverified" }, portalRequest.scope);
+        if (current.booking.status !== "scheduled" || Date.parse(current.booking.start_at) !== startMs || Date.parse(current.booking.end_at) !== endMs
+          || recipient.guest?.email !== email || (recipient.guest?.phone ?? null) !== phone
+          || !(await commsProviderExecutionAllowed(admin, { tenantId: host.tenant_id })))
+          return portalBookingResponse({ state: "saved", booking: current.booking, replayed: false }, portalRequest.scope);
       }
 
       // Zoom (best-effort, §13): if this calendar meets over Zoom and the
@@ -1346,11 +1498,13 @@ Deno.serve(async (req) => {
         });
       }
 
+      if (portalRequest && portalSavedReceipt) return portalBookingResponse({ state: "saved", booking: portalSavedReceipt, replayed: false }, portalRequest.scope);
       return json({ ok: true, booking: bookingRow });
     }
 
     return json({ error: "Unknown action" }, 400);
   } catch (e) {
+    if (portalMode) return json({ ok: false, state: "unverified", code: "BOOKING_OUTCOME_UNVERIFIED" }, 202);
     return json({ error: (e as Error).message }, 500);
   }
 });

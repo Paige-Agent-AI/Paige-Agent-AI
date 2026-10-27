@@ -289,7 +289,7 @@ export function useMediaJobs() {
     }): Promise<SubmitOutcome> => {
       setActionError(null);
       try {
-        const data = await invoke<{ job?: MediaJob; awaiting_approval?: boolean; approval?: MediaApprovalInfo | null; error?: string; needs_config?: boolean; needs_ceiling?: boolean; budget_denied?: boolean; limit_reached?: boolean }>("submit", {
+        const data = await invoke<{ job?: MediaJob; awaiting_approval?: boolean; approval?: MediaApprovalInfo | null; error?: string; needs_config?: boolean }>("submit", {
           prompt: input.prompt,
           model: input.model,
           aspect_ratio: input.aspectRatio,
@@ -302,9 +302,6 @@ export function useMediaJobs() {
             status: "error",
             message: data?.error ?? "The job couldn't be created.",
             needsConfig: data?.needs_config,
-            needsCeiling: data?.needs_ceiling,
-            budgetDenied: data?.budget_denied,
-            limitReached: data?.limit_reached,
           };
         }
         if (data.approval) {

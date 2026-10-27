@@ -251,6 +251,21 @@ describe("social publish door — proposal, owner approval, provider execution, 
     expect(w.seen.createPost).toHaveLength(0);
   });
 
+  it("surface-agnostic (Team Hub reachability pin): a request naming a different surface changes NOTHING about the door's authority path", async () => {
+    // The owner directive (2026-10-27): EXP07's agent must conduct its work from the Team Hub
+    // too. The door admits it because authority derives from resolveStudioCaller (actor JWT +
+    // active workspace) — there is no surface token to read. This pins that: a body carrying an
+    // origin/surface extra takes the IDENTICAL approval path with the identical preview.
+    const w = world();
+    const solo = await w.call(publishBody());
+    const hub = await w.call(publishBody({ surface: "team_hub", origin: "team-hub" } as never));
+    expect(solo.status).toBe(202);
+    expect(hub.status).toBe(202);
+    expect((hub.body.approval as Record<string, string>).summary).toBe((solo.body.approval as Record<string, string>).summary);
+    expect((hub.body.preview as Record<string, unknown>).platform).toBe("instagram");
+    expect(w.seen.createPost).toHaveLength(0);
+  });
+
   it("the exact body the shipped UI sends on approve (piece + channel + caption + fingerprint) executes and publishes", async () => {
     const w = world();
     const first = await w.call(publishBody());

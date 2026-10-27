@@ -168,7 +168,7 @@ export type Feature =
   //
   // WHERE THIS IS ENFORCED (§60's honesty clause). NOT here. The database answers: every team_hub_*
   // door re-runs _team_hub_refusal (canonical SOLO, an active seat, Team conversations on), and the
-  // agent doors (migration 20271116120008) add the accepted-turn token. This declaration only decides
+  // agent doors (migration 20271117010008) add the accepted-turn token. This declaration only decides
   // what renders; nothing uses it until A1b. It grants nothing.
   | "team_hub_agents"
   // Parent-tier only.

@@ -1,6 +1,6 @@
 -- EXP08 Team Hub agents, A1b part 3: the member-safe turn-state read, staged Bring in suggestions,
 -- and the same-token acceptance retry.
--- Migration: supabase/migrations/20271118220008_exp08_team_hub_agent_turn_states.sql.
+-- Migration: supabase/migrations/20271119010008_exp08_team_hub_agent_turn_states.sql.
 -- Contract: docs/delivery/exp08-team-hub-agents-contract.md, "A1b part 3 notes".
 -- Disposable PostgreSQL only. Never target the linked project. The proof runs in a database it creates
 -- and drops.
@@ -736,7 +736,7 @@ CREATE TEMP TABLE before_src AS SELECT p.oid::regprocedure::text AS sig, p.prona
  FROM pg_proc p WHERE p.pronamespace='public'::regnamespace AND p.proname LIKE '%team_hub%';
 
 -- 2. The change, then a second apply: a no-op.
-\ir ../migrations/20271118220008_exp08_team_hub_agent_turn_states.sql
+\ir ../migrations/20271119010008_exp08_team_hub_agent_turn_states.sql
 CREATE TEMP VIEW states_state AS
 SELECT 'fn:'||p.oid::regprocedure::text AS k, concat_ws('|', p.proacl::text, p.prosecdef::text, p.provolatile::text, p.proconfig::text, md5(p.prosrc)) AS v
  FROM pg_proc p WHERE p.pronamespace='public'::regnamespace AND p.proname LIKE '%team_hub%'
@@ -749,7 +749,7 @@ UNION ALL
 SELECT 'rel:'||c.relname, concat_ws('|', c.relacl::text, c.relrowsecurity::text) FROM pg_class c
  WHERE c.relnamespace='public'::regnamespace AND c.relkind='r' AND c.relname LIKE 'team_hub%';
 CREATE TEMP TABLE states_before AS SELECT * FROM states_state;
-\ir ../migrations/20271118220008_exp08_team_hub_agent_turn_states.sql
+\ir ../migrations/20271119010008_exp08_team_hub_agent_turn_states.sql
 DO $$ BEGIN
  IF EXISTS(SELECT k,v FROM states_before EXCEPT SELECT k,v FROM states_state)
    OR EXISTS(SELECT k,v FROM states_state EXCEPT SELECT k,v FROM states_before) THEN

@@ -533,7 +533,7 @@ export async function runTeamHubAgentTurn(deps: AgentTurnDeps, raw: unknown): Pr
   // 3. Accept: the permission row (service role). The token never leaves this function.
   const { token, hash } = await newTurnToken(deps.random);
   // A lost answer is retried once with the same token hash: the door hands an unconsumed turn holding
-  // that hash back to its own invocation (20271118220008), so a retry never reads as in_flight. Still
+  // that hash back to its own invocation (20271119010008), so a retry never reads as in_flight. Still
   // unknown, nothing has run and nothing can have posted (the token never left this function): the
   // turn, if it was recorded, is taken as ended after 10 minutes.
   const accept = await rpcOnceMore(service, "team_hub_accept_agent_turn", { p_tenant: tenantId, p_asker: userId, p_channel_id: target,

@@ -116,7 +116,9 @@ layer in `src/index.css`, both themes. Where the build departs from the prototyp
 **A1b part 3 notes (2026-10-27, after independent verification and the design critic).** What changed,
 why, and what it proves (§13, §58: recorded, not silent).
 - **The member-safe turn-state read (approved flow 5's missing backend).** Migration
-  `20271118220008`, in EXP08's own tables. `team_hub_agent_turn_states(p_expected_tenant, p_channel_id,
+  `20271119010008` (renumbered from `20271118220008` on 2026-10-27 so it sorts after `20271119000000`,
+  the newest version on any `origin/*` branch, and after production's newest `20271118110009`; the
+  deploy's plain `db push` refuses an out-of-order version), in EXP08's own tables. `team_hub_agent_turn_states(p_expected_tenant, p_channel_id,
   p_message_ids)` is a `SECURITY DEFINER` function on an empty search path, executable by
   `authenticated` only, and scoped in its body (§59): the caller's own seat and workspace
   (`_team_hub_refusal`), a conversation the caller can see now (`_team_hub_visible`), and only person

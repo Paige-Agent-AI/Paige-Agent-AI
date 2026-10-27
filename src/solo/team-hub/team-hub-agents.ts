@@ -340,7 +340,7 @@ export function agentOutcomeLine(outcome: AgentLineOutcome, agent: TeamHubAgentK
   }
 }
 
-// ── The member-safe turn-state read (`team_hub_agent_turn_states`, 20271118220008) ──
+// ── The member-safe turn-state read (`team_hub_agent_turn_states`, 20271119010008) ──
 
 export const TURN_STATES = ["answering", "replied", "replied_privately", "failed", "none"] as const;
 export type TurnStateValue = typeof TURN_STATES[number];

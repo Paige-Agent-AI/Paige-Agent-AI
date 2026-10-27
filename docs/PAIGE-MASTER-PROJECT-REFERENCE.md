@@ -8030,7 +8030,7 @@ Current gaps:
   agent DM and the read-only profile (About), gated on `team_hub_agents` (§60). 56 agent colour tokens in
   `src/index.css`. Evidence: mocked-RPC tests and a rendered harness
   (`docs/evidence/ui-delivery/exp08-team-hub-agents-a1b.md`); authenticated runtime `UNVERIFIED`.
-  **A1b part 3** (same branch, not merged, 2026-10-27): migration `20271118220008` adds the member-safe
+  **A1b part 3** (same branch, not merged, 2026-10-27): migration `20271119010008` (renumbered from `20271118220008` to sort after `20271119000000`) adds the member-safe
   turn-state read `team_hub_agent_turn_states` (authenticated, caller-scoped; other members see
   *<AGENT> is answering / replied to <Name> privately.*, the asker sees the true state after a reload),
   Bring in staged from the agent's structured answer, same-token acceptance; transport errors are

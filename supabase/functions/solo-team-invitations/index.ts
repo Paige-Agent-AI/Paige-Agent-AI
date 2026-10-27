@@ -61,7 +61,7 @@ const AUTHORED_REFUSALS = [
   "the workspace for this invitation was not named",
   "only an owner or admin may manage team invitations in that workspace",
   // create_solo_team_invite
-  "team invitations may grant only Admin or Member",
+  "team invitations may grant only Owner, Admin or Member",
   "a valid email address is required",
   "work profile is too long",
   "this person already belongs to the workspace",

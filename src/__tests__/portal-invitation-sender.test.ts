@@ -14,7 +14,7 @@ const actor="e0919000-0000-4000-8000-000000000001",tenant="e0929000-0000-4000-80
 const recipient="client@tests.invalid";
 type Options={header?:boolean;authenticated?:boolean;authThrows?:boolean;authority?:"admin"|"agency"|"platform"|"team_owner"|"none";
  token?:Record<string,unknown>;client?:Record<string,unknown>|null;emails?:unknown[];rpcError?:boolean;
- providerAllowed?:boolean;lateChange?:"role"|"actor"|"email"|"token"|"provider";transportUnknown?:boolean;body?:Record<string,unknown>;teamAction?:"create"|"resend"};
+ providerAllowed?:boolean;lateChange?:"role"|"actor"|"email"|"token"|"provider"|"holder";holder?:boolean|"error";transportUnknown?:boolean;body?:Record<string,unknown>;teamAction?:"create"|"resend"};
 async function drive(options:Options={}){
  let handler:(request:Request)=>Promise<Response>,brandRead=false;
  const calls:Array<{kind:string;name:string;args:unknown}>=[],sends:unknown[]=[],logs:unknown[]=[];
@@ -42,6 +42,8 @@ async function drive(options:Options={}){
     if(name==="create_solo_team_invite"||name==="resend_solo_team_invite")return options.authority==="none"
      ?{data:null,error:new Error("only an owner or admin may manage team invitations in that workspace")}
      :{data:{id:invitation,token:"synthetic-invite-token",email:recipient,tenant_id:tenant,expires_at:token.expires_at},error:null};
+    if(name==="is_tenant_account_holder")return options.holder==="error"?{data:null,error:{message:"holder read unavailable"}}
+     :{data:kind==="service"&&options.holder===true&&!(brandRead&&options.lateChange==="holder"),error:null};
     if(name==="solo_team_invite_authority")return options.authority==="team_owner"&&!(brandRead&&options.lateChange==="role")
      ?{data:tenant,error:null}:{data:null,error:{message:"native team authority refused"}};
     if(name==="resolve_tenant_brand"){brandRead=true;return {data:[{tenant_name:"Test business",primary_color:"#150C31",logo_url:null}],error:null};}
@@ -93,6 +95,31 @@ async function drive(options:Options={}){
 }
 
 describe("canonical portal invitation sender authority",()=>{
+ // EXP08 owners (I1, contract §5.3): an OWNER invitation is sent only for the account holder, checked
+ // through the service-role client; no other authority can send one.
+ const ownerToken={kind:"team",contact_id:null,default_role:"owner"};
+ it("sends an owner invitation for the account holder, checked through the service-role client only",async()=>{
+  const r=await drive({holder:true,authority:"none",token:ownerToken});
+  expect(r.status).toBe(200);expect(r.body.emailed).toBe(true);expect(r.sends).toHaveLength(1);
+  expect(r.calls).toContainEqual({kind:"service",name:"is_tenant_account_holder",args:{_user:actor,_tenant:tenant}});
+  expect(r.calls.some(x=>x.kind==="jwt"&&x.name==="is_tenant_account_holder")).toBe(false);
+  expect(r.calls.some(x=>["is_platform_owner","is_tenant_admin","agency_can_manage_child","solo_team_invite_authority"].includes(x.name))).toBe(false);
+ });
+ for(const authority of ["admin","agency","platform","team_owner"] as const)it("refuses an owner invitation for a non-holder with "+authority+" authority",async()=>{
+  const r=await drive({holder:false,authority,token:ownerToken});
+  expect(r.status).toBe(403);expect(r.body.emailed).not.toBe(true);expect(r.sends).toHaveLength(0);expect(r.logs).toHaveLength(0);
+ });
+ it("refuses an owner invitation when the account-holder read fails",async()=>{
+  const r=await drive({holder:"error",authority:"admin",token:ownerToken});
+  expect(r.status).toBe(403);expect(r.sends).toHaveLength(0);
+ });
+ it("refuses an owner invitation when the sender stops being the account holder before the provider",async()=>{
+  const r=await drive({holder:true,authority:"admin",token:ownerToken,lateChange:"holder"});
+  expect(r.body.emailed).not.toBe(true);expect(r.sends).toHaveLength(0);expect(r.logs).toHaveLength(0);
+ });
+ it("reads the invitation's permission so an owner invitation can be told apart",()=>{
+  expect(source).toMatch(/\.select\("id, tenant_id, contact_id, revoked_at, expires_at, email, kind, default_role, uses, max_uses, last_used_at"\)/);
+ });
  for(const authority of ["admin","agency","platform"] as const)it("preserves legitimate "+authority+" sender and current delivery evidence",async()=>{
   const r=await drive({authority});expect(r.status).toBe(200);expect(r.body.emailed).toBe(true);expect(r.sends).toHaveLength(1);
   expect(r.sends[0]).toMatchObject({to:[recipient],from:"Test business <business@tests.invalid>"});

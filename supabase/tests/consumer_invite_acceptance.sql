@@ -180,7 +180,26 @@ BEGIN
  RETURN replace(_src,_new,_old);
 END;
 $lci$;
-SELECT is((SELECT md5(replace(pg_temp.e09_invite_act_time_inverse(pg_temp.exp08_lifecycle_invite_inverse(prosrc)),$inv_new$    -- Keep one canonical relationship per login in each business.
+-- EXP08 owners (20271116110008) adds exactly one block to this function: the generic branch refuses an
+-- owner token instead of seating it as an Admin. Remove exactly that block first, so the inverses below
+-- still prove every original branch is preserved.
+CREATE FUNCTION pg_temp.exp08_owner_invite_inverse(_src text) RETURNS text LANGUAGE plpgsql AS $oii$
+DECLARE
+ _new text:=$oi_new$    -- EXP08 owners (20271116110008): an owner invitation is accepted only by accept_solo_team_invite,
+    -- which re-checks the account holder at that moment. Here it used to be silently turned into an
+    -- Admin seat and reported as accepted (§13). It is refused instead, before anything is written.
+    IF _tok.default_role = 'owner'::public.tenant_role THEN
+      RAISE EXCEPTION 'this invitation can''t be accepted here' USING ERRCODE = '42501', HINT = 'OWNER_INVITE_NOT_HERE';
+    END IF;
+$oi_new$;
+BEGIN
+ IF (length(_src)-length(replace(_src,_new,'')))<>length(_new) THEN
+  RAISE EXCEPTION 'EXP08 owners invitation inverse source mismatch';
+ END IF;
+ RETURN replace(_src,_new,'');
+END;
+$oii$;
+SELECT is((SELECT md5(replace(pg_temp.e09_invite_act_time_inverse(pg_temp.exp08_lifecycle_invite_inverse(pg_temp.exp08_owner_invite_inverse(prosrc))),$inv_new$    -- Keep one canonical relationship per login in each business.
     -- Other businesses retain their own original relationship authorization.
     IF EXISTS (SELECT 1 FROM public.clients c
       WHERE c.linked_user_id = _uid AND c.tenant_id = _tok.tenant_id
@@ -190,7 +209,9 @@ SELECT is((SELECT md5(replace(pg_temp.e09_invite_act_time_inverse(pg_temp.exp08_
       WHERE c.linked_user_id = _uid AND c.id <> _client_id) THEN$inv_old$)) FROM pg_proc WHERE oid='public.accept_tenant_invite(text)'::regprocedure),'10316cc79166fbcc24825cbbacf34e89','invitation exact inverse preserves all original recipient/token/CRM/audit and staff/agency branches');
 -- Renewed for EXP08 team lifecycle 20271115040008 (was 99b75b7f65d50cc4971c12dca4bef74e, production's E09
 -- body): the one hunk inverted above, nothing else; the inverse check above still returns the original.
-SELECT is((SELECT md5(prosrc) FROM pg_proc WHERE oid='public.accept_tenant_invite(text)'::regprocedure),'177c271028efecfc63c23623ef3aff88','the reviewed per-business invitation source and consumer act-time guard are installed');
+-- Renewed for EXP08 owners 20271116110008 (was 177c271028efecfc63c23623ef3aff88): the one owner block
+-- inverted above, nothing else.
+SELECT is((SELECT md5(prosrc) FROM pg_proc WHERE oid='public.accept_tenant_invite(text)'::regprocedure),'eedfabae814ee42b83002745e21f784f','the reviewed per-business invitation source and consumer act-time guard are installed');
 SELECT ok((SELECT pg_get_userbyid(proowner)='postgres' AND prosecdef AND provolatile='v' AND proconfig=ARRAY['search_path=public'] AND pg_get_function_identity_arguments(oid)='_token text' AND pg_get_function_result(oid)='uuid' FROM pg_proc WHERE oid='public.accept_tenant_invite(text)'::regprocedure) AND has_function_privilege('authenticated','public.accept_tenant_invite(text)','EXECUTE') AND has_function_privilege('service_role','public.accept_tenant_invite(text)','EXECUTE') AND NOT has_function_privilege('anon','public.accept_tenant_invite(text)','EXECUTE'),'original invitation ABI owner authority path and entry grants remain unchanged');
 SELECT is((SELECT md5(prosrc) FROM pg_proc WHERE oid='public._clients_portal_access_guard()'::regprocedure),'c1dceae767c0b94a7e465f678a72d648','original revoke and re-invitation lifecycle guard is unchanged');
 

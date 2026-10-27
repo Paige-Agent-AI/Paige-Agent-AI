@@ -21,6 +21,12 @@ const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
 const DRAIN_BUDGET_MS = 40_000;
 // The same bound the governed release puts on its send-message call.
 const GENERIC_RELEASE_TIMEOUT_MS = 25_000;
+// Governed email files no send will ever need (list_governed_comms_attachment_orphans) are removed once an
+// hour — the run whose minute is this one — at most this many per run, and only with this much budget left.
+const ORPHAN_SWEEP_MINUTE = 7;
+const ORPHAN_SWEEP_LIMIT = 100;
+const ORPHAN_SWEEP_MIN_BUDGET_MS = 5_000;
+const COMMS_ATTACHMENTS_BUCKET = "comms-attachments";
 
 // The release's database/network edges, bound to the service client. Every read is keyed by the
 // binding's own tenant and scheduler; nothing is taken from the leased row beyond what the binding says.
@@ -174,6 +180,24 @@ Deno.serve(async (req) => {
     const { error: unleaseErr } = await admin.rpc("unlease_scheduled_messages", { _ids: ids, _stamp: stamp });
     if (unleaseErr) console.warn("[comms-scheduled-drain] unlease failed; rows re-lease in 5 min", unleaseErr.message);
   }
+  // Retention for governed email files: a copy no binding names (an approval that never prepared) after a
+  // day, and the copies of a send that was refused or failed a week after it closed. A sent email's files
+  // are kept as its record. Once an hour, bounded, inside this run's time budget; a failure only logs.
+  let orphansRemoved = 0;
+  if (Math.floor(Date.now() / 60_000) % 60 === ORPHAN_SWEEP_MINUTE && DRAIN_BUDGET_MS - (Date.now() - startedAt) > ORPHAN_SWEEP_MIN_BUDGET_MS) {
+    try {
+      const { data: orphans, error: orphanErr } = await admin.rpc("list_governed_comms_attachment_orphans", { _limit: ORPHAN_SWEEP_LIMIT });
+      const paths = Array.isArray(orphans)
+        ? (orphans as unknown[]).map((o) => typeof o === "string" ? o : (o as { name?: unknown } | null)?.name).filter((n): n is string => typeof n === "string" && n.split("/")[1] === "governed")
+        : [];
+      if (orphanErr) console.warn("[comms-scheduled-drain] governed file retention read failed", orphanErr.message);
+      else if (paths.length) {
+        const { data: removed, error: removeErr } = await admin.storage.from(COMMS_ATTACHMENTS_BUCKET).remove(paths);
+        if (removeErr) console.warn("[comms-scheduled-drain] governed file retention remove failed", removeErr.message);
+        else orphansRemoved = Array.isArray(removed) ? removed.length : 0;
+      }
+    } catch (e) { console.warn("[comms-scheduled-drain] governed file retention failed", (e as Error)?.message); }
+  }
   return json(200, { claimed: rows.length, released, requeued, failed, governed, unreached: unreached.length,
-    missed_closed: typeof missed === "number" ? missed : 0 });
+    missed_closed: typeof missed === "number" ? missed : 0, governed_files_removed: orphansRemoved });
 });

@@ -12,6 +12,7 @@
 // person to review (SendGrid, Gmail and SMTP have no idempotent replay; see reconcileCommsEmailSend).
 import { COMMS_EMAIL_ACTION, COMMS_EMAIL_SCHEDULED_RELEASE_GRACE_MS, UUID, canonicalCommsEmailSendAt, commsEmailBodyHtml, commsEmailContentDigest, parseCommsEmailCommand, type CommsEmailCommand } from "./contract.ts";
 import type { CommsEmailParties, CommsEmailReadiness } from "./readiness.ts";
+import { parseCommsEmailAttachmentManifest, type CommsEmailAttachmentManifest } from "./attachments.ts";
 
 type ObjectValue = Record<string, unknown>;
 const object = (v: unknown): ObjectValue | null => v && typeof v === "object" && !Array.isArray(v) ? v as ObjectValue : null;
@@ -52,6 +53,8 @@ export interface CommsEmailStoredCall {
   contentDigest: string;
   /** "Approve now, send later": the canonical send time the person approved. Absent = send now. */
   sendAt?: string;
+  /** The files the person approved (their governed copies, sizes and sha256). Absent = no files. */
+  attachments?: CommsEmailAttachmentManifest;
 }
 
 /** Re-parse the stored proposal arguments. Anything not exactly the shape the door stored refuses. */
@@ -69,8 +72,15 @@ export function parseCommsEmailStoredCall(args: unknown, tenantId: string): (Com
     try { sendAt = canonicalCommsEmailSendAt(a.send_at); } catch { return null; }
     if (sendAt !== a.send_at) return null;
   }
+  // Stored files must be exactly a manifest of THIS tenant and operation; anything else was not approved.
+  let attachments: CommsEmailAttachmentManifest | undefined;
+  if (a.attachments !== undefined) {
+    const parsed = parseCommsEmailAttachmentManifest(a.attachments, tenantId, a.operation_id);
+    if (!parsed) return null;
+    attachments = parsed;
+  }
   return { operationId: a.operation_id, command: command as CommsEmailCommand & { connector_id: string }, recipient: a.recipient, fromAddress: a.from_address, contentDigest: a.content_digest,
-    ...(sendAt ? { sendAt } : {}) };
+    ...(sendAt ? { sendAt } : {}), ...(attachments ? { attachments } : {}) };
 }
 
 export interface CommsEmailExecutorInput {
@@ -102,6 +112,9 @@ const PREPARE_REFUSALS: [string, string][] = [
   ["COMMS_EMAIL_WORKSPACE_CHANGED", "WORKSPACE_CHANGED"],
   ["COMMS_EMAIL_SEND_AT_INVALID", "COMMS_EMAIL_SEND_AT_INVALID"],
   ["COMMS_EMAIL_SCHEDULE_NOT_SUPPORTED", "COMMS_EMAIL_SCHEDULE_NOT_SUPPORTED"],
+  ["COMMS_EMAIL_ATTACHMENTS_PROVIDER_UNSUPPORTED", "COMMS_EMAIL_ATTACHMENTS_PROVIDER_UNSUPPORTED"],
+  ["COMMS_EMAIL_ATTACHMENTS_INVALID", "COMMS_EMAIL_ATTACHMENTS_INVALID"],
+  ["COMMS_EMAIL_ATTACHMENTS_NOT_SUPPORTED", "COMMS_EMAIL_ATTACHMENTS_NOT_SUPPORTED"],
 ];
 
 export async function executeCommsEmailSend(input: CommsEmailExecutorInput, d: CommsEmailExecutorDependencies): Promise<ObjectValue> {
@@ -142,12 +155,14 @@ export async function executeCommsEmailSend(input: CommsEmailExecutorInput, d: C
 
     // `_send_at` only for a scheduled call, so every immediate send keeps choosing the 13-argument
     // prepare_comms_email_send exactly as before (PostgREST resolves the overload by argument names).
+    // An email with files names `_attachments` (and `_send_at`, null for "now"): the 15-argument overload,
+    // which validates the manifest against the governed copies and binds it in the same transaction.
     const { data, error } = await d.prepare({
       _actor_user_id: input.actorUserId, _expected_tenant_id: input.tenantId, _operation_id: input.operationId,
       _contact_id: stored.command.contact_id, _recipient: stored.recipient, _connector_id: stored.command.connector_id,
       _from_address: stored.fromAddress, _subject: stored.command.subject, _body_text: stored.command.body, _body_html: bodyHtml,
       _content_digest: contentDigest, _command: stored.command, _governance: input.governance,
-      ...(stored.sendAt ? { _send_at: stored.sendAt } : {}),
+      ...(stored.attachments ? { _send_at: stored.sendAt ?? null, _attachments: stored.attachments } : stored.sendAt ? { _send_at: stored.sendAt } : {}),
     });
     if (error) {
       if (!answered(error)) return unknown(); // no answer: the prepare may have committed
@@ -161,6 +176,15 @@ export async function executeCommsEmailSend(input: CommsEmailExecutorInput, d: C
     if (prepared.state !== "prepared") {
       if (!TERMINAL.has(String(prepared.state))) return unknown();
       return commsEmailSafeResult(await d.readResult(input.operationId), { replayed: true });
+    }
+    // A call approved WITHOUT files reached an operation already prepared (by an earlier approval) WITH
+    // files: the 13/14-argument prepare cannot see them. What this approval showed is not what the row
+    // would send, so nothing is sent. (The 15-argument overload refuses the reverse case itself.)
+    if (!stored.attachments && prepared.replayed === true) {
+      let bound: ObjectValue | null;
+      try { bound = object(await d.readBinding(prepared.message_id)); } catch { return refused("COMMS_EMAIL_BINDING_UNAVAILABLE"); }
+      if (!bound) return refused("COMMS_EMAIL_BINDING_UNAVAILABLE");
+      if (bound.attachments !== undefined && bound.attachments !== null) return refused("COMMS_EMAIL_ATTACHMENTS_CHANGED");
     }
     // A scheduled email is prepared and queued, never sent here: the drainer releases it at its time.
     // The database echoes the send time it stored; anything else is not the call that was approved.

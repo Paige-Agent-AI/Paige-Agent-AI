@@ -148,3 +148,69 @@ export async function commsEmailContentDigest(input: { recipient: string; connec
   const digest = await crypto.subtle.digest("SHA-256", bytes);
   return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, "0")).join("");
 }
+
+/* ───────────────────────── Files the approved email carries (governed attachments) ───────────────────────── */
+
+/** The private bucket the Conversations composer uploads into (inbox-shared.ts COMMS_ATTACH_BUCKET). */
+export const COMMS_EMAIL_ATTACHMENTS_BUCKET = "comms-attachments" as const;
+export const COMMS_EMAIL_ATTACHMENTS_MAX = 10;
+/** Per file: the bucket's own file_size_limit (10 MiB). */
+export const COMMS_EMAIL_ATTACHMENT_MAX_BYTES = 10 * 1024 * 1024;
+/** All files of one email together, under SendGrid's 20 MB message ceiling once base64-encoded. */
+export const COMMS_EMAIL_ATTACHMENTS_TOTAL_MAX_BYTES = 15 * 1024 * 1024;
+/**
+ * The sender providers whose email leaves through send-message's SendGrid arm, the only arm that sends
+ * governed files. 'sendgrid' is a PAIGE Email connector; 'resend' is the legacy label of PAIGE's managed
+ * sender and of a custom-domain connector, both of which have gone through that same SendGrid arm since
+ * Experience 03. Gmail and SMTP keep their single-PDF behaviour and never carry governed files.
+ * prepare_comms_email_send's 15-argument overload enforces the same list.
+ */
+export const COMMS_EMAIL_FILE_PROVIDERS: readonly string[] = Object.freeze(["sendgrid", "resend"]);
+
+const ATTACHMENT_NAME = /^[A-Za-z0-9._-]{1,120}$/;
+
+/**
+ * The files a person asks to send, as object paths in the private bucket, checked against the
+ * SERVER-derived tenant (never a tenant the request names). Each path is exactly the composer's upload
+ * shape `<tenant>/<uuid>-<name>` (inbox-shared.ts useCommsAttachments): one folder, the caller's own
+ * tenant, no traversal, no percent-encoding, no backslash, and never the Team Hub or governed folders.
+ * 1 to 10 distinct paths, in the order given. Throws `COMMS_EMAIL_ATTACHMENTS_INVALID`. Pure.
+ */
+export function parseCommsEmailAttachmentRequest(value: unknown, tenantId: string): string[] {
+  const invalid = () => new TypeError("COMMS_EMAIL_ATTACHMENTS_INVALID");
+  if (typeof tenantId !== "string" || !UUID.test(tenantId)) throw invalid();
+  const tenant = tenantId.toLowerCase();
+  if (!Array.isArray(value) || value.length < 1 || value.length > COMMS_EMAIL_ATTACHMENTS_MAX) throw invalid();
+  const shape = new RegExp(`^${tenant}/[0-9a-f-]{36}-[A-Za-z0-9._-]{1,120}$`);
+  const seen = new Set<string>();
+  return value.map((item) => {
+    if (!item || typeof item !== "object" || Array.isArray(item)) throw invalid();
+    const keys = Object.keys(item);
+    if (keys.length !== 1 || keys[0] !== "path") throw invalid();
+    const path = (item as { path: unknown }).path;
+    if (typeof path !== "string" || path.length > 200 || !shape.test(path)) throw invalid();
+    if (path.includes("..") || path.includes("%") || path.includes("\\")) throw invalid();
+    const segments = path.split("/");
+    if (segments.some((s) => s.toLowerCase() === "team-hub" || s.toLowerCase() === "governed")) throw invalid();
+    if (seen.has(path)) throw invalid();
+    seen.add(path);
+    return path;
+  });
+}
+
+/** The file name a composer path carries: everything after `<tenant>/<uuid>-`. */
+export function commsEmailAttachmentName(sourcePath: string): string {
+  const name = sourcePath.slice(sourcePath.indexOf("/") + 1 + 37);
+  if (!ATTACHMENT_NAME.test(name)) throw new TypeError("COMMS_EMAIL_ATTACHMENTS_INVALID");
+  return name;
+}
+
+/**
+ * Where the approved bytes of file `index` (0-based) of an operation are kept once the person says yes:
+ * `<tenant>/governed/<operation>/<n>-<name>`. Deterministic, so the card and the confirm name the same
+ * copy, and the numbering keeps two files of the same name apart. Members can read this folder but never
+ * write, overwrite or delete in it (20271120000000's restrictive storage policies).
+ */
+export function commsEmailGovernedAttachmentPath(tenantId: string, operationId: string, index: number, name: string): string {
+  return `${tenantId.toLowerCase()}/governed/${operationId.toLowerCase()}/${index + 1}-${name}`;
+}

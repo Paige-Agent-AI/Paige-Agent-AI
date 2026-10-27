@@ -80,6 +80,11 @@ export type CommsEmailReadiness = {
   state: "ready" | "needs_setup" | "held" | "unavailable";
   reason: CommsEmailReadinessReason;
   provider_execution_verified: false;
+  /**
+   * The chosen sender's provider, set by readCommsEmailReadiness on a READY answer only. The door uses it
+   * to decide whether this email may carry files (COMMS_EMAIL_FILE_PROVIDERS); it is never a credential.
+   */
+  sender_provider?: string;
 };
 export interface CommsEmailReadinessFacts extends EmailProviderEnvironment {
   recipient: string | null;
@@ -267,7 +272,8 @@ export async function readCommsEmailReadiness(
     const setup = commsEmailReadiness(facts);
     if (setup.state === "needs_setup") return setup;
     const preSend = await preSendCheck(admin as never, { tenantId: input.tenantId, channel: "email", to: input.recipient ?? "", contactId: input.contactId });
-    return commsEmailReadiness({ ...facts, preSend });
+    const ready = commsEmailReadiness({ ...facts, preSend });
+    return ready.eligible && facts.sender ? { ...ready, sender_provider: facts.sender.provider } : ready;
   } catch {
     return { eligible: false, state: "unavailable", reason: "EMAIL_READINESS_UNVERIFIED", provider_execution_verified: false };
   }

@@ -18,7 +18,26 @@ export type ConfirmEmailPreview = {
   body_text: string;
   /** "Approve now, send later": the instant (ISO, UTC) the approved email will go out. Absent = now. */
   send_at?: string;
+  /** The files the approved email carries, as the server read and fingerprinted them. Absent = none. */
+  attachments?: ConfirmEmailAttachment[];
 };
+
+/** One file on a confirm card: what the person needs to recognise it — never its path or contents. */
+export type ConfirmEmailAttachment = { name: string; size: number; mime: string };
+
+/** The card's file list, or undefined when it is not a well-formed list of 1..10 named files. */
+function parseConfirmAttachments(raw: unknown): ConfirmEmailAttachment[] | undefined {
+  if (!Array.isArray(raw) || raw.length < 1 || raw.length > 10) return undefined;
+  const out: ConfirmEmailAttachment[] = [];
+  for (const a of raw) {
+    if (!a || typeof a !== "object" || Array.isArray(a)) return undefined;
+    const { name, size, mime } = a as Record<string, unknown>;
+    if (!nonEmpty(name) || name.length > 120 || !nonEmpty(mime) || mime.length > 255
+      || typeof size !== "number" || !Number.isInteger(size) || size < 1) return undefined;
+    out.push({ name, size, mime });
+  }
+  return out;
+}
 
 const nonEmpty = (v: unknown): v is string => typeof v === "string" && v.trim() !== "";
 
@@ -42,6 +61,8 @@ export function parseConfirmPreview(raw: unknown): ConfirmEmailPreview | undefin
     // Only a readable instant passes; anything else is dropped (the card then shows no time, and the
     // server's summary sentence still names it).
     ...(typeof r.send_at === "string" && r.send_at.length <= 40 && Number.isFinite(Date.parse(r.send_at)) ? { send_at: r.send_at } : {}),
+    // Only a well-formed file list passes; anything else is dropped (the summary still names the files).
+    ...(parseConfirmAttachments(r.attachments) ? { attachments: parseConfirmAttachments(r.attachments) } : {}),
   };
 }
 

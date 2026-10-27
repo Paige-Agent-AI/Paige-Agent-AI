@@ -28,6 +28,11 @@ export type SendOutcome =
   | { kind: "sent"; auditId: string | null }
   /** Held by the pre-send seam (quiet hours / tenant DND): ACCEPTED — a message row is queued to go later. */
   | { kind: "queued"; outcome: string; scheduledFor: string | null; messageId: string | null }
+  /**
+   * Experience 03: SendGrid's answer could not be read (5xx, timeout, thrown request), so it may have been
+   * ACCEPTED. SendGrid has no idempotent replay: approving again would email the person a second copy.
+   */
+  | { kind: "unconfirmed"; auditId: string | null; messageId: string | null }
   | { kind: "failed"; error: string };
 
 /**
@@ -38,6 +43,12 @@ export type SendOutcome =
 export function classifySendResult(httpOk: boolean, body: unknown): SendOutcome {
   const b = obj(body);
   if (httpOk && b.status === "sent") return { kind: "sent", auditId: typeof b.audit_id === "string" ? b.audit_id : null };
+  // Before any other failure reading: an unconfirmed answer must never release the claim for a retry.
+  // Keyed on send-message's explicit `unconfirmed` marker ONLY: its other outcome_unknown answers (e.g. the
+  // 503 boundary_readback_failed, where the provider floor refused and nothing was sent) stay failures.
+  if (b.unconfirmed === true) {
+    return { kind: "unconfirmed", auditId: typeof b.audit_id === "string" ? b.audit_id : null, messageId: typeof b.message_id === "string" ? b.message_id : null };
+  }
   if (httpOk && typeof b.outcome === "string" && b.outcome.startsWith("queued_")) {
     return {
       kind: "queued", outcome: b.outcome,
@@ -111,6 +122,8 @@ export const QUEUED_UNCANCELLABLE =
 export const SCHEDULED_FROM_CONVERSATIONS =
   "Not sent again: this message is already scheduled from Conversations and goes out then. Manage it there, or decline this.";
 export const SENT_FROM_CONVERSATIONS = "Already sent from Conversations. Nothing was sent again.";
+export const SEND_UNCONFIRMED =
+  "We couldn't confirm this went out. It may already have reached them, so it won't be sent again from here. Check with them before sending it again.";
 export const HELD_DRAFT_CHANGED =
   "This reply no longer matches its draft in Conversations (the draft or the contact's address changed since it was held). This approval wasn't completed: review it in Conversations, or decline it here.";
 

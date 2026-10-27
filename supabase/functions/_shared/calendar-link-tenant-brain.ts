@@ -269,7 +269,7 @@ export async function prepareCalendarLinkShare(input: PrepareCalendarLinkInput):
   if (tenant !== input.expectedTenantId) return { ok: false, code: "ACTIVE_ACCOUNT_CHANGED" };
 
   const share = await readShareability(input.caller, input.calendarId);
-  if (!share.ok) return { ok: false, code: share.code };
+  if (share.ok === false) return { ok: false, code: share.code };
 
   if (!share.shareable || !share.slug) {
     // No public link exists to share — refuse truthfully, emit no url/copy.
@@ -344,6 +344,11 @@ export function mapSendOutcome(res: SendMessageResult): MappedSend {
   if (outcome && outcome.startsWith("blocked")) {
     return { success: false, outcome: "refused", reason: stringValue(res.reason) ?? "This contact can't be messaged on this channel.", providerMessageId: null };
   }
+  // Experience 03: the email service's answer was lost, so it may have gone out. SendGrid has no
+  // idempotent replay — this is never "failed" (which invites a second send) and never "NOT sent".
+  if (outcome === "outcome_unknown") {
+    return { success: false, outcome: "outcome_unknown", reason: "It couldn't be confirmed that this was sent; it may already have reached them.", providerMessageId: null };
+  }
   if (outcome === "failed") {
     return { success: false, outcome: "failed", reason: stringValue(res.reason) ?? stringValue(res.error) ?? "The send failed.", providerMessageId: null };
   }
@@ -383,7 +388,7 @@ export async function sendCalendarLink(input: SendCalendarLinkInput): Promise<Re
 
   // Shareability FIRST: a non-public calendar has no link to send.
   const share = await readShareability(input.caller, input.calendarId);
-  if (!share.ok) return { success: false, code: share.code };
+  if (share.ok === false) return { success: false, code: share.code };
   if (!share.shareable || !share.slug) {
     return { success: false, code: "CALENDAR_NOT_SHAREABLE", reason: share.reason, note: "This calendar isn't public, so there's no booking link to send. Publish it first." };
   }
@@ -423,7 +428,9 @@ export async function sendCalendarLink(input: SendCalendarLinkInput): Promise<Re
       ? "The booking link was handed to the messaging provider (delivery is confirmed asynchronously). Nothing was posted to social, and no second message was sent."
       : mapped.outcome === "queued"
         ? "The message is held and will send automatically at the allowed time; it has NOT been sent yet."
-        : "The link was NOT sent. Reported the exact reason; do not claim it was delivered.",
+        : mapped.outcome === "outcome_unknown"
+          ? "The send could not be confirmed: it may already have reached the contact. Do NOT send it again; tell the person to check with the contact first. Do not claim it was delivered or that it failed."
+          : "The link was NOT sent. Reported the exact reason; do not claim it was delivered.",
   };
 }
 
@@ -447,7 +454,7 @@ export async function calendarLinkSocialCopy(input: CalendarLinkSocialCopyInput)
   if (tenant !== input.expectedTenantId) return { ok: false, code: "ACTIVE_ACCOUNT_CHANGED" };
 
   const share = await readShareability(input.caller, input.calendarId);
-  if (!share.ok) return { ok: false, code: share.code };
+  if (share.ok === false) return { ok: false, code: share.code };
   if (!share.shareable || !share.slug) {
     return { ok: true, shareable: false, posted: false, sent: false, reason: share.reason, note: "This calendar isn't public yet, so there's no booking link to post. Publish it first." };
   }

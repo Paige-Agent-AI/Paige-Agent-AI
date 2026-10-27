@@ -780,3 +780,13 @@ verify_jwt = true
 # valid x-cron-token), exactly like paige-media-sweeper and paige-model-watch.
 [functions.team-hub-file-sweep]
 verify_jwt = false
+
+# Declared to match production (deploy-edge-functions run #874 readback: jwt_configuration_mismatch —
+# both run with verify_jwt=false on prod and were never declared here). send-platform-invite fails
+# closed in-function: no Authorization header → 401, then is_platform_owner() on the caller's own JWT.
+# backfill-welcome is a one-off, token-gated sender to a fixed internal recipient list.
+[functions.send-platform-invite]
+verify_jwt = false
+
+[functions.backfill-welcome]
+verify_jwt = false

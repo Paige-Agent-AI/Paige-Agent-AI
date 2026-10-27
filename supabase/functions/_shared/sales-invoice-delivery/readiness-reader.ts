@@ -7,12 +7,14 @@ import { invoiceDeliveryReadiness,type InvoiceDeliveryReadiness } from './readin
 import { readEmailSenderFacts } from '../comms-email/readiness.ts';
 type ObjectValue=Record<string,unknown>;
 const object=(v:unknown):ObjectValue=>v&&typeof v==='object'&&!Array.isArray(v)?v as ObjectValue:{};
-/** Caller must resolve authenticated actor/current tenant/admin first; this reads only safe setup metadata. */
+/** Caller must resolve authenticated actor/current tenant/admin first; this reads only safe setup metadata.
+ *  resendConfigured: a "resend" sender now sends through SendGrid (Experience 03), so it is the presence of
+ *  the platform's SendGrid Mail Send key, never RESEND_API_KEY. */
 export async function readInvoiceDeliveryReadiness(admin:InvoiceReadinessAdmin,input:{tenantId:string;actorUserId?:string|null;invoice:unknown;channel:'email'|'sms'|'imessage';connectorId:string|null},env:(key:string)=>string|undefined):Promise<InvoiceDeliveryReadiness> {
  if(input.channel==='imessage')return invoiceDeliveryReadiness({channel:'imessage',tenantMatches:true,recipient:null,resendConfigured:false,googleConfigured:false});
  const row=object(input.invoice),snapshot=object(object(row.document).snapshot),tenantMatches=row.tenant_id===input.tenantId;
  const recipient=snapshot[input.channel==='email'?'recipient_email':'recipient_phone'];
- const facts={channel:input.channel,tenantMatches,recipient:typeof recipient==='string'?recipient:null,resendConfigured:!!env('RESEND_API_KEY'),googleConfigured:!!env('GOOGLE_OAUTH_CLIENT_ID')&&!!env('GOOGLE_OAUTH_CLIENT_SECRET')};
+ const facts={channel:input.channel,tenantMatches,recipient:typeof recipient==='string'?recipient:null,resendConfigured:!!env('SENDGRID_MAIL_SEND_API_KEY'),googleConfigured:!!env('GOOGLE_OAUTH_CLIENT_ID')&&!!env('GOOGLE_OAUTH_CLIENT_SECRET')};
  if(!tenantMatches)return invoiceDeliveryReadiness(facts);
  if(typeof snapshot.client_id!=='string'||!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(snapshot.client_id))return {eligible:false,state:'unavailable',reason:'INVOICE_CLIENT_UNVERIFIED',provider_execution_verified:false};
  try {

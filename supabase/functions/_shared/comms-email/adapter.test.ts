@@ -73,10 +73,19 @@ describe("executeCommsEmailSend", () => {
 });
 
 describe("reconcileCommsEmailSend", () => {
-  it("re-enters only a reconcilable Resend operation, under the same operation and key", async () => {
-    const t = deps(); t.set("unknown"); const sent: Record<string, unknown>[] = []; t.d.send = async b => { sent.push(b); t.set("provider_accepted"); return {}; };
-    expect(await reconcileCommsEmailSend(OP, T, t.d)).toMatchObject({ ok: true, outcome: "provider_accepted", reconciled: true });
-    expect(sent).toEqual([expect.objectContaining({ comms_email_operation_id: OP, comms_email_reconcile: true, idempotency_key: `comms-email:${OP}`, message_id: M, body: "<p>Hello there</p>" })]);
+  it("never re-sends, even an operation the database still calls reconcilable (SendGrid has no idempotent replay)", async () => {
+    for (const provider of ["resend", "sendgrid"]) {
+      const t = deps({ readResult: async () => ({ outcome: "unknown", operation_id: OP, message_id: M, provider, reconcilable: true }) });
+      const sent: Record<string, unknown>[] = []; t.d.send = async b => { sent.push(b); return {}; };
+      expect(await reconcileCommsEmailSend(OP, T, t.d), provider).toMatchObject({ ok: false, outcome: "outcome_unknown", code: "COMMS_EMAIL_RECONCILIATION_REQUIRED", reconcilable: false });
+      expect(sent, provider).toEqual([]);
+      expect(t.log, provider).toEqual([]);
+    }
+  });
+  it("replays an outcome that is already recorded, without sending", async () => {
+    const t = deps(); t.set("provider_accepted"); const sent: unknown[] = []; t.d.send = async b => { sent.push(b); return {}; };
+    expect(await reconcileCommsEmailSend(OP, T, t.d)).toMatchObject({ ok: true, outcome: "provider_accepted", replayed: true });
+    expect(sent).toEqual([]);
   });
   it("leaves a non-reconcilable or foreign-tenant operation unknown without sending", async () => {
     const t = deps({ readResult: async () => ({ outcome: "unknown", message_id: M, provider: "gmail", reconcilable: false }) });

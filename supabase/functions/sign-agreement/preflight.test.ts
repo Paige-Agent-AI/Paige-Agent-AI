@@ -29,7 +29,7 @@ Deno.test('the signing handler verifies the retained presentation before any ter
   const json=(value:unknown,status=200)=>new Response(JSON.stringify(value),{status,headers:{'Content-Type':'application/json'}});
   try{
     Deno.serve=((callback:typeof handler)=>{handler=callback;return {} as never;}) as unknown as typeof Deno.serve;
-    Deno.env.get=(name:string)=>name==='SUPABASE_URL'?'https://synthetic.invalid':name==='SUPABASE_SERVICE_ROLE_KEY'||name==='RESEND_API_KEY'?'synthetic-not-a-credential':undefined;
+    Deno.env.get=(name:string)=>name==='SUPABASE_URL'?'https://synthetic.invalid':name==='SUPABASE_SERVICE_ROLE_KEY'||name==='SENDGRID_MAIL_SEND_API_KEY'?'synthetic-not-a-credential':undefined;
     globalThis.fetch=async(input,init)=>{
       const request=new Request(input,init),url=new URL(request.url);
       assert.equal(url.origin,'https://synthetic.invalid');

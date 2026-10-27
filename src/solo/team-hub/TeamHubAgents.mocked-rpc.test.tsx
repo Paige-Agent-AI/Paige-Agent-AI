@@ -1008,6 +1008,21 @@ describe("A1c: a thread's reply box carries the same @ list (Slack lets you @ in
     expect(turns).toHaveLength(0);
   });
 
+  it("in a thread, a leading / is just text: no command menu or note opens, and it is sent as typed", async () => {
+    withThread("c-launch");
+    const host = await mount();
+    await openThreadOf(host);
+    const thread = host.querySelector<HTMLElement>(".th-thread")!;
+    await type(threadBox(host), "/draft a task");
+    expect(thread.querySelector("[role=listbox][aria-label='PAIGE commands']")).toBeNull();
+    expect(thread.textContent).not.toContain("No command matches");
+    await press(threadBox(host), "Enter");
+    await flush();
+    const post = calls.find((call) => call.name === "team_hub_post_message")!;
+    expect(post.params.p_parent_message_id).toBe("m-root-c-launch");
+    expect(post.params.p_body).toBe("/draft a task");
+  });
+
   it("in a person DM's thread: no Everyone group, and a typed @here is never sent as a broadcast", async () => {
     db.conversations.push(conv({ id: "c-dm-priya", kind: "dm", name: null, visibility: "private", member_count: 2, member_ids: [ME, "u-priya"], dm_user_id: "u-priya" }));
     withThread("c-dm-priya");

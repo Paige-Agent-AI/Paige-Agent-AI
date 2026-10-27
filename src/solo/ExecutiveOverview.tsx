@@ -87,11 +87,11 @@ function ResolvedExecutiveOverview({ account, accountEpoch, accountName, openPai
   const readable = areas.filter((area) => area.entry.status === "available" && area.entry.data);
   const gaps = areas.filter((area) => area.entry.status !== "available" || !area.entry.data);
   const total = pending.total ?? null;
-  const ask = (prompt = BRIEFING + " Use the " + (PERIODS.find((p) => p.key === period)?.label ?? "Last 7 days") + " reporting period.") => {
+  const ask = (prompt = BRIEFING) => {
     if (!openPaige) return;
     clearPaigeSurfaceScope();
     clearPaigePublicPresenceScope();
-    handOffPaigePrompt(prompt);
+    handOffPaigePrompt(prompt + " Use the " + (PERIODS.find(p => p.key === period)?.label ?? "Last 7 days") + " reporting period.");
     openPaige();
   };
   const refresh = () => { review.refresh(); pending.refresh(); activity.refresh(); void missions.refresh(); void calendar.refresh(); };
@@ -111,7 +111,7 @@ function ResolvedExecutiveOverview({ account, accountEpoch, accountName, openPai
           <p>PAIGE explains the same business records you can inspect below.</p>
           <div className="exec-briefing-actions">
             <button type="button" className="exec-button exec-primary" onClick={() => ask()} disabled={!openPaige}><MessageSquareText size={16} aria-hidden="true" /><span className="exec-button-label">How's my business doing?</span><ArrowRight size={15} aria-hidden="true" /></button>
-            <button type="button" className="exec-text-button" disabled={!openPaige} onClick={() => ask("VERA, review my business performance, financial evidence and risks for the " + (PERIODS.find(p => p.key === period)?.label ?? "Last 7 days") + ". Use permitted business evidence, explain sources, periods and unavailable information, and recommend one to three grounded priorities. PAIGE remains my COO. Do not take an action.")}>Ask VERA to review the evidence<ArrowRight size={14} aria-hidden="true" /></button>
+            <button type="button" className="exec-text-button" disabled={!openPaige} onClick={() => ask("VERA, review my business performance, financial evidence and risks. Use permitted business evidence, explain sources, periods and unavailable information, and recommend one to three grounded priorities. PAIGE remains my COO. Do not take an action.")}>Ask VERA to review the evidence<ArrowRight size={14} aria-hidden="true" /></button>
           </div>
           <small>Opens your existing Chat. Choose Talk live there to speak with PAIGE. The question is yours to send.</small>
         </div>

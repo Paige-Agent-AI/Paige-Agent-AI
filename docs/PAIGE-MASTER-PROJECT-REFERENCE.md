@@ -860,6 +860,14 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**2026-10-27 UTC — EXP05 ZION assignment access-refusal source repair.**
+
+| Increment | Exact released source and production evidence | Acceptance boundary |
+| --- | --- | --- |
+| [#2946 original inspector refusal](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2946#issuecomment-6432856627) | Reviewed `59d51961723a4b24e1139723a494aec40b5ed048`, AUTHOR-REVIEW / LOWER ASSURANCE5661557153, all10 applicable exact-head checks/two webSUCCESS/normal PreviewSKIP/zero threads. Actual main `d4fcca1b48ba4115a15faefe05318a2d18991891` / tree `d6e20d95a9c87897f84b489291f0dcdf9f346472`, whole incoming691ce/E06 and five owning blobs exact. Normal production `dpl_BYSqPx1wRX5vaDcWv24PbeZ84f5R` READY/exact. Both paigeagent.ai and paige-agent-ai.vercel.app public builds exactd4fcca-mvq41uxz at03:14:57–03:15:02UTC; original shipped reader44b60404/classifierc1648ecc confirms genuine SDK/native Response401/403 handling. Proof SHA256328b0741b1db38c52288a3dc148de39d2b3e1969b4cc86fe0818167cc80c3b7c. | SOURCE/WEB VERIFIED; original140 source controls pass. No own Edge/native/permission/activation change. Actual authenticated private-sample withdrawal, refusal/reload/keyboard/cohort/isolation and full ten/E5/Builder/weekly execution/ZION useful result/notice/separate Live/founder acceptance remain PROOF OWED. No catalogue or algorithm maturity promotion, customer release name or announcement. |
+
+This mechanical closeout records the preceding delivery only and is not logged recursively.
+
 **2026-10-27 UTC — EXP02 Executive department return.**
 
 #2979 merged `d0ab7820dbba5e0cbb4aac2f03902a2e2761e8fc`; actual tree `db8af66f26898d2035009d4feb744e55f598e9e5` equals reviewed1442/
@@ -937,6 +945,12 @@ it changes no product, policy, capability or acceptance status and is not logged
 
 This mechanical post-merge closeout records the preceding source deliveries and is
 not logged recursively. It adds no product, policy, capability or acceptance change.
+
+**2026-10-27 UTC — EXP09 original booking confirmation requires a saved receipt.**
+
+| Delivery | Exact release and verification | Product/proof boundary |
+| --- | --- | --- |
+| [#2984 original booking receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2984#issuecomment-6445363334) | Reviewed `b08fd580ef651578a2c4a42230141c9043fa197c`, sequential AUTHOR-REVIEW / LOWER ASSURANCE5668455283; all10 applicable exact-head checks and both web statuses SUCCESS, schema-free Preview SKIPPED, zero threads. Final gate6445235897. Actual main `a794ce20b6e38286d0210a33bf05f650a41b6ea1` / tree `cbc8e4335f33325e43f6085630763204042db996`, exact parents74839345+reviewedb08; all13 owning nonshared leaves and16,892 incoming outside leaves exact, whole Master/Brain inverse PASS. Latest EXP03 inbound-routing schema/CI and shared sender/Calendar/Chat/Spine preserved. Vercel `dpl_4V1JjHCLNtrXWbQsqgMxXvt1PXkv` READY; both public origins exacta794ce20b6e38286d0210a33bf05f650a41b6ea1-mvqt4k8y/customerUpdate:null; entry/assets/revalidation/native304/missing404/Auth/privacy PASS at14:58:09.349UTC. Own SQL/Edge/provider delta N/A. | Bounded consumer SOURCE/WEB DEPLOYED: original valid identity/time receipt required for success/redirect; uncertainty retains details and holds another submission, original late receipt resolves without another create; real409 returns to original availability with visible explanation. No email/link delivery inference.99 focused tests/four files, types/lint/UI guard PASS; actual component desktop1536/narrow390/320 light/dark/keyboard/focus/reduced-motion inspected,0 blocking detector/7 inherited advisories. Original business brand and native labels/touch text preserved or corrected. Companion #2985 native131 owner-created Calendar/Sessions parity PASS is separate/unmerged and its Preview-capacity hold is not waived. Private customer first booking, authenticated same-appointment Calendar/Sessions return, original Rail attribution gaps, provider delivery, cross-reload uncertainty, physical iPhone/AT/native zoom/full42/seven and founder NOT_ACCEPTED remain OPEN. No new scheduler/CRM/sender, actual booking/send/payment, consent/role/provider/Live/INT346 activation or customer announcement. Forward correction/revert only the consumer; original records untouched. |
 
 **2026-10-27 UTC — EXP09 original support mailbox attention in Portal Overview.**
 

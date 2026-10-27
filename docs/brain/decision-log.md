@@ -1,5 +1,11 @@
 # Decision Log — chronological one-liners
 
+## October27 — EXP03 O12 piece 1: scheduled governed email (approve now, send later, cancel)
+
+- **Built (migration `20271119000000`):** the door accepts a send time bound into the approval; the scheduler releases the bound row through the same one-send claim; any active owner/admin cancels from the thread; the thread shows Scheduled, then Not sent with a plain reason if it never went out. Defaults recorded while the owner had not answered: any owner/admin may cancel; lead replies, agreement sends and chat stay immediate.
+- **Two independent reviews.** Round 1: a scheduler who left the business left the email stuck and uncancellable, crowding the platform-wide queue (H2); transient errors permanently cancelled; one paused business could stop every business's drain; untruthful cancel toasts. Round 2: handing back a lease did not check the lease was this run's, so an ordinary scheduled message could be released twice. All fixed with failing-first tests.
+- **Found while mapping:** Conversations email attachments have never been sent (send-message only ever attaches invoice PDFs); production has no outbound message that ever carried one. Real attachments are piece 2.
+
 ## October27 — EXP03 email reply box: owner chose B with (ii); one draft per inbound reply
 
 - **Owner decision (2026-10-27): B with (ii).** The Conversations email composer sends through the governed door `comms-email-command`. Pressing Send shows an inline check (server-resolved To/From, subject, files, send time); **Send now** / **Schedule send** is the approval. Email loses the 30-second undo; SMS keeps it. The door is extended first so attachments and a send time are bound into the approval. Reviewed on the mocked "Reply Check Prototype" artifact.

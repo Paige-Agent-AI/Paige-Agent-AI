@@ -1,4 +1,5 @@
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useLayoutEffect, useRef, type MouseEvent } from "react";
+import { Link, useLocation, useNavigate, useNavigationType } from "react-router-dom";
 import { ArrowRight, MessageSquareText, RefreshCw } from "lucide-react";
 import { PaigePresence } from "@/components/paige/live/PaigePresence";
 import { handOffPaigePrompt } from "@/lib/paigePromptHandoff";
@@ -56,17 +57,34 @@ function DomainEvidence({ domain, timezone, account }: { domain: ReviewDomain; t
 }
 
 type ExecutiveProps = {
-  account?: string | null; accountEpoch?: string | null; accountName?: string | null; openPaige?: () => void;
+  account?: string | null; accountEpoch?: string | null; actorId?: string | null; accountName?: string | null; openPaige?: () => void;
 };
+
+type ReviewReturn = {
+  version: 1; scope: string; address: string; destination: string; ordinal: number; scroll: number; sources: string[];
+};
+function reviewReturn(value: unknown, scope: string, address: string): ReviewReturn | null {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  const b = value as ReviewReturn;
+  return b.version === 1 && b.scope === scope && b.address === address
+    && typeof b.destination === 'string' && b.destination.length < 2048
+    && Number.isInteger(b.ordinal) && b.ordinal >= 0 && b.ordinal < 100
+    && Number.isFinite(b.scroll) && b.scroll >= 0 && b.scroll <= 1_000_000
+    && Array.isArray(b.sources) && b.sources.length <= 16
+    && b.sources.every(s => typeof s === 'string' && /^exec-domain-[a-z_]+$/.test(s)) ? b : null;
+}
 
 export function ExecutiveOverview(props: ExecutiveProps) {
   if (!props.accountEpoch) return <div className="executive-root"><p className="exec-read-state" role="status">Resolving this workspace…</p></div>;
-  return <ResolvedExecutiveOverview {...props} key={props.accountEpoch} />;
+  return <ResolvedExecutiveOverview {...props} key={`${props.actorId ?? ''}:${props.accountEpoch}`} />;
 }
 
-function ResolvedExecutiveOverview({ account, accountEpoch, accountName, openPaige }: ExecutiveProps) {
+function ResolvedExecutiveOverview({ account, accountEpoch, actorId, accountName, openPaige }: ExecutiveProps) {
   const location = useLocation();
   const navigate = useNavigate();
+  const navigationType = useNavigationType();
+  const root = useRef<HTMLDivElement>(null);
+  const returnedEntry = useRef<string | null>(null);
   const routePeriod = new URLSearchParams(location.search).get("review_period");
   const period = PERIODS.find(item => item.key === routePeriod)?.key ?? "last_7_days";
   const setPeriod = (value: string) => {
@@ -96,11 +114,52 @@ function ResolvedExecutiveOverview({ account, accountEpoch, accountName, openPai
   };
   const refresh = () => { review.refresh(); pending.refresh(); activity.refresh(); void missions.refresh(); void calendar.refresh(); };
   const plays = missions.items.filter((play) => play.state !== "stopped").slice(0, 3);
+  const address = location.pathname + location.search + location.hash;
+  const returnScope = actorId && account && accountEpoch ? JSON.stringify([actorId, accountEpoch, account]) : null;
+  const rememberDepartment = (event: MouseEvent<HTMLDivElement>) => {
+    if (!returnScope || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.defaultPrevented) return;
+    const opener = event.target instanceof Element ? event.target.closest<HTMLAnchorElement>('a[href]') : null;
+    const node = root.current;
+    if (!opener || !node || !node.contains(opener) || opener.hasAttribute('download') || (opener.target && opener.target !== '_self')) return;
+    const target = new URL(opener.href);
+    if (target.origin !== window.location.origin || !target.pathname.startsWith(`/solo/${account}/`) || target.pathname === location.pathname) return;
+    if (location.state !== null && (typeof location.state !== 'object' || Array.isArray(location.state))) return;
+    const destination = target.pathname + target.search + target.hash;
+    const peers = [...node.querySelectorAll<HTMLAnchorElement>('a[href]')].filter(a => a.getAttribute('href') === opener.getAttribute('href'));
+    const bookmark: ReviewReturn = { version: 1, scope: returnScope, address, destination,
+      ordinal: peers.indexOf(opener), scroll: node.scrollTop,
+      sources: [...node.querySelectorAll('section.exec-domain')].filter(section => section.querySelector('details.exec-provenance[open]')).map(section => section.getAttribute('aria-labelledby')!) };
+    // One display bookmark on the ORIGINAL history entry; no metrics, drafts or business records.
+    // The existing Link performs the only destination navigation after this replacement.
+    navigate({ pathname: location.pathname, search: location.search, hash: location.hash }, {
+      replace: true, state: { ...location.state, executiveReviewReturn: bookmark },
+    });
+  };
+  useLayoutEffect(() => {
+    if (!returnScope || navigationType !== 'POP' || returnedEntry.current === location.key || review.state === 'loading') return;
+    const bookmark = reviewReturn(location.state?.executiveReviewReturn, returnScope, address), node = root.current;
+    if (!bookmark || !node) return;
+    returnedEntry.current = location.key;
+    // A person who moved focus while the fresh read was pending keeps it.
+    if (document.activeElement && document.activeElement !== document.body && document.activeElement !== node) return;
+    for (const section of node.querySelectorAll('section.exec-domain')) {
+      if (bookmark.sources.includes(section.getAttribute('aria-labelledby') ?? '')) {
+        const details = section.querySelector<HTMLDetailsElement>('details.exec-provenance');
+        if (details) details.open = true;
+      }
+    }
+    const peers = [...node.querySelectorAll<HTMLAnchorElement>('a[href]')].filter(a => {
+      const to = new URL(a.href); return to.pathname + to.search + to.hash === bookmark.destination;
+    });
+    const focus = peers[bookmark.ordinal] ?? node.querySelector('h1');
+    focus?.focus({ preventScroll: true });
+    node.scrollTop = peers[bookmark.ordinal] ? bookmark.scroll : 0;
+  }, [address, location.key, location.state, navigationType, returnScope, review.state]);
 
-  return <div className="executive-root" aria-label="Executive Command Center">
+  return <div className="executive-root" aria-label="Executive Command Center" ref={root} onClickCapture={rememberDepartment}>
     <div className="executive-content">
       <header className="exec-header">
-        <div><h1>{accountName ? accountName + " · Executive" : "Executive"}</h1><p>Your business, in view. Your next move, in context.</p></div>
+        <div><h1 tabIndex={-1}>{accountName ? accountName + " · Executive" : "Executive"}</h1><p>Your business, in view. Your next move, in context.</p></div>
         <button type="button" className="exec-button" onClick={refresh} disabled={review.state === "loading"}><RefreshCw size={15} aria-hidden="true" />Refresh evidence</button>
       </header>
 

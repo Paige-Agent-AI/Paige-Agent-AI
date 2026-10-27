@@ -29,7 +29,7 @@
 .executive-root .exec-button:disabled,.executive-root .exec-text-button:disabled { opacity:.6; cursor:not-allowed; }
 .executive-root .exec-link,.executive-root .exec-text-button { color:var(--pg-ink); justify-content:flex-start; text-decoration:underline; text-underline-offset:4px; background:none; border:0; padding:4px 0; }
 .executive-root .exec-link:hover,.executive-root .exec-text-button:hover:not(:disabled) { color:var(--pg-violet); }
-.executive-root :is(button,a,summary,select):focus-visible { outline:2px solid hsl(var(--ring)); outline-offset:4px; }
+.executive-root :is(button,a,summary,select,h1):focus-visible { outline:2px solid hsl(var(--ring)); outline-offset:4px; }
 .exec-briefing { display:flex; align-items:center; gap:20px; padding:20px 24px; background:var(--pg-spine); border-radius:14px; margin-bottom:28px; }
 .exec-presence { flex:0 0 124px; height:124px; }
 .exec-presence .paige-presence { height:100%; width:100%; min-height:0; }

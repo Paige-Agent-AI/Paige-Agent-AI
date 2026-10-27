@@ -9,7 +9,7 @@ import type { GrowthBlock, GrowthPageTheme } from "@/lib/growth";
 describe("pageFromRow published columns", () => {
   const publishedBlocks: GrowthBlock[] = [{ type: "hero", title: "Published hero" }];
   const draftBlocks: GrowthBlock[] = [{ type: "hero", title: "Draft hero" }];
-  const theme: GrowthPageTheme = { primary_color: "#1d3a2a", accent_color: "#e8b84c" };
+  const theme: GrowthPageTheme = { primary: "#1d3a2a", accent: "#e8b84c" };
 
   it("is null unless the row is status=published (an unpublished page never offers an export)", () => {
     const r = pageFromRow({

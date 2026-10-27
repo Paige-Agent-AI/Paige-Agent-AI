@@ -224,7 +224,7 @@ function renderBlock(b: GrowthBlock, ctx: Ctx): string {
         return `<span>${esc(l.name)}</span>`;
       }).join("")}</div>`;
     case "testimonial":
-      return `${b.items.map((t) => `<figure class="gp-card" style="margin:0"><blockquote class="gp-quote">“${esc(t.quote)}”</blockquote><footer>${esc([t.author, t.role].filter(Boolean).join(", "))}${typeof t.rating === "number" ? ` · ${t.rating}/5` : ""}</footer></figure>`).join("")}`.replace(/^/, heading(b.title, "h2"));
+      return `${b.items.map((t) => `<figure class="gp-card" style="margin:0"><blockquote class="gp-quote">“${esc(t.quote)}”</blockquote><footer>${esc([t.author, t.role].filter(Boolean).join(", "))}${typeof t.rating === "number" ? ` · ${t.rating}/5` : ""}</footer></figure>`).join("")}`;
     case "pricing":
       return `${heading(b.title, "h2")}<div class="gp-grid gp-price">${b.tiers.map((t) => `<div class="gp-card${t.featured ? " featured" : ""}"><b>${esc(t.name)}</b><p class="gp-stat"><b>${esc(t.price)}</b>${t.period ? `<span style="font-size:.9rem;color:var(--gp-muted)"> / ${esc(t.period)}</span>` : ""}</p><ul style="margin:0;padding-left:1.1rem;color:var(--gp-muted)">${t.features.map((f) => `<li>${esc(f)}</li>`).join("")}</ul>${t.cta_label ? ctaAnchor(t.cta_label, t.cta_href, o) : ""}</div>`).join("")}</div>`;
     case "faq":

@@ -9,7 +9,7 @@ import {
   type PortablePageSource,
 } from "./exportPortable";
 import { buildGrowthBrandFloor } from "@/components/growth/growth-theme";
-import type { GrowthBlock } from "./growth";
+import type { GrowthBlock } from "../growth";
 
 const ORIGIN = "https://paigeagent.ai";
 const EXPORTED_AT = "2026-10-26T00:00:00Z";

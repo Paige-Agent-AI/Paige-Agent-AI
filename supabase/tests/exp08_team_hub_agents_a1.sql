@@ -1228,6 +1228,20 @@ SELECT pg_temp.check(:'end_wrong'='not_found' AND :'end_ok'='true' AND :'ended':
  'a turn ends only with its own token; a retry of an ended turn re-arms the same row, at the cap, without counting again');
 SELECT pg_temp.check(pg_temp.accept(:'ta', :'u5', :'launch', :'src_marcus', 'cura', 'reply', pg_temp.tok('marcus'))->>'ok'='true',
  'another seat''s turns are counted separately');
+-- A turn whose edge invocation died without ending it is not "running" for ever: after 10 minutes a
+-- retry re-arms it, and the abandoned invocation's token stops working.
+SELECT pg_temp.post(:'u3', :'ta', :'launch', '@NEXUS stale check', '{nexus}')#>>'{message,id}' AS src_stale \gset
+SELECT pg_temp.accept(:'ta', :'u3', :'launch', :'src_stale', 'nexus', 'reply', pg_temp.tok('S1'))->>'turn_id' AS stale_turn \gset
+SELECT pg_temp.accept(:'ta', :'u3', :'launch', :'src_stale', 'nexus', 'reply', pg_temp.tok('S2'))->>'code' AS stale_running \gset
+UPDATE public.team_hub_agent_turns SET accepted_at=now()-interval '11 minutes' WHERE id=:'stale_turn';
+SELECT pg_temp.accept(:'ta', :'u3', :'launch', :'src_stale', 'nexus', 'reply', pg_temp.tok('S2')) AS stale_rearm \gset
+SELECT pg_temp.agent_post(:'u3', :'ta', :'launch', 'nexus', 'late', gen_random_uuid()::text, NULL, :'src_stale', 'reply', pg_temp.tok('S1'))->>'code' AS stale_old \gset
+SELECT pg_temp.check(:'stale_running'='in_flight'
+ AND (:'stale_rearm')::jsonb @> jsonb_build_object('ok',true,'rearmed',true,'turn_id',:'stale_turn')
+ AND :'stale_old'='not_allowed'
+ AND pg_temp.agent_post(:'u3', :'ta', :'launch', 'nexus', 'On time', gen_random_uuid()::text, NULL, :'src_stale', 'reply', pg_temp.tok('S2'))->>'ok'='true'
+ AND (SELECT count(*) FROM public.team_hub_agent_turns WHERE source_message_id=:'src_stale')=1,
+ 'a running turn answers in_flight; one left unended for 10 minutes re-arms on retry (one row), and the abandoned token is refused');
 \echo 'PASS: the per-seat cap of 30 accepted turns per hour, the end door and the re-arm that counts once'
 
 -- 5k. A seat that ends takes its agent DMs and running turns with it; a hold keeps them; an agent DM
@@ -1263,6 +1277,135 @@ SELECT pg_temp.check(:'b_a'='true' AND :'b_p'='true' AND :'b_dm'='true' AND :'b_
  AND NOT EXISTS(SELECT 1 FROM public.team_hub_channels WHERE tenant_id=:'tb'),
  'deleting a workspace cascades through tenant_members and Team Hub, agent turns and agent DMs included, without error');
 \echo 'PASS: a seat that ends drops its agent DMs and running turns (a hold keeps them; a DM holding a file is left); deleting a workspace cascades cleanly'
+
+-- 5m. MUTANTS (§71.4). Each guard is weakened on its own, inside a transaction that is rolled back,
+-- and the property it protects is re-probed: every mutant must make its probe fail. Setup runs outside
+-- the transaction (one transaction has one now(), which unread and the cap read). A mutant that does
+-- not change the body it names stops the run, so a silent no-op can never pass.
+RESET ROLE;
+CREATE FUNCTION pg_temp.mutate(fn regprocedure, old text, new text) RETURNS void LANGUAGE plpgsql AS $$
+DECLARE body text:=pg_get_functiondef(fn);
+BEGIN
+ IF (length(body)-length(replace(body,old,'')))/length(old)<>1 THEN RAISE EXCEPTION 'mutant does not match % exactly once', fn; END IF;
+ EXECUTE replace(body,old,new);
+END $$;
+CREATE TEMP TABLE mutant_results(mutant text PRIMARY KEY, guarded boolean);
+SELECT pg_temp.j(:'u1', format('public.team_hub_create_channel(%L::uuid,%L,%L,%L::uuid[],gen_random_uuid())', :'ta','mutants','team','{}'))->>'channel_id' AS mch \gset
+SELECT pg_temp.check(pg_temp.j(u, format('public.team_hub_join_channel(%L::uuid,%L::uuid)', :'ta', :'mch'))->>'ok'='true', 'mutants: a teammate joins #mutants')
+ FROM unnest(ARRAY[:'u3', :'u6']) u;
+SELECT pg_temp.post(:'u3', :'ta', :'mch', '@CURA m', '{cura}')#>>'{message,id}' AS msrc \gset
+SELECT pg_temp.accept(:'ta', :'u3', :'mch', :'msrc', 'cura', 'reply', pg_temp.tok('M')) ->>'ok' AS macc \gset
+SELECT pg_temp.check(:'macc'='true', 'mutants: setup turn accepted');
+
+-- M1: the post door no longer matches the token.
+BEGIN;
+SELECT pg_temp.mutate('public.team_hub_post_agent_message(uuid,uuid,text,text,uuid,uuid,uuid,text,text,boolean)', ' AND t.token_hash=hashed FOR UPDATE;', ' FOR UPDATE;');
+SELECT coalesce((pg_temp.agent_post(:'u3', :'ta', :'mch', 'cura', 'forged', gen_random_uuid()::text, NULL, :'msrc', 'reply', pg_temp.tok('wrong'))->>'code'='not_allowed'),false) AS g \gset
+ROLLBACK;
+INSERT INTO mutant_results VALUES ('M1 token not matched', :'g');
+-- M2: a post no longer consumes its turn (replay).
+SELECT pg_temp.agent_post(:'u3', :'ta', :'mch', 'cura', 'First answer', gen_random_uuid()::text, NULL, :'msrc', 'reply', pg_temp.tok('M'))#>>'{message,id}' AS mreply \gset
+SELECT pg_temp.check(:'mreply'<>'', 'mutants: setup reply posted');
+BEGIN;
+UPDATE public.team_hub_agent_turns SET consumed_at=NULL, posted_message_id=NULL WHERE source_message_id=:'msrc';
+DROP INDEX public.team_hub_messages_agent_reply_key;
+SELECT pg_temp.mutate('public.team_hub_post_agent_message(uuid,uuid,text,text,uuid,uuid,uuid,text,text,boolean)',
+ E' UPDATE public.team_hub_agent_turns t SET consumed_at=now(), posted_message_id=msg.id WHERE t.id=turn.id;\n RETURN jsonb_build_object(''ok'',true,''message'',public._team_hub_message_json(msg));',
+ E' RETURN jsonb_build_object(''ok'',true,''message'',public._team_hub_message_json(msg));');
+SELECT pg_temp.agent_post(:'u3', :'ta', :'mch', 'cura', 'once', gen_random_uuid()::text, NULL, :'msrc', 'reply', pg_temp.tok('M'))->>'ok' AS once \gset
+SELECT coalesce((pg_temp.agent_post(:'u3', :'ta', :'mch', 'cura', 'twice', gen_random_uuid()::text, NULL, :'msrc', 'reply', pg_temp.tok('M'))->>'code' IS DISTINCT FROM NULL),false) AS g \gset
+ROLLBACK;
+INSERT INTO mutant_results VALUES ('M2 turn not consumed (replay)', :'g');
+-- M3: the one-reply index is gone.
+BEGIN;
+DROP INDEX public.team_hub_messages_agent_reply_key;
+SELECT coalesce((pg_temp.err(format('INSERT INTO public.team_hub_messages(tenant_id,channel_id,author_user_id,body,client_request_id,author_kind,agent_key,asked_in_message_id) VALUES (%L,%L,%L,%L,gen_random_uuid(),%L,%L,%L)',
+  :'ta', :'mch', :'u3', 'second', 'agent', 'cura', :'msrc'))<>'ok'),false) AS g \gset
+ROLLBACK;
+INSERT INTO mutant_results VALUES ('M3 one-reply index dropped', :'g');
+-- M4: acceptance is open to a signed-in person (grant and body check both removed).
+BEGIN;
+GRANT EXECUTE ON FUNCTION public.team_hub_accept_agent_turn(uuid,uuid,uuid,uuid,text,text,text) TO authenticated;
+SELECT pg_temp.mutate('public.team_hub_accept_agent_turn(uuid,uuid,uuid,uuid,text,text,text)',
+ E' IF auth.uid() IS NOT NULL THEN RETURN jsonb_build_object(''ok'',false,''code'',''not_allowed''); END IF;\n', E'\n');
+SELECT pg_temp.post(:'u3', :'ta', :'mch', '@ZION self', '{zion}')#>>'{message,id}' AS m4src \gset
+SELECT coalesce((pg_temp.j(:'u3', format('public.team_hub_accept_agent_turn(%L::uuid,%L::uuid,%L::uuid,%L::uuid,%L,%L,%L)', :'ta', :'u3', :'mch', :'m4src', 'zion','reply', pg_temp.h(pg_temp.tok('self'))))->>'ok' IS DISTINCT FROM 'true'),false) AS g \gset
+ROLLBACK;
+INSERT INTO mutant_results VALUES ('M4 acceptance open to authenticated', :'g');
+-- M5: rule 2 no longer needs the message to ask this agent.
+BEGIN;
+SELECT pg_temp.mutate('public.team_hub_accept_agent_turn(uuid,uuid,uuid,uuid,text,text,text)',
+ E' OR NOT EXISTS(SELECT 1 FROM public.team_hub_message_agent_mentions x\n    WHERE x.message_id=src.id AND x.agent_key=p_agent_key) THEN', ' THEN');
+SELECT coalesce((pg_temp.accept(:'ta', :'u3', :'mch', :'msrc', 'vera', 'reply', pg_temp.tok('M5'))->>'code'='not_allowed'),false) AS g \gset
+ROLLBACK;
+INSERT INTO mutant_results VALUES ('M5 rule 2 mention not required', :'g');
+-- M6: the post door no longer binds the turn to its conversation.
+SELECT pg_temp.j(:'u1', format('public.team_hub_create_channel(%L::uuid,%L,%L,%L::uuid[],gen_random_uuid())', :'ta','mutants-two','team','{}'))->>'channel_id' AS mch2 \gset
+SELECT pg_temp.post(:'u3', :'ta', :'mch', '@MENTOR m6', '{mentor}')#>>'{message,id}' AS m6src \gset
+SELECT pg_temp.accept(:'ta', :'u3', :'mch', :'m6src', 'mentor', 'reply', pg_temp.tok('M6'))->>'ok' AS m6acc \gset
+BEGIN;
+SELECT pg_temp.mutate('public.team_hub_post_agent_message(uuid,uuid,text,text,uuid,uuid,uuid,text,text,boolean)', E'\n  AND t.channel_id=ch.id AND t.agent_key=p_agent_key', E'\n  AND t.agent_key=p_agent_key');
+SELECT coalesce((pg_temp.agent_post(:'u3', :'ta', :'mch2', 'mentor', 'elsewhere', gen_random_uuid()::text, NULL, NULL, 'reply', pg_temp.tok('M6'))->>'code'='not_allowed'),false) AS g \gset
+ROLLBACK;
+INSERT INTO mutant_results VALUES ('M6 turn not bound to its conversation', :'g');
+-- M7: the per-seat cap is off by one.
+SELECT count(*) AS m7_used FROM public.team_hub_agent_turns WHERE asker_user_id=:'u3' AND accepted_at>now()-interval '1 hour' \gset
+SELECT pg_temp.burst(:'ta', :'u3', :'mch', 29-:m7_used) AS m7_fill \gset
+BEGIN;
+SELECT pg_temp.mutate('public.team_hub_accept_agent_turn(uuid,uuid,uuid,uuid,text,text,text)', 'IF used>=30 THEN', 'IF used>=31 THEN');
+SELECT coalesce(((pg_temp.burst(:'ta', :'u3', :'mch', 2))[2]='rate_limited'),false) AS g \gset
+ROLLBACK;
+INSERT INTO mutant_results VALUES ('M7 cap 31 not 30', :'g');
+-- M8: a stale turn is "running" for ever.
+SELECT pg_temp.post(:'u6', :'ta', :'mch', '@NEXUS m8', '{nexus}')#>>'{message,id}' AS m8src \gset
+SELECT pg_temp.accept(:'ta', :'u6', :'mch', :'m8src', 'nexus', 'reply', pg_temp.tok('M8a'))->>'turn_id' AS m8turn \gset
+UPDATE public.team_hub_agent_turns SET accepted_at=now()-interval '11 minutes' WHERE id=:'m8turn';
+BEGIN;
+SELECT pg_temp.mutate('public.team_hub_accept_agent_turn(uuid,uuid,uuid,uuid,text,text,text)', E'turn.accepted_at>now()-interval ''10 minutes''', 'true');
+SELECT coalesce((pg_temp.accept(:'ta', :'u6', :'mch', :'m8src', 'nexus', 'reply', pg_temp.tok('M8b'))->>'ok'='true'),false) AS g \gset
+ROLLBACK;
+INSERT INTO mutant_results VALUES ('M8 stale turn never re-arms', :'g');
+-- M9: unread no longer counts an agent's reply for the person who asked.
+SELECT pg_temp.post(:'u6', :'ta', :'mch', '@CURA m9', '{cura}')#>>'{message,id}' AS m9src \gset
+SELECT pg_temp.j(:'u6', format('public.team_hub_mark_read(%L::uuid,%L::uuid,%L::uuid)', :'ta', :'mch', :'m9src'))->>'ok' AS m9read \gset
+SELECT pg_temp.accept(:'ta', :'u6', :'mch', :'m9src', 'cura', 'reply', pg_temp.tok('M9'))->>'ok' AS m9acc \gset
+SELECT pg_temp.agent_post(:'u6', :'ta', :'mch', 'cura', 'Answer for Vera Lane', gen_random_uuid()::text, NULL, :'m9src', 'reply', pg_temp.tok('M9'))->>'ok' AS m9post \gset
+SELECT pg_temp.check(:'m9read'='true' AND :'m9acc'='true' AND :'m9post'='true' AND pg_temp.unread(:'u6', :'ta', :'mch')=1, 'mutants: the asker has exactly the agent reply unread');
+BEGIN;
+SELECT pg_temp.mutate('public.team_hub_list_conversations(uuid)', E'AND (x.author_user_id<>actor OR x.author_kind=''agent'')', 'AND x.author_user_id<>actor');
+SELECT coalesce((pg_temp.unread(:'u6', :'ta', :'mch')=1),false) AS g \gset
+ROLLBACK;
+INSERT INTO mutant_results VALUES ('M9 agent reply not unread for the asker', :'g');
+-- M10: an agent DM admits a second member.
+SELECT pg_temp.j(:'u6', format('public.team_hub_open_agent_dm(%L::uuid,%L)', :'ta', 'zion'))->>'channel_id' AS m10dm \gset
+BEGIN;
+SELECT pg_temp.mutate('public._team_hub_member_scope_guard()', E'AND c.created_by<>NEW.user_id) THEN', E'AND false) THEN');
+SELECT coalesce((pg_temp.err(format('INSERT INTO public.team_hub_channel_members(channel_id,tenant_id,user_id,added_by) VALUES (%L,%L,%L,%L)', :'m10dm', :'ta', :'u1', :'u1'))<>'ok'),false) AS g \gset
+ROLLBACK;
+INSERT INTO mutant_results VALUES ('M10 agent DM admits a second member', :'g');
+-- M11: a seat that ends keeps its agent DMs.
+BEGIN;
+SELECT pg_temp.mutate('public._team_hub_seat_ended()', E'WHERE c.tenant_id=OLD.tenant_id AND c.kind=''agent_dm''', E'WHERE false AND c.tenant_id=OLD.tenant_id AND c.kind=''agent_dm''');
+DELETE FROM public.tenant_members WHERE tenant_id=:'ta' AND user_id=:'u6';
+SELECT coalesce((NOT EXISTS(SELECT 1 FROM public.team_hub_channels WHERE id=:'m10dm')),false) AS g \gset
+ROLLBACK;
+INSERT INTO mutant_results VALUES ('M11 agent DM kept after the seat ends', :'g');
+-- M12: a reply may link to a message in another conversation (the DM-to-channel leak).
+BEGIN;
+SELECT pg_temp.mutate('public._team_hub_message_scope_guard()', E'WHERE a.id=NEW.asked_in_message_id AND a.channel_id=NEW.channel_id', E'WHERE a.id=NEW.asked_in_message_id');
+SELECT coalesce((pg_temp.err(format('INSERT INTO public.team_hub_messages(tenant_id,channel_id,author_user_id,body,client_request_id,author_kind,agent_key,asked_in_message_id) VALUES (%L,%L,%L,%L,gen_random_uuid(),%L,%L,%L)',
+  :'ta', :'m10dm', :'u6', 'linked', 'agent', 'zion', :'m9src'))<>'ok'),false) AS g \gset
+ROLLBACK;
+INSERT INTO mutant_results VALUES ('M12 reply linked across conversations', :'g');
+-- Controls: with nothing mutated, each probe that can be re-run holds.
+SELECT pg_temp.check(pg_temp.agent_post(:'u3', :'ta', :'mch', 'cura', 'forged', gen_random_uuid()::text, NULL, :'msrc', 'reply', pg_temp.tok('wrong'))->>'code'='not_allowed'
+ AND pg_temp.accept(:'ta', :'u3', :'mch', :'msrc', 'vera', 'reply', pg_temp.tok('M5'))->>'code'='not_allowed'
+ AND pg_temp.agent_post(:'u3', :'ta', :'mch2', 'mentor', 'elsewhere', gen_random_uuid()::text, NULL, NULL, 'reply', pg_temp.tok('M6'))->>'code'='not_allowed'
+ AND pg_temp.unread(:'u6', :'ta', :'mch')=1,
+ 'mutants: every re-runnable probe holds on the unmutated migration (controls)');
+SELECT pg_temp.check((SELECT count(*) FROM mutant_results)=12 AND NOT EXISTS(SELECT 1 FROM mutant_results WHERE guarded IS NOT FALSE),
+ 'mutants: all 12 weakened guards break the property they protect: '||(SELECT string_agg(mutant||'='||coalesce(guarded::text,'null'), '; ' ORDER BY mutant) FROM mutant_results));
+\echo 'PASS: 12 of 12 mutants (token, replay, one-reply index, acceptance grant, rule 2, conversation binding, cap, stale re-arm, unread, agent DM member, seat end, cross-conversation link) each fail their probe; controls hold'
 
 -- 6. The roster correction (20271116030108) on the six platform rows. The table carries production's
 -- columns for these rows and the rows production holds (read 2026-10-27), with two customisations made
@@ -1300,15 +1443,15 @@ SELECT pg_temp.check(NOT EXISTS(SELECT 1 FROM subagents_before b JOIN public.pai
 SELECT pg_temp.check((SELECT config->'job_kind'='"plan"' FROM public.paige_subagents WHERE slug='zion')
  AND (SELECT config->'team_hub_tools'='{"custom":true}' FROM public.paige_subagents WHERE slug='vera')
  AND (SELECT config FROM public.paige_subagents WHERE slug='design-studio')=(SELECT config FROM subagents_before WHERE slug='design-studio')
- AND (SELECT bool_and(config ?& ARRAY['team_hub_tools','tool_scope','personality']) FROM public.paige_subagents WHERE slug IN ('vera','nexus','cura','mentor','merit','zion')),
+ AND (SELECT bool_and(config ?& ARRAY['team_hub_tools','capability_scope','personality']) FROM public.paige_subagents WHERE slug IN ('vera','nexus','cura','mentor','merit','zion')),
  'roster: config keys are only ever added (ZION keeps job_kind, VERA keeps its own team_hub_tools, other agents untouched)');
 SELECT pg_temp.check((SELECT bool_and(config->'team_hub_tools'='{"mode":"allowlist","tools":["team_hub_read_conversation","read_business_time_zone","ask_choices","capability_status","marketplace_browse","list_event_kinds","team_hub_answer_privately"],"version":1}'::jsonb)
    FROM public.paige_subagents WHERE slug IN ('nexus','cura','mentor','merit','zion'))
  AND (SELECT bool_and(NOT (config->'team_hub_tools'->'tools') ?| ARRAY['team_hub_conversations','team_hub_search','crm_search_contacts','crm_list_team','list_subagents','web_search','web_fetch','inbox_list','get_business_snapshot','read_calendar_agenda'])
    FROM public.paige_subagents WHERE slug IN ('nexus','cura','mentor','merit','zion')),
  'roster: the channel allowlist is exactly the §6 list and carries none of the excluded private, CRM, comms, finance, calendar or web tools');
-SELECT pg_temp.check((SELECT bool_and(config->'tool_scope'->>'mode'='allowlist' AND config->'tool_scope'->>'access'='read'
-   AND (config->'tool_scope'->'tools') <@ '["ask_choices","capability_status","read_business_time_zone","team_hub_read_conversation","read_business_metric","get_business_snapshot","growth_list","campaign_brief_list","read_campaign_leads","crm_search_contacts","crm_get_contact_summary","read_client_engagement_status","read_tenant_knowledge","marketplace_browse","crm_list_deals","crm_pipeline_summary","agreement_list","agreement_status","crm_list_tasks","crm_get_task","plan_list","read_weekly_commitment_status","read_calendar_agenda","read_calendar_booking","crm_list_team"]'::jsonb)
+SELECT pg_temp.check((SELECT bool_and(config->'capability_scope'->>'mode'='allowlist' AND config->'capability_scope'->>'access'='read'
+   AND (config->'capability_scope'->'tools') <@ '["ask_choices","capability_status","read_business_time_zone","team_hub_read_conversation","read_business_metric","get_business_snapshot","growth_list","campaign_brief_list","read_campaign_leads","crm_search_contacts","crm_get_contact_summary","read_client_engagement_status","read_tenant_knowledge","marketplace_browse","crm_list_deals","crm_pipeline_summary","agreement_list","agreement_status","crm_list_tasks","crm_get_task","plan_list","read_weekly_commitment_status","read_calendar_agenda","read_calendar_booking","crm_list_team"]'::jsonb)
    FROM public.paige_subagents WHERE slug IN ('vera','nexus','cura','mentor','merit','zion')),
  'roster: every DM tool scope is an allowlist of reads only (A1)');
 SELECT pg_temp.check((SELECT bool_and((SELECT array_agg(k ORDER BY k) FROM jsonb_object_keys(config->'personality') k)
@@ -1323,7 +1466,7 @@ UPDATE public.paige_subagents SET description='VP Growth. Content strategy and c
  config='{}' WHERE slug='nexus';
 \ir ../migrations/20271116030108_exp08_team_hub_agents_roster.sql
 SELECT pg_temp.check((SELECT role='VP Marketing & Growth' AND domain='marketing_growth' AND version=2 AND name='NEXUS'
-   AND description NOT ILIKE '%sales sequences%' AND description NOT ILIKE '%pipeline%' AND config ?& ARRAY['team_hub_tools','tool_scope','personality']
+   AND description NOT ILIKE '%sales sequences%' AND description NOT ILIKE '%pipeline%' AND config ?& ARRAY['team_hub_tools','capability_scope','personality']
    FROM public.paige_subagents WHERE slug='nexus'),
  'roster: the untouched NEXUS seed is corrected to Marketing & growth (sales and pipeline belong to MERIT)');
 \echo 'PASS: roster: MERIT corrected to the 23 Oct standard on the untouched seed; config keys only added; the channel allowlist, read-only DM scopes and presentation-only personalities; replay is a no-op'

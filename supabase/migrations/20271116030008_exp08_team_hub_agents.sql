@@ -615,9 +615,15 @@ BEGIN
  IF FOUND THEN
   IF turn.posted_message_id IS NOT NULL THEN
    RETURN jsonb_build_object('ok',false,'code','duplicate','message_id',turn.posted_message_id); END IF;
-  IF turn.consumed_at IS NULL THEN RETURN jsonb_build_object('ok',false,'code','in_flight'); END IF;
+  -- Still running. A turn left unended for 10 minutes is taken as ended: no edge invocation outlives
+  -- that (the platform's wall-clock limit is far shorter), so an invocation that died without calling
+  -- team_hub_end_agent_turn can never hold the turn "running" for ever. Its old token stops working
+  -- the moment the turn is re-armed below.
+  IF turn.consumed_at IS NULL AND turn.accepted_at>now()-interval '10 minutes' THEN
+   RETURN jsonb_build_object('ok',false,'code','in_flight'); END IF;
   IF turn.channel_id<>ch.id THEN RETURN jsonb_build_object('ok',false,'code','invalid'); END IF;
-  -- Ended without posting: re-arm the same turn with the new token. Still one turn toward the cap.
+  -- Ended without posting (or abandoned): re-arm the same turn with the new token. Still one turn
+  -- toward the cap.
   UPDATE public.team_hub_agent_turns t SET token_hash=p_token_hash, accepted_at=now(), consumed_at=NULL
    WHERE t.id=turn.id;
   RETURN jsonb_build_object('ok',true,'turn_id',turn.id,'rearmed',true);
@@ -699,10 +705,15 @@ BEGIN
   VALUES (p_expected_tenant,ch.id,actor,body,p_parent_message_id,p_client_request_id,'agent',p_agent_key,p_asked_in_message_id)
   ON CONFLICT DO NOTHING RETURNING * INTO msg;
  IF msg.id IS NULL THEN
-  -- The one-reply rule already holds a reply from this agent to this message: return it.
-  SELECT * INTO msg FROM public.team_hub_messages m WHERE m.author_kind='agent' AND m.agent_key=p_agent_key
-   AND m.asked_in_message_id=p_asked_in_message_id AND m.channel_id=ch.id;
-  IF NOT FOUND OR msg.author_user_id<>actor THEN RETURN jsonb_build_object('ok',false,'code','invalid'); END IF;
+  -- Already stored: under this request id (an earlier attempt of this same post), or by the one-reply
+  -- rule (this agent already answered this message). Return that row; never another person's or agent's.
+  SELECT * INTO msg FROM public.team_hub_messages m WHERE m.author_user_id=actor AND m.client_request_id=p_client_request_id;
+  IF NOT FOUND THEN
+   SELECT * INTO msg FROM public.team_hub_messages m WHERE m.author_kind='agent' AND m.agent_key=p_agent_key
+    AND m.asked_in_message_id=p_asked_in_message_id AND m.channel_id=ch.id;
+  END IF;
+  IF NOT FOUND OR msg.author_user_id<>actor OR msg.author_kind<>'agent' OR msg.agent_key<>p_agent_key
+    OR msg.channel_id<>ch.id THEN RETURN jsonb_build_object('ok',false,'code','invalid'); END IF;
   UPDATE public.team_hub_agent_turns t SET consumed_at=now(), posted_message_id=msg.id WHERE t.id=turn.id;
   RETURN jsonb_build_object('ok',true,'message',public._team_hub_message_json(msg),'duplicate',true);
  END IF;

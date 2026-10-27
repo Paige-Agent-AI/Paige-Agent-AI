@@ -51,3 +51,18 @@ RELEASE_TRUTH_BOUNDARY: PARTIAL: controlled projector behavior; PROOF OWED for c
 RELEASE_RECOVERY: position=reviewed forward fix of transient evidence text, original authoritative records unaffected; reference=docs/delivery/e2-customer-experience-integration-matrix.md.
 
 Impeccable clarity/distill review uses the existing installed skill (https://github.com/pbakaus/impeccable/blob/main/.claude/skills/impeccable/SKILL.md): remove only exact redundancy; preserve necessary meaning, association and source disclosure. No visual quality or actual response improvement is inferred from tests. Functional, Visual, Experiential and Founder Acceptance remain separate.
+
+## Actual-main composition — October27
+
+The preceding identity is supporting original receiving history. Current receiving
+main is4a7d950589a1b9ebb7513b8da2a40f54ffc43216, with original2993 compatibility
+source now certified and2994 bounded QA evidence released. Both complete Brain
+histories are retained. The projector and nine-case test leaves remain byte-exact
+from7872f44c; original source/registry/authority/algorithm/capability behavior stays
+unchanged. An additional43 original target/seam/catalogue controls passed,390
+unique tests across13 suites. Fresh final-head regression/review/hosted CI and
+actual candidate deployment/authenticated response/reload remain required.
+
+Later verification on this actual-main composition passed390 tests/13 suites in
+68.13s. No runtime/test leaf changed from the preceding reviewed projector slice.
+New exact-head author review and hosted required CI remain separate release gates.

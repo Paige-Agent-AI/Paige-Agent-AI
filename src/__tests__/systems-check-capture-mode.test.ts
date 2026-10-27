@@ -4,8 +4,12 @@ import { resolve } from 'node:path';
 import ts from 'typescript';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-// Execute the entire original core. Only its actually declared runtime import is
-// supplied at the model port; undeclared or newly added imports fail this harness.
+// Execute the entire original core and exact extracted wait; only the model port
+// is controlled. Undeclared dependencies still fail this harness.
+const waitSource = ts.transpileModule(readFileSync(resolve('supabase/functions/_shared/systems-check-wait.ts'), 'utf8'), { compilerOptions: { target: ts.ScriptTarget.ES2020, module: ts.ModuleKind.CommonJS }, reportDiagnostics: true });
+if (waitSource.diagnostics?.length) throw new Error('Original wait did not compile');
+const waitLoaded: Record<string, unknown> = {};
+new Function('exports', 'require', waitSource.outputText)(waitLoaded, () => { throw new Error('Wait must have no runtime dependencies'); });
 const source = readFileSync(resolve('supabase/functions/_shared/systems-check-runner.ts'), 'utf8');
 const compiled = ts.transpileModule(source, { compilerOptions: { target: ts.ScriptTarget.ES2020, module: ts.ModuleKind.CommonJS }, reportDiagnostics: true });
 if (compiled.diagnostics?.length) throw new Error('Original core did not compile');
@@ -14,10 +18,11 @@ const imports: string[] = [];
 const loaded: Record<string, unknown> = {};
 new Function('exports', 'require', compiled.outputText)(loaded, (name: string) => {
   imports.push(name);
-  if (name !== './prompt-forge.ts') throw new Error('Unbound original dependency: ' + name);
-  return { forge };
+  if (name === './prompt-forge.ts') return { forge };
+  if (name === './systems-check-wait.ts') return waitLoaded;
+  throw new Error('Unbound original dependency: ' + name);
 });
-expect(imports).toEqual(['./prompt-forge.ts']);
+expect([...new Set(imports)]).toEqual(['./prompt-forge.ts', './systems-check-wait.ts']);
 
 // Load the thin adapter against this SAME whole original Core, not a replacement
 // runner. Native RPC replies are controlled transport fixtures; original native
@@ -27,8 +32,9 @@ const adapterCompiled = ts.transpileModule(adapterSource, { compilerOptions: { t
 if (adapterCompiled.diagnostics?.length) throw new Error('Original Systems adapter did not compile');
 const adapterLoaded: Record<string, unknown> = {};
 new Function('exports', 'require', adapterCompiled.outputText)(adapterLoaded, (name: string) => {
-  if (name !== './systems-check-runner.ts') throw new Error('Unbound adapter dependency: ' + name);
-  return loaded;
+  if (name === './systems-check-runner.ts') return loaded;
+  if (name === './systems-check-wait.ts') return waitLoaded;
+  throw new Error('Unbound adapter dependency: ' + name);
 });
 const consumeWork = adapterLoaded.consumeManualSystemsCheckWork as (options: Record<string, unknown>) => Promise<Record<string, unknown>>;
 type Summary = { run_id: string; check_count: number; pass_count: number; fail_count: number; skip_count: number; error_count: number; actions_filed: number; findings: Array<{ finding_id: string; resolution_action_id: string | null; status: string }> };

@@ -39,7 +39,10 @@
 --    was checked (§37 below): none breaks for either value, and campaigns approved before this file
 --    (managed, frozen 'resend') keep working and keep receiving receipts. The SendGrid-connector
 --    verification rule (H2: a 'sendgrid' connector's From must be on a domain THIS business verified)
---    is untouched.
+--    is untouched here. It is NOT the whole of H2 any more: the 'resend'-labelled senders that now reach
+--    SendGrid carry tenant-writable addresses, so send-message applies its own H2 rule to them
+--    (platform-sendgrid.ts tenantFrom: a mail.paigeagent.ai From only when it is this business's own
+--    managed address resolved server-side; anything else sends as notifications@).
 --
 -- 4. _sendgrid_apply_governed_receipt — SendGrid's events now settle 'resend'-bound governed emails.
 --    send-message's governed door hands a 'resend'-bound comms.email_send to SendGrid with the same three

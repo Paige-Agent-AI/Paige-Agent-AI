@@ -13,7 +13,7 @@
  */
 import { act } from "react";
 import { createRoot } from "react-dom/client";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { SoloTeamWorkspace } from "./team-workspace";
 
 const mocks = vi.hoisted(() => ({ rpc: vi.fn(), invoke: vi.fn() }));
@@ -40,12 +40,15 @@ const TEAM = {
   invitations: [],
 };
 
+const mounted: Array<ReturnType<typeof createRoot>> = [];
+
 async function mountScreen() {
   mocks.rpc.mockImplementation(async (name: string) =>
     name === "get_solo_team_workspace" ? { data: TEAM, error: null } : { data: null, error: { message: "not in this test" } });
   const host = document.createElement("div");
   document.body.append(host);
   const root = createRoot(host);
+  mounted.push(root);
   await act(async () => root.render(<SoloTeamWorkspace />));
   for (let i = 0; i < 50 && !(host.textContent ?? "").includes("Paige team context"); i++) {
     await act(async () => { await new Promise((resolve) => setTimeout(resolve, 10)); });
@@ -53,6 +56,13 @@ async function mountScreen() {
   expect(host.textContent, "the Paige panel rendered").toContain("Paige team context");
   return host.querySelector(".stw-paige") as HTMLElement;
 }
+
+// Unmount and let React's scheduler drain inside the test, so no work runs after jsdom is torn
+// down (an unhandled scheduler error after teardown fails the whole vitest run).
+afterEach(async () => {
+  for (const root of mounted.splice(0)) await act(async () => { root.unmount(); });
+  await act(async () => { await new Promise((resolve) => setTimeout(resolve, 0)); });
+});
 
 beforeEach(() => {
   document.body.innerHTML = "";

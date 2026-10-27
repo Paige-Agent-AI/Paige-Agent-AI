@@ -407,6 +407,10 @@ describe("the hand-over is done only when the read-back shows the requested rece
     const { c } = withRead(async () => ({ data: null, error: { code: "42501", message: "permission denied" } }));
     assertUnconfirmed(await runTeamLifecycleWrite("team_handover_work", scope, c as any, args), /couldn't read the work back/);
   });
+  it("the read answers an error alongside a matching row -> outcome unknown, never success", async () => {
+    const { c } = withRead(async () => ({ data: { id: ITEM, tenant_id: T, assigned_to_user_id: SAM }, error: { code: "57014", message: "canceling statement due to statement timeout" } }));
+    assertUnconfirmed(await runTeamLifecycleWrite("team_handover_work", scope, c as any, args), /couldn't read the work back/);
+  });
   it("the read throws -> outcome unknown, never success", async () => {
     const { c } = withRead(async () => { throw new Error("socket hang up"); });
     assertUnconfirmed(await runTeamLifecycleWrite("team_handover_work", scope, c as any, args), /couldn't read the work back/);

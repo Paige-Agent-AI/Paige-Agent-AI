@@ -77,7 +77,7 @@ export function createRecordedActivitySnapshotAdapter(
       return parsed;
     };
     try {
-      if (!await actorMatches() || !await tenantMatches() || !allowed()) return gap('recorded_activity_scope_changed');
+      if (!await actorMatches() || !allowed() || !await tenantMatches() || !allowed()) return gap('recorded_activity_scope_changed');
       const initial = await read();
       if (!allowed()) return gap('recorded_activity_aborted');
       const start = Date.parse(ctx.period.start), end = Date.parse(ctx.period.end), observed = clock();
@@ -87,8 +87,9 @@ export function createRecordedActivitySnapshotAdapter(
       // Re-enter the SAME native owner/admin gate. Revoked access, changed attribution, removed
       // records, or records pushed outside the current bounded source invalidate the earlier read.
       const current = await read();
+      if (!allowed()) return gap('recorded_activity_aborted');
       if (selected.some(e => !current.some(c => JSON.stringify(c) === JSON.stringify(e)))) return gap('recorded_activity_source_changed');
-      if (!await tenantMatches() || !await actorMatches() || !allowed()) return gap('recorded_activity_scope_changed');
+      if (!await tenantMatches() || !allowed() || !await actorMatches() || !allowed()) return gap('recorded_activity_scope_changed');
       return contextAvailable<DomainSnapshot>({ domain: 'outcomes', owner: 'business', period: { ...ctx.period },
         as_of: new Date(observed).toISOString(), freshness: 'live_read', coverage: 'partial',
         coverage_note: 'Up to 3 readable events in this period from the latest 25 Rail records. Limited owner-visible sample; omitted or absent entries do not prove no activity. Recorded facts are not proof of approvals, completed business actions, receipts or improved results.',

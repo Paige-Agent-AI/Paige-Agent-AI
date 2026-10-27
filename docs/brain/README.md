@@ -1,5 +1,14 @@
 ## EXP02 original recorded-activity review — October27 development
 
+Incoming [#2995 source release](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2995#issuecomment-6452429513)
+is now actual02c101f44f776e8bb937869466130be99655239c/tree72bd, all11 exact checks/
+two webSUCCESS/LOWER5673022179+5673549365. WebArRgjpF7 READY/bothorigins exact02c
+20:07UTC; original normal40574878028 verifies all9 closures/config first attempt,
+987 entries/359 Git identities. Original artifact digest and source bindings
+independently match; Chat565/review103/orchestrator149, edge-live02c. Original
+cleanup advisory retained. This verifies source delivery, not another customer
+drive. Actual candidate weekly/date/coverage/persisted reply/reload remains owed.
+
 The existing business.operating_snapshot outcomes area now has a LOCAL consumer
 of get_solo_rail_activity(p_limit=25), not a second ledger or metrics reader.
 Only original owner-visible readable facts/time/tenant-safe attribution enter

@@ -7,7 +7,7 @@ MATERIAL_FLOW_CHANGE: NO: integrates the already-requested outcomes area through
 FLOW_PROTOTYPE: NOT_REQUIRED: existing analytical read and source states; no new form, dialog, action or transition.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: eligible SOLO owner/admin asks what happened during the review period; sees original recorded facts and attribution without fabricated business completion or causal improvement.
 VISUAL_DIRECTION: NOT_APPLICABLE: no visual source changes; existing premium review and single Chat runtime retained.
-AUTOMATED_EVIDENCE: PASS: 307 checks across ten suites, including67 dedicated actual-source cases and original Finance/Chat/priority/scope/catalogue regressions. Initial regression266PASS/2FAIL exposed obsolete eight-source/no-adapter expectations; both corrected specifically, all original scope/refusal assertions retained. Fresh native source and test type checks pass.
+AUTOMATED_EVIDENCE: PASS: final actual2995 composition316 checks across eleven suites, including67 dedicated actual-source cases and original Finance/Chat/priority/scope/catalogue/window-note regressions. Initial regression266PASS/2FAIL exposed obsolete eight-source/no-adapter expectations; both corrected specifically, all original scope/refusal assertions retained. Final cancellation negatives verify no further read after each observed abort. Fresh native source and test type checks pass.
 STATIC_EVIDENCE: PASS: strict bounded adapter TypeScript, native test/source TypeScript, scoped ESLint and pinned Deno2.1.4 original composer checks exit0. The first Windows global Deno cache lacked its node type file; a fresh workspace-local cache with the same compiler/dependencies passed. No source baseline/config/workflow/security gate relaxation; hosted final-head CI remains mandatory.
 RENDERED_EVIDENCE: NOT_APPLICABLE: no interface implementation change; prior actual Finance/Executive evidence is retained, not attributed to this candidate.
 BEHAVIORAL_EVIDENCE: UNVERIFIED: controlled source/transport/permission checks are not released customer evidence. Actual recorded-activity review and saved-conversation reload remain owed.
@@ -62,3 +62,14 @@ CUSTOMER_RELEASE_IDENTITY: none: no customer announcement earned.
 RELEASE_NOTE_REQUIRED: no: internal engineering increment.
 RELEASE_TRUTH_BOUNDARY: PARTIAL: controlled native-source consumer only; deployment and authenticated outcome remain owed.
 RELEASE_RECOVERY: position=reviewed forward fix of transient analytical evidence with original authoritative records retained; reference=docs/delivery/e2-customer-experience-integration-matrix.md
+
+## Actual-main composition and preceding release closeout
+
+This consumer now receives actual2995/main02c. Both whole Brain histories and
+all original runtime/test leaves were preserved in the normal composition;
+only the original README top insertion conflicted and was resolved additively.
+Final scoped lint/types/pinnedDeno and316 checks/11 suites passed. Local review
+also tightened abort ordering so a cancelled read starts no subsequent RPC.
+The original Master shipped log records2995 source/web delivery using original
+receipt6452429513, not a new ledger or a customer-acceptance claim. No fixture,
+role, provider, registry engine, Root/risk/C0b or other Experience writer changed.

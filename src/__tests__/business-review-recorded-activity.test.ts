@@ -122,6 +122,8 @@ describe('original Rail activity inside the existing review', () => {
   it.each(['auth:1', 'tenant:1', 'feed:1', 'feed:2', 'tenant:2', 'auth:2'])('discards a cancelled late answer at %s', async step => {
     const f = fixture(); f.options.onStep = s => { if (s === step) f.cancel.abort(); };
     expect((await f.read()).data).toBeNull();
+    const sequence = ['auth:1', 'tenant:1', 'feed:1', 'feed:2', 'tenant:2', 'auth:2'];
+    expect(f.steps).toEqual(sequence.slice(0, sequence.indexOf(step) + 1));
   });
   it.each(['actorId', 'tenantId', 'workspaceId', 'scopeEpoch'])('discards changed %s during the read', async field => {
     const f = fixture(); f.options.onStep = s => { if (s === 'feed:2') f.identity[field as 'actorId'] = id(30); };

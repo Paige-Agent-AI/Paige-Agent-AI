@@ -19,6 +19,7 @@ function livePage(over: Record<string, unknown> = {}): Extract<LoadedArtifact, {
       id: "p-1", title: "Referral Workshop", slug: "workshop", live: true, changesPending: false,
       blocks: [{ type: "hero", title: "Draft hero" }],
       theme: null,
+      draftSeo: null,
       published: {
         blocks: [{ type: "hero", title: "Published hero" }],
         theme: null, seo: null, publishedAt: "2026-10-01T12:00:00Z",

@@ -45,6 +45,19 @@ describe("classifyWebDomain — the ladder and its truths", () => {
     expect(r.headline).toContain("Serving at your reserved address");
   });
 
+  it("no custom address, reserved status UNOBSERVED (the card's default): claims nothing either way", () => {
+    // A publication receipt proves the artifact's URL, not that the reserved host root serves —
+    // so the unobserved default may not say "serving" OR "held" (both would be invented facts).
+    const r = classifyWebDomain({ ...base, reservedWebLive: null });
+    expect(r.state).toBe("not_started");
+    expect(r.headline).toBe("Your reserved address (acme-coaching.paigeagent.ai)");
+    expect(r.detail).toContain("isn't checked from this panel");
+    expect(r.detail).toContain("the address at the top of this card");
+    expect(r.headline.toLowerCase()).not.toContain("serving");
+    expect(r.headline.toLowerCase()).not.toContain("held");
+    expect(`${r.headline} ${r.detail}`.toLowerCase()).not.toContain("live at");
+  });
+
   it("custom address, TXT unseen: ownership pending, at the AUTHORITATIVE answerer", () => {
     const r = classifyWebDomain(custom({}));
     expect(r.state).toBe("ownership_pending");

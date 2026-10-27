@@ -33,12 +33,13 @@ describe("DomainGuidanceCard", () => {
 
     open(el);
     expect(details.textContent).toContain("acme-coaching.paigeagent.ai");
-    // The honest starting state: serving at the reserved address, no custom address implied —
-    // "www." appears only inside the guidance's own example, never as a claimed address.
-    // The honest starting state: serving at the reserved address; "www." appears only inside
-    // the guidance's own next-step example, never in the headline or meaning-of-state lines.
+    // The honest starting state: the reserved address's serving status is UNOBSERVED from this
+    // card (a publication receipt proves the artifact's URL, not the reserved host root) — so
+    // the headline claims neither "serving" nor "held", and points at the proven address above.
+    // "www." appears only inside the guidance's own next-step example, never as a claimed address.
     const state = details.querySelector(".vs-domain-state")!;
-    expect(state.querySelector("p:first-child")!.textContent).toBe("Serving at your reserved address (acme-coaching.paigeagent.ai)");
+    expect(state.querySelector("p:first-child")!.textContent).toBe("Your reserved address (acme-coaching.paigeagent.ai)");
+    expect(state.querySelector("p:nth-child(2)")!.textContent).toContain("isn't checked from this panel");
     expect(state.querySelector("p:nth-child(2)")!.textContent).not.toContain("www.");
     expect(state.textContent).not.toContain("Live at");
   });

@@ -23,8 +23,11 @@ export const MAIL_AND_AUTHORITY_RECORDS: readonly string[] = [
 export interface WebDomainObservations {
   /** The tenant's canonical reserved address, e.g. "acme.paigeagent.ai". */
   reservedAddress: string;
-  /** Spine state for the RESERVED address: routing attached and smoke-tested (web_live). */
-  reservedWebLive: boolean;
+  /** Spine state for the RESERVED address: routing attached and smoke-tested (web_live).
+   *  null = NOT observed from this surface — the classifier then claims nothing about it
+   *  (publishing an artifact proves the artifact's own URL, never that the reserved
+   *  host root serves; the spine forbids calling reserved infrastructure live). */
+  reservedWebLive: boolean | null;
   /** The custom address the owner wants to serve the site from, once they state one. */
   customDomain: string | null;
   /** The ownership TXT record was seen at the custom domain's AUTHORITATIVE nameserver
@@ -87,12 +90,21 @@ export function classifyWebDomain(o: WebDomainObservations): WebDomainClassifica
     };
   }
   if (!o.customDomain) {
+    // Three truths, never two: OBSERVED serving, OBSERVED held, or NOT observed from here.
+    // A publication receipt proves the artifact's own URL — not that the reserved host
+    // root serves — so the unobserved case must claim nothing in either direction.
     return {
       state: "not_started",
-      headline: o.reservedWebLive ? `Serving at your reserved address (${o.reservedAddress})` : `Your reserved address is held (${o.reservedAddress})`,
-      detail: o.reservedWebLive
-        ? "Your published site answers at this address today. A custom address of your own is an addition, never a replacement requirement."
-        : "The address is allocated to your workspace and serves nothing until your site is actually live on it — a held address is not a website.",
+      headline: o.reservedWebLive === null
+        ? `Your reserved address (${o.reservedAddress})`
+        : o.reservedWebLive
+          ? `Serving at your reserved address (${o.reservedAddress})`
+          : `Your reserved address is held (${o.reservedAddress})`,
+      detail: o.reservedWebLive === null
+        ? "It's held for this workspace. Whether it's serving isn't checked from this panel — what's live today is the address at the top of this card."
+        : o.reservedWebLive
+          ? "Your published site answers at this address today. A custom address of your own is an addition, never a replacement requirement."
+          : "The address is allocated to your workspace and serves nothing until your site is actually live on it — a held address is not a website.",
       nextStep: "Want your own address (like www.yourbusiness.com)? Tell Paige the domain and the registrar you bought it from.",
     };
   }

@@ -29,7 +29,11 @@ export function DomainGuidanceCard({ tenantSlug, observations }: {
 
   const cls = classifyWebDomain({
     reservedAddress: `${tenantSlug}.paigeagent.ai`,
-    reservedWebLive: true, // this card only renders inside a live view: the reserved address IS serving
+    // A published artifact proves the artifact's own URL (the link at the top of this pop) —
+    // never that the reserved host root serves. Unobserved stays unobserved: the classifier
+    // then claims nothing about the reserved address in either direction (spine rule:
+    // reserved infrastructure is never called connected or live from a publication receipt).
+    reservedWebLive: null,
     customDomain: null,
     ownershipTxtSeen: false,
     dnsAuthorityElsewhere: null,

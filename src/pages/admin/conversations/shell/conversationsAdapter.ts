@@ -212,6 +212,10 @@ interface ConversationsComposerModelBase {
   sendLabel?: string;
   rows?: number;
   textareaClassName?: string;
+  /** Stands in place of the action row (tenant email reply: the inline check); hides the gold Send. */
+  actions?: ReactNode;
+  /** The send is being checked: Send is aria-busy/aria-disabled and inert, but keeps focus. */
+  checking?: boolean;
 
   // sending identity
   identities: SendingIdentity[];

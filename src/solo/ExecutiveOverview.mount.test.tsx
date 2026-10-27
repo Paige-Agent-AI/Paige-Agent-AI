@@ -70,7 +70,7 @@ describe('Executive period continuity through the existing route', () => {
       expect(mocks.prefill, name).toHaveBeenCalledWith(expect.stringContaining(label));
       const prompt = mocks.prefill.mock.calls[0][0] as string;
       expect(prompt.split(label), name).toHaveLength(2);
-      expect(prompt, name).toContain('Use the ' + label + ' reporting period.');
+      expect(prompt, name).toContain('Reporting period: ' + label + '.');
       expect(open, name).toHaveBeenCalledOnce();
       expect(selectedPeriod()).toBe(period);
     }

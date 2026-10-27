@@ -91,7 +91,7 @@ function ResolvedExecutiveOverview({ account, accountEpoch, accountName, openPai
     if (!openPaige) return;
     clearPaigeSurfaceScope();
     clearPaigePublicPresenceScope();
-    handOffPaigePrompt(prompt + " Use the " + (PERIODS.find(p => p.key === period)?.label ?? "Last 7 days") + " reporting period.");
+    handOffPaigePrompt(prompt + " Reporting period: " + (PERIODS.find(p => p.key === period)?.label ?? "Last 7 days") + ".");
     openPaige();
   };
   const refresh = () => { review.refresh(); pending.refresh(); activity.refresh(); void missions.refresh(); void calendar.refresh(); };

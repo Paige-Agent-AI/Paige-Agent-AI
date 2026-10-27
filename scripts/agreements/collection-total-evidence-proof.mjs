@@ -7,7 +7,7 @@ import {readAcceptedCollectionTotalEvidence,readCollectionAmountBasis,RECURRING_
  */
 export async function proveCollectionTotalEvidence({sql,read,tenant,actor,c}){
  let checks=0;const equal=(actual,expected,message)=>{assert.deepEqual(actual,expected,message);checks++;};
- const json=q=>JSON.parse(sql(q)),migration=read('supabase/migrations/20271115070004_sales_collection_total_evidence.sql');
+ const json=q=>JSON.parse(sql(q)),migration=read('supabase/migrations/20271116100404_sales_collection_total_evidence.sql');
  const reader='public.list_sales_collection_agreements(uuid,integer,uuid)',basis='public._sales_collection_amount_basis(public.tenant_client_agreements)',proof='public._sales_collection_accepted_total_evidence(public.tenant_client_agreements)';
  const definition=signature=>sql(`SELECT pg_get_functiondef('${signature}'::regprocedure);`).replaceAll('\r\n','\n');
  const metadata=signature=>json(`SELECT jsonb_build_object('owner',proowner,'acl',proacl::text,'definer',prosecdef,'path',proconfig,'volatility',provolatile) FROM pg_proc WHERE oid='${signature}'::regprocedure;`);

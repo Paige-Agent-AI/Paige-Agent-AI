@@ -65,7 +65,8 @@ function setup(opts: { caller?: "user" | "service"; admit?: Admit; provider?: Pr
       if (name === "comms_provider_execution_allowed" || name === "has_role") return { data: true, error: null };
       if (name === "current_user_tenant_id") return { data: TENANT, error: null };
       if (name === "is_platform_owner") return { data: false, error: null };
-      if (name === "tenant_sender_identity") return { data: { from_name: "Cedar", from_address: "hello@managed.example.test" }, error: null };
+      // The business's own managed address, as the server resolves it (security H2: the only shared-domain From kept).
+      if (name === "tenant_sender_identity") return { data: { from_name: "Cedar", from_address: "cedar@mail.paigeagent.ai" }, error: null };
       return { data: null, error: null };
     },
   };

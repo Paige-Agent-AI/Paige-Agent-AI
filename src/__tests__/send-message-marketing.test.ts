@@ -188,7 +188,7 @@ describe("email adapter (SendGrid route, Experience 03) headers", () => {
     const out = await email.send(
       { subject: "Hi", body_html: "<p>x</p>" },
       { from: { address: "acme@mail.paigeagent.ai" }, to: "one@example.test", providerApiKey: "k",
-        listUnsubscribeUrl: "https://db.example.test/u?token=t", idempotencyKey: "ecr:1" },
+        listUnsubscribeUrl: "https://db.example.test/u?token=t", idempotencyKey: "ecr:1", ownManagedAddresses: ["acme@mail.paigeagent.ai"] } as never,
     );
     expect(out).toEqual({ ok: true, status: "sent", provider_message_id: "sg_abc" });
     expect(s.fetchCalls.map((c) => c.url)).toEqual(["https://api.sendgrid.com/v3/mail/send"]);
@@ -211,7 +211,7 @@ describe("email adapter (SendGrid route, Experience 03) headers", () => {
     expect(JSON.parse(String(s.fetchCalls[1].init.body)).headers).toEqual({ "In-Reply-To": "<abc@mail>" });
   });
 
-  it("H2: a business's own domain never appears as the From; Paige's own paigeagent.ai moves to mail.paigeagent.ai", async () => {
+  it("H2: a business's own domain never appears as the From; a business's data never sends as PAIGE", async () => {
     const s = setup();
     const email = s.adapters.find((a) => a.channel_type === "email")!;
     await email.send({ subject: "Hi", body_html: "<p>x</p>" }, { from: { address: "hello@acme.example", display_name: "Acme Studio" }, to: "one@example.test", providerApiKey: "k", provider: "resend" });
@@ -222,7 +222,10 @@ describe("email adapter (SendGrid route, Experience 03) headers", () => {
     expect(p[0].reply_to).toEqual({ email: "hello@acme.example" });
     expect(p[1].from).toEqual({ email: "notifications@mail.paigeagent.ai", name: "Acme" });
     expect(p[1].reply_to).toEqual({ email: "desk@acme.example" });
-    expect(p[2].from).toEqual({ email: "team@mail.paigeagent.ai", name: "Paige" });
+    // A paigeagent.ai address in a business's data is never remapped onto the shared domain (tenantFrom),
+    // and no Reply-To is pointed at PAIGE.
+    expect(p[2].from).toEqual({ email: "notifications@mail.paigeagent.ai", name: "Paige" });
+    expect(p[2].reply_to).toBeUndefined();
   });
 
   it("an attachment (an invoice PDF) rides the SendGrid request", async () => {

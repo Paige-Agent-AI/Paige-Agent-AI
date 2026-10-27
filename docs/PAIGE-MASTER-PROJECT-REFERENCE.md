@@ -934,6 +934,15 @@ it changes no product, policy, capability or acceptance status and is not logged
 This mechanical post-merge closeout records the preceding source deliveries and is
 not logged recursively. It adds no product, policy, capability or acceptance change.
 
+**2026-10-27 UTC — EXP09 original support mailbox attention in Portal Overview.**
+
+| Increment | Exact released source and observed production | Acceptance boundary |
+| --- | --- | --- |
+| [#2956 original support attention](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2956#issuecomment-6432883023) | Reviewed `95da6ec1325c93fa1f161a78adb2fbed51532de1`, AUTHOR-REVIEW / LOWER ASSURANCE5661586403; all13 exact-head checks and both web statuses SUCCESS, zero review threads. Final gate6432843215; original69 focused tests and full-schema385 actual-role assertions PASS. Actual main `ecdded3953daed300ddb8d946d08dc721669fdbc` / tree `140e08f4bd43e6b468416d5bb0e7429ac2e706aa`, parentsd4fcca1b4+95da6ec13; all20 owning non-Master leaves and16,651 incoming outside entries exact, whole-Master inverse PASS. Incoming website/ZION/Team/Chat/Spine/CI preserved. Normal deploy-migrations40443129731/lint121987931777/deploy121988101381 SUCCESS; production20271116110009 count1, former40009count0. Original wrapper prosrc c17e13561cd48cf663acbb28219f4c6e, STABLE INVOKER/emptysearch_path, exact uuid/uuid/uuid[] ABI and authenticated-only execute; original support/access helper bodies exact. Vercel `dpl_DoY5t88TjWXoZEV7gVjxakFZy99s` READY on this merge; both public origins exactecdded3953daed300ddb8d946d08dc721669fdbc-mvq455cy/customerUpdate:null, entry/assets/cache/missing404 PASS at03:17:07UTC. Edge delta N/A. | Narrow original-record read SOURCE/SCHEMA/WEB DEPLOYED: fifty-case shared-mailbox window for at most250 loaded CRM clients, original client handoff, explicit unavailable/retry, actual actor/server-business fences; no case/message/provider writer or new inbox. Visual: original-component light/dark/320–1536 geometry and keyboard reviewed; final signed-in shell/cohort/physical-device/AT proof owed. Experiential: actual owner case read/reload/recovery UNVERIFIED, Portal-help→E03 case lifecycle handoff missing. Full42/seven pillars, Teach/CAP/ALG and founder NOT_ACCEPTED remain open. Existing customer contact/Knowledge/private return proof is separate; browser local-file refusal leaves actual upload/document-reading UNVERIFIED. No send, signing/payment, consent/role/provider/Live/INT346 activation or customer announcement. Forward correction or remove the narrow mount; original records remain untouched. |
+
+This mechanical post-merge identity closeout records the preceding delivery;
+it adds no product, policy, capability readiness or acceptance change and is not logged recursively.
+
 **2026-10-26 UTC — EXP09 original review handoff and business-owned Portal support contact.**
 
 | Increment | Exact source and observed production evidence | Acceptance boundary |

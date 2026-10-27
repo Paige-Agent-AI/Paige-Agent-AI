@@ -1,3 +1,27 @@
+## EXP02 Finance target source released — October27 UTC
+
+[#2967 exact receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2967#issuecomment-6434154203):
+reviewed487/LOWER5662137133/all10 applicable checksSUCCESS/PreviewSKIP/two webSUCCESS;
+actual mergef9722f5c77e19f2838c8657ca28edc646794d29e/tree5aa3e667 preserves the normal
+incoming45111 union/all16,696 outside entries. Productiondpl_6gMbStvqYRjxXz9iVh2PVLC4Bpcz
+READY; both public200/exactf972-mvq7rg8q/null/entry assets verified. Native/Edge/
+grant/action/provider delta N/A. Functional bounded source DEPLOYED; Visual19
+actual synthetic frames, Experiential/customer proof still incomplete, Founder
+NOT_ACCEPTED. No all19/nine/CAP/ALG/readiness promotion. [Current Finance boundaries](finance-department.md#october27--financial-play-target-consumer-released-acceptance-still-owed).
+
+## EXP02 financial Play target consumer — October27 UTC
+
+The original Finance Forecast view now presents sampled financial F7 targets and
+their issued actuals through the existing focused Game Plan review and shared
+Executive target component. No budget, forecast engine, provider, permission,
+writer or action receipt is added. Current actor/tenant, sample, currency, period
+and expiry limits remain explicit. Source/controlled and synthetic rendered proof
+are separate from required review/CI/release and ordinary customer acceptance.
+[Finance Brain](finance-department.md#october27--original-financial-play-targets-source-consumer)
+and [UI evidence](../evidence/ui-delivery/e2-financial-play-targets.md) retain exact
+boundaries. All19/nine, governed follow-through, native zoom, roles/cohorts/Live and
+one complete founder evaluation remain open. No catalogue/algorithm promotion.
+
 ## EXP02 original private Systems host released — October27 UTC
 
 [#2952 actual source receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2952#issuecomment-6430581019):

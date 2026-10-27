@@ -4,8 +4,10 @@ import { ArrowRight } from 'lucide-react';
 import { routeLinkTarget } from '@/lib/links/workspaceLinks';
 import { formatMissionTargetValue, type MissionTargetSnapshot } from '../../supabase/functions/_shared/business-mission-targets/presentation';
 import { formatReviewInstant } from './executive-review';
+import './executive-targets.css';
 
-export function ExecutiveTargets({ targets, account }: { targets: readonly MissionTargetSnapshot[]; account?: string | null }) {
+export function ExecutiveTargets({ targets, account, headingLevel = 4 }: { targets: readonly MissionTargetSnapshot[]; account?: string | null; headingLevel?: 3 | 4 }) {
+  const TargetHeading = headingLevel === 3 ? 'h3' : 'h4';
   const [at, setAt] = useState(Date.now);
   useEffect(() => {
     const now = Date.now(), times = targets.flatMap(row => row.observation.state === 'unavailable' ? [] : [Date.parse(row.observation.reference_expires_at),
@@ -30,7 +32,7 @@ export function ExecutiveTargets({ targets, account }: { targets: readonly Missi
       : observation.attainment === 'met' ? observation.period_complete ? 'Target met' : 'At target now'
         : target.comparison === 'at_most' ? 'Above limit' : target.comparison === 'within_range' ? 'Outside target range' : 'Below target';
     return <li key={target.id}>
-      <div className="exec-section-head"><h4>{target.title}</h4><span className="exec-state">{target.state} · revision {target.revision}</span></div>
+      <div className="exec-section-head"><TargetHeading>{target.title}</TargetHeading><span className="exec-state">{target.state} · revision {target.revision}</span></div>
       <p>{target.comparison === 'within_range' ? 'Within' : target.comparison === 'at_most' ? 'At most' : 'At least'} <strong>{desired}</strong></p>
       <p className="exec-note">{row.mission.title} · {formatReviewInstant(target.period.start, target.period.time_zone)}–{formatReviewInstant(new Date(Date.parse(target.period.end) - 1).toISOString(), target.period.time_zone)} · {target.period.time_zone}</p>
       {observation.state === 'unavailable' ? <p className="exec-note">{observation.reason === 'historical_snapshot_unavailable'

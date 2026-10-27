@@ -1,0 +1,46 @@
+[
+  {
+    "state": "partial",
+    "review": false,
+    "viewport": 390,
+    "width": 390
+  },
+  {
+    "state": "expired",
+    "review": false,
+    "viewport": 390,
+    "width": 390
+  },
+  {
+    "state": "empty",
+    "review": false,
+    "viewport": 390,
+    "width": 390
+  },
+  {
+    "state": "unavailable",
+    "review": true,
+    "view": "Financial Play targetsSaved targets and issued actuals, separate from a company budget or cash forecast.Financial targets are unavailable in this review. No target or actual is inferred.Open Business Game Plan",
+    "viewport": 390,
+    "width": 390
+  },
+  {
+    "state": "loading",
+    "review": true,
+    "view": "Financial Play targetsSaved targets and issued actuals, separate from a company budget or cash forecast.Reading permitted Play targets…Open Business Game Plan",
+    "viewport": 390,
+    "width": 390
+  },
+  {
+    "state": "error",
+    "review": false,
+    "viewport": 390,
+    "width": 390
+  },
+  {
+    "state": "member",
+    "review": false,
+    "viewport": 390,
+    "width": 390
+  }
+]

@@ -27,7 +27,7 @@ ACCEPTANCE_CRITERIA: Same original authorized case identity and state, exact kno
 MOTION_PURPOSE: NONE: ordinary bounded read and native reflow only.
 PROTECTED_SEAMS: Original case, connector, Communications, authority helper, shared runtime and workflow source bodies are untouched. Additive invoker wrapper, native read-only negatives and the narrow Portal presentation are owned by EXP09.
 
-INTERNAL_BUILD_IDENTITY: base=2aa4d23e8f10095cc4becd15f0d8ed43a7c79f3e; deployment=NOT_DEPLOYED; environment=development; migrations=PROOF_OWED(20271116110009 final-frontier native execution and fresh Preview remain required; prior523 full-schema385 passed); edge=NOT_APPLICABLE; evidence=this original packet and owning PR
+INTERNAL_BUILD_IDENTITY: base=2aa4d23e8f10095cc4becd15f0d8ed43a7c79f3e; deployment=NOT_DEPLOYED; environment=development; migrations=PROOF_OWED(20271116110009 final-frontier native execution and fresh Preview remain required, prior523 full-schema385 passed); edge=NOT_APPLICABLE; evidence=this original packet and owning PR
 RELEASE_CHANNEL: development: controlled source/render proof; no native production availability claim
 RELEASE_CLASSIFICATION: internal-only: existing-owner original-record projection, no activation or customer announcement
 CUSTOMER_RELEASE_IDENTITY: none: no named release or What's New entry

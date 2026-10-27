@@ -1,7 +1,7 @@
 import { commsProviderExecutionAllowed, COMMS_PROVIDER_EXECUTION_DISABLED } from "../_shared/comms-provider-boundary.ts";
 import {collectInvoiceLedger} from '../_shared/sales-invoice-ledger.ts';
 import { senderDisplayName } from "../_shared/email/sender-display-name.ts";
-import { platformFrom } from "../_shared/email/platform-sendgrid.ts";
+import { PLATFORM_FROM_DOMAIN, tenantFrom } from "../_shared/email/platform-sendgrid.ts";
 import {renderSalesInvoiceDocument} from '../_shared/sales-invoice-document.ts';
 import {renderDocumentPdf} from '../_shared/document-pdf.ts';
 import {pdfEmailAttachment} from '../_shared/email-attachments.ts';
@@ -131,7 +131,10 @@ type OutboundDelivery = Awaited<ReturnType<OutboundChannelAdapter["send"]>>;
 type CommsEmailSendContext = OutboundSendContext & { abortSignal?: AbortSignal | null; sendgridCustomArgs?: Record<string, string> | null;
   // Experience 03: a campaign email asks SendGrid to track opens and clicks itself, so campaign analytics
   // never depend on the account's tracking defaults.
-  sendgridTrackEngagement?: boolean };
+  sendgridTrackEngagement?: boolean;
+  // Security H2: THIS business's own managed address(es) on mail.paigeagent.ai, resolved server-side for
+  // the derived tenant (never from a connector or the request). The only shared-domain From kept as is.
+  ownManagedAddresses?: string[] };
 
 // read_comms_email_send_binding returns the binding (flat, like the invoice read) plus the
 // message's tenant. A nested `comms_email_binding` object is accepted too. Anything malformed,
@@ -383,9 +386,11 @@ const emailOutboundAdapter: OutboundChannelAdapter = {
     // From (security H2). SendGrid authenticates domains for the whole shared account, so it would accept
     // a From on any domain the account verified, including one another business verified. A SendGrid
     // connector's From reaches this arm only through the governed door or the campaign admission, both of
-    // which bind it to a domain THIS business verified, so it is sent as is. Every other From goes through
-    // platformFrom: an address on mail.paigeagent.ai stays, Paige's own paigeagent.ai addresses move there,
-    // and a business's own domain is sent as notifications@mail.paigeagent.ai under the business's name.
+    // which bind it to a domain THIS business verified, so it is sent as is. Every other From is the
+    // business's data (a workspace admin can write any connector address), so it goes through tenantFrom:
+    // a mail.paigeagent.ai address stays ONLY when it is this business's own managed address as resolved
+    // server-side; another business's managed address, any PAIGE address (paigeagent.ai is never
+    // remapped) and a business's own domain are sent as notifications@mail.paigeagent.ai under its name.
     let sgFrom: { email: string; name?: string };
     let sgReplyTo = ctx.replyTo || null;
     if (ctx.provider === "sendgrid") {
@@ -393,12 +398,13 @@ const emailOutboundAdapter: OutboundChannelAdapter = {
       sgFrom = name0 ? { email: ctx.from.address, name: name0 } : { email: ctx.from.address };
     } else {
       const name = ctx.from.display_name?.replace(/[<>",\r\n]/g, " ").replace(/\s+/g, " ").trim();
-      sgFrom = platformFrom(name ? `${name} <${ctx.from.address}>` : ctx.from.address);
-      // The business's own address is no longer the From, so a reply would reach the shared
+      sgFrom = tenantFrom(name ? `${name} <${ctx.from.address}>` : ctx.from.address, (ctx as CommsEmailSendContext).ownManagedAddresses ?? []);
+      // A business's own-domain address is no longer the From, so a reply would reach the shared
       // notifications@ address instead of the business. With no Reply-To of its own, replies go to the
-      // address the email used to come from. Reply-To is not an identity claim.
+      // address the email used to come from — but never to a paigeagent.ai address, which no business owns.
       const original = String(ctx.from.address ?? "").trim();
-      if (!sgReplyTo && sgFrom.email !== original.toLowerCase() && /^[^@\s<>]+@[^@\s<>]+\.[^@\s<>]+$/.test(original)) sgReplyTo = original;
+      if (!sgReplyTo && sgFrom.email !== original.toLowerCase() && /^[^@\s<>]+@[^@\s<>]+\.[^@\s<>]+$/.test(original)
+          && !/@(?:[^@]+\.)?paigeagent\.ai$/i.test(original)) sgReplyTo = original;
     }
     const sgHeaders: Record<string, string> = { ...buildListUnsubscribeHeaders(ctx.listUnsubscribeUrl) };
     if (msg.in_reply_to_provider_id) sgHeaders["In-Reply-To"] = msg.in_reply_to_provider_id;
@@ -723,7 +729,7 @@ Deno.serve(async (req) => {
   // the channel_connectors row (from_address/from_name/reply_to) is the fallback;
   // the platform default sender is the last resort. This never forks §38.
   let tenantId: string | null = null;
-  let draftRow: { status?: string | null; connector_id?: string | null; contact_id?: string | null; thread_key?: string | null; channel_type?: string | null; meta?: Record<string, unknown> | null } | null = null;
+  let draftRow: { status?: string | null; connector_id?: string | null; contact_id?: string | null; thread_key?: string | null; channel_type?: string | null; meta?: Record<string, unknown> | null; error?: string | null } | null = null;
   // The contact's workspace and every address it holds (its contact methods).
   let contactRow: { tenant_id?: string | null; emails: string[]; phones: string[] } | null = null;
   let connectorRow:
@@ -742,7 +748,7 @@ Deno.serve(async (req) => {
   if (body.message_id) {
     const { data, error: messageError } = await admin
       .from("messages")
-      .select("tenant_id, status, connector_id, contact_id, thread_key, channel_type, meta")
+      .select("tenant_id, status, connector_id, contact_id, thread_key, channel_type, meta, error")
       .eq("id", body.message_id)
       .maybeSingle();
     if (messageError) {
@@ -1191,6 +1197,16 @@ Deno.serve(async (req) => {
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   }
+  // Experience 03: a row whose SendGrid answer was lost (error = delivery_unconfirmed) may already be in
+  // the client's inbox, and SendGrid has no idempotent replay. A second send of that row (a stale tab's
+  // Approve, any service caller) is refused before any provider call, answered unconfirmed like the first.
+  if (body.message_id && draftRow?.status === "failed" && draftRow.error === DELIVERY_UNCONFIRMED) {
+    return new Response(JSON.stringify({
+      status: "failed", outcome: "outcome_unknown", unconfirmed: true, error: DELIVERY_UNCONFIRMED,
+      reason: "This message's earlier send could not be confirmed, so it is not sent again.",
+      message_id: body.message_id, scheduled_for: null,
+    }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+  }
 
   // INT-328: anything else the read RPC found changed since approval (e.g. the contact method was
   // removed) — the canonical claim would refuse it anyway; refuse it here so the row is finalized.
@@ -1590,6 +1606,22 @@ Deno.serve(async (req) => {
         credentialsVaultRef: connectorRow?.credentials_vault_ref ?? null,
         admin,                     // service-role client the Gmail seam uses to read the Vault ref
       };
+      // Security H2: the From kept on mail.paigeagent.ai must be THIS business's own managed address, read
+      // server-side for the derived tenant: the resolver's shared identity (the managed sender) and the
+      // business's registered identity row (present even when a custom domain wins the resolver). Never a
+      // connector's from_address, which any workspace admin can write.
+      const ownManaged: string[] = [];
+      if (identRow?.from_address) ownManaged.push(identRow.from_address);
+      if (tenantId) {
+        try {
+          const { data: own } = await admin.from("tenant_email_identities").select("local_part, status").eq("tenant_id", tenantId).maybeSingle();
+          const o = (own ?? null) as { local_part?: unknown; status?: unknown } | null;
+          if (o && typeof o.local_part === "string" && o.local_part && o.status === "active") ownManaged.push(`${o.local_part}@${PLATFORM_FROM_DOMAIN}`);
+        } catch (e) {
+          console.warn("[send-message] own managed identity read failed; only the resolver's address is kept:", (e as Error)?.message);
+        }
+      }
+      (ctx as CommsEmailSendContext).ownManagedAddresses = ownManaged;
       if (invoiceBinding) {
         // A separate delivery grant is minted at the one atomic provider-admission point.
         // body.body stays token-free for every existing persistence/audit/preview path.

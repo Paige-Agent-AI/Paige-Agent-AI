@@ -1,4 +1,5 @@
 import { commsProviderExecutionAllowed } from "../_shared/comms-provider-boundary.ts";
+import { sendPlatformEmail } from "../_shared/email/platform-sendgrid.ts";
 // Scheduled-send worker: booking reminders + post-meeting follow-ups.
 // Invoked by pg_cron every ~5 min (guarded by a shared token). Reads each
 // calendar-backed booking's notify_config, and for every due reminder offset
@@ -15,7 +16,6 @@ import { emailOptOut } from "../_shared/contact-opt-outs.ts";
 // source or env. The request handler authorizes each trigger by calling the
 // service-role RPC public.verify_cron_token against the x-cron-token header the
 // cron job builds via public.cron_token_header(); no literal token exists here.
-const RESEND_KEY = Deno.env.get("RESEND_API_KEY") ?? "";
 const EMAIL_FROM = Deno.env.get("CALENDAR_EMAIL_FROM") ?? Deno.env.get("PLATFORM_DEFAULT_EMAIL_FROM") ?? "Paige Agent AI <calendar@paigeagent.ai>";
 // SMS (Twilio) reminders fire on 'sms'/'both' via the shared sender
 // (_shared/bookingNotify.ts), which owns the Twilio credential env.
@@ -84,16 +84,12 @@ async function manageUrl(bookingId: string, ver = 0): Promise<string> {
   return `${PUBLIC_BASE}/booking/manage?token=${payload}.${sig}`;
 }
 
+// Sent through Paige's SendGrid transport (owner ruling 2026-10-26); the transport moves
+// EMAIL_FROM onto the platform's verified sending domain. False when the transport is
+// unconfigured, the recipient is invalid, or SendGrid did not accept it.
 async function sendEmail(to: string, subject: string, html: string): Promise<boolean> {
-  if (!RESEND_KEY) return false;
-  try {
-    const res = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${RESEND_KEY}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ from: EMAIL_FROM, to: [to], subject, html }),
-    });
-    return res.ok;
-  } catch { return false; }
+  const sent = await sendPlatformEmail({ from: EMAIL_FROM, to, subject, html });
+  return sent.ok;
 }
 
 // to: who a reminder targets — 'guest' (default, back-compat), 'host', or 'both'.

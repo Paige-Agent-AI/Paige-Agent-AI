@@ -19,12 +19,12 @@ function harness(name, allowed, {providerOk=true,remindChannel='email',calendarT
  const data={internal_bookings:[booking],calendars:[calendar],tenants:[{id:'tenant',name:'Brand'}],plan_items:[reminder],tenant_invite_tokens:[{id:'invite',tenant_id:'tenant',contact_id:'contact',expires_at:'2099-01-01',email:'guest@example.test',kind:'consumer',revoked_at:null,uses:0,max_uses:1,last_used_at:null}],clients:[{id:'contact',tenant_id:'tenant',status:'active',merged_into_contact_id:null,do_not_contact:false,linked_user_id:null}],client_contact_methods:[{client_id:'contact',tenant_id:'tenant',kind:'email',is_primary:true,value:'guest@example.test'}]};
  fixtures?.({booking,calendar,data});
  const admin={rpc:async(rpc,args)=>{ if(rpc==='comms_provider_execution_allowed'){scopes.push(args);if(allowed==='throw')throw Error('database unavailable');return allowed==='error'?{data:true,error:{message:'unavailable'}}:{data:allowed,error:null};}return {data:rpc==='verify_cron_token'||(name==='send-portal-invite'&&rpc==='is_tenant_admin')?true:null,error:null};}, auth:{...(name==='send-portal-invite'?{getUser:async()=>({data:{user:{id:'controlled-owner'}},error:null})}:{}),admin:{getUserById:async()=>({data:{user:{email:'host@example.test'}}})}},from(table){let mutation=null,payload=null,write=null;const query=new Proxy({}, {get(_,prop){if(prop==='then')return resolve=>resolve({data:mutation?null:(table==='plan_items'&&planFired?[]:(data[table]||[])),error:null});if(prop==='maybeSingle'||prop==='single')return async()=>{if(table==='plan_items'&&mutation){if(payload?.reminded_at){if(planFired)return {data:null,error:null};planFired=true;reminder.updated_at='2026-01-02T00:00:00Z';}return {data:{id:'reminder',updated_at:reminder.updated_at},error:null};}return {data:mutation?{id:'reminder'}:(data[table]?.[0]??null),error:null};};return (...args)=>{if(['insert','update','delete'].includes(prop)){mutation=prop;payload=args[0];write={table,kind:prop,payload};writes.push(write);}else if(write&&['eq','is'].includes(prop))(write.filters??=[]).push([prop,...args]);return query;};}});return query;}};
- const ctx=vm.createContext({console,Response,Request,Headers,URL,TextEncoder,TextDecoder,crypto:webcrypto,btoa,atob,Date,databaseAnswered,createClient:()=>admin,clientIp:()=> 'test',overRateLimit:async()=>false,parseLifecycle:()=>[],channelsOf:()=>[],targetsOf:()=>[],primaryPhonesForUsers:async()=>new Map(),renderTemplate:(x)=>x,sendSms:async(...args)=>{effects.push({sms:args});return true;},Deno:{env:{get:(k)=>(env&&Object.prototype.hasOwnProperty.call(env,k)?env[k]:'configured')},serve:fn=>ctx.handler=fn},fetch:async(url,options)=>{effects.push({url,payload:JSON.parse(options.body)});return new Response(JSON.stringify({id:'controlled-message'}),{status:providerOk?200:503});}});
+ const ctx=vm.createContext({console,Response,Request,Headers,URL,TextEncoder,TextDecoder,crypto:webcrypto,btoa,atob,Date,AbortSignal,databaseAnswered,createClient:()=>admin,clientIp:()=> 'test',overRateLimit:async()=>false,parseLifecycle:()=>[],channelsOf:()=>[],targetsOf:()=>[],primaryPhonesForUsers:async()=>new Map(),renderTemplate:(x)=>x,sendSms:async(...args)=>{effects.push({sms:args});return true;},Deno:{env:{get:(k)=>(env&&Object.prototype.hasOwnProperty.call(env,k)?env[k]:'configured')},serve:fn=>ctx.handler=fn},fetch:async(url,options)=>{effects.push({url,payload:JSON.parse(options.body)});return new Response(JSON.stringify({id:'controlled-message'}),{status:providerOk?202:503,headers:{'X-Message-Id':'controlled-message'}});}});
  const helper=readFileSync(new URL('_shared/comms-provider-boundary.ts',base),'utf8').replace(/\bexport /g,'');
  vm.runInContext(stripTypeScriptTypes(helper),ctx);
  // The real shared send gates the handlers import (E09 Slice 6): runPreSend and the contact opt-out
  // reader, each evaluated in its own scope so their module-level names cannot collide with a handler's.
- for(const [file,names] of [['_shared/pre-send-pipeline.ts',['normalizeAddress','runPreSend']],['_shared/contact-opt-outs.ts',['contactOptOuts','emailOptOut','isCustomerHeld']]]){
+ for(const [file,names] of [['_shared/email/platform-sendgrid.ts',['sendPlatformEmail','platformFrom']],['_shared/pre-send-pipeline.ts',['normalizeAddress','runPreSend']],['_shared/contact-opt-outs.ts',['contactOptOuts','emailOptOut','isCustomerHeld']]]){
   const shared=stripTypeScriptTypes(readFileSync(new URL(file,base),'utf8').replace(/^import[\s\S]*?from\s+["'][^"']+["'];\s*/gm,'').replace(/\bexport /g,''));
   Object.assign(ctx,vm.runInContext(`(()=>{${shared}\nreturn {${names.join(',')}};})()`,ctx));
  }
@@ -42,8 +42,12 @@ for(const mode of [false,'error','throw'])for(const name of ['public-booking','b
  else if(name==='plan-reminder-cron'){assert.equal(output.emailed,0);assert.equal(output.in_app,1);assert.equal(output.email_blocked,1);assert.equal(h.writes[1].table,'notifications');assert.equal(h.writes[2].payload.metadata.provider_execution,'blocked');assert.equal(h.writes[2].payload.metadata.keep,true);assert.equal(h.writes.some(w=>w.payload?.status==='cancelled'),false);}
  else{assert.equal(res.status,403);assert.equal(output.code,'COMMS_PROVIDER_EXECUTION_DISABLED');assert.equal(h.writes.length,0);}
 });
+// Provider-neutral view of one outbound email: a Resend body or a SendGrid v3 body (owner ruling
+// 2026-10-26 moved PAIGE's own email to SendGrid; callers move one at a time).
+const SEND_URLS=['https://api.resend.com/emails','https://api.sendgrid.com/v3/mail/send'];
+const mail=(e)=>{const p=e.payload;return {to:p.to??p.personalizations?.[0]?.to?.map(x=>x.email),subject:p.subject,html:p.html??p.content?.find(c=>c.type==='text/html')?.value,text:p.text??p.content?.find(c=>c.type==='text/plain')?.value,replyTo:p.reply_to?.email??p.reply_to,headers:p.headers};};
 for(const name of ['send-portal-invite','plan-reminder-cron','process-booking-notifications'])for(const providerOk of [true,false])test(`${name}: ordinary tenant keeps delivery payload and provider failure truthful (${providerOk})`,async()=>{
- const h=harness(name,true,{providerOk});const res=await h.run(name==='send-portal-invite'?{token:'valid',email:'guest@example.test'}:{});const out=await res.json();assert.equal(h.effects.length,1);assert.equal(h.effects[0].url,'https://api.resend.com/emails');assert.deepEqual(Array.from(h.effects[0].payload.to),[name==='plan-reminder-cron'?'host@example.test':'guest@example.test']);assert.ok(h.effects[0].payload.html);assert.ok(h.effects[0].payload.subject);
+ const h=harness(name,true,{providerOk});const res=await h.run(name==='send-portal-invite'?{token:'valid',email:'guest@example.test'}:{});const out=await res.json();assert.equal(h.effects.length,1);assert.ok(SEND_URLS.includes(h.effects[0].url));assert.deepEqual(Array.from(mail(h.effects[0]).to),[name==='plan-reminder-cron'?'host@example.test':'guest@example.test']);assert.ok(mail(h.effects[0]).html);assert.ok(mail(h.effects[0]).subject);
  if(name==='send-portal-invite')assert.equal(out.emailed,providerOk);else if(name==='plan-reminder-cron')assert.equal(out.emailed,providerOk?1:0);else assert.equal(out.followups,providerOk?1:0);
 });
 test('public-booking ordinary validation remains unchanged',async()=>{const h=harness('public-booking',true);const res=await h.run({action:'create',slug:'normal'});assert.equal(res.status,400);assert.equal((await res.json()).error,'Invalid time.');});
@@ -57,7 +61,12 @@ for(const name of ['send-portal-invite','plan-reminder-cron','process-booking-no
  if(old)process.env.BOUNDARY_TEST_BASELINE=old;else delete process.env.BOUNDARY_TEST_BASELINE;
  const body=name==='send-portal-invite'?{token:'valid',email:'guest@example.test'}:{};
  await current.run(body);await baseline.run(body);
- assert.equal(JSON.stringify(current.effects),JSON.stringify(baseline.effects));
+ if(current.effects.map(e=>e.url).join()===baseline.effects.map(e=>e.url).join())assert.equal(JSON.stringify(current.effects),JSON.stringify(baseline.effects));
+ else{
+  // The provider moved (Resend -> SendGrid): the message itself must not change, and From stays on Paige's domain.
+  assert.equal(JSON.stringify(current.effects.map(mail)),JSON.stringify(baseline.effects.map(mail)));
+  for(const e of current.effects)if(e.url===SEND_URLS[1])assert.match(e.payload.from.email,/@mail\.paigeagent\.ai$/);
+ }
 });
 
 // E09 Slice 6 (§37, D5): a guest whose email is suppressed (here: they turned it off in their portal)
@@ -72,8 +81,39 @@ test('process-booking-notifications: an opted-out guest gets no follow-up, and n
 test('process-booking-notifications: a reminder to both still reaches the host when the guest opted out',async()=>{
  const h=harness('process-booking-notifications',true,{fixtures:(f)=>{optedOut(f);f.booking.start_at=new Date(Date.now()+30*60000).toISOString();f.booking.end_at=new Date(Date.now()+60*60000).toISOString();f.calendar.notify_config={reminders:[{channel:'email',offset_min:60,to:'both'}]};}});
  const out=await (await h.run({})).json();
- assert.equal(out.reminders,1);assert.equal(h.effects.length,1);assert.deepEqual(Array.from(h.effects[0].payload.to),['host@example.test']);
+ assert.equal(out.reminders,1);assert.equal(h.effects.length,1);assert.equal(h.effects[0].url,SEND_URLS[1]);assert.deepEqual(Array.from(mail(h.effects[0]).to),['host@example.test']);
 });
+
+// The booking engines' own sendEmail (guest confirmation / update / cancel, each with an .ics invite)
+// is not reached by the handler drives above, so it is exercised directly on the loaded handler.
+// The tenant From moves onto Paige's domain; because the guest is told "just reply to this email",
+// the tenant's original address becomes the Reply-To unless the identity names its own.
+for(const [name,ics] of [['public-booking','BEGIN:VCALENDAR\r\nSUMMARY:Café — session\r\nEND:VCALENDAR'],['booking-manage',{name:'invite.ics',content:'BEGIN:VCALENDAR\r\nMETHOD:CANCEL\r\nSUMMARY:Café — session\r\nEND:VCALENDAR'}]]){
+ const icsText=typeof ics==='string'?ics:ics.content;
+ test(`${name}: sendEmail sends through SendGrid with the tenant name on Paige's domain, the reply path kept, and a calendar invite`,async()=>{
+  const h=harness(name,true);
+  assert.equal(await h.ctx.sendEmail('guest@example.test','Confirmed','<p>booked</p>',ics,{from:'Acme Studio <hello@acme.example>'}),true);
+  assert.equal(h.effects.length,1);assert.equal(h.effects[0].url,SEND_URLS[1]);
+  const p=h.effects[0].payload;
+  assert.deepEqual(p.from,{email:'hello@mail.paigeagent.ai',name:'Acme Studio'});
+  assert.deepEqual(p.reply_to,{email:'hello@acme.example'});
+  assert.deepEqual(Array.from(mail(h.effects[0]).to),['guest@example.test']);assert.equal(mail(h.effects[0]).html,'<p>booked</p>');
+  assert.equal(p.attachments.length,1);assert.equal(p.attachments[0].filename,'invite.ics');assert.equal(p.attachments[0].type,'text/calendar');
+  assert.equal(Buffer.from(p.attachments[0].content,'base64').toString('utf8'),icsText);
+ });
+ test(`${name}: sendEmail keeps an explicit tenant Reply-To, and a platform send carries none`,async()=>{
+  const h=harness(name,true);
+  await h.ctx.sendEmail('guest@example.test','S','<p>x</p>',undefined,{from:'hello@acme.example',replyTo:'desk@acme.example'});
+  await h.ctx.sendEmail('host@example.test','S','<p>x</p>');
+  assert.deepEqual(h.effects[0].payload.reply_to,{email:'desk@acme.example'});assert.equal(h.effects[0].payload.attachments,undefined);
+  assert.equal(h.effects[1].payload.reply_to,undefined);assert.equal(h.effects[1].payload.from.email.endsWith('@mail.paigeagent.ai'),true);
+ });
+ test(`${name}: sendEmail reports false when SendGrid refuses it or no key is configured`,async()=>{
+  assert.equal(await harness(name,true,{providerOk:false}).ctx.sendEmail('guest@example.test','S','<p>x</p>'),false);
+  const unconfigured=harness(name,true,{env:{SENDGRID_MAIL_SEND_API_KEY:''}});
+  assert.equal(await unconfigured.ctx.sendEmail('guest@example.test','S','<p>x</p>'),false);assert.equal(unconfigured.effects.length,0);
+ });
+}
 
 for(const mode of [false,'error','throw'])test(`plan-reminder: restricted in_app remains internal-only (${mode})`,async()=>{
  const h=harness('plan-reminder-cron',mode,{remindChannel:'in_app'});

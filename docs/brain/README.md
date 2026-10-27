@@ -1,3 +1,17 @@
+## EXP02 bounded Chat source coverage — October27 development
+
+The existing Operating Fabric projector now shares exact repeated long window
+notes within each original domain section when that strictly reduces emitted
+text. Every original figure keeps its basis and an explicit local reference;
+the quoted cutoff remains in the same complete section. Default6000, original
+reads/values/currencies/coverage, omission policy, risk order and authority stay
+unchanged. No new source or analytical capability is invented.
+[Source and remaining proof](../evidence/ui-delivery/e2-review-window-notes.md):
+347 focused checks passed; candidate exact-head review/CI, release/source parity
+and authorized weekly response/reload remain owed. Prior bounded authenticated
+weekly/Finance proof remains historical, not proof of this candidate. Nine
+analytics readiness, all nineteen outcomes and founder acceptance remain open.
+
 ## EXP02 Finance target source released — October27 UTC
 
 [#2967 exact receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2967#issuecomment-6434154203):

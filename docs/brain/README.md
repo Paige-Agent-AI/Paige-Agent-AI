@@ -4677,3 +4677,38 @@ Functional bounded source deployed; Visual13 actual-source synthetic frames; Exp
 authenticated viewer/Finance/roles/cohorts/reload/native zoom/full AT/full19/nine owed;
 Founder NOT_ACCEPTED. Algorithms/capability maturity and original9-0/12-0-4/monthly
 UNKNOWNUNRETRIED retained. [Release receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2974#issuecomment-6437655287).
+
+### October27 — original email review release and verification recovery
+
+#2977 merged e30c0fe1727764724c447ff2d398e618a5f2fb6c/tree5c2cabc7fa22b683d9503147e1165d0dcab99260,
+reviewed963/LOWER5664570719, all13 exact-head checks/two web statuses SUCCESS.
+Web dpl_BHtb9LkWrxNh7S32MDUntu4Cubyc READY; both public origins exacte30-mvqi7y6z,
+matching reachable entry/null customer update/missing404 at09:52:12UTC. Native
+17150002 applied once and original Engagement Read copy/Unverified coverage read
+back. This is PARTIAL DEPLOYMENT: original Edge40483692466/job122120058030 failed
+an upload command before source certification. Current read-only metadata/source
+shows the new original Business Review adapter landed, but ACTIVE/upload/source
+presence is not the original complete downloaded-source/configuration certificate.
+[Bounded partial receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2977#issuecomment-6439188576).
+
+Local recovery source044c3112839bdae94f57d8c30557814a76934eb5 changes only the
+existing read-only workflow gate/preflight identity. Verify selected source after
+an unsuccessful upload only with successful source selection and credential
+preflight, never when cancelled. Original upload/no-retry, retirement, compiler,
+configuration and success-only certification remain unchanged. No extra upload,
+alternate verifier, secret/permission/provider/worker/business activation.
+Causal actual-condition regression failed before correction; five gate controls
+PASS. Original122 test AST is exact, with two added cases; full124 local run with
+required pinned compiler is in progress and hosted exact-head CI remains required.
+Earlier compiler-path setup errors are retained, not counted as source failures
+or a passing suite. Original local provider readback remains unverified at CLI
+access; no credential workaround. Existing EXP03#2978 retains configuration
+ownership and is a receiving dependency before final shared certification.
+
+Functional source/local gate proof, Visual N/A for the workflow repair (preceding
+email17 synthetic frames remain bounded), Experiential authenticated Finance/
+catalogue/Chat/reload/cohorts/Live owed, Founder NOT_ACCEPTED. All19/nine and
+original9PASS0FAIL+12PASS0FAIL4BLOCKED/monthlyUNKNOWNUNRETRIED remain. Algorithms
+and governed business orchestration unchanged; a release check is no business
+Rail receipt. The existing original Master shipped row awaits full source
+certification; no complete-release or customer announcement claim is made.

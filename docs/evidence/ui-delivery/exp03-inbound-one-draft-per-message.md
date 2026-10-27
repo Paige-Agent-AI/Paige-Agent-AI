@@ -38,7 +38,7 @@ MOTION_PURPOSE: NONE: no motion change
 PROTECTED_SEAMS: handle-inbound-email's message dedup (`sendgrid-inbound:<tenant>:<Message-ID>`), its 503-on-failure contract, and the `confirm` lane of the draft action
 
 <!-- RELEASE_GOVERNANCE_POLICY — read docs/doctrine/release-governance-and-customer-update-policy.md -->
-INTERNAL_BUILD_IDENTITY: 0000000000000000000000000000000000000000; deployment=none-pre-merge; environment=development; migrations=PROOF_OWED(20271118110000 applies on merge via deploy-migrations); edge=PROOF_OWED(handle-inbound-email ships on merge via deploy-edge-functions); evidence=this-PR-checks-and-the-tests-above
+INTERNAL_BUILD_IDENTITY: 3c80e37f626bda041f3e2395f7e7ca6a0558c5b0; deployment=none-pre-merge; environment=development; migrations=PROOF_OWED(20271118110000 applies on merge via deploy-migrations); edge=PROOF_OWED(handle-inbound-email ships on merge via deploy-edge-functions); evidence=this-PR-checks-and-the-tests-above
 RELEASE_CHANNEL: development: code on the PR branch; applies to production on merge (pre-launch §4 stance)
 RELEASE_CLASSIFICATION: patch: closes a duplicate-draft race and a contact-name defect; no new capability
 CUSTOMER_RELEASE_IDENTITY: none: internal hardening, no owner-decided customer release

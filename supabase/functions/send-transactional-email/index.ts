@@ -7,6 +7,7 @@ import { resolveTenantEmailContext } from '../_shared/email/branding.ts'
 import { decideSendAuthority, safeFromDisplayName } from '../_shared/email/send-authority.ts'
 import { isAuthorizedInternalCaller, adminClient, operatorUserId } from '../_shared/systems-check-http.ts'
 import { overRateLimit } from '../_shared/rateLimit.ts'
+import { sendPlatformEmail } from '../_shared/email/platform-sendgrid.ts'
 import { createClient as createLimiterClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 // The shared public rate limiter is typed against its own supabase-js build.
@@ -25,10 +26,10 @@ const SENDER_DOMAIN = "paigeagent.ai"
 // FROM_DOMAIN is the domain shown in the From: header. It MUST align with SENDER_DOMAIN
 // (same subdomain, or the SENDER_ROOT). A different subdomain (e.g., mail.example.com while
 // SENDER_DOMAIN is notify.example.com) triggers a provider 400 sender_domain_mismatch.
-// Tier 1 (#64): the domain VERIFIED in Resend for sending is the subdomain
+// Tier 1 (#64): the domain VERIFIED for sending (now in SendGrid) is the subdomain
 // mail.paigeagent.ai — the bare apex is not a confirmed sending domain. The From:
 // header + the no-tenant / unaligned fallbacks below must use the verified
-// subdomain so Resend never rejects a fallback send. SENDER_DOMAIN/SENDER_ROOT
+// subdomain, and the shared transport moves any other From onto it. SENDER_DOMAIN/SENDER_ROOT
 // stay the apex root so fromAddressAligns() still accepts any *.paigeagent.ai.
 const FROM_DOMAIN = "mail.paigeagent.ai"
 
@@ -713,12 +714,13 @@ Deno.serve(async (req) => {
   if (fromOverride && fromAddressAligns(fromOverride)) resolvedFrom = fromOverride
   if (replyToOverride) resolvedReplyTo = replyToOverride
 
-  // 6. Send directly via Resend. The old async path (enqueue_email →
-  // process-email-queue, which sent via Lovable) was never deployed, so
-  // transactional email silently never left the building — "sent" only ever
-  // meant "queued into a black hole." Send inline via Resend (same proven path
-  // as send-message), record the REAL outcome, and retire the Lovable worker (#79).
-  const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')
+  // 6. Send directly through Paige's platform SendGrid transport (owner ruling 2026-10-26:
+  // everything off Resend). The old async path (enqueue_email → process-email-queue, which
+  // sent via Lovable) was never deployed, so transactional email silently never left the
+  // building — "sent" only ever meant "queued into a black hole." Send inline, record the
+  // REAL outcome, and retire the Lovable worker (#79). The key is the restricted Mail Send
+  // key, never the admin key.
+  const SENDGRID_MAIL_SEND_API_KEY = Deno.env.get('SENDGRID_MAIL_SEND_API_KEY')
 
   // IDEMPOTENCY — PERSISTED, DELIBERATELY NOT ACTED ON, and that is the §37 answer rather than a
   // half-measure. The first version of this short-circuited on a prior `sent` row with the same key.
@@ -742,8 +744,8 @@ Deno.serve(async (req) => {
     metadata: { from: resolvedFrom, reply_to: resolvedReplyTo },
   })
 
-  if (!RESEND_API_KEY) {
-    await supabase.from('email_send_log').update({ status: 'failed', error_message: 'RESEND_API_KEY not set' }).eq('message_id', messageId)
+  if (!SENDGRID_MAIL_SEND_API_KEY) {
+    await supabase.from('email_send_log').update({ status: 'failed', error_message: 'SENDGRID_MAIL_SEND_API_KEY not set' }).eq('message_id', messageId)
     return new Response(JSON.stringify({ error: 'email_provider_unconfigured' }), {
       status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
@@ -759,33 +761,26 @@ Deno.serve(async (req) => {
       }
     : undefined
 
-  let sendOk = false
-  let vendorId: string | null = null
-  let sendError: string | null = null
-  try {
-    const resendResp = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${RESEND_API_KEY}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        from: resolvedFrom,
-        to: [effectiveRecipient],
-        subject: resolvedSubject,
-        html,
-        text: plainText,
-        ...(resolvedReplyTo ? { reply_to: resolvedReplyTo } : {}),
-        ...(listUnsubscribeHeaders ? { headers: listUnsubscribeHeaders } : {}),
-      }),
-    })
-    const resendJson: any = await resendResp.json().catch(() => ({}))
-    if (resendResp.ok && resendJson?.id) {
-      sendOk = true
-      vendorId = resendJson.id
-    } else {
-      sendError = `resend_${resendResp.status}: ${JSON.stringify(resendJson).slice(0, 300)}`
-    }
-  } catch (e) {
-    sendError = (e as Error).message?.slice(0, 300) ?? 'resend_request_failed'
-  }
+  // The transport never throws. SendGrid answers 202 with no body; X-Message-Id is the receipt
+  // and the id its Event Webhook echoes. A 5xx/timeout is `unconfirmed` (it may have gone), so
+  // the row says so rather than claiming a definitive failure; this path never retries.
+  const sent = await sendPlatformEmail({
+    from: resolvedFrom,
+    to: [effectiveRecipient],
+    subject: resolvedSubject,
+    html,
+    text: plainText,
+    ...(resolvedReplyTo ? { replyTo: resolvedReplyTo } : {}),
+    ...(listUnsubscribeHeaders ? { headers: listUnsubscribeHeaders } : {}),
+  }, { apiKey: SENDGRID_MAIL_SEND_API_KEY })
+  // Accepted means a 2xx WITH the id; a 2xx without one is unreadable, so it is not reported sent.
+  const sendOk = sent.ok && !!sent.id
+  const vendorId: string | null = sendOk ? sent.id : null
+  const sendError: string | null = sendOk
+    ? null
+    : (sent.ok
+      ? `sendgrid_${sent.status}_no_message_id (outcome_unconfirmed)`
+      : `sendgrid_${sent.status}: ${sent.error ?? 'unknown'}${sent.unconfirmed ? ' (outcome_unconfirmed)' : ''}`).slice(0, 300)
 
   await supabase.from('email_send_log').update({
     status: sendOk ? 'sent' : 'failed',
@@ -800,7 +795,7 @@ Deno.serve(async (req) => {
     })
   }
 
-  console.log('Transactional email sent via Resend', { templateName, effectiveRecipient, vendorId })
+  console.log('Transactional email sent via SendGrid', { templateName, effectiveRecipient, vendorId })
   return new Response(
     JSON.stringify({ success: true, sent: true, id: vendorId }),
     { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

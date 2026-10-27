@@ -23,7 +23,7 @@ describe("send-transactional-email decides authority before it does anything", (
       "if (templateName === 'solo-beta-welcome')",
       "renderAsync(",
       "from('email_send_log')",
-      "https://api.resend.com/emails",
+      "await sendPlatformEmail(",
     ]) {
       expect(src.indexOf(later), later).toBeGreaterThan(gate);
     }

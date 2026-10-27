@@ -1,5 +1,6 @@
 import { commsProviderExecutionAllowed } from "../_shared/comms-provider-boundary.ts";
 import { databaseAnswered } from "../_shared/approval-outcome.ts";
+import { sendPlatformEmail } from "../_shared/email/platform-sendgrid.ts";
 // Planning reminder runner. Invoked by pg_cron every minute (guarded by a
 // shared token). Finds due plan_items of type 'reminder' that haven't fired,
 // and delivers them so a reminder Paige "set" actually lands — an in-app ping
@@ -20,7 +21,6 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 // source or env. Each trigger is authorized by the service-role RPC
 // public.verify_cron_token against the x-cron-token header the cron job builds
 // via public.cron_token_header(); no literal token exists in this file.
-const RESEND_KEY = Deno.env.get("RESEND_API_KEY") ?? "";
 const EMAIL_FROM = Deno.env.get("PLATFORM_DEFAULT_EMAIL_FROM") ?? "Paige Agent AI <notifications@paigeagent.ai>";
 
 const PLANNING_URL = "/app/planning";
@@ -46,15 +46,13 @@ function shell(brandName: string, accent: string, heading: string, lead: string,
     </table></td></tr></table></body></html>`;
 }
 
+// Platform SendGrid transport. No key answers email_provider_not_configured (ok:false)
+// before any request, so an unconfigured provider still counts nothing as emailed.
 async function sendEmail(to: string, subject: string, html: string): Promise<boolean> {
-  if (!RESEND_KEY || !to) return false;
+  if (!to) return false;
   try {
-    const res = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${RESEND_KEY}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ from: EMAIL_FROM, to: [to], subject, html }),
-    });
-    return res.ok;
+    const sent = await sendPlatformEmail({ from: EMAIL_FROM, to: [to], subject, html });
+    return sent.ok;
   } catch { return false; }
 }
 
@@ -88,7 +86,7 @@ Deno.serve(async (req) => {
     return new Response(JSON.stringify({ ok: false, error: dueErr.message }), { status: 500, headers: { "Content-Type": "application/json" } });
   }
 
-  // Cache tenant brand (name + accent) so a team blast hits Resend once per tenant.
+  // Cache tenant brand (name + accent) so a team blast resolves the brand once per tenant.
   const brandCache = new Map<string, { name: string; accent: string }>();
   async function brandFor(tenantId: string): Promise<{ name: string; accent: string }> {
     if (brandCache.has(tenantId)) return brandCache.get(tenantId)!;

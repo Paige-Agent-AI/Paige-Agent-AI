@@ -5,7 +5,7 @@
 -- admission refuses everything that is not the caller's own changeable booking with one "not found";
 -- request-id and state replay; and admission never writes public.internal_bookings.
 BEGIN;
-SELECT plan(113);
+SELECT plan(131);
 INSERT INTO auth.users(id,aud,role,email,email_confirmed_at,raw_app_meta_data) VALUES
  ('e0961000-0000-4000-8000-000000000001','authenticated','authenticated','sessions-host-a@tests.invalid',now(),'{"comms_provider_execution":"disabled"}'),
  ('e0961000-0000-4000-8000-000000000002','authenticated','authenticated','sessions-host-b@tests.invalid',now(),'{"comms_provider_execution":"disabled"}'),
@@ -366,5 +366,110 @@ SELECT is(public._client_portal_sessions_projection('e0962000-0000-4000-8000-000
 SELECT is(public._client_portal_sessions_projection('e0962000-0000-4000-8000-000000000001','e0963000-0000-4000-8000-000000000001',NULL,NULL,20),
  pg_temp.jordan($q$SELECT public.client_portal_sessions('e0962000-0000-4000-8000-000000000001',NULL,NULL,20)$q$),'original public/private projection parity: null window');
 SELECT is((SELECT md5(string_agg(to_jsonb(b)::text,'|' ORDER BY b.id)) FROM public.internal_bookings b),(SELECT h FROM sessions_projection_before),'all original booking rows remain unchanged by source reads');
+-- 20. One canonical appointment in the original SOLO Calendar and customer Sessions.
+-- Real original writers/readers, actual fixture roles; no provider or browser IO.
+-- This proves owner-created linkage. It does not grant customer first-booking authority.
+CREATE TEMP TABLE calendar_portal_created AS
+SELECT pg_temp.as_user('e0961000-0000-4000-8000-000000000001', $q$
+ SELECT to_jsonb(public.create_internal_booking(
+  _title=>'Customer appointment parity',_start_at=>now()+interval '10 days',
+  _end_at=>now()+interval '10 days 45 minutes',_timezone=>'America/Chicago',
+  _contact_id=>'e0963000-0000-4000-8000-000000000001',
+  _tenant_id=>'e0962000-0000-4000-8000-000000000001',
+  _calendar_id=>'e0964000-0000-4000-8000-000000000001',
+  _appointment_type=>'{"id":"t1","name":"Strategy call","duration_min":45}'::jsonb,
+  _source=>'manual'))
+$q$) AS r;
+SELECT ok((SELECT r#>>'{}' ~ '^[0-9a-f-]{36}$' FROM calendar_portal_created),
+ 'the original authorized owner writer returns a booking identity');
+SELECT ok((SELECT count(*)=1 AND bool_and(
+ tenant_id='e0962000-0000-4000-8000-000000000001' AND
+ calendar_id='e0964000-0000-4000-8000-000000000001' AND
+ contact_id='e0963000-0000-4000-8000-000000000001' AND
+ host_user_id='e0961000-0000-4000-8000-000000000001' AND
+ start_at=now()+interval '10 days' AND end_at=now()+interval '10 days 45 minutes')
+ FROM public.internal_bookings WHERE id=(SELECT (r#>>'{}')::uuid FROM calendar_portal_created)),
+ 'one native appointment retains the original business, calendar, CRM customer, host and exact time');
+CREATE TEMP TABLE calendar_portal_owner AS
+SELECT pg_temp.as_user('e0961000-0000-4000-8000-000000000001', $q$
+ SELECT coalesce(jsonb_agg(to_jsonb(b)),'[]'::jsonb)
+ FROM public.list_team_bookings(now(),now()+interval '11 days',NULL::uuid[],
+  'e0962000-0000-4000-8000-000000000001') b
+$q$) AS r;
+SELECT ok((SELECT count(*)=1 AND bool_and(e->>'contact_id'='e0963000-0000-4000-8000-000000000001')
+ FROM calendar_portal_owner,jsonb_array_elements(r) e
+ WHERE e->>'id'=(SELECT r#>>'{}' FROM calendar_portal_created)),
+ 'the built-in SOLO Calendar reads that same identity linked to the original CRM customer');
+CREATE TEMP TABLE calendar_portal_customer AS
+SELECT pg_temp.jordan($q$SELECT public.client_portal_sessions(
+ 'e0962000-0000-4000-8000-000000000001','upcoming',NULL,50)$q$) AS r;
+SELECT ok((SELECT e->>'status'='scheduled' AND (e->>'start_at')::timestamptz=now()+interval '10 days'
+ AND (e->>'end_at')::timestamptz=now()+interval '10 days 45 minutes'
+ FROM calendar_portal_customer, LATERAL pg_temp.s(r,(SELECT r#>>'{}' FROM calendar_portal_created)) e),
+ 'customer Sessions reads the same appointment identity, scheduled status and exact start/end');
+SELECT is((SELECT r FROM calendar_portal_customer),pg_temp.jordan($q$SELECT public.client_portal_sessions(
+ 'e0962000-0000-4000-8000-000000000001','upcoming',NULL,50)$q$),
+ 'returning to Sessions reads the original saved appointment without manufacturing state');
+SELECT is((SELECT count(*) FROM public.internal_bookings WHERE id=(SELECT (r#>>'{}')::uuid FROM calendar_portal_created)),
+ 1::bigint,'owner and customer readback never create a second calendar record');
+SELECT ok(pg_temp.s(pg_temp.as_user('e0961000-0000-4000-8000-000000000004',$q$
+ SELECT public.client_portal_sessions('e0962000-0000-4000-8000-000000000001','upcoming',NULL,50)$q$),
+ (SELECT r#>>'{}' FROM calendar_portal_created)) IS NULL,'another customer cannot read the newly linked appointment');
+SELECT ok(pg_temp.jordan($q$SELECT public.client_portal_sessions(
+ 'e0962000-0000-4000-8000-000000000002','upcoming',NULL,50)$q$) IS NULL,
+ 'a different business selection cannot expose the appointment');
+SELECT is(pg_temp.jordan($q$SELECT coalesce(jsonb_agg(to_jsonb(b)),'[]'::jsonb)
+ FROM public.list_team_bookings(now(),now()+interval '11 days',NULL::uuid[],
+ 'e0962000-0000-4000-8000-000000000001') b$q$)->>'sqlstate','42501',
+ 'a customer never gains the business owner Calendar reader');
+SELECT is(pg_temp.as_user('e0961000-0000-4000-8000-000000000002',$q$
+ SELECT coalesce(jsonb_agg(to_jsonb(b)),'[]'::jsonb)
+ FROM public.list_team_bookings(now(),now()+interval '11 days',NULL::uuid[],
+ 'e0962000-0000-4000-8000-000000000001') b$q$)->>'sqlstate','42501',
+ 'the other business owner cannot read this business Calendar');
+SELECT is(pg_temp.jordan($q$SELECT to_jsonb(public.create_internal_booking(
+ _title=>'Forbidden owner action',_start_at=>now()+interval '11 days',_end_at=>now()+interval '11 days 30 minutes',
+ _contact_id=>'e0963000-0000-4000-8000-000000000001',_tenant_id=>'e0962000-0000-4000-8000-000000000001'))$q$)->>'sqlstate',
+ '42501','customer membership does not grant the original owner-only booking writer');
+SELECT ok((SELECT count(*)=1 AND bool_and(user_id='e0961000-0000-4000-8000-000000000001'
+ AND data->>'contact_id'='e0963000-0000-4000-8000-000000000001')
+ FROM public.audit_logs WHERE entity='internal_booking' AND action='create_internal_booking'
+ AND entity_id=(SELECT (r#>>'{}')::uuid FROM calendar_portal_created)),
+ 'the original create audit attributes the actual owner and exact CRM relationship');
+SELECT is(pg_temp.as_user('e0961000-0000-4000-8000-000000000001',format($q$
+ SELECT to_jsonb(public.admin_set_booking_status(%L::uuid,'cancelled'))$q$,
+ (SELECT r#>>'{}' FROM calendar_portal_created))),
+ (SELECT r FROM calendar_portal_created),'the permitted status writer returns the original appointment identity');
+SELECT ok((SELECT e->>'status'='cancelled' FROM jsonb_array_elements(
+ pg_temp.as_user('e0961000-0000-4000-8000-000000000001',$q$
+ SELECT coalesce(jsonb_agg(to_jsonb(b)),'[]'::jsonb) FROM public.list_team_bookings(
+ now(),now()+interval '11 days',NULL::uuid[],'e0962000-0000-4000-8000-000000000001') b$q$)) e
+ WHERE e->>'id'=(SELECT r#>>'{}' FROM calendar_portal_created))
+ AND pg_temp.s(pg_temp.jordan($q$SELECT public.client_portal_sessions(
+ 'e0962000-0000-4000-8000-000000000001','past',NULL,50)$q$),
+ (SELECT r#>>'{}' FROM calendar_portal_created))->>'status'='cancelled',
+ 'owner Calendar and customer return both read the original cancellation, not a copied appointment');
+
+-- A typed email is deliberately insufficient: owner guest booking is still a guest.
+CREATE TEMP TABLE calendar_portal_guest AS
+SELECT pg_temp.as_user('e0961000-0000-4000-8000-000000000001',$q$
+ SELECT to_jsonb(public.create_internal_booking(
+ _title=>'Unlinked guest',_start_at=>now()+interval '12 days',_end_at=>now()+interval '12 days 30 minutes',
+ _guest_name=>'Jordan Rivera',_guest_email=>'jordan.rivera@tests.invalid',
+ _tenant_id=>'e0962000-0000-4000-8000-000000000001',_calendar_id=>'e0964000-0000-4000-8000-000000000001',
+ _source=>'manual'))$q$) AS r;
+SELECT ok((SELECT r#>>'{}' ~ '^[0-9a-f-]{36}$' FROM calendar_portal_guest),'the existing guest writer still works for the owner');
+SELECT ok((SELECT contact_id IS NULL FROM public.internal_bookings
+ WHERE id=(SELECT (r#>>'{}')::uuid FROM calendar_portal_guest)),
+ 'matching typed name/email do not manufacture a CRM relationship');
+SELECT ok(pg_temp.s(pg_temp.jordan($q$SELECT public.client_portal_sessions(
+ 'e0962000-0000-4000-8000-000000000001','upcoming',NULL,50)$q$),
+ (SELECT r#>>'{}' FROM calendar_portal_guest)) IS NULL,'the unlinked guest appointment cannot appear in customer Sessions by email match');
+SELECT is((SELECT count(*) FROM jsonb_array_elements(pg_temp.as_user('e0961000-0000-4000-8000-000000000001',$q$
+ SELECT coalesce(jsonb_agg(to_jsonb(b)),'[]'::jsonb) FROM public.list_team_bookings(
+ now(),now()+interval '13 days',NULL::uuid[],'e0962000-0000-4000-8000-000000000001') b$q$)) e
+ WHERE e->>'id'=(SELECT r#>>'{}' FROM calendar_portal_guest)),1::bigint,
+ 'the guest appointment remains visible exactly once to its legitimate business Calendar');
+
 SELECT * FROM finish();
 ROLLBACK;

@@ -1499,7 +1499,7 @@
   ],
   "announced": "Message sent",
   "typing": [
-   "CURA is writing…"
+   "CURA is writing\u2026"
   ],
   "fails": [],
   "notes": [],
@@ -2587,7 +2587,7 @@
   ],
   "announced": "Message sent",
   "typing": [
-   "CURA is writing…"
+   "CURA is writing\u2026"
   ],
   "fails": [],
   "notes": [],
@@ -3600,12 +3600,12 @@
  {
   "name": "motion-reduce",
   "dotAnimation": "none",
-  "words": "CURA is writing…"
+  "words": "CURA is writing\u2026"
  },
  {
   "name": "motion-no-preference",
   "dotAnimation": "th-dot",
-  "words": "CURA is writing…"
+  "words": "CURA is writing\u2026"
  },
  {
   "name": "keyboard",
@@ -3617,5 +3617,71 @@
    "outline": "solid 2px rgb(155, 141, 224)"
   },
   "openedByEnter": "MERITAgentSales & getting paid: deals, proposals & agreementsHow MERIT works"
+ },
+ {
+  "name": "ev-zoom200-1280-atlist-dark",
+  "act": "atlist",
+  "viewport": "640x400",
+  "paige": "closed",
+  "theme": "dark",
+  "errors": [
+   "Failed to load resource: the server responded with a status of 404 (File not found)"
+  ],
+  "docOverflowX": false,
+  "hubOverflowX": false,
+  "goldUse": [],
+  "plates": [
+   {
+    "agent": "paige",
+    "background": "rgb(65, 51, 23)",
+    "color": "rgb(235, 205, 150)",
+    "tokenTint": "rgb(65, 51, 23)"
+   },
+   {
+    "agent": "vera",
+    "background": "rgb(10, 50, 50)",
+    "color": "rgb(80, 183, 184)",
+    "tokenTint": "rgb(10, 50, 50)"
+   },
+   {
+    "agent": "nexus",
+    "background": "rgb(62, 30, 59)",
+    "color": "rgb(231, 163, 224)",
+    "tokenTint": "rgb(62, 30, 59)"
+   },
+   {
+    "agent": "cura",
+    "background": "rgb(71, 25, 42)",
+    "color": "rgb(242, 117, 160)",
+    "tokenTint": "rgb(71, 25, 42)"
+   },
+   {
+    "agent": "mentor",
+    "background": "rgb(70, 52, 85)",
+    "color": "rgb(238, 220, 255)",
+    "tokenTint": "rgb(70, 52, 85)"
+   },
+   {
+    "agent": "merit",
+    "background": "rgb(42, 69, 44)",
+    "color": "rgb(190, 245, 193)",
+    "tokenTint": "rgb(42, 69, 44)"
+   },
+   {
+    "agent": "zion",
+    "background": "rgb(29, 49, 75)",
+    "color": "rgb(164, 202, 254)",
+    "tokenTint": "rgb(29, 49, 75)"
+   }
+  ],
+  "small": [
+   "th-ag-namebtn th-ag-name:28",
+   "th-ag-namebtn th-ag-name:28"
+  ],
+  "announced": "",
+  "typing": [],
+  "fails": [],
+  "notes": [],
+  "turns": []
  }
 ]

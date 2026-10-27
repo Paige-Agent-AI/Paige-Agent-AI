@@ -120,6 +120,10 @@ describe("Team Hub stylesheet: agents (A1b, approved v5 colour rules)", () => {
     expect(css).toMatch(/\.th-ag-fail,\.th-stream-content > \.th-ag-fail\{display:flex;flex-direction:row/);
   });
 
+  it("caps the @ list by the screen height, so at 200% zoom it scrolls instead of rising behind the command row", () => {
+    expect(rule(".th-pop")).toContain("max-height:min(320px,max(132px,calc(100dvh - 190px)))");
+  });
+
   it("moves the writing dots only when motion is welcome; the words stay either way", () => {
     expect(css).toContain("@media (prefers-reduced-motion:no-preference){.th-ag-dots i{animation:th-dot 1.1s ease-in-out infinite}");
     expect(rule(".th-ag-dots i")).not.toContain("animation");

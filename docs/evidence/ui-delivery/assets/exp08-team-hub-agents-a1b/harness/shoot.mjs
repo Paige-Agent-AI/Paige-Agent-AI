@@ -40,6 +40,10 @@ for (const theme of ["dark", "light"]) {
   }
 }
 shots.push({ ...phone, theme: "dark", act: "profile", name: "ev-390-profile-dark" });
+// 200% zoom on a 1280x800 window: 640x400 CSS px, the hub one column (as increment 3 measured it).
+const zoom = { vw: 640, vh: 400, rail: 60, row: 58, paige: "closed" };
+shots.push({ ...zoom, theme: "light", act: "phone-reply", name: "ev-zoom200-1280-reply-light" });
+shots.push({ ...zoom, theme: "dark", act: "atlist", name: "ev-zoom200-1280-atlist-dark" });
 shots.push({ ...phone, theme: "light", act: "agentdm", name: "ev-390-agentdm-light" });
 
 const GOLD = ["--pg-gold-core", "--pg-gold", "--pg-gold-deep", "--pg-gold-fill"];

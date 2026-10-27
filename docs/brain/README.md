@@ -670,6 +670,10 @@ Original [#2768](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2768) rev
 
 
 
+## EXP09 original booking acknowledgement — October27 development
+
+The original public booking screen now requires a matching saved-booking receipt before confirming. Missing, malformed, wrong-time, interrupted or slow results hold another submission; an original late receipt can resolve without another dispatch. Definite conflicts return to original availability with a visible explanation. No email delivery is inferred. The business brand, native labels, narrow touch controls and reduced-motion feedback are preserved or corrected. This is a consumer repair, not the private first-booking feature: actual verified CRM membership/contact binding, customer Sessions plus SOLO Calendar reload, canonical attribution/unknown recovery and authenticated production proof remain OPEN. Original public-booking, E03 sender, Calendar, Work and Chat/Spine contracts are unchanged. [Routing and boundaries](../delivery/e09-booking-result-contract.md); [actual rendered evidence](../evidence/ui-delivery/e09-booking-result-receipt.md). No capability or algorithm maturity promotion and no founder acceptance.
+
 ## EXP09 application startup recovery — October26 source released
 
 Original [#2900](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2900) exact reviewed7f9b53493b68d900bcd65153e22c576b1e15d7b2/LOWER5646544693, all10 applicable checks/two webSUCCESS/no-native Preview SKIP/zero threads, merged0617f6d8c5d1534d831a642bf4bf20c3486cb6d4/tree1914f3bd289a3bcf38ea12255aeb8cbe30e10c26. Actual c0d1+7f9 union retains10 own/16,379 outside entries. Normal webdpl_8ySMuLRKAmbW4CDwRdz9tjETXwk4 READY/exact0617; both origins exact0617-mvon01s9/null and actual app/assets/404/revalidation/native304 readback PASS at02:29:19UTC. [Release receipt6406895196](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2900#issuecomment-6406895196); [original UI evidence](../evidence/ui-delivery/e09-application-root-recovery.md).
@@ -4679,6 +4683,40 @@ Historical9PASS0FAIL+12PASS0FAIL4BLOCKED/monthlyUNKNOWNUNRETRIED retained. Canon
 ALG03/06/11/12/13 and catalogue3Limited/3Unverified/3ComingSoon stay unchanged;
 no action approval, scan/worker/provider activation or receipt promotion.
 
+### October27 14:59UTC — original observation carrier follows current native order
+
+#2982 exact18698d39b1bb69f457a3d123dac2091e35463fb7/LOWER5668362273
+completed all13 checks/two webSUCCESS/zero review threads. Fresh pre-merge checks
+then found original EXP03 security release#2983/main74839345a19d8a896d20973c6a76f754c7f94492
+and actual native frontier20271118090000. Own17160002 remains absent; original
+observerf51/Workd953 and permissions are unchanged. That older green is historical,
+not a waiver to apply a lower, unapplied migration or borrow new-head CI.
+
+Normal source composition423f84ed preserves all six incoming E03 leaves exactly.
+Sourcec9a010c7092f75a3be3fc14a880f678b7335b46b/tree91fb087e moves ONLY the
+UNAPPLIED carrier to20271118100002. SQL bytes are identical; the only proof-code
+change is its literal source path. Fresh same original native proof passes
+manual47+unchanged Document/Research34+originalSystems148; owned cluster/database
+cleanup confirmed. One earlier invocation used the wrong local working directory
+and ran no source cases; INVALID/setup, retained with successful cleanup. The
+documented-root rerun above is the actual proof; no product guard was weakened.
+
+Own nonpersistent/dataless PR Previewd410/vfi was independently matched to the
+original parent/git/PR2982. Auth/clients/Work/bookings/Storage0, old migration once,
+new absent. Normal temporary PR close retired ONLY that disposable Preview;
+absence verified and branch count25→24. No other branch, production reset,
+include-all, history repair, new permission or expense/quota increase. Reopen on
+the reviewed forward head obtains normal new Preview; exact new-head CI/merge/
+production migration, function/source/Edge/web readback remain required.
+
+Master4.0 remains N/A for2982 while unmerged; its existing verified2981 row and
+whole E09/E02 histories remain. Manual source is not registered or activated;
+Root/risk/Spine/C0b, writers, scans/workers/providers/approvals remain untouched.
+Functional LOCAL forward carrier; VisualN/A; ExperientialINCOMPLETE; Founder
+NOT_ACCEPTED. ALG/CAP/full19/nine/historical9-0+12-0-4/monthlyUNKNOWNUNRETRIED
+unchanged. Current Coordinator ANT16320841563 preserves E09's ongoing QA until
+natural explicit handback, then E02→E05; no reclaim or repeat founder login ask.
+
 ### October27 13:16UTC — actual Chat-period release and original manual observation
 
 #2981 is actually released as ecb28d4b896be2f2ce43e5454f740cc3f45e8329,
@@ -4915,6 +4953,14 @@ Finance/catalogue/Chat/weekly/roles/cohorts/reload/Live/all19/nine still owed,
 Founder NOT_ACCEPTED. Original9PASS0FAIL+12PASS0FAIL4BLOCKED/monthlyUNKNOWNUNRETRIED
 and algorithm/capability boundaries remain; no business activation or new account.
 [Release receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2977#issuecomment-6439436313).
+
+October27 source-release closeout: #2946 reviewed59d519617/LOWER5661557153/all
+applicable exact-head CI, merged d4fcca1b48ba4115a15faefe05318a2d18991891.
+Normal BYSqPx1wRX5vaDcWv24PbeZ84f5R production READY; both public builds and
+original emitted reader/classifier match at03:14:57–03:15:02UTC, proof328b0741.
+Master §4.0 and the existing evidence retain exact identities. This proves source
+delivery only, not authenticated refusal/reload, ZION execution or full Experience
+acceptance. No own Edge/native/activation or catalogue/algorithm promotion.
 
 ## EXP02 original request/recovery consumer — October27 UTC, local only
 

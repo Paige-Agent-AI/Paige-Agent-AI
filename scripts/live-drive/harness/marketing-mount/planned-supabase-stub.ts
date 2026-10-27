@@ -144,6 +144,12 @@ export const supabase = {
         error: { message: "Edge Function returned a non-2xx status code", context: new Response(JSON.stringify(data), { status, headers: { "Content-Type": "application/json" } }) },
       });
       if (body.action === "decline") return ok({ ok: true, state: "declined" });
+      // The REAL door requires content_id + platform on EVERY publish action and refuses 400
+      // otherwise (independent-review P1: the UI once shipped a fingerprint-only approve that
+      // could never succeed). The stub enforces the same contract so a regression fails here.
+      if (body.action === "publish" && (!body.content_id || !body.platform)) {
+        return refused(400, { ok: false, code: "REQUEST_INVALID", error: "Name the saved piece and the channel to publish to." });
+      }
       // The door's PRE-approval refusals (the channel's own state, account setup, the retry
       // gate) happen on the FIRST call, exactly as the real door refuses before any approval.
       if (!body.approved_fingerprint) {

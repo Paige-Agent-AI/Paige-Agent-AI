@@ -1394,6 +1394,40 @@ Original9PASS0FAIL/12PASS0FAIL4BLOCKED/monthlyUNKNOWNUNRETRIED and ALG/CAP matur
 unchanged. Explicit ordinary-owner Edge receiving and Finance Overview+six subpages/
 roles/cohorts/reload/nativezoom/full AT/Chat-Live/full19/nine acceptance remain owed.
 
+### October27 14:59UTC — original observation carrier follows current native order
+
+#2982 exact18698d39b1bb69f457a3d123dac2091e35463fb7/LOWER5668362273
+completed all13 checks/two webSUCCESS/zero review threads. Fresh pre-merge checks
+then found original EXP03 security release#2983/main74839345a19d8a896d20973c6a76f754c7f94492
+and actual native frontier20271118090000. Own17160002 remains absent; original
+observerf51/Workd953 and permissions are unchanged. That older green is historical,
+not a waiver to apply a lower, unapplied migration or borrow new-head CI.
+
+Normal source composition423f84ed preserves all six incoming E03 leaves exactly.
+Sourcec9a010c7092f75a3be3fc14a880f678b7335b46b/tree91fb087e moves ONLY the
+UNAPPLIED carrier to20271118100002. SQL bytes are identical; the only proof-code
+change is its literal source path. Fresh same original native proof passes
+manual47+unchanged Document/Research34+originalSystems148; owned cluster/database
+cleanup confirmed. One earlier invocation used the wrong local working directory
+and ran no source cases; INVALID/setup, retained with successful cleanup. The
+documented-root rerun above is the actual proof; no product guard was weakened.
+
+Own nonpersistent/dataless PR Previewd410/vfi was independently matched to the
+original parent/git/PR2982. Auth/clients/Work/bookings/Storage0, old migration once,
+new absent. Normal temporary PR close retired ONLY that disposable Preview;
+absence verified and branch count25→24. No other branch, production reset,
+include-all, history repair, new permission or expense/quota increase. Reopen on
+the reviewed forward head obtains normal new Preview; exact new-head CI/merge/
+production migration, function/source/Edge/web readback remain required.
+
+Master4.0 remains N/A for2982 while unmerged; its existing verified2981 row and
+whole E09/E02 histories remain. Manual source is not registered or activated;
+Root/risk/Spine/C0b, writers, scans/workers/providers/approvals remain untouched.
+Functional LOCAL forward carrier; VisualN/A; ExperientialINCOMPLETE; Founder
+NOT_ACCEPTED. ALG/CAP/full19/nine/historical9-0+12-0-4/monthlyUNKNOWNUNRETRIED
+unchanged. Current Coordinator ANT16320841563 preserves E09's ongoing QA until
+natural explicit handback, then E02→E05; no reclaim or repeat founder login ask.
+
 # October27 UTC — original request and return consumer, LOCAL/UNREGISTERED
 
 Plan ANT138/2564553b extends only the original Systems consumer while #2952's

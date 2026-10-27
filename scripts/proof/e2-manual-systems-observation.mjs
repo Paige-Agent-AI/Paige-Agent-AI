@@ -8,7 +8,7 @@ import {fileURLToPath} from 'node:url';
 
 export async function proveManualSystemsObservation({fixture,ids,read,create,sourceRun,finding,finish}) {
  const key='public.read_paige_durable_observation(uuid,uuid,uuid)',cases=[];
- const migration=read('supabase/migrations/20271117160002_e02_manual_systems_observation.sql');
+ const migration=read('supabase/migrations/20271118100002_e02_manual_systems_observation.sql');
  const check=(name,fn)=>{fn();cases.push(name);};
  const value=(sql,params=[])=>fixture.run(sql,params).replaceAll('\r\n','\n');
  const metadata=()=>value(`SELECT (to_jsonb(p)-'prosrc')::text FROM pg_proc p WHERE oid='${key}'::regprocedure`);

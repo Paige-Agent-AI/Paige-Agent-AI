@@ -7,7 +7,7 @@ import { setScopedUserId } from "@/lib/scopedUser";
 
 const harness = vi.hoisted(() => ({ tenant: "test-tenant-a", user: "test-user", status: "ready", foreign: false,
   crmTasks:[] as CrmWorkRecord[], crmError:null as string|null, planningError:null as string|null, members:[] as TeamMemberRecord[], guard:null as string|null, planningOptions: [] as unknown[], planningOverrides:{} as Record<string,unknown>,
-  planningLoading:false, crmLoading:false, crmHasMore:false, peoplePartial:false, deliveryGuard:false }));
+  planningLoading:false, crmLoading:false, crmHasMore:false, peoplePartial:false, deliveryGuard:false, crmEditorReady:false, crmEditorDelayCleanup:false }));
 const weekly = vi.hoisted(() => ({ read: vi.fn(), refresh: vi.fn(), taskRead: vi.fn() }));
 // Supply the calendar read port; do not let this integration suite escape to RPC.
 vi.mock("../data/useBusinessTimeZone", async original => ({ ...await original<typeof import("../data/useBusinessTimeZone")>(),
@@ -42,7 +42,10 @@ vi.mock("./OperationsWorkEditor", () => ({ OperationsWorkEditor: ({ refresh, onN
   React.useLayoutEffect(() => { onNavigationGuardChange?.(() => harness.guard); return () => onNavigationGuardChange?.(null); }, [onNavigationGuardChange]);
   return <div>Work edit test seam<button onClick={() => void refresh()}>Refresh linked editor</button></div>;
 } }));
-vi.mock("./OperationsCrmWorkEditor",()=>({OperationsCrmWorkEditor:()=> <div>Native assignment/date edit test seam</div>}));
+vi.mock("./OperationsCrmWorkEditor",()=>({OperationsCrmWorkEditor:({onNavigationGuardChange}:{onNavigationGuardChange?:(guard:(()=>string|null)|null)=>void})=>{
+  React.useLayoutEffect(()=>{if(!harness.crmEditorReady)return;onNavigationGuardChange?.(()=>harness.guard);return()=>{if(!harness.crmEditorDelayCleanup)onNavigationGuardChange?.(null);};},[onNavigationGuardChange]);
+  return <div>Native assignment/date edit test seam</div>;
+}}));
 vi.mock("./OperationsProjectCreator", () => ({ OperationsProjectCreator: ({ onRecover }: { onRecover: (id?: string) => Promise<void> }) => <div data-testid="project-creator"><button onClick={() => void onRecover()}>Refresh unknown project</button><button onClick={() => void onRecover("test-project")}>Inspect acknowledged project</button></div> }));
 vi.mock("./useOperationsCrmWork",()=>({useOperationsCrmWork:()=>({tasks:harness.crmTasks,loading:harness.crmLoading,error:harness.crmError,forbidden:false,hasMore:harness.crmHasMore,refresh:vi.fn(),readTask:weekly.taskRead})}));
 vi.mock("./OperationsCrmStageReview",()=>({OperationsCrmStageReview:({operation}:{operation:{taskId:string}})=><div>Recovery test seam: {operation.taskId}</div>}));
@@ -60,7 +63,7 @@ beforeEach(() => { setScopedUserId(null); harness.tenant = "test-tenant-a"; harn
   vi.clearAllMocks();
   harness.planningOptions=[];
   harness.planningOverrides={};release.standalone=false;harness.deliveryGuard=false;
-  harness.planningLoading=false;harness.crmLoading=false;harness.crmHasMore=false;harness.peoplePartial=false;
+  harness.planningLoading=false;harness.crmLoading=false;harness.crmHasMore=false;harness.peoplePartial=false;harness.crmEditorReady=false;harness.crmEditorDelayCleanup=false;
   sessionStorage.clear();harness.crmTasks=[];harness.crmError=null;harness.planningError=null;harness.members=[];harness.guard=null;
   weekly.read.mockResolvedValue({kind:"unavailable"});weekly.refresh.mockResolvedValue(undefined);
   harness.foreign = false; container = document.createElement("div"); document.body.append(container); root = createRoot(container); });
@@ -107,6 +110,35 @@ async function click(text: string) {
   const button = Array.from(container.querySelectorAll("button")).find((entry) => entry.textContent === text);
   expect(button).toBeTruthy(); await act(async () => button?.click());
 }
+
+it.each([
+  [true,null,null],
+  [true,"Review the unsaved assignment first.","Review the unsaved assignment first."],
+  [false,null,"Review unsaved changes or close this task before leaving it."],
+] as const)("CRM inspection honors an original editor's known clean/dirty state and holds an absent editor (%s,%s)",async(ready,reason,expected)=>{
+  harness.crmEditorReady=ready;harness.guard=reason;
+  harness.crmTasks=[{id:"test-crm-inspection",tenant_id:harness.tenant,user_id:harness.user,title:"Test CRM inspection",description:null,status:"pending",
+    due_date:null,updated_at:"2026-10-27T12:00:00.123456Z",created_at:null,deal_id:null,biz_id:null,recorded_priority:null,estimated_minutes:null}];
+  const publish=vi.fn();await act(async()=>root.render(<OperationsWorkspace onNavigationGuardChange={publish}/>));
+  await click("Test CRM inspection");expect(document.querySelector('[role="dialog"]')).not.toBeNull();
+  const guard=publish.mock.calls.at(-1)?.[0] as (()=>string|null);expect(guard()).toBe(expected);
+  await click("Capacity");
+  expect(container.querySelector('[aria-current="page"]')?.textContent).toBe(expected?"Overview":"Capacity");
+  if(expected)expect(document.querySelector('[role="dialog"]')).not.toBeNull();
+  expect(paige.handoff).not.toHaveBeenCalled();
+});
+
+it("a prepared review retains its hold while the previous clean editor is unregistering",async()=>{
+  harness.crmEditorReady=true;harness.crmEditorDelayCleanup=true;
+  harness.crmTasks=[{id:"test-crm-review",tenant_id:harness.tenant,user_id:harness.user,title:"Test review transition",description:null,status:"pending",
+    due_date:null,updated_at:"2026-10-27T12:00:00.123456Z",created_at:null,deal_id:null,biz_id:null,recorded_priority:null,estimated_minutes:null}];
+  const publish=vi.fn();await act(async()=>root.render(<OperationsWorkspace onNavigationGuardChange={publish}/>));await click("Test review transition");
+  const stage=document.querySelector<HTMLSelectElement>('select[aria-label="Review CRM task stage"]')!;
+  await act(async()=>{stage.value="in_progress";stage.dispatchEvent(new Event("change",{bubbles:true}));});
+  expect(document.querySelector('[role="dialog"]')?.textContent).toContain("Recovery test seam");
+  expect((publish.mock.calls.at(-1)?.[0] as ()=>string|null)()).not.toBeNull();
+  await click("Capacity");expect(container.querySelector('[aria-current="page"]')?.textContent).toBe("Overview");
+});
 
 it("returns from first-use Projects to original Work without opening or sending PAIGE", async () => {
   const openPaige = vi.fn();

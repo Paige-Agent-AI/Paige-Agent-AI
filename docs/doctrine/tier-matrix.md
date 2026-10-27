@@ -549,7 +549,7 @@ Production 2026-10-27 (re-read for round 6): newest applied migration `202711181
 
 **OWNER DECISION OWED: remove Agency Team's Owner option (I3) — it never produced an owner.**
 
-### EXP08 Team Hub agents A1a: agent storage, turn doors, tolerant parsers and the roster correction (migrations `20271117010008` and `20271117010108`, 2026-10-27; NOT YET MERGED — proof local and in CI, PROOF OWED on production)
+### EXP08 Team Hub agents A1a: agent storage, turn doors, tolerant parsers and the roster correction (migrations `20271117010008` and `20271117010108`, 2026-10-27; merged #2969; applied on production — `schema_migrations` rows, the four doors and the six rows' three config keys read back 2026-10-27)
 
 Owner approval 2026-10-27 ("approved, go with your recommendations and start building"): the design (prototype v3), the seven personalities as drafted, Q1 (owners and admins assign agent work, A3), Q2 (a top-level question gets a top-level reply linked to the asker's message; a thread reply is answered in its thread), MERIT = Sales & getting paid, and the storage. Contract: [`docs/delivery/exp08-team-hub-agents-contract.md`](../delivery/exp08-team-hub-agents-contract.md); personalities: [`docs/delivery/exp08-team-hub-agents-personalities.md`](../delivery/exp08-team-hub-agents-personalities.md).
 
@@ -574,6 +574,53 @@ Owner approval 2026-10-27 ("approved, go with your recommendations and start bui
 | Anonymous | ✗ no grant | ✗ | ✗ |
 
 **Evidence:** `supabase/tests/exp08_team_hub_agents_a1.sql` (disposable PG16, in CI): the production chain md5-checked (36/36 team_hub functions), each re-emitted body reduced back to production's md5 by undoing only its A1 hunks, every §5 A1 SQL proof, the 10-minute abandoned-turn re-arm, and 24/24 mutants each breaking the property it guards (with the raw outcome under each new one the defect itself, not an unrelated error), including a reused request id answered with another question's reply, re-arms off the cap, and every acceptance and post guard that had no behaviour probe; every increment 1–4, lifecycle, admin-scope and co-owner proof still green. Vitest/node tests for both parsers, mutation-checked (§71.4). **Owed after merge:** the §32 persisted-apply read-back of both migrations (`schema_migrations`, the objects, the six rows), and an authenticated drive once A1b gives agents a voice.
+
+### EXP08 Team Hub agents A1b part 1: the server agent turn (2026-10-27; branch `exp08-hub-agents-a1b`, NOT YET MERGED — the UI is part 2, so no agent speaks to anyone yet)
+
+**What exists on the branch (and nothing more):** `paige-ai-chat` answers a closed request `{ teamHubAgentTurn: {...} }` through `_shared/team-hub/agent-turn.ts`: it resolves the workspace from the asker's JWT, re-reads the asking message under that JWT (theirs, visible now, asking this agent or in their DM with it), accepts the turn on the service role (`team_hub_accept_agent_turn`, the per-seat cap of 30 starts an hour), records the Team Hub memory-taint receipt before any Team Hub text reaches the model, gives the model only that conversation's messages (and on a private follow-up the asker's DM with the agent), runs it through `fabricCompletion` with the agent's stored personality and a read-only tool list (stored allowlist ∩ `team_hub_read_conversation` pinned and `read_business_time_zone`; never a write), posts under the asker's JWT (`team_hub_post_agent_message`, request id derived from source, agent and intent), reads the post back and records `team_hub_agent_post`. A private part posts the public part plus the definer's fixed line and tells the browser to start the DM turn; an act posts *I can't take actions here yet.* `UNAVAILABLE` in part 1: the other allowlisted tools and every DM-scope read beyond those two (contract §5 A1b part 1 notes).
+
+| Tier | Agent turn (server) | Agents in the UI |
+|---|---|---|
+| God / Operator | ✗ no seat: the persona read or the acceptance refuses (`not_member`); nothing runs | ✗ |
+| Agency / Enterprise | ✗ acceptance refuses `unavailable` (not canonical SOLO); nothing runs | ✗ |
+| Standalone (Solo) | ✓ any active seat with Team conversations on, for its own message in a conversation it can see; owner and member alike (the member is the most-affected tier, §51.5) | ✓ on the branch with part 2 (below) |
+| Sub-account | ✗ `unavailable` until Team Hub opens there | ✗ |
+| Client | ✗ no seat | ✗ |
+| Anonymous | ✗ no JWT: the chat refuses 401 before the seam | ✗ |
+
+**Evidence:** `supabase/functions/_shared/team-hub/agent-turn.test.ts` (41, automated against fakes of the definers and the model seam; 20/20 mutants killed) and `agent-turn-wiring.test.ts` (structural, 4); base `cab598493` vs branch, measured: the CI node set 582/582 → 627/627, `deno check` of `paige-ai-chat` 9 → 9 identical diagnostics, C0b 29/29 base pins reproduced and only identity[15] changed; every `lint:*` in CI green; the A1a and increment 1–4 SQL proofs re-run green. **Owed:** `edge-live` for `paige-ai-chat` after merge, and an authenticated drive (a real model turn and a real post) once part 2 gives the turn a screen — none has run.
+
+### EXP08 Team Hub agents A1b part 2: the agents on screen (2026-10-27; branch `exp08-hub-agents-a1b`, NOT YET MERGED; built to approved prototype v3 and the APPROVED-FROZEN v5 colours and symbols)
+
+**What a person sees on the branch (and nothing more):** under **Your Paige team** in the conversation list, PAIGE and her six agents, each with its own plate (tint, symbol in its ink, ring), name and short role, and its DM's unread count; the seven again under that heading in **New message** and in the **@ list** (`@NAME`, at most 3 per message, `p_agent_mention_keys`); an agent's message under its plate, name in its colour, the word *Agent*, its role and *replying to <asker>* when the question is not directly above; agent chips in text; for the **asker only**, *<Agent> is writing…*, the flow-9 lines with *Ask again* / *Check again*, the private-part note (*…writing your answer in your DM* → *Your answer is in your DM with <Agent>* with *Open DM*, or *couldn't finish your private answer* with *Ask again*) and **Bring in** (everyone else: *Only <asker> can bring them in.*); the person's **DM with an agent** (its note, its empty state, *How <Agent> works*); the read-only **agent profile** (About; no Edit view — A4); first use with *Say hello to PAIGE*. The 56 colour tokens joined the shared token layer (`src/index.css`, both themes). Agents never act here (A1). The increment-2 specialist handoff is removed (§58, agents contract §2). Other members' private-part lines and the state after a reload come from part 3's read (below).
+
+| Tier | Agents in Team Hub (A1b) |
+|---|---|
+| God / Operator | ✗ no seat; Team Hub refuses `not_member`, and the tier helper (§60) has no `team_hub_agents` |
+| Agency / Enterprise | ✗ `team_hub_agents` not in the tier set (§61 exception) — no agent row, @ entry or chip renders, and `@CURA` asks nobody; Team Hub itself is `unavailable` there |
+| Standalone (Solo) | ✓ every active seat with Team conversations on, in conversations it can see; owner and member alike (the member is the most-affected tier, §51.5) |
+| Sub-account | ✗ in practice (Team Hub `unavailable` until it opens there); `team_hub_agents` is declared for it (§60) |
+| Client | ✗ no seat |
+| Anonymous | ✗ no session |
+
+**Evidence:** mocked-RPC `TeamHubAgents.mocked-rpc.test.tsx` (23) and the updated workspace suite, `team-hub-agents.test.ts` (16), `team-hub-agent-tokens.test.ts` (6) and the stylesheet suite (17): `src/solo/team-hub` 179 → 233 tests (base `cab598493` vs branch, measured in worktrees); 12 of 13 UI mutants killed, the 13th equivalent. Rendered harness (not the real shell, not authenticated) under `docs/evidence/ui-delivery/assets/exp08-team-hub-agents-a1b/`: 52 frames, eight SOLO viewport records × both themes, 390 phone and 200% zoom, no overflow and no gold paint in any. **Owed:** authenticated runtime on a SOLO member seat (a real turn, a real post, a real private part), `edge-live` for `paige-ai-chat`, and the member-safe turn-state read.
+
+### EXP08 Team Hub agents A1b part 3: the member-safe turn-state read and the review fixes (2026-10-27; branch `exp08-hub-agents-a1b`, NOT YET MERGED)
+
+**What changed on the branch:** migration `20271119010008` adds `team_hub_agent_turn_states` (authenticated only, caller-scoped `SECURITY DEFINER`, §59), `team_hub_stage_agent_suggestions` (service role, the turn's own token) and `team_hub_agent_turns.suggestions`, and lets the acceptance door hand an unconsumed turn back to its own token. On screen: after a reload the asker sees the turn's true state (*is writing…*, the private note, *didn't reply* only for a turn that ended or never started, *Check again* when the state can't be read); everyone who can read a private reply sees *<AGENT> is answering <Name> privately.* / *replied to <Name> privately.*; Bring in offers only the agents the reply's agent suggested, pre-filled as approved; *Say hello to PAIGE* pre-fills her DM. Server: transport errors on the acceptance and the post are unknown outcomes (retried, then settled by the end door); an agent turn with a chat control hint is refused (one 20/min chat limit); a DM turn's receipt names neither its agent nor that it was a DM (contract "A1b part 3 notes").
+
+| Tier | The turn-state read and the part 3 fixes |
+|---|---|
+| God / Operator | ✗ no seat; the read refuses `not_member` |
+| Agency / Enterprise | ✗ the read refuses `unavailable` (not a canonical SOLO workspace); no agent UI (§60) |
+| Standalone (Solo) | ✓ any active seat with Team conversations on, for questions in conversations it can see now; the asker reads every state of their own question, others only the private-part lines and who was suggested; an owner cannot read a member's agent DM (`not_found`) |
+| Sub-account | ✗ the read refuses `unavailable` (Team Hub not open there) |
+| Client | ✗ no seat |
+| Anonymous | ✗ no grant (`permission denied`) |
+
+**Part 4 (same branch):** the `team_hub_agent_post` Rail receipt, which a Solo workspace's owners and admins read, names the agent and intent only for a reply in a team channel; a private channel, a teammates' DM and an agent DM leave a row with neither (no tier gains or loses a surface).
+
+**Evidence:** `supabase/tests/exp08_team_hub_agent_turn_states.sql` (disposable PG16, in CI): every state, private channel non-member, another workspace, owner on a member's DM, removed person, foreign question ids, staging validation, and 14/14 mutants; the server unit tests (B1 transport mutants, S2, Bring in, receipts; 9 of 9 server mutants killed); `src/solo/team-hub` vitest 252 (10 UI mutants, 9 killed, the 10th equivalent); rendered harness 68 frames with the list column measured. **Owed:** the §32 persisted-apply read-back of `20271119010008` after merge, and the authenticated drive.
 
 ### Solo Settings → Team: the screens for the team lifecycle (2026-10-26; owner-approved design, APPROVED-FROZEN §28)
 
@@ -5491,3 +5538,21 @@ or the reused invitation command's act, gradient gold included. The Slice 1 inbo
 inbox (4 frames). Chat: the approval card is bound to the version it was built from (`access_version`, round 3).
 Authenticated owner pause/restore/end and the customer page on production are owed; the QA relationship is
 to be ended by that business's owner by 2026-10-30 (D11).
+
+### Conversations — scheduled governed email: approve now, send later, cancel (EXP03 O12 piece 1, 2026-10-27)
+
+The governed email door (`comms-email-command`) accepts a send time. The approval binds the exact words,
+recipient, sender and time; the row waits as `queued` and the one-minute scheduler releases it through
+the same one-send claim. Any active owner or admin of the business can cancel it from the thread before
+it goes. Migration `20271119000000`. No product control creates one yet: the Conversations composer moves
+onto the door in the next piece, so every row below is reachable by data only today.
+
+| Capability | God (operator desk) | Agency-as-tenant | Standalone Solo | Sub-account | Client | Anonymous | Deploy state |
+|---|---|---|---|---|---|---|---|
+| Approve an email with a send time (door `send_at`) | Only inside a workspace it administers | ✓ owner/admin of the current workspace | ✓ owner/admin | ✓ owner/admin | — | — | PROOF OWED (no producer yet) |
+| Scheduled release when due (seat checked, not the open workspace) | — | ✓ | ✓ | ✓ | — | — | PROOF OWED |
+| Cancel a scheduled email from the thread | Only inside a workspace it administers | ✓ any owner/admin | ✓ any owner/admin | ✓ any owner/admin | — | — | PROOF OWED |
+| "Scheduled" / "Not sent" with reason in the thread | — | ✓ | ✓ | ✓ | — | — | PROOF OWED |
+
+Lead replies (`approval_id`), agreement signing requests and Paige chat sends stay immediate. SQL proof:
+`supabase/tests/comms_email_scheduled_send.sql` (CI: paige-spine-contract).

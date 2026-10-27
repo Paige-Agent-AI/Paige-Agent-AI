@@ -132,8 +132,9 @@ SELECT p.oid AS function_oid, pg_get_functiondef(p.oid) AS definition, e.expecte
 FROM (VALUES
  ('public.advance_action(uuid,text,jsonb,text,uuid,uuid,jsonb,text,text,uuid)'::regprocedure,'0d412f9c0a734aeb2815dca39ab061a3'),
  ('public.prepare_comms_email_send(uuid,uuid,uuid,uuid,text,uuid,text,text,text,text,text,jsonb,jsonb)'::regprocedure,'8da3b64c24552123b973db96a74ab986'),
- ('public.read_comms_email_send_binding(uuid)'::regprocedure,'6bc0d581e141cfaf0221002d71564eaa'),
- ('public.claim_comms_email_send(uuid,uuid,boolean)'::regprocedure,'7b1173ff7d53da5836e33c2d77366c77'),
+ -- read_binding + claim: the scheduled-send bodies (20271119000000 — release actor, not-before, queued -> draft).
+ ('public.read_comms_email_send_binding(uuid)'::regprocedure,'7cdafa1530f75a2d7c02b08f5c6ccc7d'),
+ ('public.claim_comms_email_send(uuid,uuid,boolean)'::regprocedure,'a9dfb75621838268a961152d19de954d'),
  ('public.paige_guard_send_approval_requires_governed_send()'::regprocedure,'0018e0f9a1b5c63b836cb4ef72558332'),
  ('public._lead_reply_record_send(uuid,uuid,uuid)'::regprocedure,'f0ecd87330486f154d5ffec709a5b579')
 ) AS e(function_oid,expected_md5) JOIN pg_proc p ON p.oid=e.function_oid;

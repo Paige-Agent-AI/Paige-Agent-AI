@@ -119,10 +119,19 @@ describe('Research prepared Fabric uses actual shared attempts and recording tra
     expect(test.legacy).toHaveBeenCalledWith('extract', { ...body, fabricEnabled: true }, { tenant_id: tenant, task_id: run, agent_id: 'paige-deep-research', job_kind: 'research_hop_planner' });
     expect(gate).not.toHaveBeenCalled(); expect(test.calls).toHaveLength(0); expect(result.route).toBeNull();
   });
-  it('hard reasoning budget is terminal before either transport', async () => {
+  it('usage above the informational threshold retains primary routing and one tenant-attributed trace', async () => {
     const test = fixture({ budget: async () => 10 });
-    await expect(test.adapter(true).researchCompletion('unit_synthesis', 'operational', body, { tenantId: tenant, runId: run, beforeProviderAttempt: async () => true })).rejects.toBeInstanceOf(BudgetExceeded);
-    expect(test.calls).toHaveLength(0); expect(test.traces).toHaveLength(1); expect(test.traces[0].error_class).toBe('budget_exceeded');
+    await test.adapter(true).researchCompletion('unit_synthesis', 'operational', body, { tenantId: tenant, runId: run, beforeProviderAttempt: async () => true });
+    expect(test.calls.map(call => call.provider)).toEqual(['openai']);
+    expect(test.traces).toHaveLength(1);
+    expect(test.traces[0]).toMatchObject({ tenant_id: tenant, task_id: run,
+      doctrine_gate_hits: { budget: { level: 'hard', band: 'reasoning' } } });
+    expect(test.traces[0].error_class).not.toBe('budget_exceeded');
+  });
+  it('uncapped usage does not bypass the original current-authority check', async () => {
+    const test = fixture({ budget: async () => 1_000_000 });
+    await expect(test.adapter(true).researchCompletion('unit_synthesis', 'operational', body, { tenantId: tenant, runId: run, beforeProviderAttempt: async () => false })).rejects.toThrow();
+    expect(test.calls).toHaveLength(0);
   });
   it('pre-aborted and throwing authority calls never enter provider fallback', async () => {
     for (const ctx of [{ signal: AbortSignal.abort(), beforeProviderAttempt: async () => true }, { beforeProviderAttempt: async () => { throw Error('Controlled authority unavailable'); } }]) {

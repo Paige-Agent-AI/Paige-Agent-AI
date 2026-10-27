@@ -677,6 +677,18 @@ Values intentionally omitted.
     - `growth-process-submission/lead-reply.ts`: presence only, so the lead-reply drafter counts a SendGrid sender with the door's own provider list (`emailProvidersFor`);
     - `_shared/comms-email/readiness.ts`: presence only, giving the `EMAIL_PROVIDER_NOT_CONFIGURED` state;
     - `comms-email-command/index.ts`: presence decides whether `sendgrid` counts as a sender provider (`emailProvidersFor`);
+      **Scheduled governed email (`20271119000000`, EXP03 O12 piece 1):** the door takes a top-level `send_at`
+      (whole minute, 2 min–30 days ahead when the card is raised; fingerprinted only when present, never in the
+      content digest) and a `cancel:true` body. A 14-argument `prepare_comms_email_send` overload (no default) marks
+      the bound row `queued` with `scheduled_for` and `binding.send_at`; `comms-scheduled-drain` releases a due bound
+      row through `releaseScheduledCommsEmail` → send-message (`comms_email_scheduled_release`) → the same claim.
+      A due release checks the scheduler's active owner/admin seat (`_comms_email_seat`), not their open workspace.
+      `cancel_comms_email_send` (any active owner/admin), `close_scheduled_comms_email` (always reaches a terminal,
+      owner-visible state; the Rail names the closer, else the scheduler while a member, else no Rail row and the
+      audit row says why), `close_missed_scheduled_comms_emails` (past the 15-minute grace), and
+      `unlease_scheduled_messages(ids, stamp)` (only this run's lease) are service-role only. `claim_due_scheduled_messages`
+      skips rows the provider floor would refuse and governed rows past their grace. Lead replies, agreement sends
+      and chat stay immediate.
     - `comms-sendgrid-scopes/index.ts`: records the key's scopes, and returns `SENDGRID_EXECUTOR_KEY_NOT_CONFIGURED` when unset.
   - **Production, 2026-10-26:** the owner turned SendGrid Subscription Tracking and Google Analytics tracking OFF (SendGrid → Settings → Tracking), so SendGrid adds no unsubscribe link of its own and does not rewrite link UTM tags.
   - `SENDGRID_WEBHOOK_PUBLIC_KEY` verifies Event Webhook signatures. Read only by `handle-sendgrid-webhook/index.ts`, which returns 503 until it is set. The `comms-sendgrid-webhook-admin` setup path does not read it; it hands back the key to install under this name. **Production, 2026-10-26: SET.** Verified by behaviour, not by reading it: an unsigned probe changed from 503 `webhook_not_configured` to 401 `invalid_signature`. The owner configured the Event Webhook by hand in SendGrid (enabled, signed, every event, the `handle-sendgrid-webhook` URL). SendGrid's "Test Your Integration" events passed the signature check but were quarantined, because real `sg_event_id`s carry `=` padding; the door fix is in the EXP03 PR that follows #2930.

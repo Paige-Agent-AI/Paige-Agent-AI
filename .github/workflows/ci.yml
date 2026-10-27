@@ -77,6 +77,8 @@ jobs:
           supabase/functions/_shared/team-hub-file-type.test.ts
           supabase/functions/_shared/team-hub/chat.test.ts
           supabase/functions/_shared/team-hub/chat-wiring.test.ts
+          supabase/functions/_shared/team-hub/agent-turn.test.ts
+          supabase/functions/_shared/team-hub/agent-turn-wiring.test.ts
           supabase/functions/_shared/team-hub/file-sweep.test.ts
           supabase/functions/_shared/team-lifecycle/chat.test.ts
           supabase/functions/_shared/team-lifecycle/chat-wiring.test.ts
@@ -117,6 +119,8 @@ jobs:
         run: psql -h 127.0.0.1 -U postgres -d postgres -v ON_ERROR_STOP=1 -f supabase/tests/exp08_owner_invitations.sql
       - name: EXP08 Team Hub agents A1a, accepted-turn record, single-use agent posts, one-reply rule, per-seat cap, agent DM isolation, roster correction and mutants in a disposable database
         run: psql -h 127.0.0.1 -U postgres -d postgres -v ON_ERROR_STOP=1 -f supabase/tests/exp08_team_hub_agents_a1.sql
+      - name: EXP08 Team Hub agents A1b, member-safe turn-state read, staged Bring in suggestions, same-token acceptance retry and mutants in a disposable database
+        run: psql -h 127.0.0.1 -U postgres -d postgres -v ON_ERROR_STOP=1 -f supabase/tests/exp08_team_hub_agent_turn_states.sql
       - name: EXP08 PAIGE team lifecycle catalogue, md5 guard against production's incumbent, replay guard, five Team rows and grants in a disposable database
         run: |
           psql -h 127.0.0.1 -U postgres -d postgres -v ON_ERROR_STOP=1 -c 'DROP DATABASE IF EXISTS exp08_lifecycle_cat' -c 'CREATE DATABASE exp08_lifecycle_cat'

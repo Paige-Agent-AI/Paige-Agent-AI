@@ -1,5 +1,9 @@
 # Decision Log — chronological one-liners
 
+## October27 — EXP08 PAIGE team-lifecycle tools: review fixes on #2957
+
+- **Hand-over success needs the receiver read back (2026-10-27).** `team_handover_work` is reported done only when `plan_items`, read back on the caller's session, shows that item in the server tenant assigned to the requested receiver; the writer's acknowledgement carries no assignee, so a failed read, no visible row or another assignee is now outcome unknown (`capability_outcome_unknown`, review flagged) instead of "Handed over". The other four lifecycle writes were checked: suspend/reinstate read the landed status back inside the definer, remove raises on zero rows, and the Team conversations switch updates the row it holds `FOR UPDATE` with no BEFORE trigger on `tenant_members` touching `team_hub_access` (production trigger list, read-only), so they are unchanged.
+- **Settings → Team stops saying "today" for unproven acts (2026-10-27, §13 over §28).** Suspend/reinstate, remove-and-hand-over and the Team conversations switch move from "She can do this for you today" back to the approved panel's own second lane, now labelled "New to Paige, still being checked", with "Until her new actions have been checked, you can always do them here." They return under "today" after the authenticated drive on the owner's Solo account.
 ## October27 — EXP03: PAIGE's own email moves off Resend onto SendGrid
 
 - **Owner rulings (Antonio, 2026-10-26).** The Resend account was emptied ("I had to delete all the emails inside of Resend"); "No Resend — move to SendGrid now"; "I am moving EVERYTHING to SendGrid"; keep the From on `@mail.paigeagent.ai`; SendGrid Subuser Management is not needed.

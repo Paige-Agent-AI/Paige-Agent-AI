@@ -136,6 +136,24 @@ export function governedSendView(m: MessageRow & GovernedSendFields, nowMs: numb
 }
 
 /**
+ * The ONE test for "this message is waiting to go out at a set time" (the Scheduled view and the
+ * thread list's scheduled marker). A governed email is scheduled only while governedSendView says so —
+ * a governed row past its release grace still reads 'queued' but is not scheduled any more.
+ */
+export function isScheduledMessage(m: MessageRow & GovernedSendFields, nowMs: number = Date.now()): boolean {
+  const governed = governedSendView(m, nowMs);
+  if (governed !== null) return governed === "scheduled";
+  return m.status === "queued" && !!m.scheduled_for;
+}
+
+/** What the owner is told when a cancel came too late, from the send's own recorded state. */
+export function cancelTooLateLine(outcome: unknown): string {
+  if (outcome === "refused") return "Already canceled — it won't be sent.";
+  if (outcome === "failed") return "It didn't go out.";
+  return "Too late — it's already on its way.";
+}
+
+/**
  * The ONE test for "a draft Paige wrote that is waiting for the owner's approval": an outbound row
  * in `draft` that is not a governed send already under way.
  */

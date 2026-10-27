@@ -23,19 +23,29 @@ describe("scheduledDrainRoute", () => {
 const raw = readFileSync("supabase/functions/comms-scheduled-drain/index.ts", "utf8").replace(/^import[\s\S]*?;\r?\n/gm, "");
 const compiled = transpileModule(raw, { compilerOptions: { module: ModuleKind.None, target: ScriptTarget.ES2022 } }).outputText;
 
-function drain(rows: Record<string, unknown>[]) {
+function drain(rows: Record<string, unknown>[], opts: { stepMs?: number } = {}) {
   const releases: { binding: unknown; id: string }[] = [];
   const posts: Record<string, unknown>[] = [];
+  const rpcs: { name: string; args: Record<string, unknown> }[] = [];
+  // A clock the handler reads; each governed release "takes" stepMs.
+  const clock = { t: 1_000_000 };
   let handler: (req: Request) => Promise<Response>;
   const admin = {
-    rpc: async (name: string) => name === "claim_due_scheduled_messages" ? { data: rows, error: null } : { data: null, error: null },
+    rpc: async (name: string, args: Record<string, unknown> = {}) => {
+      rpcs.push({ name, args });
+      if (name === "claim_due_scheduled_messages") return { data: rows, error: null };
+      if (name === "close_missed_scheduled_comms_emails") return { data: 2, error: null };
+      if (name === "unlease_scheduled_messages") return { data: (args._ids as unknown[]).length, error: null };
+      return { data: null, error: null };
+    },
     from: () => ({ update: () => ({ eq: async () => ({ error: null }) }) }),
   };
   const scope = {
     Deno: { env: { get: (k: string) => k === "SUPABASE_SERVICE_ROLE_KEY" ? "svc" : k === "SUPABASE_URL" ? "https://proj.example.test" : undefined }, serve: (fn: typeof handler) => { handler = fn; } },
+    Date: { now: () => clock.t },
     createClient: () => admin,
     scheduledDrainRoute,
-    releaseScheduledCommsEmail: async (binding: unknown, id: string) => { releases.push({ binding, id }); return { result: "released" }; },
+    releaseScheduledCommsEmail: async (binding: unknown, id: string) => { releases.push({ binding, id }); clock.t += opts.stepMs ?? 0; return { result: "released" }; },
     resolveCommsEmailParties: async () => { throw new Error("not reached"); },
     readCommsEmailReadiness: async () => { throw new Error("not reached"); },
     emailProvidersFor: () => [],
@@ -49,7 +59,7 @@ function drain(rows: Record<string, unknown>[]) {
     const res = await handler!(new Request("https://example.test/comms-scheduled-drain", { method: "POST", headers: { Authorization: "Bearer svc" } }));
     return await res.json() as Record<string, unknown>;
   };
-  return { run, releases, posts };
+  return { run, releases, posts, rpcs };
 }
 
 const governed = { id: "60000000-0000-4000-8000-000000000001", channel_type: "email", recipients: [{ address: "dana@x.test" }], body_text: "Hello", body_html: "<p>Hello</p>", subject: "Hi",
@@ -71,5 +81,25 @@ describe("comms-scheduled-drain routing", () => {
     expect(t.posts[0]).not.toHaveProperty("comms_email_scheduled_release");
     expect(t.releases.map((r) => r.id)).toEqual([governed.id]);
     expect(out).toMatchObject({ claimed: 2, released: 1 });
+  });
+  it("every run first closes governed emails past their grace (the sweep), then leases", async () => {
+    const t = drain([governed]);
+    const out = await t.run();
+    expect(t.rpcs.map((c) => c.name).slice(0, 2)).toEqual(["close_missed_scheduled_comms_emails", "claim_due_scheduled_messages"]);
+    expect(out).toMatchObject({ missed_closed: 2 });
+  });
+  it("stops taking rows after its run-time budget and hands the unreached leases back", async () => {
+    const rows = Array.from({ length: 5 }, (_, i) => ({ ...governed, id: `60000000-0000-4000-8000-00000000010${i}` }));
+    const t = drain(rows, { stepMs: 15_000 });
+    const out = await t.run();
+    // 0 s, 15 s, 30 s are under the 40 s budget; at 45 s the run stops taking rows.
+    expect(t.releases.map((r) => r.id)).toEqual(rows.slice(0, 3).map((r) => r.id));
+    expect(t.rpcs.find((c) => c.name === "unlease_scheduled_messages")?.args).toEqual({ _ids: rows.slice(3).map((r) => r.id) });
+    expect(out).toMatchObject({ claimed: 5, unreached: 2 });
+  });
+  it("within budget nothing is handed back", async () => {
+    const t = drain([governed, governed]);
+    await t.run();
+    expect(t.rpcs.map((c) => c.name)).not.toContain("unlease_scheduled_messages");
   });
 });

@@ -14,7 +14,12 @@
 -- the release needs only the scheduler's SEAT (a workspace switch does not stop it) while an
 -- immediate send by the same person is still refused; a removed seat raises; admission moves the row
 -- queued -> draft; cancel wins before the claim, is too late after it, refuses a non-seat, an
--- immediate send and another business; the generic undo never touches a governed row. Fixtures are
+-- immediate send and another business; the generic undo never touches a governed row; a scheduled
+-- email ALWAYS reaches an owner-visible end — the drainer closes a departed scheduler's email
+-- (scheduler_authority_removed, no Rail invented, the audit row says why) and another owner can cancel
+-- it (the Rail names the canceller); the lease never takes a governed row past its grace (the sweep
+-- closes it as missed) and one business the provider floor refuses cannot stop the lease for
+-- another; a lease handed back is taken by the next run. Fixtures are
 -- fresh uuids, test-tenant-* slugs and .tests.invalid mail (§63). No provider is called.
 -- ─────────────────────────────────────────────────────────────────────────────────────────────
 BEGIN;
@@ -42,11 +47,16 @@ END $$;
 -- ── 0. shape and grants ──────────────────────────────────────────────────────────────────────
 SELECT pg_temp.ok(1, (SELECT bool_and(p.prosecdef AND array_to_string(p.proconfig,',')='search_path=pg_catalog, public'
     AND NOT has_function_privilege('anon',p.oid,'EXECUTE') AND NOT has_function_privilege('authenticated',p.oid,'EXECUTE')
-    AND has_function_privilege('service_role',p.oid,'EXECUTE')) AND count(*)=4
+    AND has_function_privilege('service_role',p.oid,'EXECUTE')) AND count(*)=7
   FROM pg_proc p WHERE p.oid IN ('public._comms_email_seat(uuid,uuid)'::regprocedure, 'public._comms_email_release_actor(jsonb,uuid)'::regprocedure,
    'public.prepare_comms_email_send(uuid,uuid,uuid,uuid,text,uuid,text,text,text,text,text,jsonb,jsonb,timestamptz)'::regprocedure,
-   'public.cancel_comms_email_send(uuid,uuid,uuid)'::regprocedure)),
-  'the four new functions are SECURITY DEFINER, search_path pinned, service_role only');
+   'public.cancel_comms_email_send(uuid,uuid,uuid)'::regprocedure, 'public.close_scheduled_comms_email(uuid,uuid,text,uuid)'::regprocedure,
+   'public.close_missed_scheduled_comms_emails(integer)'::regprocedure, 'public.unlease_scheduled_messages(uuid[])'::regprocedure)),
+  'the seven new functions are SECURITY DEFINER, search_path pinned, service_role only');
+SELECT pg_temp.ok(5, (SELECT md5(prosrc)='6f73777a47948368222f1d0e216fa325' AND prosecdef
+    AND NOT has_function_privilege('authenticated',oid,'EXECUTE') AND NOT has_function_privilege('anon',oid,'EXECUTE') AND has_function_privilege('service_role',oid,'EXECUTE')
+   FROM pg_proc WHERE oid='public.claim_due_scheduled_messages(integer)'::regprocedure),
+  'the lease is this migration''s body and keeps its service_role-only grant');
 SELECT pg_temp.ok(2, (SELECT pronargdefaults=0 FROM pg_proc WHERE oid='public.prepare_comms_email_send(uuid,uuid,uuid,uuid,text,uuid,text,text,text,text,text,jsonb,jsonb,timestamptz)'::regprocedure)
   AND (SELECT md5(prosrc)='8da3b64c24552123b973db96a74ab986' FROM pg_proc WHERE oid='public.prepare_comms_email_send(uuid,uuid,uuid,uuid,text,uuid,text,text,text,text,text,jsonb,jsonb)'::regprocedure),
   'the scheduled overload has no default (an immediate call can never reach it); the 13-argument prepare is byte-identical');
@@ -264,6 +274,79 @@ RESET ROLE;
 SELECT set_config('request.jwt.claims', '{}', true);
 SELECT pg_temp.ok(72, (SELECT status='queued' AND meta#>>'{comms_email_binding,state}'='prepared' AND NOT (meta ? 'undo_cancelled_at') FROM public.messages WHERE id=pg_temp.msg(5)),
   'the governed row is untouched (still queued, still prepared)');
+
+-- ── 8. a scheduled email ALWAYS reaches an owner-visible end, and the lease never stalls ──────
+-- U2 schedules two emails, then leaves the business (membership no longer active).
+SET LOCAL ROLE service_role;
+CREATE TEMP TABLE _r67 AS SELECT pg_temp.prep(6, pg_temp.u(2), (SELECT later FROM _t)) a, pg_temp.prep(7, pg_temp.u(2), (SELECT later FROM _t)) b;
+RESET ROLE;
+SELECT pg_temp.make_due(6);
+UPDATE public.tenant_members SET status='inactive' WHERE user_id=pg_temp.u(2) AND tenant_id='5c4ed100-0000-4000-8000-000000000001';
+SET LOCAL ROLE service_role;
+SELECT pg_temp.err(80, 'the departed scheduler''s due email cannot be released (the seat is gone)',
+  $q$SELECT public.claim_comms_email_send(pg_temp.msg(6),pg_temp.op(6))$q$, '42501', 'COMMS_EMAIL_AUTHORITY_UNAVAILABLE');
+SELECT pg_temp.ok(81, (SELECT r->>'closed'='true' AND r->>'reason'='scheduler_authority_removed' AND r->>'rail_recorded'='false' AND r->'rail_actor'='null'::jsonb
+   FROM (SELECT public.close_scheduled_comms_email(pg_temp.msg(6),pg_temp.op(6),'scheduler_authority_removed',NULL) r) x),
+  'the drainer closes it anyway: refused scheduler_authority_removed, no Rail invented for a non-member');
+SELECT pg_temp.ok(82, (SELECT status='blocked' AND scheduled_for IS NULL AND error='scheduler_authority_removed'
+   AND meta#>>'{comms_email_binding,state}'='refused' AND meta#>>'{comms_email_binding,outcome_reason}'='scheduler_authority_removed'
+   FROM public.messages WHERE id=pg_temp.msg(6)),
+  'the row reaches an owner-visible end: Not sent, with the reason, no time');
+RESET ROLE;
+SELECT pg_temp.ok(83, (SELECT count(*)=1 FROM public.paige_audit_log WHERE action='comms.email_scheduled_closed' AND target_id=pg_temp.msg(6)
+   AND actor_user_id IS NULL AND payload->>'rail_recorded'='false' AND payload->>'rail_unrecorded_reason'='no_active_member_to_attribute'
+   AND payload->>'scheduled_by'=pg_temp.u(2)::text AND payload->>'reason'='scheduler_authority_removed'),
+  'its audit row says why no Rail could be recorded');
+SET LOCAL ROLE service_role;
+SELECT pg_temp.ok(84, (SELECT r->>'cancelled'='true' AND r->>'rail_actor'=pg_temp.u(1)::text
+   FROM (SELECT public.cancel_comms_email_send(pg_temp.u(1),'5c4ed100-0000-4000-8000-000000000001',pg_temp.op(7)) r) x),
+  'another owner cancels the departed scheduler''s email; the Rail names the person who cancelled');
+SELECT pg_temp.ok(85, (SELECT status='blocked' AND meta#>>'{comms_email_binding,outcome_reason}'='cancelled_by_owner' FROM public.messages WHERE id=pg_temp.msg(7)),
+  '... and it is closed');
+RESET ROLE;
+SELECT pg_temp.ok(86, (SELECT count(*)=1 FROM public.paige_audit_log WHERE action='comms.email_scheduled_cancelled' AND target_id=pg_temp.msg(7)
+   AND actor_user_id=pg_temp.u(1) AND payload->>'rail_actor'=pg_temp.u(1)::text AND payload->>'rail_recorded'='true'),
+  'the cancel''s audit row names the canceller as actor and Rail');
+UPDATE public.tenant_members SET status='active' WHERE user_id=pg_temp.u(2) AND tenant_id='5c4ed100-0000-4000-8000-000000000001';
+
+-- A governed row past its grace is never leased again; the sweep closes it. One within its grace is.
+SET LOCAL ROLE service_role;
+CREATE TEMP TABLE _r89 AS SELECT pg_temp.prep(8, pg_temp.u(1), (SELECT later FROM _t)) a, pg_temp.prep(9, pg_temp.u(1), (SELECT later FROM _t)) b;
+RESET ROLE;
+UPDATE public.messages SET scheduled_for=date_trunc('minute',now())-interval '20 minutes',
+  meta=jsonb_set(meta,'{comms_email_binding,send_at}',to_jsonb(to_char((date_trunc('minute',now())-interval '20 minutes') AT TIME ZONE 'UTC','YYYY-MM-DD"T"HH24:MI:SS.MS"Z"')))
+ WHERE id=pg_temp.msg(8);
+SELECT pg_temp.make_due(9);
+-- M2: a business whose provider floor refuses (kill-switched) has a due ordinary queued row.
+INSERT INTO public.tenants (id, slug, name, status, account_type, account_number_prefix, account_number, features) VALUES
+ ('5c4ed100-0000-4000-8000-000000000003','test-tenant-sched-three','Sched Proof Three','active','standalone','SCHC',986103,'{}');
+INSERT INTO public.channel_connectors (id, tenant_id, channel_type, provider, from_address, status, active) VALUES
+ ('5c4ed300-0000-4000-8000-000000000003','5c4ed100-0000-4000-8000-000000000003','email','resend','hello@sched-three.tests.invalid','active',true);
+INSERT INTO public.messages (id, tenant_id, thread_key, connector_id, channel_type, direction, status, recipients, subject, body_html, scheduled_for) VALUES
+ ('5c4ed500-0000-4000-8000-000000000003','5c4ed100-0000-4000-8000-000000000003','email:x@sched-three.tests.invalid','5c4ed300-0000-4000-8000-000000000003',
+  'email','outbound','queued','[{"address":"x@sched-three.tests.invalid"}]'::jsonb,'Three','<p>Three</p>',date_trunc('minute',now())-interval '1 minute'),
+ ('5c4ed500-0000-4000-8000-000000000004','5c4ed100-0000-4000-8000-000000000001','contact:5c4ed100-0000-4000-8000-000000000001:5c4ed200-0000-4000-8000-000000000001',
+  '5c4ed300-0000-4000-8000-000000000001','email','outbound','queued','[{"address":"lead.sched@example.tests.invalid"}]'::jsonb,'One','<p>One</p>',date_trunc('minute',now())-interval '1 minute');
+UPDATE public.tenants SET comms_provider_execution_disabled=true WHERE id='5c4ed100-0000-4000-8000-000000000003';
+SET LOCAL ROLE service_role;
+CREATE TEMP TABLE _leased AS SELECT id FROM public.claim_due_scheduled_messages(200);
+SELECT pg_temp.ok(90, (SELECT count(*)=1 FROM _leased WHERE id=pg_temp.msg(9)) AND (SELECT count(*)=1 FROM _leased WHERE id='5c4ed500-0000-4000-8000-000000000004'),
+  'the lease still takes a due governed email inside its grace, and another business''s ordinary queued row');
+SELECT pg_temp.ok(91, (SELECT count(*)=0 FROM _leased WHERE id=pg_temp.msg(8)) AND (SELECT count(*)=0 FROM _leased WHERE id IN (pg_temp.msg(6),pg_temp.msg(7))),
+  'a governed email past its grace, or one already closed, is never leased again');
+SELECT pg_temp.ok(92, (SELECT count(*)=0 FROM _leased WHERE id='5c4ed500-0000-4000-8000-000000000003'),
+  'one business the provider floor refuses neither fails the lease nor is leased (two businesses, one call)');
+-- (Each write runs in its own statement: a statement does not see the writes of a function it calls.)
+CREATE TEMP TABLE _swept AS SELECT public.close_missed_scheduled_comms_emails(200) AS n;
+SELECT pg_temp.ok(93, (SELECT n>=1 FROM _swept)
+  AND (SELECT status='blocked' AND meta#>>'{comms_email_binding,outcome_reason}'='scheduled_release_missed' FROM public.messages WHERE id=pg_temp.msg(8))
+  AND (SELECT status='queued' AND meta#>>'{comms_email_binding,state}'='prepared' FROM public.messages WHERE id=pg_temp.msg(9)),
+  'the sweep closes the one past its grace as missed, and leaves the one still inside it');
+CREATE TEMP TABLE _unleased AS SELECT public.unlease_scheduled_messages(ARRAY[pg_temp.msg(9)]) AS n;
+CREATE TEMP TABLE _released_again AS SELECT id FROM public.claim_due_scheduled_messages(200);
+SELECT pg_temp.ok(94, (SELECT n=1 FROM _unleased) AND (SELECT count(*)=1 FROM _released_again WHERE id=pg_temp.msg(9)),
+  'a lease handed back is taken again by the very next run');
+RESET ROLE;
 
 SELECT count(*) FILTER (WHERE res='ok') AS ok,
        count(*) FILTER (WHERE res<>'ok') AS failed,

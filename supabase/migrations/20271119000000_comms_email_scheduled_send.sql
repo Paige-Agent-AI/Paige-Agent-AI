@@ -4,7 +4,7 @@
 -- an immediate send prepares, then this overload marks it scheduled: binding.send_at (canonical text,
 -- exactly Date#toISOString: YYYY-MM-DDTHH:MM:SS.mmmZ), messages.status='queued',
 -- messages.scheduled_for=send_at. Nothing is sent at prepare. The existing scheduled drainer leases the
--- due row (claim_due_scheduled_messages, unchanged) and hands it to releaseScheduledCommsEmail, which asks
+-- due row (claim_due_scheduled_messages, §10 below) and hands it to releaseScheduledCommsEmail, which asks
 -- send-message to send exactly the bound row; send-message's claim (below) admits it only once due.
 -- Chat and drafted lead replies keep sending immediately through the unchanged 13-argument prepare.
 --
@@ -28,25 +28,53 @@
 --     whose time has not come answers {admitted:false, not_before} before anything is locked; the
 --     admission UPDATE moves a 'queued' row to 'draft' (so a send finalized 'unknown' is never leased
 --     by the drainer again and never cancellable as an ordinary queued draft).
---  7. NEW cancel_comms_email_send(actor, tenant, operation) — any active owner/admin of the business
---     with it open (_comms_email_actor) may cancel a scheduled operation still 'prepared': it is
---     finalized refused `cancelled_by_owner` (the existing finalizer: status 'blocked' + Rail), its
---     scheduled_for is cleared, and comms.email_scheduled_cancelled is audited — one transaction. Once
---     a claim has taken it, the answer is {cancelled:false, outcome:<state>}.
---  8. cancel_scheduled_message — never touches a governed row (AND NOT (meta ? 'comms_email_binding')).
+--  7. NEW close_scheduled_comms_email(message, operation, reason, closing_actor) — the ONE close of a
+--     scheduled governed email that never went out (see "Why not finalize_comms_email_send" below).
+--  8. NEW cancel_comms_email_send(actor, tenant, operation) — any active owner/admin of the business
+--     with it open (_comms_email_actor) may cancel a scheduled operation still 'prepared': it is closed
+--     refused `cancelled_by_owner` through (7) with the canceller as the closing actor. Once a claim has
+--     taken it, the answer is {cancelled:false, outcome:<state>}.
+--  9. NEW close_missed_scheduled_comms_emails(limit) — the drainer's sweep: every governed row still
+--     'prepared' and 'queued' more than the release grace (15 min) after its time is closed
+--     `scheduled_release_missed` through (7). Per row, so one bad row cannot stop the rest.
+-- 10. claim_due_scheduled_messages — the drainer's lease, with two exclusions and nothing else changed:
+--     (a) a governed row past its release grace is never leased again (the sweep (9) closes it instead,
+--         so stuck rows can no longer fill the LIMIT ahead of every other business's sends);
+--     (b) a row the provider floor would refuse — exactly the a00_comms_provider_message_queue check
+--         (a kill-switched, archived or paused business, or a restricted recipient) — is not selected.
+--         Before, that trigger aborted this function's single UPDATE, so ONE such business made the
+--         drain fail (claim_failed) for EVERY business.
+-- 11. NEW unlease_scheduled_messages(ids) — the drainer hands back leases on rows it did not reach
+--     inside its run-time budget, so they are picked up next minute instead of five minutes later.
+-- 12. cancel_scheduled_message — never touches a governed row (AND NOT (meta ? 'comms_email_binding')).
+--
+-- Why not finalize_comms_email_send for closing a scheduled send (owner-visible terminal state, ALWAYS):
+--   finalize records the Rail through record_capability_run, which refuses (CAPABILITY_RUN_FORBIDDEN) an
+--   actor with no ACTIVE membership. A scheduled send whose scheduler has left the business could then
+--   never be cancelled or closed: it would sit "Scheduled · Cancel", be re-leased every five minutes and,
+--   in numbers, starve every business's scheduled sends. close_scheduled_comms_email performs exactly
+--   finalize's unclaimed prepared -> refused writes (binding state/finalized_at/outcome_reason, status
+--   'blocked', error = the code) plus scheduled_for = NULL, and records the Rail against, in order: the
+--   closing person (a canceller — the Rail names who cancelled), else the scheduler while they are still
+--   an active member, else NOBODY. In that last case no Rail row can honestly be attributed to anyone, so
+--   none is invented: the close still happens and its paige_audit_log row says rail_recorded=false with
+--   rail_unrecorded_reason='no_active_member_to_attribute'. Every close writes exactly one audit row
+--   (comms.email_scheduled_cancelled for a cancel, comms.email_scheduled_closed otherwise). It only ever
+--   closes a SCHEDULED binding still 'prepared' — never an immediate send, never one a claim has taken.
+--   The closing actor is attribution only (service-role callers; it grants nothing) and is used only when
+--   it is an active member of the row's business.
 --
 -- Every other check in the replaced bodies is byte-identical to the live bodies pinned below (claim and
 -- read_binding: 20271114230204; read_result: 20270597000000; cancel_scheduled_message: the body
--- 20270504000000 rewrote from 20260726211000). §59: every new function is SECURITY DEFINER with a
--- pinned search_path and service_role-only; each re-proves its actor in its own body.
+-- 20270504000000 rewrote from 20260726211000; claim_due_scheduled_messages: 20260726211000). §59: every
+-- new function is SECURITY DEFINER with a pinned search_path and service_role-only; each re-proves its
+-- actor in its own body where it has one.
 --
 -- HONEST RESIDUALS (§13):
---  * finalize_comms_email_send records the Rail through record_capability_run, which refuses an actor
---    with no ACTIVE membership. A scheduled send whose scheduler's membership row is no longer active
---    can therefore not be closed (refused or cancelled): it stays 'prepared' and 'queued', is never
---    sent (the seat check refuses every claim), and the thread shows "Not sent" once its grace passes.
 --  * The release re-checks recipient preferences at send time; a quiet-hours / do-not-disturb hold at
 --    that moment closes the scheduled send as refused with that reason (it is not re-queued).
+--  * A business that is kill-switched / archived / paused keeps its queued rows queued (not leased).
+--    When it is re-enabled, its governed rows past their grace are closed as missed by the sweep.
 BEGIN;
 SET LOCAL lock_timeout='3s';
 DO $guard$
@@ -67,7 +95,8 @@ BEGIN
   ('public.read_comms_email_send_result(uuid,uuid,uuid)','ae501d698cd16e0e128079b0c6566bae','d12d25b1d3859f5383dfde5bf4106060'),
   ('public.read_comms_email_send_binding(uuid)','6bc0d581e141cfaf0221002d71564eaa','7cdafa1530f75a2d7c02b08f5c6ccc7d'),
   ('public.claim_comms_email_send(uuid,uuid,boolean)','7b1173ff7d53da5836e33c2d77366c77','a9dfb75621838268a961152d19de954d'),
-  ('public.cancel_scheduled_message(uuid)','0d767250452d8a29858b4152c4b71fcd','c1fbef56be124fd68cc916dd54593f1c')
+  ('public.cancel_scheduled_message(uuid)','0d767250452d8a29858b4152c4b71fcd','c1fbef56be124fd68cc916dd54593f1c'),
+  ('public.claim_due_scheduled_messages(integer)','9d4c0ba5e8fb7acd648a5900aa218d13','6f73777a47948368222f1d0e216fa325')
  ) AS replaced(identity,prior_body,own_body) LOOP
   SELECT pg_catalog.md5(prosrc) INTO actual FROM pg_catalog.pg_proc WHERE oid=to_regprocedure(expected.identity);
   IF NOT FOUND OR actual NOT IN (expected.prior_body,expected.own_body) THEN
@@ -294,11 +323,56 @@ BEGIN
  RETURN jsonb_build_object('state','dispatching','attempts',attempts,'admitted',true);
 END $$;
 
--- 7. Cancel a scheduled governed email. Lock order as the claim: actor facts (FOR SHARE), then the
+-- 7. The one close of a scheduled governed email that never went out (header: "Why not finalize").
+CREATE OR REPLACE FUNCTION public.close_scheduled_comms_email(_message_id uuid,_operation_id uuid,_reason text,_closing_actor uuid) RETURNS jsonb
+LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public AS $$
+DECLARE m public.messages%ROWTYPE; b jsonb; reason text; scheduler uuid; rail uuid; seat text;
+BEGIN
+ SELECT * INTO m FROM public.messages WHERE id=_message_id FOR UPDATE;
+ b:=m.meta->'comms_email_binding';
+ IF b IS NULL OR _operation_id IS NULL OR b->>'operation_id' IS DISTINCT FROM _operation_id::text THEN
+  RAISE EXCEPTION 'COMMS_EMAIL_CLOSE_INVALID' USING ERRCODE='22023';
+ END IF;
+ IF b->>'send_at' IS NULL THEN RAISE EXCEPTION 'COMMS_EMAIL_NOT_SCHEDULED' USING ERRCODE='55000'; END IF;
+ -- A claim has taken it (or it already has an outcome): it may have gone out. Never closed here.
+ IF b->>'state' IS DISTINCT FROM 'prepared' THEN
+  RETURN jsonb_build_object('closed',false,'outcome',b->>'state','operation_id',_operation_id,'message_id',m.id);
+ END IF;
+ reason:=CASE WHEN _reason ~ '^[a-z][a-z0-9_]{0,63}$' THEN _reason ELSE 'unspecified' END;
+ BEGIN scheduler:=(b->>'actor_user_id')::uuid; EXCEPTION WHEN invalid_text_representation THEN scheduler:=NULL; END;
+ -- Who the Rail names: the person closing it, else the scheduler, each only while an active member.
+ IF _closing_actor IS NOT NULL THEN
+  SELECT tm.role::text INTO seat FROM public.tenant_members tm WHERE tm.tenant_id=m.tenant_id AND tm.user_id=_closing_actor AND tm.status='active';
+  IF FOUND THEN rail:=_closing_actor; END IF;
+ END IF;
+ IF rail IS NULL AND scheduler IS NOT NULL
+  AND EXISTS (SELECT 1 FROM public.tenant_members tm WHERE tm.tenant_id=m.tenant_id AND tm.user_id=scheduler AND tm.status='active') THEN
+  rail:=scheduler;
+ END IF;
+ -- Exactly finalize_comms_email_send's unclaimed prepared -> refused writes, plus the time cleared.
+ UPDATE public.messages SET
+  meta=jsonb_set(meta,'{comms_email_binding}',b||jsonb_build_object('state','refused','finalized_at',now(),'outcome_reason',reason)),
+  status='blocked', error=reason, scheduled_for=NULL
+ WHERE id=m.id;
+ IF rail IS NOT NULL THEN
+  PERFORM public.record_capability_run(m.tenant_id,rail,'comms_send_email','capability_refused',_operation_id,NULL);
+ END IF;
+ INSERT INTO public.paige_audit_log(actor_user_id,actor_role,tenant_id,action,target_type,target_id,payload)
+ VALUES(_closing_actor,
+  CASE WHEN seat IS NOT NULL THEN 'comms:'||seat ELSE 'service:comms-scheduled-release' END, m.tenant_id,
+  CASE WHEN reason='cancelled_by_owner' THEN 'comms.email_scheduled_cancelled' ELSE 'comms.email_scheduled_closed' END,'message',m.id,
+  jsonb_build_object('capability','comms_send_email','operation_id',_operation_id,'reason',reason,'send_at',b->>'send_at',
+   'scheduled_by',b->>'actor_user_id','rail_actor',rail,'rail_recorded',rail IS NOT NULL)
+  || CASE WHEN rail IS NULL THEN jsonb_build_object('rail_unrecorded_reason','no_active_member_to_attribute') ELSE '{}'::jsonb END);
+ RETURN jsonb_build_object('closed',true,'outcome','refused','reason',reason,'operation_id',_operation_id,'message_id',m.id,
+  'send_at',b->>'send_at','rail_actor',rail,'rail_recorded',rail IS NOT NULL);
+END $$;
+
+-- 8. Cancel a scheduled governed email. Lock order as the claim: actor facts (FOR SHARE), then the
 --    message row (FOR UPDATE); a claim that already holds the row wins and the cancel reads its state.
 CREATE OR REPLACE FUNCTION public.cancel_comms_email_send(_actor_user_id uuid,_expected_tenant_id uuid,_operation_id uuid) RETURNS jsonb
 LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public AS $$
-DECLARE m public.messages%ROWTYPE; b jsonb; found_id uuid; seat text;
+DECLARE m public.messages%ROWTYPE; b jsonb; found_id uuid; closed jsonb;
 BEGIN
  PERFORM public._comms_email_actor(_actor_user_id,_expected_tenant_id);
  IF _operation_id IS NULL THEN RAISE EXCEPTION 'COMMS_EMAIL_OPERATION_NOT_FOUND' USING ERRCODE='P0002'; END IF;
@@ -314,19 +388,90 @@ BEGIN
  IF b->>'state' IS DISTINCT FROM 'prepared' THEN
   RETURN jsonb_build_object('cancelled',false,'outcome',b->>'state','operation_id',_operation_id,'message_id',m.id);
  END IF;
- -- The existing unclaimed close: binding refused/cancelled_by_owner, status 'blocked', the Rail.
- PERFORM public.finalize_comms_email_send(m.id,_operation_id,'refused',NULL,'cancelled_by_owner',NULL);
- UPDATE public.messages SET scheduled_for=NULL WHERE id=m.id;
- SELECT tm.role::text INTO seat FROM public.tenant_members tm
-  WHERE tm.user_id=_actor_user_id AND tm.tenant_id=_expected_tenant_id AND tm.status='active';
- INSERT INTO public.paige_audit_log(actor_user_id,actor_role,tenant_id,action,target_type,target_id,payload)
- VALUES(_actor_user_id,'comms:'||coalesce(seat,'unknown'),_expected_tenant_id,'comms.email_scheduled_cancelled','message',m.id,
-  jsonb_build_object('capability','comms_send_email','operation_id',_operation_id,'send_at',b->>'send_at','scheduled_by',b->>'actor_user_id'));
+ -- Closed through (7) with the canceller as the closing actor: the Rail and the audit row name the
+ -- person who cancelled, and a scheduler who has since left the business does not block the brake.
+ closed:=public.close_scheduled_comms_email(m.id,_operation_id,'cancelled_by_owner',_actor_user_id);
+ IF closed->>'closed' IS DISTINCT FROM 'true' THEN
+  RETURN jsonb_build_object('cancelled',false,'outcome',closed->>'outcome','operation_id',_operation_id,'message_id',m.id);
+ END IF;
  RETURN jsonb_build_object('cancelled',true,'outcome','refused','reason','cancelled_by_owner','operation_id',_operation_id,
-  'message_id',m.id,'send_at',b->>'send_at');
+  'message_id',m.id,'send_at',b->>'send_at','rail_actor',closed->'rail_actor');
 END $$;
 
--- 8. The generic undo-send never touches a governed row (only cancel_comms_email_send closes one).
+-- 9. The drainer's sweep: governed rows still waiting past their release grace are closed as missed,
+--    each in its own subtransaction (a failure on one row is reported and leaves it for the next run).
+CREATE OR REPLACE FUNCTION public.close_missed_scheduled_comms_emails(_limit integer) RETURNS integer
+LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public AS $$
+DECLARE r record; n integer:=0;
+BEGIN
+ FOR r IN SELECT d.id, d.meta#>>'{comms_email_binding,operation_id}' AS op FROM public.messages d
+   WHERE d.status='queued' AND d.meta ? 'comms_email_binding' AND d.meta#>>'{comms_email_binding,state}'='prepared'
+     AND d.meta#>>'{comms_email_binding,send_at}' IS NOT NULL
+     AND d.scheduled_for IS NOT NULL AND d.scheduled_for<=now()-interval '15 minutes'
+   ORDER BY d.scheduled_for
+   FOR UPDATE SKIP LOCKED
+   LIMIT greatest(1,least(coalesce(_limit,50),200)) LOOP
+  BEGIN
+   IF public.close_scheduled_comms_email(r.id,r.op::uuid,'scheduled_release_missed',NULL)->>'closed'='true' THEN n:=n+1; END IF;
+  EXCEPTION WHEN OTHERS THEN
+   RAISE WARNING 'close_missed_scheduled_comms_emails: message % not closed: % %',r.id,SQLSTATE,SQLERRM;
+  END;
+ END LOOP;
+ RETURN n;
+END $$;
+
+-- 10. The lease. Byte-identical to the live body (20260726211000) except the two exclusions marked.
+CREATE OR REPLACE FUNCTION public.claim_due_scheduled_messages(_limit integer DEFAULT 50)
+ RETURNS SETOF messages
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+begin
+  return query
+  update public.messages m
+     set meta = coalesce(m.meta, '{}'::jsonb)
+                || jsonb_build_object('drain_claimed_at', to_jsonb(now()))
+   where m.id in (
+     select d.id
+       from public.messages d
+      where d.status = 'queued'
+        and d.scheduled_for is not null
+        and d.scheduled_for <= now()
+        and (
+          d.meta->>'drain_claimed_at' is null
+          or (d.meta->>'drain_claimed_at')::timestamptz < now() - interval '5 minutes'
+        )
+        -- (a) a governed email past its release grace is closed by close_missed_scheduled_comms_emails,
+        --     never leased again (stuck rows must not fill the limit ahead of every other business).
+        and not (d.meta ? 'comms_email_binding' and d.scheduled_for <= now() - interval '15 minutes')
+        -- (b) exactly what a00_comms_provider_message_queue would refuse on this UPDATE: that trigger
+        --     raising here aborted the whole lease, so one restricted business stopped every business.
+        and (d.tenant_id is null or public.comms_provider_execution_allowed(d.tenant_id, null, null))
+        and not (d.channel_type = 'email' and exists (
+          select 1 from jsonb_array_elements(d.recipients) r
+           where r->>'address' is not null
+             and not public.comms_provider_execution_allowed(d.tenant_id, null, r->>'address')))
+      order by d.scheduled_for asc
+      for update skip locked
+      limit greatest(1, least(_limit, 200))
+   )
+  returning m.*;
+end;
+$function$;
+
+-- 11. Hand back the lease on rows the drainer did not reach inside its run-time budget.
+CREATE OR REPLACE FUNCTION public.unlease_scheduled_messages(_ids uuid[]) RETURNS integer
+LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public AS $$
+DECLARE n integer;
+BEGIN
+ UPDATE public.messages SET meta=meta-'drain_claimed_at'
+  WHERE id=ANY(coalesce(_ids,'{}'::uuid[])) AND status='queued' AND meta ? 'drain_claimed_at';
+ GET DIAGNOSTICS n=ROW_COUNT;
+ RETURN n;
+END $$;
+
+-- 12. The generic undo-send never touches a governed row (only cancel_comms_email_send closes one).
 --    Otherwise verbatim the live body (20260726211000 as rewritten by 20270504000000).
 CREATE OR REPLACE FUNCTION public.cancel_scheduled_message(_id uuid)
  RETURNS boolean
@@ -372,4 +517,11 @@ REVOKE ALL ON FUNCTION public.prepare_comms_email_send(uuid,uuid,uuid,uuid,text,
 GRANT EXECUTE ON FUNCTION public.prepare_comms_email_send(uuid,uuid,uuid,uuid,text,uuid,text,text,text,text,text,jsonb,jsonb,timestamptz) TO service_role;
 REVOKE ALL ON FUNCTION public.cancel_comms_email_send(uuid,uuid,uuid) FROM PUBLIC,anon,authenticated;
 GRANT EXECUTE ON FUNCTION public.cancel_comms_email_send(uuid,uuid,uuid) TO service_role;
+REVOKE ALL ON FUNCTION public.close_scheduled_comms_email(uuid,uuid,text,uuid) FROM PUBLIC,anon,authenticated;
+GRANT EXECUTE ON FUNCTION public.close_scheduled_comms_email(uuid,uuid,text,uuid) TO service_role;
+REVOKE ALL ON FUNCTION public.close_missed_scheduled_comms_emails(integer) FROM PUBLIC,anon,authenticated;
+GRANT EXECUTE ON FUNCTION public.close_missed_scheduled_comms_emails(integer) TO service_role;
+REVOKE ALL ON FUNCTION public.unlease_scheduled_messages(uuid[]) FROM PUBLIC,anon,authenticated;
+GRANT EXECUTE ON FUNCTION public.unlease_scheduled_messages(uuid[]) TO service_role;
+-- claim_due_scheduled_messages: CREATE OR REPLACE keeps its existing service_role-only grants.
 COMMIT;

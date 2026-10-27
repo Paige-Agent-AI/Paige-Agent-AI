@@ -10,7 +10,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { decideDeclaredCapability } from "../../supabase/functions/_shared/capability-kit/decision";
 import { confirmFingerprint } from "../../supabase/functions/_shared/confirm-fingerprint";
 import { COMMS_EMAIL_SEND_CAPABILITY } from "../../supabase/functions/_shared/paige-spine/domains/comms";
-import { COMMS_EMAIL_TOOL, COMMS_EMAIL_ACTION, FINGERPRINT, UUID, parseCommsEmailCommand, commsEmailBodyHtml, commsEmailContentDigest, parseCommsEmailSendAt, canonicalCommsEmailSendAt } from "../../supabase/functions/_shared/comms-email/contract";
+import { COMMS_EMAIL_TOOL, COMMS_EMAIL_ACTION, FINGERPRINT, UUID, parseCommsEmailCommand, commsEmailBodyHtml, commsEmailContentDigest, parseCommsEmailSendAt, canonicalCommsEmailSendAt, COMMS_EMAIL_SCHEDULED_RELEASE_GRACE_MS } from "../../supabase/functions/_shared/comms-email/contract";
 import { resolveCommsEmailParties, commsEmailReadinessOutcome, emailProvidersFor, type CommsEmailReadiness } from "../../supabase/functions/_shared/comms-email/readiness";
 import { verifyLeadReplyApproval, storedApprovalMatches, recordLeadReplySend, bindingApprovalMatches, leadReplyPrepareRefusal } from "../../supabase/functions/comms-email-command/lead-reply-approval";
 import { executeCommsEmailSend, reconcileCommsEmailSend, parseCommsEmailStoredCall, commsEmailSafeResult } from "../../supabase/functions/_shared/comms-email/adapter";
@@ -204,7 +204,7 @@ function setup(options: Setup = {}) {
     commsProviderExecutionAllowed, COMMS_PROVIDER_EXECUTION_DISABLED,
     confirmFingerprint, decideDeclaredCapability, COMMS_EMAIL_SEND_CAPABILITY,
     COMMS_EMAIL_TOOL, COMMS_EMAIL_ACTION, FINGERPRINT, UUID, parseCommsEmailCommand, commsEmailBodyHtml, commsEmailContentDigest,
-    parseCommsEmailSendAt, canonicalCommsEmailSendAt,
+    parseCommsEmailSendAt, canonicalCommsEmailSendAt, COMMS_EMAIL_SCHEDULED_RELEASE_GRACE_MS,
     resolveCommsEmailParties, commsEmailReadinessOutcome, emailProvidersFor,
     verifyLeadReplyApproval, storedApprovalMatches, recordLeadReplySend, bindingApprovalMatches, leadReplyPrepareRefusal, runPreSend: async () => { throw new Error("readiness is substituted in this suite"); },
     readCommsEmailReadiness: async (_admin: unknown, input: Row) => { calls.push({ name: "readiness", args: input }); return readiness; },
@@ -705,6 +705,21 @@ describe("comms-email-command: approve now, send later", () => {
     expect(t.named("insert:paige_pending_confirmations")).toHaveLength(cards);
     expect(t.named("prepare_comms_email_send")).toHaveLength(1);
     expect(t.sends).toEqual([]);
+  });
+  it("past its release grace and still prepared, a scheduled operation is neither 'scheduled' nor a resend: outcome_unknown", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    const t = setup();
+    const sendAt = later(180_000);
+    const proposal = await t.request({ send_at: sendAt });
+    await t.request({ send_at: sendAt, approved_fingerprint: proposal.body.fingerprint });
+    // Inside the grace it is still being released: still answered as scheduled.
+    vi.setSystemTime(Date.parse(sendAt) + COMMS_EMAIL_SCHEDULED_RELEASE_GRACE_MS - 1000);
+    expect((await t.request()).body).toMatchObject({ ok: true, outcome: "scheduled" });
+    vi.setSystemTime(Date.parse(sendAt) + COMMS_EMAIL_SCHEDULED_RELEASE_GRACE_MS + 1000);
+    const late = await t.request();
+    expect(late).toMatchObject({ status: 503, body: { ok: false, outcome: "outcome_unknown", code: "COMMS_EMAIL_SCHEDULED_RELEASE_UNSETTLED", operation_id: OP, replayed: true } });
+    expect(t.sends).toEqual([]);
+    expect(t.named("prepare_comms_email_send")).toHaveLength(1);
   });
   it("a live card for another time is a different approval cycle on the same operation", async () => {
     const t = setup();

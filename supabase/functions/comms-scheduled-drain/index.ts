@@ -17,6 +17,8 @@ import { runPreSend } from "../_shared/pre-send-pipeline.ts";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
+// How long one run keeps taking rows. Cron fires every minute; one governed release may take ~25 s.
+const DRAIN_BUDGET_MS = 40_000;
 
 // The release's database/network edges, bound to the service client. Every read is keyed by the
 // binding's own tenant and scheduler; nothing is taken from the leased row beyond what the binding says.
@@ -44,9 +46,11 @@ const releaseDependencies: ScheduledReleaseDependencies = {
       return { answered: sent.status < 500 && answer !== null, code };
     } finally { clearTimeout(timer); }
   },
-  finalizeRefused: async ({ messageId, operationId, reason }) => {
-    const { error } = await admin.rpc("finalize_comms_email_send", { _message_id: messageId, _operation_id: operationId, _outcome: "refused", _provider_message_id: null, _reason: reason, _claimed_attempt: null });
-    return !error;
+  closeRefused: async ({ messageId, operationId, reason }) => {
+    // No closing person: the Rail names the scheduler while they are still a member, else nobody (and
+    // the audit row says why). It closes even when the scheduler has left the business.
+    const { data, error } = await admin.rpc("close_scheduled_comms_email", { _message_id: messageId, _operation_id: operationId, _reason: reason, _closing_actor: null });
+    return !error && (data as { closed?: unknown } | null)?.closed === true;
   },
   markSupportCase: async (messageId) => { await admin.rpc("mark_support_case_outbound", { _message_id: messageId }); },
 };
@@ -75,6 +79,12 @@ Deno.serve(async (req) => {
   if (req.method !== "POST") return json(405, { error: "method_not_allowed" });
   if (!(await isAuthorizedInternalCaller(req))) return json(401, { error: "unauthorized" });
 
+  const startedAt = Date.now();
+  // Scheduled governed emails still waiting past their release grace are closed as missed (nothing went
+  // out) instead of being leased again. Best-effort: a failure here never stops the drain itself.
+  const { data: missed, error: missedErr } = await admin.rpc("close_missed_scheduled_comms_emails", { _limit: 50 });
+  if (missedErr) console.warn("[comms-scheduled-drain] missed-release sweep failed", missedErr.message);
+
   // Atomic claim (FOR UPDATE SKIP LOCKED + lease marker) — returns due rows this tick owns.
   const { data: due, error: claimErr } = await admin.rpc("claim_due_scheduled_messages", { _limit: 50 });
   if (claimErr) return json(500, { error: "claim_failed", detail: claimErr.message });
@@ -90,7 +100,12 @@ Deno.serve(async (req) => {
   // Scheduled governed emails, counted apart: released (the email service took it), refused (closed,
   // nothing went out), left (nothing written; the next lease decides).
   const governed = { released: 0, refused: 0, left: 0 };
+  // Rows are released one at a time and a governed release can wait up to 25 s on send-message, so the
+  // run stops TAKING new rows after its budget and hands the rest of the leases back: they are picked up
+  // by the next minute's run instead of sitting leased for five minutes (and drifting past their grace).
+  const unreached: string[] = [];
   for (const m of rows) {
+    if (Date.now() - startedAt > DRAIN_BUDGET_MS) { unreached.push(m.id); continue; }
     if (scheduledDrainRoute(m) === "comms_email") {
       const r = await releaseScheduledCommsEmail(m.meta?.comms_email_binding, m.id, releaseDependencies);
       if (r.result === "released") governed.released++;
@@ -131,5 +146,10 @@ Deno.serve(async (req) => {
     else if (outcome.startsWith("queued_")) requeued++;   // hit DND/quiet-hours on release — correct
     else failed++;
   }
-  return json(200, { claimed: rows.length, released, requeued, failed, governed });
+  if (unreached.length) {
+    const { error: unleaseErr } = await admin.rpc("unlease_scheduled_messages", { _ids: unreached });
+    if (unleaseErr) console.warn("[comms-scheduled-drain] unlease failed; rows re-lease in 5 min", unleaseErr.message);
+  }
+  return json(200, { claimed: rows.length, released, requeued, failed, governed, unreached: unreached.length,
+    missed_closed: typeof missed === "number" ? missed : 0 });
 });

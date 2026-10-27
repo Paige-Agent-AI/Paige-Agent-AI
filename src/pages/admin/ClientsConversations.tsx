@@ -48,7 +48,7 @@ import { ThreadFilters, useLabelCatalog } from "./conversations/ThreadFilters";
 import { ContactCardRail } from "./conversations/ContactCardRail";
 import { readableMessageBody, shouldFoldEmail } from "./conversations/messageReading";
 // INT-328 — a governed send (an email or invoice already approved and on its way) is never a draft.
-import { GOVERNED_SEND_COLS, GOVERNED_SEND_COPY, governedEmailReceiptLabel, governedNotSentLine, governedSendView, isApprovableDraft, scheduledForLabel, type GovernedSendFields } from "./conversations/governedSend";
+import { GOVERNED_SEND_COLS, GOVERNED_SEND_COPY, cancelTooLateLine, governedEmailReceiptLabel, governedNotSentLine, governedSendView, isApprovableDraft, isScheduledMessage, scheduledForLabel, type GovernedSendFields } from "./conversations/governedSend";
 // E09 — the portal channel: recognise portal rows and reply through comms_portal_reply (no provider).
 import {
   PORTAL_BODY_MAX, PORTAL_IDENTITY_ID, createPortalRequestIds, isPortalHelpRequest, isPortalMessage, portalBodyError,
@@ -194,6 +194,7 @@ function MessageBubble({
   onEdit,
   onCancelScheduled,
   onCancelGovernedScheduled,
+  cancelPending = false,
   approving,
   sendDisabled = false,
 }: {
@@ -203,6 +204,8 @@ function MessageBubble({
   onCancelScheduled: (id: string) => void;
   /** Cancel an approved, scheduled governed email (by its operation) through the governed email door. */
   onCancelGovernedScheduled: (operationId: string) => void;
+  /** This scheduled email's Cancel is already on its way: the control is disabled until it answers. */
+  cancelPending?: boolean;
   approving: boolean;
   sendDisabled?: boolean;
 }) {
@@ -345,8 +348,10 @@ function MessageBubble({
           <button
             type="button"
             data-governed-send="scheduled"
+            disabled={cancelPending}
+            aria-busy={cancelPending || undefined}
             onClick={() => onCancelGovernedScheduled(m.comms_email_operation!)}
-            className="text-[11px] text-muted-foreground underline hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--ring))]"
+            className="text-[11px] text-muted-foreground underline hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--ring))] disabled:cursor-not-allowed disabled:opacity-60"
           >
             Scheduled for {scheduledForLabel(m.comms_email_send_at)} · Cancel
           </button>
@@ -475,6 +480,8 @@ export default function ClientsConversations() {
   } = useCommsAttachments(() => tenantIdRef.current);
   const [dragOver, setDragOver] = useState(false);
   const [scheduledFor, setScheduledFor] = useState<string | null>(null); // ISO | null
+  // Scheduled governed emails whose Cancel is on its way to the door (the button is disabled meanwhile).
+  const [cancellingOperations, setCancellingOperations] = useState<ReadonlySet<string>>(() => new Set());
   const [, setUndo] = useState<{ messageId: string; expiresAt: number } | null>(null);
   const [snippets, setSnippets] = useState<Snippet[]>([]);
   const [signatures, setSignatures] = useState<Signature[]>([]);
@@ -756,7 +763,7 @@ export default function ClientsConversations() {
         return !!t.snoozed_until && new Date(t.snoozed_until).getTime() > nowMs
           && new Date(t.snoozed_until).getTime() <= endOfTodayMs();
       case "scheduled":
-        return msgs.some((m) => m.status === "queued" && !!m.scheduled_for);
+        return msgs.some((m) => isScheduledMessage(m, nowMs));
       case "unread":
         // rides the 'active' server base (baseFilter falls through to active); narrows to
         // genuinely-unread, non-archived, not-future-snoozed threads (§13 real state).
@@ -1068,23 +1075,31 @@ export default function ClientsConversations() {
 
   // Cancel an approved email set to go out later. Only the governed email door can: it closes the
   // operation under the row lock, or says it is too late because the release already took it.
+  const cancelPendingFor = (m: MessageRow & GovernedSendFields) =>
+    !!m.comms_email_operation && cancellingOperations.has(m.comms_email_operation);
   const cancelGovernedScheduled = async (operationId: string) => {
-    if (!activeTenantId) return;
+    if (!activeTenantId || cancellingOperations.has(operationId)) return;
+    setCancellingOperations((s) => new Set(s).add(operationId));
     const epoch = accountEpochRef.current.capture();
-    const { data, error } = await supabase.functions.invoke("comms-email-command", {
-      body: { expected_tenant_id: activeTenantId, operation_id: operationId, cancel: true },
-    });
-    if (!accountEpochRef.current.accept(epoch)) return;
-    // A refusal arrives as an HTTP error whose body is the door's answer.
-    let answer = (data ?? null) as Record<string, unknown> | null;
-    if (error) {
-      const context = (error as { context?: { json?: () => Promise<unknown> } }).context;
-      answer = await context?.json?.().then((v) => (v && typeof v === "object" ? v as Record<string, unknown> : null)).catch(() => null) ?? null;
+    try {
+      const { data, error } = await supabase.functions.invoke("comms-email-command", {
+        body: { expected_tenant_id: activeTenantId, operation_id: operationId, cancel: true },
+      });
+      if (!accountEpochRef.current.accept(epoch)) return;
+      // A refusal arrives as an HTTP error whose body is the door's answer.
+      let answer = (data ?? null) as Record<string, unknown> | null;
+      if (error) {
+        const context = (error as { context?: { json?: () => Promise<unknown> } }).context;
+        answer = await context?.json?.().then((v) => (v && typeof v === "object" ? v as Record<string, unknown> : null)).catch(() => null) ?? null;
+      }
+      if (answer?.cancelled === true) toast.success("Canceled — it won't be sent.");
+      // Too late: say what actually happened to the send, from its recorded state.
+      else if (answer?.code === "COMMS_EMAIL_CANCEL_TOO_LATE") toast.error(cancelTooLateLine(answer.outcome));
+      else toast.error("Couldn't cancel it. Refresh the conversation to see where it stands.");
+      void load(); void loadThreads();
+    } finally {
+      setCancellingOperations((s) => { const next = new Set(s); next.delete(operationId); return next; });
     }
-    if (answer?.cancelled === true) toast.success("Canceled — it won't be sent.");
-    else if (answer?.code === "COMMS_EMAIL_CANCEL_TOO_LATE") toast.error(answer.outcome === "provider_accepted" ? "Too late — it already went out." : "Too late — it's already on its way.");
-    else toast.error("Couldn't cancel it. Refresh the conversation to see where it stands.");
-    void load(); void loadThreads();
   };
 
   // ── One-click approve: send the existing draft row via the single outbound seam ──
@@ -1519,7 +1534,7 @@ export default function ClientsConversations() {
       archivedAt: t.archived_at,
       channel: p?.channel_type ?? "email",
       hasDraft: !!p && isApprovableDraft(p),
-      scheduled: p?.status === "queued" && !!p.scheduled_for,
+      scheduled: !!p && isScheduledMessage(p),
       raw: t,
     };
   });
@@ -1955,6 +1970,7 @@ export default function ClientsConversations() {
                   onEdit={editDraft}
                   onCancelScheduled={cancelScheduled}
                   onCancelGovernedScheduled={cancelGovernedScheduled}
+                  cancelPending={cancelPendingFor(m)}
                   approving={approvingId === m.id}
                   sendDisabled={isSolo && handlingMode === "governed"}
                 />
@@ -1971,6 +1987,7 @@ export default function ClientsConversations() {
                     onEdit={editDraft}
                     onCancelScheduled={cancelScheduled}
                     onCancelGovernedScheduled={cancelGovernedScheduled}
+                    cancelPending={cancelPendingFor(m)}
                     approving={approvingId === m.id}
                     sendDisabled={isSolo && handlingMode === "governed"}
                   />

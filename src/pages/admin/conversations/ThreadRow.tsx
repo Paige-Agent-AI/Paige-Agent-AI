@@ -11,7 +11,7 @@ import {
 } from "./inbox-shared";
 import { SnoozeMenu } from "./SnoozeMenu";
 import { LabelPopover } from "./LabelPopover";
-import { isApprovableDraft } from "./governedSend";
+import { isApprovableDraft, isScheduledMessage } from "./governedSend";
 import { isPortalHelpRequest } from "./portalReply";
 
 // Real contact avatar: deterministic INITIALS in a tokenized indigo-family circle (no fake
@@ -90,7 +90,9 @@ export function ThreadRow({
   // R-N2: a draft is simply the latest message sitting as a draft — unless it is a governed send
   // already approved and on its way (INT-328), which is never "Draft ready".
   const hasDraft = !!preview && isApprovableDraft(preview);
-  const scheduled = preview?.status === "queued" && !!preview.scheduled_for;
+  // The one rule (governedSend.isScheduledMessage): a governed email past its release grace still reads
+  // 'queued' but is not scheduled any more.
+  const scheduled = !!preview && isScheduledMessage(preview);
   const labels = thread.labels ?? [];
   const snoozed = !!thread.snoozed_until && new Date(thread.snoozed_until) > new Date();
   const archived = !!thread.archived_at;

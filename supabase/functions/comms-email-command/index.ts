@@ -4,7 +4,7 @@ import { runPreSend } from "../_shared/pre-send-pipeline.ts";
 import { confirmFingerprint } from "../_shared/confirm-fingerprint.ts";
 import { decideDeclaredCapability } from "../_shared/capability-kit/decision.ts";
 import { COMMS_EMAIL_SEND_CAPABILITY } from "../_shared/paige-spine/domains/comms.ts";
-import { COMMS_EMAIL_TOOL, COMMS_EMAIL_ACTION, FINGERPRINT, UUID, parseCommsEmailCommand, commsEmailBodyHtml, commsEmailContentDigest, parseCommsEmailSendAt, canonicalCommsEmailSendAt } from "../_shared/comms-email/contract.ts";
+import { COMMS_EMAIL_TOOL, COMMS_EMAIL_ACTION, FINGERPRINT, UUID, parseCommsEmailCommand, commsEmailBodyHtml, commsEmailContentDigest, parseCommsEmailSendAt, canonicalCommsEmailSendAt, COMMS_EMAIL_SCHEDULED_RELEASE_GRACE_MS } from "../_shared/comms-email/contract.ts";
 import { resolveCommsEmailParties, readCommsEmailReadiness, commsEmailReadinessOutcome, emailProvidersFor, type CommsEmailAdmin } from "../_shared/comms-email/readiness.ts";
 import { verifyLeadReplyApproval, storedApprovalMatches, recordLeadReplySend, bindingApprovalMatches, leadReplyPrepareRefusal, type LeadReplyApprovalAdmin } from "./lead-reply-approval.ts";
 import { executeCommsEmailSend, reconcileCommsEmailSend, parseCommsEmailStoredCall, commsEmailSafeResult } from "../_shared/comms-email/adapter.ts";
@@ -225,6 +225,14 @@ Deno.serve(async req => {
     if (!matches) return response(403, { ok: false, outcome: "outcome_unknown", code: "LEAD_REPLY_APPROVAL_MISMATCH", operation_id: body.operation_id });
   }
   if (replay && scheduledReplay) {
+    // Past its release grace and still 'prepared': no claim ever admitted it, so the email service has
+    // not received it — but the database has not recorded that yet (the drainer's sweep closes it as
+    // missed), and a release leased at the very end of the grace may still be finishing. So it is not
+    // "scheduled" any more, and not yet a recorded "not sent": outcome_unknown, never a resend prompt.
+    if (Date.parse(String(replay.send_at)) + COMMS_EMAIL_SCHEDULED_RELEASE_GRACE_MS < Date.now()) {
+      return response(503, { ok: false, outcome: "outcome_unknown", code: "COMMS_EMAIL_SCHEDULED_RELEASE_UNSETTLED", send_at: replay.send_at,
+        operation_id: body.operation_id, replayed: true });
+    }
     return response(200, { ok: true, outcome: "scheduled", send_at: replay.send_at, operation_id: body.operation_id,
       ...(typeof replay.message_id === "string" && UUID.test(replay.message_id) ? { message_id: replay.message_id } : {}), replayed: true });
   }

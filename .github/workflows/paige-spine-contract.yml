@@ -509,7 +509,9 @@ jobs:
       # "Approve now, send later" (20271119000000): a scheduled governed email is prepared queued with its
       # send_at, the claim admits it only once due and then on the scheduler's seat alone (an immediate send
       # still needs the open workspace), admission moves it out of queued, cancel wins before the claim and
-      # is too late after it, and the generic undo never touches a governed row.
+      # is too late after it, and the generic undo never touches a governed row. A departed scheduler's
+      # email is still closed (or cancelled by another owner), past-grace rows are swept not re-leased,
+      # and one provider-restricted business cannot make claim_due_scheduled_messages fail for others.
       - name: Governed email scheduled send (rolled back)
         if: ${{ !cancelled() }}
         run: psql --dbname=postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/tests/comms_email_scheduled_send.sql

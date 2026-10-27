@@ -149,7 +149,7 @@ describe("releaseScheduledCommsEmail — the drainer's release matrix", () => {
         return { operation_id: OP, send_at: SEND_AT, state: reads === 1 ? (opts.state ?? "prepared") : (opts.afterState ?? "provider_accepted"), eligible: opts.eligible ?? true };
       },
       send: async (b) => { sends.push(b); log.push("send"); return { answered: opts.answered ?? true, code: opts.code ?? null }; },
-      finalizeRefused: async (c) => { closes.push(c); log.push(`refuse:${c.reason}`); return true; },
+      closeRefused: async (c) => { closes.push(c); log.push(`refuse:${c.reason}`); return true; },
       markSupportCase: async () => { log.push("support"); },
       ...over,
     };
@@ -162,8 +162,15 @@ describe("releaseScheduledCommsEmail — the drainer's release matrix", () => {
       comms_email_operation_id: OP, idempotency_key: `comms-email:${OP}`, comms_email_scheduled_release: true }]);
     expect(t.log).toEqual(["send", "support"]);
   });
+  it("an edge clock up to a minute behind the database still releases (the database's claim is the authority)", async () => {
+    const behind = release({}, { now: AT - 30_000 });
+    expect(await releaseScheduledCommsEmail(await binding(), M, behind.d)).toEqual({ result: "released" });
+    const wayBehind = release({}, { now: AT - 61_000 });
+    expect(await releaseScheduledCommsEmail(await binding(), M, wayBehind.d)).toEqual({ result: "left", reason: "not_due" });
+    expect(wayBehind.sends).toEqual([]);
+  });
   it("before its time nothing happens; past the grace it is closed as missed without sending", async () => {
-    const early = release({}, { now: AT - 1 });
+    const early = release({}, { now: AT - 120_000 });
     expect(await releaseScheduledCommsEmail(await binding(), M, early.d)).toEqual({ result: "left", reason: "not_due" });
     const late = release({}, { now: AT + COMMS_EMAIL_SCHEDULED_RELEASE_GRACE_MS + 1 });
     expect(await releaseScheduledCommsEmail(await binding(), M, late.d)).toEqual({ result: "refused", reason: "scheduled_release_missed" });
@@ -208,16 +215,28 @@ describe("releaseScheduledCommsEmail — the drainer's release matrix", () => {
       expect(t.log).toEqual([]);
     }
   });
-  it("still prepared after an ANSWERED send-message is closed with its code; an unanswered one is left; not-yet-due is left", async () => {
-    const answered = release({}, { afterState: "prepared", code: "COMMS_EMAIL_NOT_CLAIMABLE" });
-    expect(await releaseScheduledCommsEmail(await binding(), M, answered.d)).toEqual({ result: "refused", reason: "comms_email_not_claimable" });
-    const noCode = release({}, { afterState: "prepared", code: "Something odd!" });
-    expect(await releaseScheduledCommsEmail(await binding(), M, noCode.d)).toEqual({ result: "refused", reason: "scheduled_release_not_admitted" });
+  it("still prepared after an ANSWERED send-message: only a permanent answer closes it", async () => {
+    for (const code of ["comms_email_send_shape_invalid", "comms_email_binding_required", "COMMS_EMAIL_NOT_SCHEDULED", "COMMS_EMAIL_SCHEDULED_RELEASE_REQUIRED", "message_not_found"]) {
+      const t = release({}, { afterState: "prepared", code });
+      expect(await releaseScheduledCommsEmail(await binding(), M, t.d), code).toEqual({ result: "refused", reason: code.toLowerCase() });
+    }
+  });
+  it("a transient answer is left for the next lease — never a permanent cancel (lock timeout, concurrent change, claim error, identical in flight)", async () => {
+    for (const code of ["comms_email_binding_invalid", "COMMS_EMAIL_NOT_CLAIMABLE", "COMMS_EMAIL_NOT_YET_DUE", "Something odd!", null]) {
+      const t = release({}, { afterState: "prepared", code });
+      const r = await releaseScheduledCommsEmail(await binding(), M, t.d);
+      expect(r, String(code)).toEqual({ result: "left", reason: expect.stringMatching(/^retry:/) });
+      expect(t.sends, String(code)).toHaveLength(1);
+      expect(t.closes, String(code)).toEqual([]);
+    }
     const unanswered = release({}, { afterState: "prepared", answered: false });
     expect(await releaseScheduledCommsEmail(await binding(), M, unanswered.d)).toEqual({ result: "left", reason: "send_unanswered" });
-    const notDue = release({}, { afterState: "prepared", code: "COMMS_EMAIL_NOT_YET_DUE" });
-    expect(await releaseScheduledCommsEmail(await binding(), M, notDue.d)).toEqual({ result: "left", reason: "not_due" });
-    expect([...unanswered.closes, ...notDue.closes]).toEqual([]);
+    expect(unanswered.closes).toEqual([]);
+  });
+  it("…and once the grace runs out the next lease closes it as missed", async () => {
+    const t = release({}, { afterState: "prepared", code: "COMMS_EMAIL_NOT_CLAIMABLE", now: AT + COMMS_EMAIL_SCHEDULED_RELEASE_GRACE_MS + 1 });
+    expect(await releaseScheduledCommsEmail(await binding(), M, t.d)).toEqual({ result: "refused", reason: "scheduled_release_missed" });
+    expect(t.sends).toEqual([]);
   });
   it("a claimed or settled send is never closed as refused — it may have gone out", async () => {
     for (const afterState of ["dispatching", "unknown", "failed"]) {
@@ -232,7 +251,7 @@ describe("releaseScheduledCommsEmail — the drainer's release matrix", () => {
     expect(await releaseScheduledCommsEmail(await binding(), M, thrown.d)).toEqual({ result: "settled" });
   });
   it("a close the database will not record is left, not reported as refused", async () => {
-    const t = release({ finalizeRefused: async () => false }, { now: AT + COMMS_EMAIL_SCHEDULED_RELEASE_GRACE_MS + 1 });
+    const t = release({ closeRefused: async () => false }, { now: AT + COMMS_EMAIL_SCHEDULED_RELEASE_GRACE_MS + 1 });
     expect(await releaseScheduledCommsEmail(await binding(), M, t.d)).toEqual({ result: "left", reason: "close_unrecorded:scheduled_release_missed" });
   });
   it("a binding that is not a canonical scheduled one is invalid and untouched", async () => {

@@ -260,8 +260,12 @@ export interface ScheduledReleaseDependencies {
   readBinding(messageId: string): Promise<unknown>;
   /** POST send-message (service role). `answered` = it finished (HTTP < 500 with a JSON body); `code` = its code/error, if any. */
   send(body: ObjectValue): Promise<{ answered: boolean; code: string | null }>;
-  /** finalize_comms_email_send(.., 'refused', NULL, reason, NULL) — an unclaimed close. true = the database recorded it. */
-  finalizeRefused(input: { messageId: string; operationId: string; reason: string }): Promise<boolean>;
+  /**
+   * close_scheduled_comms_email(.., reason, NULL) — the one close of a scheduled send still 'prepared'.
+   * Unlike finalize it succeeds even when the scheduler has left the business (the Rail is then honestly
+   * unattributed and the audit row says so). true = the database closed it.
+   */
+  closeRefused(input: { messageId: string; operationId: string; reason: string }): Promise<boolean>;
   /** Best-effort: the thread's support case (if any) now awaits the customer. Never blocks. */
   markSupportCase(messageId: string): Promise<void>;
 }
@@ -287,6 +291,17 @@ const SEAT_GONE: [string, string][] = [
   ["COMMS_EMAIL_WORKSPACE_UNAVAILABLE", "workspace_unavailable"],
 ];
 const RELEASE_REASON = /^[a-z][a-z0-9_]{0,63}$/;
+/** How far the edge clock may run behind the database's before a release is held back (send-message's too). */
+export const COMMS_EMAIL_RELEASE_CLOCK_TOLERANCE_MS = 60_000;
+/**
+ * send-message answers that mean THIS request can never be admitted, however often it is retried: the
+ * request shape or the row itself is wrong for a scheduled release. Only these close a still-prepared
+ * scheduled email; any other answer is treated as transient (allowlist, never a denylist).
+ */
+export const PERMANENT_RELEASE_REFUSALS: ReadonlySet<string> = new Set([
+  "comms_email_send_shape_invalid", "comms_email_binding_required", "agreement_signature_binding_required",
+  "COMMS_EMAIL_NOT_SCHEDULED", "COMMS_EMAIL_SCHEDULED_RELEASE_REQUIRED", "message_not_found",
+]);
 const releaseReason = (code: string | null | undefined, fallback: string) => {
   const r = typeof code === "string" ? code.trim().toLowerCase() : "";
   return RELEASE_REASON.test(r) ? r : fallback;
@@ -305,7 +320,7 @@ export async function releaseScheduledCommsEmail(rawBinding: unknown, messageId:
   const binding = parseScheduledCommsEmailBinding(rawBinding);
   if (!binding || typeof messageId !== "string" || !UUID.test(messageId)) return { result: "invalid" };
   const refuse = async (reason: string): Promise<ScheduledReleaseResult> =>
-    await d.finalizeRefused({ messageId, operationId: binding.operationId, reason }).catch(() => false)
+    await d.closeRefused({ messageId, operationId: binding.operationId, reason }).catch(() => false)
       ? { result: "refused", reason } : { result: "left", reason: `close_unrecorded:${reason}` };
   let seatReason = "scheduler_authority_removed";
   const read = async (): Promise<ObjectValue | "seat_gone" | null> => {
@@ -319,7 +334,9 @@ export async function releaseScheduledCommsEmail(rawBinding: unknown, messageId:
   try {
     if (binding.state !== "prepared") return { result: "settled" };
     const now = d.now(), at = Date.parse(binding.sendAt);
-    if (!Number.isFinite(now) || now < at) return { result: "left", reason: "not_due" };
+    // The edge clock may run behind the database's: a minute early is let through to send-message, whose
+    // claim answers not_before on the database's own clock (the authority) if it really is early.
+    if (!Number.isFinite(now) || now + COMMS_EMAIL_RELEASE_CLOCK_TOLERANCE_MS < at) return { result: "left", reason: "not_due" };
     if (now > at + COMMS_EMAIL_SCHEDULED_RELEASE_GRACE_MS) return await refuse("scheduled_release_missed");
 
     const fresh = await read();
@@ -369,8 +386,13 @@ export async function releaseScheduledCommsEmail(rawBinding: unknown, messageId:
     // Still prepared: no claim admitted it. Only an ANSWERED send-message proves that; an unanswered
     // one may still be admitted, so it is left for the next lease (or closed as missed after the grace).
     if (!answer.answered) return { result: "left", reason: "send_unanswered" };
-    if (answer.code === "COMMS_EMAIL_NOT_YET_DUE") return { result: "left", reason: "not_due" };
-    return await refuse(releaseReason(answer.code, "scheduled_release_not_admitted"));
+    // Only an answer that can never change on a retry closes it. Everything else — a binding read that
+    // hit a lock timeout or a concurrent change (comms_email_binding_invalid), a claim that was not
+    // admitted because an identical email is in flight or the claim errored (COMMS_EMAIL_NOT_CLAIMABLE),
+    // not yet due — is left for the next lease; past the grace the sweep closes it as missed.
+    const code = typeof answer.code === "string" ? answer.code : "";
+    if (!PERMANENT_RELEASE_REFUSALS.has(code)) return { result: "left", reason: `retry:${releaseReason(code, "unanswered_code")}` };
+    return await refuse(releaseReason(code, "scheduled_release_not_admitted"));
   } catch {
     return { result: "left", reason: "release_error" };
   }

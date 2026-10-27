@@ -4566,3 +4566,28 @@ repeated. Five causal failures corrected; four exact-source regression suites
 receipts, providers and activation unchanged. Source/review/CI/deployment and
 authenticated proof remain separate; full ten/E5/Builder/ZION/owner-away/Live and
 founder acceptance stay open. [Bounded evidence](../evidence/ui-delivery/exp05-zion-history-access-refusal.md).
+
+## EXP02 original report thumbnail controls — development, October27
+
+The original report Card keeps its inert/aria-hidden/print-hidden document preview
+beside the native Open button rather than inside it. This removes invalid nested
+buttons from real paged documents while retaining the same80×96 tile, appearance,
+native label/handler, scoped original loader, original viewer and exact opener
+return. No Studio renderer, shared Chat shell, worker, native/schema/grant,
+registry, provider, approval or Rail writer changes; no implicit delegated Send.
+
+Source0e6a72cc on mainccce: original real-renderer regression1FAIL/2PASS before
+repair,15/3PASS after; lint0/build81s PASS. Actual compiler6 incumbent diagnostics
+match prior6 exactly under unchanged baseline10, not a clean-type claim. Visual13
+fresh original-source synthetic frames verify tile geometry,0nested native
+buttons, original custom Schibsted font, eight shell layouts/320/390/theme and
+bounded keyboard/draft return. Native zoom/full AT and incumbent pagination focus
+remain separate. FunctionalLOCAL/Visualsynthetic/Experientialbounded/FounderNOT_ACCEPTED.
+
+Hosted review/CI/web deployment/readback and authorized ordinary customer/cohort/
+reload/Chat-Live/Finance/full19/nine proof remain owed. Original CAP014/015 remain
+Unverified and canonical ALG maturity unchanged; a UI Open creates no Work or
+execution receipt. The separately held2973 status migration is not imported by
+this safe no-schema UI slice; normal Preview-capacity and original E05/E09
+receiving dependencies remain in their canonical Linear threads.
+[Bounded original-control evidence](../evidence/ui-delivery/e2-report-thumbnail-accessibility.md).

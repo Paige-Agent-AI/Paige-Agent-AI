@@ -1,0 +1,258 @@
+{
+  "source": "0e6a72cc53193b67ea08838dc89d8b70d7d8dde2",
+  "channel": "development",
+  "scope": "Original Card/Studio/shell with existing explicit synthetic read ports. No customer/backend/model/provider action; no same-artifact claim with the separate native SQL proof.",
+  "observations": [
+    {
+      "name": "1536-770-closed",
+      "time": "2026-10-27T06:26:46.069Z",
+      "client": 1536,
+      "dialogs": [],
+      "focus": "BODY",
+      "height": 770,
+      "inertPreview": true,
+      "nestedButtons": 0,
+      "scroll": 1536,
+      "tile": {
+        "height": 96,
+        "width": 80
+      },
+      "width": 1536
+    },
+    {
+      "name": "1536-770-open",
+      "time": "2026-10-27T06:26:46.734Z",
+      "client": 1536,
+      "dialogs": [],
+      "focus": "Synthetic message draft",
+      "height": 770,
+      "inertPreview": true,
+      "nestedButtons": 0,
+      "scroll": 1536,
+      "tile": {
+        "height": 96,
+        "width": 80
+      },
+      "width": 1536
+    },
+    {
+      "name": "1536-770-viewer",
+      "time": "2026-10-27T06:27:10.857Z",
+      "client": 1536,
+      "dialogs": [
+        {
+          "client": 894,
+          "scroll": 894
+        }
+      ],
+      "focus": "BUTTON",
+      "height": 770,
+      "inertPreview": true,
+      "nestedButtons": 0,
+      "scroll": 1536,
+      "tile": {
+        "height": 96,
+        "width": 80
+      },
+      "width": 1536
+    },
+    {
+      "name": "1366-768-closed",
+      "time": "2026-10-27T06:27:11.809Z",
+      "client": 1366,
+      "dialogs": [],
+      "focus": "Direct PAIGE",
+      "height": 768,
+      "inertPreview": true,
+      "nestedButtons": 0,
+      "scroll": 1366,
+      "tile": {
+        "height": 96,
+        "width": 80
+      },
+      "width": 1366
+    },
+    {
+      "name": "1366-768-open",
+      "time": "2026-10-27T06:27:12.306Z",
+      "client": 1366,
+      "dialogs": [],
+      "focus": "Direct PAIGE",
+      "height": 768,
+      "inertPreview": true,
+      "nestedButtons": 0,
+      "scroll": 1366,
+      "tile": {
+        "height": 96,
+        "width": 80
+      },
+      "width": 1366
+    },
+    {
+      "name": "1024-768-closed",
+      "time": "2026-10-27T06:27:12.850Z",
+      "client": 1024,
+      "dialogs": [],
+      "focus": "Direct PAIGE",
+      "height": 768,
+      "inertPreview": true,
+      "nestedButtons": 0,
+      "scroll": 1024,
+      "tile": {
+        "height": 96,
+        "width": 80
+      },
+      "width": 1024
+    },
+    {
+      "name": "1024-768-open",
+      "time": "2026-10-27T06:27:13.358Z",
+      "client": 1024,
+      "dialogs": [],
+      "focus": "Direct PAIGE",
+      "height": 768,
+      "inertPreview": true,
+      "nestedButtons": 0,
+      "scroll": 1024,
+      "tile": {
+        "height": 96,
+        "width": 80
+      },
+      "width": 1024
+    },
+    {
+      "name": "900-1000-closed",
+      "time": "2026-10-27T06:27:13.958Z",
+      "client": 900,
+      "dialogs": [],
+      "focus": "Direct PAIGE",
+      "height": 1000,
+      "inertPreview": true,
+      "nestedButtons": 0,
+      "scroll": 900,
+      "tile": {
+        "height": 96,
+        "width": 80
+      },
+      "width": 900
+    },
+    {
+      "name": "900-1000-open",
+      "time": "2026-10-27T06:27:14.465Z",
+      "client": 900,
+      "dialogs": [],
+      "focus": "Direct PAIGE",
+      "height": 1000,
+      "inertPreview": true,
+      "nestedButtons": 0,
+      "scroll": 900,
+      "tile": {
+        "height": 96,
+        "width": 80
+      },
+      "width": 900
+    },
+    {
+      "name": "320-740-viewer-reduced",
+      "time": "2026-10-27T06:27:56.032Z",
+      "client": 320,
+      "dialogs": [
+        {
+          "client": 302,
+          "scroll": 302
+        }
+      ],
+      "focus": "BUTTON",
+      "height": 740,
+      "inertPreview": true,
+      "nestedButtons": 0,
+      "scroll": 320,
+      "tile": {
+        "height": 96,
+        "width": 80
+      },
+      "width": 320
+    },
+    {
+      "name": "320-740-page2-reduced",
+      "time": "2026-10-27T06:27:56.171Z",
+      "client": 320,
+      "dialogs": [
+        {
+          "client": 302,
+          "scroll": 302
+        }
+      ],
+      "focus": "BODY",
+      "height": 740,
+      "inertPreview": true,
+      "nestedButtons": 0,
+      "scroll": 320,
+      "tile": {
+        "height": 96,
+        "width": 80
+      },
+      "width": 320
+    },
+    {
+      "name": "1536-770-viewer-stable",
+      "time": "2026-10-27T06:28:36.622Z",
+      "client": 1536,
+      "dialogs": [
+        {
+          "client": 894,
+          "scroll": 894
+        }
+      ],
+      "focus": "Direct PAIGE",
+      "height": 770,
+      "inertPreview": true,
+      "nestedButtons": 0,
+      "scroll": 1536,
+      "tile": {
+        "height": 96,
+        "width": 80
+      },
+      "width": 1536
+    },
+    {
+      "name": "390-844-obsidian-reduced",
+      "time": "2026-10-27T06:29:32.854Z",
+      "client": 390,
+      "dialogs": [
+        {
+          "client": 373,
+          "scroll": 373
+        }
+      ],
+      "focus": "DIV",
+      "height": 844,
+      "inertPreview": true,
+      "nestedButtons": 0,
+      "scroll": 390,
+      "tile": {
+        "height": 96,
+        "width": 80
+      },
+      "width": 390
+    }
+  ],
+  "fonts": [
+    {
+      "fonts": []
+    },
+    {
+      "fonts": [
+        {
+          "familyName": "Schibsted Grotesk",
+          "glyphCount": 23,
+          "isCustomFont": true,
+          "postScriptName": "Schibsted-Grotesk-Bold"
+        }
+      ]
+    }
+  ],
+  "reducedMotionPreferenceObserved": true,
+  "exactOpenerAndSyntheticDraftReturn": true,
+  "errorLogs": []
+}

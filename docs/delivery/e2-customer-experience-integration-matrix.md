@@ -1,5 +1,19 @@
 # Experience 02 — Customer Experience Integration Matrix
 
+## October27 — original report thumbnail native control repair, local increment
+
+O01/O14/O16 original Card markup preserves its original preview/Open/view/return
+while removing invalid nested native buttons. Source0e6a72cc on actualccce,
+15/3 controlled checks/lint0/build PASS; Visual13 actual-source synthetic frames,
+same80×96 geometry/product font/narrow/theme and original draft return. Current
+compiler6 incumbent errors identical to prior6; no baseline change. Functional
+LOCAL/Visualsynthetic/Experientialbounded/FounderNOT_ACCEPTED; hosted review/CI/
+release/readback, ordinary roles/cohorts/reload/Chat-Live/Finance/native zoom/full
+AT and full19/nine remain owed. No native/grant/provider/action/catalogue/ALG
+delta, no held2973 source adopted, original outcome definitions and historical
+9PASS0FAIL+12PASS0FAIL4BLOCKED/monthlyUNKNOWNUNRETRIED unchanged.
+[Bounded evidence](../evidence/ui-delivery/e2-report-thumbnail-accessibility.md).
+
 ## October27 — Finance target source release, original19 definitions retained
 
 O04/O10/O14/O16 bounded consumer#2967 mergedf9722f5c77e19f2838c8657ca28edc646794d29e,

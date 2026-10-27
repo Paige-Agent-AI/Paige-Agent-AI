@@ -1,0 +1,216 @@
+{
+  "source": "0e6a72cc53193b67ea08838dc89d8b70d7d8dde2",
+  "base": "ccce6f1f58168f26e227205f8f40607368c22141",
+  "scope": "Declared original Card, Studio, shell, style/font and backend-refusing harness inputs only; not a full transitive graph or authenticated customer acceptance. Only original Card differs from incoming main.",
+  "inputs": [
+    {
+      "path": "src/components/admin/studio/DocumentPreview.tsx",
+      "sha256": "03511d34e9c2b52592f01bee91990b3e80731ae15b0261d46c7947607fb70d56",
+      "exact_incoming_main": true
+    },
+    {
+      "path": "src/components/admin/studio/studio-document.ts",
+      "sha256": "945cee2cd9dffaec24db4e571ad71a65ca07638d25cb30938e66226ca958fb1b",
+      "exact_incoming_main": true
+    },
+    {
+      "path": "src/components/admin/studio/studio-types.ts",
+      "sha256": "91e10916e4267b7edb63a0b988c01eaf5712ff3fba056a768fd6f0aa6a48bf05",
+      "exact_incoming_main": true
+    },
+    {
+      "path": "src/components/paige/chat/PaigeArtifactCard.tsx",
+      "sha256": "2be916090211c7029806dc350a386e37809d13e356059343df8fa5ce3d041d7a",
+      "exact_incoming_main": false
+    },
+    {
+      "path": "src/components/ui/dialog.tsx",
+      "sha256": "9107e63b84d67eafb311c13cb52bc48f32ef3b36eddebe65365b10fdfbd9d2ca",
+      "exact_incoming_main": true
+    },
+    {
+      "path": "src/components/tenant-shell/TenantCommandCenterShell.tsx",
+      "sha256": "7aaa24d867af1ac5e2222f3581ab361288ba54e6319e5c86db245875adb13e7c",
+      "exact_incoming_main": true
+    },
+    {
+      "path": "src/components/tenant-shell/tenant-command-center-shell.css",
+      "sha256": "e9756f8cfc04a330748711d798afeda35cb8f02bd133914dfee9a5fe4b0bf355",
+      "exact_incoming_main": true
+    },
+    {
+      "path": "src/index.css",
+      "sha256": "f410966e5d565745efff907262d232925f6132d4a71a414ca8146db131fbddcc",
+      "exact_incoming_main": true
+    },
+    {
+      "path": "src/solo/solo-tokens.css",
+      "sha256": "77edc9fc35a6d2dab87318996fbb0dc6d80a0a04115d1757016c10da2c7b3197",
+      "exact_incoming_main": true
+    },
+    {
+      "path": "scripts/live-drive/harness/executive-mount/index.html",
+      "sha256": "5ae436157119e1a702b87dbacb7122ca35cea9bf584f26ab499618fda7ff01eb",
+      "exact_incoming_main": true
+    },
+    {
+      "path": "scripts/live-drive/harness/executive-mount/main.tsx",
+      "sha256": "5cc3429f4a35d2fd2ac488734cf2aa073e76a437ca5f7b9f2c87db91f52bf2cc",
+      "exact_incoming_main": true
+    },
+    {
+      "path": "scripts/live-drive/harness/executive-mount/stubs.tsx",
+      "sha256": "65f0a15233e39a103e16a793dee7d8a8cfd18fd899b4d822d8dc3f9dfc397b86",
+      "exact_incoming_main": true
+    },
+    {
+      "path": "scripts/live-drive/harness/executive-mount/vite.config.ts",
+      "sha256": "d727d65d9f4f0769854ff9bd442fb3dfb518da33fdf08841bcb4205ea6926f42",
+      "exact_incoming_main": true
+    },
+    {
+      "path": "scripts/live-drive/harness/executive-mount/report-fixture.tsx",
+      "sha256": "f3de676a84c606e042f8f81a3fe1e324a1e859948f61244e55f7813a4962daed",
+      "exact_incoming_main": true
+    },
+    {
+      "path": "supabase/functions/_shared/document-business-review-evidence.ts",
+      "sha256": "de7805d9c8f8ee5352b7802711adeabeaa88a640858f2b71f1db5dee4f1dde58",
+      "exact_incoming_main": true
+    },
+    {
+      "path": "public/fonts/schibsted-grotesk/schibsted-grotesk-latin-wght-italic.woff2",
+      "sha256": "4c72510c1a185a7b7ae2c9e402fbe531a58b74c95f4d2450f4d58482213c65f7",
+      "exact_incoming_main": true
+    },
+    {
+      "path": "public/fonts/schibsted-grotesk/schibsted-grotesk-latin-wght-normal.woff2",
+      "sha256": "4c8b93f431d462c696e12b9d6a033feb3394d36e66e781357c496b95d8a75e05",
+      "exact_incoming_main": true
+    },
+    {
+      "path": "src/components/admin/studio/ArtifactStrip.tsx",
+      "sha256": "8c0a6483419ad8fca95d96bc617dcac125bb40b629c138f0d45190f7a13eb211",
+      "exact_incoming_main": true
+    }
+  ],
+  "frames": [
+    {
+      "path": "1536-770-closed.jpg",
+      "sha256": "ce38959fa80eae13e71685550a92e75865ecf6ac538a196888d4272afd525bc0",
+      "raster_width": 1535,
+      "raster_height": 770,
+      "css_width": 1536,
+      "css_height": 770,
+      "phase": "observed original interface"
+    },
+    {
+      "path": "1536-770-open.jpg",
+      "sha256": "0611e24e92cdcd7848faa8e4fe8c2098fb6d1fb1e3f18c84ee1ce514f1315f26",
+      "raster_width": 1535,
+      "raster_height": 770,
+      "css_width": 1536,
+      "css_height": 770,
+      "phase": "observed original interface"
+    },
+    {
+      "path": "1536-770-viewer.jpg",
+      "sha256": "ac2ef8bcb68f1c9ef3f3766df39bbad8dc4e8402958d3a078ae54796c644a9bf",
+      "raster_width": 1535,
+      "raster_height": 770,
+      "css_width": 1536,
+      "css_height": 770,
+      "phase": "initial dialog transition"
+    },
+    {
+      "path": "1366-768-closed.jpg",
+      "sha256": "b28c9d893c580c895344514e414a566d8cc0984fa59230e944dab38ba762046f",
+      "raster_width": 1366,
+      "raster_height": 768,
+      "css_width": 1366,
+      "css_height": 768,
+      "phase": "observed original interface"
+    },
+    {
+      "path": "1366-768-open.jpg",
+      "sha256": "8d1773ad8569d6e8edd1610e8e76095e21cc83bb5f733082a5346b5e1dfc4926",
+      "raster_width": 1366,
+      "raster_height": 768,
+      "css_width": 1366,
+      "css_height": 768,
+      "phase": "observed original interface"
+    },
+    {
+      "path": "1024-768-closed.jpg",
+      "sha256": "e7d7d49932a05ed2884d534795d9ab86f1d454b6c755ae4c383d522673505a2a",
+      "raster_width": 1024,
+      "raster_height": 768,
+      "css_width": 1024,
+      "css_height": 768,
+      "phase": "observed original interface"
+    },
+    {
+      "path": "1024-768-open.jpg",
+      "sha256": "c858dfba475e60904c7e4366ecafe5d719f897b3eeef04b5e4e582c3a9521a94",
+      "raster_width": 1024,
+      "raster_height": 768,
+      "css_width": 1024,
+      "css_height": 768,
+      "phase": "observed original interface"
+    },
+    {
+      "path": "900-1000-closed.jpg",
+      "sha256": "fb239a90ada065699f4ff73c4bb1914987ea0749822132f593677abc066d7e70",
+      "raster_width": 900,
+      "raster_height": 1000,
+      "css_width": 900,
+      "css_height": 1000,
+      "phase": "observed original interface"
+    },
+    {
+      "path": "900-1000-open.jpg",
+      "sha256": "e278e01295cbecc7f911d5af0307367e67745d759fb71687d4c0911e9fe9e483",
+      "raster_width": 900,
+      "raster_height": 1000,
+      "css_width": 900,
+      "css_height": 1000,
+      "phase": "observed original interface"
+    },
+    {
+      "path": "320-740-viewer-reduced.jpg",
+      "sha256": "74ab37c8f16216c055fe2ef776e8967a741254ca16b69d8fff68d86ecca32329",
+      "raster_width": 320,
+      "raster_height": 740,
+      "css_width": 320,
+      "css_height": 740,
+      "phase": "observed original interface"
+    },
+    {
+      "path": "320-740-page2-reduced.jpg",
+      "sha256": "e2899e6d780e61c77a708c64ae2e174a4f1097a0248bcd3786dd0c071decb635",
+      "raster_width": 320,
+      "raster_height": 740,
+      "css_width": 320,
+      "css_height": 740,
+      "phase": "observed original interface"
+    },
+    {
+      "path": "1536-770-viewer-stable.jpg",
+      "sha256": "bb0b3b7698653e2bfde5338d2aaa55e224d1dc50f3760ec461501628f41a7b24",
+      "raster_width": 1535,
+      "raster_height": 770,
+      "css_width": 1536,
+      "css_height": 770,
+      "phase": "observed original interface"
+    },
+    {
+      "path": "390-844-obsidian-reduced.jpg",
+      "sha256": "4dcfc4b02960102747ffa983912d01dcff869d692eb526467778aecf4473ba0d",
+      "raster_width": 390,
+      "raster_height": 843,
+      "css_width": 390,
+      "css_height": 844,
+      "phase": "observed original interface"
+    }
+  ]
+}

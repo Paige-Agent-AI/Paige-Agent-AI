@@ -24,7 +24,9 @@ export default defineConfig({
       { find: /^@\/hooks\/useTenantContext$/, replacement: stubs },
       { find: /^@\/hooks\/useUserRoles$/, replacement: stubs },
       { find: /^\.\/useTenantRelationshipsData$/, replacement: stubs },
-      { find: "@", replacement: path.join(repo, "src") },
+      // EXP03_SRC points "@" at another checkout's src (the negative control: the base commit's inbox, where an
+      // unconfirmed email still read "Failed"). Unset, the harness renders this tree's src.
+      { find: "@", replacement: process.env.EXP03_SRC ?? path.join(repo, "src") },
     ],
   },
   define: {

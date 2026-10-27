@@ -1,0 +1,3712 @@
+{
+  "exp03-thread-light-1536x770-paige-closed": {
+    "ok": true,
+    "viewport": "1536x770",
+    "theme": "light",
+    "paige": "closed",
+    "state": "thread",
+    "checks": {
+      "pillShown": true,
+      "lineShown": true,
+      "pillAA": true,
+      "lineAA": true,
+      "toastAA": true,
+      "failedOnlyForTheRealFailure": true,
+      "noRawUnconfirmedCode": true,
+      "toast": true,
+      "sendOnce": true,
+      "noResendOffered": true,
+      "noOverflow": true,
+      "goldOnlyOnAct": true,
+      "fontLoaded": true
+    },
+    "label": {
+      "ok": true,
+      "w": 174,
+      "h": 24
+    },
+    "font": {
+      "schibsted": true,
+      "bodyFamily": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\""
+    },
+    "exp03": [
+      {
+        "kind": "pill-sent",
+        "incidental": false,
+        "text": "Sent",
+        "ratio": 3.7,
+        "color": "rgb(50, 118, 90)",
+        "bg": "rgb(208,215,209)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "pill-failed",
+        "incidental": false,
+        "text": "Failed",
+        "ratio": 3.98,
+        "color": "rgb(164, 71, 61)",
+        "bg": "rgb(225,208,205)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "line-failed",
+        "incidental": false,
+        "text": "sendgrid_400: {\"errors\":[{\"message\":\"Does not contain a vali",
+        "ratio": 4.86,
+        "color": "rgb(164, 71, 61)",
+        "bg": "rgb(236,232,230)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": "pill-unconfirmed",
+        "incidental": false,
+        "text": "Couldn't confirm",
+        "ratio": 5.76,
+        "color": "oklab(0.426436 0.0267001 0.0553361)",
+        "bg": "rgb(223,212,201)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "line-unconfirmed",
+        "incidental": false,
+        "text": "Couldn't confirm this went out — don't resend.",
+        "ratio": 4.86,
+        "color": "rgb(164, 71, 61)",
+        "bg": "rgb(236,232,230)",
+        "size": "11px",
+        "weight": "400"
+      }
+    ],
+    "low": [
+      {
+        "kind": null,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 2.46,
+        "color": "rgba(103, 97, 107, 0.6)",
+        "bg": "rgb(247, 244, 238)",
+        "size": "12px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 2.43,
+        "color": "rgba(103, 97, 107, 0.6)",
+        "bg": "rgb(244, 241, 235)",
+        "size": "12px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "incidental": false,
+        "text": "LIVE",
+        "ratio": 3.69,
+        "color": "rgb(50, 118, 90)",
+        "bg": "rgb(217,212,211)",
+        "size": "8px",
+        "weight": "600"
+      },
+      {
+        "kind": "pill-sent",
+        "incidental": false,
+        "text": "Sent",
+        "ratio": 3.7,
+        "color": "rgb(50, 118, 90)",
+        "bg": "rgb(208,215,209)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "pill-failed",
+        "incidental": false,
+        "text": "Failed",
+        "ratio": 3.98,
+        "color": "rgb(164, 71, 61)",
+        "bg": "rgb(225,208,205)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": null,
+        "incidental": false,
+        "text": "PROFILE · LIVE",
+        "ratio": 4.37,
+        "color": "rgb(50, 118, 90)",
+        "bg": "rgb(238,230,215)",
+        "size": "8px",
+        "weight": "600"
+      }
+    ],
+    "textCount": 169,
+    "gold": 15,
+    "goldOutsideAct": [],
+    "warningInExp03": [],
+    "goldElsewhere": [
+      "Channel setup rgb(111, 86, 54)",
+      "JO rgb(122, 92, 46)",
+      "Relationship rgb(122, 92, 46)",
+      "Sales context rgb(122, 92, 46)",
+      "Relationship signals rgb(122, 92, 46)",
+      "Open Campaigns rgb(111, 86, 54)",
+      "Client access rgb(122, 92, 46)",
+      "Open Portal rgb(111, 86, 54)",
+      "Recent activity rgb(122, 92, 46)"
+    ],
+    "exp03Roots": 1,
+    "goldActs": [
+      "New conversation",
+      "Send"
+    ],
+    "tokens": {
+      "warning": "rgb(150, 98, 34)",
+      "destructive": "rgb(164, 71, 61)"
+    },
+    "line": {
+      "rgb": "rgb(164,71,61)",
+      "destructiveRgb": "rgb(164,71,61)",
+      "color": "rgb(164, 71, 61)",
+      "isDestructive": true,
+      "className": "mt-1.5 text-[11px] text-destructive"
+    },
+    "pill": {
+      "rgb": "rgb(102,71,41)",
+      "bgRgb": "rgba(148,101,34,0.149)",
+      "color": "oklab(0.426436 0.0267001 0.0553361)",
+      "bg": "rgba(150, 98, 34, 0.15)",
+      "size": "10px",
+      "className": "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide bg-[hsl(var(--warning)/0.15)] text-[color-mix(in_oklab,hsl(var(--warning))_62%,hsl(var(--foreground)))]"
+    },
+    "overflowX": false,
+    "counts": {
+      "pill": 1,
+      "line": 1,
+      "failed": 1,
+      "rawUnconfirmed": 0,
+      "approve": 0
+    },
+    "toasts": [],
+    "calls": [],
+    "errors": []
+  },
+  "exp03-thread-dark-1536x770-paige-closed": {
+    "ok": true,
+    "viewport": "1536x770",
+    "theme": "dark",
+    "paige": "closed",
+    "state": "thread",
+    "checks": {
+      "pillShown": true,
+      "lineShown": true,
+      "pillAA": true,
+      "lineAA": true,
+      "toastAA": true,
+      "failedOnlyForTheRealFailure": true,
+      "noRawUnconfirmedCode": true,
+      "toast": true,
+      "sendOnce": true,
+      "noResendOffered": true,
+      "noOverflow": true,
+      "goldOnlyOnAct": true,
+      "fontLoaded": true
+    },
+    "label": {
+      "ok": true,
+      "w": 174,
+      "h": 24
+    },
+    "font": {
+      "schibsted": true,
+      "bodyFamily": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\""
+    },
+    "exp03": [
+      {
+        "kind": "pill-sent",
+        "incidental": false,
+        "text": "Sent",
+        "ratio": 6.77,
+        "color": "rgb(143, 209, 174)",
+        "bg": "rgb(48,56,60)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "pill-failed",
+        "incidental": false,
+        "text": "Failed",
+        "ratio": 5.9,
+        "color": "rgb(237, 160, 146)",
+        "bg": "rgb(62,49,56)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "line-failed",
+        "incidental": false,
+        "text": "sendgrid_400: {\"errors\":[{\"message\":\"Does not contain a vali",
+        "ratio": 7.92,
+        "color": "rgb(237, 160, 146)",
+        "bg": "rgb(32,29,40)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": "pill-unconfirmed",
+        "incidental": false,
+        "text": "Couldn't confirm",
+        "ratio": 8.2,
+        "color": "oklab(0.881658 0.0142861 0.0638055)",
+        "bg": "rgb(62,54,53)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "line-unconfirmed",
+        "incidental": false,
+        "text": "Couldn't confirm this went out — don't resend.",
+        "ratio": 7.92,
+        "color": "rgb(237, 160, 146)",
+        "bg": "rgb(32,29,40)",
+        "size": "11px",
+        "weight": "400"
+      }
+    ],
+    "low": [
+      {
+        "kind": null,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 3.55,
+        "color": "rgba(173, 167, 159, 0.6)",
+        "bg": "rgb(22, 19, 27)",
+        "size": "12px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 3.5,
+        "color": "rgba(173, 167, 159, 0.6)",
+        "bg": "rgb(24, 22, 29)",
+        "size": "12px",
+        "weight": "400"
+      }
+    ],
+    "textCount": 169,
+    "gold": 15,
+    "goldOutsideAct": [],
+    "warningInExp03": [
+      "Couldn't confirm rgb(241,211,168)"
+    ],
+    "goldElsewhere": [
+      "Channel setup rgb(255, 240, 207)",
+      "JO rgb(199, 169, 120)",
+      "Relationship rgb(199, 169, 120)",
+      "Sales context rgb(199, 169, 120)",
+      "Relationship signals rgb(199, 169, 120)",
+      "Open Campaigns rgb(255, 240, 207)",
+      "Client access rgb(199, 169, 120)",
+      "Open Portal rgb(255, 240, 207)",
+      "Recent activity rgb(199, 169, 120)"
+    ],
+    "exp03Roots": 1,
+    "goldActs": [
+      "New conversation",
+      "Send"
+    ],
+    "tokens": {
+      "warning": "rgb(237, 192, 126)",
+      "destructive": "rgb(237, 160, 146)"
+    },
+    "line": {
+      "rgb": "rgb(237,160,146)",
+      "destructiveRgb": "rgb(237,160,146)",
+      "color": "rgb(237, 160, 146)",
+      "isDestructive": true,
+      "className": "mt-1.5 text-[11px] text-destructive"
+    },
+    "pill": {
+      "rgb": "rgb(241,211,168)",
+      "bgRgb": "rgba(235,195,128,0.149)",
+      "color": "oklab(0.881658 0.0142861 0.0638055)",
+      "bg": "rgba(237, 192, 126, 0.15)",
+      "size": "10px",
+      "className": "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide bg-[hsl(var(--warning)/0.15)] text-[color-mix(in_oklab,hsl(var(--warning))_62%,hsl(var(--foreground)))]"
+    },
+    "overflowX": false,
+    "counts": {
+      "pill": 1,
+      "line": 1,
+      "failed": 1,
+      "rawUnconfirmed": 0,
+      "approve": 0
+    },
+    "toasts": [],
+    "calls": [],
+    "errors": []
+  },
+  "exp03-thread-light-1536x770-paige-open": {
+    "ok": true,
+    "viewport": "1536x770",
+    "theme": "light",
+    "paige": "open",
+    "state": "thread",
+    "checks": {
+      "pillShown": true,
+      "lineShown": true,
+      "pillAA": true,
+      "lineAA": true,
+      "toastAA": true,
+      "failedOnlyForTheRealFailure": true,
+      "noRawUnconfirmedCode": true,
+      "toast": true,
+      "sendOnce": true,
+      "noResendOffered": true,
+      "noOverflow": true,
+      "goldOnlyOnAct": true,
+      "fontLoaded": true
+    },
+    "label": {
+      "ok": true,
+      "w": 174,
+      "h": 24
+    },
+    "font": {
+      "schibsted": true,
+      "bodyFamily": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\""
+    },
+    "exp03": [
+      {
+        "kind": "pill-sent",
+        "incidental": false,
+        "text": "Sent",
+        "ratio": 3.7,
+        "color": "rgb(50, 118, 90)",
+        "bg": "rgb(208,215,209)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "pill-failed",
+        "incidental": false,
+        "text": "Failed",
+        "ratio": 3.98,
+        "color": "rgb(164, 71, 61)",
+        "bg": "rgb(225,208,205)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "line-failed",
+        "incidental": false,
+        "text": "sendgrid_400: {\"errors\":[{\"message\":\"Does not contain a vali",
+        "ratio": 4.86,
+        "color": "rgb(164, 71, 61)",
+        "bg": "rgb(236,232,230)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": "pill-unconfirmed",
+        "incidental": false,
+        "text": "Couldn't confirm",
+        "ratio": 5.76,
+        "color": "oklab(0.426436 0.0267001 0.0553361)",
+        "bg": "rgb(223,212,201)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "line-unconfirmed",
+        "incidental": false,
+        "text": "Couldn't confirm this went out — don't resend.",
+        "ratio": 4.86,
+        "color": "rgb(164, 71, 61)",
+        "bg": "rgb(236,232,230)",
+        "size": "11px",
+        "weight": "400"
+      }
+    ],
+    "low": [
+      {
+        "kind": null,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 2.46,
+        "color": "rgba(103, 97, 107, 0.6)",
+        "bg": "rgb(247, 244, 238)",
+        "size": "12px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 2.43,
+        "color": "rgba(103, 97, 107, 0.6)",
+        "bg": "rgb(244, 241, 235)",
+        "size": "12px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "incidental": false,
+        "text": "LIVE",
+        "ratio": 3.69,
+        "color": "rgb(50, 118, 90)",
+        "bg": "rgb(217,212,211)",
+        "size": "8px",
+        "weight": "600"
+      },
+      {
+        "kind": "pill-sent",
+        "incidental": false,
+        "text": "Sent",
+        "ratio": 3.7,
+        "color": "rgb(50, 118, 90)",
+        "bg": "rgb(208,215,209)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "pill-failed",
+        "incidental": false,
+        "text": "Failed",
+        "ratio": 3.98,
+        "color": "rgb(164, 71, 61)",
+        "bg": "rgb(225,208,205)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": null,
+        "incidental": false,
+        "text": "PROFILE · LIVE",
+        "ratio": 4.37,
+        "color": "rgb(50, 118, 90)",
+        "bg": "rgb(238,230,215)",
+        "size": "8px",
+        "weight": "600"
+      }
+    ],
+    "textCount": 167,
+    "gold": 15,
+    "goldOutsideAct": [],
+    "warningInExp03": [],
+    "goldElsewhere": [
+      "Channel setup rgb(111, 86, 54)",
+      "JO rgb(122, 92, 46)",
+      "Relationship rgb(122, 92, 46)",
+      "Sales context rgb(122, 92, 46)",
+      "Relationship signals rgb(122, 92, 46)",
+      "Open Campaigns rgb(111, 86, 54)",
+      "Client access rgb(122, 92, 46)",
+      "Open Portal rgb(111, 86, 54)",
+      "Recent activity rgb(122, 92, 46)"
+    ],
+    "exp03Roots": 1,
+    "goldActs": [
+      "New conversation",
+      "Send"
+    ],
+    "tokens": {
+      "warning": "rgb(150, 98, 34)",
+      "destructive": "rgb(164, 71, 61)"
+    },
+    "line": {
+      "rgb": "rgb(164,71,61)",
+      "destructiveRgb": "rgb(164,71,61)",
+      "color": "rgb(164, 71, 61)",
+      "isDestructive": true,
+      "className": "mt-1.5 text-[11px] text-destructive"
+    },
+    "pill": {
+      "rgb": "rgb(102,71,41)",
+      "bgRgb": "rgba(148,101,34,0.149)",
+      "color": "oklab(0.426436 0.0267001 0.0553361)",
+      "bg": "rgba(150, 98, 34, 0.15)",
+      "size": "10px",
+      "className": "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide bg-[hsl(var(--warning)/0.15)] text-[color-mix(in_oklab,hsl(var(--warning))_62%,hsl(var(--foreground)))]"
+    },
+    "overflowX": false,
+    "counts": {
+      "pill": 1,
+      "line": 1,
+      "failed": 1,
+      "rawUnconfirmed": 0,
+      "approve": 0
+    },
+    "toasts": [],
+    "calls": [],
+    "errors": []
+  },
+  "exp03-thread-dark-1536x770-paige-open": {
+    "ok": true,
+    "viewport": "1536x770",
+    "theme": "dark",
+    "paige": "open",
+    "state": "thread",
+    "checks": {
+      "pillShown": true,
+      "lineShown": true,
+      "pillAA": true,
+      "lineAA": true,
+      "toastAA": true,
+      "failedOnlyForTheRealFailure": true,
+      "noRawUnconfirmedCode": true,
+      "toast": true,
+      "sendOnce": true,
+      "noResendOffered": true,
+      "noOverflow": true,
+      "goldOnlyOnAct": true,
+      "fontLoaded": true
+    },
+    "label": {
+      "ok": true,
+      "w": 174,
+      "h": 24
+    },
+    "font": {
+      "schibsted": true,
+      "bodyFamily": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\""
+    },
+    "exp03": [
+      {
+        "kind": "pill-sent",
+        "incidental": false,
+        "text": "Sent",
+        "ratio": 6.77,
+        "color": "rgb(143, 209, 174)",
+        "bg": "rgb(48,56,60)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "pill-failed",
+        "incidental": false,
+        "text": "Failed",
+        "ratio": 5.9,
+        "color": "rgb(237, 160, 146)",
+        "bg": "rgb(62,49,56)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "line-failed",
+        "incidental": false,
+        "text": "sendgrid_400: {\"errors\":[{\"message\":\"Does not contain a vali",
+        "ratio": 7.92,
+        "color": "rgb(237, 160, 146)",
+        "bg": "rgb(32,29,40)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": "pill-unconfirmed",
+        "incidental": false,
+        "text": "Couldn't confirm",
+        "ratio": 8.2,
+        "color": "oklab(0.881658 0.0142861 0.0638055)",
+        "bg": "rgb(62,54,53)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "line-unconfirmed",
+        "incidental": false,
+        "text": "Couldn't confirm this went out — don't resend.",
+        "ratio": 7.92,
+        "color": "rgb(237, 160, 146)",
+        "bg": "rgb(32,29,40)",
+        "size": "11px",
+        "weight": "400"
+      }
+    ],
+    "low": [
+      {
+        "kind": null,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 3.55,
+        "color": "rgba(173, 167, 159, 0.6)",
+        "bg": "rgb(22, 19, 27)",
+        "size": "12px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 3.5,
+        "color": "rgba(173, 167, 159, 0.6)",
+        "bg": "rgb(24, 22, 29)",
+        "size": "12px",
+        "weight": "400"
+      }
+    ],
+    "textCount": 167,
+    "gold": 15,
+    "goldOutsideAct": [],
+    "warningInExp03": [
+      "Couldn't confirm rgb(241,211,168)"
+    ],
+    "goldElsewhere": [
+      "Channel setup rgb(255, 240, 207)",
+      "JO rgb(199, 169, 120)",
+      "Relationship rgb(199, 169, 120)",
+      "Sales context rgb(199, 169, 120)",
+      "Relationship signals rgb(199, 169, 120)",
+      "Open Campaigns rgb(255, 240, 207)",
+      "Client access rgb(199, 169, 120)",
+      "Open Portal rgb(255, 240, 207)",
+      "Recent activity rgb(199, 169, 120)"
+    ],
+    "exp03Roots": 1,
+    "goldActs": [
+      "New conversation",
+      "Send"
+    ],
+    "tokens": {
+      "warning": "rgb(237, 192, 126)",
+      "destructive": "rgb(237, 160, 146)"
+    },
+    "line": {
+      "rgb": "rgb(237,160,146)",
+      "destructiveRgb": "rgb(237,160,146)",
+      "color": "rgb(237, 160, 146)",
+      "isDestructive": true,
+      "className": "mt-1.5 text-[11px] text-destructive"
+    },
+    "pill": {
+      "rgb": "rgb(241,211,168)",
+      "bgRgb": "rgba(235,195,128,0.149)",
+      "color": "oklab(0.881658 0.0142861 0.0638055)",
+      "bg": "rgba(237, 192, 126, 0.15)",
+      "size": "10px",
+      "className": "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide bg-[hsl(var(--warning)/0.15)] text-[color-mix(in_oklab,hsl(var(--warning))_62%,hsl(var(--foreground)))]"
+    },
+    "overflowX": false,
+    "counts": {
+      "pill": 1,
+      "line": 1,
+      "failed": 1,
+      "rawUnconfirmed": 0,
+      "approve": 0
+    },
+    "toasts": [],
+    "calls": [],
+    "errors": []
+  },
+  "exp03-thread-light-1366x768-paige-closed": {
+    "ok": true,
+    "viewport": "1366x768",
+    "theme": "light",
+    "paige": "closed",
+    "state": "thread",
+    "checks": {
+      "pillShown": true,
+      "lineShown": true,
+      "pillAA": true,
+      "lineAA": true,
+      "toastAA": true,
+      "failedOnlyForTheRealFailure": true,
+      "noRawUnconfirmedCode": true,
+      "toast": true,
+      "sendOnce": true,
+      "noResendOffered": true,
+      "noOverflow": true,
+      "goldOnlyOnAct": true,
+      "fontLoaded": true
+    },
+    "label": {
+      "ok": true,
+      "w": 174,
+      "h": 24
+    },
+    "font": {
+      "schibsted": true,
+      "bodyFamily": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\""
+    },
+    "exp03": [
+      {
+        "kind": "pill-sent",
+        "incidental": false,
+        "text": "Sent",
+        "ratio": 3.7,
+        "color": "rgb(50, 118, 90)",
+        "bg": "rgb(208,215,209)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "pill-failed",
+        "incidental": false,
+        "text": "Failed",
+        "ratio": 3.98,
+        "color": "rgb(164, 71, 61)",
+        "bg": "rgb(225,208,205)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "line-failed",
+        "incidental": false,
+        "text": "sendgrid_400: {\"errors\":[{\"message\":\"Does not contain a vali",
+        "ratio": 4.86,
+        "color": "rgb(164, 71, 61)",
+        "bg": "rgb(236,232,230)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": "pill-unconfirmed",
+        "incidental": false,
+        "text": "Couldn't confirm",
+        "ratio": 5.76,
+        "color": "oklab(0.426436 0.0267001 0.0553361)",
+        "bg": "rgb(223,212,201)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "line-unconfirmed",
+        "incidental": false,
+        "text": "Couldn't confirm this went out — don't resend.",
+        "ratio": 4.86,
+        "color": "rgb(164, 71, 61)",
+        "bg": "rgb(236,232,230)",
+        "size": "11px",
+        "weight": "400"
+      }
+    ],
+    "low": [
+      {
+        "kind": null,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 2.46,
+        "color": "rgba(103, 97, 107, 0.6)",
+        "bg": "rgb(247, 244, 238)",
+        "size": "12px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 2.43,
+        "color": "rgba(103, 97, 107, 0.6)",
+        "bg": "rgb(244, 241, 235)",
+        "size": "12px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "incidental": false,
+        "text": "LIVE",
+        "ratio": 3.69,
+        "color": "rgb(50, 118, 90)",
+        "bg": "rgb(217,212,211)",
+        "size": "8px",
+        "weight": "600"
+      },
+      {
+        "kind": "pill-sent",
+        "incidental": false,
+        "text": "Sent",
+        "ratio": 3.7,
+        "color": "rgb(50, 118, 90)",
+        "bg": "rgb(208,215,209)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "pill-failed",
+        "incidental": false,
+        "text": "Failed",
+        "ratio": 3.98,
+        "color": "rgb(164, 71, 61)",
+        "bg": "rgb(225,208,205)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": null,
+        "incidental": false,
+        "text": "PROFILE · LIVE",
+        "ratio": 4.37,
+        "color": "rgb(50, 118, 90)",
+        "bg": "rgb(238,230,215)",
+        "size": "8px",
+        "weight": "600"
+      }
+    ],
+    "textCount": 169,
+    "gold": 15,
+    "goldOutsideAct": [],
+    "warningInExp03": [],
+    "goldElsewhere": [
+      "Channel setup rgb(111, 86, 54)",
+      "JO rgb(122, 92, 46)",
+      "Relationship rgb(122, 92, 46)",
+      "Sales context rgb(122, 92, 46)",
+      "Relationship signals rgb(122, 92, 46)",
+      "Open Campaigns rgb(111, 86, 54)",
+      "Client access rgb(122, 92, 46)",
+      "Open Portal rgb(111, 86, 54)",
+      "Recent activity rgb(122, 92, 46)"
+    ],
+    "exp03Roots": 1,
+    "goldActs": [
+      "New conversation",
+      "Send"
+    ],
+    "tokens": {
+      "warning": "rgb(150, 98, 34)",
+      "destructive": "rgb(164, 71, 61)"
+    },
+    "line": {
+      "rgb": "rgb(164,71,61)",
+      "destructiveRgb": "rgb(164,71,61)",
+      "color": "rgb(164, 71, 61)",
+      "isDestructive": true,
+      "className": "mt-1.5 text-[11px] text-destructive"
+    },
+    "pill": {
+      "rgb": "rgb(102,71,41)",
+      "bgRgb": "rgba(148,101,34,0.149)",
+      "color": "oklab(0.426436 0.0267001 0.0553361)",
+      "bg": "rgba(150, 98, 34, 0.15)",
+      "size": "10px",
+      "className": "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide bg-[hsl(var(--warning)/0.15)] text-[color-mix(in_oklab,hsl(var(--warning))_62%,hsl(var(--foreground)))]"
+    },
+    "overflowX": false,
+    "counts": {
+      "pill": 1,
+      "line": 1,
+      "failed": 1,
+      "rawUnconfirmed": 0,
+      "approve": 0
+    },
+    "toasts": [],
+    "calls": [],
+    "errors": []
+  },
+  "exp03-thread-dark-1366x768-paige-closed": {
+    "ok": true,
+    "viewport": "1366x768",
+    "theme": "dark",
+    "paige": "closed",
+    "state": "thread",
+    "checks": {
+      "pillShown": true,
+      "lineShown": true,
+      "pillAA": true,
+      "lineAA": true,
+      "toastAA": true,
+      "failedOnlyForTheRealFailure": true,
+      "noRawUnconfirmedCode": true,
+      "toast": true,
+      "sendOnce": true,
+      "noResendOffered": true,
+      "noOverflow": true,
+      "goldOnlyOnAct": true,
+      "fontLoaded": true
+    },
+    "label": {
+      "ok": true,
+      "w": 174,
+      "h": 24
+    },
+    "font": {
+      "schibsted": true,
+      "bodyFamily": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\""
+    },
+    "exp03": [
+      {
+        "kind": "pill-sent",
+        "incidental": false,
+        "text": "Sent",
+        "ratio": 6.77,
+        "color": "rgb(143, 209, 174)",
+        "bg": "rgb(48,56,60)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "pill-failed",
+        "incidental": false,
+        "text": "Failed",
+        "ratio": 5.9,
+        "color": "rgb(237, 160, 146)",
+        "bg": "rgb(62,49,56)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "line-failed",
+        "incidental": false,
+        "text": "sendgrid_400: {\"errors\":[{\"message\":\"Does not contain a vali",
+        "ratio": 7.92,
+        "color": "rgb(237, 160, 146)",
+        "bg": "rgb(32,29,40)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": "pill-unconfirmed",
+        "incidental": false,
+        "text": "Couldn't confirm",
+        "ratio": 8.2,
+        "color": "oklab(0.881658 0.0142861 0.0638055)",
+        "bg": "rgb(62,54,53)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "line-unconfirmed",
+        "incidental": false,
+        "text": "Couldn't confirm this went out — don't resend.",
+        "ratio": 7.92,
+        "color": "rgb(237, 160, 146)",
+        "bg": "rgb(32,29,40)",
+        "size": "11px",
+        "weight": "400"
+      }
+    ],
+    "low": [
+      {
+        "kind": null,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 3.55,
+        "color": "rgba(173, 167, 159, 0.6)",
+        "bg": "rgb(22, 19, 27)",
+        "size": "12px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 3.5,
+        "color": "rgba(173, 167, 159, 0.6)",
+        "bg": "rgb(24, 22, 29)",
+        "size": "12px",
+        "weight": "400"
+      }
+    ],
+    "textCount": 169,
+    "gold": 15,
+    "goldOutsideAct": [],
+    "warningInExp03": [
+      "Couldn't confirm rgb(241,211,168)"
+    ],
+    "goldElsewhere": [
+      "Channel setup rgb(255, 240, 207)",
+      "JO rgb(199, 169, 120)",
+      "Relationship rgb(199, 169, 120)",
+      "Sales context rgb(199, 169, 120)",
+      "Relationship signals rgb(199, 169, 120)",
+      "Open Campaigns rgb(255, 240, 207)",
+      "Client access rgb(199, 169, 120)",
+      "Open Portal rgb(255, 240, 207)",
+      "Recent activity rgb(199, 169, 120)"
+    ],
+    "exp03Roots": 1,
+    "goldActs": [
+      "New conversation",
+      "Send"
+    ],
+    "tokens": {
+      "warning": "rgb(237, 192, 126)",
+      "destructive": "rgb(237, 160, 146)"
+    },
+    "line": {
+      "rgb": "rgb(237,160,146)",
+      "destructiveRgb": "rgb(237,160,146)",
+      "color": "rgb(237, 160, 146)",
+      "isDestructive": true,
+      "className": "mt-1.5 text-[11px] text-destructive"
+    },
+    "pill": {
+      "rgb": "rgb(241,211,168)",
+      "bgRgb": "rgba(235,195,128,0.149)",
+      "color": "oklab(0.881658 0.0142861 0.0638055)",
+      "bg": "rgba(237, 192, 126, 0.15)",
+      "size": "10px",
+      "className": "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide bg-[hsl(var(--warning)/0.15)] text-[color-mix(in_oklab,hsl(var(--warning))_62%,hsl(var(--foreground)))]"
+    },
+    "overflowX": false,
+    "counts": {
+      "pill": 1,
+      "line": 1,
+      "failed": 1,
+      "rawUnconfirmed": 0,
+      "approve": 0
+    },
+    "toasts": [],
+    "calls": [],
+    "errors": []
+  },
+  "exp03-thread-light-1366x768-paige-open": {
+    "ok": true,
+    "viewport": "1366x768",
+    "theme": "light",
+    "paige": "open",
+    "state": "thread",
+    "checks": {
+      "pillShown": true,
+      "lineShown": true,
+      "pillAA": true,
+      "lineAA": true,
+      "toastAA": true,
+      "failedOnlyForTheRealFailure": true,
+      "noRawUnconfirmedCode": true,
+      "toast": true,
+      "sendOnce": true,
+      "noResendOffered": true,
+      "noOverflow": true,
+      "goldOnlyOnAct": true,
+      "fontLoaded": true
+    },
+    "label": {
+      "ok": true,
+      "w": 174,
+      "h": 24
+    },
+    "font": {
+      "schibsted": true,
+      "bodyFamily": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\""
+    },
+    "exp03": [
+      {
+        "kind": "pill-failed",
+        "incidental": false,
+        "text": "Failed",
+        "ratio": 3.98,
+        "color": "rgb(164, 71, 61)",
+        "bg": "rgb(225,208,205)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "line-failed",
+        "incidental": false,
+        "text": "sendgrid_400: {\"errors\":[{\"message\":\"Does not contain a vali",
+        "ratio": 4.86,
+        "color": "rgb(164, 71, 61)",
+        "bg": "rgb(236,232,230)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": "pill-unconfirmed",
+        "incidental": false,
+        "text": "Couldn't confirm",
+        "ratio": 5.76,
+        "color": "oklab(0.426436 0.0267001 0.0553361)",
+        "bg": "rgb(223,212,201)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "line-unconfirmed",
+        "incidental": false,
+        "text": "Couldn't confirm this went out — don't resend.",
+        "ratio": 4.86,
+        "color": "rgb(164, 71, 61)",
+        "bg": "rgb(236,232,230)",
+        "size": "11px",
+        "weight": "400"
+      }
+    ],
+    "low": [
+      {
+        "kind": null,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 2.46,
+        "color": "rgba(103, 97, 107, 0.6)",
+        "bg": "rgb(247, 244, 238)",
+        "size": "12px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 2.43,
+        "color": "rgba(103, 97, 107, 0.6)",
+        "bg": "rgb(244, 241, 235)",
+        "size": "12px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "incidental": false,
+        "text": "LIVE",
+        "ratio": 3.69,
+        "color": "rgb(50, 118, 90)",
+        "bg": "rgb(217,212,211)",
+        "size": "8px",
+        "weight": "600"
+      },
+      {
+        "kind": "pill-failed",
+        "incidental": false,
+        "text": "Failed",
+        "ratio": 3.98,
+        "color": "rgb(164, 71, 61)",
+        "bg": "rgb(225,208,205)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": null,
+        "incidental": false,
+        "text": "PROFILE · LIVE",
+        "ratio": 4.37,
+        "color": "rgb(50, 118, 90)",
+        "bg": "rgb(238,230,215)",
+        "size": "8px",
+        "weight": "600"
+      }
+    ],
+    "textCount": 162,
+    "gold": 15,
+    "goldOutsideAct": [],
+    "warningInExp03": [],
+    "goldElsewhere": [
+      "Channel setup rgb(111, 86, 54)",
+      "JO rgb(122, 92, 46)",
+      "Relationship rgb(122, 92, 46)",
+      "Sales context rgb(122, 92, 46)",
+      "Relationship signals rgb(122, 92, 46)",
+      "Open Campaigns rgb(111, 86, 54)",
+      "Client access rgb(122, 92, 46)",
+      "Open Portal rgb(111, 86, 54)",
+      "Recent activity rgb(122, 92, 46)"
+    ],
+    "exp03Roots": 1,
+    "goldActs": [
+      "New conversation",
+      "Send"
+    ],
+    "tokens": {
+      "warning": "rgb(150, 98, 34)",
+      "destructive": "rgb(164, 71, 61)"
+    },
+    "line": {
+      "rgb": "rgb(164,71,61)",
+      "destructiveRgb": "rgb(164,71,61)",
+      "color": "rgb(164, 71, 61)",
+      "isDestructive": true,
+      "className": "mt-1.5 text-[11px] text-destructive"
+    },
+    "pill": {
+      "rgb": "rgb(102,71,41)",
+      "bgRgb": "rgba(148,101,34,0.149)",
+      "color": "oklab(0.426436 0.0267001 0.0553361)",
+      "bg": "rgba(150, 98, 34, 0.15)",
+      "size": "10px",
+      "className": "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide bg-[hsl(var(--warning)/0.15)] text-[color-mix(in_oklab,hsl(var(--warning))_62%,hsl(var(--foreground)))]"
+    },
+    "overflowX": false,
+    "counts": {
+      "pill": 1,
+      "line": 1,
+      "failed": 1,
+      "rawUnconfirmed": 0,
+      "approve": 0
+    },
+    "toasts": [],
+    "calls": [],
+    "errors": []
+  },
+  "exp03-thread-dark-1366x768-paige-open": {
+    "ok": true,
+    "viewport": "1366x768",
+    "theme": "dark",
+    "paige": "open",
+    "state": "thread",
+    "checks": {
+      "pillShown": true,
+      "lineShown": true,
+      "pillAA": true,
+      "lineAA": true,
+      "toastAA": true,
+      "failedOnlyForTheRealFailure": true,
+      "noRawUnconfirmedCode": true,
+      "toast": true,
+      "sendOnce": true,
+      "noResendOffered": true,
+      "noOverflow": true,
+      "goldOnlyOnAct": true,
+      "fontLoaded": true
+    },
+    "label": {
+      "ok": true,
+      "w": 174,
+      "h": 24
+    },
+    "font": {
+      "schibsted": true,
+      "bodyFamily": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\""
+    },
+    "exp03": [
+      {
+        "kind": "pill-failed",
+        "incidental": false,
+        "text": "Failed",
+        "ratio": 5.9,
+        "color": "rgb(237, 160, 146)",
+        "bg": "rgb(62,49,56)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "line-failed",
+        "incidental": false,
+        "text": "sendgrid_400: {\"errors\":[{\"message\":\"Does not contain a vali",
+        "ratio": 7.92,
+        "color": "rgb(237, 160, 146)",
+        "bg": "rgb(32,29,40)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": "pill-unconfirmed",
+        "incidental": false,
+        "text": "Couldn't confirm",
+        "ratio": 8.2,
+        "color": "oklab(0.881658 0.0142861 0.0638055)",
+        "bg": "rgb(62,54,53)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "line-unconfirmed",
+        "incidental": false,
+        "text": "Couldn't confirm this went out — don't resend.",
+        "ratio": 7.92,
+        "color": "rgb(237, 160, 146)",
+        "bg": "rgb(32,29,40)",
+        "size": "11px",
+        "weight": "400"
+      }
+    ],
+    "low": [
+      {
+        "kind": null,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 3.55,
+        "color": "rgba(173, 167, 159, 0.6)",
+        "bg": "rgb(22, 19, 27)",
+        "size": "12px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 3.5,
+        "color": "rgba(173, 167, 159, 0.6)",
+        "bg": "rgb(24, 22, 29)",
+        "size": "12px",
+        "weight": "400"
+      }
+    ],
+    "textCount": 162,
+    "gold": 15,
+    "goldOutsideAct": [],
+    "warningInExp03": [
+      "Couldn't confirm rgb(241,211,168)"
+    ],
+    "goldElsewhere": [
+      "Channel setup rgb(255, 240, 207)",
+      "JO rgb(199, 169, 120)",
+      "Relationship rgb(199, 169, 120)",
+      "Sales context rgb(199, 169, 120)",
+      "Relationship signals rgb(199, 169, 120)",
+      "Open Campaigns rgb(255, 240, 207)",
+      "Client access rgb(199, 169, 120)",
+      "Open Portal rgb(255, 240, 207)",
+      "Recent activity rgb(199, 169, 120)"
+    ],
+    "exp03Roots": 1,
+    "goldActs": [
+      "New conversation",
+      "Send"
+    ],
+    "tokens": {
+      "warning": "rgb(237, 192, 126)",
+      "destructive": "rgb(237, 160, 146)"
+    },
+    "line": {
+      "rgb": "rgb(237,160,146)",
+      "destructiveRgb": "rgb(237,160,146)",
+      "color": "rgb(237, 160, 146)",
+      "isDestructive": true,
+      "className": "mt-1.5 text-[11px] text-destructive"
+    },
+    "pill": {
+      "rgb": "rgb(241,211,168)",
+      "bgRgb": "rgba(235,195,128,0.149)",
+      "color": "oklab(0.881658 0.0142861 0.0638055)",
+      "bg": "rgba(237, 192, 126, 0.15)",
+      "size": "10px",
+      "className": "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide bg-[hsl(var(--warning)/0.15)] text-[color-mix(in_oklab,hsl(var(--warning))_62%,hsl(var(--foreground)))]"
+    },
+    "overflowX": false,
+    "counts": {
+      "pill": 1,
+      "line": 1,
+      "failed": 1,
+      "rawUnconfirmed": 0,
+      "approve": 0
+    },
+    "toasts": [],
+    "calls": [],
+    "errors": []
+  },
+  "exp03-thread-light-1024x768-paige-closed": {
+    "ok": true,
+    "viewport": "1024x768",
+    "theme": "light",
+    "paige": "closed",
+    "state": "thread",
+    "checks": {
+      "pillShown": true,
+      "lineShown": true,
+      "pillAA": true,
+      "lineAA": true,
+      "toastAA": true,
+      "failedOnlyForTheRealFailure": true,
+      "noRawUnconfirmedCode": true,
+      "toast": true,
+      "sendOnce": true,
+      "noResendOffered": true,
+      "noOverflow": true,
+      "goldOnlyOnAct": true,
+      "fontLoaded": true
+    },
+    "label": {
+      "ok": true,
+      "w": 174,
+      "h": 24
+    },
+    "font": {
+      "schibsted": true,
+      "bodyFamily": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\""
+    },
+    "exp03": [
+      {
+        "kind": "pill-failed",
+        "incidental": false,
+        "text": "Failed",
+        "ratio": 3.98,
+        "color": "rgb(164, 71, 61)",
+        "bg": "rgb(225,208,205)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "line-failed",
+        "incidental": false,
+        "text": "sendgrid_400: {\"errors\":[{\"message\":\"Does not contain a vali",
+        "ratio": 4.86,
+        "color": "rgb(164, 71, 61)",
+        "bg": "rgb(236,232,230)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": "pill-unconfirmed",
+        "incidental": false,
+        "text": "Couldn't confirm",
+        "ratio": 5.76,
+        "color": "oklab(0.426436 0.0267001 0.0553361)",
+        "bg": "rgb(223,212,201)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "line-unconfirmed",
+        "incidental": false,
+        "text": "Couldn't confirm this went out — don't resend.",
+        "ratio": 4.86,
+        "color": "rgb(164, 71, 61)",
+        "bg": "rgb(236,232,230)",
+        "size": "11px",
+        "weight": "400"
+      }
+    ],
+    "low": [
+      {
+        "kind": null,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 2.46,
+        "color": "rgba(103, 97, 107, 0.6)",
+        "bg": "rgb(247, 244, 238)",
+        "size": "12px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 2.43,
+        "color": "rgba(103, 97, 107, 0.6)",
+        "bg": "rgb(244, 241, 235)",
+        "size": "12px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "incidental": false,
+        "text": "LIVE",
+        "ratio": 3.69,
+        "color": "rgb(50, 118, 90)",
+        "bg": "rgb(217,212,211)",
+        "size": "8px",
+        "weight": "600"
+      },
+      {
+        "kind": "pill-failed",
+        "incidental": false,
+        "text": "Failed",
+        "ratio": 3.98,
+        "color": "rgb(164, 71, 61)",
+        "bg": "rgb(225,208,205)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": null,
+        "incidental": false,
+        "text": "PROFILE · LIVE",
+        "ratio": 4.37,
+        "color": "rgb(50, 118, 90)",
+        "bg": "rgb(238,230,215)",
+        "size": "8px",
+        "weight": "600"
+      }
+    ],
+    "textCount": 162,
+    "gold": 15,
+    "goldOutsideAct": [],
+    "warningInExp03": [],
+    "goldElsewhere": [
+      "Channel setup rgb(111, 86, 54)",
+      "JO rgb(122, 92, 46)",
+      "Relationship rgb(122, 92, 46)",
+      "Sales context rgb(122, 92, 46)",
+      "Relationship signals rgb(122, 92, 46)",
+      "Open Campaigns rgb(111, 86, 54)",
+      "Client access rgb(122, 92, 46)",
+      "Open Portal rgb(111, 86, 54)",
+      "Recent activity rgb(122, 92, 46)"
+    ],
+    "exp03Roots": 1,
+    "goldActs": [
+      "New conversation",
+      "Send"
+    ],
+    "tokens": {
+      "warning": "rgb(150, 98, 34)",
+      "destructive": "rgb(164, 71, 61)"
+    },
+    "line": {
+      "rgb": "rgb(164,71,61)",
+      "destructiveRgb": "rgb(164,71,61)",
+      "color": "rgb(164, 71, 61)",
+      "isDestructive": true,
+      "className": "mt-1.5 text-[11px] text-destructive"
+    },
+    "pill": {
+      "rgb": "rgb(102,71,41)",
+      "bgRgb": "rgba(148,101,34,0.149)",
+      "color": "oklab(0.426436 0.0267001 0.0553361)",
+      "bg": "rgba(150, 98, 34, 0.15)",
+      "size": "10px",
+      "className": "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide bg-[hsl(var(--warning)/0.15)] text-[color-mix(in_oklab,hsl(var(--warning))_62%,hsl(var(--foreground)))]"
+    },
+    "overflowX": false,
+    "counts": {
+      "pill": 1,
+      "line": 1,
+      "failed": 1,
+      "rawUnconfirmed": 0,
+      "approve": 0
+    },
+    "toasts": [],
+    "calls": [],
+    "errors": []
+  },
+  "exp03-thread-dark-1024x768-paige-closed": {
+    "ok": true,
+    "viewport": "1024x768",
+    "theme": "dark",
+    "paige": "closed",
+    "state": "thread",
+    "checks": {
+      "pillShown": true,
+      "lineShown": true,
+      "pillAA": true,
+      "lineAA": true,
+      "toastAA": true,
+      "failedOnlyForTheRealFailure": true,
+      "noRawUnconfirmedCode": true,
+      "toast": true,
+      "sendOnce": true,
+      "noResendOffered": true,
+      "noOverflow": true,
+      "goldOnlyOnAct": true,
+      "fontLoaded": true
+    },
+    "label": {
+      "ok": true,
+      "w": 174,
+      "h": 24
+    },
+    "font": {
+      "schibsted": true,
+      "bodyFamily": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\""
+    },
+    "exp03": [
+      {
+        "kind": "pill-failed",
+        "incidental": false,
+        "text": "Failed",
+        "ratio": 5.9,
+        "color": "rgb(237, 160, 146)",
+        "bg": "rgb(62,49,56)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "line-failed",
+        "incidental": false,
+        "text": "sendgrid_400: {\"errors\":[{\"message\":\"Does not contain a vali",
+        "ratio": 7.92,
+        "color": "rgb(237, 160, 146)",
+        "bg": "rgb(32,29,40)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": "pill-unconfirmed",
+        "incidental": false,
+        "text": "Couldn't confirm",
+        "ratio": 8.2,
+        "color": "oklab(0.881658 0.0142861 0.0638055)",
+        "bg": "rgb(62,54,53)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "line-unconfirmed",
+        "incidental": false,
+        "text": "Couldn't confirm this went out — don't resend.",
+        "ratio": 7.92,
+        "color": "rgb(237, 160, 146)",
+        "bg": "rgb(32,29,40)",
+        "size": "11px",
+        "weight": "400"
+      }
+    ],
+    "low": [
+      {
+        "kind": null,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 3.55,
+        "color": "rgba(173, 167, 159, 0.6)",
+        "bg": "rgb(22, 19, 27)",
+        "size": "12px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 3.5,
+        "color": "rgba(173, 167, 159, 0.6)",
+        "bg": "rgb(24, 22, 29)",
+        "size": "12px",
+        "weight": "400"
+      }
+    ],
+    "textCount": 162,
+    "gold": 15,
+    "goldOutsideAct": [],
+    "warningInExp03": [
+      "Couldn't confirm rgb(241,211,168)"
+    ],
+    "goldElsewhere": [
+      "Channel setup rgb(255, 240, 207)",
+      "JO rgb(199, 169, 120)",
+      "Relationship rgb(199, 169, 120)",
+      "Sales context rgb(199, 169, 120)",
+      "Relationship signals rgb(199, 169, 120)",
+      "Open Campaigns rgb(255, 240, 207)",
+      "Client access rgb(199, 169, 120)",
+      "Open Portal rgb(255, 240, 207)",
+      "Recent activity rgb(199, 169, 120)"
+    ],
+    "exp03Roots": 1,
+    "goldActs": [
+      "New conversation",
+      "Send"
+    ],
+    "tokens": {
+      "warning": "rgb(237, 192, 126)",
+      "destructive": "rgb(237, 160, 146)"
+    },
+    "line": {
+      "rgb": "rgb(237,160,146)",
+      "destructiveRgb": "rgb(237,160,146)",
+      "color": "rgb(237, 160, 146)",
+      "isDestructive": true,
+      "className": "mt-1.5 text-[11px] text-destructive"
+    },
+    "pill": {
+      "rgb": "rgb(241,211,168)",
+      "bgRgb": "rgba(235,195,128,0.149)",
+      "color": "oklab(0.881658 0.0142861 0.0638055)",
+      "bg": "rgba(237, 192, 126, 0.15)",
+      "size": "10px",
+      "className": "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide bg-[hsl(var(--warning)/0.15)] text-[color-mix(in_oklab,hsl(var(--warning))_62%,hsl(var(--foreground)))]"
+    },
+    "overflowX": false,
+    "counts": {
+      "pill": 1,
+      "line": 1,
+      "failed": 1,
+      "rawUnconfirmed": 0,
+      "approve": 0
+    },
+    "toasts": [],
+    "calls": [],
+    "errors": []
+  },
+  "exp03-thread-light-1024x768-paige-open": {
+    "ok": true,
+    "viewport": "1024x768",
+    "theme": "light",
+    "paige": "open",
+    "state": "thread",
+    "checks": {
+      "pillShown": true,
+      "lineShown": true,
+      "pillAA": true,
+      "lineAA": true,
+      "toastAA": true,
+      "failedOnlyForTheRealFailure": true,
+      "noRawUnconfirmedCode": true,
+      "toast": true,
+      "sendOnce": true,
+      "noResendOffered": true,
+      "noOverflow": true,
+      "goldOnlyOnAct": true,
+      "fontLoaded": true
+    },
+    "label": {
+      "ok": true,
+      "w": 174,
+      "h": 24
+    },
+    "font": {
+      "schibsted": true,
+      "bodyFamily": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\""
+    },
+    "exp03": [
+      {
+        "kind": "pill-failed",
+        "incidental": false,
+        "text": "Failed",
+        "ratio": 3.98,
+        "color": "rgb(164, 71, 61)",
+        "bg": "rgb(225,208,205)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "line-failed",
+        "incidental": false,
+        "text": "sendgrid_400: {\"errors\":[{\"message\":\"Does not contain a vali",
+        "ratio": 4.86,
+        "color": "rgb(164, 71, 61)",
+        "bg": "rgb(236,232,230)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": "pill-unconfirmed",
+        "incidental": false,
+        "text": "Couldn't confirm",
+        "ratio": 5.76,
+        "color": "oklab(0.426436 0.0267001 0.0553361)",
+        "bg": "rgb(223,212,201)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "line-unconfirmed",
+        "incidental": false,
+        "text": "Couldn't confirm this went out — don't resend.",
+        "ratio": 4.86,
+        "color": "rgb(164, 71, 61)",
+        "bg": "rgb(236,232,230)",
+        "size": "11px",
+        "weight": "400"
+      }
+    ],
+    "low": [
+      {
+        "kind": null,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 2.46,
+        "color": "rgba(103, 97, 107, 0.6)",
+        "bg": "rgb(247, 244, 238)",
+        "size": "12px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 2.43,
+        "color": "rgba(103, 97, 107, 0.6)",
+        "bg": "rgb(244, 241, 235)",
+        "size": "12px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "incidental": false,
+        "text": "LIVE",
+        "ratio": 3.69,
+        "color": "rgb(50, 118, 90)",
+        "bg": "rgb(217,212,211)",
+        "size": "8px",
+        "weight": "600"
+      },
+      {
+        "kind": "pill-failed",
+        "incidental": false,
+        "text": "Failed",
+        "ratio": 3.98,
+        "color": "rgb(164, 71, 61)",
+        "bg": "rgb(225,208,205)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": null,
+        "incidental": false,
+        "text": "PROFILE · LIVE",
+        "ratio": 4.37,
+        "color": "rgb(50, 118, 90)",
+        "bg": "rgb(238,230,215)",
+        "size": "8px",
+        "weight": "600"
+      }
+    ],
+    "textCount": 162,
+    "gold": 15,
+    "goldOutsideAct": [],
+    "warningInExp03": [],
+    "goldElsewhere": [
+      "Channel setup rgb(111, 86, 54)",
+      "JO rgb(122, 92, 46)",
+      "Relationship rgb(122, 92, 46)",
+      "Sales context rgb(122, 92, 46)",
+      "Relationship signals rgb(122, 92, 46)",
+      "Open Campaigns rgb(111, 86, 54)",
+      "Client access rgb(122, 92, 46)",
+      "Open Portal rgb(111, 86, 54)",
+      "Recent activity rgb(122, 92, 46)"
+    ],
+    "exp03Roots": 1,
+    "goldActs": [
+      "New conversation",
+      "Send"
+    ],
+    "tokens": {
+      "warning": "rgb(150, 98, 34)",
+      "destructive": "rgb(164, 71, 61)"
+    },
+    "line": {
+      "rgb": "rgb(164,71,61)",
+      "destructiveRgb": "rgb(164,71,61)",
+      "color": "rgb(164, 71, 61)",
+      "isDestructive": true,
+      "className": "mt-1.5 text-[11px] text-destructive"
+    },
+    "pill": {
+      "rgb": "rgb(102,71,41)",
+      "bgRgb": "rgba(148,101,34,0.149)",
+      "color": "oklab(0.426436 0.0267001 0.0553361)",
+      "bg": "rgba(150, 98, 34, 0.15)",
+      "size": "10px",
+      "className": "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide bg-[hsl(var(--warning)/0.15)] text-[color-mix(in_oklab,hsl(var(--warning))_62%,hsl(var(--foreground)))]"
+    },
+    "overflowX": false,
+    "counts": {
+      "pill": 1,
+      "line": 1,
+      "failed": 1,
+      "rawUnconfirmed": 0,
+      "approve": 0
+    },
+    "toasts": [],
+    "calls": [],
+    "errors": []
+  },
+  "exp03-thread-dark-1024x768-paige-open": {
+    "ok": true,
+    "viewport": "1024x768",
+    "theme": "dark",
+    "paige": "open",
+    "state": "thread",
+    "checks": {
+      "pillShown": true,
+      "lineShown": true,
+      "pillAA": true,
+      "lineAA": true,
+      "toastAA": true,
+      "failedOnlyForTheRealFailure": true,
+      "noRawUnconfirmedCode": true,
+      "toast": true,
+      "sendOnce": true,
+      "noResendOffered": true,
+      "noOverflow": true,
+      "goldOnlyOnAct": true,
+      "fontLoaded": true
+    },
+    "label": {
+      "ok": true,
+      "w": 174,
+      "h": 24
+    },
+    "font": {
+      "schibsted": true,
+      "bodyFamily": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\""
+    },
+    "exp03": [
+      {
+        "kind": "pill-failed",
+        "incidental": false,
+        "text": "Failed",
+        "ratio": 5.9,
+        "color": "rgb(237, 160, 146)",
+        "bg": "rgb(62,49,56)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "line-failed",
+        "incidental": false,
+        "text": "sendgrid_400: {\"errors\":[{\"message\":\"Does not contain a vali",
+        "ratio": 7.92,
+        "color": "rgb(237, 160, 146)",
+        "bg": "rgb(32,29,40)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": "pill-unconfirmed",
+        "incidental": false,
+        "text": "Couldn't confirm",
+        "ratio": 8.2,
+        "color": "oklab(0.881658 0.0142861 0.0638055)",
+        "bg": "rgb(62,54,53)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "line-unconfirmed",
+        "incidental": false,
+        "text": "Couldn't confirm this went out — don't resend.",
+        "ratio": 7.92,
+        "color": "rgb(237, 160, 146)",
+        "bg": "rgb(32,29,40)",
+        "size": "11px",
+        "weight": "400"
+      }
+    ],
+    "low": [
+      {
+        "kind": null,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 3.55,
+        "color": "rgba(173, 167, 159, 0.6)",
+        "bg": "rgb(22, 19, 27)",
+        "size": "12px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 3.5,
+        "color": "rgba(173, 167, 159, 0.6)",
+        "bg": "rgb(24, 22, 29)",
+        "size": "12px",
+        "weight": "400"
+      }
+    ],
+    "textCount": 162,
+    "gold": 15,
+    "goldOutsideAct": [],
+    "warningInExp03": [
+      "Couldn't confirm rgb(241,211,168)"
+    ],
+    "goldElsewhere": [
+      "Channel setup rgb(255, 240, 207)",
+      "JO rgb(199, 169, 120)",
+      "Relationship rgb(199, 169, 120)",
+      "Sales context rgb(199, 169, 120)",
+      "Relationship signals rgb(199, 169, 120)",
+      "Open Campaigns rgb(255, 240, 207)",
+      "Client access rgb(199, 169, 120)",
+      "Open Portal rgb(255, 240, 207)",
+      "Recent activity rgb(199, 169, 120)"
+    ],
+    "exp03Roots": 1,
+    "goldActs": [
+      "New conversation",
+      "Send"
+    ],
+    "tokens": {
+      "warning": "rgb(237, 192, 126)",
+      "destructive": "rgb(237, 160, 146)"
+    },
+    "line": {
+      "rgb": "rgb(237,160,146)",
+      "destructiveRgb": "rgb(237,160,146)",
+      "color": "rgb(237, 160, 146)",
+      "isDestructive": true,
+      "className": "mt-1.5 text-[11px] text-destructive"
+    },
+    "pill": {
+      "rgb": "rgb(241,211,168)",
+      "bgRgb": "rgba(235,195,128,0.149)",
+      "color": "oklab(0.881658 0.0142861 0.0638055)",
+      "bg": "rgba(237, 192, 126, 0.15)",
+      "size": "10px",
+      "className": "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide bg-[hsl(var(--warning)/0.15)] text-[color-mix(in_oklab,hsl(var(--warning))_62%,hsl(var(--foreground)))]"
+    },
+    "overflowX": false,
+    "counts": {
+      "pill": 1,
+      "line": 1,
+      "failed": 1,
+      "rawUnconfirmed": 0,
+      "approve": 0
+    },
+    "toasts": [],
+    "calls": [],
+    "errors": []
+  },
+  "exp03-thread-light-900x1000-paige-closed": {
+    "ok": true,
+    "viewport": "900x1000",
+    "theme": "light",
+    "paige": "closed",
+    "state": "thread",
+    "checks": {
+      "pillShown": true,
+      "lineShown": true,
+      "pillAA": true,
+      "lineAA": true,
+      "toastAA": true,
+      "failedOnlyForTheRealFailure": true,
+      "noRawUnconfirmedCode": true,
+      "toast": true,
+      "sendOnce": true,
+      "noResendOffered": true,
+      "noOverflow": true,
+      "goldOnlyOnAct": true,
+      "fontLoaded": true
+    },
+    "label": {
+      "ok": true,
+      "w": 174,
+      "h": 24
+    },
+    "font": {
+      "schibsted": true,
+      "bodyFamily": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\""
+    },
+    "exp03": [
+      {
+        "kind": "pill-sent",
+        "incidental": false,
+        "text": "Sent",
+        "ratio": 3.7,
+        "color": "rgb(50, 118, 90)",
+        "bg": "rgb(208,215,209)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "pill-failed",
+        "incidental": false,
+        "text": "Failed",
+        "ratio": 3.98,
+        "color": "rgb(164, 71, 61)",
+        "bg": "rgb(225,208,205)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "line-failed",
+        "incidental": false,
+        "text": "sendgrid_400: {\"errors\":[{\"message\":\"Does not contain a vali",
+        "ratio": 4.86,
+        "color": "rgb(164, 71, 61)",
+        "bg": "rgb(236,232,230)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": "pill-unconfirmed",
+        "incidental": false,
+        "text": "Couldn't confirm",
+        "ratio": 5.76,
+        "color": "oklab(0.426436 0.0267001 0.0553361)",
+        "bg": "rgb(223,212,201)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "line-unconfirmed",
+        "incidental": false,
+        "text": "Couldn't confirm this went out — don't resend.",
+        "ratio": 4.86,
+        "color": "rgb(164, 71, 61)",
+        "bg": "rgb(236,232,230)",
+        "size": "11px",
+        "weight": "400"
+      }
+    ],
+    "low": [
+      {
+        "kind": null,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 2.46,
+        "color": "rgba(103, 97, 107, 0.6)",
+        "bg": "rgb(247, 244, 238)",
+        "size": "12px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 2.43,
+        "color": "rgba(103, 97, 107, 0.6)",
+        "bg": "rgb(244, 241, 235)",
+        "size": "12px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "incidental": false,
+        "text": "LIVE",
+        "ratio": 3.69,
+        "color": "rgb(50, 118, 90)",
+        "bg": "rgb(217,212,211)",
+        "size": "8px",
+        "weight": "600"
+      },
+      {
+        "kind": "pill-sent",
+        "incidental": false,
+        "text": "Sent",
+        "ratio": 3.7,
+        "color": "rgb(50, 118, 90)",
+        "bg": "rgb(208,215,209)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "pill-failed",
+        "incidental": false,
+        "text": "Failed",
+        "ratio": 3.98,
+        "color": "rgb(164, 71, 61)",
+        "bg": "rgb(225,208,205)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": null,
+        "incidental": false,
+        "text": "PROFILE · LIVE",
+        "ratio": 4.37,
+        "color": "rgb(50, 118, 90)",
+        "bg": "rgb(238,230,215)",
+        "size": "8px",
+        "weight": "600"
+      }
+    ],
+    "textCount": 195,
+    "gold": 15,
+    "goldOutsideAct": [],
+    "warningInExp03": [],
+    "goldElsewhere": [
+      "Channel setup rgb(111, 86, 54)",
+      "JO rgb(122, 92, 46)",
+      "Relationship rgb(122, 92, 46)",
+      "Sales context rgb(122, 92, 46)",
+      "Relationship signals rgb(122, 92, 46)",
+      "Open Campaigns rgb(111, 86, 54)",
+      "Client access rgb(122, 92, 46)",
+      "Open Portal rgb(111, 86, 54)",
+      "Recent activity rgb(122, 92, 46)"
+    ],
+    "exp03Roots": 1,
+    "goldActs": [
+      "New conversation",
+      "Send"
+    ],
+    "tokens": {
+      "warning": "rgb(150, 98, 34)",
+      "destructive": "rgb(164, 71, 61)"
+    },
+    "line": {
+      "rgb": "rgb(164,71,61)",
+      "destructiveRgb": "rgb(164,71,61)",
+      "color": "rgb(164, 71, 61)",
+      "isDestructive": true,
+      "className": "mt-1.5 text-[11px] text-destructive"
+    },
+    "pill": {
+      "rgb": "rgb(102,71,41)",
+      "bgRgb": "rgba(148,101,34,0.149)",
+      "color": "oklab(0.426436 0.0267001 0.0553361)",
+      "bg": "rgba(150, 98, 34, 0.15)",
+      "size": "10px",
+      "className": "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide bg-[hsl(var(--warning)/0.15)] text-[color-mix(in_oklab,hsl(var(--warning))_62%,hsl(var(--foreground)))]"
+    },
+    "overflowX": false,
+    "counts": {
+      "pill": 1,
+      "line": 1,
+      "failed": 1,
+      "rawUnconfirmed": 0,
+      "approve": 0
+    },
+    "toasts": [],
+    "calls": [],
+    "errors": []
+  },
+  "exp03-thread-dark-900x1000-paige-closed": {
+    "ok": true,
+    "viewport": "900x1000",
+    "theme": "dark",
+    "paige": "closed",
+    "state": "thread",
+    "checks": {
+      "pillShown": true,
+      "lineShown": true,
+      "pillAA": true,
+      "lineAA": true,
+      "toastAA": true,
+      "failedOnlyForTheRealFailure": true,
+      "noRawUnconfirmedCode": true,
+      "toast": true,
+      "sendOnce": true,
+      "noResendOffered": true,
+      "noOverflow": true,
+      "goldOnlyOnAct": true,
+      "fontLoaded": true
+    },
+    "label": {
+      "ok": true,
+      "w": 174,
+      "h": 24
+    },
+    "font": {
+      "schibsted": true,
+      "bodyFamily": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\""
+    },
+    "exp03": [
+      {
+        "kind": "pill-sent",
+        "incidental": false,
+        "text": "Sent",
+        "ratio": 6.77,
+        "color": "rgb(143, 209, 174)",
+        "bg": "rgb(48,56,60)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "pill-failed",
+        "incidental": false,
+        "text": "Failed",
+        "ratio": 5.9,
+        "color": "rgb(237, 160, 146)",
+        "bg": "rgb(62,49,56)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "line-failed",
+        "incidental": false,
+        "text": "sendgrid_400: {\"errors\":[{\"message\":\"Does not contain a vali",
+        "ratio": 7.92,
+        "color": "rgb(237, 160, 146)",
+        "bg": "rgb(32,29,40)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": "pill-unconfirmed",
+        "incidental": false,
+        "text": "Couldn't confirm",
+        "ratio": 8.2,
+        "color": "oklab(0.881658 0.0142861 0.0638055)",
+        "bg": "rgb(62,54,53)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "line-unconfirmed",
+        "incidental": false,
+        "text": "Couldn't confirm this went out — don't resend.",
+        "ratio": 7.92,
+        "color": "rgb(237, 160, 146)",
+        "bg": "rgb(32,29,40)",
+        "size": "11px",
+        "weight": "400"
+      }
+    ],
+    "low": [
+      {
+        "kind": null,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 3.55,
+        "color": "rgba(173, 167, 159, 0.6)",
+        "bg": "rgb(22, 19, 27)",
+        "size": "12px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 3.5,
+        "color": "rgba(173, 167, 159, 0.6)",
+        "bg": "rgb(24, 22, 29)",
+        "size": "12px",
+        "weight": "400"
+      }
+    ],
+    "textCount": 195,
+    "gold": 15,
+    "goldOutsideAct": [],
+    "warningInExp03": [
+      "Couldn't confirm rgb(241,211,168)"
+    ],
+    "goldElsewhere": [
+      "Channel setup rgb(255, 240, 207)",
+      "JO rgb(199, 169, 120)",
+      "Relationship rgb(199, 169, 120)",
+      "Sales context rgb(199, 169, 120)",
+      "Relationship signals rgb(199, 169, 120)",
+      "Open Campaigns rgb(255, 240, 207)",
+      "Client access rgb(199, 169, 120)",
+      "Open Portal rgb(255, 240, 207)",
+      "Recent activity rgb(199, 169, 120)"
+    ],
+    "exp03Roots": 1,
+    "goldActs": [
+      "New conversation",
+      "Send"
+    ],
+    "tokens": {
+      "warning": "rgb(237, 192, 126)",
+      "destructive": "rgb(237, 160, 146)"
+    },
+    "line": {
+      "rgb": "rgb(237,160,146)",
+      "destructiveRgb": "rgb(237,160,146)",
+      "color": "rgb(237, 160, 146)",
+      "isDestructive": true,
+      "className": "mt-1.5 text-[11px] text-destructive"
+    },
+    "pill": {
+      "rgb": "rgb(241,211,168)",
+      "bgRgb": "rgba(235,195,128,0.149)",
+      "color": "oklab(0.881658 0.0142861 0.0638055)",
+      "bg": "rgba(237, 192, 126, 0.15)",
+      "size": "10px",
+      "className": "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide bg-[hsl(var(--warning)/0.15)] text-[color-mix(in_oklab,hsl(var(--warning))_62%,hsl(var(--foreground)))]"
+    },
+    "overflowX": false,
+    "counts": {
+      "pill": 1,
+      "line": 1,
+      "failed": 1,
+      "rawUnconfirmed": 0,
+      "approve": 0
+    },
+    "toasts": [],
+    "calls": [],
+    "errors": []
+  },
+  "exp03-thread-light-900x1000-paige-open": {
+    "ok": true,
+    "viewport": "900x1000",
+    "theme": "light",
+    "paige": "open",
+    "state": "thread",
+    "checks": {
+      "pillShown": true,
+      "lineShown": true,
+      "pillAA": true,
+      "lineAA": true,
+      "toastAA": true,
+      "failedOnlyForTheRealFailure": true,
+      "noRawUnconfirmedCode": true,
+      "toast": true,
+      "sendOnce": true,
+      "noResendOffered": true,
+      "noOverflow": true,
+      "goldOnlyOnAct": true,
+      "fontLoaded": true
+    },
+    "label": {
+      "ok": true,
+      "w": 174,
+      "h": 24
+    },
+    "font": {
+      "schibsted": true,
+      "bodyFamily": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\""
+    },
+    "exp03": [
+      {
+        "kind": "pill-sent",
+        "incidental": false,
+        "text": "Sent",
+        "ratio": 3.7,
+        "color": "rgb(50, 118, 90)",
+        "bg": "rgb(208,215,209)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "pill-failed",
+        "incidental": false,
+        "text": "Failed",
+        "ratio": 3.98,
+        "color": "rgb(164, 71, 61)",
+        "bg": "rgb(225,208,205)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "line-failed",
+        "incidental": false,
+        "text": "sendgrid_400: {\"errors\":[{\"message\":\"Does not contain a vali",
+        "ratio": 4.86,
+        "color": "rgb(164, 71, 61)",
+        "bg": "rgb(236,232,230)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": "pill-unconfirmed",
+        "incidental": false,
+        "text": "Couldn't confirm",
+        "ratio": 5.76,
+        "color": "oklab(0.426436 0.0267001 0.0553361)",
+        "bg": "rgb(223,212,201)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "line-unconfirmed",
+        "incidental": false,
+        "text": "Couldn't confirm this went out — don't resend.",
+        "ratio": 4.86,
+        "color": "rgb(164, 71, 61)",
+        "bg": "rgb(236,232,230)",
+        "size": "11px",
+        "weight": "400"
+      }
+    ],
+    "low": [
+      {
+        "kind": null,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 2.46,
+        "color": "rgba(103, 97, 107, 0.6)",
+        "bg": "rgb(247, 244, 238)",
+        "size": "12px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 2.43,
+        "color": "rgba(103, 97, 107, 0.6)",
+        "bg": "rgb(244, 241, 235)",
+        "size": "12px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "incidental": false,
+        "text": "LIVE",
+        "ratio": 3.69,
+        "color": "rgb(50, 118, 90)",
+        "bg": "rgb(217,212,211)",
+        "size": "8px",
+        "weight": "600"
+      },
+      {
+        "kind": "pill-sent",
+        "incidental": false,
+        "text": "Sent",
+        "ratio": 3.7,
+        "color": "rgb(50, 118, 90)",
+        "bg": "rgb(208,215,209)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "pill-failed",
+        "incidental": false,
+        "text": "Failed",
+        "ratio": 3.98,
+        "color": "rgb(164, 71, 61)",
+        "bg": "rgb(225,208,205)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": null,
+        "incidental": false,
+        "text": "PROFILE · LIVE",
+        "ratio": 4.37,
+        "color": "rgb(50, 118, 90)",
+        "bg": "rgb(238,230,215)",
+        "size": "8px",
+        "weight": "600"
+      }
+    ],
+    "textCount": 195,
+    "gold": 15,
+    "goldOutsideAct": [],
+    "warningInExp03": [],
+    "goldElsewhere": [
+      "Channel setup rgb(111, 86, 54)",
+      "JO rgb(122, 92, 46)",
+      "Relationship rgb(122, 92, 46)",
+      "Sales context rgb(122, 92, 46)",
+      "Relationship signals rgb(122, 92, 46)",
+      "Open Campaigns rgb(111, 86, 54)",
+      "Client access rgb(122, 92, 46)",
+      "Open Portal rgb(111, 86, 54)",
+      "Recent activity rgb(122, 92, 46)"
+    ],
+    "exp03Roots": 1,
+    "goldActs": [
+      "New conversation",
+      "Send"
+    ],
+    "tokens": {
+      "warning": "rgb(150, 98, 34)",
+      "destructive": "rgb(164, 71, 61)"
+    },
+    "line": {
+      "rgb": "rgb(164,71,61)",
+      "destructiveRgb": "rgb(164,71,61)",
+      "color": "rgb(164, 71, 61)",
+      "isDestructive": true,
+      "className": "mt-1.5 text-[11px] text-destructive"
+    },
+    "pill": {
+      "rgb": "rgb(102,71,41)",
+      "bgRgb": "rgba(148,101,34,0.149)",
+      "color": "oklab(0.426436 0.0267001 0.0553361)",
+      "bg": "rgba(150, 98, 34, 0.15)",
+      "size": "10px",
+      "className": "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide bg-[hsl(var(--warning)/0.15)] text-[color-mix(in_oklab,hsl(var(--warning))_62%,hsl(var(--foreground)))]"
+    },
+    "overflowX": false,
+    "counts": {
+      "pill": 1,
+      "line": 1,
+      "failed": 1,
+      "rawUnconfirmed": 0,
+      "approve": 0
+    },
+    "toasts": [],
+    "calls": [],
+    "errors": []
+  },
+  "exp03-thread-dark-900x1000-paige-open": {
+    "ok": true,
+    "viewport": "900x1000",
+    "theme": "dark",
+    "paige": "open",
+    "state": "thread",
+    "checks": {
+      "pillShown": true,
+      "lineShown": true,
+      "pillAA": true,
+      "lineAA": true,
+      "toastAA": true,
+      "failedOnlyForTheRealFailure": true,
+      "noRawUnconfirmedCode": true,
+      "toast": true,
+      "sendOnce": true,
+      "noResendOffered": true,
+      "noOverflow": true,
+      "goldOnlyOnAct": true,
+      "fontLoaded": true
+    },
+    "label": {
+      "ok": true,
+      "w": 174,
+      "h": 24
+    },
+    "font": {
+      "schibsted": true,
+      "bodyFamily": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\""
+    },
+    "exp03": [
+      {
+        "kind": "pill-sent",
+        "incidental": false,
+        "text": "Sent",
+        "ratio": 6.77,
+        "color": "rgb(143, 209, 174)",
+        "bg": "rgb(48,56,60)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "pill-failed",
+        "incidental": false,
+        "text": "Failed",
+        "ratio": 5.9,
+        "color": "rgb(237, 160, 146)",
+        "bg": "rgb(62,49,56)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "line-failed",
+        "incidental": false,
+        "text": "sendgrid_400: {\"errors\":[{\"message\":\"Does not contain a vali",
+        "ratio": 7.92,
+        "color": "rgb(237, 160, 146)",
+        "bg": "rgb(32,29,40)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": "pill-unconfirmed",
+        "incidental": false,
+        "text": "Couldn't confirm",
+        "ratio": 8.2,
+        "color": "oklab(0.881658 0.0142861 0.0638055)",
+        "bg": "rgb(62,54,53)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "line-unconfirmed",
+        "incidental": false,
+        "text": "Couldn't confirm this went out — don't resend.",
+        "ratio": 7.92,
+        "color": "rgb(237, 160, 146)",
+        "bg": "rgb(32,29,40)",
+        "size": "11px",
+        "weight": "400"
+      }
+    ],
+    "low": [
+      {
+        "kind": null,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 3.55,
+        "color": "rgba(173, 167, 159, 0.6)",
+        "bg": "rgb(22, 19, 27)",
+        "size": "12px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 3.5,
+        "color": "rgba(173, 167, 159, 0.6)",
+        "bg": "rgb(24, 22, 29)",
+        "size": "12px",
+        "weight": "400"
+      }
+    ],
+    "textCount": 195,
+    "gold": 15,
+    "goldOutsideAct": [],
+    "warningInExp03": [
+      "Couldn't confirm rgb(241,211,168)"
+    ],
+    "goldElsewhere": [
+      "Channel setup rgb(255, 240, 207)",
+      "JO rgb(199, 169, 120)",
+      "Relationship rgb(199, 169, 120)",
+      "Sales context rgb(199, 169, 120)",
+      "Relationship signals rgb(199, 169, 120)",
+      "Open Campaigns rgb(255, 240, 207)",
+      "Client access rgb(199, 169, 120)",
+      "Open Portal rgb(255, 240, 207)",
+      "Recent activity rgb(199, 169, 120)"
+    ],
+    "exp03Roots": 1,
+    "goldActs": [
+      "New conversation",
+      "Send"
+    ],
+    "tokens": {
+      "warning": "rgb(237, 192, 126)",
+      "destructive": "rgb(237, 160, 146)"
+    },
+    "line": {
+      "rgb": "rgb(237,160,146)",
+      "destructiveRgb": "rgb(237,160,146)",
+      "color": "rgb(237, 160, 146)",
+      "isDestructive": true,
+      "className": "mt-1.5 text-[11px] text-destructive"
+    },
+    "pill": {
+      "rgb": "rgb(241,211,168)",
+      "bgRgb": "rgba(235,195,128,0.149)",
+      "color": "oklab(0.881658 0.0142861 0.0638055)",
+      "bg": "rgba(237, 192, 126, 0.15)",
+      "size": "10px",
+      "className": "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide bg-[hsl(var(--warning)/0.15)] text-[color-mix(in_oklab,hsl(var(--warning))_62%,hsl(var(--foreground)))]"
+    },
+    "overflowX": false,
+    "counts": {
+      "pill": 1,
+      "line": 1,
+      "failed": 1,
+      "rawUnconfirmed": 0,
+      "approve": 0
+    },
+    "toasts": [],
+    "calls": [],
+    "errors": []
+  },
+  "exp03-thread-light-390x844": {
+    "ok": true,
+    "viewport": "390x844",
+    "theme": "light",
+    "paige": "closed",
+    "state": "thread",
+    "checks": {
+      "pillShown": true,
+      "lineShown": true,
+      "pillAA": true,
+      "lineAA": true,
+      "toastAA": true,
+      "failedOnlyForTheRealFailure": true,
+      "noRawUnconfirmedCode": true,
+      "toast": true,
+      "sendOnce": true,
+      "noResendOffered": true,
+      "noOverflow": true,
+      "goldOnlyOnAct": true,
+      "fontLoaded": true
+    },
+    "label": {
+      "ok": true,
+      "w": 174,
+      "h": 24
+    },
+    "font": {
+      "schibsted": true,
+      "bodyFamily": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\""
+    },
+    "exp03": [
+      {
+        "kind": "line-failed",
+        "incidental": false,
+        "text": "sendgrid_400: {\"errors\":[{\"message\":\"Does not contain a vali",
+        "ratio": 4.86,
+        "color": "rgb(164, 71, 61)",
+        "bg": "rgb(236,232,230)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": "pill-unconfirmed",
+        "incidental": false,
+        "text": "Couldn't confirm",
+        "ratio": 5.76,
+        "color": "oklab(0.426436 0.0267001 0.0553361)",
+        "bg": "rgb(223,212,201)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "line-unconfirmed",
+        "incidental": false,
+        "text": "Couldn't confirm this went out — don't resend.",
+        "ratio": 4.86,
+        "color": "rgb(164, 71, 61)",
+        "bg": "rgb(236,232,230)",
+        "size": "11px",
+        "weight": "400"
+      }
+    ],
+    "low": [
+      {
+        "kind": null,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 2.46,
+        "color": "rgba(103, 97, 107, 0.6)",
+        "bg": "rgb(247, 244, 238)",
+        "size": "12px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 2.43,
+        "color": "rgba(103, 97, 107, 0.6)",
+        "bg": "rgb(244, 241, 235)",
+        "size": "12px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "incidental": false,
+        "text": "LIVE",
+        "ratio": 3.69,
+        "color": "rgb(50, 118, 90)",
+        "bg": "rgb(217,212,211)",
+        "size": "8px",
+        "weight": "600"
+      }
+    ],
+    "textCount": 119,
+    "gold": 15,
+    "goldOutsideAct": [],
+    "warningInExp03": [],
+    "goldElsewhere": [
+      "Channel setup rgb(111, 86, 54)",
+      "JO rgb(122, 92, 46)",
+      "Relationship rgb(122, 92, 46)",
+      "Sales context rgb(122, 92, 46)",
+      "Relationship signals rgb(122, 92, 46)",
+      "Open Campaigns rgb(111, 86, 54)",
+      "Client access rgb(122, 92, 46)",
+      "Open Portal rgb(111, 86, 54)",
+      "Recent activity rgb(122, 92, 46)"
+    ],
+    "exp03Roots": 1,
+    "goldActs": [
+      "New conversation",
+      "Send"
+    ],
+    "tokens": {
+      "warning": "rgb(150, 98, 34)",
+      "destructive": "rgb(164, 71, 61)"
+    },
+    "line": {
+      "rgb": "rgb(164,71,61)",
+      "destructiveRgb": "rgb(164,71,61)",
+      "color": "rgb(164, 71, 61)",
+      "isDestructive": true,
+      "className": "mt-1.5 text-[11px] text-destructive"
+    },
+    "pill": {
+      "rgb": "rgb(102,71,41)",
+      "bgRgb": "rgba(148,101,34,0.149)",
+      "color": "oklab(0.426436 0.0267001 0.0553361)",
+      "bg": "rgba(150, 98, 34, 0.15)",
+      "size": "10px",
+      "className": "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide bg-[hsl(var(--warning)/0.15)] text-[color-mix(in_oklab,hsl(var(--warning))_62%,hsl(var(--foreground)))]"
+    },
+    "overflowX": false,
+    "counts": {
+      "pill": 1,
+      "line": 1,
+      "failed": 1,
+      "rawUnconfirmed": 0,
+      "approve": 0
+    },
+    "toasts": [],
+    "calls": [],
+    "errors": []
+  },
+  "exp03-thread-dark-390x844": {
+    "ok": true,
+    "viewport": "390x844",
+    "theme": "dark",
+    "paige": "closed",
+    "state": "thread",
+    "checks": {
+      "pillShown": true,
+      "lineShown": true,
+      "pillAA": true,
+      "lineAA": true,
+      "toastAA": true,
+      "failedOnlyForTheRealFailure": true,
+      "noRawUnconfirmedCode": true,
+      "toast": true,
+      "sendOnce": true,
+      "noResendOffered": true,
+      "noOverflow": true,
+      "goldOnlyOnAct": true,
+      "fontLoaded": true
+    },
+    "label": {
+      "ok": true,
+      "w": 174,
+      "h": 24
+    },
+    "font": {
+      "schibsted": true,
+      "bodyFamily": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\""
+    },
+    "exp03": [
+      {
+        "kind": "line-failed",
+        "incidental": false,
+        "text": "sendgrid_400: {\"errors\":[{\"message\":\"Does not contain a vali",
+        "ratio": 7.92,
+        "color": "rgb(237, 160, 146)",
+        "bg": "rgb(32,29,40)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": "pill-unconfirmed",
+        "incidental": false,
+        "text": "Couldn't confirm",
+        "ratio": 8.2,
+        "color": "oklab(0.881658 0.0142861 0.0638055)",
+        "bg": "rgb(62,54,53)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "line-unconfirmed",
+        "incidental": false,
+        "text": "Couldn't confirm this went out — don't resend.",
+        "ratio": 7.92,
+        "color": "rgb(237, 160, 146)",
+        "bg": "rgb(32,29,40)",
+        "size": "11px",
+        "weight": "400"
+      }
+    ],
+    "low": [
+      {
+        "kind": null,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 3.55,
+        "color": "rgba(173, 167, 159, 0.6)",
+        "bg": "rgb(22, 19, 27)",
+        "size": "12px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 3.5,
+        "color": "rgba(173, 167, 159, 0.6)",
+        "bg": "rgb(24, 22, 29)",
+        "size": "12px",
+        "weight": "400"
+      }
+    ],
+    "textCount": 119,
+    "gold": 15,
+    "goldOutsideAct": [],
+    "warningInExp03": [
+      "Couldn't confirm rgb(241,211,168)"
+    ],
+    "goldElsewhere": [
+      "Channel setup rgb(255, 240, 207)",
+      "JO rgb(199, 169, 120)",
+      "Relationship rgb(199, 169, 120)",
+      "Sales context rgb(199, 169, 120)",
+      "Relationship signals rgb(199, 169, 120)",
+      "Open Campaigns rgb(255, 240, 207)",
+      "Client access rgb(199, 169, 120)",
+      "Open Portal rgb(255, 240, 207)",
+      "Recent activity rgb(199, 169, 120)"
+    ],
+    "exp03Roots": 1,
+    "goldActs": [
+      "New conversation",
+      "Send"
+    ],
+    "tokens": {
+      "warning": "rgb(237, 192, 126)",
+      "destructive": "rgb(237, 160, 146)"
+    },
+    "line": {
+      "rgb": "rgb(237,160,146)",
+      "destructiveRgb": "rgb(237,160,146)",
+      "color": "rgb(237, 160, 146)",
+      "isDestructive": true,
+      "className": "mt-1.5 text-[11px] text-destructive"
+    },
+    "pill": {
+      "rgb": "rgb(241,211,168)",
+      "bgRgb": "rgba(235,195,128,0.149)",
+      "color": "oklab(0.881658 0.0142861 0.0638055)",
+      "bg": "rgba(237, 192, 126, 0.15)",
+      "size": "10px",
+      "className": "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide bg-[hsl(var(--warning)/0.15)] text-[color-mix(in_oklab,hsl(var(--warning))_62%,hsl(var(--foreground)))]"
+    },
+    "overflowX": false,
+    "counts": {
+      "pill": 1,
+      "line": 1,
+      "failed": 1,
+      "rawUnconfirmed": 0,
+      "approve": 0
+    },
+    "toasts": [],
+    "calls": [],
+    "errors": []
+  },
+  "exp03-approve-light-1366x768-paige-closed": {
+    "ok": true,
+    "viewport": "1366x768",
+    "theme": "light",
+    "paige": "closed",
+    "state": "approve",
+    "checks": {
+      "pillShown": true,
+      "lineShown": true,
+      "pillAA": true,
+      "lineAA": true,
+      "toastAA": true,
+      "failedOnlyForTheRealFailure": true,
+      "noRawUnconfirmedCode": true,
+      "toast": true,
+      "sendOnce": true,
+      "noResendOffered": true,
+      "noOverflow": true,
+      "goldOnlyOnAct": true,
+      "fontLoaded": true
+    },
+    "label": {
+      "ok": true,
+      "w": 174,
+      "h": 24
+    },
+    "font": {
+      "schibsted": true,
+      "bodyFamily": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\""
+    },
+    "exp03": [
+      {
+        "kind": "pill-sent",
+        "incidental": false,
+        "text": "Sent",
+        "ratio": 3.7,
+        "color": "rgb(50, 118, 90)",
+        "bg": "rgb(208,215,209)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "pill-failed",
+        "incidental": false,
+        "text": "Failed",
+        "ratio": 3.98,
+        "color": "rgb(164, 71, 61)",
+        "bg": "rgb(225,208,205)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "line-failed",
+        "incidental": false,
+        "text": "sendgrid_400: {\"errors\":[{\"message\":\"Does not contain a vali",
+        "ratio": 4.86,
+        "color": "rgb(164, 71, 61)",
+        "bg": "rgb(236,232,230)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": "pill-unconfirmed",
+        "incidental": false,
+        "text": "Couldn't confirm",
+        "ratio": 5.76,
+        "color": "oklab(0.426436 0.0267001 0.0553361)",
+        "bg": "rgb(223,212,201)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "line-unconfirmed",
+        "incidental": false,
+        "text": "Couldn't confirm this went out — don't resend.",
+        "ratio": 4.86,
+        "color": "rgb(164, 71, 61)",
+        "bg": "rgb(236,232,230)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": "toast",
+        "incidental": false,
+        "text": "We couldn't confirm it was sent. It may already have reached",
+        "ratio": 17.26,
+        "color": "rgb(4, 20, 57)",
+        "bg": "rgb(249, 250, 251)",
+        "size": "13px",
+        "weight": "500"
+      }
+    ],
+    "low": [
+      {
+        "kind": null,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 2.46,
+        "color": "rgba(103, 97, 107, 0.6)",
+        "bg": "rgb(247, 244, 238)",
+        "size": "12px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 2.43,
+        "color": "rgba(103, 97, 107, 0.6)",
+        "bg": "rgb(244, 241, 235)",
+        "size": "12px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "incidental": false,
+        "text": "LIVE",
+        "ratio": 3.69,
+        "color": "rgb(50, 118, 90)",
+        "bg": "rgb(217,212,211)",
+        "size": "8px",
+        "weight": "600"
+      },
+      {
+        "kind": "pill-sent",
+        "incidental": false,
+        "text": "Sent",
+        "ratio": 3.7,
+        "color": "rgb(50, 118, 90)",
+        "bg": "rgb(208,215,209)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "pill-failed",
+        "incidental": false,
+        "text": "Failed",
+        "ratio": 3.98,
+        "color": "rgb(164, 71, 61)",
+        "bg": "rgb(225,208,205)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": null,
+        "incidental": false,
+        "text": "PROFILE · LIVE",
+        "ratio": 4.37,
+        "color": "rgb(50, 118, 90)",
+        "bg": "rgb(238,230,215)",
+        "size": "8px",
+        "weight": "600"
+      }
+    ],
+    "textCount": 169,
+    "gold": 15,
+    "goldOutsideAct": [],
+    "warningInExp03": [],
+    "goldElsewhere": [
+      "Channel setup rgb(111, 86, 54)",
+      "JO rgb(122, 92, 46)",
+      "Relationship rgb(122, 92, 46)",
+      "Sales context rgb(122, 92, 46)",
+      "Relationship signals rgb(122, 92, 46)",
+      "Open Campaigns rgb(111, 86, 54)",
+      "Client access rgb(122, 92, 46)",
+      "Open Portal rgb(111, 86, 54)",
+      "Recent activity rgb(122, 92, 46)"
+    ],
+    "exp03Roots": 2,
+    "goldActs": [
+      "New conversation",
+      "Send"
+    ],
+    "tokens": {
+      "warning": "rgb(150, 98, 34)",
+      "destructive": "rgb(164, 71, 61)"
+    },
+    "line": {
+      "rgb": "rgb(164,71,61)",
+      "destructiveRgb": "rgb(164,71,61)",
+      "color": "rgb(164, 71, 61)",
+      "isDestructive": true,
+      "className": "mt-1.5 text-[11px] text-destructive"
+    },
+    "pill": {
+      "rgb": "rgb(102,71,41)",
+      "bgRgb": "rgba(148,101,34,0.149)",
+      "color": "oklab(0.426436 0.0267001 0.0553361)",
+      "bg": "rgba(150, 98, 34, 0.15)",
+      "size": "10px",
+      "className": "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide bg-[hsl(var(--warning)/0.15)] text-[color-mix(in_oklab,hsl(var(--warning))_62%,hsl(var(--foreground)))]"
+    },
+    "overflowX": false,
+    "counts": {
+      "pill": 1,
+      "line": 1,
+      "failed": 1,
+      "rawUnconfirmed": 0,
+      "approve": 0
+    },
+    "toasts": [
+      {
+        "type": "warning",
+        "text": "We couldn't confirm it was sent. It may already have reached them — check before sending it again."
+      }
+    ],
+    "calls": [
+      "functions:send-message"
+    ],
+    "errors": []
+  },
+  "exp03-approve-dark-1366x768-paige-closed": {
+    "ok": true,
+    "viewport": "1366x768",
+    "theme": "dark",
+    "paige": "closed",
+    "state": "approve",
+    "checks": {
+      "pillShown": true,
+      "lineShown": true,
+      "pillAA": true,
+      "lineAA": true,
+      "toastAA": true,
+      "failedOnlyForTheRealFailure": true,
+      "noRawUnconfirmedCode": true,
+      "toast": true,
+      "sendOnce": true,
+      "noResendOffered": true,
+      "noOverflow": true,
+      "goldOnlyOnAct": true,
+      "fontLoaded": true
+    },
+    "label": {
+      "ok": true,
+      "w": 174,
+      "h": 24
+    },
+    "font": {
+      "schibsted": true,
+      "bodyFamily": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\""
+    },
+    "exp03": [
+      {
+        "kind": "pill-sent",
+        "incidental": false,
+        "text": "Sent",
+        "ratio": 6.77,
+        "color": "rgb(143, 209, 174)",
+        "bg": "rgb(48,56,60)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "pill-failed",
+        "incidental": false,
+        "text": "Failed",
+        "ratio": 5.9,
+        "color": "rgb(237, 160, 146)",
+        "bg": "rgb(62,49,56)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "line-failed",
+        "incidental": false,
+        "text": "sendgrid_400: {\"errors\":[{\"message\":\"Does not contain a vali",
+        "ratio": 7.92,
+        "color": "rgb(237, 160, 146)",
+        "bg": "rgb(32,29,40)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": "pill-unconfirmed",
+        "incidental": false,
+        "text": "Couldn't confirm",
+        "ratio": 8.2,
+        "color": "oklab(0.881658 0.0142861 0.0638055)",
+        "bg": "rgb(62,54,53)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "line-unconfirmed",
+        "incidental": false,
+        "text": "Couldn't confirm this went out — don't resend.",
+        "ratio": 7.92,
+        "color": "rgb(237, 160, 146)",
+        "bg": "rgb(32,29,40)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": "toast",
+        "incidental": false,
+        "text": "We couldn't confirm it was sent. It may already have reached",
+        "ratio": 18.26,
+        "color": "rgb(245, 245, 245)",
+        "bg": "rgb(12, 7, 18)",
+        "size": "13px",
+        "weight": "500"
+      }
+    ],
+    "low": [
+      {
+        "kind": null,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 3.55,
+        "color": "rgba(173, 167, 159, 0.6)",
+        "bg": "rgb(22, 19, 27)",
+        "size": "12px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 3.5,
+        "color": "rgba(173, 167, 159, 0.6)",
+        "bg": "rgb(24, 22, 29)",
+        "size": "12px",
+        "weight": "400"
+      }
+    ],
+    "textCount": 169,
+    "gold": 15,
+    "goldOutsideAct": [],
+    "warningInExp03": [
+      "Couldn't confirm rgb(241,211,168)"
+    ],
+    "goldElsewhere": [
+      "Channel setup rgb(255, 240, 207)",
+      "JO rgb(199, 169, 120)",
+      "Relationship rgb(199, 169, 120)",
+      "Sales context rgb(199, 169, 120)",
+      "Relationship signals rgb(199, 169, 120)",
+      "Open Campaigns rgb(255, 240, 207)",
+      "Client access rgb(199, 169, 120)",
+      "Open Portal rgb(255, 240, 207)",
+      "Recent activity rgb(199, 169, 120)"
+    ],
+    "exp03Roots": 2,
+    "goldActs": [
+      "New conversation",
+      "Send"
+    ],
+    "tokens": {
+      "warning": "rgb(237, 192, 126)",
+      "destructive": "rgb(237, 160, 146)"
+    },
+    "line": {
+      "rgb": "rgb(237,160,146)",
+      "destructiveRgb": "rgb(237,160,146)",
+      "color": "rgb(237, 160, 146)",
+      "isDestructive": true,
+      "className": "mt-1.5 text-[11px] text-destructive"
+    },
+    "pill": {
+      "rgb": "rgb(241,211,168)",
+      "bgRgb": "rgba(235,195,128,0.149)",
+      "color": "oklab(0.881658 0.0142861 0.0638055)",
+      "bg": "rgba(237, 192, 126, 0.15)",
+      "size": "10px",
+      "className": "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide bg-[hsl(var(--warning)/0.15)] text-[color-mix(in_oklab,hsl(var(--warning))_62%,hsl(var(--foreground)))]"
+    },
+    "overflowX": false,
+    "counts": {
+      "pill": 1,
+      "line": 1,
+      "failed": 1,
+      "rawUnconfirmed": 0,
+      "approve": 0
+    },
+    "toasts": [
+      {
+        "type": "warning",
+        "text": "We couldn't confirm it was sent. It may already have reached them — check before sending it again."
+      }
+    ],
+    "calls": [
+      "functions:send-message"
+    ],
+    "errors": []
+  },
+  "exp03-approve-light-390x844": {
+    "ok": true,
+    "viewport": "390x844",
+    "theme": "light",
+    "paige": "closed",
+    "state": "approve",
+    "checks": {
+      "pillShown": true,
+      "lineShown": true,
+      "pillAA": true,
+      "lineAA": true,
+      "toastAA": true,
+      "failedOnlyForTheRealFailure": true,
+      "noRawUnconfirmedCode": true,
+      "toast": true,
+      "sendOnce": true,
+      "noResendOffered": true,
+      "noOverflow": true,
+      "goldOnlyOnAct": true,
+      "fontLoaded": true
+    },
+    "label": {
+      "ok": true,
+      "w": 174,
+      "h": 24
+    },
+    "font": {
+      "schibsted": true,
+      "bodyFamily": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\""
+    },
+    "exp03": [
+      {
+        "kind": "line-failed",
+        "incidental": false,
+        "text": "sendgrid_400: {\"errors\":[{\"message\":\"Does not contain a vali",
+        "ratio": 4.86,
+        "color": "rgb(164, 71, 61)",
+        "bg": "rgb(236,232,230)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": "pill-unconfirmed",
+        "incidental": false,
+        "text": "Couldn't confirm",
+        "ratio": 5.76,
+        "color": "oklab(0.426436 0.0267001 0.0553361)",
+        "bg": "rgb(223,212,201)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "line-unconfirmed",
+        "incidental": false,
+        "text": "Couldn't confirm this went out — don't resend.",
+        "ratio": 4.86,
+        "color": "rgb(164, 71, 61)",
+        "bg": "rgb(236,232,230)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": "toast",
+        "incidental": false,
+        "text": "We couldn't confirm it was sent. It may already have reached",
+        "ratio": 17.26,
+        "color": "rgb(4, 20, 57)",
+        "bg": "rgb(249, 250, 251)",
+        "size": "13px",
+        "weight": "500"
+      }
+    ],
+    "low": [
+      {
+        "kind": null,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 2.46,
+        "color": "rgba(103, 97, 107, 0.6)",
+        "bg": "rgb(247, 244, 238)",
+        "size": "12px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 2.43,
+        "color": "rgba(103, 97, 107, 0.6)",
+        "bg": "rgb(244, 241, 235)",
+        "size": "12px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "incidental": false,
+        "text": "LIVE",
+        "ratio": 3.69,
+        "color": "rgb(50, 118, 90)",
+        "bg": "rgb(217,212,211)",
+        "size": "8px",
+        "weight": "600"
+      }
+    ],
+    "textCount": 121,
+    "gold": 15,
+    "goldOutsideAct": [],
+    "warningInExp03": [],
+    "goldElsewhere": [
+      "Channel setup rgb(111, 86, 54)",
+      "JO rgb(122, 92, 46)",
+      "Relationship rgb(122, 92, 46)",
+      "Sales context rgb(122, 92, 46)",
+      "Relationship signals rgb(122, 92, 46)",
+      "Open Campaigns rgb(111, 86, 54)",
+      "Client access rgb(122, 92, 46)",
+      "Open Portal rgb(111, 86, 54)",
+      "Recent activity rgb(122, 92, 46)"
+    ],
+    "exp03Roots": 2,
+    "goldActs": [
+      "New conversation",
+      "Send"
+    ],
+    "tokens": {
+      "warning": "rgb(150, 98, 34)",
+      "destructive": "rgb(164, 71, 61)"
+    },
+    "line": {
+      "rgb": "rgb(164,71,61)",
+      "destructiveRgb": "rgb(164,71,61)",
+      "color": "rgb(164, 71, 61)",
+      "isDestructive": true,
+      "className": "mt-1.5 text-[11px] text-destructive"
+    },
+    "pill": {
+      "rgb": "rgb(102,71,41)",
+      "bgRgb": "rgba(148,101,34,0.149)",
+      "color": "oklab(0.426436 0.0267001 0.0553361)",
+      "bg": "rgba(150, 98, 34, 0.15)",
+      "size": "10px",
+      "className": "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide bg-[hsl(var(--warning)/0.15)] text-[color-mix(in_oklab,hsl(var(--warning))_62%,hsl(var(--foreground)))]"
+    },
+    "overflowX": false,
+    "counts": {
+      "pill": 1,
+      "line": 1,
+      "failed": 1,
+      "rawUnconfirmed": 0,
+      "approve": 0
+    },
+    "toasts": [
+      {
+        "type": "warning",
+        "text": "We couldn't confirm it was sent. It may already have reached them — check before sending it again."
+      }
+    ],
+    "calls": [
+      "functions:send-message"
+    ],
+    "errors": []
+  },
+  "exp03-approve-dark-390x844": {
+    "ok": true,
+    "viewport": "390x844",
+    "theme": "dark",
+    "paige": "closed",
+    "state": "approve",
+    "checks": {
+      "pillShown": true,
+      "lineShown": true,
+      "pillAA": true,
+      "lineAA": true,
+      "toastAA": true,
+      "failedOnlyForTheRealFailure": true,
+      "noRawUnconfirmedCode": true,
+      "toast": true,
+      "sendOnce": true,
+      "noResendOffered": true,
+      "noOverflow": true,
+      "goldOnlyOnAct": true,
+      "fontLoaded": true
+    },
+    "label": {
+      "ok": true,
+      "w": 174,
+      "h": 24
+    },
+    "font": {
+      "schibsted": true,
+      "bodyFamily": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\""
+    },
+    "exp03": [
+      {
+        "kind": "line-failed",
+        "incidental": false,
+        "text": "sendgrid_400: {\"errors\":[{\"message\":\"Does not contain a vali",
+        "ratio": 7.92,
+        "color": "rgb(237, 160, 146)",
+        "bg": "rgb(32,29,40)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": "pill-unconfirmed",
+        "incidental": false,
+        "text": "Couldn't confirm",
+        "ratio": 8.2,
+        "color": "oklab(0.881658 0.0142861 0.0638055)",
+        "bg": "rgb(62,54,53)",
+        "size": "10px",
+        "weight": "600"
+      },
+      {
+        "kind": "line-unconfirmed",
+        "incidental": false,
+        "text": "Couldn't confirm this went out — don't resend.",
+        "ratio": 7.92,
+        "color": "rgb(237, 160, 146)",
+        "bg": "rgb(32,29,40)",
+        "size": "11px",
+        "weight": "400"
+      },
+      {
+        "kind": "toast",
+        "incidental": false,
+        "text": "We couldn't confirm it was sent. It may already have reached",
+        "ratio": 18.26,
+        "color": "rgb(245, 245, 245)",
+        "bg": "rgb(12, 7, 18)",
+        "size": "13px",
+        "weight": "500"
+      }
+    ],
+    "low": [
+      {
+        "kind": null,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 3.55,
+        "color": "rgba(173, 167, 159, 0.6)",
+        "bg": "rgb(22, 19, 27)",
+        "size": "12px",
+        "weight": "400"
+      },
+      {
+        "kind": null,
+        "incidental": false,
+        "text": "You:",
+        "ratio": 3.5,
+        "color": "rgba(173, 167, 159, 0.6)",
+        "bg": "rgb(24, 22, 29)",
+        "size": "12px",
+        "weight": "400"
+      }
+    ],
+    "textCount": 121,
+    "gold": 15,
+    "goldOutsideAct": [],
+    "warningInExp03": [
+      "Couldn't confirm rgb(241,211,168)"
+    ],
+    "goldElsewhere": [
+      "Channel setup rgb(255, 240, 207)",
+      "JO rgb(199, 169, 120)",
+      "Relationship rgb(199, 169, 120)",
+      "Sales context rgb(199, 169, 120)",
+      "Relationship signals rgb(199, 169, 120)",
+      "Open Campaigns rgb(255, 240, 207)",
+      "Client access rgb(199, 169, 120)",
+      "Open Portal rgb(255, 240, 207)",
+      "Recent activity rgb(199, 169, 120)"
+    ],
+    "exp03Roots": 2,
+    "goldActs": [
+      "New conversation",
+      "Send"
+    ],
+    "tokens": {
+      "warning": "rgb(237, 192, 126)",
+      "destructive": "rgb(237, 160, 146)"
+    },
+    "line": {
+      "rgb": "rgb(237,160,146)",
+      "destructiveRgb": "rgb(237,160,146)",
+      "color": "rgb(237, 160, 146)",
+      "isDestructive": true,
+      "className": "mt-1.5 text-[11px] text-destructive"
+    },
+    "pill": {
+      "rgb": "rgb(241,211,168)",
+      "bgRgb": "rgba(235,195,128,0.149)",
+      "color": "oklab(0.881658 0.0142861 0.0638055)",
+      "bg": "rgba(237, 192, 126, 0.15)",
+      "size": "10px",
+      "className": "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide bg-[hsl(var(--warning)/0.15)] text-[color-mix(in_oklab,hsl(var(--warning))_62%,hsl(var(--foreground)))]"
+    },
+    "overflowX": false,
+    "counts": {
+      "pill": 1,
+      "line": 1,
+      "failed": 1,
+      "rawUnconfirmed": 0,
+      "approve": 0
+    },
+    "toasts": [
+      {
+        "type": "warning",
+        "text": "We couldn't confirm it was sent. It may already have reached them — check before sending it again."
+      }
+    ],
+    "calls": [
+      "functions:send-message"
+    ],
+    "errors": []
+  }
+}

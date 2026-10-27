@@ -8,7 +8,7 @@ FLOW_PROTOTYPE: NOT_REQUIRED: existing interaction/markup unchanged; this is the
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: equally eligible current/future SOLO owners retain their permitted model-assisted work and can inspect original results regardless of prior PAIGE usage. No identity-based exception or entitlement grant.
 VISUAL_DIRECTION: PASS: existing PAIGE visual system untouched. No new visual treatment or rendered design claim.
 AUTOMATED_EVIDENCE: PASS: final five suites137PASS0FAIL0SKIP, reportSHA2562cfef72c54843f00d9ca9774c237b5b8ea956d5c82483a115bf883a69853e74a. Genuine new-policy baseline93PASS10FAIL/103; first correction136PASS1FAIL/137 exposed one remaining old false-eligibility expectation, corrected before final rerun. Failures retained. Actual Fabric/legacy adapters and original continuation use provider/DB ports; no paid invocation.
-STATIC_EVIDENCE: PASS: scoped lint0 and diff check0; current Kit reports288/296 baseline entries/no new bypass; action-risk202 classified/0unclassified writes. Final exact-head CI/types and normal affected Edge graph/readback remain separate pending gates.
+STATIC_EVIDENCE: PASS: scoped lint0/diff0, original Kit288/296/no new bypass+40 self-controls, action-risk202/0unclassified. Current Spine self-test/registry244 pass after exactly one corresponding-source digest renewal; all83 unchanged hostile controls pass, log7d4c1cea9fd4cc288210cb80878bb83d7e33e8b6704f563f641ce885ef27ad4a. Required new-head CI/types and affected Edge graph/readback remain separate.
 RENDERED_EVIDENCE: UNVERIFIED: no new pixels/controls; no authenticated over-threshold conversation was run, and static source cannot establish it.
 BEHAVIORAL_EVIDENCE: UNVERIFIED: actual production high-usage response/original-result recovery still owed. Provider transports are neutral test ports, not external results.
 AUTHENTICATED_RUNTIME: UNVERIFIED: equivalent existing/new SOLO actors, current permission refusal, actual over-threshold trace/result and recovery proof remain owed; no new customer message, approval, record or provider activation.
@@ -23,7 +23,7 @@ OWNER_INTENT: uncapped tenant-attributed usage billing with the accepted25percen
 MUST_NOT_HAPPEN: monetary exhaustion/refusal or model downgrade; bypass actor/tenant/approval/provider/activation controls; invent zero cost, invoice reconciliation or accepted capability status.
 MUST_PRESERVE: original settings/trace API, usage attribution, current-authority fences, model routing/fallback policy, technical deadlines/throughput/anti-abuse controls, exact business-action approval, original Work and Rail identity.
 ACCEPTANCE_CRITERIA: prior usage cannot block a permitted model call or hide a verified original work result; actual current permission, provider failure and unknown-operation protections still hold. Trace and invoice proof are separate evidence classes.
-PROTECTED_SEAMS: original router-budget pure decision and read-only durable-continuation adapter only runtime edits. No Root/risk/registry/C0b, provider client, billing ledger, scheduler, native writer, RLS, role or activation edit.
+PROTECTED_SEAMS: original router-budget pure decision and read-only durable-continuation adapter only runtime edits. C0b renews one reviewed corresponding-module source scalar; full inverse restores current main exactly. No extractor/metadata/hostile-control/other-pin/Root/risk/registry/provider/native/RLS/role/activation change.
 INTERNAL_BUILD_IDENTITY: sha=a794ce20b6e38286d0210a33bf05f650a41b6ea1; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(candidate shared source has not been deployed); evidence=docs/evidence/ui-delivery/exp05-informational-model-usage.md; identity_scope=current main before candidate commit, exact candidate governed by PR review and CI.
 RELEASE_CHANNEL: development: original shared model-usage decision and bound continuation source candidate.
 RELEASE_CLASSIFICATION: internal-only: no completed Experience or customer release announcement.
@@ -63,8 +63,24 @@ other owners' provider controls and actual canonical collection/invoicing requir
 their original responsible leads. Platform billing account/subscription mappings
 are not usage-invoice proof. No customer-direct charge is billed here.
 
-Grounding / Collision Check: current maina794, ANT11/147/161 latest billing and
-Team Hub authority read. E08 owns shared Team Hub/Root/risk/registry/C0b work; none
-is edited. E04 received the narrow shared-model dependency. Research test updates
+Grounding / Collision Check: current maina794→07ec24 normally received, preserving
+624 release log and all E07#2964 source. ANT11/147/161 latest billing/Team Hub
+authority read. E08 owns its Team Hub/Root/risk/registry integration; none is edited.
+The new source-pin necessity was coordinated before its single-scalar edit in
+ANT161f3d0144e, outside A1b's dispatch identities. E04 received the shared dependency. Research test updates
 follow only the owner policy, not domain behavior ownership. Original source/histories
 and held2961 remain separate. No new agent/account/provider/browser effect.
+
+## Current-main source identity renewal
+
+Hosted61389 contract failure122290924079/40533090197 was genuine: the incumbent
+web_fetch positive proof refused the changed original budget module. No guard was
+disabled or made permissive. Underlying source received LOWER5669938276 before
+renewal. Original TypeScript printer(removeComments:true)+SHA256 reproduced main
+07ec24 digestd77811a61d1833990e2c1e65c62d476112fd7a0e6326552582e7949a1cc6c008.
+Reviewed current source is9b12ac32282e4223238688feef1d3e384406e9d9e1378fc94c9d937d7d6a20c4.
+Only that scalar changes; replacement back to old digest reproduces the entire
+incoming verifier byte-exact. Extractor, all29 dispatch and every other source
+scalar/metadata/negative control remain unchanged. Original83 hostile tests pass.
+All six tested source/test blobs remain exactly61389 after normal main composition;
+the137 source results are retained, not represented as a new provider invocation.

@@ -231,6 +231,15 @@ describe("the new divider", () => {
     expect(newDividerBefore(messages, 1, "u-me")).toBe("d");
     expect(newDividerBefore(messages, 0, "u-me")).toBeNull();
   });
+
+  it("A1b: counts an agent's reply to the reader as unread, as the server does, though it carries the reader's id", () => {
+    const messages = [
+      message({ id: "a", author_user_id: "u-other" }), message({ id: "q", author_user_id: "u-me" }),
+      message({ id: "r", author_user_id: "u-me", author_kind: "agent", agent_key: "cura", asked_in_message_id: "q" }),
+    ];
+    expect(newDividerBefore(messages, 1, "u-me")).toBe("r");
+    expect(newDividerBefore(messages, 2, "u-me")).toBe("a");
+  });
 });
 
 describe("refresh joining (A6 order)", () => {

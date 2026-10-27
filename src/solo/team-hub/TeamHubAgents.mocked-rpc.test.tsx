@@ -456,12 +456,15 @@ describe("flow 4: a DM with an agent", () => {
     const host = await mount();
     await click(host.querySelector<HTMLElement>(".th-conv-item--agent[data-ag='vera']"));
     answers.push(() => Promise.resolve(posted(reply("vera", String(turnBody(0).sourceMessageId), "September is up 12% on August."), { intent: "dm", conversation_id: "c-dm-vera" })));
-    await type(composer(host), "How did September close?");
+    // Another agent's name in the DM asks nobody else: the DM is only the person's and VERA's (the
+    // server refuses an agent mention in an agent DM).
+    await type(composer(host), "How did September close? @CURA says it was busy.");
     await press(composer(host), "Enter");
     await flush();
     const post = calls.find((call) => call.name === "team_hub_post_message")!;
     expect(post.params.p_channel_id).toBe("c-dm-vera");
     expect(post.params.p_agent_mention_keys).toBeUndefined();
+    expect(turns).toHaveLength(1);
     expect(turnBody(0)).toMatchObject({ conversationId: "c-dm-vera", agent: "vera", threadRootId: null });
     expect(host.textContent).toContain("September is up 12% on August.");
     expect(host.querySelector(".th-ag-dmnote")).not.toBeNull();

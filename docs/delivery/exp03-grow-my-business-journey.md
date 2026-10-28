@@ -1001,9 +1001,17 @@ Both closed as superseded with links; their branches are kept.
   evidence record: email's 30-second Undo is replaced by the check; signature images are dropped (links kept);
   sending needs the business's own owner/admin (one global admin loses it, one business owner/admin gains it);
   an email reply needs the contact's main email.
+- **Paige chat can schedule a governed email (built 2026-10-28, not merged).** `comms_send_email` takes an
+  optional `send_at` (ISO 8601 with offset) and hands it to the door top-level; the operation id binds it; an
+  approved card replays the stored time verbatim. The approval card shows a When row ("Sends Tue, Nov 3, 9:00 AM",
+  viewer's clock) and the act reads Schedule send; the chat preview now also carries the files (name and size).
+  Harness render only; an authenticated chat drive and a real release are owed.
+  Review round 1 fixes: the time names its zone everywhere ("9:00 AM CST"); the door refuses a second
+  operation for an email still scheduled to the same contact (`COMMS_EMAIL_ALREADY_SCHEDULED`), so a
+  reschedule or "send it now" must cancel first and can no longer send twice.
 
-**Open, in order:** the New conversation dialog and draft approval on the door; chat `send_at` and a "When" row
-on the approval card (also what NEXUS needs in Team Hub);
+**Open, in order:** the New conversation dialog and draft approval on the door; (chat `send_at` + When row:
+built above — Team Hub/NEXUS use still open);
 inbound follow-ups (unauthenticated-sender badge — UI, needs design);
 custom-domain rebuild; owner-seen designs for the reply screen, S4b activation and company/personal mailbox
 access (owner direction 2026-10-27: the account holder grants each team member none / read / read and reply

@@ -1,6 +1,6 @@
 import { Fragment, useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
-import { Check, X, ShieldQuestion, Loader2, AlertTriangle, CircleHelp, RotateCcw, Paperclip } from "lucide-react";
+import { Check, X, ShieldQuestion, Loader2, AlertTriangle, CircleHelp, RotateCcw, Paperclip, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 /**
@@ -43,7 +43,7 @@ export type ConfirmActionState = "pending" | "working" | "done" | "failed" | "un
 
 // INT-328 — the email preview's type and the browser's gate on it live in ./confirmPreview (a plain
 // module, so this file exports components only).
-import { formatFileSize, type ConfirmEmailPreview } from "./confirmPreview";
+import { formatFileSize, scheduledForLabel, type ConfirmEmailPreview } from "./confirmPreview";
 export type { ConfirmEmailPreview } from "./confirmPreview";
 
 /** The card's own state. `mixed` exists only at card level: some actions ran and some did not. */
@@ -52,6 +52,13 @@ type CardState = ConfirmActionState | "mixed";
 /** A file name with break opportunities after - _ . and spaces, so it wraps at its own seams. */
 function breakableFileName(name: string): ReactNode[] {
   return name.split(/(?<=[-_. ])/).map((part, i) => <Fragment key={i}>{i > 0 ? <wbr /> : null}{part}</Fragment>);
+}
+
+/** "Sends Tue, Nov 3, 9:00 AM": a narrow card may break after the date, never inside the time. */
+function WhenLabel({ at }: { at: string }) {
+  const i = at.lastIndexOf(", ");
+  const cut = i < 0 ? 0 : i + 2;
+  return <>Sends {at.slice(0, cut)}<span className="whitespace-nowrap">{at.slice(cut)}</span></>;
 }
 
 export type ConfirmAction = {
@@ -195,6 +202,13 @@ function EmailPreview({ email, bleed = false }: { email: ConfirmEmailPreview; bl
                 </p>
               ) : null}
             </dd>
+          </div>
+        ) : null}
+        {/* "Approve now, send later": the time the approved email goes out, in the viewer's clock. */}
+        {email.send_at ? (
+          <div className={row} data-confirm-when="">
+            <dt className={label}>When</dt>
+            <dd className={cn(value, "font-medium text-foreground")}><WhenLabel at={scheduledForLabel(email.send_at)} /></dd>
           </div>
         ) : null}
       </dl>
@@ -372,6 +386,8 @@ export function PaigeConfirmCard(props: PaigeConfirmCardProps) {
   const note = report ? props.note : undefined;
 
   const multi = actions.length > 1;
+  // A lone email set for later: the act schedules it (the Conversations composer's own word).
+  const scheduled = !multi && !!actions[0].preview?.send_at;
   const decided = cardState !== "pending" && cardState !== "working";
   const controlsDisabled = (!report && props.disabled) || anyWorking;
   const SealIcon = SEAL_ICON[cardState];
@@ -545,10 +561,12 @@ export function PaigeConfirmCard(props: PaigeConfirmCardProps) {
               >
                 {anyWorking ? (
                   <Loader2 className="mr-1.5 h-4 w-4 animate-spin motion-reduce:animate-none" />
+                ) : scheduled ? (
+                  <Clock className="mr-1.5 h-4 w-4" />
                 ) : (
                   <Check className="mr-1.5 h-4 w-4" />
                 )}
-                {anyWorking ? "Running…" : multi ? `Approve ${fingerprints.length}` : "Approve"}
+                {anyWorking ? "Running…" : multi ? `Approve ${fingerprints.length}` : scheduled ? "Schedule send" : "Approve"}
               </Button>
               <Button
                 size="sm"

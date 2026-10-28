@@ -11,7 +11,7 @@ import {
   resolveApprovalPolicy,
 } from "../../supabase/functions/_shared/media-provider/budget.ts";
 
-describe("media approval boundary (owner authorization 'Required behavior')", () => {
+describe("media approval boundary — ACTION-SPECIFIC only (billing supersession + correction a42e0598)", () => {
   it("video ALWAYS requires approval, whatever the estimate", () => {
     expect(resolveApprovalPolicy({ mode: "video", tier: "standard", estimatedCostUsd: 0.01, draftAllowanceUsd: 0.1 }))
       .toEqual({ approvalRequired: true, reason: "video_requires_approval" });
@@ -22,14 +22,15 @@ describe("media approval boundary (owner authorization 'Required behavior')", ()
       .toEqual({ approvalRequired: true, reason: "premium_model" });
   });
 
-  it("standard images within the draft allowance may proceed", () => {
+  it("standard images proceed WITHOUT any dollar-threshold confirmation — whatever the estimate (correction a42e0598)", () => {
     expect(resolveApprovalPolicy({ mode: "image", tier: "standard", estimatedCostUsd: 0.03, draftAllowanceUsd: 0.1 }))
-      .toEqual({ approvalRequired: false, reason: "within_draft_allowance" });
-  });
-
-  it("standard images above the allowance require confirmation", () => {
-    expect(resolveApprovalPolicy({ mode: "image", tier: "standard", estimatedCostUsd: 0.11, draftAllowanceUsd: 0.1 }))
-      .toEqual({ approvalRequired: true, reason: "above_draft_allowance" });
+      .toEqual({ approvalRequired: false, reason: "standard_no_action_gate" });
+    // The formerly-blocked case: a BIG estimate against a SMALL allowance no longer confirms
+    // on money — the monetary-only trigger is gone.
+    expect(resolveApprovalPolicy({ mode: "image", tier: "standard", estimatedCostUsd: 99, draftAllowanceUsd: 0.1 }))
+      .toEqual({ approvalRequired: false, reason: "standard_no_action_gate" });
+    expect(resolveApprovalPolicy({ mode: "image_edit", tier: "standard", estimatedCostUsd: 99, draftAllowanceUsd: 0 }))
+      .toEqual({ approvalRequired: false, reason: "standard_no_action_gate" });
   });
 });
 

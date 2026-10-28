@@ -74,8 +74,10 @@ describe("the confirm card's email preview", () => {
     expect(parseConfirmPreview({ ...preview, send_at: "2026-11-02T14:30:00.000Z" })?.send_at).toBe("2026-11-02T14:30:00.000Z");
     expect(parseConfirmPreview(preview)).toEqual(preview);
   });
-  it("drops an unreadable time instead of showing it", () => {
-    expect(parseConfirmPreview({ ...preview, send_at: "whenever" })).toEqual(preview);
-    expect(parseConfirmPreview({ ...preview, send_at: 12 })).toEqual(preview);
+  // Changed 2026-10-28 (chat scheduled email review, MINOR 4): an unreadable time used to be dropped
+  // alone, which drew a scheduled email as one that sends on approval. It now drops the whole preview.
+  it("an unreadable time drops the whole preview instead of showing an email that looks immediate", () => {
+    expect(parseConfirmPreview({ ...preview, send_at: "whenever" })).toBeUndefined();
+    expect(parseConfirmPreview({ ...preview, send_at: 12 })).toBeUndefined();
   });
 });

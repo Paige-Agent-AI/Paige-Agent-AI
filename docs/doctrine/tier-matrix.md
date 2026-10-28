@@ -2199,6 +2199,8 @@ Legend as above: **✓** live · **—** not built · **N/A** tier not opened ye
 | `connections/health` | Provider-readiness and failure-state vocabulary | **structure-only** — every row reports "Not reported" rather than a measured value | N/A | N/A | ✓ | N/A | — |
 | `connections/available` (visible label: **Add channel**) | A job-led control desk for Email and inbox, Phone and messaging, and Calendar and booking, plus one deliberate Integrations handoff | **source-backed orchestration surface** — lists only canonically operating channels; distinguishes pending, unverified, registration-required, failed-read and unavailable states; withholds the best-next action until owning reads resolve; delegates writes to Communications, Registration, Health or Calendars and performs no provider mutation itself | N/A | N/A | ✓ | N/A | — |
 
+**Solo calling, 2026-10-28 (ON BRANCH, NOT LIVE until merge + edge deploy).** A number bought through `comms-purchase-number` is now wired for inbound voice at purchase (`VoiceUrl` from `voiceTwimlUrl`), so inbound calling works on new numbers for every tier that can buy one (Solo ✓, Sub-account ✓, Agency-as-tenant ✓ — owner/admin; Client/Anonymous —). Numbers bought before this ship are unchanged. A call that did not connect now says "No answer." / "The line was busy." / "The call was cancelled." (status still `failed`); inbound rows settle by the answering seat. Calling still needs a number per business: today only one Solo tenant has one (provisioning, owner decision). Decision log: October28 "Solo calling".
+
 **The caller-ID defect this slice found, recorded because it shipped invisibly (§13).**
 `tenant_phone_numbers.is_primary` decides which number a workspace's outbound calls and texts come
 FROM — `voice-twiml` and `send-message` both order by it to pick the caller ID — and NOTHING in the
@@ -5568,13 +5570,16 @@ onto the door in the next piece, so every row below is reachable by data only to
 | Scheduled release when due (seat checked, not the open workspace) | — | ✓ | ✓ | ✓ | — | — | PROOF OWED |
 | Cancel a scheduled email from the thread | Only inside a workspace it administers | ✓ any owner/admin | ✓ any owner/admin | ✓ any owner/admin | — | — | PROOF OWED |
 | "Scheduled" / "Not sent" with reason in the thread | — | ✓ | ✓ | ✓ | — | — | PROOF OWED |
+| Paige chat schedules it (`comms_send_email` `send_at`; card shows When + Schedule send) — 2026-10-28 | Only inside a workspace it administers | ✓ owner/admin | ✓ owner/admin | ✓ owner/admin | — | — | BUILT, not merged (harness render only; authenticated chat drive owed) |
+| The same email to the same contact while one is still scheduled (another time, or "send now") is refused `COMMS_EMAIL_ALREADY_SCHEDULED` with its time, card and confirm alike — 2026-10-28 | Only inside a workspace it administers | ✓ | ✓ | ✓ | — | — | BUILT, not merged (door handler tests only) |
 
 **Do-not-disturb (2026-10-27, door change):** a send with a time is no longer refused because the
 business's own do-not-disturb is on *now*; that one hold is judged when the email is released, and a hold
 still in force then refuses and closes it with its reason. Every other hold (suppression, consent, client
 do-not-disturb) still refuses at the card. Same tiers as the rows above.
 
-Lead replies (`approval_id`), agreement signing requests and Paige chat sends stay immediate. SQL proof:
+Lead replies (`approval_id`) and agreement signing requests stay immediate. Paige chat sends can carry a
+time since 2026-10-28 (row above); without one they stay immediate, unchanged. SQL proof:
 `supabase/tests/comms_email_scheduled_send.sql` (CI: paige-spine-contract).
 
 ### Conversations — governed email attachments (EXP03 O12 piece 2, 2026-10-27)
@@ -5600,7 +5605,7 @@ hover is readable in light (shared `Button`).
 
 | Capability | God (operator desk) | Agency-as-tenant | Standalone Solo | Sub-account | Client | Anonymous | Deploy state |
 |---|---|---|---|---|---|---|---|
-| Email reply with inline check (Send → check → Send now) | Only inside a workspace it administers | ✓ owner/admin | ✓ owner/admin | ✓ owner/admin | — | — | PROOF OWED (harness rendered; signed-in drive owed) |
+| Email reply with inline check (Send → check → Send now) | Only inside a workspace it administers | ✓ owner/admin | ✓ owner/admin | ✓ owner/admin | — | — | LIVE (`f1360cf2`, bundle read back); signed-in drive owed |
 | Schedule an email reply from the composer | Only inside a workspace it administers | ✓ owner/admin | ✓ owner/admin | ✓ owner/admin | — | — | PROOF OWED |
 | Attach files to an email reply (PAIGE Email senders) | Only inside a workspace it administers | ✓ owner/admin | ✓ owner/admin | ✓ owner/admin | — | — | PROOF OWED |
 | Readable outline/ghost hover (every surface) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | PROOF OWED (106 buttons measured in harness) |

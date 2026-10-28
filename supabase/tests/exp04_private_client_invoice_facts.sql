@@ -1,5 +1,5 @@
 -- Full-schema metadata/API isolation proof. No customer or provider data.
--- The original171 Portal payment assertions remain unchanged in their own job.
+-- Retain all171 original Portal controls; only the authorized wrapper hash pin changes.
 begin;
 create function pg_temp.e04_core_check(v boolean,label text) returns void language plpgsql as $$
 begin if v is distinct from true then raise exception 'FAIL: %',label; end if; raise notice 'PASS: %',label; end $$;

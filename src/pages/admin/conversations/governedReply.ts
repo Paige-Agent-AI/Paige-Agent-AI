@@ -194,6 +194,17 @@ export type DoorAnswer =
   /** No readable answer: the call failed, or the body was not JSON. Nothing is known. */
   | { transport: true };
 
+/**
+ * Type guards for the unions above. The app tsconfig runs with `strict: false`, where TypeScript does not
+ * narrow a union on a boolean field (`if (!r.ok)`, `if (answer.transport)`); a predicate narrows in every mode.
+ */
+export function doorAnswered(a: DoorAnswer): a is Extract<DoorAnswer, { transport: false }> {
+  return a.transport === false;
+}
+export function isFailed<T extends { ok: boolean }>(r: T): r is Extract<T, { ok: false }> {
+  return r.ok === false;
+}
+
 const objectOf = (v: unknown): Record<string, unknown> | null => (v && typeof v === "object" && !Array.isArray(v) ? v as Record<string, unknown> : null);
 
 /**
@@ -374,7 +385,7 @@ function readyCheck(b: Record<string, unknown>, request: GovernedReplyRequest, n
  */
 export function classifyDoorAnswer(answer: DoorAnswer, stage: "check" | "confirm" | "status", request: GovernedReplyRequest, ctx: DoorCopyContext, nowMs: number): DoorView {
   const afterConfirm = stage !== "check";
-  if (answer.transport) return afterConfirm ? lostAnswer() : couldntCheck();
+  if (!doorAnswered(answer)) return afterConfirm ? lostAnswer() : couldntCheck();
   const b = answer.body;
   const outcome = typeof b.outcome === "string" ? b.outcome : "";
   const code = codeOf(b);

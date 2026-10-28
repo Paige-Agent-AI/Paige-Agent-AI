@@ -20,7 +20,7 @@ import type { AccountEpochToken } from "./solo/soloConversationModel";
 import type { Attachment } from "./inbox-shared";
 import {
   LOCAL_COPY, buildGovernedReplyRequest, createGovernedOperationIds, checkGovernedSendAt, classifyDoorAnswer, governedReplyFiles,
-  governedReplyScope, readDoorAnswer, sendAtProblemCopy,
+  doorAnswered, governedReplyScope, isFailed, readDoorAnswer, sendAtProblemCopy,
   type DoorAnswer, type DoorView, type GovernedReplyDraft, type GovernedReplyRequest, type ReadyCheck, type StripAction,
 } from "./governedReply";
 import { GovernedReplyStrip, type GovernedStripState } from "./GovernedReplyStrip";
@@ -94,7 +94,7 @@ export function useGovernedEmailReply(input: GovernedEmailReplyInput) {
     let sendAt: string | undefined;
     if (i.scheduledFor) {
       const at = checkGovernedSendAt(i.scheduledFor, Date.now());
-      if (!at.ok) return { view: sendAtProblemCopy(at.why) };
+      if (isFailed(at)) return { view: sendAtProblemCopy(at.why) };
       sendAt = at.sendAt;
     }
     return { draft: { tenantId: i.activeTenantId, contactId: i.contactId, connectorId: i.connectorId, subject: i.subject.trim(), text: i.text, ...(sendAt ? { sendAt } : {}), paths: files.paths } };
@@ -154,7 +154,7 @@ export function useGovernedEmailReply(input: GovernedEmailReplyInput) {
     }
     // No definite answer: the id is kept for good, so these words always ask about THIS operation.
     // Otherwise nothing went out: a final answer spends the id; so does a conflict (it can never succeed as is).
-    const conflict = !!answer && !answer.transport && answer.status === 409;
+    const conflict = !!answer && doorAnswered(answer) && answer.status === 409;
     if (view.keepId && held) idsRef.current.markUnknown(scope, held.request.operation_id);
     else if (view.settle || conflict) idsRef.current.settle(scope);
     showCant(view);
@@ -189,7 +189,7 @@ export function useGovernedEmailReply(input: GovernedEmailReplyInput) {
     if (!("draft" in d)) { if (d.view.kind === "cant") showCant(d.view, !!d.offline); return; }
     const scope = governedReplyScope(d.draft);
     const built = buildGovernedReplyRequest(d.draft, idsRef.current.idFor(scope));
-    if (!built.ok) {
+    if (isFailed(built)) {
       const view = built.problem === "subject" ? LOCAL_COPY.subjectTooLong() : built.problem === "body" ? LOCAL_COPY.bodyTooLong()
         : built.problem === "sender" ? LOCAL_COPY.badSender() : built.problem === "contact" ? LOCAL_COPY.badContact(inputRef.current.contactName) : LOCAL_COPY.cantBuild();
       if (view.kind === "cant") showCant(view);

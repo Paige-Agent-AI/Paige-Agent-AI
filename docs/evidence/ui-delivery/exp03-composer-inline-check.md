@@ -174,3 +174,9 @@ Still below AA and NOT part of this diff (measured in these frames, light/dark):
 - the phone or PAIGE-overlay layouts.
 
 The local Schibsted files render punctuation with a gap before it ("Re : Kitchen", "Oct 28 , 9 :00"), the same artefact earlier harness frames show. It is not attributed to this change.
+
+## CI round on PR #3015 (2026-10-28)
+
+- **Type ratchet:** 11 errors where the app tsconfig (`strict: false`) does not narrow a union on a boolean field (`ok`, `transport`). Fixed with two type guards in `governedReply.ts` (`doorAnswered`, `isFailed`) used at each site. Root cause of the miss: the local `tsc` ran out of memory and the ratchet read the empty output as zero errors. Re-run with `NODE_OPTIONS=--max-old-space-size=7000`, it passes (baseline 10, current 6) and it reproduced all 11 errors before the fix.
+- **Shadow lint:** the strip's `shadow-[var(...)]` emitted no box-shadow; now `shadow-[shadow:var(...)]`. The strip gains its intended light lift. Every frame was re-shot afterwards; the drive exited 0 (74/74 frames and both keyboard passes OK).
+

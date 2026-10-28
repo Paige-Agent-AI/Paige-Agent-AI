@@ -59,7 +59,7 @@ import {
 import { MessageBubble as SharedMessageBubble } from "./conversations/MessageBubble";
 // EXP03 O12 piece 3 — an email reply is checked by the governed email door, inline, before it sends.
 import { useGovernedEmailReply } from "./conversations/useGovernedEmailReply";
-import { governedReplyText, readDoorAnswer } from "./conversations/governedReply";
+import { doorAnswered, governedReplyText, readDoorAnswer } from "./conversations/governedReply";
 import { SnoozeMenu } from "./conversations/SnoozeMenu";
 import { LabelPopover } from "./conversations/LabelPopover";
 import { QuickAddDialog } from "@/components/planning/QuickAddDialog";
@@ -1100,7 +1100,7 @@ export default function ClientsConversations() {
       if (!accountEpochRef.current.accept(epoch)) return;
       // A refusal arrives as an HTTP error whose body is the door's answer (the ONE reader, governedReply.ts).
       const read = await readDoorAnswer({ data, error });
-      const answer = read.transport ? null : read.body;
+      const answer = doorAnswered(read) ? read.body : null;
       if (answer?.cancelled === true) toast.success("Canceled — it won't be sent.");
       // Too late: say what actually happened to the send, from its recorded state. Nothing going out is
       // what the owner asked for, so only "already on its way" is an error.

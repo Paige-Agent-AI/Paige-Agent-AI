@@ -10,7 +10,7 @@ import { describe, expect, it } from "vitest";
 import { Button, buttonVariants } from "./button";
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
-const classes = (v: "outline" | "ghost") => buttonVariants({ variant: v }).split(/\s+/);
+const classes = (v: "outline" | "ghost" | "secondary") => buttonVariants({ variant: v }).split(/\s+/);
 
 describe("outline and ghost hover", () => {
   it.each(["outline", "ghost"] as const)("%s hovers to the muted surface with ink text, never --secondary", (v) => {

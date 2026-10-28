@@ -37,7 +37,7 @@ const QUIET_HOVER = "h-9 hover:bg-muted hover:text-foreground";
 
 function StripFrame({ label, children }: { label: string; children: ReactNode }) {
   const reduce = useReducedMotion();
-  const className = "flex w-full min-w-0 flex-col gap-2 rounded-[10px] border border-[color:var(--pg-line-strong,hsl(var(--border)))] bg-popover px-3 py-2.5 text-foreground shadow-[var(--pg-lift-1,var(--shadow-xs))]";
+  const className = "flex w-full min-w-0 flex-col gap-2 rounded-[10px] border border-[color:var(--pg-line-strong,hsl(var(--border)))] bg-popover px-3 py-2.5 text-foreground shadow-[shadow:var(--pg-lift-1,var(--shadow-xs))]";
   if (reduce) return <div role="group" aria-label={label} data-governed-reply-strip="" className={className}>{children}</div>;
   return (
     <motion.div

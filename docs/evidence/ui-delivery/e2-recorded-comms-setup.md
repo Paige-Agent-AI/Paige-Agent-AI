@@ -7,9 +7,9 @@ MATERIAL_FLOW_CHANGE: NO: bounded copy and safe existing-record boolean presenta
 FLOW_PROTOTYPE: NOT_REQUIRED: same recorded-finding inspection and controls, no new workflow.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: existing/future eligible SOLO owners inspect recorded communications setup without mistaking it for tested calling/delivery.
 VISUAL_DIRECTION: PASS: existing Mineral drawer, Schibsted product type stack, original hierarchy/tokens and native focus remain; no decorative addition.
-AUTOMATED_EVIDENCE: PASS: failing-first3 new failures/67 incumbent PASS ->101 PASS/3 suites plus56 PASS/3 adjacent recorded-finding/run/navigation suites;157 total. True/false booleans, malformed/private suppression, unchanged stored interpretation, fail-result preservation and native-controls regression included.
+AUTOMATED_EVIDENCE: PASS: fresh composed-source209 checks/seven original owning and adjacent suites. Historical causal3FAIL/67 incumbent ->157/6 retained; strict true/false/malformed/private suppression, original stored interpretation and unchanged controls covered.
 STATIC_EVIDENCE: PASS: pinned impeccable4.1.0 detector returned[] and original scoped ESLint passed both changed source/test files; required types/build remain hosted exact-head gates, not inferred here.
-RENDERED_EVIDENCE: PASS: actual changed workspace component mounted with explicit neutral read-only ports; nine local captured frames include eight DOM override/reserved-space variants and390px. Corrected disclosure is readable, no document horizontal overflow in observed DOM. These are component evidence, not the real Chat/shell or exact-raster acceptance.
+RENDERED_EVIDENCE: PASS: original full TenantCommandCenterShell/CommandHub/Systems drawer/CSS with neutral synthetic read ports and disabled conversation. ALL8 required raster configurations now exact, including two fresh1536x770 JPEGs; product Schibsted100-900 loaded, corrected disclosure and strict boolean facts readable, no document overflow. Component frames remain supporting history; authenticated candidate acceptance remains separate.
 BEHAVIORAL_EVIDENCE: PASS: synthetic native Tab reaches close, Escape returns focus to original Email and phone setup control, Enter reopens the same drawer. Real original recorded-result/reload/source behavior is separately ANT52/5dd2e20b, prior to this repair.
 AUTHENTICATED_RUNTIME: UNVERIFIED: repair not yet released; original authorized-owner finding exposed the defect but does not prove the changed release. Other roles/cohorts/Live/effects remain owed.
 KEYBOARD_FOCUS: PASS: actual local native Tab/Escape/Enter behavior plus original focus/decision regressions; no keyboard implementation change.
@@ -18,15 +18,15 @@ REDUCED_MOTION: NOT_APPLICABLE: no new or changed motion; original reduced-motio
 STATE_COVERAGE: PASS: original recorded/error/unavailable/loading/role-refusal/decision/control regressions retained; new populated true/false and malformed calling evidence tested. Fixture rendering is not actual permission proof.
 TRUTHFUL_STATE_LABELS: PASS: only original recorded pass/setup is presented. Neither calling, delivery nor current provider readiness is verified or activated by it. Failed original interpretation remains a failure. Original database records are not rewritten.
 SOLO_UI: YES: existing command-center.systems-check native recorded-read drawer; common source for current/future eligible SOLO accounts, no tenant-specific implementation.
-SOLO_1536X770_PAIGE_CLOSED: UNVERIFIED: component DOM1536x770/closed fixture captured1506x770; full actual shell/second cohort not driven.
-SOLO_1536X770_PAIGE_OPEN: UNVERIFIED: component DOM1536x770/reserved fixture captured1506x770; reserved space is not Chat.
-SOLO_1366X768_PAIGE_CLOSED: UNVERIFIED: component DOM1366x768/closed fixture captured1366x699; not exact full-shell proof.
-SOLO_1366X768_PAIGE_OPEN: UNVERIFIED: component DOM1366x768/reserved fixture captured1366x699; not actual Chat.
-SOLO_1024X768_PAIGE_CLOSED: UNVERIFIED: component DOM1024x768/closed fixture captured1024x524; not exact full-shell proof.
-SOLO_1024X768_PAIGE_OPEN: UNVERIFIED: component DOM1024x768/reserved fixture captured1024x524; not actual Chat.
-SOLO_900X1000_PAIGE_CLOSED: UNVERIFIED: component DOM900x1000/closed fixture captured900x460; not exact full-shell proof.
-SOLO_900X1000_PAIGE_OPEN: UNVERIFIED: component DOM900x1000/reserved fixture captured900x460; not actual Chat.
-UNVERIFIED: exact released UI/source/readback, two legitimate SOLO cohorts/full shell,200-percent zoom/AT/Live and all19/nine/founder acceptance remain separate. No physical-device or exact-raster claim.
+SOLO_1536X770_PAIGE_CLOSED: PASS: exact1536x770 full original shell/recorded drawer and readable corrected disclosure, neutral synthetic source only. Actual candidate customer/runtime remains owed.
+SOLO_1536X770_PAIGE_OPEN: PASS: exact1536x770 full original shell/disabled synthetic Chat, drawer/close/disclosure reachable without covering composer; no model or authenticated-runtime claim.
+SOLO_1366X768_PAIGE_CLOSED: PASS: prior exact1366x768 full original shell/recorded drawer, neutral source and own scroll; earlier component-only raster excluded from this claim.
+SOLO_1366X768_PAIGE_OPEN: PASS: prior exact1366x768 full original shell and disabled conversation; readable source/close, no Chat runtime or second-customer inference.
+SOLO_1024X768_PAIGE_CLOSED: PASS: prior exact1024x768 full original shell/drawer, source/close reachable, no document overflow; synthetic source only.
+SOLO_1024X768_PAIGE_OPEN: PASS: prior exact1024x768 original shell/Chat overlay retained. Fold Chat before background review; covered source is not claimed interactive. Synthetic conversation only.
+SOLO_900X1000_PAIGE_CLOSED: PASS: prior exact900x1000 full original shell/drawer and original scroll, readable source/close and no document overflow; synthetic source only.
+SOLO_900X1000_PAIGE_OPEN: PASS: prior exact900x1000 original shell/Chat overlay, review preserved after folding; no assertion of interactive covered background or real Chat.
+UNVERIFIED: candidate release/source/readback, full two-legitimate-cohort candidate workflow, other roles/permission negatives/assistive technology/eligible Live/all19/nine/founder acceptance remain separate. Actual second-owner BASELINE proof is bounded below; material3018 finding remains OPEN.
 OWNER_INTENT: trustworthy source-backed complete COO experience; correct the actual provider-readiness overclaim while preserving the existing original records/workflow.
 MUST_NOT_HAPPEN: historical record rewrite, provider-state invention, credential exposure, scan, send, repair, approval or automatic work execution.
 MUST_PRESERVE: original caller-RLS finding/run/time, failure interpretation, field suppression, native keyboard/focus, pending approval controls and single PAIGE workspace.
@@ -136,3 +136,45 @@ role, credentials or tenant was manufactured. Actual candidate/released customer
 and other-cohort/permission/AT/Live/full19 acceptance remain owed. Source is still
 the same reviewed443300fe runtime; this successor only strengthens evidence.
 No capability or algorithm maturity promotion, customer release or scan activation.
+
+## October28 — actual second legitimate SOLO baseline proof
+
+ANT52/35dacff3 records an owner-designated existing ordinary SOLO actor, actual
+original recorded Communications finding/reload equality, ALL8 real-shell
+configurations at exact1536x770/1366x768/1024x768/900x1000 with Chat open/closed,
+Escape/opener/Enter and ACTUAL native Zoom200-percent. Keyboard Tab scrolls
+the body to the original action without executing it; close remains44px and
+reachable. Full native screenshot is683x384, CSS683x384/DPR2; the first cropped
+342x192 image is excluded/retained. Zoom100-percent/viewport reset afterward.
+
+All7 original Finance pages also read at exact390x844, correct Overview landing,
+VERA, no document overflow and whole settled Forecast reload equality. The
+Finance CTA prepares the existing read-only VERA draft, retains source context
+and do-not-move-money/edit-books boundary; empty draft restored without sending.
+Own tab closed, original user tab retained. All raw customer data/screenshots
+remain private. Public source is BASELINE4fb4b0398/main-B9ZNVahV, not this
+unmerged candidate. This clears second-account identification/read access; it
+does not close candidate/runtime/two-cohort release proof or the OPEN material
+review thread PRRT_kwDOSAAXqM6w8IJP. Initial local-server timeout, ambiguous fold
+lookup, transient zoom175-percent observation and incorrect screenshot format
+assumption are retained and excluded. Confirmed screenshots are actual JPEGs,
+not edited/resized images. No scan, approval, provider or business action ran.
+
+## Exact candidate1536 raster confirmation
+
+The delayed local navigation subsequently loaded the original full shell. A
+first pointer command timed out and fresh DOM proved no drawer opened; native
+Enter on the original named control then opened it. Correct recorded-setup
+wording, true/false calling facts, suppression of the private field and absence
+of the READY overclaim were inspected. Two actual native-format JPEG captures
+measure EXACT1536x770 through the supported viewport clip, without image edits:
+
+- [PAIGE closed, original full shell](e2-recorded-comms/desktop-1536-closed.jpg).
+- [PAIGE open, original full shell and disabled conversation](e2-recorded-comms/desktop-1536-open.jpg).
+
+Schibsted Grotesk100-900 loaded; original close/disclosure/read source/scroll
+remain readable. The original component and1535-raster observations remain
+supporting history. All ports and conversation in these captures are synthetic;
+this confirmation never supplies a second authenticated candidate cohort. Own
+tab closed, viewport reset, owned local server stopped; no customer or business
+action used. Material review and customer-release proof remain OPEN.

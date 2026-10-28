@@ -27,6 +27,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
 import { falAdapter } from "../_shared/media-provider/fal.ts";
+import { loadMediaConfig } from "../_shared/media-provider/config.ts";
 import { completeMediaJob, failMediaJob } from "../_shared/media-provider/complete.ts";
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -72,6 +73,11 @@ serve(async (req: Request) => {
     // Best-effort: a metering failure logs and retries on the next sweep; it
     // never blocks job processing. ──
     try {
+      // The credit unit ($/credit) turns consumed credits into covered USD, so the meter
+      // records only the UNCOVERED remainder (correction a42e0598: partial prepaid balances
+      // apply first; credit-covered cost is never metered again).
+      const config = await loadMediaConfig(admin);
+      const creditUsd = Number(config.creditUsd) > 0 ? Number(config.creditUsd) : 0.01;
       const { data: unmetered, error: unmeteredErr } = await admin
         .from("paige_media_jobs")
         .select("id,tenant_id,mode,estimated_cost_usd,actual_cost_usd,submitted_at,state")
@@ -84,15 +90,18 @@ serve(async (req: Request) => {
         const jobId = String(job.id);
         const cost = Number(job.actual_cost_usd ?? job.estimated_cost_usd) || 0;
         if (cost <= 0) continue;
-        // Exclude jobs that consumed prepaid credits (any hold entry settled to consume).
-        const { data: covered, error: coveredErr } = await admin
+        // Credit coverage = the job's consumed credits x the credit unit. A fully-covered job
+        // meters nothing (no double billing); a partially-covered job meters the remainder.
+        const { data: consumed, error: consumedErr } = await admin
           .from("paige_media_credit_entries")
-          .select("id")
+          .select("credits")
           .eq("job_id", jobId)
-          .eq("entry_type", "consume")
-          .limit(1);
-        if (coveredErr) throw coveredErr;
-        if ((covered ?? []).length > 0) continue;
+          .eq("entry_type", "consume");
+        if (consumedErr) throw consumedErr;
+        const coveredUsd = ((consumed ?? []) as Array<{ credits: number | null }>)
+          .reduce((sum, row) => sum + (Number(row.credits) || 0), 0) * creditUsd;
+        const uncoveredUsd = Math.max(0, Number((cost - coveredUsd).toFixed(4)));
+        if (uncoveredUsd <= 0) continue;
         // Idempotency: skip if a usage row already exists for this job.
         const { data: existing, error: existingErr } = await admin
           .from("platform_usage_events")
@@ -106,10 +115,10 @@ serve(async (req: Request) => {
         const { error: insertErr } = await admin.from("platform_usage_events").insert({
           tenant_id: job.tenant_id,
           event_type: "media_usd",
-          quantity: cost,
+          quantity: uncoveredUsd,
           unit: "usd",
           occurred_at: typeof job.submitted_at === "string" ? job.submitted_at : new Date().toISOString(),
-          metadata: { job_id: jobId, mode: typeof job.mode === "string" ? job.mode : null, state: typeof job.state === "string" ? job.state : null, source: "media-sweeper" },
+          metadata: { job_id: jobId, mode: typeof job.mode === "string" ? job.mode : null, state: typeof job.state === "string" ? job.state : null, cost_usd: cost, covered_usd: Number(coveredUsd.toFixed(4)), source: "media-sweeper" },
         });
         if (insertErr) throw insertErr;
       }

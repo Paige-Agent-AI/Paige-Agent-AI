@@ -1,5 +1,5 @@
 import { createContext, Fragment, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type DragEvent as ReactDragEvent, type KeyboardEvent as ReactKeyboardEvent, type MutableRefObject, type ReactNode, type RefObject } from "react";
-import { ArrowLeft, AtSign, ClipboardList, CornerDownRight, Download, FileImage, FileSpreadsheet, FileText, Hash, Lock, MessageSquareOff, MessageSquareReply, PanelRight, Paperclip, Plus, Search, SendHorizontal, Slash, UserPlus, Users, WifiOff, X } from "lucide-react";
+import { ArrowLeft, AtSign, ClipboardList, CornerDownRight, Download, FileImage, FileSpreadsheet, FileText, Hash, Lock, MessageSquareOff, MessageSquareReply, PanelRight, Paperclip, Plus, Radio, Search, SendHorizontal, Slash, UserPlus, Users, WifiOff, X } from "lucide-react";
 import { useTenantContext } from "@/hooks/useTenantContext";
 import { handOffPaigePrompt } from "@/lib/paigePromptHandoff";
 import { clearPaigeClientScope } from "@/solo/paigeClientScope";
@@ -33,6 +33,12 @@ import {
   mentionCandidates,
   mentionLabel,
   mentionRuns,
+  mentionRank,
+  broadcastIn,
+  broadcastLabel,
+  broadcastMatches,
+  broadcastRuns,
+  type TeamHubBroadcast,
   mentionScope,
   normalizeChannelName,
   permissionLabel,
@@ -261,6 +267,8 @@ function ReadyHub({ hub, announce, announcement, onOpenTeamSettings, openPaige }
   const [picked, setPicked] = useState<Record<string, PickedMention[]>>({});
   const [composerError, setComposerError] = useState<string | null>(null);
   const [threadDraft, setThreadDraft] = useState("");
+  // A1c: the people picked from the thread's @ list (the same list as the conversation's composer).
+  const [threadPicked, setThreadPicked] = useState<PickedMention[]>([]);
   const [threadError, setThreadError] = useState<string | null>(null);
   const composerRef = useRef<HTMLTextAreaElement>(null);
   const threadComposerRef = useRef<HTMLTextAreaElement>(null);
@@ -285,7 +293,7 @@ function ReadyHub({ hub, announce, announcement, onOpenTeamSettings, openPaige }
   const canAssignOthers = me?.permission === "owner" || me?.permission === "admin";
   // The PAIGE handoffs exist only where the shell can open PAIGE; without it they're omitted, not dead.
   const commands = useMemo(() => TEAM_HUB_COMMANDS.filter((command) => command.kind === "task"
-    || (command.kind === "agent" ? has("team_hub_agents") : command.kind !== "specialist" && Boolean(openPaige))), [openPaige, has]);
+    || (command.kind === "agent" ? has("team_hub_agents") : Boolean(openPaige))), [openPaige, has]);
   const oneColumn = layout === "one-column";
   const multiColumn = layout === "wide" || layout === "overlay";
   const conversations = overview.conversations;
@@ -435,7 +443,7 @@ function ReadyHub({ hub, announce, announcement, onOpenTeamSettings, openPaige }
       conversation: conversation ? conversationTitle(conversation, people) : "Team Hub conversation",
       channel_id: open.channelId,
       message_id: null,
-    }, null));
+    }));
     // The words went to PAIGE's composer; they don't also stay here.
     setDrafts((current) => ({ ...current, [open.channelId]: "" }));
     setPreview(null);
@@ -471,7 +479,9 @@ function ReadyHub({ hub, announce, announcement, onOpenTeamSettings, openPaige }
     setPicked((current) => ({ ...current, [channelId]: [] }));
     setComposerError(null);
     focusComposer();
-    const outcome = await hub.send({ channelId, parentId: null, body: draft, mentionIds: mentions.ids, withFiles: true, agentKeys });
+    // A1c: @channel / @here only in a channel; they never ask an agent (agentKeys is only the named agents).
+    const broadcast = active?.kind === "channel" ? broadcastIn(draft) : null;
+    const outcome = await hub.send({ channelId, parentId: null, body: draft, mentionIds: mentions.ids, withFiles: true, agentKeys, broadcast });
     if (outcome.kind === "sent") announce("Message sent");
     else if (outcome.kind === "failed") announce("Message not sent. Retry is available.");
     else {
@@ -491,15 +501,22 @@ function ReadyHub({ hub, announce, announcement, onOpenTeamSettings, openPaige }
     if (problem === "too_long") { const text = refusalMessage("too_long", "send"); setThreadError(text); announce(text); return; }
     const waiting = filesProblem(chips);
     if (waiting) { setThreadError(waiting); announce(waiting); return; }
+    // A1c: the people picked from the thread's @ list are mentioned, as in the conversation's composer.
+    const mentions = resolveMentions(threadDraft, threadPicked, people);
+    if (!mentions.ok) { setThreadError(mentions.problem); announce(mentions.problem); return; }
     // A1b: a thread reply may ask agents too; the agent answers in this thread.
     const inAgentDm = agentDms.some((dm) => dm.id === thread.channelId);
-    const agentKeys = agentsOn && !inAgentDm ? agentMentionsIn(threadDraft) : [];
+    const agentKeys = agentsOn && !inAgentDm ? agentMentionsIn(threadDraft, threadPicked.filter((item) => threadDraft.includes(`@${item.label}`)).map((item) => item.label)) : [];
     if (agentKeys.length > MAX_AGENTS_PER_MESSAGE) { setThreadError(TOO_MANY_AGENTS); announce(TOO_MANY_AGENTS); return; }
     const body = threadDraft;
     setThreadDraft("");
+    setThreadPicked([]);
     setThreadError(null);
     window.requestAnimationFrame(() => threadComposerRef.current?.focus());
-    const outcome = await hub.send({ channelId: thread.channelId, parentId: thread.rootId, body, mentionIds: [], withFiles: true, agentKeys });
+    // A1c: @channel / @here from a thread only when the thread is in a channel (never a DM or an agent DM).
+    const threadIn = conversations.find((item) => item.id === thread.channelId);
+    const broadcast = threadIn?.kind === "channel" ? broadcastIn(body) : null;
+    const outcome = await hub.send({ channelId: thread.channelId, parentId: thread.rootId, body, mentionIds: mentions.ids, withFiles: true, agentKeys, broadcast });
     if (outcome.kind === "sent") announce("Reply posted");
     else if (outcome.kind === "failed") announce("Reply not sent. Retry is available.");
     else { restoreReply(thread.rootId, outcome.body, outcome.message); announce(outcome.message); }
@@ -608,6 +625,7 @@ function ReadyHub({ hub, announce, announcement, onOpenTeamSettings, openPaige }
     const held = heldReplies.current[rootId];
     delete heldReplies.current[rootId];
     setThreadDraft(held ?? "");
+    setThreadPicked([]);
     setThreadError(null);
     // The reply box exists only once the thread has loaded; focus moves there then, not before.
     focusThreadWhenReady.current = true;
@@ -742,7 +760,8 @@ function ReadyHub({ hub, announce, announcement, onOpenTeamSettings, openPaige }
   const mainScope = hub.activeId ? attachmentScope(hub.activeId, null) : null;
   const threadScope = thread ? attachmentScope(thread.channelId, thread.rootId) : null;
   const threadChips = threadScope ? hub.attachments[threadScope] ?? [] : [];
-  const threadFilesOk = threadChips.every((chip) => chip.state === "ready");
+  // The thread's own conversation (it is always the open one), for the reply box's @ list.
+  const threadConversation = thread && active && active.id === thread.channelId ? active : null;
   const removeThreadFile = (localId: string) => {
     if (!threadScope) return;
     hub.removeAttachment(threadScope, localId);
@@ -893,25 +912,18 @@ function ReadyHub({ hub, announce, announcement, onOpenTeamSettings, openPaige }
           {agentsOn && <AgentActivity turns={hub.agentTurns} conversationId={thread.channelId} threadRootId={thread.rootId} around={thread.replies} agent={agentProps} />}
         </>}
       </div>
-      {thread.status === "ready" && <div className="th-composer-wrap">
-        {/* Announced once, through the live region; shown here and tied to the field. */}
-        {threadError && <p id="th-thread-error" className="th-error">{threadError}</p>}
-        <DropZone online={hub.online} onFiles={(files) => { setThreadError(null); hub.attach(thread.channelId, thread.rootId, files); }}>
-          <label htmlFor="th-thread-reply" className="th-sr">Reply in thread</label>
-          <textarea id="th-thread-reply" ref={threadComposerRef} rows={1} placeholder="Reply in thread" value={threadDraft}
-            aria-describedby={threadError ? "th-thread-error" : undefined}
-            onChange={(event) => { setThreadDraft(event.target.value); setThreadError(null); }}
-            onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) { event.preventDefault(); void sendReply(); } }} />
-          <AttachmentTray chips={threadChips} onRemove={removeThreadFile}
-            onRetry={(localId) => threadScope && hub.retryAttachment(threadScope, localId)} />
-          <div className="th-composer-row">
-            <AttachButton online={hub.online} onFiles={(files) => { setThreadError(null); hub.attach(thread.channelId, thread.rootId, files); }} />
-            <span className="th-hint">{!hub.online ? "Offline · draft kept" : filesHint(threadChips) ?? "Replies stay in this thread"}</span>
-            <SendButton ready={(Boolean(threadDraft.trim()) || threadChips.length > 0) && threadFilesOk && hub.online && bodyProblem(threadDraft) !== "too_long"}
-              disabled={!hub.online || !threadFilesOk} label="Send reply" onClick={() => void sendReply()} />
-          </div>
-        </DropZone>
-      </div>}
+      {/* A1c: the thread's reply box is the conversation's Composer, so it carries the same @ list (people
+          who can see the conversation, Your Paige team, and Everyone only in a channel). No / menu here. */}
+      {thread.status === "ready" && threadConversation && <Composer key={thread.rootId} variant="thread" inputRef={threadComposerRef}
+        conversation={threadConversation} people={people} meId={meId} online={hub.online} value={threadDraft}
+        onChange={(value) => { setThreadDraft(value); setThreadError(null); }}
+        picked={threadPicked} onPick={(mention) => setThreadPicked((current) => [...current, mention])}
+        commands={[]} onCommand={() => undefined} agentsOffered={agentsOn && threadConversation.kind !== "agent_dm"}
+        attachments={threadChips}
+        onAttach={(files) => { setThreadError(null); hub.attach(thread.channelId, thread.rootId, files); }}
+        onRetryAttachment={(localId) => threadScope && hub.retryAttachment(threadScope, localId)}
+        onRemoveAttachment={removeThreadFile}
+        error={threadError} onSend={() => void sendReply()} />}
     </aside>}
     {workOpen && !thread && <WorkPanel hub={hub} people={people} conversations={conversations} headingRef={workHeadingRef}
       onClose={() => closeWork()} onJump={(item) => void jumpTo(item)} />}
@@ -1361,23 +1373,25 @@ function Stream({ hub, people, meId, title, kind, pending, onRetry, onDiscard, o
 }
 
 /**
- * The asker's live rows at the end of a conversation or thread: "<agent> is writing…" for each turn this
- * tab is waiting on here (a reply, or a private part being written in this DM), and, in the DM, a
- * private part that couldn't be finished, with Ask again. A reply that has arrived ends its row.
+ * The live rows at the end of a conversation or thread: "<agent> is writing…" for each reply the server
+ * says is being written here (for everyone who can see it, A1c) and each turn this tab is waiting on (a
+ * reply, or a private part being written in this DM), and, in the DM, a private part that couldn't be
+ * finished, with Ask again. A reply that has arrived ends its row.
  */
 function AgentActivity({ turns, conversationId, threadRootId, around, agent }: {
   turns: Record<string, AgentTurn>; conversationId: string; threadRootId: string | null; around: TeamHubMessage[]; agent: AgentView;
 }) {
   const rows: ReactNode[] = [];
-  // After a reload (or from another tab), a turn the server says is still answering keeps its writing
-  // row, for the asker only: the read returns the public answering state to nobody else.
+  // A turn the server says is answering shows its writing row to everyone who can see the conversation
+  // (A1c owner ruling: like a person typing), the asker after a reload or in another tab included. The
+  // asker's own tab tracks its turn locally, and that row is drawn below instead (never twice).
   const read = agent.states[conversationId];
   for (const [key, state] of Object.entries(read?.states ?? {})) {
     if (state.state !== "answering" || state.privatePart || turns[key]) continue;
     const [questionId, agentKey] = key.split(":") as [string, TeamHubAgentKey];
     const question = around.find((message) => message.id === questionId)
       ?? (threadRootId === null ? undefined : around.find((message) => message.id === threadRootId && message.id === questionId));
-    if (!question || question.author_user_id !== agent.meId || (question.parent_message_id ?? null) !== threadRootId) continue;
+    if (!question || (question.parent_message_id ?? null) !== threadRootId) continue;
     if (around.some((message) => answers(message, questionId, agentKey))) continue;
     rows.push(<AgentTyping key={`s-${key}`} agent={agentKey} />);
   }
@@ -1446,11 +1460,17 @@ function shortName(person: TeamHubPerson | null, people: TeamHubPerson[]): strin
 /** A person's words: their picked mentions highlighted, and the agents the message asked as agent chips. */
 function PersonText({ message, people }: { message: TeamHubMessage; people: TeamHubPerson[] }) {
   const asked = new Set(message.agent_mentions ?? []);
+  // A1c: @channel / @here are a chip only on a message the server stored as one (never a typed lookalike).
+  const plain = (text: string, key: string) => message.broadcast
+    ? broadcastRuns(text).map((part, partIndex) => part.broadcast
+      ? <span key={`${key}-${partIndex}`} className="th-mention th-bc-chip">{part.text}</span>
+      : <span key={`${key}-${partIndex}`}>{part.text}</span>)
+    : <span key={key}>{text}</span>;
   return <p className="th-text">{mentionRuns(message.body, message.mentions, people).map((run, index) => run.mention
     ? <span key={index} className="th-mention">{run.text}</span>
     : <Fragment key={index}>{agentRuns(run.text, asked).map((part, partIndex) => part.agent
       ? <AgentChip key={partIndex} agent={part.agent} />
-      : <span key={partIndex}>{part.text}</span>)}</Fragment>)}</p>;
+      : plain(part.text, String(partIndex)))}</Fragment>)}</p>;
 }
 
 /** An @mention of an agent: its tint, its ink, its symbol. Always at tint strength (one message can hold four). */
@@ -1657,18 +1677,24 @@ type ComposerProps = {
   onAttach: (files: File[]) => void;
   onRetryAttachment: (localId: string) => void;
   onRemoveAttachment: (localId: string) => void;
+  /** A1c: "thread" is the thread's reply box: the same @ list, no / menu, its own ids and words. */
+  variant?: "message" | "thread";
 };
 
-type MentionItem = { kind: "person"; key: string; person: TeamHubPerson } | { kind: "agent"; key: string; agent: TeamHubAgentKey };
+type MentionItem = { kind: "person"; key: string; person: TeamHubPerson } | { kind: "agent"; key: string; agent: TeamHubAgentKey }
+  | { kind: "everyone"; key: string; broadcast: TeamHubBroadcast };
 
-/** An agent matches a typed query from the start of its name (or key): "@CU" is CURA. */
+/** An agent matches a typed query from the start of its name (or key): "@CU" is CURA; an exact name comes first. */
 const agentMatches = (query: string) => {
   const needle = query.trim().toLowerCase();
-  return TEAM_HUB_AGENT_KEYS.filter((key) => !needle || agentName(key).toLowerCase().startsWith(needle) || key.startsWith(needle));
+  return TEAM_HUB_AGENT_KEYS.filter((key) => !needle || agentName(key).toLowerCase().startsWith(needle) || key.startsWith(needle))
+    .map((key, order) => ({ key, order, rank: mentionRank(agentName(key), needle) < 0 ? 1 : mentionRank(agentName(key), needle) }))
+    .sort((a, b) => a.rank - b.rank || a.order - b.order).map((item) => item.key);
 };
 
 function Composer({ conversation, people, meId, online, value, onChange, picked, onPick, error, onSend, inputRef, commands, onCommand, agentsOffered,
-  attachments, onAttach, onRetryAttachment, onRemoveAttachment }: ComposerProps) {
+  attachments, onAttach, onRetryAttachment, onRemoveAttachment, variant = "message" }: ComposerProps) {
+  const inThread = variant === "thread";
   const localRef = useRef<HTMLTextAreaElement | null>(null);
   // `agentsOnly`: opened by the / command Ask an agent, so the list shows the agents alone.
   const [mention, setMention] = useState<{ start: number; query: string; agentsOnly?: boolean } | null>(null);
@@ -1680,28 +1706,41 @@ function Composer({ conversation, people, meId, online, value, onChange, picked,
   const peopleOffered = mentionCandidates(scope, people, meId, "").length > 0;
   // Offered when someone besides the author can see this conversation, or an agent can be asked.
   const mentionsOffered = peopleOffered || agentsOffered;
+  // A1c: @channel and @here, in a channel only (never a DM or an agent DM), and only when someone
+  // besides the author is in it: people the person could not address are never offered.
+  const everyoneOffered = conversation.kind === "channel" && peopleOffered;
   const items = useMemo<MentionItem[]>(() => {
     if (!mention) return [];
     const found: MentionItem[] = mention.agentsOnly ? []
       : mentionCandidates(scope, people, meId, mention.query).map((person) => ({ kind: "person", key: person.user_id, person }));
     if (agentsOffered) for (const agent of agentMatches(mention.query)) found.push({ kind: "agent", key: `ag-${agent}`, agent });
+    if (everyoneOffered && !mention.agentsOnly) for (const broadcast of broadcastMatches(mention.query)) found.push({ kind: "everyone", key: `bc-${broadcast}`, broadcast });
     return found;
   // eslint-disable-next-line react-hooks/exhaustive-deps -- scope derives from the conversation
-  }, [mention, people, meId, conversation, agentsOffered]);
+  }, [mention, people, meId, conversation, agentsOffered, everyoneOffered]);
   const commandOptions = command ? commandMatches(command.query, commands) : [];
   const mentionOpen = Boolean(mention && items.length);
   const commandOpen = Boolean(command && commandOptions.length);
   const listOpen = mentionOpen || commandOpen;
   const optionCount = commandOpen ? commandOptions.length : items.length;
-  const label = conversation.kind === "channel" ? `Message #${conversation.name}` : `Message ${hubLabel(conversation, people)}`;
+  const label = inThread ? "Reply in thread" : conversation.kind === "channel" ? `Message #${conversation.name}` : `Message ${hubLabel(conversation, people)}`;
   const problem = bodyProblem(value);
   // Files only is a message too; every chip must be ready before anything leaves.
   const filesOk = attachments.every((chip) => chip.state === "ready");
   const ready = online && filesOk && (problem === null || (problem === "empty" && attachments.length > 0));
-  const listId = `th-mentions-${conversation.id}`;
+  const listId = inThread ? `th-thread-mentions-${conversation.id}` : `th-mentions-${conversation.id}`;
+  const fieldId = inThread ? "th-thread-reply" : `th-composer-${conversation.id}`;
+  const errorId = inThread ? "th-thread-error" : `${listId}-error`;
   const commandListId = `th-commands-${conversation.id}`;
   const disabledCommand = (item: TeamHubCommand) => item.kind === "task" && !online;
   const activeOption = commandOpen ? `${commandListId}-${commandOptions[index]?.kind}` : mentionOpen ? `${listId}-${items[index]?.key}` : undefined;
+
+  // A1c: the list now runs to three groups and scrolls on its own; the option the arrows reach is kept in
+  // view (a keyboard user would otherwise move the selection out of sight, to @here at the bottom).
+  useEffect(() => {
+    if (!listOpen || !activeOption) return;
+    document.getElementById(activeOption)?.scrollIntoView?.({ block: "nearest" });
+  }, [listOpen, activeOption]);
 
   useLayoutEffect(() => {
     if (caret.current === null || !localRef.current) return;
@@ -1715,7 +1754,8 @@ function Composer({ conversation, people, meId, online, value, onChange, picked,
   };
 
   const detect = (text: string, position: number) => {
-    const typedCommand = commandQuery(text);
+    // The thread's reply box has no / menu: a leading / is just text there.
+    const typedCommand = inThread ? null : commandQuery(text);
     if (typedCommand) {
       setMention(null);
       setCommand((current) => {
@@ -1731,7 +1771,8 @@ function Composer({ conversation, people, meId, online, value, onChange, picked,
     if (at < 0 || (at > 0 && !/\s/.test(before[at - 1]))) { setMention(null); return; }
     const query = before.slice(at + 1);
     if (/\n/.test(query) || query.length > 60) { setMention(null); return; }
-    const matches = mentionCandidates(scope, people, meId, query).length + (agentsOffered ? agentMatches(query).length : 0);
+    const matches = mentionCandidates(scope, people, meId, query).length + (agentsOffered ? agentMatches(query).length : 0)
+      + (everyoneOffered ? broadcastMatches(query).length : 0);
     if (!matches && /\s/.test(query)) { setMention(null); return; }
     // Typing on in a list Ask an agent opened keeps it to the agents.
     setMention((current) => ({ start: at, query, agentsOnly: current?.start === at ? current.agentsOnly : undefined }));
@@ -1741,9 +1782,10 @@ function Composer({ conversation, people, meId, online, value, onChange, picked,
   const pick = (item: MentionItem) => {
     if (!mention) return;
     const end = mention.start + 1 + mention.query.length;
-    if (item.kind === "agent") {
+    if (item.kind === "agent" || item.kind === "everyone") {
       // An agent is written as @NAME; the message asks it when it is sent (at most three), nothing before.
-      const name = agentName(item.agent);
+      // A1c: @channel / @here are written the same way and stored with the message when it is sent.
+      const name = item.kind === "agent" ? agentName(item.agent) : item.broadcast;
       const next = `${value.slice(0, mention.start)}@${name} ${value.slice(end).replace(/^[ \t]+/, "")}`;
       caret.current = mention.start + name.length + 2;
       onChange(next);
@@ -1833,20 +1875,24 @@ function Composer({ conversation, people, meId, online, value, onChange, picked,
     {mentionOpen && <div className="th-pop" id={listId} role="listbox" aria-label="People and agents">
       {items.map((item, optionIndex) => {
         const first = optionIndex === 0 || items[optionIndex - 1].kind !== item.kind;
-        // The groups are named once there are two of them; the agents' heading is the list's own.
-        const heading = first ? item.kind === "agent" ? TEAM_HEAD : items.some((other) => other.kind === "agent") ? "People in this conversation" : null : null;
+        // The groups are named once there are two of them; the agents' and Everyone's headings are their own.
+        const heading = first ? item.kind === "agent" ? TEAM_HEAD : item.kind === "everyone" ? "Everyone"
+          : items.some((other) => other.kind !== "person") ? "People in this conversation" : null : null;
         return <Fragment key={item.key}>
           {heading && <div className="th-pop-head" aria-hidden="true">{heading}</div>}
           <div id={`${listId}-${item.key}`} role="option" aria-selected={optionIndex === index} className="th-option"
-            data-ag={item.kind === "agent" ? item.agent : undefined}
+            data-ag={item.kind === "agent" ? item.agent : undefined} data-bc={item.kind === "everyone" ? item.broadcast : undefined}
             onMouseDown={(event) => event.preventDefault()} onClick={() => pick(item)} onMouseEnter={() => setIndex(optionIndex)}>
             {item.kind === "person"
               ? <><span className="th-avatar" aria-hidden="true">{initials(item.person.display_name)}</span>
                 <span className="th-option-meta"><span>{mentionLabel(item.person, people)}</span>
                   <small>{[permissionLabel(item.person.permission) ?? "Member", item.person.title].filter(Boolean).join(" · ")}</small></span></>
-              : <><AgentPlate agent={item.agent} size="md" />
+              : item.kind === "agent" ? <><AgentPlate agent={item.agent} size="md" />
                 <span className="th-option-meta"><span><span className="th-ag-name">{agentName(item.agent)}</span> <AgentTag agent={item.agent} /></span>
-                  <small>{TEAM_HUB_AGENT_PROFILES[item.agent].short} · replies in this conversation</small></span></>}
+                  <small>{TEAM_HUB_AGENT_PROFILES[item.agent].short} · replies in this conversation</small></span></>
+              : <><span className="th-avatar th-bc-plate" aria-hidden="true">{item.broadcast === "channel" ? <Users /> : <Radio />}</span>
+                <span className="th-option-meta"><span>@{item.broadcast}</span>
+                  <small>{broadcastLabel(item.broadcast, conversation.name ?? "")}</small></span></>}
           </div>
         </Fragment>;
       })}
@@ -1865,15 +1911,15 @@ function Composer({ conversation, people, meId, online, value, onChange, picked,
     </div>}
     {command && !commandOptions.length && <p className="th-pop th-pop--note" role="status">No command matches. Try Draft a task.</p>}
     {/* Refusals are announced once, by the hub's live region; here they are shown and tied to the field. */}
-    {error && <p id={`${listId}-error`} className="th-error">{error}</p>}
+    {error && <p id={errorId} className="th-error">{error}</p>}
     {problem === "too_long" && !error && <p id={`${listId}-length`} className="th-error">{messageLength(value).toLocaleString()} of {MESSAGE_MAX_LENGTH.toLocaleString()} characters.</p>}
     <DropZone online={online} onFiles={onAttach}>
-      <label htmlFor={`th-composer-${conversation.id}`} className="th-sr">{label}</label>
-      <textarea id={`th-composer-${conversation.id}`} ref={setRefs} rows={1} value={value} placeholder={label}
+      <label htmlFor={fieldId} className="th-sr">{label}</label>
+      <textarea id={fieldId} ref={setRefs} rows={1} value={value} placeholder={label}
         role="combobox" aria-autocomplete="list" aria-haspopup="listbox" aria-expanded={listOpen}
         aria-controls={commandOpen ? commandListId : mentionOpen ? listId : undefined}
         aria-activedescendant={listOpen ? activeOption : undefined}
-        aria-describedby={error ? `${listId}-error` : problem === "too_long" ? `${listId}-length` : undefined}
+        aria-describedby={error ? errorId : problem === "too_long" ? `${listId}-length` : undefined}
         onChange={(event) => { onChange(event.target.value); detect(event.target.value, event.target.selectionStart ?? event.target.value.length); }}
         onKeyDown={onKeyDown}
         onBlur={() => { setMention(null); setCommand(null); }} />
@@ -1883,11 +1929,12 @@ function Composer({ conversation, people, meId, online, value, onChange, picked,
           onMouseDown={(event) => event.preventDefault()} onClick={insertAt}><AtSign aria-hidden="true" /></button>}
         {/* Between @ and /, as approved (§7). */}
         <AttachButton online={online} onFiles={onAttach} />
-        <button type="button" className="th-icon-btn" aria-label="PAIGE commands" aria-haspopup="listbox" aria-expanded={commandOpen}
-          onMouseDown={(event) => event.preventDefault()} onClick={openCommands}><Slash aria-hidden="true" /></button>
-        <span className="th-hint">{!online ? "Offline · draft kept" : filesHint(attachments) ?? (conversation.kind === "agent_dm" && conversation.agent_key
+        {!inThread && <button type="button" className="th-icon-btn" aria-label="PAIGE commands" aria-haspopup="listbox" aria-expanded={commandOpen}
+          onMouseDown={(event) => event.preventDefault()} onClick={openCommands}><Slash aria-hidden="true" /></button>}
+        <span className="th-hint">{!online ? "Offline · draft kept" : filesHint(attachments) ?? (inThread ? "Replies stay in this thread"
+          : conversation.kind === "agent_dm" && conversation.agent_key
           ? `${agentName(conversation.agent_key)} replies here` : mentionsOffered ? "@ to mention · / for PAIGE" : "/ for PAIGE · Shift+Enter for a new line")}</span>
-        <SendButton ready={ready} disabled={!online || !filesOk} label="Send" onClick={onSend} />
+        <SendButton ready={ready} disabled={!online || !filesOk} label={inThread ? "Send reply" : "Send"} onClick={onSend} />
       </div>
     </DropZone>
     {picked.length > 0 && <span className="th-sr">Mentioning {picked.map((item) => item.label).join(", ")}</span>}

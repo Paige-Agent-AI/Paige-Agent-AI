@@ -1,5 +1,9 @@
 # Lessons Learned — recurring traps
 
+### A crashed `tsc` reads as "no type errors" in the local ratchet (2026-10-28, EXP03)
+
+In a container with Node's default heap, `npx tsc --noEmit -p tsconfig.app.json` runs out of memory (exit 134, a V8 "heap out of memory" trace, no `TS` lines). `scripts/ci/tsc-ratchet.mjs` parses diagnostics from the output, finds none, and prints "no new type errors (baseline 10, current 0)". That is a false pass: `current 0` while the baseline is 10 is the tell. It hid real errors in EXP03's #3005 and #3015 until CI caught them. Run the ratchet with `NODE_OPTIONS=--max-old-space-size=7000`. A healthy run shows a non-zero `current` near the baseline. Separately, the app tsconfig is `strict: false`, so unions do not narrow on a boolean field (`if (!r.ok)`, `if (x.transport)`). Use a type-guard predicate.
+
 ### Recover a saved review through its native publication, never a guessed intent (2026-10-17, BUG)
 
 A browser-only publication work reference disappears on reload while native work can still be claimed or unknown. Pending review text is not proof that publication never started, and an earlier active generation is not proof a replacement published. Extend the incumbent scoped reader with the exact native document/extraction/revision/hash association and existing job visibility; distinguish no submitted publication from unreadable/ambiguous work. Preserve original work, unknown-result and unrecorded-receipt truth. Never create a second job or replay because the acknowledgement was lost. Native fixture proof remains separate from integrated authenticated recovery and owner acceptance.
@@ -71,6 +75,33 @@ had NOT persisted. The file rolled back as a whole.
 - A migration that takes exclusive locks on more than one hot table is exposed to any concurrent
   reader that takes them in the other order. Taking the locks up front, in a fixed order, under a
   `lock_timeout`, narrows the window but does not close it.
+
+### A short lock_timeout cannot land on a production that is being dumped (2026-10-27, EXP08 I1)
+
+**Symptom.** Migration `20271120010008` (#3008) failed twice on `deploy-migrations` at the same
+statement, its first `ALTER TABLE`, with `canceling statement due to lock timeout (SQLSTATE 55P03)`.
+The file runs in one transaction, so nothing was applied. Production read-backs confirmed it both
+times.
+
+**Root cause.** The PAIGE Spine contract workflow takes a read-only `pg_dump` baseline of production
+on every run, and runs overlap (four at once were observed). Each dump holds ACCESS SHARE on every
+table for its whole run (`dumpFunc`, "idle in transaction", over a minute). The migration's 2 s
+`lock_timeout` waited behind them and lost. Between my "no locks now" check and the re-run's apply,
+55 s apart, a new dump had already started.
+
+**Why a longer lock_timeout is the wrong fix.** A waiting exclusive request queues every later query
+on that table behind it. `tenant_members` is read on every request.
+
+**Rule.** A migration that needs exclusive locks on hot tables takes them all up front, at the top of
+its transaction, with `LOCK TABLE … NOWAIT` in a `DO` retry loop (`EXCEPTION WHEN lock_not_available`,
+`pg_sleep(1)`, a bounded number of tries, and a `statement_timeout` above that bound).
+- NOWAIT never queues anyone, and a failed attempt releases what it took.
+- Once all the locks are held, nothing below waits.
+- It cannot deadlock with a reader that takes the tables in another order.
+
+Proved with a behavioural test: a reader holds a lock for 5 s, the block waits it out, and a new
+reader still gets in within 0.05 s. With NOWAIT removed, that new reader is blocked. Precedent:
+`20271120010008`.
 
 ### Verified enrollment can outpace the mounted workspace provider (2026-10-12, Experience01)
 

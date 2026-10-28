@@ -1,52 +1,86 @@
-## EXP02 October28 - current release holds and rendered correction
+## EXP02 October28 — recorded Communications repair and current proof boundaries
 
-Actual original3012 Calendar source/web and authorized-owner read/whole-answer
-reload/original department/native Back proof are ANT52/e2015a9a; one empty-source
-read subset, not general SLO/cohort/Live acceptance. Navigation follow-up3019
-is DRAFT9cec0121a,134 source controls, separate AUTHOR-REVIEW LOWER5676492858.
+REPAIR O06/O14/O16 only. Original finding/status/writer/authority stay intact;
+the existing drawer labels recorded setup and strict original boolean calling
+facts, and discloses untested calling/delivery/current provider readiness.
+Original157 local checks/six suites and pinned detector are historical source
+proof; new composed-head checks are required. Full original shell/eight DOM
+sizes/390/synthetic B/native200-percent and keyboard evidence remain explicitly
+synthetic; the first component/reserved-space frames are supporting history.
 
-Recorded-comms3018 material review finding PRRT_kwDOSAAXqM6w8IJP remains OPEN.
-Original full shell/workspace/drawer is now rendered at eight DOM configurations
-plus390 and synthetic workspace B; true/false facts, private-field suppression,
-native Escape/focus/Enter, Chat-fold preservation and actual native200-percent
-zoom/scroll inspected. Synthetic ports/disabled Chat are not a second legitimate
-authenticated cohort; no account/role/credential workaround. Exact required
-candidate customer/cohort proof remains a release hold. Original component
-evidence and first failed background/zoom attempts retained, not relabeled PASS.
+Actual SECOND owner-authorized existing SOLO baseline proof ANT52/35dacff3:
+original recorded finding/reload whole text EXACT, all8 real-shell configurations
+at exact1536x770/1366x768/1024x768/900x1000 with Chat open/closed, actual native
+Zoom200-percent/scroll/44px close/Escape/opener/Enter. Original Chat overlay is
+retained; covered background is not claimed interactive. Finance Overview/all7
+exact390x844 pages/VERA/no document overflow and whole Forecast reload EXACT.
+VERA CTA prepares an original read-only source question; empty draft restored,
+not sent. Zoom100-percent/viewport reset, own tab closed/original retained;
+private captures/customer data not published. Source is BASELINE4fb4b0398/
+main-B9ZNVahV, not this candidate's released-runtime acceptance. Initial failed,
+stale and cropped observations retained/excluded. Material3018 finding
+PRRT_kwDOSAAXqM6w8IJP remains OPEN; candidate/release proof still owed. No role,
+credential, account creation, provider, approval, scan or business action used.
 
-Catalogue3014 I1 hold is CLEAR after original3016/4400 migration20010008 production
-readback. Final2237 exact CI still pending. Historical earlier held notes below
-are chronology, not a current blocked-chain claim. No provider, privilege,
-scan/worker/action activation. All19/nine/ALG maturity/founder acceptance OPEN.
+Incoming canonical3012/3014 release histories below supersede the earlier
+unpublished preparatory pending wording, which is consolidated here rather than
+reintroduced as a current hold. Original3004 activity read ANT52/1e80826a and
+recorded-check proof5dd2e20b remain bounded; Sales Back-loading ANT161/1117655d
+and original E01 panel handoffc88c13d4 remain open. New E08 original7-identity
+inline-turn proof is attributed to ANT161/e578105f+1f7519cb/receiving ACKe49a4477;
+earlier MERIT400 is historical/resolved. E08 A2 BusinessReview tool admission,
+both-chat result/reopen and expanded goal outcomes remain owed. No new runtime.
 
-## EXP02 October28 — Calendar source merged; recorded setup presentation repair
+Nine3ComingSoon/3Limited/3Unverified/allAccessUnverified; ALG03/06/11/12Partial,
+13Unverified unchanged. Historical9/0 and12/0/4/protected monthlyUNKNOWN/
+UNRETRIED/uninspected and all19/founder acceptance remain OPEN. No activation.
 
-Calendar3012 is normally merged21fff7a49632868382ce51da70d97c9eb4d428cb
-from reviewedd958/final AUTHOR-REVIEW LOWER5676269248;10 exact applicable checks
-and both web contexts passed, actual Preview was SKIPPED/unassociated. Original
-deployment40608331869/job122553347286 SUCCESS/artifact12782007461 certifies both
-affected closures/config:37 raw+297 original emitter bindings/298 Git sources.
-Chat569/Review109 certified; current native Review110 separately matches all37
-raw sources/JWTtrue to the same merged Git. Edge-live21fff, web8fDKtzop READY
-and both public origins00:27UTC exact21fff/null/original assets verified.
-Cleanup permission_denied advisory retained; actual Calendar customer proof owed.
-E08 migration hold ANT161/7ec6d149 blocks new catalogue3014 application until
-original3016 is actually deployed/read back; no history rewrite or branch cleanup.
+## EXP02 October28 - source release and bounded customer proof
 
-Bounded owner read proof for released3004 activity is ANT52/1e80826a: original
-attribution/sample/window, whole saved answer/source/reload, no action receipt.
-Systems recorded finding/run/refresh/reload/native focus/Sales navigation proof
-is ANT52/5dd2e20b. Ordinary Back required explicit reload; original EXP01 shell
-handoff ANT161/1117655d remains open. A historical communications pass overstated
-calling readiness. E02 repairs its existing drawer presentation using recorded
-setup and strict boolean facts, leaving original stored interpretation/writers
-unchanged; no calling/delivery/provider claim or activation follows.
+Original3014 normally merged557d9a7ab155dfd073f052fb393ab741b74a9714/treefe9e76bd;
+12 applicable exact-head checks/2web SUCCESS, final author-review LOWER5676589123.
+Original migrator40614223175 confirmed already-applied20101002 persisted/db-live557;
+first applying actuator not inferred. Canonical Weekly copy exact, active/read_only/
+Limitedv1 unchanged. Actual owner panel/reload ANT52/260d22ba verifies all9 whole
+descriptions/states:3ComingSoon/3Limited/3Unverified/allAccessUnverified. Web
+6EbgyrKH READY/both origins/source01:24UTC exact557. Initial panel/click failures
+retained/excluded; original E01 handoff ANT161/c88c13d4 remains unresolved.
+Stable subsequent reload does not claim that interruption was fixed.
 
-Local repair verification157 checks/six suites and bounded synthetic component
-rendering/native Escape/keyboard reopen are not customer acceptance. Native
-rasters differ from DOM override sizes; reserved Chat space is a fixture, not
-the real shell/Chat. Full released two-cohort/eight-viewport proof remains owed.
-Original19/nine/ALG maturity/founder evaluation remain OPEN.
+Original3012/21fff Calendar consumer is source/web released, with original Edge
+certificate and separately read Review110/Chat569. Exact source/release rows are
+in Master section4.0. Actual owner Calendar/whole saved answer+source reload/
+original Calendar/native Back is ANT52/e2015a9a: one request/empty-source read,
+not general reliability SLO. Initial wrong workspace INVALID/excluded. No action
+or protected monthly retry/inspection. Actual Finance follow-up ANT52/725879d5
+verifies Overview landing, all7 subpages/VERA, native arrow-key tabs,390px layout/
+no document overflow and exact whole settled Forecast reload. Its01:11UTC source
+is containing E03#3015/f136/webfu11zMq; Finance/src/solo leaves unchanged since21fff.
+Initial loading comparison/stale frames retained/excluded; screenshots private.
+
+3018 DRAFTfe4509f6f/review5676545442/157source controls has original full-shell/
+eight sizes+390/syntheticB/native200-percent/scroll/focus evidence, not a second
+legitimate authenticated cohort. Material P1 PRRT_kwDOSAAXqM6w8IJP remains OPEN.
+Nav3019 DRAFT9cec/review5676492858/134controls preserves the original model-ref
+privacy boundary; no released correction/model-compliance claim. All19/nine/
+ALG03/06/11/12Partial/13Unverified/roles/cohorts/Live/effects/founder evaluation
+remain OPEN. Historical9/0 and12/0/4, monthlyUNKNOWN/UNRETRIED preserved. No
+provider/privilege/scan/worker/action activation. Earlier merged notes remain history.
+
+## EXP02 October27 bounded customer proof and catalogue preparation
+
+Released3004 original activity now has a positive ordinary-owner Executive/read/
+source/Chat/answer-and-source reload case, ANT52/1e80826a; actual records remain
+quoted/partial and do not verify business-action completion or original receipts.
+Original history/empty composer/saved read step preserved; own browser tab closed,
+resource returned. Other roles/cohorts/Live/actions/full19/nine/founder remain open.
+Latest proof and footer/observer boundaries are in the ORIGINAL matrix below.
+The narrowly guarded CAP017 description follow-up preserves Limited/access and
+every execution field; original catalogue20 native PASS groups, not production
+activation. Release depends on original Calendar3012 gates/source verification.
+No shared presenter, registry, provider, permission, schema authority or agent
+runtime replacement. Protected monthly UNKNOWN/UNRETRIED and historical baselines
+are unchanged.
 
 ## EXP02 October27 release and original19 continuation
 

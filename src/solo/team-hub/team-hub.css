@@ -82,7 +82,7 @@
 /* One selection mark for both: a violet dot, not colour alone. The visibility toggles carry an
    icon first, so theirs sits at the end of the row and the label never shifts. */
 .th-chip[aria-pressed="true"]::before,.th-seg button[aria-pressed="true"]::after{content:"";width:6px;height:6px;flex:none;border-radius:50%;background:var(--pg-violet)}
-/* A chosen radio chip (assignee, specialist) carries the same mark. */
+/* A chosen radio chip (the task assignee) carries the same mark. */
 .th-chip[aria-checked="true"]::before{content:"";width:6px;height:6px;flex:none;border-radius:50%;background:var(--pg-violet)}
 .th-seg button::after{margin-left:auto}
 .th-chips{display:flex;flex-wrap:wrap;gap:6px}
@@ -139,6 +139,10 @@
 .th-role{color:var(--pg-muted);font-size:11px}
 .th-text{margin:2px 0 0;color:var(--pg-ink-2);overflow-wrap:anywhere;white-space:pre-wrap;max-width:75ch}
 .th-mention{padding:0 3px;border-radius:5px;background:color-mix(in srgb,var(--pg-violet) 20%,transparent);color:var(--pg-ink);font-weight:500}
+/* A1c: @channel / @here are the neutral mention chip people get, never an agent's colour; their option
+   in the @ list carries the graphite plate with a symbol (people for @channel, a signal for @here). */
+.th-bc-chip{font-weight:600;white-space:nowrap}
+.th-hub .th-bc-plate svg{width:13px;height:13px}
 .th-replies{display:inline-flex;align-items:center;gap:6px;min-height:40px;margin-top:6px;padding:0 11px;border:1px solid var(--pg-line-soft);border-radius:7px;background:transparent;color:var(--pg-violet);font-size:12px;cursor:pointer}
 .th-replies:hover{border-color:var(--pg-line)}
 .th-replies span{color:var(--pg-muted)}
@@ -172,13 +176,12 @@
 .th-pop--note{padding:10px 12px;color:var(--pg-muted);font-size:12px}
 @keyframes th-pop{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
 
-/* Increment 2: the / command menu and the specialists in the @ list */
+/* Increment 2: the / command menu; A1b/A1c: the group heads of the @ list */
 .th-pop-head{margin:6px 8px 4px;color:var(--pg-faint);font-size:11px;font-weight:600}
 .th-option[aria-disabled="true"]{opacity:.55;cursor:not-allowed}
 .th-pmark{width:24px;height:24px;flex:none;display:grid;place-items:center;border-radius:7px;background:var(--pg-graphite)}
 .th-hub .th-pmark svg{width:14px;height:14px}
 .th-kbd{flex:none;color:var(--pg-faint);font:10.5px var(--pg-font-data)}
-.th-avatar--sp{background:color-mix(in srgb,var(--pg-violet) 22%,var(--pg-graphite));color:var(--pg-ink);font-size:9px;letter-spacing:.02em}
 .th-cmdtag{padding:1px 6px;border:1px solid var(--pg-line-soft);border-radius:5px;color:var(--pg-muted);font-size:12px}
 
 /* The inline preview above the composer (Draft a task, and the PAIGE handoffs) */
@@ -435,6 +438,11 @@ button.th-ag-re:hover{color:var(--pg-muted);text-decoration:underline;text-under
 .th-ag-priv{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;margin-top:8px;max-width:560px;padding:4px 4px 4px 10px;border:1px solid color-mix(in srgb,var(--agc-ring) 35%,var(--pg-line-soft));border-radius:9px;background:color-mix(in srgb,var(--agc-tint) 45%,var(--pg-surface));color:var(--pg-ink-2);font-size:12px}
 .th-ag-priv>span{flex:1;min-width:0}
 .th-hub .th-ag-priv>svg{width:14px;height:14px;color:var(--agc-ink)}
+/* A1c (owner ruling 2026-10-27): a private answer that FAILED is a status box: neutral line and surface,
+   never the agent's tint or ring (an ancestor's data-ag cannot reach it). Only the failed box: one whose
+   state is unknown (may still be writing) keeps its agent tint, as approved. */
+.th-ag-priv--status{border-color:var(--pg-line);background:var(--pg-surface)}
+.th-hub .th-ag-priv--status>svg{color:var(--pg-muted)}
 .th-hub .th-ag-priv--failed>svg{color:var(--pg-warning)}
 .th-ag-priv .th-btn{min-height:40px}
 /* Another member's line about someone else's private answer is neutral, as the prototype's .priv: it is

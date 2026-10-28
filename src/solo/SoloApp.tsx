@@ -69,11 +69,21 @@ const isChunkLoadFailure = (error: unknown) =>
 // boundary so React re-attempts the dynamic import; a browser that cached the
 // rejected download needs "Reload PAIGE", and the copy says so without guessing
 // which case a person is in.
+//
+// STALE-DEPLOYMENT TRUTH (EXP04 finding b0d8f65d, 2026-10-28): React.lazy caches
+// a failed dynamic import for the session, so after a deployment retires the old
+// hashed asset, "Try again" re-attempts the SAME dead URL and deterministically
+// fails — only a reload picks up the new deployment. The FIRST failure may still
+// be a transient network blip, so it keeps both actions; once a "Try again"
+// ITSELF has failed, the card switches to the stale-deployment copy with Reload
+// as the primary action, and says the unsent PAIGE draft survives the reload
+// (it does — the composer draft session store persists across full reloads,
+// proven in the #2769 reload-retention test).
 export class ScreenLoadBoundary extends React.Component<
   { resetKey: string; children: React.ReactNode },
-  { failed: boolean }
+  { failed: boolean; retryFailed: boolean }
 > {
-  state = { failed: false };
+  state = { failed: false, retryFailed: false };
   static getDerivedStateFromError() { return { failed: true }; }
   componentDidCatch(error: unknown) {
     // DOWNLOAD failures only. A render error inside a loaded screen belongs to the
@@ -83,17 +93,27 @@ export class ScreenLoadBoundary extends React.Component<
     console.error("[SoloApp] a screen download failed — Chat and navigation continue. Cause:", error);
   }
   componentDidUpdate(prev: { resetKey: string }) {
-    if (prev.resetKey !== this.props.resetKey && this.state.failed) this.setState({ failed: false });
+    if (prev.resetKey !== this.props.resetKey && this.state.failed) this.setState({ failed: false, retryFailed: false });
   }
   render() {
     if (!this.state.failed) return this.props.children;
+    const stale = this.state.retryFailed;
     return (
       <div role="alert" style={{maxWidth:420,margin:'10vh auto',padding:'22px 24px',border:'1px solid var(--line)',borderRadius:14,background:'var(--surface)'}}>
-        <strong style={{display:'block',fontSize:15,marginBottom:6}}>This view could not open.</strong>
-        <p style={{fontSize:13,color:'var(--ink-3)',margin:'0 0 14px'}}>Its download or the view itself failed. PAIGE, Chat and navigation still work, and nothing you saved is affected.</p>
+        {stale ? (
+          <>
+            <strong style={{display:'block',fontSize:15,marginBottom:6}}>PAIGE has been updated.</strong>
+            <p style={{fontSize:13,color:'var(--ink-3)',margin:'0 0 14px'}}>This view still can't open because the app was updated while you were here. Reload to continue — your unsent PAIGE message is kept, and everything you saved is unaffected.</p>
+          </>
+        ) : (
+          <>
+            <strong style={{display:'block',fontSize:15,marginBottom:6}}>This view could not open.</strong>
+            <p style={{fontSize:13,color:'var(--ink-3)',margin:'0 0 14px'}}>Its download or the view itself failed. PAIGE, Chat and navigation still work, and nothing you saved is affected.</p>
+          </>
+        )}
         <div style={{display:'flex',gap:8}}>
-          <button className="btn btn-s" style={{padding:'7px 12px',fontSize:13}} onClick={()=>this.setState({failed:false})}>Try again</button>
-          <button className="btn btn-s" style={{padding:'7px 12px',fontSize:13}} onClick={()=>window.location.reload()}>Reload PAIGE</button>
+          {!stale && <button className="btn btn-s" style={{padding:'7px 12px',fontSize:13}} onClick={()=>this.setState({failed:false,retryFailed:true})}>Try again</button>}
+          <button className="btn btn-s" style={{padding:'7px 12px',fontSize:13,fontWeight:stale?600:400}} onClick={()=>window.location.reload()}>Reload PAIGE</button>
         </div>
       </div>
     );

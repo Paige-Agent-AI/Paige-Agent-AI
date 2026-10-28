@@ -302,4 +302,4 @@ BEGIN
 END $function$;
 
 COMMENT ON FUNCTION public.email_campaign_daily_cap() IS
-  'Display figure only. Since 20271121120003 nothing enforces it: filing and sending a business''s marketing email have no daily allowance (owner ruling 2026-10-27). Kept because three readers still return it for response-shape compatibility; no screen reads it.';
+  'Display figure only. Since 20271121140003 nothing enforces it: filing and sending a business''s marketing email have no daily allowance (owner ruling 2026-10-27). Kept because three readers still return it for response-shape compatibility; no screen reads it.';

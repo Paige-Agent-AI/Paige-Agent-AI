@@ -413,7 +413,7 @@ describe("Series view", () => {
   });
 });
 
-// Owner ruling 2026-10-27: PAIGE imposes no sending stop (migration 20271121120003). The database still
+// Owner ruling 2026-10-27: PAIGE imposes no sending stop (migration 20271121140003). The database still
 // reports its old 500 display figure; no series screen may present it as a limit.
 const NO_LIMIT = /a day|-a-day|daily|limit|send tomorrow|used up/i;
 describe("Email series name no daily sending limit", () => {

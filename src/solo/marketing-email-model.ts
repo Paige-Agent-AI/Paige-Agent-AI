@@ -27,7 +27,7 @@ export type Dashboard = {
   segment_count: number; segments: SegmentRow[];
   activity: ActivityRow[];
   // The database also returns daily_cap / remaining_today, a display figure nothing enforces since
-  // 20271121120003 (owner ruling 2026-10-27: no PAIGE-imposed sending stop). The screen reads only the real count.
+  // 20271121140003 (owner ruling 2026-10-27: no PAIGE-imposed sending stop). The screen reads only the real count.
   sending: { used_last_24h: number; postal_address_set: boolean };
 };
 

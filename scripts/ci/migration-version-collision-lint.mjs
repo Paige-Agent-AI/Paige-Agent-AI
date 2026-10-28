@@ -142,9 +142,10 @@ if (baseFiles) {
 
 const found = collisions({ treeFiles, baseFiles: baseFiles ?? [], addedFiles });
 if (found.length) {
-  console.log(`✗ migration-version-collision-lint: ${found.length} collision(s).\n`);
+  console.log(`✗ migration-version-collision-lint: ${found.length} problem(s).\n`);
   for (const f of found) console.log(`  • ${f}`);
-  console.log("\n  A colliding migration does not fail on push — it is SKIPPED, and every gate stays green.");
+  console.log("\n  A reused version does not fail on push — it is SKIPPED, and every gate stays green. An out-of-order one\n" +
+    "  fails the deploy after merge. Either way, rename the new migration to a free version after the base's newest.");
   process.exit(1);
 }
 console.log(`✓ migration-version-collision-lint: ${treeFiles.length} migration(s), no version reused or out of order${baseFiles ? ` (base ${base})` : ""}.`);

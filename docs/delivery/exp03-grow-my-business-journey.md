@@ -1022,7 +1022,7 @@ Both closed as superseded with links; their branches are kept.
   businesses; SendGrid's account-wide bounce list, a row outliving SendGrid's entry, and a clear for a wrongly held
   address are owner decisions (decision log 2026-10-28). The two production rows are not back-filled. Proof:
   `exp03_governed_bounce_suppression.sql` 59/59; evidence `docs/evidence/ui-delivery/exp03-governed-bounce-suppression.md`.
-- **No daily sending allowance on marketing email (this change, migration `20271121120003`, NOT live).** Owner ruling
+- **No daily sending allowance on marketing email (this change, migration `20271121140003`, NOT live).** Owner ruling
   2026-10-27 (billing): each business's own usage is billed uncapped against a 25% contribution target, and PAIGE
   imposes no spending or sending stop. The fixed 500-a-day `email_campaign_daily_cap()` was enforced in three seams;
   all three bodies are re-emitted verbatim from production (md5 read back) minus only the allowance:
@@ -1034,7 +1034,7 @@ Both closed as superseded with links; their branches are kept.
   would have handed one business's large campaign every pass, so it now takes due campaigns fairly: the business
   claimed least recently first (keyed on the claim, not a successful send, so a business whose sends are all
   deferred or failing cannot stay first — round-3 review), then oldest due — scheduling order only, nobody refused or
-  held. Series emails go through the same claim. The migration was renumbered `20271121120003` in review so it sorts
+  held. Series emails go through the same claim. The migration was renumbered `20271121140003` in review so it sorts
   after production's and main's `20271121110019` (a plain `db push` refuses an older one). Proof:
   `exp03_email_send_allowance_removed.sql` 37/37 (36/36 before the round-3 finished-campaign case) on a fresh replay of all 1506 migrations (20 fail on the old
   bodies; with only the pre-fairness claim, the passes go ash,ash,ash and the fairness assertions fail), neighbours

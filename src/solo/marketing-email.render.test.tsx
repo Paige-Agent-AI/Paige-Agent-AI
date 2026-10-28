@@ -411,7 +411,7 @@ describe("Marketing › Email campaign editor", () => {
   });
 });
 
-// Owner ruling 2026-10-27: PAIGE imposes no sending stop (migration 20271121120003). The database still
+// Owner ruling 2026-10-27: PAIGE imposes no sending stop (migration 20271121140003). The database still
 // reports its old 500 display figure; no screen may present it as a limit.
 const NO_LIMIT = /a day|-a-day|daily|limit|left in the last 24|send tomorrow|used up/i;
 describe("Marketing › Email names no daily sending limit", () => {

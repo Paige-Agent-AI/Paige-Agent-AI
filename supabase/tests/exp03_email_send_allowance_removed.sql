@@ -1,6 +1,6 @@
 -- EXP03 — PAIGE imposes no sending stop on a business's own marketing email (owner ruling 2026-10-27:
 -- uncapped billing of each tenant's own usage, 25% contribution target, no spending or sending stops).
--- Migration 20271121120003 removes the fixed 500-a-day allowance from the three places it was enforced:
+-- Migration 20271121140003 removes the fixed 500-a-day allowance from the three places it was enforced:
 -- filing a campaign (over_daily_cap), filing a "matching" series (over_daily_cap), and the dispatcher's
 -- claim (a business at 500 in 24 hours waited). This suite proves a business past 500 in 24 hours is
 -- refused nowhere, and that every OTHER refusal still holds through the real seams: a member cannot file,

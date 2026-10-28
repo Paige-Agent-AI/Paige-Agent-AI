@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import {proveReviewedDeliveryReceiptClock} from './reviewed-delivery-receipt-clock-proof.mjs';
 
 /** Guard/ABI/source proof on the original native signing fixture. This fixture
  * does NOT contain the full Work/Sales schema or genuine customer JWTs, so it
@@ -62,5 +63,32 @@ export function proveReviewedDeliveryStanding({sql,read,tenant,c,prepared}){
  for(const role of ['anon','authenticated','service_role']){
   assert.throws(()=>sql(`SET ROLE ${role};SELECT _sales_client_reviewed_delivery('${tenant}','${prepared.payload.source.client_id}','${c.terms}');`),/42501:|permission denied/);checks++;
  }
- return {checks,migrationReplay:2,scope:'Actual original public reader source/complete metadata, additive inverse, guarded replay and ACL refusals; private helper remains owner-only. Reduced synthetic fixture: no successful complete-schema public RPC, genuine customer JWT, Work writers, artifact bytes, mounted UI or customer acceptance.'};
+ // Optional stdout-only handoff to the disposable full-schema rollback proof.
+ // These are the original native writers' synthetic commercial records, never
+ // a replacement validator, customer evidence, account export or signing token.
+ if(process.argv.includes('--export-reviewed-commercial-fixture')){
+  const client=prepared.payload.source.client_id;
+  const effective=json(`SELECT _sales_client_effective_terms('${tenant}','${client}','${c.terms}');`);
+  equal(effective.state,'verified','Only verified original synthetic commercial provenance may be exported');
+  const tables={
+   tenant_client_agreements:`id='${c.terms}'`,
+   paige_agreements:`id='${effective.signing_id}'`,
+   paige_agreement_signers:`agreement_id='${effective.signing_id}'`,
+   paige_agreement_events:`agreement_id='${effective.signing_id}'`,
+   paige_sales_collection_operations:`id='${effective.operation_id}'`,
+   paige_workspace_events:`id='${effective.receipt_id}'`,
+   paige_invoices:`id='${effective.invoice_id}'`,
+  };
+  const records={};
+  for(const [table,where]of Object.entries(tables))records[table]=json(`SELECT coalesce(jsonb_agg(to_jsonb(r)),'[]'::jsonb) FROM public.${table} r WHERE ${where};`);
+  // Retained audit/consent values are synthetic native-test metadata. Tokens
+  // play no role in accepted history and are excluded from the static fixture.
+  for(const signer of records.paige_agreement_signers){signer.token_hash=null;signer.token_expires_at=null;}
+  console.log('E04_REVIEWED_COMMERCIAL_FIXTURE:'+JSON.stringify({schema_version:1,
+   scope:'Synthetic original signing/effectuation metadata; no document bytes or customer/provider acceptance',
+   tenant_id:tenant,client_id:client,actor_id:records.paige_sales_collection_operations[0].actor_user_id,
+   effective,records}));
+ }
+ const receiptClock=proveReviewedDeliveryReceiptClock({sql,read,tenant,c,prepared});
+ return {checks,migrationReplay:2,receiptClock,scope:'Actual original public reader source/complete metadata, additive inverse, guarded replay and ACL refusals; private helper remains owner-only. Reduced synthetic fixture: no successful complete-schema public RPC, genuine customer JWT, Work writers, artifact bytes, mounted UI or customer acceptance.'};
 }

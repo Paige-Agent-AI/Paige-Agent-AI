@@ -46,6 +46,8 @@ const dashboard = (days: number) => ({
     { kind: "bounced", at: iso(9), detail: "bounce_hard" },
     { kind: "campaign_sent", at: iso(13), title: "October newsletter", campaign_id: "c-sent", detail: "completed" },
   ],
+  // The real readers still return daily_cap / remaining_today (response shape kept, §37); since 20271121120003
+  // nothing enforces them and the UI ignores both — it shows used_last_24h only. Kept here to match the shape.
   sending: { daily_cap: 500, used_last_24h: 148, remaining_today: 352, postal_address_set: true },
 });
 

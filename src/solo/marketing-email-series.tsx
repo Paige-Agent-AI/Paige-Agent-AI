@@ -446,7 +446,7 @@ export function EmailSeriesView({ sequenceId, onBack, onOpen, onOpenSettings, on
     {locked && <section className="campaigns-surface mo-panel me-review" aria-labelledby="ms-review-h">
       <div className="mo-panel-head"><div><h2 id="ms-review-h">{changing ? "Ready to update" : "Ready to start"}</h2>
         <p>{startSummary({ name: s.name, emails: v.steps.length, mode: v.entry_mode, matching: v.expected_entrants, from: fromLine, change: changing })}</p></div></div>
-      <dl className="me-facts">
+      <dl className="me-facts is-3">
         <div><dt>Who enters</dt><dd>{v.entry_mode === "new_contacts" ? "New contacts from now on" : "Anyone who matches, now or later"}: {audienceWords}</dd></div>
         <div><dt>Emails</dt><dd>{v.steps.length} {v.steps.length === 1 ? "email" : "emails"} {spanWords(v.steps)}</dd></div>
         <div><dt>From</dt><dd>{fromLine}</dd></div>

@@ -2,7 +2,7 @@
 // before renewal. Base HEAD 99b7c9130 (origin/main f2ba3d6ff merged; chat blob 16f3fa13a1) reproduces all29
 // dispatch pins from its own paige-ai-chat source. The only source change is one string literal inside
 // describeConfirm (enclosing identity[15]): the email_series_request_approval card summary drops "within the
-// daily limit," (the limit no longer exists, migration 20271120140003). Decomposition of all29: dispatch
+// daily limit," (the limit no longer exists, migration 20271121120003). Decomposition of all29: dispatch
 // branches, dominating controls, helpers, imports and every other identity input equal; ONLY identity[15] changes.
 // Renew those 29 dispatch scalars only; extractor, metadata, validator, hostile controls and every source pin
 // unchanged. No activation or authority grant.

@@ -33,6 +33,20 @@
 -- leases at most 100 per call (lim), and the recipient rows are still taken FOR UPDATE SKIP LOCKED, so two
 -- workers cannot lease the same person.
 --
+-- ONE ADDITION in (3), fairness across businesses (review M1). The cap also made the queue fair by accident:
+-- a business at 500 dropped out, so one business could not hold the dispatcher for long. Without it, the
+-- claim's old order (oldest due first) would hand one business's very large campaign every pass until it
+-- drained while other businesses waited for hours. The claim now orders due campaigns by their business's
+-- most recent send — least recent first, a business that has never sent before any other — and only then by
+-- oldest due. That is SCHEDULING ORDER ONLY: no campaign is refused, held or made to wait for a limit; every
+-- due campaign is still claimable on any pass, and `FOR UPDATE OF ca SKIP LOCKED` and `LIMIT lim` are
+-- unchanged. The per-business "most recent send" is max(sent_at) on that business's recipients, read through
+-- the existing index email_campaign_recipients_tenant_sent (tenant_id, sent_at DESC) — one index probe per
+-- due campaign. Series emails are campaigns (email_campaigns.sequence_id) claimed by this same function, so
+-- they share the same fairness; email_sequence_tick only enrols and plans and is unaffected. Known limit: a
+-- batch leased but not yet recorded has no sent_at, so a second worker running in that window may claim the
+-- same business again; the worker runs one pass a minute, so this is a tie-break, not a starvation path.
+--
 -- UNCHANGED, AND STILL ENFORCED: who may file (owner/admin of the business), the postal address, the sender,
 -- the audience rule check, suppression / opt-out / consent / portal checks at plan AND again at send,
 -- "a new version never goes again to someone an earlier version reached", the person-only approval, the
@@ -41,12 +55,13 @@
 -- volatility, SECURITY DEFINER, search_path, owner and grants are unchanged: CREATE OR REPLACE keeps the
 -- owner and the ACL ({postgres, authenticated} for the two filers; {postgres, service_role} for the claim).
 --
--- NOT CHANGED HERE, deliberately: email_campaign_daily_cap() itself and the readers that report it
--- (email_audience_preview, read_email_marketing_dashboard, read_email_campaign_audience) keep their
--- response shape, because the Marketing › Email screens dereference daily_cap / remaining_today and would
--- break on a missing field (§37). Those figures now describe nothing PAIGE enforces; the screens' copy
--- ("up to 500 a day", "today's limit leaves room for …") is a tracked UI follow-up, and the function's
--- comment below says so. _email_used_today() stays: the readers still count the last 24 hours.
+-- NOT CHANGED HERE, deliberately: email_campaign_daily_cap() itself and the three readers that report it
+-- (email_audience_preview, read_email_marketing_dashboard, _read_email_sequence_before_series_chat — the
+-- body read_email_sequence wraps; read on production 2026-10-28: these and the three seams above are the
+-- only functions whose source names the cap) keep their response shape (§37). Those figures now describe
+-- nothing PAIGE enforces; the Marketing › Email screens no longer read daily_cap / remaining_today (they show
+-- used_last_24h as a plain count), and the function's comment below says so. _email_used_today() stays: the
+-- readers still count the last 24 hours.
 --
 -- Producers (§37) of the three changed seams: email_campaign_request_approval — the Marketing › Email
 -- editor (src/solo/marketing-email-editor.tsx) and PAIGE's chat filing (email_campaign_submit_for_approval,
@@ -206,7 +221,10 @@ BEGIN
      AND COALESCE(ve.scheduled_for, now()) <= now()
      AND EXISTS (SELECT 1 FROM public.email_campaign_recipients r WHERE r.version_id = ve.id AND r.status = 'planned'
                    AND (r.not_before IS NULL OR r.not_before <= now()))
-   ORDER BY COALESCE(ve.scheduled_for, ve.approved_at) ASC
+   -- Fair across businesses, scheduling order only (never a refusal or a wait): the business whose last
+   -- send is oldest goes first, one that never sent before any other; then the oldest due.
+   ORDER BY (SELECT max(rs.sent_at) FROM public.email_campaign_recipients rs WHERE rs.tenant_id = ca.tenant_id) ASC NULLS FIRST,
+            COALESCE(ve.scheduled_for, ve.approved_at) ASC
    LIMIT 1 FOR UPDATE OF ca SKIP LOCKED;
   IF NOT FOUND THEN RETURN jsonb_build_object('campaign', NULL); END IF;
   SELECT * INTO v FROM public.email_campaign_versions WHERE id = c.current_version_id;
@@ -278,4 +296,4 @@ BEGIN
 END $function$;
 
 COMMENT ON FUNCTION public.email_campaign_daily_cap() IS
-  'Display figure only. Since 20271120140003 nothing enforces it: filing and sending a business''s marketing email have no daily allowance (owner ruling 2026-10-27). Kept because the Marketing email readers still report it; their copy is a tracked follow-up.';
+  'Display figure only. Since 20271121120003 nothing enforces it: filing and sending a business''s marketing email have no daily allowance (owner ruling 2026-10-27). Kept because three readers still return it for response-shape compatibility; no screen reads it.';

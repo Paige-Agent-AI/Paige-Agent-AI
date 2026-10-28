@@ -9,8 +9,8 @@
 // passes WCAG AA:
 //   --gp-accent-foreground : ink to place ON an accent fill (accent button label)
 //   --gp-accent-ink        : an AA-clamped accent, safe to use AS text on the background
-import type { GrowthPageTheme } from "@/lib/growth";
-import { brandFontStack, resolveBrandFontPair, type BrandFontPair } from "@/lib/brand-fonts";
+import type { GrowthPageTheme } from "../../../supabase/functions/_shared/growth/types.ts";
+import { brandFontStack, resolveBrandFontPair, type BrandFontPair } from "../../../supabase/functions/_shared/growth/brand-fonts.core.ts";
 
 // On-brand fallback floor (§6/§11) — Paige indigo ink + Paige gold. Never the old
 // #0b1220/#cfae70. Any token the tenant theme + brand peek both leave blank lands here.

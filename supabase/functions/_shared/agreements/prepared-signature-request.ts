@@ -2,7 +2,7 @@ import { canonicalPresentationJson } from "./preparation-json.ts";
 import { sha256Hex } from "./token.ts";
 import { COMMS_EMAIL_SUBJECT_MAX, COMMS_EMAIL_BODY_MAX, commsEmailBodyHtml, normalizeCommsEmailAddress } from "../comms-email/contract.ts";
 import { readEmailSenderFacts, emailSenderReadiness, listCommsEmailSenders, type CommsEmailAdmin,
-  type EmailProviderEnvironment } from "../comms-email/readiness.ts";
+  type EmailProviderEnvironment, type EmailSenderFacts } from "../comms-email/readiness.ts";
 import { senderDisplayName } from "../email/sender-display-name.ts";
 import { decideContentRead } from "../inbox-intelligence/policy.ts";
 import { object, UUID } from "../sales-collections/primitives.ts";
@@ -190,13 +190,34 @@ const optionalIdentityText = (value: unknown): string | null => {
   }
   return value;
 };
+/** The historical connector label is not a second transport. Communications
+ * sends this recorded business alias through SendGrid. A resolver safety net,
+ * another tenant's alias or an unverified custom domain is never adopted. */
+async function recordedManagedAlias(admin: PreparedSignatureEmailPorts["admin"], tenantId: string,
+  address: string): Promise<boolean> {
+  const result = await admin.rpc("resolve_tenant_sender", { _tenant_id: tenantId });
+  if (result.error) throw Error("canonical_sender_read_failed");
+  if (result.data === null) return false;
+  if (!object(result.data)) throw Error("canonical_sender_read_failed");
+  return result.data.tenant_id === tenantId && result.data.kind === "shared"
+    && result.data.source === "shared"
+    && normalizeCommsEmailAddress(result.data.from_address) === address;
+}
+function signingSenderReadiness(facts: EmailSenderFacts, environment: EmailProviderEnvironment) {
+  // Only the actual SendGrid credential fact can ready a managed alias. The
+  // old label never enables Resend credentials or a provider fallback here.
+  return emailSenderReadiness(facts, facts.provider === "resend"
+    ? { ...environment, resendConfigured: environment.sendgridConfigured === true }
+    : environment);
+}
 async function boundRequestSender(ports: Pick<PreparedSignatureEmailPorts, "admin" | "environment">, tenantId: string,
   connectorId: string, actorId: string): Promise<BoundSender> {
   try {
     // Reuse the one canonical mailbox permission and provider/domain readiness
-    // opinion. This new prepared PAIGE Email path has no platform/default sender.
+    // opinion. This prepared PAIGE Email path has no fallback/default sender.
     const facts = await readEmailSenderFacts(ports.admin, tenantId, connectorId, actorId);
-    if (!facts || facts.provider !== "sendgrid" || emailSenderReadiness(facts, ports.environment())) {
+    if (!facts || !["sendgrid", "resend"].includes(facts.provider)
+      || signingSenderReadiness(facts, ports.environment())) {
       return fail("SENDER_UNVERIFIED");
     }
     const result = await ports.admin.from("channel_connectors")
@@ -204,7 +225,7 @@ async function boundRequestSender(ports: Pick<PreparedSignatureEmailPorts, "admi
       .eq("tenant_id", tenantId).eq("id", connectorId).eq("channel_type", "email").maybeSingle();
     const row = result.data;
     if (result.error || !object(row) || row.id !== connectorId || row.tenant_id !== tenantId ||
-      row.provider !== "sendgrid" || row.channel_type !== "email" || row.status !== "active" ||
+      row.provider !== facts.provider || row.channel_type !== "email" || row.status !== "active" ||
       row.active !== true) return fail("SENDER_UNVERIFIED");
     // The exact identity row must still satisfy the original mailbox policy:
     // facts may have been read just before a connection became private.
@@ -215,8 +236,14 @@ async function boundRequestSender(ports: Pick<PreparedSignatureEmailPorts, "admi
       } }).allowed) return fail("SENDER_UNVERIFIED");
     const address = normalizeCommsEmailAddress(row.from_address);
     if (!address || address !== normalizeCommsEmailAddress(facts.fromAddress)) return fail("SENDER_UNVERIFIED");
+    if (facts.provider === "resend" && !await recordedManagedAlias(ports.admin, tenantId, address)) {
+      return fail("SENDER_UNVERIFIED");
+    }
     const identity = await ports.admin.rpc("tenant_sender_identity", { _tenant_id: tenantId });
     if (identity.error || !object(identity.data)) return fail("SENDER_UNVERIFIED");
+    if (facts.provider === "resend" && normalizeCommsEmailAddress(identity.data.from_address) !== address) {
+      return fail("SENDER_UNVERIFIED");
+    }
     const name = optionalIdentityText(row.from_name) || optionalIdentityText(identity.data.from_name);
     const tenantName = optionalIdentityText(identity.data.tenant_name);
     const rawReply = optionalIdentityText(row.reply_to) || optionalIdentityText(identity.data.reply_to);
@@ -328,16 +355,18 @@ export async function readPreparedSignatureSenders(
   const readChoices = async () => {
     try {
       const list = await listCommsEmailSenders(ports.admin,
-        { tenantId: initial.args.expectedTenantId, actorUserId: expectedActorId }, ["sendgrid"]);
+        { tenantId: initial.args.expectedTenantId, actorUserId: expectedActorId }, ["sendgrid", "resend"]);
       const choices = [];
       for (const identity of list) {
         const facts = await readEmailSenderFacts(ports.admin, initial.args.expectedTenantId,
           identity.connector_id, expectedActorId);
-        if (!facts || facts.provider !== "sendgrid" ||
+        if (!facts || !["sendgrid", "resend"].includes(facts.provider) ||
           normalizeCommsEmailAddress(facts.fromAddress) !== identity.from_address) {
           return fail("SENDER_CHANGED");
         }
-        const setup = emailSenderReadiness(facts, ports.environment());
+        if (facts.provider === "resend" && !await recordedManagedAlias(ports.admin,
+          initial.args.expectedTenantId, identity.from_address)) continue;
+        const setup = signingSenderReadiness(facts, ports.environment());
         choices.push({ ...identity, state: setup?.state ?? "ready" as const, reason: setup?.reason ?? null });
       }
       return choices;

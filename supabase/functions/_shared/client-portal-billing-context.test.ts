@@ -92,6 +92,33 @@ test("scope input is frozen before awaiting the native reader",async()=>{
  const result=await pending;assert.equal(result.status,"available");assert.equal(result.data?.snapshot?.contact_id,client);
 });
 
+test("the same customer uses one decoder for independently bound businesses, never the previous business response",async()=>{
+ const other=fixture(),otherTenant="77777777-7777-4777-8777-777777777777",otherClient="88888888-8888-4888-8888-888888888888";
+ const otherThread="99999999-9999-4999-8999-999999999999",otherIntent="aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+ other.frame.profile.tenant_id=otherTenant;other.frame.profile.id=otherClient;
+ other.frame.brand.tenant_id=otherTenant;other.frame.brand.tenant_name="Northwind Studio";
+ other.snapshot.tenant_id=otherTenant;other.snapshot.contact_id=otherClient;other.snapshot.source_fingerprint="b".repeat(64);
+ other.billing.tenant_id=otherTenant;other.thread_id=otherThread;other.intent_id=otherIntent;
+ const expected=await readClientPortalPersonaSource({rpc:async()=>({data:other.frame,error:null})},actor);assert(expected.data);
+ const calls:unknown[]=[];
+ const result=await readCustomerBillingContext({rpc:async(name,args)=>{calls.push([name,args]);return{data:other,error:null};}},actor,otherThread,otherIntent,expected.data);
+ assert.equal((await read(fixture())).status,"available");assert.equal(result.status,"available");
+ assert.equal(result.data?.snapshot?.contact_id,otherClient);assert.equal(result.data?.billing?.tenant_id,otherTenant);
+ assert.deepEqual(calls,[["client_portal_assistant_billing_context",{p_thread:otherThread,p_intent:otherIntent}]]);
+ const previous=fixture();previous.thread_id=otherThread;previous.intent_id=otherIntent;
+ assert.notEqual((await readCustomerBillingContext({rpc:async()=>({data:previous,error:null})},actor,otherThread,otherIntent,expected.data)).status,"available");
+});
+
+test("an unfamiliar ordinary customer binding uses the same path without seeded actor or client IDs",async()=>{
+ const data=fixture(),newActor="bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",newClient="cccccccc-cccc-4ccc-8ccc-cccccccccccc";
+ data.frame.actor_id=newActor;data.frame.profile.linked_user_id=newActor;data.frame.profile.id=newClient;
+ data.snapshot.contact_id=newClient;
+ const expected=await readClientPortalPersonaSource({rpc:async()=>({data:data.frame,error:null})},newActor);assert(expected.data);
+ const result=await readCustomerBillingContext({rpc:async()=>({data,error:null})},newActor,thread,intent,expected.data);
+ assert.equal(result.status,"available");assert.equal(result.data?.snapshot?.contact_id,newClient);
+ // Synthetic response decoding is not new-account provisioning, real Auth, RLS or two-cohort proof.
+});
+
 test("slow native read times out once without a service/owner fallback",async t=>{
  const expected=await persona();let calls=0;t.mock.timers.enable({apis:["setTimeout"]});
  try{const pending=readCustomerBillingContext({rpc:()=>{calls++;return new Promise(()=>{});}},actor,thread,intent,expected);

@@ -1022,6 +1022,21 @@ Both closed as superseded with links; their branches are kept.
   businesses; SendGrid's account-wide bounce list, a row outliving SendGrid's entry, and a clear for a wrongly held
   address are owner decisions (decision log 2026-10-28). The two production rows are not back-filled. Proof:
   `exp03_governed_bounce_suppression.sql` 59/59; evidence `docs/evidence/ui-delivery/exp03-governed-bounce-suppression.md`.
+- **No daily sending allowance on marketing email (this change, migration `20271120140003`, NOT live).** Owner ruling
+  2026-10-27 (billing): each business's own usage is billed uncapped against a 25% contribution target, and PAIGE
+  imposes no spending or sending stop. The fixed 500-a-day `email_campaign_daily_cap()` was enforced in three seams;
+  all three bodies are re-emitted verbatim from production (md5 read back) minus only the allowance:
+  `email_campaign_request_approval` and `email_sequence_request_approval` no longer refuse `over_daily_cap` (the
+  series approval also drops its `daily_limit` and the `daily_cost_bound_usd` derived from it), and
+  `email_campaign_dispatch_claim` no longer skips a business at 500 in 24 hours. Suppression, opt-out and consent
+  at plan and at send, the postal address, the sender, owner/admin filing and person-only approval are unchanged.
+  PAIGE's campaign and series chat tools no longer mention or report a daily limit. Proof:
+  `exp03_email_send_allowance_removed.sql` 26/26 on a fresh replay (14 fail on the old bodies; 5 fail with only the
+  old claim reinstated), neighbours 299/299. **Still saying 500:** the Marketing › Email screens ("up to 500 a day",
+  "today's limit leaves room for …") and PAIGE's series approval card ("within the daily limit", in
+  `paige-ai-chat/index.ts`, C0b-pinned) — copy follow-ups, not built here. The readers keep reporting `daily_cap`
+  so those screens do not break. On PAIGE's managed sender the real ceiling is now the provider's, shared by every
+  business: SendGrid's trial allows 100 a day (owner-held paid plan, below).
 
 **Open, in order:** the New conversation dialog and draft approval on the door; (chat `send_at` + When row:
 built above — Team Hub/NEXUS use still open);

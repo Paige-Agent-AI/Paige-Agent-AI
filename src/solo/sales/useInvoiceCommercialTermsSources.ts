@@ -8,7 +8,7 @@ const obj=(v:unknown):v is Record<string,unknown>=>!!v&&typeof v==='object'&&!Ar
 export function decodeInvoiceCommercialTermsPage(value:unknown,tenant:string){
  if(!obj(value)||value.tenant_id!==tenant||typeof value.receipt_id!=='string'||!UUID.test(value.receipt_id)||!Array.isArray(value.rows)||value.rows.length>50||typeof value.has_more!=='boolean'||!(value.next_cursor===null||typeof value.next_cursor==='string'&&UUID.test(value.next_cursor))||value.has_more!==(value.next_cursor!==null))throw Error('Commercial terms could not be read.');
  const rows=value.rows.map(row=>decodeAgreement(row,tenant));if(rows.some(row=>!row)||new Set(rows.map(row=>row?.id)).size!==rows.length)throw Error('Commercial terms could not be read.');
- return {rows:rows.filter(row=>row!==null).map(row=>({id:row.id,clientId:row.client_id,title:row.title,version:row.collection_terms_version,status:row.status,termsCurrent:row.terms_current})),hasMore:value.has_more,next:value.next_cursor as string|null};
+ return {rows:rows.filter(row=>row!==null).map(row=>({id:row.id,clientId:row.client_id,title:row.title,version:row.collection_terms_version,status:row.status,termsCurrent:row.terms_current,sourceAmount:{minor:row.agreed_amount_minor,currency:row.agreed_currency,basis:row.agreed_amount_basis??'unverified'}})),hasMore:value.has_more,next:value.next_cursor as string|null};
 }
 async function read(tenant:string,before:string|null){
  const {data,error}=await supabase.rpc('read_sales_collections' as never,{_expected_tenant_id:tenant,_entity:'agreement',_limit:50,_cursor:null,_before_id:before} as never);if(error)throw Error('Commercial terms could not be read.');return decodeInvoiceCommercialTermsPage(data,tenant);

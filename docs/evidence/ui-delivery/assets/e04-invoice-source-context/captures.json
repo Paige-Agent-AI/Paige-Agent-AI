@@ -1,0 +1,38 @@
+[
+  {
+    "file": "implemented-wide.jpg",
+    "format": "jpeg",
+    "width": 1520,
+    "height": 1300,
+    "frameWidth": 1366,
+    "frameHeight": 770,
+    "theme": "Mineral",
+    "sha256": "169c6d7bd1822441d682a44c3f76bd9703130cc7ae283c968ca5ea59d49d4e8e",
+    "bytes": 127798,
+    "scope": "Actual production component imported by isolated local host; neutral fixtures and blocked SDK; not full SOLO shell or authenticated proof"
+  },
+  {
+    "file": "implemented-review.jpg",
+    "format": "jpeg",
+    "width": 1520,
+    "height": 1318,
+    "frameWidth": 1366,
+    "frameHeight": 770,
+    "theme": "Mineral",
+    "sha256": "bff5493b8f3ec699927a691982735857ad77bd64cf4fdcbf16525c179619ed05",
+    "bytes": 153440,
+    "scope": "Actual production component imported by isolated local host; neutral fixtures and blocked SDK; not full SOLO shell or authenticated proof"
+  },
+  {
+    "file": "implemented-narrow.jpg",
+    "format": "jpeg",
+    "width": 424,
+    "height": 1625,
+    "frameWidth": 390,
+    "frameHeight": 844,
+    "theme": "Obsidian",
+    "sha256": "c91b1021e575d333abf1246291cf707eddf533ed9311332242aa47b007b93224",
+    "bytes": 100772,
+    "scope": "Actual production component imported by isolated local host; neutral fixtures and blocked SDK; not full SOLO shell or authenticated proof"
+  }
+]

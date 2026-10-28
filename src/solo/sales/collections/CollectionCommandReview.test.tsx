@@ -3,6 +3,7 @@ import {createRoot,type Root} from 'react-dom/client';
 import {beforeEach,afterEach,it,expect,vi} from 'vitest';
 import {CollectionCommandReview} from './CollectionCommandReview';
 import type {CollectionCommand} from '../../../../supabase/functions/_shared/sales-collections/contract';
+import {FIXED_COLLECTION_TOTAL_REFUSAL} from '../../../../supabase/functions/_shared/sales-collections/amount-basis';
 globalThis.IS_REACT_ACT_ENVIRONMENT=true;
 const h=vi.hoisted(()=>({invoke:vi.fn(),actor:'66666666-6666-4666-8666-666666666666',onAuth:null as null|((event:string,session:{user:{id:string}}|null)=>void),theme:{resolvedTheme:'light',forcedTheme:undefined as string|undefined}}));
 vi.mock('next-themes',()=>({useTheme:()=>h.theme}));
@@ -27,6 +28,14 @@ it('proposes then approves the identical immutable command and operation; cancel
  await click('Approve action');const first=h.invoke.mock.calls[0][1].body,last=h.invoke.mock.calls[1][1].body;expect(last).toEqual({...first,approved_fingerprint:'0123456789abcdef'});expect(done).toHaveBeenCalledOnce();expect(sessionStorage.length).toBe(0);
 });
 it('decodes known HTTP refusal without trapping Cancel as unknown',async()=>{h.invoke.mockResolvedValue({data:null,error:{context:new Response(JSON.stringify({outcome:'refused',message:'Invoice changed'}),{status:422})}});await render();await click('Prepare review');expect(document.body.textContent).toContain('Invoice changed');expect(button('Cancel').disabled).toBe(false);await click('Cancel');expect(close).toHaveBeenCalledOnce();});
+it('shows the original finite-total refusal and allows correction without claiming execution',async()=>{
+ const finite:CollectionCommand={action:'collection.save_terms',agreement_id:'33333333-3333-4333-8333-333333333333',expected_version:0,terms:{schema_version:1,kind:'full',currency:'usd',total_cents:350000,anchor_date:'2026-11-01',cadence:'monthly',count:1,end_date:null,deposit_cents:null,dates:[],late_fee:{fixed_cents:0,rate_bps:0,grace_days:0,agreement_basis:null},interest:{annual_bps:0,agreement_basis:null}}};
+ h.invoke.mockResolvedValue({data:null,error:{context:new Response(JSON.stringify({outcome:'refused',code:'SALES_COLLECTION_INELIGIBLE',message:FIXED_COLLECTION_TOTAL_REFUSAL}),{status:422})}});
+ await render(tenant,finite);await click('Prepare review');
+ expect(document.querySelector('[role="alert"]')?.textContent).toBe(FIXED_COLLECTION_TOTAL_REFUSAL);expect(button('Approve action')).toBeUndefined();
+ expect(button('Cancel').disabled).toBe(false);expect(done).not.toHaveBeenCalled();expect(h.invoke).toHaveBeenCalledOnce();expect(sessionStorage.length).toBe(0);
+ await click('Cancel');expect(close).toHaveBeenCalledOnce();
+});
 it('drops foreign response after workspace changes and issues no old request',async()=>{let resolve!:(v:unknown)=>void;h.invoke.mockImplementation(()=>new Promise(r=>{resolve=r}));await render();await click('Prepare review');await render('33333333-3333-4333-8333-333333333333');await act(async()=>resolve({data:{ok:true},error:null}));expect(done).not.toHaveBeenCalled();expect(h.invoke).toHaveBeenCalledOnce();});
 it('recovers the same operation after unknown result and remount',async()=>{h.invoke.mockRejectedValueOnce(Error('Network')).mockResolvedValueOnce({data:{ok:true},error:null});await render();await click('Prepare review');const original=h.invoke.mock.calls[0][1].body;expect(button('Cancel').disabled).toBe(true);act(()=>root.unmount());root=createRoot(host);await render();expect(button('Cancel').disabled).toBe(true);await act(async()=>document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true})));expect(close).not.toHaveBeenCalled();await click('Recover original operation');expect(h.invoke.mock.calls[1][1].body).toEqual(original);expect(done).toHaveBeenCalledOnce();});
 it('auth refusal during unknown recovery does not erase original operation',async()=>{h.invoke.mockRejectedValueOnce(Error('Network')).mockResolvedValueOnce({data:null,error:{context:new Response(JSON.stringify({outcome:'refused',code:'UNAUTHENTICATED'}),{status:401})}});await render();await click('Prepare review');const original=h.invoke.mock.calls[0][1].body;await click('Recover original operation');expect(h.invoke.mock.calls[1][1].body).toEqual(original);expect(button('Cancel').disabled).toBe(true);expect(sessionStorage.length).toBe(1);});

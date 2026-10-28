@@ -68,6 +68,7 @@ export function world(o: WorldOptions = {}) {
 
   const adapter: StreamReadAdapter = {
     isConfigured: () => o.adapterConfigured !== false,
+    directCreate: async () => ({ ok: false as const, code: "transport_failed" as const }),
     getVideo: async (uid: string) => {
       seen.getVideo.push(uid);
       switch (o.getVideo ?? "ok") {

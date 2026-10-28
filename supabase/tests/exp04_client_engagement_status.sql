@@ -511,3 +511,4 @@ rollback;
 -- Keep this integration proof in the existing full-schema EXP04 job; no
 -- competing CI/QA engine or shared-workflow ownership is introduced.
 \ir exp04_reviewed_delivery_handoff.sql
+\ir exp04_private_client_invoice_facts.sql

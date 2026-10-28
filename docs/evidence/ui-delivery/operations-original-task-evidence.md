@@ -9,7 +9,7 @@ PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: An authorized SOLO owner/admin inspecting
 VISUAL_DIRECTION: PASS: Preserve incumbent compact Obsidian/Mineral Operations controls, typography and tokens. References are secondary, collapsed by default, wrapping and plainly labeled.
 AUTOMATED_EVIDENCE: PASS: Genuine threads-pool failing-first baseline 52 PASS / 10 FAIL; implemented original UI plus existing lifecycle/closed-reader suites 152/152 PASS, zero skips. Earlier fork-startup/no-file attempts are INVALID infrastructure probes, not product results.
 STATIC_EVIDENCE: UNVERIFIED: Bounded source checks completed: Changed-source ESLint and whitespace PASS; Impeccable detector found 0 anti-patterns and 45 incumbent/advisory notes (new 12.2px follows adjacent controls; no design-system maturity claim). Exact-head hosted build/CI pending.
-RENDERED_EVIDENCE: UNVERIFIED: Actual zero-transform native component inspected at1536x770 and320px in Mineral/Obsidian with six labels and wrapping; native frames under assets/exp05-original-task-evidence. Original full-shell layouts and two legitimate cohorts were not exercised.
+RENDERED_EVIDENCE: UNVERIFIED: Actual zero-transform native component inspected at1536x770 and320px in Mineral/Obsidian with six labels and wrapping; native frames under assets/exp05-original-task-evidence. The original full-shell native matrix is now inspected below; two authenticated legitimate cohorts remain owed.
 BEHAVIORAL_EVIDENCE: UNVERIFIED: Actual neutral verified/ambiguous/unconfirmed/refused/unavailable/loading/close/reopen and keyboard disclosure interactions are in native-interactions.json; actual original parent exit/refusal and authenticated reload remain owed.
 AUTHENTICATED_RUNTIME: UNVERIFIED: New disclosure not released. Prior original result/Task readback does not prove this increment.
 KEYBOARD_FOCUS: UNVERIFIED: Actual native summary Return and visible focus/44px target, Tab-to-original-Task within320px passed. Original parent exit-focus, full-shell keyboard and assistive technology have not been exercised.
@@ -18,19 +18,19 @@ REDUCED_MOTION: PASS: No animation, transition, timer or automatic scrolling is 
 STATE_COVERAGE: PASS: Original UI and data/lifecycle suites cover verified/unconfirmed/ambiguous, refused/unavailable/loading, busy/refresh, selected process and scope-change withholding; bounded source evidence only.
 TRUTHFUL_STATE_LABELS: PASS: Creation verification remains distinct from current Task completion; no catalogue or algorithm maturity promotion.
 SOLO_UI: YES: Existing Operations Playbooks / internal task process history and its original Settings integration consumer.
-SOLO_1536X770_PAIGE_CLOSED: UNVERIFIED: Full-shell authenticated geometry not exercised for this increment.
-SOLO_1536X770_PAIGE_OPEN: UNVERIFIED: Full-shell authenticated geometry not exercised for this increment.
-SOLO_1366X768_PAIGE_CLOSED: UNVERIFIED: Full-shell authenticated geometry not exercised for this increment.
-SOLO_1366X768_PAIGE_OPEN: UNVERIFIED: Full-shell authenticated geometry not exercised for this increment.
-SOLO_1024X768_PAIGE_CLOSED: UNVERIFIED: Full-shell authenticated geometry not exercised for this increment.
-SOLO_1024X768_PAIGE_OPEN: UNVERIFIED: Full-shell authenticated geometry not exercised for this increment.
-SOLO_900X1000_PAIGE_CLOSED: UNVERIFIED: Full-shell authenticated geometry not exercised for this increment.
-SOLO_900X1000_PAIGE_OPEN: UNVERIFIED: Full-shell authenticated geometry not exercised for this increment.
+SOLO_1536X770_PAIGE_CLOSED: UNVERIFIED: Actual native original-frame geometry inspected in both neutral contexts; see full-frame/native-observations.json. Authenticated released-cohort geometry remains UNVERIFIED.
+SOLO_1536X770_PAIGE_OPEN: UNVERIFIED: Actual native original-frame geometry inspected in both neutral contexts; see full-frame/native-observations.json. Authenticated released-cohort geometry remains UNVERIFIED.
+SOLO_1366X768_PAIGE_CLOSED: UNVERIFIED: Actual native original-frame geometry inspected in both neutral contexts; see full-frame/native-observations.json. Authenticated released-cohort geometry remains UNVERIFIED.
+SOLO_1366X768_PAIGE_OPEN: UNVERIFIED: Actual native original-frame geometry inspected in both neutral contexts; see full-frame/native-observations.json. Authenticated released-cohort geometry remains UNVERIFIED.
+SOLO_1024X768_PAIGE_CLOSED: UNVERIFIED: Actual native original-frame geometry inspected in both neutral contexts; see full-frame/native-observations.json. Authenticated released-cohort geometry remains UNVERIFIED.
+SOLO_1024X768_PAIGE_OPEN: UNVERIFIED: Actual native original-frame geometry inspected in both neutral contexts; see full-frame/native-observations.json. Authenticated released-cohort geometry remains UNVERIFIED.
+SOLO_900X1000_PAIGE_CLOSED: UNVERIFIED: Actual native original-frame geometry inspected in both neutral contexts; see full-frame/native-observations.json. Authenticated released-cohort geometry remains UNVERIFIED.
+SOLO_900X1000_PAIGE_OPEN: UNVERIFIED: Actual native original-frame geometry inspected in both neutral contexts; see full-frame/native-observations.json. Authenticated released-cohort geometry remains UNVERIFIED.
 OWNER_INTENT: Complete EXP05 execution/result/recovery with inspectable original evidence, preserving the single governed platform and universal eligible existing/future SOLO product.
 MUST_NOT_HAPPEN: No inferred completion, invented destination, raw provider/error data, previous-scope disclosure, business mutation, approval, retry, provider activation, new receipt or scheduler.
 MUST_PRESERVE: Original closed reader DTO, current authority/lifecycle invalidation, selected-object identity, native Task link/navigation hold, historical outcome labels and original process controls/exit focus.
 ACCEPTANCE_CRITERIA: Only a verified original result exposes exactly its saved references; expand/collapse is read-only; refused/unknown/unavailable and account/process changes cannot retain them; original Task inspection and close remain usable.
-UNVERIFIED: Full original-shell eight layouts, second legitimate cohort, parent exit-focus return, native zoom/assistive technology and authenticated released disclosure are not proven by this neutral native component. This draft remains held for complete required UI evidence.
+UNVERIFIED: The eight original-frame layouts are now rendered below. Second authenticated legitimate cohort, real parent exit-focus return, native zoom/assistive technology and authenticated released disclosure remain unverified. This draft remains held for complete required UI evidence.
 MOTION_PURPOSE: NONE: Native immediate disclosure with no authored motion or haptics.
 PROTECTED_SEAMS: Affected: privacy and display of original receipt references, responsive component geometry, accessibility and result withholding. Not affected: authentication/account choice, entitlement/signup/billing/provisioning, approval/autonomy/authority, Spine execution, canonical writes/readback semantics, Rail/Memory storage, Chat transcript/stream/thread/popout/history, Live, Browser/Vault/credentials, provider readiness/effects, scheduling/retry/idempotency runtime and shared shell geometry. Original reader/lifecycle regressions remain in verification scope.
 INTERNAL_BUILD_IDENTITY: base=4380b6928b657fc954d6df8d513b9ea3b6e07486; current-main=545e086b2f94de9704a8ea2de9bf8c4d7b6748f7; candidate identified by containing commit; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=this record.
@@ -97,3 +97,41 @@ original full-shell eight geometries, two cohorts, native zoom/AT and parent
 navigation remain owed. Source152/hosted a724 checks keep their original class.
 A new evidence head needs new exact-head CI. DRAFT continues without customer,
 activation, founder or complete-Experience acceptance promotion.
+
+
+## October28 original full-frame continuation — bounded native proof
+
+Current composed source `1c225ce253d2752631b317c4dc7aafd51d17f85b` receives
+main172958728. All three product/test/style leaves remain exact reviewed831.
+Fresh actual Vite production build PASS in2m13; existing large-chunk and Zod
+annotation advisories remain, no performance or provider claim. The ORIGINAL
+`src/solo/__render__/owner-task-history.render.test.tsx` passed1/1, zero skips,
+serializing102 real shell/Settings/Automations/hook/caller scene combinations
+with synthetic identity/backend and zero effects. This is one test, not102 tests.
+
+Actual isolated IAB inspected16 full-frame layouts:1536x770,1366x768,1024x768,
+900x1000, PAIGE open/closed, Mineral contextA and Obsidian contextB. All have
+no document horizontal overflow, loaded Schibsted and44px disclosure target.
+Twelve permit the actual native disclosure to expand and expose six wrapping
+original references. Four narrow PAIGE-open views correctly put the conversation
+over the background workspace: they are OVERLAY_ONLY, not successful background
+disclosure interactions. No overlay bypass or source fix. The remaining closed
+views prove the disclosure after the panel is folded in the serialized source.
+
+Native900px Obsidian Return→Tab reaches the original Task link with visible focus;
+320px Mineral reflow wraps every UUID and Tab reaches the last original Task
+control inside the viewport without horizontal scrolling. The320px proof uses
+the existing390px serialization; both resolve the SAME max1080 JS branch.
+Actual measurements,102-scene source manifest,18 unedited JPEG captures and
+source/frame hashes are in assets/exp05-original-task-evidence/full-frame.
+API png input names were corrected to actual JPEG format without conversion.
+
+These are actual browser renders of serialized PRODUCT markup/CSS and native
+details behavior, not hydrated React parent handlers or genuine authenticated
+cohorts. Parent close/focus/reload, native browser zoom/AT, authorization and
+released-customer proof remain UNVERIFIED. Original parent exit/focus has its
+existing source tests; no production claim is inferred. The earlier component
+and invalid captures remain historical, and no existing evidence is overwritten.
+Viewport override reset and only own temporary local tab closed. No customer,
+Team Hub, session, provider, record, approval or task was changed. This candidate
+remains DRAFT pending the remaining required finish proof and fresh final CI.

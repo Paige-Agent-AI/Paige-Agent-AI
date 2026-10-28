@@ -13,6 +13,25 @@ permission, catalogue, algorithm or acceptance state changes.
 
 ## October27 same-ZION integration in both chats — original outcomes retained
 
+### October28 original Planning Work reentry — bounded development increment
+
+The existing `operations_work` reference optionally distinguishes an original
+`planning_item` UUID from a CRM Task. Canonical current-account resolution and
+the unchanged native caller/RLS Planning reader open the original Work inspector;
+normal guarded Close/Escape clear only that focus and reload can recover it.
+No weekly-check provenance, source verification, execution or receipt is inferred
+from the URL. Untyped CRM and original weekly-result references remain compatible.
+
+Source/isolated native proof:197 original tests,16 required desktop frames/two
+neutral contexts,390/320px, native unavailable/reload/dirty/close controls. See
+[bounded source and UI evidence](../evidence/ui-delivery/exp05-planning-work-reference.md).
+EXP08 accepted the exact typed producer/consumer seam in ANT-161/ed547298; E05
+owns native Work/reader/writer and E08 retains card/admission/presentation. This
+does not close receiving integration or authenticated record/role/cohort/Rail
+proof. All original ten outcomes/E5-CV1–9 and same-ZION/both-chat acceptance below
+remain intact, PARTIAL/OPEN. Review, exact-head CI, release and founder acceptance
+remain separate; no provider/recurrence/general-runner/Live activation.
+
 Initial dated grounding: read ANT-11 description (20:57:29UTC), ANT-161 description
 (20:58:23UTC), owner ae482d19/10cca85b and EXP08 receiving c727d13c.
 EXP05 ACK is ANT-11/a40f0e29; exact producer/consumer handoff is

@@ -43,6 +43,7 @@ import { createMarketingIntakeSnapshotAdapter } from "./adapters/marketing-intak
 import { createEmailCampaignSnapshotAdapter } from "./adapters/email-campaigns.ts";
 import { createRecordedActivitySnapshotAdapter } from "./adapters/recorded-activity.ts";
 import { createFinanceSnapshotAdapter, type BusinessReviewCaller } from './adapters/finance.ts';
+import { createBookingsSnapshotAdapter, type CalendarReviewCaller } from './adapters/bookings.ts';
 
 // Finance extends this same composition with its existing caller-JWT source
 // contracts. Stored source amounts are not new Analytics metrics. The canonical
@@ -153,7 +154,7 @@ function voidForScopeChange(snapshot: BusinessOperatingSnapshot): BusinessOperat
  * every other gap is inside the snapshot with a reason.
  */
 export async function composeBusinessReview(
-  caller: BusinessReviewCaller,
+  caller: CalendarReviewCaller,
   who: BusinessReviewWho,
   request: BusinessReviewRequest,
   opts?: { readonly now?: Date; readonly timeoutMs?: number; readonly clock?: () => number; readonly financeEvidence?: boolean },
@@ -197,6 +198,7 @@ export async function composeBusinessReview(
     createEmailCampaignSnapshotAdapter(scope.caller, { tenantId }, clock),
     createRecordedActivitySnapshotAdapter(scope.caller, { tenantId }, clock),
     createGamePlanSnapshotAdapter(scope.caller, { tenantId }, clock),
+    createBookingsSnapshotAdapter(caller, { tenantId }),
     ...(opts?.financeEvidence === false ? [] : [createFinanceSnapshotAdapter(scope.caller, { tenantId }, clock)]),
   ];
   // Clamped the way the composer clamps it, so the workspace reads share the adapters' budget.

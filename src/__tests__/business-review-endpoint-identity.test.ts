@@ -15,7 +15,8 @@ const now = new Date('2026-10-27T12:00:00Z');
 function fixture() {
   const calls: { name: string; args: Record<string, unknown> }[] = [];
   const options = { role: 'owner', actor: id(1), tenant: id(2), shape: [{ id: id(2), account_type: 'standalone', parent_tenant_id: null }] as unknown,
-    denyRail: false, hangIdentity: false, onRead: (_name: string, _count: number): void => undefined };
+    denyRail: false, denyAgenda: false, teamAdmin: true, member: true, emptyAgenda: false,
+    hangIdentity: false, onRead: (_name: string, _count: number): void => undefined };
   // Real SDK/query/abort and real endpoint/composer/adapters. Only Auth/HTTP/serve/env are synthetic.
   const caller = createClient('https://test-tenant.example', 'public-test-key', { auth: { autoRefreshToken: false, persistSession: false },
     global: { fetch: async (input, init) => {
@@ -27,6 +28,15 @@ function fixture() {
       if (name === 'check_rate_limit') data = true;
       else if (name === 'current_user_tenant_id') data = options.tenant;
       else if (name === 'tenants') data = options.shape;
+      else if (name === 'is_tenant_admin') data = options.teamAdmin;
+      else if (name === 'is_tenant_member') data = options.member;
+      else if (name === 'list_team_bookings') {
+        if (options.denyAgenda) return new Response(JSON.stringify({ code: '42501', message: 'PRIVATE CALENDAR DIAGNOSTIC' }),
+          { status: 403, headers: { 'Content-Type': 'application/json' } });
+        data = options.emptyAgenda ? [] : [{ id: id(4), tenant_id: id(2), calendar_id: id(5), host_user_id: id(1), contact_id: null,
+          title: 'Original source appointment', start_at: '2026-10-26T16:00:00Z', end_at: '2026-10-26T16:30:00Z',
+          timezone: 'America/New_York', status: 'scheduled', booking_kind: 'single' }];
+      }
       else if (name === 'has_tenant_role') {
         if (options.hangIdentity) return await new Promise<Response>(() => {});
         if (args._user_id !== id(1) || args._tenant_id !== id(2)) throw Error('Retargeted membership read');
@@ -72,6 +82,59 @@ beforeEach(() => { vi.useFakeTimers({ toFake: ['Date'] }); vi.setSystemTime(now)
 afterEach(() => { vi.useRealTimers(); });
 
 describe.each(['normal', 'chat'] as const)('actual Business Review %s endpoint eligibility', mode => {
+  it.each(['owner', 'admin'])('reaches original Calendar through the real endpoint for native SOLO %s', async role => {
+    const f = fixture(); f.options.role = role;
+    const result = await f.invoke(mode, { focus: ['bookings'], timezone: 'UTC' });
+    expect(result.status).toBe(200); expect(JSON.stringify(result.body)).toContain('Original source appointment');
+    expect(f.calls.filter(c => c.name === 'list_team_bookings')).toHaveLength(1);
+    expect(f.calls.filter(c => c.name === 'is_tenant_admin')).toHaveLength(2);
+    expect(f.calls.filter(c => c.name === 'is_tenant_member')).toHaveLength(1);
+    if (mode === 'normal') {
+      expect(result.body.snapshot.domains.bookings.status).toBe('available');
+      expect(result.body.snapshot.domains.bookings.data.outcomes).toEqual([]);
+    } else {
+      expect(result.body.result.status).toBe('available');
+      expect(result.body.result.record_links).toContainEqual({ destination: 'calendar', record_id: null });
+    }
+    expect(f.calls.every(c => ['check_rate_limit', 'current_user_tenant_id', 'tenants', 'has_tenant_role',
+      'is_tenant_admin', 'is_tenant_member', 'list_team_bookings'].includes(c.name))).toBe(true);
+  });
+  it('retains native team-admin refusal rather than borrowing endpoint membership', async () => {
+    const f = fixture(); f.options.teamAdmin = false;
+    const result = await f.invoke(mode, { focus: ['bookings'], timezone: 'UTC' });
+    expect(JSON.stringify(result.body)).not.toContain('Original source appointment');
+    expect(f.calls.some(c => c.name === 'list_team_bookings')).toBe(false);
+  });
+  it.each([false, true])('withholds populated/empty Calendar after native role withdrawal (empty=%s)', async empty => {
+    const f = fixture(); f.options.emptyAgenda = empty;
+    f.options.onRead = (name, count) => { if (name === 'is_tenant_admin' && count === 2) f.options.teamAdmin = false; };
+    const result = await f.invoke(mode, { focus: ['bookings'], timezone: 'UTC' });
+    expect(f.calls.filter(c => c.name === 'list_team_bookings')).toHaveLength(1);
+    expect(f.calls.filter(c => c.name === 'is_tenant_admin')).toHaveLength(2);
+    expect(JSON.stringify(result.body)).not.toContain('Original source appointment');
+    if (mode === 'normal') expect(result.body.snapshot.domains.bookings.data).toBeNull();
+    else expect(result.body.result.record_links).toEqual([]);
+  });
+  it.each(['actor', 'tenant'] as const)('withholds Calendar if %s changes during the original read', async field => {
+    const f = fixture(); f.options.onRead = name => { if (name === 'list_team_bookings') f.options[field] = id(90); };
+    const result = await f.invoke(mode, { focus: ['bookings'], timezone: 'UTC' });
+    expect(f.calls.some(c => c.name === 'list_team_bookings')).toBe(true);
+    expect(JSON.stringify(result.body)).not.toContain('Original source appointment');
+  });
+  it('keeps original Calendar source refusal private', async () => {
+    const f = fixture(); f.options.denyAgenda = true;
+    const result = await f.invoke(mode, { focus: ['bookings'], timezone: 'UTC' });
+    expect(f.calls.some(c => c.name === 'list_team_bookings')).toBe(true);
+    expect(JSON.stringify(result.body)).not.toMatch(/Original source appointment|PRIVATE CALENDAR/);
+    if (mode === 'normal') expect(result.body.snapshot.domains.bookings.data).toBeNull();
+    else expect(result.body.result.record_links).toEqual([]);
+  });
+  it('refuses model-authored Calendar eligibility before original source access', async () => {
+    const f = fixture(); f.options.role = 'member';
+    const result = await f.invoke(mode, { focus: ['bookings'], timezone: 'UTC', role: 'owner', accountShape: 'solo' });
+    expect(JSON.stringify(result.body)).not.toContain('Original source appointment');
+    expect(f.calls.some(c => c.name === 'list_team_bookings')).toBe(false);
+  });
   it.each(['owner', 'admin'])('reaches the original Rail reader for a natively verified SOLO %s', async role => {
     const f = fixture(); f.options.role = role;
     const result = await f.invoke(mode); expect(result.status).toBe(200);

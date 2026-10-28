@@ -1,5 +1,68 @@
 # Experience 02 — Customer Experience Integration Matrix
 
+## October27 22:45UTC — verified release, customer proof and next Calendar consumer
+
+#3004 merged normally as cea5d4942ef924f25373d1962616e3cfbf440219 after reviewed
+e510794e967264a25cd0dbe72a01105b5679b614, final AUTHOR-REVIEW / LOWER ASSURANCE
+PRR_kwDOSAAXqM8AAAABUkbNNg and all11 exact required/two web checks SUCCESS.
+Normal tree162665fd retains all9 owning source/test leaves,17,138 outside
+incoming entries and four whole document histories. Original endpoint P1 is
+fixed/resolved; both real transport paths now resolve native eligibility.
+
+Source release is the normal CONTAINING main5a4bfb1f0cdd8dbe13a41d12ca63f01a9b7f0a55:
+original40595981667/job122512194990/artifact12777430258 certifies all27 closures
+and configuration (967 raw plus296 original pinned-emitter bindings;435 unique
+Git sources). ZIP8dfd578395c1b080c3555753863c693529eab39a9c7b6437cbdc66ac42d839f2
+and four owning reviewed leaves independently match. Chat567/Review107;
+original edge-live5a4 confirmed. Earlier pre-upload compiler failure40595973202
+and cleanup advisory remain historical evidence, not a waived gate. Both public
+origins22:43UTC serve exact5a4-mvr9l54s/null/original assets from READY5EtWjwy.
+[Release receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3004#issuecomment-6455445721).
+Actual candidate activity/reload is still **PROOF OWED**.
+
+ANT52d0010fa0 records the distinct authenticated BASELINE545 turn: all seven
+Finance views read/reloaded with VERA and truthful missing-source states; native
+Escape restored original evidence-button focus. Narrow390px DOM had no document
+overflow; raw843px versus requested/DOM844px is retained, not exact raster/device
+or full viewport/cohort proof. One fresh read-only weekly request settled by the
+40.586s observation (UI27s/3steps); whole answer/sources and saved trace survived
+reload. A read trace is not an action receipt. Original tabs/drafts retained,
+own tab closed/viewport reset and browser resource returned. Catalogue remains
+3ComingSoon/3Limited/3Unverified, allAccessUnverified. No Live promotion.
+
+Next coherent O01/O02/O05/O14/O16 slice **REUSES** calendar.agenda_read /
+calendar.booking.read and original readCalendarAgenda/list_team_bookings,
+**EXTENDS** the original Business Review composer and original Calendar link.
+EXP05/EXP09 retain originating records/writers. Native caller tenant/member/admin,
+strict SOLO classification, pre/post-read checks, bounded dates/deadline and
+original title previews remain authoritative. Up to3 overlapping saved bookings
+in the requested period are partial recorded facts, not attendance, completion,
+provider synchronization, free capacity or a conflict-free agenda. Windows over
+32 elapsed days remain unavailable; no shortening or hidden batching. No new
+metric, provider, scheduler, approval, registry, runtime or action receipt.
+Local normally composed source has360 checks/11 suites, strict native test types
+and pinned production endpoint compile PASS. Review/required exact-head CI,
+release and actual candidate customer proof remain owed.
+
+### Received owner goal/standing-authority/model-routing amendments
+
+Actual receiving ACK ANT16101abbd8b covers c797df3b/33906e73/2371cb83 and current
+Owner North Star. These amend acceptance subcases of the ORIGINAL19 below;
+they do not replace those definitions or introduce another matrix.
+
+| Original outcomes | Required integrated behavior and actual boundary | Existing owner/dependency |
+| --- | --- | --- |
+| O01/O02/O08/O16 | PAIGE-led goal review and source-backed next steps coexist with direct @VERA, in-place replies and DMs. Same identity/personality/approved presentation, tools, permitted context and source truth. Native VERA scope already permits existing two business reads; actual Team Hub admission/private result/reopen is **MISSING**, not closed by A1b. | EXP02 original read producers; EXP08 original conversation/presentation/admission. Exact handoff ANT161a25c1145. |
+| O07/O09/O10/O11/O12/O19 | Preserve goal/success criteria/context/dependencies and combined-plan authority, plus each original effect's current Trust/Spine scope. Suggest/Prepare/Execute under legitimate standing authority; no blanket extra approval per write when existing authority covers it. Specialist name, natural assent, confidence or a suggestion click never creates authority. Actual governed execution/results remain **PROOF OWED**. | EXP05 original Work/Harness/Layer C; original EXP03/04/09 writers; EXP08 workshop integration; EXP10 custody; EXP19 general runner remains held/unverified. |
+| O08/O16/O19 | Relevant suggestions only within authorized goal/assignment/trigger with current source/audience/freshness, dismissal/defer/pause/duplicate/stale fences. Truthful running/waiting/paused/failed/unknown/completed states, original records/readback/receipts and reconcile-before-retry. No unsolicited recurring activation or new suggestion/action ledger. | Original source Experience and Work/Trust owners; EXP02 interpretation, not another executor. |
+| O14/O15/O16/O19 | Both Chat workshops refer to the SAME original task/run/artifact with controlled permitted context. No automatic private-DM history merge, Knowledge/Memory save or widened audience. Task continuity and private result/reopen remain **integration/proof owed**. | EXP08 presentation; EXP05 original Work; original Vault/Knowledge/Memory/Trust contracts. |
+| O01/O02/O08/O16; ALG11 | Existing Model Fabric/fabricCompletion may eventually use task-cost-aware eligible tiers with quality floors/escalation for real complexity/conflict/invalid output/recovery. No model tied to VERA, second router, confidence-based escalation or monetary exhaustion stop. Actual eligible IDs/rates/terms/evaluations, latency and attributable cost per VERIFIED outcome including failed/retried/tool work, rollout/rollback are **PROOF OWED before any production policy change**. Malformed request400 needs original request-contract repair, not blind retry/larger model. | Existing Model Fabric custodian and EXP08 original3008 repair; E02 consumes, does not alter live routing/provider policy. |
+
+Functional source, visual evidence, complete experience and Founder Acceptance
+remain separate. ALG03/06/11/12 Partial; ALG13 Unverified; ALG02/04 require real
+activation/retention inputs. All19/nine remain OPEN. Historical9PASS/0FAIL,
+12PASS/0FAIL/4BLOCKED and protected monthly UNKNOWN/UNRETRIED are unchanged.
+
 ## October27 — O13 original activity review consumer in development
 
 REUSE native get_solo_rail_activity and original Rail writers; EXTEND the existing

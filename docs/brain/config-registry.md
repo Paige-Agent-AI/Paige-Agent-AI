@@ -102,7 +102,7 @@ cannot read git, so a rule bound to it must report "never evaluated", never a pa
 with `public.cron_token_header()` (same poke shape as `comms-scheduled-drain`); `verify_jwt = false` in
 `config.toml`, failing closed in-function to a service-role bearer or `x-cron-token`. Sends go through
 `send-message` with the service-role bearer and `marketing: true`. Constants live in SQL: daily cap
-`email_campaign_daily_cap()` = 500 per business (display figure only once `20271120140003` is applied — nothing enforces it; owner ruling 2026-10-27), cost estimate `email_campaign_unit_cost_usd()` = $0.0004 per
+`email_campaign_daily_cap()` = 500 per business (display figure only once `20271121120003` is applied — nothing enforces it; owner ruling 2026-10-27), cost estimate `email_campaign_unit_cost_usd()` = $0.0004 per
 managed send (an estimate, metered as `platform_metered_events` `L3_tenant_passthrough` / `marketing_email_sent`).
 Durable-work capability `marketing.email_campaign` / kind `email_campaign_dispatch`; Rail capability key
 `marketing_email_campaign`. Session flag `paige.email_campaign_approve` is set only by `email_campaign_approve`

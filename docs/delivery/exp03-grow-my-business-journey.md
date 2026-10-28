@@ -1022,7 +1022,7 @@ Both closed as superseded with links; their branches are kept.
   businesses; SendGrid's account-wide bounce list, a row outliving SendGrid's entry, and a clear for a wrongly held
   address are owner decisions (decision log 2026-10-28). The two production rows are not back-filled. Proof:
   `exp03_governed_bounce_suppression.sql` 59/59; evidence `docs/evidence/ui-delivery/exp03-governed-bounce-suppression.md`.
-- **No daily sending allowance on marketing email (this change, migration `20271120140003`, NOT live).** Owner ruling
+- **No daily sending allowance on marketing email (this change, migration `20271121120003`, NOT live).** Owner ruling
   2026-10-27 (billing): each business's own usage is billed uncapped against a 25% contribution target, and PAIGE
   imposes no spending or sending stop. The fixed 500-a-day `email_campaign_daily_cap()` was enforced in three seams;
   all three bodies are re-emitted verbatim from production (md5 read back) minus only the allowance:
@@ -1030,9 +1030,14 @@ Both closed as superseded with links; their branches are kept.
   series approval also drops its `daily_limit` and the `daily_cost_bound_usd` derived from it), and
   `email_campaign_dispatch_claim` no longer skips a business at 500 in 24 hours. Suppression, opt-out and consent
   at plan and at send, the postal address, the sender, owner/admin filing and person-only approval are unchanged.
-  PAIGE's campaign and series chat tools no longer mention or report a daily limit. Proof:
-  `exp03_email_send_allowance_removed.sql` 26/26 on a fresh replay (14 fail on the old bodies; 5 fail with only the
-  old claim reinstated), neighbours 299/299. The Marketing › Email screens and PAIGE's series approval card no longer
+  PAIGE's campaign and series chat tools no longer mention or report a daily limit. Without the cap the claim
+  would have handed one business's large campaign every pass, so it now takes due campaigns fairly: the business
+  whose last send is oldest first (never-sent first), then oldest due — scheduling order only, nobody refused or
+  held. Series emails go through the same claim. The migration was renumbered `20271121120003` in review so it sorts
+  after production's and main's `20271121110019` (a plain `db push` refuses an older one). Proof:
+  `exp03_email_send_allowance_removed.sql` 36/36 on a fresh replay of all 1506 migrations (20 fail on the old
+  bodies; with only the pre-fairness claim, the passes go ash,ash,ash and the fairness assertions fail), neighbours
+  299/299. The Marketing › Email screens and PAIGE's series approval card no longer
   state a limit: the dashboard shows the real "N marketing emails sent or sending in the last 24 hours", and the
   editor warning, the series Daily limit row and "used up" notice are gone (copy removal only; C0b pins for
   `paige-ai-chat` renewed; evidence `docs/evidence/ui-delivery/exp03-no-email-send-allowance.md`, harness frames light

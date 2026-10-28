@@ -103,16 +103,22 @@ export async function handleGrowthHostingCommand(req: Request, deps: HostingDoor
       ...(typeof cmdRaw?.expected_tenant_id === "string" ? { expected_tenant_id: cmdRaw.expected_tenant_id } : {}) };
     const key = HOSTING_KEYS[action];
 
-    let who: Awaited<ReturnType<typeof resolveStudioCaller>>;
+    // Who is asking — the verified user (the publish door's own first step).
+    let userId: string | null = null;
     try {
-      who = await resolveStudioCaller(deps.caller);
-    } catch (e) {
-      const refused = e as StudioCallerRefused;
-      const status = refused.reason === "unauthenticated" ? 401 : 403;
-      return respond(status, { ok: false, refused: true, forbidden: status === 403, code: String(refused.reason ?? "forbidden").toUpperCase(),
-        error: typeof refused.message === "string" && refused.message ? refused.message : "Only this workspace's owner or an admin can do that. Nothing was changed." });
+      const { data, error } = await deps.caller.auth.getUser();
+      userId = !error && typeof data?.user?.id === "string" ? data.user.id : null;
+    } catch { userId = null; }
+    if (!userId) return respond(401, { ok: false, code: "UNAUTHENTICATED", error: "Sign in first. Nothing was changed." });
+
+    // Which workspace, and may this person act there (owner, admin, or its managing agency).
+    const who = await resolveStudioCaller(deps.caller, cmd.expected_tenant_id ?? null);
+    if (!who.ok) {
+      const refused = who as StudioCallerRefused;
+      return respond(refused.status, { ok: false, refused: true, forbidden: refused.status === 403,
+        code: String(refused.reason).toUpperCase(),
+        error: refused.error || "Only this workspace's owner or an admin can do that. Nothing was changed." });
     }
-    const userId = who.userId;
     const tenantId = who.tenantId;
     if (cmd.expected_tenant_id && cmd.expected_tenant_id.toLowerCase() !== tenantId) {
       return respond(409, { ok: false, refused: true, code: "WORKSPACE_CHANGED", error: `Your workspace changed. ${NOTHING_CHANGED}` });

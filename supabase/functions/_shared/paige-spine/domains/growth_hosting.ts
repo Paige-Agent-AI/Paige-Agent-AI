@@ -83,9 +83,9 @@ export const GROWTH_HOSTING_DEPLOY_CAPABILITY = defineCapability({
   tenantScope: HOSTING_SCOPE,
   availability: HOSTING_AVAILABILITY,
   providerBinding: {
-    kind: "http",
-    operation: "cloudflare.workers-static-assets.deploy",
-    connectionResolver: "platform-secret",
+    kind: "internal",
+    operation: "edge.growth-hosting-command/deploy",
+    connectionResolver: null,
   },
   idempotency: {
     mode: "required",
@@ -125,9 +125,9 @@ export const GROWTH_HOSTING_RECOVER_CAPABILITY = defineCapability({
   tenantScope: HOSTING_SCOPE,
   availability: HOSTING_AVAILABILITY,
   providerBinding: {
-    kind: "http",
-    operation: "cloudflare.workers-static-assets.delete",
-    connectionResolver: "platform-secret",
+    kind: "internal",
+    operation: "edge.growth-hosting-command/recover",
+    connectionResolver: null,
   },
   idempotency: {
     mode: "required",

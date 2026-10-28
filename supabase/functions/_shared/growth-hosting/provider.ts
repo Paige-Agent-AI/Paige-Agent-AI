@@ -75,7 +75,9 @@ export async function deployStaticSite(config: ProviderConfig, input: DeployInpu
     assets: { directory: "./", html_handling: "auto-trailing-slash", not_found_handling: "none" },
   };
   const form = new FormData();
-  form.append("metadata", JSON.stringify(metadata), { type: "application/json" } as never);
+  // Cross-runtime (Deno + Node/undici): append Blobs with string filenames — no options-object
+  // overload exists on undici's FormData.
+  form.append("metadata", new Blob([JSON.stringify(metadata)], { type: "application/json" }), "metadata.json");
   for (const file of input.files) {
     form.append(file.path, new Blob([file.content], { type: file.contentType }), file.path);
   }

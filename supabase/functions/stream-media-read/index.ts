@@ -7,9 +7,10 @@ import { streamReadAdapter } from "../_shared/stream-provider/stream.ts";
 import { handleStreamMediaRead } from "../_shared/stream-media-read/reader.ts";
 
 Deno.serve((req) => {
-  if (req.method === "OPTIONS") return handleStreamMediaRead(req, { caller: null, adapter: streamReadAdapter });
+  if (req.method === "OPTIONS") return handleStreamMediaRead(req, { caller: null, admin: null, adapter: streamReadAdapter });
   const url = Deno.env.get("SUPABASE_URL");
   const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
   if (!url || !anonKey) {
     return new Response(JSON.stringify({ ok: false, code: "SERVER_NOT_CONFIGURED", error: "The video library isn't available right now. Nothing changed." }), {
       status: 503, headers: { "Access-Control-Allow-Origin": "*", "Content-Type": "application/json", "Cache-Control": "no-store" },
@@ -19,5 +20,8 @@ Deno.serve((req) => {
     global: { headers: { Authorization: req.headers.get("Authorization") ?? "" } },
     auth: { persistSession: false, autoRefreshToken: false },
   });
-  return handleStreamMediaRead(req, { caller, adapter: streamReadAdapter });
+  const admin = serviceKey
+    ? createClient(url, serviceKey, { auth: { persistSession: false, autoRefreshToken: false } })
+    : null;
+  return handleStreamMediaRead(req, { caller, admin, adapter: streamReadAdapter });
 });

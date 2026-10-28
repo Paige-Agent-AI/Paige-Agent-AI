@@ -29,6 +29,15 @@ export function previewRepaymentRead(input: RecordValue, rows: RecordValue[]): R
   const source = { commercial_terms_id: row.id, client_id: row.client_id, offer_id: row.offer_id, collection_terms_version: row.version };
   if (row.offer_id === null) return { state: 'needs_input', fields: ['canonical_offer'], source };
   if (row.terms_state === 'stale') return { state: 'conflict', code: 'RECORDED_TERMS_STALE', source };
+  if ((row.recorded_terms as RecordValue | null)?.kind === 'recurring') return { state: 'conflict', code: 'RECORDED_SCHEDULE_DIFFERS', source };
+  // A catalogue installment may be the price of EACH payment; recurring amounts are per cycle.
+  // Never reinterpret either as a finite debt or accept model-supplied total semantics.
+  if (row.agreed_amount_basis === 'per_cycle' || row.agreed_amount_basis === 'per_installment') {
+    return { state: 'refused', code: 'FIXED_TOTAL_REQUIRED', source, amount_basis: row.agreed_amount_basis };
+  }
+  if (row.amount_cents != null && row.currency != null && row.agreed_amount_basis !== 'total') {
+    return { state: 'needs_input', fields: ['verified_fixed_total_basis'], source };
+  }
   const { agreement_id: _reference, ...intent } = input;
   const calculation = assembleFixedRepaymentSchedule({ ...intent, total_cents: row.amount_cents, currency: row.currency });
   if (calculation.state !== 'ready') return { ...calculation, source };

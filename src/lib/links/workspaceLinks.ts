@@ -75,6 +75,7 @@ export function routeLinkTarget(link: ReadRecordLink, tier: WorkspaceLinkTier, a
     account: account ?? null,
     destination: link.destination,
     recordId: link.record_id,
+    recordKind: link.record_kind,
   });
   if (!resolved) return null;
   const label = resolved.status === "exact" && link.destination === "systems_check"
@@ -86,7 +87,7 @@ export function routeLinkTarget(link: ReadRecordLink, tier: WorkspaceLinkTier, a
       : resolved.status === "exact" && link.destination === "pipeline"
         ? "Open deal"
         : resolved.status === "exact" && link.destination === "operations_work"
-          ? "Open task"
+          ? link.record_kind === "planning_item" ? "Open work item" : "Open task"
           : resolved.status === "exact" && link.destination === "business_game_plan"
             ? "Open Strategic Play"
             : resolved.status === "exact" && link.destination === "portal_knowledge"

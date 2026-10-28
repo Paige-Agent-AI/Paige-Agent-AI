@@ -8,8 +8,8 @@
 //     provider money are three different things and are never summed into one "received".
 //   * A contractual obligation (the agreed schedule) is not an invoice; an invoice is not money.
 //   * A payment request in flight or with an unknown outcome is never counted as received.
-//   * Facts the platform does not record (disputes, refunds, an "effective" transition,
-//     installment-level allocation) are declared as not recorded — never inferred as zero.
+//   * Facts this standing projection does not establish are never inferred as zero.
+//     Accepted economics require the original native evidence, distinct from working terms.
 //   * Unreadable or inconsistent sources degrade to a named state, never to a confident number.
 //   * "Today" is the calendar date in the BUSINESS OWNER's configured time zone (owner ruling,
 //     2026-10-12), set only by the owner (set_business_time_zone) — never UTC, server time or the
@@ -23,6 +23,8 @@
 import { parseCollectionTerms, MAX_SCHEDULE } from '../sales-collections/contract.ts';
 import { previewCollectionSchedule } from '../sales-collections/model.ts';
 import { localDateInZone } from '../paige-context/snapshot.ts';
+import { readClientEffectiveTerms, type EffectiveTermsRead } from './effective-terms.ts';
+import { readReviewedDeliveryEvidence, type ReviewedDeliveryEvidence } from './reviewed-delivery.ts';
 
 type Json = Record<string, unknown>;
 
@@ -31,6 +33,10 @@ export type SourceTerms = {
   agreed_amount_minor: number | null; agreed_currency: string | null;
   collection_terms: unknown; collection_terms_version: number;
   starts_on: string | null; ends_on: string | null; created_at: string; updated_at: string;
+  /** Additive native read; absent on an older reader. Never infer signed economics from absence. */
+  effective_terms?: unknown;
+  /** Exact-version Operations decisions; absent on an older original reader. */
+  reviewed_delivery?: unknown;
 };
 export type SourceSigning = {
   id: string; commercial_terms_id: string | null; offer_id: string | null; title: string | null; status: string;
@@ -91,9 +97,11 @@ export type Attention = 'agreement_not_signed' | 'agreement_not_bound_to_terms' 
   | 'terms_unreadable' | 'payment_overdue' | 'behind_schedule' | 'payment_outcome_unknown'
   | 'payment_request_failed' | 'invoice_status_legacy' | 'work_overdue' | 'work_blocked'
   | 'mixed_currency' | 'list_truncated' | 'terms_invoiced_more_than_once' | 'other_terms_not_shown'
-  | 'business_time_zone_unset';
+  | 'business_time_zone_unset' | 'invoice_terms_version_mismatch' | 'invoice_terms_unavailable'
+  | 'invoice_terms_amount_mismatch' | 'effective_terms_unverified';
 
-/** `due` is true when the row falls due on or before today in the owner's zone; null when today is unknown. */
+/** `due` is true when the row falls due on or before today in the owner's zone;
+ * null when today or applicability to the invoice's original revision is unknown. */
 export type ScheduleRow = { sequence: number; due_date: string; amount_minor: number; due: boolean | null; label: string | null };
 
 export type ClientEngagementStatus = {
@@ -106,13 +114,16 @@ export type ClientEngagementStatus = {
   agreement: {
     state: AgreementState; signing_id: string | null; title: string | null; sent_at: string | null;
     completed_at: string | null; sealed: boolean; bound_to_terms: boolean;
-    /** The platform has no "effective" transition yet: signing and active terms are reported separately. */
-    effective: 'not_recorded';
+    /** Historical native effectuation, separate from current engagement status. */
+    effective: 'not_recorded' | 'unverified' | 'verified';
+    effective_source?: EffectiveTermsRead['state'];
   };
   terms: null | {
     id: string; state: TermsState; status: string; version: number; offer_name: string | null; title: string | null;
     currency: string | null; agreed_minor: number | null; kind: string | null; recurring: boolean;
     schedule: ScheduleRow[]; schedule_has_more: boolean;
+    /** Optional for older cached responses; the composer always identifies its basis. */
+    basis?: 'working' | 'accepted'; working_version?: number; working_differs?: boolean;
   };
   money: {
     currency: string | null; mixed_currency: boolean;
@@ -173,6 +184,8 @@ export type ClientEngagementStatus = {
     next: null | { title: string | null; due_at: string; item_type: 'milestone' | 'task' };
     items: SourceWorkItem[];
   };
+  /** Separate from Work status and money. Optional on older cached responses. */
+  delivery?: ReviewedDeliveryEvidence;
   attention: Attention[];
   not_recorded: string[];
   truncated: { terms: boolean; signings: boolean; invoices: boolean; work: boolean };
@@ -221,7 +234,18 @@ function composeTerms(row: SourceTerms | null, asOf: string | null): ClientEngag
   };
 }
 
-function composeAgreement(signings: SourceSigning[], termsId: string | null): ClientEngagementStatus['agreement'] {
+function composeAgreement(signings: SourceSigning[], termsId: string | null, effective: EffectiveTermsRead): ClientEngagementStatus['agreement'] {
+  if (effective.state === 'verified') {
+    const exact = signings.find(s => s.id === effective.signing_id);
+    if (exact && (exact.version !== effective.signing_version || exact.commercial_terms_id !== termsId
+      || exact.offer_id !== effective.offer_id || exact.status !== 'completed' || !exact.sealed
+      || Date.parse(exact.completed_at ?? '') !== Date.parse(effective.completed_at))) fail('effective_signing_conflict');
+    return { state: 'signed', signing_id: effective.signing_id, title: exact?.title ?? null,
+      sent_at: exact?.sent_at ?? null, completed_at: effective.completed_at, sealed: true, bound_to_terms: true,
+      effective: 'verified', effective_source: 'verified' };
+  }
+  const provenance = { effective: effective.state === 'unverified' ? 'unverified' as const : 'not_recorded' as const,
+    effective_source: effective.state };
   const newest = (rows: SourceSigning[]) => [...rows].sort((a, b) => b.created_at.localeCompare(a.created_at))[0];
   const forTerms = termsId ? signings.filter(s => s.commercial_terms_id === termsId) : [];
   // A newer draft or voided amendment does not unsign the agreement already signed for these terms.
@@ -229,15 +253,39 @@ function composeAgreement(signings: SourceSigning[], termsId: string | null): Cl
   const chosen = bound ?? newest(signings);
   if (!chosen) {
     return { state: 'none', signing_id: null, title: null, sent_at: null, completed_at: null, sealed: false,
-      bound_to_terms: false, effective: 'not_recorded' };
+      bound_to_terms: false, ...provenance };
   }
   const state = SIGNING_STATE[chosen.status] ?? fail('signing_status');
   return {
     // A "completed" signing without its sealed evidence is not reported as signed.
     state: state === 'signed' && !chosen.sealed ? 'partially_signed' : state,
     signing_id: chosen.id, title: chosen.title, sent_at: chosen.sent_at, completed_at: chosen.completed_at,
-    sealed: chosen.sealed, bound_to_terms: Boolean(bound), effective: 'not_recorded',
+    sealed: chosen.sealed, bound_to_terms: Boolean(bound), ...provenance,
   };
+}
+
+/** Expand only through the original Collections model, using the native accepted
+ * snapshot when present. The source row and current engagement status stay intact. */
+function originalTerms(source: ClientEngagementSource, row: SourceTerms, asOf: string | null) {
+  const effective = readClientEffectiveTerms(row.effective_terms, { tenant_id: source.tenant_id,
+    client_id: source.contact_id, commercial_terms_id: row.id, offer_id: row.offer_id,
+    working_terms_version: row.collection_terms_version });
+  const accepted = effective.state === 'verified' ? effective : null;
+  const terms = composeTerms(accepted ? { ...row, agreed_amount_minor: accepted.principal_minor,
+    agreed_currency: accepted.currency, collection_terms: accepted.collection_terms,
+    collection_terms_version: accepted.terms_version } : row, asOf)!;
+  return { effective, terms: { ...terms, basis: accepted ? 'accepted' as const : 'working' as const,
+    working_version: row.collection_terms_version, working_differs: accepted?.working_differs ?? false } };
+}
+
+/** The existing schedule timing rule, shared by the selected summary and every
+ * invoice's own original reference. No invoice borrows another agreement's dates. */
+function scheduleTiming(terms: ClientEngagementStatus['terms'], asOf: string | null, usable = terms?.state === 'current') {
+  const last = terms?.schedule.at(-1)?.due_date;
+  const known = Boolean(usable && asOf !== null
+    && (!terms!.schedule_has_more || (last !== undefined && last > asOf)));
+  return { known, pastDue: known
+    ? terms!.schedule.filter(r => r.due_date < asOf!).reduce((sum, r) => sum + r.amount_minor, 0) : null };
 }
 
 function invoicePaymentState(row: SourceInvoice, outstanding: number): InvoicePaymentState {
@@ -265,25 +313,56 @@ export function composeClientEngagementStatus(source: ClientEngagementSource): C
     zone: localToday === null ? null : zoneSource.zone };
   const asOf = localToday;
   const termsRow = pickTerms(source.terms);
-  const terms = composeTerms(termsRow, asOf);
-  const agreement = composeAgreement(source.signings, termsRow?.id ?? null);
+  const originals = new Map(source.terms.map(row => [row.id, originalTerms(source, row, asOf)]));
+  if (originals.size !== source.terms.length) fail('duplicate_terms');
+  const selected = termsRow ? originals.get(termsRow.id)! : null;
+  let terms: ClientEngagementStatus['terms'] = selected?.terms ?? null;
+  const agreement = composeAgreement(source.signings, termsRow?.id ?? null,
+    selected?.effective ?? { state: 'reader_unavailable' });
+  // A partial terms list cannot establish which engagement is selected. Never
+  // borrow another signing, mutable working terms or task-done status as proof.
+  const accepted = !source.terms_has_more && selected?.effective.state === 'verified' ? selected.effective : null;
+  const delivery = readReviewedDeliveryEvidence(termsRow?.reviewed_delivery, accepted ? {
+    tenantId: source.tenant_id, clientId: source.contact_id, termsId: accepted.commercial_terms_id,
+    signingId: accepted.signing_id, signingVersion: accepted.signing_version,
+    contentSha256: accepted.document_sha256, sealedSha256: accepted.sealed_sha256,
+  } : null);
   const attention = new Set<Attention>();
+  const effectiveUnverified = selected?.effective.state === 'unverified';
 
   const currencies = new Set<string>();
-  if (terms?.currency) currencies.add(terms.currency.toLowerCase());
+  // Unverified working economics cannot change the units of genuine invoices.
+  // Plan claims are withheld below; invoice/provider evidence stays in its own currency.
+  if (terms?.currency && !effectiveUnverified) currencies.add(terms.currency.toLowerCase());
+
+  const billedForTerms = termsRow ? source.invoices.filter(i => BILLED.has(i.status)
+    && i.commercial_terms_reference?.id === termsRow.id) : [];
+  // The same agreement can have a later working plan. An invoice's original
+  // version cannot borrow that plan's dates or establish progress against it.
+  const invoiceTermsVersionMismatch = billedForTerms.some(i => {
+    const version = i.commercial_terms_reference!.version, current = terms!.version;
+    return typeof version !== 'number' || !Number.isSafeInteger(version) || version < 0
+      || typeof current !== 'number' || !Number.isSafeInteger(current) || current < 0 || version !== current;
+  });
+  const invoiceTermsAmountMismatch = billedForTerms.some(i => i.amount_minor !== terms!.agreed_minor
+    || i.currency.toLowerCase() !== terms!.currency?.toLowerCase());
+  if (invoiceTermsAmountMismatch) attention.add('invoice_terms_amount_mismatch');
+  if (effectiveUnverified) attention.add('effective_terms_unverified');
+  if (invoiceTermsVersionMismatch || invoiceTermsAmountMismatch || effectiveUnverified || (terms && terms.state !== 'current')) {
+    if (invoiceTermsVersionMismatch) attention.add('invoice_terms_version_mismatch');
+    if (terms) terms = { ...terms, schedule: terms.schedule.map(row => ({ ...row, due: null })) };
+  }
 
   // The terms' schedule: what was due before today (past due) and on or before today (due to date).
-  const usable = terms?.state === 'current';
-  const lastShown = terms?.schedule.at(-1)?.due_date;
-  // A truncated schedule can only be summed exactly if every unseen row falls after as_of.
-  const scheduleKnown = usable && asOf !== null
-    && (!terms!.schedule_has_more || (lastShown !== undefined && lastShown > asOf));
-  const pastDueOnSchedule = scheduleKnown
-    ? terms!.schedule.filter(r => r.due_date < asOf!).reduce((sum, r) => sum + r.amount_minor, 0) : null;
-  const billedBound = termsRow ? source.invoices.filter(i => BILLED.has(i.status)
-    && i.commercial_terms_reference?.id === termsRow.id).length : 0;
+  const usable = terms?.state === 'current' && !invoiceTermsVersionMismatch && !invoiceTermsAmountMismatch && !effectiveUnverified;
+  const { known: scheduleKnown } = scheduleTiming(terms, asOf, usable);
+  const billedBound = billedForTerms.length;
   // Two billed invoices each carrying the whole agreed amount cannot both be the obligation.
-  if (billedBound > 1) attention.add('terms_invoiced_more_than_once');
+  const billedCounts = new Map<string, number>();
+  for (const row of source.invoices) if (BILLED.has(row.status) && row.commercial_terms_reference?.id) {
+    const id = row.commercial_terms_reference.id; billedCounts.set(id, (billedCounts.get(id) ?? 0) + 1);
+  }
+  if ([...billedCounts.values()].some(count => count > 1)) attention.add('terms_invoiced_more_than_once');
 
   let invoiced = 0, verified = 0, recorded = 0, test = 0, outstanding = 0;
   let overdue: number | null = 0;
@@ -304,9 +383,18 @@ export function composeClientEngagementStatus(source: ClientEngagementSource): C
     const bound = Boolean(termsRow && row.commercial_terms_reference?.id === termsRow.id);
     let pastDue: number | null = 0;
     if (billed && owed > 0) {
-      if (bound) {
-        pastDue = pastDueOnSchedule === null || billedBound > 1 ? null
-          : Math.min(owed, Math.max(0, pastDueOnSchedule - live - manual));
+      if (row.commercial_terms_reference !== null) {
+        const ref = row.commercial_terms_reference, original = ref ? originals.get(ref.id) : undefined;
+        const basis = original?.terms;
+        const versionKnown = basis && Number.isSafeInteger(ref.version) && ref.version >= 0 && ref.version === basis.version;
+        const amountKnown = basis && amount === basis.agreed_minor && row.currency.toLowerCase() === basis.currency?.toLowerCase();
+        if (!original) attention.add('invoice_terms_unavailable');
+        else if (!versionKnown) attention.add('invoice_terms_version_mismatch');
+        else if (!amountKnown) attention.add('invoice_terms_amount_mismatch');
+        if (original?.effective.state === 'unverified') attention.add('effective_terms_unverified');
+        const timing = scheduleTiming(basis ?? null, asOf, Boolean(basis?.state === 'current' && versionKnown
+          && amountKnown && original?.effective.state !== 'unverified' && billedCounts.get(ref.id) === 1));
+        pastDue = timing.pastDue === null ? null : Math.min(owed, Math.max(0, timing.pastDue - live - manual));
       } else if (row.due_date !== null) {
         // Without the owner's today, whether a dated invoice is late is unknown, not "not late".
         pastDue = asOf === null ? null : row.due_date < asOf ? owed : 0;
@@ -396,8 +484,9 @@ export function composeClientEngagementStatus(source: ClientEngagementSource): C
       contracted_minor: known(contracted),
       due_to_date_minor: known(dueToDate),
       invoiced_minor: known(invoiced),
-      invoiced_against_terms_minor: known(termsInvoiced),
-      received_against_terms: { verified_minor: known(termsVerified), recorded_by_owner_minor: known(termsRecorded) },
+      invoiced_against_terms_minor: known(invoiceTermsVersionMismatch || invoiceTermsAmountMismatch || effectiveUnverified ? null : termsInvoiced),
+      received_against_terms: { verified_minor: known(invoiceTermsVersionMismatch || invoiceTermsAmountMismatch || effectiveUnverified ? null : termsVerified),
+        recorded_by_owner_minor: known(invoiceTermsVersionMismatch || invoiceTermsAmountMismatch || effectiveUnverified ? null : termsRecorded) },
       not_yet_invoiced_minor: totalsKnown && contracted !== null ? Math.max(0, contracted - termsInvoiced) : null,
       received: { verified_minor: known(verified), recorded_by_owner_minor: known(recorded), test_environment_minor: known(test) },
       outstanding_minor: known(outstanding),
@@ -416,8 +505,11 @@ export function composeClientEngagementStatus(source: ClientEngagementSource): C
       next: upcoming ? { title: upcoming.title, due_at: upcoming.due_at!, item_type: upcoming.item_type } : null,
       items: w.items,
     },
+    delivery,
     attention: [...attention],
-    not_recorded: source.not_recorded,
+    // Older readers used a platform-wide absence flag. Per-record provenance
+    // above now owns that answer, including explicit reader-unavailable state.
+    not_recorded: source.not_recorded.filter(key => key !== 'terms_effective_transition'),
     truncated,
     receipt_id: source.receipt_id ?? null,
   };

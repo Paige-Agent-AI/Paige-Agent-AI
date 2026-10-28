@@ -26,6 +26,35 @@ it('does not leave the draft when Escape belongs to input composition',()=>{
   open();act(()=>host.querySelector('input')!.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',isComposing:true,bubbles:true,cancelable:true})));
   expect(host.querySelector('[role=alertdialog]')).toBeNull();const leave=new Event('beforeunload',{cancelable:true});window.dispatchEvent(leave);expect(leave.defaultPrevented).toBe(true);
 });
+it.each(['workspace','launcher','backdrop'] as const)('does not dismiss a retained Sales record when Escape belongs to the PAIGE %s',target=>{
+  const close=vi.fn(()=>history.replaceState(null,'','/solo/alpha/sales/agreements'));
+  const retained='/solo/alpha/sales/agreements?agreement=aaaaaaaa-0000-4000-8000-000000000001&agreement_document_request=bbbbbbbb-0000-4000-8000-000000000001';
+  history.replaceState(null,'',retained);
+  function Retained(){useSalesDraftExit('',false,close);return <input aria-label="Sales field"/>;}
+  host=document.createElement('div');document.body.append(host);root=createRoot(host);act(()=>root.render(<Retained/>));
+  const layer=document.createElement('div'),control=document.createElement('button');
+  if(target==='workspace')layer.id='tenant-paige-workspace';
+  else control.setAttribute('aria-label',target==='launcher'?'Direct PAIGE':'Fold PAIGE conversation');
+  if(target==='launcher')control.setAttribute('aria-expanded','true');
+  layer.append(control);host.append(layer);control.focus();
+  const escape=new KeyboardEvent('keydown',{key:'Escape',bubbles:true,cancelable:true});
+  act(()=>control.dispatchEvent(escape));
+  expect(close).not.toHaveBeenCalled();expect(location.pathname+location.search).toBe(retained);
+  expect(escape.defaultPrevented).toBe(false);expect(document.activeElement).toBe(control);
+  layer.remove();act(()=>host.querySelector('input')!.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true,cancelable:true})));
+  expect(close).toHaveBeenCalledOnce();expect(location.search).toBe('');
+});
+it('keeps unresolved Sales work guarded without opening its leave dialog underneath PAIGE',()=>{
+  const close=vi.fn();
+  function Unresolved(){const guard=useSalesDraftExit('original request',false,close,{uncertain:true});return <><input aria-label="Sales field"/>{guard.confirmation}</>;}
+  host=document.createElement('div');document.body.append(host);root=createRoot(host);act(()=>root.render(<Unresolved/>));
+  const panel=document.createElement('section'),input=document.createElement('input');panel.id='tenant-paige-workspace';panel.append(input);host.append(panel);input.focus();
+  act(()=>input.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true,cancelable:true})));
+  expect(host.querySelector('[role="alertdialog"]')).toBeNull();expect(close).not.toHaveBeenCalled();
+  const leave=new Event('beforeunload',{cancelable:true});window.dispatchEvent(leave);expect(leave.defaultPrevented).toBe(true);
+  panel.remove();act(()=>host.querySelector('input')!.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true,cancelable:true})));
+  expect(host.querySelectorAll('[role="alertdialog"]')).toHaveLength(1);expect(close).not.toHaveBeenCalled();
+});
 it('retains only opaque recovery metadata on the same agreement without bypassing unsaved-work protection',()=>{
   const navigation=new EventTarget();vi.stubGlobal('navigation',navigation);
   const id='aaaaaaaa-0000-4000-8000-000000000001',request='bbbbbbbb-0000-4000-8000-000000000001',tenant='cccccccc-0000-4000-8000-000000000001';

@@ -3317,8 +3317,8 @@
       "rail_mind_memory": "Rail: governed media/broadcast outcomes. Mind: safe facts only. Memory: none of media bytes.",
       "status": "PROOF_OWED",
       "owner": "EXP10 (connections/eligibility/readiness) coordinating with EXP07 (broadcast/media experience owner)",
-      "dependency": "Backend API access VERIFIED 2026-10-25 via the deployed read-only canary (GET read-back: ok, test video status ready 100%, duration 8.8s, account match; deployments v1/v2 ACTIVE, identical source). Owed: tenant upload to processing to playback proof, live input + simulcast proof, tenant/Platform isolation negatives, deletion/retention, the complementary two-way guest component decision.",
-      "next_slice": "EXP07's first end-to-end implementation PR (upload/processing/playback against the verified backend)",
+      "dependency": "TENANT MEDIA MACHINERY SHIPPED 2026-10-28 (EXP07 #3039 merged 662be5534, migration 20271120110000 applied, stream-media-command + stream-media-read deployed and live-probed; PROOF unchanged - the authenticated owner drive remains owed). Backend API access VERIFIED 2026-10-25 via the deployed read-only canary (GET read-back: ok, test video status ready 100%, duration 8.8s, account match; deployments v1/v2 ACTIVE, identical source). Owed: tenant upload to processing to playback proof, live input + simulcast proof, tenant/Platform isolation negatives, deletion/retention, the complementary two-way guest component decision.",
+      "next_slice": "EXP07's authenticated owner drive (a real video through the shipped door: upload -> ready -> play -> remove), then live-input + simulcast, isolation negatives, deletion/retention; the two-way guest component decision rides EXP07's decision doc with EXP10's completed realtime annex (ANT-164 comment 4b5c83ff)",
       "tier_eligibility": {
         "platform": "eligible",
         "solo": "eligible",

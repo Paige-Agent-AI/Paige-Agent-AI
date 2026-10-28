@@ -1,0 +1,770 @@
+[
+  {
+    "file": "1536x770-closed-light-native.jpg",
+    "state": "closed",
+    "canvasScroll": 0,
+    "document": {
+      "height": 770,
+      "scrollHeight": 770,
+      "scrollWidth": 1536,
+      "width": 1536
+    },
+    "focus": "Refresh commercial terms",
+    "footer": {
+      "bottom": 757.6000022888184,
+      "height": 62.10000228881836,
+      "left": 84.80000305175781,
+      "right": 1523.2000274658203,
+      "top": 695.5,
+      "width": 1438.4000244140625,
+      "x": 84.80000305175781,
+      "y": 695.5
+    },
+    "headerY": 0,
+    "panel": {
+      "rect": {
+        "bottom": 0,
+        "height": 0,
+        "left": 0,
+        "right": 0,
+        "top": 0,
+        "width": 0,
+        "x": 0,
+        "y": 0
+      },
+      "visible": false
+    },
+    "rootScroll": 0,
+    "scroll": {
+      "height": 450,
+      "overflow": "auto",
+      "scrollHeight": 1720,
+      "scrollWidth": 1423,
+      "width": 1423
+    },
+    "source": {
+      "rect": {
+        "bottom": 614.8999862670898,
+        "height": 82.5999984741211,
+        "left": 100.5999984741211,
+        "right": 1189.1999740600586,
+        "top": 532.2999877929688,
+        "width": 1088.5999755859375,
+        "x": 100.5999984741211,
+        "y": 532.2999877929688
+      },
+      "scrollWidth": 1087,
+      "text": "Engagement total$3,500.00USDDraft reference: revision 4",
+      "width": 1087
+    },
+    "theme": "light",
+    "viewport": {
+      "height": 770,
+      "width": 1536
+    }
+  },
+  {
+    "file": "1536x770-open-light-native.jpg",
+    "state": "open",
+    "canvasScroll": 0,
+    "document": {
+      "height": 770,
+      "scrollHeight": 770,
+      "scrollWidth": 1536,
+      "width": 1536
+    },
+    "focus": "Direct PAIGE",
+    "footer": {
+      "bottom": 757.6000022888184,
+      "height": 62.10000228881836,
+      "left": 84.80000305175781,
+      "right": 1000.9625396728516,
+      "top": 695.5,
+      "width": 916.1625366210938,
+      "x": 84.80000305175781,
+      "y": 695.5
+    },
+    "headerY": 0,
+    "panel": {
+      "rect": {
+        "bottom": 770.4000244140625,
+        "height": 770.4000244140625,
+        "left": 1013.7625122070312,
+        "right": 1536,
+        "top": 0,
+        "width": 522.2374877929688,
+        "x": 1013.7625122070312,
+        "y": 0
+      },
+      "visible": true
+    },
+    "rootScroll": 0,
+    "scroll": {
+      "height": 450,
+      "overflow": "auto",
+      "scrollHeight": 1854,
+      "scrollWidth": 901,
+      "width": 901
+    },
+    "source": {
+      "rect": {
+        "bottom": 614.8999862670898,
+        "height": 82.5999984741211,
+        "left": 100.5999984741211,
+        "right": 666.9624862670898,
+        "top": 532.2999877929688,
+        "width": 566.3624877929688,
+        "x": 100.5999984741211,
+        "y": 532.2999877929688
+      },
+      "scrollWidth": 565,
+      "text": "Engagement total$3,500.00USDDraft reference: revision 4",
+      "width": 565
+    },
+    "theme": "light",
+    "viewport": {
+      "height": 770,
+      "width": 1536
+    }
+  },
+  {
+    "file": "1366x768-closed-light-native.jpg",
+    "state": "closed",
+    "canvasScroll": 0,
+    "document": {
+      "height": 768,
+      "scrollHeight": 768,
+      "scrollWidth": 1366,
+      "width": 1366
+    },
+    "focus": "Refresh commercial terms",
+    "footer": {
+      "bottom": 755.2000389099121,
+      "height": 62.10000228881836,
+      "left": 84.80000305175781,
+      "right": 1353.6000518798828,
+      "top": 693.1000366210938,
+      "width": 1268.800048828125,
+      "x": 84.80000305175781,
+      "y": 693.1000366210938
+    },
+    "headerY": 0,
+    "panel": {
+      "rect": {
+        "bottom": 0,
+        "height": 0,
+        "left": 0,
+        "right": 0,
+        "top": 0,
+        "width": 0,
+        "x": 0,
+        "y": 0
+      },
+      "visible": false
+    },
+    "rootScroll": 0,
+    "scroll": {
+      "height": 447,
+      "overflow": "auto",
+      "scrollHeight": 1720,
+      "scrollWidth": 1254,
+      "width": 1254
+    },
+    "source": {
+      "rect": {
+        "bottom": 626.8999862670898,
+        "height": 82.5999984741211,
+        "left": 100.5999984741211,
+        "right": 1019.5999984741212,
+        "top": 544.2999877929688,
+        "width": 919,
+        "x": 100.5999984741211,
+        "y": 544.2999877929688
+      },
+      "scrollWidth": 917,
+      "text": "Engagement total$3,500.00USDDraft reference: revision 4",
+      "width": 917
+    },
+    "theme": "light",
+    "viewport": {
+      "height": 768,
+      "width": 1366
+    }
+  },
+  {
+    "file": "1366x768-open-light-native.jpg",
+    "state": "open",
+    "canvasScroll": 0,
+    "document": {
+      "height": 768,
+      "scrollHeight": 768,
+      "scrollWidth": 1366,
+      "width": 1366
+    },
+    "focus": "Direct PAIGE",
+    "footer": {
+      "bottom": 755.2000389099121,
+      "height": 62.10000228881836,
+      "left": 84.80000305175781,
+      "right": 889.0250396728516,
+      "top": 693.1000366210938,
+      "width": 804.2250366210938,
+      "x": 84.80000305175781,
+      "y": 693.1000366210938
+    },
+    "headerY": 0,
+    "panel": {
+      "rect": {
+        "bottom": 768,
+        "height": 768,
+        "left": 901.8250122070312,
+        "right": 1366.4000244140625,
+        "top": 0,
+        "width": 464.5750122070313,
+        "x": 901.8250122070312,
+        "y": 0
+      },
+      "visible": true
+    },
+    "rootScroll": 0,
+    "scroll": {
+      "height": 447,
+      "overflow": "auto",
+      "scrollHeight": 2319,
+      "scrollWidth": 789,
+      "width": 789
+    },
+    "source": {
+      "rect": {
+        "bottom": 626.8999862670898,
+        "height": 82.5999984741211,
+        "left": 100.5999984741211,
+        "right": 858.0249862670898,
+        "top": 544.2999877929688,
+        "width": 757.4249877929688,
+        "x": 100.5999984741211,
+        "y": 544.2999877929688
+      },
+      "scrollWidth": 756,
+      "text": "Engagement total$3,500.00USDDraft reference: revision 4",
+      "width": 756
+    },
+    "theme": "light",
+    "viewport": {
+      "height": 768,
+      "width": 1366
+    }
+  },
+  {
+    "file": "1024x768-closed-light-native.jpg",
+    "state": "closed",
+    "canvasScroll": 0,
+    "document": {
+      "height": 768,
+      "scrollHeight": 768,
+      "scrollWidth": 1024,
+      "width": 1024
+    },
+    "focus": "Refresh commercial terms",
+    "footer": {
+      "bottom": 755.2000389099121,
+      "height": 62.10000228881836,
+      "left": 84.80000305175781,
+      "right": 1011.2000274658204,
+      "top": 693.1000366210938,
+      "width": 926.4000244140624,
+      "x": 84.80000305175781,
+      "y": 693.1000366210938
+    },
+    "headerY": 0,
+    "panel": {
+      "rect": {
+        "bottom": 0,
+        "height": 0,
+        "left": 0,
+        "right": 0,
+        "top": 0,
+        "width": 0,
+        "x": 0,
+        "y": 0
+      },
+      "visible": false
+    },
+    "rootScroll": 0,
+    "scroll": {
+      "height": 447,
+      "overflow": "auto",
+      "scrollHeight": 2219,
+      "scrollWidth": 911,
+      "width": 911
+    },
+    "source": {
+      "rect": {
+        "bottom": 626.8999862670898,
+        "height": 82.5999984741211,
+        "left": 100.5999984741211,
+        "right": 980.2000350952148,
+        "top": 544.2999877929688,
+        "width": 879.6000366210938,
+        "x": 100.5999984741211,
+        "y": 544.2999877929688
+      },
+      "scrollWidth": 878,
+      "text": "Engagement total$3,500.00USDDraft reference: revision 4",
+      "width": 878
+    },
+    "theme": "light",
+    "viewport": {
+      "height": 768,
+      "width": 1024
+    }
+  },
+  {
+    "file": "1024x768-open-light-native.jpg",
+    "state": "open",
+    "canvasScroll": 0,
+    "document": {
+      "height": 768,
+      "scrollHeight": 768,
+      "scrollWidth": 1024,
+      "width": 1024
+    },
+    "focus": "Direct PAIGE",
+    "footer": {
+      "bottom": 755.2000389099121,
+      "height": 62.10000228881836,
+      "left": 84.80000305175781,
+      "right": 1011.2000274658204,
+      "top": 693.1000366210938,
+      "width": 926.4000244140624,
+      "x": 84.80000305175781,
+      "y": 693.1000366210938
+    },
+    "headerY": 0,
+    "panel": {
+      "rect": {
+        "bottom": 768,
+        "height": 768,
+        "left": 614,
+        "right": 1024,
+        "top": 0,
+        "width": 410,
+        "x": 614,
+        "y": 0
+      },
+      "visible": true
+    },
+    "rootScroll": 0,
+    "scroll": {
+      "height": 447,
+      "overflow": "auto",
+      "scrollHeight": 2219,
+      "scrollWidth": 911,
+      "width": 911
+    },
+    "source": {
+      "rect": {
+        "bottom": 626.8999862670898,
+        "height": 82.5999984741211,
+        "left": 100.5999984741211,
+        "right": 980.2000350952148,
+        "top": 544.2999877929688,
+        "width": 879.6000366210938,
+        "x": 100.5999984741211,
+        "y": 544.2999877929688
+      },
+      "scrollWidth": 878,
+      "text": "Engagement total$3,500.00USDDraft reference: revision 4",
+      "width": 878
+    },
+    "theme": "light",
+    "viewport": {
+      "height": 768,
+      "width": 1024
+    }
+  },
+  {
+    "file": "900x1000-closed-light-native.jpg",
+    "state": "closed",
+    "canvasScroll": 0,
+    "document": {
+      "height": 1000,
+      "scrollHeight": 1000,
+      "scrollWidth": 900,
+      "width": 900
+    },
+    "focus": "Refresh commercial terms",
+    "footer": {
+      "bottom": 987.200038909912,
+      "height": 62.10000228881836,
+      "left": 84.80000305175781,
+      "right": 887.2000274658203,
+      "top": 925.1000366210938,
+      "width": 802.4000244140625,
+      "x": 84.80000305175781,
+      "y": 925.1000366210938
+    },
+    "headerY": 0,
+    "panel": {
+      "rect": {
+        "bottom": 0,
+        "height": 0,
+        "left": 0,
+        "right": 0,
+        "top": 0,
+        "width": 0,
+        "x": 0,
+        "y": 0
+      },
+      "visible": false
+    },
+    "rootScroll": 0,
+    "scroll": {
+      "height": 679,
+      "overflow": "auto",
+      "scrollHeight": 2319,
+      "scrollWidth": 787,
+      "width": 787
+    },
+    "source": {
+      "rect": {
+        "bottom": 537.3000106811523,
+        "height": 82.5999984741211,
+        "left": 100.5999984741211,
+        "right": 856.2000350952148,
+        "top": 454.7000122070313,
+        "width": 755.6000366210938,
+        "x": 100.5999984741211,
+        "y": 454.7000122070313
+      },
+      "scrollWidth": 754,
+      "text": "Engagement total$3,500.00USDDraft reference: revision 4",
+      "width": 754
+    },
+    "theme": "light",
+    "viewport": {
+      "height": 1000,
+      "width": 900
+    }
+  },
+  {
+    "file": "900x1000-open-light-native.jpg",
+    "state": "open",
+    "canvasScroll": 0,
+    "document": {
+      "height": 1000,
+      "scrollHeight": 1000,
+      "scrollWidth": 900,
+      "width": 900
+    },
+    "focus": "Direct PAIGE",
+    "footer": {
+      "bottom": 987.200038909912,
+      "height": 62.10000228881836,
+      "left": 84.80000305175781,
+      "right": 887.2000274658203,
+      "top": 925.1000366210938,
+      "width": 802.4000244140625,
+      "x": 84.80000305175781,
+      "y": 925.1000366210938
+    },
+    "headerY": 0,
+    "panel": {
+      "rect": {
+        "bottom": 1000,
+        "height": 1000,
+        "left": 490,
+        "right": 900,
+        "top": 0,
+        "width": 410,
+        "x": 490,
+        "y": 0
+      },
+      "visible": true
+    },
+    "rootScroll": 0,
+    "scroll": {
+      "height": 679,
+      "overflow": "auto",
+      "scrollHeight": 2319,
+      "scrollWidth": 787,
+      "width": 787
+    },
+    "source": {
+      "rect": {
+        "bottom": 537.3000106811523,
+        "height": 82.5999984741211,
+        "left": 100.5999984741211,
+        "right": 856.2000350952148,
+        "top": 454.7000122070313,
+        "width": 755.6000366210938,
+        "x": 100.5999984741211,
+        "y": 454.7000122070313
+      },
+      "scrollWidth": 754,
+      "text": "Engagement total$3,500.00USDDraft reference: revision 4",
+      "width": 754
+    },
+    "theme": "light",
+    "viewport": {
+      "height": 1000,
+      "width": 900
+    }
+  },
+  {
+    "file": "1366x768-closed-dark-native.jpg",
+    "state": "closed",
+    "canvasScroll": 0,
+    "document": {
+      "height": 768,
+      "scrollHeight": 768,
+      "scrollWidth": 1366,
+      "width": 1366
+    },
+    "focus": "Refresh commercial terms",
+    "footer": {
+      "bottom": 755.2000389099121,
+      "height": 62.10000228881836,
+      "left": 84.80000305175781,
+      "right": 1353.6000518798828,
+      "top": 693.1000366210938,
+      "width": 1268.800048828125,
+      "x": 84.80000305175781,
+      "y": 693.1000366210938
+    },
+    "headerY": 0,
+    "panel": {
+      "rect": {
+        "bottom": 0,
+        "height": 0,
+        "left": 0,
+        "right": 0,
+        "top": 0,
+        "width": 0,
+        "x": 0,
+        "y": 0
+      },
+      "visible": false
+    },
+    "rootScroll": 0,
+    "scroll": {
+      "height": 447,
+      "overflow": "auto",
+      "scrollHeight": 1720,
+      "scrollWidth": 1254,
+      "width": 1254
+    },
+    "source": {
+      "rect": {
+        "bottom": 626.8999862670898,
+        "height": 82.5999984741211,
+        "left": 100.5999984741211,
+        "right": 1019.5999984741212,
+        "top": 544.2999877929688,
+        "width": 919,
+        "x": 100.5999984741211,
+        "y": 544.2999877929688
+      },
+      "scrollWidth": 917,
+      "text": "Engagement total$3,500.00USDDraft reference: revision 4",
+      "width": 917
+    },
+    "theme": "dark",
+    "viewport": {
+      "height": 768,
+      "width": 1366
+    }
+  },
+  {
+    "file": "1366x768-open-dark-native.jpg",
+    "state": "open",
+    "canvasScroll": 0,
+    "document": {
+      "height": 768,
+      "scrollHeight": 768,
+      "scrollWidth": 1366,
+      "width": 1366
+    },
+    "focus": "Direct PAIGE",
+    "footer": {
+      "bottom": 755.2000389099121,
+      "height": 62.10000228881836,
+      "left": 84.80000305175781,
+      "right": 889.0250396728516,
+      "top": 693.1000366210938,
+      "width": 804.2250366210938,
+      "x": 84.80000305175781,
+      "y": 693.1000366210938
+    },
+    "headerY": 0,
+    "panel": {
+      "rect": {
+        "bottom": 768,
+        "height": 768,
+        "left": 901.8250122070312,
+        "right": 1366.4000244140625,
+        "top": 0,
+        "width": 464.5750122070313,
+        "x": 901.8250122070312,
+        "y": 0
+      },
+      "visible": true
+    },
+    "rootScroll": 0,
+    "scroll": {
+      "height": 447,
+      "overflow": "auto",
+      "scrollHeight": 2319,
+      "scrollWidth": 789,
+      "width": 789
+    },
+    "source": {
+      "rect": {
+        "bottom": 626.8999862670898,
+        "height": 82.5999984741211,
+        "left": 100.5999984741211,
+        "right": 858.0249862670898,
+        "top": 544.2999877929688,
+        "width": 757.4249877929688,
+        "x": 100.5999984741211,
+        "y": 544.2999877929688
+      },
+      "scrollWidth": 756,
+      "text": "Engagement total$3,500.00USDDraft reference: revision 4",
+      "width": 756
+    },
+    "theme": "dark",
+    "viewport": {
+      "height": 768,
+      "width": 1366
+    }
+  },
+  {
+    "file": "390x844-closed-dark-native.jpg",
+    "state": "closed",
+    "canvasScroll": 0,
+    "document": {
+      "height": 844,
+      "scrollHeight": 844,
+      "scrollWidth": 390,
+      "width": 390
+    },
+    "focus": "Refresh commercial terms",
+    "footer": {
+      "bottom": 831.2000389099121,
+      "height": 61.60000228881836,
+      "left": 84.80000305175781,
+      "right": 377.6000213623047,
+      "top": 769.6000366210938,
+      "width": 292.8000183105469,
+      "x": 84.80000305175781,
+      "y": 769.6000366210938
+    },
+    "headerY": 0,
+    "panel": {
+      "rect": {
+        "bottom": 0,
+        "height": 0,
+        "left": 0,
+        "right": 0,
+        "top": 0,
+        "width": 0,
+        "x": 0,
+        "y": 0
+      },
+      "visible": false
+    },
+    "rootScroll": 0,
+    "scroll": {
+      "height": 370,
+      "overflow": "auto",
+      "scrollHeight": 3595,
+      "scrollWidth": 278,
+      "width": 278
+    },
+    "source": {
+      "rect": {
+        "bottom": 500.400016784668,
+        "height": 82.5999984741211,
+        "left": 100.5999984741211,
+        "right": 346.5999984741211,
+        "top": 417.8000183105469,
+        "width": 246,
+        "x": 100.5999984741211,
+        "y": 417.8000183105469
+      },
+      "scrollWidth": 244,
+      "text": "Engagement total$3,500.00USDDraft reference: revision 4",
+      "width": 244
+    },
+    "theme": "dark",
+    "viewport": {
+      "height": 844,
+      "width": 390
+    }
+  },
+  {
+    "file": "390x844-open-dark-native.jpg",
+    "state": "open",
+    "canvasScroll": 0,
+    "document": {
+      "height": 844,
+      "scrollHeight": 844,
+      "scrollWidth": 390,
+      "width": 390
+    },
+    "focus": "Direct PAIGE",
+    "footer": {
+      "bottom": 831.2000389099121,
+      "height": 61.60000228881836,
+      "left": 84.80000305175781,
+      "right": 377.6000213623047,
+      "top": 769.6000366210938,
+      "width": 292.8000183105469,
+      "x": 84.80000305175781,
+      "y": 769.6000366210938
+    },
+    "headerY": 0,
+    "panel": {
+      "rect": {
+        "bottom": 844,
+        "height": 844,
+        "left": 72,
+        "right": 390.3999938964844,
+        "top": 0,
+        "width": 318.3999938964844,
+        "x": 72,
+        "y": 0
+      },
+      "visible": true
+    },
+    "rootScroll": 0,
+    "scroll": {
+      "height": 370,
+      "overflow": "auto",
+      "scrollHeight": 3595,
+      "scrollWidth": 278,
+      "width": 278
+    },
+    "source": {
+      "rect": {
+        "bottom": 500.400016784668,
+        "height": 82.5999984741211,
+        "left": 100.5999984741211,
+        "right": 346.5999984741211,
+        "top": 417.8000183105469,
+        "width": 246,
+        "x": 100.5999984741211,
+        "y": 417.8000183105469
+      },
+      "scrollWidth": 244,
+      "text": "Engagement total$3,500.00USDDraft reference: revision 4",
+      "width": 244
+    },
+    "theme": "dark",
+    "viewport": {
+      "height": 844,
+      "width": 390
+    }
+  }
+]

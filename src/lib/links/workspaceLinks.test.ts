@@ -58,6 +58,19 @@ describe("DESTINATION_LABEL — the frozen words", () => {
 });
 
 describe("workspaceLinkTarget", () => {
+  it("rehydrates the closed Planning reference only in the current eligible SOLO workspace", () => {
+    const [reference] = readRecordLinks(JSON.parse(JSON.stringify([
+      { destination: "operations_work", record_id: UUID.toUpperCase(), record_kind: "planning_item", account: "foreign", url: "https://foreign.invalid" },
+    ])));
+    expect(reference).toEqual({ destination: "operations_work", record_id: UUID, record_kind: "planning_item" });
+    for (const account_number of [3855, 9999]) expect(workspaceLinkTarget(reference, { ...soloTenant, account_number })).toEqual({
+      label: "Open work item", to: `/solo/${account_number}/operations/work?planningItem=${UUID}`, status: "exact",
+    });
+    for (const tenant of [subTenant, { ...soloTenant, parent_tenant_id: "parent" }, { ...soloTenant, account_type: "operator" }, null]) {
+      expect(workspaceLinkTarget(reference, tenant)).toBeNull();
+    }
+    expect(routeLinkTarget({ ...reference, record_kind: "unknown" } as never, "solo", "123")).toBeNull();
+  });
   it('reopens only a source reference in the current SOLO business, with no stored address or authority',()=>{
     const [reference]=readRecordLinks(JSON.parse(JSON.stringify([{destination:'portal_knowledge',record_id:UUID.toUpperCase(),subject:'Private source title',tenant:'foreign',url:'https://foreign.invalid',published:true}])));
     expect(reference).toEqual({destination:'portal_knowledge',record_id:UUID});

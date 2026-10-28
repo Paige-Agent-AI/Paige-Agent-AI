@@ -594,6 +594,18 @@ manual capability remains UNAVAILABLE and analytics/catalogue maturity unchanged
 Original9/0 and12/0/4 remain historical; all19/nine continue. Protected monthly
 UNKNOWN/UNRETRIED remains intact. Earlier development/failure evidence is retained.
 
+## EXP04 useful commercial results and verification lessons — October28 development
+
+Release-diagnostic lesson: preserve a failed upload as a failure while reporting only bounded numeric CLI exit/HTTP status and a closed error category. Never publish raw CLI stdout/stderr, vendor JSON, credentials, private URLs or compiler payloads, and never let diagnostic classification authorize a retry. The original exact413 source-limit predicate, source/configuration checks, upload count, unknown-outcome refusal and downloaded-source verifier remain the authority. ACTIVE function metadata and a successful Preview label are not a verified source bundle or an authenticated commercial result. Local Windows Bash launch restrictions and a missing Deno executable are runner prerequisites to diagnose, not reasons to skip original release tests or relax assertions. Current source/review/CI/release and customer-proof receipts remain in original ANT-51 and ANT-161; a source-only diagnostic repair does not resolve the held Chat upload or promote any capability/algorithm.
+
+The full original O1–O12 remains the target. Reuse the native agreement engine, governed signing request, canonical financial and Work records, and same page/PAIGE explanations. The [#2971](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2971) invoice release and [#3040](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3040) signing/delivery release retain separate source, database, web, held shared-Chat source-readback and authenticated evidence; neither establishes completed customer acceptance. The original [journey](../delivery/exp04-get-paid-deliver-journey.md), Master and ANT-51 retain the full matrix and exact current disposition.
+
+Verified reusable lessons: internal review and a client decision are different facts; name internal versus client revision requests explicitly, and do not turn an unreleased reviewed version into release eligibility or a finished engagement. A long contextual action can enlarge a grid’s intrinsic column on a phone: bound the original card’s track and wrap the original control, preserving the parent scroll owner, focus and44px target. Neutral rendered frames prove layout and local recovery, never a signed agreement, payment, tenant permission or service acceptance. See [bounded actual source/rendered evidence](../evidence/ui-delivery/exp04-commercial-source-contracts.md).
+
+Full-schema integration lesson: original review uses wall-clock time while original release and audit events use transaction time. Compare matching audit receipt timestamps when checking that release follows review; require the actual exact-version review/release/client records rather than inferring them from clocks. E04's additive private projection correction preserves original writers and all grants. The existing full-schema client-status proof now drives real Operations handoff, internal review, separate client revision and acceptance, and later readback; every neutral row rolls back. Synthetic DB-role proof is not actual customer authentication or hosted signing. Accepted delivery cannot be silently reopened: the canonical submit writer requires a revision request, so tests must follow that real lifecycle rather than weakening it.
+
+For release sequencing, re-read the actual production migration frontier immediately before release. Forward only never-applied carriers with byte-exact SQL and original proof-loader references; never reset or rewrite applied history. Diagnose local runner permission failures in a task-owned temporary cache. Preserve timed-concurrency failures and record actual database event ordering; do not lengthen/relax assertions or claim a timeout established security. Source, exact review/CI, merge, native/Edge/web readback, activation, authenticated results and founder acceptance remain separate. No capability/algorithm Live promotion or new runtime/sender/ledger follows from these lessons.
+
 ## EXP04 original signature factory and native PDF source — October26
 
 [#2888 source receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2888#issuecomment-6407684085) records reviewed02902badb898aef1ba67708a56c9c2ac658869f7 → actual main99c63316dfc6a9a0ddd19d80660fe43fe724b564/tree5a905090e11c3ab07f0177c297591572da9fa4d8, LOWER6405130919/all13 exact checks/two webSUCCESS. The originating governed factory is SOURCE MERGED; this dated statement supersedes the earlier source-unreleased label below without rewriting its history. It reuses original Work/approval/sender/publication, immutable documents and receipts; actual signing/send/payment acceptance is separate.
@@ -1051,6 +1063,33 @@ and algorithm maturity unchanged; no customer version/publication or recursive
 feature credit for this closeout.
 
 ## EXP05 weekly same-session recovery — October25 development
+
+### October28 original Planning Work continuation — development
+
+The original `operations_work` reference now has a closed optional Planning kind
+in [#3035](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3035), preserving
+the original UUID through normalization/deduplication to the unchanged native
+caller/RLS Work reader. It is an address, never task completion, authority or
+permission to retry an unknown action. CRM and Planning identities stay distinct.
+Native prototype testing exposed a real exit defect: leaving the focus query
+reopened a closed item. Clear it only after the original unsaved-work guard.
+The useful lesson is to verify the whole original-record round trip, including
+reload and exit, rather than equate a rendered link with recovery.
+
+Original126-source/29-dispatch baseline reproduces; only two separately reviewed
+link-helper dependency pins require renewal, with extractor/metadata/hostile
+checks unchanged. [Original UI/source evidence](../evidence/ui-delivery/exp05-planning-work-reference.md)
+keeps synthetic ports separate from authenticated roles, real records/Rails and
+full ten/E5/owner-away/Builder/both-chat/Live/founder acceptance. Development,
+reviewed source, green hosted checks and released customer results remain distinct.
+
+Production follow-on: [original3035 receipt6476586277](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3035#issuecomment-6476586277)
+verifies source/web/17 Edge closures at59fc; authenticated acceptance stays open.
+Newer provider versions are neither proof of drift nor proof of equivalence:
+directly compare the current files/configuration to immutable reviewed source.
+Here all205 files in13 newer versions matched; no speculative redeploy was needed.
+Preserve failed local proof assumptions as INVALID and correct the locator or
+encoding without weakening the original verifier or relabeling runtime evidence.
 
 ### October26 whole-Experience receiving reconciliation
 

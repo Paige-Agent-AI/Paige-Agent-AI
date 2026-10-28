@@ -33,7 +33,7 @@ describe('a saved invoice reference remains verifiable after a turn reload', () 
   });
 
   it('does not invent record focus on other department links or unsupported tiers', () => {
-    for (const destination of ['sales_agreements', 'sales_collections', 'business_time_zone'] as const) {
+    for (const destination of ['sales_collections', 'business_time_zone'] as const) {
       expect(readRecordLinks([{ destination, record_id: INVOICE }])).toEqual([{ destination, record_id: null }]);
     }
     const links = readRecordLinks([{ destination: 'sales_invoices', record_id: INVOICE }]);

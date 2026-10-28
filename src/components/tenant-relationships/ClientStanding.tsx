@@ -11,8 +11,13 @@ import { collectionMoney } from "@/solo/sales/collections/presentation";
 import {
   ATTENTION_DESTINATION,
   ATTENTION_TEXT,
+  DELIVERY_PHASE_TEXT,
   NOT_RECORDED_TEXT,
+  standingDeliveryEvidence,
+  standingAgreementLink,
   standingInvoiceLink,
+  standingTermsEvidence,
+  standingTimingReason,
 } from "../../../supabase/functions/_shared/client-engagement/labels";
 import type { ClientEngagementStatus } from "../../../supabase/functions/_shared/client-engagement/status";
 import type { ReadLinkDestination } from "../../../supabase/functions/_shared/paige-turn/record-links";
@@ -64,7 +69,7 @@ function moneyPill(s: ClientEngagementStatus): { state: PillState; label: string
 
 const WORK_PILL: Record<ClientEngagementStatus["work"]["state"], { state: PillState; label: string }> = {
   none: { state: "off", label: "No delivery work" },
-  complete: { state: "success", label: "Complete" },
+  complete: { state: "success", label: "Nothing open" },
   on_schedule: { state: "success", label: "On schedule" },
   behind: { state: "error", label: "Behind" },
   undated: { state: "pending", label: "No due dates" },
@@ -102,6 +107,26 @@ function StandingLink({ destination, account, label, recordId = null }: { destin
   return <Link className="trc-standing-link" to={target.to}>{cut > 0 ? `${text.slice(0, cut)} ` : ""}<span className="trc-standing-link-tail">{text.slice(cut + 1)}<ArrowRight aria-hidden /></span></Link>;
 }
 
+function DeliveryEvidence({ s, zone }: { s: ClientEngagementStatus; zone: string | null }) {
+  const items = s.delivery?.items ?? [];
+  return <>
+    <span className="trc-standing-quiet-line">{standingDeliveryEvidence(s)}</span>
+    {items.length > 0 && <details className="trc-standing-delivery-decisions">
+      <summary>Review {plural(items.length, "delivery decision")}</summary>
+      <ul>{items.map(item => {
+        const day = dayLabel(item.decisionAt, zone);
+        return <li key={item.workItemId}>
+          <strong>{s.work.items.find(work => work.id === item.workItemId)?.title ?? "Reviewed milestone"}</strong>
+          <span>{item.revision !== null && <>Submission revision {item.revision} · </>}{DELIVERY_PHASE_TEXT[item.phase]}</span>
+          {day && <span className="trc-standing-quiet-line">{day === NOT_SHOWN
+            ? "Decision date not shown until the business time zone is set"
+            : <>Decision <time dateTime={item.decisionAt!}>{day}</time></>}</span>}
+        </li>;
+      })}</ul>
+    </details>}
+  </>;
+}
+
 /** One ledger row: its name, then its state beside it, then the facts and where to act on them. */
 function Row({ state, label, children, actions }: { state: { state: PillState; label: string }; label: string; children: ReactNode; actions?: ReactNode }) {
   return (
@@ -117,6 +142,8 @@ function Row({ state, label, children, actions }: { state: { state: PillState; l
 function notKnown(s: ClientEngagementStatus): string {
   if (s.money.mixed_currency) return "More than one currency, so not added up";
   if (s.truncated.invoices || s.truncated.terms) return "More invoices than one check reads, so not added up";
+  const timingReason = standingTimingReason(s);
+  if (timingReason) return timingReason;
   return "Not known from these records";
 }
 
@@ -158,7 +185,7 @@ function Standing({ s, name, account, openPaige }: { s: ClientEngagementStatus; 
   const terms = s.terms;
   const termsLine = terms
     ? [`Terms: ${(AGREEMENT_STATE[terms.status] ?? AGREEMENT_STATE.unrecognised).label}`,
-        terms.agreed_minor !== null && terms.currency ? `${collectionMoney(terms.agreed_minor, terms.currency)} agreed` : null,
+        terms.agreed_minor !== null && terms.currency ? `${collectionMoney(terms.agreed_minor, terms.currency)} ${terms.basis === 'accepted' ? 'accepted' : standingTimingReason(s) ? 'recorded' : 'agreed'}` : null,
         terms.recurring ? "recurring" : terms.schedule.length ? plural(terms.schedule.length, "scheduled payment") : null,
       ].filter(Boolean).join(" · ")
     : "No terms agreed yet";
@@ -174,6 +201,7 @@ function Standing({ s, name, account, openPaige }: { s: ClientEngagementStatus; 
   const held = s.as_of_date === null ? businessCalendarHeldNote(s.time_zone.state === "invalid" ? "invalid" : "missing", "record") : null;
 
   const m = s.money;
+  const termsEvidence = standingTermsEvidence(s);
   const requests = [
     (m.awaiting_confirmation_minor ?? 0) > 0 ? `${collectionMoney(m.awaiting_confirmation_minor!, currency)} awaiting payment provider confirmation — not received` : null,
     m.outcome_unknown_count > 0 ? `${plural(m.outcome_unknown_count, "payment")} with an unknown outcome` : null,
@@ -192,10 +220,11 @@ function Standing({ s, name, account, openPaige }: { s: ClientEngagementStatus; 
   return (
     <>
       <ol className="trc-standing-rows">
-        <Row state={signature} label="Agreement" actions={<StandingLink destination="sales_agreements" account={account} />}>
-          <span>{s.agreement.title ?? (s.agreement.state === "none" ? "No agreement document yet" : "Untitled agreement")}</span>
+        <Row state={signature} label="Agreement" actions={<StandingLink destination="sales_agreements" recordId={standingAgreementLink(s).record_id} account={account} />}>
+          <span>{s.agreement.title ?? (s.agreement.effective === "verified" ? "Original signed agreement" : s.agreement.state === "none" ? "No agreement document yet" : "Untitled agreement")}</span>
           {signedLine && <span className="trc-standing-quiet-line">{signedLine}</span>}
           <span className="trc-standing-quiet-line">{termsLine}</span>
+          {termsEvidence && <span className="trc-standing-quiet-line">{termsEvidence}</span>}
         </Row>
 
         <Row state={moneyPill(s)} label="Money" actions={<>
@@ -217,6 +246,7 @@ function Standing({ s, name, account, openPaige }: { s: ClientEngagementStatus; 
 
         <Row state={WORK_PILL[w.state]} label="Delivery" actions={<StandingLink destination="operations_work" account={account} />}>
           <span>{workLine}</span>
+          <DeliveryEvidence s={s} zone={zone} />
           {w.next && <span className="trc-standing-quiet-line">Next: {w.next.title ?? "Untitled"} · {dayLabel(w.next.due_at, zone) === NOT_SHOWN ? "due date not shown until the business time zone is set" : <span className="trc-standing-nowrap">due {dayLabel(w.next.due_at, zone)}</span>}</span>}
         </Row>
 

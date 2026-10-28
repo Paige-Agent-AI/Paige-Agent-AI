@@ -223,7 +223,13 @@ select pg_temp.check_true((select r->'commercial_terms_reference' = 'null'::json
 -- Work parity.
 select pg_temp.check_true((select (value#>>'{work,total}')::int=3 and (value#>>'{work,done}')::int=1 and (value#>>'{work,open}')::int=2 and (value#>>'{work,overdue}')::int=1 from status_result),'work: 3 items (reminder excluded), 1 done, 2 open, 1 overdue');
 select pg_temp.check_true((select (value#>>'{work,total}')::int=(select count(*) from public.plan_items where contact_id='e4000000-0000-4000-8000-0000000c0001' and item_type in ('milestone','task')) from status_result),'work total equals the canonical item count');
-select pg_temp.check_true((select value->'not_recorded' ? 'payment_disputes' and value->'not_recorded' ? 'terms_effective_transition' from status_result),'unrecorded facts are declared, not zeroed');
+select pg_temp.check_true((select value->'not_recorded' @> '["payment_disputes","provider_refunds","installment_allocation"]'::jsonb
+ and not (value->'not_recorded' ? 'terms_effective_transition')
+ and value#>>'{terms,0,effective_terms,state}'='not_recorded'
+ and value#>>'{terms,0,effective_terms,tenant_id}'='e4000000-0000-4000-8000-00000000aaaa'
+ and value#>>'{terms,0,effective_terms,client_id}'='e4000000-0000-4000-8000-0000000c0001'
+ and value#>>'{terms,0,effective_terms,commercial_terms_id}'='e4000000-0000-4000-8000-0000000d0001'
+ from status_result),'source gaps are declared, while missing original effective provenance remains explicitly unrecorded for the exact client/terms');
 -- Time zone: the owner's configured zone, and the owner-local calendar date of the read.
 select pg_temp.check_true((select value->'business_time_zone'='{"state":"configured","zone":"America/New_York"}'::jsonb from status_result),'business time zone is the owner''s configured zone');
 select pg_temp.check_true((select (value->>'as_of_date')::date=((value->>'read_at')::timestamptz at time zone 'America/New_York')::date from status_result),'as-of date is the owner-local date of the read, not the UTC date');
@@ -501,3 +507,7 @@ reset role;
 -- Emit the owner's read for the composer parity check (scripts/proof/exp04-client-status-parity.mjs).
 select 'E4_STATUS_JSON:'||value::text from status_result;
 rollback;
+
+-- Keep this integration proof in the existing full-schema EXP04 job; no
+-- competing CI/QA engine or shared-workflow ownership is introduced.
+\ir exp04_reviewed_delivery_handoff.sql

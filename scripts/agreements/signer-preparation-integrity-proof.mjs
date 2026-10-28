@@ -32,6 +32,9 @@ try{
  const seed=read('supabase/migrations/20270519010000_contact_methods_dependents.sql');const from=seed.indexOf('CREATE OR REPLACE FUNCTION public.seed_agreement_counterparty()'),to=seed.indexOf('$function$;',from)+'$function$;'.length;assert(from>=0&&to>from);sql(seed.slice(from,to));
  for(const name of ['20271113120000_agreement_draft_request_identity.sql','20271113130000_agreement_draft_revision_history.sql','20271113160000_agreement_frozen_draft_integrity.sql'])sql(read('supabase/migrations/'+name));
  const original=sql("SELECT md5(prosrc) FROM pg_proc WHERE oid='public.add_agreement_signer(uuid,uuid,text,text,text,integer)'::regprocedure;");check(original==='8202b665bd31e96e815676e9be2335cc','Exact current production signer writer reproduced');
+ const signerMetadataQuery="SELECT jsonb_build_object('owner',pg_get_userbyid(proowner),'acl',proacl::text,'config',proconfig,'defaults',pronargdefaults) FROM pg_proc WHERE oid='public.add_agreement_signer(uuid,uuid,text,text,text,integer)'::regprocedure;";
+ const originalSignerMetadata=JSON.parse(sql(signerMetadataQuery));
+ check(sql('SELECT current_user;')===user&&originalSignerMetadata.owner===user,'Directory-fenced fixture owner matches the requested local constructor');
  const save=sql("SELECT md5(prosrc) FROM pg_proc WHERE oid='public.save_paige_agreement(uuid,uuid,uuid,text,text,uuid,uuid,text,uuid,text,timestamptz)'::regprocedure;");
  if(mode==='repaired'){const migration=read('supabase/migrations/20271113240004_agreement_signer_preparation_integrity.sql');sql(migration);sql(migration);}
  const fresh=()=>JSON.parse(sql(context+`SELECT save_paige_agreement('${tenant}',NULL,'${client}','Original supplied document','Exact original supplied words');`));
@@ -78,8 +81,9 @@ try{
   check(sql(`SELECT count(*) FROM paige_agreement_events WHERE agreement_id='${a.id}' AND detail ? 'added_signer_order'`)==='3','One original event per actual addition');
   check(sql(`SELECT count(*) FROM paige_agreement_signers WHERE agreement_id='${a.id}' AND (token_hash IS NOT NULL OR status IN ('signed','viewed'))`)==='0','No signing token/view/consent action fabricated');
   check(sql("SELECT md5(prosrc) FROM pg_proc WHERE oid='public.save_paige_agreement(uuid,uuid,uuid,text,text,uuid,uuid,text,uuid,text,timestamptz)'::regprocedure;")===save,'Original SAVE body remains unchanged');
-  const meta=JSON.parse(sql("SELECT jsonb_build_object('owner',pg_get_userbyid(proowner),'acl',proacl::text,'config',proconfig,'defaults',pronargdefaults) FROM pg_proc WHERE oid='public.add_agreement_signer(uuid,uuid,text,text,text,integer)'::regprocedure;"));
-  check(meta.owner==='proofrunner'&&meta.acl.includes('authenticated=X/')&&!meta.acl.includes('anon=X/')&&meta.defaults===2,'Existing owner/ACL/defaulted signature preserved in fixture');
+  const meta=JSON.parse(sql(signerMetadataQuery));
+  assert.deepEqual(meta,originalSignerMetadata,'Every original signer ownership/ACL/config/default byte remains unchanged');checks++;
+  check(meta.owner===user&&meta.acl.includes('authenticated=X/')&&!meta.acl.includes('anon=X/')&&meta.defaults===2,'Existing owner/ACL/defaulted signature preserved in fixture');
   check(meta.config.includes('search_path=public, pg_temp'),'Original function search path preserved');
   refused(add(a.id,'anon@example.test'),'42501',context+'SET ROLE anon;');
   refused(add(a.id,'service@example.test'),'42501',context+'SET ROLE service_role;');

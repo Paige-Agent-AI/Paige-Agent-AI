@@ -114,3 +114,27 @@ upgraded to a stronger model as a substitute. No Team Hub module/router change
 is made here. Original owner_only controls/INT346/held recurrence/provider/Live
 remain. All ten outcomes/E5-CV1–9/Builder/ZION/useful independent execution,
 notifications/recovery/both-chat/cohort/founder acceptance stay OPEN.
+
+## October28 required full-suite regression correction
+
+Original40594500129 candidate086 ran23,452 cases:23,446 passed,2 failed,4
+pending. Its ORIGINAL unit-failure artifact12778250462/ZIP SHA256
+72581e0e2e5a3fb0ff8cf4ecd148303887405ac85490cb81455f59c19a8a1db4
+names only c0b-read-registration and e2-2-conversational-read-admission. Logs
+connector transport failed twice; original attribution archive was read and
+its digest verified instead. No failed required gate was relabeled PASS.
+
+Both actual failures reproduce locally:16 PASS/2 FAIL. The new original
+read was missing from two closed registration/admission test inventories.
+Correction031810c91 adds the exact new read's native executor/read_only/none/
+door-seat/PARTIAL contract plus all8 authority combinations, and pins the ONE
+new imported name in the closed conversational list. No skip, broad exemption,
+production permission/gate change or relaxed unknown-tool expectation. All
+incumbent assertions remain. Corrected original7 suites177/177, zero skips;
+fresh composed mainf1360cf29 also177/177 and original hostile83/83 PASS.
+
+Composeda140893d6 preserves reviewed086 Chat BYTE-EXACT; current main has
+no Chat delta since545. Full current C0b inverse retains all incoming E03/E04
+source pins/comments and renews only the originally reviewed29 scalars/one
+automations digest. No migration/Edge activation/customer acceptance inferred.
+New exact-head review/required CI remains before safe merge/deployment.

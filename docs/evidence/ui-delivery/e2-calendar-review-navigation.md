@@ -18,15 +18,15 @@ REDUCED_MOTION: PASS: actual local preference reduce=true; no added/changed anim
 STATE_COVERAGE: PASS: available partial empty Calendar sample, unavailable/member/error/loading and synthetic workspace B were inspected; no Calendar link on refused/error/loading states. These synthetic contexts do not prove actual tenant isolation or a second authenticated cohort.
 TRUTHFUL_STATE_LABELS: PASS: partial-source availability and absence-not-capacity distinctions preserved. Model guidance is conditional; original references stay out of model context and are separately rendered. No action, approval or prediction is claimed.
 SOLO_UI: YES: canonical command-center.executive and original calendar destination; one shared implementation, no customer identity selects behavior.
-SOLO_1536X770_PAIGE_CLOSED: UNVERIFIED: DOM1536x770/full original shell captured1535x770; original Calendar link/source visible. Exact raster/two legitimate authenticated cohorts remain owed.
-SOLO_1536X770_PAIGE_OPEN: UNVERIFIED: DOM1536x770/full original shell captured1535x770; side-by-side original shell and disabled synthetic composer; actual model Chat/cohorts excluded.
+SOLO_1536X770_PAIGE_CLOSED: PASS: October28 original-shell recapture is actual JPEG1536x770 with original Bookings source and Calendar link visible. Neutral synthetic ports only; actual customer-cohort proof remains excluded.
+SOLO_1536X770_PAIGE_OPEN: PASS: October28 actual JPEG1536x770, original shell/source link and side-by-side disabled synthetic composer; loaded Schibsted100–900 and no document overflow. Actual model Chat/cohort proof remains excluded.
 SOLO_1366X768_PAIGE_CLOSED: PASS:1366x768 actual raster/source link/scroll inspected in original shell with neutral synthetic source; authenticated-cohort proof excluded.
 SOLO_1366X768_PAIGE_OPEN: PASS:1366x768 raster; original shell side-by-side source and synthetic composer readable, no covering controls; actual Chat runtime excluded.
 SOLO_1024X768_PAIGE_CLOSED: PASS:1024x768 raster/source link readable/reachable, own Executive scroll, no document overflow; synthetic source only.
 SOLO_1024X768_PAIGE_OPEN: PASS:1024x768 raster; incumbent Chat overlay preserved, source behind it is not claimed interactive. Fold Chat for source inspection; no unrelated shell change.
 SOLO_900X1000_PAIGE_CLOSED: PASS:900x1000 raster/source link readable/reachable with own scroll/no document overflow; synthetic source only.
 SOLO_900X1000_PAIGE_OPEN: PASS:900x1000 raster; incumbent Chat overlay preserved and not counted as accessible background-source interaction.
-UNVERIFIED: exact1536 raster, actual200-percent zoom/AT, second legitimate authenticated SOLO cohort, released correction/actual model compliance/eligible Live and full19/nine/founder acceptance remain separate obligations; this is not delivery-complete evidence.
+UNVERIFIED: actual200-percent zoom/AT, second legitimate authenticated Calendar cohort, released correction/actual model compliance/eligible Live and full19/nine/founder acceptance remain separate obligations; this is not delivery-complete evidence.
 OWNER_INTENT: source-backed complete COO review with real original department navigation and conversation continuity.
 MUST_NOT_HAPPEN: expose private references/URLs to model, invent appointments/free capacity, mutate a booking, create approval/action authority or relabel synthetic proof as customer acceptance.
 MUST_PRESERVE: Chat Root's deliberate reference stripping, original E4 renderer/persistence, caller authority, Calendar writer, review period/source/scroll/focus and one PAIGE workspace.
@@ -85,6 +85,42 @@ ALG03/06/11/12 Partial,13 Unverified. No predictive claim or maturity promotion.
 Functional134 local checks/visual bounded render/experiential synthetic return
 are distinct from released authenticated behavior and final founder acceptance.
 Historical9PASS0FAIL and12PASS0FAIL4BLOCKED remain unchanged; all19 remain OPEN.
+
+## October28 exact desktop recapture and interrupted native check
+
+The original owning source remains `20607a2e7252fdb4afcd017bae5ace2d2f925098`;
+this follow-up changes only this record and adds two neutral images. Both new
+captures are original browser JPEGs, independently read as **1536x770** without
+resampling, cropping after capture or changing image pixels:
+
+- [Original shell, Chat closed, exact1536x770](e2-calendar-review-navigation/desktop-1536-closed.jpg), SHA256 `86a34afb8725990bf49232a94e889891e2da663f525627aabfeea2c45ebd5b9a`.
+- [Original shell, Chat open, exact1536x770](e2-calendar-review-navigation/desktop-1536-open.jpg), SHA256 `8c7f920d124eef784dde3f581491e7094318fe2b369cc941fea37585346f976b`.
+
+The original Bookings disclosure and Calendar link are readable. Current DOM
+checks report1536x770/document width1536, loaded Schibsted Grotesk100–900 and
+reduced motion. In the open state the source link and disabled synthetic composer
+occupy separate columns; the composer is empty. Keyboard Shift-Tab reaches the
+original Source & freshness control. These are development-only source ports,
+not an authenticated Calendar read, a real model turn or a second customer cohort.
+The original1535px images remain historical supporting evidence.
+
+An initial navigation timeout recovered on the same loaded local tab; a first
+screenshot timeout is excluded and its unchanged settled retry returned the
+closed image above. Before any native zoom keys, Windows control stopped because
+it could not confirm the current browser address safely. **No further browser
+input followed.** Native200-percent/assistive-technology verification is still
+UNVERIFIED. The owned Vite server was stopped. The temporary1536x770 viewport
+override could not be reset after that stop; final browser cleanup/restoration is
+not claimed verified. No customer tab, record, approval or provider was changed.
+
+Receiving currentmain `37244873a` adds no competing E02 source lease. EXP08 owns
+the four A2b Chat/confirmation regions and retains the direct Studio/CRM claim and
+outcome-reconciliation dependency; E05 owns the proposed optional Planning-item
+address and its two exact dependency-digest rows. EXP02 will consume the original
+released references/results, never invent authority from a link. Source merge,
+deployed model wording, actual customer return/reload and full19/nine acceptance
+remain open. Original ANT138/78f6c80a records the outcomes-first checkpoint and
+ANT161/1cbf016d the exact shared-source no-conflict receipt.
 
 INTERNAL_BUILD_IDENTITY: 1c760326008229e500e4192a4c9aa536ae4aa57c; identity-role=source candidate; final documentation correction exact head in PR; deployment=none; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(original paige-ai-chat and paige-business-review source deployment); evidence=docs/evidence/ui-delivery/e2-calendar-review-navigation.md
 RELEASE_CHANNEL: development: no hosted or production correction claimed

@@ -3,6 +3,7 @@ import {
   buildGovernedReplyRequest, checkGovernedSendAt, classifyDoorAnswer, floorSendAtToMinute, governedReplyFiles,
   governedReplyScope, governedReplyText, readDoorAnswer, signaturePlainText, type GovernedReplyDraft,
 } from "./governedReply";
+import { scheduledForLabel } from "./governedSend";
 
 const TENANT = "6f1a2b3c-4d5e-4f60-8a7b-9c0d1e2f3a4b";
 const CONTACT = "0c1d2e3f-4a5b-4c6d-8e7f-a0b1c2d3e4f5";
@@ -156,6 +157,20 @@ describe("holds", () => {
     expect(quiet.kind === "cant" && `${quiet.head} ${quiet.body ?? ""}`).not.toMatch(/quiet hours/i);
     const dnd = classifyDoorAnswer(err(422, { outcome: "held", reason: "QUEUED_TENANT_DND" }), "check", request(), ctx, NOW);
     expect(dnd.kind === "cant" && dnd.body).toBe("Schedule it for later.");
+  });
+});
+
+describe("an email already scheduled (review MAJOR 2, 2026-10-28)", () => {
+  const err = (status: number, body: Record<string, unknown>) => ({ transport: false as const, status, body });
+  it("names the scheduled time in the viewer's words and says to cancel it first; never a raw code", () => {
+    const at = "2026-11-03T15:00:00.000Z";
+    const v = classifyDoorAnswer(err(409, { ok: false, outcome: "refused", code: "COMMS_EMAIL_ALREADY_SCHEDULED", send_at: at }), "check", request(), ctx, NOW);
+    expect(v.kind).toBe("cant");
+    if (v.kind !== "cant") return;
+    expect(`${v.head} ${v.body ?? ""}`).toBe(`This email is already scheduled for ${scheduledForLabel(at)}. Cancel it first if you want to change it.`);
+    expect(v.say).not.toMatch(/COMMS_|[A-Z]+_[A-Z]+/);
+    const noTime = classifyDoorAnswer(err(409, { ok: false, outcome: "refused", code: "COMMS_EMAIL_ALREADY_SCHEDULED" }), "check", request(), ctx, NOW);
+    expect(noTime.kind === "cant" && noTime.head).toBe("This email is already scheduled.");
   });
 });
 

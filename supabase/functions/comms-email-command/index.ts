@@ -319,6 +319,28 @@ Deno.serve(async req => {
     return response(statusOf(settled), { ...settled, reconciled_operation_id: pending });
   }
 
+  // 3b — The same email to the same contact, approved for later under ANOTHER operation and still waiting,
+  // is that email: another time, or "send it now", would send it twice. Refused (card and confirm alike)
+  // until the owner cancels it. Read with the service role, scoped to the server-derived tenant.
+  // No time bound: a row past its release grace but not yet swept can still be claimed by a release
+  // leased at the very end of the grace (the replay above answers outcome_unknown for that same state).
+  // On a prepared recovery this operation's own row is unresolved, so a refusal here is outcome_unknown.
+  const notThisOne = preparedRecovery ? "outcome_unknown" : "refused";
+  const { data: waiting, error: waitingError } = await admin.from("messages")
+    .select("scheduled_operation_id:meta->comms_email_binding->>operation_id,scheduled_send_at:meta->comms_email_binding->>send_at")
+    .eq("tenant_id", tenantId).eq("contact_id", command.contact_id).eq("status", "queued")
+    .eq("meta->comms_email_binding->>state", "prepared").eq("meta->comms_email_binding->>content_digest", contentDigest)
+    .neq("meta->comms_email_binding->>operation_id", body.operation_id).not("meta->comms_email_binding->>send_at", "is", null)
+    .order("scheduled_for", { ascending: true }).limit(1).maybeSingle();
+  if (waitingError) return response(503, { ok: false, outcome: notThisOne, code: "COMMS_EMAIL_RECONCILIATION_UNVERIFIED" });
+  const scheduledAt = typeof waiting?.scheduled_send_at === "string" ? waiting.scheduled_send_at : null;
+  if (scheduledAt && Date.parse(scheduledAt) + COMMS_EMAIL_SCHEDULED_RELEASE_GRACE_MS < Date.now()) {
+    // Its time has passed and its release is not settled: it may still be going out. Never a resend prompt.
+    return response(503, { ok: false, outcome: "outcome_unknown", code: "COMMS_EMAIL_IDENTICAL_IN_FLIGHT", scheduled_operation_id: waiting!.scheduled_operation_id,
+      operation_id: body.operation_id, delivery_confirmed: false });
+  }
+  if (scheduledAt) return response(409, { ok: false, outcome: notThisOne, code: "COMMS_EMAIL_ALREADY_SCHEDULED", send_at: scheduledAt, scheduled_operation_id: waiting!.scheduled_operation_id });
+
   // 4 — Readiness before any proposal: no card is raised for an email that cannot go out.
   const readiness = await readCommsEmailReadiness(admin as unknown as CommsEmailAdmin, { tenantId, actorUserId: user.id, contactId: command.contact_id, recipient: parties.recipient, connectorId: parties.connectorId, scheduled: body.send_at !== undefined }, key => Deno.env.get(key), runPreSend);
   if (!readiness.eligible || !parties.fromAddress) return response(422, { ok: false, outcome: readiness.eligible ? "needs_setup" : commsEmailReadinessOutcome(readiness), reason: readiness.eligible ? "TENANT_EMAIL_SENDER_MISSING" : readiness.reason });

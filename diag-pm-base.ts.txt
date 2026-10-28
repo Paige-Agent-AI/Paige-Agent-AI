@@ -1,0 +1,3 @@
+      return await dispatchJob(admin, job, { authHeader, webhookUrl: `${supabaseUrl}/functions/v1/paige-media-webhook` }, config);
+      return await dispatchJob(admin, updated, { authHeader, webhookUrl: `${supabaseUrl}/functions/v1/paige-media-webhook` }, config);
+    const platformAccrued = await readPlatformMediaAccrual((n: string, a: Record<string, unknown>) => admin.rpc(n, a));

@@ -1,5 +1,9 @@
 # Lessons Learned — recurring traps
 
+### A caller-authorized read is not automatically a service-side source check (2026-10-28, EXP09)
+
+**Symptom → cause → rule.** A genuine customer Billing reader exists, but adding its facts to CURA also requires original private-turn terminal and history validation. The reader resolves the actual caller JWT; the original terminal settles through a trusted service using the accepted actor/tenant/intent. An actor argument alone cannot substitute for that caller authority. Inspect both ends before wiring a shared read. Ask the originating domain for one compatible canonical source/currentness contract; never swap JWT claims, widen grants, copy a financial query or add another ledger to bridge the lanes. A closed DTO parser can progress independently, but synthetic parser proof does not establish native authorization, useful customer answers or a released integration. Original dependency: ANT51/358ca300; owning consumer packet: [customer Billing scope](../delivery/e09-customer-billing-business-scope.md).
+
 ### A crashed `tsc` reads as "no type errors" in the local ratchet (2026-10-28, EXP03)
 
 In a container with Node's default heap, `npx tsc --noEmit -p tsconfig.app.json` runs out of memory (exit 134, a V8 "heap out of memory" trace, no `TS` lines). `scripts/ci/tsc-ratchet.mjs` parses diagnostics from the output, finds none, and prints "no new type errors (baseline 10, current 0)". That is a false pass: `current 0` while the baseline is 10 is the tell. It hid real errors in EXP03's #3005 and #3015 until CI caught them. Run the ratchet with `NODE_OPTIONS=--max-old-space-size=7000`. A healthy run shows a non-zero `current` near the baseline. Separately, the app tsconfig is `strict: false`, so unions do not narrow on a boolean field (`if (!r.ok)`, `if (x.transport)`). Use a type-guard predicate.

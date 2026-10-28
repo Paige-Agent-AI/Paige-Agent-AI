@@ -5585,7 +5585,7 @@ hover is readable in light (shared `Button`).
 
 | Capability | God (operator desk) | Agency-as-tenant | Standalone Solo | Sub-account | Client | Anonymous | Deploy state |
 |---|---|---|---|---|---|---|---|
-| Email reply with inline check (Send → check → Send now) | Only inside a workspace it administers | ✓ owner/admin | ✓ owner/admin | ✓ owner/admin | — | — | PROOF OWED (harness rendered; signed-in drive owed) |
+| Email reply with inline check (Send → check → Send now) | Only inside a workspace it administers | ✓ owner/admin | ✓ owner/admin | ✓ owner/admin | — | — | LIVE (`f1360cf2`, bundle read back); signed-in drive owed |
 | Schedule an email reply from the composer | Only inside a workspace it administers | ✓ owner/admin | ✓ owner/admin | ✓ owner/admin | — | — | PROOF OWED |
 | Attach files to an email reply (PAIGE Email senders) | Only inside a workspace it administers | ✓ owner/admin | ✓ owner/admin | ✓ owner/admin | — | — | PROOF OWED |
 | Readable outline/ghost hover (every surface) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | PROOF OWED (106 buttons measured in harness) |

@@ -34,7 +34,7 @@ import { commsProviderExecutionAllowed } from "../_shared/comms-provider-boundar
 //      tenant has no subaccount.
 import { stampedWebhookUrls } from "../_shared/twilio-webhook-auth.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { purchaseNumber, resolveTwilioCreds, type SupabaseAdminLike } from "../_shared/twilio.ts";
+import { purchaseNumber, resolveTwilioCreds, voiceTwimlUrl, type SupabaseAdminLike } from "../_shared/twilio.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -196,6 +196,14 @@ Deno.serve(async (req) => {
   if (!subRow.inbound_webhook_secret) {
     return json({ needs_config: true, error: "inbound_webhook_secret_missing" });
   }
+  // The number's inbound VOICE webhook, built by the one helper repair-voice-twiml-app uses
+  // (§18), so a later repair recognises it as ours rather than refusing it as a custom route.
+  // Without this the number was bought SMS-only and inbound calls never reached voice-twiml.
+  // Checked BEFORE the buy: refusing here spends nothing.
+  const voiceUrl = voiceTwimlUrl(subRow.inbound_webhook_secret);
+  if (!voiceUrl) {
+    return json({ needs_config: true, error: "voice_twiml_url_unavailable" });
+  }
 
   // ── The price the human approved must be the price we are about to start charging ──────
   // This runs BEFORE `purchaseNumber`, because a check that happens after the money is spent
@@ -243,6 +251,7 @@ Deno.serve(async (req) => {
   const bought = await purchaseNumber(creds.data.accountSid, creds.data.authToken, phoneNumber, {
     smsUrl,
     statusCallback,
+    voiceUrl,
     friendlyName: friendlyName ?? undefined,
   }, creds.data.apiKeySid); // C-2a: SK… as the Basic-auth username (API-Key auth)
   if (!bought.ok || !bought.data) {

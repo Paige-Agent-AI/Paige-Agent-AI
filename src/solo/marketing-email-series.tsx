@@ -426,7 +426,7 @@ export function EmailSeriesView({ sequenceId, onBack, onOpen, onOpenSettings, on
         {s.status === "active" && <button type="button" className="btn btn-s" disabled={busy !== null} onClick={() => void act("pause", "email_sequence_pause", { p_sequence_id: s.id }, "Paused. Nothing sends until you resume. People who match in the meantime join then.")}><Ic.pause size={14}/>Pause</button>}
         {(s.status === "active" || s.status === "paused" || s.status === "blocked") && <button type="button" className="btn btn-s ms-danger" disabled={busy !== null || confirmStop} aria-expanded={confirmStop} onClick={() => setConfirmStop(true)}>Stop</button>}
         {s.status === "stopped" && onOpen && <button type="button" className="btn btn-s btn-p" disabled={busy !== null} onClick={() => void startCopy()}>{busy === "copy" ? "Copying…" : "Start a copy"}</button>}
-        {s.status === "paused" && <button type="button" className="btn btn-s btn-p" disabled={busy !== null} onClick={() => void act("resume", "email_sequence_resume", { p_sequence_id: s.id }, `Resumed. Emails that were waiting go out now${data.waiting_to_enter ? `, and the ${data.waiting_to_enter.toLocaleString()} ${data.waiting_to_enter === 1 ? "person" : "people"} waiting join within a few minutes` : ""}, all within today’s limit.`)}><Ic.play size={14}/>Resume</button>}
+        {s.status === "paused" && <button type="button" className="btn btn-s btn-p" disabled={busy !== null} onClick={() => void act("resume", "email_sequence_resume", { p_sequence_id: s.id }, `Resumed. Emails that were waiting go out now${data.waiting_to_enter ? `, and the ${data.waiting_to_enter.toLocaleString()} ${data.waiting_to_enter === 1 ? "person" : "people"} waiting join within a few minutes` : ""}.`)}><Ic.play size={14}/>Resume</button>}
       </div>
     </div>
     {notice && <p className={`me-notice ${notice.tone === "bad" ? "is-bad" : "is-ok"}`} role={notice.tone === "bad" ? "alert" : "status"}>{notice.text}</p>}
@@ -445,16 +445,15 @@ export function EmailSeriesView({ sequenceId, onBack, onOpen, onOpenSettings, on
 
     {locked && <section className="campaigns-surface mo-panel me-review" aria-labelledby="ms-review-h">
       <div className="mo-panel-head"><div><h2 id="ms-review-h">{changing ? "Ready to update" : "Ready to start"}</h2>
-        <p>{startSummary({ name: s.name, emails: v.steps.length, mode: v.entry_mode, matching: v.expected_entrants, from: fromLine, cap: data.sending.daily_cap, change: changing })}</p></div></div>
+        <p>{startSummary({ name: s.name, emails: v.steps.length, mode: v.entry_mode, matching: v.expected_entrants, from: fromLine, change: changing })}</p></div></div>
       <dl className="me-facts">
         <div><dt>Who enters</dt><dd>{v.entry_mode === "new_contacts" ? "New contacts from now on" : "Anyone who matches, now or later"}: {audienceWords}</dd></div>
         <div><dt>Emails</dt><dd>{v.steps.length} {v.steps.length === 1 ? "email" : "emails"} {spanWords(v.steps)}</dd></div>
         <div><dt>From</dt><dd>{fromLine}</dd></div>
-        <div><dt>Daily limit</dt><dd>Up to {data.sending.daily_cap.toLocaleString()} a day across all your marketing email; series emails wait, never dropped</dd></div>
       </dl>
       <p className="me-hint">Someone leaves when they unsubscribe, bounce or are marked do not contact{v.exit_on_goal !== "none" && goalLabel ? `, or ${goalLabel}` : ""}{v.exit_when_unmatched ? ", or they stop matching" : ""}. Each person goes through this series once. Approving once covers everyone who enters this version, now and later; if you change it after that, the change is a new version that needs your approval again. Nothing has been sent.</p>
       <div className="me-review-acts">
-        <button type="button" className="btn btn-s btn-g" disabled={busy !== null} onClick={() => void act("approve", "email_sequence_approve", { p_version_id: v.id }, changing ? "Updated. People carry on with the new emails from where they are." : v.entry_mode === "new_contacts" ? `Started. “${s.name}” sends by itself from now on. New contacts who match join as they arrive.` : `Started. People who match join within a few minutes; their first email goes out ${v.steps[0]?.delay_minutes ? waitWords(v.steps[0].delay_minutes, 0) : "within today’s limit"}.`)}>{busy === "approve" ? "Approving…" : changing ? "Approve changes" : "Approve and start"}</button>
+        <button type="button" className="btn btn-s btn-g" disabled={busy !== null} onClick={() => void act("approve", "email_sequence_approve", { p_version_id: v.id }, changing ? "Updated. People carry on with the new emails from where they are." : v.entry_mode === "new_contacts" ? `Started. “${s.name}” sends by itself from now on. New contacts who match join as they arrive.` : `Started. People who match join within a few minutes; their first email goes out ${v.steps[0]?.delay_minutes ? waitWords(v.steps[0].delay_minutes, 0) : "shortly after they join"}.`)}>{busy === "approve" ? "Approving…" : changing ? "Approve changes" : "Approve and start"}</button>
         <button type="button" className="btn btn-s" disabled={busy !== null} onClick={() => void act("changes", "email_sequence_edit", { p_sequence_id: s.id }, "Back to draft. The waiting approval is withdrawn; nothing was sent.")}>Make changes</button>
         <button type="button" className="btn btn-s btn-q" disabled={busy !== null} onClick={() => setDeclineOpen((o) => !o)} aria-expanded={declineOpen}>Not now</button>
       </div>
@@ -483,7 +482,6 @@ export function EmailSeriesView({ sequenceId, onBack, onOpen, onOpenSettings, on
         {s.status === "paused" ? <div><dt>Join when you resume</dt><dd>{data.waiting_to_enter == null ? "—" : data.waiting_to_enter.toLocaleString()}</dd></div>
         : <div><dt>Next send</dt><dd className="is-small">{s.status === "blocked" ? "On hold until fixed" : s.status === "stopped" ? "—" : when(data.emails.map((e) => e.next_at).filter(Boolean).sort()[0] ?? null) ?? "Nothing due yet"}</dd></div>}
       </dl>
-      {data.sending.remaining_today === 0 && s.status === "active" && data.people.in_now > 0 && <p className="me-notice is-warn">Today’s {data.sending.daily_cap.toLocaleString()} are used up across your email. Series emails that are due wait for tomorrow, and the emails after them wait too. Nothing is dropped.</p>}
       {(data.people.in_now + data.people.completed + data.people.left) === 0 ? <p className="me-hint">Nobody yet. {v.entry_mode === "new_contacts" ? "The next new contact who matches joins and gets email 1." : "People who match join within a few minutes."}</p>
         : <div className="ms-two">
           <div><p className="ms-sub">How far people got</p><ul className="ms-funnel">
@@ -524,7 +522,7 @@ export function EmailSeriesView({ sequenceId, onBack, onOpen, onOpenSettings, on
         </section>
 
         <section className="campaigns-surface mo-panel" aria-labelledby="ms-emails">
-          <div className="mo-panel-head"><div><h2 id="ms-emails">Emails <span className="ms-count">{steps.length} of up to {MAX_STEPS}</span></h2><p>Each wait counts from when the email before it was sent; the first, from when they join. If an email waits for the daily limit, the next one waits for it.</p></div>{editable && <button type="button" className="mo-ask" onClick={() => window.dispatchEvent(new CustomEvent("paige:open", { detail: { prompt: `Rewrite the emails in my series "${s.name}" (series ${s.id}). Read it first and ask me what should change before you write. Use only links and prices I give you or that are already in my business. Save it as a draft. Do not file it for approval unless I ask, and never say anything was sent.` } }))}><Ic.spark size={12}/>Write with PAIGE</button>}</div>
+          <div className="mo-panel-head"><div><h2 id="ms-emails">Emails <span className="ms-count">{steps.length} of up to {MAX_STEPS}</span></h2><p>Each wait counts from when the email before it was sent; the first, from when they join.</p></div>{editable && <button type="button" className="mo-ask" onClick={() => window.dispatchEvent(new CustomEvent("paige:open", { detail: { prompt: `Rewrite the emails in my series "${s.name}" (series ${s.id}). Read it first and ask me what should change before you write. Use only links and prices I give you or that are already in my business. Save it as a draft. Do not file it for approval unless I ask, and never say anything was sent.` } }))}><Ic.spark size={12}/>Write with PAIGE</button>}</div>
           <ol className="ms-spine" aria-label="Emails in order">{steps.map((step, i) => {
             const isOpen = editable && open === step.position;
             const sx = stats(step.position);
@@ -588,7 +586,7 @@ export function EmailSeriesView({ sequenceId, onBack, onOpen, onOpenSettings, on
               <strong>{x.from_name ? `${x.from_name} <${x.from_address}>` : x.from_address ?? "No address"}</strong><small>{x.healthy ? "Your email connection" : "Needs attention in Connections"}</small></button>)}
             <button type="button" role="radio" aria-checked={settings.sender.mode === "managed"} tabIndex={tabStop(settings.sender.mode === "managed")} disabled={!data.managed_sender.ok} onClick={() => changeSettings({ sender: { mode: "managed" } })}>
               <strong>{data.managed_sender.ok ? (data.managed_sender.from_name ? `${data.managed_sender.from_name} <${data.managed_sender.from_address}>` : data.managed_sender.from_address) : "PAIGE’s sender"}</strong>
-              <small>{data.managed_sender.ok ? "PAIGE’s sender · up to 500 a day · opens and clicks reported" : "Not set up for this business yet"}</small></button>
+              <small>{data.managed_sender.ok ? "PAIGE’s sender · opens and clicks reported" : "Not set up for this business yet"}</small></button>
           </div> : <p className="me-reach"><span>{fromLine}</span></p>}
         </section>
       </div>

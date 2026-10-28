@@ -213,8 +213,10 @@ Deno.serve(async (req) => {
       continue;
     }
     if (claim.waiting || !claim.recipients?.length) {
-      // At the daily ceiling, or another worker holds the rest of the batch. Settle what may be
-      // finished and stop rather than claim the same campaign again in a loop.
+      // Nothing was leased: another worker holds the rest of the batch, or the send-time check left
+      // everyone still planned out.
+      // (There is no daily ceiling since 20271120140003; `waiting` is kept for any older claim answer.)
+      // Settle what may be finished and stop rather than claim the same campaign again in a loop.
       notes.push({ campaign_id: claim.campaign.id, waiting: claim.waiting ?? "nothing_leased" });
       await admin.rpc("email_campaign_dispatch_settle", { p_campaign_id: claim.campaign.id });
       break;

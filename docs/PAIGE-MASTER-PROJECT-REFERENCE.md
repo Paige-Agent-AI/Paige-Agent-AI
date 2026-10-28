@@ -860,6 +860,25 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+
+**2026-10-28 UTC - EXP02 original Calendar source and bounded read QA closeout.**
+
+| Increment | Exact source/release evidence | Outcome and acceptance boundary |
+| --- | --- | --- |
+| [#3012 original Calendar Business Review source](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3012) | Reviewed d95839ef608c01d0ad25b595cdb8b5dfcb33b61e/tree2b1f51b5e616643db722d12b21916aae213271ff, final AUTHOR-REVIEW / LOWER ASSURANCE5676269248; all10 applicable exact-head checks and2 web contexts SUCCESS. Actual Preview SKIPPED/unassociated; prior43c capacity cancellation retained. Normal main21fff7a49632868382ce51da70d97c9eb4d428cb/treede3c4997e8498e4da25fe5d74b96bac280a8c08b preserves7 own runtime/test leaves and17,187 other incoming leaves. Original Edge40608331869/job122553347286 SUCCESS/artifact12782007461/ZIP360c902699efefcc150ed69e97e83b5341212186d65a420fc0f556285c9166f7 certifies both affected closures/config:37 raw+297 original pinned-emitter bindings/298 Git sources. Chat569/Review109 certified; native Review110 separately matches all37 raw sources/JWTtrue, version difference and cleanup permission_denied advisory retained. Original edge-live21fff; compiler not rerun locally. Web8fDKtzop READY and both public origins00:27UTC exact21fff/null/original assets/missing404. [Source receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3012#issuecomment-6457361635). | Existing calendar.agenda_read/list_team_bookings, bounded saved previews/native authority; no booking writer/provider/scheduler/privilege/action activation. Actual authorized-owner read/source/whole Chat-answer reload/original Calendar/native Back subset ANT52/e2015a9a and [QA receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3012#issuecomment-6457503140); one read settled by35.596s observation/UI20s, not SLO. Initial other-workspace observation INVALID/excluded. No appointment/scan/approval/provider action or protected monthly retry. Navigation gaps remain draft3019, not claimed fixed in production. Internal increment only; all19/nine/founder acceptance OPEN. |
+
+Current bounded Finance follow-up is ANT52/725879d5: actual existing authorized
+owner, correct Finance->Overview landing, all7 subpages/VERA, native tab keyboard,
+390px source layout/no document overflow, whole settled Forecast panel reload.
+Initial loading comparison and stale compositor frames are excluded and retained.
+Current containing webf1360cf295c2fbcf79c01cb8c544d4fc01ba7fd5 is original EXP03#3015,
+dpl_fu11zMqvyN9cKaYUfxth3PL7GNsH READY;01:11UTC both public origins exactf136/null/
+original assets/missing404, actual browser bootstrap path matches. Finance/src/solo
+leaves unchanged since21fff; earlier21fff expectation failed honestly on the new
+release before current verification. No customer data/screenshots are published.
+This is one-owner read/display/reload proof, not connected bank/accounting,
+second legitimate cohort, permission negatives, effects, Live or founder acceptance.
+
 **2026-10-27 UTC — EXP02 original activity source and actual endpoint eligibility.**
 
 | Increment | Exact released source and production evidence | Acceptance boundary |

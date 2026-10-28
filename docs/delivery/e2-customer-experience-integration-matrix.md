@@ -1,5 +1,61 @@
 # Experience 02 — Customer Experience Integration Matrix
 
+## October28 - original Calendar release and current Finance read proof
+
+Functional:3012 normally merged21fff7a49632868382ce51da70d97c9eb4d428cb after exact
+d958 review/10 applicable checks+2web success. Original Edge40608331869/artifact
+12782007461 verifies both closures/config,37raw+297 original emitter bindings/
+298Git sources. Native Chat569/Review110 separately read; certificate109 difference
+and cleanup advisory preserved. Original web8fDKtzop/both public origins verified.
+Master section4.0 carries the exact source/release row. No local compiler rerun
+is substituted for original deployment evidence.
+
+Authenticated O01/O02/O05/O14/O16 subset ANT52/e2015a9a: actual existing owner,
+Calendar partial/source/time/window/absence-not-capacity, one ordinary read-only
+question, whole business answer/source retained on reload, existing original
+Calendar link and native Back. Settled by35.596s observation/UI20s, not exact
+latency/SLO. Initial wrong workspace INVALID/excluded. Initial unnormalized saved
+answer mismatch retained; only observed transient Done/trace/footer chrome was
+excluded, all business/source text/punctuation/figures/date content preserved.
+No appointment mutation, scan, approval, provider or protected monthly retry.
+Native Calendar Back success does not close Sales Back-loading ANT161/1117655d.
+
+Authenticated O04/O14 follow-up ANT52/725879d5: actual Finance menu->Overview,
+all7 subpages/VERA, actual390px original source presentation, no page overflow,
+selected tabs reachable in existing strip, native ArrowLeft moves Forecasting
+to Profitability with matching focus. Whole settled Forecast content exactly
+equals pre-reload; initial Reading-permitted-targets loading mismatch is retained
+and excluded until settled. Initial stale compositor/strip transition frames
+excluded; seven confirmed narrow frames inspected. Unavailable bank/accounting/
+obligation/profit sources remain explicit; no unsupported forecast or bank-cash
+claim. Actual financial text/screenshots stay private. Current containing web is
+original EXP03#3015/f1360cf295c2fbcf79c01cb8c544d4fc01ba7fd5, READYdpl_fu11zMqvyN9cKaYUfxth3PL7GNsH.
+Both origins/source assets/missing404 independently verified01:11UTC, browser
+bootstrap /assets/main-Dc0Cb9PB.js matches; src/solo/Finance unchanged since21fff.
+Earlier21fff expectation failed on the normal new release before refreshed proof.
+
+Visual/Experiential:3018 full original shell/drawer/CSS/eight sizes+390/syntheticB,
+native200-percent zoom/drawer scroll/Tab/Escape/opener/Enter/Chat-fold preservation
+verified locally, with explicit synthetic sources/disabled Chat and actual raster
+differences. Material P1 PRRT_kwDOSAAXqM6w8IJP remains OPEN: second legitimate
+authenticated cohort and candidate customer proof owed, no waiver/new account.
+3018 DRAFTfe4509f6f/review5676545442; runtime source unchanged/157controls.
+3019 nav DRAFT9cec/review5676492858/134controls restores existing typed destination
+and generic conditional model guidance, while original refs stay excluded from
+model context. No released correction/model-compliance claim.
+
+Catalogue3014 final2237: I1 hold CLEAR after original3016/4400 production20010008,
+native frontier independently read. Current f136 prospectivefe9e76bd preserves
+6own leaves and17,308 outside incoming leaves EXACT; no merge inferred. Required
+exact verify pending. Nine3Limited/3Unverified/3ComingSoon/AccessUnverified and
+ALG03/06/11/12Partial/13Unverified unchanged. O07 still needs accepted-intent/
+Spine/admission integration into the ALREADY mounted original private onboarding
+Work host, not a second runner. No scan/worker/provider/action activation.
+Founder Acceptance/all19 remain OPEN; historical9/0 and12/0/4, monthly
+UNKNOWN/UNRETRIED/uninspected retained. Resources returned/own tabs closed,
+viewport/native zoom restored, original customer tab preserved.
+
+
 ## October27 22:45UTC — verified release, customer proof and next Calendar consumer
 
 #3004 merged normally as cea5d4942ef924f25373d1962616e3cfbf440219 after reviewed

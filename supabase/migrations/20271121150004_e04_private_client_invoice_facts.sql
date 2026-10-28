@@ -34,6 +34,11 @@ BEGIN
  SELECT * INTO p FROM pg_catalog.pg_proc WHERE oid=pg_catalog.to_regprocedure('public.client_portal_invoices(uuid,integer,jsonb)');
  IF NOT FOUND OR pg_catalog.md5(p.prosrc) NOT IN ('28df84d29fcde1e64bb09153f4d3e77b','91f0344a6231205da5763af3755f0ad3')
   OR pg_catalog.pg_get_userbyid(p.proowner)<>'postgres' OR NOT p.prosecdef OR p.provolatile<>'v'
+  OR p.prorettype<>'jsonb'::regtype OR p.proretset OR p.pronargs<>3 OR p.pronargdefaults<>3
+  OR p.proargnames IS DISTINCT FROM ARRAY['p_tenant_id','p_limit','p_after']::text[]
+  OR p.provariadic<>0 OR p.proargmodes IS NOT NULL OR p.proallargtypes IS NOT NULL
+  OR p.proisstrict OR p.proleakproof OR p.proparallel<>'u' OR p.prokind<>'f'
+  OR p.prolang IS DISTINCT FROM (SELECT oid FROM pg_catalog.pg_language WHERE lanname='plpgsql')
   OR p.proconfig IS DISTINCT FROM ARRAY['search_path=public, pg_temp']::text[]
   OR p.proacl IS NULL
   OR EXISTS(SELECT 1 FROM pg_catalog.aclexplode(p.proacl) a WHERE a.privilege_type<>'EXECUTE' OR a.is_grantable
@@ -48,6 +53,11 @@ BEGIN
  IF core_oid IS NOT NULL THEN
   SELECT * INTO p FROM pg_catalog.pg_proc WHERE oid=core_oid;
   IF pg_catalog.md5(p.prosrc)<>'d86613d312960b0d507898210e7e5197' OR p.prosecdef OR p.provolatile<>'v'
+   OR p.prorettype<>'jsonb'::regtype OR p.proretset OR p.pronargs<>4 OR p.pronargdefaults<>0
+   OR p.proargnames IS DISTINCT FROM ARRAY['_tenant','_client','p_limit','p_after']::text[]
+   OR p.provariadic<>0 OR p.proargmodes IS NOT NULL OR p.proallargtypes IS NOT NULL
+   OR p.proisstrict OR p.proleakproof OR p.proparallel<>'u' OR p.prokind<>'f'
+   OR p.prolang IS DISTINCT FROM (SELECT oid FROM pg_catalog.pg_language WHERE lanname='plpgsql')
    OR p.proconfig IS DISTINCT FROM ARRAY['search_path=""']::text[] OR pg_catalog.pg_get_userbyid(p.proowner)<>'postgres'
    OR p.proacl IS NULL OR EXISTS(SELECT 1 FROM pg_catalog.aclexplode(p.proacl) a
     WHERE a.privilege_type<>'EXECUTE' OR a.is_grantable OR a.grantee<>p.proowner) THEN
@@ -76,6 +86,11 @@ BEGIN
  END IF;
  SELECT * INTO p FROM pg_catalog.pg_proc WHERE oid=pg_catalog.to_regprocedure('public._client_portal_invoice_facts_for_client(uuid,uuid,integer,jsonb)');
  IF NOT FOUND OR pg_catalog.md5(p.prosrc)<>'d86613d312960b0d507898210e7e5197' OR p.prosecdef OR p.provolatile<>'v'
+  OR p.prorettype<>'jsonb'::regtype OR p.proretset OR p.pronargs<>4 OR p.pronargdefaults<>0
+  OR p.proargnames IS DISTINCT FROM ARRAY['_tenant','_client','p_limit','p_after']::text[]
+  OR p.provariadic<>0 OR p.proargmodes IS NOT NULL OR p.proallargtypes IS NOT NULL
+  OR p.proisstrict OR p.proleakproof OR p.proparallel<>'u' OR p.prokind<>'f'
+  OR p.prolang IS DISTINCT FROM (SELECT oid FROM pg_catalog.pg_language WHERE lanname='plpgsql')
   OR p.proconfig IS DISTINCT FROM ARRAY['search_path=""']::text[] OR pg_catalog.pg_get_userbyid(p.proowner)<>'postgres'
   OR p.proacl IS NULL OR EXISTS(SELECT 1 FROM pg_catalog.aclexplode(p.proacl) a
    WHERE a.privilege_type<>'EXECUTE' OR a.is_grantable OR a.grantee<>p.proowner) THEN

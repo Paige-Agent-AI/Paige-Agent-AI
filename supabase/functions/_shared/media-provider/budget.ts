@@ -29,21 +29,28 @@ import { enforceBudget, type BudgetBand, type BudgetDecision } from "../router-b
 import type { MediaMode } from "./mod.ts";
 
 export type MediaApprovalPolicy =
-  | { approvalRequired: false; reason: "within_draft_allowance" }
-  | { approvalRequired: true; reason: "video_requires_approval" | "premium_model" | "above_draft_allowance" };
+  | { approvalRequired: false; reason: "standard_no_action_gate" }
+  | { approvalRequired: true; reason: "video_requires_approval" | "premium_model" };
 
+/**
+ * The approval boundary is ACTION-SPECIFIC only (Coordinator correction a42e0598 on #3009):
+ * video always confirms (a consequential action class) and premium models confirm (a
+ * model-class choice) — neither trigger reads money. The former above_draft_allowance
+ * trigger — confirmation required SOLELY because a USD estimate exceeded a USD allowance —
+ * was a per-use monetary gate and is REMOVED under the billing supersession; standard-tier
+ * image/copy jobs proceed without it, whatever the estimate.
+ */
 export function resolveApprovalPolicy(input: {
   mode: MediaMode;
   tier: "standard" | "premium";
   estimatedCostUsd: number;
   draftAllowanceUsd: number;
 }): MediaApprovalPolicy {
+  void input.estimatedCostUsd;
+  void input.draftAllowanceUsd;
   if (input.mode === "video") return { approvalRequired: true, reason: "video_requires_approval" };
   if (input.tier === "premium") return { approvalRequired: true, reason: "premium_model" };
-  if (input.estimatedCostUsd > input.draftAllowanceUsd) {
-    return { approvalRequired: true, reason: "above_draft_allowance" };
-  }
-  return { approvalRequired: false, reason: "within_draft_allowance" };
+  return { approvalRequired: false, reason: "standard_no_action_gate" };
 }
 
 /**

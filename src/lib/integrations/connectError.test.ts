@@ -38,6 +38,16 @@ describe("structured errors reach their copy", () => {
     expect(message).not.toContain("try again in a moment");
   });
 
+  it("a pre-buy voice-setup refusal (Solo numbers) says setup is unfinished, never 'try again'", async () => {
+    // useSoloNumbers routes every comms-purchase-number refusal through resolveFunctionError.
+    const { code, message } = await resolveFunctionError({
+      error: null, data: { needs_config: true, error: "voice_twiml_url_unavailable" }, action: "buy that number",
+    });
+    expect(code).toBe("voice_twiml_url_unavailable");
+    expect(message).toContain("isn’t finished being set up");
+    expect(message).not.toContain("try again in a moment");
+  });
+
   it("reads a NESTED {code, message} code, which the A2P functions actually return", async () => {
     // This is the shape `comms-a2p-draft` and `comms-a2p-submit` document and emit.
     // Reading only the string form dropped every one of their refusals on the floor.

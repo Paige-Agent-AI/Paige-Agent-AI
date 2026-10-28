@@ -622,6 +622,21 @@ Owner approval 2026-10-27 ("approved, go with your recommendations and start bui
 
 **Evidence:** `supabase/tests/exp08_team_hub_agent_turn_states.sql` (disposable PG16, in CI): every state, private channel non-member, another workspace, owner on a member's DM, removed person, foreign question ids, staging validation, and 14/14 mutants; the server unit tests (B1 transport mutants, S2, Bring in, receipts; 9 of 9 server mutants killed); `src/solo/team-hub` vitest 252 (10 UI mutants, 9 killed, the 10th equivalent); rendered harness 68 frames with the list column measured. **Owed:** the §32 persisted-apply read-back of `20271119010008` after merge, and the authenticated drive.
 
+### EXP08 Team Hub agents A1c: "is writing…" for everyone, @channel / @here, the Slack-style @ list (2026-10-27; branch `exp08-hub-agents-a1c`, NOT YET MERGED, on top of the unmerged A1b)
+
+**What changed on the branch:** migration `20271120020008` re-emits `team_hub_agent_turn_states` so a running reply reads `answering` to everyone who can see the conversation (state only), adds `team_hub_messages.broadcast_mention` and `team_hub_message_broadcast_recipients` (RLS on, no grant, retired with the account), gives `team_hub_post_message` an optional `p_broadcast_mention` (channel only, never asks an agent) and adds `broadcast` to the message JSON only when set; round 2 adds `team_hub_channel_members.last_active_at`, written only by the person's own read door `team_hub_mark_read` (re-emitted, one marked hunk), and md5(prosrc) guards on every body the file calls or replaces. On screen: *<AGENT> is writing…* for every viewer (re-read every 3 s while visible, at most 2 minutes from when fast re-reading began for the conversation); only the FAILED private-answer box is neutral (owner ruling; the unknown box keeps the agent tint, §28); the @ list — in the conversation's box and, round 2, a thread's — is people, then *Your Paige team*, then *Everyone* (@channel, @here) in a channel with someone besides the author, matching from the start of any word, closest first; @channel / @here render as the neutral chip; the dead specialist handoff is stripped (§30). @here means "posted in the channel, or their own read door ran for it, in the last 10 minutes" — never `last_read_at`, which joining, a seat start and the Team conversations toggle also set (no presence substrate exists); a broadcast that reaches nobody is stored as a plain message. Team Hub has no notification or unread-mention count for ANY mention yet: @channel / @here store recipients and show a chip; alerts are a later increment (contract "A1c notes").
+
+| Tier | A1c |
+|---|---|
+| God / Operator | ✗ no seat; the read and the post door refuse `not_member` |
+| Agency / Enterprise | ✗ the doors refuse `unavailable`; no agent UI (§60); no @channel / @here (Team Hub not open there) |
+| Standalone (Solo) | ✓ any active seat with Team conversations on: sees *is writing…* for any reply being written in a conversation it can see; offers and sends @channel / @here in a channel; reached by one only as a member of that channel with Team conversations on (@here: posted there, or opened / read it through the read door, in the last 10 minutes — not merely joined, seated or switched on); nobody is alerted; an owner reads nothing on a member's agent DM (`not_found`) |
+| Sub-account | ✗ the doors refuse `unavailable` (Team Hub not open there) |
+| Client | ✗ no seat |
+| Anonymous | ✗ no grant (`permission denied`) |
+
+**Evidence:** `supabase/tests/exp08_team_hub_a1c.sql` (disposable PG16, in CI): production md5 guards for the post door and the message JSON, replay no-op, byte identity with the A1c hunks undone, writing for another member and the owner in a team channel and a thread, nothing once posted, ended or stale, private-channel non-member, agent DM, another workspace, @channel / @here recipients by the activity rule with join / seat-start / toggle values left in place and not reached, an agent reply not counted as the asker posting, read door at 9 minutes reached and at 11 not, an empty broadcast stored plain, the read door the only writer of `last_active_at`, refusals outside a channel, retry, every existing caller resolving, storage backstops, the md5 guard refusing drift, 16/16 mutants; `src/solo/team-hub` vitest 281 with client mutants killed; rendered harness 18 frames. Migration order re-checked round 2: production newest `20271119000000`; A1b `20271119010008` and I1 `20271119020008` apply first; `20271120000000` on `origin/claude/great-heisenberg-u7kyd9` sorts above — renumber if it lands first. **Owed:** the §32 persisted-apply read-back of `20271120020008` after merge (with A1b's `20271119010008` before it), and the authenticated drive.
+
 ### Solo Settings → Team: the screens for the team lifecycle (2026-10-26; owner-approved design, APPROVED-FROZEN §28)
 
 What a person can now do from **Settings → Team** (`/solo/{account}/settings/team`), each through the seam already listed above — no new writer:
@@ -2183,6 +2198,8 @@ Legend as above: **✓** live · **—** not built · **N/A** tier not opened ye
 | `connections/registration` | Carrier (10DLC) registration: **PAIGE drafts the regulatory copy**, **the reviewed copy is saved**, and **the business facts blocking the filing are editable here** — a second EDITOR of the one canonical record, not a second record. Setup still owns the full record and its own five-subtab surface | **partly wired** — `comms-a2p-draft` (a real model call) and `comms-a2p-submit` (save only) both run; **filing with a carrier does not exist** and the surface says so rather than reporting a submitted state it cannot produce. The business-record editor writes through `save_solo_business_context`, the same seam Setup uses, so the two surfaces cannot disagree (§57); it is Owner-only and mounts the canonical adapter only when opened. The four carrier-required representative identity columns are **derived** by `sync_a2p_representative_identity` (20261201000700) — before it, no writer populated them and brand filing could never start. The grading ladder stays in `communications`; this area holds the acts (§18) | N/A | N/A | ✓ | N/A | — |
 | `connections/health` | Provider-readiness and failure-state vocabulary | **structure-only** — every row reports "Not reported" rather than a measured value | N/A | N/A | ✓ | N/A | — |
 | `connections/available` (visible label: **Add channel**) | A job-led control desk for Email and inbox, Phone and messaging, and Calendar and booking, plus one deliberate Integrations handoff | **source-backed orchestration surface** — lists only canonically operating channels; distinguishes pending, unverified, registration-required, failed-read and unavailable states; withholds the best-next action until owning reads resolve; delegates writes to Communications, Registration, Health or Calendars and performs no provider mutation itself | N/A | N/A | ✓ | N/A | — |
+
+**Solo calling, 2026-10-28 (ON BRANCH, NOT LIVE until merge + edge deploy).** A number bought through `comms-purchase-number` is now wired for inbound voice at purchase (`VoiceUrl` from `voiceTwimlUrl`), so inbound calling works on new numbers for every tier that can buy one (Solo ✓, Sub-account ✓, Agency-as-tenant ✓ — owner/admin; Client/Anonymous —). Numbers bought before this ship are unchanged. A call that did not connect now says "No answer." / "The line was busy." / "The call was cancelled." (status still `failed`); inbound rows settle by the answering seat. Calling still needs a number per business: today only one Solo tenant has one (provisioning, owner decision). Decision log: October28 "Solo calling".
 
 **The caller-ID defect this slice found, recorded because it shipped invisibly (§13).**
 `tenant_phone_numbers.is_primary` decides which number a workspace's outbound calls and texts come
@@ -5553,13 +5570,16 @@ onto the door in the next piece, so every row below is reachable by data only to
 | Scheduled release when due (seat checked, not the open workspace) | — | ✓ | ✓ | ✓ | — | — | PROOF OWED |
 | Cancel a scheduled email from the thread | Only inside a workspace it administers | ✓ any owner/admin | ✓ any owner/admin | ✓ any owner/admin | — | — | PROOF OWED |
 | "Scheduled" / "Not sent" with reason in the thread | — | ✓ | ✓ | ✓ | — | — | PROOF OWED |
+| Paige chat schedules it (`comms_send_email` `send_at`; card shows When + Schedule send) — 2026-10-28 | Only inside a workspace it administers | ✓ owner/admin | ✓ owner/admin | ✓ owner/admin | — | — | BUILT, not merged (harness render only; authenticated chat drive owed) |
+| The same email to the same contact while one is still scheduled (another time, or "send now") is refused `COMMS_EMAIL_ALREADY_SCHEDULED` with its time, card and confirm alike — 2026-10-28 | Only inside a workspace it administers | ✓ | ✓ | ✓ | — | — | BUILT, not merged (door handler tests only) |
 
 **Do-not-disturb (2026-10-27, door change):** a send with a time is no longer refused because the
 business's own do-not-disturb is on *now*; that one hold is judged when the email is released, and a hold
 still in force then refuses and closes it with its reason. Every other hold (suppression, consent, client
 do-not-disturb) still refuses at the card. Same tiers as the rows above.
 
-Lead replies (`approval_id`), agreement signing requests and Paige chat sends stay immediate. SQL proof:
+Lead replies (`approval_id`) and agreement signing requests stay immediate. Paige chat sends can carry a
+time since 2026-10-28 (row above); without one they stay immediate, unchanged. SQL proof:
 `supabase/tests/comms_email_scheduled_send.sql` (CI: paige-spine-contract).
 
 ### Conversations — governed email attachments (EXP03 O12 piece 2, 2026-10-27)
@@ -5585,7 +5605,7 @@ hover is readable in light (shared `Button`).
 
 | Capability | God (operator desk) | Agency-as-tenant | Standalone Solo | Sub-account | Client | Anonymous | Deploy state |
 |---|---|---|---|---|---|---|---|
-| Email reply with inline check (Send → check → Send now) | Only inside a workspace it administers | ✓ owner/admin | ✓ owner/admin | ✓ owner/admin | — | — | PROOF OWED (harness rendered; signed-in drive owed) |
+| Email reply with inline check (Send → check → Send now) | Only inside a workspace it administers | ✓ owner/admin | ✓ owner/admin | ✓ owner/admin | — | — | LIVE (`f1360cf2`, bundle read back); signed-in drive owed |
 | Schedule an email reply from the composer | Only inside a workspace it administers | ✓ owner/admin | ✓ owner/admin | ✓ owner/admin | — | — | PROOF OWED |
 | Attach files to an email reply (PAIGE Email senders) | Only inside a workspace it administers | ✓ owner/admin | ✓ owner/admin | ✓ owner/admin | — | — | PROOF OWED |
 | Readable outline/ghost hover (every surface) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | PROOF OWED (106 buttons measured in harness) |

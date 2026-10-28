@@ -1001,7 +1001,12 @@ const SOURCES = {
   "supabase/functions/fetch-url-content/index.ts": "4e10fe5cd2e189ced5c0cf929586626297b7c9653b34f8a109eede4b88d2926b",
   "supabase/functions/kb-ingest-doc/index.ts": "09c54913f8c844a0e7bb2826947cb002496fb800c34d2e46ae0f6a3f5a0ea7a7",
   "supabase/functions/comms-search-numbers/index.ts": "828ac020a9c984a808e3c9375748f1762a8667bd5a9da1c81d1fac902782d4f8",
-  "supabase/functions/comms-purchase-number/index.ts": "23f479730d2b658fe231dcbe33e3fcd864ec07e9f87ce116742f83e84c8e9237",
+  // Purchased-number voice wiring (2026-10-28), AUTHOR-REVIEW / LOWER ASSURANCE before renewal: the
+  // handler now builds the number's inbound voice webhook with the existing voiceTwimlUrl(secret)
+  // helper (the one repair-voice-twiml-app stamps), refuses needs_config/voice_twiml_url_unavailable
+  // BEFORE any buy when it cannot, and passes voiceUrl to purchaseNumber. Authority, tenant derivation,
+  // price verification, audit and record exits are unchanged. Old 23f47973… reproduced from 4fb4b0398.
+  "supabase/functions/comms-purchase-number/index.ts": "34a2ed1199818913b5e861be571095cbc3a212adb3f5062a33060e48f7a921e4",
   "supabase/functions/comms-a2p-draft/index.ts": "49bd8acc5ed4ec7d60ba79b917438ae5eba0ce2ffcbf862baa9caa56293ada29",
   "supabase/functions/paige-write-back/index.ts": "5ff11463820b7c38e69f683cbcd8542359d5a72c37724c06846bf3dcc6d41de8",
   // EXP05 durable-outcome review a5f5e38ce, AUTHOR-REVIEW / LOWER ASSURANCE.
@@ -1112,7 +1117,11 @@ const SOURCES = {
   // Operator retirement adds opt-in timeout/no-retry controls; ordinary callers retain
   // their existing behavior. Renewed non-author review and actual retry controls are
   // recorded on PR #1897; no other incumbent snapshot is regenerated or accepted.
-  "supabase/functions/_shared/twilio.ts": "afe6b57d9ed91c00e6517856f7b17c36f147fee5b88afb3450586c4393d6565a",
+  // Purchased-number voice wiring (2026-10-28), AUTHOR-REVIEW / LOWER ASSURANCE before renewal: the
+  // only change is purchaseNumber — PurchaseNumberOptions gains optional voiceUrl, and the form body
+  // gains VoiceUrl + VoiceMethod=POST when it is set (omitted otherwise, so no other request changes).
+  // No other function, auth path or request shape is touched. Old afe6b57d… reproduced from 4fb4b0398.
+  "supabase/functions/_shared/twilio.ts": "3b6fe3eeb8c6e4211e82012d08f63b5d8b14811ee780fef19eaa735b6c5d0b1d",
   // SendGrid Inbound Parse (2026-10-27), AUTHOR-REVIEW / LOWER ASSURANCE: the inbound registry gains an
   // optional provider qualifier — InboundChannelAdapter.provider?, a `channel:provider` key when it is set,
   // and getInboundAdapter(ch, provider?) — so handle-inbound-email can register its SendGrid adapter beside
@@ -1369,8 +1378,19 @@ const ANCESTRY_SOURCES = {
  "supabase/functions/_shared/cura-knowledge-teaching.ts": "b421c4302a7772d7b376a7ff99cd96691991593eb3ab1db31d1ac82a9825df87",
  // Exact non-author-reviewed generic-email C4b ancestry at a9de011b6;
  // proposal b4ebdf9d / review 8b83d5c5. Existing114 pins and verifier unchanged.
- "supabase/functions/_shared/paige-turn/resume.ts": "dbcdf4de1ca3d1e36d4841650fcb42a43d3d747ddc0c88488e80bb3859cbaff6",
- "supabase/functions/_shared/comms-email/chat.ts": "b2c63f538935839cbafa9642b2d0ca83b8c24b1fc61be8200bda2efc19e9044e",
+ // 2026-10-28 EXP03 chat scheduled email (review MINOR 5): renewed from dbcdf4de (reproduced from main
+ // f1360cf2). doorResumeShape's comms branch carries a stored canonical send_at into the recorded call
+ // and refuses a non-canonical one; every other branch unchanged.
+ "supabase/functions/_shared/paige-turn/resume.ts": "41da840ec5b42ebd65e923fcb5c2cfa5310d7ba867e9b549139b3d31cc4cd22a",
+ // 2026-10-28 EXP03 chat scheduled email: renewed from b2c63f53 (reproduced from main f1360cf2).
+ // Adds only optional send_at: proposal passes it top-level (never in the command) and into the
+ // operation id when present; an approved/pinned call replays the stored send_at verbatim; card
+ // preview carries a canonical send_at and file names/sizes; "scheduled" and three send-time
+ // refusal notes. Selection, approval lookup and every other branch unchanged.
+ // 2026-10-28 review round 1: renewed from 4a71458d (reproduced from 025ff551). send_at description asks
+ // for the offset on the TARGET date (no fixed example); "scheduled" never reads Not sent and points to
+ // the card's local time; COMMS_EMAIL_ALREADY_SCHEDULED note. Nothing else.
+ "supabase/functions/_shared/comms-email/chat.ts": "0bf1f64ec1d82e5ef435fdf06cf07fd8169e2853e3c5401eb1c8592b00d81608",
 };
 export function validateIncumbentResourceBindings(chatText,sourceTexts) {
  const findings=[],tools=new Map();

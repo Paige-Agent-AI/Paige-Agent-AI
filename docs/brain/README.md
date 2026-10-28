@@ -1,3 +1,18 @@
+## EXP02 October27 bounded customer proof and catalogue preparation
+
+Released3004 original activity now has a positive ordinary-owner Executive/read/
+source/Chat/answer-and-source reload case, ANT52/1e80826a; actual records remain
+quoted/partial and do not verify business-action completion or original receipts.
+Original history/empty composer/saved read step preserved; own browser tab closed,
+resource returned. Other roles/cohorts/Live/actions/full19/nine/founder remain open.
+Latest proof and footer/observer boundaries are in the ORIGINAL matrix below.
+The narrowly guarded CAP017 description follow-up preserves Limited/access and
+every execution field; original catalogue20 native PASS groups, not production
+activation. Release depends on original Calendar3012 gates/source verification.
+No shared presenter, registry, provider, permission, schema authority or agent
+runtime replacement. Protected monthly UNKNOWN/UNRETRIED and historical baselines
+are unchanged.
+
 ## EXP02 October27 release and original19 continuation
 
 #3004 actual mergecea5d494/e510 is source-released through original containing

@@ -136,6 +136,7 @@ function purchaseFailureCopy(code: string | undefined): string {
     case "twilio_subaccount_not_provisioned":
     case "twilio_subaccount_row_missing":
     case "inbound_webhook_secret_missing":
+    case "voice_twiml_url_unavailable":
       return "Your business isn't set up to buy numbers yet. Once setup finishes you'll be able to grab one.";
     case "number_unavailable":
       return "That one just went to someone else. Pick another and try again.";

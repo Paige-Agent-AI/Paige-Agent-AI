@@ -13,7 +13,7 @@
 import { COMMS_EMAIL_SEND_CAPABILITY } from "../paige-spine/domains/comms.ts";
 import { PORTAL_INVITATION_TOOLS, PORTAL_INVITATION_TOOL_NAMES, dispatchPortalInvitationChat } from "../client-portal-invitation/chat.ts";
 import { CRM_APPROVAL_CANDIDATE_LIMIT, resolveCrmApprovedFingerprint } from "../crm-command/approval-resolution.ts";
-import { COMMS_EMAIL_ACTION, COMMS_EMAIL_BODY_MAX, COMMS_EMAIL_SUBJECT_MAX, COMMS_EMAIL_TOOL, FINGERPRINT, UUID, parseCommsEmailCommand, type CommsEmailCommand } from "./contract.ts";
+import { COMMS_EMAIL_ACTION, COMMS_EMAIL_BODY_MAX, COMMS_EMAIL_SUBJECT_MAX, COMMS_EMAIL_TOOL, FINGERPRINT, UUID, canonicalCommsEmailSendAt, parseCommsEmailCommand, type CommsEmailCommand } from "./contract.ts";
 
 const DOOR = "comms-email-command";
 
@@ -26,6 +26,7 @@ const DESCRIPTIONS: Record<string, Record<string, unknown>> = {
   subject: { type: "string", minLength: 1, maxLength: COMMS_EMAIL_SUBJECT_MAX, description: "One-line subject, no line breaks." },
   body: { type: "string", minLength: 1, maxLength: COMMS_EMAIL_BODY_MAX, description: "The email body as plain text. Blank lines separate paragraphs. No HTML." },
   connector_id: { type: "string", format: "uuid", description: "Omit unless this tool returned a list of sender addresses and the person chose one; then pass that choice's connector_id." },
+  send_at: { ...kitProperties.send_at as object, description: "Only when the person asked for a later time. First read the business time zone with read_business_time_zone and confirm the time in words with the person. Then give it as ISO 8601 with the UTC offset in force on the TARGET date in that zone (daylight saving can differ from today's offset), 2 minutes to 30 days ahead. Leave it out to send on approval." },
 };
 const toolProperties = Object.fromEntries(Object.keys(kitProperties).map((key) => {
   const described = DESCRIPTIONS[key];
@@ -57,10 +58,11 @@ function canonical(value: unknown): unknown {
   return value;
 }
 /** Assistant/tool transcript growth cannot mint a second operation for the same user command. */
-export async function commsEmailOperationId(tenant: string, actor: string, command: unknown, turn: Turn, origin?: { action_id: string; approval_id: string }): Promise<string> {
+export async function commsEmailOperationId(tenant: string, actor: string, command: unknown, turn: Turn, origin?: { action_id: string; approval_id: string }, sendAt?: string): Promise<string> {
   // Omission retains the incumbent unbound identity byte for byte. A server-bound follow-up
   // adds its exact action/approval pair, so identical words cannot borrow another follow-up.
-  const bytes = new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(JSON.stringify(canonical({ namespace: "comms_email_chat_v1", tenant, actor, command, turn, ...(origin ? { origin } : {}) }))))).slice(0, 16);
+  // A canonical send time does the same: the same words for another minute are another email.
+  const bytes = new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(JSON.stringify(canonical({ namespace: "comms_email_chat_v1", tenant, actor, command, turn, ...(origin ? { origin } : {}), ...(sendAt ? { send_at: sendAt } : {}) }))))).slice(0, 16);
   bytes[6] = (bytes[6] & 15) | 64; bytes[8] = (bytes[8] & 63) | 128;
   const hex = [...bytes].map((b) => b.toString(16).padStart(2, "0")).join("");
   return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
@@ -115,14 +117,30 @@ function storedApproval(args: Record<string, unknown>): string | null {
 }
 
 const text = (value: unknown, max: number): string | null => typeof value === "string" && value.length > 0 && value.length <= max ? value : null;
+const canonicalSendAt = (value: unknown): string | null => { try { return canonicalCommsEmailSendAt(value); } catch { return null; } };
+type PreviewFile = { name: string; size: number; mime: string };
+function previewFiles(value: unknown): PreviewFile[] | null {
+  if (!Array.isArray(value) || value.length < 1 || value.length > 10) return null;
+  const out: PreviewFile[] = [];
+  for (const f of value) {
+    if (!record(f) || !text(f.name, 120) || !text(f.mime, 255) || typeof f.size !== "number" || !Number.isInteger(f.size) || f.size < 1) return null;
+    out.push({ name: f.name as string, size: f.size, mime: f.mime as string });
+  }
+  return out;
+}
 /** The card's email preview, narrowed to exactly the fields the person approves. Null when malformed. */
-export function commsEmailConfirmPreview(value: unknown): { kind: "email"; to_name?: string; to_address: string; from_address: string; subject: string; body_text: string } | null {
+export function commsEmailConfirmPreview(value: unknown): { kind: "email"; to_name?: string; to_address: string; from_address: string; subject: string; body_text: string; send_at?: string; attachments?: PreviewFile[] } | null {
   if (!value || typeof value !== "object" || Array.isArray(value)) return null;
   const p = value as Record<string, unknown>;
   const to = text(p.to_address, 320), from = text(p.from_address, 320), subject = text(p.subject, COMMS_EMAIL_SUBJECT_MAX), body = text(p.body_text, COMMS_EMAIL_BODY_MAX);
   if (p.kind !== "email" || !to || !from || !subject || !body) return null;
   if (p.to_name !== undefined && p.to_name !== null && text(p.to_name, 200) === null) return null;
-  return { kind: "email", ...(typeof p.to_name === "string" && p.to_name ? { to_name: p.to_name } : {}), to_address: to, from_address: from, subject, body_text: body };
+  // A time or file list the card cannot show faithfully drops the whole preview, never just itself.
+  const sendAt = p.send_at === undefined ? undefined : canonicalSendAt(p.send_at);
+  const files = p.attachments === undefined ? undefined : previewFiles(p.attachments);
+  if (sendAt === null || files === null) return null;
+  return { kind: "email", ...(typeof p.to_name === "string" && p.to_name ? { to_name: p.to_name } : {}), to_address: to, from_address: from, subject, body_text: body,
+    ...(sendAt ? { send_at: sendAt } : {}), ...(files ? { attachments: files } : {}) };
 }
 
 const CODE = /^[A-Z][A-Z0-9_]{0,63}$/;
@@ -133,6 +151,7 @@ export function commsEmailChatSafeResult(value: unknown): Record<string, unknown
   const out: Record<string, unknown> = {};
   for (const key of ["ok", "replayed", "provider_receipt_available", "delivery_confirmed"]) if (typeof source[key] === "boolean") out[key] = source[key];
   if (typeof source.outcome === "string" && /^[a-z_]{1,40}$/.test(source.outcome)) out.outcome = source.outcome;
+  if (typeof source.send_at === "string" && canonicalSendAt(source.send_at) === source.send_at) out.send_at = source.send_at;
   for (const key of ["reason", "code"]) if (typeof source[key] === "string" && CODE.test(source[key] as string)) out[key] = source[key];
   if (typeof source.reconciled_operation_id === "string") out.reconciled = true;
   return out;
@@ -195,6 +214,11 @@ const REASON_NOTES: Record<string, string> = {
   APPROVAL_CYCLE_INVALID: "That approval no longer matches this email, so nothing was sent. Propose it again.",
   APPROVAL_CLAIM_INVALID: "That approval could not be used, so nothing was sent. Propose it again.",
   SEND_NOT_ADMITTED: "It was approved but the sending step did not take it. Nothing went out. The person can ask for it again, which starts a new request.",
+  // A send time: nothing was sent or scheduled.
+  COMMS_EMAIL_SEND_AT_INVALID: "The send time must be 2 minutes to 30 days from now, so nothing was sent or scheduled. Ask the person for a time in that range.",
+  COMMS_EMAIL_SEND_AT_PASSED: "The time it was scheduled for has passed, so nothing was sent or scheduled. Ask the person for a new time.",
+  COMMS_EMAIL_SCHEDULE_NOT_SUPPORTED: "A drafted reply goes out when it is approved and cannot be scheduled. Nothing was sent.",
+  COMMS_EMAIL_ALREADY_SCHEDULED: "This email is already scheduled to this person (send_at is its time, in UTC: say it in the business time zone, never a guess). To change the time or send it now, cancel it in Conversations first, then ask again.",
 };
 function notSentNote(...keys: unknown[]): string {
   const plain = keys.map((k) => typeof k === "string" ? REASON_NOTES[k] : undefined).find((n) => n);
@@ -213,7 +237,7 @@ function readSenders(value: unknown): { connector_id: string; from_address: stri
   });
 }
 
-const MODEL_KEYS = new Set(["contact_id", "subject", "body", "connector_id"]);
+const MODEL_KEYS = new Set(["contact_id", "subject", "body", "connector_id", "send_at"]);
 /** Door outcomes that guarantee nothing was dispatched for this operation. */
 const NOT_SENT_OUTCOMES = new Set<unknown>(["refused", "held", "needs_setup", "failed"]);
 
@@ -228,7 +252,14 @@ export async function dispatchCommsEmailChat(ctx: CommsEmailChatContext, deps: C
   // never approval here (the card's fingerprint is) and never part of the command.
   const modelArgs = { ...ctx.args };
   if (typeof modelArgs.confirm === "boolean") delete modelArgs.confirm;
-  if (Object.keys(modelArgs).some((key) => !MODEL_KEYS.has(key))) return { content: { success: false, error: "Invalid email request. Pass only contact_id, subject, body and, when the person chose a sender, connector_id." } };
+  if (Object.keys(modelArgs).some((key) => !MODEL_KEYS.has(key))) return { content: { success: false, error: "Invalid email request. Pass only contact_id, subject, body, send_at when the person asked for a later time and, when the person chose a sender, connector_id." } };
+  // Null is a model's way of leaving it out; anything else must be a real instant with an offset.
+  let sendAt: string | undefined;
+  if (modelArgs.send_at !== undefined && modelArgs.send_at !== null) {
+    const at = canonicalSendAt(modelArgs.send_at);
+    if (!at) return { content: { success: false, error: "Invalid email request. send_at must be an ISO 8601 time with the UTC offset in force on that date (YYYY-MM-DDTHH:MM:SS+HH:MM or -HH:MM). Nothing was sent." } };
+    sendAt = at;
+  }
 
   // Capture caller, selection and scope before the first await. Later mutable input/ports must
   // not lend a different actor, origin or operation to an admitted continuation.
@@ -323,12 +354,13 @@ export async function dispatchCommsEmailChat(ctx: CommsEmailChatContext, deps: C
       const approvalId = storedApproval(approvedArgs);
       if (origin && (approvalId !== origin.approvalId || command.contact_id !== origin.contactId)) return { ...refuse("unclaimable"), tokens };
       if (approvalId && (!uuid(userId) || !uuid(turn?.thread_id) || !isCurrent(true))) return { ...refuse("unclaimable"), tokens };
-      body = { expected_tenant_id: tenantId, operation_id: approvedArgs.operation_id, command, approved_fingerprint: fingerprint, ...(approvalId ? { approval_id: approvalId } : {}) };
+      // The stored time, exactly as stored: the door re-reads it and refuses one it did not store.
+      body = { expected_tenant_id: tenantId, operation_id: approvedArgs.operation_id, command, approved_fingerprint: fingerprint, ...(approvalId ? { approval_id: approvalId } : {}), ...(own(approvedArgs, "send_at") ? { send_at: approvedArgs.send_at } : {}) };
       spent = [...approved].find((token) => token.split(":")[0] === fingerprint);
     } else {
       command = parseCommsEmailCommand({ action: COMMS_EMAIL_ACTION, contact_id: modelArgs.contact_id, connector_id: modelArgs.connector_id ?? null, subject: modelArgs.subject, body: modelArgs.body });
       if (origin && command.contact_id !== origin.contactId) return refuse("unclaimable");
-      body = { expected_tenant_id: tenantId, operation_id: await commsEmailOperationId(tenantId, userId, command, turn, origin ? { action_id: origin.actionId, approval_id: origin.approvalId } : undefined), command, ...(origin ? { approval_id: origin.approvalId } : {}) };
+      body = { expected_tenant_id: tenantId, operation_id: await commsEmailOperationId(tenantId, userId, command, turn, origin ? { action_id: origin.actionId, approval_id: origin.approvalId } : undefined, sendAt), command, ...(origin ? { approval_id: origin.approvalId } : {}), ...(sendAt ? { send_at: sendAt } : {}) };
     }
   } catch {
     return approvedArgs ? { ...refuse("unclaimable"), tokens } : { content: { success: false, error: "Invalid email request. contact_id must be a contact's id from a contact read; subject is one line of at most 200 characters; body is plain text of at most 10000 characters." }, tokens };
@@ -356,6 +388,12 @@ export async function dispatchCommsEmailChat(ctx: CommsEmailChatContext, deps: C
     const safe = commsEmailChatSafeResult(result);
     if (result.ok === true && result.outcome === "provider_accepted") {
       return { tokens, spent, content: withReplay({ ...safe, success: true, delivery_confirmed: false, note: 'The email service accepted the message. That is not proof it was delivered or read — say "sent (accepted for delivery)", never "they received it" or "delivered".' }) };
+    }
+    // Scheduled is never "Not sent", whatever its time looks like; the person reads the local time on the card.
+    if (result.ok === true && result.outcome === "scheduled") {
+      return { tokens, spent, content: withReplay({ ...safe, success: true, outcome: "scheduled", delivery_confirmed: false, note: typeof safe.send_at === "string"
+        ? 'Scheduled. Nothing has been sent yet. The person sees the exact local time on the card: say it is scheduled for that time; do not convert the stored UTC value yourself. It can be canceled in Conversations until then. Say "scheduled", never "sent".'
+        : "Scheduled; time could not be confirmed here. Do not resend. Nothing has been sent yet; it shows in Conversations, where it can be canceled." }) };
     }
     // A door reply with no outcome is "Not sent" only when it is one of the door's own pre-send
     // answers; anything else that lacks an outcome (a runtime/gateway body) stays unconfirmed.

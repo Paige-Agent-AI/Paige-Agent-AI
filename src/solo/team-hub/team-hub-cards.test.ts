@@ -7,6 +7,8 @@
  */
 import { describe, expect, it } from "vitest";
 import {
+  cardReasonSentence,
+  dmRequestPrefill,
   CARD_KIND_LABEL,
   cardActBody,
   cardActLine,
@@ -168,10 +170,35 @@ describe("A2b fixes: the outcome note and the act's spoken line", () => {
     const waiting = parseCardStates({ ok: true, cards: [row({}, { actions: [{ summary: "s", fingerprint: "a1b2c3d4e5f60718", note }] })] }, null)!["m-card"];
     expect(waiting.approval.actions[0].note).toBe(cardExpiryNote(EXPIRES));
   });
+  it("a failed card says the server's reason as a sentence; the clause stays the server's (review fix 1)", () => {
+    const read = parseCardStates({ ok: true, cards: [row({}, { state: "failed", decided_at: "2026-10-28T15:35:00Z",
+      actions: [{ summary: "s", note: "the task changed after I read it" }] })] }, null)!["m-card"];
+    expect(read.approval.actions[0].note).toBe("The task changed after I read it.");
+    expect(cardReasonSentence("publishing is switched off here")).toBe("Publishing is switched off here.");
+    expect(cardReasonSentence("Jordan Lee isn't on this workspace's Operations board any more, so the task wasn't created."))
+      .toBe("Jordan Lee isn't on this workspace's Operations board any more, so the task wasn't created.");
+    expect(cardReasonSentence("“Prepare the onboarding packet” is cancelled.")).toBe("“Prepare the onboarding packet” is cancelled.");
+  });
   it("every turned-down outcome has a line; what the card itself says has none", () => {
     for (const outcome of ["not_yours", "not_visible", "already_decided", "expired", "conversations_off", "could_not_start", "no_answer"] as const) {
       expect(cardActLine(outcome)).toMatch(/\S/);
     }
     for (const outcome of ["done", "failed", "unconfirmed", "declined"] as const) expect(cardActLine(outcome)).toBeNull();
+  });
+});
+
+describe("dmRequestPrefill (channel redirect → the asker's request in the DM box)", () => {
+  it("keeps the asker's words and drops only that agent's mention", () => {
+    expect(dmRequestPrefill("@ZION cancel the packet task", "zion")).toBe("Cancel the packet task");
+    expect(dmRequestPrefill("Sam has the report now. @ZION can you hand it over?", "zion")).toBe("Sam has the report now. can you hand it over?");
+    expect(dmRequestPrefill("@ZION, ask @NEXUS about the page", "zion")).toBe("Ask @NEXUS about the page");
+  });
+  it("leaves an email address and another agent alone", () => {
+    expect(dmRequestPrefill("@ZION email ops@ZION.co please", "zion")).toBe("Email ops@ZION.co please");
+    expect(dmRequestPrefill("@VERA check it", "zion")).toBe("@VERA check it");
+  });
+  it("is null when nothing but the mention is left", () => {
+    expect(dmRequestPrefill("@ZION", "zion")).toBeNull();
+    expect(dmRequestPrefill("  @ZION  ", "zion")).toBeNull();
   });
 });

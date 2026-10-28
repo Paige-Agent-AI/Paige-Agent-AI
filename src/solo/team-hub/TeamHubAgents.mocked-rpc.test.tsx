@@ -1617,7 +1617,67 @@ describe("A2b: a Team Hub card, read and redeemed in the asker's DM", () => {
       actions: [{ summary: SUMMARY, note: "the task changed after I read it" }] });
     const host = await mount();
     await openDm(host);
-    expect(cardIn(host)!.textContent).toContain("the task changed after I read it");
+    // The server's clause, said on the card as the sentence the approved card draws (A2b review fix 1).
+    expect(cardIn(host)!.querySelector('[data-confirm-part="action-note"]')!.textContent).toBe("The task changed after I read it.");
+  });
+
+  for (const outcome of ["not_yours", "not_visible"] as const) {
+    it(`a refusal that leaves the card undecidable shows the card's own refusal, not a live Approve (review fix 2): ${outcome}`, async () => {
+      inDm();
+      cardRows["r-zion-m-ask"] = serverCard();
+      cardAnswers.push({ ok: false, outcome, card: null, outcome_message: null });
+      const host = await mount();
+      await openDm(host);
+      const approve = cardIn(host)!.querySelector<HTMLElement>('[data-confirm-part="approve"]');
+      // The card read after the refusal doesn't answer, so what shows is the screen's own handling of it.
+      db.override.team_hub_card_states = () => ({ ok: false, code: "unavailable" });
+      await click(approve);
+      await flush();
+      const card = cardIn(host)!;
+      expect(card.getAttribute("data-ap-state")).toBe("waiting");
+      expect(card.querySelector('[data-confirm-part="approve"]')).toBeNull();
+      expect(card.querySelector('[data-confirm-part="refusal"]')!.textContent).toContain("This card can no longer be approved, so nothing has changed.");
+      expect(cardActs).toHaveLength(1);
+    });
+  }
+
+  it("an act that didn't go through says so under the card and keeps Approve, so it can be tried again (review fix 2)", async () => {
+    inDm();
+    cardRows["r-zion-m-ask"] = serverCard();
+    cardAnswers.push({ ok: false, outcome: "could_not_start", card: null, outcome_message: null });
+    const host = await mount();
+    await openDm(host);
+    await click(cardIn(host)!.querySelector<HTMLElement>('[data-confirm-part="approve"]'));
+    await flush();
+    const row = rowOf(host, "r-zion-m-ask")!;
+    expect(row.querySelector(".th-fail")!.textContent).toBe("That didn't go through just now. Try again.");
+    expect(cardIn(host)!.querySelector('[data-confirm-part="approve"]')).not.toBeNull();
+    // Trying again clears it while the second act runs.
+    const pending = deferred();
+    cardAnswers.push(pending.answer);
+    await click(cardIn(host)!.querySelector<HTMLElement>('[data-confirm-part="approve"]'));
+    expect(row.querySelector(".th-fail")).toBeNull();
+    expect(cardActs).toHaveLength(2);
+  });
+
+  it("focus goes to the card's message row when Approve leaves the card, never to the page (review fix 3)", async () => {
+    inDm();
+    cardRows["r-zion-m-ask"] = serverCard();
+    const pending = deferred();
+    cardAnswers.push(pending.answer);
+    const host = await mount();
+    await openDm(host);
+    const approve = cardIn(host)!.querySelector<HTMLElement>('[data-confirm-part="approve"]')!;
+    approve.focus();
+    expect(document.activeElement).toBe(approve);
+    await click(approve);
+    await flush();
+    expect(document.activeElement).toBe(rowOf(host, "r-zion-m-ask"));
+    const done = serverCard({ state: "done", decided_at: "2026-10-28T15:35:00Z", decided_by_name: "Morgan Reyes", actions: [{ summary: SUMMARY }] });
+    cardRows["r-zion-m-ask"] = done;
+    await act(async () => pending.resolve({ ok: true, outcome: "done", card: done.card, outcome_message: null }));
+    await flush();
+    expect(document.activeElement).toBe(rowOf(host, "r-zion-m-ask"));
   });
 
   it("the person who did not ask reads Waiting on them, with nothing to press", async () => {
@@ -1735,6 +1795,10 @@ describe("A2b: a Team Hub card, read and redeemed in the asker's DM", () => {
     await click(open);
     expect(calls.find((call) => call.name === "team_hub_open_agent_dm")!.params).toMatchObject({ p_expected_tenant: TENANT, p_agent_key: "zion" });
     expect(host.querySelector(".th-conv-head--agent")!.getAttribute("data-ag")).toBe("zion");
+    // Owner ruling 2026-10-28: the DM opens with the asker's own request in its box, unsent.
+    await flush();
+    expect(composer(host).value).toBe("Cancel the packet task");
+    expect(calls.some((call) => call.name === "team_hub_post_message")).toBe(false);
   });
 
   it("offers no Open DM to anyone else, on a reply without the line, or inside the DM itself", async () => {

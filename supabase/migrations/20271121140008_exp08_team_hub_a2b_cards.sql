@@ -76,8 +76,9 @@ END $locks$;
 -- ── 0. The bodies this file calls or replaces are the ones it was written against ────────────────
 -- md5(prosrc). The four helpers: production, read 2026-10-27 (the values 20271120020008 pins). The two
 -- replaced doors: the bodies this tree's chain creates (team_hub_accept_agent_turn from 20271119010008,
--- the ten-argument team_hub_post_agent_message from 20271117010008); the integrator re-reads production
--- before merge. A replaced body may also already be this file's own (a second apply is a no-op).
+-- the ten-argument team_hub_post_agent_message from 20271117010008). All six values re-read from
+-- production 2026-10-28 (md5(prosrc)) and equal; ZION's and NEXUS's stored version 1 scopes also equal
+-- the values below. A replaced body may also already be this file's own (a second apply is a no-op).
 DO $guard$
 DECLARE expected record; actual text;
 BEGIN

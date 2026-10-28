@@ -389,6 +389,22 @@ export function answers(message: Pick<TeamHubMessage, "author_kind" | "agent_key
  * agent. The server writes it (decision D7). The screen keys the asker's Open DM on it, so it survives a
  * reload with nothing stored for it.
  */
+/**
+ * A2b (owner ruling 2026-10-28): what "Open DM with ZION" puts in the DM's message box after a channel
+ * redirect, so the asker doesn't type the request twice. The asker's own words, with that agent's
+ * mention taken out (the DM is already with them); nothing is sent until they press Send. Null when
+ * nothing would be left.
+ */
+export function dmRequestPrefill(body: string, agent: TeamHubAgentKey): string | null {
+  const name = TEAM_HUB_AGENT_PROFILES[agent].name;
+  const text = body.replace(agentToken(), (match, lead: string, found: string) => found === name ? lead : match)
+    .replace(/[ \t]{2,}/g, " ").replace(/^[\s,:;–—-]+/, "").trim();
+  if (!text) return null;
+  // The mention opened the sentence, so what follows it now does: capitalise it.
+  const led = body.trimStart().startsWith(`@${name}`);
+  return led ? text.charAt(0).toLocaleUpperCase() + text.slice(1) : text;
+}
+
 export const REDIRECT_LINE = "I can do that with you in our DM.";
 export function endsWithRedirect(body: string): boolean {
   return body.trimEnd().endsWith(REDIRECT_LINE);
@@ -425,6 +441,19 @@ export function cardExpiryNote(expiresAt: string): string {
   return `Expires at ${at}.`;
 }
 
+/**
+ * The failed card's reason, said as the sentence the approved card draws (A2b review fix 1). The server
+ * keeps its reason as a clause so its outcome line can read "That didn't run: <reason>. Nothing was
+ * changed."; on the card it stands alone, so it starts with a capital and ends with a full stop. A
+ * reason that is already a sentence is left as it is.
+ */
+export function cardReasonSentence(reason: string): string {
+  const text = reason.trim();
+  if (!text) return text;
+  const first = text.charAt(0).toLocaleUpperCase() + text.slice(1);
+  return /[.!?\u2026]["\u201d\u2019]?$/.test(first) ? first : `${first}.`;
+}
+
 function parseCardRecord(value: unknown): CardRecord | null | undefined {
   if (value === undefined || value === null) return null;
   if (!isRow(value) || Object.keys(value).some((key) => key !== "destination" && key !== "record_id")) return undefined;
@@ -455,7 +484,8 @@ function parseServerCard(card: unknown, outcomeMessageId: unknown, record: unkno
   const actions = card.actions.map((item) => isRow(item) ? {
     summary: item.summary,
     ...(waiting && isText(item.fingerprint) ? { fingerprint: item.fingerprint } : {}),
-    ...(waiting && expiresAt ? { note: cardExpiryNote(expiresAt) } : settled && isText(item.note) ? { note: item.note } : {}),
+    ...(waiting && expiresAt ? { note: cardExpiryNote(expiresAt) }
+      : settled && isText(item.note) ? { note: card.state === "failed" ? cardReasonSentence(item.note) : item.note } : {}),
   } : item);
   const approval = parseApproval({ state: card.state, kind, actions, asker_user_id: card.asker_user_id,
     decided_by_name: card.decided_by_name, decided_at: card.decided_at });

@@ -1693,6 +1693,20 @@ Where a ruling takes effect is the build order in section 5 A2 (A2a / A2b / A2c)
      the asker's seat, by the same three modes and rules. It applies to her DM from A2b, where the
      approved frames include her Prepare card (`a2-paige-dm-prepare-*`).
 
+### A2b design review rulings (owner, 2026-10-28, "go with your recommendations")
+
+Reviewed on the rendered A2b frames (`docs/evidence/ui-delivery/assets/exp08-team-hub-agents-a2b/`).
+1. **The line under a card when an act didn't reach the server is APPROVED:** "That didn't go through just
+   now. Try again." Approve stays live; the existing `.th-fail` row style, no CSS change.
+2. **A channel redirect's Open DM prefills the request.** The asker's DM with that agent opens with the
+   asker's own words in its box (the agent's mention removed), unsent. Nothing is posted until Send.
+3. **Every agent gets cards, in waves, through this one card path** (owner question, answered from the
+   A2 capability matrix): MERIT (agreement_send, billing_send_invoice, sales_create_payment_request),
+   CURA (client_portal_invitation_send, client_portal_access_set), VERA (mission_create / revise),
+   NEXUS (comms_send_email, form / funnel publish), MENTOR (planning). Each needs its domain lead's
+   confirmation of the exact tools and summary sentences in ANT-161; the lead keeps its door and writer.
+   owner_only acts stay out of Team Hub (every door refuses them).
+
 ## 13. Proof owed after merge (per increment)
 
 - **§32 persisted apply:** the `db-live` readback of each migration. The `schema_migrations` row

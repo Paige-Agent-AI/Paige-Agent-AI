@@ -42,7 +42,7 @@ import {
 import {
   agentTurnBody, askingMessageIds, cardActBody, cardActLine, cardMessageIds, parseAgentTurn, parseCardAct, parseCardStates, parseTurnStates,
   type AgentLineOutcome, type AgentTurnAnswer, type AgentTurnRequest, type BringInSuggestion, type CardActAnswer, type CardActRequest,
-  type CardRead, type ServerTurnState,
+  type CardActOutcome, type CardRead, type ServerTurnState,
 } from "./team-hub-agents";
 import type { TeamHubApprovalAct } from "./TeamHubApproval";
 
@@ -210,6 +210,13 @@ export interface TurnStateRead { read: "ready" | "unavailable"; states: Record<s
  * agent message the card belongs to. `unavailable` when the read failed: the cards already read are kept.
  */
 export interface CardStateRead { read: "ready" | "unavailable"; cards: Record<string, CardRead> }
+
+/** A2b: what one Approve / Not now came to: the server's outcome and the line the hub says for it. */
+export interface CardActReport { outcome: CardActOutcome | "no_answer"; line: string | null }
+
+/** The card as it stands, without its binding: the approved card then draws its own refusal, never Approve. */
+const unbound = (card: CardRead): CardRead => ({ ...card, approval: { ...card.approval,
+  actions: card.approval.actions.map(({ fingerprint: _fingerprint, ...rest }) => rest) } });
 
 export const agentTurnKey = (sourceMessageId: string, agent: TeamHubAgentKey) => `${sourceMessageId}:${agent}`;
 const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === "object" && value !== null && !Array.isArray(value);
@@ -1346,9 +1353,15 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
    * door that owns it, records the outcome and posts the agent's outcome message; no model runs. While
    * an approved act runs the card reads Running; nothing is ever shown as done unless the server says so.
    * A second click while one is on its way is ignored, so one card is never acted on twice from here.
-   * Resolves to the line to announce (cardActLine), or null when the card itself says it (verifier fix 5).
+   * Resolves to the outcome and the line to announce (cardActLine; null when the card itself says it,
+   * verifier fix 5), or null when nothing was sent.
+   *
+   * A refusal that leaves the card waiting is never left looking approvable (A2b review fix 2): when the
+   * server says this person can't decide it (not theirs, not visible, conversations off), the card goes
+   * back without its binding, so the approved card shows its own refusal instead of a live Approve.
+   * `could_not_start` keeps the binding, because trying again is the right next step; the screen says so.
    */
-  const actOnCard = useCallback(async (message: TeamHubMessage, act: TeamHubApprovalAct): Promise<string | null> => {
+  const actOnCard = useCallback(async (message: TeamHubMessage, act: TeamHubApprovalAct): Promise<CardActReport | null> => {
     // Pause is A2c's (a standing permission). No A2b read draws a standing card, so nothing offers it.
     if (act.kind === "pause") return null;
     const fingerprint = act.fingerprints[0];
@@ -1375,18 +1388,20 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
       // be read, an approved act is "couldn't confirm it ran" and a Not now is left as it was.
       const read = await readCardStates(conversationId, [message.id]);
       if (!read && alive.current) putCard(conversationId, message.id, act.kind === "approve" ? settledAs("unconfirmed") : prior);
-      return cardActLine("no_answer");
+      return { outcome: "no_answer", line: cardActLine("no_answer") };
     }
     if (answer.card) putCard(conversationId, message.id, answer.card);
     else if (answer.outcome === "done" || answer.outcome === "failed" || answer.outcome === "unconfirmed"
       || answer.outcome === "declined" || answer.outcome === "expired") putCard(conversationId, message.id, settledAs(answer.outcome));
+    else if (answer.outcome === "not_yours" || answer.outcome === "not_visible" || answer.outcome === "conversations_off")
+      putCard(conversationId, message.id, unbound(prior));
     else putCard(conversationId, message.id, prior);
     if (answer.outcomeMessage) placeReply(answer.outcomeMessage, conversationId, false);
     void readCardStates(conversationId, [message.id]);
     // The hub settles what the answer means for everyone (Team conversations off, the DM gone), and the
     // conversation is read again so the outcome message is in place.
     void refreshAfterAction.current();
-    return cardActLine(answer.outcome);
+    return { outcome: answer.outcome, line: cardActLine(answer.outcome) };
   }, [invokeCardAct, placeReply, putCard, readCardStates]);
 
   // Each card goes onto the agent message it belongs to, as the approval the approved card draws.

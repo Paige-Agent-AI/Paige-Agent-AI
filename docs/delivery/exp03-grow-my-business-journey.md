@@ -1036,7 +1036,7 @@ Both closed as superseded with links; their branches are kept.
   deferred or failing cannot stay first — round-3 review), then oldest due — scheduling order only, nobody refused or
   held. Series emails go through the same claim. The migration was renumbered `20271121120003` in review so it sorts
   after production's and main's `20271121110019` (a plain `db push` refuses an older one). Proof:
-  `exp03_email_send_allowance_removed.sql` 36/36 on a fresh replay of all 1506 migrations (20 fail on the old
+  `exp03_email_send_allowance_removed.sql` 37/37 (36/36 before the round-3 finished-campaign case) on a fresh replay of all 1506 migrations (20 fail on the old
   bodies; with only the pre-fairness claim, the passes go ash,ash,ash and the fairness assertions fail), neighbours
   299/299. The Marketing › Email screens and PAIGE's series approval card no longer
   state a limit: the dashboard shows the real "N marketing emails sent or sending in the last 24 hours", and the

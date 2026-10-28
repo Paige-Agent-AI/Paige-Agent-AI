@@ -1,3 +1,35 @@
+## EXP02 October28 - source release and bounded customer proof
+
+Original3014 normally merged557d9a7ab155dfd073f052fb393ab741b74a9714/treefe9e76bd;
+12 applicable exact-head checks/2web SUCCESS, final author-review LOWER5676589123.
+Original migrator40614223175 confirmed already-applied20101002 persisted/db-live557;
+first applying actuator not inferred. Canonical Weekly copy exact, active/read_only/
+Limitedv1 unchanged. Actual owner panel/reload ANT52/260d22ba verifies all9 whole
+descriptions/states:3ComingSoon/3Limited/3Unverified/allAccessUnverified. Web
+6EbgyrKH READY/both origins/source01:24UTC exact557. Initial panel/click failures
+retained/excluded; original E01 handoff ANT161/c88c13d4 remains unresolved.
+Stable subsequent reload does not claim that interruption was fixed.
+
+Original3012/21fff Calendar consumer is source/web released, with original Edge
+certificate and separately read Review110/Chat569. Exact source/release rows are
+in Master section4.0. Actual owner Calendar/whole saved answer+source reload/
+original Calendar/native Back is ANT52/e2015a9a: one request/empty-source read,
+not general reliability SLO. Initial wrong workspace INVALID/excluded. No action
+or protected monthly retry/inspection. Actual Finance follow-up ANT52/725879d5
+verifies Overview landing, all7 subpages/VERA, native arrow-key tabs,390px layout/
+no document overflow and exact whole settled Forecast reload. Its01:11UTC source
+is containing E03#3015/f136/webfu11zMq; Finance/src/solo leaves unchanged since21fff.
+Initial loading comparison/stale frames retained/excluded; screenshots private.
+
+3018 DRAFTfe4509f6f/review5676545442/157source controls has original full-shell/
+eight sizes+390/syntheticB/native200-percent/scroll/focus evidence, not a second
+legitimate authenticated cohort. Material P1 PRRT_kwDOSAAXqM6w8IJP remains OPEN.
+Nav3019 DRAFT9cec/review5676492858/134controls preserves the original model-ref
+privacy boundary; no released correction/model-compliance claim. All19/nine/
+ALG03/06/11/12Partial/13Unverified/roles/cohorts/Live/effects/founder evaluation
+remain OPEN. Historical9/0 and12/0/4, monthlyUNKNOWN/UNRETRIED preserved. No
+provider/privilege/scan/worker/action activation. Earlier merged notes remain history.
+
 ## EXP02 October27 bounded customer proof and catalogue preparation
 
 Released3004 original activity now has a positive ordinary-owner Executive/read/
@@ -4773,6 +4805,17 @@ repeated. Five causal failures corrected; four exact-source regression suites
 receipts, providers and activation unchanged. Source/review/CI/deployment and
 authenticated proof remain separate; full ten/E5/Builder/ZION/owner-away/Live and
 founder acceptance stay open. [Bounded evidence](../evidence/ui-delivery/exp05-zion-history-access-refusal.md).
+
+## EXP05 original weekly schedule preview — source candidate, October26–27
+
+The existing owner conversation can prepare a minimized schedule comparison from
+the original weekly process/revision. It reuses configure intent, caller JWT,
+current owner checks, original request/budget and native owner controls; it cannot
+save, authorize, enable or execute.129 original-reader/actual-Root/negative checks,
+scoped compiler and Kit admission controls pass. Catalogue and algorithm maturity
+are not promoted. Source/review/CI/deployment and ordinary authenticated proof
+remain separate; all ten/E5/Builder/ZION/owner-away/Live/founder acceptance remain
+open. [Original weekly record](../delivery/experience-05-weekly-commitment-check.md).
 
 ## EXP02 original report status compatibility — development, October27
 

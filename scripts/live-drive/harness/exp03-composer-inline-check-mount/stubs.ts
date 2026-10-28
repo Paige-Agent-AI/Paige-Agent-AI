@@ -95,13 +95,28 @@ export const harnessLog: { rpc: Array<{ name: string; args: unknown }>; tables: 
 const tableRows = (table: string): unknown[] =>
   table === "messages" ? messages() : table === "threads" ? threads() : table === "channel_connectors" ? connectors : [];
 
+// ?supp=bounce|complaint|optout — EXP03 20271120120003: Jordan's do-not-send rows. A governed email's hard bounce is
+// this business's row for the normalised ADDRESS (no contact); a spam report and an opt-out are on the contact.
+// The paige_suppressions stub honours the filters the inbox sends (eq / is), so each read gets only its rows.
+const supp = params.get("supp");
+const suppressionRows = supp === "bounce"
+  ? [{ tenant_id: TENANT, contact_id: null, address_normalized: JORDAN_EMAIL, channel: "email", reason: "bounce_hard" }]
+  : supp === "complaint" ? [{ tenant_id: TENANT, contact_id: JORDAN, address_normalized: null, channel: "email", reason: "complaint" }]
+  : supp === "optout" ? [{ tenant_id: TENANT, contact_id: JORDAN, address_normalized: null, channel: "email", reason: "unsubscribe_link" }]
+  : [];
+
 function builder(table: string) {
   harnessLog.tables.push(table);
-  const result = () => ({ data: tableRows(table), error: null, count: tableRows(table).length });
+  const filters: Array<[string, unknown]> = [];
+  const rowsFor = () => table === "paige_suppressions"
+    ? suppressionRows.filter((r) => filters.every(([col, v]) => (r as Record<string, unknown>)[col] === v)).map(({ channel: ch, reason }) => ({ channel: ch, reason }))
+    : tableRows(table);
+  const result = () => ({ data: rowsFor(), error: null, count: rowsFor().length });
   const proxy: Record<string, unknown> = new Proxy({}, {
     get(_t, prop) {
       if (prop === "then") return (ok: (v: unknown) => unknown, bad?: (e: unknown) => unknown) => Promise.resolve(result()).then(ok, bad);
       if (prop === "single" || prop === "maybeSingle") return () => Promise.resolve({ data: null, error: null });
+      if (table === "paige_suppressions" && (prop === "eq" || prop === "is")) return (col: string, v: unknown) => { filters.push([col, v]); return proxy; };
       return () => proxy;
     },
   });

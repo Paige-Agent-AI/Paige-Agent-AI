@@ -1001,7 +1001,7 @@ Both closed as superseded with links; their branches are kept.
   evidence record: email's 30-second Undo is replaced by the check; signature images are dropped (links kept);
   sending needs the business's own owner/admin (one global admin loses it, one business owner/admin gains it);
   an email reply needs the contact's main email.
-- **Paige chat can schedule a governed email (built 2026-10-28, not merged).** `comms_send_email` takes an
+- **Paige chat can schedule a governed email (#3023, LIVE 2026-10-28; edge-live `9fc00543`).** `comms_send_email` takes an
   optional `send_at` (ISO 8601 with offset) and hands it to the door top-level; the operation id binds it; an
   approved card replays the stored time verbatim. The approval card shows a When row ("Sends Tue, Nov 3, 9:00 AM",
   viewer's clock) and the act reads Schedule send; the chat preview now also carries the files (name and size).
@@ -1009,6 +1009,19 @@ Both closed as superseded with links; their branches are kept.
   Review round 1 fixes: the time names its zone everywhere ("9:00 AM CST"); the door refuses a second
   operation for an email still scheduled to the same contact (`COMMS_EMAIL_ALREADY_SCHEDULED`), so a
   reschedule or "send it now" must cancel first and can no longer send twice.
+- **A governed email that bounces now stops the next one (this change, migration `20271120120003`, NOT live).**
+  Found on production 2026-10-28: a hard bounce at one Solo business and, seven minutes later, SendGrid's
+  account-wide "Bounced Address" drop at a second business, to the same address — both failed, neither wrote a
+  suppression, so the door's pre-send check could not hold the next try. The governed-reply applier now writes a
+  per-business `paige_suppressions` row — `bounce_hard` (a non-blocked bounce or a "Bounced Address"/"Invalid" drop)
+  keyed on the normalised ADDRESS, `complaint` on the contact — and a "bounced before" drop says so in plain words.
+  The Conversations composer and contact rail now say why from the reason and the key (an address bounce: "This
+  email address bounced. Check it, or use another address."; a bounce kept on the contact names the DND tab, or in
+  Solo says changing the address won't lift it; never "opted out"), and a corrected address is not held. Campaign
+  planning and send-time claims now also skip a +tagged contact whose folded address is held. Never across
+  businesses; SendGrid's account-wide bounce list, a row outliving SendGrid's entry, and a clear for a wrongly held
+  address are owner decisions (decision log 2026-10-28). The two production rows are not back-filled. Proof:
+  `exp03_governed_bounce_suppression.sql` 59/59; evidence `docs/evidence/ui-delivery/exp03-governed-bounce-suppression.md`.
 
 **Open, in order:** the New conversation dialog and draft approval on the door; (chat `send_at` + When row:
 built above — Team Hub/NEXUS use still open);

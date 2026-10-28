@@ -23,7 +23,7 @@
 --   5. a campaign through a business's own Gmail connection is still provider_mismatch; a SendGrid lane
 --      campaign still correlates.
 BEGIN;
-SELECT plan(73);
+SELECT plan(74);
 
 -- ── Seed ────────────────────────────────────────────────────────────────────────────────────────
 INSERT INTO auth.users(id,aud,role,email,email_confirmed_at,raw_app_meta_data) VALUES
@@ -202,6 +202,14 @@ SELECT ok(pg_temp.prep(4)->>'ok' = 'true' AND pg_temp.claim(4)->>'admitted' = 't
 SELECT is(pg_temp.evd('sg:rsret-d4', 'sgd4', 4, 'bounced', _bounce=>'bounce')||'/'||pg_temp.jr('sg:rsret-d4')
           ||'/'||(pg_temp.b(4)->>'state')||'/'||(pg_temp.b(4)->>'delivery_state')||'/'||pg_temp.ms(4),
   'processed/correlated:settled_by_provider_event/provider_accepted/bounced/failed', 'a bounce settles it and marks it failed (never delivered)');
+-- Since 20271120120003 a governed hard bounce also suppresses the ADDRESS for this business (no contact; proved in
+-- full by exp03_governed_bounce_suppression.sql). Asserted here, then removed as a stated fixture step (the row is
+-- not customer-held, so the delete guard admits it): sections 2–5 below send campaigns to contact A's address.
+SELECT ok(EXISTS (SELECT 1 FROM public.paige_suppressions WHERE tenant_id = 'e03d0200-0000-4000-8000-000000000001'
+            AND contact_id IS NULL AND address_normalized = 'a.rsret@tests.invalid' AND reason = 'bounce_hard' AND source = 'webhook'),
+  'the governed hard bounce suppressed contact A''s address (20271120120003)');
+DELETE FROM public.paige_suppressions WHERE tenant_id = 'e03d0200-0000-4000-8000-000000000001'
+   AND contact_id IS NULL AND address_normalized = 'a.rsret@tests.invalid' AND reason = 'bounce_hard' AND source = 'webhook';
 SELECT ok(pg_temp.prep(5)->>'ok' = 'true' AND pg_temp.claim(5)->>'admitted' = 'true' AND pg_temp.fin(5, 'unknown') = 'unknown',
   'a third Resend-bound email is finalized unknown');
 SELECT is(pg_temp.evd('sg:rsret-d5', 'sgd5', 5, 'delivered', 'e03f0200-0000-4000-8000-000000000002')||'/'||pg_temp.jr('sg:rsret-d5')

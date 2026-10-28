@@ -650,6 +650,10 @@ The approved channel Operations-task proposal belongs to the SAME ZION;
 `writeScopedPlanning` calls original `plan_assign_task_scoped`. The task is assigned
 to a named human, never to an agent. The original `paige_actions` row is the
 accepted action record; native Task/Work and original Rail readback remain required.
+The domain result is `record: {table: "plan_items", id: item_id}` with current
+`updated_at`, not a CRM Task UUID. Reopen that original Planning Work item. The
+adapter supplies no idempotency/approval/receipt store: preserve original operation
+redemption/claim/Rail and `retryAllowed: false` for uncertain acknowledgments.
 MENTOR's separate five `planning.*` writers are DM-only and exact-approval-required;
 this handoff does not substitute those tools for the Operations writer.
 

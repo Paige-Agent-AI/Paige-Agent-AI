@@ -66,6 +66,15 @@ other original algorithms, catalogue maturity and all ten outcomes remain open.
 
 ## Evidence boundaries
 
+The first hosted contract job122873347732 correctly refused two changed reviewed
+source dependencies. Original main37244873 reproduces126 dependencies and29
+dispatches; candidate refusal names only the canonical URL and closed reference
+helpers. Published pre-renewal35ad source review5684152701 precedes the two-pin
+renewal. `pin-renewal.json` preserves original/new digests and exact inverse;
+all other124 pins,29 dispatch scalars, metadata, extractor, validator and hostile
+controls remain unchanged. Fresh hosted verification is still required. Initial
+local buffer/import probes ran no complete baseline verdict and are INVALID.
+
 `artifact-sha256.json` records unedited native images and manifest/observation
 hashes; `native-source.json` identifies actual product inputs and synthetic ports.
 `native-geometry.json` contains observed addresses, geometry and actual exit/reload

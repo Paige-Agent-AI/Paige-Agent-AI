@@ -9,7 +9,7 @@ export function proveReviewedDeliveryStanding({sql,read,tenant,c,prepared}){
  const publicRead='public.read_client_engagement_status(uuid,uuid)';
  const privateRead='public._sales_client_reviewed_delivery(uuid,uuid,uuid)';
  const effectiveRead='public._sales_client_effective_terms(uuid,uuid,uuid)';
- const path='supabase/migrations/20271120131504_e04_reviewed_delivery_standing.sql';
+ const path='supabase/migrations/20271121131504_e04_reviewed_delivery_standing.sql';
  const migration=read(path),guard=migration.slice(migration.indexOf('DO $reader$'),migration.lastIndexOf('COMMIT;'));
  const meta=identity=>json(`SELECT to_jsonb(p)-'prosrc' FROM pg_proc p WHERE oid='${identity}'::regprocedure;`);
  const bodyHash=identity=>sql(`SELECT md5(prosrc) FROM pg_proc WHERE oid='${identity}'::regprocedure;`);

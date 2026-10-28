@@ -33,7 +33,7 @@ export function proveReviewedDelivery({sql,read,quote,tenant,c,prepared}){
  CREATE TABLE public.operations_delivery_client_releases(id uuid PRIMARY KEY,submission_id uuid,tenant_id uuid,client_id uuid,client_user_id uuid,
   released_by uuid,released_at timestamptz,state text,decision_by uuid,decision_at timestamptz,client_note text);
  CREATE TABLE public.audit_logs(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),user_id uuid,entity text,action text,entity_id uuid,data jsonb);`);
- const migration=read('supabase/migrations/20271120131404_e04_reviewed_delivery_projection.sql');
+ const migration=read('supabase/migrations/20271121131404_e04_reviewed_delivery_projection.sql');
  sql(migration);
  const signature='public._sales_client_reviewed_delivery(uuid,uuid,uuid)';
  const meta=()=>json(`SELECT jsonb_build_object('oid',oid,'body',md5(prosrc),'owner',proowner,'acl',proacl::text,'definer',prosecdef,'path',proconfig,'volatility',provolatile)

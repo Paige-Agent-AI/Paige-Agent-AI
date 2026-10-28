@@ -43,7 +43,7 @@ export async function provePreparedManagedEmail({sql,read,tenant,actor,quote:q,f
   'owner',proowner,'acl',proacl::text,'config',proconfig,'definer',prosecdef,'volatility',provolatile,'parallel',proparallel,
   'args',proargtypes::text,'names',proargnames,'defaults',pronargdefaults,'result',prorettype) ORDER BY oid),'[]'::jsonb)
   FROM pg_proc WHERE pronamespace IN ('public'::regnamespace,'private'::regnamespace);`);
- const before=census(),migration=read('supabase/migrations/20271120131604_e04_managed_email_signing_identity.sql');
+ const before=census(),migration=read('supabase/migrations/20271121131604_e04_managed_email_signing_identity.sql');
  if(!process.argv.includes('--prepared-managed-email-baseline')){sql(migration);sql(migration);}
  const after=census(),changed=['e04_prepared_confirmation_source','e04_agreement_email_binding'];
  assert.deepEqual(after.filter(p=>!changed.includes(p.name)),before.filter(p=>!changed.includes(p.name)));checks++;

@@ -1,6 +1,6 @@
 # EXP04 commercial source contracts — development evidence
 
-Current source receiving: normal merge `5f11db25c3c1a19d2cc618ed58ca7178109f26cf` receives the complete reviewed invoice parent `f7d8bd60f3b17432bf6e2362d0bfd0b2e75899e4` and main `6d8e5c56a15a4f800124c248f546202d3bc99175`. All 24 originating source/test blobs remain unchanged at that merge. Three never-applied carriers now follow the invoice parent's forward versions as `20271120131404`–`20271120131604`; their original SQL bytes are unchanged and only matching proof-loader filenames move. This record remains a development attestation, with no deployed signing or delivery acceptance claim.
+Current source receiving: normal merge `8a2bb3e6b592276698b3675ff624abf99d9b9283` receives complete reviewed invoice parent `91b9276da86d46c85216c5294e0e0c90bd789600` and main `644924aaf2f0c3631b8bc43e64f1d1e8fcca6feb`. Every originating source/test blob remains unchanged at that merge. Three never-applied carriers follow the invoice parent as `20271121131404`–`20271121131604`, beyond independently read production frontier `20271121110019`; original SQL bytes and order remain exact, only matching loader paths move. This is a development attestation, with no deployed signing or delivery acceptance claim.
 
 UI_DELIVERY_EVIDENCE_VERSION: 1
 FLOW_BY_FLOW: PASS: retained agreement and explicit sender review follow the original confirmation, Work, Communications and receipt path; Clients and PAIGE consume the same original delivery projection.

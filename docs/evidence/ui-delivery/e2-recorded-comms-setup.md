@@ -41,6 +41,11 @@ original Back/recovery handoff ANT161/1117655d stays open, cause UNKNOWN.
 Private local artifacts are in outputs/e2-recorded-comms-proof/ of the owning
 checkout: render-proof.json, keyboard-proof.json and named PNG frames. They
 contain neutral synthetic records, no real tenant identifiers or credentials.
+Two actual neutral component captures are preserved with this record:
+[desktop component,1506x770 raster](e2-recorded-comms/desktop-component.png) and
+[narrow component,390x843 raster](e2-recorded-comms/narrow-component.png).
+They preserve the original product type stack and explicit synthetic-source
+label; neither is a full authenticated shell or exact requested-raster claim.
 First blank harness render is NOT PASS: original console identified an absolute
 alias that imported an unconfigured client. Only the private harness was fixed
 to explicit original-component/no-backend ports; no production environment,

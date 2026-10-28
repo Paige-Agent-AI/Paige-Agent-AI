@@ -1,6 +1,6 @@
 # E01 matrix annotations — agentic A–H, sandbox, Team Hub reachability, Suggest/Prepare/Execute (zCod, 2026-10-28)
 
-Delivers the annotations owed by the October-27 owner directives (agentic-behavior mandate 422cb42d; sandbox verification 7bfd9ae0; Team Hub both-chats requirement incl. the goal-driven amendment d0b0363e and A2 ruling b379a467) **on the existing matrices** — this file annotates the ten-outcome/23-case matrices in `matrix-reconciliation-2026-10-24.md` + `scope-reconciliation-refresh-2026-10-26.md`; it creates no new scorecard. Grounded at main `172958728`. Every row carries its class (BUILT-with-source / PARTIAL / MISSING IMPLEMENTATION / PROOF OWED / CONCRETE DECISION / HELD DEPENDENCY / NOT APPLICABLE WITH REASON) and named owner where not EXP01.
+Delivers the annotations owed by the October-27 owner directives (agentic-behavior mandate 422cb42d; sandbox verification 7bfd9ae0; Team Hub both-chats requirement incl. the goal-driven amendment d0b0363e and A2 ruling b379a467 — all Linear comment anchors on ANT-50/ANT-161, cited for the channel record) **on the existing matrices** — this file annotates the ten-outcome/23-case matrices in `matrix-reconciliation-2026-10-24.md` + `scope-reconciliation-refresh-2026-10-26.md`; it creates no new scorecard. Grounded at main `172958728`. Every row carries its class (BUILT-with-source / PARTIAL / MISSING IMPLEMENTATION / PROOF OWED / CONCRETE DECISION / HELD DEPENDENCY / NOT APPLICABLE WITH REASON) and named owner where not EXP01.
 
 ## 1. Agentic (A–H) subcases — annotated per outcome, consolidated (the journey is one chain)
 
@@ -36,7 +36,7 @@ The eight mandated behaviors map onto E01's single canonical journey (context �
 
 ## 4. Billing supersession annotation
 
-Accepted (fc672bb7 + corrected dd1db983): no monetary usage stop exists anywhere in E01's runtime chain at current main (router-budget hard band = observation only, E05 #2989; re-grounded at `53d50bb74`+); ms time-budgets retained as technical liveness guards. Usage attribution continues through the canonical `paige_llm_trace` + `record_capability_run` streams; no second meter.
+Accepted (fc672bb7 + corrected dd1db983): no monetary usage stop exists anywhere in E01's runtime chain at current main (router-budget hard band = observation only — the informational-observation change is `61389f83a` "fix(EXP05): keep model usage observations informational", ancestor of this branch's base; re-verified at this head); ms time-budgets retained as technical liveness guards. Usage attribution continues through the canonical `paige_llm_trace` + `record_capability_run` streams; no second meter.
 
 ## 5. Canonical ALG statements (unchanged, restated per mandate)
 

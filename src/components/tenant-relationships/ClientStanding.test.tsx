@@ -29,7 +29,75 @@ const row = (label: string) => [...host.querySelectorAll(".trc-standing-row")].f
 const dd = (term: string) => [...host.querySelectorAll(".trc-standing-money > div")].find(d => d.querySelector("dt")?.textContent === term)?.querySelector("dd");
 const hrefs = () => [...host.querySelectorAll("a")].map(a => [a.textContent, a.getAttribute("href")]);
 
+function reviewedReply(phase = "accepted") {
+  const f = effectiveStandingFixture(), e = f.accepted;
+  const submitted = phase !== "not_submitted";
+  const released = ["accepted", "revision_requested", "awaiting_client"].includes(phase);
+  const decided = ["accepted", "revision_requested", "internal_revision_requested"].includes(phase);
+  const delivery = { schema_version: 1, state: "verified", tenant_id: f.source.tenant_id,
+    client_id: f.source.contact_id, commercial_terms_id: f.t.id,
+    signing_id: e.signing_id, signing_version: e.signing_version,
+    content_sha256: e.document_sha256, sealed_sha256: e.sealed_sha256,
+    plan_id: "e4850000-0000-4000-8000-000000000001", coverage_complete: true, has_more: false,
+    milestone_count: 1, items: [{ work_item_id: f.source.work.items[0].id, phase,
+      submission_id: submitted ? "e4850000-0000-4000-8000-000000000002" : null,
+      submission_revision: submitted ? 2 : null, artifact_digest: submitted ? "d".repeat(64) : null,
+      release_id: released ? "e4850000-0000-4000-8000-000000000003" : null,
+      decision_at: decided ? "2026-10-20T00:30:00Z" : null }] };
+  Object.assign(f.t, { reviewed_delivery: delivery });
+  return { ...f, delivery };
+}
+
 describe("ClientStanding", () => {
+  it("lets the owner inspect the original exact-version client decision without closing the engagement", async () => {
+    const f = reviewedReply(); rpc.mockResolvedValue({ data: f.source, error: null }); await render();
+    const delivery = row("Delivery")!;
+    expect(delivery.textContent).toContain("1 of 1 reviewed milestones accepted by the client");
+    expect(delivery.textContent).toContain("Engagement completion still needs review");
+    const details = delivery.querySelector("details")!;
+    expect(details).not.toBeNull(); expect(details.open).toBe(false);
+    expect(details.querySelector("summary")?.textContent).toBe("Review 1 delivery decision");
+    act(() => (details.querySelector("summary") as HTMLElement).click());
+    expect(details.open).toBe(true);
+    expect(details.textContent).toContain(f.source.work.items[0].title);
+    expect(details.textContent).toContain("Submission revision 2");
+    expect(details.textContent).toContain("Client accepted");
+    expect(details.textContent).not.toContain(f.delivery.items[0].release_id);
+    expect(rpc).toHaveBeenCalledTimes(1);
+    expect(delivery.querySelector("a")?.getAttribute("href")).toBe("/solo/42/operations/work");
+  });
+  it.each([
+    ["not_submitted", "Not submitted"], ["internal_review", "Internal review"],
+    ["internal_revision_requested", "Internal revision requested"], ["not_released", "Internally reviewed · not released"],
+    ["awaiting_client", "Awaiting client decision"], ["revision_requested", "Client revision requested"],
+  ])("keeps the original %s state distinct in the decision disclosure", async (phase, label) => {
+    const f = reviewedReply(phase); rpc.mockResolvedValue({ data: f.source, error: null }); await render();
+    const details = row("Delivery")?.querySelector("details");
+    expect(details?.textContent).toContain(label);
+    expect(details?.textContent).not.toContain("Client accepted");
+    if (phase === "not_submitted") expect(details?.textContent).not.toContain("Version");
+  });
+  it.each(["not_linked", "scope_changed", "unavailable"])("shows the %s reason without invented decisions", async state => {
+    const f = reviewedReply(); f.delivery.state = state;
+    rpc.mockResolvedValue({ data: f.source, error: null }); await render();
+    const delivery = row("Delivery")!;
+    const reason = { not_linked: "No reviewed delivery plan is linked", scope_changed: "The delivery scope changed", unavailable: "delivery evidence needs verification" }[state];
+    expect(delivery.textContent).toContain(reason);
+    expect(delivery.querySelector("details")).toBeNull();
+    expect(delivery.textContent).not.toContain("0 of");
+  });
+  it("uses the business date for a decision near midnight", async () => {
+    const f = reviewedReply(); f.source.business_time_zone = { state: "configured", zone: "America/New_York" };
+    rpc.mockResolvedValue({ data: f.source, error: null }); await render();
+    expect(row("Delivery")?.querySelector("details")?.textContent).toContain("Decision Oct 19, 2026");
+  });
+  it("withholds decision dates when the business zone is missing", async () => {
+    const f = reviewedReply(); f.source.business_time_zone = { state: "missing", zone: null }; f.source.as_of_date = null;
+    rpc.mockResolvedValue({ data: f.source, error: null }); await render();
+    const text = row("Delivery")?.querySelector("details")?.textContent;
+    expect(text).toContain("Decision date not shown until the business time zone is set");
+    expect(text).not.toContain("Oct 20");
+  });
   it("shows the accepted revision separately from the later working draft", async () => {
     const {source:changed}=effectiveStandingFixture();rpc.mockResolvedValue({data:changed,error:null});await render();
     expect(row("Agreement")?.textContent).toContain("Accepted revision 1 · Working draft revision 2 differs");

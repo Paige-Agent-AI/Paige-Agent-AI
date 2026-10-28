@@ -37,6 +37,9 @@ export function useSalesDraftExit(draft: unknown, busy: boolean, onClose: () => 
       // A native editor popup owns its dismissal. The same Sales leave guard
       // remains authoritative for a later, unhandled Escape or navigation.
       if (event.target instanceof Element && event.target.closest('[role="listbox"], [role="menu"]')) return;
+      // PAIGE owns keyboard input on its surface, its open launcher and its
+      // overlay backdrop. Keep the underlying Sales record and leave guard.
+      if (event.target instanceof Element && event.target.closest('#tenant-paige-workspace, [aria-label="Direct PAIGE"][aria-expanded="true"], [aria-label="Fold PAIGE conversation"]')) return;
       event.preventDefault();
       if (pending) setPending(null); else request();
     };

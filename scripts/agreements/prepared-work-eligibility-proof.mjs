@@ -42,7 +42,12 @@ export async function provePreparedWorkEligibility({sql,read,tenant,actor,quote:
   check(sql(`SELECT consumed_at IS NULL FROM paige_pending_confirmations WHERE args->>'operation_id'='${v.operation}';`)==='t','Waited refusal preserves original unconsumed HIGH review');
  }finally{sql(`UPDATE tenants SET status='active' WHERE id='${tenant}';`);}
  check(sql("SELECT has_function_privilege('service_role','private.e04_prepared_confirmation_source(uuid,uuid,jsonb)','EXECUTE') OR has_function_privilege('authenticated','private.e04_prepared_confirmation_source(uuid,uuid,jsonb)','EXECUTE') OR has_function_privilege('anon','private.e04_prepared_confirmation_source(uuid,uuid,jsonb)','EXECUTE');")==='f','No direct private preflight grant');
- return {result:'PASS',checks,migrationReplay:migration?2:0,concurrentSessions:sessions,observedLockWaits:waits,source:body(),
+  let managedEmail=null;
+  if(process.argv.includes('--prepared-managed-email')){
+   const {provePreparedManagedEmail}=await import('./prepared-managed-email-proof.mjs');
+   managedEmail=await provePreparedManagedEmail({sql,read,tenant,actor,quote:q,fixture,issue,claim});
+  }
+  return {result:'PASS',checks,migrationReplay:migration?2:0,concurrentSessions:sessions,observedLockWaits:waits,source:body(),managedEmail,
   migrationSha256:migration?createHash('sha256').update(migration).digest('hex'):null,
   scope:'Original issue/claim restriction under the original tenant lock. Synthetic native scope only; subscription-trial enrollment mapping and authenticated billing/cohort acceptance remain separate evidence.'};
 }

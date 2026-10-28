@@ -30,6 +30,17 @@ function OriginalResult({ result, account, navigationHeld }: { result: Result; a
             <h4>{result.title}</h4><p className="sa-note">{outcomeWords(result.recordedOutcome)} · Decision recorded: <time dateTime={result.decidedAt}>{when(result.decidedAt)}</time></p>
             {result.originalTask.state === 'verified' ? <>
               <p className="sa-note">Original task creation is verified against its saved result and receipt. Open the task to read its current state.</p>
+              <details className="sa-owner-task-evidence">
+                <summary>Original task evidence</summary>
+                <dl>
+                  <dt>Task</dt><dd>{result.originalTask.taskId}</dd>
+                  <dt>Creation receipt</dt><dd>{result.originalTask.receiptId}</dd>
+                  <dt>Execution</dt><dd>{result.originalTask.runId}</dd>
+                  <dt>Approval</dt><dd>{result.approvalId}</dd>
+                  <dt>Process</dt><dd>{result.processId}</dd>
+                  <dt>Attempt</dt><dd>{result.occurrenceId}</dd>
+                </dl>
+              </details>
               {target?.status === 'exact' && (navigationHeld ? <p className="sa-note">Finish or cancel your pipeline rule edit before opening the task.</p>
                 : <Link className="sa-ctl" to={target.to}>{target.label}</Link>)}
             </> : <p className="sa-note">The original task could not be verified. A recorded status alone does not establish that a task was created. Nothing will be rerun here.</p>}

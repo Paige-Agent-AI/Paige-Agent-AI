@@ -1,0 +1,20 @@
+{
+  "boundary": "Native summary and keyboard on serialized original source; no React parent handlers, server or authenticated cohort",
+  "narrow": {
+    "focus": "Open task",
+    "height": 770,
+    "href": "/solo/1234567/operations/work?task=00000000-0000-4000-8000-000000000114",
+    "overflow": false,
+    "rect": {
+      "bottom": 436.5375061035156,
+      "height": 44,
+      "left": 122.8000030517578,
+      "right": 206.7875061035156,
+      "top": 392.5375061035156,
+      "width": 83.98750305175781,
+      "x": 122.8000030517578,
+      "y": 392.5375061035156
+    },
+    "width": 320
+  }
+}

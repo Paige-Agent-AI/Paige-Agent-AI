@@ -5626,6 +5626,7 @@ hover is readable in light (shared `Button`).
 | Schedule an email reply from the composer | Only inside a workspace it administers | ✓ owner/admin | ✓ owner/admin | ✓ owner/admin | — | — | PROOF OWED |
 | Attach files to an email reply (PAIGE Email senders) | Only inside a workspace it administers | ✓ owner/admin | ✓ owner/admin | ✓ owner/admin | — | — | PROOF OWED |
 | Readable outline/ghost hover (every surface) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | PROOF OWED (106 buttons measured in harness) |
+| A governed email's hard bounce or "bounced before"/invalid drop puts that ADDRESS (a complaint: the contact) on THAT business's do-not-send list, so the next email is held at the check; the composer and contact rail say why from the reason ("This email address bounced. Check it, or use another address." · "marked your email as spam" · opt-outs unchanged); a corrected address is not held; campaigns skip a +tagged contact whose folded address is held; a blocked bounce or a delay does not suppress (migration `20271120120003`) | Only for a workspace it sends from; never across businesses | ✓ its own book only | ✓ its own book only | ✓ its own book only | — | — | ON BRANCH, NOT LIVE (SQL proof `exp03_governed_bounce_suppression.sql`; production apply and readback owed after merge) |
 
 Members who are not the business's owner/admin are told "Only an owner or admin sends email for the business."
 An email reply needs the contact's main email on their card.

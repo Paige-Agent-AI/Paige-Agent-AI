@@ -1,0 +1,374 @@
+{
+  "exp03b-bounce-light-1366x768": {
+    "ok": true,
+    "checks": {
+      "mounted": true,
+      "font": true,
+      "noOverflow": true,
+      "note": true,
+      "soloHasNoRailSignal": true,
+      "notOptedOut": true,
+      "sendHeld": true,
+      "aa": true,
+      "goldOnlyOnSend": true
+    },
+    "note": "This email address bounced. Check it, or use another address.",
+    "signal": "",
+    "contrast": [
+      {
+        "text": "This email address bounced. Check it, or use another address.",
+        "ratio": 14.6,
+        "size": "11px"
+      }
+    ],
+    "send": {
+      "disabled": true,
+      "text": "Send"
+    },
+    "goldBtns": [
+      "Send"
+    ],
+    "errors": []
+  },
+  "exp03b-bounce-dark-1366x768": {
+    "ok": true,
+    "checks": {
+      "mounted": true,
+      "font": true,
+      "noOverflow": true,
+      "note": true,
+      "soloHasNoRailSignal": true,
+      "notOptedOut": true,
+      "sendHeld": true,
+      "aa": true,
+      "goldOnlyOnSend": true
+    },
+    "note": "This email address bounced. Check it, or use another address.",
+    "signal": "",
+    "contrast": [
+      {
+        "text": "This email address bounced. Check it, or use another address.",
+        "ratio": 16.06,
+        "size": "11px"
+      }
+    ],
+    "send": {
+      "disabled": true,
+      "text": "Send"
+    },
+    "goldBtns": [
+      "Send"
+    ],
+    "errors": []
+  },
+  "exp03b-complaint-light-1366x768": {
+    "ok": true,
+    "checks": {
+      "mounted": true,
+      "font": true,
+      "noOverflow": true,
+      "note": true,
+      "soloHasNoRailSignal": true,
+      "notOptedOut": true,
+      "sendHeld": true,
+      "aa": true,
+      "goldOnlyOnSend": true
+    },
+    "note": "They marked your email as spam — Paige won't send email.",
+    "signal": "",
+    "contrast": [
+      {
+        "text": "They marked your email as spam — Paige won't send email.",
+        "ratio": 14.6,
+        "size": "11px"
+      }
+    ],
+    "send": {
+      "disabled": true,
+      "text": "Send"
+    },
+    "goldBtns": [
+      "Send"
+    ],
+    "errors": []
+  },
+  "exp03b-complaint-dark-1366x768": {
+    "ok": true,
+    "checks": {
+      "mounted": true,
+      "font": true,
+      "noOverflow": true,
+      "note": true,
+      "soloHasNoRailSignal": true,
+      "notOptedOut": true,
+      "sendHeld": true,
+      "aa": true,
+      "goldOnlyOnSend": true
+    },
+    "note": "They marked your email as spam — Paige won't send email.",
+    "signal": "",
+    "contrast": [
+      {
+        "text": "They marked your email as spam — Paige won't send email.",
+        "ratio": 16.06,
+        "size": "11px"
+      }
+    ],
+    "send": {
+      "disabled": true,
+      "text": "Send"
+    },
+    "goldBtns": [
+      "Send"
+    ],
+    "errors": []
+  },
+  "exp03b-optout-light-1366x768": {
+    "ok": true,
+    "checks": {
+      "mounted": true,
+      "font": true,
+      "noOverflow": true,
+      "note": true,
+      "soloHasNoRailSignal": true,
+      "notOptedOut": true,
+      "sendHeld": true,
+      "aa": true,
+      "goldOnlyOnSend": true
+    },
+    "note": "This contact opted out of Email — Paige won't send.",
+    "signal": "",
+    "contrast": [
+      {
+        "text": "This contact opted out of Email — Paige won't send.",
+        "ratio": 14.6,
+        "size": "11px"
+      }
+    ],
+    "send": {
+      "disabled": true,
+      "text": "Send"
+    },
+    "goldBtns": [
+      "Send"
+    ],
+    "errors": []
+  },
+  "exp03b-optout-dark-1366x768": {
+    "ok": true,
+    "checks": {
+      "mounted": true,
+      "font": true,
+      "noOverflow": true,
+      "note": true,
+      "soloHasNoRailSignal": true,
+      "notOptedOut": true,
+      "sendHeld": true,
+      "aa": true,
+      "goldOnlyOnSend": true
+    },
+    "note": "This contact opted out of Email — Paige won't send.",
+    "signal": "",
+    "contrast": [
+      {
+        "text": "This contact opted out of Email — Paige won't send.",
+        "ratio": 16.06,
+        "size": "11px"
+      }
+    ],
+    "send": {
+      "disabled": true,
+      "text": "Send"
+    },
+    "goldBtns": [
+      "Send"
+    ],
+    "errors": []
+  },
+  "exp03b-bounce-light-1536x770": {
+    "ok": true,
+    "checks": {
+      "mounted": true,
+      "font": true,
+      "noOverflow": true,
+      "note": true,
+      "soloHasNoRailSignal": true,
+      "notOptedOut": true,
+      "sendHeld": true,
+      "aa": true,
+      "goldOnlyOnSend": true
+    },
+    "note": "This email address bounced. Check it, or use another address.",
+    "signal": "",
+    "contrast": [
+      {
+        "text": "This email address bounced. Check it, or use another address.",
+        "ratio": 14.6,
+        "size": "11px"
+      }
+    ],
+    "send": {
+      "disabled": true,
+      "text": "Send"
+    },
+    "goldBtns": [
+      "Send"
+    ],
+    "errors": []
+  },
+  "exp03b-bounce-dark-1536x770": {
+    "ok": true,
+    "checks": {
+      "mounted": true,
+      "font": true,
+      "noOverflow": true,
+      "note": true,
+      "soloHasNoRailSignal": true,
+      "notOptedOut": true,
+      "sendHeld": true,
+      "aa": true,
+      "goldOnlyOnSend": true
+    },
+    "note": "This email address bounced. Check it, or use another address.",
+    "signal": "",
+    "contrast": [
+      {
+        "text": "This email address bounced. Check it, or use another address.",
+        "ratio": 16.06,
+        "size": "11px"
+      }
+    ],
+    "send": {
+      "disabled": true,
+      "text": "Send"
+    },
+    "goldBtns": [
+      "Send"
+    ],
+    "errors": []
+  },
+  "exp03b-bounce-light-1024x768": {
+    "ok": true,
+    "checks": {
+      "mounted": true,
+      "font": true,
+      "noOverflow": true,
+      "note": true,
+      "soloHasNoRailSignal": true,
+      "notOptedOut": true,
+      "sendHeld": true,
+      "aa": true,
+      "goldOnlyOnSend": true
+    },
+    "note": "This email address bounced. Check it, or use another address.",
+    "signal": "",
+    "contrast": [
+      {
+        "text": "This email address bounced. Check it, or use another address.",
+        "ratio": 14.6,
+        "size": "11px"
+      }
+    ],
+    "send": {
+      "disabled": true,
+      "text": "Send"
+    },
+    "goldBtns": [
+      "Send"
+    ],
+    "errors": []
+  },
+  "exp03b-bounce-dark-1024x768": {
+    "ok": true,
+    "checks": {
+      "mounted": true,
+      "font": true,
+      "noOverflow": true,
+      "note": true,
+      "soloHasNoRailSignal": true,
+      "notOptedOut": true,
+      "sendHeld": true,
+      "aa": true,
+      "goldOnlyOnSend": true
+    },
+    "note": "This email address bounced. Check it, or use another address.",
+    "signal": "",
+    "contrast": [
+      {
+        "text": "This email address bounced. Check it, or use another address.",
+        "ratio": 16.06,
+        "size": "11px"
+      }
+    ],
+    "send": {
+      "disabled": true,
+      "text": "Send"
+    },
+    "goldBtns": [
+      "Send"
+    ],
+    "errors": []
+  },
+  "exp03b-bounce-light-900x1000": {
+    "ok": true,
+    "checks": {
+      "mounted": true,
+      "font": true,
+      "noOverflow": true,
+      "note": true,
+      "soloHasNoRailSignal": true,
+      "notOptedOut": true,
+      "sendHeld": true,
+      "aa": true,
+      "goldOnlyOnSend": true
+    },
+    "note": "This email address bounced. Check it, or use another address.",
+    "signal": "",
+    "contrast": [
+      {
+        "text": "This email address bounced. Check it, or use another address.",
+        "ratio": 14.6,
+        "size": "11px"
+      }
+    ],
+    "send": {
+      "disabled": true,
+      "text": "Send"
+    },
+    "goldBtns": [
+      "Send"
+    ],
+    "errors": []
+  },
+  "exp03b-bounce-dark-900x1000": {
+    "ok": true,
+    "checks": {
+      "mounted": true,
+      "font": true,
+      "noOverflow": true,
+      "note": true,
+      "soloHasNoRailSignal": true,
+      "notOptedOut": true,
+      "sendHeld": true,
+      "aa": true,
+      "goldOnlyOnSend": true
+    },
+    "note": "This email address bounced. Check it, or use another address.",
+    "signal": "",
+    "contrast": [
+      {
+        "text": "This email address bounced. Check it, or use another address.",
+        "ratio": 16.06,
+        "size": "11px"
+      }
+    ],
+    "send": {
+      "disabled": true,
+      "text": "Send"
+    },
+    "goldBtns": [
+      "Send"
+    ],
+    "errors": []
+  }
+}

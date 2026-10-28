@@ -7,7 +7,7 @@ MATERIAL_FLOW_CHANGE: YES: the existing managed sender can qualify for exact sig
 FLOW_PROTOTYPE: WAIVED: owner-decision=2026-10-21 Experience Design and Visual Quality Standard section6 and existing full EXP04 delivery directive; reason=Owner authorizes routine design implementation and one complete integrated founder evaluation without repeated component signoff. Actual changed-interface rendering and interaction verification remain required before release.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: an authorized SOLO owner reviews the original signing request and inspects exact-version delivery decisions for the same client.
 VISUAL_DIRECTION: PASS: preserve the current PAIGE design system, existing workspace composition and original record navigation; use a native disclosure for supporting delivery detail.
-AUTOMATED_EVIDENCE: UNVERIFIED: exact composed-head hosted checks are pending. Bounded originating sender, real-handler, Sales keyboard and native identity regressions pass locally; original delivery consumer controls are supporting source evidence.
+AUTOMATED_EVIDENCE: UNVERIFIED: the development branch is not published and hosted CI has not executed on this composition. Bounded originating sender, real-handler, Sales keyboard and native identity regressions pass locally; original delivery consumer controls are supporting source evidence.
 STATIC_EVIDENCE: UNVERIFIED: exact composition validation is pending. Source scope preserves the original public permission interfaces, canonical writers and guarded forward migrations. No source check establishes customer acceptance.
 RENDERED_EVIDENCE: UNVERIFIED: actual candidate desktop and narrow-viewport rendering remain required; existing production observations do not verify this unreleased composition.
 BEHAVIORAL_EVIDENCE: UNVERIFIED: candidate navigation, focus, original-record reload, uncertain-outcome recovery and role-scoped operation remain required.
@@ -41,7 +41,7 @@ RELEASE_CHANNEL: development: source validation only; no deployed customer outco
 RELEASE_CLASSIFICATION: internal-only: integration proof candidate, not release-ready.
 CUSTOMER_RELEASE_IDENTITY: none: no customer release has been earned or authorized for this candidate.
 RELEASE_NOTE_REQUIRED: no: development source only, no customer publication.
-RELEASE_TRUTH_BOUNDARY: PROOF OWED for candidate rendering, deployment, authenticated behavior and complete customer outcomes; no LIVE promotion.
+RELEASE_TRUTH_BOUNDARY: PROOF OWED: candidate rendering, deployment, authenticated behavior and complete customer outcomes are not verified; no LIVE promotion.
 RELEASE_RECOVERY: position=preserve the original production contracts and withheld consequential actions; reference=normal forward-fix and original-operation reconciliation after verified release gates.
 
 ## Source and authorization boundary

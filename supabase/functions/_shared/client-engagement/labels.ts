@@ -11,6 +11,25 @@ import { readRecordLinks } from '../paige-turn/record-links.ts';
 
 export const INVOICE_TERMS_VERSION_REASON = 'Invoice and plan versions differ';
 
+/** Shared owner-page/conversation words, from the same exact-version read. */
+export function standingDeliveryEvidence(s: ClientEngagementStatus): string {
+  const d = s.delivery;
+  if (!d || d.state === 'unavailable') return 'Client acceptance is not shown here. The delivery evidence needs verification.';
+  if (d.state === 'not_linked') return 'No reviewed delivery plan is linked to these accepted terms.';
+  if (d.state === 'scope_changed') return 'The delivery scope changed. Review the plan before confirming completion.';
+  const progress = `${d.accepted} of ${d.total} reviewed milestones accepted by the client`;
+  if (d.state === 'accepted') return `${progress}. Engagement completion still needs review.`;
+  const clientRevisions = d.items.filter(item => item.phase === 'revision_requested').length;
+  const internalRevisions = d.items.filter(item => item.phase === 'internal_revision_requested').length;
+  return `${progress}${d.awaiting ? ` · ${d.awaiting} awaiting their decision` : ''}${clientRevisions ? ` · ${clientRevisions} client revision${clientRevisions === 1 ? '' : 's'} requested` : ''}${internalRevisions ? ` · ${internalRevisions} internal revision${internalRevisions === 1 ? '' : 's'} requested` : ''}.`;
+}
+
+export const DELIVERY_PHASE_TEXT = {
+  not_submitted: 'Not submitted', internal_review: 'Internal review',
+  internal_revision_requested: 'Internal revision requested', not_released: 'Internally reviewed · not released',
+  awaiting_client: 'Awaiting client decision', revision_requested: 'Client revision requested', accepted: 'Client accepted',
+} as const;
+
 /** One explanation for the existing Clients and PAIGE reads, not a new source. */
 export function standingTimingReason(s: ClientEngagementStatus): string | null {
   if (s.attention.includes('effective_terms_unverified')) return 'Original invoice terms need verification';

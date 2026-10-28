@@ -1,0 +1,338 @@
+{
+  "sourceParent": "e9d3fc5767d41188747eb10a7a467eede80c9707",
+  "boundary": "Actual original Clients and SOLO shell with neutral intercepted scoped-read, identity, role and provider ports. Chat/voice/backend execution unmounted. No customer/provider/payment/signature/persistence or full canonical Work integration proof.",
+  "inputs": [
+    {
+      "path": "src/components/tenant-shell/TenantCommandCenterShell.tsx",
+      "gitBlob": "1053167fbf0e046773cffc24c06eeb8581c5b5be",
+      "sha256": "7aaa24d867af1ac5e2222f3581ab361288ba54e6319e5c86db245875adb13e7c"
+    },
+    {
+      "path": "src/components/tenant-relationships/TenantRelationshipsClientsWorkspace.tsx",
+      "gitBlob": "7e2684af65576758272033025e284b1b81bb7a53",
+      "sha256": "720a34071e2974f457952134c1e7f9c11a21dc887adc63316bd6c4875828b839"
+    },
+    {
+      "path": "src/components/tenant-relationships/ClientStanding.tsx",
+      "gitBlob": "e486ec38bd2a76acd9853fb54832f11a6d47a200",
+      "sha256": "71e6497136cc543a104610b99254520ddf661b7b88380d06d9df4f5f08bfc8c2"
+    },
+    {
+      "path": "src/components/tenant-relationships/client-standing.css",
+      "gitBlob": "1f177b5f338f003aa46a8bbc288cdcd9f360ccaa",
+      "sha256": "bcc293bc2da436442aa8bbe095e76f9c8335f5a3ca4e0b723206fd1f7eb2f499"
+    },
+    {
+      "path": "src/solo/engagement/useClientEngagementStatus.ts",
+      "gitBlob": "5bbaeffbd1e30c64222b0f3daefd3f8a24d74869",
+      "sha256": "11a1ad8d265fffbc29608d5410e0d3d8b008a02c2eb70c13654cd2c578b4f0ae"
+    },
+    {
+      "path": "supabase/functions/_shared/client-engagement/status.ts",
+      "gitBlob": "770827dd57df9fe1bf7631428c25bf847d6d538f",
+      "sha256": "eb2ba0def0b994da7b10e051501191fe074304cdfb0c2750c36efe3767ab77be"
+    },
+    {
+      "path": "supabase/functions/_shared/client-engagement/reviewed-delivery.ts",
+      "gitBlob": "d93a6e8d6827931714e057b8a61763a746932f8b",
+      "sha256": "90d0ce14fb9c03628dd9b6517cd75ac39832a081a4e902858dd289b0ac53a1e8"
+    },
+    {
+      "path": "supabase/functions/_shared/client-engagement/labels.ts",
+      "gitBlob": "a78827ef7651db22f2f5bb69d998a08836c6fab8",
+      "sha256": "3171d473aa5d1691d6a324c3678a8021d6dc29ec8c0f51fc0676a19827354428"
+    },
+    {
+      "path": "src/__tests__/fixtures/exp04-effective-standing-source.ts",
+      "gitBlob": "83d6e9cc40f892026723ba72096cc01e1fa020b5",
+      "sha256": "60ada461c1bd635f808c7e0272481dcd30b964ab9427c525ea1896c06a869fdb"
+    }
+  ],
+  "fixtureInputs": [
+    {
+      "path": "work/c75-delivery-prototype/fixture.ts",
+      "sha256": "97f8cc95948a700b9a9b090de08f6620af0a1894940b22d5b0d1fed18034ac2a"
+    },
+    {
+      "path": "work/c75-delivery-prototype/shell-ports.tsx",
+      "sha256": "286c208e9dc4bd0146f76e85df120d48f974c1f583800db7852a1a95028dfa4b"
+    },
+    {
+      "path": "work/c75-delivery-prototype/shell-main.tsx",
+      "sha256": "2334782fea7969cbc35b9cd8a87603cd66e355d851ccacef3f3c395773d7fd27"
+    },
+    {
+      "path": "work/c75-delivery-prototype/shell-vite.config.mjs",
+      "sha256": "1da160eacab5a34b25c0144a911e185be06402f265580a70ab5861d57e109d07"
+    }
+  ],
+  "frames": [
+    {
+      "name": "1536x770-closed.jpg",
+      "css": {
+        "width": 1536,
+        "height": 770
+      },
+      "raster": {
+        "width": 1536,
+        "height": 770
+      },
+      "paige": "closed",
+      "headerTop": 0,
+      "shellTop": 0,
+      "outerScrollWidth": 1536,
+      "record": [
+        {
+          "height": 579,
+          "scrollHeight": 4105,
+          "scrollTop": 476.7999877929687,
+          "scrollWidth": 445,
+          "width": 445
+        }
+      ],
+      "sha256": "57dc1bfd7bcfc5b060efbf0d56d7ff17e3f389939633554a81458b5f2099b2f4",
+      "bytes": 80640
+    },
+    {
+      "name": "1536x770-open.jpg",
+      "css": {
+        "width": 1536,
+        "height": 770
+      },
+      "raster": {
+        "width": 1536,
+        "height": 770
+      },
+      "paige": "open",
+      "headerTop": 0,
+      "shellTop": 0,
+      "outerScrollWidth": 1536,
+      "record": [
+        {
+          "height": 528,
+          "scrollHeight": 4163,
+          "scrollTop": 476.7999877929687,
+          "scrollWidth": 445,
+          "width": 445
+        }
+      ],
+      "sha256": "a5f62bc1f07dc76f4fa1a7456db1aa431ea5d930ec98270cb5a05d9b58d6feb8",
+      "bytes": 90130
+    },
+    {
+      "name": "1366x768-closed.jpg",
+      "css": {
+        "width": 1366,
+        "height": 768
+      },
+      "raster": {
+        "width": 1366,
+        "height": 768
+      },
+      "paige": "closed",
+      "headerTop": 0,
+      "shellTop": 0,
+      "outerScrollWidth": 1366,
+      "record": [
+        {
+          "height": 576,
+          "scrollHeight": 4105,
+          "scrollTop": 476.7999877929687,
+          "scrollWidth": 445,
+          "width": 445
+        }
+      ],
+      "sha256": "818e94c7434cc3d174f961e836ace9be231c69bb942a000e617dfbb894b35907",
+      "bytes": 81438
+    },
+    {
+      "name": "1366x768-open.jpg",
+      "css": {
+        "width": 1366,
+        "height": 768
+      },
+      "raster": {
+        "width": 1366,
+        "height": 768
+      },
+      "paige": "open",
+      "headerTop": 0,
+      "shellTop": 0,
+      "outerScrollWidth": 1366,
+      "record": [
+        {
+          "height": 526,
+          "scrollHeight": 4163,
+          "scrollTop": 476.7999877929687,
+          "scrollWidth": 445,
+          "width": 445
+        }
+      ],
+      "sha256": "0f09a635939a0ed0186cbddb7dcc1ceee188e00e83db0026185e5c13f370b7ec",
+      "bytes": 85715
+    },
+    {
+      "name": "1024x768-closed.jpg",
+      "css": {
+        "width": 1024,
+        "height": 768
+      },
+      "raster": {
+        "width": 1024,
+        "height": 768
+      },
+      "paige": "closed",
+      "headerTop": 0,
+      "shellTop": 0,
+      "outerScrollWidth": 1024,
+      "record": [
+        {
+          "height": 526,
+          "scrollHeight": 3391,
+          "scrollTop": 384,
+          "scrollWidth": 905,
+          "width": 905
+        }
+      ],
+      "sha256": "e1f74f954cbbb2c44700406e8f4ced4a21308a3088b4466dce95618a33941882",
+      "bytes": 73620
+    },
+    {
+      "name": "1024x768-open.jpg",
+      "css": {
+        "width": 1024,
+        "height": 768
+      },
+      "raster": {
+        "width": 1024,
+        "height": 768
+      },
+      "paige": "open",
+      "headerTop": 0,
+      "shellTop": 0,
+      "outerScrollWidth": 1024,
+      "record": [
+        {
+          "height": 526,
+          "scrollHeight": 3391,
+          "scrollTop": 384,
+          "scrollWidth": 905,
+          "width": 905
+        }
+      ],
+      "sha256": "2299fca79d1d911f3ee39b383b941ed2ef83805215e479e149e0bc58333cffe9",
+      "bytes": 41943
+    },
+    {
+      "name": "900x1000-closed.jpg",
+      "css": {
+        "width": 900,
+        "height": 1000
+      },
+      "raster": {
+        "width": 900,
+        "height": 1000
+      },
+      "paige": "closed",
+      "headerTop": 0,
+      "shellTop": 0,
+      "outerScrollWidth": 900,
+      "record": [
+        {
+          "height": 758,
+          "scrollHeight": 3467,
+          "scrollTop": 384,
+          "scrollWidth": 781,
+          "width": 781
+        }
+      ],
+      "sha256": "f0b02156452a54f338a728e2e4699d7955a0ff7f7a14da469fe7d7e8b332a167",
+      "bytes": 94869
+    },
+    {
+      "name": "900x1000-open.jpg",
+      "css": {
+        "width": 900,
+        "height": 1000
+      },
+      "raster": {
+        "width": 900,
+        "height": 1000
+      },
+      "paige": "open",
+      "headerTop": 0,
+      "shellTop": 0,
+      "outerScrollWidth": 900,
+      "record": [
+        {
+          "height": 758,
+          "scrollHeight": 3467,
+          "scrollTop": 384,
+          "scrollWidth": 781,
+          "width": 781
+        }
+      ],
+      "sha256": "c0c323ca635310050af66db3b0911564061f653f11434f23c4757cdb109ae6b6",
+      "bytes": 46109
+    }
+  ],
+  "phone": {
+    "width": 390,
+    "height": 844,
+    "outer": 390,
+    "record": [
+      {
+        "scrollTop": 782.4000244140625,
+        "scrollWidth": 271,
+        "width": 271
+      }
+    ],
+    "button": [
+      {
+        "height": 44,
+        "text": "Ask PAIGE about Example Consulting Client",
+        "whiteSpace": "normal",
+        "width": 213.6000061035156
+      }
+    ],
+    "focus": {
+      "height": 44,
+      "text": "Review 2 delivery decisions"
+    },
+    "headerTop": 0
+  },
+  "recovery": {
+    "wholeRenderedReadEqual": true,
+    "source": "Original scoped local failure -> Try again -> same complete original standing and reopened disclosure"
+  },
+  "stateCoverage": [
+    "awaiting_client",
+    "accepted_with_engagement_not_determined",
+    "internal_review",
+    "client_revision",
+    "internal_revision",
+    "not_released",
+    "scope_changed",
+    "missing_evidence",
+    "not_linked",
+    "loading",
+    "permission_refused",
+    "failed_then_retry"
+  ],
+  "exclusions": [
+    "Initial tab attachment timeout",
+    "An expanded-header click did not fold PAIGE; rejected before capture",
+    "HMR reset the local fixture before the initial retry attempt",
+    "The replacement collector was empty; only eight actual stored frame receipts with matching raw SHA256 were recovered and accepted",
+    "Earlier unlogged native observation failures are not retroactive PASS",
+    "The attempted additional state-image recapture timed out after selecting a local case. No new frame or PASS was inferred; viewport restored."
+  ],
+  "unverified": [
+    "Real owner/staff/linked-client and second cohort",
+    "Native browser zoom, physical phone and assistive technology",
+    "Authenticated persistence, original artifact bytes and canonical Work-writer-to-projection happy path",
+    "Deployed signing sender/provider outcome",
+    "All twelve integrated outcomes and founder acceptance"
+  ],
+  "inputBindingBoundary": "The nine current source blobs bind the eight final desktop frame receipts and final phone evidence. Three supplementary decision-wording images were captured after the wording repair and before the later fit CSS constraint; they establish wording, not final exact geometry."
+}

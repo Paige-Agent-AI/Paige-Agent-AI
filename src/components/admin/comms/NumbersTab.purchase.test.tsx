@@ -172,6 +172,24 @@ describe("Buying a number asks first, and holds the server to the price shown", 
       .not.toMatch(/may have just been taken/i);
   });
 
+  it("a pre-buy voice-setup refusal reads as setup, not as 'try another number'", async () => {
+    await mount();
+    await search();
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+    const prior = state.invoke;
+    state.invoke = vi.fn(async (name: string, ...rest: unknown[]) =>
+      name === "comms-purchase-number"
+        ? { data: { needs_config: true, error: "voice_twiml_url_unavailable" }, error: null }
+        : prior(name, ...rest));
+
+    await act(async () => { button("Buy")?.click(); });
+
+    const said = state.toasts.map((t) => `${t.title ?? ""} ${t.description ?? ""}`).join(" ");
+    expect(said).toMatch(/isn't set up to buy numbers yet/i);
+    expect(said).not.toMatch(/may have just been taken/i);
+    expect(said).not.toContain("voice_twiml_url_unavailable");
+  });
+
   it("still NEVER reports a refused purchase as a success", async () => {
     await mount();
     await search();

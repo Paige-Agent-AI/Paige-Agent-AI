@@ -640,3 +640,31 @@ Ordinary empty weekly read/reload does not prove notification retention of an
 existing draft or pending action. No recurrence/provider/role/Live activation,
 new business record or acceptance closure; all original ten/E5/Builder/owner-away/
 ZION/cohorts/isolation/founder obligations above remain exact and open.
+
+
+## October28 Team Hub A2 receiving boundary — acceptance still open
+
+Original ANT161 owner ruling `b379a467-cb92-4bbe-b0f3-0abae443523d`,
+EXP08 source reconciliation `6250def0` and EXP01 delta `37d673f9` received.
+The approved channel Operations-task proposal belongs to the SAME ZION;
+`writeScopedPlanning` calls original `plan_assign_task_scoped`. The task is assigned
+to a named human, never to an agent. The original `paige_actions` row is the
+accepted action record; native Task/Work and original Rail readback remain required.
+MENTOR's separate five `planning.*` writers are DM-only and exact-approval-required;
+this handoff does not substitute those tools for the Operations writer.
+
+EXP08 owns A2a Suggest/reopen/component, A2b card door/decline/state/outcome, and
+A2c standing-authority Execute plus channel-task admission. Reuse the ORIGINAL
+confirmation store/fingerprint, `PaigeConfirmCard`, `resolve_tool_autonomy`,
+Compass clamp and `decideGovernedExecution`. No EXP05 duplicate or protected-source
+takeover. Execute without a click requires arguments solely from the asker's own
+message AND a current `auto` result at rung2+ rechecked when the act runs. Otherwise
+the original card is required; high and owner_only always require a card.
+
+Original A1c same-ZION inline conversational success is received as EXP08's bounded
+authenticated evidence (`e578105f`, followed by all-seven `1f7519cb`). It is NOT
+ZION task execution, standing authority, weekly recurrence, automation, result/reopen
+or full Experience acceptance. A2 remains implementation/proof owed. Initiative is
+held to A3; the general workshop runner remains held under EXP19. Original ten
+outcomes, E5-CV1–E5-CV9, shared workshop/privacy, direct specialist access, algorithm
+contracts, two-chat and eligible new/existing SOLO proof remain open.

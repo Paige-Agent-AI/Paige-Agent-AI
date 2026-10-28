@@ -519,11 +519,13 @@ describe("mentions (mocked RPC)", () => {
     const { host } = await mount();
     expect(button(host, "Mention someone")).toBeDefined();
     await type(composer(host), "@");
-    const people = Array.from(host.querySelectorAll("[role=option]:not([data-ag])")).map((option) => option.textContent);
+    const people = Array.from(host.querySelectorAll("[role=option]:not([data-ag]):not([data-bc])")).map((option) => option.textContent);
     expect(people).toHaveLength(1);
     expect(people[0]).toContain("Sam Lee (Sales)");
-    // PAIGE and her agents follow, under their own heading.
+    // PAIGE and her agents follow, under their own heading; then (A1c) Everyone, for this channel's members.
     expect(host.querySelectorAll("[role=option][data-ag]")).toHaveLength(7);
+    expect(Array.from(host.querySelectorAll("[role=option][data-bc]")).map((option) => option.textContent))
+      .toEqual(["@channelEveryone in #leadership", "@hereEveryone active in #leadership"]);
   });
 
   it("offers no person in a private channel with nobody else in it, only the agents", async () => {
@@ -535,6 +537,8 @@ describe("mentions (mocked RPC)", () => {
     await type(composer(host), "@");
     expect(host.querySelectorAll("[role=option]:not([data-ag])")).toHaveLength(0);
     expect(host.querySelectorAll("[role=option][data-ag]")).toHaveLength(7);
+    // A1c: nobody else is here, so @channel / @here are not offered either.
+    expect(host.querySelector("[role=option][data-bc]")).toBeNull();
   });
 
   it("offers no mention list at all in a private channel with nobody else in it when the tier has no agents", async () => {
@@ -1477,6 +1481,18 @@ describe("PAIGE handoffs (increment 2, mocked RPC)", () => {
     expect(mocks.handoff).not.toHaveBeenCalled();
     expect(openPaige).not.toHaveBeenCalled();
     expect(mocks.invoke).toHaveBeenCalledWith("paige-ai-chat", expect.anything());
+  });
+
+  it("A1c strip (§30): the / menu offers four commands and never Ask a specialist, wherever PAIGE can open", async () => {
+    const { host } = await mount({ openPaige: vi.fn() });
+    await type(composer(host), "/");
+    const box = listbox(host, "PAIGE commands")!;
+    expect(options(box).map((option) => option.textContent)).toEqual([
+      expect.stringContaining("Draft a task"), expect.stringContaining("Ask an agent"),
+      expect.stringContaining("Request approval"), expect.stringContaining("Schedule a meeting")]);
+    expect(host.textContent).not.toMatch(/specialist/i);
+    await type(composer(host), "/PAIGE spec");
+    expect(listbox(host, "PAIGE commands")).toBeNull();
   });
 
   it("A1b reversal: the / command Ask an agent starts an @mention that lists PAIGE and her agents only", async () => {

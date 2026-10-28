@@ -381,7 +381,8 @@ describe.each([
     expect(host.textContent).not.toContain("Sending…");
     expect(buttons(host)).not.toContain("Approve & send");
     const cancel = host.querySelector<HTMLButtonElement>('[data-governed-send="scheduled"]');
-    const when = new Date(inAnHour).toLocaleString(undefined, { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+    // 2026-10-28: the shared label names the time zone (daylight-saving review, chat scheduled email).
+    const when = new Date(inAnHour).toLocaleString(undefined, { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit", timeZoneName: "short" });
     expect(cancel?.parentElement?.textContent).toBe(`Sends ${when}Cancel`);
     expect(cancel?.textContent).toBe("Cancel");
     expect(cancel?.getAttribute("aria-label")).toBe(`Cancel the email scheduled for ${when}`);

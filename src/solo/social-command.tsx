@@ -33,6 +33,7 @@
 import React from "react";
 import { Ic } from "./_shared";
 import { useSocialCommand } from "./useSocialCommand";
+import { GoLive } from "./go-live";
 import { useSoloPendingActions } from "./data/useSoloPendingActions";
 import { elapsedLabel } from "./data/useSoloActivityFeed";
 // useSoloTrust directly rather than compass.tsx's useTrustDepartments: the compass module pulls the
@@ -793,6 +794,10 @@ export function SocialCommand({ campaigns, onOpenStudio, onAskPaige, onOpenCompa
         onOpenPipeline={onOpenPipeline}
         onAskPaige={onAskPaige}
       />
+
+      {/* EXP07 broadcast slice — the Go live surface the owner placed on this tab (2026-10-28):
+          the tab's standing act, above the standing panels, fed only by the broadcast door. */}
+      <GoLive />
 
       <div className="social-grid">
         <div className="social-col">

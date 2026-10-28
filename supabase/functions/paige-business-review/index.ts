@@ -22,8 +22,10 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
 import { composeBusinessReview } from "../_shared/paige-context/business-review.ts";
+import type { BusinessReviewWho } from "../_shared/paige-context/business-review.ts";
 import { dispatchBusinessSnapshotChat } from "../_shared/paige-context/business-review-chat.ts";
 import { SNAPSHOT_PERIOD_KEYS, SNAPSHOT_DOMAINS } from "../_shared/paige-context/snapshot.ts";
+import { readCalendarAccountShape, type CalendarBookingReadCaller } from "../_shared/calendar-booking-read.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -31,6 +33,58 @@ const corsHeaders = {
 };
 
 const MAX_BODY_BYTES = 4_096;
+type IdentityReply = { data: unknown; error: unknown };
+type ReviewIdentityCaller = Pick<CalendarBookingReadCaller, 'auth'> & {
+  rpc(name: string, args?: Record<string, unknown>): PromiseLike<IdentityReply> & {
+    abortSignal(signal: AbortSignal): PromiseLike<IdentityReply>;
+  };
+  // The original SDK table selector is not awaitable until select() is called.
+  from(table: 'tenants'): unknown;
+};
+
+/** Resolve metadata from the original caller-native authority, never from body/headers or a
+ * global app role. Each domain STILL re-proves its own read authority. An unconfirmed identity
+ * stays unresolved, preserving the existing total/partial review rather than inventing access. */
+async function resolveReviewWho(caller: ReviewIdentityCaller, actorId: string, tenantId: string | null,
+  requestSignal: AbortSignal): Promise<BusinessReviewWho> {
+  const unresolved: BusinessReviewWho = { actorId, tenantId, role: null, accountShape: null };
+  if (!tenantId || requestSignal.aborted) return unresolved;
+  const controller = new AbortController(), stop = () => controller.abort();
+  requestSignal.addEventListener('abort', stop, { once: true });
+  const timer = setTimeout(stop, 2_000);
+  const expired = new Promise<BusinessReviewWho>(resolve => controller.signal.addEventListener('abort', () => resolve(unresolved), { once: true }));
+  const lookup = async (): Promise<BusinessReviewWho> => {
+    try {
+      // Preserve original SDK builders/binding. The incumbent Calendar classification helper
+      // owns its minimal caller-visible row validation and the canonical SOLO predicate.
+      const originalTable = caller.from.bind(caller);
+      const classificationCaller: CalendarBookingReadCaller = { auth: caller.auth,
+        rpc: (name, args) => caller.rpc(name, args) as ReturnType<CalendarBookingReadCaller['rpc']>,
+        from(table) {
+          const builder = originalTable(table);
+          if (!builder || typeof builder !== 'object' || !('select' in builder) || typeof builder.select !== 'function')
+            throw new Error('classification_reader_unavailable');
+          // The incumbent helper only calls select() on this initial selector;
+          // retain its original SDK filter/abort chain rather than fabricating a Promise.
+          return builder as ReturnType<CalendarBookingReadCaller['from']>;
+        } };
+      const [shape, owner, admin] = await Promise.all([
+        readCalendarAccountShape(classificationCaller, tenantId, controller.signal),
+        caller.rpc('has_tenant_role', { _user_id: actorId, _tenant_id: tenantId, _role: 'owner' }).abortSignal(controller.signal),
+        caller.rpc('has_tenant_role', { _user_id: actorId, _tenant_id: tenantId, _role: 'admin' }).abortSignal(controller.signal),
+      ]);
+      if (controller.signal.aborted || shape.status !== 'available' || owner.error || admin.error) return unresolved;
+      const [scope, actor] = await Promise.all([
+        caller.rpc('current_user_tenant_id').abortSignal(controller.signal), caller.auth.getUser(),
+      ]);
+      if (controller.signal.aborted || scope.error || scope.data !== tenantId || actor.error || actor.data.user?.id !== actorId) return unresolved;
+      return { actorId, tenantId, role: owner.data === true ? 'owner' : admin.data === true ? 'admin' : null,
+        accountShape: shape.accountShape };
+    } catch { return unresolved; }
+  };
+  try { return await Promise.race([lookup(), expired]); }
+  finally { clearTimeout(timer); requestSignal.removeEventListener('abort', stop); controller.abort(); }
+}
 
 /** Bounded parse of the optional request: unknown keys and oversized values are refused, never guessed. */
 function parseRequest(body: unknown): { ok: true; request: { period?: string; timezone: string; customStart?: string; customEnd?: string; focus?: string[] } } | { ok: false; error: string } {
@@ -148,13 +202,17 @@ serve(async (req: Request) => {
     const scope = await supabaseClient.rpc("current_user_tenant_id");
     const tenantId = !scope.error && typeof scope.data === "string" && scope.data !== "" ? scope.data : null;
 
+    if (chat && (!tenantId || req.headers.get('x-paige-review-scope') !== tenantId))
+      return new Response(JSON.stringify({ error: 'The original business workspace could not be verified.' }), { status: 403, headers: corsHeaders });
+    const who = await resolveReviewWho({ auth: supabaseClient.auth,
+      rpc: (name, args) => supabaseClient.rpc(name, args), from: supabaseClient.from.bind(supabaseClient),
+    }, user.id, tenantId, req.signal);
+
     if (chat) {
       // A binding assertion, never authority. A workspace switch must refuse
       // before any composer/issuer read, not merely hide its eventual response.
-      if (!tenantId || req.headers.get('x-paige-review-scope') !== tenantId)
-        return new Response(JSON.stringify({ error: 'The original business workspace could not be verified.' }), { status: 403, headers: corsHeaders });
       const result = await dispatchBusinessSnapshotChat(
-        { who: { actorId: user.id, tenantId, role: null, accountShape: null }, timezone: parsed.request.timezone },
+        { who, timezone: parsed.request.timezone },
         { caller: supabaseClient }, chatArgs,
       );
       const after = await supabaseClient.rpc('current_user_tenant_id');
@@ -166,9 +224,8 @@ serve(async (req: Request) => {
 
     const review = await composeBusinessReview(
       supabaseClient,
-      // `who` is what this seam resolved; role/accountShape are not invented here (the issuer
-      // decides authority), matching the chat dispatch's honest nulls.
-      { actorId: user.id, tenantId, role: null, accountShape: null },
+      // Original native membership/classification only; each source still decides current authority.
+      who,
       { ...parsed.request, timezone: parsed.request.timezone },
       // Additive response negotiation on this existing endpoint. Old web tabs
       // omit the marker and keep their original closed snapshot shape. Old Edge

@@ -7,7 +7,7 @@ import { Paperclip, ImageIcon, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { type Attachment, COMMS_ATTACH_BUCKET, isImageMime } from "./inbox-shared";
 
-export function AttachmentChip({ a, onRemove }: { a: Attachment; onRemove: () => void }) {
+export function AttachmentChip({ a, onRemove, disabled = false }: { a: Attachment; onRemove: () => void; disabled?: boolean }) {
   const [preview, setPreview] = useState<string | null>(null);
   useEffect(() => {
     let alive = true;
@@ -31,8 +31,9 @@ export function AttachmentChip({ a, onRemove }: { a: Attachment; onRemove: () =>
       <span className="max-w-[140px] truncate">{a.name || "attachment"}</span>
       <button
         type="button"
-        onClick={onRemove}
-        className="rounded p-0.5 text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--ring))]"
+        onClick={() => { if (!disabled) onRemove(); }}
+        disabled={disabled}
+        className="rounded p-0.5 text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--ring))] disabled:cursor-not-allowed disabled:opacity-50"
         aria-label={`Remove ${a.name || "attachment"}`}
       >
         <X className="h-3 w-3" />

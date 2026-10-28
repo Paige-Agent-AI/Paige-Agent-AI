@@ -18,7 +18,8 @@
 // (the spinner respects the OS via the Loader2 animate-spin, which CSS-freezes under
 // prefers-reduced-motion at the framework level).
 import { useRef, type ClipboardEvent, type DragEvent, type ReactNode } from "react";
-import { Loader2, Send } from "lucide-react";
+import { useReducedMotion } from "framer-motion";
+import { Clock, Loader2, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
@@ -51,16 +52,30 @@ export interface MessageComposerProps {
   onPaste?: (e: ClipboardEvent<HTMLTextAreaElement>) => void;
   /** Optional extra classes on the textarea (tenant: drop-zone ring styling). */
   textareaClassName?: string;
+  /**
+   * Optional slot that stands IN PLACE of the toolbar (tenant email reply: the inline check strip).
+   * While it is present the gold Send is not rendered — the strip carries the one gold act (§11) — and
+   * the send shortcut does nothing, so a keystroke can never confirm what the strip is showing.
+   */
+  actions?: ReactNode;
+  /**
+   * The send is being checked: Send reads `sendLabel` (the caller passes "Checking…"), is aria-busy and
+   * aria-disabled, and ignores clicks and the shortcut — but stays focusable, so focus is not lost.
+   */
+  checking?: boolean;
 }
 
 export function MessageComposer({
   value, onChange, onSend, sending = false, disabled = false,
   sendDisabled = false, sendOnEnter = false,
   placeholder = "Write a message…", note, sendLabel = "Send", rows = 2,
-  header, toolbar, onDrop, onDragOver, onDragLeave, onPaste, textareaClassName,
+  header, toolbar, onDrop, onDragOver, onDragLeave, onPaste, textareaClassName, actions, checking = false,
 }: MessageComposerProps) {
+  const reduce = useReducedMotion();
   const submitLockRef = useRef(false);
+  const held = checking || !!actions;
   const submit = () => {
+    if (held) return;
     if (sending || disabled || sendDisabled || submitLockRef.current) return;
     submitLockRef.current = true;
     try {
@@ -100,23 +115,34 @@ export function MessageComposer({
             const plainEnter = !e.shiftKey && !e.altKey && !e.metaKey && !e.ctrlKey;
             const establishedShortcut = !e.shiftKey && (e.metaKey || e.ctrlKey);
             if (e.key === "Enter" && !e.nativeEvent.isComposing && ((sendOnEnter && plainEnter) || establishedShortcut)) {
+              // A check is open or running: the send keys are inert (never a confirm, never a newline).
               e.preventDefault();
               submit();
             }
           }}
         />
-        {/* Send is the ONE earned gold act on this surface (§11). */}
-        <Button
-          variant="gold"
-          onClick={submit}
-          disabled={sending || disabled || sendDisabled}
-          className="absolute bottom-2 right-5 h-10 shrink-0"
-        >
-          {sending ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Send className="mr-1.5 h-4 w-4" />}
-          {sendLabel}
-        </Button>
+        {/* Send is the ONE earned gold act on this surface (§11). While `actions` stands in for the
+            toolbar, it carries that act and this button is not rendered. */}
+        {!actions && (
+          <Button
+            variant="gold"
+            onClick={submit}
+            disabled={sending || disabled || sendDisabled}
+            aria-busy={checking || undefined}
+            aria-disabled={checking || undefined}
+            data-composer-send=""
+            className="absolute bottom-2 right-5 h-10 shrink-0"
+          >
+            {checking
+              ? (reduce ? <Clock className="mr-1.5 h-4 w-4" aria-hidden /> : <Loader2 className="mr-1.5 h-4 w-4 animate-spin" aria-hidden />)
+              : sending ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Send className="mr-1.5 h-4 w-4" />}
+            {sendLabel}
+          </Button>
+        )}
       </div>
-      {toolbar && <div className="mt-2 flex flex-wrap items-center gap-2">{toolbar}</div>}
+      {actions
+        ? <div className="mt-2">{actions}</div>
+        : toolbar && <div className="mt-2 flex flex-wrap items-center gap-2">{toolbar}</div>}
       {note && <p className="mt-1.5 text-[11px] text-muted-foreground">{note}</p>}
     </div>
   );

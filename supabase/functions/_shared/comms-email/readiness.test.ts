@@ -97,6 +97,17 @@ describe("readCommsEmailReadiness", () => {
     expect((await readCommsEmailReadiness(admin({ channel_connectors: [conn(S1)] }), { tenantId: T, contactId: C, recipient: "primary@x.test", connectorId: S1 }, () => undefined)).reason).toBe("EMAIL_PROVIDER_NOT_CONFIGURED");
     expect(preSend.calls).toEqual([]);
   });
+  it("the business's do-not-disturb holds a send NOW but not one scheduled for later; every other hold still binds", async () => {
+    const at = (scheduled?: boolean) => readCommsEmailReadiness(admin({ channel_connectors: [conn(S1)] }), { tenantId: T, contactId: C, recipient: "primary@x.test", connectorId: S1, scheduled }, env);
+    preSend.result = { proceed: false, outcome: "queued_tenant_dnd" };
+    expect(await at()).toMatchObject({ eligible: false, state: "held", reason: "QUEUED_TENANT_DND" });
+    expect(await at(true)).toMatchObject({ eligible: true, reason: "READY_FOR_GOVERNED_REVIEW", sender_provider: "resend" });
+    for (const outcome of ["blocked_suppressed", "blocked_client_dnd", "blocked_no_consent", "queued_quiet_hours", "error"]) {
+      preSend.result = { proceed: false, outcome };
+      expect((await at(true)).eligible).toBe(false);
+    }
+    preSend.result = { proceed: true, outcome: "proceed" };
+  });
   it("an inactive or foreign connector is a missing sender; a read failure is unavailable", async () => {
     expect((await readCommsEmailReadiness(admin({ channel_connectors: [conn(S1, { status: "disconnected" })] }), { tenantId: T, contactId: C, recipient: "p@x.test", connectorId: S1 }, env)).reason).toBe("TENANT_EMAIL_SENDER_MISSING");
     expect((await readCommsEmailReadiness(admin({ channel_connectors: [conn(S1, { tenant_id: F })] }), { tenantId: T, contactId: C, recipient: "p@x.test", connectorId: S1 }, env)).reason).toBe("TENANT_EMAIL_SENDER_MISSING");

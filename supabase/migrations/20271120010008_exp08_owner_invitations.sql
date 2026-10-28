@@ -167,6 +167,38 @@
 
 BEGIN;
 SET LOCAL lock_timeout = '2s';
+SET LOCAL statement_timeout = '15min';
+
+-- LOCKS UP FRONT, WITHOUT QUEUEING (2026-10-27, after two production applies of this file timed out).
+-- Production is read almost continuously by read-only schema dumps (the PAIGE Spine contract
+-- baseline: pg_dump holds a share lock on every table for its whole run, often several at once). The
+-- first exclusive lock this file needed waited behind them and hit lock_timeout both times, and the
+-- whole file rolled back (nothing applied). A longer lock_timeout is not the fix: a waiting exclusive
+-- request queues every later query on that table behind it, and tenant_members is read on every
+-- request. Instead, every lock the file needs is taken here, all at once, with NOWAIT, which never
+-- waits and so never queues anyone; a failed attempt is rolled back with the locks it got, and the
+-- loop tries again a second later, for up to ten minutes. Once all four are held, nothing below waits
+-- on a table lock (the foreign keys reference tenant_business_owners, held here; the trigger on
+-- tenants needs SHARE ROW EXCLUSIVE). NOWAIT also means no deadlock with a reader that takes these
+-- tables in another order (lessons-learned, the dump-session deadlock).
+DO $locks$
+DECLARE _tries integer := 0;
+BEGIN
+  LOOP
+    BEGIN
+      LOCK TABLE public.tenants IN SHARE ROW EXCLUSIVE MODE NOWAIT;
+      LOCK TABLE public.tenant_members, public.tenant_business_owners, public.tenant_invite_tokens
+        IN ACCESS EXCLUSIVE MODE NOWAIT;
+      EXIT;
+    EXCEPTION WHEN lock_not_available THEN
+      _tries := _tries + 1;
+      IF _tries >= 600 THEN
+        RAISE EXCEPTION 'EXP08 owner invitations: could not take the table locks in % one-second attempts; nothing was applied, so retry when production is quieter', _tries;
+      END IF;
+      PERFORM pg_sleep(1);
+    END;
+  END LOOP;
+END $locks$;
 
 -- INCUMBENT GUARD (precedent 20271108233000, 20271116100008). Every production function this file
 -- replaces must still be the body it was written against, compared as a FINGERPRINT: md5 of prosrc

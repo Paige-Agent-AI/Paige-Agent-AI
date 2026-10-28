@@ -1,14 +1,19 @@
 /**
  * Media budget + approval policy — the pure decision core for the media seam.
  *
- * Reuses the router-budget LADDER verbatim (_shared/router-budget/mod.ts
- * `enforceBudget`) so media and LLM spend enforce the same three-band math.
- * What differs — deliberately, by owner ruling — is the IO posture and the
- * approval boundary:
+ * OWNER BILLING SUPERSESSION (2026-10-27, ANT-162): ALL PAIGE-imposed tenant
+ * spending ceilings are REMOVED — attributable media usage bills the consuming
+ * tenant at published rates through the canonical usage meter; totals are
+ * informational and never interrupt a job. This supersedes the 2026-09-12
+ * fail-closed ceiling rulings this file was built under: the ladder no longer
+ * denies — unknown accrual, an unset ceiling, and exceeded totals all ALLOW,
+ * with the accrual/ceiling numbers returned for display only. The APPROVAL
+ * boundary below (draft allowance / premium / video-always) is a business-action
+ * permission, not a monetary ceiling, and is retained unchanged. Rate limits
+ * and other technical anti-abuse live outside this file and are retained.
  *
- *   MEDIA FAILS CLOSED on unknown accrual ("budget unavailable, stale,
- *   exceeded, or unknown → fail closed" — owner authorization). The LLM path's
- *   proceed-un-gated degrade is NOT inherited here; media mints provider spend.
+ * The router-budget import and band mapping survive for callers that still
+ * render band context; nothing denies on money here anymore.
  *
  * Approval boundary (owner authorization, "Required behavior"):
  *   within automatic draft allowance → may proceed only if policy permits
@@ -52,11 +57,10 @@ export function mediaBand(mode: MediaMode, tier: "standard" | "premium"): Budget
 }
 
 // String-literal discriminant: this repo compiles non-strict, where boolean
-// discrimination does not narrow.
+// discrimination does not narrow. Post-supersession there is no deny verdict —
+// the totals are informational and never interrupt a job.
 export type MediaBudgetDecision =
-  | { verdict: "allow"; decision: BudgetDecision }
-  /** Fail-closed verdict with the truthful reason the UI must show. */
-  | { verdict: "deny"; gate: "budget_exceeded" | "budget_unknown"; explanation: string; decision?: BudgetDecision };
+  | { verdict: "allow"; decision?: BudgetDecision; spend: { accruedUsd: number | null; ceilingUsd: number | null } };
 
 /**
  * Platform-wide accrual read for the UTC day via `media_spend_today_all` — the
@@ -81,38 +85,24 @@ export async function readPlatformMediaAccrual(
 }
 
 /**
- * The platform guard decision (owner correction 2026-09-12): unlike the
- * per-tenant ladder, an UNREADABLE platform accrual still allows the call —
- * the guard is a runaway-spend backstop, not the customer-facing gate, and
- * bricking every tenant's media on a metrics blip trades a bounded money risk
- * for an outage. The per-tenant ladder (decideMediaBudget) remains fail-closed.
+ * The platform guard is INFORMATIONAL (billing supersession 2026-10-27): the
+ * platform-wide accrual total is returned for display/alerting and never pauses
+ * spend. The 2026-09-12 runaway-spend backstop it replaced is superseded;
+ * runaway protection now lives in billing alerts and technical anti-abuse.
  */
 export function decidePlatformSpendGuard(input: {
   platformAccruedUsd: number | null;
   platformCeilingUsd: number;
   estimatedCostUsd: number;
-}): { ok: boolean; explanation?: string } {
-  if (input.platformAccruedUsd === null || !Number.isFinite(input.platformAccruedUsd)) {
-    return { ok: true };
-  }
-  if (input.platformAccruedUsd + input.estimatedCostUsd > input.platformCeilingUsd) {
-    return {
-      ok: false,
-      explanation:
-        `Platform media spend is paused for today (about $${input.platformAccruedUsd.toFixed(2)} of the $${input.platformCeilingUsd.toFixed(2)} platform-wide daily guard used); resets at UTC midnight`,
-    };
-  }
-  return { ok: true };
+}): { ok: true; platformAccruedUsd: number | null; platformCeilingUsd: number } {
+  return { ok: true, platformAccruedUsd: input.platformAccruedUsd, platformCeilingUsd: input.platformCeilingUsd };
 }
 
 /**
- * Decide a media job against the ladder. `accruedUsd: null` means the accrual
- * read FAILED — media fails closed (the documented deviation from the LLM path).
- *
- * DEVIATION #1 (fail closed on unknown accrual) and DEVIATION #2 (no cheap-band
- * continue past the hard ceiling) are both owner-ruled for MEDIA ("budget
- * unavailable, stale, exceeded, or unknown → fail closed") and deliberately do
- * NOT edit the shared LLM contract — they live in this wrapper only.
+ * Decide a media job against spend. POST-SUPERSESSION this NEVER denies on
+ * money: unknown accrual, an unset ceiling, and exceeded totals all allow —
+ * the numbers ride along so surfaces can show "today's media spend" honestly.
+ * The approval boundary (resolveApprovalPolicy) still governs confirmation.
  */
 export function decideMediaBudget(input: {
   accruedUsd: number | null;
@@ -121,54 +111,11 @@ export function decideMediaBudget(input: {
   tier: "standard" | "premium";
   estimatedCostUsd: number;
 }): MediaBudgetDecision {
-  if (input.accruedUsd === null || !Number.isFinite(input.accruedUsd)) {
-    return {
-      verdict: "deny",
-      gate: "budget_unknown",
-      explanation:
-        "Today's media spend couldn't be read, so generation is paused (fail-closed). Try again shortly; if it persists, check the database.",
-    };
-  }
-  // A null ceiling means the owner has not configured the media budget at all —
-  // spend is not enabled (no silent default; owner ruling "no provider calls
-  // until … the budget configuration is in place").
-  if (input.ceilingUsd === null || !Number.isFinite(input.ceilingUsd) || input.ceilingUsd <= 0) {
-    return {
-      verdict: "deny",
-      gate: "budget_unknown",
-      explanation:
-        "Media generation isn't switched on yet — no media budget ceiling is configured. The owner sets media_budget_daily_usd (platform or per-tenant) to enable spend.",
-    };
-  }
-  const decision = enforceBudget({
-    accrued_usd: input.accruedUsd,
-    ceiling_usd: input.ceilingUsd,
-    band: mediaBand(input.mode, input.tier),
-  });
-  // Media deviation #2: the cheap band's continue-at-hard posture is for LLM
-  // economy traffic; media mints provider spend, so the hard gate BLOCKS here.
-  if (decision.decision === "block" || decision.gate === "budget_hard") {
-    return {
-      verdict: "deny",
-      gate: "budget_exceeded",
-      explanation:
-        `Daily media budget reached ($${input.accruedUsd.toFixed(2)} of $${input.ceilingUsd.toFixed(2)}); resets at UTC midnight`,
-      decision,
-    };
-  }
-  // A job that would itself blow past the ceiling is blocked even below the
-  // soft gate — the ladder guards spend already accrued; this guards the
-  // marginal spend the request is about to mint.
-  if (input.accruedUsd + input.estimatedCostUsd > input.ceilingUsd) {
-    return {
-      verdict: "deny",
-      gate: "budget_exceeded",
-      explanation:
-        `This job (≈$${input.estimatedCostUsd.toFixed(2)}) would exceed today's media budget ($${input.accruedUsd.toFixed(2)} of $${input.ceilingUsd.toFixed(2)} used); resets at UTC midnight`,
-      decision,
-    };
-  }
-  return { verdict: "allow", decision };
+  void mediaBand(input.mode, input.tier); // band context retained for callers; no denial path remains
+  return {
+    verdict: "allow",
+    spend: { accruedUsd: input.accruedUsd, ceilingUsd: input.ceilingUsd },
+  };
 }
 
 /** Accrual read for the UTC day via the service-role RPC `media_spend_today`. */

@@ -51,6 +51,7 @@ export function businessReviewRecordLinks(snapshot: BusinessOperatingSnapshot): 
     clients: ['contacts'],
     campaigns: ['marketing'],
     email: ['marketing'],
+    bookings: ['calendar'],
   } as const;
   const links: ReadRecordLink[] = [];
   // Use the SAME Fabric priority policy as the visible review. Within the

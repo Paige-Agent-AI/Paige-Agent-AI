@@ -166,4 +166,36 @@ describe("MessageComposer keyboard sending", () => {
     expect(onSend).toHaveBeenCalledTimes(2);
     expect(document.activeElement).toBe(textarea);
   });
+
+  it("an actions slot stands in for the toolbar and the gold Send is not rendered (gold appears once)", () => {
+    const onSend = vi.fn();
+    const { host, textarea } = renderComposer({
+      onSend,
+      toolbar: <button type="button">Attach</button>,
+      actions: <div data-testid="strip"><button type="button" className="gold">Send now</button></div>,
+    });
+    expect(host.querySelector('[data-testid="strip"]')).not.toBeNull();
+    expect(host.querySelector("[data-composer-send]")).toBeNull();
+    expect([...host.querySelectorAll("button")].map((b) => b.textContent)).toEqual(["Send now"]);
+    // The send keys never confirm what the strip shows.
+    const plain = keydown(textarea, {});
+    const shortcut = keydown(textarea, { ctrlKey: true });
+    expect(plain.event.defaultPrevented).toBe(true);
+    expect(shortcut.event.defaultPrevented).toBe(true);
+    expect(onSend).not.toHaveBeenCalled();
+  });
+
+  it("checking keeps Send focusable and busy, and makes it inert (never `disabled`)", () => {
+    const onSend = vi.fn();
+    const { sendButton, textarea } = renderComposer({ onSend, checking: true, sendLabel: "Checking…" });
+    act(() => sendButton.focus());
+    expect(sendButton.disabled).toBe(false);
+    expect(sendButton.getAttribute("aria-busy")).toBe("true");
+    expect(sendButton.getAttribute("aria-disabled")).toBe("true");
+    expect(sendButton.textContent).toContain("Checking…");
+    act(() => sendButton.click());
+    keydown(textarea, {});
+    expect(onSend).not.toHaveBeenCalled();
+    expect(document.activeElement).toBe(sendButton);
+  });
 });

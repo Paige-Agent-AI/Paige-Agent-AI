@@ -1,0 +1,1749 @@
+{
+  "label": "before",
+  "measuredAt": "2026-10-27T22:44:36.027Z",
+  "viewport": "1366x768",
+  "surfaces": {
+    "conversations-light": [
+      {
+        "i": 0,
+        "variant": "ghost",
+        "name": "Most recent",
+        "icon": false,
+        "hover": {
+          "ratio": 1.11,
+          "fg": "rgb(33, 30, 36)",
+          "bg": "rgb(26, 17, 39)",
+          "hovered": true
+        },
+        "rest": {
+          "ratio": 5.32,
+          "bg": "rgb(244, 241, 235)"
+        }
+      },
+      {
+        "i": 1,
+        "variant": "ghost",
+        "name": "Labels",
+        "icon": true,
+        "shot": "docs/evidence/ui-delivery/assets/exp03-composer-inline-check/exp03c-hover-before-conversations-light-labels.png",
+        "hover": {
+          "ratio": 1.11,
+          "fg": "rgb(33, 30, 36)",
+          "bg": "rgb(26, 17, 39)",
+          "hovered": true
+        },
+        "rest": {
+          "ratio": 5.32,
+          "bg": "rgb(244, 241, 235)"
+        }
+      },
+      {
+        "i": 2,
+        "variant": "ghost",
+        "name": "Thread actions",
+        "icon": true,
+        "hover": {
+          "ratio": 1.11,
+          "fg": "rgb(33, 30, 36)",
+          "bg": "rgb(26, 17, 39)",
+          "hovered": true
+        },
+        "rest": {
+          "ratio": 5.32,
+          "bg": "rgb(244, 241, 235)"
+        }
+      },
+      {
+        "i": 3,
+        "variant": "ghost",
+        "name": "Labels",
+        "icon": true,
+        "hover": {
+          "ratio": 1.11,
+          "fg": "rgb(33, 30, 36)",
+          "bg": "rgb(26, 17, 39)",
+          "hovered": true
+        },
+        "rest": {
+          "ratio": 5.47,
+          "bg": "rgb(247, 244, 238)"
+        }
+      },
+      {
+        "i": 4,
+        "variant": "ghost",
+        "name": "Thread actions",
+        "icon": true,
+        "hover": {
+          "ratio": 1.11,
+          "fg": "rgb(33, 30, 36)",
+          "bg": "rgb(26, 17, 39)",
+          "hovered": true
+        },
+        "rest": {
+          "ratio": 5.47,
+          "bg": "rgb(247, 244, 238)"
+        }
+      },
+      {
+        "i": 5,
+        "variant": "ghost",
+        "name": "Labels",
+        "icon": true,
+        "hover": {
+          "ratio": 1.11,
+          "fg": "rgb(33, 30, 36)",
+          "bg": "rgb(26, 17, 39)",
+          "hovered": true
+        },
+        "rest": {
+          "ratio": 5.32,
+          "bg": "rgb(244, 241, 235)"
+        }
+      },
+      {
+        "i": 6,
+        "variant": "ghost",
+        "name": "Thread actions",
+        "icon": true,
+        "hover": {
+          "ratio": 1.11,
+          "fg": "rgb(33, 30, 36)",
+          "bg": "rgb(26, 17, 39)",
+          "hovered": true
+        },
+        "rest": {
+          "ratio": 5.32,
+          "bg": "rgb(244, 241, 235)"
+        }
+      },
+      {
+        "i": 7,
+        "variant": "ghost",
+        "name": "Set a reminder about this contact",
+        "icon": true,
+        "hover": {
+          "ratio": 1.11,
+          "fg": "rgb(33, 30, 36)",
+          "bg": "rgb(26, 17, 39)",
+          "hovered": true
+        },
+        "rest": {
+          "ratio": 5.32,
+          "bg": "rgb(244, 241, 235)"
+        }
+      },
+      {
+        "i": 8,
+        "variant": "ghost",
+        "name": "Delete conversation",
+        "icon": true,
+        "hover": {
+          "ratio": 1.11,
+          "fg": "rgb(33, 30, 36)",
+          "bg": "rgb(26, 17, 39)",
+          "hovered": true
+        },
+        "rest": {
+          "ratio": 5.32,
+          "bg": "rgb(244, 241, 235)"
+        }
+      },
+      {
+        "i": 9,
+        "variant": "outline",
+        "name": "Open primary PAIGE",
+        "icon": false,
+        "ratio": null,
+        "note": "could not hover: TimeoutError: locator.hover: Timeout 5000ms exceeded. Call log: \u001b[2m  - waiting for locator('[data-hm=\"9\"]')\u001b[22m"
+      },
+      {
+        "i": 10,
+        "variant": "outline",
+        "name": "Attach",
+        "icon": false,
+        "hover": {
+          "ratio": 1.1,
+          "fg": "rgb(32, 30, 35)",
+          "bg": "rgb(26, 17, 39)",
+          "hovered": true
+        },
+        "rest": {
+          "ratio": 14.65,
+          "bg": "rgb(244, 241, 235)"
+        }
+      },
+      {
+        "i": 11,
+        "variant": "outline",
+        "name": "Dictate",
+        "icon": false,
+        "hover": {
+          "ratio": 1.1,
+          "fg": "rgb(32, 30, 35)",
+          "bg": "rgb(26, 17, 39)",
+          "hovered": true
+        },
+        "rest": {
+          "ratio": 14.65,
+          "bg": "rgb(244, 241, 235)"
+        }
+      },
+      {
+        "i": 12,
+        "variant": "outline",
+        "name": "Draft with Paige",
+        "icon": false,
+        "shot": "docs/evidence/ui-delivery/assets/exp03-composer-inline-check/exp03c-hover-before-conversations-light-draft-with-paige.png",
+        "hover": {
+          "ratio": 1.1,
+          "fg": "rgb(32, 30, 35)",
+          "bg": "rgb(26, 17, 39)",
+          "hovered": true
+        },
+        "rest": {
+          "ratio": 14.65,
+          "bg": "rgb(244, 241, 235)"
+        }
+      },
+      {
+        "i": 13,
+        "variant": "outline",
+        "name": "Guide Paige's draft",
+        "icon": true,
+        "hover": {
+          "ratio": 1.1,
+          "fg": "rgb(32, 30, 35)",
+          "bg": "rgb(26, 17, 39)",
+          "hovered": true
+        },
+        "rest": {
+          "ratio": 14.65,
+          "bg": "rgb(244, 241, 235)"
+        }
+      },
+      {
+        "i": 14,
+        "variant": "outline",
+        "name": "Schedule",
+        "icon": false,
+        "shot": "docs/evidence/ui-delivery/assets/exp03-composer-inline-check/exp03c-hover-before-conversations-light-schedule.png",
+        "hover": {
+          "ratio": 1.1,
+          "fg": "rgb(32, 30, 35)",
+          "bg": "rgb(26, 17, 39)",
+          "hovered": true
+        },
+        "rest": {
+          "ratio": 14.65,
+          "bg": "rgb(244, 241, 235)"
+        }
+      }
+    ],
+    "check-strip-light": [
+      {
+        "i": 0,
+        "variant": "outline",
+        "name": "Edit",
+        "icon": false,
+        "hover": {
+          "ratio": 14.99,
+          "fg": "rgb(33, 30, 36)",
+          "bg": "rgb(247, 244, 238)",
+          "hovered": true
+        },
+        "rest": {
+          "ratio": 16.31,
+          "bg": "rgb(255, 254, 250)"
+        }
+      }
+    ],
+    "settings-security-data-light": [
+      {
+        "i": 0,
+        "variant": "ghost",
+        "name": "Show password",
+        "icon": true,
+        "hover": {
+          "ratio": 1.11,
+          "fg": "rgb(33, 30, 36)",
+          "bg": "rgb(26, 17, 39)",
+          "hovered": true
+        },
+        "rest": {
+          "ratio": 14.65,
+          "bg": "rgb(244, 241, 235)"
+        }
+      },
+      {
+        "i": 1,
+        "variant": "outline",
+        "name": "Sign out",
+        "icon": false,
+        "shot": "docs/evidence/ui-delivery/assets/exp03-composer-inline-check/exp03c-hover-before-settings-security-data-light-sign-out.png",
+        "hover": {
+          "ratio": 1.1,
+          "fg": "rgb(32, 30, 35)",
+          "bg": "rgb(26, 17, 39)",
+          "hovered": true
+        },
+        "rest": {
+          "ratio": 14.65,
+          "bg": "rgb(244, 241, 235)"
+        }
+      },
+      {
+        "i": 2,
+        "variant": "outline",
+        "name": "Chats",
+        "icon": false,
+        "hover": {
+          "ratio": 1.11,
+          "fg": "rgb(33, 30, 36)",
+          "bg": "rgb(26, 17, 39)",
+          "hovered": true
+        },
+        "rest": {
+          "ratio": 15.44,
+          "bg": "rgb(251,247,243)"
+        }
+      },
+      {
+        "i": 3,
+        "variant": "ghost",
+        "name": "Copy message",
+        "icon": true,
+        "shot": "docs/evidence/ui-delivery/assets/exp03-composer-inline-check/exp03c-hover-before-settings-security-data-light-copy-message.png",
+        "hover": {
+          "ratio": 1.11,
+          "fg": "rgb(33, 30, 36)",
+          "bg": "rgb(26, 17, 39)",
+          "hovered": true
+        },
+        "rest": {
+          "ratio": 13.85,
+          "bg": "rgb(238,235,231)"
+        }
+      },
+      {
+        "i": 4,
+        "variant": "ghost",
+        "name": "Play message aloud",
+        "icon": true,
+        "hover": {
+          "ratio": 1.11,
+          "fg": "rgb(33, 30, 36)",
+          "bg": "rgb(26, 17, 39)",
+          "hovered": true
+        },
+        "rest": {
+          "ratio": 13.85,
+          "bg": "rgb(238,235,231)"
+        }
+      },
+      {
+        "i": 5,
+        "variant": "ghost",
+        "name": "Copy message",
+        "icon": true,
+        "hover": {
+          "ratio": 1.11,
+          "fg": "rgb(33, 30, 36)",
+          "bg": "rgb(26, 17, 39)",
+          "hovered": true
+        },
+        "rest": {
+          "ratio": 6.02,
+          "bg": "rgb(101, 90, 150)"
+        }
+      },
+      {
+        "i": 6,
+        "variant": "ghost",
+        "name": "Copy message",
+        "icon": true,
+        "hover": {
+          "ratio": 1.11,
+          "fg": "rgb(33, 30, 36)",
+          "bg": "rgb(26, 17, 39)",
+          "hovered": true
+        },
+        "rest": {
+          "ratio": 13.85,
+          "bg": "rgb(238,235,231)"
+        }
+      },
+      {
+        "i": 7,
+        "variant": "ghost",
+        "name": "Play message aloud",
+        "icon": true,
+        "hover": {
+          "ratio": 1.11,
+          "fg": "rgb(33, 30, 36)",
+          "bg": "rgb(26, 17, 39)",
+          "hovered": true
+        },
+        "rest": {
+          "ratio": 13.85,
+          "bg": "rgb(238,235,231)"
+        }
+      },
+      {
+        "i": 8,
+        "variant": "ghost",
+        "name": "Copy message",
+        "icon": true,
+        "hover": {
+          "ratio": 1.11,
+          "fg": "rgb(33, 30, 36)",
+          "bg": "rgb(26, 17, 39)",
+          "hovered": true
+        },
+        "rest": {
+          "ratio": 6.02,
+          "bg": "rgb(101, 90, 150)"
+        }
+      },
+      {
+        "i": 9,
+        "variant": "ghost",
+        "name": "Copy message",
+        "icon": true,
+        "hover": {
+          "ratio": 1.11,
+          "fg": "rgb(33, 30, 36)",
+          "bg": "rgb(26, 17, 39)",
+          "hovered": true
+        },
+        "rest": {
+          "ratio": 13.85,
+          "bg": "rgb(238,235,231)"
+        }
+      },
+      {
+        "i": 10,
+        "variant": "ghost",
+        "name": "Play message aloud",
+        "icon": true,
+        "hover": {
+          "ratio": 1.11,
+          "fg": "rgb(33, 30, 36)",
+          "bg": "rgb(26, 17, 39)",
+          "hovered": true
+        },
+        "rest": {
+          "ratio": 13.85,
+          "bg": "rgb(238,235,231)"
+        }
+      },
+      {
+        "i": 11,
+        "variant": "ghost",
+        "name": "Start voice typing",
+        "icon": true,
+        "hover": {
+          "ratio": 1.11,
+          "fg": "rgb(33, 30, 36)",
+          "bg": "rgb(26, 17, 39)",
+          "hovered": true
+        },
+        "rest": {
+          "ratio": 14.73,
+          "bg": "rgb(245, 242, 236)"
+        }
+      },
+      {
+        "i": 12,
+        "variant": "outline",
+        "name": "Talk live with Paige",
+        "icon": false,
+        "hover": {
+          "ratio": 1.11,
+          "fg": "rgb(33, 30, 36)",
+          "bg": "rgb(26, 17, 39)",
+          "hovered": true
+        },
+        "rest": {
+          "ratio": 14.73,
+          "bg": "rgb(245, 242, 236)"
+        }
+      },
+      {
+        "i": 13,
+        "variant": "ghost",
+        "name": "Attach a document",
+        "icon": true,
+        "hover": {
+          "ratio": 1.11,
+          "fg": "rgb(33, 30, 36)",
+          "bg": "rgb(26, 17, 39)",
+          "hovered": true
+        },
+        "rest": {
+          "ratio": 14.73,
+          "bg": "rgb(245, 242, 236)"
+        }
+      }
+    ],
+    "settings-integrations-light": [
+      {
+        "i": 0,
+        "variant": "outline",
+        "name": "Chats",
+        "icon": false,
+        "hover": {
+          "ratio": 1.11,
+          "fg": "rgb(33, 30, 36)",
+          "bg": "rgb(26, 17, 39)",
+          "hovered": true
+        },
+        "rest": {
+          "ratio": 15.44,
+          "bg": "rgb(251,247,243)"
+        }
+      },
+      {
+        "i": 1,
+        "variant": "ghost",
+        "name": "Copy message",
+        "icon": true,
+        "hover": {
+          "ratio": 1.11,
+          "fg": "rgb(33, 30, 36)",
+          "bg": "rgb(26, 17, 39)",
+          "hovered": true
+        },
+        "rest": {
+          "ratio": 13.85,
+          "bg": "rgb(238,235,231)"
+        }
+      },
+      {
+        "i": 2,
+        "variant": "ghost",
+        "name": "Play message aloud",
+        "icon": true,
+        "hover": {
+          "ratio": 1.11,
+          "fg": "rgb(33, 30, 36)",
+          "bg": "rgb(26, 17, 39)",
+          "hovered": true
+        },
+        "rest": {
+          "ratio": 13.85,
+          "bg": "rgb(238,235,231)"
+        }
+      },
+      {
+        "i": 3,
+        "variant": "ghost",
+        "name": "Copy message",
+        "icon": true,
+        "hover": {
+          "ratio": 1.11,
+          "fg": "rgb(33, 30, 36)",
+          "bg": "rgb(26, 17, 39)",
+          "hovered": true
+        },
+        "rest": {
+          "ratio": 6.02,
+          "bg": "rgb(101, 90, 150)"
+        }
+      },
+      {
+        "i": 4,
+        "variant": "ghost",
+        "name": "Copy message",
+        "icon": true,
+        "hover": {
+          "ratio": 1.11,
+          "fg": "rgb(33, 30, 36)",
+          "bg": "rgb(26, 17, 39)",
+          "hovered": true
+        },
+        "rest": {
+          "ratio": 13.85,
+          "bg": "rgb(238,235,231)"
+        }
+      },
+      {
+        "i": 5,
+        "variant": "ghost",
+        "name": "Play message aloud",
+        "icon": true,
+        "hover": {
+          "ratio": 1.11,
+          "fg": "rgb(33, 30, 36)",
+          "bg": "rgb(26, 17, 39)",
+          "hovered": true
+        },
+        "rest": {
+          "ratio": 13.85,
+          "bg": "rgb(238,235,231)"
+        }
+      },
+      {
+        "i": 6,
+        "variant": "ghost",
+        "name": "Copy message",
+        "icon": true,
+        "hover": {
+          "ratio": 1.11,
+          "fg": "rgb(33, 30, 36)",
+          "bg": "rgb(26, 17, 39)",
+          "hovered": true
+        },
+        "rest": {
+          "ratio": 6.02,
+          "bg": "rgb(101, 90, 150)"
+        }
+      },
+      {
+        "i": 7,
+        "variant": "ghost",
+        "name": "Copy message",
+        "icon": true,
+        "hover": {
+          "ratio": 1.11,
+          "fg": "rgb(33, 30, 36)",
+          "bg": "rgb(26, 17, 39)",
+          "hovered": true
+        },
+        "rest": {
+          "ratio": 13.85,
+          "bg": "rgb(238,235,231)"
+        }
+      },
+      {
+        "i": 8,
+        "variant": "ghost",
+        "name": "Play message aloud",
+        "icon": true,
+        "hover": {
+          "ratio": 1.11,
+          "fg": "rgb(33, 30, 36)",
+          "bg": "rgb(26, 17, 39)",
+          "hovered": true
+        },
+        "rest": {
+          "ratio": 13.85,
+          "bg": "rgb(238,235,231)"
+        }
+      },
+      {
+        "i": 9,
+        "variant": "ghost",
+        "name": "Start voice typing",
+        "icon": true,
+        "hover": {
+          "ratio": 1.11,
+          "fg": "rgb(33, 30, 36)",
+          "bg": "rgb(26, 17, 39)",
+          "hovered": true
+        },
+        "rest": {
+          "ratio": 14.73,
+          "bg": "rgb(245, 242, 236)"
+        }
+      },
+      {
+        "i": 10,
+        "variant": "outline",
+        "name": "Talk live with Paige",
+        "icon": false,
+        "hover": {
+          "ratio": 1.11,
+          "fg": "rgb(33, 30, 36)",
+          "bg": "rgb(26, 17, 39)",
+          "hovered": true
+        },
+        "rest": {
+          "ratio": 14.73,
+          "bg": "rgb(245, 242, 236)"
+        }
+      },
+      {
+        "i": 11,
+        "variant": "ghost",
+        "name": "Attach a document",
+        "icon": true,
+        "hover": {
+          "ratio": 1.11,
+          "fg": "rgb(33, 30, 36)",
+          "bg": "rgb(26, 17, 39)",
+          "hovered": true
+        },
+        "rest": {
+          "ratio": 14.73,
+          "bg": "rgb(245, 242, 236)"
+        }
+      }
+    ],
+    "settings-connections-light": [
+      {
+        "i": 0,
+        "variant": "outline",
+        "name": "Chats",
+        "icon": false,
+        "hover": {
+          "ratio": 1.11,
+          "fg": "rgb(33, 30, 36)",
+          "bg": "rgb(26, 17, 39)",
+          "hovered": true
+        },
+        "rest": {
+          "ratio": 15.44,
+          "bg": "rgb(251,247,243)"
+        }
+      },
+      {
+        "i": 1,
+        "variant": "ghost",
+        "name": "Copy message",
+        "icon": true,
+        "hover": {
+          "ratio": 1.11,
+          "fg": "rgb(33, 30, 36)",
+          "bg": "rgb(26, 17, 39)",
+          "hovered": true
+        },
+        "rest": {
+          "ratio": 13.85,
+          "bg": "rgb(238,235,231)"
+        }
+      },
+      {
+        "i": 2,
+        "variant": "ghost",
+        "name": "Play message aloud",
+        "icon": true,
+        "hover": {
+          "ratio": 1.11,
+          "fg": "rgb(33, 30, 36)",
+          "bg": "rgb(26, 17, 39)",
+          "hovered": true
+        },
+        "rest": {
+          "ratio": 13.85,
+          "bg": "rgb(238,235,231)"
+        }
+      },
+      {
+        "i": 3,
+        "variant": "ghost",
+        "name": "Copy message",
+        "icon": true,
+        "hover": {
+          "ratio": 1.11,
+          "fg": "rgb(33, 30, 36)",
+          "bg": "rgb(26, 17, 39)",
+          "hovered": true
+        },
+        "rest": {
+          "ratio": 6.02,
+          "bg": "rgb(101, 90, 150)"
+        }
+      },
+      {
+        "i": 4,
+        "variant": "ghost",
+        "name": "Copy message",
+        "icon": true,
+        "hover": {
+          "ratio": 1.11,
+          "fg": "rgb(33, 30, 36)",
+          "bg": "rgb(26, 17, 39)",
+          "hovered": true
+        },
+        "rest": {
+          "ratio": 13.85,
+          "bg": "rgb(238,235,231)"
+        }
+      },
+      {
+        "i": 5,
+        "variant": "ghost",
+        "name": "Play message aloud",
+        "icon": true,
+        "hover": {
+          "ratio": 1.11,
+          "fg": "rgb(33, 30, 36)",
+          "bg": "rgb(26, 17, 39)",
+          "hovered": true
+        },
+        "rest": {
+          "ratio": 13.85,
+          "bg": "rgb(238,235,231)"
+        }
+      },
+      {
+        "i": 6,
+        "variant": "ghost",
+        "name": "Copy message",
+        "icon": true,
+        "hover": {
+          "ratio": 1.11,
+          "fg": "rgb(33, 30, 36)",
+          "bg": "rgb(26, 17, 39)",
+          "hovered": true
+        },
+        "rest": {
+          "ratio": 6.02,
+          "bg": "rgb(101, 90, 150)"
+        }
+      },
+      {
+        "i": 7,
+        "variant": "ghost",
+        "name": "Copy message",
+        "icon": true,
+        "hover": {
+          "ratio": 1.11,
+          "fg": "rgb(33, 30, 36)",
+          "bg": "rgb(26, 17, 39)",
+          "hovered": true
+        },
+        "rest": {
+          "ratio": 13.85,
+          "bg": "rgb(238,235,231)"
+        }
+      },
+      {
+        "i": 8,
+        "variant": "ghost",
+        "name": "Play message aloud",
+        "icon": true,
+        "hover": {
+          "ratio": 1.11,
+          "fg": "rgb(33, 30, 36)",
+          "bg": "rgb(26, 17, 39)",
+          "hovered": true
+        },
+        "rest": {
+          "ratio": 13.85,
+          "bg": "rgb(238,235,231)"
+        }
+      },
+      {
+        "i": 9,
+        "variant": "ghost",
+        "name": "Start voice typing",
+        "icon": true,
+        "hover": {
+          "ratio": 1.11,
+          "fg": "rgb(33, 30, 36)",
+          "bg": "rgb(26, 17, 39)",
+          "hovered": true
+        },
+        "rest": {
+          "ratio": 14.73,
+          "bg": "rgb(245, 242, 236)"
+        }
+      },
+      {
+        "i": 10,
+        "variant": "outline",
+        "name": "Talk live with Paige",
+        "icon": false,
+        "hover": {
+          "ratio": 1.11,
+          "fg": "rgb(33, 30, 36)",
+          "bg": "rgb(26, 17, 39)",
+          "hovered": true
+        },
+        "rest": {
+          "ratio": 14.73,
+          "bg": "rgb(245, 242, 236)"
+        }
+      },
+      {
+        "i": 11,
+        "variant": "ghost",
+        "name": "Attach a document",
+        "icon": true,
+        "hover": {
+          "ratio": 1.11,
+          "fg": "rgb(33, 30, 36)",
+          "bg": "rgb(26, 17, 39)",
+          "hovered": true
+        },
+        "rest": {
+          "ratio": 14.73,
+          "bg": "rgb(245, 242, 236)"
+        }
+      }
+    ],
+    "conversations-dark": [
+      {
+        "i": 0,
+        "variant": "ghost",
+        "name": "Most recent",
+        "icon": false,
+        "hover": {
+          "ratio": 16.31,
+          "fg": "rgb(246, 242, 234)",
+          "bg": "rgb(26, 17, 39)",
+          "hovered": true
+        },
+        "rest": {
+          "ratio": 7.52,
+          "bg": "rgb(24, 22, 29)"
+        }
+      },
+      {
+        "i": 1,
+        "variant": "ghost",
+        "name": "Labels",
+        "icon": true,
+        "shot": "docs/evidence/ui-delivery/assets/exp03-composer-inline-check/exp03c-hover-before-conversations-dark-labels.png",
+        "hover": {
+          "ratio": 16.31,
+          "fg": "rgb(246, 242, 234)",
+          "bg": "rgb(26, 17, 39)",
+          "hovered": true
+        },
+        "rest": {
+          "ratio": 7.52,
+          "bg": "rgb(24, 22, 29)"
+        }
+      },
+      {
+        "i": 2,
+        "variant": "ghost",
+        "name": "Thread actions",
+        "icon": true,
+        "hover": {
+          "ratio": 16.31,
+          "fg": "rgb(246, 242, 234)",
+          "bg": "rgb(26, 17, 39)",
+          "hovered": true
+        },
+        "rest": {
+          "ratio": 7.52,
+          "bg": "rgb(24, 22, 29)"
+        }
+      },
+      {
+        "i": 3,
+        "variant": "ghost",
+        "name": "Labels",
+        "icon": true,
+        "hover": {
+          "ratio": 16.31,
+          "fg": "rgb(246, 242, 234)",
+          "bg": "rgb(26, 17, 39)",
+          "hovered": true
+        },
+        "rest": {
+          "ratio": 7.7,
+          "bg": "rgb(22, 19, 27)"
+        }
+      },
+      {
+        "i": 4,
+        "variant": "ghost",
+        "name": "Thread actions",
+        "icon": true,
+        "hover": {
+          "ratio": 16.31,
+          "fg": "rgb(246, 242, 234)",
+          "bg": "rgb(26, 17, 39)",
+          "hovered": true
+        },
+        "rest": {
+          "ratio": 7.7,
+          "bg": "rgb(22, 19, 27)"
+        }
+      },
+      {
+        "i": 5,
+        "variant": "ghost",
+        "name": "Labels",
+        "icon": true,
+        "hover": {
+          "ratio": 16.31,
+          "fg": "rgb(246, 242, 234)",
+          "bg": "rgb(26, 17, 39)",
+          "hovered": true
+        },
+        "rest": {
+          "ratio": 7.52,
+          "bg": "rgb(24, 22, 29)"
+        }
+      },
+      {
+        "i": 6,
+        "variant": "ghost",
+        "name": "Thread actions",
+        "icon": true,
+        "hover": {
+          "ratio": 16.31,
+          "fg": "rgb(246, 242, 234)",
+          "bg": "rgb(26, 17, 39)",
+          "hovered": true
+        },
+        "rest": {
+          "ratio": 7.52,
+          "bg": "rgb(24, 22, 29)"
+        }
+      },
+      {
+        "i": 7,
+        "variant": "ghost",
+        "name": "Set a reminder about this contact",
+        "icon": true,
+        "hover": {
+          "ratio": 16.31,
+          "fg": "rgb(246, 242, 234)",
+          "bg": "rgb(26, 17, 39)",
+          "hovered": true
+        },
+        "rest": {
+          "ratio": 7.52,
+          "bg": "rgb(24, 22, 29)"
+        }
+      },
+      {
+        "i": 8,
+        "variant": "ghost",
+        "name": "Delete conversation",
+        "icon": true,
+        "hover": {
+          "ratio": 16.31,
+          "fg": "rgb(246, 242, 234)",
+          "bg": "rgb(26, 17, 39)",
+          "hovered": true
+        },
+        "rest": {
+          "ratio": 7.52,
+          "bg": "rgb(24, 22, 29)"
+        }
+      },
+      {
+        "i": 9,
+        "variant": "outline",
+        "name": "Open primary PAIGE",
+        "icon": false,
+        "ratio": null,
+        "note": "could not hover: TimeoutError: locator.hover: Timeout 5000ms exceeded. Call log: \u001b[2m  - waiting for locator('[data-hm=\"9\"]')\u001b[22m"
+      },
+      {
+        "i": 10,
+        "variant": "outline",
+        "name": "Attach",
+        "icon": false,
+        "hover": {
+          "ratio": 16.31,
+          "fg": "rgb(246, 242, 234)",
+          "bg": "rgb(26, 17, 39)",
+          "hovered": true
+        },
+        "rest": {
+          "ratio": 16.06,
+          "bg": "rgb(24, 22, 29)"
+        }
+      },
+      {
+        "i": 11,
+        "variant": "outline",
+        "name": "Dictate",
+        "icon": false,
+        "hover": {
+          "ratio": 16.31,
+          "fg": "rgb(246, 242, 234)",
+          "bg": "rgb(26, 17, 39)",
+          "hovered": true
+        },
+        "rest": {
+          "ratio": 16.06,
+          "bg": "rgb(24, 22, 29)"
+        }
+      },
+      {
+        "i": 12,
+        "variant": "outline",
+        "name": "Draft with Paige",
+        "icon": false,
+        "shot": "docs/evidence/ui-delivery/assets/exp03-composer-inline-check/exp03c-hover-before-conversations-dark-draft-with-paige.png",
+        "hover": {
+          "ratio": 16.31,
+          "fg": "rgb(246, 242, 234)",
+          "bg": "rgb(26, 17, 39)",
+          "hovered": true
+        },
+        "rest": {
+          "ratio": 16.06,
+          "bg": "rgb(24, 22, 29)"
+        }
+      },
+      {
+        "i": 13,
+        "variant": "outline",
+        "name": "Guide Paige's draft",
+        "icon": true,
+        "hover": {
+          "ratio": 16.31,
+          "fg": "rgb(246, 242, 234)",
+          "bg": "rgb(26, 17, 39)",
+          "hovered": true
+        },
+        "rest": {
+          "ratio": 16.06,
+          "bg": "rgb(24, 22, 29)"
+        }
+      },
+      {
+        "i": 14,
+        "variant": "outline",
+        "name": "Schedule",
+        "icon": false,
+        "shot": "docs/evidence/ui-delivery/assets/exp03-composer-inline-check/exp03c-hover-before-conversations-dark-schedule.png",
+        "hover": {
+          "ratio": 16.31,
+          "fg": "rgb(246, 242, 234)",
+          "bg": "rgb(26, 17, 39)",
+          "hovered": true
+        },
+        "rest": {
+          "ratio": 16.06,
+          "bg": "rgb(24, 22, 29)"
+        }
+      }
+    ],
+    "check-strip-dark": [
+      {
+        "i": 0,
+        "variant": "outline",
+        "name": "Edit",
+        "icon": false,
+        "hover": {
+          "ratio": 16.45,
+          "fg": "rgb(246, 242, 234)",
+          "bg": "rgb(22, 19, 27)",
+          "hovered": true
+        },
+        "rest": {
+          "ratio": 14.98,
+          "bg": "rgb(32, 28, 38)"
+        }
+      }
+    ],
+    "settings-security-data-dark": [
+      {
+        "i": 0,
+        "variant": "ghost",
+        "name": "Show password",
+        "icon": true,
+        "hover": {
+          "ratio": 16.31,
+          "fg": "rgb(246, 242, 234)",
+          "bg": "rgb(26, 17, 39)",
+          "hovered": true
+        },
+        "rest": {
+          "ratio": 16.06,
+          "bg": "rgb(24, 22, 29)"
+        }
+      },
+      {
+        "i": 1,
+        "variant": "outline",
+        "name": "Sign out",
+        "icon": false,
+        "shot": "docs/evidence/ui-delivery/assets/exp03-composer-inline-check/exp03c-hover-before-settings-security-data-dark-sign-out.png",
+        "hover": {
+          "ratio": 16.31,
+          "fg": "rgb(246, 242, 234)",
+          "bg": "rgb(26, 17, 39)",
+          "hovered": true
+        },
+        "rest": {
+          "ratio": 16.06,
+          "bg": "rgb(24, 22, 29)"
+        }
+      },
+      {
+        "i": 2,
+        "variant": "outline",
+        "name": "Chats",
+        "icon": false,
+        "hover": {
+          "ratio": 16.31,
+          "fg": "rgb(246, 242, 234)",
+          "bg": "rgb(26, 17, 39)",
+          "hovered": true
+        },
+        "rest": {
+          "ratio": 17.01,
+          "bg": "rgb(18,15,22)"
+        }
+      },
+      {
+        "i": 3,
+        "variant": "ghost",
+        "name": "Copy message",
+        "icon": true,
+        "shot": "docs/evidence/ui-delivery/assets/exp03-composer-inline-check/exp03c-hover-before-settings-security-data-dark-copy-message.png",
+        "hover": {
+          "ratio": 16.31,
+          "fg": "rgb(246, 242, 234)",
+          "bg": "rgb(26, 17, 39)",
+          "hovered": true
+        },
+        "rest": {
+          "ratio": 15.23,
+          "bg": "rgb(30,27,34)"
+        }
+      },
+      {
+        "i": 4,
+        "variant": "ghost",
+        "name": "Play message aloud",
+        "icon": true,
+        "hover": {
+          "ratio": 16.31,
+          "fg": "rgb(246, 242, 234)",
+          "bg": "rgb(26, 17, 39)",
+          "hovered": true
+        },
+        "rest": {
+          "ratio": 15.23,
+          "bg": "rgb(30,27,34)"
+        }
+      },
+      {
+        "i": 5,
+        "variant": "ghost",
+        "name": "Copy message",
+        "icon": true,
+        "hover": {
+          "ratio": 16.31,
+          "fg": "rgb(246, 242, 234)",
+          "bg": "rgb(26, 17, 39)",
+          "hovered": true
+        },
+        "rest": {
+          "ratio": 7.05,
+          "bg": "rgb(156, 143, 224)"
+        }
+      },
+      {
+        "i": 6,
+        "variant": "ghost",
+        "name": "Copy message",
+        "icon": true,
+        "hover": {
+          "ratio": 16.31,
+          "fg": "rgb(246, 242, 234)",
+          "bg": "rgb(26, 17, 39)",
+          "hovered": true
+        },
+        "rest": {
+          "ratio": 15.23,
+          "bg": "rgb(30,27,34)"
+        }
+      },
+      {
+        "i": 7,
+        "variant": "ghost",
+        "name": "Play message aloud",
+        "icon": true,
+        "hover": {
+          "ratio": 16.31,
+          "fg": "rgb(246, 242, 234)",
+          "bg": "rgb(26, 17, 39)",
+          "hovered": true
+        },
+        "rest": {
+          "ratio": 15.23,
+          "bg": "rgb(30,27,34)"
+        }
+      },
+      {
+        "i": 8,
+        "variant": "ghost",
+        "name": "Copy message",
+        "icon": true,
+        "hover": {
+          "ratio": 16.31,
+          "fg": "rgb(246, 242, 234)",
+          "bg": "rgb(26, 17, 39)",
+          "hovered": true
+        },
+        "rest": {
+          "ratio": 7.05,
+          "bg": "rgb(156, 143, 224)"
+        }
+      },
+      {
+        "i": 9,
+        "variant": "ghost",
+        "name": "Copy message",
+        "icon": true,
+        "hover": {
+          "ratio": 16.31,
+          "fg": "rgb(246, 242, 234)",
+          "bg": "rgb(26, 17, 39)",
+          "hovered": true
+        },
+        "rest": {
+          "ratio": 15.23,
+          "bg": "rgb(30,27,34)"
+        }
+      },
+      {
+        "i": 10,
+        "variant": "ghost",
+        "name": "Play message aloud",
+        "icon": true,
+        "hover": {
+          "ratio": 16.31,
+          "fg": "rgb(246, 242, 234)",
+          "bg": "rgb(26, 17, 39)",
+          "hovered": true
+        },
+        "rest": {
+          "ratio": 15.23,
+          "bg": "rgb(30,27,34)"
+        }
+      },
+      {
+        "i": 11,
+        "variant": "ghost",
+        "name": "Start voice typing",
+        "icon": true,
+        "hover": {
+          "ratio": 16.31,
+          "fg": "rgb(246, 242, 234)",
+          "bg": "rgb(26, 17, 39)",
+          "hovered": true
+        },
+        "rest": {
+          "ratio": 16.01,
+          "bg": "rgb(25, 22, 30)"
+        }
+      },
+      {
+        "i": 12,
+        "variant": "outline",
+        "name": "Talk live with Paige",
+        "icon": false,
+        "hover": {
+          "ratio": 16.31,
+          "fg": "rgb(246, 242, 234)",
+          "bg": "rgb(26, 17, 39)",
+          "hovered": true
+        },
+        "rest": {
+          "ratio": 16.01,
+          "bg": "rgb(25, 22, 30)"
+        }
+      },
+      {
+        "i": 13,
+        "variant": "ghost",
+        "name": "Attach a document",
+        "icon": true,
+        "hover": {
+          "ratio": 16.31,
+          "fg": "rgb(246, 242, 234)",
+          "bg": "rgb(26, 17, 39)",
+          "hovered": true
+        },
+        "rest": {
+          "ratio": 16.01,
+          "bg": "rgb(25, 22, 30)"
+        }
+      }
+    ],
+    "settings-integrations-dark": [
+      {
+        "i": 0,
+        "variant": "outline",
+        "name": "Chats",
+        "icon": false,
+        "hover": {
+          "ratio": 16.31,
+          "fg": "rgb(246, 242, 234)",
+          "bg": "rgb(26, 17, 39)",
+          "hovered": true
+        },
+        "rest": {
+          "ratio": 17.01,
+          "bg": "rgb(18,15,22)"
+        }
+      },
+      {
+        "i": 1,
+        "variant": "ghost",
+        "name": "Copy message",
+        "icon": true,
+        "hover": {
+          "ratio": 16.31,
+          "fg": "rgb(246, 242, 234)",
+          "bg": "rgb(26, 17, 39)",
+          "hovered": true
+        },
+        "rest": {
+          "ratio": 15.23,
+          "bg": "rgb(30,27,34)"
+        }
+      },
+      {
+        "i": 2,
+        "variant": "ghost",
+        "name": "Play message aloud",
+        "icon": true,
+        "hover": {
+          "ratio": 16.31,
+          "fg": "rgb(246, 242, 234)",
+          "bg": "rgb(26, 17, 39)",
+          "hovered": true
+        },
+        "rest": {
+          "ratio": 15.23,
+          "bg": "rgb(30,27,34)"
+        }
+      },
+      {
+        "i": 3,
+        "variant": "ghost",
+        "name": "Copy message",
+        "icon": true,
+        "hover": {
+          "ratio": 16.31,
+          "fg": "rgb(246, 242, 234)",
+          "bg": "rgb(26, 17, 39)",
+          "hovered": true
+        },
+        "rest": {
+          "ratio": 7.05,
+          "bg": "rgb(156, 143, 224)"
+        }
+      },
+      {
+        "i": 4,
+        "variant": "ghost",
+        "name": "Copy message",
+        "icon": true,
+        "hover": {
+          "ratio": 16.31,
+          "fg": "rgb(246, 242, 234)",
+          "bg": "rgb(26, 17, 39)",
+          "hovered": true
+        },
+        "rest": {
+          "ratio": 15.23,
+          "bg": "rgb(30,27,34)"
+        }
+      },
+      {
+        "i": 5,
+        "variant": "ghost",
+        "name": "Play message aloud",
+        "icon": true,
+        "hover": {
+          "ratio": 16.31,
+          "fg": "rgb(246, 242, 234)",
+          "bg": "rgb(26, 17, 39)",
+          "hovered": true
+        },
+        "rest": {
+          "ratio": 15.23,
+          "bg": "rgb(30,27,34)"
+        }
+      },
+      {
+        "i": 6,
+        "variant": "ghost",
+        "name": "Copy message",
+        "icon": true,
+        "hover": {
+          "ratio": 16.31,
+          "fg": "rgb(246, 242, 234)",
+          "bg": "rgb(26, 17, 39)",
+          "hovered": true
+        },
+        "rest": {
+          "ratio": 7.05,
+          "bg": "rgb(156, 143, 224)"
+        }
+      },
+      {
+        "i": 7,
+        "variant": "ghost",
+        "name": "Copy message",
+        "icon": true,
+        "hover": {
+          "ratio": 16.31,
+          "fg": "rgb(246, 242, 234)",
+          "bg": "rgb(26, 17, 39)",
+          "hovered": true
+        },
+        "rest": {
+          "ratio": 15.23,
+          "bg": "rgb(30,27,34)"
+        }
+      },
+      {
+        "i": 8,
+        "variant": "ghost",
+        "name": "Play message aloud",
+        "icon": true,
+        "hover": {
+          "ratio": 16.31,
+          "fg": "rgb(246, 242, 234)",
+          "bg": "rgb(26, 17, 39)",
+          "hovered": true
+        },
+        "rest": {
+          "ratio": 15.23,
+          "bg": "rgb(30,27,34)"
+        }
+      },
+      {
+        "i": 9,
+        "variant": "ghost",
+        "name": "Start voice typing",
+        "icon": true,
+        "hover": {
+          "ratio": 16.31,
+          "fg": "rgb(246, 242, 234)",
+          "bg": "rgb(26, 17, 39)",
+          "hovered": true
+        },
+        "rest": {
+          "ratio": 16.01,
+          "bg": "rgb(25, 22, 30)"
+        }
+      },
+      {
+        "i": 10,
+        "variant": "outline",
+        "name": "Talk live with Paige",
+        "icon": false,
+        "hover": {
+          "ratio": 16.31,
+          "fg": "rgb(246, 242, 234)",
+          "bg": "rgb(26, 17, 39)",
+          "hovered": true
+        },
+        "rest": {
+          "ratio": 16.01,
+          "bg": "rgb(25, 22, 30)"
+        }
+      },
+      {
+        "i": 11,
+        "variant": "ghost",
+        "name": "Attach a document",
+        "icon": true,
+        "hover": {
+          "ratio": 16.31,
+          "fg": "rgb(246, 242, 234)",
+          "bg": "rgb(26, 17, 39)",
+          "hovered": true
+        },
+        "rest": {
+          "ratio": 16.01,
+          "bg": "rgb(25, 22, 30)"
+        }
+      }
+    ],
+    "settings-connections-dark": [
+      {
+        "i": 0,
+        "variant": "outline",
+        "name": "Chats",
+        "icon": false,
+        "hover": {
+          "ratio": 16.31,
+          "fg": "rgb(246, 242, 234)",
+          "bg": "rgb(26, 17, 39)",
+          "hovered": true
+        },
+        "rest": {
+          "ratio": 17.01,
+          "bg": "rgb(18,15,22)"
+        }
+      },
+      {
+        "i": 1,
+        "variant": "ghost",
+        "name": "Copy message",
+        "icon": true,
+        "hover": {
+          "ratio": 16.31,
+          "fg": "rgb(246, 242, 234)",
+          "bg": "rgb(26, 17, 39)",
+          "hovered": true
+        },
+        "rest": {
+          "ratio": 15.23,
+          "bg": "rgb(30,27,34)"
+        }
+      },
+      {
+        "i": 2,
+        "variant": "ghost",
+        "name": "Play message aloud",
+        "icon": true,
+        "hover": {
+          "ratio": 16.31,
+          "fg": "rgb(246, 242, 234)",
+          "bg": "rgb(26, 17, 39)",
+          "hovered": true
+        },
+        "rest": {
+          "ratio": 15.23,
+          "bg": "rgb(30,27,34)"
+        }
+      },
+      {
+        "i": 3,
+        "variant": "ghost",
+        "name": "Copy message",
+        "icon": true,
+        "hover": {
+          "ratio": 16.31,
+          "fg": "rgb(246, 242, 234)",
+          "bg": "rgb(26, 17, 39)",
+          "hovered": true
+        },
+        "rest": {
+          "ratio": 7.05,
+          "bg": "rgb(156, 143, 224)"
+        }
+      },
+      {
+        "i": 4,
+        "variant": "ghost",
+        "name": "Copy message",
+        "icon": true,
+        "hover": {
+          "ratio": 16.31,
+          "fg": "rgb(246, 242, 234)",
+          "bg": "rgb(26, 17, 39)",
+          "hovered": true
+        },
+        "rest": {
+          "ratio": 15.23,
+          "bg": "rgb(30,27,34)"
+        }
+      },
+      {
+        "i": 5,
+        "variant": "ghost",
+        "name": "Play message aloud",
+        "icon": true,
+        "hover": {
+          "ratio": 16.31,
+          "fg": "rgb(246, 242, 234)",
+          "bg": "rgb(26, 17, 39)",
+          "hovered": true
+        },
+        "rest": {
+          "ratio": 15.23,
+          "bg": "rgb(30,27,34)"
+        }
+      },
+      {
+        "i": 6,
+        "variant": "ghost",
+        "name": "Copy message",
+        "icon": true,
+        "hover": {
+          "ratio": 16.31,
+          "fg": "rgb(246, 242, 234)",
+          "bg": "rgb(26, 17, 39)",
+          "hovered": true
+        },
+        "rest": {
+          "ratio": 7.05,
+          "bg": "rgb(156, 143, 224)"
+        }
+      },
+      {
+        "i": 7,
+        "variant": "ghost",
+        "name": "Copy message",
+        "icon": true,
+        "hover": {
+          "ratio": 16.31,
+          "fg": "rgb(246, 242, 234)",
+          "bg": "rgb(26, 17, 39)",
+          "hovered": true
+        },
+        "rest": {
+          "ratio": 15.23,
+          "bg": "rgb(30,27,34)"
+        }
+      },
+      {
+        "i": 8,
+        "variant": "ghost",
+        "name": "Play message aloud",
+        "icon": true,
+        "hover": {
+          "ratio": 16.31,
+          "fg": "rgb(246, 242, 234)",
+          "bg": "rgb(26, 17, 39)",
+          "hovered": true
+        },
+        "rest": {
+          "ratio": 15.23,
+          "bg": "rgb(30,27,34)"
+        }
+      },
+      {
+        "i": 9,
+        "variant": "ghost",
+        "name": "Start voice typing",
+        "icon": true,
+        "hover": {
+          "ratio": 16.31,
+          "fg": "rgb(246, 242, 234)",
+          "bg": "rgb(26, 17, 39)",
+          "hovered": true
+        },
+        "rest": {
+          "ratio": 16.01,
+          "bg": "rgb(25, 22, 30)"
+        }
+      },
+      {
+        "i": 10,
+        "variant": "outline",
+        "name": "Talk live with Paige",
+        "icon": false,
+        "hover": {
+          "ratio": 16.31,
+          "fg": "rgb(246, 242, 234)",
+          "bg": "rgb(26, 17, 39)",
+          "hovered": true
+        },
+        "rest": {
+          "ratio": 16.01,
+          "bg": "rgb(25, 22, 30)"
+        }
+      },
+      {
+        "i": 11,
+        "variant": "ghost",
+        "name": "Attach a document",
+        "icon": true,
+        "hover": {
+          "ratio": 16.31,
+          "fg": "rgb(246, 242, 234)",
+          "bg": "rgb(26, 17, 39)",
+          "hovered": true
+        },
+        "rest": {
+          "ratio": 16.01,
+          "bg": "rgb(25, 22, 30)"
+        }
+      }
+    ]
+  }
+}

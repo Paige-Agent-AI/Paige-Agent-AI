@@ -5574,3 +5574,21 @@ member-unwritable path, re-checked before sending, and sent only through PAIGE E
 | See the files on the approval card | Only inside a workspace it administers | ✓ | ✓ | ✓ | — | — | PROOF OWED |
 | Write under `comms-attachments/<tenant>/governed/` | Service role only | Refused | Refused | Refused | Refused | Refused | PROOF OWED |
 | Read governed copies | Platform-owner read | ✓ members of that workspace | ✓ members | ✓ members | — | — | PROOF OWED |
+
+### Conversations — the email reply is checked inline through the governed door (EXP03 O12 piece 3, 2026-10-27)
+
+The Conversations composer (Solo inbox and the admin inbox — the same component) no longer sends email directly.
+Send asks the governed door for a check; the strip shows who it goes to (the contact's main email), from which
+sender, the subject, when, and the files; nothing sends until Send now. SMS, Approve & send, Send edited and the
+lead-reply review keep their own paths. Also in this change, owner-approved: every outline and ghost button's
+hover is readable in light (shared `Button`).
+
+| Capability | God (operator desk) | Agency-as-tenant | Standalone Solo | Sub-account | Client | Anonymous | Deploy state |
+|---|---|---|---|---|---|---|---|
+| Email reply with inline check (Send → check → Send now) | Only inside a workspace it administers | ✓ owner/admin | ✓ owner/admin | ✓ owner/admin | — | — | PROOF OWED (harness rendered; signed-in drive owed) |
+| Schedule an email reply from the composer | Only inside a workspace it administers | ✓ owner/admin | ✓ owner/admin | ✓ owner/admin | — | — | PROOF OWED |
+| Attach files to an email reply (PAIGE Email senders) | Only inside a workspace it administers | ✓ owner/admin | ✓ owner/admin | ✓ owner/admin | — | — | PROOF OWED |
+| Readable outline/ghost hover (every surface) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | PROOF OWED (106 buttons measured in harness) |
+
+Members who are not the business's owner/admin are told "Only an owner or admin sends email for the business."
+An email reply needs the contact's main email on their card.

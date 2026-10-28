@@ -65,7 +65,7 @@ export function CustomizeFloor({ onCustomize }: { onCustomize: () => void }) {
     <Button
       onClick={onCustomize}
       variant="outline"
-      className="w-full border-accent/50 text-accent hover:bg-accent/10"
+      className="w-full border-accent/50 text-accent hover:bg-accent/10 hover:text-accent"
     >
       <SlidersHorizontal className="mr-2 h-4 w-4" /> Customize Paige
     </Button>

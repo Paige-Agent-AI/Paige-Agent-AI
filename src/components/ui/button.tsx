@@ -11,9 +11,12 @@ const buttonVariants = cva(
       variant: {
         default: "bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm hover:shadow-md hover:-translate-y-px",
         destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90 hover:shadow-md hover:-translate-y-px",
-        outline: "border border-border bg-transparent hover:bg-secondary hover:border-primary/40",
+        // Outline and ghost hover to the THEME's muted surface with ink text. They used to hover to --secondary,
+        // which only :root defines (dark navy) — so in light every one of them went dark under its own dark text
+        // (1.1:1). Owner instruction 2026-10-27, "Yes", answering "Want me to fix it everywhere?".
+        outline: "border border-border bg-transparent hover:bg-muted hover:text-foreground hover:border-primary/40",
         secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80 hover:shadow-sm",
-        ghost: "hover:bg-secondary hover:text-foreground hover:shadow-sm",
+        ghost: "hover:bg-muted hover:text-foreground hover:shadow-sm",
         link: "text-primary underline-offset-4 hover:underline hover:text-primary/80",
         gold: "bg-gradient-gold text-accent-foreground font-semibold shadow-glow hover:shadow-glow-lg hover:-translate-y-px",
         premium: "bg-[linear-gradient(110deg,hsl(258_70%_12%),hsl(255_55%_30%),hsl(258_70%_12%))] bg-[length:200%_100%] text-primary-foreground font-semibold shadow-md hover:shadow-lg hover:-translate-y-px hover:bg-[position:100%_0]",

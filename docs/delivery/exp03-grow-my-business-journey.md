@@ -1001,6 +1001,15 @@ Both closed as superseded with links; their branches are kept.
   evidence record: email's 30-second Undo is replaced by the check; signature images are dropped (links kept);
   sending needs the business's own owner/admin (one global admin loses it, one business owner/admin gains it);
   an email reply needs the contact's main email.
+- **A governed email that bounces now stops the next one (this change, migration `20271120120003`, NOT live).**
+  Found on production 2026-10-28: a hard bounce at one Solo business and, seven minutes later, SendGrid's
+  account-wide "Bounced Address" drop at a second business, to the same address — both failed, neither wrote a
+  suppression, so the door's pre-send check could not hold the next try. The governed-reply applier now writes a
+  per-business `paige_suppressions` row (`bounce_hard` for a non-blocked bounce or a "Bounced Address"/"Invalid"
+  drop, `complaint` for a spam report; contact-keyed as campaigns are) and a "bounced before" drop says so in plain
+  words. Never across businesses; SendGrid's account-wide bounce list is a separate owner decision (decision log
+  2026-10-28). The two production rows are not back-filled. Proof: `exp03_governed_bounce_suppression.sql` (30/30;
+  11 of its assertions fail on the old body).
 
 **Open, in order:** the New conversation dialog and draft approval on the door; chat `send_at` and a "When" row
 on the approval card (also what NEXUS needs in Team Hub);

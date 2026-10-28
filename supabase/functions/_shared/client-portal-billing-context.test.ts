@@ -5,6 +5,7 @@ import {readCustomerBillingContext,customerBillingMessages,customerBillingTermin
 
 // Synthetic transport only. No native financial source or customer identity is established here.
 // deno-lint-ignore no-explicit-any
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Mutable hostile transport fixtures intentionally violate every DTO leaf.
 type Row=any;
 const actor="11111111-1111-4111-8111-111111111111",client="22222222-2222-4222-8222-222222222222";
 const tenant="33333333-3333-4333-8333-333333333333",thread="44444444-4444-4444-8444-444444444444";
@@ -14,7 +15,7 @@ const frame=()=>({actor_id:actor,profile:{id:client,tenant_id:tenant,linked_user
  brand:{tenant_id:tenant,tenant_name:"Harbor Lane Advisors"},config:{assistant:{enabled:true,display_name:"Cura"}}});
 const fixture=():Row=>({frame:frame(),thread_id:thread,intent_id:intent,mode:"bound",
  snapshot:{version:1,kind:"customer_billing",tenant_id:tenant,contact_id:client,source_fingerprint:"a".repeat(64),observed_at:observed},
- billing:{tenant_id:tenant,read_at:observed,invoice_count:1,open_count:1,has_more:false,
+ billing:{schema_version:1,tenant_id:tenant,business_name:"Harbor Lane Advisors",read_at:observed,invoice_count:1,open_count:1,has_more:false,next_cursor:null,
   invoices:[{id:invoice,invoice_number:"HL-001",status:"issued",currency:"usd",issued_at:observed,due_date:"2026-11-03",
    amount_minor:"10000",remaining_minor:"6000",provider_verified_minor:"3000",manual_recorded_minor:"1000",test_provider_minor:"500",payable:true,past_due:false}],
   balances:[{currency:"usd",remaining_minor:"6000",provider_verified_minor:"3000",manual_recorded_minor:"1000",test_provider_minor:"500"}]}});
@@ -27,6 +28,51 @@ test("one caller-bound native response retains original string money and exact s
  assert.equal(result.status,"available");assert.equal(result.data?.billing?.invoices[0].remaining_minor,"6000");
  assert.equal(result.data?.snapshot?.contact_id,client);
  assert.deepEqual(calls,[["client_portal_assistant_billing_context",{p_thread:thread,p_intent:intent}]]);
+});
+
+test("retain the complete original invoice page rather than stripping schema, business and continuation identity",async()=>{
+ const data=fixture();
+ Object.assign(data.billing,{schema_version:1,business_name:"Harbor Lane Advisors",next_cursor:null});
+ const result=await read(data);
+ assert.equal(result.status,"available");
+ assert.deepEqual(result.data?.billing,data.billing);
+});
+
+test("a bounded page preserves original all-page counts, balances and its exact native continuation",async()=>{
+ const data=fixture();data.billing.invoice_count=9;data.billing.open_count=7;data.billing.has_more=true;
+ data.billing.next_cursor={issued_at:observed,id:invoice};
+ data.billing.balances[0].remaining_minor="123456";
+ const result=await read(data);assert.equal(result.status,"available");
+ assert.deepEqual(result.data?.billing,data.billing);
+ assert.equal(result.data?.billing?.invoices.length,1);
+ assert.equal(result.data?.billing?.invoice_count,9);
+ assert.equal(result.data?.billing?.balances[0].remaining_minor,"123456");
+});
+
+test("last-page has_more false never replaces the source's all-page count with this page's length",async()=>{
+ const data=fixture();data.billing.invoice_count=9;data.billing.open_count=7;
+ const result=await read(data);assert.equal(result.status,"available");
+ assert.deepEqual(result.data?.billing,data.billing);
+});
+
+test("null business name and empty invoice page retain the original public shape",async()=>{
+ const data=fixture();Object.assign(data.billing,{business_name:null,invoices:[],balances:[],invoice_count:0,open_count:0});
+ const result=await read(data);assert.equal(result.status,"available");assert.deepEqual(result.data?.billing,data.billing);
+});
+
+for(const [name,mutate] of [
+ ["missing schema",(r:Row)=>delete r.billing.schema_version],
+ ["different schema",(r:Row)=>r.billing.schema_version=2],
+ ["coerced schema",(r:Row)=>r.billing.schema_version="1"],
+ ["invalid business name",(r:Row)=>r.billing.business_name={name:"other"}],
+ ["missing cursor",(r:Row)=>delete r.billing.next_cursor],
+ ["cursor without more",(r:Row)=>r.billing.next_cursor={issued_at:observed,id:invoice}],
+ ["more without cursor",(r:Row)=>{r.billing.has_more=true;r.billing.invoice_count=9;}],
+ ["foreign continuation",(r:Row)=>{r.billing.has_more=true;r.billing.invoice_count=9;r.billing.next_cursor={issued_at:observed,id:client};}],
+ ["different continuation instant",(r:Row)=>{r.billing.has_more=true;r.billing.invoice_count=9;r.billing.next_cursor={issued_at:"2026-10-28T13:00:00Z",id:invoice};}],
+ ["widened continuation",(r:Row)=>{r.billing.has_more=true;r.billing.invoice_count=9;r.billing.next_cursor={issued_at:observed,id:invoice,tenant_id:tenant};}],
+] as const)test("withhold incomplete original page: "+name,async()=>{
+ const data=fixture();mutate(data);assert.notEqual((await read(data)).status,"available");
 });
 
 test("invalid actor or intent and mismatched expected customer never dispatch a native read",async()=>{
@@ -128,7 +174,7 @@ test("slow native read times out once without a service/owner fallback",async t=
 });
 
 test("bounded mixed-currency facts stay separate and carry no payment or owner action",async()=>{
- const r=fixture();r.billing.invoice_count=9;r.billing.has_more=true;
+ const r=fixture();r.billing.invoice_count=9;r.billing.has_more=true;r.billing.next_cursor={issued_at:observed,id:invoice};
  r.billing.balances.push({...r.billing.balances[0],currency:"eur",remaining_minor:"900"});
  const result=await read(r);assert.equal(result.status,"available");
  const messages=customerBillingMessages(result.data!);assert.equal(messages.length,1);

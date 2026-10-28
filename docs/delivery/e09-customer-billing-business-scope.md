@@ -1,5 +1,39 @@
 # EXP09 — original customer Billing, selected relationship and returning session
 
+## October28 complete-page consumer reconciliation — NOT MOUNTED
+
+Same pre-edit ten-part routing below and original PCO-PORTAL-012/013,
+PCO-CUSTOMER-004/005/J08 apply. Composed full current main24e76c8d, preserving
+the original financial source and both independent Brain lessons. Original
+37 transport tests pass. A new real failing assertion demonstrates that the
+unmounted prototype rejects the existing complete invoice DTO because it omits
+schema_version, business_name and next_cursor. Correct only this owned consumer
+and its tests: retain the original complete closed page, native all-page totals
+and exact continuation identity; never recompute money, treat a page as all
+invoices, or promote read_at/schema_version into issued-version provenance.
+No browser decoder, financial query, SQL, Root, shared checker or grant changes.
+
+Originating E04 contract0e216c8b and E09 exact native replyee602cf4 remain the
+integration boundary. Exact issued-version references, query/as-of/calendar
+identity and native source locking/currentness are still required from E04;
+this preparation supplies none of those by inference. Native accepted-turn,
+terminal/publication/history and actual customer proof remain unimplemented.
+No runtime import, PR/release, source-marker change or provider effect is
+authorized by a passing synthetic decoder test.
+
+Supporting proof: original37 tests PASS on composed main; complete-page
+regression genuinely FAILS once against that decoder (37PASS/1FAIL), then
+51/51 PASS after correction. The14 additions exercise the complete closed
+DTO, null/empty source, all-page totals across a partial/last page and malformed,
+missing, foreign or widened continuation evidence. Original provider/manual/test
+amount strings are retained, not recalculated. Strict targeted TypeScript and
+changed-source/test ESLint PASS. ESLint initially found the existing hostile
+fixture's intentional any annotation; a single test-only documented exemption
+matches its existing Deno exemption, with no runtime or other lint rule change.
+No native or real financial query, model call, customer write or deployment was
+performed. The prototype remains unmounted pending the original financial
+producer's released provenance/currentness contract.
+
 ## October28 continuation: CURA explains the customer's original invoice facts — BUILDING
 
 Owner outcome: an authenticated customer asks CURA what their own business has invoiced and what remains due, receives a source-backed explanation in the existing private conversation, and returns to the same authorized history and original Billing page. This closes a demonstrated consumer gap; it does not replace the released Billing implementation or EXP04's commercial system. Original IDs: PCO-PORTAL-012/013, PCO-CUSTOMER-004/005 and J08. Full42/seven remains the assignment.

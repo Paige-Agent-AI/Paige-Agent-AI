@@ -9,8 +9,9 @@ type Money=Readonly<{remaining_minor:string;provider_verified_minor:string;manua
 type Invoice=Money&Readonly<{id:string;invoice_number:string|null;status:"issued"|"void";currency:string;issued_at:string;
  due_date:string|null;amount_minor:string;payable:boolean;past_due:boolean}>;
 type Balance=Money&Readonly<{currency:string}>;
-type Billing=Readonly<{tenant_id:string;read_at:string;invoices:Invoice[];invoice_count:number;open_count:number;
- has_more:boolean;balances:Balance[]}>;
+type Cursor=Readonly<{issued_at:string;id:string}>;
+type Billing=Readonly<{schema_version:1;tenant_id:string;business_name:string|null;read_at:string;invoices:Invoice[];
+ invoice_count:number;open_count:number;has_more:boolean;next_cursor:Cursor|null;balances:Balance[]}>;
 export type CustomerBillingSnapshot=Readonly<{version:1;kind:"customer_billing";tenant_id:string;contact_id:string;
  source_fingerprint:string;observed_at:string}>;
 export type CustomerBillingContext=Readonly<{threadId:string;intentId:string;snapshot:CustomerBillingSnapshot|null;billing:Billing|null}>;
@@ -35,12 +36,19 @@ function money(o:Record<string,unknown>):Money|null{
   manual_recorded_minor:o.manual_recorded_minor as string,test_provider_minor:o.test_provider_minor as string};
 }
 function decodeBilling(value:unknown,tenantId:string,observedAt:string):Billing|null{
- const page=closed(value,["tenant_id","read_at","invoices","invoice_count","open_count","has_more","balances"]);
- if(!page||page.tenant_id!==tenantId||page.read_at!==observedAt||!count(page.invoice_count)||!count(page.open_count)||
+ const page=closed(value,["schema_version","tenant_id","business_name","read_at","invoices","invoice_count","open_count","has_more","next_cursor","balances"]);
+ if(!page||page.schema_version!==1||page.tenant_id!==tenantId||
+  (page.business_name!==null&&typeof page.business_name!=="string")||page.read_at!==observedAt||!count(page.invoice_count)||!count(page.open_count)||
   page.open_count>page.invoice_count||typeof page.has_more!=="boolean"||!Array.isArray(page.invoices)||page.invoices.length>5||
   page.invoices.length>page.invoice_count||!Array.isArray(page.balances)||page.balances.length>200||
-  (page.has_more&&(page.invoices.length===0||page.invoice_count<=page.invoices.length))||
-  (!page.has_more&&page.invoice_count!==page.invoices.length))return null;
+  (page.has_more&&(page.invoices.length===0||page.invoice_count<=page.invoices.length)))return null;
+ let nextCursor:Cursor|null=null;
+ if(page.next_cursor!==null){
+  const c=closed(page.next_cursor,["issued_at","id"]);
+  if(!c||!timestamp(c.issued_at)||!uuid(c.id))return null;
+  nextCursor={issued_at:c.issued_at,id:c.id};
+ }
+ if(page.has_more!==(nextCursor!==null))return null;
  const invoices:Invoice[]=[],balances:Balance[]=[];
  for(const raw of page.invoices){
   const i=closed(raw,["id","invoice_number","status","currency","issued_at","due_date","amount_minor",...MONEY_KEYS,"payable","past_due"]);
@@ -52,14 +60,18 @@ function decodeBilling(value:unknown,tenantId:string,observedAt:string):Billing|
   invoices.push({id:i.id,invoice_number:i.invoice_number as string|null,status:i.status,currency:i.currency,
    issued_at:i.issued_at,due_date:i.due_date as string|null,amount_minor:i.amount_minor,...m,payable:i.payable,past_due:i.past_due});
  }
+ if(nextCursor){
+  const last=invoices.at(-1);
+  if(!last||nextCursor.id!==last.id||nextCursor.issued_at!==last.issued_at)return null;
+ }
  for(const raw of page.balances){
   const b=closed(raw,["currency",...MONEY_KEYS]),m=b?money(b):null;
   if(!b||!m||!currency(b.currency)||balances.some(x=>x.currency===b.currency))return null;
   balances.push({currency:b.currency,...m});
  }
  if(page.invoice_count===0&&balances.length!==0)return null;
- return{tenant_id:tenantId,read_at:observedAt,invoices,invoice_count:page.invoice_count,open_count:page.open_count,
-  has_more:page.has_more,balances};
+ return{schema_version:1,tenant_id:tenantId,business_name:page.business_name as string|null,read_at:observedAt,invoices,
+  invoice_count:page.invoice_count,open_count:page.open_count,has_more:page.has_more,next_cursor:nextCursor,balances};
 }
 
 /** One genuine caller-JWT native context; no financial query, owner fallback, service grant or claim mutation. */

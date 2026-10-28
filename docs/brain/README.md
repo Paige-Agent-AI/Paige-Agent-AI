@@ -596,7 +596,9 @@ UNKNOWN/UNRETRIED remains intact. Earlier development/failure evidence is retain
 
 ## EXP04 useful commercial results and verification lessons — October28 development
 
-The full original O1–O12 remains the target. Reuse the native agreement engine, governed signing request, canonical financial and Work records, and same page/PAIGE explanations. Current [#2971](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2971) invoice source and the source-only signing/delivery continuation are development/release work, not completed customer acceptance; original [journey](../delivery/exp04-get-paid-deliver-journey.md) and ANT-51 retain the matrix.
+Release-diagnostic lesson: preserve a failed upload as a failure while reporting only bounded numeric CLI exit/HTTP status and a closed error category. Never publish raw CLI stdout/stderr, vendor JSON, credentials, private URLs or compiler payloads, and never let diagnostic classification authorize a retry. The original exact413 source-limit predicate, source/configuration checks, upload count, unknown-outcome refusal and downloaded-source verifier remain the authority. ACTIVE function metadata and a successful Preview label are not a verified source bundle or an authenticated commercial result. Local Windows Bash launch restrictions and a missing Deno executable are runner prerequisites to diagnose, not reasons to skip original release tests or relax assertions. Current source/review/CI/release and customer-proof receipts remain in original ANT-51 and ANT-161; a source-only diagnostic repair does not resolve the held Chat upload or promote any capability/algorithm.
+
+The full original O1–O12 remains the target. Reuse the native agreement engine, governed signing request, canonical financial and Work records, and same page/PAIGE explanations. The [#2971](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2971) invoice release and [#3040](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3040) signing/delivery release retain separate source, database, web, held shared-Chat source-readback and authenticated evidence; neither establishes completed customer acceptance. The original [journey](../delivery/exp04-get-paid-deliver-journey.md), Master and ANT-51 retain the full matrix and exact current disposition.
 
 Verified reusable lessons: internal review and a client decision are different facts; name internal versus client revision requests explicitly, and do not turn an unreleased reviewed version into release eligibility or a finished engagement. A long contextual action can enlarge a grid’s intrinsic column on a phone: bound the original card’s track and wrap the original control, preserving the parent scroll owner, focus and44px target. Neutral rendered frames prove layout and local recovery, never a signed agreement, payment, tenant permission or service acceptance. See [bounded actual source/rendered evidence](../evidence/ui-delivery/exp04-commercial-source-contracts.md).
 
@@ -1080,6 +1082,14 @@ checks unchanged. [Original UI/source evidence](../evidence/ui-delivery/exp05-pl
 keeps synthetic ports separate from authenticated roles, real records/Rails and
 full ten/E5/owner-away/Builder/both-chat/Live/founder acceptance. Development,
 reviewed source, green hosted checks and released customer results remain distinct.
+
+Production follow-on: [original3035 receipt6476586277](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3035#issuecomment-6476586277)
+verifies source/web/17 Edge closures at59fc; authenticated acceptance stays open.
+Newer provider versions are neither proof of drift nor proof of equivalence:
+directly compare the current files/configuration to immutable reviewed source.
+Here all205 files in13 newer versions matched; no speculative redeploy was needed.
+Preserve failed local proof assumptions as INVALID and correct the locator or
+encoding without weakening the original verifier or relabeling runtime evidence.
 
 ### October26 whole-Experience receiving reconciliation
 

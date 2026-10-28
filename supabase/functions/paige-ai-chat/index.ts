@@ -19310,6 +19310,9 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         growth_page_unpublish: "growth_pages", growth_form_unpublish: "growth_forms",
         growth_funnel_unpublish: "growth_funnels",
         studio_image_publish: "marketing_content", studio_image_unpublish: "marketing_content",
+        // EXP06 hosting door (growth-hosting-command) — attribution rows for the §17/§19.8 map;
+        // NOT Chat admission (the door's tools are not offered here; A2 is EXP08's seam).
+        growth_hosting_deploy: "growth_hosted_deployments", growth_hosting_recover: "growth_hosted_deployments",
         action_file: "paige_actions", action_advance: "paige_actions",
         n8n_activate_workflow: "n8n_workflow", n8n_deactivate_workflow: "n8n_workflow",
         n8n_create_workflow: "n8n_workflow", n8n_update_workflow: "n8n_workflow",

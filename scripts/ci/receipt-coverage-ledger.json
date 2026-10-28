@@ -772,6 +772,18 @@
       "evidence": "growth-publish-command door records the run via recordCapabilityRun (_shared/studio-run-outcome.ts), approval channel operator_card"
     },
     {
+      "tool": "growth_hosting_deploy",
+      "risk": "high",
+      "receipt": "emits",
+      "evidence": "growth-hosting-command door files the run via recordCapabilityRun for the executed/refused act (deployed / capability_outcome_unknown on an uncertain provider outcome / capability_refused), approval channel operator_card"
+    },
+    {
+      "tool": "growth_hosting_recover",
+      "risk": "high",
+      "receipt": "emits",
+      "evidence": "growth-hosting-command door files the run via recordCapabilityRun for the executed/refused act (removed / removed_unconfirmed recorded in detail), approval channel operator_card"
+    },
+    {
       "tool": "improvement_decide",
       "risk": "high",
       "receipt": "seeded_undeclared"

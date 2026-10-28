@@ -1,7 +1,7 @@
 // The section band rhythm — ONE implementation shared by the React renderer and the portable
 // export, so a downloaded page carries the same tonal cadence the live page shows. Pure data:
 // no React here.
-import type { GrowthBlock } from "../growth";
+import type { GrowthBlock } from "../../../supabase/functions/_shared/growth/types.ts";
 
 export type GpBand = "brand" | "contrast" | "deep";
 

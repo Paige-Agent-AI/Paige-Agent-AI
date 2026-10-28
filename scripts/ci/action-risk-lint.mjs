@@ -233,11 +233,27 @@ export function parseStudioPublishActions(src) {
   return [...src.slice(at, end).matchAll(/^\s*([a-z0-9_]+):\s*[A-Z0-9_]+_CAPABILITY,/gm)].map(m => m[1]);
 }
 
+/** The growth-hosting door's governed keys, read from its bounded declaration map (same shape). */
+export function parseGrowthHostingActions(src) {
+  const at = src.indexOf("export const GROWTH_HOSTING_KIT_BY_ACTION = {");
+  const end = src.indexOf("} as const;", at);
+  if (at < 0 || end < 0) return [];
+  return [...src.slice(at, end).matchAll(/^\s*([a-z0-9_]+):\s*[A-Z0-9_]+_CAPABILITY,/gm)].map(m => m[1]);
+}
+
+
 /** The door must hand the map's declaration to the canonical Kit gate, as the invoice door does. */
 export function studioPublishDoorBound(handler) {
   return /import\s*\{[^}]*\bSTUDIO_PUBLISH_KIT_BY_ACTION\b[^}]*\}\s*from\s*["']\.\.\/_shared\/paige-spine\/domains\/studio_publish\.ts["']/.test(handler)
     && /import\s*\{[^}]*\bdecideDeclaredCapability\b[^}]*\}\s*from\s*["']\.\.\/_shared\/capability-kit\/decision\.ts["']/.test(handler)
     && /decideDeclaredCapability\(\s*STUDIO_PUBLISH_KIT_BY_ACTION\[/.test(handler);
+}
+
+/** The growth-hosting door must hand its map's declarations to the same canonical Kit gate. */
+export function growthHostingDoorBound(handler) {
+  return /import\s*\{[^}]*\bGROWTH_HOSTING_KIT_BY_ACTION\b[^}]*\}\s*from\s*["']\.\.\/_shared\/paige-spine\/domains\/growth_hosting\.ts["']/.test(handler)
+    && /import\s*\{[^}]*\bdecideDeclaredCapability\b[^}]*\}\s*from\s*["']\.\.\/_shared\/capability-kit\/decision\.ts["']/.test(handler)
+    && /decideDeclaredCapability\(\s*GROWTH_HOSTING_KIT_BY_ACTION\[/.test(handler);
 }
 
 /** Closed declared adapter, not any function whose name resembles a gate. */
@@ -830,6 +846,18 @@ if (fs.existsSync(STUDIO_PUBLISH_HANDLER)) {
   if (!studioPublishDoorBound(fs.readFileSync(STUDIO_PUBLISH_HANDLER, 'utf8'))) throw new Error('Studio publish door no longer binds STUDIO_PUBLISH_KIT_BY_ACTION to the canonical Kit gate (decideDeclaredCapability)');
   const actions = parseStudioPublishActions(fs.readFileSync(STUDIO_PUBLISH_MAP, 'utf8'));
   if (!actions.length) throw new Error('Studio publish declaration map could not be parsed');
+  governedEdgeActions.push(...actions);
+  requiredClassifications.push(...actions);
+}
+// The growth-hosting door (EXP06 WEB-05). Same rule as the publish door: the handler binds the
+// domain's declared action map to the canonical Kit gate, and the map's keys are the acts only that
+// door runs — classified in the policy, visible in the autonomy catalogue, receipt-covered.
+const GROWTH_HOSTING_HANDLER = "supabase/functions/growth-hosting-command/index.ts";
+const GROWTH_HOSTING_MAP = "supabase/functions/_shared/paige-spine/domains/growth_hosting.ts";
+if (fs.existsSync(GROWTH_HOSTING_HANDLER)) {
+  if (!growthHostingDoorBound(fs.readFileSync(GROWTH_HOSTING_HANDLER, "utf-8"))) throw new Error("Growth hosting door no longer binds GROWTH_HOSTING_KIT_BY_ACTION to the canonical Kit gate (decideDeclaredCapability)");
+  const actions = parseGrowthHostingActions(fs.readFileSync(GROWTH_HOSTING_MAP, "utf-8"));
+  if (!actions.length) throw new Error("Growth hosting declaration map could not be parsed");
   governedEdgeActions.push(...actions);
   requiredClassifications.push(...actions);
 }

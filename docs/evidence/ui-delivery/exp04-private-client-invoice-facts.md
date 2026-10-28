@@ -19,7 +19,7 @@ STATE_COVERAGE: UNVERIFIED: local source/metadata does not prove real invoices, 
 TRUTHFUL_STATE_LABELS: PASS: source-only private infrastructure, no customer capability or catalogue LIVE promotion. Existing Billing remains released; new conversational invoice facts remain unavailable until governed native integration is implemented and verified.
 SOLO_UI: NO: no Solo interface changes; the private read is reusable for every correctly authorized relationship. Existing Agency/Sub-account activation holds remain unchanged.
 UNVERIFIED: original public compatibility171, private core negatives/replay, exact review/CI/Preview, safe release/native readback, original invoice/version/currentness provenance, E09 consumer integration, real roles/two cohorts/provider evidence and complete O1–O12/founder acceptance remain open.
-INTERNAL_BUILD_IDENTITY: 5f47a1746d76e1249bd3444261a1c16386afd599; identity_role=released source parent; final_head=exact PR review receipt; environment=development; deployment=NONE; migrations=PROOF_OWED(20271121150004); edge=NOT_APPLICABLE; evidence=this record and original full-schema SQL tests
+INTERNAL_BUILD_IDENTITY: 5f47a1746d76e1249bd3444261a1c16386afd599; identity_role=merged source parent with separate Edge readback held; final_head=exact PR review receipt; environment=development; deployment=NONE; migrations=PROOF_OWED(20271121150004); edge=NOT_APPLICABLE; evidence=this record and original full-schema SQL tests
 RELEASE_CHANNEL: development: source-only continuation of original O11; no customer announcement.
 RELEASE_CLASSIFICATION: patch: original private financial query factoring preserves public Billing behavior.
 CUSTOMER_RELEASE_IDENTITY: none: this private source seam is not an integrated customer outcome or announcement.

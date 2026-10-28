@@ -1,3 +1,24 @@
+## EXP02 October28 - current release holds and rendered correction
+
+Actual original3012 Calendar source/web and authorized-owner read/whole-answer
+reload/original department/native Back proof are ANT52/e2015a9a; one empty-source
+read subset, not general SLO/cohort/Live acceptance. Navigation follow-up3019
+is DRAFT9cec0121a,134 source controls, separate AUTHOR-REVIEW LOWER5676492858.
+
+Recorded-comms3018 material review finding PRRT_kwDOSAAXqM6w8IJP remains OPEN.
+Original full shell/workspace/drawer is now rendered at eight DOM configurations
+plus390 and synthetic workspace B; true/false facts, private-field suppression,
+native Escape/focus/Enter, Chat-fold preservation and actual native200-percent
+zoom/scroll inspected. Synthetic ports/disabled Chat are not a second legitimate
+authenticated cohort; no account/role/credential workaround. Exact required
+candidate customer/cohort proof remains a release hold. Original component
+evidence and first failed background/zoom attempts retained, not relabeled PASS.
+
+Catalogue3014 I1 hold is CLEAR after original3016/4400 migration20010008 production
+readback. Final2237 exact CI still pending. Historical earlier held notes below
+are chronology, not a current blocked-chain claim. No provider, privilege,
+scan/worker/action activation. All19/nine/ALG maturity/founder acceptance OPEN.
+
 ## EXP02 October28 — Calendar source merged; recorded setup presentation repair
 
 Calendar3012 is normally merged21fff7a49632868382ce51da70d97c9eb4d428cb

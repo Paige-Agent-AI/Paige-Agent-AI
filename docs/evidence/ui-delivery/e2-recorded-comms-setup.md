@@ -13,7 +13,7 @@ RENDERED_EVIDENCE: PASS: actual changed workspace component mounted with explici
 BEHAVIORAL_EVIDENCE: PASS: synthetic native Tab reaches close, Escape returns focus to original Email and phone setup control, Enter reopens the same drawer. Real original recorded-result/reload/source behavior is separately ANT52/5dd2e20b, prior to this repair.
 AUTHENTICATED_RUNTIME: UNVERIFIED: repair not yet released; original authorized-owner finding exposed the defect but does not prove the changed release. Other roles/cohorts/Live/effects remain owed.
 KEYBOARD_FOCUS: PASS: actual local native Tab/Escape/Enter behavior plus original focus/decision regressions; no keyboard implementation change.
-ZOOM_REFLOW: UNVERIFIED:390px local reflow has no document overflow; actual200-percent zoom and full shell/cohort proof remain owed.
+ZOOM_REFLOW: PASS: actual native Edge menu reported Zoom:200%; CSS1366x768 became683x384/DPR2 with document width683, original drawer body scroll192 revealed the full corrected disclosure. Native Control+0 restored100 percent. Earlier tab-key attempts had no scale effect and are excluded; second legitimate cohort remains owed.
 REDUCED_MOTION: NOT_APPLICABLE: no new or changed motion; original reduced-motion rules retained, no new runtime preference claim.
 STATE_COVERAGE: PASS: original recorded/error/unavailable/loading/role-refusal/decision/control regressions retained; new populated true/false and malformed calling evidence tested. Fixture rendering is not actual permission proof.
 TRUTHFUL_STATE_LABELS: PASS: only original recorded pass/setup is presented. Neither calling, delivery nor current provider readiness is verified or activated by it. Failed original interpretation remains a failure. Original database records are not rewritten.
@@ -78,3 +78,61 @@ CUSTOMER_RELEASE_IDENTITY: none: complete customer release/founder acceptance no
 RELEASE_NOTE_REQUIRED: no: internal engineering increment, no customer announcement.
 RELEASE_TRUTH_BOUNDARY: PARTIAL: source and bounded synthetic proof; released customer/UI acceptance PROOF OWED, executable systems.check UNAVAILABLE.
 RELEASE_RECOVERY: position=reviewed forward correction preserving original records/authority, no business-work replay; reference=docs/delivery/e2-customer-experience-integration-matrix.md
+
+
+## Full-shell review correction (October28 UTC)
+
+OPEN material review finding PRRT_kwDOSAAXqM6w8IJP is acknowledged in
+4395877276. Component/reserved-space frames above remain supporting evidence;
+their unverified fields are not a required-gate waiver. Merge remains HELD
+for the second legitimate authenticated SOLO cohort and exact candidate runtime
+proof; this record does not close that finding or claim complete delivery.
+
+Actual original TenantCommandCenterShell/CommandHub/SoloSystemsCheckWorkspace/
+FindingDetails/CSS are now rendered through the existing executive-mount systems
+harness. Only PRIVATE read fixtures supply the historical comms pass, strict
+true/false booleans and a private sentinel that must not render. Original shell/
+drawer/font/scroll/focus are real; source, actor/tenant ports and the disabled
+synthetic conversation remain synthetic. No backend/provider/approval/action ran.
+
+Eight DOM configurations1536x770/1366x768/1024x768/900x1000 with Chat folded/open,
+plus390x844 and separate synthetic workspace B at1366x768, were captured and
+visually inspected. The full recorded-setup statement and two boolean facts
+are readable; historical Calling-is-READY and private sentinel absent throughout.
+Document widths equal viewports. Actual rasters:1535x770 at1536DOM;390x843 at
+390x844DOM;1366x768/1024x768/900x1000 exact. The one-pixel capture discrepancy
+is retained, not an exact-raster claim. Correct loaded Schibsted Grotesk100-900
+face was reported by the original renderer diagnostic.
+
+At900/1024 the original Chat overlay is intentionally in front of the source
+review. Opening the drawer while folded, then opening/folding Chat preserves
+it and returns to the same original review. A first background click at1024
+folded Chat without opening the drawer; that initial disclosure=false/pane-empty
+observation is retained and excluded. Background behind the overlay is not
+claimed interactive or readable acceptance. No shell geometry was changed.
+
+Native390 Tab reached close; Escape restored Email and phone setup opener;
+Enter reopened. Actual native Edge zoom control visibly reported200 percent:
+CSS1366x768 became683x384/DPR2, document683/no horizontal overflow. Original
+sc-drawer-body had162px client/587px content; scrolling192 revealed the whole
+corrected statement within the drawer. Header/close remained reachable. Native
+Control+0 restored100 percent, then viewport override reset. Earlier browser-tab
+Control-plus attempts made no observed scale change and are not PASS.
+
+Preserved actual neutral captures:
+- [Full original shell beside Chat,1366x768](e2-recorded-comms/desktop-full-shell.png).
+- [Full original shell,390x843 raster](e2-recorded-comms/narrow-full-shell.png).
+- [Actual native200-percent scrolled disclosure](e2-recorded-comms/native-200-percent.png).
+
+Private reproducible artifacts: outputs/e2-comms-shell-proof/render-proof.json
+and named PNGs; original component captures retained. Temporary local server
+stopped, native zoom restored, viewport reset and only two own temporary tabs
+closed. Original authorized customer tab retained. Browser connection IDs changed;
+fresh browser-name inventory recovered Edge without using Chrome/customer data.
+
+Second synthetic workspace B is NOT the required second legitimate authenticated
+SOLO cohort. Only the existing owner-designated account is authorized; no account,
+role, credentials or tenant was manufactured. Actual candidate/released customer
+and other-cohort/permission/AT/Live/full19 acceptance remain owed. Source is still
+the same reviewed443300fe runtime; this successor only strengthens evidence.
+No capability or algorithm maturity promotion, customer release or scan activation.

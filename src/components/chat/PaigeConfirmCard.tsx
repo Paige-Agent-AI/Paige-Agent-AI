@@ -313,6 +313,12 @@ type SharedProps = {
    * not approve something the person has not yet read.
    */
   focusOnMount?: boolean;
+  /**
+   * Replaces the card's own heading (and the group's accessible name) where the default would be
+   * untrue for the person reading it: in a shared room, "Needs your OK" said to someone who is not
+   * the one deciding. Omitted, the heading is the card's own, exactly as before.
+   */
+  heading?: string;
 };
 
 type DecideProps = SharedProps & {
@@ -362,7 +368,7 @@ export function PaigeConfirmCard(props: PaigeConfirmCardProps) {
 
   const cardState = cardStateOf(actions);
   const anyWorking = cardState === "working";
-  const heading = headingFor(cardState, actions);
+  const heading = props.heading ?? headingFor(cardState, actions);
   const note = report ? props.note : undefined;
 
   const multi = actions.length > 1;
@@ -399,9 +405,12 @@ export function PaigeConfirmCard(props: PaigeConfirmCardProps) {
         props.className,
       )}
     >
-      <div className="flex items-start gap-2.5">
+      {/* data-confirm-part names each region so a host that lays the card out differently (Team Hub's
+          room card) can do it from CSS without depending on utility class names. No visual effect here. */}
+      <div className="flex items-start gap-2.5" data-confirm-part="row">
         <span
           aria-hidden
+          data-confirm-part="seal"
           className={cn(
             "mt-px grid h-6 w-6 shrink-0 place-items-center rounded-md border border-border/70 bg-background/70",
             TONE[cardState],
@@ -414,12 +423,12 @@ export function PaigeConfirmCard(props: PaigeConfirmCardProps) {
           )}
         </span>
 
-        <div className="min-w-0 flex-1">
+        <div className="min-w-0 flex-1" data-confirm-part="content">
           {/* A real heading, not an uppercase eyebrow. It states the decision, and it changes
               with the outcome so the card reports what happened instead of silently vanishing.
               On a report the heading and its sentence are ONE live region, so the reason is
               announced with the verdict rather than left for someone to go looking for. */}
-          <div aria-live={report ? "polite" : undefined} aria-atomic={report ? true : undefined}>
+          <div aria-live={report ? "polite" : undefined} aria-atomic={report ? true : undefined} data-confirm-part="status">
             <p
               className="text-[13px] font-semibold leading-[18px] tracking-[-0.012em] text-foreground"
               aria-live={report ? undefined : "polite"}
@@ -436,7 +445,7 @@ export function PaigeConfirmCard(props: PaigeConfirmCardProps) {
             )}
           </div>
 
-          <ul className={cn("mt-1.5 space-y-1.5", !multi && "space-y-0")}>
+          <ul className={cn("mt-1.5 space-y-1.5", !multi && "space-y-0")} data-confirm-part="actions">
             {actions.map((action, i) => {
               const state = action.state ?? "pending";
               const RowIcon = ROW_ICON[state];
@@ -479,7 +488,7 @@ export function PaigeConfirmCard(props: PaigeConfirmCardProps) {
                         <EmailPreview email={action.preview} bleed={!multi} />
                       </>
                     ) : (
-                    <span className={cn((settled || (!bound && multi)) && "text-muted-foreground")}>
+                    <span className={cn((settled || (!bound && multi)) && "text-muted-foreground")} data-confirm-part="summary">
                       {/* The icon beside a row is hidden from assistive tech, so its state is said
                           in words: in a mixed card the heading cannot tell which one ran. */}
                       {multi && ROW_WORD[state] && <span className="sr-only">{ROW_WORD[state]}: </span>}
@@ -488,6 +497,7 @@ export function PaigeConfirmCard(props: PaigeConfirmCardProps) {
                     )}
                     {action.note && (
                       <span
+                        data-confirm-part="action-note"
                         className={cn(
                           "mt-0.5 block text-xs leading-4",
                           state === "failed" ? "text-destructive"
@@ -518,17 +528,18 @@ export function PaigeConfirmCard(props: PaigeConfirmCardProps) {
               hopeful one. The person is told where the decision can actually be made. A report
               has nothing to decide, so it never says this. */}
           {!report && !canApprove && !decided ? (
-            <p className="mt-2.5 text-xs leading-4 text-muted-foreground">
+            <p className="mt-2.5 text-xs leading-4 text-muted-foreground" data-confirm-part="refusal">
               {props.cannotApproveHere ??
                 "This conversation can’t complete approvals, so nothing has changed. Ask for it again where Paige can show you an approval control."}
             </p>
           ) : null}
 
           {!report && canApprove && !decided && (
-            <div className="mt-3 flex flex-wrap items-center gap-2">
+            <div className="mt-3 flex flex-wrap items-center gap-2" data-confirm-part="controls">
               <Button
                 size="sm"
                 variant="gold"
+                data-confirm-part="approve"
                 onClick={() => props.onApprove(fingerprints)}
                 disabled={controlsDisabled}
               >
@@ -542,6 +553,7 @@ export function PaigeConfirmCard(props: PaigeConfirmCardProps) {
               <Button
                 size="sm"
                 variant="ghost"
+                data-confirm-part="deny"
                 onClick={() => props.onDeny(fingerprints)}
                 disabled={controlsDisabled}
                 className="text-muted-foreground"
@@ -561,7 +573,7 @@ export function PaigeConfirmCard(props: PaigeConfirmCardProps) {
               the one that asked is gone. Where something MAY have gone through, the step is to
               check first, so asking again cannot make it happen twice. */}
           {(recovery || check) && (
-            <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2">
+            <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2" data-confirm-part="next">
               {recovery && (
                 <>
                   {/* Its label may wrap: at 320px reflow the text column is narrower than the

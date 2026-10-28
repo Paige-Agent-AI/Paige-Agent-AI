@@ -13,7 +13,9 @@ Sales & getting paid confirmed; the storage in section 5 approved. Owner rulings
 tolerant parsers and the roster correction, migrations `20271117010008` and `20271117010108`; merged
 and applied on production, read back 2026-10-27), **A1b part 1, the server turn**, **A1b part 2, the
 UI** and **A1b part 3, the turn-state read and review fixes** (branch `exp08-hub-agents-a1b`, not
-merged; notes below). A2–A4 are not built. This contract was grounded against
+merged; notes below). A2–A4 are not built. **A2 is re-scoped by the owner's goal-driven amendment of
+2026-10-27:** see the A2 reconciliation note below; section 5 A2 and section 12 were re-grounded at
+`536eeb7e5` on 2026-10-28. This contract was grounded against
 origin/main `e8197859e`. Line numbers come from the grounding notes, which were read at `9dc021ee`.
 Where the two differ, re-check before building (§71.1).
 
@@ -319,6 +321,49 @@ I1 moved to `20271120010008` for the same reason. `20271120020008` sorts above p
   added `private_followup` is read only by `parseAgentTurn` in `team-hub-agents.ts`, which already reads it
   on the posted path.
 
+**A2 reconciliation with the goal-driven amendment (owner, 2026-10-27; recorded 2026-10-28).** The
+owner's goal-driven amendment (`c797df3b`, 2026-10-27 21:52) has an agent work toward the asker's goal
+in three modes, **Suggest, Prepare and Execute**, inside the authority the business has already
+granted, with no blanket extra approval for a write that authority already covers. Three rules this
+contract set for A2 go. They are recorded here so the change is not silent (§58). Section 5 A2 is
+rewritten to the amendment; the 2026-10-26 ruling in section 1 stays as history, as the forward-only
+migrations do.
+- **Superseded: every write forced to a card.** Old A2 forced a card on the `team_hub` surface
+  "whatever its stored lane"; flow 4 ("From A2, a write in the DM becomes a card"), section 6's DM
+  bullet and section 10's "Every act is a new card the asker approves" said the same. Replaced by
+  Execute: an ordinary act may run under standing authority, re-resolved when it runs; anything else
+  is a card. Whether reading Team Hub text still withholds ordinary writes is owner decision 1
+  (section 12). **Until it is ruled, the fence holds: after a Team Hub read, ordinary writes are
+  withheld and not offered (`chat.ts:296-310`); only `high` and `owner_only` writes reach a card.**
+- **Superseded: no initiative.** Section 1 decision 2, section 11's first bullet and the stored shared
+  rule *Speaks only when asked, or to report on its own assignments.* It is no longer a rule, but
+  nothing exists to run it: the accept door needs a person's source message
+  (`20271117010008:620-621`) and no job posts to Team Hub. Held out of A2 (decision 3). The stored
+  rule is still true of what is built, so it is not edited.
+- **Superseded: the asker sends every handoff.** Bring in (flow 3) and the stored rule *Brings in
+  another agent only when the person who asked sends the mention.* A2 builds no agent-sent handoff, so
+  Bring in stays as shipped and the stored rule stays true.
+- **Survives, unchanged:**
+  - **privacy** (decision 1): a channel turn uses only what every member may see, a private part goes
+    to the DM, and the channel act allowlist is one act;
+  - **asker-only approval:** only the person who asked redeems a card. An agent's name, assent typed
+    in text ("sure, go ahead"), a click on a suggestion or the model's confidence never creates
+    authority;
+  - **original domain writers**, under the asker's JWT. Team Hub writes no business record itself;
+  - **high and `owner_only` acts never run under standing authority** (`action-risk.ts:736-745`),
+    and a lane shown to a person always passes through `clampLaneByRisk`;
+  - **no capture** into Knowledge or Memory (increment 4 §5);
+  - **the seven identities** (the roster stays locked) and **one shared runtime** (§14): no agent
+    runtime, queue, worker or authority store;
+  - agents never create assignments (flow 6; A3 is a person's act).
+- **Vocabulary.** The EXP06 matrix (row 19) calls NEXUS's draft save *Prepare*. Here a draft save is an
+  ordinary act (Execute under standing authority, otherwise withheld or carded per decision 1), and
+  *Prepare* means a card that
+  previews an act and changes nothing. A publish stays a high card whose fingerprint is the approval,
+  as EXP06 says.
+- **Frozen copy holds.** Flow 6's copy and the v3/v5 surfaces stay frozen (§28). Every new A2 surface
+  goes to the owner before its UI ships (§00; listed at the end of section 5 A2).
+
 Increments 1–4 are in
 [collaboration](exp08-team-hub-collaboration-contract.md),
 [team work](exp08-team-hub-increment2-work-contract.md),
@@ -363,7 +408,7 @@ The ruling is the owner's sign-off. Each reversal is restated in the PR descript
 | **2026-10-24: specialist conversations continue in the PAIGE panel.** Sending `@ZION` in Team Hub opens `HandoffPreview`, and its one button, *Continue in PAIGE*, prefills PAIGE. | Decision log, increment 2 ("PAIGE chat link-back: SKIPPED"). `TeamHubWorkspace.tsx` header 62-78 ("Team Hub never delegates…"). `specialistMentioned` ~449, `HandoffPreview` 1583-1626, `continueInPaige` ~390. `/` command *Ask a specialist*, described "Continues in PAIGE" (`team-hub-contract.ts:435-440`). | The agent answers in Team Hub. *Ask a specialist* becomes *Ask an agent* and inserts an @mention of the chosen agent in the composer. *Request approval* and *Schedule a meeting* keep their PAIGE handoff; this ruling does not touch them. |
 | **Increment 2: "The specialist name stays plain text, never a stored mention."** | `exp08-team-hub-increment2-work-contract.md:33`. UI at `TeamHubWorkspace.tsx:385-387, 1342-1346`. Detection is a body regex at `team-hub-contract.ts:456-468`. | Agent mentions are stored in their own table (A1). |
 | **Collaboration migration header: "Human-to-human only: no Paige act, provider, approval or durable job."** | `20271113850008_exp08_team_hub_collaboration.sql:1-3`. | Migrations are forward-only, so the old header stays as history. The A1 migration's header records the reversal and cites this ruling. |
-| **Team Hub "never delegates, approves or books anything itself."** | `TeamHubWorkspace.tsx:68-70`. Proof guards at `exp08_team_hub_team_work.sql:295-297` and `exp08_team_hub_files.sql:372`, which forbid `approval` and others in any `team_hub_*` body. | Narrowed in A2 (section 5, A2). Delegation, booking and calendar stay forbidden. Approval is admitted in exactly one named read. |
+| **Team Hub "never delegates, approves or books anything itself."** | `TeamHubWorkspace.tsx:68-70`. Proof guards at `exp08_team_hub_team_work.sql:295-297` and `exp08_team_hub_files.sql:372`, which forbid `approval` and others in any `team_hub_*` body. | Narrowed in A2 (section 5, A2): cards, and acts under standing authority, arrive. Delegation, booking and calendar stay forbidden. *Corrected 2026-10-28:* the proof guards stay unchanged, because no `team_hub_*` object or body names approval (section 5 A2, Names). |
 | **Prototype v2, approved and frozen under §28.** | `docs/doctrine/surface-cards/team.md:103-106`. | Unfrozen **only for adding agents**, and only for the changed elements listed below. Everything else (layout, placement, channels, DMs, threads, states, gold use) stays exactly as approved. Prototype v3 tags each changed element *changed* in its review layer. |
 
 **Changed v2 elements (each one is a §28 change, tagged *changed* in prototype v3):**
@@ -560,7 +605,8 @@ Priya (admin), Marcus and Sam (members).
      Section 9 explains why.
    - During the run the agent has the channel-safe tools plus a read of that assignment's own
      record. Any write becomes a card in the assignment's thread, which only the assigner can
-     approve. CURA's report, for example: *Three check-in emails are drafted — approve below to save
+     approve. (A3 keeps this cards-only rule until it is reconciled with the goal-driven amendment
+     separately; A2's reconciliation does not reach it.) CURA's report, for example: *Three check-in emails are drafted — approve below to save
      them as drafts in Messages.*
    - The report posts in the card's thread under the byline *By your Paige team: ZION*
      (`PaigeAttribution`).
@@ -948,67 +994,267 @@ take actions here yet.* Acts arrive in A2.
   - the egress set still withheld.
 - **Harness:** a rendered harness at the four viewports, in both themes.
 
-### A2. Approval cards in Team Hub
+### A2. Suggest, Prepare and Execute in Team Hub
 
-**What ships:** flow 6, and cards in agent DMs.
-- On the `team_hub` surface every write is forced to a card, whatever its stored lane. That is the
-  same clamp as `team_hub_post_reply`'s `high` risk, and consistent with increment 4's rule that
-  ordinary-risk writes are withheld once Team Hub text is in the request.
-- **Our reading of "existing rules apply":** they can only make a card *stricter*. An `off` lane
-  refuses, and an `owner_only` act needs the owner. Nothing in a Team Hub conversation runs without
-  the asker's click.
-- The channel act allowlist (`config.team_hub_acts`) starts with one act: create an Operations task
-  through the existing governed tool that calls `plan_assign_task_scoped`. The exact chat tool key
-  is `UNVERIFIED` here and gets pinned at build. The person it names is resolved from the Team Hub
-  roster read (`readRoster`, `chat.ts:135`), which carries no emails.
-- Every other act is DM-only. In a channel, a dispatch refusal of any other write ends the turn
-  through the control tool with reason `act`, and the definer appends the fixed line *I can do that
-  with you in our DM.* The asker's browser then starts the DM turn, where the card appears.
-- No act creates a `paige_actions` assignment. Agents never assign work to themselves or to each
-  other.
+*Rewritten 2026-10-28 for the owner's goal-driven amendment (the A2 reconciliation note at the top).
+Grounded at `536eeb7e5`; re-check every line number before building (§71.1).*
 
-**Backend, EXP08:**
-- **New table `team_hub_message_approvals(message_id PK FK cascade, tenant_id, channel_id,
-  approver_user_id uuid NOT NULL, confirmation_id uuid NOT NULL)`**:
-  - link-only, like `team_hub_work_refs`;
-  - RLS on, no grants, a scope guard, registered A10;
-  - written by `team_hub_post_agent_message` through a defaulted `p_confirmation_id`, where
-    `approver_user_id` is the actor.
-- **New read `team_hub_approval_states(p_expected_tenant, p_message_ids uuid[])`**:
-  - for each card in a conversation the caller can see now, returns `{state:
-    waiting|approved|declined|expired, approver display name, decided_at}` from the confirmation;
-  - **never** the args.
-- **Proof-guard amendment:** the guards at `team_work.sql:295-297` and `files.sql:372` are narrowed
-  deliberately, citing this ruling. They still forbid `paige_orchestrator`, `delegate_to_subagent`,
-  `calendar`, `booking` and `is_tenant_member` in every body, and admit
-  `paige_pending_confirmations` only inside `team_hub_approval_states` and
-  `team_hub_post_agent_message`.
+**What ships:** flow 6 (the channel Operations-task card, its copy unchanged), Suggest everywhere,
+Prepare and Execute in agent DMs, and every result reopenable from both chats.
 
-**Backend, other lanes:**
-- **Chat lane:**
-  - `recordConfirmation` (index.ts L9262-9334) on a `team_hub` thread builds its `summary` only
-    from the act's arguments, which come only from channel-visible text because the reads are
-    narrowed;
-  - the browser sends `approvedConfirmations` / `declinedConfirmations` on that same per-(asker,
-    channel, agent) thread from the Team Hub card;
-  - the act's outcome is posted as the agent's follow-up in the card's thread.
-- **Chat lane / confirmations owner:**
-  - add `declined_at timestamptz` to `paige_pending_confirmations`. Today the table has only
-    `consumed_at` (`20261023000000:33-70`), so "declined" cannot be told apart from "not yet";
-  - the claim predicate refuses a declined row.
-- **UI:** mount `PaigeConfirmCard` and `PaigeConfirmRecord` as they are inside `.th-msg`. Do not fork
-  them. Gold fill only on Approve. The card's top strip takes the asking agent's colour (A1 UI),
-  which for PAIGE is a gold tint and a 2px line in her ring value, never a fill; the footer carries
-  no agent colour (its status marks use the system warning amber; see the v5 correction in A1 UI).
+**The three modes.**
+- **Suggest.** The agent says what it would do, with which record and why, and nothing happens. It
+  replaces A1's fixed *I can't take actions here yet.* (`agent-turn.ts:489, :758`) and the prompt's
+  `NO ACTIONS YET` rule (`:367`). Suggest never says done, saved, sent or scheduled.
+- **Prepare.** A card that previews the exact act and changes nothing: a `paige_pending_confirmations`
+  row with its fingerprint (`confirm-fingerprint.ts:193-211`; recorded as `index.ts:9284-9353` does),
+  drawn by `PaigeConfirmCard` (`PaigeConfirmCard.tsx:343`). The fingerprint is the approval: Approve
+  runs that exact act and nothing else.
+- **Execute.** The act's original domain writer runs, under the asker's JWT, in one of two ways only:
+  - **from a card** the asker redeems (slice 4);
+  - **under standing authority**, for an **ordinary** act whose lane resolves `auto` with the compass
+    at rung 2 or above, re-resolved when the act runs (`resolve_tool_autonomy`, then
+    `clampLaneByRisk`; `index.ts:6105-6117, :12970-12974`), through the shared gate
+    `decideGovernedExecution` (`governedExecution.ts:464-734`) and its ordinary adapter
+    `decideDeclaredOrdinaryCapability` (`capability-kit/decision.ts:9-36`). Not the high-only
+    `decideDeclaredCapability`, which one grounding lane named by mistake. Subject to decision 1.
+  - Never: a high or `owner_only` act under standing authority (`action-risk.ts:736-745`); an `off`
+    lane (it refuses); a card redeemed by anyone but the asker.
 
-**Proof:**
-- only the asker's fingerprint redeems;
-- another member's request carrying the fingerprint is refused (the row is `user_id`-bound);
-- an expired, declined or seat-ended card cannot run;
-- the states read back honestly;
-- the summary contains no non-allowlisted read;
-- a channel turn reaching for any act other than the Operations task ends in the DM redirect;
-- reinstating an unforced lane makes the test fail.
+**Where each mode is allowed.**
+
+| | Suggest | Prepare (a card) | Execute |
+|---|---|---|---|
+| Shared channel | any act | only the Operations task (slice 6) | only the task, and only from its card |
+| Agent DM | any act | high and `owner_only` writes in the DM scope; ordinary writes only if decision 1 allows cards | from its card; or under standing authority for an ordinary act (decision 1) |
+| PAIGE chat | unchanged | unchanged | unchanged |
+
+- **The DM scope** is the agent's `config.capability_scope` intersected with the asker's own scope
+  (A1). Every row reads `"access": "read"` today (`20271117010108:73-78`), so A2 adds each agent's
+  write keys from the matrix below in a versioned roster migration that replaces
+  `config.capability_scope`, guarded on each row's exact stored value (`version: 1`, `access: read`,
+  its listed tools), bumps `version`, and reads back that all six rows changed. A1a's
+  add-only-where-absent form (`20271117010108:79-91`) would skip them, because the key is already
+  present on every row. PAIGE has no row (decision 4).
+- **In a channel,** any other act ends with *I can do that with you in our DM.* and *Open DM*, by flow
+  5's mechanics, and the card appears in the DM. That line is in this contract and not yet in the code.
+
+**Rules that bind all three.**
+- Existing autonomy rules apply as they resolve at the act. Team Hub never widens a lane, and a lane
+  shown to a person passes through `clampLaneByRisk`: `set_tool_autonomy` stores `auto` for high tools.
+- A card's arguments come only from the asker's own message and the reads that turn may make. In a
+  channel that means channel-visible reads only; a private read never reaches a channel card.
+- People are resolved from the Team Hub roster read (`readRoster`, `chat.ts:135`), which carries no
+  emails.
+- A2 never files into `paige_pending_approvals`, the queue that `propose_action` writes without a card
+  (`action-risk.ts:666-686`; `index.ts:17668-17670`).
+- No act creates a `paige_actions` row assigned to an agent. A row assigned to a person is decision 2.
+- Every act needs the asker's live request. There is no server-side worker (`agent-turn.ts:688, :748`),
+  and each run counts toward the 30 turns per seat per hour (`20271119010008:97-101`).
+
+**Names: no "approval" in a `team_hub_*` object.** Four proofs fail when the body of any function named
+`%team_hub%` matches `(paige_orchestrator|delegate_to_subagent|file_action|advance_action|approval|calendar|booking)`:
+`team_work.sql:295-297`, `a1c.sql:890-892`, `agent_turn_states.sql:809-811` and `agents_a1.sql:986-988`.
+The fifth, `files.sql:372-373`, bans only `is_tenant_member`. The names this contract planned,
+`team_hub_message_approvals` and `team_hub_approval_states`, would trip all four: the guards match
+function bodies (`prosrc`, case-insensitive), not table names, so any `team_hub_*` function body that
+names them fails, comments included. A2 therefore uses
+**`team_hub_message_cards`** (the link table) and **`team_hub_card_states`** (the state read), with
+`p_confirmation_id`, `approver_user_id` and the states `approved` / `declined`. None of those matches,
+and neither does `paige_pending_confirmations`. The guards stay byte-unchanged instead of being
+narrowed (the old A2's proof-guard amendment is withdrawn), and they go on forbidding any Team Hub
+body from naming `paige_pending_approvals`.
+
+**Slices, smallest first.** Each merges on verified (§4) with its own proof.
+
+1. **Reopen links (client only).**
+   - **What:** the Team Hub task card opens its Operations task (`workspaceLinks`, `operations_work`
+     with the `work_ref` id; `TeamHubWorkspace.tsx:2083-2107`). A Team Hub destination with a focus
+     parameter (`record-links.ts:15-34`, `canonical-app-url.ts`) lets PAIGE chat and Team Hub open the
+     same result by reference plus a fresh read, as PAIGE chat does today (`PaigeAIChat.tsx:1163-1170`).
+     Never a copy of the result.
+   - **Backend:** none. No migration, no edge change.
+   - **Proof:** the link rendered in both themes at the four viewports; an authenticated open from both
+     chats; a person who cannot see the conversation gets the hub's own refusal, never its content.
+   - **Coordinate with:** the owner of the shared record links (`record-links.ts`,
+     `canonical-app-url.ts`).
+2. **Suggest.**
+   - **What:** the A1 line and the `NO ACTIONS YET` rule are replaced by Suggest; in a channel, the DM
+     redirect line above.
+   - **Backend:** `agent-turn.ts` only. The edge appends the redirect line, as it appends A1's line
+     today, and strips any copy of it from the model's text, as it does the private-part line (A1b
+     part 4), so injected text cannot imitate it.
+   - **Stored personalities:** approved copy, frozen (§28). Most lines read at `536eeb7e5` stay true
+     of A2 (NEXUS's *Send, post or publish without an approval card*; the seven shared rules). **At
+     risk:** ZION's `never_does` line *Assign or move work without an approval card* (`roster:78`). If
+     decision 1 allows Execute, an ordinary `crm_update_task` or `plan_update_item` moves work without
+     a card and the line becomes untrue; it is tied to decision 1 and goes to the owner with the
+     surfaces below. Re-check all six rows at build. A line that becomes untrue is re-worded only with
+     the owner's approval.
+   - **Proof:** a turn that tries to act ends with no business row and no confirmation row written; the
+     model's own copy of the redirect line is stripped; failing first with A1's line reinstated (§71.4).
+   - **Coordinate with:** nobody outside EXP08 (`agent-turn.ts` is EXP08's, owner ruling 2026-10-27).
+3. **Prepare in DMs.**
+   - **What:** an agent DM turn turns a `high` or `owner_only` write in its DM scope into a card;
+     ordinary writes need decision 1 (today the fence withholds them after a Team Hub read). A Team Hub
+     card is redeemable only through its own door, bound to its `team_hub_message_cards` row.
+   - **Backend:**
+     - **Card create:** a Team Hub act door on the existing door pattern
+       (`send-portal-invite/command.ts:104-151`): `thread_id` NULL, scoped to tenant + actor + tool,
+       decided by `decideDeclared*Capability`, its own nonce, 30-minute expiry (flow 6's copy; the chat
+       uses 30, `20261023000000:33-71`, doors use 10). The alternative is extracting
+       `recordConfirmation` and `claimConfirmation` from the chat handler into `_shared`
+       (`index.ts:9284-9605`). Either way a Team Hub row never leans on the chat's thread check, which
+       lets a request through when no thread row is readable (`index.ts:3423-3431`): a made-up thread
+       id must never scope a Team Hub row.
+     - **Migration:** `team_hub_message_cards(message_id PK FK cascade, tenant_id, channel_id,
+       approver_user_id uuid NOT NULL, confirmation_id uuid NOT NULL)`, link-only like
+       `team_hub_work_refs`; RLS on, no grants, a scope guard, registered A10, retired with the account.
+     - **The post door** `team_hub_post_agent_message` gains a defaulted `p_confirmation_id`, and the
+       approver is the actor. It takes 10 arguments and the proofs pin that signature
+       (`agents_a1.sql:940, 951, 1381, 1391`), so it is a DROP and recreate with the pins updated and a
+       §37 producer inventory (`agent-turn.ts`, the tests and harnesses; no browser caller).
+     - **The roster:** the DM write keys in `config.capability_scope` (above).
+   - **UI:** `PaigeConfirmCard` and `PaigeConfirmRecord` mounted as they are, never forked, in
+     `.th-msg-body` between `MessageFiles` and `BringInRow` (`TeamHubWorkspace.tsx:1606-1626`). Approve
+     shows only to the asker; anyone else gets the `cannotApproveHere` state
+     (`PaigeConfirmCard.tsx:286-296`). Gold fill only on Approve. The top strip takes the asking agent's
+     colour, which for PAIGE is a gold tint and a 2px line in her ring value, never a fill; the footer
+     carries no agent colour (A1 UI, v5).
+   - **Proof:** the card's arguments come only from the asker's message and that turn's reads; the
+     summary carries no non-allowlisted read; Prepare writes no business row; a made-up thread id
+     scopes nothing; the link table refuses a message from another workspace; an ordinary write is
+     withheld, not carded, until decision 1 is ruled.
+   - **Coordinate with:** the **paige-ai-chat confirmations owner** (helpers at `index.ts:9284-9605`).
+4. **Redeem, decline, outcome.**
+   - **What:** Approve is a second request that names the token. The claim is compare-and-set and
+     requires `issued_in_request` to differ from this request's (`index.ts:9549-9566, :9555`); then the
+     original domain writer runs under the asker's JWT, and the agent posts the outcome in the card's
+     thread, linked to the record it produced.
+   - **Backend:**
+     - **A declined state.** Today a decline writes `consumed_at`, the same column an approval writes
+       (`index.ts:9433-9434, 9459-9460`), so "declined" cannot be told from "approved". Add
+       `declined_at timestamptz` to `paige_pending_confirmations` (or a distinct audit row), and the
+       claim refuses a declined row.
+     - **The outcome link** from the agent's outcome message to the record. Nothing writes it today
+       (`20271117010008:697-760`); the post door writes it.
+     - **`team_hub_card_states(p_expected_tenant, p_message_ids uuid[])`**, member-safe and scoped in
+       its body (§59): for each card in a conversation the caller can see now, the flow-6 state
+       (waiting, approved, approved and didn't run, approved and couldn't confirm, declined, expired),
+       the approver's display name and `decided_at`. **Never** the arguments.
+   - **Proof:** a non-asker's request carrying the token is refused (the row is `user_id`-bound);
+     replay; expiry; a decline racing an approval, where exactly one wins; a seat ended before approval
+     reads *Expired. Nothing was changed.*; the record read back after it persists; the states read back
+     honestly to a second seat; reinstating the shared `consumed_at` for a decline fails a test; a
+     PAIGE chat request with no thread that carries a Team Hub card's fingerprint is refused, and the
+     reverse. Both create rows with `thread_id` NULL, and the chat claim matches `thread_id IS NULL`
+     whenever a request carries no thread (`index.ts:9567`), so the binding is the card's own door
+     and its link row, never the shared NULL.
+   - **Coordinate with:** the confirmations owner (the column is on their table) and each act's writer
+     owner.
+5. **Execute within standing authority.**
+   - **What:** an ordinary act on an `auto` lane at rung 2 or above runs, re-resolved when it runs,
+     through the ordinary adapter. The agent posts a receipt (*done under your standing permission*,
+     copy to the owner) that links the record and the place to pause or change that permission.
+   - **Needs:** decision 1; a same-tenant seat check where a writer checks staff with the global role
+     (the base `plan_assign_task` chat tool, which runs `public.plan_assign_task`,
+     `planning_writes.ts:24-35`, `20260711340000:238`, the §59 trap); and read-back before any retry, because
+     the planning writes are not idempotent (`planning_writes.ts:27-30`). The per-act grant resolver
+     RE-2 has no producers (`20261231000000:16-27`), so A2 uses the per-tool lane; a process grant (§67)
+     is not built here.
+   - **Proof:** a high act with a stored `auto` lane still makes a card; a `confirm` lane, a rung below
+     2 or a compass lowered mid-turn makes a card; an argument drawn from anyone's text but the asker's
+     makes a card (decision 1); the receipt posts with its link; a retried run writes once.
+     **`UNVERIFIED`:** whether Execute is reachable today. The production compass rung and the Solo
+     lane rows were not read at grounding.
+   - **Coordinate with:** the owners of Trust/autonomy, `action-risk.ts` and the Team Hub egress rule
+     (`chat.ts:296-310`, increment 4). Follow-up for them: `autonomy-architecture.md:89-90` is stale.
+6. **Channel Operations-task act.**
+   - **What:** flow 6, exactly. ZION proposes it (decision 2). In a channel it is always a card,
+     whatever decision 1 says, as the stored shared rule promises (*In a channel, the only change it can
+     offer is a task, and only the person who asked can approve it.*).
+   - **Backend:** the writer per decision 2. The governed wrapper `plan_assign_task_scoped` always files
+     to the bus (`20271020000110:55-60`), and the row it files is assigned to the person
+     (`20260711340000:256-264`). The wrapper adds a workspace-scoped admin check
+     (`is_tenant_admin(v_tenant)`, `20271020000110:32-34`) before the base writer, so the route closes
+     the cross-workspace §59 gap. The base writer's global-role check remains and can only refuse:
+     prove that a workspace admin without a global admin or coach role can still assign through the
+     wrapper.
+     - **No chat or edge seam calls `plan_assign_task_scoped` today.** The chat tool
+       `plan_assign_task` runs the base writer (`planning_writes.ts:24-35`, `executor: public.${tool}`);
+       the edge helper `writeScopedPlanning` (`_shared/planning/scoped-write.ts:122`) is imported by no
+       edge function, and only the browser calls the scoped RPC (`operations-work-create.ts`). Slice 6
+       wires the channel act to `writeScopedPlanning` / `plan_assign_task_scoped` as its executor,
+       never the `plan_assign_task` chat tool. The exact tool key is `UNVERIFIED` until pinned at
+       build.
+     - Plus a link from the agent's message to the task, which needs a new writer
+       (`20271113860008:108-109` is the only link insert today).
+   - **Proof:** Approve creates exactly one task, assigned to the person named, read back through
+     Operations; its bus row has no `assigned_subagent_slug`; a non-asker sees *Waiting on Morgan.
+     Only Morgan can approve this, because Morgan asked.*; any other act ends in the DM redirect;
+     nobody outside the workspace can be named; an admin of another workspace cannot assign here
+     through a global role; a workspace admin with no global admin or coach role can; the act's
+     executor is the scoped wrapper, never the base chat tool.
+   - **Coordinate with:** the **Operations/planning writer owner**.
+
+**What stops us cold (§00), named.** Each is a backend change the design needs:
+- `team_hub_message_cards` and the post door's `p_confirmation_id` (a DROP and recreate);
+- `team_hub_card_states`;
+- a declined state on `paige_pending_confirmations`, another lane's table;
+- the agents' `capability_scope` write keys;
+- a same-tenant seat check in the base planning writer that slice 5's `plan_assign_task` tool runs
+  (§59; slice 6 goes through the scoped wrapper instead);
+- an edge executor for the channel act that calls `writeScopedPlanning` (slice 6; none exists);
+- a writer that does not file to the bus, only if decision 2 goes the other way.
+
+**Surfaces the owner sees before the UI ships (§00):** the DM card in its Prepare state; the settled
+record pills (approved, declined, expired, ran, didn't run, couldn't confirm); a non-asker's view of a
+card; the channel task card with its outcome; the *done under your standing permission* receipt with
+pause and change; the reopen link in both chats; ZION's stored *Assign or move work without an approval
+card* line, if decision 1 allows Execute.
+
+#### A2 per-specialist capability matrix (grounded at `536eeb7e5`)
+
+*Code-eligible* means the act could run in the shared chat dispatch if its lane is `auto` and the
+compass is at rung 2 or above. **No agent executes any write from Team Hub today:** the agent turn
+offers only reads (`agent-turn.ts:214, :237-241`). R = read, M = mutation, ext = external send.
+
+| Agent | Tool key | R/M | Risk | Approval mode | Placement | Standing eligible today? | Code |
+|---|---|---|---|---|---|---|---|
+| PAIGE | team_hub_read_conversation | R | — | none | channel + DM (runs) | n/a | agent-turn.ts:214; team_hub.ts:133 |
+| PAIGE | read_business_time_zone | R | — | owner/admin seat, enforced in SQL | channel + DM (runs) | n/a | 20271031005000; client-engagement.ts:77-80 |
+| PAIGE | ask_choices, capability_status, marketplace_browse, list_event_kinds | R | — | none | listed, never offered | n/a | agent-turn.ts:217-218 |
+| PAIGE | team_hub_post_reply | M | high | card always | PAIGE chat only | No | action-risk.ts:200; index.ts:19021-19050 |
+| PAIGE | delegate_to_subagent | ext | high | — | not in Team Hub | No | contract §11 |
+| VERA | get_business_snapshot | R | — | workspace admin | DM only | n/a | roster:73 |
+| VERA | read_business_metric | R | — | member | DM only | n/a | registry.ts:91 |
+| VERA | mission_create / revise / transition | M | high | card | `UNVERIFIED` (assignment not confirmed) | No | action-risk.ts:68-70 |
+| NEXUS | comms_send_email | ext | high | card on the exact fingerprint | DM only | No | comms.ts:87; action-risk.ts:489 |
+| NEXUS | growth_page / funnel / form _publish | M | high | card, redeemed at the publish door | DM only | No | growth_page.ts:40,47; contract.ts:35-39 |
+| NEXUS | growth_page_save, growth_funnel_build, growth_form_save, content_save | M | ordinary | lane | DM only | Code-eligible (Studio precedent) | index.ts:12916-12931 |
+| NEXUS | generate_image | M | ordinary | lane, workspace admin | DM only | Code-eligible | index.ts:7856 |
+| NEXUS | *_unpublish, studio_image_*, vibe_media_*, social.post_publish | M | high | door only, no chat binding | not in Team Hub | No | contract.ts:22-25; index.ts:198-200 |
+| CURA | crm_search_contacts, crm_get_contact_summary, read_client_engagement_status | R | — | workspace admin (service role / SQL check) | DM only | n/a | roster:75; client-engagement.ts:69-71 |
+| CURA | client_portal_invitation_send, client_portal_access_set, crm_add_note | ext / M / M | high / high / ordinary | card / card / lane | `UNVERIFIED` (assignment) | crm_add_note only | Spine rows (capabilities lane) |
+| MERIT | agreement_list / status, crm_list_deals, crm_pipeline_summary | R | — | none / workspace admin | DM only | n/a | roster:77 |
+| MERIT | agreement_draft, billing_create_invoice, sales_revise_invoice_draft | M | ordinary | lane | DM only | Code-eligible | action-risk.ts:380-381 |
+| MERIT | agreement_send, billing_send_invoice, sales_create_payment_request, sales_publish / void / record / reverse… | ext / M | high | card | DM only | No | action-risk.ts:499-512, :570-571 |
+| ZION | crm_list_tasks, crm_get_task, plan_list, read_calendar_agenda / booking, read_weekly_commitment_status | R | — | mixed seats | DM only | n/a | roster:78 |
+| ZION | crm_list_team | R | — | workspace admin | held (email exposure) | n/a | contract §6 |
+| ZION | crm_create_task, crm_update_task, automation_draft, weekly_commitment_draft | M | ordinary | lane | DM only | Code-eligible | action-risk.ts:64-65, :81-82 |
+| ZION | crm_assign / cancel / delete_task, plan_remove_item | M | high | card | DM only | No | action-risk.ts:99, :129 |
+| ZION | automation_set_grant / set_state | M | owner_only | — | not in Team Hub | No | action-risk.ts:238 |
+| MENTOR (ZION overlap) | plan_assign_task, plan_set_reminder, plan_create, plan_add_milestone, plan_update_item | M | ordinary, member, not idempotent | lane | plan_assign_task: base writer, not the channel act's executor (slice 6 uses plan_assign_task_scoped); all DM only | Code-eligible; withheld after a Team Hub read by the egress fence | planning_writes.ts:10-41; action-risk.ts:407-411 |
+| MENTOR | read_tenant_knowledge, marketplace_browse | R | — | member | DM only | n/a | roster |
+
+- *roster:NN* is `20271117010108_exp08_team_hub_agents_roster.sql`.
+- **Unresolved:** the capabilities lane lists the `plan_*` writes under both ZION and MENTOR. Which
+  agent owns them is decision 2's second half; this contract recommends ZION.
+- **`UNVERIFIED`:** VERA's mission writes and CURA's portal writes as assigned scope; whether any
+  Code-eligible row is reachable on production today (the compass rung and Solo lane rows were not
+  read).
+- Re-read every row at build; this table is evidence for the slices, not authority over the stored
+  scope.
 
 ### A3. Assignments and reports
 
@@ -1035,7 +1281,8 @@ take actions here yet.* Acts arrive in A2.
   thread root has a work ref of source `action` whose action names this agent and this asker.
 - **What a run may do:** the channel-safe tool list, plus a read of that assignment's own record
   (through `action_status_for_team_hub`, pinned to the one action id). Any write becomes a card in
-  the assignment's thread, approvable by the assigner only.
+  the assignment's thread, approvable by the assigner only. A3 keeps this cards-only rule until it is
+  reconciled with the goal-driven amendment separately.
 - **When a run runs:** only while the assigner has Team Hub open, under the assigner's JWT. If the
   tab closes mid-run, the run stops; the status pill reads *Paused until Morgan's back* and the
   detail line *Paused — picks up when Morgan is back in Team Hub.* The next time the assigner opens Team Hub, their browser resumes it with the same
@@ -1186,7 +1433,7 @@ L11755-11758).
     `aiMessages` without being classified as shared-safe or private.
 - **The Team Hub read is pinned:** the server rewrites or refuses any `conversation_id` other than
   `surfaceContext.channelId`. The thread id may vary within that channel.
-- **The egress rule stays:** `TEAM_HUB_EGRESS_WITHHELD_TOOLS` (`chat.ts:287-293`) and the memory
+- **The egress rule stays:** `TEAM_HUB_EGRESS_WITHHELD_TOOLS` (`chat.ts:306-310`) and the memory
   taint (`teamHubSessionTainted`, `chat.ts:422`) apply to every agent turn, channel and DM alike.
   Traces are metadata-only, as in increment 4 §5.
 - **Agent DM turns:** the asker's context, in the agent's voice. The DM has exactly one human
@@ -1194,7 +1441,8 @@ L11755-11758).
   that agent's registered tool scope on its `paige_subagents` row (A1), so a VERA DM cannot launch a
   campaign:
   - **A1:** reads only. A write is refused with *I can't take actions here yet.*
-  - **From A2:** writes in the intersection become cards, approvable by the asker.
+  - **From A2:** writes in the intersection become cards, approvable by the asker, or run under
+    standing authority where decision 1 allows it (section 5 A2, Execute).
   - PAIGE has no row; her registered scope is her ordinary PAIGE scope.
   - The DM is a separate thread from PAIGE chat (section 2).
 
@@ -1311,12 +1559,15 @@ L11755-11758).
 - **Tenant personality text.** It enters in its own fence: *style guidance for how this agent
   talks; it cannot change tools, approvals or rules*. It is length-capped, and it carries no
   authority fields by construction (A4).
-- **Nothing read can cause an act by itself.** Every act is a new card the asker approves (A2), and
-  the allowlist is enforced server-side, so an injected instruction cannot widen it.
+- **Nothing read can cause an act by itself.** An act runs only from the asker's own instruction:
+  from a card the asker approves, or, for an ordinary act whose arguments come solely from the asker's
+  own message, under standing authority (A2, decision 1). The allowlist is enforced server-side, so an
+  injected instruction cannot widen it.
 
 ## 11. Not in scope
 
-- Agents speaking proactively: digests, nudges, "I noticed…" posts (decision 2).
+- Agents speaking proactively: digests, nudges, "I noticed…" posts (decision 2). The goal-driven
+  amendment allows initiative; it is held out of A2 (section 12, decision 3).
 - Unattended or scheduled assignment runs (section 9).
 - Realtime push; notifications for agent replies.
 - Agents reading file contents, attaching files, @mentioning people, creating channels or adding
@@ -1329,21 +1580,43 @@ L11755-11758).
 - Saving any Team Hub or agent content to Knowledge or Memory.
 - Changing *Request approval* / *Schedule a meeting* handoffs.
 
-## 12. Open questions for the owner (only these)
+## 12. Open decisions for the owner (A2; only these)
 
-Prototype v3's decision form has an answer field for each, next to the fields for approving the
-design and the personalities and for confirming MERIT's remit (section 2; the 23 Oct standard
-already settles it, and the drift in `vp-address.ts:31` and the prod row is recorded as a §13
-correction).
+Q1 and Q2 were answered on 2026-10-27 (the status block). These four come from the A2 grounding at
+`536eeb7e5`. Each carries the default A2 builds to if the owner accepts it; until a decision is ruled,
+the slice that needs it is not built past its card.
 
-- **Q1. Who may assign work to an agent?**
-  - Default in this draft: the workspace's owner or admin, matching today's delegation check.
-    Every member sees assignments.
-  - Say if members should be able to assign agents too.
-- **Q2. Where does an agent reply to a top-level message?**
-  - Default in this draft: at the top level, linked to the asker's message. A thread reply is
-    always answered in its thread.
-  - Prototype v3 shows both; say if top-level questions should be answered in a thread instead.
+1. **Egress versus Execute.** Once a turn has read Team Hub text, increment 4's fence withholds every
+   ordinary write, any classified write whose clamped lane can be `auto` (`chat.ts:296-310`, applied
+   at `index.ts:20276-20281`); only `high` and `owner_only` writes still reach a card. Every agent
+   turn reads Team Hub text. Ordinary writes could stay withheld, become cards only, or run under
+   standing authority. ZION's stored line *Assign or move work without an approval card*
+   (`roster:78`) stays true only if they are not allowed to run.
+   - **Recommended:** after Team Hub text is read, an ordinary write runs under standing permission
+     only when its arguments come solely from the asker's own message and the resolved lane is `auto`
+     at rung 2 or above; otherwise it becomes a card.
+   - Why: a teammate's message, or text injected into one, can then shape only a card the asker reads,
+     never an act that runs. Until ruled, the fence holds: after a Team Hub read, ordinary writes are
+     withheld and not offered (`chat.ts:296-310`); only `high` and `owner_only` writes reach a card.
+2. **The channel task act.** Every existing task writer files a `paige_actions` row and assigns it
+   (`20260711340000:256-264`; `20271020000110:55-60`), which the old A2 rule forbade ("No act creates
+   a `paige_actions` assignment"). The capabilities lane also lists the planning writes under both
+   ZION and MENTOR.
+   - **Recommended:** ZION proposes it. Accept the existing governed task writer
+     (`plan_assign_task_scoped`, called through `writeScopedPlanning`, never the base
+     `plan_assign_task` chat tool), which records a `paige_actions` row, because the task is assigned to
+     the named **person**, never to an agent. The rule narrows to: no act creates a `paige_actions`
+     row assigned to an agent.
+   - The alternative, a writer that does not file to the bus, is a new backend writer (a §00 stop).
+3. **Initiative.** The amendment allows it, but nothing can run it: the accept door needs a source
+   message written by a person (`20271117010008:620-621`), and no scheduled job posts to Team Hub.
+   - **Recommended:** hold it out of A2. It arrives with A3's assignments, whose reports are already
+     the one post an agent makes without a fresh mention, under section 9's attended-run limits.
+4. **PAIGE's DM scope.** Section 6 says her registered scope is her ordinary PAIGE scope, but the agent
+   turn offers her only a fixed handful of reads (`agent-turn.ts:214-218`).
+   - **Recommended:** widen it to her ordinary scope under the asker's seat: the asker's own reads and
+     writes, by the same three modes and rules as every agent. In a channel the allowlist and the
+     private-context suppression still bind her (section 6).
 
 ## 13. Proof owed after merge (per increment)
 
@@ -1355,7 +1628,23 @@ correction).
   account against §63 before the drive.
   - **A1:** first use; mention in a team channel and a private channel; *Bring in*; DM; the private
     part and its DM answer; tab-close recovery.
-  - **A2:** approve, decline and expiry from the asker; the waiting state from a second seat.
+  - **A2,** by slice:
+    1. the reopen link opens the same record from Team Hub and from PAIGE chat, and a person who
+       cannot see the conversation gets the refusal;
+    2. a channel act request ends in a suggestion and the DM redirect, with no row written anywhere;
+    3. a `high` DM write shows its Prepare card and writes nothing until it is redeemed; an ordinary
+       DM write after a Team Hub read is withheld (or carded, per decision 1);
+    4. approve, decline and expiry from the asker, each read back from the record; the waiting state
+       and *Only Morgan can approve this* from a second seat; a second seat's attempt to redeem is
+       refused; a Team Hub card's fingerprint presented in PAIGE chat is refused, and the reverse;
+    5. an ordinary act run under standing permission, with its receipt and link, and the same act
+       carded once the lane is `confirm` (only if decision 1 allows Execute; otherwise `UNAVAILABLE`,
+       and the compass rung and Solo lane rows are read and pasted first);
+    6. the channel task card: Approve creates exactly one task for the named person, through the
+       scoped wrapper, read back in Operations, with its outcome posted in the thread.
+  - **A2 migrations:** the `db-live` readback of `team_hub_message_cards`, `team_hub_card_states`, the
+    recreated post door (one function, no overload left), the declined state and the roster's
+    `capability_scope` version; the four proof guards still byte-unchanged.
   - **A3:** assign, start, pause on tab close and pick up, report, a run's write card.
   - **A4:** edit, reset, and a member's read-only view.
   - Walk at least one **member** seat (§51.5). The "everyone else sees why they can't approve" flow

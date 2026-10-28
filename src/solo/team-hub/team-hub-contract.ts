@@ -138,6 +138,82 @@ export interface TeamHubMessage {
   agent_mentions?: TeamHubAgentKey[];
   /** A1c: the @channel or @here the server stored on it (a channel message only), else null. */
   broadcast?: TeamHubBroadcast | null;
+  /**
+   * EXP08 A2: the approval an agent's message carries, else null. Only an agent's message carries one.
+   * Dormant until the A2 backend writes it: no read door returns this key today, so the parser yields
+   * null for every live message and the card never renders against production data.
+   */
+  approval?: TeamHubApproval | null;
+}
+
+/**
+ * EXP08 A2: where an agent's proposal stands. `waiting` needs the asker's click; `working` is the
+ * approved act running; `done`, `failed` and `unconfirmed` are what became of it (the shared card's
+ * report words); `declined` is the asker's Not now and `expired` is a card nobody decided in time —
+ * two different facts, kept apart because "nothing changed" is true of both for different reasons.
+ * `standing` (design option, owner decision 1, goal-driven amendment 2026-10-27): an ordinary write the
+ * asker holds standing permission for ran without a click; the card is its receipt — what ran, what the
+ * permission covers, when, and (for the asker) Pause. Not yet ruled, and no backend writes it.
+ */
+export type TeamHubApprovalState = "waiting" | "working" | "done" | "failed" | "unconfirmed" | "declined" | "expired" | "standing";
+export const TEAM_HUB_APPROVAL_STATES: readonly TeamHubApprovalState[] = ["waiting", "working", "done", "failed", "unconfirmed", "declined", "expired", "standing"];
+
+export interface TeamHubApprovalAction {
+  /** The server-written sentence for the exact call. Never model prose. */
+  summary: string;
+  /** Present only for the asker on a waiting card: the binding Approve echoes. */
+  fingerprint?: string;
+  state?: "pending" | "working" | "done" | "failed" | "unconfirmed";
+  /** The server's sentence about what it produced, or why it didn't run. */
+  note?: string;
+}
+
+export interface TeamHubApproval {
+  state: TeamHubApprovalState;
+  /** The kind line on the card's strip, e.g. "Operations task", "Invoice draft". */
+  kind: string;
+  actions: TeamHubApprovalAction[];
+  /** The one person whose click decides it. Everyone else reads it. */
+  asker_user_id: string;
+  /** Who decided, as the room reads them; null until someone has. */
+  decided_by_name: string | null;
+  decided_at: string | null;
+  /**
+   * `standing` only, and required there: the server's sentence for what the standing permission covers,
+   * written for the person reading it ("Operations tasks you ask ZION for in this workspace" to the
+   * asker; the asker's name to a teammate). Null on every other state. A receipt that cannot say what
+   * it ran under is not whole, so the parser refuses it rather than guessing.
+   */
+  covered_by: string | null;
+  // Deliberately absent: a link to the record the act produced (the A2 state read returns state,
+  // approver and time only, never the arguments). It has no seam, so it does not render.
+}
+
+const APPROVAL_ACTION_STATES = ["pending", "working", "done", "failed", "unconfirmed"] as const;
+
+/** The A2 approval on an agent's message, or null when it is absent or not whole (never guessed). */
+export function parseApproval(value: unknown): TeamHubApproval | null {
+  if (!isRow(value)) return null;
+  if (!TEAM_HUB_APPROVAL_STATES.includes(value.state as TeamHubApprovalState) || !isText(value.kind) || !isText(value.asker_user_id)) return null;
+  if (!Array.isArray(value.actions) || value.actions.length === 0) return null;
+  const actions: TeamHubApprovalAction[] = [];
+  for (const item of value.actions) {
+    if (!isRow(item) || !isText(item.summary)) return null;
+    const state = item.state === undefined ? undefined : APPROVAL_ACTION_STATES.find((known) => known === item.state);
+    if (item.state !== undefined && !state) return null;
+    actions.push({ summary: item.summary,
+      ...(isText(item.fingerprint) ? { fingerprint: item.fingerprint } : {}),
+      ...(state ? { state } : {}),
+      ...(isText(item.note) ? { note: item.note } : {}) });
+  }
+  const standing = value.state === "standing";
+  if (standing && !isText(value.covered_by)) return null;
+  return {
+    state: value.state as TeamHubApprovalState, kind: value.kind, actions, asker_user_id: value.asker_user_id,
+    decided_by_name: isText(value.decided_by_name) ? value.decided_by_name : null,
+    decided_at: isInstant(value.decided_at) ? value.decided_at : null,
+    covered_by: standing ? value.covered_by as string : null,
+  };
 }
 
 /** A1c: @channel (everyone in the channel) and @here (everyone active in it now). Slack's meanings. */
@@ -373,6 +449,7 @@ function parseMessage(value: unknown): TeamHubMessage | null {
   // Absent only on an answer from before increment 3; present, it must be a list of whole files.
   const files = value.files === undefined ? [] : parseAll(value.files, parseFile);
   if (!files) return null;
+  const approval = authorKind === "agent" ? parseApproval(value.approval) : null;
   return {
     files: files.filter((file, index) => files.findIndex((other) => other.id === file.id) === index),
     work_ref: parseWorkRef(value.work_ref),
@@ -391,6 +468,9 @@ function parseMessage(value: unknown): TeamHubMessage | null {
     agent_mentions: [...new Set((agentMentions as string[]).filter(isTeamHubAgentKey))],
     // A1c: absent on every message that carries none; a kind this build does not know is not shown.
     broadcast: value.broadcast === "channel" || value.broadcast === "here" ? value.broadcast : null,
+    // A2: an agent's message only; a person's message never carries an approval. The key is set only when
+    // an approval is there, so every message without one reads exactly as it did before A2.
+    ...(approval ? { approval } : {}),
   };
 }
 

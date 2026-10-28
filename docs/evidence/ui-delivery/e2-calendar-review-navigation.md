@@ -16,7 +16,7 @@ KEYBOARD_FOCUS: PASS: native keyboard/Back restores Open Calendar focus; existin
 ZOOM_REFLOW: UNVERIFIED:390px DOM reflow has no document overflow; actual200-percent browser zoom and assistive technology remain owed.
 REDUCED_MOTION: PASS: actual local preference reduce=true; no added/changed animation, incumbent rules retained.
 STATE_COVERAGE: PASS: available partial empty Calendar sample, unavailable/member/error/loading and synthetic workspace B were inspected; no Calendar link on refused/error/loading states. These synthetic contexts do not prove actual tenant isolation or a second authenticated cohort.
-TRUTHFUL_STATE_LABELS: PASS: partial source/unknown-not-zero and absence-not-capacity preserved. Model guidance is conditional; original references stay out of model context and are separately rendered. No action, approval or prediction is claimed.
+TRUTHFUL_STATE_LABELS: PASS: partial-source availability and absence-not-capacity distinctions preserved. Model guidance is conditional; original references stay out of model context and are separately rendered. No action, approval or prediction is claimed.
 SOLO_UI: YES: canonical command-center.executive and original calendar destination; one shared implementation, no customer identity selects behavior.
 SOLO_1536X770_PAIGE_CLOSED: UNVERIFIED: DOM1536x770/full original shell captured1535x770; original Calendar link/source visible. Exact raster/two legitimate authenticated cohorts remain owed.
 SOLO_1536X770_PAIGE_OPEN: UNVERIFIED: DOM1536x770/full original shell captured1535x770; side-by-side original shell and disabled synthetic composer; actual model Chat/cohorts excluded.
@@ -86,10 +86,10 @@ Functional134 local checks/visual bounded render/experiential synthetic return
 are distinct from released authenticated behavior and final founder acceptance.
 Historical9PASS0FAIL and12PASS0FAIL4BLOCKED remain unchanged; all19 remain OPEN.
 
-INTERNAL_BUILD_IDENTITY: base4400de57315bd608c60522dfb86b5860c2c058f5 plus reviewed navigation diff; exact resulting Git commit in PR; deployment=PENDING; environment=development; migrations=NOT_APPLICABLE; edge=PENDING(paige-ai-chat,paige-business-review); evidence=ANT138/a1f84ad3,ANT52/e2015a9a and this record
+INTERNAL_BUILD_IDENTITY: 1c760326008229e500e4192a4c9aa536ae4aa57c; identity-role=source candidate; final documentation correction exact head in PR; deployment=none; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(original paige-ai-chat and paige-business-review source deployment); evidence=docs/evidence/ui-delivery/e2-calendar-review-navigation.md
 RELEASE_CHANNEL: development: no hosted or production correction claimed
-RELEASE_CLASSIFICATION: internal repair increment; no new capability or action activation
+RELEASE_CLASSIFICATION: internal-only: repair increment with no new capability or action activation
 CUSTOMER_RELEASE_IDENTITY: none: complete founder Experience evaluation remains open
 RELEASE_NOTE_REQUIRED: no: internal truthful navigation repair, no customer announcement authority exercised
-RELEASE_TRUTH_BOUNDARY: PARTIAL original authorized source-read subset; PROOF OWED exact correction release, actual model compliance, other cohorts/roles/Live/all19
+RELEASE_TRUTH_BOUNDARY: PARTIAL: original authorized source-read subset only; exact correction release, actual model compliance, other cohorts/roles/Live/all19 remain excluded
 RELEASE_RECOVERY: position=forward-fix through original reviewed source and ordinary deployment; reference=original3012 source/QA and existing canonical source contracts; no business replay

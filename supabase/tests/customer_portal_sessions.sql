@@ -5,7 +5,7 @@
 -- admission refuses everything that is not the caller's own changeable booking with one "not found";
 -- request-id and state replay; and admission never writes public.internal_bookings.
 BEGIN;
-SELECT plan(175);
+SELECT plan(212);
 INSERT INTO auth.users(id,aud,role,email,email_confirmed_at,raw_app_meta_data) VALUES
  ('e0961000-0000-4000-8000-000000000001','authenticated','authenticated','sessions-host-a@tests.invalid',now(),'{"comms_provider_execution":"disabled"}'),
  ('e0961000-0000-4000-8000-000000000002','authenticated','authenticated','sessions-host-b@tests.invalid',now(),'{"comms_provider_execution":"disabled"}'),
@@ -595,6 +595,130 @@ SELECT is(pg_temp.booking_calendars(_actor=>'e0961000-0000-4000-8000-00000000000
  _client=>'e0963000-0000-4000-8000-000000000006')->>'sqlstate','42501','a merged-away customer cannot discover calendars');
 UPDATE public.profiles SET active_tenant_id='e0962000-0000-4000-8000-000000000001'
  WHERE user_id='e0961000-0000-4000-8000-000000000001';
+-- Native private-booking admission: full schema and actual PostgreSQL roles,
+-- synthetic identities only. The SDK/Auth and provider paths are separate proof.
+INSERT INTO public.client_contact_methods(tenant_id,client_id,kind,value,is_primary,position) VALUES
+ ('e0962000-0000-4000-8000-000000000001','e0963000-0000-4000-8000-000000000001',
+  'email','jordan.rivera@tests.invalid',true,0);
+CREATE FUNCTION pg_temp.private_booking_plan() RETURNS jsonb LANGUAGE sql AS $plan$
+ SELECT jsonb_build_object('calendar_id',c.id,'calendar_source',
+  (SELECT jsonb_object_agg(k,to_jsonb(c)->k) FROM unnest(ARRAY[
+   'id','tenant_id','type','title','description','logo_url','accent','duration_min','buffer_before_min',
+   'buffer_after_min','min_notice_min','timezone','availability_json','enabled','theme','subtitle',
+   'show_company_name','location_type','location_value','notify_config','location_options','booking_horizon_days',
+   'redirect_url','intake_questions','appointment_types','date_overrides','capacity','assignment_strategy']) k),
+  'hosts_source',(SELECT jsonb_agg(jsonb_build_object('user_id',h.user_id,'priority',h.priority,
+   'availability_json',h.availability_json,'timezone',h.timezone) ORDER BY h.user_id)
+   FROM public.calendar_hosts h WHERE h.calendar_id=c.id),
+  'host_ids',jsonb_build_array('e0961000-0000-4000-8000-000000000001'::uuid),'booking_kind','single',
+  'title','Strategy call','start_at',now()+interval '12 days 2 hours','end_at',now()+interval '12 days 2 hours 45 minutes',
+  'guest_name','Jordan Rivera','guest_email','jordan.rivera@tests.invalid','guest_phone',NULL,
+  'notes',NULL,'location_type','phone','location_value',NULL,'intake_answers','{}'::jsonb,
+  'appointment_type','{"id":"t1","name":"Strategy call","duration_min":45}'::jsonb)
+ FROM public.calendars c WHERE c.id='e0964000-0000-4000-8000-000000000001'
+$plan$;
+CREATE TEMP TABLE private_booking_input AS SELECT pg_temp.private_booking_plan() p;
+ALTER TABLE private_booking_input ADD COLUMN intent jsonb;
+UPDATE private_booking_input SET intent=jsonb_build_object('calendar_id',p->'calendar_id','start',p->'start_at',
+ 'appointment_type_id','t1','location','phone','notes',NULL,'answers','{}'::jsonb);
+CREATE FUNCTION pg_temp.private_booking_call(_sql text) RETURNS jsonb LANGUAGE plpgsql AS $call$
+DECLARE r jsonb;
+BEGIN
+ -- Fixture role setup, not a customer token or production impersonation.
+ PERFORM set_config('request.jwt.claims','{"role":"service_role"}',true);
+ SET LOCAL ROLE service_role;
+ BEGIN EXECUTE _sql INTO r;
+ EXCEPTION WHEN OTHERS THEN r:=jsonb_build_object('sqlstate',SQLSTATE,'error',SQLERRM); END;
+ RESET ROLE; PERFORM set_config('request.jwt.claims','{}',true); RETURN r;
+END $call$;
+CREATE FUNCTION pg_temp.private_booking_create(
+ _actor uuid DEFAULT 'e0961000-0000-4000-8000-000000000003',
+ _tenant uuid DEFAULT 'e0962000-0000-4000-8000-000000000001',
+ _client uuid DEFAULT 'e0963000-0000-4000-8000-000000000001',
+ _request uuid DEFAULT 'e0968000-0000-4000-8000-000000000001',
+ _override jsonb DEFAULT '{}'::jsonb,_intent_override jsonb DEFAULT '{}'::jsonb) RETURNS jsonb LANGUAGE sql AS $create$
+ SELECT pg_temp.private_booking_call(format('SELECT public.client_portal_commit_booking(%L,%L,%L,%L,%L::jsonb,%L::jsonb)',
+  _actor,_tenant,_client,_request,intent||_intent_override,p||_override)) FROM private_booking_input
+$create$;
+SELECT ok(NOT has_function_privilege('authenticated',
+ 'public.client_portal_commit_booking(uuid,uuid,uuid,uuid,jsonb,jsonb)','EXECUTE'),
+ 'a customer cannot call the trusted native booking constructor directly');
+SELECT ok(has_function_privilege('service_role',
+ 'public.client_portal_commit_booking(uuid,uuid,uuid,uuid,jsonb,jsonb)','EXECUTE'),
+ 'the existing booking service can call the native constructor');
+SELECT ok(NOT has_function_privilege('service_role',
+ 'public._client_portal_lock_verified_customer(uuid,uuid,uuid)','EXECUTE'),
+ 'the server-only binding helper is not itself a service API');
+SELECT is(pg_temp.private_booking_create(_actor=>'e0961000-0000-4000-8000-000000000001')->>'sqlstate','42501',
+ 'owner identity cannot substitute for the invited customer');
+SELECT is(pg_temp.private_booking_create(_tenant=>'e0962000-0000-4000-8000-000000000002')->>'sqlstate','42501',
+ 'native booking refuses the wrong business');
+SELECT is(pg_temp.private_booking_create(_client=>'e0963000-0000-4000-8000-000000000002')->>'sqlstate','42501',
+ 'native booking refuses the wrong customer');
+SELECT is(pg_temp.private_booking_create(_override=>'{"guest_email":"other@tests.invalid"}')->>'sqlstate','40001',
+ 'the saved customer recipient cannot be replaced with a typed email');
+-- The earlier unlinked owner/guest fixture intentionally occupies day12. Keep
+-- its real native uniqueness protection and prove that no private create can
+-- overwrite or adopt it by a typed matching email. The positive is two hours later.
+SELECT is(pg_temp.private_booking_create(_override=>jsonb_build_object(
+ 'start_at',now()+interval '12 days','end_at',now()+interval '12 days 45 minutes'),
+ _intent_override=>jsonb_build_object('start',now()+interval '12 days'))->>'sqlstate','23505',
+ 'the original occupied host time refuses a private create and rolls back the request');
+CREATE TEMP TABLE private_booking_saved AS SELECT pg_temp.private_booking_create() r;
+-- Diagnostic contains only this rolled-back synthetic fixture, never customer data.
+SELECT diag('private booking native response: '||r::text) FROM private_booking_saved
+ WHERE r->>'state' IS DISTINCT FROM 'saved';
+SELECT is((SELECT r->>'state' FROM private_booking_saved),'saved','native admission commits a real original appointment');
+SELECT is((SELECT r->>'replayed' FROM private_booking_saved),'false','a new result is distinguished from recovery');
+SELECT is((SELECT count(*) FROM public.internal_bookings WHERE portal_request_id='e0968000-0000-4000-8000-000000000001'),
+ 1::bigint,'one customer request creates exactly one native appointment');
+SELECT ok((SELECT contact_id='e0963000-0000-4000-8000-000000000001' AND
+ tenant_id='e0962000-0000-4000-8000-000000000001' AND
+ portal_actor_user_id='e0961000-0000-4000-8000-000000000003'
+ FROM public.internal_bookings WHERE id=(SELECT (r#>>'{booking,id}')::uuid FROM private_booking_saved)),
+ 'native provenance retains the verified customer and original CRM relationship');
+SELECT is((SELECT count(*) FROM public.audit_logs WHERE action='client_portal_create' AND
+ entity_id=(SELECT (r#>>'{booking,id}')::uuid FROM private_booking_saved) AND
+ user_id='e0961000-0000-4000-8000-000000000003'),1::bigint,'the create audit attributes the actual customer');
+SELECT ok((SELECT count(*)=1 FROM jsonb_array_elements(pg_temp.as_user(
+ 'e0961000-0000-4000-8000-000000000001',$q$SELECT coalesce(jsonb_agg(to_jsonb(b)),'[]'::jsonb)
+ FROM public.list_team_bookings(now(),now()+interval '13 days',NULL::uuid[],
+ 'e0962000-0000-4000-8000-000000000001') b$q$)) b
+ WHERE b->>'id'=(SELECT r#>>'{booking,id}' FROM private_booking_saved)),
+ 'the built-in SOLO Calendar reads the same privately booked appointment');
+SELECT ok(pg_temp.s(pg_temp.jordan($q$SELECT public.client_portal_sessions(
+ 'e0962000-0000-4000-8000-000000000001','upcoming',NULL,50)$q$),
+ (SELECT r#>>'{booking,id}' FROM private_booking_saved)) IS NOT NULL,
+ 'customer Sessions reads the same privately booked appointment');
+CREATE TEMP TABLE private_booking_recovery AS SELECT pg_temp.jordan($q$SELECT public.client_portal_booking_request(
+ 'e0962000-0000-4000-8000-000000000001','e0963000-0000-4000-8000-000000000001',
+ 'e0968000-0000-4000-8000-000000000001')$q$) r;
+SELECT is((SELECT r->'booking' FROM private_booking_recovery),(SELECT r->'booking' FROM private_booking_saved),
+ 'returning customer recovery reads the same saved native result');
+SELECT is((SELECT pg_temp.keys(CASE WHEN jsonb_typeof(r->'booking')='object' THEN r->'booking' ELSE '{}'::jsonb END) FROM private_booking_recovery),
+ 'end_at,id,start_at,status,timezone,title','recovery withholds host identities, intake, provider ids and guest PII');
+UPDATE public.internal_bookings SET title='PRIVATE STAFF BOOKING TITLE',notes='PRIVATE STAFF BOOKING NOTE'
+ WHERE id=(SELECT (r#>>'{booking,id}')::uuid FROM private_booking_saved);
+SELECT is(pg_temp.jordan($q$SELECT public.client_portal_booking_request(
+ 'e0962000-0000-4000-8000-000000000001','e0963000-0000-4000-8000-000000000001',
+ 'e0968000-0000-4000-8000-000000000001')$q$)#>>'{booking,title}','Strategy call',
+ 'returning recovery uses the original client-visible service name instead of an internal staff title');
+SELECT ok(strpos(pg_temp.jordan($q$SELECT public.client_portal_booking_request(
+ 'e0962000-0000-4000-8000-000000000001','e0963000-0000-4000-8000-000000000001',
+ 'e0968000-0000-4000-8000-000000000001')$q$)::text,'PRIVATE STAFF BOOKING')=0,
+ 'internal staff title and notes cannot leak through recovery after the owner edits the native record');
+SELECT is(pg_temp.private_booking_create()->>'replayed','true','retrying the exact original request returns its result');
+SELECT is(pg_temp.private_booking_create()->'execution','null'::jsonb,'replay never repeats provider instructions');
+SELECT is((SELECT count(*) FROM public.audit_logs WHERE action='client_portal_create' AND
+ entity_id=(SELECT (r#>>'{booking,id}')::uuid FROM private_booking_saved)),1::bigint,
+ 'recovery and retries do not create another audit or appointment');
+SELECT is(pg_temp.as_user('e0961000-0000-4000-8000-000000000004',$q$SELECT public.client_portal_booking_request(
+ 'e0962000-0000-4000-8000-000000000001','e0963000-0000-4000-8000-000000000001',
+ 'e0968000-0000-4000-8000-000000000001')$q$)->>'sqlstate','42501','another customer cannot recover this request');
+SELECT is(pg_temp.jordan($q$SELECT public.client_portal_booking_request(
+ 'e0962000-0000-4000-8000-000000000002','e0963000-0000-4000-8000-000000000001',
+ 'e0968000-0000-4000-8000-000000000001')$q$)->>'sqlstate','42501','another business cannot recover this request');
+
 CREATE FUNCTION pg_temp.booking_access(_action text) RETURNS jsonb LANGUAGE plpgsql AS $test$
 DECLARE v jsonb;
 BEGIN
@@ -605,11 +729,86 @@ BEGIN
   'e0963000-0000-4000-8000-000000000001',%L,'engagement_paused',NULL,%L)$q$,_action,v->>'since'));
 END $test$;
 SELECT is(pg_temp.booking_access('pause')->>'ok','true','the original owner control can pause this fixture customer');
+SELECT is(pg_temp.private_booking_create()->>'sqlstate','42501','paused access refuses even an exact native replay');
+SELECT is(pg_temp.jordan($q$SELECT public.client_portal_booking_request(
+ 'e0962000-0000-4000-8000-000000000001','e0963000-0000-4000-8000-000000000001',
+ 'e0968000-0000-4000-8000-000000000001')$q$)->>'sqlstate','42501','paused access refuses recovery of a retained request');
 SELECT is(pg_temp.booking_calendars()->>'sqlstate','42501','paused access invalidates the discovery read immediately');
 SELECT is(pg_temp.booking_access('restore')->>'ok','true','the original owner control restores the same relationship');
 SELECT is(pg_temp.booking_calendars(),(SELECT r FROM calendar_discovery),'restored access returns the same original calendar facts');
 SELECT is(pg_temp.booking_access('end')->>'ok','true','the original owner control ends this fixture relationship');
+SELECT is(pg_temp.private_booking_create()->>'sqlstate','42501','revocation invalidates retained native booking requests');
+SELECT is(pg_temp.jordan($q$SELECT public.client_portal_booking_request(
+ 'e0962000-0000-4000-8000-000000000001','e0963000-0000-4000-8000-000000000001',
+ 'e0968000-0000-4000-8000-000000000001')$q$)->>'sqlstate','42501','revocation invalidates retained customer recovery');
 SELECT is(pg_temp.booking_calendars()->>'sqlstate','42501','ended access cannot use a retained login to discover the business calendars');
+
+-- Owner-authorized retirement compatibility. This is a fully rolled-back
+-- synthetic Operator fixture, not an actual permission grant or account deletion.
+-- Exercise the ORIGINAL protected role/capability registry and retirement APIs.
+SELECT is(pg_temp.as_user('e0961000-0000-4000-8000-000000000001',format($q$
+ WITH removed AS (DELETE FROM public.internal_bookings WHERE id=%L::uuid RETURNING id)
+ SELECT to_jsonb(count(*)) FROM removed$q$,(SELECT r#>>'{booking,id}' FROM private_booking_saved)))->>'sqlstate',
+ '42501','an ordinary host must cancel rather than erase a trusted customer request');
+SELECT set_config('paige.operator_retirement_claim','e0969000-0000-4000-8000-000000000099',true);
+SELECT is(pg_temp.as_user('e0961000-0000-4000-8000-000000000001',format($q$
+ WITH removed AS (DELETE FROM public.internal_bookings WHERE id=%L::uuid RETURNING id)
+ SELECT to_jsonb(count(*)) FROM removed$q$,(SELECT r#>>'{booking,id}' FROM private_booking_saved)))->>'sqlstate',
+ '42501','an arbitrary retirement flag does not authorize deletion of the native request');
+SELECT set_config('paige.operator_retirement_claim','',true);
+SELECT is(pg_temp.as_user('e0961000-0000-4000-8000-000000000001',
+ $q$SELECT to_jsonb(public.operator_can_permanently_delete_accounts())$q$),'false'::jsonb,
+ 'SOLO business ownership never becomes permanent-account deletion authority');
+INSERT INTO auth.users(id,aud,role,email,email_confirmed_at) VALUES
+ ('e0961000-0000-4000-8000-000000000008','authenticated','authenticated','test-operator-e09-retirement@tests.invalid',now());
+INSERT INTO public.user_roles(user_id,role) VALUES('e0961000-0000-4000-8000-000000000008','platform_admin');
+SELECT is(pg_temp.as_user('e0961000-0000-4000-8000-000000000008',
+ $q$SELECT to_jsonb(public.operator_can_permanently_delete_accounts())$q$),'true'::jsonb,
+ 'the original protected registry resolves this synthetic Platform Operator permission');
+-- The earlier negative deliberately contains a mis-tenanted booking pointing
+-- into business A. Remove only that synthetic anomaly after all original tests;
+-- real cross-account dependencies must continue to block permanent deletion.
+DELETE FROM public.internal_bookings WHERE id='e0965000-0000-4000-8000-000000000022';
+-- Keep this compatibility case about the Portal booking seal, rather than
+-- silently changing the ORIGINAL Operator's generic CTID cleanup contract.
+-- Its existing contact-method DELETE trigger rewrites the owning clients row;
+-- a plan captured before that rewrite holds a stale clients CTID. The prior
+-- full-schema run actually refused/rolled back with55000 at this unrelated
+-- legacy boundary. Finish ONLY this rollback fixture's contact-method cleanup
+-- BEFORE the original preflight; retain its trusted appointment and actor.
+-- This is not a production workaround or proof of general account retirement.
+CREATE TEMP TABLE private_booking_contact_before_cleanup AS
+ SELECT ctid::text AS tuple_id FROM public.clients
+ WHERE id='e0963000-0000-4000-8000-000000000001';
+DELETE FROM public.client_contact_methods
+ WHERE tenant_id='e0962000-0000-4000-8000-000000000001'
+ AND client_id='e0963000-0000-4000-8000-000000000001';
+SELECT isnt((SELECT ctid::text FROM public.clients WHERE id='e0963000-0000-4000-8000-000000000001'),
+ (SELECT tuple_id FROM private_booking_contact_before_cleanup),
+ 'the original contact-method cleanup rewrites the synthetic contact before retirement preflight');
+CREATE TEMP TABLE private_booking_other_business AS SELECT to_jsonb(t) r FROM public.tenants t
+ WHERE id='e0962000-0000-4000-8000-000000000002';
+CREATE TEMP TABLE private_booking_archive_preview AS SELECT pg_temp.as_user(
+ 'e0961000-0000-4000-8000-000000000008',$q$SELECT public.operator_preview_account_archive(
+ 'e0962000-0000-4000-8000-000000000001')$q$) r;
+CREATE TEMP TABLE private_booking_archived AS SELECT pg_temp.as_user('e0961000-0000-4000-8000-000000000008',format($q$
+ SELECT public.operator_archive_account('e0962000-0000-4000-8000-000000000001',%L,'Northwind Studio',
+ 'e0969000-0000-4000-8000-000000000001')$q$,(SELECT r->>'version' FROM private_booking_archive_preview))) r;
+SELECT diag('synthetic canonical archive response: '||r::text) FROM private_booking_archived WHERE r->>'state' IS DISTINCT FROM 'archived';
+SELECT is((SELECT r->>'state' FROM private_booking_archived),'archived',
+ 'the existing authorized archive process retains the marked appointment before permanent cleanup');
+CREATE TEMP TABLE private_booking_delete_preview AS SELECT pg_temp.as_user('e0961000-0000-4000-8000-000000000008',
+ $q$SELECT public.operator_preview_account_deletion('e0962000-0000-4000-8000-000000000001')$q$) r;
+CREATE TEMP TABLE private_booking_deleted AS SELECT pg_temp.as_user('e0961000-0000-4000-8000-000000000008',format($q$
+ SELECT public.operator_delete_archived_account('e0962000-0000-4000-8000-000000000001',%L,'Northwind Studio',
+ 'e0969000-0000-4000-8000-000000000001')$q$,(SELECT r->>'version' FROM private_booking_delete_preview))) r;
+SELECT diag('synthetic canonical deletion response: '||r::text) FROM private_booking_deleted WHERE r->>'state' IS DISTINCT FROM 'deleted';
+SELECT is((SELECT r->>'state' FROM private_booking_deleted),'deleted',
+ 'only the original authorized permanent-account process can remove the scoped marked appointment');
+SELECT is((SELECT count(*) FROM public.internal_bookings WHERE id=(SELECT (r#>>'{booking,id}')::uuid FROM private_booking_saved)),
+ 0::bigint,'the original permanent cleanup removes its native appointment without a parallel deletion writer');
+SELECT is((SELECT to_jsonb(t) FROM public.tenants t WHERE id='e0962000-0000-4000-8000-000000000002'),
+ (SELECT r FROM private_booking_other_business),'the canonical cleanup preserves the other business exactly');
 
 SELECT * FROM finish();
 ROLLBACK;

@@ -65,7 +65,7 @@ beforeEach(() => { setScopedUserId(null); harness.tenant = "test-tenant-a"; harn
   harness.planningOverrides={};release.standalone=false;harness.deliveryGuard=false;
   harness.planningLoading=false;harness.crmLoading=false;harness.crmHasMore=false;harness.peoplePartial=false;harness.crmEditorReady=false;harness.crmEditorDelayCleanup=false;
   sessionStorage.clear();harness.crmTasks=[];harness.crmError=null;harness.planningError=null;harness.members=[];harness.guard=null;
-  weekly.read.mockResolvedValue({kind:"unavailable"});weekly.refresh.mockResolvedValue(undefined);
+  weekly.read.mockReset().mockResolvedValue({kind:"unavailable"});weekly.refresh.mockResolvedValue(undefined);
   harness.foreign = false; container = document.createElement("div"); document.body.append(container); root = createRoot(container); });
 afterEach(() => { act(() => root.unmount()); setScopedUserId(null); container.remove(); });
 it.each([["2099-01-02T13:15:00+03:00",new Date("2099-01-02T13:15:00+03:00").toLocaleString()],
@@ -453,6 +453,30 @@ const linkedSearch = `?weeklySource=planning_item&item=${linkedId}`;
 const linkedItem = () => ({ id: linkedId, tenant_id: harness.tenant, plan_id: null, item_type: "task", title: "Canonical linked Planning work",
   summary: "Source record", status: "open", priority: "normal", due_at: null, assigned_to_user_id: harness.user, created_by: harness.user,
   updated_at: "2026-10-10T12:00:00.123456Z" });
+it("opens the original Planning reference without claiming weekly-check provenance or reading CRM", async () => {
+  weekly.read.mockResolvedValue({ kind: "verified", item: linkedItem() });
+  await act(async () => root.render(<OperationsWorkspace view="work" weeklySourceSearch={`?planningItem=${linkedId}`} weeklySourceKey="original-planning" />));
+  const dialog = document.querySelector('[role="dialog"]');
+  expect(dialog).not.toBeNull();
+  expect(dialog?.textContent).toContain("Canonical linked Planning work");
+  expect(dialog?.textContent).not.toMatch(/weekly check|completing a check/i);
+  expect(weekly.read).toHaveBeenCalledWith({ actorId: harness.user, tenantId: harness.tenant, itemId: linkedId }, expect.any(Function));
+  expect(weekly.taskRead).not.toHaveBeenCalled();
+});
+it("withholds delayed original Planning details after the caller changes and keeps mixed links inert", async () => {
+  let resolve: (value: unknown) => void = () => {};
+  const oldItem = linkedItem(); weekly.read.mockImplementationOnce(() => new Promise(done => { resolve = done; }));
+  const search = `?planningItem=${linkedId}`;
+  await act(async () => root.render(<OperationsWorkspace view="work" weeklySourceSearch={search} />));
+  expect(weekly.read).toHaveBeenCalledOnce();
+  harness.tenant = "test-tenant-b";
+  await act(async () => root.render(<OperationsWorkspace view="work" weeklySourceSearch={search} />));
+  await act(async () => resolve({ kind: "verified", item: oldItem }));
+  expect(document.querySelector('[role="dialog"]')?.textContent).not.toContain(oldItem.title);
+  const reads = weekly.read.mock.calls.length;
+  await act(async () => root.render(<OperationsWorkspace view="work" weeklySourceSearch={`${search}&task=${linkedId}`} />));
+  expect(weekly.read).toHaveBeenCalledTimes(reads); expect(weekly.taskRead).not.toHaveBeenCalled();
+});
 it("opens the point-read Planning record outside the loaded bundle and refreshes that exact record", async () => {
   weekly.read.mockResolvedValue({ kind: "verified", item: linkedItem() });
   await act(async () => root.render(<OperationsWorkspace view="work" weeklySourceSearch={linkedSearch} weeklySourceKey="link-one" />));

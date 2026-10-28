@@ -722,7 +722,10 @@ async function dispatchJob(
   /// stops the job — the uncovered cost is attributed to the tenant at settle
   /// through platform_usage_events and reaches collection from there. ──
   const creditsNeeded = estimateCredits(Number(job.estimated_cost_usd) || 0, config.creditUsd);
-  const hold = await holdMediaCredits((n: string, a: Record<string, unknown>) => admin.rpc(n, a), String(job.tenant_id), jobId, creditsNeeded, Number(job.estimated_cost_usd) || undefined);
+  // One shared RPC adapter, typed to the ledger's own client shape (hoisted so every hold call
+  // site below shares it instead of each minting its own inline double).
+  const creditRpc = (n: string, a: Record<string, unknown>) => admin.rpc(n, a);
+  const hold = await holdMediaCredits(creditRpc, String(job.tenant_id), jobId, creditsNeeded, Number(job.estimated_cost_usd) || undefined);
   if (!hold.ok) {
     // Partial-prepaid remainder (correction a42e0598): apply any positive remaining balance as
     // a best-effort PARTIAL hold so already-paid value is used first; the settle meter covers
@@ -730,7 +733,7 @@ async function dispatchJob(
     const remainder = Number.isFinite(hold.balance) ? Math.floor(hold.balance as number) : 0;
     let partialOk = false;
     if (remainder > 0) {
-      const partial = await holdMediaCredits((n: string, a: Record<string, unknown>) => admin.rpc(n, a), String(job.tenant_id), jobId, remainder, undefined);
+      const partial = await holdMediaCredits(creditRpc, String(job.tenant_id), jobId, remainder);
       partialOk = partial.ok;
     }
     const holdNote = partialOk

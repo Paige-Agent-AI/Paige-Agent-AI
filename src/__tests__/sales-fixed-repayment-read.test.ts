@@ -2,7 +2,7 @@ import {describe,it,expect,vi} from 'vitest';
 import {dispatchSalesCollectionsChat} from '../../supabase/functions/_shared/sales-collections-chat';
 import {assembleFixedRepaymentSchedule} from '../../supabase/functions/_shared/sales-collections/model';
 const tenant='20000000-0000-0000-0000-000000000001',agreement='40000000-0000-0000-0000-000000000001',client='30000000-0000-0000-0000-000000000001',offer='50000000-0000-0000-0000-000000000001',receipt='90000000-0000-0000-0000-000000000001';
-const row=()=>({id:agreement,tenant_id:tenant,client_id:client,offer_id:offer,title:'Synthetic terms',title_truncated:false,client_name:'Synthetic client',client_name_truncated:false,status:'draft',agreed_amount_minor:350000,agreed_currency:'usd',collection_terms:null,collection_terms_version:0,terms_current:false});
+const row=()=>({id:agreement,tenant_id:tenant,client_id:client,offer_id:offer,title:'Synthetic terms',title_truncated:false,client_name:'Synthetic client',client_name_truncated:false,status:'draft',term_kind:'one_time',agreed_amount_basis:'total',agreed_amount_minor:350000,agreed_currency:'usd',collection_terms:null,collection_terms_version:0,terms_current:false});
 const intent={agreement_id:agreement,deposit_cents:50000,deposit_date:'2026-10-15',installment_cents:30000,first_installment_date:'2026-11-01',cadence:'monthly'};
 function harness(source:unknown[]= [row()]){const rpc=vi.fn().mockResolvedValue({data:{tenant_id:tenant,receipt_id:receipt,rows:source,has_more:false,next_cursor:null},error:null}),invoke=vi.fn(),from=vi.fn();return {rpc,invoke,from,deps:{caller:{rpc,functions:{invoke}},admin:{from}}};}
 const read=(args:Record<string,unknown>,h= harness())=>dispatchSalesCollectionsChat({tenantId:tenant,userId:'test-actor',toolName:'read_sales_collections',args,approved:new Set(),sameToolCalls:1,turn:{thread_id:null,user_turn_ordinal:1,user_turn:'Preview repayment'}},h.deps as never);
@@ -33,6 +33,20 @@ describe('canonical fixed repayment read through existing Collections',()=>{
  });
  it('does not use principal preview on invoice or receipt reads',async()=>{
   const h=harness();expect((await read({entity:'invoice',fixed_repayment:intent},h)).content.success).toBe(false);expect(h.rpc).not.toHaveBeenCalled();
+ });
+ it.each([
+  {term_kind:'recurring',agreed_amount_basis:'per_cycle'},
+  {term_kind:'installment',agreed_amount_basis:'per_installment'},
+ ])('keeps canonical per-period amounts out of a fixed preview %j',async semantics=>{
+  const h=harness([{...row(),...semantics}]);
+  expect((await read({entity:'agreement',fixed_repayment:intent},h)).content).toMatchObject({success:true,repayment_preview:{state:'refused',code:'FIXED_TOTAL_REQUIRED'}});
+  expect(h.rpc).toHaveBeenCalledOnce();expect(h.invoke).not.toHaveBeenCalled();expect(h.from).not.toHaveBeenCalled();
+ });
+ it('asks for verified original semantics on an older reader and never accepts them from the request',async()=>{
+  const source={...row(),term_kind:undefined,agreed_amount_basis:undefined},h=harness([source]);
+  expect((await read({entity:'agreement',fixed_repayment:intent},h)).content).toMatchObject({success:true,repayment_preview:{state:'needs_input',fields:['verified_fixed_total_basis']}});
+  const injected=harness([source]);expect((await read({entity:'agreement',fixed_repayment:{...intent,agreed_amount_basis:'total'}},injected)).content.success).toBe(false);
+  expect(injected.rpc).not.toHaveBeenCalled();
  });
  it('preserves stale terms and rejects a competing recorded schedule',async()=>{
   const assembled=assembleFixedRepaymentSchedule({total_cents:350000,currency:'usd',...Object.fromEntries(Object.entries(intent).filter(([key])=>key!=='agreement_id'))});

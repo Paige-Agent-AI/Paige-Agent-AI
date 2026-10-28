@@ -140,6 +140,43 @@ describe("original internal-task history inspection", () => {
     title: "Review the new contact", originalTask: verified ? { state: "verified", taskId,
       receiptId: "00000000-0000-4000-8000-000000000114", runId: "00000000-0000-4000-8000-000000000115" } : { state: "unconfirmed" }, currentTask: { state: "not_read" } });
 
+  it("discloses only the exact verified creation references without a new read or control", () => {
+    const result = original(true); m.state.history = readyHistory(result); view();
+    const summary = screen.getByText("Original task evidence"), details = summary.parentElement as HTMLDetailsElement;
+    expect(details.tagName).toBe("DETAILS"); expect(details.open).toBe(false);
+    expect([...details.querySelectorAll("dt")].map(e => e.textContent)).toEqual(["Task", "Creation receipt", "Execution", "Approval", "Process", "Attempt"]);
+    expect([...details.querySelectorAll("dd")].map(e => e.textContent)).toEqual([taskId, result.originalTask.receiptId, result.originalTask.runId,
+      locator.approvalId, row.id, locator.occurrenceId]);
+    expect(details.querySelectorAll("a,button,input")).toHaveLength(0);
+    expect(m.control).not.toHaveBeenCalled(); expect(m.refresh).not.toHaveBeenCalled();
+    expect(m.openHistory).not.toHaveBeenCalled(); expect(m.inspectOutcome).not.toHaveBeenCalled();
+  });
+  it("keeps an uncertain recorded outcome distinct from verified original task creation", () => {
+    m.state.history = readyHistory({ ...original(true), recordedOutcome: "ambiguous" }); view();
+    expect(document.querySelector(".sa-owner-task-result p")!.textContent).toContain("Outcome uncertain");
+    expect(screen.getByText("Original task evidence")).toBeTruthy();
+    expect(screen.getByText(/Open the task to read its current state/)).toBeTruthy();
+    expect(document.querySelector(".sa-owner-task-result")!.textContent).not.toMatch(/task completed|retry|rerun/i);
+    expect(m.control).not.toHaveBeenCalled();
+  });
+  it.each(["loading", "refused", "unavailable", "unconfirmed"])("withdraws original references when the current result becomes %s", status => {
+    m.state.history = readyHistory(original(true)); const h = view(); expect(screen.getByText("Original task evidence")).toBeTruthy();
+    m.state.history = readyHistory(status === "unconfirmed" ? original() : { status });
+    h.rerender(<MemoryRouter initialEntries={["/solo/123/settings/integrations"]}><OwnerTaskAutomations /></MemoryRouter>);
+    expect(screen.queryByText("Original task evidence")).toBeNull(); expect(document.body.textContent).not.toContain(taskId);
+    expect(document.body.textContent).not.toContain("00000000-0000-4000-8000-000000000114");
+    expect(m.control).not.toHaveBeenCalled(); expect(m.inspectOutcome).not.toHaveBeenCalled();
+  });
+  it.each(["busy", "needsRefresh", "closed", "different-process"])("withholds original references after the current history becomes %s", state => {
+    m.state.history = readyHistory(original(true)); const h = view();
+    const details = screen.getByText("Original task evidence").parentElement as HTMLDetailsElement; details.open = true;
+    if (state === "busy" || state === "needsRefresh") m.state[state] = true;
+    else m.state.history = state === "closed" ? { status: "closed" } : { ...readyHistory(original(true)), processId: "another-process" };
+    h.rerender(<MemoryRouter initialEntries={["/solo/123/settings/integrations"]}><OwnerTaskAutomations /></MemoryRouter>);
+    expect(screen.queryByText("Original task evidence")).toBeNull(); expect(document.body.textContent).not.toContain(taskId);
+    expect(m.control).not.toHaveBeenCalled(); expect(m.inspectOutcome).not.toHaveBeenCalled();
+  });
+
   it("requests history for the exact current process without a control, refresh or replay", () => {
     view(); fireEvent.click(screen.getByRole("button", { name: "View history", exact: true }));
     expect(m.openHistory).toHaveBeenCalledExactlyOnceWith(row);

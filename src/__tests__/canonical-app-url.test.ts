@@ -10,6 +10,19 @@ import { SOLO_BRANCHES } from "@/lib/routing/tierBranches";
 import { SOLO_SETUP_TABS } from "@/solo/settings-business-context-contract";
 
 describe("canonical externally emitted app destinations", () => {
+  it("addresses original Planning work separately from CRM without creating another destination", () => {
+    const input = { actor: "account", tier: "solo", account: "123", destination: "operations_work" } as const;
+    const id = "e5000000-0000-4000-8000-000000000001";
+    expect(resolveCanonicalRecordLink({ ...input, recordId: id, recordKind: "planning_item" })).toEqual({
+      path: `/solo/123/operations/work?planningItem=${id}`, status: "exact",
+    });
+    expect(resolveCanonicalRecordLink({ ...input, recordId: id })).toEqual({ path: `/solo/123/operations/work?task=${id}`, status: "exact" });
+    expect(resolveCanonicalRecordLink({ ...input, recordId: id, recordKind: "unknown" } as never)).toBeNull();
+    expect(resolveCanonicalRecordLink({ ...input, destination: "contacts", recordId: id, recordKind: "planning_item" })).toBeNull();
+    for (const tier of ["sub_account", "agency", "enterprise", "operator"] as const) {
+      expect(resolveCanonicalRecordLink({ ...input, tier, recordId: id, recordKind: "planning_item" })).toBeNull();
+    }
+  });
   it("focuses only a valid Systems Check UUID on its existing SOLO destination", () => {
     const input = { actor: "account", tier: "solo", account: "1971670", destination: "systems_check" } as const;
     const id = "e2000000-0000-4000-8000-000000000001";
@@ -155,11 +168,12 @@ describe("resolveCanonicalRecordLink", () => {
     ["operations_work", "/solo/1971670/operations/work"],
     ["business_time_zone", "/solo/1971670/settings/setup/business-profile#business-time-zone"],
     ["conversations", "/solo/1971670/clients/conversations"],
-  ] as const)("maps %s to its Solo surface, surface-only", (destination, path) => {
+  ] as const)("maps %s to its mounted Solo surface with only supported focus", (destination, path) => {
     expect(resolveCanonicalRecordLink({ ...solo, destination })).toEqual({ path, status: "surface_only" });
-    // Only the mounted invoice and Task consumers support exact UUID focus.
+    // Only the mounted agreement, invoice and Task consumers support exact UUID focus.
     expect(resolveCanonicalRecordLink({ ...solo, destination, recordId: UUID })).toEqual(destination === 'sales_invoices'
       ? { path: `${path}&invoice=${UUID}`, status: "exact" }
+      : destination === 'sales_agreements' ? { path: `${path}?agreement=${UUID}`, status: "exact" }
       : destination === 'operations_work' ? { path: `${path}?task=${UUID}`, status: "exact" }
       : { path, status: "surface_only" });
   });

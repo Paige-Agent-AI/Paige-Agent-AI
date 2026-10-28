@@ -1,6 +1,10 @@
 import {expect,it} from "vitest";
 import {parseOperationsTaskFocus} from "./operations-task-focus";
 const id="33333333-3333-4333-8333-333333333333";
+it("never interprets a mixed Planning and CRM address as a CRM task", () => {
+  expect(parseOperationsTaskFocus(`?task=${id}&planningItem=${id}`)).toEqual({ kind: "invalid" });
+  expect(parseOperationsTaskFocus(`?planningItem=${id}`)).toBeNull();
+});
 it("accepts exactly one UUID address while preserving unrelated routing state",()=>{
  expect(parseOperationsTaskFocus(`?task=${id.toUpperCase()}&filter=active`)).toEqual({kind:"task",id});
  expect(parseOperationsTaskFocus("?filter=active")).toBeNull();

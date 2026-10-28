@@ -173,7 +173,7 @@ export type CanonicalRecordLink = { path: string; status: "exact" | "surface_onl
 /** The focus parameters the mounted surfaces already read (UUIDs only). */
 const RECORD_FOCUS: Record<MountedTier, Partial<Record<CanonicalDestination, string>>> = {
   operator: {},
-  solo: { contacts: "person", pipeline: "deal", sales_invoices: "invoice", tasks: "task", operations_work: "task", business_game_plan: "play", portal_knowledge: "source", systems_check: "finding" },
+  solo: { contacts: "person", pipeline: "deal", sales_agreements: "agreement", sales_invoices: "invoice", tasks: "task", operations_work: "task", business_game_plan: "play", portal_knowledge: "source", systems_check: "finding" },
   sub_account: {},
   agency: {},
 };
@@ -190,12 +190,14 @@ export function withQuery(path: string, key: string, value: string): string {
 }
 
 export function resolveCanonicalRecordLink(
-  input: CanonicalAppRouteInput & { recordId?: string | null },
+  input: CanonicalAppRouteInput & { recordId?: string | null; recordKind?: "planning_item" },
 ): CanonicalRecordLink | null {
+  // A Planning UUID must never be reinterpreted as an identically named CRM task.
+  if (input.recordKind !== undefined && (input.recordKind !== "planning_item" || input.destination !== "operations_work")) return null;
   const path = resolveCanonicalAppPath(input);
   if (!path) return null;
   const tier = mountedTier(input.tier);
-  const focus = tier ? RECORD_FOCUS[tier][input.destination] : undefined;
+  const focus = input.recordKind === "planning_item" ? "planningItem" : tier ? RECORD_FOCUS[tier][input.destination] : undefined;
   const id = typeof input.recordId === "string" ? input.recordId.trim() : "";
   if (focus && RECORD_UUID.test(id)) return { path: withQuery(path, focus, id), status: "exact" };
   return { path, status: "surface_only" };

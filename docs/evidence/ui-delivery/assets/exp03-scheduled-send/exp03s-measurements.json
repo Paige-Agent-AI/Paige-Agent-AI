@@ -37,7 +37,7 @@
         "kind": "rail-scheduled",
         "disabled": false,
         "incidental": false,
-        "text": "Scheduled · in about 19 hours",
+        "text": "Scheduled · in about 12 hours",
         "ratio": 5.47,
         "color": "rgb(103, 97, 107)",
         "bg": "rgb(247, 244, 238)",
@@ -59,7 +59,7 @@
         "kind": "sends-time",
         "disabled": false,
         "incidental": false,
-        "text": "Sends Wed, Oct 28, 9:00 AM",
+        "text": "Sends Wed, Oct 28, 9:00 AM CDT",
         "ratio": 4.93,
         "color": "rgb(103, 97, 107)",
         "bg": "rgb(236,232,230)",
@@ -197,13 +197,13 @@
       "Send"
     ],
     "sends": {
-      "text": "Sends Wed, Oct 28, 9:00 AM",
+      "text": "Sends Wed, Oct 28, 9:00 AM CDT",
       "size": "11px",
       "lines": 1
     },
     "cancel": {
       "text": "Cancel",
-      "ariaLabel": "Cancel the email scheduled for Wed, Oct 28, 9:00 AM",
+      "ariaLabel": "Cancel the email scheduled for Wed, Oct 28, 9:00 AM CDT",
       "disabled": false,
       "ariaBusy": null,
       "opacity": "1",
@@ -264,7 +264,7 @@
         "kind": "rail-scheduled",
         "disabled": false,
         "incidental": false,
-        "text": "Scheduled · in about 19 hours",
+        "text": "Scheduled · in about 12 hours",
         "ratio": 7.7,
         "color": "rgb(173, 167, 159)",
         "bg": "rgb(22, 19, 27)",
@@ -286,7 +286,7 @@
         "kind": "sends-time",
         "disabled": false,
         "incidental": false,
-        "text": "Sends Wed, Oct 28, 9:00 AM",
+        "text": "Sends Wed, Oct 28, 9:00 AM CDT",
         "ratio": 6.95,
         "color": "rgb(173, 167, 159)",
         "bg": "rgb(32,29,40)",
@@ -369,13 +369,13 @@
       "Send"
     ],
     "sends": {
-      "text": "Sends Wed, Oct 28, 9:00 AM",
+      "text": "Sends Wed, Oct 28, 9:00 AM CDT",
       "size": "11px",
       "lines": 1
     },
     "cancel": {
       "text": "Cancel",
-      "ariaLabel": "Cancel the email scheduled for Wed, Oct 28, 9:00 AM",
+      "ariaLabel": "Cancel the email scheduled for Wed, Oct 28, 9:00 AM CDT",
       "disabled": false,
       "ariaBusy": null,
       "opacity": "1",
@@ -436,7 +436,7 @@
         "kind": "rail-scheduled",
         "disabled": false,
         "incidental": false,
-        "text": "Scheduled · in about 19 hours",
+        "text": "Scheduled · in about 12 hours",
         "ratio": 5.47,
         "color": "rgb(103, 97, 107)",
         "bg": "rgb(247, 244, 238)",
@@ -458,7 +458,7 @@
         "kind": "sends-time",
         "disabled": false,
         "incidental": false,
-        "text": "Sends Wed, Oct 28, 9:00 AM",
+        "text": "Sends Wed, Oct 28, 9:00 AM CDT",
         "ratio": 4.93,
         "color": "rgb(103, 97, 107)",
         "bg": "rgb(236,232,230)",
@@ -596,13 +596,13 @@
       "Send"
     ],
     "sends": {
-      "text": "Sends Wed, Oct 28, 9:00 AM",
+      "text": "Sends Wed, Oct 28, 9:00 AM CDT",
       "size": "11px",
       "lines": 1
     },
     "cancel": {
       "text": "Cancel",
-      "ariaLabel": "Cancel the email scheduled for Wed, Oct 28, 9:00 AM",
+      "ariaLabel": "Cancel the email scheduled for Wed, Oct 28, 9:00 AM CDT",
       "disabled": false,
       "ariaBusy": null,
       "opacity": "1",
@@ -663,7 +663,7 @@
         "kind": "rail-scheduled",
         "disabled": false,
         "incidental": false,
-        "text": "Scheduled · in about 19 hours",
+        "text": "Scheduled · in about 12 hours",
         "ratio": 7.7,
         "color": "rgb(173, 167, 159)",
         "bg": "rgb(22, 19, 27)",
@@ -685,7 +685,7 @@
         "kind": "sends-time",
         "disabled": false,
         "incidental": false,
-        "text": "Sends Wed, Oct 28, 9:00 AM",
+        "text": "Sends Wed, Oct 28, 9:00 AM CDT",
         "ratio": 6.95,
         "color": "rgb(173, 167, 159)",
         "bg": "rgb(32,29,40)",
@@ -768,13 +768,13 @@
       "Send"
     ],
     "sends": {
-      "text": "Sends Wed, Oct 28, 9:00 AM",
+      "text": "Sends Wed, Oct 28, 9:00 AM CDT",
       "size": "11px",
       "lines": 1
     },
     "cancel": {
       "text": "Cancel",
-      "ariaLabel": "Cancel the email scheduled for Wed, Oct 28, 9:00 AM",
+      "ariaLabel": "Cancel the email scheduled for Wed, Oct 28, 9:00 AM CDT",
       "disabled": false,
       "ariaBusy": null,
       "opacity": "1",
@@ -835,7 +835,7 @@
         "kind": "rail-scheduled",
         "disabled": false,
         "incidental": false,
-        "text": "Scheduled · in about 19 hours",
+        "text": "Scheduled · in about 12 hours",
         "ratio": 5.47,
         "color": "rgb(103, 97, 107)",
         "bg": "rgb(247, 244, 238)",
@@ -857,7 +857,7 @@
         "kind": "sends-time",
         "disabled": false,
         "incidental": false,
-        "text": "Sends Wed, Oct 28, 9:00 AM",
+        "text": "Sends Wed, Oct 28, 9:00 AM CDT",
         "ratio": 4.93,
         "color": "rgb(103, 97, 107)",
         "bg": "rgb(236,232,230)",
@@ -995,13 +995,13 @@
       "Send"
     ],
     "sends": {
-      "text": "Sends Wed, Oct 28, 9:00 AM",
+      "text": "Sends Wed, Oct 28, 9:00 AM CDT",
       "size": "11px",
       "lines": 1
     },
     "cancel": {
       "text": "Cancel",
-      "ariaLabel": "Cancel the email scheduled for Wed, Oct 28, 9:00 AM",
+      "ariaLabel": "Cancel the email scheduled for Wed, Oct 28, 9:00 AM CDT",
       "disabled": false,
       "ariaBusy": null,
       "opacity": "1",
@@ -1062,7 +1062,7 @@
         "kind": "rail-scheduled",
         "disabled": false,
         "incidental": false,
-        "text": "Scheduled · in about 19 hours",
+        "text": "Scheduled · in about 12 hours",
         "ratio": 7.7,
         "color": "rgb(173, 167, 159)",
         "bg": "rgb(22, 19, 27)",
@@ -1084,7 +1084,7 @@
         "kind": "sends-time",
         "disabled": false,
         "incidental": false,
-        "text": "Sends Wed, Oct 28, 9:00 AM",
+        "text": "Sends Wed, Oct 28, 9:00 AM CDT",
         "ratio": 6.95,
         "color": "rgb(173, 167, 159)",
         "bg": "rgb(32,29,40)",
@@ -1167,13 +1167,13 @@
       "Send"
     ],
     "sends": {
-      "text": "Sends Wed, Oct 28, 9:00 AM",
+      "text": "Sends Wed, Oct 28, 9:00 AM CDT",
       "size": "11px",
       "lines": 1
     },
     "cancel": {
       "text": "Cancel",
-      "ariaLabel": "Cancel the email scheduled for Wed, Oct 28, 9:00 AM",
+      "ariaLabel": "Cancel the email scheduled for Wed, Oct 28, 9:00 AM CDT",
       "disabled": false,
       "ariaBusy": null,
       "opacity": "1",
@@ -1234,7 +1234,7 @@
         "kind": "rail-scheduled",
         "disabled": false,
         "incidental": false,
-        "text": "Scheduled · in about 19 hours",
+        "text": "Scheduled · in about 12 hours",
         "ratio": 5.47,
         "color": "rgb(103, 97, 107)",
         "bg": "rgb(247, 244, 238)",
@@ -1256,7 +1256,7 @@
         "kind": "sends-time",
         "disabled": false,
         "incidental": false,
-        "text": "Sends Wed, Oct 28, 9:00 AM",
+        "text": "Sends Wed, Oct 28, 9:00 AM CDT",
         "ratio": 4.93,
         "color": "rgb(103, 97, 107)",
         "bg": "rgb(236,232,230)",
@@ -1394,13 +1394,13 @@
       "Send"
     ],
     "sends": {
-      "text": "Sends Wed, Oct 28, 9:00 AM",
+      "text": "Sends Wed, Oct 28, 9:00 AM CDT",
       "size": "11px",
       "lines": 1
     },
     "cancel": {
       "text": "Cancel",
-      "ariaLabel": "Cancel the email scheduled for Wed, Oct 28, 9:00 AM",
+      "ariaLabel": "Cancel the email scheduled for Wed, Oct 28, 9:00 AM CDT",
       "disabled": false,
       "ariaBusy": null,
       "opacity": "1",
@@ -1461,7 +1461,7 @@
         "kind": "rail-scheduled",
         "disabled": false,
         "incidental": false,
-        "text": "Scheduled · in about 19 hours",
+        "text": "Scheduled · in about 12 hours",
         "ratio": 7.7,
         "color": "rgb(173, 167, 159)",
         "bg": "rgb(22, 19, 27)",
@@ -1483,7 +1483,7 @@
         "kind": "sends-time",
         "disabled": false,
         "incidental": false,
-        "text": "Sends Wed, Oct 28, 9:00 AM",
+        "text": "Sends Wed, Oct 28, 9:00 AM CDT",
         "ratio": 6.95,
         "color": "rgb(173, 167, 159)",
         "bg": "rgb(32,29,40)",
@@ -1566,13 +1566,13 @@
       "Send"
     ],
     "sends": {
-      "text": "Sends Wed, Oct 28, 9:00 AM",
+      "text": "Sends Wed, Oct 28, 9:00 AM CDT",
       "size": "11px",
       "lines": 1
     },
     "cancel": {
       "text": "Cancel",
-      "ariaLabel": "Cancel the email scheduled for Wed, Oct 28, 9:00 AM",
+      "ariaLabel": "Cancel the email scheduled for Wed, Oct 28, 9:00 AM CDT",
       "disabled": false,
       "ariaBusy": null,
       "opacity": "1",
@@ -1633,7 +1633,7 @@
         "kind": "rail-scheduled",
         "disabled": false,
         "incidental": false,
-        "text": "Scheduled · in about 19 hours",
+        "text": "Scheduled · in about 12 hours",
         "ratio": 5.47,
         "color": "rgb(103, 97, 107)",
         "bg": "rgb(247, 244, 238)",
@@ -1655,7 +1655,7 @@
         "kind": "sends-time",
         "disabled": false,
         "incidental": false,
-        "text": "Sends Wed, Oct 28, 9:00 AM",
+        "text": "Sends Wed, Oct 28, 9:00 AM CDT",
         "ratio": 4.93,
         "color": "rgb(103, 97, 107)",
         "bg": "rgb(236,232,230)",
@@ -1793,13 +1793,13 @@
       "Send"
     ],
     "sends": {
-      "text": "Sends Wed, Oct 28, 9:00 AM",
+      "text": "Sends Wed, Oct 28, 9:00 AM CDT",
       "size": "11px",
       "lines": 1
     },
     "cancel": {
       "text": "Cancel",
-      "ariaLabel": "Cancel the email scheduled for Wed, Oct 28, 9:00 AM",
+      "ariaLabel": "Cancel the email scheduled for Wed, Oct 28, 9:00 AM CDT",
       "disabled": false,
       "ariaBusy": null,
       "opacity": "1",
@@ -1860,7 +1860,7 @@
         "kind": "rail-scheduled",
         "disabled": false,
         "incidental": false,
-        "text": "Scheduled · in about 19 hours",
+        "text": "Scheduled · in about 12 hours",
         "ratio": 7.7,
         "color": "rgb(173, 167, 159)",
         "bg": "rgb(22, 19, 27)",
@@ -1882,7 +1882,7 @@
         "kind": "sends-time",
         "disabled": false,
         "incidental": false,
-        "text": "Sends Wed, Oct 28, 9:00 AM",
+        "text": "Sends Wed, Oct 28, 9:00 AM CDT",
         "ratio": 6.95,
         "color": "rgb(173, 167, 159)",
         "bg": "rgb(32,29,40)",
@@ -1965,13 +1965,13 @@
       "Send"
     ],
     "sends": {
-      "text": "Sends Wed, Oct 28, 9:00 AM",
+      "text": "Sends Wed, Oct 28, 9:00 AM CDT",
       "size": "11px",
       "lines": 1
     },
     "cancel": {
       "text": "Cancel",
-      "ariaLabel": "Cancel the email scheduled for Wed, Oct 28, 9:00 AM",
+      "ariaLabel": "Cancel the email scheduled for Wed, Oct 28, 9:00 AM CDT",
       "disabled": false,
       "ariaBusy": null,
       "opacity": "1",
@@ -2032,7 +2032,7 @@
         "kind": "rail-scheduled",
         "disabled": false,
         "incidental": false,
-        "text": "Scheduled · in about 19 hours",
+        "text": "Scheduled · in about 12 hours",
         "ratio": 5.47,
         "color": "rgb(103, 97, 107)",
         "bg": "rgb(247, 244, 238)",
@@ -2054,7 +2054,7 @@
         "kind": "sends-time",
         "disabled": false,
         "incidental": false,
-        "text": "Sends Wed, Oct 28, 9:00 AM",
+        "text": "Sends Wed, Oct 28, 9:00 AM CDT",
         "ratio": 4.93,
         "color": "rgb(103, 97, 107)",
         "bg": "rgb(236,232,230)",
@@ -2192,13 +2192,13 @@
       "Send"
     ],
     "sends": {
-      "text": "Sends Wed, Oct 28, 9:00 AM",
+      "text": "Sends Wed, Oct 28, 9:00 AM CDT",
       "size": "11px",
       "lines": 1
     },
     "cancel": {
       "text": "Cancel",
-      "ariaLabel": "Cancel the email scheduled for Wed, Oct 28, 9:00 AM",
+      "ariaLabel": "Cancel the email scheduled for Wed, Oct 28, 9:00 AM CDT",
       "disabled": false,
       "ariaBusy": null,
       "opacity": "1",
@@ -2259,7 +2259,7 @@
         "kind": "rail-scheduled",
         "disabled": false,
         "incidental": false,
-        "text": "Scheduled · in about 19 hours",
+        "text": "Scheduled · in about 12 hours",
         "ratio": 7.7,
         "color": "rgb(173, 167, 159)",
         "bg": "rgb(22, 19, 27)",
@@ -2281,7 +2281,7 @@
         "kind": "sends-time",
         "disabled": false,
         "incidental": false,
-        "text": "Sends Wed, Oct 28, 9:00 AM",
+        "text": "Sends Wed, Oct 28, 9:00 AM CDT",
         "ratio": 6.95,
         "color": "rgb(173, 167, 159)",
         "bg": "rgb(32,29,40)",
@@ -2364,13 +2364,13 @@
       "Send"
     ],
     "sends": {
-      "text": "Sends Wed, Oct 28, 9:00 AM",
+      "text": "Sends Wed, Oct 28, 9:00 AM CDT",
       "size": "11px",
       "lines": 1
     },
     "cancel": {
       "text": "Cancel",
-      "ariaLabel": "Cancel the email scheduled for Wed, Oct 28, 9:00 AM",
+      "ariaLabel": "Cancel the email scheduled for Wed, Oct 28, 9:00 AM CDT",
       "disabled": false,
       "ariaBusy": null,
       "opacity": "1",
@@ -2431,7 +2431,7 @@
         "kind": "rail-scheduled",
         "disabled": false,
         "incidental": false,
-        "text": "Scheduled · in about 19 hours",
+        "text": "Scheduled · in about 12 hours",
         "ratio": 5.47,
         "color": "rgb(103, 97, 107)",
         "bg": "rgb(247, 244, 238)",
@@ -2453,7 +2453,7 @@
         "kind": "sends-time",
         "disabled": false,
         "incidental": false,
-        "text": "Sends Wed, Oct 28, 9:00 AM",
+        "text": "Sends Wed, Oct 28, 9:00 AM CDT",
         "ratio": 4.93,
         "color": "rgb(103, 97, 107)",
         "bg": "rgb(236,232,230)",
@@ -2591,13 +2591,13 @@
       "Send"
     ],
     "sends": {
-      "text": "Sends Wed, Oct 28, 9:00 AM",
+      "text": "Sends Wed, Oct 28, 9:00 AM CDT",
       "size": "11px",
       "lines": 1
     },
     "cancel": {
       "text": "Cancel",
-      "ariaLabel": "Cancel the email scheduled for Wed, Oct 28, 9:00 AM",
+      "ariaLabel": "Cancel the email scheduled for Wed, Oct 28, 9:00 AM CDT",
       "disabled": false,
       "ariaBusy": null,
       "opacity": "1",
@@ -2658,7 +2658,7 @@
         "kind": "rail-scheduled",
         "disabled": false,
         "incidental": false,
-        "text": "Scheduled · in about 19 hours",
+        "text": "Scheduled · in about 12 hours",
         "ratio": 7.7,
         "color": "rgb(173, 167, 159)",
         "bg": "rgb(22, 19, 27)",
@@ -2680,7 +2680,7 @@
         "kind": "sends-time",
         "disabled": false,
         "incidental": false,
-        "text": "Sends Wed, Oct 28, 9:00 AM",
+        "text": "Sends Wed, Oct 28, 9:00 AM CDT",
         "ratio": 6.95,
         "color": "rgb(173, 167, 159)",
         "bg": "rgb(32,29,40)",
@@ -2763,13 +2763,13 @@
       "Send"
     ],
     "sends": {
-      "text": "Sends Wed, Oct 28, 9:00 AM",
+      "text": "Sends Wed, Oct 28, 9:00 AM CDT",
       "size": "11px",
       "lines": 1
     },
     "cancel": {
       "text": "Cancel",
-      "ariaLabel": "Cancel the email scheduled for Wed, Oct 28, 9:00 AM",
+      "ariaLabel": "Cancel the email scheduled for Wed, Oct 28, 9:00 AM CDT",
       "disabled": false,
       "ariaBusy": null,
       "opacity": "1",
@@ -2830,7 +2830,7 @@
         "kind": "rail-scheduled",
         "disabled": false,
         "incidental": false,
-        "text": "Scheduled · in about 19 hours",
+        "text": "Scheduled · in about 12 hours",
         "ratio": 5.47,
         "color": "rgb(103, 97, 107)",
         "bg": "rgb(247, 244, 238)",
@@ -2852,7 +2852,7 @@
         "kind": "sends-time",
         "disabled": false,
         "incidental": false,
-        "text": "Sends Wed, Oct 28, 9:00 AM",
+        "text": "Sends Wed, Oct 28, 9:00 AM CDT",
         "ratio": 4.93,
         "color": "rgb(103, 97, 107)",
         "bg": "rgb(236,232,230)",
@@ -2990,13 +2990,13 @@
       "Send"
     ],
     "sends": {
-      "text": "Sends Wed, Oct 28, 9:00 AM",
+      "text": "Sends Wed, Oct 28, 9:00 AM CDT",
       "size": "11px",
       "lines": 1
     },
     "cancel": {
       "text": "Cancel",
-      "ariaLabel": "Cancel the email scheduled for Wed, Oct 28, 9:00 AM",
+      "ariaLabel": "Cancel the email scheduled for Wed, Oct 28, 9:00 AM CDT",
       "disabled": false,
       "ariaBusy": null,
       "opacity": "1",
@@ -3057,7 +3057,7 @@
         "kind": "rail-scheduled",
         "disabled": false,
         "incidental": false,
-        "text": "Scheduled · in about 19 hours",
+        "text": "Scheduled · in about 12 hours",
         "ratio": 7.7,
         "color": "rgb(173, 167, 159)",
         "bg": "rgb(22, 19, 27)",
@@ -3079,7 +3079,7 @@
         "kind": "sends-time",
         "disabled": false,
         "incidental": false,
-        "text": "Sends Wed, Oct 28, 9:00 AM",
+        "text": "Sends Wed, Oct 28, 9:00 AM CDT",
         "ratio": 6.95,
         "color": "rgb(173, 167, 159)",
         "bg": "rgb(32,29,40)",
@@ -3162,13 +3162,13 @@
       "Send"
     ],
     "sends": {
-      "text": "Sends Wed, Oct 28, 9:00 AM",
+      "text": "Sends Wed, Oct 28, 9:00 AM CDT",
       "size": "11px",
       "lines": 1
     },
     "cancel": {
       "text": "Cancel",
-      "ariaLabel": "Cancel the email scheduled for Wed, Oct 28, 9:00 AM",
+      "ariaLabel": "Cancel the email scheduled for Wed, Oct 28, 9:00 AM CDT",
       "disabled": false,
       "ariaBusy": null,
       "opacity": "1",
@@ -4318,7 +4318,7 @@
         "kind": "rail-scheduled",
         "disabled": false,
         "incidental": false,
-        "text": "Scheduled · in about 19 hours",
+        "text": "Scheduled · in about 12 hours",
         "ratio": 5.47,
         "color": "rgb(103, 97, 107)",
         "bg": "rgb(247, 244, 238)",
@@ -4340,7 +4340,7 @@
         "kind": "sends-time",
         "disabled": false,
         "incidental": false,
-        "text": "Sends Wed, Oct 28, 9:00 AM",
+        "text": "Sends Wed, Oct 28, 9:00 AM CDT",
         "ratio": 4.93,
         "color": "rgb(103, 97, 107)",
         "bg": "rgb(236,232,230)",
@@ -4445,13 +4445,13 @@
       "Send"
     ],
     "sends": {
-      "text": "Sends Wed, Oct 28, 9:00 AM",
+      "text": "Sends Wed, Oct 28, 9:00 AM CDT",
       "size": "11px",
       "lines": 2
     },
     "cancel": {
       "text": "Cancel",
-      "ariaLabel": "Cancel the email scheduled for Wed, Oct 28, 9:00 AM",
+      "ariaLabel": "Cancel the email scheduled for Wed, Oct 28, 9:00 AM CDT",
       "disabled": false,
       "ariaBusy": null,
       "opacity": "1",
@@ -5029,7 +5029,7 @@
         "kind": "rail-scheduled",
         "disabled": false,
         "incidental": false,
-        "text": "Scheduled · in about 19 hours",
+        "text": "Scheduled · in about 12 hours",
         "ratio": 7.7,
         "color": "rgb(173, 167, 159)",
         "bg": "rgb(22, 19, 27)",
@@ -5051,7 +5051,7 @@
         "kind": "sends-time",
         "disabled": false,
         "incidental": false,
-        "text": "Sends Wed, Oct 28, 9:00 AM",
+        "text": "Sends Wed, Oct 28, 9:00 AM CDT",
         "ratio": 6.95,
         "color": "rgb(173, 167, 159)",
         "bg": "rgb(32,29,40)",
@@ -5112,13 +5112,13 @@
       "Send"
     ],
     "sends": {
-      "text": "Sends Wed, Oct 28, 9:00 AM",
+      "text": "Sends Wed, Oct 28, 9:00 AM CDT",
       "size": "11px",
       "lines": 2
     },
     "cancel": {
       "text": "Cancel",
-      "ariaLabel": "Cancel the email scheduled for Wed, Oct 28, 9:00 AM",
+      "ariaLabel": "Cancel the email scheduled for Wed, Oct 28, 9:00 AM CDT",
       "disabled": false,
       "ariaBusy": null,
       "opacity": "1",
@@ -5557,7 +5557,7 @@
         "kind": "rail-scheduled",
         "disabled": false,
         "incidental": false,
-        "text": "Scheduled · in about 19 hours",
+        "text": "Scheduled · in about 12 hours",
         "ratio": 5.47,
         "color": "rgb(103, 97, 107)",
         "bg": "rgb(247, 244, 238)",
@@ -5579,7 +5579,7 @@
         "kind": "sends-time",
         "disabled": false,
         "incidental": false,
-        "text": "Sends Wed, Oct 28, 9:00 AM",
+        "text": "Sends Wed, Oct 28, 9:00 AM CDT",
         "ratio": 4.93,
         "color": "rgb(103, 97, 107)",
         "bg": "rgb(236,232,230)",
@@ -5717,7 +5717,7 @@
       "Send"
     ],
     "sends": {
-      "text": "Sends Wed, Oct 28, 9:00 AM",
+      "text": "Sends Wed, Oct 28, 9:00 AM CDT",
       "size": "11px",
       "lines": 1
     },
@@ -5786,7 +5786,7 @@
         "kind": "rail-scheduled",
         "disabled": false,
         "incidental": false,
-        "text": "Scheduled · in about 19 hours",
+        "text": "Scheduled · in about 12 hours",
         "ratio": 7.7,
         "color": "rgb(173, 167, 159)",
         "bg": "rgb(22, 19, 27)",
@@ -5808,7 +5808,7 @@
         "kind": "sends-time",
         "disabled": false,
         "incidental": false,
-        "text": "Sends Wed, Oct 28, 9:00 AM",
+        "text": "Sends Wed, Oct 28, 9:00 AM CDT",
         "ratio": 6.95,
         "color": "rgb(173, 167, 159)",
         "bg": "rgb(32,29,40)",
@@ -5891,7 +5891,7 @@
       "Send"
     ],
     "sends": {
-      "text": "Sends Wed, Oct 28, 9:00 AM",
+      "text": "Sends Wed, Oct 28, 9:00 AM CDT",
       "size": "11px",
       "lines": 1
     },
@@ -6387,7 +6387,7 @@
         "kind": "rail-scheduled",
         "disabled": false,
         "incidental": false,
-        "text": "Scheduled · in about 19 hours",
+        "text": "Scheduled · in about 12 hours",
         "ratio": 5.47,
         "color": "rgb(103, 97, 107)",
         "bg": "rgb(247, 244, 238)",
@@ -6409,7 +6409,7 @@
         "kind": "sends-time",
         "disabled": false,
         "incidental": false,
-        "text": "Sends Wed, Oct 28, 9:00 AM",
+        "text": "Sends Wed, Oct 28, 9:00 AM CDT",
         "ratio": 4.93,
         "color": "rgb(103, 97, 107)",
         "bg": "rgb(236,232,230)",
@@ -6558,13 +6558,13 @@
       "Send"
     ],
     "sends": {
-      "text": "Sends Wed, Oct 28, 9:00 AM",
+      "text": "Sends Wed, Oct 28, 9:00 AM CDT",
       "size": "11px",
       "lines": 1
     },
     "cancel": {
       "text": "Cancel",
-      "ariaLabel": "Cancel the email scheduled for Wed, Oct 28, 9:00 AM",
+      "ariaLabel": "Cancel the email scheduled for Wed, Oct 28, 9:00 AM CDT",
       "disabled": false,
       "ariaBusy": null,
       "opacity": "1",
@@ -6615,7 +6615,7 @@
     "outlineOffset": "0px",
     "text": "Cancel",
     "roleNameMatches": 1,
-    "accessibleName": "Cancel the email scheduled for Wed, Oct 28, 9:00 AM",
+    "accessibleName": "Cancel the email scheduled for Wed, Oct 28, 9:00 AM CDT",
     "visibleText": "Cancel",
     "enterCancelled": true,
     "focusAfter": {
@@ -6640,7 +6640,7 @@
     "outlineOffset": "0px",
     "text": "Cancel",
     "roleNameMatches": 1,
-    "accessibleName": "Cancel the email scheduled for Wed, Oct 28, 9:00 AM",
+    "accessibleName": "Cancel the email scheduled for Wed, Oct 28, 9:00 AM CDT",
     "visibleText": "Cancel",
     "enterCancelled": true,
     "focusAfter": {

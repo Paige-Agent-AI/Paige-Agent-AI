@@ -1072,6 +1072,25 @@ feature credit for this closeout.
 
 ## EXP05 weekly same-session recovery — October25 development
 
+### October28 original Planning Work continuation — development
+
+The original `operations_work` reference now has a closed optional Planning kind
+in [#3035](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3035), preserving
+the original UUID through normalization/deduplication to the unchanged native
+caller/RLS Work reader. It is an address, never task completion, authority or
+permission to retry an unknown action. CRM and Planning identities stay distinct.
+Native prototype testing exposed a real exit defect: leaving the focus query
+reopened a closed item. Clear it only after the original unsaved-work guard.
+The useful lesson is to verify the whole original-record round trip, including
+reload and exit, rather than equate a rendered link with recovery.
+
+Original126-source/29-dispatch baseline reproduces; only two separately reviewed
+link-helper dependency pins require renewal, with extractor/metadata/hostile
+checks unchanged. [Original UI/source evidence](../evidence/ui-delivery/exp05-planning-work-reference.md)
+keeps synthetic ports separate from authenticated roles, real records/Rails and
+full ten/E5/owner-away/Builder/both-chat/Live/founder acceptance. Development,
+reviewed source, green hosted checks and released customer results remain distinct.
+
 ### October26 whole-Experience receiving reconciliation
 
 Owner design addendum ANT-11/704476b3 is mapped as subcases in the same original
@@ -4825,6 +4844,17 @@ repeated. Five causal failures corrected; four exact-source regression suites
 receipts, providers and activation unchanged. Source/review/CI/deployment and
 authenticated proof remain separate; full ten/E5/Builder/ZION/owner-away/Live and
 founder acceptance stay open. [Bounded evidence](../evidence/ui-delivery/exp05-zion-history-access-refusal.md).
+
+## EXP05 original weekly schedule preview — source candidate, October26–27
+
+The existing owner conversation can prepare a minimized schedule comparison from
+the original weekly process/revision. It reuses configure intent, caller JWT,
+current owner checks, original request/budget and native owner controls; it cannot
+save, authorize, enable or execute.129 original-reader/actual-Root/negative checks,
+scoped compiler and Kit admission controls pass. Catalogue and algorithm maturity
+are not promoted. Source/review/CI/deployment and ordinary authenticated proof
+remain separate; all ten/E5/Builder/ZION/owner-away/Live/founder acceptance remain
+open. [Original weekly record](../delivery/experience-05-weekly-commitment-check.md).
 
 ## EXP02 original report status compatibility — development, October27
 

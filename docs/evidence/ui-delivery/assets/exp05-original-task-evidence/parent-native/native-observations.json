@@ -1,0 +1,142 @@
+{
+  "boundary": "ACTUAL HYDRATED ORIGINAL PARENT/HISTORY; SYNTHETIC HOOK PORTS ONLY; NOT AUTHENTICATION OR BACKEND RECOVERY",
+  "observations": [
+    {
+      "step": "1536 native keyboard expansion",
+      "active": "Original task evidence",
+      "horizontalOverflow": false,
+      "labels": [
+        "Task",
+        "Creation receipt",
+        "Execution",
+        "Approval",
+        "Process",
+        "Attempt"
+      ],
+      "open": true,
+      "refs": [
+        "00000000-0000-4000-8000-000000000004",
+        "00000000-0000-4000-8000-000000000005",
+        "00000000-0000-4000-8000-000000000006",
+        "00000000-0000-4000-8000-000000000002",
+        "00000000-0000-4000-8000-000000000001",
+        "00000000-0000-4000-8000-000000000003"
+      ],
+      "summaryHeight": 44,
+      "viewport": {
+        "height": 770,
+        "width": 1536
+      }
+    },
+    {
+      "step": "actual original parent Escape return",
+      "active": "View history",
+      "focusVisible": true,
+      "historyCount": 0,
+      "outline": "rgb(111, 86, 54) solid 1.6px"
+    },
+    {
+      "step": "actual original parent Close return",
+      "active": "View history",
+      "focusVisible": true,
+      "historyCount": 0
+    },
+    {
+      "step": "synthetic current authority refusal removes original references",
+      "body": "Internal task processesA new contact can prepare a task for your approval.RefreshAn active owner or admin in this workspace is required.Review pending tasksOpen workLocal fixture route: /solo/123/operations/playbooks",
+      "disclosures": 0,
+      "taskLinks": 0
+    },
+    {
+      "step": "native browser zoom shortcut probe",
+      "before": {
+        "dpr": 1.0000000149011612,
+        "scale": 1,
+        "width": 1536
+      },
+      "after": {
+        "dpr": 1.0000000149011612,
+        "scale": 1,
+        "width": 1536
+      },
+      "status": "UNAVAILABLE_NO_OBSERVED_ZOOM_CHANGE"
+    },
+    {
+      "step": "unconfirmed source result removes creation references",
+      "body": "Prepare an internal client reviewExecution recorded · Decision recorded: Oct 27, 2026, 12:00 PM UTCThe original task could not be verified. A recorded status alone does not establish that a task was created. Nothing will be rerun here.",
+      "disclosures": 0,
+      "taskLinks": 0
+    },
+    {
+      "step": "unavailable source result gives read-only recovery",
+      "body": "The original outcome couldn’t be read. Select Inspect outcome to read it again; nothing will be rerun.",
+      "disclosures": 0
+    },
+    {
+      "step": "320px Obsidian hydrated original reflow",
+      "font": true,
+      "grid": "207.2px",
+      "horizontalOverflow": false,
+      "refs": [
+        {
+          "clientWidth": 207,
+          "scrollWidth": 207,
+          "text": "00000000-0000-4000-8000-000000000004"
+        },
+        {
+          "clientWidth": 207,
+          "scrollWidth": 207,
+          "text": "00000000-0000-4000-8000-000000000005"
+        },
+        {
+          "clientWidth": 207,
+          "scrollWidth": 207,
+          "text": "00000000-0000-4000-8000-000000000006"
+        },
+        {
+          "clientWidth": 207,
+          "scrollWidth": 207,
+          "text": "00000000-0000-4000-8000-000000000002"
+        },
+        {
+          "clientWidth": 207,
+          "scrollWidth": 207,
+          "text": "00000000-0000-4000-8000-000000000001"
+        },
+        {
+          "clientWidth": 207,
+          "scrollWidth": 207,
+          "text": "00000000-0000-4000-8000-000000000003"
+        }
+      ],
+      "summaryHeight": 44,
+      "viewport": {
+        "height": 900,
+        "width": 320
+      }
+    },
+    {
+      "step": "320px keyboard reaches original Task link",
+      "active": "Open task",
+      "focusVisible": true,
+      "href": "/solo/123/operations/work?task=00000000-0000-4000-8000-000000000004",
+      "rect": {
+        "width": 80.1624984741211,
+        "x": 48.79999923706055
+      }
+    },
+    {
+      "step": "320px Escape from Task link restores parent invoker",
+      "active": "View history",
+      "focusVisible": true,
+      "historyCount": 0
+    },
+    {
+      "step": "synthetic current-scope refused presentation only",
+      "body": "Internal task processesA new contact can prepare a task for your approval.RefreshAn active owner or admin in this workspace is required.Review pending tasksOpen workLocal fixture route: /solo/123/operations/playbooks",
+      "disclosures": 0,
+      "taskLinks": 0
+    }
+  ],
+  "accessibleRefusalSnapshot": "Browser tab: 6, Title: \"Original Task parent — neutral native QA\", URL: \"http://127.0.0.1:61820/\".\n0 AXWebArea Original Task parent — neutral native QA, URL: 127.0.0.1:61820/\n\t1 container root\n\t\t2 text NEUTRAL NATIVE QA. Byte-exact original Task parent/history; synthetic read ports only. No authentication, network, saved work or effects.\n\t\t3 button Fixture verified\n\t\t\t4 text Fixture \n\t\t\t5 text verified\n\t\t6 button Fixture unconfirmed\n\t\t\t7 text Fixture \n\t\t\t8 text unconfirmed\n\t\t9 button Fixture refused\n\t\t\t10 text Fixture \n\t\t\t11 text refused\n\t\t12 button Fixture unavailable\n\t\t\t13 text Fixture \n\t\t\t14 text unavailable\n\t\t15 button Fixture switch context\n\t\t16 button Fixture switch theme\n\t\t17 container\n\t\t\t18 container Internal task processes\n\t\t\t\t19 container\n\t\t\t\t\t20 heading Internal task processes, Value: 2, ID: :r0:-title\n\t\t\t\t\t\t21 text Internal task processes\n\t\t\t\t\t22 text A new contact can prepare a task for your approval.\n\t\t\t\t\t23 button Refresh\n\t\t\t\t35 text An active owner or admin in this workspace is required.\n\t\t\t\t31 container\n\t\t\t\t\t32 link Description: Review pending tasks, Value: 127.0.0.1:61820/solo/123/command-center/business-game-plan\n\t\t\t\t\t33 link Description: Open work, Value: 127.0.0.1:61820/solo/123/operations/work\n\t\t\t34 text Local fixture route:  /solo/123/operations/playbooks\n\nThe focused UI element is 15 button Fixture switch context"
+}

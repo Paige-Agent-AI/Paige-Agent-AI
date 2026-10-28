@@ -84,7 +84,7 @@ describe("Marketing › Content", () => {
     expect(summary()).toBe("6 pieces in your library: 2 images, 1 document and 3 pieces of copy. 1 is in your Catalog. Nothing here posts or sends.");
     // The library comes before published work.
     const sections = [...host.querySelectorAll(".mct > section")].map((s) => s.querySelector("h2")?.textContent);
-    expect(sections).toEqual(["Your library", "Published from Vibe Studio"]);
+    expect(sections).toEqual(["Your library", "Published from Vibe Studio", "Videos"]);
     const cards = [...host.querySelectorAll(".mct-card")];
     expect(cards).toHaveLength(6);
     expect(cards[0].querySelector("img")?.getAttribute("src")).toBe(ROWS[0].image_url);

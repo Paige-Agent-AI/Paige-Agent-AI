@@ -11,6 +11,11 @@ const uuid = (value: unknown): value is string => typeof value === "string"
 /** The URL carries an address only. It never supplies tenant, role or record data. */
 export function parseWeeklyPlanningSource(search: string): WeeklyPlanningSource {
   const query = new URLSearchParams(search);
+  if (query.has("planningItem")) {
+    if (query.getAll("planningItem").length !== 1 || query.has("task") || query.has("weeklySource") || query.has("item")
+      || !uuid(query.get("planningItem"))) return { kind: "invalid" };
+    return { kind: "planning_item", id: query.get("planningItem")!.toLowerCase() };
+  }
   if (!query.has("weeklySource") && !query.has("item")) return null;
   if (query.getAll("weeklySource").length !== 1 || query.getAll("item").length !== 1
     || query.get("weeklySource") !== "planning_item" || !uuid(query.get("item"))) return { kind: "invalid" };

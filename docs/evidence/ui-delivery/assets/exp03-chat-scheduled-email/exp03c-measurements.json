@@ -1,0 +1,894 @@
+{
+  "exp03c-files0-light-1366x768": {
+    "ok": true,
+    "files": 0,
+    "theme": "light",
+    "viewport": "1366x768",
+    "layout": "dock",
+    "sendAt": "2026-11-03T15:00:00.000Z",
+    "checks": {
+      "fontLoaded": true,
+      "noPageOverflow": true,
+      "noTranscriptOverflowX": true,
+      "noCardOverflow": true,
+      "act": true,
+      "summaryNotRepeated": true,
+      "whenRow": true,
+      "aaText": true,
+      "noWhenOverflow": true,
+      "noGoldInRow": true,
+      "noTabStopInRow": true,
+      "tabReachesAct": true
+    },
+    "font": {
+      "first": "Schibsted Grotesk",
+      "loaded": true
+    },
+    "when": {
+      "label": "When",
+      "value": "Sends Tue, Nov 3, 9:00 AM CST",
+      "labelRatio": 4.78,
+      "valueRatio": 13.12,
+      "labelFont": "13px",
+      "valueFont": "13px",
+      "valueWeight": "500",
+      "valueLines": 2,
+      "overflow": false,
+      "lastInList": true
+    },
+    "rowGold": [],
+    "envelopeWidth": 120,
+    "cardOverflow": false,
+    "pageOverflow": false,
+    "transcriptOverflowX": false,
+    "act": {
+      "text": "Schedule send",
+      "inView": true,
+      "background": "rgba(0, 0, 0, 0)",
+      "actRatio": 13.12
+    },
+    "summaryShown": false,
+    "tabs": 1,
+    "errors": []
+  },
+  "exp03c-files0-light-1536x770": {
+    "ok": true,
+    "files": 0,
+    "theme": "light",
+    "viewport": "1536x770",
+    "layout": "dock",
+    "sendAt": "2026-11-03T15:00:00.000Z",
+    "checks": {
+      "fontLoaded": true,
+      "noPageOverflow": true,
+      "noTranscriptOverflowX": true,
+      "noCardOverflow": true,
+      "act": true,
+      "summaryNotRepeated": true,
+      "whenRow": true,
+      "aaText": true,
+      "noWhenOverflow": true,
+      "noGoldInRow": true,
+      "noTabStopInRow": true,
+      "tabReachesAct": true
+    },
+    "font": {
+      "first": "Schibsted Grotesk",
+      "loaded": true
+    },
+    "when": {
+      "label": "When",
+      "value": "Sends Tue, Nov 3, 9:00 AM CST",
+      "labelRatio": 4.78,
+      "valueRatio": 13.12,
+      "labelFont": "13px",
+      "valueFont": "13px",
+      "valueWeight": "500",
+      "valueLines": 2,
+      "overflow": false,
+      "lastInList": true
+    },
+    "rowGold": [],
+    "envelopeWidth": 155,
+    "cardOverflow": false,
+    "pageOverflow": false,
+    "transcriptOverflowX": false,
+    "act": {
+      "text": "Schedule send",
+      "inView": true,
+      "background": "rgba(0, 0, 0, 0)",
+      "actRatio": 13.12
+    },
+    "summaryShown": false,
+    "tabs": 1,
+    "errors": []
+  },
+  "exp03c-files0-light-1366x768-wide": {
+    "ok": true,
+    "files": 0,
+    "theme": "light",
+    "viewport": "1366x768",
+    "layout": "phone",
+    "sendAt": "2026-11-03T15:00:00.000Z",
+    "checks": {
+      "fontLoaded": true,
+      "noPageOverflow": true,
+      "noTranscriptOverflowX": true,
+      "noCardOverflow": true,
+      "act": true,
+      "summaryNotRepeated": true,
+      "whenRow": true,
+      "aaText": true,
+      "noWhenOverflow": true,
+      "noGoldInRow": true
+    },
+    "font": {
+      "first": "Schibsted Grotesk",
+      "loaded": true
+    },
+    "when": {
+      "label": "When",
+      "value": "Sends Tue, Nov 3, 9:00 AM CST",
+      "labelRatio": 4.78,
+      "valueRatio": 13.12,
+      "labelFont": "13px",
+      "valueFont": "13px",
+      "valueWeight": "500",
+      "valueLines": 1,
+      "overflow": false,
+      "lastInList": true
+    },
+    "rowGold": [],
+    "envelopeWidth": 929,
+    "cardOverflow": false,
+    "pageOverflow": false,
+    "transcriptOverflowX": false,
+    "act": {
+      "text": "Schedule send",
+      "inView": true,
+      "background": "rgba(0, 0, 0, 0)",
+      "actRatio": 13.12
+    },
+    "summaryShown": false,
+    "tabs": 0,
+    "errors": []
+  },
+  "exp03c-files0-light-390x844": {
+    "ok": true,
+    "files": 0,
+    "theme": "light",
+    "viewport": "390x844",
+    "layout": "phone",
+    "sendAt": "2026-11-03T15:00:00.000Z",
+    "checks": {
+      "fontLoaded": true,
+      "noPageOverflow": true,
+      "noTranscriptOverflowX": true,
+      "noCardOverflow": true,
+      "act": true,
+      "summaryNotRepeated": true,
+      "whenRow": true,
+      "aaText": true,
+      "noWhenOverflow": true,
+      "noGoldInRow": true
+    },
+    "font": {
+      "first": "Schibsted Grotesk",
+      "loaded": true
+    },
+    "when": {
+      "label": "When",
+      "value": "Sends Tue, Nov 3, 9:00 AM CST",
+      "labelRatio": 4.78,
+      "valueRatio": 13.12,
+      "labelFont": "13px",
+      "valueFont": "13px",
+      "valueWeight": "500",
+      "valueLines": 2,
+      "overflow": false,
+      "lastInList": true
+    },
+    "rowGold": [],
+    "envelopeWidth": 264,
+    "cardOverflow": false,
+    "pageOverflow": false,
+    "transcriptOverflowX": false,
+    "act": {
+      "text": "Schedule send",
+      "inView": true,
+      "background": "rgba(0, 0, 0, 0)",
+      "actRatio": 13.12
+    },
+    "summaryShown": false,
+    "tabs": 0,
+    "errors": []
+  },
+  "exp03c-files1-light-1366x768": {
+    "ok": true,
+    "files": 1,
+    "theme": "light",
+    "viewport": "1366x768",
+    "layout": "dock",
+    "sendAt": "2026-11-03T15:00:00.000Z",
+    "checks": {
+      "fontLoaded": true,
+      "noPageOverflow": true,
+      "noTranscriptOverflowX": true,
+      "noCardOverflow": true,
+      "act": true,
+      "summaryNotRepeated": true,
+      "whenRow": true,
+      "aaText": true,
+      "noWhenOverflow": true,
+      "noGoldInRow": true,
+      "noTabStopInRow": true,
+      "tabReachesAct": true
+    },
+    "font": {
+      "first": "Schibsted Grotesk",
+      "loaded": true
+    },
+    "when": {
+      "label": "When",
+      "value": "Sends Tue, Nov 3, 9:00 AM CST",
+      "labelRatio": 4.78,
+      "valueRatio": 13.12,
+      "labelFont": "13px",
+      "valueFont": "13px",
+      "valueWeight": "500",
+      "valueLines": 2,
+      "overflow": false,
+      "lastInList": true
+    },
+    "rowGold": [],
+    "envelopeWidth": 120,
+    "cardOverflow": false,
+    "pageOverflow": false,
+    "transcriptOverflowX": false,
+    "act": {
+      "text": "Schedule send",
+      "inView": true,
+      "background": "rgba(0, 0, 0, 0)",
+      "actRatio": 13.12
+    },
+    "summaryShown": false,
+    "tabs": 1,
+    "errors": []
+  },
+  "exp03c-files1-light-1536x770": {
+    "ok": true,
+    "files": 1,
+    "theme": "light",
+    "viewport": "1536x770",
+    "layout": "dock",
+    "sendAt": "2026-11-03T15:00:00.000Z",
+    "checks": {
+      "fontLoaded": true,
+      "noPageOverflow": true,
+      "noTranscriptOverflowX": true,
+      "noCardOverflow": true,
+      "act": true,
+      "summaryNotRepeated": true,
+      "whenRow": true,
+      "aaText": true,
+      "noWhenOverflow": true,
+      "noGoldInRow": true,
+      "noTabStopInRow": true,
+      "tabReachesAct": true
+    },
+    "font": {
+      "first": "Schibsted Grotesk",
+      "loaded": true
+    },
+    "when": {
+      "label": "When",
+      "value": "Sends Tue, Nov 3, 9:00 AM CST",
+      "labelRatio": 4.78,
+      "valueRatio": 13.12,
+      "labelFont": "13px",
+      "valueFont": "13px",
+      "valueWeight": "500",
+      "valueLines": 2,
+      "overflow": false,
+      "lastInList": true
+    },
+    "rowGold": [],
+    "envelopeWidth": 155,
+    "cardOverflow": false,
+    "pageOverflow": false,
+    "transcriptOverflowX": false,
+    "act": {
+      "text": "Schedule send",
+      "inView": true,
+      "background": "rgba(0, 0, 0, 0)",
+      "actRatio": 13.12
+    },
+    "summaryShown": false,
+    "tabs": 1,
+    "errors": []
+  },
+  "exp03c-files1-light-1366x768-wide": {
+    "ok": true,
+    "files": 1,
+    "theme": "light",
+    "viewport": "1366x768",
+    "layout": "phone",
+    "sendAt": "2026-11-03T15:00:00.000Z",
+    "checks": {
+      "fontLoaded": true,
+      "noPageOverflow": true,
+      "noTranscriptOverflowX": true,
+      "noCardOverflow": true,
+      "act": true,
+      "summaryNotRepeated": true,
+      "whenRow": true,
+      "aaText": true,
+      "noWhenOverflow": true,
+      "noGoldInRow": true
+    },
+    "font": {
+      "first": "Schibsted Grotesk",
+      "loaded": true
+    },
+    "when": {
+      "label": "When",
+      "value": "Sends Tue, Nov 3, 9:00 AM CST",
+      "labelRatio": 4.78,
+      "valueRatio": 13.12,
+      "labelFont": "13px",
+      "valueFont": "13px",
+      "valueWeight": "500",
+      "valueLines": 1,
+      "overflow": false,
+      "lastInList": true
+    },
+    "rowGold": [],
+    "envelopeWidth": 929,
+    "cardOverflow": false,
+    "pageOverflow": false,
+    "transcriptOverflowX": false,
+    "act": {
+      "text": "Schedule send",
+      "inView": true,
+      "background": "rgba(0, 0, 0, 0)",
+      "actRatio": 13.12
+    },
+    "summaryShown": false,
+    "tabs": 0,
+    "errors": []
+  },
+  "exp03c-files1-light-390x844": {
+    "ok": true,
+    "files": 1,
+    "theme": "light",
+    "viewport": "390x844",
+    "layout": "phone",
+    "sendAt": "2026-11-03T15:00:00.000Z",
+    "checks": {
+      "fontLoaded": true,
+      "noPageOverflow": true,
+      "noTranscriptOverflowX": true,
+      "noCardOverflow": true,
+      "act": true,
+      "summaryNotRepeated": true,
+      "whenRow": true,
+      "aaText": true,
+      "noWhenOverflow": true,
+      "noGoldInRow": true
+    },
+    "font": {
+      "first": "Schibsted Grotesk",
+      "loaded": true
+    },
+    "when": {
+      "label": "When",
+      "value": "Sends Tue, Nov 3, 9:00 AM CST",
+      "labelRatio": 4.78,
+      "valueRatio": 13.12,
+      "labelFont": "13px",
+      "valueFont": "13px",
+      "valueWeight": "500",
+      "valueLines": 2,
+      "overflow": false,
+      "lastInList": true
+    },
+    "rowGold": [],
+    "envelopeWidth": 264,
+    "cardOverflow": false,
+    "pageOverflow": false,
+    "transcriptOverflowX": false,
+    "act": {
+      "text": "Schedule send",
+      "inView": true,
+      "background": "rgba(0, 0, 0, 0)",
+      "actRatio": 13.12
+    },
+    "summaryShown": false,
+    "tabs": 0,
+    "errors": []
+  },
+  "exp03c-control-light-1366x768": {
+    "ok": true,
+    "files": 0,
+    "theme": "light",
+    "viewport": "1366x768",
+    "layout": "dock",
+    "sendAt": null,
+    "checks": {
+      "fontLoaded": true,
+      "noPageOverflow": true,
+      "noTranscriptOverflowX": true,
+      "noCardOverflow": true,
+      "act": true,
+      "summaryNotRepeated": true,
+      "noWhenRow": true,
+      "noTabStopInRow": true,
+      "tabReachesAct": true
+    },
+    "font": {
+      "first": "Schibsted Grotesk",
+      "loaded": true
+    },
+    "when": null,
+    "rowGold": [],
+    "envelopeWidth": 120,
+    "cardOverflow": false,
+    "pageOverflow": false,
+    "transcriptOverflowX": false,
+    "act": {
+      "text": "Approve",
+      "inView": true,
+      "background": "rgba(0, 0, 0, 0)",
+      "actRatio": 13.12
+    },
+    "summaryShown": false,
+    "tabs": 1,
+    "errors": []
+  },
+  "exp03c-files0-dark-1366x768": {
+    "ok": true,
+    "files": 0,
+    "theme": "dark",
+    "viewport": "1366x768",
+    "layout": "dock",
+    "sendAt": "2026-11-03T15:00:00.000Z",
+    "checks": {
+      "fontLoaded": true,
+      "noPageOverflow": true,
+      "noTranscriptOverflowX": true,
+      "noCardOverflow": true,
+      "act": true,
+      "summaryNotRepeated": true,
+      "whenRow": true,
+      "aaText": true,
+      "noWhenOverflow": true,
+      "noGoldInRow": true,
+      "noTabStopInRow": true,
+      "tabReachesAct": true
+    },
+    "font": {
+      "first": "Schibsted Grotesk",
+      "loaded": true
+    },
+    "when": {
+      "label": "When",
+      "value": "Sends Tue, Nov 3, 9:00 AM CST",
+      "labelRatio": 6.82,
+      "valueRatio": 14.56,
+      "labelFont": "13px",
+      "valueFont": "13px",
+      "valueWeight": "500",
+      "valueLines": 2,
+      "overflow": false,
+      "lastInList": true
+    },
+    "rowGold": [],
+    "envelopeWidth": 120,
+    "cardOverflow": false,
+    "pageOverflow": false,
+    "transcriptOverflowX": false,
+    "act": {
+      "text": "Schedule send",
+      "inView": true,
+      "background": "rgba(0, 0, 0, 0)",
+      "actRatio": 1.23
+    },
+    "summaryShown": false,
+    "tabs": 1,
+    "errors": []
+  },
+  "exp03c-files0-dark-1536x770": {
+    "ok": true,
+    "files": 0,
+    "theme": "dark",
+    "viewport": "1536x770",
+    "layout": "dock",
+    "sendAt": "2026-11-03T15:00:00.000Z",
+    "checks": {
+      "fontLoaded": true,
+      "noPageOverflow": true,
+      "noTranscriptOverflowX": true,
+      "noCardOverflow": true,
+      "act": true,
+      "summaryNotRepeated": true,
+      "whenRow": true,
+      "aaText": true,
+      "noWhenOverflow": true,
+      "noGoldInRow": true,
+      "noTabStopInRow": true,
+      "tabReachesAct": true
+    },
+    "font": {
+      "first": "Schibsted Grotesk",
+      "loaded": true
+    },
+    "when": {
+      "label": "When",
+      "value": "Sends Tue, Nov 3, 9:00 AM CST",
+      "labelRatio": 6.82,
+      "valueRatio": 14.56,
+      "labelFont": "13px",
+      "valueFont": "13px",
+      "valueWeight": "500",
+      "valueLines": 2,
+      "overflow": false,
+      "lastInList": true
+    },
+    "rowGold": [],
+    "envelopeWidth": 155,
+    "cardOverflow": false,
+    "pageOverflow": false,
+    "transcriptOverflowX": false,
+    "act": {
+      "text": "Schedule send",
+      "inView": true,
+      "background": "rgba(0, 0, 0, 0)",
+      "actRatio": 1.23
+    },
+    "summaryShown": false,
+    "tabs": 1,
+    "errors": []
+  },
+  "exp03c-files0-dark-1366x768-wide": {
+    "ok": true,
+    "files": 0,
+    "theme": "dark",
+    "viewport": "1366x768",
+    "layout": "phone",
+    "sendAt": "2026-11-03T15:00:00.000Z",
+    "checks": {
+      "fontLoaded": true,
+      "noPageOverflow": true,
+      "noTranscriptOverflowX": true,
+      "noCardOverflow": true,
+      "act": true,
+      "summaryNotRepeated": true,
+      "whenRow": true,
+      "aaText": true,
+      "noWhenOverflow": true,
+      "noGoldInRow": true
+    },
+    "font": {
+      "first": "Schibsted Grotesk",
+      "loaded": true
+    },
+    "when": {
+      "label": "When",
+      "value": "Sends Tue, Nov 3, 9:00 AM CST",
+      "labelRatio": 6.82,
+      "valueRatio": 14.56,
+      "labelFont": "13px",
+      "valueFont": "13px",
+      "valueWeight": "500",
+      "valueLines": 1,
+      "overflow": false,
+      "lastInList": true
+    },
+    "rowGold": [],
+    "envelopeWidth": 929,
+    "cardOverflow": false,
+    "pageOverflow": false,
+    "transcriptOverflowX": false,
+    "act": {
+      "text": "Schedule send",
+      "inView": true,
+      "background": "rgba(0, 0, 0, 0)",
+      "actRatio": 1.23
+    },
+    "summaryShown": false,
+    "tabs": 0,
+    "errors": []
+  },
+  "exp03c-files0-dark-390x844": {
+    "ok": true,
+    "files": 0,
+    "theme": "dark",
+    "viewport": "390x844",
+    "layout": "phone",
+    "sendAt": "2026-11-03T15:00:00.000Z",
+    "checks": {
+      "fontLoaded": true,
+      "noPageOverflow": true,
+      "noTranscriptOverflowX": true,
+      "noCardOverflow": true,
+      "act": true,
+      "summaryNotRepeated": true,
+      "whenRow": true,
+      "aaText": true,
+      "noWhenOverflow": true,
+      "noGoldInRow": true
+    },
+    "font": {
+      "first": "Schibsted Grotesk",
+      "loaded": true
+    },
+    "when": {
+      "label": "When",
+      "value": "Sends Tue, Nov 3, 9:00 AM CST",
+      "labelRatio": 6.82,
+      "valueRatio": 14.56,
+      "labelFont": "13px",
+      "valueFont": "13px",
+      "valueWeight": "500",
+      "valueLines": 2,
+      "overflow": false,
+      "lastInList": true
+    },
+    "rowGold": [],
+    "envelopeWidth": 264,
+    "cardOverflow": false,
+    "pageOverflow": false,
+    "transcriptOverflowX": false,
+    "act": {
+      "text": "Schedule send",
+      "inView": true,
+      "background": "rgba(0, 0, 0, 0)",
+      "actRatio": 1.23
+    },
+    "summaryShown": false,
+    "tabs": 0,
+    "errors": []
+  },
+  "exp03c-files1-dark-1366x768": {
+    "ok": true,
+    "files": 1,
+    "theme": "dark",
+    "viewport": "1366x768",
+    "layout": "dock",
+    "sendAt": "2026-11-03T15:00:00.000Z",
+    "checks": {
+      "fontLoaded": true,
+      "noPageOverflow": true,
+      "noTranscriptOverflowX": true,
+      "noCardOverflow": true,
+      "act": true,
+      "summaryNotRepeated": true,
+      "whenRow": true,
+      "aaText": true,
+      "noWhenOverflow": true,
+      "noGoldInRow": true,
+      "noTabStopInRow": true,
+      "tabReachesAct": true
+    },
+    "font": {
+      "first": "Schibsted Grotesk",
+      "loaded": true
+    },
+    "when": {
+      "label": "When",
+      "value": "Sends Tue, Nov 3, 9:00 AM CST",
+      "labelRatio": 6.82,
+      "valueRatio": 14.56,
+      "labelFont": "13px",
+      "valueFont": "13px",
+      "valueWeight": "500",
+      "valueLines": 2,
+      "overflow": false,
+      "lastInList": true
+    },
+    "rowGold": [],
+    "envelopeWidth": 120,
+    "cardOverflow": false,
+    "pageOverflow": false,
+    "transcriptOverflowX": false,
+    "act": {
+      "text": "Schedule send",
+      "inView": true,
+      "background": "rgba(0, 0, 0, 0)",
+      "actRatio": 1.23
+    },
+    "summaryShown": false,
+    "tabs": 1,
+    "errors": []
+  },
+  "exp03c-files1-dark-1536x770": {
+    "ok": true,
+    "files": 1,
+    "theme": "dark",
+    "viewport": "1536x770",
+    "layout": "dock",
+    "sendAt": "2026-11-03T15:00:00.000Z",
+    "checks": {
+      "fontLoaded": true,
+      "noPageOverflow": true,
+      "noTranscriptOverflowX": true,
+      "noCardOverflow": true,
+      "act": true,
+      "summaryNotRepeated": true,
+      "whenRow": true,
+      "aaText": true,
+      "noWhenOverflow": true,
+      "noGoldInRow": true,
+      "noTabStopInRow": true,
+      "tabReachesAct": true
+    },
+    "font": {
+      "first": "Schibsted Grotesk",
+      "loaded": true
+    },
+    "when": {
+      "label": "When",
+      "value": "Sends Tue, Nov 3, 9:00 AM CST",
+      "labelRatio": 6.82,
+      "valueRatio": 14.56,
+      "labelFont": "13px",
+      "valueFont": "13px",
+      "valueWeight": "500",
+      "valueLines": 2,
+      "overflow": false,
+      "lastInList": true
+    },
+    "rowGold": [],
+    "envelopeWidth": 155,
+    "cardOverflow": false,
+    "pageOverflow": false,
+    "transcriptOverflowX": false,
+    "act": {
+      "text": "Schedule send",
+      "inView": true,
+      "background": "rgba(0, 0, 0, 0)",
+      "actRatio": 1.23
+    },
+    "summaryShown": false,
+    "tabs": 1,
+    "errors": []
+  },
+  "exp03c-files1-dark-1366x768-wide": {
+    "ok": true,
+    "files": 1,
+    "theme": "dark",
+    "viewport": "1366x768",
+    "layout": "phone",
+    "sendAt": "2026-11-03T15:00:00.000Z",
+    "checks": {
+      "fontLoaded": true,
+      "noPageOverflow": true,
+      "noTranscriptOverflowX": true,
+      "noCardOverflow": true,
+      "act": true,
+      "summaryNotRepeated": true,
+      "whenRow": true,
+      "aaText": true,
+      "noWhenOverflow": true,
+      "noGoldInRow": true
+    },
+    "font": {
+      "first": "Schibsted Grotesk",
+      "loaded": true
+    },
+    "when": {
+      "label": "When",
+      "value": "Sends Tue, Nov 3, 9:00 AM CST",
+      "labelRatio": 6.82,
+      "valueRatio": 14.56,
+      "labelFont": "13px",
+      "valueFont": "13px",
+      "valueWeight": "500",
+      "valueLines": 1,
+      "overflow": false,
+      "lastInList": true
+    },
+    "rowGold": [],
+    "envelopeWidth": 929,
+    "cardOverflow": false,
+    "pageOverflow": false,
+    "transcriptOverflowX": false,
+    "act": {
+      "text": "Schedule send",
+      "inView": true,
+      "background": "rgba(0, 0, 0, 0)",
+      "actRatio": 1.23
+    },
+    "summaryShown": false,
+    "tabs": 0,
+    "errors": []
+  },
+  "exp03c-files1-dark-390x844": {
+    "ok": true,
+    "files": 1,
+    "theme": "dark",
+    "viewport": "390x844",
+    "layout": "phone",
+    "sendAt": "2026-11-03T15:00:00.000Z",
+    "checks": {
+      "fontLoaded": true,
+      "noPageOverflow": true,
+      "noTranscriptOverflowX": true,
+      "noCardOverflow": true,
+      "act": true,
+      "summaryNotRepeated": true,
+      "whenRow": true,
+      "aaText": true,
+      "noWhenOverflow": true,
+      "noGoldInRow": true
+    },
+    "font": {
+      "first": "Schibsted Grotesk",
+      "loaded": true
+    },
+    "when": {
+      "label": "When",
+      "value": "Sends Tue, Nov 3, 9:00 AM CST",
+      "labelRatio": 6.82,
+      "valueRatio": 14.56,
+      "labelFont": "13px",
+      "valueFont": "13px",
+      "valueWeight": "500",
+      "valueLines": 2,
+      "overflow": false,
+      "lastInList": true
+    },
+    "rowGold": [],
+    "envelopeWidth": 264,
+    "cardOverflow": false,
+    "pageOverflow": false,
+    "transcriptOverflowX": false,
+    "act": {
+      "text": "Schedule send",
+      "inView": true,
+      "background": "rgba(0, 0, 0, 0)",
+      "actRatio": 1.23
+    },
+    "summaryShown": false,
+    "tabs": 0,
+    "errors": []
+  },
+  "exp03c-control-dark-1366x768": {
+    "ok": true,
+    "files": 0,
+    "theme": "dark",
+    "viewport": "1366x768",
+    "layout": "dock",
+    "sendAt": null,
+    "checks": {
+      "fontLoaded": true,
+      "noPageOverflow": true,
+      "noTranscriptOverflowX": true,
+      "noCardOverflow": true,
+      "act": true,
+      "summaryNotRepeated": true,
+      "noWhenRow": true,
+      "noTabStopInRow": true,
+      "tabReachesAct": true
+    },
+    "font": {
+      "first": "Schibsted Grotesk",
+      "loaded": true
+    },
+    "when": null,
+    "rowGold": [],
+    "envelopeWidth": 120,
+    "cardOverflow": false,
+    "pageOverflow": false,
+    "transcriptOverflowX": false,
+    "act": {
+      "text": "Approve",
+      "inView": true,
+      "background": "rgba(0, 0, 0, 0)",
+      "actRatio": 1.23
+    },
+    "summaryShown": false,
+    "tabs": 1,
+    "errors": []
+  }
+}

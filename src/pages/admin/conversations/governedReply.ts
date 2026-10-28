@@ -291,10 +291,13 @@ const lostAnswer = (head = "Couldn't confirm this went out — don't resend."): 
 });
 
 /** The answer to a readiness or files refusal, in owner words. `null` when the code is not one of these. */
-function refusalCopy(code: string, ctx: DoorCopyContext, settle: boolean): DoorView | null {
+function refusalCopy(code: string, ctx: DoorCopyContext, settle: boolean, b: Record<string, unknown> = {}): DoorView | null {
   const who = ctx.name.trim() || "this person";
   const from = ctx.from.trim() || "This sending address";
   switch (code) {
+    // The same email is already waiting under another operation: a second one would send it twice.
+    case "COMMS_EMAIL_ALREADY_SCHEDULED": return cant(typeof b.send_at === "string" ? `This email is already scheduled for ${scheduledForLabel(b.send_at)}.` : "This email is already scheduled.",
+      "Cancel it first if you want to change it.", { settle });
     case "RECIPIENT_EMAIL_MISSING": return cant(`There's no email address on ${who}'s contact card.`, "Add one, then send.", { settle });
     case "SENDER_VERIFICATION_MISSING": return cant(`${from} isn't verified for sending.`, "Finish it in Settings → Email, then send.", { action: "settings", settle });
     case "TENANT_EMAIL_SENDER_MISSING": return cant("This sending address can't send email.", "Choose another.", { settle });
@@ -436,7 +439,7 @@ export function classifyDoorAnswer(answer: DoorAnswer, stage: "check" | "confirm
   // A refusal: nothing was dispatched. After a confirm the operation's answer is final; a replayed
   // refusal is too. A fresh refusal on a check keeps the id, so asking again is the same request.
   const settle = afterConfirm || replayed;
-  const known = refusalCopy(code, ctx, settle);
+  const known = refusalCopy(code, ctx, settle, b);
   if (known) return known;
   if (answer.status === 503 || /UNAVAILABLE|UNVERIFIED|RECEIPT_FAILED/.test(code)) return couldntCheck(settle);
   return cant("This email can't be sent from here right now.", NOTHING_SENT, { settle });

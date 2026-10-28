@@ -27,6 +27,9 @@ const params = new URLSearchParams(window.location.search);
 const theme = params.get("theme") === "dark" ? "dark" : "light";
 const files = Number(params.get("files") ?? "1");
 const layout = params.get("layout") === "phone" ? "phone" : "dock";
+// ?send_at=<ISO> — an email Paige's chat scheduled for later (drive-scheduled.mjs): the door's preview carries send_at
+// and its summary ends " — scheduled for YYYY-MM-DD HH:MM UTC" (comms-email-command).
+const sendAt = params.get("send_at");
 document.documentElement.classList.toggle("dark", theme === "dark");
 
 const FILE_SETS: Record<number, Array<{ name: string; size: number; mime: string }>> = {
@@ -65,7 +68,8 @@ const fileWords = attachments.length === 0 ? "" : ` — with ${attachments.lengt
 const CONFIRM = {
   tool: "comms_send_email",
   fingerprint: FP,
-  summary: `Email Maya Ortiz at maya@ortizlandscaping.example from jordan@brightwateradvisory.example: "Spring proposal and site plan"` + fileWords,
+  summary: `Email Maya Ortiz at maya@ortizlandscaping.example from jordan@brightwateradvisory.example: "Spring proposal and site plan"` + fileWords
+    + (sendAt ? ` — scheduled for ${sendAt.slice(0, 16).replace("T", " ")} UTC` : ""),
   preview: {
     kind: "email",
     to_name: "Maya Ortiz",
@@ -74,6 +78,7 @@ const CONFIRM = {
     subject: "Spring proposal and site plan",
     body_text: BODY,
     ...(attachments.length ? { attachments } : {}),
+    ...(sendAt ? { send_at: sendAt } : {}),
   },
 };
 

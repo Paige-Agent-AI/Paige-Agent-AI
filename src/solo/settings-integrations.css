@@ -323,6 +323,16 @@
 .sa-owner-task-history .sa-field { overflow-wrap: anywhere; }
 .sa-owner-task-history a { text-decoration: none; }
 .sa-owner-task-result { display: flex; flex-direction: column; gap: 8px; }
+.sa-owner-task-evidence { font-size: 12.2px; color: var(--pg-ink); }
+.sa-owner-task-evidence summary { cursor: pointer; min-height: 44px; align-content: center; }
+.sa-owner-task-evidence summary:focus-visible { outline: 2px solid var(--pg-violet); outline-offset: 2px; }
+.sa-owner-task-evidence dl { display: grid; grid-template-columns: minmax(0,115px) minmax(0,1fr); gap: 8px 12px; margin: 0 0 8px; }
+.sa-owner-task-evidence dt { color: var(--pg-ink-2); }
+.sa-owner-task-evidence dd { margin: 0; overflow-wrap: anywhere; font-family: var(--pg-font-data); }
+@media (max-width: 480px) {
+  .sa-owner-task-evidence dl { grid-template-columns: minmax(0,1fr); gap: 4px; }
+  .sa-owner-task-evidence dd + dt { margin-top: 8px; }
+}
 .sa-rule-controls { display: flex; align-items: center; gap: 7px; flex: none; flex-wrap: wrap; }
 .sa-confirm { display: inline-flex; gap: 7px; }
 .sa-ctl {

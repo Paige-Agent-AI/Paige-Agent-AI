@@ -1200,6 +1200,18 @@ describe("comms-email-command: an email already scheduled is not proposed again"
     t.bindings.set(OP_2, { operation_id: OP_2, tenant_id: FOREIGN, actor_user_id: ACTOR_2, contact_id: CONTACT, recipient: "dana@example.test", content_digest: digest, state: "prepared", send_at: later(), message_id: "60000000-0000-4000-8000-000000000099" });
     expect((await t.request()).status).toBe(202);
   });
+  // Second review MINOR 2: a row past its release grace but not yet swept may still be released (a lease
+  // taken at the end of the grace). It must keep blocking, as "may still be going out", never a pass.
+  it("an identical email past its release grace but not yet swept still blocks, as outcome_unknown", async () => {
+    const t = setup();
+    const digest = await commsEmailContentDigest({ recipient: "dana@example.test", connectorId: SENDER, subject: command.subject, bodyText: command.body });
+    const past = new Date(Math.floor((Date.now() - 20 * 60_000) / 60_000) * 60_000).toISOString();
+    t.bindings.set(OP_2, { operation_id: OP_2, tenant_id: TENANT, actor_user_id: ACTOR, contact_id: CONTACT, recipient: "dana@example.test", content_digest: digest, state: "prepared", send_at: past, message_id: "60000000-0000-4000-8000-000000000098" });
+    const r = await t.request();
+    expect(r).toMatchObject({ status: 503, body: { ok: false, outcome: "outcome_unknown", code: "COMMS_EMAIL_IDENTICAL_IN_FLIGHT", scheduled_operation_id: OP_2, delivery_confirmed: false } });
+    expect(t.named("insert:paige_pending_confirmations")).toEqual([]);
+    expect(t.sends).toEqual([]);
+  });
   it("a messages read the guard cannot complete is a refusal before any card, never a silent pass", async () => {
     const down = setup({ messagesFail: true });
     expect(await down.request(other())).toMatchObject({ status: 503, body: { outcome: "refused", code: "COMMS_EMAIL_RECONCILIATION_UNVERIFIED" } });

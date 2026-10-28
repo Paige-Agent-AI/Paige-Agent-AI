@@ -34,7 +34,7 @@ SOLO_1024X768_PAIGE_CLOSED: NOT_APPLICABLE: the card lives inside the PAIGE chat
 SOLO_1024X768_PAIGE_OPEN: UNVERIFIED: not rendered at this width (dock 340px) — owed to an authenticated Solo drive
 SOLO_900X1000_PAIGE_CLOSED: NOT_APPLICABLE: the card lives inside the PAIGE chat; with PAIGE closed it is not on screen
 SOLO_900X1000_PAIGE_OPEN: UNVERIFIED: not rendered at this width (dock 340px) — owed to an authenticated Solo drive
-UNVERIFIED: authenticated runtime (model, deployed door, real messages filters, release); the 1024 and 900 docked widths; browser zoom; the Conversations frames listed below were not re-shot after the zone was added; the paige-turn resume Deno test (CI only, no deno here); the time is the viewer's clock with its zone, not converted to the business time zone
+UNVERIFIED: authenticated runtime (model, deployed door, real messages filters, release); the 1024 and 900 docked widths; browser zoom; the paige-turn resume Deno test (CI only, no deno here); the time is the viewer's clock with its zone, not converted to the business time zone
 
 OWNER_INTENT: the owner chose "approve now, send later" (2026-10-27, "B with (ii)"); the open list in docs/delivery/exp03-grow-my-business-journey.md §14.8 named "chat send_at and a When row on the approval card" next: target actor = the business owner or an admin seat using PAIGE; user job = ask PAIGE to email a contact at a later time; required outcome = the card shows exactly when, approving schedules it, it goes out once at that time and can be cancelled in Conversations
 MUST_NOT_HAPPEN: a time shown without its zone that hides a daylight-saving slip; an email approved for one time sent at another or immediately; the same email sent twice because it was rescheduled or "sent now" under a new operation; a scheduled email narrated as sent or as not sent; a time inside the command or its content digest; a changed operation id or fingerprint for an email without a time; a storage path reaching the card
@@ -51,14 +51,13 @@ RELEASE_NOTE_REQUIRED: NO: part of the EXP03 approve-now-send-later release the 
 RELEASE_TRUTH_BOUNDARY: PARTIAL: the card's When row, the zone in every scheduled time and the strip's refusal copy are LIVE on the frontend after merge; PAIGE choosing send_at and the door's already-scheduled refusal depend on the deployed edge bundles, PROOF OWED until an authenticated drive observes them
 RELEASE_RECOVERY: position=forward-fix preferred, a revert is self-contained (no migration, and the door's new refusal only refuses); reference=commits 025ff551 and 828b6a1a and this record
 
-## Stale frames (wording changed, not re-shot)
+## Re-shot frames (the zone label reached two older records)
 
-The shared label now ends with the zone, so these committed Conversations frames show the old wording ("Sends Wed, Oct 28, 9:00 AM" without "CDT"/"CST"):
+The shared label now ends with the zone ("Sends Wed, Oct 28, 9:00 AM CDT"), so the scheduled Conversations frames were re-shot with their own drives, whose checks now accept an optional zone abbreviation:
 
-- `docs/evidence/ui-delivery/assets/exp03-composer-inline-check/` (8): `exp03c-check-scheduled-{light,dark}-1366x768-paige-closed.jpg`, `exp03c-check-scheduled-{light,dark}-390x844.jpg`, `exp03c-scheduled-{light,dark}-1366x768-paige-closed.jpg`, `exp03c-scheduled-{light,dark}-390x844.jpg`.
-- `docs/evidence/ui-delivery/assets/exp03-scheduled-send/` (23): `exp03s-scheduled-{light,dark}-{1536x770,1366x768,1024x768,900x1000}-paige-{closed,open}.jpg` (16), `exp03s-scheduled-{light,dark}-390x844.jpg` (2), `exp03s-scheduled-cancel-hang-{light,dark}-1366x768-paige-closed.jpg` (2), `exp03s-scheduled-cancel-error-light-1366x768-paige-closed.jpg` (1), `exp03s-keyboard-focus-{light,dark}-1366x768.jpg` (2).
-
-Found by scanning each record's measurements JSON for a rendered weekday-month-time string; frames without a scheduled time are unaffected.
+- `docs/evidence/ui-delivery/assets/exp03-composer-inline-check/`: `scripts/live-drive/harness/exp03-composer-inline-check-mount/drive.mjs` → exit 0, 76 OK.
+- `docs/evidence/ui-delivery/assets/exp03-scheduled-send/`: `scripts/live-drive/harness/exp03-scheduled-send-mount/drive.mjs` → exit 0, 37 OK. Before the regex change the same run failed `sendsShown` on exactly the frames that render a time.
+- The 390x844 composer frames are cramped (the left and right rails stay open in the harness at that width); main's committed frame shows the same layout, so this round did not cause it.
 
 ## Scope and collisions
 
@@ -75,4 +74,4 @@ Found by scanning each record's measurements JSON for a rendered weekday-month-t
 
 - Independent review round 1 (no blocker): MAJOR 1, MAJOR 2, MINOR 3, 4, 5 and 8 addressed in 828b6a1a; this record labels the file frames as a preview-passthrough render.
 - Harness divergence: the dock is the shell's `.tcs-paige` column without the `SoloPaigeWorkspace` wrapper; the JSON's `actRatio` reads the button text over its transparent box, not the gold gradient, and is not a contrast claim.
-- The already-scheduled guard reads only within the release window (send_at no older than the 15-minute grace); a row past its grace is the drainer's sweep's to close and does not block.
+- Independent review round 2 (no blocker, no major): MINOR 2 fixed (the guard has no time bound; an identical email past its release grace but not yet swept answers outcome_unknown `COMMS_EMAIL_IDENTICAL_IN_FLIGHT`, never a pass; new test fails on the previous door), MINOR 6 fixed for the guard (a prepared recovery's refusal is outcome_unknown, read from code, no test). Open, filed as follow-ups: MINOR 1 (the guard is a read, not a lock; two confirms in flight together on two surfaces can both prepare — the lock belongs in `prepare_comms_email_send`, a migration), MINOR 3 (the chat's already-scheduled note asks the model to say a UTC time in the business zone; `read_business_time_zone` is offered only on the tenant tier), MINOR 4 (the lead-reply review never reads the door's error body, so the new 409 shows its generic copy), MINOR 5 (the guard keys on the content digest: a different sender is not caught, different files are blocked, and two deliberate identical sends are refused — an owner product boundary).

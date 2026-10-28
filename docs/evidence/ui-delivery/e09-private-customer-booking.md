@@ -28,7 +28,7 @@ SOLO_900X1000_PAIGE_CLOSED: UNVERIFIED: Final composed UI proof remains owed.
 SOLO_900X1000_PAIGE_OPEN: UNVERIFIED: Final composed UI proof remains owed.
 UNVERIFIED: Final exact-head complete database/CI and Preview, final composed-shell rendered matrix, authenticated owner/customer journey, physical iPhone, provider acknowledgment/delivery, deployment and complete founder acceptance. The plan212 Sessions step passed at supporting head d8d5717a3a6962bbe42b84eff650596058cb0a14; it does not establish those separate claims.
 
-INTERNAL_BUILD_IDENTITY: implementation=4ea5a7ebe390640d3089b4ceb05ad5daaa2c68cb; deployment=NOT_DEPLOYED; environment=development; migrations=PROOF_OWED(candidate20271119110009 and20271119110019 have not reached production); edge=PROOF_OWED(original public-booking candidate is not deployed); evidence=docs/evidence/ui-delivery/e09-private-customer-booking.md
+INTERNAL_BUILD_IDENTITY: implementation=4ea5a7ebe390640d3089b4ceb05ad5daaa2c68cb; deployment=NOT_DEPLOYED; environment=development; migrations=PROOF_OWED(candidate20271120110009 and20271120110019 have not reached production); edge=PROOF_OWED(original public-booking candidate is not deployed); evidence=docs/evidence/ui-delivery/e09-private-customer-booking.md
 RELEASE_CHANNEL: development: open PR3001 under review; no production promotion or new customer booking control.
 RELEASE_CLASSIFICATION: internal-only: original booking composition under active development and full-schema repair, not a finished private booking flow.
 CUSTOMER_RELEASE_IDENTITY: none: no customer name, version, announcement or publication.

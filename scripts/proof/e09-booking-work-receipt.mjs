@@ -78,7 +78,7 @@ $a$;
   check('A customer can check its exact original request without repeating a create',()=>assert.equal(readReceipt().state,'not_found'));
   return {baseline:true,bookingWriter:'NOT_RUN',auth:'SYNTHETIC',reducedSchema:true};
  }
- const migration='supabase/migrations/20271119110019_e09_private_booking_commit.sql',migrationSource=read(migration);
+ const migration='supabase/migrations/20271120110019_e09_private_booking_commit.sql',migrationSource=read(migration);
  const migrationSHA256=createHash('sha256').update(migrationSource).digest('hex');
  const proofSource=read('scripts/proof/e09-booking-work-receipt.mjs'),proofSHA256=createHash('sha256').update(proofSource).digest('hex');
  fs.writeFileSync(path.join(proofDir,'executed-native-booking-proof.mjs'),proofSource);

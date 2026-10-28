@@ -1,6 +1,7 @@
 import {readFileSync} from 'node:fs';
 import {transpileModule,ModuleKind,ScriptTarget} from 'typescript';
 import {commercialTermsSummary} from '../../../../supabase/functions/_shared/sales-commercial/terms-summary';
+import {FIXED_COLLECTION_TOTAL_REFUSAL} from '../../../../supabase/functions/_shared/sales-collections/amount-basis';
 import {it,expect} from 'vitest';
 import {decideDeclaredCapability} from '../../../../supabase/functions/_shared/capability-kit/decision';
 import {SALES_COLLECTION_KIT_BY_ACTION} from '../../../../supabase/functions/_shared/paige-spine/domains/sales_collections';
@@ -18,7 +19,7 @@ function setup(options:{role?:string;tenant?:string;replay?:unknown;claimed?:unk
   builder.maybeSingle=async()=>({data:table==='tenant_members'?{role:options.role??'owner',status:'active'}:mutation==='update'?options.claimed?{args:options.claimed}:null:mutation==='insert'?{summary:'Review import',expires_at:'2099-01-01T00:00:00Z'}:null,error:null});
   builder.then=(resolve:(v:unknown)=>unknown,reject:(v:unknown)=>unknown)=>Promise.resolve({error:table==='paige_audit_log'&&options.auditFails?{code:'failure'}:null}).then(resolve,reject);return builder;
  }};
- const scope={Deno:{env:{get:(key:string)=>key},serve:(fn:typeof handler)=>{handler=fn}},createClient:(_url:string,key:string)=>key==='SUPABASE_ANON_KEY'?caller:admin,confirmFingerprint:async()=>'0123456789abcdef',decideDeclaredCapability,SALES_COLLECTION_KIT_BY_ACTION,databaseAnswered:()=>true,UUID,COLLECTION_ACTIONS,parseCollectionCommand,commercialTermsSummary};
+ const scope={Deno:{env:{get:(key:string)=>key},serve:(fn:typeof handler)=>{handler=fn}},createClient:(_url:string,key:string)=>key==='SUPABASE_ANON_KEY'?caller:admin,confirmFingerprint:async()=>'0123456789abcdef',decideDeclaredCapability,SALES_COLLECTION_KIT_BY_ACTION,databaseAnswered:()=>true,UUID,COLLECTION_ACTIONS,parseCollectionCommand,commercialTermsSummary,FIXED_COLLECTION_TOTAL_REFUSAL};
  new Function(...Object.keys(scope),compiled)(...Object.values(scope));
  return {calls,request:async(extra:Record<string,unknown>={})=>{const response=await handler(new Request('https://example.test',{method:'POST',body:JSON.stringify({expected_tenant_id:tenant,operation_id:operation,command,...extra})}));return {status:response.status,body:await response.json()}}};
 }
@@ -43,5 +44,19 @@ it('a canonical stored approval executes the exact reviewed digest with server a
 });
 
 const commercialCommand={action:'collection.create_commercial_terms',client_id:tenant,offer_id:operation,term_kind:'one_time',agreed_amount_minor:350000,agreed_currency:'usd',billing_interval:null,interval_count:null,installments_total:null,payment_schedule:'on_start',starts_on:'2026-11-01',ends_on:null,title:null,notes:null};
+const fixedRefusal=FIXED_COLLECTION_TOTAL_REFUSAL;
+const fixedCommand={action:'collection.save_terms',agreement_id:operation,expected_version:0,terms:{schema_version:1,kind:'full',currency:'usd',total_cents:350000,anchor_date:'2026-11-01',cadence:'monthly',count:1}};
+it('returns the exact finite-total refusal to the existing review without opening approval or execution',async()=>{
+ const test=setup({preview:{eligible:false,summary:fixedRefusal}}),result=await test.request({command:fixedCommand});
+ expect(result.status).toBe(422);expect(result.body).toMatchObject({outcome:'refused',code:'SALES_COLLECTION_INELIGIBLE',message:fixedRefusal});
+ expect(test.calls.map(call=>call.name)).toEqual(['read_sales_collection_command_result','preview_sales_collection_command']);
+});
+it('never promotes an arbitrary refusal summary or another action into that customer message',async()=>{
+ for(const [requested,summary] of [[fixedCommand,'PRIVATE backend note'],[command,fixedRefusal]]){
+  const test=setup({preview:{eligible:false,summary}}),result=await test.request({command:requested});
+  expect(result.status).toBe(422);expect(result.body).not.toHaveProperty('message');
+  expect(test.calls.some(call=>call.name.startsWith('insert:')||call.name==='execute_sales_collection_command')).toBe(false);
+ }
+});
 it('new commercial creation presents exact canonical labels and amount without executing under auto',async()=>{const test=setup({preview:{eligible:true,context:{client_id:tenant,offer_id:operation,client_name:'Client X',offer_name:'Advisory',labels_truncated:false}}});expect((await test.request({command:commercialCommand})).body.outcome).toBe('approval_required');const card=test.calls.find(c=>c.name==='insert:paige_pending_confirmations')?.args as {summary:string};expect(card.summary).toContain('Client X / Advisory');expect(card.summary).toContain('3,500.00');expect(card.summary).not.toContain(tenant);expect(test.calls.some(c=>c.name==='execute_sales_collection_command')).toBe(false);});
 it('new commercial creation cannot propose an opaque or unverified approval context',async()=>{const test=setup();const result=await test.request({command:commercialCommand});expect(result.status).toBe(422);expect(result.body.code).toBe('COMMERCIAL_REVIEW_CONTEXT_UNAVAILABLE');expect(test.calls.some(c=>c.name==='insert:paige_pending_confirmations')).toBe(false);});

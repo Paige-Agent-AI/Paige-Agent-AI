@@ -4,6 +4,8 @@
  */
 export type CollectionAmountBasis='total'|'per_cycle'|'per_installment'|'unverified';
 export type CollectionTermKind='one_time'|'recurring'|'installment'|'deposit'|'custom_quote';
+/** Exact native refusal vocabulary; never display arbitrary backend diagnostics as this message. */
+export const FIXED_COLLECTION_TOTAL_REFUSAL='The original commercial amount is not a verified engagement total. Review its original terms before saving a finite collection schedule.';
 export function readCollectionAmountBasis(value:Record<string,unknown>):CollectionAmountBasis {
  const kind=value.term_kind,basis=value.agreed_amount_basis;
  if(kind===undefined&&basis===undefined)return 'unverified';

@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { prepareWeeklyControlReview } from "../../supabase/functions/_shared/paige-orchestration/weekly-commitment-control-review";
 import { readWeeklyCommitmentProjection } from "../../supabase/functions/_shared/paige-orchestration/weekly-commitment-read";
 import * as weeklyRead from "../../supabase/functions/_shared/paige-orchestration/weekly-commitment-read";
+import * as controlReview from "../../supabase/functions/_shared/paige-orchestration/weekly-commitment-control-review";
 import type { ContextIdentity } from "../../supabase/functions/_shared/paige-context/mod";
 import type { WeeklyControlOperation } from "../../supabase/functions/_shared/paige-orchestration/weekly-commitment-control-input";
 
@@ -19,6 +20,56 @@ function fixture(data:unknown=canonical()) {
   return {caller,calls,currentIdentity:()=>current,switchIdentity:(next:ContextIdentity)=>{current=next;}};
 }
 const target={automation_id:process};
+
+describe("original schedule review safe Chat projection", () => {
+  const run = (...args: unknown[]) => {
+    const fn = (controlReview as Record<string, unknown>).prepareWeeklyScheduleReviewChatResponse;
+    expect(typeof fn, "the original review must own the model-safe projection").toBe("function");
+    return (fn as (...args: unknown[]) => Promise<Record<string, unknown>>)(...args);
+  };
+  it("compares original schedule/revision while withholding the exact server RPC binding", async () => {
+    const f = fixture();
+    const result = await run(identity, f, { ...target, ...schedule, weekday: 3 }, request, 8000);
+    expect(result).toMatchObject({ status: "available", review: { operation: "configure", revision: 7,
+      current_schedule: schedule, proposed_schedule: { ...schedule, weekday: 3 },
+      authorization: "not_granted_by_review", proposed_next_run_at: null, execution_availability: "held" } });
+    expect(result).not.toHaveProperty("binding");
+    expect(JSON.stringify(result)).not.toMatch(/_expected_revision|_expected_control|configure_weekly_commitment_check/);
+    expect(f.calls).toEqual(["current_user_tenant_id", "weekly_commitment_owner", "get_weekly_commitment_checks",
+      "current_user_tenant_id", "weekly_commitment_owner"]);
+  });
+  it("never reads after the existing server turn budget is exhausted", async () => {
+    for (const budget of [0, -1, NaN]) {
+      const f = fixture();
+      expect(await run(identity, f, { ...target, ...schedule }, request, budget)).toMatchObject({ status: "unavailable" });
+      expect(f.calls).toHaveLength(0);
+    }
+  });
+  it("retires late preflight at the original elapsed deadline without a later read or write", async () => {
+    vi.useFakeTimers();
+    try {
+      let finish!: (value: { data: unknown; error: null }) => void;
+      const f = fixture(), caller = { rpc: vi.fn(() => new Promise<{ data: unknown; error: null }>(resolve => { finish = resolve; })) };
+      const pending = run(identity, { ...f, caller }, { ...target, ...schedule }, request, 25);
+      await vi.advanceTimersByTimeAsync(26);
+      expect(await pending).toMatchObject({ status: "unavailable" });
+      finish({ data: tenant, error: null }); await vi.advanceTimersByTimeAsync(1);
+      expect(caller.rpc).toHaveBeenCalledTimes(1);
+    } finally { vi.useRealTimers(); }
+  });
+  it("rejects foreign, malformed and client-scoped proposals without binding leakage", async () => {
+    const f = fixture();
+    expect(await run(identity, f, { ...target, ...schedule, _expected_revision: 7 }, request, 8000))
+      .toMatchObject({ status: "needs_input" });
+    expect(f.calls).toHaveLength(0);
+    expect(await run(identity, f, { ...target, automation_id: request, ...schedule }, request, 8000))
+      .toMatchObject({ status: "unavailable", reason: "target_unavailable" });
+    const client = fixture();
+    expect(await run({ ...identity, actAsClientId: process }, client, { ...target, ...schedule }, request, 8000))
+      .toMatchObject({ status: "refused" });
+    expect(client.calls).toHaveLength(0);
+  });
+});
 
 describe("canonical weekly conversation review without approval or execution",()=>{
   it("retires a review when cancellation arrives at the completed canonical-read handoff",async()=>{

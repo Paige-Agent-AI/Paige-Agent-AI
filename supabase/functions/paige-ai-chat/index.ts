@@ -14,7 +14,8 @@ import { readCalendarAccountShape, readCalendarBooking, readCalendarAgenda, cale
 import { CALENDAR_BOOKING_READ_TOOLS, CALENDAR_AGENDA_READ_TOOLS } from "../_shared/paige-spine/domains/calendar_booking.ts";
 import { readOperationsTask, type OperationsTaskReadCaller } from "../_shared/operations-task-read.ts";
 import { CRM_TASK_READ_TOOLS } from "../_shared/paige-spine/domains/crm_task.ts";
-import { WEEKLY_COMMITMENT_STATUS_TOOL_NAME, WEEKLY_COMMITMENT_STATUS_TOOLS, weeklyCommitmentStatusToolsForContext, WEEKLY_COMMITMENT_DRAFT_TOOL_NAME, WEEKLY_COMMITMENT_DRAFT_TOOLS, weeklyCommitmentDraftToolsForContext, OWNER_TASK_HISTORY_TOOL_NAME, OWNER_TASK_HISTORY_TOOLS, ownerTaskHistoryToolsForContext } from "../_shared/paige-spine/domains/automations.ts";
+import { WEEKLY_COMMITMENT_STATUS_TOOL_NAME, WEEKLY_COMMITMENT_STATUS_TOOLS, weeklyCommitmentStatusToolsForContext, WEEKLY_COMMITMENT_DRAFT_TOOL_NAME, WEEKLY_COMMITMENT_DRAFT_TOOLS, weeklyCommitmentDraftToolsForContext, WEEKLY_SCHEDULE_REVIEW_TOOL_NAME, WEEKLY_SCHEDULE_REVIEW_TOOLS, weeklyScheduleReviewToolsForContext, OWNER_TASK_HISTORY_TOOL_NAME, OWNER_TASK_HISTORY_TOOLS, ownerTaskHistoryToolsForContext } from "../_shared/paige-spine/domains/automations.ts";
+import { prepareWeeklyScheduleReviewChatResponse } from "../_shared/paige-orchestration/weekly-commitment-control-review.ts";
 import { prepareWeeklyCommitmentChatResponse } from "../_shared/paige-orchestration/weekly-commitment-read.ts";
 import { createWeeklyDraftDeadline } from "../_shared/paige-orchestration/weekly-draft-deadline.ts";
 import { readOwnerTaskHistoryForChat } from "../_shared/paige-orchestration/owner-task-history-chat.ts";
@@ -382,7 +383,7 @@ If asked to create, change, send, schedule or delete anything: say plainly and b
 // Hub: APPROVED ... covers Chat and Live"): the three Team Hub reads. Caller JWT through the
 // team_hub_* definers, which re-prove the seat, canonical SOLO and visibility; they write nothing.
 // The reply tool (team_hub_post_reply) is a write and stays withheld here like every other write.
-const CONVERSATIONAL_ADMITTED_READ_TOOLS: ReadonlySet<string> = new Set(Object.freeze(["read_business_metric", "get_business_snapshot", "read_client_engagement_status", "read_business_time_zone", "read_calendar_booking", "read_calendar_agenda", "crm_get_task", WEEKLY_COMMITMENT_STATUS_TOOL_NAME, OWNER_TASK_HISTORY_TOOL_NAME, "team_hub_conversations", "team_hub_read_conversation", "team_hub_search"]));
+const CONVERSATIONAL_ADMITTED_READ_TOOLS: ReadonlySet<string> = new Set(Object.freeze(["read_business_metric", "get_business_snapshot", "read_client_engagement_status", "read_business_time_zone", "read_calendar_booking", "read_calendar_agenda", "crm_get_task", WEEKLY_COMMITMENT_STATUS_TOOL_NAME, WEEKLY_SCHEDULE_REVIEW_TOOL_NAME, OWNER_TASK_HISTORY_TOOL_NAME, "team_hub_conversations", "team_hub_read_conversation", "team_hub_search"]));
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": `authorization, x-client-info, apikey, content-type, x-client-portal-business, ${CHAT_CONTROL_HEADER}`,
@@ -720,6 +721,7 @@ function describeStep(
     case "team_hub_post_reply": return { label: failed ? "Couldn't post that Team Hub reply" : "Posted your Team Hub reply", group: "shared" };
     case "client_portal_request_share": return { label: failed ? "Couldn't verify that request was shared"
       : out.already_shared === true || out.replayed === true ? "Confirmed the request was already shared" : "Shared the saved customer request", group: "shared" };
+    case "read_weekly_schedule_review": return { label: failed ? "Couldn't review that weekly schedule" : "Reviewed that weekly schedule", group: "shared" };
     case WEEKLY_COMMITMENT_STATUS_TOOL_NAME: return { label: failed ? "Couldn't check your weekly responsibility" : "Checked your weekly responsibility", group: "shared" };
     default: return { label: "Working on that", group: "shared" };
   }
@@ -9067,6 +9069,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
     if (callerTier === "tenant" && calendarBookingAccountShape === "solo" && taskReadRole && !scopedClientId && !customerPortal) toolDefs.push(...CRM_TASK_READ_TOOLS);
     if (weeklyCommitmentStatusToolsForContext({ callerTier, accountShape: calendarBookingAccountShape, role: taskReadRole, scopedClientId: scopedClientId ?? null, customerPortal }).length) toolDefs.push(...WEEKLY_COMMITMENT_STATUS_TOOLS);
     if (weeklyCommitmentDraftToolsForContext({ callerTier, accountShape: calendarBookingAccountShape, role: taskReadRole, scopedClientId: scopedClientId ?? null, customerPortal }).length) toolDefs.push(...WEEKLY_COMMITMENT_DRAFT_TOOLS);
+    if (weeklyScheduleReviewToolsForContext({ callerTier, accountShape: calendarBookingAccountShape, role: taskReadRole, scopedClientId: scopedClientId ?? null, customerPortal }).length) toolDefs.push(...WEEKLY_SCHEDULE_REVIEW_TOOLS);
     if (ownerTaskHistoryToolsForContext({ callerTier, accountShape: calendarBookingAccountShape, role: taskReadRole, scopedClientId: scopedClientId ?? null, customerPortal }).length) toolDefs.push(...OWNER_TASK_HISTORY_TOOLS);
     // One-to-one business email (INT-328): declared by its domain module, executed only by its door.
     toolDefs.push(...COMMS_EMAIL_TOOLS as any);
@@ -18917,6 +18920,40 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               ? { success: false, outcome_unknown: true, error: "The access change did not report back. Read it with read_client_portal_access before anything else, and do not retry automatically.", note: OUTCOME_UNKNOWN_NOTE }
               : { success: false, error: "The client's portal access could not be read just now.", not_applied: true }) });
           }
+        } else if (tc.function.name === WEEKLY_SCHEDULE_REVIEW_TOOL_NAME) {
+          // Preview over the original owner projection; no confirmation or writer.
+          const weeklyReviewTenant = callerTier === "tenant" ? personaCtx?.tenant_id ?? null : null;
+          const weeklyReviewIdentity: ContextIdentity = { actorId: user.id, tenantId: weeklyReviewTenant, workspaceId: weeklyReviewTenant,
+            role: taskReadRole, accountShape: calendarBookingAccountShape, actAsClientId: scopedClientId ?? null,
+            scopeEpoch: payloadThreadId ?? validatedData.requestIntentId ?? "current_request" };
+          let weeklyReviewArgs: unknown = null;
+          try { weeklyReviewArgs = JSON.parse(tc.function.arguments || "{}"); } catch { /* invalid intent stays needs_input */ }
+          const weeklyReviewIntent = weeklyDraftRuntime()?.intentId;
+          let result = !weeklyReviewIntent ? { status: "unavailable" as const,
+            message: "The current conversation request could not be verified. Nothing was changed." }
+            : await prepareWeeklyScheduleReviewChatResponse(weeklyReviewIdentity, {
+              caller: supabaseClient,
+              currentIdentity: () => weeklyDraftCurrent() && !customerPortal && callerTier === "tenant"
+                ? { ...weeklyReviewIdentity, tenantId: personaCtx?.tenant_id ?? null, workspaceId: personaCtx?.tenant_id ?? null } : null,
+              revalidateScope: async () => await revalidateTenantKnowledgeScope(true)
+                && (await readCalendarAccountShape(supabaseClient as unknown as CalendarBookingReadCaller,
+                  weeklyReviewTenant, req.signal)).status === "available",
+              signal: req.signal,
+            }, weeklyReviewArgs, weeklyReviewIntent, WALL_CLOCK_MS - (Date.now() - startedAt));
+          if (result.status === "available" && weeklyReviewTenant && weeklyDraftCurrent()) {
+            const receiptBudget = Math.min(2000, WALL_CLOCK_MS - (Date.now() - startedAt));
+            if (receiptBudget > 0) try {
+              const receiptStage = createWeeklyDraftDeadline(receiptBudget, weeklyDraftCurrent);
+              const receiptRunId = await receiptStage(() => stableRunId([tc.function.name, weeklyReviewTenant, `${weeklyReviewIntent}:${tc.id}`]));
+              await receiptStage(() => recordCapabilityRun(supabase, { tenantId: weeklyReviewTenant, actorId: user.id,
+                capabilityKey: tc.function.name, outcome: "capability_succeeded",
+                runId: receiptRunId,
+                detail: { channel: "paige_chat", scope: "personal_planning_commitments", read_only: true, preview_only: true } }));
+            } catch { console.error("[paige] Weekly review read receipt unavailable"); }
+          }
+          if (!weeklyDraftCurrent() || weeklyReviewTenant !== personaCtx?.tenant_id) result = { status: "unavailable",
+            message: "The current owner context changed during the review. Re-read the original responsibility; nothing was changed." };
+          toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(result) });
         } else if (tc.function.name === WEEKLY_COMMITMENT_STATUS_TOOL_NAME) {
           // Final domain consumer: no incumbent executor gains a dominating condition.
           // Original caller JWT, canonical owner-only RPC and current server scope.

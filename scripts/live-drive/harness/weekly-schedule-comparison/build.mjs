@@ -1,0 +1,23 @@
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import {build} from 'esbuild';
+import {createHash} from 'node:crypto';
+import {execFileSync} from 'node:child_process';
+import {fileURLToPath} from 'node:url';
+const root=process.cwd(),out=path.join(root,'work/weekly-comparison-native');
+const fixture=path.dirname(fileURLToPath(import.meta.url));
+await fs.mkdir(out,{recursive:true});
+for(const name of ['source.tsx','ports.tsx','host.css'])await fs.copyFile(path.join(fixture,name),path.join(out,name));
+execFileSync(process.execPath,[path.join(root,'node_modules/tailwindcss/lib/cli.js'),'-i','src/index.css','-o',path.join(out,'global.css'),'--content','src/components/chat/MarkdownMessage.tsx,src/components/ui/sheet.tsx,src/solo/weekly/WeeklyResponsibilityEntry.tsx,work/weekly-comparison-native/source.tsx'],{cwd:root,stdio:'pipe'});
+const hash=b=>createHash('sha256').update(b).digest('hex');
+const mocked=[];
+const result=await build({entryPoints:[path.join(out,'source.tsx')],bundle:true,write:false,outfile:path.join(out,'bundle.js'),jsx:'automatic',format:'iife',metafile:true,define:{'process.env.NODE_ENV':'"production"'},plugins:[{name:'offline-explicit-boundaries',setup(api){api.onResolve({filter:/^\.\/useWeeklyResponsibility$|^\.\/WeeklyDraftComposer$/},args=>{if(!args.importer.endsWith('WeeklyResponsibilityEntry.tsx'))return;mocked.push({importer:path.relative(root,args.importer),module:args.path});return{path:path.join(out,'ports.tsx')};});}}]});
+const js=result.outputFiles.find(f=>f.path.endsWith('.js')).text;
+const css=(await fs.readFile(path.join(out,'global.css'),'utf8'))+'\n'+result.outputFiles.find(f=>f.path.endsWith('.css')).text;
+await fs.writeFile(path.join(out,'bundle.js'),js);
+await fs.writeFile(path.join(out,'bundle.css'),css);
+await fs.writeFile(path.join(out,'index.html'),`<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src 'none';script-src 'self';style-src 'self' 'unsafe-inline';img-src data:;font-src 'self';connect-src 'none';object-src 'none';base-uri 'none';form-action 'none'"><title>EXP05 offline weekly comparison</title><link rel="stylesheet" href="/bundle.css"></head><body><div id="root"></div><script src="/bundle.js"></script></body></html>`);
+const sources=[];for(const relative of Object.keys(result.metafile.inputs)){if(relative.startsWith('src/'))sources.push({path:relative,sha256:hash(await fs.readFile(path.join(root,relative)))});}
+const proof={head:execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),boundary:'Synthetic local render and interaction only; actual source components, explicit fixture hooks/draft exclusion; no model/runtime/authentication/business effect proof.',mocked,sources,bundle:hash(js),css:hash(css)};
+await fs.writeFile(path.join(out,'manifest.json'),JSON.stringify(proof,null,2)+'\n');
+console.log(JSON.stringify({head:proof.head,sources:sources.length,mocked,bundle:proof.bundle}));

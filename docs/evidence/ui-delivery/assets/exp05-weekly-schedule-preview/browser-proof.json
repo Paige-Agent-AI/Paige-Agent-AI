@@ -1,0 +1,456 @@
+{
+  "boundary": "Offline synthetic flow only; actual Markdown/weekly entry/sheet/schedule controls; representative Chat wording; not model, authority, production shell, authenticated or provider proof",
+  "checks": [
+    {
+      "name": "conversation-loading",
+      "pass": true
+    },
+    {
+      "name": "native-loading",
+      "pass": true,
+      "excerpt": "- dialog \"Weekly responsibility\":\n  - heading \"Weekly responsibility\" [level=2]\n  - paragraph: Current owner scope, canonical schedules and verified results.\n  - banner:\n    - heading \"Weekly commitment check\" [level=2]\n    - paragraph: Review the week. Keep the original work in Operations.\n    - button \"Refresh weekly responsibility\" [disabled]:\n  - status: Reading this owner’s current schedule and receipts…\n  - navigation \"Weekly responsibility records\":\n    - link \"Clients → Calendar\":\n      - /url: /solo/1701/clients/calendar\n    - link \"Operations → Work\":\n      - /url: /solo/1701/operations/work\n  - button \"Close\" [active]:\n    - generi"
+    },
+    {
+      "name": "conversation-refused",
+      "pass": true
+    },
+    {
+      "name": "native-refused",
+      "pass": true,
+      "excerpt": "- dialog \"Weekly responsibility\":\n  - heading \"Weekly responsibility\" [level=2]\n  - paragraph: Current owner scope, canonical schedules and verified results.\n  - banner:\n    - heading \"Weekly commitment check\" [level=2]\n    - paragraph: Review the week. Keep the original work in Operations.\n    - button \"Refresh weekly responsibility\" [active]:\n  - status: Weekly responsibility inspection is available to the current workspace owner. No other account’s records are shown.\n  - navigation \"Weekly responsibility records\":\n    - link \"Clients → Calendar\":\n      - /url: /solo/1701/clients/calendar\n    - link \"Operations → Work\":\n      - /url: /solo/"
+    },
+    {
+      "name": "conversation-unavailable",
+      "pass": true
+    },
+    {
+      "name": "native-unavailable",
+      "pass": true,
+      "excerpt": "- dialog \"Weekly responsibility\":\n  - heading \"Weekly responsibility\" [level=2]\n  - paragraph: Current owner scope, canonical schedules and verified results.\n  - banner:\n    - heading \"Weekly commitment check\" [level=2]\n    - paragraph: Review the week. Keep the original work in Operations.\n    - button \"Refresh weekly responsibility\" [active]:\n  - alert:\n    - heading \"Current status couldn’t be verified\" [level=3]\n    - paragraph: Refresh to read the schedule again. This does not mean no check exists or that a run failed.\n    - button \"Try again\"\n  - navigation \"Weekly responsibility records\":\n    - link \"Clients → Calendar\":\n      - /url: "
+    },
+    {
+      "name": "conversation-empty",
+      "pass": true
+    },
+    {
+      "name": "native-empty",
+      "pass": true,
+      "excerpt": "- dialog \"Weekly responsibility\":\n  - heading \"Weekly responsibility\" [level=2]\n  - paragraph: Current owner scope, canonical schedules and verified results.\n  - banner:\n    - heading \"Weekly commitment check\" [level=2]\n    - paragraph: Review the week. Keep the original work in Operations.\n    - button \"Refresh weekly responsibility\" [active]:\n  - paragraph: Read Tue, Oct 27, 11:00 AM EDT\n  - heading \"No weekly responsibility is registered\" [level=3]\n  - paragraph: Prepare the schedule and scope for review. Recurring execution is currently unavailable.\n  - navigation \"Weekly responsibility records\":\n    - link \"Clients → Calendar\":\n      - /"
+    },
+    {
+      "name": "conversation-missing",
+      "pass": true
+    },
+    {
+      "name": "native-missing",
+      "pass": true,
+      "excerpt": "- dialog \"Weekly responsibility\":\n  - heading \"Weekly responsibility\" [level=2]\n  - paragraph: Current owner scope, canonical schedules and verified results.\n  - banner:\n    - heading \"Weekly commitment check\" [level=2]\n    - paragraph: Review the week. Keep the original work in Operations.\n    - button \"Refresh weekly responsibility\" [active]:\n  - paragraph: Read Tue, Oct 27, 11:00 AM EDT\n  - article:\n    - heading \"Weekly commitments\" [level=3]\n    - generic: Paused\n    - paragraph:\n      - text: Every Monday at 09:00\n      - text: America/New_York\n    - term: Next execution\n    - definition: No executable next run is available\n    - term: "
+    },
+    {
+      "name": "conversation-ready",
+      "pass": true
+    },
+    {
+      "name": "native-ready",
+      "pass": true,
+      "excerpt": "- dialog \"Weekly responsibility\":\n  - heading \"Weekly responsibility\" [level=2]\n  - paragraph: Current owner scope, canonical schedules and verified results.\n  - banner:\n    - heading \"Weekly commitment check\" [level=2]\n    - paragraph: Review the week. Keep the original work in Operations.\n    - button \"Refresh weekly responsibility\" [active]:\n  - paragraph: Read Tue, Oct 27, 11:00 AM EDT\n  - article:\n    - heading \"Weekly commitments\" [level=3]\n    - generic: Paused\n    - paragraph:\n      - text: Every Monday at 09:00\n      - text: America/New_York\n    - term: Next execution\n    - definition: No executable next run is available\n    - term: "
+    },
+    {
+      "name": "unknown-native-no-auto-retry",
+      "pass": true
+    },
+    {
+      "name": "invalid-zone-no-save",
+      "pass": true
+    },
+    {
+      "name": "inner-escape-keeps-sheet",
+      "pass": true
+    },
+    {
+      "name": "second-neutral-context-native-empty",
+      "pass": true
+    },
+    {
+      "name": "reduced-motion-native-sheet",
+      "pass": true,
+      "observed": {
+        "animation": "1e-05s",
+        "transition": "1e-05s"
+      }
+    },
+    {
+      "name": "exact-time-keyboard-edit",
+      "pass": true,
+      "observed": "Native ArrowUp/ArrowRight/3/0 changed saved09:00 to proposed10:30; actual review showed Tuesday10:30, currentMonday09:00. Earlier automated fill did not update React state and is INVALID as product proof."
+    }
+  ],
+  "captures": [
+    {
+      "file": "light-1536-open.png",
+      "requested": {
+        "width": 1536,
+        "height": 770
+      },
+      "panel": "open",
+      "measure": {
+        "body": 1536,
+        "root": 1536,
+        "theme": "light",
+        "width": 1536
+      },
+      "globalOverflow": false
+    },
+    {
+      "file": "light-1536-closed.png",
+      "requested": {
+        "width": 1536,
+        "height": 770
+      },
+      "panel": "closed",
+      "measure": {
+        "body": 1536,
+        "root": 1536,
+        "theme": "light",
+        "width": 1536
+      },
+      "globalOverflow": false
+    },
+    {
+      "file": "light-1366-open.png",
+      "requested": {
+        "width": 1366,
+        "height": 768
+      },
+      "panel": "open",
+      "measure": {
+        "body": 1366,
+        "root": 1366,
+        "theme": "light",
+        "width": 1366
+      },
+      "globalOverflow": false
+    },
+    {
+      "file": "light-1366-closed.png",
+      "requested": {
+        "width": 1366,
+        "height": 768
+      },
+      "panel": "closed",
+      "measure": {
+        "body": 1366,
+        "root": 1366,
+        "theme": "light",
+        "width": 1366
+      },
+      "globalOverflow": false
+    },
+    {
+      "file": "light-1024-open.png",
+      "requested": {
+        "width": 1024,
+        "height": 768
+      },
+      "panel": "open",
+      "measure": {
+        "body": 1024,
+        "root": 1024,
+        "theme": "light",
+        "width": 1024
+      },
+      "globalOverflow": false
+    },
+    {
+      "file": "light-1024-closed.png",
+      "requested": {
+        "width": 1024,
+        "height": 768
+      },
+      "panel": "closed",
+      "measure": {
+        "body": 1024,
+        "root": 1024,
+        "theme": "light",
+        "width": 1024
+      },
+      "globalOverflow": false
+    },
+    {
+      "file": "light-900-open.png",
+      "requested": {
+        "width": 900,
+        "height": 1000
+      },
+      "panel": "open",
+      "measure": {
+        "body": 900,
+        "root": 900,
+        "theme": "light",
+        "width": 900
+      },
+      "globalOverflow": false
+    },
+    {
+      "file": "light-900-closed.png",
+      "requested": {
+        "width": 900,
+        "height": 1000
+      },
+      "panel": "closed",
+      "measure": {
+        "body": 900,
+        "root": 900,
+        "theme": "light",
+        "width": 900
+      },
+      "globalOverflow": false
+    },
+    {
+      "file": "light-390-open.png",
+      "requested": {
+        "width": 390,
+        "height": 844
+      },
+      "panel": "open",
+      "measure": {
+        "body": 375,
+        "root": 375,
+        "theme": "light",
+        "width": 390
+      },
+      "globalOverflow": false
+    },
+    {
+      "file": "light-390-closed.png",
+      "requested": {
+        "width": 390,
+        "height": 844
+      },
+      "panel": "closed",
+      "measure": {
+        "body": 390,
+        "root": 390,
+        "theme": "light",
+        "width": 390
+      },
+      "globalOverflow": false
+    },
+    {
+      "file": "light-320-open.png",
+      "requested": {
+        "width": 320,
+        "height": 740
+      },
+      "panel": "open",
+      "measure": {
+        "body": 305,
+        "root": 305,
+        "theme": "light",
+        "width": 320
+      },
+      "globalOverflow": false
+    },
+    {
+      "file": "light-320-closed.png",
+      "requested": {
+        "width": 320,
+        "height": 740
+      },
+      "panel": "closed",
+      "measure": {
+        "body": 320,
+        "root": 320,
+        "theme": "light",
+        "width": 320
+      },
+      "globalOverflow": false
+    },
+    {
+      "file": "dark-1536-open.png",
+      "requested": {
+        "width": 1536,
+        "height": 770
+      },
+      "panel": "open",
+      "measure": {
+        "body": 1536,
+        "root": 1536,
+        "theme": "dark",
+        "width": 1536
+      },
+      "globalOverflow": false
+    },
+    {
+      "file": "dark-1536-closed.png",
+      "requested": {
+        "width": 1536,
+        "height": 770
+      },
+      "panel": "closed",
+      "measure": {
+        "body": 1536,
+        "root": 1536,
+        "theme": "dark",
+        "width": 1536
+      },
+      "globalOverflow": false
+    },
+    {
+      "file": "dark-1366-open.png",
+      "requested": {
+        "width": 1366,
+        "height": 768
+      },
+      "panel": "open",
+      "measure": {
+        "body": 1366,
+        "root": 1366,
+        "theme": "dark",
+        "width": 1366
+      },
+      "globalOverflow": false
+    },
+    {
+      "file": "dark-1366-closed.png",
+      "requested": {
+        "width": 1366,
+        "height": 768
+      },
+      "panel": "closed",
+      "measure": {
+        "body": 1366,
+        "root": 1366,
+        "theme": "dark",
+        "width": 1366
+      },
+      "globalOverflow": false
+    },
+    {
+      "file": "dark-1024-open.png",
+      "requested": {
+        "width": 1024,
+        "height": 768
+      },
+      "panel": "open",
+      "measure": {
+        "body": 1024,
+        "root": 1024,
+        "theme": "dark",
+        "width": 1024
+      },
+      "globalOverflow": false
+    },
+    {
+      "file": "dark-1024-closed.png",
+      "requested": {
+        "width": 1024,
+        "height": 768
+      },
+      "panel": "closed",
+      "measure": {
+        "body": 1024,
+        "root": 1024,
+        "theme": "dark",
+        "width": 1024
+      },
+      "globalOverflow": false
+    },
+    {
+      "file": "dark-900-open.png",
+      "requested": {
+        "width": 900,
+        "height": 1000
+      },
+      "panel": "open",
+      "measure": {
+        "body": 900,
+        "root": 900,
+        "theme": "dark",
+        "width": 900
+      },
+      "globalOverflow": false
+    },
+    {
+      "file": "dark-900-closed.png",
+      "requested": {
+        "width": 900,
+        "height": 1000
+      },
+      "panel": "closed",
+      "measure": {
+        "body": 900,
+        "root": 900,
+        "theme": "dark",
+        "width": 900
+      },
+      "globalOverflow": false
+    },
+    {
+      "file": "dark-390-open.png",
+      "requested": {
+        "width": 390,
+        "height": 844
+      },
+      "panel": "open",
+      "measure": {
+        "body": 375,
+        "root": 375,
+        "theme": "dark",
+        "width": 390
+      },
+      "globalOverflow": false
+    },
+    {
+      "file": "dark-390-closed.png",
+      "requested": {
+        "width": 390,
+        "height": 844
+      },
+      "panel": "closed",
+      "measure": {
+        "body": 390,
+        "root": 390,
+        "theme": "dark",
+        "width": 390
+      },
+      "globalOverflow": false
+    },
+    {
+      "file": "dark-320-open.png",
+      "requested": {
+        "width": 320,
+        "height": 740
+      },
+      "panel": "open",
+      "measure": {
+        "body": 305,
+        "root": 305,
+        "theme": "dark",
+        "width": 320
+      },
+      "globalOverflow": false
+    },
+    {
+      "file": "dark-320-closed.png",
+      "requested": {
+        "width": 320,
+        "height": 740
+      },
+      "panel": "closed",
+      "measure": {
+        "body": 320,
+        "root": 320,
+        "theme": "dark",
+        "width": 320
+      },
+      "globalOverflow": false
+    }
+  ],
+  "unverified": [
+    "Actual browser200percent zoom: shortcuts did not change observed1366px/ratio1; no zoom PASS",
+    "Natural model wording and production Root transport",
+    "Authenticated authority, real changes/receipts/reload, provider readiness, existing/new tenants",
+    "Full production SOLO shell geometry; this neutral frame uses actual target components only"
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "boundary": "PRE-IMPLEMENTATION SOURCE-BASED PROTOTYPE ONLY; explicit synthetic lookup and address/copy adapter; no authenticated or business effects",
+  "entry": "original Planning reference → existing current-caller Work inspector",
+  "verified": "Opened exact synthetic original Planning row with current Work editor",
+  "unavailable": "Original work unavailable; no details, no invented current state; read-only Refresh offered",
+  "escapeAttempt": {
+    "status": "NO_OBSERVED_CLOSE",
+    "active": "Refresh source work",
+    "dialogs": 1,
+    "route": "/solo/1701/operations/work?planningItem=30000000-0000-4000-8000-000000000011"
+  },
+  "close": {
+    "active": "Refresh source work",
+    "dialogs": 1,
+    "notice": [
+      "Planning work is unavailable in this workspace. Retry planning work",
+      "CRM tasks are unavailable. Retry CRM tasks",
+      "Review assignments unavailableCurrent work and source access could not be verified. Refresh to inspect your recorded nominations.",
+      "This record could not be verified for your current account and workspace. It may have changed or become unavailable."
+    ]
+  }
+}

@@ -1052,6 +1052,25 @@ feature credit for this closeout.
 
 ## EXP05 weekly same-session recovery — October25 development
 
+### October28 original Planning Work continuation — development
+
+The original `operations_work` reference now has a closed optional Planning kind
+in [#3035](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3035), preserving
+the original UUID through normalization/deduplication to the unchanged native
+caller/RLS Work reader. It is an address, never task completion, authority or
+permission to retry an unknown action. CRM and Planning identities stay distinct.
+Native prototype testing exposed a real exit defect: leaving the focus query
+reopened a closed item. Clear it only after the original unsaved-work guard.
+The useful lesson is to verify the whole original-record round trip, including
+reload and exit, rather than equate a rendered link with recovery.
+
+Original126-source/29-dispatch baseline reproduces; only two separately reviewed
+link-helper dependency pins require renewal, with extractor/metadata/hostile
+checks unchanged. [Original UI/source evidence](../evidence/ui-delivery/exp05-planning-work-reference.md)
+keeps synthetic ports separate from authenticated roles, real records/Rails and
+full ten/E5/owner-away/Builder/both-chat/Live/founder acceptance. Development,
+reviewed source, green hosted checks and released customer results remain distinct.
+
 ### October26 whole-Experience receiving reconciliation
 
 Owner design addendum ANT-11/704476b3 is mapped as subcases in the same original

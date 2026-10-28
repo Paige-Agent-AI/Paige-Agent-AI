@@ -91,6 +91,15 @@ it("clears only the Task address on explicit dismissal, keeping unrelated query/
  await render(["/solo/123/operations/work","/solo/123/operations/work?task=33333333-3333-4333-8333-333333333333&filter=active#current"]);
  await click("Dismiss Task focus");expect(container.querySelector("output")?.textContent).toBe("/solo/123/operations/work?filter=active#current");
 });
+it("clears only the neutral Planning address on permitted close so the original URL cannot reopen it", async () => {
+  const path = "/solo/123/operations/work?planningItem=30000000-0000-4000-8000-000000000011&filter=mine#original";
+  await render(["/solo/123/operations/work", path]);
+  harness.reason = "Unsaved original work"; await click("Dismiss source");
+  expect(container.querySelector("output")?.textContent).toBe(path);
+  harness.reason = null; await click("Dismiss source");
+  expect(container.querySelector("output")?.textContent).toBe("/solo/123/operations/work?filter=mine#original");
+  expect(container.querySelector("[data-query]")?.getAttribute("data-query")).toBe("?filter=mine");
+});
 it("restores BrowserRouter's accepted index without overwriting its Back destination",async()=>{
  const originalUrl=window.location.href,originalState=window.history.state;window.history.replaceState({idx:0},"","/solo/123/operations/work");
  const indices:number[]=[];let first=()=>{},restored=()=>{};

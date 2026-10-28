@@ -20,8 +20,12 @@ export type OwnerTaskRead = { status: "ready"; items: OwnerTaskReview[]; hasMore
   | { status: "loading" | "refused" | "unavailable" };
 export type OwnerTaskControl = { status: "saved"; state: "live" | "paused" }
   | { status: "refused" | "stale" | "busy" | "unsupported" | "unavailable" | "unknown" };
+// Local denial provenance only. Never copied from a resource/Edge response and
+// never accepted by a writer as permission or execution evidence.
+type AccessRefusal = { status: "refused"; access: "refused" };
+const refusedAccess = (): AccessRefusal => ({ status: "refused", access: "refused" });
 export type OwnerTaskHistoryList = { status: "ready"; items: { approvalId: string; occurrenceId: string; updatedAt: string; approvalStatus: string }[]; hasMore: boolean }
-  | { status: "refused" | "unavailable" };
+  | { status: "refused" | "unavailable" } | AccessRefusal;
 export type OwnerTaskHistoryInvoker = { invoke(name: string, options: { body: { approvalId: string; tenantId: string }; method: "POST" }): PromiseLike<Response> };
 const PROCESS_KEYS = ["id", "tenant_id", "name", "category", "trigger_key", "trigger_config", "conditions", "created_by", "state", "granted_lane", "owner_task_armed_at"] as const;
 const object = (v: unknown): v is JsonObject => !!v && typeof v === "object" && !Array.isArray(v);
@@ -83,6 +87,7 @@ export async function readOwnerTaskHistoryList(scope: OwnerTaskScope, processId:
   if (!uuid(processId)) return { status: "refused" };
   try {
     const before = await authority(captured, caller, current, deadline);
+    if (before === "refused") return refusedAccess();
     if (before !== "ready") return { status: before };
     const rows = await deadline.wait(() => caller.from("paige_approval_queue_v")
       .select("id,tenant_id,source,category,type,status,updated_at,metadata")
@@ -104,6 +109,7 @@ export async function readOwnerTaskHistoryList(scope: OwnerTaskScope, processId:
     }
     const after = await authority(captured, caller, current, deadline);
     deadline.check();
+    if (after === "refused") return refusedAccess();
     return after === "ready" ? { status: "ready", items: items.slice(0, 25), hasMore: items.length > 25 } : { status: after };
   } catch { return { status: matches(captured, current) ? "unavailable" : "refused" }; }
 }
@@ -129,15 +135,17 @@ function historyProjection(data: unknown, processId: string, approvalId: string)
 /** One deliberate original-record read. The ordinary SDK supplies its current
  * JWT; this port cannot supply tokens, execute approvals or replay an action. */
 export async function readOwnerTaskOutcome(scope: OwnerTaskScope, selection: { processId: string; approvalId: string; occurrenceId: string },
-  caller: OwnerTaskCaller, functions: OwnerTaskHistoryInvoker, current: () => OwnerTaskScope | null): Promise<OwnerTaskHistory> {
+  caller: OwnerTaskCaller, functions: OwnerTaskHistoryInvoker, current: () => OwnerTaskScope | null): Promise<OwnerTaskHistory | AccessRefusal> {
   const captured = { ...scope }, { processId, approvalId, occurrenceId } = selection, deadline = operationDeadline(captured, current);
   if (![processId, approvalId, occurrenceId].every(uuid)) return { status: "refused" };
   try {
     const before = await authority(captured, caller, current, deadline);
+    if (before === "refused") return refusedAccess();
     if (before !== "ready") return { status: before };
     const response = await deadline.wait(() => functions.invoke("paige-owner-task-history", { method: "POST", body: { approvalId, tenantId: captured.tenantId } }));
     const after = await authority(captured, caller, current, deadline);
     deadline.check();
+    if (after === "refused") return refusedAccess();
     if (after !== "ready") return { status: after };
     if (response.error) return { status: response.error instanceof FunctionsHttpError
       && response.error.context instanceof globalThis.Response && [401, 403].includes(response.error.context.status) ? "refused" : "unavailable" };

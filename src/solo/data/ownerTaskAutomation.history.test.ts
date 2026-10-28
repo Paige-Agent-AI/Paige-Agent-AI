@@ -44,6 +44,26 @@ function fixture() {
 }
 afterEach(() => { vi.useRealTimers(); });
 
+describe("local authority-refusal provenance", () => {
+  it.each(["list-before", "list-after", "detail-before", "detail-after"])("identifies only the original failed authority check: %s", async stage => {
+    const f = fixture();
+    if (stage.endsWith("before")) f.configure.role = "member";
+    else f.configure.on = step => {
+      if (step === (stage.startsWith("list") ? "paige_approval_queue_v" : "paige-owner-task-history")) f.configure.role = "member";
+    };
+    const read = stage.startsWith("list")
+      ? await readOwnerTaskHistoryList(scope, selected.processId, f.caller, f.current)
+      : await readOwnerTaskOutcome(scope, selected, f.caller, f.functions, f.current);
+    expect(read).toEqual({ status: "refused", access: "refused" });
+    expect(read).not.toHaveProperty("items"); expect(read).not.toHaveProperty("originalTask");
+    expect(f.calls.some(call => call.stage === "control_owner_task_automation")).toBe(false);
+  });
+  it("does not adopt an alleged access marker from a resource response", async () => {
+    const f = fixture(); f.configure.data = { status: "refused", access: "refused", private: "untrusted" };
+    expect(await readOwnerTaskOutcome(scope, selected, f.caller, f.functions, f.current)).toEqual({ status: "refused" });
+  });
+});
+
 describe("actual history handler and standard SDK refusal transport", () => {
   it.each(["handler-403", "handler-401", "http-400", "http-404", "http-409", "http-500", "fetch-error", "relay-error",
     "plain-error-native-response", "genuine-error-fake-response", "retired-scope", "revoked-role"])("keeps authority and uncertainty distinct: %s", async scenario => {
@@ -82,7 +102,9 @@ describe("actual history handler and standard SDK refusal transport", () => {
       return received;
     } };
     const refused = ["handler-403", "handler-401", "retired-scope", "revoked-role"].includes(scenario);
-    expect(await readOwnerTaskOutcome(scope, selected, f.caller, functions, f.current)).toEqual({ status: refused ? "refused" : "unavailable" });
+    expect(await readOwnerTaskOutcome(scope, selected, f.caller, functions, f.current)).toEqual({
+      status: refused ? "refused" : "unavailable", ...(scenario === "revoked-role" ? { access: "refused" } : {}),
+    });
     expect(invocations).toBe(1); expect(privateReads).toBe(0);
     expect(f.calls.every(x => ["auth", "current_user_tenant_id", "tenant_members"].includes(x.stage))).toBe(true);
     if (response) {
@@ -195,8 +217,8 @@ describe("existing process history caller projection (unmounted)", () => {
     if (fault === "wrong-tenant") f.configure.tenant = id(999);
     if (fault === "member") f.configure.role = "member";
     if (fault === "inactive") f.configure.seat = "inactive";
-    expect(await readOwnerTaskOutcome(scope, selected, f.caller, f.functions, f.current)).toEqual({ status: "refused" });
-    expect(await readOwnerTaskHistoryList(scope, selected.processId, f.caller, f.current)).toEqual({ status: "refused" });
+    expect(await readOwnerTaskOutcome(scope, selected, f.caller, f.functions, f.current)).toEqual({ status: "refused", access: "refused" });
+    expect(await readOwnerTaskHistoryList(scope, selected.processId, f.caller, f.current)).toEqual({ status: "refused", access: "refused" });
     expect(f.calls.some(x => ["paige-owner-task-history", "paige_approval_queue_v"].includes(x.stage))).toBe(false);
   });
   it.each(["epoch", "logout", "member", "tenant"])("refuses late history after %s", async fault => {
@@ -206,7 +228,9 @@ describe("existing process history caller projection (unmounted)", () => {
       if (fault === "member") f.configure.role = "member";
       if (fault === "tenant") f.configure.tenant = id(999);
     };
-    expect(await readOwnerTaskOutcome(scope, selected, f.caller, f.functions, f.current)).toEqual({ status: "refused" });
+    expect(await readOwnerTaskOutcome(scope, selected, f.caller, f.functions, f.current)).toEqual({
+      status: "refused", ...(fault === "member" || fault === "tenant" ? { access: "refused" } : {}),
+    });
   });
   it("does not revive a captured A request after A-to-B-to-A", async () => {
     const f = fixture(); f.configure.on = stage => { if (stage === "paige_approval_queue_v") { f.change({ ...scope, tenantId: id(99), epoch: 2 }); f.change({ ...scope, epoch: 3 }); } };

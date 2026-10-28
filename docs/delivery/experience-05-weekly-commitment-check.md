@@ -907,3 +907,23 @@ Capabilities synchronization: the affected Weekly Priorities / Task Prioritizati
 recipes retain their existing Listed/Unverified limits. This native, non-self-
 describing schedule read is not execution of a generic recipe or proof of an
 enabled automation. No shared panel reservation or new customer Live label.
+
+## October28 — original native process access recovery, development checkpoint
+
+Outcomes08/10 and original E5-CV6/CV9 remain open. A bounded REPAIR distinguishes
+the original local authority refusal from an individual-result refusal. The
+former retires cached process/history references and returns lost keyboard focus
+to original Refresh; the latter and unavailable reads retain valid inspection.
+Original controls, authority checks, native writer, approvals and Rails remain
+unchanged. Causal125PASS/7FAIL becomes254PASS/0FAIL, with original strict baseline
+and candidate sharing15 incumbent diagnostics and zero new. See
+[source/native evidence](../evidence/ui-delivery/exp05-owner-task-access-recovery.md).
+
+One shared path serves eligible existing/future SOLO accounts; no tenant patch,
+schema or provisioning change. Neutral scopes and source tests do not establish
+real cohort/new-account/RLS proof. Source is local; exact review/CI/merge/web
+readback and corrected authenticated recovery are separate owed states. Both
+PAIGE Chat and Team Hub, full weekly execution, Workflow Builder, ZION follow-
+through, algorithms and original ten/E5/founder acceptance remain incomplete.
+E08 Root/card window and E06/E04 deployment reconciliation stay with their owners;
+this repair does not consume those protected sources or promote catalogue status.

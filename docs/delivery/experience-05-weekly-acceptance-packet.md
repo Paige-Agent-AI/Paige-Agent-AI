@@ -700,3 +700,17 @@ or full Experience acceptance. A2 remains implementation/proof owed. Initiative 
 held to A3; the general workshop runner remains held under EXP19. Original ten
 outcomes, E5-CV1–E5-CV9, shared workshop/privacy, direct specialist access, algorithm
 contracts, two-chat and eligible new/existing SOLO proof remain open.
+
+### October28 original recovery evidence — no new full-outcome closure
+
+E5-CV6/CV9 and outcomes08/10 receive bounded native access-refusal recovery source
+coverage: original authority failure retires cached controls, resource refusal
+and unavailable remain localized, current Refresh is deliberate, stale responses
+cannot erase a newer read/unknown hold, and lost focus returns without stealing
+connected focus. [Exact evidence](../evidence/ui-delivery/exp05-owner-task-access-recovery.md)
+records causal125/7/0 then254/0/0, unchanged authority/writer/markup/style and15
+identical incumbent strict diagnostics. Existing/new neutral fixture scopes are
+not authenticated tenant/role/revoke/new-account proof. No domain act, approval,
+provider, recurrence, Chat/Live or held activation occurred. Source/review/CI/
+merge/web/readback/customer/founder states remain separate; full original ten,
+E5-CV1–9, both-chat ZION and Workflow Builder obligations remain open.

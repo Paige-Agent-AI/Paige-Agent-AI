@@ -4764,6 +4764,15 @@ mechanical source-release accounting, not another delivery log or activation.
 
 ## EXP05 routine automation session recovery — October25 source correction
 
+October28 continuation: distinguish an original caller/workspace authority refusal
+from a refused individual result before retiring cached native process controls.
+Only local authority checks may supply denial provenance; resource/provider data
+must not. Preserve valid inspection, unknown-action holds, current-scope tickets
+and deliberate Refresh; restore only lost focus, never steal connected focus.
+Bounded source/native-fixture evidence is in
+`../evidence/ui-delivery/exp05-owner-task-access-recovery.md`; this does not close
+actual customer/cohort/both-chat recovery or the full ten/E5 acceptance cases.
+
 The existing native Operations/Settings process hook must not discard original history or a pending/inconclusive control on routine same-session SIGNED_IN. Reuse canonical nonsecret actor/sign-in metadata for retention only; genuine session/scope changes still retire synchronously and original caller/native CAS remain authority. Actual hook causal38/4 becomes228/0 across five owning data/hook/UI files, including original native component/result/link preservation and all negative controls. [Source and proof limits](../evidence/ui-delivery/exp05-owner-task-session-recovery.md) retain strict base/candidate15 inherited failures/zero new, unchanged native markup/styles and actual pre-release ordinary-owner original Task/receipt/reload retrieval separately from corrected deployment acceptance. No Root lease, runtime, writer, provider, capability/catalogue/algorithm maturity or full-Experience closure; exact review/CI/deployment/current authenticated return still owed.
 ## EXP02 original manual result finalization — source only, October26
 

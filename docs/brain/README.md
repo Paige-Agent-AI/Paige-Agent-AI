@@ -1,3 +1,21 @@
+## EXP02 October28 - Weekly catalogue source/readback verified
+
+Original3014 normally merged557d9a7ab155dfd073f052fb393ab741b74a9714/treefe9e76bd;
+12 required applicable checks/2web SUCCESS, final author-review LOWER5676589123.
+Original migrator40614223175 verified already-applied20101002 persisted/db-live557;
+first applying actuator not inferred. Canonical source copy exact, active/read_only/
+Limitedv1 unchanged. Actual authorized-owner catalogue/reload ANT52/260d22ba
+verifies all9 whole descriptions/states:3ComingSoon/3Limited/3Unverified, allAccess
+Unverified. Web6EbgyrKH READY/both origins/source01:24UTC exact557. Initial panel
+selection/click interruptions retained, cause UNKNOWN/shared E01 handoff owed;
+stable subsequent reload is not a claim the interruption was fixed.
+
+Mechanical closeout also records original3012 source/Calendar QA and actual7-page
+Finance proof725879d5. Details and exact identities are in Master section4.0 and
+the ORIGINAL19 matrix.3018/3019 remain unmerged; material3018 cohort/runtime
+review hold remains OPEN. No capability/algorithm/Live/action promotion; all19/
+nine/founder acceptance OPEN. Earlier pending notes below remain chronology.
+
 ## EXP02 October28 - verified source and bounded customer proof
 
 Original3012/21fff Calendar read consumer is source/web released, with original

@@ -24,6 +24,8 @@ type Client = any;
 export interface StreamMediaReadDeps {
   /** The caller's own client (anon key + their JWT). This handler performs NO writes. */
   caller: Client;
+  /** Service-role client: the tenant catalogue read (tenant_media_assets). */
+  admin: Client;
   /** The read-only Stream adapter, injected so tests drive the REAL handler with a double. */
   adapter: StreamReadAdapter;
 }
@@ -37,8 +39,9 @@ const HEADERS = {
 const respond = (status: number, body: Record<string, unknown>) => new Response(JSON.stringify(body), { status, headers: HEADERS });
 const UID = /^[0-9a-f]{32}$/;
 
-/** The closed catalogue: every uid this handler may serve, until the library table exists. */
-const CATALOGUE = new Set(["650092261481ddfac3d4da12d3b9aff3"]);
+/** The platform's own published test video — owner coordination data, served to any
+ * resolved workspace until the platform library replaces it (the canary's absorb path). */
+const PLATFORM_CATALOGUE = new Set(["650092261481ddfac3d4da12d3b9aff3"]);
 
 export async function handleStreamMediaRead(req: Request, deps: StreamMediaReadDeps): Promise<Response> {
   if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: HEADERS });
@@ -62,9 +65,20 @@ export async function handleStreamMediaRead(req: Request, deps: StreamMediaReadD
     const refused = caller as unknown as { status: number; reason: string; error: string };
     return respond(refused.status, { ok: false, code: `CALLER_${refused.reason.toUpperCase()}`, error: refused.error });
   }
+  const tenantId = (caller as unknown as { tenantId: string }).tenantId;
 
-  // The closed catalogue — BEFORE the provider is asked anything.
-  if (!CATALOGUE.has(uid)) {
+  // The catalogue: THIS workspace's tenant_media_assets rows (ready only) ∪ the platform's
+  // own published assets. Anything else is refused BEFORE the provider is asked anything.
+  let catalogued: boolean = PLATFORM_CATALOGUE.has(uid);
+  if (!catalogued) {
+    if (!deps.admin) return respond(500, { ok: false, code: "SERVER_NOT_CONFIGURED", error: "The video library isn't available right now. Nothing changed." });
+    const assetRead = await deps.admin.from("tenant_media_assets")
+      .select("id,stream_uid,status,tenant_id")
+      .eq("tenant_id", tenantId).eq("stream_uid", uid).eq("status", "ready")
+      .limit(1);
+    catalogued = !assetRead.error && Array.isArray(assetRead.data) && assetRead.data.length > 0;
+  }
+  if (!catalogued) {
     return respond(404, { ok: false, code: "MEDIA_NOT_IN_LIBRARY", error: "That video isn't in this workspace's library." });
   }
   if (!deps.adapter.isConfigured()) {

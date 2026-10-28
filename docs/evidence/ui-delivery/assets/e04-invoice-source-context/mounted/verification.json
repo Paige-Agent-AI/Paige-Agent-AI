@@ -1,0 +1,74 @@
+{
+  "scope": "Controlled local original shell/Sales/Invoice; no authenticated, persistence, provider or acceptance claim",
+  "publishedParent": "88b3bb0f21052b3cd588a581b763b4fff61298f0",
+  "sourceHashes": {
+    "src/solo/sales/InvoiceDraftEditor.tsx": "00eca3f1774dcd30c8e0fd015bba0e413006621dbb6359371fc1803a869b8754",
+    "src/solo/sales/InvoiceDraftEditor.test.tsx": "dcb14f90745b58c4d20333d9de88d9f1bf3bdadbfe2615a4e5792e2b8e93726c",
+    "src/solo/sales/SalesBillingWorkspace.tsx": "d7e16c5429135eadfb3c084492360f3bf5c71f098d6f3ae40c9f6e3211e14995",
+    "src/solo/sales/SalesBillingWorkspace.test.tsx": "d760985599cc20f23cb0b9dc70b98f15b5252ca373f679d4a5db42ccb3640e56",
+    "src/solo/sales/InvoiceCommercialSourceAmount.tsx": "6c66d248a6e25695f4cd32429d3d094be7da00c8fc2cd5ab03be1e3a7a7f0c39",
+    "src/solo/sales/InvoiceCommercialSourceAmount.test.tsx": "4e08a15451bbb78c8019dd9e2996e7a9be8962ab67ee6b3347e3dcb4dd0a5f86",
+    "src/solo/sales/useInvoiceCommercialTermsSources.ts": "ddd057446109b93b6ec2991524f4fcaa388e0a5322c24fb77e87651013e9b1c7",
+    "src/solo/sales/useInvoiceCommercialTermsSources.test.tsx": "a81f21962c3de1e546a3b974afc864adfd00f00c4f546dbcda7e8efabac83057",
+    "src/solo/sales/invoice-draft-editor.css": "0e460fec1caf8e71147c557798810e546fe855b7f8fac9619a7345d9ad830b5f"
+  },
+  "transcriptHashes": {
+    "e04-c73-unit-r1.json": "a6cb8ee6432fdd3bf0ca0115b1950ad2c97cc1afee777209803c2e492fe14c55",
+    "e04-c73-lint.json": "11c47e6536efbdaa6b08ca8d1ed9acdc60f32cdcbe1751c372fa180879d43e77",
+    "e04-c73-types.json": "90c424cfca032bd1ab1b1b88b96cc8789aaf116a5e6dec79618616ec100cdfd6",
+    "e04-c74-build.log": "47f91278356235a195b63f1d192613e60558514840c5d597d22cf9e741aaca55",
+    "e04-c74-build.json": "b4f39febd0e5559bdf40706637fcd3d1fb8b4067d8c135c29d142161f54250b3",
+    "e04-c74-impeccable.json": "145fc7c43ce04ac6df54c074f0dd4cc81b9acdd9269e4fdb15c1d9b1e7888556"
+  },
+  "automated": {
+    "files": 5,
+    "passed": 97,
+    "failed": 0,
+    "skipped": 0,
+    "causalBeforeRepair": "One new original-parent scroll control failed600!=0, other40 workspace cases passed"
+  },
+  "static": {
+    "scopedLint": "PASS",
+    "types": {
+      "baseline": 10,
+      "current": 6,
+      "new": 0
+    },
+    "build": "PASS",
+    "soloEntryKiB": 385,
+    "soloEntryLimitKiB": 520,
+    "impeccable": {
+      "version": "4.1.0",
+      "blocking": 0,
+      "advisory": 3
+    }
+  },
+  "contrast": {
+    "Obsidian": {
+      "secondary": 7.8,
+      "amount": 14.9
+    },
+    "Mineral": {
+      "secondary": 8.61,
+      "amount": 17.13
+    }
+  },
+  "reusedProofBoundary": "Supabase, scripts, package/lock and .github tracked inputs byte exact to published parent; prior actual18 graph/compiler and native proofs are retained, not described as a new invocation",
+  "browser": {
+    "nativeGeometryCaptures": 12,
+    "reviewTop": 0,
+    "backToDetails": 1648,
+    "originalHeadingFocus": true,
+    "save": "Explicit intercepted refusal; no persistence",
+    "viewportOverride": "RESET",
+    "actualChatBodyVoiceAuthBackend": "UNMOUNTED"
+  },
+  "unverified": [
+    "hosted current repair head CI/Preview",
+    "actual zoom/AT/OS reduced motion",
+    "ordinary owner/staff/linked-client and two legitimate cohorts",
+    "durable save/receipts/reload",
+    "provider payment/send/signing outcomes",
+    "full twelve outcomes and founder acceptance"
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "before": {
+    "detailsTop": 1648,
+    "headerY": 0
+  },
+  "review": {
+    "billToY": 457.8000183105469,
+    "focus": "Review invoice",
+    "headerY": 0,
+    "paneY": 391.2000122070313,
+    "reviewTop": 0
+  },
+  "returned": {
+    "detailsTop": 1648,
+    "focus": "Create invoice",
+    "headerY": 0
+  },
+  "scope": "Actual original parent source; private scroll proposal archived/unmounted; providers/backend mocked"
+}

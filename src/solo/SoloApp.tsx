@@ -102,8 +102,8 @@ export class ScreenLoadBoundary extends React.Component<
       <div role="alert" style={{maxWidth:420,margin:'10vh auto',padding:'22px 24px',border:'1px solid var(--line)',borderRadius:14,background:'var(--surface)'}}>
         {stale ? (
           <>
-            <strong style={{display:'block',fontSize:15,marginBottom:6}}>PAIGE has been updated.</strong>
-            <p style={{fontSize:13,color:'var(--ink-3)',margin:'0 0 14px'}}>This view still can't open because the app was updated while you were here. Reload to continue — your unsent PAIGE message is kept, and everything you saved is unaffected.</p>
+            <strong style={{display:'block',fontSize:15,marginBottom:6}}>PAIGE may have been updated.</strong>
+            <p style={{fontSize:13,color:'var(--ink-3)',margin:'0 0 14px'}}>This view still can't open — the app may have been updated while you were here, or its download keeps failing. Reload to continue — your unsent PAIGE message is kept, and everything you saved is unaffected.</p>
           </>
         ) : (
           <>

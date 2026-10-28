@@ -94,7 +94,6 @@ describe("ScreenLoadBoundary (PR9 failed-download recovery)", () => {
     await render(<App path="/a" />);
     expect(host.querySelector("[data-loaded]")).toBeTruthy();
   });
-});
 
   // EXP04 finding b0d8f65d (2026-10-28): after a deployment retires the old
   // hashed asset, "Try again" re-attempts the SAME cached-dead URL and fails —
@@ -116,7 +115,7 @@ describe("ScreenLoadBoundary (PR9 failed-download recovery)", () => {
 
     // Try again → the module cache still points at the dead URL → fails again.
     await act(async () => { host.querySelectorAll("button")[0].click(); });
-    expect(host.textContent).toContain("PAIGE has been updated.");
+    expect(host.textContent).toContain("PAIGE may have been updated.");
     expect(host.textContent).toContain("Reload to continue");
     expect(host.textContent).toContain("unsent PAIGE message is kept");
     // Try again is GONE — reload is the one recovery that works for a stale asset.
@@ -128,3 +127,4 @@ describe("ScreenLoadBoundary (PR9 failed-download recovery)", () => {
     await render(<App path="/a" />);
     expect(host.querySelector("[data-loaded]")).toBeTruthy();
   });
+});

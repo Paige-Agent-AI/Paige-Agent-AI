@@ -1,0 +1,176 @@
+{
+  "sourceHead": "1c225ce253d2752631b317c4dc7aafd51d17f85b",
+  "proofClass": "ACTUAL_BROWSER_OF_SERIALIZED_ORIGINAL_SOLO_FRAME",
+  "originalRenderTest": "src/solo/__render__/owner-task-history.render.test.tsx",
+  "testResults": {
+    "tests": 1,
+    "passed": 1,
+    "failed": 0,
+    "skipped": 0,
+    "serializedScenes": 102
+  },
+  "realEffects": 0,
+  "authenticated": false,
+  "syntheticContexts": [
+    "a light",
+    "b dark"
+  ],
+  "nativeLayouts": 16,
+  "expandedDisclosure": 12,
+  "expectedNarrowPaigeOverlay": 4,
+  "narrowReflow": {
+    "actualWidth": 320,
+    "serializedJsMediaWidth": 390,
+    "sameMax1080Branch": true
+  },
+  "limitations": [
+    "Serialized React handlers are not active browser handlers; no parent exit/reload proof.",
+    "Synthetic actors are not two authenticated legitimate cohorts.",
+    "Native zoom, assistive technology, denied server roles and persistence remain unverified."
+  ],
+  "imageFormat": "Original JPEG bytes returned by screenshot API; renamed from misleading png input names without conversion.",
+  "cleanup": "Viewport reset; only own temporary IAB tab closed; customer and Team Hub tabs untouched.",
+  "files": [
+    {
+      "file": "native-320-last-control.jpg",
+      "sha256": "f8a1cfa5c4d2eb97701c4a84f4dfb212c18f00c62c75d181d3a8d13d4e318aed",
+      "bytes": 34731,
+      "width": 320,
+      "height": 770
+    },
+    {
+      "file": "native-320-reflow.jpg",
+      "sha256": "cc09d3e4e9f7a7edfed60af95f46be579752a3ee8d30219964f086eb290587e1",
+      "bytes": 38670,
+      "width": 320,
+      "height": 770
+    },
+    {
+      "file": "native-history-a-light-1024x768-closed-verified.jpg",
+      "sha256": "6a9eeff7e5fc90eafff669cc3334472103eaa7289cee332e56be11a63da97040",
+      "bytes": 74382,
+      "width": 1024,
+      "height": 768
+    },
+    {
+      "file": "native-history-a-light-1024x768-open-verified.jpg",
+      "sha256": "3562234727b2650efd7464abc4ede09bb3138fb6394555ce4826061399835d62",
+      "bytes": 50800,
+      "width": 1024,
+      "height": 768
+    },
+    {
+      "file": "native-history-a-light-1366x768-closed-verified.jpg",
+      "sha256": "d79a5290945c760d277fc5af211785b2354a69f699c4ee89e341f854d07d1660",
+      "bytes": 81609,
+      "width": 1366,
+      "height": 768
+    },
+    {
+      "file": "native-history-a-light-1366x768-open-verified.jpg",
+      "sha256": "86ad67e78cf8f261371dc543efe370d0cb09f52c0ce0116a82b067df70605337",
+      "bytes": 100338,
+      "width": 1366,
+      "height": 768
+    },
+    {
+      "file": "native-history-a-light-1536x770-closed-verified.jpg",
+      "sha256": "d50386629ce666b5c492edd51bb65c32b7765e81d3115c83295ba5721d44b9b6",
+      "bytes": 90933,
+      "width": 1535,
+      "height": 770
+    },
+    {
+      "file": "native-history-a-light-1536x770-open-verified.jpg",
+      "sha256": "af5cc9cd184b64b8294b40236d3aacf8301d888d3903696f6f20b9ec7235797c",
+      "bytes": 112486,
+      "width": 1535,
+      "height": 770
+    },
+    {
+      "file": "native-history-a-light-900x1000-closed-verified.jpg",
+      "sha256": "f59ca75ead17519467bd67b2724d3e0cdc606f34d60201521b831f7d40e65e81",
+      "bytes": 91970,
+      "width": 900,
+      "height": 1000
+    },
+    {
+      "file": "native-history-a-light-900x1000-open-verified.jpg",
+      "sha256": "a89c80ccd622bf78dfd3c8f4eb636c190224795abd962b04f67b8ed1f5b6dea2",
+      "bytes": 52804,
+      "width": 900,
+      "height": 1000
+    },
+    {
+      "file": "native-history-b-dark-1024x768-closed-verified.jpg",
+      "sha256": "514260339433528fe764ee6ed6b1922ecc1183f1e16829e6eb356e3eadf4e838",
+      "bytes": 73430,
+      "width": 1024,
+      "height": 768
+    },
+    {
+      "file": "native-history-b-dark-1024x768-open-verified.jpg",
+      "sha256": "96b92082ddd6bdbd266b35268b04bbf91dfaad810f683591795f345424d752a8",
+      "bytes": 49653,
+      "width": 1024,
+      "height": 768
+    },
+    {
+      "file": "native-history-b-dark-1366x768-closed-verified.jpg",
+      "sha256": "16660db566d1b4d8665932468d12dcbdf14df49c1dcc9fcb457222893c9d58e0",
+      "bytes": 80424,
+      "width": 1366,
+      "height": 768
+    },
+    {
+      "file": "native-history-b-dark-1366x768-open-verified.jpg",
+      "sha256": "51e3eb59b3621a2b208727882de8e90d39578072cfe084bd1f99c14181c8209f",
+      "bytes": 100161,
+      "width": 1366,
+      "height": 768
+    },
+    {
+      "file": "native-history-b-dark-1536x770-closed-verified.jpg",
+      "sha256": "dd0905d9d93765427cc813193550b46eba743b8c7c7d690ce2e23651b1fda54a",
+      "bytes": 90170,
+      "width": 1535,
+      "height": 770
+    },
+    {
+      "file": "native-history-b-dark-1536x770-open-verified.jpg",
+      "sha256": "d710a5efc0dab356d1b4001eb58f2f4d1332551804b0c6d992aab3be2280add6",
+      "bytes": 113263,
+      "width": 1535,
+      "height": 770
+    },
+    {
+      "file": "native-history-b-dark-900x1000-closed-verified.jpg",
+      "sha256": "a290e08abf8f3596609c34e7b553ed98bf6d8b0ecc38f36bf89d895fef2a484b",
+      "bytes": 90886,
+      "width": 900,
+      "height": 1000
+    },
+    {
+      "file": "native-history-b-dark-900x1000-open-verified.jpg",
+      "sha256": "7bbef7694aa46fd8564fc84db36a2cfd06cb71b31ff14a303471cda828da559d",
+      "bytes": 53754,
+      "width": 900,
+      "height": 1000
+    },
+    {
+      "file": "native-observations.json",
+      "sha256": "9206c1005ecac931932b7aff86dd8c8a2bf73beb8cb597d52129012aec9809fa",
+      "bytes": 14333
+    },
+    {
+      "file": "native-keyboard-reflow.json",
+      "sha256": "fc1cee98aad27afb1eb0137110133f44e90f7892de02c634316879ace21264c5",
+      "bytes": 594
+    },
+    {
+      "file": "render-manifest.json",
+      "sha256": "dd8011e600b43cbbe4b48f269899dbfe8233e5b797a081a279cf38a9040265a5",
+      "bytes": 157854
+    }
+  ]
+}

@@ -13,6 +13,12 @@ const supportContact = process.argv.includes('--support-contact');
 const bookingCalendarsBaseline = process.argv.includes('--booking-calendars-baseline');
 const bookingCalendars = process.argv.includes('--booking-calendars') || bookingCalendarsBaseline;
 let bookingCalendarsEvidence;
+const bookingActorBaseline = process.argv.includes('--booking-actor-lock-baseline');
+const bookingWorkReceiptBaseline = process.argv.includes('--booking-work-receipt-baseline');
+const bookingWorkReceipt = process.argv.includes('--booking-work-receipt') || bookingWorkReceiptBaseline;
+const bookingActor = process.argv.includes('--booking-actor-lock') || bookingActorBaseline || bookingWorkReceipt;
+let bookingActorEvidence;
+let bookingWorkReceiptEvidence;
 const documents = process.argv.includes('--documents');
 const privateRequestBaseline = process.argv.includes('--private-request-baseline');
 const privateRequestHistoryBaseline = process.argv.includes('--private-request-history-baseline');
@@ -429,6 +435,8 @@ try {
  if(requestShareCatalogue){const {requestShareCatalogueProof}=await import('./e09-request-share-catalogue.mjs');requestShareCatalogueEvidence=requestShareCatalogueProof({sql,check,assert,fs,fixture,baseline:requestShareCatalogueBaseline});}
  if(supportContact){const {supportContactProof}=await import('./e09-support-contact.mjs');supportContactProof({sql,check,assert,fs,fixture});}
  if(bookingCalendars){const {bookingCalendarsProof}=await import('./e09-booking-calendars.mjs');bookingCalendarsEvidence=bookingCalendarsProof({sql,check,assert,fs,fixture,baseline:bookingCalendarsBaseline});}
+ if(bookingActor){const {bookingActorLockProof}=await import('./e09-private-booking-atomic.mjs');bookingActorEvidence=await bookingActorLockProof({sql,check,assert,fs,fixture,spawn,exe,args,transcripts,path,work,createHash,baseline:bookingActorBaseline});}
+ if(bookingWorkReceipt){const {bookingWorkReceiptProof}=await import('./e09-booking-work-receipt.mjs');bookingWorkReceiptEvidence=await bookingWorkReceiptProof({sql,check,assert,fs,fixture,spawn,exe,args,transcripts,path,work,createHash,baseline:bookingWorkReceiptBaseline});}
  if(documents){const {documentProof}=await import('./e09-documents-native.mjs');documentProof({sql,check,assert,fs,root,path});}
  const failed=results.filter(x=>x.status==='FAIL');
  const report={mode:documents?'documents-candidate':actionsBaseline?'actions-baseline':actions?'actions-candidate':baselineOnly?'baseline':'candidate',evidenceClass:'synthetic-native-postgresql',fullSupabaseReplay:'UNVERIFIED',authenticatedAcceptance:'NOT_RUN',host:'127.0.0.1',port,platform:os.platform(),node:process.version,migrationSHA256:createHash('sha256').update(migration).digest('hex'),...(documents?{documentMigrationSHA256:createHash('sha256').update(fs.readFileSync('supabase/migrations/20271108150000_e09_customer_documents.sql')).digest('hex'),physicalStorage:'NOT_RUN',realtimeTransport:'NOT_RUN'}:{}),...(actions?{actionPredecessors,actionMigrationSHA256:createHash('sha256').update(fs.readFileSync('supabase/migrations/20271108122000_e09_customer_action_scope.sql')).digest('hex')}:{}),results,passed:results.length-failed.length,failed:failed.length};
@@ -439,6 +447,8 @@ try {
  if(privateRequest){report.mode=privateRequestFocus?(privateRequestFocusBaseline?'private-request-focused-publication-baseline':'private-request-focused-publication-candidate'):privateRequestPublication?'private-request-publication-candidate':privateRequestPublicationBaseline?'private-request-publication-baseline':privateRequestHistoryBaseline?'private-request-history-baseline':privateRequestBaseline?'private-request-baseline':'private-request-candidate';report.privateRequest=privateRequestEvidence;}
  if(requestShareCatalogue){report.mode=requestShareCatalogueBaseline?'request-share-catalogue-baseline':'request-share-catalogue-candidate';report.requestShareCatalogue=requestShareCatalogueEvidence;}
  if(bookingCalendars){report.mode=bookingCalendarsBaseline?'booking-calendars-baseline':'booking-calendars-candidate';report.bookingCalendars=bookingCalendarsEvidence;}
+ if(bookingActor){report.mode=bookingActorBaseline?'booking-actor-lock-baseline':'booking-actor-lock-candidate';report.bookingActorLock=bookingActorEvidence;}
+ if(bookingWorkReceipt){report.mode=bookingWorkReceiptBaseline?'booking-work-receipt-baseline':'booking-work-receipt-candidate';report.bookingWorkReceipt=bookingWorkReceiptEvidence;}
  fs.writeFileSync(path.join(work,baselineOnly||actionsBaseline||actionActTimeBaseline||inviteActTimeBaseline?'baseline.json':'candidate.json'),JSON.stringify(report,null,2));
  console.log(JSON.stringify({passed:report.passed,failed:report.failed,failures:failed,evidenceDir:work},null,2));
  if(failed.length)process.exitCode=1;

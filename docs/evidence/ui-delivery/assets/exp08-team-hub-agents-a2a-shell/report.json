@@ -1,0 +1,2103 @@
+{
+ "generated": "2026-10-28T12:54:15.546Z",
+ "harness": "http://127.0.0.1:5297 (scripts/live-drive/harness/team-hub-shell-mount, real SoloApp)",
+ "label": "harness render · not live",
+ "records": [
+  {
+   "name": "shell-3855-1536x770-paige-closed-dark",
+   "frame": "shell-3855-1536x770-paige-closed-dark.png",
+   "tenant": "Harbor Lane Studio",
+   "account": "3855",
+   "viewport": "1536x770",
+   "paigeRequested": "closed",
+   "theme": "dark",
+   "url": "/solo/3855/team-hub",
+   "paige": "closed",
+   "paigeOverlay": false,
+   "nav": "expanded",
+   "pageOverflowXpx": 0,
+   "pageOverflowYpx": 0,
+   "screenHost": {
+    "overflow": "hidden",
+    "scrolls": false,
+    "w": 1320,
+    "h": 704
+   },
+   "href": "/solo/3855/operations/work",
+   "linkText": "Open delivery work",
+   "cardText": "Task in Operations e8000000 Prepare the onboarding packet Assignee Jordan Lee Due Sat, Oct 31 Status Ready Read from Operations · 12:54 PM Open delivery work",
+   "scrollOwner": "div.th-stream",
+   "scrollOwnerOverflowing": true,
+   "scrollableAncestors": [
+    "div.th-stream"
+   ],
+   "initial": {
+    "rect": {
+     "x": 927,
+     "y": 596,
+     "w": 139,
+     "h": 40
+    },
+    "inViewport": true,
+    "clippedBy": [],
+    "fullyVisible": true,
+    "coveredBy": null
+   },
+   "scrolledAway": {
+    "rect": {
+     "x": 927,
+     "y": 695,
+     "w": 139,
+     "h": 40
+    },
+    "inViewport": true,
+    "clippedBy": [
+     "div.th-stream"
+    ],
+    "fullyVisible": false,
+    "coveredBy": "div.th-composer-row"
+   },
+   "afterScrollIntoView": {
+    "rect": {
+     "x": 927,
+     "y": 614,
+     "w": 139,
+     "h": 40
+    },
+    "inViewport": true,
+    "clippedBy": [],
+    "fullyVisible": true,
+    "coveredBy": null
+   },
+   "linkStyle": {
+    "fontSize": "12px",
+    "fontWeight": "600",
+    "color": "rgb(246, 242, 234)",
+    "ink": "rgb(246, 242, 234)",
+    "goldCore": "rgb(255, 240, 207)",
+    "underline": "underline",
+    "transition": "all 0s"
+   },
+   "linkStyleOk": true,
+   "approval": {
+    "heading": "Approval not available here",
+    "refusalHeadingPresent": true,
+    "buttons": [],
+    "approveDrawn": false,
+    "text": "Operations task ZION wants to create a task in Operations: “Prepare the onboarding packet”, for Jordan Lee, due Fri, Oct 31. Approving from Team Hub isn't connected yet, so nothing has changed."
+   },
+   "keyboard": {
+    "tabs": 45,
+    "focusVisible": true,
+    "outline": "solid 2px rgb(155, 141, 224)",
+    "outlineOffset": "-2px",
+    "boxShadow": "none",
+    "inViewport": true
+   },
+   "errors": []
+  },
+  {
+   "name": "shell-3855-1536x770-paige-open-dark",
+   "frame": "shell-3855-1536x770-paige-open-dark.png",
+   "tenant": "Harbor Lane Studio",
+   "account": "3855",
+   "viewport": "1536x770",
+   "paigeRequested": "open",
+   "theme": "dark",
+   "url": "/solo/3855/team-hub",
+   "paige": "open",
+   "paigeOverlay": false,
+   "nav": "expanded",
+   "pageOverflowXpx": 0,
+   "pageOverflowYpx": 0,
+   "screenHost": {
+    "overflow": "hidden",
+    "scrolls": false,
+    "w": 798,
+    "h": 704
+   },
+   "href": "/solo/3855/operations/work",
+   "linkText": "Open delivery work",
+   "cardText": "Task in Operations e8000000 Prepare the onboarding packet Assignee Jordan Lee Due Sat, Oct 31 Status Ready Read from Operations · 12:54 PM Open delivery work",
+   "scrollOwner": "div.th-stream",
+   "scrollOwnerOverflowing": true,
+   "scrollableAncestors": [
+    "div.th-stream"
+   ],
+   "initial": {
+    "rect": {
+     "x": 832,
+     "y": 596,
+     "w": 139,
+     "h": 40
+    },
+    "inViewport": true,
+    "clippedBy": [],
+    "fullyVisible": true,
+    "coveredBy": null
+   },
+   "scrolledAway": {
+    "rect": {
+     "x": 832,
+     "y": 695,
+     "w": 139,
+     "h": 40
+    },
+    "inViewport": true,
+    "clippedBy": [
+     "div.th-stream"
+    ],
+    "fullyVisible": false,
+    "coveredBy": "div.th-composer-row"
+   },
+   "afterScrollIntoView": {
+    "rect": {
+     "x": 832,
+     "y": 614,
+     "w": 139,
+     "h": 40
+    },
+    "inViewport": true,
+    "clippedBy": [],
+    "fullyVisible": true,
+    "coveredBy": null
+   },
+   "linkStyle": {
+    "fontSize": "12px",
+    "fontWeight": "600",
+    "color": "rgb(246, 242, 234)",
+    "ink": "rgb(246, 242, 234)",
+    "goldCore": "rgb(255, 240, 207)",
+    "underline": "underline",
+    "transition": "all 0s"
+   },
+   "linkStyleOk": true,
+   "approval": {
+    "heading": "Approval not available here",
+    "refusalHeadingPresent": true,
+    "buttons": [],
+    "approveDrawn": false,
+    "text": "Operations task ZION wants to create a task in Operations: “Prepare the onboarding packet”, for Jordan Lee, due Fri, Oct 31. Approving from Team Hub isn't connected yet, so nothing has changed."
+   },
+   "keyboard": {
+    "tabs": 61,
+    "focusVisible": true,
+    "outline": "solid 2px rgb(155, 141, 224)",
+    "outlineOffset": "-2px",
+    "boxShadow": "none",
+    "inViewport": true
+   },
+   "errors": []
+  },
+  {
+   "name": "shell-3855-1366x768-paige-closed-dark",
+   "frame": "shell-3855-1366x768-paige-closed-dark.png",
+   "tenant": "Harbor Lane Studio",
+   "account": "3855",
+   "viewport": "1366x768",
+   "paigeRequested": "closed",
+   "theme": "dark",
+   "url": "/solo/3855/team-hub",
+   "paige": "closed",
+   "paigeOverlay": false,
+   "nav": "compact",
+   "pageOverflowXpx": 0,
+   "pageOverflowYpx": 0,
+   "screenHost": {
+    "overflow": "hidden",
+    "scrolls": false,
+    "w": 1294,
+    "h": 702
+   },
+   "href": "/solo/3855/operations/work",
+   "linkText": "Open delivery work",
+   "cardText": "Task in Operations e8000000 Prepare the onboarding packet Assignee Jordan Lee Due Sat, Oct 31 Status Ready Read from Operations · 12:54 PM Open delivery work",
+   "scrollOwner": "div.th-stream",
+   "scrollOwnerOverflowing": true,
+   "scrollableAncestors": [
+    "div.th-stream"
+   ],
+   "initial": {
+    "rect": {
+     "x": 783,
+     "y": 594,
+     "w": 139,
+     "h": 40
+    },
+    "inViewport": true,
+    "clippedBy": [],
+    "fullyVisible": true,
+    "coveredBy": null
+   },
+   "scrolledAway": {
+    "rect": {
+     "x": 783,
+     "y": 695,
+     "w": 139,
+     "h": 40
+    },
+    "inViewport": true,
+    "clippedBy": [
+     "div.th-stream"
+    ],
+    "fullyVisible": false,
+    "coveredBy": "div.th-composer-row"
+   },
+   "afterScrollIntoView": {
+    "rect": {
+     "x": 783,
+     "y": 612,
+     "w": 139,
+     "h": 40
+    },
+    "inViewport": true,
+    "clippedBy": [],
+    "fullyVisible": true,
+    "coveredBy": null
+   },
+   "linkStyle": {
+    "fontSize": "12px",
+    "fontWeight": "600",
+    "color": "rgb(246, 242, 234)",
+    "ink": "rgb(246, 242, 234)",
+    "goldCore": "rgb(255, 240, 207)",
+    "underline": "underline",
+    "transition": "all 0s"
+   },
+   "linkStyleOk": true,
+   "approval": {
+    "heading": "Approval not available here",
+    "refusalHeadingPresent": true,
+    "buttons": [],
+    "approveDrawn": false,
+    "text": "Operations task ZION wants to create a task in Operations: “Prepare the onboarding packet”, for Jordan Lee, due Fri, Oct 31. Approving from Team Hub isn't connected yet, so nothing has changed."
+   },
+   "keyboard": {
+    "tabs": 45,
+    "focusVisible": true,
+    "outline": "solid 2px rgb(155, 141, 224)",
+    "outlineOffset": "-2px",
+    "boxShadow": "none",
+    "inViewport": true
+   },
+   "errors": []
+  },
+  {
+   "name": "shell-3855-1366x768-paige-open-dark",
+   "frame": "shell-3855-1366x768-paige-open-dark.png",
+   "tenant": "Harbor Lane Studio",
+   "account": "3855",
+   "viewport": "1366x768",
+   "paigeRequested": "open",
+   "theme": "dark",
+   "url": "/solo/3855/team-hub",
+   "paige": "open",
+   "paigeOverlay": false,
+   "nav": "compact",
+   "pageOverflowXpx": 0,
+   "pageOverflowYpx": 0,
+   "screenHost": {
+    "overflow": "hidden",
+    "scrolls": false,
+    "w": 830,
+    "h": 702
+   },
+   "href": "/solo/3855/operations/work",
+   "linkText": "Open delivery work",
+   "cardText": "Task in Operations e8000000 Prepare the onboarding packet Assignee Jordan Lee Due Sat, Oct 31 Status Ready Read from Operations · 12:54 PM Open delivery work",
+   "scrollOwner": "div.th-stream",
+   "scrollOwnerOverflowing": true,
+   "scrollableAncestors": [
+    "div.th-stream"
+   ],
+   "initial": {
+    "rect": {
+     "x": 720,
+     "y": 594,
+     "w": 139,
+     "h": 40
+    },
+    "inViewport": true,
+    "clippedBy": [],
+    "fullyVisible": true,
+    "coveredBy": null
+   },
+   "scrolledAway": {
+    "rect": {
+     "x": 720,
+     "y": 695,
+     "w": 139,
+     "h": 40
+    },
+    "inViewport": true,
+    "clippedBy": [
+     "div.th-stream"
+    ],
+    "fullyVisible": false,
+    "coveredBy": "div.th-composer-row"
+   },
+   "afterScrollIntoView": {
+    "rect": {
+     "x": 720,
+     "y": 612,
+     "w": 139,
+     "h": 40
+    },
+    "inViewport": true,
+    "clippedBy": [],
+    "fullyVisible": true,
+    "coveredBy": null
+   },
+   "linkStyle": {
+    "fontSize": "12px",
+    "fontWeight": "600",
+    "color": "rgb(246, 242, 234)",
+    "ink": "rgb(246, 242, 234)",
+    "goldCore": "rgb(255, 240, 207)",
+    "underline": "underline",
+    "transition": "all 0s"
+   },
+   "linkStyleOk": true,
+   "approval": {
+    "heading": "Approval not available here",
+    "refusalHeadingPresent": true,
+    "buttons": [],
+    "approveDrawn": false,
+    "text": "Operations task ZION wants to create a task in Operations: “Prepare the onboarding packet”, for Jordan Lee, due Fri, Oct 31. Approving from Team Hub isn't connected yet, so nothing has changed."
+   },
+   "keyboard": {
+    "tabs": 61,
+    "focusVisible": true,
+    "outline": "solid 2px rgb(155, 141, 224)",
+    "outlineOffset": "-2px",
+    "boxShadow": "none",
+    "inViewport": true
+   },
+   "errors": []
+  },
+  {
+   "name": "shell-3855-1024x768-paige-closed-dark",
+   "frame": "shell-3855-1024x768-paige-closed-dark.png",
+   "tenant": "Harbor Lane Studio",
+   "account": "3855",
+   "viewport": "1024x768",
+   "paigeRequested": "closed",
+   "theme": "dark",
+   "url": "/solo/3855/team-hub",
+   "paige": "closed",
+   "paigeOverlay": false,
+   "nav": "compact",
+   "pageOverflowXpx": 0,
+   "pageOverflowYpx": 0,
+   "screenHost": {
+    "overflow": "hidden",
+    "scrolls": false,
+    "w": 952,
+    "h": 702
+   },
+   "href": "/solo/3855/operations/work",
+   "linkText": "Open delivery work",
+   "cardText": "Task in Operations e8000000 Prepare the onboarding packet Assignee Jordan Lee Due Sat, Oct 31 Status Ready Read from Operations · 12:54 PM Open delivery work",
+   "scrollOwner": "div.th-stream",
+   "scrollOwnerOverflowing": true,
+   "scrollableAncestors": [
+    "div.th-stream"
+   ],
+   "initial": {
+    "rect": {
+     "x": 763,
+     "y": 594,
+     "w": 139,
+     "h": 40
+    },
+    "inViewport": true,
+    "clippedBy": [],
+    "fullyVisible": true,
+    "coveredBy": null
+   },
+   "scrolledAway": {
+    "rect": {
+     "x": 763,
+     "y": 695,
+     "w": 139,
+     "h": 40
+    },
+    "inViewport": true,
+    "clippedBy": [
+     "div.th-stream"
+    ],
+    "fullyVisible": false,
+    "coveredBy": "div.th-composer-row"
+   },
+   "afterScrollIntoView": {
+    "rect": {
+     "x": 763,
+     "y": 612,
+     "w": 139,
+     "h": 40
+    },
+    "inViewport": true,
+    "clippedBy": [],
+    "fullyVisible": true,
+    "coveredBy": null
+   },
+   "linkStyle": {
+    "fontSize": "12px",
+    "fontWeight": "600",
+    "color": "rgb(246, 242, 234)",
+    "ink": "rgb(246, 242, 234)",
+    "goldCore": "rgb(255, 240, 207)",
+    "underline": "underline",
+    "transition": "all 0s"
+   },
+   "linkStyleOk": true,
+   "approval": {
+    "heading": "Approval not available here",
+    "refusalHeadingPresent": true,
+    "buttons": [],
+    "approveDrawn": false,
+    "text": "Operations task ZION wants to create a task in Operations: “Prepare the onboarding packet”, for Jordan Lee, due Fri, Oct 31. Approving from Team Hub isn't connected yet, so nothing has changed."
+   },
+   "keyboard": {
+    "tabs": 45,
+    "focusVisible": true,
+    "outline": "solid 2px rgb(155, 141, 224)",
+    "outlineOffset": "-2px",
+    "boxShadow": "none",
+    "inViewport": true
+   },
+   "errors": []
+  },
+  {
+   "name": "shell-3855-1024x768-paige-open-dark",
+   "frame": "shell-3855-1024x768-paige-open-dark.png",
+   "tenant": "Harbor Lane Studio",
+   "account": "3855",
+   "viewport": "1024x768",
+   "paigeRequested": "open",
+   "theme": "dark",
+   "url": "/solo/3855/team-hub",
+   "paige": "open",
+   "paigeOverlay": true,
+   "nav": "compact",
+   "pageOverflowXpx": 0,
+   "pageOverflowYpx": 0,
+   "screenHost": {
+    "overflow": "hidden",
+    "scrolls": false,
+    "w": 952,
+    "h": 702
+   },
+   "href": "/solo/3855/operations/work",
+   "linkText": "Open delivery work",
+   "cardText": "Task in Operations e8000000 Prepare the onboarding packet Assignee Jordan Lee Due Sat, Oct 31 Status Ready Read from Operations · 12:54 PM Open delivery work",
+   "scrollOwner": "div.th-stream",
+   "scrollOwnerOverflowing": true,
+   "scrollableAncestors": [
+    "div.th-stream"
+   ],
+   "initial": {
+    "rect": {
+     "x": 763,
+     "y": 594,
+     "w": 139,
+     "h": 40
+    },
+    "inViewport": true,
+    "clippedBy": [],
+    "fullyVisible": true,
+    "coveredBy": "textarea.flex.rounded-md"
+   },
+   "scrolledAway": {
+    "rect": {
+     "x": 763,
+     "y": 695,
+     "w": 139,
+     "h": 40
+    },
+    "inViewport": true,
+    "clippedBy": [
+     "div.th-stream"
+    ],
+    "fullyVisible": false,
+    "coveredBy": "button.inline-flex.items-center"
+   },
+   "afterScrollIntoView": {
+    "rect": {
+     "x": 763,
+     "y": 612,
+     "w": 139,
+     "h": 40
+    },
+    "inViewport": true,
+    "clippedBy": [],
+    "fullyVisible": true,
+    "coveredBy": "textarea.flex.rounded-md"
+   },
+   "linkStyle": {
+    "fontSize": "12px",
+    "fontWeight": "600",
+    "color": "rgb(246, 242, 234)",
+    "ink": "rgb(246, 242, 234)",
+    "goldCore": "rgb(255, 240, 207)",
+    "underline": "underline",
+    "transition": "all 0s"
+   },
+   "linkStyleOk": true,
+   "approval": {
+    "heading": "Approval not available here",
+    "refusalHeadingPresent": true,
+    "buttons": [],
+    "approveDrawn": false,
+    "text": "Operations task ZION wants to create a task in Operations: “Prepare the onboarding packet”, for Jordan Lee, due Fri, Oct 31. Approving from Team Hub isn't connected yet, so nothing has changed."
+   },
+   "keyboard": {
+    "tabs": 62,
+    "focusVisible": true,
+    "outline": "solid 2px rgb(155, 141, 224)",
+    "outlineOffset": "-2px",
+    "boxShadow": "none",
+    "inViewport": true,
+    "obscuredWhenFocused": true,
+    "afterEscapeFold": {
+     "paige": "closed",
+     "uncovered": true
+    }
+   },
+   "errors": []
+  },
+  {
+   "name": "shell-3855-900x1000-paige-closed-dark",
+   "frame": "shell-3855-900x1000-paige-closed-dark.png",
+   "tenant": "Harbor Lane Studio",
+   "account": "3855",
+   "viewport": "900x1000",
+   "paigeRequested": "closed",
+   "theme": "dark",
+   "url": "/solo/3855/team-hub",
+   "paige": "closed",
+   "paigeOverlay": false,
+   "nav": "compact",
+   "pageOverflowXpx": 0,
+   "pageOverflowYpx": 0,
+   "screenHost": {
+    "overflow": "hidden",
+    "scrolls": false,
+    "w": 828,
+    "h": 934
+   },
+   "href": "/solo/3855/operations/work",
+   "linkText": "Open delivery work",
+   "cardText": "Task in Operations e8000000 Prepare the onboarding packet Assignee Jordan Lee Due Sat, Oct 31 Status Ready Read from Operations · 12:54 PM Open delivery work",
+   "scrollOwner": "div.th-stream",
+   "scrollOwnerOverflowing": false,
+   "scrollableAncestors": [],
+   "initial": {
+    "rect": {
+     "x": 719,
+     "y": 695,
+     "w": 139,
+     "h": 40
+    },
+    "inViewport": true,
+    "clippedBy": [],
+    "fullyVisible": true,
+    "coveredBy": null
+   },
+   "afterScrollIntoView": {
+    "rect": {
+     "x": 719,
+     "y": 695,
+     "w": 139,
+     "h": 40
+    },
+    "inViewport": true,
+    "clippedBy": [],
+    "fullyVisible": true,
+    "coveredBy": null
+   },
+   "linkStyle": {
+    "fontSize": "12px",
+    "fontWeight": "600",
+    "color": "rgb(246, 242, 234)",
+    "ink": "rgb(246, 242, 234)",
+    "goldCore": "rgb(255, 240, 207)",
+    "underline": "underline",
+    "transition": "all 0s"
+   },
+   "linkStyleOk": true,
+   "approval": {
+    "heading": "Approval not available here",
+    "refusalHeadingPresent": true,
+    "buttons": [],
+    "approveDrawn": false,
+    "text": "Operations task ZION wants to create a task in Operations: “Prepare the onboarding packet”, for Jordan Lee, due Fri, Oct 31. Approving from Team Hub isn't connected yet, so nothing has changed."
+   },
+   "keyboard": {
+    "tabs": 45,
+    "focusVisible": true,
+    "outline": "solid 2px rgb(155, 141, 224)",
+    "outlineOffset": "-2px",
+    "boxShadow": "none",
+    "inViewport": true
+   },
+   "errors": []
+  },
+  {
+   "name": "shell-3855-900x1000-paige-open-dark",
+   "frame": "shell-3855-900x1000-paige-open-dark.png",
+   "tenant": "Harbor Lane Studio",
+   "account": "3855",
+   "viewport": "900x1000",
+   "paigeRequested": "open",
+   "theme": "dark",
+   "url": "/solo/3855/team-hub",
+   "paige": "open",
+   "paigeOverlay": true,
+   "nav": "compact",
+   "pageOverflowXpx": 0,
+   "pageOverflowYpx": 0,
+   "screenHost": {
+    "overflow": "hidden",
+    "scrolls": false,
+    "w": 828,
+    "h": 934
+   },
+   "href": "/solo/3855/operations/work",
+   "linkText": "Open delivery work",
+   "cardText": "Task in Operations e8000000 Prepare the onboarding packet Assignee Jordan Lee Due Sat, Oct 31 Status Ready Read from Operations · 12:54 PM Open delivery work",
+   "scrollOwner": "div.th-stream",
+   "scrollOwnerOverflowing": false,
+   "scrollableAncestors": [],
+   "initial": {
+    "rect": {
+     "x": 719,
+     "y": 695,
+     "w": 139,
+     "h": 40
+    },
+    "inViewport": true,
+    "clippedBy": [],
+    "fullyVisible": true,
+    "coveredBy": "div#solo-paige-transcript.flex-1.min-h-0"
+   },
+   "afterScrollIntoView": {
+    "rect": {
+     "x": 719,
+     "y": 695,
+     "w": 139,
+     "h": 40
+    },
+    "inViewport": true,
+    "clippedBy": [],
+    "fullyVisible": true,
+    "coveredBy": "div#solo-paige-transcript.flex-1.min-h-0"
+   },
+   "linkStyle": {
+    "fontSize": "12px",
+    "fontWeight": "600",
+    "color": "rgb(246, 242, 234)",
+    "ink": "rgb(246, 242, 234)",
+    "goldCore": "rgb(255, 240, 207)",
+    "underline": "underline",
+    "transition": "all 0s"
+   },
+   "linkStyleOk": true,
+   "approval": {
+    "heading": "Approval not available here",
+    "refusalHeadingPresent": true,
+    "buttons": [],
+    "approveDrawn": false,
+    "text": "Operations task ZION wants to create a task in Operations: “Prepare the onboarding packet”, for Jordan Lee, due Fri, Oct 31. Approving from Team Hub isn't connected yet, so nothing has changed."
+   },
+   "keyboard": {
+    "tabs": 62,
+    "focusVisible": true,
+    "outline": "solid 2px rgb(155, 141, 224)",
+    "outlineOffset": "-2px",
+    "boxShadow": "none",
+    "inViewport": true,
+    "obscuredWhenFocused": true,
+    "afterEscapeFold": {
+     "paige": "closed",
+     "uncovered": true
+    }
+   },
+   "errors": []
+  },
+  {
+   "name": "shell-4120-1536x770-paige-closed-dark",
+   "frame": "shell-4120-1536x770-paige-closed-dark.png",
+   "tenant": "Juniper Row Consulting",
+   "account": "4120",
+   "viewport": "1536x770",
+   "paigeRequested": "closed",
+   "theme": "dark",
+   "url": "/solo/4120/team-hub",
+   "paige": "closed",
+   "paigeOverlay": false,
+   "nav": "expanded",
+   "pageOverflowXpx": 0,
+   "pageOverflowYpx": 0,
+   "screenHost": {
+    "overflow": "hidden",
+    "scrolls": false,
+    "w": 1320,
+    "h": 704
+   },
+   "href": "/solo/4120/operations/work",
+   "linkText": "Open delivery work",
+   "cardText": "Task in Operations e8000000 Prepare the onboarding packet Assignee Jordan Lee Due Sat, Oct 31 Status Ready Read from Operations · 12:54 PM Open delivery work",
+   "scrollOwner": "div.th-stream",
+   "scrollOwnerOverflowing": true,
+   "scrollableAncestors": [
+    "div.th-stream"
+   ],
+   "initial": {
+    "rect": {
+     "x": 927,
+     "y": 596,
+     "w": 139,
+     "h": 40
+    },
+    "inViewport": true,
+    "clippedBy": [],
+    "fullyVisible": true,
+    "coveredBy": null
+   },
+   "scrolledAway": {
+    "rect": {
+     "x": 927,
+     "y": 695,
+     "w": 139,
+     "h": 40
+    },
+    "inViewport": true,
+    "clippedBy": [
+     "div.th-stream"
+    ],
+    "fullyVisible": false,
+    "coveredBy": "div.th-composer-row"
+   },
+   "afterScrollIntoView": {
+    "rect": {
+     "x": 927,
+     "y": 614,
+     "w": 139,
+     "h": 40
+    },
+    "inViewport": true,
+    "clippedBy": [],
+    "fullyVisible": true,
+    "coveredBy": null
+   },
+   "linkStyle": {
+    "fontSize": "12px",
+    "fontWeight": "600",
+    "color": "rgb(246, 242, 234)",
+    "ink": "rgb(246, 242, 234)",
+    "goldCore": "rgb(255, 240, 207)",
+    "underline": "underline",
+    "transition": "all 0s"
+   },
+   "linkStyleOk": true,
+   "approval": {
+    "heading": "Approval not available here",
+    "refusalHeadingPresent": true,
+    "buttons": [],
+    "approveDrawn": false,
+    "text": "Operations task ZION wants to create a task in Operations: “Prepare the onboarding packet”, for Jordan Lee, due Fri, Oct 31. Approving from Team Hub isn't connected yet, so nothing has changed."
+   },
+   "keyboard": {
+    "tabs": 45,
+    "focusVisible": true,
+    "outline": "solid 2px rgb(155, 141, 224)",
+    "outlineOffset": "-2px",
+    "boxShadow": "none",
+    "inViewport": true
+   },
+   "errors": []
+  },
+  {
+   "name": "shell-4120-1536x770-paige-open-dark",
+   "frame": "shell-4120-1536x770-paige-open-dark.png",
+   "tenant": "Juniper Row Consulting",
+   "account": "4120",
+   "viewport": "1536x770",
+   "paigeRequested": "open",
+   "theme": "dark",
+   "url": "/solo/4120/team-hub",
+   "paige": "open",
+   "paigeOverlay": false,
+   "nav": "expanded",
+   "pageOverflowXpx": 0,
+   "pageOverflowYpx": 0,
+   "screenHost": {
+    "overflow": "hidden",
+    "scrolls": false,
+    "w": 798,
+    "h": 704
+   },
+   "href": "/solo/4120/operations/work",
+   "linkText": "Open delivery work",
+   "cardText": "Task in Operations e8000000 Prepare the onboarding packet Assignee Jordan Lee Due Sat, Oct 31 Status Ready Read from Operations · 12:54 PM Open delivery work",
+   "scrollOwner": "div.th-stream",
+   "scrollOwnerOverflowing": true,
+   "scrollableAncestors": [
+    "div.th-stream"
+   ],
+   "initial": {
+    "rect": {
+     "x": 832,
+     "y": 596,
+     "w": 139,
+     "h": 40
+    },
+    "inViewport": true,
+    "clippedBy": [],
+    "fullyVisible": true,
+    "coveredBy": null
+   },
+   "scrolledAway": {
+    "rect": {
+     "x": 832,
+     "y": 695,
+     "w": 139,
+     "h": 40
+    },
+    "inViewport": true,
+    "clippedBy": [
+     "div.th-stream"
+    ],
+    "fullyVisible": false,
+    "coveredBy": "div.th-composer-row"
+   },
+   "afterScrollIntoView": {
+    "rect": {
+     "x": 832,
+     "y": 614,
+     "w": 139,
+     "h": 40
+    },
+    "inViewport": true,
+    "clippedBy": [],
+    "fullyVisible": true,
+    "coveredBy": null
+   },
+   "linkStyle": {
+    "fontSize": "12px",
+    "fontWeight": "600",
+    "color": "rgb(246, 242, 234)",
+    "ink": "rgb(246, 242, 234)",
+    "goldCore": "rgb(255, 240, 207)",
+    "underline": "underline",
+    "transition": "all 0s"
+   },
+   "linkStyleOk": true,
+   "approval": {
+    "heading": "Approval not available here",
+    "refusalHeadingPresent": true,
+    "buttons": [],
+    "approveDrawn": false,
+    "text": "Operations task ZION wants to create a task in Operations: “Prepare the onboarding packet”, for Jordan Lee, due Fri, Oct 31. Approving from Team Hub isn't connected yet, so nothing has changed."
+   },
+   "keyboard": {
+    "tabs": 61,
+    "focusVisible": true,
+    "outline": "solid 2px rgb(155, 141, 224)",
+    "outlineOffset": "-2px",
+    "boxShadow": "none",
+    "inViewport": true
+   },
+   "errors": []
+  },
+  {
+   "name": "shell-4120-1366x768-paige-closed-dark",
+   "frame": "shell-4120-1366x768-paige-closed-dark.png",
+   "tenant": "Juniper Row Consulting",
+   "account": "4120",
+   "viewport": "1366x768",
+   "paigeRequested": "closed",
+   "theme": "dark",
+   "url": "/solo/4120/team-hub",
+   "paige": "closed",
+   "paigeOverlay": false,
+   "nav": "compact",
+   "pageOverflowXpx": 0,
+   "pageOverflowYpx": 0,
+   "screenHost": {
+    "overflow": "hidden",
+    "scrolls": false,
+    "w": 1294,
+    "h": 702
+   },
+   "href": "/solo/4120/operations/work",
+   "linkText": "Open delivery work",
+   "cardText": "Task in Operations e8000000 Prepare the onboarding packet Assignee Jordan Lee Due Sat, Oct 31 Status Ready Read from Operations · 12:54 PM Open delivery work",
+   "scrollOwner": "div.th-stream",
+   "scrollOwnerOverflowing": true,
+   "scrollableAncestors": [
+    "div.th-stream"
+   ],
+   "initial": {
+    "rect": {
+     "x": 783,
+     "y": 594,
+     "w": 139,
+     "h": 40
+    },
+    "inViewport": true,
+    "clippedBy": [],
+    "fullyVisible": true,
+    "coveredBy": null
+   },
+   "scrolledAway": {
+    "rect": {
+     "x": 783,
+     "y": 695,
+     "w": 139,
+     "h": 40
+    },
+    "inViewport": true,
+    "clippedBy": [
+     "div.th-stream"
+    ],
+    "fullyVisible": false,
+    "coveredBy": "div.th-composer-row"
+   },
+   "afterScrollIntoView": {
+    "rect": {
+     "x": 783,
+     "y": 612,
+     "w": 139,
+     "h": 40
+    },
+    "inViewport": true,
+    "clippedBy": [],
+    "fullyVisible": true,
+    "coveredBy": null
+   },
+   "linkStyle": {
+    "fontSize": "12px",
+    "fontWeight": "600",
+    "color": "rgb(246, 242, 234)",
+    "ink": "rgb(246, 242, 234)",
+    "goldCore": "rgb(255, 240, 207)",
+    "underline": "underline",
+    "transition": "all 0s"
+   },
+   "linkStyleOk": true,
+   "approval": {
+    "heading": "Approval not available here",
+    "refusalHeadingPresent": true,
+    "buttons": [],
+    "approveDrawn": false,
+    "text": "Operations task ZION wants to create a task in Operations: “Prepare the onboarding packet”, for Jordan Lee, due Fri, Oct 31. Approving from Team Hub isn't connected yet, so nothing has changed."
+   },
+   "keyboard": {
+    "tabs": 45,
+    "focusVisible": true,
+    "outline": "solid 2px rgb(155, 141, 224)",
+    "outlineOffset": "-2px",
+    "boxShadow": "none",
+    "inViewport": true
+   },
+   "errors": []
+  },
+  {
+   "name": "shell-4120-1366x768-paige-open-dark",
+   "frame": "shell-4120-1366x768-paige-open-dark.png",
+   "tenant": "Juniper Row Consulting",
+   "account": "4120",
+   "viewport": "1366x768",
+   "paigeRequested": "open",
+   "theme": "dark",
+   "url": "/solo/4120/team-hub",
+   "paige": "open",
+   "paigeOverlay": false,
+   "nav": "compact",
+   "pageOverflowXpx": 0,
+   "pageOverflowYpx": 0,
+   "screenHost": {
+    "overflow": "hidden",
+    "scrolls": false,
+    "w": 830,
+    "h": 702
+   },
+   "href": "/solo/4120/operations/work",
+   "linkText": "Open delivery work",
+   "cardText": "Task in Operations e8000000 Prepare the onboarding packet Assignee Jordan Lee Due Sat, Oct 31 Status Ready Read from Operations · 12:54 PM Open delivery work",
+   "scrollOwner": "div.th-stream",
+   "scrollOwnerOverflowing": true,
+   "scrollableAncestors": [
+    "div.th-stream"
+   ],
+   "initial": {
+    "rect": {
+     "x": 720,
+     "y": 594,
+     "w": 139,
+     "h": 40
+    },
+    "inViewport": true,
+    "clippedBy": [],
+    "fullyVisible": true,
+    "coveredBy": null
+   },
+   "scrolledAway": {
+    "rect": {
+     "x": 720,
+     "y": 695,
+     "w": 139,
+     "h": 40
+    },
+    "inViewport": true,
+    "clippedBy": [
+     "div.th-stream"
+    ],
+    "fullyVisible": false,
+    "coveredBy": "div.th-composer-row"
+   },
+   "afterScrollIntoView": {
+    "rect": {
+     "x": 720,
+     "y": 612,
+     "w": 139,
+     "h": 40
+    },
+    "inViewport": true,
+    "clippedBy": [],
+    "fullyVisible": true,
+    "coveredBy": null
+   },
+   "linkStyle": {
+    "fontSize": "12px",
+    "fontWeight": "600",
+    "color": "rgb(246, 242, 234)",
+    "ink": "rgb(246, 242, 234)",
+    "goldCore": "rgb(255, 240, 207)",
+    "underline": "underline",
+    "transition": "all 0s"
+   },
+   "linkStyleOk": true,
+   "approval": {
+    "heading": "Approval not available here",
+    "refusalHeadingPresent": true,
+    "buttons": [],
+    "approveDrawn": false,
+    "text": "Operations task ZION wants to create a task in Operations: “Prepare the onboarding packet”, for Jordan Lee, due Fri, Oct 31. Approving from Team Hub isn't connected yet, so nothing has changed."
+   },
+   "keyboard": {
+    "tabs": 61,
+    "focusVisible": true,
+    "outline": "solid 2px rgb(155, 141, 224)",
+    "outlineOffset": "-2px",
+    "boxShadow": "none",
+    "inViewport": true
+   },
+   "errors": []
+  },
+  {
+   "name": "shell-4120-1024x768-paige-closed-dark",
+   "frame": "shell-4120-1024x768-paige-closed-dark.png",
+   "tenant": "Juniper Row Consulting",
+   "account": "4120",
+   "viewport": "1024x768",
+   "paigeRequested": "closed",
+   "theme": "dark",
+   "url": "/solo/4120/team-hub",
+   "paige": "closed",
+   "paigeOverlay": false,
+   "nav": "compact",
+   "pageOverflowXpx": 0,
+   "pageOverflowYpx": 0,
+   "screenHost": {
+    "overflow": "hidden",
+    "scrolls": false,
+    "w": 952,
+    "h": 702
+   },
+   "href": "/solo/4120/operations/work",
+   "linkText": "Open delivery work",
+   "cardText": "Task in Operations e8000000 Prepare the onboarding packet Assignee Jordan Lee Due Sat, Oct 31 Status Ready Read from Operations · 12:54 PM Open delivery work",
+   "scrollOwner": "div.th-stream",
+   "scrollOwnerOverflowing": true,
+   "scrollableAncestors": [
+    "div.th-stream"
+   ],
+   "initial": {
+    "rect": {
+     "x": 763,
+     "y": 594,
+     "w": 139,
+     "h": 40
+    },
+    "inViewport": true,
+    "clippedBy": [],
+    "fullyVisible": true,
+    "coveredBy": null
+   },
+   "scrolledAway": {
+    "rect": {
+     "x": 763,
+     "y": 695,
+     "w": 139,
+     "h": 40
+    },
+    "inViewport": true,
+    "clippedBy": [
+     "div.th-stream"
+    ],
+    "fullyVisible": false,
+    "coveredBy": "div.th-composer-row"
+   },
+   "afterScrollIntoView": {
+    "rect": {
+     "x": 763,
+     "y": 612,
+     "w": 139,
+     "h": 40
+    },
+    "inViewport": true,
+    "clippedBy": [],
+    "fullyVisible": true,
+    "coveredBy": null
+   },
+   "linkStyle": {
+    "fontSize": "12px",
+    "fontWeight": "600",
+    "color": "rgb(246, 242, 234)",
+    "ink": "rgb(246, 242, 234)",
+    "goldCore": "rgb(255, 240, 207)",
+    "underline": "underline",
+    "transition": "all 0s"
+   },
+   "linkStyleOk": true,
+   "approval": {
+    "heading": "Approval not available here",
+    "refusalHeadingPresent": true,
+    "buttons": [],
+    "approveDrawn": false,
+    "text": "Operations task ZION wants to create a task in Operations: “Prepare the onboarding packet”, for Jordan Lee, due Fri, Oct 31. Approving from Team Hub isn't connected yet, so nothing has changed."
+   },
+   "keyboard": {
+    "tabs": 45,
+    "focusVisible": true,
+    "outline": "solid 2px rgb(155, 141, 224)",
+    "outlineOffset": "-2px",
+    "boxShadow": "none",
+    "inViewport": true
+   },
+   "errors": []
+  },
+  {
+   "name": "shell-4120-1024x768-paige-open-dark",
+   "frame": "shell-4120-1024x768-paige-open-dark.png",
+   "tenant": "Juniper Row Consulting",
+   "account": "4120",
+   "viewport": "1024x768",
+   "paigeRequested": "open",
+   "theme": "dark",
+   "url": "/solo/4120/team-hub",
+   "paige": "open",
+   "paigeOverlay": true,
+   "nav": "compact",
+   "pageOverflowXpx": 0,
+   "pageOverflowYpx": 0,
+   "screenHost": {
+    "overflow": "hidden",
+    "scrolls": false,
+    "w": 952,
+    "h": 702
+   },
+   "href": "/solo/4120/operations/work",
+   "linkText": "Open delivery work",
+   "cardText": "Task in Operations e8000000 Prepare the onboarding packet Assignee Jordan Lee Due Sat, Oct 31 Status Ready Read from Operations · 12:55 PM Open delivery work",
+   "scrollOwner": "div.th-stream",
+   "scrollOwnerOverflowing": true,
+   "scrollableAncestors": [
+    "div.th-stream"
+   ],
+   "initial": {
+    "rect": {
+     "x": 763,
+     "y": 594,
+     "w": 139,
+     "h": 40
+    },
+    "inViewport": true,
+    "clippedBy": [],
+    "fullyVisible": true,
+    "coveredBy": "textarea.flex.rounded-md"
+   },
+   "scrolledAway": {
+    "rect": {
+     "x": 763,
+     "y": 695,
+     "w": 139,
+     "h": 40
+    },
+    "inViewport": true,
+    "clippedBy": [
+     "div.th-stream"
+    ],
+    "fullyVisible": false,
+    "coveredBy": "button.inline-flex.items-center"
+   },
+   "afterScrollIntoView": {
+    "rect": {
+     "x": 763,
+     "y": 612,
+     "w": 139,
+     "h": 40
+    },
+    "inViewport": true,
+    "clippedBy": [],
+    "fullyVisible": true,
+    "coveredBy": "textarea.flex.rounded-md"
+   },
+   "linkStyle": {
+    "fontSize": "12px",
+    "fontWeight": "600",
+    "color": "rgb(246, 242, 234)",
+    "ink": "rgb(246, 242, 234)",
+    "goldCore": "rgb(255, 240, 207)",
+    "underline": "underline",
+    "transition": "all 0s"
+   },
+   "linkStyleOk": true,
+   "approval": {
+    "heading": "Approval not available here",
+    "refusalHeadingPresent": true,
+    "buttons": [],
+    "approveDrawn": false,
+    "text": "Operations task ZION wants to create a task in Operations: “Prepare the onboarding packet”, for Jordan Lee, due Fri, Oct 31. Approving from Team Hub isn't connected yet, so nothing has changed."
+   },
+   "keyboard": {
+    "tabs": 62,
+    "focusVisible": true,
+    "outline": "solid 2px rgb(155, 141, 224)",
+    "outlineOffset": "-2px",
+    "boxShadow": "none",
+    "inViewport": true,
+    "obscuredWhenFocused": true,
+    "afterEscapeFold": {
+     "paige": "closed",
+     "uncovered": true
+    }
+   },
+   "errors": []
+  },
+  {
+   "name": "shell-4120-900x1000-paige-closed-dark",
+   "frame": "shell-4120-900x1000-paige-closed-dark.png",
+   "tenant": "Juniper Row Consulting",
+   "account": "4120",
+   "viewport": "900x1000",
+   "paigeRequested": "closed",
+   "theme": "dark",
+   "url": "/solo/4120/team-hub",
+   "paige": "closed",
+   "paigeOverlay": false,
+   "nav": "compact",
+   "pageOverflowXpx": 0,
+   "pageOverflowYpx": 0,
+   "screenHost": {
+    "overflow": "hidden",
+    "scrolls": false,
+    "w": 828,
+    "h": 934
+   },
+   "href": "/solo/4120/operations/work",
+   "linkText": "Open delivery work",
+   "cardText": "Task in Operations e8000000 Prepare the onboarding packet Assignee Jordan Lee Due Sat, Oct 31 Status Ready Read from Operations · 12:55 PM Open delivery work",
+   "scrollOwner": "div.th-stream",
+   "scrollOwnerOverflowing": false,
+   "scrollableAncestors": [],
+   "initial": {
+    "rect": {
+     "x": 719,
+     "y": 695,
+     "w": 139,
+     "h": 40
+    },
+    "inViewport": true,
+    "clippedBy": [],
+    "fullyVisible": true,
+    "coveredBy": null
+   },
+   "afterScrollIntoView": {
+    "rect": {
+     "x": 719,
+     "y": 695,
+     "w": 139,
+     "h": 40
+    },
+    "inViewport": true,
+    "clippedBy": [],
+    "fullyVisible": true,
+    "coveredBy": null
+   },
+   "linkStyle": {
+    "fontSize": "12px",
+    "fontWeight": "600",
+    "color": "rgb(246, 242, 234)",
+    "ink": "rgb(246, 242, 234)",
+    "goldCore": "rgb(255, 240, 207)",
+    "underline": "underline",
+    "transition": "all 0s"
+   },
+   "linkStyleOk": true,
+   "approval": {
+    "heading": "Approval not available here",
+    "refusalHeadingPresent": true,
+    "buttons": [],
+    "approveDrawn": false,
+    "text": "Operations task ZION wants to create a task in Operations: “Prepare the onboarding packet”, for Jordan Lee, due Fri, Oct 31. Approving from Team Hub isn't connected yet, so nothing has changed."
+   },
+   "keyboard": {
+    "tabs": 45,
+    "focusVisible": true,
+    "outline": "solid 2px rgb(155, 141, 224)",
+    "outlineOffset": "-2px",
+    "boxShadow": "none",
+    "inViewport": true
+   },
+   "errors": []
+  },
+  {
+   "name": "shell-4120-900x1000-paige-open-dark",
+   "frame": "shell-4120-900x1000-paige-open-dark.png",
+   "tenant": "Juniper Row Consulting",
+   "account": "4120",
+   "viewport": "900x1000",
+   "paigeRequested": "open",
+   "theme": "dark",
+   "url": "/solo/4120/team-hub",
+   "paige": "open",
+   "paigeOverlay": true,
+   "nav": "compact",
+   "pageOverflowXpx": 0,
+   "pageOverflowYpx": 0,
+   "screenHost": {
+    "overflow": "hidden",
+    "scrolls": false,
+    "w": 828,
+    "h": 934
+   },
+   "href": "/solo/4120/operations/work",
+   "linkText": "Open delivery work",
+   "cardText": "Task in Operations e8000000 Prepare the onboarding packet Assignee Jordan Lee Due Sat, Oct 31 Status Ready Read from Operations · 12:55 PM Open delivery work",
+   "scrollOwner": "div.th-stream",
+   "scrollOwnerOverflowing": false,
+   "scrollableAncestors": [],
+   "initial": {
+    "rect": {
+     "x": 719,
+     "y": 695,
+     "w": 139,
+     "h": 40
+    },
+    "inViewport": true,
+    "clippedBy": [],
+    "fullyVisible": true,
+    "coveredBy": "div#solo-paige-transcript.flex-1.min-h-0"
+   },
+   "afterScrollIntoView": {
+    "rect": {
+     "x": 719,
+     "y": 695,
+     "w": 139,
+     "h": 40
+    },
+    "inViewport": true,
+    "clippedBy": [],
+    "fullyVisible": true,
+    "coveredBy": "div#solo-paige-transcript.flex-1.min-h-0"
+   },
+   "linkStyle": {
+    "fontSize": "12px",
+    "fontWeight": "600",
+    "color": "rgb(246, 242, 234)",
+    "ink": "rgb(246, 242, 234)",
+    "goldCore": "rgb(255, 240, 207)",
+    "underline": "underline",
+    "transition": "all 0s"
+   },
+   "linkStyleOk": true,
+   "approval": {
+    "heading": "Approval not available here",
+    "refusalHeadingPresent": true,
+    "buttons": [],
+    "approveDrawn": false,
+    "text": "Operations task ZION wants to create a task in Operations: “Prepare the onboarding packet”, for Jordan Lee, due Fri, Oct 31. Approving from Team Hub isn't connected yet, so nothing has changed."
+   },
+   "keyboard": {
+    "tabs": 62,
+    "focusVisible": true,
+    "outline": "solid 2px rgb(155, 141, 224)",
+    "outlineOffset": "-2px",
+    "boxShadow": "none",
+    "inViewport": true,
+    "obscuredWhenFocused": true,
+    "afterEscapeFold": {
+     "paige": "closed",
+     "uncovered": true
+    }
+   },
+   "errors": []
+  },
+  {
+   "name": "shell-3855-1366x768-paige-closed-light",
+   "frame": "shell-3855-1366x768-paige-closed-light.png",
+   "tenant": "Harbor Lane Studio",
+   "account": "3855",
+   "viewport": "1366x768",
+   "paigeRequested": "closed",
+   "theme": "light",
+   "url": "/solo/3855/team-hub",
+   "paige": "closed",
+   "paigeOverlay": false,
+   "nav": "compact",
+   "pageOverflowXpx": 0,
+   "pageOverflowYpx": 0,
+   "screenHost": {
+    "overflow": "hidden",
+    "scrolls": false,
+    "w": 1294,
+    "h": 702
+   },
+   "href": "/solo/3855/operations/work",
+   "linkText": "Open delivery work",
+   "cardText": "Task in Operations e8000000 Prepare the onboarding packet Assignee Jordan Lee Due Sat, Oct 31 Status Ready Read from Operations · 12:55 PM Open delivery work",
+   "scrollOwner": "div.th-stream",
+   "scrollOwnerOverflowing": true,
+   "scrollableAncestors": [
+    "div.th-stream"
+   ],
+   "initial": {
+    "rect": {
+     "x": 783,
+     "y": 594,
+     "w": 139,
+     "h": 40
+    },
+    "inViewport": true,
+    "clippedBy": [],
+    "fullyVisible": true,
+    "coveredBy": null
+   },
+   "scrolledAway": {
+    "rect": {
+     "x": 783,
+     "y": 695,
+     "w": 139,
+     "h": 40
+    },
+    "inViewport": true,
+    "clippedBy": [
+     "div.th-stream"
+    ],
+    "fullyVisible": false,
+    "coveredBy": "div.th-composer-row"
+   },
+   "afterScrollIntoView": {
+    "rect": {
+     "x": 783,
+     "y": 612,
+     "w": 139,
+     "h": 40
+    },
+    "inViewport": true,
+    "clippedBy": [],
+    "fullyVisible": true,
+    "coveredBy": null
+   },
+   "linkStyle": {
+    "fontSize": "12px",
+    "fontWeight": "600",
+    "color": "rgb(32, 30, 35)",
+    "ink": "rgb(32, 30, 35)",
+    "goldCore": "rgb(111, 86, 54)",
+    "underline": "underline",
+    "transition": "all 0s"
+   },
+   "linkStyleOk": true,
+   "approval": {
+    "heading": "Approval not available here",
+    "refusalHeadingPresent": true,
+    "buttons": [],
+    "approveDrawn": false,
+    "text": "Operations task ZION wants to create a task in Operations: “Prepare the onboarding packet”, for Jordan Lee, due Fri, Oct 31. Approving from Team Hub isn't connected yet, so nothing has changed."
+   },
+   "keyboard": {
+    "tabs": 45,
+    "focusVisible": true,
+    "outline": "solid 2px rgb(101, 90, 150)",
+    "outlineOffset": "-2px",
+    "boxShadow": "none",
+    "inViewport": true
+   },
+   "errors": []
+  },
+  {
+   "name": "shell-3855-1366x768-paige-open-light",
+   "frame": "shell-3855-1366x768-paige-open-light.png",
+   "tenant": "Harbor Lane Studio",
+   "account": "3855",
+   "viewport": "1366x768",
+   "paigeRequested": "open",
+   "theme": "light",
+   "url": "/solo/3855/team-hub",
+   "paige": "open",
+   "paigeOverlay": false,
+   "nav": "compact",
+   "pageOverflowXpx": 0,
+   "pageOverflowYpx": 0,
+   "screenHost": {
+    "overflow": "hidden",
+    "scrolls": false,
+    "w": 830,
+    "h": 702
+   },
+   "href": "/solo/3855/operations/work",
+   "linkText": "Open delivery work",
+   "cardText": "Task in Operations e8000000 Prepare the onboarding packet Assignee Jordan Lee Due Sat, Oct 31 Status Ready Read from Operations · 12:55 PM Open delivery work",
+   "scrollOwner": "div.th-stream",
+   "scrollOwnerOverflowing": true,
+   "scrollableAncestors": [
+    "div.th-stream"
+   ],
+   "initial": {
+    "rect": {
+     "x": 720,
+     "y": 594,
+     "w": 139,
+     "h": 40
+    },
+    "inViewport": true,
+    "clippedBy": [],
+    "fullyVisible": true,
+    "coveredBy": null
+   },
+   "scrolledAway": {
+    "rect": {
+     "x": 720,
+     "y": 695,
+     "w": 139,
+     "h": 40
+    },
+    "inViewport": true,
+    "clippedBy": [
+     "div.th-stream"
+    ],
+    "fullyVisible": false,
+    "coveredBy": "div.th-composer-row"
+   },
+   "afterScrollIntoView": {
+    "rect": {
+     "x": 720,
+     "y": 612,
+     "w": 139,
+     "h": 40
+    },
+    "inViewport": true,
+    "clippedBy": [],
+    "fullyVisible": true,
+    "coveredBy": null
+   },
+   "linkStyle": {
+    "fontSize": "12px",
+    "fontWeight": "600",
+    "color": "rgb(32, 30, 35)",
+    "ink": "rgb(32, 30, 35)",
+    "goldCore": "rgb(111, 86, 54)",
+    "underline": "underline",
+    "transition": "all 0s"
+   },
+   "linkStyleOk": true,
+   "approval": {
+    "heading": "Approval not available here",
+    "refusalHeadingPresent": true,
+    "buttons": [],
+    "approveDrawn": false,
+    "text": "Operations task ZION wants to create a task in Operations: “Prepare the onboarding packet”, for Jordan Lee, due Fri, Oct 31. Approving from Team Hub isn't connected yet, so nothing has changed."
+   },
+   "keyboard": {
+    "tabs": 61,
+    "focusVisible": true,
+    "outline": "solid 2px rgb(101, 90, 150)",
+    "outlineOffset": "-2px",
+    "boxShadow": "none",
+    "inViewport": true
+   },
+   "errors": []
+  },
+  {
+   "name": "shell-3855-900x1000-paige-closed-light",
+   "frame": "shell-3855-900x1000-paige-closed-light.png",
+   "tenant": "Harbor Lane Studio",
+   "account": "3855",
+   "viewport": "900x1000",
+   "paigeRequested": "closed",
+   "theme": "light",
+   "url": "/solo/3855/team-hub",
+   "paige": "closed",
+   "paigeOverlay": false,
+   "nav": "compact",
+   "pageOverflowXpx": 0,
+   "pageOverflowYpx": 0,
+   "screenHost": {
+    "overflow": "hidden",
+    "scrolls": false,
+    "w": 828,
+    "h": 934
+   },
+   "href": "/solo/3855/operations/work",
+   "linkText": "Open delivery work",
+   "cardText": "Task in Operations e8000000 Prepare the onboarding packet Assignee Jordan Lee Due Sat, Oct 31 Status Ready Read from Operations · 12:55 PM Open delivery work",
+   "scrollOwner": "div.th-stream",
+   "scrollOwnerOverflowing": false,
+   "scrollableAncestors": [],
+   "initial": {
+    "rect": {
+     "x": 719,
+     "y": 695,
+     "w": 139,
+     "h": 40
+    },
+    "inViewport": true,
+    "clippedBy": [],
+    "fullyVisible": true,
+    "coveredBy": null
+   },
+   "afterScrollIntoView": {
+    "rect": {
+     "x": 719,
+     "y": 695,
+     "w": 139,
+     "h": 40
+    },
+    "inViewport": true,
+    "clippedBy": [],
+    "fullyVisible": true,
+    "coveredBy": null
+   },
+   "linkStyle": {
+    "fontSize": "12px",
+    "fontWeight": "600",
+    "color": "rgb(32, 30, 35)",
+    "ink": "rgb(32, 30, 35)",
+    "goldCore": "rgb(111, 86, 54)",
+    "underline": "underline",
+    "transition": "all 0s"
+   },
+   "linkStyleOk": true,
+   "approval": {
+    "heading": "Approval not available here",
+    "refusalHeadingPresent": true,
+    "buttons": [],
+    "approveDrawn": false,
+    "text": "Operations task ZION wants to create a task in Operations: “Prepare the onboarding packet”, for Jordan Lee, due Fri, Oct 31. Approving from Team Hub isn't connected yet, so nothing has changed."
+   },
+   "keyboard": {
+    "tabs": 45,
+    "focusVisible": true,
+    "outline": "solid 2px rgb(101, 90, 150)",
+    "outlineOffset": "-2px",
+    "boxShadow": "none",
+    "inViewport": true
+   },
+   "errors": []
+  },
+  {
+   "name": "shell-3855-900x1000-paige-open-light",
+   "frame": "shell-3855-900x1000-paige-open-light.png",
+   "tenant": "Harbor Lane Studio",
+   "account": "3855",
+   "viewport": "900x1000",
+   "paigeRequested": "open",
+   "theme": "light",
+   "url": "/solo/3855/team-hub",
+   "paige": "open",
+   "paigeOverlay": true,
+   "nav": "compact",
+   "pageOverflowXpx": 0,
+   "pageOverflowYpx": 0,
+   "screenHost": {
+    "overflow": "hidden",
+    "scrolls": false,
+    "w": 828,
+    "h": 934
+   },
+   "href": "/solo/3855/operations/work",
+   "linkText": "Open delivery work",
+   "cardText": "Task in Operations e8000000 Prepare the onboarding packet Assignee Jordan Lee Due Sat, Oct 31 Status Ready Read from Operations · 12:55 PM Open delivery work",
+   "scrollOwner": "div.th-stream",
+   "scrollOwnerOverflowing": false,
+   "scrollableAncestors": [],
+   "initial": {
+    "rect": {
+     "x": 719,
+     "y": 695,
+     "w": 139,
+     "h": 40
+    },
+    "inViewport": true,
+    "clippedBy": [],
+    "fullyVisible": true,
+    "coveredBy": "div#solo-paige-transcript.flex-1.min-h-0"
+   },
+   "afterScrollIntoView": {
+    "rect": {
+     "x": 719,
+     "y": 695,
+     "w": 139,
+     "h": 40
+    },
+    "inViewport": true,
+    "clippedBy": [],
+    "fullyVisible": true,
+    "coveredBy": "div#solo-paige-transcript.flex-1.min-h-0"
+   },
+   "linkStyle": {
+    "fontSize": "12px",
+    "fontWeight": "600",
+    "color": "rgb(32, 30, 35)",
+    "ink": "rgb(32, 30, 35)",
+    "goldCore": "rgb(111, 86, 54)",
+    "underline": "underline",
+    "transition": "all 0s"
+   },
+   "linkStyleOk": true,
+   "approval": {
+    "heading": "Approval not available here",
+    "refusalHeadingPresent": true,
+    "buttons": [],
+    "approveDrawn": false,
+    "text": "Operations task ZION wants to create a task in Operations: “Prepare the onboarding packet”, for Jordan Lee, due Fri, Oct 31. Approving from Team Hub isn't connected yet, so nothing has changed."
+   },
+   "keyboard": {
+    "tabs": 62,
+    "focusVisible": true,
+    "outline": "solid 2px rgb(101, 90, 150)",
+    "outlineOffset": "-2px",
+    "boxShadow": "none",
+    "inViewport": true,
+    "obscuredWhenFocused": true,
+    "afterEscapeFold": {
+     "paige": "closed",
+     "uncovered": true
+    }
+   },
+   "errors": []
+  }
+ ],
+ "states": [
+  {
+   "name": "shell-state-read-1366-dark",
+   "frame": "shell-state-read-1366-dark.png",
+   "read": "read",
+   "theme": "dark",
+   "href": "/solo/3855/operations/work",
+   "cardText": "Task in Operations e8000000 Prepare the onboarding packet Assignee Jordan Lee Due Sat, Oct 31 Status Ready Read from Operations · 12:55 PM Open delivery work",
+   "errors": []
+  },
+  {
+   "name": "shell-state-read-1366-light",
+   "frame": "shell-state-read-1366-light.png",
+   "read": "read",
+   "theme": "light",
+   "href": "/solo/3855/operations/work",
+   "cardText": "Task in Operations e8000000 Prepare the onboarding packet Assignee Jordan Lee Due Sat, Oct 31 Status Ready Read from Operations · 12:55 PM Open delivery work",
+   "errors": []
+  },
+  {
+   "name": "shell-state-failed-1366-dark",
+   "frame": "shell-state-failed-1366-dark.png",
+   "read": "failed",
+   "theme": "dark",
+   "href": "/solo/3855/operations/work",
+   "cardText": "Task in Operations e8000000 Its status couldn't be read from Operations. Team Hub reads it again on the next refresh. Checked 12:55 PM Open delivery work",
+   "errors": []
+  },
+  {
+   "name": "shell-state-failed-1366-light",
+   "frame": "shell-state-failed-1366-light.png",
+   "read": "failed",
+   "theme": "light",
+   "href": "/solo/3855/operations/work",
+   "cardText": "Task in Operations e8000000 Its status couldn't be read from Operations. Team Hub reads it again on the next refresh. Checked 12:55 PM Open delivery work",
+   "errors": []
+  },
+  {
+   "name": "shell-state-unreadable-1366-dark",
+   "frame": "shell-state-unreadable-1366-dark.png",
+   "read": "unreadable",
+   "theme": "dark",
+   "href": null,
+   "cardText": "Task in Operations e8000000 You can't see this task in Operations. Checked 12:55 PM",
+   "errors": []
+  },
+  {
+   "name": "shell-state-unreadable-1366-light",
+   "frame": "shell-state-unreadable-1366-light.png",
+   "read": "unreadable",
+   "theme": "light",
+   "href": null,
+   "cardText": "Task in Operations e8000000 You can't see this task in Operations. Checked 12:55 PM",
+   "errors": []
+  }
+ ],
+ "interactions": [
+  {
+   "name": "keyboard-enter-opens-operations-work",
+   "keyboard": {
+    "tabs": 43,
+    "focusVisible": true,
+    "outline": "solid 2px rgb(155, 141, 224)",
+    "outlineOffset": "-2px",
+    "boxShadow": "none",
+    "inViewport": true
+   },
+   "after": {
+    "url": "/solo/3855/operations/work",
+    "screen": "Overview Work Projects Delivery Playbooks Capacity New task Review with ZION Work is available, but team names and photos couldn’t be loaded. Retry profiles CRM work couldn’t be loaded. Try again. Ret",
+    "title": "HARBOR LANE STUDIO Operations Solo"
+   },
+   "frame": "shell-enter-operations-work-1366-dark.png",
+   "back": {
+    "url": "/solo/3855/team-hub",
+    "hub": true
+   },
+   "errors": []
+  },
+  {
+   "name": "workspace-switch-a-to-b",
+   "before": "/solo/3855/operations/work",
+   "staleRightAfter": [],
+   "redirected": "/solo/4120/command-center/executive",
+   "afterSwitch": {
+    "url": "/solo/4120/team-hub",
+    "href": "/solo/4120/operations/work",
+    "account": "JUNIPER ROW CONSULTING",
+    "stale": []
+   },
+   "keyboard": {
+    "tabs": 43,
+    "focusVisible": true,
+    "outline": "solid 2px rgb(155, 141, 224)",
+    "outlineOffset": "-2px",
+    "boxShadow": "none",
+    "inViewport": true
+   },
+   "landed": "/solo/4120/operations/work",
+   "frame": "shell-switch-a-to-b-1366-dark.png",
+   "errors": []
+  },
+  {
+   "name": "zoom-200-dark",
+   "frame": "shell-zoom200-1366x768-paige-closed-dark.png",
+   "url": "/solo/3855/team-hub",
+   "paige": "closed",
+   "paigeOverlay": false,
+   "nav": "compact",
+   "pageOverflowXpx": 0,
+   "pageOverflowYpx": 0,
+   "screenHost": {
+    "overflow": "hidden",
+    "scrolls": false,
+    "w": 611,
+    "h": 325
+   },
+   "href": "/solo/3855/operations/work",
+   "linkText": "Open delivery work",
+   "cardText": "Task in Operations e8000000 Prepare the onboarding packet Assignee Jordan Lee Due Sat, Oct 31 Status Ready Read from Operations · 12:55 PM Open delivery work",
+   "scrollOwner": "div.th-stream",
+   "scrollOwnerOverflowing": true,
+   "scrollableAncestors": [
+    "div.th-stream"
+   ],
+   "initial": {
+    "rect": {
+     "x": 510,
+     "y": 212,
+     "w": 139,
+     "h": 40
+    },
+    "inViewport": true,
+    "clippedBy": [],
+    "fullyVisible": true,
+    "coveredBy": null
+   },
+   "scrolledAway": {
+    "rect": {
+     "x": 510,
+     "y": 688,
+     "w": 139,
+     "h": 40
+    },
+    "inViewport": false,
+    "clippedBy": [
+     "div.th-stream",
+     "main[data-solo-screen-host]",
+     "div",
+     "main#tenant-shell-main.tcs-main",
+     "section.tcs-canvas",
+     "div",
+     "body",
+     "html.dark"
+    ],
+    "fullyVisible": false,
+    "coveredBy": null
+   },
+   "afterScrollIntoView": {
+    "rect": {
+     "x": 510,
+     "y": 230,
+     "w": 139,
+     "h": 40
+    },
+    "inViewport": true,
+    "clippedBy": [],
+    "fullyVisible": true,
+    "coveredBy": null
+   },
+   "linkStyle": {
+    "fontSize": "12px",
+    "fontWeight": "600",
+    "color": "rgb(246, 242, 234)",
+    "ink": "rgb(246, 242, 234)",
+    "goldCore": "rgb(255, 240, 207)",
+    "underline": "underline",
+    "transition": "all 0s"
+   },
+   "linkStyleOk": true,
+   "approval": {
+    "heading": "Approval not available here",
+    "refusalHeadingPresent": true,
+    "buttons": [],
+    "approveDrawn": false,
+    "text": "Operations task ZION wants to create a task in Operations: “Prepare the onboarding packet”, for Jordan Lee, due Fri, Oct 31. Approving from Team Hub isn't connected yet, so nothing has changed."
+   },
+   "keyboard": {
+    "tabs": 31,
+    "focusVisible": true,
+    "outline": "solid 2px rgb(155, 141, 224)",
+    "outlineOffset": "-2px",
+    "boxShadow": "none",
+    "inViewport": true
+   },
+   "errors": []
+  },
+  {
+   "name": "zoom-200-light",
+   "frame": "shell-zoom200-1366x768-paige-closed-light.png",
+   "url": "/solo/3855/team-hub",
+   "paige": "closed",
+   "paigeOverlay": false,
+   "nav": "compact",
+   "pageOverflowXpx": 0,
+   "pageOverflowYpx": 0,
+   "screenHost": {
+    "overflow": "hidden",
+    "scrolls": false,
+    "w": 611,
+    "h": 325
+   },
+   "href": "/solo/3855/operations/work",
+   "linkText": "Open delivery work",
+   "cardText": "Task in Operations e8000000 Prepare the onboarding packet Assignee Jordan Lee Due Sat, Oct 31 Status Ready Read from Operations · 12:55 PM Open delivery work",
+   "scrollOwner": "div.th-stream",
+   "scrollOwnerOverflowing": true,
+   "scrollableAncestors": [
+    "div.th-stream"
+   ],
+   "initial": {
+    "rect": {
+     "x": 510,
+     "y": 212,
+     "w": 139,
+     "h": 40
+    },
+    "inViewport": true,
+    "clippedBy": [],
+    "fullyVisible": true,
+    "coveredBy": null
+   },
+   "scrolledAway": {
+    "rect": {
+     "x": 510,
+     "y": 688,
+     "w": 139,
+     "h": 40
+    },
+    "inViewport": false,
+    "clippedBy": [
+     "div.th-stream",
+     "main[data-solo-screen-host]",
+     "div",
+     "main#tenant-shell-main.tcs-main",
+     "section.tcs-canvas",
+     "div",
+     "body",
+     "html.light"
+    ],
+    "fullyVisible": false,
+    "coveredBy": null
+   },
+   "afterScrollIntoView": {
+    "rect": {
+     "x": 510,
+     "y": 230,
+     "w": 139,
+     "h": 40
+    },
+    "inViewport": true,
+    "clippedBy": [],
+    "fullyVisible": true,
+    "coveredBy": null
+   },
+   "linkStyle": {
+    "fontSize": "12px",
+    "fontWeight": "600",
+    "color": "rgb(32, 30, 35)",
+    "ink": "rgb(32, 30, 35)",
+    "goldCore": "rgb(111, 86, 54)",
+    "underline": "underline",
+    "transition": "all 0s"
+   },
+   "linkStyleOk": true,
+   "approval": {
+    "heading": "Approval not available here",
+    "refusalHeadingPresent": true,
+    "buttons": [],
+    "approveDrawn": false,
+    "text": "Operations task ZION wants to create a task in Operations: “Prepare the onboarding packet”, for Jordan Lee, due Fri, Oct 31. Approving from Team Hub isn't connected yet, so nothing has changed."
+   },
+   "keyboard": {
+    "tabs": 31,
+    "focusVisible": true,
+    "outline": "solid 2px rgb(101, 90, 150)",
+    "outlineOffset": "-2px",
+    "boxShadow": "none",
+    "inViewport": true
+   },
+   "errors": []
+  },
+  {
+   "name": "reduced-motion",
+   "prefersReduced": true,
+   "runningAnimations": [],
+   "onCardOrLink": [],
+   "linkTransition": "all 1e-05s",
+   "cardAnimation": "none",
+   "hover": {
+    "running": 0
+   },
+   "frame": "shell-reduced-motion-1366-dark.png",
+   "errors": []
+  }
+ ],
+ "failures": []
+}

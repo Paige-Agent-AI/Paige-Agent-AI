@@ -31,6 +31,30 @@ export function mapCallStatus(callStatus: string | null | undefined): string | n
 }
 
 /**
+ * The owner-facing reason written to messages.error for an unsuccessful call. All four terminals
+ * still STORE as 'failed' (messages_status_check has no other unsuccessful value, and the call log,
+ * pills and counters all key on it) — but nobody picking up is not the provider rejecting the call,
+ * and saying so was the owner-reported defect (2026-10-28). "Rejected" is kept ONLY for a genuine
+ * provider failure (CallStatus=failed) or a status we do not recognise.
+ */
+const CALL_OUTCOME_COPY: Record<string, string> = {
+  "no-answer": "No answer.",
+  busy: "The line was busy.",
+  canceled: "The call was cancelled.",
+};
+
+export function callOutcomeError(
+  callStatus: string | null | undefined,
+  errorCode: string | null | undefined,
+): string {
+  const honest = CALL_OUTCOME_COPY[String(callStatus ?? "").trim().toLowerCase()];
+  if (honest) return honest;
+  return errorCode
+    ? `The provider rejected this call (error ${errorCode}).`
+    : "The provider rejected this call.";
+}
+
+/**
  * The provider_message_id(s) a call-status callback could match. The voice row stored the PARENT call
  * SID (voice-twiml used params.CallSid). A <Number>/<Client> child-leg statusCallback posts the CHILD
  * CallSid PLUS ParentCallSid = that parent SID. Try both (parent first) so matching works whether the

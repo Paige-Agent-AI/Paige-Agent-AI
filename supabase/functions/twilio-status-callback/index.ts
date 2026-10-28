@@ -60,7 +60,7 @@
 import { authenticateTwilioWebhook, type WebhookAuthOutcome } from "../_shared/twilio-webhook-auth.ts";
 import { deriveOperatorVoiceWebhookSecret } from "../_shared/operator-twilio.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { mapCallStatus, callMatchSids, parseCallDuration, nonEmptyOrNull } from "./call-status.ts";
+import { mapCallStatus, callMatchSids, callOutcomeError, parseCallDuration, nonEmptyOrNull } from "./call-status.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -209,9 +209,9 @@ async function applyCallUpdate(
   if (table === "messages") update.updated_at = nowIso;
   if (advance) update.status = f.mapped;
   if (table === "messages" && advance && f.mapped === "failed") {
-    update.error = f.errorCode
-      ? `The provider rejected this call (error ${f.errorCode}).`
-      : "The provider rejected this call.";
+    // Status stays 'failed'; the wording says what actually happened (no answer / busy /
+    // cancelled), keeping "rejected" for a genuine provider failure only.
+    update.error = callOutcomeError(f.twilioStatus, f.errorCode);
   }
   // Duration / recording / transcript are stamped whenever Twilio reports them, independent of the
   // advance-only status guard. null ⇒ omitted (never overwrites a prior real value with null, §13).

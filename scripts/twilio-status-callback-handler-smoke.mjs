@@ -100,13 +100,35 @@ updates.length = 0;
 assert.equal((await invoke()).status, 200);
 assert.equal(updates.length, 1);
 assert.equal(updates[0].status, "failed");
-assert.equal(updates[0].error, "The provider rejected this call (error 486).");
+// A busy line is not a provider rejection (owner report 2026-10-28): the status stays 'failed',
+// the wording says what actually happened.
+assert.equal(updates[0].error, "The line was busy.");
 assert.equal(updates[0].meta.call.error_code, "486");
 
 // Provider retry/duplicate: the same callback is idempotent at the owning row.
 assert.equal((await invoke()).status, 200);
 assert.equal(updates.length, 2);
 assert.equal(updates[1].status, "failed");
+
+// The other unsuccessful terminals, through the REAL handler. Prod carried a no-answer call
+// written as "The provider rejected this call." — the exact defect these pin.
+const invokeBody = (body) => handler(new Request(
+  `https://ref.functions.supabase.co/functions/v1/twilio-status-callback?t=${encodeURIComponent(SECRET)}`,
+  { method: "POST", headers: { "content-type": "application/x-www-form-urlencoded" }, body },
+));
+for (const [body, expected] of [
+  ["CallSid=CAchild&ParentCallSid=CAparent&CallStatus=no-answer", "No answer."],
+  ["CallSid=CAchild&ParentCallSid=CAparent&CallStatus=canceled", "The call was cancelled."],
+  ["CallSid=CAchild&ParentCallSid=CAparent&CallStatus=failed&ErrorCode=13224", "The provider rejected this call (error 13224)."],
+]) {
+  currentStatus = "queued";
+  updates.length = 0;
+  assert.equal((await invokeBody(body)).status, 200);
+  assert.equal(updates.length, 1);
+  assert.equal(updates[0].status, "failed", "the stored status is unchanged: still 'failed'");
+  assert.equal(updates[0].error, expected, body);
+}
+currentStatus = "queued";
 
 // A provider rejection is terminal. A late/out-of-order queued or completed callback
 // must never rewrite a failed call as Initiated or Completed.

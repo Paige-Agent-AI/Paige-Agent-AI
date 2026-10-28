@@ -32,6 +32,21 @@ describe("voice call safety", () => {
     expect(providerCallErrorMessage({ code: 99999, message: raw })).not.toContain(raw);
   });
 
+  // The callee not picking up, being busy, or declining is not a provider rejection. These are
+  // the Voice JS SDK's SIP-derived errors (@twilio/voice-sdk 2.x: TemporarilyUnavailable 31480,
+  // BusyHere 31486, Decline 31603); before this they fell through to the "rejected" catch-all.
+  it("names an unanswered, busy or declined call honestly instead of calling it rejected", () => {
+    const raw = "private provider payload";
+    expect(providerCallErrorMessage({ code: 31480, message: raw })).toBe("No answer.");
+    expect(providerCallErrorMessage({ code: 31486, message: raw })).toBe("The line was busy.");
+    expect(providerCallErrorMessage({ code: "31486" })).toBe("The line was busy.");
+    expect(providerCallErrorMessage({ code: 31603, message: raw })).toBe("The call was declined.");
+    for (const code of [31480, 31486, 31603]) {
+      expect(providerCallErrorMessage({ code, message: raw })).not.toMatch(/rejected/i);
+      expect(providerCallErrorMessage({ code, message: raw })).not.toContain(raw);
+    }
+  });
+
   it("discards an expired Device so retry must mint a fresh token", () => {
     let destroyed = 0;
     const device = { destroy: () => { destroyed += 1; } };

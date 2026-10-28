@@ -37,7 +37,7 @@ const outDir = fs.mkdtempSync(path.join(os.tmpdir(), "comms-purchase-safety-"));
 /** Everything the substituted seams were asked to do during one request. */
 let calls;
 const reset = () => {
-  calls = { purchases: [], audits: [], inserts: [], pricingLookups: [] };
+  calls = { purchases: [], purchaseOpts: [], audits: [], inserts: [], pricingLookups: [] };
 };
 
 /* ── The substituted seams, written as files so esbuild can alias to them ───────── */
@@ -64,13 +64,18 @@ export function createClient() {
 }
 `);
 
+// `voiceTwimlUrl` is NOT substituted: the stub re-exports the REAL helper from _shared/twilio.ts
+// (the resolver below lets the stub's own import through), so the voice URL this smoke asserts is
+// the one the shipped code builds — the same helper repair-voice-twiml-app stamps numbers with.
 fs.writeFileSync(path.join(outDir, "twilio-stub.mjs"), `
+export { voiceTwimlUrl } from ${JSON.stringify(path.resolve("supabase/functions/_shared/twilio.ts"))};
 export function resolveTwilioCreds() {
   return Promise.resolve({ ok: true, data: { accountSid: "ACtest", authToken: "tok", apiKeySid: "SKtest" } });
 }
-export function purchaseNumber(_a, _b, phoneNumber) {
+export function purchaseNumber(_a, _b, phoneNumber, opts) {
   const g = globalThis.__smoke;
   g.calls.purchases.push(phoneNumber);
+  g.calls.purchaseOpts.push(opts ?? {});
   return Promise.resolve(g.twilioResult(phoneNumber));
 }
 `);
@@ -91,8 +96,9 @@ await build({
     setup(b) {
       b.onResolve({ filter: /^https:\/\/esm\.sh\/@supabase\/supabase-js/ },
         () => ({ path: path.join(outDir, "supabase-stub.mjs") }));
-      b.onResolve({ filter: /_shared\/twilio\.ts$/ },
-        () => ({ path: path.join(outDir, "twilio-stub.mjs") }));
+      b.onResolve({ filter: /_shared\/twilio\.ts$/ }, (a) =>
+        // The stub's own re-export of the real voiceTwimlUrl resolves normally.
+        a.importer.endsWith("twilio-stub.mjs") ? undefined : { path: path.join(outDir, "twilio-stub.mjs") });
     },
   }],
 });
@@ -192,6 +198,16 @@ console.log("comms-purchase-number safety smoke\n");
   check("  and it reached Twilio exactly once", calls.purchases.length === 1);
   check("  and it wrote its audit row", calls.audits.length === 1
     && calls.audits[0].data.recorded_on_tenant === true);
+  // An inbound call to a newly bought number must reach voice-twiml. The URL is the exact one
+  // repair-voice-twiml-app stamps (voiceTwimlUrl(inbound_webhook_secret)); without it the number
+  // was bought SMS-only and every inbound call went nowhere.
+  const opts = calls.purchaseOpts[0] ?? {};
+  check("  and it wired the number's VOICE webhook at buy time",
+    opts.voiceUrl === `https://x.test/functions/v1/voice-twiml?t=${"s".repeat(64)}`, JSON.stringify(opts));
+  check("  and SMS wiring is unchanged",
+    opts.smsUrl === `https://x.test/functions/v1/handle-inbound-sms?t=${"s".repeat(64)}`
+      && opts.statusCallback === `https://x.test/functions/v1/twilio-status-callback?t=${"s".repeat(64)}`,
+    JSON.stringify(opts));
 }
 
 /* 2 ── §37: the UI producers send NO price. They must be byte-for-byte unaffected. */

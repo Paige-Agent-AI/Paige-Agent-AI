@@ -74,6 +74,11 @@ export function providerCallErrorMessage(error: unknown): string {
   if (code === "31005" || code === "31009") {
     return "We could not reach the calling provider. Retry.";
   }
+  // The callee's side, not the provider's: Voice SDK SIP errors TemporarilyUnavailable (31480),
+  // BusyHere (31486) and Decline (31603). Same honest wording as the server's call log.
+  if (code === "31480") return "No answer.";
+  if (code === "31486") return "The line was busy.";
+  if (code === "31603") return "The call was declined.";
   return "The provider rejected this call. Check the number and retry.";
 }
 

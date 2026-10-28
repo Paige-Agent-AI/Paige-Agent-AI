@@ -93,9 +93,9 @@ function LeadReplyDraftEntry({tenantId,contactId,approval,canEdit,disabled,recor
     {!current?.original&&(ready?<p className="break-words text-sm text-muted-foreground">{draft.subject as string}</p>:<p className="text-sm text-muted-foreground">No complete email draft is available.</p>)}
     {!canEdit?<p className="text-xs text-muted-foreground">An owner or admin can review and approve this reply.</p>
       : !current||current.loading?<p role="status" className="text-sm text-muted-foreground">Checking this reply's recorded status…</p>
-      : current.editable?(ready?<Button variant="outline" size="sm" className="hover:text-secondary-foreground" disabled={disabled} onClick={()=>{if(isCurrent())onEdit(approval,{subject:draft!.subject as string,body:draft!.body as string});}}>Edit and review reply</Button>:null)
+      : current.editable?(ready?<Button variant="outline" size="sm" disabled={disabled} onClick={()=>{if(isCurrent())onEdit(approval,{subject:draft!.subject as string,body:draft!.body as string});}}>Edit and review reply</Button>:null)
       : current.original?<OriginalReplyReport actorId={actorId} tenantId={tenantId} contactId={contactId} threadKey={threadKey} approvalId={approval.id} original={current.original} disabled={recordDisabled} current={isCurrent}/>
-      : <><p role="status" className="text-sm text-muted-foreground">{current.note}</p><Button variant="outline" size="sm" className="hover:text-secondary-foreground" disabled={recordDisabled} onClick={()=>{void refresh();}}>Check sending status</Button></>}
+      : <><p role="status" className="text-sm text-muted-foreground">{current.note}</p><Button variant="outline" size="sm" disabled={recordDisabled} onClick={()=>{void refresh();}}>Check sending status</Button></>}
   </div>;
 }
 

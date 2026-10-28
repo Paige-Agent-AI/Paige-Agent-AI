@@ -36,8 +36,11 @@ describe("E2-6a — one composition path", () => {
     expect(SOURCE).toMatch(/global: \{ headers: \{ Authorization: authHeader \} \}/);
   });
 
-  it("resolve who honestly: user id + server-read workspace, never invented role/accountShape", () => {
-    expect(SOURCE).toMatch(/actorId: user\.id, tenantId, role: null, accountShape: null/);
+  it("resolves eligibility from original native role/classification checks, never body-authored metadata", () => {
+    expect(SOURCE).toMatch(/await resolveReviewWho\(\{ auth: supabaseClient.auth,[\s\S]*?\}, user.id, tenantId, req.signal\)/);
+    expect(SOURCE).toContain('readCalendarAccountShape(classificationCaller, tenantId, controller.signal)');
+    expect(SOURCE).toContain("caller.rpc('has_tenant_role', { _user_id: actorId, _tenant_id: tenantId, _role: 'owner' })");
+    expect(SOURCE).toContain("caller.rpc('has_tenant_role', { _user_id: actorId, _tenant_id: tenantId, _role: 'admin' })");
     expect(SOURCE).toMatch(/rpc\("current_user_tenant_id"\)/);
     expect(SOURCE).not.toMatch(/role: "/);
   });

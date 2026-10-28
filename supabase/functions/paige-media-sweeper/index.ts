@@ -64,6 +64,59 @@ serve(async (req: Request) => {
       (e: unknown) => console.error("[media-sweeper] settle_media_credit_holds failed:", e instanceof Error ? e.message : "unknown"),
     );
 
+    // ── USAGE METER (owner billing supersession 2026-10-27): terminal jobs
+    // whose cost was NOT covered by prepaid credits are attributed to the
+    // consuming tenant in platform_usage_events (LAYER 1, the same §17 meter
+    // paige-tts/stt write). Credits-covered jobs already consumed their
+    // prepaid value — metering them would double-bill, so they are excluded.
+    // Best-effort: a metering failure logs and retries on the next sweep; it
+    // never blocks job processing. ──
+    try {
+      const { data: unmetered, error: unmeteredErr } = await admin
+        .from("paige_media_jobs")
+        .select("id,tenant_id,mode,estimated_cost_usd,actual_cost_usd,submitted_at,state")
+        .in("state", ["succeeded", "failed"])
+        .not("submitted_at", "is", null)
+        .limit(50);
+      if (unmeteredErr) throw unmeteredErr;
+      for (const job of (unmetered ?? []) as Array<Record<string, unknown>>) {
+        if (!job.tenant_id || typeof job.tenant_id !== "string") continue; // operator path is not a billable tenant
+        const jobId = String(job.id);
+        const cost = Number(job.actual_cost_usd ?? job.estimated_cost_usd) || 0;
+        if (cost <= 0) continue;
+        // Exclude jobs that consumed prepaid credits (any hold entry settled to consume).
+        const { data: covered, error: coveredErr } = await admin
+          .from("paige_media_credit_entries")
+          .select("id")
+          .eq("job_id", jobId)
+          .eq("entry_type", "consume")
+          .limit(1);
+        if (coveredErr) throw coveredErr;
+        if ((covered ?? []).length > 0) continue;
+        // Idempotency: skip if a usage row already exists for this job.
+        const { data: existing, error: existingErr } = await admin
+          .from("platform_usage_events")
+          .select("id")
+          .eq("tenant_id", job.tenant_id)
+          .eq("event_type", "media_usd")
+          .contains("metadata", { job_id: jobId })
+          .limit(1);
+        if (existingErr) throw existingErr;
+        if ((existing ?? []).length > 0) continue;
+        const { error: insertErr } = await admin.from("platform_usage_events").insert({
+          tenant_id: job.tenant_id,
+          event_type: "media_usd",
+          quantity: cost,
+          unit: "usd",
+          occurred_at: typeof job.submitted_at === "string" ? job.submitted_at : new Date().toISOString(),
+          metadata: { job_id: jobId, mode: typeof job.mode === "string" ? job.mode : null, state: typeof job.state === "string" ? job.state : null, source: "media-sweeper" },
+        });
+        if (insertErr) throw insertErr;
+      }
+    } catch (e) {
+      console.error("[media-sweeper] usage meter failed (will retry next sweep):", e instanceof Error ? e.message : "unknown");
+    }
+
     const { data: claimed, error: claimErr } = await admin.rpc("claim_due_media_jobs", { _limit: 10 });
     if (claimErr) return json({ error: "claim_failed", detail: claimErr.message }, 500);
     const jobs = (claimed ?? []) as Record<string, unknown>[];

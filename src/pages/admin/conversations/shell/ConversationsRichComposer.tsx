@@ -36,9 +36,10 @@ export function ConversationsRichComposer(model: ConversationsComposerModel) {
   const {
     capabilities: caps,
     value, onChange, onSend, sending, disabled, sendDisabled, sendOnEnter, placeholder, note, sendLabel, rows, textareaClassName,
+    actions, checking,
     identities, identityId, onIdentityChange, showIdentity = true,
     showSubject = false, subject = "", onSubjectChange,
-    attachments = [], uploading = false, onAttachFiles, onRemoveAttachment,
+    attachments = [], uploading = false, onAttachFiles, onRemoveAttachment, attachmentsLocked = false,
     showDraftWithPaige = false, onDraftWithPaige, drafting = false, draftReadingDoc = false,
     draftFlags = [], canDraft = true,
     templates = [], onApplyTemplate, snippets = [], onApplySnippet, showCombinedInsert = false,
@@ -125,7 +126,7 @@ export function ConversationsRichComposer(model: ConversationsComposerModel) {
       {renderAttach && attachments.length > 0 && (
         <div className="flex flex-wrap gap-1.5">
           {attachments.map((a) => (
-            <AttachmentChip key={a.url} a={a} onRemove={() => a.url && onRemoveAttachment?.(a)} />
+            <AttachmentChip key={a.url} a={a} disabled={disabled || attachmentsLocked} onRemove={() => a.url && onRemoveAttachment?.(a)} />
           ))}
         </div>
       )}
@@ -330,7 +331,8 @@ export function ConversationsRichComposer(model: ConversationsComposerModel) {
                 <Input
                   type="datetime-local"
                   className="mt-1 h-9"
-                  min={new Date(Date.now() + 60_000).toISOString().slice(0, 16)}
+                  // A governed email can be set no sooner than two minutes ahead (the door's own window).
+                  min={new Date(Date.now() + 2 * 60_000).toISOString().slice(0, 16)}
                   onChange={(e) => {
                     if (!e.target.value) return;
                     const d = new Date(e.target.value);
@@ -381,6 +383,8 @@ export function ConversationsRichComposer(model: ConversationsComposerModel) {
       rows={rows}
       header={hasHeader ? header : undefined}
       toolbar={hasToolbar ? toolbar : undefined}
+      actions={actions}
+      checking={checking}
       textareaClassName={cn(textareaClassName, renderAttach && dragOver && "ring-2 ring-[hsl(var(--ring))]")}
       onDrop={renderAttach && !disabled ? (e) => {
         e.preventDefault(); onDragLeaveZone?.();

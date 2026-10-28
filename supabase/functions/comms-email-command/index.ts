@@ -4,7 +4,8 @@ import { runPreSend } from "../_shared/pre-send-pipeline.ts";
 import { confirmFingerprint } from "../_shared/confirm-fingerprint.ts";
 import { decideDeclaredCapability } from "../_shared/capability-kit/decision.ts";
 import { COMMS_EMAIL_SEND_CAPABILITY } from "../_shared/paige-spine/domains/comms.ts";
-import { COMMS_EMAIL_TOOL, COMMS_EMAIL_ACTION, FINGERPRINT, UUID, parseCommsEmailCommand, commsEmailBodyHtml, commsEmailContentDigest, parseCommsEmailSendAt, canonicalCommsEmailSendAt, COMMS_EMAIL_SCHEDULED_RELEASE_GRACE_MS } from "../_shared/comms-email/contract.ts";
+import { COMMS_EMAIL_TOOL, COMMS_EMAIL_ACTION, FINGERPRINT, UUID, parseCommsEmailCommand, commsEmailBodyHtml, commsEmailContentDigest, parseCommsEmailSendAt, canonicalCommsEmailSendAt, COMMS_EMAIL_SCHEDULED_RELEASE_GRACE_MS, parseCommsEmailAttachmentRequest, COMMS_EMAIL_FILE_PROVIDERS } from "../_shared/comms-email/contract.ts";
+import { readCommsEmailAttachmentSources, copyCommsEmailAttachmentsToGoverned, parseCommsEmailAttachmentManifest, commsEmailManifestsEqual, commsEmailAttachmentPreview, commsEmailAttachmentSummary, commsEmailManifestDigest, readGovernedCommsEmailAttachmentFiles, type CommsEmailAttachmentFile, type CommsEmailAttachmentManifest, type CommsEmailStorage } from "../_shared/comms-email/attachments.ts";
 import { resolveCommsEmailParties, readCommsEmailReadiness, commsEmailReadinessOutcome, emailProvidersFor, type CommsEmailAdmin } from "../_shared/comms-email/readiness.ts";
 import { verifyLeadReplyApproval, storedApprovalMatches, recordLeadReplySend, bindingApprovalMatches, leadReplyPrepareRefusal, type LeadReplyApprovalAdmin } from "./lead-reply-approval.ts";
 import { executeCommsEmailSend, reconcileCommsEmailSend, parseCommsEmailStoredCall, commsEmailSafeResult } from "../_shared/comms-email/adapter.ts";
@@ -25,6 +26,12 @@ const object = (value: unknown): Record<string, unknown> | null => value && type
 const refusedBeforeDispatch = (status: number, code: string) => response(status, { ok: false, outcome: "refused", code });
 const REPLAY_MISMATCH = "COMMS_EMAIL_REPLAY_MISMATCH";
 const statusOf = (result: Record<string, unknown>) => result.ok === true ? 200 : result.outcome === "outcome_unknown" ? 503 : result.outcome === "sender_choice_required" ? 409 : 422;
+// How long the door waits on send-message. Without files: 25 s (send-message's provider call has its own
+// 20 s deadline). With files, send-message first reads and re-hashes up to 10 MiB of governed copies (in
+// parallel) before its claim, so the wait is 40 s. A send-message that does not answer in time is never
+// read as "not sent": the result is read back from the database, and an unanswered send stays unknown.
+const SEND_WAIT_MS = 25_000;
+const SEND_WAIT_WITH_FILES_MS = 40_000;
 
 Deno.serve(async req => {
   if (req.method === "OPTIONS") return new Response("ok", { headers });
@@ -35,12 +42,12 @@ Deno.serve(async req => {
   const admin = createClient(url, serviceKey);
   const { data: { user }, error: userError } = await caller.auth.getUser();
   if (userError || !user) return refusedBeforeDispatch(401, "UNAUTHENTICATED");
-  let body: Record<string, unknown> & { expected_tenant_id: string; operation_id: string; approval_id?: string; send_at?: string; cancel?: true }, command: ReturnType<typeof parseCommsEmailCommand>;
+  let body: Record<string, unknown> & { expected_tenant_id: string; operation_id: string; approval_id?: string; send_at?: string; cancel?: true; attachments?: unknown }, command: ReturnType<typeof parseCommsEmailCommand>;
   try {
     const raw = await req.text();
     if (raw.length > 100000) throw new TypeError("BODY_TOO_LARGE");
     const parsed = object(JSON.parse(raw));
-    if (!parsed || Object.keys(parsed).some(key => !["expected_tenant_id", "operation_id", "command", "approved_fingerprint", "approval_id", "send_at", "cancel"].includes(key))) throw new TypeError("INVALID_BODY");
+    if (!parsed || Object.keys(parsed).some(key => !["expected_tenant_id", "operation_id", "command", "approved_fingerprint", "approval_id", "send_at", "cancel", "attachments"].includes(key))) throw new TypeError("INVALID_BODY");
     if (typeof parsed.expected_tenant_id !== "string" || !UUID.test(parsed.expected_tenant_id) || typeof parsed.operation_id !== "string" || !UUID.test(parsed.operation_id)) throw new TypeError("INVALID_SCOPE");
     // Cancel of a scheduled send: exactly { expected_tenant_id, operation_id, cancel: true } — no command,
     // no approval, no time. It is answered further down, after the workspace/seat/profile checks.
@@ -65,6 +72,9 @@ Deno.serve(async req => {
       }
       // A drafted lead reply is answered now; its one-send-per-approval record is not scheduled.
       if (sendAt !== undefined && parsed.approval_id !== undefined) return refusedBeforeDispatch(400, "COMMS_EMAIL_SCHEDULE_NOT_SUPPORTED");
+      // Files ride as a top-level key too (the command and its content digest are unchanged), and never
+      // with a drafted lead reply, whose send is recorded against its approval exactly as drafted.
+      if (parsed.attachments !== undefined && parsed.approval_id !== undefined) return refusedBeforeDispatch(400, "COMMS_EMAIL_ATTACHMENTS_NOT_SUPPORTED");
       // The binding, the unique index and send-message all compare the operation id as lowercase
       // text; an uppercase id from a direct caller would otherwise never match its own binding.
       const { send_at: _requestedSendAt, ...rest } = parsed;
@@ -76,6 +86,13 @@ Deno.serve(async req => {
 
   const { data: tenantId, error: tenantError } = await caller.rpc("current_user_tenant_id");
   if (tenantError || typeof tenantId !== "string" || tenantId !== body.expected_tenant_id) return refusedBeforeDispatch(409, "WORKSPACE_CHANGED");
+  // The files named, checked against the SERVER-derived tenant before anything is read: a path in
+  // another business, the Team Hub or the governed folder is refused here, with no storage call at all.
+  let attachmentPaths: string[] | null = null;
+  if (body.attachments !== undefined) {
+    try { attachmentPaths = parseCommsEmailAttachmentRequest(body.attachments, tenantId); }
+    catch { return refusedBeforeDispatch(400, "COMMS_EMAIL_ATTACHMENTS_INVALID"); }
+  }
   // A cancel is a brake, not a send: it is not held behind the provider kill switch.
   if (body.cancel !== true && !await commsProviderExecutionAllowed(admin, { tenantId, actorUserId: user.id })) return refusedBeforeDispatch(403, COMMS_PROVIDER_EXECUTION_DISABLED);
   const stillCurrent = async () => {
@@ -133,9 +150,10 @@ Deno.serve(async req => {
   // Whether send-message ANSWERED (finished) rather than timing out or failing at the gateway. Only
   // an answered call that left the row 'prepared' proves nothing was dispatched for this operation.
   let sendAnswered = false;
+  let sendWaitMs = SEND_WAIT_MS;
   const send = async (payload: Record<string, unknown>) => {
     sendAnswered = false;
-    const abort = new AbortController(); const timer = setTimeout(() => abort.abort(), 25000);
+    const abort = new AbortController(); const timer = setTimeout(() => abort.abort(), sendWaitMs);
     try {
       const sent = await fetch(`${url}/functions/v1/send-message`, { method: "POST", headers: { Authorization: `Bearer ${serviceKey}`, "Content-Type": "application/json" }, body: JSON.stringify(payload), signal: abort.signal });
       const answer = await sent.json().catch(() => null);
@@ -275,8 +293,26 @@ Deno.serve(async req => {
     // The finder searches the whole workspace; the result read is tied to its actor. An identical
     // unresolved email that a TEAMMATE asked for is theirs to settle: name it, never send, and never
     // promise that asking again will check it (for this person it cannot).
-    try { await readResult(pending); } catch (error) {
+    let pendingResult: Record<string, unknown> | null = null;
+    try { pendingResult = object(await readResult(pending)); } catch (error) {
       if (error instanceof Error && error.message === REPLAY_MISMATCH) return response(503, { ok: false, outcome: "outcome_unknown", code: "COMMS_EMAIL_TEAMMATE_IN_FLIGHT", operation_id: body.operation_id });
+    }
+    // The text matches, but files make it a different email: when this request names files, or the
+    // unsettled one carried them, that send's result is NOT this one's (its files, or this request's,
+    // never went with it). Nothing is sent; the owner is told a matching email is still settling.
+    // Unreadable (a read error, or no answer): whether that send carried files cannot be told, so its result is
+    // never handed back as this one's. Nothing is sent; asking again re-checks it.
+    if (!attachmentPaths && pendingResult === null) return response(503, { ok: false, outcome: "refused", code: "COMMS_EMAIL_RECONCILIATION_UNVERIFIED" });
+    let pendingCarriesFiles = false;
+    if (!attachmentPaths) {
+      try {
+        const pendingMessage = typeof pendingResult?.message_id === "string" && UUID.test(pendingResult.message_id) ? pendingResult.message_id : null;
+        const pendingBinding = pendingMessage ? object(await readBinding(pendingMessage)) : null;
+        pendingCarriesFiles = pendingBinding !== null && pendingBinding.attachments !== undefined && pendingBinding.attachments !== null;
+      } catch { return response(503, { ok: false, outcome: "refused", code: "COMMS_EMAIL_RECONCILIATION_UNVERIFIED" }); }
+    }
+    if (attachmentPaths || pendingCarriesFiles) {
+      return response(503, { ok: false, outcome: "outcome_unknown", code: "COMMS_EMAIL_IDENTICAL_IN_FLIGHT", reconciled_operation_id: pending, operation_id: body.operation_id, delivery_confirmed: false });
     }
     const settled = await reconcile(pending);
     await settleSupportCase(settled);
@@ -284,8 +320,49 @@ Deno.serve(async req => {
   }
 
   // 4 — Readiness before any proposal: no card is raised for an email that cannot go out.
-  const readiness = await readCommsEmailReadiness(admin as unknown as CommsEmailAdmin, { tenantId, actorUserId: user.id, contactId: command.contact_id, recipient: parties.recipient, connectorId: parties.connectorId }, key => Deno.env.get(key), runPreSend);
+  const readiness = await readCommsEmailReadiness(admin as unknown as CommsEmailAdmin, { tenantId, actorUserId: user.id, contactId: command.contact_id, recipient: parties.recipient, connectorId: parties.connectorId, scheduled: body.send_at !== undefined }, key => Deno.env.get(key), runPreSend);
   if (!readiness.eligible || !parties.fromAddress) return response(422, { ok: false, outcome: readiness.eligible ? "needs_setup" : commsEmailReadinessOutcome(readiness), reason: readiness.eligible ? "TENANT_EMAIL_SENDER_MISSING" : readiness.reason });
+
+  // 4b — The files, read only now that the email can go out. Only a sender whose email leaves through the
+  // SendGrid arm carries files (Gmail and SMTP send no governed files). Each file is read with the service
+  // role, checked (size, the bucket's live type list, its own signature and extension) and hashed: the
+  // manifest is part of the approved call, so a card and its confirm must have read the same bytes.
+  let attachmentManifest: CommsEmailAttachmentManifest | null = null;
+  let attachmentFiles: CommsEmailAttachmentFile[] = [];
+  let attachmentsDigest: string | null = null;
+  if (attachmentPaths) {
+    if (!COMMS_EMAIL_FILE_PROVIDERS.includes(String(readiness.sender_provider ?? ""))) return refusedBeforeDispatch(422, "COMMS_EMAIL_ATTACHMENTS_PROVIDER_UNSUPPORTED");
+    // A prepared operation (its send never answered) already holds its approved files: the binding is the
+    // record and the governed copies are the bytes. Recovery re-sends exactly those — read back and
+    // re-hashed — whatever has happened to the composer uploads since (the composer deletes an upload the
+    // person removes). The request must still name the same uploads, in the same order, as that approval.
+    let boundManifest: CommsEmailAttachmentManifest | null = null;
+    if (preparedRecovery) {
+      let bound: Record<string, unknown> | null;
+      try { bound = typeof replay?.message_id === "string" && UUID.test(replay.message_id) ? object(await readBinding(replay.message_id)) : null; }
+      catch { return response(503, { ok: false, outcome: "outcome_unknown", code: "COMMS_EMAIL_BINDING_UNAVAILABLE", operation_id: body.operation_id }); }
+      if (bound && bound.attachments !== undefined && bound.attachments !== null) {
+        boundManifest = parseCommsEmailAttachmentManifest(bound.attachments, tenantId, body.operation_id);
+        if (!boundManifest || boundManifest.map(e => e.source_path).join("\n") !== attachmentPaths.join("\n")) return refusedBeforeDispatch(409, "COMMS_EMAIL_ATTACHMENTS_CHANGED");
+      }
+    }
+    if (boundManifest) {
+      let kept: Awaited<ReturnType<typeof readGovernedCommsEmailAttachmentFiles>>;
+      try { kept = await readGovernedCommsEmailAttachmentFiles(admin.storage as unknown as CommsEmailStorage, boundManifest); }
+      catch { return refusedBeforeDispatch(503, "COMMS_EMAIL_ATTACHMENT_UNAVAILABLE"); }
+      if (!kept.ok) return refusedBeforeDispatch(409, "COMMS_EMAIL_ATTACHMENT_CHANGED");
+      attachmentManifest = boundManifest;
+      attachmentFiles = kept.files;
+    } else {
+      let read: Awaited<ReturnType<typeof readCommsEmailAttachmentSources>>;
+      try { read = await readCommsEmailAttachmentSources(admin.storage as unknown as CommsEmailStorage, { tenantId, operationId: body.operation_id, paths: attachmentPaths }); }
+      catch { return refusedBeforeDispatch(503, "COMMS_EMAIL_ATTACHMENT_UNAVAILABLE"); }
+      if (!read.ok) return refusedBeforeDispatch(read.code === "COMMS_EMAIL_ATTACHMENT_UNAVAILABLE" ? 503 : 422, read.code);
+      attachmentManifest = read.manifest;
+      attachmentFiles = read.files;
+    }
+    attachmentsDigest = await commsEmailManifestDigest(attachmentManifest);
+  }
 
   // 5 — The proposed call: the exact recipient address, sender address and content digest are part
   // of what is fingerprinted, so a change to any of them is a different approval.
@@ -297,10 +374,15 @@ Deno.serve(async req => {
   // one time cannot be confirmed for another. Absent for an immediate send: every existing fingerprint,
   // summary and preview is unchanged.
   if (body.send_at !== undefined) requestArgs.send_at = body.send_at;
+  // The files are part of what is fingerprinted (each one's governed path, size, type and sha256). Absent
+  // without files: every existing fingerprint, summary and preview is unchanged.
+  if (attachmentManifest) { requestArgs.attachments = attachmentManifest; requestArgs.attachments_digest = attachmentsDigest; }
   const summary = `Email ${parties.contactName} at ${parties.recipient} from ${parties.fromAddress}: "${command.subject}"`
+    + (attachmentManifest ? commsEmailAttachmentSummary(attachmentManifest) : "")
     + (body.send_at !== undefined ? ` — scheduled for ${body.send_at.slice(0, 16).replace("T", " ")} UTC` : "");
   const preview = { kind: "email", to_name: parties.contactName, to_address: parties.recipient, from_address: parties.fromAddress, subject: command.subject, body_text: command.body,
-    ...(body.send_at !== undefined ? { send_at: body.send_at } : {}) };
+    ...(body.send_at !== undefined ? { send_at: body.send_at } : {}),
+    ...(attachmentManifest ? { attachments: commsEmailAttachmentPreview(attachmentManifest) } : {}) };
   if (preparedRecovery || body.approved_fingerprint === undefined) {
     // Reuse a live server-issued proposal cycle for this operation, or mint a fresh one. A consumed
     // fingerprint never becomes authority again (same rule as the invoice door).
@@ -312,6 +394,9 @@ Deno.serve(async req => {
       .order("server_issued_at", { ascending: false }).limit(1).maybeSingle();
     if (cycleError) return response(503, { ok: false, outcome: preparedRecovery ? "outcome_unknown" : "refused", code: "APPROVAL_STORE_UNAVAILABLE" });
     const cycle = object(pendingCycle?.args);
+    // A live cycle carries exactly the files this request read (none when none were named).
+    const cycleAttachmentsMatch = (stored: unknown, digest: unknown) => stored === undefined ? attachmentManifest === null && digest === undefined
+      : attachmentManifest !== null && digest === attachmentsDigest && commsEmailManifestsEqual(parseCommsEmailAttachmentManifest(stored, tenantId, body.operation_id), attachmentManifest);
     if (cycle) {
       let cycleCommand: ReturnType<typeof parseCommsEmailCommand>;
       try { cycleCommand = parseCommsEmailCommand(cycle.command); } catch { return response(409, { ok: false, outcome: "refused", code: "APPROVAL_CYCLE_INVALID" }); }
@@ -319,6 +404,7 @@ Deno.serve(async req => {
         || cycle.recipient !== parties.recipient || cycle.from_address !== parties.fromAddress || cycle.content_digest !== contentDigest
         || !storedApprovalMatches(cycle, body.approval_id)
         || cycle.send_at !== body.send_at
+        || !cycleAttachmentsMatch(cycle.attachments, cycle.attachments_digest)
         || typeof cycle.approval_cycle_nonce !== "string" || !UUID.test(cycle.approval_cycle_nonce))
         return response(409, { ok: false, outcome: "refused", code: "APPROVAL_CYCLE_INVALID" });
       requestArgs.approval_cycle_nonce = cycle.approval_cycle_nonce;
@@ -333,12 +419,17 @@ Deno.serve(async req => {
   if (body.approved_fingerprint !== undefined) {
     claimedArgs = null;
     if (!(await stillCurrent())) return refusedBeforeDispatch(409, "WORKSPACE_CHANGED");
-    const { data: claimed, error } = await admin.from("paige_pending_confirmations")
+    let redeem = admin.from("paige_pending_confirmations")
       .update({ consumed_at: new Date().toISOString() }).eq("user_id", user.id).eq("tenant_id", tenantId)
       .eq("tool_name", COMMS_EMAIL_TOOL).eq("fingerprint", body.approved_fingerprint)
       .is("thread_id", null).is("scoped_client_id", null).is("consumed_at", null)
       .not("server_issued_at", "is", null).not("issued_in_request", "is", null)
-      .neq("issued_in_request", requestNonce).gt("expires_at", new Date().toISOString()).select("args").maybeSingle();
+      .neq("issued_in_request", requestNonce).gt("expires_at", new Date().toISOString());
+    // With files, only a proposal holding exactly the files just read is redeemed — an exact match on the
+    // manifest's digest (a short value, never the manifest itself in the request URL). A file changed since
+    // the card was shown, or a confirm naming fewer or other files, has another digest: nothing is spent.
+    if (attachmentsDigest) redeem = redeem.eq("args->>attachments_digest", attachmentsDigest);
+    const { data: claimed, error } = await redeem.select("args").maybeSingle();
     if (!error) claimedArgs = object(claimed?.args);
   }
 
@@ -378,7 +469,9 @@ Deno.serve(async req => {
       proposal = existing.data; proposalError = existing.error;
     }
     if (proposalError || !proposal) return response(503, { ok: false, outcome: preparedRecovery ? "outcome_unknown" : "refused", code: "APPROVAL_STORE_UNAVAILABLE" });
-    return response(202, { ok: false, outcome: "approval_required", capability: COMMS_EMAIL_TOOL, fingerprint, operation_id: body.operation_id, summary: proposal.summary, expires_at: proposal.expires_at, preview });
+    return response(202, { ok: false, outcome: "approval_required", capability: COMMS_EMAIL_TOOL, fingerprint, operation_id: body.operation_id, summary: proposal.summary, expires_at: proposal.expires_at,
+    // The check's remaining life by the server's clock, so a browser with a wrong clock can still time it.
+    expires_in_ms: Math.max(0, Date.parse(String(proposal.expires_at)) - Date.now()), preview });
   }
 
   // 9 — Execute the STORED call only. The request's own command was used to find this proposal;
@@ -397,7 +490,20 @@ Deno.serve(async req => {
   }
   if (preparedRecovery && (stored.operationId !== body.operation_id || JSON.stringify(stored.command) !== JSON.stringify(proposedCommand)
     || typeof object(decision.args)?.approval_cycle_nonce !== "string")) return response(403, { ok: false, outcome: "refused", code: "APPROVAL_CYCLE_INVALID" });
+  // The approved files must be exactly the ones this request read (a confirm without them, or with other
+  // bytes, is not this approval): the bytes about to be kept are the bytes the person approved.
+  if (!commsEmailManifestsEqual(stored.attachments, attachmentManifest)
+    || (stored.attachments && object(decision.args)?.attachments_digest !== await commsEmailManifestDigest(stored.attachments))) return refusedBeforeDispatch(409, "COMMS_EMAIL_ATTACHMENTS_CHANGED");
   if (!(await stillCurrent())) return refusedBeforeDispatch(409, "WORKSPACE_CHANGED");
+  // Copy-on-approve: the bytes hashed above are kept at the operation's governed paths (never overwritten;
+  // a replay must find the same bytes there). send-message sends only these copies, re-hashed at send time.
+  if (stored.attachments) {
+    let copied: Awaited<ReturnType<typeof copyCommsEmailAttachmentsToGoverned>>;
+    try { copied = await copyCommsEmailAttachmentsToGoverned(admin.storage as unknown as CommsEmailStorage, attachmentFiles); }
+    catch { return refusedBeforeDispatch(503, "COMMS_EMAIL_ATTACHMENT_UNAVAILABLE"); }
+    if (!copied.ok) return refusedBeforeDispatch(copied.code === "COMMS_EMAIL_ATTACHMENT_UNAVAILABLE" ? 503 : 409, copied.code);
+    sendWaitMs = SEND_WAIT_WITH_FILES_MS;
+  }
   const governance = { actor_user_id: user.id, tenant_id: tenantId, tool: COMMS_EMAIL_TOOL, action: COMMS_EMAIL_ACTION,
     approval_channel: decision.audit.laneEffective === "confirm" ? "operator_card" : "standing_autonomy_setting",
     approved_fingerprint: decision.audit.laneEffective === "confirm" ? body.approved_fingerprint : null,
@@ -413,7 +519,7 @@ Deno.serve(async req => {
   const result = await executeCommsEmailSend({ actorUserId: user.id, tenantId, operationId: stored.operationId, stored, governance }, {
     stillCurrent, readResult, send, readBinding,
     resolveParties: () => resolveCommsEmailParties(admin as unknown as CommsEmailAdmin, { tenantId, actorUserId: user.id, contactId: stored.command.contact_id, connectorId: stored.command.connector_id }, senderProviders),
-    readiness: resolved => readCommsEmailReadiness(admin as unknown as CommsEmailAdmin, { tenantId, actorUserId: user.id, contactId: resolved.contactId, recipient: resolved.recipient, connectorId: resolved.connectorId }, key => Deno.env.get(key), runPreSend),
+    readiness: resolved => readCommsEmailReadiness(admin as unknown as CommsEmailAdmin, { tenantId, actorUserId: user.id, contactId: resolved.contactId, recipient: resolved.recipient, connectorId: resolved.connectorId, scheduled: stored.sendAt !== undefined }, key => Deno.env.get(key), runPreSend),
     prepare: async args => {
       const { data, error } = await admin.rpc("prepare_comms_email_send", args);
       approvalPrepareRefusal.code = error ? leadReplyPrepareRefusal(error) : null;

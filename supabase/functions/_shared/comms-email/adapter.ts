@@ -12,6 +12,7 @@
 // person to review (SendGrid, Gmail and SMTP have no idempotent replay; see reconcileCommsEmailSend).
 import { COMMS_EMAIL_ACTION, COMMS_EMAIL_SCHEDULED_RELEASE_GRACE_MS, UUID, canonicalCommsEmailSendAt, commsEmailBodyHtml, commsEmailContentDigest, parseCommsEmailCommand, type CommsEmailCommand } from "./contract.ts";
 import type { CommsEmailParties, CommsEmailReadiness } from "./readiness.ts";
+import { parseCommsEmailAttachmentManifest, type CommsEmailAttachmentManifest } from "./attachments.ts";
 
 type ObjectValue = Record<string, unknown>;
 const object = (v: unknown): ObjectValue | null => v && typeof v === "object" && !Array.isArray(v) ? v as ObjectValue : null;
@@ -52,6 +53,8 @@ export interface CommsEmailStoredCall {
   contentDigest: string;
   /** "Approve now, send later": the canonical send time the person approved. Absent = send now. */
   sendAt?: string;
+  /** The files the person approved (their governed copies, sizes and sha256). Absent = no files. */
+  attachments?: CommsEmailAttachmentManifest;
 }
 
 /** Re-parse the stored proposal arguments. Anything not exactly the shape the door stored refuses. */
@@ -69,8 +72,18 @@ export function parseCommsEmailStoredCall(args: unknown, tenantId: string): (Com
     try { sendAt = canonicalCommsEmailSendAt(a.send_at); } catch { return null; }
     if (sendAt !== a.send_at) return null;
   }
+  // Stored files must be exactly a manifest of THIS tenant and operation; anything else was not approved.
+  // The manifest's digest rides beside it (the confirm's exact redemption filter): both or neither. The
+  // door recomputes the digest from the manifest before it keeps any bytes.
+  let attachments: CommsEmailAttachmentManifest | undefined;
+  if ((a.attachments === undefined) !== (a.attachments_digest === undefined)) return null;
+  if (a.attachments !== undefined) {
+    const parsed = parseCommsEmailAttachmentManifest(a.attachments, tenantId, a.operation_id);
+    if (!parsed || typeof a.attachments_digest !== "string" || !/^[0-9a-f]{64}$/.test(a.attachments_digest)) return null;
+    attachments = parsed;
+  }
   return { operationId: a.operation_id, command: command as CommsEmailCommand & { connector_id: string }, recipient: a.recipient, fromAddress: a.from_address, contentDigest: a.content_digest,
-    ...(sendAt ? { sendAt } : {}) };
+    ...(sendAt ? { sendAt } : {}), ...(attachments ? { attachments } : {}) };
 }
 
 export interface CommsEmailExecutorInput {
@@ -102,6 +115,9 @@ const PREPARE_REFUSALS: [string, string][] = [
   ["COMMS_EMAIL_WORKSPACE_CHANGED", "WORKSPACE_CHANGED"],
   ["COMMS_EMAIL_SEND_AT_INVALID", "COMMS_EMAIL_SEND_AT_INVALID"],
   ["COMMS_EMAIL_SCHEDULE_NOT_SUPPORTED", "COMMS_EMAIL_SCHEDULE_NOT_SUPPORTED"],
+  ["COMMS_EMAIL_ATTACHMENTS_PROVIDER_UNSUPPORTED", "COMMS_EMAIL_ATTACHMENTS_PROVIDER_UNSUPPORTED"],
+  ["COMMS_EMAIL_ATTACHMENTS_INVALID", "COMMS_EMAIL_ATTACHMENTS_INVALID"],
+  ["COMMS_EMAIL_ATTACHMENTS_NOT_SUPPORTED", "COMMS_EMAIL_ATTACHMENTS_NOT_SUPPORTED"],
 ];
 
 export async function executeCommsEmailSend(input: CommsEmailExecutorInput, d: CommsEmailExecutorDependencies): Promise<ObjectValue> {
@@ -142,12 +158,14 @@ export async function executeCommsEmailSend(input: CommsEmailExecutorInput, d: C
 
     // `_send_at` only for a scheduled call, so every immediate send keeps choosing the 13-argument
     // prepare_comms_email_send exactly as before (PostgREST resolves the overload by argument names).
+    // An email with files names `_attachments` (and `_send_at`, null for "now"): the 15-argument overload,
+    // which validates the manifest against the governed copies and binds it in the same transaction.
     const { data, error } = await d.prepare({
       _actor_user_id: input.actorUserId, _expected_tenant_id: input.tenantId, _operation_id: input.operationId,
       _contact_id: stored.command.contact_id, _recipient: stored.recipient, _connector_id: stored.command.connector_id,
       _from_address: stored.fromAddress, _subject: stored.command.subject, _body_text: stored.command.body, _body_html: bodyHtml,
       _content_digest: contentDigest, _command: stored.command, _governance: input.governance,
-      ...(stored.sendAt ? { _send_at: stored.sendAt } : {}),
+      ...(stored.attachments ? { _send_at: stored.sendAt ?? null, _attachments: stored.attachments } : stored.sendAt ? { _send_at: stored.sendAt } : {}),
     });
     if (error) {
       if (!answered(error)) return unknown(); // no answer: the prepare may have committed
@@ -161,6 +179,15 @@ export async function executeCommsEmailSend(input: CommsEmailExecutorInput, d: C
     if (prepared.state !== "prepared") {
       if (!TERMINAL.has(String(prepared.state))) return unknown();
       return commsEmailSafeResult(await d.readResult(input.operationId), { replayed: true });
+    }
+    // A call approved WITHOUT files reached an operation already prepared (by an earlier approval) WITH
+    // files: the 13/14-argument prepare cannot see them. What this approval showed is not what the row
+    // would send, so nothing is sent. (The 15-argument overload refuses the reverse case itself.)
+    if (!stored.attachments && prepared.replayed === true) {
+      let bound: ObjectValue | null;
+      try { bound = object(await d.readBinding(prepared.message_id)); } catch { return refused("COMMS_EMAIL_BINDING_UNAVAILABLE"); }
+      if (!bound) return refused("COMMS_EMAIL_BINDING_UNAVAILABLE");
+      if (bound.attachments !== undefined && bound.attachments !== null) return refused("COMMS_EMAIL_ATTACHMENTS_CHANGED");
     }
     // A scheduled email is prepared and queued, never sent here: the drainer releases it at its time.
     // The database echoes the send time it stored; anything else is not the call that was approved.
@@ -258,8 +285,12 @@ export interface ScheduledReleaseDependencies {
   readiness(input: { tenantId: string; actorUserId: string; parties: Extract<CommsEmailParties, { kind: "resolved" }> }): Promise<CommsEmailReadiness>;
   /** read_comms_email_send_binding. On a database refusal it throws an Error whose message carries the database's code. */
   readBinding(messageId: string): Promise<unknown>;
-  /** POST send-message (service role). `answered` = it finished (HTTP < 500 with a JSON body); `code` = its code/error, if any. */
-  send(body: ObjectValue): Promise<{ answered: boolean; code: string | null }>;
+  /**
+   * POST send-message (service role). `answered` = it finished (HTTP < 500 with a JSON body); `code` = its
+   * code/error, if any. `withFiles`: the bound email carries governed files, which send-message reads and
+   * re-hashes before its claim, so the caller waits longer (the request itself never carries them).
+   */
+  send(body: ObjectValue, options?: { withFiles: boolean }): Promise<{ answered: boolean; code: string | null }>;
   /**
    * close_scheduled_comms_email(.., reason, NULL) — the one close of a scheduled send still 'prepared'.
    * Unlike finalize it succeeds even when the scheduler has left the business (the Rail is then honestly
@@ -373,7 +404,7 @@ export async function releaseScheduledCommsEmail(rawBinding: unknown, messageId:
         message_id: messageId, subject: binding.subject, body: binding.bodyHtml,
         comms_email_operation_id: binding.operationId, idempotency_key: `comms-email:${binding.operationId}`,
         comms_email_scheduled_release: true,
-      });
+      }, { withFiles: Array.isArray(object(rawBinding)?.attachments) });
     } catch { /* an unanswered send is settled by the readback below, never by this throw */ }
 
     const after = await read();

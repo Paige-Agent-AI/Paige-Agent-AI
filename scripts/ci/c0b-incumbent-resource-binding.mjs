@@ -1322,7 +1322,11 @@ const ANCESTRY_SOURCES = {
  // only the customer name resolver/import and role wording change. Native
  // binding/policy/Knowledge/private-history guards are unchanged. Pin the pure
  // identity dependency too; no dispatch scalar or verifier logic is renewed.
- "supabase/functions/_shared/client-portal-persona.ts": "e6d4017abf1f50cfbb1da55cec4430f9d64465c8664220fd1013612c91f5c833",
+ // E09 care-first restoration, AUTHOR-REVIEW / LOWER ASSURANCE: reproduce the
+ // e6d4017a incumbent from662be5534/d57432d9c; the customer-only assembler adds
+ // the unchanged identity-free PAIGE_PERSONA_CORE once. Root, frame/permissions,
+ // shared core, all29 dispatch scalars and125 other dependency pins stay exact.
+ "supabase/functions/_shared/client-portal-persona.ts": "63b318c89dfbca09ac118e8ba8d3d86098ed1343603dcb18c06ae8e70312a6d6",
  // E09 CURA round 4 (2026-10-19), AUTHOR source review (NOT non-author; an independent reviewer must confirm):
  // client-portal-identity.ts only. namesPaige sets aside a literal typed "Paiget" on the raw name before folding
  // (a superscript or look-alike t no longer borrows the exemption); the look-alike map gains lowercase keys

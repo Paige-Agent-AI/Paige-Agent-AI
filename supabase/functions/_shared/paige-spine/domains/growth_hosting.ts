@@ -25,21 +25,12 @@ import { defineCapability, objectInputSchema, ownerGrantablePermission } from ".
 // card — platform-owner enablement and a customer's page-publication approval are two
 // different doors (owner review 80189cce).
 
-export const GROWTH_HOSTING_DEPLOY = {
-  key: "growth_hosting.deploy", domain: "growth_hosting", owner: "vibe-studio", humanSurface: "/solo/:account/growth",
-  action: { classification: "external_effect", executor: "edge.growth-hosting-command", chatTool: "growth_hosting_deploy", riskPolicyKey: "high", approvalAuthority: "chat-canonical", idempotency: "One deployment per page: re-deploying re-deploys the same bytes to the same deployment name and re-verifies; the confirmation fingerprint is the execute-once guard, and an uncertain provider outcome is never auto-retried." },
-  outcome: { kinds: ["deployed", "verified", "refused", "failed"], projector: "capability-record", railVisibility: "Records that a hosted copy of a published page was deployed and verified at its HTTPS address — never that anyone visited it." },
-  chatBinding: "UNAVAILABLE", mindBinding: "UNAVAILABLE", sharedPrimitiveChange: "NONE", maturity: "PARTIAL",
-} as const satisfies SpineCapability;
-
-export const GROWTH_HOSTING_RECOVER = {
-  key: "growth_hosting.recover", domain: "growth_hosting", owner: "vibe-studio", humanSurface: "/solo/:account/growth",
-  action: { classification: "external_effect", executor: "edge.growth-hosting-command", chatTool: "growth_hosting_recover", riskPolicyKey: "high", approvalAuthority: "chat-canonical", idempotency: "Removing a removed deployment converges on 'no hosted copy'; uncertain outcomes mark the row removed_unconfirmed rather than a blind re-fire." },
-  outcome: { kinds: ["removed", "removed_unconfirmed", "refused", "failed"], projector: "capability-record", railVisibility: "Records that a page's hosted copy was taken down; the page's own published version is untouched." },
-  chatBinding: "UNAVAILABLE", mindBinding: "UNAVAILABLE", sharedPrimitiveChange: "NONE", maturity: "PARTIAL",
-} as const satisfies SpineCapability;
-
-export const GROWTH_HOSTING_CAPABILITIES = [GROWTH_HOSTING_DEPLOY, GROWTH_HOSTING_RECOVER] as const;
+// REGISTRY NOTE (enforced by scripts/ci/paige-spine-registry-lint.mjs): a MUTATING capability
+// joins PAIGE_SPINE_CAPABILITIES only when its Chat binding is LIVE. The hosting acts are
+// door-governed in THIS slice (the Studio host path reaches the door; the kit map below is what
+// the door executes against) — the registry entries land WITH the chat-admission slice, which is
+// also when chatTool goes from UNAVAILABLE to real. Nothing here weakens the governance: both
+// action-risk keys are live and the Kit gate refuses an unregistered act the door never declares.
 
 // Governed declarations (capability kit) — the entries the growth-hosting-command door hands to
 // decideDeclaredCapability. They throw if a declared risk contradicts action-risk.ts, which is the

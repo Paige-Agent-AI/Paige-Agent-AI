@@ -37,6 +37,18 @@ export function formatFileSize(bytes: number): string {
   return `${mb >= 10 ? Math.round(mb) : Number(mb.toFixed(1))} MB`;
 }
 
+/**
+ * A scheduled email's send time in the viewer's own clock and words ("Wed, Oct 28, 9:00 AM"). One home for
+ * the approval card and the Conversations inbox (governedSend re-exports it), so both say the same time.
+ */
+export function scheduledForLabel(sendAt: string, locale?: string): string {
+  const at = new Date(sendAt);
+  return Number.isFinite(at.getTime())
+    // The zone is named so a daylight-saving change (CDT → CST) is visible, never silent.
+    ? at.toLocaleString(locale, { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit", timeZoneName: "short" })
+    : "a set time";
+}
+
 /** The card's file list, or undefined when it is not a well-formed list of 1..10 named files. */
 function parseConfirmAttachments(raw: unknown): ConfirmEmailAttachment[] | undefined {
   if (!Array.isArray(raw) || raw.length < 1 || raw.length > 10) return undefined;
@@ -63,6 +75,10 @@ export function parseConfirmPreview(raw: unknown): ConfirmEmailPreview | undefin
   const r = raw as Record<string, unknown>;
   if (r.kind !== undefined && r.kind !== "email") return undefined;
   if (!nonEmpty(r.to_address) || !nonEmpty(r.from_address) || !nonEmpty(r.subject) || !nonEmpty(r.body_text)) return undefined;
+  // A time that is present but unreadable fails closed: an email shown as "sends now" that is really
+  // scheduled is worse than no preview (the card falls back to the server's sentence, which names the time).
+  const sendAtOk = typeof r.send_at === "string" && r.send_at.length <= 40 && Number.isFinite(Date.parse(r.send_at));
+  if (r.send_at !== undefined && !sendAtOk) return undefined;
   return {
     kind: "email",
     ...(nonEmpty(r.to_name) ? { to_name: r.to_name } : {}),
@@ -70,9 +86,7 @@ export function parseConfirmPreview(raw: unknown): ConfirmEmailPreview | undefin
     from_address: r.from_address,
     subject: r.subject,
     body_text: r.body_text,
-    // Only a readable instant passes; anything else is dropped (the card then shows no time, and the
-    // server's summary sentence still names it).
-    ...(typeof r.send_at === "string" && r.send_at.length <= 40 && Number.isFinite(Date.parse(r.send_at)) ? { send_at: r.send_at } : {}),
+    ...(sendAtOk ? { send_at: r.send_at as string } : {}),
     // Only a well-formed file list passes; anything else is dropped (the summary still names the files).
     ...(parseConfirmAttachments(r.attachments) ? { attachments: parseConfirmAttachments(r.attachments) } : {}),
   };

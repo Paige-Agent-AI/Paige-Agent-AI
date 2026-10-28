@@ -1,7 +1,7 @@
 // A mode of the original fenced, disposable PostgreSQL runner. This component
 // proof does not authenticate a user, book a session or call any provider.
 export async function bookingActorLockProof({sql,check,assert,fs,fixture,spawn,exe,args,transcripts,path,work,createHash,baseline}) {
- const migrationPath='supabase/migrations/20271120110009_e09_private_booking_atomic.sql';
+ const migrationPath='supabase/migrations/20271121110009_e09_private_booking_atomic.sql';
  const read=file=>fs.readFileSync(file,'utf8').replaceAll('\r\n','\n');
  const source=read('supabase/migrations/20271111060000_e09_campaign_portal_audience.sql');
  const start=source.indexOf('CREATE FUNCTION public._client_portal_customer_open(');

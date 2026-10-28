@@ -116,8 +116,8 @@ export function CustomerBooking({ onSaved, accent }: { onSaved: () => void | Pro
       <CalendarDays aria-hidden="true" className="mr-2 h-4 w-4" />{pending ? "Review booking request" : "Book a time"}
     </Button>
     <Sheet open={open} onOpenChange={setOpen}>
-      <SheetContent className="flex h-dvh w-full flex-col gap-0 overflow-hidden p-0 sm:max-w-xl [&>button]:z-10 motion-reduce:animate-none motion-reduce:transition-none"
-        overlayClassName="motion-reduce:animate-none motion-reduce:transition-none"
+      <SheetContent className="flex h-dvh w-full flex-col gap-0 overflow-hidden p-0 sm:max-w-xl [&>button]:z-10 motion-reduce:!animate-none motion-reduce:transition-none"
+        overlayClassName="motion-reduce:!animate-none motion-reduce:transition-none"
         onOpenAutoFocus={e => { e.preventDefault(); title.current?.focus(); }}
         onCloseAutoFocus={e => { e.preventDefault(); trigger.current?.focus(); }}>
         <SheetHeader className="shrink-0 border-b border-border px-5 pb-5 pt-7 text-left">

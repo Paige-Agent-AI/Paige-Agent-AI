@@ -36,7 +36,7 @@ export const READ_LINK_DESTINATIONS = [
 
 export type ReadLinkDestination = (typeof READ_LINK_DESTINATIONS)[number];
 
-/** UUID references are supported for clients, managed invoices, pipeline deals, Tasks, Plays, owner Knowledge and recorded Systems Check findings. Subject text is contact-only. */
+/** UUID references are supported for clients, agreement documents, managed invoices, pipeline deals, Tasks, Plays, owner Knowledge and recorded Systems Check findings. Subject text is contact-only. */
 export type ReadRecordLink = { destination: ReadLinkDestination; record_id: string | null; subject?: string; record_kind?: "planning_item" };
 
 export const MAX_RECORD_LINKS = 6;
@@ -63,10 +63,10 @@ function one(value: unknown): ReadRecordLink | null {
   const destination = v.destination as ReadLinkDestination;
   const typedPlanning = Object.prototype.hasOwnProperty.call(v, "record_kind");
   if (typedPlanning && (destination !== "operations_work" || v.record_kind !== "planning_item")) return null;
-  if (destination !== "contacts" && destination !== "sales_invoices" && destination !== "pipeline" && destination !== "operations_work" && destination !== "business_game_plan" && destination !== "portal_knowledge" && destination !== "systems_check") return { destination, record_id: null };
+  if (destination !== "contacts" && destination !== "sales_agreements" && destination !== "sales_invoices" && destination !== "pipeline" && destination !== "operations_work" && destination !== "business_game_plan" && destination !== "portal_knowledge" && destination !== "systems_check") return { destination, record_id: null };
   const record_id = typeof v.record_id === "string" && UUID.test(v.record_id) ? v.record_id.toLowerCase() : null;
   if (typedPlanning) return { destination, record_id, record_kind: "planning_item" };
-  if (destination === "sales_invoices" || destination === "pipeline" || destination === "operations_work" || destination === "business_game_plan" || destination === "portal_knowledge" || destination === "systems_check") return { destination, record_id };
+  if (destination === "sales_agreements" || destination === "sales_invoices" || destination === "pipeline" || destination === "operations_work" || destination === "business_game_plan" || destination === "portal_knowledge" || destination === "systems_check") return { destination, record_id };
   const subject = subjectOf(v.subject);
   return subject ? { destination, record_id, subject } : { destination, record_id };
 }

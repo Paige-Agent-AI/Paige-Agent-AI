@@ -43,6 +43,33 @@ function fakeCaller(replies: Record<string, { data?: unknown; error?: { code?: s
 const one = (id = CLIENT, exact = true) => ({ matches: [{ id, name: 'Test Consulting Client', status: 'active', exact }], more: false });
 
 describe('the client-standing projection never invents money', () => {
+  it('keeps a projection gap distinct from the platform having no effective-terms record', () => {
+    const text=standing();
+    expect(text).toContain('Effective terms are not established by this standing view.');
+    expect(text).toContain('NOT ESTABLISHED BY THIS STANDING READ:');
+    expect(text).not.toContain('The platform does not record when an agreement takes effect.');
+    expect(text).not.toContain('NOT RECORDED BY THE PLATFORM:');
+    expect(text).toContain('Dispute details are not established by this standing read.');
+    expect(text).not.toContain('Disputes are not recorded by the platform.');
+  });
+  it.each([0,3])('does not equate %i done work records with accepted service', done => {
+    const s=base();s.work={...s.work,total:3,done,open:0,cancelled:3-done,blocked:0,overdue:0,undated_open:0,
+      items:s.work.items.map(item=>({...item,status:done===3?'done':'cancelled'}))};
+    const text=standing(s);
+    expect(text).toContain(`ONBOARDING AND DELIVERY: no open linked work — ${done} of 3 done`);
+    expect(text).toContain('Work counts do not establish client acceptance or engagement completion.');
+    expect(text).not.toContain('ONBOARDING AND DELIVERY: complete');
+  });
+  it('explains a mismatched invoice revision without declaring current-plan dates due', () => {
+    const s=base();s.terms[0].collection_terms_version=2;
+    const text=standing(s);
+    expect(text).toContain('verification pending — invoice and plan versions differ');
+    expect(text).toContain('Review the original terms before checking payment timing.');
+    expect(text).toContain('Outstanding (invoiced, not yet received): USD 3,020.00');
+    expect(text).toContain('Paid and VERIFIED by the payment provider: USD 100.00');
+    expect(text).not.toContain('exactly on schedule');
+    expect(text).not.toContain('ahead of the schedule by');
+  });
   it('keeps provider-verified, owner-recorded and test money apart, with real amounts', () => {
     const text = standing();
     expect(text).toContain('Paid and VERIFIED by the payment provider: USD 100.00');

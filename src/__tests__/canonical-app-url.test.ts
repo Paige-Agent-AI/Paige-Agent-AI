@@ -168,11 +168,12 @@ describe("resolveCanonicalRecordLink", () => {
     ["operations_work", "/solo/1971670/operations/work"],
     ["business_time_zone", "/solo/1971670/settings/setup/business-profile#business-time-zone"],
     ["conversations", "/solo/1971670/clients/conversations"],
-  ] as const)("maps %s to its Solo surface, surface-only", (destination, path) => {
+  ] as const)("maps %s to its mounted Solo surface with only supported focus", (destination, path) => {
     expect(resolveCanonicalRecordLink({ ...solo, destination })).toEqual({ path, status: "surface_only" });
-    // Only the mounted invoice and Task consumers support exact UUID focus.
+    // Only the mounted agreement, invoice and Task consumers support exact UUID focus.
     expect(resolveCanonicalRecordLink({ ...solo, destination, recordId: UUID })).toEqual(destination === 'sales_invoices'
       ? { path: `${path}&invoice=${UUID}`, status: "exact" }
+      : destination === 'sales_agreements' ? { path: `${path}?agreement=${UUID}`, status: "exact" }
       : destination === 'operations_work' ? { path: `${path}?task=${UUID}`, status: "exact" }
       : { path, status: "surface_only" });
   });

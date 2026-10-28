@@ -1230,7 +1230,7 @@ const SOURCES = {
  // Restoring main8e97's route helper reproduces old636e digest, all120 sources
  // and all29 dispatches. Renew this reviewed helper only; extractor, metadata,
  // dispatch scalars and other119 accepted dependency pins remain unchanged.
- "supabase/functions/_shared/canonical-app-url.ts": "2ed96e6112f3d84f362c69dcbcb1aa40141e9adbd62f549b45874df607a0d124",
+ "supabase/functions/_shared/canonical-app-url.ts": "f9c28d86381783f7ecfc50489ef41b55b3fc220c0effc051718608baadecf80f",
   "supabase/functions/_shared/gmail.ts": "78f697e312d18eb9d73ff2a3802142003a843b109f5e2a956182befb5d6160ff",
   "supabase/functions/_shared/smtp.ts": "0e3ea569f3728dde3329bb5281ef0afb9d592a4f080b3535b2bb7da62799f5ff",
   "supabase/functions/_shared/sales-invoice-delivery/binding.ts": "4e95a90d3a145278d3cb27f64865d26dc968d1c8cf7937dea2feac584e307b77",
@@ -1376,7 +1376,7 @@ const ANCESTRY_SOURCES = {
  // stay exact. Restoring main8e97's helper reproduces old8465 digest, all120 source
  // pins and all29 dispatches. Renew this inspected helper only; no extractor,
  // metadata, dispatch scalar or other dependency changes. Hostile controls retained.
- "supabase/functions/_shared/paige-turn/record-links.ts": "4edbfeedd1f809fc13d5e8b24ae2e5d006d6e2b1decacc6874c7103a382f39d2",
+ "supabase/functions/_shared/paige-turn/record-links.ts": "b3bf852044fcc65c751667c4cc0638c7c38940415baf9f151d0b7be2b541f841",
  // Original extraction input/acknowledgment validation remains authoritative.
  "supabase/functions/_shared/knowledge-extraction.ts": "458e778114b65959f35c5a65f1b371992faf199f6828d2928df8cb0c5435578d",
  // Original CURA history and strict native preparation adapter; native authority unchanged.

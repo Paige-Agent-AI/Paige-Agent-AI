@@ -58,7 +58,6 @@ async function world(opts: Opts = {}) {
           case "get_paige_persona_context": return [{ tenant_id: TENANT }];
           case "team_hub_decide_card": return opts.decide ? opts.decide(a) : a.p_decision === "decline"
             ? { ok: true, decision: "declined", confirmation_id: CONF } : { ok: true, decision: "approved", confirmation_id: CONF };
-          case "team_hub_settle_card": return opts.settle ? opts.settle(a) : { ok: true, outcome: (a.p_outcome as any).state };
           case "team_hub_post_agent_message": return opts.post ? opts.post() : { ok: true, message: { id: OUTCOME_MSG } };
           case "team_hub_list_messages": return { ok: true, messages: [{ id: OUTCOME_MSG, author_kind: "agent", agent_key: "zion", body: "x", parent_message_id: CARD }], has_more: false,
             root: { id: CARD, author_kind: "agent", agent_key: "zion" } };
@@ -86,6 +85,8 @@ async function world(opts: Opts = {}) {
     rpc(name: string, a: Record<string, unknown> = {}) {
       calls.push({ who: "service", name, args: a });
       if (name === "team_hub_accept_agent_turn") return Promise.resolve({ data: opts.accept ? opts.accept() : { ok: true, turn_id: TURN, accepted_at: "2026-10-28T10:01:00Z" }, error: null });
+      // Codex P1: the outcome is the server's to settle, as the service role with the verified approver.
+      if (name === "team_hub_settle_card") return Promise.resolve({ data: opts.settle ? opts.settle(a) : { ok: true, outcome: (a.p_outcome as any).state }, error: null });
       return Promise.resolve({ data: null, error: null });
     },
     from: db.from,
@@ -139,6 +140,9 @@ describe("Approve (CRM): decide, the stored call through its door, settle, then 
     assert.equal(eqOf(rowRead, "id"), CONF);
     assert.equal(eqOf(rowRead, "user_id"), SAM);
     const [settle] = named(w, "team_hub_settle_card");
+    assert.equal(settle.who, "service", "the approver's own JWT can never assert an outcome (Codex P1)");
+    assert.equal(settle.args.p_actor, SAM);
+    assert.equal(settle.args.p_expected_tenant, TENANT);
     assert.deepEqual(settle.args.p_outcome, { state: "done", note: "The task is cancelled.", record: { destination: "operations_work", record_id: TASK } });
     const [accept] = named(w, "team_hub_accept_agent_turn");
     assert.equal(accept.who, "service");

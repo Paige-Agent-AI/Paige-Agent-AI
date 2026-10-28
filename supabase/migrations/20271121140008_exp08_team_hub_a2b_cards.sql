@@ -31,7 +31,7 @@
 --   team_hub_decide_card (authenticated): the approver's Approve or Not now. Not now consumes the
 --     proposal in the same transaction (consumed_at stays the one claim fact every door reads) and
 --     stores 'declined'; Approve stores the decision only, so the door's own claim still runs it.
---   team_hub_settle_card (authenticated): records the outcome BEFORE anything is posted; a 'failed'
+--   team_hub_settle_card (service role, approver passed in): records the outcome BEFORE anything is posted; a 'failed'
 --     outcome whose proposal is still live consumes it in the same transaction.
 --   team_hub_card_states (authenticated): the member-safe read. Never the proposal's arguments; the
 --     fingerprint only to the approver and only while the card is waiting.
@@ -477,12 +477,23 @@ GRANT EXECUTE ON FUNCTION public.team_hub_decide_card(uuid,uuid,text,text) TO au
 -- "record"?: {"destination": <a link destination key>, "record_id": <uuid>}} (a record only with done).
 -- 'failed' means the door reported nothing ran; if the proposal is still live it is consumed here, in the
 -- same transaction, so nothing can run it later.
-CREATE OR REPLACE FUNCTION public.team_hub_settle_card(p_expected_tenant uuid, p_message_id uuid, p_outcome jsonb)
+-- SERVICE ROLE ONLY (Codex P1 on #3041): an outcome is the server's record of what the door actually did,
+-- written by card-act after it ran the door, never something the approver asserts with their own JWT. As
+-- in team_hub_accept_agent_turn, auth.uid() is null here, so the approver is the one passed in (§59: the
+-- only place a passed actor is honoured), and the edge function passes the user it verified from the JWT.
+-- Every approver check below is re-run against that user.
+CREATE OR REPLACE FUNCTION public.team_hub_settle_card(p_expected_tenant uuid, p_actor uuid, p_message_id uuid, p_outcome jsonb)
 RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
-DECLARE actor uuid:=auth.uid(); refusal text:=public._team_hub_refusal(p_expected_tenant); card public.team_hub_message_cards;
+DECLARE actor uuid:=p_actor; card public.team_hub_message_cards;
  state text; note text; rec jsonb;
 BEGIN
- IF refusal IS NOT NULL THEN RETURN jsonb_build_object('ok',false,'code',refusal); END IF;
+ IF p_expected_tenant IS NULL OR actor IS NULL OR NOT public._team_hub_is_active(p_expected_tenant, actor) THEN
+  RETURN jsonb_build_object('ok',false,'code','not_member'); END IF;
+ IF NOT EXISTS(SELECT 1 FROM public.tenants t WHERE t.id=p_expected_tenant
+   AND t.account_type='standalone' AND t.parent_tenant_id IS NULL) THEN
+  RETURN jsonb_build_object('ok',false,'code','unavailable'); END IF;
+ IF NOT public._team_hub_participates(p_expected_tenant, actor) THEN
+  RETURN jsonb_build_object('ok',false,'code','conversations_off'); END IF;
  IF p_message_id IS NULL OR p_outcome IS NULL OR jsonb_typeof(p_outcome)<>'object'
    OR EXISTS(SELECT 1 FROM jsonb_object_keys(p_outcome) x(k) WHERE x.k NOT IN ('state','note','record'))
    OR jsonb_typeof(p_outcome->'state') IS DISTINCT FROM 'string' OR p_outcome->>'state' NOT IN ('done','failed','unconfirmed')
@@ -515,8 +526,8 @@ BEGIN
   WHERE k.message_id=card.message_id;
  RETURN jsonb_build_object('ok',true,'outcome',state);
 END $$;
-REVOKE ALL ON FUNCTION public.team_hub_settle_card(uuid,uuid,jsonb) FROM PUBLIC, anon, service_role;
-GRANT EXECUTE ON FUNCTION public.team_hub_settle_card(uuid,uuid,jsonb) TO authenticated;
+REVOKE ALL ON FUNCTION public.team_hub_settle_card(uuid,uuid,uuid,jsonb) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.team_hub_settle_card(uuid,uuid,uuid,jsonb) TO service_role;
 
 -- ── G. The member-safe card read ─────────────────────────────────────────────────────────────────
 -- For the cards on the given messages of a conversation the caller can see now. Never the proposal's

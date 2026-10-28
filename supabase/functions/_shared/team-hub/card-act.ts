@@ -13,7 +13,7 @@
 //      with exactly its fingerprint approved. The door, never this module, claims it (compare-and-set)
 //      and runs what IT stored, under the asker's JWT (`invokeAs`).
 //   4. CLASSIFY what the door said (classifyResumedApproval: done / didn't run / couldn't confirm).
-//   5. SETTLE the outcome on the card (team_hub_settle_card) BEFORE anything is posted (D9). A "didn't
+//   5. SETTLE the outcome on the card (team_hub_settle_card, service role, the verified approver passed in) BEFORE anything is posted (D9). A "didn't
 //      run" whose proposal is still live is consumed there, in the same transaction.
 //   6. ACCEPT the outcome turn (team_hub_accept_agent_turn, intent outcome:<card>), 7. POST the outcome
 //      in the card's thread (postOnceMore, the agent turn's own idempotent post), read it back, and
@@ -356,7 +356,9 @@ export async function runTeamHubCardAct(deps: CardActDeps, raw: unknown): Promis
     : classified.state === "failed" ? FAILED_REASON[classified.reason ?? "refused"] : null;
   const record = classified.state === "done" && (kind === "task_handover" || kind === "task_cancel") && taskId
     ? { destination: "operations_work", record_id: taskId } : null;
-  const settle = await rpcSafe(caller, "team_hub_settle_card", { p_expected_tenant: tenantId, p_message_id: req.messageId,
+  // Service role, with the approver this function verified from the JWT (§59): an outcome is the server's
+  // record of what the door did, never something the approver can assert with their own token (Codex P1).
+  const settle = await rpcSafe(service, "team_hub_settle_card", { p_expected_tenant: tenantId, p_actor: userId, p_message_id: req.messageId,
     p_outcome: { state: classified.state, ...(note ? { note } : {}), ...(record ? { record } : {}) } });
   const settledEnv = settle && !settle.error ? object(settle.data) : null;
   // A card settled before (another request got here first) keeps that outcome; this one reports it.

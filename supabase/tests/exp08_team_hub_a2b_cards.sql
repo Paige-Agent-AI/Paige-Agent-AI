@@ -895,17 +895,22 @@ DO $$ DECLARE fn text; BEGIN
    OR to_regprocedure('public.team_hub_post_agent_message(uuid,uuid,text,text,uuid,uuid,uuid,text,text,boolean)') IS NOT NULL THEN
   RAISE EXCEPTION 'FAIL: the ten-argument post door is still there (an overload would make named calls ambiguous)'; END IF;
  FOREACH fn IN ARRAY ARRAY['team_hub_post_agent_message(uuid,uuid,text,text,uuid,uuid,uuid,text,text,boolean,uuid,text,jsonb,text)',
-   'team_hub_decide_card(uuid,uuid,text,text)','team_hub_settle_card(uuid,uuid,jsonb)','team_hub_card_states(uuid,uuid,uuid[])'] LOOP
+   'team_hub_decide_card(uuid,uuid,text,text)','team_hub_card_states(uuid,uuid,uuid[])'] LOOP
   IF NOT has_function_privilege('authenticated','public.'||fn,'EXECUTE') OR has_function_privilege('anon','public.'||fn,'EXECUTE')
     OR has_function_privilege('service_role','public.'||fn,'EXECUTE') THEN
    RAISE EXCEPTION 'FAIL: % must be executable by authenticated only', fn; END IF;
  END LOOP;
+ IF has_function_privilege('authenticated','public.team_hub_settle_card(uuid,uuid,uuid,jsonb)','EXECUTE')
+   OR has_function_privilege('anon','public.team_hub_settle_card(uuid,uuid,uuid,jsonb)','EXECUTE')
+   OR NOT has_function_privilege('service_role','public.team_hub_settle_card(uuid,uuid,uuid,jsonb)','EXECUTE')
+   OR to_regprocedure('public.team_hub_settle_card(uuid,uuid,jsonb)') IS NOT NULL THEN
+  RAISE EXCEPTION 'FAIL: settle must be service-role only (the approver never asserts an outcome), with no JWT overload'; END IF;
  IF has_function_privilege('authenticated','public.team_hub_accept_agent_turn(uuid,uuid,uuid,uuid,text,text,text)','EXECUTE')
    OR has_function_privilege('anon','public.team_hub_accept_agent_turn(uuid,uuid,uuid,uuid,text,text,text)','EXECUTE')
    OR NOT has_function_privilege('service_role','public.team_hub_accept_agent_turn(uuid,uuid,uuid,uuid,text,text,text)','EXECUTE') THEN
   RAISE EXCEPTION 'FAIL: the acceptance door must stay service-role only'; END IF;
  IF EXISTS(SELECT 1 FROM unnest(ARRAY['team_hub_post_agent_message(uuid,uuid,text,text,uuid,uuid,uuid,text,text,boolean,uuid,text,jsonb,text)',
-   'team_hub_decide_card(uuid,uuid,text,text)','team_hub_settle_card(uuid,uuid,jsonb)','team_hub_card_states(uuid,uuid,uuid[])',
+   'team_hub_decide_card(uuid,uuid,text,text)','team_hub_settle_card(uuid,uuid,uuid,jsonb)','team_hub_card_states(uuid,uuid,uuid[])',
    'team_hub_accept_agent_turn(uuid,uuid,uuid,uuid,text,text,text)']) f
    WHERE NOT EXISTS(SELECT 1 FROM pg_proc p WHERE p.oid=('public.'||f)::regprocedure AND p.prosecdef AND p.proconfig[1]='search_path=""')
     OR EXISTS(SELECT 1 FROM pg_proc p, aclexplode(coalesce(p.proacl, acldefault('f',p.proowner))) a
@@ -1027,8 +1032,12 @@ CREATE FUNCTION pg_temp.apost(actor text, tenant text, channel text, agent text,
   CASE WHEN summary IS NULL THEN '' ELSE format(',p_card_summary=>%L', summary) END)) $$;
 CREATE FUNCTION pg_temp.decide(actor text, tenant text, msg text, decision text, fp text) RETURNS jsonb LANGUAGE sql AS $$
  SELECT pg_temp.j(actor, format('public.team_hub_decide_card(%L::uuid,%L::uuid,%L,%L)', tenant, msg, decision, fp)) $$;
+-- Settle is the server's (card-act, service role) with the approver it verified passed in (Codex P1 on #3041).
 CREATE FUNCTION pg_temp.settle(actor text, tenant text, msg text, outcome jsonb) RETURNS jsonb LANGUAGE sql AS $$
- SELECT pg_temp.j(actor, format('public.team_hub_settle_card(%L::uuid,%L::uuid,%L::jsonb)', tenant, msg, outcome)) $$;
+ SELECT pg_temp.j(NULL, format('public.team_hub_settle_card(%L::uuid,%L::uuid,%L::uuid,%L::jsonb)', tenant, actor, msg, outcome), 'service_role') $$;
+-- The same call made by the approver with their own JWT, as Codex's forged settlement would.
+CREATE FUNCTION pg_temp.settle_as_user(actor text, tenant text, msg text, outcome jsonb) RETURNS jsonb LANGUAGE sql AS $$
+ SELECT pg_temp.j(actor, format('public.team_hub_settle_card(%L::uuid,%L::uuid,%L::uuid,%L::jsonb)', tenant, actor, msg, outcome)) $$;
 CREATE FUNCTION pg_temp.cstates(actor text, tenant text, channel text, ids text[]) RETURNS jsonb LANGUAGE sql AS $$
  SELECT pg_temp.j(actor, format('public.team_hub_card_states(%L::uuid,%L::uuid,%L::uuid[])', tenant, channel, ids)) $$;
 CREATE FUNCTION pg_temp.cs(r jsonb, msg text) RETURNS jsonb LANGUAGE sql AS $$
@@ -1297,6 +1306,12 @@ SELECT pg_temp.check(pg_temp.accept(:'ta', :'u2', :'zdm', :'q1', 'zion', :'oi', 
  'outcome turn: refused while the outcome is not settled');
 -- The door ran (it consumes its own proposal), then settle records done with the record it produced.
 UPDATE public.paige_pending_confirmations SET consumed_at=now() WHERE id=:'c_good';
+-- Codex P1 on #3041: the approver, holding an approved card, cannot assert Done with their own JWT. The
+-- call is refused by the grant before any body runs, and the card stays unsettled for the server to settle.
+SELECT pg_temp.check(pg_temp.settle_as_user(:'u2', :'ta', :'card1', '{"state":"done","note":"forged"}') ? 'error'
+ AND (pg_temp.settle_as_user(:'u2', :'ta', :'card1', '{"state":"done"}')->>'error') ILIKE '%permission denied%'
+ AND (SELECT k.outcome IS NULL AND k.settled_at IS NULL FROM public.team_hub_message_cards k WHERE k.message_id=:'card1'),
+ 'settle: the approver''s own JWT cannot settle an approved card; only the server, after running the door');
 SELECT pg_temp.settle(:'u2', :'ta', :'card1', '{"state":"done","note":"  Kickoff task cancelled.  ","record":{"destination":"operations_work","record_id":"30000000-0000-4000-8000-000000000001"}}') AS st1 \gset
 SELECT pg_temp.check((:'st1')::jsonb=jsonb_build_object('ok',true,'outcome','done')
  AND (SELECT outcome='done' AND outcome_note='Kickoff task cancelled.' AND outcome_record='{"destination":"operations_work","record_id":"30000000-0000-4000-8000-000000000001"}'::jsonb
@@ -1552,7 +1567,7 @@ ROLLBACK;
 INSERT INTO mutant_results VALUES ('K13 no scope trigger', :'g');
 -- K14: settle 'failed' leaves a live proposal live.
 BEGIN;
-SELECT pg_temp.mutate('public.team_hub_settle_card(uuid,uuid,jsonb)'::regprocedure, $m$ IF state='failed' THEN$m$, $m$ IF false THEN$m$);
+SELECT pg_temp.mutate('public.team_hub_settle_card(uuid,uuid,uuid,jsonb)'::regprocedure, $m$ IF state='failed' THEN$m$, $m$ IF false THEN$m$);
 SELECT pg_temp.decide(:'u2', :'ta', (:'wx')::jsonb->>'card', 'approve', (:'wx')::jsonb->>'fp')->>'ok' AS k14a \gset
 SELECT pg_temp.settle(:'u2', :'ta', (:'wx')::jsonb->>'card', '{"state":"failed"}')->>'ok' AS k14b \gset
 SELECT coalesce(:'k14a'='true' AND :'k14b'='true' AND (SELECT consumed_at IS NOT NULL FROM public.paige_pending_confirmations WHERE id=((:'wx')::jsonb->>'conf')::uuid),false) AS g \gset

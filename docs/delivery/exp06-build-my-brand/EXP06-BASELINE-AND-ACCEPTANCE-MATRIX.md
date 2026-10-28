@@ -1,13 +1,16 @@
 # EXP06 — Build My Brand & Online Presence: Baseline & Customer Acceptance Matrix
 
 **Status:** owning delivery evidence for the EXP06 workstream, recorded at assignment
-(2026-10-23). This document holds the complete customer acceptance matrix and the
-WEB-control applicability register for EXP06. It is the EXP06 view of the single
-Capability Outcome Map (direct mapped outcome **FLOW:BRAND**, row 139, retained title
-*"Build the brand and publish the business website, pages and public presence."*) —
-not a second capability inventory. Owner authorization: ANT-162 header (2026-10-23),
-full assignment brief owner-pasted to the lead session; RECEIVING ACK posted on
-ANT-162 (comment `5da8bf50`).
+(2026-10-23). **Corrected 2026-10-28 per owner `88b2f756`/`350e030f`: implementation is
+OPEN — row 11 (hosting executor/HTTPS verification/usage-meter writer) is actively being
+built within existing authority with provider activation HELD, and rows 19/20 (both-chat
+and customer proof) remain open; "engineering complete" is retracted.** This document
+holds the complete customer acceptance matrix and the WEB-control applicability register
+for EXP06. It is the EXP06 view of the single Capability Outcome Map (direct mapped
+outcome **FLOW:BRAND**, row 139, retained title *"Build the brand and publish the
+business website, pages and public presence."*) — not a second capability inventory.
+Owner authorization: ANT-162 header (2026-10-23), full assignment brief owner-pasted to
+the lead session; RECEIVING ACK posted on ANT-162 (comment `5da8bf50`).
 
 **Grounding:** actual `main` `89e48402c` (2026-10-23), one merge (two commits) past the
 coordinator audit pin `a9bd855c1`. Worktree branch `exp06-build-my-brand`. All "present"
@@ -85,7 +88,7 @@ with exact source/release identity + relevant legitimate runtime evidence;
 | 8 | Existing-site mode: embed original form on permitted external host without migration/token; attribution whitelist, validation, CSP/sandbox fallback, mobile sizing, unpublish behavior; one real submission→canonical source, correct tenant, no accidental sends | `public/embed.js` + S2a acceptance package (A–E; E UNVERIFIED pending owner own-site test) | VERIFY/refresh | EXP03 producer (ANT-87) for future attribution depth | PR5; re-proof A–D on current main; E stays UNVERIFIED until owner's own-site leg |
 | 9 | Domain/hosting: registrar vs authoritative DNS vs host distinguished; six guidance profiles; truthful TXT/CNAME/SSL pending/conflict/revocation; email/NS/DNSSEC/existing content preserved; reserved address serves no content; real change needs exact authority | vocabulary + spine doc only | BUILD (guidance surface + state model) | EXP10 (connection semantics, ANT-164); owner (any real DNS/provider effect) | PR7; deterministic state checks + guidance content; no provider mutation from EXP06 |
 | 10 | Portable public export: real versioned HTML/CSS/JS/assets; reproduce rendering/links/accessibility/SEO; exclude secrets/private records/unsafe execution; verify asset provenance; source lineage preserved; provider deployment distinct from download | none (1.2) | BUILD | — | PR6; export from canonical published artifact; negative tests: no private data, no secrets, no unsafe execution |
-| 11 | Approved host path: scoped external hosting where authorized; real deployment/version/address/status/rollback + transparent cost owner; absent access/budget = exact blocker, no mock URL | none (1.2) | BUILD readiness; deploy owner-gated | owner (Cloudflare authority/spend); EXP10 (provider registry entry when activated) | PR7 packages readiness; real deployment only after owner grant; BLOCKED label until then |
+| 11 | Approved host path: scoped external hosting where authorized; real deployment/version/address/status/rollback + transparent cost owner; absent access/budget = exact blocker, no mock URL | PR7 guidance + truthful states shipped; **executor/HTTPS-verify/metering writer NOT built** (per corrected packet; confirmed by owner `350e030f`) | **BUILD — implementation OPEN** (owner `88b2f756`, 2026-10-28: build within existing authority, provider activation HELD) | EXP06 (implementation); owner (activation: account identity + token via EXP10 custody — ONE concrete decision at that point); EXP10 (provider registry entry when activated); migration queues behind EXP08 #3016 (`7ec6d149`) | Door-shaped executor (deploy/verify/recover/status) consuming an approved export after the workspace owner's own approval card; real HTTPS verification vs the export manifest before any live claim; usage-meter writer to canonical `platform_usage_events` (no second ledger); ships DORMANT-FAIL-CLOSED (no token exists → every path returns the honest "not switched on" state); live deployment proof stays BLOCKED-by-design until the owner's activation decision |
 | 12 | SEO/public quality: titles/descriptions/headings, accessible names/contrast/focus/alt/labels/errors, responsive, robots/canonical/sitemap as applicable, safe asset/render/embed policy, abuse/spam/bot/duplicate controls, bounded costs; no ranking promise | partial (intake rate/agent gating retained) | BUILD/EXTEND | — | PR8; per-artifact SEO fields + a11y pass; no ranking claims |
 | 13 | Security: role matrix (owner/admin/member/foreign/revoked), session/object/version/private-storage grants, expired links, forged host/tenant/artifact IDs, workspace switch A→B→A + late responses, prompt/content injection, secret/PII-free public output; platform role ≠ tenant-private visibility | retained denial wall (publish door, studio scope, public intake contract) | EXTEND/VERIFY | — | PR8; new negatives for export/host/SEO surfaces; retained negatives re-run |
 | 14 | Joined business outcome: permitted public visitor→consented form→canonical CRM/source attribution→E04 approved commercial handoff→E09 secure entry, original records; missing downstream proof stays visible | visit→submission→source linkage (retained) | INTEGRATE | EXP03 (producer), EXP04 (#2170/#2184 open), EXP09 (ANT-163) | PR5/PR8 interface integration only; never other domains' writers |

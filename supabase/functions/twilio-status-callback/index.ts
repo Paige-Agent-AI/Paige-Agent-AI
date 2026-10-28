@@ -60,7 +60,15 @@
 import { authenticateTwilioWebhook, type WebhookAuthOutcome } from "../_shared/twilio-webhook-auth.ts";
 import { deriveOperatorVoiceWebhookSecret } from "../_shared/operator-twilio.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { mapCallStatus, callMatchSids, callOutcomeError, parseCallDuration, nonEmptyOrNull } from "./call-status.ts";
+import {
+  mapCallStatus,
+  callMatchSids,
+  callOutcomeError,
+  decideInboundCall,
+  parseCallDuration,
+  nonEmptyOrNull,
+  type InboundCallDecision,
+} from "./call-status.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -234,6 +242,90 @@ async function applyCallUpdate(
 }
 
 /**
+ * INBOUND applier (review M1). An inbound call rings every seat at once and the number-level
+ * StatusCallback also posts the parent's end, in any order, so the first terminal callback is NOT
+ * the answer. `decideInboundCall` classifies the callback; this applies it:
+ *   • answered leg  → delivered, overriding a provisional "No answer." (error cleared), with the
+ *                     answered leg's talk time. Unconditional: an answer is the strongest fact.
+ *   • parent ended  → failed + honest wording, ONLY while the row is still queued, written as a
+ *                     conditional update (`status = 'queued'`) so it can never overwrite an answer
+ *                     that landed between our read and our write. No duration: ring time is not talk.
+ *   • losing leg    → recorded under meta.call.legs only, conditional on the status we read, so it
+ *                     never clobbers a newer answer. It never changes status or duration.
+ * The outbound applier above is unchanged.
+ */
+async function applyInboundCallUpdate(
+  admin: WebhookAdmin,
+  table: "messages" | "operator_messages",
+  metaKey: "meta" | "metadata",
+  row: { id: string; status: string | null; meta?: unknown; metadata?: unknown },
+  f: CallFacts,
+  decision: InboundCallDecision,
+): Promise<Response> {
+  const nowIso = new Date().toISOString();
+  const currentStatus = String(row.status ?? "");
+
+  const prevMetaRaw = (row as Record<string, unknown>)[metaKey];
+  const prevMeta = (prevMetaRaw && typeof prevMetaRaw === "object" ? prevMetaRaw : {}) as Record<string, unknown>;
+  const prevCall = (prevMeta.call && typeof prevMeta.call === "object" ? prevMeta.call : {}) as Record<string, unknown>;
+  const prevLegs = (prevCall.legs && typeof prevCall.legs === "object" ? prevCall.legs : {}) as Record<string, unknown>;
+  const call: Record<string, unknown> = {
+    ...prevCall,
+    provider: "twilio",
+    updated_at: nowIso,
+    legs: { ...prevLegs, [f.callSid]: { provider_status: f.twilioStatus, duration_seconds: f.duration, error_code: f.errorCode } },
+  };
+
+  const update: Record<string, unknown> = {};
+  let onlyIfStatus: string | null = null;
+  if (decision.kind === "answered") {
+    call.provider_status = f.twilioStatus;
+    call.mapped_status = "delivered";
+    call.answered_call_sid = f.callSid;
+    call.error_code = null;
+    if (currentStatus !== "delivered" && currentStatus !== "read") update.status = "delivered";
+    if (table === "messages" && currentStatus === "failed") update.error = null;
+    if (f.duration !== null) {
+      update.call_duration_seconds = f.duration;
+      call.duration_seconds = f.duration;
+    }
+  } else if (decision.kind === "settle_unanswered") {
+    if (currentStatus !== "queued") {
+      // Already decided — an answer, or an earlier settlement. Nothing to add but recording facts.
+      if (f.recordingUrl === null && f.transcript === null) {
+        console.log(`[twilio-status-callback] ${table} inbound parent="${f.twilioStatus}" already ${currentStatus} — no change`);
+        return new Response("ok", { status: 200, headers: corsHeaders });
+      }
+    } else {
+      call.provider_status = f.twilioStatus;
+      call.mapped_status = "failed";
+      call.error_code = f.errorCode;
+      update.status = "failed";
+      if (table === "messages") update.error = decision.error;
+      onlyIfStatus = "queued";
+    }
+  } else {
+    onlyIfStatus = currentStatus;
+  }
+  if (onlyIfStatus !== null || decision.kind === "answered") update[metaKey] = { ...prevMeta, call };
+  if (table === "messages") update.updated_at = nowIso;
+  if (f.recordingUrl !== null) update.recording_url = f.recordingUrl;
+  if (f.transcript !== null) update.transcript = f.transcript;
+
+  let q = admin.from(table).update(update).eq("id", row.id);
+  if (onlyIfStatus !== null) q = q.eq("status", onlyIfStatus);
+  const { error: updErr } = await q;
+  if (updErr) {
+    console.error(`[twilio-status-callback] ${table} inbound voice update_error`, { code: updErr.code ?? null });
+    return new Response("retry", { status: 503, headers: { ...corsHeaders, "Retry-After": "5" } });
+  }
+  console.log(
+    `[twilio-status-callback] ${table} inbound voice twilio="${f.twilioStatus}" decision=${decision.kind} from=${currentStatus}`,
+  );
+  return new Response("ok", { status: 200, headers: corsHeaders });
+}
+
+/**
  * #168 + Fleet Comms S3 P3 — stamp a VOICE row's terminal status + call_duration_seconds (+ recording_url /
  * transcript when Twilio provides them) from a Twilio call-status callback, on the CORRECT scope. Matched on
  * provider_message_id = the parent Call SID (voice-twiml / operator voice writer stored it); the child-leg
@@ -285,12 +377,26 @@ async function handleCallStatus(
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const admin = createClient(supabaseUrl, serviceKey);
 
+  // Inbound rows ring several seats and get a parent callback too, so they take the order-robust
+  // applier; every other row (outbound) keeps the original first-terminal applier byte-for-byte.
+  const applyFor = (
+    client: WebhookAdmin,
+    table: "messages" | "operator_messages",
+    metaKey: "meta" | "metadata",
+    row: { id: string; status: string | null; direction?: string | null; meta?: unknown; metadata?: unknown },
+  ): Promise<Response> =>
+    row.direction === "inbound"
+      ? applyInboundCallUpdate(client, table, metaKey, row, facts, decideInboundCall({
+        twilioStatus, parentCallSid, duration: facts.duration, errorCode: facts.errorCode,
+      }))
+      : applyCallUpdate(client, table, metaKey, row, facts);
+
   // 1) TENANT store. channel_type='voice' is defensive scoping (provider_message_id is globally unique,
   //    so a message row could never collide, but this guarantees we never touch a non-voice row).
   if (authScope.kind === "tenant") {
     const { data: tRow, error: tErr } = await admin
       .from("messages")
-      .select("id, status, meta")
+      .select("id, status, direction, meta")
       .in("provider_message_id", sids)
       .eq("channel_type", "voice")
       .eq("tenant_id", authScope.tenantId)
@@ -299,7 +405,7 @@ async function handleCallStatus(
       console.error("[twilio-status-callback] messages voice lookup_error", { code: tErr.code ?? null });
       return new Response("retry", { status: 503, headers: { ...corsHeaders, "Retry-After": "5" } });
     }
-    if (tRow) return await applyCallUpdate(admin, "messages", "meta", tRow, facts);
+    if (tRow) return await applyFor(admin, "messages", "meta", tRow);
     console.log("[twilio-status-callback] no tenant messages row for callback — operator store not consulted");
     return new Response("ok", { status: 200, headers: corsHeaders });
   }
@@ -309,7 +415,7 @@ async function handleCallStatus(
   // A tenant secret never reaches the platform-tier operator store.
   const { data: oRow, error: oErr } = await admin
     .from("operator_messages")
-    .select("id, status, metadata")
+    .select("id, status, direction, metadata")
     .in("provider_message_id", sids)
     .eq("channel_type", "voice")
     .maybeSingle();
@@ -318,7 +424,7 @@ async function handleCallStatus(
     return new Response("retry", { status: 503, headers: { ...corsHeaders, "Retry-After": "5" } });
   }
   if (oRow) {
-    return await applyCallUpdate(admin, "operator_messages", "metadata", oRow, facts);
+    return await applyFor(admin, "operator_messages", "metadata", oRow);
   }
 
   // No voice row in EITHER store (e.g. the start-of-call write was skipped on an honest degrade).

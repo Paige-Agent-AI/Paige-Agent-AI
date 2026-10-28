@@ -107,7 +107,9 @@ await build({
 let handler = null;
 globalThis.Deno = {
   env: {
-    get: (k) => ({
+    // `scenario.noVoiceUrl` removes the only inputs voiceTwimlUrl builds from (the stubbed Supabase
+    // client never reads the URL), so the real helper returns null — the pre-buy refusal path.
+    get: (k) => (scenario?.noVoiceUrl && (k === "SUPABASE_URL" || k === "VOICE_TWIML_URL")) ? undefined : ({
       SUPABASE_URL: "https://x.test",
       SUPABASE_ANON_KEY: "anon",
       SUPABASE_SERVICE_ROLE_KEY: "service",
@@ -208,6 +210,16 @@ console.log("comms-purchase-number safety smoke\n");
     opts.smsUrl === `https://x.test/functions/v1/handle-inbound-sms?t=${"s".repeat(64)}`
       && opts.statusCallback === `https://x.test/functions/v1/twilio-status-callback?t=${"s".repeat(64)}`,
     JSON.stringify(opts));
+}
+
+/* 1b ── No voice webhook can be built: refuse BEFORE the buy. Nothing spent, nothing recorded. */
+{
+  const r = await buy({ phone_number: "+14045550101", agreed_monthly_cents: 120 }, { noVoiceUrl: true });
+  check("an unbuildable voice webhook is a setup refusal",
+    r.status === 200 && r.body.needs_config === true && r.body.error === "voice_twiml_url_unavailable", JSON.stringify(r.body));
+  check("  and NOTHING was bought (no provider call)", calls.purchases.length === 0);
+  check("  and no price was checked, no number row and no spent audit written",
+    calls.pricingLookups.length === 0 && calls.inserts.length === 0 && calls.audits.length === 0);
 }
 
 /* 2 ── §37: the UI producers send NO price. They must be byte-for-byte unaffected. */

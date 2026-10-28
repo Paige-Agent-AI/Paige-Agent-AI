@@ -55,6 +55,46 @@ export function callOutcomeError(
 }
 
 /**
+ * INBOUND call outcome, decided per callback KIND rather than "first terminal wins".
+ *
+ * An inbound call rings every seat at once (voice-twiml `buildInboundTwiml`: one <Client> leg per
+ * owner/admin, each with its own statusCallback) and, once a number has a VoiceUrl, the number-level
+ * StatusCallback also posts the PARENT call's end with no ParentCallSid. Twilio cancels the losing legs
+ * the moment one seat answers, and every one of these callbacks can arrive in any order. So:
+ *   • a CHILD leg that answered — in-progress, or completed with talk time > 0 — is the answer and wins
+ *     over anything recorded before it;
+ *   • a CHILD leg that did not answer decides nothing: another seat may still pick up;
+ *   • the PARENT's terminal status settles "nobody answered", and only while no leg has answered. The
+ *     parent's `completed` means the call ENDED, never that it connected, so it settles as "No answer.".
+ * Outbound calls do not use this: they have exactly one <Number> leg and keep the first-terminal rule.
+ */
+export type InboundCallDecision =
+  | { kind: "answered" }
+  | { kind: "settle_unanswered"; error: string }
+  | { kind: "record_leg" };
+
+const PARENT_TERMINALS = new Set(["completed", "busy", "no-answer", "canceled", "failed"]);
+
+export function decideInboundCall(input: {
+  twilioStatus: string | null | undefined;
+  parentCallSid: string | null | undefined;
+  duration: number | null;
+  errorCode: string | null | undefined;
+}): InboundCallDecision {
+  const s = String(input.twilioStatus ?? "").trim().toLowerCase();
+  const isChildLeg = String(input.parentCallSid ?? "").trim().length > 0;
+  if (isChildLeg) {
+    const answered = s === "in-progress" || s === "answered" || (s === "completed" && (input.duration ?? 0) > 0);
+    return answered ? { kind: "answered" } : { kind: "record_leg" };
+  }
+  if (!PARENT_TERMINALS.has(s)) return { kind: "record_leg" };
+  return {
+    kind: "settle_unanswered",
+    error: s === "completed" ? CALL_OUTCOME_COPY["no-answer"] : callOutcomeError(s, input.errorCode),
+  };
+}
+
+/**
  * The provider_message_id(s) a call-status callback could match. The voice row stored the PARENT call
  * SID (voice-twiml used params.CallSid). A <Number>/<Client> child-leg statusCallback posts the CHILD
  * CallSid PLUS ParentCallSid = that parent SID. Try both (parent first) so matching works whether the

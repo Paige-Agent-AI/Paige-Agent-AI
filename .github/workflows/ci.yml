@@ -1405,6 +1405,13 @@ jobs:
         if: ${{ !cancelled() }}
         run: npm run smoke:comms-tenant-scope
 
+      # Drives the REAL twilio-status-callback handler: retry/terminal state, the honest
+      # no-answer/busy/cancelled wording, inbound callback ORDER (several seats ring at once and
+      # the parent posts its own end), and operator-proof isolation. It ran nowhere until now.
+      - name: Smoke — voice status callback (call outcome, inbound ordering, operator isolation)
+        if: ${{ !cancelled() }}
+        run: npm run smoke:voice-status-callback
+
       # Drives the REAL manage-tenant-domain handler. Adding, re-pointing or removing
       # a sending domain changes the identity every outbound message carries, and none
       # of it left a trace until now. `deno check` proves the audit writes compile; only

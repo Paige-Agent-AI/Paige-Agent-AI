@@ -6,7 +6,7 @@
 // other unsuccessful value, and every reader keys on it); only the wording becomes honest.
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { callOutcomeError, mapCallStatus } from "./call-status.ts";
+import { callOutcomeError, decideInboundCall, mapCallStatus } from "./call-status.ts";
 
 describe("call outcome wording is honest about why a call did not connect", () => {
   it("no-answer says No answer, never 'rejected'", () => {
@@ -35,5 +35,45 @@ describe("call outcome wording is honest about why a call did not connect", () =
   });
   it("the stored status is unchanged: all four unsuccessful terminals are still 'failed'", () => {
     for (const s of ["busy", "no-answer", "canceled", "failed"]) assert.equal(mapCallStatus(s), "failed");
+  });
+});
+
+// INBOUND calls ring every seat at once (one <Client> leg per owner/admin) and, once a number has a
+// VoiceUrl, the number-level StatusCallback also posts the PARENT call's end. Callbacks arrive in any
+// order, so the inbound outcome is decided per callback kind, never "first terminal wins":
+//   • a CHILD leg that answered (in-progress, or completed with duration > 0) is the answer;
+//   • a CHILD leg that did not answer (the losers Twilio cancels, or a leg nobody picked up) decides
+//     nothing on its own — another seat may still answer;
+//   • the PARENT's end settles "nobody answered" — and only if no leg answered.
+describe("inbound call decision is robust to callback order", () => {
+  const child = { parentCallSid: "CAparent" };
+  const parent = { parentCallSid: null };
+  it("an answered child leg is the answer", () => {
+    assert.deepEqual(decideInboundCall({ ...child, twilioStatus: "completed", duration: 42, errorCode: null }), { kind: "answered" });
+    assert.deepEqual(decideInboundCall({ ...child, twilioStatus: "in-progress", duration: null, errorCode: null }), { kind: "answered" });
+  });
+  it("a completed child leg with no talk time is NOT an answer", () => {
+    assert.deepEqual(decideInboundCall({ ...child, twilioStatus: "completed", duration: 0, errorCode: null }), { kind: "record_leg" });
+    assert.deepEqual(decideInboundCall({ ...child, twilioStatus: "completed", duration: null, errorCode: null }), { kind: "record_leg" });
+  });
+  it("a losing or unanswered child leg never decides the call", () => {
+    for (const s of ["canceled", "no-answer", "busy", "failed"]) {
+      assert.deepEqual(decideInboundCall({ ...child, twilioStatus: s, duration: 0, errorCode: null }), { kind: "record_leg" }, s);
+    }
+  });
+  it("the parent's completed settles an unanswered call as No answer — it never means connected", () => {
+    assert.deepEqual(decideInboundCall({ ...parent, twilioStatus: "completed", duration: 30, errorCode: null }),
+      { kind: "settle_unanswered", error: "No answer." });
+  });
+  it("other parent terminals settle with their own honest wording", () => {
+    assert.deepEqual(decideInboundCall({ ...parent, twilioStatus: "no-answer", duration: null, errorCode: null }),
+      { kind: "settle_unanswered", error: "No answer." });
+    assert.deepEqual(decideInboundCall({ ...parent, twilioStatus: "failed", duration: null, errorCode: "13224" }),
+      { kind: "settle_unanswered", error: "The provider rejected this call (error 13224)." });
+  });
+  it("a non-terminal parent status decides nothing", () => {
+    for (const s of ["ringing", "in-progress", "queued", "wobble"]) {
+      assert.deepEqual(decideInboundCall({ ...parent, twilioStatus: s, duration: null, errorCode: null }), { kind: "record_leg" }, s);
+    }
   });
 });

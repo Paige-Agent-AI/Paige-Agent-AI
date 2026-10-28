@@ -37,6 +37,17 @@ export function formatFileSize(bytes: number): string {
   return `${mb >= 10 ? Math.round(mb) : Number(mb.toFixed(1))} MB`;
 }
 
+/**
+ * A scheduled email's send time in the viewer's own clock and words ("Wed, Oct 28, 9:00 AM"). One home for
+ * the approval card and the Conversations inbox (governedSend re-exports it), so both say the same time.
+ */
+export function scheduledForLabel(sendAt: string, locale?: string): string {
+  const at = new Date(sendAt);
+  return Number.isFinite(at.getTime())
+    ? at.toLocaleString(locale, { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })
+    : "a set time";
+}
+
 /** The card's file list, or undefined when it is not a well-formed list of 1..10 named files. */
 function parseConfirmAttachments(raw: unknown): ConfirmEmailAttachment[] | undefined {
   if (!Array.isArray(raw) || raw.length < 1 || raw.length > 10) return undefined;

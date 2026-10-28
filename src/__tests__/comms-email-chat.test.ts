@@ -623,3 +623,112 @@ describe('actual paige-ai-chat comms email wiring', () => {
     expect(chatSource.indexOf('if (COMMS_EMAIL_TOOL_NAMES.has(tc.function.name)) {')).toBeLessThan(chatSource.indexOf('if (MUTATING_TOOLS.has(tc.function.name) && !CRM_COMMAND_TOOL_NAMES.has(tc.function.name as any)) {'));
   });
 });
+
+// EXP03 — Paige's chat schedules a governed email for later ("approve now, send later"). The door
+// (comms-email-command) already takes a TOP-LEVEL send_at; these prove the chat half hands it over,
+// keeps it out of the command, binds it into the operation identity and replays the stored one.
+describe('scheduled email from Paige chat (send_at)', () => {
+  const later = '2026-11-03T09:00:00-05:00', laterUtc = '2026-11-03T14:00:00.000Z';
+  const stored = (extra: Record<string, unknown> = {}) => ({ expected_tenant_id: tenant, operation_id: operation, command, recipient: 'dana@example.test', from_address: 'hello@business.test', content_digest: 'f'.repeat(64), ...extra });
+  const unbound = { action: 'comms.email_send', contact_id: contact, connector_id: null, subject: args.subject, body: args.body };
+
+  it('declares send_at as an optional, described, ISO 8601 field in both the Kit and the tool', () => {
+    const kit = COMMS_EMAIL_SEND_CAPABILITY.input.properties as Record<string, Record<string, unknown>>;
+    expect(kit).toHaveProperty('send_at');
+    expect(COMMS_EMAIL_SEND_CAPABILITY.input.required).not.toContain('send_at');
+    const pattern = new RegExp(String(kit.send_at.pattern));
+    for (const ok of [later, '2026-11-03T14:00Z', '2026-11-03T14:00:00.000Z']) expect(pattern.test(ok), ok).toBe(true);
+    for (const bad of ['2026-11-03T09:00:00', 'tomorrow 9am', '2026-11-03']) expect(pattern.test(bad), bad).toBe(false);
+    const tool = COMMS_EMAIL_TOOLS[0].function.parameters.properties as Record<string, Record<string, unknown>>;
+    expect(String(tool.send_at.description)).toMatch(/later/i);
+    expect(String(tool.send_at.description)).toMatch(/offset/i);
+    expect(String(tool.send_at.description)).toMatch(/leave it out|omit/i);
+    expect(COMMS_EMAIL_TOOLS[0].function.parameters.required).not.toContain('send_at');
+  });
+
+  it('a proposal passes the canonical send_at to the door at the TOP level, never inside the command', async () => {
+    const h = harness();
+    await dispatchCommsEmailChat({ ...context, args: { ...args, send_at: later } }, h.deps as never);
+    expect(h.calls).toHaveLength(1);
+    const body = h.calls[0].options.body;
+    expect(body.send_at).toBe(laterUtc);
+    expect(body.command).toEqual(unbound);
+    expect(body.command).not.toHaveProperty('send_at');
+  });
+
+  it('the operation id separates the same words at different times and matches the same words at the same instant', async () => {
+    const plain = await commsEmailOperationId(tenant, 'actor', unbound, turn);
+    const at = (sendAt: string) => { const h = harness(); return dispatchCommsEmailChat({ ...context, args: { ...args, send_at: sendAt } }, h.deps as never).then(() => h.calls[0].options.body.operation_id); };
+    const nine = await at(later);
+    expect(nine).not.toBe(plain);
+    expect(await at('2026-11-03T14:00Z')).toBe(nine);
+    expect(await at('2026-11-03T14:00:59.999Z')).toBe(nine);
+    expect(await at('2026-11-03T10:00:00-05:00')).not.toBe(nine);
+    // Without send_at the incumbent identity is byte-for-byte unchanged.
+    expect(await commsEmailOperationId(tenant, 'actor', command, turn)).toBe('fc5eaa99-56f6-466d-a239-96fd878df695');
+    const h = harness(); await dispatchCommsEmailChat(context, h.deps as never);
+    expect(h.calls[0].options.body.operation_id).toBe(plain);
+    expect(h.calls[0].options.body).not.toHaveProperty('send_at');
+  });
+
+  it('a send time without a timezone, or not a time at all, is refused before the door', async () => {
+    for (const bad of ['2026-11-03T09:00:00', 'next Tuesday', 42, '2026-02-30T09:00:00Z']) {
+      const h = harness();
+      const r = await dispatchCommsEmailChat({ ...context, args: { ...args, send_at: bad } }, h.deps as never);
+      expect(h.calls, String(bad)).toEqual([]);
+      expect(r.content.success).toBe(false);
+      expect(String(r.content.error)).toMatch(/send_at/);
+    }
+  });
+
+  it('an approved card replays the STORED send_at verbatim, whatever the model re-emits', async () => {
+    const h = harness([{ fingerprint, args: stored({ send_at: laterUtc }) }], { ok: true, outcome: 'scheduled', send_at: laterUtc, operation_id: operation });
+    await dispatchCommsEmailChat({ ...context, args: { ...args, send_at: '2026-12-01T09:00:00Z' }, approved: new Set([fingerprint]) }, h.deps as never);
+    expect(h.calls[0].options.body).toEqual({ expected_tenant_id: tenant, operation_id: operation, command, approved_fingerprint: fingerprint, send_at: laterUtc });
+    // An immediate stored call stays immediate even if the model now adds a time.
+    const now = harness([{ fingerprint, args: stored() }], { ok: true, outcome: 'provider_accepted' });
+    await dispatchCommsEmailChat({ ...context, args: { ...args, send_at: later }, approved: new Set([fingerprint]) }, now.deps as never);
+    expect(now.calls[0].options.body).not.toHaveProperty('send_at');
+  });
+
+  it('a pinned (resumed) approval replays its stored send_at verbatim', async () => {
+    const h = harness([], { ok: true, outcome: 'scheduled', send_at: laterUtc });
+    await dispatchCommsEmailChat({ ...context, current: () => true, pinned: { fingerprint, args: stored({ send_at: laterUtc }) } } as never, h.deps as never);
+    expect(h.predicates).toEqual([]);
+    expect(h.calls[0].options.body).toMatchObject({ operation_id: operation, approved_fingerprint: fingerprint, send_at: laterUtc });
+  });
+
+  it('the card preview carries a valid send_at and the files by name and size only', async () => {
+    const files = [{ name: 'proposal.pdf', size: 2048, mime: 'application/pdf', source_path: `${tenant}/governed/x/1-proposal.pdf` }];
+    const narrowed = commsEmailConfirmPreview({ ...preview, send_at: laterUtc, attachments: files });
+    expect(narrowed).toEqual({ ...preview, send_at: laterUtc, attachments: [{ name: 'proposal.pdf', size: 2048, mime: 'application/pdf' }] });
+    expect(JSON.stringify(narrowed)).not.toContain('governed');
+    // A time or file list the person could misread is no preview at all; the summary still names both.
+    expect(commsEmailConfirmPreview({ ...preview, send_at: 'soon' })).toBeNull();
+    expect(commsEmailConfirmPreview({ ...preview, attachments: [{ name: '', size: 1, mime: 'x' }] })).toBeNull();
+    expect(commsEmailConfirmPreview({ ...preview, attachments: [] })).toBeNull();
+    const h = harness([], { ok: false, outcome: 'approval_required', fingerprint, summary: 'Email Dana — scheduled for 2026-11-03 14:00 UTC', preview: { ...preview, send_at: laterUtc } });
+    const r = await dispatchCommsEmailChat({ ...context, args: { ...args, send_at: later } }, h.deps as never);
+    expect(r.content.confirm_preview).toEqual({ ...preview, send_at: laterUtc });
+  });
+
+  it('a scheduled result says scheduled — never sent — and the card reports it ran', async () => {
+    const h = harness([{ fingerprint, args: stored({ send_at: laterUtc }) }], { ok: true, outcome: 'scheduled', send_at: laterUtc, operation_id: operation, message_id: 'private-message', delivery_confirmed: false });
+    const r = await dispatchCommsEmailChat({ ...context, approved: new Set([fingerprint]) }, h.deps as never);
+    expect(r.content).toMatchObject({ success: true, outcome: 'scheduled', send_at: laterUtc, delivery_confirmed: false });
+    expect(String(r.content.note)).toMatch(/Scheduled/);
+    expect(String(r.content.note)).toMatch(/Nothing has been sent yet/);
+    expect(String(r.content.note)).not.toMatch(/^Not sent/);
+    expect(JSON.stringify(r)).not.toContain('private-message');
+    expect(classifySpentApproval(JSON.stringify(r.content)).outcome).toBe('ran');
+  });
+
+  it('every send-time refusal the door can give has its own plain note', async () => {
+    for (const code of ['COMMS_EMAIL_SEND_AT_INVALID', 'COMMS_EMAIL_SEND_AT_PASSED', 'COMMS_EMAIL_SCHEDULE_NOT_SUPPORTED']) {
+      const r = await dispatchCommsEmailChat({ ...context, args: { ...args, send_at: later } }, harness([], { ok: false, outcome: 'refused', code }).deps as never);
+      expect(r.content, code).toMatchObject({ success: false, not_applied: true });
+      expect(String(r.content.note), code).not.toMatch(/It was stopped before sending/);
+      expect(String(r.content.note), code).not.toMatch(/\b[A-Z][A-Z0-9]*_[A-Z0-9_]+\b/);
+    }
+  });
+});

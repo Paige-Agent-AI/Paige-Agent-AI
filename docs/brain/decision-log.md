@@ -1,5 +1,10 @@
 # Decision Log — chronological one-liners
 
+## October28 — EXP03: Paige's chat can schedule a governed email; the approval card says When
+
+- **Built (no migration, no door change):** `comms_send_email` takes optional `send_at` (Kit declaration + tool schema; ISO 8601 with offset, pattern-checked, window left to the door), passed TOP-LEVEL to `comms-email-command`, never in the command; the chat operation id binds the canonical minute only when present (no-time ids unchanged byte for byte); an approved or pinned card replays the stored `send_at` verbatim; a `scheduled` result reads "Scheduled … nothing has been sent yet"; three send-time refusals have plain notes. The chat card preview now carries `send_at` and the files (name/size/mime only) — it used to drop both.
+- **Card:** a When row ("Sends <weekday, month day, time>", the viewer's clock, the one `scheduledForLabel` now homed in `confirmPreview.ts` and re-exported by Conversations) and a "Schedule send" act for a lone scheduled email. C0b pin for `_shared/comms-email/chat.ts` renewed (old `b2c63f53…` reproduced from main `f1360cf2` first). Harness render only; authenticated chat drive owed.
+
 ## October27 — EXP03 O12 piece 3: the Conversations email reply is checked inline through the governed door
 
 - **Owner decision "B with (ii)" (2026-10-27) completed in the composer.** Send opens an inline check (To the contact's main email · From · Subject · when · files); Send now confirms with the fingerprint. Owner answers applied: quiet hours / do-not-disturb → ask to schedule; recipient → the contact's main email; words locked until a definite answer.

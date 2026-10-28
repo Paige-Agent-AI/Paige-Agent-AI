@@ -252,3 +252,38 @@ describe("an email with files: the owner sees every file he is approving", () =>
     expect(ui.host.querySelector("[data-confirm-attachments]")).toBeNull();
   });
 });
+
+describe("an email set for later: the card says when, and the act schedules it", () => {
+  const SEND_AT = "2026-11-03T14:00:00.000Z";
+  it("shows a When row with the time in the viewer's clock, the same words Conversations uses", async () => {
+    const { scheduledForLabel } = await import("@/pages/admin/conversations/governedSend");
+    const ui = render(<PaigeConfirmCard actions={[action({ preview: { ...EMAIL, send_at: SEND_AT } })]} onApprove={() => {}} onDeny={() => {}} />);
+    const when = ui.host.querySelector<HTMLElement>("[data-confirm-when]");
+    expect(when).not.toBeNull();
+    expect(when!.querySelector("dt")!.textContent).toBe("When");
+    expect(when!.querySelector("dd")!.textContent).toBe(`Sends ${scheduledForLabel(SEND_AT)}`);
+    expect(ui.preview()!.contains(when)).toBe(true);
+    expect(when!.innerHTML).not.toMatch(/#[0-9a-f]{3,6}\b|rgb\(|gold/i);
+  });
+  it("the act reads Schedule send, and still approves the exact fingerprint", () => {
+    const onApprove = vi.fn();
+    const ui = render(<PaigeConfirmCard actions={[action({ preview: { ...EMAIL, send_at: SEND_AT } })]} onApprove={onApprove} onDeny={() => {}} />);
+    expect(ui.button(/^Approve$/)).toBeUndefined();
+    const schedule = ui.button(/^Schedule send$/);
+    expect(schedule).toBeDefined();
+    act(() => schedule!.click());
+    expect(onApprove).toHaveBeenCalledWith([FP]);
+  });
+  it("an email that sends on approval has no When row and still reads Approve (unchanged)", () => {
+    const ui = render(<PaigeConfirmCard actions={[action()]} onApprove={() => {}} onDeny={() => {}} />);
+    expect(ui.host.querySelector("[data-confirm-when]")).toBeNull();
+    expect(ui.button(/^Approve$/)).toBeDefined();
+    expect(ui.button(/^Schedule send$/)).toBeUndefined();
+  });
+  it("a batch keeps Approve N even when one email is scheduled; its row still says when", () => {
+    const other = action({ fingerprint: "fedcba9876543210", preview: undefined, summary: "Add a note" });
+    const ui = render(<PaigeConfirmCard actions={[action({ preview: { ...EMAIL, send_at: SEND_AT } }), other]} onApprove={() => {}} onDeny={() => {}} />);
+    expect(ui.button(/^Approve 2$/)).toBeDefined();
+    expect(ui.host.querySelector("[data-confirm-when]")).not.toBeNull();
+  });
+});

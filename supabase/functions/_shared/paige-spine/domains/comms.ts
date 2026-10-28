@@ -113,6 +113,8 @@ export const COMMS_EMAIL_SEND_CAPABILITY = defineCapability({
       connector_id: { anyOf: [{ type: "string", format: "uuid" }, { type: "null" }] },
       subject: { type: "string", minLength: 1, maxLength: 200 },
       body: { type: "string", minLength: 1, maxLength: 10000 },
+      // Rides beside the command, never in it (the door's top-level send_at); the door checks the window.
+      send_at: { type: "string", maxLength: 40, pattern: "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,3})?)?(Z|[+-]\\d{2}:\\d{2})$", description: "When to send: an ISO 8601 time with a timezone offset, 2 minutes to 30 days ahead. Absent sends on approval." },
     },
     required: ["contact_id", "subject", "body"],
   }),

@@ -5568,13 +5568,16 @@ onto the door in the next piece, so every row below is reachable by data only to
 | Scheduled release when due (seat checked, not the open workspace) | — | ✓ | ✓ | ✓ | — | — | PROOF OWED |
 | Cancel a scheduled email from the thread | Only inside a workspace it administers | ✓ any owner/admin | ✓ any owner/admin | ✓ any owner/admin | — | — | PROOF OWED |
 | "Scheduled" / "Not sent" with reason in the thread | — | ✓ | ✓ | ✓ | — | — | PROOF OWED |
+| Paige chat schedules it (`comms_send_email` `send_at`; card shows When + Schedule send) — 2026-10-28 | Only inside a workspace it administers | ✓ owner/admin | ✓ owner/admin | ✓ owner/admin | — | — | BUILT, not merged (harness render only; authenticated chat drive owed) |
+| The same email to the same contact while one is still scheduled (another time, or "send now") is refused `COMMS_EMAIL_ALREADY_SCHEDULED` with its time, card and confirm alike — 2026-10-28 | Only inside a workspace it administers | ✓ | ✓ | ✓ | — | — | BUILT, not merged (door handler tests only) |
 
 **Do-not-disturb (2026-10-27, door change):** a send with a time is no longer refused because the
 business's own do-not-disturb is on *now*; that one hold is judged when the email is released, and a hold
 still in force then refuses and closes it with its reason. Every other hold (suppression, consent, client
 do-not-disturb) still refuses at the card. Same tiers as the rows above.
 
-Lead replies (`approval_id`), agreement signing requests and Paige chat sends stay immediate. SQL proof:
+Lead replies (`approval_id`) and agreement signing requests stay immediate. Paige chat sends can carry a
+time since 2026-10-28 (row above); without one they stay immediate, unchanged. SQL proof:
 `supabase/tests/comms_email_scheduled_send.sql` (CI: paige-spine-contract).
 
 ### Conversations — governed email attachments (EXP03 O12 piece 2, 2026-10-27)
@@ -5600,7 +5603,7 @@ hover is readable in light (shared `Button`).
 
 | Capability | God (operator desk) | Agency-as-tenant | Standalone Solo | Sub-account | Client | Anonymous | Deploy state |
 |---|---|---|---|---|---|---|---|
-| Email reply with inline check (Send → check → Send now) | Only inside a workspace it administers | ✓ owner/admin | ✓ owner/admin | ✓ owner/admin | — | — | PROOF OWED (harness rendered; signed-in drive owed) |
+| Email reply with inline check (Send → check → Send now) | Only inside a workspace it administers | ✓ owner/admin | ✓ owner/admin | ✓ owner/admin | — | — | LIVE (`f1360cf2`, bundle read back); signed-in drive owed |
 | Schedule an email reply from the composer | Only inside a workspace it administers | ✓ owner/admin | ✓ owner/admin | ✓ owner/admin | — | — | PROOF OWED |
 | Attach files to an email reply (PAIGE Email senders) | Only inside a workspace it administers | ✓ owner/admin | ✓ owner/admin | ✓ owner/admin | — | — | PROOF OWED |
 | Readable outline/ghost hover (every surface) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | PROOF OWED (106 buttons measured in harness) |

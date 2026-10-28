@@ -307,14 +307,14 @@ try {
     if (s.state === "check") Object.assign(checks, checkFace("Send now"), { nothingSent: stripText.includes("Nothing has been sent yet. Changing the words closes this check."), announced: m.status === "Ready to send to Jordan Rivera. Check To and From, then Send now." });
     if (s.state === "check-scheduled") Object.assign(checks, checkFace("Schedule send"), {
       when: /When Sends \w{3}, \w{3} \d+, 9:00 AM/.test(stripText), sendAtWholeMinute: /T\d\d:\d\d:00\.000Z$/.test(String(doorCalls[0]?.args?.send_at)),
-      note: /Nothing has been sent\. It goes out \w{3}, \w{3} \d+, 9:00 AM\./.test(stripText),
+      note: /Nothing has been sent\. It goes out \w{3}, \w{3} \d+, 9:00 AM(?: [A-Z]{2,5})?\./.test(stripText),
     });
     if (s.state === "sending") Object.assign(checks, {
       twoCalls: doorCalls.length === 2 && doorCalls[1].args.approved_fingerprint === "0123456789abcdef" && doorCalls[1].args.operation_id === doorCalls[0].args.operation_id,
       sendingBusy: /Sending…/.test(stripText), wordsLocked: m.composer.disabled && m.composer.body === BODY, goldOnce: m.goldButtons.length === 1,
     });
     if (s.state === "sent") Object.assign(checks, { cleared: m.composer.body === "" && m.composer.subject === "" && !m.strip, acceptedPill: m.pills.accepted >= 1, announced: m.status === "Accepted by the email service.", focusBody: m.focus.tag === "TEXTAREA" && m.focus.inComposer, pillAA: aa("pill-accepted") });
-    if (s.state === "scheduled") Object.assign(checks, { cleared: m.composer.body === "" && !m.strip, scheduledPill: m.pills.scheduled >= 1, announced: /^Scheduled for \w{3}, \w{3} \d+, 9:00 AM\.$/.test(m.status), pillAA: aa("pill-scheduled", "sends-time") });
+    if (s.state === "scheduled") Object.assign(checks, { cleared: m.composer.body === "" && !m.strip, scheduledPill: m.pills.scheduled >= 1, announced: /^Scheduled for \w{3}, \w{3} \d+, 9:00 AM(?: [A-Z]{2,5})?\.$/.test(m.status), pillAA: aa("pill-scheduled", "sends-time") });
     if (s.state === "unconfirmed") Object.assign(checks, { dontResend: stripText.includes("Couldn't confirm this went out — don't resend."), checkStatus: stripText.includes("Check status"), wordsKept: m.composer.body === BODY && m.composer.subject === SUBJECT, rowUnconfirmed: m.pills.unconfirmed >= 1, focusCheckStatus: m.focus.text === "Check status", wordsKeptNote: stripText.includes("Your words are kept.") });
     if (s.state === "expired") Object.assign(checks, { expiredCopy: stripText.includes("This check expired — check again."), noAct: m.goldButtons.length === 0, checkAgain: stripText.includes("Check again"), oneCall: doorCalls.length === 1 });
     if (s.state === "switch-held") Object.assign(checks, { toast: behaviour.toastSeen === true && m.toasts.some((t) => t.text.includes("Wait for this email to finish sending before changing conversation.")), stillJordan: m.composer.body === BODY && /Sending…/.test(stripText) });

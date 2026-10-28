@@ -30,6 +30,23 @@ describe("C0b canonical read declaration convergence", () => {
     const outsideBefore = new Set(`list_subagents delegate_to_subagent forge_subagent propose_action read_email_campaigns read_email_campaign_audience email_campaign_draft email_campaign_request_approval read_email_series email_series_draft email_series_request_approval gmail_organize read_message_content read_support_cases get_pipeline_lead_funnel set_ad_creative_featured campaign_step_plan campaign_step_record_result campaign_step_judge process_scope_set get_business_snapshot read_client_engagement_status read_business_time_zone`.split(" "));
     const known = new Set([...Object.keys(LEGACY_CAPABILITIES), ...PAIGE_SPINE_CAPABILITIES.map((c) => c.action?.chatTool).filter((t): t is string => !!t), ...batch.map(([tool]) => tool)]);
     for (const tool of known) {
+      // The new schedule comparison reuses the original private owner reader.
+      // A door seat is only a prerequisite; the native reader still proves owner.
+      // Pin this new declaration rather than weakening the frozen incumbent set.
+      if (tool === "read_weekly_schedule_review") {
+        expect(requiresWorkspaceAdmin(tool, new Set()), tool).toBe(true);
+        expect(mutatingTools().has(tool)).toBe(false);
+        expect(PAIGE_SPINE_CAPABILITIES.find(cap => cap.action?.chatTool === tool)).toMatchObject({
+          key: "automations.weekly_schedule_review", selfDescribe: false, maturity: "PARTIAL",
+          chatBinding: "LIVE", mindBinding: "UNAVAILABLE",
+          action: { classification: "read", executor: "public.get_weekly_commitment_checks",
+            riskPolicyKey: "read_only", approvalAuthority: "none", seatAuthority: "door-seat" },
+        });
+        for (const workspaceAdmin of [false, true]) for (const platformOperator of [false, true]) for (const seat of [false, true]) {
+          expect(authorityAdmits(tool, { workspaceAdmin, platformOperator, seat }, new Set())).toBe(seat);
+        }
+        continue;
+      }
       // EXP05's newly mounted original-task reader was absent from the frozen
       // roster. Preserve its existing native owner/admin seat requirement.
       if (tool === "read_owner_task_act") {

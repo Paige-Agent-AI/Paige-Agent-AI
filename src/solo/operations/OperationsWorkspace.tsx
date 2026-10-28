@@ -50,7 +50,7 @@ type Destination = typeof DESTINATIONS[number];
 const WORK_SET_LABELS: Record<OperationsWorkSet, string> = {
   attention: "Needs attention", deadlines: "Next deadlines", timing: "Timing to confirm", reminders: "Recorded reminders",
 };
-type Inspection = { kind: "item"; id: string; view: Destination; proposedStage?: PlanItemStatus; weeklySource?: boolean } | { kind: "plan"; id: string; view: Destination } | {kind:"crm";id:string;view:Destination;record:CrmWorkRecord} | {kind:"crm_recovery";id:string;view:Destination} | {kind:"crm_focus";id:string;view:Destination} | {kind:"delivery_review";id:string;view:Destination;review:PendingDeliveryReview} | {kind:"delivery_recovery";id:string;view:Destination;target:RecoveryTarget} | null;
+type Inspection = { kind: "item"; id: string; view: Destination; proposedStage?: PlanItemStatus; weeklySource?: boolean; planningReference?: boolean } | { kind: "plan"; id: string; view: Destination } | {kind:"crm";id:string;view:Destination;record:CrmWorkRecord} | {kind:"crm_recovery";id:string;view:Destination} | {kind:"crm_focus";id:string;view:Destination} | {kind:"delivery_review";id:string;view:Destination;review:PendingDeliveryReview} | {kind:"delivery_recovery";id:string;view:Destination;target:RecoveryTarget} | null;
 
 type WorkspaceProps = { openPaige?: () => void; view?: string; onViewChange?: (view: string) => void; onOpenAgreements?: () => void;
   onOpenBusinessTimeZone?: () => void;
@@ -257,6 +257,7 @@ function ScopedOperations({ tenantId, userId, openPaige, onOpenAgreements, onOpe
   useEffect(() => {
     if (destination !== "Work" || parseOperationsTaskFocus(weeklySourceSearch)) return;
     const target = parseWeeklyPlanningSource(weeklySourceSearch);
+    const planningReference = new URLSearchParams(weeklySourceSearch).has("planningItem");
     if (!target) {
       if (inspection?.kind === "item" && inspection.weeklySource && !checkNavigation()) {
         selectionEpoch.current += 1; setInspection(null); setWeeklySource({ id: null, phase: "idle", item: null });
@@ -265,13 +266,13 @@ function ScopedOperations({ tenantId, userId, openPaige, onOpenAgreements, onOpe
     }
     if (checkNavigation()) return;
     if (creatingWork || creatingProject || inspection?.kind === "crm" || inspection?.kind === "crm_recovery" || inspection?.kind === "crm_focus") {
-      setNavigationNotice("Finish or close the current work inspection before opening a weekly-check source."); return;
+      setNavigationNotice(planningReference ? "Finish or close the current inspection before opening another work item." : "Finish or close the current work inspection before opening a weekly-check source."); return;
     }
     if (target.kind === "invalid") {
       selectionEpoch.current += 1; setInspection(null); setWeeklySource({ id: null, phase: "unavailable", item: null });
-      setNavigationNotice("This weekly-check work link is unavailable. Return to the weekly result and open a verified Planning record."); return;
+      setNavigationNotice(planningReference ? "This work link is unavailable. Return to the original record and open it again." : "This weekly-check work link is unavailable. Return to the weekly result and open a verified Planning record."); return;
     }
-    rememberInvoker(); setNavigationNotice(""); setInspection({ kind: "item", id: target.id, view: "Work", weeklySource: true });
+    rememberInvoker(); setNavigationNotice(""); setInspection({ kind: "item", id: target.id, view: "Work", weeklySource: true, planningReference });
     void readLinkedItem(target.id);
     // Changes to selection/editor state must not re-apply a consumed URL.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -524,7 +525,7 @@ function ScopedOperations({ tenantId, userId, openPaige, onOpenAgreements, onOpe
           ? "This task isn’t available in your current workspace. Check the link or your access."
           : taskFocus.phase==="cancelled"?"Task lookup cancelled. Refresh when you’re ready to check again."
           : "Current task details couldn’t be confirmed. Refresh to check again."}</p>}
-        {linkedInspection && <p>Planning work referenced by the weekly check. Completing a check does not complete this work.</p>}
+        {linkedInspection && <p>{inspection.planningReference ? "Original Planning work. Current details and permissions are checked here." : "Planning work referenced by the weekly check. Completing a check does not complete this work."}</p>}
         {linkedInspection && weeklySource.phase === "reading" && <p role="status">Reading this record with your current work permissions…</p>}
         {linkedInspection && weeklySource.phase === "unavailable" && <p role="status">This record could not be verified for your current account and workspace. It may have changed or become unavailable.</p>}
         {linkedInspection && <button type="button" disabled={weeklySource.phase === "reading"} onClick={() => {

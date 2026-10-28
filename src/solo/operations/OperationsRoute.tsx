@@ -90,7 +90,7 @@ export function OperationsRoute({ openPaige, onNavigationGuardChange }: { openPa
     onViewChange={next => { if (!notifyGuard.current?.()) setView(next); }}
     onWeeklySourceDismiss={() => {
       if (notifyGuard.current?.()) return;
-      const query = new URLSearchParams(location.search); query.delete("weeklySource"); query.delete("item");
+      const query = new URLSearchParams(location.search); query.delete("weeklySource"); query.delete("item"); query.delete("planningItem");
       navigate({ pathname: location.pathname, search: query.toString() ? `?${query}` : "", hash: location.hash }, { replace: true });
     }}
     onTaskFocusDismiss={() => {

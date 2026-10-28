@@ -10,6 +10,19 @@ import { SOLO_BRANCHES } from "@/lib/routing/tierBranches";
 import { SOLO_SETUP_TABS } from "@/solo/settings-business-context-contract";
 
 describe("canonical externally emitted app destinations", () => {
+  it("addresses original Planning work separately from CRM without creating another destination", () => {
+    const input = { actor: "account", tier: "solo", account: "123", destination: "operations_work" } as const;
+    const id = "e5000000-0000-4000-8000-000000000001";
+    expect(resolveCanonicalRecordLink({ ...input, recordId: id, recordKind: "planning_item" })).toEqual({
+      path: `/solo/123/operations/work?planningItem=${id}`, status: "exact",
+    });
+    expect(resolveCanonicalRecordLink({ ...input, recordId: id })).toEqual({ path: `/solo/123/operations/work?task=${id}`, status: "exact" });
+    expect(resolveCanonicalRecordLink({ ...input, recordId: id, recordKind: "unknown" } as never)).toBeNull();
+    expect(resolveCanonicalRecordLink({ ...input, destination: "contacts", recordId: id, recordKind: "planning_item" })).toBeNull();
+    for (const tier of ["sub_account", "agency", "enterprise", "operator"] as const) {
+      expect(resolveCanonicalRecordLink({ ...input, tier, recordId: id, recordKind: "planning_item" })).toBeNull();
+    }
+  });
   it("focuses only a valid Systems Check UUID on its existing SOLO destination", () => {
     const input = { actor: "account", tier: "solo", account: "1971670", destination: "systems_check" } as const;
     const id = "e2000000-0000-4000-8000-000000000001";

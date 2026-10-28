@@ -1,0 +1,27 @@
+{
+  "base": "37244873a0d3e5d24dc7f5a67c043e683fbb0a23",
+  "preRenewalHead": "35ad5377831204f15dfe0765b12cb90c20bbe50e",
+  "sourceReview": 5684152701,
+  "baseline": {
+    "dependencies": 126,
+    "dispatches": 29,
+    "findings": []
+  },
+  "candidateBeforeRenewal": [
+    "incumbent reviewed source changed: supabase/functions/_shared/canonical-app-url.ts",
+    "incumbent reviewed source changed: supabase/functions/_shared/paige-turn/record-links.ts"
+  ],
+  "pins": [
+    {
+      "path": "supabase/functions/_shared/canonical-app-url.ts",
+      "before": "1234eb3d9e2b345741bc33009ea1ad0f07fe22c67a1ce12224c12a0a48032640",
+      "after": "2ed96e6112f3d84f362c69dcbcb1aa40141e9adbd62f549b45874df607a0d124"
+    },
+    {
+      "path": "supabase/functions/_shared/paige-turn/record-links.ts",
+      "before": "10dedf3b503c7db57ec2a5ac3195bb4129b8694399c9e7ba9ea15dbcb6e17ac8",
+      "after": "4edbfeedd1f809fc13d5e8b24ae2e5d006d6e2b1decacc6874c7103a382f39d2"
+    }
+  ],
+  "inverse_restores_entire_original_contract": true
+}

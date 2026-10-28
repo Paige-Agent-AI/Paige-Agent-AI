@@ -1,0 +1,279 @@
+{
+ "generated": "2026-10-28T05:03:54.240Z",
+ "harness": "http://127.0.0.1:4793/",
+ "shots": [
+  {
+   "name": "a2a-taskcard-read-1366-dark",
+   "read": "read",
+   "viewport": "1366x768",
+   "theme": "dark",
+   "errors": [],
+   "cardText": "Task in Operations e8000000 Prepare the onboarding packet Assignee Jordan Lee Due Sat, Oct 31 Status Ready Read from Operations · 5:03 AM Open delivery work",
+   "links": [
+    {
+     "text": "Open delivery work",
+     "href": "/solo/3855/operations/work",
+     "color": "rgb(255, 240, 207)",
+     "background": "rgba(0, 0, 0, 0)",
+     "fontSize": "12px",
+     "fontWeight": "600",
+     "height": 40,
+     "right": 921,
+     "overlapsReadTime": false
+    }
+   ],
+   "footDisplay": "flex",
+   "insideCard": true,
+   "docOverflowX": false,
+   "pageOverflowXpx": 0,
+   "ink": "#f6f2ea"
+  },
+  {
+   "name": "a2a-taskcard-read-390-dark",
+   "read": "read",
+   "viewport": "390x844",
+   "theme": "dark",
+   "errors": [],
+   "cardText": "Task in Operations e8000000 Prepare the onboarding packet Assignee Jordan Lee Due Sat, Oct 31 Status Ready Read from Operations · 5:03 AM Open delivery work",
+   "links": [
+    {
+     "text": "Open delivery work",
+     "href": "/solo/3855/operations/work",
+     "color": "rgb(255, 240, 207)",
+     "background": "rgba(0, 0, 0, 0)",
+     "fontSize": "12px",
+     "fontWeight": "600",
+     "height": 40,
+     "right": 270,
+     "overlapsReadTime": false
+    }
+   ],
+   "footDisplay": "flex",
+   "insideCard": true,
+   "docOverflowX": false,
+   "pageOverflowXpx": 0,
+   "ink": "#f6f2ea"
+  },
+  {
+   "name": "a2a-taskcard-read-1366-light",
+   "read": "read",
+   "viewport": "1366x768",
+   "theme": "light",
+   "errors": [],
+   "cardText": "Task in Operations e8000000 Prepare the onboarding packet Assignee Jordan Lee Due Sat, Oct 31 Status Ready Read from Operations · 5:03 AM Open delivery work",
+   "links": [
+    {
+     "text": "Open delivery work",
+     "href": "/solo/3855/operations/work",
+     "color": "rgb(111, 86, 54)",
+     "background": "rgba(0, 0, 0, 0)",
+     "fontSize": "12px",
+     "fontWeight": "600",
+     "height": 40,
+     "right": 921,
+     "overlapsReadTime": false
+    }
+   ],
+   "footDisplay": "flex",
+   "insideCard": true,
+   "docOverflowX": false,
+   "pageOverflowXpx": 0,
+   "ink": "#201e23"
+  },
+  {
+   "name": "a2a-taskcard-read-390-light",
+   "read": "read",
+   "viewport": "390x844",
+   "theme": "light",
+   "errors": [],
+   "cardText": "Task in Operations e8000000 Prepare the onboarding packet Assignee Jordan Lee Due Sat, Oct 31 Status Ready Read from Operations · 5:03 AM Open delivery work",
+   "links": [
+    {
+     "text": "Open delivery work",
+     "href": "/solo/3855/operations/work",
+     "color": "rgb(111, 86, 54)",
+     "background": "rgba(0, 0, 0, 0)",
+     "fontSize": "12px",
+     "fontWeight": "600",
+     "height": 40,
+     "right": 270,
+     "overlapsReadTime": false
+    }
+   ],
+   "footDisplay": "flex",
+   "insideCard": true,
+   "docOverflowX": false,
+   "pageOverflowXpx": 0,
+   "ink": "#201e23"
+  },
+  {
+   "name": "a2a-taskcard-failed-1366-dark",
+   "read": "failed",
+   "viewport": "1366x768",
+   "theme": "dark",
+   "errors": [],
+   "cardText": "Task in Operations e8000000 Its status couldn't be read from Operations. Team Hub reads it again on the next refresh. Checked 5:04 AM Open delivery work",
+   "links": [
+    {
+     "text": "Open delivery work",
+     "href": "/solo/3855/operations/work",
+     "color": "rgb(255, 240, 207)",
+     "background": "rgba(0, 0, 0, 0)",
+     "fontSize": "12px",
+     "fontWeight": "600",
+     "height": 40,
+     "right": 921,
+     "overlapsReadTime": false
+    }
+   ],
+   "footDisplay": "flex",
+   "insideCard": true,
+   "docOverflowX": false,
+   "pageOverflowXpx": 0,
+   "ink": "#f6f2ea"
+  },
+  {
+   "name": "a2a-taskcard-failed-390-dark",
+   "read": "failed",
+   "viewport": "390x844",
+   "theme": "dark",
+   "errors": [],
+   "cardText": "Task in Operations e8000000 Its status couldn't be read from Operations. Team Hub reads it again on the next refresh. Checked 5:04 AM Open delivery work",
+   "links": [
+    {
+     "text": "Open delivery work",
+     "href": "/solo/3855/operations/work",
+     "color": "rgb(255, 240, 207)",
+     "background": "rgba(0, 0, 0, 0)",
+     "fontSize": "12px",
+     "fontWeight": "600",
+     "height": 40,
+     "right": 270,
+     "overlapsReadTime": false
+    }
+   ],
+   "footDisplay": "flex",
+   "insideCard": true,
+   "docOverflowX": false,
+   "pageOverflowXpx": 0,
+   "ink": "#f6f2ea"
+  },
+  {
+   "name": "a2a-taskcard-failed-1366-light",
+   "read": "failed",
+   "viewport": "1366x768",
+   "theme": "light",
+   "errors": [],
+   "cardText": "Task in Operations e8000000 Its status couldn't be read from Operations. Team Hub reads it again on the next refresh. Checked 5:04 AM Open delivery work",
+   "links": [
+    {
+     "text": "Open delivery work",
+     "href": "/solo/3855/operations/work",
+     "color": "rgb(111, 86, 54)",
+     "background": "rgba(0, 0, 0, 0)",
+     "fontSize": "12px",
+     "fontWeight": "600",
+     "height": 40,
+     "right": 921,
+     "overlapsReadTime": false
+    }
+   ],
+   "footDisplay": "flex",
+   "insideCard": true,
+   "docOverflowX": false,
+   "pageOverflowXpx": 0,
+   "ink": "#201e23"
+  },
+  {
+   "name": "a2a-taskcard-failed-390-light",
+   "read": "failed",
+   "viewport": "390x844",
+   "theme": "light",
+   "errors": [],
+   "cardText": "Task in Operations e8000000 Its status couldn't be read from Operations. Team Hub reads it again on the next refresh. Checked 5:04 AM Open delivery work",
+   "links": [
+    {
+     "text": "Open delivery work",
+     "href": "/solo/3855/operations/work",
+     "color": "rgb(111, 86, 54)",
+     "background": "rgba(0, 0, 0, 0)",
+     "fontSize": "12px",
+     "fontWeight": "600",
+     "height": 40,
+     "right": 270,
+     "overlapsReadTime": false
+    }
+   ],
+   "footDisplay": "flex",
+   "insideCard": true,
+   "docOverflowX": false,
+   "pageOverflowXpx": 0,
+   "ink": "#201e23"
+  },
+  {
+   "name": "a2a-taskcard-unreadable-1366-dark",
+   "read": "unreadable",
+   "viewport": "1366x768",
+   "theme": "dark",
+   "errors": [],
+   "cardText": "Task in Operations e8000000 You can't see this task in Operations. Checked 5:04 AM",
+   "links": [],
+   "footDisplay": "block",
+   "insideCard": true,
+   "docOverflowX": false,
+   "pageOverflowXpx": 0,
+   "ink": "#f6f2ea"
+  },
+  {
+   "name": "a2a-taskcard-unreadable-390-dark",
+   "read": "unreadable",
+   "viewport": "390x844",
+   "theme": "dark",
+   "errors": [],
+   "cardText": "Task in Operations e8000000 You can't see this task in Operations. Checked 5:04 AM",
+   "links": [],
+   "footDisplay": "block",
+   "insideCard": true,
+   "docOverflowX": false,
+   "pageOverflowXpx": 0,
+   "ink": "#f6f2ea"
+  },
+  {
+   "name": "a2a-taskcard-unreadable-1366-light",
+   "read": "unreadable",
+   "viewport": "1366x768",
+   "theme": "light",
+   "errors": [],
+   "cardText": "Task in Operations e8000000 You can't see this task in Operations. Checked 5:04 AM",
+   "links": [],
+   "footDisplay": "block",
+   "insideCard": true,
+   "docOverflowX": false,
+   "pageOverflowXpx": 0,
+   "ink": "#201e23"
+  },
+  {
+   "name": "a2a-taskcard-unreadable-390-light",
+   "read": "unreadable",
+   "viewport": "390x844",
+   "theme": "light",
+   "errors": [],
+   "cardText": "Task in Operations e8000000 You can't see this task in Operations. Checked 5:04 AM",
+   "links": [],
+   "footDisplay": "block",
+   "insideCard": true,
+   "docOverflowX": false,
+   "pageOverflowXpx": 0,
+   "ink": "#201e23"
+  }
+ ],
+ "interactions": [
+  {
+   "name": "keyboard-focus-open-link",
+   "focused": "Open delivery work",
+   "outline": "solid 2px rgb(155, 141, 224)",
+   "outlineOffset": "-2px",
+   "violet": "#9b8de0"
+  }
+ ]
+}

@@ -57,6 +57,8 @@ const REFUSED = new Set([
   "number_unavailable", "price_changed", "price_unverifiable",
   "twilio_subaccount_not_provisioned", "twilio_subaccount_row_missing",
   "twilio_creds_unavailable", "twilio_missing_credentials", "inbound_webhook_secret_missing",
+  // The number's voice webhook could not be built — refused BEFORE purchaseNumber, nothing spent.
+  "voice_twiml_url_unavailable",
   // comms-a2p-draft: gate refusals, and every SAVE_REFUSAL_STATUS code
   "METHOD_NOT_ALLOWED", "UNAUTHENTICATED", "BAD_JSON", "INVALID_TENANT_ID",
   "WORKSPACE_CHANGED", "NO_TENANT", "TENANT_REQUIRED", "UNKNOWN_TENANT",

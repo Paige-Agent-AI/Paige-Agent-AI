@@ -837,3 +837,73 @@ the parent release hold. Incoming EXP03 and EXP04 source must be composed, then
 immutable review, scalar/dependency proof, full required exact-head CI, actual
 production source/native record/Rail and ordinary authenticated recovery remain
 owed. See exp05-weekly-native-chat.md for the full truthful flow boundary.
+
+## October26–27 next bounded connection — schedule review, not authorization
+
+Pre-edit routing: the intended usable outcome is an eligible SOLO owner asking
+PAIGE to compare a proposed weekly time with the original saved responsibility,
+then inspecting the existing owner controls before choosing any change. EXP05
+owns Planning/Operations; E08 has returned the shared Chat window after #2957.
+E02 consumes the original intent/budget ports after this slice; E04 retains its
+two source-dependent pin changes and E09 retains browser custody.
+
+REUSE the original configure-intent schema, canonical weekly projection and
+prepareWeeklyControlReview; EXTEND their existing Chat connection only. Layers
+A/B supply current actor/scope, Spine/Kit and ordinary read admission; the real
+Layer C engine remains the later authorized occurrence path, not this read.
+At the starting main2aa4d23e8 there is NO registered schedule-review capability
+or admitted tool: UNAVAILABLE, not a pre-existing Live key. Add the smallest
+canonical read declaration if the tests prove its connection. No new provider
+or connection is required; this reads the internal owner-private process.
+
+Risk is read_only, no MUTATION_VERB or approval is issued. Keep the existing
+one-approval gate/native owner controls and automation_set_state owner_only;
+neither review nor model assent can authorize, enable or execute recurrence.
+No durable job, new event producer, scheduler or ledger is needed for a review.
+Original process/revision/read_at and existing verified act/Rail references
+prove what was inspected; a read receipt never proves a saved schedule or run.
+
+Existing Operations/weekly surface-binding rows remain PARTIAL/PROOF OWED.
+No markup, navigation, new review surface, provider-readiness or catalogue Live
+promotion is planned. Preserve original E5-CV1/CV2/CV9 and all full ten outcomes.
+Required proof includes real original reader and declaration/Root integration,
+wrong role/tenant/persona, malformed intent, scope withdrawal, elapsed budget,
+no binding leakage, no writer/retry, exact-head CI and deployed source. Ordinary
+authenticated proposed-review -> native owner controls -> later-session original
+record proof remains separate, queued behind actual browser custody receiving.
+
+Source checkpoint `8857f60f9711f0fae5bab3eafb5ac013d0f35077` connects only the
+configure preview as `automations.weekly_schedule_review` /
+`read_weekly_schedule_review`. It reuses the original closed configure schema;
+the caller cannot supply tenant, role, revision, budget, request or approval.
+The server passes its original validated intent and remaining turn budget. The
+one8s review stage retires late work; current native owner/scope checks still
+surround the original projection. Only the minimized review reaches the model,
+not its writer binding. A bounded existing capability-run recorder records a
+read/preview only; receipt failure never becomes a saved change or run receipt.
+
+Actual baseline42PASS/17FAIL; two earlier cache permission failures ran zero
+assertions and remain INVALID. Final six-suite129PASS/0FAIL/0skip, report SHA256
+`e5cf1dd53a25653878d80b5a129ec73f234a4fb62dfc5c41e91e07567f79b4a1`.
+Actual Root branch recording-port tests cover native reads, no binding leakage,
+withdrawal during receipt wait, missing original intent and forged scope input.
+Scoped lint0, six-file actual-app compiler0 own/0 dependency diagnostics; original
+Kit self-test plus seven new hostile admission controls and normal lint PASS.
+These are source/recording-port proofs, not ordinary authentication/PostgreSQL.
+
+Pre-renewal sequential AUTHOR-REVIEW / LOWER ASSURANCE is recorded in original
+ANT161 `d646055a`: all29 original2aa dispatch scalars reproduce; only enclosing
+identity[15] differs, with branches, controls, other identities, helpers and
+imports exact. Renew only those scalars and the original automations source pin;
+E04's two source-specific pins and all metadata/extractors/controls remain exact.
+Final review/required hosted CI, deployment, real review/native owner reentry,
+catalogue-panel proof and all original ten/E5/Builder/owner-away/ZION/Live/founder
+acceptance remain owed. Read binding is not a customer Live/maturity promotion.
+No new provider, Layer C producer, native writer, permission, recurring activation
+or approval is introduced. Functional source only; Visual implementation unchanged;
+Experiential complete outcome PROOF OWED; Founder NOT_ACCEPTED.
+
+Capabilities synchronization: the affected Weekly Priorities / Task Prioritization
+recipes retain their existing Listed/Unverified limits. This native, non-self-
+describing schedule read is not execution of a generic recipe or proof of an
+enabled automation. No shared panel reservation or new customer Live label.

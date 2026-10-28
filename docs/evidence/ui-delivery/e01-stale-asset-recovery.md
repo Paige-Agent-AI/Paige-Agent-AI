@@ -37,10 +37,10 @@ MOTION_PURPOSE: NONE.
 - Trigger evidence: ANT-50 comment b0d8f65d (EXP04 authorized-owner QA); ACK 7d9163ed posted before the fix.
 - Draft-survival source: src/lib/paigeComposerScopeState.ts (sessionStorage `paige.composer.drafts.v1`, owner-scoped, TTL) + its session round-trip suite; #2769 integration test.
 
-INTERNAL_BUILD_IDENTITY: <pr12-code-sha>; deployment=undeployed at authoring (ships with the next web build; readback follows); environment=local vitest + CI; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=this record + the boundary suite
+INTERNAL_BUILD_IDENTITY: 316fe798658d247b0523c348209f47d9f0c7fd1e; deployment=undeployed at authoring (ships with the next web build; readback follows); environment=local vitest + CI; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=this record + the boundary suite
 RELEASE_CHANNEL: development: merges through the normal PR gate.
 RELEASE_CLASSIFICATION: internal-only: pre-evaluation recovery repair.
-CUSTOMER_RELEASE_IDENTITY: none.
+CUSTOMER_RELEASE_IDENTITY: none: internal-only recovery repair ahead of the founder evaluation window — no coherent owner-visible outcome ships alone here.
 RELEASE_NOTE_REQUIRED: no: error-path recovery refinement; no journey change.
 RELEASE_TRUTH_BOUNDARY: PARTIAL: behavior suite-proven + source-verified draft survival; rendered error-state and authenticated observation UNVERIFIED.
 RELEASE_RECOVERY: position=forward-fix; reference=this record + the ANT-50 thread (b0d8f65d → 7d9163ed → repair reply)

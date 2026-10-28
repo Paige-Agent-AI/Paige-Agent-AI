@@ -633,6 +633,10 @@ jobs:
       # PR3 Canonical Parity: every Solo producer creates a canonically
       # routable tenant by construction; broken shapes fail closed.
       - run: supabase test db supabase/tests/canonical_solo_provisioning.sql
+      # EXP08: every new Solo account, from each of those producers, gets the same Team Hub (list,
+      # a DM with PAIGE and each of the six specialists, a channel and a first message).
+      - run: supabase test db supabase/tests/exp08_team_hub_new_solo_parity.sql
+        if: ${{ !cancelled() }}
       - run: supabase test db supabase/tests/solo_team_invite_workspace_authority.sql
       - run: supabase test db supabase/tests/solo_team_invite_recipient_binding.sql
       # Additive E09 customer-safe relationship/profile foundation; no new CI database.

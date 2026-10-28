@@ -3365,6 +3365,70 @@
       ]
     },
     {
+      "id": "cloudflare-realtimekit",
+      "name": "Cloudflare RealtimeKit (real-time rooms — the two-way guest component)",
+      "taxonomy": "marketing_ads_social_presence_analytics",
+      "business_reason": "Owner-directed 2026-10-24/25 (mandatory two-way guest conversations/webinars) and ACTIVATED 2026-10-28 (app created on the existing PAIGE Cloudflare account): the complementary real-time component Cloudflare Stream alone cannot provide — live audio/video rooms where a host and guests actually talk to each other, with governed admission and server-issued participant tokens.",
+      "paige_use_cases": [
+        "(governed, EXP07-led) live host + guest conversation rooms with server-issued participant authTokens",
+        "(governed, future) webinar sessions at participant scale (caps unverified — see dependency)"
+      ],
+      "connection_prerequisite": "Platform-held Cloudflare Account API token (owner-created 2026-10-28, stored in edge secrets; canonical key CLOUDFLARE_REALTIMEKIT_API_TOKEN, exact stored key name to be confirmed by owner); the existing CLOUDFLARE_ACCOUNT_ID covers the account. The Realtime/RealtimeKit admin permission named in the docs is NOT visible in this account's token UI (owner report; matches community reports) — EXP07's read-only credential probe on first deploy settles whether the created token carries it.",
+      "required_scopes": [
+        "Cloudflare Account API token with RealtimeKit admin capability (permission-group visibility unresolved on this account; probe decides; Plan B = Cloudflare support ticket)"
+      ],
+      "safe_readable_context": "Meeting/participant metadata needed for governed admission and session state; never the API token; recordings only if/when the storage leg is configured (today: Not configured)",
+      "allowed_writes_external_effects": "None implemented. Planned (EXP07, each reviewed/CI/deployed): create meeting, add participant (server-side authToken issuance), end session — the admission door binds tenant authority and per-session spend metered to platform_usage_events as media_usd. No recording/export leg (storage deliberately Not configured).",
+      "authority_lane": [
+        "prohibited"
+      ],
+      "m1_dependency": "none (platform-paid media substrate; relevant track is internal per-session media_usd metering only, not M1 real-money spend control)",
+      "canonical_provider_receipt": "None yet (PROPOSED); future: RealtimeKit meeting/participant ids and statuses; the durable record of truth stays in PAIGE's own session records — provider metadata is traceability, not the boundary",
+      "rail_mind_memory": "Rail: governed live-session outcomes. Mind: safe session facts only. Memory: none of media bytes or room transcripts.",
+      "status": "PROPOSED",
+      "owner": "EXP07 (broadcast/live experience) coordinating with EXP10 (connection/credential custody + registry truth)",
+      "dependency": "OWNER ACTIVATION RECEIVED 2026-10-28 (ANT-162 comments 37e56af0 + the correction 7f6c5026): RealtimeKit app 'paige-production' created on the existing PAIGE CF account (App ID b96eaa3d-0450-414a-9155-0dffb4654433 - public coordination data, NOT a secret; the earlier 32-hex string was NOT the App ID); Account API token owner-created and stored in edge secrets (key name to confirm); storage Not configured (recording leg deferred by design); webhooks tab empty (not needed for slice 1). Nothing is built in PAIGE yet - EXP07's adapter + read-only credential probe + governed admission door are the in-flight first slice. Provider facts (pricing $0.002/participant-min A/V verified; limits; retention incl. indefinite meeting records with NO delete - INACTIVE only; rollback semantics) live in EXP10's completed annex, ANT-164 comment 4b5c83ff.",
+      "next_slice": "EXP07's adapter + probe + admission door (server-side participant authTokens; per-session spend to platform_usage_events); EXP10 flips this row to PROOF_OWED with code anchors when that slice merges",
+      "tier_eligibility": {
+        "platform": "eligible",
+        "solo": "eligible",
+        "agency_future": "resell",
+        "enterprise_future": "eligible"
+      },
+      "expense_and_operations": {
+        "cost_responsibility": "platform_paid",
+        "billing_owner": "platform (PAIGE Agent AI Inc. Cloudflare account)",
+        "operational_owner": "EXP07 lead + EXP10 connection custody",
+        "pricing_model": "metered_usage",
+        "pricing_source_url": "https://developers.cloudflare.com/realtime/realtimekit/platform/pricing/",
+        "pricing_checked_as_of": "2026-10-26",
+        "pricing_note": "$0.002/participant-min A/V, $0.0005 audio-only, $0.01/min export (verified 2026-10-26 official pricing page; free tier NOT documented - assume $0 floor; account billing view is the only confirmation source)",
+        "access_prerequisite": "Existing platform Cloudflare account + the owner-created RealtimeKit app + Account API token (all in place 2026-10-28)",
+        "expected_cost_driver": [
+          "minutes",
+          "transactions"
+        ],
+        "rate_limits_quotas": "API 3,500 req/5min; recording APIs 1,000 req/50s; per-participant SDK limits (verified limits page); max participants/session and concurrent sessions NOT documented",
+        "usage_review_cadence": "monthly during early launch",
+        "renewal_deprecation_review": "review on Cloudflare Realtime pricing/beta changes",
+        "data_privacy_retention": "Meeting records INDEFINITE (no delete - INACTIVE only); participant records indefinite but deletable per-meeting via API; chat indefinite w/ persist_chat else 7d; recordings/transcripts 7d (storage not configured today); analytics 6mo; webhook logs 1mo (verified data-retention page); participant records deletable per-meeting via API",
+        "money_movement": {
+          "can_move_real_money": false,
+          "m1_dependency_track": "none",
+          "detail": "Media substrate, not money movement"
+        },
+        "receipt_reconciliation": "RealtimeKit meeting/participant ids reconciled against PAIGE's session records and the media_usd meter",
+        "rail_outcome": "Governed live-session outcome on Rail",
+        "pause_revoke_path": "Stop creating meetings (immediate); token rotation (owner); full data purge of indefinite-retention records requires a Cloudflare support/GDPR request (annex 4b5c83ff)",
+        "next_owner": "EXP07",
+        "next_slice": "Adapter + credential probe + admission door; registry promotion on merge"
+      },
+      "sources": [
+        "ANT-164 comment 4b5c83ff (EXP10 completed realtime annex: pricing/limits/retention/rollback, all doc-grounded)",
+        "ANT-162 comments 37e56af0 + 7f6c5026 (owner activation + App ID correction)"
+      ]
+    },
+    {
       "id": "cloudflare-r2",
       "name": "Cloudflare R2 (object storage)",
       "taxonomy": "files_contracts_vault",

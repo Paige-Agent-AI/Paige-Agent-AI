@@ -66,6 +66,20 @@ other original algorithms, catalogue maturity and all ten outcomes remain open.
 
 ## Evidence boundaries
 
+### Current-main composition after the original green head
+
+Incoming maind4c1afeaf includes E04 agreement references/focus and E08 universal
+Team Hub parity. Normal merge5643917bb preserves all17,772 outside-own incoming
+leaves and the entire Master. The five native Operations sources remain byte-exact;
+only the two pure helpers compose the original Planning distinction with incoming
+agreement identity. Nine original Work/reference/E04 navigation suites now208PASS,
+0FAIL/0skip. Original native screenshots retain their recorded source identity,
+not a falsely relabeled new render or authenticated result. `composition-d4.json`
+preserves original126-pin/29-dispatch reproduction, separate local pre-renewal
+source review564 and exact two-pin inverse. E08's own dispatch/Chat/card region
+is unchanged. Fresh current-head CI/source deployment and authenticated proof
+remain required; the earlier green head is historical.
+
 The first hosted contract job122873347732 correctly refused two changed reviewed
 source dependencies. Original main37244873 reproduces126 dependencies and29
 dispatches; candidate refusal names only the canonical URL and closed reference

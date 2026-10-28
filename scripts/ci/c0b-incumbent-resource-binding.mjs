@@ -1,3 +1,7 @@
+// EXP05 main-composed Planning reference, October28: local separate source review
+// 5643917bb; original d4c1afeaf reproduces126 pins/29 dispatches. Incoming E04
+// Sales agreement reference/focus preserved; renew only the same two composed
+// helper digests. Full pre-renewal/inverse proof in the existing UI evidence.
 // EXP05 original Planning Work reference, October28. Pre-renewal source35ad53778,
 // AUTHOR-REVIEW / LOWER ASSURANCE5684152701; baseline main37244873 reproduces
 // all126 dependencies and29 dispatches. Renew ONLY canonical-app-url and record-links
@@ -1230,7 +1234,7 @@ const SOURCES = {
  // Restoring main8e97's route helper reproduces old636e digest, all120 sources
  // and all29 dispatches. Renew this reviewed helper only; extractor, metadata,
  // dispatch scalars and other119 accepted dependency pins remain unchanged.
- "supabase/functions/_shared/canonical-app-url.ts": "f9c28d86381783f7ecfc50489ef41b55b3fc220c0effc051718608baadecf80f",
+ "supabase/functions/_shared/canonical-app-url.ts": "abb26a5acdf4569d308610d8827145a93e103f3b1f5a71e56b8aca75cc685658",
   "supabase/functions/_shared/gmail.ts": "78f697e312d18eb9d73ff2a3802142003a843b109f5e2a956182befb5d6160ff",
   "supabase/functions/_shared/smtp.ts": "0e3ea569f3728dde3329bb5281ef0afb9d592a4f080b3535b2bb7da62799f5ff",
   "supabase/functions/_shared/sales-invoice-delivery/binding.ts": "4e95a90d3a145278d3cb27f64865d26dc968d1c8cf7937dea2feac584e307b77",
@@ -1376,7 +1380,7 @@ const ANCESTRY_SOURCES = {
  // stay exact. Restoring main8e97's helper reproduces old8465 digest, all120 source
  // pins and all29 dispatches. Renew this inspected helper only; no extractor,
  // metadata, dispatch scalar or other dependency changes. Hostile controls retained.
- "supabase/functions/_shared/paige-turn/record-links.ts": "b3bf852044fcc65c751667c4cc0638c7c38940415baf9f151d0b7be2b541f841",
+ "supabase/functions/_shared/paige-turn/record-links.ts": "f382443f63dce366a255bc1b4fb20d7cc160787658ab97e84ea948e79204a728",
  // Original extraction input/acknowledgment validation remains authoritative.
  "supabase/functions/_shared/knowledge-extraction.ts": "458e778114b65959f35c5a65f1b371992faf199f6828d2928df8cb0c5435578d",
  // Original CURA history and strict native preparation adapter; native authority unchanged.

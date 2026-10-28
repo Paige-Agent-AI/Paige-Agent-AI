@@ -8183,7 +8183,7 @@ Current gaps:
   SQLSTATE are settled by the end door (never *can't post here* for an error); Check again on an unknown
   state only re-reads it; model text cannot end with the private-part line; neutral clock for *may still
   be replying*; agent list rows fit prototype c05. Contract "A1b part 4 notes".
-  **A1c** (branch `exp08-hub-agents-a1c`, on A1b, not merged, 2026-10-27): migration `20271120020008`
+  **A1c** (PR #3020, rebuilt on main `4400de573` after A1b #2999 and I1 #3008/#3016 merged, 2026-10-28): migration `20271120020008`
   — everyone who can see a conversation sees *<AGENT> is writing…* (the state read returns `answering`
   to them, state only); @channel / @here through `team_hub_post_message`'s new `p_broadcast_mention`
   (channel only, never asks an agent; recipients stored; @here = posted in the channel, or the person's

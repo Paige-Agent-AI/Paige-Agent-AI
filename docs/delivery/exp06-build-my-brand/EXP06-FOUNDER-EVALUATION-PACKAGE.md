@@ -1,5 +1,16 @@
 # EXP06 — Build My Brand & Online Presence: the ONE integrated founder evaluation package
 
+> **STATUS CORRECTION (2026-10-28, owner `88b2f756` + `350e030f`): implementation is
+> OPEN, not complete.** The hosting deployment executor, real HTTPS verification and the
+> tenant usage-meter writer are NOT built (named in the corrected service-enable packet)
+> and are now authorized to build within existing authority with provider activation
+> HELD. Both-chat (Team Hub) proof is likewise open behind EXP08's A2. **The evaluation
+> request is WITHDRAWN until the matrix actually closes** — this package is retained as
+> the proof ledger for what HAS shipped (the table below remains true per slice) and
+> becomes the evaluation package when rows 11/19/20 close. "Engineering complete" and
+> "only the founder evaluation and a hosting switch remain" were premature and are
+> retracted.
+
 Prepared per ANT-162 (continuation command; standing policy: no routine per-PR founder
 testing — this is the single evaluation the whole Experience has been building toward).
 Everything below is what engineering has PROVED, what remains PROOF OWED and why, and the

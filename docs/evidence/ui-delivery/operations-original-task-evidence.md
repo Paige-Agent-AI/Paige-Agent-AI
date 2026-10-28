@@ -9,11 +9,11 @@ PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: An authorized SOLO owner/admin inspecting
 VISUAL_DIRECTION: PASS: Preserve incumbent compact Obsidian/Mineral Operations controls, typography and tokens. References are secondary, collapsed by default, wrapping and plainly labeled.
 AUTOMATED_EVIDENCE: PASS: Genuine threads-pool failing-first baseline 52 PASS / 10 FAIL; implemented original UI plus existing lifecycle/closed-reader suites 152/152 PASS, zero skips. Earlier fork-startup/no-file attempts are INVALID infrastructure probes, not product results.
 STATIC_EVIDENCE: UNVERIFIED: Bounded source checks completed: Changed-source ESLint and whitespace PASS; Impeccable detector found 0 anti-patterns and 45 incumbent/advisory notes (new 12.2px follows adjacent controls; no design-system maturity claim). Exact-head hosted build/CI pending.
-RENDERED_EVIDENCE: UNVERIFIED: Bounded prototype observed: Corrected Mineral native prototype frame inspected; current product component and bundled prototype have identical SHA256 ebf4d1a87c1bf3ae7fbe0b1ab748afcc611e903f9ed06fbde7b3e145e0367d42, zero component transforms. Final desktop/narrow/theme geometry remains UNVERIFIED after browser target loss and reconnect timeout. No full-shell/customer claim.
-BEHAVIORAL_EVIDENCE: UNVERIFIED: Bounded prototype observed: Native prototype keyboard expansion/focus inspected; original source withholding and no-extra-request/control assertions PASS. Final actual-source browser exit/refusal and reload remain owed.
+RENDERED_EVIDENCE: UNVERIFIED: Actual zero-transform native component inspected at1536x770 and320px in Mineral/Obsidian with six labels and wrapping; native frames under assets/exp05-original-task-evidence. Original full-shell layouts and two legitimate cohorts were not exercised.
+BEHAVIORAL_EVIDENCE: UNVERIFIED: Actual neutral verified/ambiguous/unconfirmed/refused/unavailable/loading/close/reopen and keyboard disclosure interactions are in native-interactions.json; actual original parent exit/refusal and authenticated reload remain owed.
 AUTHENTICATED_RUNTIME: UNVERIFIED: New disclosure not released. Prior original result/Task readback does not prove this increment.
-KEYBOARD_FOCUS: UNVERIFIED: Bounded prototype observed: Native prototype summary keyboard expansion and visible focus inspected; final original history exit/current component browser proof still owed.
-ZOOM_REFLOW: UNVERIFIED: Browser target loss prevented final narrow long-reference reflow inspection; native browser zoom and physical device evidence were not collected.
+KEYBOARD_FOCUS: UNVERIFIED: Actual native summary Return and visible focus/44px target, Tab-to-original-Task within320px passed. Original parent exit-focus, full-shell keyboard and assistive technology have not been exercised.
+ZOOM_REFLOW: UNVERIFIED: Actual320px native component has no horizontal overflow and references wrap; full-shell reflow/native browser zoom and physical-device evidence were not collected.
 REDUCED_MOTION: PASS: No animation, transition, timer or automatic scrolling is added.
 STATE_COVERAGE: PASS: Original UI and data/lifecycle suites cover verified/unconfirmed/ambiguous, refused/unavailable/loading, busy/refresh, selected process and scope-change withholding; bounded source evidence only.
 TRUTHFUL_STATE_LABELS: PASS: Creation verification remains distinct from current Task completion; no catalogue or algorithm maturity promotion.
@@ -30,7 +30,7 @@ OWNER_INTENT: Complete EXP05 execution/result/recovery with inspectable original
 MUST_NOT_HAPPEN: No inferred completion, invented destination, raw provider/error data, previous-scope disclosure, business mutation, approval, retry, provider activation, new receipt or scheduler.
 MUST_PRESERVE: Original closed reader DTO, current authority/lifecycle invalidation, selected-object identity, native Task link/navigation hold, historical outcome labels and original process controls/exit focus.
 ACCEPTANCE_CRITERIA: Only a verified original result exposes exactly its saved references; expand/collapse is read-only; refused/unknown/unavailable and account/process changes cannot retain them; original Task inspection and close remain usable.
-UNVERIFIED: Final rendered desktop/narrow/theme and history-exit/refusal checks could not finish after browser target loss and reconnect timeout; full-shell zoom, assistive technology, cohorts and authenticated released disclosure remain untested. This draft carries no visual-finish or customer acceptance claim.
+UNVERIFIED: Full original-shell eight layouts, second legitimate cohort, parent exit-focus return, native zoom/assistive technology and authenticated released disclosure are not proven by this neutral native component. This draft remains held for complete required UI evidence.
 MOTION_PURPOSE: NONE: Native immediate disclosure with no authored motion or haptics.
 PROTECTED_SEAMS: Affected: privacy and display of original receipt references, responsive component geometry, accessibility and result withholding. Not affected: authentication/account choice, entitlement/signup/billing/provisioning, approval/autonomy/authority, Spine execution, canonical writes/readback semantics, Rail/Memory storage, Chat transcript/stream/thread/popout/history, Live, Browser/Vault/credentials, provider readiness/effects, scheduling/retry/idempotency runtime and shared shell geometry. Original reader/lifecycle regressions remain in verification scope.
 INTERNAL_BUILD_IDENTITY: base=4380b6928b657fc954d6df8d513b9ea3b6e07486; current-main=545e086b2f94de9704a8ea2de9bf8c4d7b6748f7; candidate identified by containing commit; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=this record.
@@ -67,3 +67,33 @@ Design authority: October21 owner standing green light for EXP05 design choices,
 AUTHOR-REVIEW / LOWER ASSURANCE: implementation and review are separate passes by the same agent. Final source inspection preserves the verified-only branch, closed DTO, no extra network/control, no business mutation, original navigation hold and truthful creation-versus-current-state labels. This is a DRAFT source candidate while final visual review is incomplete; no finished-premium or customer-LIVE claim. Browser target loss followed by connection timeout is an access limitation, not product PASS/FAIL. Full-shell eight geometries, zoom/AT, account switching and authenticated cohorts remain owed. Review exact containing commit after composition before release.
 
 Impeccable applied: clarify, craft-floor and finish source inspection; detector 0 anti-patterns. Canonical guidance: https://github.com/pbakaus/impeccable/blob/main/.claude/skills/impeccable/SKILL.md. Rendered finish review is incomplete and blocks this increment's release.
+
+## October28 actual native component continuation
+
+A fresh neutral tab recovered after browser inventory changes. Original source
+SHA256ebf4d1a87c1bf3ae7fbe0b1ab748afcc611e903f9ed06fbde7b3e145e0367d42
+is exact reviewed product with zero component transforms. Closed result and
+controls are synthetic ports; CSP denies connections/forms/effects. No owner,
+customer or TeamHub original tab was used or changed. The manifest and nine
+actual interaction observations are in assets/exp05-original-task-evidence.
+
+Actual desktop1536x770 and320px keyboard/labels/wrapping inspected; Schibsted
+loaded. Verified creation stays distinct from uncertain recorded outcome.
+Unconfirmed/refused/unavailable/loading withdraw all six references and Task
+link. Close/reopen returns fixture identities without an execution. These are
+simulated-state presentation checks, never actual401/RLS or server persistence.
+The isolated host has no parent invoker, so parent exit-focus remains unverified.
+
+The dark host initially lacked a canvas: INVALID harness frame, corrected
+privately with the original token canvas and recaptured; no product repair.
+One scrolled getScreenshot returned305x156 and is INVALID geometry evidence;
+raw CDP capture timed out. Correct fullPage captures are JPEG despite the
+API's .png input filename; retained .jpg bytes are unedited. Temporary tab
+viewport was reset (actual1514x822) and only own temporary tab was closed.
+Original customer/TeamHub tabs, drafts and settings remain intact.
+
+Rendered finish is PARTIAL: native component has no material visual finding;
+original full-shell eight geometries, two cohorts, native zoom/AT and parent
+navigation remain owed. Source152/hosted a724 checks keep their original class.
+A new evidence head needs new exact-head CI. DRAFT continues without customer,
+activation, founder or complete-Experience acceptance promotion.

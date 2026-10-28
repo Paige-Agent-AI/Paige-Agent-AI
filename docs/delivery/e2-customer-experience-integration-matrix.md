@@ -1,5 +1,68 @@
 # Experience 02 — Customer Experience Integration Matrix
 
+## October28 - verified releases, Finance and catalogue read/reload
+
+Functional:3012 normal21fff7a49632868382ce51da70d97c9eb4d428cb after exactd958
+review5676269248/10applicable checks+2web SUCCESS/genuine PreviewSKIP. Original
+Edge40608331869/artifact12782007461 certifies both affected closures/config,
+37raw+297 original emitter bindings/298Git sources. Certified Chat569/Review109;
+current native Review110 separately matches all37raw/JWTtrue. Version difference/
+cleanup advisory retained, compiler not rerun locally. Original web8fDKtzop/
+both origins verified. Exact release row is in Master section4.0.
+
+Actual O01/O02/O05/O14/O16 read subset ANT52/e2015a9a: original Calendar partial/
+source/time/window/absence-not-capacity, one ordinary read-only Chat request,
+whole business answer/source after reload, original Calendar/native Back.
+35.596s observation/UI20s is not latency/SLO. Initial wrong workspace INVALID/
+excluded. Initial unnormalized answer mismatch retained; only observed transient
+Done/trace/footer chrome excluded, all business/source content preserved.
+No appointment/scan/approval/provider or monthly retry/inspection. Calendar Back
+success does not close original Sales Back-loading ANT161/1117655d.
+
+Actual O04/O14 Finance follow-up ANT52/725879d5: menu->Overview, all7 subpages/
+VERA, seven confirmed390px source layouts/no document overflow/selected tabs
+reachable in original strip. Native ArrowLeft Forecasting->Profitability with
+matching focus. Whole settled Forecast panel equals pre-reload; first comparison
+caught Reading-permitted-targets loading and is excluded until settled. Initial
+stale compositor/strip-transition frames retained/excluded. Unsupported bank/
+accounting/obligation/profit/forecast inputs remain explicit, screenshots private.
+Source at01:11UTC: original E03#3015/f1360cf295c2fbcf79c01cb8c544d4fc01ba7fd5,
+READYdpl_fu11zMqvyN9cKaYUfxth3PL7GNsH; both origins/source/missing404 verified,
+actual main-Dc0Cb9PB bootstrap matches. Finance/src/solo unchanged since21fff.
+Earlier21fff expectation failed on the new source before correct refreshed proof.
+
+Catalogue3014 normal557d9a7ab155dfd073f052fb393ab741b74a9714/treefe9e76bd after
+reviewed2237/final5676589123/12applicable checks+2web SUCCESS/genuine PreviewSKIP/
+zero threads.6own/17,308 outside incoming leaves exact. Original migrator
+40614223175/deploy122572978130 SUCCESS confirmed already-applied20101002 persisted;
+its db push was already up to date, first applying actuator not inferred.
+Native migration recorded/newest, db-live557 and exact Weekly copy/active/read_only/
+Limitedv1 independently verified. Web6EbgyrKH READY/both origins01:24UTC exact557/
+null/original hashes/missing404, actual main-D4Qa9y7L bootstrap matches.
+
+Actual panel/read/reload ANT52/260d22ba verifies whole9 descriptions/states equal
+after reload:3ComingSoon/3Limited/3Unverified/allAccessUnverified. Weekly source
+copy visible and Limited; no Live promotion/action. Initial panel return to Chat,
+empty query/static-text click failures retained/excluded; settled reopen/reload
+stable. Cause UNKNOWN; original E01 continuity handoff ANT161/c88c13d4 remains
+unresolved, no shared-source takeover. Own tabs closed/viewport/native zoom reset/
+original authorized customer tab retained. No Chat message or business effect.
+
+Visual/Experiential:3018 DRAFTfe4509f6f/review5676545442/157controls preserves
+original full-shell/drawer/CSS/eight sizes+390/syntheticB/native200-percent zoom/
+scroll/Tab/Escape/opener/Enter/Chat-fold evidence, with synthetic ports/disabled
+Chat/raster differences explicit. P1 PRRT_kwDOSAAXqM6w8IJP still OPEN for legitimate
+second-cohort/candidate runtime proof; no waiver/new account. Nav3019 DRAFT9cec/
+review5676492858/134controls preserves original model-ref exclusion, existing
+route/focus/period; not released/model-compliance proof.
+
+All19/nine customer outcomes/roles/cohorts/Live/effects/founder acceptance OPEN.
+ALG03/06/11/12Partial/13Unverified unchanged; historical9/0 and12/0/4, protected
+monthlyUNKNOWN/UNRETRIED/uninspected preserved. O07 needs accepted-intent/Spine/
+customer admission into the ALREADY mounted original private onboarding Work
+host, never a duplicate runner. No scan/worker/provider/privilege/action activation.
+
+
 ## October27 22:58UTC — original activity customer read/reload proof
 
 ANT52/1e80826a and ANT138/074b3350 record a bounded authorized ordinary SOLO

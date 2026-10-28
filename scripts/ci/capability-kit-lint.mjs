@@ -335,6 +335,26 @@ function weeklyStatusReadDoorBound(resolver) {
     && native.includes('callerJwtDb.rpc("get_weekly_commitment_checks")');
 }
 
+function weeklyScheduleReviewDoorBound(resolver) {
+  const read = file => resolver.sourceFile(path.join(ROOT, file))?.text.replace(/\s+/g, "") ?? "";
+  const chat = read("supabase/functions/paige-ai-chat/index.ts");
+  const domain = read(WEEKLY_STATUS_DECLARATION_FILE);
+  const review = read("supabase/functions/_shared/paige-orchestration/weekly-commitment-control-review.ts");
+  return weeklyStatusReadDoorBound(resolver)
+    && domain.includes('input:objectInputSchema({properties:WEEKLY_CONTROL_REVIEW_INPUTS.configure.properties,required:WEEKLY_CONTROL_REVIEW_INPUTS.configure.required})')
+    && domain.includes('returnweeklyCommitmentStatusToolsForContext(context).length?WEEKLY_SCHEDULE_REVIEW_TOOLS:[]')
+    && chat.includes('toolDefs.push(...WEEKLY_SCHEDULE_REVIEW_TOOLS)')
+    && chat.includes('constweeklyReviewTenant=callerTier==="tenant"?personaCtx?.tenant_id??null:null;')
+    && chat.includes('constweeklyReviewIntent=weeklyDraftRuntime()?.intentId;')
+    && chat.includes('awaitprepareWeeklyScheduleReviewChatResponse(weeklyReviewIdentity,{caller:supabaseClient,')
+    && chat.includes('currentIdentity:()=>weeklyDraftCurrent()&&!customerPortal&&callerTier==="tenant"')
+    && chat.includes('weeklyReviewArgs,weeklyReviewIntent,WALL_CLOCK_MS-(Date.now()-startedAt)')
+    && review.includes('"configure",raw,requestId')
+    && review.includes('createWeeklyDraftDeadline(Math.min(8000,remainingMs),current)')
+    && review.includes('currentIdentity:()=>current()?origin:null')
+    && review.includes('return{status:"available"asconst,review:result.review,');
+}
+
 function collectDeclaredCapabilityNames(files, resolver) {
   const riskKeys = new Set();
   const toolNames = new Set();
@@ -438,6 +458,9 @@ function collectDeclaredCapabilityNames(files, resolver) {
                 if(identity&&literalProperty(identity,'id')==='automations.weekly_commitment_status'
                   &&owner.name.text==='WEEKLY_COMMITMENT_STATUS_READ_CAPABILITY'&&weeklyStatusReadDoorBound(resolver))
                   readTools.set('read_weekly_commitment_status',owner.name.text);
+                if(identity&&literalProperty(identity,'id')==='automations.weekly_schedule_review'
+                  &&owner.name.text==='WEEKLY_SCHEDULE_REVIEW_CAPABILITY'&&weeklyScheduleReviewDoorBound(resolver))
+                  readTools.set('read_weekly_schedule_review',owner.name.text);
               }
               else if(operation==='edge.tenant-stripe-connect'&&relative(file)==='supabase/functions/_shared/sales-payments/merchant-capability.ts'){
                 const identity=nestedProperties(sections,'identity',sourceFile);
@@ -1615,6 +1638,24 @@ function runSelfTest() {
     const names=collectDeclaredCapabilityNames([weeklyFile],{sourceFile:file=>texts.has(file)?ts.createSourceFile(file,texts.get(file),ts.ScriptTarget.Latest,true,ts.ScriptKind.TS):undefined});
     const tool=file===null?weeklyTool.replace('WEEKLY_COMMITMENT_STATUS_READ_CAPABILITY.input','{type:"object"}'):weeklyTool;
     const found=scanSource(tool,'src/probe.ts',{declaredReadTools:names.readTools}).some(item=>item.rule==='direct-tool-definition');
+    if(found!==expected){failed++;console.error(`  FAIL ${name}`);}else console.log(`  ok   ${name}`);
+  }
+  const weeklyReviewFile=path.join(ROOT,'supabase/functions/_shared/paige-orchestration/weekly-commitment-control-review.ts');
+  const reviewSources=new Map([...weeklySources,[weeklyReviewFile,fs.readFileSync(weeklyReviewFile,'utf8').replace(/\r\n/g,'\n')]]);
+  const reviewTool='const tool={name:"read_weekly_schedule_review",description:"Preview only",parameters:WEEKLY_SCHEDULE_REVIEW_CAPABILITY.input};';
+  for(const [name,file,from,to,expected] of [
+    ['Weekly review exact original read',weeklyFile,null,null,false],
+    ['Weekly review wrong identity',weeklyFile,'id: "automations.weekly_schedule_review"','id: "automations.other_review"',true],
+    ['Weekly review service caller',calendarChat,'prepareWeeklyScheduleReviewChatResponse(weeklyReviewIdentity, {\n              caller: supabaseClient','prepareWeeklyScheduleReviewChatResponse(weeklyReviewIdentity, {\n              caller: supabase',true],
+    ['Weekly review missing native request',calendarChat,'const weeklyReviewIntent = weeklyDraftRuntime()?.intentId;','const weeklyReviewIntent = args.request_id;',true],
+    ['Weekly review loses turn budget',calendarChat,'weeklyReviewArgs, weeklyReviewIntent, WALL_CLOCK_MS - (Date.now() - startedAt)','weeklyReviewArgs, weeklyReviewIntent, 360000',true],
+    ['Weekly review loses current scope',weeklyReviewFile,'currentIdentity: () => current() ? origin : null','currentIdentity: () => origin',true],
+    ['Weekly review exposes writer binding',weeklyReviewFile,'return { status: "available" as const, review: result.review,','return { status: "available" as const, binding: result.binding, review: result.review,',true],
+  ]) {
+    const texts=new Map(reviewSources);
+    if(from!==null){const original=texts.get(file);if(original.split(from).length!==2)throw Error('Weekly review negative must mutate exactly one source: '+name);texts.set(file,original.replace(from,to));}
+    const names=collectDeclaredCapabilityNames([weeklyFile],{sourceFile:file=>texts.has(file)?ts.createSourceFile(file,texts.get(file),ts.ScriptTarget.Latest,true,ts.ScriptKind.TS):undefined});
+    const found=scanSource(reviewTool,'src/probe.ts',{declaredReadTools:names.readTools}).some(item=>item.rule==='direct-tool-definition');
     if(found!==expected){failed++;console.error(`  FAIL ${name}`);}else console.log(`  ok   ${name}`);
   }
   const readNames=collectDeclaredCapabilityNames([declarationFile],{sourceFile:()=>readAst});

@@ -76,6 +76,21 @@ had NOT persisted. The file rolled back as a whole.
   reader that takes them in the other order. Taking the locks up front, in a fixed order, under a
   `lock_timeout`, narrows the window but does not close it.
 
+### A local tsc ratchet that runs out of memory reports a false pass (2026-10-28, EXP08 A2a)
+
+**Symptom.** `npm run ci:tsc` printed "no new type errors (baseline 10, current 0)" locally, but CI's
+`verify` failed the same commit (#3029) on a new TS2322 in a Team Hub test file.
+
+**Root cause.** Locally, `tsc --noEmit -p tsconfig.app.json` died of heap exhaustion (exit 134). The
+ratchet parses error lines from tsc's output, found none in a crash dump, and reported "current 0".
+"Current 0" against a baseline of 10 is itself the tell: the known errors cannot all have vanished.
+
+**Rule.** Before trusting a local ratchet, confirm its current count is plausible. A count of 0 against
+a non-zero baseline means tsc did not finish. Run it with `NODE_OPTIONS=--max-old-space-size=7168` and
+the worktree's own `npm ci` (not a symlinked `node_modules`), then reproduce the CI failure before
+claiming the fix. The ratchet treating a crashed tsc as zero errors is a defect in
+`scripts/ci/tsc-ratchet.mjs` worth fixing by its owner.
+
 ### A short lock_timeout cannot land on a production that is being dumped (2026-10-27, EXP08 I1)
 
 **Symptom.** Migration `20271120010008` (#3008) failed twice on `deploy-migrations` at the same

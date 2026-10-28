@@ -15,7 +15,7 @@ import { motion, useReducedMotion } from "framer-motion";
 import { useLocation, useSearchParams, Link } from "react-router-dom";
 import {
   MessageCircle, Inbox, Send, Pencil, Loader2, Sparkles, AlertTriangle, Paperclip,
-  PanelRight, Bell, Plus, PlugZap, Trash2, CircleHelp,
+  PanelRight, Bell, Plus, PlugZap, Trash2, CircleHelp, MailWarning,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
@@ -37,6 +37,7 @@ import {
   SEND_UNCONFIRMED_COPY, isUnconfirmedMessage, ownerSendError,
   useCommsAttachments,
 } from "./conversations/inbox-shared";
+import { composeSuppressionNotice, normalizeSuppressionEmail } from "./conversations/suppressionWords";
 import { voiceHistoryStatus } from "@/lib/voice/voiceCallSafety";
 import { tenantRoutePrefixForPath } from "@/components/tenant-shell/tenantShellRoutes";
 import { ComposeThreadDialog } from "./conversations/ComposeThreadDialog";
@@ -917,20 +918,36 @@ export default function ClientsConversations() {
   // wouldn't refresh; and without the shared guard a slow toggle-read for contact A could clobber
   // a newer read for contact B, staling the pre-send opt-out guard. The shared counter closes both
   // races cleanly (§13). Server-side pre-send remains authoritative regardless.
-  const loadSuppressionsFor = useCallback(async (cid: string | null) => {
+  // EXP03 (20271120120003): a governed email's hard bounce is kept on this business's row for the normalised
+  // ADDRESS (no contact), so the contact's rows alone miss it. Read this business's address rows for the
+  // contact's CURRENT main email too (tenant-filtered: a platform owner's RLS sees every business), so a bounce
+  // shows while that address is on the card and a corrected address is not held by the old one.
+  const loadSuppressionsFor = useCallback(async (cid: string | null, email: string | null) => {
     const req = ++suppReqRef.current;
     const epoch = accountEpochRef.current.capture();
     if (epoch.account !== activeTenantId) return;
     if (!cid) { if (req === suppReqRef.current) setSuppressions([]); return; }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sb = supabase as any;
-    const { data } = await sb.from("paige_suppressions").select("channel, reason").eq("contact_id", cid);
-    if (req === suppReqRef.current && accountEpochRef.current.accept(epoch)) setSuppressions((data as Suppression[]) ?? []);
+    const address = email?.trim() ? normalizeSuppressionEmail(email) : null;
+    const [byContact, byAddress] = await Promise.all([
+      sb.from("paige_suppressions").select("channel, reason").eq("contact_id", cid),
+      address && activeTenantId
+        ? sb.from("paige_suppressions").select("channel, reason")
+          .eq("tenant_id", activeTenantId).eq("channel", "email").is("contact_id", null).eq("address_normalized", address)
+        : Promise.resolve({ data: [] }),
+    ]);
+    const rows: Suppression[] = [
+      ...((byContact.data as Suppression[] | null) ?? []).map((r) => ({ ...r, keyed: "contact" as const })),
+      ...((byAddress.data as Suppression[] | null) ?? []).map((r) => ({ ...r, keyed: "address" as const })),
+    ];
+    if (req === suppReqRef.current && accountEpochRef.current.accept(epoch)) setSuppressions(rows);
   }, [activeTenantId]);
-  useEffect(() => { void loadSuppressionsFor(selectedThread?.contact_id ?? null); }, [selectedThread?.contact_id, loadSuppressionsFor]);
+  const suppressionEmail = selectedThread?.clients?.email ?? null;
+  useEffect(() => { void loadSuppressionsFor(selectedThread?.contact_id ?? null, suppressionEmail); }, [selectedThread?.contact_id, suppressionEmail, loadSuppressionsFor]);
   const refreshSuppressions = useCallback(
-    () => loadSuppressionsFor(selectedThread?.contact_id ?? null),
-    [loadSuppressionsFor, selectedThread?.contact_id],
+    () => loadSuppressionsFor(selectedThread?.contact_id ?? null, suppressionEmail),
+    [loadSuppressionsFor, selectedThread?.contact_id, suppressionEmail],
   );
 
   // E09 — the portal is offered as a send channel when the thread's contact is a client who has
@@ -1459,9 +1476,10 @@ export default function ClientsConversations() {
     if (!body.trim()) { toast.error("Write a reply first."); return; }
     if (composeChannel === "email" && !subject.trim()) { toast.error("Add a subject for the email."); return; }
     if (attachments.length > 10) { toast.error("Remove attachments until 10 or fewer remain."); return; }
-    // R-HIGH3: truthful pre-send guard — never enqueue for a contact who opted out of this channel.
-    const blocked = suppressions.find((s) => s.channel === composeChannel);
-    if (blocked) { toast.error(`This contact opted out of ${CHANNEL_LABEL[composeChannel]} — Paige won't send.`); return; }
+    // R-HIGH3: truthful pre-send guard — never enqueue to a channel PAIGE won't send on, and say why from the
+    // row's reason (a bounce is the address, a spam report is the person's, an opt-out keeps its words).
+    const blocked = composeSuppressionNotice(suppressions, composeChannel, { canLiftHere: !isSolo });
+    if (blocked) { toast.error(blocked); return; }
     if (governedEmail) { await governedReply.check(); return; }
 
     const activeSend = sendInFlightRef.current;
@@ -1703,6 +1721,9 @@ export default function ClientsConversations() {
         ? ` ${portalBodyLength.toLocaleString()} / ${PORTAL_BODY_MAX.toLocaleString()} characters.`
         : "")
     : "";
+  // Why PAIGE won't send on the chosen channel, from the row's reason (20271120120003), or null.
+  // The admin inbox shows the contact card with its DND tab (where a hold on the contact is lifted); Solo does not.
+  const composeHeldNote = composeSuppressionNotice(suppressions, composeChannel, { canLiftHere: !isSolo });
   const composerModel: ConversationsComposerModel | null = selected ? {
     capabilities: {
       ...capabilities,
@@ -1738,6 +1759,13 @@ export default function ClientsConversations() {
     rows: 2,
     sendLabel: governedReply.checking ? "Checking…" : leadReplyApprovalId ? "Review reply" : portalMode ? "Send" : scheduledFor ? "Schedule" : editingDraftId ? "Send edited" : "Send",
     note: leadReplyApprovalId ? <>Review the exact sender and message before approving. <button type="button" className="underline" disabled={leadReplyReview.blocksEditing} onClick={cancelLeadReply}>Cancel reply edit</button></> : portalUnreachable ? undefined : portalMode ? portalNote
+      // Why Send is held for this channel, in words (20271120120003): the bounced address, the spam report, the opt-out.
+      : composeHeldNote ? (
+        <span data-compose-held-note className="inline-flex items-start gap-1.5 text-foreground">
+          <MailWarning aria-hidden className="mt-px h-3.5 w-3.5 shrink-0 text-[hsl(var(--warning))]" />
+          <span>{composeHeldNote}</span>
+        </span>
+      )
       // A governed email goes to the address the door resolves (the contact's main email); while the
       // check is open the strip names it, so the note says nothing that could contradict it.
       // The door sends only to the contact card's main email (the same primary address read here).

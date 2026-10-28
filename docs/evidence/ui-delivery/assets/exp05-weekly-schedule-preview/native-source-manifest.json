@@ -1,0 +1,66 @@
+{
+  "head": "829bf7cb0bfec5f2586a1339a1e11273fe186c1f",
+  "boundary": "Synthetic local render and interaction only; actual source components, explicit fixture hooks/draft exclusion; no model/runtime/authentication/business effect proof.",
+  "mocked": [
+    {
+      "importer": "src\\solo\\weekly\\WeeklyResponsibilityEntry.tsx",
+      "module": "./useWeeklyResponsibility"
+    },
+    {
+      "importer": "src\\solo\\weekly\\WeeklyResponsibilityEntry.tsx",
+      "module": "./WeeklyDraftComposer"
+    }
+  ],
+  "sources": [
+    {
+      "path": "src/lib/utils.ts",
+      "sha256": "d1f1e0d62cb8d8d1e04c26e14de842d8a151f75812d81b046c65b5d1fe8e4b27"
+    },
+    {
+      "path": "src/lib/hostRouting.ts",
+      "sha256": "32f9039e9363ea2109d3c619ff43e7eeaa01245c54804058dea4f599974cd30c"
+    },
+    {
+      "path": "src/components/chat/MarkdownMessage.tsx",
+      "sha256": "31ff405b48ae6ec986cc4381c56a112b48c14ea6c739bbd985b1782e95d224a0"
+    },
+    {
+      "path": "src/components/ui/sheet.tsx",
+      "sha256": "56877e67e260514dc8df4347ae2a0d516c9d5cfbb341d104da2a9bc9484865a5"
+    },
+    {
+      "path": "src/components/tenant-shell/tenantShellRoutes.ts",
+      "sha256": "c88b329c2667f125e47cf9a5a0b8ed407f6df2416917570f33bf84a50c470b0d"
+    },
+    {
+      "path": "src/lib/paigePromptHandoff.ts",
+      "sha256": "ff2ce8f41aa8f7b95b25c8a4675bde3f97f94a372ed2419e79ca30b6188a288f"
+    },
+    {
+      "path": "src/solo/weekly/weekly-responsibility.ts",
+      "sha256": "796067513eaad0f1144c92757c9dfe3aecf092e6f973c04095cae25d14446553"
+    },
+    {
+      "path": "src/solo/weekly/WeeklyScheduleChange.tsx",
+      "sha256": "dd97ffe954f4561ac895c6cd449db8cde0ef54d105336544bee4138af2327946"
+    },
+    {
+      "path": "src/solo/weekly/weekly-responsibility.css",
+      "sha256": "a999cecb1193b49590ed830f633a7644bcff0d37e45003e4fbec3fc3673f8323"
+    },
+    {
+      "path": "src/solo/weekly/WeeklyResponsibilityPanel.tsx",
+      "sha256": "13028fcacf67cfcfddf2952be436c0becab74883b40d8a79c7403acc899e9e2a"
+    },
+    {
+      "path": "src/solo/weekly/WeeklyResponsibilityEntry.tsx",
+      "sha256": "8975693256a6fccb98acc6322e98ab67d95477adda9cb21092941c98e5965d1a"
+    },
+    {
+      "path": "src/solo/solo-tokens.css",
+      "sha256": "77edc9fc35a6d2dab87318996fbb0dc6d80a0a04115d1757016c10da2c7b3197"
+    }
+  ],
+  "bundle": "8068a6974402c227312477c62b5c35dfcb2a9c8857d3f2a05a52554e8f621cfd",
+  "css": "d5a5769078df175037ef3e784bd1efd5263d34951df3ae4ec11b45253312f999"
+}

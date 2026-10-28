@@ -1007,8 +1007,10 @@ Both closed as superseded with links; their branches are kept.
   suppression, so the door's pre-send check could not hold the next try. The governed-reply applier now writes a
   per-business `paige_suppressions` row — `bounce_hard` (a non-blocked bounce or a "Bounced Address"/"Invalid" drop)
   keyed on the normalised ADDRESS, `complaint` on the contact — and a "bounced before" drop says so in plain words.
-  The Conversations composer and contact rail now say why from the reason (a bounce: "This email address bounced.
-  Check it, or use another address."; never "opted out"), and a corrected address is not held. Never across
+  The Conversations composer and contact rail now say why from the reason and the key (an address bounce: "This
+  email address bounced. Check it, or use another address."; a bounce kept on the contact names the DND tab, or in
+  Solo says changing the address won't lift it; never "opted out"), and a corrected address is not held. Campaign
+  planning and send-time claims now also skip a +tagged contact whose folded address is held. Never across
   businesses; SendGrid's account-wide bounce list, a row outliving SendGrid's entry, and a clear for a wrongly held
   address are owner decisions (decision log 2026-10-28). The two production rows are not back-filled. Proof:
   `exp03_governed_bounce_suppression.sql` 45/45; evidence `docs/evidence/ui-delivery/exp03-governed-bounce-suppression.md`.

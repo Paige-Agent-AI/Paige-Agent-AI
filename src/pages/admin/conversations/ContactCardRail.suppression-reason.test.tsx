@@ -68,6 +68,14 @@ describe("Conversations rail — the reason, in words", () => {
     expect(sw("Email").getAttribute("data-state")).toBe("unchecked");
     expect(host.textContent).toContain("This email address bounced. Check it, or use another address.");
   });
+  it("a contact-keyed bounce says what lifts it: the Email switch in this DND tab (on, liftable)", async () => {
+    await mount([{ channel: "email", reason: "bounce_hard", keyed: "contact" }]);
+    expect(signal()).toContain("This contact's email bounced. Fix their address, then turn off Email in the DND tab.");
+    expect(signal()).not.toContain("Check it, or use another address.");
+    expect(sw("Email").getAttribute("data-state")).toBe("checked");
+    expect(sw("Email").disabled).toBe(false);
+    expect(host.textContent).toContain("Bounced. Fix their address, then turn this off.");
+  });
   it("a spam report says they marked it as spam", async () => {
     await mount([{ channel: "email", reason: "complaint" }]);
     expect(signal()).toContain("Marked your email as spam");

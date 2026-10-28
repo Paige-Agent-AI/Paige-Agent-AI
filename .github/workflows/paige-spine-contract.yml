@@ -786,9 +786,10 @@ jobs:
       - run: supabase test db supabase/tests/exp03_resend_retired.sql
         if: ${{ !cancelled() }}
       # EXP03 (20271120120003): a governed one-to-one email whose SendGrid event proves the address cannot
-      # receive (a hard bounce, a "Bounced Address" or "Invalid" drop) or carries a complaint puts the contact on
-      # THAT business's do-not-send list, so the pre-send read holds the next attempt; a blocked bounce or a
-      # delay suppresses nobody, and another business at the same address is never suppressed.
+      # receive (a hard bounce, a "Bounced Address" or "Invalid" drop) puts that normalised ADDRESS on THAT
+      # business's do-not-send list, and a complaint puts the contact on it, so the pre-send read holds the next
+      # attempt and campaigns skip a +tagged address too; a blocked bounce or a delay suppresses nobody, another
+      # business at the same address is never suppressed, and a refused or skipped write is reported, not lost.
       - run: supabase test db supabase/tests/exp03_governed_bounce_suppression.sql
         if: ${{ !cancelled() }}
       # E09 K2: relevant retrieval — the asker re-resolved from the thread; authorized set first, candidates only

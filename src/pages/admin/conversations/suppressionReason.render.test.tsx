@@ -204,6 +204,27 @@ describe("the inbox says why PAIGE won't send — from the reason, never 'opted 
     expect(toast.error).toHaveBeenCalledWith("They marked your email as spam — Paige won't send email.");
   });
 
+  // Review M-B: a bounce kept on the CONTACT (the campaign applier and the Resend receipt path write those) is not
+  // lifted by changing the address, so "check it, or use another address" would be untrue. Say what lifts it.
+  it("a contact-keyed bounce on the admin inbox names what lifts it (the card's DND tab), not 'use another address'", async () => {
+    db.suppressions = [onContact("bounce_hard")];
+    const host = await mount("/admin/clients-hub/conversations");
+    await write(host);
+    expect(host.textContent).toContain("This contact's email bounced. Fix their address, then turn off Email in the DND tab of their card.");
+    expect(host.textContent).not.toContain("Check it, or use another address.");
+    await act(async () => { sendButton(host)!.click(); await flush(); });
+    expect(toast.error).toHaveBeenCalledWith("This contact's email bounced. Fix their address, then turn off Email in the DND tab of their card.");
+  });
+
+  it("a contact-keyed bounce in Solo (no DND tab there) says changing the address won't lift it", async () => {
+    db.suppressions = [onContact("bounce_hard")];
+    const host = await mount();
+    await write(host);
+    expect(host.textContent).toContain("This contact's email bounced. Changing their address won't lift this hold.");
+    expect(host.textContent).not.toContain("Check it, or use another address.");
+    expect(sendButton(host)?.getAttribute("aria-disabled") === "true" || sendButton(host)?.disabled).toBe(true);
+  });
+
   it("an opt-out keeps its words", async () => {
     db.suppressions = [onContact("unsubscribe_link")];
     const host = await mount("/admin/clients-hub/conversations");

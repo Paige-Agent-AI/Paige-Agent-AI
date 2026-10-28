@@ -48,7 +48,7 @@ import {
   type ClientContact, type MessageRow, type Label, type ChannelType, type Suppression,
   CHANNEL_ICON, CHANNEL_LABEL, CREATED_VIA_LABEL, LABEL_COLOR, bodyPreview, contactNameFromClient,
 } from "./inbox-shared";
-import { BOUNCED_WORDS, REPORTED_WORDS, kindsOn, railSuppressionLines, switchable } from "./suppressionWords";
+import { BOUNCED_CONTACT_WORDS, BOUNCED_WORDS, REPORTED_WORDS, kindsOn, railSuppressionLines, switchable } from "./suppressionWords";
 import { AgentsLog } from "./AgentsLog";
 import { TagPicker } from "@/components/admin/contacts/TagPicker";
 import { ContactDealsSection } from "@/components/admin/contacts/ContactDealsSection";
@@ -317,7 +317,8 @@ export function ContactCardRail({
   // report) can't be lifted from here: only they can turn it back on (E09 Slice 6, D3 / reviewer B1).
   const heldByContact = (ch: "email" | "sms") => suppressions.some((s) => s.channel === ch && CONTACT_HELD_REASONS.has(s.reason));
   const heldNote = (ch: "email" | "sms") => !heldByContact(ch)
-    ? (kindsOn(suppressions, ch).includes("bounced") ? `${BOUNCED_WORDS[ch].line} ${BOUNCED_WORDS[ch].hint}` : undefined)
+    ? (kindsOn(suppressions, ch).includes("bounced_contact") ? BOUNCED_CONTACT_WORDS[ch].note
+      : kindsOn(suppressions, ch).includes("bounced") ? `${BOUNCED_WORDS[ch].line} ${BOUNCED_WORDS[ch].hint}` : undefined)
     : suppressions.some((s) => s.channel === ch && s.reason === "complaint") ? REPORTED_NOTE : HELD_NOTE;
   const dnd = !!contact?.dnd_active;
 
@@ -517,6 +518,15 @@ export function ContactCardRail({
                       <div className="text-[11px] text-foreground">
                         {REPORTED_WORDS[ch].line}
                         <span className="text-muted-foreground"> — {REPORTED_WORDS[ch].hint}</span>
+                      </div>
+                    </div>
+                  ))}
+                  {reasonLines.bouncedContact.map((ch) => (
+                    <div key={`bounced-contact-${ch}`} className="flex items-start gap-2">
+                      <MailWarning className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[hsl(var(--warning))]" />
+                      <div className="text-[11px] text-foreground">
+                        {BOUNCED_CONTACT_WORDS[ch].line}
+                        <span className="text-muted-foreground"> {BOUNCED_CONTACT_WORDS[ch].hint}</span>
                       </div>
                     </div>
                   ))}

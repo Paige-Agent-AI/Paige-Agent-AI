@@ -1478,7 +1478,7 @@ export default function ClientsConversations() {
     if (attachments.length > 10) { toast.error("Remove attachments until 10 or fewer remain."); return; }
     // R-HIGH3: truthful pre-send guard — never enqueue to a channel PAIGE won't send on, and say why from the
     // row's reason (a bounce is the address, a spam report is the person's, an opt-out keeps its words).
-    const blocked = composeSuppressionNotice(suppressions, composeChannel);
+    const blocked = composeSuppressionNotice(suppressions, composeChannel, { canLiftHere: !isSolo });
     if (blocked) { toast.error(blocked); return; }
     if (governedEmail) { await governedReply.check(); return; }
 
@@ -1722,7 +1722,8 @@ export default function ClientsConversations() {
         : "")
     : "";
   // Why PAIGE won't send on the chosen channel, from the row's reason (20271120120003), or null.
-  const composeHeldNote = composeSuppressionNotice(suppressions, composeChannel);
+  // The admin inbox shows the contact card with its DND tab (where a hold on the contact is lifted); Solo does not.
+  const composeHeldNote = composeSuppressionNotice(suppressions, composeChannel, { canLiftHere: !isSolo });
   const composerModel: ConversationsComposerModel | null = selected ? {
     capabilities: {
       ...capabilities,

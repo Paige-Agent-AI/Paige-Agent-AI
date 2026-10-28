@@ -9,10 +9,13 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 // paige-ai-chat agent turn). The rail, command row and PAIGE panel are labelled placeholders, not the real
 // tenant shell; the doubles are not the database and not a model turn. Every name and figure is fictional.
 const OUT = process.env.TEAM_HUB_EVIDENCE_OUT ?? resolve(HERE, "..");
-const REPORT = process.env.TEAM_HUB_REPORT ?? resolve(HERE, "report.json");
+// Round 3 (`node shoot.mjs --matrix [filter]`): the six A1c states at the eight SOLO viewport records, both themes,
+// written to report-r3.json with geometry (overflow, the @ list and composer inside the hub, PAIGE overlap).
+const MATRIX = process.argv.includes("--matrix");
+const REPORT = process.env.TEAM_HUB_REPORT ?? resolve(HERE, MATRIX ? "report-r3.json" : "report.json");
 const BASE = process.env.TEAM_HUB_HARNESS_URL ?? "http://127.0.0.1:4792/";
 const browser = await chromium.launch(process.env.PW_EXECUTABLE_PATH ? { executablePath: process.env.PW_EXECUTABLE_PATH } : {});
-const only = process.argv[2];
+const only = process.argv.slice(2).find((arg) => !arg.startsWith("--"));
 const desk = { vw: 1366, vh: 768, rail: 72, paige: "closed" };
 const phone = { vw: 390, vh: 844, rail: 60, row: 58, paige: "closed" };
 const shots = [];
@@ -27,6 +30,26 @@ for (const theme of ["dark", "light"]) {
   for (const act of ["private-still-writing-merit", "thread-atlist"]) shots.push({ ...desk, theme, act, name: `ev-a1c-${act}-1366-${theme}` });
 }
 shots.push({ ...phone, theme: "dark", act: "thread-atlist", name: "ev-a1c-thread-atlist-390-dark" });
+// The SOLO viewport records, exactly as A1b's harness defines them (tenant-command-center-shell.css + readNavPreference):
+// 1536 open = PAIGE inline 399px, 1366 open = inline 340px, 1024 and 900 open = the shell's 410px overlay.
+const records = [
+  { id: "1536x770-closed", vw: 1536, vh: 770, rail: 216, paige: "closed" },
+  { id: "1536x770-open", vw: 1536, vh: 770, rail: 216, paige: "inline", pw: 399 },
+  { id: "1366x768-closed", vw: 1366, vh: 768, rail: 72, paige: "closed" },
+  { id: "1366x768-open", vw: 1366, vh: 768, rail: 72, paige: "inline", pw: 340 },
+  { id: "1024x768-closed", vw: 1024, vh: 768, rail: 72, paige: "closed" },
+  { id: "1024x768-open", vw: 1024, vh: 768, rail: 72, paige: "overlay" },
+  { id: "900x1000-closed", vw: 900, vh: 1000, rail: 72, paige: "closed" },
+  { id: "900x1000-open", vw: 900, vh: 1000, rail: 72, paige: "overlay" },
+];
+if (MATRIX) {
+  shots.length = 0;
+  for (const r of records) for (const theme of ["light", "dark"]) {
+    for (const act of ["writing-others", "atlist-top", "atlist-everyone", "thread-atlist", "private-fail-merit", "private-still-writing-merit"]) {
+      shots.push({ ...r, theme, act, name: `ev-a1c-${act}-${r.id}-${theme}` });
+    }
+  }
+}
 
 const GOLD = ["--pg-gold-core", "--pg-gold", "--pg-gold-deep", "--pg-gold-fill"];
 const report = [];
@@ -68,7 +91,7 @@ for (const shot of shots) {
     await page.evaluate(() => document.querySelector(".th-ag-priv[data-ag='merit']")?.scrollIntoView({ block: "center" }));
   } else if (act === "thread-atlist") {
     await openConv("client-delivery");
-    await page.locator(".th-conv button", { hasText: /^2 replies/ }).first().click();
+    await page.locator(".th-conv button", { hasText: /^2 replies/ }).first().dispatchEvent("click"); // DOM event, so the PAIGE overlay placeholder never blocks the harness step
     const reply = page.locator("#th-thread-reply"); await reply.waitFor();
     await reply.fill("@"); await reply.press("End");
     await page.waitForSelector(".th-thread [role=listbox][aria-label='People and agents']");
@@ -140,6 +163,51 @@ for (const shot of shots) {
       fails: Array.from(document.querySelectorAll(".th-ag-fail")).map((row) => row.textContent),
       notes: Array.from(document.querySelectorAll(".th-ag-priv")).map((row) => row.textContent),
       turns: window.__thTurns ?? [],
+      geometry: (() => {
+        const vw = window.innerWidth, vh = window.innerHeight;
+        const box = (el) => { if (!el || !el.getClientRects().length) return null; const r = el.getBoundingClientRect(); return { left: Math.round(r.left), top: Math.round(r.top), right: Math.round(r.right), bottom: Math.round(r.bottom) }; };
+        const clip = (a, b) => a && b ? { left: Math.max(a.left, b.left), top: Math.max(a.top, b.top), right: Math.min(a.right, b.right), bottom: Math.min(a.bottom, b.bottom) } : null;
+        const area = (r) => r ? Math.max(0, r.right - r.left) * Math.max(0, r.bottom - r.top) : 0;
+        const inside = (inner, outer) => Boolean(inner && outer && inner.left >= outer.left - 1 && inner.top >= outer.top - 1 && inner.right <= outer.right + 1 && inner.bottom <= outer.bottom + 1);
+        const hubEl = document.querySelector(".th-hub");
+        // The hub's visible box: its own rect, cut by the screen host it sits in and by the viewport.
+        const hubVisible = clip(clip(box(hubEl), box(document.querySelector("[data-solo-screen-host]"))), { left: 0, top: 0, right: vw, bottom: vh });
+        const inline = box(document.querySelector("[data-harness='paige-inline']"));
+        const panel = box(document.querySelector("[data-harness='paige-overlay']"));
+        const scrim = box(document.querySelector("[data-harness='paige-scrim']"));
+        // What a person would see on top at a point: inside the hub, or a PAIGE element.
+        const topAt = (r) => { if (!r) return null; const x = Math.round((r.left + r.right) / 2), y = Math.round((r.top + r.bottom) / 2);
+          const el = document.elementFromPoint(Math.min(vw - 1, Math.max(0, x)), Math.min(vh - 1, Math.max(0, y)));
+          return el ? (el.closest("[data-harness]")?.getAttribute("data-harness") ?? (el.closest(".th-hub") ? "hub" : el.tagName)) : null; };
+        const measure = (el) => { const r = box(el); if (!r) return null;
+          return { rect: r, insideHub: inside(r, hubVisible), insideViewport: inside(r, { left: 0, top: 0, right: vw, bottom: vh }),
+            paigeInlineOverlapPx: area(clip(r, inline)), paigeOverlayOverlapPx: area(clip(r, panel)), paigeScrimOverlapPx: area(clip(r, scrim)), topAtCentre: topAt(r) }; };
+        const thread = document.querySelector(".th-thread [role=listbox][aria-label='People and agents']");
+        const list = thread ?? document.querySelector(".th-conv [role=listbox][aria-label='People and agents']");
+        const field = thread ? document.querySelector("#th-thread-reply") : document.querySelector(".th-conv textarea[role=combobox]");
+        const composer = field?.closest(".th-composer") ?? field;
+        const active = (() => {
+          if (!list || !field) return null;
+          const id = field.getAttribute("aria-activedescendant");
+          const option = (id && document.getElementById(id)) || list.querySelector("[aria-selected=true]");
+          if (!option) return { id, found: false };
+          const r = box(option), l = box(list);
+          return { id: option.id, label: option.getAttribute("data-ag") ?? option.getAttribute("data-bc") ?? option.querySelector(".th-option-meta span")?.textContent ?? option.textContent,
+            rect: r, inList: inside(r, l), inViewport: inside(r, { left: 0, top: 0, right: vw, bottom: vh }), topAtCentre: topAt(r) };
+        })();
+        const hubBox = box(hubEl);
+        return {
+          viewport: { vw, vh },
+          pageOverflowXpx: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+          hubOverflowXpx: hubEl ? hubEl.scrollWidth - hubEl.clientWidth : null,
+          hubRect: hubBox, hubVisible,
+          hubWidth: hubBox ? hubBox.right - hubBox.left : null,
+          paige: { inline, overlay: panel, scrim },
+          atList: list ? { where: thread ? "thread" : "conversation", ...measure(list) } : null,
+          composer: composer ? { where: thread ? "thread" : "conversation", ...measure(composer) } : null,
+          activeOption: active,
+        };
+      })(),
     };
   }, GOLD);
   await page.screenshot({ path: resolve(OUT, `${shot.name}.png`) });
@@ -147,7 +215,7 @@ for (const shot of shots) {
   await page.close();
 }
 // Reduced motion: another member's writing dots stop; the words stay.
-for (const motion of ["reduce", "no-preference"]) {
+for (const motion of MATRIX ? [] : ["reduce", "no-preference"]) {
   const page = await browser.newPage({ viewport: { width: 1366, height: 768 }, reducedMotion: motion });
   await page.goto(`${BASE}?s=writing&theme=dark&vw=1366&vh=768&rail=72&paige=closed`);
   await page.waitForSelector(".th-hub");
@@ -159,7 +227,7 @@ for (const motion of ["reduce", "no-preference"]) {
   await page.close();
 }
 // Keyboard: the @ list wraps up to @here, Tab picks @channel, and the send carries p_broadcast_mention and no agent.
-{
+if (!MATRIX) {
   const page = await browser.newPage({ viewport: { width: 1366, height: 768 } });
   await page.goto(`${BASE}?s=populated&theme=dark&vw=1366&vh=768&rail=72&paige=closed`);
   await page.waitForSelector(".th-hub");

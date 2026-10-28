@@ -27,10 +27,10 @@ function Frame() {
       <div style={{ height: row, flex: "none", background: "var(--pg-spine)", borderBottom: "1px solid var(--pg-line-soft)" }}><div style={label}>Command row · placeholder</div></div>
       <main data-solo-screen-host style={{ flex: 1, overflow: "hidden", minHeight: 0, minWidth: 0 }}><TeamHubWorkspace onOpenTeamSettings={() => undefined} openPaige={openPaige} /></main>
     </div>
-    {paige === "inline" && <div style={{ background: "var(--pg-spine)", borderLeft: "1px solid var(--pg-line)" }}><div style={label}>PAIGE panel · placeholder · {pw}px</div></div>}
+    {paige === "inline" && <div data-harness="paige-inline" style={{ background: "var(--pg-spine)", borderLeft: "1px solid var(--pg-line)" }}><div style={label}>PAIGE panel · placeholder · {pw}px</div></div>}
     {paige === "overlay" && <>
-      <div style={{ position: "absolute", zIndex: 7, top: 0, bottom: 0, left: rail, right: Math.min(410, vw - rail), background: "rgba(8,7,11,.42)", backdropFilter: "blur(2px)" }} />
-      <div style={{ position: "absolute", zIndex: 8, top: 0, bottom: 0, right: 0, width: Math.min(410, vw - rail), background: "var(--pg-spine)", borderLeft: "1px solid var(--pg-line)" }}><div style={label}>PAIGE panel · placeholder overlay · {Math.min(410, vw - rail)}px</div></div>
+      <div data-harness="paige-scrim" style={{ position: "absolute", zIndex: 7, top: 0, bottom: 0, left: rail, right: Math.min(410, vw - rail), background: "rgba(8,7,11,.42)", backdropFilter: "blur(2px)" }} />
+      <div data-harness="paige-overlay" style={{ position: "absolute", zIndex: 8, top: 0, bottom: 0, right: 0, width: Math.min(410, vw - rail), background: "var(--pg-spine)", borderLeft: "1px solid var(--pg-line)" }}><div style={label}>PAIGE panel · placeholder overlay · {Math.min(410, vw - rail)}px</div></div>
     </>}
   </div>;
 }

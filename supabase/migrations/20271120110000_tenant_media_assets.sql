@@ -134,7 +134,7 @@ BEGIN
     (_row.status = 'processing' AND p_status IN ('ready', 'failed', 'outcome_unknown')) OR
     (p_status = 'revoked')
   ) THEN
-    RAISE EXCEPTION 'MEDIA_WALK_INVALID: % → % is not a lifecycle edge' USING ERRCODE = '22023', _row.status, p_status;
+    RAISE EXCEPTION 'MEDIA_WALK_INVALID: % -> % is not a lifecycle edge', _row.status, p_status USING ERRCODE = '22023';
   END IF;
   UPDATE public.tenant_media_assets SET
     status = p_status,

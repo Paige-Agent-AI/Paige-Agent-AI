@@ -61,7 +61,30 @@ describe("stream-media-read · the governed Stream library read (EXP07 media sli
     expect(w.seen.getVideo).toHaveLength(0);
   });
 
-  it("the catalogue's own video is served with its public metadata only", async () => {
+  it("a TENANT-library ready row catalogues its video (the closed catalogue is now the tenant table ∪ platform assets)", async () => {
+    const w = world({ assets: [{ id: "a1", tenant_id: MINE, stream_uid: FOREIGN_VIDEO, status: "ready" }] });
+    const res = await w.call({ uid: FOREIGN_VIDEO });
+    expect(res.status).toBe(200);
+    expect((await body(res)).ok).toBe(true);
+    expect(w.seen.assetReads.at(-1)).toEqual({ tenant: MINE, uid: FOREIGN_VIDEO });
+  });
+
+  it("a tenant row that is NOT ready (still processing) does NOT catalogue — the honest not-yet state", async () => {
+    const w = world({ assets: [{ id: "a2", tenant_id: MINE, stream_uid: FOREIGN_VIDEO, status: "processing" }] });
+    const res = await w.call({ uid: FOREIGN_VIDEO });
+    expect(res.status).toBe(404);
+    expect((await body(res)).code).toBe("MEDIA_NOT_IN_LIBRARY");
+    expect(w.seen.getVideo).toHaveLength(0);
+  });
+
+  it("another workspace's library row never catalogues for this caller (tenant isolation at the catalogue)", async () => {
+    const w = world({ assets: [{ id: "a3", tenant_id: "22222222-2222-4222-8222-222222222222", stream_uid: FOREIGN_VIDEO, status: "ready" }] });
+    const res = await w.call({ uid: FOREIGN_VIDEO });
+    expect(res.status).toBe(404);
+    expect((await body(res)).code).toBe("MEDIA_NOT_IN_LIBRARY");
+  });
+
+  it("the platform test video still serves with its public metadata only (the canary's absorb path)", async () => {
     const w = world();
     const res = await w.call();
     expect(res.status).toBe(200);

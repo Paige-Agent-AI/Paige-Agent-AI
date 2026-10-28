@@ -860,6 +860,15 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**2026-10-28 UTC — EXP02 original Calendar review evidence, source merged.**
+
+| Increment | Exact merged source and release evidence | Acceptance boundary |
+| --- | --- | --- |
+| [#3012 original Calendar evidence](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3012) | Reviewed d95839ef608c01d0ad25b595cdb8b5dfcb33b61e/tree2b1f51b5e616643db722d12b21916aae213271ff; final AUTHOR-REVIEW / LOWER ASSURANCE5676269248; all10 applicable exact-head checks and both web contexts SUCCESS, actual Supabase Preview SKIPPED/unassociated. Prior43c capacity cancellation remains historical. Normal merge21fff7a49632868382ce51da70d97c9eb4d428cb/treede3c4997e8498e4da25fe5d74b96bac280a8c08b retains7 owning runtime/test leaves,17,187 outside incoming entries and four whole document histories. Original deploy40608331869/job122553347286 SUCCESS/artifact12782007461/ZIP360c902699efefcc150ed69e97e83b5341212186d65a420fc0f556285c9166f7 certifies both affected closures/config,37 raw+297 original pinned-emitter bindings/298 unique Git sources. Chat569/Review109 in certificate; current native Review110 is separately all37 raw sources EXACT to the same certificate/merged Git, JWTtrue, not silently called109. Original edge-live21fff; original cleanup permission_denied advisory retained, compiler not rerun locally. Webdpl_8fDKtzopxwEojmQWMzBc3bXsPCQ5 READY; both public origins00:27UTC exact21fff-mvrdekpw/null/matching original assets/missing404. | Read-only projection of original calendar.agenda_read/list_team_bookings, native owner/admin scope before/after and original bounded sample. No booking writer, provider, scheduler, privilege, worker or action activation. Up to3 saved appointment previews are not attendance, completion, free capacity or provider synchronization. Actual customer Calendar/source/return/reload proof OWED. E08 I1 migration hold respected; dependent catalogue3014 not applied. Internal increment only; all19/nine/founder acceptance OPEN. |
+
+**2026-10-28 UTC — EXP02 bounded existing-owner read-proof addendum.**
+Original ANT52/1e80826a verifies the released3004 Executive/activity-source/Chat/whole-answer-and-source reload subset on containing5a4, Chat567/Review107; recorded completed labels are not verified business completion or action receipts. Original ANT52/5dd2e20b separately verifies recorded Systems finding/run/reload/refresh/native focus and Sales navigation. Browser Back required explicit reload and historical communications impact overstated current readiness; both findings remain open. These bounded proofs do not close roles/cohorts/Live/effects/all19 or founder acceptance, and do not alter historical9PASS0FAIL or12PASS0FAIL4BLOCKED.
+
 **2026-10-27 UTC — EXP02 original activity source and actual endpoint eligibility.**
 
 | Increment | Exact released source and production evidence | Acceptance boundary |

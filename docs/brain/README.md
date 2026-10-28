@@ -1,3 +1,32 @@
+## EXP02 October28 — Calendar source merged; recorded setup presentation repair
+
+Calendar3012 is normally merged21fff7a49632868382ce51da70d97c9eb4d428cb
+from reviewedd958/final AUTHOR-REVIEW LOWER5676269248;10 exact applicable checks
+and both web contexts passed, actual Preview was SKIPPED/unassociated. Original
+deployment40608331869/job122553347286 SUCCESS/artifact12782007461 certifies both
+affected closures/config:37 raw+297 original emitter bindings/298 Git sources.
+Chat569/Review109 certified; current native Review110 separately matches all37
+raw sources/JWTtrue to the same merged Git. Edge-live21fff, web8fDKtzop READY
+and both public origins00:27UTC exact21fff/null/original assets verified.
+Cleanup permission_denied advisory retained; actual Calendar customer proof owed.
+E08 migration hold ANT161/7ec6d149 blocks new catalogue3014 application until
+original3016 is actually deployed/read back; no history rewrite or branch cleanup.
+
+Bounded owner read proof for released3004 activity is ANT52/1e80826a: original
+attribution/sample/window, whole saved answer/source/reload, no action receipt.
+Systems recorded finding/run/refresh/reload/native focus/Sales navigation proof
+is ANT52/5dd2e20b. Ordinary Back required explicit reload; original EXP01 shell
+handoff ANT161/1117655d remains open. A historical communications pass overstated
+calling readiness. E02 repairs its existing drawer presentation using recorded
+setup and strict boolean facts, leaving original stored interpretation/writers
+unchanged; no calling/delivery/provider claim or activation follows.
+
+Local repair verification157 checks/six suites and bounded synthetic component
+rendering/native Escape/keyboard reopen are not customer acceptance. Native
+rasters differ from DOM override sizes; reserved Chat space is a fixture, not
+the real shell/Chat. Full released two-cohort/eight-viewport proof remains owed.
+Original19/nine/ALG maturity/founder evaluation remain OPEN.
+
 ## EXP02 October27 release and original19 continuation
 
 #3004 actual mergecea5d494/e510 is source-released through original containing

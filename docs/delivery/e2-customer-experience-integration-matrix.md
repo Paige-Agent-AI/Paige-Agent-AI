@@ -1,5 +1,58 @@
 # Experience 02 — Customer Experience Integration Matrix
 
+## October28 — Calendar merge and recorded-check truthfulness repair
+
+O01/O02/O05/O14/O16: original Calendar consumer3012 merged normally as
+21fff7a49632868382ce51da70d97c9eb4d428cb/treede3c4997e8498e4da25fe5d74b96bac280a8c08b,
+reviewedd95839ef608c01d0ad25b595cdb8b5dfcb33b61e/final AUTHOR-REVIEW LOWER5676269248.
+All10 applicable exact-head checks and two web contexts SUCCESS; original Preview
+actually SKIPPED/unassociated (old43c capacity cancellation retained separately).
+Original deploy40608331869/job122553347286 SUCCESS/artifact12782007461,
+ZIP360c902699efefcc150ed69e97e83b5341212186d65a420fc0f556285c9166f7 verifies
+both affected closures/config:37 raw+297 original pinned-emitter bindings/298
+unique Git sources. Chat569/Review109 certified; current native Review110 is
+separately all37 raw sources EXACT to the same certificate/Git/JWTtrue. Retain
+that version difference and original cleanup permission_denied advisory;
+compiler not rerun locally. Edge-live21fff independently read. Web8fDKtzop READY,
+both origins00:27UTC exact21fff-mvrdekpw/null/original assets/missing404.
+Authorized customer Calendar/department/whole-response reload proof is still
+owed. Source owners EXP05/09,
+original read capability/native membership and bounded source limits unchanged.
+
+O13/O16: existing-owner recorded-activity proof ANT52/1e80826a on released5a4,
+Chat567/Review107, preserves actual attribution/sample/window and whole original
+Chat answer/sources after reload. The read trace is not an action receipt;
+recorded completion is not verified domain completion, money or causal benefit.
+Only one legitimate owner read subset, not second cohort or Live acceptance.
+
+O06/O14/O16: ANT52/5dd2e20b recorded-check read-only finding/run/source/date,
+same-result reload/refresh, native Escape/return focus and real Sales destination
+PASS. No scan or other action was submitted; Chat stayed unchanged. Native Back
+stalled on loading until explicit reload: OPEN original EXP01 shell handoff
+ANT161/1117655d, cause UNKNOWN. Historical comms impact also overstated calling
+readiness. Local UI-only repair presents a pass as recorded setup, shows the
+two original calling-configuration facts only when booleans, and explicitly
+states live calling/delivery/current readiness are not tested. Original stored
+finding, authority, reads, approval controls, runtime and receipts unchanged.
+Failing-first3 new failures/67 incumbent PASS became157 PASS/six owning and
+adjacent suites; no local test becomes authenticated acceptance.
+
+Visual/experiential repair proof: actual component, neutral synthetic source,
+eight DOM size/reserved-space combinations plus390px narrow, native Tab/Escape
+focus return/Enter reopening. Raw frame sizes differ from DOM overrides, and
+reserved Chat is not the real Chat/shell; full exact-raster/eight-shell/two-cohort,
+zoom/AT and released-customer verification remain owed. Original product type
+stack/CSS/scroll/motion retained; no broad redesign or another component system.
+
+CAP017 catalogue3014 remains DRAFT/dependent: E08's original I1 chain hold
+ANT161/7ec6d149 requires3016 production readback first. No new E02 migration,
+grant, provider, scan/worker/customer action or capability/algorithm activation.
+E03 email handoff1aa432ed preserves high-risk exact-fingerprint confirmation,
+even inside standing/combined plans; provider acceptance is not delivery.
+ALG03/06/11/12 Partial,13 Unverified; nine3Limited/3Unverified/3ComingSoon with
+AccessUnverified; all19/founder OPEN. Historical9/0 and12/0/4 retained; protected
+monthly report stays UNKNOWN/UNRETRIED/uninspected. No founder slice evaluation.
+
 ## October27 22:45UTC — verified release, customer proof and next Calendar consumer
 
 #3004 merged normally as cea5d4942ef924f25373d1962616e3cfbf440219 after reviewed

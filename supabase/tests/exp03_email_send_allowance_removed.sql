@@ -204,8 +204,10 @@ SELECT is((SELECT a.metadata->>'matching_now' FROM public.paige_pending_approval
   '504', 'the approval still names how many people match now');
 
 -- ── 6. Fair across businesses (review M1): order only, never a refusal or a wait ───────────────
--- Ash (last send an hour ago) has a 504-person campaign due 4 minutes ago; Birch (never sent) has a
+-- Ash (claimed in section 4) has a 504-person campaign due 4 minutes ago; Birch (never claimed) has a
 -- 150-person campaign due 2 minutes ago. Oldest-due-first alone would give Ash every pass until it drained.
+-- Birch's first batch is DEFERRED, not sent (quiet hours): no sent_at is written. A key on the last send would
+-- then put Birch first again on every pass; the key on the last claim lets Ash have the next one.
 INSERT INTO k VALUES ('ash2', pg_temp.draft('e03c0100-0000-4000-8000-000000000001', 'standard', 'Autumn to everyone', '{"tags":["bulk"]}'));
 INSERT INTO k VALUES ('birch', pg_temp.draft('e03c0100-0000-4000-8000-000000000004', 'standard', 'Birch note', '{}'));
 SELECT is(pg_temp.owner(format('SELECT to_jsonb(public.email_campaign_update_draft(%L::uuid, p_scheduled_for => %L::timestamptz))', pg_temp.v('ash2'), now() - interval '4 minutes'))->>'error', NULL,
@@ -220,9 +222,10 @@ SELECT is((SELECT string_agg(COALESCE(r->>'error', 'ok'), ',' ORDER BY o) FROM (
             SELECT 1 o, pg_temp.owner(format('SELECT public.email_campaign_approve(%L::uuid)', pg_temp.v('ash2'))) r
             UNION ALL SELECT 2, pg_temp.birch_owner(format('SELECT public.email_campaign_approve(%L::uuid)', pg_temp.v('birch')))) x),
   'ok,ok', 'both are approved');
--- Three worker passes; after each, the worker records what it sent (Birch 30 minutes ago, then Ash 10).
+-- Three worker passes; after each, the worker records the outcome: Birch's 100 deferred 15 minutes, as
+-- email_campaign_dispatch_record does (back to planned, a not_before, no sent_at); then Ash's 100 sent.
 INSERT INTO k VALUES ('fair1', pg_temp.claim());
-UPDATE public.email_campaign_recipients SET status = 'sent', sent_at = now() - interval '30 minutes', lease_until = NULL, updated_at = now()
+UPDATE public.email_campaign_recipients SET status = 'planned', lease_until = NULL, not_before = now() + interval '15 minutes', updated_at = now()
  WHERE status = 'sending' AND campaign_id = (SELECT (c->'campaign'->>'id')::uuid FROM k WHERE name = 'fair1');
 INSERT INTO k VALUES ('fair2', pg_temp.claim());
 UPDATE public.email_campaign_recipients SET status = 'sent', sent_at = now() - interval '10 minutes', lease_until = NULL, updated_at = now()
@@ -232,7 +235,7 @@ SELECT is((SELECT string_agg(CASE WHEN (c->'campaign'->>'id') = pg_temp.c('ash2'
                                   WHEN (c->'campaign'->>'id') = pg_temp.c('birch')::text THEN 'birch'
                                   ELSE COALESCE(c->>'error', 'other') END, ',' ORDER BY name)
              FROM k WHERE name IN ('fair1','fair2','fair3')),
-  'birch,ash,birch', 'the passes alternate: Birch (never sent) first though due later, then Ash, then Birch again');
+  'birch,ash,birch', 'the passes alternate: Birch (never claimed) first though due later, then Ash although Birch''s batch was only deferred, then Birch again');
 SELECT is((SELECT string_agg(COALESCE(jsonb_array_length(c->'recipients')::text, 'none'), ',' ORDER BY name) FROM k WHERE name IN ('fair1','fair2','fair3')),
   '100,100,50', 'each pass leases up to its limit: nobody is refused, held or skipped for a limit');
 SELECT is((SELECT count(*)::int FROM k WHERE name IN ('fair1','fair2','fair3') AND (c ? 'waiting' OR c ? 'blocked' OR c ? 'error')), 0,

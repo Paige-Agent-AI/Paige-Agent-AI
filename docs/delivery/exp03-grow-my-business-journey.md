@@ -1032,7 +1032,8 @@ Both closed as superseded with links; their branches are kept.
   at plan and at send, the postal address, the sender, owner/admin filing and person-only approval are unchanged.
   PAIGE's campaign and series chat tools no longer mention or report a daily limit. Without the cap the claim
   would have handed one business's large campaign every pass, so it now takes due campaigns fairly: the business
-  whose last send is oldest first (never-sent first), then oldest due — scheduling order only, nobody refused or
+  claimed least recently first (keyed on the claim, not a successful send, so a business whose sends are all
+  deferred or failing cannot stay first — round-3 review), then oldest due — scheduling order only, nobody refused or
   held. Series emails go through the same claim. The migration was renumbered `20271121120003` in review so it sorts
   after production's and main's `20271121110019` (a plain `db push` refuses an older one). Proof:
   `exp03_email_send_allowance_removed.sql` 36/36 on a fresh replay of all 1506 migrations (20 fail on the old

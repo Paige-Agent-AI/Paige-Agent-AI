@@ -36,16 +36,20 @@
 -- ONE ADDITION in (3), fairness across businesses (review M1). The cap also made the queue fair by accident:
 -- a business at 500 dropped out, so one business could not hold the dispatcher for long. Without it, the
 -- claim's old order (oldest due first) would hand one business's very large campaign every pass until it
--- drained while other businesses waited for hours. The claim now orders due campaigns by their business's
--- most recent send — least recent first, a business that has never sent before any other — and only then by
--- oldest due. That is SCHEDULING ORDER ONLY: no campaign is refused, held or made to wait for a limit; every
--- due campaign is still claimable on any pass, and `FOR UPDATE OF ca SKIP LOCKED` and `LIMIT lim` are
--- unchanged. The per-business "most recent send" is max(sent_at) on that business's recipients, read through
--- the existing index email_campaign_recipients_tenant_sent (tenant_id, sent_at DESC) — one index probe per
--- due campaign. Series emails are campaigns (email_campaigns.sequence_id) claimed by this same function, so
--- they share the same fairness; email_sequence_tick only enrols and plans and is unaffected. Known limit: a
--- batch leased but not yet recorded has no sent_at, so a second worker running in that window may claim the
--- same business again; the worker runs one pass a minute, so this is a tie-break, not a starvation path.
+-- drained while other businesses waited for hours. The claim now orders due campaigns by when their business
+-- was last CLAIMED — least recently first — and only then by oldest due. That is SCHEDULING ORDER ONLY: no
+-- campaign is refused, held or made to wait for a limit; every due campaign is still claimable on any pass,
+-- and `FOR UPDATE OF ca SKIP LOCKED` and `LIMIT lim` are unchanged.
+-- "Last claimed" is the newest updated_at among the business's dispatchable campaigns (status scheduled or
+-- sending), read through the existing index email_campaigns_tenant_updated (tenant_id, updated_at DESC). Every
+-- claim already stamps its campaign's updated_at; it now uses clock_timestamp() so two claims in one
+-- transaction still order. Keying on the claim, not on a successful send, is deliberate (round-3 review): a
+-- send that is deferred (quiet hours, do-not-disturb), fails or ends outcome_unknown writes no sent_at, so a
+-- send-based key would leave a business that never completes a send first in line on every pass. Series
+-- emails are campaigns (email_campaigns.sequence_id) claimed by this same function, so they share the same
+-- fairness; email_sequence_tick only enrols and plans and is unaffected. Known limit: a second worker running
+-- while the first has not committed its claim sees the old stamp and may claim the same business; the worker
+-- runs one pass a minute, so this is a tie-break, not a starvation path.
 --
 -- UNCHANGED, AND STILL ENFORCED: who may file (owner/admin of the business), the postal address, the sender,
 -- the audience rule check, suppression / opt-out / consent / portal checks at plan AND again at send,
@@ -221,9 +225,10 @@ BEGIN
      AND COALESCE(ve.scheduled_for, now()) <= now()
      AND EXISTS (SELECT 1 FROM public.email_campaign_recipients r WHERE r.version_id = ve.id AND r.status = 'planned'
                    AND (r.not_before IS NULL OR r.not_before <= now()))
-   -- Fair across businesses, scheduling order only (never a refusal or a wait): the business whose last
-   -- send is oldest goes first, one that never sent before any other; then the oldest due.
-   ORDER BY (SELECT max(rs.sent_at) FROM public.email_campaign_recipients rs WHERE rs.tenant_id = ca.tenant_id) ASC NULLS FIRST,
+   -- Fair across businesses, scheduling order only (never a refusal or a wait): the business claimed least
+   -- recently goes first, whether or not its last claim ended in a send; then the oldest due.
+   ORDER BY (SELECT max(cb.updated_at) FROM public.email_campaigns cb
+              WHERE cb.tenant_id = ca.tenant_id AND cb.status IN ('scheduled','sending')) ASC,
             COALESCE(ve.scheduled_for, ve.approved_at) ASC
    LIMIT 1 FOR UPDATE OF ca SKIP LOCKED;
   IF NOT FOUND THEN RETURN jsonb_build_object('campaign', NULL); END IF;
@@ -284,7 +289,8 @@ BEGIN
   )
   SELECT COALESCE(jsonb_agg(jsonb_build_object('id', id, 'client_id', client_id, 'email', email)), '[]'::jsonb) INTO batch FROM leased;
 
-  UPDATE public.email_campaigns SET status = 'sending', updated_at = now() WHERE id = c.id;
+  -- clock_timestamp(), not now(): this stamp is the fairness key above, and must order within one transaction.
+  UPDATE public.email_campaigns SET status = 'sending', updated_at = clock_timestamp() WHERE id = c.id;
   RETURN jsonb_build_object(
     'campaign', jsonb_build_object('id', c.id, 'tenant_id', c.tenant_id, 'kind', c.kind, 'name', c.name,
       'version_id', v.id, 'approved_by', v.approved_by),

@@ -860,6 +860,23 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**2026-10-28 UTC — EXP04 invoice commercial context and authoritative source continuity.**
+
+| Increment | Exact reviewed source and production evidence | Customer result and acceptance boundary |
+| --- | --- | --- |
+| [#2971](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2971) | Reviewed `91b9276da86d46c85216c5294e0e0c90bd789600` / tree `d945c2994ac0ca30ac17b079406482782faa77f7`, final review5684944492 **AUTHOR-REVIEW / LOWER ASSURANCE**; all13 latest required exact-head checks and both web contexts SUCCESS, native Preview122869964344/full-schema122867008011 SUCCESS, zero review threads. Normal merge `9c05b9769808f642356587e75dde92d1a88faf44` / tree `08b7efd9722060827a5a1217c7c4a1984747ba11`, actual parents182b034d+91b9276; locally composed tree equals actual remote tree and17,663 outside-owned incoming leaves remain exact. | Existing invoice preparation retains originating client/agreement/commercial terms, explicit tax/fee uncertainty, dates and delivery intent. A stale source refuses execution until explicit current-source adoption; prior entries and underlying owner/PAIGE context are preserved. Original canonical financial and approval writers remain authoritative. A draft, delivery intent or checkout request never implies issue, sending or payment. |
+| Normal database and selected Edge release | `deploy-migrations`40713366193 SUCCESS; original SQL bytes applied once as20271121131004 through20271121131304. Native effective-read body2d0bb3db63603ffe58b66b492ffc37ef, amount-basis a7c2887fc4578d00a7e9cf84d6b53097 and original public reader4680297b25322dca36b44dbaaf528a39 retain verified owner/ABI/config/ACL. Original Edge40713366317 recovery job122913911172 SUCCESS; certificate12828306898 independently archive-hash verified (`a23fed26e253d7f539b75bdc9c7d672883987b7a7a847648a6561f20c6fe99a0`):18/18 selected closures/configurations and539 file hashes PASS, including Chat574/send-message282/platform-billing-connect43. Actual `db-live` and `edge-live` both9c05b976. | Initial upload/source-readback failure is retained:17/18 selected importers matched, one shared helper missed31 bytes of the original agreement-route mapping. One unchanged canonical failed-job recovery reconciled18/18; no source/pipeline/grant exception or business dispatch. Certificate scratch cleanup remains explicitly permission_denied/incomplete. Selected coverage is not an all-importer census or customer-provider proof. |
+| Web and bounded owner QA | Production `dpl_6PUJpqNWkyr6Jse787Jh2nfwZ9rs` READY with exact9c05b976 metadata. Later both public origins independently serve containing main `d4c1afeafdc2023612ef7c1c79ec10c5e7f8e851-mvsaoolw`, customerUpdate:null, original assets200/missing404/ETag304. Protected ANT52/a3f67481 records the designated ordinary existing SOLO owner's same agreement and whole displayed history equality after reload/reopen, and original invoice navigation/read/Continue-editing/unsaved-discard recovery. | **Functional:** source/deployment readback and bounded owner read/recovery verified; saved invoice persistence, real signing and processor settlement remain unproven. **Visual:** source-bound original-shell invoice rendering/local interactions plus bounded current owner desktop fit; actual signing repair, real staff/client and second legitimate cohort remain owed. **Experiential:** original records and reload retained for this tested subset, complete12 journey open. **Founder:** NOT_ACCEPTED. No live send/signature/payment, new QA business, permission or held activation change. ALG01/12 PARTIAL,02 incomplete,13 UNVERIFIED; no catalogue LIVE promotion. Internal production increment only, no customer release identity or general launch claim. |
+
+The first bundle/old Preview-history failures were preserved and resolved only by
+the guarded normal lifecycle of this PR's empty owned Preview. No applied
+production history, protected foreign Preview, frozen checkout or tests were
+reset/rewritten. Separate signing/delivery continuation remains
+[#3040](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3040), not part of
+this release. ALL original O1–O12 apply to every eligible current/future SOLO
+account; the original ANT51 matrix retains provider, real-role, two-cohort,
+orchestration, algorithm and single integrated founder-acceptance gaps.
+
 **2026-10-28 UTC — EXP09 private customer booking: original Sessions and SOLO Calendar source released.**
 
 | Increment | Exact source and production evidence | Outcome and acceptance boundary |

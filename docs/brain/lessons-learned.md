@@ -1,5 +1,9 @@
 # Lessons Learned — recurring traps
 
+### A crashed `tsc` reads as "no type errors" in the local ratchet (2026-10-28, EXP03)
+
+In a container with Node's default heap, `npx tsc --noEmit -p tsconfig.app.json` runs out of memory (exit 134, a V8 "heap out of memory" trace, no `TS` lines). `scripts/ci/tsc-ratchet.mjs` parses diagnostics from the output, finds none, and prints "no new type errors (baseline 10, current 0)". That is a false pass: `current 0` while the baseline is 10 is the tell. It hid real errors in EXP03's #3005 and #3015 until CI caught them. Run the ratchet with `NODE_OPTIONS=--max-old-space-size=7000`. A healthy run shows a non-zero `current` near the baseline. Separately, the app tsconfig is `strict: false`, so unions do not narrow on a boolean field (`if (!r.ok)`, `if (x.transport)`). Use a type-guard predicate.
+
 ### Recover a saved review through its native publication, never a guessed intent (2026-10-17, BUG)
 
 A browser-only publication work reference disappears on reload while native work can still be claimed or unknown. Pending review text is not proof that publication never started, and an earlier active generation is not proof a replacement published. Extend the incumbent scoped reader with the exact native document/extraction/revision/hash association and existing job visibility; distinguish no submitted publication from unreadable/ambiguous work. Preserve original work, unknown-result and unrecorded-receipt truth. Never create a second job or replay because the acknowledgement was lost. Native fixture proof remains separate from integrated authenticated recovery and owner acceptance.

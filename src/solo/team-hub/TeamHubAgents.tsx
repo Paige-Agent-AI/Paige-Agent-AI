@@ -40,7 +40,7 @@ export function AgentTag({ agent }: { agent: TeamHubAgentKey }) {
   return <span className="th-ag-tag" data-ag={agent}>Agent</span>;
 }
 
-/** "CURA is writing…": only the person who asked sees it, while their own tab waits for the reply. */
+/** "CURA is writing…": everyone who can see the conversation sees it while the reply is written (A1c). */
 export function AgentTyping({ agent, label }: { agent: TeamHubAgentKey; label?: string }) {
   return <div className="th-ag-typing" role="status" data-ag={agent}>
     <AgentPlate agent={agent} size="lg" />
@@ -70,8 +70,12 @@ export function PrivateNote({ agent, status, onOpenDm, onAskAgain, onCheck, onli
 }) {
   const name = agentName(agent);
   if (status === "failed" || status === "unknown") {
-    // A failure is a status: its mark is the system warning, never the agent's colour.
-    return <div className={`th-ag-priv${status === "failed" ? " th-ag-priv--failed" : ""}`} data-ag={agent}>
+    // A failure is a status: its mark is the system warning, never the agent's colour. A1c (owner ruling
+    // 2026-10-27, the FAILED box only): a failed box is neutral, with no data-ag, so no agent tint, ring or
+    // ink reaches it; the agent is named in the words. While its state is unknown (it may still be
+    // writing) the box keeps its agent tint exactly as A1b had it (approved, §28).
+    const failed = status === "failed";
+    return <div className={failed ? "th-ag-priv th-ag-priv--status th-ag-priv--failed" : "th-ag-priv"} data-ag={failed ? undefined : agent}>
       {status === "failed" ? <TriangleAlert aria-hidden="true" /> : <Lock aria-hidden="true" />}
       <span>{status === "failed" ? `${name} couldn't finish your private answer.` : `${name} may still be writing your private answer.`}</span>
       <button type="button" className="th-btn" disabled={!online} onClick={status === "failed" ? onAskAgain : onCheck}>{status === "failed" ? "Ask again" : "Check again"}</button></div>;

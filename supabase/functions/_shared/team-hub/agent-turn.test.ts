@@ -9,7 +9,7 @@ import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import {
-  ANSWER_PRIVATELY_TOOL, EXECUTABLE_AGENT_TOOLS, PINNED_READ_TOOL, bringInLines, effectiveAgentTools, isTeamHubAgentTurnRequest, isTransportError, parseAgentAnswer, parseAgentTurnRequest,
+  ANSWER_PRIVATELY_TOOL, EXECUTABLE_AGENT_TOOLS, PINNED_READ_TOOL, PRIVATE_PART_LINE, bringInLines, effectiveAgentTools, isTeamHubAgentTurnRequest, isTransportError, parseAgentAnswer, parseAgentTurnRequest,
   parseBringIn, privateRouteAllowed, runTeamHubAgentTurn, storedToolNames, uuidFrom, type AgentTurnDeps, type CompleteFn,
 } from "./agent-turn.ts";
 
@@ -438,6 +438,46 @@ describe("the cap, a replay and a duplicate (contract sections 8 and 9)", () => 
     assert.equal((r.body as any).message.id, posted.id);
     assert.equal(m.requests.length, 0);
     assert.equal(named(w, "team_hub_post_agent_message").length, 0);
+    assert.equal((r.body as any).private_followup, undefined, "a reply without the fixed line starts no DM turn");
+  });
+  it("duplicate of a reply with a private part: the lost answer's DM follow-up is rebuilt from the stored line", async () => {
+    // The reply committed (with the definer's fixed line) but its answer was lost; the retry is a duplicate.
+    const posted = message("f1f1f1f1-f1f1-4f1f-8f1f-f1f1f1f1f1f1", LAUNCH, SAM, `Quick one for everyone: dates close faster.\n\n${PRIVATE_PART_LINE}`,
+      { author_kind: "agent", agent_key: "merit", asked_in_message_id: ASK });
+    const w = world({ accept: () => ({ ok: false, code: "duplicate", message_id: posted.id }) });
+    w.store.get(LAUNCH)!.unshift(posted);
+    const m = model([{ content: "x" }]);
+    const r = await run(w, m);
+    assert.equal(r.body.outcome, "posted");
+    assert.equal(r.body.duplicate, true);
+    assert.deepEqual((r.body as any).private_followup, { conversationId: LAUNCH, sourceMessageId: ASK, threadRootId: null, agent: "merit", privateFollowUp: true, dm_conversation_id: MERIT_DM });
+    assert.equal(m.requests.length, 0);
+    assert.equal(named(w, "team_hub_post_agent_message").length, 0);
+  });
+  it("duplicate of a reply that only quotes the fixed line mid-body starts no DM turn: only the definer's line at the end counts", async () => {
+    // The definer appends the line LAST; a reply that carries it anywhere else (quoted, or followed by
+    // more words) had no private part, so a retry must not rebuild a DM follow-up from it.
+    const posted = message("f1f1f1f1-f1f1-4f1f-8f1f-f1f1f1f1f1f1", LAUNCH, SAM,
+      `You asked what "${PRIVATE_PART_LINE}" means.\n\nIt is the line I add when part of an answer goes to your DM. Nothing here does.`,
+      { author_kind: "agent", agent_key: "merit", asked_in_message_id: ASK });
+    const w = world({ accept: () => ({ ok: false, code: "duplicate", message_id: posted.id }) });
+    w.store.get(LAUNCH)!.unshift(posted);
+    const m = model([{ content: "x" }]);
+    const r = await run(w, m);
+    assert.equal(r.body.outcome, "posted");
+    assert.equal(r.body.duplicate, true);
+    const body = r.body as { message?: { id?: string }; private_followup?: unknown };
+    assert.equal(body.message?.id, posted.id);
+    assert.equal(body.private_followup, undefined, "the fixed line mid-body is not a private part");
+    assert.equal(m.requests.length, 0);
+  });
+  it("duplicate of the DM answer itself never asks for another DM turn", async () => {
+    const posted = message("f1f1f1f1-f1f1-4f1f-8f1f-f1f1f1f1f1f1", MERIT_DM, SAM, `Here it is.\n\n${PRIVATE_PART_LINE}`, { author_kind: "agent", agent_key: "merit" });
+    const w = world({ accept: () => ({ ok: false, code: "duplicate", message_id: posted.id }) });
+    w.store.get(MERIT_DM)!.unshift(posted);
+    const r = await run(w, model([{ content: "x" }]), turn({ privateFollowUp: true }));
+    assert.equal(r.body.outcome, "posted");
+    assert.equal((r.body as any).private_followup, undefined);
   });
   it("a duplicate that cannot be read back is unconfirmed, never posted", async () => {
     const w = world({ accept: () => ({ ok: false, code: "duplicate", message_id: "f2f2f2f2-f2f2-4f2f-8f2f-f2f2f2f2f2f2" }) }), m = model([{ content: "x" }]);

@@ -724,10 +724,21 @@ async function dispatchJob(
   const creditsNeeded = estimateCredits(Number(job.estimated_cost_usd) || 0, config.creditUsd);
   const hold = await holdMediaCredits((n: string, a: Record<string, unknown>) => admin.rpc(n, a), String(job.tenant_id), jobId, creditsNeeded, Number(job.estimated_cost_usd) || undefined);
   if (!hold.ok) {
-    console.warn(
-      "[media] no credit hold placed (job proceeds, uncovered cost meters at settle):",
-      hold.insufficient ? `insufficient (${hold.balance ?? 0} of ${creditsNeeded})` : `error ${hold.error ?? "unknown"}`,
-    );
+    // Partial-prepaid remainder (correction a42e0598): apply any positive remaining balance as
+    // a best-effort PARTIAL hold so already-paid value is used first; the settle meter covers
+    // only the uncovered remainder. A hold of the whole remaining balance cannot be insufficient.
+    const remainder = Number.isFinite(hold.balance) ? Math.floor(hold.balance as number) : 0;
+    let partialOk = false;
+    if (remainder > 0) {
+      const partial = await holdMediaCredits((n: string, a: Record<string, unknown>) => admin.rpc(n, a), String(job.tenant_id), jobId, remainder, undefined);
+      partialOk = partial.ok;
+    }
+    const holdNote = partialOk
+      ? `partial ${remainder} of ${creditsNeeded} credits held`
+      : hold.insufficient
+        ? `no hold (balance ${hold.balance ?? 0} of ${creditsNeeded})`
+        : `no hold (error ${hold.error ?? "unknown"})`;
+    console.warn("[media] partial-or-no credit hold (job proceeds; the uncovered remainder meters at settle):", holdNote);
   }
 
   if (provider === "fal") {

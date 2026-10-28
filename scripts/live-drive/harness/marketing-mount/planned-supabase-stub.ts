@@ -119,6 +119,13 @@ export const supabase = {
       row.status = String(args.p_status);
       return answer(row);
     }
+    if (fn === "tenant_media_asset_list") {
+      // EXP07 media library: one ready row with playback, one processing row.
+      return answer([
+        { id: "va-1", title: "Spring webinar recording", kind: "video", stream_uid: "650092261481ddfac3d4da12d3b9aff3", status: "ready", duration_seconds: 3540, created_at: day(1) },
+        { id: "va-2", title: "Client intro (new upload)", kind: "video", stream_uid: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", status: "processing", duration_seconds: null, created_at: day(0) },
+      ]);
+    }
     if (fn === "content_publication_list") {
       // EXP07 row 10 — the receipts a piece already carries: one published (with its link) and
       // one outcome_unknown (the state that blocks a retry). Only rows for the asked piece.

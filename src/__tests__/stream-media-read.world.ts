@@ -29,13 +29,17 @@ export interface WorldOptions {
   adapterConfigured?: boolean;
   /** The adapter's getVideo answer class. */
   getVideo?: "ok" | "refused" | "missing" | "transport";
+  /** tenant_media_assets rows the admin double serves (status must be 'ready' to catalogue). */
+  assets?: Array<Record<string, unknown>>;
 }
 
 export function world(o: WorldOptions = {}) {
   const seen = {
     getVideo: [] as string[],
     asked: [] as Array<Record<string, unknown>>,
+    assetReads: [] as Array<{ tenant: string; uid: string }>,
   };
+  const assets = [...(o.assets ?? [])];
 
   const caller = {
     auth: {
@@ -49,8 +53,22 @@ export function world(o: WorldOptions = {}) {
     },
   };
 
+  // The service-role double: a PostgREST-shaped from() chain over the assets rows.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- a PostgREST chain returns itself from every method; a loose record is the honest shape for a double
+  const admin: any = {
+    from: (table: string) => {
+      let rows: Record<string, unknown>[] = table === "tenant_media_assets" ? assets : [];
+      const chain: Record<string, unknown> = {};
+      for (const m of ["select"]) chain[m] = () => chain;
+      chain.eq = (c: string, v: unknown) => { if (c === "tenant_id") seen.assetReads.push({ tenant: String(v), uid: "" }); rows = rows.filter((r) => r[c] === v); if (c === "stream_uid" && seen.assetReads.length) seen.assetReads[seen.assetReads.length - 1].uid = String(v); return chain; };
+      chain.limit = () => Promise.resolve({ data: rows, error: null });
+      return chain;
+    },
+  };
+
   const adapter: StreamReadAdapter = {
     isConfigured: () => o.adapterConfigured !== false,
+    directCreate: async () => ({ ok: false as const, code: "transport_failed" as const }),
     getVideo: async (uid: string) => {
       seen.getVideo.push(uid);
       switch (o.getVideo ?? "ok") {
@@ -69,7 +87,7 @@ export function world(o: WorldOptions = {}) {
       // GET/OPTIONS Requests cannot carry a body — the verb checks pass none.
       body: init.method && init.method !== "POST" ? undefined : JSON.stringify({ action: "video", uid: TEST_VIDEO, ...over }),
       ...init,
-    }), { caller, adapter });
+    }), { caller, admin, adapter });
 
-  return { seen, call, caller, adapter };
+  return { seen, call, caller, admin, adapter };
 }

@@ -17,8 +17,8 @@ import type { TeamHubAgentKey, TeamHubApproval } from "./team-hub-contract";
  *
  * The only states the card has no words for are a room's Not now and Expired — "Morgan declined" is
  * not something a one-person chat ever says — so those two settle into a record of the same shape.
- * So does Standing (design option, owner decision 1): a receipt for an ordinary write the asker's
- * standing permission covered, which ran without a click. It reads exactly like Done, says what the
+ * So does Standing (owner decision 1, ruled 2026-10-28; written by A2c, no backend writes it yet): a
+ * receipt for an ordinary write the asker's standing permission covered, which ran without a click. It reads exactly like Done, says what the
  * permission covers under the line that ran, and gives the asker one quiet Pause. Never gold.
  *
  * Colour (contract A1 UI, v5 frozen): agent colour is in the strip only — a wash under half strength,
@@ -68,11 +68,17 @@ function Card({ approval, isAsker, askerName, decidedLabel, online, onAct }: {
     // the asker on a surface with no seam, reads the card's own refusal: a dead Approve is unrepresentable.
     const bind = isAsker && Boolean(onAct);
     const actions: ConfirmAction[] = approval.actions.map(({ summary, fingerprint, note }) => ({ summary, note, ...(bind && fingerprint ? { fingerprint } : {}) }));
+    // The asker whose card cannot be approved here is never told "Needs your OK" either: the group's name
+    // says what is true for them. Two different reasons, said apart: this surface holds no seam, or the
+    // server sent the card without a binding (nothing the click could redeem).
+    const bound = actions.some((action) => action.fingerprint);
     return <PaigeConfirmCard className="th-ap-card" actions={actions} disabled={!online}
-      heading={isAsker ? undefined : `Waiting on ${askerName}`}
-      cannotApproveHere={isAsker
-        ? "Approving from Team Hub isn't connected yet, so nothing has changed."
-        : `Waiting on ${askerName}. Only ${askerName} can approve this, because ${askerName} asked.`}
+      heading={!isAsker ? `Waiting on ${askerName}` : bound ? undefined : "Approval not available here"}
+      cannotApproveHere={!isAsker
+        ? `Waiting on ${askerName}. Only ${askerName} can approve this, because ${askerName} asked.`
+        : onAct
+          ? "This card can no longer be approved, so nothing has changed. Ask again for a fresh one."
+          : "Approving from Team Hub isn't connected yet, so nothing has changed."}
       onApprove={(fingerprints) => onAct?.({ kind: "approve", fingerprints })}
       onDeny={(fingerprints) => onAct?.({ kind: "decline", fingerprints })} />;
   }

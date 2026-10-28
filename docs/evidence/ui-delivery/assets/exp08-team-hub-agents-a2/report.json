@@ -1,0 +1,3735 @@
+{
+ "generated": "2026-10-28T04:14:58.618Z",
+ "harness": "http://127.0.0.1:4793/",
+ "shots": [
+  {
+   "name": "a2-suggest-1366-dark",
+   "state": "suggest",
+   "viewport": "1366x768",
+   "theme": "dark",
+   "viewer": "morgan (owner, the asker)",
+   "errors": [
+    "Failed to load resource: the server responded with a status of 404 (File not found)"
+   ],
+   "docOverflowX": false,
+   "pageOverflowXpx": 0,
+   "hubOverflowXpx": 0,
+   "goldOutsideApprove": false,
+   "goldUse": {
+    "approve": [],
+    "paigeIdentity": [
+     "span.th-ag-plate.th-ag-plate--md:background-color=rgb(65, 51, 23)",
+     "span.th-ag-plate.th-ag-plate--md:box-shadow=rgb(172, 137, 71)",
+     "svg.th-ag-mark:color=rgb(235, 205, 150)",
+     "path:color=rgb(235, 205, 150)",
+     "path:fill=rgb(235, 205, 150)",
+     "circle:color=rgb(235, 205, 150)",
+     "circle:fill=rgb(235, 205, 150)"
+    ],
+    "status": [],
+    "leaks": []
+   },
+   "cards": [],
+   "lastAgentText": "The intake is back and kickoff is booked for the 29th, so the next step is the onboarding packet: the welcome letter, the access checklist and the first-week schedule.\n\nJordan has the lightest week, so I'd give it to Jordan, due Fri, Oct 31. Want me to prepare it?"
+  },
+  {
+   "name": "a2-suggest-1366-light",
+   "state": "suggest",
+   "viewport": "1366x768",
+   "theme": "light",
+   "viewer": "morgan (owner, the asker)",
+   "errors": [],
+   "docOverflowX": false,
+   "pageOverflowXpx": 0,
+   "hubOverflowXpx": 0,
+   "goldOutsideApprove": false,
+   "goldUse": {
+    "approve": [],
+    "paigeIdentity": [
+     "span.th-ag-plate.th-ag-plate--md:box-shadow=rgb(163, 130, 69)",
+     "svg.th-ag-mark:color=rgb(116, 83, 3)",
+     "path:color=rgb(116, 83, 3)",
+     "path:fill=rgb(116, 83, 3)",
+     "circle:color=rgb(116, 83, 3)",
+     "circle:fill=rgb(116, 83, 3)"
+    ],
+    "status": [],
+    "leaks": []
+   },
+   "cards": [],
+   "lastAgentText": "The intake is back and kickoff is booked for the 29th, so the next step is the onboarding packet: the welcome letter, the access checklist and the first-week schedule.\n\nJordan has the lightest week, so I'd give it to Jordan, due Fri, Oct 31. Want me to prepare it?"
+  },
+  {
+   "name": "a2-dm-prepare-1366-dark",
+   "state": "dm-prepare",
+   "viewport": "1366x768",
+   "theme": "dark",
+   "viewer": "morgan (owner, the asker)",
+   "errors": [],
+   "docOverflowX": false,
+   "pageOverflowXpx": 0,
+   "hubOverflowXpx": 0,
+   "goldOutsideApprove": false,
+   "goldUse": {
+    "approve": [
+     "button.inline-flex.items-center.justify-center:background-color=rgb(212, 167, 82)"
+    ],
+    "paigeIdentity": [
+     "span.th-ag-plate.th-ag-plate--md:background-color=rgb(65, 51, 23)",
+     "span.th-ag-plate.th-ag-plate--md:box-shadow=rgb(172, 137, 71)",
+     "svg.th-ag-mark:color=rgb(235, 205, 150)",
+     "path:color=rgb(235, 205, 150)",
+     "path:fill=rgb(235, 205, 150)",
+     "circle:color=rgb(235, 205, 150)",
+     "circle:fill=rgb(235, 205, 150)"
+    ],
+    "status": [],
+    "leaks": []
+   },
+   "cards": [
+    {
+     "agent": "merit",
+     "state": "waiting",
+     "view": "asker",
+     "text": "Invoice draft Needs your OK Draft an invoice for Northwind Studio, $1,200, due Nov 15 Approve Not now",
+     "buttons": [
+      {
+       "text": "Approve",
+       "height": 32,
+       "disabled": false
+      },
+      {
+       "text": "Not now",
+       "height": 32,
+       "disabled": false
+      }
+     ],
+     "links": [],
+     "strip": {
+      "boxShadow": "rgb(156, 230, 161) 0px 2px 0px 0px inset",
+      "background": "color(srgb 0.128039 0.169216 0.142353)",
+      "kindColor": "rgb(190, 245, 193)",
+      "expectFill": "rgb(156, 230, 161)",
+      "expectInk": "rgb(190, 245, 193)",
+      "lineIsAgentFill": true,
+      "kindIsAgentInk": true
+     },
+     "agentColourInFooter": [],
+     "approveFill": {
+      "background": "rgb(212, 167, 82)",
+      "isPgGoldFill": true,
+      "backgroundImage": "none",
+      "color": "rgb(8, 7, 11)",
+      "height": 32,
+      "radius": "8px",
+      "boxShadow": "rgba(0, 0, 0, 0.45) 0px 1px 2px 0px"
+     },
+     "type": {
+      "summary": {
+       "fontSize": "14px",
+       "fontWeight": "600",
+       "color": "rgb(246, 242, 234)"
+      },
+      "footer": {
+       "fontSize": "12.5px",
+       "fontWeight": "600",
+       "color": "rgb(214, 208, 201)"
+      }
+     },
+     "footerOrder": [
+      "Not now",
+      "Approve"
+     ],
+     "rect": {
+      "left": 370,
+      "right": 930,
+      "width": 560,
+      "height": 126
+     },
+     "insideMessageBody": true,
+     "insideViewport": true,
+     "overflowX": false
+    }
+   ],
+   "lastAgentText": "Got it. I've prepared it as a draft for Northwind Studio. It stays a draft until you approve, and nothing goes to Northwind yet."
+  },
+  {
+   "name": "a2-dm-prepare-1366-light",
+   "state": "dm-prepare",
+   "viewport": "1366x768",
+   "theme": "light",
+   "viewer": "morgan (owner, the asker)",
+   "errors": [],
+   "docOverflowX": false,
+   "pageOverflowXpx": 0,
+   "hubOverflowXpx": 0,
+   "goldOutsideApprove": false,
+   "goldUse": {
+    "approve": [
+     "button.inline-flex.items-center.justify-center:background-color=rgb(201, 169, 106)"
+    ],
+    "paigeIdentity": [
+     "span.th-ag-plate.th-ag-plate--md:box-shadow=rgb(163, 130, 69)",
+     "svg.th-ag-mark:color=rgb(116, 83, 3)",
+     "path:color=rgb(116, 83, 3)",
+     "path:fill=rgb(116, 83, 3)",
+     "circle:color=rgb(116, 83, 3)",
+     "circle:fill=rgb(116, 83, 3)"
+    ],
+    "status": [],
+    "leaks": []
+   },
+   "cards": [
+    {
+     "agent": "merit",
+     "state": "waiting",
+     "view": "asker",
+     "text": "Invoice draft Needs your OK Draft an invoice for Northwind Studio, $1,200, due Nov 15 Approve Not now",
+     "buttons": [
+      {
+       "text": "Approve",
+       "height": 32,
+       "disabled": false
+      },
+      {
+       "text": "Not now",
+       "height": 32,
+       "disabled": false
+      }
+     ],
+     "links": [],
+     "strip": {
+      "boxShadow": "rgb(23, 99, 37) 0px 2px 0px 0px inset",
+      "background": "color(srgb 0.89549 0.926078 0.876078)",
+      "kindColor": "rgb(3, 75, 20)",
+      "expectFill": "rgb(23, 99, 37)",
+      "expectInk": "rgb(3, 75, 20)",
+      "lineIsAgentFill": true,
+      "kindIsAgentInk": true
+     },
+     "agentColourInFooter": [],
+     "approveFill": {
+      "background": "rgb(201, 169, 106)",
+      "isPgGoldFill": true,
+      "backgroundImage": "none",
+      "color": "rgb(32, 30, 35)",
+      "height": 32,
+      "radius": "8px",
+      "boxShadow": "rgba(45, 40, 50, 0.1) 0px 1px 2px 0px"
+     },
+     "type": {
+      "summary": {
+       "fontSize": "14px",
+       "fontWeight": "600",
+       "color": "rgb(32, 30, 35)"
+      },
+      "footer": {
+       "fontSize": "12.5px",
+       "fontWeight": "600",
+       "color": "rgb(61, 57, 65)"
+      }
+     },
+     "footerOrder": [
+      "Not now",
+      "Approve"
+     ],
+     "rect": {
+      "left": 370,
+      "right": 930,
+      "width": 560,
+      "height": 126
+     },
+     "insideMessageBody": true,
+     "insideViewport": true,
+     "overflowX": false
+    }
+   ],
+   "lastAgentText": "Got it. I've prepared it as a draft for Northwind Studio. It stays a draft until you approve, and nothing goes to Northwind yet."
+  },
+  {
+   "name": "a2-channel-task-asker-1366-dark",
+   "state": "channel-task-asker",
+   "viewport": "1366x768",
+   "theme": "dark",
+   "viewer": "morgan (owner, the asker)",
+   "errors": [],
+   "docOverflowX": false,
+   "pageOverflowXpx": 0,
+   "hubOverflowXpx": 0,
+   "goldOutsideApprove": false,
+   "goldUse": {
+    "approve": [
+     "button.inline-flex.items-center.justify-center:background-color=rgb(212, 167, 82)"
+    ],
+    "paigeIdentity": [
+     "span.th-ag-plate.th-ag-plate--md:background-color=rgb(65, 51, 23)",
+     "span.th-ag-plate.th-ag-plate--md:box-shadow=rgb(172, 137, 71)",
+     "svg.th-ag-mark:color=rgb(235, 205, 150)",
+     "path:color=rgb(235, 205, 150)",
+     "path:fill=rgb(235, 205, 150)",
+     "circle:color=rgb(235, 205, 150)",
+     "circle:fill=rgb(235, 205, 150)"
+    ],
+    "status": [],
+    "leaks": []
+   },
+   "cards": [
+    {
+     "agent": "zion",
+     "state": "waiting",
+     "view": "asker",
+     "text": "Operations task Needs your OK ZION wants to create a task in Operations: “Prepare the onboarding packet”, for Jordan Lee, due Fri, Oct 31. Approve Not now",
+     "buttons": [
+      {
+       "text": "Approve",
+       "height": 32,
+       "disabled": false
+      },
+      {
+       "text": "Not now",
+       "height": 32,
+       "disabled": false
+      }
+     ],
+     "links": [],
+     "strip": {
+      "boxShadow": "rgb(110, 164, 235) 0px 2px 0px 0px inset",
+      "background": "color(srgb 0.105098 0.133922 0.197059)",
+      "kindColor": "rgb(164, 202, 254)",
+      "expectFill": "rgb(110, 164, 235)",
+      "expectInk": "rgb(164, 202, 254)",
+      "lineIsAgentFill": true,
+      "kindIsAgentInk": true
+     },
+     "agentColourInFooter": [],
+     "approveFill": {
+      "background": "rgb(212, 167, 82)",
+      "isPgGoldFill": true,
+      "backgroundImage": "none",
+      "color": "rgb(8, 7, 11)",
+      "height": 32,
+      "radius": "8px",
+      "boxShadow": "rgba(0, 0, 0, 0.45) 0px 1px 2px 0px"
+     },
+     "type": {
+      "summary": {
+       "fontSize": "14px",
+       "fontWeight": "600",
+       "color": "rgb(246, 242, 234)"
+      },
+      "footer": {
+       "fontSize": "12.5px",
+       "fontWeight": "600",
+       "color": "rgb(214, 208, 201)"
+      }
+     },
+     "footerOrder": [
+      "Not now",
+      "Approve"
+     ],
+     "rect": {
+      "left": 370,
+      "right": 930,
+      "width": 560,
+      "height": 146
+     },
+     "insideMessageBody": true,
+     "insideViewport": true,
+     "overflowX": false
+    }
+   ],
+   "lastAgentText": "Here it is as an Operations task. Nothing is created until Morgan approves it."
+  },
+  {
+   "name": "a2-channel-task-asker-1366-light",
+   "state": "channel-task-asker",
+   "viewport": "1366x768",
+   "theme": "light",
+   "viewer": "morgan (owner, the asker)",
+   "errors": [],
+   "docOverflowX": false,
+   "pageOverflowXpx": 0,
+   "hubOverflowXpx": 0,
+   "goldOutsideApprove": false,
+   "goldUse": {
+    "approve": [
+     "button.inline-flex.items-center.justify-center:background-color=rgb(201, 169, 106)"
+    ],
+    "paigeIdentity": [
+     "span.th-ag-plate.th-ag-plate--md:box-shadow=rgb(163, 130, 69)",
+     "svg.th-ag-mark:color=rgb(116, 83, 3)",
+     "path:color=rgb(116, 83, 3)",
+     "path:fill=rgb(116, 83, 3)",
+     "circle:color=rgb(116, 83, 3)",
+     "circle:fill=rgb(116, 83, 3)"
+    ],
+    "status": [],
+    "leaks": []
+   },
+   "cards": [
+    {
+     "agent": "zion",
+     "state": "waiting",
+     "view": "asker",
+     "text": "Operations task Needs your OK ZION wants to create a task in Operations: “Prepare the onboarding packet”, for Jordan Lee, due Fri, Oct 31. Approve Not now",
+     "buttons": [
+      {
+       "text": "Approve",
+       "height": 32,
+       "disabled": false
+      },
+      {
+       "text": "Not now",
+       "height": 32,
+       "disabled": false
+      }
+     ],
+     "links": [],
+     "strip": {
+      "boxShadow": "rgb(82, 134, 203) 0px 2px 0px 0px inset",
+      "background": "color(srgb 0.927255 0.941961 0.95902)",
+      "kindColor": "rgb(55, 100, 160)",
+      "expectFill": "rgb(82, 134, 203)",
+      "expectInk": "rgb(55, 100, 160)",
+      "lineIsAgentFill": true,
+      "kindIsAgentInk": true
+     },
+     "agentColourInFooter": [],
+     "approveFill": {
+      "background": "rgb(201, 169, 106)",
+      "isPgGoldFill": true,
+      "backgroundImage": "none",
+      "color": "rgb(32, 30, 35)",
+      "height": 32,
+      "radius": "8px",
+      "boxShadow": "rgba(45, 40, 50, 0.1) 0px 1px 2px 0px"
+     },
+     "type": {
+      "summary": {
+       "fontSize": "14px",
+       "fontWeight": "600",
+       "color": "rgb(32, 30, 35)"
+      },
+      "footer": {
+       "fontSize": "12.5px",
+       "fontWeight": "600",
+       "color": "rgb(61, 57, 65)"
+      }
+     },
+     "footerOrder": [
+      "Not now",
+      "Approve"
+     ],
+     "rect": {
+      "left": 370,
+      "right": 930,
+      "width": 560,
+      "height": 146
+     },
+     "insideMessageBody": true,
+     "insideViewport": true,
+     "overflowX": false
+    }
+   ],
+   "lastAgentText": "Here it is as an Operations task. Nothing is created until Morgan approves it."
+  },
+  {
+   "name": "a2-channel-task-other-1366-dark",
+   "state": "channel-task-other",
+   "viewport": "1366x768",
+   "theme": "dark",
+   "viewer": "priya",
+   "errors": [],
+   "docOverflowX": false,
+   "pageOverflowXpx": 0,
+   "hubOverflowXpx": 0,
+   "goldOutsideApprove": false,
+   "goldUse": {
+    "approve": [],
+    "paigeIdentity": [
+     "span.th-ag-plate.th-ag-plate--md:background-color=rgb(65, 51, 23)",
+     "span.th-ag-plate.th-ag-plate--md:box-shadow=rgb(172, 137, 71)",
+     "svg.th-ag-mark:color=rgb(235, 205, 150)",
+     "path:color=rgb(235, 205, 150)",
+     "path:fill=rgb(235, 205, 150)",
+     "circle:color=rgb(235, 205, 150)",
+     "circle:fill=rgb(235, 205, 150)"
+    ],
+    "status": [],
+    "leaks": []
+   },
+   "cards": [
+    {
+     "agent": "zion",
+     "state": "waiting",
+     "view": "other",
+     "text": "Operations task ZION wants to create a task in Operations: “Prepare the onboarding packet”, for Jordan Lee, due Fri, Oct 31. Waiting on Morgan. Only Morgan can approve this, because Morgan asked.",
+     "buttons": [],
+     "links": [],
+     "strip": {
+      "boxShadow": "rgb(110, 164, 235) 0px 2px 0px 0px inset",
+      "background": "color(srgb 0.105098 0.133922 0.197059)",
+      "kindColor": "rgb(164, 202, 254)",
+      "expectFill": "rgb(110, 164, 235)",
+      "expectInk": "rgb(164, 202, 254)",
+      "lineIsAgentFill": true,
+      "kindIsAgentInk": true
+     },
+     "agentColourInFooter": [],
+     "approveFill": null,
+     "type": {
+      "summary": {
+       "fontSize": "14px",
+       "fontWeight": "600",
+       "color": "rgb(246, 242, 234)"
+      },
+      "footer": {
+       "fontSize": "12.5px",
+       "fontWeight": "600",
+       "color": "rgb(214, 208, 201)"
+      }
+     },
+     "footerOrder": [],
+     "rect": {
+      "left": 370,
+      "right": 930,
+      "width": 560,
+      "height": 145
+     },
+     "insideMessageBody": true,
+     "insideViewport": true,
+     "overflowX": false
+    }
+   ],
+   "lastAgentText": "Here it is as an Operations task. Nothing is created until Morgan approves it."
+  },
+  {
+   "name": "a2-channel-task-other-1366-light",
+   "state": "channel-task-other",
+   "viewport": "1366x768",
+   "theme": "light",
+   "viewer": "priya",
+   "errors": [],
+   "docOverflowX": false,
+   "pageOverflowXpx": 0,
+   "hubOverflowXpx": 0,
+   "goldOutsideApprove": false,
+   "goldUse": {
+    "approve": [],
+    "paigeIdentity": [
+     "span.th-ag-plate.th-ag-plate--md:box-shadow=rgb(163, 130, 69)",
+     "svg.th-ag-mark:color=rgb(116, 83, 3)",
+     "path:color=rgb(116, 83, 3)",
+     "path:fill=rgb(116, 83, 3)",
+     "circle:color=rgb(116, 83, 3)",
+     "circle:fill=rgb(116, 83, 3)"
+    ],
+    "status": [],
+    "leaks": []
+   },
+   "cards": [
+    {
+     "agent": "zion",
+     "state": "waiting",
+     "view": "other",
+     "text": "Operations task ZION wants to create a task in Operations: “Prepare the onboarding packet”, for Jordan Lee, due Fri, Oct 31. Waiting on Morgan. Only Morgan can approve this, because Morgan asked.",
+     "buttons": [],
+     "links": [],
+     "strip": {
+      "boxShadow": "rgb(82, 134, 203) 0px 2px 0px 0px inset",
+      "background": "color(srgb 0.927255 0.941961 0.95902)",
+      "kindColor": "rgb(55, 100, 160)",
+      "expectFill": "rgb(82, 134, 203)",
+      "expectInk": "rgb(55, 100, 160)",
+      "lineIsAgentFill": true,
+      "kindIsAgentInk": true
+     },
+     "agentColourInFooter": [],
+     "approveFill": null,
+     "type": {
+      "summary": {
+       "fontSize": "14px",
+       "fontWeight": "600",
+       "color": "rgb(32, 30, 35)"
+      },
+      "footer": {
+       "fontSize": "12.5px",
+       "fontWeight": "600",
+       "color": "rgb(61, 57, 65)"
+      }
+     },
+     "footerOrder": [],
+     "rect": {
+      "left": 370,
+      "right": 930,
+      "width": 560,
+      "height": 145
+     },
+     "insideMessageBody": true,
+     "insideViewport": true,
+     "overflowX": false
+    }
+   ],
+   "lastAgentText": "Here it is as an Operations task. Nothing is created until Morgan approves it."
+  },
+  {
+   "name": "a2-channel-task-offline-1366-dark",
+   "state": "channel-task-offline",
+   "viewport": "1366x768",
+   "theme": "dark",
+   "viewer": "morgan (owner, the asker)",
+   "errors": [],
+   "docOverflowX": false,
+   "pageOverflowXpx": 0,
+   "hubOverflowXpx": 0,
+   "goldOutsideApprove": false,
+   "goldUse": {
+    "approve": [
+     "button.inline-flex.items-center.justify-center:background-color=rgb(212, 167, 82)"
+    ],
+    "paigeIdentity": [
+     "span.th-ag-plate.th-ag-plate--md:background-color=rgb(65, 51, 23)",
+     "span.th-ag-plate.th-ag-plate--md:box-shadow=rgb(172, 137, 71)",
+     "svg.th-ag-mark:color=rgb(235, 205, 150)",
+     "path:color=rgb(235, 205, 150)",
+     "path:fill=rgb(235, 205, 150)",
+     "circle:color=rgb(235, 205, 150)",
+     "circle:fill=rgb(235, 205, 150)"
+    ],
+    "status": [],
+    "leaks": []
+   },
+   "cards": [
+    {
+     "agent": "zion",
+     "state": "waiting",
+     "view": "asker",
+     "text": "Operations task Needs your OK ZION wants to create a task in Operations: “Prepare the onboarding packet”, for Jordan Lee, due Fri, Oct 31. Approve Not now",
+     "buttons": [
+      {
+       "text": "Approve",
+       "height": 32,
+       "disabled": true
+      },
+      {
+       "text": "Not now",
+       "height": 32,
+       "disabled": true
+      }
+     ],
+     "links": [],
+     "strip": {
+      "boxShadow": "rgb(110, 164, 235) 0px 2px 0px 0px inset",
+      "background": "color(srgb 0.105098 0.133922 0.197059)",
+      "kindColor": "rgb(164, 202, 254)",
+      "expectFill": "rgb(110, 164, 235)",
+      "expectInk": "rgb(164, 202, 254)",
+      "lineIsAgentFill": true,
+      "kindIsAgentInk": true
+     },
+     "agentColourInFooter": [],
+     "approveFill": {
+      "background": "rgb(212, 167, 82)",
+      "isPgGoldFill": true,
+      "backgroundImage": "none",
+      "color": "rgb(8, 7, 11)",
+      "height": 32,
+      "radius": "8px",
+      "boxShadow": "rgba(0, 0, 0, 0.45) 0px 1px 2px 0px"
+     },
+     "type": {
+      "summary": {
+       "fontSize": "14px",
+       "fontWeight": "600",
+       "color": "rgb(246, 242, 234)"
+      },
+      "footer": {
+       "fontSize": "12.5px",
+       "fontWeight": "600",
+       "color": "rgb(214, 208, 201)"
+      }
+     },
+     "footerOrder": [
+      "Not now",
+      "Approve"
+     ],
+     "rect": {
+      "left": 370,
+      "right": 930,
+      "width": 560,
+      "height": 146
+     },
+     "insideMessageBody": true,
+     "insideViewport": true,
+     "overflowX": false
+    }
+   ],
+   "lastAgentText": "Here it is as an Operations task. Nothing is created until Morgan approves it."
+  },
+  {
+   "name": "a2-channel-task-offline-1366-light",
+   "state": "channel-task-offline",
+   "viewport": "1366x768",
+   "theme": "light",
+   "viewer": "morgan (owner, the asker)",
+   "errors": [],
+   "docOverflowX": false,
+   "pageOverflowXpx": 0,
+   "hubOverflowXpx": 0,
+   "goldOutsideApprove": false,
+   "goldUse": {
+    "approve": [
+     "button.inline-flex.items-center.justify-center:background-color=rgb(201, 169, 106)"
+    ],
+    "paigeIdentity": [
+     "span.th-ag-plate.th-ag-plate--md:box-shadow=rgb(163, 130, 69)",
+     "svg.th-ag-mark:color=rgb(116, 83, 3)",
+     "path:color=rgb(116, 83, 3)",
+     "path:fill=rgb(116, 83, 3)",
+     "circle:color=rgb(116, 83, 3)",
+     "circle:fill=rgb(116, 83, 3)"
+    ],
+    "status": [],
+    "leaks": []
+   },
+   "cards": [
+    {
+     "agent": "zion",
+     "state": "waiting",
+     "view": "asker",
+     "text": "Operations task Needs your OK ZION wants to create a task in Operations: “Prepare the onboarding packet”, for Jordan Lee, due Fri, Oct 31. Approve Not now",
+     "buttons": [
+      {
+       "text": "Approve",
+       "height": 32,
+       "disabled": true
+      },
+      {
+       "text": "Not now",
+       "height": 32,
+       "disabled": true
+      }
+     ],
+     "links": [],
+     "strip": {
+      "boxShadow": "rgb(82, 134, 203) 0px 2px 0px 0px inset",
+      "background": "color(srgb 0.927255 0.941961 0.95902)",
+      "kindColor": "rgb(55, 100, 160)",
+      "expectFill": "rgb(82, 134, 203)",
+      "expectInk": "rgb(55, 100, 160)",
+      "lineIsAgentFill": true,
+      "kindIsAgentInk": true
+     },
+     "agentColourInFooter": [],
+     "approveFill": {
+      "background": "rgb(201, 169, 106)",
+      "isPgGoldFill": true,
+      "backgroundImage": "none",
+      "color": "rgb(32, 30, 35)",
+      "height": 32,
+      "radius": "8px",
+      "boxShadow": "rgba(45, 40, 50, 0.1) 0px 1px 2px 0px"
+     },
+     "type": {
+      "summary": {
+       "fontSize": "14px",
+       "fontWeight": "600",
+       "color": "rgb(32, 30, 35)"
+      },
+      "footer": {
+       "fontSize": "12.5px",
+       "fontWeight": "600",
+       "color": "rgb(61, 57, 65)"
+      }
+     },
+     "footerOrder": [
+      "Not now",
+      "Approve"
+     ],
+     "rect": {
+      "left": 370,
+      "right": 930,
+      "width": 560,
+      "height": 146
+     },
+     "insideMessageBody": true,
+     "insideViewport": true,
+     "overflowX": false
+    }
+   ],
+   "lastAgentText": "Here it is as an Operations task. Nothing is created until Morgan approves it."
+  },
+  {
+   "name": "a2-working-1366-dark",
+   "state": "working",
+   "viewport": "1366x768",
+   "theme": "dark",
+   "viewer": "morgan (owner, the asker)",
+   "errors": [],
+   "docOverflowX": false,
+   "pageOverflowXpx": 0,
+   "hubOverflowXpx": 0,
+   "goldOutsideApprove": false,
+   "goldUse": {
+    "approve": [],
+    "paigeIdentity": [
+     "span.th-ag-plate.th-ag-plate--md:background-color=rgb(65, 51, 23)",
+     "span.th-ag-plate.th-ag-plate--md:box-shadow=rgb(172, 137, 71)",
+     "svg.th-ag-mark:color=rgb(235, 205, 150)",
+     "path:color=rgb(235, 205, 150)",
+     "path:fill=rgb(235, 205, 150)",
+     "circle:color=rgb(235, 205, 150)",
+     "circle:fill=rgb(235, 205, 150)"
+    ],
+    "status": [],
+    "leaks": []
+   },
+   "cards": [
+    {
+     "agent": "zion",
+     "state": "working",
+     "view": "asker",
+     "text": "Operations task Running… Approved by you · 10:04 AM ZION wants to create a task in Operations: “Prepare the onboarding packet”, for Jordan Lee, due Fri, Oct 31.",
+     "buttons": [],
+     "links": [],
+     "strip": {
+      "boxShadow": "rgb(110, 164, 235) 0px 2px 0px 0px inset",
+      "background": "color(srgb 0.105098 0.133922 0.197059)",
+      "kindColor": "rgb(164, 202, 254)",
+      "expectFill": "rgb(110, 164, 235)",
+      "expectInk": "rgb(164, 202, 254)",
+      "lineIsAgentFill": true,
+      "kindIsAgentInk": true
+     },
+     "agentColourInFooter": [],
+     "approveFill": null,
+     "type": {
+      "summary": {
+       "fontSize": "14px",
+       "fontWeight": "600",
+       "color": "rgb(246, 242, 234)"
+      },
+      "footer": {
+       "fontSize": "12.5px",
+       "fontWeight": "600",
+       "color": "rgb(214, 208, 201)"
+      }
+     },
+     "footerOrder": [],
+     "rect": {
+      "left": 370,
+      "right": 930,
+      "width": 560,
+      "height": 145
+     },
+     "insideMessageBody": true,
+     "insideViewport": true,
+     "overflowX": false
+    }
+   ],
+   "lastAgentText": "Here it is as an Operations task. Nothing is created until Morgan approves it."
+  },
+  {
+   "name": "a2-working-1366-light",
+   "state": "working",
+   "viewport": "1366x768",
+   "theme": "light",
+   "viewer": "morgan (owner, the asker)",
+   "errors": [],
+   "docOverflowX": false,
+   "pageOverflowXpx": 0,
+   "hubOverflowXpx": 0,
+   "goldOutsideApprove": false,
+   "goldUse": {
+    "approve": [],
+    "paigeIdentity": [
+     "span.th-ag-plate.th-ag-plate--md:box-shadow=rgb(163, 130, 69)",
+     "svg.th-ag-mark:color=rgb(116, 83, 3)",
+     "path:color=rgb(116, 83, 3)",
+     "path:fill=rgb(116, 83, 3)",
+     "circle:color=rgb(116, 83, 3)",
+     "circle:fill=rgb(116, 83, 3)"
+    ],
+    "status": [],
+    "leaks": []
+   },
+   "cards": [
+    {
+     "agent": "zion",
+     "state": "working",
+     "view": "asker",
+     "text": "Operations task Running… Approved by you · 10:04 AM ZION wants to create a task in Operations: “Prepare the onboarding packet”, for Jordan Lee, due Fri, Oct 31.",
+     "buttons": [],
+     "links": [],
+     "strip": {
+      "boxShadow": "rgb(82, 134, 203) 0px 2px 0px 0px inset",
+      "background": "color(srgb 0.927255 0.941961 0.95902)",
+      "kindColor": "rgb(55, 100, 160)",
+      "expectFill": "rgb(82, 134, 203)",
+      "expectInk": "rgb(55, 100, 160)",
+      "lineIsAgentFill": true,
+      "kindIsAgentInk": true
+     },
+     "agentColourInFooter": [],
+     "approveFill": null,
+     "type": {
+      "summary": {
+       "fontSize": "14px",
+       "fontWeight": "600",
+       "color": "rgb(32, 30, 35)"
+      },
+      "footer": {
+       "fontSize": "12.5px",
+       "fontWeight": "600",
+       "color": "rgb(61, 57, 65)"
+      }
+     },
+     "footerOrder": [],
+     "rect": {
+      "left": 370,
+      "right": 930,
+      "width": 560,
+      "height": 145
+     },
+     "insideMessageBody": true,
+     "insideViewport": true,
+     "overflowX": false
+    }
+   ],
+   "lastAgentText": "Here it is as an Operations task. Nothing is created until Morgan approves it."
+  },
+  {
+   "name": "a2-done-1366-dark",
+   "state": "done",
+   "viewport": "1366x768",
+   "theme": "dark",
+   "viewer": "morgan (owner, the asker)",
+   "errors": [],
+   "docOverflowX": false,
+   "pageOverflowXpx": 0,
+   "hubOverflowXpx": 0,
+   "goldOutsideApprove": false,
+   "goldUse": {
+    "approve": [],
+    "paigeIdentity": [
+     "span.th-ag-plate.th-ag-plate--md:background-color=rgb(65, 51, 23)",
+     "span.th-ag-plate.th-ag-plate--md:box-shadow=rgb(172, 137, 71)",
+     "svg.th-ag-mark:color=rgb(235, 205, 150)",
+     "path:color=rgb(235, 205, 150)",
+     "path:fill=rgb(235, 205, 150)",
+     "circle:color=rgb(235, 205, 150)",
+     "circle:fill=rgb(235, 205, 150)"
+    ],
+    "status": [],
+    "leaks": []
+   },
+   "cards": [
+    {
+     "agent": "zion",
+     "state": "done",
+     "view": "asker",
+     "text": "Operations task Done Approved by you · 10:04 AM Created in Operations: “Prepare the onboarding packet”, for Jordan Lee, due Fri, Oct 31.",
+     "buttons": [],
+     "links": [],
+     "strip": {
+      "boxShadow": "rgb(110, 164, 235) 0px 2px 0px 0px inset",
+      "background": "color(srgb 0.105098 0.133922 0.197059)",
+      "kindColor": "rgb(164, 202, 254)",
+      "expectFill": "rgb(110, 164, 235)",
+      "expectInk": "rgb(164, 202, 254)",
+      "lineIsAgentFill": true,
+      "kindIsAgentInk": true
+     },
+     "agentColourInFooter": [],
+     "approveFill": null,
+     "type": {
+      "summary": {
+       "fontSize": "14px",
+       "fontWeight": "600",
+       "color": "rgb(246, 242, 234)"
+      },
+      "footer": {
+       "fontSize": "12.5px",
+       "fontWeight": "600",
+       "color": "rgb(214, 208, 201)"
+      }
+     },
+     "footerOrder": [],
+     "rect": {
+      "left": 370,
+      "right": 930,
+      "width": 560,
+      "height": 145
+     },
+     "insideMessageBody": true,
+     "insideViewport": true,
+     "overflowX": false
+    }
+   ],
+   "lastAgentText": "Here it is as an Operations task. Nothing is created until Morgan approves it."
+  },
+  {
+   "name": "a2-done-1366-light",
+   "state": "done",
+   "viewport": "1366x768",
+   "theme": "light",
+   "viewer": "morgan (owner, the asker)",
+   "errors": [],
+   "docOverflowX": false,
+   "pageOverflowXpx": 0,
+   "hubOverflowXpx": 0,
+   "goldOutsideApprove": false,
+   "goldUse": {
+    "approve": [],
+    "paigeIdentity": [
+     "span.th-ag-plate.th-ag-plate--md:box-shadow=rgb(163, 130, 69)",
+     "svg.th-ag-mark:color=rgb(116, 83, 3)",
+     "path:color=rgb(116, 83, 3)",
+     "path:fill=rgb(116, 83, 3)",
+     "circle:color=rgb(116, 83, 3)",
+     "circle:fill=rgb(116, 83, 3)"
+    ],
+    "status": [],
+    "leaks": []
+   },
+   "cards": [
+    {
+     "agent": "zion",
+     "state": "done",
+     "view": "asker",
+     "text": "Operations task Done Approved by you · 10:04 AM Created in Operations: “Prepare the onboarding packet”, for Jordan Lee, due Fri, Oct 31.",
+     "buttons": [],
+     "links": [],
+     "strip": {
+      "boxShadow": "rgb(82, 134, 203) 0px 2px 0px 0px inset",
+      "background": "color(srgb 0.927255 0.941961 0.95902)",
+      "kindColor": "rgb(55, 100, 160)",
+      "expectFill": "rgb(82, 134, 203)",
+      "expectInk": "rgb(55, 100, 160)",
+      "lineIsAgentFill": true,
+      "kindIsAgentInk": true
+     },
+     "agentColourInFooter": [],
+     "approveFill": null,
+     "type": {
+      "summary": {
+       "fontSize": "14px",
+       "fontWeight": "600",
+       "color": "rgb(32, 30, 35)"
+      },
+      "footer": {
+       "fontSize": "12.5px",
+       "fontWeight": "600",
+       "color": "rgb(61, 57, 65)"
+      }
+     },
+     "footerOrder": [],
+     "rect": {
+      "left": 370,
+      "right": 930,
+      "width": 560,
+      "height": 145
+     },
+     "insideMessageBody": true,
+     "insideViewport": true,
+     "overflowX": false
+    }
+   ],
+   "lastAgentText": "Here it is as an Operations task. Nothing is created until Morgan approves it."
+  },
+  {
+   "name": "a2-done-other-1366-dark",
+   "state": "done-other",
+   "viewport": "1366x768",
+   "theme": "dark",
+   "viewer": "priya",
+   "errors": [],
+   "docOverflowX": false,
+   "pageOverflowXpx": 0,
+   "hubOverflowXpx": 0,
+   "goldOutsideApprove": false,
+   "goldUse": {
+    "approve": [],
+    "paigeIdentity": [
+     "span.th-ag-plate.th-ag-plate--md:background-color=rgb(65, 51, 23)",
+     "span.th-ag-plate.th-ag-plate--md:box-shadow=rgb(172, 137, 71)",
+     "svg.th-ag-mark:color=rgb(235, 205, 150)",
+     "path:color=rgb(235, 205, 150)",
+     "path:fill=rgb(235, 205, 150)",
+     "circle:color=rgb(235, 205, 150)",
+     "circle:fill=rgb(235, 205, 150)"
+    ],
+    "status": [],
+    "leaks": []
+   },
+   "cards": [
+    {
+     "agent": "zion",
+     "state": "done",
+     "view": "other",
+     "text": "Operations task Done Approved by Morgan · 10:04 AM Created in Operations: “Prepare the onboarding packet”, for Jordan Lee, due Fri, Oct 31.",
+     "buttons": [],
+     "links": [],
+     "strip": {
+      "boxShadow": "rgb(110, 164, 235) 0px 2px 0px 0px inset",
+      "background": "color(srgb 0.105098 0.133922 0.197059)",
+      "kindColor": "rgb(164, 202, 254)",
+      "expectFill": "rgb(110, 164, 235)",
+      "expectInk": "rgb(164, 202, 254)",
+      "lineIsAgentFill": true,
+      "kindIsAgentInk": true
+     },
+     "agentColourInFooter": [],
+     "approveFill": null,
+     "type": {
+      "summary": {
+       "fontSize": "14px",
+       "fontWeight": "600",
+       "color": "rgb(246, 242, 234)"
+      },
+      "footer": {
+       "fontSize": "12.5px",
+       "fontWeight": "600",
+       "color": "rgb(214, 208, 201)"
+      }
+     },
+     "footerOrder": [],
+     "rect": {
+      "left": 370,
+      "right": 930,
+      "width": 560,
+      "height": 145
+     },
+     "insideMessageBody": true,
+     "insideViewport": true,
+     "overflowX": false
+    }
+   ],
+   "lastAgentText": "Here it is as an Operations task. Nothing is created until Morgan approves it."
+  },
+  {
+   "name": "a2-done-other-1366-light",
+   "state": "done-other",
+   "viewport": "1366x768",
+   "theme": "light",
+   "viewer": "priya",
+   "errors": [],
+   "docOverflowX": false,
+   "pageOverflowXpx": 0,
+   "hubOverflowXpx": 0,
+   "goldOutsideApprove": false,
+   "goldUse": {
+    "approve": [],
+    "paigeIdentity": [
+     "span.th-ag-plate.th-ag-plate--md:box-shadow=rgb(163, 130, 69)",
+     "svg.th-ag-mark:color=rgb(116, 83, 3)",
+     "path:color=rgb(116, 83, 3)",
+     "path:fill=rgb(116, 83, 3)",
+     "circle:color=rgb(116, 83, 3)",
+     "circle:fill=rgb(116, 83, 3)"
+    ],
+    "status": [],
+    "leaks": []
+   },
+   "cards": [
+    {
+     "agent": "zion",
+     "state": "done",
+     "view": "other",
+     "text": "Operations task Done Approved by Morgan · 10:04 AM Created in Operations: “Prepare the onboarding packet”, for Jordan Lee, due Fri, Oct 31.",
+     "buttons": [],
+     "links": [],
+     "strip": {
+      "boxShadow": "rgb(82, 134, 203) 0px 2px 0px 0px inset",
+      "background": "color(srgb 0.927255 0.941961 0.95902)",
+      "kindColor": "rgb(55, 100, 160)",
+      "expectFill": "rgb(82, 134, 203)",
+      "expectInk": "rgb(55, 100, 160)",
+      "lineIsAgentFill": true,
+      "kindIsAgentInk": true
+     },
+     "agentColourInFooter": [],
+     "approveFill": null,
+     "type": {
+      "summary": {
+       "fontSize": "14px",
+       "fontWeight": "600",
+       "color": "rgb(32, 30, 35)"
+      },
+      "footer": {
+       "fontSize": "12.5px",
+       "fontWeight": "600",
+       "color": "rgb(61, 57, 65)"
+      }
+     },
+     "footerOrder": [],
+     "rect": {
+      "left": 370,
+      "right": 930,
+      "width": 560,
+      "height": 145
+     },
+     "insideMessageBody": true,
+     "insideViewport": true,
+     "overflowX": false
+    }
+   ],
+   "lastAgentText": "Here it is as an Operations task. Nothing is created until Morgan approves it."
+  },
+  {
+   "name": "a2-failed-1366-dark",
+   "state": "failed",
+   "viewport": "1366x768",
+   "theme": "dark",
+   "viewer": "morgan (owner, the asker)",
+   "errors": [],
+   "docOverflowX": false,
+   "pageOverflowXpx": 0,
+   "hubOverflowXpx": 0,
+   "goldOutsideApprove": false,
+   "goldUse": {
+    "approve": [],
+    "paigeIdentity": [
+     "span.th-ag-plate.th-ag-plate--md:background-color=rgb(65, 51, 23)",
+     "span.th-ag-plate.th-ag-plate--md:box-shadow=rgb(172, 137, 71)",
+     "svg.th-ag-mark:color=rgb(235, 205, 150)",
+     "path:color=rgb(235, 205, 150)",
+     "path:fill=rgb(235, 205, 150)",
+     "circle:color=rgb(235, 205, 150)",
+     "circle:fill=rgb(235, 205, 150)"
+    ],
+    "status": [],
+    "leaks": []
+   },
+   "cards": [
+    {
+     "agent": "zion",
+     "state": "failed",
+     "view": "asker",
+     "text": "Operations task Didn't run Approved by you · 10:04 AM ZION wants to create a task in Operations: “Prepare the onboarding packet”, for Jordan Lee, due Fri, Oct 31. Jordan Lee isn't on this workspace's Operations board any more, so the task wasn't created.",
+     "buttons": [],
+     "links": [],
+     "strip": {
+      "boxShadow": "rgb(110, 164, 235) 0px 2px 0px 0px inset",
+      "background": "color(srgb 0.105098 0.133922 0.197059)",
+      "kindColor": "rgb(164, 202, 254)",
+      "expectFill": "rgb(110, 164, 235)",
+      "expectInk": "rgb(164, 202, 254)",
+      "lineIsAgentFill": true,
+      "kindIsAgentInk": true
+     },
+     "agentColourInFooter": [],
+     "approveFill": null,
+     "type": {
+      "summary": {
+       "fontSize": "14px",
+       "fontWeight": "600",
+       "color": "rgb(246, 242, 234)"
+      },
+      "footer": {
+       "fontSize": "12.5px",
+       "fontWeight": "600",
+       "color": "rgb(214, 208, 201)"
+      }
+     },
+     "footerOrder": [],
+     "rect": {
+      "left": 370,
+      "right": 930,
+      "width": 560,
+      "height": 165
+     },
+     "insideMessageBody": true,
+     "insideViewport": true,
+     "overflowX": false
+    }
+   ],
+   "lastAgentText": "Here it is as an Operations task. Nothing is created until Morgan approves it."
+  },
+  {
+   "name": "a2-failed-1366-light",
+   "state": "failed",
+   "viewport": "1366x768",
+   "theme": "light",
+   "viewer": "morgan (owner, the asker)",
+   "errors": [],
+   "docOverflowX": false,
+   "pageOverflowXpx": 0,
+   "hubOverflowXpx": 0,
+   "goldOutsideApprove": false,
+   "goldUse": {
+    "approve": [],
+    "paigeIdentity": [
+     "span.th-ag-plate.th-ag-plate--md:box-shadow=rgb(163, 130, 69)",
+     "svg.th-ag-mark:color=rgb(116, 83, 3)",
+     "path:color=rgb(116, 83, 3)",
+     "path:fill=rgb(116, 83, 3)",
+     "circle:color=rgb(116, 83, 3)",
+     "circle:fill=rgb(116, 83, 3)"
+    ],
+    "status": [],
+    "leaks": []
+   },
+   "cards": [
+    {
+     "agent": "zion",
+     "state": "failed",
+     "view": "asker",
+     "text": "Operations task Didn't run Approved by you · 10:04 AM ZION wants to create a task in Operations: “Prepare the onboarding packet”, for Jordan Lee, due Fri, Oct 31. Jordan Lee isn't on this workspace's Operations board any more, so the task wasn't created.",
+     "buttons": [],
+     "links": [],
+     "strip": {
+      "boxShadow": "rgb(82, 134, 203) 0px 2px 0px 0px inset",
+      "background": "color(srgb 0.927255 0.941961 0.95902)",
+      "kindColor": "rgb(55, 100, 160)",
+      "expectFill": "rgb(82, 134, 203)",
+      "expectInk": "rgb(55, 100, 160)",
+      "lineIsAgentFill": true,
+      "kindIsAgentInk": true
+     },
+     "agentColourInFooter": [],
+     "approveFill": null,
+     "type": {
+      "summary": {
+       "fontSize": "14px",
+       "fontWeight": "600",
+       "color": "rgb(32, 30, 35)"
+      },
+      "footer": {
+       "fontSize": "12.5px",
+       "fontWeight": "600",
+       "color": "rgb(61, 57, 65)"
+      }
+     },
+     "footerOrder": [],
+     "rect": {
+      "left": 370,
+      "right": 930,
+      "width": 560,
+      "height": 165
+     },
+     "insideMessageBody": true,
+     "insideViewport": true,
+     "overflowX": false
+    }
+   ],
+   "lastAgentText": "Here it is as an Operations task. Nothing is created until Morgan approves it."
+  },
+  {
+   "name": "a2-unconfirmed-1366-dark",
+   "state": "unconfirmed",
+   "viewport": "1366x768",
+   "theme": "dark",
+   "viewer": "morgan (owner, the asker)",
+   "errors": [],
+   "docOverflowX": false,
+   "pageOverflowXpx": 0,
+   "hubOverflowXpx": 0,
+   "goldOutsideApprove": false,
+   "goldUse": {
+    "approve": [],
+    "paigeIdentity": [
+     "span.th-ag-plate.th-ag-plate--md:background-color=rgb(65, 51, 23)",
+     "span.th-ag-plate.th-ag-plate--md:box-shadow=rgb(172, 137, 71)",
+     "svg.th-ag-mark:color=rgb(235, 205, 150)",
+     "path:color=rgb(235, 205, 150)",
+     "path:fill=rgb(235, 205, 150)",
+     "circle:color=rgb(235, 205, 150)",
+     "circle:fill=rgb(235, 205, 150)"
+    ],
+    "status": [
+     "svg.lucide.lucide-circle-help.h-3.5:color=rgb(237, 193, 127)",
+     "svg.lucide.lucide-circle-help.h-3.5:stroke=rgb(237, 193, 127)",
+     "circle:color=rgb(237, 193, 127)",
+     "circle:stroke=rgb(237, 193, 127)",
+     "path:color=rgb(237, 193, 127)",
+     "path:stroke=rgb(237, 193, 127)",
+     "path:color=rgb(237, 193, 127)",
+     "path:stroke=rgb(237, 193, 127)"
+    ],
+    "leaks": []
+   },
+   "cards": [
+    {
+     "agent": "zion",
+     "state": "unconfirmed",
+     "view": "asker",
+     "text": "Operations task Couldn't confirm it ran Approved by you · 10:04 AM ZION wants to create a task in Operations: “Prepare the onboarding packet”, for Jordan Lee, due Fri, Oct 31. The request went out, but Operations didn't answer. Check the board before asking again.",
+     "buttons": [],
+     "links": [],
+     "strip": {
+      "boxShadow": "rgb(110, 164, 235) 0px 2px 0px 0px inset",
+      "background": "color(srgb 0.105098 0.133922 0.197059)",
+      "kindColor": "rgb(164, 202, 254)",
+      "expectFill": "rgb(110, 164, 235)",
+      "expectInk": "rgb(164, 202, 254)",
+      "lineIsAgentFill": true,
+      "kindIsAgentInk": true
+     },
+     "agentColourInFooter": [],
+     "approveFill": null,
+     "type": {
+      "summary": {
+       "fontSize": "14px",
+       "fontWeight": "600",
+       "color": "rgb(246, 242, 234)"
+      },
+      "footer": {
+       "fontSize": "12.5px",
+       "fontWeight": "600",
+       "color": "rgb(214, 208, 201)"
+      }
+     },
+     "footerOrder": [],
+     "rect": {
+      "left": 370,
+      "right": 930,
+      "width": 560,
+      "height": 165
+     },
+     "insideMessageBody": true,
+     "insideViewport": true,
+     "overflowX": false
+    }
+   ],
+   "lastAgentText": "Here it is as an Operations task. Nothing is created until Morgan approves it."
+  },
+  {
+   "name": "a2-unconfirmed-1366-light",
+   "state": "unconfirmed",
+   "viewport": "1366x768",
+   "theme": "light",
+   "viewer": "morgan (owner, the asker)",
+   "errors": [],
+   "docOverflowX": false,
+   "pageOverflowXpx": 0,
+   "hubOverflowXpx": 0,
+   "goldOutsideApprove": false,
+   "goldUse": {
+    "approve": [],
+    "paigeIdentity": [
+     "span.th-ag-plate.th-ag-plate--md:box-shadow=rgb(163, 130, 69)",
+     "svg.th-ag-mark:color=rgb(116, 83, 3)",
+     "path:color=rgb(116, 83, 3)",
+     "path:fill=rgb(116, 83, 3)",
+     "circle:color=rgb(116, 83, 3)",
+     "circle:fill=rgb(116, 83, 3)"
+    ],
+    "status": [
+     "svg.lucide.lucide-circle-help.h-3.5:color=rgb(152, 99, 34)",
+     "svg.lucide.lucide-circle-help.h-3.5:stroke=rgb(152, 99, 34)",
+     "circle:color=rgb(152, 99, 34)",
+     "circle:stroke=rgb(152, 99, 34)",
+     "path:color=rgb(152, 99, 34)",
+     "path:stroke=rgb(152, 99, 34)",
+     "path:color=rgb(152, 99, 34)",
+     "path:stroke=rgb(152, 99, 34)"
+    ],
+    "leaks": []
+   },
+   "cards": [
+    {
+     "agent": "zion",
+     "state": "unconfirmed",
+     "view": "asker",
+     "text": "Operations task Couldn't confirm it ran Approved by you · 10:04 AM ZION wants to create a task in Operations: “Prepare the onboarding packet”, for Jordan Lee, due Fri, Oct 31. The request went out, but Operations didn't answer. Check the board before asking again.",
+     "buttons": [],
+     "links": [],
+     "strip": {
+      "boxShadow": "rgb(82, 134, 203) 0px 2px 0px 0px inset",
+      "background": "color(srgb 0.927255 0.941961 0.95902)",
+      "kindColor": "rgb(55, 100, 160)",
+      "expectFill": "rgb(82, 134, 203)",
+      "expectInk": "rgb(55, 100, 160)",
+      "lineIsAgentFill": true,
+      "kindIsAgentInk": true
+     },
+     "agentColourInFooter": [],
+     "approveFill": null,
+     "type": {
+      "summary": {
+       "fontSize": "14px",
+       "fontWeight": "600",
+       "color": "rgb(32, 30, 35)"
+      },
+      "footer": {
+       "fontSize": "12.5px",
+       "fontWeight": "600",
+       "color": "rgb(61, 57, 65)"
+      }
+     },
+     "footerOrder": [],
+     "rect": {
+      "left": 370,
+      "right": 930,
+      "width": 560,
+      "height": 165
+     },
+     "insideMessageBody": true,
+     "insideViewport": true,
+     "overflowX": false
+    }
+   ],
+   "lastAgentText": "Here it is as an Operations task. Nothing is created until Morgan approves it."
+  },
+  {
+   "name": "a2-declined-1366-dark",
+   "state": "declined",
+   "viewport": "1366x768",
+   "theme": "dark",
+   "viewer": "morgan (owner, the asker)",
+   "errors": [],
+   "docOverflowX": false,
+   "pageOverflowXpx": 0,
+   "hubOverflowXpx": 0,
+   "goldOutsideApprove": false,
+   "goldUse": {
+    "approve": [],
+    "paigeIdentity": [
+     "span.th-ag-plate.th-ag-plate--md:background-color=rgb(65, 51, 23)",
+     "span.th-ag-plate.th-ag-plate--md:box-shadow=rgb(172, 137, 71)",
+     "svg.th-ag-mark:color=rgb(235, 205, 150)",
+     "path:color=rgb(235, 205, 150)",
+     "path:fill=rgb(235, 205, 150)",
+     "circle:color=rgb(235, 205, 150)",
+     "circle:fill=rgb(235, 205, 150)"
+    ],
+    "status": [],
+    "leaks": []
+   },
+   "cards": [
+    {
+     "agent": "zion",
+     "state": "declined",
+     "view": "asker",
+     "text": "Operations task ZION wants to create a task in Operations: “Prepare the onboarding packet”, for Jordan Lee, due Fri, Oct 31. You chose Not now at 10:03 AM. Nothing was changed.",
+     "buttons": [],
+     "links": [],
+     "strip": {
+      "boxShadow": "rgb(110, 164, 235) 0px 2px 0px 0px inset",
+      "background": "color(srgb 0.105098 0.133922 0.197059)",
+      "kindColor": "rgb(164, 202, 254)",
+      "expectFill": "rgb(110, 164, 235)",
+      "expectInk": "rgb(164, 202, 254)",
+      "lineIsAgentFill": true,
+      "kindIsAgentInk": true
+     },
+     "agentColourInFooter": [],
+     "approveFill": null,
+     "type": {
+      "summary": {
+       "fontSize": "14px",
+       "fontWeight": "500",
+       "color": "rgb(214, 208, 201)"
+      },
+      "footer": {
+       "fontSize": "12.5px",
+       "fontWeight": "400",
+       "color": "rgb(214, 208, 201)"
+      }
+     },
+     "footerOrder": [],
+     "rect": {
+      "left": 370,
+      "right": 930,
+      "width": 560,
+      "height": 145
+     },
+     "insideMessageBody": true,
+     "insideViewport": true,
+     "overflowX": false
+    }
+   ],
+   "lastAgentText": "Here it is as an Operations task. Nothing is created until Morgan approves it."
+  },
+  {
+   "name": "a2-declined-1366-light",
+   "state": "declined",
+   "viewport": "1366x768",
+   "theme": "light",
+   "viewer": "morgan (owner, the asker)",
+   "errors": [],
+   "docOverflowX": false,
+   "pageOverflowXpx": 0,
+   "hubOverflowXpx": 0,
+   "goldOutsideApprove": false,
+   "goldUse": {
+    "approve": [],
+    "paigeIdentity": [
+     "span.th-ag-plate.th-ag-plate--md:box-shadow=rgb(163, 130, 69)",
+     "svg.th-ag-mark:color=rgb(116, 83, 3)",
+     "path:color=rgb(116, 83, 3)",
+     "path:fill=rgb(116, 83, 3)",
+     "circle:color=rgb(116, 83, 3)",
+     "circle:fill=rgb(116, 83, 3)"
+    ],
+    "status": [],
+    "leaks": []
+   },
+   "cards": [
+    {
+     "agent": "zion",
+     "state": "declined",
+     "view": "asker",
+     "text": "Operations task ZION wants to create a task in Operations: “Prepare the onboarding packet”, for Jordan Lee, due Fri, Oct 31. You chose Not now at 10:03 AM. Nothing was changed.",
+     "buttons": [],
+     "links": [],
+     "strip": {
+      "boxShadow": "rgb(82, 134, 203) 0px 2px 0px 0px inset",
+      "background": "color(srgb 0.927255 0.941961 0.95902)",
+      "kindColor": "rgb(55, 100, 160)",
+      "expectFill": "rgb(82, 134, 203)",
+      "expectInk": "rgb(55, 100, 160)",
+      "lineIsAgentFill": true,
+      "kindIsAgentInk": true
+     },
+     "agentColourInFooter": [],
+     "approveFill": null,
+     "type": {
+      "summary": {
+       "fontSize": "14px",
+       "fontWeight": "500",
+       "color": "rgb(61, 57, 65)"
+      },
+      "footer": {
+       "fontSize": "12.5px",
+       "fontWeight": "400",
+       "color": "rgb(61, 57, 65)"
+      }
+     },
+     "footerOrder": [],
+     "rect": {
+      "left": 370,
+      "right": 930,
+      "width": 560,
+      "height": 145
+     },
+     "insideMessageBody": true,
+     "insideViewport": true,
+     "overflowX": false
+    }
+   ],
+   "lastAgentText": "Here it is as an Operations task. Nothing is created until Morgan approves it."
+  },
+  {
+   "name": "a2-declined-other-1366-dark",
+   "state": "declined-other",
+   "viewport": "1366x768",
+   "theme": "dark",
+   "viewer": "priya",
+   "errors": [],
+   "docOverflowX": false,
+   "pageOverflowXpx": 0,
+   "hubOverflowXpx": 0,
+   "goldOutsideApprove": false,
+   "goldUse": {
+    "approve": [],
+    "paigeIdentity": [
+     "span.th-ag-plate.th-ag-plate--md:background-color=rgb(65, 51, 23)",
+     "span.th-ag-plate.th-ag-plate--md:box-shadow=rgb(172, 137, 71)",
+     "svg.th-ag-mark:color=rgb(235, 205, 150)",
+     "path:color=rgb(235, 205, 150)",
+     "path:fill=rgb(235, 205, 150)",
+     "circle:color=rgb(235, 205, 150)",
+     "circle:fill=rgb(235, 205, 150)"
+    ],
+    "status": [],
+    "leaks": []
+   },
+   "cards": [
+    {
+     "agent": "zion",
+     "state": "declined",
+     "view": "other",
+     "text": "Operations task ZION wants to create a task in Operations: “Prepare the onboarding packet”, for Jordan Lee, due Fri, Oct 31. Morgan declined at 10:03 AM. Nothing was changed.",
+     "buttons": [],
+     "links": [],
+     "strip": {
+      "boxShadow": "rgb(110, 164, 235) 0px 2px 0px 0px inset",
+      "background": "color(srgb 0.105098 0.133922 0.197059)",
+      "kindColor": "rgb(164, 202, 254)",
+      "expectFill": "rgb(110, 164, 235)",
+      "expectInk": "rgb(164, 202, 254)",
+      "lineIsAgentFill": true,
+      "kindIsAgentInk": true
+     },
+     "agentColourInFooter": [],
+     "approveFill": null,
+     "type": {
+      "summary": {
+       "fontSize": "14px",
+       "fontWeight": "500",
+       "color": "rgb(214, 208, 201)"
+      },
+      "footer": {
+       "fontSize": "12.5px",
+       "fontWeight": "400",
+       "color": "rgb(214, 208, 201)"
+      }
+     },
+     "footerOrder": [],
+     "rect": {
+      "left": 370,
+      "right": 930,
+      "width": 560,
+      "height": 145
+     },
+     "insideMessageBody": true,
+     "insideViewport": true,
+     "overflowX": false
+    }
+   ],
+   "lastAgentText": "Here it is as an Operations task. Nothing is created until Morgan approves it."
+  },
+  {
+   "name": "a2-declined-other-1366-light",
+   "state": "declined-other",
+   "viewport": "1366x768",
+   "theme": "light",
+   "viewer": "priya",
+   "errors": [],
+   "docOverflowX": false,
+   "pageOverflowXpx": 0,
+   "hubOverflowXpx": 0,
+   "goldOutsideApprove": false,
+   "goldUse": {
+    "approve": [],
+    "paigeIdentity": [
+     "span.th-ag-plate.th-ag-plate--md:box-shadow=rgb(163, 130, 69)",
+     "svg.th-ag-mark:color=rgb(116, 83, 3)",
+     "path:color=rgb(116, 83, 3)",
+     "path:fill=rgb(116, 83, 3)",
+     "circle:color=rgb(116, 83, 3)",
+     "circle:fill=rgb(116, 83, 3)"
+    ],
+    "status": [],
+    "leaks": []
+   },
+   "cards": [
+    {
+     "agent": "zion",
+     "state": "declined",
+     "view": "other",
+     "text": "Operations task ZION wants to create a task in Operations: “Prepare the onboarding packet”, for Jordan Lee, due Fri, Oct 31. Morgan declined at 10:03 AM. Nothing was changed.",
+     "buttons": [],
+     "links": [],
+     "strip": {
+      "boxShadow": "rgb(82, 134, 203) 0px 2px 0px 0px inset",
+      "background": "color(srgb 0.927255 0.941961 0.95902)",
+      "kindColor": "rgb(55, 100, 160)",
+      "expectFill": "rgb(82, 134, 203)",
+      "expectInk": "rgb(55, 100, 160)",
+      "lineIsAgentFill": true,
+      "kindIsAgentInk": true
+     },
+     "agentColourInFooter": [],
+     "approveFill": null,
+     "type": {
+      "summary": {
+       "fontSize": "14px",
+       "fontWeight": "500",
+       "color": "rgb(61, 57, 65)"
+      },
+      "footer": {
+       "fontSize": "12.5px",
+       "fontWeight": "400",
+       "color": "rgb(61, 57, 65)"
+      }
+     },
+     "footerOrder": [],
+     "rect": {
+      "left": 370,
+      "right": 930,
+      "width": 560,
+      "height": 145
+     },
+     "insideMessageBody": true,
+     "insideViewport": true,
+     "overflowX": false
+    }
+   ],
+   "lastAgentText": "Here it is as an Operations task. Nothing is created until Morgan approves it."
+  },
+  {
+   "name": "a2-expired-1366-dark",
+   "state": "expired",
+   "viewport": "1366x768",
+   "theme": "dark",
+   "viewer": "morgan (owner, the asker)",
+   "errors": [],
+   "docOverflowX": false,
+   "pageOverflowXpx": 0,
+   "hubOverflowXpx": 0,
+   "goldOutsideApprove": false,
+   "goldUse": {
+    "approve": [],
+    "paigeIdentity": [
+     "span.th-ag-plate.th-ag-plate--md:background-color=rgb(65, 51, 23)",
+     "span.th-ag-plate.th-ag-plate--md:box-shadow=rgb(172, 137, 71)",
+     "svg.th-ag-mark:color=rgb(235, 205, 150)",
+     "path:color=rgb(235, 205, 150)",
+     "path:fill=rgb(235, 205, 150)",
+     "circle:color=rgb(235, 205, 150)",
+     "circle:fill=rgb(235, 205, 150)"
+    ],
+    "status": [],
+    "leaks": []
+   },
+   "cards": [
+    {
+     "agent": "zion",
+     "state": "expired",
+     "view": "asker",
+     "text": "Operations task ZION wants to create a task in Operations: “Prepare the onboarding packet”, for Jordan Lee, due Fri, Oct 31. Expired at 10:32 AM. Nothing was changed.",
+     "buttons": [],
+     "links": [],
+     "strip": {
+      "boxShadow": "rgb(110, 164, 235) 0px 2px 0px 0px inset",
+      "background": "color(srgb 0.105098 0.133922 0.197059)",
+      "kindColor": "rgb(164, 202, 254)",
+      "expectFill": "rgb(110, 164, 235)",
+      "expectInk": "rgb(164, 202, 254)",
+      "lineIsAgentFill": true,
+      "kindIsAgentInk": true
+     },
+     "agentColourInFooter": [],
+     "approveFill": null,
+     "type": {
+      "summary": {
+       "fontSize": "14px",
+       "fontWeight": "500",
+       "color": "rgb(214, 208, 201)"
+      },
+      "footer": {
+       "fontSize": "12.5px",
+       "fontWeight": "400",
+       "color": "rgb(214, 208, 201)"
+      }
+     },
+     "footerOrder": [],
+     "rect": {
+      "left": 370,
+      "right": 930,
+      "width": 560,
+      "height": 145
+     },
+     "insideMessageBody": true,
+     "insideViewport": true,
+     "overflowX": false
+    }
+   ],
+   "lastAgentText": "Here it is as an Operations task. Nothing is created until Morgan approves it."
+  },
+  {
+   "name": "a2-expired-1366-light",
+   "state": "expired",
+   "viewport": "1366x768",
+   "theme": "light",
+   "viewer": "morgan (owner, the asker)",
+   "errors": [],
+   "docOverflowX": false,
+   "pageOverflowXpx": 0,
+   "hubOverflowXpx": 0,
+   "goldOutsideApprove": false,
+   "goldUse": {
+    "approve": [],
+    "paigeIdentity": [
+     "span.th-ag-plate.th-ag-plate--md:box-shadow=rgb(163, 130, 69)",
+     "svg.th-ag-mark:color=rgb(116, 83, 3)",
+     "path:color=rgb(116, 83, 3)",
+     "path:fill=rgb(116, 83, 3)",
+     "circle:color=rgb(116, 83, 3)",
+     "circle:fill=rgb(116, 83, 3)"
+    ],
+    "status": [],
+    "leaks": []
+   },
+   "cards": [
+    {
+     "agent": "zion",
+     "state": "expired",
+     "view": "asker",
+     "text": "Operations task ZION wants to create a task in Operations: “Prepare the onboarding packet”, for Jordan Lee, due Fri, Oct 31. Expired at 10:32 AM. Nothing was changed.",
+     "buttons": [],
+     "links": [],
+     "strip": {
+      "boxShadow": "rgb(82, 134, 203) 0px 2px 0px 0px inset",
+      "background": "color(srgb 0.927255 0.941961 0.95902)",
+      "kindColor": "rgb(55, 100, 160)",
+      "expectFill": "rgb(82, 134, 203)",
+      "expectInk": "rgb(55, 100, 160)",
+      "lineIsAgentFill": true,
+      "kindIsAgentInk": true
+     },
+     "agentColourInFooter": [],
+     "approveFill": null,
+     "type": {
+      "summary": {
+       "fontSize": "14px",
+       "fontWeight": "500",
+       "color": "rgb(61, 57, 65)"
+      },
+      "footer": {
+       "fontSize": "12.5px",
+       "fontWeight": "400",
+       "color": "rgb(61, 57, 65)"
+      }
+     },
+     "footerOrder": [],
+     "rect": {
+      "left": 370,
+      "right": 930,
+      "width": 560,
+      "height": 145
+     },
+     "insideMessageBody": true,
+     "insideViewport": true,
+     "overflowX": false
+    }
+   ],
+   "lastAgentText": "Here it is as an Operations task. Nothing is created until Morgan approves it."
+  },
+  {
+   "name": "a2-expired-other-1366-dark",
+   "state": "expired-other",
+   "viewport": "1366x768",
+   "theme": "dark",
+   "viewer": "priya",
+   "errors": [],
+   "docOverflowX": false,
+   "pageOverflowXpx": 0,
+   "hubOverflowXpx": 0,
+   "goldOutsideApprove": false,
+   "goldUse": {
+    "approve": [],
+    "paigeIdentity": [
+     "span.th-ag-plate.th-ag-plate--md:background-color=rgb(65, 51, 23)",
+     "span.th-ag-plate.th-ag-plate--md:box-shadow=rgb(172, 137, 71)",
+     "svg.th-ag-mark:color=rgb(235, 205, 150)",
+     "path:color=rgb(235, 205, 150)",
+     "path:fill=rgb(235, 205, 150)",
+     "circle:color=rgb(235, 205, 150)",
+     "circle:fill=rgb(235, 205, 150)"
+    ],
+    "status": [],
+    "leaks": []
+   },
+   "cards": [
+    {
+     "agent": "zion",
+     "state": "expired",
+     "view": "other",
+     "text": "Operations task ZION wants to create a task in Operations: “Prepare the onboarding packet”, for Jordan Lee, due Fri, Oct 31. Expired at 10:32 AM. Nothing was changed.",
+     "buttons": [],
+     "links": [],
+     "strip": {
+      "boxShadow": "rgb(110, 164, 235) 0px 2px 0px 0px inset",
+      "background": "color(srgb 0.105098 0.133922 0.197059)",
+      "kindColor": "rgb(164, 202, 254)",
+      "expectFill": "rgb(110, 164, 235)",
+      "expectInk": "rgb(164, 202, 254)",
+      "lineIsAgentFill": true,
+      "kindIsAgentInk": true
+     },
+     "agentColourInFooter": [],
+     "approveFill": null,
+     "type": {
+      "summary": {
+       "fontSize": "14px",
+       "fontWeight": "500",
+       "color": "rgb(214, 208, 201)"
+      },
+      "footer": {
+       "fontSize": "12.5px",
+       "fontWeight": "400",
+       "color": "rgb(214, 208, 201)"
+      }
+     },
+     "footerOrder": [],
+     "rect": {
+      "left": 370,
+      "right": 930,
+      "width": 560,
+      "height": 145
+     },
+     "insideMessageBody": true,
+     "insideViewport": true,
+     "overflowX": false
+    }
+   ],
+   "lastAgentText": "Here it is as an Operations task. Nothing is created until Morgan approves it."
+  },
+  {
+   "name": "a2-expired-other-1366-light",
+   "state": "expired-other",
+   "viewport": "1366x768",
+   "theme": "light",
+   "viewer": "priya",
+   "errors": [],
+   "docOverflowX": false,
+   "pageOverflowXpx": 0,
+   "hubOverflowXpx": 0,
+   "goldOutsideApprove": false,
+   "goldUse": {
+    "approve": [],
+    "paigeIdentity": [
+     "span.th-ag-plate.th-ag-plate--md:box-shadow=rgb(163, 130, 69)",
+     "svg.th-ag-mark:color=rgb(116, 83, 3)",
+     "path:color=rgb(116, 83, 3)",
+     "path:fill=rgb(116, 83, 3)",
+     "circle:color=rgb(116, 83, 3)",
+     "circle:fill=rgb(116, 83, 3)"
+    ],
+    "status": [],
+    "leaks": []
+   },
+   "cards": [
+    {
+     "agent": "zion",
+     "state": "expired",
+     "view": "other",
+     "text": "Operations task ZION wants to create a task in Operations: “Prepare the onboarding packet”, for Jordan Lee, due Fri, Oct 31. Expired at 10:32 AM. Nothing was changed.",
+     "buttons": [],
+     "links": [],
+     "strip": {
+      "boxShadow": "rgb(82, 134, 203) 0px 2px 0px 0px inset",
+      "background": "color(srgb 0.927255 0.941961 0.95902)",
+      "kindColor": "rgb(55, 100, 160)",
+      "expectFill": "rgb(82, 134, 203)",
+      "expectInk": "rgb(55, 100, 160)",
+      "lineIsAgentFill": true,
+      "kindIsAgentInk": true
+     },
+     "agentColourInFooter": [],
+     "approveFill": null,
+     "type": {
+      "summary": {
+       "fontSize": "14px",
+       "fontWeight": "500",
+       "color": "rgb(61, 57, 65)"
+      },
+      "footer": {
+       "fontSize": "12.5px",
+       "fontWeight": "400",
+       "color": "rgb(61, 57, 65)"
+      }
+     },
+     "footerOrder": [],
+     "rect": {
+      "left": 370,
+      "right": 930,
+      "width": 560,
+      "height": 145
+     },
+     "insideMessageBody": true,
+     "insideViewport": true,
+     "overflowX": false
+    }
+   ],
+   "lastAgentText": "Here it is as an Operations task. Nothing is created until Morgan approves it."
+  },
+  {
+   "name": "a2-standing-1366-dark",
+   "state": "standing",
+   "viewport": "1366x768",
+   "theme": "dark",
+   "viewer": "morgan (owner, the asker)",
+   "errors": [],
+   "docOverflowX": false,
+   "pageOverflowXpx": 0,
+   "hubOverflowXpx": 0,
+   "goldOutsideApprove": false,
+   "goldUse": {
+    "approve": [],
+    "paigeIdentity": [
+     "span.th-ag-plate.th-ag-plate--md:background-color=rgb(65, 51, 23)",
+     "span.th-ag-plate.th-ag-plate--md:box-shadow=rgb(172, 137, 71)",
+     "svg.th-ag-mark:color=rgb(235, 205, 150)",
+     "path:color=rgb(235, 205, 150)",
+     "path:fill=rgb(235, 205, 150)",
+     "circle:color=rgb(235, 205, 150)",
+     "circle:fill=rgb(235, 205, 150)"
+    ],
+    "status": [],
+    "leaks": []
+   },
+   "cards": [
+    {
+     "agent": "zion",
+     "state": "standing",
+     "view": "asker",
+     "text": "Operations task Created in Operations: “Prepare the onboarding packet”, for Jordan Lee, due Fri, Oct 31. Covers: Operations tasks you ask ZION for in this workspace. Done under your standing permission · 10:04 AM Pause",
+     "buttons": [
+      {
+       "text": "Pause",
+       "height": 32,
+       "disabled": false
+      }
+     ],
+     "links": [],
+     "strip": {
+      "boxShadow": "rgb(110, 164, 235) 0px 2px 0px 0px inset",
+      "background": "color(srgb 0.105098 0.133922 0.197059)",
+      "kindColor": "rgb(164, 202, 254)",
+      "expectFill": "rgb(110, 164, 235)",
+      "expectInk": "rgb(164, 202, 254)",
+      "lineIsAgentFill": true,
+      "kindIsAgentInk": true
+     },
+     "agentColourInFooter": [],
+     "approveFill": null,
+     "type": {
+      "summary": {
+       "fontSize": "14px",
+       "fontWeight": "600",
+       "color": "rgb(246, 242, 234)"
+      },
+      "footer": null
+     },
+     "footerOrder": [],
+     "rect": {
+      "left": 370,
+      "right": 930,
+      "width": 560,
+      "height": 166
+     },
+     "insideMessageBody": true,
+     "insideViewport": true,
+     "overflowX": false
+    }
+   ],
+   "lastAgentText": "Done. It's on the Operations board for Jordan, due Fri, Oct 31."
+  },
+  {
+   "name": "a2-standing-1366-light",
+   "state": "standing",
+   "viewport": "1366x768",
+   "theme": "light",
+   "viewer": "morgan (owner, the asker)",
+   "errors": [],
+   "docOverflowX": false,
+   "pageOverflowXpx": 0,
+   "hubOverflowXpx": 0,
+   "goldOutsideApprove": false,
+   "goldUse": {
+    "approve": [],
+    "paigeIdentity": [
+     "span.th-ag-plate.th-ag-plate--md:box-shadow=rgb(163, 130, 69)",
+     "svg.th-ag-mark:color=rgb(116, 83, 3)",
+     "path:color=rgb(116, 83, 3)",
+     "path:fill=rgb(116, 83, 3)",
+     "circle:color=rgb(116, 83, 3)",
+     "circle:fill=rgb(116, 83, 3)"
+    ],
+    "status": [],
+    "leaks": []
+   },
+   "cards": [
+    {
+     "agent": "zion",
+     "state": "standing",
+     "view": "asker",
+     "text": "Operations task Created in Operations: “Prepare the onboarding packet”, for Jordan Lee, due Fri, Oct 31. Covers: Operations tasks you ask ZION for in this workspace. Done under your standing permission · 10:04 AM Pause",
+     "buttons": [
+      {
+       "text": "Pause",
+       "height": 32,
+       "disabled": false
+      }
+     ],
+     "links": [],
+     "strip": {
+      "boxShadow": "rgb(82, 134, 203) 0px 2px 0px 0px inset",
+      "background": "color(srgb 0.927255 0.941961 0.95902)",
+      "kindColor": "rgb(55, 100, 160)",
+      "expectFill": "rgb(82, 134, 203)",
+      "expectInk": "rgb(55, 100, 160)",
+      "lineIsAgentFill": true,
+      "kindIsAgentInk": true
+     },
+     "agentColourInFooter": [],
+     "approveFill": null,
+     "type": {
+      "summary": {
+       "fontSize": "14px",
+       "fontWeight": "600",
+       "color": "rgb(32, 30, 35)"
+      },
+      "footer": null
+     },
+     "footerOrder": [],
+     "rect": {
+      "left": 370,
+      "right": 930,
+      "width": 560,
+      "height": 166
+     },
+     "insideMessageBody": true,
+     "insideViewport": true,
+     "overflowX": false
+    }
+   ],
+   "lastAgentText": "Done. It's on the Operations board for Jordan, due Fri, Oct 31."
+  },
+  {
+   "name": "a2-standing-other-1366-dark",
+   "state": "standing-other",
+   "viewport": "1366x768",
+   "theme": "dark",
+   "viewer": "priya",
+   "errors": [],
+   "docOverflowX": false,
+   "pageOverflowXpx": 0,
+   "hubOverflowXpx": 0,
+   "goldOutsideApprove": false,
+   "goldUse": {
+    "approve": [],
+    "paigeIdentity": [
+     "span.th-ag-plate.th-ag-plate--md:background-color=rgb(65, 51, 23)",
+     "span.th-ag-plate.th-ag-plate--md:box-shadow=rgb(172, 137, 71)",
+     "svg.th-ag-mark:color=rgb(235, 205, 150)",
+     "path:color=rgb(235, 205, 150)",
+     "path:fill=rgb(235, 205, 150)",
+     "circle:color=rgb(235, 205, 150)",
+     "circle:fill=rgb(235, 205, 150)"
+    ],
+    "status": [],
+    "leaks": []
+   },
+   "cards": [
+    {
+     "agent": "zion",
+     "state": "standing",
+     "view": "other",
+     "text": "Operations task Created in Operations: “Prepare the onboarding packet”, for Jordan Lee, due Fri, Oct 31. Covers: Operations tasks Morgan asks ZION for in this workspace. Done under Morgan's standing permission · 10:04 AM",
+     "buttons": [],
+     "links": [],
+     "strip": {
+      "boxShadow": "rgb(110, 164, 235) 0px 2px 0px 0px inset",
+      "background": "color(srgb 0.105098 0.133922 0.197059)",
+      "kindColor": "rgb(164, 202, 254)",
+      "expectFill": "rgb(110, 164, 235)",
+      "expectInk": "rgb(164, 202, 254)",
+      "lineIsAgentFill": true,
+      "kindIsAgentInk": true
+     },
+     "agentColourInFooter": [],
+     "approveFill": null,
+     "type": {
+      "summary": {
+       "fontSize": "14px",
+       "fontWeight": "600",
+       "color": "rgb(246, 242, 234)"
+      },
+      "footer": null
+     },
+     "footerOrder": [],
+     "rect": {
+      "left": 370,
+      "right": 930,
+      "width": 560,
+      "height": 165
+     },
+     "insideMessageBody": true,
+     "insideViewport": true,
+     "overflowX": false
+    }
+   ],
+   "lastAgentText": "Done. It's on the Operations board for Jordan, due Fri, Oct 31."
+  },
+  {
+   "name": "a2-standing-other-1366-light",
+   "state": "standing-other",
+   "viewport": "1366x768",
+   "theme": "light",
+   "viewer": "priya",
+   "errors": [],
+   "docOverflowX": false,
+   "pageOverflowXpx": 0,
+   "hubOverflowXpx": 0,
+   "goldOutsideApprove": false,
+   "goldUse": {
+    "approve": [],
+    "paigeIdentity": [
+     "span.th-ag-plate.th-ag-plate--md:box-shadow=rgb(163, 130, 69)",
+     "svg.th-ag-mark:color=rgb(116, 83, 3)",
+     "path:color=rgb(116, 83, 3)",
+     "path:fill=rgb(116, 83, 3)",
+     "circle:color=rgb(116, 83, 3)",
+     "circle:fill=rgb(116, 83, 3)"
+    ],
+    "status": [],
+    "leaks": []
+   },
+   "cards": [
+    {
+     "agent": "zion",
+     "state": "standing",
+     "view": "other",
+     "text": "Operations task Created in Operations: “Prepare the onboarding packet”, for Jordan Lee, due Fri, Oct 31. Covers: Operations tasks Morgan asks ZION for in this workspace. Done under Morgan's standing permission · 10:04 AM",
+     "buttons": [],
+     "links": [],
+     "strip": {
+      "boxShadow": "rgb(82, 134, 203) 0px 2px 0px 0px inset",
+      "background": "color(srgb 0.927255 0.941961 0.95902)",
+      "kindColor": "rgb(55, 100, 160)",
+      "expectFill": "rgb(82, 134, 203)",
+      "expectInk": "rgb(55, 100, 160)",
+      "lineIsAgentFill": true,
+      "kindIsAgentInk": true
+     },
+     "agentColourInFooter": [],
+     "approveFill": null,
+     "type": {
+      "summary": {
+       "fontSize": "14px",
+       "fontWeight": "600",
+       "color": "rgb(32, 30, 35)"
+      },
+      "footer": null
+     },
+     "footerOrder": [],
+     "rect": {
+      "left": 370,
+      "right": 930,
+      "width": 560,
+      "height": 165
+     },
+     "insideMessageBody": true,
+     "insideViewport": true,
+     "overflowX": false
+    }
+   ],
+   "lastAgentText": "Done. It's on the Operations board for Jordan, due Fri, Oct 31."
+  },
+  {
+   "name": "a2-paige-dm-prepare-1366-dark",
+   "state": "paige-dm-prepare",
+   "viewport": "1366x768",
+   "theme": "dark",
+   "viewer": "morgan (owner, the asker)",
+   "errors": [],
+   "docOverflowX": false,
+   "pageOverflowXpx": 0,
+   "hubOverflowXpx": 0,
+   "goldOutsideApprove": false,
+   "goldUse": {
+    "approve": [
+     "button.inline-flex.items-center.justify-center:background-color=rgb(212, 167, 82)"
+    ],
+    "paigeIdentity": [
+     "span.th-ag-plate.th-ag-plate--md:background-color=rgb(65, 51, 23)",
+     "span.th-ag-plate.th-ag-plate--md:box-shadow=rgb(172, 137, 71)",
+     "svg.th-ag-mark:color=rgb(235, 205, 150)",
+     "path:color=rgb(235, 205, 150)",
+     "path:fill=rgb(235, 205, 150)",
+     "circle:color=rgb(235, 205, 150)",
+     "circle:fill=rgb(235, 205, 150)",
+     "header.th-conv-head.th-conv-head--agent:box-shadow=rgb(172, 137, 71)",
+     "span.th-ag-plate.th-ag-plate--sm:background-color=rgb(65, 51, 23)",
+     "span.th-ag-plate.th-ag-plate--sm:box-shadow=rgb(172, 137, 71)",
+     "svg.th-ag-mark:color=rgb(235, 205, 150)",
+     "path:color=rgb(235, 205, 150)",
+     "path:fill=rgb(235, 205, 150)",
+     "circle:color=rgb(235, 205, 150)",
+     "circle:fill=rgb(235, 205, 150)",
+     "span.th-conv-title.th-ag-name:color=rgb(235, 205, 150)",
+     "span.th-ag-tag:color=rgb(235, 205, 150)",
+     "span.th-ag-tag:background-color=rgb(65, 51, 23)",
+     "span.th-ag-plate.th-ag-plate--lg:background-color=rgb(65, 51, 23)",
+     "span.th-ag-plate.th-ag-plate--lg:box-shadow=rgb(172, 137, 71)",
+     "svg.th-ag-mark:color=rgb(235, 205, 150)",
+     "path:color=rgb(235, 205, 150)",
+     "path:fill=rgb(235, 205, 150)",
+     "circle:color=rgb(235, 205, 150)",
+     "circle:fill=rgb(235, 205, 150)",
+     "button.th-ag-namebtn.th-ag-name:color=rgb(235, 205, 150)",
+     "span.th-ag-tag:color=rgb(235, 205, 150)",
+     "span.th-ag-tag:background-color=rgb(65, 51, 23)",
+     "div.th-ap-strip:box-shadow=rgb(172, 137, 71)",
+     "span.th-ag-plate.th-ag-plate--sm:background-color=rgb(65, 51, 23)",
+     "span.th-ag-plate.th-ag-plate--sm:box-shadow=rgb(172, 137, 71)",
+     "svg.th-ag-mark:color=rgb(235, 205, 150)",
+     "path:color=rgb(235, 205, 150)",
+     "path:fill=rgb(235, 205, 150)",
+     "circle:color=rgb(235, 205, 150)",
+     "circle:fill=rgb(235, 205, 150)",
+     "span.th-ap-kind:color=rgb(235, 205, 150)"
+    ],
+    "status": [],
+    "leaks": []
+   },
+   "cards": [
+    {
+     "agent": "paige",
+     "state": "waiting",
+     "view": "asker",
+     "text": "Weekly plan Needs your OK Add “Workshop prep: run sheet and slides” to your weekly plan for Nov 3–7, as Tuesday's first priority. Approve Not now",
+     "buttons": [
+      {
+       "text": "Approve",
+       "height": 32,
+       "disabled": false
+      },
+      {
+       "text": "Not now",
+       "height": 32,
+       "disabled": false
+      }
+     ],
+     "links": [],
+     "strip": {
+      "boxShadow": "rgb(172, 137, 71) 0px 2px 0px 0px inset",
+      "background": "color(srgb 0.168627 0.137451 0.105294)",
+      "kindColor": "rgb(235, 205, 150)",
+      "expectFill": "rgb(172, 137, 71)",
+      "expectInk": "rgb(235, 205, 150)",
+      "lineIsAgentFill": true,
+      "kindIsAgentInk": true
+     },
+     "agentColourInFooter": [],
+     "approveFill": {
+      "background": "rgb(212, 167, 82)",
+      "isPgGoldFill": true,
+      "backgroundImage": "none",
+      "color": "rgb(8, 7, 11)",
+      "height": 32,
+      "radius": "8px",
+      "boxShadow": "rgba(0, 0, 0, 0.45) 0px 1px 2px 0px"
+     },
+     "type": {
+      "summary": {
+       "fontSize": "14px",
+       "fontWeight": "600",
+       "color": "rgb(246, 242, 234)"
+      },
+      "footer": {
+       "fontSize": "12.5px",
+       "fontWeight": "600",
+       "color": "rgb(214, 208, 201)"
+      }
+     },
+     "footerOrder": [
+      "Not now",
+      "Approve"
+     ],
+     "rect": {
+      "left": 370,
+      "right": 930,
+      "width": 560,
+      "height": 146
+     },
+     "insideMessageBody": true,
+     "insideViewport": true,
+     "overflowX": false
+    }
+   ],
+   "lastAgentText": "Here's the change to your plan for the week of Nov 3. It stays as it is until you approve."
+  },
+  {
+   "name": "a2-paige-dm-prepare-1366-light",
+   "state": "paige-dm-prepare",
+   "viewport": "1366x768",
+   "theme": "light",
+   "viewer": "morgan (owner, the asker)",
+   "errors": [],
+   "docOverflowX": false,
+   "pageOverflowXpx": 0,
+   "hubOverflowXpx": 0,
+   "goldOutsideApprove": false,
+   "goldUse": {
+    "approve": [
+     "button.inline-flex.items-center.justify-center:background-color=rgb(201, 169, 106)"
+    ],
+    "paigeIdentity": [
+     "span.th-ag-plate.th-ag-plate--md:box-shadow=rgb(163, 130, 69)",
+     "svg.th-ag-mark:color=rgb(116, 83, 3)",
+     "path:color=rgb(116, 83, 3)",
+     "path:fill=rgb(116, 83, 3)",
+     "circle:color=rgb(116, 83, 3)",
+     "circle:fill=rgb(116, 83, 3)",
+     "header.th-conv-head.th-conv-head--agent:box-shadow=rgb(163, 130, 69)",
+     "span.th-ag-plate.th-ag-plate--sm:box-shadow=rgb(163, 130, 69)",
+     "svg.th-ag-mark:color=rgb(116, 83, 3)",
+     "path:color=rgb(116, 83, 3)",
+     "path:fill=rgb(116, 83, 3)",
+     "circle:color=rgb(116, 83, 3)",
+     "circle:fill=rgb(116, 83, 3)",
+     "span.th-conv-title.th-ag-name:color=rgb(116, 83, 3)",
+     "span.th-ag-tag:color=rgb(116, 83, 3)",
+     "span.th-ag-plate.th-ag-plate--lg:box-shadow=rgb(163, 130, 69)",
+     "svg.th-ag-mark:color=rgb(116, 83, 3)",
+     "path:color=rgb(116, 83, 3)",
+     "path:fill=rgb(116, 83, 3)",
+     "circle:color=rgb(116, 83, 3)",
+     "circle:fill=rgb(116, 83, 3)",
+     "button.th-ag-namebtn.th-ag-name:color=rgb(116, 83, 3)",
+     "span.th-ag-tag:color=rgb(116, 83, 3)",
+     "div.th-ap-strip:box-shadow=rgb(163, 130, 69)",
+     "span.th-ag-plate.th-ag-plate--sm:box-shadow=rgb(163, 130, 69)",
+     "svg.th-ag-mark:color=rgb(116, 83, 3)",
+     "path:color=rgb(116, 83, 3)",
+     "path:fill=rgb(116, 83, 3)",
+     "circle:color=rgb(116, 83, 3)",
+     "circle:fill=rgb(116, 83, 3)",
+     "span.th-ap-kind:color=rgb(116, 83, 3)"
+    ],
+    "status": [],
+    "leaks": []
+   },
+   "cards": [
+    {
+     "agent": "paige",
+     "state": "waiting",
+     "view": "asker",
+     "text": "Weekly plan Needs your OK Add “Workshop prep: run sheet and slides” to your weekly plan for Nov 3–7, as Tuesday's first priority. Approve Not now",
+     "buttons": [
+      {
+       "text": "Approve",
+       "height": 32,
+       "disabled": false
+      },
+      {
+       "text": "Not now",
+       "height": 32,
+       "disabled": false
+      }
+     ],
+     "links": [],
+     "strip": {
+      "boxShadow": "rgb(163, 130, 69) 0px 2px 0px 0px inset",
+      "background": "color(srgb 0.95902 0.929608 0.879608)",
+      "kindColor": "rgb(116, 83, 3)",
+      "expectFill": "rgb(163, 130, 69)",
+      "expectInk": "rgb(116, 83, 3)",
+      "lineIsAgentFill": true,
+      "kindIsAgentInk": true
+     },
+     "agentColourInFooter": [],
+     "approveFill": {
+      "background": "rgb(201, 169, 106)",
+      "isPgGoldFill": true,
+      "backgroundImage": "none",
+      "color": "rgb(32, 30, 35)",
+      "height": 32,
+      "radius": "8px",
+      "boxShadow": "rgba(45, 40, 50, 0.1) 0px 1px 2px 0px"
+     },
+     "type": {
+      "summary": {
+       "fontSize": "14px",
+       "fontWeight": "600",
+       "color": "rgb(32, 30, 35)"
+      },
+      "footer": {
+       "fontSize": "12.5px",
+       "fontWeight": "600",
+       "color": "rgb(61, 57, 65)"
+      }
+     },
+     "footerOrder": [
+      "Not now",
+      "Approve"
+     ],
+     "rect": {
+      "left": 370,
+      "right": 930,
+      "width": 560,
+      "height": 146
+     },
+     "insideMessageBody": true,
+     "insideViewport": true,
+     "overflowX": false
+    }
+   ],
+   "lastAgentText": "Here's the change to your plan for the week of Nov 3. It stays as it is until you approve."
+  },
+  {
+   "name": "a2-dm-prepare-390-dark",
+   "state": "dm-prepare",
+   "viewport": "390x844",
+   "theme": "dark",
+   "viewer": "morgan (owner, the asker)",
+   "errors": [],
+   "docOverflowX": false,
+   "pageOverflowXpx": 0,
+   "hubOverflowXpx": 0,
+   "goldOutsideApprove": false,
+   "goldUse": {
+    "approve": [
+     "button.inline-flex.items-center.justify-center:background-color=rgb(212, 167, 82)"
+    ],
+    "paigeIdentity": [],
+    "status": [],
+    "leaks": []
+   },
+   "cards": [
+    {
+     "agent": "merit",
+     "state": "waiting",
+     "view": "asker",
+     "text": "Invoice draft Needs your OK Draft an invoice for Northwind Studio, $1,200, due Nov 15 Approve Not now",
+     "buttons": [
+      {
+       "text": "Approve",
+       "height": 32,
+       "disabled": false
+      },
+      {
+       "text": "Not now",
+       "height": 32,
+       "disabled": false
+      }
+     ],
+     "links": [],
+     "strip": {
+      "boxShadow": "rgb(156, 230, 161) 0px 2px 0px 0px inset",
+      "background": "color(srgb 0.128039 0.169216 0.142353)",
+      "kindColor": "rgb(190, 245, 193)",
+      "expectFill": "rgb(156, 230, 161)",
+      "expectInk": "rgb(190, 245, 193)",
+      "lineIsAgentFill": true,
+      "kindIsAgentInk": true
+     },
+     "agentColourInFooter": [],
+     "approveFill": {
+      "background": "rgb(212, 167, 82)",
+      "isPgGoldFill": true,
+      "backgroundImage": "none",
+      "color": "rgb(8, 7, 11)",
+      "height": 32,
+      "radius": "8px",
+      "boxShadow": "rgba(0, 0, 0, 0.45) 0px 1px 2px 0px"
+     },
+     "type": {
+      "summary": {
+       "fontSize": "14px",
+       "fontWeight": "600",
+       "color": "rgb(246, 242, 234)"
+      },
+      "footer": {
+       "fontSize": "12.5px",
+       "fontWeight": "600",
+       "color": "rgb(214, 208, 201)"
+      }
+     },
+     "footerOrder": [
+      "Not now",
+      "Approve"
+     ],
+     "rect": {
+      "left": 76,
+      "right": 364,
+      "width": 288,
+      "height": 146
+     },
+     "insideMessageBody": false,
+     "insideViewport": true,
+     "overflowX": false
+    }
+   ],
+   "lastAgentText": "Got it. I've prepared it as a draft for Northwind Studio. It stays a draft until you approve, and nothing goes to Northwind yet."
+  },
+  {
+   "name": "a2-dm-prepare-390-light",
+   "state": "dm-prepare",
+   "viewport": "390x844",
+   "theme": "light",
+   "viewer": "morgan (owner, the asker)",
+   "errors": [],
+   "docOverflowX": false,
+   "pageOverflowXpx": 0,
+   "hubOverflowXpx": 0,
+   "goldOutsideApprove": false,
+   "goldUse": {
+    "approve": [
+     "button.inline-flex.items-center.justify-center:background-color=rgb(201, 169, 106)"
+    ],
+    "paigeIdentity": [],
+    "status": [],
+    "leaks": []
+   },
+   "cards": [
+    {
+     "agent": "merit",
+     "state": "waiting",
+     "view": "asker",
+     "text": "Invoice draft Needs your OK Draft an invoice for Northwind Studio, $1,200, due Nov 15 Approve Not now",
+     "buttons": [
+      {
+       "text": "Approve",
+       "height": 32,
+       "disabled": false
+      },
+      {
+       "text": "Not now",
+       "height": 32,
+       "disabled": false
+      }
+     ],
+     "links": [],
+     "strip": {
+      "boxShadow": "rgb(23, 99, 37) 0px 2px 0px 0px inset",
+      "background": "color(srgb 0.89549 0.926078 0.876078)",
+      "kindColor": "rgb(3, 75, 20)",
+      "expectFill": "rgb(23, 99, 37)",
+      "expectInk": "rgb(3, 75, 20)",
+      "lineIsAgentFill": true,
+      "kindIsAgentInk": true
+     },
+     "agentColourInFooter": [],
+     "approveFill": {
+      "background": "rgb(201, 169, 106)",
+      "isPgGoldFill": true,
+      "backgroundImage": "none",
+      "color": "rgb(32, 30, 35)",
+      "height": 32,
+      "radius": "8px",
+      "boxShadow": "rgba(45, 40, 50, 0.1) 0px 1px 2px 0px"
+     },
+     "type": {
+      "summary": {
+       "fontSize": "14px",
+       "fontWeight": "600",
+       "color": "rgb(32, 30, 35)"
+      },
+      "footer": {
+       "fontSize": "12.5px",
+       "fontWeight": "600",
+       "color": "rgb(61, 57, 65)"
+      }
+     },
+     "footerOrder": [
+      "Not now",
+      "Approve"
+     ],
+     "rect": {
+      "left": 76,
+      "right": 364,
+      "width": 288,
+      "height": 146
+     },
+     "insideMessageBody": false,
+     "insideViewport": true,
+     "overflowX": false
+    }
+   ],
+   "lastAgentText": "Got it. I've prepared it as a draft for Northwind Studio. It stays a draft until you approve, and nothing goes to Northwind yet."
+  },
+  {
+   "name": "a2-channel-task-asker-390-dark",
+   "state": "channel-task-asker",
+   "viewport": "390x844",
+   "theme": "dark",
+   "viewer": "morgan (owner, the asker)",
+   "errors": [],
+   "docOverflowX": false,
+   "pageOverflowXpx": 0,
+   "hubOverflowXpx": 0,
+   "goldOutsideApprove": false,
+   "goldUse": {
+    "approve": [
+     "button.inline-flex.items-center.justify-center:background-color=rgb(212, 167, 82)"
+    ],
+    "paigeIdentity": [],
+    "status": [],
+    "leaks": []
+   },
+   "cards": [
+    {
+     "agent": "zion",
+     "state": "waiting",
+     "view": "asker",
+     "text": "Operations task Needs your OK ZION wants to create a task in Operations: “Prepare the onboarding packet”, for Jordan Lee, due Fri, Oct 31. Approve Not now",
+     "buttons": [
+      {
+       "text": "Approve",
+       "height": 32,
+       "disabled": false
+      },
+      {
+       "text": "Not now",
+       "height": 32,
+       "disabled": false
+      }
+     ],
+     "links": [],
+     "strip": {
+      "boxShadow": "rgb(110, 164, 235) 0px 2px 0px 0px inset",
+      "background": "color(srgb 0.105098 0.133922 0.197059)",
+      "kindColor": "rgb(164, 202, 254)",
+      "expectFill": "rgb(110, 164, 235)",
+      "expectInk": "rgb(164, 202, 254)",
+      "lineIsAgentFill": true,
+      "kindIsAgentInk": true
+     },
+     "agentColourInFooter": [],
+     "approveFill": {
+      "background": "rgb(212, 167, 82)",
+      "isPgGoldFill": true,
+      "backgroundImage": "none",
+      "color": "rgb(8, 7, 11)",
+      "height": 32,
+      "radius": "8px",
+      "boxShadow": "rgba(0, 0, 0, 0.45) 0px 1px 2px 0px"
+     },
+     "type": {
+      "summary": {
+       "fontSize": "14px",
+       "fontWeight": "600",
+       "color": "rgb(246, 242, 234)"
+      },
+      "footer": {
+       "fontSize": "12.5px",
+       "fontWeight": "600",
+       "color": "rgb(214, 208, 201)"
+      }
+     },
+     "footerOrder": [
+      "Not now",
+      "Approve"
+     ],
+     "rect": {
+      "left": 76,
+      "right": 364,
+      "width": 288,
+      "height": 166
+     },
+     "insideMessageBody": false,
+     "insideViewport": true,
+     "overflowX": false
+    }
+   ],
+   "lastAgentText": "Here it is as an Operations task. Nothing is created until Morgan approves it."
+  },
+  {
+   "name": "a2-channel-task-asker-390-light",
+   "state": "channel-task-asker",
+   "viewport": "390x844",
+   "theme": "light",
+   "viewer": "morgan (owner, the asker)",
+   "errors": [],
+   "docOverflowX": false,
+   "pageOverflowXpx": 0,
+   "hubOverflowXpx": 0,
+   "goldOutsideApprove": false,
+   "goldUse": {
+    "approve": [
+     "button.inline-flex.items-center.justify-center:background-color=rgb(201, 169, 106)"
+    ],
+    "paigeIdentity": [],
+    "status": [],
+    "leaks": []
+   },
+   "cards": [
+    {
+     "agent": "zion",
+     "state": "waiting",
+     "view": "asker",
+     "text": "Operations task Needs your OK ZION wants to create a task in Operations: “Prepare the onboarding packet”, for Jordan Lee, due Fri, Oct 31. Approve Not now",
+     "buttons": [
+      {
+       "text": "Approve",
+       "height": 32,
+       "disabled": false
+      },
+      {
+       "text": "Not now",
+       "height": 32,
+       "disabled": false
+      }
+     ],
+     "links": [],
+     "strip": {
+      "boxShadow": "rgb(82, 134, 203) 0px 2px 0px 0px inset",
+      "background": "color(srgb 0.927255 0.941961 0.95902)",
+      "kindColor": "rgb(55, 100, 160)",
+      "expectFill": "rgb(82, 134, 203)",
+      "expectInk": "rgb(55, 100, 160)",
+      "lineIsAgentFill": true,
+      "kindIsAgentInk": true
+     },
+     "agentColourInFooter": [],
+     "approveFill": {
+      "background": "rgb(201, 169, 106)",
+      "isPgGoldFill": true,
+      "backgroundImage": "none",
+      "color": "rgb(32, 30, 35)",
+      "height": 32,
+      "radius": "8px",
+      "boxShadow": "rgba(45, 40, 50, 0.1) 0px 1px 2px 0px"
+     },
+     "type": {
+      "summary": {
+       "fontSize": "14px",
+       "fontWeight": "600",
+       "color": "rgb(32, 30, 35)"
+      },
+      "footer": {
+       "fontSize": "12.5px",
+       "fontWeight": "600",
+       "color": "rgb(61, 57, 65)"
+      }
+     },
+     "footerOrder": [
+      "Not now",
+      "Approve"
+     ],
+     "rect": {
+      "left": 76,
+      "right": 364,
+      "width": 288,
+      "height": 166
+     },
+     "insideMessageBody": false,
+     "insideViewport": true,
+     "overflowX": false
+    }
+   ],
+   "lastAgentText": "Here it is as an Operations task. Nothing is created until Morgan approves it."
+  },
+  {
+   "name": "a2-channel-task-other-390-dark",
+   "state": "channel-task-other",
+   "viewport": "390x844",
+   "theme": "dark",
+   "viewer": "priya",
+   "errors": [],
+   "docOverflowX": false,
+   "pageOverflowXpx": 0,
+   "hubOverflowXpx": 0,
+   "goldOutsideApprove": false,
+   "goldUse": {
+    "approve": [],
+    "paigeIdentity": [],
+    "status": [],
+    "leaks": []
+   },
+   "cards": [
+    {
+     "agent": "zion",
+     "state": "waiting",
+     "view": "other",
+     "text": "Operations task ZION wants to create a task in Operations: “Prepare the onboarding packet”, for Jordan Lee, due Fri, Oct 31. Waiting on Morgan. Only Morgan can approve this, because Morgan asked.",
+     "buttons": [],
+     "links": [],
+     "strip": {
+      "boxShadow": "rgb(110, 164, 235) 0px 2px 0px 0px inset",
+      "background": "color(srgb 0.105098 0.133922 0.197059)",
+      "kindColor": "rgb(164, 202, 254)",
+      "expectFill": "rgb(110, 164, 235)",
+      "expectInk": "rgb(164, 202, 254)",
+      "lineIsAgentFill": true,
+      "kindIsAgentInk": true
+     },
+     "agentColourInFooter": [],
+     "approveFill": null,
+     "type": {
+      "summary": {
+       "fontSize": "14px",
+       "fontWeight": "600",
+       "color": "rgb(246, 242, 234)"
+      },
+      "footer": {
+       "fontSize": "12.5px",
+       "fontWeight": "600",
+       "color": "rgb(214, 208, 201)"
+      }
+     },
+     "footerOrder": [],
+     "rect": {
+      "left": 76,
+      "right": 364,
+      "width": 288,
+      "height": 170
+     },
+     "insideMessageBody": false,
+     "insideViewport": true,
+     "overflowX": false
+    }
+   ],
+   "lastAgentText": "Here it is as an Operations task. Nothing is created until Morgan approves it."
+  },
+  {
+   "name": "a2-channel-task-other-390-light",
+   "state": "channel-task-other",
+   "viewport": "390x844",
+   "theme": "light",
+   "viewer": "priya",
+   "errors": [],
+   "docOverflowX": false,
+   "pageOverflowXpx": 0,
+   "hubOverflowXpx": 0,
+   "goldOutsideApprove": false,
+   "goldUse": {
+    "approve": [],
+    "paigeIdentity": [],
+    "status": [],
+    "leaks": []
+   },
+   "cards": [
+    {
+     "agent": "zion",
+     "state": "waiting",
+     "view": "other",
+     "text": "Operations task ZION wants to create a task in Operations: “Prepare the onboarding packet”, for Jordan Lee, due Fri, Oct 31. Waiting on Morgan. Only Morgan can approve this, because Morgan asked.",
+     "buttons": [],
+     "links": [],
+     "strip": {
+      "boxShadow": "rgb(82, 134, 203) 0px 2px 0px 0px inset",
+      "background": "color(srgb 0.927255 0.941961 0.95902)",
+      "kindColor": "rgb(55, 100, 160)",
+      "expectFill": "rgb(82, 134, 203)",
+      "expectInk": "rgb(55, 100, 160)",
+      "lineIsAgentFill": true,
+      "kindIsAgentInk": true
+     },
+     "agentColourInFooter": [],
+     "approveFill": null,
+     "type": {
+      "summary": {
+       "fontSize": "14px",
+       "fontWeight": "600",
+       "color": "rgb(32, 30, 35)"
+      },
+      "footer": {
+       "fontSize": "12.5px",
+       "fontWeight": "600",
+       "color": "rgb(61, 57, 65)"
+      }
+     },
+     "footerOrder": [],
+     "rect": {
+      "left": 76,
+      "right": 364,
+      "width": 288,
+      "height": 170
+     },
+     "insideMessageBody": false,
+     "insideViewport": true,
+     "overflowX": false
+    }
+   ],
+   "lastAgentText": "Here it is as an Operations task. Nothing is created until Morgan approves it."
+  },
+  {
+   "name": "a2-done-390-dark",
+   "state": "done",
+   "viewport": "390x844",
+   "theme": "dark",
+   "viewer": "morgan (owner, the asker)",
+   "errors": [],
+   "docOverflowX": false,
+   "pageOverflowXpx": 0,
+   "hubOverflowXpx": 0,
+   "goldOutsideApprove": false,
+   "goldUse": {
+    "approve": [],
+    "paigeIdentity": [],
+    "status": [],
+    "leaks": []
+   },
+   "cards": [
+    {
+     "agent": "zion",
+     "state": "done",
+     "view": "asker",
+     "text": "Operations task Done Approved by you · 10:04 AM Created in Operations: “Prepare the onboarding packet”, for Jordan Lee, due Fri, Oct 31.",
+     "buttons": [],
+     "links": [],
+     "strip": {
+      "boxShadow": "rgb(110, 164, 235) 0px 2px 0px 0px inset",
+      "background": "color(srgb 0.105098 0.133922 0.197059)",
+      "kindColor": "rgb(164, 202, 254)",
+      "expectFill": "rgb(110, 164, 235)",
+      "expectInk": "rgb(164, 202, 254)",
+      "lineIsAgentFill": true,
+      "kindIsAgentInk": true
+     },
+     "agentColourInFooter": [],
+     "approveFill": null,
+     "type": {
+      "summary": {
+       "fontSize": "14px",
+       "fontWeight": "600",
+       "color": "rgb(246, 242, 234)"
+      },
+      "footer": {
+       "fontSize": "12.5px",
+       "fontWeight": "600",
+       "color": "rgb(214, 208, 201)"
+      }
+     },
+     "footerOrder": [],
+     "rect": {
+      "left": 76,
+      "right": 364,
+      "width": 288,
+      "height": 165
+     },
+     "insideMessageBody": false,
+     "insideViewport": true,
+     "overflowX": false
+    }
+   ],
+   "lastAgentText": "Here it is as an Operations task. Nothing is created until Morgan approves it."
+  },
+  {
+   "name": "a2-done-390-light",
+   "state": "done",
+   "viewport": "390x844",
+   "theme": "light",
+   "viewer": "morgan (owner, the asker)",
+   "errors": [],
+   "docOverflowX": false,
+   "pageOverflowXpx": 0,
+   "hubOverflowXpx": 0,
+   "goldOutsideApprove": false,
+   "goldUse": {
+    "approve": [],
+    "paigeIdentity": [],
+    "status": [],
+    "leaks": []
+   },
+   "cards": [
+    {
+     "agent": "zion",
+     "state": "done",
+     "view": "asker",
+     "text": "Operations task Done Approved by you · 10:04 AM Created in Operations: “Prepare the onboarding packet”, for Jordan Lee, due Fri, Oct 31.",
+     "buttons": [],
+     "links": [],
+     "strip": {
+      "boxShadow": "rgb(82, 134, 203) 0px 2px 0px 0px inset",
+      "background": "color(srgb 0.927255 0.941961 0.95902)",
+      "kindColor": "rgb(55, 100, 160)",
+      "expectFill": "rgb(82, 134, 203)",
+      "expectInk": "rgb(55, 100, 160)",
+      "lineIsAgentFill": true,
+      "kindIsAgentInk": true
+     },
+     "agentColourInFooter": [],
+     "approveFill": null,
+     "type": {
+      "summary": {
+       "fontSize": "14px",
+       "fontWeight": "600",
+       "color": "rgb(32, 30, 35)"
+      },
+      "footer": {
+       "fontSize": "12.5px",
+       "fontWeight": "600",
+       "color": "rgb(61, 57, 65)"
+      }
+     },
+     "footerOrder": [],
+     "rect": {
+      "left": 76,
+      "right": 364,
+      "width": 288,
+      "height": 165
+     },
+     "insideMessageBody": false,
+     "insideViewport": true,
+     "overflowX": false
+    }
+   ],
+   "lastAgentText": "Here it is as an Operations task. Nothing is created until Morgan approves it."
+  },
+  {
+   "name": "a2-failed-390-dark",
+   "state": "failed",
+   "viewport": "390x844",
+   "theme": "dark",
+   "viewer": "morgan (owner, the asker)",
+   "errors": [],
+   "docOverflowX": false,
+   "pageOverflowXpx": 0,
+   "hubOverflowXpx": 0,
+   "goldOutsideApprove": false,
+   "goldUse": {
+    "approve": [],
+    "paigeIdentity": [],
+    "status": [],
+    "leaks": []
+   },
+   "cards": [
+    {
+     "agent": "zion",
+     "state": "failed",
+     "view": "asker",
+     "text": "Operations task Didn't run Approved by you · 10:04 AM ZION wants to create a task in Operations: “Prepare the onboarding packet”, for Jordan Lee, due Fri, Oct 31. Jordan Lee isn't on this workspace's Operations board any more, so the task wasn't created.",
+     "buttons": [],
+     "links": [],
+     "strip": {
+      "boxShadow": "rgb(110, 164, 235) 0px 2px 0px 0px inset",
+      "background": "color(srgb 0.105098 0.133922 0.197059)",
+      "kindColor": "rgb(164, 202, 254)",
+      "expectFill": "rgb(110, 164, 235)",
+      "expectInk": "rgb(164, 202, 254)",
+      "lineIsAgentFill": true,
+      "kindIsAgentInk": true
+     },
+     "agentColourInFooter": [],
+     "approveFill": null,
+     "type": {
+      "summary": {
+       "fontSize": "14px",
+       "fontWeight": "600",
+       "color": "rgb(246, 242, 234)"
+      },
+      "footer": {
+       "fontSize": "12.5px",
+       "fontWeight": "600",
+       "color": "rgb(214, 208, 201)"
+      }
+     },
+     "footerOrder": [],
+     "rect": {
+      "left": 76,
+      "right": 364,
+      "width": 288,
+      "height": 221
+     },
+     "insideMessageBody": false,
+     "insideViewport": true,
+     "overflowX": false
+    }
+   ],
+   "lastAgentText": "Here it is as an Operations task. Nothing is created until Morgan approves it."
+  },
+  {
+   "name": "a2-failed-390-light",
+   "state": "failed",
+   "viewport": "390x844",
+   "theme": "light",
+   "viewer": "morgan (owner, the asker)",
+   "errors": [],
+   "docOverflowX": false,
+   "pageOverflowXpx": 0,
+   "hubOverflowXpx": 0,
+   "goldOutsideApprove": false,
+   "goldUse": {
+    "approve": [],
+    "paigeIdentity": [],
+    "status": [],
+    "leaks": []
+   },
+   "cards": [
+    {
+     "agent": "zion",
+     "state": "failed",
+     "view": "asker",
+     "text": "Operations task Didn't run Approved by you · 10:04 AM ZION wants to create a task in Operations: “Prepare the onboarding packet”, for Jordan Lee, due Fri, Oct 31. Jordan Lee isn't on this workspace's Operations board any more, so the task wasn't created.",
+     "buttons": [],
+     "links": [],
+     "strip": {
+      "boxShadow": "rgb(82, 134, 203) 0px 2px 0px 0px inset",
+      "background": "color(srgb 0.927255 0.941961 0.95902)",
+      "kindColor": "rgb(55, 100, 160)",
+      "expectFill": "rgb(82, 134, 203)",
+      "expectInk": "rgb(55, 100, 160)",
+      "lineIsAgentFill": true,
+      "kindIsAgentInk": true
+     },
+     "agentColourInFooter": [],
+     "approveFill": null,
+     "type": {
+      "summary": {
+       "fontSize": "14px",
+       "fontWeight": "600",
+       "color": "rgb(32, 30, 35)"
+      },
+      "footer": {
+       "fontSize": "12.5px",
+       "fontWeight": "600",
+       "color": "rgb(61, 57, 65)"
+      }
+     },
+     "footerOrder": [],
+     "rect": {
+      "left": 76,
+      "right": 364,
+      "width": 288,
+      "height": 221
+     },
+     "insideMessageBody": false,
+     "insideViewport": true,
+     "overflowX": false
+    }
+   ],
+   "lastAgentText": "Here it is as an Operations task. Nothing is created until Morgan approves it."
+  },
+  {
+   "name": "a2-declined-390-dark",
+   "state": "declined",
+   "viewport": "390x844",
+   "theme": "dark",
+   "viewer": "morgan (owner, the asker)",
+   "errors": [],
+   "docOverflowX": false,
+   "pageOverflowXpx": 0,
+   "hubOverflowXpx": 0,
+   "goldOutsideApprove": false,
+   "goldUse": {
+    "approve": [],
+    "paigeIdentity": [],
+    "status": [],
+    "leaks": []
+   },
+   "cards": [
+    {
+     "agent": "zion",
+     "state": "declined",
+     "view": "asker",
+     "text": "Operations task ZION wants to create a task in Operations: “Prepare the onboarding packet”, for Jordan Lee, due Fri, Oct 31. You chose Not now at 10:03 AM. Nothing was changed.",
+     "buttons": [],
+     "links": [],
+     "strip": {
+      "boxShadow": "rgb(110, 164, 235) 0px 2px 0px 0px inset",
+      "background": "color(srgb 0.105098 0.133922 0.197059)",
+      "kindColor": "rgb(164, 202, 254)",
+      "expectFill": "rgb(110, 164, 235)",
+      "expectInk": "rgb(164, 202, 254)",
+      "lineIsAgentFill": true,
+      "kindIsAgentInk": true
+     },
+     "agentColourInFooter": [],
+     "approveFill": null,
+     "type": {
+      "summary": {
+       "fontSize": "14px",
+       "fontWeight": "500",
+       "color": "rgb(214, 208, 201)"
+      },
+      "footer": {
+       "fontSize": "12.5px",
+       "fontWeight": "400",
+       "color": "rgb(214, 208, 201)"
+      }
+     },
+     "footerOrder": [],
+     "rect": {
+      "left": 76,
+      "right": 364,
+      "width": 288,
+      "height": 170
+     },
+     "insideMessageBody": false,
+     "insideViewport": true,
+     "overflowX": false
+    }
+   ],
+   "lastAgentText": "Here it is as an Operations task. Nothing is created until Morgan approves it."
+  },
+  {
+   "name": "a2-declined-390-light",
+   "state": "declined",
+   "viewport": "390x844",
+   "theme": "light",
+   "viewer": "morgan (owner, the asker)",
+   "errors": [],
+   "docOverflowX": false,
+   "pageOverflowXpx": 0,
+   "hubOverflowXpx": 0,
+   "goldOutsideApprove": false,
+   "goldUse": {
+    "approve": [],
+    "paigeIdentity": [],
+    "status": [],
+    "leaks": []
+   },
+   "cards": [
+    {
+     "agent": "zion",
+     "state": "declined",
+     "view": "asker",
+     "text": "Operations task ZION wants to create a task in Operations: “Prepare the onboarding packet”, for Jordan Lee, due Fri, Oct 31. You chose Not now at 10:03 AM. Nothing was changed.",
+     "buttons": [],
+     "links": [],
+     "strip": {
+      "boxShadow": "rgb(82, 134, 203) 0px 2px 0px 0px inset",
+      "background": "color(srgb 0.927255 0.941961 0.95902)",
+      "kindColor": "rgb(55, 100, 160)",
+      "expectFill": "rgb(82, 134, 203)",
+      "expectInk": "rgb(55, 100, 160)",
+      "lineIsAgentFill": true,
+      "kindIsAgentInk": true
+     },
+     "agentColourInFooter": [],
+     "approveFill": null,
+     "type": {
+      "summary": {
+       "fontSize": "14px",
+       "fontWeight": "500",
+       "color": "rgb(61, 57, 65)"
+      },
+      "footer": {
+       "fontSize": "12.5px",
+       "fontWeight": "400",
+       "color": "rgb(61, 57, 65)"
+      }
+     },
+     "footerOrder": [],
+     "rect": {
+      "left": 76,
+      "right": 364,
+      "width": 288,
+      "height": 170
+     },
+     "insideMessageBody": false,
+     "insideViewport": true,
+     "overflowX": false
+    }
+   ],
+   "lastAgentText": "Here it is as an Operations task. Nothing is created until Morgan approves it."
+  },
+  {
+   "name": "a2-expired-390-dark",
+   "state": "expired",
+   "viewport": "390x844",
+   "theme": "dark",
+   "viewer": "morgan (owner, the asker)",
+   "errors": [],
+   "docOverflowX": false,
+   "pageOverflowXpx": 0,
+   "hubOverflowXpx": 0,
+   "goldOutsideApprove": false,
+   "goldUse": {
+    "approve": [],
+    "paigeIdentity": [],
+    "status": [],
+    "leaks": []
+   },
+   "cards": [
+    {
+     "agent": "zion",
+     "state": "expired",
+     "view": "asker",
+     "text": "Operations task ZION wants to create a task in Operations: “Prepare the onboarding packet”, for Jordan Lee, due Fri, Oct 31. Expired at 10:32 AM. Nothing was changed.",
+     "buttons": [],
+     "links": [],
+     "strip": {
+      "boxShadow": "rgb(110, 164, 235) 0px 2px 0px 0px inset",
+      "background": "color(srgb 0.105098 0.133922 0.197059)",
+      "kindColor": "rgb(164, 202, 254)",
+      "expectFill": "rgb(110, 164, 235)",
+      "expectInk": "rgb(164, 202, 254)",
+      "lineIsAgentFill": true,
+      "kindIsAgentInk": true
+     },
+     "agentColourInFooter": [],
+     "approveFill": null,
+     "type": {
+      "summary": {
+       "fontSize": "14px",
+       "fontWeight": "500",
+       "color": "rgb(214, 208, 201)"
+      },
+      "footer": {
+       "fontSize": "12.5px",
+       "fontWeight": "400",
+       "color": "rgb(214, 208, 201)"
+      }
+     },
+     "footerOrder": [],
+     "rect": {
+      "left": 76,
+      "right": 364,
+      "width": 288,
+      "height": 170
+     },
+     "insideMessageBody": false,
+     "insideViewport": true,
+     "overflowX": false
+    }
+   ],
+   "lastAgentText": "Here it is as an Operations task. Nothing is created until Morgan approves it."
+  },
+  {
+   "name": "a2-expired-390-light",
+   "state": "expired",
+   "viewport": "390x844",
+   "theme": "light",
+   "viewer": "morgan (owner, the asker)",
+   "errors": [],
+   "docOverflowX": false,
+   "pageOverflowXpx": 0,
+   "hubOverflowXpx": 0,
+   "goldOutsideApprove": false,
+   "goldUse": {
+    "approve": [],
+    "paigeIdentity": [],
+    "status": [],
+    "leaks": []
+   },
+   "cards": [
+    {
+     "agent": "zion",
+     "state": "expired",
+     "view": "asker",
+     "text": "Operations task ZION wants to create a task in Operations: “Prepare the onboarding packet”, for Jordan Lee, due Fri, Oct 31. Expired at 10:32 AM. Nothing was changed.",
+     "buttons": [],
+     "links": [],
+     "strip": {
+      "boxShadow": "rgb(82, 134, 203) 0px 2px 0px 0px inset",
+      "background": "color(srgb 0.927255 0.941961 0.95902)",
+      "kindColor": "rgb(55, 100, 160)",
+      "expectFill": "rgb(82, 134, 203)",
+      "expectInk": "rgb(55, 100, 160)",
+      "lineIsAgentFill": true,
+      "kindIsAgentInk": true
+     },
+     "agentColourInFooter": [],
+     "approveFill": null,
+     "type": {
+      "summary": {
+       "fontSize": "14px",
+       "fontWeight": "500",
+       "color": "rgb(61, 57, 65)"
+      },
+      "footer": {
+       "fontSize": "12.5px",
+       "fontWeight": "400",
+       "color": "rgb(61, 57, 65)"
+      }
+     },
+     "footerOrder": [],
+     "rect": {
+      "left": 76,
+      "right": 364,
+      "width": 288,
+      "height": 170
+     },
+     "insideMessageBody": false,
+     "insideViewport": true,
+     "overflowX": false
+    }
+   ],
+   "lastAgentText": "Here it is as an Operations task. Nothing is created until Morgan approves it."
+  },
+  {
+   "name": "a2-standing-390-dark",
+   "state": "standing",
+   "viewport": "390x844",
+   "theme": "dark",
+   "viewer": "morgan (owner, the asker)",
+   "errors": [],
+   "docOverflowX": false,
+   "pageOverflowXpx": 0,
+   "hubOverflowXpx": 0,
+   "goldOutsideApprove": false,
+   "goldUse": {
+    "approve": [],
+    "paigeIdentity": [],
+    "status": [],
+    "leaks": []
+   },
+   "cards": [
+    {
+     "agent": "zion",
+     "state": "standing",
+     "view": "asker",
+     "text": "Operations task Created in Operations: “Prepare the onboarding packet”, for Jordan Lee, due Fri, Oct 31. Covers: Operations tasks you ask ZION for in this workspace. Done under your standing permission · 10:04 AM Pause",
+     "buttons": [
+      {
+       "text": "Pause",
+       "height": 32,
+       "disabled": false
+      }
+     ],
+     "links": [],
+     "strip": {
+      "boxShadow": "rgb(110, 164, 235) 0px 2px 0px 0px inset",
+      "background": "color(srgb 0.105098 0.133922 0.197059)",
+      "kindColor": "rgb(164, 202, 254)",
+      "expectFill": "rgb(110, 164, 235)",
+      "expectInk": "rgb(164, 202, 254)",
+      "lineIsAgentFill": true,
+      "kindIsAgentInk": true
+     },
+     "agentColourInFooter": [],
+     "approveFill": null,
+     "type": {
+      "summary": {
+       "fontSize": "14px",
+       "fontWeight": "600",
+       "color": "rgb(246, 242, 234)"
+      },
+      "footer": null
+     },
+     "footerOrder": [],
+     "rect": {
+      "left": 76,
+      "right": 364,
+      "width": 288,
+      "height": 208
+     },
+     "insideMessageBody": false,
+     "insideViewport": true,
+     "overflowX": false
+    }
+   ],
+   "lastAgentText": "Done. It's on the Operations board for Jordan, due Fri, Oct 31."
+  },
+  {
+   "name": "a2-standing-390-light",
+   "state": "standing",
+   "viewport": "390x844",
+   "theme": "light",
+   "viewer": "morgan (owner, the asker)",
+   "errors": [],
+   "docOverflowX": false,
+   "pageOverflowXpx": 0,
+   "hubOverflowXpx": 0,
+   "goldOutsideApprove": false,
+   "goldUse": {
+    "approve": [],
+    "paigeIdentity": [],
+    "status": [],
+    "leaks": []
+   },
+   "cards": [
+    {
+     "agent": "zion",
+     "state": "standing",
+     "view": "asker",
+     "text": "Operations task Created in Operations: “Prepare the onboarding packet”, for Jordan Lee, due Fri, Oct 31. Covers: Operations tasks you ask ZION for in this workspace. Done under your standing permission · 10:04 AM Pause",
+     "buttons": [
+      {
+       "text": "Pause",
+       "height": 32,
+       "disabled": false
+      }
+     ],
+     "links": [],
+     "strip": {
+      "boxShadow": "rgb(82, 134, 203) 0px 2px 0px 0px inset",
+      "background": "color(srgb 0.927255 0.941961 0.95902)",
+      "kindColor": "rgb(55, 100, 160)",
+      "expectFill": "rgb(82, 134, 203)",
+      "expectInk": "rgb(55, 100, 160)",
+      "lineIsAgentFill": true,
+      "kindIsAgentInk": true
+     },
+     "agentColourInFooter": [],
+     "approveFill": null,
+     "type": {
+      "summary": {
+       "fontSize": "14px",
+       "fontWeight": "600",
+       "color": "rgb(32, 30, 35)"
+      },
+      "footer": null
+     },
+     "footerOrder": [],
+     "rect": {
+      "left": 76,
+      "right": 364,
+      "width": 288,
+      "height": 208
+     },
+     "insideMessageBody": false,
+     "insideViewport": true,
+     "overflowX": false
+    }
+   ],
+   "lastAgentText": "Done. It's on the Operations board for Jordan, due Fri, Oct 31."
+  }
+ ],
+ "interactions": [
+  {
+   "name": "approve-dm",
+   "state": "dm-prepare",
+   "buttonsBefore": [
+    "Approve",
+    "Not now"
+   ],
+   "clicked": "Approve",
+   "recorded": [
+    {
+     "message": "a-merit-mr1",
+     "act": {
+      "kind": "approve",
+      "fingerprints": [
+       "fp-merit-inv-1"
+      ]
+     }
+    }
+   ],
+   "errors": []
+  },
+  {
+   "name": "not-now-channel",
+   "state": "channel-task-asker",
+   "buttonsBefore": [
+    "Approve",
+    "Not now"
+   ],
+   "clicked": "Not now",
+   "recorded": [
+    {
+     "message": "a-zion-dm3",
+     "act": {
+      "kind": "decline",
+      "fingerprints": [
+       "fp-zion-task-1"
+      ]
+     }
+    }
+   ],
+   "errors": []
+  },
+  {
+   "name": "other-member-has-no-controls",
+   "state": "channel-task-other",
+   "buttonsBefore": [],
+   "clicked": null,
+   "recorded": [],
+   "errors": []
+  },
+  {
+   "name": "offline-controls-disabled",
+   "state": "channel-task-offline",
+   "buttonsBefore": [
+    "Approve (disabled)",
+    "Not now (disabled)"
+   ],
+   "clicked": null,
+   "recorded": [],
+   "errors": []
+  },
+  {
+   "name": "pause-standing",
+   "state": "standing",
+   "buttonsBefore": [
+    "Pause"
+   ],
+   "clicked": "Pause",
+   "recorded": [
+    {
+     "message": "a-zion-dm3",
+     "act": {
+      "kind": "pause"
+     }
+    }
+   ],
+   "errors": []
+  },
+  {
+   "name": "standing-other-has-no-controls",
+   "state": "standing-other",
+   "buttonsBefore": [],
+   "clicked": null,
+   "recorded": [],
+   "errors": []
+  },
+  {
+   "name": "keyboard-focus-approve",
+   "focused": "Approve",
+   "outline": "solid 2px rgb(155, 141, 224)",
+   "boxShadow": "rgba(0, 0, 0, 0.45) 0px 1px 2px 0px",
+   "violet": "#9b8de0"
+  }
+ ]
+}

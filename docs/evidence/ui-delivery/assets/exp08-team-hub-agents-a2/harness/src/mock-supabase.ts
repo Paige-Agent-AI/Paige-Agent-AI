@@ -68,8 +68,18 @@ const daily = (): Row[] => {
     created_at: today(10, 4), approval: approval({ state: "standing", decided_by_name: "Morgan Reyes", decided_at: today(10, 4),
       covered_by: viewer === "u-me" ? "Operations tasks you ask ZION for in this workspace" : "Operations tasks Morgan asks ZION for in this workspace",
       actions: [{ summary: TASK, state: "done", note: "Created in Operations: \u201cPrepare the onboarding packet\u201d, for Jordan Lee, due Fri, Oct 31." }] }) })];
+  // A2a slice 1 (separate from the frozen A2 set): a person's task message whose card links to
+  // Operations → Work. `tr` picks the plan_items read: read (default), failed or unreadable.
+  if (scenario === "a2-taskcard") return [...earlier, agentMsg("zion", "dm1", "u-me", suggest, { created_at: today(9, 59) }),
+    msg({ id: "dm4", author_user_id: "u-me", body: "/PAIGE draft a task", work_ref: { source: "planning", id: TASK_ID }, created_at: today(10, 6) })];
   return earlier;
 };
+const TASK_ID = "e8000000-0000-4000-8000-0000000a0001";
+const taskRead = params.get("tr") ?? "read";
+const planItems = () => scenario !== "a2-taskcard" ? { data: [], error: null }
+  : taskRead === "failed" ? { data: null, error: { message: "harness: the read failed" } }
+  : taskRead === "unreadable" ? { data: [], error: null }
+  : { data: [{ id: TASK_ID, title: "Prepare the onboarding packet", status: "open", assigned_to_user_id: "u-jordan", due_at: "2026-10-31T17:00:00.000Z", updated_at: today(10, 6) }], error: null };
 const db = {
   people: firstUse ? [people[0]] : people,
   conversations: firstUse ? [] as Row[] : [
@@ -263,7 +273,7 @@ async function agentTurn(body: Row) {
 
 export const supabase = {
   rpc: async (name: string, p: Row) => ({ data: backend(name, p), error: null }),
-  from: () => ({ select() { return this; }, eq() { return this; }, in() { return Promise.resolve({ data: [], error: null }); } }),
+  from: (table: string) => ({ select() { return this; }, eq() { return this; }, in() { return Promise.resolve(table === "plan_items" ? planItems() : { data: [], error: null }); } }),
   functions: { invoke: async (name: string, options: { body: Row }) => name === "paige-ai-chat" ? { data: await agentTurn(options.body), error: null } : { data: null, error: { message: "not in this harness" } } },
   storage: { from: () => ({ createSignedUrl: async () => ({ data: null, error: { message: "no files here" } }) }) },
   auth: { getSession: async () => ({ data: { session: null } }) },

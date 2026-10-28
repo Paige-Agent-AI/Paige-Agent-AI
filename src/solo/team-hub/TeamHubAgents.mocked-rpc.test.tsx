@@ -177,7 +177,7 @@ async function flush() {
     await act(async () => { await new Promise((resolve) => window.requestAnimationFrame(() => resolve(undefined))); });
   }
 }
-async function mount(props: { openPaige?: () => void; onOpenTeamSettings?: () => void } = {}) {
+async function mount(props: { openPaige?: () => void; onOpenTeamSettings?: () => void; onApprovalAct?: (message: Row, act: Row) => void } = {}) {
   const host = document.createElement("div");
   document.body.append(host);
   const root = createRoot(host);
@@ -1422,5 +1422,34 @@ describe("A1c: one @ list for anyone you'd address (Slack-style), and @channel /
     expect(row.querySelector(".th-ag-chip[data-ag='cura']")!.textContent).toBe("@CURA");
     expect(row.querySelector(".th-bc-chip")!.textContent).toBe("@channel");
     expect(rowOf(host, "m-typed")!.querySelector(".th-bc-chip")).toBeNull();
+  });
+});
+
+// EXP08 A2a: the approved card is mounted in the real workspace, and the Solo shell passes no
+// onApprovalAct (SoloApp.tsx), so the asker must never see an Approve that nothing can redeem (§70).
+describe("A2a: the approval card in the real workspace", () => {
+  const approval = { state: "waiting", kind: "Operations task", asker_user_id: ME,
+    actions: [{ summary: "ZION wants to create a task in Operations: \u201cPrepare the onboarding packet\u201d.", fingerprint: "fp-zion-1" }] };
+
+  it("draws the asker's card with no Approve and an honest refusal where the shell holds no seam", async () => {
+    db.messages["c-launch"] = [msg({ id: "m-ask", author_user_id: ME, body: "@ZION set up the packet task", agent_mentions: ["zion"] }),
+      reply("zion", "m-ask", "Here is the task I'd create.", { approval })];
+    const host = await mount();
+    const card = rowOf(host, "r-zion-m-ask")!.querySelector(".th-ap")!;
+    expect(card).toBeTruthy();
+    expect(button(card, "Approve")).toBeUndefined();
+    expect(card.querySelector('[data-confirm-part="approve"]')).toBeNull();
+    expect(card.querySelector('[data-confirm-part="refusal"]')!.textContent).toBe("Approving from Team Hub isn't connected yet, so nothing has changed.");
+  });
+
+  it("binds Approve to the message and its fingerprint only where a seam is passed", async () => {
+    db.messages["c-launch"] = [msg({ id: "m-ask", author_user_id: ME, body: "@ZION set up the packet task", agent_mentions: ["zion"] }),
+      reply("zion", "m-ask", "Here is the task I'd create.", { approval })];
+    const onApprovalAct = vi.fn();
+    const host = await mount({ onApprovalAct });
+    await click(rowOf(host, "r-zion-m-ask")!.querySelector<HTMLElement>('[data-confirm-part="approve"]'));
+    expect(onApprovalAct).toHaveBeenCalledTimes(1);
+    expect(onApprovalAct.mock.calls[0][0]).toMatchObject({ id: "r-zion-m-ask" });
+    expect(onApprovalAct.mock.calls[0][1]).toEqual({ kind: "approve", fingerprints: ["fp-zion-1"] });
   });
 });

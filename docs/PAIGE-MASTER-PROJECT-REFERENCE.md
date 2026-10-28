@@ -860,6 +860,13 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**2026-10-28 UTC — EXP08 Team Hub agents A1c live (seven agents proven inline); A2a in progress.**
+
+| Increment | Exact released source and production evidence | Acceptance boundary |
+| --- | --- | --- |
+| [#3020 Team Hub agents A1c](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3020) | Squash merge `536eeb7e5`. Migration `20271120020008_exp08_team_hub_a1c_writing_and_broadcast` applied and recorded in production `schema_migrations`; `db-live` at `536eeb7e5`; `edge-live` at `a21830d8e`, which contains it. Authenticated production proof, read back 2026-10-28: one agent-authored `team_hub_messages` row each from PAIGE, VERA, NEXUS, MENTOR, MERIT, ZION and CURA between 02:20:16 and 02:24:46 UTC on the owner's SOLO account. | All seven agents answer inline in Team Hub on SOLO (the 2026-10-27 MERIT `http_400` is resolved). Everyone in a conversation sees *is writing…*; @channel / @here store recipients but alert nobody (no notification for any mention yet). Agents still take no action. Agency and Sub-account held. |
+| A2a (this PR, branch `exp08-a2-design`) | Not merged. Owner rulings 2026-10-28: Solo focus; the A2 design APPROVED-FROZEN (§28) as rendered by `docs/evidence/ui-delivery/assets/exp08-team-hub-agents-a2/harness`; the four A2 decisions as recommended (contract section 12). Ships the contract with the rulings, the approved card component inert until A2b wires data, and the task-card half of slice 1 (a link to Operations → Work); the PAIGE-chat half and the exact-task address are not built. Evidence record `docs/evidence/ui-delivery/exp08-team-hub-agents-a2a.md`. | Nothing in A2a is live yet. The card draws nothing for anyone until A2b; the task-card link owes a signed-in open after merge. A2b (Suggest + Prepare + redeem in DMs) and A2c (Execute + the channel task) are not built. |
+
 **2026-10-28 UTC — EXP08 Team Hub agents A1b, co-owner invitations I1 and its lock fix.**
 
 | Increment | Exact released source and production evidence | Acceptance boundary |
@@ -8200,6 +8207,13 @@ Current gaps:
   stripped. **Gap:** Team Hub has no notification or unread-mention count for ANY mention yet;
   @channel / @here store recipients and show a chip; alerts are a later increment.
   Contract "A1c notes"; proof `exp08_team_hub_a1c.sql`.
+  **§13 correction (2026-10-28):** the "not merged" and "no agent speaks yet" lines above are history.
+  A1b (#2999 `956b47ef5`) and A1c (#3020 `536eeb7e5`) are merged with their migrations applied
+  (`db-live` at `536eeb7e5`), and all seven agents answered inline on the owner's SOLO account on
+  production, 2026-10-28 02:20–02:24 UTC (one agent-authored message each, read back). Agents still
+  take no action. **A2** (Suggest / Prepare / Execute) is re-scoped and its design APPROVED-FROZEN
+  (owner 2026-10-28, four decisions ruled as recommended); A2a (contract, the inert card component,
+  the task-card link to Operations → Work) is in progress, A2b and A2c are not built. Agency and Sub-account Team Hub stay held.
 - `/solo/{n}/team` still redirects to Settings → Team; Team Hub is a separate destination.
 - Team actions still emit no Rail outcome.
 

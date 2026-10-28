@@ -151,9 +151,9 @@ export interface TeamHubMessage {
  * approved act running; `done`, `failed` and `unconfirmed` are what became of it (the shared card's
  * report words); `declined` is the asker's Not now and `expired` is a card nobody decided in time —
  * two different facts, kept apart because "nothing changed" is true of both for different reasons.
- * `standing` (design option, owner decision 1, goal-driven amendment 2026-10-27): an ordinary write the
+ * `standing` (owner decision 1, ruled 2026-10-28; goal-driven amendment 2026-10-27): an ordinary write the
  * asker holds standing permission for ran without a click; the card is its receipt — what ran, what the
- * permission covers, when, and (for the asker) Pause. Not yet ruled, and no backend writes it.
+ * permission covers, when, and (for the asker) Pause. Written by A2c; no backend writes it yet.
  */
 export type TeamHubApprovalState = "waiting" | "working" | "done" | "failed" | "unconfirmed" | "declined" | "expired" | "standing";
 export const TEAM_HUB_APPROVAL_STATES: readonly TeamHubApprovalState[] = ["waiting", "working", "done", "failed", "unconfirmed", "declined", "expired", "standing"];

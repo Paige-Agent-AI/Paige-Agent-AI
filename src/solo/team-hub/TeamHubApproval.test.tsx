@@ -57,6 +57,23 @@ describe("TeamHubApprovalCard", () => {
     const el = render(<TeamHubApprovalCard approval={waiting()} agent="zion" meId="u-morgan" askerName="Morgan" decidedLabel={null} />);
     expect(buttons(el)).toEqual([]);
     expect(el.textContent).toContain("isn't connected yet, so nothing has changed");
+    // Named for what is true for the asker here, never "Needs your OK" on a card nothing can redeem.
+    expect(el.querySelector('[data-card-mode="decide"]')?.getAttribute("aria-label")).toBe("Approval not available here");
+    expect(el.textContent).not.toContain("Needs your OK");
+  });
+
+  it("tells an asker whose card arrived without a binding that it can no longer be approved, not that Team Hub isn't connected", () => {
+    const el = render(<TeamHubApprovalCard approval={waiting({ actions: [{ summary: SUMMARY }] })} agent="zion" meId="u-morgan" askerName="Morgan" decidedLabel={null} onAct={vi.fn()} />);
+    expect(buttons(el)).toEqual([]);
+    const card = el.querySelector('[data-card-mode="decide"]');
+    expect(card?.querySelector('[data-confirm-part="refusal"]')?.textContent).toBe("This card can no longer be approved, so nothing has changed. Ask again for a fresh one.");
+    expect(card?.getAttribute("aria-label")).toBe("Approval not available here");
+    expect(el.textContent).not.toContain("isn't connected yet");
+  });
+
+  it("keeps the asker's own heading on a card they can approve", () => {
+    const el = render(<TeamHubApprovalCard approval={waiting()} agent="zion" meId="u-morgan" askerName="Morgan" decidedLabel={null} onAct={vi.fn()} />);
+    expect(el.querySelector('[data-card-mode="decide"]')?.getAttribute("aria-label")).not.toBe("Approval not available here");
   });
 
   it("reports Done once, in the server's words, with who approved it", () => {
@@ -75,7 +92,7 @@ describe("TeamHubApprovalCard", () => {
     expect(el.textContent).toContain("Approved by you · 10:04 AM");
   });
 
-  // Standing (design option, owner decision 1): an ordinary write that ran under the asker's standing permission.
+  // Standing (owner decision 1, ruled 2026-10-28; written by A2c, no backend writes it yet): an ordinary write that ran under the asker's standing permission.
   const standing = (): TeamHubApproval => waiting({ state: "standing", decided_at: "2026-10-28T10:04:00Z", covered_by: "Operations tasks you ask ZION for in this workspace",
     actions: [{ summary: SUMMARY, state: "done", note: "Created in Operations: \u201cPrepare the onboarding packet\u201d, for Jordan Lee, due Fri, Oct 31." }] });
 

@@ -221,6 +221,13 @@
 .th-facts dd{margin:0;min-width:0;color:var(--pg-ink-2);overflow-wrap:anywhere}
 .th-src-foot{padding:7px 12px;border-top:1px solid var(--pg-line-soft);background:var(--pg-workspace)}
 .th-src-fresh{color:var(--pg-faint);font:10.5px var(--pg-font-data)}
+/* EXP08 A2a slice 1: the task card's link to Operations → Work. Ink (.th-link), never gold; a 40px
+   target that borrows the foot's padding, the violet ring inset because the card clips its overflow,
+   and a row gap so a wrapped link never covers the read time. */
+.th-src-foot--open{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;column-gap:12px;row-gap:6px}
+.th-src-open{display:inline-flex;align-items:center;gap:4px;margin-block:-6px;margin-inline-end:-4px;font-size:12px;font-weight:600}
+.th-src-open:focus-visible{outline-offset:-2px}
+.th-src-open svg{width:14px;height:14px}
 /* Status is a word and a dot together, never colour alone. */
 .th-state{display:inline-flex;align-items:center;gap:6px;padding:1px 8px;border:1px solid var(--pg-line);border-radius:6px;color:var(--pg-ink-2);font-size:11.5px;white-space:nowrap}
 .th-state::before{content:"";width:6px;height:6px;flex:none;border-radius:50%;background:var(--pg-faint)}

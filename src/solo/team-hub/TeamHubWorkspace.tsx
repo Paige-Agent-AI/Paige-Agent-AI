@@ -1,6 +1,8 @@
 import { createContext, Fragment, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type DragEvent as ReactDragEvent, type KeyboardEvent as ReactKeyboardEvent, type MutableRefObject, type ReactNode, type RefObject } from "react";
-import { ArrowLeft, AtSign, ClipboardList, CornerDownRight, Download, FileImage, FileSpreadsheet, FileText, Hash, Lock, MessageSquareOff, MessageSquareReply, PanelRight, Paperclip, Plus, Radio, Search, SendHorizontal, Slash, UserPlus, Users, WifiOff, X } from "lucide-react";
+import { Link, useInRouterContext } from "react-router-dom";
+import { ArrowLeft, ArrowRight, AtSign, ClipboardList, CornerDownRight, Download, FileImage, FileSpreadsheet, FileText, Hash, Lock, MessageSquareOff, MessageSquareReply, PanelRight, Paperclip, Plus, Radio, Search, SendHorizontal, Slash, UserPlus, Users, WifiOff, X } from "lucide-react";
 import { useTenantContext } from "@/hooks/useTenantContext";
+import { workspaceLinkTarget } from "@/lib/links/workspaceLinks";
 import { handOffPaigePrompt } from "@/lib/paigePromptHandoff";
 import { clearPaigeClientScope } from "@/solo/paigeClientScope";
 import { clearPaigePublicPresenceScope } from "@/solo/paigePublicPresenceScope";
@@ -2099,10 +2101,22 @@ function assigneeLabel(userId: string | null, people: TeamHubPerson[], meId: str
  * The card a task message carries. Everything but the record id is read from the original
  * Operations record, with the time it was read; Team Hub stores none of it. A record the caller's
  * RLS doesn't return is said to be out of sight — its status is never guessed.
+ *
+ * EXP08 A2 slice 1: the card reopens its work in Operations, by reference. A Team Hub task is a
+ * Planning item, and Operations has no address for one Planning item: `?task=` opens a CRM task and
+ * `?weeklySource=planning_item&item=` says the work came from a weekly check. So the link opens
+ * Operations → Work, where the same record is listed under the reader's own permissions — never
+ * `record_id: id`, which would address a different (CRM) record. The address is built from the
+ * account on screen now, through the shared route map; it fails closed outside SOLO, and is not
+ * offered to someone who cannot see the task there.
  */
-function TaskCard({ id, read, people, meId }: { id: string; read: TeamHubTaskRead | undefined; people: TeamHubPerson[]; meId: string }) {
+export function TaskCard({ id, read, people, meId }: { id: string; read: TeamHubTaskRead | undefined; people: TeamHubPerson[]; meId: string }) {
   const short = id.slice(0, 8);
   const state = read?.state ?? "loading";
+  const { activeTenant } = useTenantContext();
+  const inRouter = useInRouterContext();
+  const open = read && (read.state === "read" || read.state === "failed")
+    ? workspaceLinkTarget({ destination: "operations_work", record_id: null }, activeTenant) : null;
   return <div className="th-src" role="group" aria-label={`Task in Operations, record ${short}`}>
     <div className="th-src-top"><ClipboardList aria-hidden="true" /><span className="th-src-kind">Task in Operations</span>
       <span className="th-src-id" title={id}>{short}</span></div>
@@ -2120,8 +2134,11 @@ function TaskCard({ id, read, people, meId }: { id: string; read: TeamHubTaskRea
           : state === "failed" ? "Its status couldn't be read from Operations. Team Hub reads it again on the next refresh."
             : "Reading status from Operations…"}</p>}
     </div>
-    {read && read.state !== "loading" && <div className="th-src-foot">
+    {read && read.state !== "loading" && <div className={open ? "th-src-foot th-src-foot--open" : "th-src-foot"}>
       <span className="th-src-fresh">{read.state === "read" ? `Read from Operations · ${timeLabel(read.readAt)}` : `Checked ${timeLabel(read.readAt)}`}</span>
+      {open && (inRouter
+        ? <Link to={open.to} className="th-link th-src-open">{open.label}<ArrowRight aria-hidden="true" /></Link>
+        : <a href={open.to} className="th-link th-src-open">{open.label}<ArrowRight aria-hidden="true" /></a>)}
     </div>}
   </div>;
 }

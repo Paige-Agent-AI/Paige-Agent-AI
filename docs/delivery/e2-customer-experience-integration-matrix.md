@@ -56,6 +56,38 @@ UNKNOWN/UNRETRIED/uninspected retained. Resources returned/own tabs closed,
 viewport/native zoom restored, original customer tab preserved.
 
 
+## October27 22:58UTC — original activity customer read/reload proof
+
+ANT52/1e80826a and ANT138/074b3350 record a bounded authorized ordinary SOLO
+owner turn on released3004/containing5a4, Chat567/Review107/JWT true before/after.
+Executive displayed original activity with explicit partial/no-aggregate limits;
+source/freshness expanded. One read-only Chat request quoted matching original
+attribution/source/window and refused to infer verified underlying business
+completion, approvals, payment, receipts or causal improvement from record labels.
+Old conversation prefix, whole answer/sources and one saved read step survived
+reload; composer empty. UI30s/settled by83.408s observation is not an exact latency
+or reliability SLO. Live versus persisted footer minute and update-notice chrome
+are explicitly excluded from answer equality; actual source timestamps persist.
+Source-bound public readback remained5a4 through22:57UTC, but the browser bootstrap
+hash was not separately captured in this turn. Actual desktop screenshot is
+private. Own tab closure confirmed, original workspace retained/no viewport
+override, browser resource RETURNED. No action or protected monthly retry.
+
+This advances only positive owner O13 source/projection/continuity subcases.
+Other roles/tenant/cohorts, original domain execution/result/receipt linkage,
+eligible Live and full19/nine/founder remain OPEN. Historical9/0,12/0/4 and
+protected monthly UNKNOWN/UNRETRIED are unchanged.
+
+CAP017-only description preparation follows original3012 Calendar source release:
+same canonical paige_skills row, Limited coverage/actual access states, original
+panel, tools, permissions, tiers, risk, autonomy and activation unchanged. No new
+status registry. Guarded forward carrier20271120101002 follows metadata frontier
+20271120000000; recheck actual ordering before release. Native original catalogue
+suite20 PASS groups retains all earlier controls, with failing-first new copy,
+exact one-row update/other eight+unrelated rows unchanged, replay, custom metadata
+and reader-denial proof. This is LOCAL; Calendar review5675475133/exact43c CI and
+Preview capacity recovery still precede release, then actual catalogue readback.
+
 ## October27 22:45UTC — verified release, customer proof and next Calendar consumer
 
 #3004 merged normally as cea5d4942ef924f25373d1962616e3cfbf440219 after reviewed

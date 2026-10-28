@@ -1032,10 +1032,11 @@ Both closed as superseded with links; their branches are kept.
   at plan and at send, the postal address, the sender, owner/admin filing and person-only approval are unchanged.
   PAIGE's campaign and series chat tools no longer mention or report a daily limit. Proof:
   `exp03_email_send_allowance_removed.sql` 26/26 on a fresh replay (14 fail on the old bodies; 5 fail with only the
-  old claim reinstated), neighbours 299/299. **Still saying 500:** the Marketing › Email screens ("up to 500 a day",
-  "today's limit leaves room for …") and PAIGE's series approval card ("within the daily limit", in
-  `paige-ai-chat/index.ts`, C0b-pinned) — copy follow-ups, not built here. The readers keep reporting `daily_cap`
-  so those screens do not break. On PAIGE's managed sender the real ceiling is now the provider's, shared by every
+  old claim reinstated), neighbours 299/299. The Marketing › Email screens and PAIGE's series approval card no longer
+  state a limit: the dashboard shows the real "N marketing emails sent or sending in the last 24 hours", and the
+  editor warning, the series Daily limit row and "used up" notice are gone (copy removal only; C0b pins for
+  `paige-ai-chat` renewed; evidence `docs/evidence/ui-delivery/exp03-no-email-send-allowance.md`, harness frames light
+  and dark). The readers still return `daily_cap`; nothing reads it. On PAIGE's managed sender the real ceiling is now the provider's, shared by every
   business: SendGrid's trial allows 100 a day (owner-held paid plan, below).
 
 **Open, in order:** the New conversation dialog and draft approval on the door; (chat `send_at` + When row:

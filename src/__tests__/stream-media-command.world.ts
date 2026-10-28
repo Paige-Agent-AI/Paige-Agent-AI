@@ -45,7 +45,6 @@ function providerVideo(kind: NonNullable<WorldOptions["getVideo"]>): StreamVideo
     case "ok_downloading": return { ...base, status: "downloading", duration: null };
     case "ok_ready": return { ...base, status: "ready", duration: 61.5, readyToStream: true, playback: { hls: "https://customer-x.cloudflarestream.com/dddd/manifest/video.m3u8", dash: null }, thumbnail: "https://customer-x/thumbs/dddd.jpg" };
     case "ok_error": return { ...base, status: "error", duration: null };
-    case "ok_ready_from_uploading": return { ...base, status: "ready", duration: 61.5 };
     case "ok_ready_from_uploading": return { ...base, status: "ready", duration: 61.5, readyToStream: true, playback: { hls: "https://customer-x/dddd.m3u8", dash: null }, thumbnail: null };
     default: return { ...base, status: "queued", duration: null };
   }
@@ -72,11 +71,11 @@ export function world(o: WorldOptions = {}) {
     },
   };
 
-  // deno-lint-ignore no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- a PostgREST chain returns itself from every method; a loose record is the honest shape for a double
   const admin: any = {
     from(table: string) {
       const filters: string[][] = [];
-      // deno-lint-ignore no-explicit-any
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- see above
       const chain: any = {};
       const run = () => {
         seen.reads.push({ table, filters: [...filters] });

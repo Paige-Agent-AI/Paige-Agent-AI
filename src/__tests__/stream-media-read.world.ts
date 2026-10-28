@@ -54,7 +54,7 @@ export function world(o: WorldOptions = {}) {
   };
 
   // The service-role double: a PostgREST-shaped from() chain over the assets rows.
-  // deno-lint-ignore no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- a PostgREST chain returns itself from every method; a loose record is the honest shape for a double
   const admin: any = {
     from: (table: string) => {
       let rows: Record<string, unknown>[] = table === "tenant_media_assets" ? assets : [];

@@ -2,6 +2,7 @@ import {describe,expect,it} from 'vitest';
 import {composeClientEngagementStatus} from '../../supabase/functions/_shared/client-engagement/status';
 import {effectiveStandingFixture} from './fixtures/exp04-effective-standing-source';
 import {projectClientStanding} from '../../supabase/functions/_shared/client-engagement/chat';
+import {standingDeliveryEvidence} from '../../supabase/functions/_shared/client-engagement/labels';
 
 const id=(n:number)=>`e4810000-0000-4000-8000-${String(n).padStart(12,'0')}`;
 function fixture(){
@@ -15,6 +16,25 @@ function fixture(){
 }
 
 describe('original client standing consumes reviewed delivery, separately from tasks and money',()=>{
+  it('names an internal revision in the summary without attributing it to the client',()=>{
+   const {source,delivery}=fixture();Object.assign(delivery.items[0],{phase:'internal_revision_requested',release_id:null});
+   const status=composeClientEngagementStatus(source),summary=standingDeliveryEvidence(status);
+   expect(summary).toBe('0 of 1 reviewed milestones accepted by the client · 1 internal revision requested.');
+   expect(projectClientStanding(status)).toContain(`REVIEWED DELIVERY: ${summary}`);
+  });
+  it('keeps simultaneous internal and client revision requests separately attributable',()=>{
+   const {source,delivery}=fixture();delivery.milestone_count=2;
+   delivery.items=[{...delivery.items[0],phase:'internal_revision_requested',release_id:null},
+    {...delivery.items[0],work_item_id:id(12),submission_id:id(13),release_id:id(14),phase:'revision_requested'}];
+   const summary=standingDeliveryEvidence(composeClientEngagementStatus(source));
+   expect(summary).toBe('0 of 2 reviewed milestones accepted by the client · 1 client revision requested · 1 internal revision requested.');
+  });
+  it('describes a reviewed version as unreleased without promising eligibility to release it',()=>{
+   const {source,delivery}=fixture();Object.assign(delivery.items[0],{phase:'not_released',release_id:null,decision_at:null});
+   const text=projectClientStanding(composeClientEngagementStatus(source));
+   expect(text).toContain('Submission revision 1 · Internally reviewed · not released');
+   expect(text).not.toContain('Ready for client release');
+  });
   it('gives PAIGE the same tracked acceptance and explicit engagement hold as the client record',()=>{
    const {source}=fixture(),text=projectClientStanding(composeClientEngagementStatus(source));
    expect(text).toContain('REVIEWED DELIVERY: 1 of 1 reviewed milestones accepted by the client. Engagement completion still needs review.');

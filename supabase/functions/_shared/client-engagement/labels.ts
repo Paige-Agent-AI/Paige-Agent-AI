@@ -19,12 +19,14 @@ export function standingDeliveryEvidence(s: ClientEngagementStatus): string {
   if (d.state === 'scope_changed') return 'The delivery scope changed. Review the plan before confirming completion.';
   const progress = `${d.accepted} of ${d.total} reviewed milestones accepted by the client`;
   if (d.state === 'accepted') return `${progress}. Engagement completion still needs review.`;
-  return `${progress}${d.awaiting ? ` · ${d.awaiting} awaiting their decision` : ''}${d.revisions ? ` · ${d.revisions} revision requested` : ''}.`;
+  const clientRevisions = d.items.filter(item => item.phase === 'revision_requested').length;
+  const internalRevisions = d.items.filter(item => item.phase === 'internal_revision_requested').length;
+  return `${progress}${d.awaiting ? ` · ${d.awaiting} awaiting their decision` : ''}${clientRevisions ? ` · ${clientRevisions} client revision${clientRevisions === 1 ? '' : 's'} requested` : ''}${internalRevisions ? ` · ${internalRevisions} internal revision${internalRevisions === 1 ? '' : 's'} requested` : ''}.`;
 }
 
 export const DELIVERY_PHASE_TEXT = {
   not_submitted: 'Not submitted', internal_review: 'Internal review',
-  internal_revision_requested: 'Internal revision requested', not_released: 'Ready for client release',
+  internal_revision_requested: 'Internal revision requested', not_released: 'Internally reviewed · not released',
   awaiting_client: 'Awaiting client decision', revision_requested: 'Client revision requested', accepted: 'Client accepted',
 } as const;
 

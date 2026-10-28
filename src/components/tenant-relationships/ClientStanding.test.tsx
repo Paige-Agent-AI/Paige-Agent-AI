@@ -68,7 +68,7 @@ describe("ClientStanding", () => {
   });
   it.each([
     ["not_submitted", "Not submitted"], ["internal_review", "Internal review"],
-    ["internal_revision_requested", "Internal revision requested"], ["not_released", "Ready for client release"],
+    ["internal_revision_requested", "Internal revision requested"], ["not_released", "Internally reviewed · not released"],
     ["awaiting_client", "Awaiting client decision"], ["revision_requested", "Client revision requested"],
   ])("keeps the original %s state distinct in the decision disclosure", async (phase, label) => {
     const f = reviewedReply(phase); rpc.mockResolvedValue({ data: f.source, error: null }); await render();

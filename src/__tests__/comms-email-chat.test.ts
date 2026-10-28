@@ -731,4 +731,45 @@ describe('scheduled email from Paige chat (send_at)', () => {
       expect(String(r.content.note), code).not.toMatch(/\b[A-Z][A-Z0-9]*_[A-Z0-9_]+\b/);
     }
   });
+
+  // Review round 1 (2026-10-28).
+  it('MAJOR 1: the send_at description carries no fixed offset; it asks for the offset in force on the target date, the business time zone and a confirmed time', () => {
+    const kit = (COMMS_EMAIL_SEND_CAPABILITY.input.properties as Record<string, Record<string, unknown>>).send_at;
+    const tool = (COMMS_EMAIL_TOOLS[0].function.parameters.properties as Record<string, Record<string, unknown>>).send_at;
+    for (const d of [String(kit.description), String(tool.description)]) {
+      expect(d).not.toMatch(/[+-]\d{2}:\d{2}/);
+      expect(d).toMatch(/target date/i);
+      expect(d).toMatch(/daylight/i);
+    }
+    expect(String(tool.description)).toMatch(/read_business_time_zone/);
+    expect(String(tool.description)).toMatch(/confirm the time/i);
+  });
+
+  it('MAJOR 1: a scheduled result tells Paige to say the local time the card shows, never to convert the UTC value', async () => {
+    const h = harness([{ fingerprint, args: stored({ send_at: laterUtc }) }], { ok: true, outcome: 'scheduled', send_at: laterUtc });
+    const r = await dispatchCommsEmailChat({ ...context, approved: new Set([fingerprint]) }, h.deps as never);
+    expect(String(r.content.note)).toMatch(/card/);
+    expect(String(r.content.note)).toMatch(/do not convert/i);
+    expect(String(r.content.note)).not.toContain(laterUtc);
+  });
+
+  it('MAJOR 2: an email already scheduled is refused in plain words that point to cancelling it first', async () => {
+    const r = await dispatchCommsEmailChat({ ...context, args: { ...args, send_at: '2026-11-03T10:00:00-06:00' } }, harness([], { ok: false, outcome: 'refused', code: 'COMMS_EMAIL_ALREADY_SCHEDULED', send_at: laterUtc, scheduled_operation_id: operation }).deps as never);
+    expect(r.content).toMatchObject({ success: false, not_applied: true, send_at: laterUtc });
+    expect(String(r.content.note)).toMatch(/already scheduled/i);
+    expect(String(r.content.note)).toMatch(/cancel it in Conversations first/i);
+    expect(String(r.content.note)).not.toMatch(/\b[A-Z][A-Z0-9]*_[A-Z0-9_]+\b/);
+    expect(JSON.stringify(r.content)).not.toContain(operation);
+  });
+
+  it('MINOR 3: a scheduled outcome is never "Not sent", even when its time is unreadable or missing', async () => {
+    for (const reply of [{ ok: true, outcome: 'scheduled', send_at: '2026-11-03T14:00:00Z' }, { ok: true, outcome: 'scheduled' }]) {
+      const h = harness([{ fingerprint, args: stored({ send_at: laterUtc }) }], reply);
+      const r = await dispatchCommsEmailChat({ ...context, approved: new Set([fingerprint]) }, h.deps as never);
+      expect(r.content, JSON.stringify(reply)).toMatchObject({ success: true, outcome: 'scheduled', delivery_confirmed: false });
+      expect(String(r.content.note)).toMatch(/time could not be confirmed here/i);
+      expect(String(r.content.note)).toMatch(/Do not resend/);
+      expect(String(r.content.note)).not.toMatch(/Not sent/);
+    }
+  });
 });

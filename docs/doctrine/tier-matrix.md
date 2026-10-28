@@ -5554,6 +5554,7 @@ onto the door in the next piece, so every row below is reachable by data only to
 | Cancel a scheduled email from the thread | Only inside a workspace it administers | ✓ any owner/admin | ✓ any owner/admin | ✓ any owner/admin | — | — | PROOF OWED |
 | "Scheduled" / "Not sent" with reason in the thread | — | ✓ | ✓ | ✓ | — | — | PROOF OWED |
 | Paige chat schedules it (`comms_send_email` `send_at`; card shows When + Schedule send) — 2026-10-28 | Only inside a workspace it administers | ✓ owner/admin | ✓ owner/admin | ✓ owner/admin | — | — | BUILT, not merged (harness render only; authenticated chat drive owed) |
+| The same email to the same contact while one is still scheduled (another time, or "send now") is refused `COMMS_EMAIL_ALREADY_SCHEDULED` with its time, card and confirm alike — 2026-10-28 | Only inside a workspace it administers | ✓ | ✓ | ✓ | — | — | BUILT, not merged (door handler tests only) |
 
 **Do-not-disturb (2026-10-27, door change):** a send with a time is no longer refused because the
 business's own do-not-disturb is on *now*; that one hold is judged when the email is released, and a hold

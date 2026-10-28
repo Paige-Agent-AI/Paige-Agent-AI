@@ -23,7 +23,7 @@ fs.mkdirSync(out, { recursive: true });
 const PORT = 5197;
 const LABEL = "harness render · not live";
 const SEND_AT = "2026-11-03T15:00:00.000Z"; // 9:00 AM Tue, Nov 3 in America/Chicago (CST)
-const WHEN = "Sends Tue, Nov 3, 9:00 AM";
+const WHEN = "Sends Tue, Nov 3, 9:00 AM CST"; // the shared label names the zone (review MAJOR 1)
 
 const shots = [];
 for (const theme of ["light", "dark"]) {

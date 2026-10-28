@@ -10,7 +10,7 @@ import { act } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { PaigeConfirmCard, type ConfirmAction } from "./PaigeConfirmCard";
-import { parseConfirmPreview, type ConfirmEmailPreview } from "./confirmPreview";
+import { parseConfirmPreview, scheduledForLabel, type ConfirmEmailPreview } from "./confirmPreview";
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -255,6 +255,22 @@ describe("an email with files: the owner sees every file he is approving", () =>
 
 describe("an email set for later: the card says when, and the act schedules it", () => {
   const SEND_AT = "2026-11-03T14:00:00.000Z";
+  // Review MAJOR 1: a time without its zone hid a daylight-saving slip (8 AM CST shown as "8:00 AM").
+  it("the one shared time label names its zone, so a daylight-saving change is visible", () => {
+    const tz = process.env.TZ;
+    process.env.TZ = "America/Chicago";
+    try {
+      expect(scheduledForLabel("2026-11-03T15:00:00.000Z", "en-US")).toBe("Tue, Nov 3, 9:00 AM CST");
+      expect(scheduledForLabel("2026-10-28T14:00:00.000Z", "en-US")).toBe("Wed, Oct 28, 9:00 AM CDT");
+    } finally { if (tz === undefined) delete process.env.TZ; else process.env.TZ = tz; }
+  });
+  it("present but unreadable, the time drops the WHOLE preview (fail closed, as the server does)", () => {
+    const { kind: _kind, ...wire } = EMAIL;
+    expect(parseConfirmPreview({ ...wire, send_at: "soon" })).toBeUndefined();
+    expect(parseConfirmPreview({ ...wire, send_at: 42 })).toBeUndefined();
+    expect(parseConfirmPreview({ ...wire, send_at: SEND_AT })).toEqual({ ...EMAIL, send_at: SEND_AT });
+    expect(parseConfirmPreview(wire)).toEqual(EMAIL);
+  });
   it("shows a When row with the time in the viewer's clock, the same words Conversations uses", async () => {
     const { scheduledForLabel } = await import("@/pages/admin/conversations/governedSend");
     const ui = render(<PaigeConfirmCard actions={[action({ preview: { ...EMAIL, send_at: SEND_AT } })]} onApprove={() => {}} onDeny={() => {}} />);

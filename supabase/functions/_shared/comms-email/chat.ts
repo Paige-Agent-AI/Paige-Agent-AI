@@ -26,7 +26,7 @@ const DESCRIPTIONS: Record<string, Record<string, unknown>> = {
   subject: { type: "string", minLength: 1, maxLength: COMMS_EMAIL_SUBJECT_MAX, description: "One-line subject, no line breaks." },
   body: { type: "string", minLength: 1, maxLength: COMMS_EMAIL_BODY_MAX, description: "The email body as plain text. Blank lines separate paragraphs. No HTML." },
   connector_id: { type: "string", format: "uuid", description: "Omit unless this tool returned a list of sender addresses and the person chose one; then pass that choice's connector_id." },
-  send_at: { ...kitProperties.send_at as object, description: "Only when the person asked for it to go out at a later time: that time as ISO 8601 with its timezone offset (e.g. 2026-11-03T09:00:00-05:00), 2 minutes to 30 days ahead. Leave it out to send on approval." },
+  send_at: { ...kitProperties.send_at as object, description: "Only when the person asked for a later time. First read the business time zone with read_business_time_zone and confirm the time in words with the person. Then give it as ISO 8601 with the UTC offset in force on the TARGET date in that zone (daylight saving can differ from today's offset), 2 minutes to 30 days ahead. Leave it out to send on approval." },
 };
 const toolProperties = Object.fromEntries(Object.keys(kitProperties).map((key) => {
   const described = DESCRIPTIONS[key];
@@ -218,6 +218,7 @@ const REASON_NOTES: Record<string, string> = {
   COMMS_EMAIL_SEND_AT_INVALID: "The send time must be 2 minutes to 30 days from now, so nothing was sent or scheduled. Ask the person for a time in that range.",
   COMMS_EMAIL_SEND_AT_PASSED: "The time it was scheduled for has passed, so nothing was sent or scheduled. Ask the person for a new time.",
   COMMS_EMAIL_SCHEDULE_NOT_SUPPORTED: "A drafted reply goes out when it is approved and cannot be scheduled. Nothing was sent.",
+  COMMS_EMAIL_ALREADY_SCHEDULED: "This email is already scheduled to this person (send_at is its time, in UTC: say it in the business time zone, never a guess). To change the time or send it now, cancel it in Conversations first, then ask again.",
 };
 function notSentNote(...keys: unknown[]): string {
   const plain = keys.map((k) => typeof k === "string" ? REASON_NOTES[k] : undefined).find((n) => n);
@@ -256,7 +257,7 @@ export async function dispatchCommsEmailChat(ctx: CommsEmailChatContext, deps: C
   let sendAt: string | undefined;
   if (modelArgs.send_at !== undefined && modelArgs.send_at !== null) {
     const at = canonicalSendAt(modelArgs.send_at);
-    if (!at) return { content: { success: false, error: "Invalid email request. send_at must be an ISO 8601 time with its timezone offset, e.g. 2026-11-03T09:00:00-05:00. Nothing was sent." } };
+    if (!at) return { content: { success: false, error: "Invalid email request. send_at must be an ISO 8601 time with the UTC offset in force on that date (YYYY-MM-DDTHH:MM:SS+HH:MM or -HH:MM). Nothing was sent." } };
     sendAt = at;
   }
 
@@ -388,8 +389,11 @@ export async function dispatchCommsEmailChat(ctx: CommsEmailChatContext, deps: C
     if (result.ok === true && result.outcome === "provider_accepted") {
       return { tokens, spent, content: withReplay({ ...safe, success: true, delivery_confirmed: false, note: 'The email service accepted the message. That is not proof it was delivered or read — say "sent (accepted for delivery)", never "they received it" or "delivered".' }) };
     }
-    if (result.ok === true && result.outcome === "scheduled" && typeof safe.send_at === "string") {
-      return { tokens, spent, content: withReplay({ ...safe, success: true, delivery_confirmed: false, note: `Scheduled for ${safe.send_at} (UTC). Nothing has been sent yet; it can be canceled in Conversations until then. Say "scheduled", never "sent".` }) };
+    // Scheduled is never "Not sent", whatever its time looks like; the person reads the local time on the card.
+    if (result.ok === true && result.outcome === "scheduled") {
+      return { tokens, spent, content: withReplay({ ...safe, success: true, outcome: "scheduled", delivery_confirmed: false, note: typeof safe.send_at === "string"
+        ? 'Scheduled. Nothing has been sent yet. The person sees the exact local time on the card: say it is scheduled for that time; do not convert the stored UTC value yourself. It can be canceled in Conversations until then. Say "scheduled", never "sent".'
+        : "Scheduled; time could not be confirmed here. Do not resend. Nothing has been sent yet; it shows in Conversations, where it can be canceled." }) };
     }
     // A door reply with no outcome is "Not sent" only when it is one of the door's own pre-send
     // answers; anything else that lacks an outcome (a runtime/gateway body) stays unconfirmed.

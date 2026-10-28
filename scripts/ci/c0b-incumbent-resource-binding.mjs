@@ -1361,13 +1361,19 @@ const ANCESTRY_SOURCES = {
  "supabase/functions/_shared/cura-knowledge-teaching.ts": "b421c4302a7772d7b376a7ff99cd96691991593eb3ab1db31d1ac82a9825df87",
  // Exact non-author-reviewed generic-email C4b ancestry at a9de011b6;
  // proposal b4ebdf9d / review 8b83d5c5. Existing114 pins and verifier unchanged.
- "supabase/functions/_shared/paige-turn/resume.ts": "dbcdf4de1ca3d1e36d4841650fcb42a43d3d747ddc0c88488e80bb3859cbaff6",
+ // 2026-10-28 EXP03 chat scheduled email (review MINOR 5): renewed from dbcdf4de (reproduced from main
+ // f1360cf2). doorResumeShape's comms branch carries a stored canonical send_at into the recorded call
+ // and refuses a non-canonical one; every other branch unchanged.
+ "supabase/functions/_shared/paige-turn/resume.ts": "41da840ec5b42ebd65e923fcb5c2cfa5310d7ba867e9b549139b3d31cc4cd22a",
  // 2026-10-28 EXP03 chat scheduled email: renewed from b2c63f53 (reproduced from main f1360cf2).
  // Adds only optional send_at: proposal passes it top-level (never in the command) and into the
  // operation id when present; an approved/pinned call replays the stored send_at verbatim; card
  // preview carries a canonical send_at and file names/sizes; "scheduled" and three send-time
  // refusal notes. Selection, approval lookup and every other branch unchanged.
- "supabase/functions/_shared/comms-email/chat.ts": "4a71458df907d48470acd577cf5a519ba217760c5740d49bc7d6893e83bfcc79",
+ // 2026-10-28 review round 1: renewed from 4a71458d (reproduced from 025ff551). send_at description asks
+ // for the offset on the TARGET date (no fixed example); "scheduled" never reads Not sent and points to
+ // the card's local time; COMMS_EMAIL_ALREADY_SCHEDULED note. Nothing else.
+ "supabase/functions/_shared/comms-email/chat.ts": "0bf1f64ec1d82e5ef435fdf06cf07fd8169e2853e3c5401eb1c8592b00d81608",
 };
 export function validateIncumbentResourceBindings(chatText,sourceTexts) {
  const findings=[],tools=new Map();

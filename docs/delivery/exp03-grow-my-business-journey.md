@@ -1006,6 +1006,9 @@ Both closed as superseded with links; their branches are kept.
   approved card replays the stored time verbatim. The approval card shows a When row ("Sends Tue, Nov 3, 9:00 AM",
   viewer's clock) and the act reads Schedule send; the chat preview now also carries the files (name and size).
   Harness render only; an authenticated chat drive and a real release are owed.
+  Review round 1 fixes: the time names its zone everywhere ("9:00 AM CST"); the door refuses a second
+  operation for an email still scheduled to the same contact (`COMMS_EMAIL_ALREADY_SCHEDULED`), so a
+  reschedule or "send it now" must cancel first and can no longer send twice.
 
 **Open, in order:** the New conversation dialog and draft approval on the door; (chat `send_at` + When row:
 built above — Team Hub/NEXUS use still open);

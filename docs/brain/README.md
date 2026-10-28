@@ -1071,6 +1071,14 @@ keeps synthetic ports separate from authenticated roles, real records/Rails and
 full ten/E5/owner-away/Builder/both-chat/Live/founder acceptance. Development,
 reviewed source, green hosted checks and released customer results remain distinct.
 
+Production follow-on: [original3035 receipt6476586277](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3035#issuecomment-6476586277)
+verifies source/web/17 Edge closures at59fc; authenticated acceptance stays open.
+Newer provider versions are neither proof of drift nor proof of equivalence:
+directly compare the current files/configuration to immutable reviewed source.
+Here all205 files in13 newer versions matched; no speculative redeploy was needed.
+Preserve failed local proof assumptions as INVALID and correct the locator or
+encoding without weakening the original verifier or relabeling runtime evidence.
+
 ### October26 whole-Experience receiving reconciliation
 
 Owner design addendum ANT-11/704476b3 is mapped as subcases in the same original

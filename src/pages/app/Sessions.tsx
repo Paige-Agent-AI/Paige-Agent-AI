@@ -5,7 +5,7 @@
  * be moved or cancelled here only while its calendar's notice window is open; the change itself is
  * made by the business's own booking engine, which re-checks the window and the open times and
  * sends the business's notifications. A change shows as done only once that engine answered.
- * There is no new booking from here: a customer who wants a time messages the business.
+ * New bookings use the same original calendar service and exact customer relationship.
  */
 import { useCallback, useEffect, useId, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { Link } from "react-router-dom";
@@ -39,6 +39,7 @@ import { useClientPortalBrand } from "@/hooks/useClientPortalBrand";
 import { readableTextOn } from "@/lib/brand/contrast";
 import { useCustomerIdentity } from "@/lib/portal/customerIdentity";
 import { CLIENT_PORTAL_CHOOSE_HREF } from "@/lib/client-portal-entry";
+import { CustomerBooking } from "@/components/client-portal/CustomerBooking";
 
 type Accent = CSSProperties | undefined;
 
@@ -800,9 +801,12 @@ export default function Sessions() {
       aria-busy={sessions.loading}
       className="mx-auto max-w-2xl [&_button]:min-h-[44px]"
     >
-      <header className="space-y-1 pb-4">
-        <h1 id="sessions-title" ref={heading} tabIndex={-1} className="text-2xl font-semibold tracking-tight">Sessions</h1>
-        {!blocked && <p className="text-sm text-muted-foreground">Your sessions with {businessName}.</p>}
+      <header className="flex flex-wrap items-center justify-between gap-4 pb-4">
+        <div className="min-w-0 space-y-1">
+          <h1 id="sessions-title" ref={heading} tabIndex={-1} className="text-2xl font-semibold tracking-tight">Sessions</h1>
+          {!blocked && <p className="text-sm text-muted-foreground">Your sessions with {businessName}.</p>}
+        </div>
+        {!blocked && !firstLoad && !sessions.error && sessions.tenantId && <CustomerBooking onSaved={sessions.refresh} accent={accentStyle} />}
       </header>
 
       {sessions.error && !blocked && (
@@ -876,7 +880,7 @@ export default function Sessions() {
               <SessionsEmpty
                 icon={CalendarClock}
                 title="No upcoming sessions"
-                description={`When ${businessName} books a time with you, it shows up here. Want to set one up? Send them a message.`}
+                description={`Book an available time with ${businessName}, or message them to arrange a session.`}
                 action={(
                   <Link to="/app/messages" className={LINK_BUTTON}>
                     <MessageSquare aria-hidden="true" className="h-4 w-4" /> Message {businessName}

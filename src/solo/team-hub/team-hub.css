@@ -226,6 +226,10 @@
    and a row gap so a wrapped link never covers the read time. */
 .th-src-foot--open{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;column-gap:12px;row-gap:6px}
 .th-src-open{display:inline-flex;align-items:center;gap:4px;margin-block:-6px;margin-inline-end:-4px;font-size:12px;font-weight:600}
+/* In the real Solo shell `[data-pg] a` (index.css: gold-core, no underline), `.paige-solo a` and `[data-tenant-shell] a`
+   (font:inherit) are all (0,1,1) and beat .th-link/.th-src-open (0,1,0), so the link rendered GOLD at 13px/400 with no
+   underline (measured in the real SoloApp, team-hub-shell-mount). (0,2,1) restores the declared style, no new value. */
+[data-pg] a.th-src-open,[data-pg] a.th-src-open:hover{color:var(--pg-ink);text-decoration:underline;text-underline-offset:3px;font-size:12px;font-weight:600}
 .th-src-open:focus-visible{outline-offset:-2px}
 .th-src-open svg{width:14px;height:14px}
 /* Status is a word and a dot together, never colour alone. */

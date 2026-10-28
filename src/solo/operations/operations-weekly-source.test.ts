@@ -105,6 +105,14 @@ it("accepts only one explicitly typed Planning UUID target", () => {
     `?weeklySource=planning_item&weeklySource=planning_item&item=${itemId}`, `?weeklySource=planning_item&item=${itemId}&item=${itemId}`,
     `?item=${itemId}`, "?weeklySource=planning_item"]) expect(parseWeeklyPlanningSource(query)).toEqual({ kind: "invalid" });
 });
+it("accepts a provenance-neutral Planning target through the SAME parser and rejects mixed identities", () => {
+  expect(parseWeeklyPlanningSource(`?planningItem=${itemId.toUpperCase()}`)).toEqual({ kind: "planning_item", id: itemId });
+  for (const query of ["?planningItem=", "?planningItem=not-a-uuid", `?planningItem=%20${itemId}`,
+    `?planningItem=${itemId}&planningItem=${itemId}`, `?planningItem=${itemId}&task=${itemId}`,
+    `?planningItem=${itemId}&weeklySource=planning_item`, `?planningItem=${itemId}&item=${itemId}`]) {
+    expect(parseWeeklyPlanningSource(query)).toEqual({ kind: "invalid" });
+  }
+});
 it("reads the exact personal Planning row and preserves the raw canonical version", async () => {
   const result = await readWeeklyPlanningSource(scope, () => true);
   expect(result).toEqual({ kind: "verified", item });

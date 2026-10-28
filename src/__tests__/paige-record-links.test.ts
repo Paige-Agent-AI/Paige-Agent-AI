@@ -31,6 +31,23 @@ describe("Marketing surface reference", () => {
 });
 const B = "e4000000-0000-4000-8000-0000000c0002";
 
+describe("typed original Planning work references", () => {
+  it("keeps Planning distinct from a CRM task with the same UUID through persistence and deduplication", () => {
+    const planning = { destination: "operations_work", record_id: A, record_kind: "planning_item" };
+    const crm = { destination: "operations_work", record_id: A };
+    expect(readRecordLinks(JSON.parse(JSON.stringify([
+      { ...planning, subject: "Private title", tenant: "foreign", url: "https://foreign.invalid", approved: true }, crm, planning,
+    ])))).toEqual([planning, crm]);
+    expect(mergeRecordLinks([crm], [planning, crm])).toEqual([crm, planning]);
+  });
+  it("rejects unknown or misplaced record kinds instead of silently reinterpreting them as CRM", () => {
+    for (const record_kind of ["crm_task", "plan_items", "", null, {}, ["planning_item"]]) {
+      expect(readRecordLinks([{ destination: "operations_work", record_id: A, record_kind }])).toEqual([]);
+    }
+    expect(readRecordLinks([{ destination: "contacts", record_id: A, record_kind: "planning_item" }])).toEqual([]);
+  });
+});
+
 it("retains a Systems Check finding UUID through the original reference frame without source text or authority", () => {
   const persisted = JSON.parse(JSON.stringify([{ destination: "systems_check", record_id: A.toUpperCase(),
     path: "/foreign", account: "other", subject: "Private finding", approved: true }]));

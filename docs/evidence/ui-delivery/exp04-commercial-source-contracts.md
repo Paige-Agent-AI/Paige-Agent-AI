@@ -1,5 +1,7 @@
 # EXP04 commercial source contracts — development evidence
 
+Current source receiving: normal merge `5f11db25c3c1a19d2cc618ed58ca7178109f26cf` receives the complete reviewed invoice parent `f7d8bd60f3b17432bf6e2362d0bfd0b2e75899e4` and main `6d8e5c56a15a4f800124c248f546202d3bc99175`. All 24 originating source/test blobs remain unchanged at that merge. Three never-applied carriers now follow the invoice parent's forward versions as `20271120131404`–`20271120131604`; their original SQL bytes are unchanged and only matching proof-loader filenames move. This record remains a development attestation, with no deployed signing or delivery acceptance claim.
+
 UI_DELIVERY_EVIDENCE_VERSION: 1
 FLOW_BY_FLOW: PASS: retained agreement and explicit sender review follow the original confirmation, Work, Communications and receipt path; Clients and PAIGE consume the same original delivery projection.
 PAIGE_UI_DESIGN: PASS: existing Sales leave guard, Clients standing disclosure, semantic tokens and original navigation are reused.
@@ -7,7 +9,7 @@ MATERIAL_FLOW_CHANGE: YES: the existing managed sender can qualify for exact sig
 FLOW_PROTOTYPE: WAIVED: owner-decision=2026-10-21 Experience Design and Visual Quality Standard section6 and existing full EXP04 delivery directive; reason=Owner authorizes routine design implementation and one complete integrated founder evaluation without repeated component signoff. Actual changed-interface rendering and interaction verification remain required before release.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: an authorized SOLO owner reviews the original signing request and inspects exact-version delivery decisions for the same client.
 VISUAL_DIRECTION: PASS: preserve the current PAIGE design system, existing workspace composition and original record navigation; use a native disclosure for supporting delivery detail.
-AUTOMATED_EVIDENCE: UNVERIFIED: the development branch is not published and hosted CI has not executed on this composition. Bounded originating sender, real-handler, Sales keyboard and native identity regressions pass locally; original delivery consumer controls are supporting source evidence.
+AUTOMATED_EVIDENCE: UNVERIFIED: hosted CI has not executed on this received main and forward-carrier composition. Earlier exact source-only head passed the original full-schema contract; originating sender, real-handler, Sales keyboard and native identity regressions are bounded supporting evidence. Fresh composed-head validation remains required.
 STATIC_EVIDENCE: UNVERIFIED: exact composition validation is pending. Source scope preserves the original public permission interfaces, canonical writers and guarded forward migrations. No source check establishes customer acceptance.
 RENDERED_EVIDENCE: UNVERIFIED: actual candidate desktop and narrow-viewport rendering remain required; existing production observations do not verify this unreleased composition.
 BEHAVIORAL_EVIDENCE: UNVERIFIED: candidate navigation, focus, original-record reload, uncertain-outcome recovery and role-scoped operation remain required.

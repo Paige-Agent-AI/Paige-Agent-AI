@@ -1,0 +1,47 @@
+{
+  "base": "d4c1afeafdc2023612ef7c1c79ec10c5e7f8e851",
+  "preRenewalHead": "5643917bb49411a24a6b984579b944f15e75026c",
+  "sourceReview": {
+    "relationship": "AUTHOR-REVIEW / LOWER ASSURANCE",
+    "source": "local exact composition review before renewed pins",
+    "priorPublishedProductReview": 5684152701
+  },
+  "baseline": {
+    "dependencies": 126,
+    "dispatches": 29,
+    "findings": []
+  },
+  "candidateBeforeRenewal": [
+    "incumbent reviewed source changed: supabase/functions/_shared/canonical-app-url.ts",
+    "incumbent reviewed source changed: supabase/functions/_shared/paige-turn/record-links.ts"
+  ],
+  "pins": [
+    {
+      "path": "supabase/functions/_shared/canonical-app-url.ts",
+      "before": "f9c28d86381783f7ecfc50489ef41b55b3fc220c0effc051718608baadecf80f",
+      "after": "abb26a5acdf4569d308610d8827145a93e103f3b1f5a71e56b8aca75cc685658"
+    },
+    {
+      "path": "supabase/functions/_shared/paige-turn/record-links.ts",
+      "before": "b3bf852044fcc65c751667c4cc0638c7c38940415baf9f151d0b7be2b541f841",
+      "after": "f382443f63dce366a255bc1b4fb20d7cc160787658ab97e84ea948e79204a728"
+    }
+  ],
+  "inverseRestoresWholePreRenewalContract": true,
+  "composedRegressionTests": {
+    "passed": 208,
+    "failed": 0,
+    "skipped": 0
+  },
+  "compositionReview": {
+    "base": "d4c1afeafdc2023612ef7c1c79ec10c5e7f8e851",
+    "preRenewalHead": "5643917bb49411a24a6b984579b944f15e75026c",
+    "allIncomingOutsideOwnPreserved": 17772,
+    "ownChangedPaths": 48,
+    "wholeMasterExact": true,
+    "fiveNativeOpsSourcesExact": true,
+    "reviewRelationship": "AUTHOR-REVIEW / LOWER ASSURANCE",
+    "findings": [],
+    "scope": "exact composed helpers preserve native Planning distinction and incoming Sales agreement identity; original current-caller reader/writers/approval/29 dispatches unchanged"
+  }
+}

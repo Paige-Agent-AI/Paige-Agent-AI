@@ -1,0 +1,10 @@
+{
+  "phase": "PRE-IMPLEMENTATION SECOND BOUNDED PASS",
+  "finding": "Original close left the new Planning focus in the URL and immediately reopened the inspector",
+  "correction": "Private prototype adapter clears only the Planning focus through the original permitted close",
+  "observation": {
+    "active": "Inspect original Planning work",
+    "dialogs": 0,
+    "route": "/solo/1701/operations/work"
+  }
+}

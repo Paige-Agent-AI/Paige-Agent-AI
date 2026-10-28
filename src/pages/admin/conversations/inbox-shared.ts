@@ -137,7 +137,10 @@ export interface DbThread {
   last_direction: Direction | null;
   clients: ClientContact | null; // joined
 }
-export interface Suppression { channel: "sms" | "email"; reason: string }
+// `keyed` says how the row names the person: "contact" (their contact row: the business's pause, an opt-out, a
+// complaint) or "address" (this business's row for their normalised address: a governed email's hard bounce,
+// 20271120120003). Absent means contact (the inbox read only contact rows before).
+export interface Suppression { channel: "sms" | "email"; reason: string; keyed?: "contact" | "address" }
 
 // #482 Phase-2 — the Agents' log reads Paige's action-bus registry per contact for REAL
 // attribution. RLS on paige_actions pins an authenticated coach/admin to their OWN tenant

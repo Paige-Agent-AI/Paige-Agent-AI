@@ -101,6 +101,10 @@ SELECT pg_temp.check_true((SELECT count(*)=6 AND bool_and(md5(p.prosrc)=s.expect
 -- 20271116200000 redefines the campaign applier and the sender resolver after it (Resend retired): replay it
 -- too, so nothing above is left on the older body.
 \ir ../migrations/20271116200000_exp03_resend_retired.sql
+-- 20271120120003 redefines the governed-reply applier after it (a hard bounce, a bounced-before or invalid
+-- drop, and a complaint now suppress for the email's business): replay it last, so the receipts below run
+-- against the body production has. Its own proof is exp03_governed_bounce_suppression.sql.
+\ir ../migrations/20271120120003_exp03_governed_bounce_suppression.sql
 
 SELECT pg_temp.check_true(to_regprocedure('public.ingest_sendgrid_receipt(text,text,text,text,timestamptz)') IS NULL
   AND to_regprocedure('public.ingest_sendgrid_receipt(text,text,text,text,timestamptz,text,text,text,text,text)') IS NOT NULL,

@@ -101,6 +101,42 @@ export function weeklyCommitmentDraftToolsForContext(context: Parameters<typeof 
   return weeklyCommitmentStatusToolsForContext(context).length ? WEEKLY_COMMITMENT_DRAFT_TOOLS : [];
 }
 
+/** Inspect a proposed schedule; never save, authorize, enable or dispatch it. */
+export const WEEKLY_SCHEDULE_REVIEW_CAPABILITY = defineCapability({
+  identity: { id: "automations.weekly_schedule_review", version: 1, domain: "automations", owner: "experience-05",
+    humanSurface: "PAIGE / existing Weekly responsibility", description: "Compare a proposed weekly schedule with its original owner-private record before using the existing owner controls." },
+  input: objectInputSchema({ properties: WEEKLY_CONTROL_REVIEW_INPUTS.configure.properties,
+    required: WEEKLY_CONTROL_REVIEW_INPUTS.configure.required }),
+  effect: "read",
+  governance: { actionRiskKey: null, risk: "read_only", approval: "none",
+    requiredPermission: ownerGrantablePermission("automations.weekly_commitment_status.read") },
+  tenantScope: { source: "server", tenantResolver: "current_user_tenant_id", actorResolver: "authenticated_user",
+    revalidateAt: ["before_availability", "before_execution", "before_receipt"] },
+  availability: { resolver: "paige-capability-status", states: ["live", "not_for_tier", "unavailable"] },
+  providerBinding: { kind: "internal", operation: 'public.get_weekly_commitment_checks', connectionResolver: null },
+  idempotency: { mode: "not_applicable" },
+  receipt: { rail: true, recorder: "record_capability_run", redaction: "tenant_safe", visibility: "owner_internal" },
+  outcome: { projector: "capability-record" },
+});
+export const WEEKLY_SCHEDULE_REVIEW = {
+  key: "automations.weekly_schedule_review", domain: "automations", owner: "experience-05",
+  humanSurface: "PAIGE / existing Weekly responsibility", readiness: "none", selfDescribe: false,
+  action: { classification: "read", executor: "public.get_weekly_commitment_checks", chatTool: "read_weekly_schedule_review",
+    seatAuthority: "door-seat", riskPolicyKey: "read_only", approvalAuthority: "none",
+    idempotency: "Caller-JWT original process/revision inspection only; no writer, approval, schedule control or replay." },
+  outcome: { kinds: ["available", "needs_input", "refused", "unavailable"], projector: "public.get_weekly_commitment_checks",
+    railVisibility: "Read receipt only; proposed times are not saved schedules, permission or completed weekly-check receipts." },
+  chatBinding: "LIVE", mindBinding: "UNAVAILABLE", sharedPrimitiveChange: "NONE", maturity: "PARTIAL",
+} as const satisfies SpineCapability;
+export const WEEKLY_SCHEDULE_REVIEW_TOOL_NAME = "read_weekly_schedule_review";
+export const WEEKLY_SCHEDULE_REVIEW_TOOLS = [{ type: "function" as const, function: {
+  name: "read_weekly_schedule_review", parameters: WEEKLY_SCHEDULE_REVIEW_CAPABILITY.input,
+  description: "Preview a requested time change for one saved weekly responsibility, using its exact original automation_id from read_weekly_commitment_status. Ask for weekday, local time and explicit time zone. This read does not save, authorize, enable, cancel or run anything; use the existing Weekly responsibility owner controls for an actual change. Never guess a target or report a proposed next run as scheduled.",
+} }];
+export function weeklyScheduleReviewToolsForContext(context: Parameters<typeof weeklyCommitmentStatusToolsForContext>[0]) {
+  return weeklyCommitmentStatusToolsForContext(context).length ? WEEKLY_SCHEDULE_REVIEW_TOOLS : [];
+}
+
 // Original-outcome reader; a conversational lookup grants no action authority. The
 // server transport reauthorizes the exact companion under its original caller
 // JWT before using this unchanged service-only native result reader. Current

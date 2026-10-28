@@ -504,6 +504,10 @@ async function requestSeed() {
       sendgrid_domain_id: "controlled-domain", sendgrid_verified_at: at },
     identity: { from_name: "Original business", from_address: "original@studio.example.test",
       reply_to: "original-reply@studio.example.test", tenant_name: "Controlled Studio" },
+    canonical: null as Record<string, unknown> | null,
+    canonicalReads: 0,
+    onCanonical: null as ((read: number) => void) | null,
+    canonicalError: false,
     configured: true, readError: false,
     preSend: { proceed: true, outcome: "proceed" },
     preSendCalls: [] as Array<Record<string, unknown>>,
@@ -539,8 +543,13 @@ async function requestSeed() {
         } };
       },
       async rpc(name: string, args: Record<string, unknown>) {
-        assert.equal(name, "tenant_sender_identity", "No approval or message RPC in a review");
         assert.deepEqual(args, { _tenant_id: tenant });
+        if (name === "resolve_tenant_sender") {
+          state.canonicalReads++;
+          state.onCanonical?.(state.canonicalReads);
+          return { data: structuredClone(state.canonical), error: state.canonicalError ? { message: "private resolver fault" } : null };
+        }
+        assert.equal(name, "tenant_sender_identity", "Only the two original identity reads; no approval or message RPC in a review");
         state.identityReads++; state.onIdentity?.(state.identityReads);
         return { data: structuredClone(state.identity), error: null };
       },
@@ -1242,3 +1251,106 @@ Deno.test('native confirmation adapter cannot issue changed scope args or malfor
   await assert.rejects(()=>x.store.claim({fingerprint:'malformed',requestNonce:next}),/PREPARED_SIGNATURE_APPROVAL_UNAVAILABLE/);
   assert.equal(x.calls.length,0);
 });
+
+async function managedIdentitySeed() {
+  const x = await requestSeed();
+  const address = "controlled-studio@mail.paigeagent.ai";
+  x.state.connector.provider = "resend";
+  x.state.connector.from_address = address;
+  x.state.identity.from_address = address;
+  // Original recorded business alias, not the resolver's platform_default
+  // safety net. The existing Communications transport is SendGrid; no Resend
+  // credential, connector rewrite, message or provider call is introduced.
+  x.state.canonical = { ...x.state.identity, tenant_id: tenant,
+    kind: "shared", source: "shared" };
+  return x;
+}
+
+Deno.test("managed PAIGE Email alias appears in signing choices without effects or provider-success claims", async () => {
+  const x = await managedIdentitySeed(), before = effects(x.f);
+  const result = await senderChoices()(listInput(x), x.f.caller, x.f.service,
+    actor, x.emailPorts) as unknown as Record<string, unknown>;
+  assert.deepEqual(result.senders, [{ connector_id: connectorId,
+    from_address: x.state.connector.from_address, state: "ready", reason: null }]);
+  assert.equal(result.provider_execution_verified, false);
+  assert.equal(result.approval, "not_requested");
+  assert.equal(result.execution, "unavailable");
+  assert.deepEqual(effects(x.f), before);
+  assert.deepEqual(x.state.preSendCalls, []);
+});
+
+Deno.test("managed PAIGE Email alias is explicitly bound to the original signing review and SendGrid transport", async () => {
+  const x = await managedIdentitySeed(), before = effects(x.f);
+  const result = await x.run();
+  assert.equal(result.tool, "agreement_send");
+  assert.deepEqual(result.args.sender, { connector_id: connectorId, provider: "sendgrid",
+    from_address: x.state.connector.from_address, from_name: x.state.connector.from_name,
+    reply_to: x.state.connector.reply_to });
+  assert.equal(result.approval, "not_requested");
+  assert.equal(result.execution, "unavailable");
+  assert.deepEqual(effects(x.f), before);
+});
+
+for (const [label, canonical] of Object.entries({
+  "missing recorded identity": null,
+  "platform safety net": { kind: "platform", source: "platform_default" },
+  "wrong business": { tenant_id: operation },
+  "custom-domain identity": { kind: "custom_domain", source: "custom_domain" },
+  "unrecorded shared identity": { source: "platform_default" },
+  "different original address": { from_address: "other@mail.paigeagent.ai" },
+})) {
+  Deno.test("managed signing sender refuses " + label + " without a provider or business effect", async () => {
+    const x = await managedIdentitySeed(), before = effects(x.f);
+    x.state.canonical = canonical === null ? null : { ...x.state.canonical, ...canonical };
+    await assert.rejects(x.run, refuses("SENDER_UNVERIFIED"));
+    const choices = await senderChoices()(listInput(x), x.f.caller, x.f.service, actor, x.emailPorts) as unknown as Awaited<ReturnType<typeof candidate.readPreparedSignatureSenders>>;
+    assert.deepEqual(choices.senders, []);
+    assert.deepEqual(effects(x.f), before);
+    assert.deepEqual(x.state.preSendCalls, []);
+  });
+}
+Deno.test("managed signing sender fails closed on unreadable canonical identity", async () => {
+  const x = await managedIdentitySeed(), before = effects(x.f);
+  x.state.canonicalError = true;
+  await assert.rejects(x.run, refuses("SENDER_UNVERIFIED"));
+  await assert.rejects(() => senderChoices()(listInput(x), x.f.caller, x.f.service, actor, x.emailPorts),
+    refuses("SENDER_CHOICES_UNVERIFIED"));
+  assert.deepEqual(effects(x.f), before);
+});
+Deno.test("managed signing sender needs the actual SendGrid credential even when a legacy key is configured", async () => {
+  const x = await managedIdentitySeed(), before = effects(x.f);
+  x.emailPorts.environment = () => ({ resendConfigured: true, googleConfigured: false, sendgridConfigured: false });
+  await assert.rejects(x.run, refuses("SENDER_UNVERIFIED"));
+  const result = await senderChoices()(listInput(x), x.f.caller, x.f.service, actor, x.emailPorts) as unknown as Awaited<ReturnType<typeof candidate.readPreparedSignatureSenders>>;
+  assert.equal(result.senders.length, 1);
+  assert.notEqual(result.senders[0].state, "ready");
+  assert.equal(result.provider_execution_verified, false);
+  assert.deepEqual(effects(x.f), before);
+  assert.deepEqual(x.state.preSendCalls, []);
+});
+Deno.test("managed signing sender refuses an identity changed at the final source read", async () => {
+  const x = await managedIdentitySeed(), before = effects(x.f);
+  x.state.onCanonical = n => { if (n === 2) x.state.canonical!.from_address = "other@mail.paigeagent.ai"; };
+  await assert.rejects(x.run, refuses("SENDER_UNVERIFIED"));
+  assert.deepEqual(effects(x.f), before);
+});
+Deno.test("managed signing sender requires the same original business presentation address", async () => {
+  const x = await managedIdentitySeed(), before = effects(x.f);
+  x.state.identity.from_address = "different@mail.paigeagent.ai";
+  await assert.rejects(x.run, refuses("SENDER_UNVERIFIED"));
+  assert.deepEqual(effects(x.f), before);
+});
+for (const [label, change] of Object.entries({
+  "foreign connector": { tenant_id: operation },
+  "revoked connector": { status: "revoked" },
+  "inactive connector": { active: false },
+  "another actor's private mailbox": { mailbox_class: "personal", mailbox_owner_user_id: operation },
+})) {
+  Deno.test("managed signing sender preserves refusal of " + label, async () => {
+    const x = await managedIdentitySeed(), before = effects(x.f);
+    Object.assign(x.state.connector, change);
+    await assert.rejects(x.run, refuses("SENDER_UNVERIFIED"));
+    assert.deepEqual(effects(x.f), before);
+    assert.deepEqual(x.state.preSendCalls, []);
+  });
+}

@@ -10,7 +10,7 @@ import {canonicalPresentationJson} from './preparation-json.ts';
 type Ports=Pick<PreparedSignatureEmailPorts,'admin'|'environment'>;
 type Sender=Awaited<ReturnType<typeof readPreparedRequestSender>>;
 export type PreparedSignatureMessageSource=Readonly<{
- messageId:string;operationId:string;tenantId:string;actorId:string;clientId:string;connectorId:string;
+ messageId:string;operationId:string;tenantId:string;actorId:string;clientId:string;connectorId:string;connectorProvider:'sendgrid'|'resend';
  agreementId:string;workId:string;parentOperationId:string;requestSha256:string;preparationId:string;
  preparationSha256:string;documentSha256:string;credentialEventId:string;commitment:string;expiresAt:string;
  signerId:string;recipientIds:readonly string[];recipient:string;subject:string;bodyText:string;bodyHtml:string;sender:Readonly<Sender>;
@@ -43,7 +43,11 @@ export function capturePreparedSignatureMessage(value:unknown):PreparedSignature
   ||g.actor_user_id!==a.actor_id||g.tenant_id!==a.tenant_id||g.operation_id!==a.operation_id
   ||g.agreement_work_id!==a.work_id||g.agreement_operation_id!==a.agreement_operation_id
   ||g.agreement_request_sha256!==a.request_sha256||g.signer_id!==p.id
-  ||v.provider!=='sendgrid'||s.provider!=='sendgrid'||s.connector_id!==v.connector_id||s.from_address!==v.from_address
+   // Native binding retains the original connector label; the reviewed sender
+   // names the actual SendGrid transport. Shape alone grants no dispatch: the
+   // original native source and recorded alias are revalidated before a claim
+   // and again at effect time by prepareSignatureMessage.
+   ||(v.provider!=='sendgrid'&&v.provider!=='resend')||s.provider!=='sendgrid'||s.connector_id!==v.connector_id||s.from_address!==v.from_address
   ||typeof s.from_address!=='string'||normalizeCommsEmailAddress(s.from_address)!==s.from_address
   ||!(s.from_name===null||typeof s.from_name==='string'&&!/[\r\n<>]/.test(s.from_name)&&!s.from_name.includes('\u0000'))
   ||!(s.reply_to===null||typeof s.reply_to==='string'&&normalizeCommsEmailAddress(s.reply_to)===s.reply_to)
@@ -56,7 +60,7 @@ export function capturePreparedSignatureMessage(value:unknown):PreparedSignature
   ||!a.recipient_ids.every(uuid)||new Set(a.recipient_ids).size!==a.recipient_ids.length||!a.recipient_ids.includes(p.id)
   ||typeof a.credential_expires_at!=='string'||!Number.isFinite(Date.parse(a.credential_expires_at)))return fail('INVALID_SOURCE');
  return Object.freeze({messageId:v.message_id,operationId:v.operation_id,tenantId:v.tenant_id,actorId:v.actor_user_id,
-  clientId:v.contact_id,connectorId:v.connector_id,agreementId:a.agreement_id,workId:a.work_id,parentOperationId:a.agreement_operation_id,
+   clientId:v.contact_id,connectorId:v.connector_id,connectorProvider:v.provider as 'sendgrid'|'resend',agreementId:a.agreement_id,workId:a.work_id,parentOperationId:a.agreement_operation_id,
   requestSha256:a.request_sha256,preparationId:a.preparation_id,preparationSha256:a.preparation_sha256,documentSha256:a.document_sha256,
   credentialEventId:a.credential_event_id,commitment:a.credential_commitment,expiresAt:a.credential_expires_at,signerId:p.id,
   recipientIds:Object.freeze([...a.recipient_ids]),recipient:m.to,subject:m.subject,bodyText:m.body_text,bodyHtml:m.body_html,

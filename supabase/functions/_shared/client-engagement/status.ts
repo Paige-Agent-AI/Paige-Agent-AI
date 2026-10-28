@@ -24,6 +24,7 @@ import { parseCollectionTerms, MAX_SCHEDULE } from '../sales-collections/contrac
 import { previewCollectionSchedule } from '../sales-collections/model.ts';
 import { localDateInZone } from '../paige-context/snapshot.ts';
 import { readClientEffectiveTerms, type EffectiveTermsRead } from './effective-terms.ts';
+import { readReviewedDeliveryEvidence, type ReviewedDeliveryEvidence } from './reviewed-delivery.ts';
 
 type Json = Record<string, unknown>;
 
@@ -34,6 +35,8 @@ export type SourceTerms = {
   starts_on: string | null; ends_on: string | null; created_at: string; updated_at: string;
   /** Additive native read; absent on an older reader. Never infer signed economics from absence. */
   effective_terms?: unknown;
+  /** Exact-version Operations decisions; absent on an older original reader. */
+  reviewed_delivery?: unknown;
 };
 export type SourceSigning = {
   id: string; commercial_terms_id: string | null; offer_id: string | null; title: string | null; status: string;
@@ -181,6 +184,8 @@ export type ClientEngagementStatus = {
     next: null | { title: string | null; due_at: string; item_type: 'milestone' | 'task' };
     items: SourceWorkItem[];
   };
+  /** Separate from Work status and money. Optional on older cached responses. */
+  delivery?: ReviewedDeliveryEvidence;
   attention: Attention[];
   not_recorded: string[];
   truncated: { terms: boolean; signings: boolean; invoices: boolean; work: boolean };
@@ -314,6 +319,14 @@ export function composeClientEngagementStatus(source: ClientEngagementSource): C
   let terms: ClientEngagementStatus['terms'] = selected?.terms ?? null;
   const agreement = composeAgreement(source.signings, termsRow?.id ?? null,
     selected?.effective ?? { state: 'reader_unavailable' });
+  // A partial terms list cannot establish which engagement is selected. Never
+  // borrow another signing, mutable working terms or task-done status as proof.
+  const accepted = !source.terms_has_more && selected?.effective.state === 'verified' ? selected.effective : null;
+  const delivery = readReviewedDeliveryEvidence(termsRow?.reviewed_delivery, accepted ? {
+    tenantId: source.tenant_id, clientId: source.contact_id, termsId: accepted.commercial_terms_id,
+    signingId: accepted.signing_id, signingVersion: accepted.signing_version,
+    contentSha256: accepted.document_sha256, sealedSha256: accepted.sealed_sha256,
+  } : null);
   const attention = new Set<Attention>();
   const effectiveUnverified = selected?.effective.state === 'unverified';
 
@@ -492,6 +505,7 @@ export function composeClientEngagementStatus(source: ClientEngagementSource): C
       next: upcoming ? { title: upcoming.title, due_at: upcoming.due_at!, item_type: upcoming.item_type } : null,
       items: w.items,
     },
+    delivery,
     attention: [...attention],
     // Older readers used a platform-wide absence flag. Per-record provenance
     // above now owns that answer, including explicit reader-unavailable state.

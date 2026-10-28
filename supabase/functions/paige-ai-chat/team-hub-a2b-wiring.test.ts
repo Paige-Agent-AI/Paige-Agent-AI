@@ -35,7 +35,7 @@ const INVOKE_AS = "    const teamHubInvokeAs = (name: string, body: Record<strin
   + "      supabaseClient.functions.invoke(name, { headers: { Authorization: authHeader }, body });\n";
 const AGENT_SEAM = "    if (isTeamHubAgentTurnRequest(rawData)) {\n"
   + "      const agentTurn = await runTeamHubAgentTurn({ caller: supabaseClient, service: supabase, userId: user.id,\n"
-  + "        complete: fabricCompletion, signal: req.signal, controlHint, invokeAs: teamHubInvokeAs }, rawData);\n";
+  + "        complete: fabricCompletion, signal: req.signal, controlHint, invokeAs: teamHubInvokeAs,\n";
 const CARD_SEAM = "    if (isTeamHubCardActRequest(rawData)) {\n"
   + "      const cardAct = await runTeamHubCardAct({ caller: supabaseClient, service: supabase, userId: user.id,\n"
   + "        signal: req.signal, controlHint, invokeAs: teamHubInvokeAs }, rawData);\n"

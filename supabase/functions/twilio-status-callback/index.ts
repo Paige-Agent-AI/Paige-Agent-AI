@@ -284,7 +284,9 @@ async function applyInboundCallUpdate(
     call.answered_call_sid = f.callSid;
     call.error_code = null;
     if (currentStatus !== "delivered" && currentStatus !== "read") update.status = "delivered";
-    if (table === "messages" && currentStatus === "failed") update.error = null;
+    // Always cleared, not only when the read saw 'failed': the parent's "No answer." settle can commit
+    // between this read and this write, and an answered call must never keep it.
+    if (table === "messages") update.error = null;
     if (f.duration !== null) {
       update.call_duration_seconds = f.duration;
       call.duration_seconds = f.duration;

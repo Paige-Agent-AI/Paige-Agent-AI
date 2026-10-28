@@ -22,6 +22,9 @@ let currentDuration = null;
 // Off for the original assertions above the ordering section, which were written against a row that
 // never changes; on inside it.
 let stateful = false;
+// When set, the next voice-row read returns this status instead of the stored one: the row as it was
+// read just before another callback committed (review MAJOR-1, read → other write → write).
+let staleReadStatus = null;
 const resetRow = (direction) => {
   stateful = true;
   currentStatus = "queued"; currentDirection = direction; currentMeta = {}; currentError = null; currentDuration = null;
@@ -47,7 +50,7 @@ function makeAdmin() {
             if (operatorMode) return { data: null, error: null };
             return failLookup
               ? { data: null, error: { code: "transient" } }
-              : { data: { id: "voice-row", status: currentStatus, direction: currentDirection, meta: currentMeta }, error: null };
+              : (() => { const status = staleReadStatus ?? currentStatus; staleReadStatus = null; return { data: { id: "voice-row", status, direction: currentDirection, meta: currentMeta }, error: null }; })();
           }
           if (table === "operator_messages" && operatorMode) {
             return { data: { id: "operator-voice-row", status: currentStatus, direction: currentDirection, metadata: currentMeta }, error: null };
@@ -197,6 +200,17 @@ const inboundFinal = async (bodies) => {
   assert.equal(r.status, "delivered", "an answered leg arriving after the parent still wins");
   assert.equal(r.error, null, "the provisional 'No answer.' is cleared once a leg is known to have answered");
   assert.equal(r.duration, 75);
+}
+// Interleaved (review MAJOR-1): the winner's callback READ the row while it was still queued, then the
+// parent settled "No answer.", then the winner wrote. It must not leave delivered with "No answer.".
+{
+  const r = await inboundFinal([`${PARENT}&CallStatus=completed&CallDuration=80`]);
+  assert.equal(r.status, "failed");
+  staleReadStatus = "queued";
+  assert.equal((await invokeBody(leg("CAseat1", "completed", 75))).status, 200);
+  assert.equal(currentStatus, "delivered", "the answered leg still wins after an interleaved settle");
+  assert.equal(currentError, null, "an answered call never keeps the parent's provisional 'No answer.'");
+  assert.equal(currentDuration, 75);
 }
 // All legs no-answer, then the parent: a missed call.
 {

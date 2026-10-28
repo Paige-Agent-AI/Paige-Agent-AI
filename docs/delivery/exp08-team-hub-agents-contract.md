@@ -1707,6 +1707,22 @@ Reviewed on the rendered A2b frames (`docs/evidence/ui-delivery/assets/exp08-tea
    confirmation of the exact tools and summary sentences in ANT-161; the lead keeps its door and writer.
    owner_only acts stay out of Team Hub (every door refuses them).
 
+### A2b review hardening (2026-10-28, #3041)
+
+- **Codex P1, fixed:** `team_hub_settle_card` is service_role only `(tenant, actor, message, outcome)`;
+  card-act settles with the service client after running the door, passing the approver it verified
+  from the JWT; a call carrying a user's JWT is refused `not_allowed`. The approver can no longer assert
+  Done with their own token.
+- **Peer review, fixed:** an approved card whose request died before it settled is resumed by the
+  approver's own Approve once it is 10 s old (same fingerprint, proposal still unclaimed); inside those
+  10 s Approve says try again. A proposal that can't be read settles failed (the door never ran) and is
+  retired.
+- **Peer review, recorded, not changed:** a narrow race where PAIGE chat mints a publish proposal for the
+  same page between the agent turn's acceptance and the card's prepare would link the chat's proposal
+  to the card. It needs the same person on both surfaces within seconds; nothing runs without their own
+  Approve. Anchoring the check to the prepare's own start would wrongly refuse a legitimate re-asked turn
+  (the CRM proposal is idempotent on the asking message), so it stays on the turn's acceptance time.
+
 ## 13. Proof owed after merge (per increment)
 
 - **§32 persisted apply:** the `db-live` readback of each migration. The `schema_migrations` row

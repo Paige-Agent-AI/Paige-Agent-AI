@@ -1264,7 +1264,8 @@ SELECT pg_temp.decide(:'u2', :'ta', :'card1', 'approve', pg_temp.fp('good')) AS 
 SELECT pg_temp.check((:'d1')::jsonb=jsonb_build_object('ok',true,'decision','approved','confirmation_id',:'c_good')
  AND (SELECT decision='approved' AND decided_at IS NOT NULL FROM public.team_hub_message_cards WHERE message_id=:'card1')
  AND (SELECT consumed_at IS NULL FROM public.paige_pending_confirmations WHERE id=:'c_good')
- AND pg_temp.decide(:'u2', :'ta', :'card1', 'decline', pg_temp.fp('good'))=jsonb_build_object('ok',true,'already',true,'decision','approved','outcome',NULL,'confirmation_id',:'c_good')
+ AND pg_temp.decide(:'u2', :'ta', :'card1', 'decline', pg_temp.fp('good'))=jsonb_build_object('ok',true,'already',true,'decision','approved','outcome',NULL,'confirmation_id',:'c_good',
+   'decided_at',(SELECT to_jsonb(decided_at) FROM public.team_hub_message_cards WHERE message_id=:'card1'))
  AND pg_temp.cs(pg_temp.cstates(:'u2', :'ta', :'zdm', ARRAY[:'card1']), :'card1')#>>'{card,state}'='working'
  AND pg_temp.cs(pg_temp.cstates(:'u2', :'ta', :'zdm', ARRAY[:'card1']), :'card1')#>>'{card,decided_by_name}'='Person 2'
  AND NOT (pg_temp.cs(pg_temp.cstates(:'u2', :'ta', :'zdm', ARRAY[:'card1']), :'card1')#>'{card,actions,0}' ? 'fingerprint'),
@@ -1312,6 +1313,9 @@ SELECT pg_temp.check(pg_temp.settle_as_user(:'u2', :'ta', :'card1', '{"state":"d
  AND (pg_temp.settle_as_user(:'u2', :'ta', :'card1', '{"state":"done"}')->>'error') ILIKE '%permission denied%'
  AND (SELECT k.outcome IS NULL AND k.settled_at IS NULL FROM public.team_hub_message_cards k WHERE k.message_id=:'card1'),
  'settle: the approver''s own JWT cannot settle an approved card; only the server, after running the door');
+SELECT pg_temp.check(pg_temp.j(:'u2', format('public.team_hub_settle_card(%L::uuid,%L::uuid,%L::uuid,%L::jsonb)', :'ta', :'u2', :'card1', '{"state":"done"}'), 'service_role')->>'code'='not_allowed'
+ AND (SELECT k.outcome IS NULL FROM public.team_hub_message_cards k WHERE k.message_id=:'card1'),
+ 'settle: a service-role call that carries a user''s JWT is never the server settling (not_allowed)');
 SELECT pg_temp.settle(:'u2', :'ta', :'card1', '{"state":"done","note":"  Kickoff task cancelled.  ","record":{"destination":"operations_work","record_id":"30000000-0000-4000-8000-000000000001"}}') AS st1 \gset
 SELECT pg_temp.check((:'st1')::jsonb=jsonb_build_object('ok',true,'outcome','done')
  AND (SELECT outcome='done' AND outcome_note='Kickoff task cancelled.' AND outcome_record='{"destination":"operations_work","record_id":"30000000-0000-4000-8000-000000000001"}'::jsonb

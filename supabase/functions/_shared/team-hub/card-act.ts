@@ -44,6 +44,8 @@ import { recordCapabilityRun, stableRunId, type CapabilityOutcome } from "../cap
 export const TEAM_HUB_CARD_ACT_KEY = "teamHubCardAct";
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const FINGERPRINT = /^[0-9a-f]{16}$/;
+/** An approved card with no outcome this long after its decision is stranded (its request died): a later Approve resumes it. */
+export const STRANDED_APPROVAL_MS = 10_000;
 const object = (v: unknown): Record<string, unknown> | null => v && typeof v === "object" && !Array.isArray(v) ? v as Record<string, unknown> : null;
 const uuid = (v: unknown): string | null => typeof v === "string" && UUID.test(v) ? v.toLowerCase() : null;
 
@@ -247,7 +249,19 @@ export async function runTeamHubCardAct(deps: CardActDeps, raw: unknown): Promis
   const dec = decided && !decided.error ? object(decided.data) : null;
   if (!dec) return result("could_not_start", { card: await cardState() });
   if (dec.ok !== true) return result(decideRefusal(dec.code), { card: await cardState() });
-  if (dec.already === true) return result("already_decided", { card: await cardState() });
+  // Peer review on #3041: an approval whose request died before it settled (a lost answer, a crash
+  // between decide and the door) would otherwise sit unrunnable until it expired. Once the first attempt
+  // is clearly over, the approver's own Approve with the same fingerprint resumes it from step 2. The
+  // door's own claim still lets the act run once, and settle keeps the first outcome.
+  const decidedAt = typeof dec.decided_at === "string" ? Date.parse(dec.decided_at) : NaN;
+  const unsettledApproval = dec.already === true && dec.decision === "approved" && (dec.outcome === null || dec.outcome === undefined)
+    && req.act === "approve";
+  // Within the first attempt's own time it may still be running: say try again (Approve stays), never resume.
+  if (unsettledApproval && !(Number.isFinite(decidedAt) && Date.now() - decidedAt >= STRANDED_APPROVAL_MS)) {
+    return result("could_not_start", { card: await cardState() });
+  }
+  const resumed = unsettledApproval;
+  if (dec.already === true && !resumed) return result("already_decided", { card: await cardState() });
   if (dec.decision === "declined") return result("declined", { card: await cardState() });
   const confirmationId = uuid(dec.confirmation_id);
   if (dec.decision !== "approved" || !confirmationId) return result("could_not_start", { card: await cardState() });
@@ -263,6 +277,9 @@ export async function runTeamHubCardAct(deps: CardActDeps, raw: unknown): Promis
   };
   const selectedAt = new Date().toISOString();
   const row = await readRow();
+  // A resumed approval runs only the proposal the approver was shown: another fingerprint decides nothing.
+  // and only while the door has not claimed it (a claimed one belongs to the attempt that claimed it).
+  if (resumed && (!row || row.fingerprint !== fp || row.consumed_at !== null)) return result("already_decided", { card: await cardState() });
 
   // 2-4. Rebuild the door call from the stored proposal, run it through its door, and classify.
   type Classified = { state: "done" | "failed" | "unconfirmed"; reason?: keyof typeof FAILED_REASON };
@@ -284,7 +301,9 @@ export async function runTeamHubCardAct(deps: CardActDeps, raw: unknown): Promis
   const rowState = row ? storedRowState(row, Date.now()) : null;
   let publishedUrl: string | null = null;
 
-  if (row === undefined) classified = { state: "unconfirmed" };                       // the proposal could not be read
+  // The proposal could not be read, so the door was never called: it didn't run, and settling it failed
+  // retires the proposal so nothing can run it later (peer review on #3041).
+  if (row === undefined) classified = { state: "failed", reason: "unusable" };
   else if (!shape) classified = fromKind(classifyResumedApproval({ spent: false, withheld: true }).outcome, "unusable");
   else if (rowState === "expired") classified = fromKind(classifyResumedApproval({ spent: false, expired: true }).outcome, "expired");
   else if (rowState === "used") classified = fromKind(classifyResumedApproval({ spent: false, lost: true }).outcome, "unusable");

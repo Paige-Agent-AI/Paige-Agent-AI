@@ -8,7 +8,7 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { isTeamHubCardActRequest, parseCardActRequest, runTeamHubCardAct, type CardActDeps } from "./card-act.ts";
+import { isTeamHubCardActRequest, parseCardActRequest, runTeamHubCardAct, STRANDED_APPROVAL_MS, type CardActDeps } from "./card-act.ts";
 import { uuidFrom } from "./agent-turn.ts";
 import { confirmFingerprint } from "../confirm-fingerprint.ts";
 import { eqOf, fakeDb, type Query } from "./a2b-test-fakes.ts";
@@ -35,6 +35,8 @@ type Opts = {
   tool?: "crm_cancel_task" | "crm_assign_task" | "growth_page_publish"; decide?: (a: Record<string, unknown>) => unknown; settle?: (a: Record<string, unknown>) => unknown;
   door?: (name: string, body: Record<string, unknown>) => unknown; rowAfter?: () => Record<string, unknown> | null; row?: (fp: string) => Record<string, unknown> | null;
   accept?: () => unknown; post?: () => unknown;
+  /** The proposal read does not answer (a database error). */
+  rowError?: boolean;
   /** The card's message row as the service read returns it, or "error" for a read that does not answer. */
   msg?: Record<string, unknown> | null | "error";
   /** The task's title and the assignee's name, as the done note reads them (absent: no row). */
@@ -71,6 +73,7 @@ async function world(opts: Opts = {}) {
   const db = fakeDb((q) => {
     if (q.table === "paige_pending_confirmations" && q.op === "select") {
       rowReads += 1;
+      if (opts.rowError) return { data: null, error: { message: "down" } };
       if (rowReads > 1 && opts.rowAfter) return { data: opts.rowAfter(), error: null };
       return { data: opts.row ? opts.row(fp) : live, error: null };
     }
@@ -315,9 +318,48 @@ describe("Not now, and the people who cannot decide", () => {
       assert.equal((r.body as any).outcome, outcome, code);
       assert.equal(named(w, "crm-command").length + named(w, "team_hub_settle_card").length + named(w, "team_hub_post_agent_message").length, 0, code);
     }
-    const w = await world({ decide: () => ({ ok: true, already: true, decision: "approved", outcome: null, confirmation_id: CONF }) });
+    const w = await world({ decide: () => ({ ok: true, already: true, decision: "approved", outcome: "done", confirmation_id: CONF, decided_at: "2026-10-28T10:00:00Z" }) });
     assert.equal((await runTeamHubCardAct(w.deps, act(w.fp))).body.outcome, "already_decided");
-    assert.equal(named(w, "crm-command").length, 0, "a second Approve never runs the act again");
+    assert.equal(named(w, "crm-command").length, 0, "a second Approve of a settled card never runs the act again");
+  });
+  describe("an approval whose request died before it settled (peer review on #3041)", () => {
+    const unsettled = (msAgo: number) => () => ({ ok: true, already: true, decision: "approved", outcome: null, confirmation_id: CONF,
+      decided_at: new Date(Date.now() - msAgo).toISOString() });
+    it("within the first attempt's own time, Approve says try again and runs nothing", async () => {
+      for (const decide of [unsettled(2_000), () => ({ ok: true, already: true, decision: "approved", outcome: null, confirmation_id: CONF })]) {
+        const w = await world({ decide });
+        assert.equal((await runTeamHubCardAct(w.deps, act(w.fp))).body.outcome, "could_not_start");
+        assert.equal(named(w, "crm-command").length + named(w, "team_hub_settle_card").length, 0);
+      }
+    });
+    it("once it is stranded, the approver's Approve resumes it: the door runs once and the outcome is settled", async () => {
+      const w = await world({ decide: unsettled(STRANDED_APPROVAL_MS + 5_000) });
+      const r = await runTeamHubCardAct(w.deps, act(w.fp));
+      assert.equal((r.body as any).outcome, "done");
+      assert.equal(named(w, "crm-command").length, 1);
+      assert.equal(named(w, "team_hub_settle_card")[0].args.p_outcome.state, "done");
+    });
+    it("a stranded approval resumes only the proposal shown, and only while the door has not claimed it", async () => {
+      let w = await world({ decide: unsettled(STRANDED_APPROVAL_MS + 5_000) });
+      assert.equal((await runTeamHubCardAct(w.deps, act("0123456789abcdef"))).body.outcome, "already_decided", "another fingerprint");
+      assert.equal(named(w, "crm-command").length + named(w, "team_hub_settle_card").length, 0);
+      w = await world({ decide: unsettled(STRANDED_APPROVAL_MS + 5_000),
+        row: (fp) => ({ id: CONF, fingerprint: fp, tool_name: "crm_cancel_task", args: CRM_ARGS, consumed_at: "2026-10-28T10:00:01Z", expires_at: "2999-01-01T00:00:00Z", server_issued_at: "2026-10-28T10:00:05Z", issued_in_request: ISSUED }) });
+      assert.equal((await runTeamHubCardAct(w.deps, act(w.fp))).body.outcome, "already_decided", "already claimed by the first attempt");
+      assert.equal(named(w, "crm-command").length + named(w, "team_hub_settle_card").length, 0);
+    });
+    it("a Not now never resumes an approved card", async () => {
+      const w = await world({ decide: unsettled(STRANDED_APPROVAL_MS + 5_000) });
+      assert.equal((await runTeamHubCardAct(w.deps, act(w.fp, { act: "decline" }))).body.outcome, "already_decided");
+      assert.equal(named(w, "crm-command").length, 0);
+    });
+  });
+  it("a proposal that can't be read never reached the door: it didn't run, and settling it retires the proposal", async () => {
+    const w = await world({ rowError: true });
+    const r = await runTeamHubCardAct(w.deps, act(w.fp));
+    assert.equal((r.body as any).outcome, "failed");
+    assert.equal(named(w, "crm-command").length, 0);
+    assert.deepEqual(named(w, "team_hub_settle_card")[0].args.p_outcome, { state: "failed", note: "that approval couldn't be used" });
   });
   it("a decide whose answer was lost is not retried (a retry could read our own decision as someone else's)", async () => {
     const w = await world({ decide: () => null });

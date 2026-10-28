@@ -454,7 +454,7 @@ BEGIN
  IF card.approver_user_id<>actor THEN RETURN jsonb_build_object('ok',false,'code','not_yours'); END IF;
  IF card.decision IS NOT NULL THEN
   RETURN jsonb_build_object('ok',true,'already',true,'decision',card.decision,'outcome',card.outcome,
-   'confirmation_id',card.confirmation_id); END IF;
+   'confirmation_id',card.confirmation_id,'decided_at',card.decided_at); END IF;
  SELECT * INTO conf FROM public.paige_pending_confirmations p WHERE p.id=card.confirmation_id AND p.user_id=actor
   AND p.tenant_id=p_expected_tenant AND p.thread_id IS NULL AND p.fingerprint=p_fingerprint FOR UPDATE;
  IF NOT FOUND THEN RETURN jsonb_build_object('ok',false,'code','invalid'); END IF;
@@ -487,6 +487,8 @@ RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
 DECLARE actor uuid:=p_actor; card public.team_hub_message_cards;
  state text; note text; rec jsonb;
 BEGIN
+ -- A request that carries a user's JWT is never the server settling (as team_hub_accept_agent_turn).
+ IF auth.uid() IS NOT NULL THEN RETURN jsonb_build_object('ok',false,'code','not_allowed'); END IF;
  IF p_expected_tenant IS NULL OR actor IS NULL OR NOT public._team_hub_is_active(p_expected_tenant, actor) THEN
   RETURN jsonb_build_object('ok',false,'code','not_member'); END IF;
  IF NOT EXISTS(SELECT 1 FROM public.tenants t WHERE t.id=p_expected_tenant

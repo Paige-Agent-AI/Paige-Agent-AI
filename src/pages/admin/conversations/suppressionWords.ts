@@ -19,14 +19,15 @@ export const BOUNCED_WORDS: Record<SuppressionChannel, { line: string; hint: str
   sms: { line: "This number couldn't receive texts.", hint: "Check it, or use another number." },
 };
 // A bounce kept on the contact. The hint names the real control on the rail: the Email / SMS switch in the
-// contact card's DND tab (its writer, set_contact_channel_suppression, deletes rows keyed on the contact).
+// contact card's DND tab (its writer, set_contact_channel_suppression, deletes rows keyed on the contact). It
+// names who can use it: that writer refuses anyone but the business's owners and admins.
 export const BOUNCED_CONTACT_WORDS: Record<SuppressionChannel, { line: string; hint: string; note: string; solo: string }> = {
   email: {
-    line: "This contact's email bounced.", hint: "Fix their address, then turn off Email in the DND tab.",
+    line: "This contact's email bounced.", hint: "Fix their address, then an owner or admin turns off Email in the DND tab.",
     note: "Bounced. Fix their address, then turn this off.", solo: "Changing their address won't lift this hold.",
   },
   sms: {
-    line: "This contact's number couldn't receive texts.", hint: "Fix their number, then turn off SMS in the DND tab.",
+    line: "This contact's number couldn't receive texts.", hint: "Fix their number, then an owner or admin turns off SMS in the DND tab.",
     note: "Couldn't receive texts. Fix their number, then turn this off.", solo: "Changing their number won't lift this hold.",
   },
 };

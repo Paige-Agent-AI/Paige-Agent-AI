@@ -210,10 +210,10 @@ describe("the inbox says why PAIGE won't send — from the reason, never 'opted 
     db.suppressions = [onContact("bounce_hard")];
     const host = await mount("/admin/clients-hub/conversations");
     await write(host);
-    expect(host.textContent).toContain("This contact's email bounced. Fix their address, then turn off Email in the DND tab of their card.");
+    expect(host.textContent).toContain("This contact's email bounced. Fix their address, then an owner or admin turns off Email in the DND tab of their card.");
     expect(host.textContent).not.toContain("Check it, or use another address.");
     await act(async () => { sendButton(host)!.click(); await flush(); });
-    expect(toast.error).toHaveBeenCalledWith("This contact's email bounced. Fix their address, then turn off Email in the DND tab of their card.");
+    expect(toast.error).toHaveBeenCalledWith("This contact's email bounced. Fix their address, then an owner or admin turns off Email in the DND tab of their card.");
   });
 
   it("a contact-keyed bounce in Solo (no DND tab there) says changing the address won't lift it", async () => {

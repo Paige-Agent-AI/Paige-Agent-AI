@@ -70,7 +70,7 @@ describe("Conversations rail — the reason, in words", () => {
   });
   it("a contact-keyed bounce says what lifts it: the Email switch in this DND tab (on, liftable)", async () => {
     await mount([{ channel: "email", reason: "bounce_hard", keyed: "contact" }]);
-    expect(signal()).toContain("This contact's email bounced. Fix their address, then turn off Email in the DND tab.");
+    expect(signal()).toContain("This contact's email bounced. Fix their address, then an owner or admin turns off Email in the DND tab.");
     expect(signal()).not.toContain("Check it, or use another address.");
     expect(sw("Email").getAttribute("data-state")).toBe("checked");
     expect(sw("Email").disabled).toBe(false);

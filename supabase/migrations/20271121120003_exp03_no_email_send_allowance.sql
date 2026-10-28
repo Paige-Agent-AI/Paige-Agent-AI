@@ -40,10 +40,11 @@
 -- was last CLAIMED — least recently first — and only then by oldest due. That is SCHEDULING ORDER ONLY: no
 -- campaign is refused, held or made to wait for a limit; every due campaign is still claimable on any pass,
 -- and `FOR UPDATE OF ca SKIP LOCKED` and `LIMIT lim` are unchanged.
--- "Last claimed" is the newest updated_at among the business's dispatchable campaigns (status scheduled or
--- sending), read through the existing index email_campaigns_tenant_updated (tenant_id, updated_at DESC). Every
--- claim already stamps its campaign's updated_at; it now uses clock_timestamp() so two claims in one
--- transaction still order. Keying on the claim, not on a successful send, is deliberate (round-3 review): a
+-- "Last claimed" is the newest updated_at among ALL the business's campaigns, a first-row probe of the existing
+-- index email_campaigns_tenant_updated (tenant_id, updated_at DESC). Every claim already stamps its campaign's
+-- updated_at; it now uses clock_timestamp() so two claims in one transaction still order. No status filter: a
+-- small campaign is claimed and settled (completed) in one pass, and a filter would drop that stamp, putting a
+-- business with many small campaigns first again every pass. Settling and editing only move the key later. Keying on the claim, not on a successful send, is deliberate (round-3 review): a
 -- send that is deferred (quiet hours, do-not-disturb), fails or ends outcome_unknown writes no sent_at, so a
 -- send-based key would leave a business that never completes a send first in line on every pass. Series
 -- emails are campaigns (email_campaigns.sequence_id) claimed by this same function, so they share the same
@@ -227,8 +228,7 @@ BEGIN
                    AND (r.not_before IS NULL OR r.not_before <= now()))
    -- Fair across businesses, scheduling order only (never a refusal or a wait): the business claimed least
    -- recently goes first, whether or not its last claim ended in a send; then the oldest due.
-   ORDER BY (SELECT max(cb.updated_at) FROM public.email_campaigns cb
-              WHERE cb.tenant_id = ca.tenant_id AND cb.status IN ('scheduled','sending')) ASC,
+   ORDER BY (SELECT max(cb.updated_at) FROM public.email_campaigns cb WHERE cb.tenant_id = ca.tenant_id) ASC,
             COALESCE(ve.scheduled_for, ve.approved_at) ASC
    LIMIT 1 FOR UPDATE OF ca SKIP LOCKED;
   IF NOT FOUND THEN RETURN jsonb_build_object('campaign', NULL); END IF;

@@ -14,7 +14,7 @@
 -- addresses; §63); everything rolled back. No provider is called: the send step is the service-only
 -- dispatch seam, driven exactly as email-campaign-worker drives it.
 BEGIN;
-SELECT plan(36);
+SELECT plan(37);
 
 -- ── Seed ────────────────────────────────────────────────────────────────────────────────────────
 -- Users: 1 owner of Ash, 2 member of Ash, 3 owner of Elm (no postal address), 4 owner of Birch.
@@ -240,6 +240,24 @@ SELECT is((SELECT string_agg(COALESCE(jsonb_array_length(c->'recipients')::text,
   '100,100,50', 'each pass leases up to its limit: nobody is refused, held or skipped for a limit');
 SELECT is((SELECT count(*)::int FROM k WHERE name IN ('fair1','fair2','fair3') AND (c ? 'waiting' OR c ? 'blocked' OR c ? 'error')), 0,
   'no pass answers waiting, blocked or an error');
+-- A campaign that finishes keeps its business's turn spent (round-3 review): Birch's 50 are sent and its
+-- campaign settles (completed, as email_campaign_dispatch_settle does after the pass); Birch then has a second
+-- campaign due. Its business was claimed after Ash's last claim, so Ash goes next — a key over only
+-- scheduled/sending campaigns would drop the finished one and put Birch first again.
+UPDATE public.email_campaign_recipients SET status = 'sent', sent_at = now(), lease_until = NULL, updated_at = now()
+ WHERE status = 'sending' AND campaign_id = pg_temp.c('birch');
+UPDATE public.email_campaign_recipients SET status = 'skipped', skip_reason = 'contact_removed', updated_at = now()
+ WHERE status = 'planned' AND campaign_id = pg_temp.c('birch');
+UPDATE public.email_campaigns SET status = 'completed', updated_at = clock_timestamp() WHERE id = pg_temp.c('birch');
+INSERT INTO k VALUES ('birch2', pg_temp.draft('e03c0100-0000-4000-8000-000000000004', 'standard', 'Birch second note', '{}'));
+INSERT INTO k VALUES ('birch2_filed', pg_temp.birch_owner(format('SELECT public.email_campaign_request_approval(%L::uuid)', pg_temp.v('birch2'))));
+INSERT INTO k VALUES ('birch2_ok', pg_temp.birch_owner(format('SELECT public.email_campaign_approve(%L::uuid)', pg_temp.v('birch2'))));
+INSERT INTO k VALUES ('fair4', pg_temp.claim());
+SELECT is((SELECT CASE WHEN (c->'campaign'->>'id') = pg_temp.c('ash2')::text THEN 'ash'
+                       WHEN (c->'campaign'->>'id') = pg_temp.c('birch2')::text THEN 'birch2'
+                       ELSE COALESCE(c->>'error', (SELECT COALESCE(x.c->>'error','filed') FROM k x WHERE x.name = 'birch2_ok')) END
+             FROM k WHERE name = 'fair4'),
+  'ash', 'Birch''s finished campaign still counts as its last claim: Ash, not Birch''s second campaign, goes next');
 
 SELECT * FROM finish();
 ROLLBACK;

@@ -9,7 +9,7 @@ Branch `worktree-agent-a55b63b75992b79b7`:
 - c50895108: review fixes. The migration is renumbered `20271121120003` (above production's and main's `20271121110019`). The claim is fair across businesses. The series "Ready to start" facts grid fits its three facts. Stale comments are corrected.
 - 5a2b0b372: this record's update and the re-rendered frames.
 - 2d44bd5dc: the migration-version lint also refuses a version older than main's newest (the B1 shape).
-- 7th commit on `claude/great-heisenberg-u7kyd9`: round-3 review MAJOR. The fair claim keys on when a business was last claimed, not on its last successful send: a deferred, failed or outcome-unknown send writes no `sent_at`, so the first key could leave such a business first on every pass. Database and proof only; no screen changed, so the frames and the UI build identity below are unchanged.
+- 7th commit on `claude/great-heisenberg-u7kyd9`: round-3 review MAJOR. The fair claim keys on when a business was last claimed, not on its last successful send: a deferred, failed or outcome-unknown send writes no `sent_at`, so the first key could leave such a business first on every pass. A follow-up keeps the key across all of a business's campaigns (no status filter), so a small campaign claimed and settled in one pass still counts. Database and proof only; no screen changed, so the frames and the UI build identity below are unchanged.
 
 Owner ruling 2026-10-27 (billing): each business's own usage is billed uncapped against a 25% contribution target, and PAIGE imposes no spending or sending stop. Once the database stopped enforcing 500 a day, every screen that still said "up to 500 a day" promised a limit that no longer existed. This change removes that copy. It adds no new element.
 

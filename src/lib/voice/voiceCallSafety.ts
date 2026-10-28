@@ -74,6 +74,12 @@ export function providerCallErrorMessage(error: unknown): string {
   if (code === "31005" || code === "31009") {
     return "We could not reach the calling provider. Retry.";
   }
+  // The callee's side, not the provider's: Voice SDK SIP errors TemporarilyUnavailable (31480),
+  // BusyHere (31486) and Decline (31603). Same wording as the server's call log: Twilio reports a
+  // declined call to the status callback as CallStatus=no-answer, logged "No answer.", so 31603
+  // says "No answer." too rather than telling the owner a different story than the call log.
+  if (code === "31480" || code === "31603") return "No answer.";
+  if (code === "31486") return "The line was busy.";
   return "The provider rejected this call. Check the number and retry.";
 }
 

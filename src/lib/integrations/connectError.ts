@@ -99,6 +99,9 @@ const COMMS_COPY: Record<string, string> = {
     "This business doesn’t have a messaging account yet, so there’s nothing to buy a number into.",
   inbound_webhook_secret_missing:
     "Messaging isn’t finished being set up for this business yet, so a number can’t be attached safely.",
+  // Refused before the buy: the number's call routing could not be built. Nothing was bought.
+  voice_twiml_url_unavailable:
+    "Calling isn’t finished being set up for this business yet, so a number can’t be attached safely. Nothing was bought.",
   number_bought_but_record_failed:
     "The number was bought and you are being billed for it, but we couldn’t attach it to this business. Don’t buy another — tell us and we’ll attach this one.",
   // Only reachable once a lane SENDS the amount it displayed. Both are the server

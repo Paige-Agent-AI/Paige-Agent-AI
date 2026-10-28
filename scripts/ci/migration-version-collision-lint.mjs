@@ -25,6 +25,12 @@
  *   1. two files in the tree sharing a version — always wrong, whoever wrote them;
  *   2. a version this branch ADDS that already exists on the merge base — the merge-collision
  *      shape, which is the common one on a long-lived branch.
+ *   4. a version this branch ADDS that sorts BEFORE the newest version already on the base branch.
+ *      Production has applied the base's newest, and `supabase db push` (what deploy-migrations runs)
+ *      refuses a local file that would be inserted before the remote's last migration, so the deploy
+ *      fails after merge. Measured 2026-10-28: an EXP03 branch named its migration 20271120140003 while
+ *      main was already at 20271121110019; shapes 1 and 2 passed it, and only a by-hand frontier check
+ *      caught it before merge. Rename to a version later than the base's newest.
  * It does NOT and cannot catch shape 3: a version recorded in production whose file is not in this
  * repository at all. That needs the live ledger, which CI has no credentials for. Stated plainly
  * rather than implied, because a guard trusted for more than it checks is worse than none — the
@@ -66,6 +72,17 @@ export function collisions({ treeFiles, baseFiles, addedFiles }) {
         `Rename this migration to a free, later version — never renumber the one already applied.`);
     }
   }
+  const baseNewest = baseFiles.map(versionOf).filter((v) => /^\d{14}$/.test(v)).sort().at(-1);
+  if (baseNewest) {
+    for (const f of addedFiles) {
+      const v = versionOf(f);
+      if (!/^\d{14}$/.test(v) || baseVersions.has(v) || v > baseNewest) continue;
+      out.push(`${f.split("/").pop()} has version ${v}, which sorts before the base branch's newest ` +
+        `migration ${baseByVersion.get(baseNewest)}. Production has applied that one, so \`supabase db push\` ` +
+        `refuses to insert this file before it and the deploy fails after merge. Rename it to a version ` +
+        `later than ${baseNewest}.`);
+    }
+  }
   return out;
 }
 
@@ -82,14 +99,24 @@ if (SELF_TEST) {
   ok(collisions({ treeFiles: [M("20260101000000", "mine")], baseFiles: [M("20260101000000", "theirs")],
                   addedFiles: [M("20260101000000", "mine")] }).length === 1,
      "a version the base already uses is caught even with no duplicate filename");
-  ok(collisions({ treeFiles: [M("20260101000000", "mine")], baseFiles: [M("20260102000000", "theirs")],
-                  addedFiles: [M("20260101000000", "mine")] }).length === 0,
+  ok(collisions({ treeFiles: [M("20260103000000", "mine")], baseFiles: [M("20260102000000", "theirs")],
+                  addedFiles: [M("20260103000000", "mine")] }).length === 0,
      "an unused version is clean");
   // A file present on BOTH sides unchanged is not an addition and must not be flagged.
   ok(collisions({ treeFiles: [M("20260101000000", "same")], baseFiles: [M("20260101000000", "same")], addedFiles: [] }).length === 0,
      "an unchanged existing migration is not a collision with itself");
   ok(collisions({ treeFiles: ["supabase/migrations/README.md"], baseFiles: [], addedFiles: ["supabase/migrations/README.md"] }).length === 0,
      "a non-migration filename is ignored rather than parsed as a version");
+  // Shape 4: an added version older than the base's newest fails `db push` after merge.
+  ok(collisions({ treeFiles: [M("20260101000000", "mine"), M("20260105000000", "theirs")],
+                  baseFiles: [M("20260105000000", "theirs")], addedFiles: [M("20260101000000", "mine")] }).length === 1,
+     "an added version older than the base's newest is caught");
+  ok(collisions({ treeFiles: [M("20260106000000", "mine"), M("20260105000000", "theirs")],
+                  baseFiles: [M("20260105000000", "theirs")], addedFiles: [M("20260106000000", "mine")] }).length === 0,
+     "an added version newer than the base's newest is clean");
+  ok(collisions({ treeFiles: [M("20260105000000", "mine")], baseFiles: [M("20260105000000", "theirs")],
+                  addedFiles: [M("20260105000000", "mine")] }).length === 1,
+     "a reused newest version is reported once, as a reuse, not also as out of order");
   console.log(fail === 0 ? "✓ migration-version-collision-lint self-test passed." : `✗ ${fail} self-test failure(s).`);
   process.exit(fail === 0 ? 0 : 1);
 }
@@ -120,4 +147,4 @@ if (found.length) {
   console.log("\n  A colliding migration does not fail on push — it is SKIPPED, and every gate stays green.");
   process.exit(1);
 }
-console.log(`✓ migration-version-collision-lint: ${treeFiles.length} migration(s), no version reused${baseFiles ? ` (base ${base})` : ""}.`);
+console.log(`✓ migration-version-collision-lint: ${treeFiles.length} migration(s), no version reused or out of order${baseFiles ? ` (base ${base})` : ""}.`);

@@ -95,36 +95,24 @@ export async function a2bAuthority(caller: unknown, service: unknown, userId: st
 // ---------------------------------------------------------------- tool definitions, each from its one home
 
 /**
- * crm_list_tasks, crm_list_team and growth_list have no shared definition yet: their only definition is
- * inline in paige-ai-chat's tool list. Until they get one home, these are kept identical to it, and
- * card-tools.test.ts fails the moment either side drifts (it reads the chat's source). D15: the task
- * list keeps its one schema, so `assignee_email` stays offered and is answered `needs_input` here.
+ * crm_list_tasks, crm_list_team and growth_list have no shared definition yet: each is defined once, in
+ * paige-ai-chat (GROWTH_LIST_TOOL_DEF, CRM_LIST_TEAM_TOOL_DEF, CRM_LIST_TASKS_TOOL_DEF), which hands them
+ * to the agent turn. Team Hub keeps no copy (capability-kit lint: no second tool definition). D15: the
+ * task list keeps its one schema, so `assignee_email` stays offered and is answered `needs_input` here.
  */
-export const CHAT_INLINE_READ_DEFS = Object.freeze({
-  growth_list: { type: "function", function: { name: "growth_list",
-    description: "Team only. List the tenant's landing pages (growth pages) with their slug, title, status (draft/published/archived), and — for published pages — the real public URL. Read-only; safe to run. Use when the operator asks 'what pages do I have?', 'show my landing pages', or before saving/publishing so you can reference an existing page by id.",
-    parameters: { type: "object", properties: {} } } },
-  crm_list_team: { type: "function", function: { name: "crm_list_team",
-    description: "Team only. List the tenant's team members (coaches, brokers, admins, sales reps) with their names, roles, and user ids. Use this to resolve 'assign her to the coach named X' into a user_id before calling crm_assign_contact.",
-    parameters: { type: "object", properties: {} } } },
-  crm_list_tasks: { type: "function", function: { name: "crm_list_tasks",
-    description: "Team only. List operator tasks. Use for 'what's due today', 'overdue tasks', or 'tasks for [coach]'. Returns id, title, due_date, status, assignee user_id, track, deal_id, updated_at and created_at. Before changing an existing task, use this current updated_at as expected_updated_at; use created_at only when updated_at is null. If neither supplies a valid timestamp, do not guess a version or change the task. Omitted status excludes completed tasks; status all includes every status.",
-    parameters: { type: "object", properties: {
-      status: { type: "string", enum: ["pending", "in_progress", "completed", "cancelled", "all"] },
-      overdue: { type: "boolean", description: "Only return tasks past due_date and not completed." },
-      assignee_email: { type: "string" },
-      due_within_days: { type: "number", description: "Tasks due within N days from today." },
-      limit: { type: "number" },
-    } } } },
-});
+export const CHAT_READ_TOOL_NAMES: ReadonlySet<string> = new Set(["growth_list", "crm_list_team", "crm_list_tasks"]);
 
 /** Each A2b tool's definition, a fresh copy per call (the caller may decorate what it is handed). */
-export function a2bToolDef(name: string): { type: "function"; function: { name: string; description: string; parameters: unknown } } | null {
+export function a2bToolDef(name: string, chatReadDefs?: Readonly<Record<string, unknown>>): { type: "function"; function: { name: string; description: string; parameters: unknown } } | null {
   const pick = (): unknown => {
     if (name === "growth_page_publish") return growthPagePublishToolDef();
     if (name === "crm_get_task") return CRM_TASK_READ_TOOLS.find((t) => t.function.name === name) ?? null;
     if (name === "crm_assign_task" || name === "crm_cancel_task") return CRM_COMMAND_TOOLS.find((t) => t.function.name === name) ?? null;
-    return (CHAT_INLINE_READ_DEFS as Record<string, unknown>)[name] ?? null;
+    if (!CHAT_READ_TOOL_NAMES.has(name)) return null;
+    const def = chatReadDefs?.[name];
+    // Only the definition of the tool asked for: a mislabelled entry is never offered under another name.
+    const named = def && typeof def === "object" ? (def as { function?: { name?: unknown } }).function?.name : null;
+    return named === name ? def : null;
   };
   const def = pick();
   return def ? JSON.parse(JSON.stringify(def)) : null;

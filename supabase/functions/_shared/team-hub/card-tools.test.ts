@@ -2,36 +2,22 @@
 // EXP08 Team Hub agents A2b — the card set, the tool definitions' one home, and provenance (plan D2, D6,
 // D13, D15). The turn-level behaviour (offer, Prepare, D11, one card per turn) is driven in
 // agent-turn.test.ts. EVIDENCE CLASS: automated unit tests plus STRUCTURAL checks over two sources the
-// module must agree with: paige-ai-chat's inline tool definitions and the A2b migration's inlined PAIGE
+// module must agree with: paige-ai-chat's own read tool definitions and the A2b migration's inlined PAIGE
 // scope. No authenticated drive is claimed here.
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import {
-  A2B_CARD_TOOLS, A2B_READ_TOOLS, CARD_KIND, CHAT_INLINE_READ_DEFS, CardProvenance, KIND_LABEL, PAIGE_A2B_DM_SCOPE, a2bToolDef, offeredA2bTools,
+  A2B_CARD_TOOLS, A2B_READ_TOOLS, CARD_KIND, CHAT_READ_TOOL_NAMES, CardProvenance, KIND_LABEL, PAIGE_A2B_DM_SCOPE, a2bToolDef, offeredA2bTools,
 } from "./card-tools.ts";
 import { classifyAction, mutatingTools } from "../action-risk.ts";
+import { chatReadToolDefs } from "./a2b-test-fakes.ts";
 
 const CHAT = readFileSync(fileURLToPath(new URL("../../paige-ai-chat/index.ts", import.meta.url)), "utf8");
 const MIGRATION = readFileSync(fileURLToPath(new URL("../../../migrations/20271121140008_exp08_team_hub_a2b_cards.sql", import.meta.url)), "utf8");
 
-/** The object literal of one inline tool definition in the chat, evaluated (it holds only literals). */
-function chatInlineDef(name: string): unknown {
-  const at = CHAT.indexOf(`name: "${name}",`);
-  assert.ok(at > 0, `the chat defines ${name}`);
-  assert.equal(CHAT.indexOf(`name: "${name}",`, at + 1), -1, `${name} is defined once`);
-  const start = CHAT.lastIndexOf("{\n            type: \"function\",", at);
-  let depth = 0, i = start, quote: string | null = null;
-  for (; i < CHAT.length; i++) {
-    const ch = CHAT[i];
-    if (quote) { if (ch === "\\") i++; else if (ch === quote) quote = null; continue; }
-    if (ch === "\"" || ch === "'" || ch === "`") quote = ch;
-    else if (ch === "{") depth++;
-    else if (ch === "}" && --depth === 0) break;
-  }
-  return new Function(`return (${CHAT.slice(start, i + 1)});`)();
-}
+const DEFS = chatReadToolDefs(CHAT);
 
 describe("the A2b card set is hand-listed, and every card is a high write", () => {
   it("exactly the three card tools and four reads, each with one kind and one label", () => {
@@ -57,11 +43,24 @@ describe("the A2b card set is hand-listed, and every card is a high write", () =
 });
 
 describe("every A2b tool definition comes from its one home", () => {
-  it("the three reads with no shared home yet are byte-for-byte the chat's inline definitions (drift fails here)", () => {
-    for (const name of Object.keys(CHAT_INLINE_READ_DEFS)) assert.deepEqual(a2bToolDef(name), chatInlineDef(name), name);
+  it("the three reads with no shared home yet are the chat's own definitions, each used once in its tool list", () => {
+    assert.deepEqual([...CHAT_READ_TOOL_NAMES].sort(), Object.keys(DEFS).sort());
+    for (const name of CHAT_READ_TOOL_NAMES) {
+      assert.deepEqual(a2bToolDef(name, DEFS), DEFS[name], name);
+      assert.equal((DEFS[name] as any).function.name, name);
+      assert.equal(CHAT.includes(`name: "${name}",`), true, `${name} is defined in the chat`);
+    }
+    for (const c of ["GROWTH_LIST_TOOL_DEF", "CRM_LIST_TEAM_TOOL_DEF", "CRM_LIST_TASKS_TOOL_DEF"]) {
+      assert.equal(CHAT.split(`          ${c},`).length - 1, 1, `${c} is in the chat's tool list once`);
+    }
+  });
+  it("without the chat's definitions those three are not offered, and a mislabelled one never is", () => {
+    for (const name of CHAT_READ_TOOL_NAMES) assert.equal(a2bToolDef(name), null, name);
+    assert.equal(a2bToolDef("growth_list", { growth_list: DEFS.crm_list_team }), null);
+    assert.equal(a2bToolDef("crm_update_task", DEFS), null);
   });
   it("D15: crm_list_tasks keeps its one schema, assignee_email included", () => {
-    assert.ok("assignee_email" in ((a2bToolDef("crm_list_tasks") as any).function.parameters.properties));
+    assert.ok("assignee_email" in ((a2bToolDef("crm_list_tasks", DEFS) as any).function.parameters.properties));
   });
   it("the card tools and crm_get_task come from their shared homes, a fresh copy each time", () => {
     for (const name of ["crm_assign_task", "crm_cancel_task", "growth_page_publish", "crm_get_task"]) {

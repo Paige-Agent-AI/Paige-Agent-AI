@@ -12,7 +12,9 @@ import {
   ANSWER_PRIVATELY_TOOL, EXECUTABLE_AGENT_TOOLS, PINNED_READ_TOOL, PRIVATE_PART_LINE, bringInLines, effectiveAgentTools, isTeamHubAgentTurnRequest, isTransportError, parseAgentAnswer, parseAgentTurnRequest,
   parseBringIn, privateRouteAllowed, runTeamHubAgentTurn, storedToolNames, uuidFrom, type AgentTurnDeps, type CompleteFn,
 } from "./agent-turn.ts";
-import { fakeDb, eqOf, hasFilter, type Query } from "./a2b-test-fakes.ts";
+import { chatReadToolDefs, fakeDb, eqOf, hasFilter, type Query } from "./a2b-test-fakes.ts";
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import { crmCommandFallbackIdempotencyKeys, canonicalizeCrmCommand } from "../crm-command/catalog.ts";
 
 const TENANT = "11111111-1111-4111-8111-111111111111";
@@ -950,9 +952,11 @@ function dmWorld(opts: DmOpts = {}) {
 }
 async function runDm(w: ReturnType<typeof dmWorld>, m: ReturnType<typeof model>, agent: "zion" | "nexus" | "paige" = "zion", body?: unknown) {
   return runTeamHubAgentTurn({ caller: w.caller, service: w.service, userId: SAM, complete: m.make(w.calls), random: () => new Uint8Array(32).fill(7),
-    ...(w.invokeAs ? { invokeAs: w.invokeAs } : {}) },
+    chatReadToolDefs: CHAT_READ_DEFS, ...(w.invokeAs ? { invokeAs: w.invokeAs } : {}) },
     body ?? { teamHubAgentTurn: { conversationId: w.dm, sourceMessageId: ASK, threadRootId: null, agent } });
 }
+// The chat hands these three definitions to every agent turn (paige-ai-chat, chatReadToolDefs).
+const CHAT_READ_DEFS = chatReadToolDefs(readFileSync(fileURLToPath(new URL("../../paige-ai-chat/index.ts", import.meta.url)), "utf8"));
 const offered = (m: ReturnType<typeof model>) => (m.requests[0].request.tools ?? []).map((t) => t.function.name).sort();
 const toolResults = (m: ReturnType<typeof model>) => m.requests.at(-1)!.request.messages.filter((x) => x.role === "tool").map((x) => JSON.parse(String(x.content)));
 const LIST = { name: "crm_list_tasks", args: {} };
@@ -992,7 +996,7 @@ describe("A2b: what an agent DM turn is offered (D4, D5, D13)", () => {
   });
   it("PAIGE's DM scope is her A1 reads plus the A2b reads and all three card tools", async () => {
     const w = dmWorld({ agent: "paige" }), m = model([FINAL]);
-    await runTeamHubAgentTurn({ caller: w.caller, service: w.service, userId: SAM, complete: m.make(w.calls), random: () => new Uint8Array(32).fill(7), invokeAs: w.invokeAs },
+    await runTeamHubAgentTurn({ caller: w.caller, service: w.service, userId: SAM, complete: m.make(w.calls), random: () => new Uint8Array(32).fill(7), invokeAs: w.invokeAs, chatReadToolDefs: CHAT_READ_DEFS },
       { teamHubAgentTurn: { conversationId: w.dm, sourceMessageId: ASK, threadRootId: null, agent: "paige" } });
     assert.deepEqual(offered(m), ["crm_assign_task", "crm_cancel_task", "crm_get_task", "crm_list_tasks", "crm_list_team", "growth_list", "growth_page_publish",
       "read_business_time_zone", "team_hub_read_conversation"]);
@@ -1002,6 +1006,23 @@ describe("A2b: what an agent DM turn is offered (D4, D5, D13)", () => {
     await runDm(w, m, "zion", { teamHubAgentTurn: { conversationId: LAUNCH, sourceMessageId: ASK, threadRootId: null, agent: "zion" } });
     assert.deepEqual(offered(m), ["read_business_time_zone", "team_hub_read_conversation"]);
     assert.equal(named(w as never, "is_tenant_admin_as").length, 0, "the authority is not even asked");
+  });
+});
+
+describe("A2b: the three chat-owned read definitions arrive only from the chat", () => {
+  it("absent, growth_list, crm_list_team and crm_list_tasks are not offered (fail closed), and the rest are", async () => {
+    const w = dmWorld({ agent: "paige" }), m = model([FINAL]);
+    await runTeamHubAgentTurn({ caller: w.caller, service: w.service, userId: SAM, complete: m.make(w.calls), random: () => new Uint8Array(32).fill(7), invokeAs: w.invokeAs },
+      { teamHubAgentTurn: { conversationId: w.dm, sourceMessageId: ASK, threadRootId: null, agent: "paige" } });
+    assert.deepEqual(offered(m), ["crm_assign_task", "crm_cancel_task", "crm_get_task", "growth_page_publish", "read_business_time_zone", "team_hub_read_conversation"]);
+  });
+  it("a definition handed in under another tool's name is never offered under that name", async () => {
+    const w = dmWorld({ agent: "paige" }), m = model([FINAL]);
+    await runTeamHubAgentTurn({ caller: w.caller, service: w.service, userId: SAM, complete: m.make(w.calls), random: () => new Uint8Array(32).fill(7), invokeAs: w.invokeAs,
+      chatReadToolDefs: { ...CHAT_READ_DEFS, growth_list: CHAT_READ_DEFS.crm_list_team } },
+      { teamHubAgentTurn: { conversationId: w.dm, sourceMessageId: ASK, threadRootId: null, agent: "paige" } });
+    assert.equal(offered(m).includes("growth_list"), false);
+    assert.equal(offered(m).filter((n) => n === "crm_list_team").length, 1);
   });
 });
 

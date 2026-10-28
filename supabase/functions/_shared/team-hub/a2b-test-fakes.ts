@@ -40,3 +40,28 @@ export function fakeDb(resolve: Resolver, log: Query[]) {
 /** The value of an `eq` filter on `key`, or undefined. */
 export const eqOf = (q: Query, key: string): unknown => q.filters.find(([op, k]) => op === "eq" && k === key)?.[2];
 export const hasFilter = (q: Query, op: string, key: string): boolean => q.filters.some(([o, k]) => o === op && k === key);
+
+/**
+ * The three read definitions paige-ai-chat owns (GROWTH_LIST_TOOL_DEF, CRM_LIST_TEAM_TOOL_DEF,
+ * CRM_LIST_TASKS_TOOL_DEF), evaluated from its source as the chat hands them to the agent turn. Each
+ * holds only literals, so evaluating the literal is exactly the object the chat passes.
+ */
+export function chatReadToolDefs(chatSource: string): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  for (const [name, constName] of [["growth_list", "GROWTH_LIST_TOOL_DEF"], ["crm_list_team", "CRM_LIST_TEAM_TOOL_DEF"], ["crm_list_tasks", "CRM_LIST_TASKS_TOOL_DEF"]]) {
+    const head = `const ${constName} = `;
+    const at = chatSource.indexOf(head);
+    if (at < 0 || chatSource.indexOf(head, at + 1) >= 0) throw new Error(`the chat defines ${constName} exactly once`);
+    const start = at + head.length;
+    let depth = 0, i = start, quote: string | null = null;
+    for (; i < chatSource.length; i++) {
+      const ch = chatSource[i];
+      if (quote) { if (ch === "\\") i++; else if (ch === quote) quote = null; continue; }
+      if (ch === "\"" || ch === "'" || ch === "`") quote = ch;
+      else if (ch === "{") depth++;
+      else if (ch === "}" && --depth === 0) break;
+    }
+    out[name] = new Function(`return (${chatSource.slice(start, i + 1)});`)();
+  }
+  return out;
+}

@@ -208,6 +208,12 @@ export interface AgentTurnDeps {
    * door through it. Absent, no card tool is offered (fail closed).
    */
   invokeAs?: DoorInvoke;
+  /**
+   * A2b: the definitions of the three reads that have no shared home yet (growth_list, crm_list_team,
+   * crm_list_tasks), handed in by paige-ai-chat from its own one definition of each. Absent, those
+   * reads are not offered (fail closed); Team Hub never keeps a second copy of their schemas.
+   */
+  chatReadToolDefs?: Readonly<Record<string, unknown>>;
 }
 
 // ---------------------------------------------------------------- tools (contract section 6)
@@ -240,10 +246,10 @@ const TOOL_DEFS: Readonly<Record<string, ToolDef>> = Object.freeze(Object.fromEn
   [...TEAM_HUB_READ_TOOLS, ...CLIENT_ENGAGEMENT_TOOLS].filter((t) => EXECUTABLE_AGENT_TOOLS.has(t.function.name))
     .map((t) => [t.function.name, t as unknown as ToolDef])));
 /** A runnable tool's definition: A1's from the table above, an A2b tool's from its one home (card-tools.ts). */
-function toolDef(name: string): ToolDef | undefined {
+function toolDef(name: string, chatReadDefs?: Readonly<Record<string, unknown>>): ToolDef | undefined {
   if (TOOL_DEFS[name]) return TOOL_DEFS[name];
   if (!A2B_READ_TOOLS.has(name) && !A2B_CARD_TOOLS.has(name)) return undefined;
-  return (a2bToolDef(name) as ToolDef | null) ?? undefined;
+  return (a2bToolDef(name, chatReadDefs) as ToolDef | null) ?? undefined;
 }
 
 type StoredList = { mode?: unknown; tools?: unknown };
@@ -763,7 +769,7 @@ export async function runTeamHubAgentTurn(deps: AgentTurnDeps, raw: unknown): Pr
   // system messages above travel as `instructions`, which that check does not read, so the request is
   // refused with a 400 before the model runs. The asker's line therefore names the answer format too.
   messages.push({ role: "user", content: `${askerName} asks ${agentName(agent) ?? "you"}: ${quoteTeamHubText(source.body, 2000)}\n\n${ANSWER_FORMAT_REMINDER}` });
-  const toolDefs = tools.map((t) => toolDef(t)).filter((d): d is ToolDef => !!d);
+  const toolDefs = tools.map((t) => toolDef(t, deps.chatReadToolDefs)).filter((d): d is ToolDef => !!d);
   // A2b (D6): the ids this turn's reads returned, the only source a card's arguments may come from.
   const provenance = new CardProvenance();
 

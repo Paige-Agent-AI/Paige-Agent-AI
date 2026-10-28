@@ -1,5 +1,9 @@
 # Decision Log — chronological one-liners
 
+## October28 — EXP08 Team Hub agents A2b: approval cards in agent DMs, two owner rulings
+
+- **Built (migration `20271121140008`):** ZION hand-over / cancel, NEXUS page publish and PAIGE any of the three arrive as the APPROVED-FROZEN A2 card in the asker's DM; the card is the door's own proposal row, asker-only Approve / Not now, outcome posted in the thread; summaries name the task and the person. **Owner rulings ("go with your recommendations"):** the "That didn't go through just now. Try again." line under a card stays; a channel redirect's Open DM opens the DM with the asker's request prefilled, unsent. **Owner question answered:** every agent gets cards, in waves through the same path (MERIT next), each confirmed by its domain lead in ANT-161. **Lesson:** a harness frame review caught three defects no test did (a lowercase reason fragment, a silent refused Approve, focus dropped to the page); render the real hook path before asking for sign-off.
+
 ## October28 — EXP08 Team Hub: one Team Hub for every Solo account, now and future
 
 - **Owner direction (2026-10-28):** every Solo account has the same experience, a couple are used to test, and future Solo accounts get it too. For Team Hub this already holds by construction, and is now pinned: no per-account flag, copy or seed exists (doors gate on canonical Solo + active seat + Team conversations, default on; the six specialists are platform rows the agent turn alone reads; PAIGE's personality is compiled). Production read 2026-10-28: all six active Solo accounts pass identically. `exp08_team_hub_new_solo_parity.sql` (database-contract job) proves a new account from each of the four Solo producers reaches every Team Hub door. **Lesson:** parity is kept by having nothing per-account to drift, plus one test per producer; never by seeding or patching accounts one at a time. Whole-product parity stays with ANT-21.

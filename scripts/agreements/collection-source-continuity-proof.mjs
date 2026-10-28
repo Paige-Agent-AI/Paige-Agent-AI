@@ -20,10 +20,10 @@ export async function proveAcceptedCollectionSource({sql,read,quote,tenant,actor
  const clientStart=collections.indexOf('CREATE OR REPLACE FUNCTION public._sales_collection_client_name(');
  const listEnd=collections.indexOf('TO authenticated;',clientStart)+'TO authenticated;'.length;
  assert(clientStart>=0&&listEnd>clientStart);sql(collections.slice(clientStart,listEnd));
- sql(read('supabase/migrations/20271120131104_sales_collection_amount_basis.sql'));
+ sql(read('supabase/migrations/20271121131104_sales_collection_amount_basis.sql'));
  const predecessor=json(`SET test.uid='${actor}';SET test.tenant='${tenant}';SET ROLE authenticated;SELECT list_sales_collection_agreements('${tenant}');`);
  equal(predecessor.rows.find(row=>row.id===c.terms)?.agreed_amount_basis,'unverified','Predecessor read cannot yet use original accepted/effective provenance');
- sql(read('supabase/migrations/20271120131204_sales_collection_fixed_source_guard.sql'));
+ sql(read('supabase/migrations/20271121131204_sales_collection_fixed_source_guard.sql'));
  const evidenceMode=process.argv.includes('--accepted-total-evidence');
  const evidenceProof=evidenceMode?await(await import('./collection-total-evidence-proof.mjs')).proveCollectionTotalEvidence({sql,read,quote,tenant,actor,c}):null;
  checks+=evidenceProof?.checks??0;

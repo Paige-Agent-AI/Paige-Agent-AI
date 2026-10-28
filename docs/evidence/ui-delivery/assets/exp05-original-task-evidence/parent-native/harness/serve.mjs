@@ -1,0 +1,3 @@
+import http from 'node:http';import fs from 'node:fs/promises';import path from 'node:path';
+const root=path.resolve('work/original-task-evidence-native/hydrated');
+http.createServer(async(req,res)=>{const file=({'/':'index.html','/bundle.js':'bundle.js','/style.css':'style.css'})[new URL(req.url,'http://127.0.0.1').pathname];if(!file){res.writeHead(404).end();return}try{res.writeHead(200,{'Content-Type':file.endsWith('.js')?'text/javascript':file.endsWith('.css')?'text/css':'text/html','Cache-Control':'no-store'}).end(await fs.readFile(path.join(root,file)))}catch{res.writeHead(500).end()}}).listen(0,'127.0.0.1',function(){console.log('Original native parent fixture: http://127.0.0.1:'+this.address().port)});

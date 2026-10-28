@@ -1,0 +1,73 @@
+{
+  "boundary": "NEUTRAL NATIVE COMPONENT ONLY; NO AUTHENTICATION OR EFFECTS",
+  "checks": [
+    {
+      "case": "verified-keyboard-320",
+      "focus": "SUMMARY",
+      "fontLoaded": true,
+      "height": 770,
+      "labels": [
+        "Task",
+        "Creation receipt",
+        "Execution",
+        "Approval",
+        "Process",
+        "Attempt"
+      ],
+      "open": true,
+      "overflow": false,
+      "theme": "light",
+      "width": 320
+    },
+    {
+      "case": "ambiguous",
+      "disclosure": true,
+      "overflow": false,
+      "taskLink": true,
+      "text": "Review the new contact and prepare the next stepOutcome uncertain · Decision recorded: Oct 27, 2026, 12:00 PM UTCOriginal task creation is verified against its saved result and receipt. Open the task to read its current state.Original task evidenceTask00000000-0000-4000-8000-000000000004Creation receipt00000000-0000-4000-8000-000000000005Execution00000000-0000-4000-8000-000000000006Approval00000000-0000-4000-8000-000000000002Process00000000-0000-4000-8000-000000000001Attempt00000000-0000-4000-8000-000000000003Open task"
+    },
+    {
+      "case": "unconfirmed",
+      "disclosure": false,
+      "overflow": false,
+      "taskLink": false,
+      "text": "Review the new contact and prepare the next stepExecution recorded · Decision recorded: Oct 27, 2026, 12:00 PM UTCThe original task could not be verified. A recorded status alone does not establish that a task was created. Nothing will be rerun here."
+    },
+    {
+      "case": "refused",
+      "disclosure": false,
+      "overflow": false,
+      "taskLink": false,
+      "text": "This result is no longer available in your current workspace or role."
+    },
+    {
+      "case": "unavailable",
+      "disclosure": false,
+      "overflow": false,
+      "taskLink": false,
+      "text": "The original outcome couldn’t be read. Select Inspect outcome to read it again; nothing will be rerun."
+    },
+    {
+      "case": "loading",
+      "disclosure": false,
+      "overflow": false,
+      "taskLink": false,
+      "text": "Reading the original result and receipt…"
+    },
+    {
+      "case": "return-to-verified",
+      "open": false,
+      "rows": 6
+    },
+    {
+      "case": "close-history",
+      "closed": true,
+      "disclosure": false
+    },
+    {
+      "case": "reopen-expand",
+      "focus": "SUMMARY",
+      "open": true
+    }
+  ]
+}

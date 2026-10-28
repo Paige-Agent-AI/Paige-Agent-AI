@@ -221,5 +221,15 @@
     "failed": 0,
     "skipped": 0
   },
-  "real_records_receipts_and_roles": "PROOF OWED"
+  "real_records_receipts_and_roles": "PROOF OWED",
+  "canonical_git_source": {
+    "src/solo/operations/OperationsRoute.tsx": "a4f449b0cc3d0dd9e6542f07444d4aed477aaa339d33afba0a9d5b79d144b7db",
+    "src/solo/operations/OperationsWorkspace.tsx": "cbe22d53425b54a15712612639e49ba22a928a16816a28854a9741cbdc9418a5",
+    "src/solo/operations/operations-weekly-source.ts": "d891749430be5b4efc6010a2dfaa39cd55ee6297d9f2234de4cedcad9f3fbe33",
+    "src/solo/operations/operations-task-focus.ts": "e612beb83323c720cb9b06cfcc0b760c47e638f9419329dd930c2ecb7f1ba931",
+    "src/lib/links/workspaceLinks.ts": "ec9df60122c1d831a0db39e9b2f2b9fbae42303e7563c87e4e4ff84d63d6a8c2",
+    "supabase/functions/_shared/canonical-app-url.ts": "7804bb0ae853eacd1843d7c4dc21ecb5b569a5cd7642a79f091bb564ed4abfd7",
+    "supabase/functions/_shared/paige-turn/record-links.ts": "5f5f0c13084f143cd6a85d35ccfde6986685f12adecc6427b6b92910b2e78a1a"
+  },
+  "source_hash_boundary": "actual_owned_source hashes raw source bytes used by the native build; canonical_git_source hashes LF-normalized committed source. Line endings may differ; no product transform was applied."
 }

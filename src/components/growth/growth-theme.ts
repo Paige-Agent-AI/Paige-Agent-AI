@@ -9,7 +9,7 @@
 // passes WCAG AA:
 //   --gp-accent-foreground : ink to place ON an accent fill (accent button label)
 //   --gp-accent-ink        : an AA-clamped accent, safe to use AS text on the background
-import type { GrowthPageTheme } from "@/lib/growth";
+import type { GrowthPageTheme } from "../../../supabase/functions/_shared/growth/types.ts";
 import { brandFontStack, resolveBrandFontPair, type BrandFontPair } from "@/lib/brand-fonts";
 
 // On-brand fallback floor (§6/§11) — Paige indigo ink + Paige gold. Never the old

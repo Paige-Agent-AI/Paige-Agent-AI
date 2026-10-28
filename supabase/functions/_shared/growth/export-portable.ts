@@ -15,7 +15,7 @@
 import { resolveGrowthTheme } from "../../../../src/components/growth/growth-theme.ts";
 import { assignBands } from "../../../../src/lib/growth/bands.ts";
 import { embedUrl } from "../../../../src/lib/growth/media.ts";
-import type { GrowthBlock, GrowthPageTheme } from "../../../../src/lib/growth.ts";
+import type { GrowthBlock, GrowthPageTheme } from "./types.ts";
 
 /**
  * The rich_text sanitizer seam — the ONE environment-dependent step in an otherwise pure

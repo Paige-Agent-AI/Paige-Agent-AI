@@ -6,7 +6,7 @@
 import { PAIGE_APP_ORIGIN } from "../canonical-app-url.ts";
 import { buildPortableExport, PortableExportRefused } from "../growth/export-portable.ts";
 import { buildGrowthBrandFloor } from "../../../../src/components/growth/growth-theme.ts";
-import type { GrowthBlock, GrowthPageTheme } from "../../../../src/lib/growth.ts";
+import type { GrowthBlock, GrowthPageTheme } from "../growth/types.ts";
 import type { HostingExport } from "../growth-hosting-command/contract.ts";
 
 // deno-lint-ignore no-explicit-any

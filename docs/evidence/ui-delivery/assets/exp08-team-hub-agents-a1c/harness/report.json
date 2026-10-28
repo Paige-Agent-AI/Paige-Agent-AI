@@ -1,0 +1,1592 @@
+[
+ {
+  "name": "ev-a1c-writing-others-1366-dark",
+  "act": "writing-others",
+  "viewport": "1366x768",
+  "paige": "closed",
+  "theme": "dark",
+  "errors": [
+   "Failed to load resource: the server responded with a status of 404 (File not found)"
+  ],
+  "docOverflowX": false,
+  "hubOverflowX": false,
+  "listOverflowX": false,
+  "dmHeader": null,
+  "composerHint": {
+   "text": "@ to mention · / for PAIGE",
+   "clipped": false
+  },
+  "composerValue": "",
+  "bring": [
+   "Only Priya can bring them in."
+  ],
+  "goldUse": [],
+  "plates": [
+   {
+    "agent": "paige",
+    "background": "rgb(65, 51, 23)",
+    "color": "rgb(235, 205, 150)",
+    "tokenTint": "rgb(65, 51, 23)"
+   },
+   {
+    "agent": "vera",
+    "background": "rgb(10, 50, 50)",
+    "color": "rgb(80, 183, 184)",
+    "tokenTint": "rgb(10, 50, 50)"
+   },
+   {
+    "agent": "nexus",
+    "background": "rgb(62, 30, 59)",
+    "color": "rgb(231, 163, 224)",
+    "tokenTint": "rgb(62, 30, 59)"
+   },
+   {
+    "agent": "cura",
+    "background": "rgb(71, 25, 42)",
+    "color": "rgb(242, 117, 160)",
+    "tokenTint": "rgb(71, 25, 42)"
+   },
+   {
+    "agent": "mentor",
+    "background": "rgb(70, 52, 85)",
+    "color": "rgb(238, 220, 255)",
+    "tokenTint": "rgb(70, 52, 85)"
+   },
+   {
+    "agent": "merit",
+    "background": "rgb(42, 69, 44)",
+    "color": "rgb(190, 245, 193)",
+    "tokenTint": "rgb(42, 69, 44)"
+   },
+   {
+    "agent": "zion",
+    "background": "rgb(29, 49, 75)",
+    "color": "rgb(164, 202, 254)",
+    "tokenTint": "rgb(29, 49, 75)"
+   }
+  ],
+  "small": [
+   "th-ag-namebtn th-ag-name:28",
+   "th-ag-namebtn th-ag-name:28"
+  ],
+  "announced": "",
+  "typing": [
+   "MERIT is writing…"
+  ],
+  "atList": [],
+  "failedBox": null,
+  "chips": [
+   {
+    "text": "@PAIGE",
+    "kind": "agent",
+    "background": "rgb(65, 51, 23)"
+   },
+   {
+    "text": "@CURA",
+    "kind": "agent",
+    "background": "rgb(71, 25, 42)"
+   },
+   {
+    "text": "@NEXUS",
+    "kind": "agent",
+    "background": "rgb(62, 30, 59)"
+   },
+   {
+    "text": "@ZION",
+    "kind": "agent",
+    "background": "rgb(29, 49, 75)"
+   },
+   {
+    "text": "@NEXUS",
+    "kind": "agent",
+    "background": "rgb(62, 30, 59)"
+   },
+   {
+    "text": "@MERIT",
+    "kind": "agent",
+    "background": "rgb(42, 69, 44)"
+   }
+  ],
+  "fails": [],
+  "notes": [],
+  "turns": []
+ },
+ {
+  "name": "ev-a1c-private-fail-merit-1366-dark",
+  "act": "private-fail-merit",
+  "viewport": "1366x768",
+  "paige": "closed",
+  "theme": "dark",
+  "errors": [],
+  "docOverflowX": false,
+  "hubOverflowX": false,
+  "listOverflowX": false,
+  "dmHeader": null,
+  "composerHint": {
+   "text": "@ to mention · / for PAIGE",
+   "clipped": false
+  },
+  "composerValue": "",
+  "bring": [
+   "Only Priya can bring them in."
+  ],
+  "goldUse": [],
+  "plates": [
+   {
+    "agent": "paige",
+    "background": "rgb(65, 51, 23)",
+    "color": "rgb(235, 205, 150)",
+    "tokenTint": "rgb(65, 51, 23)"
+   },
+   {
+    "agent": "vera",
+    "background": "rgb(10, 50, 50)",
+    "color": "rgb(80, 183, 184)",
+    "tokenTint": "rgb(10, 50, 50)"
+   },
+   {
+    "agent": "nexus",
+    "background": "rgb(62, 30, 59)",
+    "color": "rgb(231, 163, 224)",
+    "tokenTint": "rgb(62, 30, 59)"
+   },
+   {
+    "agent": "cura",
+    "background": "rgb(71, 25, 42)",
+    "color": "rgb(242, 117, 160)",
+    "tokenTint": "rgb(71, 25, 42)"
+   },
+   {
+    "agent": "mentor",
+    "background": "rgb(70, 52, 85)",
+    "color": "rgb(238, 220, 255)",
+    "tokenTint": "rgb(70, 52, 85)"
+   },
+   {
+    "agent": "merit",
+    "background": "rgb(42, 69, 44)",
+    "color": "rgb(190, 245, 193)",
+    "tokenTint": "rgb(42, 69, 44)"
+   },
+   {
+    "agent": "zion",
+    "background": "rgb(29, 49, 75)",
+    "color": "rgb(164, 202, 254)",
+    "tokenTint": "rgb(29, 49, 75)"
+   }
+  ],
+  "small": [
+   "th-ag-namebtn th-ag-name:28",
+   "th-ag-namebtn th-ag-name:28",
+   "th-ag-namebtn th-ag-name:28"
+  ],
+  "announced": "Message sent",
+  "typing": [],
+  "atList": [],
+  "failedBox": {
+   "text": "MERIT couldn't finish your private answer.Ask again",
+   "dataAg": null,
+   "border": "rgba(244, 237, 222, 0.196)",
+   "background": "rgb(25, 22, 30)",
+   "surface": "",
+   "line": ""
+  },
+  "chips": [
+   {
+    "text": "@PAIGE",
+    "kind": "agent",
+    "background": "rgb(65, 51, 23)"
+   },
+   {
+    "text": "@CURA",
+    "kind": "agent",
+    "background": "rgb(71, 25, 42)"
+   },
+   {
+    "text": "@NEXUS",
+    "kind": "agent",
+    "background": "rgb(62, 30, 59)"
+   },
+   {
+    "text": "@ZION",
+    "kind": "agent",
+    "background": "rgb(29, 49, 75)"
+   },
+   {
+    "text": "@NEXUS",
+    "kind": "agent",
+    "background": "rgb(62, 30, 59)"
+   },
+   {
+    "text": "@MERIT",
+    "kind": "agent",
+    "background": "rgb(42, 69, 44)"
+   }
+  ],
+  "fails": [],
+  "notes": [
+   "MERIT couldn't finish your private answer.Ask again"
+  ],
+  "turns": [
+   {
+    "post": {
+     "body": "@MERIT what did Harper & Co. pay us last quarter?",
+     "broadcast": null,
+     "agents": [
+      "merit"
+     ]
+    }
+   },
+   {
+    "conversationId": "c-launch",
+    "sourceMessageId": "s-1",
+    "threadRootId": null,
+    "agent": "merit"
+   },
+   {
+    "conversationId": "c-launch",
+    "sourceMessageId": "s-1",
+    "threadRootId": null,
+    "agent": "merit",
+    "privateFollowUp": true
+   }
+  ]
+ },
+ {
+  "name": "ev-a1c-atlist-top-1366-dark",
+  "act": "atlist-top",
+  "viewport": "1366x768",
+  "paige": "closed",
+  "theme": "dark",
+  "errors": [],
+  "docOverflowX": false,
+  "hubOverflowX": false,
+  "listOverflowX": false,
+  "dmHeader": null,
+  "composerHint": {
+   "text": "@ to mention · / for PAIGE",
+   "clipped": false
+  },
+  "composerValue": "@",
+  "bring": [
+   "Only Priya can bring them in."
+  ],
+  "goldUse": [],
+  "plates": [
+   {
+    "agent": "paige",
+    "background": "rgb(65, 51, 23)",
+    "color": "rgb(235, 205, 150)",
+    "tokenTint": "rgb(65, 51, 23)"
+   },
+   {
+    "agent": "vera",
+    "background": "rgb(10, 50, 50)",
+    "color": "rgb(80, 183, 184)",
+    "tokenTint": "rgb(10, 50, 50)"
+   },
+   {
+    "agent": "nexus",
+    "background": "rgb(62, 30, 59)",
+    "color": "rgb(231, 163, 224)",
+    "tokenTint": "rgb(62, 30, 59)"
+   },
+   {
+    "agent": "cura",
+    "background": "rgb(71, 25, 42)",
+    "color": "rgb(242, 117, 160)",
+    "tokenTint": "rgb(71, 25, 42)"
+   },
+   {
+    "agent": "mentor",
+    "background": "rgb(70, 52, 85)",
+    "color": "rgb(238, 220, 255)",
+    "tokenTint": "rgb(70, 52, 85)"
+   },
+   {
+    "agent": "merit",
+    "background": "rgb(42, 69, 44)",
+    "color": "rgb(190, 245, 193)",
+    "tokenTint": "rgb(42, 69, 44)"
+   },
+   {
+    "agent": "zion",
+    "background": "rgb(29, 49, 75)",
+    "color": "rgb(164, 202, 254)",
+    "tokenTint": "rgb(29, 49, 75)"
+   }
+  ],
+  "small": [
+   "th-ag-namebtn th-ag-name:28",
+   "th-ag-namebtn th-ag-name:28"
+  ],
+  "announced": "",
+  "typing": [],
+  "atList": [
+   "# People in this conversation",
+   "*Marcus Hale",
+   "Priya Nair",
+   "Sam Lee",
+   "# Your Paige team",
+   "paige",
+   "vera",
+   "nexus",
+   "cura",
+   "mentor",
+   "merit",
+   "zion",
+   "# Everyone",
+   "channel",
+   "here"
+  ],
+  "failedBox": null,
+  "chips": [
+   {
+    "text": "@PAIGE",
+    "kind": "agent",
+    "background": "rgb(65, 51, 23)"
+   },
+   {
+    "text": "@CURA",
+    "kind": "agent",
+    "background": "rgb(71, 25, 42)"
+   },
+   {
+    "text": "@NEXUS",
+    "kind": "agent",
+    "background": "rgb(62, 30, 59)"
+   },
+   {
+    "text": "@ZION",
+    "kind": "agent",
+    "background": "rgb(29, 49, 75)"
+   },
+   {
+    "text": "@NEXUS",
+    "kind": "agent",
+    "background": "rgb(62, 30, 59)"
+   }
+  ],
+  "fails": [],
+  "notes": [],
+  "turns": []
+ },
+ {
+  "name": "ev-a1c-atlist-everyone-1366-dark",
+  "act": "atlist-everyone",
+  "viewport": "1366x768",
+  "paige": "closed",
+  "theme": "dark",
+  "errors": [],
+  "docOverflowX": false,
+  "hubOverflowX": false,
+  "listOverflowX": false,
+  "dmHeader": null,
+  "composerHint": {
+   "text": "@ to mention · / for PAIGE",
+   "clipped": false
+  },
+  "composerValue": "@",
+  "bring": [
+   "Only Priya can bring them in."
+  ],
+  "goldUse": [],
+  "plates": [
+   {
+    "agent": "paige",
+    "background": "rgb(65, 51, 23)",
+    "color": "rgb(235, 205, 150)",
+    "tokenTint": "rgb(65, 51, 23)"
+   },
+   {
+    "agent": "vera",
+    "background": "rgb(10, 50, 50)",
+    "color": "rgb(80, 183, 184)",
+    "tokenTint": "rgb(10, 50, 50)"
+   },
+   {
+    "agent": "nexus",
+    "background": "rgb(62, 30, 59)",
+    "color": "rgb(231, 163, 224)",
+    "tokenTint": "rgb(62, 30, 59)"
+   },
+   {
+    "agent": "cura",
+    "background": "rgb(71, 25, 42)",
+    "color": "rgb(242, 117, 160)",
+    "tokenTint": "rgb(71, 25, 42)"
+   },
+   {
+    "agent": "mentor",
+    "background": "rgb(70, 52, 85)",
+    "color": "rgb(238, 220, 255)",
+    "tokenTint": "rgb(70, 52, 85)"
+   },
+   {
+    "agent": "merit",
+    "background": "rgb(42, 69, 44)",
+    "color": "rgb(190, 245, 193)",
+    "tokenTint": "rgb(42, 69, 44)"
+   },
+   {
+    "agent": "zion",
+    "background": "rgb(29, 49, 75)",
+    "color": "rgb(164, 202, 254)",
+    "tokenTint": "rgb(29, 49, 75)"
+   }
+  ],
+  "small": [
+   "th-ag-namebtn th-ag-name:28",
+   "th-ag-namebtn th-ag-name:28"
+  ],
+  "announced": "",
+  "typing": [],
+  "atList": [
+   "# People in this conversation",
+   "Marcus Hale",
+   "Priya Nair",
+   "Sam Lee",
+   "# Your Paige team",
+   "paige",
+   "vera",
+   "nexus",
+   "cura",
+   "mentor",
+   "merit",
+   "zion",
+   "# Everyone",
+   "channel",
+   "*here"
+  ],
+  "failedBox": null,
+  "chips": [
+   {
+    "text": "@PAIGE",
+    "kind": "agent",
+    "background": "rgb(65, 51, 23)"
+   },
+   {
+    "text": "@CURA",
+    "kind": "agent",
+    "background": "rgb(71, 25, 42)"
+   },
+   {
+    "text": "@NEXUS",
+    "kind": "agent",
+    "background": "rgb(62, 30, 59)"
+   },
+   {
+    "text": "@ZION",
+    "kind": "agent",
+    "background": "rgb(29, 49, 75)"
+   },
+   {
+    "text": "@NEXUS",
+    "kind": "agent",
+    "background": "rgb(62, 30, 59)"
+   }
+  ],
+  "fails": [],
+  "notes": [],
+  "turns": []
+ },
+ {
+  "name": "ev-a1c-chips-1366-dark",
+  "act": "chips",
+  "viewport": "1366x768",
+  "paige": "closed",
+  "theme": "dark",
+  "errors": [],
+  "docOverflowX": false,
+  "hubOverflowX": false,
+  "listOverflowX": false,
+  "dmHeader": null,
+  "composerHint": {
+   "text": "@ to mention · / for PAIGE",
+   "clipped": false
+  },
+  "composerValue": "",
+  "bring": [
+   "Only Priya can bring them in."
+  ],
+  "goldUse": [],
+  "plates": [
+   {
+    "agent": "paige",
+    "background": "rgb(65, 51, 23)",
+    "color": "rgb(235, 205, 150)",
+    "tokenTint": "rgb(65, 51, 23)"
+   },
+   {
+    "agent": "vera",
+    "background": "rgb(10, 50, 50)",
+    "color": "rgb(80, 183, 184)",
+    "tokenTint": "rgb(10, 50, 50)"
+   },
+   {
+    "agent": "nexus",
+    "background": "rgb(62, 30, 59)",
+    "color": "rgb(231, 163, 224)",
+    "tokenTint": "rgb(62, 30, 59)"
+   },
+   {
+    "agent": "cura",
+    "background": "rgb(71, 25, 42)",
+    "color": "rgb(242, 117, 160)",
+    "tokenTint": "rgb(71, 25, 42)"
+   },
+   {
+    "agent": "mentor",
+    "background": "rgb(70, 52, 85)",
+    "color": "rgb(238, 220, 255)",
+    "tokenTint": "rgb(70, 52, 85)"
+   },
+   {
+    "agent": "merit",
+    "background": "rgb(42, 69, 44)",
+    "color": "rgb(190, 245, 193)",
+    "tokenTint": "rgb(42, 69, 44)"
+   },
+   {
+    "agent": "zion",
+    "background": "rgb(29, 49, 75)",
+    "color": "rgb(164, 202, 254)",
+    "tokenTint": "rgb(29, 49, 75)"
+   }
+  ],
+  "small": [
+   "th-ag-namebtn th-ag-name:28",
+   "th-ag-namebtn th-ag-name:28",
+   "th-ag-namebtn th-ag-name:28"
+  ],
+  "announced": "",
+  "typing": [],
+  "atList": [],
+  "failedBox": null,
+  "chips": [
+   {
+    "text": "@PAIGE",
+    "kind": "agent",
+    "background": "rgb(65, 51, 23)"
+   },
+   {
+    "text": "@CURA",
+    "kind": "agent",
+    "background": "rgb(71, 25, 42)"
+   },
+   {
+    "text": "@NEXUS",
+    "kind": "agent",
+    "background": "rgb(62, 30, 59)"
+   },
+   {
+    "text": "@ZION",
+    "kind": "agent",
+    "background": "rgb(29, 49, 75)"
+   },
+   {
+    "text": "@NEXUS",
+    "kind": "agent",
+    "background": "rgb(62, 30, 59)"
+   },
+   {
+    "text": "@channel",
+    "kind": "everyone",
+    "background": "color(srgb 0.607843 0.552941 0.878431 / 0.2)"
+   },
+   {
+    "text": "@Sam Lee",
+    "kind": "person",
+    "background": "color(srgb 0.607843 0.552941 0.878431 / 0.2)"
+   },
+   {
+    "text": "@ZION",
+    "kind": "agent",
+    "background": "rgb(29, 49, 75)"
+   }
+  ],
+  "fails": [],
+  "notes": [],
+  "turns": []
+ },
+ {
+  "name": "ev-a1c-writing-others-1366-light",
+  "act": "writing-others",
+  "viewport": "1366x768",
+  "paige": "closed",
+  "theme": "light",
+  "errors": [],
+  "docOverflowX": false,
+  "hubOverflowX": false,
+  "listOverflowX": false,
+  "dmHeader": null,
+  "composerHint": {
+   "text": "@ to mention · / for PAIGE",
+   "clipped": false
+  },
+  "composerValue": "",
+  "bring": [
+   "Only Priya can bring them in."
+  ],
+  "goldUse": [],
+  "plates": [
+   {
+    "agent": "paige",
+    "background": "rgb(244, 231, 210)",
+    "color": "rgb(116, 83, 3)",
+    "tokenTint": "rgb(244, 231, 210)"
+   },
+   {
+    "agent": "vera",
+    "background": "rgb(208, 235, 235)",
+    "color": "rgb(6, 92, 93)",
+    "tokenTint": "rgb(208, 235, 235)"
+   },
+   {
+    "agent": "nexus",
+    "background": "rgb(254, 227, 251)",
+    "color": "rgb(140, 66, 135)",
+    "tokenTint": "rgb(254, 227, 251)"
+   },
+   {
+    "agent": "cura",
+    "background": "rgb(254, 230, 236)",
+    "color": "rgb(107, 24, 58)",
+    "tokenTint": "rgb(254, 230, 236)"
+   },
+   {
+    "agent": "mentor",
+    "background": "rgb(229, 216, 243)",
+    "color": "rgb(78, 39, 107)",
+    "tokenTint": "rgb(229, 216, 243)"
+   },
+   {
+    "agent": "merit",
+    "background": "rgb(208, 229, 208)",
+    "color": "rgb(3, 75, 20)",
+    "tokenTint": "rgb(208, 229, 208)"
+   },
+   {
+    "agent": "zion",
+    "background": "rgb(226, 238, 255)",
+    "color": "rgb(55, 100, 160)",
+    "tokenTint": "rgb(226, 238, 255)"
+   }
+  ],
+  "small": [
+   "th-ag-namebtn th-ag-name:28",
+   "th-ag-namebtn th-ag-name:28"
+  ],
+  "announced": "",
+  "typing": [
+   "MERIT is writing…"
+  ],
+  "atList": [],
+  "failedBox": null,
+  "chips": [
+   {
+    "text": "@PAIGE",
+    "kind": "agent",
+    "background": "rgb(244, 231, 210)"
+   },
+   {
+    "text": "@CURA",
+    "kind": "agent",
+    "background": "rgb(254, 230, 236)"
+   },
+   {
+    "text": "@NEXUS",
+    "kind": "agent",
+    "background": "rgb(254, 227, 251)"
+   },
+   {
+    "text": "@ZION",
+    "kind": "agent",
+    "background": "rgb(226, 238, 255)"
+   },
+   {
+    "text": "@NEXUS",
+    "kind": "agent",
+    "background": "rgb(254, 227, 251)"
+   },
+   {
+    "text": "@MERIT",
+    "kind": "agent",
+    "background": "rgb(208, 229, 208)"
+   }
+  ],
+  "fails": [],
+  "notes": [],
+  "turns": []
+ },
+ {
+  "name": "ev-a1c-private-fail-merit-1366-light",
+  "act": "private-fail-merit",
+  "viewport": "1366x768",
+  "paige": "closed",
+  "theme": "light",
+  "errors": [],
+  "docOverflowX": false,
+  "hubOverflowX": false,
+  "listOverflowX": false,
+  "dmHeader": null,
+  "composerHint": {
+   "text": "@ to mention · / for PAIGE",
+   "clipped": false
+  },
+  "composerValue": "",
+  "bring": [
+   "Only Priya can bring them in."
+  ],
+  "goldUse": [],
+  "plates": [
+   {
+    "agent": "paige",
+    "background": "rgb(244, 231, 210)",
+    "color": "rgb(116, 83, 3)",
+    "tokenTint": "rgb(244, 231, 210)"
+   },
+   {
+    "agent": "vera",
+    "background": "rgb(208, 235, 235)",
+    "color": "rgb(6, 92, 93)",
+    "tokenTint": "rgb(208, 235, 235)"
+   },
+   {
+    "agent": "nexus",
+    "background": "rgb(254, 227, 251)",
+    "color": "rgb(140, 66, 135)",
+    "tokenTint": "rgb(254, 227, 251)"
+   },
+   {
+    "agent": "cura",
+    "background": "rgb(254, 230, 236)",
+    "color": "rgb(107, 24, 58)",
+    "tokenTint": "rgb(254, 230, 236)"
+   },
+   {
+    "agent": "mentor",
+    "background": "rgb(229, 216, 243)",
+    "color": "rgb(78, 39, 107)",
+    "tokenTint": "rgb(229, 216, 243)"
+   },
+   {
+    "agent": "merit",
+    "background": "rgb(208, 229, 208)",
+    "color": "rgb(3, 75, 20)",
+    "tokenTint": "rgb(208, 229, 208)"
+   },
+   {
+    "agent": "zion",
+    "background": "rgb(226, 238, 255)",
+    "color": "rgb(55, 100, 160)",
+    "tokenTint": "rgb(226, 238, 255)"
+   }
+  ],
+  "small": [
+   "th-ag-namebtn th-ag-name:28",
+   "th-ag-namebtn th-ag-name:28",
+   "th-ag-namebtn th-ag-name:28"
+  ],
+  "announced": "Message sent",
+  "typing": [],
+  "atList": [],
+  "failedBox": {
+   "text": "MERIT couldn't finish your private answer.Ask again",
+   "dataAg": null,
+   "border": "rgba(45, 40, 50, 0.184)",
+   "background": "rgb(245, 242, 236)",
+   "surface": "",
+   "line": ""
+  },
+  "chips": [
+   {
+    "text": "@PAIGE",
+    "kind": "agent",
+    "background": "rgb(244, 231, 210)"
+   },
+   {
+    "text": "@CURA",
+    "kind": "agent",
+    "background": "rgb(254, 230, 236)"
+   },
+   {
+    "text": "@NEXUS",
+    "kind": "agent",
+    "background": "rgb(254, 227, 251)"
+   },
+   {
+    "text": "@ZION",
+    "kind": "agent",
+    "background": "rgb(226, 238, 255)"
+   },
+   {
+    "text": "@NEXUS",
+    "kind": "agent",
+    "background": "rgb(254, 227, 251)"
+   },
+   {
+    "text": "@MERIT",
+    "kind": "agent",
+    "background": "rgb(208, 229, 208)"
+   }
+  ],
+  "fails": [],
+  "notes": [
+   "MERIT couldn't finish your private answer.Ask again"
+  ],
+  "turns": [
+   {
+    "post": {
+     "body": "@MERIT what did Harper & Co. pay us last quarter?",
+     "broadcast": null,
+     "agents": [
+      "merit"
+     ]
+    }
+   },
+   {
+    "conversationId": "c-launch",
+    "sourceMessageId": "s-1",
+    "threadRootId": null,
+    "agent": "merit"
+   },
+   {
+    "conversationId": "c-launch",
+    "sourceMessageId": "s-1",
+    "threadRootId": null,
+    "agent": "merit",
+    "privateFollowUp": true
+   }
+  ]
+ },
+ {
+  "name": "ev-a1c-atlist-top-1366-light",
+  "act": "atlist-top",
+  "viewport": "1366x768",
+  "paige": "closed",
+  "theme": "light",
+  "errors": [],
+  "docOverflowX": false,
+  "hubOverflowX": false,
+  "listOverflowX": false,
+  "dmHeader": null,
+  "composerHint": {
+   "text": "@ to mention · / for PAIGE",
+   "clipped": false
+  },
+  "composerValue": "@",
+  "bring": [
+   "Only Priya can bring them in."
+  ],
+  "goldUse": [],
+  "plates": [
+   {
+    "agent": "paige",
+    "background": "rgb(244, 231, 210)",
+    "color": "rgb(116, 83, 3)",
+    "tokenTint": "rgb(244, 231, 210)"
+   },
+   {
+    "agent": "vera",
+    "background": "rgb(208, 235, 235)",
+    "color": "rgb(6, 92, 93)",
+    "tokenTint": "rgb(208, 235, 235)"
+   },
+   {
+    "agent": "nexus",
+    "background": "rgb(254, 227, 251)",
+    "color": "rgb(140, 66, 135)",
+    "tokenTint": "rgb(254, 227, 251)"
+   },
+   {
+    "agent": "cura",
+    "background": "rgb(254, 230, 236)",
+    "color": "rgb(107, 24, 58)",
+    "tokenTint": "rgb(254, 230, 236)"
+   },
+   {
+    "agent": "mentor",
+    "background": "rgb(229, 216, 243)",
+    "color": "rgb(78, 39, 107)",
+    "tokenTint": "rgb(229, 216, 243)"
+   },
+   {
+    "agent": "merit",
+    "background": "rgb(208, 229, 208)",
+    "color": "rgb(3, 75, 20)",
+    "tokenTint": "rgb(208, 229, 208)"
+   },
+   {
+    "agent": "zion",
+    "background": "rgb(226, 238, 255)",
+    "color": "rgb(55, 100, 160)",
+    "tokenTint": "rgb(226, 238, 255)"
+   }
+  ],
+  "small": [
+   "th-ag-namebtn th-ag-name:28",
+   "th-ag-namebtn th-ag-name:28"
+  ],
+  "announced": "",
+  "typing": [],
+  "atList": [
+   "# People in this conversation",
+   "*Marcus Hale",
+   "Priya Nair",
+   "Sam Lee",
+   "# Your Paige team",
+   "paige",
+   "vera",
+   "nexus",
+   "cura",
+   "mentor",
+   "merit",
+   "zion",
+   "# Everyone",
+   "channel",
+   "here"
+  ],
+  "failedBox": null,
+  "chips": [
+   {
+    "text": "@PAIGE",
+    "kind": "agent",
+    "background": "rgb(244, 231, 210)"
+   },
+   {
+    "text": "@CURA",
+    "kind": "agent",
+    "background": "rgb(254, 230, 236)"
+   },
+   {
+    "text": "@NEXUS",
+    "kind": "agent",
+    "background": "rgb(254, 227, 251)"
+   },
+   {
+    "text": "@ZION",
+    "kind": "agent",
+    "background": "rgb(226, 238, 255)"
+   },
+   {
+    "text": "@NEXUS",
+    "kind": "agent",
+    "background": "rgb(254, 227, 251)"
+   }
+  ],
+  "fails": [],
+  "notes": [],
+  "turns": []
+ },
+ {
+  "name": "ev-a1c-atlist-everyone-1366-light",
+  "act": "atlist-everyone",
+  "viewport": "1366x768",
+  "paige": "closed",
+  "theme": "light",
+  "errors": [],
+  "docOverflowX": false,
+  "hubOverflowX": false,
+  "listOverflowX": false,
+  "dmHeader": null,
+  "composerHint": {
+   "text": "@ to mention · / for PAIGE",
+   "clipped": false
+  },
+  "composerValue": "@",
+  "bring": [
+   "Only Priya can bring them in."
+  ],
+  "goldUse": [],
+  "plates": [
+   {
+    "agent": "paige",
+    "background": "rgb(244, 231, 210)",
+    "color": "rgb(116, 83, 3)",
+    "tokenTint": "rgb(244, 231, 210)"
+   },
+   {
+    "agent": "vera",
+    "background": "rgb(208, 235, 235)",
+    "color": "rgb(6, 92, 93)",
+    "tokenTint": "rgb(208, 235, 235)"
+   },
+   {
+    "agent": "nexus",
+    "background": "rgb(254, 227, 251)",
+    "color": "rgb(140, 66, 135)",
+    "tokenTint": "rgb(254, 227, 251)"
+   },
+   {
+    "agent": "cura",
+    "background": "rgb(254, 230, 236)",
+    "color": "rgb(107, 24, 58)",
+    "tokenTint": "rgb(254, 230, 236)"
+   },
+   {
+    "agent": "mentor",
+    "background": "rgb(229, 216, 243)",
+    "color": "rgb(78, 39, 107)",
+    "tokenTint": "rgb(229, 216, 243)"
+   },
+   {
+    "agent": "merit",
+    "background": "rgb(208, 229, 208)",
+    "color": "rgb(3, 75, 20)",
+    "tokenTint": "rgb(208, 229, 208)"
+   },
+   {
+    "agent": "zion",
+    "background": "rgb(226, 238, 255)",
+    "color": "rgb(55, 100, 160)",
+    "tokenTint": "rgb(226, 238, 255)"
+   }
+  ],
+  "small": [
+   "th-ag-namebtn th-ag-name:28",
+   "th-ag-namebtn th-ag-name:28"
+  ],
+  "announced": "",
+  "typing": [],
+  "atList": [
+   "# People in this conversation",
+   "Marcus Hale",
+   "Priya Nair",
+   "Sam Lee",
+   "# Your Paige team",
+   "paige",
+   "vera",
+   "nexus",
+   "cura",
+   "mentor",
+   "merit",
+   "zion",
+   "# Everyone",
+   "channel",
+   "*here"
+  ],
+  "failedBox": null,
+  "chips": [
+   {
+    "text": "@PAIGE",
+    "kind": "agent",
+    "background": "rgb(244, 231, 210)"
+   },
+   {
+    "text": "@CURA",
+    "kind": "agent",
+    "background": "rgb(254, 230, 236)"
+   },
+   {
+    "text": "@NEXUS",
+    "kind": "agent",
+    "background": "rgb(254, 227, 251)"
+   },
+   {
+    "text": "@ZION",
+    "kind": "agent",
+    "background": "rgb(226, 238, 255)"
+   },
+   {
+    "text": "@NEXUS",
+    "kind": "agent",
+    "background": "rgb(254, 227, 251)"
+   }
+  ],
+  "fails": [],
+  "notes": [],
+  "turns": []
+ },
+ {
+  "name": "ev-a1c-chips-1366-light",
+  "act": "chips",
+  "viewport": "1366x768",
+  "paige": "closed",
+  "theme": "light",
+  "errors": [],
+  "docOverflowX": false,
+  "hubOverflowX": false,
+  "listOverflowX": false,
+  "dmHeader": null,
+  "composerHint": {
+   "text": "@ to mention · / for PAIGE",
+   "clipped": false
+  },
+  "composerValue": "",
+  "bring": [
+   "Only Priya can bring them in."
+  ],
+  "goldUse": [],
+  "plates": [
+   {
+    "agent": "paige",
+    "background": "rgb(244, 231, 210)",
+    "color": "rgb(116, 83, 3)",
+    "tokenTint": "rgb(244, 231, 210)"
+   },
+   {
+    "agent": "vera",
+    "background": "rgb(208, 235, 235)",
+    "color": "rgb(6, 92, 93)",
+    "tokenTint": "rgb(208, 235, 235)"
+   },
+   {
+    "agent": "nexus",
+    "background": "rgb(254, 227, 251)",
+    "color": "rgb(140, 66, 135)",
+    "tokenTint": "rgb(254, 227, 251)"
+   },
+   {
+    "agent": "cura",
+    "background": "rgb(254, 230, 236)",
+    "color": "rgb(107, 24, 58)",
+    "tokenTint": "rgb(254, 230, 236)"
+   },
+   {
+    "agent": "mentor",
+    "background": "rgb(229, 216, 243)",
+    "color": "rgb(78, 39, 107)",
+    "tokenTint": "rgb(229, 216, 243)"
+   },
+   {
+    "agent": "merit",
+    "background": "rgb(208, 229, 208)",
+    "color": "rgb(3, 75, 20)",
+    "tokenTint": "rgb(208, 229, 208)"
+   },
+   {
+    "agent": "zion",
+    "background": "rgb(226, 238, 255)",
+    "color": "rgb(55, 100, 160)",
+    "tokenTint": "rgb(226, 238, 255)"
+   }
+  ],
+  "small": [
+   "th-ag-namebtn th-ag-name:28",
+   "th-ag-namebtn th-ag-name:28",
+   "th-ag-namebtn th-ag-name:28"
+  ],
+  "announced": "",
+  "typing": [],
+  "atList": [],
+  "failedBox": null,
+  "chips": [
+   {
+    "text": "@PAIGE",
+    "kind": "agent",
+    "background": "rgb(244, 231, 210)"
+   },
+   {
+    "text": "@CURA",
+    "kind": "agent",
+    "background": "rgb(254, 230, 236)"
+   },
+   {
+    "text": "@NEXUS",
+    "kind": "agent",
+    "background": "rgb(254, 227, 251)"
+   },
+   {
+    "text": "@ZION",
+    "kind": "agent",
+    "background": "rgb(226, 238, 255)"
+   },
+   {
+    "text": "@NEXUS",
+    "kind": "agent",
+    "background": "rgb(254, 227, 251)"
+   },
+   {
+    "text": "@channel",
+    "kind": "everyone",
+    "background": "color(srgb 0.396078 0.352941 0.588235 / 0.2)"
+   },
+   {
+    "text": "@Sam Lee",
+    "kind": "person",
+    "background": "color(srgb 0.396078 0.352941 0.588235 / 0.2)"
+   },
+   {
+    "text": "@ZION",
+    "kind": "agent",
+    "background": "rgb(226, 238, 255)"
+   }
+  ],
+  "fails": [],
+  "notes": [],
+  "turns": []
+ },
+ {
+  "name": "ev-a1c-writing-others-390-dark",
+  "act": "writing-others",
+  "viewport": "390x844",
+  "paige": "closed",
+  "theme": "dark",
+  "errors": [],
+  "docOverflowX": false,
+  "hubOverflowX": false,
+  "listOverflowX": null,
+  "dmHeader": null,
+  "composerHint": {
+   "text": "@ to mention · / for PAIGE",
+   "clipped": false
+  },
+  "composerValue": "",
+  "bring": [
+   "Only Priya can bring them in."
+  ],
+  "goldUse": [],
+  "plates": [
+   {
+    "agent": "paige",
+    "background": "rgb(65, 51, 23)",
+    "color": "rgb(235, 205, 150)",
+    "tokenTint": "rgb(65, 51, 23)"
+   },
+   {
+    "agent": "vera",
+    "background": "rgb(10, 50, 50)",
+    "color": "rgb(80, 183, 184)",
+    "tokenTint": "rgb(10, 50, 50)"
+   },
+   {
+    "agent": "nexus",
+    "background": "rgb(62, 30, 59)",
+    "color": "rgb(231, 163, 224)",
+    "tokenTint": "rgb(62, 30, 59)"
+   },
+   {
+    "agent": "cura",
+    "background": "rgb(71, 25, 42)",
+    "color": "rgb(242, 117, 160)",
+    "tokenTint": "rgb(71, 25, 42)"
+   },
+   {
+    "agent": "mentor",
+    "background": "rgb(70, 52, 85)",
+    "color": "rgb(238, 220, 255)",
+    "tokenTint": "rgb(70, 52, 85)"
+   },
+   {
+    "agent": "merit",
+    "background": "rgb(42, 69, 44)",
+    "color": "rgb(190, 245, 193)",
+    "tokenTint": "rgb(42, 69, 44)"
+   },
+   {
+    "agent": "zion",
+    "background": "rgb(29, 49, 75)",
+    "color": "rgb(164, 202, 254)",
+    "tokenTint": "rgb(29, 49, 75)"
+   }
+  ],
+  "small": [
+   "th-ag-namebtn th-ag-name:28",
+   "th-ag-namebtn th-ag-name:28"
+  ],
+  "announced": "",
+  "typing": [
+   "MERIT is writing…"
+  ],
+  "atList": [],
+  "failedBox": null,
+  "chips": [
+   {
+    "text": "@PAIGE",
+    "kind": "agent",
+    "background": "rgb(65, 51, 23)"
+   },
+   {
+    "text": "@CURA",
+    "kind": "agent",
+    "background": "rgb(71, 25, 42)"
+   },
+   {
+    "text": "@NEXUS",
+    "kind": "agent",
+    "background": "rgb(62, 30, 59)"
+   },
+   {
+    "text": "@ZION",
+    "kind": "agent",
+    "background": "rgb(29, 49, 75)"
+   },
+   {
+    "text": "@NEXUS",
+    "kind": "agent",
+    "background": "rgb(62, 30, 59)"
+   },
+   {
+    "text": "@MERIT",
+    "kind": "agent",
+    "background": "rgb(42, 69, 44)"
+   }
+  ],
+  "fails": [],
+  "notes": [],
+  "turns": []
+ },
+ {
+  "name": "ev-a1c-atlist-everyone-390-dark",
+  "act": "atlist-everyone",
+  "viewport": "390x844",
+  "paige": "closed",
+  "theme": "dark",
+  "errors": [],
+  "docOverflowX": false,
+  "hubOverflowX": false,
+  "listOverflowX": null,
+  "dmHeader": null,
+  "composerHint": {
+   "text": "@ to mention · / for PAIGE",
+   "clipped": false
+  },
+  "composerValue": "@",
+  "bring": [
+   "Only Priya can bring them in."
+  ],
+  "goldUse": [],
+  "plates": [
+   {
+    "agent": "paige",
+    "background": "rgb(65, 51, 23)",
+    "color": "rgb(235, 205, 150)",
+    "tokenTint": "rgb(65, 51, 23)"
+   },
+   {
+    "agent": "vera",
+    "background": "rgb(10, 50, 50)",
+    "color": "rgb(80, 183, 184)",
+    "tokenTint": "rgb(10, 50, 50)"
+   },
+   {
+    "agent": "nexus",
+    "background": "rgb(62, 30, 59)",
+    "color": "rgb(231, 163, 224)",
+    "tokenTint": "rgb(62, 30, 59)"
+   },
+   {
+    "agent": "cura",
+    "background": "rgb(71, 25, 42)",
+    "color": "rgb(242, 117, 160)",
+    "tokenTint": "rgb(71, 25, 42)"
+   },
+   {
+    "agent": "mentor",
+    "background": "rgb(70, 52, 85)",
+    "color": "rgb(238, 220, 255)",
+    "tokenTint": "rgb(70, 52, 85)"
+   },
+   {
+    "agent": "merit",
+    "background": "rgb(42, 69, 44)",
+    "color": "rgb(190, 245, 193)",
+    "tokenTint": "rgb(42, 69, 44)"
+   },
+   {
+    "agent": "zion",
+    "background": "rgb(29, 49, 75)",
+    "color": "rgb(164, 202, 254)",
+    "tokenTint": "rgb(29, 49, 75)"
+   }
+  ],
+  "small": [
+   "th-ag-namebtn th-ag-name:28",
+   "th-ag-namebtn th-ag-name:28"
+  ],
+  "announced": "",
+  "typing": [],
+  "atList": [
+   "# People in this conversation",
+   "Marcus Hale",
+   "Priya Nair",
+   "Sam Lee",
+   "# Your Paige team",
+   "paige",
+   "vera",
+   "nexus",
+   "cura",
+   "mentor",
+   "merit",
+   "zion",
+   "# Everyone",
+   "channel",
+   "*here"
+  ],
+  "failedBox": null,
+  "chips": [
+   {
+    "text": "@PAIGE",
+    "kind": "agent",
+    "background": "rgb(65, 51, 23)"
+   },
+   {
+    "text": "@CURA",
+    "kind": "agent",
+    "background": "rgb(71, 25, 42)"
+   },
+   {
+    "text": "@NEXUS",
+    "kind": "agent",
+    "background": "rgb(62, 30, 59)"
+   },
+   {
+    "text": "@ZION",
+    "kind": "agent",
+    "background": "rgb(29, 49, 75)"
+   },
+   {
+    "text": "@NEXUS",
+    "kind": "agent",
+    "background": "rgb(62, 30, 59)"
+   }
+  ],
+  "fails": [],
+  "notes": [],
+  "turns": []
+ },
+ {
+  "name": "ev-a1c-atlist-top-390-light",
+  "act": "atlist-top",
+  "viewport": "390x844",
+  "paige": "closed",
+  "theme": "light",
+  "errors": [],
+  "docOverflowX": false,
+  "hubOverflowX": false,
+  "listOverflowX": null,
+  "dmHeader": null,
+  "composerHint": {
+   "text": "@ to mention · / for PAIGE",
+   "clipped": false
+  },
+  "composerValue": "@",
+  "bring": [
+   "Only Priya can bring them in."
+  ],
+  "goldUse": [],
+  "plates": [
+   {
+    "agent": "paige",
+    "background": "rgb(244, 231, 210)",
+    "color": "rgb(116, 83, 3)",
+    "tokenTint": "rgb(244, 231, 210)"
+   },
+   {
+    "agent": "vera",
+    "background": "rgb(208, 235, 235)",
+    "color": "rgb(6, 92, 93)",
+    "tokenTint": "rgb(208, 235, 235)"
+   },
+   {
+    "agent": "nexus",
+    "background": "rgb(254, 227, 251)",
+    "color": "rgb(140, 66, 135)",
+    "tokenTint": "rgb(254, 227, 251)"
+   },
+   {
+    "agent": "cura",
+    "background": "rgb(254, 230, 236)",
+    "color": "rgb(107, 24, 58)",
+    "tokenTint": "rgb(254, 230, 236)"
+   },
+   {
+    "agent": "mentor",
+    "background": "rgb(229, 216, 243)",
+    "color": "rgb(78, 39, 107)",
+    "tokenTint": "rgb(229, 216, 243)"
+   },
+   {
+    "agent": "merit",
+    "background": "rgb(208, 229, 208)",
+    "color": "rgb(3, 75, 20)",
+    "tokenTint": "rgb(208, 229, 208)"
+   },
+   {
+    "agent": "zion",
+    "background": "rgb(226, 238, 255)",
+    "color": "rgb(55, 100, 160)",
+    "tokenTint": "rgb(226, 238, 255)"
+   }
+  ],
+  "small": [
+   "th-ag-namebtn th-ag-name:28",
+   "th-ag-namebtn th-ag-name:28"
+  ],
+  "announced": "",
+  "typing": [],
+  "atList": [
+   "# People in this conversation",
+   "*Marcus Hale",
+   "Priya Nair",
+   "Sam Lee",
+   "# Your Paige team",
+   "paige",
+   "vera",
+   "nexus",
+   "cura",
+   "mentor",
+   "merit",
+   "zion",
+   "# Everyone",
+   "channel",
+   "here"
+  ],
+  "failedBox": null,
+  "chips": [
+   {
+    "text": "@PAIGE",
+    "kind": "agent",
+    "background": "rgb(244, 231, 210)"
+   },
+   {
+    "text": "@CURA",
+    "kind": "agent",
+    "background": "rgb(254, 230, 236)"
+   },
+   {
+    "text": "@NEXUS",
+    "kind": "agent",
+    "background": "rgb(254, 227, 251)"
+   },
+   {
+    "text": "@ZION",
+    "kind": "agent",
+    "background": "rgb(226, 238, 255)"
+   },
+   {
+    "text": "@NEXUS",
+    "kind": "agent",
+    "background": "rgb(254, 227, 251)"
+   }
+  ],
+  "fails": [],
+  "notes": [],
+  "turns": []
+ },
+ {
+  "name": "motion-reduce",
+  "dotAnimation": "none",
+  "words": "MERIT is writing…"
+ },
+ {
+  "name": "motion-no-preference",
+  "dotAnimation": "th-dot",
+  "words": "MERIT is writing…"
+ },
+ {
+  "name": "keyboard",
+  "lastOption": "th-mentions-c-launch-bc-here",
+  "valueAfterTab": "@channel ",
+  "turns": [
+   {
+    "post": {
+     "body": "@channel the workshop moved to Nov 14",
+     "broadcast": "channel",
+     "agents": []
+    }
+   }
+  ]
+ }
+]

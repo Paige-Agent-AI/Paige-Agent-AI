@@ -1,0 +1,664 @@
+{
+  "proofClass": "ACTUAL_BROWSER_OF_SERIALIZED_PRODUCT_FULL_FRAME",
+  "authenticated": false,
+  "networkEffects": false,
+  "staticReactHandlers": false,
+  "records": [
+    {
+      "file": "history-a-light-1536x770-closed-verified.html",
+      "context": "synthetic-a",
+      "focus": "SUMMARY",
+      "font": true,
+      "height": 770,
+      "labels": 6,
+      "open": true,
+      "overflow": false,
+      "paige": "closed",
+      "scrollOwnerOverflow": "hidden auto",
+      "summaryHeight": 44,
+      "values": [
+        {
+          "scrollWidth": 987,
+          "width": 987
+        },
+        {
+          "scrollWidth": 987,
+          "width": 987
+        },
+        {
+          "scrollWidth": 987,
+          "width": 987
+        },
+        {
+          "scrollWidth": 987,
+          "width": 987
+        },
+        {
+          "scrollWidth": 987,
+          "width": 987
+        },
+        {
+          "scrollWidth": 987,
+          "width": 987
+        }
+      ],
+      "width": 1536,
+      "inspection": "EXPANDED_NATIVE_DISCLOSURE"
+    },
+    {
+      "file": "history-a-light-1536x770-open-verified.html",
+      "context": "synthetic-a",
+      "focus": "SUMMARY",
+      "font": true,
+      "height": 770,
+      "labels": 6,
+      "open": true,
+      "overflow": false,
+      "paige": "open",
+      "scrollOwnerOverflow": "hidden auto",
+      "summaryHeight": 44,
+      "values": [
+        {
+          "scrollWidth": 536,
+          "width": 536
+        },
+        {
+          "scrollWidth": 536,
+          "width": 536
+        },
+        {
+          "scrollWidth": 536,
+          "width": 536
+        },
+        {
+          "scrollWidth": 536,
+          "width": 536
+        },
+        {
+          "scrollWidth": 536,
+          "width": 536
+        },
+        {
+          "scrollWidth": 536,
+          "width": 536
+        }
+      ],
+      "width": 1536,
+      "inspection": "EXPANDED_NATIVE_DISCLOSURE"
+    },
+    {
+      "file": "history-a-light-1366x768-closed-verified.html",
+      "context": "synthetic-a",
+      "focus": "SUMMARY",
+      "font": true,
+      "height": 768,
+      "labels": 6,
+      "open": true,
+      "overflow": false,
+      "paige": "closed",
+      "scrollOwnerOverflow": "hidden auto",
+      "summaryHeight": 44,
+      "values": [
+        {
+          "scrollWidth": 987,
+          "width": 987
+        },
+        {
+          "scrollWidth": 987,
+          "width": 987
+        },
+        {
+          "scrollWidth": 987,
+          "width": 987
+        },
+        {
+          "scrollWidth": 987,
+          "width": 987
+        },
+        {
+          "scrollWidth": 987,
+          "width": 987
+        },
+        {
+          "scrollWidth": 987,
+          "width": 987
+        }
+      ],
+      "width": 1366,
+      "inspection": "EXPANDED_NATIVE_DISCLOSURE"
+    },
+    {
+      "file": "history-a-light-1366x768-open-verified.html",
+      "context": "synthetic-a",
+      "focus": "SUMMARY",
+      "font": true,
+      "height": 768,
+      "labels": 6,
+      "open": true,
+      "overflow": false,
+      "paige": "open",
+      "scrollOwnerOverflow": "hidden auto",
+      "summaryHeight": 44,
+      "values": [
+        {
+          "scrollWidth": 568,
+          "width": 568
+        },
+        {
+          "scrollWidth": 568,
+          "width": 568
+        },
+        {
+          "scrollWidth": 568,
+          "width": 568
+        },
+        {
+          "scrollWidth": 568,
+          "width": 568
+        },
+        {
+          "scrollWidth": 568,
+          "width": 568
+        },
+        {
+          "scrollWidth": 568,
+          "width": 568
+        }
+      ],
+      "width": 1366,
+      "inspection": "EXPANDED_NATIVE_DISCLOSURE"
+    },
+    {
+      "file": "history-a-light-1024x768-closed-verified.html",
+      "context": "synthetic-a",
+      "focus": "SUMMARY",
+      "font": true,
+      "height": 768,
+      "labels": 6,
+      "open": true,
+      "overflow": false,
+      "paige": "closed",
+      "scrollOwnerOverflow": "hidden auto",
+      "summaryHeight": 44,
+      "values": [
+        {
+          "scrollWidth": 705,
+          "width": 705
+        },
+        {
+          "scrollWidth": 705,
+          "width": 705
+        },
+        {
+          "scrollWidth": 705,
+          "width": 705
+        },
+        {
+          "scrollWidth": 705,
+          "width": 705
+        },
+        {
+          "scrollWidth": 705,
+          "width": 705
+        },
+        {
+          "scrollWidth": 705,
+          "width": 705
+        }
+      ],
+      "width": 1024,
+      "inspection": "EXPANDED_NATIVE_DISCLOSURE"
+    },
+    {
+      "file": "history-a-light-1024x768-open-verified.html",
+      "context": "synthetic-a",
+      "focus": "BUTTON",
+      "font": true,
+      "height": 768,
+      "labels": 6,
+      "open": false,
+      "overflow": false,
+      "paige": "open",
+      "scrollOwnerOverflow": "hidden auto",
+      "summaryHeight": 44,
+      "values": [
+        {
+          "scrollWidth": 705,
+          "width": 705
+        },
+        {
+          "scrollWidth": 705,
+          "width": 705
+        },
+        {
+          "scrollWidth": 705,
+          "width": 705
+        },
+        {
+          "scrollWidth": 705,
+          "width": 705
+        },
+        {
+          "scrollWidth": 705,
+          "width": 705
+        },
+        {
+          "scrollWidth": 705,
+          "width": 705
+        }
+      ],
+      "width": 1024,
+      "inspection": "EXPECTED_OVERLAY_ONLY: background disclosure not actionable until PAIGE folds"
+    },
+    {
+      "file": "history-a-light-900x1000-closed-verified.html",
+      "context": "synthetic-a",
+      "focus": "SUMMARY",
+      "font": true,
+      "height": 1000,
+      "labels": 6,
+      "open": true,
+      "overflow": false,
+      "paige": "closed",
+      "scrollOwnerOverflow": "hidden auto",
+      "summaryHeight": 44,
+      "values": [
+        {
+          "scrollWidth": 586,
+          "width": 586
+        },
+        {
+          "scrollWidth": 586,
+          "width": 586
+        },
+        {
+          "scrollWidth": 586,
+          "width": 586
+        },
+        {
+          "scrollWidth": 586,
+          "width": 586
+        },
+        {
+          "scrollWidth": 586,
+          "width": 586
+        },
+        {
+          "scrollWidth": 586,
+          "width": 586
+        }
+      ],
+      "width": 900,
+      "inspection": "EXPANDED_NATIVE_DISCLOSURE"
+    },
+    {
+      "file": "history-a-light-900x1000-open-verified.html",
+      "context": "synthetic-a",
+      "focus": "BUTTON",
+      "font": true,
+      "height": 1000,
+      "labels": 6,
+      "open": false,
+      "overflow": false,
+      "paige": "open",
+      "scrollOwnerOverflow": "hidden auto",
+      "summaryHeight": 44,
+      "values": [
+        {
+          "scrollWidth": 586,
+          "width": 586
+        },
+        {
+          "scrollWidth": 586,
+          "width": 586
+        },
+        {
+          "scrollWidth": 586,
+          "width": 586
+        },
+        {
+          "scrollWidth": 586,
+          "width": 586
+        },
+        {
+          "scrollWidth": 586,
+          "width": 586
+        },
+        {
+          "scrollWidth": 586,
+          "width": 586
+        }
+      ],
+      "width": 900,
+      "inspection": "EXPECTED_OVERLAY_ONLY: background disclosure not actionable until PAIGE folds"
+    },
+    {
+      "file": "history-b-dark-1536x770-closed-verified.html",
+      "context": "synthetic-b",
+      "focus": "SUMMARY",
+      "font": true,
+      "height": 770,
+      "labels": 6,
+      "open": true,
+      "overflow": false,
+      "paige": "closed",
+      "scrollOwnerOverflow": "hidden auto",
+      "summaryHeight": 44,
+      "values": [
+        {
+          "scrollWidth": 987,
+          "width": 987
+        },
+        {
+          "scrollWidth": 987,
+          "width": 987
+        },
+        {
+          "scrollWidth": 987,
+          "width": 987
+        },
+        {
+          "scrollWidth": 987,
+          "width": 987
+        },
+        {
+          "scrollWidth": 987,
+          "width": 987
+        },
+        {
+          "scrollWidth": 987,
+          "width": 987
+        }
+      ],
+      "width": 1536,
+      "inspection": "EXPANDED_NATIVE_DISCLOSURE"
+    },
+    {
+      "file": "history-b-dark-1536x770-open-verified.html",
+      "context": "synthetic-b",
+      "focus": "SUMMARY",
+      "font": true,
+      "height": 770,
+      "labels": 6,
+      "open": true,
+      "overflow": false,
+      "paige": "open",
+      "scrollOwnerOverflow": "hidden auto",
+      "summaryHeight": 44,
+      "values": [
+        {
+          "scrollWidth": 536,
+          "width": 536
+        },
+        {
+          "scrollWidth": 536,
+          "width": 536
+        },
+        {
+          "scrollWidth": 536,
+          "width": 536
+        },
+        {
+          "scrollWidth": 536,
+          "width": 536
+        },
+        {
+          "scrollWidth": 536,
+          "width": 536
+        },
+        {
+          "scrollWidth": 536,
+          "width": 536
+        }
+      ],
+      "width": 1536,
+      "inspection": "EXPANDED_NATIVE_DISCLOSURE"
+    },
+    {
+      "file": "history-b-dark-1366x768-closed-verified.html",
+      "context": "synthetic-b",
+      "focus": "SUMMARY",
+      "font": true,
+      "height": 768,
+      "labels": 6,
+      "open": true,
+      "overflow": false,
+      "paige": "closed",
+      "scrollOwnerOverflow": "hidden auto",
+      "summaryHeight": 44,
+      "values": [
+        {
+          "scrollWidth": 987,
+          "width": 987
+        },
+        {
+          "scrollWidth": 987,
+          "width": 987
+        },
+        {
+          "scrollWidth": 987,
+          "width": 987
+        },
+        {
+          "scrollWidth": 987,
+          "width": 987
+        },
+        {
+          "scrollWidth": 987,
+          "width": 987
+        },
+        {
+          "scrollWidth": 987,
+          "width": 987
+        }
+      ],
+      "width": 1366,
+      "inspection": "EXPANDED_NATIVE_DISCLOSURE"
+    },
+    {
+      "file": "history-b-dark-1366x768-open-verified.html",
+      "context": "synthetic-b",
+      "focus": "SUMMARY",
+      "font": true,
+      "height": 768,
+      "labels": 6,
+      "open": true,
+      "overflow": false,
+      "paige": "open",
+      "scrollOwnerOverflow": "hidden auto",
+      "summaryHeight": 44,
+      "values": [
+        {
+          "scrollWidth": 568,
+          "width": 568
+        },
+        {
+          "scrollWidth": 568,
+          "width": 568
+        },
+        {
+          "scrollWidth": 568,
+          "width": 568
+        },
+        {
+          "scrollWidth": 568,
+          "width": 568
+        },
+        {
+          "scrollWidth": 568,
+          "width": 568
+        },
+        {
+          "scrollWidth": 568,
+          "width": 568
+        }
+      ],
+      "width": 1366,
+      "inspection": "EXPANDED_NATIVE_DISCLOSURE"
+    },
+    {
+      "file": "history-b-dark-1024x768-closed-verified.html",
+      "context": "synthetic-b",
+      "focus": "SUMMARY",
+      "font": true,
+      "height": 768,
+      "labels": 6,
+      "open": true,
+      "overflow": false,
+      "paige": "closed",
+      "scrollOwnerOverflow": "hidden auto",
+      "summaryHeight": 44,
+      "values": [
+        {
+          "scrollWidth": 705,
+          "width": 705
+        },
+        {
+          "scrollWidth": 705,
+          "width": 705
+        },
+        {
+          "scrollWidth": 705,
+          "width": 705
+        },
+        {
+          "scrollWidth": 705,
+          "width": 705
+        },
+        {
+          "scrollWidth": 705,
+          "width": 705
+        },
+        {
+          "scrollWidth": 705,
+          "width": 705
+        }
+      ],
+      "width": 1024,
+      "inspection": "EXPANDED_NATIVE_DISCLOSURE"
+    },
+    {
+      "file": "history-b-dark-1024x768-open-verified.html",
+      "context": "synthetic-b",
+      "focus": "BODY",
+      "font": true,
+      "height": 768,
+      "labels": 6,
+      "open": false,
+      "overflow": false,
+      "paige": "open",
+      "scrollOwnerOverflow": "hidden auto",
+      "summaryHeight": 44,
+      "values": [
+        {
+          "scrollWidth": 705,
+          "width": 705
+        },
+        {
+          "scrollWidth": 705,
+          "width": 705
+        },
+        {
+          "scrollWidth": 705,
+          "width": 705
+        },
+        {
+          "scrollWidth": 705,
+          "width": 705
+        },
+        {
+          "scrollWidth": 705,
+          "width": 705
+        },
+        {
+          "scrollWidth": 705,
+          "width": 705
+        }
+      ],
+      "width": 1024,
+      "inspection": "EXPECTED_OVERLAY_ONLY: background disclosure not actionable until PAIGE folds"
+    },
+    {
+      "file": "history-b-dark-900x1000-closed-verified.html",
+      "context": "synthetic-b",
+      "focus": "SUMMARY",
+      "font": true,
+      "height": 1000,
+      "labels": 6,
+      "open": true,
+      "overflow": false,
+      "paige": "closed",
+      "scrollOwnerOverflow": "hidden auto",
+      "summaryHeight": 44,
+      "values": [
+        {
+          "scrollWidth": 586,
+          "width": 586
+        },
+        {
+          "scrollWidth": 586,
+          "width": 586
+        },
+        {
+          "scrollWidth": 586,
+          "width": 586
+        },
+        {
+          "scrollWidth": 586,
+          "width": 586
+        },
+        {
+          "scrollWidth": 586,
+          "width": 586
+        },
+        {
+          "scrollWidth": 586,
+          "width": 586
+        }
+      ],
+      "width": 900,
+      "inspection": "EXPANDED_NATIVE_DISCLOSURE"
+    },
+    {
+      "file": "history-b-dark-900x1000-open-verified.html",
+      "context": "synthetic-b",
+      "focus": "BODY",
+      "font": true,
+      "height": 1000,
+      "labels": 6,
+      "open": false,
+      "overflow": false,
+      "paige": "open",
+      "scrollOwnerOverflow": "hidden auto",
+      "summaryHeight": 44,
+      "values": [
+        {
+          "scrollWidth": 586,
+          "width": 586
+        },
+        {
+          "scrollWidth": 586,
+          "width": 586
+        },
+        {
+          "scrollWidth": 586,
+          "width": 586
+        },
+        {
+          "scrollWidth": 586,
+          "width": 586
+        },
+        {
+          "scrollWidth": 586,
+          "width": 586
+        },
+        {
+          "scrollWidth": 586,
+          "width": 586
+        }
+      ],
+      "width": 900,
+      "inspection": "EXPECTED_OVERLAY_ONLY: background disclosure not actionable until PAIGE folds"
+    }
+  ]
+}

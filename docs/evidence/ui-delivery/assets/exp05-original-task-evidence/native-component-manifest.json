@@ -1,0 +1,12 @@
+{
+  "sourceSHA256": "ebf4d1a87c1bf3ae7fbe0b1ab748afcc611e903f9ed06fbde7b3e145e0367d42",
+  "productBaseSHA256": "ebf4d1a87c1bf3ae7fbe0b1ab748afcc611e903f9ed06fbde7b3e145e0367d42",
+  "prototypeTransform": "none: exact current product component and styles",
+  "cssSHA256": "eaf52b120dcd0ce4fe010f2cbe088cd28724ce6f914129bf2fcd8f80e41d545e",
+  "scriptSHA256": "0ed09daf59b450363a0d64d144a4964fb62636f6f0724a1bdb77f5b1a074267b",
+  "productInputs": [
+    "src/lib/tier/tierFeatures.ts",
+    "src/lib/links/workspaceLinks.ts"
+  ],
+  "boundary": "NEUTRAL SOURCE-BASED PROTOTYPE; NO AUTHENTICATION, NETWORK, EXECUTION OR PERSISTENCE"
+}

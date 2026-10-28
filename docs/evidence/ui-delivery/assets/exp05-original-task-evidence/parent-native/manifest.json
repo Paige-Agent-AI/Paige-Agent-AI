@@ -1,0 +1,15 @@
+{
+  "pin": "d0a27ccd726566c093bda2beafd7610e49a70d54",
+  "inputs": {
+    "src/solo/owner-task-automations.tsx": "983b8bf154ddb3684d8bdb15c4b42a80ad322ada1b605d40f06cd8b813a542eb",
+    "src/solo/owner-task-process-history.tsx": "ebf4d1a87c1bf3ae7fbe0b1ab748afcc611e903f9ed06fbde7b3e145e0367d42",
+    "src/lib/tier/tierFeatures.ts": "a1ec9dda16861ef87c6ef7f2832e156cdda774138954ac185dfc8b04930706b2",
+    "src/lib/links/workspaceLinks.ts": "c8239322febf13eb83bbcc492244ace86d426608af5d5257d1a55e23fc57558f",
+    "src/index.css": "85a3adb5668238e91cdb6c8189488db1fd24ce6698f7456ae23a3de6aa572482",
+    "src/solo/settings-integrations.css": "a58aa56d0d2e1a888cd4d9c9653f2c16b239fe14890a9df74bd9d70b2b94a168"
+  },
+  "componentTransform": "NONE: both original parent and history component byte-exact from Git",
+  "portBoundary": "Synthetic hook read/history state in memory only; no actual hook authority, authentication, network, provider, persistence or business effects",
+  "cssSHA256": "79776bc39bf4e0cb8ac2927ffa79e8c4e30b85bb2a31ed220f8757e0e17e4c9f",
+  "bundleSHA256": "2f2a87039a683a290f1dafe35bc28a0cbc53da92c73403e08ccc35b35b507728"
+}

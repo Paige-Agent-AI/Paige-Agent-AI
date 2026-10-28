@@ -1,0 +1,63 @@
+{
+  "at": "2026-10-28T12:46:52.595Z",
+  "scope": "Actual original AppShellBody exposed only to this local build, AppNav, Cura, Sessions, booking; explicit synthetic Auth/frame/consent/history/SDK ports; no real identity/model/provider evidence",
+  "files": [
+    {
+      "file": "src/pages/AppShell.tsx",
+      "sha256": "3f0f34218fd7b247c0a271db0eed8627cc8608854388d1a10fc0233d9e7806cc"
+    },
+    {
+      "file": "src/components/app/AppNav.tsx",
+      "sha256": "c5abb43842d3e50ad4d29e607b2d04fd78a22e7b886374c96867bb643c40816e"
+    },
+    {
+      "file": "src/components/app/PaigeChat.tsx",
+      "sha256": "96fb6505d01603f2911da6db298e8b70024918c149a1c6a533a2fc4f491374aa"
+    },
+    {
+      "file": "src/pages/app/Sessions.tsx",
+      "sha256": "a2309d36897ae2a0eb1c0495380d2d009ed3485abcfb3f2f4e318e871cdac684"
+    },
+    {
+      "file": "src/components/client-portal/CustomerBooking.tsx",
+      "sha256": "d40e930d1bd746d0f43ccb9bf2b43109ce5e08ec9388bc697d7a2a0c4bd4eb76"
+    },
+    {
+      "file": "src/hooks/useClientPortalBooking.ts",
+      "sha256": "e1fc659a6d359a735609152279989e0c5957f2a7663edd10a179aed73274f4b1"
+    },
+    {
+      "file": "src/lib/client-portal-booking.ts",
+      "sha256": "73be070f3ef3af77329ba90959d65bb2553caf565373c1aacff9554544018f93"
+    }
+  ],
+  "fixtureFiles": [
+    {
+      "file": "outputs/e09-booking-shell-review.tsx",
+      "sha256": "e2d829d53e8db9d95a25f4734bd2bea0ec43d4fe7edf43e5d6c9ff020b3c9745"
+    },
+    {
+      "file": "outputs/e09-booking-shell-review-ports.tsx",
+      "sha256": "f4e680357b40d5406f17e0c0cf58047e40e46bc976f03edde7f792034d67b454"
+    }
+  ],
+  "reproducibleInputs": [
+    {
+      "file": "harness/entry.tsx",
+      "sha256": "3a9d21dd230e62a61fde6d0b4bdaad9bea02f9208a402b4ae37609fae0eee5fb"
+    },
+    {
+      "file": "harness/ports.tsx",
+      "sha256": "aed06bfc4a6088ac2beb928bb54b28bee46dc8e632f8119f4b31bda8a3c065cb"
+    },
+    {
+      "file": "harness/sdk.ts",
+      "sha256": "d683d45a3204e5508e33b1d44cecf9b2c7e37228023d35a885217db3b2c2a0cb"
+    },
+    {
+      "file": "harness/build.mjs",
+      "sha256": "79953237e08afd3387f8fba74e3b3370b1d1a721940cb2c74559446b3171abb0"
+    }
+  ],
+  "boundary": "Captured with installed runtime and official Router6 vendor; clean-checkout reproduction uses original lockfile dependencies. Synthetic ports never establish authenticated, consent, model or provider behavior."
+}

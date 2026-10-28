@@ -44,9 +44,11 @@ function jsonContains(v: unknown, x: unknown): boolean {
 }
 function matches(row: Row, filters: Filter[]) {
   return filters.every(({ method, args: [col, a, b] }) => {
-    // PostgREST's JSON text path (`args->>key`) reads one key of a jsonb column as text.
-    const [column, jsonKey] = String(col).split("->>");
-    const v = jsonKey === undefined ? row[column] : (() => { const x = (row[column] as Row | undefined)?.[jsonKey]; return x === undefined || x === null ? null : String(x); })();
+    // PostgREST's JSON text path (`args->>key`, or `meta->binding->>key`) reads one key of a jsonb column as text.
+    const [path, jsonKey] = String(col).split("->>");
+    const [column, ...hops] = path.split("->");
+    const holder = hops.reduce<unknown>((o, k) => (o as Row | undefined)?.[k], row[column]);
+    const v = jsonKey === undefined ? holder : (() => { const x = (holder as Row | undefined)?.[jsonKey]; return x === undefined || x === null ? null : String(x); })();
     if (method === "eq") return v === a;
     if (method === "neq") return v !== a;
     if (method === "is") return a === null ? v == null : v === a;
@@ -67,7 +69,7 @@ type Setup = {
   // a replay read that errors, and a finalize that the database refuses.
   actor?: string; activeTenant?: string | null; readResultFails?: boolean; readResultFailsFor?: string; finalizeFails?: boolean;
   providerExecution?: unknown; providerBoundaryError?: boolean;
-  cancelFails?: boolean;
+  cancelFails?: boolean; messagesFail?: boolean;
   // The private bucket the composer uploads into: object path -> bytes + stored type. `storageFails`
   // makes every read answer an error.
   objects?: Record<string, { bytes: Uint8Array; type: string }>; storageFails?: boolean; bucketTypes?: readonly string[] | null;
@@ -101,7 +103,13 @@ function setup(options: Setup = {}) {
         return { data: [value], error: null };
       }
       if (table === "paige_pending_confirmations" && options.approvalStoreFails && !mutation) return { data: null, error: { code: "PGRST000", message: "store down" } };
-      const found = rows().filter(r => matches(r, filters));
+      if (table === "messages" && options.messagesFail) return { data: null, error: { code: "PGRST000", message: "messages down" } };
+      // public.messages as the migrations write it: the binding under meta, status 'queued' while scheduled
+      // ('blocked' once cancelled or closed), scheduled_for = the time. The two aliases are the door's select.
+      const source = table === "messages" ? [...bindings.values()].map(b => ({ tenant_id: b.tenant_id, contact_id: b.contact_id,
+        status: typeof b.send_at === "string" ? (b.state === "prepared" ? "queued" : "blocked") : "draft", scheduled_for: b.send_at ?? null,
+        meta: { comms_email_binding: b }, scheduled_operation_id: b.operation_id, scheduled_send_at: b.send_at ?? null })) : rows();
+      const found = source.filter(r => matches(r, filters));
       if (mutation?.kind === "update") { found.forEach(r => Object.assign(r, mutation!.value)); calls.push({ name: `update:${table}`, args: { filters, value: mutation.value, hit: found.length } }); }
       return { data: found, error: null };
     };
@@ -1137,5 +1145,64 @@ describe("comms-email-command: files — review round 2", () => {
     expect(await t.request({ attachments })).toMatchObject({ status: 409, body: { code: "COMMS_EMAIL_ATTACHMENT_CHANGED" } });
     expect(await t.request({ attachments: [{ path: src2 }, { path: src1 }] })).toMatchObject({ status: 409, body: { code: "COMMS_EMAIL_ATTACHMENTS_CHANGED" } });
     expect(t.sends).toHaveLength(1);
+  });
+});
+
+// Review MAJOR 2 (2026-10-28): "make it 10 instead" or "send it now instead" under a NEW operation used to
+// raise a fresh card while the 9 AM email still waited — both would go out. The door now refuses while
+// the same email to the same contact is still scheduled, naming its time.
+describe("comms-email-command: an email already scheduled is not proposed again", () => {
+  const later = (ms = 3_600_000) => new Date(Math.floor((Date.now() + ms) / 60_000) * 60_000).toISOString();
+  const schedule = async (t: ReturnType<typeof setup>, sendAt = later()) => {
+    const proposal = await t.request({ send_at: sendAt });
+    expect((await t.request({ send_at: sendAt, approved_fingerprint: proposal.body.fingerprint })).body.outcome).toBe("scheduled");
+    return sendAt;
+  };
+  const other = (extra: Row = {}) => ({ operation_id: OP_2, ...extra });
+
+  it("another time for the same words is refused, naming the scheduled time; no card, nothing prepared", async () => {
+    const t = setup();
+    const sendAt = await schedule(t);
+    const cards = t.named("insert:paige_pending_confirmations").length;
+    const r = await t.request(other({ send_at: later(7_200_000) }));
+    expect(r).toMatchObject({ status: 409, body: { ok: false, outcome: "refused", code: "COMMS_EMAIL_ALREADY_SCHEDULED", send_at: sendAt, scheduled_operation_id: OP } });
+    expect(t.named("insert:paige_pending_confirmations")).toHaveLength(cards);
+    expect(t.named("prepare_comms_email_send")).toHaveLength(1);
+    expect(t.sends).toEqual([]);
+  });
+  it("'send it now instead' (no time) is refused the same way", async () => {
+    const t = setup();
+    const sendAt = await schedule(t);
+    expect(await t.request(other())).toMatchObject({ status: 409, body: { code: "COMMS_EMAIL_ALREADY_SCHEDULED", send_at: sendAt } });
+    expect(t.sends).toEqual([]);
+  });
+  it("a second card raised BEFORE the first was approved cannot be confirmed into a second send", async () => {
+    const t = setup();
+    const first = later(), second = later(7_200_000);
+    const a = await t.request({ send_at: first });
+    const b = await t.request(other({ send_at: second }));
+    expect(b.status).toBe(202);
+    await t.request({ send_at: first, approved_fingerprint: a.body.fingerprint });
+    const r = await t.request(other({ send_at: second, approved_fingerprint: b.body.fingerprint }));
+    expect(r).toMatchObject({ status: 409, body: { code: "COMMS_EMAIL_ALREADY_SCHEDULED", send_at: first } });
+    expect(t.named("prepare_comms_email_send")).toHaveLength(1);
+  });
+  it("once cancelled, the same email can be proposed again; other words or another contact were never blocked", async () => {
+    const t = setup();
+    await schedule(t);
+    expect((await t.request(other({ command: { ...command, subject: "Something else" } }))).status).toBe(202);
+    await t.raw({ method: "POST", body: JSON.stringify({ expected_tenant_id: TENANT, operation_id: OP, cancel: true }) });
+    expect((await t.request({ operation_id: "20000000-0000-4000-8000-000000000003", send_at: later(7_200_000) })).status).toBe(202);
+  });
+  it("another workspace's identical scheduled email never blocks this one", async () => {
+    const t = setup();
+    const digest = await commsEmailContentDigest({ recipient: "dana@example.test", connectorId: SENDER, subject: command.subject, bodyText: command.body });
+    t.bindings.set(OP_2, { operation_id: OP_2, tenant_id: FOREIGN, actor_user_id: ACTOR_2, contact_id: CONTACT, recipient: "dana@example.test", content_digest: digest, state: "prepared", send_at: later(), message_id: "60000000-0000-4000-8000-000000000099" });
+    expect((await t.request()).status).toBe(202);
+  });
+  it("a messages read the guard cannot complete is a refusal before any card, never a silent pass", async () => {
+    const down = setup({ messagesFail: true });
+    expect(await down.request(other())).toMatchObject({ status: 503, body: { outcome: "refused", code: "COMMS_EMAIL_RECONCILIATION_UNVERIFIED" } });
+    expect(down.named("insert:paige_pending_confirmations")).toEqual([]);
   });
 });

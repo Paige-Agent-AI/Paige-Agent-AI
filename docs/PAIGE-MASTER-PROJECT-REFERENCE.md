@@ -860,6 +860,14 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**2026-10-28 UTC — EXP08 Team Hub agents A1b, co-owner invitations I1 and its lock fix.**
+
+| Increment | Exact released source and production evidence | Acceptance boundary |
+| --- | --- | --- |
+| [#2999 Team Hub agents A1b](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2999) | Squash merge `956b47ef5`. Migration `20271119010008_exp08_team_hub_agent_turn_states` applied and read back on production. Edge `paige-ai-chat` deployed with deployed-source readback PASS; `edge-live` moved to `956b47ef5`. Web production deployment READY at `956b47ef`. | PAIGE and the six specialists answer inline in Team Hub. The first live specialist turn (MERIT, 2026-10-27 21:57 UTC) failed with OpenAI `http_400`, a JSON-mode request-shape defect that #3008 fixes. Authenticated owner drive still owed. |
+| [#3008 co-owner invitations I1](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3008) | Squash merge `ccb14485c`. Edge `paige-ai-chat`, `accept-invite`, `send-portal-invite` and `solo-team-invitations` deployed with deployed-source readback PASS (run 40601337825). Migration `20271120010008` did NOT apply: two attempts hit a lock timeout behind overlapping read-only `pg_dump` sessions and rolled back whole, and production read back unchanged both times. | The MERIT JSON-mode fix is live for all seven Team Hub agents; no successful live agent turn is recorded yet. The new edge code degrades safely without the migration. |
+| [#3016 I1 lock fix](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3016) | Squash merge `4400de573`. `deploy-migrations` run 40609950230 applied `20271120010008` on the first attempt and verified it persisted; `db-live` moved to `4400de573`. Read-only production checks: migration recorded as newest; new functions, trigger, column and constraint present; re-emitted bodies equal their proof pins; zero owner-role tokens. | Owner invitations are now the account holder's alone on production (server and database only; the I3 screens are not built). The Agency Team Owner option now shows a refusal sentence, not yet seen in a signed-in drive. Owner decision owed: remove that option. |
+
 **2026-10-27 UTC — EXP02 original activity source and actual endpoint eligibility.**
 
 | Increment | Exact released source and production evidence | Acceptance boundary |

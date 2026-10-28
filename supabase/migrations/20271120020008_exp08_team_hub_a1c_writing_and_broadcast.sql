@@ -47,6 +47,30 @@
 -- CHECK; remove the table from operator_retirement_disposition.
 BEGIN;
 SET LOCAL lock_timeout = '2s';
+SET LOCAL statement_timeout = '15min';
+
+-- LOCKS UP FRONT, WITHOUT QUEUEING (the pattern of 20271120010008, after two production applies of that
+-- file timed out behind overlapping read-only schema dumps, lessons-learned 2026-10-27). This file alters
+-- team_hub_messages (a column, a CHECK, and the new recipients table's foreign key) and
+-- team_hub_channel_members (a column). Both are taken here at once with NOWAIT, which never waits and so
+-- never queues a reader; a failed attempt releases what it took and the loop tries again a second later,
+-- for up to ten minutes. Once held, nothing below waits on a table lock (the recipients table is new).
+DO $locks$
+DECLARE _tries integer := 0;
+BEGIN
+  LOOP
+    BEGIN
+      LOCK TABLE public.team_hub_messages, public.team_hub_channel_members IN ACCESS EXCLUSIVE MODE NOWAIT;
+      EXIT;
+    EXCEPTION WHEN lock_not_available THEN
+      _tries := _tries + 1;
+      IF _tries >= 600 THEN
+        RAISE EXCEPTION 'EXP08 Team Hub A1c: could not take the table locks in % one-second attempts; nothing was applied, so retry when production is quieter', _tries;
+      END IF;
+      PERFORM pg_sleep(1);
+    END;
+  END LOOP;
+END $locks$;
 
 -- ── 0. The bodies this file calls or replaces are the ones it was written against ────────────────
 -- md5(prosrc), production read 2026-10-27 (SELECT on pg_proc). team_hub_agent_turn_states is not on

@@ -11,8 +11,8 @@
 // Only the binding STATES, the times that bound "Sending…", a scheduled send's time and a refusal's
 // code-shaped reason are read (eight scalar JSON paths), never the bound command, body or governance —
 // the inbox needs to know what to say, not what was approved.
-import type { MessageRow } from "./inbox-shared";
-import { COMMS_EMAIL_SCHEDULED_RELEASE_GRACE_MS } from "../../../../supabase/functions/_shared/comms-email/contract";
+import type { Attachment, MessageRow } from "./inbox-shared";
+import { COMMS_EMAIL_SCHEDULED_RELEASE_GRACE_MS, COMMS_EMAIL_ATTACHMENTS_MAX, parseCommsEmailAttachmentRequest } from "../../../../supabase/functions/_shared/comms-email/contract";
 
 /** PostgREST select fragment appended to MESSAGE_COLS by the inbox's message pull. */
 export const GOVERNED_SEND_COLS =
@@ -220,3 +220,23 @@ export const GOVERNED_SEND_COPY = {
     line: "Couldn't confirm this went out — don't resend.",
   },
 } as const;
+
+/**
+ * The files a composer has staged, as the governed email door's `attachments` request — checked with the
+ * door's OWN parser (§18), so the composer can say before sending which files cannot go with an approved
+ * email instead of learning it from a refusal. `refused` names each staged file the door would turn away
+ * (another folder, a name the upload path cannot carry, more than ten); the server still re-checks
+ * everything, reads the bytes and decides. Pure.
+ */
+export function governedAttachmentRequest(tenantId: string, staged: readonly Attachment[]): { attachments: { path: string }[]; refused: string[] } {
+  const attachments: { path: string }[] = [];
+  const refused: string[] = [];
+  for (const a of staged) {
+    const path = typeof a.url === "string" ? a.url : "";
+    let ok = false;
+    try { ok = attachments.length < COMMS_EMAIL_ATTACHMENTS_MAX && !attachments.some((x) => x.path === path) && parseCommsEmailAttachmentRequest([{ path }], tenantId).length === 1; }
+    catch { ok = false; }
+    if (ok) attachments.push({ path }); else refused.push(a.name || "file");
+  }
+  return { attachments, refused };
+}

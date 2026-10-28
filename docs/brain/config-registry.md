@@ -689,6 +689,16 @@ Values intentionally omitted.
       `unlease_scheduled_messages(ids, stamp)` (only this run's lease) are service-role only. `claim_due_scheduled_messages`
       skips rows the provider floor would refuse and governed rows past their grace. Lead replies, agreement sends
       and chat stay immediate.
+      **Governed email attachments (`20271120000000`, EXP03 O12 piece 2):** door key `attachments:[{path}]` (composer upload
+      paths under the server-derived tenant; ≤10 files, ≤10 MiB each and in total; mime allowlist = the bucket's, checked
+      against content). Manifest `{path, source_path, name, mime, size, sha256}` is fingerprinted and redeemed by an exact
+      `attachments_digest`; approved bytes are copied to `comms-attachments/<tenant>/governed/<operation>/<n>-<name>`
+      (restrictive storage policies `comms_attach_governed_*_boundary` block member INSERT/UPDATE/DELETE there; SELECT open).
+      15-argument `prepare_comms_email_send(<13>, _send_at, _attachments)` (service_role only) binds the manifest and writes
+      `messages.attachments`; send-message re-hashes the copies before the claim (`COMMS_EMAIL_ATTACHMENT_CHANGED` refuses,
+      nothing sent) and sends them as SendGrid `attachments` only; providers `sendgrid`/`resend` may carry files, Gmail/SMTP
+      refuse. `list_governed_comms_attachment_orphans` + the drainer (minute 7 of each hour, ≤100) remove orphan copies
+      after 24 h and copies of refused/failed sends after 7 days; sent copies are kept as the record.
     - `comms-sendgrid-scopes/index.ts`: records the key's scopes, and returns `SENDGRID_EXECUTOR_KEY_NOT_CONFIGURED` when unset.
   - **Production, 2026-10-26:** the owner turned SendGrid Subscription Tracking and Google Analytics tracking OFF (SendGrid → Settings → Tracking), so SendGrid adds no unsubscribe link of its own and does not rewrite link UTM tags.
   - `SENDGRID_WEBHOOK_PUBLIC_KEY` verifies Event Webhook signatures. Read only by `handle-sendgrid-webhook/index.ts`, which returns 503 until it is set. The `comms-sendgrid-webhook-admin` setup path does not read it; it hands back the key to install under this name. **Production, 2026-10-26: SET.** Verified by behaviour, not by reading it: an unsigned probe changed from 503 `webhook_not_configured` to 401 `invalid_signature`. The owner configured the Event Webhook by hand in SendGrid (enabled, signed, every event, the `handle-sendgrid-webhook` URL). SendGrid's "Test Your Integration" events passed the signature check but were quarantined, because real `sg_event_id`s carry `=` padding; the door fix is in the EXP03 PR that follows #2930.

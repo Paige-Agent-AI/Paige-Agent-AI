@@ -1,0 +1,2052 @@
+{
+  "exp03a-files0-light-1366x768": {
+    "ok": true,
+    "files": 0,
+    "theme": "light",
+    "viewport": "1366x768",
+    "layout": "dock",
+    "checks": {
+      "fontLoaded": true,
+      "noPageOverflow": true,
+      "noTranscriptOverflowX": true,
+      "noCardOverflow": true,
+      "approveFound": true,
+      "noRow": true,
+      "noTabStopInRow": true,
+      "tabReachesApprove": true
+    },
+    "font": {
+      "family": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-se",
+      "first": "Schibsted Grotesk",
+      "loaded": true
+    },
+    "row": null,
+    "items": [],
+    "rowGold": [],
+    "cardOverflow": false,
+    "pageOverflow": false,
+    "transcriptOverflowX": false,
+    "approve": {
+      "text": "Approve",
+      "inView": true,
+      "top": 431,
+      "bottom": 467
+    },
+    "summaryShown": false,
+    "storagePath": false,
+    "aria": null,
+    "tabs": [
+      {
+        "tag": "BUTTON",
+        "text": "Start voice typing",
+        "inRow": false
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Attach a document",
+        "inRow": false
+      },
+      {
+        "tag": "BODY",
+        "text": "Workspace content (illustrative) ChatsNe",
+        "inRow": false
+      },
+      {
+        "tag": "DIV",
+        "text": "PAIGE conversation",
+        "inRow": false
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Copy message",
+        "inRow": false
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Play message aloud",
+        "inRow": false
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Copy message",
+        "inRow": false
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Approve",
+        "inRow": false
+      }
+    ],
+    "errors": []
+  },
+  "exp03a-files0-light-390x844": {
+    "ok": true,
+    "files": 0,
+    "theme": "light",
+    "viewport": "390x844",
+    "layout": "phone",
+    "checks": {
+      "fontLoaded": true,
+      "noPageOverflow": true,
+      "noTranscriptOverflowX": true,
+      "noCardOverflow": true,
+      "approveFound": true,
+      "noRow": true
+    },
+    "font": {
+      "family": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-se",
+      "first": "Schibsted Grotesk",
+      "loaded": true
+    },
+    "row": null,
+    "items": [],
+    "rowGold": [],
+    "cardOverflow": false,
+    "pageOverflow": false,
+    "transcriptOverflowX": false,
+    "approve": {
+      "text": "Approve",
+      "inView": true,
+      "top": 557,
+      "bottom": 593
+    },
+    "summaryShown": false,
+    "storagePath": false,
+    "aria": null,
+    "tabs": [],
+    "errors": []
+  },
+  "exp03a-files0-dark-1366x768": {
+    "ok": true,
+    "files": 0,
+    "theme": "dark",
+    "viewport": "1366x768",
+    "layout": "dock",
+    "checks": {
+      "fontLoaded": true,
+      "noPageOverflow": true,
+      "noTranscriptOverflowX": true,
+      "noCardOverflow": true,
+      "approveFound": true,
+      "noRow": true,
+      "noTabStopInRow": true,
+      "tabReachesApprove": true
+    },
+    "font": {
+      "family": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-se",
+      "first": "Schibsted Grotesk",
+      "loaded": true
+    },
+    "row": null,
+    "items": [],
+    "rowGold": [],
+    "cardOverflow": false,
+    "pageOverflow": false,
+    "transcriptOverflowX": false,
+    "approve": {
+      "text": "Approve",
+      "inView": true,
+      "top": 431,
+      "bottom": 467
+    },
+    "summaryShown": false,
+    "storagePath": false,
+    "aria": null,
+    "tabs": [
+      {
+        "tag": "BUTTON",
+        "text": "Start voice typing",
+        "inRow": false
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Attach a document",
+        "inRow": false
+      },
+      {
+        "tag": "BODY",
+        "text": "Workspace content (illustrative) ChatsNe",
+        "inRow": false
+      },
+      {
+        "tag": "DIV",
+        "text": "PAIGE conversation",
+        "inRow": false
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Copy message",
+        "inRow": false
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Play message aloud",
+        "inRow": false
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Copy message",
+        "inRow": false
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Approve",
+        "inRow": false
+      }
+    ],
+    "errors": []
+  },
+  "exp03a-files0-dark-390x844": {
+    "ok": true,
+    "files": 0,
+    "theme": "dark",
+    "viewport": "390x844",
+    "layout": "phone",
+    "checks": {
+      "fontLoaded": true,
+      "noPageOverflow": true,
+      "noTranscriptOverflowX": true,
+      "noCardOverflow": true,
+      "approveFound": true,
+      "noRow": true
+    },
+    "font": {
+      "family": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-se",
+      "first": "Schibsted Grotesk",
+      "loaded": true
+    },
+    "row": null,
+    "items": [],
+    "rowGold": [],
+    "cardOverflow": false,
+    "pageOverflow": false,
+    "transcriptOverflowX": false,
+    "approve": {
+      "text": "Approve",
+      "inView": true,
+      "top": 557,
+      "bottom": 593
+    },
+    "summaryShown": false,
+    "storagePath": false,
+    "aria": null,
+    "tabs": [],
+    "errors": []
+  },
+  "exp03a-files1-light-1366x768": {
+    "ok": true,
+    "files": 1,
+    "theme": "light",
+    "viewport": "1366x768",
+    "layout": "dock",
+    "checks": {
+      "fontLoaded": true,
+      "noPageOverflow": true,
+      "noTranscriptOverflowX": true,
+      "noCardOverflow": true,
+      "approveFound": true,
+      "row": true,
+      "aaText": true,
+      "noItemOverflow": true,
+      "iconsHidden": true,
+      "sizesReadable": true,
+      "noGoldInRow": true,
+      "noStoragePath": true,
+      "ariaNamesList": true,
+      "noTabStopInRow": true,
+      "tabReachesApprove": true
+    },
+    "font": {
+      "family": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-se",
+      "first": "Schibsted Grotesk",
+      "loaded": true
+    },
+    "row": {
+      "label": "File",
+      "labelRatio": 4.78,
+      "labelFont": "13px",
+      "ariaLabel": "1 file attached",
+      "count": 1,
+      "rowOverflow": false
+    },
+    "items": [
+      {
+        "name": "Spring-planting-proposal.pdf",
+        "size": "2.4 MB",
+        "nameRatio": 13.12,
+        "sizeRatio": 4.78,
+        "nameFont": "13px",
+        "nameLines": 2,
+        "overflow": false,
+        "iconHidden": true,
+        "iconColor": "rgb(103, 97, 107)",
+        "height": 54
+      }
+    ],
+    "rowGold": [],
+    "cardOverflow": false,
+    "pageOverflow": false,
+    "transcriptOverflowX": false,
+    "approve": {
+      "text": "Approve",
+      "inView": true,
+      "top": 431,
+      "bottom": 467
+    },
+    "summaryShown": false,
+    "storagePath": false,
+    "aria": "- term: File\n- definition:\n  - list \"1 file attached\":\n    - listitem: Spring-planting-proposal.pdf 2.4 MB",
+    "tabs": [
+      {
+        "tag": "BUTTON",
+        "text": "Start voice typing",
+        "inRow": false
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Attach a document",
+        "inRow": false
+      },
+      {
+        "tag": "BODY",
+        "text": "Workspace content (illustrative) ChatsNe",
+        "inRow": false
+      },
+      {
+        "tag": "DIV",
+        "text": "PAIGE conversation",
+        "inRow": false
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Copy message",
+        "inRow": false
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Play message aloud",
+        "inRow": false
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Copy message",
+        "inRow": false
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Approve",
+        "inRow": false
+      }
+    ],
+    "errors": []
+  },
+  "exp03a-files1-light-390x844": {
+    "ok": true,
+    "files": 1,
+    "theme": "light",
+    "viewport": "390x844",
+    "layout": "phone",
+    "checks": {
+      "fontLoaded": true,
+      "noPageOverflow": true,
+      "noTranscriptOverflowX": true,
+      "noCardOverflow": true,
+      "approveFound": true,
+      "row": true,
+      "aaText": true,
+      "noItemOverflow": true,
+      "iconsHidden": true,
+      "sizesReadable": true,
+      "noGoldInRow": true,
+      "noStoragePath": true,
+      "ariaNamesList": true
+    },
+    "font": {
+      "family": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-se",
+      "first": "Schibsted Grotesk",
+      "loaded": true
+    },
+    "row": {
+      "label": "File",
+      "labelRatio": 4.78,
+      "labelFont": "13px",
+      "ariaLabel": "1 file attached",
+      "count": 1,
+      "rowOverflow": false
+    },
+    "items": [
+      {
+        "name": "Spring-planting-proposal.pdf",
+        "size": "2.4 MB",
+        "nameRatio": 13.12,
+        "sizeRatio": 4.78,
+        "nameFont": "13px",
+        "nameLines": 2,
+        "overflow": false,
+        "iconHidden": true,
+        "iconColor": "rgb(103, 97, 107)",
+        "height": 54
+      }
+    ],
+    "rowGold": [],
+    "cardOverflow": false,
+    "pageOverflow": false,
+    "transcriptOverflowX": false,
+    "approve": {
+      "text": "Approve",
+      "inView": true,
+      "top": 557,
+      "bottom": 593
+    },
+    "summaryShown": false,
+    "storagePath": false,
+    "aria": "- term: File\n- definition:\n  - list \"1 file attached\":\n    - listitem: Spring-planting-proposal.pdf 2.4 MB",
+    "tabs": [],
+    "errors": []
+  },
+  "exp03a-files1-dark-1366x768": {
+    "ok": true,
+    "files": 1,
+    "theme": "dark",
+    "viewport": "1366x768",
+    "layout": "dock",
+    "checks": {
+      "fontLoaded": true,
+      "noPageOverflow": true,
+      "noTranscriptOverflowX": true,
+      "noCardOverflow": true,
+      "approveFound": true,
+      "row": true,
+      "aaText": true,
+      "noItemOverflow": true,
+      "iconsHidden": true,
+      "sizesReadable": true,
+      "noGoldInRow": true,
+      "noStoragePath": true,
+      "ariaNamesList": true,
+      "noTabStopInRow": true,
+      "tabReachesApprove": true
+    },
+    "font": {
+      "family": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-se",
+      "first": "Schibsted Grotesk",
+      "loaded": true
+    },
+    "row": {
+      "label": "File",
+      "labelRatio": 6.82,
+      "labelFont": "13px",
+      "ariaLabel": "1 file attached",
+      "count": 1,
+      "rowOverflow": false
+    },
+    "items": [
+      {
+        "name": "Spring-planting-proposal.pdf",
+        "size": "2.4 MB",
+        "nameRatio": 14.56,
+        "sizeRatio": 6.82,
+        "nameFont": "13px",
+        "nameLines": 2,
+        "overflow": false,
+        "iconHidden": true,
+        "iconColor": "rgb(173, 167, 159)",
+        "height": 54
+      }
+    ],
+    "rowGold": [],
+    "cardOverflow": false,
+    "pageOverflow": false,
+    "transcriptOverflowX": false,
+    "approve": {
+      "text": "Approve",
+      "inView": true,
+      "top": 431,
+      "bottom": 467
+    },
+    "summaryShown": false,
+    "storagePath": false,
+    "aria": "- term: File\n- definition:\n  - list \"1 file attached\":\n    - listitem: Spring-planting-proposal.pdf 2.4 MB",
+    "tabs": [
+      {
+        "tag": "BUTTON",
+        "text": "Start voice typing",
+        "inRow": false
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Attach a document",
+        "inRow": false
+      },
+      {
+        "tag": "BODY",
+        "text": "Workspace content (illustrative) ChatsNe",
+        "inRow": false
+      },
+      {
+        "tag": "DIV",
+        "text": "PAIGE conversation",
+        "inRow": false
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Copy message",
+        "inRow": false
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Play message aloud",
+        "inRow": false
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Copy message",
+        "inRow": false
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Approve",
+        "inRow": false
+      }
+    ],
+    "errors": []
+  },
+  "exp03a-files1-dark-390x844": {
+    "ok": true,
+    "files": 1,
+    "theme": "dark",
+    "viewport": "390x844",
+    "layout": "phone",
+    "checks": {
+      "fontLoaded": true,
+      "noPageOverflow": true,
+      "noTranscriptOverflowX": true,
+      "noCardOverflow": true,
+      "approveFound": true,
+      "row": true,
+      "aaText": true,
+      "noItemOverflow": true,
+      "iconsHidden": true,
+      "sizesReadable": true,
+      "noGoldInRow": true,
+      "noStoragePath": true,
+      "ariaNamesList": true
+    },
+    "font": {
+      "family": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-se",
+      "first": "Schibsted Grotesk",
+      "loaded": true
+    },
+    "row": {
+      "label": "File",
+      "labelRatio": 6.82,
+      "labelFont": "13px",
+      "ariaLabel": "1 file attached",
+      "count": 1,
+      "rowOverflow": false
+    },
+    "items": [
+      {
+        "name": "Spring-planting-proposal.pdf",
+        "size": "2.4 MB",
+        "nameRatio": 14.56,
+        "sizeRatio": 6.82,
+        "nameFont": "13px",
+        "nameLines": 2,
+        "overflow": false,
+        "iconHidden": true,
+        "iconColor": "rgb(173, 167, 159)",
+        "height": 54
+      }
+    ],
+    "rowGold": [],
+    "cardOverflow": false,
+    "pageOverflow": false,
+    "transcriptOverflowX": false,
+    "approve": {
+      "text": "Approve",
+      "inView": true,
+      "top": 557,
+      "bottom": 593
+    },
+    "summaryShown": false,
+    "storagePath": false,
+    "aria": "- term: File\n- definition:\n  - list \"1 file attached\":\n    - listitem: Spring-planting-proposal.pdf 2.4 MB",
+    "tabs": [],
+    "errors": []
+  },
+  "exp03a-files3-light-1366x768": {
+    "ok": true,
+    "files": 3,
+    "theme": "light",
+    "viewport": "1366x768",
+    "layout": "dock",
+    "checks": {
+      "fontLoaded": true,
+      "noPageOverflow": true,
+      "noTranscriptOverflowX": true,
+      "noCardOverflow": true,
+      "approveFound": true,
+      "row": true,
+      "aaText": true,
+      "noItemOverflow": true,
+      "iconsHidden": true,
+      "sizesReadable": true,
+      "noGoldInRow": true,
+      "noStoragePath": true,
+      "ariaNamesList": true,
+      "noTabStopInRow": true,
+      "tabReachesApprove": true
+    },
+    "font": {
+      "family": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-se",
+      "first": "Schibsted Grotesk",
+      "loaded": true
+    },
+    "row": {
+      "label": "Files",
+      "labelRatio": 4.78,
+      "labelFont": "13px",
+      "ariaLabel": "3 files attached",
+      "count": 3,
+      "rowOverflow": false
+    },
+    "items": [
+      {
+        "name": "Spring-planting-proposal.pdf",
+        "size": "2.4 MB",
+        "nameRatio": 13.12,
+        "sizeRatio": 4.78,
+        "nameFont": "13px",
+        "nameLines": 2,
+        "overflow": false,
+        "iconHidden": true,
+        "iconColor": "rgb(103, 97, 107)",
+        "height": 54
+      },
+      {
+        "name": "Ortiz-Landscaping_front-and-side-yard_site-plan_revision-4_FINAL_approved-by-Maya_2026-10-27.pdf",
+        "size": "7.5 MB",
+        "nameRatio": 13.12,
+        "sizeRatio": 4.78,
+        "nameFont": "13px",
+        "nameLines": 9,
+        "overflow": false,
+        "iconHidden": true,
+        "iconColor": "rgb(103, 97, 107)",
+        "height": 180
+      },
+      {
+        "name": "Plant list.xlsx",
+        "size": "48 KB",
+        "nameRatio": 13.12,
+        "sizeRatio": 4.78,
+        "nameFont": "13px",
+        "nameLines": 1,
+        "overflow": false,
+        "iconHidden": true,
+        "iconColor": "rgb(103, 97, 107)",
+        "height": 36
+      }
+    ],
+    "rowGold": [],
+    "cardOverflow": false,
+    "pageOverflow": false,
+    "transcriptOverflowX": false,
+    "approve": {
+      "text": "Approve",
+      "inView": true,
+      "top": 631,
+      "bottom": 667
+    },
+    "summaryShown": false,
+    "storagePath": false,
+    "aria": "- term: Files\n- definition:\n  - list \"3 files attached\":\n    - listitem: Spring-planting-proposal.pdf 2.4 MB\n    - listitem: Ortiz-Landscaping_front-and-side-yard_site-plan_revision-4_FINAL_approved-by-Maya_2026-10-27.pdf 7.5 MB\n    - listitem: Plant list.xlsx 48 KB\n  - paragraph: 9.9 MB in all",
+    "tabs": [
+      {
+        "tag": "BUTTON",
+        "text": "Start voice typing",
+        "inRow": false
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Attach a document",
+        "inRow": false
+      },
+      {
+        "tag": "BODY",
+        "text": "Workspace content (illustrative) ChatsNe",
+        "inRow": false
+      },
+      {
+        "tag": "DIV",
+        "text": "PAIGE conversation",
+        "inRow": false
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Copy message",
+        "inRow": false
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Play message aloud",
+        "inRow": false
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Copy message",
+        "inRow": false
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Approve",
+        "inRow": false
+      }
+    ],
+    "errors": []
+  },
+  "exp03a-files3-light-390x844": {
+    "ok": true,
+    "files": 3,
+    "theme": "light",
+    "viewport": "390x844",
+    "layout": "phone",
+    "checks": {
+      "fontLoaded": true,
+      "noPageOverflow": true,
+      "noTranscriptOverflowX": true,
+      "noCardOverflow": true,
+      "approveFound": true,
+      "row": true,
+      "aaText": true,
+      "noItemOverflow": true,
+      "iconsHidden": true,
+      "sizesReadable": true,
+      "noGoldInRow": true,
+      "noStoragePath": true,
+      "ariaNamesList": true
+    },
+    "font": {
+      "family": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-se",
+      "first": "Schibsted Grotesk",
+      "loaded": true
+    },
+    "row": {
+      "label": "Files",
+      "labelRatio": 4.78,
+      "labelFont": "13px",
+      "ariaLabel": "3 files attached",
+      "count": 3,
+      "rowOverflow": false
+    },
+    "items": [
+      {
+        "name": "Spring-planting-proposal.pdf",
+        "size": "2.4 MB",
+        "nameRatio": 13.12,
+        "sizeRatio": 4.78,
+        "nameFont": "13px",
+        "nameLines": 2,
+        "overflow": false,
+        "iconHidden": true,
+        "iconColor": "rgb(103, 97, 107)",
+        "height": 54
+      },
+      {
+        "name": "Ortiz-Landscaping_front-and-side-yard_site-plan_revision-4_FINAL_approved-by-Maya_2026-10-27.pdf",
+        "size": "7.5 MB",
+        "nameRatio": 13.12,
+        "sizeRatio": 4.78,
+        "nameFont": "13px",
+        "nameLines": 4,
+        "overflow": false,
+        "iconHidden": true,
+        "iconColor": "rgb(103, 97, 107)",
+        "height": 90
+      },
+      {
+        "name": "Plant list.xlsx",
+        "size": "48 KB",
+        "nameRatio": 13.12,
+        "sizeRatio": 4.78,
+        "nameFont": "13px",
+        "nameLines": 1,
+        "overflow": false,
+        "iconHidden": true,
+        "iconColor": "rgb(103, 97, 107)",
+        "height": 36
+      }
+    ],
+    "rowGold": [],
+    "cardOverflow": false,
+    "pageOverflow": false,
+    "transcriptOverflowX": false,
+    "approve": {
+      "text": "Approve",
+      "inView": true,
+      "top": 557,
+      "bottom": 593
+    },
+    "summaryShown": false,
+    "storagePath": false,
+    "aria": "- term: Files\n- definition:\n  - list \"3 files attached\":\n    - listitem: Spring-planting-proposal.pdf 2.4 MB\n    - listitem: Ortiz-Landscaping_front-and-side-yard_site-plan_revision-4_FINAL_approved-by-Maya_2026-10-27.pdf 7.5 MB\n    - listitem: Plant list.xlsx 48 KB\n  - paragraph: 9.9 MB in all",
+    "tabs": [],
+    "errors": []
+  },
+  "exp03a-files3-dark-1366x768": {
+    "ok": true,
+    "files": 3,
+    "theme": "dark",
+    "viewport": "1366x768",
+    "layout": "dock",
+    "checks": {
+      "fontLoaded": true,
+      "noPageOverflow": true,
+      "noTranscriptOverflowX": true,
+      "noCardOverflow": true,
+      "approveFound": true,
+      "row": true,
+      "aaText": true,
+      "noItemOverflow": true,
+      "iconsHidden": true,
+      "sizesReadable": true,
+      "noGoldInRow": true,
+      "noStoragePath": true,
+      "ariaNamesList": true,
+      "noTabStopInRow": true,
+      "tabReachesApprove": true
+    },
+    "font": {
+      "family": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-se",
+      "first": "Schibsted Grotesk",
+      "loaded": true
+    },
+    "row": {
+      "label": "Files",
+      "labelRatio": 6.82,
+      "labelFont": "13px",
+      "ariaLabel": "3 files attached",
+      "count": 3,
+      "rowOverflow": false
+    },
+    "items": [
+      {
+        "name": "Spring-planting-proposal.pdf",
+        "size": "2.4 MB",
+        "nameRatio": 14.56,
+        "sizeRatio": 6.82,
+        "nameFont": "13px",
+        "nameLines": 2,
+        "overflow": false,
+        "iconHidden": true,
+        "iconColor": "rgb(173, 167, 159)",
+        "height": 54
+      },
+      {
+        "name": "Ortiz-Landscaping_front-and-side-yard_site-plan_revision-4_FINAL_approved-by-Maya_2026-10-27.pdf",
+        "size": "7.5 MB",
+        "nameRatio": 14.56,
+        "sizeRatio": 6.82,
+        "nameFont": "13px",
+        "nameLines": 9,
+        "overflow": false,
+        "iconHidden": true,
+        "iconColor": "rgb(173, 167, 159)",
+        "height": 180
+      },
+      {
+        "name": "Plant list.xlsx",
+        "size": "48 KB",
+        "nameRatio": 14.56,
+        "sizeRatio": 6.82,
+        "nameFont": "13px",
+        "nameLines": 1,
+        "overflow": false,
+        "iconHidden": true,
+        "iconColor": "rgb(173, 167, 159)",
+        "height": 36
+      }
+    ],
+    "rowGold": [],
+    "cardOverflow": false,
+    "pageOverflow": false,
+    "transcriptOverflowX": false,
+    "approve": {
+      "text": "Approve",
+      "inView": true,
+      "top": 631,
+      "bottom": 667
+    },
+    "summaryShown": false,
+    "storagePath": false,
+    "aria": "- term: Files\n- definition:\n  - list \"3 files attached\":\n    - listitem: Spring-planting-proposal.pdf 2.4 MB\n    - listitem: Ortiz-Landscaping_front-and-side-yard_site-plan_revision-4_FINAL_approved-by-Maya_2026-10-27.pdf 7.5 MB\n    - listitem: Plant list.xlsx 48 KB\n  - paragraph: 9.9 MB in all",
+    "tabs": [
+      {
+        "tag": "BUTTON",
+        "text": "Start voice typing",
+        "inRow": false
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Attach a document",
+        "inRow": false
+      },
+      {
+        "tag": "BODY",
+        "text": "Workspace content (illustrative) ChatsNe",
+        "inRow": false
+      },
+      {
+        "tag": "DIV",
+        "text": "PAIGE conversation",
+        "inRow": false
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Copy message",
+        "inRow": false
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Play message aloud",
+        "inRow": false
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Copy message",
+        "inRow": false
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Approve",
+        "inRow": false
+      }
+    ],
+    "errors": []
+  },
+  "exp03a-files3-dark-390x844": {
+    "ok": true,
+    "files": 3,
+    "theme": "dark",
+    "viewport": "390x844",
+    "layout": "phone",
+    "checks": {
+      "fontLoaded": true,
+      "noPageOverflow": true,
+      "noTranscriptOverflowX": true,
+      "noCardOverflow": true,
+      "approveFound": true,
+      "row": true,
+      "aaText": true,
+      "noItemOverflow": true,
+      "iconsHidden": true,
+      "sizesReadable": true,
+      "noGoldInRow": true,
+      "noStoragePath": true,
+      "ariaNamesList": true
+    },
+    "font": {
+      "family": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-se",
+      "first": "Schibsted Grotesk",
+      "loaded": true
+    },
+    "row": {
+      "label": "Files",
+      "labelRatio": 6.82,
+      "labelFont": "13px",
+      "ariaLabel": "3 files attached",
+      "count": 3,
+      "rowOverflow": false
+    },
+    "items": [
+      {
+        "name": "Spring-planting-proposal.pdf",
+        "size": "2.4 MB",
+        "nameRatio": 14.56,
+        "sizeRatio": 6.82,
+        "nameFont": "13px",
+        "nameLines": 2,
+        "overflow": false,
+        "iconHidden": true,
+        "iconColor": "rgb(173, 167, 159)",
+        "height": 54
+      },
+      {
+        "name": "Ortiz-Landscaping_front-and-side-yard_site-plan_revision-4_FINAL_approved-by-Maya_2026-10-27.pdf",
+        "size": "7.5 MB",
+        "nameRatio": 14.56,
+        "sizeRatio": 6.82,
+        "nameFont": "13px",
+        "nameLines": 4,
+        "overflow": false,
+        "iconHidden": true,
+        "iconColor": "rgb(173, 167, 159)",
+        "height": 90
+      },
+      {
+        "name": "Plant list.xlsx",
+        "size": "48 KB",
+        "nameRatio": 14.56,
+        "sizeRatio": 6.82,
+        "nameFont": "13px",
+        "nameLines": 1,
+        "overflow": false,
+        "iconHidden": true,
+        "iconColor": "rgb(173, 167, 159)",
+        "height": 36
+      }
+    ],
+    "rowGold": [],
+    "cardOverflow": false,
+    "pageOverflow": false,
+    "transcriptOverflowX": false,
+    "approve": {
+      "text": "Approve",
+      "inView": true,
+      "top": 557,
+      "bottom": 593
+    },
+    "summaryShown": false,
+    "storagePath": false,
+    "aria": "- term: Files\n- definition:\n  - list \"3 files attached\":\n    - listitem: Spring-planting-proposal.pdf 2.4 MB\n    - listitem: Ortiz-Landscaping_front-and-side-yard_site-plan_revision-4_FINAL_approved-by-Maya_2026-10-27.pdf 7.5 MB\n    - listitem: Plant list.xlsx 48 KB\n  - paragraph: 9.9 MB in all",
+    "tabs": [],
+    "errors": []
+  },
+  "exp03a-files10-light-1366x768": {
+    "ok": true,
+    "files": 10,
+    "theme": "light",
+    "viewport": "1366x768",
+    "layout": "dock",
+    "checks": {
+      "fontLoaded": true,
+      "noPageOverflow": true,
+      "noTranscriptOverflowX": true,
+      "noCardOverflow": true,
+      "approveFound": true,
+      "row": true,
+      "aaText": true,
+      "noItemOverflow": true,
+      "iconsHidden": true,
+      "sizesReadable": true,
+      "noGoldInRow": true,
+      "noStoragePath": true,
+      "ariaNamesList": true,
+      "noTabStopInRow": true,
+      "tabReachesApprove": true
+    },
+    "font": {
+      "family": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-se",
+      "first": "Schibsted Grotesk",
+      "loaded": true
+    },
+    "row": {
+      "label": "Files",
+      "labelRatio": 4.78,
+      "labelFont": "13px",
+      "ariaLabel": "10 files attached",
+      "count": 10,
+      "rowOverflow": false
+    },
+    "items": [
+      {
+        "name": "Spring-planting-proposal.pdf",
+        "size": "2.4 MB",
+        "nameRatio": 13.12,
+        "sizeRatio": 4.78,
+        "nameFont": "13px",
+        "nameLines": 2,
+        "overflow": false,
+        "iconHidden": true,
+        "iconColor": "rgb(103, 97, 107)",
+        "height": 54
+      },
+      {
+        "name": "Site plan — revision 4.pdf",
+        "size": "7.5 MB",
+        "nameRatio": 13.12,
+        "sizeRatio": 4.78,
+        "nameFont": "13px",
+        "nameLines": 2,
+        "overflow": false,
+        "iconHidden": true,
+        "iconColor": "rgb(103, 97, 107)",
+        "height": 54
+      },
+      {
+        "name": "Plant list.xlsx",
+        "size": "48 KB",
+        "nameRatio": 13.12,
+        "sizeRatio": 4.78,
+        "nameFont": "13px",
+        "nameLines": 1,
+        "overflow": false,
+        "iconHidden": true,
+        "iconColor": "rgb(103, 97, 107)",
+        "height": 36
+      },
+      {
+        "name": "Front bed — before.jpg",
+        "size": "3.2 MB",
+        "nameRatio": 13.12,
+        "sizeRatio": 4.78,
+        "nameFont": "13px",
+        "nameLines": 2,
+        "overflow": false,
+        "iconHidden": true,
+        "iconColor": "rgb(103, 97, 107)",
+        "height": 54
+      },
+      {
+        "name": "Side yard — before.jpg",
+        "size": "2.8 MB",
+        "nameRatio": 13.12,
+        "sizeRatio": 4.78,
+        "nameFont": "13px",
+        "nameLines": 2,
+        "overflow": false,
+        "iconHidden": true,
+        "iconColor": "rgb(103, 97, 107)",
+        "height": 54
+      },
+      {
+        "name": "Irrigation notes.docx",
+        "size": "86 KB",
+        "nameRatio": 13.12,
+        "sizeRatio": 4.78,
+        "nameFont": "13px",
+        "nameLines": 2,
+        "overflow": false,
+        "iconHidden": true,
+        "iconColor": "rgb(103, 97, 107)",
+        "height": 54
+      },
+      {
+        "name": "Crew schedule.pdf",
+        "size": "305 KB",
+        "nameRatio": 13.12,
+        "sizeRatio": 4.78,
+        "nameFont": "13px",
+        "nameLines": 2,
+        "overflow": false,
+        "iconHidden": true,
+        "iconColor": "rgb(103, 97, 107)",
+        "height": 54
+      },
+      {
+        "name": "Soil test results.pdf",
+        "size": "1.1 MB",
+        "nameRatio": 13.12,
+        "sizeRatio": 4.78,
+        "nameFont": "13px",
+        "nameLines": 2,
+        "overflow": false,
+        "iconHidden": true,
+        "iconColor": "rgb(103, 97, 107)",
+        "height": 54
+      },
+      {
+        "name": "Warranty terms.pdf",
+        "size": "94 KB",
+        "nameRatio": 13.12,
+        "sizeRatio": 4.78,
+        "nameFont": "13px",
+        "nameLines": 2,
+        "overflow": false,
+        "iconHidden": true,
+        "iconColor": "rgb(103, 97, 107)",
+        "height": 54
+      },
+      {
+        "name": "readme.txt",
+        "size": "820 bytes",
+        "nameRatio": 13.12,
+        "sizeRatio": 4.78,
+        "nameFont": "13px",
+        "nameLines": 1,
+        "overflow": false,
+        "iconHidden": true,
+        "iconColor": "rgb(103, 97, 107)",
+        "height": 36
+      }
+    ],
+    "rowGold": [],
+    "cardOverflow": false,
+    "pageOverflow": false,
+    "transcriptOverflowX": false,
+    "approve": {
+      "text": "Approve",
+      "inView": false,
+      "top": 879,
+      "bottom": 915
+    },
+    "summaryShown": false,
+    "storagePath": false,
+    "aria": "- term: Files\n- definition:\n  - list \"10 files attached\":\n    - listitem: Spring-planting-proposal.pdf 2.4 MB\n    - listitem: Site plan — revision 4.pdf 7.5 MB\n    - listitem: Plant list.xlsx 48 KB\n    - listitem: Front bed — before.jpg 3.2 MB\n    - listitem: Side yard — before.jpg 2.8 MB\n    - listitem: Irrigation notes.docx 86 KB\n    - listitem: Crew schedule.pdf 305 KB\n    - listitem: Soil test results.pdf 1.1 MB\n    - listitem: Warranty terms.pdf 94 KB\n    - listitem: readme.txt 820 bytes\n  - paragraph: 18 MB in all",
+    "tabs": [
+      {
+        "tag": "BUTTON",
+        "text": "Start voice typing",
+        "inRow": false
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Attach a document",
+        "inRow": false
+      },
+      {
+        "tag": "BODY",
+        "text": "Workspace content (illustrative) ChatsNe",
+        "inRow": false
+      },
+      {
+        "tag": "DIV",
+        "text": "PAIGE conversation",
+        "inRow": false
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Copy message",
+        "inRow": false
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Play message aloud",
+        "inRow": false
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Copy message",
+        "inRow": false
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Approve",
+        "inRow": false
+      }
+    ],
+    "errors": []
+  },
+  "exp03a-files10-light-390x844": {
+    "ok": true,
+    "files": 10,
+    "theme": "light",
+    "viewport": "390x844",
+    "layout": "phone",
+    "checks": {
+      "fontLoaded": true,
+      "noPageOverflow": true,
+      "noTranscriptOverflowX": true,
+      "noCardOverflow": true,
+      "approveFound": true,
+      "row": true,
+      "aaText": true,
+      "noItemOverflow": true,
+      "iconsHidden": true,
+      "sizesReadable": true,
+      "noGoldInRow": true,
+      "noStoragePath": true,
+      "ariaNamesList": true
+    },
+    "font": {
+      "family": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-se",
+      "first": "Schibsted Grotesk",
+      "loaded": true
+    },
+    "row": {
+      "label": "Files",
+      "labelRatio": 4.78,
+      "labelFont": "13px",
+      "ariaLabel": "10 files attached",
+      "count": 10,
+      "rowOverflow": false
+    },
+    "items": [
+      {
+        "name": "Spring-planting-proposal.pdf",
+        "size": "2.4 MB",
+        "nameRatio": 13.12,
+        "sizeRatio": 4.78,
+        "nameFont": "13px",
+        "nameLines": 2,
+        "overflow": false,
+        "iconHidden": true,
+        "iconColor": "rgb(103, 97, 107)",
+        "height": 54
+      },
+      {
+        "name": "Site plan — revision 4.pdf",
+        "size": "7.5 MB",
+        "nameRatio": 13.12,
+        "sizeRatio": 4.78,
+        "nameFont": "13px",
+        "nameLines": 1,
+        "overflow": false,
+        "iconHidden": true,
+        "iconColor": "rgb(103, 97, 107)",
+        "height": 36
+      },
+      {
+        "name": "Plant list.xlsx",
+        "size": "48 KB",
+        "nameRatio": 13.12,
+        "sizeRatio": 4.78,
+        "nameFont": "13px",
+        "nameLines": 1,
+        "overflow": false,
+        "iconHidden": true,
+        "iconColor": "rgb(103, 97, 107)",
+        "height": 36
+      },
+      {
+        "name": "Front bed — before.jpg",
+        "size": "3.2 MB",
+        "nameRatio": 13.12,
+        "sizeRatio": 4.78,
+        "nameFont": "13px",
+        "nameLines": 1,
+        "overflow": false,
+        "iconHidden": true,
+        "iconColor": "rgb(103, 97, 107)",
+        "height": 36
+      },
+      {
+        "name": "Side yard — before.jpg",
+        "size": "2.8 MB",
+        "nameRatio": 13.12,
+        "sizeRatio": 4.78,
+        "nameFont": "13px",
+        "nameLines": 1,
+        "overflow": false,
+        "iconHidden": true,
+        "iconColor": "rgb(103, 97, 107)",
+        "height": 36
+      },
+      {
+        "name": "Irrigation notes.docx",
+        "size": "86 KB",
+        "nameRatio": 13.12,
+        "sizeRatio": 4.78,
+        "nameFont": "13px",
+        "nameLines": 1,
+        "overflow": false,
+        "iconHidden": true,
+        "iconColor": "rgb(103, 97, 107)",
+        "height": 36
+      },
+      {
+        "name": "Crew schedule.pdf",
+        "size": "305 KB",
+        "nameRatio": 13.12,
+        "sizeRatio": 4.78,
+        "nameFont": "13px",
+        "nameLines": 1,
+        "overflow": false,
+        "iconHidden": true,
+        "iconColor": "rgb(103, 97, 107)",
+        "height": 36
+      },
+      {
+        "name": "Soil test results.pdf",
+        "size": "1.1 MB",
+        "nameRatio": 13.12,
+        "sizeRatio": 4.78,
+        "nameFont": "13px",
+        "nameLines": 1,
+        "overflow": false,
+        "iconHidden": true,
+        "iconColor": "rgb(103, 97, 107)",
+        "height": 36
+      },
+      {
+        "name": "Warranty terms.pdf",
+        "size": "94 KB",
+        "nameRatio": 13.12,
+        "sizeRatio": 4.78,
+        "nameFont": "13px",
+        "nameLines": 1,
+        "overflow": false,
+        "iconHidden": true,
+        "iconColor": "rgb(103, 97, 107)",
+        "height": 36
+      },
+      {
+        "name": "readme.txt",
+        "size": "820 bytes",
+        "nameRatio": 13.12,
+        "sizeRatio": 4.78,
+        "nameFont": "13px",
+        "nameLines": 1,
+        "overflow": false,
+        "iconHidden": true,
+        "iconColor": "rgb(103, 97, 107)",
+        "height": 36
+      }
+    ],
+    "rowGold": [],
+    "cardOverflow": false,
+    "pageOverflow": false,
+    "transcriptOverflowX": false,
+    "approve": {
+      "text": "Approve",
+      "inView": true,
+      "top": 703,
+      "bottom": 739
+    },
+    "summaryShown": false,
+    "storagePath": false,
+    "aria": "- term: Files\n- definition:\n  - list \"10 files attached\":\n    - listitem: Spring-planting-proposal.pdf 2.4 MB\n    - listitem: Site plan — revision 4.pdf 7.5 MB\n    - listitem: Plant list.xlsx 48 KB\n    - listitem: Front bed — before.jpg 3.2 MB\n    - listitem: Side yard — before.jpg 2.8 MB\n    - listitem: Irrigation notes.docx 86 KB\n    - listitem: Crew schedule.pdf 305 KB\n    - listitem: Soil test results.pdf 1.1 MB\n    - listitem: Warranty terms.pdf 94 KB\n    - listitem: readme.txt 820 bytes\n  - paragraph: 18 MB in all",
+    "tabs": [],
+    "errors": []
+  },
+  "exp03a-files10-dark-1366x768": {
+    "ok": true,
+    "files": 10,
+    "theme": "dark",
+    "viewport": "1366x768",
+    "layout": "dock",
+    "checks": {
+      "fontLoaded": true,
+      "noPageOverflow": true,
+      "noTranscriptOverflowX": true,
+      "noCardOverflow": true,
+      "approveFound": true,
+      "row": true,
+      "aaText": true,
+      "noItemOverflow": true,
+      "iconsHidden": true,
+      "sizesReadable": true,
+      "noGoldInRow": true,
+      "noStoragePath": true,
+      "ariaNamesList": true,
+      "noTabStopInRow": true,
+      "tabReachesApprove": true
+    },
+    "font": {
+      "family": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-se",
+      "first": "Schibsted Grotesk",
+      "loaded": true
+    },
+    "row": {
+      "label": "Files",
+      "labelRatio": 6.82,
+      "labelFont": "13px",
+      "ariaLabel": "10 files attached",
+      "count": 10,
+      "rowOverflow": false
+    },
+    "items": [
+      {
+        "name": "Spring-planting-proposal.pdf",
+        "size": "2.4 MB",
+        "nameRatio": 14.56,
+        "sizeRatio": 6.82,
+        "nameFont": "13px",
+        "nameLines": 2,
+        "overflow": false,
+        "iconHidden": true,
+        "iconColor": "rgb(173, 167, 159)",
+        "height": 54
+      },
+      {
+        "name": "Site plan — revision 4.pdf",
+        "size": "7.5 MB",
+        "nameRatio": 14.56,
+        "sizeRatio": 6.82,
+        "nameFont": "13px",
+        "nameLines": 2,
+        "overflow": false,
+        "iconHidden": true,
+        "iconColor": "rgb(173, 167, 159)",
+        "height": 54
+      },
+      {
+        "name": "Plant list.xlsx",
+        "size": "48 KB",
+        "nameRatio": 14.56,
+        "sizeRatio": 6.82,
+        "nameFont": "13px",
+        "nameLines": 1,
+        "overflow": false,
+        "iconHidden": true,
+        "iconColor": "rgb(173, 167, 159)",
+        "height": 36
+      },
+      {
+        "name": "Front bed — before.jpg",
+        "size": "3.2 MB",
+        "nameRatio": 14.56,
+        "sizeRatio": 6.82,
+        "nameFont": "13px",
+        "nameLines": 2,
+        "overflow": false,
+        "iconHidden": true,
+        "iconColor": "rgb(173, 167, 159)",
+        "height": 54
+      },
+      {
+        "name": "Side yard — before.jpg",
+        "size": "2.8 MB",
+        "nameRatio": 14.56,
+        "sizeRatio": 6.82,
+        "nameFont": "13px",
+        "nameLines": 2,
+        "overflow": false,
+        "iconHidden": true,
+        "iconColor": "rgb(173, 167, 159)",
+        "height": 54
+      },
+      {
+        "name": "Irrigation notes.docx",
+        "size": "86 KB",
+        "nameRatio": 14.56,
+        "sizeRatio": 6.82,
+        "nameFont": "13px",
+        "nameLines": 2,
+        "overflow": false,
+        "iconHidden": true,
+        "iconColor": "rgb(173, 167, 159)",
+        "height": 54
+      },
+      {
+        "name": "Crew schedule.pdf",
+        "size": "305 KB",
+        "nameRatio": 14.56,
+        "sizeRatio": 6.82,
+        "nameFont": "13px",
+        "nameLines": 2,
+        "overflow": false,
+        "iconHidden": true,
+        "iconColor": "rgb(173, 167, 159)",
+        "height": 54
+      },
+      {
+        "name": "Soil test results.pdf",
+        "size": "1.1 MB",
+        "nameRatio": 14.56,
+        "sizeRatio": 6.82,
+        "nameFont": "13px",
+        "nameLines": 2,
+        "overflow": false,
+        "iconHidden": true,
+        "iconColor": "rgb(173, 167, 159)",
+        "height": 54
+      },
+      {
+        "name": "Warranty terms.pdf",
+        "size": "94 KB",
+        "nameRatio": 14.56,
+        "sizeRatio": 6.82,
+        "nameFont": "13px",
+        "nameLines": 2,
+        "overflow": false,
+        "iconHidden": true,
+        "iconColor": "rgb(173, 167, 159)",
+        "height": 54
+      },
+      {
+        "name": "readme.txt",
+        "size": "820 bytes",
+        "nameRatio": 14.56,
+        "sizeRatio": 6.82,
+        "nameFont": "13px",
+        "nameLines": 1,
+        "overflow": false,
+        "iconHidden": true,
+        "iconColor": "rgb(173, 167, 159)",
+        "height": 36
+      }
+    ],
+    "rowGold": [],
+    "cardOverflow": false,
+    "pageOverflow": false,
+    "transcriptOverflowX": false,
+    "approve": {
+      "text": "Approve",
+      "inView": false,
+      "top": 879,
+      "bottom": 915
+    },
+    "summaryShown": false,
+    "storagePath": false,
+    "aria": "- term: Files\n- definition:\n  - list \"10 files attached\":\n    - listitem: Spring-planting-proposal.pdf 2.4 MB\n    - listitem: Site plan — revision 4.pdf 7.5 MB\n    - listitem: Plant list.xlsx 48 KB\n    - listitem: Front bed — before.jpg 3.2 MB\n    - listitem: Side yard — before.jpg 2.8 MB\n    - listitem: Irrigation notes.docx 86 KB\n    - listitem: Crew schedule.pdf 305 KB\n    - listitem: Soil test results.pdf 1.1 MB\n    - listitem: Warranty terms.pdf 94 KB\n    - listitem: readme.txt 820 bytes\n  - paragraph: 18 MB in all",
+    "tabs": [
+      {
+        "tag": "BUTTON",
+        "text": "Start voice typing",
+        "inRow": false
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Attach a document",
+        "inRow": false
+      },
+      {
+        "tag": "BODY",
+        "text": "Workspace content (illustrative) ChatsNe",
+        "inRow": false
+      },
+      {
+        "tag": "DIV",
+        "text": "PAIGE conversation",
+        "inRow": false
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Copy message",
+        "inRow": false
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Play message aloud",
+        "inRow": false
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Copy message",
+        "inRow": false
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Approve",
+        "inRow": false
+      }
+    ],
+    "errors": []
+  },
+  "exp03a-files10-dark-390x844": {
+    "ok": true,
+    "files": 10,
+    "theme": "dark",
+    "viewport": "390x844",
+    "layout": "phone",
+    "checks": {
+      "fontLoaded": true,
+      "noPageOverflow": true,
+      "noTranscriptOverflowX": true,
+      "noCardOverflow": true,
+      "approveFound": true,
+      "row": true,
+      "aaText": true,
+      "noItemOverflow": true,
+      "iconsHidden": true,
+      "sizesReadable": true,
+      "noGoldInRow": true,
+      "noStoragePath": true,
+      "ariaNamesList": true
+    },
+    "font": {
+      "family": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-se",
+      "first": "Schibsted Grotesk",
+      "loaded": true
+    },
+    "row": {
+      "label": "Files",
+      "labelRatio": 6.82,
+      "labelFont": "13px",
+      "ariaLabel": "10 files attached",
+      "count": 10,
+      "rowOverflow": false
+    },
+    "items": [
+      {
+        "name": "Spring-planting-proposal.pdf",
+        "size": "2.4 MB",
+        "nameRatio": 14.56,
+        "sizeRatio": 6.82,
+        "nameFont": "13px",
+        "nameLines": 2,
+        "overflow": false,
+        "iconHidden": true,
+        "iconColor": "rgb(173, 167, 159)",
+        "height": 54
+      },
+      {
+        "name": "Site plan — revision 4.pdf",
+        "size": "7.5 MB",
+        "nameRatio": 14.56,
+        "sizeRatio": 6.82,
+        "nameFont": "13px",
+        "nameLines": 1,
+        "overflow": false,
+        "iconHidden": true,
+        "iconColor": "rgb(173, 167, 159)",
+        "height": 36
+      },
+      {
+        "name": "Plant list.xlsx",
+        "size": "48 KB",
+        "nameRatio": 14.56,
+        "sizeRatio": 6.82,
+        "nameFont": "13px",
+        "nameLines": 1,
+        "overflow": false,
+        "iconHidden": true,
+        "iconColor": "rgb(173, 167, 159)",
+        "height": 36
+      },
+      {
+        "name": "Front bed — before.jpg",
+        "size": "3.2 MB",
+        "nameRatio": 14.56,
+        "sizeRatio": 6.82,
+        "nameFont": "13px",
+        "nameLines": 1,
+        "overflow": false,
+        "iconHidden": true,
+        "iconColor": "rgb(173, 167, 159)",
+        "height": 36
+      },
+      {
+        "name": "Side yard — before.jpg",
+        "size": "2.8 MB",
+        "nameRatio": 14.56,
+        "sizeRatio": 6.82,
+        "nameFont": "13px",
+        "nameLines": 1,
+        "overflow": false,
+        "iconHidden": true,
+        "iconColor": "rgb(173, 167, 159)",
+        "height": 36
+      },
+      {
+        "name": "Irrigation notes.docx",
+        "size": "86 KB",
+        "nameRatio": 14.56,
+        "sizeRatio": 6.82,
+        "nameFont": "13px",
+        "nameLines": 1,
+        "overflow": false,
+        "iconHidden": true,
+        "iconColor": "rgb(173, 167, 159)",
+        "height": 36
+      },
+      {
+        "name": "Crew schedule.pdf",
+        "size": "305 KB",
+        "nameRatio": 14.56,
+        "sizeRatio": 6.82,
+        "nameFont": "13px",
+        "nameLines": 1,
+        "overflow": false,
+        "iconHidden": true,
+        "iconColor": "rgb(173, 167, 159)",
+        "height": 36
+      },
+      {
+        "name": "Soil test results.pdf",
+        "size": "1.1 MB",
+        "nameRatio": 14.56,
+        "sizeRatio": 6.82,
+        "nameFont": "13px",
+        "nameLines": 1,
+        "overflow": false,
+        "iconHidden": true,
+        "iconColor": "rgb(173, 167, 159)",
+        "height": 36
+      },
+      {
+        "name": "Warranty terms.pdf",
+        "size": "94 KB",
+        "nameRatio": 14.56,
+        "sizeRatio": 6.82,
+        "nameFont": "13px",
+        "nameLines": 1,
+        "overflow": false,
+        "iconHidden": true,
+        "iconColor": "rgb(173, 167, 159)",
+        "height": 36
+      },
+      {
+        "name": "readme.txt",
+        "size": "820 bytes",
+        "nameRatio": 14.56,
+        "sizeRatio": 6.82,
+        "nameFont": "13px",
+        "nameLines": 1,
+        "overflow": false,
+        "iconHidden": true,
+        "iconColor": "rgb(173, 167, 159)",
+        "height": 36
+      }
+    ],
+    "rowGold": [],
+    "cardOverflow": false,
+    "pageOverflow": false,
+    "transcriptOverflowX": false,
+    "approve": {
+      "text": "Approve",
+      "inView": true,
+      "top": 703,
+      "bottom": 739
+    },
+    "summaryShown": false,
+    "storagePath": false,
+    "aria": "- term: Files\n- definition:\n  - list \"10 files attached\":\n    - listitem: Spring-planting-proposal.pdf 2.4 MB\n    - listitem: Site plan — revision 4.pdf 7.5 MB\n    - listitem: Plant list.xlsx 48 KB\n    - listitem: Front bed — before.jpg 3.2 MB\n    - listitem: Side yard — before.jpg 2.8 MB\n    - listitem: Irrigation notes.docx 86 KB\n    - listitem: Crew schedule.pdf 305 KB\n    - listitem: Soil test results.pdf 1.1 MB\n    - listitem: Warranty terms.pdf 94 KB\n    - listitem: readme.txt 820 bytes\n  - paragraph: 18 MB in all",
+    "tabs": [],
+    "errors": []
+  },
+  "exp03a-files3-light-1536x770": {
+    "ok": true,
+    "files": 3,
+    "theme": "light",
+    "viewport": "1536x770",
+    "layout": "dock",
+    "checks": {
+      "fontLoaded": true,
+      "noPageOverflow": true,
+      "noTranscriptOverflowX": true,
+      "noCardOverflow": true,
+      "approveFound": true,
+      "row": true,
+      "aaText": true,
+      "noItemOverflow": true,
+      "iconsHidden": true,
+      "sizesReadable": true,
+      "noGoldInRow": true,
+      "noStoragePath": true,
+      "ariaNamesList": true,
+      "noTabStopInRow": true,
+      "tabReachesApprove": true
+    },
+    "font": {
+      "family": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-se",
+      "first": "Schibsted Grotesk",
+      "loaded": true
+    },
+    "row": {
+      "label": "Files",
+      "labelRatio": 4.78,
+      "labelFont": "13px",
+      "ariaLabel": "3 files attached",
+      "count": 3,
+      "rowOverflow": false
+    },
+    "items": [
+      {
+        "name": "Spring-planting-proposal.pdf",
+        "size": "2.4 MB",
+        "nameRatio": 13.12,
+        "sizeRatio": 4.78,
+        "nameFont": "13px",
+        "nameLines": 2,
+        "overflow": false,
+        "iconHidden": true,
+        "iconColor": "rgb(103, 97, 107)",
+        "height": 54
+      },
+      {
+        "name": "Ortiz-Landscaping_front-and-side-yard_site-plan_revision-4_FINAL_approved-by-Maya_2026-10-27.pdf",
+        "size": "7.5 MB",
+        "nameRatio": 13.12,
+        "sizeRatio": 4.78,
+        "nameFont": "13px",
+        "nameLines": 6,
+        "overflow": false,
+        "iconHidden": true,
+        "iconColor": "rgb(103, 97, 107)",
+        "height": 126
+      },
+      {
+        "name": "Plant list.xlsx",
+        "size": "48 KB",
+        "nameRatio": 13.12,
+        "sizeRatio": 4.78,
+        "nameFont": "13px",
+        "nameLines": 1,
+        "overflow": false,
+        "iconHidden": true,
+        "iconColor": "rgb(103, 97, 107)",
+        "height": 36
+      }
+    ],
+    "rowGold": [],
+    "cardOverflow": false,
+    "pageOverflow": false,
+    "transcriptOverflowX": false,
+    "approve": {
+      "text": "Approve",
+      "inView": true,
+      "top": 557,
+      "bottom": 593
+    },
+    "summaryShown": false,
+    "storagePath": false,
+    "aria": "- term: Files\n- definition:\n  - list \"3 files attached\":\n    - listitem: Spring-planting-proposal.pdf 2.4 MB\n    - listitem: Ortiz-Landscaping_front-and-side-yard_site-plan_revision-4_FINAL_approved-by-Maya_2026-10-27.pdf 7.5 MB\n    - listitem: Plant list.xlsx 48 KB\n  - paragraph: 9.9 MB in all",
+    "tabs": [
+      {
+        "tag": "BUTTON",
+        "text": "Start voice typing",
+        "inRow": false
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Attach a document",
+        "inRow": false
+      },
+      {
+        "tag": "BODY",
+        "text": "Workspace content (illustrative) ChatsNe",
+        "inRow": false
+      },
+      {
+        "tag": "DIV",
+        "text": "PAIGE conversation",
+        "inRow": false
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Copy message",
+        "inRow": false
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Play message aloud",
+        "inRow": false
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Copy message",
+        "inRow": false
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Approve",
+        "inRow": false
+      }
+    ],
+    "errors": []
+  },
+  "exp03a-files3-dark-1536x770": {
+    "ok": true,
+    "files": 3,
+    "theme": "dark",
+    "viewport": "1536x770",
+    "layout": "dock",
+    "checks": {
+      "fontLoaded": true,
+      "noPageOverflow": true,
+      "noTranscriptOverflowX": true,
+      "noCardOverflow": true,
+      "approveFound": true,
+      "row": true,
+      "aaText": true,
+      "noItemOverflow": true,
+      "iconsHidden": true,
+      "sizesReadable": true,
+      "noGoldInRow": true,
+      "noStoragePath": true,
+      "ariaNamesList": true,
+      "noTabStopInRow": true,
+      "tabReachesApprove": true
+    },
+    "font": {
+      "family": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-se",
+      "first": "Schibsted Grotesk",
+      "loaded": true
+    },
+    "row": {
+      "label": "Files",
+      "labelRatio": 6.82,
+      "labelFont": "13px",
+      "ariaLabel": "3 files attached",
+      "count": 3,
+      "rowOverflow": false
+    },
+    "items": [
+      {
+        "name": "Spring-planting-proposal.pdf",
+        "size": "2.4 MB",
+        "nameRatio": 14.56,
+        "sizeRatio": 6.82,
+        "nameFont": "13px",
+        "nameLines": 2,
+        "overflow": false,
+        "iconHidden": true,
+        "iconColor": "rgb(173, 167, 159)",
+        "height": 54
+      },
+      {
+        "name": "Ortiz-Landscaping_front-and-side-yard_site-plan_revision-4_FINAL_approved-by-Maya_2026-10-27.pdf",
+        "size": "7.5 MB",
+        "nameRatio": 14.56,
+        "sizeRatio": 6.82,
+        "nameFont": "13px",
+        "nameLines": 6,
+        "overflow": false,
+        "iconHidden": true,
+        "iconColor": "rgb(173, 167, 159)",
+        "height": 126
+      },
+      {
+        "name": "Plant list.xlsx",
+        "size": "48 KB",
+        "nameRatio": 14.56,
+        "sizeRatio": 6.82,
+        "nameFont": "13px",
+        "nameLines": 1,
+        "overflow": false,
+        "iconHidden": true,
+        "iconColor": "rgb(173, 167, 159)",
+        "height": 36
+      }
+    ],
+    "rowGold": [],
+    "cardOverflow": false,
+    "pageOverflow": false,
+    "transcriptOverflowX": false,
+    "approve": {
+      "text": "Approve",
+      "inView": true,
+      "top": 557,
+      "bottom": 593
+    },
+    "summaryShown": false,
+    "storagePath": false,
+    "aria": "- term: Files\n- definition:\n  - list \"3 files attached\":\n    - listitem: Spring-planting-proposal.pdf 2.4 MB\n    - listitem: Ortiz-Landscaping_front-and-side-yard_site-plan_revision-4_FINAL_approved-by-Maya_2026-10-27.pdf 7.5 MB\n    - listitem: Plant list.xlsx 48 KB\n  - paragraph: 9.9 MB in all",
+    "tabs": [
+      {
+        "tag": "BUTTON",
+        "text": "Start voice typing",
+        "inRow": false
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Attach a document",
+        "inRow": false
+      },
+      {
+        "tag": "BODY",
+        "text": "Workspace content (illustrative) ChatsNe",
+        "inRow": false
+      },
+      {
+        "tag": "DIV",
+        "text": "PAIGE conversation",
+        "inRow": false
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Copy message",
+        "inRow": false
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Play message aloud",
+        "inRow": false
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Copy message",
+        "inRow": false
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Approve",
+        "inRow": false
+      }
+    ],
+    "errors": []
+  }
+}

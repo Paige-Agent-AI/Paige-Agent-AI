@@ -1095,7 +1095,19 @@ const SOURCES = {
   // generic scheduled_binding block and terminalizeScheduledRelease's direct row writes are skipped for a bound
   // row (it is closed through the finalizer). (4) Nothing else: no authority, verifier, recipient, tenant gate,
   // provider arm or dispatch branch changed. Old e1c22250… reproduced from main 9e325d91 first.
-  "supabase/functions/send-message/index.ts": "fffd0a7faae3f0c6150784ddda33e280e2786d03e05bfd53d9a0d8aa5a0d5f51",
+  // EXP03 O12 piece 2 renewal (2026-10-27), governed email attachments, reviewed by two independent §39 adversarial reviews (c6276d507, then the follow-up 090d85257; no TOCTOU, no cross-tenant read; round-1 M1/M3/M4 and the LOWs fixed; H1 fixed on the card, though no product surface produces a file send yet; round 2 found no new HIGH) — the follow-up's delta in this file is listed:
+  // send-message/index.ts changes in four places. (1) parseCommsEmailBinding parses an optional
+  // binding.attachments with the shared strict manifest parser (governed copies of THIS tenant and operation
+  // only); anything else marks it "invalid". (2) Before the claim, a binding with files is refused through the
+  // existing unclaimed finalizer (COMMS_EMAIL_ATTACHMENT_CHANGED with zero storage reads when invalid;
+  // COMMS_EMAIL_ATTACHMENTS_PROVIDER_UNSUPPORTED unless binding and connector are on the SendGrid arm), else the
+  // governed copies are read with the service role, re-hashed against the binding and handed to the adapter as
+  // ctx.governedFileAttachments. (3) The SendGrid arm sends those as attachments; the Gmail and SMTP arms refuse
+  // a send carrying them before any network call, classified failed/COMMS_EMAIL_ATTACHMENTS_PROVIDER_UNSUPPORTED.
+  // (4) Nothing else: the door-path refusal of body.attachments, serverAttachments, the invoice PDF path, the H2
+  // refusal, authority, recipient, tenant gate and dispatch branches are unchanged. Old fffd0a7f… reproduced from
+  // main 0fcd5a331 first.
+  "supabase/functions/send-message/index.ts": "0acfd997a123d5b73cc3a5fb13a1dff2d841f5d8ae9f17e86147bd0bfbc5ae82",
   "supabase/functions/_shared/paige-spine/contracts.ts": "2d771686d636c04d2e07d9b8c336e19cde246b9a303ddd034d7ae8500f7eefb4",
   // Operator retirement adds opt-in timeout/no-retry controls; ordinary callers retain
   // their existing behavior. Renewed non-author review and actual retry controls are
@@ -1108,7 +1120,11 @@ const SOURCES = {
   // every existing register/get call resolves the same adapter. Outbound registry, NormalizedMessage, Delivery,
   // OutboundSendContext and buildListUnsubscribeHeaders are byte-identical. Prior f29fe750… reproduced from
   // db0048ad7 (git show | TypeScript printer {removeComments:true}, sha256) before renewing. Renew this digest only.
-  "supabase/functions/_shared/channel-adapters.ts": "dc0cfccf25118be0a76b5599167e7440c8e80a8c63880a549f7f36e2d18d0977",
+  // EXP03 O12 piece 2 renewal (2026-10-27), same review: channel-adapters.ts ADDS one optional
+  // OutboundSendContext field, governedFileAttachments ({content, filename, type}[]), read only by the email
+  // adapter. No existing field, adapter contract or registry function changed. Old dc0cfccf… reproduced from
+  // main 0fcd5a331 first.
+  "supabase/functions/_shared/channel-adapters.ts": "515ad56691be9b00b9cd894f53522236a23e78efba40b20adb0806fc6df15984",
   // E09 Slice 6 bounded renewal (2026-10-18), integrating-crew source review (NOT non-author):
   // the only change vs main is one added `case "customer_request"` in suppressionReason (the plain
   // sentence a portal opt-out returns). Step order, every block/queue condition, the consent channel
@@ -1230,7 +1246,16 @@ const SOURCES = {
   // EXP03 Resend retirement (2026-10-27), AUTHOR-REVIEW / LOWER ASSURANCE: readCommsEmailReadiness's
   // resendConfigured fact reads SENDGRID_MAIL_SEND_API_KEY presence instead of RESEND_API_KEY. Decision
   // function, result shape and every reason unchanged. Old 325b6bae… reproduced from b39fda02 first.
-  "supabase/functions/_shared/comms-email/readiness.ts": "035c108e210bb7912250cac4000959e58c172cc4eb57a639b05839c4700762e9",
+  // EXP03 O12 piece 2 renewal (2026-10-27), same review: readiness.ts — readCommsEmailReadiness adds
+  // sender_provider (the chosen connector's provider name, never a credential) to a READY answer only, and the
+  // CommsEmailReadiness type gains that optional field. Every state, reason and read is unchanged. Old 035c108e…
+  // reproduced from main 0fcd5a331 first.
+  // EXP03 scheduled send during the business's do-not-disturb (2026-10-27), same review: readiness takes an
+  // optional `scheduled` flag; when set, ONLY the business's own do-not-disturb hold (queued_tenant_dnd) stops
+  // holding the check, because the drainer re-runs every pre-send check at release. Suppression, consent,
+  // client do-not-disturb, quiet hours and an errored check still refuse. Every other state, reason and read is
+  // unchanged. Old e2790d93… reproduced from main 5a4bfb1f0 first.
+  "supabase/functions/_shared/comms-email/readiness.ts": "8bfab4b5fe9453736b8f68b82d76434cc9884e9ea39583d7d32e97454affba5f",
   "supabase/functions/_shared/openai-models.ts": "a76ac476a2cbd298421a9d7d37f3605cf384e4a4e53a1635719405d52e70905e",
   "supabase/functions/_shared/openai-responses.ts": "bec9943dcb725b592cdba219a5e349f14bcf1f259adbc17522fceb5c6fe0ec81",
   "supabase/functions/_shared/provider-failure.ts": "3a3507a6ddc6f6e5051a5d17b7a5ff30624643c6bd39d07793224eb0177873b5",
@@ -1242,7 +1267,13 @@ const SOURCES = {
   // parseCommsEmailSendAt (whole minute, 2 min–30 days at proposal, format-only at confirm) and
   // COMMS_EMAIL_SCHEDULED_RELEASE_GRACE_MS. The command, its keys, commsEmailBodyHtml and the content digest
   // are unchanged. Old 733eb988… reproduced from main 9e325d91 first.
-  "supabase/functions/_shared/comms-email/contract.ts": "3fc25e779d16073b317508ab77637ae00f8c1de48bb078909928aff37505ffc6",
+  // EXP03 O12 piece 2 renewal (2026-10-27), same review: contract.ts ADDS the attachment limits (10 files,
+  // 10 MiB each, 10 MiB together — the follow-up lowered the total from 15 MiB), COMMS_EMAIL_FILE_PROVIDERS
+  // (sendgrid, resend), parseCommsEmailAttachmentRequest (server-tenant composer paths only),
+  // commsEmailAttachmentName and commsEmailGovernedAttachmentPath. The command, its keys, commsEmailBodyHtml,
+  // the content digest and the send-time functions are unchanged. Old 3fc25e77… reproduced from main 0fcd5a331
+  // first.
+  "supabase/functions/_shared/comms-email/contract.ts": "40208d3cc65b42150e162e4d062d33d23f244a68cb7c3b75d0494aa989a1e334",
   "supabase/functions/_shared/paige-turn/continuity.ts": "ca8c258d200a59a573a3c0cc2a3ad253cbed1239da24afdd1efc0fdbc90dec69",
   "supabase/functions/_shared/paige-turn/contract.ts": "317424344aeb669ef5885b36bbe61c66f94ad3fce994c966203cd6c8f42763f4"
 };

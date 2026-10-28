@@ -16,9 +16,9 @@ KEYBOARD_FOCUS: PASS: the disclosure is a native `<details>/<summary>` and the p
 ZOOM_REFLOW: PASS: the card is a single-column typographic section inside the panel's fixed pop; all four Solo viewports including 900×1000 assert no document overflow. A dedicated 200%-zoom frame was not added for this state.
 REDUCED_MOTION: PASS: no motion in the card; the native disclosure toggle is the only state change.
 STATE_COVERAGE: PASS: the model's full ladder + both overrides are covered by unit truth (17/17); the rendered legs cover the honest default (the UNOBSERVED reserved state — the card claims neither serving nor held, because a publication receipt proves the artifact's URL, not the reserved host root), the conflict override, and the provider swap; ssl_pending/revoked/gated_ready truths are pinned at unit level with exact refusal sentences, and live_verified is proven to require BOTH granted authorization and verified SSL — never granted by the card's default path. The card's own default observation set is the honest not_started with reservedWebLive UNOBSERVED (null): it renders inside a live view, but the live view proves the artifact's URL — never that the reserved host root serves — so the default claims nothing in either direction (review finding honored).
-TRUTHFUL_STATE_LABELS: PASS: an UNOBSERVED reserved address says exactly that ("isn't checked from this panel… what's live today is the address at the top of this card") and claims neither serving nor held; a held reserved address is "held… serves nothing"; an observed serving reserved address says "Serving at your reserved address" and NEVER "Live at"; only the domain-spine's live_verified says live and only with granted + verified; conflict says what is in the way and that records are never overwritten; the host path states the export is a copy never a move, that PAIGE never provisions hosting, buys domains, or changes DNS silently, and that anything beyond the free tier is scoped, priced, and approved BEFORE activation under an owner-set ceiling.
+TRUTHFUL_STATE_LABELS: PASS: an UNOBSERVED reserved address says exactly that ("isn't checked from this panel… what's live today is the address at the top of this card") and claims neither serving nor held; a held reserved address is "held… serves nothing"; an observed serving reserved address says "Serving at your reserved address" and NEVER "Live at"; only the domain-spine's live_verified says live and only with granted + verified; conflict says what is in the way and that records are never overwritten; the host path states the export is a copy never a move, that PAIGE never provisions hosting, buys domains, or changes DNS silently, and that anything billable is scoped, priced and approved BEFORE activation with real usage attributed to the workspace and metered, never capped (corrected copy — see the 2026-10-27 correction note below).
 SOLO_UI: YES: Solo Marketing → Vibe Studio → a project's publish panel (both live views) → "Use my own address" disclosure.
-UNVERIFIED: the card inside a real authenticated owner's panel (PROOF OWED with the authenticated session); any real DNS observation, verification, or hosting deployment (owner-gated BY DESIGN — WEB-05 stays BLOCKED until the owner grants Cloudflare authority/spend, and this PR adds no capability to cross that gate).
+UNVERIFIED: the card inside a real authenticated owner's panel (PROOF OWED with the authenticated session); any real DNS observation, verification, or hosting deployment (owner-gated BY DESIGN — WEB-05 stays BLOCKED until the owner's service-enable go; the corrected decision packet is prepared and no monetary ceiling exists; this surface adds no capability to cross that gate).
 OWNER_INTENT: matrix row 9 — registrar vs authoritative DNS vs host distinguished; six guidance profiles; truthful TXT/CNAME/SSL pending/conflict/revocation states; email/NS/DNSSEC/existing content preserved; reserved address serves no content; real change needs exact authority. Row 11 — host-path readiness packaged with exact blockers, no mock URL, deployment owner-gated.
 MUST_NOT_HAPPEN: no provider/DNS/hosting mutation of any kind (pure guidance — no network in the model or card, asserted); no state ever called live that is not spine-live_verified; no implied purchase, provisioning, or second going-live act; no drift from the tenant-domain-spine vocabulary (reserved/outbound_ready/inbound_ready/web_live/verified/error — "The UI and Paige must never call reserved infrastructure connected or live"); no secret or API surface introduced; the publish door's authority untouched.
 MUST_PRESERVE: the publish door's sole authority over going live; the panel's existing live-view layout (the card appends quietly after the export/embed cards, gated on tenantSlug); the domain-spine vocabulary and its reserved-vs-live discipline; the six owner-named providers exactly (Cloudflare, Namecheap, GoDaddy, Squarespace Domains, Porkbun, WIX) with the Wix authority rule; the mail-record preservation list exactly.
@@ -40,3 +40,33 @@ SOLO_1024X768_PAIGE_CLOSED: PASS: assets/exp06-domain-guidance/solo-1024x768-pai
 SOLO_1024X768_PAIGE_OPEN: PASS: assets/exp06-domain-guidance/solo-1024x768-paige-open.png — real dock-open frame; pop geometry asserted identical to closed (overlay invariance proven).
 SOLO_900X1000_PAIGE_CLOSED: PASS: assets/exp06-domain-guidance/solo-900x1000-paige-closed.png — narrow-portrait leg; the 360px pop holds its single column; the document never scrolls.
 SOLO_900X1000_PAIGE_OPEN: PASS: assets/exp06-domain-guidance/solo-900x1000-paige-open.png — real dock-open frame; pop geometry asserted identical to closed (overlay invariance proven).
+
+## 2026-10-27 correction — the cost line follows the billing supersession (head `8da1cec4f`)
+
+The owner's billing supersession (ANT-162 `2010d550`: no PAIGE-imposed spending ceilings;
+usage is attributed and metered, never capped) plus the owner's review of the
+service-enable packet (`80189cce`) made one sentence of this card's copy untrue: "any
+spend stays under an owner-set ceiling with alerts." Corrected copy (verified current
+Cloudflare facts inline): "**Static hosting of this shape sits in Cloudflare's free tier
+today — static-asset requests are free and unlimited.** Anything billable is scoped,
+priced and approved by the workspace owner BEFORE activation — PAIGE never provisions
+hosting, buys domains, or changes DNS silently, and real usage is attributed to the
+workspace and **metered, not capped**."
+
+Proof on the corrected tree (all assertions re-run green):
+- `domain-guidance.test.ts` 17/17 and `DomainGuidanceCard.render.test.tsx` green (24
+  tests across the two files); the pinned test phrases ("free tier", "never provisions
+  hosting") are unchanged and still asserted.
+- drive-domain.mjs re-run end-to-end after the fix: **all 12 frames re-captured**, every
+  honesty assertion green, `errors: []`. Precision: the re-captured frames are
+  byte-identical to the committed set because the cost line sits below the pop's fold in
+  every viewport (as in PR7) — the frames never displayed this line; its truth has
+  always been pinned by unit test, and now by the supersession pins above.
+- A real-browser text assertion on the live card: the metered line present, "free and
+  unlimited" present, the old "owner-set ceiling" phrasing ABSENT, "never provisions
+  hosting" retained.
+- Harness repair carried in the same head: the studio-mount vite config now pins its
+  postcss plugins to the repo's `tailwind.config.ts` (tailwind's postcss plugin resolves
+  its config from `process.cwd()`; started from the harness directory it silently fell
+  back to a default theme and `@apply border-border` failed — the harness now serves
+  identically from any cwd).

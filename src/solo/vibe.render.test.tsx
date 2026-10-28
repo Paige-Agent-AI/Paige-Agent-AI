@@ -242,9 +242,9 @@ describe("Vibe Studio — the 18 owner-required states, rendered", () => {
     expect(text()).not.toContain("Meridian Advisory");
   });
 
-  it("state 15 — a budget-denied submit surfaces the server's explanation verbatim", async () => {
+  it("state 15 — a failed submit surfaces the server's explanation verbatim (monetary stops are gone; the shape stays)", async () => {
     renderAt(baseMedia({
-      submit: async () => ({ status: "error", message: "Daily media budget reached ($20.00 of $20.00); resets at UTC midnight", budgetDenied: true }),
+      submit: async () => ({ status: "error", message: "The image service is unreachable right now; nothing was spent." }),
     }));
     const textarea = host.querySelector("textarea");
     const setter = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, "value")?.set;
@@ -254,6 +254,6 @@ describe("Vibe Studio — the 18 owner-required states, rendered", () => {
     });
     const gen = host.querySelector<HTMLButtonElement>("button[aria-label='Generate']");
     await act(async () => { gen?.click(); });
-    expect(text()).toContain("Daily media budget reached");
+    expect(text()).toContain("The image service is unreachable");
   });
 });

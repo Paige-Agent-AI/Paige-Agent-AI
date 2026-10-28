@@ -169,6 +169,12 @@ export async function grantTeamSeat(
       // 42501: a membership guard refused the write. Rule 1b is one (the seat became suspended after
       // the check); the archived-workspace and company-workspace guards are others. Say which.
       if (String(error.code ?? "") === "42501") {
+        // EXP08 owner invitations (20271120010008, round 4): the person has an owner invitation to
+        // this business waiting, so a seat from any other invitation is refused. The database's own
+        // sentence (recognised by its HINT, never by its text) tells them to open that invitation.
+        if (error.hint === "OWNER_INVITE_WAITING" && typeof error.message === "string" && error.message.trim()) {
+          return { ok: false, status: 409, code: "owner_invite_waiting", error: error.message };
+        }
         const now = await readSeatStatus(db, args.tenantId, args.userId);
         if (now && now !== "active") return notActive(now);
         return {

@@ -146,6 +146,12 @@ export interface OutboundChannelAdapter {
 export interface OutboundSendContext {
   /** Ephemeral server-produced bytes; never accepted from SendBody or persisted as secrets. */
   serverAttachments?: EmailAttachment[];
+  /**
+   * INT-328 governed email files: the approved bytes send-message read back from the operation's governed
+   * copies and verified against the binding's sha256 (base64 `content`). Never from the request body.
+   * Only the SendGrid arm sends them; the Gmail and SMTP arms refuse a send that carries any (not attempted).
+   */
+  governedFileAttachments?: { content: string; filename: string; type: string }[];
   from: MessageParty;          // resolved tenant sender identity (§38 tenant-owned)
   to: string;                  // primary recipient address/phone/handle
   replyTo?: string | null;

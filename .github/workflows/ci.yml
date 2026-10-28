@@ -81,6 +81,14 @@ jobs:
           supabase/functions/_shared/team-hub/chat-wiring.test.ts
           supabase/functions/_shared/team-hub/agent-turn.test.ts
           supabase/functions/_shared/team-hub/agent-turn-wiring.test.ts
+          supabase/functions/_shared/team-hub/card-tools.test.ts
+          supabase/functions/_shared/team-hub/card-act.test.ts
+          supabase/functions/_shared/team-hub/card-binding.test.ts
+          supabase/functions/paige-ai-chat/team-hub-a2b-wiring.test.ts
+          supabase/functions/_shared/crm-reads/list-tasks.test.ts
+          supabase/functions/_shared/crm-reads/list-team.test.ts
+          supabase/functions/_shared/growth/list-pages.test.ts
+          supabase/functions/_shared/growth-publish-command/chat-tools.test.ts
           supabase/functions/_shared/team-hub/file-sweep.test.ts
           supabase/functions/_shared/team-lifecycle/chat.test.ts
           supabase/functions/_shared/team-lifecycle/chat-wiring.test.ts
@@ -125,6 +133,8 @@ jobs:
         run: psql -h 127.0.0.1 -U postgres -d postgres -v ON_ERROR_STOP=1 -f supabase/tests/exp08_team_hub_agent_turn_states.sql
       - name: EXP08 Team Hub agents A1c, writing state for everyone who can see the conversation, @channel and @here through the post door, byte identity and mutants in a disposable database
         run: psql -h 127.0.0.1 -U postgres -d postgres -v ON_ERROR_STOP=1 -f supabase/tests/exp08_team_hub_a1c.sql
+      - name: EXP08 Team Hub agents A2b, cards as the door's own proposal, the one link row, decide/settle/states doors, outcome turn, scope trigger, roster v2 and mutants in a disposable database
+        run: psql -h 127.0.0.1 -U postgres -d postgres -v ON_ERROR_STOP=1 -f supabase/tests/exp08_team_hub_a2b_cards.sql
       - name: EXP08 PAIGE team lifecycle catalogue, md5 guard against production's incumbent, replay guard, five Team rows and grants in a disposable database
         run: |
           psql -h 127.0.0.1 -U postgres -d postgres -v ON_ERROR_STOP=1 -c 'DROP DATABASE IF EXISTS exp08_lifecycle_cat' -c 'CREATE DATABASE exp08_lifecycle_cat'

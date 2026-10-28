@@ -68,7 +68,7 @@ import {
   type TeamHubFile,
 } from "./team-hub-contract";
 import { agentTurnKey, attachmentScope, teamHubNavigation, useTeamHub, type AgentTurn, type AttachmentChip, type PendingMessage, type TaskDraft, type TeamHub, type TurnStateRead } from "./useTeamHub";
-import { agentMentionsIn, agentName, agentOutcomeLine, agentRuns, answers, bringInSuggestions, FIXED_PRIVATE_LINE, MAX_AGENTS_PER_MESSAGE, splitPrivateLine, TEAM_HEAD, TEAM_HUB_AGENT_PROFILES, TOO_MANY_AGENTS, type AgentLineOutcome } from "./team-hub-agents";
+import { agentMentionsIn, agentName, agentOutcomeLine, agentRuns, answers, bringInSuggestions, endsWithRedirect, FIXED_PRIVATE_LINE, MAX_AGENTS_PER_MESSAGE, splitPrivateLine, TEAM_HEAD, TEAM_HUB_AGENT_PROFILES, TOO_MANY_AGENTS, type AgentLineOutcome } from "./team-hub-agents";
 import { AgentDmEmpty, AgentDmNote, AgentFailRow, AgentGlyph, AgentPlate, AgentProfilePanel, AgentTag, AgentTyping, BringInRow, PrivateNote, PrivateOthersNote } from "./TeamHubAgents";
 import { TeamHubApprovalCard, type TeamHubApprovalAct } from "./TeamHubApproval";
 import "./team-hub.css";
@@ -99,8 +99,8 @@ import "./team-hub.css";
  * omitted, not shown dead.
  */
 /**
- * EXP08 A2: what an approval card's buttons do. Absent (the Solo shell today, because the A2 backend
- * is not built), every card refuses honestly instead of offering a control that would do nothing.
+ * EXP08 A2: what an approval card's buttons do. A2b: absent (the Solo shell), the hub's own
+ * `actOnCard` redeems the card through `paige-ai-chat`; a host passes one only to replace that.
  */
 export type TeamHubApprovalHandler = (message: TeamHubMessage, act: TeamHubApprovalAct) => void;
 
@@ -741,7 +741,9 @@ function ReadyHub({ hub, announce, announcement, onOpenTeamSettings, openPaige, 
     onAskAgain: (request) => void hub.askAgain(request),
     onCheck: (request) => void hub.checkTurn(request),
     onBringIn: bringIn,
-    onApprovalAct,
+    // A2b: the hub redeems a card itself (`{ teamHubCardAct }`); a host may still pass its own seam.
+    // A turned-down act is said in words through the hub's live region, never left silent (verifier fix 5).
+    onApprovalAct: onApprovalAct ?? ((message, act) => { void hub.actOnCard(message, act).then((line) => { if (line) announce(line); }); }),
   };
 
   const closeForm = (returnTo: "channel" | "dm") => {
@@ -1455,7 +1457,7 @@ type AgentView = {
   /** Check again for an unknown state: re-read the turn's state, never start a turn. */
   onCheck: (request: AgentTurn["request"]) => void;
   onBringIn: (reply: TeamHubMessage, prefill: string, agent: TeamHubAgentKey) => void;
-  /** A2: absent until a seam redeems the card (the card then refuses rather than offering Approve). */
+  /** A2: what redeems a card: the host's seam, or (A2b) the hub's own `actOnCard`. */
   onApprovalAct?: TeamHubApprovalHandler;
 };
 
@@ -1640,6 +1642,13 @@ function AgentMessageRow({ message, agentKey, people, meId, onOpenThread, agent,
           ?? { conversationId: place?.conversationId ?? "", sourceMessageId: message.asked_in_message_id!, threadRootId: message.parent_message_id, agent: agentKey, privateFollowUp: true })}
         onCheck={() => agent.onCheck({ conversationId: place?.conversationId ?? "", sourceMessageId: message.asked_in_message_id!, threadRootId: message.parent_message_id, agent: agentKey })} />}
       {othersLine && <PrivateOthersNote agent={agentKey} askerName={askerShort} state={othersLine} />}
+      {/* A2b: an act asked in a shared conversation is offered in the asker's DM with this agent; the
+          agent's reply ends with the server's line saying so. The asker gets the way there, read from
+          that line, so it is still here after a reload. Everyone else has nothing to press. */}
+      {agent?.on && isAsker && !place?.agentDm && endsWithRedirect(message.body) && <div className="th-ag-bring">
+        <button type="button" className="th-btn th-ag-bring-btn" data-ag={agentKey} onClick={() => agent.onOpenDm(agentKey)}>
+          <AgentPlate agent={agentKey} size="sm" />Open DM with {name}</button>
+      </div>}
       {message.files.length > 0 && <MessageFiles files={message.files} />}
       {message.approval && <TeamHubApprovalCard approval={message.approval} agent={agentKey} meId={meId}
         askerName={approvalAsker(message.approval.asker_user_id, people, askerShort)}

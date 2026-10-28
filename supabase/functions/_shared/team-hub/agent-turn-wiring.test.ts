@@ -17,7 +17,7 @@ const at = (needle: string): number => {
 };
 const SEAM = "    if (isTeamHubAgentTurnRequest(rawData)) {\n"
   + "      const agentTurn = await runTeamHubAgentTurn({ caller: supabaseClient, service: supabase, userId: user.id,\n"
-  + "        complete: fabricCompletion, signal: req.signal, controlHint }, rawData);\n"
+  + "        complete: fabricCompletion, signal: req.signal, controlHint, invokeAs: teamHubInvokeAs }, rawData);\n"
   + "      return new Response(JSON.stringify(agentTurn.body),\n"
   + "        { status: agentTurn.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });\n"
   + "    }\n";
@@ -26,7 +26,7 @@ describe("the agent-turn seam in paige-ai-chat", () => {
   it("imports the module once, from its one home", () => {
     at("import { isTeamHubAgentTurnRequest, runTeamHubAgentTurn } from '../_shared/team-hub/agent-turn.ts';");
   });
-  it("hands over exactly the asker's session, the service role, the verified actor, the one model seam and the request's signal", () => {
+  it("hands over exactly the asker's session, the service role, the verified actor, the one model seam, the request's signal and (A2b) the asker's door seam", () => {
     at(SEAM);
   });
   it("runs after the verified actor and the ingress rate limit, and before the chat schema or anything else", () => {

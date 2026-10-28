@@ -1,48 +1,34 @@
-## EXP02 October28 - Weekly catalogue source/readback verified
+## EXP02 October28 - source release and bounded customer proof
 
 Original3014 normally merged557d9a7ab155dfd073f052fb393ab741b74a9714/treefe9e76bd;
-12 required applicable checks/2web SUCCESS, final author-review LOWER5676589123.
-Original migrator40614223175 verified already-applied20101002 persisted/db-live557;
-first applying actuator not inferred. Canonical source copy exact, active/read_only/
-Limitedv1 unchanged. Actual authorized-owner catalogue/reload ANT52/260d22ba
-verifies all9 whole descriptions/states:3ComingSoon/3Limited/3Unverified, allAccess
-Unverified. Web6EbgyrKH READY/both origins/source01:24UTC exact557. Initial panel
-selection/click interruptions retained, cause UNKNOWN/shared E01 handoff owed;
-stable subsequent reload is not a claim the interruption was fixed.
+12 applicable exact-head checks/2web SUCCESS, final author-review LOWER5676589123.
+Original migrator40614223175 confirmed already-applied20101002 persisted/db-live557;
+first applying actuator not inferred. Canonical Weekly copy exact, active/read_only/
+Limitedv1 unchanged. Actual owner panel/reload ANT52/260d22ba verifies all9 whole
+descriptions/states:3ComingSoon/3Limited/3Unverified/allAccessUnverified. Web
+6EbgyrKH READY/both origins/source01:24UTC exact557. Initial panel/click failures
+retained/excluded; original E01 handoff ANT161/c88c13d4 remains unresolved.
+Stable subsequent reload does not claim that interruption was fixed.
 
-Mechanical closeout also records original3012 source/Calendar QA and actual7-page
-Finance proof725879d5. Details and exact identities are in Master section4.0 and
-the ORIGINAL19 matrix.3018/3019 remain unmerged; material3018 cohort/runtime
-review hold remains OPEN. No capability/algorithm/Live/action promotion; all19/
-nine/founder acceptance OPEN. Earlier pending notes below remain chronology.
+Original3012/21fff Calendar consumer is source/web released, with original Edge
+certificate and separately read Review110/Chat569. Exact source/release rows are
+in Master section4.0. Actual owner Calendar/whole saved answer+source reload/
+original Calendar/native Back is ANT52/e2015a9a: one request/empty-source read,
+not general reliability SLO. Initial wrong workspace INVALID/excluded. No action
+or protected monthly retry/inspection. Actual Finance follow-up ANT52/725879d5
+verifies Overview landing, all7 subpages/VERA, native arrow-key tabs,390px layout/
+no document overflow and exact whole settled Forecast reload. Its01:11UTC source
+is containing E03#3015/f136/webfu11zMq; Finance/src/solo leaves unchanged since21fff.
+Initial loading comparison/stale frames retained/excluded; screenshots private.
 
-## EXP02 October28 - verified source and bounded customer proof
-
-Original3012/21fff Calendar read consumer is source/web released, with original
-Edge certificate and separately read native Review110/Chat569; exact release
-row is in Master section4.0. Actual existing-owner read-only Calendar/whole
-saved answer+source reload/original Calendar/native Back is ANT52/e2015a9a.
-One request/empty source, not general reliability SLO; wrong-workspace initial
-observation INVALID/excluded. No action or protected monthly retry.
-
-Current Finance follow-up ANT52/725879d5 verifies actual Overview landing,
-all7 subpages/Review with VERA, native arrow-key tab navigation,390px original
-layout/no document overflow, and exact whole settled Forecast panel reload.
-The initial comparison was genuinely source loading, not success; confirmed
-frames were recaptured after compositor/strip settling. Current web is original
-E03#3015/f136/dpl_fu11zMqvyN9cKaYUfxth3PL7GNsH, both origins/source verified01:11UTC;
-all Finance/src/solo leaves unchanged since21fff. Other-source coverage,
-permissions/cohorts/Live/receipts/full19/founder acceptance remain owed.
-
-Recorded-comms3018 is DRAFTfe4509f6f, review5676545442,157 source controls.
-Original full-shell/eight sizes+390/syntheticB/native200-percent/scroll/focus
-evidence is supporting, not second legitimate authenticated cohort. Material
-P1 PRRT_kwDOSAAXqM6w8IJP remains OPEN, merge HELD. Nav3019 is DRAFT9cec/134 controls,
-review5676492858, refs remain excluded from model context; not released.
-Catalogue3014 I1 hold CLEAR after original3016/4400 production20010008; final2237
-exact verify still pending. Six own leaves/17,308 incoming f136 leaves compose
-cleanly into prospectivefe9e76bd, not a merge. All19/nine/algorithm maturity
-and founder evaluation remain OPEN. No grant/provider/scan/worker/action activation.
+3018 DRAFTfe4509f6f/review5676545442/157source controls has original full-shell/
+eight sizes+390/syntheticB/native200-percent/scroll/focus evidence, not a second
+legitimate authenticated cohort. Material P1 PRRT_kwDOSAAXqM6w8IJP remains OPEN.
+Nav3019 DRAFT9cec/review5676492858/134controls preserves the original model-ref
+privacy boundary; no released correction/model-compliance claim. All19/nine/
+ALG03/06/11/12Partial/13Unverified/roles/cohorts/Live/effects/founder evaluation
+remain OPEN. Historical9/0 and12/0/4, monthlyUNKNOWN/UNRETRIED preserved. No
+provider/privilege/scan/worker/action activation. Earlier merged notes remain history.
 
 ## EXP02 October27 bounded customer proof and catalogue preparation
 

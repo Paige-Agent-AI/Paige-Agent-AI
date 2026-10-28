@@ -1,84 +1,66 @@
 # Experience 02 — Customer Experience Integration Matrix
 
-## October28 - catalogue synchronization released, full outcomes remain open
+## October28 - verified releases, Finance and catalogue read/reload
 
-O01/O02/O14/O16/nine-catalogue presentation:3014 normal557d9a7ab155dfd073f052fb393ab741b74a9714/
-treefe9e76bd after exact2237/review5676589123/12applicable checks+2web SUCCESS,
-genuine Preview SKIP/zero threads.6own and17,308 outside incoming leaves exact.
-Original deploy-migrations40614223175/deploy122572978130 SUCCESS confirmed
-already-applied20271120101002 persisted; native recorded/newest/db-live557 and
-exact new canonical copy/active/read_only/Limitedv1 independently read. Do not
-claim this db push first applied it: the run reported already up to date.
-Web6EbgyrKH READY and both public origins/source01:24UTC exact557/null/missing404;
-actual customer bootstrap main-D4Qa9y7L matches. Master section4.0 records it.
+Functional:3012 normal21fff7a49632868382ce51da70d97c9eb4d428cb after exactd958
+review5676269248/10applicable checks+2web SUCCESS/genuine PreviewSKIP. Original
+Edge40608331869/artifact12782007461 certifies both affected closures/config,
+37raw+297 original emitter bindings/298Git sources. Certified Chat569/Review109;
+current native Review110 separately matches all37raw/JWTtrue. Version difference/
+cleanup advisory retained, compiler not rerun locally. Original web8fDKtzop/
+both origins verified. Exact release row is in Master section4.0.
 
-Actual one-authorized-owner Capabilities/read/reload ANT52/260d22ba: exact Weekly
-copy visible, whole9 row descriptions/states equal after reload/reopen,3ComingSoon/
-3Limited/3Unverified and allAccessUnverified. No Live promotion or execution.
-Initial selected-tab return to Chat/empty query and static-text click failures
-retained/excluded; after settled reopen and full reload the catalogue stayed
-correct. Cause UNKNOWN, shared E01 continuity handoff remains owed. No Chat
-message/protected monthly retry/inspection, provider, approval or business action.
-Private customer data/screenshots retained locally, own tab closed/original
-customer workspace preserved. This closes bounded catalogue-copy proof, not
-the9 customer analytics outcomes or full19.3018/3019 still unmerged, legitimate
-second-cohort/permission/Live/effects/algorithm/founder obligations remain OPEN.
+Actual O01/O02/O05/O14/O16 read subset ANT52/e2015a9a: original Calendar partial/
+source/time/window/absence-not-capacity, one ordinary read-only Chat request,
+whole business answer/source after reload, original Calendar/native Back.
+35.596s observation/UI20s is not latency/SLO. Initial wrong workspace INVALID/
+excluded. Initial unnormalized answer mismatch retained; only observed transient
+Done/trace/footer chrome excluded, all business/source content preserved.
+No appointment/scan/approval/provider or monthly retry/inspection. Calendar Back
+success does not close original Sales Back-loading ANT161/1117655d.
 
+Actual O04/O14 Finance follow-up ANT52/725879d5: menu->Overview, all7 subpages/
+VERA, seven confirmed390px source layouts/no document overflow/selected tabs
+reachable in original strip. Native ArrowLeft Forecasting->Profitability with
+matching focus. Whole settled Forecast panel equals pre-reload; first comparison
+caught Reading-permitted-targets loading and is excluded until settled. Initial
+stale compositor/strip-transition frames retained/excluded. Unsupported bank/
+accounting/obligation/profit/forecast inputs remain explicit, screenshots private.
+Source at01:11UTC: original E03#3015/f1360cf295c2fbcf79c01cb8c544d4fc01ba7fd5,
+READYdpl_fu11zMqvyN9cKaYUfxth3PL7GNsH; both origins/source/missing404 verified,
+actual main-Dc0Cb9PB bootstrap matches. Finance/src/solo unchanged since21fff.
+Earlier21fff expectation failed on the new source before correct refreshed proof.
 
-## October28 - original Calendar release and current Finance read proof
+Catalogue3014 normal557d9a7ab155dfd073f052fb393ab741b74a9714/treefe9e76bd after
+reviewed2237/final5676589123/12applicable checks+2web SUCCESS/genuine PreviewSKIP/
+zero threads.6own/17,308 outside incoming leaves exact. Original migrator
+40614223175/deploy122572978130 SUCCESS confirmed already-applied20101002 persisted;
+its db push was already up to date, first applying actuator not inferred.
+Native migration recorded/newest, db-live557 and exact Weekly copy/active/read_only/
+Limitedv1 independently verified. Web6EbgyrKH READY/both origins01:24UTC exact557/
+null/original hashes/missing404, actual main-D4Qa9y7L bootstrap matches.
 
-Functional:3012 normally merged21fff7a49632868382ce51da70d97c9eb4d428cb after exact
-d958 review/10 applicable checks+2web success. Original Edge40608331869/artifact
-12782007461 verifies both closures/config,37raw+297 original emitter bindings/
-298Git sources. Native Chat569/Review110 separately read; certificate109 difference
-and cleanup advisory preserved. Original web8fDKtzop/both public origins verified.
-Master section4.0 carries the exact source/release row. No local compiler rerun
-is substituted for original deployment evidence.
+Actual panel/read/reload ANT52/260d22ba verifies whole9 descriptions/states equal
+after reload:3ComingSoon/3Limited/3Unverified/allAccessUnverified. Weekly source
+copy visible and Limited; no Live promotion/action. Initial panel return to Chat,
+empty query/static-text click failures retained/excluded; settled reopen/reload
+stable. Cause UNKNOWN; original E01 continuity handoff ANT161/c88c13d4 remains
+unresolved, no shared-source takeover. Own tabs closed/viewport/native zoom reset/
+original authorized customer tab retained. No Chat message or business effect.
 
-Authenticated O01/O02/O05/O14/O16 subset ANT52/e2015a9a: actual existing owner,
-Calendar partial/source/time/window/absence-not-capacity, one ordinary read-only
-question, whole business answer/source retained on reload, existing original
-Calendar link and native Back. Settled by35.596s observation/UI20s, not exact
-latency/SLO. Initial wrong workspace INVALID/excluded. Initial unnormalized saved
-answer mismatch retained; only observed transient Done/trace/footer chrome was
-excluded, all business/source text/punctuation/figures/date content preserved.
-No appointment mutation, scan, approval, provider or protected monthly retry.
-Native Calendar Back success does not close Sales Back-loading ANT161/1117655d.
+Visual/Experiential:3018 DRAFTfe4509f6f/review5676545442/157controls preserves
+original full-shell/drawer/CSS/eight sizes+390/syntheticB/native200-percent zoom/
+scroll/Tab/Escape/opener/Enter/Chat-fold evidence, with synthetic ports/disabled
+Chat/raster differences explicit. P1 PRRT_kwDOSAAXqM6w8IJP still OPEN for legitimate
+second-cohort/candidate runtime proof; no waiver/new account. Nav3019 DRAFT9cec/
+review5676492858/134controls preserves original model-ref exclusion, existing
+route/focus/period; not released/model-compliance proof.
 
-Authenticated O04/O14 follow-up ANT52/725879d5: actual Finance menu->Overview,
-all7 subpages/VERA, actual390px original source presentation, no page overflow,
-selected tabs reachable in existing strip, native ArrowLeft moves Forecasting
-to Profitability with matching focus. Whole settled Forecast content exactly
-equals pre-reload; initial Reading-permitted-targets loading mismatch is retained
-and excluded until settled. Initial stale compositor/strip transition frames
-excluded; seven confirmed narrow frames inspected. Unavailable bank/accounting/
-obligation/profit sources remain explicit; no unsupported forecast or bank-cash
-claim. Actual financial text/screenshots stay private. Current containing web is
-original EXP03#3015/f1360cf295c2fbcf79c01cb8c544d4fc01ba7fd5, READYdpl_fu11zMqvyN9cKaYUfxth3PL7GNsH.
-Both origins/source assets/missing404 independently verified01:11UTC, browser
-bootstrap /assets/main-Dc0Cb9PB.js matches; src/solo/Finance unchanged since21fff.
-Earlier21fff expectation failed on the normal new release before refreshed proof.
-
-Visual/Experiential:3018 full original shell/drawer/CSS/eight sizes+390/syntheticB,
-native200-percent zoom/drawer scroll/Tab/Escape/opener/Enter/Chat-fold preservation
-verified locally, with explicit synthetic sources/disabled Chat and actual raster
-differences. Material P1 PRRT_kwDOSAAXqM6w8IJP remains OPEN: second legitimate
-authenticated cohort and candidate customer proof owed, no waiver/new account.
-3018 DRAFTfe4509f6f/review5676545442; runtime source unchanged/157controls.
-3019 nav DRAFT9cec/review5676492858/134controls restores existing typed destination
-and generic conditional model guidance, while original refs stay excluded from
-model context. No released correction/model-compliance claim.
-
-Catalogue3014 final2237: I1 hold CLEAR after original3016/4400 production20010008,
-native frontier independently read. Current f136 prospectivefe9e76bd preserves
-6own leaves and17,308 outside incoming leaves EXACT; no merge inferred. Required
-exact verify pending. Nine3Limited/3Unverified/3ComingSoon/AccessUnverified and
-ALG03/06/11/12Partial/13Unverified unchanged. O07 still needs accepted-intent/
-Spine/admission integration into the ALREADY mounted original private onboarding
-Work host, not a second runner. No scan/worker/provider/action activation.
-Founder Acceptance/all19 remain OPEN; historical9/0 and12/0/4, monthly
-UNKNOWN/UNRETRIED/uninspected retained. Resources returned/own tabs closed,
-viewport/native zoom restored, original customer tab preserved.
+All19/nine customer outcomes/roles/cohorts/Live/effects/founder acceptance OPEN.
+ALG03/06/11/12Partial/13Unverified unchanged; historical9/0 and12/0/4, protected
+monthlyUNKNOWN/UNRETRIED/uninspected preserved. O07 needs accepted-intent/Spine/
+customer admission into the ALREADY mounted original private onboarding Work
+host, never a duplicate runner. No scan/worker/provider/privilege/action activation.
 
 
 ## October27 22:58UTC — original activity customer read/reload proof

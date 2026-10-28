@@ -11,7 +11,7 @@
 import { act } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { TeamHubWorkspace } from "./TeamHubWorkspace";
+import { TeamHubWorkspace, type TeamHubApprovalHandler } from "./TeamHubWorkspace";
 import { AGENT_WRITING_IDLE_RESET_MS, AGENT_WRITING_POLL_MAX_MS, AGENT_WRITING_POLL_MS, REFRESH_INTERVAL_MS } from "./useTeamHub";
 
 const TENANT = "tenant-a";
@@ -177,7 +177,7 @@ async function flush() {
     await act(async () => { await new Promise((resolve) => window.requestAnimationFrame(() => resolve(undefined))); });
   }
 }
-async function mount(props: { openPaige?: () => void; onOpenTeamSettings?: () => void; onApprovalAct?: (message: Row, act: Row) => void } = {}) {
+async function mount(props: { openPaige?: () => void; onOpenTeamSettings?: () => void; onApprovalAct?: TeamHubApprovalHandler } = {}) {
   const host = document.createElement("div");
   document.body.append(host);
   const root = createRoot(host);

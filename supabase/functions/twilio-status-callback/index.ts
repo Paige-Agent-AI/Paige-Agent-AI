@@ -187,8 +187,7 @@ interface CallFacts {
  * transcript are stamped ONLY when Twilio actually provided them (null otherwise — never fabricated, §13).
  */
 async function applyCallUpdate(
-  // deno-lint-ignore no-explicit-any
-  admin: any,
+  admin: WebhookAdmin,
   table: "messages" | "operator_messages",
   metaKey: "meta" | "metadata",
   row: { id: string; status: string | null; meta?: unknown; metadata?: unknown },

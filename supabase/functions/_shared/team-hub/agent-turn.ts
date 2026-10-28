@@ -163,6 +163,8 @@ export interface AgentTurnService {
   rpc(name: string, args?: Record<string, unknown>): PromiseLike<RpcResult>;
   from(table: string): any;
 }
+/** Repeated in the user message so JSON mode is accepted (see the turn's messages). */
+export const ANSWER_FORMAT_REMINDER = "Answer with the one JSON object described in your instructions.";
 export type ChatMessage = { role: "system" | "user" | "assistant" | "tool"; content: string | null; tool_calls?: ToolCall[]; tool_call_id?: string };
 export type ToolCall = { id: string; type?: "function"; function: { name: string; arguments: string } };
 export type ToolDef = { type: "function"; function: { name: string; description: string; parameters: unknown } };
@@ -653,7 +655,10 @@ export async function runTeamHubAgentTurn(deps: AgentTurnDeps, raw: unknown): Pr
   ];
   if (here) messages.push({ role: "system", content: `${req.privateFollowUp ? "The conversation the question was asked in" : "This conversation"}, newest messages:\n${here}` });
   if (dmHistory) messages.push({ role: "system", content: `Your DM with ${askerName}, newest messages:\n${dmHistory}` });
-  messages.push({ role: "user", content: `${askerName} asks ${agentName(agent) ?? "you"}: ${quoteTeamHubText(source.body, 2000)}` });
+  // JSON mode on OpenAI's Responses API needs the word "json" in the input messages themselves: the
+  // system messages above travel as `instructions`, which that check does not read, so the request is
+  // refused with a 400 before the model runs. The asker's line therefore names the answer format too.
+  messages.push({ role: "user", content: `${askerName} asks ${agentName(agent) ?? "you"}: ${quoteTeamHubText(source.body, 2000)}\n\n${ANSWER_FORMAT_REMINDER}` });
   const toolDefs = tools.map((t) => TOOL_DEFS[t]).filter(Boolean);
 
   // 6. The model, through the injected seam, with the narrowed tools.

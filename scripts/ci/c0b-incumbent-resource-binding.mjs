@@ -1242,7 +1242,12 @@ const SOURCES = {
   // sender_provider (the chosen connector's provider name, never a credential) to a READY answer only, and the
   // CommsEmailReadiness type gains that optional field. Every state, reason and read is unchanged. Old 035c108e…
   // reproduced from main 0fcd5a331 first.
-  "supabase/functions/_shared/comms-email/readiness.ts": "e2790d93390114ce9b799b53d1106279b2626e0c40bf5bb92b676885daf4f8e8",
+  // EXP03 scheduled send during the business's do-not-disturb (2026-10-27), same review: readiness takes an
+  // optional `scheduled` flag; when set, ONLY the business's own do-not-disturb hold (queued_tenant_dnd) stops
+  // holding the check, because the drainer re-runs every pre-send check at release. Suppression, consent,
+  // client do-not-disturb, quiet hours and an errored check still refuse. Every other state, reason and read is
+  // unchanged. Old e2790d93… reproduced from main 5a4bfb1f0 first.
+  "supabase/functions/_shared/comms-email/readiness.ts": "8bfab4b5fe9453736b8f68b82d76434cc9884e9ea39583d7d32e97454affba5f",
   "supabase/functions/_shared/openai-models.ts": "a76ac476a2cbd298421a9d7d37f3605cf384e4a4e53a1635719405d52e70905e",
   "supabase/functions/_shared/openai-responses.ts": "bec9943dcb725b592cdba219a5e349f14bcf1f259adbc17522fceb5c6fe0ec81",
   "supabase/functions/_shared/provider-failure.ts": "3a3507a6ddc6f6e5051a5d17b7a5ff30624643c6bd39d07793224eb0177873b5",

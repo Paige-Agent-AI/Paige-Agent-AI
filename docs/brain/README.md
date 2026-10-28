@@ -1402,6 +1402,7 @@ Team index. Read these before any Team or Team Hub work:
 |---|---|
 | [Team surface card](../doctrine/surface-cards/team.md) | Current source and its corrections (Oct 23), owner decisions D1–D4, the six `high` access tools, why Team is `PARTIAL` (no Rail outcome) |
 | [Ownership & authority lifecycle](../handoff/team-ownership-authority-lifecycle.md) | Received by EXP08 and still `UNAVAILABLE`; business-ownership facts never grant authority |
+| Co-owners and entity owners (EXP08, I1 2026-10-27) | Owner invitations are the account holder's alone (migration `20271120010008`, not merged); operators keep their shipped archive/restore/delete/remove powers over Solo accounts (owner ruling 2026-10-27); delivery contract `docs/delivery/exp08-co-owners-entity-owners-contract.md`; ledger in the tier matrix, "EXP08 co-owners and entity owners, I1"; decision log October27 |
 | [Recipient binding P0](../delivery/solo-team-recipient-binding-p0.md) | Invites bind to the confirmed recipient email (`20261200000300`); production persistence not re-read |
 | [Team Spine packet](../delivery/spine-integration-packet-team.md) | `team.authority` read (shipped #876). Its "no code yet" and four-fact statements are historical |
 

@@ -52,8 +52,10 @@ proof, receipts on the PR threads).
   it. Server-rendered meta is a platform decision, not claimed.
 - **Real-device AT testing.** The a11y contract pins source truth; screen-reader/physical
   device claims stay unclaimed.
-- **WEB-05 real hosting deployment.** Owner-gated by design (Cloudflare authority/spend
-  unapproved). The export + host path are ready the moment it is granted.
+- **WEB-05 real hosting deployment.** Owner-gated by design (the service-enable decision
+   packet is prepared and corrected; no monetary ceiling exists). The export + host path
+   are ready the moment the owner says enable; the deployment executor/HTTPS-readback/
+   metering writer are then EXP06's named build.
 - **E03 S2a leg E (own-site embed leg).** Engineering dependency with the original owners.
 - **Row 14 joined business outcome.** Visit→submission→source linkage is retained and
   tested; the downstream CRM/attribution/handoff proof is EXP03/04-owned (integration
@@ -69,9 +71,14 @@ proof, receipts on the PR threads).
    650ca4eb).** The earlier "authority + spend ceiling" framing is superseded: there is no
    monetary ceiling to set. The concrete, reviewable service-enable decision for Cloudflare
    static hosting (WEB-05) is prepared in
-   [EXP06-SERVICE-ENABLE-DECISION.md](EXP06-SERVICE-ENABLE-DECISION.md) — actor, action,
-   scope, permissions, cost basis, effect, rollback — ready when the owner says enable.
-   (Media Stream/R2 remains a separate service-enable decision on its own evidence.)
+   [EXP06-SERVICE-ENABLE-DECISION.md](EXP06-SERVICE-ENABLE-DECISION.md) — **corrected per
+   the owner's 2026-10-27 review (ANT-162 `80189cce`)**: built-vs-missing stated plainly
+   (executor/HTTPS-readback/metering writer are NOT built and are EXP06's to build on the
+   enable go; account identity/token are owner/EXP10-held), verified current cost facts
+   (static-asset requests free and unlimited, no storage cost), metering marked PROOF OWED
+   (deployment count is not metering), and platform-owner enablement separated from each
+   customer's own page-publication approval. (Media Stream/R2 remains a separate
+   service-enable decision on its own evidence.)
 3. The authenticated QA session scheduling (existing coordination).
 4. Team Hub both-chats completion (row 19): EXP08's A2 admits NEXUS's growth publish kit;
    EXP06's handoff with exact tool IDs is posted (ANT-161 `833d33b1`).

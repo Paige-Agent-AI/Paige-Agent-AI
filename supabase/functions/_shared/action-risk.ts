@@ -166,6 +166,14 @@ const RISK: ReadonlyArray<readonly [string, ActionRisk, string]> = [
   ["growth_form_unpublish", "high", "takes a public form offline, so strangers can no longer submit to the workspace"],
   ["studio_image_publish", "high", "puts an image in the Catalog where anyone with its link can see it"],
   ["studio_image_unpublish", "high", "withdraws a published image from the Catalog that people may already be using"],
+  // Hosted copies of published pages (EXP06 WEB-05, owner direction 2026-10-28 88b2f756). Door-only
+  // keys: the growth-hosting-command door runs them for the Studio panel and any future chat tool
+  // alike. Deploying reaches an EXTERNAL provider under a platform-held account — a public effect
+  // outside the platform's own walls — and recovering changes what a shared address serves. Both
+  // stay `high` even while the service is DORMANT (no platform token exists yet; the door refuses
+  // with hosting_not_enabled): the policy governs the act, not the switch.
+  ["growth_hosting_deploy", "high", "puts a copy of a published page on external hosting at a new public HTTPS address under a platform-held account"],
+  ["growth_hosting_recover", "high", "removes an externally hosted copy, so anyone with that address stops reaching it"],
   // The evaluation loop's DECIDE leg (Runway 4 / #1123), the sign-off half of the `improvement_propose`
   // pair above. It records the owner's approve/reject on a `paige_improvement_proposals` row and
   // applies nothing (there is no auto-apply path — it flips status, decided_by, rationale only). It

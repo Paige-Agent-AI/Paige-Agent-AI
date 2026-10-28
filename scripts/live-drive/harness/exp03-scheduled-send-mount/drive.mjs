@@ -248,7 +248,7 @@ try {
     if (s.state === "scheduled" && s.act === "none") Object.assign(checks, {
       pillScheduled: m.counts.pillScheduled === 1,
       cancelShown: !!m.cancel && m.cancel.text === "Cancel" && /^Cancel the email scheduled for .+$/.test(m.cancel.ariaLabel ?? "") && !m.cancel.disabled && m.cancel.opacity === "1",
-      sendsShown: !!m.sends && /^Sends \w{3}, \w{3} \d+, \d+:\d\d [AP]M$/.test(m.sends.text), railInFuture: m.tagged.some((c) => c.kind === "rail-scheduled" && /^Scheduled · in /.test(c.text)),
+      sendsShown: !!m.sends && /^Sends \w{3}, \w{3} \d+, \d+:\d\d [AP]M(?: [A-Z]{2,5})?$/.test(m.sends.text), railInFuture: m.tagged.some((c) => c.kind === "rail-scheduled" && /^Scheduled · in /.test(c.text)),
       railScheduled: m.counts.railScheduled === 1, noDoorCall: doorCalls.length === 0,
       pillAA: aa("pill-scheduled"), cancelAA: aa("cancel-control"), sendsAA: aa("sends-time"), railAA: aa("rail-scheduled"),
     });

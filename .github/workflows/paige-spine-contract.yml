@@ -169,6 +169,9 @@ on:
       - "supabase/migrations/20271120000000_comms_email_governed_attachments.sql"
       - "supabase/functions/comms-scheduled-drain/**"
       - "supabase/tests/exp03_resend_retired.sql"
+      # A governed email's hard bounce / bounced-before drop / complaint suppresses for its business.
+      - "supabase/tests/exp03_governed_bounce_suppression.sql"
+      - "supabase/migrations/20271120120003_exp03_governed_bounce_suppression.sql"
       - "supabase/tests/tenant_email_domain_normalization.sql"
       - "supabase/migrations/20271101042133_tenant_email_domains_normalize_domain.sql"
       - "supabase/functions/comms-email-command/**"
@@ -630,6 +633,10 @@ jobs:
       # PR3 Canonical Parity: every Solo producer creates a canonically
       # routable tenant by construction; broken shapes fail closed.
       - run: supabase test db supabase/tests/canonical_solo_provisioning.sql
+      # EXP08: every new Solo account, from each of those producers, gets the same Team Hub (list,
+      # a DM with PAIGE and each of the six specialists, a channel and a first message).
+      - run: supabase test db supabase/tests/exp08_team_hub_new_solo_parity.sql
+        if: ${{ !cancelled() }}
       - run: supabase test db supabase/tests/solo_team_invite_workspace_authority.sql
       - run: supabase test db supabase/tests/solo_team_invite_recipient_binding.sql
       # Additive E09 customer-safe relationship/profile foundation; no new CI database.
@@ -781,6 +788,13 @@ jobs:
       # sender freezes 'sendgrid', and SendGrid's events settle managed and Resend-connector campaigns under
       # the same claims, address and suppression rules; Gmail-connector sends stay provider_mismatch.
       - run: supabase test db supabase/tests/exp03_resend_retired.sql
+        if: ${{ !cancelled() }}
+      # EXP03 (20271120120003): a governed one-to-one email whose SendGrid event proves the address cannot
+      # receive (a hard bounce, a "Bounced Address" or "Invalid" drop) puts that normalised ADDRESS on THAT
+      # business's do-not-send list, and a complaint puts the contact on it, so the pre-send read holds the next
+      # attempt and campaigns skip a +tagged address too; a blocked bounce or a delay suppresses nobody, another
+      # business at the same address is never suppressed, and a refused or skipped write is reported, not lost.
+      - run: supabase test db supabase/tests/exp03_governed_bounce_suppression.sql
         if: ${{ !cancelled() }}
       # E09 K2: relevant retrieval — the asker re-resolved from the thread; authorized set first, candidates only
       # through the exact-chunk check, ranked by distance, five sources, eight passages within 4,800 characters

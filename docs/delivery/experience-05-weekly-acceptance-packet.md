@@ -11,6 +11,123 @@ permission, catalogue, algorithm or acceptance state changes.
 
 # Weekly Internal Commitment Check — protected acceptance handoff
 
+## October27 same-ZION integration in both chats — original outcomes retained
+
+### October28 original Planning Work reentry — bounded development increment
+
+The existing `operations_work` reference optionally distinguishes an original
+`planning_item` UUID from a CRM Task. Canonical current-account resolution and
+the unchanged native caller/RLS Planning reader open the original Work inspector;
+normal guarded Close/Escape clear only that focus and reload can recover it.
+No weekly-check provenance, source verification, execution or receipt is inferred
+from the URL. Untyped CRM and original weekly-result references remain compatible.
+
+Source/isolated native proof:197 original tests,16 required desktop frames/two
+neutral contexts,390/320px, native unavailable/reload/dirty/close controls. See
+[bounded source and UI evidence](../evidence/ui-delivery/exp05-planning-work-reference.md).
+EXP08 accepted the exact typed producer/consumer seam in ANT-161/ed547298; E05
+owns native Work/reader/writer and E08 retains card/admission/presentation. This
+does not close receiving integration or authenticated record/role/cohort/Rail
+proof. All original ten outcomes/E5-CV1–9 and same-ZION/both-chat acceptance below
+remain intact, PARTIAL/OPEN. Review, exact-head CI, release and founder acceptance
+remain separate; no provider/recurrence/general-runner/Live activation.
+
+Initial dated grounding: read ANT-11 description (20:57:29UTC), ANT-161 description
+(20:58:23UTC), owner ae482d19/10cca85b and EXP08 receiving c727d13c.
+EXP05 ACK is ANT-11/a40f0e29; exact producer/consumer handoff is
+ANT-161/772d7b77. Inspected main
+`4380b6928b657fc954d6df8d513b9ea3b6e07486`; A1b #2999 at
+`4017c381405e05a25e048624d567c06d3fc1cb91` was DRAFT/unmerged at that snapshot.
+Current reconciliation: main `545e086b2f94de9704a8ea2de9bf8c4d7b6748f7`;
+A1b merged as `956b47ef50b55f5831add6f3c3e22700bced5820`. EXP08's
+ANT-161/5b169d84 records migration20271119010008 and corrected normal Edge
+run40587156841 attempt2/source readback/edge-live956. The first nonlanding
+upload remains dated evidence. This is released source, not complete authenticated
+specialist/action acceptance. A2 original action admission remains missing.
+This extends the SAME ten outcomes/E5-CV1–9/A–H/S1–S12 below, never a new
+inventory or closure. Source, deployment, activation, authenticated proof and
+founder acceptance remain separate.
+
+Reuse the original `VP_ROSTER` ZION identity and existing global
+`paige_subagents` slug `zion`, original role20271113080000 and EXP08's in-place
+config/personality20271117010108. Participation records reference that identity.
+Preserve approved v5 **Cobalt(h256) / Cog / ZION** and practical, precise voice
+in `exp08-team-hub-agents-personalities.md`; its dated v5 table and the owner
+ruling supersede the older violet-plate sentence. No replacement persona,
+registry, Work, runtime, approval, scheduler, sender, Memory or result ledger.
+
+The seed's `capability_scope` is read-only metadata, not actual Hub admission.
+A1b offers only `team_hub_read_conversation` and `read_business_time_zone`.
+EXP08 owns A2 current asker ∩ registered specialist scope, participant/routing,
+channel/DM privacy, original confirmation cards and result/reopen presentation.
+EXP05 retains the original Operations/Planning/Calendar/Automation writers.
+
+**Current intended behavior (owner c797df3b/33906e73/2371cb83):** PAIGE may
+coordinate a bounded goal, explain its plan and success criteria, and continue
+eligible work within legitimate standing authority. Suggest / Prepare / Execute
+uses the original Trust Compass/Spine and combined-plan scope, with current
+actor/tenant/role/provider/recipient/revocation/risk checks at each effect.
+An extra human click for every write, a human-sent handoff for every step and
+attended-only follow-through are superseded as universal final-target rules;
+applicable exact approval and held activation boundaries remain. No authority
+comes from agent personality, prose or model confidence. Preserve direct
+@PAIGE/@ZION and other original specialist mentions, DMs and in-place replies;
+PAIGE coordination adds a route and never forces a PAIGE intermediary.
+
+| Original outcome / E5 cases | PAIGE Chat / original source and current boundary | Team Hub gap, receiving owner and terminal proof |
+| --- | --- | --- |
+| 01 Responsibilities / CV3,4,9 | PARTIAL R1: `plan_list`, `crm_list_tasks`, exact `crm_get_task`, original Calendar/weekly reads. | EXP08 A2 original permitted reads; private Work in asker DM. E05 exact record/coverage references. Compare both chats with actual authorized sources. |
+| 02 Plan week / CV1,2,5,9 | PARTIAL R1/R2/R8; capacity/dependency correction remains missing. Held2961 is a read-preview, never execution. | E05 original correction loop; EXP08 consumes same plan/result. Prove changed context, zone, correction, save and reopen without another plan engine. |
+| 03 Manage work / CV4,5,6 | PARTIAL R3: original `crm_create_task`/`crm_update_task`, `plan_create`/`plan_add_milestone`/`plan_assign_task`/`plan_update_item`, exact stored arguments/current version. | EXP08 A2 original Task admission/authority presentation; E05 original writer/assignee contract. Suggest/Prepare/Execute follows current original policy and goal scope; obtain exact approval when required. Private results stay permitted-recipient scoped. Same domain record/readback/Rail, no duplicate. |
+| 04 Calendar/reminders / CV2,5,7 | PARTIAL R2/R5: `read_calendar_agenda`, `read_calendar_booking`, `plan_set_reminder`, `read_weekly_commitment_status`; recurrence proof still owed. | EXP08 original private reads/actions under real scope; E05 original zone/DST/schedule/result. E03/09 retain customer bookings. No new scheduler/recurrence activation. |
+| 05 Build automations / CV1,5,9 | PARTIAL R4/R7: `automation_draft`/`weekly_commitment_draft` only prepare/save. Full multi-step clarification/correction Builder remains missing. | E05 original definitions/goal and dependency plan; EXP08 permitted preview/correction and original authority/approval presentation. Saved draft is not authorized/enabled/executed work. |
+| 06 Execute / CV1,3,7 | PARTIAL R5: original event→`runEventActs`→ActionAdapter→domain/Rail. `automation_set_grant`/`automation_set_state` remain owner_only. | E08 A2 admission/standing-authority and pause/revoke presentation; E05 original act/record/receipt and useful independent follow-through. Prove current asker/tenant/combined-plan/per-effect authorization, exact approval where required and no duplicate. No new activation grant; historical Task readback is not new execution. |
+| 07 Monitor / CV3,6,8 | PARTIAL R1/R6/R8: original process/act/Work and `list_subagents`; useful anomaly triage/ongoing monitoring remains missing. | E05 original evidence/ALG12 with E02/E10 sources; E08 permitted placement only. Writing indicator/reply is not monitoring or business success. |
+| 08 Recover / CV5,6,7,9 | PARTIAL R2/R5/R6: exact operation reconciliation, `read_owner_task_act`, weekly/ZION original results. | E08 original request/turn/privacy through loss/reopen; E05 original domain operation/receipt. Test expired/revoked/cancelled/stale/unknown, no replay across either chat. |
+| 09 Inform / CV8 | HELD DEPENDENCY / MISSING: useful permitted owner-away result and original consented notice lifecycle. | E05 original result/authorized goal, assignment or monitoring trigger; E08 permitted placement, dismiss/defer/pause and original references. Prove restrained useful suggestions and deduplication in original homes. Original Communications consent/quiet hours/provider authority; no new external effect. |
+| 10 Return/resume / CV3,4,6,9 | PARTIAL R1/R2/R6: original conversation, Work, process history and own-row ZION results; useful positive assignment/recovery still owed. | E08 Hub reopen/reference rendering; E05 original result/native destination. Same work in both chats, no DM leak, invented completion or recreated effect. |
+
+Exact read handoff: `automations.owner_task_history` / `read_owner_task_act` →
+original `paige-owner-task-history` / `public.read_owner_task_act`, current
+owner/admin companion authorization, original process/approval/occurrence and
+verified taskId/receiptId/runId. Current Task remains unread until original
+`crm_clients.task_read` / `crm_get_task` inspector reauthorizes its exact UUID.
+`agents.list` / `list_subagents` reads original own-row invocation/receipt;
+`agents.delegate` / `delegate_to_subagent` retains its original high-risk
+orchestrator/forge approval. A soft response is not a business effect or an
+exactly-once retry token. Metadata never activates unrestricted specialist tools.
+
+Every applicable row owes ordinary actor/channel→same ZION/tool→exact original
+approval where required→canonical domain result/Rail→reload/reopen in BOTH chats.
+Include tenant/role/member/channel, private-result, stale/revoked/expired/cancelled
+and lost-acknowledgment/unknown/no-duplicate negatives. Private Work/Calendar and
+references stay in the asker's authorized DM. Preserve the original attachment
+contract and prohibition on Team Hub→Knowledge/Memory saving. A1b read-only
+replies are not final action acceptance. No capability/ALG maturity promotion.
+
+The same original Work/task/run/artifact workshop must be inspectable from both
+chats, with explicit least-context handoff and original status/result/receipt/
+cancellation/recovery. Private DM transcripts are never automatically copied.
+E05 owns original Work/Harness/results, E08 workshop/conversation/admission/Trust
+presentation, E10 provider custody and original Vault/Trust owners their sources;
+E19's general runner stays held. No new workshop engine or Sandbox activation.
+
+ALG-11 remains shared `fabricCompletion`/Model Fabric: E08 supplies workload/eval
+cases; the existing custodian owns routing. Evaluate routine/balanced/complex
+workloads with a quality floor, bounded escalation and original privacy/authority.
+Measure actual success, latency and total variable cost per verified outcome,
+including retries/tools; no Hub-only router, specific live model selection,
+monetary-exhaustion downgrade or algorithm maturity promotion. Original ALG-01,
+02/03/08/12/13 integration/proof remains owed; identity/personality is unchanged.
+
+Shared Chat/C0b composition stays in ANT-161; A1b handback5b169d84 is received.
+Preserve both implementations and renew only corresponding reviewed source
+identities. Current #3008/55e725dbe has no index/C0b delta; E08's later A1c
+agent-turn module remains theirs. Inspect actual current source at each boundary,
+never hold independent work under a blanket old upload-size freeze. Full ten/E5, Builder,
+algorithms, universal eligible existing/new SOLO, isolation, separate eligible
+Live and founder acceptance remain OPEN.
+
 ## October27 agentic and sandbox subcases — same original acceptance matrix
 
 Receive ANT-11/88623a8d and7f5b84d2; ACKb46eaf35. These are subcases of the
@@ -542,3 +659,35 @@ Ordinary empty weekly read/reload does not prove notification retention of an
 existing draft or pending action. No recurrence/provider/role/Live activation,
 new business record or acceptance closure; all original ten/E5/Builder/owner-away/
 ZION/cohorts/isolation/founder obligations above remain exact and open.
+
+
+## October28 Team Hub A2 receiving boundary — acceptance still open
+
+Original ANT161 owner ruling `b379a467-cb92-4bbe-b0f3-0abae443523d`,
+EXP08 source reconciliation `6250def0` and EXP01 delta `37d673f9` received.
+The approved channel Operations-task proposal belongs to the SAME ZION;
+`writeScopedPlanning` calls original `plan_assign_task_scoped`. The task is assigned
+to a named human, never to an agent. The original `paige_actions` row is the
+accepted action record; native Task/Work and original Rail readback remain required.
+The domain result is `record: {table: "plan_items", id: item_id}` with current
+`updated_at`, not a CRM Task UUID. Reopen that original Planning Work item. The
+adapter supplies no idempotency/approval/receipt store: preserve original operation
+redemption/claim/Rail and `retryAllowed: false` for uncertain acknowledgments.
+MENTOR's separate five `planning.*` writers are DM-only and exact-approval-required;
+this handoff does not substitute those tools for the Operations writer.
+
+EXP08 owns A2a Suggest/reopen/component, A2b card door/decline/state/outcome, and
+A2c standing-authority Execute plus channel-task admission. Reuse the ORIGINAL
+confirmation store/fingerprint, `PaigeConfirmCard`, `resolve_tool_autonomy`,
+Compass clamp and `decideGovernedExecution`. No EXP05 duplicate or protected-source
+takeover. Execute without a click requires arguments solely from the asker's own
+message AND a current `auto` result at rung2+ rechecked when the act runs. Otherwise
+the original card is required; high and owner_only always require a card.
+
+Original A1c same-ZION inline conversational success is received as EXP08's bounded
+authenticated evidence (`e578105f`, followed by all-seven `1f7519cb`). It is NOT
+ZION task execution, standing authority, weekly recurrence, automation, result/reopen
+or full Experience acceptance. A2 remains implementation/proof owed. Initiative is
+held to A3; the general workshop runner remains held under EXP19. Original ten
+outcomes, E5-CV1–E5-CV9, shared workshop/privacy, direct specialist access, algorithm
+contracts, two-chat and eligible new/existing SOLO proof remain open.

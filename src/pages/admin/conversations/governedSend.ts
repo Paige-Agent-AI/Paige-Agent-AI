@@ -200,13 +200,8 @@ export function governedNotSentLine(reason: string | null | undefined): string {
   return "Nothing went out.";
 }
 
-/** The send time in the viewer's own clock and words ("Wed, Oct 28, 9:00 AM"). */
-export function scheduledForLabel(sendAt: string, locale?: string): string {
-  const at = new Date(sendAt);
-  return Number.isFinite(at.getTime())
-    ? at.toLocaleString(locale, { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })
-    : "a set time";
-}
+/** The send time in the viewer's own clock and words — one home, shared with the approval card. */
+export { scheduledForLabel } from "@/components/chat/confirmPreview";
 
 /** Copy, kept with the rule so the label and the state cannot drift apart. */
 export const GOVERNED_SEND_COPY = {

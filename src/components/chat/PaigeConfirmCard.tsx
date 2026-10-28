@@ -1,6 +1,6 @@
 import { Fragment, useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
-import { Check, X, ShieldQuestion, Loader2, AlertTriangle, CircleHelp, RotateCcw, Paperclip } from "lucide-react";
+import { Check, X, ShieldQuestion, Loader2, AlertTriangle, CircleHelp, RotateCcw, Paperclip, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 /**
@@ -43,7 +43,7 @@ export type ConfirmActionState = "pending" | "working" | "done" | "failed" | "un
 
 // INT-328 — the email preview's type and the browser's gate on it live in ./confirmPreview (a plain
 // module, so this file exports components only).
-import { formatFileSize, type ConfirmEmailPreview } from "./confirmPreview";
+import { formatFileSize, scheduledForLabel, type ConfirmEmailPreview } from "./confirmPreview";
 export type { ConfirmEmailPreview } from "./confirmPreview";
 
 /** The card's own state. `mixed` exists only at card level: some actions ran and some did not. */
@@ -52,6 +52,13 @@ type CardState = ConfirmActionState | "mixed";
 /** A file name with break opportunities after - _ . and spaces, so it wraps at its own seams. */
 function breakableFileName(name: string): ReactNode[] {
   return name.split(/(?<=[-_. ])/).map((part, i) => <Fragment key={i}>{i > 0 ? <wbr /> : null}{part}</Fragment>);
+}
+
+/** "Sends Tue, Nov 3, 9:00 AM": a narrow card may break after the date, never inside the time. */
+function WhenLabel({ at }: { at: string }) {
+  const i = at.lastIndexOf(", ");
+  const cut = i < 0 ? 0 : i + 2;
+  return <>Sends {at.slice(0, cut)}<span className="whitespace-nowrap">{at.slice(cut)}</span></>;
 }
 
 export type ConfirmAction = {
@@ -197,6 +204,13 @@ function EmailPreview({ email, bleed = false }: { email: ConfirmEmailPreview; bl
             </dd>
           </div>
         ) : null}
+        {/* "Approve now, send later": the time the approved email goes out, in the viewer's clock. */}
+        {email.send_at ? (
+          <div className={row} data-confirm-when="">
+            <dt className={label}>When</dt>
+            <dd className={cn(value, "font-medium text-foreground")}><WhenLabel at={scheduledForLabel(email.send_at)} /></dd>
+          </div>
+        ) : null}
       </dl>
       <div className="border-t border-border/70 py-2.5">
         <div
@@ -313,6 +327,12 @@ type SharedProps = {
    * not approve something the person has not yet read.
    */
   focusOnMount?: boolean;
+  /**
+   * Replaces the card's own heading (and the group's accessible name) where the default would be
+   * untrue for the person reading it: in a shared room, "Needs your OK" said to someone who is not
+   * the one deciding. Omitted, the heading is the card's own, exactly as before.
+   */
+  heading?: string;
 };
 
 type DecideProps = SharedProps & {
@@ -362,10 +382,12 @@ export function PaigeConfirmCard(props: PaigeConfirmCardProps) {
 
   const cardState = cardStateOf(actions);
   const anyWorking = cardState === "working";
-  const heading = headingFor(cardState, actions);
+  const heading = props.heading ?? headingFor(cardState, actions);
   const note = report ? props.note : undefined;
 
   const multi = actions.length > 1;
+  // A lone email set for later: the act schedules it (the Conversations composer's own word).
+  const scheduled = !multi && !!actions[0].preview?.send_at;
   const decided = cardState !== "pending" && cardState !== "working";
   const controlsDisabled = (!report && props.disabled) || anyWorking;
   const SealIcon = SEAL_ICON[cardState];
@@ -399,9 +421,12 @@ export function PaigeConfirmCard(props: PaigeConfirmCardProps) {
         props.className,
       )}
     >
-      <div className="flex items-start gap-2.5">
+      {/* data-confirm-part names each region so a host that lays the card out differently (Team Hub's
+          room card) can do it from CSS without depending on utility class names. No visual effect here. */}
+      <div className="flex items-start gap-2.5" data-confirm-part="row">
         <span
           aria-hidden
+          data-confirm-part="seal"
           className={cn(
             "mt-px grid h-6 w-6 shrink-0 place-items-center rounded-md border border-border/70 bg-background/70",
             TONE[cardState],
@@ -414,12 +439,12 @@ export function PaigeConfirmCard(props: PaigeConfirmCardProps) {
           )}
         </span>
 
-        <div className="min-w-0 flex-1">
+        <div className="min-w-0 flex-1" data-confirm-part="content">
           {/* A real heading, not an uppercase eyebrow. It states the decision, and it changes
               with the outcome so the card reports what happened instead of silently vanishing.
               On a report the heading and its sentence are ONE live region, so the reason is
               announced with the verdict rather than left for someone to go looking for. */}
-          <div aria-live={report ? "polite" : undefined} aria-atomic={report ? true : undefined}>
+          <div aria-live={report ? "polite" : undefined} aria-atomic={report ? true : undefined} data-confirm-part="status">
             <p
               className="text-[13px] font-semibold leading-[18px] tracking-[-0.012em] text-foreground"
               aria-live={report ? undefined : "polite"}
@@ -436,7 +461,7 @@ export function PaigeConfirmCard(props: PaigeConfirmCardProps) {
             )}
           </div>
 
-          <ul className={cn("mt-1.5 space-y-1.5", !multi && "space-y-0")}>
+          <ul className={cn("mt-1.5 space-y-1.5", !multi && "space-y-0")} data-confirm-part="actions">
             {actions.map((action, i) => {
               const state = action.state ?? "pending";
               const RowIcon = ROW_ICON[state];
@@ -479,7 +504,7 @@ export function PaigeConfirmCard(props: PaigeConfirmCardProps) {
                         <EmailPreview email={action.preview} bleed={!multi} />
                       </>
                     ) : (
-                    <span className={cn((settled || (!bound && multi)) && "text-muted-foreground")}>
+                    <span className={cn((settled || (!bound && multi)) && "text-muted-foreground")} data-confirm-part="summary">
                       {/* The icon beside a row is hidden from assistive tech, so its state is said
                           in words: in a mixed card the heading cannot tell which one ran. */}
                       {multi && ROW_WORD[state] && <span className="sr-only">{ROW_WORD[state]}: </span>}
@@ -488,6 +513,7 @@ export function PaigeConfirmCard(props: PaigeConfirmCardProps) {
                     )}
                     {action.note && (
                       <span
+                        data-confirm-part="action-note"
                         className={cn(
                           "mt-0.5 block text-xs leading-4",
                           state === "failed" ? "text-destructive"
@@ -518,30 +544,34 @@ export function PaigeConfirmCard(props: PaigeConfirmCardProps) {
               hopeful one. The person is told where the decision can actually be made. A report
               has nothing to decide, so it never says this. */}
           {!report && !canApprove && !decided ? (
-            <p className="mt-2.5 text-xs leading-4 text-muted-foreground">
+            <p className="mt-2.5 text-xs leading-4 text-muted-foreground" data-confirm-part="refusal">
               {props.cannotApproveHere ??
                 "This conversation can’t complete approvals, so nothing has changed. Ask for it again where Paige can show you an approval control."}
             </p>
           ) : null}
 
           {!report && canApprove && !decided && (
-            <div className="mt-3 flex flex-wrap items-center gap-2">
+            <div className="mt-3 flex flex-wrap items-center gap-2" data-confirm-part="controls">
               <Button
                 size="sm"
                 variant="gold"
+                data-confirm-part="approve"
                 onClick={() => props.onApprove(fingerprints)}
                 disabled={controlsDisabled}
               >
                 {anyWorking ? (
                   <Loader2 className="mr-1.5 h-4 w-4 animate-spin motion-reduce:animate-none" />
+                ) : scheduled ? (
+                  <Clock className="mr-1.5 h-4 w-4" />
                 ) : (
                   <Check className="mr-1.5 h-4 w-4" />
                 )}
-                {anyWorking ? "Running…" : multi ? `Approve ${fingerprints.length}` : "Approve"}
+                {anyWorking ? "Running…" : multi ? `Approve ${fingerprints.length}` : scheduled ? "Schedule send" : "Approve"}
               </Button>
               <Button
                 size="sm"
                 variant="ghost"
+                data-confirm-part="deny"
                 onClick={() => props.onDeny(fingerprints)}
                 disabled={controlsDisabled}
                 className="text-muted-foreground"
@@ -561,7 +591,7 @@ export function PaigeConfirmCard(props: PaigeConfirmCardProps) {
               the one that asked is gone. Where something MAY have gone through, the step is to
               check first, so asking again cannot make it happen twice. */}
           {(recovery || check) && (
-            <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2">
+            <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2" data-confirm-part="next">
               {recovery && (
                 <>
                   {/* Its label may wrap: at 320px reflow the text column is narrower than the

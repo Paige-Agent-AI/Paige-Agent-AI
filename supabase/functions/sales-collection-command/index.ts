@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
 import { commercialTermsSummary } from "../_shared/sales-commercial/terms-summary.ts";
+import { FIXED_COLLECTION_TOTAL_REFUSAL, RECURRING_COLLECTION_AMOUNT_REFUSAL } from "../_shared/sales-collections/amount-basis.ts";
 import { confirmFingerprint } from "../_shared/confirm-fingerprint.ts";
 import { decideDeclaredCapability } from "../_shared/capability-kit/decision.ts";
 import { SALES_COLLECTION_KIT_BY_ACTION } from "../_shared/paige-spine/domains/sales_collections.ts";
@@ -59,7 +60,14 @@ Deno.serve(async req => {
 
   const { data: previewData, error: previewError } = await admin.rpc("preview_sales_collection_command", { _actor_user_id: user.id, _expected_tenant_id: tenantId, _command: command });
   const preview = object(previewData);
-  if (previewError || !preview || preview.eligible !== true) return response(422, { ok: false, outcome: "refused", code: "SALES_COLLECTION_INELIGIBLE", ...(preview ? { preview } : {}) });
+  if (previewError || !preview || preview.eligible !== true) {
+    const amountRefusal = !previewError && command.action === "collection.save_terms" && preview?.eligible === false
+      ? command.terms.kind === "recurring"
+        ? preview.summary === RECURRING_COLLECTION_AMOUNT_REFUSAL ? RECURRING_COLLECTION_AMOUNT_REFUSAL : undefined
+        : preview.summary === FIXED_COLLECTION_TOTAL_REFUSAL ? FIXED_COLLECTION_TOTAL_REFUSAL : undefined
+      : undefined;
+    return response(422, { ok: false, outcome: "refused", code: "SALES_COLLECTION_INELIGIBLE", ...(amountRefusal ? { message: amountRefusal } : {}), ...(preview ? { preview } : {}) });
+  }
   if (command.action === "collection.effectuate_terms" && !readCommercialEffectuationConsequence(preview.consequence, command)) {
     return response(422, { ok: false, outcome: "refused", code: "COMMERCIAL_REVIEW_CONTEXT_UNAVAILABLE", operation_id: body.operation_id,
       message: "The exact signed terms could not be verified. Refresh the original records before approval." });

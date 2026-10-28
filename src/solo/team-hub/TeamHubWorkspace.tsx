@@ -1,6 +1,8 @@
 import { createContext, Fragment, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type DragEvent as ReactDragEvent, type KeyboardEvent as ReactKeyboardEvent, type MutableRefObject, type ReactNode, type RefObject } from "react";
-import { ArrowLeft, AtSign, ClipboardList, CornerDownRight, Download, FileImage, FileSpreadsheet, FileText, Hash, Lock, MessageSquareOff, MessageSquareReply, PanelRight, Paperclip, Plus, Radio, Search, SendHorizontal, Slash, UserPlus, Users, WifiOff, X } from "lucide-react";
+import { Link, useInRouterContext } from "react-router-dom";
+import { ArrowLeft, ArrowRight, AtSign, ClipboardList, CornerDownRight, Download, FileImage, FileSpreadsheet, FileText, Hash, Lock, MessageSquareOff, MessageSquareReply, PanelRight, Paperclip, Plus, Radio, Search, SendHorizontal, Slash, UserPlus, Users, WifiOff, X } from "lucide-react";
 import { useTenantContext } from "@/hooks/useTenantContext";
+import { workspaceLinkTarget } from "@/lib/links/workspaceLinks";
 import { handOffPaigePrompt } from "@/lib/paigePromptHandoff";
 import { clearPaigeClientScope } from "@/solo/paigeClientScope";
 import { clearPaigePublicPresenceScope } from "@/solo/paigePublicPresenceScope";
@@ -68,6 +70,7 @@ import {
 import { agentTurnKey, attachmentScope, teamHubNavigation, useTeamHub, type AgentTurn, type AttachmentChip, type PendingMessage, type TaskDraft, type TeamHub, type TurnStateRead } from "./useTeamHub";
 import { agentMentionsIn, agentName, agentOutcomeLine, agentRuns, answers, bringInSuggestions, FIXED_PRIVATE_LINE, MAX_AGENTS_PER_MESSAGE, splitPrivateLine, TEAM_HEAD, TEAM_HUB_AGENT_PROFILES, TOO_MANY_AGENTS, type AgentLineOutcome } from "./team-hub-agents";
 import { AgentDmEmpty, AgentDmNote, AgentFailRow, AgentGlyph, AgentPlate, AgentProfilePanel, AgentTag, AgentTyping, BringInRow, PrivateNote, PrivateOthersNote } from "./TeamHubAgents";
+import { TeamHubApprovalCard, type TeamHubApprovalAct } from "./TeamHubApproval";
 import "./team-hub.css";
 
 /**
@@ -95,7 +98,13 @@ import "./team-hub.css";
  * scanned, and the screen says so. Realtime and links back from PAIGE are later increments and are
  * omitted, not shown dead.
  */
-export function TeamHubWorkspace({ onOpenTeamSettings, openPaige }: { onOpenTeamSettings?: () => void; openPaige?: () => void }) {
+/**
+ * EXP08 A2: what an approval card's buttons do. Absent (the Solo shell today, because the A2 backend
+ * is not built), every card refuses honestly instead of offering a control that would do nothing.
+ */
+export type TeamHubApprovalHandler = (message: TeamHubMessage, act: TeamHubApprovalAct) => void;
+
+export function TeamHubWorkspace({ onOpenTeamSettings, openPaige, onApprovalAct }: { onOpenTeamSettings?: () => void; openPaige?: () => void; onApprovalAct?: TeamHubApprovalHandler }) {
   const { activeTenant, activeUserId, loading, accountContextStatus, refresh } = useTenantContext();
   if (loading || accountContextStatus === "resolving") return <HubSkeleton />;
   const tenantId = activeTenant?.id ?? null;
@@ -106,11 +115,11 @@ export function TeamHubWorkspace({ onOpenTeamSettings, openPaige }: { onOpenTeam
   }
   // Remount per actor and workspace: a switch clears every conversation, draft and pending send.
   return <ScopedTeamHub key={`${activeUserId}:${tenantId}`} tenantId={tenantId} onTenantRefresh={refresh}
-    onOpenTeamSettings={onOpenTeamSettings} openPaige={openPaige} />;
+    onOpenTeamSettings={onOpenTeamSettings} openPaige={openPaige} onApprovalAct={onApprovalAct} />;
 }
 
-function ScopedTeamHub({ tenantId, onTenantRefresh, onOpenTeamSettings, openPaige }: {
-  tenantId: string; onTenantRefresh?: () => unknown; onOpenTeamSettings?: () => void; openPaige?: () => void;
+function ScopedTeamHub({ tenantId, onTenantRefresh, onOpenTeamSettings, openPaige, onApprovalAct }: {
+  tenantId: string; onTenantRefresh?: () => unknown; onOpenTeamSettings?: () => void; openPaige?: () => void; onApprovalAct?: TeamHubApprovalHandler;
 }) {
   const [announcement, setAnnouncement] = useState("");
   // One polite region, one write per frame. Everything said before the next frame paints (a pick
@@ -169,7 +178,7 @@ function ScopedTeamHub({ tenantId, onTenantRefresh, onOpenTeamSettings, openPaig
     }
     return <HubSkeleton />;
   }
-  return <ReadyHub hub={hub} announce={announce} announcement={announcement} onOpenTeamSettings={onOpenTeamSettings} openPaige={openPaige} />;
+  return <ReadyHub hub={hub} announce={announce} announcement={announcement} onOpenTeamSettings={onOpenTeamSettings} openPaige={openPaige} onApprovalAct={onApprovalAct} />;
 }
 
 /** Several messages for the one live region, read as sentences in the order they were said. */
@@ -248,8 +257,8 @@ const localDay = (instant: string | null) => {
   return Number.isNaN(date.getTime()) ? "" : `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 };
 
-function ReadyHub({ hub, announce, announcement, onOpenTeamSettings, openPaige }: {
-  hub: TeamHub; announce: (text: string) => void; announcement: string; onOpenTeamSettings?: () => void; openPaige?: () => void;
+function ReadyHub({ hub, announce, announcement, onOpenTeamSettings, openPaige, onApprovalAct }: {
+  hub: TeamHub; announce: (text: string) => void; announcement: string; onOpenTeamSettings?: () => void; openPaige?: () => void; onApprovalAct?: TeamHubApprovalHandler;
 }) {
   const overview = hub.overview!;
   const people = overview.people;
@@ -732,6 +741,7 @@ function ReadyHub({ hub, announce, announcement, onOpenTeamSettings, openPaige }
     onAskAgain: (request) => void hub.askAgain(request),
     onCheck: (request) => void hub.checkTurn(request),
     onBringIn: bringIn,
+    onApprovalAct,
   };
 
   const closeForm = (returnTo: "channel" | "dm") => {
@@ -1445,6 +1455,8 @@ type AgentView = {
   /** Check again for an unknown state: re-read the turn's state, never start a turn. */
   onCheck: (request: AgentTurn["request"]) => void;
   onBringIn: (reply: TeamHubMessage, prefill: string, agent: TeamHubAgentKey) => void;
+  /** A2: absent until a seam redeems the card (the card then refuses rather than offering Approve). */
+  onApprovalAct?: TeamHubApprovalHandler;
 };
 
 /** Where a row sits: the rows around it (the stream, or a thread's root and replies) and its kind of place. */
@@ -1567,6 +1579,12 @@ function AskedAgentsStatus({ message, agent, place }: { message: TeamHubMessage;
     onAction={() => (line.unknown ? agent.onCheck : agent.onAskAgain)(line.request)} />)}</>;
 }
 
+/** The one person who decides a card, by first name; the message's asker when the roster has no row. */
+function approvalAsker(userId: string, people: TeamHubPerson[], fallback: string): string {
+  const person = people.find((item) => item.user_id === userId);
+  return person ? shortName(person, people) : fallback;
+}
+
 function AgentMessageRow({ message, agentKey, people, meId, onOpenThread, agent, place }: {
   message: TeamHubMessage; agentKey: TeamHubAgentKey; people: TeamHubPerson[]; meId: string;
   onOpenThread?: (rootId: string, trigger: HTMLElement) => void; agent?: AgentView; place?: RowPlace;
@@ -1623,6 +1641,10 @@ function AgentMessageRow({ message, agentKey, people, meId, onOpenThread, agent,
         onCheck={() => agent.onCheck({ conversationId: place?.conversationId ?? "", sourceMessageId: message.asked_in_message_id!, threadRootId: message.parent_message_id, agent: agentKey })} />}
       {othersLine && <PrivateOthersNote agent={agentKey} askerName={askerShort} state={othersLine} />}
       {message.files.length > 0 && <MessageFiles files={message.files} />}
+      {message.approval && <TeamHubApprovalCard approval={message.approval} agent={agentKey} meId={meId}
+        askerName={approvalAsker(message.approval.asker_user_id, people, askerShort)}
+        decidedLabel={message.approval.decided_at ? timeLabel(message.approval.decided_at) : null} online={agent?.online ?? true}
+        onAct={agent?.onApprovalAct ? (act) => agent.onApprovalAct?.(message, act) : undefined} />}
       {bring.length > 0 && agent && <BringInRow agents={bring.map((item) => item.agent)} askerName={askerShort} isAsker={isAsker}
         onBring={(key) => { const item = bring.find((entry) => entry.agent === key); if (item) agent.onBringIn(message, item.prefill, key); }} />}
       {onOpenThread && message.reply_count > 0 && <button type="button" className="th-replies"
@@ -2079,10 +2101,22 @@ function assigneeLabel(userId: string | null, people: TeamHubPerson[], meId: str
  * The card a task message carries. Everything but the record id is read from the original
  * Operations record, with the time it was read; Team Hub stores none of it. A record the caller's
  * RLS doesn't return is said to be out of sight — its status is never guessed.
+ *
+ * EXP08 A2 slice 1: the card reopens its work in Operations, by reference. A Team Hub task is a
+ * Planning item, and Operations has no address for one Planning item: `?task=` opens a CRM task and
+ * `?weeklySource=planning_item&item=` says the work came from a weekly check. So the link opens
+ * Operations → Work, where the same record is listed under the reader's own permissions — never
+ * `record_id: id`, which would address a different (CRM) record. The address is built from the
+ * account on screen now, through the shared route map; it fails closed outside SOLO, and is not
+ * offered to someone who cannot see the task there.
  */
-function TaskCard({ id, read, people, meId }: { id: string; read: TeamHubTaskRead | undefined; people: TeamHubPerson[]; meId: string }) {
+export function TaskCard({ id, read, people, meId }: { id: string; read: TeamHubTaskRead | undefined; people: TeamHubPerson[]; meId: string }) {
   const short = id.slice(0, 8);
   const state = read?.state ?? "loading";
+  const { activeTenant } = useTenantContext();
+  const inRouter = useInRouterContext();
+  const open = read && (read.state === "read" || read.state === "failed")
+    ? workspaceLinkTarget({ destination: "operations_work", record_id: null }, activeTenant) : null;
   return <div className="th-src" role="group" aria-label={`Task in Operations, record ${short}`}>
     <div className="th-src-top"><ClipboardList aria-hidden="true" /><span className="th-src-kind">Task in Operations</span>
       <span className="th-src-id" title={id}>{short}</span></div>
@@ -2100,8 +2134,11 @@ function TaskCard({ id, read, people, meId }: { id: string; read: TeamHubTaskRea
           : state === "failed" ? "Its status couldn't be read from Operations. Team Hub reads it again on the next refresh."
             : "Reading status from Operations…"}</p>}
     </div>
-    {read && read.state !== "loading" && <div className="th-src-foot">
+    {read && read.state !== "loading" && <div className={open ? "th-src-foot th-src-foot--open" : "th-src-foot"}>
       <span className="th-src-fresh">{read.state === "read" ? `Read from Operations · ${timeLabel(read.readAt)}` : `Checked ${timeLabel(read.readAt)}`}</span>
+      {open && (inRouter
+        ? <Link to={open.to} className="th-link th-src-open">{open.label}<ArrowRight aria-hidden="true" /></Link>
+        : <a href={open.to} className="th-link th-src-open">{open.label}<ArrowRight aria-hidden="true" /></a>)}
     </div>}
   </div>;
 }

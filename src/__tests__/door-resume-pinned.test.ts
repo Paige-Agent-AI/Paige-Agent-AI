@@ -46,6 +46,17 @@ describe("C4b — literal Comms request reconstruction", () => {
     expect(doorResumeShape("comms_send_email", { ...stored, command: { ...command, connector_id: null } }, tenant, catalogs)?.callArgs)
       .toEqual({ contact_id: invoice, subject: "Approved subject", body: "Approved body" });
   });
+  it("a scheduled stored email keeps its send time in the recorded call; a malformed stored time refuses", () => {
+    const { approval_id: _origin, ...unbound } = stored;
+    const sendAt = "2026-11-03T15:00:00.000Z";
+    expect(doorResumeShape("comms_send_email", { ...unbound, send_at: sendAt }, tenant, catalogs)?.callArgs).toEqual({
+      contact_id: invoice, connector_id: page, subject: "Approved subject", body: "Approved body", send_at: sendAt,
+    });
+    for (const send_at of [null, "", "2026-11-03T09:00:00", "2026-11-03T15:00Z", 42]) {
+      expect(doorResumeShape("comms_send_email", { ...unbound, send_at }, tenant, catalogs), String(send_at)).toBeNull();
+    }
+    expect(doorResumeShape("comms_send_email", unbound, tenant, catalogs)?.callArgs).not.toHaveProperty("send_at");
+  });
   it("accepts an incumbent unbound stored email but refuses malformed-present origins", () => {
     const { approval_id: _origin, ...unbound } = stored;
     expect(doorResumeShape("comms_send_email", unbound, tenant, catalogs)?.family).toBe("comms");

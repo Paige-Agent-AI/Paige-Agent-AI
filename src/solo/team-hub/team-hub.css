@@ -55,6 +55,10 @@
 .th-btn:hover{border-color:var(--pg-line-strong)}
 .th-btn:disabled{opacity:.55;cursor:not-allowed}
 .th-btn--ghost{background:transparent}
+/* A2: the shared approval card's Approve joins this one act rule. Keyed on the card's own
+   data-confirm-part, never on the gold variant's utility class, so a restyle of that variant cannot
+   quietly bring its gradient and glow back here (the harness also measures background-image:none). */
+.th-hub .th-ap-card [data-confirm-part="approve"],
 .th-btn--act{background:var(--pg-gold-fill);border-color:transparent;color:var(--pg-env);font-weight:600;box-shadow:var(--pg-e2)}
 /* Light gold fill is a mid tone: --pg-env (a light warm grey) fails on it, ink passes (7.4:1),
    exactly as client-portal-access.css pairs it. */
@@ -217,6 +221,17 @@
 .th-facts dd{margin:0;min-width:0;color:var(--pg-ink-2);overflow-wrap:anywhere}
 .th-src-foot{padding:7px 12px;border-top:1px solid var(--pg-line-soft);background:var(--pg-workspace)}
 .th-src-fresh{color:var(--pg-faint);font:10.5px var(--pg-font-data)}
+/* EXP08 A2a slice 1: the task card's link to Operations → Work. Ink (.th-link), never gold; a 40px
+   target that borrows the foot's padding, the violet ring inset because the card clips its overflow,
+   and a row gap so a wrapped link never covers the read time. */
+.th-src-foot--open{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;column-gap:12px;row-gap:6px}
+.th-src-open{display:inline-flex;align-items:center;gap:4px;margin-block:-6px;margin-inline-end:-4px;font-size:12px;font-weight:600}
+/* In the real Solo shell `[data-pg] a` (index.css: gold-core, no underline), `.paige-solo a` and `[data-tenant-shell] a`
+   (font:inherit) are all (0,1,1) and beat .th-link/.th-src-open (0,1,0), so the link rendered GOLD at 13px/400 with no
+   underline (measured in the real SoloApp, team-hub-shell-mount). (0,2,1) restores the declared style, no new value. */
+[data-pg] a.th-src-open,[data-pg] a.th-src-open:hover{color:var(--pg-ink);text-decoration:underline;text-underline-offset:3px;font-size:12px;font-weight:600}
+.th-src-open:focus-visible{outline-offset:-2px}
+.th-src-open svg{width:14px;height:14px}
 /* Status is a word and a dot together, never colour alone. */
 .th-state{display:inline-flex;align-items:center;gap:6px;padding:1px 8px;border:1px solid var(--pg-line);border-radius:6px;color:var(--pg-ink-2);font-size:11.5px;white-space:nowrap}
 .th-state::before{content:"";width:6px;height:6px;flex:none;border-radius:50%;background:var(--pg-faint)}
@@ -510,3 +525,106 @@ button.th-ag-re:hover{color:var(--pg-muted);text-decoration:underline;text-under
 .th-profile .th-thread-head h2:focus{outline:0}
 .th-profile .th-thread-head h2:focus-visible{outline:2px solid var(--pg-violet);outline-offset:2px}
 @media (prefers-reduced-motion:reduce){.th-ag-dots i{animation:none}}
+
+/* EXP08 A2: an agent's approval inside its message, laid out as a room card.
+   The decisions and outcomes are the shared PaigeConfirmCard, mounted as it is; this block only lays it
+   out, from its data-confirm-part regions. One shape for every state:
+     strip   whose proposal it is (agent colour lives here and nowhere else on the card)
+     body    the thing being approved, the line that carries the weight (14px/600 ink)
+     footer  the status, then the controls at the right end (Not now, Approve) or the outcome
+   Not now and Expired, which the shared card has no words for, are .th-ap-rec in the same shape.
+   Agent colour: a wash under half strength, a 2px line in the agent's fill (PAIGE: her ring value, her
+   fill IS her ring, v5), the kind line in the agent's ink, the plate. Never in the footer, never on a
+   status mark. The only gold fill is Approve. */
+.th-ap{margin-top:8px;max-width:560px;border:1px solid var(--pg-line);border-radius:12px;background:var(--pg-workspace);box-shadow:var(--pg-rim);overflow:hidden}
+.th-ap-strip{display:flex;align-items:center;gap:8px;min-height:36px;padding:8px 12px 7px;border-bottom:1px solid var(--pg-line-soft);
+  background:color-mix(in srgb,var(--agc-tint) 45%,var(--pg-surface));box-shadow:inset 0 2px 0 var(--agc-fill)}
+.th-ap-kind{min-width:0;color:var(--agc-ink);font-size:12px;font-weight:600;letter-spacing:-.003em;overflow-wrap:anywhere}
+
+/* The shared card as a two-row grid. Its own row/content wrappers step aside (plain divs, no role), so
+   its regions place directly: body across the top, then seal | status | controls along the footer. */
+.th-hub .th-ap-card{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;margin:0;padding:0;border:0;border-radius:0;background:transparent}
+.th-ap-card [data-confirm-part="row"],.th-ap-card [data-confirm-part="content"]{display:contents}
+
+/* Body: the shared card's action list and the record's list share every metric. */
+.th-hub .th-ap-card [data-confirm-part="actions"],.th-ap-body{grid-column:1/-1;grid-row:1;display:grid;gap:6px;margin:0;padding:11px 12px 12px;list-style:none;background:var(--pg-surface)}
+.th-hub .th-ap-card [data-confirm-part="actions"] li{font-size:14px;line-height:20px}
+.th-hub .th-ap-card [data-confirm-part="summary"],.th-ap-sum{display:block;margin:0;max-width:64ch;color:var(--pg-ink);font-size:14px;font-weight:600;line-height:20px;letter-spacing:-.006em;overflow-wrap:anywhere}
+.th-hub .th-ap-card [data-confirm-part="action-note"]{margin-top:2px;color:var(--pg-ink-2);font-size:12.5px;line-height:18px;font-weight:400}
+.th-hub .th-ap-card[data-state="failed"] [data-confirm-part="action-note"]{color:var(--pg-negative)}
+/* A proposal that never happened reads quieter than one that did. */
+.th-ap-rec .th-ap-sum{color:var(--pg-ink-2);font-weight:500}
+/* Standing (design option, owner decision 1): a receipt for something that DID happen, so it keeps Done's
+   weight rather than the record's quiet, and adds the one line Done never needs: what the permission covers. */
+.th-ap-rec--standing .th-ap-sum{color:var(--pg-ink);font-weight:600}
+.th-ap-rec--standing .th-ap-body{display:block}
+.th-ap-list{display:grid;gap:6px;margin:0;padding:0;list-style:none}
+.th-ap-covers{margin:2px 0 0;max-width:64ch;color:var(--pg-muted);font-size:12.5px;line-height:18px;overflow-wrap:anywhere}
+
+/* Footer: one strip of the card's ground under a hairline. Every footer cell shares its metrics. */
+.th-hub .th-ap-card [data-confirm-part="seal"],.th-hub .th-ap-card [data-confirm-part="status"],
+.th-hub .th-ap-card [data-confirm-part="controls"],.th-hub .th-ap-card [data-confirm-part="refusal"],.th-ap-foot{
+  grid-row:2;align-self:stretch;min-height:44px;margin:0;border-top:1px solid var(--pg-line-soft);color:var(--pg-ink-2);font-size:12.5px;line-height:18px}
+.th-ap-foot{display:flex;align-items:center;gap:8px;padding:6px 12px}
+.th-hub .th-ap-foot svg{width:14px;height:14px;flex:none;color:var(--pg-muted)}
+/* Standing's footer reads like Done's: the check in the positive colour, "Done" at the status weight, the
+   rest of the sentence muted. Pause is the quietest control on the card: words only, no fill, no gold. */
+.th-hub .th-ap-foot .th-ap-ok{color:var(--pg-positive)}
+.th-ap-said{flex:1;min-width:0;margin:0;color:var(--pg-muted)}
+.th-ap-said strong{color:var(--pg-ink-2);font-weight:600}
+.th-ap-pause{flex:none;align-self:center;height:32px;padding:0 10px;border:0;border-radius:8px;background:transparent;color:var(--pg-ink-2);
+  font:inherit;font-size:13px;font-weight:500;cursor:pointer;transition:background-color .15s ease-out,color .15s ease-out}
+.th-ap-pause:hover{background:var(--pg-lift);color:var(--pg-ink)}
+.th-ap-pause:disabled{opacity:.55;cursor:not-allowed;background:transparent}
+
+/* The seal is the outcome mark on a report (a bare 14px icon in its status colour) and nothing on a
+   pending card: the strip's plate already says who, and two stacked icons say it twice. */
+.th-hub .th-ap-card [data-confirm-part="seal"]{grid-column:1;display:flex;align-items:center;width:auto;height:auto;padding:0 8px 0 12px;
+  border-width:1px 0 0;border-radius:0;background:transparent}
+.th-hub .th-ap-card[data-card-mode="decide"] [data-confirm-part="seal"]{display:none}
+.th-hub .th-ap-card [data-confirm-part="seal"] svg{width:14px;height:14px}
+.th-hub .th-ap-card[data-state="done"] [data-confirm-part="seal"]{color:var(--pg-positive)}
+.th-hub .th-ap-card[data-state="failed"] [data-confirm-part="seal"],.th-hub .th-ap-card[data-state="mixed"] [data-confirm-part="seal"]{color:var(--pg-negative)}
+.th-hub .th-ap-card[data-state="unconfirmed"] [data-confirm-part="seal"]{color:var(--pg-warning)}
+.th-hub .th-ap-card[data-state="working"] [data-confirm-part="seal"]{color:var(--pg-muted)}
+
+/* Status: the card's own heading (and on a report its sentence, "Approved by you · 10:04 AM"), one line. */
+.th-hub .th-ap-card [data-confirm-part="status"]{grid-column:2;display:flex;flex-wrap:wrap;align-items:center;column-gap:10px;padding:6px 12px 6px 0}
+.th-hub .th-ap-card[data-card-mode="decide"] [data-confirm-part="status"]{padding-left:12px}
+.th-hub .th-ap-card [data-confirm-part="status"] p{margin:0;max-width:none;font-size:12.5px;line-height:18px;letter-spacing:0}
+.th-hub .th-ap-card [data-confirm-part="status"] p:first-child{color:var(--pg-ink-2);font-weight:600}
+.th-hub .th-ap-card [data-confirm-part="status"] p + p{color:var(--pg-muted);font-weight:400}
+/* A report has no controls column: the status runs to the card's right edge. */
+.th-hub .th-ap-card[data-card-mode="report"] [data-confirm-part="status"]{grid-column:2/-1}
+
+/* The refusal IS the footer where it shows (a teammate's view, or no seam): it replaces the heading,
+   which would only repeat it. The heading stays the group's accessible name. */
+.th-hub .th-ap-card [data-confirm-part="refusal"]{grid-column:1/-1;display:flex;align-items:center;padding:6px 12px}
+.th-hub .th-ap-card:has([data-confirm-part="refusal"]) [data-confirm-part="status"]{display:none}
+
+/* Controls at the right end of the footer: Not now, then Approve last (frozen A1 UI rule). */
+.th-hub .th-ap-card [data-confirm-part="controls"]{grid-column:3;display:flex;flex-wrap:nowrap;align-items:center;justify-content:flex-end;gap:6px;padding:6px 12px 6px 0}
+.th-hub .th-ap-card [data-confirm-part="controls"] > :not(button){order:0;margin-right:6px;color:var(--pg-muted);font-size:12px}
+.th-hub .th-ap-card [data-confirm-part="deny"]{order:1}
+.th-hub .th-ap-card [data-confirm-part="approve"]{order:2}
+.th-hub .th-ap-card [data-confirm-part="controls"] button{height:32px;border-radius:8px;padding:0 12px;font-size:13px}
+.th-hub .th-ap-card [data-confirm-part="deny"]{color:var(--pg-ink-2)}
+.th-hub .th-ap-card [data-confirm-part="approve"],.th-hub .th-ap-card [data-confirm-part="approve"]:hover{background-image:none;transform:none;box-shadow:var(--pg-e2)}
+[data-pg="light"] .th-hub .th-ap-card [data-confirm-part="approve"]{color:var(--pg-ink)}
+.th-hub .th-ap-card [data-confirm-part="approve"]:hover{filter:brightness(1.05)}
+/* `.th-hub svg` (16px) would out-rank the card's own Tailwind sizes; give them back. */
+.th-hub .th-ap-card [data-confirm-part="controls"] svg{width:15px;height:15px}
+
+@container th-hub (max-width:479.98px){
+  /* At phone width the card steps out of the avatar column (32px + 10px gap) and takes the message's
+     whole width, so a summary is not squeezed to three lines beside an empty gutter. */
+  .th-ap{margin-left:-42px}
+  .th-ap-strip,.th-ap-foot{padding-left:11px;padding-right:11px}
+  .th-hub .th-ap-card [data-confirm-part="actions"],.th-ap-body{padding-left:11px;padding-right:11px}
+  .th-hub .th-ap-card[data-card-mode="decide"] [data-confirm-part="status"]{padding-left:11px}
+  .th-hub .th-ap-card [data-confirm-part="controls"]{padding-right:11px}
+  /* The words carry both buttons; their icons give the status line back the room to stay on one line. */
+  .th-hub .th-ap-card [data-confirm-part="controls"] svg{display:none}
+  .th-hub .th-ap-card [data-confirm-part="controls"] button{padding:0 11px}
+  .th-hub .th-ap-card[data-card-mode="decide"] [data-confirm-part="status"] p:first-child{white-space:nowrap}
+}

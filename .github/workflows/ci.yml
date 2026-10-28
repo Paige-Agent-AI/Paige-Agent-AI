@@ -71,7 +71,11 @@ jobs:
           supabase/functions/dispatch-stage-automation/gate.test.ts
           supabase/functions/_shared/comms-email-provider-boundary.test.mjs
           supabase/functions/_shared/comms-phone-provider-boundary.test.mjs
+          supabase/functions/_shared/twilio-purchase-voice.test.ts
+          supabase/functions/twilio-status-callback/call-status.test.ts
           supabase/functions/_shared/booking-provider-boundary.test.mjs
+          supabase/functions/_shared/client-portal-booking.test.ts
+          supabase/functions/public-booking/customer.test.mjs
           supabase/functions/send-portal-invite/canonical-delivery.test.mjs
           supabase/functions/_shared/operator-retirement-handler.test.mjs
           supabase/functions/_shared/team-hub-file-type.test.ts
@@ -1402,6 +1406,13 @@ jobs:
       - name: Smoke — comms tenant scope (§9/§53 webhook scoping)
         if: ${{ !cancelled() }}
         run: npm run smoke:comms-tenant-scope
+
+      # Drives the REAL twilio-status-callback handler: retry/terminal state, the honest
+      # no-answer/busy/cancelled wording, inbound callback ORDER (several seats ring at once and
+      # the parent posts its own end), and operator-proof isolation. It ran nowhere until now.
+      - name: Smoke — voice status callback (call outcome, inbound ordering, operator isolation)
+        if: ${{ !cancelled() }}
+        run: npm run smoke:voice-status-callback
 
       # Drives the REAL manage-tenant-domain handler. Adding, re-pointing or removing
       # a sending domain changes the identity every outbound message carries, and none

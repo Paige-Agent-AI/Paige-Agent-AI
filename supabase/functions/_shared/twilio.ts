@@ -564,6 +564,12 @@ export interface PurchaseNumberOptions {
   statusCallback?: string;
   /** Inbound SMS webhook URL (the C-2 Twilio inbound handler). */
   smsUrl?: string;
+  /**
+   * Inbound VOICE webhook URL — `voiceTwimlUrl(inbound_webhook_secret)`, the exact URL
+   * repair-voice-twiml-app stamps on a number. When set, VoiceMethod=POST goes with it.
+   * Omitted, the number is bought with no voice wiring (inbound calls reach nothing).
+   */
+  voiceUrl?: string;
   friendlyName?: string;
 }
 
@@ -588,6 +594,10 @@ export async function purchaseNumber(
       FriendlyName: opts.friendlyName,
       SmsUrl: opts.smsUrl,
       StatusCallback: opts.statusCallback,
+      // Same end state as repair-voice-twiml-app: VoiceUrl + POST, no TwiML Application on
+      // the number (a new number has none, so there is no VoiceApplicationSid to clear).
+      VoiceUrl: opts.voiceUrl,
+      VoiceMethod: opts.voiceUrl ? "POST" : undefined,
     },
     // C-2a: the subaccount-scoped API Key SID as the Basic-auth username. Omitted →
     // username falls back to subaccountSid (wrong under API-Key auth), so callers that

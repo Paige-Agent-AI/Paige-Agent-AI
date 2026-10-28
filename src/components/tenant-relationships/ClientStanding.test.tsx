@@ -4,6 +4,7 @@ import { createRoot, type Root } from "react-dom/client";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ATTENTION_TEXT } from "../../../supabase/functions/_shared/client-engagement/labels";
+import {effectiveStandingFixture} from "../../__tests__/fixtures/exp04-effective-standing-source";
 
 // Experience 04 E4-S3 PR beta (Track D): where one client stands, on that client's Solo record —
 // read through the SAME governed read and composer PAIGE answers from, so the page and the chat can
@@ -29,6 +30,38 @@ const dd = (term: string) => [...host.querySelectorAll(".trc-standing-money > di
 const hrefs = () => [...host.querySelectorAll("a")].map(a => [a.textContent, a.getAttribute("href")]);
 
 describe("ClientStanding", () => {
+  it("shows the accepted revision separately from the later working draft", async () => {
+    const {source:changed}=effectiveStandingFixture();rpc.mockResolvedValue({data:changed,error:null});await render();
+    expect(row("Agreement")?.textContent).toContain("Accepted revision 1 · Working draft revision 2 differs");
+    expect(row("Agreement")?.textContent).toContain("$3,500.00 accepted");
+    expect(dd("Overdue")?.textContent).toBe("$320.00");
+  });
+  it("does not call an exact original signing outside the title list untitled", async () => {
+    const {source:changed,accepted}=effectiveStandingFixture();changed.signings=[];changed.signings_has_more=true;
+    rpc.mockResolvedValue({data:changed,error:null});await render();
+    expect(row("Agreement")?.textContent).toContain("Original signed agreement");
+    expect(row("Agreement")?.textContent).not.toContain("Untitled agreement");
+    expect(row("Agreement")?.querySelector('a')?.getAttribute('href')).toBe(`/solo/42/sales/agreements?agreement=${accepted.signing_id}`);
+  });
+  it.each([0,3])("does not equate %i done work records with accepted service", async done => {
+    const work={...structuredClone(source.work),total:3,done,open:0,cancelled:3-done,blocked:0,overdue:0,undated_open:0};
+    work.items=work.items.map((item: Record<string,unknown>)=>({...item,status:done===3?"done":"cancelled"}));
+    rpc.mockResolvedValue(reply({work}));await render();
+    expect(row("Delivery")?.textContent).toContain("Nothing open");
+    expect(row("Delivery")?.textContent).toContain(`${done} of 3 done`);
+    expect(row("Delivery")?.textContent).toContain("Client acceptance is not shown here.");
+  });
+  it("explains an invoice revision mismatch while preserving balances and original navigation", async () => {
+    const changed=structuredClone(source);changed.terms[0].collection_terms_version=2;
+    rpc.mockResolvedValue({data:{...changed,receipt_id:undefined},error:null});await render();
+    expect(dd("Outstanding")?.textContent).toBe("$3,020.00");
+    expect(dd("Paid · verified by your payment provider")?.textContent).toBe("$100.00");
+    expect(dd("Recorded by you · not provider-verified")?.textContent).toBe("$500.00");
+    expect(dd("Overdue")?.textContent).toContain("Not known");
+    expect(dd("Overdue")?.textContent).toContain("Invoice and plan versions differ");
+    expect(host.textContent).toContain(ATTENTION_TEXT.invoice_terms_version_mismatch);
+    expect(hrefs()).toContainEqual(["Open terms & agreements","/solo/42/sales/agreements"]);
+  });
   it("reads one client through the governed read, once, and headlines where they stand", async () => {
     rpc.mockResolvedValue(reply()); await render();
     expect(rpc).toHaveBeenCalledTimes(1);
@@ -76,7 +109,7 @@ describe("ClientStanding", () => {
   it("links only through the shared route map and frozen labels", async () => {
     rpc.mockResolvedValue(reply()); await render();
     const links = hrefs();
-    expect(links).toContainEqual(["Open terms & agreements", "/solo/42/sales/agreements"]);
+    expect(links).toContainEqual(["Open terms & agreements", `/solo/42/sales/agreements?agreement=${source.signings[0].id}`]);
     expect(links).toContainEqual(["Open invoices", "/solo/42/sales/payments?view=invoices"]);
     expect(links).toContainEqual(["Open collections", "/solo/42/sales/payments?view=collections"]);
     expect(links).toContainEqual(["Open delivery work", "/solo/42/operations/work"]);

@@ -21,7 +21,9 @@ describe("E2-2 admission set (ANT-23)", () => {
     // docs/delivery/e2-1-readonly-admission-determination.md and its independent security review.
     // EXP08 Team Hub increment 4 (owner decision 2026-10-24, docs/brain/decision-log.md) adds the three
     // caller-JWT Team Hub reads; the reply stays withheld like every write.
-    expect(m![1].trim()).toBe('"read_business_metric", "get_business_snapshot", "read_client_engagement_status", "read_business_time_zone", "read_calendar_booking", "read_calendar_agenda", "crm_get_task", WEEKLY_COMMITMENT_STATUS_TOOL_NAME, OWNER_TASK_HISTORY_TOOL_NAME, "team_hub_conversations", "team_hub_read_conversation", "team_hub_search"');
+    // EXP05 #2961 adds only the configure-intent preview over the original
+    // caller-JWT owner reader; it cannot write, approve or operate a schedule.
+    expect(m![1].trim()).toBe('"read_business_metric", "get_business_snapshot", "read_client_engagement_status", "read_business_time_zone", "read_calendar_booking", "read_calendar_agenda", "crm_get_task", WEEKLY_COMMITMENT_STATUS_TOOL_NAME, WEEKLY_SCHEDULE_REVIEW_TOOL_NAME, OWNER_TASK_HISTORY_TOOL_NAME, "team_hub_conversations", "team_hub_read_conversation", "team_hub_search"');
   });
 
   it("the set is declared ReadonlySet and its comment forbids widening without an owner-recorded change", () => {

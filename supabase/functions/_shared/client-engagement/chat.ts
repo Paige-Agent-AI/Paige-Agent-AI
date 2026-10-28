@@ -8,7 +8,7 @@ import {
   parseClientEngagementSource,
   type ClientEngagementStatus,
 } from './status.ts';
-import { AGREEMENT_TEXT, ATTENTION_TEXT, PAYMENT_STATE_TEXT, standingRecordLinks } from './labels.ts';
+import { AGREEMENT_TEXT, ATTENTION_TEXT, PAYMENT_STATE_TEXT, standingRecordLinks, standingTermsEvidence, standingTimingReason } from './labels.ts';
 import type { ReadRecordLink } from '../paige-turn/record-links.ts';
 
 // Experience 04 E4-S2 — "where does this client stand?" and the business time zone, from chat.
@@ -119,6 +119,7 @@ export function money(minor: number | null, currency: string | null, unknown = '
 export function rec(v: string | null | undefined, empty = 'untitled'): string {
   // Control characters and line breaks become spaces; bidirectional overrides and zero-width marks are dropped so
   // a name cannot visually re-order the line; every double-quote look-alike becomes ' so the quoting cannot be faked.
+  // eslint-disable-next-line no-control-regex -- stripping control characters from source labels is intentional
   const flat = (v ?? '').replace(/[\u0000-\u001f\u007f-\u009f\u2028\u2029]+/g, ' ')
     .replace(/[\u200b-\u200f\u202a-\u202e\u2060-\u2069\ufeff]/g, '')
     .replace(/["\u201c\u201d\u201e\u201f\u2033\u00ab\u00bb\uff02]/g, "'").replace(/\s+/g, ' ').trim();
@@ -149,6 +150,8 @@ export function projectClientStanding(s: ClientEngagementStatus): string {
   const zone = zoneSet ? s.time_zone.zone : null;
   const when = (iso: string | null) => at(iso, zone) ?? (iso ? 'date not shown until the business time zone is set' : null);
   const m = s.money;
+  const invoiceTermsVersionMismatch = s.attention.includes('invoice_terms_version_mismatch');
+  const timingReason = standingTimingReason(s);
   const totalsReason = m.mixed_currency ? 'not added up: invoices use more than one currency'
     : s.truncated.invoices ? 'not added up: more invoices exist than one read returns' : 'not known';
   const lines: string[] = [];
@@ -158,16 +161,23 @@ export function projectClientStanding(s: ClientEngagementStatus): string {
     : `Business time zone: ${s.time_zone.state === 'missing' ? 'NOT SET' : 'NOT RECOGNISED'} — due, upcoming and overdue judgements are withheld until the owner sets it in Settings → Setup → Business profile.`}`);
 
   const a = s.agreement;
-  lines.push(`AGREEMENT: ${AGREEMENT_TEXT[a.state] ?? a.state}${a.title ? ` (${rec(a.title)})` : ''}${a.sent_at ? `; sent ${when(a.sent_at)}` : ''}${a.completed_at ? `; signed ${when(a.completed_at)}` : ''}${a.state === 'signed' ? (a.sealed ? '; sealed copy stored' : '; sealed copy not confirmed') : ''}. Linked to the agreed terms: ${a.bound_to_terms ? 'yes' : 'no'}. The platform does not record when an agreement takes effect.`);
+  const effectiveNote = a.effective === 'verified' ? 'Original accepted terms are retained with this signed agreement.'
+    : a.effective === 'unverified' ? 'The original effective agreement evidence could not be verified.'
+    : 'Effective terms are not established by this standing view.';
+  lines.push(`AGREEMENT: ${AGREEMENT_TEXT[a.state] ?? a.state}${a.title ? ` (${rec(a.title)})` : ''}${a.sent_at ? `; sent ${when(a.sent_at)}` : ''}${a.completed_at ? `; signed ${when(a.completed_at)}` : ''}${a.state === 'signed' ? (a.sealed ? '; sealed copy stored' : '; sealed copy not confirmed') : ''}. Linked to the agreed terms: ${a.bound_to_terms ? 'yes' : 'no'}. ${effectiveNote}`);
+  const evidence = standingTermsEvidence(s);
+  if (evidence && a.effective === 'verified') lines.push(evidence);
 
   if (!s.terms) lines.push('TERMS: no agreed terms are recorded for this client.');
   else {
     const t = s.terms;
-    lines.push(`TERMS: ${rec(t.title ?? t.offer_name, 'Agreed terms')} — status ${t.status}, ${t.state === 'current' ? 'current' : t.state === 'stale' ? 'changed since it was agreed' : t.state === 'unreadable' ? 'schedule unreadable' : t.state}; agreed ${money(t.agreed_minor, t.currency)}${t.kind ? `, ${t.kind.replace(/_/g, ' ')}` : ''}${t.recurring ? ', recurring' : ''}.`);
+    const planState = invoiceTermsVersionMismatch ? 'saved plan; invoice version not matched' : t.state === 'current' ? 'current' : t.state === 'stale' ? 'changed since it was agreed' : t.state === 'unreadable' ? 'schedule unreadable' : t.state;
+    lines.push(`TERMS: ${t.basis === 'accepted' ? 'Original accepted commercial terms' : rec(t.title ?? t.offer_name, 'Agreed terms')} — status ${t.status}, ${planState}; ${t.basis === 'accepted' ? 'accepted' : timingReason ? 'recorded amount' : 'agreed'} ${money(t.agreed_minor, t.currency)}${t.kind ? `, ${t.kind.replace(/_/g, ' ')}` : ''}${t.recurring ? ', recurring' : ''}.`);
     if (t.schedule.length) {
       lines.push(`INSTALLMENTS (${t.schedule.length}${t.schedule_has_more ? '+' : ''}):`);
       for (const r of t.schedule.slice(0, 12)) {
-        const due = r.due === null ? held : r.due ? 'due' : 'not yet due';
+        const due = r.due === null ? zoneSet
+          ? `verification pending — ${(timingReason ?? 'the schedule is not established').toLowerCase()}` : held : r.due ? 'due' : 'not yet due';
         lines.push(`  #${r.sequence} ${r.due_date} ${money(r.amount_minor, t.currency)}${r.label ? ` (${rec(r.label)})` : ''} — ${due}`);
       }
       if (t.schedule.length > 12 || t.schedule_has_more) lines.push('  (more installments exist; not all are listed)');
@@ -187,7 +197,7 @@ export function projectClientStanding(s: ClientEngagementStatus): string {
     : m.behind_schedule_minor > 0 ? money(m.behind_schedule_minor, cur)
     : m.behind_schedule_minor < 0 ? `no — ahead of the schedule by ${money(-m.behind_schedule_minor, cur)}` : 'no — exactly on schedule'}`);
   lines.push(`  Agreed but not yet invoiced: ${money(m.not_yet_invoiced_minor, cur)}`);
-  lines.push(`  Payment requests awaiting provider confirmation (NOT received): ${money(m.awaiting_confirmation_minor, cur, totalsReason)}; payments with unknown outcome: ${m.outcome_unknown_count}; failed payment requests: ${m.failed_request_count}; reversals: ${m.reversal_count}. Disputes are not recorded by the platform.`);
+  lines.push(`  Payment requests awaiting provider confirmation (NOT received): ${money(m.awaiting_confirmation_minor, cur, totalsReason)}; payments with unknown outcome: ${m.outcome_unknown_count}; failed payment requests: ${m.failed_request_count}; reversals: ${m.reversal_count}. Dispute details are not established by this standing read.`);
 
   if (s.invoices.length) {
     lines.push(`INVOICES (${s.invoices.length}${s.truncated.invoices ? '+, list truncated' : ''}):`);
@@ -200,16 +210,16 @@ export function projectClientStanding(s: ClientEngagementStatus): string {
   } else lines.push('INVOICES: none.');
 
   const w = s.work;
-  if (w.state === 'none') lines.push('ONBOARDING AND DELIVERY: no delivery plan or tasks are recorded for this client.');
+  if (w.state === 'none') lines.push('ONBOARDING AND DELIVERY: no linked milestones or tasks are recorded for this client. Work counts do not establish client acceptance or engagement completion.');
   else {
-    const label = w.state === 'complete' ? 'complete' : w.state === 'on_schedule' ? 'on schedule' : w.state === 'behind' ? 'behind' : 'no due dates set';
-    lines.push(`ONBOARDING AND DELIVERY: ${label} — ${w.done} of ${w.total} done, ${w.open} open, ${w.overdue} overdue, ${w.blocked} blocked${s.truncated.work ? ' (more items exist than are listed)' : ''}. Work deadlines are exact times, so the overdue count does not depend on the business time zone.${w.next ? ` Next: ${w.next.item_type} ${rec(w.next.title)} due ${when(w.next.due_at)}.` : ''}`);
+    const label = w.state === 'complete' ? 'no open linked work' : w.state === 'on_schedule' ? 'on schedule' : w.state === 'behind' ? 'behind' : 'no due dates set';
+    lines.push(`ONBOARDING AND DELIVERY: ${label} — ${w.done} of ${w.total} done, ${w.open} open, ${w.overdue} overdue, ${w.blocked} blocked${s.truncated.work ? ' (more items exist than are listed)' : ''}. Work deadlines are exact times, so the overdue count does not depend on the business time zone. Work counts do not establish client acceptance or engagement completion.${w.next ? ` Next: ${w.next.item_type} ${rec(w.next.title)} due ${when(w.next.due_at)}.` : ''}`);
   }
 
   lines.push(s.attention.length
     ? `NEEDS ATTENTION:\n${s.attention.map((k) => `  - ${ATTENTION_TEXT[k] ?? k}`).join('\n')}`
     : 'NEEDS ATTENTION: nothing flagged.');
-  if (s.not_recorded.length) lines.push(`NOT RECORDED BY THE PLATFORM: ${s.not_recorded.join(', ')}.`);
+  if (s.not_recorded.length) lines.push(`NOT ESTABLISHED BY THIS STANDING READ: ${s.not_recorded.join(', ')}.`);
   return lines.join('\n');
 }
 

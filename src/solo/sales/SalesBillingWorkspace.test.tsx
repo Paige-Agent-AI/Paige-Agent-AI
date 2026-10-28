@@ -4,15 +4,15 @@ import { beforeEach, afterEach, expect, it, vi } from 'vitest';
 import { SalesBillingWorkspace } from './SalesBillingWorkspace';
 import { normalizeInvoiceSnapshot } from './invoiceDraftSnapshot';
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
-const h = vi.hoisted(() => ({ tenant: '11111111-1111-4111-8111-111111111111', phase: 'ready', save: vi.fn(), invoke:vi.fn(), rpc:vi.fn(), actor:'66666666-6666-4666-8666-666666666666', catalogOptions:vi.fn(), catalogRetry:vi.fn(), catalogMore:false, rows: [] as unknown[], offers: [] as unknown[], canManage: true, clients: [] as { id: string; name: string; primaryEmail?: string | null }[] }));
+const h = vi.hoisted(() => ({ tenant: '11111111-1111-4111-8111-111111111111', phase: 'ready', save: vi.fn(), invoke:vi.fn(), rpc:vi.fn(), actor:'66666666-6666-4666-8666-666666666666', catalogOptions:vi.fn(), catalogRetry:vi.fn(), catalogMore:false, termsVersion:2, rows: [] as unknown[], offers: [] as unknown[], canManage: true, clients: [] as { id: string; name: string; primaryEmail?: string | null }[] }));
 vi.mock('@/integrations/supabase/client',()=>({supabase:{rpc:h.rpc,functions:{invoke:h.invoke},auth:{getSession:async()=>({data:{session:{user:{id:h.actor}}}}),onAuthStateChange:()=>({data:{subscription:{unsubscribe(){}}}})}}}));
 vi.mock('../useSalesInvoiceDrafts', () => ({ useSalesInvoiceDrafts: () => ({ tenantId: h.tenant, phase: h.phase, rows: h.rows.map((value)=>{const r=value as {facts:Record<string,unknown>;totalMinor:number;dueNowMinor:number;remainderMinor:number};return ({...r,snapshot:normalizeInvoiceSnapshot({...r.facts,due_now_minor:r.dueNowMinor,remainder_minor:r.remainderMinor,price_snapshot:r.facts.price_id?{price_id:r.facts.price_id,product_id:'66666666-6666-4666-8666-666666666666',product_name:r.facts.item,unit_minor:r.facts.unit_minor,currency:'usd',billing_interval:'one_time',interval_count:null}:null},r.totalMinor)})}), hasMore: false, nextCursor: null, message: '', save: h.save, retry: vi.fn() }) }));
 vi.mock('../useSoloCommercialTerms', () => ({ useSoloCommercialTerms: () => ({ tenantId: h.tenant, phase: 'ready', clientsReadable: true, canManage: h.canManage, clients: h.clients }) }));
 vi.mock('../useCatalogOffers', () => ({ useCatalogOffers: (options:unknown) => {h.catalogOptions(options);return ({ tenantId: h.tenant, phase: 'ready', offers: h.offers, referencedOffers: [], hasMore:h.catalogMore,retry:h.catalogRetry })} }));
 vi.mock('./useInvoiceBillingSources',()=>({useInvoiceBillingSources:()=>({tenantId:h.tenant,phase:'ready',agreements:[],customers:h.clients.map(c=>({...c,address:null,methods:c.primaryEmail?[{id:'88888888-8888-4888-8888-888888888888',kind:'email',value:c.primaryEmail,label:'Billing',isPrimary:true}]:[]}))})}));
-vi.mock('./useInvoiceCommercialTermsSources',()=>({useInvoiceCommercialTermsSources:()=>({commercialTerms:[{id:'55555555-5555-4555-8555-555555555555',clientId:'22222222-2222-4222-8222-222222222222',title:'Synthetic installment terms',version:2,status:'draft',termsCurrent:true}],phase:'ready',hasMore:false,loadingMore:false,error:'',retry:vi.fn(),loadMore:vi.fn()})}));
+vi.mock('./useInvoiceCommercialTermsSources',()=>({useInvoiceCommercialTermsSources:()=>({commercialTerms:[{id:'55555555-5555-4555-8555-555555555555',clientId:'22222222-2222-4222-8222-222222222222',title:'Synthetic installment terms',version:h.termsVersion,status:'draft',termsCurrent:true,sourceAmount:{minor:350000,currency:'usd',basis:'total'}}],phase:'ready',hasMore:false,loadingMore:false,error:'',retry:vi.fn(),loadMore:vi.fn()})}));
 let host: HTMLDivElement; let root: Root;
-beforeEach(() => { h.clients = [{ id: '22222222-2222-4222-8222-222222222222', name: 'Test client', primaryEmail: 'primary@example.test' }, { id: '77777777-7777-4777-8777-777777777777', name: 'No email client', primaryEmail: null }]; h.phase = 'ready'; h.canManage = true; h.rows = []; h.offers = []; h.tenant = '11111111-1111-4111-8111-111111111111'; h.actor='66666666-6666-4666-8666-666666666666';sessionStorage.clear();h.invoke.mockReset();h.rpc.mockReset();h.rpc.mockResolvedValue({data:null,error:null});h.save.mockReset();h.catalogOptions.mockReset();h.catalogRetry.mockReset();h.catalogMore=false; host = document.createElement('div'); document.body.append(host); root = createRoot(host); act(() => root.render(<SalesBillingWorkspace view="invoices" />)); });
+beforeEach(() => { h.clients = [{ id: '22222222-2222-4222-8222-222222222222', name: 'Test client', primaryEmail: 'primary@example.test' }, { id: '77777777-7777-4777-8777-777777777777', name: 'No email client', primaryEmail: null }]; h.phase = 'ready'; h.canManage = true; h.rows = []; h.offers = []; h.tenant = '11111111-1111-4111-8111-111111111111'; h.actor='66666666-6666-4666-8666-666666666666';sessionStorage.clear();h.invoke.mockReset();h.rpc.mockReset();h.rpc.mockResolvedValue({data:null,error:null});h.save.mockReset();h.catalogOptions.mockReset();h.catalogRetry.mockReset();h.catalogMore=false;h.termsVersion=2; host = document.createElement('div'); document.body.append(host); root = createRoot(host); act(() => root.render(<SalesBillingWorkspace view="invoices" />)); });
 afterEach(() => { act(() => root.unmount()); host.remove(); vi.unstubAllGlobals(); });
 function button(text: string) { return [...host.querySelectorAll('button')].find(b => b.textContent === text)!; }
 function click(text: string) { act(() => button(text).click()); }
@@ -145,4 +145,29 @@ it('shows only a loading state while the exact saved invoice is unresolved',asyn
  seedVisibleRow();let resolve!:(value:unknown)=>void;h.rpc.mockImplementationOnce(()=>new Promise(r=>{resolve=r;}));
  await act(async()=>root.render(<SalesBillingWorkspace view="invoices" focusInvoiceIds={[focusedId]}/>));expect(host.textContent).toContain('Reading this invoice');expect(host.textContent).not.toContain('Catalog service');expect(host.textContent).not.toContain('Create invoice');
  await act(async()=>resolve({data:focusedRecord(),error:null}));expect(host.textContent).toContain('Older recurring service');
+});
+it('retains version-update focus and original parent review focus through the mounted invoice flow',async()=>{
+ fill();
+ function change(selector:string,value:string){const el=host.querySelector<HTMLInputElement|HTMLSelectElement>(selector)!;act(()=>{const proto=el instanceof HTMLSelectElement?HTMLSelectElement.prototype:HTMLInputElement.prototype;Object.getOwnPropertyDescriptor(proto,'value')!.set!.call(el,value);el.dispatchEvent(new Event(el instanceof HTMLSelectElement?'change':'input',{bubbles:true}));});}
+ change('[aria-label="Unit price for item 1"]','3500');change('[aria-label="Billing structure"]','deposit');change('[aria-label="Deposit basis"]','fixed');change('[aria-label="Deposit amount (USD)"]','500');
+ field('Invoice note','Owner-edited note');field('Commercial terms / payment plan','55555555-5555-4555-8555-555555555555');
+ act(()=>Array.from(host.querySelectorAll('label')).find(l=>l.textContent?.startsWith('Email invoice'))!.querySelector('input')!.click());
+ h.termsVersion=3;act(()=>root.render(<SalesBillingWorkspace view="invoices"/>));
+ click('Use current terms version');expect(document.activeElement).toBe(host.querySelector('[aria-label="Commercial terms / payment plan"]'));
+ expect(h.save).not.toHaveBeenCalled();expect(h.invoke).not.toHaveBeenCalled();
+ click('Review invoice');expect(document.activeElement).toBe(host.querySelector('.sb-editor h2'));expect(document.activeElement?.textContent).toBe('Review invoice');
+ expect(host.querySelector('[aria-label="Selected commercial source amount"]')?.textContent).toContain('Draft reference: revision 3');
+ click('Back to details');expect(document.activeElement?.textContent).toBe('Create invoice');
+ expect((host.querySelector('[aria-label="Deposit amount (USD)"]') as HTMLInputElement).value).toBe('500.00');
+ h.save.mockResolvedValue({ok:false,outcome:'refused',message:'Controlled refusal'});await act(async()=>button('Save draft').click());
+ expect(h.save).toHaveBeenCalledOnce();expect(h.save.mock.calls[0][0].draft).toMatchObject({schema_version:3,deposit_minor:50000,currency:'usd',memo:'Owner-edited note',recipient_email:'primary@example.test',commercial_terms_reference:{id:'55555555-5555-4555-8555-555555555555',version:3},items:[{unit_minor:350000,quantity:1}]});
+ expect(h.invoke).not.toHaveBeenCalled();
+});
+it('starts the original review at its document beginning and restores the prior details position',()=>{
+ fill();act(()=>Array.from(host.querySelectorAll('label')).find(l=>l.textContent?.startsWith('Email invoice'))!.querySelector('input')!.click());
+ const details=host.querySelector('.ide-scroll') as HTMLElement;details.scrollTop=600;
+ click('Review invoice');expect((host.querySelector('.ide-scroll') as HTMLElement).scrollTop).toBe(0);expect(document.activeElement?.textContent).toBe('Review invoice');
+ (host.querySelector('.ide-scroll') as HTMLElement).scrollTop=200;
+ click('Back to details');expect((host.querySelector('.ide-scroll') as HTMLElement).scrollTop).toBe(600);expect(document.activeElement?.textContent).toBe('Create invoice');
+ expect((host.querySelector('[aria-label="Unit price for item 1"]') as HTMLInputElement).value).toBe('150.25');expect(h.save).not.toHaveBeenCalled();expect(h.invoke).not.toHaveBeenCalled();
 });

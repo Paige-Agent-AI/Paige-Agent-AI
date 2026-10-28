@@ -27,6 +27,7 @@ import {
 import "./marketing-overview.css";
 import "./marketing-content.css";
 import { PublishPiece } from "./publish-piece";
+import { MediaLibrary } from "./media-library";
 
 const DocumentPreview = React.lazy(() => import("@/components/admin/studio/DocumentPreview").then((module) => ({ default: module.DocumentPreview })));
 
@@ -133,6 +134,7 @@ export function MarketingContent({ tenantId, published, onOpenCapture, onRetryPu
         : <FilteredGallery key={`${tenantId}:${kind}`} tenantId={tenantId} kind={kind} onOpen={onPiece} onAll={() => onKind("all")}/>}
     </section>}
     <Published published={published} onOpenCapture={onOpenCapture} onRetry={onRetryPublished}/>
+    {access === "allowed" && <MediaLibrary tenantId={tenantId}/>}
     <p className="mct-foot">Publishing is connected: open a piece to publish it to a connected channel — you approve the exact post before it goes out, and nothing is scheduled. Scheduling stays with your Calendar plan.</p>
     {host && piece && access === "allowed" && createPortal(<PiecePreview key={`${tenantId}:${piece}`} tenantId={tenantId} id={piece} known={pieces.find((p) => p.id === piece) ?? null} listPhase={phase} onClose={() => onPiece(null)}/>, host)}
   </div>;

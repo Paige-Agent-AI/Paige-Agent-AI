@@ -76,7 +76,7 @@ serve(async (req: Request) => {
       // The credit unit ($/credit) turns consumed credits into covered USD, so the meter
       // records only the UNCOVERED remainder (correction a42e0598: partial prepaid balances
       // apply first; credit-covered cost is never metered again).
-      const config = await loadMediaConfig(admin);
+      const config = await loadMediaConfig(admin as unknown as Parameters<typeof loadMediaConfig>[0]);
       const creditUsd = Number(config.creditUsd) > 0 ? Number(config.creditUsd) : 0.01;
       const { data: unmetered, error: unmeteredErr } = await admin
         .from("paige_media_jobs")

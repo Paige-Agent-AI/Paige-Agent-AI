@@ -1,0 +1,842 @@
+{
+  "scope": "Original customer AppShellBody/AppNav/Cura/Sessions/booking with explicit synthetic Auth, consent, history and SDK ports. Geometry and interaction only, not genuine login, second-business isolation or provider evidence.",
+  "ownerShell": "The external /app/sessions shell has no owner PAIGE open/closed toggle. Cura is present at desktop and hidden by the existing narrow non-Home breakpoint. Owner SOLO Calendar layout is unchanged.",
+  "notes": [
+    "Native Control++ did not change browser zoom; native 200% zoom remains unverified. 683x384 is explicitly a CSS reflow equivalent only.",
+    "Required intake refused before create and focused the first required field.",
+    "Escape closes after the existing exit animation and restores Book a time focus. Close-button Tab wraps within the dialog.",
+    "Reduced-motion initially failed: shared data-state animation specificity overrode the owned utility; scoped important utility now yields animation none and transition none for sheet and overlay.",
+    "Unknown response hides create, retains Review booking request, and Check booking returns the original saved receipt and one Sessions item."
+  ],
+  "measurements": [
+    {
+      "case": "original-shell-1536-saved",
+      "dialogs": [],
+      "documentHeight": 770,
+      "documentWidth": 1536,
+      "focus": "Book a time",
+      "scrollOwners": [
+        {
+          "clientHeight": 770,
+          "clientWidth": 1536,
+          "h": 770.4000244140625,
+          "label": null,
+          "overflowX": "hidden",
+          "overflowY": "auto",
+          "role": null,
+          "scrollHeight": 770,
+          "scrollWidth": 1536,
+          "tag": "DIV",
+          "w": 1536,
+          "x": 0,
+          "y": 0
+        },
+        {
+          "clientHeight": 567,
+          "clientWidth": 613,
+          "h": 566.7999877929688,
+          "label": null,
+          "overflowX": "auto",
+          "overflowY": "auto",
+          "role": null,
+          "scrollHeight": 567,
+          "scrollWidth": 613,
+          "tag": "DIV",
+          "w": 613.2000122070312,
+          "x": 0,
+          "y": 60.79999923706055
+        },
+        {
+          "clientHeight": 409,
+          "clientWidth": 613,
+          "h": 409.3000183105469,
+          "label": "Cura conversation",
+          "overflowX": "auto",
+          "overflowY": "auto",
+          "role": null,
+          "scrollHeight": 409,
+          "scrollWidth": 613,
+          "tag": "DIV",
+          "w": 613.2000122070312,
+          "x": 0,
+          "y": 122.0999984741211
+        },
+        {
+          "clientHeight": 30,
+          "clientWidth": 581,
+          "h": 30.100000381469727,
+          "label": null,
+          "overflowX": "auto",
+          "overflowY": "auto",
+          "role": null,
+          "scrollHeight": 30,
+          "scrollWidth": 581,
+          "tag": "DIV",
+          "w": 581.2000122070312,
+          "x": 16,
+          "y": 589.5
+        },
+        {
+          "clientHeight": 710,
+          "clientWidth": 921,
+          "h": 709.6000366210938,
+          "label": null,
+          "overflowX": "auto",
+          "overflowY": "auto",
+          "role": null,
+          "scrollHeight": 710,
+          "scrollWidth": 921,
+          "tag": "DIV",
+          "w": 921,
+          "x": 615,
+          "y": 60.79999923706055
+        }
+      ],
+      "viewport": [
+        1536,
+        770
+      ]
+    },
+    {
+      "case": "original-shell-1366-options",
+      "dialogs": [
+        {
+          "clientHeight": 768,
+          "clientWidth": 575,
+          "h": 768,
+          "label": null,
+          "overflowX": "hidden",
+          "overflowY": "hidden",
+          "role": "dialog",
+          "scrollHeight": 768,
+          "scrollWidth": 575,
+          "tag": "DIV",
+          "w": 576,
+          "x": 856.6503295898438,
+          "y": 0
+        }
+      ],
+      "documentHeight": 768,
+      "documentWidth": 1366,
+      "focus": "Book a time",
+      "scrollOwners": [
+        {
+          "clientHeight": 768,
+          "clientWidth": 1366,
+          "h": 768,
+          "label": null,
+          "overflowX": "hidden",
+          "overflowY": "auto",
+          "role": null,
+          "scrollHeight": 768,
+          "scrollWidth": 1366,
+          "tag": "DIV",
+          "w": 1366.4000244140625,
+          "x": 0,
+          "y": 0
+        },
+        {
+          "clientHeight": 564,
+          "clientWidth": 545,
+          "h": 564.4000244140625,
+          "label": null,
+          "overflowX": "auto",
+          "overflowY": "auto",
+          "role": null,
+          "scrollHeight": 564,
+          "scrollWidth": 545,
+          "tag": "DIV",
+          "w": 545.3624877929688,
+          "x": 0,
+          "y": 60.79999923706055
+        },
+        {
+          "clientHeight": 407,
+          "clientWidth": 545,
+          "h": 406.8999938964844,
+          "label": "Cura conversation",
+          "overflowX": "auto",
+          "overflowY": "auto",
+          "role": null,
+          "scrollHeight": 407,
+          "scrollWidth": 545,
+          "tag": "DIV",
+          "w": 545.3624877929688,
+          "x": 0,
+          "y": 122.0999984741211
+        },
+        {
+          "clientHeight": 30,
+          "clientWidth": 513,
+          "h": 30.100000381469727,
+          "label": null,
+          "overflowX": "auto",
+          "overflowY": "auto",
+          "role": null,
+          "scrollHeight": 30,
+          "scrollWidth": 513,
+          "tag": "DIV",
+          "w": 513.3624877929688,
+          "x": 16,
+          "y": 587.1000366210938
+        },
+        {
+          "clientHeight": 707,
+          "clientWidth": 819,
+          "h": 707.2000122070312,
+          "label": null,
+          "overflowX": "auto",
+          "overflowY": "auto",
+          "role": null,
+          "scrollHeight": 707,
+          "scrollWidth": 819,
+          "tag": "DIV",
+          "w": 819.2374877929688,
+          "x": 547.1625366210938,
+          "y": 60.79999923706055
+        },
+        {
+          "clientHeight": 615,
+          "clientWidth": 527,
+          "h": 615.2000122070312,
+          "label": null,
+          "overflowX": "auto",
+          "overflowY": "auto",
+          "role": null,
+          "scrollHeight": 615,
+          "scrollWidth": 527,
+          "tag": "DIV",
+          "w": 527.2000122070312,
+          "x": 881.4503173828125,
+          "y": 128.8000030517578
+        }
+      ],
+      "viewport": [
+        1366,
+        768
+      ]
+    },
+    {
+      "case": "original-shell-1024-options",
+      "dialogs": [
+        {
+          "clientHeight": 768,
+          "clientWidth": 575,
+          "h": 768,
+          "label": null,
+          "overflowX": "hidden",
+          "overflowY": "hidden",
+          "role": "dialog",
+          "scrollHeight": 768,
+          "scrollWidth": 575,
+          "tag": "DIV",
+          "w": 576,
+          "x": 448,
+          "y": 0
+        }
+      ],
+      "documentHeight": 768,
+      "documentWidth": 1024,
+      "focus": "Book a time",
+      "scrollOwners": [
+        {
+          "clientHeight": 768,
+          "clientWidth": 1024,
+          "h": 768,
+          "label": null,
+          "overflowX": "hidden",
+          "overflowY": "auto",
+          "role": null,
+          "scrollHeight": 768,
+          "scrollWidth": 1024,
+          "tag": "DIV",
+          "w": 1024,
+          "x": 0,
+          "y": 0
+        },
+        {
+          "clientHeight": 516,
+          "clientWidth": 408,
+          "h": 516.4000244140625,
+          "label": null,
+          "overflowX": "auto",
+          "overflowY": "auto",
+          "role": null,
+          "scrollHeight": 516,
+          "scrollWidth": 408,
+          "tag": "DIV",
+          "w": 408.3999938964844,
+          "x": 0,
+          "y": 108.8000030517578
+        },
+        {
+          "clientHeight": 359,
+          "clientWidth": 408,
+          "h": 358.8999938964844,
+          "label": "Cura conversation",
+          "overflowX": "auto",
+          "overflowY": "auto",
+          "role": null,
+          "scrollHeight": 359,
+          "scrollWidth": 408,
+          "tag": "DIV",
+          "w": 408.3999938964844,
+          "x": 0,
+          "y": 170.10000610351562
+        },
+        {
+          "clientHeight": 30,
+          "clientWidth": 376,
+          "h": 30.100000381469727,
+          "label": null,
+          "overflowX": "auto",
+          "overflowY": "auto",
+          "role": null,
+          "scrollHeight": 30,
+          "scrollWidth": 376,
+          "tag": "DIV",
+          "w": 376.3999938964844,
+          "x": 16,
+          "y": 587.1000366210938
+        },
+        {
+          "clientHeight": 659,
+          "clientWidth": 614,
+          "h": 659.2000122070312,
+          "label": null,
+          "overflowX": "auto",
+          "overflowY": "auto",
+          "role": null,
+          "scrollHeight": 659,
+          "scrollWidth": 614,
+          "tag": "DIV",
+          "w": 613.7999877929688,
+          "x": 410.2000122070313,
+          "y": 108.8000030517578
+        },
+        {
+          "clientHeight": 615,
+          "clientWidth": 527,
+          "h": 615.2000122070312,
+          "label": null,
+          "overflowX": "auto",
+          "overflowY": "auto",
+          "role": null,
+          "scrollHeight": 615,
+          "scrollWidth": 527,
+          "tag": "DIV",
+          "w": 527.2000122070312,
+          "x": 472.8000183105469,
+          "y": 128.8000030517578
+        }
+      ],
+      "viewport": [
+        1024,
+        768
+      ]
+    },
+    {
+      "case": "original-shell-900-options",
+      "dialogs": [
+        {
+          "clientHeight": 1000,
+          "clientWidth": 575,
+          "h": 1000,
+          "label": null,
+          "overflowX": "hidden",
+          "overflowY": "hidden",
+          "role": "dialog",
+          "scrollHeight": 1000,
+          "scrollWidth": 575,
+          "tag": "DIV",
+          "w": 576,
+          "x": 324,
+          "y": 0
+        }
+      ],
+      "documentHeight": 1000,
+      "documentWidth": 900,
+      "focus": "Book a time",
+      "scrollOwners": [
+        {
+          "clientHeight": 1000,
+          "clientWidth": 900,
+          "h": 1000,
+          "label": null,
+          "overflowX": "hidden",
+          "overflowY": "auto",
+          "role": null,
+          "scrollHeight": 1000,
+          "scrollWidth": 900,
+          "tag": "DIV",
+          "w": 900,
+          "x": 0,
+          "y": 0
+        },
+        {
+          "clientHeight": 748,
+          "clientWidth": 359,
+          "h": 748.4000244140625,
+          "label": null,
+          "overflowX": "auto",
+          "overflowY": "auto",
+          "role": null,
+          "scrollHeight": 748,
+          "scrollWidth": 359,
+          "tag": "DIV",
+          "w": 358.8000183105469,
+          "x": 0,
+          "y": 108.8000030517578
+        },
+        {
+          "clientHeight": 591,
+          "clientWidth": 359,
+          "h": 590.9000244140625,
+          "label": "Cura conversation",
+          "overflowX": "auto",
+          "overflowY": "auto",
+          "role": null,
+          "scrollHeight": 591,
+          "scrollWidth": 359,
+          "tag": "DIV",
+          "w": 358.8000183105469,
+          "x": 0,
+          "y": 170.10000610351562
+        },
+        {
+          "clientHeight": 30,
+          "clientWidth": 327,
+          "h": 30.100000381469727,
+          "label": null,
+          "overflowX": "auto",
+          "overflowY": "auto",
+          "role": null,
+          "scrollHeight": 30,
+          "scrollWidth": 361,
+          "tag": "DIV",
+          "w": 326.8000183105469,
+          "x": 16,
+          "y": 819.1000366210938
+        },
+        {
+          "clientHeight": 891,
+          "clientWidth": 539,
+          "h": 891.2000122070312,
+          "label": null,
+          "overflowX": "auto",
+          "overflowY": "auto",
+          "role": null,
+          "scrollHeight": 891,
+          "scrollWidth": 539,
+          "tag": "DIV",
+          "w": 539.4000244140625,
+          "x": 360.6000061035156,
+          "y": 108.8000030517578
+        },
+        {
+          "clientHeight": 847,
+          "clientWidth": 527,
+          "h": 847.2000122070312,
+          "label": null,
+          "overflowX": "auto",
+          "overflowY": "auto",
+          "role": null,
+          "scrollHeight": 847,
+          "scrollWidth": 527,
+          "tag": "DIV",
+          "w": 527.2000122070312,
+          "x": 348.8000183105469,
+          "y": 128.8000030517578
+        }
+      ],
+      "viewport": [
+        900,
+        1000
+      ]
+    },
+    {
+      "case": "original-shell-900-sessions",
+      "dialogs": [],
+      "documentHeight": 1000,
+      "documentWidth": 900,
+      "focus": "Book a time",
+      "scrollOwners": [
+        {
+          "clientHeight": 1000,
+          "clientWidth": 900,
+          "h": 1000,
+          "label": null,
+          "overflowX": "hidden",
+          "overflowY": "auto",
+          "role": null,
+          "scrollHeight": 1000,
+          "scrollWidth": 900,
+          "tag": "DIV",
+          "w": 900,
+          "x": 0,
+          "y": 0
+        },
+        {
+          "clientHeight": 748,
+          "clientWidth": 359,
+          "h": 748.4000244140625,
+          "label": null,
+          "overflowX": "auto",
+          "overflowY": "auto",
+          "role": null,
+          "scrollHeight": 748,
+          "scrollWidth": 359,
+          "tag": "DIV",
+          "w": 358.8000183105469,
+          "x": 0,
+          "y": 108.8000030517578
+        },
+        {
+          "clientHeight": 591,
+          "clientWidth": 359,
+          "h": 590.9000244140625,
+          "label": "Cura conversation",
+          "overflowX": "auto",
+          "overflowY": "auto",
+          "role": null,
+          "scrollHeight": 591,
+          "scrollWidth": 359,
+          "tag": "DIV",
+          "w": 358.8000183105469,
+          "x": 0,
+          "y": 170.10000610351562
+        },
+        {
+          "clientHeight": 30,
+          "clientWidth": 327,
+          "h": 30.100000381469727,
+          "label": null,
+          "overflowX": "auto",
+          "overflowY": "auto",
+          "role": null,
+          "scrollHeight": 30,
+          "scrollWidth": 361,
+          "tag": "DIV",
+          "w": 326.8000183105469,
+          "x": 16,
+          "y": 819.1000366210938
+        },
+        {
+          "clientHeight": 891,
+          "clientWidth": 539,
+          "h": 891.2000122070312,
+          "label": null,
+          "overflowX": "auto",
+          "overflowY": "auto",
+          "role": null,
+          "scrollHeight": 891,
+          "scrollWidth": 539,
+          "tag": "DIV",
+          "w": 539.4000244140625,
+          "x": 360.6000061035156,
+          "y": 108.8000030517578
+        }
+      ],
+      "viewport": [
+        900,
+        1000
+      ]
+    },
+    {
+      "case": "320-dark-required-intake",
+      "dialogs": [
+        {
+          "clientHeight": 568,
+          "clientWidth": 319,
+          "h": 568,
+          "label": null,
+          "overflowX": "hidden",
+          "overflowY": "hidden",
+          "role": "dialog",
+          "scrollHeight": 568,
+          "scrollWidth": 319,
+          "tag": "DIV",
+          "w": 320,
+          "x": 0,
+          "y": 0
+        }
+      ],
+      "documentHeight": 568,
+      "documentWidth": 320,
+      "focus": "",
+      "scrollOwners": [
+        {
+          "clientHeight": 568,
+          "clientWidth": 320,
+          "h": 568,
+          "label": null,
+          "overflowX": "hidden",
+          "overflowY": "auto",
+          "role": null,
+          "scrollHeight": 568,
+          "scrollWidth": 320,
+          "tag": "DIV",
+          "w": 320,
+          "x": 0,
+          "y": 0
+        },
+        {
+          "clientHeight": 499,
+          "clientWidth": 305,
+          "h": 499.2000122070313,
+          "label": null,
+          "overflowX": "auto",
+          "overflowY": "auto",
+          "role": null,
+          "scrollHeight": 566,
+          "scrollWidth": 305,
+          "tag": "DIV",
+          "w": 320,
+          "x": 0,
+          "y": 68.80000305175781
+        },
+        {
+          "clientHeight": 463,
+          "clientWidth": 304,
+          "h": 463.2000122070313,
+          "label": null,
+          "overflowX": "auto",
+          "overflowY": "auto",
+          "role": null,
+          "scrollHeight": 727,
+          "scrollWidth": 304,
+          "tag": "DIV",
+          "w": 319.20001220703125,
+          "x": 0.800000011920929,
+          "y": 104.8000030517578
+        }
+      ],
+      "viewport": [
+        320,
+        568
+      ]
+    },
+    {
+      "case": "320-dark-intake-scrolled",
+      "dialogs": [
+        {
+          "clientHeight": 568,
+          "clientWidth": 319,
+          "h": 568,
+          "label": null,
+          "overflowX": "hidden",
+          "overflowY": "hidden",
+          "role": "dialog",
+          "scrollHeight": 568,
+          "scrollWidth": 319,
+          "tag": "DIV",
+          "w": 320,
+          "x": 0,
+          "y": 0
+        }
+      ],
+      "documentHeight": 568,
+      "documentWidth": 320,
+      "focus": "Message Northwind Studio",
+      "scrollOwners": [
+        {
+          "clientHeight": 568,
+          "clientWidth": 320,
+          "h": 568,
+          "label": null,
+          "overflowX": "hidden",
+          "overflowY": "auto",
+          "role": null,
+          "scrollHeight": 568,
+          "scrollWidth": 320,
+          "tag": "DIV",
+          "w": 320,
+          "x": 0,
+          "y": 0
+        },
+        {
+          "clientHeight": 499,
+          "clientWidth": 305,
+          "h": 499.2000122070313,
+          "label": null,
+          "overflowX": "auto",
+          "overflowY": "auto",
+          "role": null,
+          "scrollHeight": 566,
+          "scrollWidth": 305,
+          "tag": "DIV",
+          "w": 320,
+          "x": 0,
+          "y": 68.80000305175781
+        },
+        {
+          "clientHeight": 463,
+          "clientWidth": 304,
+          "h": 463.2000122070313,
+          "label": null,
+          "overflowX": "auto",
+          "overflowY": "auto",
+          "role": null,
+          "scrollHeight": 727,
+          "scrollWidth": 304,
+          "tag": "DIV",
+          "w": 319.20001220703125,
+          "x": 0.800000011920929,
+          "y": 104.8000030517578
+        }
+      ],
+      "viewport": [
+        320,
+        568
+      ]
+    },
+    {
+      "case": "390-unknown-held",
+      "dialogs": [
+        {
+          "clientHeight": 844,
+          "clientWidth": 390,
+          "h": 844,
+          "label": null,
+          "overflowX": "hidden",
+          "overflowY": "hidden",
+          "role": "dialog",
+          "scrollHeight": 844,
+          "scrollWidth": 390,
+          "tag": "DIV",
+          "w": 390.3999938964844,
+          "x": 0,
+          "y": 0
+        }
+      ],
+      "documentHeight": 844,
+      "documentWidth": 390,
+      "focus": "Let’s check your bookingThe original request still needs verification.",
+      "scrollOwners": [
+        {
+          "clientHeight": 844,
+          "clientWidth": 390,
+          "h": 844,
+          "label": null,
+          "overflowX": "hidden",
+          "overflowY": "auto",
+          "role": null,
+          "scrollHeight": 844,
+          "scrollWidth": 390,
+          "tag": "DIV",
+          "w": 390.3999938964844,
+          "x": 0,
+          "y": 0
+        },
+        {
+          "clientHeight": 775,
+          "clientWidth": 390,
+          "h": 775.2000122070312,
+          "label": null,
+          "overflowX": "auto",
+          "overflowY": "auto",
+          "role": null,
+          "scrollHeight": 775,
+          "scrollWidth": 390,
+          "tag": "DIV",
+          "w": 390.3999938964844,
+          "x": 0,
+          "y": 68.80000305175781
+        },
+        {
+          "clientHeight": 739,
+          "clientWidth": 390,
+          "h": 739.2000122070312,
+          "label": null,
+          "overflowX": "auto",
+          "overflowY": "auto",
+          "role": null,
+          "scrollHeight": 739,
+          "scrollWidth": 390,
+          "tag": "DIV",
+          "w": 389.6000061035156,
+          "x": 0.800000011920929,
+          "y": 104.8000030517578
+        }
+      ],
+      "viewport": [
+        390,
+        844
+      ]
+    },
+    {
+      "case": "200-percent-equivalent-683x384-reflow-not-native-zoom",
+      "dialogs": [
+        {
+          "clientHeight": 384,
+          "clientWidth": 575,
+          "h": 384,
+          "label": null,
+          "overflowX": "hidden",
+          "overflowY": "hidden",
+          "role": "dialog",
+          "scrollHeight": 384,
+          "scrollWidth": 575,
+          "tag": "DIV",
+          "w": 576,
+          "x": 107.20000457763672,
+          "y": 0
+        }
+      ],
+      "documentHeight": 384,
+      "documentWidth": 683,
+      "focus": "Return to Sessions",
+      "scrollOwners": [
+        {
+          "clientHeight": 384,
+          "clientWidth": 683,
+          "h": 384,
+          "label": null,
+          "overflowX": "hidden",
+          "overflowY": "auto",
+          "role": null,
+          "scrollHeight": 384,
+          "scrollWidth": 683,
+          "tag": "DIV",
+          "w": 683.2000122070312,
+          "x": 0,
+          "y": 0
+        },
+        {
+          "clientHeight": 315,
+          "clientWidth": 668,
+          "h": 315.20001220703125,
+          "label": null,
+          "overflowX": "auto",
+          "overflowY": "auto",
+          "role": null,
+          "scrollHeight": 440,
+          "scrollWidth": 668,
+          "tag": "DIV",
+          "w": 683.2000122070312,
+          "x": 0,
+          "y": 68.80000305175781
+        },
+        {
+          "clientHeight": 231,
+          "clientWidth": 512,
+          "h": 231.1999969482422,
+          "label": null,
+          "overflowX": "auto",
+          "overflowY": "auto",
+          "role": null,
+          "scrollHeight": 344,
+          "scrollWidth": 512,
+          "tag": "DIV",
+          "w": 527.2000122070312,
+          "x": 132,
+          "y": 128.8000030517578
+        }
+      ],
+      "viewport": [
+        683,
+        384
+      ]
+    }
+  ]
+}

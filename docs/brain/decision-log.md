@@ -1,5 +1,9 @@
 # Decision Log — chronological one-liners
 
+## October28 — EXP08 Team Hub: one Team Hub for every Solo account, now and future
+
+- **Owner direction (2026-10-28):** every Solo account has the same experience, a couple are used to test, and future Solo accounts get it too. For Team Hub this already holds by construction, and is now pinned: no per-account flag, copy or seed exists (doors gate on canonical Solo + active seat + Team conversations, default on; the six specialists are platform rows the agent turn alone reads; PAIGE's personality is compiled). Production read 2026-10-28: all six active Solo accounts pass identically. `exp08_team_hub_new_solo_parity.sql` (database-contract job) proves a new account from each of the four Solo producers reaches every Team Hub door. **Lesson:** parity is kept by having nothing per-account to drift, plus one test per producer; never by seeding or patching accounts one at a time. Whole-product parity stays with ANT-21.
+
 ## October28 — EXP03: no daily sending allowance on a business's marketing email
 
 - **Owner ruling (2026-10-27, billing):** each tenant's own usage is billed uncapped, with a 25% contribution target; PAIGE imposes no spending or sending stops. Applied here to the fixed 500-per-business-per-24-hours marketing email allowance (`email_campaign_daily_cap()`).

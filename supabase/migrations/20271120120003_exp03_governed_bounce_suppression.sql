@@ -18,10 +18,15 @@
 --
 --  1. Suppression. When a correlated event proves the address cannot receive, or the person complained,
 --     a row is written for the email's business:
---       (tenant_id, contact_id or address, 'email', 'bounce_hard' | 'complaint', 'webhook') ON CONFLICT DO NOTHING
---     with the campaign path's column use exactly: the contact when there is one (here: the message's own
---     contact, and only when that contact belongs to the message's business), otherwise the lower-cased
---     recipient address. "Proves it cannot receive" is:
+--       bounce_hard: (tenant_id, NULL, _comms_normalize_address('email', recipient), 'email', 'bounce_hard', 'webhook')
+--       complaint:   (tenant_id, contact or NULL, NULL or the normalised address, 'email', 'complaint', 'webhook')
+--     ON CONFLICT DO NOTHING. Keys (review M2): a dead address is a fact about the ADDRESS, so bounce_hard
+--     is keyed on the canonical normalised address (the writer normaliser pre-send's normalizeEmail mirrors:
+--     lower-cased, +tag folded) with NO contact — a contact-keyed row would hold every address the contact
+--     has, and correcting a mistyped address would not lift it. A complaint is the PERSON's answer, so it is
+--     keyed on the message's own contact (only when that contact belongs to the message's business), else
+--     on the normalised address. (The campaign applier still contact-keys its bounces; not changed here.)
+--     "Proves it cannot receive" is:
 --       · a bounce that is not 'blocked' — the campaign path's own definition of hard
 --         (`lower(btrim(coalesce(_bounce_type,''))) <> 'blocked'`, which this applier already maps to
 --         delivery state 'bounced'); a 'blocked' bounce is the receiving server refusing THIS email, not
@@ -34,18 +39,21 @@
 --     that carries such a fact, even when the email's own state does not move (a late or repeated report):
 --     the person's server or the person said it, exactly as the campaign path treats every correlated hard
 --     bounce and complaint. A replay adds nothing (ON CONFLICT DO NOTHING on the existing unique index).
---     The write is contained in its own block: if it is ever refused, the email's own outcome is still
---     recorded, a WARNING names the SQLSTATE, and the journalled effect gains '_suppression_failed' so the
+--     The write runs AFTER the email's own outcome is written and is contained in its own block: if it is
+--     ever refused, that outcome is still recorded, a WARNING names the SQLSTATE, and the journalled effect
+--     gains '_suppression_failed' (including after a refused message update, which now answers
+--     'message_update_refused_suppression_failed' instead of returning before the suppression step), so the
 --     failure is visible in sendgrid_receipt_processing.delivery_effect instead of silent. On success the
 --     returned effect is unchanged, so every reader of delivery_effect keeps its values.
 --  2. Clearer words. A drop because the address bounced before now says
 --     "Not sent: this address bounced before, so the email service is holding it. Check the address."
 --     (messages.error and the follow-up communication_log.error_message). Every other text is unchanged.
 --
--- TENANT SCOPE (§9). A suppression is one business's fact about its own contact. The row is written under
--- the message's tenant and the message's own contact (set_contact_scoped_tenant re-derives the tenant from
--- the contact; the contact is used only when it belongs to the message's business, so the row can never
--- land under another business). Nothing here blocks the address for any other business. NOT built,
+-- TENANT SCOPE (§9). A suppression is one business's fact. The row is written under the message's tenant:
+-- set_contact_scoped_tenant takes the tenant from the contact when there is one (a complaint's contact is
+-- used only when it belongs to the message's business), and otherwise — no contact, no signed-in session
+-- inside the webhook — keeps the explicit tenant_id this function supplies, so the row can never land under
+-- another business. Nothing here blocks the address for any other business. NOT built,
 -- deliberately: SendGrid's bounce list is account-wide, so once ANY PAIGE business's email to an address
 -- bounces, SendGrid drops every other business's email to it ("Bounced Address") — that cross-business
 -- effect exists at the provider, is not created by this file, and is an owner decision (see the decision
@@ -80,10 +88,17 @@
 --       the governed door's readiness maps it to BLOCKED_SUPPRESSED, whose words already read "They
 --       unsubscribed or this address bounced" in src/pages/admin/conversations/governedReply.ts and
 --       governedSend.ts — unchanged); campaign plan/dispatch suppression re-checks; the customer-portal
---       consent reads (bounce_hard → EMAIL_UNDELIVERABLE); the Conversations contact panel.
+--       consent reads (bounce_hard → EMAIL_UNDELIVERABLE); set_contact_channel_suppression's lift (deletes
+--       only rows keyed on that contact — an address-keyed bounce is NOT lifted by the Conversations "Do not
+--       contact" switch; a wrongly held address has no product clear yet, owner decision in the decision log);
+--       the Conversations inbox (src/pages/admin/ClientsConversations.tsx) and contact rail
+--       (src/pages/admin/conversations/ContactCardRail.tsx), which read the contact's rows by contact_id and
+--       said "opted out" for every reason — changed in the same change set to read the reason (a bounce says
+--       the address bounced, a complaint says they marked it as spam) and to also read this business's
+--       address-keyed rows for the contact's current main email.
 --     · proofs: supabase/tests/exp03_governed_bounce_suppression.sql (new, this file's own proof);
---       supabase/tests/exp03_resend_retired.sql §1b (its governed hard bounce now suppresses contact A —
---       asserted there, then removed as a stated fixture step so its campaign sections keep contact A).
+--       supabase/tests/exp03_resend_retired.sql §1b (its governed hard bounce now suppresses contact A's
+--       address — asserted there, then removed as a stated fixture step so its campaign sections keep A).
 -- ============================================================================
 
 CREATE OR REPLACE FUNCTION public._sendgrid_apply_governed_receipt(
@@ -111,7 +126,9 @@ DECLARE
   settled   boolean := false;
   drop_why  text;     -- 20271120120003: a drop's provider reason, normalised for comparison
   supp_why  text;     -- 20271120120003: 'bounce_hard' | 'complaint' | NULL
-  supp_who  uuid;     -- 20271120120003: the message's own contact, when it belongs to the message's business
+  supp_who  uuid;     -- 20271120120003: a complaint's contact, when it belongs to the message's business
+  supp_failed boolean := false;  -- 20271120120003: the suppression write was refused
+  refused   boolean := false;    -- the message update was refused (42501); answered after the suppression step
 BEGIN
   SELECT * INTO m FROM public.messages WHERE provider_message_id = _sg_message_id FOR UPDATE;
 
@@ -256,23 +273,6 @@ BEGIN
     ELSE effect := 'stale_ignored'; END IF;
   END IF;
 
-  -- 20271120120003: this business's do-not-send list learns it, so the pre-send check holds the next
-  -- attempt. Written for this message's business only (§9); the campaign path's columns exactly: the
-  -- contact when there is one, otherwise the address. Contained: a refused write never loses the email's
-  -- own outcome below, and it is never silent (WARNING + '_suppression_failed' in the journalled effect).
-  IF supp_why IS NOT NULL THEN
-    SELECT c.id INTO supp_who FROM public.clients c WHERE c.id = m.contact_id AND c.tenant_id = m.tenant_id;
-    BEGIN
-      INSERT INTO public.paige_suppressions (tenant_id, contact_id, address_normalized, channel, reason, source)
-      VALUES (m.tenant_id, supp_who, CASE WHEN supp_who IS NULL THEN lower(btrim(b->>'recipient')) END, 'email',
-              supp_why, 'webhook')
-      ON CONFLICT DO NOTHING;
-    EXCEPTION WHEN OTHERS THEN
-      RAISE WARNING '_sendgrid_apply_governed_receipt: suppression (%) for message % not written: % %', supp_why, m.id, SQLSTATE, SQLERRM;
-      effect := effect || '_suppression_failed';
-    END;
-  END IF;
-
   IF nb IS DISTINCT FROM b OR new_status IS DISTINCT FROM m.status THEN
     nb := nb || jsonb_build_object('delivery_updated_at', now());
     BEGIN
@@ -283,10 +283,11 @@ BEGIN
       -- A row still reading 'sent' passes the provider-execution guard on every update; if this
       -- business's sending was switched off after the send, the guard refuses (42501). The event stays
       -- journalled and in email_send_log; the message keeps its last state, and the journal says so.
-      RETURN jsonb_build_object('correlation', 'correlated', 'reason', NULL, 'message_id', m.id, 'effect', 'message_update_refused');
+      -- 20271120120003: answered below, after the suppression step, so that answer carries its outcome too.
+      refused := true;
     END;
     -- The contact history row (written when the reply was handed over) follows a negative outcome.
-    IF new_status = 'failed' AND m.status IS DISTINCT FROM 'failed' THEN
+    IF NOT refused AND new_status = 'failed' AND m.status IS DISTINCT FROM 'failed' THEN
       UPDATE public.communication_log
          SET status = CASE WHEN incoming = 'dropped' THEN 'failed' ELSE 'bounced' END,
              error_message = new_error
@@ -294,7 +295,35 @@ BEGIN
     END IF;
   END IF;
 
+  -- 20271120120003: this business's do-not-send list learns it, so the pre-send check holds the next
+  -- attempt. Written for this message's business only (§9). A dead address is a fact about the ADDRESS,
+  -- so bounce_hard is keyed on the canonical normalised address with no contact: correcting a contact's
+  -- address is not held by the old one, and the contact's other addresses are not held. A complaint is
+  -- the PERSON's answer, so it is keyed on the message's contact (only when that contact belongs to the
+  -- message's business), else on the normalised address. Runs after the email's own outcome is written and
+  -- is contained, so a refused write never loses that outcome and is never silent: a WARNING names the
+  -- SQLSTATE and the journalled effect gains '_suppression_failed' (also on a refused message update).
+  IF supp_why IS NOT NULL THEN
+    IF supp_why = 'complaint' THEN
+      SELECT c.id INTO supp_who FROM public.clients c WHERE c.id = m.contact_id AND c.tenant_id = m.tenant_id;
+    END IF;
+    BEGIN
+      INSERT INTO public.paige_suppressions (tenant_id, contact_id, address_normalized, channel, reason, source)
+      VALUES (m.tenant_id, supp_who,
+              CASE WHEN supp_who IS NULL THEN public._comms_normalize_address('email', b->>'recipient') END,
+              'email', supp_why, 'webhook')
+      ON CONFLICT DO NOTHING;
+    EXCEPTION WHEN OTHERS THEN
+      RAISE WARNING '_sendgrid_apply_governed_receipt: suppression (%) for message % not written: % %', supp_why, m.id, SQLSTATE, SQLERRM;
+      supp_failed := true;
+    END;
+  END IF;
+
+  IF refused THEN
+    RETURN jsonb_build_object('correlation', 'correlated', 'reason', NULL, 'message_id', m.id,
+                              'effect', 'message_update_refused' || CASE WHEN supp_failed THEN '_suppression_failed' ELSE '' END);
+  END IF;
   RETURN jsonb_build_object('correlation', 'correlated', 'reason', CASE WHEN settled THEN 'settled_by_provider_event' END,
-                            'message_id', m.id, 'effect', effect);
+                            'message_id', m.id, 'effect', effect || CASE WHEN supp_failed THEN '_suppression_failed' ELSE '' END);
 END $$;
 REVOKE ALL ON FUNCTION public._sendgrid_apply_governed_receipt(text, text, text, timestamptz, text, text, text, text, text) FROM PUBLIC, anon, authenticated, service_role;

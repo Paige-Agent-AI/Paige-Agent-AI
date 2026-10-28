@@ -1005,11 +1005,13 @@ Both closed as superseded with links; their branches are kept.
   Found on production 2026-10-28: a hard bounce at one Solo business and, seven minutes later, SendGrid's
   account-wide "Bounced Address" drop at a second business, to the same address — both failed, neither wrote a
   suppression, so the door's pre-send check could not hold the next try. The governed-reply applier now writes a
-  per-business `paige_suppressions` row (`bounce_hard` for a non-blocked bounce or a "Bounced Address"/"Invalid"
-  drop, `complaint` for a spam report; contact-keyed as campaigns are) and a "bounced before" drop says so in plain
-  words. Never across businesses; SendGrid's account-wide bounce list is a separate owner decision (decision log
-  2026-10-28). The two production rows are not back-filled. Proof: `exp03_governed_bounce_suppression.sql` (30/30;
-  11 of its assertions fail on the old body).
+  per-business `paige_suppressions` row — `bounce_hard` (a non-blocked bounce or a "Bounced Address"/"Invalid" drop)
+  keyed on the normalised ADDRESS, `complaint` on the contact — and a "bounced before" drop says so in plain words.
+  The Conversations composer and contact rail now say why from the reason (a bounce: "This email address bounced.
+  Check it, or use another address."; never "opted out"), and a corrected address is not held. Never across
+  businesses; SendGrid's account-wide bounce list, a row outliving SendGrid's entry, and a clear for a wrongly held
+  address are owner decisions (decision log 2026-10-28). The two production rows are not back-filled. Proof:
+  `exp03_governed_bounce_suppression.sql` 45/45; evidence `docs/evidence/ui-delivery/exp03-governed-bounce-suppression.md`.
 
 **Open, in order:** the New conversation dialog and draft approval on the door; chat `send_at` and a "When" row
 on the approval card (also what NEXUS needs in Team Hub);

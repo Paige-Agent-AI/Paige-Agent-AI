@@ -36,7 +36,7 @@ import {
 import {
   User, UserPlus, Mail, Phone, Clock, Copy, ShieldAlert, BellOff, PanelRightClose,
   Send, Loader2, ExternalLink, UserRound, Sparkles, Bell, ClipboardList,
-  FileSignature, CreditCard, Zap,
+  FileSignature, CreditCard, Zap, MailWarning,
 } from "lucide-react";
 import { CallButton } from "@/components/admin/voice/CallButton";
 import { ContactPortalPanel } from "@/components/admin/contacts/ContactPortalPanel";
@@ -48,6 +48,7 @@ import {
   type ClientContact, type MessageRow, type Label, type ChannelType, type Suppression,
   CHANNEL_ICON, CHANNEL_LABEL, CREATED_VIA_LABEL, LABEL_COLOR, bodyPreview, contactNameFromClient,
 } from "./inbox-shared";
+import { BOUNCED_WORDS, REPORTED_WORDS, kindsOn, railSuppressionLines, switchable } from "./suppressionWords";
 import { AgentsLog } from "./AgentsLog";
 import { TagPicker } from "@/components/admin/contacts/TagPicker";
 import { ContactDealsSection } from "@/components/admin/contacts/ContactDealsSection";
@@ -302,15 +303,21 @@ export function ContactCardRail({
   }, [contact?.id]);
 
   useEffect(() => {
-    setEmailDnd(suppressions.some((s) => s.channel === "email"));
-    setSmsDnd(suppressions.some((s) => s.channel === "sms"));
+    // The switch shows only what its writer can change: rows keyed on this contact. A governed email's bounce is
+    // kept on the business's row for the ADDRESS (20271120120003); it is shown, with why, but is not "paused".
+    setEmailDnd(suppressions.some((s) => s.channel === "email" && switchable(s)));
+    setSmsDnd(suppressions.some((s) => s.channel === "sms" && switchable(s)));
   }, [suppressions]);
 
   const optedOut = suppressions.length > 0;
+  // What each row MEANS (20271120120003): a bounce is the address, a spam report the person's, the rest opt-outs.
+  const reasonLines = railSuppressionLines(suppressions);
+  const optedOutRows = suppressions.filter((s) => s.reason !== "bounce_hard" && s.reason !== "complaint");
   // A channel the CONTACT turned off (their portal account, a STOP reply, their unsubscribe link, a spam
   // report) can't be lifted from here: only they can turn it back on (E09 Slice 6, D3 / reviewer B1).
   const heldByContact = (ch: "email" | "sms") => suppressions.some((s) => s.channel === ch && CONTACT_HELD_REASONS.has(s.reason));
-  const heldNote = (ch: "email" | "sms") => !heldByContact(ch) ? undefined
+  const heldNote = (ch: "email" | "sms") => !heldByContact(ch)
+    ? (kindsOn(suppressions, ch).includes("bounced") ? `${BOUNCED_WORDS[ch].line} ${BOUNCED_WORDS[ch].hint}` : undefined)
     : suppressions.some((s) => s.channel === ch && s.reason === "complaint") ? REPORTED_NOTE : HELD_NOTE;
   const dnd = !!contact?.dnd_active;
 
@@ -493,13 +500,35 @@ export function ContactCardRail({
           {(optedOut || dnd) && (
             <div className="space-y-1.5 rounded-lg border border-[hsl(var(--warning)/0.4)] bg-[hsl(var(--warning)/0.08)] p-2.5">
               {optedOut && (
-                <div className="flex items-start gap-2">
-                  <ShieldAlert className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[hsl(var(--warning))]" />
-                  <div className="text-[11px] text-foreground">
-                    Opted out of{" "}
-                    {[...new Set(suppressions.map((s) => CHANNEL_LABEL[s.channel as ChannelType] ?? s.channel))].join(" & ")}
-                    <span className="text-muted-foreground"> — Paige won't send on {suppressions.length > 1 ? "these" : "this"}.</span>
-                  </div>
+                <div data-suppression-signal className="space-y-1.5">
+                  {reasonLines.optedOut.length > 0 && (
+                    <div className="flex items-start gap-2">
+                      <ShieldAlert className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[hsl(var(--warning))]" />
+                      <div className="text-[11px] text-foreground">
+                        Opted out of{" "}
+                        {reasonLines.optedOut.map((ch) => CHANNEL_LABEL[ch as ChannelType] ?? ch).join(" & ")}
+                        <span className="text-muted-foreground"> — Paige won't send on {optedOutRows.length > 1 ? "these" : "this"}.</span>
+                      </div>
+                    </div>
+                  )}
+                  {reasonLines.reported.map((ch) => (
+                    <div key={`reported-${ch}`} className="flex items-start gap-2">
+                      <ShieldAlert className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[hsl(var(--warning))]" />
+                      <div className="text-[11px] text-foreground">
+                        {REPORTED_WORDS[ch].line}
+                        <span className="text-muted-foreground"> — {REPORTED_WORDS[ch].hint}</span>
+                      </div>
+                    </div>
+                  ))}
+                  {reasonLines.bounced.map((ch) => (
+                    <div key={`bounced-${ch}`} className="flex items-start gap-2">
+                      <MailWarning className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[hsl(var(--warning))]" />
+                      <div className="text-[11px] text-foreground">
+                        {BOUNCED_WORDS[ch].line}
+                        <span className="text-muted-foreground"> {BOUNCED_WORDS[ch].hint}</span>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )}
               {dnd && (

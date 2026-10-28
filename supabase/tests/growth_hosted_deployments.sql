@@ -148,4 +148,19 @@ DO $$
     END;
   END $$;
 
+-- 6. The autonomy catalogue carries the two governed tools (visible + turnable-off) ----------
+SET ROLE authenticated;
+DO $$
+  DECLARE
+    rows text;
+  BEGIN
+    SELECT string_agg(tool_key, ',' ORDER BY tool_key) INTO rows
+      FROM public.list_tool_autonomy(NULL)
+     WHERE tool_key IN ('growth_hosting_deploy','growth_hosting_recover');
+    IF rows IS DISTINCT FROM 'growth_hosting_deploy,growth_hosting_recover' THEN
+      RAISE EXCEPTION 'hosting tools missing from the autonomy catalogue: %', coalesce(rows, 'none');
+    END IF;
+  END $$;
+RESET ROLE;
+
 SELECT 'growth_hosted_deployments contract: PASS' AS result;

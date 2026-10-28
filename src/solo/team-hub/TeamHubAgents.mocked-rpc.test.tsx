@@ -12,6 +12,7 @@ import { act } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { TeamHubWorkspace } from "./TeamHubWorkspace";
+import { AGENT_WRITING_IDLE_RESET_MS, AGENT_WRITING_POLL_MAX_MS, AGENT_WRITING_POLL_MS, REFRESH_INTERVAL_MS } from "./useTeamHub";
 
 const TENANT = "tenant-a";
 const ME = "u-me";
@@ -76,15 +77,17 @@ function backend(name: string, params: Row) {
       return { ok: true };
     case "team_hub_post_message": {
       const message = msg({ id: `m-sent-${calls.length}`, author_user_id: ME, body: String(params.p_body).trim(), mentions: params.p_mention_ids ?? [],
-        parent_message_id: params.p_parent_message_id ?? null, agent_mentions: params.p_agent_mention_keys ?? [] });
+        parent_message_id: params.p_parent_message_id ?? null, agent_mentions: params.p_agent_mention_keys ?? [],
+        ...(params.p_broadcast_mention ? { broadcast: params.p_broadcast_mention } : {}) });
       if (params.p_parent_message_id) (db.replies[String(params.p_parent_message_id)] ??= []).push(message);
       else (db.messages[String(params.p_channel_id)] ??= []).push(message);
       return { ok: true, duplicate: false, message };
     }
     case "team_hub_agent_turn_states": {
-      // A double of the read's contract (proved in exp08_team_hub_agent_turn_states.sql): the asker reads
-      // every state of their own questions; anyone else only the two private-part lines and who a reply
-      // suggested bringing in, without the line of context.
+      // A double of the read's contract (proved in exp08_team_hub_agent_turn_states.sql and, for A1c,
+      // exp08_team_hub_a1c.sql): the asker reads every state of their own questions; anyone else only a
+      // reply being written (A1c), the two private-part lines and who a reply suggested bringing in,
+      // without the line of context.
       const cid = String(params.p_channel_id);
       const c = db.conversations.find((item) => item.id === cid);
       if (!c) return { ok: false, code: "not_found" };
@@ -99,7 +102,8 @@ function backend(name: string, params: Row) {
           const fact = { state: answered ? "replied" : "none", private_part: false, asker_name: "Teammate", ...db.states[`${id}:${key}`] } as Row;
           const mine = question.author_user_id === ME;
           const bring = Array.isArray(fact.bring_in) ? (mine ? fact.bring_in : (fact.bring_in as Row[]).map((item) => ({ agent: item.agent }))) : undefined;
-          const approved = fact.private_part === true && (fact.state === "answering" || fact.state === "replied_privately");
+          const approved = (fact.private_part === true && (fact.state === "answering" || fact.state === "replied_privately"))
+            || (fact.private_part !== true && fact.state === "answering");
           if (!mine && !approved && !bring) continue;
           states.push({ message_id: id, agent_key: key, state: mine || approved ? fact.state : "replied", private_part: fact.private_part,
             asker_name: fact.asker_name, ...(bring ? { bring_in: bring } : {}) });
@@ -322,6 +326,9 @@ describe("flow 9: when an agent doesn't answer", () => {
     const fail = host.querySelector(".th-ag-fail")!;
     // The line, then its one button: the recovery is never said twice.
     expect(fail.textContent).toBe(`${line}${action ?? ""}`);
+    // A1c: a failure row is a status and carries no agent colour.
+    expect(fail.hasAttribute("data-ag")).toBe(false);
+    expect(fail.querySelector("[data-ag]")).toBeNull();
     expect(host.querySelector(".th-msg--agent")).toBeNull();
     if (action) {
       answers.push(posted(reply("cura", String(turnBody(0).sourceMessageId), "Two people start Monday.")));
@@ -378,6 +385,7 @@ describe("after a reload: the turn's true state, never a failure for a turn that
     expect(line.textContent).toBe("MENTOR may still be replying.Check again");
     // Not a failure: a neutral clock, never the warning triangle.
     expect(line.classList.contains("th-ag-fail--pending")).toBe(true);
+    expect(line.hasAttribute("data-ag")).toBe(false);
     expect(line.querySelector("svg.lucide-clock")).not.toBeNull();
     expect(line.querySelector("svg.lucide-triangle-alert")).toBeNull();
   });
@@ -557,6 +565,10 @@ describe("flow 5: the private part, answered in the asker's DM", () => {
     await flush();
     const note = host.querySelector(".th-msg--agent .th-ag-priv")!;
     expect(note.textContent).toContain("MERIT couldn't finish your private answer.");
+    // A1c owner ruling: the failed box is neutral. It carries no agent, so no agent tint or ring reaches it.
+    expect(note.hasAttribute("data-ag")).toBe(false);
+    expect(note.classList.contains("th-ag-priv--status")).toBe(true);
+    expect(note.querySelector("[data-ag]")).toBeNull();
     answers.push(posted(reply("merit", null, "Two invoices.", { id: "r-dm" }), { intent: "dm", conversation_id: "c-dm-merit" }));
     await click(button(note as HTMLElement, "Ask again"));
     // Ask again re-runs the private part only, not the channel reply.
@@ -585,6 +597,11 @@ describe("flow 5: the private part, answered in the asker's DM", () => {
     const host = await mount();
     const note = () => rowOf(host, "r-merit-m-ask")!.querySelector<HTMLElement>(".th-ag-priv")!;
     expect(note().textContent).toContain("MERIT may still be writing your private answer.");
+    // §28: the unknown box keeps MERIT's tint exactly as A1b had it; only the FAILED box is neutral.
+    expect(note().getAttribute("data-ag")).toBe("merit");
+    expect(note().classList.contains("th-ag-priv--status")).toBe(false);
+    expect(note().classList.contains("th-ag-priv--failed")).toBe(false);
+    expect(note().querySelector("svg.lucide-lock")).not.toBeNull();
     delete db.override.team_hub_agent_turn_states;
     db.states = { "m-ask:merit": { state: "replied_privately", private_part: true } };
     await click(button(note(), "Check again"));
@@ -611,6 +628,257 @@ describe("flow 5: the private part, answered in the asker's DM", () => {
     expect(row.querySelector(".th-text--fixed")!.textContent).toBe(FIXED);
     expect(row.querySelector(".th-ag-priv")).toBeNull();
     expect(button(row, /Open DM/)).toBeUndefined();
+  });
+});
+
+describe("a turn another tab owns is settled by the state read, never writing forever (Codex P2, A1c)", () => {
+  const focusRead = async () => { await act(async () => { window.dispatchEvent(new Event("focus")); }); await flush(); };
+  const ask = async (host: HTMLElement, text = "@CURA who's onboarding?") => {
+    await type(composer(host), text);
+    await press(composer(host), "Enter");
+    await flush();
+    return String(turnBody(0).sourceMessageId);
+  };
+
+  it("in_flight, then the read says it ended without a post: the failure line with Ask again, which asks the same request", async () => {
+    answers.push({ ok: false, outcome: "in_flight", agent: "cura" });
+    const host = await mount();
+    const question = await ask(host);
+    expect(host.querySelector(".th-ag-typing")!.textContent).toBe("CURA is writing…");
+    db.states = { [`${question}:cura`]: { state: "failed" } };
+    await focusRead();
+    expect(host.querySelector(".th-ag-typing")).toBeNull();
+    const fail = rowOf(host, question)!.querySelector(".th-ag-fail")!;
+    expect(fail.textContent).toBe("CURA didn't reply.Ask again");
+    answers.push(posted(reply("cura", question, "Two people start Monday.")));
+    await click(button(fail as HTMLElement, "Ask again"));
+    expect(turnBody(1)).toEqual(turnBody(0));
+    expect(host.textContent).toContain("Two people start Monday.");
+  });
+
+  it("in_flight, then the other tab's reply posts: the row ends and the reply shows", async () => {
+    answers.push({ ok: false, outcome: "in_flight", agent: "cura" });
+    const host = await mount();
+    const question = await ask(host);
+    db.messages["c-launch"].push(reply("cura", question, "Two people start Monday."));
+    await focusRead();
+    expect(host.querySelector(".th-ag-typing")).toBeNull();
+    expect(host.querySelector(".th-ag-fail")).toBeNull();
+    expect(host.textContent).toContain("Two people start Monday.");
+  });
+
+  it("in_flight while the read still says answering keeps CURA is writing…", async () => {
+    answers.push({ ok: false, outcome: "in_flight", agent: "cura" });
+    const host = await mount();
+    const question = await ask(host);
+    db.states = { [`${question}:cura`]: { state: "answering" } };
+    await focusRead();
+    expect(host.querySelectorAll(".th-ag-typing")).toHaveLength(1);
+    expect(host.querySelector(".th-ag-fail")).toBeNull();
+  });
+
+  it("this tab's own running turn is never ended by a read, even one that says failed", async () => {
+    const pending = deferred();
+    answers.push(pending.answer);
+    const host = await mount();
+    const question = await ask(host);
+    db.states = { [`${question}:cura`]: { state: "failed" } };
+    await focusRead();
+    expect(host.querySelector(".th-ag-typing")!.textContent).toBe("CURA is writing…");
+    expect(host.querySelector(".th-ag-fail")).toBeNull();
+    await act(async () => pending.resolve(posted(reply("cura", question, "Two people start Monday."))));
+    await flush();
+    expect(host.querySelector(".th-ag-typing")).toBeNull();
+    expect(host.textContent).toContain("Two people start Monday.");
+  });
+
+  it("a read issued before the turn went in_flight cannot settle it", async () => {
+    // The first state read is held until after this tab hears in_flight; it says failed (stale).
+    let release!: () => void;
+    const gate = new Promise<void>((done) => { release = done; });
+    let held = false;
+    const impl = mocks.rpc.getMockImplementation()!;
+    mocks.rpc.mockImplementation(async (name: string, params: Row) => {
+      if (name === "team_hub_agent_turn_states" && !held && (params.p_message_ids as string[]).some((id) => id.startsWith("m-sent"))) {
+        held = true;
+        const stale = { ok: true, states: (params.p_message_ids as string[]).map((id) => ({ message_id: id, agent_key: "cura", state: "failed", private_part: false, asker_name: "Teammate" })) };
+        await gate;
+        calls.push({ name, params });
+        return { data: stale, error: null };
+      }
+      return impl(name, params);
+    });
+    const pending = deferred();
+    answers.push(pending.answer);
+    const host = await mount();
+    const question = await ask(host);
+    // The read is out (held) while this tab's turn is still running; then the turn answers in_flight.
+    expect(held).toBe(true);
+    await act(async () => pending.resolve({ ok: false, outcome: "in_flight", agent: "cura" }));
+    await flush();
+    await act(async () => { release(); await gate; });
+    await flush();
+    expect(host.querySelector(".th-ag-typing")!.textContent).toBe("CURA is writing…");
+    expect(rowOf(host, question)!.querySelector(".th-ag-fail")).toBeNull();
+    // A read issued after it began waiting does settle it.
+    db.states = { [`${question}:cura`]: { state: "failed" } };
+    await focusRead();
+    expect(rowOf(host, question)!.querySelector(".th-ag-fail")!.textContent).toBe("CURA didn't reply.Ask again");
+  });
+
+  const privateFirst = (host: HTMLElement) => () => String(turnBody(0).sourceMessageId);
+  it("a private part left writing (another tab runs it) that the read says failed: couldn't finish, with Ask again, in the channel and in the DM", async () => {
+    const host = await mount();
+    const question = privateFirst(host);
+    answers.push(() => Promise.resolve(posted(reply("merit", question(), FIXED),
+      { private_followup: { conversationId: "c-launch", sourceMessageId: question(), threadRootId: null, agent: "merit", privateFollowUp: true, dm_conversation_id: "c-dm-merit" } })));
+    answers.push({ ok: false, outcome: "in_flight", agent: "merit" });
+    await type(composer(host), "@MERIT what did Harper & Co. pay us?");
+    await press(composer(host), "Enter");
+    await flush();
+    const note = () => host.querySelector<HTMLElement>(".th-msg--agent .th-ag-priv")!;
+    expect(note().textContent).toContain("MERIT is writing your answer in your DM.");
+    // The asker goes to the DM while it is being written: the channel's state is still read there.
+    await click(button(note(), /Open DM/));
+    expect(host.querySelector(".th-ag-typing")!.textContent).toBe("MERIT is writing…");
+    db.states = { [`${question()}:merit`]: { state: "failed", private_part: true } };
+    await focusRead();
+    expect(calls.filter((call) => call.name === "team_hub_agent_turn_states").at(-1)!.params).toMatchObject({ p_channel_id: "c-launch" });
+    expect(host.querySelector(".th-ag-typing")).toBeNull();
+    const fail = host.querySelector(".th-ag-fail")!;
+    expect(fail.textContent).toBe("MERIT couldn't finish your private answer.Ask again");
+    answers.push(posted(reply("merit", null, "Two invoices.", { id: "r-dm" }), { intent: "dm", conversation_id: "c-dm-merit" }));
+    await click(button(fail as HTMLElement, "Ask again"));
+    expect(turnBody(2)).toEqual({ ...turnBody(0), privateFollowUp: true });
+  });
+
+  it("a private part left writing that the read says replied privately: your answer is in your DM", async () => {
+    const host = await mount();
+    const question = privateFirst(host);
+    answers.push(() => Promise.resolve(posted(reply("merit", question(), FIXED),
+      { private_followup: { conversationId: "c-launch", sourceMessageId: question(), threadRootId: null, agent: "merit", privateFollowUp: true, dm_conversation_id: null } })));
+    answers.push({ ok: false, outcome: "in_flight", agent: "merit" });
+    await type(composer(host), "@MERIT what did Harper & Co. pay us?");
+    await press(composer(host), "Enter");
+    await flush();
+    const note = () => host.querySelector<HTMLElement>(".th-msg--agent .th-ag-priv")!;
+    expect(note().textContent).toContain("MERIT is writing your answer in your DM.");
+    db.states = { [`${question()}:merit`]: { state: "replied_privately", private_part: true } };
+    await focusRead();
+    expect(note().textContent).toContain("Your answer is in your DM with MERIT. Only you can see it.");
+  });
+
+  // The conversation read is held so the screen shows only what the STATE read settled: the reply
+  // itself cannot arrive and hide a writing row or a failure line that should not be there.
+  const holdConversationReads = () => {
+    let release!: () => void;
+    const gate = new Promise<void>((done) => { release = done; });
+    let holding = false;
+    const impl = mocks.rpc.getMockImplementation()!;
+    mocks.rpc.mockImplementation(async (name: string, params: Row) => {
+      if (holding && name === "team_hub_list_messages") await gate;
+      return impl(name, params);
+    });
+    return { hold: () => { holding = true; }, release: async () => { holding = false; await act(async () => { release(); await gate; }); await flush(); } };
+  };
+  it.each([
+    ["answering", "MERIT is writing your answer in your DM. Only you can see it."],
+    ["replied_privately", "Your answer is in your DM with MERIT. Only you can see it."],
+    ["failed", "MERIT couldn't finish your private answer."],
+  ])("in_flight, and the other tab's reply has a private part (%s): the row ends as replied, never writing forever and never didn't reply", async (state, note) => {
+    // The read reports the DM turn's state for a reply with a private part, never `replied`: the
+    // channel reply posted all the same, so this tab's in_flight row must end.
+    answers.push({ ok: false, outcome: "in_flight", agent: "merit" });
+    const reads = holdConversationReads();
+    const host = await mount();
+    const question = await ask(host, "@MERIT what did Harper & Co. pay us?");
+    expect(host.querySelector(".th-ag-typing")!.textContent).toBe("MERIT is writing…");
+    db.messages["c-launch"].push(reply("merit", question, `Quick one for everyone: dates close faster.\n\n${FIXED}`));
+    db.states = { [`${question}:merit`]: { state, private_part: true } };
+    reads.hold();
+    await focusRead();
+    expect(calls.filter((call) => call.name === "team_hub_agent_turn_states").at(-1)!.params.p_message_ids).toContain(question);
+    expect(host.querySelector(".th-ag-typing")).toBeNull();
+    expect(host.textContent).not.toContain("MERIT didn't reply.");
+    expect(rowOf(host, question)!.querySelector(".th-ag-fail")).toBeNull();
+    await reads.release();
+    const row = host.querySelector<HTMLElement>(".th-msg--agent")!;
+    expect(row.querySelector(".th-text--fixed")!.textContent).toBe(FIXED);
+    expect(row.querySelector(".th-ag-priv")!.textContent).toContain(note);
+    expect(host.querySelector(".th-ag-typing")).toBeNull();
+    expect(host.textContent).not.toContain("MERIT didn't reply.");
+    expect(turns).toHaveLength(1);
+  });
+
+  it("this tab's own Ask again on a private part is never ended by a read, even one that says failed", async () => {
+    const host = await mount();
+    const question = privateFirst(host);
+    answers.push(() => Promise.resolve(posted(reply("merit", question(), FIXED),
+      { private_followup: { conversationId: "c-launch", sourceMessageId: question(), threadRootId: null, agent: "merit", privateFollowUp: true, dm_conversation_id: "c-dm-merit" } })));
+    answers.push({ ok: false, outcome: "no_reply", agent: "merit" });
+    await type(composer(host), "@MERIT what did Harper & Co. pay us?");
+    await press(composer(host), "Enter");
+    await flush();
+    const note = () => host.querySelector<HTMLElement>(".th-msg--agent .th-ag-priv")!;
+    expect(note().textContent).toContain("MERIT couldn't finish your private answer.");
+    // The server still says the earlier DM turn failed; this tab asks for the private part again.
+    db.states = { [`${question()}:merit`]: { state: "failed", private_part: true } };
+    const pending = deferred();
+    answers.push(pending.answer);
+    await click(button(note(), "Ask again"));
+    expect(turnBody(2)).toEqual({ ...turnBody(0), privateFollowUp: true });
+    expect(note().textContent).toContain("MERIT is writing your answer in your DM.");
+    const reads = calls.filter((call) => call.name === "team_hub_agent_turn_states").length;
+    await focusRead();
+    expect(calls.filter((call) => call.name === "team_hub_agent_turn_states").length).toBeGreaterThan(reads);
+    // The stale failed read does not flicker the running turn to couldn't finish.
+    expect(note().textContent).toContain("MERIT is writing your answer in your DM.");
+    expect(host.textContent).not.toContain("couldn't finish");
+    await act(async () => pending.resolve(posted(reply("merit", null, "Two invoices.", { id: "r-dm" }), { intent: "dm", conversation_id: "c-dm-merit" })));
+    await flush();
+    expect(note().textContent).toContain("Your answer is in your DM with MERIT. Only you can see it.");
+  });
+
+  it("a read issued before the private part went in_flight cannot end it", async () => {
+    // The first state read is held until after this tab's DM turn hears in_flight; it says failed (stale).
+    let release!: () => void;
+    const gate = new Promise<void>((done) => { release = done; });
+    let held = false;
+    const impl = mocks.rpc.getMockImplementation()!;
+    mocks.rpc.mockImplementation(async (name: string, params: Row) => {
+      if (name === "team_hub_agent_turn_states" && !held && (params.p_message_ids as string[]).some((id) => id.startsWith("m-sent"))) {
+        held = true;
+        const stale = { ok: true, states: (params.p_message_ids as string[]).map((id) => ({ message_id: id, agent_key: "merit", state: "failed", private_part: true, asker_name: "Teammate" })) };
+        await gate;
+        calls.push({ name, params });
+        return { data: stale, error: null };
+      }
+      return impl(name, params);
+    });
+    const host = await mount();
+    const question = privateFirst(host);
+    const dmTurn = deferred();
+    answers.push(() => Promise.resolve(posted(reply("merit", question(), FIXED),
+      { private_followup: { conversationId: "c-launch", sourceMessageId: question(), threadRootId: null, agent: "merit", privateFollowUp: true, dm_conversation_id: "c-dm-merit" } })));
+    answers.push(dmTurn.answer);
+    await type(composer(host), "@MERIT what did Harper & Co. pay us?");
+    await press(composer(host), "Enter");
+    await flush();
+    const note = () => host.querySelector<HTMLElement>(".th-msg--agent .th-ag-priv")!;
+    // The read is out (held) while this tab's DM turn is still running; then that turn answers in_flight.
+    expect(held).toBe(true);
+    expect(turns).toHaveLength(2);
+    await act(async () => dmTurn.resolve({ ok: false, outcome: "in_flight", agent: "merit" }));
+    await flush();
+    expect(note().textContent).toContain("MERIT is writing your answer in your DM.");
+    await act(async () => { release(); await gate; });
+    await flush();
+    expect(note().textContent).toContain("MERIT is writing your answer in your DM.");
+    expect(host.textContent).not.toContain("couldn't finish");
+    // A read issued after it began waiting does end it.
+    db.states = { [`${question()}:merit`]: { state: "failed", private_part: true } };
+    await focusRead();
+    expect(note().textContent).toContain("MERIT couldn't finish your private answer.");
   });
 });
 
@@ -704,7 +972,8 @@ describe("agent identity", () => {
     const host = await mount();
     await type(composer(host), "@");
     const box = host.querySelector<HTMLElement>("[role=listbox][aria-label='People and agents']")!;
-    expect(Array.from(box.querySelectorAll(".th-pop-head")).map((item) => item.textContent)).toEqual(["People in this conversation", "Your Paige team"]);
+    // A1c: Slack-style, one list for anyone you'd address: people, then the agents, then Everyone.
+    expect(Array.from(box.querySelectorAll(".th-pop-head")).map((item) => item.textContent)).toEqual(["People in this conversation", "Your Paige team", "Everyone"]);
     const agentOption = box.querySelector<HTMLElement>("[role=option][data-ag='zion']")!;
     expect(agentOption.textContent).toContain("ZION");
     expect(agentOption.querySelector(".th-ag-tag")!.textContent).toBe("Agent");
@@ -766,5 +1035,392 @@ describe("the agent DM header", () => {
     const head = host.querySelector(".th-conv-head--agent .th-head-actions button")!;
     expect(head.querySelector(".th-label-wide")!.textContent).toBe("How MENTOR works");
     expect(head.querySelector(".th-label-narrow")!.textContent).toBe("Profile");
+  });
+});
+
+describe("A1c: \"<AGENT> is writing…\" for everyone who can see the conversation (owner ruling)", () => {
+  const theirs = (over: Row = {}) => msg({ id: "m-q", author_user_id: "u-priya", body: "@MERIT what should the workshop cost?", agent_mentions: ["merit"], ...over });
+  const stateReads = () => calls.filter((call) => call.name === "team_hub_agent_turn_states").length;
+  // A manual clock for the hub's intervals (window.setInterval) and Date.now only: React's scheduling
+  // and jsdom's animation frames keep real time, so the screen still settles between ticks.
+  let now = 0;
+  let intervals: Map<number, { fn: () => void; ms: number; next: number }>;
+  const useClock = () => {
+    now = Date.parse("2026-10-27T09:30:00Z");
+    intervals = new Map();
+    let ids = 0;
+    vi.spyOn(Date, "now").mockImplementation(() => now);
+    const realSet = window.setInterval.bind(window);
+    const realClear = window.clearInterval.bind(window);
+    vi.spyOn(window, "setInterval").mockImplementation(((fn: () => void, ms?: number, ...rest: unknown[]) => {
+      // Only the hub's own two cadences; anything else (jsdom's animation frames) keeps real time.
+      if (ms !== AGENT_WRITING_POLL_MS && ms !== REFRESH_INTERVAL_MS) return realSet(fn, ms, ...rest);
+      ids += 1;
+      intervals.set(ids, { fn, ms: ms ?? 0, next: now + (ms ?? 0) });
+      return 1_000_000 + ids;
+    }) as unknown as typeof window.setInterval);
+    vi.spyOn(window, "clearInterval").mockImplementation(((id?: number) => {
+      if (id !== undefined && id > 1_000_000) intervals.delete(id - 1_000_000); else realClear(id);
+    }) as typeof window.clearInterval);
+  };
+  const tick = async (ms: number) => {
+    const end = now + ms;
+    for (;;) {
+      const due = [...intervals.entries()].filter(([, item]) => item.next <= end).sort((a, b) => a[1].next - b[1].next)[0];
+      if (!due) break;
+      now = due[1].next;
+      due[1].next += due[1].ms;
+      await act(async () => { due[1].fn(); });
+      await flush();
+    }
+    now = end;
+  };
+
+  it("another member sees MERIT is writing… under Priya's question, with the dots in MERIT's colour, and never a failure", async () => {
+    db.messages["c-launch"] = [theirs()];
+    db.states = { "m-q:merit": { state: "answering", asker_name: "Priya Nair" } };
+    const host = await mount();
+    const typing = host.querySelectorAll(".th-ag-typing");
+    expect(typing).toHaveLength(1);
+    expect(typing[0].textContent).toBe("MERIT is writing…");
+    expect(typing[0].getAttribute("data-ag")).toBe("merit");
+    expect(typing[0].getAttribute("role")).toBe("status");
+    expect(typing[0].querySelectorAll(".th-ag-dots i")).toHaveLength(3);
+    // At the end of the stream, after the question.
+    expect(host.querySelector(".th-stream-content")!.lastElementChild).toBe(typing[0]);
+    expect(host.querySelector(".th-ag-fail")).toBeNull();
+    // Nothing of the asker's own: no Ask again, no private note, no turn of this tab.
+    expect(button(host, "Ask again")).toBeUndefined();
+    expect(turns).toHaveLength(0);
+  });
+
+  it("another member sees it in a thread too, at the end of the thread", async () => {
+    db.messages["c-launch"] = [msg({ id: "m-root", body: "Kickoff agenda", reply_count: 1, last_reply_at: stamp() })];
+    db.replies["m-root"] = [theirs({ id: "m-tq", parent_message_id: "m-root", body: "@MERIT and the price?" })];
+    db.states = { "m-tq:merit": { state: "answering", asker_name: "Priya Nair" } };
+    const host = await mount();
+    expect(host.querySelector(".th-conv .th-ag-typing")).toBeNull();
+    await click(button(host, /^1 reply/));
+    const thread = host.querySelector(".th-thread")!;
+    expect(thread.querySelectorAll(".th-ag-typing")).toHaveLength(1);
+    expect(thread.querySelector(".th-ag-typing")!.textContent).toBe("MERIT is writing…");
+  });
+
+  it("a private part being written stays the approved line for others, never a writing row", async () => {
+    db.messages["c-launch"] = [theirs(), reply("merit", "m-q", FIXED, { author_user_id: "u-priya" })];
+    db.states = { "m-q:merit": { state: "answering", private_part: true, asker_name: "Priya Nair" } };
+    const host = await mount();
+    expect(host.textContent).toContain("MERIT is answering Priya privately.");
+    expect(host.querySelector(".th-ag-typing")).toBeNull();
+  });
+
+  it("the asker's own question shows one writing row, not two, while the server also says answering", async () => {
+    const pending = deferred();
+    answers.push(pending.answer);
+    const host = await mount();
+    await type(composer(host), "@CURA who's onboarding?");
+    await press(composer(host), "Enter");
+    await flush();
+    const question = String(turnBody(0).sourceMessageId);
+    db.states = { [`${question}:cura`]: { state: "answering" } };
+    await act(async () => { window.dispatchEvent(new Event("focus")); });
+    await flush();
+    expect(calls.filter((call) => call.name === "team_hub_agent_turn_states").some((call) => (call.params.p_message_ids as string[]).includes(question))).toBe(true);
+    expect(host.querySelectorAll(".th-ag-typing")).toHaveLength(1);
+    pending.resolve(posted(reply("cura", question, "Two people start Monday.")));
+    await flush();
+  });
+
+  it("re-reads every 3 s while MERIT is writing, then the reply appears and the row ends; the 3 s reads stop", async () => {
+    useClock();
+    db.messages["c-launch"] = [theirs()];
+    db.states = { "m-q:merit": { state: "answering", asker_name: "Priya Nair" } };
+    const host = await mount();
+    const before = stateReads();
+    await tick(AGENT_WRITING_POLL_MS);
+    expect(stateReads()).toBe(before + 1);
+    await tick(AGENT_WRITING_POLL_MS);
+    expect(stateReads()).toBe(before + 2);
+    // The reply posts: the next read says replied (others read nothing), and the stream is read again.
+    db.messages["c-launch"].push(reply("merit", "m-q", "Charge for the outcome, not the hours.", { author_user_id: "u-priya" }));
+    db.states = {};
+    const lists = calls.filter((call) => call.name === "team_hub_list_messages").length;
+    await tick(AGENT_WRITING_POLL_MS);
+    expect(calls.filter((call) => call.name === "team_hub_list_messages").length).toBeGreaterThan(lists);
+    expect(host.querySelector(".th-ag-typing")).toBeNull();
+    expect(host.textContent).toContain("Charge for the outcome, not the hours.");
+    // Nothing is being written now: the 3 s interval is gone (the 15 s tick is the next read, at 15 s).
+    expect([...intervals.values()].some((item) => item.ms === AGENT_WRITING_POLL_MS)).toBe(false);
+    const settled = stateReads();
+    await tick(AGENT_WRITING_POLL_MS - 1);
+    expect(stateReads()).toBe(settled);
+  });
+
+  it("stops the 3 s reads while the tab is hidden, and after 2 minutes; the 15 s tick carries on", async () => {
+    useClock();
+    db.messages["c-launch"] = [theirs()];
+    db.states = { "m-q:merit": { state: "answering", asker_name: "Priya Nair" } };
+    let visibility = "hidden";
+    vi.spyOn(document, "visibilityState", "get").mockImplementation(() => visibility as DocumentVisibilityState);
+    await mount();
+    const hidden = stateReads();
+    await tick(AGENT_WRITING_POLL_MS * 4);
+    expect(stateReads()).toBe(hidden);
+    visibility = "visible";
+    await tick(AGENT_WRITING_POLL_MAX_MS);
+    const capped = stateReads();
+    // Inside the window the 3 s reads ran (and the 15 s tick too); past it only the 15 s tick reads.
+    expect(capped).toBeGreaterThan(hidden + 20);
+    expect([...intervals.values()].some((item) => item.ms === AGENT_WRITING_POLL_MS)).toBe(false);
+    await tick(REFRESH_INTERVAL_MS);
+    expect(stateReads()).toBe(capped + 1);
+  }, 60_000);
+
+  it("caps the 3 s reads 2 minutes from when they began, even when another reply starts writing; a pause resets it", async () => {
+    useClock();
+    const fast = () => [...intervals.values()].some((item) => item.ms === AGENT_WRITING_POLL_MS);
+    db.messages["c-launch"] = [theirs(), msg({ id: "m-q2", author_user_id: "u-sam", body: "@CURA who starts Monday?", agent_mentions: ["cura"] })];
+    db.states = { "m-q:merit": { state: "answering", asker_name: "Priya Nair" } };
+    await mount();
+    expect(fast()).toBe(true);
+    await tick(99_000);
+    // 99 s in, CURA starts writing too: the set of writing replies changes, the cap does not restart.
+    db.states = { ...db.states, "m-q2:cura": { state: "answering", asker_name: "Sam Lee" } };
+    await tick(AGENT_WRITING_POLL_MS);
+    expect(document.querySelectorAll(".th-ag-typing")).toHaveLength(2);
+    expect(fast()).toBe(true);
+    // At 2 minutes from the FIRST fast read the 3 s reads stop, though both are still writing (now 123 s in;
+    // a cap restarted when CURA began would run to 222 s).
+    await tick(AGENT_WRITING_POLL_MAX_MS - 99_000);
+    expect(fast()).toBe(false);
+    const capped = stateReads();
+    await tick(AGENT_WRITING_POLL_MS * 3);
+    expect(stateReads()).toBe(capped);
+    // MERIT finishes while CURA keeps writing: still capped (writing never paused).
+    db.states = { "m-q2:cura": { state: "answering", asker_name: "Sam Lee" } };
+    await tick(REFRESH_INTERVAL_MS);
+    expect(document.querySelectorAll(".th-ag-typing")).toHaveLength(1);
+    expect(fast()).toBe(false);
+    // Nothing written for a while, then a new reply starts: a new burst, so fast reads begin again.
+    db.states = {};
+    await tick(REFRESH_INTERVAL_MS);
+    expect(document.querySelectorAll(".th-ag-typing")).toHaveLength(0);
+    await tick(AGENT_WRITING_IDLE_RESET_MS);
+    db.states = { "m-q:merit": { state: "answering", asker_name: "Priya Nair" } };
+    await tick(REFRESH_INTERVAL_MS);
+    expect(document.querySelectorAll(".th-ag-typing")).toHaveLength(1);
+    expect(fast()).toBe(true);
+  }, 60_000);
+
+  it("with nothing being written there are no 3 s reads at all", async () => {
+    useClock();
+    db.messages["c-launch"] = [theirs(), reply("merit", "m-q", "Done.", { author_user_id: "u-priya" })];
+    await mount();
+    const before = stateReads();
+    await tick(REFRESH_INTERVAL_MS - 1);
+    expect(stateReads()).toBe(before);
+  });
+});
+
+describe("A1c: a thread's reply box carries the same @ list (Slack lets you @ in a thread)", () => {
+  const threadList = (host: HTMLElement) => host.querySelector<HTMLElement>(".th-thread [role=listbox][aria-label='People and agents']");
+  const threadKeys = (host: HTMLElement) => Array.from(threadList(host)?.querySelectorAll<HTMLElement>("[role=option]") ?? [])
+    .map((option) => option.getAttribute("data-ag") ?? (option.getAttribute("data-bc") ? `@${option.getAttribute("data-bc")}` : option.querySelector(".th-option-meta span")!.textContent));
+  const openThreadOf = async (host: HTMLElement) => { await click(button(host, /^1 reply/)); expect(threadBox(host)).toBeTruthy(); };
+  const withThread = (channel: string) => {
+    db.messages[channel] = [msg({ id: `m-root-${channel}`, body: "Kickoff agenda", reply_count: 1, last_reply_at: stamp() })];
+    db.replies[`m-root-${channel}`] = [msg({ id: `m-r1-${channel}`, parent_message_id: `m-root-${channel}`, body: "Looks good." })];
+  };
+
+  it("in a channel thread: people who can see it, Your Paige team, then Everyone; a picked person is mentioned and @here is sent", async () => {
+    withThread("c-launch");
+    const host = await mount();
+    await openThreadOf(host);
+    // The same Composer: an @ button, no / menu in a thread.
+    const thread = host.querySelector<HTMLElement>(".th-thread")!;
+    expect(button(thread, "Mention someone")).toBeTruthy();
+    expect(button(thread, "PAIGE commands")).toBeUndefined();
+    await type(threadBox(host), "@");
+    expect(threadKeys(host)).toEqual(["Priya Nair", "Sam Lee", "paige", "vera", "nexus", "cura", "mentor", "merit", "zion", "@channel", "@here"]);
+    await type(threadBox(host), "@pri");
+    await press(threadBox(host), "Enter");
+    expect(threadBox(host).value).toBe("@Priya Nair ");
+    await type(threadBox(host), "@Priya Nair @he");
+    await press(threadBox(host), "Tab");
+    expect(threadBox(host).value).toBe("@Priya Nair @here ");
+    await type(threadBox(host), "@Priya Nair @here can someone check?");
+    await press(threadBox(host), "Enter");
+    await flush();
+    const post = calls.find((call) => call.name === "team_hub_post_message")!;
+    expect(post.params.p_parent_message_id).toBe("m-root-c-launch");
+    expect(post.params.p_mention_ids).toEqual(["u-priya"]);
+    expect(post.params.p_broadcast_mention).toBe("here");
+    expect(post.params.p_agent_mention_keys).toBeUndefined();
+    expect(turns).toHaveLength(0);
+  });
+
+  it("in a thread, a leading / is just text: no command menu or note opens, and it is sent as typed", async () => {
+    withThread("c-launch");
+    const host = await mount();
+    await openThreadOf(host);
+    const thread = host.querySelector<HTMLElement>(".th-thread")!;
+    await type(threadBox(host), "/draft a task");
+    expect(thread.querySelector("[role=listbox][aria-label='PAIGE commands']")).toBeNull();
+    expect(thread.textContent).not.toContain("No command matches");
+    await press(threadBox(host), "Enter");
+    await flush();
+    const post = calls.find((call) => call.name === "team_hub_post_message")!;
+    expect(post.params.p_parent_message_id).toBe("m-root-c-launch");
+    expect(post.params.p_body).toBe("/draft a task");
+  });
+
+  it("in a person DM's thread: no Everyone group, and a typed @here is never sent as a broadcast", async () => {
+    db.conversations.push(conv({ id: "c-dm-priya", kind: "dm", name: null, visibility: "private", member_count: 2, member_ids: [ME, "u-priya"], dm_user_id: "u-priya" }));
+    withThread("c-dm-priya");
+    const host = await mount();
+    await click(host.querySelector<HTMLElement>("#th-conv-c-dm-priya"));
+    await openThreadOf(host);
+    await type(threadBox(host), "@");
+    expect(threadKeys(host)).toEqual(["Priya Nair", "paige", "vera", "nexus", "cura", "mentor", "merit", "zion"]);
+    expect(threadList(host)!.querySelector("[data-bc]")).toBeNull();
+    await type(threadBox(host), "@here are you free?");
+    await press(threadBox(host), "Enter");
+    await flush();
+    const post = calls.find((call) => call.name === "team_hub_post_message")!;
+    expect(post.params.p_parent_message_id).toBe("m-root-c-dm-priya");
+    expect("p_broadcast_mention" in post.params).toBe(false);
+  });
+
+  it("in an agent DM's thread: neither Your Paige team nor Everyone is offered, and @channel is never sent", async () => {
+    db.conversations.push(agentDm("cura"));
+    withThread("c-dm-cura");
+    const host = await mount();
+    await click(host.querySelector<HTMLElement>("#th-conv-c-dm-cura"));
+    await openThreadOf(host);
+    await type(threadBox(host), "@");
+    expect(threadList(host)).toBeNull();
+    await type(threadBox(host), "@channel ping");
+    await press(threadBox(host), "Enter");
+    await flush();
+    const post = calls.find((call) => call.name === "team_hub_post_message")!;
+    expect("p_broadcast_mention" in post.params).toBe(false);
+    expect(post.params.p_agent_mention_keys).toBeUndefined();
+  });
+});
+
+describe("A1c: one @ list for anyone you'd address (Slack-style), and @channel / @here", () => {
+  const box = (host: HTMLElement) => host.querySelector<HTMLElement>("[role=listbox][aria-label='People and agents']");
+  const optionKeys = (host: HTMLElement) => Array.from(box(host)?.querySelectorAll<HTMLElement>("[role=option]") ?? [])
+    .map((option) => option.getAttribute("data-ag") ?? (option.getAttribute("data-bc") ? `@${option.getAttribute("data-bc")}` : option.querySelector(".th-option-meta span")!.textContent));
+
+  it("lists people who can see the conversation first, then Your Paige team, then Everyone with @channel and @here", async () => {
+    const host = await mount();
+    await type(composer(host), "@");
+    expect(optionKeys(host)).toEqual(["Priya Nair", "Sam Lee", "paige", "vera", "nexus", "cura", "mentor", "merit", "zion", "@channel", "@here"]);
+    const everyone = Array.from(box(host)!.querySelectorAll("[role=option][data-bc]"));
+    expect(everyone.map((option) => option.textContent)).toEqual(["@channelEveryone in #launch", "@hereEveryone active in #launch"]);
+    // Neutral: no agent colour on the Everyone options.
+    expect(everyone.every((option) => !option.hasAttribute("data-ag") && !option.querySelector("[data-ag]"))).toBe(true);
+  });
+
+  it("filters every group by the start of any word, closest first, and the keyboard moves, picks and closes", async () => {
+    const host = await mount();
+    await type(composer(host), "@le");
+    expect(optionKeys(host)).toEqual(["Sam Lee"]);
+    await type(composer(host), "@ri");
+    expect(box(host)).toBeNull();
+    await type(composer(host), "@me");
+    expect(optionKeys(host)).toEqual(["mentor", "merit"]);
+    await type(composer(host), "@merit");
+    expect(optionKeys(host)).toEqual(["merit"]);
+    await type(composer(host), "@ev");
+    expect(optionKeys(host)).toEqual(["@channel", "@here"]);
+    await type(composer(host), "@he");
+    expect(optionKeys(host)).toEqual(["@here"]);
+    // Up from the first option wraps to the last, which is scrolled into view; Tab picks; Esc closes a reopened list.
+    const seen: Element[] = [];
+    const scroll = vi.fn(function (this: Element) { seen.push(this); });
+    const original = Object.getOwnPropertyDescriptor(Element.prototype, "scrollIntoView");
+    Object.defineProperty(Element.prototype, "scrollIntoView", { configurable: true, writable: true, value: scroll });
+    await type(composer(host), "@");
+    await press(composer(host), "ArrowUp");
+    expect(composer(host).getAttribute("aria-activedescendant")).toBe(box(host)!.querySelector("[role=option][data-bc='here']")!.id);
+    expect(seen.at(-1)).toBe(box(host)!.querySelector("[role=option][data-bc='here']"));
+    expect(scroll).toHaveBeenLastCalledWith({ block: "nearest" });
+    if (original) Object.defineProperty(Element.prototype, "scrollIntoView", original);
+    else delete (Element.prototype as { scrollIntoView?: unknown }).scrollIntoView;
+    await press(composer(host), "ArrowUp");
+    expect(composer(host).getAttribute("aria-activedescendant")).toBe(box(host)!.querySelector("[role=option][data-bc='channel']")!.id);
+    await press(composer(host), "Tab");
+    expect(composer(host).value).toBe("@channel ");
+    await type(composer(host), "@channel @");
+    expect(box(host)).not.toBeNull();
+    await press(composer(host), "Escape");
+    expect(box(host)).toBeNull();
+  });
+
+  it("@channel is stored with the message, never asks an agent, and shows as a neutral chip", async () => {
+    const host = await mount();
+    await type(composer(host), "@channel the launch is Friday");
+    await press(composer(host), "Enter");
+    await flush();
+    const post = calls.find((call) => call.name === "team_hub_post_message")!;
+    expect(post.params.p_broadcast_mention).toBe("channel");
+    expect(post.params.p_agent_mention_keys).toBeUndefined();
+    expect(turns).toHaveLength(0);
+    expect(mocks.invoke).not.toHaveBeenCalled();
+    const chip = host.querySelector(".th-bc-chip")!;
+    expect(chip.textContent).toBe("@channel");
+    expect(chip.classList.contains("th-mention")).toBe(true);
+    expect(chip.hasAttribute("data-ag")).toBe(false);
+  });
+
+  it("@here and @channel together send @channel; a plain message sends neither", async () => {
+    const host = await mount();
+    await type(composer(host), "@here and @channel: standup moved");
+    await press(composer(host), "Enter");
+    await flush();
+    await type(composer(host), "standup moved");
+    await press(composer(host), "Enter");
+    await flush();
+    const posts = calls.filter((call) => call.name === "team_hub_post_message");
+    expect(posts[0].params.p_broadcast_mention).toBe("channel");
+    expect("p_broadcast_mention" in posts[1].params).toBe(false);
+  });
+
+  it("is never offered or sent in a person DM or an agent DM", async () => {
+    db.conversations.push(conv({ id: "c-dm-priya", kind: "dm", name: null, visibility: "private", member_count: 2, member_ids: [ME, "u-priya"], dm_user_id: "u-priya" }));
+    db.messages["c-dm-priya"] = [];
+    db.conversations.push(agentDm("cura"));
+    db.messages["c-dm-cura"] = [];
+    const host = await mount();
+    await click(host.querySelector<HTMLElement>("#th-conv-c-dm-priya"));
+    await type(composer(host), "@");
+    expect(box(host)!.querySelector("[data-bc]")).toBeNull();
+    await type(composer(host), "@here are you free?");
+    await press(composer(host), "Enter");
+    await flush();
+    await click(host.querySelector<HTMLElement>("#th-conv-c-dm-cura"));
+    await type(composer(host), "@here hello");
+    await press(composer(host), "Enter");
+    await flush();
+    const posts = calls.filter((call) => call.name === "team_hub_post_message");
+    expect(posts).toHaveLength(2);
+    expect(posts.every((call) => !("p_broadcast_mention" in call.params))).toBe(true);
+  });
+
+  it("renders a sent message's person, agent and @channel chips: the person and @channel neutral, the agent in its identity", async () => {
+    db.messages["c-launch"] = [
+      msg({ id: "m-chips", body: "@channel @Priya Nair and @CURA: Friday", mentions: ["u-priya"], agent_mentions: ["cura"], broadcast: "channel" }),
+      msg({ id: "m-typed", body: "a typed @channel the server did not store" }),
+    ];
+    const host = await mount();
+    const row = rowOf(host, "m-chips")!;
+    const person = Array.from(row.querySelectorAll(".th-mention")).find((chip) => chip.textContent === "@Priya Nair")!;
+    expect(person.hasAttribute("data-ag")).toBe(false);
+    expect(person.classList.contains("th-bc-chip")).toBe(false);
+    expect(row.querySelector(".th-ag-chip[data-ag='cura']")!.textContent).toBe("@CURA");
+    expect(row.querySelector(".th-bc-chip")!.textContent).toBe("@channel");
+    expect(rowOf(host, "m-typed")!.querySelector(".th-bc-chip")).toBeNull();
   });
 });

@@ -15,6 +15,8 @@ import { describe, it, expect } from "vitest";
 import { senderDisplayName } from "../email/sender-display-name.ts";
 import { isPreparedAgreementMessage } from "../agreements/prepared-signature-message.ts";
 import { tenantFrom, PLATFORM_FROM_DOMAIN } from "../email/platform-sendgrid.ts";
+import { parseCommsEmailAttachmentManifest, readGovernedCommsEmailAttachments } from "./attachments.ts";
+import { COMMS_EMAIL_FILE_PROVIDERS } from "./contract.ts";
 
 const MSG = "33333333-3333-4333-8333-3333333333bb";
 const TENANT = "44444444-4444-4444-8444-4444444444bb";
@@ -29,7 +31,9 @@ const compiled = transpileModule(raw, { compilerOptions: { module: ModuleKind.No
 type Caller = "user" | "service";
 function setup(opts: { provider?: string; caller?: Caller; queued?: boolean; answer?: number | "throw"; row?: { status: string; error: string | null };
   // A governed email row (meta.comms_email_binding) and what claim_comms_email_send answers for it.
-  binding?: Record<string, unknown>; claim?: Record<string, unknown>; connectorActive?: boolean } = {}) {
+  binding?: Record<string, unknown>; claim?: Record<string, unknown>; connectorActive?: boolean;
+  // The private bucket, as send-message's service-role storage client reads it.
+  objects?: Record<string, { bytes: Uint8Array; type: string }> } = {}) {
   const provider = opts.provider ?? "sendgrid";
   const rpcCalls: string[] = [];
   const rpcArgs: { name: string; args: Record<string, unknown> }[] = [];
@@ -37,8 +41,14 @@ function setup(opts: { provider?: string; caller?: Caller; queued?: boolean; ans
   const fetchBodies: Record<string, unknown>[] = [];
   const writes: { table: string; mode: string; values: unknown }[] = [];
   const adapters: Record<string, { send: (...a: unknown[]) => Promise<unknown> }> = {};
+  const downloads: string[] = [];
   let handler: (req: Request) => Promise<Response>;
   const client = {
+    storage: { from: (bucket: string) => ({ download: async (path: string) => {
+      downloads.push(`${bucket}:${path}`);
+      const o = opts.objects?.[path];
+      return o ? { data: new Blob([o.bytes], { type: o.type }), error: null } : { data: null, error: { message: "Object not found" } };
+    } }) },
     auth: { getUser: async () => ({ data: { user: { id: ACTOR } } }) },
     from: (table: string) => {
       let mode = "select";
@@ -78,6 +88,7 @@ function setup(opts: { provider?: string; caller?: Caller; queued?: boolean; ans
     return Promise.resolve(new Response(JSON.stringify({ id: "provider-id" }), { status: url.includes("sendgrid") ? 202 : 200, headers: { "X-Message-Id": "sg-id" } }));
   };
   const scope = { decideContentRead, commsProviderExecutionAllowed, COMMS_PROVIDER_EXECUTION_DISABLED, PAIGE_APP_ORIGIN: "https://app.example.test",isPreparedAgreementMessage, tenantFrom, PLATFORM_FROM_DOMAIN,
+    parseCommsEmailAttachmentManifest, readGovernedCommsEmailAttachments, COMMS_EMAIL_FILE_PROVIDERS,
     Deno: {
       env: { get: (k: string) => k === "SUPABASE_SERVICE_ROLE_KEY" ? SERVICE : k === "SENDGRID_MAIL_SEND_API_KEY" ? "SG.platform-key" : k === "RESEND_API_KEY" ? undefined : k === "SUPABASE_URL" ? "https://proj.example.test" : "configured" },
       serve: (fn: typeof handler) => { handler = fn; },
@@ -105,7 +116,7 @@ function setup(opts: { provider?: string; caller?: Caller; queued?: boolean; ans
     }));
     return { status: res.status, body: await res.json() as Record<string, unknown> };
   };
-  return { request, rpcCalls, rpcArgs, fetchCalls, fetchBodies, writes };
+  return { request, rpcCalls, rpcArgs, fetchCalls, fetchBodies, writes, downloads };
 }
 
 const generic = { channel: "email", to: "lead@example.test", contact_id: CONTACT, connector_id: CONNECTOR, subject: "Hi", body: "<p>Hi</p>" };
@@ -273,5 +284,91 @@ describe("send-message — a scheduled governed email", () => {
     const r = await s.request(immediate);
     expect(r.body).toMatchObject({ ok: true, outcome: "provider_accepted" });
     expect(s.fetchCalls).toEqual(["https://api.sendgrid.com/v3/mail/send"]);
+  });
+});
+
+// INT-328 files: send-message sends ONLY the binding's governed copies, re-read and re-hashed before the
+// claim. A copy missing or changed is an unclaimed prepared -> refused close: no claim, no provider call.
+describe("send-message — the files a governed email carries", () => {
+  const OP = "88888888-8888-4888-8888-8888888888cc";
+  const PDF = new TextEncoder().encode("%PDF-1.7\n1 0 obj << >> endobj\n%%EOF\n");
+  const PNG = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 13]);
+  const sha = async (b: Uint8Array) => [...new Uint8Array(await crypto.subtle.digest("SHA-256", b))].map((x) => x.toString(16).padStart(2, "0")).join("");
+  const gov = (n: number, name: string, tenant = TENANT, op = OP) => `${tenant}/governed/${op}/${n}-${name}`;
+  const manifest = async () => [
+    { path: gov(1, "proposal.pdf"), source_path: `${TENANT}/90000000-0000-4000-8000-000000000001-proposal.pdf`, name: "proposal.pdf", mime: "application/pdf", size: PDF.length, sha256: await sha(PDF) },
+    { path: gov(2, "photo.png"), source_path: `${TENANT}/90000000-0000-4000-8000-000000000002-photo.png`, name: "photo.png", mime: "image/png", size: PNG.length, sha256: await sha(PNG) },
+  ];
+  const stored = () => ({ [gov(1, "proposal.pdf")]: { bytes: PDF, type: "application/pdf" }, [gov(2, "photo.png")]: { bytes: PNG, type: "image/png" } });
+  const bound = async (over: Record<string, unknown> = {}) => ({ operation_id: OP, tenant_id: TENANT, actor_user_id: ACTOR, contact_id: CONTACT, connector_id: CONNECTOR,
+    recipient: "lead@example.test", from_address: "hello@own.example.test", provider: "sendgrid", subject: "Hi", body_html: "<p>Hi</p>", state: "prepared",
+    attachments: await manifest(), ...over });
+  const send = { ...generic, message_id: MSG, comms_email_operation_id: OP, idempotency_key: `comms-email:${OP}` };
+  const finalizes = (s: ReturnType<typeof setup>) => s.rpcArgs.filter((c) => c.name === "finalize_comms_email_send").map((c) => c.args);
+
+  it("verified copies go to SendGrid as exactly these base64 attachments, after the claim", async () => {
+    const s = setup({ caller: "service", binding: await bound(), objects: stored() });
+    const r = await s.request(send);
+    expect(r.body).toMatchObject({ ok: true, outcome: "provider_accepted" });
+    expect(s.downloads).toEqual([`comms-attachments:${gov(1, "proposal.pdf")}`, `comms-attachments:${gov(2, "photo.png")}`]);
+    expect(s.fetchCalls).toEqual(["https://api.sendgrid.com/v3/mail/send"]);
+    expect(s.fetchBodies[0].attachments).toEqual([
+      { content: Buffer.from(PDF).toString("base64"), filename: "proposal.pdf", type: "application/pdf", disposition: "attachment" },
+      { content: Buffer.from(PNG).toString("base64"), filename: "photo.png", type: "image/png", disposition: "attachment" },
+    ]);
+    expect(s.rpcCalls.indexOf("claim_comms_email_send")).toBeGreaterThan(-1);
+  });
+  it("a copy changed or missing since approval: refused (finalized from prepared), no claim, zero SendGrid calls", async () => {
+    for (const objects of [{ ...stored(), [gov(2, "photo.png")]: { bytes: new Uint8Array([...PNG, 0]), type: "image/png" } }, { [gov(1, "proposal.pdf")]: { bytes: PDF, type: "application/pdf" } }]) {
+      const s = setup({ caller: "service", binding: await bound(), objects });
+      const r = await s.request(send);
+      expect(r.body).toMatchObject({ ok: false, outcome: "refused", reason: "COMMS_EMAIL_ATTACHMENT_CHANGED" });
+      expect(finalizes(s)).toEqual([expect.objectContaining({ _outcome: "refused", _reason: "comms_email_attachment_changed", _claimed_attempt: null })]);
+      expect(s.rpcCalls).not.toContain("claim_comms_email_send");
+      expect(s.fetchCalls).toEqual([]);
+    }
+  });
+  it("a binding naming another business's or another operation's object is refused with ZERO downloads", async () => {
+    const other = "99999999-9999-4999-8999-9999999999bb";
+    for (const path of [gov(1, "proposal.pdf", "44444444-4444-4444-8444-444444444400"), gov(1, "proposal.pdf", TENANT, "88888888-8888-4888-8888-8888888888dd"), `${TENANT}/${other}-proposal.pdf`, `${TENANT}/team-hub/x/1-proposal.pdf`]) {
+      const m = await manifest();
+      const s = setup({ caller: "service", binding: await bound({ attachments: [{ ...m[0], path }] }), objects: { [path]: { bytes: PDF, type: "application/pdf" } } });
+      const r = await s.request(send);
+      expect(r.body, path).toMatchObject({ outcome: "refused", reason: "COMMS_EMAIL_ATTACHMENT_CHANGED" });
+      expect(s.downloads).toEqual([]);
+      expect(s.fetchCalls).toEqual([]);
+      expect(s.rpcCalls).not.toContain("claim_comms_email_send");
+    }
+  });
+  it("a Gmail (or SMTP) binding with files is refused before any read, claim or provider call", async () => {
+    for (const provider of ["gmail", "smtp"]) {
+      const s = setup({ caller: "service", provider, binding: await bound({ provider }), objects: stored() });
+      const r = await s.request(send);
+      expect(r.body, provider).toMatchObject({ outcome: "refused", reason: "COMMS_EMAIL_ATTACHMENTS_PROVIDER_UNSUPPORTED" });
+      expect(s.downloads).toEqual([]); expect(s.fetchCalls).toEqual([]);
+      expect(s.rpcCalls).not.toContain("claim_comms_email_send");
+    }
+  });
+  it("files never ride the request: a governed send naming body.attachments is still refused", async () => {
+    const s = setup({ caller: "service", binding: await bound(), objects: stored() });
+    const r = await s.request({ ...send, attachments: [{ url: gov(1, "proposal.pdf") }] });
+    expect(r).toMatchObject({ status: 400, body: { error: "comms_email_send_shape_invalid" } });
+    expect(s.downloads).toEqual([]); expect(s.fetchCalls).toEqual([]);
+  });
+  it("a governed send without files reads nothing and sends no attachments (unchanged)", async () => {
+    const s = setup({ caller: "service", binding: await bound({ attachments: undefined }) });
+    const r = await s.request(send);
+    expect(r.body).toMatchObject({ ok: true, outcome: "provider_accepted" });
+    expect(s.downloads).toEqual([]);
+    expect(s.fetchBodies[0]).not.toHaveProperty("attachments");
+  });
+  it("a scheduled release with files re-checks them the same way", async () => {
+    const due = new Date(Math.floor((Date.now() - 60_000) / 60_000) * 60_000).toISOString();
+    const ok = setup({ caller: "service", queued: true, binding: await bound({ send_at: due }), objects: stored() });
+    expect((await ok.request({ ...send, comms_email_scheduled_release: true })).body).toMatchObject({ ok: true, outcome: "provider_accepted" });
+    expect((ok.fetchBodies[0].attachments as unknown[]).length).toBe(2);
+    const gone = setup({ caller: "service", queued: true, binding: await bound({ send_at: due }), objects: {} });
+    expect((await gone.request({ ...send, comms_email_scheduled_release: true })).body).toMatchObject({ outcome: "refused", reason: "COMMS_EMAIL_ATTACHMENT_CHANGED" });
+    expect(gone.fetchCalls).toEqual([]);
   });
 });

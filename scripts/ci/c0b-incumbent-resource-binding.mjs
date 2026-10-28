@@ -993,7 +993,12 @@ const SOURCES = {
   "supabase/functions/fetch-url-content/index.ts": "4e10fe5cd2e189ced5c0cf929586626297b7c9653b34f8a109eede4b88d2926b",
   "supabase/functions/kb-ingest-doc/index.ts": "09c54913f8c844a0e7bb2826947cb002496fb800c34d2e46ae0f6a3f5a0ea7a7",
   "supabase/functions/comms-search-numbers/index.ts": "828ac020a9c984a808e3c9375748f1762a8667bd5a9da1c81d1fac902782d4f8",
-  "supabase/functions/comms-purchase-number/index.ts": "23f479730d2b658fe231dcbe33e3fcd864ec07e9f87ce116742f83e84c8e9237",
+  // Purchased-number voice wiring (2026-10-28), AUTHOR-REVIEW / LOWER ASSURANCE before renewal: the
+  // handler now builds the number's inbound voice webhook with the existing voiceTwimlUrl(secret)
+  // helper (the one repair-voice-twiml-app stamps), refuses needs_config/voice_twiml_url_unavailable
+  // BEFORE any buy when it cannot, and passes voiceUrl to purchaseNumber. Authority, tenant derivation,
+  // price verification, audit and record exits are unchanged. Old 23f47973… reproduced from 4fb4b0398.
+  "supabase/functions/comms-purchase-number/index.ts": "34a2ed1199818913b5e861be571095cbc3a212adb3f5062a33060e48f7a921e4",
   "supabase/functions/comms-a2p-draft/index.ts": "49bd8acc5ed4ec7d60ba79b917438ae5eba0ce2ffcbf862baa9caa56293ada29",
   "supabase/functions/paige-write-back/index.ts": "5ff11463820b7c38e69f683cbcd8542359d5a72c37724c06846bf3dcc6d41de8",
   // EXP05 durable-outcome review a5f5e38ce, AUTHOR-REVIEW / LOWER ASSURANCE.
@@ -1087,12 +1092,28 @@ const SOURCES = {
   // generic scheduled_binding block and terminalizeScheduledRelease's direct row writes are skipped for a bound
   // row (it is closed through the finalizer). (4) Nothing else: no authority, verifier, recipient, tenant gate,
   // provider arm or dispatch branch changed. Old e1c22250… reproduced from main 9e325d91 first.
-  "supabase/functions/send-message/index.ts": "fffd0a7faae3f0c6150784ddda33e280e2786d03e05bfd53d9a0d8aa5a0d5f51",
+  // EXP03 O12 piece 2 renewal (2026-10-27), governed email attachments, reviewed by two independent §39 adversarial reviews (c6276d507, then the follow-up 090d85257; no TOCTOU, no cross-tenant read; round-1 M1/M3/M4 and the LOWs fixed; H1 fixed on the card, though no product surface produces a file send yet; round 2 found no new HIGH) — the follow-up's delta in this file is listed:
+  // send-message/index.ts changes in four places. (1) parseCommsEmailBinding parses an optional
+  // binding.attachments with the shared strict manifest parser (governed copies of THIS tenant and operation
+  // only); anything else marks it "invalid". (2) Before the claim, a binding with files is refused through the
+  // existing unclaimed finalizer (COMMS_EMAIL_ATTACHMENT_CHANGED with zero storage reads when invalid;
+  // COMMS_EMAIL_ATTACHMENTS_PROVIDER_UNSUPPORTED unless binding and connector are on the SendGrid arm), else the
+  // governed copies are read with the service role, re-hashed against the binding and handed to the adapter as
+  // ctx.governedFileAttachments. (3) The SendGrid arm sends those as attachments; the Gmail and SMTP arms refuse
+  // a send carrying them before any network call, classified failed/COMMS_EMAIL_ATTACHMENTS_PROVIDER_UNSUPPORTED.
+  // (4) Nothing else: the door-path refusal of body.attachments, serverAttachments, the invoice PDF path, the H2
+  // refusal, authority, recipient, tenant gate and dispatch branches are unchanged. Old fffd0a7f… reproduced from
+  // main 0fcd5a331 first.
+  "supabase/functions/send-message/index.ts": "0acfd997a123d5b73cc3a5fb13a1dff2d841f5d8ae9f17e86147bd0bfbc5ae82",
   "supabase/functions/_shared/paige-spine/contracts.ts": "2d771686d636c04d2e07d9b8c336e19cde246b9a303ddd034d7ae8500f7eefb4",
   // Operator retirement adds opt-in timeout/no-retry controls; ordinary callers retain
   // their existing behavior. Renewed non-author review and actual retry controls are
   // recorded on PR #1897; no other incumbent snapshot is regenerated or accepted.
-  "supabase/functions/_shared/twilio.ts": "afe6b57d9ed91c00e6517856f7b17c36f147fee5b88afb3450586c4393d6565a",
+  // Purchased-number voice wiring (2026-10-28), AUTHOR-REVIEW / LOWER ASSURANCE before renewal: the
+  // only change is purchaseNumber — PurchaseNumberOptions gains optional voiceUrl, and the form body
+  // gains VoiceUrl + VoiceMethod=POST when it is set (omitted otherwise, so no other request changes).
+  // No other function, auth path or request shape is touched. Old afe6b57d… reproduced from 4fb4b0398.
+  "supabase/functions/_shared/twilio.ts": "3b6fe3eeb8c6e4211e82012d08f63b5d8b14811ee780fef19eaa735b6c5d0b1d",
   // SendGrid Inbound Parse (2026-10-27), AUTHOR-REVIEW / LOWER ASSURANCE: the inbound registry gains an
   // optional provider qualifier — InboundChannelAdapter.provider?, a `channel:provider` key when it is set,
   // and getInboundAdapter(ch, provider?) — so handle-inbound-email can register its SendGrid adapter beside
@@ -1100,7 +1121,11 @@ const SOURCES = {
   // every existing register/get call resolves the same adapter. Outbound registry, NormalizedMessage, Delivery,
   // OutboundSendContext and buildListUnsubscribeHeaders are byte-identical. Prior f29fe750… reproduced from
   // db0048ad7 (git show | TypeScript printer {removeComments:true}, sha256) before renewing. Renew this digest only.
-  "supabase/functions/_shared/channel-adapters.ts": "dc0cfccf25118be0a76b5599167e7440c8e80a8c63880a549f7f36e2d18d0977",
+  // EXP03 O12 piece 2 renewal (2026-10-27), same review: channel-adapters.ts ADDS one optional
+  // OutboundSendContext field, governedFileAttachments ({content, filename, type}[]), read only by the email
+  // adapter. No existing field, adapter contract or registry function changed. Old dc0cfccf… reproduced from
+  // main 0fcd5a331 first.
+  "supabase/functions/_shared/channel-adapters.ts": "515ad56691be9b00b9cd894f53522236a23e78efba40b20adb0806fc6df15984",
   // E09 Slice 6 bounded renewal (2026-10-18), integrating-crew source review (NOT non-author):
   // the only change vs main is one added `case "customer_request"` in suppressionReason (the plain
   // sentence a portal opt-out returns). Step order, every block/queue condition, the consent channel
@@ -1222,7 +1247,16 @@ const SOURCES = {
   // EXP03 Resend retirement (2026-10-27), AUTHOR-REVIEW / LOWER ASSURANCE: readCommsEmailReadiness's
   // resendConfigured fact reads SENDGRID_MAIL_SEND_API_KEY presence instead of RESEND_API_KEY. Decision
   // function, result shape and every reason unchanged. Old 325b6bae… reproduced from b39fda02 first.
-  "supabase/functions/_shared/comms-email/readiness.ts": "035c108e210bb7912250cac4000959e58c172cc4eb57a639b05839c4700762e9",
+  // EXP03 O12 piece 2 renewal (2026-10-27), same review: readiness.ts — readCommsEmailReadiness adds
+  // sender_provider (the chosen connector's provider name, never a credential) to a READY answer only, and the
+  // CommsEmailReadiness type gains that optional field. Every state, reason and read is unchanged. Old 035c108e…
+  // reproduced from main 0fcd5a331 first.
+  // EXP03 scheduled send during the business's do-not-disturb (2026-10-27), same review: readiness takes an
+  // optional `scheduled` flag; when set, ONLY the business's own do-not-disturb hold (queued_tenant_dnd) stops
+  // holding the check, because the drainer re-runs every pre-send check at release. Suppression, consent,
+  // client do-not-disturb, quiet hours and an errored check still refuse. Every other state, reason and read is
+  // unchanged. Old e2790d93… reproduced from main 5a4bfb1f0 first.
+  "supabase/functions/_shared/comms-email/readiness.ts": "8bfab4b5fe9453736b8f68b82d76434cc9884e9ea39583d7d32e97454affba5f",
   "supabase/functions/_shared/openai-models.ts": "a76ac476a2cbd298421a9d7d37f3605cf384e4a4e53a1635719405d52e70905e",
   "supabase/functions/_shared/openai-responses.ts": "bec9943dcb725b592cdba219a5e349f14bcf1f259adbc17522fceb5c6fe0ec81",
   "supabase/functions/_shared/provider-failure.ts": "3a3507a6ddc6f6e5051a5d17b7a5ff30624643c6bd39d07793224eb0177873b5",
@@ -1234,7 +1268,13 @@ const SOURCES = {
   // parseCommsEmailSendAt (whole minute, 2 min–30 days at proposal, format-only at confirm) and
   // COMMS_EMAIL_SCHEDULED_RELEASE_GRACE_MS. The command, its keys, commsEmailBodyHtml and the content digest
   // are unchanged. Old 733eb988… reproduced from main 9e325d91 first.
-  "supabase/functions/_shared/comms-email/contract.ts": "3fc25e779d16073b317508ab77637ae00f8c1de48bb078909928aff37505ffc6",
+  // EXP03 O12 piece 2 renewal (2026-10-27), same review: contract.ts ADDS the attachment limits (10 files,
+  // 10 MiB each, 10 MiB together — the follow-up lowered the total from 15 MiB), COMMS_EMAIL_FILE_PROVIDERS
+  // (sendgrid, resend), parseCommsEmailAttachmentRequest (server-tenant composer paths only),
+  // commsEmailAttachmentName and commsEmailGovernedAttachmentPath. The command, its keys, commsEmailBodyHtml,
+  // the content digest and the send-time functions are unchanged. Old 3fc25e77… reproduced from main 0fcd5a331
+  // first.
+  "supabase/functions/_shared/comms-email/contract.ts": "40208d3cc65b42150e162e4d062d33d23f244a68cb7c3b75d0494aa989a1e334",
   "supabase/functions/_shared/paige-turn/continuity.ts": "ca8c258d200a59a573a3c0cc2a3ad253cbed1239da24afdd1efc0fdbc90dec69",
   "supabase/functions/_shared/paige-turn/contract.ts": "317424344aeb669ef5885b36bbe61c66f94ad3fce994c966203cd6c8f42763f4"
 };
@@ -1330,8 +1370,19 @@ const ANCESTRY_SOURCES = {
  "supabase/functions/_shared/cura-knowledge-teaching.ts": "b421c4302a7772d7b376a7ff99cd96691991593eb3ab1db31d1ac82a9825df87",
  // Exact non-author-reviewed generic-email C4b ancestry at a9de011b6;
  // proposal b4ebdf9d / review 8b83d5c5. Existing114 pins and verifier unchanged.
- "supabase/functions/_shared/paige-turn/resume.ts": "dbcdf4de1ca3d1e36d4841650fcb42a43d3d747ddc0c88488e80bb3859cbaff6",
- "supabase/functions/_shared/comms-email/chat.ts": "b2c63f538935839cbafa9642b2d0ca83b8c24b1fc61be8200bda2efc19e9044e",
+ // 2026-10-28 EXP03 chat scheduled email (review MINOR 5): renewed from dbcdf4de (reproduced from main
+ // f1360cf2). doorResumeShape's comms branch carries a stored canonical send_at into the recorded call
+ // and refuses a non-canonical one; every other branch unchanged.
+ "supabase/functions/_shared/paige-turn/resume.ts": "41da840ec5b42ebd65e923fcb5c2cfa5310d7ba867e9b549139b3d31cc4cd22a",
+ // 2026-10-28 EXP03 chat scheduled email: renewed from b2c63f53 (reproduced from main f1360cf2).
+ // Adds only optional send_at: proposal passes it top-level (never in the command) and into the
+ // operation id when present; an approved/pinned call replays the stored send_at verbatim; card
+ // preview carries a canonical send_at and file names/sizes; "scheduled" and three send-time
+ // refusal notes. Selection, approval lookup and every other branch unchanged.
+ // 2026-10-28 review round 1: renewed from 4a71458d (reproduced from 025ff551). send_at description asks
+ // for the offset on the TARGET date (no fixed example); "scheduled" never reads Not sent and points to
+ // the card's local time; COMMS_EMAIL_ALREADY_SCHEDULED note. Nothing else.
+ "supabase/functions/_shared/comms-email/chat.ts": "0bf1f64ec1d82e5ef435fdf06cf07fd8169e2853e3c5401eb1c8592b00d81608",
 };
 export function validateIncumbentResourceBindings(chatText,sourceTexts) {
  const findings=[],tools=new Map();

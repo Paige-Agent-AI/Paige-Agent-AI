@@ -1,6 +1,6 @@
-import { useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode } from "react";
+import { Fragment, useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
-import { Check, X, ShieldQuestion, Loader2, AlertTriangle, CircleHelp, RotateCcw } from "lucide-react";
+import { Check, X, ShieldQuestion, Loader2, AlertTriangle, CircleHelp, RotateCcw, Paperclip, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 /**
@@ -43,11 +43,23 @@ export type ConfirmActionState = "pending" | "working" | "done" | "failed" | "un
 
 // INT-328 — the email preview's type and the browser's gate on it live in ./confirmPreview (a plain
 // module, so this file exports components only).
-import type { ConfirmEmailPreview } from "./confirmPreview";
+import { formatFileSize, scheduledForLabel, type ConfirmEmailPreview } from "./confirmPreview";
 export type { ConfirmEmailPreview } from "./confirmPreview";
 
 /** The card's own state. `mixed` exists only at card level: some actions ran and some did not. */
 type CardState = ConfirmActionState | "mixed";
+
+/** A file name with break opportunities after - _ . and spaces, so it wraps at its own seams. */
+function breakableFileName(name: string): ReactNode[] {
+  return name.split(/(?<=[-_. ])/).map((part, i) => <Fragment key={i}>{i > 0 ? <wbr /> : null}{part}</Fragment>);
+}
+
+/** "Sends Tue, Nov 3, 9:00 AM": a narrow card may break after the date, never inside the time. */
+function WhenLabel({ at }: { at: string }) {
+  const i = at.lastIndexOf(", ");
+  const cut = i < 0 ? 0 : i + 2;
+  return <>Sends {at.slice(0, cut)}<span className="whitespace-nowrap">{at.slice(cut)}</span></>;
+}
 
 export type ConfirmAction = {
   /** The server-authored sentence describing the exact call. Never model prose re-rendered. */
@@ -165,6 +177,40 @@ function EmailPreview({ email, bleed = false }: { email: ConfirmEmailPreview; bl
           <dt className={label}>Subject</dt>
           <dd className={cn(value, "font-semibold tracking-[-0.006em] text-foreground")}>{email.subject}</dd>
         </div>
+        {/* The files this approval sends, as the server read and fingerprinted them: the name the person
+            gave each one and its size. Never the storage path — that is not something they chose. */}
+        {email.attachments?.length ? (
+          <div className={row} data-confirm-attachments="">
+            <dt className={label}>{email.attachments.length === 1 ? "File" : "Files"}</dt>
+            <dd className={value}>
+              <ul className="space-y-0.5" aria-label={email.attachments.length === 1 ? "1 file attached" : `${email.attachments.length} files attached`}>
+                {email.attachments.map((file, i) => (
+                  <li key={`${i}-${file.name}`} className="flex min-w-0 items-start gap-1.5">
+                    <Paperclip aria-hidden="true" className="mt-[3px] h-3 w-3 shrink-0 text-muted-foreground" />
+                    {/* Name over size, so a narrow dock gives the name the whole width; a long name breaks
+                        after - _ . or a space before it ever breaks mid-word. */}
+                    <span className="min-w-0">
+                      <span className="block text-foreground [overflow-wrap:break-word]">{breakableFileName(file.name)}</span>
+                      <span className="block tabular-nums text-muted-foreground">{formatFileSize(file.size)}</span>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+              {email.attachments.length > 1 ? (
+                <p className="mt-1 tabular-nums text-muted-foreground">
+                  {formatFileSize(email.attachments.reduce((sum, file) => sum + file.size, 0))} in all
+                </p>
+              ) : null}
+            </dd>
+          </div>
+        ) : null}
+        {/* "Approve now, send later": the time the approved email goes out, in the viewer's clock. */}
+        {email.send_at ? (
+          <div className={row} data-confirm-when="">
+            <dt className={label}>When</dt>
+            <dd className={cn(value, "font-medium text-foreground")}><WhenLabel at={scheduledForLabel(email.send_at)} /></dd>
+          </div>
+        ) : null}
       </dl>
       <div className="border-t border-border/70 py-2.5">
         <div
@@ -334,6 +380,8 @@ export function PaigeConfirmCard(props: PaigeConfirmCardProps) {
   const note = report ? props.note : undefined;
 
   const multi = actions.length > 1;
+  // A lone email set for later: the act schedules it (the Conversations composer's own word).
+  const scheduled = !multi && !!actions[0].preview?.send_at;
   const decided = cardState !== "pending" && cardState !== "working";
   const controlsDisabled = (!report && props.disabled) || anyWorking;
   const SealIcon = SEAL_ICON[cardState];
@@ -502,10 +550,12 @@ export function PaigeConfirmCard(props: PaigeConfirmCardProps) {
               >
                 {anyWorking ? (
                   <Loader2 className="mr-1.5 h-4 w-4 animate-spin motion-reduce:animate-none" />
+                ) : scheduled ? (
+                  <Clock className="mr-1.5 h-4 w-4" />
                 ) : (
                   <Check className="mr-1.5 h-4 w-4" />
                 )}
-                {anyWorking ? "Running…" : multi ? `Approve ${fingerprints.length}` : "Approve"}
+                {anyWorking ? "Running…" : multi ? `Approve ${fingerprints.length}` : scheduled ? "Schedule send" : "Approve"}
               </Button>
               <Button
                 size="sm"

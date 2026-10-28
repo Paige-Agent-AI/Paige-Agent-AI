@@ -118,3 +118,21 @@ Standing gates restated: no second Studio/publish door/registry/scheduler/approv
 ---
 
 *EXP07 label: all comments on this lane are labeled EXP07 explicitly. Canonical register/locks/Map deltas are posted as precise row/cell deltas + evidence in ANT-162 for Coordinator write/readback (Sheets owner-session-only from this environment). docs/brain/README.md Studio-index correction (assignment §103) owed after coordination with the section owner and #2191's author.*
+
+
+## Team Hub / NEXUS reachability (owner directive 2026-10-27) — built vs missing
+
+Specialist: NEXUS (shared with EXP03/EXP06; approved magenta/Megaphone personality from the canonical homes; EXP07 owns content/media/publishing capabilities; no cloned persona/registry/runtime).
+
+| Subcase | State | Evidence / gap |
+| -- | -- | -- |
+| Door authority is surface-agnostic (Team-Hub-invocable by construction) | BUILT (source) | resolveStudioCaller on every door; pinned by the contract test in social-publish-door.test.ts ("surface-agnostic pin") |
+| NEXUS can invoke media generate / library save / social publish from PAIGE chat | MISSING | paige-ai-chat admits no EXP07 action tool today; capabilities are Studio/Marketing-surface-only. Integration slice = admit the existing capabilities as governed chat tools (shared-source Chat edit, window requested via ANT-161 per protocol) |
+| NEXUS can invoke the same from Team Hub chat | MISSING (blocked on EXP08 seam + the chat admission above) | Team Hub specialist actions ride the same chat tool machinery; EXP08 owns participant/admission/presentation |
+| Result/receipt presentation + reopen in Team Hub | MISSING (design ready) | reads existing receipts (paige_media_jobs, content_publications, Rail rows) — no new ledger |
+| Channel/DM boundaries, asker-only approval, no Team-Hub-to-Knowledge saves | DESIGN-BOUND (to be proven in the integration slice) | matches the approved Team Hub contract; honored in the handoff (ANT-161/14767be5) |
+| Agentic/sandbox note | N/A for now | EXP07 agentic work executes server-side through governed doors (no client sandbox); browser-sandbox requirements belong to the browsing lanes |
+
+## Billing supersession state (owner 2026-10-27)
+
+All five monetary stops in the media path (null-ceiling off-switch, per-tenant daily ceiling, platform daily guard, video daily allowance, provider-ceiling gate + the insufficient-credit 402) are REMOVED — totals informational; uncovered cost meters to `platform_usage_events` at settle; credits consume as prepaid value with no double billing; technical anti-abuse RETAINED. **Correction a42e0598 applied:** the `above_draft_allowance` confirmation trigger was itself a monetary-only per-use gate and is REMOVED (standard-tier image/copy proceeds without any dollar-threshold confirmation; the action-specific video/premium confirmations stay); a failed full hold now applies the remaining prepaid balance as a best-effort PARTIAL hold and the settle meter records only the uncovered remainder (actual − consumed-credits×$credit). **Claims split:** removed-stops state = merged+deployed (#3009/b77e3a15b, then this repair); production cap-free proof, meter→invoice reach-through on live data, and authenticated acceptance remain PROOF OWED — merged source is not invoice proof.

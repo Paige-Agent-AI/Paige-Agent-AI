@@ -1,10 +1,9 @@
 // @vitest-environment node
-// Media budget + approval policy — the pure decision core of the media seam
-// (owner build authorization 2026-09-12). These tests pin the fail-closed
-// rulings: unknown accrual blocks, unset ceiling blocks (no silent default),
-// the cheap band does NOT continue past the hard ceiling for media, marginal
-// spend cannot cross the ceiling, and the approval boundary (draft allowance /
-// premium / video-always) behaves exactly as authorized.
+// Media budget + approval policy — the pure decision core of the media seam.
+// The OWNER BILLING SUPERSESSION (2026-10-27, ANT-162) removed every monetary
+// stop: spend totals are informational and never interrupt a job. These tests
+// pin that (the old fail-closed rulings are superseded), and pin the RETAINED
+// approval boundary (draft allowance / premium / video-always) unchanged.
 import { describe, expect, it } from "vitest";
 import {
   decideMediaBudget,
@@ -12,7 +11,7 @@ import {
   resolveApprovalPolicy,
 } from "../../supabase/functions/_shared/media-provider/budget.ts";
 
-describe("media approval boundary (owner authorization 'Required behavior')", () => {
+describe("media approval boundary — ACTION-SPECIFIC only (billing supersession + correction a42e0598)", () => {
   it("video ALWAYS requires approval, whatever the estimate", () => {
     expect(resolveApprovalPolicy({ mode: "video", tier: "standard", estimatedCostUsd: 0.01, draftAllowanceUsd: 0.1 }))
       .toEqual({ approvalRequired: true, reason: "video_requires_approval" });
@@ -23,19 +22,20 @@ describe("media approval boundary (owner authorization 'Required behavior')", ()
       .toEqual({ approvalRequired: true, reason: "premium_model" });
   });
 
-  it("standard images within the draft allowance may proceed", () => {
+  it("standard images proceed WITHOUT any dollar-threshold confirmation — whatever the estimate (correction a42e0598)", () => {
     expect(resolveApprovalPolicy({ mode: "image", tier: "standard", estimatedCostUsd: 0.03, draftAllowanceUsd: 0.1 }))
-      .toEqual({ approvalRequired: false, reason: "within_draft_allowance" });
-  });
-
-  it("standard images above the allowance require confirmation", () => {
-    expect(resolveApprovalPolicy({ mode: "image", tier: "standard", estimatedCostUsd: 0.11, draftAllowanceUsd: 0.1 }))
-      .toEqual({ approvalRequired: true, reason: "above_draft_allowance" });
+      .toEqual({ approvalRequired: false, reason: "standard_no_action_gate" });
+    // The formerly-blocked case: a BIG estimate against a SMALL allowance no longer confirms
+    // on money — the monetary-only trigger is gone.
+    expect(resolveApprovalPolicy({ mode: "image", tier: "standard", estimatedCostUsd: 99, draftAllowanceUsd: 0.1 }))
+      .toEqual({ approvalRequired: false, reason: "standard_no_action_gate" });
+    expect(resolveApprovalPolicy({ mode: "image_edit", tier: "standard", estimatedCostUsd: 99, draftAllowanceUsd: 0 }))
+      .toEqual({ approvalRequired: false, reason: "standard_no_action_gate" });
   });
 });
 
 describe("media band mapping", () => {
-  it("premium tiers and video are never the cheap band (they must block at the hard ceiling)", () => {
+  it("premium tiers and video are never the cheap band (band context for display; nothing blocks on money anymore)", () => {
     expect(mediaBand("video", "standard")).toBe("reasoning");
     expect(mediaBand("image", "premium")).toBe("reasoning");
     expect(mediaBand("image_edit", "premium")).toBe("reasoning");
@@ -43,39 +43,33 @@ describe("media band mapping", () => {
   });
 });
 
-describe("decideMediaBudget — fail-closed rulings", () => {
-  it("fails closed on unknown accrual (owner: 'budget unavailable… → fail closed')", () => {
+describe("decideMediaBudget — informational spend (OWNER BILLING SUPERSESSION 2026-10-27)", () => {
+  it("unknown accrual ALLOWS — the job proceeds and the total renders as unknown, never a pause", () => {
     const v = decideMediaBudget({ accruedUsd: null, ceilingUsd: 20, mode: "image", tier: "standard", estimatedCostUsd: 0.03 });
-    expect(v.verdict).toBe("deny");
-    if (v.verdict === "deny") expect(v.gate).toBe("budget_unknown");
+    expect(v.verdict).toBe("allow");
+    expect(v.spend.accruedUsd).toBeNull();
   });
 
-  it("treats an UNSET ceiling as spend-off — no silent default (compliance H3)", () => {
-    const v = decideMediaBudget({ accruedUsd: 0, ceilingUsd: null, mode: "image", tier: "standard", estimatedCostUsd: 0.03 });
-    expect(v.verdict).toBe("deny");
-    if (v.verdict === "deny") {
-      expect(v.gate).toBe("budget_unknown");
-      expect(v.explanation).toMatch(/media_budget_daily_usd/);
-    }
+  it("an UNSET ceiling ALLOWS — spend is on by default; no monetary off-switch remains", () => {
+    const v = decideMediaBudget({ accruedUsd: 5, ceilingUsd: null, mode: "image", tier: "standard", estimatedCostUsd: 0.03 });
+    expect(v.verdict).toBe("allow");
+    expect(v.spend.ceilingUsd).toBeNull();
   });
 
-  it("blocks cheap-band image spend at the hard ceiling (compliance H1: media never continues past 100%)", () => {
-    const v = decideMediaBudget({ accruedUsd: 20, ceilingUsd: 20, mode: "image", tier: "standard", estimatedCostUsd: 0.03 });
-    expect(v.verdict).toBe("deny");
-    if (v.verdict === "deny") expect(v.gate).toBe("budget_exceeded");
+  it("EXCEEDED totals ALLOW — the ceiling number rides along for display; the job is never interrupted", () => {
+    const v = decideMediaBudget({ accruedUsd: 25, ceilingUsd: 20, mode: "video", tier: "premium", estimatedCostUsd: 5 });
+    expect(v.verdict).toBe("allow");
+    expect(v.spend).toEqual({ accruedUsd: 25, ceilingUsd: 20 });
   });
 
-  it("blocks a job whose marginal spend would cross the ceiling even below it", () => {
-    const v = decideMediaBudget({ accruedUsd: 19.99, ceilingUsd: 20, mode: "image", tier: "standard", estimatedCostUsd: 0.03 });
-    expect(v.verdict).toBe("deny");
-    if (v.verdict === "deny") expect(v.explanation).toMatch(/would exceed today's media budget/);
+  it("a marginal job that would cross any former ceiling still ALLOWS", () => {
+    const v = decideMediaBudget({ accruedUsd: 19.99, ceilingUsd: 20, mode: "image", tier: "standard", estimatedCostUsd: 0.5 });
+    expect(v.verdict).toBe("allow");
   });
 
-  it("allows ordinary in-budget image jobs, soft-gated near the ceiling", () => {
-    const okCase = decideMediaBudget({ accruedUsd: 1, ceilingUsd: 20, mode: "image", tier: "standard", estimatedCostUsd: 0.03 });
-    expect(okCase.verdict).toBe("allow");
-    const soft = decideMediaBudget({ accruedUsd: 16.5, ceilingUsd: 20, mode: "image", tier: "standard", estimatedCostUsd: 0.03 });
-    expect(soft.verdict).toBe("allow");
-    if (soft.verdict === "allow") expect(soft.decision.gate).toBe("budget_soft");
+  it("the platform guard ALWAYS allows and returns the totals for alerting", async () => {
+    const { decidePlatformSpendGuard } = await import("../../supabase/functions/_shared/media-provider/budget.ts");
+    expect(decidePlatformSpendGuard({ platformAccruedUsd: 500, platformCeilingUsd: 100, estimatedCostUsd: 5 }).ok).toBe(true);
+    expect(decidePlatformSpendGuard({ platformAccruedUsd: null, platformCeilingUsd: 100, estimatedCostUsd: 5 }).ok).toBe(true);
   });
 });

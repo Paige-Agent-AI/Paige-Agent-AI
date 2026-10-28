@@ -57,6 +57,9 @@ import {
 } from "./conversations/portalReply";
 // Shared conversation atoms (§18 one home) — the SAME bubble the operator Fleet inbox renders.
 import { MessageBubble as SharedMessageBubble } from "./conversations/MessageBubble";
+// EXP03 O12 piece 3 — an email reply is checked by the governed email door, inline, before it sends.
+import { useGovernedEmailReply } from "./conversations/useGovernedEmailReply";
+import { doorAnswered, governedReplyText, readDoorAnswer } from "./conversations/governedReply";
 import { SnoozeMenu } from "./conversations/SnoozeMenu";
 import { LabelPopover } from "./conversations/LabelPopover";
 import { QuickAddDialog } from "@/components/planning/QuickAddDialog";
@@ -1063,6 +1066,8 @@ export default function ClientsConversations() {
 
   const selectThread = (key: string) => {
     if (followupHoldRef.current && key !== selectedKey) { toast.error("Finish or cancel the original reply before changing conversation."); return; }
+    // An email confirm is out: its answer lands on THIS conversation's words, so the switch waits for it.
+    if (governedReply.blocksEditing && key !== selectedKey) { toast("Wait for this email to finish sending before changing conversation."); return; }
     setSelectedKey(key);
     // The Gmail-style keyboard cursor lives in ConversationsThreadList and follows the open
     // thread there; multi-select, bulk, and keyboard nav are all list-internal now (§18).
@@ -1093,12 +1098,9 @@ export default function ClientsConversations() {
         body: { expected_tenant_id: activeTenantId, operation_id: operationId, cancel: true },
       });
       if (!accountEpochRef.current.accept(epoch)) return;
-      // A refusal arrives as an HTTP error whose body is the door's answer.
-      let answer = (data ?? null) as Record<string, unknown> | null;
-      if (error) {
-        const context = (error as { context?: { json?: () => Promise<unknown> } }).context;
-        answer = await context?.json?.().then((v) => (v && typeof v === "object" ? v as Record<string, unknown> : null)).catch(() => null) ?? null;
-      }
+      // A refusal arrives as an HTTP error whose body is the door's answer (the ONE reader, governedReply.ts).
+      const read = await readDoorAnswer({ data, error });
+      const answer = doorAnswered(read) ? read.body : null;
       if (answer?.cancelled === true) toast.success("Canceled — it won't be sent.");
       // Too late: say what actually happened to the send, from its recorded state. Nothing going out is
       // what the owner asked for, so only "already on its way" is an error.
@@ -1213,6 +1215,27 @@ export default function ClientsConversations() {
     disabled:followupLocatorConflict||tenantContext.loading||tenantContext.accountContextLoading||tenantContext.accountContextStatus!=="ready"||(isSolo&&handlingMode==="governed"),
     current:()=>accountEpochRef.current.accept(followupEpoch)},()=>{void load();void loadThreads();});
   followupHoldRef.current=!!leadReplyApprovalId||dialogFollowupHoldRef.current;
+
+  // ── The email reply's inline check (EXP03 O12 piece 3). The words the door binds the approval to are
+  //    the reply plus the plain-text signature when it is on; the server derives the HTML. ────────────
+  const composerWrapRef = useRef<HTMLDivElement>(null);
+  const replySignature = composeChannel === "email" && appendSignature ? effectiveSignature() : null;
+  const governedReply = useGovernedEmailReply({
+    activeTenantId, tenantIdRef, threadKey: selected?.key ?? null,
+    contactId: selected?.contactId ?? null, contactName: selected?.name ?? "",
+    connectorId: composeConnectorId, connectors: composerConnectors,
+    subject, text: governedReplyText(body, replySignature ? resolveMergeVars(replySignature.html, mergeContext(selected, replySignature)) : null),
+    attachments, scheduledFor, epoch: accountEpochRef.current, composerRef: composerWrapRef, settingsHref: connectionsHref,
+    onChooseSender: (id) => { setComposeConnectorId(id); setComposeChannel("email"); },
+    onRecorded: ({ contactId }) => {
+      resetComposer();
+      // The governed row lands on the contact's own thread; open it if this was another key.
+      const key = activeTenantId ? `contact:${activeTenantId}:${contactId}` : null;
+      if (key && key !== selected?.key) pendingSelectRef.current = key;
+      void load(); void loadThreads();
+    },
+    onRefresh: () => { void load(); void loadThreads(); },
+  });
   useBeforeUnloadGuard(!!leadReplyApprovalId && (!!subject.trim() || !!body.trim() || leadReplyReview.blocksEditing));
   const cancelLeadReply=()=>{
     if(!leadReplyReview.reset())return;
@@ -1429,13 +1452,17 @@ export default function ClientsConversations() {
     if (isSolo && !selected.contactId) { toast.error("Associate this participant with a client before sending."); return; }
     if (composeChannel === "portal") { await sendPortal(); return; }
     if (!composeChannel) { toast.error("Connect a channel first — Paige needs a way to send."); return; }
-    if (!selected.toAddress) { toast.error("No client address on this thread to send to."); return; }
+    // An email reply goes through the governed door, which resolves the address itself and says so
+    // plainly when the contact card has none. Editing a drafted row ("Send edited") keeps send-message.
+    const governedEmail = composeChannel === "email" && !editingDraftId;
+    if (!selected.toAddress && !governedEmail) { toast.error("No client address on this thread to send to."); return; }
     if (!body.trim()) { toast.error("Write a reply first."); return; }
     if (composeChannel === "email" && !subject.trim()) { toast.error("Add a subject for the email."); return; }
     if (attachments.length > 10) { toast.error("Remove attachments until 10 or fewer remain."); return; }
     // R-HIGH3: truthful pre-send guard — never enqueue for a contact who opted out of this channel.
     const blocked = suppressions.find((s) => s.channel === composeChannel);
     if (blocked) { toast.error(`This contact opted out of ${CHANNEL_LABEL[composeChannel]} — Paige won't send.`); return; }
+    if (governedEmail) { await governedReply.check(); return; }
 
     const activeSend = sendInFlightRef.current;
     if (activeSend && accountEpochRef.current.accept(activeSend)) return;
@@ -1687,7 +1714,10 @@ export default function ClientsConversations() {
     onChange: handleBodyChange,
     onSend: send,
     sending,
-    disabled: drafting || uploading || leadReplyReview.blocksEditing || (isSolo && handlingMode === "governed"),
+    disabled: drafting || uploading || leadReplyReview.blocksEditing || (isSolo && handlingMode === "governed") || governedReply.blocksEditing,
+    // The inline check stands in for the action row; while it runs, Send says so and stays focused.
+    actions: governedReply.actions,
+    checking: governedReply.checking,
     // A client who hasn't joined the portal can't receive a portal post — Send is held for both
     // inboxes (the trailing `|| portalUnreachable`), and the inline notice above the composer says why.
     sendDisabled: isSolo && (
@@ -1706,8 +1736,16 @@ export default function ClientsConversations() {
       ? `Message ${selected.name} in their client portal…`
       : `Reply to ${selected.name}…  (drop a file to attach)`,
     rows: 2,
-    sendLabel: leadReplyApprovalId ? "Review reply" : portalMode ? "Send" : scheduledFor ? "Schedule" : editingDraftId ? "Send edited" : "Send",
-    note: leadReplyApprovalId ? <>Review the exact sender and message before approving. <button type="button" className="underline" disabled={leadReplyReview.blocksEditing} onClick={cancelLeadReply}>Cancel reply edit</button></> : portalUnreachable ? undefined : portalMode ? portalNote : selected.toAddress ? `To ${selected.toAddress}` : "No address on this thread",
+    sendLabel: governedReply.checking ? "Checking…" : leadReplyApprovalId ? "Review reply" : portalMode ? "Send" : scheduledFor ? "Schedule" : editingDraftId ? "Send edited" : "Send",
+    note: leadReplyApprovalId ? <>Review the exact sender and message before approving. <button type="button" className="underline" disabled={leadReplyReview.blocksEditing} onClick={cancelLeadReply}>Cancel reply edit</button></> : portalUnreachable ? undefined : portalMode ? portalNote
+      // A governed email goes to the address the door resolves (the contact's main email); while the
+      // check is open the strip names it, so the note says nothing that could contradict it.
+      // The door sends only to the contact card's main email (the same primary address read here).
+      : composeChannel === "email" && !editingDraftId ? (governedReply.stripOpen ? undefined
+        : !selected.contactId ? "No contact on this thread yet."
+        : selectedThread?.clients?.email ? `Goes to ${selected.name}'s main email.`
+        : `${selected.name} has no email address on their contact card yet.`)
+      : selected.toAddress ? `To ${selected.toAddress}` : "No address on this thread",
     textareaClassName: "h-24 min-h-24 max-h-24",
     identities: [
       ...composerConnectors.map((c) => ({
@@ -1743,6 +1781,7 @@ export default function ClientsConversations() {
     uploading,
     onAttachFiles: uploadComposerFiles,
     onRemoveAttachment: (a) => void removeAttachment(a),
+    attachmentsLocked: governedReply.filesLocked,
     showDraftWithPaige: composeChannel === "email",
     onDraftWithPaige: ({ guide, tone }) => void draftWithPaige({ guide, tone }),
     drafting,
@@ -2071,7 +2110,13 @@ export default function ClientsConversations() {
                     </p>
                   </div>
                 )}
-                <ConversationsRichComposer {...composerModel} />
+                {/* Esc anywhere in the composer is Edit while a check is open (a menu that handled it first wins). */}
+                <div
+                  ref={composerWrapRef}
+                  onKeyDown={(e) => { if (e.key === "Escape" && !e.defaultPrevented && governedReply.stripOpen) { e.preventDefault(); governedReply.closeStrip(); } }}
+                >
+                  <ConversationsRichComposer {...composerModel} />
+                </div>
               </>
             ) : null}
           </div>
@@ -2084,6 +2129,9 @@ export default function ClientsConversations() {
   return (
     <PageShell width="full" fill className={cn("lg:flex-1 lg:overflow-hidden", isSolo && "solo-conversations-page-shell")}>
       <h1 className="sr-only">Conversations</h1>
+      {/* The email check's announcements live outside any one conversation, so a jump to the thread a
+          send landed on (or no thread at all) never drops what is being said. */}
+      {governedReply.liveRegion}
       {/* The three-column conversation shell (§18 one home) — pure layout: the §36 first-run
           swap, the railOpen 3↔2-col toggle, and the mobile contact Sheet. The container feeds it
           the rendered LEFT rail, the container-owned MIDDLE pane, and the RIGHT contact panel. */}

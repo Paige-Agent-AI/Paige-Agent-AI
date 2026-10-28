@@ -5,6 +5,8 @@ import { PLATFORM_FROM_DOMAIN, tenantFrom } from "../_shared/email/platform-send
 import {renderSalesInvoiceDocument} from '../_shared/sales-invoice-document.ts';
 import {renderDocumentPdf} from '../_shared/document-pdf.ts';
 import {pdfEmailAttachment} from '../_shared/email-attachments.ts';
+import { parseCommsEmailAttachmentManifest, readGovernedCommsEmailAttachments, type CommsEmailAttachmentManifest, type CommsEmailStorage } from "../_shared/comms-email/attachments.ts";
+import { COMMS_EMAIL_FILE_PROVIDERS } from "../_shared/comms-email/contract.ts";
 import { readInvoiceDeliveryReadiness, type InvoiceReadinessAdmin } from "../_shared/sales-invoice-delivery/readiness-reader.ts";
 import { PAIGE_APP_ORIGIN } from "../_shared/canonical-app-url.ts";
 // Unified send dispatcher — routes email via SendGrid (or the business's own Gmail/SMTP), SMS via Twilio.
@@ -125,6 +127,11 @@ interface CommsEmailBinding {
   subject: string; body_html: string; state: string;
   /** A scheduled governed email's canonical send time (ISO, UTC, whole minute). null = an immediate send. */
   send_at: string | null;
+  /**
+   * The files the person approved, as their governed copies (path, size, sha256). null = no files.
+   * "invalid" = the binding names files this operation cannot carry: refused, and nothing is read.
+   */
+  attachments: CommsEmailAttachmentManifest | "invalid" | null;
 }
 type CommsEmailOutcome = "provider_accepted" | "failed" | "refused" | "unknown";
 type OutboundDelivery = Awaited<ReturnType<OutboundChannelAdapter["send"]>>;
@@ -173,11 +180,18 @@ function parseCommsEmailBinding(value: unknown, messageTenantId: string | null):
     if (!Number.isFinite(ms) || new Date(ms).toISOString() !== v.send_at) return null;
     sendAt = v.send_at;
   }
+  // Files are read only from the binding, and only as the governed copies of THIS tenant and operation
+  // (`<tenant>/governed/<operation>/…`). Anything else marks the binding's files invalid: it is refused
+  // before any storage read, and nothing is sent.
+  let attachments: CommsEmailAttachmentManifest | "invalid" | null = null;
+  if (v.attachments !== undefined && v.attachments !== null) {
+    attachments = parseCommsEmailAttachmentManifest(v.attachments, v.tenant_id as string, v.operation_id as string) ?? "invalid";
+  }
   return {
     operation_id: v.operation_id as string, tenant_id: v.tenant_id as string, actor_user_id: v.actor_user_id as string,
     contact_id: v.contact_id as string, connector_id: v.connector_id as string,
     recipient: v.recipient, from_address: v.from_address, provider: v.provider,
-    subject: v.subject, body_html: v.body_html, state: v.state, send_at: sendAt,
+    subject: v.subject, body_html: v.body_html, state: v.state, send_at: sendAt, attachments,
   };
 }
 
@@ -200,6 +214,8 @@ function commsEmailDeliveryOutcome(
     "smtp_requires_admin", "smtp_not_configured", "smtp_creds_failed",
   ]);
   if (delivery.reason && notSent.has(delivery.reason)) return { outcome: "failed", reason: "EMAIL_PROVIDER_NOT_CONFIGURED" };
+  // A Gmail/SMTP arm handed governed files refuses before any network call (send-message refuses it earlier).
+  if (delivery.reason === GOVERNED_FILES_UNSUPPORTED) return { outcome: "failed", reason: "COMMS_EMAIL_ATTACHMENTS_PROVIDER_UNSUPPORTED" };
   if (!delivery.reason && delivery.error === SENDGRID_KEY_MISSING) return { outcome: "failed", reason: "EMAIL_PROVIDER_NOT_CONFIGURED" };
   // An SMTP exception may land after DATA was accepted; only the pre-socket host guard is definitive.
   if (delivery.reason === "smtp_send_failed") {
@@ -232,6 +248,10 @@ async function sendWithinCommsEmailDeadline(
     if (timer !== undefined) clearTimeout(timer);
   }
 }
+
+// A Gmail or SMTP arm that is handed governed files: nothing is attempted (only the SendGrid arm sends them).
+const GOVERNED_FILES_UNSUPPORTED = "governed_attachments_unsupported";
+const governedFilesRefused = () => ({ ok: false, status: "failed" as const, reason: GOVERNED_FILES_UNSUPPORTED, error: GOVERNED_FILES_UNSUPPORTED });
 
 const MAX_COMMS_ATTACHMENTS = 10;
 const MAX_COMMS_ATTACHMENT_BYTES = 10 * 1024 * 1024;
@@ -291,6 +311,7 @@ const emailOutboundAdapter: OutboundChannelAdapter = {
     //    'email' registry entry). When the connector's provider is 'gmail', send through
     //    the Gmail seam using the token resolved from its Vault ref; otherwise SendGrid. ──
     if (ctx.provider === "gmail") {
+      if (ctx.governedFileAttachments?.length) return governedFilesRefused();
       // ctx.admin (OutboundAdminClient) is structurally { from, rpc } — identical to the
       // Gmail seam's SupabaseAdminLike (imported from twilio.ts, same shape), so it assigns.
       const admin = ctx.admin as unknown as SupabaseAdminLike | null | undefined;
@@ -339,6 +360,7 @@ const emailOutboundAdapter: OutboundChannelAdapter = {
     //    ref and sends through the tenant's OWN SMTP host (host/port/secure from
     //    ctx.connectorConfig). SSRF host/port guard lives inside smtpSend. ──
     if (ctx.provider === "smtp") {
+      if (ctx.governedFileAttachments?.length) return governedFilesRefused();
       const admin = ctx.admin as unknown as SupabaseAdminLike | null | undefined;
       if (!admin) {
         return {
@@ -460,6 +482,13 @@ const emailOutboundAdapter: OutboundChannelAdapter = {
               filename: a.filename,
               type: a.contentType,
               disposition: "attachment",
+            })),
+          } : {}),
+          // INT-328: a governed email's approved files, verified against the binding just before the claim.
+          // (A governed email never carries an invoice PDF, so this never replaces one.)
+          ...(ctx.governedFileAttachments?.length ? {
+            attachments: ctx.governedFileAttachments.map((a) => ({
+              content: a.content, filename: a.filename, type: a.type, disposition: "attachment",
             })),
           } : {}),
         }),
@@ -1689,6 +1718,20 @@ Deno.serve(async (req) => {
             }},environment:()=>({resendConfigured:false,googleConfigured:false,sendgridConfigured:!!Deno.env.get("SENDGRID_MAIL_SEND_API_KEY")}),
           });
         }catch{return await refuseCommsEmail("AGREEMENT_SIGNATURE_REQUEST_UNAVAILABLE");}
+      }
+      if (commsBinding && commsBinding.attachments !== null) {
+        // INT-328 files: only the binding's governed copies, re-read and re-hashed here BEFORE the claim,
+        // so a refusal is an unclaimed prepared -> refused close and the provider is never called.
+        // A binding naming paths outside this operation's governed folder is refused without any read.
+        if (commsBinding.attachments === "invalid") return await refuseCommsEmail("COMMS_EMAIL_ATTACHMENT_CHANGED");
+        if (!COMMS_EMAIL_FILE_PROVIDERS.includes(commsBinding.provider) || !COMMS_EMAIL_FILE_PROVIDERS.includes(String(connectorRow?.provider ?? ""))) {
+          return await refuseCommsEmail("COMMS_EMAIL_ATTACHMENTS_PROVIDER_UNSUPPORTED");
+        }
+        let verified: Awaited<ReturnType<typeof readGovernedCommsEmailAttachments>>;
+        try { verified = await readGovernedCommsEmailAttachments(admin.storage as unknown as CommsEmailStorage, commsBinding.attachments); }
+        catch { verified = { ok: false, code: "COMMS_EMAIL_ATTACHMENT_CHANGED" }; }
+        if (!verified.ok) return await refuseCommsEmail("COMMS_EMAIL_ATTACHMENT_CHANGED");
+        ctx.governedFileAttachments = verified.files;
       }
       if (commsBinding) {
         // The one atomic provider-admission point (mirrors the invoice claim above). A losing,

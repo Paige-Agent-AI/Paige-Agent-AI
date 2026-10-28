@@ -1,3 +1,95 @@
+## EXP02 October27 bounded customer proof and catalogue preparation
+
+Released3004 original activity now has a positive ordinary-owner Executive/read/
+source/Chat/answer-and-source reload case, ANT52/1e80826a; actual records remain
+quoted/partial and do not verify business-action completion or original receipts.
+Original history/empty composer/saved read step preserved; own browser tab closed,
+resource returned. Other roles/cohorts/Live/actions/full19/nine/founder remain open.
+Latest proof and footer/observer boundaries are in the ORIGINAL matrix below.
+The narrowly guarded CAP017 description follow-up preserves Limited/access and
+every execution field; original catalogue20 native PASS groups, not production
+activation. Release depends on original Calendar3012 gates/source verification.
+No shared presenter, registry, provider, permission, schema authority or agent
+runtime replacement. Protected monthly UNKNOWN/UNRETRIED and historical baselines
+are unchanged.
+
+## EXP02 October27 release and original19 continuation
+
+#3004 actual mergecea5d494/e510 is source-released through original containing
+5a4bfb1f/40595981667/artifact12777430258:27 closures/config/1263 source bindings,
+Chat567/Review107 and edge-live5a4 independently match Git. Earlier pre-upload
+compiler failure and cleanup advisory retained. Exact web/both-origin proof and
+bounded baseline Finance/weekly QA are separately recorded in the
+[ORIGINAL19 matrix](../delivery/e2-customer-experience-integration-matrix.md).
+Candidate recorded-activity authentication and full outcome acceptance remain
+owed. Actual browser resource was returned; original tabs/drafts preserved.
+
+Next Calendar consumer reuses original caller-native calendar.agenda_read,
+original booking records and canonical department navigation, without a new
+metric, scheduler, writer or execution runtime. It receives actual5a4 and repaired
+endpoint; local360/11 controls/native types/pinned endpoint compile pass, not
+reviewed/deployed/customer acceptance. Owner goal-driven PAIGE coordination,
+direct @VERA/DM preservation, legitimate standing authority, both-chat original
+task continuity and cost-aware ORIGINAL Model Fabric design are incorporated in
+that same matrix. E08-owned A2 business-read admission remains missing; no held
+runner/model/provider/scan/action activation. All19/nine/founder OPEN.
+
+## EXP02 endpoint correction and same-VERA handoff — October27 development
+
+PR #3004 remains a source-release HOLD: non-author finding4393680160 correctly
+identified that the real Executive/Chat endpoint supplied unresolved eligibility,
+so the new original Rail consumer refused genuine endpoint requests. The local
+correction resolves current caller-native membership and strict SOLO classification
+through existing contracts, with bounded lookup and actor/workspace revalidation.
+No native permission, provider, service client, registry or execution gate changes.
+Actual endpoint/composer tests cover both transport modes and authorization,
+classification, changed scope, revoked source and timeout negatives. The corrected
+endpoint passes the pinned production compiler; fresh final review/CI and actual
+release/customer readback remain owed. Earlier a1d2 green CI is historical only.
+
+Actually received the October27 SAME-specialist directive in ANT138/ANT161 and
+current Owner North Star. The original VERA identity/personality and approved
+teal/ShieldCheck presentation remain authoritative. Native registry metadata
+already permits get_business_snapshot/read_business_metric in capability_scope;
+Team Hub admission/result/reopen remains MISSING. Exact producer/consumer handoff
+is ANT161a25c1145; EXP08 owns its private-DM tool admission and result presentation.
+No Team Hub clone, runtime, role grant, shared-source takeover or activation.
+Original nineteen-outcome matrix now records this built-versus-missing boundary.
+
+Owner-requested four-hour daily Linear heartbeat is ACTIVE on this existing E02
+conversation (actual receiving ACK ANT16192c70179). It reads applicable updates
+and continues this full assignment without duplicate unchanged pings or agents;
+completion includes the remaining customer proof and single founder acceptance.
+
+## EXP02 original recorded-activity review — October27 development
+
+Incoming [#2995 source release](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2995#issuecomment-6452429513)
+is now actual02c101f44f776e8bb937869466130be99655239c/tree72bd, all11 exact checks/
+two webSUCCESS/LOWER5673022179+5673549365. WebArRgjpF7 READY/bothorigins exact02c
+20:07UTC; original normal40574878028 verifies all9 closures/config first attempt,
+987 entries/359 Git identities. Original artifact digest and source bindings
+independently match; Chat565/review103/orchestrator149, edge-live02c. Original
+cleanup advisory retained. This verifies source delivery, not another customer
+drive. Actual candidate weekly/date/coverage/persisted reply/reload remains owed.
+
+The existing business.operating_snapshot outcomes area now has a LOCAL consumer
+of get_solo_rail_activity(p_limit=25), not a second ledger or metrics reader.
+Only original owner-visible readable facts/time/tenant-safe attribution enter
+the requested-period bounded sample. Client-only/unknown classifications,
+changed authority/source and late cancelled answers are withheld. An empty
+sample does not prove no activity; a recorded successful read is not a completed
+business action, approval, domain receipt or measured improvement. Original
+departmental record linking remains a distinct source integration obligation.
+[Source/authority/evidence](../evidence/ui-delivery/e2-review-recorded-activity.md)
+separates local proof from required review/CI/source release/customer reload.
+CAP/ALG maturity and all nineteen outcomes remain unchanged and open.
+
+EXP05 explicitly received the original Systems Work/result/optional Rail consumer
+in ANT161e13f07ca. Existing weekly-read preview is not the Systems action door.
+EXP02 retains Systems registration, accepted-intent binding and full scan proof;
+original shared Root/risk/C0b composition remains coordinated with EXP05/EXP08.
+No manual scan, worker, provider, action or new privilege is activated by that ACK.
+
 ## EXP02 bounded Chat source coverage — October27 development
 
 The existing Operating Fabric projector now shares exact repeated long window
@@ -1310,6 +1402,7 @@ Team index. Read these before any Team or Team Hub work:
 |---|---|
 | [Team surface card](../doctrine/surface-cards/team.md) | Current source and its corrections (Oct 23), owner decisions D1–D4, the six `high` access tools, why Team is `PARTIAL` (no Rail outcome) |
 | [Ownership & authority lifecycle](../handoff/team-ownership-authority-lifecycle.md) | Received by EXP08 and still `UNAVAILABLE`; business-ownership facts never grant authority |
+| Co-owners and entity owners (EXP08, I1 2026-10-27) | Owner invitations are the account holder's alone (migration `20271120010008`, not merged); operators keep their shipped archive/restore/delete/remove powers over Solo accounts (owner ruling 2026-10-27); delivery contract `docs/delivery/exp08-co-owners-entity-owners-contract.md`; ledger in the tier matrix, "EXP08 co-owners and entity owners, I1"; decision log October27 |
 | [Recipient binding P0](../delivery/solo-team-recipient-binding-p0.md) | Invites bind to the confirmed recipient email (`20261200000300`); production persistence not re-read |
 | [Team Spine packet](../delivery/spine-integration-packet-team.md) | `team.authority` read (shipped #876). Its "no code yet" and four-fact statements are historical |
 

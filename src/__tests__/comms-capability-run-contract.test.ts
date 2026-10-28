@@ -90,6 +90,8 @@ describe("Communications capability runs — what the Rail is told", () => {
       "forbidden", "unauthorized", "tenant_not_resolved", "number_unavailable",
       "price_changed", "price_unverifiable", "twilio_subaccount_not_provisioned",
       "twilio_subaccount_row_missing", "inbound_webhook_secret_missing", "twilio_creds_unavailable",
+      // The number's voice webhook could not be built; refused BEFORE the buy, nothing spent.
+      "voice_twiml_url_unavailable",
       // A config problem the request layer catches before anything is sent — nothing attempted.
       "twilio_missing_credentials",
     ]) expect(buy({ success: false, error: code })).toBe("capability_refused");

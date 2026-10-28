@@ -903,7 +903,7 @@ function SuggestionCard({ suggestion, isMobile }: { suggestion: SuggestionConten
       {suggestion.ctas && suggestion.ctas.length > 0 && (
         <div className="flex flex-wrap gap-2 pt-1">
           {suggestion.ctas.map((cta, i) => (
-            <Button key={i} variant="outline" size="sm" className="h-8 text-xs gap-1.5 border-accent/40 text-accent hover:bg-accent/10" asChild>
+            <Button key={i} variant="outline" size="sm" className="h-8 text-xs gap-1.5 border-accent/40 text-accent hover:bg-accent/10 hover:text-accent" asChild>
               <a href={cta.href} target="_blank" rel="noopener noreferrer">{cta.label}<ExternalLink className="w-3 h-3" /></a>
             </Button>
           ))}
@@ -1153,7 +1153,7 @@ function PriorityActionList({ analysis, bureauLabel }: { analysis: FileAnalysis;
               {gap.suggestion?.ctas && gap.suggestion.ctas.length > 0 && (
                 <div className="flex flex-wrap gap-2 mt-2">
                   {gap.suggestion.ctas.map((cta, j) => (
-                    <Button key={j} variant="outline" size="sm" className="h-7 text-xs gap-1.5 border-accent/40 text-accent hover:bg-accent/10" asChild>
+                    <Button key={j} variant="outline" size="sm" className="h-7 text-xs gap-1.5 border-accent/40 text-accent hover:bg-accent/10 hover:text-accent" asChild>
                       <a href={cta.href} target="_blank" rel="noopener noreferrer">{cta.label}<ExternalLink className="w-3 h-3" /></a>
                     </Button>
                   ))}

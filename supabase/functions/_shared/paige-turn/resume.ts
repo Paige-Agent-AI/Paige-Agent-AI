@@ -32,7 +32,7 @@ import {
 } from "../approval-outcome.ts";
 
 import { readTurnRecord, RESUME_KINDS, TURN_CONTRACT_VERSION, type ResumeKind, type TurnRecord } from "./contract.ts";
-import { parseCommsEmailCommand } from "../comms-email/contract.ts";
+import { canonicalCommsEmailSendAt, parseCommsEmailCommand } from "../comms-email/contract.ts";
 export { RESUME_KINDS, type ResumeKind };
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -399,9 +399,13 @@ export function doorResumeShape(
       && (typeof args.approval_id !== "string" || !UUID_ANY.test(args.approval_id))) return null;
     try {
       const email = parseCommsEmailCommand(command);
+      // A stored time is the door's canonical text; anything else is not a call it stored.
+      const timed = Object.prototype.hasOwnProperty.call(args, "send_at");
+      if (timed && canonicalCommsEmailSendAt(args.send_at) !== args.send_at) return null;
       return { family: "comms", callArgs: {
         contact_id: email.contact_id, subject: email.subject, body: email.body,
         ...(email.connector_id ? { connector_id: email.connector_id } : {}),
+        ...(timed ? { send_at: args.send_at } : {}),
       } };
     } catch { return null; }
   }

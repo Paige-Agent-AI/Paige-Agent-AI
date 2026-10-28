@@ -36,6 +36,10 @@ const db = vi.hoisted(() => ({
   doorAnswer: null as null | { data: unknown; error: unknown },
   /** A door answer that has not arrived yet (the Cancel is in flight). */
   doorPending: null as null | Promise<{ data: unknown; error: unknown }>,
+  /** An answer built from the request (the reply check echoes its own operation id). */
+  doorFn: null as null | ((body: Record<string, unknown>) => { data: unknown; error: unknown }),
+  /** The one email connector's id ("conn-1"; a uuid where the governed door's parser must accept it). */
+  connectorId: "conn-1",
 }));
 
 vi.mock("@/integrations/supabase/client", () => {
@@ -45,7 +49,7 @@ vi.mock("@/integrations/supabase/client", () => {
     const rows = () => table === "messages" ? db.messages
       : table === "threads" ? db.threads
       : table === "channel_connectors" ? [{
-        id: "conn-1", channel_type: "email", provider: "resend", display_name: "Jordan",
+        id: db.connectorId, channel_type: "email", provider: "resend", display_name: "Jordan",
         from_address: "jordan@northlightadvisory.example", from_name: "Jordan", inbound_address: null,
         status: "active", active: true,
       }]
@@ -76,7 +80,7 @@ vi.mock("@/integrations/supabase/client", () => {
         onAuthStateChange: () => ({ data: { subscription: { unsubscribe: vi.fn() } } }),
       },
       functions: { invoke: (name: string, opts?: { body?: Record<string, unknown> }) => { db.invokes.push(name);
-        if (name === "comms-email-command") { db.doorBodies.push(opts?.body ?? {}); return db.doorPending ?? Promise.resolve(db.doorAnswer ?? { data: { ok: true, cancelled: true }, error: null }); }
+        if (name === "comms-email-command") { db.doorBodies.push(opts?.body ?? {}); if (db.doorFn) return Promise.resolve(db.doorFn(opts?.body ?? {})); return db.doorPending ?? Promise.resolve(db.doorAnswer ?? { data: { ok: true, cancelled: true }, error: null }); }
         if (name === "subagent-email-composer" && db.draft) return db.draft(); if (name === "send-message" && db.sendAnswer) return Promise.resolve(db.sendAnswer); return Promise.resolve({ data: { outcome: "queued_scheduled", message_id: "queued-1" }, error: null }); } },
       storage: { from: () => ({ upload: () => Promise.resolve({ data: null, error: null }), createSignedUrl: () => Promise.resolve({ data: null, error: null }) }) },
     },
@@ -139,7 +143,7 @@ const flush = async () => {
 const mounted: Array<() => Promise<void>> = [];
 beforeEach(() => {
   vi.clearAllMocks(); db.cancellations = []; db.invokes = []; db.contact = client; db.draft = null; db.sendAnswer = null;
-  db.doorBodies = []; db.doorAnswer = null; db.doorPending = null;
+  db.doorBodies = []; db.doorAnswer = null; db.doorPending = null; db.doorFn = null; db.connectorId = "conn-1";
   db.cancel = async () => ({ data: true, error: null });
 });
 afterEach(async () => { while (mounted.length) await mounted.pop()!(); });
@@ -377,7 +381,8 @@ describe.each([
     expect(host.textContent).not.toContain("Sending…");
     expect(buttons(host)).not.toContain("Approve & send");
     const cancel = host.querySelector<HTMLButtonElement>('[data-governed-send="scheduled"]');
-    const when = new Date(inAnHour).toLocaleString(undefined, { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+    // 2026-10-28: the shared label names the time zone (daylight-saving review, chat scheduled email).
+    const when = new Date(inAnHour).toLocaleString(undefined, { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit", timeZoneName: "short" });
     expect(cancel?.parentElement?.textContent).toBe(`Sends ${when}Cancel`);
     expect(cancel?.textContent).toBe("Cancel");
     expect(cancel?.getAttribute("aria-label")).toBe(`Cancel the email scheduled for ${when}`);
@@ -794,10 +799,15 @@ describe("an email the service may have taken (its answer was lost)", () => {
     expect(toast.error).not.toHaveBeenCalled();
   });
 
-  it("the reply composer whose answer was lost warns honestly, never as a failure, and clears", async () => {
-    db.messages = [message({ status: "sent" })];
-    db.threads = [thread];
-    db.sendAnswer = UNCONFIRMED;
+  // EXP03 O12 piece 3: the reply composer's email no longer goes through send-message's undo window. It is
+  // checked and confirmed through the governed door; a confirm whose answer is unknown clears the composer
+  // (it may already be with them) and says not to resend — never a failure.
+  it("the reply composer's email whose confirm answer is unknown says don't resend, never a failure, and keeps the words", async () => {
+    const contact = "0c1d2e3f-4a5b-4c6d-8e7f-a0b1c2d3e4f5";
+    const key = `contact:tenant-a:${contact}`;
+    db.connectorId = "1d2e3f4a-5b6c-4d7e-8f90-a1b2c3d4e5f6";
+    db.messages = [message({ status: "sent", thread_key: key, contact_id: contact, connector_id: db.connectorId })];
+    db.threads = [{ ...thread, thread_key: key, contact_id: contact, clients: { ...client, id: contact } }];
     const host = await mountInbox("/admin/clients/conversations");
     const body = host.querySelector<HTMLTextAreaElement>("textarea")!;
     const subject = host.querySelector<HTMLInputElement>('input[placeholder="Subject"]')!;
@@ -808,14 +818,25 @@ describe("an email the service may have taken (its answer was lost)", () => {
       Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, "value")!.set!.call(body, "Following up on Thursday.");
       body.dispatchEvent(new Event("input", { bubbles: true })); await flush();
     });
+    // The check: a 202 naming the request's own operation, exactly as the door answers.
+    db.doorFn = (b) => ({ data: { ok: false, outcome: "approval_required", fingerprint: "0123456789abcdef", operation_id: b.operation_id, expires_at: new Date(Date.now() + 600_000).toISOString(),
+      preview: { kind: "email", to_name: "Maya Ortiz", to_address: "maya@ortizlandscaping.example", from_address: "jordan@northlightadvisory.example", subject: "Thursday", body_text: "Following up on Thursday." } }, error: null });
     const send = [...host.querySelectorAll("button")].find((b) => b.textContent?.trim() === "Send")!;
     expect(send).toBeTruthy();
     await act(async () => { send.click(); await flush(); });
     for (let i = 0; i < 3; i++) await act(async () => { await flush(); });
-    expect(db.invokes).toContain("send-message");
-    expect(toast.warning).toHaveBeenCalledWith(COPY);
+    const sendNow = host.querySelector<HTMLButtonElement>('[data-strip-focus="confirm"]')!;
+    expect(sendNow?.textContent).toBe("Send now");
+    db.doorFn = null;
+    db.doorAnswer = { data: null, error: { context: { status: 503, json: async () => ({ ok: false, outcome: "outcome_unknown", code: "COMMS_EMAIL_RECONCILIATION_REQUIRED" }) } } };
+    await act(async () => { sendNow.click(); await flush(); });
+    for (let i = 0; i < 3; i++) await act(async () => { await flush(); });
+    expect(db.invokes).toEqual(["comms-email-command", "comms-email-command"]);
+    expect(db.doorBodies[1]).toMatchObject({ operation_id: db.doorBodies[0].operation_id, approved_fingerprint: "0123456789abcdef" });
+    expect(host.querySelector("[data-governed-reply-strip]")?.textContent).toContain("Couldn't confirm this went out — don't resend.");
     expect(toast.error).not.toHaveBeenCalled();
-    expect(host.querySelector<HTMLTextAreaElement>("textarea")!.value).toBe("");
+    // Words stay until a definite answer: asking again replays the same operation.
+    expect(host.querySelector<HTMLTextAreaElement>("textarea")!.value).toBe("Following up on Thursday.");
   });
 
   it("the new-conversation dialog warns honestly and closes, leaving no Send that would mail a second copy", async () => {

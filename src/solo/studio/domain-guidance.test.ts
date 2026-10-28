@@ -147,6 +147,14 @@ describe("guidance content — the six providers and the never-touch rules", () 
     expect(HOST_PATH_COST_LINE).toContain("never provisions hosting");
   });
 
+  it("cost line follows the billing supersession: verified free/unlimited facts, metered — never a ceiling", () => {
+    // 2026-10-27 supersession (ANT-162 2010d550): no owner-set ceilings; usage is attributed + metered.
+    expect(HOST_PATH_COST_LINE).toContain("static-asset requests are free and unlimited");
+    expect(HOST_PATH_COST_LINE).toContain("metered, not capped");
+    expect(HOST_PATH_COST_LINE).not.toContain("ceiling with alerts");
+    expect(HOST_PATH_COST_LINE).not.toMatch(/owner-set ceiling/);
+  });
+
   it("preservation line names every never-touch family and the owner approval", () => {
     for (const rec of ["MX", "SPF", "DKIM", "DMARC", "nameservers", "DNSSEC"]) {
       expect(DNS_PRESERVATION_LINE).toContain(rec);

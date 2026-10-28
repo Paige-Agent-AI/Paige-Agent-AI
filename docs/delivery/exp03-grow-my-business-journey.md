@@ -980,8 +980,38 @@ Both closed as superseded with links; their branches are kept.
   creates a scheduled email until piece 3 (the composer), so it is groundwork, not an owner capability yet.
   Found while mapping: Conversations email attachments have never been sent; piece 2 builds them.
 
-**Open, in order:** O12 piece 2 (real email attachments, bound into the approval) and piece 3 (the composer's
-inline check on the door, with Schedule and Attach), then the New conversation dialog and draft approval on the door;
+- **#2997 merged (`f1439806`) and LIVE** — piece 1 read back on production (migration, bodies, grants, scheduler).
+- **O12 piece 2 (this PR, migration `20271120000000`): governed email attachments.** The bytes approved are the bytes
+  sent: read and hashed at the card, copied on approval to a member-unwritable path, re-hashed before the claim, sent
+  through SendGrid only; the approval card lists the files. Two independent reviews, all findings fixed. Not reachable
+  from the product until piece 3.
+
+- **#3005 (piece 2) merged (`5a4bfb1f`) and LIVE** — migration, 15-argument prepare (service role only), storage
+  policies and edge deploy read back on production.
+- **#3011 merged (`ec41f633`) and LIVE** — a send scheduled for later is no longer refused by the business's own
+  do-not-disturb *now* (the drainer re-checks at release); the door's 202 carries `expires_in_ms`. Deployed
+  `comms-email-command` v48 read back containing the change. Found by the independent review of piece 3.
+- **O12 piece 3 (this PR): the Conversations email reply goes through the door with an inline check.** Send opens
+  a check strip (To the contact's main email · From · Subject · when · files) and nothing sends until Send now;
+  the words stay locked until a definite answer; an unconfirmed answer says "don't resend" and offers Check
+  status on the same operation; refusals read in owner language. One independent adversarial review (1 blocker,
+  5 major, 6 minor — all fixed failing-first), 74 rendered frames light/dark + keyboard passes, AA measured.
+  Owner-approved (2026-10-27, "Yes") platform-wide fix rides along: outline and ghost buttons no longer hover to
+  an unreadable navy slab in light (1.1:1 → 15:1 across 106 measured buttons). §58 call-outs in the PR and the
+  evidence record: email's 30-second Undo is replaced by the check; signature images are dropped (links kept);
+  sending needs the business's own owner/admin (one global admin loses it, one business owner/admin gains it);
+  an email reply needs the contact's main email.
+- **Paige chat can schedule a governed email (built 2026-10-28, not merged).** `comms_send_email` takes an
+  optional `send_at` (ISO 8601 with offset) and hands it to the door top-level; the operation id binds it; an
+  approved card replays the stored time verbatim. The approval card shows a When row ("Sends Tue, Nov 3, 9:00 AM",
+  viewer's clock) and the act reads Schedule send; the chat preview now also carries the files (name and size).
+  Harness render only; an authenticated chat drive and a real release are owed.
+  Review round 1 fixes: the time names its zone everywhere ("9:00 AM CST"); the door refuses a second
+  operation for an email still scheduled to the same contact (`COMMS_EMAIL_ALREADY_SCHEDULED`), so a
+  reschedule or "send it now" must cancel first and can no longer send twice.
+
+**Open, in order:** the New conversation dialog and draft approval on the door; (chat `send_at` + When row:
+built above — Team Hub/NEXUS use still open);
 inbound follow-ups (unauthenticated-sender badge — UI, needs design);
 custom-domain rebuild; owner-seen designs for the reply screen, S4b activation and company/personal mailbox
 access (owner direction 2026-10-27: the account holder grants each team member none / read / read and reply

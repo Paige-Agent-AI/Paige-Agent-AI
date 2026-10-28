@@ -215,7 +215,7 @@ export default function AffiliateApplicationsTab() {
                       <Button
                         size="sm"
                         variant="outline"
-                        className="border-red-300 text-red-600 hover:bg-red-50"
+                        className="border-red-300 text-red-600 hover:bg-red-50 hover:text-red-600"
                         disabled={actioningId === app.id}
                         onClick={() => openReview(app, "reject")}
                       >

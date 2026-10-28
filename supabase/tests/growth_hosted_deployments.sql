@@ -1,5 +1,5 @@
 -- ============================================================================
--- growth_hosted_deployments — repeatable proof for 20271120110000_growth_hosted_deployments.sql
+-- growth_hosted_deployments — repeatable proof for 20271120120000_growth_hosted_deployments.sql
 --
 -- Proves, on an isolated database with synthetic fixtures only (§63):
 --   1. The table exists with exactly the expected columns; the unique (tenant_id, page_id)

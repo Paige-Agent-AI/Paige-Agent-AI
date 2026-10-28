@@ -211,6 +211,114 @@ why, and what it proves (§13, §58: recorded, not silent).
   roles truncated earlier than frame c05; measured in the harness, all seven now truncate no earlier.
   No agent colour or symbol changed (§28).
 
+**A1c notes (2026-10-27, the owner's rulings on mentions and the failed private box).** Recorded, not
+silent (§13, §58); each has a test that fails with the defect reinstated (§71.4). Migration
+`20271120020008`, not applied anywhere yet. It was `20271119030008` until round 3 (2026-10-27): the
+risk named in round 2 happened. Production applied `20271120000000` (EXP03 governed email
+attachments, read-only SELECT 2026-10-27), so `20271119030008` sorted below an applied version, and
+I1 moved to `20271120010008` for the same reason. `20271120020008` sorts above production, A1b
+(`20271119010008`, applied) and I1, which must apply first.
+- **Only the FAILED private answer box is neutral (owner ruling 2026-10-27, "go with your
+  recommendations").** *<AGENT> couldn't finish your private answer.* + Ask again is a status box: no
+  `data-ag`, its own neutral line and surface (`.th-ag-priv--status`), so no agent tint, ring or ink
+  reaches it from an ancestor; the agent is named in the words. The ruling named the failed box only, so
+  its unknown-state twin, *<AGENT> may still be writing your private answer* + Check again, keeps the
+  agent tint and lock exactly as A1b had it (§28; round 1 had wrongly neutralised it too, corrected).
+  Agent colour and symbol stay everywhere else. Confirmed: no failure row (*didn't reply*, *may still be
+  replying*, *couldn't start*) takes an agent token.
+- **"<AGENT> is writing…" for everyone (owner, Team Hub mentions).** While a reply is being written,
+  everyone who can see the conversation sees the writing row at the end of the stream (or thread), as
+  the asker does. Server: `team_hub_agent_turn_states` (re-emitted from A1b, two marked hunks) returns
+  `answering` for a running reply turn to any caller who can see the conversation — state only, no text,
+  token or turn id; a failed, unstarted or stale turn of another person stays hidden; an agent DM stays
+  its one member's (the owner is refused `not_found`); another workspace reads nothing. Client: the
+  writing row is drawn from the read for every viewer; the asker's own tab still draws its local row
+  once (never twice). While any reply in the open conversation is being written the state is re-read
+  every 3 s, only while the tab is visible, for at most 2 minutes counted from when fast re-reading
+  began for that conversation: another reply starting (or one ending) while writing goes on does not
+  restart it; it starts again only on a conversation change or once nothing has been written there for
+  60 s. When a row ends the conversation is refreshed so the reply appears; otherwise the 15 s tick is
+  unchanged. Reduced motion stills the dots.
+- **The dead specialist handoff is stripped (§30).** No `specialist` command kind, no specialist branch in
+  `paigeHandoffDraft`, no `SPECIALIST_NAMES` / `specialistMentioned` / `withoutSpecialists`, no specialist
+  avatar CSS; the tests that existed only for it are replaced by tests that it cannot appear (the / menu
+  is four commands with no specialist wording; @agent never opens a PAIGE preview). Searched:
+  `specialist`, `Specialist`, `SPECIALIST`, `Ask a specialist`, `avatar--sp`, `SpecialistName` across
+  `src/solo/team-hub`, `src/pages/admin/TeamHub.tsx` and `_shared/team-hub`; what remains is the roster's
+  own word ("the six specialists") and history comments.
+- **One @ list for anyone you'd address (Slack-style).** Already held from A1b: people who can see the
+  conversation first, then *Your Paige team* (PAIGE + six); Up/Down/Enter/Tab, Esc; people who cannot see
+  a private conversation are never offered; a person's mention renders as the neutral chip, an agent's
+  in its approved identity. Fixed in A1c: a name now matches from the start of any of its words (it
+  matched anywhere, so "@ri" offered Priya), ranked exact, then names that start with it, then later
+  words; the option the arrow keys reach is scrolled into view (with three groups the list scrolls on its
+  own, and @here could be selected out of sight). **Threads (round 2):** the thread's reply box is the
+  same `Composer` (`variant="thread"`), not a fork, so it carries the same @ list: people who can see the
+  conversation, *Your Paige team* (never in an agent DM), and *Everyone* only when the thread is in a
+  channel; a picked person is mentioned (`p_mention_ids`), as in the conversation's composer. It has no
+  / menu. @channel / @here are sent from a thread only when the thread is in a channel.
+- **@channel and @here (owner: no prototype needed, Slack semantics).** Grounded first (§71): searched
+  `mention`, `mentions`, `notify`, `unread`, `highlight`, `presence`, `last_seen`, `last_active`,
+  `heartbeat`, `online` across the Team Hub migrations, `src/solo/team-hub` and `src/hooks`. What a
+  person mention does today: a `team_hub_message_mentions` row, the id in the message's `mentions`, and
+  the highlighted run in the message — there is **no notification and no unread-mention count** in Team
+  Hub. There is **no presence substrate**. `team_hub_channel_members.last_read_at` is NOT an activity
+  signal: besides the read door it is set to now() by `team_hub_join_channel`, by the seat-start trigger
+  `_team_hub_seat_started` (an invitation accepted) and by the Team conversations toggle
+  (`set_solo_team_member_team_hub_access`), so round 1's @here, which read it, reached people who had
+  only joined, been seated or been switched on (the verifier's blocking finding, fixed). Built: in a channel with someone besides the author, a third *Everyone* group
+  offers *@channel — Everyone in #name* and *@here — Everyone active in #name* (never in a DM or an agent
+  DM). Sent through the existing post door: `team_hub_post_message` gains `p_broadcast_mention`
+  (`channel` | `here`, refused `invalid` outside a channel; @channel wins when both are typed; the client
+  sends it only when the message carries one). Stored: `team_hub_messages.broadcast_mention` and
+  `team_hub_message_broadcast_recipients` — who it reached, as a mention row records its person:
+  @channel every other member of the channel who takes part in Team conversations; **@here, defined
+  honestly from stored data**: those of them who, in the last 10 minutes, posted in the channel (their
+  own message or thread reply, `author_kind='user'`: an agent reply to their question is not their post)
+  or whose own read door ran for it. The read door is `team_hub_mark_read`, which the browser calls when
+  the person opens the conversation or reads new messages in it on screen; it now also writes
+  `team_hub_channel_members.last_active_at = now()`, a new nullable column nothing else writes (the
+  proof checks every function body). So someone with the conversation open and nothing new arriving
+  drops out after 10 minutes. The author is never a recipient. **A broadcast that would reach nobody**
+  (the author alone, or nobody else active for @here) **is stored as a plain message**: no
+  `broadcast_mention`, no recipients, no chip. `_team_hub_message_json` adds
+  `broadcast` only on a row that carries one. @channel / @here never ask an agent: no agent-mention row,
+  and the acceptance door refuses a turn for it. Shown as the neutral mention chip, only on a message the
+  server stored as one. **Team Hub has no notification or unread-mention count for ANY mention yet** —
+  a person, an agent, @channel or @here. @channel / @here store their recipients and show a chip; nobody
+  is alerted. Alerts are a later increment; the recipient rows are stored for it.
+- **The migration checks what it was written against.** Before changing anything it compares
+  md5(prosrc) of every body it calls (`_team_hub_refusal`, `_team_hub_visible`, `_team_hub_is_active`,
+  `_team_hub_participates`) with production's (read 2026-10-27), and of every body it replaces
+  (`_team_hub_message_json`, `team_hub_mark_read`, the eight-argument `team_hub_post_message`) with
+  production's or its own; `team_hub_agent_turn_states` with A1b's body or its own. Any drift stops it.
+- **Producer inventory for `team_hub_post_message` (§37).** Browser `useTeamHub` deliver (named call;
+  `p_broadcast_mention` only when set), PAIGE's `_shared/team-hub/chat.ts` `postTeamHubReply` (named,
+  seven arguments), `team_hub_request_task` (positional, six), the tests and the evidence harnesses
+  (named). DROP and recreate: each still resolves to the one nine-argument function (proved in
+  `exp08_team_hub_a1c.sql`); no overload is left. Response consumers: the browser parser (tolerant of the
+  added key; reads it), `chat.ts` (reads `message.id` only), `agent-turn.ts` (does not read the post
+  door's message).
+- **Two Codex P2 findings on A1b (PR #2999), fixed here (2026-10-27).** (1) *A lost answer dropped the
+  private part.* When a reply with a private part committed but its answer was lost, the retry's accept
+  door answers `duplicate` and the turn returned the read-back reply with no `private_followup`, so the
+  browser never started the DM turn. `agent-turn.ts` now rebuilds `private_followup` in the duplicate
+  branch when the stored reply is this agent's, the intent is `reply`, and its body ends with
+  `PRIVATE_PART_LINE` (the one constant; only the definer appends that line and the model's copy is
+  stripped before posting), in the same shape and with the DM resolved the same way (or null) as the
+  normal posted path, which now shares that one helper. (2) *A turn another tab owns wrote forever.* A
+  local turn stored `in_flight`, or a private part left `writing` after `in_flight`, was never compared
+  with later `team_hub_agent_turn_states` reads, so the asker saw "is writing…" until a reload.
+  `useTeamHub` now settles such a turn from the read: ended without a post (`failed`) → the failure line
+  with Ask again; replied (or the reply carries a private part) → the local row is dropped and the
+  conversation is read again so the reply shows; a private part `replied_privately` → the DM note; still
+  answering, or no turn yet → unchanged. A turn this tab is running is never settled by a read, and only a
+  read issued after the turn began waiting can settle it (a stale read cannot). A waiting turn outside the
+  open conversation (a private part while the asker is in the DM) is read on the same focus / reconnect /
+  15 s ticks. Producers and consumers (§37): the accept door's `duplicate` answer is read only here; the
+  added `private_followup` is read only by `parseAgentTurn` in `team-hub-agents.ts`, which already reads it
+  on the posted path.
+
 Increments 1–4 are in
 [collaboration](exp08-team-hub-collaboration-contract.md),
 [team work](exp08-team-hub-increment2-work-contract.md),

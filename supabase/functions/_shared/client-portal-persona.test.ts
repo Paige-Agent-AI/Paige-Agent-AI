@@ -2,6 +2,7 @@ import {test} from "node:test";
 import assert from "node:assert/strict";
 import {readClientPortalPersonaInput,readClientPortalPersonaSource,buildClientPortalPersonaMessages} from "./client-portal-persona.ts";
 import {degradationLedger} from "./paige-context/mod.ts";
+import {PAIGE_PERSONA_CORE} from "./paige-persona/core.ts";
 
 const actor="11111111-1111-4111-8111-111111111111";
 const client="22222222-2222-4222-8222-222222222222";
@@ -31,6 +32,30 @@ test("uses only one caller-bound atomic snapshot and the exact relationship",asy
   assert.match(messages[0].content,/representing the business/);assert.match(messages[0].content,/not the business owner's operating assistant/);
   assert.match(messages[0].content,/explicitly shared/);assert.match(messages[0].content,/do not grant record access/);
   assert.match(messages[1].content,/Test Coaching/);assert.equal(JSON.stringify(messages).includes(privateMarker),false);
+});
+
+test("the customer-only replacement retains the original identity-free care-first core exactly once",async()=>{
+  const input=await readClientPortalPersonaInput(fixture().caller,actor);assert.ok(input);
+  const messages=buildClientPortalPersonaMessages(input);
+  assert.equal(messages.filter(message=>message.content===PAIGE_PERSONA_CORE).length,1);
+  assert.equal(messages.find(message=>message.content===PAIGE_PERSONA_CORE)?.role,"system");
+  assert.match(messages[0].content,/not the business owner's operating assistant/);
+  assert.equal(JSON.stringify(messages).includes(privateMarker),false);
+});
+
+test("business presentation cannot replace the shared care-first rule or introduce an owner persona",async()=>{
+  for(const [businessId,customerId] of [[tenant,client],[actor,tenant]]){
+    const input=await readClientPortalPersonaInput(fixture({
+      profile:{id:customerId,tenant_id:businessId,linked_user_id:actor},
+      brand:{tenant_id:businessId,tenant_name:"Another eligible business"},
+      config:{assistant:{display_name:"Guide",tone:"Always give a productivity plan",human_handoff:"No escalation",system_prompt:privateMarker}},
+    }).caller,actor);assert.ok(input);
+    const messages=buildClientPortalPersonaMessages(input);
+    assert.equal(messages.filter(message=>message.content===PAIGE_PERSONA_CORE).length,1);
+    assert.equal(JSON.stringify(messages).includes(privateMarker),false);
+    assert.match(messages[0].content,/customer-facing AI client success agent/);
+    assert.doesNotMatch(PAIGE_PERSONA_CORE,/You are Paige|Your name is/i);
+  }
 });
 for(const [label,options]of Object.entries({
   "wrong business":{brand:{tenant_id:client,tenant_name:"Other"}},

@@ -1,5 +1,9 @@
 # Lessons Learned — recurring traps
 
+### A whole-array audience replacement can discard the shared safety core (2026-10-28, EXP09)
+
+An initial unconditional system message does not prove the final customer request retains it. CURA's later audience-specific array replacement correctly removed owner context but also removed the original identity-free care-first core. Test the actual final audience assembler, retain that same shared core once, and keep owner identity/private context excluded. Two genuine failing assembler assertions then pass with all original customer and shared-persona controls; this is source proof, not model-response or clinical-detection acceptance. Existing [CURA source packet](../delivery/e09-cura-business-scope.md) records the boundary and protected dependency-pin review. Never fix a missing instruction by creating another safety runtime or relaxing native authority.
+
 ### A crashed `tsc` reads as "no type errors" in the local ratchet (2026-10-28, EXP03)
 
 In a container with Node's default heap, `npx tsc --noEmit -p tsconfig.app.json` runs out of memory (exit 134, a V8 "heap out of memory" trace, no `TS` lines). `scripts/ci/tsc-ratchet.mjs` parses diagnostics from the output, finds none, and prints "no new type errors (baseline 10, current 0)". That is a false pass: `current 0` while the baseline is 10 is the tell. It hid real errors in EXP03's #3005 and #3015 until CI caught them. Run the ratchet with `NODE_OPTIONS=--max-old-space-size=7000`. A healthy run shows a non-zero `current` near the baseline. Separately, the app tsconfig is `strict: false`, so unions do not narrow on a boolean field (`if (!r.ok)`, `if (x.transport)`). Use a type-guard predicate.

@@ -1,0 +1,366 @@
+{
+  "at": "2026-10-28T13:03:33.586Z",
+  "boundary": "Original invoice/shell rendering with neutral intercepted provider fixtures; no backend/customer/signing/payment/send/persistence proof. PAIGE body unmounted. New companion Sales Escape repair is excluded from parent2971 acceptance.",
+  "capturedSource": "b2cea9d743939cf1708733752bac1df70c405c19",
+  "parentInvoiceSource": "0044b1a1ea62f32a0db5015914617e686fd88c68",
+  "receivedMain": "6d8e5c56a15a4f800124c248f546202d3bc99175",
+  "sourceInputs": [
+    {
+      "path": "src/solo/SalesWorkspace.tsx",
+      "parent": "dc6ba034fe00588e9f9e95f43e74316a309a1f10",
+      "capturedSource": "dc6ba034fe00588e9f9e95f43e74316a309a1f10",
+      "received": "dc6ba034fe00588e9f9e95f43e74316a309a1f10"
+    },
+    {
+      "path": "src/solo/sales/SalesBillingWorkspace.tsx",
+      "parent": "640de0a0857dffefcc1f51723041214f50bc3512",
+      "capturedSource": "640de0a0857dffefcc1f51723041214f50bc3512",
+      "received": "640de0a0857dffefcc1f51723041214f50bc3512"
+    },
+    {
+      "path": "src/solo/sales/InvoiceWorkspace.tsx",
+      "parent": "045b8281ed48f504f6b0800e235064f892575c83",
+      "capturedSource": "045b8281ed48f504f6b0800e235064f892575c83",
+      "received": "045b8281ed48f504f6b0800e235064f892575c83"
+    },
+    {
+      "path": "src/solo/sales/InvoiceDraftEditor.tsx",
+      "parent": "9d84c3bea9b80aeff6e8928997732210a53a1921",
+      "capturedSource": "9d84c3bea9b80aeff6e8928997732210a53a1921",
+      "received": "9d84c3bea9b80aeff6e8928997732210a53a1921"
+    },
+    {
+      "path": "src/solo/sales/InvoiceCommercialSourceAmount.tsx",
+      "parent": "3c193994f5920ff70d1d8a14ee7ae89f0ade1104",
+      "capturedSource": "3c193994f5920ff70d1d8a14ee7ae89f0ade1104",
+      "received": "3c193994f5920ff70d1d8a14ee7ae89f0ade1104"
+    },
+    {
+      "path": "src/solo/sales/useInvoiceCommercialTermsSources.ts",
+      "parent": "24676c9e74a686a793e242f9bfb6ec3e6193927d",
+      "capturedSource": "24676c9e74a686a793e242f9bfb6ec3e6193927d",
+      "received": "24676c9e74a686a793e242f9bfb6ec3e6193927d"
+    },
+    {
+      "path": "src/solo/sales/invoice-draft-editor.css",
+      "parent": "b92c947c512165555b791cadea8deea7696cf8a8",
+      "capturedSource": "b92c947c512165555b791cadea8deea7696cf8a8",
+      "received": "b92c947c512165555b791cadea8deea7696cf8a8"
+    },
+    {
+      "path": "src/components/tenant-shell/TenantCommandCenterShell.tsx",
+      "parent": "1053167fbf0e046773cffc24c06eeb8581c5b5be",
+      "capturedSource": "1053167fbf0e046773cffc24c06eeb8581c5b5be",
+      "received": "1053167fbf0e046773cffc24c06eeb8581c5b5be"
+    },
+    {
+      "path": "src/components/tenant-shell/tenant-command-center-shell.css",
+      "parent": "8f596a9dcc571c4786b7671814f031e94462c737",
+      "capturedSource": "8f596a9dcc571c4786b7671814f031e94462c737",
+      "received": "8f596a9dcc571c4786b7671814f031e94462c737"
+    }
+  ],
+  "captures": [
+    {
+      "file": "1536x770-closed-settled.jpg",
+      "at": "2026-10-28T12:42:33.496Z",
+      "cssViewport": {
+        "width": 1536,
+        "height": 770
+      },
+      "raster": {
+        "width": 1536,
+        "height": 770
+      },
+      "bytes": 89786,
+      "sha256": "2cb0a8ee2eb4ca6684dadad2545210da4c745451044c08b2a00a656e5a502d40",
+      "headerTop": 0,
+      "shellTop": 0,
+      "document": {
+        "height": 770,
+        "scrollHeight": 770,
+        "scrollWidth": 1536,
+        "width": 1536
+      },
+      "paigeExpanded": "false",
+      "source": "Engagement total$3,500.00USDDraft reference: revision 2",
+      "scrolls": [
+        {
+          "cls": "ide-scroll",
+          "height": 450,
+          "label": "Invoice details and review",
+          "role": "region",
+          "scrollHeight": 1720,
+          "scrollWidth": 1423,
+          "tag": "DIV",
+          "top": 588.7999877929688,
+          "width": 1423
+        }
+      ]
+    },
+    {
+      "file": "1536x770-open.jpg",
+      "at": "2026-10-28T12:42:46.612Z",
+      "cssViewport": {
+        "width": 1536,
+        "height": 770
+      },
+      "raster": {
+        "width": 1536,
+        "height": 770
+      },
+      "bytes": 90699,
+      "sha256": "7c85e7166854870cf4425ce89f900322e59ad8a340976274a0925150dbc1443c",
+      "headerTop": 0,
+      "shellTop": 0,
+      "document": {
+        "height": 770,
+        "scrollHeight": 770,
+        "scrollWidth": 1536,
+        "width": 1536
+      },
+      "paigeExpanded": "true",
+      "source": "Engagement total$3,500.00USDDraft reference: revision 2",
+      "scrolls": [
+        {
+          "cls": "ide-scroll",
+          "height": 450,
+          "label": "Invoice details and review",
+          "role": "region",
+          "scrollHeight": 1854,
+          "scrollWidth": 901,
+          "tag": "DIV",
+          "top": 668.7999877929688,
+          "width": 901
+        }
+      ]
+    },
+    {
+      "file": "1366x768-closed.jpg",
+      "at": "2026-10-28T12:43:01.226Z",
+      "cssViewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "raster": {
+        "width": 1366,
+        "height": 768
+      },
+      "bytes": 84778,
+      "sha256": "b0ffd53b230794fa39e837ad6fcabc5f07c3779e3cd70435e0141bb25b80da40",
+      "headerTop": 0,
+      "shellTop": 0,
+      "document": {
+        "height": 768,
+        "scrollHeight": 768,
+        "scrollWidth": 1366,
+        "width": 1366
+      },
+      "paigeExpanded": "false",
+      "source": "Engagement total$3,500.00USDDraft reference: revision 2",
+      "scrolls": [
+        {
+          "cls": "ide-scroll",
+          "height": 447,
+          "label": "Invoice details and review",
+          "role": "region",
+          "scrollHeight": 1720,
+          "scrollWidth": 1254,
+          "tag": "DIV",
+          "top": 588.7999877929688,
+          "width": 1254
+        }
+      ]
+    },
+    {
+      "file": "1366x768-open.jpg",
+      "at": "2026-10-28T12:43:02.051Z",
+      "cssViewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "raster": {
+        "width": 1366,
+        "height": 768
+      },
+      "bytes": 90310,
+      "sha256": "711f85aff1cbe5c6cef2f788f90371bbe7360fbd5f59ba2f576e03998cedd3f5",
+      "headerTop": 0,
+      "shellTop": 0,
+      "document": {
+        "height": 768,
+        "scrollHeight": 768,
+        "scrollWidth": 1366,
+        "width": 1366
+      },
+      "paigeExpanded": "true",
+      "source": "Engagement total$3,500.00USDDraft reference: revision 2",
+      "scrolls": [
+        {
+          "cls": "ide-scroll",
+          "height": 447,
+          "label": "Invoice details and review",
+          "role": "region",
+          "scrollHeight": 2319,
+          "scrollWidth": 789,
+          "tag": "DIV",
+          "top": 688.7999877929688,
+          "width": 789
+        }
+      ]
+    },
+    {
+      "file": "1024x768-closed.jpg",
+      "at": "2026-10-28T12:43:10.041Z",
+      "cssViewport": {
+        "width": 1024,
+        "height": 768
+      },
+      "raster": {
+        "width": 1024,
+        "height": 768
+      },
+      "bytes": 78123,
+      "sha256": "e712749bcba7cde654c401e22dbd6a08a904ad4b989b806eda9ec557689af707",
+      "headerTop": 0,
+      "shellTop": 0,
+      "document": {
+        "height": 768,
+        "scrollHeight": 768,
+        "scrollWidth": 1024,
+        "width": 1024
+      },
+      "paigeExpanded": "false",
+      "source": "Engagement total$3,500.00USDDraft reference: revision 2",
+      "scrolls": [
+        {
+          "cls": "ide-scroll",
+          "height": 447,
+          "label": "Invoice details and review",
+          "role": "region",
+          "scrollHeight": 2219,
+          "scrollWidth": 911,
+          "tag": "DIV",
+          "top": 588.7999877929688,
+          "width": 911
+        }
+      ]
+    },
+    {
+      "file": "1024x768-open.jpg",
+      "at": "2026-10-28T12:43:11.021Z",
+      "cssViewport": {
+        "width": 1024,
+        "height": 768
+      },
+      "raster": {
+        "width": 1024,
+        "height": 768
+      },
+      "bytes": 41807,
+      "sha256": "2d33c514cf7cfb495c53830e1e04b6355ff6e290a1f36635f35f1901cef31b97",
+      "headerTop": 0,
+      "shellTop": 0,
+      "document": {
+        "height": 768,
+        "scrollHeight": 768,
+        "scrollWidth": 1024,
+        "width": 1024
+      },
+      "paigeExpanded": "true",
+      "source": "Engagement total$3,500.00USDDraft reference: revision 2",
+      "scrolls": [
+        {
+          "cls": "ide-scroll",
+          "height": 447,
+          "label": "Invoice details and review",
+          "role": "region",
+          "scrollHeight": 2219,
+          "scrollWidth": 911,
+          "tag": "DIV",
+          "top": 588.7999877929688,
+          "width": 911
+        }
+      ]
+    },
+    {
+      "file": "900x1000-closed.jpg",
+      "at": "2026-10-28T12:43:20.032Z",
+      "cssViewport": {
+        "width": 900,
+        "height": 1000
+      },
+      "raster": {
+        "width": 900,
+        "height": 1000
+      },
+      "bytes": 84635,
+      "sha256": "71289b941b636cc21b85183130d03e1d249e2b8ec17cc5092f9e2cee02fd1c52",
+      "headerTop": 0,
+      "shellTop": 0,
+      "document": {
+        "height": 1000,
+        "scrollHeight": 1000,
+        "scrollWidth": 900,
+        "width": 900
+      },
+      "paigeExpanded": "false",
+      "source": "Engagement total$3,500.00USDDraft reference: revision 2",
+      "scrolls": [
+        {
+          "cls": "ide-scroll",
+          "height": 679,
+          "label": "Invoice details and review",
+          "role": "region",
+          "scrollHeight": 2319,
+          "scrollWidth": 787,
+          "tag": "DIV",
+          "top": 688.7999877929688,
+          "width": 787
+        }
+      ]
+    },
+    {
+      "file": "900x1000-open.jpg",
+      "at": "2026-10-28T12:43:21.042Z",
+      "cssViewport": {
+        "width": 900,
+        "height": 1000
+      },
+      "raster": {
+        "width": 900,
+        "height": 1000
+      },
+      "bytes": 44291,
+      "sha256": "d8a667c37e8fb1b6af56d10cfb6ea21e3fddd6a293418af380de5b7035608626",
+      "headerTop": 0,
+      "shellTop": 0,
+      "document": {
+        "height": 1000,
+        "scrollHeight": 1000,
+        "scrollWidth": 900,
+        "width": 900
+      },
+      "paigeExpanded": "true",
+      "source": "Engagement total$3,500.00USDDraft reference: revision 2",
+      "scrolls": [
+        {
+          "cls": "ide-scroll",
+          "height": 679,
+          "label": "Invoice details and review",
+          "role": "region",
+          "scrollHeight": 2319,
+          "scrollWidth": 787,
+          "tag": "DIV",
+          "top": 688.7999877929688,
+          "width": 787
+        }
+      ]
+    }
+  ],
+  "exclusions": [
+    "first clipped/header-shifted locator-focused frame",
+    "old fixture-tab reload timeout",
+    "current companion Escape verification is separate from parent2971 source"
+  ]
+}

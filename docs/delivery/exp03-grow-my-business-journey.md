@@ -1009,7 +1009,7 @@ Both closed as superseded with links; their branches are kept.
   Review round 1 fixes: the time names its zone everywhere ("9:00 AM CST"); the door refuses a second
   operation for an email still scheduled to the same contact (`COMMS_EMAIL_ALREADY_SCHEDULED`), so a
   reschedule or "send it now" must cancel first and can no longer send twice.
-- **A governed email that bounces now stops the next one (this change, migration `20271120120003`, NOT live).**
+- **A governed email that bounces now stops the next one (#3027, migration `20271120120003` LIVE: schema_migrations + function bodies read back on prod, db-live `a6f84f20`).**
   Found on production 2026-10-28: a hard bounce at one Solo business and, seven minutes later, SendGrid's
   account-wide "Bounced Address" drop at a second business, to the same address — both failed, neither wrote a
   suppression, so the door's pre-send check could not hold the next try. The governed-reply applier now writes a

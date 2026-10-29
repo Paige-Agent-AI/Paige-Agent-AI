@@ -860,6 +860,13 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**2026-10-29 UTC — EXP05 original automation draft preview; production web/Edge source verified.**
+
+| Increment | Exact source and observed release | Useful result and proof boundary |
+| --- | --- | --- |
+| [#3061](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3061#issuecomment-6500028795) | Reviewed `966d614bf50503bb56d1a118587388837cbca9d1`, final **AUTHOR-REVIEW / LOWER ASSURANCE**5699648814; all11 exact checks/genuine native Preview/two web contexts SUCCESS, zero threads. Merge `9da96dfb4eaa331ab2d83de575323cde3b2838dc`, parents7378+966/tree`49247dc1b5f2f2f40e4b7e15cebc86c6af1c4be3` equals inspected composition.78 original UI/source +250 full C0b cases,127pins/29dispatches/0findings/strict0-to0 and16 source-shell frames. | Original stored draft trigger and ordered bounded task purposes appear before the same canonical approval; original summary line breaks retained. Exact stored arguments, fingerprints, Trust, original domain writer and separate enablement/execution are unchanged. |
+| Production **WEB/EDGE SOURCE VERIFIED; customer outcome PROOF OWED** | Original Edge40894439135/job123519597038 SUCCESS; artifact12907320009/42,101bytes/SHA256`874ce616e0cdedd0f58046e1a1b92a1e03183f7fc82da0576e7b7b344b83cd01` independently verified. ALL ONE selected Chat582/JWTtrue/305source+305emittedPASS, owning raw/emitted source hashes and actual edge-live9da verified. Vercel`dpl_3VsY2yR86moEGfdVggzbkiKigpbb` READY/exact; BOTH origins14:51:40–42UTC200/build9da-mvtnmqk9/null. Original shared summary module200/36,398bytes/SHA256`3933ee70e453f14d444c9f5b10dcdaf290bc69e85d6060628896e11ab6b54708`, all4 owning signatures PASS. Own SQL N/A. [Original production evidence](evidence/exp05-automation-draft-preview-production.json). | Shared tenant-neutral source; no actual customer draft/domain act/Rail/reload, full automation lifecycle, same-ZION both-chat/current+new-account/RLS/full ten/E5/founder acceptance inferred. No provider/recurrence/Live, catalogue or algorithm promotion/customer announcement. Ordinary forward-fix/revert through existing pipeline, never repeat an unknown effect. |
+
 **2026-10-29 UTC — EXP05 ZION inspection Auth/focus recovery; production web/source verified.**
 
 | Increment | Exact source and observed release | Useful result and proof boundary |

@@ -14,6 +14,8 @@ import { DictationMicButton } from "@/components/voice/DictationMicButton";
 import { appendDictation } from "@/lib/voice/useDictation";
 import {useCustomerChatAttachments} from "@/hooks/useCustomerChatAttachments";
 import {CustomerChatAttachments} from "@/components/chat/CustomerChatAttachments";
+import {CustomerChatPublicLink} from "@/components/chat/CustomerChatPublicLink";
+import {customerPublicLinkUrl} from "../../../supabase/functions/_shared/client-portal-public-link";
 import type {PortalDocument} from "@/lib/client-portal-documents";
 import { useChatDocumentUpload } from "@/hooks/useChatDocumentUpload";
 import { useBeforeUnloadGuard } from "@/hooks/useBeforeUnloadGuard";
@@ -56,6 +58,7 @@ type Message = {
   documentFileName?: string;
   files?: PortalDocument[];
   unavailableFiles?: number;
+  publicLink?: string;
   syncStatus?: SyncStatus;
   /** Inline extraction proposal rendered as a confirmation card after this message. */
   extractionProposal?: ExtractionProposal;
@@ -180,6 +183,8 @@ function PaigeChatInner({ user, session, clientId, customerFrame, customerAvaila
   const queryClient = useQueryClient();
   const sessionIdRef = useRef<string>(crypto.randomUUID());
   const [customerThread,setCustomerThread] = useState<string|null>(null);
+  const [customerLink,setCustomerLink]=useState<string|null>(null);
+  const [linkValidationAttempt,setLinkValidationAttempt]=useState(0);
   const [historyState,setHistoryState] = useState<"loading"|"ready"|"error">(customerFrame?"loading":"ready");
   const [historyRetry,setHistoryRetry] = useState(0);
   const privateFiles=useCustomerChatAttachments(customerFrame?customerThread:null,
@@ -188,7 +193,7 @@ function PaigeChatInner({ user, session, clientId, customerFrame, customerAvaila
   useEffect(()=>{if(!fileAccess?.expires)return;const timer=window.setTimeout(()=>setFileAccess(null),Math.max(0,fileAccess.expires-Date.now()));return()=>window.clearTimeout(timer);},[fileAccess]);
   const historyRetryFocus=useRef(false);
   const customerRequest = useRef({epoch:0,abort:null as AbortController|null});
-  type Recovery={threadId:string;intentId:string;phase:"sending"|"unknown"|"checking"|"unconfirmed"|"error"};
+  type Recovery={threadId:string;intentId:string;phase:"sending"|"unknown"|"checking"|"unconfirmed"|"error";expectedLink?:string};
   const [customerRecovery,setCustomerRecovery]=useState<Recovery|null>(null);
   const customerRecoveryRef=useRef<Recovery|null>(null);
   const customerRecoveryAbort=useRef<AbortController|null>(null);
@@ -501,11 +506,15 @@ function PaigeChatInner({ user, session, clientId, customerFrame, customerAvaila
       const saved=await readCustomerChat(customerFrame,controller.signal);
       if(!current())return;if(Date.now()>=deadlineAt){unavailable();return;}
       if(saved.threadId!==original.threadId)throw Error("Customer conversation changed");
+      const accepted=saved.messages.find(message=>message.role==="user"&&message.requestIntentId===original.intentId);
+      if(original.expectedLink){
+        if(accepted?.publicLink!==original.expectedLink)throw Error("Customer link receipt changed");
+        setCustomerLink(null);
+      }
       if(saved.latestRequestIntentId&&saved.latestRequestIntentId!==original.intentId){
         customerRecoveryActionFocus.current=requestRoute;setMessages(saved.messages);setRecovery({threadId:saved.threadId,intentId:saved.latestRequestIntentId,phase:"unconfirmed"});return;
       }
       setMessages(saved.messages.length?saved.messages:[mkMessage({role:"assistant",content:playbook.persona.greeting})]);
-      const accepted=saved.messages.find(message=>message.role==="user"&&message.requestIntentId===original.intentId);
       if(accepted?.files?.length)privateFiles.releaseSentSelection(accepted.files.map(file=>file.id));
       customerRecoveryFocus.current=requestRoute;setRecovery(null);setCustomerRecovered(true);
     }catch{if(current()){customerRecoveryActionFocus.current=requestRoute;setMessages([]);setRecovery({...original,phase:"error"});}}
@@ -530,13 +539,16 @@ function PaigeChatInner({ user, session, clientId, customerFrame, customerAvaila
     if(privateFilesBlocked)return;
     if(customerFrame&&(!customerAvailable||historyState!=="ready"||!customerThread||customerRecoveryRef.current||customerSendBusy.current))return;
     if (dictationActive) return;
-    const messageText = overrideInput || input || (customerFrame&&privateFiles.files.length ? "Please help me understand these files." : "");
+    const selectedPublicLink=customerFrame&&customerLink?.trim()?customerPublicLinkUrl(customerLink):null;
+    if(customerFrame&&customerLink?.trim()&&!selectedPublicLink){setLinkValidationAttempt(value=>value+1);return;}
+    const messageText = overrideInput || input || (customerFrame&&privateFiles.files.length ? "Please help me understand these files." : selectedPublicLink ? "Please read this public page." : "");
     if ((!messageText.trim() && !attachedDoc) || isLoading || (customerFrame && attachedDoc)) return;
 
     if(customerFrame){customerSendBusy.current=true;setCustomerRecovered(false);}
     resetInactivityTimer();
 
-    const userMessage = mkMessage({ role: "user", content: messageText.trim() || (attachedDoc ? `Analyze this document: ${attachedDoc.name}` : ""), documentFileName: attachedDoc?.name });
+    const userMessage = mkMessage({ role: "user", content: messageText.trim() || (attachedDoc ? `Analyze this document: ${attachedDoc.name}` : ""), documentFileName: attachedDoc?.name,
+      ...(selectedPublicLink?{publicLink:selectedPublicLink}:{}) });
     const isFirstUserMessage = messages.every((m) => m.role !== "user");
     const newMessages = [...messages, userMessage];
     setMessages(newMessages);
@@ -571,7 +583,7 @@ function PaigeChatInner({ user, session, clientId, customerFrame, customerAvaila
       &&customerRenderScope.current.scope===requestScope&&customerRenderScope.current.available&&!customerAbort?.signal.aborted);
     const uncertain=()=>{
       if(!customerFrame||!visibleRequest()||!requestIntent||!customerThread)return;
-      setRecovery({threadId:customerThread,intentId:requestIntent,phase:"unknown"});
+      setRecovery({threadId:customerThread,intentId:requestIntent,phase:"unknown",...(selectedPublicLink?{expectedLink:selectedPublicLink}:{})});
       setSteps(settleOpenSteps);setIsLoading(false);customerSendBusy.current=false;
     };
     const timeoutRequest=()=>{
@@ -641,6 +653,7 @@ function PaigeChatInner({ user, session, clientId, customerFrame, customerAvaila
           surfaceContext:{kind:"customer_portal"},threadId:customerThread,
           requestIntentId:requestIntent,interactive:{kind:"message"},
           ...(selectedPrivateIds.length?{customerFileIds:selectedPrivateIds}:{}),...getUserClock()});
+        if(selectedPublicLink)payload.customerPublicLink=selectedPublicLink;
       }
 
       if (currentDoc) {
@@ -651,7 +664,7 @@ function PaigeChatInner({ user, session, clientId, customerFrame, customerAvaila
         };
       }
 
-      if(customerFrame&&requestIntent&&customerThread){customerDispatched=true;setRecovery({threadId:customerThread,intentId:requestIntent,phase:"sending"});}
+      if(customerFrame&&requestIntent&&customerThread){customerDispatched=true;setRecovery({threadId:customerThread,intentId:requestIntent,phase:"sending",...(selectedPublicLink?{expectedLink:selectedPublicLink}:{})});}
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/paige-ai-chat`,
         {
@@ -724,14 +737,16 @@ function PaigeChatInner({ user, session, clientId, customerFrame, customerAvaila
         }
       }
       if(customerFrame&&(!customerStreamDone||!assistantMessage.trim())){uncertain();return;}
-      if(customerFrame&&selectedPrivateIds.length){
+      if(customerFrame&&(selectedPrivateIds.length||selectedPublicLink)){
         const saved=await readCustomerChat(customerFrame,customerAbort?.signal);
         if(!currentRequest())return;
         const accepted=saved.messages.find(message=>message.role==="user"&&message.requestIntentId===requestIntent);
-        if(saved.threadId!==customerThread||!accepted?.files||accepted.unavailableFiles
-          ||accepted.files.length!==selectedPrivateIds.length||accepted.files.some((file,index)=>file.id!==selectedPrivateIds[index])){uncertain();return;}
+        if(saved.threadId!==customerThread||(selectedPublicLink&&accepted?.publicLink!==selectedPublicLink)
+          ||(selectedPrivateIds.length&&(!accepted?.files||accepted.unavailableFiles
+          ||accepted.files.length!==selectedPrivateIds.length||accepted.files.some((file,index)=>file.id!==selectedPrivateIds[index])))){uncertain();return;}
         setMessages(saved.messages);
-        privateFiles.releaseSentSelection(selectedPrivateIds);
+        if(selectedPrivateIds.length)privateFiles.releaseSentSelection(selectedPrivateIds);
+        if(selectedPublicLink)setCustomerLink(null);
       }
       if(customerFrame)setRecovery(null);
       // The read is over: a step it started and never closed will not close now.
@@ -908,6 +923,9 @@ function PaigeChatInner({ user, session, clientId, customerFrame, customerAvaila
                 )
               )}
               {message.syncStatus && <SyncStatusPanel syncStatus={message.syncStatus} />}
+              {customerFrame&&message.role==="user"&&message.publicLink&&<div className="mt-2 min-w-0 text-xs text-muted-foreground">
+                <p className="font-medium">Selected link</p><p className="break-words [overflow-wrap:anywhere]">{message.publicLink}</p>
+              </div>}
               {message.extractionProposal && (
                 <ExtractionProposalCard
                   proposal={message.extractionProposal}
@@ -976,9 +994,12 @@ function PaigeChatInner({ user, session, clientId, customerFrame, customerAvaila
 
       {/* Input area — safe area padding on mobile */}
       <div className="p-2 sm:p-3 border-t border-border space-y-2 flex-shrink-0 pb-[max(8px,env(safe-area-inset-bottom))]">
-        {customerFrame&&<CustomerChatAttachments enabled={privateFiles.available} locked={isLoading||!!customerRecovery} files={privateFiles.files} issues={privateFiles.issues}
-          busy={privateFiles.busy} notice={privateFiles.notice} upload={privateFiles.nativeUpload} onSelect={privateFiles.append} onRemove={privateFiles.remove}
-          onCheck={privateFiles.check} onResume={privateFiles.resume} onStop={privateFiles.stop}/>}
+        {customerFrame&&<CustomerChatPublicLink value={customerLink} locked={privateFilesBlocked||isLoading||!!customerRecovery||!customerAvailable||historyState!=="ready"}
+          validationAttempt={linkValidationAttempt} onChange={setCustomerLink} onContinue={()=>inputRef.current?.focus()}>
+          {({action,field})=><><CustomerChatAttachments enabled={privateFiles.available} locked={isLoading||!!customerRecovery} files={privateFiles.files} issues={privateFiles.issues}
+            busy={privateFiles.busy} notice={privateFiles.notice} upload={privateFiles.nativeUpload} onSelect={privateFiles.append} onRemove={privateFiles.remove}
+            onCheck={privateFiles.check} onResume={privateFiles.resume} onStop={privateFiles.stop} secondaryAction={action}/>{field}</>}
+        </CustomerChatPublicLink>}
         <div className={`flex gap-1.5 sm:gap-2 items-center${customerFrame ? " flex-wrap" : ""}`}>
           {!customerFrame&&<Button variant="ghost" size="icon" className="h-[44px] w-[44px] md:h-9 md:w-9 flex-shrink-0 text-muted-foreground hover:text-primary" onClick={openFilePicker} disabled={isLoading} title="Attach a document (PDF)">
             <Paperclip className="w-4 h-4" />
@@ -1008,7 +1029,7 @@ function PaigeChatInner({ user, session, clientId, customerFrame, customerAvaila
             variant="secondary"
             className={`flex-shrink-0 ${isMobile ? "h-[44px] w-[44px]" : "h-9 w-9"}`}
           />
-          <Button aria-label="Send message" onClick={() => handleSend()} disabled={privateFilesBlocked || isLoading || dictationActive || (!!customerFrame&&(!customerAvailable||historyState!=="ready"||!!customerRecovery)) || (!input.trim() && !attachedDoc && !(customerFrame&&privateFiles.files.length))} className="bg-gradient-gold hover:opacity-90 h-[44px] w-[44px] md:h-10 md:w-10 flex-shrink-0" size="icon">
+          <Button aria-label="Send message" onClick={() => handleSend()} disabled={privateFilesBlocked || isLoading || dictationActive || (!!customerFrame&&(!customerAvailable||historyState!=="ready"||!!customerRecovery)) || (!input.trim() && !attachedDoc && !(customerFrame&&(privateFiles.files.length||customerLink?.trim())))} className="bg-gradient-gold hover:opacity-90 h-[44px] w-[44px] md:h-10 md:w-10 flex-shrink-0" size="icon">
             {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
           </Button>
         </div>

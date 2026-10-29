@@ -314,8 +314,12 @@
 .sa-owner-task-rule .sa-rule-controls { margin-top: 10px; }
 .sa-owner-task-rule .sa-editor { margin-top: 12px; }
 .sa-owner-task-config { margin-top: 10px; font-size: 12.2px; color: var(--pg-ink-2); }
-.sa-owner-task-config summary { cursor: pointer; }
-.sa-owner-task-config pre { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 11.8px; line-height: 1.6; }
+.sa-owner-task-config summary { cursor: pointer; min-height: 44px; padding: 12px 0; box-sizing: border-box; }
+.sa-owner-task-config summary:focus-visible { outline: 2px solid var(--pg-violet); outline-offset: 2px; }
+.sa-owner-task-design { display: grid; gap: 12px; line-height: 1.6; overflow-wrap: anywhere; }
+.sa-owner-task-design > p, .sa-owner-task-design li > p { margin: 0; }
+.sa-owner-task-design ol { list-style: none; display: grid; gap: 16px; margin: 0; padding: 0; }
+.sa-owner-task-design li { display: grid; gap: 6px; padding-top: 12px; border-top: 1px solid var(--pg-line); }
 .sa-owner-task-history h4 { font-size: 14px; margin: 0; overflow-wrap: anywhere; }
 .sa-owner-task-attempts { list-style: none; margin: 0; padding: 0; }
 .sa-owner-task-history .sa-ctl, .sa-owner-task-history-open { min-height: 44px; }

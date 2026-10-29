@@ -1,0 +1,65 @@
+{
+  "recordedAt": "2026-10-29T22:18:22.722Z",
+  "scope": "Actual incumbent Payments and invoice-detail source rendered through explicit synthetic facts, role/SDK and unavailable document/payment ports. Local engineering banner is not product UI. Not authenticated, full-shell, native, provider or customer acceptance proof.",
+  "producer": {
+    "pr": 3099,
+    "head": "5533abc346c69b777c378cfd03402227f3874b52"
+  },
+  "sourceCheckpoint": "7613882f8075fa1a0348363d5b7639da4cd38909",
+  "inputSha256": {
+    "src/pages/app/Billing.tsx": "498c623047ecccef27fbdf75abb8bc095bdd773b2e000291b1ea7b1879c23afe",
+    "src/pages/app/BillingInvoice.tsx": "07875717a34d0009cb61b7ee578c3a4ad441c7c936bca979c87f8d4b368c7031",
+    "src/hooks/useClientPortalInvoices.ts": "0daad35505719cca75b80099f74e25caf52cd421f6e4d3739e1c225a66727140"
+  },
+  "screenshots": [
+    {
+      "name": "source-1536.jpg",
+      "format": "jpeg",
+      "viewport": {
+        "width": 1536,
+        "height": 770
+      },
+      "sha256": "d838d04db3719a611af582191ec7fb346efe8c88b2880a4ed97b9a91b02e8962"
+    },
+    {
+      "name": "source-390.jpg",
+      "format": "jpeg",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "sha256": "6c5a7ebce9a04550a529635ede330329efedb858b9c45ac0940dfaf3f1a2ad1a"
+    },
+    {
+      "name": "source-320-dark.jpg",
+      "format": "jpeg",
+      "viewport": {
+        "width": 320,
+        "height": 768
+      },
+      "sha256": "1301f138cc93d0a2fe6f9b5470e3b11f0af44d2439dcf1875e3da215b8068c69"
+    },
+    {
+      "name": "detail-1536.jpg",
+      "format": "jpeg",
+      "viewport": {
+        "width": 1536,
+        "height": 770
+      },
+      "sha256": "fee3817fa966c4cff5e209f7fd339179d92000467d47f01e395462af63164c53"
+    },
+    {
+      "name": "detail-390.jpg",
+      "format": "jpeg",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "sha256": "c52ef04a93511598ca8e77b2df390095bbb8926ed4f9bf128857630f4111caf4"
+    }
+  ],
+  "renderedChecksSha256": "e1f18753dc3f55dc60ef96c51c137b9b3145b06fe0a24a69d369da462dae7ea8",
+  "nativeBehavior": "NOT_RUN",
+  "actualCustomer": "NOT_RUN",
+  "viewportAndMediaRestored": true
+}

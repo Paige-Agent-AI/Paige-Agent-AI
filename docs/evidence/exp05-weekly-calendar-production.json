@@ -1,0 +1,138 @@
+{
+  "schema": 1,
+  "pr": 3093,
+  "reviewedHead": "b8f8a6ff8c79c2ac32d242fcd35733f664f078f5",
+  "merge": "c7564183c9c11c275f92f558f2a2dd4fe0fc6a76",
+  "tree": "2f110e56f2da4fac0c5e655b22c97081733b710d",
+  "releaseClass": "internal-only production web increment; complete EXP05 acceptance remains open",
+  "review": {
+    "final": 5704689335,
+    "assurance": "AUTHOR-REVIEW / LOWER ASSURANCE"
+  },
+  "ci": {
+    "webContexts": 2,
+    "unresolvedReviewThreads": 0,
+    "managedPreview": "SKIPPED: schema-free",
+    "requiredChecks": 10,
+    "webResult": "SUCCESS",
+    "result": "SUCCESS"
+  },
+  "deployment": {
+    "status": "READY",
+    "id": "dpl_HW5M16VbpaLenC7r5d83oJdNYr9p",
+    "commit": "c7564183c9c11c275f92f558f2a2dd4fe0fc6a76"
+  },
+  "publicReadback": [
+    {
+      "origin": "https://paigeagent.ai",
+      "at": "2026-10-29T21:41:46.708Z",
+      "expectedMerge": "c7564183c9c11c275f92f558f2a2dd4fe0fc6a76",
+      "version": {
+        "buildId": "c7564183c9c11c275f92f558f2a2dd4fe0fc6a76-mvu2hocr",
+        "customerUpdate": null
+      },
+      "exactExpectedBuild": true,
+      "versionMeta": {
+        "path": "/version.json",
+        "status": 200,
+        "bytes": 86,
+        "sha256": "4e166fe63d98f97c7cad5795c0269ab3907645b71f7b5b179feb81b241405e55"
+      },
+      "moduleGraph": [
+        {
+          "path": "/assets/main-B4wi29Cg.js",
+          "status": 200,
+          "bytes": 1568,
+          "sha256": "58b62b726e89080cc78cb9a1c3251db67462b6b37fc360eac9ac0038fe4e2f43"
+        },
+        {
+          "path": "/assets/main-DHdnAIaH.js",
+          "status": 200,
+          "bytes": 1177864,
+          "sha256": "66d175ffabfd7ad6d33eeb83ee5331e541e39a52b8d3c53a47b11c10cfb52b40"
+        },
+        {
+          "path": "/assets/SoloEntry-B5wYPbU1.js",
+          "status": 200,
+          "bytes": 403233,
+          "sha256": "cc3c5e398c2d5d85800c92b2928f5be4f76d1c80706217e91b14b49f107f6a06"
+        }
+      ],
+      "operations": {
+        "path": "/assets/OperationsRoute-CAOtdMFx.js",
+        "status": 200,
+        "bytes": 251178,
+        "sha256": "e095b3f37d8b7d919305673b3d3a461ae5d3cd088138c8e5026bfc5a4cd23fd9",
+        "signatures": {
+          "Review weekly workload": true,
+          "Hours available for this work": true,
+          "Reset review inputs": true,
+          "No time has been reserved or action authorized.": true,
+          "Calendar commitments": true,
+          "Refresh Calendar": true,
+          "Appointments are withheld; this does not mean the week is free.": true,
+          "Your entered work capacity already excludes appointments and is unchanged.": true
+        }
+      },
+      "boundary": "Public source/version only. No authenticated customer, role/RLS, domain execution, receipt or founder acceptance inferred."
+    },
+    {
+      "origin": "https://app.paigeagent.ai",
+      "at": "2026-10-29T21:41:47.452Z",
+      "expectedMerge": "c7564183c9c11c275f92f558f2a2dd4fe0fc6a76",
+      "version": {
+        "buildId": "c7564183c9c11c275f92f558f2a2dd4fe0fc6a76-mvu2hocr",
+        "customerUpdate": null
+      },
+      "exactExpectedBuild": true,
+      "versionMeta": {
+        "path": "/version.json",
+        "status": 200,
+        "bytes": 86,
+        "sha256": "4e166fe63d98f97c7cad5795c0269ab3907645b71f7b5b179feb81b241405e55"
+      },
+      "moduleGraph": [
+        {
+          "path": "/assets/main-B4wi29Cg.js",
+          "status": 200,
+          "bytes": 1568,
+          "sha256": "58b62b726e89080cc78cb9a1c3251db67462b6b37fc360eac9ac0038fe4e2f43"
+        },
+        {
+          "path": "/assets/main-DHdnAIaH.js",
+          "status": 200,
+          "bytes": 1177864,
+          "sha256": "66d175ffabfd7ad6d33eeb83ee5331e541e39a52b8d3c53a47b11c10cfb52b40"
+        },
+        {
+          "path": "/assets/SoloEntry-B5wYPbU1.js",
+          "status": 200,
+          "bytes": 403233,
+          "sha256": "cc3c5e398c2d5d85800c92b2928f5be4f76d1c80706217e91b14b49f107f6a06"
+        }
+      ],
+      "operations": {
+        "path": "/assets/OperationsRoute-CAOtdMFx.js",
+        "status": 200,
+        "bytes": 251178,
+        "sha256": "e095b3f37d8b7d919305673b3d3a461ae5d3cd088138c8e5026bfc5a4cd23fd9",
+        "signatures": {
+          "Review weekly workload": true,
+          "Hours available for this work": true,
+          "Reset review inputs": true,
+          "No time has been reserved or action authorized.": true,
+          "Calendar commitments": true,
+          "Refresh Calendar": true,
+          "Appointments are withheld; this does not mean the week is free.": true,
+          "Your entered work capacity already excludes appointments and is unchanged.": true
+        }
+      },
+      "boundary": "Public source/version only. No authenticated customer, role/RLS, domain execution, receipt or founder acceptance inferred."
+    }
+  ],
+  "nativeSchema": "NOT_APPLICABLE",
+  "edge": "NOT_APPLICABLE: no function source change or upload claimed",
+  "activation": "NONE",
+  "authenticatedProof": "UNVERIFIED: fresh designated-account tab redirected to another active workspace; INVALID for designated proof. Stopped before interaction and closed only own tab. No account switch or parent QA borrowing.",
+  "acceptance": "PROOF_OWED: feasible saved plan, dependencies, same ZION in PAIGE Chat/Team Hub, original domain/Rail recovery, equivalent existing/new SOLO and all ten outcomes/E5-CV1-CV9. Founder NOT_ACCEPTED."
+}

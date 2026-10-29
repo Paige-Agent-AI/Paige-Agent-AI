@@ -36,6 +36,19 @@ describe('Sales invoice canonical Chat door', () => {
     expect(h.predicates).toEqual([]);expect(result.spent).toBe(fingerprint);expect(result.content.note).toContain('does not establish money received');
     expect(h.calls).toEqual([{body:{expected_tenant_id:tenant,operation_id:operation,approved_fingerprint:fingerprint,command:{action:'invoice.payment_request',invoice_id:invoice,expected_version:2,provider:'stripe',purpose:'partial',amount_minor:50000}}}]);
   });
+  it.each([{pinned:false,purpose:'installment'},{pinned:true,purpose:'installment'},
+    {pinned:false,purpose:'deposit'},{pinned:true,purpose:'deposit'}])('retains an accepted dated target when resuming the original approval %j',async({pinned,purpose})=>{
+    const reference={commercial_terms_id:'44444444-4444-4444-8444-444444444444',signing_id:'55555555-5555-4555-8555-555555555555',signing_version:4,terms_version:3,sequence:1};
+    const exact={action:'invoice.payment_request',invoice_id:invoice,expected_version:2,provider:'stripe',purpose,amount_minor:50000,currency:'usd',client_id:invoice,issued_snapshot_version:1,merchant_account_id:'acct_A',merchant_binding_version:1,environment:'test',
+      obligation:{reference,source_digest:'a'.repeat(64),due_date:'2026-11-15',scheduled_minor:50000,remaining_minor:50000}};
+    const args={command:exact,operation_id:operation,expected_tenant_id:tenant,approval_subject:`invoice.payment_request:${invoice}`};
+    const h=harness(pinned?[]:[{fingerprint,args}]);
+    await dispatchSalesInvoiceChat({...context,toolName:'sales_create_payment_request',args:{invoice_id:invoice,expected_version:99,provider:'stripe',purpose:'partial',amount_minor:99999},
+      ...(pinned?{approved:new Set<string>(),pinned:{fingerprint,args}}:{})},h.deps as never);
+    expect(h.calls).toEqual([{body:{expected_tenant_id:tenant,operation_id:operation,approved_fingerprint:fingerprint,
+      command:{action:'invoice.payment_request',invoice_id:invoice,expected_version:2,provider:'stripe',purpose,obligation_reference:reference}}}]);
+    if(pinned)expect(h.predicates).toEqual([]);
+  });
   it('C4 pinned payment authority from another tenant refuses before dispatch',async()=>{
     const h=harness();const result=await dispatchSalesInvoiceChat({...context,toolName:'sales_create_payment_request',approved:new Set(),pinned:{fingerprint,args:{command:{action:'invoice.payment_request',invoice_id:invoice,expected_version:2,provider:'stripe',purpose:'full',currency:'usd',client_id:invoice,issued_snapshot_version:1,merchant_account_id:'acct_A',merchant_binding_version:1,environment:'test',amount_minor:50000},operation_id:operation,expected_tenant_id:operation}}},h.deps as never);
     expect(result.content.success).toBe(false);expect(h.calls).toEqual([]);expect(result.spent).toBeUndefined();

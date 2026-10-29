@@ -3,8 +3,9 @@ import { memberVisibleIdentity, type TeamMemberRecord } from "../team-workspace-
 import type { CrmWorkRecord } from "./operations-native-work";
 import type { PlanItem } from "@/hooks/usePlanList";
 import { weeklyWorkload, type ReadyWorkWeek } from "./operations-weekly-workload";
+import { OperationsWeeklyCalendar } from "./OperationsWeeklyCalendar";
 
-type Props = { week: ReadyWorkWeek; members: TeamMemberRecord[];
+type Props = { tenantId: string; week: ReadyWorkWeek; members: TeamMemberRecord[];
   onInspectItem: (item: PlanItem) => void; onInspectTask?: (task: CrmWorkRecord) => void };
 const duration = (minutes: number) => {
   const hours = Math.floor(minutes / 60), rest = minutes % 60;
@@ -13,19 +14,20 @@ const duration = (minutes: number) => {
 
 /** Ephemeral what-if inputs are discarded whenever their original source changes. */
 export function OperationsWeeklyWorkload(props: Props) {
-  const { week, members } = props;
+  const { tenantId, week, members } = props;
   const source = [...week.days.flatMap(day => day.deadlines), ...week.undated, ...week.unavailable, ...week.outside];
-  const revision = JSON.stringify([week.zone, week.today, week.days[0].date,
+  const revision = JSON.stringify([tenantId, week.zone, week.today, week.days[0].date,
     members.map(member => [member.membership_id, member.user_id, member.status]),
     source.map(work => [work.id, work.title, work.assigned_to_user_id, work.status, work.due_at, work.updated_at,
       work.native.source === "crm" ? work.native.record.estimated_minutes : null])]);
   return <WorkloadReview key={revision} {...props} />;
 }
-function WorkloadReview({ week, members, onInspectItem, onInspectTask }: Props) {
+function WorkloadReview({ tenantId, week, members, onInspectItem, onInspectTask }: Props) {
   const id = useId();
   const [ownerId, setOwnerId] = useState("");
   const [hours, setHours] = useState("");
   const [estimates, setEstimates] = useState<Record<string, string>>({});
+  const [calendarOwner, setCalendarOwner] = useState("");
   const owner = members.find(member => member.user_id === ownerId);
   const review = weeklyWorkload(week, owner?.user_id ?? "", hours, estimates);
   return <details className="ops-week-review">
@@ -34,7 +36,7 @@ function WorkloadReview({ week, members, onInspectItem, onInspectTask }: Props) 
       <p id={`${id}-scope`}>Review work due in this week. Enter hours available for this work after appointments and other responsibilities. Calendar availability and dependencies still need checking.</p>
       {members.length === 0 ? <p role="status">The current team roster is unavailable. Open Capacity to review the assignments that could be read.</p> : <>
         <div className="ops-week-review-inputs">
-          <label>Person<select value={ownerId} onChange={event => { setOwnerId(event.target.value); setHours(""); setEstimates({}); }}>
+          <label>Person<select value={ownerId} onChange={event => { setOwnerId(event.target.value); setHours(""); setEstimates({}); setCalendarOwner(""); }}>
             <option value="">Choose a person</option>
             {members.map(member => <option key={member.membership_id} value={member.user_id}>{memberVisibleIdentity(member).primary}</option>)}
           </select></label>
@@ -66,7 +68,10 @@ function WorkloadReview({ week, members, onInspectItem, onInspectTask }: Props) 
               {invalid && <small id={`${id}-${work.id}-error`}>{Number(text) > 2147483647
                 ? "This estimate is too large. Check the original work." : "Enter zero or a positive whole number of minutes."}</small>}</label>
           </li>)}</ul>
-          <button type="button" onClick={() => { setHours(""); setEstimates({}); }}>Reset review inputs</button>
+          <button type="button" aria-expanded={calendarOwner === ownerId} onClick={() => setCalendarOwner(value => value === ownerId ? "" : ownerId)}>
+            {calendarOwner === ownerId ? "Hide Calendar commitments" : "Check Calendar commitments"}</button>
+          {calendarOwner === ownerId && <OperationsWeeklyCalendar key={`${tenantId}:${ownerId}`} tenantId={tenantId} ownerId={ownerId} week={week} />}
+          <button type="button" onClick={() => { setHours(""); setEstimates({}); setCalendarOwner(""); }}>Reset review inputs</button>
         </>}
       </>}
       <p className="ops-week-review-note">Saved deadlines and effort are unchanged. Open original work to review permitted changes. No time has been reserved or action authorized.</p>

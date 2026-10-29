@@ -2,7 +2,7 @@
 
 Status: implementation candidate, not deployment or customer acceptance. Original
 ANT-51 O1–O12 and ANT-161/eff75565 govern. E04 owns the existing deployment helper;
-this consumes E09's reviewed, UNAPPLIED aid9302f45c without taking over its Portal.
+this consumes E09's UNAPPLIED aid9302f45c without taking over its Portal.
 
 ## Customer outcome and original architecture
 
@@ -43,7 +43,11 @@ outputs/e04-c114-selection-before-source.log. No production upload is used to
 create the failure. The WHOLE original compiler/readback/deploy suite plus new controls passes141/141
 in300.861seconds on the composed candidate, using the existing pinned Deno2.1.4.
 This includes the actual frozen compiler and original credential/effect-permission
-controls. Exact-head review and required hosted gates remain separate.
+controls. Exact tested helperSHA25643ce05e30582c511d6d85fc5bf9f11f10a5fe4c734c7cb881a49cb3a3c1c92a1;
+testSHA2566a8b476e35d5d68b05bfe12b06c895534d64b723155b07629e2a4f04bb7eb514.
+The original combined aid reverses cleanly, restoring both whole original files;
+17,891 outside-owned main leaves are exact. Exact-head review and required hosted
+gates remain separate.
 
 The tests use real immutable local Git fixtures and scripted vendor responses.
 They do not prove Docker compilation, provider acceptance, a deployed source

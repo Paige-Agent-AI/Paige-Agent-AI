@@ -1,5 +1,16 @@
 # Experience 02 — Customer Experience Integration Matrix
 
+## October29 - bounded Calendar source-release reconciliation
+
+3019 receives maina58e9d8d with original source/tests/assets retained and fresh
+118PASS/four suites. Final review/exact-head CI and original Edge/web deployment
+readback remain required. This safe source increment is distinct from native
+zoom/AT, released model compliance, two-cohort, Live and complete-outcome proof;
+those remain PROOF OWED and excluded from LIVE. Earlier blanket source-hold
+wording is superseded only for this bounded increment under existing AGENTS.
+No registry/algorithm/activation promotion;3018 material P1 and Sales-history
+finding remain OPEN. Original19/nine definitions and historical acceptance stay.
+
 ## October28 - authorized Calendar read proof and original navigation correction
 
 O01/O02/O05/O14/O16: original3012/21fff source proof and original release
@@ -36,6 +47,103 @@ Partial,13Unverified; nine3Limited/3Unverified/3ComingSoon/AccessUnverified,
 historical9/0 and12/0/4, protected monthly UNKNOWN/UNRETRIED/uninspected and
 all19/founder acceptance remain unchanged.
 
+
+## October29 — O13 original commercial lookups remain reads
+
+**REPAIR:** original shared Rail presentation only. E04 request ANT138/2bc79b0c
+and receiving bce36fd6 / ANT161/77ed54cd/ae5585e1 reserve the exact formatter;
+E04 retains Sales/native Team Hub execution and source ownership. Originally
+reserved22010102/#3067 passed all13 exact-head checks, but would overtake E04's
+pending lower versions. Successor22000002 follows native21150004 and precedes
+E04 reserved22010004/22010005. Old applied Preview/history remains unchanged;
+fresh successor review/CI/Preview/release proof is required. No new reader, registry,
+receipt, event, worker, tool, tenant authority, approval or action is introduced.
+
+**Functional:** successful `agreement_list`, `agreement_status` and original nested
+`find_clients_for_status` receive factual read titles/summaries through the SAME
+`_workspace_event_display` identity. All other fields/tuples and original scoped
+getter remain intact. Native original20/candidate32/replay32, identity/no-event
+and six source/metadata refusal mutants pass. Local assertion adapter executes
+the original SQL expressions; this is not hosted pgTAP/RLS/customer proof.
+
+**Visual:** incumbent Schibsted/tokens/renderer/spacing and controls unchanged;
+actual synthetic desktop/320px and all eight original-shell viewport states pass
+copy wrapping without page/row horizontal overflow. Sequential Impeccable
+clarity/craft-floor finish pass found no material defect in the changed copy.
+Other domain data are fixtures; native200percent/AT/customer proof remains due.
+**Experiential:** same original records and read-only refresh; source semantics
+are not a completed commercial action. Released reload/cohort/role acceptance
+remains due. **Founder Acceptance:** NOT_ACCEPTED; all original19/nine persist.
+
+**Algorithm Support:** no new algorithm/scoring/prediction or maturity promotion.
+**Orchestration Contract:** original read request/caller/native writer/immutable
+receipt precede the unchanged scoped getter and this pure display projection.
+No LayerC action/approval is run by rendering. Failures/unknowns delegate unchanged.
+**Capabilities:** no registry/availability/provider change; no Live promotion
+from wording or local tests. Exact review/required CI/migration/web readback and
+appropriate actual customer proof are separate release obligations. [UI evidence](../evidence/ui-delivery/e2-commercial-read-receipts.md).
+
+## October29 — SAME VERA original-metric Team Hub foundation
+
+O01/O02/O04/O08/O14/O16 remain the customer outcome: ask VERA for a verified
+business measurement, explain its actual scope and limitations and reopen the
+original Executive. Temporary owner direction ANT138/a1e5137d is incorporated
+in receiving ACK8fc611a3 and narrow source contract ANT161/a3cd4dc4/f46394ea.
+**REUSE** INT340 `analytics.metric_read` / `read_business_metric`, original
+`BUSINESS_METRIC_TOOLS`, `readBusinessMetric`, native issuer/resolver and original
+record links. **EXTEND** only the SAME VERA private-business-DM consumer adapter;
+no duplicate source engine, metric math, provider, roster, grant or runtime.
+
+**Functional:** new `team-hub/vera-metric-read.ts` is deliberately unmounted.
+Original stored VERA DM scope already permits this read. Server-resolved exact
+specialist/audience/tenant/actor, current owner/admin and stored scope are checked;
+the original native caller JWT still decides source authority. Strict five-second
+read and revalidation bounds, abort/late-result fences and original host read-marker
+ACK precede exposure. Before posting, revalidation reads the SAME immutable
+evidence reference through the original resolver, without reissuance/fallback.
+Original count/currency/coverage/freshness/caveats and zero-versus-unavailable
+remain intact. No bank balance, completed action or causal improvement is inferred.
+
+Meaningful pre-implementation positive control failed on unavailable-versus-available;
+the final local original-reader/host/negative-control suite has155 PASS/0 FAIL/
+0 SKIP, including41 new VERA tests. Strict new-module/test TypeScript and scoped
+ESLint PASS. A separate source review caught and corrected an unbounded later
+clarification scope check; it now uses the same deadline. Automated review of
+the first candidate caught expiry passing during later marker/authority awaits.
+Three real failing-before regressions cover initial exposure, same-reference
+revalidation and the final authority await. A further source review reproduced
+four failing expiry/cancel cases during the bounded promise's result delivery;
+the final checks now sit at the OUTER publication boundary after that delivery.
+All seven regressions pass, with no replacement issuance. The original C0b suite actually executes249 PASS;
+an earlier direct exports-only module load is excluded as guard proof. Original
+Metric/contract80 and SOLO parity/all mutation controls PASS, with the initial
+sandbox Vite EPERM retained as setup failure before the unchanged authorized run.
+Review of the exact
+committed head, hosted CI, merge and release readback remain owed. Master4.0 is
+N/A while this candidate is unmerged. No production identity is anticipated.
+
+**Visual:** no changed rendered surface; existing specialist presentation reused
+when mounted. **Experiential:** E04 owns the single overlapping original Team Hub
+offer/definition/dispatch/pre-publication span; exact adapter exports are handed
+to that writer alongside original CURA/MERIT, preserving E08#3041/f786 and E05's
+automation scope/pins. Mounting, both-chat useful result/reopen, two legitimate
+SOLO cohorts, tenant/role/revoke/unknown recovery and actual customer proof remain
+integration/acceptance work. Full `get_business_snapshot` and Mission HIGH-write
+integration remain separate required follow-ups, not replaced by one measurement.
+
+**Orchestration:** LayersA/B original admission/current authority, D original
+specialist turn, F original result/reference and G verification are reused and
+remain partial/proof owed. Read_only, no MUTATION_VERB/approval/job/LayerC action;
+the original read marker is provenance, not a business-effect Rail receipt.
+Integration Registry R1/R8 unchanged; no external provider or model call by this
+adapter. Universal eligible current/future SOLO source path; no account-specific
+code or new test identities. Existing provisioning/role defaults remain native.
+**Algorithms:** this adds measurement transport, no priority/scoring/prediction;
+ALG03/06/11/12 Partial and ALG13 Unverified remain unchanged. **Capabilities:**
+CAP009–017 original3Limited/3Unverified/3ComingSoon, account access Unverified;
+Executive PARTIAL/Team Hub PROOF_OWED remain unchanged. **Founder Acceptance:**
+NOT_ACCEPTED; all19/nine remain OPEN. Preserve historical9PASS/0FAIL,
+12PASS/0FAIL/4BLOCKED and protected monthly UNKNOWN/UNRETRIED/UNINSPECTED.
 
 ## October28 - verified releases, Finance and catalogue read/reload
 

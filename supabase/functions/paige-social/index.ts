@@ -4,10 +4,13 @@ import { recordCapabilityRun, stableRunId, type CapabilityOutcome } from "../_sh
 import { buildSocialProfileKey, SOCIAL_OAUTH_PLATFORMS, uploadPostSocialAdapter } from "../_shared/social-provider/upload-post.ts";
 import { governSocialMutation } from "../_shared/social-provider/governance.ts";
 import { SocialProviderError } from "../_shared/social-provider/mod.ts";
+import { zernioSocialAdapter } from "../_shared/social-provider/zernio.ts";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const RETURN_PATH = /^\/solo\/[A-Za-z0-9_-]+\/settings\/integrations\/?$/;
-const adapter = uploadPostSocialAdapter;
+// The provider Paige runs on is whichever adapter carries a vaulted key. Zernio is the
+// selected provider (owner decision 2026-10-29); the doors stay provider-neutral.
+const adapter = zernioSocialAdapter.isConfigured() ? zernioSocialAdapter : uploadPostSocialAdapter;
 
 type Json = Record<string, unknown>;
 

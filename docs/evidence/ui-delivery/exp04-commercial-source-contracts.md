@@ -1,0 +1,106 @@
+# EXP04 commercial source contracts — development evidence
+
+Current source receiving: normal merge `8c4e0a5f11477064e18680abf0fc2b070ccfc7dc` receives actual merged invoice release `9c05b9769808f642356587e75dde92d1a88faf44`, including complete incoming main and the separate original Operations evidence release. All39 originating changed paths and all17,772 incoming outside-owned leaves remain exact; all nine rendered source bindings are unchanged. Three never-applied carriers follow the released invoice parent as `20271121131404`–`20271121131604`, with original SQL bytes and order unchanged. Current original native read87/continuity129 including89 evidence/reviewed-delivery108/public metadata33 and signing managed identity23 pass under their original local owners; both clusters empty and stopped. This is development source and neutral rendered evidence, not deployed signing/delivery or full-schema canonical Work/customer acceptance.
+
+[Exact rendered-source bindings and raw frame hashes](assets/e04-commercial-source-contracts/c95/captures.json), [original delivery disclosure](assets/e04-commercial-source-contracts/c95/1366x768-closed.jpg), [phone keyboard disclosure after the owned fit repair](assets/e04-commercial-source-contracts/c95/phone-delivery.jpg), [internal revision](assets/e04-commercial-source-contracts/c95/internal-revision.jpg) and [reviewed, not released](assets/e04-commercial-source-contracts/c95/reviewed-not-released.jpg) retain neutral fixture evidence. Actual native/browser zoom, OS preference, AT, authenticated roles and complete commercial result remain separate.
+
+UI_DELIVERY_EVIDENCE_VERSION: 1
+FLOW_BY_FLOW: PASS: retained agreement and explicit sender review follow the original confirmation, Work, Communications and receipt path; Clients and PAIGE consume the same original delivery projection.
+PAIGE_UI_DESIGN: PASS: existing Sales leave guard, Clients standing disclosure, semantic tokens and original navigation are reused.
+MATERIAL_FLOW_CHANGE: YES: the existing managed sender can qualify for exact signing review, and the original client standing distinguishes internal review from a separate client decision.
+FLOW_PROTOTYPE: PASS: retained original-shell read prototype C95, native decision disclosures and phone evidence precede the bounded wording/fit repair; direction selected by the existing lead under the owner’s routine UX delegation. This is not individual founder approval. See assets/e04-commercial-source-contracts/c95/captures.json and original ANT-51 finding93f6080e.
+PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: an authorized SOLO owner reviews the original signing request and inspects exact-version delivery decisions for the same client.
+VISUAL_DIRECTION: PASS: preserve the current PAIGE design system, existing workspace composition and original record navigation; use a native disclosure for supporting delivery detail.
+AUTOMATED_EVIDENCE: PASS: original ten consumer suites243/243 after causal24 incumbent PASS/3 new meaning failures; unchanged shared safety83/83, zero skips. Complete original local signing/confirmation/Work/credentials/message/field/seal/publication chain and managed identity23/replay2 pass. Earlier real-handler219 and reviewed native108/metadata33 are bounded supporting evidence; current-head hosted checks and full-schema positive Work handoff remain required.
+STATIC_EVIDENCE: PASS: whole-parent composition preserves17,735 incoming outside-owned leaves and all25 originating paths at merge; three forward carriers keep exact SQL bytes. Only original wording, original UI expectation and owned standing fit are subsequently repaired. Captured original UI input Git blobs and raw SHA256 values are recorded for exact-head readback.
+RENDERED_EVIDENCE: PASS: actual original Clients/SOLO shell, neutral read/role ports, at1536x770/1366x768/1024x768/900x1000 with PAIGE closed/open. All8 actual CSS/raster sizes and raw hashes verified, header/root0, no outer or record horizontal overflow. At390x844 the owned record improves271/318 ->271/271 with original44px disclosure and action. Narrow PAIGE overlay is retained, not simultaneous background interaction.
+BEHAVIORAL_EVIDENCE: PASS: native disclosure shows exact original submission versions, distinct internal/client revisions and reviewed-not-released state; tracked acceptance retains undetermined engagement completion. Native PAIGE fold/open preserves whole standing across8 frames. Local read failure -> original Try again -> entire original read exact after reopening disclosure; no data persistence claimed.
+AUTHENTICATED_RUNTIME: UNVERIFIED: this is development source. No deployed candidate or authenticated agreement-to-delivery acceptance is claimed.
+KEYBOARD_FOCUS: PASS: native Return expands the original disclosure, focus remains on its44px target at390 width; existing scoped read retry recovers whole original context. Source-only Sales PAIGE-Escape and ordinary leave/Continue behavior were verified separately; deployed signing, full role and AT proof remain open.
+ZOOM_REFLOW: UNVERIFIED: candidate browser zoom and reflow remain required.
+REDUCED_MOTION: UNVERIFIED: no motion is added; candidate preference verification remains required.
+STATE_COVERAGE: UNVERIFIED: all twelve controlled original-UI read states were exercised locally, with captured data-withholding, distinct decision phases and whole-read retry recovery. These implemented and locally verified states are documented in captures.json. Complete deployed signing, real actor and provider-outcome state coverage still needs authenticated proof; that limitation is missing proof, not a claim the UI states are absent.
+TRUTHFUL_STATE_LABELS: PASS: source contracts preserve provider acceptance versus delivery/signing/payment, internal versus client decisions, and undetermined overall engagement completion.
+SOLO_UI: YES: existing Sales and Clients standing; development source only.
+UNVERIFIED: renewed exact-head hosted checks, legitimate owner/staff/linked-client and second-cohort operation, artifact bytes, deployment readback, provider evidence and full Experience acceptance remain open. The separate full-schema rollback proof now passes in this PR's empty native Preview with the candidate receipt-clock migration applied transactionally. This is database-role and metadata proof, not actual customer authentication or deployment.
+
+SOLO_1536X770_PAIGE_CLOSED: PASS: actual original shell/frame in assets/e04-commercial-source-contracts/c95/captures.json, matching CSS and raw raster dimensions; header/root0 and bounded record scroll; neutral ports only.
+SOLO_1536X770_PAIGE_OPEN: PASS: actual original shell/frame in assets/e04-commercial-source-contracts/c95/captures.json, matching CSS and raw raster dimensions; header/root0 and bounded record scroll; neutral ports only.
+SOLO_1366X768_PAIGE_CLOSED: PASS: actual original shell/frame in assets/e04-commercial-source-contracts/c95/captures.json, matching CSS and raw raster dimensions; header/root0 and bounded record scroll; neutral ports only.
+SOLO_1366X768_PAIGE_OPEN: PASS: actual original shell/frame in assets/e04-commercial-source-contracts/c95/captures.json, matching CSS and raw raster dimensions; header/root0 and bounded record scroll; neutral ports only.
+SOLO_1024X768_PAIGE_CLOSED: PASS: actual original shell/frame in assets/e04-commercial-source-contracts/c95/captures.json, matching CSS and raw raster dimensions; header/root0 and bounded record scroll; neutral ports only.
+SOLO_1024X768_PAIGE_OPEN: PASS: actual original shell/frame in assets/e04-commercial-source-contracts/c95/captures.json, matching CSS and raw raster dimensions; header/root0 and bounded record scroll; neutral ports only.
+SOLO_900X1000_PAIGE_CLOSED: PASS: actual original shell/frame in assets/e04-commercial-source-contracts/c95/captures.json, matching CSS and raw raster dimensions; header/root0 and bounded record scroll; neutral ports only.
+SOLO_900X1000_PAIGE_OPEN: PASS: actual original shell/frame in assets/e04-commercial-source-contracts/c95/captures.json, matching CSS and raw raster dimensions; header/root0 and bounded record scroll; neutral ports only.
+
+OWNER_INTENT: Complete all twelve original EXP04 outcomes through the original agreement, financial and service records, followed by one integrated founder evaluation.
+MUST_NOT_HAPPEN: A signature, task completion or internal review cannot fabricate payment, client acceptance or engagement completion. No new ledger, approval store, sender, scheduler, Portal or execution runtime.
+MUST_PRESERVE: Exact tenant/client/document/signing identity; immutable reviewed terms; original actor and mailbox permissions; HIGH approval; original Work, message claim and Rail receipt; existing Portal boundaries and held activation.
+ACCEPTANCE_CRITERIA: An authorized owner can review the exact original request and inspect the original delivery evidence, navigate to the original Work record, reload the same result and recover safely when evidence changes. Unauthorized roles cannot obtain private records or execute effects. All twelve integrated customer outcomes still require acceptance.
+MOTION_PURPOSE: NONE: no motion change.
+PROTECTED_SEAMS: Original permission, signing, Work, Communications, client-standing and receipt contracts are reused. Shared Chat admission, Root, risk registry, Team Hub and Portal implementations are unchanged.
+
+INTERNAL_BUILD_IDENTITY: 766c2755f2f8bd72f3da64cf67dd81fbd3f76405; identity_role=published source parent of the full-schema proof and receipt-clock repair; final_head=exact PR review receipt; deployment=NONE; environment=development; migrations=PROOF_OWED(20271121131404/20271121131504/20271121131604/20271121142004); edge=PROOF_OWED(original shared agreement and standing imports); evidence=this record and exact source/frame manifest
+RELEASE_CHANNEL: development: source validation only; no deployed customer outcome.
+RELEASE_CLASSIFICATION: patch: original signing-source compatibility and truthful versioned client standing; complete Experience acceptance remains open.
+CUSTOMER_RELEASE_IDENTITY: none: no customer release has been earned or authorized for this candidate.
+RELEASE_NOTE_REQUIRED: no: development source only, no customer publication.
+RELEASE_TRUTH_BOUNDARY: PROOF OWED: renewed current-head hosted checks, production native/Edge/web readback, authenticated behavior and complete customer outcomes remain open. Neutral rendered layout/recovery and the bounded full-schema canonical Work/standing integration below are separately PASS; no LIVE promotion.
+RELEASE_RECOVERY: position=preserve the original production contracts and withheld consequential actions; reference=normal forward-fix and original-operation reconciliation after verified release gates.
+
+## Source and authorization boundary
+
+The signing repair uses the original recorded business alias and current SendGrid readiness, explicit connector selection, exact document/message review and the original consequential approval. A historical connector label does not enable another transport, a default sender or an uncertain resend. Only existing private source comparisons change behind exact body/ABI/owner/ACL guards.
+
+The delivery reader uses the original engagement, latest submission revision, retained artifact digest, internal review, release and separate client decision. It grants no direct private access and does not determine whole-engagement completion. The Sales keyboard repair retains the original dirty, busy, uncertain, menu and handled-event protections.
+
+This evidence record contains no customer records, authenticated screenshots, provider deployment details, credentials or private implementation history. Protected runtime evidence remains outside this source-only candidate. Every unverified item above is a real remaining verification requirement.
+
+## Full-schema canonical delivery proof
+
+The existing `exp04_client_engagement_status.sql` CI entry includes
+`exp04_reviewed_delivery_handoff.sql`; no shared workflow is replaced. Its neutral
+commercial metadata is captured from the original native signing/effectuation
+writers, with token hashes excluded. The real full schema validates that retained
+evidence. Synthetic commercial-history seeding does not prove hosted signing,
+file bytes or a billing writer. Invoice fixture shape follows the original draft
+constraint; it never becomes an issued invoice or a payment.
+
+In the PR's empty native Preview, the actual authenticated database role executes
+the original Operations handoff, owner self-review submission, explicit internal
+review, release and separately linked client revision request. A new submitted
+version masks the earlier decision; its separately reviewed/released version can
+be accepted by that client. The original status RPC and later read retain the
+same canonical decisions. Owner impersonation, unrelated-member standing access,
+client use of the owner RPC, release before review and silent resubmission after
+acceptance are refused. A synthetic review receipt later than release still
+withholds the decision. Every record and candidate DDL rolls back; fresh readback
+confirms all fixture tables empty and the original private body/journal intact.
+
+The first full-schema run exposed E04's incorrect comparison of wall-clock
+`reviewed_at` to transaction-clock `released_at`. The additive receipt-clock
+migration compares the matching original review audit's transaction timestamp.
+Exact tenant, Work/version/artifact, reviewer, release, client and audit predicates
+remain. No Operations writer or grant changes. Initial fixture type/identity/draft
+shape failures and the invalid attempt to revise an already accepted version were
+retained and corrected in the test; no product constraint was relaxed. The
+full-schema proof is metadata/DB-role integration, not hosted customer acceptance.
+
+## Existing orchestration contract
+
+1. **Requested result:** an authorized owner reviews the exact original prepared signing request, or reads the original client's delivery decisions. A document draft or status read does not authorize a send, signature, charge or completed service.
+2. **Entry:** original Sales agreement preparation/saved review and original Clients standing. PAIGE consumes the same standing words. Actual Team Hub commercial action/result integration and eligible Live remain separate proof requirements.
+3. **Original records and capability:** retain `paige_agreements`, original preparation/signers/events, `plans`/`plan_items`, delivery submissions/releases and audit records. The original `agreement_send` capability and `read_client_engagement_status` domain reader are reused; no new capability registration or Live promotion is claimed.
+4. **Execution path:** prepared signing uses the original canonical confirmation, Work, Communications admission and Rail paths. Ordinary status reads remain reads. No new Layer C adapter/runtime is introduced and existing Chat admission holds remain binding.
+5. **Authorization:** actor, tenant, original client/document/preparation revision, signer, current connector and recorded shared sender must match. The private delivery helper has no direct API grant; the incumbent public owner/admin reader retains its original authority. This is not a Portal client grant.
+6. **Risk and approval:** original HIGH consequential approval binds the exact source, recipient, sender and message. Standing and disclosure reads grant no approval and execute no external action. A legacy connector label never authorizes another provider or fallback sender.
+7. **Execution and receipt:** the original Work/request identity, message claim, immutable agreement events and Rail receipt remain authoritative. Internal review, release and client decisions retain their original separate version/digest evidence. No parallel job, approval or execution store exists.
+8. **Readback and duplicates:** revalidate original scope at execution and retain original idempotency/replay controls. Provider acceptance, delivery, viewing, signing and payment remain different facts. Local native controls prove bounded source integrity; real provider readback is still owed.
+9. **Recovery:** missing, withdrawn, foreign, stale or changed evidence refuses or stays unavailable. An interrupted or unknown result requires inspection/reconciliation of the original operation, not a blind new send. Retained Sales context, original read retry and reload remain distinct from external-action retry authority.
+10. **Visible result:** the owner sees exact original revision and review/approval/unknown states; client standing names internal versus client revision and reviewed-but-unreleased work. Even all tracked client-accepted milestones leave whole-engagement completion undetermined. Actual owner/staff/linked-client operation, durable artifacts/reload and full twelve-outcome acceptance remain open.
+
+## Algorithm and capability maturity
+
+ALG-01 remains bounded PARTIAL: original request/message/signing identity and replay checks provide local reconciliation evidence, not verified payment settlement or every provider event. ALG-02 onboarding/completion progression remains incomplete. ALG-12 remains bounded PARTIAL: original refusal, missing evidence and unknown outcome controls are retained; complete hosted exception recovery is not established. ALG-13 contextual next-best-action usefulness remains UNVERIFIED; existing source-backed next-step wording is not an invented score or verified recommendation engine.
+
+The original Sales capability remains PARTIAL / PROOF OWED. Same MERIT identity and original page/conversation contracts are preserved; a successful ordinary MERIT reply does not prove commercial action execution, both-chat integration or completed O1–O12. No capability, algorithm, provider or held effect is activated by this candidate.

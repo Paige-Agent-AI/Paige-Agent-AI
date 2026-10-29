@@ -1,7 +1,7 @@
 {
   "doc": "Integration Capability Registry",
   "schema_version": "1.2.0",
-  "grounded_against": "origin/main fead7dfd03cd0ec1ee5c0c9f7854f067de484239 + Public Presence provider-MVP production closeout (2026-09-06); v1.2 adds the code_anchors accountability field + dead-anchor resolve check, grounded against origin/main 91c815f (2026-09-13) — every runtime-claiming provider's anchors verified to exist on disk at that commit. EXP10 activation pass (2026-10-22, origin/main 7a8b066942098a7917b2655fe75d8ebad677fb09): added slack / make-com / icloud-mail entries (all PROPOSED, no runtime claims), recorded EXP10 ownership of the microsoft-365 Teams lane, grounded by docs/delivery/exp10-connect-my-business/EXP10-SOURCE-RECONCILIATION-REGISTER.md.",
+  "grounded_against": "origin/main fead7dfd03cd0ec1ee5c0c9f7854f067de484239 + Public Presence provider-MVP production closeout (2026-09-06); v1.2 adds the code_anchors accountability field + dead-anchor resolve check, grounded against origin/main 91c815f (2026-09-13) — every runtime-claiming provider's anchors verified to exist on disk at that commit. EXP10 activation pass (2026-10-22, origin/main 7a8b066942098a7917b2655fe75d8ebad677fb09): added slack / make-com / icloud-mail entries (all PROPOSED, no runtime claims), recorded EXP10 ownership of the microsoft-365 Teams lane,  EXP10 provider-coverage pass (2026-10-29, origin/main 67a51bfc281ef6b5128451a8d32166f369656730): added the zernio row (PROOF_OWED — EXP07 #3070 merged a405a3a11 + deployed configured it behind the Social connection pipe; facts grounded in the merged adapter source and EXP07's ANT-162 records e1ec0288/d3e5ad85; pricing deliberately unknown, not asserted).",
   "purpose": "One authoritative, living catalogue and taxonomy of every third-party provider, API, connector, Marketplace service, and external-execution platform Paige may use. This is a product-governance and delivery record. It does NOT install providers, hold credentials, call external APIs, create OAuth clients, create billing commitments, or ship provider functionality. v1.1 adds the API Expense & Operations Layer (per-provider operating cost + ownership visibility) — see expense_and_operations_schema and cost_tracks.",
   "cardinal_rule": "Listing a provider here NEVER means it is connected, available, or autonomous. A registry entry is a governance declaration, not a live capability. Connection is a per-tenant authorization fact; availability is a getTierFeatureSet()/RLS fact; autonomy is a resolve_tool_autonomy()/Trust-Compass fact. This document decides none of them (see rules R1 and R8).",
   "how_it_relates_to_siblings": {
@@ -3317,8 +3317,8 @@
       "rail_mind_memory": "Rail: governed media/broadcast outcomes. Mind: safe facts only. Memory: none of media bytes.",
       "status": "PROOF_OWED",
       "owner": "EXP10 (connections/eligibility/readiness) coordinating with EXP07 (broadcast/media experience owner)",
-      "dependency": "Backend API access VERIFIED 2026-10-25 via the deployed read-only canary (GET read-back: ok, test video status ready 100%, duration 8.8s, account match; deployments v1/v2 ACTIVE, identical source). Owed: tenant upload to processing to playback proof, live input + simulcast proof, tenant/Platform isolation negatives, deletion/retention, the complementary two-way guest component decision.",
-      "next_slice": "EXP07's first end-to-end implementation PR (upload/processing/playback against the verified backend)",
+      "dependency": "TENANT MEDIA MACHINERY SHIPPED 2026-10-28 (EXP07 #3039 merged 662be5534, migration 20271120110000 applied, stream-media-command + stream-media-read deployed and live-probed; PROOF unchanged - the authenticated owner drive remains owed). Backend API access VERIFIED 2026-10-25 via the deployed read-only canary (GET read-back: ok, test video status ready 100%, duration 8.8s, account match; deployments v1/v2 ACTIVE, identical source). Owed: tenant upload to processing to playback proof, live input + simulcast proof, tenant/Platform isolation negatives, deletion/retention, the complementary two-way guest component decision.",
+      "next_slice": "EXP07's authenticated owner drive (a real video through the shipped door: upload -> ready -> play -> remove), then live-input + simulcast, isolation negatives, deletion/retention; the two-way guest component decision rides EXP07's decision doc with EXP10's completed realtime annex (ANT-164 comment 4b5c83ff)",
       "tier_eligibility": {
         "platform": "eligible",
         "solo": "eligible",
@@ -3362,6 +3362,151 @@
       ],
       "sources": [
         "docs/delivery/exp10-connect-my-business/EXP10-SOURCE-RECONCILIATION-REGISTER.md"
+      ]
+    },
+    {
+      "id": "cloudflare-realtimekit",
+      "name": "Cloudflare RealtimeKit (real-time rooms — the two-way guest component)",
+      "taxonomy": "marketing_ads_social_presence_analytics",
+      "business_reason": "Owner-directed 2026-10-24/25 (mandatory two-way guest conversations/webinars) and ACTIVATED 2026-10-28 (app created on the existing PAIGE Cloudflare account): the complementary real-time component Cloudflare Stream alone cannot provide — live audio/video rooms where a host and guests actually talk to each other, with governed admission and server-issued participant tokens.",
+      "paige_use_cases": [
+        "(governed, EXP07-led) live host + guest conversation rooms with server-issued participant authTokens",
+        "(governed, future) webinar sessions at participant scale (caps unverified — see dependency)"
+      ],
+      "connection_prerequisite": "Platform-held Cloudflare Account API token (owner-created 2026-10-28, stored in edge secrets; canonical key CLOUDFLARE_REALTIMEKIT_API_TOKEN, exact stored key name to be confirmed by owner); the existing CLOUDFLARE_ACCOUNT_ID covers the account. The Realtime/RealtimeKit admin permission named in the docs is NOT visible in this account's token UI (owner report; matches community reports) — EXP07's read-only credential probe on first deploy settles whether the created token carries it.",
+      "required_scopes": [
+        "Cloudflare Account API token with RealtimeKit admin capability (permission-group visibility unresolved on this account; probe decides; Plan B = Cloudflare support ticket)"
+      ],
+      "safe_readable_context": "Meeting/participant metadata needed for governed admission and session state; never the API token; recordings only if/when the storage leg is configured (today: Not configured)",
+      "allowed_writes_external_effects": "None implemented. Planned (EXP07, each reviewed/CI/deployed): create meeting, add participant (server-side authToken issuance), end session — the admission door binds tenant authority and per-session spend metered to platform_usage_events as media_usd. No recording/export leg (storage deliberately Not configured).",
+      "authority_lane": [
+        "prohibited"
+      ],
+      "m1_dependency": "none (platform-paid media substrate; relevant track is internal per-session media_usd metering only, not M1 real-money spend control)",
+      "canonical_provider_receipt": "None yet (PROPOSED); future: RealtimeKit meeting/participant ids and statuses; the durable record of truth stays in PAIGE's own session records — provider metadata is traceability, not the boundary",
+      "rail_mind_memory": "Rail: governed live-session outcomes. Mind: safe session facts only. Memory: none of media bytes or room transcripts.",
+      "status": "PROPOSED",
+      "owner": "EXP07 (broadcast/live experience) coordinating with EXP10 (connection/credential custody + registry truth)",
+      "dependency": "OWNER ACTIVATION RECEIVED 2026-10-28 (ANT-162 comments 37e56af0 + the correction 7f6c5026): RealtimeKit app 'paige-production' created on the existing PAIGE CF account (App ID b96eaa3d-0450-414a-9155-0dffb4654433 - public coordination data, NOT a secret; the earlier 32-hex string was NOT the App ID); Account API token owner-created and stored in edge secrets (key name to confirm); storage Not configured (recording leg deferred by design); webhooks tab empty (not needed for slice 1). Nothing is built in PAIGE yet - EXP07's adapter + read-only credential probe + governed admission door are the in-flight first slice. Provider facts (pricing $0.002/participant-min A/V verified; limits; retention incl. indefinite meeting records with NO delete - INACTIVE only; rollback semantics) live in EXP10's completed annex, ANT-164 comment 4b5c83ff.",
+      "next_slice": "EXP07's adapter + probe + admission door (server-side participant authTokens; per-session spend to platform_usage_events); EXP10 flips this row to PROOF_OWED with code anchors when that slice merges",
+      "tier_eligibility": {
+        "platform": "eligible",
+        "solo": "eligible",
+        "agency_future": "resell",
+        "enterprise_future": "eligible"
+      },
+      "expense_and_operations": {
+        "cost_responsibility": "platform_paid",
+        "billing_owner": "platform (PAIGE Agent AI Inc. Cloudflare account)",
+        "operational_owner": "EXP07 lead + EXP10 connection custody",
+        "pricing_model": "metered_usage",
+        "pricing_source_url": "https://developers.cloudflare.com/realtime/realtimekit/platform/pricing/",
+        "pricing_checked_as_of": "2026-10-26",
+        "pricing_note": "$0.002/participant-min A/V, $0.0005 audio-only, $0.01/min export (verified 2026-10-26 official pricing page; free tier NOT documented - assume $0 floor; account billing view is the only confirmation source)",
+        "access_prerequisite": "Existing platform Cloudflare account + the owner-created RealtimeKit app + Account API token (all in place 2026-10-28)",
+        "expected_cost_driver": [
+          "minutes",
+          "transactions"
+        ],
+        "rate_limits_quotas": "API 3,500 req/5min; recording APIs 1,000 req/50s; per-participant SDK limits (verified limits page); max participants/session and concurrent sessions NOT documented",
+        "usage_review_cadence": "monthly during early launch",
+        "renewal_deprecation_review": "review on Cloudflare Realtime pricing/beta changes",
+        "data_privacy_retention": "Meeting records INDEFINITE (no delete - INACTIVE only); participant records indefinite but deletable per-meeting via API; chat indefinite w/ persist_chat else 7d; recordings/transcripts 7d (storage not configured today); analytics 6mo; webhook logs 1mo (verified data-retention page); participant records deletable per-meeting via API",
+        "money_movement": {
+          "can_move_real_money": false,
+          "m1_dependency_track": "none",
+          "detail": "Media substrate, not money movement"
+        },
+        "receipt_reconciliation": "RealtimeKit meeting/participant ids reconciled against PAIGE's session records and the media_usd meter",
+        "rail_outcome": "Governed live-session outcome on Rail",
+        "pause_revoke_path": "Stop creating meetings (immediate); token rotation (owner); full data purge of indefinite-retention records requires a Cloudflare support/GDPR request (annex 4b5c83ff)",
+        "next_owner": "EXP07",
+        "next_slice": "Adapter + credential probe + admission door; registry promotion on merge"
+      },
+      "sources": [
+        "ANT-164 comment 4b5c83ff (EXP10 completed realtime annex: pricing/limits/retention/rollback, all doc-grounded)",
+        "ANT-162 comments 37e56af0 + 7f6c5026 (owner activation + App ID correction)"
+      ]
+    },
+    {
+      "id": "zernio",
+      "name": "Zernio (the configured Social connection provider)",
+      "taxonomy": "marketing_ads_social_presence_analytics",
+      "business_reason": "Owner selected Zernio and vaulted ZERNIO_API_KEY (2026-10-29); EXP07 PR #3070 (merged a405a3a11, deployed with the workflow's own readback 2026-10-29) configured it behind the existing dormant Social connection pipe — the concrete provider the Social cards' Connect flow now reaches. Before this the whole connection pipe (cards, approvals, verification, receipts) shipped with NO provider configured behind it, dormant by design.",
+      "paige_use_cases": [
+        "per-platform, multi-account social connections through the REAL platform's own consent screen (Zernio hosts the selection screens before it; per-platform authorization hosts allowlisted by the adapter)",
+        "verify a connected account by provider readback (GET /accounts — Zernio's documented completion signal, not redirect parameters)",
+        "per-account disconnect with provider-side revocation (their documented revocation unit: tokens revoked, metering stops)",
+        "(future, its own governed slice) publishing — the adapter's createPost always refuses today"
+      ],
+      "connection_prerequisite": "Owner-vaulted platform secret ZERNIO_API_KEY (Edge Secrets; the adapter reads it through the canonical env-key path) plus the pipe's existing PUBLIC_SITE_URL. The key authenticates PAIGE as a platform client only; tenant identity stays the opaque ps_<hmac> provider profile key minted by the social doors — Zernio never learns a Paige tenant or customer id.",
+      "required_scopes": [
+        "Per-account platform-native consent shown by the real platform's own consent screen (the adapter's per-platform authorization-host allowlist is enforced); no scope is inferred, pre-granted, or silently widened"
+      ],
+      "safe_readable_context": "Connection health, stable provider account identifier, platform (Zernio's reported names folded to PAIGE's catalogue keys via the adapter's documented aliases), handle, display name, avatar URL, per-account capability list, and last verification time. The API key, profile HMAC keys, callback nonces, and raw payloads are service-only.",
+      "allowed_writes_external_effects": "Open the account-authorization redirect (Zernio selection screens or the platform's consent screen) after one owner/admin confirmation; verify by readback; per-account provider-side revocation on disconnect. Publishing, scheduling, analytics pulls, comments, replies, DMs, ads, and paid actions DO NOT exist here — the adapter's createPost always refuses, and each arm ships as its own future governed slice. No spend.",
+      "authority_lane": [
+        "read",
+        "confirm"
+      ],
+      "m1_dependency": "No money movement in the connection slice; the provider subscription is a platform operating expense. Any future paid social action requires the canonical real-money control before exposure.",
+      "canonical_provider_receipt": "The requested platform's account present in the profile readback (GET /accounts) — Zernio's documented completion signal — with connection state applied by the existing social doors before their connection receipt/Rail outcome. Future publishing receipts belong to the publishing slice, not this row.",
+      "rail_mind_memory": "Rail: the existing social-connection receipt path (record_capability_run through the doors). Mind and long-term Memory: no private provider payload, token, or audience data.",
+      "status": "PROOF_OWED",
+      "owner": "EXP07 (Social experience); EXP10 (registry entry — connection substrate)",
+      "dependency": "The first REAL connect in production (Settings → Integrations → a platform → Connect) is the live probe and the credential check on the vaulted key: 200-path proves the key carries authority; 401/403 surfaces exact regeneration guidance; it lands the first verified account on a card. LIVE requires that authenticated end-to-end proof. Durable follow-up only if the redirect race ever shows: Zernio's account.connected webhook (a later slice).",
+      "next_slice": "EXP07 queue: broadcast slice → guest admission + scheduled calls → Team Hub chat-tool seam → the Zernio publishing arm (its own governed slice; createPost refuses until then).",
+      "tier_eligibility": {
+        "platform": "eligible",
+        "solo": "eligible",
+        "agency_future": "resell",
+        "enterprise_future": "eligible"
+      },
+      "expense_and_operations": {
+        "cost_responsibility": "platform_paid",
+        "billing_owner": "Paige platform account; the shared server credential is never a tenant identity.",
+        "operational_owner": "EXP07 (Social experience); connection substrate EXP10",
+        "pricing_model": "unknown",
+        "pricing_source_url": "https://zernio.com/ (provider site; the pricing page is NOT yet verified — no price is asserted)",
+        "pricing_checked_as_of": null,
+        "pricing_note": "No price is asserted: Zernio's pricing was not verified in this registry pass (facts come from the merged adapter source and EXP07's ANT-162 records). Verify at the provider before any publishing/cost-bearing slice.",
+        "access_prerequisite": "Owner-vaulted ZERNIO_API_KEY in Edge Secrets plus the pipe's existing PUBLIC_SITE_URL; no per-tenant keys exist.",
+        "expected_cost_driver": [
+          "api_calls"
+        ],
+        "rate_limits_quotas": "Unknown/unverified in this pass — no limit is asserted; the adapter rides safeFetch under the platform's standard deadline. Verify Zernio's documented limits before any volume-bearing slice.",
+        "usage_review_cadence": "At each Social slice's review until the first real connect; pricing and limits re-verified before the publishing arm.",
+        "renewal_deprecation_review": "Not applicable yet (no paid plan or term recorded); revisit when the provider subscription terms are verified.",
+        "data_privacy_retention": "Connection state and safe account facts live in PAIGE's own stores; the API key and profile HMAC keys are service-only. Provider-side retention was NOT verified in this pass — verify Zernio's data terms before the publishing slice.",
+        "money_movement": {
+          "can_move_real_money": false,
+          "m1_dependency_track": "none",
+          "detail": "Connection substrate only; publishing and any paid action do not exist yet and require the canonical real-money control first."
+        },
+        "receipt_reconciliation": "The requested platform's account present in the GET /accounts readback, matched to the opaque ps_<hmac> profile key; connection state applied by the doors before the receipt/Rail outcome.",
+        "rail_outcome": "Governed social-connection outcome on Rail (the doors' existing path)",
+        "pause_revoke_path": "Stop connects (immediate; no scheduled or automated connects exist); disconnect revokes per-account at the provider (their documented unit); platform key rotation is owner-held (ZERNIO_API_KEY).",
+        "next_owner": "EXP07",
+        "next_slice": "First real connect in production (the live probe and credential check), then EXP07's broadcast / guest admission / Team Hub seam / publishing queue."
+      },
+      "code_anchors": [
+        {
+          "path": "supabase/functions/_shared/social-provider/zernio.ts",
+          "role": "provider_adapter",
+          "note": "the Zernio adapter — satisfies the same SocialProviderAdapter contract the doors were built against; DEFAULT_API_BASE zernio.com/api/v1; verification by GET /accounts readback; createPost always refuses (publishing is a future governed slice)"
+        },
+        {
+          "path": "supabase/functions/paige-social-callback/index.ts",
+          "role": "callback_readback",
+          "note": "the callback leg — verifies Zernio rows by reading the profile back and requiring the requested platform's account (readback, not redirect parameters)"
+        }
+      ],
+      "sources": [
+        "supabase/functions/_shared/social-provider/zernio.ts",
+        "supabase/functions/_shared/social-provider/mod.ts",
+        "supabase/functions/paige-social/index.ts",
+        "supabase/functions/paige-social-callback/index.ts",
+        "ANT-162 comments e1ec0288 + d3e5ad85 (EXP07 records: owner choice, key vaulting, #3070 merged a405a3a11 + deploy readback, honest probe boundary)"
       ]
     },
     {

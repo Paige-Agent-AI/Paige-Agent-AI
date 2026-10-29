@@ -1,0 +1,315 @@
+{
+  "schema": 1,
+  "base": "24e76c8d41024d47a1e51c15c77244785c1eafb7",
+  "source": {
+    "src/solo/data/ownerTaskAutomation.ts": "e28fccd3c644178c10ccd4f262175ccf0532eec30416370764fc2887731fe24a",
+    "src/solo/data/ownerTaskAutomation.history.test.ts": "3ed3c0c3f2c5051b8c95721704e4794f10cbb641dc496f22674bcce86028afb1",
+    "src/solo/data/useOwnerTaskAutomations.ts": "447ec3325c13d460c727f27f648855fb1e61c7ee4b44b2d2a8a8a34478afb42e",
+    "src/solo/data/useOwnerTaskAutomations.test.tsx": "affc34e2aa1beb51f2cbd4caad1e6f373246f6f79e5017e0ee4e364ca76c748d",
+    "src/solo/owner-task-automations.tsx": "1be8ff96943bac92fb446aa6c245a5488c4e044aa410b290cf0e85619d98b3dc"
+  },
+  "invariants": {
+    "authorityClassificationOnly": true,
+    "unchangedFunctions": {
+      "controlOwnerTaskAutomation": true,
+      "readOwnerTaskAutomations": true,
+      "operationDeadline": true
+    },
+    "unchangedCallbacks": {
+      "refresh": true,
+      "control": true
+    },
+    "unchangedFiles": {
+      "src/solo/owner-task-process-history.tsx": true,
+      "src/solo/settings-integrations.css": true,
+      "src/solo/operations/OperationsPlaybooks.tsx": true,
+      "src/solo/settings-automations.tsx": true
+    },
+    "unchangedNativeJsx": true
+  },
+  "strictGraph": {
+    "same": true,
+    "baseDiagnostics": 15,
+    "candidateDiagnostics": 15,
+    "baseline": [
+      "src/contexts/ImpersonationContext.tsx TS2339: Property 'client_name' does not exist on type 'never'.",
+      "src/contexts/ImpersonationContext.tsx TS2339: Property 'contact_id' does not exist on type 'never'.",
+      "src/contexts/ImpersonationContext.tsx TS2339: Property 'linked_user_id' does not exist on type 'never'.",
+      "src/contexts/ImpersonationContext.tsx TS2339: Property 'linked_user_id' does not exist on type 'never'.",
+      "src/contexts/ImpersonationContext.tsx TS2345: Argument of type '{ p_contact_id: string; }' is not assignable to parameter of type 'undefined'.",
+      "src/contexts/ImpersonationContext.tsx TS2345: Argument of type '{ p_contact_id: string; }' is not assignable to parameter of type 'undefined'.",
+      "src/hooks/useTenantContext.tsx TS2339: Property 'active_tenant_id' does not exist on type 'never'.",
+      "src/hooks/useTenantContext.tsx TS2339: Property 'agency_login_default' does not exist on type 'never'.",
+      "src/hooks/useTenantContext.tsx TS2339: Property 'tenant_id' does not exist on type 'never'.",
+      "src/hooks/useTenantContext.tsx TS2345: Argument of type '{ _expected: string; }' is not assignable to parameter of type 'undefined'.",
+      "src/hooks/useTenantContext.tsx TS2345: Argument of type '{ _tenant: string; }' is not assignable to parameter of type 'undefined'.",
+      "src/hooks/useTenantContext.tsx TS2345: Argument of type '{ _user_id: string; }' is not assignable to parameter of type 'undefined'.",
+      "src/hooks/useTenantContext.tsx TS2345: Argument of type '{ active_tenant_id: string | null; }' is not assignable to parameter of type 'never'.",
+      "src/hooks/useTenantContext.tsx TS2345: Argument of type '{ active_tenant_id: string | null; }' is not assignable to parameter of type 'never'.",
+      "src/solo/data/ownerTaskAutomation.ts TS18046: 'data.process' is of type 'unknown'."
+    ],
+    "candidate": [
+      "src/contexts/ImpersonationContext.tsx TS2339: Property 'client_name' does not exist on type 'never'.",
+      "src/contexts/ImpersonationContext.tsx TS2339: Property 'contact_id' does not exist on type 'never'.",
+      "src/contexts/ImpersonationContext.tsx TS2339: Property 'linked_user_id' does not exist on type 'never'.",
+      "src/contexts/ImpersonationContext.tsx TS2339: Property 'linked_user_id' does not exist on type 'never'.",
+      "src/contexts/ImpersonationContext.tsx TS2345: Argument of type '{ p_contact_id: string; }' is not assignable to parameter of type 'undefined'.",
+      "src/contexts/ImpersonationContext.tsx TS2345: Argument of type '{ p_contact_id: string; }' is not assignable to parameter of type 'undefined'.",
+      "src/hooks/useTenantContext.tsx TS2339: Property 'active_tenant_id' does not exist on type 'never'.",
+      "src/hooks/useTenantContext.tsx TS2339: Property 'agency_login_default' does not exist on type 'never'.",
+      "src/hooks/useTenantContext.tsx TS2339: Property 'tenant_id' does not exist on type 'never'.",
+      "src/hooks/useTenantContext.tsx TS2345: Argument of type '{ _expected: string; }' is not assignable to parameter of type 'undefined'.",
+      "src/hooks/useTenantContext.tsx TS2345: Argument of type '{ _tenant: string; }' is not assignable to parameter of type 'undefined'.",
+      "src/hooks/useTenantContext.tsx TS2345: Argument of type '{ _user_id: string; }' is not assignable to parameter of type 'undefined'.",
+      "src/hooks/useTenantContext.tsx TS2345: Argument of type '{ active_tenant_id: string | null; }' is not assignable to parameter of type 'never'.",
+      "src/hooks/useTenantContext.tsx TS2345: Argument of type '{ active_tenant_id: string | null; }' is not assignable to parameter of type 'never'.",
+      "src/solo/data/ownerTaskAutomation.ts TS18046: 'data.process' is of type 'unknown'."
+    ]
+  },
+  "tests": {
+    "red": {
+      "sha256": "884a8144dd4a86d5bd28720e86acfafd5634cec52999dc74104244e14486d12e",
+      "passed": 125,
+      "failed": 7,
+      "pending": 0,
+      "success": false
+    },
+    "green": {
+      "sha256": "aacf319a5d699a7fdd5e7b853b1e70d09c761e3ff0c30f043594ecd605183bb7",
+      "passed": 264,
+      "failed": 0,
+      "pending": 0,
+      "success": true
+    },
+    "initialGreen": {
+      "sha256": "fac0edd794235754eba4c652fc8a6cb89e92f816a16eedf84874008a63f91dec",
+      "passed": 254,
+      "failed": 0,
+      "pending": 0,
+      "success": true
+    },
+    "authReviewRed": {
+      "sha256": "4d0820292f6d3878d7d1c4c35c9dba4a6308ac99ea4ed6eb850e9dee8f93c587",
+      "passed": 81,
+      "failed": 7,
+      "pending": 0,
+      "success": false
+    }
+  },
+  "browser": {
+    "host": "Actual native component and corrected hook, neutral Auth/context/read ports only; original compiled CSS and blocked font/network; not full-shell, customer, RLS, provider or assistive-technology proof.",
+    "checks": [
+      "1536x960 Mineral fixture A: Enter View history; authority refusal retires process controls and focuses Refresh; deliberate Enter Refresh rereads original ready state",
+      "individual-result refusal retains native process inspection; network unavailable retains it and offers Read history again",
+      "held authority response resolved from connected fixture control preserves that external focus",
+      "390x844 Obsidian fixture B: authority refusal removes stale process; Refresh focused; Tab reaches original Review pending tasks link"
+    ],
+    "invalidProbes": [
+      "initial private host alias omitted extension; corrected only host resolver",
+      "initial private host omitted original compiled settings stylesheet; excluded from visual proof, corrected host stylesheet inclusion",
+      "Playwright selectOption helper timed out twice; native documented setValue and keyboard used successfully"
+    ],
+    "cleanup": "Only own IAB tab12 closed, temporary viewport reset and verified own loopback node29912 stopped",
+    "fullShell": {
+      "manifestSha256": "5c9c40692181a1c807ee840962530933ebddb34ec31b38ef688fa3c85f231de2",
+      "productInputs": 393,
+      "transformedProductModules": 0,
+      "frames": [
+        {
+          "context": "a/Mineral",
+          "panel": "closed",
+          "width": 1536,
+          "height": 770,
+          "documentWidth": 1536,
+          "staleProcess": false,
+          "refusedPanel": true,
+          "screenshot": "Original coding conversation, isolated IAB tab13",
+          "keyboardBoundary": "Visible native opener; lost focus returns to Refresh."
+        },
+        {
+          "context": "a/Mineral",
+          "panel": "closed",
+          "width": 1366,
+          "height": 768,
+          "documentWidth": 1366,
+          "staleProcess": false,
+          "refusedPanel": true,
+          "screenshot": "Original coding conversation, isolated IAB tab13",
+          "keyboardBoundary": "Visible native opener; lost focus returns to Refresh."
+        },
+        {
+          "context": "a/Mineral",
+          "panel": "closed",
+          "width": 1024,
+          "height": 768,
+          "documentWidth": 1024,
+          "staleProcess": false,
+          "refusedPanel": true,
+          "screenshot": "Original coding conversation, isolated IAB tab13",
+          "keyboardBoundary": "Visible native opener; lost focus returns to Refresh."
+        },
+        {
+          "context": "a/Mineral",
+          "panel": "closed",
+          "width": 900,
+          "height": 1000,
+          "documentWidth": 900,
+          "staleProcess": false,
+          "refusedPanel": true,
+          "screenshot": "Original coding conversation, isolated IAB tab13",
+          "keyboardBoundary": "Visible native opener; lost focus returns to Refresh."
+        },
+        {
+          "context": "a/Mineral",
+          "panel": "open",
+          "width": 1536,
+          "height": 770,
+          "documentWidth": 1536,
+          "staleProcess": false,
+          "refusedPanel": true,
+          "screenshot": "Original coding conversation, isolated IAB tab13",
+          "keyboardBoundary": "Visible native opener; lost focus returns to Refresh."
+        },
+        {
+          "context": "a/Mineral",
+          "panel": "open",
+          "width": 1366,
+          "height": 768,
+          "documentWidth": 1366,
+          "staleProcess": false,
+          "refusedPanel": true,
+          "screenshot": "Original coding conversation, isolated IAB tab13",
+          "keyboardBoundary": "Visible native opener; lost focus returns to Refresh."
+        },
+        {
+          "context": "a/Mineral",
+          "panel": "open",
+          "width": 1024,
+          "height": 768,
+          "documentWidth": 1024,
+          "staleProcess": false,
+          "refusedPanel": true,
+          "screenshot": "Original coding conversation, isolated IAB tab13",
+          "keyboardBoundary": "Covered opener was targeted for visual state only; not natural keyboard proof. Original panel close/reentry tested separately."
+        },
+        {
+          "context": "a/Mineral",
+          "panel": "open",
+          "width": 900,
+          "height": 1000,
+          "documentWidth": 900,
+          "staleProcess": false,
+          "refusedPanel": true,
+          "screenshot": "Original coding conversation, isolated IAB tab13",
+          "keyboardBoundary": "Covered opener was targeted for visual state only; not natural keyboard proof. Original panel close/reentry tested separately."
+        },
+        {
+          "context": "b/Obsidian",
+          "panel": "closed",
+          "width": 1536,
+          "height": 770,
+          "documentWidth": 1536,
+          "staleProcess": false,
+          "refusedPanel": true,
+          "screenshot": "Original coding conversation, isolated IAB tab13",
+          "keyboardBoundary": "Visible native opener; lost focus returns to Refresh."
+        },
+        {
+          "context": "b/Obsidian",
+          "panel": "closed",
+          "width": 1366,
+          "height": 768,
+          "documentWidth": 1366,
+          "staleProcess": false,
+          "refusedPanel": true,
+          "screenshot": "Original coding conversation, isolated IAB tab13",
+          "keyboardBoundary": "Visible native opener; lost focus returns to Refresh."
+        },
+        {
+          "context": "b/Obsidian",
+          "panel": "closed",
+          "width": 1024,
+          "height": 768,
+          "documentWidth": 1024,
+          "staleProcess": false,
+          "refusedPanel": true,
+          "screenshot": "Original coding conversation, isolated IAB tab13",
+          "keyboardBoundary": "Visible native opener; lost focus returns to Refresh."
+        },
+        {
+          "context": "b/Obsidian",
+          "panel": "closed",
+          "width": 900,
+          "height": 1000,
+          "documentWidth": 900,
+          "staleProcess": false,
+          "refusedPanel": true,
+          "screenshot": "Original coding conversation, isolated IAB tab13",
+          "keyboardBoundary": "Visible native opener; lost focus returns to Refresh."
+        },
+        {
+          "context": "b/Obsidian",
+          "panel": "open",
+          "width": 1536,
+          "height": 770,
+          "documentWidth": 1536,
+          "staleProcess": false,
+          "refusedPanel": true,
+          "screenshot": "Original coding conversation, isolated IAB tab13",
+          "keyboardBoundary": "Visible native opener; lost focus returns to Refresh."
+        },
+        {
+          "context": "b/Obsidian",
+          "panel": "open",
+          "width": 1366,
+          "height": 768,
+          "documentWidth": 1366,
+          "staleProcess": false,
+          "refusedPanel": true,
+          "screenshot": "Original coding conversation, isolated IAB tab13",
+          "keyboardBoundary": "Visible native opener; lost focus returns to Refresh."
+        },
+        {
+          "context": "b/Obsidian",
+          "panel": "open",
+          "width": 1024,
+          "height": 768,
+          "documentWidth": 1024,
+          "staleProcess": false,
+          "refusedPanel": true,
+          "screenshot": "Original coding conversation, isolated IAB tab13",
+          "keyboardBoundary": "Covered opener was targeted for visual state only; not natural keyboard proof. Original panel close/reentry tested separately."
+        },
+        {
+          "context": "b/Obsidian",
+          "panel": "open",
+          "width": 900,
+          "height": 1000,
+          "documentWidth": 900,
+          "staleProcess": false,
+          "refusedPanel": true,
+          "screenshot": "Original coding conversation, isolated IAB tab13",
+          "keyboardBoundary": "Covered opener was targeted for visual state only; not natural keyboard proof. Original panel close/reentry tested separately."
+        }
+      ],
+      "interactions": [
+        "Original Fold PAIGE restores Direct PAIGE focus at900 Obsidian B and1024 Mineral A; deliberate Refresh recovers the current process",
+        "Both native local enable reviews open then Escape returns original Review to enable; no enabling callback",
+        "Held B response, actual shell context/route switch to A, then release old denial leaves A ready and old history retired",
+        "Original native unavailable history preserves process and offers Read history again",
+        "320x568 source reflow has documentWidth320; original ops-department-body scrolls; Tab reaches Review to enable, View history and Close history, then Enter returns original opener"
+      ],
+      "scrollOwner": "Actual narrow ops-department-body height334/scrollHeight1076; sidebar tcs-nav-links is separate. No new scroll owner.",
+      "reducedMotion": "Actual matchMedia reduce=true; no animation/style changed.",
+      "zoom": "Ctrl-plus did not change innerWidth/devicePixelRatio and is INVALID as physical zoom proof; Ctrl0 restored. Reflow320x568 verified, physical200 percent and assistive technology remain UNVERIFIED.",
+      "cleanup": "Own IAB tab13 closed, viewport reset, verified own loopback process57032 stopped.",
+      "boundary": "Both original shell contexts are valid neutral fixture shapes, NOT real authenticated tenants; role/cohort/new-account/customer proof remains separately owed."
+    }
+  },
+  "boundary": "No customer data, role/tenant/account creation, approval/record/control, provider/recurrence/Live/Edge/schema activation, registry or domain writer change. Full EXP05/both-chat/cohort/founder proof remains open.",
+  "reviewCorrections": {
+    "auth": "Real SDK retryable503 regression81PASS/7FAIL before correction. Only confirmed SDK missing-session/API401/403 denial gets refusal; ambiguous Auth failures return unavailable, with no further read/control and no grant.",
+    "strict": "First corrected graph15→18 exposed three missing required AuthApiError code arguments in tests. Corrected real-SDK test constructors; final graph is authoritative below.",
+    "visual": "Initial eight NOT_APPLICABLE viewport attestations withdrawn. Full original shell sixteen-frame matrix and natural interaction probes replace them; hidden covered-opener probes are visual only."
+  }
+}

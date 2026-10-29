@@ -20,6 +20,7 @@ import { prepareWeeklyCommitmentChatResponse } from "../_shared/paige-orchestrat
 import { createWeeklyDraftDeadline } from "../_shared/paige-orchestration/weekly-draft-deadline.ts";
 import { readOwnerTaskHistoryForChat } from "../_shared/paige-orchestration/owner-task-history-chat.ts";
 import { readBoundedAutomationList, type AutomationListCaller } from "../_shared/paige-orchestration/automation-list-read.ts";
+import { automationDraftSummary } from "../_shared/paige-orchestration/automation-draft-summary.ts";
 import type { OwnerTaskHistoryClients } from "../_shared/paige-orchestration/owner-task-history.ts";
 import { bindWeeklyControlForReview, parseWeeklyControlIntent } from "../_shared/paige-orchestration/weekly-commitment-control-input.ts";
 import { claimWeeklyDraftChatApproval, weeklyDraftNativeArgs } from "../_shared/paige-orchestration/weekly-draft-chat-claim.ts";
@@ -10414,11 +10415,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         }
         case "delegate_to_subagent":
           return specialistAssignmentSummary(a, specialistStepRoster);
-        case "automation_draft": {
-          const n = typeof a?.name === "string" ? a.name : "a new process";
-          const count = Array.isArray(a?.steps) ? a.steps.length : 0;
-          return `Set up "${n}" — ${count} step${count === 1 ? "" : "s"}, starting when ${typeof a?.trigger_key === "string" ? a.trigger_key.split(".").pop()?.replace(/_/g, " ") : "its trigger fires"}. It will be created switched off and asking first.`;
-        }
+        case "automation_draft": return automationDraftSummary(a);
         case "automation_set_grant":
           // The lane is the whole decision, so it is stated in the operator's terms rather than in
           // the enum's. "auto" read back as "auto" is not something a person can weigh.
@@ -19310,6 +19307,9 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
         growth_page_unpublish: "growth_pages", growth_form_unpublish: "growth_forms",
         growth_funnel_unpublish: "growth_funnels",
         studio_image_publish: "marketing_content", studio_image_unpublish: "marketing_content",
+        // EXP06 hosting door (growth-hosting-command) — attribution rows for the §17/§19.8 map;
+        // NOT Chat admission (the door's tools are not offered here; A2 is EXP08's seam).
+        growth_hosting_deploy: "growth_hosted_deployments", growth_hosting_recover: "growth_hosted_deployments",
         action_file: "paige_actions", action_advance: "paige_actions",
         n8n_activate_workflow: "n8n_workflow", n8n_deactivate_workflow: "n8n_workflow",
         n8n_create_workflow: "n8n_workflow", n8n_update_workflow: "n8n_workflow",

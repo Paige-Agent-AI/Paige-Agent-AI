@@ -94,4 +94,37 @@ describe("ScreenLoadBoundary (PR9 failed-download recovery)", () => {
     await render(<App path="/a" />);
     expect(host.querySelector("[data-loaded]")).toBeTruthy();
   });
+
+  // EXP04 finding b0d8f65d (2026-10-28): after a deployment retires the old
+  // hashed asset, "Try again" re-attempts the SAME cached-dead URL and fails —
+  // the person must be moved to the recovery that actually works. First failure
+  // keeps both actions (may be transient); a FAILED Try again switches the card
+  // to the stale-deployment truth with Reload as the only/primary action and the
+  // honest draft-survives-reload note.
+  it("a failed Try again converts the card to the stale-deployment recovery (EXP04 sequence)", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => undefined);
+    let fail = true;
+    const Screen = () => { if (fail) throw new TypeError("Failed to fetch dynamically imported module: clients-dead.js"); return <p data-loaded>ok</p>; };
+    const App = ({ path }: { path: string }) => (
+      <ScreenLoadBoundary resetKey={path}><Screen /></ScreenLoadBoundary>
+    );
+    await render(<App path="/a" />);
+    // First failure: both actions, original honest copy.
+    expect(host.textContent).toContain("This view could not open.");
+    expect(buttons()).toEqual(["Try again", "Reload PAIGE"]);
+
+    // Try again → the module cache still points at the dead URL → fails again.
+    await act(async () => { host.querySelectorAll("button")[0].click(); });
+    expect(host.textContent).toContain("PAIGE may have been updated.");
+    expect(host.textContent).toContain("Reload to continue");
+    expect(host.textContent).toContain("unsent PAIGE message is kept");
+    // Try again is GONE — reload is the one recovery that works for a stale asset.
+    expect(buttons()).toEqual(["Reload PAIGE"]);
+
+    // Recovery via reload is the primary action; navigation reset still restores.
+    fail = false;
+    await render(<App path="/b" />);
+    await render(<App path="/a" />);
+    expect(host.querySelector("[data-loaded]")).toBeTruthy();
+  });
 });

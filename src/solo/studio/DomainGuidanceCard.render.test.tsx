@@ -1,9 +1,16 @@
-import { describe, expect, it, afterEach } from "vitest";
+import { describe, expect, it, afterEach, vi } from "vitest";
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { readFileSync } from "node:fs";
 
 import { DomainGuidanceCard } from "./DomainGuidanceCard";
+import { prepareHostingDeployment, type HostingPrepared } from "./studio-data";
+
+vi.mock("./studio-data", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("./studio-data")>();
+  return { ...actual, prepareHostingDeployment: vi.fn() };
+});
+const prep = vi.mocked(prepareHostingDeployment);
 
 let root: Root | null = null;
 const host = () => {
@@ -95,8 +102,8 @@ describe("PublishPanel mounting (static)", () => {
   it("the card is mounted in BOTH live views, gated on tenantSlug, and nothing else calls it", () => {
     const src = readFileSync("src/solo/studio/PublishPanel.tsx", "utf8");
     expect(src.match(/<DomainGuidanceCard /g)).toHaveLength(2);
-    expect(src).toContain('{tenantSlug && <DomainGuidanceCard tenantSlug={tenantSlug} />}');
-    expect(src).toContain('{!confirming && tenantSlug && <DomainGuidanceCard tenantSlug={tenantSlug} />}');
+    expect(src).toContain('artifact.kind === "page" && <DomainGuidanceCard tenantSlug={tenantSlug} pageId={artifact.page.id} />');
+    expect(src).toContain('!confirming && tenantSlug && artifact.kind === "page" &&');
     // The disclosure adds no door contact of its own: the panel still names no publish/unpublish RPC.
     expect(src).not.toMatch(/growth_page_(publish|unpublish)/);
   });
@@ -105,5 +112,52 @@ describe("PublishPanel mounting (static)", () => {
     const src = readFileSync("src/solo/studio/DomainGuidanceCard.tsx", "utf8");
     expect(src).not.toMatch(/\bfetch\s*\(|XMLHttpRequest|supabase|\.rpc\(|WebSocket/);
     expect(src).not.toMatch(/window\.open|location\.assign/);
+  });
+});
+
+describe("DomainGuidanceCard — the host path's Check hosting step (WEB-05 wiring)", () => {
+  it("shows no check button when the artifact is not a page (no pageId)", () => {
+    const el = host();
+    act(() => root!.render(<DomainGuidanceCard tenantSlug="acme-coaching" />));
+    expect(el.querySelector("button.vs-link")).toBeNull();
+  });
+
+  it("renders the door's honest dormant sentence VERBATIM when hosting isn't switched on", async () => {
+    const answer: HostingPrepared = { state: "disabled", message: "Hosting isn't switched on yet. Nothing was changed." };
+    prep.mockResolvedValueOnce(answer);
+    const el = host();
+    act(() => root!.render(<DomainGuidanceCard tenantSlug="acme-coaching" pageId="33333333-3333-4333-8333-333333333333" />));
+    open(el);
+    const btn = el.querySelector("button.vs-link") as HTMLButtonElement;
+    expect(btn).not.toBeNull();
+    await act(async () => { btn.click(); });
+    const line = el.querySelector("[data-hosting-state]") as HTMLElement;
+    expect(line.getAttribute("data-hosting-state")).toBe("disabled");
+    expect(line.textContent).toBe("Hosting isn't switched on yet. Nothing was changed.");
+    expect(prep).toHaveBeenCalledWith("33333333-3333-4333-8333-333333333333");
+  });
+
+  it("when the door has a proposal (post-activation), points at the approval review — never claims live", async () => {
+    prep.mockResolvedValueOnce({ state: "ready", message: "Put a hosted copy of this page online.", fingerprint: "fp-1", summary: "Put a hosted copy of “Spring offer” at https://acme-spring-offer.paigeagent.workers.dev.", address: "https://acme-spring-offer.paigeagent.workers.dev" });
+    const el = host();
+    act(() => root!.render(<DomainGuidanceCard tenantSlug="acme-coaching" pageId="33333333-3333-4333-8333-333333333333" />));
+    open(el);
+    const btn = el.querySelector("button.vs-link") as HTMLButtonElement;
+    await act(async () => { btn.click(); });
+    const line = el.querySelector("[data-hosting-state]") as HTMLElement;
+    expect(line.getAttribute("data-hosting-state")).toBe("ready");
+    expect(line.textContent).toContain("review it in your approvals");
+    expect(line.textContent).not.toMatch(/is live|went live/i);
+  });
+
+  it("a transport failure says the check failed — nothing was changed, never a promise", async () => {
+    prep.mockRejectedValueOnce(new Error("Hosting couldn't be checked just now. Nothing was changed. Try again."));
+    const el = host();
+    act(() => root!.render(<DomainGuidanceCard tenantSlug="acme-coaching" pageId="33333333-3333-4333-8333-333333333333" />));
+    open(el);
+    const btn = el.querySelector("button.vs-link") as HTMLButtonElement;
+    await act(async () => { btn.click(); });
+    const line = el.querySelector("[data-hosting-state]") as HTMLElement;
+    expect(line.textContent).toContain("couldn't be checked");
   });
 });

@@ -1,6 +1,7 @@
 import {clientPortalBindingFromProfile, type ClientPortalChatBinding} from "./client-portal-chat-scope.ts";
 import {contextAvailable,contextDegraded,contextUnavailable,type ContextSourceResult} from "./paige-context/mod.ts";
 import {customerAgentName} from "./client-portal-identity.ts";
+import {PAIGE_PERSONA_CORE} from "./paige-persona/core.ts";
 
 type Caller={rpc(name:string):PromiseLike<{data:unknown;error:unknown}>};
 export type ClientPortalPersonaInput=Readonly<{
@@ -86,5 +87,8 @@ Private AI conversation and a message deliberately sent to the business are diff
     business_name:input.businessName,assistant_name:input.assistantName,tone:input.tone,
     service_scope:input.serviceScope,human_handoff:input.humanHandoff,
     tagline:input.tagline,support_email:input.supportEmail,
-  })}`}];
+  })}`},
+  // The customer-only replacement discards the earlier owner message array.
+  // Retain the same identity-free care-first policy, never the owner persona.
+  {role:"system",content:PAIGE_PERSONA_CORE}];
 }

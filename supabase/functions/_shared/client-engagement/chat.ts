@@ -8,7 +8,7 @@ import {
   parseClientEngagementSource,
   type ClientEngagementStatus,
 } from './status.ts';
-import { AGREEMENT_TEXT, ATTENTION_TEXT, PAYMENT_STATE_TEXT, standingRecordLinks, standingTermsEvidence, standingTimingReason } from './labels.ts';
+import { AGREEMENT_TEXT, ATTENTION_TEXT, DELIVERY_PHASE_TEXT, PAYMENT_STATE_TEXT, standingDeliveryEvidence, standingRecordLinks, standingTermsEvidence, standingTimingReason } from './labels.ts';
 import type { ReadRecordLink } from '../paige-turn/record-links.ts';
 
 // Experience 04 E4-S2 — "where does this client stand?" and the business time zone, from chat.
@@ -216,7 +216,15 @@ export function projectClientStanding(s: ClientEngagementStatus): string {
     lines.push(`ONBOARDING AND DELIVERY: ${label} — ${w.done} of ${w.total} done, ${w.open} open, ${w.overdue} overdue, ${w.blocked} blocked${s.truncated.work ? ' (more items exist than are listed)' : ''}. Work deadlines are exact times, so the overdue count does not depend on the business time zone. Work counts do not establish client acceptance or engagement completion.${w.next ? ` Next: ${w.next.item_type} ${rec(w.next.title)} due ${when(w.next.due_at)}.` : ''}`);
   }
 
-  lines.push(s.attention.length
+   lines.push(`REVIEWED DELIVERY: ${standingDeliveryEvidence(s)}`);
+   const delivery = s.delivery?.items ?? [];
+   for (const item of delivery.slice(0, 5)) {
+     const title = s.work.items.find(work => work.id === item.workItemId)?.title;
+     lines.push(`  ${rec(title, 'Reviewed milestone')}: ${item.revision !== null ? `Submission revision ${item.revision} · ` : ''}${DELIVERY_PHASE_TEXT[item.phase]}${item.decisionAt ? `; decision ${when(item.decisionAt)}` : ''}.`);
+   }
+   if (delivery.length > 5) lines.push(`${delivery.length - 5} more delivery ${delivery.length === 6 ? 'decision is' : 'decisions are'} available in the original Work records.`);
+
+   lines.push(s.attention.length
     ? `NEEDS ATTENTION:\n${s.attention.map((k) => `  - ${ATTENTION_TEXT[k] ?? k}`).join('\n')}`
     : 'NEEDS ATTENTION: nothing flagged.');
   if (s.not_recorded.length) lines.push(`NOT ESTABLISHED BY THIS STANDING READ: ${s.not_recorded.join(', ')}.`);

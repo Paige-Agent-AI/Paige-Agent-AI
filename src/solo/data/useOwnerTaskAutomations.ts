@@ -47,6 +47,12 @@ export function useOwnerTaskAutomations() {
     historyTicket.current++;
     publishHistory({ key: "", view: CLOSED_HISTORY });
   }, [publishHistory]);
+  const retireRefusedAccess = useCallback((scope: OwnerTaskScope) => {
+    if (!same(scope, current())) return;
+    sequence.current++; historyProcesses.current = new WeakMap();
+    closeHistory();
+    publish({ key: keyOf(scope), read: { status: "refused" }, busy: false, needsRefresh: true, feedback: null });
+  }, [current, closeHistory, publish]);
   const refresh = useCallback(async () => {
     if (flight.current) return;
     const scope = current(), ticket = ++sequence.current;
@@ -115,12 +121,17 @@ export function useOwnerTaskAutomations() {
     try { read = await readOwnerTaskHistoryList(scope, processId, caller, stillCurrent); }
     catch { read = { status: "unavailable" }; }
     if (!stillCurrent()) return;
+    // A refused individual result does not establish lost process access. Only
+    // the original caller authority check may retire the cached review.
+    if (read.status === "refused" && "access" in read && read.access === "refused") {
+      retireRefusedAccess(scope); return;
+    }
     publishHistory({ key, view: read.status === "ready" ? {
       status: "ready", processId,
       list: Object.freeze({ items: Object.freeze(read.items.map(row => Object.freeze({ ...row }))), hasMore: read.hasMore }),
       selected: null, outcome: null,
     } : { status: read.status, processId } });
-  }, [current, publishHistory]);
+  }, [current, publishHistory, retireRefusedAccess]);
 
   const inspectOutcome = useCallback(async (locator: HistoryLocator): Promise<void> => {
     const scope = current(), before = historyRef.current;
@@ -135,8 +146,11 @@ export function useOwnerTaskAutomations() {
     try { outcome = await readOwnerTaskOutcome(scope, selection, caller, historyInvoker, stillCurrent); }
     catch { outcome = { status: "unavailable" }; }
     if (!stillCurrent()) return;
+    if (outcome.status === "refused" && "access" in outcome && outcome.access === "refused") {
+      retireRefusedAccess(scope); return;
+    }
     publishHistory({ key, view: { ...view, selected: locator, outcome } });
-  }, [current, publishHistory]);
+  }, [current, publishHistory, retireRefusedAccess]);
 
   const control = useCallback(async (review: OwnerTaskReview, action: "arm" | "pause"): Promise<OwnerTaskControl> => {
     if (flight.current) return { status: "busy" };

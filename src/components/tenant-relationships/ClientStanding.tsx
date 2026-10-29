@@ -11,7 +11,9 @@ import { collectionMoney } from "@/solo/sales/collections/presentation";
 import {
   ATTENTION_DESTINATION,
   ATTENTION_TEXT,
+  DELIVERY_PHASE_TEXT,
   NOT_RECORDED_TEXT,
+  standingDeliveryEvidence,
   standingAgreementLink,
   standingInvoiceLink,
   standingTermsEvidence,
@@ -103,6 +105,26 @@ function StandingLink({ destination, account, label, recordId = null }: { destin
   const text = label ?? target.label, cut = text.lastIndexOf(" ");
   // The arrow travels with the last word, so a wrapped link never strands it at the cell's far edge.
   return <Link className="trc-standing-link" to={target.to}>{cut > 0 ? `${text.slice(0, cut)} ` : ""}<span className="trc-standing-link-tail">{text.slice(cut + 1)}<ArrowRight aria-hidden /></span></Link>;
+}
+
+function DeliveryEvidence({ s, zone }: { s: ClientEngagementStatus; zone: string | null }) {
+  const items = s.delivery?.items ?? [];
+  return <>
+    <span className="trc-standing-quiet-line">{standingDeliveryEvidence(s)}</span>
+    {items.length > 0 && <details className="trc-standing-delivery-decisions">
+      <summary>Review {plural(items.length, "delivery decision")}</summary>
+      <ul>{items.map(item => {
+        const day = dayLabel(item.decisionAt, zone);
+        return <li key={item.workItemId}>
+          <strong>{s.work.items.find(work => work.id === item.workItemId)?.title ?? "Reviewed milestone"}</strong>
+          <span>{item.revision !== null && <>Submission revision {item.revision} · </>}{DELIVERY_PHASE_TEXT[item.phase]}</span>
+          {day && <span className="trc-standing-quiet-line">{day === NOT_SHOWN
+            ? "Decision date not shown until the business time zone is set"
+            : <>Decision <time dateTime={item.decisionAt!}>{day}</time></>}</span>}
+        </li>;
+      })}</ul>
+    </details>}
+  </>;
 }
 
 /** One ledger row: its name, then its state beside it, then the facts and where to act on them. */
@@ -224,7 +246,7 @@ function Standing({ s, name, account, openPaige }: { s: ClientEngagementStatus; 
 
         <Row state={WORK_PILL[w.state]} label="Delivery" actions={<StandingLink destination="operations_work" account={account} />}>
           <span>{workLine}</span>
-          <span className="trc-standing-quiet-line">Client acceptance is not shown here.</span>
+          <DeliveryEvidence s={s} zone={zone} />
           {w.next && <span className="trc-standing-quiet-line">Next: {w.next.title ?? "Untitled"} · {dayLabel(w.next.due_at, zone) === NOT_SHOWN ? "due date not shown until the business time zone is set" : <span className="trc-standing-nowrap">due {dayLabel(w.next.due_at, zone)}</span>}</span>}
         </Row>
 

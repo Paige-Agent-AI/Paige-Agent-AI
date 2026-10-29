@@ -1,0 +1,45 @@
+{
+  "sourceParent": "24e76c8d41024d47a1e51c15c77244785c1eafb7",
+  "boundary": "Original Sales/shell with neutral local hooks/SDK; no backend/customer/provider/persistence proof.",
+  "source": {
+    "path": "src/solo/sales/SalesBillingWorkspace.tsx",
+    "sha256": "e836c1c6e7824ef4f848612fc314f2863b72225c8a2c861d902e5685514c79cd",
+    "oneCopyInverse": true
+  },
+  "regression": {
+    "files": 2,
+    "tests": 44,
+    "failures": 0,
+    "source": "Original SalesBillingWorkspace and InvoicePaymentRequests suites"
+  },
+  "build": {
+    "status": "PASS",
+    "seconds": 99
+  },
+  "desktop": {
+    "width": 1280,
+    "height": 720,
+    "scrollWidth": 1280,
+    "toolbar": "USD · invoice records",
+    "buttonsPreserved": 3,
+    "screenshot": "desktop.jpg",
+    "format": "image/jpeg"
+  },
+  "narrow": {
+    "width": 390,
+    "height": 844,
+    "scrollWidth": 390,
+    "toolbarWidth": 293,
+    "toolbarScrollWidth": 293,
+    "actualDOM": true,
+    "pixelQuality": "UNVERIFIED: screenshot transport returned390x219; raster excluded"
+  },
+  "exclusions": [
+    "First test invocation failed Windows temporary cache rename; authorized unchanged44-control rerunPASS",
+    "Live Vite dev transport timeout; built original fixture successfully served HTTP200 and rendered",
+    "Tab emulation call stalled; tab21 closed and original production tab1280x720 verified",
+    "No keyboard, layout, focus or control source changes; no new literal-mirroring test"
+  ],
+  "activation": "NONE",
+  "customerAcceptance": "UNVERIFIED"
+}

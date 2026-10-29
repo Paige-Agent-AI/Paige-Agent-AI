@@ -1,0 +1,52 @@
+[
+  {
+    "origin": "https://paigeagent.ai",
+    "at": "2026-10-29T01:01:37.6788933+00:00",
+    "status": 200,
+    "version": {
+      "buildId": "3f80ec8f5de5ce990d9f3674f538cf74037bbb0c-mvsu25xr",
+      "customerUpdate": null
+    },
+    "versionSha256": "f126c0ccd69064b8a61467079d3528eefaa01bf162d5e52aa19d424c62e8af8e",
+    "originalEntry": "/assets/main-BQznstbC.js",
+    "applicationEntry": "/assets/main-DYKNfA4a.js",
+    "surfaceEntry": "/assets/SoloEntry-CmKL7V5S.js",
+    "originalChunk": "/assets/settings-integrations-D7I3GpMP.js",
+    "chunkStatus": 200,
+    "chunkBytes": 30280,
+    "chunkSha256": "8088e26dee6917a546d3c653a42fa9867407d1ffe04f1cb66c4e6a0923c9edfe",
+    "signatures": {
+      "originalNativeProcess": true,
+      "originalRefusedPanel": true,
+      "closedLocalAccessRefusal": true,
+      "currentListAndDetailAccessRefusal": true,
+      "originalFocusCondition": true
+    },
+    "boundary": "Public emitted-source/version readback only; not authenticated access refusal, domain/Rail execution, cohort or founder acceptance."
+  },
+  {
+    "origin": "https://app.paigeagent.ai",
+    "at": "2026-10-29T01:01:39.3928625+00:00",
+    "status": 200,
+    "version": {
+      "buildId": "3f80ec8f5de5ce990d9f3674f538cf74037bbb0c-mvsu25xr",
+      "customerUpdate": null
+    },
+    "versionSha256": "f126c0ccd69064b8a61467079d3528eefaa01bf162d5e52aa19d424c62e8af8e",
+    "originalEntry": "/assets/main-BQznstbC.js",
+    "applicationEntry": "/assets/main-DYKNfA4a.js",
+    "surfaceEntry": "/assets/SoloEntry-CmKL7V5S.js",
+    "originalChunk": "/assets/settings-integrations-D7I3GpMP.js",
+    "chunkStatus": 200,
+    "chunkBytes": 30280,
+    "chunkSha256": "8088e26dee6917a546d3c653a42fa9867407d1ffe04f1cb66c4e6a0923c9edfe",
+    "signatures": {
+      "originalNativeProcess": true,
+      "originalRefusedPanel": true,
+      "closedLocalAccessRefusal": true,
+      "currentListAndDetailAccessRefusal": true,
+      "originalFocusCondition": true
+    },
+    "boundary": "Public emitted-source/version readback only; not authenticated access refusal, domain/Rail execution, cohort or founder acceptance."
+  }
+]

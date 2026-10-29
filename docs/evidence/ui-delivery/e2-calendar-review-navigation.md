@@ -1,5 +1,22 @@
 # EXP02 original Calendar navigation and truthful Chat guidance
 
+## October29 current source-release disposition
+
+Current main `a58e9d8d088a75f1a8786c83958915f65d67d2d5` is composed normally.
+The four owning source/test files and original rendered assets are unchanged;
+fresh four-suite verification is118PASS. An initial temporary-cache rename
+failure ran no tests; the unchanged retry used a workspace-local temporary
+directory and passed. Both observations are retained, with no test weakening.
+No inline review finding is open on3019. Separate source inspection classifies
+this existing typed-link/read-message repair as a bounded safe source increment
+under AGENTS' merge-after-green rule, pending final review and exact-head CI.
+This corrects the earlier blanket source hold, not the missing acceptance proof:
+native200-percent/assistive technology, released model wording, two legitimate
+customer cohorts, eligible Live and complete19/nine/founder acceptance remain
+PROOF OWED and excluded from LIVE claims. Original3018 material P1 and the
+separate Sales-history finding are not resolved by this disposition. Original
+paige-ai-chat and paige-business-review source deployment/readback remain owed.
+
 UI_DELIVERY_EVIDENCE_VERSION: 1
 FLOW_BY_FLOW: PASS: original pre-edit ten-point packet ANT138/a1f84ad3; authorized Calendar evidence -> existing department link -> original route -> native Back and existing review state.
 PAIGE_UI_DESIGN: PASS: original project skill/five modules, Executive source hierarchy, Schibsted typography, native link/focus and shell scroll contracts preserved; Impeccable clarify/craft-floor and finish inspection applied.

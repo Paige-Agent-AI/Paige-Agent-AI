@@ -39,7 +39,9 @@ const compiled = transpileModule(raw, { compilerOptions: { module: ModuleKind.No
 
 type Mode = "accepted" | "accepted_no_id" | "reject400" | "status500" | "throw" | "hang";
 type AgreementCase = { omitToken?:boolean; wrongToken?:boolean; expired?:boolean; missingSource?:boolean; receiptError?:boolean;
-  wrongScope?:boolean; witness?:boolean; changedName?:boolean; changedReply?:boolean; withdrawAfterClaim?:boolean };
+  wrongScope?:boolean; witness?:boolean; changedName?:boolean; changedReply?:boolean; withdrawAfterClaim?:boolean;
+  managed?:boolean; managedInvalid?:'fallback'|'foreign'|'address'|'unreadable'; managedWithdrawAfterClaim?:boolean;
+  connectorProvider?:'gmail'|'smtp' };
 const TOKEN='1a'.repeat(32),TOKEN_HASH=createHash('sha256').update(TOKEN).digest('hex');
 const PARENT='88888888-8888-4888-8888-888888888801',WORK='99999999-9999-4999-8999-999999999999';
 const AGREEMENT='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',SIGNER='bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
@@ -50,7 +52,9 @@ function setup(opts: { fetch?: Mode; eligible?: boolean; key?: boolean; agreemen
     decision_receipt_recorded:true,approved_fingerprint:'a'.repeat(16),purpose:'agreement_signature_request',agreement_work_id:WORK,
     agreement_operation_id:PARENT,agreement_request_sha256:'f'.repeat(64),signer_id:SIGNER,operation_id:OP};
   const approvedBody='Please review the agreement.\n\n'+PREPARED_SIGNING_LINK_MARKER;
-  const b = { ...binding,...(a?{body_text:approvedBody,body_html:'<p>'+approvedBody+'</p>',governance}: {}) };
+  const b = { ...binding,...(a?{body_text:approvedBody,body_html:'<p>'+approvedBody+'</p>',governance}: {}),
+    ...(a?.managed?{provider:'resend',from_address:'controlled-studio@mail.paigeagent.ai'}:{}),
+    ...(a?.connectorProvider?{provider:a.connectorProvider}:{}) };
   const expiry=a?.expired?'2000-01-01T00:00:00Z':new Date(Date.now()+3_600_000).toISOString();
   const source={kind:'prepared_agreement_message_source',source_only:true,tenant_id:TENANT,actor_id:a?.wrongScope?PARENT:ACTOR,
     work_id:WORK,agreement_id:AGREEMENT,client_id:CONTACT,preparation_id:PREPARATION,preparation_sha256:'e'.repeat(64),document_sha256:'d'.repeat(64),
@@ -75,7 +79,7 @@ function setup(opts: { fetch?: Mode; eligible?: boolean; key?: boolean; agreemen
         if (mode !== "select") return { data: { id: table === "messages" ? MSG : "row-id" }, error: null };
         if (table === "messages") return { data: { tenant_id: TENANT, status: "draft", connector_id: CONNECTOR, contact_id: CONTACT, thread_key: `contact:${TENANT}:${CONTACT}`, channel_type: "email", meta: { source: "comms-email-command", comms_email_binding: b } }, error: null };
         if (table === "clients") return { data: { tenant_id: TENANT, emails: a?.witness?[]:["Lead@Example.test"] }, error: null };
-        if (table === "channel_connectors") return { data: { id:CONNECTOR,tenant_id: TENANT, status: "active", active: true, channel_type: "email", mailbox_class: "shared_support", mailbox_owner_user_id: null, provider: "sendgrid", from_address: "hello@own.example.test", from_name: a?.changedName?'Changed sender':"Own Co", reply_to: a?.changedReply?'changed@own.example.test':null, credentials_vault_ref: null, config: null }, error: null };
+        if (table === "channel_connectors") return { data: { id:CONNECTOR,tenant_id: TENANT, status: "active", active: true, channel_type: "email", mailbox_class: "shared_support", mailbox_owner_user_id: null, provider: b.provider, from_address: b.from_address, from_name: a?.changedName?'Changed sender':"Own Co", reply_to: a?.changedReply?'changed@own.example.test':null, credentials_vault_ref: null, config: null }, error: null };
         if (table === "tenant_email_domains"&&a)return {data:{tenant_id:TENANT,domain:'own.example.test',sendgrid_status:'verified',sendgrid_domain_id:'synthetic-domain',sendgrid_verified_at:'2026-01-01T00:00:00Z'},error:null};
         return { data: null, error: null };
       };
@@ -89,6 +93,13 @@ function setup(opts: { fetch?: Mode; eligible?: boolean; key?: boolean; agreemen
       if (name === "comms_provider_execution_allowed") return { data: true, error: null };
       if (name === "read_comms_email_send_binding") return { data: { ...b,...(a?{state:db.state,attempts:db.attempts,...(a.missingSource?{}:{agreement_source:source})}:{}),message_id: MSG, tenant_id: TENANT, channel_type: "email", message_status: "draft", eligible: a?.withdrawAfterClaim&&db.state==='dispatching'?false:opts.eligible ?? true }, error: null };
       if (name === "tenant_sender_identity"&&a)return {data:{from_name:'Own Co',from_address:b.from_address,reply_to:null,tenant_name:'Own Co'},error:null};
+      if (name === "resolve_tenant_sender"&&a?.managed){
+        expect(args).toEqual({_tenant_id:TENANT});
+        return {data:{tenant_id:a.managedInvalid==='foreign'?CONTACT:TENANT,
+          kind:a.managedInvalid==='fallback'?'platform':'shared',source:a.managedInvalid==='fallback'?'platform_default':'shared',
+          from_address:a.managedInvalid==='address'||a.managedWithdrawAfterClaim&&db.state==='dispatching'?'different@mail.paigeagent.ai':b.from_address},
+          error:a.managedInvalid==='unreadable'?{code:'unavailable'}:null};
+      }
       if (name === "_read_prepared_agreement_credentials"&&a)return {data:a.receiptError?null:{kind:'prepared_agreement_credentials',state:'recorded',tenant_id:TENANT,actor_id:ACTOR,
         operation_id:PARENT,agreement_id:AGREEMENT,preparation_id:PREPARATION,request_sha256:'f'.repeat(64),preparation_sha256:'e'.repeat(64),document_sha256:'d'.repeat(64),work_id:WORK,event_id:EVENT,
         credentials:[{signer_id:SIGNER,token_hash:TOKEN_HASH,expires_at:expiry}]},error:a.receiptError?{code:'unavailable'}:null};
@@ -204,6 +215,43 @@ describe("send-message SendGrid arm on the governed comms_email path", () => {
 });
 
 describe('original governed sender for an approved agreement signing request',()=>{
+  it('dispatches a selected recorded managed alias through the SAME SendGrid adapter and original claim only',async()=>{
+    const s=setup({agreement:{managed:true}}),r=await s.request();
+    expect(r.body).toMatchObject({outcome:'provider_accepted',delivery_confirmed:false});
+    expect(s.fetchCalls).toHaveLength(1);
+    const call=s.fetchCalls[0],payload=JSON.parse(String(call.init.body));
+    expect(call.url).toBe('https://api.sendgrid.com/v3/mail/send');
+    expect(payload.from.email).toBe('controlled-studio@mail.paigeagent.ai');
+    expect(JSON.stringify(payload)).toContain('/sign/'+TOKEN);
+    expect(s.rpcCalls.filter(c=>c.name==='claim_comms_email_send')).toHaveLength(1);
+    expect(JSON.stringify(s.writes)+JSON.stringify(r)).not.toContain(TOKEN);
+  });
+  it.each(['fallback','foreign','address','unreadable'] as const)('refuses managed identity %s before original claim and provider',async managedInvalid=>{
+    const s=setup({agreement:{managed:true,managedInvalid}});await s.request();
+    expect(s.fetchCalls).toHaveLength(0);
+    expect(s.rpcCalls.some(c=>c.name==='claim_comms_email_send')).toBe(false);
+  });
+  it('rechecks the recorded managed alias after the winning claim without making another provider attempt',async()=>{
+    const s=setup({agreement:{managed:true,managedWithdrawAfterClaim:true}});await s.request();
+    expect(s.rpcCalls.filter(c=>c.name==='claim_comms_email_send')).toHaveLength(1);
+    expect(s.fetchCalls).toHaveLength(0);
+  });
+  it.each(['gmail','smtp'] as const)('cannot retarget an approved SendGrid request to %s',async connectorProvider=>{
+    const s=setup({agreement:{connectorProvider}});await s.request();
+    expect(s.fetchCalls).toHaveLength(0);
+    expect(s.rpcCalls.some(c=>c.name==='claim_comms_email_send')).toBe(false);
+  });
+  it('managed-alias uncertainty stays unknown without leaking the link or claiming delivery',async()=>{
+    const s=setup({agreement:{managed:true},fetch:'status500'}),r=await s.request();
+    expect(r.body).toMatchObject({outcome:'unknown',delivery_confirmed:false});
+    expect(s.fetchCalls).toHaveLength(1);
+    expect(JSON.stringify(s.writes)+JSON.stringify(r)).not.toContain(TOKEN);
+  });
+  it('managed-alias signing cannot fall back when the actual SendGrid key is missing',async()=>{
+    const s=setup({agreement:{managed:true},key:false});await s.request();
+    expect(s.fetchCalls).toHaveLength(0);
+    expect(s.rpcCalls.some(c=>c.name==='claim_comms_email_send')).toBe(false);
+  });
   it('uses the exact original credential in provider RAM only; drafts/audit/history and responses retain no working link',async()=>{
     const s=setup({agreement:{}}),r=await s.request();
     expect(r.body.outcome).toBe('provider_accepted');expect(s.fetchCalls).toHaveLength(1);

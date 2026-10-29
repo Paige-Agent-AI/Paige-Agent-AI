@@ -27,7 +27,7 @@ malformed targets use the existing read-failure/retry state. No extra invoice,
 principal, sender, provider adapter, scheduler or financial store was introduced.
 
 Current proof: 391 payment checks/17 suites; 202 adjacent Chat/endpoint/ledger checks;
-28 existing review/recovery UI checks; 41 reduced-schema PostgreSQL checks using
+28 existing review/recovery UI checks; 43 reduced-schema PostgreSQL checks using
 tracked original functions; the ENTIRE original provider/role/claim/allocation/Rail
 proof also passes with the extended writers. Genuine provider facts are simulated
 in those native tests. Strict Deno 2.9.8, original Kit/risk and definer/version guards

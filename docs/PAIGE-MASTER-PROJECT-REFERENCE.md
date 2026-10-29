@@ -860,6 +860,13 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**2026-10-29 UTC — EXP05 original task-process access recovery; production web/source verified, customer acceptance open.**
+
+| Increment | Exact source and observed release | Useful result and proof boundary |
+| --- | --- | --- |
+| [#3055 original access/refusal recovery](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3055#issuecomment-6484939699) | Reviewed `3ebbb1531ee0d931f65c48b72a72bf12d5ecf1e9`, final **AUTHOR-REVIEW / LOWER ASSURANCE**5691408393; all10 executed exact-head checks/two web statuses SUCCESS, schema-free Preview SKIPPED. Both material review findings corrected/resolved. Actual merge `3f80ec8f5de5ce990d9f3674f538cf74037bbb0c`, parents6215b6e3+3eb, tree `cce15dbe5af699bebd3b2acddda06d1bd81cd174` equals inspected current-main union. | Original local authority refusal retires stale process/history controls; individual-result refusal/unavailability stays local. Retryable Auth is unavailable, not confirmed denial. Lost BODY focus returns to original Refresh; another connected focus is preserved. No writer, authority grant, action replay or activation.264 focused tests and16 original-shell fixture frames are engineering proof only. |
+| Production **WEB/SOURCE VERIFIED; customer outcome PROOF OWED** | READY Vercel `dpl_FY85o9xM4bD736TZfBDbvscCu3vB`, exact3f/production, canonical aliases assigned. BOTH public origins01:01:37–39UTC200/build3f-mvsu25xr/customerUpdate:null. Declared original bootstrap→application→SoloEntry→native settings chunk200/30,280bytes/SHA256 `8088e26dee6917a546d3c653a42fa9867407d1ffe04f1cb66c4e6a0923c9edfe`; all5 source signatures PASS. [Actual readback](evidence/exp05-owner-task-access-recovery-production.json). | No Edge/migration/provider/recurrence/Live operation required or performed. Actual corrected authenticated denial/recovery, equivalent role/cohort/new-account/RLS behavior, complete ten outcomes/E5 cases/weekly/Builder/same-ZION both-chat and founder acceptance remain open. Catalogue/algorithm maturity unchanged; no customer release identity or announcement. |
+
 **2026-10-28 UTC — EXP09 CURA care-first source restoration; runtime verification held.**
 
 | Increment | Exact source and observed release | Useful result and proof boundary |

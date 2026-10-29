@@ -937,3 +937,23 @@ predicates and native writers remain. Initial viewport exemptions are withdrawn:
 two disclosed neutral contexts/themes, plus natural cancel/close/scope reentry.
 This is not real tenant/cohort authentication. Physical zoom/AT and corrected
 customer proof remain separately unverified; exact final-head gates still apply.
+
+### October28 local / October29 UTC — task-process recovery source released
+
+Original outcomes08/10/E5-CV6/CV9 bounded repair #3055 is merged
+3f80ec8f5de5ce990d9f3674f538cf74037bbb0c, reviewed3eb/lower5691408393,
+all10 applicable checks/two web statuses SUCCESS, schema-free Preview SKIPPED.
+Actual treecce15dbe equals current6215+3eb union, preserving E04 private invoice
+migration50004. READY production Verceldpl_FY85o9xM4bD736TZfBDbvscCu3vB/exact3f;
+both official public versions01:01UTC3f-mvsu25xr/customerUpdate:null. Declared
+bootstrap/application/SoloEntry/native chunk200/hash8088e26d, all5 source
+signatures PASS. Exact readback is in
+../evidence/exp05-owner-task-access-recovery-production.json and original §4.0.
+
+Deployed source is not authenticated customer denial, domain/Rail execution or
+full outcome acceptance. No Edge/schema upload, permission, provider/recurrence/
+Live activation, catalogue or algorithm promotion. Full ten/E5/weekly/Builder/
+same-ZION both-chat/role-cohort and founder obligations remain STILL CODING.
+Separate ZION recovery #3057 is OPEN45cb/92 focused PASS, CI pending at this
+checkpoint. Owner's subsequent narrow shared-preview authorization is recorded
+in ANT161/9fd6cc0e; E08's broader Team Hub work/branch remains preserved.

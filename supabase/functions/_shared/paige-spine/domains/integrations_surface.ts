@@ -1,4 +1,5 @@
 import type { SpineCapability } from "../contracts.ts";
+import { defineCapability, objectInputSchema, ownerGrantablePermission } from "../../capability-kit/mod.ts";
 
 /**
  * Integrations surface — Paige's visibility into what's connected, what's
@@ -99,25 +100,31 @@ export const INTEGRATIONS_HEALTH = {
   maturity: "PARTIAL",
 } as const satisfies SpineCapability;
 
-// The chat-facing tool definition for the live read half (integrations.list), following the
-// domains/agreement.ts → AGREEMENT_TOOLS one-home pattern. The PARAMETERS are verbatim from the
-// live paige-ai-chat binding (index.ts, the integrations_list def); the description keeps that
-// binding's factual listing sentence but drops its PAIGE-COO coaching voice — Team Hub specialist
-// turns must not carry PAIGE-chat persona guidance (EXP08 A1b notes) — and states the read-only
-// rule the surface's own description states for its other reads. The chat's pre-existing inline
-// def stays untouched; unifying the two definitions is a follow-up for that file's next owner,
-// not this append. integrations_health has NO live chat executor and is deliberately absent.
-export const INTEGRATIONS_READ_TOOLS = [
-  {
-    type: "function",
-    function: {
-      name: "integrations_list",
-      description:
-        "List every integration/connection on this workspace — channel (email/SMS/calendar), provider, status, health, and addresses. READ-ONLY: it never connects, disconnects or changes anything. Report the statuses exactly as returned; never imply a connection is healthy or broken beyond what the status says.",
-      parameters: {
-        type: "object",
-        properties: {},
-      },
-    },
-  },
-] as const;
+// The kit-governed declaration for the live read half (integrations.list), routed through
+// defineCapability() per the capability-kit anti-bypass guard (a direct ToolDef literal in a
+// spine domain is refused debt). The ToolDef below derives its description and parameters from
+// THIS declaration — the crm_task/team_hub one-home pattern. The description keeps the chat
+// binding's factual listing sentence but drops its PAIGE-COO coaching voice (specialist turns
+// carry no PAIGE-chat persona guidance, EXP08 A1b notes) and states the read-only rule. The chat's
+// pre-existing inline def stays untouched; unifying the two is a follow-up for that file's next
+// owner. integrations_health has NO live chat executor and is deliberately absent.
+export const INTEGRATIONS_LIST_READ_CAPABILITY = defineCapability({
+  identity: { id: "integrations.list", version: 1, domain: "integrations", owner: "integrations",
+    humanSurface: "/solo/:account/settings/integrations",
+    description: "List every integration/connection on this workspace — channel (email/SMS/calendar), provider, status, health, and addresses. READ-ONLY: it never connects, disconnects or changes anything. Report the statuses exactly as returned; never imply a connection is healthy or broken beyond what the status says." },
+  input: objectInputSchema({ description: "No arguments: the workspace and the person are the signed-in session's own.", properties: {}, required: [] }),
+  effect: "read",
+  governance: { actionRiskKey: null, risk: "read_only", approval: "none", requiredPermission: ownerGrantablePermission("integrations.list.read") },
+  tenantScope: { source: "server", tenantResolver: "current_user_tenant_id", actorResolver: "authenticated_user",
+    revalidateAt: ["before_availability", "before_execution", "before_receipt"] },
+  availability: { resolver: "paige-capability-status", states: ["live", "not_for_tier", "unavailable"] },
+  providerBinding: { kind: "internal", operation: "public.list_integration_surface", connectionResolver: null },
+  idempotency: { mode: "not_applicable" },
+  receipt: { rail: true, recorder: "record_capability_run", redaction: "tenant_safe", visibility: "owner_internal" },
+  outcome: { projector: "capability-record" },
+});
+
+export const INTEGRATIONS_READ_TOOLS = [{ type: "function" as const, function: {
+  name: "integrations_list", description: INTEGRATIONS_LIST_READ_CAPABILITY.identity.description,
+  parameters: INTEGRATIONS_LIST_READ_CAPABILITY.input,
+} }];

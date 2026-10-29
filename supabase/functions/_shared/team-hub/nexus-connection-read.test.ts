@@ -40,10 +40,14 @@ function serviceWith(receipts: Array<{ capability: string; detail: Record<string
   };
 }
 
-test("the domain's one def is the integrations_list read with no parameters", () => {
+test("the domain's one def is the integrations_list read, kit-declared with no parameters", () => {
   assert.equal(INTEGRATIONS_READ_TOOLS.length, 1);
   assert.equal(INTEGRATIONS_READ_TOOLS[0].function.name, "integrations_list");
-  assert.deepEqual(INTEGRATIONS_READ_TOOLS[0].function.parameters, { type: "object", properties: {} });
+  const p = INTEGRATIONS_READ_TOOLS[0].function.parameters as Record<string, unknown>;
+  assert.equal(p.type, "object");
+  assert.deepEqual(p.properties, {});
+  assert.deepEqual(p.required, []);
+  assert.equal(p.additionalProperties, false); // a kit input schema, not a hand-written literal
 });
 
 test("eligibility: every gate must hold, and each failure alone withholds the read", () => {

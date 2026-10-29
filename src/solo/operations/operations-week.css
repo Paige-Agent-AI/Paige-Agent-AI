@@ -21,5 +21,25 @@
 .ops-week-no-date { margin:0; }
 .ops-week-weekend { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); border-bottom:1px solid var(--pg-line); }
 .ops-week footer { display:flex; flex-wrap:wrap; gap:4px 16px; padding-top:12px; }
+.ops-week-review { border-top:1px solid var(--pg-line); margin-bottom:16px; }
+.ops-week-review summary { padding:12px 0; min-height:44px; cursor:pointer; font-size:13px; font-weight:600; }
+.ops-week-review summary>span { margin-left:8px; font-weight:400; color:var(--pg-muted); }
+.ops-week-review summary:focus-visible { outline:2px solid var(--pg-violet); outline-offset:3px; }
+.ops-week-review-body { padding:0 0 16px; font-size:13px; line-height:1.6; }
+.ops-week-review-body>p { margin:8px 0; }
+.ops-week-review-inputs { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; margin-top:14px; }
+.ops-week-review label { display:flex; flex-direction:column; gap:6px; min-width:0; font-size:12px; }
+.ops-week-review input,.ops-week-review select { width:100%; min-width:0; min-height:44px; padding:8px 10px; border:1px solid var(--pg-line); border-radius:7px; background:var(--pg-workspace); color:var(--pg-ink); font:inherit; }
+.ops-week-review input:focus-visible,.ops-week-review select:focus-visible { outline:2px solid var(--pg-violet); outline-offset:2px; }
+.ops-week-review input[aria-invalid=true] { border-color:var(--pg-ink); border-style:dashed; }
+.ops-week-review-note,.ops-week-review-work small { color:var(--pg-muted); font-size:12px; }
+.ops-week-review-result { display:flex; flex-direction:column; gap:5px; padding:12px; margin:14px 0; border-left:3px solid var(--pg-violet); background:var(--pg-workspace); }
+.ops-week-review-result[data-over=true] { border-left-style:double; border-left-width:5px; }
+.ops-week-review-result strong { font-size:16px; font-variant-numeric:tabular-nums; }
+.ops-week-review-work { list-style:none; margin:0 0 14px; padding:0; }
+.ops-week-review-work li { display:grid; grid-template-columns:minmax(0,1fr) 140px; gap:12px; padding:12px 0; border-bottom:1px solid var(--pg-line); }
+.ops-week-review-work li>div { display:flex; flex-direction:column; gap:4px; min-width:0; }
+.ops-week-review-work li button { text-align:left; overflow-wrap:anywhere; }
+@container(max-width:430px) { .ops-week-review-inputs { grid-template-columns:1fr; } .ops-week-review summary>span { display:block; margin-left:0; } .ops-week-review-work li { grid-template-columns:1fr; } .ops-week-review-work li label { max-width:180px; } }
 @container(max-width:600px) { .ops-week-grid { grid-template-columns:1fr; } .ops-week-day { display:grid; grid-template-columns:110px minmax(0,1fr); gap:4px 12px; padding:12px 0; border-right:0; border-bottom:1px solid var(--pg-line); } .ops-week-day:last-child { border-bottom:0; } .ops-week-day h3 { align-content:start; margin:8px 0 0; } .ops-week-day>:not(h3) { grid-column:2; } .ops-week-weekend { grid-template-columns:1fr; } }
 @container(max-width:280px) { .ops-week-day { display:block; } .ops-week-day h3 { margin:0 0 10px; } }

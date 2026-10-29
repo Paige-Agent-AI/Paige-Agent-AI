@@ -61,7 +61,7 @@ export function OperationsOverview({ tenantId, plans, items, members, crmTasks =
       </div>
     </header>
     {work.active.length > 0 && <p className="ops-desk-read-scope">{work.active.length} active {work.active.length === 1 ? "commitment" : "commitments"} · {work.inProgress.length} in progress · {work.reminders.length} {work.reminders.length === 1 ? "reminder" : "reminders"} in the sources shown</p>}
-    {hasNativeWork && <OperationsWeek tenantId={tenantId} items={items} tasks={crmTasks}
+    {hasNativeWork && <OperationsWeek tenantId={tenantId} items={items} tasks={crmTasks} members={members}
       onInspectItem={onInspectItem} onInspectTask={onInspectCrmTask} onOpenBusinessTimeZone={onOpenBusinessTimeZone} businessTimeZoneRef={businessTimeZoneRef} />}
     <div className={hasNativeWork ? 'ops-desk-columns' : undefined}><div className={hasNativeWork ? 'ops-desk-primary-column' : undefined}>
       {hasNativeWork && (spotlight ? <section className="ops-desk-attention" aria-label="Priority work to inspect"><header>

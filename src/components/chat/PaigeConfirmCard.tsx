@@ -504,7 +504,7 @@ export function PaigeConfirmCard(props: PaigeConfirmCardProps) {
                         <EmailPreview email={action.preview} bleed={!multi} />
                       </>
                     ) : (
-                    <span className={cn((settled || (!bound && multi)) && "text-muted-foreground")} data-confirm-part="summary">
+                    <span className={cn("whitespace-pre-line", (settled || (!bound && multi)) && "text-muted-foreground")} data-confirm-part="summary">
                       {/* The icon beside a row is hidden from assistive tech, so its state is said
                           in words: in a mixed card the heading cannot tell which one ran. */}
                       {multi && ROW_WORD[state] && <span className="sr-only">{ROW_WORD[state]}: </span>}

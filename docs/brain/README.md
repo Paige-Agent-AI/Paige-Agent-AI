@@ -5405,3 +5405,41 @@ defect. Exact receipt6484939699/§4.0 and
 ../evidence/exp05-owner-task-access-recovery-production.json preserve observed
 versions/hashes. Source signatures are not authenticated customer, domain/Rail,
 full EXP05 or founder proof; no activation or extra Edge upload.
+
+## EXP05 original ZION Auth availability lesson — October28
+
+An SDK Auth error is not automatically a confirmed authority refusal. Preserve
+scope/actor/tenant/deadline/server checks; classify actual missing-session/API
+401/403 separately from retryable503/network/429/ambiguous unavailability, with
+no additional private read or transport retry. In native result inspection,
+confirmed denial must withdraw the private sample and recover keyboard focus
+only when its removed control leaves BODY focused. Another connected control
+must keep focus. Original ZION reader/component92 focused tests and actual
+untransformed shell evidence are in
+`../evidence/ui-delivery/exp05-zion-auth-unavailability.md`; fixtures remain
+separate from authenticated customer, same-ZION both-chat and full EXP05 proof.
+
+
+## 2026-10-29 EXP05 — original automation draft review
+
+Original automation_draft describes only saving a nonexecuting draft. Bounded
+trigger/task-purpose preview is the shared pure formatter; never stringify
+arbitrary step config or treat a draft/enablement as executed Work. Original
+stored args, fingerprints, Trust, writer, ActionAdapter/Layer C and Rail remain.
+[Proof and limitations](../evidence/ui-delivery/exp05-automation-draft-preview.md).
+
+Returning E08#3041/f786: original Root/card two-location preview composes cleanly,
+but source-binding pins must be composed from BOTH actual heads; git --check
+may return0 while reporting conflicts. Private original E08 baseline126/29 and
+unapplied composed127/29 proof preserve its exact metadata/peer pins. Never
+replace E08 checker wholesale. Owner9fd6 / Coordinator35471 permit this narrow
+current fix; E04 MERIT and E06/E04 Edge holds remain separately owned. Source/
+fixture/build/review/CI/merge/deploy/authenticated/full-Experience/founder states
+stay distinct. No new scheduler, registry, agent, provider or activation.
+
+
+EXP05 original draft-preview CI lesson (2026-10-29): adding one reviewed source
+pin also advances the existing exact ancestry-count assertion; run ALL original
+C0b files plus int304, not only the83-case resource suite. Causal249/248/1 became
+full250/250/0 plus11/11/0 without weakening any original guard or negative.
+Original product Root/card/helper/checker source and prior evidence remain.

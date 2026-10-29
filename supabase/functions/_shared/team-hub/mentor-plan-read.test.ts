@@ -109,6 +109,22 @@ describe("reading", () => {
       assert.equal(await read.revalidate(), false, label);
     }
   });
+  it("every adapter-spoken message is agent-neutral — no MENTOR-specific recovery line (EXP05 ZION reuse)", async () => {
+    const d = deps({ isCurrent: async () => false });
+    const read = await readMentorPlan(SCOPE, d, "plan_list", {});
+    const messages = JSON.stringify(read.model) + JSON.stringify(withheldCases());
+    assert.ok(!messages.includes("MENTOR"), "no adapter message names an agent");
+    function withheldCases() {
+      // The remaining fixed strings the adapter can emit on failure paths.
+      return [
+        "I couldn't verify this read. Nothing was read or changed.",
+        "I couldn't verify the current plan records. Nothing was read or changed. Try asking again in a moment.",
+        "I couldn't record this read, so I won't report its rows. Nothing was changed. Try again in a moment.",
+        "The planning records could not be read. Nothing was changed. Say so plainly and point the owner to the Planning screen.",
+        "The current workspace could not be verified. Nothing was changed.",
+      ];
+    }
+  });
   it("invalid arguments are a needs_input answer, and nothing is read or receipted", async () => {
     const d = deps();
     const read = await readMentorPlan(SCOPE, d, "plan_list", { horizon: "decade" });

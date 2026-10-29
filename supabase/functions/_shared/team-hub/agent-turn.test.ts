@@ -53,7 +53,9 @@ type Opts = {
   accept?: (args: Record<string, unknown>) => unknown; end?: () => unknown; recordFails?: string[];
   post?: (args: Record<string, unknown>, attempt: number) => unknown; readbackHides?: boolean; launchVisibility?: unknown;
   sourceIn?: string; sourceThread?: string | null; stage?: (args: Record<string, unknown>) => unknown;
-  agentDmKey?: string; authorityRows?: unknown[]; planList?: unknown; planListError?: boolean; tenantPin?: string;
+  agentDmKey?: string; authorityRows?: unknown[]; authorityRowsFn?: () => unknown[]; planList?: unknown; planListError?: boolean; tenantPin?: string;
+  nativeReadStage?: (args: Record<string, unknown>) => unknown;
+  personaTenant?: () => string; accountRows?: unknown;
 };
 /** A raw client answer (`{ data, error }`), for the transport failures the Supabase client returns instead of throwing. */
 const raw = (data: unknown, error: { message?: string; code?: string } | null, commit = false) => ({ __rpc: { data, error }, commit });
@@ -78,7 +80,7 @@ function world(opts: Opts = {}) {
       calls.push({ who: "caller", name, args });
       const answer = (() => {
         switch (name) {
-          case "get_paige_persona_context": return [{ tenant_id: TENANT, tenant_name: "Brightline Studio" }];
+          case "get_paige_persona_context": return [{ tenant_id: opts.personaTenant?.() ?? TENANT, tenant_name: "Brightline Studio" }];
           case "team_hub_list_conversations": return { ok: true, me: { user_id: SAM },
             people: [{ user_id: SAM, display_name: "Sam Lee" }, { user_id: PRIYA, display_name: "Priya Shah" }],
             conversations: [
@@ -97,7 +99,7 @@ function world(opts: Opts = {}) {
           }
           case "team_hub_open_agent_dm": return { ok: true, channel_id: MERIT_DM };
           case "read_business_time_zone": return { state: "configured", zone: "America/Chicago", can_set: false, local_date: "2026-10-27" };
-          case "get_team_authority_readiness": return opts.authorityRows ?? [
+          case "get_team_authority_readiness": return opts.authorityRowsFn?.() ?? opts.authorityRows ?? [
             { fact_key: "viewer_permission", value: "owner", status: "available", source: null, reason: null, tenant_id: TENANT },
             { fact_key: "viewer_is_legal_owner", value: "true", status: "available", source: null, reason: null, tenant_id: TENANT },
           ];
@@ -134,6 +136,12 @@ function world(opts: Opts = {}) {
       return Promise.resolve({ data: answer, error: null });
     },
   };
+  Object.assign(caller, { from(table: string) {
+    calls.push({ who: "caller", name: `from:${table}`, args: {} });
+    const chain: any = { select: () => chain, eq: () => chain, limit: () => chain,
+      abortSignal: async () => ({ data: opts.accountRows ?? [{ id: TENANT, account_type: "standalone", parent_tenant_id: null }], error: null }) };
+    return chain;
+  } });
   const service = {
     rpc(name: string, args: Record<string, unknown> = {}) {
       calls.push({ who: "service", name, args });
@@ -142,6 +150,10 @@ function world(opts: Opts = {}) {
         return Promise.resolve(a && a.__rpc ? a.__rpc : { data: a, error: null });
       }
       if (name === "team_hub_stage_agent_suggestions") return Promise.resolve({ data: opts.stage ? opts.stage(args) : { ok: true }, error: null });
+      if (name === "team_hub_stage_agent_read_context") {
+        const answer = opts.nativeReadStage ? opts.nativeReadStage(args) : { ok: false, code: "not_allowed" };
+        return Promise.resolve(answer && typeof answer === "object" && "__rpc" in answer ? (answer as any).__rpc : { data: answer, error: null });
+      }
       if (name === "team_hub_end_agent_turn") return Promise.resolve({ data: opts.end ? opts.end() : { ok: true }, error: null });
       if (name === "record_capability_run") {
         const failed = opts.recordFails?.includes(String(args._capability_key));
@@ -921,5 +933,129 @@ describe("MENTOR plan read (EXP01)", () => {
     assert.equal(named(w, "plan_create").length, 0, "no writer ever runs");
     const [post] = named(w, "team_hub_post_agent_message");
     assert.match(post.args.p_body, /I can't take actions here yet\./);
+  });
+});
+
+// EXP05 own source window: intended future native contract is simulated here.
+// These recording ports prove actual host composition, never native SQL/Auth.
+const ZION_PLANNING_CONFIG = { team_hub_tools: SHARED_LIST, capability_scope: {
+  version: 1, mode: "allowlist", access: "read", tools: ["read_business_time_zone", "team_hub_read_conversation", "crm_list_tasks", "plan_list"],
+}, personality: { tone: "direct and operational" } };
+const zionWorld = (opts: Opts = {}) => world({ sourceIn: MERIT_DM, mentions: [], agentDmKey: "zion",
+  config: { slug: "zion", config: ZION_PLANNING_CONFIG }, nativeReadStage: () => ({ ok: true }), ...opts });
+const zionTurn = () => turn({ conversationId: MERIT_DM, agent: "zion" });
+const planningAnswer = JSON.stringify({ reply: "Your saved plan includes Confirm venue. Nothing was changed.", route: "answer" });
+
+describe("EXP05 ZION Planning read host composition — native contract proof still owed", () => {
+  it("offers the canonical read in ZION's own owner DM and stages its original turn before model exposure", async () => {
+    const w = zionWorld({ nativeReadStage: args => {
+      assert.equal(m.requests.length, 1, "no private model attempt before native acknowledgement");
+      assert.ok(!promptText(m).includes("Confirm venue"));
+      assert.deepEqual(Object.keys(args).sort(), ["p_read_tools", "p_record_links", "p_token_hash", "p_turn_id"]);
+      assert.equal(args.p_turn_id, TURN);
+      assert.equal(args.p_token_hash, sha(TOKEN));
+      assert.deepEqual(args.p_read_tools, ["plan_list"]);
+      assert.deepEqual(args.p_record_links, [], "never invent an unsupported Planning link");
+      return { ok: true };
+    } });
+    const m = model([{ tool_calls: [{ name: "plan_list", args: { horizon: "week" } }] }, { content: planningAnswer }]);
+    const r = await run(w, m, zionTurn());
+    assert.equal(r.body.outcome, "posted");
+    assert.ok(m.requests[0].request.tools!.some((t: any) => t.function.name === "plan_list"));
+    assert.ok(!m.requests[0].request.tools!.some((t: any) => t.function.name === "plan_create"));
+    assert.equal(named(w, "plan_list").length, 1);
+    assert.equal(named(w, "plan_list")[0].args.p_tenant_id, TENANT);
+    assert.ok(promptText(m).includes("Confirm venue"));
+    assert.equal(named(w, "team_hub_stage_agent_read_context").length, 1);
+    assert.equal(named(w, "team_hub_post_agent_message").length, 1);
+  });
+
+  it("a refused or uncertain native stage withholds private rows and posts nothing, without replay", async () => {
+    for (const stage of [{ ok: false, code: "not_allowed" }, raw(null, TRANSPORT)]) {
+      const w = zionWorld({ nativeReadStage: () => stage });
+      const m = model([{ tool_calls: [{ name: "plan_list", args: {} }] }, { content: planningAnswer }]);
+      const r = await run(w, m, zionTurn());
+      assert.equal(r.body.outcome, "no_reply");
+      assert.equal(named(w, "plan_list").length, 1);
+      assert.equal(named(w, "team_hub_stage_agent_read_context").length, 1);
+      assert.equal(named(w, "team_hub_post_agent_message").length, 0);
+      assert.equal(m.requests.length, 1);
+      assert.ok(!promptText(m).includes("Confirm venue"));
+    }
+  });
+
+  it("does not offer Planning to a member, foreign permission row or non-SOLO account", async () => {
+    const cases: Opts[] = [
+      { authorityRows: [{ fact_key: "viewer_permission", value: "member", status: "available", tenant_id: TENANT }] },
+      { authorityRows: [{ fact_key: "viewer_permission", value: "owner", status: "available", tenant_id: SECRET_CHANNEL }] },
+      { accountRows: [{ id: TENANT, account_type: "platform_operator", parent_tenant_id: null }] },
+      { accountRows: [{ id: TENANT, account_type: "standalone", parent_tenant_id: SECRET_CHANNEL }] },
+    ];
+    for (const opts of cases) {
+      const w = zionWorld(opts), m = model([{ content: "I can't verify access to those plans here." }]);
+      await run(w, m, zionTurn());
+      assert.ok(!m.requests[0].request.tools!.some((t: any) => t.function.name === "plan_list"));
+      assert.equal(named(w, "plan_list").length, 0);
+      assert.equal(named(w, "team_hub_stage_agent_read_context").length, 0);
+    }
+  });
+
+  it("channel scope never gains the private ZION plan read from its roster", async () => {
+    const w = zionWorld({ sourceIn: LAUNCH, mentions: ["zion"] }), m = model([{ content: "Ask me privately about your plans." }]);
+    await run(w, m, turn({ agent: "zion" }));
+    assert.ok(!m.requests[0].request.tools!.some((t: any) => t.function.name === "plan_list"));
+    assert.equal(named(w, "plan_list").length, 0);
+  });
+
+  it("a workspace switch after native staging retires the result before another model request", async () => {
+    let activeTenant = TENANT;
+    const w = zionWorld({ personaTenant: () => activeTenant, nativeReadStage: () => { activeTenant = SECRET_CHANNEL; return { ok: true }; } });
+    const m = model([{ tool_calls: [{ name: "plan_list", args: {} }] }, { content: planningAnswer }]);
+    const r = await run(w, m, zionTurn());
+    assert.equal(r.body.outcome, "no_reply");
+    assert.equal(m.requests.length, 1);
+    assert.ok(!promptText(m).includes("Confirm venue"));
+    assert.equal(named(w, "team_hub_post_agent_message").length, 0);
+  });
+
+  it("a changed ZION roster after native staging cannot publish its private result", async () => {
+    let changed = false;
+    const w = zionWorld({ nativeReadStage: () => { changed = true; return { ok: true }; }, configFn: () => ({ slug: "zion", config: {
+      ...ZION_PLANNING_CONFIG, capability_scope: { ...ZION_PLANNING_CONFIG.capability_scope,
+        tools: changed ? ["read_business_time_zone"] : ZION_PLANNING_CONFIG.capability_scope.tools },
+    } }) });
+    const m = model([{ tool_calls: [{ name: "plan_list", args: {} }] }, { content: planningAnswer }]);
+    const r = await run(w, m, zionTurn());
+    assert.equal(r.body.outcome, "no_reply");
+    assert.equal(m.requests.length, 1);
+    assert.equal(named(w, "team_hub_post_agent_message").length, 0);
+  });
+
+  it("consumes at most three private plan reads across the whole original turn", async () => {
+    const w = zionWorld(), m = model([
+      { tool_calls: [{ name: "plan_list", args: {} }] },
+      { tool_calls: [{ name: "plan_list", args: { horizon: "month" } }] },
+      { tool_calls: [{ name: "plan_list", args: {} }, { name: "plan_list", args: {} }] },
+      { content: "This turn reached its three-read limit. Ask for a follow-up for the rest." },
+    ]);
+    const r = await run(w, m, zionTurn());
+    assert.equal(r.body.outcome, "posted");
+    assert.equal(named(w, "plan_list").length, 3);
+    assert.equal(named(w, "team_hub_stage_agent_read_context").length, 3);
+    assert.match(r.body.message.body, /three-read limit/);
+  });
+
+  it("re-proves role after the model response, before posting any private result", async () => {
+    let revoked = false;
+    const w = zionWorld({ authorityRowsFn: () => [{ fact_key: "viewer_permission", value: revoked ? "member" : "owner", status: "available", tenant_id: TENANT }] });
+    const m = model([{ tool_calls: [{ name: "plan_list", args: {} }] }, { content: planningAnswer }]);
+    const complete = m.make(w.calls); let round = 0;
+    const r = await run(w, m, zionTurn(), { complete: async (request, options) => {
+      const reply = await complete(request, options);
+      if (++round === 2) revoked = true;
+      return reply;
+    } });
+    assert.equal(r.body.outcome, "no_reply");
+    assert.equal(named(w, "team_hub_post_agent_message").length, 0);
   });
 });

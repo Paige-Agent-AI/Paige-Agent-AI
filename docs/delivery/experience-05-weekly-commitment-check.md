@@ -1000,3 +1000,40 @@ same-ZION both-chat/role-cohort and founder obligations remain STILL CODING.
 Separate ZION recovery #3057 is OPEN45cb/92 focused PASS, CI pending at this
 checkpoint. Owner's subsequent narrow shared-preview authorization is recorded
 in ANT161/9fd6cc0e; E08's broader Team Hub work/branch remains preserved.
+
+
+## 2026-10-29 EXP05 — original automation draft review
+
+Outcome05 / E5-CV1,CV5,CV9 REPAIR: original automation_draft confirmation now previews
+the original trigger and ordered bounded task purposes, with draft-only wording.
+No original stored args, fingerprints, risk/Trust, writer, enablement, Layer C,
+ActionAdapter or Rail contract changes. Shared tenant-neutral Root/card helper
+serves eligible existing/future SOLO; no schema/default/account fork.
+
+[Evidence](../evidence/ui-delivery/exp05-automation-draft-preview.md): causal15/2,
+final78/0/0; original hostile83/0/0; strict0/0; actual build;16 original-shell
+frames plus320/20-step keyboard reflow. Root/card/checker full inverse retains
+all126 peer pins/metadata/extractor, renews29 enclosing identity scalars and adds
+one pure-helper digest only (127/29/zero findings). Pre-renewal lower-assurance
+review ae12b2c7 on immutable88ad retained. No capability/maturity promotion.
+
+Owner9fd6 narrow override/Coordinator35471 temporary own-specialist direction
+ACK64dcb052. E08#3041/f786 preserved; both original Root/card inverses and its
+126/29 baseline proved, private unapplied127/29 composed reference has no findings.
+Checker is a real composition conflict, not a safe blind overwrite. E04 MERIT
+read seam untouched; E06/E04 retain original Chat Edge layout/release hold.
+SOURCE/NATIVE FIXTURE VERIFIED, review/CI/merge/deployment/customer proof owed.
+Original ten/E5, complete Builder/weekly execution/same-ZION both-chat and
+founder obligations remain open; no test-cohort/role/RLS/new-account closure.
+
+
+## 2026-10-29 exact CI consumer reconciliation
+
+Original broad C0b consumer failed249 tests/248PASS/1FAIL on its exact126 source
+count after the reviewed helper made127. The original test now pins127 and
+the exact helper path, with a real draft-summary mutation refusal added. No
+original negative, admission, extractor, metadata or runtime product byte was
+removed or changed. Full original C0b250PASS/0FAIL/0skip and original authenticated
+observation11PASS/0FAIL/0skip now pass. Earlier83PASS described only the specific
+incumbent-resource suite. Final review/required exact-head CI remain owed; same
+16 native frames, original source hashes and full customer/founder gaps retained.

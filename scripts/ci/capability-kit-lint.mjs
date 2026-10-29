@@ -108,6 +108,18 @@ function campaignLeadsReadDoorBound(resolver) {
     && chat.includes('readCampaignBriefLeads({ caller: supabaseClient');
 }
 
+function mentorPlanReadDoorBound(resolver) {
+  // EXP01: the read rides the Team Hub agent-turn adapter only — the asker's own client calls
+  // public.plan_list, the tenant is re-pinned after the read, and every read re-checks the
+  // per-turn isCurrent gate before rows reach the model. Nothing else may mount this tool.
+  const adapter=resolver.sourceFile(path.join(ROOT,'supabase/functions/_shared/team-hub/mentor-plan-read.ts'))?.text??'';
+  const turn=resolver.sourceFile(path.join(ROOT,'supabase/functions/_shared/team-hub/agent-turn.ts'))?.text??'';
+  return adapter.includes('deps.caller.rpc("plan_list"')
+    && adapter.includes('"current_user_tenant_id"')
+    && adapter.includes('deps.isCurrent()')
+    && turn.includes('mentorPlanReadTools(mentorScope)');
+}
+
 export function businessSnapshotReadDoorBound(resolver) {
   const read=p=>resolver.sourceFile(path.join(ROOT,p))?.text??'';
   const adapter=read(BUSINESS_SNAPSHOT_ADAPTER_FILE);
@@ -415,6 +427,15 @@ function collectDeclaredCapabilityNames(files, resolver) {
                 const identity=nestedProperties(sections,'identity',sourceFile);
                 if(identity&&literalProperty(identity,'id')==='campaign.leads'&&owner.name.text==='CAMPAIGN_LEADS_READ_CAPABILITY'
                   &&campaignLeadsReadDoorBound(resolver))readTools.set('read_campaign_leads',owner.name.text);
+            }
+            else if(operation==='public.plan_list'&&relative(file)==='supabase/functions/_shared/paige-spine/domains/planning.ts'){
+                // EXP01 slice 1: MENTOR's Team Hub DM plan read. The RPC's plan_list name predates
+                // the read_* naming heuristic; admit this exact read tuple and schema only when the
+                // actual caller-JWT door is bound (asker's client, tenant pin, per-read isCurrent
+                // re-check); never clear risk debt.
+                const identity=nestedProperties(sections,'identity',sourceFile);
+                if(identity&&literalProperty(identity,'id')==='planning.list'&&owner.name.text==='PLAN_LIST_READ_CAPABILITY'
+                  &&mentorPlanReadDoorBound(resolver))readTools.set('plan_list',owner.name.text);
             }
             else if(operation==='public.issue_analytics_evidence_bundle'&&relative(file)===BUSINESS_SNAPSHOT_DECLARATION_FILE){
                 const identity=nestedProperties(sections,'identity',sourceFile);

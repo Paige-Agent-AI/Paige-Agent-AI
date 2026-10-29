@@ -1,3 +1,21 @@
+## October28 original ZION recovery — no full-outcome closure
+
+Original outcomes08/10/E5-CV6/CV9 retain their authenticated acceptance obligations.
+The native reader now distinguishes actual retryable/rate-limited/ambiguous Auth
+from confirmed session/API401/403 refusal. It never grants permission or repeats
+an assignment. The original component preserves the sampled row for unavailable
+detail, retires private results for confirmed denial and restores lost BODY focus
+to its original header without stealing another connected control's focus.
+
+Final92 focused assertions, strict0/0, inverse source/JSX/style preservation,
+sixteen final original-shell frames and bounded native recovery checks are
+recorded in [the existing evidence family](../evidence/ui-delivery/exp05-zion-auth-unavailability.md).
+Explicit neutral Auth/inspector/Chat ports do not prove authenticated customer
+authority, RLS, cohort/new-account, domain work/Rail execution or founder acceptance.
+No new full outcome closed; same ZION in both chats, complete Builder lifecycle,
+weekly execution, monitoring/recovery, all applicable algorithms and original ten
+outcomes/E5-CV1–E5-CV9 remain mandatory. Current status STILL CODING/NOT_READY.
+
 ## October26 index reconciliation — no new customer outcome
 
 The two exact released-source/readback supplements below remain unchanged.

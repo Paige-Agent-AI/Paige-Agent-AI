@@ -1,5 +1,5 @@
 import type { OriginalSpecialistObservation } from '@/components/chat/specialistHistory';
-import { FunctionsHttpError } from '@supabase/supabase-js';
+import { FunctionsHttpError, isAuthApiError, isAuthSessionMissingError } from '@supabase/supabase-js';
 import { createWeeklyDraftDeadline } from '../../../supabase/functions/_shared/paige-orchestration/weekly-draft-deadline';
 
 export type ZionReadScope = { actorId: string; tenantId: string; epoch: number; actAsClientId?: string | null };
@@ -61,6 +61,8 @@ function original(raw: unknown, expected: ZionAssignmentSummary): ZionAssignment
 }
 const denied = (error: unknown) => error instanceof FunctionsHttpError
   && error.context instanceof globalThis.Response && [401, 403].includes(error.context.status);
+const sessionDenied = (error: unknown) => isAuthSessionMissingError(error)
+  || isAuthApiError(error) && [401, 403].includes(error.status);
 
 /** A new UI consumer of the ORIGINAL caller-JWT inspector, never a dispatch,
  * approval, settlement or retry. One elapsed budget also retires late preflight. */
@@ -78,13 +80,17 @@ export async function readZionAssignments(scope: ZionReadScope, caller: Caller, 
   const stage = createWeeklyDraftDeadline(8000, matches);
   try {
     const before = await stage(() => caller.auth.getSession());
-    if (!matches() || before.error || before.data.session?.user.id !== origin.actorId) return { status: 'refused' };
+    if (!matches()) return { status: 'refused' };
+    if (before.error) return { status: sessionDenied(before.error) ? 'refused' : 'unavailable' };
+    if (before.data.session?.user.id !== origin.actorId) return { status: 'refused' };
     const read = await stage(() => caller.functions.invoke('paige-orchestrator', { body: { action: 'tool_search', tenant_id: origin.tenantId,
       ...(chosen ? { invocation_id: chosen.id } : { recent_assignments: true }) } }));
     if (!matches()) return { status: 'refused' };
     if (read.error) return { status: denied(read.error) ? 'refused' : 'unavailable' };
     const after = await stage(() => caller.auth.getSession());
-    if (!matches() || after.error || after.data.session?.user.id !== origin.actorId) return { status: 'refused' };
+    if (!matches()) return { status: 'refused' };
+    if (after.error) return { status: sessionDenied(after.error) ? 'refused' : 'unavailable' };
+    if (after.data.session?.user.id !== origin.actorId) return { status: 'refused' };
     if (chosen) { const result = original(read.data, chosen); return result ? { status: 'ready', invocation: result } : { status: 'unavailable' }; }
     const entries = sample(read.data);
     return entries ? { status: 'ready', entries } : { status: 'unavailable' };

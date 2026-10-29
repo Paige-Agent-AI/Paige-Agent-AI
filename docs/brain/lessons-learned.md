@@ -3577,3 +3577,8 @@ ANT161/eff75565 preserves one deployment pipeline. E06 shared-home relocation fi
 ### 2026-10-29 — EXP04 separate an unchanged native prerequisite from unfinished UI proof
 
 A visible integration's open full-shell finding must remain open. A separately reviewed, byte-exact unmounted native prerequisite may advance without carrying its host/UI, provided original caller behavior, peer configurations, authority, complete source inverses, ACLs, retry/reload and cold/replay tests hold. Preserve the original PR/Preview history and exact SQL versions; do not move applied files or disguise the native release as customer capability. Mounting, source certificates, actual rendered/authenticated roles and founder acceptance remain separate. See ../delivery/exp04-native-commercial-read-prerequisite.md and original ANT51/ANT161.
+
+
+### EXP04 native financial source factoring — 2026-10-29
+
+Move the ONE original query behind an internal date argument; preserve legacy caller JSON/date behavior through a strict delegate until its paired consumer ships. Factor the existing configured business-calendar reader rather than adding a parallel calendar. Verify whole original source inverses, OID/ABI/ACL/defaults and all-page identity separately from real financial/role behavior. A catalogue-only PostgreSQL fixture can prove compilation, exact metadata, replay and source-refusal controls while lacking Auth/domain tables; label that boundary and retain full-schema financial/customer proof as owed. An already-applied Preview file is immutable: after native success use a new reviewed forward for any later correction. Original source contract: docs/delivery/exp04-native-client-invoice-observation.md.

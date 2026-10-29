@@ -46,6 +46,14 @@ export function OwnerTaskAutomations({ navigationHeld = false, onNavigationGuard
     if (historySourceRef.current?.isConnected) historySourceRef.current.focus();
   };
   const cancelRef = useRef<HTMLButtonElement>(null), refreshRef = useRef<HTMLButtonElement>(null);
+  const previousRead = useRef(a.read.status);
+  useLayoutEffect(() => {
+    const retired = previousRead.current === "ready" && a.read.status === "refused" && a.needsRefresh;
+    previousRead.current = a.read.status;
+    // Restore focus only when the requesting control disappeared. A user who
+    // moved to another connected control keeps their chosen focus.
+    if (retired && document.activeElement === document.body) refreshRef.current?.focus({ preventScroll: true });
+  }, [a.read.status, a.needsRefresh]);
   const sourceRef = useRef<HTMLButtonElement | null>(null), scopeRef = useRef(a.scopeKey);
   scopeRef.current = a.scopeKey;
   const selected = review?.scope === a.scopeKey && a.read.status === "ready" && a.read.items.includes(review.item) && !a.needsRefresh ? review.item : null;

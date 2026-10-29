@@ -214,6 +214,72 @@ async function loaded() {
 }
 const item = (read: OwnerTaskRead) => { if (read.status !== "ready") throw new Error("not ready"); return read.items[0]; };
 describe("original history races and truthful states", () => {
+  it.each(["list", "detail"] as const)("retires cached controls only for a current original access refusal during %s", async stage => {
+    const h = await historyLoaded(), original = item(h.result.current.read);
+    if (stage === "list") m.history.mockResolvedValueOnce({ status: "refused", access: "refused" });
+    await act(async () => { await h.result.current.openHistory(original); });
+    if (stage === "detail") {
+      m.outcome.mockResolvedValueOnce({ status: "refused", access: "refused" });
+      await act(async () => { await h.result.current.inspectOutcome(historyRow(h)); });
+    }
+    expect(h.result.current.read).toEqual({ status: "refused" });
+    expect(h.result.current.history.status).toBe("closed"); expect(h.result.current.needsRefresh).toBe(true);
+    await act(async () => { expect(await h.result.current.control(original, "arm")).toEqual({ status: "refused" }); });
+    expect(m.control).not.toHaveBeenCalled(); expect(m.read).toHaveBeenCalledTimes(1);
+    const fresh = historyReview(); m.read.mockResolvedValueOnce({ status: "ready", items: [fresh], hasMore: false });
+    await act(async () => { await h.result.current.refresh(); });
+    expect(h.result.current.read).toMatchObject({ status: "ready", items: [fresh] });
+    expect(h.result.current.needsRefresh).toBe(false);
+    await act(async () => { expect(await h.result.current.control(original, "arm")).toEqual({ status: "refused" }); });
+    expect(m.control).not.toHaveBeenCalled(); expect(m.read).toHaveBeenCalledTimes(2);
+  });
+  it("a late access refusal cannot erase an inconclusive control", async () => {
+    const pending = deferred<unknown>(); m.history.mockReturnValueOnce(pending.promise); m.control.mockResolvedValueOnce({ status: "unknown" });
+    const h = await historyLoaded(), original = item(h.result.current.read); let request!: Promise<void>;
+    act(() => { request = h.result.current.openHistory(original); });
+    await act(async () => { await h.result.current.control(original, "pause"); });
+    await act(async () => { pending.resolve({ status: "refused", access: "refused" }); await request; });
+    expect(h.result.current.read.status).toBe("ready"); expect(h.result.current.feedback?.result.status).toBe("unknown");
+    expect(h.result.current.needsRefresh).toBe(true); expect(m.control).toHaveBeenCalledTimes(1); expect(m.read).toHaveBeenCalledTimes(1);
+  });
+  it("an older access refusal cannot retire a newer deliberate process read", async () => {
+    const pending = deferred<unknown>(); m.history.mockReturnValueOnce(pending.promise);
+    const h = await historyLoaded(), original = item(h.result.current.read); let request!: Promise<void>;
+    act(() => { request = h.result.current.openHistory(original); });
+    const fresh = { status: "ready" as const, items: [historyReview()], hasMore: false }; m.read.mockResolvedValueOnce(fresh);
+    await act(async () => { await h.result.current.refresh(); });
+    await act(async () => { pending.resolve({ status: "refused", access: "refused" }); await request; });
+    expect(h.result.current.read).toBe(fresh); expect(h.result.current.needsRefresh).toBe(false);
+    expect(h.result.current.history.status).toBe("closed"); expect(m.control).not.toHaveBeenCalled();
+  });
+  it("native access refusal removes stale process controls and restores lost keyboard focus to Refresh", async () => {
+    m.read.mockResolvedValue({ status: "ready", items: [historyReview()], hasMore: false });
+    m.history.mockResolvedValueOnce({ status: "refused", access: "refused" });
+    const host = document.createElement("div"); document.body.append(host); const root = createRoot(host); roots.add(root);
+    try {
+      await act(async () => root.render(<MemoryRouter><OwnerTaskAutomations /></MemoryRouter>));
+      const history = [...host.querySelectorAll("button")].find(button => button.textContent === "View history")!;
+      history.focus(); await act(async () => { history.click(); });
+      expect(host.textContent).not.toContain("Review new contact");
+      expect(host.textContent).toContain("An active owner or admin");
+      const refresh = [...host.querySelectorAll("button")].find(button => button.textContent === "Refresh")!;
+      expect(document.activeElement).toBe(refresh); expect(m.control).not.toHaveBeenCalled();
+    } finally { act(() => root.unmount()); roots.delete(root); host.remove(); }
+  });
+  it("native refusal does not steal focus from another still-connected control", async () => {
+    const pending = deferred<unknown>(); m.history.mockReturnValueOnce(pending.promise);
+    m.read.mockResolvedValue({ status: "ready", items: [historyReview()], hasMore: false });
+    const host = document.createElement("div"), external = document.createElement("button"); external.textContent = "Other work";
+    document.body.append(host, external); const root = createRoot(host); roots.add(root);
+    try {
+      await act(async () => root.render(<MemoryRouter><OwnerTaskAutomations /></MemoryRouter>));
+      const history = [...host.querySelectorAll("button")].find(button => button.textContent === "View history")!;
+      history.focus(); act(() => { history.click(); }); external.focus();
+      await act(async () => { pending.resolve({ status: "refused", access: "refused" }); });
+      expect(host.textContent).toContain("An active owner or admin"); expect(document.activeElement).toBe(external);
+      expect(m.control).not.toHaveBeenCalled();
+    } finally { act(() => root.unmount()); roots.delete(root); host.remove(); external.remove(); }
+  });
   it("retires older process A→B→A reads without stranding the final selection", async () => {
     const a = historyReview(), b = historyReview("44444444-4444-4444-8444-444444444444");
     const first = deferred<unknown>(), second = deferred<unknown>();

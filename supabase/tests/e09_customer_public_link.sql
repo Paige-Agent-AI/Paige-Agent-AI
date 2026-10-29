@@ -136,5 +136,25 @@ SELECT ok((SELECT NOT(pg_temp.settle(th,intent,'',NULL,'WITHHELD') ? 'sqlstate')
 SELECT pg_temp.executor(th,intent,'release') FROM link_interrupted;
 SELECT is((SELECT count(*) FROM public.paige_chat_turns p,link_interrupted l WHERE p.thread_id=l.th AND p.interactive_intent_id=l.intent
  AND p.role='assistant' AND coalesce(p.content,'')='' AND NOT p.bundle_ref ? 'customer_public_link'),1::bigint,'withheld result stores no borrowed link answer or source claim');
+
+-- One real synthetic Auth actor, two independently recorded CRM relationships:
+-- changing only the selected business must never reuse the first private turn.
+SELECT pg_temp.as_user('a1',format('SELECT public.set_tenant_portal_config(%L,%L::jsonb)',pg_temp.t('a'),'{"assistant":{"enabled":true}}'));
+INSERT INTO public.clients(id,tenant_id,linked_user_id,created_by,first_name,last_name,status) VALUES
+ ('e0997430-0000-4000-8000-0000000000b3','e0997420-0000-4000-8000-00000000000b','e0997410-0000-4000-8000-0000000000a2','e0997410-0000-4000-8000-0000000000b1','Test','Second relationship','active');
+SELECT set_config('request.headers',jsonb_build_object('x-client-portal-business',pg_temp.t('a'))::text,true);
+SELECT is((SELECT pg_temp.ctx('a2',th,intent)->>'mode' FROM link_turn),'bound','same multi-business customer still reads original selected-business receipt');
+SELECT set_config('request.headers',jsonb_build_object('x-client-portal-business',pg_temp.t('b'))::text,true);
+SELECT is((SELECT pg_temp.ctx('a2',th,intent)->>'sqlstate' FROM link_turn),'42501','second legitimate relationship never admits the first business private turn');
+CREATE TEMP TABLE link_second_business AS SELECT
+ (pg_temp.as_user('a2',$q$SELECT to_jsonb(public.paige_chat_thread_create(NULL,'customer','Second business reference','{}'))$q$)#>>'{}')::uuid th,
+ gen_random_uuid() intent,'https://example.org/second-business'::text url;
+SELECT is((SELECT pg_temp.begin_link(th,intent,url)->>'status' FROM link_second_business),'accepted','same actor can begin the independently authorized second-business turn');
+SELECT is((SELECT pg_temp.ctx('a2',th,intent)#>>'{snapshot,tenant_id}' FROM link_second_business),pg_temp.t('b')::text,'second turn binds the actual second business');
+SELECT is((SELECT pg_temp.ctx('a2',th,intent)#>>'{snapshot,contact_id}' FROM link_second_business),'e0997430-0000-4000-8000-0000000000b3','second turn binds the actual distinct CRM relationship');
+SELECT is((SELECT pg_temp.ctx('a2',th,intent)#>>'{snapshot,url}' FROM link_second_business),'https://example.org/second-business','second business retains only its own accepted selection');
+SELECT set_config('request.headers',jsonb_build_object('x-client-portal-business',pg_temp.t('a'))::text,true);
+SELECT is((SELECT pg_temp.ctx('a2',th,intent)->>'sqlstate' FROM link_second_business),'42501','returning first-business context cannot read second-business turn');
+SELECT is((SELECT pg_temp.ctx('a2',th,intent)#>>'{snapshot,url}' FROM link_turn),'https://example.org/program','returning customer retains the first business exact original URL');
 SELECT * FROM finish();
 ROLLBACK;

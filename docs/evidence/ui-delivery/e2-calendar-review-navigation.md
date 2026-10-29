@@ -3,6 +3,9 @@
 ## October29 current source-release disposition
 
 Current main `a58e9d8d088a75f1a8786c83958915f65d67d2d5` is composed normally.
+Reviewed Finance sibling `8dd24563267f2a87e753c498239bcd3e271d8a7c` is also
+received as an explicit release-order dependency, not falsely described as main.
+Finance3082 must merge first; Calendar's final checks cover that composed source.
 The four owning source/test files and original rendered assets are unchanged;
 fresh four-suite verification is118PASS. An initial temporary-cache rename
 failure ran no tests; the unchanged retry used a workspace-local temporary

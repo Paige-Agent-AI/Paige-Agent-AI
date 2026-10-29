@@ -1,5 +1,9 @@
 # Lessons Learned — recurring traps
 
+### A deterministic customer read can reuse the original conservative route (2026-10-29, EXP09)
+
+The original `resolveTurnRoute` already gives a genuinely unrun advisory classifier an `unclassified_default` operational floor. For one explicitly selected public page, prepare the exact native-authorized call through the original ToolDef and execute it in the existing read loop before the first model response; do not invent classifier output, attachment facts, a second router or tool registry. This floor grants no authority: retain native actor/business/relationship/intent/URL binding, every original per-call gate and a closed handle-once customer boundary. A DOM/source test is not real HTTP or customer proof. The [existing UI evidence](../evidence/ui-delivery/e09-cura-public-link.md) records local tests, genuine red findings, reviewed source-pin renewal and the still-open native/release gates.
+
 ### Bind a resolved client read to the original native argument (2026-10-28, EXP09)
 
 A private specialist adapter must compare the returned client to the EXACT original reader's `_contact_id`, including when that id came from the existing CRM name lookup. Checking only the initial optional `client_id` leaves a name-resolution path unchecked. A genuine new adapter negative failed34/35 before this correction, then all35 passed. Reuse the original caller-JWT reader/composer; preserve native refusal separately from `needs_input`, acknowledge original read receipts before model context, and revalidate original scope/facts before posting. These transport tests do not establish live Auth/RLS or grant a customer the business owner's Team Hub authority.

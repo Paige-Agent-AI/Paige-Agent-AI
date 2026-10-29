@@ -5,7 +5,7 @@
 // that rejects it. `npm run lint:crm-patch-fields` re-derives and fails on any difference.
 //
 // Regenerate:  node scripts/ci/crm-patch-field-gen.mjs --write
-// Derived from: 20270516000000_crm_commands_speak_contact_methods.sql, 20271108121000_task_progress_contract.sql
+// Derived from: 20270516000000_crm_commands_speak_contact_methods.sql, 20271126010012_task_effort_scalar.sql
 
 export type CrmPatchFieldSpec = { readonly name: string; readonly description?: string };
 
@@ -76,6 +76,7 @@ export const CRM_PATCH_FIELDS: Readonly<Record<string, readonly CrmPatchFieldSpe
     { name: "track", description: "Workstream the task belongs to." },
     { name: "metadata", description: "Structured object of extra task fields; must be an object." },
     { name: "status", description: "Task update only: in_progress starts pending work or updates work already in progress. Use the separate complete, reopen or cancel command for other stages." },
+    { name: "estimated_minutes", description: "Task update only: whole minutes from 0 to 2147483647, or null to clear. Preserves other task metadata; cannot be combined with metadata replacement. Zero means recorded zero, not unknown." },
   ]),
   // company.create — public.execute_crm_command_reversible
   "company.create": Object.freeze([

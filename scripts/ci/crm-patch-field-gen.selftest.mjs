@@ -211,6 +211,28 @@ export async function selfTest() {
     } finally { rmSync(dir, { recursive: true, force: true }); }
   }
 
+  // The effort extension owns only task.update. Restating the original executor
+  // must not silently replace a peer's Contact, Company, Deal or receipt logic.
+  {
+    const migrations=join(dirname(CLI), "../../supabase/migrations");
+    const definition=(name)=>readFileSync(join(migrations,name),"utf8").split("CREATE OR REPLACE FUNCTION")[1];
+    const base=definition("20271108121000_task_progress_contract.sql");
+    const effort=definition("20271126010012_task_effort_scalar.sql");
+    const start="    if v_action = 'task.update' then";
+    const end="    elsif v_action = 'task.reschedule' then";
+    check("effort preserves every byte before the original Task update branch",
+      base.split(start).length===2 && effort.split(start).length===2 &&
+      base.split(start)[0]===effort.split(start)[0]);
+    check("effort preserves reschedule, other domains and original receipt/replay tail",
+      base.indexOf(end)>=0 && effort.indexOf(end)>=0 &&
+      base.slice(base.indexOf(end))===effort.slice(effort.indexOf(end)));
+    const derived=spawnSync(process.execPath,[CLI,"--print"],{encoding:"utf8"});
+    const fields=derived.status===0?JSON.parse(derived.stdout):{};
+    check("scalar effort is advertised only on the existing Task update command",
+      fields["task.update"]?.includes("estimated_minutes") &&
+      Object.entries(fields).every(([key,list])=>key==="task.update" || !list.includes("estimated_minutes")),derived.stderr);
+  }
+
   const failed = cases.filter((c) => !c.ok);
   console.log(`\n${failed.length ? "❌" : "✅"} crm-patch-field-gen self-test: ${cases.length - failed.length}/${cases.length} passed`);
   if (failed.length) process.exit(1);

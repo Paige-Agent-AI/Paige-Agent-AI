@@ -26,6 +26,7 @@ const claim=(op,token=randomUUID(),t=tenant)=>`SELECT claim_sales_invoice_paymen
 const final=(op,token,state='customer_action_required',object='cs_test_fixture',url='https://checkout.stripe.com/c/pay/cs_test_fixture')=>`SELECT finalize_sales_invoice_payment_request('${tenant}','${op}','${token}','${state}',${object===null?'NULL':"'"+object+"'"},'open',${url===null?'NULL':"'"+url+"'"},NULL);`;
 const deny=(sql,pattern)=>assert.throws(()=>run(sql),pattern);
 const execute=sql=>new Promise((resolve,reject)=>{const p=spawn(binary,args(),{windowsHide:true});let out='',err='';p.stdout.on('data',v=>out+=v);p.stderr.on('data',v=>err+=v);p.on('error',reject);p.on('close',code=>resolve({code,out,err}));p.stdin.end(sql);});
+let originalListDefinition=null,forwardListDefinition=null;
 try {
  run(`DO $$ BEGIN IF NOT EXISTS(SELECT 1 FROM pg_roles WHERE rolname='anon') THEN CREATE ROLE anon;END IF;IF NOT EXISTS(SELECT 1 FROM pg_roles WHERE rolname='authenticated') THEN CREATE ROLE authenticated;END IF;IF NOT EXISTS(SELECT 1 FROM pg_roles WHERE rolname='service_role') THEN CREATE ROLE service_role;END IF;END $$;
  CREATE SCHEMA auth;CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE AS $$SELECT nullif(current_setting('test.actor',true),'')::uuid$$;
@@ -78,9 +79,44 @@ try {
  }
  if(mode==='--s4-baseline')run(service(`SELECT allocate_verified_sales_invoice_payment('${tenant}','${randomUUID()}','${randomUUID()}','{}');`));
  if(mode==='--reconciliation-baseline')run(service(`SELECT register_sales_payment_reconciliation_work('${tenant}','${randomUUID()}');`));
+ // Run the ENTIRE incumbent role/claim/settlement/Rail/concurrency proof against
+ // the additive accepted-target writers too. Legacy unbound commands retain the
+ // original contract. Accepted-source positives have their own composition proof;
+ // these synthetic provider facts are never production settlement evidence.
+ if(process.argv.includes('--accepted-obligation-writers')){
+  const source=read('supabase/migrations/20271126010010_e04_accepted_invoice_payment_obligations.sql');
+  const exact=(name,tag)=>{
+   const start=source.indexOf('CREATE OR REPLACE FUNCTION public.'+name+'(');
+   const end=source.indexOf('END $'+tag+'$;',start);
+   assert(start>=0&&end>start,'original forward writer '+name);
+   return source.slice(start,end+('END $'+tag+'$;').length);
+  };
+  originalListDefinition=run("SELECT pg_get_functiondef('public.list_sales_invoice_payment_operations(uuid,uuid)'::regprocedure);");
+  forwardListDefinition=exact('list_sales_invoice_payment_operations','function');
+  const forward=exact('_sales_invoice_require_accepted_obligation','target')
+   +exact('prepare_sales_invoice_payment_request','function')
+   +exact('claim_sales_invoice_payment_request','function')+forwardListDefinition;
+  run(forward);run(forward);
+  run('REVOKE ALL ON FUNCTION public._sales_invoice_require_accepted_obligation(public.paige_invoices,jsonb) FROM PUBLIC,anon,authenticated,service_role;');
+ }
  const first=randomUUID();
  // --baseline intentionally fails here on current-main: there is no asynchronous operation RPC.
  const prepared=JSON.parse(run(service(prepare(first))).split('\n').at(-1));assert.equal(prepared.state,'prepared');assert(!('dispatch_claim_token' in prepared));
+ if(originalListDefinition&&forwardListDefinition){
+  const listSql=`SET test.actor='${actor}';SET test.workspace='${tenant}';SET ROLE authenticated;SELECT list_sales_invoice_payment_operations('${tenant}','${invoice}');`;
+  run(originalListDefinition+';');const oldList=JSON.parse(run(listSql).split('\n').at(-1));
+  run(forwardListDefinition);const currentList=JSON.parse(run(listSql).split('\n').at(-1));
+  assert.deepEqual(currentList,oldList,'WHOLE original legacy list JSON remains exact');
+  const ref={commercial_terms_id:randomUUID(),signing_id:randomUUID(),signing_version:4,terms_version:1,sequence:2},id=randomUUID();
+  // Stored-selector projection only. This failed operation is a rolled-back
+  // synthetic fixture, not a preparation, approval, signature or provider result.
+  const projected=run(`BEGIN;INSERT INTO paige_invoice_provider_operations(id,tenant_id,invoice_id,client_id,actor_user_id,invoice_version,issued_snapshot_version,provider,merchant_account_id,merchant_binding_version,environment,amount_minor,currency,purpose,command,authority_fingerprint,idempotency_key,state,dispatch_claim_token,dispatch_started_at)
+   SELECT '${id}',tenant_id,invoice_id,client_id,actor_user_id,invoice_version,issued_snapshot_version,provider,merchant_account_id,merchant_binding_version,environment,amount_minor,currency,'installment',jsonb_set(command,'{obligation}',${literal({reference:ref,source_digest:'a'.repeat(64),due_date:'2026-10-15',scheduled_minor:50000,remaining_minor:50000})}),authority_fingerprint,'sales-payment-${id}','failed',gen_random_uuid(),now() FROM paige_invoice_provider_operations WHERE id='${first}';${listSql}ROLLBACK;`).split('\n').find(line=>line.startsWith('{'));
+  assert(projected);const listed=JSON.parse(projected).rows.find(row=>row.id===id);
+  assert.deepEqual(listed.obligation_reference,ref,'original owner list retains exact immutable accepted selector');
+  assert(!('command' in listed)&&!('dispatch_claim_token' in listed),'no raw command/claim token in owner list');
+  assert.equal(run(`SELECT count(*) FROM paige_invoice_provider_operations WHERE id='${id}';`),'0','projection fixture rolls back');
+ }
  assert.equal(JSON.parse(run(service(`SELECT _sales_invoice_read('${tenant}','${invoice}',0);`)).split('\n').at(-1)).id,invoice,'existing Edge service read remains executable');
  deny(`SET ROLE anon;SELECT _sales_invoice_read('${tenant}','${invoice}',0);`,/permission denied/);
  deny(`SET ROLE authenticated;SELECT _sales_invoice_read('${tenant}','${invoice}',0);`,/permission denied/);

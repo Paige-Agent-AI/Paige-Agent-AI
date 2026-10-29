@@ -27,3 +27,14 @@ it('a draft number is assigned on issuance and never described as previously iss
 });
 
 it('request-editor abandonment is visible outside the hidden manual editor',async()=>{await render();await click('Request customer payment');await click('Send invoice');const dialog=document.querySelector('[role="alertdialog"]');expect(dialog).not.toBeNull();expect(dialog!.closest('[hidden]')).toBeNull();await click('Continue editing');expect(document.body.textContent).toContain('Prepare payment review');});
+
+it('unknown accepted payment recovery closes to its original trigger and retains exact selector',async()=>{
+ const reference={commercial_terms_id:'44444444-4444-4444-8444-444444444444',signing_id:'55555555-5555-4555-8555-555555555555',signing_version:4,terms_version:1,sequence:2};
+ h.rpc.mockImplementation(async(name:string)=>({data:name==='read_sales_invoice'?invoiceLifecycleFixtureRow(id,'issued'):name==='list_sales_invoice_payment_operations'?{rows:[{id:'33333333-3333-4333-8333-333333333333',provider:'stripe',purpose:'installment',invoice_version:2,amount_minor:30000,currency:'usd',state:'outcome_unknown',obligation_reference:reference}]}:[],error:null}));
+ h.invoke.mockResolvedValue({data:{outcome:'outcome_unknown'},error:null});
+ await render();button('Check existing request').focus();await click('Check existing request');await click('Recover original operation');
+ expect(h.invoke.mock.calls[0][1].body).toMatchObject({operation_id:'33333333-3333-4333-8333-333333333333',command:{purpose:'installment',obligation_reference:reference}});
+ expect(h.invoke.mock.calls[0][1].body.command).not.toHaveProperty('amount_minor');
+ await click('Close review');expect(document.activeElement).toBe(button('Check existing request'));
+ expect(changed).not.toHaveBeenCalled();expect(sessionStorage.length).toBe(1);
+});

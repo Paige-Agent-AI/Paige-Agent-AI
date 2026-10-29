@@ -141,6 +141,7 @@ function Harness() {
             <a className="vs-link" href="#" onClick={(e) => e.preventDefault()} style={{ wordBreak: "break-all" }}>https://acme-coaching.paigeagent.ai/p/acme-coaching/workshop</a>
             <DomainGuidanceCard
               tenantSlug="acme-coaching"
+              pageId="33333333-3333-4333-8333-333333333333"
               observations={domain === "conflict" ? { customDomain: "www.acme-coaching.com", recordConflict: true } : undefined}
             />
             <div className="vs-pop-foot"><button type="button" className="vs-btn">Done</button></div>

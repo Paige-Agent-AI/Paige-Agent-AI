@@ -22,14 +22,16 @@ Original count/currency/coverage/freshness/caveats and zero-versus-unavailable
 remain intact. No bank balance, completed action or causal improvement is inferred.
 
 Meaningful pre-implementation positive control failed on unavailable-versus-available;
-the final local original-reader/host/negative-control suite has151 PASS/0 FAIL/
-0 SKIP, including37 new VERA tests. Strict new-module/test TypeScript and scoped
+the final local original-reader/host/negative-control suite has155 PASS/0 FAIL/
+0 SKIP, including41 new VERA tests. Strict new-module/test TypeScript and scoped
 ESLint PASS. A separate source review caught and corrected an unbounded later
 clarification scope check; it now uses the same deadline. Automated review of
 the first candidate caught expiry passing during later marker/authority awaits.
-Three real failing-before regressions now pass: initial exposure, same-reference
-revalidation and the final authority await. Expiry is checked after ALL awaits,
-with no replacement issuance. The original C0b suite actually executes249 PASS;
+Three real failing-before regressions cover initial exposure, same-reference
+revalidation and the final authority await. A further source review reproduced
+four failing expiry/cancel cases during the bounded promise's result delivery;
+the final checks now sit at the OUTER publication boundary after that delivery.
+All seven regressions pass, with no replacement issuance. The original C0b suite actually executes249 PASS;
 an earlier direct exports-only module load is excluded as guard proof. Original
 Metric/contract80 and SOLO parity/all mutation controls PASS, with the initial
 sandbox Vite EPERM retained as setup failure before the unchanged authorized run.

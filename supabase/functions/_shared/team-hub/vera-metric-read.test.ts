@@ -222,3 +222,34 @@ test("expiry is checked after the final authority await as well as the marker",a
   assert.equal(await pending,false);assert.equal(w.receipts(),2);
   assert.equal(w.calls.filter(c=>c.name==="issue_analytics_evidence_bundle").length,1);
 });
+
+for(const phase of ["initial","revalidation"]) test("expiry during bounded-result delivery is withheld: "+phase,async t=>{
+  t.mock.timers.enable({apis:["Date","setTimeout"],now:Date.now()});
+  const w=world();let checks=0;
+  w.patch({reference_expires_at:new Date(Date.now()+1000).toISOString()});
+  const result=await readVeraMetric(scope(),{...w.deps,isCurrent:async()=>{
+    if(++checks===(phase==="initial"?3:6))
+      queueMicrotask(()=>queueMicrotask(()=>t.mock.timers.tick(1000)));
+    return true;
+  }},{metric_key:"business.active_clients_current"});
+  if(phase==="initial"){
+    assert.equal(result.model.status,"unavailable");assert.equal(result.model.metric,undefined);
+  }else{
+    assert.equal(result.model.status,"available");assert.equal(await result.revalidate(),false);
+  }
+  assert.equal(w.calls.filter(c=>c.name==="issue_analytics_evidence_bundle").length,1);
+});
+
+for(const phase of ["initial","revalidation"]) test("abort during bounded-result delivery is withheld: "+phase,async()=>{
+  const w=world(),controller=new AbortController();let checks=0;
+  const result=await readVeraMetric(scope(),{...w.deps,signal:controller.signal,isCurrent:async()=>{
+    if(++checks===(phase==="initial"?3:6))queueMicrotask(()=>queueMicrotask(()=>controller.abort()));
+    return true;
+  }},{metric_key:"business.active_clients_current"});
+  if(phase==="initial"){
+    assert.equal(result.model.status,"unavailable");assert.equal(result.model.metric,undefined);
+  }else{
+    assert.equal(result.model.status,"available");assert.equal(await result.revalidate(),false);
+  }
+  assert.equal(w.calls.filter(c=>c.name==="issue_analytics_evidence_bundle").length,1);
+});

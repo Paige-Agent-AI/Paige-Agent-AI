@@ -34,6 +34,10 @@ function eligible(s: VeraMetricScope): boolean {
 export function veraMetricReadTools(scope: VeraMetricScope): (typeof DEFINITION)[] {
   return eligible(scope) ? [DEFINITION] : [];
 }
+function unexpired(result: MetricReadOutcome): boolean {
+  const expiry = Date.parse(result.metric?.reference_expires_at ?? "");
+  return Number.isFinite(expiry) && expiry > Date.now();
+}
 const withheld = (): VeraMetricRead => ({
   model: { status: "unavailable", message: "I couldn't verify this measurement for your current workspace. Its value is unavailable here." },
   recordLinks: [], revalidate: async () => false,
@@ -69,11 +73,6 @@ export async function readVeraMetric(scopeInput: VeraMetricScope, deps: VeraMetr
         if (stopped() || await deps.isCurrent(scope) !== true || stopped()) return null;
         if (result.status === "available" && await deps.recordRead() !== true) return null;
         if (stopped() || await deps.isCurrent(scope) !== true || stopped()) return null;
-        // Native validation preceded those awaits; the SAME evidence must still be unexpired now.
-        if (result.status === "available") {
-          const expiry = Date.parse(result.metric?.reference_expires_at ?? "");
-          if (!Number.isFinite(expiry) || expiry <= Date.now()) return null;
-        }
         return structuredClone(result);
       };
       try { return await Promise.race([work(), deadline]); }
@@ -85,26 +84,31 @@ export async function readVeraMetric(scopeInput: VeraMetricScope, deps: VeraMetr
       }
     };
     const first = await bounded(originalArgs, true);
-    if (!first) return withheld();
-    if (first.status !== "available" || !first.metric) return {
+    // Check after bounded-result delivery too, not just inside its asynchronous work.
+    if (!first || deps.signal?.aborted) return withheld();
+    if (first.status !== "available") return {
       model: first, recordLinks: [], revalidate: async () => {
         // A bounded clarification contains no measurement. The host still checks its turn before posting.
         if (first.status !== "needs_input") return false;
         const current = await bounded(originalArgs, false);
-        return current?.status === "needs_input";
+        return !deps.signal?.aborted && current?.status === "needs_input";
       },
     };
-    const metric = first.metric, identity = JSON.stringify(metric);
+    const metric = first.metric;
+    if (!metric) return withheld();
+    const identity = JSON.stringify(metric);
     // These fields come only from the ORIGINAL verified native result, never from model text.
     const exactReference = Object.freeze({ metric_key: metric.metric_key, period: "custom",
       range_key: metric.range.key, range_start: metric.range.start, range_end: metric.range.end,
       evidence_ref: metric.evidence_ref });
-    return { model: structuredClone(first),
+    const prepared: VeraMetricRead = { model: structuredClone(first),
       recordLinks: readRecordLinks([{ destination: "executive", record_id: null }]),
       revalidate: async () => {
         const current = await bounded(exactReference, false);
-        return current?.status === "available" && JSON.stringify(current.metric) === identity;
+        return !deps.signal?.aborted && current?.status === "available"
+          && JSON.stringify(current.metric) === identity && unexpired(current);
       },
     };
+    return !deps.signal?.aborted && unexpired(first) ? prepared : withheld();
   } catch { return withheld(); }
 }

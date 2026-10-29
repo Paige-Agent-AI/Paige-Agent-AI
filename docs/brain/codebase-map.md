@@ -2,13 +2,15 @@
 
 ## EXP02 original commercial read wording (2026-10-29, candidate)
 
-Forward `20271122010102_e2_commercial_read_receipt_labels.sql` composes the exact
+Forward `20271122000002_e2_commercial_read_receipt_labels.sql` composes the exact
 original E04 `_workspace_event_display(text,text,text)` body in place. Only three
 successful capability-run tuples receive read wording: `agreement_list`,
 `agreement_status`, `find_clients_for_status`. The last is an original nested RPC,
 not a new model tool. Existing event identities, actor fields, failures/unknowns,
 private owner/ACL/OID and original scoped `get_solo_rail_activity` stay unchanged.
 No new receipt, domain writer, grant, approval or completion is created.
+The successor releases after native21150004 and before pending E04 host10004/5;
+old #3067/10102 and its applied Preview remain unchanged, explicitly superseded.
 Native original20/candidate32/replay32 and six source/metadata refusal controls
 pass in isolated PostgreSQL16; local expression adapter is not hosted pgTAP,
 customer authentication, RLS or durability acceptance. Review, exact-head CI,

@@ -4,8 +4,11 @@
 
 **REPAIR:** original shared Rail presentation only. E04 request ANT138/2bc79b0c
 and receiving bce36fd6 / ANT161/77ed54cd/ae5585e1 reserve the exact formatter;
-E04 retains Sales/native Team Hub execution and source ownership. Forward22010102
-follows native21150004 and E04 reserved22010004/22010005. No new reader, registry,
+E04 retains Sales/native Team Hub execution and source ownership. Originally
+reserved22010102/#3067 passed all13 exact-head checks, but would overtake E04's
+pending lower versions. Successor22000002 follows native21150004 and precedes
+E04 reserved22010004/22010005. Old applied Preview/history remains unchanged;
+fresh successor review/CI/Preview/release proof is required. No new reader, registry,
 receipt, event, worker, tool, tenant authority, approval or action is introduced.
 
 **Functional:** successful `agreement_list`, `agreement_status` and original nested

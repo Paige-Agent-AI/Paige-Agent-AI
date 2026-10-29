@@ -1,3 +1,57 @@
+# C129 — accepted-obligation source and same-operation recovery (2026-10-29 UTC)
+
+Keep the owner's calibrated order below. MERIT #3092 is now merged at
+`a0ba8016618a68bd4ef93a5f92a7550c850bafbb`, with exact-head checks, lower-assurance
+author review and normal source-verified web/Edge release. The first source mismatch
+held its release marker; one unchanged normal retry verified all 308 source and
+emitted leaves. Fresh authorized Owner production read, original agreement link,
+same document reload and explicit original-DM reopen passed. Protected identities
+and screenshots remain in ANT-52; this is not full twelve-outcome acceptance.
+
+The next **LOCAL, UNRELEASED** O3/O4 increment composes the ORIGINAL signed/effective
+payload, canonical invoice balance, immutable provider operation and approval gate.
+Native `20271126010010` follows released E09 `20271126010009`; it has not been applied
+to a durable Preview or production. Its unique owner admission
+`read_sales_accepted_invoice_obligations` leaves the old three-argument accepted
+reader's OID/body/ACL/DTO unchanged. The command service's distinct
+`read_sales_invoice_payment_obligation` reuses the original explicit-actor and
+service-only guards; no caller-JWT impersonation or new permission system.
+
+The exact accepted target survives initial review, canonical Chat approval resume,
+historical operation recovery, and the original owner's operation-list projection.
+Preparation and dispatch repeat the same target/source/remaining-amount check under
+their existing locks. The review consequence names the accepted sequence, due date
+and terms revision. The original recovery control keeps its operation ID and returns
+keyboard focus after its asynchronous list reload. Unknown remains unknown;
+malformed targets use the existing read-failure/retry state. No extra invoice,
+principal, sender, provider adapter, scheduler or financial store was introduced.
+
+Current proof: 391 payment checks/17 suites; 202 adjacent Chat/endpoint/ledger checks;
+28 existing review/recovery UI checks; 41 reduced-schema PostgreSQL checks using
+tracked original functions; the ENTIRE original provider/role/claim/allocation/Rail
+proof also passes with the extended writers. Genuine provider facts are simulated
+in those native tests. Strict Deno 2.9.8, original Kit/risk and definer/version guards
+pass. Actual original-component desktop and 390px rendered recovery, keyboard exit,
+reload/reopen and invalid-source refusal are synthetic-port evidence; full shell,
+real payment/signing/provider/cohort verification and founder acceptance remain owed.
+
+**Next, not silently omitted:** mount accepted schedule selection/inspection through
+the existing invoice workspace and authorized conversation source; add explicit
+original receipt/split allocation and correction/reversal binding; prove schedule
+revision integrity and full-schema/concurrent caller behavior. Unassigned manual
+receipts are held rather than guessed FIFO. TEST receipts never establish actual
+commercial fulfillment. No target-creation UI or new Chat capability is claimed Live.
+
+E09 calendar consumer retains never-applied native11 and its original billing
+authority. E05 retains native12 Task work. The acknowledged E04 private financial
+currentness factor will use a distinct legitimate forward above those reservations;
+it is still unbuilt and must preserve original billing/relationship semantics.
+ALG-01/02/12/13, capability catalogue and Binding Ledger maturity are unchanged.
+The existing registered `sales_invoice.payment_request` uses its legitimate governed
+direct command path: original actor/tenant/role, HIGH approval/fingerprint, immutable
+operation/claim, GET-only uncertain reconciliation and canonical Rail. Source reads
+and calculations are not forced into Layer C, and source proof does not activate it.
+
 # C128 — connected commercial outcome first (2026-10-29 UTC)
 
 Owner recalibration: finish the current original MERIT release; then close the connected O1–O4 agreement → authorized signing/exact effective terms → deposit/installments → original invoice lifecycle. Next O5/O9 payment/reconciliation/Collections; then O6–O8/O10–O12 onboarding, actual delivery/client decisions, completion, self-service and standing. No new platform stream or agent. Native ZION observation stays an explicit later/unbuilt delivery dependency, not an assumed capability. All original twelve outcomes and one integrated founder evaluation remain mandatory.

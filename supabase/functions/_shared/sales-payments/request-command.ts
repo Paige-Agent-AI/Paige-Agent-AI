@@ -55,10 +55,16 @@ export function parsePaymentRequestIntent(v:unknown):PaymentRequestIntent {
   ...(reference?{obligation_reference:reference}:v.purpose!=='full'?{amount_minor:v.amount_minor as number}:{})};
 }
 
+/** Human consequence wording uses the SAME validated immutable command as approval.
+ * Original currency presentation is unchanged; this does not calculate obligations. */
+export function paymentRequestReviewSummary(value:unknown):string {
+ const command=parseCanonicalPaymentRequestCommand(value);
+ const summary=`Request ${new Intl.NumberFormat('en-US',{style:'currency',currency:String(command.currency).toUpperCase()}).format(Number(command.amount_minor)/100)} from this invoice’s customer using the business’s connected ${command.provider==='stripe'?'Stripe':'PayPal'} account. The customer completes payment securely with the provider. Creating this request does not record a payment.`;
+ return command.obligation?`${summary} Accepted payment ${command.obligation.reference.sequence} is due ${command.obligation.due_date}, from accepted terms version ${command.obligation.reference.terms_version}.`:summary;
+}
 /** Recover the original caller selector from its validated immutable operation.
  * No current balance, new amount or provider call is needed for historical replay.
- * A dated target must remain that exact accepted reference, never a free-form amount.
- */
+ * A dated target remains that exact accepted reference, never a free-form amount. */
 export function paymentRequestIntentFromCommand(value:unknown):PaymentRequestIntent {
  const command=parseCanonicalPaymentRequestCommand(value);
  return parsePaymentRequestIntent({action:command.action,invoice_id:command.invoice_id,
@@ -70,8 +76,9 @@ export function paymentRequestIntentFromCommand(value:unknown):PaymentRequestInt
  * The command is subsequently fingerprinted by the shared gate and revalidated under SQL locks.
  * A partial/deposit amount is owner intent validated against the canonical outstanding balance;
  * this cannot establish installment eligibility or a recurring mandate by itself. */
-export function buildPaymentRequestCommand(value:unknown,invoice:InvoicePaymentContext,merchant:MerchantBinding,facts:MerchantObservation|null,now:number,obligationSource?:unknown):PaymentRequestCommand {
- const intent=parsePaymentRequestIntent(value);
+/** Validate original native target transport before any provider readiness read.
+ * This reuses the same exact checks in final assembly; it grants no authority. */
+export function paymentObligationForRequest(intent:PaymentRequestIntent,invoice:InvoicePaymentContext,obligationSource?:unknown):PaymentObligationEvidence|undefined {
  let obligation:PaymentObligationEvidence|undefined;
  if(intent.obligation_reference){
   if(obligationSource===undefined||obligationSource===null)throw new TypeError('PAYMENT_OBLIGATION_REQUIRED');
@@ -83,6 +90,11 @@ export function buildPaymentRequestCommand(value:unknown,invoice:InvoicePaymentC
   if(source.obligation.remaining_minor===0)throw new TypeError('PAYMENT_OBLIGATION_ALREADY_ALLOCATED');
   obligation=source.obligation;
  }else if(obligationSource!==undefined)throw new TypeError('PAYMENT_OBLIGATION_UNEXPECTED');
+ return obligation;
+}
+export function buildPaymentRequestCommand(value:unknown,invoice:InvoicePaymentContext,merchant:MerchantBinding,facts:MerchantObservation|null,now:number,obligationSource?:unknown):PaymentRequestCommand {
+ const intent=parsePaymentRequestIntent(value);
+ const obligation=paymentObligationForRequest(intent,invoice,obligationSource);
  if(merchant.tenant_id!==invoice.tenant_id)throw new TypeError('MERCHANT_TENANT_MISMATCH');
  if(merchant.provider!==intent.provider)throw new TypeError('MERCHANT_PROVIDER_MISMATCH');
  const readiness=merchantReadiness(merchant,facts,now);if(!readiness.eligible)throw new TypeError(readiness.reason);

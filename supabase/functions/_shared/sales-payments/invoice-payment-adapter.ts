@@ -1,5 +1,5 @@
 import type {SalesPaymentAdmin} from './database-port.ts';
-import {buildPaymentRequestCommand,parsePaymentRequestIntent,type PaymentRequestCommand} from './request-command.ts';
+import {buildPaymentRequestCommand,parsePaymentRequestIntent,paymentObligationForRequest,type PaymentRequestCommand} from './request-command.ts';
 import {readStripeMerchant,type MerchantBinding} from './merchant.ts';
 import {salesStripeClient} from './stripe-client.ts';
 import {parseClaimedPayment,safePaymentOperation} from './operation-projection.ts';
@@ -33,6 +33,18 @@ export async function preparePaymentReview(admin:SalesPaymentAdmin,caller:Paymen
  ]);
  const row=object(invoiceRow.data),facts=object(invoiceFacts.data),merchant=object(merchantRow.data);
  if(invoiceRow.error||invoiceFacts.error||merchantRow.error||!row||!facts||!merchant||row.tenant_id!==caller.tenantId||facts.tenant_id!==caller.tenantId||row.id!==facts.id||typeof row.contact_id!=='string')throw new Error('PAYMENT_CONTEXT_UNAVAILABLE');
+ const invoice={id:String(facts.id),tenant_id:caller.tenantId,client_id:row.contact_id,
+  lifecycle_version:Number(facts.version),issued_snapshot_version:Number(facts.issued_snapshot_version),
+  status:String(facts.status),currency:String(facts.currency),outstanding_minor:Number(facts.remaining_cents)};
+ let obligationSource:unknown;
+ if(intent.obligation_reference){
+  const accepted=await admin.rpc('read_sales_invoice_payment_obligation',{_actor_user_id:caller.actorId,
+   _expected_tenant_id:caller.tenantId,_invoice_id:intent.invoice_id,_reference:intent.obligation_reference});
+  if(accepted.error||!accepted.data)throw new Error('PAYMENT_OBLIGATION_UNAVAILABLE');
+  obligationSource=accepted.data;
+ }
+ paymentObligationForRequest(intent,invoice,obligationSource);
+ if(!await caller.stillCurrent())throw new Error('WORKSPACE_CHANGED');
  const client=salesStripeClient(secret);
  if(merchant.provider_environment!==client.environment||typeof merchant.stripe_account_id!=='string'||!Number.isSafeInteger(merchant.binding_version))throw new Error('MERCHANT_BINDING_UNAVAILABLE');
  const binding:MerchantBinding={tenant_id:caller.tenantId,provider:'stripe',merchant_id:merchant.stripe_account_id,environment:client.environment,version:Number(merchant.binding_version)};
@@ -42,8 +54,7 @@ export async function preparePaymentReview(admin:SalesPaymentAdmin,caller:Paymen
   _environment:binding.environment,_charges_enabled:observation.charges_enabled,_payouts_enabled:observation.payouts_enabled,_details_submitted:observation.details_submitted,
   _payment_permission:observation.payment_permission,_country:merchant.country,_currency:merchant.default_currency,_requirements:merchant.requirements});
  if(saved.error||saved.data!==binding.version)throw new Error('MERCHANT_BINDING_CHANGED');
- return buildPaymentRequestCommand(intent,{id:String(facts.id),tenant_id:caller.tenantId,client_id:row.contact_id,
-  lifecycle_version:Number(facts.version),issued_snapshot_version:Number(facts.issued_snapshot_version),status:String(facts.status),currency:String(facts.currency),outstanding_minor:Number(facts.remaining_cents)},binding,observation,Date.now());
+ return buildPaymentRequestCommand(intent,invoice,binding,observation,Date.now(),obligationSource);
 }
 export function paymentExecutionPorts(admin:SalesPaymentAdmin,caller:PaymentCaller,secret:string,origin:string):PaymentExecutionPorts {
  const scope={_expected_tenant_id:caller.tenantId,_operation_id:caller.operationId};

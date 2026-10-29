@@ -1,5 +1,5 @@
 import {describe,it,expect} from 'vitest';
-import {parsePaymentRequestIntent,buildPaymentRequestCommand,parseCanonicalPaymentRequestCommand,paymentRequestIntentFromCommand} from './request-command.ts';
+import {parsePaymentRequestIntent,buildPaymentRequestCommand,parseCanonicalPaymentRequestCommand,paymentRequestIntentFromCommand,paymentRequestReviewSummary} from './request-command.ts';
 const invoice={id:'11111111-1111-4111-8111-111111111111',tenant_id:'22222222-2222-4222-8222-222222222222',client_id:'33333333-3333-4333-8333-333333333333',lifecycle_version:3,issued_snapshot_version:1,status:'issued',currency:'usd',outstanding_minor:350000};
 const merchant={tenant_id:invoice.tenant_id,provider:'stripe' as const,merchant_id:'acct_testA',environment:'test' as const,version:1};
 const now=Date.parse('2026-10-05T12:00:00Z');
@@ -110,5 +110,20 @@ describe('original payment-operation recovery intent',()=>{
   const command=buildPaymentRequestCommand(scheduledIntent,invoice,merchant,facts,now,obligationContext);
   expect(()=>paymentRequestIntentFromCommand({...command,amount_minor:49999})).toThrow();
   expect(()=>paymentRequestIntentFromCommand({...command,obligation:{...obligation,source_digest:'invalid'}})).toThrow();
+ });
+});
+
+describe('source-backed payment review consequence',()=>{
+ it('retains the entire existing unbound review wording',()=>{
+  expect(paymentRequestReviewSummary(buildPaymentRequestCommand(intent,invoice,merchant,facts,now))).toBe('Request $3,500.00 from this invoice’s customer using the business’s connected Stripe account. The customer completes payment securely with the provider. Creating this request does not record a payment.');
+ });
+ it('makes the exact accepted sequence/date/revision reviewable before approval',()=>{
+  const command=buildPaymentRequestCommand(scheduledIntent,invoice,merchant,facts,now,obligationContext);
+  expect(paymentRequestReviewSummary(command)).toContain('Accepted payment 1 is due 2026-11-15, from accepted terms version 1.');
+  expect(paymentRequestReviewSummary(command)).toContain('Creating this request does not record a payment.');
+ });
+ it('does not present a corrupted accepted date as reviewable evidence',()=>{
+  const command=buildPaymentRequestCommand(scheduledIntent,invoice,merchant,facts,now,obligationContext);
+  expect(()=>paymentRequestReviewSummary({...command,obligation:{...obligation,due_date:'2026-02-30'}})).toThrow();
  });
 });

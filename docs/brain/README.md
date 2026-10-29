@@ -5393,3 +5393,15 @@ or causal improvement inferred. Original9PASS0FAIL/12PASS0FAIL4BLOCKED and prote
 monthlyUNKNOWNUNRETRIED stay unchanged. Existing ordinary-owner Edge handback,
 all seven Finance pages/roles/cohorts/reload/native zoom/AT, actual Chat/Live and
 the full19/nine integrated customer/founder acceptance remain open.
+
+## EXP05 native recovery source readback — October29 UTC
+
+#3055 production web/source verification is3f80ec8f5de5ce990d9f3674f538cf74037bbb0c,
+READY original web deployment and both official origins. Follow the actual
+declared bootstrap→application→SoloEntry→native dependency graph when locating
+emitted source; the released load boundary means a one-level asset assumption
+is insufficient. Private probe failures were excluded, not called a deployment
+defect. Exact receipt6484939699/§4.0 and
+../evidence/exp05-owner-task-access-recovery-production.json preserve observed
+versions/hashes. Source signatures are not authenticated customer, domain/Rail,
+full EXP05 or founder proof; no activation or extra Edge upload.

@@ -722,3 +722,17 @@ The16-frame original-shell matrix uses labeled neutral A/Mineral/B/Obsidian port
 not real authenticated tenants. It verifies denial rendering, native panel return,
 review/history cancellation and held-scope retirement without effects. The earlier
 unchanged-geometry exemption is withdrawn. No new full-outcome/cohort/owner closure.
+
+### Original task-process recovery production receipt — October29 UTC
+
+#3055 exact3f80ec8f5de5ce990d9f3674f538cf74037bbb0c is production WEB/SOURCE
+VERIFIED: READY original web deployment, both canonical versions and emitted
+native chunk/source markers independently read back. Original264/0/0 tests,
+16 disclosed original-shell fixture frames and final lower-assurance review are
+retained; all10 executed exact-head checks/two web statuses PASS, Preview SKIP.
+Actual readback: ../evidence/exp05-owner-task-access-recovery-production.json.
+This does not close corrected authenticated denial/recovery, tenant/role/cohort/
+new-account/RLS, original domain/Rail, any whole ten-outcome/E5 case or founder
+proof. No migration, Edge, activation or external business effect. #3057 and the
+owner-authorized narrow shared Automation-preview integration remain separate
+pending work. STILL CODING; no whole-Experience or catalogue maturity promotion.

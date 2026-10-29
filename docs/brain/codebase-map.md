@@ -14,6 +14,24 @@ Dashboard `PortalInvitationManager.tsx` delegates sends to `PortalInvitationComm
 
 `_shared/analytics-metrics/read.ts` declares the single `analytics.metric_read` / `read_business_metric` capability. `paige-ai-chat` binds it after existing runtime gates using the real caller-JWT client; Live reaches the same handler. The canonical issuer/resolver and shared pure validator own values, scope and evidence. The frontend validator import reexports the same implementation. Current-turn evidence uses `paige-context/mod.ts`, without extending Pipeline Mind signals or persisting metrics as Memory. Source wiring is not authenticated acceptance. Exact integration/proof boundaries: `docs/delivery/int340-conversational-metric-read.md`.
 
+EXP02's `_shared/team-hub/vera-metric-read.ts` is an **unmounted foundation** for
+the SAME VERA's private business DM. It offers the original definition and calls
+that original reader with the asking actor's caller-JWT client; no new metric
+query, calculation, store, identity, model or authority. Server-resolved current
+owner/admin, tenant/actor, business-DM audience and stored tool scope are required.
+Each read/revalidation has a five-second deadline and cancellation fence; a late
+native completion cannot publish. The host's original read-marker ACK is required.
+Before publication it resolves the SAME original immutable evidence reference,
+never issuing a replacement after refusal, expiry or uncertainty. Reference
+expiry and cancellation are checked again at the outer publication boundary
+after bounded-result delivery, not only inside the native reader/work promise. Original
+Executive links remain outside model context; a read marker is not an action or
+settlement receipt. The existing Team Hub turn must still mount offer/dispatch,
+current-scope checks and pre-post revalidation under its single source owner.
+Both-chat result/reopen, role/revocation and legitimate existing/new SOLO proof
+remain owed; no catalogue or Binding Ledger state is promoted by this adapter.
+See the [original EXP02 matrix](../delivery/e2-customer-experience-integration-matrix.md).
+
 ## Ads from chat — lead funnel read + Ads showroom feature (2026-10-12)
 
 `_shared/paige-spine/domains/ads.ts` declares `ads.lead_funnel` (chat tool `get_pipeline_lead_funnel`,

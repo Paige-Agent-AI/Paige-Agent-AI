@@ -10,7 +10,7 @@ VISUAL_DIRECTION: PASS: incumbent Operate interface, original modal, buttons, to
 AUTOMATED_EVIDENCE: PASS: 391 payment checks/17 suites, 202 adjacent Chat/endpoint/ledger checks, 28 original review/recovery UI checks, 43 tracked-function reduced-schema PostgreSQL checks. Entire incumbent provider/role/claim/settlement/Rail/concurrency proof also passes with extended writers and whole legacy list-JSON equivalence. Provider and file facts are synthetic.
 STATIC_EVIDENCE: PASS: strict Deno2.9.8 runtime checks; canonical Kit288/296/no new bypass, risk204/no unclassified writes, both definer guards and migration-version guard. Exact-head CI and final source review remain separate.
 RENDERED_EVIDENCE: PASS: actual original component fixture, light1536x770 and390x844, retained exact PNG clips assets/e04-accepted-obligation-recovery/desktop.png and narrow.png; invalid.png shows malformed-selector refusal. Source hashes and measured geometry are in source-manifest.json. This is not the full SOLO shell.
-BEHAVIORAL_EVIDENCE: PASS: keyboard Enter → same saved operation → truthful unknown result → close → original trigger after async list read. Full reload/reopen retains exact selector and operation in the original session recovery. Fixture SDK-port input was visibly inspected; no free amount substitutes for the accepted reference. Invalid reference removes initiation and exposes existing retry.
+BEHAVIORAL_EVIDENCE: PASS: keyboard Enter → same saved operation → unconfirmed provider state → close → original trigger after async list read. Full reload/reopen retains exact selector and operation in the original session recovery. Fixture SDK-port input was visibly inspected; no free amount substitutes for the accepted reference. Invalid reference removes initiation and exposes existing retry.
 AUTHENTICATED_RUNTIME: UNVERIFIED: this financial change is development-only; no hosted signer/payment/provider/cohort/customer acceptance. Earlier genuine MERIT production read proof is separate and does not establish this payment flow.
 KEYBOARD_FOCUS: PASS: actual desktop/narrow review primary focus and return to Check existing request after list reload. Original missing-focus defect reproduced, failing regression retained and corrected through original parent focus handler plus child read-ready signal.
 ZOOM_REFLOW: UNVERIFIED:390px reflow/dialog reachability and no horizontal overflow proven; native200-percent zoom and physical mobile were not driven.
@@ -27,12 +27,12 @@ ACCEPTANCE_CRITERIA: exact signed schedule and receipt allocation visible throug
 MOTION_PURPOSE: NONE: original modal motion retained.
 PROTECTED_SEAMS: native actor/service and invoice/version/receipt/claim/Rail seams exercised in isolated PostgreSQL; exact Chat stored/pinned recovery tested. No shared admission/Root/registry/Portal/calculator/scheduler/provider identity or real-tenant source edit.
 
-INTERNAL_BUILD_IDENTITY: ac01a87070c5f5fac79a280ac374046da247bf8c; deployment=NOT_APPLICABLE; environment=development; migrations=UNAPPLIED(20271126010010); edge=NOT_DEPLOYED; evidence=assets/e04-accepted-obligation-recovery/source-manifest.json
+INTERNAL_BUILD_IDENTITY: ac01a87070c5f5fac79a280ac374046da247bf8c; deployment=NOT_APPLICABLE; environment=development; migrations=PROOF_OWED(20271126010010 source-only native foundation); edge=PROOF_OWED(sales-invoice-command source-only adapter); evidence=assets/e04-accepted-obligation-recovery/source-manifest.json
 RELEASE_CHANNEL: development: source and local synthetic-port proof only; final reviewed head/CI/Preview/release must be recorded separately.
 RELEASE_CLASSIFICATION: internal-only: accepted-target foundation and exact existing-operation recovery, not a completed customer payment-plan release.
 CUSTOMER_RELEASE_IDENTITY: none: no customer announcement or full outcome acceptance.
 RELEASE_NOTE_REQUIRED: no: internal engineering increment; preserve canonical release policy.
-RELEASE_TRUTH_BOUNDARY: PARTIAL source foundation; financial/provider/authenticated/full12 PROOF OWED. No new capability or algorithm Live promotion.
+RELEASE_TRUTH_BOUNDARY: PARTIAL: source foundation; financial/provider/authenticated/full12 PROOF OWED. No new capability or algorithm Live promotion.
 RELEASE_RECOVERY: position=ordinary reviewed forward fix or source revert before activation; reference=docs/delivery/exp04-get-paid-deliver-journey.md C129. Never replay an unknown provider effect or rewrite signed/financial history.
 
 SOLO_1536X770_PAIGE_CLOSED: UNVERIFIED: component1536 clip is not full-shell proof.

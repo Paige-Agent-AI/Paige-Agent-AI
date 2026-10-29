@@ -108,7 +108,7 @@ export async function readMentorPlan(
     return needsInput("The plan read arguments must match the plan_list tool. Nothing was read or changed. Correct the request before trying again.");
   }
   if (!await deps.isCurrent() || deps.signal?.aborted) {
-    return withheld("I couldn't verify the current plan records. Nothing was read or changed. Try asking again in MENTOR's DM.");
+    return withheld("I couldn't verify the current plan records. Nothing was read or changed. Try asking again in a moment.");
   }
   if (!await deps.recordRead(PLAN_READ_TOOL)) {
     return withheld("I couldn't record this read, so I won't report its rows. Nothing was changed. Try again in a moment.");

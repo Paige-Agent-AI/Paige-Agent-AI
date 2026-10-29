@@ -93,8 +93,9 @@ begin
  perform pg_temp.check_true(actual=expected,'whole original cursor page, totals and provider/manual/test facts remain exact');
 end $legacy_results$;
 
-do $off_page_identity$
-declare before_read jsonb; after_read jsonb; off_page uuid; original_number text;
+create temp table e04_native_off_page_identity(before_read jsonb not null,off_page uuid not null,original_number text);
+do $off_page_capture$
+declare before_read jsonb; off_page uuid; original_number text;
 begin
  before_read:=public._client_portal_invoice_facts_for_client('e4000000-0000-4000-8000-00000000aaaa','e4000000-0000-4000-8000-0000000c0001',1,null,current_date);
  select i.id,i.invoice_number into strict off_page,original_number from public.paige_invoices i
@@ -102,21 +103,39 @@ begin
    and i.status in ('issued','void') and i.billing_issued_snapshot_version is not null and i.billing_document is not null
    and not exists(select 1 from jsonb_array_elements(before_read->'invoices') p where p->>'id'=i.id::text)
   order by i.billing_issued_at,i.id limit 1;
- -- Original fixture convention only: disable writer triggers for the synthetic
- -- source counterfactual, then restore every trigger BEFORE invoking the read.
- perform set_config('session_replication_role','replica',true);
- update public.paige_invoices set invoice_number=coalesce(original_number,'test')||'-native-control' where id=off_page;
- perform set_config('session_replication_role','origin',true);
+ insert into pg_temp.e04_native_off_page_identity values(before_read,off_page,original_number);
+end $off_page_capture$;
+
+-- SAME standalone SET LOCAL as the incumbent fixture. The restricted runner
+-- refuses set_config(session_replication_role) inside a DO block.
+-- No extra parameter permission; every source read runs with triggers restored.
+set local session_replication_role=replica;
+update public.paige_invoices i set invoice_number=coalesce(s.original_number,'test')||'-native-control'
+ from pg_temp.e04_native_off_page_identity s where i.id=s.off_page;
+set local session_replication_role=origin;
+
+do $off_page_changed$
+declare before_read jsonb; after_read jsonb;
+begin
+ select s.before_read into strict before_read from pg_temp.e04_native_off_page_identity s;
  after_read:=public._client_portal_invoice_facts_for_client('e4000000-0000-4000-8000-00000000aaaa','e4000000-0000-4000-8000-0000000c0001',1,null,current_date);
  perform pg_temp.check_true(before_read-'_native_sources'=after_read-'_native_sources','off-page control leaves the visible page and financial totals unchanged');
  perform pg_temp.check_true(before_read->'_native_sources'->>'all_facts_identity'<>after_read->'_native_sources'->>'all_facts_identity',
   'source identity covers original facts beyond the returned page');
- perform set_config('session_replication_role','replica',true);
- update public.paige_invoices set invoice_number=original_number where id=off_page;
- perform set_config('session_replication_role','origin',true);
+end $off_page_changed$;
+
+set local session_replication_role=replica;
+update public.paige_invoices i set invoice_number=s.original_number
+ from pg_temp.e04_native_off_page_identity s where i.id=s.off_page;
+set local session_replication_role=origin;
+
+do $off_page_restored$
+declare before_read jsonb;
+begin
+ select s.before_read into strict before_read from pg_temp.e04_native_off_page_identity s;
  perform pg_temp.check_true(public._client_portal_invoice_facts_for_client('e4000000-0000-4000-8000-00000000aaaa','e4000000-0000-4000-8000-0000000c0001',1,null,current_date)=before_read,
   'source control restores the exact original query outcome and identity');
-end $off_page_identity$;
+end $off_page_restored$;
 
 -- A deterministic near-midnight boundary, including the DST date transition.
 -- Reuse the SAME original setting, never a user profile or an invented default.

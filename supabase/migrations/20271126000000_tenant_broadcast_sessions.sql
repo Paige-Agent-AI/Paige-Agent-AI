@@ -15,6 +15,7 @@ CREATE TABLE IF NOT EXISTS public.tenant_broadcast_sessions (
   status text NOT NULL DEFAULT 'live',
   meeting_id text NOT NULL,
   host_participant_id text,
+  participant_count integer NOT NULL DEFAULT 1,
   created_by uuid,
   created_at timestamptz NOT NULL DEFAULT now(),
   ended_at timestamptz,
@@ -62,6 +63,35 @@ LANGUAGE sql SECURITY DEFINER SET search_path = public AS $fn$
 $fn$;
 REVOKE ALL ON FUNCTION public.tenant_broadcast_session_active(uuid) FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.tenant_broadcast_session_active(uuid) TO service_role;
+
+-- A member's seat: increments the live session's participant count under the interactive
+-- cap (a technical limit that also bounds billing exposure — the billing supersession
+-- keeps anti-abuse). Not-live returns NULL; AT CAP raises BROADCAST_ROOM_FULL so the door
+-- can tell the two apart honestly.
+CREATE OR REPLACE FUNCTION public.tenant_broadcast_session_join(
+  p_tenant_id uuid
+) RETURNS public.tenant_broadcast_sessions
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $fn$
+DECLARE
+  r public.tenant_broadcast_sessions;
+BEGIN
+  SELECT * INTO r FROM public.tenant_broadcast_sessions
+  WHERE tenant_id = p_tenant_id AND status = 'live'
+  ORDER BY created_at DESC LIMIT 1 FOR UPDATE;
+  IF r.id IS NULL THEN
+    RETURN NULL;
+  END IF;
+  IF r.participant_count >= 8 THEN
+    RAISE EXCEPTION 'BROADCAST_ROOM_FULL: the room is at its interactive cap' USING ERRCODE = 'P0001';
+  END IF;
+  UPDATE public.tenant_broadcast_sessions
+  SET participant_count = participant_count + 1
+  WHERE id = r.id
+  RETURNING * INTO r;
+  RETURN r;
+END $fn$;
+REVOKE ALL ON FUNCTION public.tenant_broadcast_session_join(uuid) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.tenant_broadcast_session_join(uuid) TO service_role;
 
 CREATE OR REPLACE FUNCTION public.tenant_broadcast_session_end(
   p_id uuid, p_tenant_id uuid

@@ -36,6 +36,9 @@ const JoinPlatform = lazyPage(() => import("./pages/JoinPlatform"));
 const McpOAuthCallback = lazyPage(() => import("./pages/McpOAuthCallback"));
 const ZapierOAuthCallback = lazyPage(() => import("./pages/ZapierOAuthCallback"));
 const BookingPage = lazyPage(() => import("./pages/BookingPage"));
+// EXP07 broadcast slice: the live room (host + seated members; the SDK is code-split to
+// exactly this route so the Social tab never carries it).
+const LiveRoom = lazyPage(() => import("./pages/LiveRoom"));
 const ManageBooking = lazyPage(() => import("./pages/ManageBooking"));
 const PaigeHome = lazyPage(() => import("./pages/PaigeHome"));
 const Onboarding = lazyPage(() => import("./pages/Onboarding"));
@@ -247,6 +250,7 @@ const App = () => /^\/payment-return\/?$/i.test(window.location.pathname) ? <Pay
             <Route path="/oauth/mcp/callback" element={<PageSuspense><McpOAuthCallback /></PageSuspense>} />
             <Route path="/oauth/zapier/callback" element={<PageSuspense><ZapierOAuthCallback /></PageSuspense>} />
             <Route path="/book/:slug" element={<PageSuspense><BookingPage /></PageSuspense>} />
+            <Route path="/live/:id" element={<PageSuspense><LiveRoom /></PageSuspense>} />
             <Route path="/booking/manage" element={<PageSuspense><ManageBooking /></PageSuspense>} />
             <Route path="/signup" element={<SignupRedirect />} />
             <Route path="/get-started" element={<SignupRedirect />} />

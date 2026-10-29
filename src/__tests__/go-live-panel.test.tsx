@@ -33,7 +33,7 @@ vi.mock("@/hooks/useTenantContext", () => ({ useTenantContext: () => ({ activeTe
 
 import { GoLive } from "../solo/go-live";
 
-const SESSION = { title: "Spring open house", started_at: "2026-10-28T23:00:00Z", guest_url: "https://paigeagent.ai/live/spring-open-house" };
+const SESSION = { id: "ffff0000-0000-4000-8000-00000000c001", title: "Spring open house", started_at: "2026-10-28T23:00:00Z", guest_url: "https://paigeagent.ai/live/spring-open-house" };
 
 let container: HTMLDivElement | null = null;
 let root: Root | null = null;
@@ -99,6 +99,9 @@ describe("Go live — the act, only when the door asserts readiness", () => {
     expect(text()).toContain("Spring open house");
     expect(container?.querySelector("[data-golive-guest-link]")?.textContent).toBe(SESSION.guest_url);
     expect(text()).toContain("End broadcast");
+    // The room lives at /live/:id — the panel's act link points there.
+    const roomLink = Array.from(container?.querySelectorAll("a") ?? []).find((a) => a.textContent?.includes("Open the room"));
+    expect(roomLink?.getAttribute("href")).toBe(`/live/${SESSION.id}`);
   });
 
   it("sends the host's own title when one is given", async () => {

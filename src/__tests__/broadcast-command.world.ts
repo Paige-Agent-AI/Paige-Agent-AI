@@ -29,6 +29,8 @@ export interface WorldOptions {
   /** A pre-seeded LIVE session row (owned by `seedTenant`). */
   seedLive?: boolean;
   seedTenant?: string;
+  /** The seeded live session's participant count (the interactive cap is 8). */
+  seedParticipants?: number;
   /** Pre-seeded recent rows for the anti-abuse count (owned by USER). */
   seedRecentCount?: number;
   meterInsertFails?: boolean;
@@ -49,7 +51,7 @@ export function world(o: WorldOptions = {}) {
     sessions.push({
       id: SESSION_ID, tenant_id: o.seedTenant ?? MINE, title: "Seeded live", status: "live",
       meeting_id: MEETING_ID, host_participant_id: PARTICIPANT_ID, created_by: USER,
-      created_at: FIXED_START, ended_at: null,
+      participant_count: o.seedParticipants ?? 1, created_at: FIXED_START, ended_at: null,
     });
   }
   for (let i = 0; i < (o.seedRecentCount ?? 0); i += 1) {
@@ -87,9 +89,18 @@ export function world(o: WorldOptions = {}) {
         const row: Row = {
           id: SESSION_ID, tenant_id: args.p_tenant_id, title: args.p_title, status: "live",
           meeting_id: args.p_meeting_id, host_participant_id: args.p_host_participant_id,
-          created_by: args.p_created_by, created_at: new Date().toISOString(), ended_at: null,
+          participant_count: 1, created_by: args.p_created_by, created_at: new Date().toISOString(), ended_at: null,
         };
         sessions.push(row);
+        return { data: { ...row }, error: null };
+      }
+      if (fn === "tenant_broadcast_session_join") {
+        const row = sessions.find((s) => s.tenant_id === args.p_tenant_id && s.status === "live");
+        if (!row) return { data: null, error: null };
+        if (Number(row.participant_count) >= 8) {
+          return { data: null, error: { message: "BROADCAST_ROOM_FULL: the room is at its interactive cap" } };
+        }
+        row.participant_count = Number(row.participant_count) + 1;
         return { data: { ...row }, error: null };
       }
       if (fn === "tenant_broadcast_session_end") {

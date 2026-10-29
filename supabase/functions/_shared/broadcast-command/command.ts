@@ -54,9 +54,6 @@ const HOST_PRESET = "group_call";
  *  rate). The first-invoice readback (the decision doc's named open question) settles
  *  actuals; this constant is a meter estimate, never a customer price. */
 const LIST_USD_PER_PARTICIPANT_MIN = 0.002;
-/** Slice 1 admits only the host; the meter counts host participant-minutes. Guest
- *  admission (the next slice) adds their minutes to the same row's arithmetic. */
-const SLICE_1_PARTICIPANTS = 1;
 
 /** The tenant-facing guest link for a session: the app origin the browser called from,
  *  with the honest fallback when no origin header survives. The /live route ships with
@@ -74,7 +71,7 @@ export async function handleBroadcastCommand(req: Request, deps: BroadcastComman
   let body: Record<string, unknown> = {};
   try { body = await req.json() as Record<string, unknown>; } catch { return respond(400, { ok: false, code: "REQUEST_INVALID", error: NOTHING_CHANGED }); }
   const action = typeof body.action === "string" ? body.action : "";
-  if (!["status", "open", "end", "probe"].includes(action)) return respond(400, { ok: false, code: "ACTION_INVALID", error: NOTHING_CHANGED });
+  if (!["status", "open", "end", "join", "probe"].includes(action)) return respond(400, { ok: false, code: "ACTION_INVALID", error: NOTHING_CHANGED });
 
   // Who is calling — the door never trusts a named tenant or user.
   const { data: userData, error: userErr } = await deps.caller.auth.getUser();
@@ -102,7 +99,7 @@ export async function handleBroadcastCommand(req: Request, deps: BroadcastComman
     if (row?.id) {
       return respond(200, {
         ok: true, state: "live",
-        session: { title: String(row.title), started_at: String(row.created_at), guest_url: guestUrlFor(req, String(row.id)) },
+        session: { id: String(row.id), title: String(row.title), started_at: String(row.created_at), guest_url: guestUrlFor(req, String(row.id)) },
       });
     }
     return respond(200, { ok: true, state: "ready" });
@@ -114,6 +111,41 @@ export async function handleBroadcastCommand(req: Request, deps: BroadcastComman
     const probed = await deps.adapter.listMeetings();
     if (probed.ok) return respond(200, { ok: true, probe: "reachable", meetings: probed.meetings.length });
     return respond(502, { ok: false, code: "BROADCAST_PROBE_REFUSED", error: "The live service refused the credential check — nothing was changed.", httpStatus: "httpStatus" in probed ? probed.httpStatus : undefined });
+  }
+
+  // ── join: a signed-in member's seat in their OWN workspace's live room — the host
+  // included (a browser refresh re-mints the pass through this same action). The room
+  // itself lives at /live/:id; the interactive cap is the anti-abuse bound. ────────────
+  if (action === "join") {
+    const active = await deps.admin.rpc("tenant_broadcast_session_active", { p_tenant_id: tenantId });
+    const row = active.error ? null : (active.data as Record<string, unknown> | null);
+    if (!row?.id || typeof row.meeting_id !== "string") {
+      return respond(404, { ok: false, code: "BROADCAST_NOT_LIVE", error: "No live broadcast to join in this workspace." });
+    }
+    const seat = await deps.admin.rpc("tenant_broadcast_session_join", { p_tenant_id: tenantId });
+    const seatRow = seat.error
+      // The cap raises BROADCAST_ROOM_FULL; anything else is the door's honest refusal.
+      ? (String(seat.error?.message ?? "").includes("BROADCAST_ROOM_FULL") ? "room_full" : "refused")
+      : ((seat.data as Record<string, unknown> | null)?.id ? "seated" : "not_live");
+    if (seatRow === "room_full") {
+      return respond(409, { ok: false, code: "BROADCAST_ROOM_FULL", error: "This live room is full right now. Nothing changed." });
+    }
+    if (seatRow !== "seated") {
+      return respond(404, { ok: false, code: "BROADCAST_NOT_LIVE", error: "No live broadcast to join in this workspace." });
+    }
+    const pass = await deps.adapter.addParticipant({
+      meetingId: String(row.meeting_id), customParticipantId: user.id, presetName: HOST_PRESET, name: "Guest",
+    });
+    if (!pass.ok) {
+      // The seat was counted but the provider refused — the count is a bound, not a bill;
+      // the meter reads the final participant_count only at end.
+      return respond(502, { ok: false, code: "BROADCAST_JOIN_REFUSED", error: "The live service couldn't admit you. Try again in a moment." });
+    }
+    return respond(200, {
+      ok: true,
+      session: { id: String(row.id), title: String(row.title), started_at: String(row.created_at), guest_url: guestUrlFor(req, String(row.id)) },
+      join: { meeting_id: String(row.meeting_id), participant_id: pass.participant.id, token: pass.participant.token },
+    });
   }
 
   if (!configured) {
@@ -164,9 +196,9 @@ export async function handleBroadcastCommand(req: Request, deps: BroadcastComman
     const sessionId = String(row.id);
     return respond(200, {
       ok: true,
-      session: { title, started_at: String(row.created_at), guest_url: guestUrlFor(req, sessionId) },
+      session: { id: sessionId, title, started_at: String(row.created_at), guest_url: guestUrlFor(req, sessionId) },
       // The host's OWN join material — the provider-minted participant pass (never the
-      // platform token). The in-page room mount consumes this; the panel passes it through.
+      // platform token). The room page consumes this; the panel passes it through.
       host: { meeting_id: meeting.meeting.id, participant_id: host.participant.id, token: host.participant.token },
     });
   }
@@ -196,26 +228,27 @@ export async function handleBroadcastCommand(req: Request, deps: BroadcastComman
     return respond(409, { ok: false, code: "BROADCAST_END_RACE", error: "The broadcast already ended — refresh for its real state." });
   }
 
-  // The meter: host participant-minutes at the list-rate estimate, exactly-once by job_id
-  // under the media_usd index the platform already enforces. A failed insert is NAMED in
-  // the response (meter_pending) — never a silent gap in the ledger.
+  // The meter: participant-minutes at the list-rate estimate, exactly-once by job_id under
+  // the media_usd index the platform already enforces. A failed insert is NAMED in the
+  // response (meter_pending) — never a silent gap in the ledger.
   const startedAt = Date.parse(String(row.created_at));
   const endedAt = endedRow.ended_at ? Date.parse(String(endedRow.ended_at)) : Date.now();
+  const participants = typeof row.participant_count === "number" ? row.participant_count : 1;
   const participantMinutes = Number.isFinite(startedAt) && Number.isFinite(endedAt)
-    ? Math.max(0, (endedAt - startedAt) / 60_000) * SLICE_1_PARTICIPANTS
+    ? Math.max(0, (endedAt - startedAt) / 60_000) * participants
     : 0;
   const usd = Number((participantMinutes * LIST_USD_PER_PARTICIPANT_MIN).toFixed(4));
   const meter = await deps.admin.from("platform_usage_events").insert({
     tenant_id: tenantId, event_type: "media_usd", quantity: usd, unit: "usd",
     metadata: {
       job_id: `broadcast:${sessionId}`, kind: "broadcast_session_end",
-      participant_minutes: Math.round(participantMinutes * 100) / 100,
+      participant_minutes: Math.round(participantMinutes * 100) / 100, participants,
       list_rate_usd_per_participant_min: LIST_USD_PER_PARTICIPANT_MIN, host_kick_ok: kickOk,
     },
   });
   return respond(200, {
     ok: true, state: "ended",
-    session: { title: String(row.title), started_at: String(row.created_at), guest_url: guestUrlFor(req, sessionId) },
+    session: { id: sessionId, title: String(row.title), started_at: String(row.created_at), guest_url: guestUrlFor(req, sessionId) },
     ...(meter.error ? { note: "meter_pending" } : {}),
   });
 }

@@ -28,10 +28,16 @@ type GoLivePhase = "checking" | "unavailable" | "ready" | "live" | "ended";
 
 /** The session facts the door mints. Every field is the door's own — none is synthesized here. */
 type LiveSession = {
+  id: string;
   title: string;
   started_at: string;
   guest_url: string;
 };
+
+const sessionFrom = (s: Record<string, unknown> | null | undefined): LiveSession | null =>
+  s && typeof s.id === "string" && typeof s.title === "string" && typeof s.started_at === "string" && typeof s.guest_url === "string"
+    ? { id: s.id, title: s.title, started_at: s.started_at, guest_url: s.guest_url }
+    : null;
 
 const TRUTH_LABEL: Record<GoLivePhase, string> = {
   checking: "UNAVAILABLE",
@@ -79,9 +85,9 @@ export function GoLive() {
       // panel never renders readiness the door didn't assert.
       if (data?.ok && data.state === "ready") { setPhase("ready"); return; }
       if (data?.ok && data.state === "live" && data.session && typeof data.session === "object") {
-        const s = data.session as Record<string, unknown>;
-        if (typeof s.title === "string" && typeof s.started_at === "string" && typeof s.guest_url === "string") {
-          setSession({ title: s.title, started_at: s.started_at, guest_url: s.guest_url });
+        const live = sessionFrom(data.session as Record<string, unknown>);
+        if (live) {
+          setSession(live);
           setPhase("live");
           return;
         }
@@ -114,14 +120,14 @@ export function GoLive() {
     } catch {
       data = null; errorBody = null;
     }
-    const s = data?.ok ? data.session as Record<string, unknown> | undefined : undefined;
-    if (!data?.ok || typeof s?.title !== "string" || typeof s?.started_at !== "string" || typeof s?.guest_url !== "string") {
-      // The door's refusal vocabulary is closed; if it left a sentence, show it, else this
+    const live = data?.ok ? sessionFrom(data.session as Record<string, unknown> | undefined) : null;
+    if (!data?.ok || !live) {
+      // The door’s refusal vocabulary is closed; if it left a sentence, show it, else this
       // honest one. Provider prose never reaches the customer.
       const sentence = typeof errorBody?.error === "string" && !/non-2xx/i.test(errorBody.error) ? errorBody.error : "The room couldn’t be opened. Nothing is running — try again in a moment.";
       setNote(sentence); setBusy(false); return;
     }
-    setSession({ title: s.title, started_at: s.started_at, guest_url: s.guest_url });
+    setSession(live);
     setPhase("live"); setBusy(false); setNote("");
   };
 
@@ -169,18 +175,19 @@ export function GoLive() {
 
     {phase === "unavailable" && (
       <p className="social-golive-body">
-        Live broadcasting isn’t switched on for your workspace yet. When it is, you’ll open a live
-        room from here — your camera and voice, and guests you admit on a link PAIGE mints for the
-        session.
+        Live broadcasting isn’t switched on for your workspace yet. When it is, you’ll open a
+        live room from here — your camera and voice, with people from your workspace joining
+        you on a link PAIGE mints for the session.
       </p>
     )}
 
     {phase === "ready" && (
       <div className="social-golive-ready">
         <p className="social-golive-body">
-          Open a live room and bring guests in on a private link — you decide who joins you on
-          camera. Broadcasting straight to your connected channels arrives once each platform
-          grants live access; your connections live in Settings → Integrations.
+          Open a live room and bring people from your workspace in on a private link — each
+          joins with their own PAIGE sign-in. Broadcasting straight to your connected
+          channels arrives once each platform grants live access; your connections live in
+          Settings → Integrations.
         </p>
         <div className="social-golive-acts">
           <label className="social-golive-field">
@@ -208,15 +215,18 @@ export function GoLive() {
           {minutesLive(session.started_at, now) ? <span> · live for {minutesLive(session.started_at, now)}</span> : null}
         </p>
         <p className="social-golive-body">
-          Your room is open. Guests join on the link below and each one waits until you admit them.
+          Your room is open — open it from here. People in this workspace join on the link
+          below, each with their own PAIGE sign-in. Bringing in outside guests arrives with
+          the guest-admission update.
         </p>
         <div className="social-golive-linkrow">
+          <a className="btn btn-s btn-g" href={`/live/${session.id}`}>Open the room</a>
           <span className="social-golive-link mono" data-golive-guest-link>{session.guest_url}</span>
-          <button type="button" className="btn btn-s" onClick={() => void copyLink()}>Copy guest link</button>
+          <button type="button" className="btn btn-s" onClick={() => void copyLink()}>Copy join link</button>
           <button type="button" className="btn btn-s" disabled={busy} onClick={() => void endBroadcast()}>End broadcast</button>
         </div>
-        {/* The in-page room (camera preview, admitted guests) mounts here with the door slice. */}
-        <div className="social-golive-room" data-golive-room />
+        {/* The room itself lives at /live/:id — one implementation for host and seated
+            members, SDK code-split to that route; this panel is the control surface. */}
       </div>
     )}
 

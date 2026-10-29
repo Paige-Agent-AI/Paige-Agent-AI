@@ -166,6 +166,53 @@ describe("broadcast-command — end: the row is the truth", () => {
   });
 });
 
+describe("broadcast-command — join: a member's seat in their own workspace's room", () => {
+  it("seats a signed-in member and hands them their OWN pass — never the platform token", async () => {
+    const w = world({ seedLive: true });
+    const res = await w.call({ action: "join" });
+    expect(res.status).toBe(200);
+    const parsed = await body(res);
+    const join = parsed.join as Record<string, unknown>;
+    expect(join).toMatchObject({ meeting_id: MEETING_ID, participant_id: PARTICIPANT_ID });
+    expect(String(join.token)).toBe("participant-jwt-not-the-platform-token");
+    expect(w.seen.addParticipant[0]).toMatchObject({ meetingId: MEETING_ID, customParticipantId: USER, name: "Guest" });
+    expect((parsed.session as Record<string, unknown>).id).toBe(SESSION_ID);
+    expect(JSON.stringify(parsed)).not.toMatch(/Bearer|CLOUDFLARE_REALTIMEKIT_API_TOKEN|synthetic-edge-token/i);
+  });
+
+  it("another workspace's live room is not joinable — the seat is tenant-scoped", async () => {
+    const w = world({ seedLive: true, seedTenant: THEIRS });
+    const res = await w.call({ action: "join" });
+    expect(res.status).toBe(404);
+    expect(w.seen.addParticipant).toHaveLength(0);
+  });
+
+  it("refuses honestly at the interactive cap without minting a pass", async () => {
+    const w = world({ seedLive: true, seedParticipants: 8 });
+    const res = await w.call({ action: "join" });
+    expect(res.status).toBe(409);
+    expect((await body(res)).code).toBe("BROADCAST_ROOM_FULL");
+    expect(w.seen.addParticipant).toHaveLength(0);
+  });
+
+  it("a refused admission reports the honest code — the seat is a bound, not a bill", async () => {
+    const w = world({ seedLive: true, addParticipant: "refused" });
+    const res = await w.call({ action: "join" });
+    expect(res.status).toBe(502);
+    expect((await body(res)).code).toBe("BROADCAST_JOIN_REFUSED");
+  });
+
+  it("meters EVERY seated participant at end — one join then end = two people's minutes", async () => {
+    const w = world({ seedLive: true });
+    await w.call({ action: "join" });
+    await w.call({ action: "end" });
+    const meter = w.seen.meterInserts.at(-1);
+    // 30 minutes × 2 participants × $0.002 = $0.12 at the documented list estimate.
+    expect(Number(meter?.quantity)).toBeCloseTo(0.12, 3);
+    expect(meter?.metadata).toMatchObject({ participants: 2, participant_minutes: 60 });
+  });
+});
+
 describe("broadcast-command — probe: the read-only credential proof", () => {
   it("answers reachable on a 200 without creating anything", async () => {
     const w = world();

@@ -27,6 +27,11 @@ capability/algorithm maturity promotion follows from this sequencing correction.
 
 ## October29 — Finance native Back/Forward focus repair, candidate
 
+Source-release applicability correction ANT138/b35fd421 follows AGENTS.md and
+module5: safe reviewed exact-CI source release is separate from complete native,
+authenticated/cohort and founder acceptance. Those gaps stay UNVERIFIED; no
+material finding/security gate is waived and no full outcome is closed.
+
 REPAIR O04/O14/O16 in the original Finance tab component only. Same-workspace POP
 restores selected-tab focus only while that tab strip owns it; Chat draft/caret,
 non-history navigation and workspace-change focus are protected. No route/store/

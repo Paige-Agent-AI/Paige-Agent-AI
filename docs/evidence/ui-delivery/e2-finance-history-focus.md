@@ -53,6 +53,32 @@ repair or new agent was started.
 
 ## Proof boundaries and recovery
 
+### October29 source-release applicability correction
+
+Original ANT138/b35fd421 records this correction before release. AGENTS.md's
+"Merge to main after green" rule separates safe reviewed source release from
+activation, authenticated QA and founder acceptance. Module5 permits exact gaps
+reported UNVERIFIED and excluded from the claimed deliverable. The earlier
+blanket pre-merge requirement for exact-Preview authentication and complete
+native/AT/customer acceptance was my gate-classification error for this frontend
+focus-only repair, not a newly discovered source or authorization failure.
+
+No required test, material finding, security check or provider/effect gate is
+waived. The release claim is the bounded source correction, with observed local
+keyboard/history behavior; no LIVE capability, full outcome, native200percent,
+screen-reader conformance or authenticated-cohort claim is made. Those proof
+classes remain required and UNVERIFIED until exercised through the legitimate
+released product. Production read-only regression follows authoritative source
+readback; no Auth configuration, credential, role or fixture change is needed.
+
+Current maina58e9d8d088a75f1a8786c83958915f65d67d2d5 composes at5b364d78bbf3878eb3979afbaf3dfa4a5addcac3.
+Its14 incoming backend/proof/document paths preserve every frontend/style/test
+input of the previous70PASS run and both neutral image leaves. The older2d
+candidate has all10 applicable hosted checks SUCCESS/schema-free PreviewSKIP,
+but final review and required CI for the successor are independently owed.
+Existing3018 material P1,3019 and original Sales history findings are unaffected
+by this proportional Finance source-release disposition.
+
 ### October29 current-main composition and renewed proof
 
 The existing candidate composes current main1044576a7471c33dfb29f16fc420943e884e82e9

@@ -18,7 +18,6 @@
 // read-only and Connect/Reconnect stays in Settings → Integrations (owner alignment
 // 2026-10-28) — this surface never grows a second connect flow.
 import React from "react";
-import { useTenantContext } from "@/hooks/useTenantContext";
 import { supabase } from "@/integrations/supabase/client";
 import { readFunctionErrorBody } from "@/lib/integrations/connectError";
 import { Ic } from "./_shared";
@@ -54,8 +53,9 @@ const minutesLive = (startedAt: string, now: number) => {
   return mins < 1 ? "under a minute" : `${mins} min`;
 };
 
-export function GoLive() {
-  const { activeTenantId } = useTenantContext();
+export function GoLive({ tenantId }: { tenantId: string }) {
+  // Mounted only when the Social surface has resolved the workspace (the parent gates it):
+  // contract mounts without a workspace never render this panel and never touch transport.
   const [phase, setPhase] = React.useState<GoLivePhase>("checking");
   const [session, setSession] = React.useState<LiveSession | null>(null);
   const [title, setTitle] = React.useState("");
@@ -64,7 +64,7 @@ export function GoLive() {
   const [now, setNow] = React.useState(() => Date.now());
 
   const callDoor = async (body: Record<string, unknown>) => {
-    const invoked = await supabase.functions.invoke("broadcast-command", { body: { ...body, expected_tenant_id: activeTenantId } });
+    const invoked = await supabase.functions.invoke("broadcast-command", { body: { ...body, expected_tenant_id: tenantId } });
     const errorBody = await readFunctionErrorBody(invoked.error, invoked.data);
     return { data: invoked.data as Record<string, unknown> | null, errorBody };
   };
@@ -99,7 +99,7 @@ export function GoLive() {
     // Status is read once per mount, the same rhythm the media library uses; the tenant
     // switch remounts the Social page and therefore this panel.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTenantId]);
+  }, [tenantId]);
 
   React.useEffect(() => {
     if (phase !== "live") return;

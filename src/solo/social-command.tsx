@@ -797,7 +797,7 @@ export function SocialCommand({ campaigns, onOpenStudio, onAskPaige, onOpenCompa
 
       {/* EXP07 broadcast slice — the Go live surface the owner placed on this tab (2026-10-28):
           the tab's standing act, above the standing panels, fed only by the broadcast door. */}
-      <GoLive />
+      {social.tenantId ? <GoLive tenantId={social.tenantId} /> : null}
 
       <div className="social-grid">
         <div className="social-col">

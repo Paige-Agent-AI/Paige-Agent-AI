@@ -29,7 +29,6 @@ vi.mock("@/integrations/supabase/client", () => ({
   },
 }));
 vi.mock("@/lib/integrations/connectError", () => ({ readFunctionErrorBody: async () => null }));
-vi.mock("@/hooks/useTenantContext", () => ({ useTenantContext: () => ({ activeTenantId: "tenant-1" }) }));
 
 import { GoLive } from "../solo/go-live";
 
@@ -42,7 +41,7 @@ const mount = async () => {
   container = document.createElement("div");
   document.body.appendChild(container);
   root = createRoot(container);
-  await act(async () => { root!.render(<GoLive />); });
+  await act(async () => { root!.render(<GoLive tenantId="tenant-1" />); });
   return container;
 };
 

@@ -31,6 +31,13 @@ const DM_SCOPE = { version: 1, mode: "allowlist", access: "read", tools: ["ask_c
 const MERIT_CONFIG = { team_hub_tools: SHARED_LIST, capability_scope: DM_SCOPE,
   personality: { short_role: "Sales & getting paid", role_line: "Sales & getting paid: deals, proposals & agreements", intro: "I'm MERIT.", warmth: 4, length: 2, formality: 3, energy: 4, humour: "off",
     house_words: [], things_to_avoid: ["Pressure tactics"], never_does: ["Post a deal value in a channel"], sounds_like: ["Next step: proposal by Oct 30."] } };
+// EXP01: MENTOR's roster row once the plan-read migration lands — DM scope gains plan_list.
+const MENTOR_DM_SCOPE = { version: 1, mode: "allowlist", access: "read", tools: ["ask_choices", "capability_status", "read_business_time_zone", "team_hub_read_conversation", "read_tenant_knowledge", "marketplace_browse", "plan_list"] };
+const MENTOR_CONFIG = { team_hub_tools: SHARED_LIST, capability_scope: MENTOR_DM_SCOPE,
+  personality: { short_role: "Discovery & strategy", role_line: "Discovery & strategy", intro: "I'm MENTOR.", warmth: 4, length: 3, formality: 2, energy: 3, humour: "light",
+    house_words: [], things_to_avoid: ["Lecturing"], never_does: ["Lecture"], sounds_like: ["One thing first."] } };
+const PLAN_ROW = "99999999-9999-4999-8999-999999999990";
+const PLAN_ITEM = "99999999-9999-4999-8999-999999999991";
 
 type Msg = Record<string, unknown>;
 type Call = { who: "caller" | "service"; name: string; args: Record<string, unknown> };
@@ -42,10 +49,11 @@ function message(id: string, channel: string, author: string, body: string, extr
 }
 
 type Opts = {
-  sourceAuthor?: string; mentions?: string[]; config?: unknown; configThrows?: boolean;
+  sourceAuthor?: string; mentions?: string[]; config?: unknown; configThrows?: boolean; configFn?: () => unknown;
   accept?: (args: Record<string, unknown>) => unknown; end?: () => unknown; recordFails?: string[];
   post?: (args: Record<string, unknown>, attempt: number) => unknown; readbackHides?: boolean; launchVisibility?: unknown;
   sourceIn?: string; sourceThread?: string | null; stage?: (args: Record<string, unknown>) => unknown;
+  agentDmKey?: string; authorityRows?: unknown[]; planList?: unknown; planListError?: boolean; tenantPin?: string;
 };
 /** A raw client answer (`{ data, error }`), for the transport failures the Supabase client returns instead of throwing. */
 const raw = (data: unknown, error: { message?: string; code?: string } | null, commit = false) => ({ __rpc: { data, error }, commit });
@@ -77,7 +85,7 @@ function world(opts: Opts = {}) {
               { id: LAUNCH, kind: "channel", name: "launch", visibility: "launchVisibility" in opts ? opts.launchVisibility : "team", joined: true, unread: 0 },
               { id: SECRET_CHANNEL, kind: "channel", name: "acquisition-talks", visibility: "private", joined: true, unread: 3 },
               { id: SAM_PRIYA_DM, kind: "dm", name: null, visibility: "private", dm_user_id: PRIYA, joined: true, unread: 1 },
-              { id: MERIT_DM, kind: "agent_dm", name: null, visibility: "private", agent_key: "merit", joined: true, unread: 0 },
+              { id: MERIT_DM, kind: "agent_dm", name: null, visibility: "private", agent_key: opts.agentDmKey ?? "merit", joined: true, unread: 0 },
             ] };
           case "team_hub_list_messages": {
             const key = args.p_thread_root ? `${args.p_channel_id}:${args.p_thread_root}` : String(args.p_channel_id);
@@ -89,6 +97,14 @@ function world(opts: Opts = {}) {
           }
           case "team_hub_open_agent_dm": return { ok: true, channel_id: MERIT_DM };
           case "read_business_time_zone": return { state: "configured", zone: "America/Chicago", can_set: false, local_date: "2026-10-27" };
+          case "get_team_authority_readiness": return opts.authorityRows ?? [
+            { fact_key: "viewer_permission", value: "owner", status: "available", source: null, reason: null, tenant_id: TENANT },
+            { fact_key: "viewer_is_legal_owner", value: "true", status: "available", source: null, reason: null, tenant_id: TENANT },
+          ];
+          case "plan_list": return opts.planListError
+            ? { __rpc: { data: null, error: { message: "PLAN_FORBIDDEN" } } }
+            : (opts.planList ?? { plans: [{ id: PLAN_ROW, title: "Launch week", horizon: "week", items: [{ id: PLAN_ITEM, title: "Confirm venue", status: "not_started", due_at: "2026-10-30" }] }], loose_items: [] });
+          case "current_user_tenant_id": return opts.tenantPin ?? TENANT;
           case "team_hub_post_agent_message": {
             postAttempt += 1;
             let after: unknown;
@@ -136,7 +152,11 @@ function world(opts: Opts = {}) {
     from(table: string) {
       calls.push({ who: "service", name: `from:${table}`, args: {} });
       const chain: any = { select: () => chain, eq: () => chain, is: () => chain,
-        maybeSingle: async () => { if (opts.configThrows) throw new Error("down"); return { data: opts.config === undefined ? { slug: "merit", config: MERIT_CONFIG } : opts.config, error: null }; } };
+        maybeSingle: async () => {
+          if (opts.configThrows) throw new Error("down");
+          const data = opts.configFn ? opts.configFn() : (opts.config === undefined ? { slug: "merit", config: MERIT_CONFIG } : opts.config);
+          return { data, error: null };
+        } };
       return chain;
     },
   };
@@ -805,5 +825,101 @@ describe("the private-part line is the definer's alone", () => {
     const post = named(w, "team_hub_post_agent_message")[0].args;
     assert.equal(post.p_private_answer, true);
     assert.equal(post.p_body, "For the room: soon.");
+  });
+});
+
+// EXP01 (MENTOR) plan read — the one DM-scope read this module runs for MENTOR: the existing
+// planning read, offered only in MENTOR's DM under the asker's current owner/admin authority with
+// the roster still listing exactly the offered scope. Every gate fails closed.
+describe("MENTOR plan read (EXP01)", () => {
+  const mentorWorld = (over: Opts = {}) => world({ sourceIn: MERIT_DM, mentions: [], agentDmKey: "mentor", config: { slug: "mentor", config: MENTOR_CONFIG }, ...over });
+  const mentorTurn = (extra: Record<string, unknown> = {}) => turn({ conversationId: MERIT_DM, agent: "mentor", ...extra });
+
+  it("offers plan_list only in MENTOR's DM, reads it under the asker's client, receipts it, and answers from the rows", async () => {
+    const w = mentorWorld(), m = model([
+      { tool_calls: [{ name: "plan_list", args: { horizon: "week" } }] },
+      { content: JSON.stringify({ reply: "One thing on your plate: Confirm venue, due the 30th.", route: "answer" }) },
+    ]);
+    const r = await run(w, m, mentorTurn());
+    assert.equal(r.status, 200);
+    assert.equal(r.body.outcome, "posted");
+    assert.ok(m.requests[0].request.tools!.some((t: any) => t.function.name === "plan_list"), "the read is offered to the model");
+    const read = named(w, "plan_list")[0];
+    assert.equal(read.who, "caller");
+    assert.equal(read.args.p_tenant_id, TENANT);
+    const planCall = w.calls.findIndex((c) => c.name === "plan_list");
+    const pinCall = w.calls.findIndex((c) => c.name === "current_user_tenant_id");
+    assert.ok(planCall >= 0 && pinCall > planCall, "the tenant pin runs after the read");
+    const receipts = named(w, "record_capability_run").filter((c) => c.args._capability_key === "plan_list");
+    assert.equal(receipts.length, 1, "the read is receipted exactly once");
+    assert.match(promptText(m), /Confirm venue/, "the model saw the real rows");
+  });
+
+  it("a member seat never sees the read, and an attempted call is answered unavailable, never guessed", async () => {
+    const w = mentorWorld({ authorityRows: [
+      { fact_key: "viewer_permission", value: "member", status: "available", source: null, reason: null, tenant_id: TENANT },
+      { fact_key: "viewer_is_legal_owner", value: "false", status: "available", source: null, reason: null, tenant_id: TENANT },
+    ] }), m = model([
+      { tool_calls: [{ name: "plan_list", args: {} }] },
+      { content: "I can't see your plans from here, so I won't guess what's on them." },
+    ]);
+    const r = await run(w, m, mentorTurn());
+    assert.equal(r.body.outcome, "posted");
+    assert.ok(!m.requests[0].request.tools!.some((t: any) => t.function.name === "plan_list"), "a member is never offered the read");
+    assert.equal(named(w, "plan_list").length, 0);
+  });
+
+  it("ZION's stored plan_list entry is NOT offered (the executor is MENTOR-scoped), and a channel never offers it", async () => {
+    const zionScope = { version: 1, mode: "allowlist", access: "read", tools: ["read_business_time_zone", "team_hub_read_conversation", "crm_list_tasks", "plan_list"] };
+    const w = world({ sourceIn: MERIT_DM, mentions: [], agentDmKey: "zion", config: { slug: "zion", config: { team_hub_tools: SHARED_LIST, capability_scope: zionScope, personality: {} } } });
+    const m = model([{ content: "Three things. Owner, task, due. Here they are." }]);
+    const r = await run(w, m, turn({ conversationId: MERIT_DM, agent: "zion" }));
+    assert.equal(r.body.outcome, "posted");
+    assert.ok(!m.requests[0].request.tools!.some((t: any) => t.function.name === "plan_list"), "only MENTOR's span runs this executor");
+
+    const wc = world({ mentions: ["mentor"], config: { slug: "mentor", config: MENTOR_CONFIG } }), mc = model([{ content: "Let's take it from the top." }]);
+    await run(wc, mc, turn({ agent: "mentor" }));
+    assert.ok(!mc.requests[0].request.tools!.some((t: any) => t.function.name === "plan_list"), "a channel reply never offers a DM-scope read");
+  });
+
+  it("a roster that drops plan_list mid-turn withholds the rows and ends the turn — no post, never a widened read", async () => {
+    let rosterReads = 0;
+    const withList = { slug: "mentor", config: JSON.parse(JSON.stringify(MENTOR_CONFIG)) };
+    const withoutList = { slug: "mentor", config: JSON.parse(JSON.stringify(MENTOR_CONFIG)) };
+    withoutList.config.capability_scope.tools = withoutList.config.capability_scope.tools.filter((t: string) => t !== "plan_list");
+    const w = mentorWorld({ configFn: () => (rosterReads += 1) <= 3 ? withList : withoutList }), m = model([
+      { tool_calls: [{ name: "plan_list", args: { horizon: "week" } }] },
+      { content: JSON.stringify({ reply: "One thing on your plate: Confirm venue.", route: "answer" }) },
+    ]);
+    const r = await run(w, m, mentorTurn());
+    assert.equal(r.body.ok, false);
+    assert.equal(r.body.outcome, "no_reply", "the turn fails closed before the post");
+    assert.equal(named(w, "team_hub_post_agent_message").length, 0);
+    assert.ok(rosterReads >= 4, "the gate re-read the roster before posting");
+  });
+
+  it("at most three plan reads a turn; the fourth is a limit message, and the reply stays honest", async () => {
+    const w = mentorWorld(), m = model([
+      { tool_calls: [{ name: "plan_list", args: {} }] },
+      { tool_calls: [{ name: "plan_list", args: {} }] },
+      { tool_calls: [{ name: "plan_list", args: {} }, { name: "plan_list", args: {} }] },
+      { content: "Three reads is my limit here — ask me again for the rest." },
+    ]);
+    const r = await run(w, m, mentorTurn());
+    assert.equal(r.body.outcome, "posted");
+    assert.equal(named(w, "plan_list").length, 3);
+    assert.match(r.body.message.body, /Three reads is my limit/);
+  });
+
+  it("a refused planning WRITE still gets the A1 line — the read executor admits no writer", async () => {
+    const w = mentorWorld(), m = model([
+      { tool_calls: [{ name: "plan_create", args: { title: "Q4 push" } }] },
+      { content: JSON.stringify({ reply: "Happy to set that up.", route: "act" }) },
+    ]);
+    const r = await run(w, m, mentorTurn());
+    assert.equal(r.body.outcome, "posted");
+    assert.equal(named(w, "plan_create").length, 0, "no writer ever runs");
+    const [post] = named(w, "team_hub_post_agent_message");
+    assert.match(post.args.p_body, /I can't take actions here yet\./);
   });
 });

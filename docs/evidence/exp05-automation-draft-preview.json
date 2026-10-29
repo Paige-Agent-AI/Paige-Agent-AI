@@ -1,0 +1,311 @@
+{
+  "schema": 1,
+  "ownerOutcome": "EXP05 outcome05; original E5-CV1/CV5/CV9. Inspect original automation draft before save; future execution is distinct.",
+  "state": "SOURCE_NATIVE_FIXTURE_VERIFIED; NOT_DEPLOYED; AUTHENTICATED_PROOF_OWED; FULL_EXPERIENCE_NOT_READY",
+  "authority": {
+    "ownerOverride": "ANT161/9fd6cc0e-98b6-4535-b15a-33a78fdcd059",
+    "coordinatorTemporaryDirection": "ANT161/35471b23-69da-41e5-97b7-83f9b1b4fcc1",
+    "preRenewalAuthorReview": "ANT11/ae12b2c7-3b43-469f-b30b-824ef9600b1b",
+    "sourceOnlyCommit": "88adf9337561ea338933e37ed159fe65e84a73a1",
+    "assurance": "AUTHOR-REVIEW / LOWER ASSURANCE"
+  },
+  "source": {
+    "base": "3f80ec8f5de5ce990d9f3674f538cf74037bbb0c",
+    "sourceOnlyCommit": "88adf9337561ea338933e37ed159fe65e84a73a1",
+    "assurance": "AUTHOR-REVIEW / LOWER ASSURANCE",
+    "rootInverse": true,
+    "cardInverse": true,
+    "pinInverse": true,
+    "sourcePins": 127,
+    "dispatchPins": 29,
+    "findings": [],
+    "strictGraph": {
+      "same": true,
+      "baseline": 0,
+      "candidate": 0,
+      "baselineDiagnostics": [],
+      "candidateDiagnostics": []
+    },
+    "source": {
+      "supabase/functions/paige-ai-chat/index.ts": "7d20dd836ecc573144973f2afb76ff90986e58d61a47d914d8e35a7fdd4ed298",
+      "src/components/chat/PaigeConfirmCard.tsx": "7dac99fbfd31e41a791204cfff88a12d1af93876f8cdcc496423a20e60b9f952",
+      "supabase/functions/_shared/paige-orchestration/automation-draft-summary.ts": "2ba93f51ee47c98ec1ad49c5294e1fe1dabd2b69054e38d73692cea767083c2f",
+      "scripts/ci/c0b-incumbent-resource-binding.mjs": "897a02e8825de06a1aa445f92f7999db1f9458842f4a199e49325896384f557d"
+    },
+    "manifestSha256": "172ef524b501178b0094dee4cad9000bf9c97675e7b2b208840102cddf798e46",
+    "boundary": "Original saved-argument summary display only. No approval, executor, stored arguments, fingerprint, provider, recurrence or permission change. Exact old extractor/validator/metadata and126 peer pins preserved;29 reviewed enclosing identity scalars and one pure helper digest only."
+  },
+  "tests": {
+    "failureFirst": {
+      "sha256": "c0433276858a2c1ed8c69325969e49b506a1b7bf19d63ef68055caea03107709",
+      "passed": 15,
+      "failed": 2,
+      "pending": 0,
+      "success": false
+    },
+    "final": {
+      "sha256": "4ac8eee02bc5c949ab8028f4dd15b721236380a1c2a48b5fba8e6c8db0b8df54",
+      "passed": 78,
+      "failed": 0,
+      "pending": 0,
+      "success": true
+    },
+    "originalHostileBindings": {
+      "passed": 83,
+      "failed": 0,
+      "skipped": 0,
+      "tapSha256": "a67ee51b06c3b30b81e727286730824da858d5b08ab557c2057136e5f09f98b9"
+    }
+  },
+  "build": {
+    "status": "PASS",
+    "logSha256": "c36fccab0bb4d4889456dc15b0f56c18f56dda67ac0200ed1e9c8a1ad4381820",
+    "dependencyLockSha256": "f3bd78f7d486e941b5e3f98b2173967d16da93c8fe9de3547a3d46379fe726a3",
+    "priorAttempt": "FAILED missing installed @mdxeditor/editor in stale shared cache; own junction repointed to existing identical-lock runtime, dependency targets preserved"
+  },
+  "native": {
+    "manifestSha256": "172ef524b501178b0094dee4cad9000bf9c97675e7b2b208840102cddf798e46",
+    "productInputs": 393,
+    "productTransforms": 0,
+    "cssFile": "main-DL7vYO-O.css",
+    "cssSha256": "0ea1c7401ca318c643686636df5c884731e85f5d134cfb96a0312057a3095214",
+    "bundleSha256": "e6cb0eed9cbeba23c0f0a292be30719018a1e86ac009eed360087f4fad2901a3",
+    "boundary": "Untransformed original SoloApp/Operations/confirmation card/formatter; neutral Auth/data and explicit message transport/container port. Actual candidate production-build CSS; existing whitespace-pre-line utility checked. Not actual Chat server transport, authenticated customer/RLS/provider or saved draft proof.",
+    "frames": 16,
+    "sizes": [
+      {
+        "width": 1536,
+        "height": 770
+      },
+      {
+        "width": 1366,
+        "height": 768
+      },
+      {
+        "width": 1024,
+        "height": 768
+      },
+      {
+        "width": 900,
+        "height": 1000
+      }
+    ],
+    "contexts": [
+      "neutral A/Mineral",
+      "neutral B/Obsidian"
+    ],
+    "panelStates": [
+      "open",
+      "closed"
+    ],
+    "allDocumentWidthsEqualViewport": true,
+    "openSummary": {
+      "length": 388,
+      "whiteSpace": "pre-line",
+      "focus": "Needs your OK"
+    },
+    "stress": {
+      "width": 320,
+      "height": 700,
+      "documentWidth": 320,
+      "steps": 20,
+      "summaryLength": 3610,
+      "scrollHeight": 4170,
+      "clientHeight": 504,
+      "approveFocusVisible": true,
+      "nativeScrollTop": 3665.60009765625
+    },
+    "notNow": "Native Tab Approve → Not now; Enter produced Local Not now callback only; no business change.",
+    "literalMarkupNodes": 0,
+    "reducedMotion": true,
+    "physicalZoomAndAT": "UNVERIFIED",
+    "screenshots": "Original coding conversation, isolated IAB tab15; tab closed and viewport reset.",
+    "excludedProbes": "Initial wrong fixture account normalized to command-center, sibling-CSS preliminary frame, case-sensitive context probe and DOM-presence-only visibility probe are not final acceptance assertions."
+  },
+  "e08Compatibility": {
+    "e08": "f7867db12b6eb7d9e53b8add5a657e28ce42406c",
+    "baseline": {
+      "pins": 126,
+      "tools": 29,
+      "findings": []
+    },
+    "composed": {
+      "pins": 127,
+      "tools": 29,
+      "findings": [],
+      "rootSha256": "74026a30d0aebe93eed24d64d122131260264a6fe8e43139c53599011827e954",
+      "cardSha256": "7dac99fbfd31e41a791204cfff88a12d1af93876f8cdcc496423a20e60b9f952",
+      "checkerSha256": "0cea3b7ff6bce7a33f19bdc74c785ea177a748ee71450680425b2a1e3cd8a426"
+    },
+    "rootInverse": true,
+    "cardInverse": true,
+    "changedScalars": [
+      {
+        "tool": "comms_setup_calling",
+        "before": "4df6e1061b5fdf042f3d1acd2fd201524208a6b019b4f9f83bc592c3b6434190",
+        "after": "c9649fe0f97b768da5959736dc81ceb8bab8b9e77119458aa2afb4877ae7e5f8"
+      },
+      {
+        "tool": "calendar_book_meeting",
+        "before": "aaa6fd45314eff5d78c3c176dc8031acea74687f558e0d4e6315caef8b0e5402",
+        "after": "f31d4808c7ccd5de98fd5c595a0ee6e963477c528ae113ae9b45e866f8609874"
+      },
+      {
+        "tool": "calendar_link_send",
+        "before": "8ba2ceaca68cf6e87b7ddc49b0ecda58259fd9165d2eedeb542b4a6aabe6dba8",
+        "after": "562d5d13b4c1a94349888e87a45c663fb0a31e2890ca602dac5c414cecac8252"
+      },
+      {
+        "tool": "propose_business_brief_update",
+        "before": "6d545801356fca0b694f5fee7dbb95d4c1c233dd8ac9b569db3a1145a5d12912",
+        "after": "1c957043bfb002ef09982d81530973509a69b1fdd838227a36c93634d5b53e36"
+      },
+      {
+        "tool": "update_business_profile",
+        "before": "696de5090adc66e296ffc8beadfd75a0cec42d784f8b21947f5665b1e9ab6a2b",
+        "after": "281ab07b9b0a7276559bc4a634f7fce1b39afa7a295f57ff24a1051728aa427c"
+      },
+      {
+        "tool": "capability_status",
+        "before": "a7daf5c13341887402584fcc5a6815a8c79d2795dbb1d1fe34b7a0a05238587a",
+        "after": "2e7ce044c784d3039baf512d638914d1c6efa757cbc5c6a20e0ee62e390725f9"
+      },
+      {
+        "tool": "improvement_propose",
+        "before": "79ab0e0000bbe66a8821459e59ebd9ee1eb3223dc2348bf1df134292305125c3",
+        "after": "ab3913fd5b544b3cdf0129188b65babc0cd6673b345b37861c83157558d253fc"
+      },
+      {
+        "tool": "improvement_decide",
+        "before": "d6cd16757790d2916eef40935a3249d072c8eaf870592c9e36d0e4ac4a82fe4f",
+        "after": "cf1ebe900a7581787d253f1576a613156f7452b1e71653282fd1a34398fe7059"
+      },
+      {
+        "tool": "list_subagents",
+        "before": "af36c3f08cf2fb971fd5c063e609dc77c8ca9181b6963bde22ba6c71eb132eb4",
+        "after": "5de32cfe7680ff6e28a2be1e4ed0e09848ced56e04520952357a75b17886ceb5"
+      },
+      {
+        "tool": "delegate_to_subagent",
+        "before": "af36c3f08cf2fb971fd5c063e609dc77c8ca9181b6963bde22ba6c71eb132eb4",
+        "after": "5de32cfe7680ff6e28a2be1e4ed0e09848ced56e04520952357a75b17886ceb5"
+      },
+      {
+        "tool": "forge_subagent",
+        "before": "61b4d14597a81374ac47c746e5795968fca1199bcc9bb3ecf6c5a8667f8a2d9e",
+        "after": "1995406d7daf07e860117ed6dc558b88751f51d41003c4789390e069017139d0"
+      },
+      {
+        "tool": "author_event_kind",
+        "before": "53b20ef7ae549c6b46ce482ef67764546738463dd6fcb34427d495738a2d121a",
+        "after": "442d6f9cf5c722f8b1c7082ddc7c7d257ca492268d3465a7b4f0ab4f892c4a4e"
+      },
+      {
+        "tool": "crm_add_note",
+        "before": "7f97c8bb4a6b8bdac83b1bc57b57196c471b902da9196fb1b950001ffbb0f7e4",
+        "after": "d46efa7617544749da8ef2bff65a1219614d813c5ee4a240b8c15c86b40e6a05"
+      },
+      {
+        "tool": "crm_file_document",
+        "before": "155b874ee6ae219d530f3b97231ff4b3382df13d0c85297f899227cc56781da2",
+        "after": "4a705a8c7f581317b15d3e8161d153a6be12d73f2c7aa4b7f2a5b65fb7019eed"
+      },
+      {
+        "tool": "update_client_data",
+        "before": "5928514e28e8102a096ca9db62fa10a233c7588cef8b19e82f0e383243cf8fdd",
+        "after": "0a7ea396358a1e012072c2df8706b338d07af1cc3c70386d0112a8b4317e6992"
+      },
+      {
+        "tool": "pipeline_configure",
+        "before": "0039ed7bfb43510e625a601ce9cb57f52bcd646327ad657ed644e0708e870e1c",
+        "after": "e641cc00644215e593e0af108715616ae9da8017ce846c05c6299d43004579ef"
+      },
+      {
+        "tool": "deep_research",
+        "before": "ecef39b3a6b216d841167b91bab178c4ff51cae1d007f7c7105ddd8784691d2b",
+        "after": "c15193bdb75f16a002cd053d4acd2e46a8a9b4aa28d3ea28e3ed40e2604efd1a"
+      },
+      {
+        "tool": "web_search",
+        "before": "e01f3bb56527a8d3d57d8e2678e11a43c3cec6475d56d192f79a768c26ff0851",
+        "after": "a6d6021fa370a6704f539cdb691e065a520d444d2548ab418f5e001324974624"
+      },
+      {
+        "tool": "web_fetch",
+        "before": "286fbd66967524a7032a4e1996f0a165f6dcb8e6ca8b98bd78377032007f011c",
+        "after": "b424c2ec99339f8e72e373903d3e507d6d6e48f7e0874a3667d694e612932b1e"
+      },
+      {
+        "tool": "save_to_knowledge_base",
+        "before": "32ba084fa58f8e2ba2fe8324ec11eb65d213128cc952d69787db5a275a6490e2",
+        "after": "95e7ad1768b8c0ec2eade3cd6c0a16f0756c6b3dd37d901380838d517fe521b7"
+      },
+      {
+        "tool": "automation_draft",
+        "before": "1494d03cd63edebc7d6d81049b8e4ee4204fc360847f4f976e82a931e9d774f8",
+        "after": "be98c9612fc139f12567308d345c71a570c1caa1b2f93ea751d1df6f931d11c0"
+      },
+      {
+        "tool": "comms_connection_summary",
+        "before": "9c20baa20d3501cebf717f98357314015b18970cd74ebd4c0143d56d5990ca44",
+        "after": "7612cc88ee1c675ded2f5cfabb1d28171d92582e56ae0d13d4e60562e78f192e"
+      },
+      {
+        "tool": "comms_registration_status",
+        "before": "c6bc56b7241cdf02c5f15d62258e8b19ea397295939846eca773b93415cd1a46",
+        "after": "e07c480a062aa08684bd2c28d464da24565707c7c751fbd6a38071a21a8201ab"
+      },
+      {
+        "tool": "comms_list_numbers",
+        "before": "6a90437cc4d95266fce314a565bafb88f324989ebe8e047e4feba58a9ae4ce92",
+        "after": "bc37d909d945d8a080bfe5d4fca19a4e87b134c113c471a4057f33253b666ff0"
+      },
+      {
+        "tool": "comms_search_numbers",
+        "before": "11eb35d1be4bf9b171ac9430fec566e624c5eff68360dda2d01b3311a329a3b7",
+        "after": "7378d80782c55e4ab7fc8a62ad59f4e2f464b697e8b229de15aad70af8aebdbe"
+      },
+      {
+        "tool": "comms_buy_number",
+        "before": "a61bed056d269447931e082f289af17c5bb8664e3def276a7a9d34ded61bed0c",
+        "after": "d9c8b5980327db05ca4f3c135757616df99c51fe6d86dc965e9934cc8573e661"
+      },
+      {
+        "tool": "comms_draft_registration",
+        "before": "efa7cb6891d1f25cee2c7ee58d075a45d9ecebe665b14993ec236aef3ff74a02",
+        "after": "5f0022a0838e323a5e21015f258d684d736a5bb7a3bf8a20ef3a94d691115cce"
+      },
+      {
+        "tool": "comms_name_number",
+        "before": "cde32155daa6b9a9ffd4834c01c23c6f41f9e35111b9f1dee9f20cdc0e61a023",
+        "after": "e0687cb6176b35ce14a5a640db0fe2abbc1502f8a9c57266de9e8a892673629d"
+      },
+      {
+        "tool": "comms_set_primary_number",
+        "before": "2aeb52083df83faabee0cbcb1bded7fdc2256e91b2a169136d66cf29ab84bbeb",
+        "after": "307a624ef31690ad6509ef50cf607adeea52315e470bc4b7f37c9b36011eb437"
+      }
+    ],
+    "boundary": "PRIVATE UNAPPLIED returning-lead reference only. All original E08 Root/card bytes outside exact preview delta and all original checker metadata/source pins retained. No original E08 branch/worktree changed. Does not replace main composition, semantic review, hostile tests or fresh exact-head CI on the returning final branch.",
+    "currentPatchSha256": "2480caa6707ba675d93bcec98792e3203fac3f265c0b583a401a1d8556fdeed1",
+    "needsCheckerComposition": true,
+    "unappliedReference": "Existing shared workspace work/automation-preview-return-handoff; never applied to original E08 branch."
+  },
+  "orchestration": {
+    "capability": "automations.automation_draft",
+    "risk": "ordinary",
+    "writer": "Original exact stored-argument draft writer unchanged",
+    "enablement": "automation_set_state owner_only remains separate",
+    "storedArgsFingerprintAndAuthority": "UNCHANGED",
+    "LayerCActionAdapterAndRail": "Existing contracts retained, no execution or new receipt emitted by preview",
+    "catalogue": "operations.department PARTIAL; no registry/Binding Ledger or recipe maturity promotion",
+    "algorithms": "ALG-01 original binding/no-repeat retained; ALG-12/13 truthful existing limits. No algorithm maturity promotion."
+  },
+  "remaining": [
+    "Final exact-head review and required CI",
+    "Merge and actual web/Edge source readback through original release owners",
+    "Original authorized saved draft/act/Rail/reload and negative security proof",
+    "Authenticated existing/new eligible SOLO, actor/tenant/role boundaries",
+    "Full ten outcomes/E5 cases, weekly execution, automation lifecycle, same-ZION both chats and founder acceptance"
+  ]
+}

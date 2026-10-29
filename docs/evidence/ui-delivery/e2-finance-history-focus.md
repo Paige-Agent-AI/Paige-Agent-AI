@@ -53,6 +53,33 @@ repair or new agent was started.
 
 ## Proof boundaries and recovery
 
+### October29 current-main composition and renewed proof
+
+The existing candidate composes current main1044576a7471c33dfb29f16fc420943e884e82e9
+at0e4af4620fdeb697b9dd770818ca3f3fa9bde726/tree31256a00f47c226a218e17a0a89bb86fcdfb35a8.
+All incoming source is preserved; the owning seven-path change remains195add2del
+before this evidence/sequence update. Fresh original four-suite regression is
+70PASS. An initial unsupported `--minWorkers` CLI option failed before tests;
+the unchanged original command then ran all70, without weakened assertions.
+
+The original local Finance mount at the normal1514x774 CSS viewport now confirms
+Back -> Profitability and Forward -> Budgeting & Forecasting with matching focus,
+panel labelling, one tabbable tab and no document overflow. Raw neutral capture
+and history JSON remain in outputs/e2-finance-history-focus/current-main-1044576a-*.
+This is synthetic source/interaction proof, not an authenticated candidate or
+required eight-viewport replacement. The initial local load/navigation timeout
+and transient Opening Finance frame are excluded from settled proof.
+
+Native Edge AX and URL context recovered this turn. An initial screenshot did
+not match that context; the documented root Raise action restored a matching
+Edge capture. A subsequent native tab-switch request was refused because user
+input was detected; no zoom keys were sent and native input was not retried.
+Native200percent and screen-reader proof remain UNVERIFIED, alongside legitimate
+exact-preview/customer/cohort acceptance. Existing EXP01/Auth dependency remains;
+no callback, token, credential, account, native permission or provider was changed.
+The older5698712347 review and92d hosted CI do not approve this newer head.
+Fresh final-head review/CI and all declared delivery holds remain binding.
+
 The first sandbox run failed before tests on an EPERM temporary rename. The same
 unchanged test command with normal filesystem access produced the actual3FAIL;
 no timeout, test, baseline or guard was weakened. Original Vite/Router deprecation

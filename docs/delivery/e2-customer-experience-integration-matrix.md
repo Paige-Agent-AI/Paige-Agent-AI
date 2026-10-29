@@ -1,5 +1,30 @@
 # Experience 02 — Customer Experience Integration Matrix
 
+## October29 — owner-directed closure-first sequence
+
+Original ANT138/5e3a19cb records the recalibrated plan. All original19 definitions,
+nine analytics and historical proof remain unchanged; no full row is closed.
+Finish existing3082/3018/3019 release holds before accumulating unrelated work.
+Then target complete original outcomes in this dependency order:
+
+| Order | Original outcomes | Required customer result |
+| --- | --- | --- |
+| 1 | O14/O13 | Original departmental record and accountable activity, correct authority, return/reload/recovery |
+| 2 | O01/O02/O06/O16 | Reliable sourced briefing, matched Executive/Chat, recorded findings and eligible modality continuity |
+| 3 | O09/O10/O11 | Same Play direction/revision, matched numeric target/actual and enforced current Trust policy |
+| 4 | O03/O04/O05/O08 | Original commercial/financial/client evidence, supported comparisons and useful priorities |
+| 5 | O07/O12/O19 | Legitimately authorized real check/action, original result/Rail receipt and uncertain-outcome recovery |
+| 6 | O15/O17/O18 | Permitted context, original Conversations and cited persisted/retrievable research |
+
+One active deliverable proceeds through build, review, exact CI, normal release,
+source readback and actual useful-result/reopen proof. A named external hold
+permits the next independent REQUIRED step; it does not permit a gate waiver,
+discretionary polish or new infrastructure. Existing EXP01 Auth/Chat/eligible Live,
+EXP04/05/08 shared Team Hub and original departmental writers retain ownership.
+Both-chat applicability and two legitimate SOLO cohorts stay explicit. Engineering
+closure is separate from the one final founder evaluation. No acceptance or
+capability/algorithm maturity promotion follows from this sequencing correction.
+
 ## October29 — Finance native Back/Forward focus repair, candidate
 
 REPAIR O04/O14/O16 in the original Finance tab component only. Same-workspace POP

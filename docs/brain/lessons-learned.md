@@ -1,5 +1,9 @@
 # Lessons Learned — recurring traps
 
+### Bind a resolved client read to the original native argument (2026-10-28, EXP09)
+
+A private specialist adapter must compare the returned client to the EXACT original reader's `_contact_id`, including when that id came from the existing CRM name lookup. Checking only the initial optional `client_id` leaves a name-resolution path unchecked. A genuine new adapter negative failed34/35 before this correction, then all35 passed. Reuse the original caller-JWT reader/composer; preserve native refusal separately from `needs_input`, acknowledge original read receipts before model context, and revalidate original scope/facts before posting. These transport tests do not establish live Auth/RLS or grant a customer the business owner's Team Hub authority.
+
 ### A whole-array audience replacement can discard the shared safety core (2026-10-28, EXP09)
 
 An initial unconditional system message does not prove the final customer request retains it. CURA's later audience-specific array replacement correctly removed owner context but also removed the original identity-free care-first core. Test the actual final audience assembler, retain that same shared core once, and keep owner identity/private context excluded. Two genuine failing assembler assertions then pass with all original customer and shared-persona controls; this is source proof, not model-response or clinical-detection acceptance. Existing [CURA source packet](../delivery/e09-cura-business-scope.md) records the boundary and protected dependency-pin review. Never fix a missing instruction by creating another safety runtime or relaxing native authority.

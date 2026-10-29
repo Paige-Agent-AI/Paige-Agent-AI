@@ -1,5 +1,5 @@
 -- EXP09: caller-JWT calendar-aware projection of ORIGINAL invoice facts.
--- CLI-created 20261029203418; LOCAL/UNAPPLIED forward after E04 reserved10.
+-- CLI-created 20261029203418; UNAPPLIED forward after original E04 PR3099/10.
 -- Do not publish/apply in a durable Preview ahead of the legitimate10 chain.
 -- No financial query/calendar/permission body, table, writer or provider change.
 BEGIN;

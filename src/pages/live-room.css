@@ -20,6 +20,6 @@
   background: linear-gradient(118deg, var(--gold-tint), var(--surface) 60%);
   box-shadow: var(--sh-1);
 }
-.live-room-message h1 { margin: 0; font-size: 17px; letter-spacing: -.02em; }
+.live-room-message h1 { margin: 0; font-size: 18px; letter-spacing: -.02em; }
 .live-room-message p { margin: 0; font-size: 13px; line-height: 1.6; color: var(--ink-2); }
 .live-room-back { font-size: 12.5px; color: var(--ink-2); text-decoration: underline; }

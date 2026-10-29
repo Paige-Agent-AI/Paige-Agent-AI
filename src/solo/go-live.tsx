@@ -20,7 +20,6 @@
 import React from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { readFunctionErrorBody } from "@/lib/integrations/connectError";
-import { Ic } from "./_shared";
 
 /** What the door said, in the four labels the Social surface already speaks. */
 type GoLivePhase = "checking" | "unavailable" | "ready" | "live" | "ended";
@@ -52,6 +51,19 @@ const minutesLive = (startedAt: string, now: number) => {
   const mins = Math.max(0, Math.floor((now - started) / 60_000));
   return mins < 1 ? "under a minute" : `${mins} min`;
 };
+
+const ArrowGlyph = ({ size = 13 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6}
+    strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h13M12.5 6l6 6-6 6" /></svg>
+);
+
+const BroadcastGlyph = ({ size = 16 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6}
+    strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <circle cx="12" cy="12" r="2.2" />
+    <path d="M7.8 7.8a6 6 0 000 8.4M16.2 16.2a6 6 0 000-8.4M4.9 4.9a10 10 0 000 14.2M19.1 19.1a10 10 0 000-14.2" />
+  </svg>
+);
 
 export function GoLive({ tenantId }: { tenantId: string }) {
   // Mounted only when the Social surface has resolved the workspace (the parent gates it):
@@ -161,7 +173,7 @@ export function GoLive({ tenantId }: { tenantId: string }) {
 
   return <section className="social-golive" aria-labelledby="social-golive-h" data-golive-phase={phase}>
     <div className="social-golive-head">
-      <span className="social-golive-glyph"><Ic.broadcast size={16} style={{}} /></span>
+      <span className="social-golive-glyph"><BroadcastGlyph size={16} /></span>
       <div className="social-golive-title">
         <span className="social-eyebrow">Live broadcasting</span>
         <h2 id="social-golive-h">Go live</h2>
@@ -201,7 +213,7 @@ export function GoLive({ tenantId }: { tenantId: string }) {
             />
           </label>
           <button type="button" className="btn btn-s btn-g social-golive-act" disabled={busy} onClick={() => void goLive()}>
-            <Ic.arrow size={13} style={{}} />{busy ? "Opening…" : "Go live"}
+            <ArrowGlyph size={13} />{busy ? "Opening…" : "Go live"}
           </button>
         </div>
       </div>
@@ -238,7 +250,7 @@ export function GoLive({ tenantId }: { tenantId: string }) {
         </p>
         <div className="social-golive-acts">
           <button type="button" className="btn btn-s btn-g social-golive-act" disabled={busy} onClick={() => { setPhase("ready"); setNote(""); }}>
-            <Ic.arrow size={13} style={{}} />Go live again
+            <ArrowGlyph size={13} />Go live again
           </button>
         </div>
       </div>

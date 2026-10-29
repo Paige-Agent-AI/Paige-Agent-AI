@@ -20,7 +20,7 @@ RENDERED_EVIDENCE: PASS: actual current SoloApp/OperationsWorkspace/Overview/Wee
 BEHAVIORAL_EVIDENCE: PASS: actual browser correction/excess result, keyboard stepper and tab focus, invalid-minute correction, reset, private source-change invalidation, second neutral context and narrow PAIGE folding/reentry. Owning component tests additionally cover source versions/effort/title/roster changes and reload. No production Auth, RLS or business mutation proof claimed.
 AUTHENTICATED_RUNTIME: UNVERIFIED: existing signed-in customer/both-chat/native permission and full planning-save/reopen proof remain owed; synthetic context transitions are not tenant-isolation acceptance.
 KEYBOARD_FOCUS: PASS: native summary opens with Enter, native selection and number stepper work; Tab moves to original work and shows the existing focus ring. Validation uses aria-invalid and an associated error; status announces the comparison without moving focus.
-ZOOM_REFLOW: UNVERIFIED: browser-native200% zoom and assistive-technology screen-reader checks were not performed. The verified390px narrow reflow and16 required shell geometries have no document overflow; inputs at least44px. Original department scroll owns the review and keyboard reaches Reset and subsequent original work.
+ZOOM_REFLOW: PASS: actual Windows Chrome native200% zoom in the confirmed local QA tab, both themes/PAIGE closed-open; native Zoom:200% and DPR2.5 versus OS-scale1.25 confirmed (visual scale1, no emulation). CSS viewport521x357/document width521,44px inputs; keyboard reaches Reset in view and exact original task inspection/Escape return preserves review. Normal100% restored. Native JSON/five page-only screenshots in assets/exp05-weekly-workload/native-200-*. Assistive-technology screen-reader testing remains UNVERIFIED.
 REDUCED_MOTION: PASS: no new animation, timer or motion; original shell behavior retained.
 STATE_COVERAGE: PASS: no person, no roster, no dated work, missing/invalid capacity, known/unknown/invalid/revised effort, blocked work, excess/within-entered-budget, prior/undated/unreadable dates, reset, changed source/person/week/business and reload. Existing unverified business-zone states withhold the review.
 TRUTHFUL_STATE_LABELS: PASS: saved versus review estimate, entered capacity, known effort and missing estimates remain distinct. A within-budget estimate never asserts a feasible schedule, Calendar availability, completed work or authorization.
@@ -33,7 +33,7 @@ SOLO_1024X768_PAIGE_CLOSED: PASS: final light/dark *-1024-closed.*; document wid
 SOLO_1024X768_PAIGE_OPEN: PASS: original PAIGE overlay and protected underlying workspace captured; folding PAIGE resumes the review. Underlying geometry is not simultaneous interaction proof.
 SOLO_900X1000_PAIGE_CLOSED: PASS: final light/dark *-900-closed.*; document width900.
 SOLO_900X1000_PAIGE_OPEN: PASS: original PAIGE overlay in both themes, original fold/reentry preserves the review; no new overlay implementation.
-UNVERIFIED: real customer/role/provider/Calendar availability; exact remaining task effort; canonical dependency graph; automatic time placement; saved capacity or reviewed-plan resume; full Chat/Team Hub ZION handoff; production source release; ten-outcome/E5 closure and founder acceptance.
+UNVERIFIED: assistive-technology screen-reader testing; real customer/role/provider/Calendar availability; exact remaining task effort; canonical dependency graph; automatic time placement; saved capacity or reviewed-plan resume; full Chat/Team Hub ZION handoff; production source release; ten-outcome/E5 closure and founder acceptance.
 OWNER_INTENT: deliver the complete Operations Experience in focused coherent releases; owner tests the whole Experience once. First close weekly planning, then builder, monitoring and proactive information.
 MUST_NOT_HAPPEN: inferred40-hour capacity, task-count-as-effort, another person's budget, automatic save/approval/scheduling, stale review reuse, provider effect or a new availability/scheduler/ledger service.
 MUST_PRESERVE: original Planning/CRM/roster readers, actor/tenant-keyed Operations, business-calendar/DST interpretation, native inspectors/writers, review and required CI.
@@ -103,3 +103,17 @@ merge, deployment readback, authenticated verification and owner acceptance are
 separate states on the original PR/ANT-11. O02 still owes genuine Calendar and
 dependency integration, feasible alternatives, authorized correction/save/reopen
 and useful follow-through; O05/O07/O09 and all original acceptance remain open.
+
+## Native zoom review correction
+
+Automated review5703247947 correctly required native200% proof; the original
+390px check was insufficient. Completed that exact check in the confirmed local
+QA browser after the owner brought the QA tab into view. Native Chrome shortcuts
+and its actual200% control establish the zoom; no fabricated/emulated substitute.
+Comparison correction, original-task inspection, Escape/focus return, PAIGE
+overlay/fold/reentry and Reset keyboard reachability pass without clipping or
+horizontal document overflow. No customer account or provider was used.
+The earlier unsafe full-window capture request was rejected; no private-page
+image is recorded. Only confirmed local QA page screenshots are included.
+Source files remain byte-identical to reviewed48a47bf8; this correction adds
+missing evidence and does not rewrite the original review or runtime history.

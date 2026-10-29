@@ -19,7 +19,7 @@
 //      live opsz 6–96 axis, and this check proves it on every run instead of trusting the request.
 //   4. Writes the family's OFL.txt beside its files — the OFL requires the licence to travel with the
 //      font files.
-//   5. Regenerates src/lib/brand-fonts.files.ts: the file manifest (paths, weight/stretch descriptors,
+//   5. Regenerates supabase/functions/_shared/growth/brand-fonts.files.ts (the app's src/lib/brand-fonts.files.ts is a compatibility re-export wrapper): the file manifest (paths, weight/stretch descriptors,
 //      axes, unicode-range, byte sizes). The POLICY — which faces are offered, their character, their
 //      body partner, the fallback stack — lives in src/lib/brand-fonts.ts and is never generated.
 //
@@ -33,7 +33,7 @@ import path from "node:path";
 
 const ROOT = path.resolve(import.meta.dirname, "..", "..");
 const OUT_DIR = path.join(ROOT, "public", "fonts", "brand");
-const MANIFEST = path.join(ROOT, "src", "lib", "brand-fonts.files.ts");
+const MANIFEST = path.join(ROOT, "supabase", "functions", "_shared", "growth", "brand-fonts.files.ts");
 const UA = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36";
 
 // `axes` is the CSS2 request after the family name. A range (`a..b`) asks for the variable file; a `;`

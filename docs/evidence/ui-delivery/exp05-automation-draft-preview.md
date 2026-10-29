@@ -80,3 +80,15 @@ shared Chat Edge source-layout/deployment hold. No blind upload, verifier bypass
 activation or original source takeover. Full ten outcomes/E5-CV1–9, weekly
 execution, Workflow Builder, monitoring, same-ZION both-chat and founder proof
 remain open. Actual customer browsers and their leases were not used.
+
+
+## 2026-10-29 exact CI consumer reconciliation
+
+Original broad C0b consumer failed249 tests/248PASS/1FAIL on its exact126 source
+count after the reviewed helper made127. The original test now pins127 and
+the exact helper path, with a real draft-summary mutation refusal added. No
+original negative, admission, extractor, metadata or runtime product byte was
+removed or changed. Full original C0b250PASS/0FAIL/0skip and original authenticated
+observation11PASS/0FAIL/0skip now pass. Earlier83PASS described only the specific
+incumbent-resource suite. Final review/required exact-head CI remain owed; same
+16 native frames, original source hashes and full customer/founder gaps retained.

@@ -5436,3 +5436,10 @@ replace E08 checker wholesale. Owner9fd6 / Coordinator35471 permit this narrow
 current fix; E04 MERIT and E06/E04 Edge holds remain separately owned. Source/
 fixture/build/review/CI/merge/deploy/authenticated/full-Experience/founder states
 stay distinct. No new scheduler, registry, agent, provider or activation.
+
+
+EXP05 original draft-preview CI lesson (2026-10-29): adding one reviewed source
+pin also advances the existing exact ancestry-count assertion; run ALL original
+C0b files plus int304, not only the83-case resource suite. Causal249/248/1 became
+full250/250/0 plus11/11/0 without weakening any original guard or negative.
+Original product Root/card/helper/checker source and prior evidence remain.

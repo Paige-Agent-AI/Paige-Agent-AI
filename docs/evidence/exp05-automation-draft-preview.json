@@ -307,5 +307,41 @@
     "Original authorized saved draft/act/Rail/reload and negative security proof",
     "Authenticated existing/new eligible SOLO, actor/tenant/role boundaries",
     "Full ten outcomes/E5 cases, weekly execution, automation lifecycle, same-ZION both chats and founder acceptance"
-  ]
+  ],
+  "ciConsumerReconciliation": {
+    "originalHead": "2421ab9b7c415630b24aed1509d0169d2bacb352",
+    "job": 123210537917,
+    "gate": "C0b incumbent adapter authority bindings",
+    "causal": {
+      "tests": 249,
+      "passed": 248,
+      "failed": 1,
+      "pending": 0,
+      "reason": "Original ancestry count expected126 after independently reviewed pure helper made actual127",
+      "tapSha256": "5d9482c463067a4b466d3b94cfceefe0cd5a0475ddccff0eb97058ba34bcab79"
+    },
+    "correction": {
+      "path": "scripts/ci/c0b-calendar-ancestry.test.mjs",
+      "sourceSha256": "681317ab808983b87e04f11cc4fd4383db0f1347afca6fac4968ab1be932736e",
+      "exactSourceCount": 127,
+      "exactHelperPresence": true,
+      "addedDraftSummaryMutationRefusal": true,
+      "allOriginalAssertionsPreserved": true
+    },
+    "fullOriginalC0b": {
+      "tests": 250,
+      "passed": 250,
+      "failed": 0,
+      "pending": 0,
+      "tapSha256": "eb7c73b6d203873e6e560f401d1fc446ee9d2f6b98c3c31dcc52ef1964fd9b0c"
+    },
+    "originalAuthenticatedObservation": {
+      "tests": 11,
+      "passed": 11,
+      "failed": 0,
+      "pending": 0,
+      "tapSha256": "292f919d92933abc495e3db52eb55b344f2e0ced32d363dcc96288ce29e5c8e0"
+    },
+    "boundary": "Corresponding original test consumer correction only; product Root/card/helper/checker bytes unchanged. Earlier83 referred to specific hostile suite, not full CI. Final source review/exact-head CI remain required."
+  }
 }

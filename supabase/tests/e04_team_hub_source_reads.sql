@@ -118,6 +118,11 @@ SELECT pg_temp.check(pg_temp.agent_post(:'u1',:'ta',:'e04_dm','merit','must not 
  'stored specialist read scope revoked after preparation refuses publication');
 ROLLBACK;
 BEGIN;
+UPDATE public.paige_subagents SET config=jsonb_set(config,'{capability_scope,access}','"disabled"') WHERE tenant_id IS NULL AND slug='merit';
+SELECT pg_temp.check(pg_temp.agent_post(:'u1',:'ta',:'e04_dm','merit','must not publish',gen_random_uuid()::text,NULL,:'e04_question','dm',:'e04_token') ? 'error',
+ 'retired private read classification cannot retain authority from unchanged tool names');
+ROLLBACK;
+BEGIN;
 UPDATE public.team_hub_agent_turns SET read_context=jsonb_set(read_context,'{expires_at}',to_jsonb(clock_timestamp()-interval '1 second')) WHERE id=:'e04_turn';
 SELECT pg_temp.check(pg_temp.agent_post(:'u1',:'ta',:'e04_dm','merit','must not publish',gen_random_uuid()::text,NULL,:'e04_question','dm',:'e04_token') ? 'error',
  'expired attestation refuses publication without a new source read');

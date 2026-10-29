@@ -222,6 +222,15 @@ describe("MERIT's canonical private commercial integration", () => {
     assert.equal(m.requests[0].request.tools?.some(t => t.function.name === "agreement_list"), false);
     assert.equal(named(w, "paige_agreement_overview").length, 0);
   });
+  it("a changed private access classification cannot retain reads from old tool names", async () => {
+    const config = structuredClone(MERIT_CONFIG);
+    config.capability_scope.access = "disabled";
+    const w = world({ sourceIn: MERIT_DM, domainRole: "owner", config: { slug: "merit", config }, domainRead: () => [row()] });
+    const m = model([{ tool_calls: [{ name: "agreement_list" }] }, { content: "That read is unavailable." }]);
+    await run(w, m, turn({ conversationId: MERIT_DM }));
+    assert.equal(m.requests[0].request.tools?.some(t => t.function.name === "agreement_list"), false);
+    assert.equal(named(w, "paige_agreement_overview").length, 0);
+  });
   it("malformed private tool JSON cannot turn a requested filter into the whole agreement book", async () => {
     const w = world({ sourceIn: MERIT_DM, domainRole: "owner", domainRead: () => [row()] });
     let round = 0;

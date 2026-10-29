@@ -676,6 +676,7 @@ export async function runTeamHubAgentTurn(deps: AgentTurnDeps, raw: unknown): Pr
         && role.length === 1 && (role[0].value === "owner" || role[0].value === "admin")
         && !!freshNames && "people" in freshNames && freshNames.conversation?.kind === "agent_dm"
         && freshNames.conversation.agent_key === agent && freshNames.people.has(userId)
+        && object(config?.capability_scope)?.access === "read"
         && freshTools !== null && JSON.stringify(freshTools) === JSON.stringify(s.storedTools);
     } catch { return false; }
   };

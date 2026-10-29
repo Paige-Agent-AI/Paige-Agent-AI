@@ -1,0 +1,39 @@
+{
+  "boundary": "Untransformed current SoloApp/Operations/Overview/Week and candidate workload review; explicitly synthetic Work/roster/timezone/Auth/Chat ports. Not authenticated customer/RLS/provider/domain-execution proof.",
+  "originalManifest": "build-manifest.json",
+  "originalManifestSha256": "53c18df294d8b202d730ce83ac421a407d4de011309f08937c75bcfd12cf71c8",
+  "sourceBase": "0afbbff26ea4db769e1311dac0d5212d464d63cb",
+  "change": "Only two result-panel border rules; no product logic changes",
+  "unchangedProductInputsVerified": 393,
+  "unchangedMockPortsVerified": 191,
+  "changed": [
+    {
+      "path": "src/solo/operations/operations-week.css",
+      "sha256": "db6ce6e497506b23f00830f6434e88ff24779d4af089ad9ae65826263f722076",
+      "previousSha256": "74e7efb1541e5ec7df9e74d0975132de71f987e56a779aaa7dbd71cf8261f9c5"
+    }
+  ],
+  "bundleSha256": "023223d0d36f7221918eaeaed30f6159c038f6e6a60c38c3f72ddf1c543bbb91",
+  "rendered": {
+    "quiet-panel-light-1366.png": {
+      "width": 1366,
+      "height": 768,
+      "theme": "light",
+      "state": "over-budget"
+    },
+    "quiet-panel-dark-1366.png": {
+      "width": 1366,
+      "height": 768,
+      "theme": "dark",
+      "state": "over-budget"
+    },
+    "quiet-panel-dark-900.png": {
+      "width": 900,
+      "height": 1000,
+      "theme": "dark",
+      "state": "within-entered-budget"
+    }
+  },
+  "nativeZoom": "Prior exact evidence retained; not repeated for two border-rule correction",
+  "customerProof": "UNVERIFIED"
+}

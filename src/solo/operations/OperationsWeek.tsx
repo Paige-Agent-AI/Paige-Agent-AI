@@ -4,9 +4,11 @@ import type { PlanItem } from "@/hooks/usePlanList";
 import { businessCalendarHeldNote, useBusinessCalendarDay } from "../data/useBusinessTimeZone";
 import type { CrmWorkRecord } from "./operations-native-work";
 import { operationsWeek } from "./operations-week";
+import type { TeamMemberRecord } from "../team-workspace-contract";
+import { OperationsWeeklyWorkload } from "./OperationsWeeklyWorkload";
 import "./operations-week.css";
 
-type Props = { tenantId: string; items: PlanItem[]; tasks: CrmWorkRecord[];
+type Props = { tenantId: string; items: PlanItem[]; tasks: CrmWorkRecord[]; members?: TeamMemberRecord[];
   onInspectItem: (item: PlanItem) => void; onInspectTask?: (task: CrmWorkRecord) => void;
   onOpenBusinessTimeZone?: () => void; businessTimeZoneRef?: (node: HTMLButtonElement | null) => void };
 const dateLabel = (date: string, options: Intl.DateTimeFormatOptions) =>
@@ -16,7 +18,7 @@ const dateLabel = (date: string, options: Intl.DateTimeFormatOptions) =>
 export function OperationsWeek(props: Props) {
   return <ScopedWeek key={props.tenantId} {...props} />;
 }
-function ScopedWeek({ tenantId, items, tasks, onInspectItem, onInspectTask, onOpenBusinessTimeZone, businessTimeZoneRef }: Props) {
+function ScopedWeek({ tenantId, items, tasks, members = [], onInspectItem, onInspectTask, onOpenBusinessTimeZone, businessTimeZoneRef }: Props) {
   const { day, refresh } = useBusinessCalendarDay(tenantId);
   const [offset, setOffset] = useState(0);
   const week = operationsWeek(tenantId, items, tasks, day, offset);
@@ -51,6 +53,7 @@ function ScopedWeek({ tenantId, items, tasks, onInspectItem, onInspectTask, onOp
         <button type="button" onClick={() => setOffset(0)} disabled={offset === 0}>This week</button>
         <button type="button" aria-label="Next work week" onClick={() => setOffset(value => value + 1)}><ChevronRight size={16} aria-hidden /></button></nav></header>
     <p className="ops-week-zone">Business calendar · {week.zone}. Recorded dates do not reserve Calendar time.</p>
+    <OperationsWeeklyWorkload week={week} members={members} onInspectItem={onInspectItem} onInspectTask={onInspectTask} />
     <div className="ops-week-grid">{days(week.days.slice(0, 5))}</div>
     {weekend.some(date => date.deadlines.length || date.reminders.length) && <div className="ops-week-weekend">{days(weekend)}</div>}
     <footer>{shown.length} dated {shown.length === 1 ? "commitment" : "commitments"} in this week from the sources shown.

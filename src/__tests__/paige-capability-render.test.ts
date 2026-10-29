@@ -54,6 +54,86 @@ describe("renderCapabilityStatusBlock — the authoritative 'what can you do' bl
     expect(out).toMatch(/do NOT\s+invent one/i);
   });
 
+  // INT-117 S3 — the named-third-party rule, per the owner's scope clarification (2026-09-21)
+  // and the coordinator's option-(a) ruling (2026-09-22): FORBIDDEN is claiming CURRENT access
+  // to a named product unless a group NAMES it; a generic-KIND group is handled NEUTRALLY
+  // (describe the capability in the group's own words; neither assert nor deny that it is that
+  // product — covers both P1s: no false current claim via a mislabelled lane, and no false
+  // denial of a real connection behind a generic label); ALLOWED is discussing/planning/
+  // conditional-future framing. The upstream n8n-readiness bug is INT-123 (G2-1), not fixable here.
+  it("INT-117 S3: carries the named-third-party rule — CURRENT claims need a group that NAMES the product", () => {
+    const out = renderCapabilityStatusBlock([cap("x", "live", "See things")]);
+    expect(out).toMatch(/names a specific outside app, tool, or data source/i);
+    expect(out).toMatch(/never imply you currently connect to it or can read, pull, or sync its data now unless a group below names it/i);
+    // The trap classes are named in the directive (familiar brands are the risk).
+    for (const brand of ["GHL/GoHighLevel", "HubSpot", "Salesforce", "Zapier", "n8n", "Meta/Facebook", "Instagram", "Google Calendar", "QuickBooks"]) {
+      expect(out).toContain(brand);
+    }
+    // Sabotage-sensitivity: dropping the rule from the directive fails the pin.
+    const without = out.replace(/If the person\s+names a specific outside app[^.]*\.[^.]*/i, "");
+    expect(/names a specific outside app/i.test(without)).toBe(false);
+  });
+
+  it("INT-117 S3: the generic-kind clause is NEUTRAL — describe in the group's own words, neither assert nor deny the product", () => {
+    const out = renderCapabilityStatusBlock([cap("x", "live", "See things")]);
+    expect(out).toMatch(/If a group describes a matching kind of capability without naming the product/i);
+    expect(out).toMatch(/describe what you can do in that group's own words and neither assert nor deny that it is that specific product/i);
+    // Sabotage-sensitivity: restoring EITHER one-sided reading (assert or deny) fails the pin.
+    const asserting = out.replace("neither assert nor deny that it is that specific product", "treat it as that product's connected lane");
+    expect(/neither assert nor deny/i.test(asserting)).toBe(false);
+    const denying = out.replace("neither assert nor deny that it is that specific product", "say you don't have a connection to it here");
+    expect(/neither assert nor deny/i.test(denying)).toBe(false);
+  });
+
+  it("INT-117 S3 ruling matrix (a): named product absent + NO matching kind → no current-access claim stands on", () => {
+    // Nothing named GHL/HubSpot/etc and no automation-lane row either: the forbidden clause is
+    // the only governing text for a current-access claim about those products.
+    const out = renderCapabilityStatusBlock([
+      cap("crm.search_contacts", "live", "See your contacts"),
+      cap("calendar.read", "live", "See your calendar"),
+    ]);
+    expect(out).toMatch(/never imply you currently connect to it or can read, pull, or sync its data now unless a group below names it/i);
+    const rows = out.split("\n").filter((l: string) => l.trim().startsWith("- "));
+    for (const brand of ["Zapier", "GHL", "GoHighLevel", "HubSpot", "Salesforce", "n8n", "Facebook", "Instagram", "Google Calendar", "QuickBooks"]) {
+      expect(rows.some((r: string) => r.includes(brand)), `brand ${brand} leaked into a capability row`).toBe(false);
+    }
+    expect(out).toContain("See your contacts");
+    expect(out).toContain("See your calendar");
+  });
+
+  it("INT-117 S3 ruling matrix (b): generic kind PRESENT (the real n8n manifest shape) → the group's words govern, no product assertion and no denial", () => {
+    // The real manifest shape (signals.ts): integrations.n8n_run_workflow renders as the generic
+    // "Run one of your automations". The neutral clause directs the model to describe the
+    // capability in the group's own words — it can neither claim "that's my n8n connection"
+    // (false when the readiness bug mislabels a disconnected workspace) nor deny the connection
+    // (false when it IS really connected). Covers BOTH Codex P1s at the prompt layer.
+    const out = renderCapabilityStatusBlock([
+      cap("integrations.n8n_run_workflow", "needs_approval", "Run one of your automations", "Automations are connected in this workspace."),
+    ]);
+    expect(out).toMatch(/CAN PREPARE FOR YOUR APPROVAL/i);
+    expect(out).toContain("Run one of your automations");
+    expect(out).toMatch(/describe what you can do in that group's own words and neither assert nor deny that it is that specific product/i);
+    // The generic row itself carries NO product name (kind, not brand). The directive quotes
+    // the phrase as its example, so match the actual ROW (a "- " line), not the directive.
+    const itemLine = out.split("\n").find((l: string) => l.trim().startsWith("- ") && l.includes("Run one of your automations"));
+    expect(itemLine).toBeTruthy();
+    expect(itemLine).not.toMatch(/n8n|zapier/i);
+  });
+
+  it("INT-117 S3 ruling matrix (c): conditional/future framing about the SAME absent tool is explicitly permitted — refusal-only fails the pin", () => {
+    const out = renderCapabilityStatusBlock([cap("x", "live", "See things")]);
+    expect(out).toMatch(/Discussing the tool, planning around it, or framing what you'll do once it's connected is fine/i);
+    expect(out).toMatch(/just never imply it's connected now when it isn't/i);
+    const refusalOnly = out.replace(/Discussing the tool[^.]*\./i, "");
+    expect(/Discussing the tool, planning around it/i.test(refusalOnly)).toBe(false);
+  });
+
+  it("INT-117 S3: 'send a text' and 'post to social' stay doubly fenced — the NEVER-say clause AND the named-party rule together", () => {
+    const out = renderCapabilityStatusBlock([cap("sms.send", "planned", "Send texts", "Not available here yet.")]);
+    expect(out).toMatch(/NEVER say you can post to social, send a text\/SMS/i);
+    expect(out).toMatch(/names a specific outside app, tool, or data source/i);
+  });
+
   it("puts proof_owed items under a CAN-ATTEMPT-NOT-PROVEN heading distinct from planned", () => {
     const out = renderCapabilityStatusBlock([
       cap("browser.secure_session", "proof_owed", "Browse a website for you", "Paige can try this, but it isn't proven to work here yet — she'll tell you honestly what came back."),

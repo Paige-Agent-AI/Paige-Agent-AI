@@ -86,6 +86,7 @@ jobs:
           supabase/functions/_shared/team-hub/cura-service-read.test.ts
           supabase/functions/_shared/team-hub/mentor-plan-read.test.ts
           supabase/functions/_shared/team-hub/zion-planning-read.test.ts
+          supabase/functions/_shared/client-engagement/merit-team-hub-read.test.ts
           supabase/functions/_shared/team-hub/vera-metric-read.test.ts
           supabase/functions/_shared/team-hub/nexus-connection-read.test.ts
           supabase/functions/_shared/client-engagement/native-prerequisite.test.ts

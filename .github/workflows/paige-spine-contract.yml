@@ -1030,6 +1030,10 @@ jobs:
       # verbatim (A), always closed-shaped (B), prose refused at the write (C), foreign-tenant
       # clean (D). Rides this replayed DB for the same §24 reason as above.
       - run: psql -v ON_ERROR_STOP=1 -f supabase/tests/mcp_connection_error_code_readback.sql postgresql://postgres:postgres@127.0.0.1:54322/postgres
+      # EXP10 Team Hub (ANT-164, directive 385a54eb): the NEXUS roster registration
+      # (20271122070008) — the one append to the nexus platform row's DM scope (A/D), no other
+      # agent's row touched (B), and the append's own predicate is replay-idempotent (C).
+      - run: psql -v ON_ERROR_STOP=1 -f supabase/tests/exp10_nexus_team_hub_connection_read.sql postgresql://postgres:postgres@127.0.0.1:54322/postgres
       # Connected MCP Gateway — Slice ② foundation (migration 20270332000000): the OAuth-state store
       # (begin/consume single-use + encrypted verifier + expiry + §9 cross-tenant refusal), INT-152
       # (config_generation trigger bump on endpoint/credential/status-reset — never on a probe result;

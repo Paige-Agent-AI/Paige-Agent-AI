@@ -47,6 +47,12 @@ import { VP_ROSTER } from "../paige-context/vp-address.ts";
 import { mutatingTools } from "../action-risk.ts";
 import { recordCapabilityRun, stableRunId, type CapabilityOutcome } from "../capability-record.ts";
 import { CLIENT_ENGAGEMENT_TOOLS, dispatchBusinessTimeZoneChat } from "../client-engagement/chat.ts";
+// EXP10 NEXUS connection read (ANT-164, owner directive 385a54eb; contract efa6d22f on ANT-161):
+// the integrations domain's one read, offered in nexus DMs only. Parallel additive span — E08's
+// A2b machinery and every peer lane's spans in this file are untouched.
+import {
+  NEXUS_CONNECTION_READ_TOOL, nexusConnectionToolDef, offerNexusConnectionRead, readNexusConnections,
+} from "./nexus-connection-read.ts";
 import type { TraceCtx } from "../llm-trace.ts";
 import { MENTOR_PLAN_READ_TIMEOUT_MS, mentorPlanReadTools, readMentorPlan, type MentorPlanScope } from "./mentor-plan-read.ts";
 import { loadTeamAuthorityForChat } from "../paige-spine/domains/teamAuthorityChatEvidence.ts";
@@ -699,11 +705,19 @@ export async function runTeamHubAgentTurn(deps: AgentTurnDeps, raw: unknown): Pr
     mentorScope = { tenantId, actorId: userId, storedTools: storedDm };
     if (await currentMentorScope()) mentorReads = mentorPlanReadTools(mentorScope);
   }
-  const tools = effectiveAgentTools(
+  const baseTools = effectiveAgentTools(
     whereKind === "agent_dm" ? storedDm : storedShared,
     whereKind === "agent_dm" ? "agent_dm" : "shared",
     mentorReads.length ? new Set([...EXECUTABLE_AGENT_TOOLS, MENTOR_PLAN_TOOL]) : undefined,
   );
+  // EXP10 NEXUS connection read (ANT-164, directive 385a54eb; contract efa6d22f on ANT-161): the one
+  // nexus-DM domain read — integrations_list, the SAME invoker-scoped projection PAIGE chat calls,
+  // under the asker's own JWT. Offered only when the stored nexus DM scope names it AND the asker is
+  // this workspace's owner/admin (the authority is asked only when the scope already names the read).
+  // Every gate fails closed; the projection's RLS bounds the rows regardless of this gate's freshness.
+  const nexusConnection = agent === "nexus" && whereKind === "agent_dm"
+    && await offerNexusConnectionRead({ caller, service, userId, tenantId }, storedDm);
+  const tools = nexusConnection ? [...baseTools, NEXUS_CONNECTION_READ_TOOL] : baseTools;
   const privateRoute = privateRouteAllowed(whereKind === "agent_dm" ? storedDm : storedShared, whereKind === "agent_dm" ? "agent_dm" : "shared");
   // EXP01 (MENTOR): a per-turn definition merge, so an admitted mentor read is offered with its
   // real schema (from its one home) instead of silently vanishing from the frozen base record.
@@ -734,7 +748,10 @@ export async function runTeamHubAgentTurn(deps: AgentTurnDeps, raw: unknown): Pr
   // system messages above travel as `instructions`, which that check does not read, so the request is
   // refused with a 400 before the model runs. The asker's line therefore names the answer format too.
   messages.push({ role: "user", content: `${askerName} asks ${agentName(agent) ?? "you"}: ${quoteTeamHubText(source.body, 2000)}\n\n${ANSWER_FORMAT_REMINDER}` });
-  const toolDefs = tools.map((t) => mentorTurnDefs[t]).filter(Boolean);
+  // EXP10 NEXUS connection read: its definition lives in the integrations domain's one home
+  // (INTEGRATIONS_READ_TOOLS, via nexusConnectionToolDef), not in TOOL_DEFS/mentorTurnDefs, so it is
+  // appended after EXP01's per-turn definition merge.
+  const toolDefs = [...tools.map((t) => mentorTurnDefs[t]).filter(Boolean), ...(nexusConnection ? [nexusConnectionToolDef() as ToolDef] : [])];
 
   // 6. The model, through the injected seam, with the narrowed tools.
   const trace: TraceCtx = { tenant_id: tenantId, working_context_tenant_id: tenantId, agent_id: agent, job_kind: "team_hub_agent_turn", content_policy: "metadata_only" };
@@ -787,6 +804,14 @@ export async function runTeamHubAgentTurn(deps: AgentTurnDeps, raw: unknown): Pr
         }
         const read = await readTeamHubConversation({ tenantId, userId }, caller, { conversation_id: asked ?? req.conversationId, thread_id: args.thread_id, limit: args.limit });
         messages.push({ role: "tool", tool_call_id: call.id, content: JSON.stringify(read.envelope) });
+        continue;
+      }
+      if (name === NEXUS_CONNECTION_READ_TOOL) {
+        // EXP10 NEXUS: the workspace's connections surface, under the asker's own JWT, bounded by the
+        // module's own deadline and honest on every failure; the envelope is the SAME shape PAIGE chat
+        // returns for this tool. Not offered ⇒ the dispatch-refusal block above already answered it.
+        const read = await readNexusConnections({ caller, service, userId, tenantId, turnRef: `${turnId}:${hash}`, signal: deps.signal }, args);
+        messages.push({ role: "tool", tool_call_id: call.id, content: JSON.stringify(read) });
         continue;
       }
       if (name === TIME_ZONE_TOOL) {

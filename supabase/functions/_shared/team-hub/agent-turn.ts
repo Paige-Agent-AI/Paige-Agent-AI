@@ -56,6 +56,9 @@ import {
 import type { TraceCtx } from "../llm-trace.ts";
 import { MENTOR_PLAN_READ_TIMEOUT_MS, mentorPlanReadTools, readMentorPlan, type MentorPlanScope } from "./mentor-plan-read.ts";
 import { loadTeamAuthorityForChat } from "../paige-spine/domains/teamAuthorityChatEvidence.ts";
+import { readZionPlans, zionPlanReadTools, type ZionPlanningScope } from "./zion-planning-read.ts";
+import { readCalendarAccountShape, type CalendarBookingReadCaller } from "../calendar-booking-read.ts";
+import { createWeeklyDraftDeadline } from "../paige-orchestration/weekly-draft-deadline.ts";
 
 // ---------------------------------------------------------------- the request
 
@@ -705,10 +708,68 @@ export async function runTeamHubAgentTurn(deps: AgentTurnDeps, raw: unknown): Pr
     mentorScope = { tenantId, actorId: userId, storedTools: storedDm };
     if (await currentMentorScope()) mentorReads = mentorPlanReadTools(mentorScope);
   }
+  // EXP05: same ZION, original Planning reader, own private owner/admin DM only.
+  // Native read staging MUST acknowledge this original turn before any rows
+  // reach the model. The forward native guard/history contract is a release
+  // dependency; this host never substitutes roster presence for that authority.
+  const MAX_PRIVATE_READS = 3;
+  let zionReadsUsed = 0;
+  const zionScope: ZionPlanningScope | null = agent === "zion" && whereKind === "agent_dm" && storedDm?.includes("plan_list")
+    ? Object.freeze({ agent: "zion", where: "agent_dm", tenantId, actorId: userId, storedTools: Object.freeze([...storedDm]) }) : null;
+  const currentZionScope = async (): Promise<boolean> => {
+    if (!zionScope || deps.signal?.aborted) return false;
+    const within = createWeeklyDraftDeadline(5000, () => !deps.signal?.aborted);
+    try {
+      return await within(async () => {
+        const [freshPersona, freshNames, authority, shape, row] = await Promise.all([
+          rpcSafe(caller, "get_paige_persona_context", {}),
+          readNames(caller, tenantId, target),
+          loadTeamAuthorityForChat(caller, tenantId),
+          readCalendarAccountShape(caller as unknown as CalendarBookingReadCaller, tenantId, deps.signal),
+          service.from("paige_subagents").select("slug,config").eq("slug", "zion").is("tenant_id", null).maybeSingle(),
+        ]);
+        const persona = freshPersona && !freshPersona.error
+          ? object(Array.isArray(freshPersona.data) ? freshPersona.data[0] : freshPersona.data) : null;
+        const config = object(row?.error ? null : row?.data?.config);
+        const freshTools = storedToolNames(config?.capability_scope);
+        const permission = authority.status === "available"
+          ? authority.rows.filter(r => r.fact_key === "viewer_permission" && r.status === "available" && r.tenant_id === tenantId) : [];
+        return !deps.signal?.aborted && uuid(persona?.tenant_id) === tenantId && shape.status === "available"
+          && row?.data?.slug === "zion" && object(config?.capability_scope)?.access === "read"
+          && freshTools !== null && JSON.stringify(freshTools) === JSON.stringify(zionScope.storedTools)
+          && !!freshNames && "people" in freshNames && freshNames.people.has(userId)
+          && freshNames.conversation?.kind === "agent_dm" && freshNames.conversation.agent_key === "zion"
+          && permission.length === 1 && (permission[0].value === "owner" || permission[0].value === "admin");
+      }) === true;
+    } catch { return false; }
+  };
+  const zionReadDeps = {
+    caller, signal: deps.signal, isCurrent: currentZionScope,
+    takeRead: () => {
+      if (zionReadsUsed >= MAX_PRIVATE_READS) return false;
+      zionReadsUsed += 1;
+      return true;
+    },
+    recordRead: async (tool: "plan_list") => {
+      try {
+        return await recordCapabilityRun(service, { tenantId, actorId: userId, capabilityKey: tool, outcome: "capability_succeeded",
+          runId: await stableRunId([tool, tenantId, userId, `team_hub_agent:${turnId}:${hash}:zion:${zionReadsUsed}`]),
+          detail: { channel: "team_hub_agent", tool, read_only: true } });
+      } catch { return false; }
+    },
+    stageReadContext: async () => {
+      const staged = await rpcSafe(service, "team_hub_stage_agent_read_context", {
+        p_turn_id: turnId, p_token_hash: hash, p_read_tools: ["plan_list"], p_record_links: [],
+      });
+      return !!staged && !staged.error && object(staged.data)?.ok === true;
+    },
+  };
+  const zionReads = zionScope ? await zionPlanReadTools(zionScope, zionReadDeps) : [];
+  const zionRevalidations: Array<() => Promise<boolean>> = [];
   const baseTools = effectiveAgentTools(
     whereKind === "agent_dm" ? storedDm : storedShared,
     whereKind === "agent_dm" ? "agent_dm" : "shared",
-    mentorReads.length ? new Set([...EXECUTABLE_AGENT_TOOLS, MENTOR_PLAN_TOOL]) : undefined,
+    mentorReads.length || zionReads.length ? new Set([...EXECUTABLE_AGENT_TOOLS, MENTOR_PLAN_TOOL]) : undefined,
   );
   // EXP10 NEXUS connection read (ANT-164, directive 385a54eb; contract efa6d22f on ANT-161): the one
   // nexus-DM domain read — integrations_list, the SAME invoker-scoped projection PAIGE chat calls,
@@ -722,6 +783,8 @@ export async function runTeamHubAgentTurn(deps: AgentTurnDeps, raw: unknown): Pr
   // EXP01 (MENTOR): a per-turn definition merge, so an admitted mentor read is offered with its
   // real schema (from its one home) instead of silently vanishing from the frozen base record.
   const mentorTurnDefs: Record<string, ToolDef> = { ...TOOL_DEFS, ...Object.fromEntries(mentorReads.map((t) => [t.function.name, t as unknown as ToolDef])) };
+  // Extend the same map; never replace a peer definition or register a duplicate.
+  for (const definition of zionReads) mentorTurnDefs[definition.function.name] = definition as unknown as ToolDef;
   const readable = new Set([target, req.conversationId]);
 
   // 5. The marker, then the context. Team Hub text reaches the model only after the receipt that stops
@@ -761,11 +824,13 @@ export async function runTeamHubAgentTurn(deps: AgentTurnDeps, raw: unknown): Pr
   const writes = mutatingTools();
   for (let round = 0; round < MAX_ROUNDS && control === null; round++) {
     if (deps.signal?.aborted) return endedWithoutPost("no_reply");
+    if (zionReads.length && !await currentZionScope()) return endedWithoutPost("no_reply");
     let result: Awaited<ReturnType<CompleteFn>>;
     try {
       result = await deps.complete({ cognitive_class: "operational", job: "team_hub_agent_turn", messages, tools: toolDefs.length ? toolDefs : undefined,
         response_format: { type: "json_object" }, max_tokens: 900 },
-        { trace, signal: deps.signal, beforeProviderAttempt: async () => !deps.signal?.aborted && (!mentorReadsUsed || await currentMentorScope()) });
+        { trace, signal: deps.signal, beforeProviderAttempt: async () => !deps.signal?.aborted
+          && (!mentorReadsUsed || await currentMentorScope()) && (!zionReads.length || await currentZionScope()) });
     } catch { return endedWithoutPost("no_reply"); }
     const choice = object((object(result?.response)?.choices as unknown[] | undefined)?.[0]);
     const message = object(choice?.message);
@@ -785,7 +850,8 @@ export async function runTeamHubAgentTurn(deps: AgentTurnDeps, raw: unknown): Pr
     for (const call of calls) {
       const name = String(call.function.name);
       let args: Record<string, unknown> = {};
-      try { args = object(JSON.parse(call.function.arguments || "{}")) ?? {}; } catch { args = {}; }
+      let originalArgs: unknown;
+      try { originalArgs = JSON.parse(call.function.arguments || "{}"); args = object(originalArgs) ?? {}; } catch { args = {}; }
       // DISPATCH REFUSAL, the second enforcement: a tool that was not offered never runs, whatever the
       // model sends. In a shared conversation a refused read moves to the DM and a refused write gets the
       // A1 line; in the DM a refused write gets the A1 line and a refused read is answered as unavailable.
@@ -826,6 +892,23 @@ export async function runTeamHubAgentTurn(deps: AgentTurnDeps, raw: unknown): Pr
         messages.push({ role: "tool", tool_call_id: call.id, content: JSON.stringify(forModel) });
         continue;
       }
+      if (zionScope && zionReads.some(t => t.function.name === name)) {
+        if (typeof call.function.arguments !== "string" || !call.function.arguments || !object(originalArgs)) {
+          messages.push({ role: "tool", tool_call_id: call.id, content: JSON.stringify({ status: "needs_input", message: "The Planning request must be a JSON object. Nothing was read or changed. Correct the request before trying again." }) });
+          continue;
+        }
+        if (zionReadsUsed >= MAX_PRIVATE_READS) {
+          messages.push({ role: "tool", tool_call_id: call.id, content: JSON.stringify({ status: "unavailable", message: "This turn reached its three-read limit. No further plans were read. Explain the limit and ask for a follow-up if needed." }) });
+          continue;
+        }
+        const read = await readZionPlans(zionScope, zionReadDeps, name, args);
+        // Refused/unknown native stage never releases its private result, starts
+        // another model attempt or posts an answer based on unverified rows.
+        if (read.model.success !== true && read.model.status !== "needs_input") return endedWithoutPost("no_reply");
+        if (read.model.success === true) zionRevalidations.push(read.revalidate);
+        messages.push({ role: "tool", tool_call_id: call.id, content: JSON.stringify(read.model) });
+        continue;
+      }
       // EXP01 (MENTOR) plan read: bounded per turn, receipted before the rows reach the model, and
       // honest about every refusal. The adapter owns validation/pinning; this is only the dispatch.
       if (mentorReads.some((t) => t.function.name === name)) {
@@ -854,6 +937,8 @@ export async function runTeamHubAgentTurn(deps: AgentTurnDeps, raw: unknown): Pr
     }
   }
   if (deps.signal?.aborted) return endedWithoutPost("no_reply");
+  for (const check of zionRevalidations) if (!await check()) return endedWithoutPost("no_reply");
+  if (zionReads.length && !await currentZionScope()) return endedWithoutPost("no_reply");
   // EXP01 (MENTOR): a read that happened must still be CURRENT when the reply posts — the roster,
   // the conversation and the seat are re-proved, and any lapse ends the turn rather than posting
   // rows the asker may no longer be entitled to see.

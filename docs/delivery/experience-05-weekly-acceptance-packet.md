@@ -849,3 +849,40 @@ operations.department stays PARTIAL; canonical ALG01/08/11/12/13 maturity is
 unchanged. Same ZION/personality in both chats, weekly execution/full Builder
 lifecycle/proactive/recovery, all ten outcomes/E5-CV1–9 and one complete founder
 evaluation remain OPEN. Founder NOT_ACCEPTED; STILL CODING / NOT_READY.
+
+## October29 — ZION Planning host review branch; native release dependency OPEN
+
+The owner explicitly approved bounded review-branch implementation after the
+automatic source-authorization rejection. The rejected patch was never applied;
+this later authorized branch adds only ZION private owner/admin Planning reads.
+Same identity/personality, original ToolDef/executor/caller JWT, fresh persona/DM/
+SOLO/role/roster checks, one total three-read budget, original marker/native
+turn-token stage before model exposure, pre-provider/post checks and original
+post/readback/unknown-result reconciliation. No writer, new scheduler or ledger.
+Malformed/non-object calls cannot become broader empty reads; native refusals or
+uncertain/late acknowledgements withhold private data and stop the turn.
+
+Orchestration Contract: original private Team Hub asking message/accepted turn →
+planning.list / plan_list canonical read → original read marker → existing
+service-only read-context stage → original caller-JWT post/readback/Rail. No
+Layer C business effect or new ActionAdapter. E04 owns native forward admission,
+source-version/currentness/history and exact receiving review; CURRENT native
+guard excludes ZION. Scope checks are not source-version proof. No fabricated
+non-null Work link, no native bypass, no unmerged peer dependency copied.
+
+Local original+foundation103 plus12 new host cases =115PASS/0FAIL/0skip. Test-only
+WIP10abb recorded six expected-red missing behaviors. Removing the new malformed
+object guard yields an unexpected real recording-port plan read (1 versus0);
+final guard passes. Strict source+test baseline6/candidate6/no added diagnostics;
+ESLint baseline2+19/candidate2+19/no new diagnostics; original Kit288/296/no new
+bypass. Eight peer files and four original host spans remain byte-identical.
+[Exact branch evidence](../evidence/exp05-zion-planning-host-review.json).
+
+Functional SOURCE/REVIEW BRANCH only; hosted CI, merge and deployment not claimed.
+Visual: original approved DM/UI/presentation unchanged, no rendered integration
+claim. Experiential: native/actual actor/private publication/reload/current+new
+SOLO proof remains owed. AUTHOR-REVIEW / LOWER ASSURANCE; native receiving review
+not waived. operations.department stays PARTIAL; no capability/algorithm maturity
+promotion. ALG-01/08/11 reused, ALG-12/13 truthful limitations. Weekly execution,
+full automation lifecycle, both-chat ZION/recovery, all ten outcomes/E5-CV1–9
+and complete founder evaluation remain OPEN. STILL CODING / NOT_READY.

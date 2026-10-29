@@ -138,7 +138,7 @@ function world(opts: Opts = {}) {
   };
   Object.assign(caller, { from(table: string) {
     calls.push({ who: "caller", name: `from:${table}`, args: {} });
-    const chain: any = { select: () => chain, eq: () => chain, limit: () => chain,
+    const chain = { select: () => chain, eq: () => chain, limit: () => chain,
       abortSignal: async () => ({ data: opts.accountRows ?? [{ id: TENANT, account_type: "standalone", parent_tenant_id: null }], error: null }) };
     return chain;
   } });
@@ -152,7 +152,8 @@ function world(opts: Opts = {}) {
       if (name === "team_hub_stage_agent_suggestions") return Promise.resolve({ data: opts.stage ? opts.stage(args) : { ok: true }, error: null });
       if (name === "team_hub_stage_agent_read_context") {
         const answer = opts.nativeReadStage ? opts.nativeReadStage(args) : { ok: false, code: "not_allowed" };
-        return Promise.resolve(answer && typeof answer === "object" && "__rpc" in answer ? (answer as any).__rpc : { data: answer, error: null });
+        return Promise.resolve(answer && typeof answer === "object" && "__rpc" in answer
+          ? (answer as { __rpc: { data: unknown; error: { message?: string; code?: string } | null } }).__rpc : { data: answer, error: null });
       }
       if (name === "team_hub_end_agent_turn") return Promise.resolve({ data: opts.end ? opts.end() : { ok: true }, error: null });
       if (name === "record_capability_run") {
@@ -881,13 +882,13 @@ describe("MENTOR plan read (EXP01)", () => {
     assert.equal(named(w, "plan_list").length, 0);
   });
 
-  it("ZION's stored plan_list entry is NOT offered (the executor is MENTOR-scoped), and a channel never offers it", async () => {
+  it("ZION's stored plan_list entry grants no member access, and a channel never offers it", async () => {
     const zionScope = { version: 1, mode: "allowlist", access: "read", tools: ["read_business_time_zone", "team_hub_read_conversation", "crm_list_tasks", "plan_list"] };
-    const w = world({ sourceIn: MERIT_DM, mentions: [], agentDmKey: "zion", config: { slug: "zion", config: { team_hub_tools: SHARED_LIST, capability_scope: zionScope, personality: {} } } });
+    const w = world({ sourceIn: MERIT_DM, mentions: [], agentDmKey: "zion", authorityRows: [{ fact_key: "viewer_permission", value: "member", status: "available", tenant_id: TENANT }], config: { slug: "zion", config: { team_hub_tools: SHARED_LIST, capability_scope: zionScope, personality: {} } } });
     const m = model([{ content: "Three things. Owner, task, due. Here they are." }]);
     const r = await run(w, m, turn({ conversationId: MERIT_DM, agent: "zion" }));
     assert.equal(r.body.outcome, "posted");
-    assert.ok(!m.requests[0].request.tools!.some((t: any) => t.function.name === "plan_list"), "only MENTOR's span runs this executor");
+    assert.ok(!m.requests[0].request.tools!.some((t: any) => t.function.name === "plan_list"), "roster presence grants no owner/admin authority");
 
     const wc = world({ mentions: ["mentor"], config: { slug: "mentor", config: MENTOR_CONFIG } }), mc = model([{ content: "Let's take it from the top." }]);
     await run(wc, mc, turn({ agent: "mentor" }));
@@ -961,8 +962,8 @@ describe("EXP05 ZION Planning read host composition — native contract proof st
     const m = model([{ tool_calls: [{ name: "plan_list", args: { horizon: "week" } }] }, { content: planningAnswer }]);
     const r = await run(w, m, zionTurn());
     assert.equal(r.body.outcome, "posted");
-    assert.ok(m.requests[0].request.tools!.some((t: any) => t.function.name === "plan_list"));
-    assert.ok(!m.requests[0].request.tools!.some((t: any) => t.function.name === "plan_create"));
+    assert.ok(m.requests[0].request.tools!.some(t => t.function.name === "plan_list"));
+    assert.ok(!m.requests[0].request.tools!.some(t => t.function.name === "plan_create"));
     assert.equal(named(w, "plan_list").length, 1);
     assert.equal(named(w, "plan_list")[0].args.p_tenant_id, TENANT);
     assert.ok(promptText(m).includes("Confirm venue"));
@@ -971,7 +972,7 @@ describe("EXP05 ZION Planning read host composition — native contract proof st
   });
 
   it("a refused or uncertain native stage withholds private rows and posts nothing, without replay", async () => {
-    for (const stage of [{ ok: false, code: "not_allowed" }, raw(null, TRANSPORT)]) {
+    for (const stage of [{ ok: false, code: "not_allowed" }, { ok: "true" }, raw(null, TRANSPORT)]) {
       const w = zionWorld({ nativeReadStage: () => stage });
       const m = model([{ tool_calls: [{ name: "plan_list", args: {} }] }, { content: planningAnswer }]);
       const r = await run(w, m, zionTurn());
@@ -994,7 +995,7 @@ describe("EXP05 ZION Planning read host composition — native contract proof st
     for (const opts of cases) {
       const w = zionWorld(opts), m = model([{ content: "I can't verify access to those plans here." }]);
       await run(w, m, zionTurn());
-      assert.ok(!m.requests[0].request.tools!.some((t: any) => t.function.name === "plan_list"));
+      assert.ok(!m.requests[0].request.tools!.some(t => t.function.name === "plan_list"));
       assert.equal(named(w, "plan_list").length, 0);
       assert.equal(named(w, "team_hub_stage_agent_read_context").length, 0);
     }
@@ -1003,7 +1004,7 @@ describe("EXP05 ZION Planning read host composition — native contract proof st
   it("channel scope never gains the private ZION plan read from its roster", async () => {
     const w = zionWorld({ sourceIn: LAUNCH, mentions: ["zion"] }), m = model([{ content: "Ask me privately about your plans." }]);
     await run(w, m, turn({ agent: "zion" }));
-    assert.ok(!m.requests[0].request.tools!.some((t: any) => t.function.name === "plan_list"));
+    assert.ok(!m.requests[0].request.tools!.some(t => t.function.name === "plan_list"));
     assert.equal(named(w, "plan_list").length, 0);
   });
 
@@ -1042,6 +1043,7 @@ describe("EXP05 ZION Planning read host composition — native contract proof st
     assert.equal(r.body.outcome, "posted");
     assert.equal(named(w, "plan_list").length, 3);
     assert.equal(named(w, "team_hub_stage_agent_read_context").length, 3);
+    assert.ok("message" in r.body && r.body.message && typeof r.body.message.body === "string");
     assert.match(r.body.message.body, /three-read limit/);
   });
 
@@ -1057,5 +1059,59 @@ describe("EXP05 ZION Planning read host composition — native contract proof st
     } });
     assert.equal(r.body.outcome, "no_reply");
     assert.equal(named(w, "team_hub_post_agent_message").length, 0);
+  });
+
+  it("never coerces a malformed or non-object Planning call into a broader empty read", async () => {
+    for (const input of ["", "{", "null", "[]", '"week"']) {
+      const w = zionWorld(), m = model([{ tool_calls: [{ name: "plan_list", args: {} }] }, { content: "Please correct the Planning request. Nothing was read or changed." }]);
+      const complete = m.make(w.calls); let round = 0;
+      const r = await run(w, m, zionTurn(), { complete: async (request, options) => {
+        const reply = await complete(request, options);
+        if (++round === 1) (reply.response!.choices as Array<{ message: { tool_calls: Array<{ function: { arguments: string } }> } }>)[0].message.tool_calls[0].function.arguments = input;
+        return reply;
+      } });
+      assert.equal(r.body.outcome, "posted");
+      assert.equal(named(w, "plan_list").length, 0);
+      assert.equal(named(w, "team_hub_stage_agent_read_context").length, 0);
+      assert.ok(!promptText(m).includes("Confirm venue"));
+    }
+  });
+
+  it("a failed original read marker starts neither a domain read nor native staging", async () => {
+    const w = zionWorld({ recordFails: ["plan_list"] }), m = model([{ tool_calls: [{ name: "plan_list", args: {} }] }]);
+    const r = await run(w, m, zionTurn());
+    assert.equal(r.body.outcome, "no_reply");
+    for (const name of ["plan_list", "team_hub_stage_agent_read_context", "team_hub_post_agent_message"]) assert.equal(named(w, name).length, 0);
+    assert.equal(m.requests.length, 1);
+  });
+
+  it("rechecks current authority at an internal provider retry before releasing private context", async () => {
+    let revoked = false;
+    const w = zionWorld({ authorityRowsFn: () => [{ fact_key: "viewer_permission", value: revoked ? "member" : "owner", status: "available", tenant_id: TENANT }] });
+    const m = model([{ tool_calls: [{ name: "plan_list", args: {} }] }]), complete = m.make(w.calls); let attempts = 0;
+    const r = await run(w, m, zionTurn(), { complete: async (request, options) => {
+      if (++attempts === 2) {
+        revoked = true;
+        assert.equal(await options.beforeProviderAttempt!(), false);
+        return { ok: false };
+      }
+      return complete(request, options);
+    } });
+    assert.equal(r.body.outcome, "no_reply");
+    assert.equal(m.requests.length, 1);
+    assert.equal(named(w, "team_hub_post_agent_message").length, 0);
+  });
+
+  it("a lost original post acknowledgement reconciles the same result without rereading plans", async () => {
+    const w = zionWorld({ post: (_args, attempt) => attempt === 1 ? raw(null, TRANSPORT, true) : undefined });
+    const m = model([{ tool_calls: [{ name: "plan_list", args: {} }] }, { content: planningAnswer }]);
+    const r = await run(w, m, zionTurn());
+    assert.equal(r.body.outcome, "posted");
+    const posts = named(w, "team_hub_post_agent_message");
+    assert.equal(posts.length, 2);
+    assert.deepEqual(posts[0].args, posts[1].args);
+    assert.equal(named(w, "plan_list").length, 1);
+    assert.equal(named(w, "team_hub_stage_agent_read_context").length, 1);
+    assert.equal(w.store.get(MERIT_DM)!.filter(row => row.author_kind === "agent").length, 1);
   });
 });

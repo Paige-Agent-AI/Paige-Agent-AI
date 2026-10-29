@@ -1,0 +1,104 @@
+{
+  "schema": 1,
+  "base": "e9445b8ab92fd0a2f3e8e11acd48d71bbcedd118",
+  "branch": "feat/exp05-zion-plan-read-host-20261029",
+  "source": {
+    "supabase/functions/_shared/team-hub/agent-turn.ts": "6e065d4b8ac31f44dc8767ca34a0c618b7c3abc7f9f282b6fbfc93027fbd2136",
+    "supabase/functions/_shared/team-hub/agent-turn.test.ts": "7cd595eafdcce57aec5b8b7c8829965f6db46c5448c797900d58ac54491c83ee"
+  },
+  "authority": "Human explicitly approved bounded review-branch implementation after automatic rejection; no live activation/business effects/native bypass authorized.",
+  "flow": "Same ZION, owner/admin-only original private Team Hub DM, genuine Planning read and truthful original publication.",
+  "capability": "planning.list / plan_list; existing definition/readMentorPlan/caller-JWT RPC; no writer or Layer C effect.",
+  "contracts": {
+    "scope": "Fresh original persona, DM visibility, current owner/admin authority, original SOLO classification and unchanged read-only roster before read/provider/post.",
+    "budget": "One total maximum-three private Planning reads for this turn; original five-second per-read elapsed continuation deadline.",
+    "receipt": "Original plan_list read marker before domain RPC; original turn/token native stage before any private rows reach model; original post/readback/recovery/Rail.",
+    "native": "E04 forward guard, source-version/currentness/history and reviewed composition STILL REQUIRED; existing guard excludes ZION. No non-null invented Work links.",
+    "provider": "Original Model Fabric routing and budget; no activation, paid provider, external send, recurrence or new router."
+  },
+  "preserved": [
+    "supabase/functions/_shared/team-hub/mentor-plan-read.ts",
+    "supabase/functions/_shared/team-hub/mentor-plan-read.test.ts",
+    "supabase/functions/_shared/team-hub/nexus-connection-read.ts",
+    "supabase/functions/_shared/team-hub/zion-planning-read.ts",
+    "supabase/functions/paige-ai-chat/index.ts",
+    "src/components/chat/PaigeConfirmCard.tsx",
+    "scripts/ci/c0b-incumbent-resource-binding.mjs",
+    ".github/workflows/ci.yml"
+  ],
+  "peerChecks": [
+    {
+      "start": "const MENTOR_PLAN_TOOL =",
+      "pass": true
+    },
+    {
+      "start": "  const nexusConnection =",
+      "pass": true
+    },
+    {
+      "start": "      // EXP01 (MENTOR) plan read: bounded per turn,",
+      "pass": true
+    },
+    {
+      "start": "  // 8. The post, under the asker",
+      "pass": true
+    }
+  ],
+  "tests": {
+    "originalAndFoundation": 103,
+    "hostAdded": 12,
+    "pass": 115,
+    "fail": 0,
+    "skip": 0,
+    "testFirst": "Local test-only WIP 10abb: six expected-red host behaviors; new specification, not claimed production regression.",
+    "malformedMutation": "Removing only the new object guard causes actual unexpected plan_list read (1 versus 0). Production source was not rewritten.",
+    "strict": {
+      "base": "e9445b8ab92fd0a2f3e8e11acd48d71bbcedd118",
+      "baseline": 6,
+      "candidate": 6,
+      "added": []
+    },
+    "lint": [
+      {
+        "file": "supabase/functions/_shared/team-hub/agent-turn.ts",
+        "baseline": 2,
+        "candidate": 2,
+        "added": []
+      },
+      {
+        "file": "supabase/functions/_shared/team-hub/agent-turn.test.ts",
+        "baseline": 19,
+        "candidate": 19,
+        "added": []
+      }
+    ],
+    "kit": "PASS 288/296 original path+symbol entries; no new bypass",
+    "artifacts": {
+      "work/zion-planning-host-green.tap": "a06019db49ae3600f8da9f2c6678ad91e8ad576b56b818b0ac66685f61de873a",
+      "work/zion-planning-host-red.tap": "a049beb38df6f7ae3b94cb68e351e3a1662e5d280804e7d370255a5a9d3d673e",
+      "work/zion-planning-host-malformed-red.tap": "7eb7af692c43108aa2be508e9ca53287cae2181c3a89721252257b7cd401a4ff",
+      "work/zion-planning-host-types.json": "b940cdf4652eb2225a077e0bff01ba6a0b2cfd2ef35eb7149c3e18e93b0a3ed4",
+      "work/zion-planning-host-lint-ratchet.json": "bf9a30ae2a433de5aee17b0ba5f4180539fbcc7a201eb075ae73de3bc77119c9"
+    }
+  },
+  "review": "Sequential specification/security/recovery review: AUTHOR-REVIEW / LOWER ASSURANCE. E04 exact native/host receiving review remains mandatory.",
+  "ui": "Original approved Team Hub DM, identity, personality, colors, reply/recovery UI reused unchanged; no screen/control/style edits. Actual customer/rendered integration not established by Node ports.",
+  "catalogue": "operations.department PARTIAL; ZION Team Hub Planning remains UNAVAILABLE/UNVERIFIED pending native release and authenticated proof. No status promotion.",
+  "algorithms": "ALG-01 original reconciliation/no-repeat; ALG-08 source inputs only; ALG-11 original routing; ALG-12/13 honest limitations, no new maturity. ALG-02/03 unchanged.",
+  "release": {
+    "source": "REVIEW BRANCH",
+    "requiredCI": "NOT_YET_RUN",
+    "merged": false,
+    "deployed": false,
+    "activated": false,
+    "authenticated": "UNVERIFIED",
+    "founder": "NOT_ACCEPTED"
+  },
+  "remaining": [
+    "Foundation #3086 must clear exact CI/merge and be composed against latest main.",
+    "E04 forward native scope/version/history contract, original role/revoke/reload proof and receiving review; preserve MERIT/CURA/MENTOR/NEXUS/E08 spans.",
+    "Exact-head required CI and safe production readback, no activation inferred.",
+    "Same ZION in both chats, existing/new eligible SOLO, actual original record/Rail/reopen and negative auth proof.",
+    "Full ten outcomes/E5-CV1–9, weekly execution, Automation Builder lifecycle, proactive follow-through and founder evaluation."
+  ]
+}

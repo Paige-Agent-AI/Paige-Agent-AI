@@ -104,6 +104,23 @@ separate states on the original PR/ANT-11. O02 still owes genuine Calendar and
 dependency integration, feasible alternatives, authorized correction/save/reopen
 and useful follow-through; O05/O07/O09 and all original acceptance remain open.
 
+## Required design-check correction — October 29
+
+Exact-head verify at 0afbb reported the pinned Impeccable 4.1.0 side-tab findings
+on the comparison panel's heavy left border. The release stayed held. Replaced
+that accent with a subtle full perimeter; over-budget remains explicit in text
+and a dashed perimeter. No workload, authority, input or navigation logic changed.
+The same pinned scanner now reports zero anti-patterns; four advisory notes remain
+on the existing week shell's literal radius/type values, without a gate override.
+
+Actual untransformed parent source rebuilt with the same neutral ports:
+quiet-panel-build-manifest.json records the new CSS hash. The three quiet-panel
+screenshots cover Mineral/Obsidian at 1366×768 and Obsidian at 900×1000, both excess
+and within-budget states. Document widths match the viewports; keyboard focus
+still reaches the original task inspector. The earlier native 200% and complete
+interaction evidence remain scoped to their recorded source; this correction
+changes only two border rules. Fresh exact-final-head CI is still required.
+
 ## Native zoom review correction
 
 Automated review5703247947 correctly required native200% proof; the original

@@ -42,8 +42,9 @@ export function parsePaymentRequestIntent(v:unknown):PaymentRequestIntent {
  const bound=Object.prototype.hasOwnProperty.call(v,'obligation_reference');
  let reference:PaymentObligationReference|undefined;
  if(bound){
-  if(v.purpose!=='installment')return invalid();
+  if(v.purpose!=='deposit'&&v.purpose!=='installment')return invalid();
   keys.push('obligation_reference');reference=parsePaymentObligationReference(v.obligation_reference);
+  if(v.purpose==='deposit'&&reference.sequence!==1)return invalid();
  }else if(v.purpose!=='full'){
   keys.push('amount_minor');
   if(!Number.isSafeInteger(v.amount_minor)||(v.amount_minor as number)<=0||(v.amount_minor as number)>2147483647)return invalid();
@@ -52,6 +53,18 @@ export function parsePaymentRequestIntent(v:unknown):PaymentRequestIntent {
  return {action:'invoice.payment_request',invoice_id:v.invoice_id.toLowerCase(),expected_version:v.expected_version as number,
   provider:v.provider as SalesPaymentProvider,purpose:v.purpose as PaymentRequest['purpose'],
   ...(reference?{obligation_reference:reference}:v.purpose!=='full'?{amount_minor:v.amount_minor as number}:{})};
+}
+
+/** Recover the original caller selector from its validated immutable operation.
+ * No current balance, new amount or provider call is needed for historical replay.
+ * A dated target must remain that exact accepted reference, never a free-form amount.
+ */
+export function paymentRequestIntentFromCommand(value:unknown):PaymentRequestIntent {
+ const command=parseCanonicalPaymentRequestCommand(value);
+ return parsePaymentRequestIntent({action:command.action,invoice_id:command.invoice_id,
+  expected_version:command.expected_version,provider:command.provider,purpose:command.purpose,
+  ...(command.obligation?{obligation_reference:command.obligation.reference}
+   :command.purpose==='full'?{}:{amount_minor:command.amount_minor})});
 }
 /** Pure canonical assembly only. Inputs are server-resolved invoice/readiness facts, NOT authority.
  * The command is subsequently fingerprinted by the shared gate and revalidated under SQL locks.

@@ -1,5 +1,5 @@
 import {describe,it,expect} from 'vitest';
-import {parsePaymentRequestIntent,buildPaymentRequestCommand,parseCanonicalPaymentRequestCommand} from './request-command.ts';
+import {parsePaymentRequestIntent,buildPaymentRequestCommand,parseCanonicalPaymentRequestCommand,paymentRequestIntentFromCommand} from './request-command.ts';
 const invoice={id:'11111111-1111-4111-8111-111111111111',tenant_id:'22222222-2222-4222-8222-222222222222',client_id:'33333333-3333-4333-8333-333333333333',lifecycle_version:3,issued_snapshot_version:1,status:'issued',currency:'usd',outstanding_minor:350000};
 const merchant={tenant_id:invoice.tenant_id,provider:'stripe' as const,merchant_id:'acct_testA',environment:'test' as const,version:1};
 const now=Date.parse('2026-10-05T12:00:00Z');
@@ -47,6 +47,15 @@ describe('payment request against one original accepted dated obligation',()=>{
   expect(buildPaymentRequestCommand({...scheduledIntent,obligation_reference:nextReference},invoice,merchant,facts,now,next))
    .toMatchObject({amount_minor:30000,obligation:next.obligation});
  });
+ it('retains an explicitly requested initial deposit as the same accepted first obligation',()=>{
+  const depositIntent={...scheduledIntent,purpose:'deposit'};
+  const command=buildPaymentRequestCommand(depositIntent,invoice,merchant,facts,now,obligationContext);
+  expect(command).toMatchObject({purpose:'deposit',amount_minor:50000,obligation});
+  expect(paymentRequestIntentFromCommand(command)).toEqual(depositIntent);
+ });
+ it('does not mislabel a later accepted installment as the initial deposit',()=>{
+  expect(()=>parsePaymentRequestIntent({...scheduledIntent,purpose:'deposit',obligation_reference:{...acceptedReference,sequence:2}})).toThrow();
+ });
  it('requires native scoped source context before preparing a scheduled request',()=>{
   expect(()=>buildPaymentRequestCommand(scheduledIntent,invoice,merchant,facts,now)).toThrow('PAYMENT_OBLIGATION_REQUIRED');
  });
@@ -70,5 +79,36 @@ describe('payment request against one original accepted dated obligation',()=>{
   const command=buildPaymentRequestCommand(scheduledIntent,invoice,merchant,facts,now,obligationContext);
   expect(()=>parseCanonicalPaymentRequestCommand({...command,amount_minor:49999})).toThrow();
   expect(()=>parseCanonicalPaymentRequestCommand({...command,obligation:{...obligation,approved:true}})).toThrow();
+ });
+});
+
+describe('original payment-operation recovery intent',()=>{
+ it.each([
+  intent,
+  {...intent,purpose:'partial',amount_minor:12500},
+  {...intent,purpose:'deposit',amount_minor:50000},
+  {...intent,purpose:'installment',amount_minor:30000},
+ ])('preserves the original unbound command selector %j',original=>{
+  const command=buildPaymentRequestCommand(original,invoice,merchant,facts,now);
+  expect(paymentRequestIntentFromCommand(command)).toEqual(parsePaymentRequestIntent(original));
+ });
+ it('reopens the same accepted target rather than substituting a free-form installment amount',()=>{
+  const command=buildPaymentRequestCommand(scheduledIntent,invoice,merchant,facts,now,obligationContext);
+  const restored=paymentRequestIntentFromCommand(command);
+  expect(restored).toEqual(scheduledIntent);
+  expect(restored).not.toHaveProperty('amount_minor');
+  expect(restored).not.toHaveProperty('merchant_account_id');
+  expect(restored).not.toHaveProperty('obligation');
+ });
+ it('retains the historical target after a partly allocated request without repricing or a current read',()=>{
+  const command=buildPaymentRequestCommand(scheduledIntent,invoice,merchant,facts,now,
+   {...obligationContext,obligation:{...obligation,remaining_minor:12500}});
+  expect(paymentRequestIntentFromCommand(command)).toEqual(scheduledIntent);
+  expect(command.amount_minor).toBe(12500);
+ });
+ it('rejects corrupted stored commands before producing any recovery intent',()=>{
+  const command=buildPaymentRequestCommand(scheduledIntent,invoice,merchant,facts,now,obligationContext);
+  expect(()=>paymentRequestIntentFromCommand({...command,amount_minor:49999})).toThrow();
+  expect(()=>paymentRequestIntentFromCommand({...command,obligation:{...obligation,source_digest:'invalid'}})).toThrow();
  });
 });

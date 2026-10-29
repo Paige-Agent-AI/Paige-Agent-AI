@@ -1,6 +1,6 @@
 import type {SalesPaymentAdmin} from "../_shared/sales-payments/database-port.ts";
 import { preparePaymentReview,executeInvoicePaymentRequest,paymentExecutionPorts } from "../_shared/sales-payments/invoice-payment-adapter.ts";
-import { parseCanonicalPaymentRequestCommand,parsePaymentRequestIntent } from "../_shared/sales-payments/request-command.ts";
+import { parseCanonicalPaymentRequestCommand,paymentRequestIntentFromCommand } from "../_shared/sales-payments/request-command.ts";
 import { reconcilePayment } from "../_shared/sales-payments/request-execution.ts";
 import { PAIGE_APP_ORIGIN } from "../_shared/canonical-app-url.ts";
 import { invoicePublicOriginReady } from "../_shared/sales-invoice-delivery/binding.ts";
@@ -66,7 +66,7 @@ Deno.serve(async req => {
     if(saved) {
       try {
         const exact=parseCanonicalPaymentRequestCommand(saved.command);
-        const intent=parsePaymentRequestIntent({action:exact.action,invoice_id:exact.invoice_id,expected_version:exact.expected_version,provider:exact.provider,purpose:exact.purpose,...(exact.purpose==='full'?{}:{amount_minor:exact.amount_minor})});
+        const intent=paymentRequestIntentFromCommand(exact);
         if(JSON.stringify(intent)!==JSON.stringify(command))return response(409,{ok:false,outcome:"refused",code:"PAYMENT_OPERATION_INPUT_CHANGED"});
         if(saved.state==='prepared'){
           preparedPaymentRecovery=true;preparedPaymentCommand={...exact};

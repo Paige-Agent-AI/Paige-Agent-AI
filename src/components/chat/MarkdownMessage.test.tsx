@@ -17,12 +17,12 @@ const TABLE_MD = `| Name | Email | Phone | Status |
 | --- | --- | --- | --- |
 | A very long unbreakable-name-token | someone@example.com | 555-555-5555 | active |`;
 
-async function render(content: string, verifiedAppPaths?: readonly string[]): Promise<{ host: HTMLElement; unmount: () => void }> {
+async function render(content: string, verifiedAppPaths?: readonly string[], allowImages?: boolean): Promise<{ host: HTMLElement; unmount: () => void }> {
   const host = document.createElement("div");
   document.body.appendChild(host);
   const root = createRoot(host);
   await act(async () => {
-    root.render(<MarkdownMessage content={content} verifiedAppPaths={verifiedAppPaths} />);
+    root.render(<MarkdownMessage content={content} verifiedAppPaths={verifiedAppPaths} allowImages={allowImages} />);
   });
   return {
     host,
@@ -34,6 +34,20 @@ async function render(content: string, verifiedAppPaths?: readonly string[]): Pr
 }
 
 describe("MarkdownMessage — wide tables self-scroll, never clipped", () => {
+  it("renders restricted response media as text while preserving formatting, citations and tables", async () => {
+    const {host,unmount}=await render("**Answer**\n\n![Reference illustration](https://assets.example.invalid/illustration.png)\n\n[Source](https://example.org/guide)\n\n"+TABLE_MD,undefined,false);
+    expect(host.querySelector("img")).toBeNull();expect(host.textContent).toContain("Reference illustration");
+    expect(host.querySelector("strong")?.textContent).toBe("Answer");expect(host.querySelector("table")).not.toBeNull();
+    expect(host.querySelector("a")?.getAttribute("href")).toBe("https://example.org/guide");unmount();
+  });
+  it("preserves the original default image behavior for existing shared workspace callers",async()=>{
+    const {host,unmount}=await render("![Workspace illustration](https://assets.example.invalid/illustration.png)");
+    expect(host.querySelector("img")?.getAttribute("src")).toBe("https://assets.example.invalid/illustration.png");unmount();
+  });
+  it("also keeps reference-style images inert and an empty caption understandable",async()=>{
+    const {host,unmount}=await render("![Caption][illustration]\n\n[illustration]: https://assets.example.invalid/reference.png\n\n![](https://assets.example.invalid/empty.png)",undefined,false);
+    expect(host.querySelector("img")).toBeNull();expect(host.textContent).toContain("Caption");expect(host.textContent).toContain("Image omitted");unmount();
+  });
   it("renders a GFM table wrapped in an overflow-x-auto container", async () => {
     const { host, unmount } = await render(TABLE_MD);
     const table = host.querySelector("table");

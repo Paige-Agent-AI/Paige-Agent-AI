@@ -910,9 +910,9 @@ function PaigeChatInner({ user, session, clientId, customerFrame, customerAvaila
                   const { before, diagram, after } = extractEntityDiagram(remainder);
                   return (
                     <>
-                      {before && <MarkdownMessage content={before} />}
+                      {before && <MarkdownMessage content={before} allowImages={!customerFrame} />}
                       {diagram && <EntityDiagramCard data={diagram} />}
-                      {after && <MarkdownMessage content={after} />}
+                      {after && <MarkdownMessage content={after} allowImages={!customerFrame} />}
                       {rc.analysis && <RootCauseCard data={rc.analysis} />}
                     </>
                   );

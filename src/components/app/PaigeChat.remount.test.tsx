@@ -453,6 +453,15 @@ describe("normal PaigeChat remount scroll behavior", () => {
     return {user:{id:memoryFixture.actor,user_metadata:{}} as never,session:null};
   };
 
+  it("keeps saved customer response illustrations inert without removing source citations or answer text",async()=>{
+    const props=returningCustomer();portalFixture.read.mockResolvedValue({threadId:"private-thread",messages:[{id:"private-answer",role:"assistant",
+      content:"**Saved answer**\n\n![Reference illustration](https://assets.example.invalid/customer.png)\n\n[Source](https://example.org/guide)"}]});
+    await act(async()=>{root.render(<PaigeChat {...props}/>);await memoryFlush();});
+    expect(host.querySelector('img[src="https://assets.example.invalid/customer.png"]')).toBeNull();
+    expect(host.textContent).toContain("Saved answer");expect(host.textContent).toContain("Reference illustration");
+    expect(host.querySelector('a[href="https://example.org/guide"]')).not.toBeNull();
+  });
+
   it("sends the selected customer business, verified bearer and private-only turn to CURA",async()=>{
     const props=returningCustomer();portalFixture.read.mockResolvedValue({threadId:"e0945000-0000-4000-8000-000000000001",messages:[]});
     const sent=vi.fn(async(..._args:unknown[])=>new Response('data: {"choices":[{"delta":{"content":"Authorized customer reply"}}]}\n\ndata: [DONE]\n\n',{status:200,headers:{"Content-Type":"text/event-stream"}}));vi.stubGlobal("fetch",sent);

@@ -1,0 +1,25 @@
+/* LiveRoom (/live/:id) — the room page's own minimal chrome. Tokens only, the same
+   discipline as social-command.css: no hex literals, no new semantic colors; the page is
+   mostly the SDK's own surface, so this is a centered column and honest message cards. */
+
+.live-room-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: min(1180px, 94vw);
+  margin: 0 auto;
+  padding: 28px 0 40px;
+}
+.live-room-title { margin: 0; font-size: 18px; letter-spacing: -.02em; color: var(--ink); }
+.live-room-note { margin: 0; font-size: 13px; color: var(--ink-2); }
+.live-room-message {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 10px;
+  max-width: 520px; margin: 10vh auto 0; padding: 26px 28px;
+  border: 1px solid var(--line); border-radius: var(--r-l);
+  background: linear-gradient(118deg, var(--gold-tint), var(--surface) 60%);
+  box-shadow: var(--sh-1);
+}
+.live-room-message h1 { margin: 0; font-size: 18px; letter-spacing: -.02em; }
+.live-room-message p { margin: 0; font-size: 13px; line-height: 1.6; color: var(--ink-2); }
+.live-room-back { font-size: 12.5px; color: var(--ink-2); text-decoration: underline; }

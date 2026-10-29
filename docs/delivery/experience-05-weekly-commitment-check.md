@@ -1,5 +1,58 @@
 # Experience 05 Weekly Internal Commitment Check
 
+## October29 — original automation draft preview source released
+
+Outcome05 / E5-CV1,CV5,CV9: the original stored automation draft now shows its
+trigger and ordered, bounded internal-task purposes before the same approval.
+The original text summary preserves line breaks. Saving a draft is separate
+from authorizing, enabling or actually executing a process.
+
+Reviewed 966d614bf50503bb56d1a118587388837cbca9d1, final AUTHOR-REVIEW / LOWER ASSURANCE5699648814;
+all11 exact checks/genuine native Preview/two web contexts SUCCESS, zero threads.
+Merge 9da96dfb4eaa331ab2d83de575323cde3b2838dc/tree49247dc1b5f2f2f40e4b7e15cebc86c6af1c4be3.
+Normal Edge40894439135/job123519597038 SUCCESS, original artifact12907320009
+independently SHA-verified: ALL ONE selected Chat582/JWTtrue/305source+305emitted
+PASS, exact root/helper source and original edge-live9da verified. Own SQL N/A.
+Web dpl_3VsY2yR86moEGfdVggzbkiKigpbb READY/exact; both official origins
+14:51:40–42UTC200/build9da-mvtnmqk9/null; original declared shared confirm module
+36,398bytes/SHA2563933ee70e453f14d444c9f5b10dcdaf290bc69e85d6060628896e11ab6b54708,
+all four owning source signatures PASS.
+[Production receipt](../evidence/exp05-automation-draft-preview-production.json)
+retains original PR6500028795 and the unchanged dated source/UI evidence.
+
+Functional: SOURCE/WEB/EDGE VERIFIED. Visual: original16-frame/320 keyboard
+source evidence, no authenticated/physical zoom/AT claim. Experiential: actual
+approved draft/domain act/Rail/reload, complete automation lifecycle, same ZION
+in both chats, full ten/E5 and equivalent eligible current/new-account/role/RLS
+acceptance remain OPEN. Founder NOT_ACCEPTED; STILL CODING / NOT_READY.
+No external send, task execution, provider, recurrence, Live, catalogue or
+algorithm maturity is activated or promoted by this source-only verification.
+
+## October29 — ZION inspection recovery source released; customer proof owed
+
+Original outcomes08/10 and E5-CV6/CV9: retryable Auth failures now use unavailable;
+confirmed session/API denial withdraws private results and restores only lost
+BODY focus to the original inspection header. No assignment is repeated.
+Reviewed 8eac255472f1268aa177dabb524d45553322769d, final AUTHOR-REVIEW / LOWER ASSURANCE5696515667;
+all10 executed exact checks/two web contexts SUCCESS, no-schema Preview SKIP.
+Merge 67a51bfc281ef6b5128451a8d32166f369656730, tree39cc6892ed40c4b82e95541b73ec8e5b1f1cf20f;
+original production dpl_7NiADF19VUjtnZ2Y16b4hUiHb1j6 READY/exact.
+Both official origins10:55:24–25UTC serve67a51-mvtfaqsn/null, original declared
+OperationsRoute chunk240,965bytes/SHA256
+5bd1990df45f23d96002c9f5d0402f7cd29bcc4b316b7349db5223e067ed86e1;
+all8 source signatures pass. Own schema/Edge upload NOT_APPLICABLE.
+[Production receipt](../evidence/exp05-zion-auth-unavailability-production.json)
+preserves the dated source/UI evidence and original PR receipt6494818654.
+
+Functional: source/web VERIFIED; original92 tests and16 neutral-port rendered
+frames are bounded engineering evidence. Visual: original geometry retained;
+physical zoom/AT remain owed. Experiential: authenticated corrected denial,
+role/revocation/tenant isolation, equivalent eligible existing/new-account cohorts,
+same ZION in both chats, weekly execution/Builder lifecycle and full ten/E5 proof
+remain OPEN. Founder: NOT_ACCEPTED. No full outcome closure, new domain record,
+Rail receipt, provider/recurrence/Live activation or catalogue/algorithm promotion.
+STILL CODING / NOT_READY. One complete founder evaluation remains later.
+
 ## October28 — original ZION inspection recovery, development
 
 REPAIR original outcomes08/10 and E5-CV6/CV9. Actual SDK transient Auth errors
@@ -975,3 +1028,75 @@ same-ZION both-chat/role-cohort and founder obligations remain STILL CODING.
 Separate ZION recovery #3057 is OPEN45cb/92 focused PASS, CI pending at this
 checkpoint. Owner's subsequent narrow shared-preview authorization is recorded
 in ANT161/9fd6cc0e; E08's broader Team Hub work/branch remains preserved.
+
+
+## 2026-10-29 EXP05 — original automation draft review
+
+Outcome05 / E5-CV1,CV5,CV9 REPAIR: original automation_draft confirmation now previews
+the original trigger and ordered bounded task purposes, with draft-only wording.
+No original stored args, fingerprints, risk/Trust, writer, enablement, Layer C,
+ActionAdapter or Rail contract changes. Shared tenant-neutral Root/card helper
+serves eligible existing/future SOLO; no schema/default/account fork.
+
+[Evidence](../evidence/ui-delivery/exp05-automation-draft-preview.md): causal15/2,
+final78/0/0; original hostile83/0/0; strict0/0; actual build;16 original-shell
+frames plus320/20-step keyboard reflow. Root/card/checker full inverse retains
+all126 peer pins/metadata/extractor, renews29 enclosing identity scalars and adds
+one pure-helper digest only (127/29/zero findings). Pre-renewal lower-assurance
+review ae12b2c7 on immutable88ad retained. No capability/maturity promotion.
+
+Owner9fd6 narrow override/Coordinator35471 temporary own-specialist direction
+ACK64dcb052. E08#3041/f786 preserved; both original Root/card inverses and its
+126/29 baseline proved, private unapplied127/29 composed reference has no findings.
+Checker is a real composition conflict, not a safe blind overwrite. E04 MERIT
+read seam untouched; E06/E04 retain original Chat Edge layout/release hold.
+SOURCE/NATIVE FIXTURE VERIFIED, review/CI/merge/deployment/customer proof owed.
+Original ten/E5, complete Builder/weekly execution/same-ZION both-chat and
+founder obligations remain open; no test-cohort/role/RLS/new-account closure.
+
+
+## 2026-10-29 exact CI consumer reconciliation
+
+Original broad C0b consumer failed249 tests/248PASS/1FAIL on its exact126 source
+count after the reviewed helper made127. The original test now pins127 and
+the exact helper path, with a real draft-summary mutation refusal added. No
+original negative, admission, extractor, metadata or runtime product byte was
+removed or changed. Full original C0b250PASS/0FAIL/0skip and original authenticated
+observation11PASS/0FAIL/0skip now pass. Earlier83PASS described only the specific
+incumbent-resource suite. Final review/required exact-head CI remain owed; same
+16 native frames, original source hashes and full customer/founder gaps retained.
+
+## October29 — bounded ZION planning-read composition, unmounted source
+
+REUSE original E01 planning.list / plan_list definition and caller-JWT executor;
+EXTEND same ZION private-DM composition. New server-only module snapshots its
+original actor/tenant/DM/tool scope and arguments, uses the host's one total
+private-read budget, keeps original read-marker identity, and exposes no plan
+rows until the existing native staging callback acknowledges the same scope.
+Every original read/marker/pin/stage continuation shares a five-second elapsed
+deadline; late acknowledgements cannot begin another RPC or release private data.
+The final returned check re-resolves scope; it is NOT domain-version evidence.
+
+Original host+reader baseline89PASS. New unavailable-skeleton specification
+4PASS/6FAIL is failing-first API evidence, not an old production regression;
+final original+composition103PASS/0FAIL/0skip (89 original+14 new). Strict graph
+original0/candidate0, test graph no added diagnostics; focused lint/whitespace
+PASS. The required read-marker tool argument found by strict checking was fixed
+and now asserted explicitly. Original host/MENTOR/NEXUS/Root/card/source pins
+remain byte-identical; only one test filename joins the original CI list.
+
+Source windowANT161/f14d667d/218e98aa and pre-edit42659e6c/89b1e5e5 retained.
+E04 owns the original native forward guard/currentness/history/typed-link
+contract; its applied80004/5 are not rewritten. Shared-host integration will
+publish exact spans before editing and preserve3076/38be/E08f786. No host imports
+this new module yet; no schema, approval, model call, dispatch, provider, stored
+result, record link, receipt or live availability is added by this preparation.
+[Exact evidence](../evidence/exp05-zion-planning-read-preparation.json).
+
+Functional SOURCE/PREPARED, not a customer outcome. Visual N/A: no UI/entry.
+Experiential INCOMPLETE: actual host/native staging/post/history/reopen and
+authenticated owner/member/tenant/revocation/current+new SOLO proof remain owed.
+operations.department stays PARTIAL; canonical ALG01/08/11/12/13 maturity is
+unchanged. Same ZION/personality in both chats, weekly execution/full Builder
+lifecycle/proactive/recovery, all ten outcomes/E5-CV1–9 and one complete founder
+evaluation remain OPEN. Founder NOT_ACCEPTED; STILL CODING / NOT_READY.

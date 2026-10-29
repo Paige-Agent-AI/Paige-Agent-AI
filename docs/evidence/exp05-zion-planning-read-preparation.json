@@ -1,0 +1,84 @@
+{
+  "schema": 1,
+  "base": "9da96dfb4eaa331ab2d83de575323cde3b2838dc",
+  "branch": "feat/exp05-zion-plan-read-20261029",
+  "classification": "REUSE canonical definition/executor/deadline; EXTEND unmounted ZION composition only",
+  "source": {
+    "supabase/functions/_shared/team-hub/zion-planning-read.ts": "74ce65cbbc9e12b47dea568c30cf36eff5b7f07dce32dbd8cf71aff0776283ae",
+    "supabase/functions/_shared/team-hub/zion-planning-read.test.ts": "9417b844bc922b0aae6856f4bd1bee18d696d9ba6e59dd0b665a4ed355a21a41",
+    ".github/workflows/ci.yml": "6a55a7bc445f18d20640e32a4ad688d9cd1accd74ccf4cd6ee6c4f0e298447ef"
+  },
+  "ciInverse": true,
+  "originalPeersPreserved": [
+    "supabase/functions/_shared/team-hub/agent-turn.ts",
+    "supabase/functions/_shared/team-hub/agent-turn.test.ts",
+    "supabase/functions/_shared/team-hub/mentor-plan-read.ts",
+    "supabase/functions/_shared/team-hub/mentor-plan-read.test.ts",
+    "supabase/functions/paige-ai-chat/index.ts",
+    "src/components/chat/PaigeConfirmCard.tsx",
+    "scripts/ci/c0b-incumbent-resource-binding.mjs"
+  ],
+  "scope": "Same registered ZION; original actor/tenant/private DM/current roster+role proof supplied by original host, never by model arguments",
+  "flow": {
+    "entry": "Future original ZION Team Hub private DM",
+    "goal": "Review genuine authorized Planning records and retain truthful original publication",
+    "before": "Stored plan_list remains inert in production agent-turns",
+    "sourceNow": "Bounded original reader composition prepared; no host admission",
+    "after": "Required exact host and native forward integration, both-chat/currentness/reopen proof"
+  },
+  "originalDefinition": "PLANNING_READ_TOOLS from paige-spine/domains/planning.ts",
+  "originalExecutor": "readMentorPlan from team-hub/mentor-plan-read.ts; original public.plan_list caller-JWT RPC",
+  "native": "Existing accepted-turn/token service-only source stage callback; real producer/currentness/typed links E04-owned and not implemented by this source",
+  "deadline": "One original five-second elapsed deadline across preflight/read marker/domain RPC/tenant pin/native stage; no late extra RPC or data release",
+  "budget": "One shared host-supplied private-read counter; no per-adapter reset/new ledger",
+  "tests": {
+    "originalBaseline": 89,
+    "unavailableSkeleton": {
+      "pass": 4,
+      "fail": 6,
+      "selected": 10,
+      "boundary": "New API specification, not production regression"
+    },
+    "final": {
+      "pass": 103,
+      "fail": 0,
+      "skip": 0,
+      "original": 89,
+      "added": 14
+    },
+    "strict": {
+      "baseline": 0,
+      "candidate": 0,
+      "testAdded": 0
+    },
+    "artifacts": {
+      "work/zion-planning-baseline.tap": "9032e0e0e2017330b58b9d53736e5e6d4f17d5a020d4f22e0293bc49207f8547",
+      "work/zion-planning-composition-red.tap": "f12e7939451b64aa8c90ef93059d22a5967a5e301b2e00dbd944ee91965c9388",
+      "work/zion-planning-original-and-composition.tap": "229b3eb2dd570debf0896740774bc5c9c03f858ff83be5966c51ec2123ee06de",
+      "work/zion-planning-types.json": "16f4703eecaa404bd3966d98058d66657a3019da84a916088c463d9eebec3f76"
+    }
+  },
+  "reviewFinding": "Missing original read-marker tool argument fixed; strict graph and marker-key assertion now pass",
+  "catalogue": "operations.department PARTIAL; ZION Team Hub plan read remains unadmitted/unverified, no status/registry/Binding Ledger promotion",
+  "algorithms": "ALG01 same canonical identities/no replay; ALG08 input only; ALG11 existing router untouched; ALG12/13 truthful limitations. No maturity promotion.",
+  "release": {
+    "source": "LOCAL PREPARATION",
+    "review": "REQUIRED",
+    "ci": "REQUIRED",
+    "merged": false,
+    "deployed": false,
+    "activated": false,
+    "authenticated": "UNVERIFIED",
+    "founder": "NOT_ACCEPTED"
+  },
+  "unmounted": true,
+  "ui": "No UI/entry/route/style changes; logic-only preparation, prototype/rendered proof not a substitute for future real integration",
+  "remaining": [
+    "Exact shared-host/source composition preserving MENTOR/NEXUS/MERIT/CURA/E08",
+    "E04 native forward scope/version-currentness/history/typed-link contract and original publication",
+    "Native owner/member/foreign-tenant/revocation/reload/provider-readiness negative proof",
+    "Actual same-ZION PAIGE Chat and Team Hub results/receipts/reentry",
+    "Full ten outcomes/E5-CV1–9, weekly execution, Automation Builder lifecycle, proactive/recovery/current+new eligible SOLO",
+    "Complete founder evaluation after engineering release"
+  ]
+}

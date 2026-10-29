@@ -27,8 +27,8 @@ BEGIN
    OR p.proretset OR p.provariadic<>0 OR p.proargmodes IS NOT NULL OR p.proallargtypes IS NOT NULL
    OR p.proisstrict OR p.proleakproof OR p.proparallel<>'u' OR p.prokind<>'f'
    OR p.prolang<>(SELECT oid FROM pg_catalog.pg_language WHERE lanname='plpgsql')
-   OR p.proacl IS DISTINCT FROM CASE WHEN spec.customer_api
-    THEN ARRAY['postgres=X/postgres','authenticated=X/postgres']::aclitem[] ELSE ARRAY['postgres=X/postgres']::aclitem[] END THEN
+   OR p.proacl IS DISTINCT FROM (CASE WHEN spec.customer_api
+    THEN ARRAY['postgres=X/postgres','authenticated=X/postgres']::aclitem[] ELSE ARRAY['postgres=X/postgres']::aclitem[] END) THEN
    RAISE EXCEPTION 'Original invoice calendar source changed: %',spec.identity USING ERRCODE='23514';
   END IF;
  END LOOP;

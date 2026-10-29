@@ -109,7 +109,7 @@ function begin(customerPortal:boolean,customerPublicLink:string|null,customerFil
  return {rpc,call:make({customerPortal,customerPublicLink,customerFileIds,customerCaller:{rpc},supabaseClient:{rpc},interactiveInput:{kind:"message"},
   validatedData:{threadId:thread,requestIntentId:intent},userText:"Read the public guide",customerQuery:null})};
 }
-it.each([undefined,[id(6)]])("uses the original native link admission and delegates optional files without owner authority: %s",async files=>{
+it.each([{files:undefined as string[]|undefined},{files:[id(6)]}])("uses the original native link admission and delegates optional files without owner authority: $files",async({files})=>{
  const x=begin(true,url,files);await x.call(true);
  expect(x.rpc).toHaveBeenCalledWith("client_portal_assistant_begin_link",expect.objectContaining({p_thread:thread,p_intent:intent,p_url:url,p_file_ids:files??null,p_effectful:true}));
 });

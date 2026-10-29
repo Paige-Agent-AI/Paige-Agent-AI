@@ -27,7 +27,7 @@ MOTION_PURPOSE: NONE: factual copy only.
 PROTECTED_SEAMS: AFFECTED: Rail display title/summary for three successful read tuples; test delegation/actor/privacy/ACL/replay/no new events. NOT AFFECTED: tenant/role selection, authentication, billing/provisioning, approval/autonomy, Spine/domain execution, canonical writes/readback, Memory, Chat scroll/stream/history/popout, Live, Browser/Vault, providers/effects, jobs/retries and shell geometry/controls; preserve all original contracts.
 IMPECCABLE_REVIEW: PASS: sequential clarify/craft-floor finish pass preserves hierarchy, tone, native Schibsted, original spacing/tokens and truthful lookup labels; desktop/320 and shell-open states have readable wrapping. No material copy/layout finding. Stale design sidecar recorded without unrelated repair. This is not independent non-author or authenticated full-Experience acceptance.
 ALGORITHM_SUPPORT: NO VERIFIED ALGORITHM added; existing partial/unverified intelligence remains unchanged.
-INTERNAL_BUILD_IDENTITY: 48f9ea715be5aafed3976c7f552e4f126b7bb53d; branch=codex/e2-commercial-read-receipts; deployment=NOT_DEPLOYED; environment=local; migrations=PROOF_OWED(20271122010102_e2_commercial_read_receipt_labels); edge=NOT_APPLICABLE; evidence=ANT161/77ed54cd and this native/rendered packet; identity-role=supporting composed source base, exact candidate in PR receipt.
+INTERNAL_BUILD_IDENTITY: 8e731c335ac6407eef59a1059f148f0c4b6893cb; branch=codex/e2-commercial-read-receipts; deployment=NOT_DEPLOYED; environment=local; migrations=PROOF_OWED(20271122010102_e2_commercial_read_receipt_labels); edge=NOT_APPLICABLE; evidence=ANT161/77ed54cd and this native/rendered packet; identity-role=supporting composed source base, exact candidate in PR receipt.
 RELEASE_CHANNEL: development: no production claim.
 RELEASE_CLASSIFICATION: internal-only: bounded lookup wording repair.
 CUSTOMER_RELEASE_IDENTITY: none: bounded factual wording repair, no customer announcement.
@@ -55,3 +55,15 @@ three suites passes28 tests. No timeout/guard/source assertion was weakened;
 required hosted CI remains unchanged. Earlier PG fixture/CRLF setup failures
 and the first local navigation timeout are excluded, preserved diagnostic evidence.
 DOM keyboard checks are not native assistive-technology proof.
+
+Actual first-head database-contract40823566808/job123281348541 FAIL is retained:
+the existing E4-S3 test expected the successful nested lookup to keep generic
+completion wording. Its non-success condition and every non-copy field remain
+exact; the corrected original assertion now additionally requires the deliberate
+read title/summary. This is test-contract reconciliation, not a weakened source
+or authorization gate. Fresh exact-head review/CI are mandatory.
+The first post-commit local replay harness selected HEAD's new32 test as its old20
+baseline and correctly failed before migration; it is excluded. The corrected
+explicit original-base harness proves original legacy clause PASS before source,
+causal FAIL after the deliberate wording change, then corrected clause PASS;
+all original20/new32/replay/identity/no-event/refusal controls remain green.

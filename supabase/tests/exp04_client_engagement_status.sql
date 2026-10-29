@@ -454,9 +454,12 @@ select pg_temp.check_true((select d->>'actor_type'='paige_agent' and d->>'title'
   'E4-S3: PAIGE''s client read reads "Checked where a client stands", with no client name or amount');
 select pg_temp.check_true(public._workspace_event_display('capability_run','capability_failed','read_client_engagement_status')
   =public._workspace_event_display_before_exp04_owner_attribution('capability_run','capability_failed','read_client_engagement_status')
-  and public._workspace_event_display('capability_run','capability_succeeded','find_clients_for_status')
-  =public._workspace_event_display_before_exp04_owner_attribution('capability_run','capability_succeeded','find_clients_for_status'),
-  'E4-S3: a non-success read and the lookup key keep the inherited wording');
+  and (public._workspace_event_display('capability_run','capability_succeeded','find_clients_for_status')-'title'-'summary')
+  =(public._workspace_event_display_before_exp04_owner_attribution('capability_run','capability_succeeded','find_clients_for_status')-'title'-'summary')
+  and public._workspace_event_display('capability_run','capability_succeeded','find_clients_for_status')->>'title'='Looked up client records'
+  and public._workspace_event_display('capability_run','capability_succeeded','find_clients_for_status')->>'summary'
+    ='Existing clients were searched for a status lookup. No business records were changed.',
+  'E4-S3: a non-success read stays inherited; successful lookup keeps all non-copy fields and describes only a read');
 select pg_temp.check_true((select public._workspace_event_display('capability_run','capability_succeeded','planning_weekly_commitment_check')->>'title')='Weekly commitment check completed'
   and public._workspace_event_display('capability_run','capability_succeeded','n8n_run_workflow')
   =public._workspace_event_display_before_exp04_owner_attribution('capability_run','capability_succeeded','n8n_run_workflow'),

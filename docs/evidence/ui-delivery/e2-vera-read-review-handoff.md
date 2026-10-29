@@ -8,10 +8,10 @@ FLOW_PROTOTYPE: NOT_REQUIRED: original read/reply/trace/reload flow is unchanged
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: eligible current/future SOLO owners ask for a source-backed business review without an unintended request to approve delegated work.
 VISUAL_DIRECTION: PASS: existing PAIGE conversation, VERA attribution and original source links; no new specialist interface or decorative control.
 AUTOMATED_EVIDENCE: PASS: executed failing-first1FAIL/21PASS ->48PASS/two original narrative and transport suites. Instruction-contract checks are not model-behavior proof. Original read-only permission, actor/scope, malformed/refused/timeout/no-replay and typed-link controls retained.
-STATIC_EVIDENCE: UNVERIFIED: scoped lint, unchanged-guard/Kit controls, separate review and required exact-head hosted checks remain required before source release.
+STATIC_EVIDENCE: PASS: scoped ESLint and original Capability Kit lint/type contract passed,288/296 unchanged debt entries/no new bypass. Separate review, exact-head evidence guard and required hosted checks remain required before source release.
 RENDERED_EVIDENCE: UNVERIFIED: the actual released failure was inspected in the original authenticated Chat/trace surface. Corrected model output is not yet rendered or verified. Existing frontend geometry is unchanged; no new screenshot or premium-conformance claim.
 BEHAVIORAL_EVIDENCE: UNVERIFIED: actual read returned an unintended assignment proposal, not the requested briefing. Candidate instruction text cannot prove correction. Genuine released read-only answer/references/reload remain required.
-AUTHENTICATED_RUNTIME: FAILED: original released193d0b1e request in ANT52/9162cafd settled as approval-pending specialist assignment after snapshot/discovery/timezone reads. Candidate behavior remains UNVERIFIED. EXP02 did not approve or execute the proposal.
+AUTHENTICATED_RUNTIME: UNVERIFIED: candidate behavior has not run. The original released193d0b1e request in ANT52/9162cafd FAILED, settling as approval-pending specialist assignment after snapshot/discovery/timezone reads. EXP02 did not approve or execute the proposal.
 KEYBOARD_FOCUS: NOT_APPLICABLE: no keyboard/focus implementation change; original composer, trace and approval controls untouched. No new accessibility-conformance claim.
 ZOOM_REFLOW: UNVERIFIED: no geometry change; actual candidate answer/native200-percent/assistive-technology proof remains owed.
 REDUCED_MOTION: NOT_APPLICABLE: no new or changed motion.
@@ -80,7 +80,7 @@ Applied installed Impeccable clarify/craft-floor/finish inspection
 clear actor/intent/action distinction, bounded source-backed answer, no extra
 banner or specialist interface. Actual corrected output is still unverified.
 
-INTERNAL_BUILD_IDENTITY: 193d0b1ebc9553636aa290eaeb6f1f1ec4dfc8f5; identity-role=receiving main; candidate=Git exact-head review; deployment=none; environment=local; migrations=NOT_APPLICABLE; edge=original Chat/Review deployment required; evidence=docs/evidence/ui-delivery/e2-vera-read-review-handoff.md
+INTERNAL_BUILD_IDENTITY: 193d0b1ebc9553636aa290eaeb6f1f1ec4dfc8f5; identity-role=receiving main; candidate=Git exact-head review; deployment=none; environment=local; migrations=NOT_APPLICABLE; edge=PROOF_OWED(original Chat/Review deployment and exact source readback); evidence=docs/evidence/ui-delivery/e2-vera-read-review-handoff.md
 RELEASE_CHANNEL: development: bounded read-instruction repair, not a completed weekly review claim.
 RELEASE_CLASSIFICATION: internal-only: no customer announcement or new authority.
 CUSTOMER_RELEASE_IDENTITY: none: complete customer outcome/founder acceptance remains unearned.

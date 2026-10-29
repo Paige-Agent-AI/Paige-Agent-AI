@@ -98,3 +98,26 @@ export const INTEGRATIONS_HEALTH = {
   sharedPrimitiveChange: "SCR-INTEGRATIONS-MIND",
   maturity: "PARTIAL",
 } as const satisfies SpineCapability;
+
+// The chat-facing tool definition for the live read half (integrations.list), following the
+// domains/agreement.ts → AGREEMENT_TOOLS one-home pattern. The PARAMETERS are verbatim from the
+// live paige-ai-chat binding (index.ts, the integrations_list def); the description keeps that
+// binding's factual listing sentence but drops its PAIGE-COO coaching voice — Team Hub specialist
+// turns must not carry PAIGE-chat persona guidance (EXP08 A1b notes) — and states the read-only
+// rule the surface's own description states for its other reads. The chat's pre-existing inline
+// def stays untouched; unifying the two definitions is a follow-up for that file's next owner,
+// not this append. integrations_health has NO live chat executor and is deliberately absent.
+export const INTEGRATIONS_READ_TOOLS = [
+  {
+    type: "function",
+    function: {
+      name: "integrations_list",
+      description:
+        "List every integration/connection on this workspace — channel (email/SMS/calendar), provider, status, health, and addresses. READ-ONLY: it never connects, disconnects or changes anything. Report the statuses exactly as returned; never imply a connection is healthy or broken beyond what the status says.",
+      parameters: {
+        type: "object",
+        properties: {},
+      },
+    },
+  },
+] as const;

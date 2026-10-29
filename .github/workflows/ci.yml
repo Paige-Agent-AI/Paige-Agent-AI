@@ -133,6 +133,8 @@ jobs:
         run: psql -h 127.0.0.1 -U postgres -d postgres -v ON_ERROR_STOP=1 -f supabase/tests/exp08_team_hub_a1c.sql
       - name: EXP01 MENTOR Team Hub plan read, roster gains exactly one read tool once, no other row or key moves, idempotent in a disposable database
         run: psql -h 127.0.0.1 -U postgres -d postgres -v ON_ERROR_STOP=1 -f supabase/tests/e01_mentor_team_hub_plan_read.sql
+      - name: EXP04 original Team Hub commercial read scope, references and publication restrictions
+        run: psql -h 127.0.0.1 -U postgres -d postgres -v ON_ERROR_STOP=1 -v e04_source_reads=1 -f supabase/tests/exp08_team_hub_a1c.sql
       - name: EXP08 PAIGE team lifecycle catalogue, md5 guard against production's incumbent, replay guard, five Team rows and grants in a disposable database
         run: |
           psql -h 127.0.0.1 -U postgres -d postgres -v ON_ERROR_STOP=1 -c 'DROP DATABASE IF EXISTS exp08_lifecycle_cat' -c 'CREATE DATABASE exp08_lifecycle_cat'

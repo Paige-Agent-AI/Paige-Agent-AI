@@ -1,5 +1,18 @@
 # EXP07 — the exact Cloudflare decision: media + broadcast enablement
 
+> **CORRECTION RECORD (2026-10-28, post-merge — same doc, per Coordinator e7c6e686/fdbbecf4):**
+> this packet's merged state approved nothing by itself — prices, provider enablement, and
+> customer acceptance were and remain separate owner acts. Three claims below are superseded
+> in place: §2's library "LIVE end-to-end" becomes the bounded source+deploy+probe milestone
+> it always was (the authenticated drive is still owed); §5's arithmetic is corrected
+> (×1.25 = 25% markup = **20% contribution** on pre-fee revenue; the 25%-contribution floor
+> is **$9.84**, not $9.23); §7's rollback language no longer equates stopping new usage with
+> active-session termination or guaranteed deletion (EXP10's retention/decommission evidence
+> is the reference, ANT-161 `4b5c83ff`). **Enablement status since:** the owner separately
+> enabled RealtimeKit in the Cloudflare dashboard on 2026-10-28 (app `paige-production`) and
+> vaulted the API token — that owner act, not this document, is what gates the broadcast
+> build. Tenant pricing remains owner-held.
+
 **Status: DECISION REQUESTED — nothing activated.** This document names the ONE decision the
 owner's standing direction asks for (a concrete service-enable decision, not a spend ceiling),
 now that the media implementation it prices is real and deployed (ANT-162 milestone
@@ -23,8 +36,8 @@ minimums are owner-held facts this document explicitly does NOT guess.
 
 | Product | Feature | Status in PAIGE today |
 |---|---|---|
-| Cloudflare Stream | On-demand storage + delivery (HLS/DASH playback) | **LIVE** — the tenant media library uses it end-to-end (upload → lifecycle → playback), deployed 2026-10-28 |
-| Cloudflare Stream | Direct upload (one-time upload URLs) | **LIVE** — the governed `stream-media-command` door; the API token never leaves the server |
+| Cloudflare Stream | On-demand storage + delivery (HLS/DASH playback) | **SHIPPED (source + deploy + probe)** — merged `662be5534`, migration applied, doors deployed and unauth-probed 2026-10-28; the authenticated upload→ready→play→remove drive is still OWED, so "end-to-end LIVE" is not claimed |
+| Cloudflare Stream | Direct upload (one-time upload URLs) | **SHIPPED (source + deploy + probe)** — the governed `stream-media-command` door; the API token never leaves the server; no live provider call made yet (none authorized at ship time) |
 | Cloudflare Stream | Recordings storage/replay (for broadcast sessions) | NOT WIRED — the recording lands as a library row at session end (the store supports it; the session wiring is the broadcast slice) |
 | Cloudflare Realtime — RealtimeKit | Two-way A/V rooms (host + guests, camera/mic, screenshare, simulcast f/h/q) | NOT ENABLED — the two-way layer; this decision's core ask |
 | Cloudflare Realtime — RealtimeKit | Recording export (RTMP/HLS export into Stream storage) | NOT ENABLED — priced below; export writes the session recording into the tenant's library |
@@ -88,19 +101,27 @@ document does not guess.
 
 Owner-accepted target: tenant-attributed usage bills the consuming tenant at published
 rates with a **25% contribution after attributable variable/payment costs** — final rates
-await actual-invoice and market verification (owner direction 2026-10-27/28). On LIST rates
-the arithmetic is:
+await actual-invoice and market verification (owner direction 2026-10-27/28).
 
-| Line (list) | Cost/session | ×1.25 tenant rate | Margin/session |
-|---|---|---|---|
-| Interactive 4 + export + 100 viewers + replay | $7.38 | **$9.23** | $1.85 |
+**Corrected arithmetic (supersedes the original ×1.25-equals-25%-contribution claim; all
+figures illustrative at LIST rates, before payment fees):**
+
+| Line (list) | Cost/session | ×1.25 (= 25% markup) | Contribution at ×1.25 | 25%-contribution floor |
+|---|---|---|---|---|
+| Interactive 4 + export + 100 viewers + replay | $7.38 | $9.23 | **20%** ($1.85 / $9.23) | **$9.84** ($7.38 / 0.75) |
+
+A ×1.25 multiplier is a 25% markup **on cost** but only a **20% contribution on revenue**
+before payment fees. Meeting the accepted 25% contribution target requires at least
+**$9.84** on the $7.38 list-cost session — and the FINAL rate must additionally cover the
+actual variable/payment costs and fixed payment charges once those are known from the real
+account plan and first invoice. No final price is proposed or implied here.
 
 Per-tenant enforcement (the billing supersession's shape): **no per-tenant spend ceiling** —
 usage meters per tenant into `platform_usage_events` (the SAME canonical meter the media
 library already writes; the broadcast slice adds its session/participant/export rows through
 the same writer — no second ledger), and collection thresholds trigger charging, never
-cessation. What remains the owner's is the FINAL RATE (list × 1.25 is the opening proposal,
-subject to actual-cost verification) and any account-level commitment.
+cessation. What remains the owner's is the FINAL RATE (any multiplier is an opening
+illustration, subject to actual-cost verification) and any account-level commitment.
 
 ## 6. Permissions, security and data boundaries
 
@@ -121,10 +142,10 @@ subject to actual-cost verification) and any account-level commitment.
 
 | Layer | Rollback |
 |---|---|
-| Product enable | Flip the account-level feature off in the Cloudflare dashboard — no infrastructure to decommission (both products are managed) |
+| Product enable | Flip the account-level feature off in the Cloudflare dashboard. This stops NEW usage — it does NOT terminate in-flight sessions (they run until ended or dropped) and does NOT delete persisted data; decommission scope, purge behavior and scale/account-plan facts follow EXP10's retention/decommission evidence (ANT-161 `4b5c83ff`), not this table |
 | Code | The broadcast slice ships dormant-fail-closed behind the missing feature (the same shape as the media library pre-enable): every path returns the honest "not switched on yet" until the feature exists; reverting the PR removes the surface |
 | Data | Sessions/recordings are rows in the tenant's library — revoking/deleting them is the library's own lifecycle; no schema unwind beyond that |
-| Cost | Usage-billed; disabling stops accrual immediately (no reserved capacity) |
+| Cost | Usage-billed with no reserved capacity: disabling stops accrual of NEW usage; in-flight sessions may accrue until terminated (hard session termination on drop is the build-time mitigation); retention of already-stored recordings bills at Stream storage rates until the library lifecycle removes them |
 
 ## 8. Remaining proof (what this decision unlocks, in order)
 
@@ -145,7 +166,8 @@ subject to actual-cost verification) and any account-level commitment.
 PAIGE Cloudflare account** — the account Stream already uses; no new account, no new
 per-tenant tokens, custody unchanged through EXP10; usage-billed at the published rates
 above with NO per-tenant spend ceiling (the supersession's shape); tenant rate = list ×1.25
-as the opening proposal (25% contribution), FINAL RATES to be set after the owner reads the
+as the opening ILLUSTRATION (25% markup = 20% contribution pre-fees; the 25%-contribution
+floor is $9.84 — §5), FINAL RATES to be set after the owner reads the
 actual account plan/discount and the first invoice's real costs.
 
 Everything else in this document is already authorized and shipped or already owned by

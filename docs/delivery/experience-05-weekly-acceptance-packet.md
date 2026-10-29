@@ -939,3 +939,41 @@ reload/recovery, eligible existing/new SOLO cohorts and both-chat proof owed.
 `operations.department` and catalogue stay PARTIAL; no Live promotion.
 All ten outcomes/E5 cases remain open for integrated verification.
 Founder NOT_ACCEPTED; STILL CODING / NOT_READY.
+
+## October29 — effort correction UI, reviewed local checkpoint
+
+Dependent source83d97fb1e/tree d3217465 adds the effort field to the ORIGINAL
+Task editor/review/command consumer. One scalar command retains raw native
+version, original approval fingerprint and operation key. Native metadata
+readback must match, then the independently scoped Work read must agree.
+Unknown/reload recovers that same operation; clear is unknown, zero is recorded.
+Stage targets cannot masquerade as effort proposals. Refusal focus now returns
+to Back to details instead of the disabled action. No new approval or writer.
+
+117 assertions/seven original suites PASS, including exact Task focus and
+SoloApp retention. The two original selector families changed only to match
+the expanded accessible labels; all positive/negative assertions remain.
+Full application TypeScript has nine unchanged-file diagnostics, zero changed;
+the empty root-solution result is excluded. Focused lint/UTF8/diff and pinned
+Impeccable pass (zero anti-patterns, three inherited type-size advisories).
+15 final rendered frames/121 product input hashes verify desktop and narrow
+states with explicit offline ports; native/AT/full-shell dock matrix owed.
+[Exact flow and proof boundary](../evidence/ui-delivery/exp05-task-effort-review.md).
+
+Reusable native-writer lesson: existing Task metadata update is a WHOLE
+replacement. Never send a partial effort object through it. Extend the original
+scalar contract with CAS and key-preserving mutation, retain the explicit
+replacement semantics, and verify both executor and independent native read.
+
+Separately, released workload3091 has bounded ordinary-owner production proof
+in protected ANT-52/c8eeddbf: current work/roster, truthful undated exclusions,
+temporary engineering capacity input, loaded reload reset, original Task read
+and stable sidebar Operations→Overview. No business write, dated/over-capacity
+case or new effort-save proof is inferred. Earlier wrong-active-context attempt
+remains INVALID. Browser custody was returned without touching peer tabs.
+
+Source/UI LOCAL, native12 NOT_APPLIED, full-schema/required CI/merge/deployment
+and actual saved/receipt/cohort/both-chat proof remain owed. E04/E09 migration
+order is a pending receiving handoff; E04 original ZION Planning ABI remains
+separate. All ten outcomes/E5-CV1–9 and one integrated founder evaluation remain
+OPEN. Catalogue/operations.department PARTIAL; founder NOT_ACCEPTED/NOT_READY.

@@ -1,0 +1,93 @@
+# EXP05 O02/O03 — correct saved Task effort through original Work
+
+UI_DELIVERY_EVIDENCE_VERSION: 1
+INTERNAL_BUILD_IDENTITY: source=83d97fb1e8ba56e8fc56b92ed00f2a15a9733e7c; base=4ed8acc917e45b43deebdee1231c218f32cd1abf; deployment=offline-original-Operations-mount; environment=local; migrations=20271126010012_NOT_APPLIED; edge=NOT_DEPLOYED; evidence=docs/evidence/ui-delivery/assets/exp05-task-effort/build-manifest.json. Exact eventual head/review/CI must be recorded before release.
+RELEASE_CHANNEL: development: local source and isolated browser/SQL fixtures only.
+RELEASE_CLASSIFICATION: internal-only: one correction/save/reopen leg of O02/O03, not complete weekly planning or EXP05.
+CUSTOMER_RELEASE_IDENTITY: none: no launch, activation or founder acceptance.
+RELEASE_NOTE_REQUIRED: NO: original issue/PR are the unfinished increment's record.
+RELEASE_TRUTH_BOUNDARY: PARTIAL: actual original editor, command door consumer, review and recovery rendered with explicit offline ports; native producer is local, unmerged and unapplied.
+RELEASE_RECOVERY: position=hold until migration ordering/review/full-schema/exact-head CI clear; reference=original Task operation/key/version, original CRM read and receipt. Never retry an unknown write with a fresh operation.
+FLOW_BY_FLOW: PASS: original Work → inspect Task → change whole-minute estimate or clear → review exact units → original Trust approval if required → original executor acknowledgement → independent original Work read → saved status; lost acknowledgement → reload → original recovery → readback.
+PAIGE_UI_DESIGN: PASS: existing Task inspector, typography, tokens, gold action, native controls and focus ring. New effort input/review action are44px; clear uses an18px visual checkbox inside its44px label target. No new banner, tab, drawer engine or design system.
+MATERIAL_FLOW_CHANGE: YES: durable effort correction, distinct from temporary workload estimates.
+FLOW_PROTOTYPE: PASS: actual original OperationsWorkspace, editor, command consumer and review in the incumbent full Operations harness; only explicit source/Auth/transport ports are synthetic. No production test route.
+PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: permitted SOLO owner/admin corrects one original Task estimate without overwriting unrelated metadata or reserving Calendar time.
+VISUAL_DIRECTION: PASS: compact inline planning fields and exact review inside the existing inspector; original work remains visible behind its modal.
+AUTOMATED_EVIDENCE: PASS:117 assertions in seven original effort/command/editor/review/task-focus/SoloApp-retention suites. Original denial, account switching, unavailable source, CAS/replay, zero/clear, widened proposals, independent readback and refusal focus retained. Native component20 and generator15 are separate bounded evidence below.
+STATIC_EVIDENCE: UNVERIFIED: actual tsconfig.app.json reports nine unchanged-file diagnostics and zero changed-path diagnostics. Empty root-solution tsc result is EXCLUDED. Diff/UTF8/focused lint are separate checks; hosted exact-lock CI remains required.
+RENDERED_EVIDENCE: PASS:121 current product input hashes, explicit private fixture ports, compiled asset hashes and15 final frames: light desktop1280x720 plus both themes at narrow320x700. All final product hashes match the inspected source. Fixture label is moved above controls only; no product styling transform.
+BEHAVIORAL_EVIDENCE: PASS: exact-minute approval, saved/read/reopen, unknown after lost response, reload pending-operation reentry and same-operation recovery; refusal with safe next-step focus, role denial, zero versus clear and keyboard transition. These prove UI wiring against synthetic ports, not actual domain authorization/execution.
+AUTHENTICATED_RUNTIME: UNVERIFIED: new effort write, original approval/receipt and later real read/reload require legitimate protected production verification after release. Parent3091 has separate bounded owner read-only proof in ANT-52/c8eeddbf; it does not prove this new writer.
+KEYBOARD_FOCUS: PASS: native numeric entry/Tab reaches clear label; exact review/approval/recovery retain original controls. A real refusal focus loss was found and repaired: focus moves to Back to details after disabling the refused action. Original focus/retention assertions remain, with only their changed accessible-label selectors reconciled.
+ZOOM_REFLOW: UNVERIFIED:320px reflow has no document overflow and new targets are44px; native200% zoom and screen-reader testing of this added flow remain owed. Parent native zoom is not borrowed.
+REDUCED_MOTION: PASS: no new animation, timer or polling; original drawer motion retained.
+STATE_COVERAGE: PASS: known/unknown effort, zero, clear, invalid/unchanged values, permission loading/denial, unavailable/stale/native-record change, review, approval, refused, saved, unknown and recovered. Existing loading/absent-task and account-switch retention tests remain in the117 cases.
+TRUTHFUL_STATE_LABELS: PASS: effort is neither free time nor a Calendar reservation. Clear means unknown, not zero. Executor response alone never establishes saved Work; refused/unknown cannot become optimistic completion.
+SOLO_UI: YES: one shared tenant-neutral Task/Operations implementation, no per-account condition, provisioning fork or Platform Operator change.
+SOLO_1536X770_PAIGE_CLOSED: UNVERIFIED: full original shell at this size remains owed; current changed-path evidence is1280px plus320px original Operations mount.
+SOLO_1536X770_PAIGE_OPEN: UNVERIFIED: no PAIGE dock interaction claim from an inert harness placeholder.
+SOLO_1366X768_PAIGE_CLOSED: UNVERIFIED: full-shell size remains owed.
+SOLO_1366X768_PAIGE_OPEN: UNVERIFIED: original dock/inspector continuity remains owed.
+SOLO_1024X768_PAIGE_CLOSED: UNVERIFIED: full-shell size remains owed.
+SOLO_1024X768_PAIGE_OPEN: UNVERIFIED: original dock overlay/return remains owed.
+SOLO_900X1000_PAIGE_CLOSED: UNVERIFIED: full-shell size remains owed.
+SOLO_900X1000_PAIGE_OPEN: UNVERIFIED: original dock overlay/return remains owed.
+UNVERIFIED: full-schema225-case pgTAP run, original Trust/Rail/concurrency/native role proof, migration ordering, independent review/exact-head CI, deployment, new/existing eligible SOLO cohorts, Chat/Team Hub tool behavior, native zoom/AT, full-shell dock matrix and founder acceptance.
+OWNER_INTENT: finish realistic weekly planning first, then bounded Automation Builder, monitoring and permitted proactive updates; retain full ten outcomes/E5-CV1–9 and one founder evaluation.
+MUST_NOT_HAPPEN: whole metadata erased by a partial update, unknown effort converted to zero, stale/foreign actor or Task reuse, fresh-key replay after response loss, invented receipt/saved status, new approval/writer/ledger/scheduler, provider effect or held ZION activation.
+MUST_PRESERVE: native service-only executor/ACL/OID, actor/tenant and record checks, raw Task version/CAS, exact stored command/Trust, original replay/receipt transaction, explicit metadata replacement semantics and all non-Task branches.
+ACCEPTANCE_CRITERIA: approved effort change persists only its intended key, original metadata survives, the same scoped Task reopens with native effort and original receipt, invalid/denied/stale/replayed/uncertain cases remain safe; universal eligible SOLO behavior and both conversational consumers verified before full outcome closure.
+MOTION_PURPOSE: none added.
+PROTECTED_SEAMS: original CRM function is restated only for Task update; original generator derives its field. No Root, Chat host, Spine/risk registry, E04/E09 native functions, Calendar reader/writer or Team Hub implementation edit.
+
+## Original execution and scope
+
+The native producer is review checkpoint4ed8acc91. Nullable integer
+`task.update.patch.estimated_minutes` changes only that key, preserving nested
+metadata. Whole metadata replacement retains its prior explicit semantics;
+combining it with scalar effort is refused. No applied migration changes.
+Tentative forward12 follows actual production09; E04 reserved10/E09 tentative11
+ordering is being reconciled in original ANT-161/51d8c74d. No durable Preview
+was opened ahead of that reservation and no production write was made.
+
+Twenty isolated PostgreSQL16 checks execute the actual whole function, with
+baseline refusal first, unchanged OID/ACL, set/clear/zero/bounds, malformed input
+and source, stale version, replay and receipt-failure rollback. Peripheral
+Auth/access/hash/receipt ports are explicit fixtures: not production Auth/RLS,
+Trust, canonical Rail, full-schema or concurrent isolation proof. The original
+governed CRM suite preserves194 assertions and adds31 (225 total); that full
+schema suite remains UNRUN. Generator self-tests15/15 preserve all non-Task
+function bytes and advertise the field only on Task update.
+
+The UI sends one scalar patch through existing `crm-command`. It requires exact
+native Task identity/field, internal-effect flags and version before acknowledgement,
+then the original independent Work read before saved feedback. Stored recovery
+remains same actor/tenant/Task/key/version and cannot mix stage and effort targets.
+No browser metadata is authority.
+
+## Capabilities and Algorithm Support
+
+Existing `crm_update_task` and `crm_clients.task_read` remain the original producer
+and reader. No static Spine write key was found; this is the existing legitimate
+governed direct command, not a new Layer C integration. Catalogue/department
+remain PARTIAL; native/tool support and actual displayed availability must be
+verified together after release. No provider or specialist privilege is added.
+
+ALG-01: local extension of exact-field readback and original-operation recovery;
+real approval/Rail/reload proof owed. ALG-08: saved effort becomes one supported
+weekly input, not a complete scheduling/dependency optimizer. ALG-13: unchanged
+explainable weekly recommendation contract. ALG-02/03/11/12 and conditional
+ALG-10 keep their original maturity/gaps; no new algorithm claimed.
+
+## Evidence interpretation
+
+Final PNG/JSON states in the manifest are synthetic only. One earlier
+`light-narrow-refused.png` is excluded: it predates the refusal-focus correction.
+The final `light-narrow-refused-final-focus` frame supersedes it. All other final
+frames were recaptured after that source correction.18px checkbox geometry is
+the glyph; checkbox-target.json records its44px interactive label.
+
+Functional: LOCAL/NOT_MERGED/NOT_DEPLOYED. Visual: changed-path source rendering
+and material focus/target correction verified; full-shell/native/AT gaps above.
+Experiential: integrated native/customer proof still owed. Founder: NOT_ACCEPTED.

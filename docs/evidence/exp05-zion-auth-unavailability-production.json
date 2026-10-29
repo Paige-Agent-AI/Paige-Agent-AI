@@ -1,0 +1,120 @@
+{
+  "schema": 1,
+  "channel": "production",
+  "releaseClass": "internal-only patch; no customer name or announcement",
+  "originalPr": 3057,
+  "reviewedHead": "8eac255472f1268aa177dabb524d45553322769d",
+  "merge": "67a51bfc281ef6b5128451a8d32166f369656730",
+  "tree": "39cc6892ed40c4b82e95541b73ec8e5b1f1cf20f",
+  "parents": [
+    "abfbffee8c16e8ca8e207948bae6e1309648b572",
+    "8eac255472f1268aa177dabb524d45553322769d"
+  ],
+  "review": {
+    "assurance": "AUTHOR-REVIEW / LOWER ASSURANCE",
+    "id": 5696515667
+  },
+  "ci": {
+    "executedChecks": 10,
+    "result": "SUCCESS",
+    "webContexts": 2,
+    "webResult": "SUCCESS",
+    "nativePreview": "SKIPPED: genuinely no schema change",
+    "reviewThreads": 0
+  },
+  "deployment": {
+    "id": "dpl_7NiADF19VUjtnZ2Y16b4hUiHb1j6",
+    "environment": "production",
+    "status": "READY",
+    "commit": "67a51bfc281ef6b5128451a8d32166f369656730"
+  },
+  "migrations": "NOT_APPLICABLE",
+  "edgeUpload": "NOT_APPLICABLE: no function/config/retirement delta",
+  "publicReadback": [
+    {
+      "origin": "https://paigeagent.ai",
+      "at": "2026-10-29T10:55:24.514Z",
+      "status": 200,
+      "version": {
+        "buildId": "67a51bfc281ef6b5128451a8d32166f369656730-mvtfaqsn",
+        "customerUpdate": null
+      },
+      "versionSha256": "56da97fc68aae950ad9784c960df13c181f15a4dd180a79643b4fb23c8ebca48",
+      "originalEntry": "/assets/main-D4CG29kx.js",
+      "applicationEntry": "/assets/main-BcXeCmXX.js",
+      "surfaceEntry": "/assets/SoloEntry-fOGpPkDj.js",
+      "originalChunk": "/assets/OperationsRoute-BMArT3ay.js",
+      "chunkBytes": 240965,
+      "chunkSha256": "5bd1990df45f23d96002c9f5d0402f7cd29bcc4b316b7349db5223e067ed86e1",
+      "signatures": {
+        "originalZionInspector": true,
+        "originalActorTenantEpoch": true,
+        "originalCallerJwtInspector": true,
+        "beforeAfterSessionChecks": true,
+        "authErrorRefusalVersusUnavailable": true,
+        "originalConfirmedSdkDenial": true,
+        "originalLostBodyFocus": true,
+        "originalNoRepeatMessage": true
+      },
+      "boundary": "Public version and original declared emitted source only. No authenticated customer/denial/cohort/RLS/new-account/domain execution/Rail or founder acceptance inferred."
+    },
+    {
+      "origin": "https://app.paigeagent.ai",
+      "at": "2026-10-29T10:55:25.204Z",
+      "status": 200,
+      "version": {
+        "buildId": "67a51bfc281ef6b5128451a8d32166f369656730-mvtfaqsn",
+        "customerUpdate": null
+      },
+      "versionSha256": "56da97fc68aae950ad9784c960df13c181f15a4dd180a79643b4fb23c8ebca48",
+      "originalEntry": "/assets/main-D4CG29kx.js",
+      "applicationEntry": "/assets/main-BcXeCmXX.js",
+      "surfaceEntry": "/assets/SoloEntry-fOGpPkDj.js",
+      "originalChunk": "/assets/OperationsRoute-BMArT3ay.js",
+      "chunkBytes": 240965,
+      "chunkSha256": "5bd1990df45f23d96002c9f5d0402f7cd29bcc4b316b7349db5223e067ed86e1",
+      "signatures": {
+        "originalZionInspector": true,
+        "originalActorTenantEpoch": true,
+        "originalCallerJwtInspector": true,
+        "beforeAfterSessionChecks": true,
+        "authErrorRefusalVersusUnavailable": true,
+        "originalConfirmedSdkDenial": true,
+        "originalLostBodyFocus": true,
+        "originalNoRepeatMessage": true
+      },
+      "boundary": "Public version and original declared emitted source only. No authenticated customer/denial/cohort/RLS/new-account/domain execution/Rail or founder acceptance inferred."
+    }
+  ],
+  "sourceTests": {
+    "final": 92,
+    "failed": 0,
+    "skipped": 0,
+    "strictBaseline": 0,
+    "strictCandidate": 0,
+    "renderedFrames": 16,
+    "fixtureBoundary": "Disclosed neutral Auth/inspector/Chat ports; not authenticated customer proof"
+  },
+  "outcomes": [
+    "08",
+    "10"
+  ],
+  "cases": [
+    "E5-CV6",
+    "E5-CV9"
+  ],
+  "orchestration": "Original actor/tenant/epoch and caller-JWT tool_search inspector. No dispatch, decision, repeated assignment, domain write or new Rail receipt.",
+  "applicability": "Shared tenant-neutral SOLO reader/component for equally eligible existing and future accounts. Existing/new-account cohorts, roles and RLS customer proof remain owed.",
+  "capabilities": "operations.department remains PARTIAL; no catalogue, Binding Ledger, provider-readiness or algorithm maturity promotion",
+  "remaining": [
+    "Authenticated corrected Auth denial and deliberate recovery",
+    "Equivalent eligible existing and new-account behavior; tenant, role and revocation controls",
+    "Same original ZION through PAIGE Chat and Team Hub",
+    "Weekly execution, complete Automation Builder lifecycle, original ten outcomes and E5-CV1–E5-CV9",
+    "Physical zoom/assistive technology and complete founder acceptance"
+  ],
+  "founderAcceptance": "NOT_ACCEPTED",
+  "fullExperience": "STILL CODING / NOT_READY",
+  "rollback": "Ordinary reviewed source revert/forward fix; never replay unknown work",
+  "receipt": "https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3057#issuecomment-6494818654"
+}

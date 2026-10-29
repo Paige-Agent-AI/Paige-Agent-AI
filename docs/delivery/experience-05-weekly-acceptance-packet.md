@@ -1,3 +1,28 @@
+## October29 — ZION inspection recovery source released; customer proof owed
+
+Original outcomes08/10 and E5-CV6/CV9: retryable Auth failures now use unavailable;
+confirmed session/API denial withdraws private results and restores only lost
+BODY focus to the original inspection header. No assignment is repeated.
+Reviewed 8eac255472f1268aa177dabb524d45553322769d, final AUTHOR-REVIEW / LOWER ASSURANCE5696515667;
+all10 executed exact checks/two web contexts SUCCESS, no-schema Preview SKIP.
+Merge 67a51bfc281ef6b5128451a8d32166f369656730, tree39cc6892ed40c4b82e95541b73ec8e5b1f1cf20f;
+original production dpl_7NiADF19VUjtnZ2Y16b4hUiHb1j6 READY/exact.
+Both official origins10:55:24–25UTC serve67a51-mvtfaqsn/null, original declared
+OperationsRoute chunk240,965bytes/SHA256
+5bd1990df45f23d96002c9f5d0402f7cd29bcc4b316b7349db5223e067ed86e1;
+all8 source signatures pass. Own schema/Edge upload NOT_APPLICABLE.
+[Production receipt](../evidence/exp05-zion-auth-unavailability-production.json)
+preserves the dated source/UI evidence and original PR receipt6494818654.
+
+Functional: source/web VERIFIED; original92 tests and16 neutral-port rendered
+frames are bounded engineering evidence. Visual: original geometry retained;
+physical zoom/AT remain owed. Experiential: authenticated corrected denial,
+role/revocation/tenant isolation, equivalent eligible existing/new-account cohorts,
+same ZION in both chats, weekly execution/Builder lifecycle and full ten/E5 proof
+remain OPEN. Founder: NOT_ACCEPTED. No full outcome closure, new domain record,
+Rail receipt, provider/recurrence/Live activation or catalogue/algorithm promotion.
+STILL CODING / NOT_READY. One complete founder evaluation remains later.
+
 ## October28 original ZION recovery — no full-outcome closure
 
 Original outcomes08/10/E5-CV6/CV9 retain their authenticated acceptance obligations.

@@ -44,7 +44,6 @@ BEGIN
  SELECT s.config INTO config FROM public.paige_subagents s
   WHERE s.tenant_id IS NULL AND s.slug=t.agent_key FOR SHARE;
  IF NOT FOUND OR config->'capability_scope'->>'mode' IS DISTINCT FROM 'allowlist'
-   OR config->'capability_scope'->>'access' IS DISTINCT FROM 'read'
    OR jsonb_typeof(config->'capability_scope'->'tools') IS DISTINCT FROM 'array'
    OR jsonb_typeof(tools) IS DISTINCT FROM 'array' OR jsonb_array_length(tools) NOT BETWEEN 1 AND 3 THEN
   RAISE EXCEPTION 'Source read scope unavailable' USING ERRCODE='42501'; END IF;

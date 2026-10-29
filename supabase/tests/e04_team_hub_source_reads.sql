@@ -44,6 +44,20 @@ SELECT pg_temp.check(to_regprocedure('public.team_hub_stage_agent_read_context(u
  'required native publication contract is not implemented');
 \endif
 \ir ../migrations/20271122010004_e04_team_hub_source_reads.sql
+-- Same state as the already-migrated Preview. Apply a genuine forward version,
+-- not a rewrite that a normal resync would skip, then prove replay and full inverse.
+CREATE TEMP TABLE e04_access_before AS SELECT oid,pg_catalog.to_jsonb(p)-ARRAY['prosrc','xmin','xmax','cmin','cmax','ctid'] AS metadata
+ FROM pg_catalog.pg_proc p WHERE oid='public._team_hub_assert_agent_read_scope(public.team_hub_agent_turns)'::regprocedure;
+SELECT pg_temp.check((SELECT md5(prosrc)='a0c7ceda680e1f3bc663332464558e68' FROM pg_proc
+ WHERE oid='public._team_hub_assert_agent_read_scope(public.team_hub_agent_turns)'::regprocedure),
+ 'original22010004 guard matches already-migrated Preview before forward repair');
+\ir ../migrations/20271122010005_e04_team_hub_read_access.sql
+\ir ../migrations/20271122010005_e04_team_hub_read_access.sql
+SELECT pg_temp.check((SELECT md5(prosrc)='1c775f6c3c41b6cd32f01a52238933cb'
+ AND md5(replace(prosrc,E'   OR config->''capability_scope''->>''access'' IS DISTINCT FROM ''read''\n',''))='a0c7ceda680e1f3bc663332464558e68'
+ AND pg_catalog.to_jsonb(p)-ARRAY['prosrc','xmin','xmax','cmin','cmax','ctid']=b.metadata
+ FROM pg_proc p JOIN e04_access_before b USING(oid)),
+ 'forward read guard, whole body inverse, OID ABI owner ACL security config and replay exact');
 
 -- Preserve the entire original bodies outside the three exact additive hunks.
 DO $$ DECLARE src text; old text; guard text; BEGIN

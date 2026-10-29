@@ -1,0 +1,6 @@
+{
+  "boundary": "Synthetic transport through ORIGINAL useSoloCalendar hook, no customer or provider effects",
+  "refused": "Calendar commitments\nRefresh Calendar\n\nCalendar is unavailable or its freshness could not be confirmed. Appointments are withheld; this does not mean the week is free.\n\nNative Calendar records only; connected-provider free/busy and working hours are not verified here. Your entered work capacity already excludes appointments and is unchanged. Dependencies still need review.",
+  "recovered": "Calendar commitments\nRefresh Calendar\n\n2 recorded appointments returned for this person in this week.\n\nRead Thu, Oct 29, 3:40 PM · America/New_York\n\n2 appointments overlap. Review these commitments before placing more work.\n\nClient delivery review\nconfirmed · Overlap\nThu, Oct 29, 10:00 AM – Thu, Oct 29, 11:00 AM\nWorkshop preparation\nconfirmed · Overlap\nThu, Oct 29, 10:30 AM – Thu, Oct 29, 11:30 AM\n\n1 appointment has no recorded host and cannot be assigned to this person in this review.\n\nNative Calendar records only; connected-provider free/busy and working hours are not verified here. Your entered work capacity already excludes appointments and is unchanged. Dependencies still need review.",
+  "hoursAfterRetry": "8"
+}

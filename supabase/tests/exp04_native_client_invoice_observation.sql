@@ -119,7 +119,10 @@ declare before_read jsonb; after_read jsonb;
 begin
  select s.before_read into strict before_read from pg_temp.e04_native_off_page_identity s;
  after_read:=public._client_portal_invoice_facts_for_client('e4000000-0000-4000-8000-00000000aaaa','e4000000-0000-4000-8000-0000000c0001',1,null,current_date);
- perform pg_temp.check_true(before_read-'_native_sources'=after_read-'_native_sources','off-page control leaves the visible page and financial totals unchanged');
+ -- Capturing and mutating are separate top-level statements, so the original
+ -- statement_timestamp read_at can differ. Compare EVERY other public field.
+ perform pg_temp.check_true(before_read-ARRAY['_native_sources','read_at']=after_read-ARRAY['_native_sources','read_at'],
+  'off-page control leaves the entire visible page, cursor and financial totals unchanged apart from observation time');
  perform pg_temp.check_true(before_read->'_native_sources'->>'all_facts_identity'<>after_read->'_native_sources'->>'all_facts_identity',
   'source identity covers original facts beyond the returned page');
 end $off_page_changed$;
@@ -133,8 +136,8 @@ do $off_page_restored$
 declare before_read jsonb;
 begin
  select s.before_read into strict before_read from pg_temp.e04_native_off_page_identity s;
- perform pg_temp.check_true(public._client_portal_invoice_facts_for_client('e4000000-0000-4000-8000-00000000aaaa','e4000000-0000-4000-8000-0000000c0001',1,null,current_date)=before_read,
-  'source control restores the exact original query outcome and identity');
+ perform pg_temp.check_true(public._client_portal_invoice_facts_for_client('e4000000-0000-4000-8000-00000000aaaa','e4000000-0000-4000-8000-0000000c0001',1,null,current_date)-'read_at'=before_read-'read_at',
+  'source control restores every original financial field and source identity apart from observation time');
 end $off_page_restored$;
 
 -- A deterministic near-midnight boundary, including the DST date transition.

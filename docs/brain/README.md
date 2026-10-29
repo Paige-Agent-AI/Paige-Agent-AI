@@ -1,3 +1,32 @@
+## EXP02 October29 - Calendar source increment and acceptance boundary
+
+Original3019 is composed with receiving maina58e9d8d; unchanged owning source
+passes118 focused checks. Bounded source release is eligible after final review
+and exact-head CI, with original Edge/web readback still owed. Earlier blanket
+source-hold wording is corrected under existing merge-after-green governance.
+Native zoom/AT, released model compliance, legitimate cohorts, full19/nine and
+founder acceptance remain PROOF OWED; original3018 material P1 stays OPEN.
+
+## EXP02 October28 - actual Calendar proof and navigation repair
+
+Original3012/21fff source deployment is independently verified. Actual bounded
+authorized-owner QA ANT52/e2015a9a verifies Calendar source/one ordinary read-only
+Chat request/whole saved business answer and source after reload/original
+Calendar/native Back. Settled by35.596s observation/UI20s, not an SLO. Initial
+other-workspace observation was INVALID and excluded; no action or monthly
+report retry. This does not close roles/cohorts/Live or the original19.
+
+The observed missing Executive Calendar link and contradictory model navigation
+claim are repaired through existing original metadata/read-message guidance.
+Actual references remain deliberately stripped from model context; original E4
+rendering/persistence stays separate.134 local source controls and bounded
+original-shell synthetic rendering/keyboard/draft return are not released
+customer proof. See the [navigation evidence](../evidence/ui-delivery/e2-calendar-review-navigation.md).
+Separate Sales Back-loading remains OPEN. Recorded-comms3018 has a material
+full-shell/cohort/zoom review hold; catalogue3014 I1 migration hold is CLEAR after
+original4400 deployment/frontier, with final required CI still pending.
+All19/nine/algorithm maturity/founder acceptance remain OPEN.
+
 ## EXP02 October28 - source release and bounded customer proof
 
 Original3014 normally merged557d9a7ab155dfd073f052fb393ab741b74a9714/treefe9e76bd;

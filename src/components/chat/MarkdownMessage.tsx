@@ -9,6 +9,9 @@ interface MarkdownMessageProps {
   className?: string;
   /** Present only for scoped workspace answers; paths come from the canonical record resolver. */
   verifiedAppPaths?: readonly string[];
+  /** Private answers may show image captions without initiating media requests.
+   * Explicit authorized file controls and existing workspace callers are separate. */
+  allowImages?: boolean;
 }
 
 function verifiedHref(href: string | undefined, paths: readonly string[] | undefined): string | null {
@@ -34,7 +37,7 @@ function verifiedHref(href: string | undefined, paths: readonly string[] | undef
  * Supports: bold, italic, headings, ordered/unordered lists,
  * code, blockquotes, links, and GFM tables.
  */
-export function MarkdownMessage({ content, className, verifiedAppPaths }: MarkdownMessageProps) {
+export function MarkdownMessage({ content, className, verifiedAppPaths, allowImages = true }: MarkdownMessageProps) {
   return (
     <div
       className={cn(
@@ -76,6 +79,8 @@ export function MarkdownMessage({ content, className, verifiedAppPaths }: Markdo
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         components={{
+          ...(!allowImages ? {img: ({alt}: {alt?: string}) =>
+            <span className="text-muted-foreground">{alt ? `Image omitted: ${alt}` : "Image omitted"}</span>} : {}),
           a: ({ node, href, children, ...props }) => {
             const verified = verifiedHref(href, verifiedAppPaths);
             return verified

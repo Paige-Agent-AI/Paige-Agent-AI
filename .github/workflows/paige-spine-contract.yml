@@ -802,6 +802,10 @@ jobs:
       # begin binds the read's exact snapshot, replay is byte-identical and never re-embeds, hashes re-checked.
       - run: supabase test db supabase/tests/e09_customer_knowledge_retrieval.sql
         if: ${{ !cancelled() }}
+      # E09: deliberately selected public page stays on the original accepted customer turn;
+      # exact caller/relationship/URL binding, replay, revocation and publication guards.
+      - run: supabase test db supabase/tests/e09_customer_public_link.sql
+        if: ${{ !cancelled() }}
       # The owner's real send through create_solo_team_invite, accepted through accept_solo_team_invite,
       # for Member and Admin across two businesses: no hand-written token.
       - run: supabase test db supabase/tests/solo_team_invite_accept_end_to_end.sql

@@ -1,6 +1,14 @@
 /** Internal provider-neutral Social connection seam. Provider names never become customer copy. */
 export type SocialConnectionStatus = "connected" | "needs_reauth";
 
+/** The OAuth platforms every Social provider adapter must support — the customer catalogue
+ *  (src/solo/social-platform-catalog.ts) is grounded in this list. Reddit is deliberately
+ *  absent while providers report its OAuth path as unavailable. */
+export const SOCIAL_OAUTH_PLATFORMS = [
+  "tiktok", "instagram", "facebook", "linkedin", "youtube", "x", "threads",
+  "pinterest", "google_business", "snapchat",
+] as const;
+
 export interface SocialProviderAccount {
   platform: string;
   providerAccountId: string;

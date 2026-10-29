@@ -2,11 +2,13 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
 import { recordCapabilityRun, stableRunId } from "../_shared/capability-record.ts";
 import { uploadPostSocialAdapter } from "../_shared/social-provider/upload-post.ts";
 import { SocialProviderError } from "../_shared/social-provider/mod.ts";
+import { zernioSocialAdapter } from "../_shared/social-provider/zernio.ts";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const TOKEN = /^[0-9a-f]{64}$/;
 const RETURN_PATH = /^\/solo\/[A-Za-z0-9_-]+\/settings\/integrations\/?$/;
-const adapter = uploadPostSocialAdapter;
+// Same provider selection as paige-social: whichever adapter carries a vaulted key.
+const adapter = zernioSocialAdapter.isConfigured() ? zernioSocialAdapter : uploadPostSocialAdapter;
 
 function object(value: unknown): Record<string, unknown> | null {
   return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : null;
@@ -81,19 +83,29 @@ Deno.serve(async (req: Request) => {
 
   const providerStatus = url.searchParams.get("connect_status");
   const returnedPlatform = (url.searchParams.get("platform") ?? "").replace(/-/g, "_");
-  if (providerStatus !== "success" || returnedPlatform !== claim.requested_platform) {
+  // Zernio does not document its redirect parameters; its documented completion signal is
+  // the profile readback. Zernio rows therefore verify by the readback below (which
+  // requires the requested platform's account to be present) and fail early only on an
+  // explicit cancelled/failed return. The strict redirect-parameter contract above the
+  // readback stays intact for the other provider.
+  const readbackIsTruth = claim.provider_key === zernioSocialAdapter.key;
+  const explicitCancel = providerStatus === "cancelled" || url.searchParams.get("status") === "cancelled";
+  const explicitFailure = (providerStatus !== null && providerStatus !== "success")
+    || url.searchParams.get("status") === "error" || url.searchParams.get("error") !== null;
+  const platformMismatch = !readbackIsTruth && returnedPlatform !== claim.requested_platform;
+  if (explicitCancel || explicitFailure || platformMismatch) {
     const reportedCode = (url.searchParams.get("error_code") ?? "").toUpperCase();
     const safeReason = reportedCode === "ACCOUNT_ALREADY_LINKED" ? "account_already_linked"
-      : providerStatus === "cancelled" ? "consent_cancelled"
-        : returnedPlatform !== claim.requested_platform ? "platform_mismatch" : "connection_failed";
-    const failureCode = providerStatus === "cancelled" && reportedCode === "ACCESS_DENIED"
+      : explicitCancel ? "consent_cancelled"
+        : platformMismatch ? "platform_mismatch" : "connection_failed";
+    const failureCode = explicitCancel && reportedCode === "ACCESS_DENIED"
       ? "provider_consent_cancelled"
-      : returnedPlatform !== claim.requested_platform ? "provider_platform_mismatch" : "provider_connection_failed";
+      : platformMismatch ? "provider_platform_mismatch" : "provider_connection_failed";
     await admin.rpc("social_release_connection_attempt", {
       _tenant_id: claim.tenant_id, _attempt_id: attemptId, _actor_id: claim.actor_id,
       _failure_code: failureCode, _released_at: new Date().toISOString(),
     });
-    return resultRedirect(claim.return_path, providerStatus === "cancelled" ? "cancelled" : "verification_failed", undefined, safeReason);
+    return resultRedirect(claim.return_path, explicitCancel ? "cancelled" : "verification_failed", undefined, safeReason);
   }
 
   try {

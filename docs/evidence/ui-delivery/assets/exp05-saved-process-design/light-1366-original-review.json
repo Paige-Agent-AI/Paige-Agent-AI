@@ -1,0 +1,118 @@
+{
+  "controls": [
+    {
+      "height": 37.29999923706055,
+      "tag": "BUTTON",
+      "text": "Overview",
+      "width": 82.36250305175781
+    },
+    {
+      "height": 37.29999923706055,
+      "tag": "BUTTON",
+      "text": "Work",
+      "width": 58.04999923706055
+    },
+    {
+      "height": 37.29999923706055,
+      "tag": "BUTTON",
+      "text": "Projects",
+      "width": 74.1624984741211
+    },
+    {
+      "height": 37.29999923706055,
+      "tag": "BUTTON",
+      "text": "Delivery",
+      "width": 74.9749984741211
+    },
+    {
+      "height": 37.29999923706055,
+      "tag": "BUTTON",
+      "text": "Playbooks",
+      "width": 88.0250015258789
+    },
+    {
+      "height": 37.29999923706055,
+      "tag": "BUTTON",
+      "text": "Capacity",
+      "width": 77.9000015258789
+    },
+    {
+      "height": 37.29999923706055,
+      "tag": "BUTTON",
+      "text": "Review with ZION",
+      "width": 157.5625
+    },
+    {
+      "height": 44,
+      "tag": "BUTTON",
+      "text": "Procedures",
+      "width": 96.7249984741211
+    },
+    {
+      "height": 44,
+      "tag": "BUTTON",
+      "text": "Automations",
+      "width": 106.9875030517578
+    },
+    {
+      "height": 44,
+      "tag": "BUTTON",
+      "text": "Design with ZION",
+      "width": 128.97500610351562
+    },
+    {
+      "height": 44,
+      "tag": "BUTTON",
+      "text": "Refresh",
+      "width": 63.86249923706055
+    },
+    {
+      "height": 44,
+      "tag": "BUTTON",
+      "text": "Review to enable",
+      "width": 118.4250030517578
+    },
+    {
+      "height": 44,
+      "tag": "BUTTON",
+      "text": "View history",
+      "width": 91.0999984741211
+    },
+    {
+      "height": 44,
+      "tag": "BUTTON",
+      "text": "Enable future contacts",
+      "width": 156.6750030517578
+    },
+    {
+      "height": 44,
+      "tag": "BUTTON",
+      "text": "Cancel",
+      "width": 59.41250228881836
+    },
+    {
+      "height": 44,
+      "tag": "A",
+      "text": "Review pending tasks",
+      "width": 122.4625015258789
+    },
+    {
+      "height": 44,
+      "tag": "A",
+      "text": "Open work",
+      "width": 62.91250228881836
+    }
+  ],
+  "documentWidth": 1366,
+  "focus": {
+    "tag": "BUTTON",
+    "text": "Cancel"
+  },
+  "steps": [],
+  "text": "Overview\nWork\nProjects\nDelivery\nPlaybooks\nCapacity\nReview with ZION\nProcedures\nAutomations\nAutomations\nDesign with ZION\n\nContact created\n→\nTask approval\n→\nOriginal work and receipt\n\nInternal task processes\n\nA new contact can prepare a task for your approval.\n\nRefresh\nClient kickoff preparation\n\nWhen a contact is created · Draft · Each task needs your approval\n\nPrepare the kickoff review\n\nReview the original business record before proposing the next action.\n\nReview to enable\nView history\n\nEnable this exact task for contacts created after you enable it. Each occurrence waits for your approval. No task is created by enabling.\n\nEnable future contacts\nCancel\nReview pending tasks\nOpen work\nHARNESS RENDER · SYNTHETIC DATA · NOT LIVE",
+  "url": "http://127.0.0.1:56483/solo/42/operations/playbooks?theme=light&design=single",
+  "viewport": {
+    "height": 768,
+    "width": 1366
+  }
+}

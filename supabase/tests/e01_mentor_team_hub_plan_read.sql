@@ -28,15 +28,14 @@ CREATE TEMP TABLE e01_before AS SELECT slug, tenant_id, config FROM public.paige
 
 DO $proof$
 DECLARE mentor_tools jsonb; zion_tools jsonb; merit_tools jsonb; tenant_tools jsonb;
-        last int; occurrences int; moved int;
+        occurrences int; moved int;
 BEGIN
   -- 1. The platform MENTOR row gained exactly one name, at the end of its read list.
   SELECT config->'capability_scope'->'tools' INTO mentor_tools FROM public.paige_subagents WHERE slug='mentor' AND tenant_id IS NULL;
-  last := jsonb_array_length(mentor_tools);
+  IF mentor_tools IS DISTINCT FROM '["ask_choices","capability_status","read_business_time_zone","team_hub_read_conversation","read_tenant_knowledge","marketplace_browse","plan_list"]'::jsonb THEN
+    RAISE EXCEPTION 'mentor scope is not the seeded list plus plan_list at the end'; END IF;
   SELECT count(*) INTO occurrences FROM jsonb_array_elements_text(mentor_tools) t WHERE t='plan_list';
-  IF mentor_tools IS NULL OR occurrences <> 1 OR mentor_tools->>(last-1) IS DISTINCT FROM 'plan_list'
-     OR mentor_tools->>(last-2) IS DISTINCT FROM 'marketplace_browse' THEN
-    RAISE EXCEPTION 'mentor scope did not gain plan_list exactly once at the end'; END IF;
+  IF occurrences <> 1 THEN RAISE EXCEPTION 'plan_list not exactly once'; END IF;
   -- 2. ZION is byte-identical (no duplicate inserted into a list that already names it).
   SELECT config->'capability_scope'->'tools' INTO zion_tools FROM public.paige_subagents WHERE slug='zion';
   SELECT count(*) INTO occurrences FROM jsonb_array_elements_text(zion_tools) t WHERE t='plan_list';

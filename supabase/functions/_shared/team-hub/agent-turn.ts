@@ -669,20 +669,22 @@ export async function runTeamHubAgentTurn(deps: AgentTurnDeps, raw: unknown): Pr
     let onAbort: (() => void) | undefined;
     try {
       return await Promise.race([(async () => {
-        const [row, freshNames, authority] = await Promise.all([
-          service.from("paige_subagents").select("slug,config").eq("slug", "mentor").is("tenant_id", null).maybeSingle(),
-          readNames(caller, tenantId, target),
-          loadTeamAuthorityForChat(caller, tenantId),
-        ]);
-        const config = object(row?.error ? null : row?.data?.config);
-        const fresh = storedToolNames(config?.capability_scope);
-        const permission = authority.status === "available"
-          ? authority.rows.filter((r) => r.fact_key === "viewer_permission" && r.status === "available") : [];
-        return !deps.signal?.aborted && fresh !== null && JSON.stringify(fresh) === JSON.stringify(mentorScope.storedTools)
-          && object(config?.capability_scope)?.access === "read"
-          && !!freshNames && "people" in freshNames && freshNames.conversation?.kind === "agent_dm"
-          && freshNames.conversation.agent_key === "mentor" && freshNames.people.has(userId)
-          && permission.length === 1 && (permission[0].value === "owner" || permission[0].value === "admin");
+        try {
+          const [row, freshNames, authority] = await Promise.all([
+            service.from("paige_subagents").select("slug,config").eq("slug", "mentor").is("tenant_id", null).maybeSingle(),
+            readNames(caller, tenantId, target),
+            loadTeamAuthorityForChat(caller, tenantId),
+          ]);
+          const config = object(row?.error ? null : row?.data?.config);
+          const fresh = storedToolNames(config?.capability_scope);
+          const permission = authority.status === "available"
+            ? authority.rows.filter((r) => r.fact_key === "viewer_permission" && r.status === "available") : [];
+          return !deps.signal?.aborted && fresh !== null && JSON.stringify(fresh) === JSON.stringify(mentorScope.storedTools)
+            && object(config?.capability_scope)?.access === "read"
+            && !!freshNames && "people" in freshNames && freshNames.conversation?.kind === "agent_dm"
+            && freshNames.conversation.agent_key === "mentor" && freshNames.people.has(userId)
+            && permission.length === 1 && (permission[0].value === "owner" || permission[0].value === "admin");
+        } catch { return false; }
       })(), new Promise<boolean>((resolve) => {
         timer = setTimeout(() => resolve(false), MENTOR_PLAN_READ_TIMEOUT_MS);
         onAbort = () => resolve(false); deps.signal?.addEventListener("abort", onAbort, { once: true });

@@ -32,7 +32,7 @@ const MERIT_CONFIG = { team_hub_tools: SHARED_LIST, capability_scope: DM_SCOPE,
   personality: { short_role: "Sales & getting paid", role_line: "Sales & getting paid: deals, proposals & agreements", intro: "I'm MERIT.", warmth: 4, length: 2, formality: 3, energy: 4, humour: "off",
     house_words: [], things_to_avoid: ["Pressure tactics"], never_does: ["Post a deal value in a channel"], sounds_like: ["Next step: proposal by Oct 30."] } };
 // EXP01: MENTOR's roster row once the plan-read migration lands — DM scope gains plan_list.
-const MENTOR_DM_SCOPE = { version: 1, mode: "allowlist", access: "read", tools: ["ask_choices", "capability_status", "read_business_time_zone", "team_hub_read_conversation", "plan_list"] };
+const MENTOR_DM_SCOPE = { version: 1, mode: "allowlist", access: "read", tools: ["ask_choices", "capability_status", "read_business_time_zone", "team_hub_read_conversation", "read_tenant_knowledge", "marketplace_browse", "plan_list"] };
 const MENTOR_CONFIG = { team_hub_tools: SHARED_LIST, capability_scope: MENTOR_DM_SCOPE,
   personality: { short_role: "Discovery & strategy", role_line: "Discovery & strategy", intro: "I'm MENTOR.", warmth: 4, length: 3, formality: 2, energy: 3, humour: "light",
     house_words: [], things_to_avoid: ["Lecturing"], never_does: ["Lecture"], sounds_like: ["One thing first."] } };
@@ -847,7 +847,9 @@ describe("MENTOR plan read (EXP01)", () => {
     const read = named(w, "plan_list")[0];
     assert.equal(read.who, "caller");
     assert.equal(read.args.p_tenant_id, TENANT);
-    assert.equal(named(w, "current_user_tenant_id").length, 1, "the tenant pin runs after the read");
+    const planCall = w.calls.findIndex((c) => c.name === "plan_list");
+    const pinCall = w.calls.findIndex((c) => c.name === "current_user_tenant_id");
+    assert.ok(planCall >= 0 && pinCall > planCall, "the tenant pin runs after the read");
     const receipts = named(w, "record_capability_run").filter((c) => c.args._capability_key === "plan_list");
     assert.equal(receipts.length, 1, "the read is receipted exactly once");
     assert.match(promptText(m), /Confirm venue/, "the model saw the real rows");
@@ -911,10 +913,12 @@ describe("MENTOR plan read (EXP01)", () => {
 
   it("a refused planning WRITE still gets the A1 line — the read executor admits no writer", async () => {
     const w = mentorWorld(), m = model([
+      { tool_calls: [{ name: "plan_create", args: { title: "Q4 push" } }] },
       { content: JSON.stringify({ reply: "Happy to set that up.", route: "act" }) },
     ]);
     const r = await run(w, m, mentorTurn());
     assert.equal(r.body.outcome, "posted");
+    assert.equal(named(w, "plan_create").length, 0, "no writer ever runs");
     const [post] = named(w, "team_hub_post_agent_message");
     assert.match(post.args.p_body, /I can't take actions here yet\./);
   });

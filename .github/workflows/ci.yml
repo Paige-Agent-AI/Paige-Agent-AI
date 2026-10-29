@@ -84,6 +84,7 @@ jobs:
           supabase/functions/_shared/team-hub/agent-turn.test.ts
           supabase/functions/_shared/team-hub/agent-turn-wiring.test.ts
           supabase/functions/_shared/team-hub/cura-service-read.test.ts
+          supabase/functions/_shared/team-hub/mentor-plan-read.test.ts
           supabase/functions/_shared/team-hub/vera-metric-read.test.ts
           supabase/functions/_shared/team-hub/file-sweep.test.ts
           supabase/functions/_shared/team-lifecycle/chat.test.ts

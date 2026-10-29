@@ -13,7 +13,9 @@ import { PLANNING_READ_TOOLS } from "../paige-spine/domains/planning.ts";
 export const MENTOR_PLAN_READ_KEYS = ["plan_list"] as const;
 export const MENTOR_PLAN_READ_TIMEOUT_MS = 5000;
 /** Server-side ceiling independent of the requested limit: the model sees at most this many rows
- *  of each kind, so a hostile or runaway argument can never dump a tenant's whole history. */
+ *  of each top-level kind (plans, loose_items — a returned plan still carries its own items, the
+ *  same exposure the live seam's limit 50 has), so a runaway argument can never dump a tenant's
+ *  whole history. */
 export const MENTOR_PLAN_MAX_ROWS = 30;
 const PLAN_READ_TOOL = "plan_list";
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
@@ -122,7 +124,8 @@ export async function readMentorPlan(
     p_tenant_id: scope.tenantId,
     p_contact_id: null,
     p_by_item_date: false,
-    p_include_cancelled: args.include_cancelled,
+    // The live binding's own marshal (paige-ai-chat): either switch asks for saved history.
+    p_include_cancelled: args.include_cancelled === true || args.status === "cancelled",
   });
   if (deps.signal?.aborted) return withheld("I couldn't verify this read. Nothing was changed.");
   if (reply.error) {

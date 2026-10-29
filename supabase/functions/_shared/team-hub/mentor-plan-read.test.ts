@@ -75,6 +75,14 @@ describe("reading", () => {
     assert.equal(d.calls[1].name, "current_user_tenant_id");
     assert.equal(await read.revalidate(), true);
   });
+  it("status 'cancelled' asks for saved history exactly like the live binding's marshal", async () => {
+    const d1 = deps(); const d2 = deps();
+    await readMentorPlan(SCOPE, d1, "plan_list", { status: "cancelled" });
+    assert.equal(d1.calls[0].args!.p_status, "cancelled");
+    assert.equal(d1.calls[0].args!.p_include_cancelled, true, "status cancelled implies history");
+    await readMentorPlan(SCOPE, d2, "plan_list", {});
+    assert.equal(d2.calls[0].args!.p_include_cancelled, false, "default stays history-free");
+  });
   it("caps rows server-side regardless of the request", async () => {
     const many = Array.from({ length: 90 }, (_, i) => ({ id: `${i}`, items: [] }));
     const d = deps({ rpc: { plan_list: { plans: many, loose_items: many }, current_user_tenant_id: TENANT } });

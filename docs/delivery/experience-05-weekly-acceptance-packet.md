@@ -1,3 +1,44 @@
+## October29 — weekly workload and Calendar review released; O02 remains open
+
+Original O02/O03 inputs and E5-CV1/CV2/CV5/CV9: #3091 reviewed ebb0fc7e6,
+lower-assurance review5703813142, merged19dded728/treea7415d89. #3093 reviewed
+b8f8a6ff8, lower-assurance review5704689335, mergedc7564183/tree2f110e56.
+Each passed all10 exact required checks/two web statuses; schema-free Preview
+correctly SKIPPED. Both actual merges preserve reviewed source and incoming
+peer implementations. Both normal Vercel releases READY; both official origins
+returned the exact respective versions and declared Operations modules.
+[Workload production receipt](../evidence/exp05-weekly-workload-production.json)
+and [Calendar production receipt](../evidence/exp05-weekly-calendar-production.json).
+No database migration, Edge source upload or capability activation is introduced.
+
+Functional: dated original Work effort can be compared with a selected person's
+explicit temporary net work-capacity input; unknown/undated work stays separate.
+An explicit Calendar read adds genuine native commitments/recorded overlaps,
+with original refresh/freshness, per-host business-week boundaries and withheld
+stale/refused results. Entered capacity is unchanged; no provider free/busy,
+actual working hours, feasible saved schedule or dependency optimization claimed.
+
+Visual: original workload source-bound responsive/theme/keyboard/native200%
+evidence and new Calendar20-frame responsive/interaction evidence retain their
+individual scope. New Calendar native200%/AT remains UNVERIFIED.
+
+Experiential: protected ANT52/c8eeddbf records bounded authorized ordinary-owner
+workload disclosure/person/engineering-only8h input, original Task read, stable
+Operations→Overview navigation and loaded-reload reset PASS. This is not actual
+business capacity, a saved edit or a second cohort. The fresh Calendar check
+redirected to a different active workspace: INVALID designated-account proof;
+closed only the owned tab before interaction. No account switch, message,
+approval, work/booking write or provider effect. Calendar customer proof is not
+borrowed from the parent workload check.
+
+Remaining O02: canonical effort correction/save/reopen; genuine deadlines,
+dependencies, availability and feasible alternatives; same ZION in both chats;
+current/new SOLO/role/RLS/revocation and original records/receipts/recovery.
+operations.department/catalogue and ALG-01/08/13 maturity remain PARTIAL, other
+algorithms unchanged. O05 Builder→O07 monitoring→O09 permitted updates remain
+the next owner-prioritized outcomes; all original ten and E5-CV1–E5-CV9 stay in
+scope. Founder NOT_ACCEPTED; STILL CODING / NOT_READY; one integrated evaluation.
+
 ## October29 — original automation draft preview source released
 
 Outcome05 / E5-CV1,CV5,CV9: the original stored automation draft now shows its

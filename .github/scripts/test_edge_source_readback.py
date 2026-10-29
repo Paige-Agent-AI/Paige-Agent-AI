@@ -1700,5 +1700,104 @@ class BoundedDeployFixtures(unittest.TestCase):
         self.assertNotIn('SECRET', json.dumps(result))
 
 
+class PreselectedDeployFixtures(unittest.TestCase):
+    runner = BoundedDeployFixtures.runner
+    run_deploy = BoundedDeployFixtures.run_deploy
+
+    def setUp(self):
+        BoundedDeployFixtures.setUp(self)
+        self.source_bytes = sum(len(edge_deploy.readback.commit_file(
+            self.fixture.repo, self.fixture.commit, p))
+            for p in edge_deploy.checked_source(
+                self.fixture.repo, self.fixture.commit, 'paige-ai-chat')[1]['files'])
+        budget = patch.object(edge_deploy, 'API_SOURCE_BUDGET_BYTES', self.source_bytes - 1,
+                              create=True)
+        budget.start()
+        self.addCleanup(budget.stop)
+
+    def test_selection_large_graph_uses_local_before_any_api_upload(self):
+        result = self.run_deploy()
+        self.assertTrue(result['ok'])
+        self.assertFalse(result['source_verified'])
+        self.assertEqual(result['mode'], 'local_requested')
+        self.assertEqual([a[-1] for a in self.calls], ['{{.ServerVersion}}', '--use-docker'])
+
+    def test_selection_exact_boundary_stays_on_original_api_path(self):
+        edge_deploy.API_SOURCE_BUDGET_BYTES = self.source_bytes
+        self.assertEqual(self.run_deploy()['mode'], 'api')
+        self.assertEqual(len(self.calls), 1)
+
+    def test_selection_local_failure_or_unknown_never_uses_api(self):
+        for local in [subprocess.CompletedProcess([], 1, '', 'PRIVATE'),
+                      subprocess.TimeoutExpired('supabase', 1), OSError('PRIVATE')]:
+            with self.subTest(kind=type(local).__name__):
+                self.calls.clear()
+                self.local_result = local
+                result = self.run_deploy()
+                self.assertFalse(result['ok'])
+                self.assertFalse(result['source_verified'])
+                self.assertNotIn('PRIVATE', json.dumps(result))
+                self.assertEqual(len(self.calls), 2)
+                self.assertFalse(any('--use-api' in a for a in self.calls))
+
+    def test_selection_missing_docker_never_submits_any_upload(self):
+        self.docker_result = subprocess.CompletedProcess([], 1, '', 'PRIVATE')
+        self.assertEqual(self.run_deploy()['reason'], 'local_builder_unavailable')
+        self.assertEqual(len(self.calls), 1)
+        self.assertEqual(self.calls[0][0], 'docker')
+
+    def test_selection_maps_refused_before_any_provider_or_cli(self):
+        self.fixture.files['supabase/functions/paige-ai-chat/deno.json'] = '{"imports":{}}\n'
+        self.fixture.recommit()
+        self.assertEqual(self.run_deploy()['reason'], 'local_import_map_contract_unverified')
+        self.assertEqual(self.calls, [])
+
+    def test_selection_false_jwt_is_preserved_without_override(self):
+        self.fixture.files['supabase/config.toml'] += (
+            '[functions.paige-ai-chat]\nverify_jwt = false\n')
+        self.fixture.recommit()
+        self.assertIs(edge_deploy.checked_source(
+            self.fixture.repo, self.fixture.commit, 'paige-ai-chat')[1]['verify_jwt'], False)
+        self.assertEqual(self.run_deploy()['mode'], 'local_requested')
+        self.assertEqual(len(self.calls), 2)
+        self.assertFalse(any('--no-verify-jwt' in a for a in self.calls))
+
+    def test_selection_source_withdrawal_during_docker_prevents_upload(self):
+        before = self.runner
+        def retire_after_docker(args, directory, timeout):
+            value = before(args, directory, timeout)
+            if args[0] == 'docker':
+                (self.fixture.repo / 'supabase/functions/_shared/authority.ts').unlink()
+            return value
+        result = edge_deploy.deploy(self.fixture.repo, self.fixture.commit,
+                                  'paige-ai-chat', runner=retire_after_docker)
+        self.assertEqual(result['reason'], 'source_changed_no_retry')
+        self.assertEqual(len(self.calls), 1)
+
+    def test_selection_dirty_source_refuses_before_any_cli(self):
+        (self.fixture.repo / 'supabase/functions/_shared/authority.ts').write_text('// changed\n')
+        self.assertEqual(self.run_deploy()['reason'], 'source_validation_refused')
+        self.assertEqual(self.calls, [])
+
+    def test_selection_project_change_refuses_before_any_cli(self):
+        self.fixture.files['supabase/config.toml'] = 'project_id = "another-project"\n'
+        self.fixture.recommit()
+        self.assertEqual(self.run_deploy()['reason'], 'source_validation_refused')
+        self.assertEqual(self.calls, [])
+
+    def test_selection_total_deadline_is_still_bounded(self):
+        times = iter([0, edge_deploy.MAX_SECONDS + 1])
+        result = edge_deploy.deploy(self.fixture.repo, self.fixture.commit, 'paige-ai-chat',
+                                  runner=self.runner, clock=lambda: next(times))
+        self.assertEqual(result['reason'], 'local_builder_unavailable')
+        self.assertEqual(self.calls, [])
+
+    def test_selection_committed_content_read_failure_refuses_before_io(self):
+        with patch.object(edge_deploy.readback, 'commit_file',
+                          side_effect=edge_deploy.readback.ReadbackError('withdrawn')):
+            self.assertEqual(self.run_deploy()['reason'], 'source_validation_refused')
+        self.assertEqual(self.calls, [])
+
+
 if __name__ == '__main__':
     unittest.main()

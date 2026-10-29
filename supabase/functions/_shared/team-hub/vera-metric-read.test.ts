@@ -183,3 +183,42 @@ test("even clarification publication bounds a later hung authority check",async 
   const pending=result.revalidate();await entered.promise;t.mock.timers.tick(VERA_METRIC_READ_TIMEOUT_MS);
   assert.equal(await pending,false);gate.resolve(true);await nextTurn();assert.equal(w.calls.length,0);
 });
+
+test("evidence expiring during the initial final marker wait is withheld",async t=>{
+  t.mock.timers.enable({apis:["Date","setTimeout"],now:Date.now()});
+  const w=world(),entered=deferred<void>(),marker=deferred<boolean>();
+  w.patch({reference_expires_at:new Date(Date.now()+1000).toISOString()});
+  const pending=readVeraMetric(scope(),{...w.deps,recordRead:async()=>{entered.resolve();return marker.promise;}},
+    {metric_key:"business.active_clients_current"});
+  await entered.promise;t.mock.timers.tick(1001);marker.resolve(true);
+  const result=await pending;assert.equal(result.model.status,"unavailable");
+  assert.equal(result.model.metric,undefined);assert.deepEqual(result.recordLinks,[]);
+  assert.equal(w.calls.filter(c=>c.name==="issue_analytics_evidence_bundle").length,1);
+});
+
+test("same-ref evidence expiring after native validation cannot pass publication revalidation",async t=>{
+  t.mock.timers.enable({apis:["Date","setTimeout"],now:Date.now()});
+  const w=world(),entered=deferred<void>(),marker=deferred<boolean>();let wait=false;
+  w.patch({reference_expires_at:new Date(Date.now()+1000).toISOString()});
+  const result=await readVeraMetric(scope(),{...w.deps,recordRead:async()=>{
+    if(wait){entered.resolve();return marker.promise;}return true;
+  }},{metric_key:"business.active_clients_current"});
+  assert.equal(result.model.status,"available");wait=true;
+  const pending=result.revalidate();await entered.promise;t.mock.timers.tick(1000);marker.resolve(true);
+  assert.equal(await pending,false);
+  assert.equal(w.calls.filter(c=>c.name==="issue_analytics_evidence_bundle").length,1);
+  assert.equal(w.calls.filter(c=>c.name==="resolve_analytics_evidence_reference").length,2);
+});
+
+test("expiry is checked after the final authority await as well as the marker",async t=>{
+  t.mock.timers.enable({apis:["Date","setTimeout"],now:Date.now()});
+  const w=world(),entered=deferred<void>(),gate=deferred<boolean>();let checks=0;
+  w.patch({reference_expires_at:new Date(Date.now()+1000).toISOString()});
+  const result=await readVeraMetric(scope(),{...w.deps,isCurrent:async()=>{
+    if(++checks===6){entered.resolve();return gate.promise;}return true;
+  }},{metric_key:"business.active_clients_current"});
+  assert.equal(result.model.status,"available");
+  const pending=result.revalidate();await entered.promise;t.mock.timers.tick(1000);gate.resolve(true);
+  assert.equal(await pending,false);assert.equal(w.receipts(),2);
+  assert.equal(w.calls.filter(c=>c.name==="issue_analytics_evidence_bundle").length,1);
+});

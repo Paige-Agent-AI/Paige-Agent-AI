@@ -69,6 +69,11 @@ export async function readVeraMetric(scopeInput: VeraMetricScope, deps: VeraMetr
         if (stopped() || await deps.isCurrent(scope) !== true || stopped()) return null;
         if (result.status === "available" && await deps.recordRead() !== true) return null;
         if (stopped() || await deps.isCurrent(scope) !== true || stopped()) return null;
+        // Native validation preceded those awaits; the SAME evidence must still be unexpired now.
+        if (result.status === "available") {
+          const expiry = Date.parse(result.metric?.reference_expires_at ?? "");
+          if (!Number.isFinite(expiry) || expiry <= Date.now()) return null;
+        }
         return structuredClone(result);
       };
       try { return await Promise.race([work(), deadline]); }

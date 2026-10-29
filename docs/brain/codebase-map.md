@@ -22,7 +22,9 @@ owner/admin, tenant/actor, business-DM audience and stored tool scope are requir
 Each read/revalidation has a five-second deadline and cancellation fence; a late
 native completion cannot publish. The host's original read-marker ACK is required.
 Before publication it resolves the SAME original immutable evidence reference,
-never issuing a replacement after refusal, expiry or uncertainty. Original
+never issuing a replacement after refusal, expiry or uncertainty. Reference
+expiry is checked again after the final awaited authority/marker checks, not
+only inside the native reader. Original
 Executive links remain outside model context; a read marker is not an action or
 settlement receipt. The existing Team Hub turn must still mount offer/dispatch,
 current-scope checks and pre-post revalidation under its single source owner.

@@ -1,5 +1,23 @@
 # Codebase Map — shipped surface area (routes · components · edge functions · gates · integrations)
 
+## EXP02 original commercial read wording (2026-10-29, candidate)
+
+Forward `20271122000002_e2_commercial_read_receipt_labels.sql` composes the exact
+original E04 `_workspace_event_display(text,text,text)` body in place. Only three
+successful capability-run tuples receive read wording: `agreement_list`,
+`agreement_status`, `find_clients_for_status`. The last is an original nested RPC,
+not a new model tool. Existing event identities, actor fields, failures/unknowns,
+private owner/ACL/OID and original scoped `get_solo_rail_activity` stay unchanged.
+No new receipt, domain writer, grant, approval or completion is created.
+The successor releases after native21150004 and before pending E04 host10004/5;
+old #3067/10102 and its applied Preview remain unchanged, explicitly superseded.
+Native original20/candidate32/replay32 and six source/metadata refusal controls
+pass in isolated PostgreSQL16; local expression adapter is not hosted pgTAP,
+customer authentication, RLS or durability acceptance. Review, exact-head CI,
+native release/readback and customer proof remain due. Original source owners
+and all19/nine obligations are retained in the [E02 matrix](../delivery/e2-customer-experience-integration-matrix.md)
+and [proportional UI packet](../evidence/ui-delivery/e2-commercial-read-receipts.md).
+
 ## E09 customer role, approved resources and invitation convergence (2026-10-17)
 
 Customer `/app` retains `AppShell`/`AppNav` and `components/app/PaigeChat.tsx`. The actual customer frame selects the business-branded role; `functions/_shared/client-portal-chat-scope.ts`, `client-portal-persona.ts` and `client-portal-assistant-context.ts` bind native membership, explicitly shared program Knowledge and issued private history in the existing `paige-ai-chat` handler. Private `customer_private` threads/turns remain separate from business-shared `messages`/`threads`; owner Knowledge/Memory/tools are not customer context. These are bounded production source releases2274/2276/2287, not independent authenticated customer reply/reload acceptance. The owner reports a new customer reply on2026-10-17; reload remains UNVERIFIED. The customer identity correction reuses Cura from the existing Client Success roster through pure `client-portal-identity.ts`, preserving custom tenant names and PAIGE as the owner's COO. Its exact production source/model-identity proof remains owed until its normal release/readback.

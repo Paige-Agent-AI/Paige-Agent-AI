@@ -1,5 +1,40 @@
 # Experience 02 — Customer Experience Integration Matrix
 
+## October29 — O13 original commercial lookups remain reads
+
+**REPAIR:** original shared Rail presentation only. E04 request ANT138/2bc79b0c
+and receiving bce36fd6 / ANT161/77ed54cd/ae5585e1 reserve the exact formatter;
+E04 retains Sales/native Team Hub execution and source ownership. Originally
+reserved22010102/#3067 passed all13 exact-head checks, but would overtake E04's
+pending lower versions. Successor22000002 follows native21150004 and precedes
+E04 reserved22010004/22010005. Old applied Preview/history remains unchanged;
+fresh successor review/CI/Preview/release proof is required. No new reader, registry,
+receipt, event, worker, tool, tenant authority, approval or action is introduced.
+
+**Functional:** successful `agreement_list`, `agreement_status` and original nested
+`find_clients_for_status` receive factual read titles/summaries through the SAME
+`_workspace_event_display` identity. All other fields/tuples and original scoped
+getter remain intact. Native original20/candidate32/replay32, identity/no-event
+and six source/metadata refusal mutants pass. Local assertion adapter executes
+the original SQL expressions; this is not hosted pgTAP/RLS/customer proof.
+
+**Visual:** incumbent Schibsted/tokens/renderer/spacing and controls unchanged;
+actual synthetic desktop/320px and all eight original-shell viewport states pass
+copy wrapping without page/row horizontal overflow. Sequential Impeccable
+clarity/craft-floor finish pass found no material defect in the changed copy.
+Other domain data are fixtures; native200percent/AT/customer proof remains due.
+**Experiential:** same original records and read-only refresh; source semantics
+are not a completed commercial action. Released reload/cohort/role acceptance
+remains due. **Founder Acceptance:** NOT_ACCEPTED; all original19/nine persist.
+
+**Algorithm Support:** no new algorithm/scoring/prediction or maturity promotion.
+**Orchestration Contract:** original read request/caller/native writer/immutable
+receipt precede the unchanged scoped getter and this pure display projection.
+No LayerC action/approval is run by rendering. Failures/unknowns delegate unchanged.
+**Capabilities:** no registry/availability/provider change; no Live promotion
+from wording or local tests. Exact review/required CI/migration/web readback and
+appropriate actual customer proof are separate release obligations. [UI evidence](../evidence/ui-delivery/e2-commercial-read-receipts.md).
+
 ## October29 — SAME VERA original-metric Team Hub foundation
 
 O01/O02/O04/O08/O14/O16 remain the customer outcome: ask VERA for a verified

@@ -136,8 +136,8 @@ export function world(o: WorldOptions = {}) {
         }
         return chain;
       };
-      chain.eq = (col: string, value: unknown) => { filters.push(["eq", col, value]); return chain; };
-      chain.gte = (col: string, value: unknown) => { filters.push(["gte", col, value]); return chain; };
+      chain.eq = (col: string, value: string) => { filters.push(["eq", col, value]); return chain; };
+      chain.gte = (col: string, value: string) => { filters.push(["gte", col, value]); return chain; };
       chain.maybeSingle = () => Promise.resolve({ data: null, error: null });
       chain.insert = (values: Row) => {
         if (table === "platform_usage_events") {

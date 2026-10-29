@@ -121,6 +121,17 @@ function refusal(status: number | undefined, missing: "meeting_missing" | "parti
   return status === 404 ? { ok: false, code: missing } : { ok: false, code: "cloudflare_refused", httpStatus: status };
 }
 
+/** The app project runs with `strict: false`, where the `ok` literal does NOT narrow the
+ *  call union — this cast-through is the house pattern (explicit property casts, never
+ *  a discriminated-union `as` on the whole value). */
+function failureOf(r: object): { code: "cloudflare_refused" | "transport_failed"; httpStatus?: number } {
+  const f = r as { code?: unknown; httpStatus?: unknown };
+  return {
+    code: f.code === "transport_failed" ? "transport_failed" : "cloudflare_refused",
+    httpStatus: typeof f.httpStatus === "number" ? f.httpStatus : undefined,
+  };
+}
+
 export const realtimeKitAdapter: RealtimeKitAdapter = {
   isConfigured() {
     return creds() !== null;
@@ -129,7 +140,7 @@ export const realtimeKitAdapter: RealtimeKitAdapter = {
     const c = creds();
     if (!c) return { ok: false as const, code: "adapter_not_configured" as const };
     const r = await call(c, "/meetings", { method: "GET" });
-    if (!r.ok) return { ok: false as const, code: r.code, httpStatus: r.httpStatus };
+    if (!r.ok) { const f = failureOf(r); return { ok: false as const, code: f.code, httpStatus: f.httpStatus }; }
     const list = dataListOf(r.body);
     if (!list) return { ok: false as const, code: "cloudflare_refused" as const, httpStatus: r.status };
     return { ok: true as const, meetings: list.slice(0, 100).map(mapMeeting) };
@@ -138,7 +149,7 @@ export const realtimeKitAdapter: RealtimeKitAdapter = {
     const c = creds();
     if (!c) return { ok: false as const, code: "adapter_not_configured" as const };
     const r = await call(c, "/presets", { method: "GET" });
-    if (!r.ok) return { ok: false as const, code: r.code, httpStatus: r.httpStatus };
+    if (!r.ok) { const f = failureOf(r); return { ok: false as const, code: f.code, httpStatus: f.httpStatus }; }
     const list = dataListOf(r.body);
     if (!list) return { ok: false as const, code: "cloudflare_refused" as const, httpStatus: r.status };
     const presets = list
@@ -151,7 +162,7 @@ export const realtimeKitAdapter: RealtimeKitAdapter = {
     const c = creds();
     if (!c) return { ok: false as const, code: "adapter_not_configured" as const };
     const r = await call(c, `/meetings/${encodeURIComponent(meetingId)}`, { method: "GET" });
-    if (!r.ok) return refusal(r.httpStatus, "meeting_missing");
+    if (!r.ok) return refusal(failureOf(r).httpStatus, "meeting_missing");
     const d = dataOf(r.body);
     if (!d) return { ok: false as const, code: "cloudflare_refused" as const, httpStatus: r.status };
     return { ok: true as const, meeting: mapMeeting(d) };
@@ -160,7 +171,7 @@ export const realtimeKitAdapter: RealtimeKitAdapter = {
     const c = creds();
     if (!c) return { ok: false as const, code: "adapter_not_configured" as const };
     const r = await call(c, "/meetings", { method: "POST", body: JSON.stringify({ title: boundedTitle(input.title) }) });
-    if (!r.ok) return { ok: false as const, code: r.code, httpStatus: r.httpStatus };
+    if (!r.ok) { const f = failureOf(r); return { ok: false as const, code: f.code, httpStatus: f.httpStatus }; }
     const d = dataOf(r.body);
     if (!d || typeof d.id !== "string" || !d.id.trim()) return { ok: false as const, code: "cloudflare_refused" as const, httpStatus: r.status };
     return { ok: true as const, meeting: mapMeeting(d) };
@@ -174,7 +185,7 @@ export const realtimeKitAdapter: RealtimeKitAdapter = {
     };
     if (input.name) body.name = input.name;
     const r = await call(c, `/meetings/${encodeURIComponent(input.meetingId)}/participants`, { method: "POST", body: JSON.stringify(body) });
-    if (!r.ok) return refusal(r.httpStatus, "meeting_missing");
+    if (!r.ok) return refusal(failureOf(r).httpStatus, "meeting_missing");
     const d = dataOf(r.body);
     const token = typeof d?.token === "string" ? d.token : "";
     const id = typeof d?.id === "string" ? d.id : "";
@@ -185,7 +196,7 @@ export const realtimeKitAdapter: RealtimeKitAdapter = {
     const c = creds();
     if (!c) return { ok: false as const, code: "adapter_not_configured" as const };
     const r = await call(c, `/meetings/${encodeURIComponent(input.meetingId)}/participants/${encodeURIComponent(input.participantId)}`, { method: "DELETE" });
-    if (!r.ok) return refusal(r.httpStatus, "participant_missing");
+    if (!r.ok) return refusal(failureOf(r).httpStatus, "participant_missing");
     return { ok: true as const };
   },
 };

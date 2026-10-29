@@ -161,7 +161,7 @@ export function GoLive() {
 
   return <section className="social-golive" aria-labelledby="social-golive-h" data-golive-phase={phase}>
     <div className="social-golive-head">
-      <span className="social-golive-glyph"><Ic.broadcast size={16} /></span>
+      <span className="social-golive-glyph"><Ic.broadcast size={16} style={{}} /></span>
       <div className="social-golive-title">
         <span className="social-eyebrow">Live broadcasting</span>
         <h2 id="social-golive-h">Go live</h2>
@@ -201,7 +201,7 @@ export function GoLive() {
             />
           </label>
           <button type="button" className="btn btn-s btn-g social-golive-act" disabled={busy} onClick={() => void goLive()}>
-            <Ic.arrow size={13} />{busy ? "Opening…" : "Go live"}
+            <Ic.arrow size={13} style={{}} />{busy ? "Opening…" : "Go live"}
           </button>
         </div>
       </div>
@@ -238,7 +238,7 @@ export function GoLive() {
         </p>
         <div className="social-golive-acts">
           <button type="button" className="btn btn-s btn-g social-golive-act" disabled={busy} onClick={() => { setPhase("ready"); setNote(""); }}>
-            <Ic.arrow size={13} />Go live again
+            <Ic.arrow size={13} style={{}} />Go live again
           </button>
         </div>
       </div>

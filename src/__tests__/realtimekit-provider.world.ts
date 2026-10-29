@@ -11,7 +11,7 @@ export const APP_ID = "b96eaa3d-0450-414a-9155-0dffb4654433";
 export const MEETING_ID = "11111111-2222-4333-8444-555555555555";
 export const PARTICIPANT_ID = "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee";
 
-type Answer =
+export type Answer =
   | { kind: "ok"; body: unknown }
   | { kind: "status"; status: number }
   | { kind: "reject" };

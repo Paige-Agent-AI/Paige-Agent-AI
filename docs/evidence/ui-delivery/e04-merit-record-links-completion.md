@@ -45,7 +45,7 @@ Provider requirement: no new connection or provider. Existing model runtime rema
 
 ## Release boundaries
 
-INTERNAL_BUILD_IDENTITY: original four UI blobs8a1aba4ad7d191ef3fa6147c6709d78a861572c0 composed on dc010f4af69ce473980c87bf71ee0ede98a44583; candidate=development; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(original paige-ai-chat wording-forward deployment and downloaded-source certificate)
+INTERNAL_BUILD_IDENTITY: original four UI blobs8a1aba4ad7d191ef3fa6147c6709d78a861572c0 composed on dc010f4af69ce473980c87bf71ee0ede98a44583; candidate=development; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(original paige-ai-chat wording-forward deployment and downloaded-source certificate); evidence=docs/evidence/ui-delivery/e04-merit-record-links-completion.md and protected ANT52/C128
 RELEASE_CHANNEL: development: exact reviewed/hosted/production identities recorded separately after observation
 RELEASE_CLASSIFICATION: internal-only: original commercial-read navigation completion, not complete agreement execution or Experience acceptance
 CUSTOMER_RELEASE_IDENTITY: none: founder integrated evaluation and customer publication remain separately gated

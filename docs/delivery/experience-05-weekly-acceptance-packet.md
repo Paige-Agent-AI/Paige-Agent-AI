@@ -1,3 +1,31 @@
+## October29 — original automation draft preview source released
+
+Outcome05 / E5-CV1,CV5,CV9: the original stored automation draft now shows its
+trigger and ordered, bounded internal-task purposes before the same approval.
+The original text summary preserves line breaks. Saving a draft is separate
+from authorizing, enabling or actually executing a process.
+
+Reviewed 966d614bf50503bb56d1a118587388837cbca9d1, final AUTHOR-REVIEW / LOWER ASSURANCE5699648814;
+all11 exact checks/genuine native Preview/two web contexts SUCCESS, zero threads.
+Merge 9da96dfb4eaa331ab2d83de575323cde3b2838dc/tree49247dc1b5f2f2f40e4b7e15cebc86c6af1c4be3.
+Normal Edge40894439135/job123519597038 SUCCESS, original artifact12907320009
+independently SHA-verified: ALL ONE selected Chat582/JWTtrue/305source+305emitted
+PASS, exact root/helper source and original edge-live9da verified. Own SQL N/A.
+Web dpl_3VsY2yR86moEGfdVggzbkiKigpbb READY/exact; both official origins
+14:51:40–42UTC200/build9da-mvtnmqk9/null; original declared shared confirm module
+36,398bytes/SHA2563933ee70e453f14d444c9f5b10dcdaf290bc69e85d6060628896e11ab6b54708,
+all four owning source signatures PASS.
+[Production receipt](../evidence/exp05-automation-draft-preview-production.json)
+retains original PR6500028795 and the unchanged dated source/UI evidence.
+
+Functional: SOURCE/WEB/EDGE VERIFIED. Visual: original16-frame/320 keyboard
+source evidence, no authenticated/physical zoom/AT claim. Experiential: actual
+approved draft/domain act/Rail/reload, complete automation lifecycle, same ZION
+in both chats, full ten/E5 and equivalent eligible current/new-account/role/RLS
+acceptance remain OPEN. Founder NOT_ACCEPTED; STILL CODING / NOT_READY.
+No external send, task execution, provider, recurrence, Live, catalogue or
+algorithm maturity is activated or promoted by this source-only verification.
+
 ## October29 — ZION inspection recovery source released; customer proof owed
 
 Original outcomes08/10 and E5-CV6/CV9: retryable Auth failures now use unavailable;

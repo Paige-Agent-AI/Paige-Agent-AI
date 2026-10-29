@@ -1,0 +1,18 @@
+{
+  "checkedAt": "2026-10-29T03:53:08.109Z",
+  "focus": "/solo/4242424/sales/agreements?agreement=12345678-1234-4234-8234-123456789012",
+  "link": {
+    "color": "rgb(33, 30, 36)",
+    "font": "600 13px / 19.5px \"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+    "height": 26.5,
+    "href": "/solo/4242424/sales/agreements?agreement=12345678-1234-4234-8234-123456789012",
+    "width": 180.6875
+  },
+  "rowWidth": 934.4000244140624,
+  "scrollWidth": 1280,
+  "viewport": {
+    "height": 720,
+    "width": 1280
+  },
+  "evidenceClass": "Actual rendered original component with neutral offline ports; no image/backend/authenticated acceptance"
+}

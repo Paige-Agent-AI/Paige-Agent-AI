@@ -8,6 +8,7 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
+import { readFileSync } from "node:fs";
 import {
   ANSWER_PRIVATELY_TOOL, EXECUTABLE_AGENT_TOOLS, PINNED_READ_TOOL, PRIVATE_PART_LINE, bringInLines, effectiveAgentTools, isTeamHubAgentTurnRequest, isTransportError, parseAgentAnswer, parseAgentTurnRequest,
   parseBringIn, privateRouteAllowed, runTeamHubAgentTurn, storedToolNames, uuidFrom, type AgentTurnDeps, type CompleteFn,
@@ -42,6 +43,9 @@ function message(id: string, channel: string, author: string, body: string, extr
 }
 
 type Opts = {
+  privateAgent?: "merit" | "cura";
+  domainRole?: string; domainRead?: (name: string, args: Record<string, unknown>) => unknown;
+  stageReads?: (args: Record<string, unknown>) => unknown;
   sourceAuthor?: string; mentions?: string[]; config?: unknown; configThrows?: boolean;
   accept?: (args: Record<string, unknown>) => unknown; end?: () => unknown; recordFails?: string[];
   post?: (args: Record<string, unknown>, attempt: number) => unknown; readbackHides?: boolean; launchVisibility?: unknown;
@@ -64,12 +68,17 @@ function world(opts: Opts = {}) {
     { agent_mentions: opts.mentions ?? ["merit"], parent_message_id: opts.sourceThread ?? null });
   if (opts.sourceThread) store.set(`${sourceIn}:${opts.sourceThread}`, [src]); else store.get(sourceIn)!.unshift(src);
   let postAttempt = 0;
+  let stagedRead: Record<string, unknown> | null = null;
   const postedByRequest = new Map<string, Msg>();
   const caller = {
     rpc(name: string, args: Record<string, unknown> = {}) {
       calls.push({ who: "caller", name, args });
       const answer = (() => {
         switch (name) {
+          case "get_team_authority_readiness": return opts.domainRole ? [{ tenant_id: TENANT,
+            fact_key: "viewer_permission", value: opts.domainRole, status: "available" }] : null;
+          case "paige_agreement_overview": return opts.domainRead?.(name, args) ?? [];
+          case "read_client_engagement_status": return opts.domainRead?.(name, args) ?? null;
           case "get_paige_persona_context": return [{ tenant_id: TENANT, tenant_name: "Brightline Studio" }];
           case "team_hub_list_conversations": return { ok: true, me: { user_id: SAM },
             people: [{ user_id: SAM, display_name: "Sam Lee" }, { user_id: PRIYA, display_name: "Priya Shah" }],
@@ -77,7 +86,7 @@ function world(opts: Opts = {}) {
               { id: LAUNCH, kind: "channel", name: "launch", visibility: "launchVisibility" in opts ? opts.launchVisibility : "team", joined: true, unread: 0 },
               { id: SECRET_CHANNEL, kind: "channel", name: "acquisition-talks", visibility: "private", joined: true, unread: 3 },
               { id: SAM_PRIYA_DM, kind: "dm", name: null, visibility: "private", dm_user_id: PRIYA, joined: true, unread: 1 },
-              { id: MERIT_DM, kind: "agent_dm", name: null, visibility: "private", agent_key: "merit", joined: true, unread: 0 },
+              { id: MERIT_DM, kind: "agent_dm", name: null, visibility: "private", agent_key: opts.privateAgent ?? "merit", joined: true, unread: 0 },
             ] };
           case "team_hub_list_messages": {
             const key = args.p_thread_root ? `${args.p_channel_id}:${args.p_thread_root}` : String(args.p_channel_id);
@@ -103,7 +112,8 @@ function world(opts: Opts = {}) {
             if (earlier) return after ?? { ok: true, message: earlier, duplicate: true };
             const posted = message("f0f0f0f0-f0f0-4f0f-8f0f-f0f0f0f0f0f0", String(args.p_channel_id), SAM,
               `${args.p_body}${args.p_private_answer ? "\n\nThat part is just for you, so I'm answering it in our DM." : ""}`.trim(),
-              { author_kind: "agent", agent_key: args.p_agent_key, asked_in_message_id: args.p_asked_in_message_id, parent_message_id: args.p_parent_message_id });
+              { author_kind: "agent", agent_key: args.p_agent_key, asked_in_message_id: args.p_asked_in_message_id, parent_message_id: args.p_parent_message_id,
+                ...(stagedRead ? { source_backed_read: true, paige_record_links: stagedRead.p_record_links } : {}) });
             const key = args.p_parent_message_id ? `${args.p_channel_id}:${args.p_parent_message_id}` : String(args.p_channel_id);
             store.set(key, [posted, ...(store.get(key) ?? [])]);
             postedByRequest.set(String(args.p_client_request_id), posted);
@@ -117,6 +127,12 @@ function world(opts: Opts = {}) {
       if (answer && typeof answer === "object" && "__rpc" in (answer as object)) return Promise.resolve((answer as any).__rpc);
       return Promise.resolve({ data: answer, error: null });
     },
+    from(_table: string) {
+      const response = Promise.resolve({ data: [{ id: TENANT, account_type: "standalone", parent_tenant_id: null }], error: null });
+      const q = { select: () => q, eq: () => q, limit: () => q, abortSignal: () => q,
+        then: response.then.bind(response) };
+      return q;
+    },
   };
   const service = {
     rpc(name: string, args: Record<string, unknown> = {}) {
@@ -126,6 +142,11 @@ function world(opts: Opts = {}) {
         return Promise.resolve(a && a.__rpc ? a.__rpc : { data: a, error: null });
       }
       if (name === "team_hub_stage_agent_suggestions") return Promise.resolve({ data: opts.stage ? opts.stage(args) : { ok: true }, error: null });
+      if (name === "team_hub_stage_agent_read_context") {
+        const data = opts.stageReads ? opts.stageReads(args) : { ok: true };
+        if (data && typeof data === "object" && "ok" in data && data.ok) stagedRead = args;
+        return Promise.resolve({ data, error: null });
+      }
       if (name === "team_hub_end_agent_turn") return Promise.resolve({ data: opts.end ? opts.end() : { ok: true }, error: null });
       if (name === "record_capability_run") {
         const failed = opts.recordFails?.includes(String(args._capability_key));
@@ -167,6 +188,93 @@ async function run(w: ReturnType<typeof world>, m: ReturnType<typeof model>, bod
 const TOKEN = "07".repeat(32);
 const named = (w: ReturnType<typeof world>, name: string) => w.calls.filter((c) => c.name === name);
 const promptText = (m: ReturnType<typeof model>) => m.requests.map((r) => JSON.stringify(r.request.messages)).join("\n");
+
+describe("MERIT's canonical private commercial integration", () => {
+  const id = "12345678-1234-4234-8234-123456789012";
+  const row = () => ({ id, title: "Consulting engagement", status: "draft", contact_id: null,
+    signers_total: 1, signers_signed: 0, outstanding_names: ["Test Signer"], updated_at: "2026-01-01T00:00:00Z" });
+  it("offers original agreement read, marks facts, revalidates then uses the same post and reload result", async () => {
+    const w = world({ sourceIn: MERIT_DM, domainRole: "owner", domainRead: () => [row()] });
+    const m = model([{ tool_calls: [{ name: "agreement_list" }] }, { content: "The consulting engagement is a draft." }]);
+    const r = await run(w, m, turn({ conversationId: MERIT_DM }));
+    assert.ok(m.requests[0].request.tools?.some(t => t.function.name === "agreement_list"));
+    assert.equal(named(w, "paige_agreement_overview").length, 2);
+    assert.equal(named(w, "team_hub_stage_agent_read_context").length, 1);
+    const marker = named(w, "record_capability_run").find(c => c.args._capability_key === "agreement_list")!;
+    assert.ok(marker); assert.ok(w.calls.indexOf(marker) < m.requests[1].callsBefore);
+    assert.equal(r.body.outcome, "posted");
+    assert.ok("message" in r.body);
+    assert.deepEqual((r.body.message as Record<string, unknown>).paige_record_links, [{ destination: "sales_agreements", record_id: id }]);
+    assert.equal(promptText(m).includes("paige_record_links"), false);
+    assert.equal(named(w, "team_hub_post_agent_message")[0].who, "caller");
+  });
+  it("never offers or executes private commercial reads to a poisoned shared scope", async () => {
+    const config = structuredClone(MERIT_CONFIG); config.team_hub_tools.tools.push("agreement_list");
+    const w = world({ domainRole: "owner", config: { slug: "merit", config }, domainRead: () => [row()] });
+    const m = model([{ tool_calls: [{ name: "agreement_list" }] }]); await run(w, m);
+    assert.equal(m.requests[0].request.tools?.some(t => t.function.name === "agreement_list"), false);
+    assert.equal(named(w, "paige_agreement_overview").length, 0);
+  });
+  it("member authority cannot offer or execute the owner/admin domain adapter", async () => {
+    const w = world({ sourceIn: MERIT_DM, domainRole: "member" });
+    const m = model([{ tool_calls: [{ name: "agreement_list" }] }, { content: "I cannot read it." }]);
+    await run(w, m, turn({ conversationId: MERIT_DM }));
+    assert.equal(m.requests[0].request.tools?.some(t => t.function.name === "agreement_list"), false);
+    assert.equal(named(w, "paige_agreement_overview").length, 0);
+  });
+  it("malformed private tool JSON cannot turn a requested filter into the whole agreement book", async () => {
+    const w = world({ sourceIn: MERIT_DM, domainRole: "owner", domainRead: () => [row()] });
+    let round = 0;
+    const r = await runTeamHubAgentTurn({ caller: w.caller, service: w.service, userId: SAM,
+      complete: async () => ({ ok: true, response: { choices: [{ message: round++ === 0
+        ? { content: "", tool_calls: [{ id: "bad-json", type: "function", function: { name: "agreement_list", arguments: "{broken" } }] }
+        : { content: "Please check the request." } }] } }) }, turn({ conversationId: MERIT_DM }));
+    assert.equal(named(w, "paige_agreement_overview").length, 0);
+    assert.equal(named(w, "team_hub_stage_agent_read_context").length, 0);
+    assert.equal(r.body.outcome, "posted", "a factual input error may be explained without reading or changing business records");
+  });
+  it("a changed original agreement before publication ends without posting stale facts", async () => {
+    let n = 0;
+    const w = world({ sourceIn: MERIT_DM, domainRole: "owner", domainRead: () => [{ ...row(), status: n++ ? "completed" : "draft" }] });
+    const m = model([{ tool_calls: [{ name: "agreement_list" }] }, { content: "It is a draft." }]);
+    const r = await run(w, m, turn({ conversationId: MERIT_DM }));
+    assert.equal(r.body.outcome, "no_reply"); assert.equal(named(w, "team_hub_post_agent_message").length, 0);
+  });
+  it("bounds private read fanout inside the original turn even if a provider returns extra calls", async () => {
+    const w = world({ sourceIn: MERIT_DM, domainRole: "owner", domainRead: () => [row()] });
+    const m = model([{ tool_calls: Array.from({ length: 4 }, () => ({ name: "agreement_list" })) }, { content: "The original agreement is a draft." }]);
+    const r = await run(w, m, turn({ conversationId: MERIT_DM }));
+    assert.equal(r.body.outcome, "posted");
+    assert.equal(named(w, "paige_agreement_overview").length, 6, "at most three reads plus their original-source revalidation");
+    assert.match(promptText(m), /read limit/i);
+  });
+  it("missing commercial marker or native read-context acknowledgement prevents publication", async () => {
+    for (const extra of [{ recordFails: ["agreement_list"] }, { stageReads: () => ({ ok: false }) }]) {
+      const w = world({ sourceIn: MERIT_DM, domainRole: "owner", domainRead: () => [row()], ...extra });
+      const m = model([{ tool_calls: [{ name: "agreement_list" }] }, { content: "It is a draft." }]);
+      const r = await run(w, m, turn({ conversationId: MERIT_DM }));
+      assert.equal(r.body.outcome, "no_reply"); assert.equal(named(w, "team_hub_post_agent_message").length, 0);
+    }
+  });
+});
+
+for (const agent of ["merit", "cura"] as const) it("mounts " + agent + "'s original client-standing adapter in its own private turn", async () => {
+  const standing = JSON.parse(readFileSync(new URL("../../../../src/__tests__/fixtures/exp04-client-status-source.json", import.meta.url), "utf8"));
+  standing.tenant_id = TENANT;
+  const config = structuredClone(MERIT_CONFIG);
+  config.capability_scope.tools.push("read_client_engagement_status");
+  const w = world({ privateAgent: agent, mentions: [agent], sourceIn: MERIT_DM, domainRole: "owner",
+    config: { slug: agent, config }, domainRead: () => structuredClone(standing) });
+  const m = model([{ tool_calls: [{ name: "read_client_engagement_status", args: { client_id: standing.contact_id } }] },
+    { content: "The original client records distinguish recorded receipts from verified payment." }]);
+  const r = await run(w, m, turn({ agent, conversationId: MERIT_DM }));
+  assert.ok(m.requests[0].request.tools?.some(t => t.function.name === "read_client_engagement_status"));
+  assert.equal(named(w, "read_client_engagement_status").length, 2);
+  assert.equal(named(w, "team_hub_stage_agent_read_context").length, 1);
+  assert.equal(r.body.outcome, "posted");
+  assert.equal(named(w, "team_hub_post_agent_message")[0].args.p_agent_key, agent);
+  assert.equal(promptText(m).includes("paige_record_links"), false);
+});
 
 describe("the request is closed and strict", () => {
   it("routes only on its own key, and refuses anything beyond the five fields", () => {

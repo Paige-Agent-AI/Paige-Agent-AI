@@ -122,6 +122,7 @@ BEGIN
     AND payment.provider_environment='live' AND operation.environment='live'
     AND operation.state='settled' AND operation.allocation_payment_id=payment.id
     AND operation.client_id=_invoice.contact_id AND operation.amount_minor=payment.amount_cents
+    AND payment.currency=operation.currency AND payment.provider=operation.provider
     AND operation.currency=payload->>'currency' AND operation.verified_readback IS NOT NULL
     AND operation.command->>'action'='invoice.payment_request'
     AND operation.command#>'{obligation,reference}'=v_reference

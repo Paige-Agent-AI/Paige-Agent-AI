@@ -860,6 +860,14 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**2026-10-29 UTC — EXP02 original VERA Metric reader foundation; unmounted source and web verified.**
+
+| Increment | Exact source and observed release | Useful result and proof boundary |
+| --- | --- | --- |
+| [#3063](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3063) | Reviewed `48dfcdbcafa78924c73a2b902b691001ebed51f3`, final **AUTHOR-REVIEW / LOWER ASSURANCE**5692710803. All six exact-head workflows/all11 checks/native Preview and both web statuses SUCCESS; expiry/cancellation finding corrected/resolved. Actual normal merge `99230b24bd62840cc5e4ef4820a393b1b5d09051`, tree `8d46ac6c7c91c9c4545e803257da20b540ba0801`, parents6be394b95+48df. Whole incoming Master retained; all other17,895 leaves match reviewed source. | Same original VERA identity, Spine analytics.metric_read, native Metric issuer/reference, caller authority and original strict read marker. No reissuance on revalidation; expiry/cancellation checked after bounded-result delivery.155 focused controls (41 new), strict types/lint PASS, seven real red-to-green boundary regressions. UNMOUNTED consumer foundation; no agent-turn, new metric, grant, roster, provider/model or activation. [Original matrix](delivery/e2-customer-experience-integration-matrix.md), [release receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3063#issuecomment-6488532862). |
+| Production **WEB/SOURCE VERIFIED; native integration HELD** | Vercel `dpl_D5rLhrkEyAYPutNikr6i4r4RSjsk` READY/exact99230. Both public origins04:57:55UTC serve `99230b24bd62840cc5e4ef4820a393b1b5d09051-mvt2hh4q`; app/assets200, missing404, customerUpdate:null. Normal new-source Edge40820143138/job123270444211 FAILED: actual CI logs show Chat HTTP413/exit1/api_failed_no_retry and download_missing_dependency. | E06 source layout is merged; E04 retains canonical uploader/current-source recovery. No retry, fallback widening, source-marker advance or activation. Archive bytes were not independently inspected; metadata is not a positive per-function certificate. Native helper mounting/post authority-freshness, both-chat/reload/recovery, eligible cohort/role proof, all19/nine and founder acceptance remain open. Internal-only; no customer release identity/announcement, algorithm or catalogue promotion. Own migration N/A. |
+
+
 **2026-10-29 UTC — EXP09 CURA private business-service source; shared integration pending.**
 
 | Increment | Exact source and observed release | Useful result and proof boundary |

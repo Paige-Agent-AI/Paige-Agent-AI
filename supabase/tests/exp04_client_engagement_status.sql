@@ -509,9 +509,12 @@ reset role;
 
 -- Emit the owner's read for the composer parity check (scripts/proof/exp04-client-status-parity.mjs).
 select 'E4_STATUS_JSON:'||value::text from status_result;
+-- Same rollback-only original fixture, no additional permanent QA tenant.
+\ir exp04_native_client_invoice_observation.sql
 rollback;
 
 -- Keep this integration proof in the existing full-schema EXP04 job; no
 -- competing CI/QA engine or shared-workflow ownership is introduced.
 \ir exp04_reviewed_delivery_handoff.sql
 \ir exp04_private_client_invoice_facts.sql
+\ir exp04_native_client_invoice_observation_replay.sql

@@ -842,3 +842,38 @@ removed or changed. Full original C0b250PASS/0FAIL/0skip and original authentica
 observation11PASS/0FAIL/0skip now pass. Earlier83PASS described only the specific
 incumbent-resource suite. Final review/required exact-head CI remain owed; same
 16 native frames, original source hashes and full customer/founder gaps retained.
+
+## October29 — bounded ZION planning-read composition, unmounted source
+
+REUSE original E01 planning.list / plan_list definition and caller-JWT executor;
+EXTEND same ZION private-DM composition. New server-only module snapshots its
+original actor/tenant/DM/tool scope and arguments, uses the host's one total
+private-read budget, keeps original read-marker identity, and exposes no plan
+rows until the existing native staging callback acknowledges the same scope.
+Every original read/marker/pin/stage continuation shares a five-second elapsed
+deadline; late acknowledgements cannot begin another RPC or release private data.
+The final returned check re-resolves scope; it is NOT domain-version evidence.
+
+Original host+reader baseline89PASS. New unavailable-skeleton specification
+4PASS/6FAIL is failing-first API evidence, not an old production regression;
+final original+composition103PASS/0FAIL/0skip (89 original+14 new). Strict graph
+original0/candidate0, test graph no added diagnostics; focused lint/whitespace
+PASS. The required read-marker tool argument found by strict checking was fixed
+and now asserted explicitly. Original host/MENTOR/NEXUS/Root/card/source pins
+remain byte-identical; only one test filename joins the original CI list.
+
+Source windowANT161/f14d667d/218e98aa and pre-edit42659e6c/89b1e5e5 retained.
+E04 owns the original native forward guard/currentness/history/typed-link
+contract; its applied80004/5 are not rewritten. Shared-host integration will
+publish exact spans before editing and preserve3076/38be/E08f786. No host imports
+this new module yet; no schema, approval, model call, dispatch, provider, stored
+result, record link, receipt or live availability is added by this preparation.
+[Exact evidence](../evidence/exp05-zion-planning-read-preparation.json).
+
+Functional SOURCE/PREPARED, not a customer outcome. Visual N/A: no UI/entry.
+Experiential INCOMPLETE: actual host/native staging/post/history/reopen and
+authenticated owner/member/tenant/revocation/current+new SOLO proof remain owed.
+operations.department stays PARTIAL; canonical ALG01/08/11/12/13 maturity is
+unchanged. Same ZION/personality in both chats, weekly execution/full Builder
+lifecycle/proactive/recovery, all ten outcomes/E5-CV1–9 and one complete founder
+evaluation remain OPEN. Founder NOT_ACCEPTED; STILL CODING / NOT_READY.

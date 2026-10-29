@@ -457,6 +457,11 @@ export default function BillingInvoice() {
           </p>
         )}
       </header>
+      {invoice?.past_due === null && (
+        <p data-testid="invoice-calendar-note" role="status" className="mb-4 text-sm text-muted-foreground">
+          Due dates are shown as issued. We can’t confirm overdue status right now. Contact the business if you need help.
+        </p>
+      )}
 
       {list.error && !blocked && !invoice && (
         <div role="alert" className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-destructive/40 px-4 py-3 text-sm">

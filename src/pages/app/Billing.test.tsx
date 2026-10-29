@@ -64,6 +64,13 @@ beforeEach(() => {
 });
 afterEach(() => { act(() => root.unmount()); host.remove(); });
 
+it("keeps genuine amounts and due dates visible without inventing overdue status when the original business date is missing",async()=>{
+ withInvoices([inv(1,{past_due:null,due_date:"2026-10-28"})],{calendar:{state:"missing",zone:null,local_date:null},pastDueKnown:false});
+ await render();expect(host.querySelector("[data-testid=invoice-calendar-note]")?.textContent).toContain("can’t confirm overdue status");
+ expect(text()).toContain("$1,250.00");expect(host.querySelector("[data-testid=invoice-status]")?.textContent).toBe("Open");
+ expect(host.querySelector("[data-testid=invoice-row]")?.getAttribute("href")).toBe(`/app/billing/${id(1)}`);
+});
+
 it("is called Payments, never Billing, and names what is owed in a sentence", async () => {
   withInvoices([inv(1), inv(2, { remaining_minor: 50000 }), inv(3, { status: "void", remaining_minor: 0, amount_minor: 40000 })]);
   await render();

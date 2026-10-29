@@ -30,10 +30,10 @@ b379a467 hold them (the write/card half is EXP08's A2c design, deliberately not 
 - §24 CI on the exact merged head cf6e070637: full ci run 40836516877 **completed success**; check-run set 16/16 complete, all success.
 - Deploy + prod readback: `deploy-migrations` run 40841193637 **success on 1a7fd5b7b** (roster migration applied); prod SQL readback shows MENTOR platform row `capability_scope.tools` now ends `…,"marketplace_browse","plan_list"` with `access:"read"`, ZION unchanged (single `plan_list`, list intact). `deploy-edge-functions` deployed `paige-ai-chat` ✓ at 08:20:09Z from my squash; platform record: paige-ai-chat **v579 updated_at 2026-10-29T08:24:44Z**, status ACTIVE.
 
-## Known limits (honest)
+## Known limits (honest) — reconciled per Coordinator ec462b9d
 
-- The edge-live certification step refused to advance the tag: `paige-ai-chat: FAIL (download_missing_dependency)` — **pre-existing**, identical on run 40821995052 at 05:14Z, ~3h before this PR existed (and `paige-social: FAIL (immutable_source_unavailable)` came with EXP07's #3070, not this PR). The deploys themselves succeeded; the certification block is a platform-level issue for the workflow owner, flagged in ANT-161.
+- **Assignment status (corrected):** E01-owned coding is complete as a BOUNDED claim; the FULL integrated assignment is **STILL CODING** — the remaining in-scope work is the Team Hub DM confirm-lane CARD admission of MENTOR's five planning WRITERS (the writers themselves are done and frozen in `_shared/paige-spine/domains/planning_writes.ts`, c0b-pinned, live in PAIGE chat; the unimplemented part is EXP08's A2c ordinary-write door, on hold for its lead's return Sat Oct 31 07:00 UTC). Not founder-acceptance-blocked — integration-blocked. E01 executes it when A2c lands.
+- **Edge-live certification — RESOLVED after this PR flagged it:** the `download_missing_dependency` readback failures (run 40821995052, 05:14Z, pre-dating this PR) were superseded the same morning by the pipeline's own successful run 40841347232 on main a405a3a11 — deployed-source verified, deployed commit recorded, edge-live at a405, all 29 selected functions PASS including paige-ai-chat v579 (EXP09's independently verified certificate, ANT-161 245a01b9).
 - No authenticated drive is claimed here: the live mentor-DM conversation is exercised by the founder evaluation window, never manufactured.
-- A2c (MENTOR's five planning writers as DM confirm-lane cards) remains EXP08-owned; this slice declares the dependency, it does not build it.
 
 EVIDENCE CLASS: automated unit tests + pgtest + CI + deploy logs + prod SQL/platform readback. No live customer session is claimed.

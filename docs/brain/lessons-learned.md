@@ -1,5 +1,9 @@
 # Lessons Learned — recurring traps
 
+### A deterministic customer read can reuse the original conservative route (2026-10-29, EXP09)
+
+The original `resolveTurnRoute` already gives a genuinely unrun advisory classifier an `unclassified_default` operational floor. For one explicitly selected public page, prepare the exact native-authorized call through the original ToolDef and execute it in the existing read loop before the first model response; do not invent classifier output, attachment facts, a second router or tool registry. This floor grants no authority: retain native actor/business/relationship/intent/URL binding, every original per-call gate and a closed handle-once customer boundary. A DOM/source test is not real HTTP or customer proof. The [existing UI evidence](../evidence/ui-delivery/e09-cura-public-link.md) records local tests, genuine red findings, reviewed source-pin renewal and the still-open native/release gates.
+
 ### Bind a resolved client read to the original native argument (2026-10-28, EXP09)
 
 A private specialist adapter must compare the returned client to the EXACT original reader's `_contact_id`, including when that id came from the existing CRM name lookup. Checking only the initial optional `client_id` leaves a name-resolution path unchecked. A genuine new adapter negative failed34/35 before this correction, then all35 passed. Reuse the original caller-JWT reader/composer; preserve native refusal separately from `needs_input`, acknowledge original read receipts before model context, and revalidate original scope/facts before posting. These transport tests do not establish live Auth/RLS or grant a customer the business owner's Team Hub authority.
@@ -3586,3 +3590,7 @@ Move the ONE original query behind an internal date argument; preserve legacy ca
 ### A frontend Preview does not deploy its backend (2026-10-29, EXP04)
 
 A legitimate signed-in exact frontend Preview can still call the existing production backend. Verify the visible build identity and actual source-backed result independently; an honest unavailable reply is not new-path acceptance. When a UI's material review requires real links that depend on unmerged backend code, consider the same reviewed backend as a separately governed dependency first, preserve the UI finding and shared-source reservations, then exercise the original full-shell UI against actual released readers. Do not copy sessions, create QA identities, fabricate receipts or broaden Auth host patterns to manufacture proof.
+
+### Source facts and workspace navigation have different audiences (2026-10-29, EXP04)
+
+An intentionally URL-free model tool result does not establish that the owner received no source link: the canonical workspace can attach authorized navigation outside the model text. Keep original source facts in the model, resolve allowed destinations in the existing UI, and tell the specialist not to infer missing navigation from the sanitized result. Verify the actual saved reply, link target, keyboard return, reload and workspace switch rather than closing the flow from prompt tests. Full-shell capture evidence must verify the actual toggle's expanded state; a hidden close button can remain in the DOM. Exclude stale/compositor frames and retain protected customer screenshots outside public source.

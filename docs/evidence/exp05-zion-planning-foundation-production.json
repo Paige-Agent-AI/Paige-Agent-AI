@@ -1,0 +1,132 @@
+{
+  "schema": 1,
+  "pr": 3086,
+  "reviewedHead": "e9445b8ab92fd0a2f3e8e11acd48d71bbcedd118",
+  "merge": "7a30d3d503d6ad0723eeceb226727687bce74fd9",
+  "tree": "39ef69e76fa4a1cc14e2d272ba4ca8030929e838",
+  "parents": [
+    "52b82683dcfd6c699c17306862399c3ede0e6d34",
+    "e9445b8ab92fd0a2f3e8e11acd48d71bbcedd118"
+  ],
+  "channel": "production",
+  "releaseClass": "internal-only unmounted source foundation; no customer capability activation",
+  "review": {
+    "assurance": "AUTHOR-REVIEW / LOWER ASSURANCE",
+    "source": 5701248495,
+    "finalComposition": 5701770567
+  },
+  "ci": {
+    "requiredChecks": 11,
+    "result": "SUCCESS",
+    "webContexts": 2,
+    "webResult": "SUCCESS",
+    "managedPreview": "SUCCESS",
+    "reviewThreads": 0
+  },
+  "deployment": {
+    "id": "dpl_2uLPHLTkzNpqcZVi27qCxd8kxyL3",
+    "status": "READY",
+    "commit": "7a30d3d503d6ad0723eeceb226727687bce74fd9"
+  },
+  "publicReadback": [
+    {
+      "origin": "https://paigeagent.ai",
+      "at": "2026-10-29T17:03:20.176Z",
+      "status": 200,
+      "version": {
+        "buildId": "7a30d3d503d6ad0723eeceb226727687bce74fd9-mvtsj03g",
+        "customerUpdate": null
+      },
+      "versionSha256": "dfcd8eae4c875a172aae623bb18ca09a8b01262ef3be58c960469dc7a2644fa2",
+      "originalEntry": "/assets/main-a-YW4LeP.js",
+      "applicationEntry": "/assets/main-B7w5A5vS.js",
+      "surfaceEntry": "/assets/SoloEntry-CjoIAxdI.js",
+      "originalChunk": "/assets/OperationsRoute-BoDSTkS7.js",
+      "chunkBytes": 240965,
+      "chunkSha256": "3f62b07f63045885fea78c32627156bb97f876599370b8be7472bbba71752884",
+      "signatures": {
+        "originalZionInspector": true,
+        "originalActorTenantEpoch": true,
+        "originalCallerJwtInspector": true,
+        "beforeAfterSessionChecks": true,
+        "authErrorRefusalVersusUnavailable": true,
+        "originalConfirmedSdkDenial": true,
+        "originalLostBodyFocus": true,
+        "originalNoRepeatMessage": true
+      },
+      "boundary": "Public version and original declared emitted source only. No authenticated customer/denial/cohort/RLS/new-account/domain execution/Rail or founder acceptance inferred."
+    },
+    {
+      "origin": "https://app.paigeagent.ai",
+      "at": "2026-10-29T17:03:21.009Z",
+      "status": 200,
+      "version": {
+        "buildId": "7a30d3d503d6ad0723eeceb226727687bce74fd9-mvtsj03g",
+        "customerUpdate": null
+      },
+      "versionSha256": "dfcd8eae4c875a172aae623bb18ca09a8b01262ef3be58c960469dc7a2644fa2",
+      "originalEntry": "/assets/main-a-YW4LeP.js",
+      "applicationEntry": "/assets/main-B7w5A5vS.js",
+      "surfaceEntry": "/assets/SoloEntry-CjoIAxdI.js",
+      "originalChunk": "/assets/OperationsRoute-BoDSTkS7.js",
+      "chunkBytes": 240965,
+      "chunkSha256": "3f62b07f63045885fea78c32627156bb97f876599370b8be7472bbba71752884",
+      "signatures": {
+        "originalZionInspector": true,
+        "originalActorTenantEpoch": true,
+        "originalCallerJwtInspector": true,
+        "beforeAfterSessionChecks": true,
+        "authErrorRefusalVersusUnavailable": true,
+        "originalConfirmedSdkDenial": true,
+        "originalLostBodyFocus": true,
+        "originalNoRepeatMessage": true
+      },
+      "boundary": "Public version and original declared emitted source only. No authenticated customer/denial/cohort/RLS/new-account/domain execution/Rail or founder acceptance inferred."
+    }
+  ],
+  "edge": {
+    "workflowRun": 40917238093,
+    "job": 123600617357,
+    "result": "SUCCESS",
+    "baseline": "9da96dfb4eaa331ab2d83de575323cde3b2838dc",
+    "changed": [
+      "supabase/functions/_shared/team-hub/zion-planning-read.test.ts",
+      "supabase/functions/_shared/team-hub/zion-planning-read.ts"
+    ],
+    "selectedFunctions": 0,
+    "upload": "SKIPPED: no reachable runtime imports this new module",
+    "readback": "NOT_APPLICABLE: no selected function/new provider upload; no vacuous runtime certificate claimed",
+    "tag": "NOT_ADVANCED by this successful zero-selection job"
+  },
+  "migrations": "NOT_APPLICABLE: no schema changes",
+  "tests": {
+    "original": 89,
+    "added": 14,
+    "pass": 103,
+    "fail": 0,
+    "skip": 0,
+    "strictBaseline": 0,
+    "strictCandidate": 0,
+    "boundary": "Recording ports/mock clock; not authenticated/native/provider/production latency proof"
+  },
+  "orchestration": "Unmounted composition reuses original planning.list/plan_list definition/executor/caller JWT/marker/deadline; future original host must stage accepted turn/token before model; no Layer C action, writer, scheduler or new ledger.",
+  "applicability": "Tenant-neutral same ZION module for eligible current/future SOLO; existing/new-account and actor/tenant/native customer proof remain owed.",
+  "catalogue": "operations.department PARTIAL; ZION Team Hub Planning UNAVAILABLE/UNVERIFIED until exact native/host/customer proof. No status/algorithm maturity promotion.",
+  "next": {
+    "pr": 3087,
+    "head": "6f5e9071128af3df0d4741149f9ed31b7eb13df9",
+    "state": "DRAFT",
+    "tests": 115,
+    "dependency": "E04 native ZION forward admission/source-version/history contract and exact receiving review; current guard excludes ZION, no activation allowed."
+  },
+  "remaining": [
+    "Complete native/host compatibility and exact-head CI/review/production readback",
+    "Actual same-ZION result through both chats, original records/Rail/reload and revocation/foreign/member/channel negatives",
+    "Equivalent eligible existing/new SOLO cohorts, legitimate provider readiness and held action boundaries",
+    "Weekly execution, full Automation Builder lifecycle, proactive follow-through, original ten outcomes/E5-CV1–9",
+    "Complete integrated founder evaluation"
+  ],
+  "fullExperience": "STILL CODING / NOT_READY",
+  "founderAcceptance": "NOT_ACCEPTED",
+  "recovery": "Preserve existing production host while forward integration is held; normal reviewed revert/forward fix, never replay uncertain work"
+}

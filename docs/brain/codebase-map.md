@@ -1,5 +1,18 @@
 # Codebase Map — shipped surface area (routes · components · edge functions · gates · integrations)
 
+## EXP02 Finance native history focus (2026-10-29, candidate)
+
+Original FinanceWorkspace now aligns selected/focused tabs on same-workspace
+browser POP only while the original tab strip owns focus. Existing Chat/form/
+source-sheet focus, routes, VERA, canonical readers and authority are preserved.
+Actual causal3FAIL/39PASS ->62 owning/adjacent PASS plus8 provisioning source
+controls; original parity/hostile controls, types0new, scoped lint/detector pass.
+Native synthetic Back/Forward/Chat draft/390 reachability and full8 CSS viewport
+captures are bounded separately from actual candidate/cohort/native200percent/AT
+and final release proof, all still owed. See
+[original UI evidence](../evidence/ui-delivery/e2-finance-history-focus.md).
+No shared routing hook, runtime, data writer, capability or activation change.
+
 ## EXP02 original commercial read wording (2026-10-29, candidate)
 
 Forward `20271122000002_e2_commercial_read_receipt_labels.sql` composes the exact

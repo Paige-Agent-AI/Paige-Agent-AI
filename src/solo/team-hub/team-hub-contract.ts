@@ -10,6 +10,8 @@
  * Pure functions only: no React, no Supabase. The hook owns the calls.
  */
 
+import { readRecordLinks, type ReadRecordLink } from "../../../supabase/functions/_shared/paige-turn/record-links";
+
 export const TEAM_HUB_REFUSALS = [
   "not_member",
   // Not a canonical SOLO workspace (amendment A1). Agency and Sub-account are held.
@@ -113,6 +115,9 @@ export interface TeamHubOverview {
 }
 
 export interface TeamHubMessage {
+  /** Original source references, attached only to a native verified private agent reply. */
+  record_links?: ReadRecordLink[];
+  source_backed_read?: true;
   id: string;
   author_user_id: string;
   body: string;
@@ -450,6 +455,7 @@ function parseMessage(value: unknown): TeamHubMessage | null {
   const files = value.files === undefined ? [] : parseAll(value.files, parseFile);
   if (!files) return null;
   const approval = authorKind === "agent" ? parseApproval(value.approval) : null;
+  const sourceRead = authorKind === "agent" && value.source_backed_read === true;
   return {
     files: files.filter((file, index) => files.findIndex((other) => other.id === file.id) === index),
     work_ref: parseWorkRef(value.work_ref),
@@ -471,6 +477,7 @@ function parseMessage(value: unknown): TeamHubMessage | null {
     // A2: an agent's message only; a person's message never carries an approval. The key is set only when
     // an approval is there, so every message without one reads exactly as it did before A2.
     ...(approval ? { approval } : {}),
+    ...(sourceRead ? { source_backed_read: true as const, record_links: readRecordLinks(value.paige_record_links) } : {}),
   };
 }
 

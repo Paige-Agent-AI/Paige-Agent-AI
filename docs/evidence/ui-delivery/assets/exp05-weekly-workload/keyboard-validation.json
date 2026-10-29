@@ -1,0 +1,34 @@
+{
+  "keyboard1": {
+    "focus": "Hours available for this work",
+    "result": "1 h 30 min estimated / 2 h 15 min entered capacityKnown effort is within the budget, but missing estimates prevent a complete comparison.",
+    "value": "2.25"
+  },
+  "keyboard2": {
+    "focus": "Send the approved project outline",
+    "focusVisible": true,
+    "tag": "BUTTON"
+  },
+  "validation": [
+    {
+      "describedBy": ":rd:-scope :rd:-hours",
+      "invalid": "false",
+      "label": null
+    },
+    {
+      "describedBy": null,
+      "invalid": "false",
+      "label": "Estimated minutes: Send the approved project outline"
+    },
+    {
+      "describedBy": ":rd:-planning:00000000-0000-4000-8000-000000000911-error",
+      "invalid": "true",
+      "label": "Estimated minutes: Confirm the delivery handoff"
+    },
+    {
+      "describedBy": null,
+      "invalid": "false",
+      "label": "Estimated minutes: Prepare the next client workshop"
+    }
+  ]
+}

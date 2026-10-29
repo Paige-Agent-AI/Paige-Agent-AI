@@ -38,6 +38,52 @@ const text = () => host.textContent ?? "";
 const button = (name: string) => [...host.querySelectorAll("button")].find((b) => b.textContent?.includes(name))!;
 const link = (path: string) => host.querySelector("a[href='" + path + "']");
 
+function withBookings() {
+  const snapshot = structuredClone(SNAPSHOT);
+  snapshot.requested.push('bookings');
+  snapshot.domains.bookings = { status: 'available', data: {
+    domain: 'bookings', owner: 'calendar', period: snapshot.period, as_of: snapshot.composed_at,
+    freshness: 'live_read', coverage: 'partial', coverage_note: 'Up to 3 saved previews; absence is not free capacity.',
+    headline: [], changes: [], outcomes: [], risks: [], upcoming: [], goal_links: [],
+    sources: [{ system: 'calendar', adapter: 'bookings.canonical_agenda.v1' }],
+  } };
+  return snapshot;
+}
+
+describe('original Calendar evidence destination', () => {
+  it('opens the original department from an empty authorized sample and restores its source/focus', async () => {
+    mocks.review.mockReturnValue({ state: 'ready', snapshot: withBookings(), refresh: vi.fn() });
+    await act(async () => root!.render(<MemoryRouter initialEntries={[EXECUTIVE + '?review_period=last_30_days']}><Routes>
+      <Route path="/solo/:account/command-center/executive" element={<ExecutiveOverview account="1234567" accountEpoch="test-tenant-1" actorId="test-owner" />} />
+      <Route path="/solo/:account/calendar/week" element={<h1>Original Calendar destination</h1>} />
+    </Routes><PeriodRouteProbe /></MemoryRouter>));
+    const section = host.querySelector("[aria-labelledby='exec-domain-bookings']")!;
+    const opener = section.querySelector<HTMLAnchorElement>('a.exec-link');
+    expect(opener?.getAttribute('href')).toBe('/solo/1234567/calendar/week');
+    expect(opener?.textContent).toContain('Open Calendar');
+    expect(section.textContent).toContain('No value is inferred');
+    expect(section.querySelector('.exec-figures dd')).toBeNull();
+    (section.querySelector('details') as HTMLDetailsElement).open = true;
+    opener!.focus(); act(() => opener!.click());
+    expect(text()).toContain('Original Calendar destination');
+    act(() => button('Test browser Back').click());
+    const returned = host.querySelector("[aria-labelledby='exec-domain-bookings']")!;
+    expect((returned.querySelector('details') as HTMLDetailsElement).open).toBe(true);
+    expect(document.activeElement).toBe(returned.querySelector('a.exec-link'));
+    expect(selectedPeriod()).toBe('last_30_days');
+    expect(mocks.prefill).not.toHaveBeenCalled();
+  });
+  it.each(['unavailable', 'degraded'] as const)('does not offer Calendar evidence navigation from a %s source', async status => {
+    const snapshot = withBookings();
+    snapshot.domains.bookings = { status, reason: 'authorization_denied', data: null };
+    mocks.review.mockReturnValue({ state: 'ready', snapshot, refresh: vi.fn() });
+    await mount();
+    expect(link('/solo/1234567/calendar/week')).toBeNull();
+    expect(host.querySelector("[aria-labelledby='exec-domain-bookings']")).toBeNull();
+    expect(host.querySelector('.exec-gaps')?.textContent).toContain('not authorized');
+  });
+});
+
 function PeriodRouteProbe() {
   const location = useLocation(), navigate = useNavigate();
   return <><output data-testid="route-address">{location.pathname + location.search + location.hash}</output>

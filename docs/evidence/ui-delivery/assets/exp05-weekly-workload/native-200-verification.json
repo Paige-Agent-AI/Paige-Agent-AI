@@ -1,0 +1,107 @@
+{
+  "schema": 1,
+  "sourceHead": "48a47bf8ca3f44f7506fc4b51c568dac3a2faf76",
+  "boundary": "Confirmed local QA tab; original SoloApp/Operations/Week and candidate review, explicit neutral Auth/Work/roster/Chat ports. Not authenticated customer proof. No personal-page screenshot is included.",
+  "method": "Windows native Chrome Ctrl-plus commands; native Zoom:200% control confirmed, DPR2.5 against original OS-scale DPR1.25; visualViewport.scale1. No CSS zoom, transform, pinch emulation or device-metrics override used for this native check.",
+  "nativeControl": "5039 button Zoom: 200%",
+  "before": {
+    "dpr": 1.25,
+    "height": 791,
+    "scale": 1,
+    "width": 1536
+  },
+  "closedLight": {
+    "documentWidth": 521,
+    "dpr": 2.5,
+    "fields": [
+      {
+        "height": 44,
+        "label": "PersonChoose a personJordan Ellis",
+        "width": 373.6000061035156
+      },
+      {
+        "height": 44,
+        "label": "Hours available for this work",
+        "width": 373.6000061035156
+      },
+      {
+        "height": 44,
+        "label": "Estimated minutes: Send the approved project outline",
+        "width": 180
+      },
+      {
+        "height": 44,
+        "label": "Estimated minutes: Confirm the delivery handoff",
+        "width": 180
+      },
+      {
+        "height": 44,
+        "label": "Estimated minutes: Prepare the next client workshop",
+        "width": 180
+      }
+    ],
+    "focus": {
+      "rect": {
+        "bottom": 301,
+        "height": 44,
+        "top": 257,
+        "width": 127.41875457763672
+      },
+      "text": "Reset review inputs",
+      "visible": true
+    },
+    "height": 357,
+    "result": "3 h 15 min estimated / 2 h entered capacityKnown effort exceeds your budget by 1 h 15 min. Review scope, ownership or dates in the original work.",
+    "visualScale": 1,
+    "width": 521
+  },
+  "openLight": {
+    "capacity": "2",
+    "documentWidth": 521,
+    "dpr": 2.5,
+    "height": 357,
+    "paige": {
+      "left": 72,
+      "right": 521.2000122070312,
+      "width": 449.2000122070313
+    },
+    "result": "3 h 15 min estimated / 2 h entered capacityKnown effort exceeds your budget by 1 h 15 min. Review scope, ownership or dates in the original work.",
+    "visualScale": 1,
+    "width": 521
+  },
+  "paigeReturn": {
+    "capacity": "2",
+    "focus": "Direct PAIGE",
+    "result": "3 h 15 min estimated / 2 h entered capacityKnown effort exceeds your budget by 1 h 15 min. Review scope, ownership or dates in the original work."
+  },
+  "originalInspectorReturn": {
+    "capacity": "2",
+    "dialog": false,
+    "discardPrompt": false,
+    "focus": "Confirm the delivery handoff"
+  },
+  "closedDark": {
+    "documentWidth": 521,
+    "dpr": 2.5,
+    "focus": "Reset review inputs",
+    "focusBottom": 301,
+    "focusVisible": true,
+    "height": 357,
+    "result": "3 h 15 min estimated / 2 h entered capacityKnown effort exceeds your budget by 1 h 15 min. Review scope, ownership or dates in the original work.",
+    "width": 521
+  },
+  "openDark": {
+    "capacity": "2",
+    "documentWidth": 521,
+    "dpr": 2.5,
+    "height": 357,
+    "width": 521
+  },
+  "restored100": {
+    "dpr": 1.25,
+    "height": 715,
+    "visualScale": 1,
+    "width": 1042
+  },
+  "checkedAt": "2026-10-29T19:13:05.303Z"
+}

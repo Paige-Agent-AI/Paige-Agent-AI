@@ -3,12 +3,13 @@ import {readClientPortalFrame,sameClientPortalFrame,type ClientPortalFrame} from
 import {captureClientPortalAuthorization,withClientPortalBusiness} from "./client-portal-scope";
 import {CLIENT_DOCUMENT_COLUMNS,portalDocumentFromUpload,type PortalDocument} from "./client-portal-documents";
 import {readCustomerChatFile,readCustomerChatFilePage} from "./customer-chat-files";
+import {customerPublicLinkUrl} from "../../supabase/functions/_shared/client-portal-public-link";
 
 type NativeFileRead=PromiseLike<{data:unknown;error:unknown}>&{setHeader(name:string,value:string):NativeFileRead;abortSignal(signal:AbortSignal):NativeFileRead};
-type CustomerTurnProjection={id:unknown;role:unknown;content:unknown;customer_file_ids:unknown;request_intent_id:unknown};
-const CUSTOMER_TURN_COLUMNS:string="id,role,content,customer_file_ids:bundle_ref->customer_files->file_ids,request_intent_id:bundle_ref->interactive->>request_intent_id";
+type CustomerTurnProjection={id:unknown;role:unknown;content:unknown;customer_file_ids:unknown;customer_link_url:unknown;request_intent_id:unknown};
+const CUSTOMER_TURN_COLUMNS:string="id,role,content,customer_file_ids:bundle_ref->customer_files->file_ids,customer_link_url:bundle_ref->customer_public_link->>url,request_intent_id:bundle_ref->interactive->>request_intent_id";
 type CustomerThreadProjection={id:unknown;caller_user_id:unknown;contact_id:unknown;tenant_id:unknown;lens:unknown;interactive_latest_intent:unknown};
-export type CustomerChatMessage={id:string;role:"user"|"assistant";content:string;files?:PortalDocument[];unavailableFiles?:number;requestIntentId?:string};
+export type CustomerChatMessage={id:string;role:"user"|"assistant";content:string;files?:PortalDocument[];unavailableFiles?:number;requestIntentId?:string;publicLink?:string};
 const uuid=(v:unknown):v is string=>typeof v==="string"&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
 
 /** Canonical Chat read/create only; turns are written by the existing protected runtime. */
@@ -103,7 +104,14 @@ export async function readCustomerChat(frame:ClientPortalFrame,signal?:AbortSign
  for(const row of [...(turns.data??[])].reverse()){
   if((row.role==="user"||row.role==="assistant")&&uuid(row.id)&&typeof row.content==="string")
    {const ids=receiptIds.get(row.id);
-    messages.push({id:row.id,role:row.role,content:row.content,...(uuid(row.request_intent_id)?{requestIntentId:row.request_intent_id}:{}),...(ids?{files:ids.flatMap(id=>documents.has(id)?[documents.get(id)!]:[]),
+    // Only the original user receipt supplies a selection. This does not claim
+    // that HTTP succeeded or that this external page is business Knowledge.
+    let publicLink:string|null=null;
+    if(row.role==="user"&&row.customer_link_url!=null){
+     publicLink=customerPublicLinkUrl(row.customer_link_url);
+     if(!publicLink||publicLink!==row.customer_link_url)throw Error("Saved link could not be verified");
+    }
+    messages.push({id:row.id,role:row.role,content:row.content,...(publicLink?{publicLink}:{}),...(uuid(row.request_intent_id)?{requestIntentId:row.request_intent_id}:{}),...(ids?{files:ids.flatMap(id=>documents.has(id)?[documents.get(id)!]:[]),
       unavailableFiles:ids.filter(id=>!documents.has(id)).length}:{})});}
  }
  const latestThread=await readCustomerThread(scope,threadId);

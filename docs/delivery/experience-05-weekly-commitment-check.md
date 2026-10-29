@@ -1,5 +1,23 @@
 # Experience 05 Weekly Internal Commitment Check
 
+## October28 — original ZION inspection recovery, development
+
+REPAIR original outcomes08/10 and E5-CV6/CV9. Actual SDK transient Auth errors
+select unavailable without falsely asserting lost owner/admin access; confirmed
+session/API denial remains refused and retires the private sample. Native lost
+BODY focus returns to the original Close inspection control, while another
+connected control keeps focus. No assignment dispatch, execution or replay.
+
+Failing-first36PASS/7FAIL and separate focus22PASS/2FAIL precede final92PASS/0FAIL;
+strict affected graph0/0. Original untransformed shell/reader/component16-frame
+matrix, keyboard, deliberate same-record recovery, close/late/scope-switch and
+320 reflow have disclosed neutral Auth/read ports. These are not authenticated
+customer/cohort proof. [Exact evidence](../evidence/ui-delivery/exp05-zion-auth-unavailability.md)
+preserves the original server inspector, source/receipt projections and
+actor/tenant/epoch/deadline. Team Hub Root/cards remain reserved, automation
+preview handoff pending; full ten/E5/Builder/weekly/both-chat/algorithm and founder
+obligations remain open. STILL CODING; no catalogue or activation promotion.
+
 ## October25 - exact paused resume preparation, not admitted
 
 REPAIR the existing future weekly control review. Five causal failures with all71

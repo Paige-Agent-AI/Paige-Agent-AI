@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState } from 'react';
+import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 import { ChevronRight, RotateCw } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { readZionAssignments, type ZionAssignment, type ZionAssignmentSummary } from './zion-assignment-read';
@@ -24,6 +24,12 @@ export function OperationsZionHistory({ tenantId, userId }: { tenantId: string; 
   const [saved, setSaved] = useState<View>({ scope, phase: 'idle' });
   // Props changing are a privacy boundary before effects, even outside the keyed owner.
   const view: View = saved.scope === scope ? saved : { scope, phase: 'idle' };
+  const priorPhase = useRef(view.phase);
+  useLayoutEffect(() => {
+    const removedSample = priorPhase.current === 'sample' && view.phase === 'refused';
+    priorPhase.current = view.phase;
+    if (removedSample && document.activeElement === document.body) header.current?.focus({ preventScroll: true });
+  }, [view.phase]);
   useEffect(() => {
     mounted.current = true;
     lifecycle.current = {};

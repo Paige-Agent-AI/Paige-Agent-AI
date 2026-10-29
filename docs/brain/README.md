@@ -5405,3 +5405,16 @@ defect. Exact receipt6484939699/§4.0 and
 ../evidence/exp05-owner-task-access-recovery-production.json preserve observed
 versions/hashes. Source signatures are not authenticated customer, domain/Rail,
 full EXP05 or founder proof; no activation or extra Edge upload.
+
+## EXP05 original ZION Auth availability lesson — October28
+
+An SDK Auth error is not automatically a confirmed authority refusal. Preserve
+scope/actor/tenant/deadline/server checks; classify actual missing-session/API
+401/403 separately from retryable503/network/429/ambiguous unavailability, with
+no additional private read or transport retry. In native result inspection,
+confirmed denial must withdraw the private sample and recover keyboard focus
+only when its removed control leaves BODY focused. Another connected control
+must keep focus. Original ZION reader/component92 focused tests and actual
+untransformed shell evidence are in
+`../evidence/ui-delivery/exp05-zion-auth-unavailability.md`; fixtures remain
+separate from authenticated customer, same-ZION both-chat and full EXP05 proof.

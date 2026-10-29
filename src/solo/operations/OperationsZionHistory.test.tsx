@@ -2,7 +2,7 @@
 import React, { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
-import { createClient } from '@supabase/supabase-js';
+import { AuthRetryableFetchError, createClient } from '@supabase/supabase-js';
 import { OperationsZionHistory } from './OperationsZionHistory';
 import type { ZionAssignmentRead } from './zion-assignment-read';
 type AuthSnapshot = { user: { id: string; last_sign_in_at?: string } };
@@ -137,6 +137,7 @@ it.each([401, 403])('withdraws prior original text and the whole sample after an
   port.invoke.mockImplementation((name, options) => sdk.functions.invoke(name, options));
   await render(); await click('Inspect recent work'); await click('Inspect original response');
   expect(host.textContent).toContain('untrusted original text');
+  button('Refresh original response').focus();
   await click('Refresh original response');
   expect(host.textContent).toContain('Current owner or admin access is required');
   expect(host.textContent).not.toContain('Response recorded');
@@ -146,4 +147,45 @@ it.each([401, 403])('withdraws prior original text and the whole sample after an
   expect(refusal?.bodyUsed).toBe(false); expect(calls).toBe(3);
   expect(port.invoke).toHaveBeenCalledTimes(3);
   expect(host.querySelector('script')).toBeNull();
+  expect(document.activeElement).toBe(button('Close inspection'));
+});
+
+it('does not steal another connected focus when a delayed original inspection is refused', async () => {
+  await render(); await click('Inspect recent work');
+  let resolve!: (x: ZionAssignmentRead) => void;
+  port.read.mockImplementationOnce(() => new Promise(r => { resolve = r; }));
+  await click('Inspect original response');
+  const other = document.createElement('button'); other.textContent = 'Other current control'; document.body.append(other); other.focus();
+  try {
+    await act(async () => resolve({ status: 'refused' }));
+    expect(document.activeElement).toBe(other);
+    expect(host.textContent).toContain('Current owner or admin access is required');
+  } finally { other.remove(); }
+});
+
+it.each(['before', 'after'])('keeps the original sample and permits deliberate reinspection after Auth unavailability %s the read', async stage => {
+  const actual = await vi.importActual<typeof import('./zion-assignment-read')>('./zion-assignment-read');
+  port.read.mockImplementation(actual.readZionAssignments);
+  if (result.status !== 'ready' || !('invocation' in result)) throw Error('fixture');
+  port.invoke.mockResolvedValueOnce({ data: { ok: true, matches: [], recent_invocations: [entry], sample_only: true, limit: 5, note: 'sample only' }, error: null });
+  await render(); await click('Inspect recent work');
+  const failure = { data: { session: null }, error: new AuthRetryableFetchError('Temporary Auth outage', 503) };
+  if (stage === 'before') port.getSession.mockResolvedValueOnce(failure);
+  else {
+    port.getSession.mockResolvedValueOnce({ data: { session: { user: { id: actor } } }, error: null }).mockResolvedValueOnce(failure);
+    port.invoke.mockResolvedValueOnce({ data: { ok: true, matches: [], invocation: result.invocation }, error: null });
+  }
+  await click('Inspect original response');
+  expect(host.textContent).toContain('Response recorded');
+  expect(host.textContent).toContain('The original response could not be verified. No assignment was repeated.');
+  expect(host.textContent).not.toContain('Current owner or admin access is required');
+  expect(host.textContent).not.toContain('untrusted original text');
+  expect(port.invoke).toHaveBeenCalledTimes(stage === 'before' ? 1 : 2);
+  port.invoke.mockResolvedValueOnce({ data: { ok: true, matches: [], invocation: result.invocation }, error: null });
+  await click('Inspect original response');
+  expect(host.textContent).toContain('untrusted original text');
+  expect(host.textContent).toContain('Original receipt needs review');
+  expect(host.textContent).not.toContain('Original receipt verified');
+  expect(port.invoke).toHaveBeenCalledTimes(stage === 'before' ? 2 : 3);
+  expect(port.invoke.mock.calls.every(([name, options]) => name === 'paige-orchestrator' && options.body.action === 'tool_search')).toBe(true);
 });

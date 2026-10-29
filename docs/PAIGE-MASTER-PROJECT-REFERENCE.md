@@ -860,6 +860,14 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**2026-10-29 UTC — EXP05 unmounted ZION Planning foundation; source released, no capability activation.**
+
+| Increment | Exact source/release | Customer truth and remaining proof |
+| --- | --- | --- |
+| [#3086](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3086) | Reviewed e944; final **AUTHOR-REVIEW / LOWER ASSURANCE**5701770567; all11 required checks/managed Preview/two web SUCCESS/0threads. Merge 7a30d3d503d6ad0723eeceb226727687bce74fd9/tree39ef69e7, parents52b826+e944.103 local/strict0-to0. | Canonical Planning definition/executor/JWT/read-marker/deadline reused in an UNMOUNTED same-ZION module. No new executor, registry, writer, domain/Rail result or live admission. |
+| Production source/web verified; **Planning customer outcome PROOF OWED** | Vercel dpl_2uLPHLTkzNpqcZVi27qCxd8kxyL3 READY/exact; BOTH origins17:03:20–21UTC200/build7a30-mvtsj03g/null. Original Operations240,965bytes/SHA2563f62b07f63045885fea78c32627156bb97f876599370b8be7472bbba71752884/all8 signaturesPASS. Original Edge40917238093/job123600617357 SUCCESS/zero-selected/upload and certification SKIPPED/9da baseline unchanged; schemaN/A. [Evidence](evidence/exp05-zion-planning-foundation-production.json). | Separate host DRAFT#3087/6f5e/115tests needs E04 forward native admission/source-version/history +receiving review/exact CI/customer proof. operations.department PARTIAL; both-chat/native/Rail/reload/current+new SOLO/full ten/E5/weekly execution/Builder/proactive/recovery/founder OPEN. STILL CODING / NOT_READY. |
+
+
 **2026-10-29 UTC — EXP05 original automation draft preview; production web/Edge source verified.**
 
 | Increment | Exact source and observed release | Useful result and proof boundary |

@@ -9,16 +9,22 @@ import {
   classifyWebDomain,
   type WebDomainObservations,
 } from "./domain-guidance";
+import { prepareHostingDeployment, type HostingPrepared } from "./studio-data";
 
 /**
  * "Use my own address" — the custom-domain guidance disclosure in the publish panel's live
  * views (EXP06 PR7 — WEB-05/06/07). Guidance and truthful state ONLY: it names the reserved
  * address's real status, walks the six provider profiles, pins the mail records nobody touches,
- * and lays out the owner-gated host path. It contacts nothing and approves nothing — the entry
- * point to any real action is the owner's own chat with Paige, through the governed door.
+ * and lays out the owner-gated host path. The host path's "host it" step asks the ONE hosting
+ * door (growth-hosting-command) what is true — today it answers that hosting isn't switched on
+ * yet, and that sentence is shown verbatim; when the platform enables the service the same
+ * check carries the owner's approval card. Nothing here contacts a provider or approves
+ * anything on its own.
  */
-export function DomainGuidanceCard({ tenantSlug, observations }: {
+export function DomainGuidanceCard({ tenantSlug, pageId, observations }: {
   tenantSlug: string;
+  /** The PUBLISHED page this panel is hosting-eligible for (drives the door's deploy check). */
+  pageId?: string;
   /** The current facts. Unsupplied = the honest starting state everywhere today: no custom
    *  address, reserved address's live status unknown from here (never claimed). */
   observations?: Partial<WebDomainObservations>;
@@ -26,6 +32,21 @@ export function DomainGuidanceCard({ tenantSlug, observations }: {
   const selectId = useId();
   const [providerId, setProviderId] = useState<string>(PROVIDER_PROFILES[0].id);
   const provider = PROVIDER_PROFILES.find((p) => p.id === providerId) ?? PROVIDER_PROFILES[0];
+  const [hostingCheck, setHostingCheck] = useState<HostingPrepared | null>(null);
+  const [hostingChecking, setHostingChecking] = useState(false);
+
+  const checkHosting = async () => {
+    if (!pageId || hostingChecking) return;
+    setHostingChecking(true);
+    setHostingCheck(null);
+    try {
+      setHostingCheck(await prepareHostingDeployment(pageId));
+    } catch (e) {
+      setHostingCheck({ state: "refused", message: e instanceof Error ? e.message : "Hosting couldn't be checked just now. Nothing was changed." });
+    } finally {
+      setHostingChecking(false);
+    }
+  };
 
   const cls = classifyWebDomain({
     reservedAddress: `${tenantSlug}.paigeagent.ai`,
@@ -70,6 +91,20 @@ export function DomainGuidanceCard({ tenantSlug, observations }: {
         <ul>
           {HOST_PATH_PACKAGE.map((s) => <li key={s.title}><strong>{s.title}</strong> — {s.detail}</li>)}
         </ul>
+        {pageId && (
+          <p className="vs-domain-hosting-check">
+            <button type="button" className="vs-link" onClick={checkHosting} disabled={hostingChecking}>
+              {hostingChecking ? "Checking hosting…" : "Check hosting for this page"}
+            </button>
+            {hostingCheck && (
+              <span className="vs-domain-hosting-answer" data-hosting-state={hostingCheck.state}>
+                {hostingCheck.state === "ready"
+                  ? `${hostingCheck.summary ?? "Put a hosted copy of this page online."} — review it in your approvals.`
+                  : hostingCheck.message}
+              </span>
+            )}
+          </p>
+        )}
         <p className="vs-domain-note">{HOST_PATH_COST_LINE}</p>
       </div>
     </details>

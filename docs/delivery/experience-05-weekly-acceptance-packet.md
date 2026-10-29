@@ -714,3 +714,11 @@ not authenticated tenant/role/revoke/new-account proof. No domain act, approval,
 provider, recurrence, Chat/Live or held activation occurred. Source/review/CI/
 merge/web/readback/customer/founder states remain separate; full original ten,
 E5-CV1–9, both-chat ZION and Workflow Builder obligations remain open.
+
+Subsequent review requires explicit transient-Auth handling and the full original-
+shell viewport interaction matrix. Actual SDK503 causal81PASS/7FAIL now becomes
+final264PASS/0FAIL in six suites, with missing-session/API401/403 denial retained.
+The16-frame original-shell matrix uses labeled neutral A/Mineral/B/Obsidian ports,
+not real authenticated tenants. It verifies denial rendering, native panel return,
+review/history cancellation and held-scope retirement without effects. The earlier
+unchanged-geometry exemption is withdrawn. No new full-outcome/cohort/owner closure.

@@ -1,7 +1,7 @@
 // @vitest-environment node
 // Protected caller/transport ports, not browser Auth, production RLS or acceptance.
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { createClient, FunctionsHttpError } from "@supabase/supabase-js";
+import { AuthApiError, AuthRetryableFetchError, AuthSessionMissingError, createClient, FunctionsHttpError } from "@supabase/supabase-js";
 import { readOwnerTaskHistoryList, readOwnerTaskOutcome, type OwnerTaskCaller, type OwnerTaskHistoryInvoker, type OwnerTaskScope } from "./ownerTaskAutomation";
 import { ACT_OUTCOMES } from "../../../supabase/functions/_shared/paige-orchestration/outcomes";
 import { createOwnerTaskHistoryHandler } from "../../../supabase/functions/_shared/paige-orchestration/owner-task-history-handler";
@@ -45,6 +45,29 @@ function fixture() {
 afterEach(() => { vi.useRealTimers(); });
 
 describe("local authority-refusal provenance", () => {
+  it.each(["list-before", "list-after", "detail-before", "detail-after"])("keeps a real Auth 503 unavailable during %s", async stage => {
+    const f = fixture(), temporary = new AuthRetryableFetchError("Temporary Auth outage", 503);
+    if (stage.endsWith("before")) f.configure.authError = temporary;
+    else f.configure.on = step => {
+      if (step === (stage.startsWith("list") ? "paige_approval_queue_v" : "paige-owner-task-history")) f.configure.authError = temporary;
+    };
+    const read = stage.startsWith("list")
+      ? await readOwnerTaskHistoryList(scope, selected.processId, f.caller, f.current)
+      : await readOwnerTaskOutcome(scope, selected, f.caller, f.functions, f.current);
+    expect(read).toEqual({ status: "unavailable" });
+    expect(f.calls.some(call => call.stage === "control_owner_task_automation")).toBe(false);
+    expect(f.calls.filter(call => ["paige_approval_queue_v", "paige-owner-task-history"].includes(call.stage))).toHaveLength(stage.endsWith("before") ? 0 : 1);
+  });
+  it.each([new AuthRetryableFetchError("Network unavailable", 0), new AuthApiError("Rate limited", 429, "over_request_rate_limit"), new TypeError("Unknown Auth transport failure")])("does not turn ambiguous Auth failure into confirmed denial: %s", async error => {
+    const f = fixture(); f.configure.authError = error;
+    expect(await readOwnerTaskHistoryList(scope, selected.processId, f.caller, f.current)).toEqual({ status: "unavailable" });
+    expect(f.calls).toEqual([{ stage: "auth" }]);
+  });
+  it.each([new AuthSessionMissingError(), new AuthApiError("Invalid session", 401, "bad_jwt"), new AuthApiError("Denied", 403, "not_admin")])("retains confirmed SDK session denial: %s", async error => {
+    const f = fixture(); f.configure.authError = error;
+    expect(await readOwnerTaskOutcome(scope, selected, f.caller, f.functions, f.current)).toEqual({ status: "refused", access: "refused" });
+    expect(f.calls).toEqual([{ stage: "auth" }]);
+  });
   it.each(["list-before", "list-after", "detail-before", "detail-after"])("identifies only the original failed authority check: %s", async stage => {
     const f = fixture();
     if (stage.endsWith("before")) f.configure.role = "member";

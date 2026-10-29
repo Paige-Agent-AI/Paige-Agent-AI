@@ -927,3 +927,13 @@ PAIGE Chat and Team Hub, full weekly execution, Workflow Builder, ZION follow-
 through, algorithms and original ten/E5/founder acceptance remain incomplete.
 E08 Root/card window and E06/E04 deployment reconciliation stay with their owners;
 this repair does not consume those protected sources or promote catalogue status.
+
+Review follow-on: original SDK Auth errors must not all become confirmed access
+denial. A real retryable503 regression81PASS/7FAIL precedes correction; final
+six suites264PASS/0FAIL retain actual SDK missing-session/API401/403 refusal and
+fail closed for network/rate-limit/ambiguous errors. Successful actor/tenant/seat
+predicates and native writers remain. Initial viewport exemptions are withdrawn:
+16 actual original-shell frames cover four required sizes, panel open/closed and
+two disclosed neutral contexts/themes, plus natural cancel/close/scope reentry.
+This is not real tenant/cohort authentication. Physical zoom/AT and corrected
+customer proof remain separately unverified; exact final-head gates still apply.

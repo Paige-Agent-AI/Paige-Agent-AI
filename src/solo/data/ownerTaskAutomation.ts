@@ -1,5 +1,5 @@
 /** Caller-JWT reader/control for the existing native task process. No execution or retry authority. */
-import { FunctionsHttpError } from "@supabase/supabase-js";
+import { FunctionsHttpError, isAuthApiError, isAuthSessionMissingError } from "@supabase/supabase-js";
 import { ACT_OUTCOME_SET } from "../../../supabase/functions/_shared/paige-orchestration/outcomes.ts";
 import type { OwnerTaskHistory } from "../../../supabase/functions/_shared/paige-orchestration/owner-task-history.ts";
 export type OwnerTaskScope = { actorId: string; tenantId: string; epoch: number };
@@ -69,7 +69,12 @@ type Deadline = ReturnType<typeof operationDeadline>;
 async function authority(scope: OwnerTaskScope, caller: OwnerTaskCaller, current: () => OwnerTaskScope | null, deadline: Deadline): Promise<"ready" | "refused" | "unavailable"> {
   if (!matches(scope, current)) return "refused";
   const user = await deadline.wait(() => caller.auth.getUser());
-  if (!matches(scope, current) || user.error || user.data.user?.id !== scope.actorId) return "refused";
+  if (!matches(scope, current)) return "refused";
+  // An Auth outage is not confirmed loss of access. Fail closed without giving
+  // retryable, rate-limited or otherwise ambiguous errors denial provenance.
+  if (user.error) return isAuthSessionMissingError(user.error)
+    || isAuthApiError(user.error) && [401, 403].includes(user.error.status) ? "refused" : "unavailable";
+  if (user.data.user?.id !== scope.actorId) return "refused";
   const tenant = await deadline.wait(() => caller.rpc("current_user_tenant_id"));
   if (!matches(scope, current)) return "refused";
   if (tenant.error) return "unavailable";

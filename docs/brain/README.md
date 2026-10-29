@@ -4769,6 +4769,10 @@ from a refused individual result before retiring cached native process controls.
 Only local authority checks may supply denial provenance; resource/provider data
 must not. Preserve valid inspection, unknown-action holds, current-scope tickets
 and deliberate Refresh; restore only lost focus, never steal connected focus.
+Review also exposed the original Auth-error collapse: only confirmed SDK missing-
+session/API401/403 denial retires access; transient/ambiguous Auth errors stay
+unavailable and fail closed before private reads/controls. Unchanged geometry
+does not exempt a UI correction from the original-shell interaction matrix.
 Bounded source/native-fixture evidence is in
 `../evidence/ui-delivery/exp05-owner-task-access-recovery.md`; this does not close
 actual customer/cohort/both-chat recovery or the full ten/E5 acceptance cases.

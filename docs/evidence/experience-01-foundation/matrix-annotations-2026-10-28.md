@@ -45,3 +45,18 @@ ALG-02/13: **wired** — signals = owner-confirmed business context; logic = `FI
 ## 6. Founder-window legs (unchanged)
 
 The 23 authenticated cases, personal Live consent→audio→interruption, real-customer performance for #2884, and final acceptance remain PROOF OWED exactly as the packet separates them; nothing in this annotation manufactures or substitutes any of them.
+
+## 7. Amendment 2026-10-29 — MENTOR's DM plan READ shipped (owner directive 66c5b1eb)
+
+Section 3's Team Hub row above gains its read half, merged and live (PR **#3068**, squash
+**1a7fd5b7b**; contract first in ANT-161 9a4448c8): in MENTOR's own DM, `plan_list` — the same
+caller-JWT planning read the main chat seam uses — is offered and executed under per-turn
+fail-closed gates (current owner/admin authority, fresh roster equality, DM shape re-proof,
+tenant pin, 30-row cap, ≤3 reads/turn, receipt before rows). **The write/card half is unchanged:
+PROOF OWED until EXP08 A2c** (the five `plan_*` writers remain withheld; the in-channel act
+remains ZION's scoped writer). Evidence: `mentor-team-hub-plan-read-2026-10-29.md` (unit 80/80
++ 8/8, Kit lint no-new-bypass, pgtest, full CI 16/16 on the merged head, migration deployed +
+prod roster readback, paige-ai-chat v579 live). ZION's stored `plan_list` stays inert in agent
+turns by test. Cross-cutting negatives of §3 remain PROOF OWED with A2c. Known platform issue
+flagged (not E01's): edge-live certification has failed `paige-ai-chat (download_missing_dependency)`
+since before this PR (run 40821995052, 05:14Z) — deploys succeed; the tag cannot advance.

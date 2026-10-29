@@ -1,0 +1,477 @@
+{
+  "source": "4e4f916c580ca2f3631fe2d19170527cb887e9bd",
+  "sourceOnly": true,
+  "authenticated": false,
+  "cases": [
+    {
+      "width": 900,
+      "height": 1000,
+      "cohort": "b",
+      "state": "closed",
+      "geometry": {
+        "frame": {
+          "height": 1000,
+          "left": 0,
+          "top": 60.79999923706055,
+          "width": 900
+        },
+        "outer": [
+          900,
+          1080
+        ]
+      },
+      "raster": [
+        900,
+        1080
+      ],
+      "file": "e04-c124-merit-900-closed-b.png",
+      "sourceLinkInAX": true,
+      "paigeWorkspace": false,
+      "sourceOnly": true,
+      "sha256": "40e2c9c2addcdd7e1b4f5f2fb927f12f6213e1e17f611b7eaa2c31c8c44663fc"
+    },
+    {
+      "width": 900,
+      "height": 1000,
+      "cohort": "b",
+      "state": "open",
+      "geometry": {
+        "frame": {
+          "height": 1000,
+          "left": 0,
+          "top": 60.79999923706055,
+          "width": 900
+        },
+        "outer": [
+          900,
+          1080
+        ]
+      },
+      "raster": [
+        900,
+        1080
+      ],
+      "file": "e04-c124-merit-900-open-b.png",
+      "sourceLinkInAX": true,
+      "paigeWorkspace": true,
+      "sourceOnly": true,
+      "sha256": "b5f913f2af49c33005f4b955440430bd7de84af654f4c7c49756f08eb34b79b4"
+    },
+    {
+      "width": 1536,
+      "height": 770,
+      "cohort": "a",
+      "state": "closed",
+      "geometry": {
+        "frame": {
+          "height": 770,
+          "left": 0,
+          "top": 42.400001525878906,
+          "width": 1536
+        },
+        "outer": [
+          1536,
+          850
+        ]
+      },
+      "raster": [
+        1536,
+        850
+      ],
+      "file": "e04-c124-merit-1536-closed-a.png",
+      "sourceLinkInAX": true,
+      "paigeWorkspace": false,
+      "sourceOnly": true,
+      "sha256": "90eab3b75fba819f624696948115805bc92d8344d208f98d02ffa20fe0ebcf21"
+    },
+    {
+      "width": 1536,
+      "height": 770,
+      "cohort": "a",
+      "state": "open",
+      "geometry": {
+        "frame": {
+          "height": 770,
+          "left": 0,
+          "top": 42.400001525878906,
+          "width": 1536
+        },
+        "outer": [
+          1536,
+          850
+        ]
+      },
+      "raster": [
+        1536,
+        850
+      ],
+      "file": "e04-c124-merit-1536-open-a.png",
+      "sourceLinkInAX": true,
+      "paigeWorkspace": true,
+      "sourceOnly": true,
+      "sha256": "df4717a154d3b390330addd3286232b548c52e21ab12b9e285420d617e9da7b6"
+    },
+    {
+      "width": 1536,
+      "height": 770,
+      "cohort": "b",
+      "state": "closed",
+      "geometry": {
+        "frame": {
+          "height": 770,
+          "left": 0,
+          "top": 42.400001525878906,
+          "width": 1536
+        },
+        "outer": [
+          1536,
+          850
+        ]
+      },
+      "raster": [
+        1536,
+        850
+      ],
+      "file": "e04-c124-merit-1536-closed-b-settled.png",
+      "sourceLinkInAX": true,
+      "paigeWorkspace": false,
+      "sourceOnly": true,
+      "sha256": "0211b4d9d6c79b07f25362729932c4ad804d50fb8f463140e489e2d55e4079e8"
+    },
+    {
+      "width": 1536,
+      "height": 770,
+      "cohort": "b",
+      "state": "open",
+      "geometry": {
+        "frame": {
+          "height": 770,
+          "left": 0,
+          "top": 42.400001525878906,
+          "width": 1536
+        },
+        "outer": [
+          1536,
+          850
+        ]
+      },
+      "raster": [
+        1536,
+        850
+      ],
+      "file": "e04-c124-merit-1536-open-b.png",
+      "sourceLinkInAX": true,
+      "paigeWorkspace": true,
+      "sourceOnly": true,
+      "sha256": "594f7f9f5ee348582bf206b226ffde498596aa04332f4f232ad46bb6129f8ed5"
+    },
+    {
+      "width": 1366,
+      "height": 768,
+      "cohort": "a",
+      "state": "closed",
+      "geometry": {
+        "frame": {
+          "height": 768,
+          "left": 0,
+          "top": 42.400001525878906,
+          "width": 1366
+        },
+        "outer": [
+          1366,
+          848
+        ]
+      },
+      "raster": [
+        1366,
+        848
+      ],
+      "file": "e04-c124-merit-1366-closed-a.png",
+      "sourceLinkInAX": true,
+      "paigeWorkspace": false,
+      "sourceOnly": true,
+      "sha256": "baafdcb8a3ec812e4e02c965a0615098a06727da78323ad2eec364a3598b32fa"
+    },
+    {
+      "width": 1366,
+      "height": 768,
+      "cohort": "a",
+      "state": "open",
+      "geometry": {
+        "frame": {
+          "height": 768,
+          "left": 0,
+          "top": 42.400001525878906,
+          "width": 1366
+        },
+        "outer": [
+          1366,
+          848
+        ]
+      },
+      "raster": [
+        1366,
+        848
+      ],
+      "file": "e04-c124-merit-1366-open-a.png",
+      "sourceLinkInAX": true,
+      "paigeWorkspace": true,
+      "sourceOnly": true,
+      "sha256": "fbd8a12463b442225fea367da1d71a8c9e00ff44bf9e9aed388006dc89f9d822"
+    },
+    {
+      "width": 1366,
+      "height": 768,
+      "cohort": "b",
+      "state": "closed",
+      "geometry": {
+        "frame": {
+          "height": 768,
+          "left": 0,
+          "top": 42.400001525878906,
+          "width": 1366
+        },
+        "outer": [
+          1366,
+          848
+        ]
+      },
+      "raster": [
+        1366,
+        848
+      ],
+      "file": "e04-c124-merit-1366-closed-b.png",
+      "sourceLinkInAX": true,
+      "paigeWorkspace": false,
+      "sourceOnly": true,
+      "sha256": "59ce3de52ab6e6a9ad307034493ce19c708b48ccc931c1e270602746dd536af8"
+    },
+    {
+      "width": 1366,
+      "height": 768,
+      "cohort": "b",
+      "state": "open",
+      "geometry": {
+        "frame": {
+          "height": 768,
+          "left": 0,
+          "top": 42.400001525878906,
+          "width": 1366
+        },
+        "outer": [
+          1366,
+          848
+        ]
+      },
+      "raster": [
+        1366,
+        848
+      ],
+      "file": "e04-c124-merit-1366-open-b-settled.png",
+      "sourceLinkInAX": true,
+      "paigeWorkspace": true,
+      "sourceOnly": true,
+      "sha256": "1be66b5145238fedd6d0a1ad6129ca3ed281d4c2b582be74110581a18e0da667"
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "cohort": "a",
+      "state": "closed",
+      "geometry": {
+        "frame": {
+          "height": 768,
+          "left": 0,
+          "top": 42.400001525878906,
+          "width": 1024
+        },
+        "outer": [
+          1024,
+          848
+        ]
+      },
+      "raster": [
+        1024,
+        848
+      ],
+      "file": "e04-c124-merit-1024-closed-a.png",
+      "sourceLinkInAX": true,
+      "paigeWorkspace": false,
+      "sourceOnly": true,
+      "sha256": "28730108d6568a7f6b190ab9ade34b30af3103a2df4e5d9b70913fc03ee8cf1c"
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "cohort": "a",
+      "state": "open",
+      "geometry": {
+        "frame": {
+          "height": 768,
+          "left": 0,
+          "top": 42.400001525878906,
+          "width": 1024
+        },
+        "outer": [
+          1024,
+          848
+        ]
+      },
+      "raster": [
+        1024,
+        848
+      ],
+      "file": "e04-c124-merit-1024-open-a.png",
+      "sourceLinkInAX": true,
+      "paigeWorkspace": true,
+      "sourceOnly": true,
+      "sha256": "0f090bcfccafb21c4334634b9d57cbf8de5f940697310e7e0b6842e97a2074a6"
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "cohort": "b",
+      "state": "closed",
+      "geometry": {
+        "frame": {
+          "height": 768,
+          "left": 0,
+          "top": 42.400001525878906,
+          "width": 1024
+        },
+        "outer": [
+          1024,
+          848
+        ]
+      },
+      "raster": [
+        1024,
+        848
+      ],
+      "file": "e04-c124-merit-1024-closed-b.png",
+      "sourceLinkInAX": true,
+      "paigeWorkspace": false,
+      "sourceOnly": true,
+      "sha256": "1df4f6205ae299642f603c5c07674c2126ac732384629881ab2322d27efe6d91"
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "cohort": "b",
+      "state": "open",
+      "geometry": {
+        "frame": {
+          "height": 768,
+          "left": 0,
+          "top": 42.400001525878906,
+          "width": 1024
+        },
+        "outer": [
+          1024,
+          848
+        ]
+      },
+      "raster": [
+        1024,
+        848
+      ],
+      "file": "e04-c124-merit-1024-open-b.png",
+      "sourceLinkInAX": true,
+      "paigeWorkspace": true,
+      "sourceOnly": true,
+      "sha256": "194c1f17d42a7f672b480bc0cdd1c696e197ff74687442f6fc3aa356f0eb1a3d"
+    },
+    {
+      "width": 900,
+      "height": 1000,
+      "cohort": "a",
+      "state": "closed",
+      "geometry": {
+        "frame": {
+          "height": 1000,
+          "left": 0,
+          "top": 60.79999923706055,
+          "width": 900
+        },
+        "outer": [
+          900,
+          1080
+        ]
+      },
+      "raster": [
+        900,
+        1080
+      ],
+      "file": "e04-c124-merit-900-closed-a.png",
+      "sourceLinkInAX": true,
+      "paigeWorkspace": false,
+      "sourceOnly": true,
+      "sha256": "464dfb8cc38cfe85a3c25e7a9be91d072ea5bf308441edd7c405a08e6352cf9d"
+    },
+    {
+      "width": 900,
+      "height": 1000,
+      "cohort": "a",
+      "state": "open",
+      "geometry": {
+        "frame": {
+          "height": 1000,
+          "left": 0,
+          "top": 60.79999923706055,
+          "width": 900
+        },
+        "outer": [
+          900,
+          1080
+        ]
+      },
+      "raster": [
+        900,
+        1080
+      ],
+      "file": "e04-c124-merit-900-open-a.png",
+      "sourceLinkInAX": true,
+      "paigeWorkspace": true,
+      "sourceOnly": true,
+      "sha256": "3e25c8d6f6c2cd7ad8414d82a496034bfb876b7dd33cf94652a92a2fe8d36e5f"
+    }
+  ],
+  "excludedAttempts": [
+    {
+      "method": "getScreenshot",
+      "format": "JPEG",
+      "raster": [
+        1493,
+        840
+      ],
+      "reason": "Native image did not match requested renderer width",
+      "file": "e04-c124-excluded-native-raster-1493x840.jpg"
+    },
+    {
+      "method": "playwright.screenshot",
+      "reason": "Unavailable API; no capture"
+    },
+    {
+      "case": "900/a",
+      "reason": "Initial iframe render not ready; no image counted"
+    },
+    {
+      "case": "900/a",
+      "reason": "Escape at outer document did not close inner overlay; excluded. Focused original overlay control then Escape verified close and focus return."
+    }
+  ],
+  "boundary": "Offline whole original shell source render. Fictional contexts, not authenticated acceptance.",
+  "review": {
+    "states": 16,
+    "completeViewportPairs": 8,
+    "productViewportVsBanner": "Product iframe has the listed exact viewport; PNG adds 80 CSS pixels for explicit source-only banner.",
+    "excluded": [
+      "native screenshot1493x840",
+      "all captureBeyondViewport:false production rasters",
+      "initial unsettled1536closedb/1366openb",
+      "1536closedbconfirm wrong general channel"
+    ],
+    "visual": "Record-link hierarchy, legibility, wrapping and visible original close control inspected. Narrow original overlay intentionally covers background; close restores link. No new design-system or premium/full-Experience completion claim.",
+    "p1": "4408942384 remains OPEN; reviewed Preview authenticated new-path and complete real-role acceptance owed."
+  }
+}

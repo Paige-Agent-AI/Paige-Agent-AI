@@ -1,5 +1,43 @@
 # Experience 02 — Customer Experience Integration Matrix
 
+## October29 — released Calendar proof and failed VERA read handoff
+
+Calendar3019 merged0a8b95f9; finala08 lower-assurance review5704091183,
+all11 exact checks/genuine managed Preview/two webSUCCESS, normal serialized
+Edge40950644173 source/configurationPASS for Chat and Review. Direct original
+checker independently matched37 Review files. Chat raw dump unavailable; an
+optional artifact download was blocked by Edge and not bypassed/independently
+ZIP-hashed. Both public origins verified source-equivalent descendant193d0b1e,
+not an observed exact0a8 public build. GH3019/6508394193 preserves the boundary.
+
+Actual authorized original Calendar roundtrip and full reload subsequently PASS
+(ANT52/9162cafd): native receiver, original period/source-open/scroll/opener focus,
+whole conversation/card facts/source owners and empty composer retained. The
+earlier unverifiable review/active-workspace redirect remains INVALID, preserved
+separately in ANT52/e2f833a9. Original chooser restored the authorized owner; no
+Auth/RLS/role change or unapproved-workspace QA. Other cohorts/AT/Live remain owed.
+Finance3082 bounded customer regression PASS and Master-only3094 merge193d0b1e/
+deployment/source-equivalence proof supersede the historical candidate state below.
+
+The next genuine weekly read was **FAILED**, not accepted: source snapshot read
+then specialist discovery/timezone read ended in a proposed VERA assignment
+awaiting approval instead of a useful briefing. EXP02 did not approve/execute/
+dismiss it. Request/proposal text persists after reload, which does not establish
+current original action status. No protected monthly request/variant inspected.
+
+Original ANT138/3e3b91ee pre-edit packet reserves only the existing E02 snapshot
+tool/narration instructions and original tests/evidence. Candidate shared note
+distinguishes VERA attribution from a separately requested durable assignment.
+It preserves all registry/runtime/authority/domain/source/transport contracts.
+Executed1FAIL/21PASS ->48PASS/two suites proves instruction/transport contracts,
+not model compliance. Actual useful released answer/links/reload remains required.
+[Original evidence](../evidence/ui-delivery/e2-vera-read-review-handoff.md).
+
+Functional source-only repair; Visual unchanged frontend/unverified candidate
+output; Experiential failed released request; Founder Acceptance OPEN. Existing
+closure order, original3018 materialP1/Sales history, all19/nine, historical9/0,
+12/0/4/monthlyUNKNOWNUNRETRIEDUNINSPECTED, ALG and catalogue maturity unchanged.
+
 ## October29 - bounded Calendar source-release reconciliation
 
 3019 receives maina58e9d8d with original source/tests/assets retained and fresh

@@ -35,7 +35,7 @@ MUST_PRESERVE: one original Spine/Harness/Trust/Layer C/Work/Planning/Automation
 ACCEPTANCE_CRITERIA: original confirmation branch displays bounded exact task purposes and original trigger; only existing draft-save approval can proceed; unsupported configuration stays visibly unverified; literal text, decline, original fingerprint and bounded source-binding checks remain intact.
 MOTION_PURPOSE: NONE: no motion change.
 PROTECTED_SEAMS: owner override ANT161/9fd6cc0e covers the original describeConfirm automation_draft import/case and original confirmation summary span, corresponding helper/tests and reviewed changed pins. No other Root, Team Hub, writer, executor, risk, authority or provider source changed.
-INTERNAL_BUILD_IDENTITY: base=3f80ec8f5de5ce990d9f3674f538cf74037bbb0c; source-only=88adf9337561ea338933e37ed159fe65e84a73a1; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; evidence=docs/evidence/exp05-automation-draft-preview.json
+INTERNAL_BUILD_IDENTITY: base=3f80ec8f5de5ce990d9f3674f538cf74037bbb0c; source-only=88adf9337561ea338933e37ed159fe65e84a73a1; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(E06 source layout and E04 canonical current-source release certificate); evidence=docs/evidence/exp05-automation-draft-preview.json
 RELEASE_CHANNEL: development: bounded existing draft-preview repair; final exact head is recorded by the reviewed PR.
 RELEASE_CLASSIFICATION: internal-only: no complete customer outcome or launch announced.
 CUSTOMER_RELEASE_IDENTITY: none: integrated EXP05 and founder evaluation remain incomplete.

@@ -1,5 +1,53 @@
 # Experience 02 — Customer Experience Integration Matrix
 
+## October29 - bounded Calendar source-release reconciliation
+
+3019 receives maina58e9d8d with original source/tests/assets retained and fresh
+118PASS/four suites. Final review/exact-head CI and original Edge/web deployment
+readback remain required. This safe source increment is distinct from native
+zoom/AT, released model compliance, two-cohort, Live and complete-outcome proof;
+those remain PROOF OWED and excluded from LIVE. Earlier blanket source-hold
+wording is superseded only for this bounded increment under existing AGENTS.
+No registry/algorithm/activation promotion;3018 material P1 and Sales-history
+finding remain OPEN. Original19/nine definitions and historical acceptance stay.
+
+## October28 - authorized Calendar read proof and original navigation correction
+
+O01/O02/O05/O14/O16: original3012/21fff source proof and original release
+certificate remain distinct from actual owner QA ANT52/e2015a9a. One ordinary
+read-only Calendar Chat request settled by35.596s observation/UI20s, with real
+partial/unknown-not-zero/source/window, whole business answer/source reload,
+original Calendar destination and native Back. No appointment mutation, scan,
+approval, provider, monthly report retry or other action ran. Initial wrong
+workspace observation was INVALID and excluded. Exact business/source text was
+compared independently of observed transient Done/trace/footer-time chrome;
+the initial unnormalized mismatch remains recorded. One owner/empty-source
+subset only, not general latency, populated/cohort/permission/Live acceptance.
+
+Two observed gaps are now an owning-source navigation correction: existing
+typed Calendar destination added to Bookings, and generic conditional guidance
+acknowledges separately rendered original links. No actual refs/IDs/URLs enter
+model context; original Root stripping/E4 renderer/persistence unchanged.
+Causal3FAIL/84PASS ->134PASS/four suites, scoped lint/pinned detector pass.
+Original-shell synthetic eight DOM combinations plus390 narrow, native
+Tab/Enter/Back/focus/scroll and preserved synthetic Chat draft were inspected.
+Actual1536DOM raster is1535;390DOM height844 raster843; exact1366/1024/900
+rasters verified. Disabled synthetic Chat/actor/source ports are not authentic
+customer/cohort proof. Zoom/AT/current correction source release/model compliance
+remain owed; see original UI record. Source fields never imply action receipt,
+booking attendance/completion or free capacity.
+
+3018 recorded-comms presentation is HELD on material full-shell/cohort/zoom
+review finding PRRT_kwDOSAAXqM6w8IJP; prior honest unverified labels are not a
+waiver. Separate Sales Back-loading ANT161/1117655d remains OPEN. Catalogue3014
+I1 hold is genuinely CLEAR: original3016/4400 migration20010008 applied/read back;
+final2237 required CI and canonical description deployment/readback remain owed.
+No new authority/registry/metric/provider/action activation. ALG03/06/11/12
+Partial,13Unverified; nine3Limited/3Unverified/3ComingSoon/AccessUnverified,
+historical9/0 and12/0/4, protected monthly UNKNOWN/UNRETRIED/uninspected and
+all19/founder acceptance remain unchanged.
+
+
 ## October29 — owner-directed closure-first sequence
 
 Original ANT138/5e3a19cb records the recalibrated plan. All original19 definitions,

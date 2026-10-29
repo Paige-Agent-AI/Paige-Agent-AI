@@ -1,0 +1,77 @@
+{
+  "boundary": "OFFLINE original source components, not authenticated record opening/native persistence",
+  "keyboard": {
+    "boxShadow": "none",
+    "href": "/solo/4343434/sales/agreements?agreement=12345678-1234-4234-8234-123456789012",
+    "outline": "solid",
+    "text": "Open terms & agreements"
+  },
+  "switch": {
+    "status": "PASS_SOURCE_ONLY",
+    "account": "4242424",
+    "oldReferences": 0,
+    "sourceReferences": 0
+  },
+  "afterSwitch": {
+    "clip": {
+      "bottom": 884.4000244140625,
+      "left": 284,
+      "right": 900,
+      "top": 122
+    },
+    "documentScroll": [
+      900,
+      1000
+    ],
+    "focused": "MERIT, agent, Sales & getting paid",
+    "fullyInsideClip": true,
+    "hitIsLink": true,
+    "hitLabel": null,
+    "hitTag": "SPAN",
+    "href": "/solo/4242424/sales/agreements?agreement=12345678-1234-4234-8234-123456789012",
+    "link": {
+      "bottom": 341.8000183105469,
+      "height": 26.5,
+      "left": 483.3000183105469,
+      "right": 659.9250183105469,
+      "top": 315.3000183105469,
+      "width": 176.625,
+      "x": 483.3000183105469,
+      "y": 315.3000183105469
+    },
+    "paigeOpen": "false",
+    "scrollAncestors": [
+      {
+        "className": "th-stream",
+        "client": 762,
+        "role": "region",
+        "scroll": 762
+      },
+      {
+        "className": "tcs-main",
+        "client": 934,
+        "role": null,
+        "scroll": 934
+      },
+      {
+        "className": "",
+        "client": 1000,
+        "role": null,
+        "scroll": 1000
+      },
+      {
+        "className": "light",
+        "client": 1000,
+        "role": null,
+        "scroll": 1000
+      }
+    ],
+    "viewport": [
+      900,
+      1000
+    ]
+  },
+  "route": "Original source link reached explicit offline record boundary with same account/locator; return restored component",
+  "excluded": "Initial transition reads and interrupted pointer actions were NOT a context-switch PASS. Native focus Tab then Return verified4343434→4242424 and original component reset to general with zero old source refs.",
+  "pixel": "UNVERIFIED"
+}

@@ -1,0 +1,2121 @@
+{
+  "boundary": "OFFLINE actual source shell and original components; fictional contexts, not Auth/provider/persistence acceptance",
+  "finalCases": [
+    {
+      "width": 1536,
+      "cohort": "a",
+      "opened": false,
+      "clip": {
+        "bottom": 653.9999923706055,
+        "left": 428,
+        "right": 1536,
+        "top": 121.20000457763672
+      },
+      "documentScroll": [
+        1536,
+        770
+      ],
+      "focused": "MERIT, agent, Sales & getting paid",
+      "fullyInsideClip": true,
+      "hitIsLink": true,
+      "hitLabel": null,
+      "hitTag": "SPAN",
+      "href": "/solo/4242424/sales/agreements?agreement=12345678-1234-4234-8234-123456789012",
+      "link": {
+        "bottom": 303.5,
+        "height": 26.5,
+        "left": 627.2999877929688,
+        "right": 803.9249877929688,
+        "top": 277,
+        "width": 176.625,
+        "x": 627.2999877929688,
+        "y": 277
+      },
+      "paigeOpen": "false",
+      "scrollAncestors": [
+        {
+          "className": "th-stream",
+          "client": 533,
+          "role": "region",
+          "scroll": 533
+        },
+        {
+          "className": "tcs-main",
+          "client": 704,
+          "role": null,
+          "scroll": 704
+        },
+        {
+          "className": "",
+          "client": 770,
+          "role": null,
+          "scroll": 770
+        },
+        {
+          "className": "light",
+          "client": 770,
+          "role": null,
+          "scroll": 770
+        }
+      ],
+      "viewport": [
+        1536,
+        770
+      ],
+      "valid": true
+    },
+    {
+      "width": 1536,
+      "cohort": "a",
+      "opened": true,
+      "clip": {
+        "bottom": 653.9999923706055,
+        "left": 448,
+        "right": 1013.7625122070312,
+        "top": 121.20000457763672
+      },
+      "documentScroll": [
+        1536,
+        770
+      ],
+      "focused": "Direct PAIGE",
+      "fullyInsideClip": true,
+      "hitIsLink": true,
+      "hitLabel": null,
+      "hitTag": "SPAN",
+      "href": "/solo/4242424/sales/agreements?agreement=12345678-1234-4234-8234-123456789012",
+      "link": {
+        "bottom": 341,
+        "height": 26.5,
+        "left": 647.2999877929688,
+        "right": 823.9249877929688,
+        "top": 314.5,
+        "width": 176.625,
+        "x": 647.2999877929688,
+        "y": 314.5
+      },
+      "paigeOpen": "true",
+      "scrollAncestors": [
+        {
+          "className": "th-stream",
+          "client": 533,
+          "role": "region",
+          "scroll": 533
+        },
+        {
+          "className": "tcs-main",
+          "client": 704,
+          "role": null,
+          "scroll": 704
+        },
+        {
+          "className": "",
+          "client": 770,
+          "role": null,
+          "scroll": 770
+        },
+        {
+          "className": "light",
+          "client": 770,
+          "role": null,
+          "scroll": 770
+        }
+      ],
+      "viewport": [
+        1536,
+        770
+      ],
+      "valid": true,
+      "afterFold": {
+        "clip": {
+          "bottom": 653.9999923706055,
+          "left": 448,
+          "right": 1536,
+          "top": 121.20000457763672
+        },
+        "documentScroll": [
+          1536,
+          770
+        ],
+        "focused": "Direct PAIGE",
+        "fullyInsideClip": true,
+        "hitIsLink": true,
+        "hitLabel": null,
+        "hitTag": "SPAN",
+        "href": "/solo/4242424/sales/agreements?agreement=12345678-1234-4234-8234-123456789012",
+        "link": {
+          "bottom": 303.5,
+          "height": 26.5,
+          "left": 647.2999877929688,
+          "right": 823.9249877929688,
+          "top": 277,
+          "width": 176.625,
+          "x": 647.2999877929688,
+          "y": 277
+        },
+        "paigeOpen": "false",
+        "scrollAncestors": [
+          {
+            "className": "th-stream",
+            "client": 533,
+            "role": "region",
+            "scroll": 533
+          },
+          {
+            "className": "tcs-main",
+            "client": 704,
+            "role": null,
+            "scroll": 704
+          },
+          {
+            "className": "",
+            "client": 770,
+            "role": null,
+            "scroll": 770
+          },
+          {
+            "className": "light",
+            "client": 770,
+            "role": null,
+            "scroll": 770
+          }
+        ],
+        "viewport": [
+          1536,
+          770
+        ]
+      }
+    },
+    {
+      "width": 1366,
+      "cohort": "a",
+      "opened": false,
+      "clip": {
+        "bottom": 651.6000289916992,
+        "left": 304,
+        "right": 1366,
+        "top": 121.20000457763672
+      },
+      "documentScroll": [
+        1366,
+        768
+      ],
+      "focused": "MERIT, agent, Sales & getting paid",
+      "fullyInsideClip": true,
+      "hitIsLink": true,
+      "hitLabel": null,
+      "hitTag": "SPAN",
+      "href": "/solo/4242424/sales/agreements?agreement=12345678-1234-4234-8234-123456789012",
+      "link": {
+        "bottom": 303.5,
+        "height": 26.5,
+        "left": 503.3000183105469,
+        "right": 679.9250183105469,
+        "top": 277,
+        "width": 176.625,
+        "x": 503.3000183105469,
+        "y": 277
+      },
+      "paigeOpen": "false",
+      "scrollAncestors": [
+        {
+          "className": "th-stream",
+          "client": 530,
+          "role": "region",
+          "scroll": 530
+        },
+        {
+          "className": "tcs-main",
+          "client": 702,
+          "role": null,
+          "scroll": 702
+        },
+        {
+          "className": "",
+          "client": 768,
+          "role": null,
+          "scroll": 768
+        },
+        {
+          "className": "light",
+          "client": 768,
+          "role": null,
+          "scroll": 768
+        }
+      ],
+      "viewport": [
+        1366,
+        768
+      ],
+      "valid": true
+    },
+    {
+      "width": 1366,
+      "cohort": "a",
+      "opened": true,
+      "clip": {
+        "bottom": 651.6000289916992,
+        "left": 304,
+        "right": 901.8250122070312,
+        "top": 121.20000457763672
+      },
+      "documentScroll": [
+        1366,
+        768
+      ],
+      "focused": "Direct PAIGE",
+      "fullyInsideClip": true,
+      "hitIsLink": true,
+      "hitLabel": null,
+      "hitTag": "SPAN",
+      "href": "/solo/4242424/sales/agreements?agreement=12345678-1234-4234-8234-123456789012",
+      "link": {
+        "bottom": 341,
+        "height": 26.5,
+        "left": 503.3000183105469,
+        "right": 679.9250183105469,
+        "top": 314.5,
+        "width": 176.625,
+        "x": 503.3000183105469,
+        "y": 314.5
+      },
+      "paigeOpen": "true",
+      "scrollAncestors": [
+        {
+          "className": "th-stream",
+          "client": 530,
+          "role": "region",
+          "scroll": 530
+        },
+        {
+          "className": "tcs-main",
+          "client": 702,
+          "role": null,
+          "scroll": 702
+        },
+        {
+          "className": "",
+          "client": 768,
+          "role": null,
+          "scroll": 768
+        },
+        {
+          "className": "light",
+          "client": 768,
+          "role": null,
+          "scroll": 768
+        }
+      ],
+      "viewport": [
+        1366,
+        768
+      ],
+      "valid": true,
+      "afterFold": {
+        "clip": {
+          "bottom": 651.6000289916992,
+          "left": 304,
+          "right": 1366,
+          "top": 121.20000457763672
+        },
+        "documentScroll": [
+          1366,
+          768
+        ],
+        "focused": "Direct PAIGE",
+        "fullyInsideClip": true,
+        "hitIsLink": true,
+        "hitLabel": null,
+        "hitTag": "SPAN",
+        "href": "/solo/4242424/sales/agreements?agreement=12345678-1234-4234-8234-123456789012",
+        "link": {
+          "bottom": 303.5,
+          "height": 26.5,
+          "left": 503.3000183105469,
+          "right": 679.9250183105469,
+          "top": 277,
+          "width": 176.625,
+          "x": 503.3000183105469,
+          "y": 277
+        },
+        "paigeOpen": "false",
+        "scrollAncestors": [
+          {
+            "className": "th-stream",
+            "client": 530,
+            "role": "region",
+            "scroll": 530
+          },
+          {
+            "className": "tcs-main",
+            "client": 702,
+            "role": null,
+            "scroll": 702
+          },
+          {
+            "className": "",
+            "client": 768,
+            "role": null,
+            "scroll": 768
+          },
+          {
+            "className": "light",
+            "client": 768,
+            "role": null,
+            "scroll": 768
+          }
+        ],
+        "viewport": [
+          1366,
+          768
+        ]
+      }
+    },
+    {
+      "width": 1024,
+      "cohort": "a",
+      "opened": false,
+      "clip": {
+        "bottom": 651.6000289916992,
+        "left": 284,
+        "right": 1024,
+        "top": 121.20000457763672
+      },
+      "documentScroll": [
+        1024,
+        768
+      ],
+      "focused": "MERIT, agent, Sales & getting paid",
+      "fullyInsideClip": true,
+      "hitIsLink": true,
+      "hitLabel": null,
+      "hitTag": "SPAN",
+      "href": "/solo/4242424/sales/agreements?agreement=12345678-1234-4234-8234-123456789012",
+      "link": {
+        "bottom": 321.5,
+        "height": 26.5,
+        "left": 483.3000183105469,
+        "right": 659.9250183105469,
+        "top": 295,
+        "width": 176.625,
+        "x": 483.3000183105469,
+        "y": 295
+      },
+      "paigeOpen": "false",
+      "scrollAncestors": [
+        {
+          "className": "th-stream",
+          "client": 530,
+          "role": "region",
+          "scroll": 530
+        },
+        {
+          "className": "tcs-main",
+          "client": 702,
+          "role": null,
+          "scroll": 702
+        },
+        {
+          "className": "",
+          "client": 768,
+          "role": null,
+          "scroll": 768
+        },
+        {
+          "className": "light",
+          "client": 768,
+          "role": null,
+          "scroll": 768
+        }
+      ],
+      "viewport": [
+        1024,
+        768
+      ],
+      "valid": true
+    },
+    {
+      "width": 1024,
+      "cohort": "a",
+      "opened": true,
+      "clip": {
+        "bottom": 651.6000289916992,
+        "left": 284,
+        "right": 1024,
+        "top": 121.20000457763672
+      },
+      "documentScroll": [
+        1024,
+        768
+      ],
+      "focused": "Direct PAIGE",
+      "fullyInsideClip": true,
+      "hitIsLink": false,
+      "hitLabel": "Fold PAIGE conversation",
+      "hitTag": "BUTTON",
+      "href": "/solo/4242424/sales/agreements?agreement=12345678-1234-4234-8234-123456789012",
+      "link": {
+        "bottom": 321.5,
+        "height": 26.5,
+        "left": 483.3000183105469,
+        "right": 659.9250183105469,
+        "top": 295,
+        "width": 176.625,
+        "x": 483.3000183105469,
+        "y": 295
+      },
+      "paigeOpen": "true",
+      "scrollAncestors": [
+        {
+          "className": "th-stream",
+          "client": 530,
+          "role": "region",
+          "scroll": 530
+        },
+        {
+          "className": "tcs-main",
+          "client": 702,
+          "role": null,
+          "scroll": 702
+        },
+        {
+          "className": "",
+          "client": 768,
+          "role": null,
+          "scroll": 768
+        },
+        {
+          "className": "light",
+          "client": 768,
+          "role": null,
+          "scroll": 768
+        }
+      ],
+      "viewport": [
+        1024,
+        768
+      ],
+      "valid": true,
+      "afterFold": {
+        "clip": {
+          "bottom": 651.6000289916992,
+          "left": 284,
+          "right": 1024,
+          "top": 121.20000457763672
+        },
+        "documentScroll": [
+          1024,
+          768
+        ],
+        "focused": "Direct PAIGE",
+        "fullyInsideClip": true,
+        "hitIsLink": true,
+        "hitLabel": null,
+        "hitTag": "SPAN",
+        "href": "/solo/4242424/sales/agreements?agreement=12345678-1234-4234-8234-123456789012",
+        "link": {
+          "bottom": 321.5,
+          "height": 26.5,
+          "left": 483.3000183105469,
+          "right": 659.9250183105469,
+          "top": 295,
+          "width": 176.625,
+          "x": 483.3000183105469,
+          "y": 295
+        },
+        "paigeOpen": "false",
+        "scrollAncestors": [
+          {
+            "className": "th-stream",
+            "client": 530,
+            "role": "region",
+            "scroll": 530
+          },
+          {
+            "className": "tcs-main",
+            "client": 702,
+            "role": null,
+            "scroll": 702
+          },
+          {
+            "className": "",
+            "client": 768,
+            "role": null,
+            "scroll": 768
+          },
+          {
+            "className": "light",
+            "client": 768,
+            "role": null,
+            "scroll": 768
+          }
+        ],
+        "viewport": [
+          1024,
+          768
+        ]
+      }
+    },
+    {
+      "width": 900,
+      "cohort": "a",
+      "opened": false,
+      "clip": {
+        "bottom": 883.6000289916992,
+        "left": 284,
+        "right": 900,
+        "top": 121.20000457763672
+      },
+      "documentScroll": [
+        900,
+        1000
+      ],
+      "focused": "MERIT, agent, Sales & getting paid",
+      "fullyInsideClip": true,
+      "hitIsLink": true,
+      "hitLabel": null,
+      "hitTag": "SPAN",
+      "href": "/solo/4242424/sales/agreements?agreement=12345678-1234-4234-8234-123456789012",
+      "link": {
+        "bottom": 341,
+        "height": 26.5,
+        "left": 483.3000183105469,
+        "right": 659.9250183105469,
+        "top": 314.5,
+        "width": 176.625,
+        "x": 483.3000183105469,
+        "y": 314.5
+      },
+      "paigeOpen": "false",
+      "scrollAncestors": [
+        {
+          "className": "th-stream",
+          "client": 762,
+          "role": "region",
+          "scroll": 762
+        },
+        {
+          "className": "tcs-main",
+          "client": 934,
+          "role": null,
+          "scroll": 934
+        },
+        {
+          "className": "",
+          "client": 1000,
+          "role": null,
+          "scroll": 1000
+        },
+        {
+          "className": "light",
+          "client": 1000,
+          "role": null,
+          "scroll": 1000
+        }
+      ],
+      "viewport": [
+        900,
+        1000
+      ],
+      "valid": true
+    },
+    {
+      "width": 900,
+      "cohort": "a",
+      "opened": true,
+      "clip": {
+        "bottom": 883.6000289916992,
+        "left": 284,
+        "right": 900,
+        "top": 121.20000457763672
+      },
+      "documentScroll": [
+        900,
+        1000
+      ],
+      "focused": "Direct PAIGE",
+      "fullyInsideClip": true,
+      "hitIsLink": false,
+      "hitLabel": null,
+      "hitTag": "DIV",
+      "href": "/solo/4242424/sales/agreements?agreement=12345678-1234-4234-8234-123456789012",
+      "link": {
+        "bottom": 341,
+        "height": 26.5,
+        "left": 483.3000183105469,
+        "right": 659.9250183105469,
+        "top": 314.5,
+        "width": 176.625,
+        "x": 483.3000183105469,
+        "y": 314.5
+      },
+      "paigeOpen": "true",
+      "scrollAncestors": [
+        {
+          "className": "th-stream",
+          "client": 762,
+          "role": "region",
+          "scroll": 762
+        },
+        {
+          "className": "tcs-main",
+          "client": 934,
+          "role": null,
+          "scroll": 934
+        },
+        {
+          "className": "",
+          "client": 1000,
+          "role": null,
+          "scroll": 1000
+        },
+        {
+          "className": "light",
+          "client": 1000,
+          "role": null,
+          "scroll": 1000
+        }
+      ],
+      "viewport": [
+        900,
+        1000
+      ],
+      "valid": true,
+      "afterFold": {
+        "clip": {
+          "bottom": 883.6000289916992,
+          "left": 284,
+          "right": 900,
+          "top": 121.20000457763672
+        },
+        "documentScroll": [
+          900,
+          1000
+        ],
+        "focused": null,
+        "fullyInsideClip": true,
+        "hitIsLink": true,
+        "hitLabel": null,
+        "hitTag": "SPAN",
+        "href": "/solo/4242424/sales/agreements?agreement=12345678-1234-4234-8234-123456789012",
+        "link": {
+          "bottom": 341,
+          "height": 26.5,
+          "left": 483.3000183105469,
+          "right": 659.9250183105469,
+          "top": 314.5,
+          "width": 176.625,
+          "x": 483.3000183105469,
+          "y": 314.5
+        },
+        "paigeOpen": "false",
+        "scrollAncestors": [
+          {
+            "className": "th-stream",
+            "client": 762,
+            "role": "region",
+            "scroll": 762
+          },
+          {
+            "className": "tcs-main",
+            "client": 934,
+            "role": null,
+            "scroll": 934
+          },
+          {
+            "className": "",
+            "client": 1000,
+            "role": null,
+            "scroll": 1000
+          },
+          {
+            "className": "light",
+            "client": 1000,
+            "role": null,
+            "scroll": 1000
+          }
+        ],
+        "viewport": [
+          900,
+          1000
+        ]
+      }
+    },
+    {
+      "width": 1536,
+      "cohort": "b",
+      "opened": false,
+      "clip": {
+        "bottom": 653.9999923706055,
+        "left": 448,
+        "right": 1536,
+        "top": 121.20000457763672
+      },
+      "documentScroll": [
+        1536,
+        770
+      ],
+      "focused": "MERIT, agent, Sales & getting paid",
+      "fullyInsideClip": true,
+      "hitIsLink": true,
+      "hitLabel": null,
+      "hitTag": "SPAN",
+      "href": "/solo/4343434/sales/agreements?agreement=12345678-1234-4234-8234-123456789012",
+      "link": {
+        "bottom": 303.5,
+        "height": 26.5,
+        "left": 647.2999877929688,
+        "right": 823.9249877929688,
+        "top": 277,
+        "width": 176.625,
+        "x": 647.2999877929688,
+        "y": 277
+      },
+      "paigeOpen": "false",
+      "scrollAncestors": [
+        {
+          "className": "th-stream",
+          "client": 533,
+          "role": "region",
+          "scroll": 533
+        },
+        {
+          "className": "tcs-main",
+          "client": 704,
+          "role": null,
+          "scroll": 704
+        },
+        {
+          "className": "",
+          "client": 770,
+          "role": null,
+          "scroll": 770
+        },
+        {
+          "className": "light",
+          "client": 770,
+          "role": null,
+          "scroll": 770
+        }
+      ],
+      "viewport": [
+        1536,
+        770
+      ],
+      "valid": true
+    },
+    {
+      "width": 1536,
+      "cohort": "b",
+      "opened": true,
+      "clip": {
+        "bottom": 653.9999923706055,
+        "left": 448,
+        "right": 1013.7625122070312,
+        "top": 121.20000457763672
+      },
+      "documentScroll": [
+        1536,
+        770
+      ],
+      "focused": "Direct PAIGE",
+      "fullyInsideClip": true,
+      "hitIsLink": true,
+      "hitLabel": null,
+      "hitTag": "SPAN",
+      "href": "/solo/4343434/sales/agreements?agreement=12345678-1234-4234-8234-123456789012",
+      "link": {
+        "bottom": 341,
+        "height": 26.5,
+        "left": 647.2999877929688,
+        "right": 823.9249877929688,
+        "top": 314.5,
+        "width": 176.625,
+        "x": 647.2999877929688,
+        "y": 314.5
+      },
+      "paigeOpen": "true",
+      "scrollAncestors": [
+        {
+          "className": "th-stream",
+          "client": 533,
+          "role": "region",
+          "scroll": 533
+        },
+        {
+          "className": "tcs-main",
+          "client": 704,
+          "role": null,
+          "scroll": 704
+        },
+        {
+          "className": "",
+          "client": 770,
+          "role": null,
+          "scroll": 770
+        },
+        {
+          "className": "light",
+          "client": 770,
+          "role": null,
+          "scroll": 770
+        }
+      ],
+      "viewport": [
+        1536,
+        770
+      ],
+      "valid": true,
+      "afterFold": {
+        "clip": {
+          "bottom": 653.9999923706055,
+          "left": 448,
+          "right": 1536,
+          "top": 121.20000457763672
+        },
+        "documentScroll": [
+          1536,
+          770
+        ],
+        "focused": null,
+        "fullyInsideClip": true,
+        "hitIsLink": true,
+        "hitLabel": null,
+        "hitTag": "SPAN",
+        "href": "/solo/4343434/sales/agreements?agreement=12345678-1234-4234-8234-123456789012",
+        "link": {
+          "bottom": 303.5,
+          "height": 26.5,
+          "left": 647.2999877929688,
+          "right": 823.9249877929688,
+          "top": 277,
+          "width": 176.625,
+          "x": 647.2999877929688,
+          "y": 277
+        },
+        "paigeOpen": "false",
+        "scrollAncestors": [
+          {
+            "className": "th-stream",
+            "client": 533,
+            "role": "region",
+            "scroll": 533
+          },
+          {
+            "className": "tcs-main",
+            "client": 704,
+            "role": null,
+            "scroll": 704
+          },
+          {
+            "className": "",
+            "client": 770,
+            "role": null,
+            "scroll": 770
+          },
+          {
+            "className": "light",
+            "client": 770,
+            "role": null,
+            "scroll": 770
+          }
+        ],
+        "viewport": [
+          1536,
+          770
+        ]
+      }
+    },
+    {
+      "width": 1366,
+      "cohort": "b",
+      "opened": false,
+      "clip": {
+        "bottom": 651.6000289916992,
+        "left": 304,
+        "right": 1366,
+        "top": 121.20000457763672
+      },
+      "documentScroll": [
+        1366,
+        768
+      ],
+      "focused": "MERIT, agent, Sales & getting paid",
+      "fullyInsideClip": true,
+      "hitIsLink": true,
+      "hitLabel": null,
+      "hitTag": "SPAN",
+      "href": "/solo/4343434/sales/agreements?agreement=12345678-1234-4234-8234-123456789012",
+      "link": {
+        "bottom": 303.5,
+        "height": 26.5,
+        "left": 503.3000183105469,
+        "right": 679.9250183105469,
+        "top": 277,
+        "width": 176.625,
+        "x": 503.3000183105469,
+        "y": 277
+      },
+      "paigeOpen": "false",
+      "scrollAncestors": [
+        {
+          "className": "th-stream",
+          "client": 530,
+          "role": "region",
+          "scroll": 530
+        },
+        {
+          "className": "tcs-main",
+          "client": 702,
+          "role": null,
+          "scroll": 702
+        },
+        {
+          "className": "",
+          "client": 768,
+          "role": null,
+          "scroll": 768
+        },
+        {
+          "className": "light",
+          "client": 768,
+          "role": null,
+          "scroll": 768
+        }
+      ],
+      "viewport": [
+        1366,
+        768
+      ],
+      "valid": true
+    },
+    {
+      "width": 1366,
+      "cohort": "b",
+      "opened": true,
+      "clip": {
+        "bottom": 651.6000289916992,
+        "left": 304,
+        "right": 901.8250122070312,
+        "top": 121.20000457763672
+      },
+      "documentScroll": [
+        1366,
+        768
+      ],
+      "focused": "Direct PAIGE",
+      "fullyInsideClip": true,
+      "hitIsLink": true,
+      "hitLabel": null,
+      "hitTag": "SPAN",
+      "href": "/solo/4343434/sales/agreements?agreement=12345678-1234-4234-8234-123456789012",
+      "link": {
+        "bottom": 341,
+        "height": 26.5,
+        "left": 503.3000183105469,
+        "right": 679.9250183105469,
+        "top": 314.5,
+        "width": 176.625,
+        "x": 503.3000183105469,
+        "y": 314.5
+      },
+      "paigeOpen": "true",
+      "scrollAncestors": [
+        {
+          "className": "th-stream",
+          "client": 530,
+          "role": "region",
+          "scroll": 530
+        },
+        {
+          "className": "tcs-main",
+          "client": 702,
+          "role": null,
+          "scroll": 702
+        },
+        {
+          "className": "",
+          "client": 768,
+          "role": null,
+          "scroll": 768
+        },
+        {
+          "className": "light",
+          "client": 768,
+          "role": null,
+          "scroll": 768
+        }
+      ],
+      "viewport": [
+        1366,
+        768
+      ],
+      "valid": true,
+      "afterFold": {
+        "clip": {
+          "bottom": 651.6000289916992,
+          "left": 304,
+          "right": 1366,
+          "top": 121.20000457763672
+        },
+        "documentScroll": [
+          1366,
+          768
+        ],
+        "focused": null,
+        "fullyInsideClip": true,
+        "hitIsLink": true,
+        "hitLabel": null,
+        "hitTag": "SPAN",
+        "href": "/solo/4343434/sales/agreements?agreement=12345678-1234-4234-8234-123456789012",
+        "link": {
+          "bottom": 303.5,
+          "height": 26.5,
+          "left": 503.3000183105469,
+          "right": 679.9250183105469,
+          "top": 277,
+          "width": 176.625,
+          "x": 503.3000183105469,
+          "y": 277
+        },
+        "paigeOpen": "false",
+        "scrollAncestors": [
+          {
+            "className": "th-stream",
+            "client": 530,
+            "role": "region",
+            "scroll": 530
+          },
+          {
+            "className": "tcs-main",
+            "client": 702,
+            "role": null,
+            "scroll": 702
+          },
+          {
+            "className": "",
+            "client": 768,
+            "role": null,
+            "scroll": 768
+          },
+          {
+            "className": "light",
+            "client": 768,
+            "role": null,
+            "scroll": 768
+          }
+        ],
+        "viewport": [
+          1366,
+          768
+        ]
+      }
+    },
+    {
+      "width": 1024,
+      "cohort": "b",
+      "opened": false,
+      "clip": {
+        "bottom": 651.6000289916992,
+        "left": 284,
+        "right": 1024,
+        "top": 121.20000457763672
+      },
+      "documentScroll": [
+        1024,
+        768
+      ],
+      "focused": "MERIT, agent, Sales & getting paid",
+      "fullyInsideClip": true,
+      "hitIsLink": true,
+      "hitLabel": null,
+      "hitTag": "SPAN",
+      "href": "/solo/4343434/sales/agreements?agreement=12345678-1234-4234-8234-123456789012",
+      "link": {
+        "bottom": 321.5,
+        "height": 26.5,
+        "left": 483.3000183105469,
+        "right": 659.9250183105469,
+        "top": 295,
+        "width": 176.625,
+        "x": 483.3000183105469,
+        "y": 295
+      },
+      "paigeOpen": "false",
+      "scrollAncestors": [
+        {
+          "className": "th-stream",
+          "client": 530,
+          "role": "region",
+          "scroll": 530
+        },
+        {
+          "className": "tcs-main",
+          "client": 702,
+          "role": null,
+          "scroll": 702
+        },
+        {
+          "className": "",
+          "client": 768,
+          "role": null,
+          "scroll": 768
+        },
+        {
+          "className": "light",
+          "client": 768,
+          "role": null,
+          "scroll": 768
+        }
+      ],
+      "viewport": [
+        1024,
+        768
+      ],
+      "valid": true
+    },
+    {
+      "width": 1024,
+      "cohort": "b",
+      "opened": true,
+      "clip": {
+        "bottom": 651.6000289916992,
+        "left": 284,
+        "right": 1024,
+        "top": 121.20000457763672
+      },
+      "documentScroll": [
+        1024,
+        768
+      ],
+      "focused": "Direct PAIGE",
+      "fullyInsideClip": true,
+      "hitIsLink": false,
+      "hitLabel": "Fold PAIGE conversation",
+      "hitTag": "BUTTON",
+      "href": "/solo/4343434/sales/agreements?agreement=12345678-1234-4234-8234-123456789012",
+      "link": {
+        "bottom": 321.5,
+        "height": 26.5,
+        "left": 483.3000183105469,
+        "right": 659.9250183105469,
+        "top": 295,
+        "width": 176.625,
+        "x": 483.3000183105469,
+        "y": 295
+      },
+      "paigeOpen": "true",
+      "scrollAncestors": [
+        {
+          "className": "th-stream",
+          "client": 530,
+          "role": "region",
+          "scroll": 530
+        },
+        {
+          "className": "tcs-main",
+          "client": 702,
+          "role": null,
+          "scroll": 702
+        },
+        {
+          "className": "",
+          "client": 768,
+          "role": null,
+          "scroll": 768
+        },
+        {
+          "className": "light",
+          "client": 768,
+          "role": null,
+          "scroll": 768
+        }
+      ],
+      "viewport": [
+        1024,
+        768
+      ],
+      "valid": true,
+      "afterFold": {
+        "clip": {
+          "bottom": 651.6000289916992,
+          "left": 284,
+          "right": 1024,
+          "top": 121.20000457763672
+        },
+        "documentScroll": [
+          1024,
+          768
+        ],
+        "focused": null,
+        "fullyInsideClip": true,
+        "hitIsLink": true,
+        "hitLabel": null,
+        "hitTag": "SPAN",
+        "href": "/solo/4343434/sales/agreements?agreement=12345678-1234-4234-8234-123456789012",
+        "link": {
+          "bottom": 321.5,
+          "height": 26.5,
+          "left": 483.3000183105469,
+          "right": 659.9250183105469,
+          "top": 295,
+          "width": 176.625,
+          "x": 483.3000183105469,
+          "y": 295
+        },
+        "paigeOpen": "false",
+        "scrollAncestors": [
+          {
+            "className": "th-stream",
+            "client": 530,
+            "role": "region",
+            "scroll": 530
+          },
+          {
+            "className": "tcs-main",
+            "client": 702,
+            "role": null,
+            "scroll": 702
+          },
+          {
+            "className": "",
+            "client": 768,
+            "role": null,
+            "scroll": 768
+          },
+          {
+            "className": "light",
+            "client": 768,
+            "role": null,
+            "scroll": 768
+          }
+        ],
+        "viewport": [
+          1024,
+          768
+        ]
+      }
+    },
+    {
+      "width": 900,
+      "cohort": "b",
+      "opened": false,
+      "clip": {
+        "bottom": 883.6000289916992,
+        "left": 284,
+        "right": 900,
+        "top": 121.20000457763672
+      },
+      "documentScroll": [
+        900,
+        1000
+      ],
+      "focused": "MERIT, agent, Sales & getting paid",
+      "fullyInsideClip": true,
+      "hitIsLink": true,
+      "hitLabel": null,
+      "hitTag": "SPAN",
+      "href": "/solo/4343434/sales/agreements?agreement=12345678-1234-4234-8234-123456789012",
+      "link": {
+        "bottom": 341,
+        "height": 26.5,
+        "left": 483.3000183105469,
+        "right": 659.9250183105469,
+        "top": 314.5,
+        "width": 176.625,
+        "x": 483.3000183105469,
+        "y": 314.5
+      },
+      "paigeOpen": "false",
+      "scrollAncestors": [
+        {
+          "className": "th-stream",
+          "client": 762,
+          "role": "region",
+          "scroll": 762
+        },
+        {
+          "className": "tcs-main",
+          "client": 934,
+          "role": null,
+          "scroll": 934
+        },
+        {
+          "className": "",
+          "client": 1000,
+          "role": null,
+          "scroll": 1000
+        },
+        {
+          "className": "light",
+          "client": 1000,
+          "role": null,
+          "scroll": 1000
+        }
+      ],
+      "viewport": [
+        900,
+        1000
+      ],
+      "valid": true
+    },
+    {
+      "width": 900,
+      "cohort": "b",
+      "opened": true,
+      "clip": {
+        "bottom": 883.6000289916992,
+        "left": 284,
+        "right": 900,
+        "top": 121.20000457763672
+      },
+      "documentScroll": [
+        900,
+        1000
+      ],
+      "focused": "Direct PAIGE",
+      "fullyInsideClip": true,
+      "hitIsLink": false,
+      "hitLabel": null,
+      "hitTag": "DIV",
+      "href": "/solo/4343434/sales/agreements?agreement=12345678-1234-4234-8234-123456789012",
+      "link": {
+        "bottom": 341,
+        "height": 26.5,
+        "left": 483.3000183105469,
+        "right": 659.9250183105469,
+        "top": 314.5,
+        "width": 176.625,
+        "x": 483.3000183105469,
+        "y": 314.5
+      },
+      "paigeOpen": "true",
+      "scrollAncestors": [
+        {
+          "className": "th-stream",
+          "client": 762,
+          "role": "region",
+          "scroll": 762
+        },
+        {
+          "className": "tcs-main",
+          "client": 934,
+          "role": null,
+          "scroll": 934
+        },
+        {
+          "className": "",
+          "client": 1000,
+          "role": null,
+          "scroll": 1000
+        },
+        {
+          "className": "light",
+          "client": 1000,
+          "role": null,
+          "scroll": 1000
+        }
+      ],
+      "viewport": [
+        900,
+        1000
+      ],
+      "valid": true,
+      "afterFold": {
+        "clip": {
+          "bottom": 883.6000289916992,
+          "left": 284,
+          "right": 900,
+          "top": 121.20000457763672
+        },
+        "documentScroll": [
+          900,
+          1000
+        ],
+        "focused": null,
+        "fullyInsideClip": true,
+        "hitIsLink": true,
+        "hitLabel": null,
+        "hitTag": "SPAN",
+        "href": "/solo/4343434/sales/agreements?agreement=12345678-1234-4234-8234-123456789012",
+        "link": {
+          "bottom": 341,
+          "height": 26.5,
+          "left": 483.3000183105469,
+          "right": 659.9250183105469,
+          "top": 314.5,
+          "width": 176.625,
+          "x": 483.3000183105469,
+          "y": 314.5
+        },
+        "paigeOpen": "false",
+        "scrollAncestors": [
+          {
+            "className": "th-stream",
+            "client": 762,
+            "role": "region",
+            "scroll": 762
+          },
+          {
+            "className": "tcs-main",
+            "client": 934,
+            "role": null,
+            "scroll": 934
+          },
+          {
+            "className": "",
+            "client": 1000,
+            "role": null,
+            "scroll": 1000
+          },
+          {
+            "className": "light",
+            "client": 1000,
+            "role": null,
+            "scroll": 1000
+          }
+        ],
+        "viewport": [
+          900,
+          1000
+        ]
+      }
+    }
+  ],
+  "excludedInitialAttempts": [
+    {
+      "width": 1536,
+      "cohort": "a",
+      "opened": false,
+      "clip": {
+        "bottom": 653.9999923706055,
+        "left": 428,
+        "right": 1013.7625122070312,
+        "top": 121.20000457763672
+      },
+      "documentScroll": [
+        1536,
+        770
+      ],
+      "fullyInsideClip": true,
+      "href": "/solo/4242424/sales/agreements?agreement=12345678-1234-4234-8234-123456789012",
+      "link": {
+        "bottom": 341,
+        "height": 26.5,
+        "left": 627.2999877929688,
+        "right": 803.9249877929688,
+        "top": 314.5,
+        "width": 176.625,
+        "x": 627.2999877929688,
+        "y": 314.5
+      },
+      "paigeOpen": "true",
+      "scrollAncestors": [
+        {
+          "className": "th-stream",
+          "client": 533,
+          "role": "region",
+          "scroll": 533
+        },
+        {
+          "className": "tcs-main",
+          "client": 704,
+          "role": null,
+          "scroll": 704
+        },
+        {
+          "className": "",
+          "client": 770,
+          "role": null,
+          "scroll": 770
+        },
+        {
+          "className": "light",
+          "client": 770,
+          "role": null,
+          "scroll": 770
+        }
+      ],
+      "viewport": [
+        1536,
+        770
+      ],
+      "valid": false,
+      "note": "INVALID harness action: Direct PAIGE opens; Fold is required to close"
+    },
+    {
+      "width": 1536,
+      "cohort": "a",
+      "opened": true,
+      "clip": {
+        "bottom": 653.9999923706055,
+        "left": 428,
+        "right": 1013.7625122070312,
+        "top": 121.20000457763672
+      },
+      "documentScroll": [
+        1536,
+        770
+      ],
+      "fullyInsideClip": true,
+      "href": "/solo/4242424/sales/agreements?agreement=12345678-1234-4234-8234-123456789012",
+      "link": {
+        "bottom": 341,
+        "height": 26.5,
+        "left": 627.2999877929688,
+        "right": 803.9249877929688,
+        "top": 314.5,
+        "width": 176.625,
+        "x": 627.2999877929688,
+        "y": 314.5
+      },
+      "paigeOpen": "true",
+      "scrollAncestors": [
+        {
+          "className": "th-stream",
+          "client": 533,
+          "role": "region",
+          "scroll": 533
+        },
+        {
+          "className": "tcs-main",
+          "client": 704,
+          "role": null,
+          "scroll": 704
+        },
+        {
+          "className": "",
+          "client": 770,
+          "role": null,
+          "scroll": 770
+        },
+        {
+          "className": "light",
+          "client": 770,
+          "role": null,
+          "scroll": 770
+        }
+      ],
+      "viewport": [
+        1536,
+        770
+      ],
+      "valid": true,
+      "note": ""
+    },
+    {
+      "width": 1366,
+      "cohort": "a",
+      "opened": false,
+      "clip": {
+        "bottom": 651.6000289916992,
+        "left": 284,
+        "right": 901.8250122070312,
+        "top": 121.20000457763672
+      },
+      "documentScroll": [
+        1366,
+        768
+      ],
+      "fullyInsideClip": true,
+      "href": "/solo/4242424/sales/agreements?agreement=12345678-1234-4234-8234-123456789012",
+      "link": {
+        "bottom": 341,
+        "height": 26.5,
+        "left": 483.3000183105469,
+        "right": 659.9250183105469,
+        "top": 314.5,
+        "width": 176.625,
+        "x": 483.3000183105469,
+        "y": 314.5
+      },
+      "paigeOpen": "true",
+      "scrollAncestors": [
+        {
+          "className": "th-stream",
+          "client": 530,
+          "role": "region",
+          "scroll": 530
+        },
+        {
+          "className": "tcs-main",
+          "client": 702,
+          "role": null,
+          "scroll": 702
+        },
+        {
+          "className": "",
+          "client": 768,
+          "role": null,
+          "scroll": 768
+        },
+        {
+          "className": "light",
+          "client": 768,
+          "role": null,
+          "scroll": 768
+        }
+      ],
+      "viewport": [
+        1366,
+        768
+      ],
+      "valid": false,
+      "note": "INVALID harness action: Direct PAIGE opens; Fold is required to close"
+    },
+    {
+      "width": 1366,
+      "cohort": "a",
+      "opened": true,
+      "clip": {
+        "bottom": 651.6000289916992,
+        "left": 284,
+        "right": 901.8250122070312,
+        "top": 121.20000457763672
+      },
+      "documentScroll": [
+        1366,
+        768
+      ],
+      "fullyInsideClip": true,
+      "href": "/solo/4242424/sales/agreements?agreement=12345678-1234-4234-8234-123456789012",
+      "link": {
+        "bottom": 341,
+        "height": 26.5,
+        "left": 483.3000183105469,
+        "right": 659.9250183105469,
+        "top": 314.5,
+        "width": 176.625,
+        "x": 483.3000183105469,
+        "y": 314.5
+      },
+      "paigeOpen": "true",
+      "scrollAncestors": [
+        {
+          "className": "th-stream",
+          "client": 530,
+          "role": "region",
+          "scroll": 530
+        },
+        {
+          "className": "tcs-main",
+          "client": 702,
+          "role": null,
+          "scroll": 702
+        },
+        {
+          "className": "",
+          "client": 768,
+          "role": null,
+          "scroll": 768
+        },
+        {
+          "className": "light",
+          "client": 768,
+          "role": null,
+          "scroll": 768
+        }
+      ],
+      "viewport": [
+        1366,
+        768
+      ],
+      "valid": true,
+      "note": ""
+    },
+    {
+      "width": 1536,
+      "cohort": "a",
+      "opened": false,
+      "clip": {
+        "bottom": 653.9999923706055,
+        "left": 448,
+        "right": 1536,
+        "top": 121.20000457763672
+      },
+      "documentScroll": [
+        1536,
+        770
+      ],
+      "focused": "MERIT, agent, Sales & getting paid",
+      "fullyInsideClip": true,
+      "hitIsLink": true,
+      "hitLabel": null,
+      "hitTag": "SPAN",
+      "href": "/solo/4242424/sales/agreements?agreement=12345678-1234-4234-8234-123456789012",
+      "link": {
+        "bottom": 303.5,
+        "height": 26.5,
+        "left": 647.2999877929688,
+        "right": 823.9249877929688,
+        "top": 277,
+        "width": 176.625,
+        "x": 647.2999877929688,
+        "y": 277
+      },
+      "paigeOpen": "false",
+      "scrollAncestors": [
+        {
+          "className": "th-stream",
+          "client": 533,
+          "role": "region",
+          "scroll": 533
+        },
+        {
+          "className": "tcs-main",
+          "client": 704,
+          "role": null,
+          "scroll": 704
+        },
+        {
+          "className": "",
+          "client": 770,
+          "role": null,
+          "scroll": 770
+        },
+        {
+          "className": "light",
+          "client": 770,
+          "role": null,
+          "scroll": 770
+        }
+      ],
+      "viewport": [
+        1536,
+        770
+      ],
+      "valid": true
+    },
+    {
+      "width": 1366,
+      "cohort": "a",
+      "opened": false,
+      "clip": {
+        "bottom": 651.6000289916992,
+        "left": 304,
+        "right": 1366,
+        "top": 121.20000457763672
+      },
+      "documentScroll": [
+        1366,
+        768
+      ],
+      "focused": "MERIT, agent, Sales & getting paid",
+      "fullyInsideClip": true,
+      "hitIsLink": true,
+      "hitLabel": null,
+      "hitTag": "SPAN",
+      "href": "/solo/4242424/sales/agreements?agreement=12345678-1234-4234-8234-123456789012",
+      "link": {
+        "bottom": 303.5,
+        "height": 26.5,
+        "left": 503.3000183105469,
+        "right": 679.9250183105469,
+        "top": 277,
+        "width": 176.625,
+        "x": 503.3000183105469,
+        "y": 277
+      },
+      "paigeOpen": "false",
+      "scrollAncestors": [
+        {
+          "className": "th-stream",
+          "client": 530,
+          "role": "region",
+          "scroll": 530
+        },
+        {
+          "className": "tcs-main",
+          "client": 702,
+          "role": null,
+          "scroll": 702
+        },
+        {
+          "className": "",
+          "client": 768,
+          "role": null,
+          "scroll": 768
+        },
+        {
+          "className": "light",
+          "client": 768,
+          "role": null,
+          "scroll": 768
+        }
+      ],
+      "viewport": [
+        1366,
+        768
+      ],
+      "valid": true
+    },
+    {
+      "width": 1024,
+      "cohort": "a",
+      "opened": false,
+      "clip": {
+        "bottom": 651.6000289916992,
+        "left": 284,
+        "right": 1024,
+        "top": 121.20000457763672
+      },
+      "documentScroll": [
+        1024,
+        768
+      ],
+      "focused": null,
+      "fullyInsideClip": true,
+      "hitIsLink": true,
+      "hitLabel": null,
+      "hitTag": "SPAN",
+      "href": "/solo/4242424/sales/agreements?agreement=12345678-1234-4234-8234-123456789012",
+      "link": {
+        "bottom": 321.5,
+        "height": 26.5,
+        "left": 483.3000183105469,
+        "right": 659.9250183105469,
+        "top": 295,
+        "width": 176.625,
+        "x": 483.3000183105469,
+        "y": 295
+      },
+      "paigeOpen": "false",
+      "scrollAncestors": [
+        {
+          "className": "th-stream",
+          "client": 530,
+          "role": "region",
+          "scroll": 530
+        },
+        {
+          "className": "tcs-main",
+          "client": 702,
+          "role": null,
+          "scroll": 702
+        },
+        {
+          "className": "",
+          "client": 768,
+          "role": null,
+          "scroll": 768
+        },
+        {
+          "className": "light",
+          "client": 768,
+          "role": null,
+          "scroll": 768
+        }
+      ],
+      "viewport": [
+        1024,
+        768
+      ],
+      "valid": true
+    },
+    {
+      "width": 1024,
+      "cohort": "a",
+      "opened": true,
+      "missingSource": true,
+      "valid": false
+    },
+    {
+      "width": 900,
+      "cohort": "a",
+      "opened": false,
+      "missingSource": true,
+      "valid": false
+    },
+    {
+      "width": 1024,
+      "cohort": "a",
+      "opened": false,
+      "clip": {
+        "bottom": 651.6000289916992,
+        "left": 284,
+        "right": 1024,
+        "top": 121.20000457763672
+      },
+      "documentScroll": [
+        1024,
+        768
+      ],
+      "focused": "MERIT, agent, Sales & getting paid",
+      "fullyInsideClip": true,
+      "hitIsLink": true,
+      "hitLabel": null,
+      "hitTag": "SPAN",
+      "href": "/solo/4242424/sales/agreements?agreement=12345678-1234-4234-8234-123456789012",
+      "link": {
+        "bottom": 321.5,
+        "height": 26.5,
+        "left": 483.3000183105469,
+        "right": 659.9250183105469,
+        "top": 295,
+        "width": 176.625,
+        "x": 483.3000183105469,
+        "y": 295
+      },
+      "paigeOpen": "false",
+      "scrollAncestors": [
+        {
+          "className": "th-stream",
+          "client": 530,
+          "role": "region",
+          "scroll": 530
+        },
+        {
+          "className": "tcs-main",
+          "client": 702,
+          "role": null,
+          "scroll": 702
+        },
+        {
+          "className": "",
+          "client": 768,
+          "role": null,
+          "scroll": 768
+        },
+        {
+          "className": "light",
+          "client": 768,
+          "role": null,
+          "scroll": 768
+        }
+      ],
+      "viewport": [
+        1024,
+        768
+      ],
+      "valid": true
+    },
+    {
+      "width": 1024,
+      "cohort": "a",
+      "opened": true,
+      "clip": {
+        "bottom": 651.6000289916992,
+        "left": 284,
+        "right": 1024,
+        "top": 121.20000457763672
+      },
+      "documentScroll": [
+        1024,
+        768
+      ],
+      "focused": "Direct PAIGE",
+      "fullyInsideClip": true,
+      "hitIsLink": false,
+      "hitLabel": "Fold PAIGE conversation",
+      "hitTag": "BUTTON",
+      "href": "/solo/4242424/sales/agreements?agreement=12345678-1234-4234-8234-123456789012",
+      "link": {
+        "bottom": 321.5,
+        "height": 26.5,
+        "left": 483.3000183105469,
+        "right": 659.9250183105469,
+        "top": 295,
+        "width": 176.625,
+        "x": 483.3000183105469,
+        "y": 295
+      },
+      "paigeOpen": "true",
+      "scrollAncestors": [
+        {
+          "className": "th-stream",
+          "client": 530,
+          "role": "region",
+          "scroll": 530
+        },
+        {
+          "className": "tcs-main",
+          "client": 702,
+          "role": null,
+          "scroll": 702
+        },
+        {
+          "className": "",
+          "client": 768,
+          "role": null,
+          "scroll": 768
+        },
+        {
+          "className": "light",
+          "client": 768,
+          "role": null,
+          "scroll": 768
+        }
+      ],
+      "viewport": [
+        1024,
+        768
+      ],
+      "valid": true
+    },
+    {
+      "width": 1024,
+      "cohort": "a",
+      "opened": false,
+      "clip": {
+        "bottom": 651.6000289916992,
+        "left": 284,
+        "right": 1024,
+        "top": 121.20000457763672
+      },
+      "documentScroll": [
+        1024,
+        768
+      ],
+      "focused": "MERIT, agent, Sales & getting paid",
+      "fullyInsideClip": true,
+      "hitIsLink": true,
+      "hitLabel": null,
+      "hitTag": "SPAN",
+      "href": "/solo/4242424/sales/agreements?agreement=12345678-1234-4234-8234-123456789012",
+      "link": {
+        "bottom": 321.5,
+        "height": 26.5,
+        "left": 483.3000183105469,
+        "right": 659.9250183105469,
+        "top": 295,
+        "width": 176.625,
+        "x": 483.3000183105469,
+        "y": 295
+      },
+      "paigeOpen": "false",
+      "scrollAncestors": [
+        {
+          "className": "th-stream",
+          "client": 530,
+          "role": "region",
+          "scroll": 530
+        },
+        {
+          "className": "tcs-main",
+          "client": 702,
+          "role": null,
+          "scroll": 702
+        },
+        {
+          "className": "",
+          "client": 768,
+          "role": null,
+          "scroll": 768
+        },
+        {
+          "className": "light",
+          "client": 768,
+          "role": null,
+          "scroll": 768
+        }
+      ],
+      "viewport": [
+        1024,
+        768
+      ],
+      "valid": true
+    }
+  ],
+  "capture": "UNVERIFIED: screenshot unavailable",
+  "pointer": "Interrupted pointer commands excluded; state reread, original keyboard actions used"
+}

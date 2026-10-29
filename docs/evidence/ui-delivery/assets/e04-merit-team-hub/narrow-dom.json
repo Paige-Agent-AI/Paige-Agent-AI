@@ -1,0 +1,18 @@
+{
+  "viewport": {
+    "clientHeight": 844,
+    "clientWidth": 390,
+    "scrollWidth": 390
+  },
+  "row": {
+    "link": {
+      "height": 26.5,
+      "href": "/solo/4242424/sales/agreements?agreement=12345678-1234-4234-8234-123456789012",
+      "width": 180.6875,
+      "x": 58,
+      "y": 285.6000061035156
+    },
+    "rowWidth": 364.3999938964844
+  },
+  "evidenceClass": "Actual 390px iframe rendered DOM and original component; no image, backend or authenticated proof"
+}

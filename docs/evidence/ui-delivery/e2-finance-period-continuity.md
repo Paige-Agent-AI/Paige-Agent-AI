@@ -7,26 +7,26 @@ MATERIAL_FLOW_CHANGE: NO: repair the existing view filter and return behavior; n
 FLOW_PROTOTYPE: NOT_REQUIRED: unchanged existing Finance navigation/filter flow, not a new review or execution workflow.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: an eligible SOLO owner can inspect the same Sales reporting window after returning to Finance.
 VISUAL_DIRECTION: PASS: preserve Mineral/Obsidian, Schibsted, original VERA attribution and Finance hierarchy; no markup, style, copy or motion change.
-AUTOMATED_EVIDENCE: PASS: original component baseline42PASS; causal7FAIL/51PASS ->58PASS; adjacent shell test then caught actor/business reset1FAIL/114PASS; corrected116PASS across five original suites, retaining all incumbent assertions and adding explicit foreign-view reset before reads.
-STATIC_EVIDENCE: PASS: scoped ESLint0, unchanged pinned Impeccable4.1.0 detector0 and whitespace pass. Initial local type ratchet FAILED on seven missing-package diagnostics outside this patch; isolated exact-lock installation/recheck and final hosted gates remain required, no baseline or guard edits.
-RENDERED_EVIDENCE: UNVERIFIED: original full SoloApp/Finance harness actually rendered and selected week -> Forecast retained the URL; control disconnected during reload. Complete candidate desktop/narrow capture and interaction evidence remain owed; older release captures are not this candidate.
-BEHAVIORAL_EVIDENCE: PASS: original five-suite routing/reader/permission/source tests116PASS, plus actual local week -> Forecast navigation. Native full reload/Back proof remains UNVERIFIED after browser disconnection.
+AUTOMATED_EVIDENCE: PASS: original component baseline42PASS; causal7FAIL/51PASS ->58PASS; adjacent shell caught actor/business reset1FAIL/114PASS, corrected without weakening it. Fresh isolated exact-lock124PASS/six original suites including provisioning8, retaining all incumbent assertions and explicit foreign-view reset before reads.
+STATIC_EVIDENCE: PASS: scoped ESLint0, pinned Impeccable4.1.0 detector0, parity SP1-SP5/all original hostile and legitimate controls, whitespace/UIguard. Initial stale-dependency type failure retained; isolated exact current-lock install then unchanged type ratchet PASS baseline10/current6/no-new. Prior/shared folders, lock and guard conserved; final hosted gates remain separate.
+RENDERED_EVIDENCE: PASS: original full SoloApp/Finance native captures at all8 prescribed CSS configurations and390x844, same Schibsted/VERA/scroll, no document overflow. Separate action/capture calls verify actual open/folded state; native1536 DOM raster1535x770 and390 DOM raster390x843 retained without resizing. Neutral desktop/narrow images below.
+BEHAVIORAL_EVIDENCE: PASS: actual local week -> Forecast -> full reload -> native Back retains week; fresh source address and visible selector agree. Native Forward/Back preserve synthetic unsent value/focus/caret.390px keyboard End reaches Forecast with selected visible focus ring. These are original-shell synthetic transports, not customer acceptance.
 AUTHENTICATED_RUNTIME: UNVERIFIED: actual released predecessor exposed week -> month context loss in protected ANT52/c6825652. This local repair is not deployed or customer accepted.
-KEYBOARD_FOCUS: PASS: original focus/arrow/history/Chat/form/source-sheet controls retained; new Back/Forward test preserves unsent Chat value, focus and caret. Actual candidate native/AT conformance remains unverified.
-ZOOM_REFLOW: UNVERIFIED: no geometry/style changes; required candidate desktop/narrow/native200-percent review remains owed through supported controls.
+KEYBOARD_FOCUS: PASS: original focus/arrow/history/Chat/form/source-sheet controls retained; actual native Forward/Back preserves synthetic discussion value/focus/caret,390px selected Forecast is reachable and visibly focused. Full reload starts at BODY, not claimed focus restoration. Full AT conformance unverified.
+ZOOM_REFLOW: UNVERIFIED: all8 CSS viewports and390px reflow measured separately; native200-percent and full AT remain owed through supported controls.
 REDUCED_MOTION: NOT_APPLICABLE: no motion, transition, timing or reduced-motion contract changed.
 STATE_COVERAGE: PASS: strict four-range allowlist; absent/empty/unknown/uppercase/duplicate/untrusted input falls back to original month; object query/hash/state retained; inline mode and actor/business reset conserved; original loading/refusal/error/source/target/invoice states unchanged.
 TRUTHFUL_STATE_LABELS: PASS: same authorized Metric/Evidence reader, original financial dates/currencies/coverage and VERA controls; saved Play periods and bank source dates remain independent. No provider, prediction, approval or completion claim added.
 SOLO_UI: YES: original FinanceWorkspace for every eligible current/future SOLO account; no customer-specific source, account allowlist or provisioning change.
-SOLO_1536X770_PAIGE_CLOSED: UNVERIFIED: candidate native capture owed after browser disconnection.
-SOLO_1536X770_PAIGE_OPEN: UNVERIFIED: candidate native capture owed; synthetic discussion is not actual Chat acceptance.
-SOLO_1366X768_PAIGE_CLOSED: UNVERIFIED: candidate native capture owed.
-SOLO_1366X768_PAIGE_OPEN: UNVERIFIED: candidate native capture owed.
-SOLO_1024X768_PAIGE_CLOSED: UNVERIFIED: candidate native capture owed.
-SOLO_1024X768_PAIGE_OPEN: UNVERIFIED: candidate native capture owed; covered background is not concurrently operable.
-SOLO_900X1000_PAIGE_CLOSED: UNVERIFIED: candidate native capture owed.
-SOLO_900X1000_PAIGE_OPEN: UNVERIFIED: candidate native capture owed; original responsive overlay contract retained.
-UNVERIFIED: exact-lock type/build, final-head review/CI, candidate rendered/native/AT proof, merge/deployment/readback and both legitimate customer cohorts; all19/nine/eligible Live/founder acceptance remain open.
+SOLO_1536X770_PAIGE_CLOSED: PASS: stable-1536x770-closed.jpg, exact DOM/native1535x770; week filter, original full shell/no document overflow.
+SOLO_1536X770_PAIGE_OPEN: PASS: stable-1536x770-open.jpg, exact DOM/native1535x770, original side rail/neutral unsent discussion.
+SOLO_1366X768_PAIGE_CLOSED: PASS: stable-1366x768-closed.jpg, exact DOM/native1366x768, readable original Finance view and filter.
+SOLO_1366X768_PAIGE_OPEN: PASS: stable-1366x768-open.jpg, exact DOM/native1366x768, original side rail and preserved synthetic draft.
+SOLO_1024X768_PAIGE_CLOSED: PASS: stable-1024x768-closed.jpg, exact DOM/native1024x768, original collapsed navigation/source view.
+SOLO_1024X768_PAIGE_OPEN: PASS: stable-1024x768-open.jpg, exact DOM/native1024x768, original overlay; fold before operating covered Finance.
+SOLO_900X1000_PAIGE_CLOSED: PASS: stable-900x1000-closed.jpg, exact DOM/native900x1000, original Finance source and own scroll.
+SOLO_900X1000_PAIGE_OPEN: PASS: stable-900x1000-open.jpg, exact DOM/native900x1000, original overlay; covered background not claimed operable.
+UNVERIFIED: final-head hosted review/CI/build, native200-percent/full AT, merge/deployment/readback and both legitimate customer cohorts; all19/nine/eligible Live/founder acceptance remain open.
 OWNER_INTENT: preserve source-backed business context while completing the original19 outcomes through cohesive releases.
 MUST_NOT_HAPPEN: carrying a selected view across actor/business changes, losing unsent Chat, changing metric authority/math, inventing cash/profit/forecast figures or activating an action.
 MUST_PRESERVE: Overview landing, original seven tabs and canonical route registry, source-currentness/expiry and sheet dismissal, VERA handoff, keyboard focus, permissions and original receiving domain records.
@@ -50,6 +50,29 @@ Existing E05 -> E04 -> E02 Master closeout lease is respected, no shared edit.
 Local proof reuses `scripts/live-drive/harness/finance-review-mount` unchanged.
 Private logs in outputs/e2-finance-window-* retain failures as well as passes.
 
+## Rendered and interaction proof
+
+`outputs/e2-finance-period-proof/stable-frames.json`, `interaction.json` and
+`image-metadata.json` bind the actual original-shell source43286b3a, CSS dimensions,
+native raster hashes and native reload/Back/Forward/keyboard observations. The
+only later changes are this evidence/matrix and two exact neutral image copies;
+product inputs remain identical. Original optional source fixtures deliberately
+remain synthetic and cannot establish issuer/provider/permission readiness.
+
+![Original Finance desktop, synthetic only](assets/e2-finance-period-desktop.jpg)
+![Original Finance narrow keyboard target, synthetic only](assets/e2-finance-period-narrow.jpg)
+
+Transport timeouts/detachment before the settled result remain excluded, not
+erased. An initial proof-driver assumption treated Direct PAIGE as a fold toggle;
+its mislabeled and same-call compositor-stale frames are INVALID. The actual
+original Fold PAIGE control and separate action/capture calls produced the eight
+verified stable-* frames. A responsive duplicate-label selector was narrowed to
+the original header control after fresh inspection. No source repair, security
+override, synthetic customer or alternative browser engine was used. Native full
+reload initially timed out obtaining its frame tree; the settled original page
+was then actually read and Back showed week, not the predecessor's month.
+Viewport reset and only the owned proof tab closed; peer tabs untouched.
+
 Applied Flow-by-Flow audit/build/verification and installed Impeccable harden,
 craft-floor and separate finish inspection. Canonical reference:
 https://github.com/pbakaus/impeccable/blob/main/.claude/skills/impeccable/SKILL.md.
@@ -64,9 +87,10 @@ Original retained financial and strategic periods remain authoritative.
 ALG03/06/11/12 stay Partial, ALG13 Unverified; no predictive claim. All nine
 catalogue states remain3ComingSoon/3Limited/3Unverified/allAccessUnverified.
 
-Functional: LOCAL correction116PASS. Visual: unchanged renderer, candidate
-capture owed. Experiential: causal predecessor FAIL, candidate local partial
-proof only. Founder Acceptance: OPEN, one complete integrated evaluation.
+Functional: LOCAL correction124PASS/type-ratchetPASS. Visual: unchanged renderer,
+actual eight-view/narrow native proof. Experiential: causal predecessor FAIL,
+local full-reload/return/draft/caret proof only. Founder Acceptance: OPEN, one
+complete integrated evaluation.
 Historical9PASS/0FAIL and12PASS/0FAIL/4BLOCKED remain; monthly
 UNKNOWN/UNRETRIED/UNINSPECTED. Original3018P1 and Sales return finding remain open.
 
@@ -75,5 +99,5 @@ RELEASE_CHANNEL: development: local bounded Finance view repair, not customer ac
 RELEASE_CLASSIFICATION: internal-only: no new capability or customer announcement.
 CUSTOMER_RELEASE_IDENTITY: none: original complete Experience acceptance remains unearned.
 RELEASE_NOTE_REQUIRED: no: internal repair evidence only.
-RELEASE_TRUTH_BOUNDARY: PARTIAL: original tests and one local navigation; candidate rendered/reload/release/customer proof remains PROOF OWED.
+RELEASE_TRUTH_BOUNDARY: PARTIAL: original exact-lock tests/types and native synthetic shell/reload/return; final hosted release/native200-percent/AT/customer proof remains PROOF OWED.
 RELEASE_RECOVERY: position=original reviewed forward correction or revert, no business work replay; reference=docs/delivery/e2-customer-experience-integration-matrix.md

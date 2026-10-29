@@ -22,13 +22,17 @@ uses the canonical Finance URL/route helpers and same readers. Original42PASS,
 causal7FAIL/51PASS ->58PASS; adjacent original actor/business reset caught1FAIL/
 114PASS, now corrected116PASS/five suites without weakening that assertion.
 [Original repair evidence](../evidence/ui-delivery/e2-finance-period-continuity.md).
-Not merged/deployed/accepted. Local browser disconnected during reload; complete
-candidate render/native/customer proof remains owed. Exact-lock dependency
-reconciliation and final-head review/CI remain controlling, no gate waiver.
+Not merged/deployed/accepted. Isolated exact-lock124PASS/six suites and unchanged
+type ratchet10→6/no-newPASS now replace the stale-dependency local failure.
+Recovered original-shell native eight-view/narrow proof, full Forecast reload ->
+Back retaining week, and synthetic discussion value/focus/caret across Forward/
+Back PASS. Initial detachment/stale or mislabeled proof-driver frames remain
+excluded; native200-percent/AT and actual released two-cohort proof remain owed.
+Final-head review/CI remain controlling, no gate waiver.
 
 Functional3096 bounded released answer PASS/new Finance repair LOCAL. Visual
-unchanged renderer/candidate captures owed. Experiential one useful saved answer,
-Finance period return still pending released verification. Founder Acceptance
+unchanged renderer/eight-view and390px native synthetic proof. Experiential one
+useful saved answer; Finance period return still pending released verification. Founder Acceptance
 OPEN; all19/nine unchanged. Catalogue3ComingSoon/3Limited/3Unverified/allAccess
 Unverified; ALG03/06/11/12Partial,13Unverified. Historical9/0,12/0/4 and protected
 monthlyUNKNOWNUNRETRIEDUNINSPECTED retained. Existing3018P1/Sales holds and

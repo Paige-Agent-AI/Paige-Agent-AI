@@ -1,5 +1,39 @@
 # Experience 02 — Customer Experience Integration Matrix
 
+## October29 — VERA released result; Finance view continuity correction
+
+Original3096 mergeddb8807a11f29db2ca3bd2d2ce4b60ea9bfcf2c0d after all11 exact
+gates/two web successes/lower5705183761. Production webdpl_78HLEpUcW2yvGCw1bVsvnW25GM6r
+READY/exact; normal serialized Edge40963983241/job123763654177 both original
+Chat/Review source-configuration PASS, direct37 Review files exact. Both public
+origins served exactdb880/main-DK1AwFbb.js; no manual activation or source bypass.
+
+Protected ANT52/c6825652 records ONE useful authorized read-only weekly VERA
+answer: three original reads, no assignment/approval card; six source links and
+exact answer/links full reload/folded return PASS. This corrects the later case,
+not the historical failed request, and is not universal reliability. Current
+ordinary second-cohort all7 Finance/VERA/narrow keyboard/BackForward focus and
+Overview landing PASS. Native200-percent/AT/full geometry/roles/Live remain owed.
+
+Actual remaining O04/O14/O16 failure: selecting week, opening Forecast, fully
+reloading and returning reset the Sales window to month. Original truthful labels
+prevented false figures but context was lost. Current bounded local correction
+uses the canonical Finance URL/route helpers and same readers. Original42PASS,
+causal7FAIL/51PASS ->58PASS; adjacent original actor/business reset caught1FAIL/
+114PASS, now corrected116PASS/five suites without weakening that assertion.
+[Original repair evidence](../evidence/ui-delivery/e2-finance-period-continuity.md).
+Not merged/deployed/accepted. Local browser disconnected during reload; complete
+candidate render/native/customer proof remains owed. Exact-lock dependency
+reconciliation and final-head review/CI remain controlling, no gate waiver.
+
+Functional3096 bounded released answer PASS/new Finance repair LOCAL. Visual
+unchanged renderer/candidate captures owed. Experiential one useful saved answer,
+Finance period return still pending released verification. Founder Acceptance
+OPEN; all19/nine unchanged. Catalogue3ComingSoon/3Limited/3Unverified/allAccess
+Unverified; ALG03/06/11/12Partial,13Unverified. Historical9/0,12/0/4 and protected
+monthlyUNKNOWNUNRETRIEDUNINSPECTED retained. Existing3018P1/Sales holds and
+E05→E04→E02 Master lease remain; no peer writer, provider, grant or action change.
+
 ## October29 — released Calendar proof and failed VERA read handoff
 
 Calendar3019 merged0a8b95f9; finala08 lower-assurance review5704091183,

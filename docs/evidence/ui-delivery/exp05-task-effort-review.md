@@ -1,7 +1,7 @@
 # EXP05 O02/O03 — correct saved Task effort through original Work
 
 UI_DELIVERY_EVIDENCE_VERSION: 1
-INTERNAL_BUILD_IDENTITY: source=83d97fb1e8ba56e8fc56b92ed00f2a15a9733e7c; base=4ed8acc917e45b43deebdee1231c218f32cd1abf; deployment=offline-original-Operations-mount; environment=local; migrations=20271126010012_NOT_APPLIED; edge=NOT_DEPLOYED; evidence=docs/evidence/ui-delivery/assets/exp05-task-effort/build-manifest.json. Exact eventual head/review/CI must be recorded before release.
+INTERNAL_BUILD_IDENTITY: source=83d97fb1e8ba56e8fc56b92ed00f2a15a9733e7c; base=4ed8acc917e45b43deebdee1231c218f32cd1abf; deployment=offline-original-Operations-mount; environment=local; migrations=PROOF_OWED(20271126010012_task_effort_scalar held for forward ordering); edge=PROOF_OWED(compiled Task patch schema after native release); evidence=docs/evidence/ui-delivery/assets/exp05-task-effort/build-manifest.json. Exact eventual head/review/CI must be recorded before release.
 RELEASE_CHANNEL: development: local source and isolated browser/SQL fixtures only.
 RELEASE_CLASSIFICATION: internal-only: one correction/save/reopen leg of O02/O03, not complete weekly planning or EXP05.
 CUSTOMER_RELEASE_IDENTITY: none: no launch, activation or founder acceptance.
@@ -17,16 +17,16 @@ VISUAL_DIRECTION: PASS: compact inline planning fields and exact review inside t
 AUTOMATED_EVIDENCE: PASS:117 assertions in seven original effort/command/editor/review/task-focus/SoloApp-retention suites. Original denial, account switching, unavailable source, CAS/replay, zero/clear, widened proposals, independent readback and refusal focus retained. Native component20 and generator15 are separate bounded evidence below.
 STATIC_EVIDENCE: UNVERIFIED: actual tsconfig.app.json reports nine unchanged-file diagnostics and zero changed-path diagnostics. Empty root-solution tsc result is EXCLUDED. Diff/UTF8/focused lint are separate checks; hosted exact-lock CI remains required.
 RENDERED_EVIDENCE: PASS:121 current product input hashes, explicit private fixture ports, compiled asset hashes and15 final frames: light desktop1280x720 plus both themes at narrow320x700. All final product hashes match the inspected source. Fixture label is moved above controls only; no product styling transform.
-BEHAVIORAL_EVIDENCE: PASS: exact-minute approval, saved/read/reopen, unknown after lost response, reload pending-operation reentry and same-operation recovery; refusal with safe next-step focus, role denial, zero versus clear and keyboard transition. These prove UI wiring against synthetic ports, not actual domain authorization/execution.
+BEHAVIORAL_EVIDENCE: PASS: docs/evidence/ui-delivery/assets/exp05-task-effort/build-manifest.json correlates15 actual rendered states for exact-minute review, saved/read/reopen, response loss, original-operation recovery, refusal focus, role denial and zero versus clear. UI wiring uses synthetic ports; real domain execution is excluded.
 AUTHENTICATED_RUNTIME: UNVERIFIED: new effort write, original approval/receipt and later real read/reload require legitimate protected production verification after release. Parent3091 has separate bounded owner read-only proof in ANT-52/c8eeddbf; it does not prove this new writer.
 KEYBOARD_FOCUS: PASS: native numeric entry/Tab reaches clear label; exact review/approval/recovery retain original controls. A real refusal focus loss was found and repaired: focus moves to Back to details after disabling the refused action. Original focus/retention assertions remain, with only their changed accessible-label selectors reconciled.
 ZOOM_REFLOW: UNVERIFIED:320px reflow has no document overflow and new targets are44px; native200% zoom and screen-reader testing of this added flow remain owed. Parent native zoom is not borrowed.
 REDUCED_MOTION: PASS: no new animation, timer or polling; original drawer motion retained.
-STATE_COVERAGE: PASS: known/unknown effort, zero, clear, invalid/unchanged values, permission loading/denial, unavailable/stale/native-record change, review, approval, refused, saved, unknown and recovered. Existing loading/absent-task and account-switch retention tests remain in the117 cases.
+STATE_COVERAGE: PASS:117 assertions cover missing/recorded effort, zero, clear, invalid/unchanged values, permission loading/denial, stale/native-record change, exact review/approval, refusal, saved and response-loss recovery. Original absent-task and account-switch retention assertions remain intact.
 TRUTHFUL_STATE_LABELS: PASS: effort is neither free time nor a Calendar reservation. Clear means unknown, not zero. Executor response alone never establishes saved Work; refused/unknown cannot become optimistic completion.
 SOLO_UI: YES: one shared tenant-neutral Task/Operations implementation, no per-account condition, provisioning fork or Platform Operator change.
 SOLO_1536X770_PAIGE_CLOSED: UNVERIFIED: full original shell at this size remains owed; current changed-path evidence is1280px plus320px original Operations mount.
-SOLO_1536X770_PAIGE_OPEN: UNVERIFIED: no PAIGE dock interaction claim from an inert harness placeholder.
+SOLO_1536X770_PAIGE_OPEN: UNVERIFIED: this fixture's dock is inert; no actual1536px open-dock interaction was exercised.
 SOLO_1366X768_PAIGE_CLOSED: UNVERIFIED: full-shell size remains owed.
 SOLO_1366X768_PAIGE_OPEN: UNVERIFIED: original dock/inspector continuity remains owed.
 SOLO_1024X768_PAIGE_CLOSED: UNVERIFIED: full-shell size remains owed.

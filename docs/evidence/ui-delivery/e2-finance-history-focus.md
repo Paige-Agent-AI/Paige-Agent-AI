@@ -16,7 +16,7 @@ KEYBOARD_FOCUS: PASS: three causal history cases plus Chat selection/draft, non-
 ZOOM_REFLOW: UNVERIFIED: native Windows window inventory timed out before zoom controls;390px reflow is measured separately and is not native200-percent proof.
 REDUCED_MOTION: NOT_APPLICABLE: no animation or preference behavior changed; original styles and reduced-motion contracts untouched.
 STATE_COVERAGE: PASS: original Finance ready/loading/error/denied/source/target/invoice tests retained; new tests cover history movement and focus ownership, not new backend authority.
-TRUTHFUL_STATE_LABELS: PASS: VERA, source evidence, figures, unknown states, approval boundaries and nine catalogue entries unchanged; fixtures explicitly say NO BACKEND/NOT CUSTOMER ACCEPTANCE.
+TRUTHFUL_STATE_LABELS: PASS: src/solo/finance/FinanceWorkspace.test.tsx retains VERA and original invoice/target source disclosures; no data or catalogue entry changes. Synthetic footer says NO BACKEND and NOT CUSTOMER ACCEPTANCE.
 SOLO_UI: YES: original shared FinanceWorkspace for every eligible current/future SOLO account, no account-specific presentation or shared-shell fork.
 SOLO_1536X770_PAIGE_CLOSED: PASS: stable-1536x770-closed.jpg/json, exact1536x770 DOM/no document overflow; native1535x770 raster retained, original synthetic shell/context only.
 SOLO_1536X770_PAIGE_OPEN: PASS: stable-1536x770-open.jpg/json, original Chat beside Finance, exact1536x770 DOM/native1535x770; synthetic discussion and backend ports, no customer acceptance.
@@ -93,4 +93,4 @@ RELEASE_CLASSIFICATION: internal-only: one native-history accessibility correcti
 CUSTOMER_RELEASE_IDENTITY: none: complete customer release and founder acceptance not earned.
 RELEASE_NOTE_REQUIRED: no: routine internal repair, no public announcement.
 RELEASE_TRUTH_BOUNDARY: PROOF OWED: source/local keyboard repair; final release/customer/cohort/native200percent and complete Experience proof separate.
-RELEASE_RECOVERY: position=normal reviewed forward correction of the original component; no business action replay; reference=docs/delivery/e2-customer-experience-integration-matrix.md
+RELEASE_RECOVERY: position=reviewed forward correction of the original component preserving business records without action replay; reference=docs/delivery/e2-customer-experience-integration-matrix.md

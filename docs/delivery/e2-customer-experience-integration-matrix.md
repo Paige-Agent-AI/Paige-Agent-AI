@@ -1,5 +1,19 @@
 # Experience 02 — Customer Experience Integration Matrix
 
+## October29 — Finance native Back/Forward focus repair, candidate
+
+REPAIR O04/O14/O16 in the original Finance tab component only. Same-workspace POP
+restores selected-tab focus only while that tab strip owns it; Chat draft/caret,
+non-history navigation and workspace-change focus are protected. No route/store/
+capability/authority/readiness delta. Source causal3FAIL/39PASS ->62 related PASS,
+original8 provisioning controls, parity/hostile controls, types0new/lint/detector
+and bounded original-shell desktop/narrow/Back/Forward proof are separate from
+candidate release/customer/cohort/native200percent/AT acceptance, still owed.
+[Original evidence](../evidence/ui-delivery/e2-finance-history-focus.md).
+Functional LOCAL, Visual native synthetic, Experiential partial, Founder OPEN.
+Historical9/0,12/0/4/monthlyUNKNOWN/UNRETRIED, original19 definitions/nine catalogue
+states/algorithm maturity and original3018/3019 holds remain unchanged.
+
 ## October29 — O13 original commercial lookups remain reads
 
 **REPAIR:** original shared Rail presentation only. E04 request ANT138/2bc79b0c

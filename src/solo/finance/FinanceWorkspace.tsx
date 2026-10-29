@@ -2,7 +2,7 @@ import React from "react";
 import { resolveDepartmentSpecialist } from "@/lib/paige/vpDepartments";
 import { useOptionalTenantContext } from "@/hooks/useTenantContext";
 import { useTheme } from "next-themes";
-import { Navigate, useLocation, useNavigate } from "react-router-dom";
+import { Navigate, useLocation, useNavigate, useNavigationType } from "react-router-dom";
 import { RefreshCw, ArrowUpRight, Landmark, Wallet, Sparkles } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { useSubtabRoute } from "@/lib/routing/useSubtabRoute";
@@ -59,6 +59,18 @@ export function FinanceWorkspace({ epoch }: { epoch?: string | null }) {
  const [detail, setDetail] = React.useState<{ epoch: string; range: string; readIdentity: string; value: SalesMetricBundle | InvoiceRecord } | null>(null);
  const navigate = useNavigate(), location = useLocation();
  const refs = React.useRef<Array<HTMLButtonElement | null>>([]);
+ const navigationType = useNavigationType();
+ const focusScope = React.useRef(epoch);
+ React.useLayoutEffect(() => {
+  const sameWorkspace = focusScope.current === epoch;
+  focusScope.current = epoch;
+  if (!sameWorkspace || navigationType !== "POP") return;
+  // History updates selection without the click/key handler. Follow it only
+  // while this tab strip owns focus; leave Chat, forms and source sheets alone.
+  const focused = refs.current.find(node => node && node === document.activeElement);
+  const selected = refs.current.find(node => node?.getAttribute("aria-selected") === "true");
+  if (focused && selected && focused !== selected) selected.focus();
+ }, [epoch, tab, navigationType]);
  const evidenceReturn = React.useRef<{ element: HTMLButtonElement; epoch: string; range: SalesPerformanceRangeKey } | null>(null);
  const prefix = location.pathname.match(/^\/solo\/[^/]+/)?.[0];
  const openOwner = (path: string) => { if (prefix) navigate(`${prefix}/${path}`); };

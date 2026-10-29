@@ -860,6 +860,14 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**2026-10-29 UTC — EXP02 Finance history focus; source/web and bounded customer regression verified.**
+
+| Increment | Exact source and observed release | Customer truth and remaining proof |
+| --- | --- | --- |
+| [#3082](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3082#issuecomment-6507048752) | Reviewed8dd24563267f2a87e753c498239bcd3e271d8a7c; **AUTHOR-REVIEW / LOWER ASSURANCE**5703739010; all10 applicable exact checks/two web SUCCESS, own schema-free PreviewSKIP, zero inline threads. Normal mainbddfc26a5e296fb856fc2c9fba397903bbc11fee/parentsa58+8dd/tree53d7433e64dfcfcc096a9c17fa42d07dd87c7bba exactly equals reviewed source; all17,956 outside-owned leaves retained. Original70 focused/provisioning checks/input binding, parity/negative controls and UI evidence passed. | Same-workspace history follows the selected original tab only while its tab strip owns focus. Existing Chat/forms/source-sheet focus, original seven routes, VERA, readers and permissions preserved; no new registry, runtime or financial action. |
+| Production **WEB SOURCE VERIFIED; bounded authorized customer regression PASS** | Vercel dpl_AzsddHUcFBVdx1uiMUBwyxe9ZnzM READY/exact. BOTH canonical origins20:00:59–20:01:00UTC exactbdd-mvtyuxmi/customerUpdate:null/missing404. Original served Finance module SHA2563962bb4669643d160439b3cdc427252462ebb727b3637ac758ba997fda181b69 includes the repair. Initial parent-loader-only assertion failed; resolving its original referenced module passed without source changes. Own SQL/Edge/grants/providers/activation N/A. | ANT52/72add017: actual before-release mismatch now passes Back/Forward selection+focus; neutral unsent draft/caret/composer focus preserved and cleared without send. Overview landing/all seven original departments/VERA/no document overflow; original conversation/scroll survive release and Forecast reload. Private raw captures stay local. |
+| Internal-only production repair; **complete Experience PROOF OWED** | No customer release identity/announcement. Recovery is the original reviewed forward-fix/revert pipeline, with no business-work replay. Separate Calendar3019 follows its own final CI/Edge/web proof; Systems3018 P1 and Sales history remain OPEN. | One authorized ordinary SOLO subset, not native200-percent/AT, released second cohort, all-role/Live/full19/nine or founder acceptance. Original9/0 and12/0/4/protected monthlyUNKNOWN/UNRETRIED/uninspected preserved. Analytics3ComingSoon/3Limited/3Unverified/allAccessUnverified and ALG03/06/11/12Partial,13Unverified unchanged. |
+
 **2026-10-29 UTC — EXP05 unmounted ZION Planning foundation; source released, no capability activation.**
 
 | Increment | Exact source/release | Customer truth and remaining proof |

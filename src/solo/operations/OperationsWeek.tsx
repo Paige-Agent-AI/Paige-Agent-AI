@@ -53,7 +53,7 @@ function ScopedWeek({ tenantId, items, tasks, members = [], onInspectItem, onIns
         <button type="button" onClick={() => setOffset(0)} disabled={offset === 0}>This week</button>
         <button type="button" aria-label="Next work week" onClick={() => setOffset(value => value + 1)}><ChevronRight size={16} aria-hidden /></button></nav></header>
     <p className="ops-week-zone">Business calendar · {week.zone}. Recorded dates do not reserve Calendar time.</p>
-    <OperationsWeeklyWorkload week={week} members={members} onInspectItem={onInspectItem} onInspectTask={onInspectTask} />
+    <OperationsWeeklyWorkload tenantId={tenantId} week={week} members={members} onInspectItem={onInspectItem} onInspectTask={onInspectTask} />
     <div className="ops-week-grid">{days(week.days.slice(0, 5))}</div>
     {weekend.some(date => date.deadlines.length || date.reminders.length) && <div className="ops-week-weekend">{days(weekend)}</div>}
     <footer>{shown.length} dated {shown.length === 1 ? "commitment" : "commitments"} in this week from the sources shown.

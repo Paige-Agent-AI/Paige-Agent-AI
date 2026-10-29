@@ -1,5 +1,57 @@
 # Experience 02 — Customer Experience Integration Matrix
 
+## October29 — SAME VERA original-metric Team Hub foundation
+
+O01/O02/O04/O08/O14/O16 remain the customer outcome: ask VERA for a verified
+business measurement, explain its actual scope and limitations and reopen the
+original Executive. Temporary owner direction ANT138/a1e5137d is incorporated
+in receiving ACK8fc611a3 and narrow source contract ANT161/a3cd4dc4/f46394ea.
+**REUSE** INT340 `analytics.metric_read` / `read_business_metric`, original
+`BUSINESS_METRIC_TOOLS`, `readBusinessMetric`, native issuer/resolver and original
+record links. **EXTEND** only the SAME VERA private-business-DM consumer adapter;
+no duplicate source engine, metric math, provider, roster, grant or runtime.
+
+**Functional:** new `team-hub/vera-metric-read.ts` is deliberately unmounted.
+Original stored VERA DM scope already permits this read. Server-resolved exact
+specialist/audience/tenant/actor, current owner/admin and stored scope are checked;
+the original native caller JWT still decides source authority. Strict five-second
+read and revalidation bounds, abort/late-result fences and original host read-marker
+ACK precede exposure. Before posting, revalidation reads the SAME immutable
+evidence reference through the original resolver, without reissuance/fallback.
+Original count/currency/coverage/freshness/caveats and zero-versus-unavailable
+remain intact. No bank balance, completed action or causal improvement is inferred.
+
+Meaningful pre-implementation positive control failed on unavailable-versus-available;
+the final local original-reader/host/negative-control suite has148 PASS/0 FAIL/
+0 SKIP, including34 new VERA tests. Strict new-module/test TypeScript and scoped
+ESLint PASS. A separate source review caught and corrected an unbounded later
+clarification scope check; it now uses the same deadline. Review of the exact
+committed head, hosted CI, merge and release readback remain owed. Master4.0 is
+N/A while this candidate is unmerged. No production identity is anticipated.
+
+**Visual:** no changed rendered surface; existing specialist presentation reused
+when mounted. **Experiential:** E04 owns the single overlapping original Team Hub
+offer/definition/dispatch/pre-publication span; exact adapter exports are handed
+to that writer alongside original CURA/MERIT, preserving E08#3041/f786 and E05's
+automation scope/pins. Mounting, both-chat useful result/reopen, two legitimate
+SOLO cohorts, tenant/role/revoke/unknown recovery and actual customer proof remain
+integration/acceptance work. Full `get_business_snapshot` and Mission HIGH-write
+integration remain separate required follow-ups, not replaced by one measurement.
+
+**Orchestration:** LayersA/B original admission/current authority, D original
+specialist turn, F original result/reference and G verification are reused and
+remain partial/proof owed. Read_only, no MUTATION_VERB/approval/job/LayerC action;
+the original read marker is provenance, not a business-effect Rail receipt.
+Integration Registry R1/R8 unchanged; no external provider or model call by this
+adapter. Universal eligible current/future SOLO source path; no account-specific
+code or new test identities. Existing provisioning/role defaults remain native.
+**Algorithms:** this adds measurement transport, no priority/scoring/prediction;
+ALG03/06/11/12 Partial and ALG13 Unverified remain unchanged. **Capabilities:**
+CAP009–017 original3Limited/3Unverified/3ComingSoon, account access Unverified;
+Executive PARTIAL/Team Hub PROOF_OWED remain unchanged. **Founder Acceptance:**
+NOT_ACCEPTED; all19/nine remain OPEN. Preserve historical9PASS/0FAIL,
+12PASS/0FAIL/4BLOCKED and protected monthly UNKNOWN/UNRETRIED/UNINSPECTED.
+
 ## October28 - verified releases, Finance and catalogue read/reload
 
 Functional:3012 normal21fff7a49632868382ce51da70d97c9eb4d428cb after exactd958

@@ -517,3 +517,4 @@ rollback;
 -- competing CI/QA engine or shared-workflow ownership is introduced.
 \ir exp04_reviewed_delivery_handoff.sql
 \ir exp04_private_client_invoice_facts.sql
+\ir exp04_native_client_invoice_observation_replay.sql

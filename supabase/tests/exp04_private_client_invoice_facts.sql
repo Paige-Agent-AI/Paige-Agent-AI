@@ -1,21 +1,47 @@
 -- Full-schema metadata/API isolation proof. No customer or provider data.
--- Retain all171 original Portal controls; only the authorized wrapper hash pin changes.
+-- Retain all171 original Portal controls and the whole original query/authority
+-- pins. A five-argument move must reproduce the entire original financial body.
 begin;
 create function pg_temp.e04_core_check(v boolean,label text) returns void language plpgsql as $$
 begin if v is distinct from true then raise exception 'FAIL: %',label; end if; raise notice 'PASS: %',label; end $$;
 create function pg_temp.e04_core_refused(stmt text,label text) returns void language plpgsql as $$
 begin begin execute stmt; exception when insufficient_privilege then raise notice 'PASS: %',label; return; end;
  raise exception 'FAIL: % accepted',label; end $$;
-do $identity$ declare core pg_catalog.pg_proc%rowtype; wrapper pg_catalog.pg_proc%rowtype; original text;
+do $identity$ declare core pg_catalog.pg_proc%rowtype; wrapper pg_catalog.pg_proc%rowtype; original text; query_body text; step record;
  declarations text:=E'  _client uuid;\n  _tenant uuid;\n';
  resolver text:=E'  _client := public._client_portal_billing_client(p_tenant_id);\n  IF _client IS NULL THEN RETURN NULL; END IF;\n  SELECT c.tenant_id INTO _tenant FROM public.clients c WHERE c.id = _client;';
  null_guard text:=E'  IF _tenant IS NULL OR _client IS NULL THEN\n    RAISE EXCEPTION ''CLIENT_INVOICE_UNAVAILABLE'' USING ERRCODE=''42501'';\n  END IF;';
 begin
  select * into strict core from pg_catalog.pg_proc where oid='public._client_portal_invoice_facts_for_client(uuid,uuid,integer,jsonb)'::regprocedure;
  select * into strict wrapper from pg_catalog.pg_proc where oid='public.client_portal_invoices(uuid,integer,jsonb)'::regprocedure;
- perform pg_temp.e04_core_check(pg_catalog.md5(core.prosrc)='d86613d312960b0d507898210e7e5197','exact original financial core body');
+ query_body:=core.prosrc;
+ if to_regprocedure('public._client_portal_invoice_facts_for_client(uuid,uuid,integer,jsonb,date)') is not null then
+  perform pg_temp.e04_core_check(md5(core.prosrc)='0a70d5ed7b157fa68472bbf24785be1a','exact compatible four-argument financial delegate');
+  select prosrc into strict query_body from pg_proc where oid='public._client_portal_invoice_facts_for_client(uuid,uuid,integer,jsonb,date)'::regprocedure;
+  perform pg_temp.e04_core_check(md5(query_body)='a307bf9e57e5b2ad692c74a329e683cd','exact native financial source before whole inverse');
+  for step in select * from (values ('  _today date := (now() AT TIME ZONE ''UTC'')::date;','  _today date := p_as_of;'),
+('  IF _tenant IS NULL OR _client IS NULL THEN
+    RAISE EXCEPTION ''CLIENT_INVOICE_UNAVAILABLE'' USING ERRCODE=''42501'';
+  END IF;','  IF _tenant IS NULL OR _client IS NULL THEN
+    RAISE EXCEPTION ''CLIENT_INVOICE_UNAVAILABLE'' USING ERRCODE=''42501'';
+  END IF;
+  IF p_as_of IS NOT NULL AND NOT isfinite(p_as_of) THEN
+    RAISE EXCEPTION ''CLIENT_INVOICE_INPUT_INVALID'' USING ERRCODE=''22023'';
+  END IF;'),
+('      i.billing_issued_at AS issued_at,','      i.billing_issued_at AS issued_at, i.billing_issued_snapshot_version AS issued_snapshot_version,'),
+('      ''issued_at'', p.issued_at, ''due_date'', p.due_date,','      ''issued_at'', p.issued_at, ''due_date'', p.due_date,
+      ''issued_snapshot_version'', p.issued_snapshot_version,'),
+('    ''read_at'', statement_timestamp()','    ''_native_sources'', jsonb_build_object(''as_of_date'',p_as_of,''all_facts_identity'',
+      encode(extensions.digest(coalesce((SELECT jsonb_agg(to_jsonb(f) ORDER BY f.id) FROM facts f),''[]''::jsonb)::text,''sha256''),''hex'')),
+    ''read_at'', statement_timestamp()')) s(before,after) loop
+   perform pg_temp.e04_core_check((length(query_body)-length(replace(query_body,step.after,'')))/length(step.after)=1,
+    'native financial inverse has one exact anchor');
+   query_body:=replace(query_body,step.after,step.before);
+  end loop;
+ end if;
+ perform pg_temp.e04_core_check(pg_catalog.md5(query_body)='d86613d312960b0d507898210e7e5197','exact entire original financial query and validation');
  perform pg_temp.e04_core_check(pg_catalog.md5(wrapper.prosrc)='91f0344a6231205da5763af3755f0ad3','public wrapper only resolves original scope and delegates');
- original:=pg_catalog.replace(core.prosrc,E'\nDECLARE\n',E'\nDECLARE\n'||declarations);
+ original:=pg_catalog.replace(query_body,E'\nDECLARE\n',E'\nDECLARE\n'||declarations);
  original:=pg_catalog.replace(original,null_guard,resolver);
  perform pg_temp.e04_core_check(pg_catalog.md5(original)='28df84d29fcde1e64bb09153f4d3e77b','complete inverse reproduces the entire original financial query and validation');
  perform pg_temp.e04_core_check(not core.prosecdef and core.provolatile='v' and core.proconfig=array['search_path=""']::text[] and pg_catalog.pg_get_userbyid(core.proowner)='postgres','private invoker has canonical owner and closed search path');

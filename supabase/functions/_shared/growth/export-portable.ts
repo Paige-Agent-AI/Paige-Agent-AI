@@ -12,9 +12,9 @@
 //
 // NOT A PUBLISH PATH. This reads what the publish door already put live; it creates nothing,
 // mutates nothing, and touches no database (the caller passes the published columns in).
-import { resolveGrowthTheme } from "../../../../src/components/growth/growth-theme.ts";
-import { assignBands } from "../../../../src/lib/growth/bands.ts";
-import { embedUrl } from "../../../../src/lib/growth/media.ts";
+import { resolveGrowthTheme } from "./theme.ts";
+import { assignBands } from "./bands.ts";
+import { embedUrl } from "./media.ts";
 import type { GrowthBlock, GrowthPageTheme } from "./types.ts";
 
 /**

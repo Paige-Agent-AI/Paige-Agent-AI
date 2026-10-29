@@ -5,7 +5,7 @@
 // deployment's identity and the verification target.
 import { PAIGE_APP_ORIGIN } from "../canonical-app-url.ts";
 import { buildPortableExport, PortableExportRefused } from "../growth/export-portable.ts";
-import { buildGrowthBrandFloor } from "../../../../src/components/growth/growth-theme.ts";
+import { buildGrowthBrandFloor } from "../growth/theme.ts";
 import type { GrowthBlock, GrowthPageTheme } from "../growth/types.ts";
 import type { HostingExport } from "../growth-hosting-command/contract.ts";
 

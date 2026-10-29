@@ -24,7 +24,7 @@
 // A string that is not in the map never becomes a URL: every URL below is built from a slug and a
 // file name that come from the generated manifest (./brand-fonts.files.ts), never from tenant text.
 // An unknown string keeps the renderer's existing behaviour (its sanitised family name, unloaded).
-import { BRAND_FONT_FILES, type BrandFontFile } from "../../../../src/lib/brand-fonts.files.ts";
+import { BRAND_FONT_FILES, type BrandFontFile } from "./brand-fonts.files.ts";
 
 export type BrandFontCharacter =
   | "editorial serif"

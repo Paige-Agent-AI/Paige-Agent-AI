@@ -1,0 +1,9 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Actual SOLO shell — offline MERIT source proof</title>
+<style>html,body{margin:0;background:#e9e7e3;color:#25221f;font:14px system-ui}header{padding:12px}iframe{display:block;border:0}</style>
+</head><body><header>Offline source render of the original SOLO shell, PAIGE workspace and Team Hub. Fictional contexts; no authenticated account, provider, model or persisted result.</header>
+<iframe title="Actual original SOLO shell source render"></iframe><script>
+const q=new URLSearchParams(location.search),sizes={"1536":[1536,770],"1366":[1366,768],"1024":[1024,768],"900":[900,1000]};
+const [width,height]=sizes[q.get("width")]||sizes["1536"],frame=document.querySelector("iframe");
+frame.width=String(width);frame.height=String(height);frame.style.width=width+"px";frame.style.height=height+"px";
+frame.src="/?"+new URLSearchParams({theme:q.get("theme")==="dark"?"dark":"light",cohort:q.get("cohort")==="b"?"b":"a",paige:q.get("paige")==="open"?"open":"closed"});
+</script></body></html>

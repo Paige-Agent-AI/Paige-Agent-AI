@@ -1,7 +1,7 @@
 {
   "doc": "Integration Capability Registry",
   "schema_version": "1.2.0",
-  "grounded_against": "origin/main fead7dfd03cd0ec1ee5c0c9f7854f067de484239 + Public Presence provider-MVP production closeout (2026-09-06); v1.2 adds the code_anchors accountability field + dead-anchor resolve check, grounded against origin/main 91c815f (2026-09-13) — every runtime-claiming provider's anchors verified to exist on disk at that commit. EXP10 activation pass (2026-10-22, origin/main 7a8b066942098a7917b2655fe75d8ebad677fb09): added slack / make-com / icloud-mail entries (all PROPOSED, no runtime claims), recorded EXP10 ownership of the microsoft-365 Teams lane, grounded by docs/delivery/exp10-connect-my-business/EXP10-SOURCE-RECONCILIATION-REGISTER.md.",
+  "grounded_against": "origin/main fead7dfd03cd0ec1ee5c0c9f7854f067de484239 + Public Presence provider-MVP production closeout (2026-09-06); v1.2 adds the code_anchors accountability field + dead-anchor resolve check, grounded against origin/main 91c815f (2026-09-13) — every runtime-claiming provider's anchors verified to exist on disk at that commit. EXP10 activation pass (2026-10-22, origin/main 7a8b066942098a7917b2655fe75d8ebad677fb09): added slack / make-com / icloud-mail entries (all PROPOSED, no runtime claims), recorded EXP10 ownership of the microsoft-365 Teams lane,  EXP10 provider-coverage pass (2026-10-29, origin/main 67a51bfc281ef6b5128451a8d32166f369656730): added the zernio row (PROOF_OWED — EXP07 #3070 merged a405a3a11 + deployed configured it behind the Social connection pipe; facts grounded in the merged adapter source and EXP07's ANT-162 records e1ec0288/d3e5ad85; pricing deliberately unknown, not asserted).",
   "purpose": "One authoritative, living catalogue and taxonomy of every third-party provider, API, connector, Marketplace service, and external-execution platform Paige may use. This is a product-governance and delivery record. It does NOT install providers, hold credentials, call external APIs, create OAuth clients, create billing commitments, or ship provider functionality. v1.1 adds the API Expense & Operations Layer (per-provider operating cost + ownership visibility) — see expense_and_operations_schema and cost_tracks.",
   "cardinal_rule": "Listing a provider here NEVER means it is connected, available, or autonomous. A registry entry is a governance declaration, not a live capability. Connection is a per-tenant authorization fact; availability is a getTierFeatureSet()/RLS fact; autonomy is a resolve_tool_autonomy()/Trust-Compass fact. This document decides none of them (see rules R1 and R8).",
   "how_it_relates_to_siblings": {
@@ -3426,6 +3426,87 @@
       "sources": [
         "ANT-164 comment 4b5c83ff (EXP10 completed realtime annex: pricing/limits/retention/rollback, all doc-grounded)",
         "ANT-162 comments 37e56af0 + 7f6c5026 (owner activation + App ID correction)"
+      ]
+    },
+    {
+      "id": "zernio",
+      "name": "Zernio (the configured Social connection provider)",
+      "taxonomy": "marketing_ads_social_presence_analytics",
+      "business_reason": "Owner selected Zernio and vaulted ZERNIO_API_KEY (2026-10-29); EXP07 PR #3070 (merged a405a3a11, deployed with the workflow's own readback 2026-10-29) configured it behind the existing dormant Social connection pipe — the concrete provider the Social cards' Connect flow now reaches. Before this the whole connection pipe (cards, approvals, verification, receipts) shipped with NO provider configured behind it, dormant by design.",
+      "paige_use_cases": [
+        "per-platform, multi-account social connections through the REAL platform's own consent screen (Zernio hosts the selection screens before it; per-platform authorization hosts allowlisted by the adapter)",
+        "verify a connected account by provider readback (GET /accounts — Zernio's documented completion signal, not redirect parameters)",
+        "per-account disconnect with provider-side revocation (their documented revocation unit: tokens revoked, metering stops)",
+        "(future, its own governed slice) publishing — the adapter's createPost always refuses today"
+      ],
+      "connection_prerequisite": "Owner-vaulted platform secret ZERNIO_API_KEY (Edge Secrets; the adapter reads it through the canonical env-key path) plus the pipe's existing PUBLIC_SITE_URL. The key authenticates PAIGE as a platform client only; tenant identity stays the opaque ps_<hmac> provider profile key minted by the social doors — Zernio never learns a Paige tenant or customer id.",
+      "required_scopes": [
+        "Per-account platform-native consent shown by the real platform's own consent screen (the adapter's per-platform authorization-host allowlist is enforced); no scope is inferred, pre-granted, or silently widened"
+      ],
+      "safe_readable_context": "Connection health, stable provider account identifier, platform (Zernio's reported names folded to PAIGE's catalogue keys via the adapter's documented aliases), handle, display name, avatar URL, per-account capability list, and last verification time. The API key, profile HMAC keys, callback nonces, and raw payloads are service-only.",
+      "allowed_writes_external_effects": "Open the account-authorization redirect (Zernio selection screens or the platform's consent screen) after one owner/admin confirmation; verify by readback; per-account provider-side revocation on disconnect. Publishing, scheduling, analytics pulls, comments, replies, DMs, ads, and paid actions DO NOT exist here — the adapter's createPost always refuses, and each arm ships as its own future governed slice. No spend.",
+      "authority_lane": [
+        "read",
+        "confirm"
+      ],
+      "m1_dependency": "No money movement in the connection slice; the provider subscription is a platform operating expense. Any future paid social action requires the canonical real-money control before exposure.",
+      "canonical_provider_receipt": "The requested platform's account present in the profile readback (GET /accounts) — Zernio's documented completion signal — with connection state applied by the existing social doors before their connection receipt/Rail outcome. Future publishing receipts belong to the publishing slice, not this row.",
+      "rail_mind_memory": "Rail: the existing social-connection receipt path (record_capability_run through the doors). Mind and long-term Memory: no private provider payload, token, or audience data.",
+      "status": "PROOF_OWED",
+      "owner": "EXP07 (Social experience); EXP10 (registry entry — connection substrate)",
+      "dependency": "The first REAL connect in production (Settings → Integrations → a platform → Connect) is the live probe and the credential check on the vaulted key: 200-path proves the key carries authority; 401/403 surfaces exact regeneration guidance; it lands the first verified account on a card. LIVE requires that authenticated end-to-end proof. Durable follow-up only if the redirect race ever shows: Zernio's account.connected webhook (a later slice).",
+      "next_slice": "EXP07 queue: broadcast slice → guest admission + scheduled calls → Team Hub chat-tool seam → the Zernio publishing arm (its own governed slice; createPost refuses until then).",
+      "tier_eligibility": {
+        "platform": "eligible",
+        "solo": "eligible",
+        "agency_future": "resell",
+        "enterprise_future": "eligible"
+      },
+      "expense_and_operations": {
+        "cost_responsibility": "platform_paid",
+        "billing_owner": "Paige platform account; the shared server credential is never a tenant identity.",
+        "operational_owner": "EXP07 (Social experience); connection substrate EXP10",
+        "pricing_model": "unknown",
+        "pricing_source_url": "https://zernio.com/ (provider site; the pricing page is NOT yet verified — no price is asserted)",
+        "pricing_checked_as_of": null,
+        "pricing_note": "No price is asserted: Zernio's pricing was not verified in this registry pass (facts come from the merged adapter source and EXP07's ANT-162 records). Verify at the provider before any publishing/cost-bearing slice.",
+        "access_prerequisite": "Owner-vaulted ZERNIO_API_KEY in Edge Secrets plus the pipe's existing PUBLIC_SITE_URL; no per-tenant keys exist.",
+        "expected_cost_driver": [
+          "api_calls"
+        ],
+        "rate_limits_quotas": "Unknown/unverified in this pass — no limit is asserted; the adapter rides safeFetch under the platform's standard deadline. Verify Zernio's documented limits before any volume-bearing slice.",
+        "usage_review_cadence": "At each Social slice's review until the first real connect; pricing and limits re-verified before the publishing arm.",
+        "renewal_deprecation_review": "Not applicable yet (no paid plan or term recorded); revisit when the provider subscription terms are verified.",
+        "data_privacy_retention": "Connection state and safe account facts live in PAIGE's own stores; the API key and profile HMAC keys are service-only. Provider-side retention was NOT verified in this pass — verify Zernio's data terms before the publishing slice.",
+        "money_movement": {
+          "can_move_real_money": false,
+          "m1_dependency_track": "none",
+          "detail": "Connection substrate only; publishing and any paid action do not exist yet and require the canonical real-money control first."
+        },
+        "receipt_reconciliation": "The requested platform's account present in the GET /accounts readback, matched to the opaque ps_<hmac> profile key; connection state applied by the doors before the receipt/Rail outcome.",
+        "rail_outcome": "Governed social-connection outcome on Rail (the doors' existing path)",
+        "pause_revoke_path": "Stop connects (immediate; no scheduled or automated connects exist); disconnect revokes per-account at the provider (their documented unit); platform key rotation is owner-held (ZERNIO_API_KEY).",
+        "next_owner": "EXP07",
+        "next_slice": "First real connect in production (the live probe and credential check), then EXP07's broadcast / guest admission / Team Hub seam / publishing queue."
+      },
+      "code_anchors": [
+        {
+          "path": "supabase/functions/_shared/social-provider/zernio.ts",
+          "role": "provider_adapter",
+          "note": "the Zernio adapter — satisfies the same SocialProviderAdapter contract the doors were built against; DEFAULT_API_BASE zernio.com/api/v1; verification by GET /accounts readback; createPost always refuses (publishing is a future governed slice)"
+        },
+        {
+          "path": "supabase/functions/paige-social-callback/index.ts",
+          "role": "callback_readback",
+          "note": "the callback leg — verifies Zernio rows by reading the profile back and requiring the requested platform's account (readback, not redirect parameters)"
+        }
+      ],
+      "sources": [
+        "supabase/functions/_shared/social-provider/zernio.ts",
+        "supabase/functions/_shared/social-provider/mod.ts",
+        "supabase/functions/paige-social/index.ts",
+        "supabase/functions/paige-social-callback/index.ts",
+        "ANT-162 comments e1ec0288 + d3e5ad85 (EXP07 records: owner choice, key vaulting, #3070 merged a405a3a11 + deploy readback, honest probe boundary)"
       ]
     },
     {

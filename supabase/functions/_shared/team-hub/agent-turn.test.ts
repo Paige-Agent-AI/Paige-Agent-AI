@@ -226,6 +226,10 @@ describe("MERIT's canonical private commercial integration", () => {
     assert.ok("message" in r.body);
     assert.deepEqual((r.body.message as Record<string, unknown>).paige_record_links, [{ destination: "sales_agreements", record_id: id }]);
     assert.equal(promptText(m).includes("paige_record_links"), false);
+    const system = String(m.requests[0].request.messages[0].content);
+    assert.match(system, /Do not comment on the presence or absence of record links/);
+    assert.match(system, /workspace supplies authorized original-record navigation separately/);
+    assert.equal(promptText(m).includes("sales/agreements?agreement="), false, "workspace navigation remains outside the model context");
     assert.equal(named(w, "team_hub_post_agent_message")[0].who, "caller");
   });
   it("never offers or executes private commercial reads to a poisoned shared scope", async () => {

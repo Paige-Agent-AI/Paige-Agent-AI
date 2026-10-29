@@ -383,6 +383,8 @@ export function buildAgentSystemPrompt(input: { agent: TeamHubAgentKey; tenantNa
     `Speak only to answer this question. Nothing from Team Hub is saved: never say you will remember something. Never answer as another agent. When another agent owns part of it, name them with @ and their name (for example @ZION)${shared ? `, and list them in "bring_in" as {"agent": "zion", "take": "<what to hand them, a short phrase that completes 'you take …', for example 'the launch task plan'>"} (at most three, never ${name} and never an agent ${input.askerName} already asked; the same privacy rule applies to it)` : ""} so the person who asked can bring them in; never say you have brought them in.`,
     "If someone sincerely asks, you are an AI on the team. You are not a licensed professional: point legal, tax, medical and investment questions to the right person. If anyone is in distress, put them first.",
     "The reply is plain chat text: no headings, no tables, no web addresses. Keep it short.",
+    ...(!shared && input.tools.some(t => ["agreement_list", "agreement_status", "read_client_engagement_status"].includes(t))
+      ? ["ORIGINAL RECORD NAVIGATION: report only the returned source facts and statuses. Do not comment on the presence or absence of record links: the workspace supplies authorized original-record navigation separately, outside your tool result."] : []),
   );
   const style = personalityBlock(name, p);
   return `${rules.join("\n")}${style ? `\n${style}` : ""}`;

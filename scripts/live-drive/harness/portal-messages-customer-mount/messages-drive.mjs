@@ -82,7 +82,14 @@ async function drive(page, s, notes) {
     }
     case "error": await page.getByText("We couldn't load your messages").waitFor({ timeout: 30_000 }); break;
     case "norelationship": await page.getByText("Messages aren't available on this account").waitFor({ timeout: 30_000 }); break;
-    case "multiple": await page.getByText("Messaging for more than one business isn't available yet").waitFor({ timeout: 30_000 }); break;
+    case "multiple": {
+      await page.getByText("Choose a business to message").waitFor({ timeout: 30_000 });
+      const choose = page.getByRole("link", { name: "Choose business", exact: true });
+      if (await choose.getAttribute("href") !== "/app?chooseBusiness=1") throw new Error("Missing original business chooser recovery");
+      if (await field.count()) throw new Error("An ambiguous relationship must not expose a composer");
+      notes.businessChooser = "Original /app?chooseBusiness=1; no customer record or selection inferred";
+      break;
+    }
     case "loading": await page.locator("section[aria-labelledby='messages-title'] [role='status']").first().waitFor({ state: "attached", timeout: 30_000 }); break;
   }
   // The chrome's brand resolves on its own read; wait for it to settle (no skeleton) unless the state never resolves it.

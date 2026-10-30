@@ -1,0 +1,83 @@
+{
+  "boundary": "Original Messages page/hook/AppNav rendered with synthetic transport; full authenticated AppShell/CURA and native business chooser are not mounted.",
+  "observedAt": "2026-10-30T22:04:11.794Z",
+  "observations": [
+    {
+      "case": "desktop-ambiguity",
+      "chooser": [
+        {
+          "height": 44,
+          "href": "/app?chooseBusiness=1",
+          "target": null
+        }
+      ],
+      "composer": false,
+      "fonts": "loaded",
+      "height": 768,
+      "scrollWidth": 1366,
+      "width": 1366
+    },
+    {
+      "actions": [
+        {
+          "height": 44,
+          "href": "/app?chooseBusiness=1",
+          "text": "Choose business",
+          "width": 138.47500610351562
+        },
+        {
+          "height": 44,
+          "href": "/app",
+          "text": " Back to Home",
+          "width": 144.8249969482422
+        }
+      ],
+      "case": "narrow-dark-ambiguity",
+      "composer": false,
+      "fonts": "loaded",
+      "height": 844,
+      "scrollWidth": 390,
+      "width": 390
+    },
+    {
+      "body": "",
+      "case": "narrow-dark-keyboard-recovery",
+      "composerDisabled": false,
+      "focusedId": "portal-message-body",
+      "height": 844,
+      "savedRows": 12,
+      "scrollWidth": 390,
+      "width": 390
+    },
+    {
+      "case": "desktop-refused-keyboard-retry",
+      "composerDisabled": true,
+      "errorStillVisible": true,
+      "focusedText": "Try again",
+      "height": 768,
+      "width": 1366
+    },
+    {
+      "body": "",
+      "case": "desktop-keyboard-recovery",
+      "composerDisabled": false,
+      "focusedId": "portal-message-body",
+      "height": 768,
+      "rows": 10,
+      "scrollWidth": 1366,
+      "width": 1366
+    },
+    {
+      "body": "",
+      "case": "narrow-light-keyboard-recovery-current-source",
+      "composerDisabled": false,
+      "focusedId": "portal-message-body",
+      "height": 844,
+      "rows": 10,
+      "scrollWidth": 390,
+      "width": 390
+    }
+  ],
+  "captureFailure": "One narrow error-state screenshot timed out before any recovery action; not used as visual evidence. The subsequent current-page state confirmed the retry had not run.",
+  "measurementLimit": "The initial narrow-dark savedRows value used an inapplicable ID selector and is excluded as a row-count assertion. Desktop and subsequent narrow-light counts use actual non-presentation message list items and both read 10. Focus, width and composer observations use the actual rendered controls."
+}

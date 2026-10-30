@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-30T17:18:45.688Z",
+  "at": "2026-10-30T17:26:14.359Z",
   "boundary": "Actual components with synthetic local ports/CSP, not full SOLO shell or authenticated financial/provider proof. Review image proves unchanged review markup; final narrow reload reflects current receipt source. Earlier unfocused/loading frames excluded.",
   "files": [
     {
@@ -16,7 +16,7 @@
     },
     {
       "file": "src/solo/sales/InvoiceReceiptAssignments.tsx",
-      "sha256": "48fdc1912388ecb39844f59f46da62df560ff751b4214fd359c3cd3a843934b3"
+      "sha256": "5d95b99eb63a4dd4236849ab8923e72b97f2030877305b20432129af37059e65"
     },
     {
       "file": "src/solo/sales/invoice-accepted-payment-plan.css",
@@ -28,7 +28,7 @@
     },
     {
       "file": "supabase/functions/_shared/sales-invoice-command/manual-allocation-read.ts",
-      "sha256": "5944e4548be0537a4d9916598c573da40cfc5ea7dd2e1f16359891ee0d2844db"
+      "sha256": "d4c157623c43b1a1f3543072f5f11e5bfb88239aa0e1825d98bca351a39920e9"
     },
     {
       "file": "scripts/live-drive/sales-payments/mount/accepted-plan.ts",
@@ -46,7 +46,8 @@
     },
     {
       "file": "receipt-keyboard-end-390.jpg",
-      "sha256": "55bfa114c8b729293d2f315a4af32c9d72fab5e018c0c0352e6a68adab8d1763"
+      "sha256": "0f2c21b825997c639e34643912e2905e2e685b57d21178d5cf2781b3c8f17840"
     }
-  ]
+  ],
+  "productCommit": "955da6dc3d69710122a06b67b57eede892a75af8"
 }

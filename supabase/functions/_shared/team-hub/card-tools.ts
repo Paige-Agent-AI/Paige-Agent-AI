@@ -237,12 +237,22 @@ export type CardReadContext = {
   /** Distinguishes this turn's receipts (the accepted turn's id). */
   turnRef: string;
   signal?: AbortSignal;
+  /** Fresh verified actor/workspace/DM/role/roster scope, never the offer-time snapshot. */
+  isCurrent: () => Promise<boolean>;
 };
 
 const READ_UNAVAILABLE = { status: "unavailable", message: "That read didn't work just now. Say plainly that you couldn't look it up; never guess." };
 
 /** One A2b read, for the model. Every one is the chat's own read from its one home, never a second query. */
 export async function runCardRead(ctx: CardReadContext, tool: string, args: Record<string, unknown>, callId: string): Promise<Record<string, unknown>> {
+  try {
+    if (ctx.signal?.aborted || !await ctx.isCurrent()) return READ_UNAVAILABLE;
+    const result = await readCardData(ctx, tool, args, callId);
+    return !ctx.signal?.aborted && await ctx.isCurrent() ? result : READ_UNAVAILABLE;
+  } catch { return READ_UNAVAILABLE; }
+}
+
+async function readCardData(ctx: CardReadContext, tool: string, args: Record<string, unknown>, callId: string): Promise<Record<string, unknown>> {
   try {
     if (tool === "crm_list_tasks") {
       // D15: the person filter needs an auth-user lookup by email, which Team Hub never makes.

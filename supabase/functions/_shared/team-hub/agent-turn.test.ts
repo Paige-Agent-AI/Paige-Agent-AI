@@ -1025,6 +1025,8 @@ type DmOpts = {
   row?: () => Record<string, unknown> | null; acceptedAt?: string | null; asked?: "dm" | "channel";
   /** A2b: a Team Hub card already links the proposal the door hands back. */
   linked?: boolean;
+  onTaskRead?: () => void;
+  scopeNow?: () => unknown;
 };
 function dmWorld(opts: DmOpts = {}) {
   const agent = opts.agent ?? "zion";
@@ -1076,11 +1078,11 @@ function dmWorld(opts: DmOpts = {}) {
   };
   const subagent = opts.scope !== undefined ? opts.scope : agent === "nexus" ? NEXUS_V2 : ZION_V2;
   const serviceDb = fakeDb((q) => {
-    if (q.table === "paige_subagents") return { data: { slug: agent, config: { capability_scope: subagent, team_hub_tools: SHARED_LIST } }, error: null };
+    if (q.table === "paige_subagents") return { data: { slug: agent, config: { capability_scope: opts.scopeNow ? opts.scopeNow() : subagent, team_hub_tools: SHARED_LIST } }, error: null };
     if (q.table === "user_roles") return { data: [], error: null };
     if (q.table === "tenant_members") return { data: opts.role === null ? null : { role: opts.role ?? "owner", status: "active" }, error: null };
-    if (q.table === "tasks") return { data: [{ id: TASK, title: "Book the venue", status: "pending", due_date: null, track: null, user_id: SAM, biz_id: null, deal_id: null,
-      source_thread_id: null, updated_at: TASK_UPDATED, created_at: TASK_UPDATED }], error: null };
+    if (q.table === "tasks") { opts.onTaskRead?.(); return { data: [{ id: TASK, title: "Book the venue", status: "pending", due_date: null, track: null, user_id: SAM, biz_id: null, deal_id: null,
+      source_thread_id: null, updated_at: TASK_UPDATED, created_at: TASK_UPDATED }], error: null }; }
     if (q.table === "tenants") return { data: { slug: "brightline" }, error: null };
     if (q.table === "team_hub_message_cards") return { data: opts.linked ? { message_id: CARD_MSG } : null, error: null };
     if (q.table === "paige_pending_confirmations") {
@@ -1094,6 +1096,7 @@ function dmWorld(opts: DmOpts = {}) {
     rpc(name: string, args: Record<string, unknown> = {}) {
       calls.push({ who: "service", name, args });
       if (name === "team_hub_accept_agent_turn") return Promise.resolve({ data: { ok: true, turn_id: TURN, ...(opts.acceptedAt === null ? {} : { accepted_at: opts.acceptedAt ?? ACCEPTED_AT }) }, error: null });
+      if (name === "team_hub_stage_agent_read_context") return Promise.resolve({ data: { ok: true }, error: null });
       if (name === "is_tenant_admin_as") return Promise.resolve({ data: opts.admin ?? true, error: null });
       if (name === "agency_can_manage_child") return Promise.resolve({ data: opts.agency ?? false, error: null });
       return Promise.resolve({ data: null, error: null });
@@ -1163,6 +1166,91 @@ describe("A2b: what an agent DM turn is offered (D4, D5, D13)", () => {
     await runDm(w, m, "zion", { teamHubAgentTurn: { conversationId: LAUNCH, sourceMessageId: ASK, threadRootId: null, agent: "zion" } });
     assert.deepEqual(offered(m), ["read_business_time_zone", "team_hub_read_conversation"]);
     assert.equal(named(w as never, "is_tenant_admin_as").length, 0, "the authority is not even asked");
+  });
+});
+
+describe("A2b: private card reads revalidate the current authority", () => {
+  it("the shared Fabric pre-attempt hook refuses another provider request after demotion", async () => {
+    const opts: DmOpts = { role: "admin", admin: true };
+    const w = dmWorld(opts), m = model([{ tool_calls: [LIST] }, FINAL]);
+    const make = m.make; let allowed: boolean | undefined;
+    m.make = calls => {
+      const complete = make(calls); let attempts = 0;
+      return async (request, options) => {
+        if (++attempts === 2) {
+          opts.role = "member"; opts.admin = false;
+          allowed = await options.beforeProviderAttempt?.();
+          if (!allowed) return { ok: false };
+        }
+        return complete(request, options);
+      };
+    };
+    const r = await runDm(w, m);
+    assert.equal(allowed, false);
+    assert.equal(m.requests.length, 1);
+    assert.equal(named(w, "team_hub_post_agent_message").length, 0);
+    assert.equal(r.body.outcome, "no_reply");
+  });
+  it("a changed stored scope before dispatch withholds the task read", async () => {
+    let revoked = false;
+    const w = dmWorld({ scopeNow: () => revoked ? { ...ZION_V2, tools: ZION_V2.tools.filter(t => t !== "crm_list_tasks") } : ZION_V2 });
+    const m = model([{ tool_calls: [LIST] }, FINAL]), make = m.make;
+    m.make = calls => {
+      const complete = make(calls);
+      return async (request, options) => { revoked = true; return complete(request, options); };
+    };
+    const r = await runDm(w, m);
+    assert.equal(w.queries.filter(q => q.table === "tasks").length, 0);
+    assert.equal(named(w, "team_hub_post_agent_message").length, 0);
+    assert.equal(r.body.outcome, "no_reply");
+  });
+  it("demotion while the first provider request runs prevents the service task read", async () => {
+    const opts: DmOpts = { role: "admin", admin: true };
+    const w = dmWorld(opts), m = model([{ tool_calls: [LIST] }, FINAL]);
+    const make = m.make;
+    m.make = calls => {
+      const complete = make(calls);
+      return async (request, options) => { opts.role = "member"; opts.admin = false; return complete(request, options); };
+    };
+    const r = await runDm(w, m);
+    assert.equal(w.queries.filter(q => q.table === "tasks").length, 0);
+    assert.equal(named(w, "team_hub_post_agent_message").length, 0);
+    assert.equal(r.body.outcome, "no_reply");
+  });
+  it("demotion while a task read resolves withholds its data from the next provider request", async () => {
+    const opts: DmOpts = { role: "admin", admin: true };
+    opts.onTaskRead = () => { opts.role = "member"; opts.admin = false; };
+    const w = dmWorld(opts), m = model([{ tool_calls: [LIST] }, FINAL]);
+    const r = await runDm(w, m);
+    assert.equal(m.requests.length, 1);
+    assert.equal(named(w, "team_hub_post_agent_message").length, 0);
+    assert.equal(r.body.outcome, "no_reply");
+  });
+  it("demotion after the final provider answer prevents publication", async () => {
+    const opts: DmOpts = { role: "admin", admin: true };
+    const w = dmWorld(opts), m = model([{ tool_calls: [LIST] }, FINAL]);
+    const make = m.make;
+    m.make = calls => {
+      const complete = make(calls); let attempts = 0;
+      return async (request, options) => {
+        const result = await complete(request, options);
+        if (++attempts === 2) { opts.role = "member"; opts.admin = false; }
+        return result;
+      };
+    };
+    const r = await runDm(w, m);
+    assert.equal(named(w, "team_hub_post_agent_message").length, 0);
+    assert.equal(r.body.outcome, "no_reply");
+  });
+  it("stages successful card reads on the exact accepted turn before publication", async () => {
+    const w = dmWorld(), m = model([{ tool_calls: [LIST] }, FINAL]);
+    const r = await runDm(w, m);
+    assert.equal(r.body.outcome, "posted");
+    const staged = named(w, "team_hub_stage_agent_read_context");
+    assert.equal(staged.length, 1);
+    assert.deepEqual(staged[0].args.p_read_tools, ["crm_list_tasks"]);
+    assert.equal(staged[0].args.p_turn_id, TURN);
+    assert.ok(w.calls.indexOf(staged[0]) < w.calls.indexOf(named(w, "team_hub_post_agent_message")[0]));
   });
 });
 

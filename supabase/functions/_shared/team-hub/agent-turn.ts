@@ -862,6 +862,41 @@ export async function runTeamHubAgentTurn(deps: AgentTurnDeps, raw: unknown): Pr
   // an A2b read or card tool. A card tool also needs the door seam; without it, none is offered.
   const authority = whereKind === "agent_dm" && namesA2bTool(storedDm)
     ? await a2bAuthority(caller, service, userId, tenantId) : null;
+  const cardReadTools = new Set<string>();
+  const currentCardReadScope = async (): Promise<boolean> => {
+    if (deps.signal?.aborted || whereKind !== "agent_dm" || !storedDm) return false;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    let onAbort: (() => void) | undefined;
+    try {
+      return await Promise.race([(async () => {
+        try {
+          const [persona, freshNames, freshAuthority, platform] = await Promise.all([
+            rpcSafe(caller, "get_paige_persona_context", {}), readNames(caller, tenantId, target),
+            a2bAuthority(caller, service, userId, tenantId),
+            agent === "paige" ? Promise.resolve(null)
+              : service.from("paige_subagents").select("slug,config").eq("slug", agent).is("tenant_id", null).maybeSingle(),
+          ]);
+          const context = persona && !persona.error ? object(Array.isArray(persona.data) ? persona.data[0] : persona.data) : null;
+          const config = platform && !platform.error ? object(platform.data?.config) : null;
+          const scope = object(config?.capability_scope);
+          const fresh = agent === "paige" ? [...PAIGE_DM_SCOPE] : storedToolNames(scope);
+          return !deps.signal?.aborted && context?.tenant_id === tenantId
+            && freshAuthority.seat === true && freshAuthority.workspaceAdmin === true
+            && !!freshNames && "people" in freshNames && freshNames.people.has(userId)
+            && freshNames.conversation?.kind === "agent_dm" && freshNames.conversation.agent_key === agent
+            && fresh !== null && JSON.stringify(fresh) === JSON.stringify(storedDm)
+            && (agent === "paige" || scope?.access === "read" || scope?.access === "card");
+        } catch { return false; }
+      })(), new Promise<boolean>(resolve => {
+        timer = setTimeout(() => resolve(false), 5000);
+        onAbort = () => resolve(false); deps.signal?.addEventListener("abort", onAbort, { once: true });
+        if (deps.signal?.aborted) resolve(false);
+      })]);
+    } finally {
+      if (timer !== undefined) clearTimeout(timer);
+      if (onAbort) deps.signal?.removeEventListener("abort", onAbort);
+    }
+  };
   const baseTools = effectiveAgentTools(
     whereKind === "agent_dm" ? storedDm : storedShared,
     whereKind === "agent_dm" ? "agent_dm" : "shared",
@@ -926,7 +961,7 @@ export async function runTeamHubAgentTurn(deps: AgentTurnDeps, raw: unknown): Pr
     try {
       result = await deps.complete({ cognitive_class: "operational", job: "team_hub_agent_turn", messages, tools: toolDefs.length ? toolDefs : undefined,
         response_format: { type: "json_object" }, max_tokens: 900 },
-        { trace, signal: deps.signal, beforeProviderAttempt: async () => !deps.signal?.aborted && (!mentorReadsUsed || await currentMentorScope())
+        { trace, signal: deps.signal, beforeProviderAttempt: async () => !deps.signal?.aborted && (!cardReadTools.size || await currentCardReadScope()) && (!mentorReadsUsed || await currentMentorScope())
           && (!domainChecks.length || await currentPrivateScope(privateScope)) });
     } catch { return endedWithoutPost("no_reply"); }
     const choice = object((object(result?.response)?.choices as unknown[] | undefined)?.[0]);
@@ -969,7 +1004,17 @@ export async function runTeamHubAgentTurn(deps: AgentTurnDeps, raw: unknown): Pr
       }
       if (A2B_READ_TOOLS.has(name)) {
         // A2b: the chat's own read from its one home, under this person's authority in this workspace.
-        const result = await runCardRead({ caller, service, tenantId, userId, turnRef: `${turnId}:${hash}`, signal: deps.signal }, name, args, call.id);
+        if (!await currentCardReadScope()) return endedWithoutPost("no_reply");
+        // The existing native read-context protocol admits at most three distinct private sources.
+        if (!cardReadTools.has(name) && cardReadTools.size >= 3) {
+          messages.push({ role: "tool", tool_call_id: call.id, content: JSON.stringify({ status: "unavailable",
+            message: "This turn reached its private read limit. No further records were read. Ask for a follow-up if needed." }) });
+          continue;
+        }
+        cardReadTools.add(name);
+        const result = await runCardRead({ caller, service, tenantId, userId, turnRef: `${turnId}:${hash}`, signal: deps.signal,
+          isCurrent: currentCardReadScope }, name, args, call.id);
+        if (!await currentCardReadScope()) return endedWithoutPost("no_reply");
         provenance.note(name, result);
         messages.push({ role: "tool", tool_call_id: call.id, content: JSON.stringify(result) });
         continue;
@@ -1120,6 +1165,13 @@ export async function runTeamHubAgentTurn(deps: AgentTurnDeps, raw: unknown): Pr
   // Source results are prepared, not durable execution receipts. Re-read them and current
   // authority before staging references on the ORIGINAL accepted turn. The native post repeats
   // Sales authority/stored-scope checks atomically; it still owns posting/idempotency/readback.
+  if (cardReadTools.size) {
+    if (!await currentCardReadScope()) return endedWithoutPost("no_reply");
+    const staged = await rpcSafe(service, "team_hub_stage_agent_read_context", {
+      p_turn_id: turnId, p_token_hash: hash, p_read_tools: [...cardReadTools], p_record_links: [],
+    });
+    if (deps.signal?.aborted || staged?.error || object(staged?.data)?.ok !== true) return endedWithoutPost("no_reply");
+  }
   if (domainChecks.length) {
     for (const check of domainChecks) if (deps.signal?.aborted || !await check()) return endedWithoutPost("no_reply");
     if (!await currentPrivateScope(privateScope)) return endedWithoutPost("no_reply");

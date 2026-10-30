@@ -92,6 +92,62 @@ The agents' replies above the cards and the Suggest sentence are hand-written st
 
 ## Evidence index
 
+### Exact native EXP10 receiving compatibility — October 30, 2026
+
+Database-contract job `123852114883` on `98c4a26022` failed at the original EXP10 native
+test line 35: `A3: scope access changed: card`. Earlier domain-duplicate migration errors in
+the same log are expected negative probes followed by PASS; they are not the failed step.
+The actual compatibility failure reproduced locally, exit 3. The EXP10 test expected only
+the original version-1/read/eight-tool scope; reviewed A2b intentionally adds version-2/card
+with exactly those eight reads followed by `growth_page_publish`.
+
+The receiving test now validates only those two exact version/access/ordered-tool contracts,
+retaining actual platform-row, other-agent isolation and original absent-guard replay checks.
+Both positive configurations and eleven hostile mode/access/version/missing-read/extra-action/
+order/null configurations are checked. No EXP10 migration, helper, provider or credential code
+changes. Existing-owner notices are ANT-164/`53878a54-b948-4982-b16a-8b4942bb51e4` and ANT-161.
+The original disposable A2b proof now includes this real native test after all original assertions
+and mutants and the new P1 proof. It passes locally, exit 0. A test-only JSONB operator precedence
+error during development was corrected and is not counted as passing evidence.
+Fresh hosted exact-head gates remain required; this correction does not waive the failed run.
+The local full-app compiler attempt on the repair was stopped without a result; only the earlier
+head has the recorded baseline comparison. Current type/build assurance must come from fresh checks.
+
+### New task-read freshness P1 — repair under review, October 30, 2026
+
+Automated review `5707385501` on #3108/`98c4a26022` found a real authority-snapshot gap
+(`PRRT_kwDOSAAXqM6x0z0D`). **Release held.** Prior source-only reviews did not identify it;
+the successful Preview and local SQL do not waive it. No customer incident is asserted.
+Four new regression cases reproduced **120 PASS / 4 FAIL** before the repair: demotion before
+dispatch, during read, after the final answer, and absent native staging. The application now
+re-resolves current actor/workspace/seat/admin/DM/stored scope before and after each A2b read,
+before provider attempts and before publication; a lost scope ends the turn without a post.
+The final host suite passes **126/126**, including additional shared-Fabric pre-attempt refusal
+and roster-change cases. The combined original agent/card/specialist suites passed **310/310**
+before those final two test-only cases were added. These are author-run engineering tests.
+
+Forward migration `20271126030008` extends the ORIGINAL accepted-token read-context guard for
+PAIGE/ZION/NEXUS. Original MERIT/CURA/VERA logic is byte-exact after removing the marked A2b
+branch and restoring the original three-agent predicate; the complete original OID/metadata/
+ACL guard and metadata inverse remain. New native body MD5 `a75a322d43e4cde08f5142d1eabf6ddb`.
+Original applied `26020008` and E04 applied history are unchanged. Staging and posting remain
+the same original path; there is no second authority engine or attestation store.
+
+The disposable PostgreSQL proof passes all original 16 sections/16 mutants plus new guard
+replay, whole-peer-body inverse, current admin staging, demotion/roster/account-change refusal,
+browser attestation refusal, authorized PAIGE/ZION/NEXUS publication and out-of-scope source
+refusals. An additional native mutant removes the authority guard, demonstrates the forbidden
+post, then rolls back; the unmutated guard refuses it. No original assertion was removed.
+An independent read-only reviewer found no actionable source issue in the repair; they did not
+rerun tests or certify hosted/authenticated behavior. Renewed exact-head review/CI, application
+of the new forward migration, native readback and actual authorized customer proof remain owed.
+
+Reusable lesson: offer-time authorization is not permission to use a service-role read later.
+Revalidate around the read and provider continuation, and serialize current authority with the
+original publication transaction. Private-read staging admits at most three distinct sources
+per turn, matching the original protocol; this is a scope/technical bound with a follow-up path,
+not a monetary allowance or a change to uncapped consuming-tenant billing.
+
 ### Hosted failure disposition and sequential carrier — October 30, 2026
 
 Original #3041 is preserved at successor integration head

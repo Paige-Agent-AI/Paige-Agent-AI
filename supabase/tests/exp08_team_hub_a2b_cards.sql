@@ -1658,6 +1658,8 @@ SELECT pg_temp.check((SELECT count(*) FROM mutant_results)=16 AND NOT EXISTS(SEL
  'mutants: all 16 weakened guards break the property they protect: '||(SELECT string_agg(mutant||'='||coalesce(guarded::text,'null'), '; ' ORDER BY mutant) FROM mutant_results));
 \echo 'PASS: 16 of 16 mutants (decide by a non-approver, declined read from consumed_at, fingerprint to a non-approver, arguments in the states read, a proposal from before the turn, a proposal in a chat thread, the agent scope unchecked, decide without visibility, approve consuming, no UNIQUE proposal link, an outcome before settle (door alone, and door with the storage CHECK gone), an inactive approver reading waiting, no scope trigger, failed leaving the proposal live, decline not consuming) each fail their probe; controls hold'
 
+\ir fixtures/exp08-a2b-card-read-revalidation.sql
+
 RESET ROLE;
 \c postgres
 DROP DATABASE exp08_team_hub_a2b_proof;

@@ -1719,6 +1719,14 @@ Reviewed on the rendered A2b frames (`docs/evidence/ui-delivery/assets/exp08-tea
 
 ### A2b review hardening (2026-10-28, #3041)
 
+- **Successor P1, 2026-10-30, #3108:** the A2b read offer's authority snapshot does not authorize
+  later service reads. Fresh actor/tenant/admin/seat/DM/roster checks bracket every card read and
+  provider continuation; the original accepted-token staging/post guard rechecks authority in
+  the publication transaction. New forward `20271126030008` adds only the A2b private-source
+  branch while preserving the original E04 guard body and metadata. Original applied files
+  remain unchanged. Regression/native mutation proof is in the original A2b evidence packet.
+  Release remains held pending published repair, renewed exact-head review/checks and readback.
+
 - **Codex P1, fixed:** `team_hub_settle_card` is service_role only `(tenant, actor, message, outcome)`;
   card-act settles with the service client after running the door, passing the approver it verified
   from the JWT; a call carrying a user's JWT is refused `not_allowed`. The approver can no longer assert

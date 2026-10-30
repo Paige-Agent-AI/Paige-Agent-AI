@@ -25,7 +25,7 @@ MUST_PRESERVE: original one-step behavior/copy, actor/business/currentness/versi
 ACCEPTANCE_CRITERIA: read all exact purposes; correct the original draft where needed; cancel with no effects or deliberately enable; each real future occurrence obtains its own authority and original Task/Rail; refresh/reload returns the same original process/outcomes without duplication.
 MOTION_PURPOSE: NONE: no motion change.
 PROTECTED_SEAMS: tested original OwnerTaskAutomations/hook/caller/count-complete read/history; unchanged Spine/Harness/Trust/LayerC/native writers, shared Chat/TeamHub/Root/registry/model/provider/scheduler.
-INTERNAL_BUILD_IDENTITY: source=product6f1a31e1073e7cba26529399b8295b37b6252fa1 with evidence-only Operations-host follow-up over nativee79f0620b2f37217a4b8983ec2a15a34ea836fa2; deployment=UNVERIFIED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=this record and original ANT11/5cfc4b04
+INTERNAL_BUILD_IDENTITY: source=2296d8b5d61b388597948548d7ab30617e7f4180; deployment=UNVERIFIED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=this record and original ANT11/5cfc4b04; native-prerequisite=e79f0620b2f37217a4b8983ec2a15a34ea836fa2
 RELEASE_CHANNEL: development: original component/source review, no deployed child claim.
 RELEASE_CLASSIFICATION: internal-only: bounded existing process-review extension, native3137 prerequisite; no complete customer-release claim.
 CUSTOMER_RELEASE_IDENTITY: none: no customer release name or announcement authorized.

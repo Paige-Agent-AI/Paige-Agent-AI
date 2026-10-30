@@ -16,6 +16,7 @@ try{
   await page.getByText(explanation,{exact:true}).first().waitFor();
   await page.waitForFunction(text=>[...document.querySelectorAll('[data-sonner-toast]')].some(el=>{const r=el.getBoundingClientRect();return el.textContent.includes(text)&&r.top>=0&&r.bottom<=innerHeight&&getComputedStyle(el).opacity==='1';}),explanation);
   await page.screenshot({path:path.join(out,theme+'-'+width+'.jpg'),type:'jpeg',quality:85});
+  assert.equal(await page.evaluate(text=>[...document.querySelectorAll('[data-sonner-toast]')].some(el=>{const r=el.getBoundingClientRect();return el.textContent.includes(text)&&r.top>=0&&r.bottom<=innerHeight&&getComputedStyle(el).opacity==='1';}),explanation),true,'warning remains visible after screenshot');
   assert.equal(await dialog.locator('textarea').inputValue(),words);assert.equal(await dialog.isVisible(),true);
   assert.equal(await page.evaluate(()=>window.smsFinalEligibilityCalls.length),1,'no automatic retry');
   await send.focus();await send.press('Enter');await page.waitForFunction(()=>window.smsFinalEligibilityCalls.length===2);
@@ -26,7 +27,7 @@ try{
   await dialog.locator('textarea').press('Escape');await dialog.waitFor({state:'hidden'});
   await page.getByRole('button',{name:'Reopen conversation'}).click();await dialog.waitFor();assert.equal(await dialog.locator('textarea').inputValue(),'');
   assert.equal(await page.evaluate(()=>window.smsFinalEligibilityCalls.length),2,'reopen does not dispatch');
-  results.push({theme,width,height,geometry,inertRequests:2,wordsRetained:true,noAutomaticRetry:true,escapeReopen:true,errors});await page.close();
+  results.push({theme,width,height,geometry,inertRequests:2,warningAfterCapture:true,wordsRetained:true,noAutomaticRetry:true,escapeReopen:true,errors});await page.close();
  }
  const paths=['src/pages/admin/conversations/ComposeThreadDialog.tsx','src/pages/admin/conversations/inbox-shared.ts','supabase/functions/_shared/pre-send-pipeline.ts','supabase/functions/send-message/index.ts',...['index.html','main.tsx','stubs.ts','vite.config.ts','drive.mjs'].map(p=>'scripts/live-drive/harness/exp03-sms-final-eligibility-mount/'+p)];
  fs.writeFileSync(path.join(out,'source-manifest.json'),JSON.stringify({proof:'Unchanged original dialog plus explicitly fictional injected refusal. Separate actual backend/gate tests; no full shell, PAIGE, authenticated, saved-thread or provider proof.',files:Object.fromEntries(paths.map(p=>[p,crypto.createHash('sha256').update(fs.readFileSync(p)).digest('hex')]))},null,2)+'\n');

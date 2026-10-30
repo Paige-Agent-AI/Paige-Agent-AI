@@ -1,7 +1,7 @@
 import { useCallback, useSyncExternalStore, type SetStateAction } from "react";
 
-import { composerScopeIdentityKey, createComposerScopeIdentity, type ComposerScopeIdentity } from "./paigeComposerScopeIdentity";
-export { COMPOSER_FOCUS_NONE, COMPOSER_SCOPE_FIELDS, composerScopeIdentityKey, createComposerScopeIdentity, type ComposerScopeIdentity, type ComposerScopeFieldCoverage } from "./paigeComposerScopeIdentity";
+import { composerScopeIdentityKey, createComposerScopeIdentity, type ComposerScopeIdentity } from "./paigeComposerScopeIdentity.ts";
+export { COMPOSER_FOCUS_NONE, COMPOSER_SCOPE_FIELDS, composerScopeIdentityKey, createComposerScopeIdentity, type ComposerScopeIdentity, type ComposerScopeFieldCoverage } from "./paigeComposerScopeIdentity.ts";
 
 export type ComposerConversation =
   | Readonly<{ kind: "new"; id: string }>

@@ -75,7 +75,7 @@ export function ComposeThreadDialog({
   activeConnectors,
   tenantId,
   activeTenantId = null,
-  settingsHref = "/admin/settings",
+  settingsHref = "/choose-account",
   actorId=null,
   approvalId,
   onHoldChange,

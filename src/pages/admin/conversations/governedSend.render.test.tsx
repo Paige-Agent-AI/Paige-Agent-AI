@@ -516,10 +516,11 @@ describe("a scheduled governed email's state, with the clock injected", () => {
   });
 });
 
-// The new-conversation dialog's scheduled Undo — THIS PR's code (ComposeThreadDialog calls
-// requestScheduledCancellation). The inbox-surface variants it once shared a describe with were
+// The new-conversation dialog's original queued SMS Undo. Email now checks and confirms
+// through comms-email-command; its uncertain-operation recovery is tested below and in
+// LeadReplyDrafts.test.tsx. SMS still calls requestScheduledCancellation. The inbox variants were
 // superseded by main's Conversations hardening and stay retired; main's own suites cover that flow.
-describe("the new-conversation dialog's scheduled cancellation receipts", () => {
+describe("the new-conversation dialog's queued SMS cancellation receipts", () => {
   const outcomes: Array<[string, () => Promise<{data: unknown; error: unknown}>]> = [
     ["false", async () => ({data:false,error:null})],
     ["missing", async () => ({data:null,error:null})],
@@ -529,9 +530,10 @@ describe("the new-conversation dialog's scheduled cancellation receipts", () => 
     ["transport rejection", async () => { throw new Error("offline"); }],
   ];
   async function queueWithUndo() {
+    db.contact = {...client,tenant_id:"tenant-a",client_contact_methods:[{kind:"phone",value:"+15555550101",is_primary:true}]};
     const holder = document.createElement("div"); document.body.appendChild(holder);
     const root = createRoot(holder);
-    const render = (tenant: string, open = true) => root.render(<MemoryRouter><ComposeThreadDialog open={open} onOpenChange={()=>{}} activeConnectors={[{id:"conn-1",channel_type:"email",provider:"resend",display_name:"Test business email",from_address:"hello@business.example"}]} tenantId={tenant} initialContact={{id:"contact-1",name:"Test lead"}} onSent={()=>{}} /></MemoryRouter>);
+    const render = (tenant: string, open = true) => root.render(<MemoryRouter><ComposeThreadDialog open={open} onOpenChange={()=>{}} activeConnectors={[{id:"conn-1",channel_type:"sms",provider:"twilio",display_name:"Test business phone",from_address:"+15555550102"}]} tenantId={tenant} initialContact={{id:"contact-1",name:"Test lead"}} onSent={()=>{}} /></MemoryRouter>);
     await act(async () => { render("tenant-a"); await flush(); });
     for (let i=0;i<3;i++) await act(async () => { await flush(); });
     mounted.push(async () => { await act(async () => {root.unmount();});holder.remove(); });
@@ -539,11 +541,8 @@ describe("the new-conversation dialog's scheduled cancellation receipts", () => 
     const closeSameWorkspace = async () => {await act(async () => {render("tenant-a",false);await flush();});};
     const host = document.querySelector<HTMLElement>('[role="dialog"]')!;
     expect(host).toBeTruthy();
-    const subject = host.querySelector<HTMLInputElement>('input[placeholder="Subject"]')!;
     const body = host.querySelector<HTMLTextAreaElement>("textarea")!;
     await act(async () => {
-      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,"value")!.set!.call(subject,"Test scheduled reply");
-      subject.dispatchEvent(new Event("input",{bubbles:true}));
       Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,"value")!.set!.call(body,"Please keep this draft.");
       body.dispatchEvent(new Event("input",{bubbles:true})); await flush();
     });
@@ -839,12 +838,15 @@ describe("an email the service may have taken (its answer was lost)", () => {
     expect(host.querySelector<HTMLTextAreaElement>("textarea")!.value).toBe("Following up on Thursday.");
   });
 
-  it("the new-conversation dialog warns honestly and closes, leaving no Send that would mail a second copy", async () => {
-    db.sendAnswer = UNCONFIRMED;
+  it("the new-conversation dialog retains uncertain email words and checks the same operation without sending another copy", async () => {
+    const contact = "0c1d2e3f-4a5b-4c6d-8e7f-a0b1c2d3e4f5";
+    db.connectorId = "1d2e3f4a-5b6c-4d7e-8f90-a1b2c3d4e5f6";
+    db.contact = {...client,id:contact,tenant_id:"tenant-a"};
+    db.doorFn = b => ({data:{ok:false,outcome:"approval_required",fingerprint:"0123456789abcdef",operation_id:b.operation_id,expires_at:new Date(Date.now()+600_000).toISOString(),preview:{kind:"email",to_name:"Maya Ortiz",to_address:"maya@ortizlandscaping.example",from_address:"hello@business.example",subject:"Checking in",body_text:"Hello there."}},error:null});
     const onOpenChange = vi.fn(); const onSent = vi.fn();
     const holder = document.createElement("div"); document.body.appendChild(holder);
     const root = createRoot(holder);
-    await act(async () => { root.render(<MemoryRouter><ComposeThreadDialog open onOpenChange={onOpenChange} activeConnectors={[{id:"conn-1",channel_type:"email",provider:"resend",display_name:"Test business email",from_address:"hello@business.example"}]} tenantId="tenant-a" initialContact={{id:"contact-1",name:"Test lead"}} onSent={onSent} /></MemoryRouter>); await flush(); });
+    await act(async () => { root.render(<MemoryRouter><ComposeThreadDialog open actorId="owner-1" activeTenantId="tenant-a" onOpenChange={onOpenChange} activeConnectors={[{id:db.connectorId,channel_type:"email",provider:"sendgrid",display_name:"Test business email",from_address:"hello@business.example"}]} tenantId="tenant-a" initialContact={{id:contact,name:"Test lead"}} onSent={onSent} /></MemoryRouter>); await flush(); });
     for (let i = 0; i < 3; i++) await act(async () => { await flush(); });
     mounted.push(async () => { await act(async () => { root.unmount(); }); holder.remove(); });
     const host = document.querySelector<HTMLElement>('[role="dialog"]')!;
@@ -858,10 +860,19 @@ describe("an email the service may have taken (its answer was lost)", () => {
     });
     const send = [...host.querySelectorAll("button")].find(b=>b.textContent?.trim()==="Send")!;
     await act(async () => { send.click(); await flush(); });
-    expect(db.invokes).toEqual(["send-message"]);
-    expect(toast.warning).toHaveBeenCalledWith(COPY);
+    expect(db.invokes).toEqual(["comms-email-command"]);
+    const confirm=host.querySelector<HTMLButtonElement>('[data-strip-focus="confirm"]');expect(confirm?.textContent).toBe("Send now");
+    db.doorFn=null;db.doorAnswer={data:null,error:{context:{status:503,json:async()=>({ok:false,outcome:"outcome_unknown",code:"COMMS_EMAIL_RECONCILIATION_REQUIRED"})}}};
+    await act(async()=>{confirm!.click();await flush();});
+    expect(db.invokes).toEqual(["comms-email-command","comms-email-command"]);
+    expect(db.doorBodies[1]).toMatchObject({operation_id:db.doorBodies[0].operation_id,approved_fingerprint:"0123456789abcdef"});
+    expect(host.querySelector("[data-governed-reply-strip]")?.textContent).toContain("Couldn't confirm this went out — don't resend.");
+    expect(body.value).toBe("Hello there.");
     expect(toast.error).not.toHaveBeenCalled();
-    expect(onOpenChange).toHaveBeenCalledWith(false);
-    expect(onSent).toHaveBeenCalled();
+    expect(onOpenChange).not.toHaveBeenCalled();expect(onSent).not.toHaveBeenCalled();
+    const status=host.querySelector<HTMLButtonElement>('[data-strip-focus="recheck"]');expect(status?.textContent).toBe("Check status");
+    await act(async()=>{status!.click();await flush();});
+    expect(db.doorBodies[2]).toMatchObject({operation_id:db.doorBodies[0].operation_id});
+    expect(db.invokes).not.toContain("send-message");
   });
 });

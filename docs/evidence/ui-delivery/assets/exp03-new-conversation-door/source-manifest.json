@@ -2,7 +2,7 @@
   "proof": "Actual native inbox/dialog/check; synthetic session, data, door, storage and outcomes only. No real auth/database/provider execution.",
   "files": {
     "src/pages/admin/ClientsConversations.tsx": "f61d010badc81e263fcc725072a211003d6a6150691362a315dd06fb9f97463e",
-    "src/pages/admin/conversations/ComposeThreadDialog.tsx": "b7071a9e07bad0cdd58f85fb2f2e38d51f33c8ae4bda84c7890e1865f5cfb630",
+    "src/pages/admin/conversations/ComposeThreadDialog.tsx": "1d9761a3e9c315b6d204f421073480f47dadce2a40e2a5946bddb2dcccd07e41",
     "src/pages/admin/conversations/LeadReplyDrafts.test.tsx": "2791a51dc423b0d6cd14aa14d22342f1a9ee94e360bade77b39249230b81fd89",
     "src/pages/admin/conversations/useGovernedEmailReply.tsx": "6b2b46da3b6275617589364501418308a8eff8a7ba34568a3d107bbbb4000029",
     "src/pages/admin/conversations/GovernedReplyStrip.tsx": "eae5d309551768ccf1fe680b0ca6c7ebf4a28c58f11954d3b6d1a5616dc68787",

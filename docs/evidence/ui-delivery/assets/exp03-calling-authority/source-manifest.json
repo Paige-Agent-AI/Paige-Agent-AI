@@ -1,0 +1,14 @@
+{
+  "proof": "Original whole Settings/shell and actual calling hook/card, synthetic read/identity ports only; all effect invocations refuse; no authenticated/provider proof.",
+  "files": {
+    "src/solo/settings.tsx": "bc68d474819250421f6619c25efb075952c88b3c2d76386654ca2845af44955f",
+    "src/solo/data/useSoloNumbers.ts": "61c02c2a728025220ea88ccf1ecd879f170bc09709bf2b60153073997644c3df",
+    "src/solo/CallingSetupCard.tsx": "e8c67be28f2c3d5315e123abf867c141edda3ce7ae9c390928e7662e02191447",
+    "src/components/tenant-shell/TenantCommandCenterShell.tsx": "7aaa24d867af1ac5e2222f3581ab361288ba54e6319e5c86db245875adb13e7c",
+    "scripts/live-drive/harness/exp03-calling-authority-mount/index.html": "28abed925470d7640b2f4dc5ea5d9cc78d0a19132b18d34584b3fa856875a14a",
+    "scripts/live-drive/harness/exp03-calling-authority-mount/main.tsx": "25200a3bc05338e3fdc7e8695b569acdcb2b26bbd3f21bc0e169bcc87f842698",
+    "scripts/live-drive/harness/exp03-calling-authority-mount/stubs.ts": "68992594c433bb6878c134789e44f07d6e84461a7c91b0a6916235e7e3737e48",
+    "scripts/live-drive/harness/exp03-calling-authority-mount/vite.config.ts": "ec577d101dfb82eaa05f168d47d1f77b86c9fe1bde9bd74f9565ca434e19cbc2",
+    "scripts/live-drive/harness/exp03-calling-authority-mount/drive.mjs": "87f891936a8365d0cd76508c135f6952fe92f527b0b0ffd97d79de5672572ba1"
+  }
+}

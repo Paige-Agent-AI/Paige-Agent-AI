@@ -1414,6 +1414,10 @@ jobs:
         if: ${{ !cancelled() }}
         run: npm run smoke:comms-purchase-safety
 
+      - name: Smoke — original calling workspace authority (synthetic provider ports)
+        if: ${{ !cancelled() }}
+        run: node scripts/comms-workspace-authority-smoke.mjs
+
       - name: Smoke — comms tenant scope (§9/§53 webhook scoping)
         if: ${{ !cancelled() }}
         run: npm run smoke:comms-tenant-scope

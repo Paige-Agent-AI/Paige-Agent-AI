@@ -7,10 +7,10 @@ MATERIAL_FLOW_CHANGE: NO: original SMS failure result now reuses the already-exi
 FLOW_PROTOTYPE: NOT_REQUIRED: existing approved uncertainty interaction reused, no new UI flow or visible control; rendered SMS reuse verification still owed.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: sender can distinguish an uncertain SMS attempt from a definite refusal and avoid sending the same message twice.
 VISUAL_DIRECTION: PASS: unchanged canonical Conversations/composer and original message/warning presentation.
-AUTOMATED_EVIDENCE: PASS: original uncertainty18cases9PASS/9FAIL→18PASS; receipt20PASS/3FAIL→23PASS; review literal-text counterexamples22PASS/5FAIL→27PASS, runtime channel-validation27PASS/7FAIL→34PASS; entire original Communications CI list1150PASS. Prior-source C0b83PASS; final revised-source binding controls must renew. Every provider port inert.
+AUTOMATED_EVIDENCE: PASS: original uncertainty18cases9PASS/9FAIL→18PASS; receipt20PASS/3FAIL→23PASS; review literal-text counterexamples22PASS/5FAIL→27PASS, runtime channel-validation27PASS/7FAIL→34PASS; entire original Communications CI list1150PASS. Revised exact source C0b incumbent/calendar115PASS, registry self-testPASS, focused source/test/driver lint0. Every provider port inert.
 STATIC_EVIDENCE: UNVERIFIED: exact source review/type/lint/C0b identity/hosted review and checks remain required; local Deno unavailable.
-RENDERED_EVIDENCE: UNVERIFIED: prior actual-dialog packet had eight successful bounded cases; review renewal exposed an expired-warning light1536 capture, preserved as light-1536-review-capture-excluded.jpg and EXCLUDED. Driver now waits fonts, captures before extra inspections and requires warning still visible after screenshot; renewed nine-source packet is running, not yet claimed PASS. No fullshell/authenticated/provider/saved-thread proof.
-BEHAVIORAL_EVIDENCE: PASS: actual original handler and registered SMS adapter23cases cover uncertainty, definitive refusals, receipt/replay/words and provider floor; separate actual-dialog prototype eight geometries/themes shows Enter→original warning→closed attempt→one callback, exact words in one injected transport request, reopening does not resend.
+RENDERED_EVIDENCE: PASS: renewed actual-dialog packet completed eight light/dark/geometry cases with nine-source manifest; warning is visible in the inspected light1536 capture. Driver waits fonts, captures before extra inspections and requires warning still visible after screenshot. Earlier expired-warning capture is preserved as light-1536-review-capture-excluded.jpg and EXCLUDED. No fullshell/authenticated/provider/saved-thread proof.
+BEHAVIORAL_EVIDENCE: PASS: actual original handler and registered SMS adapter34cases cover uncertainty, definitive refusals, receipt/replay/literal words, request validation and provider floor; separate actual-dialog prototype eight geometries/themes shows Enter→original warning→closed attempt→one callback, exact words in one injected transport request, reopening does not resend.
 AUTHENTICATED_RUNTIME: UNVERIFIED: no actual send or customer/tenant mutation; exact release/readback and legitimate customer proof owed.
 KEYBOARD_FOCUS: UNVERIFIED: focused original Send activated by Enter in all eight browser cases; complete focus-restoration/saved-thread/AT route not exercised.
 ZOOM_REFLOW: UNVERIFIED: no new native zoom drive; original UI source unchanged.
@@ -30,7 +30,7 @@ RELEASE_CHANNEL: development: fictional source/transport fixtures only, no actua
 RELEASE_CLASSIFICATION: patch: original SMS result truth and original same-message recovery guard.
 CUSTOMER_RELEASE_IDENTITY: none: source candidate, no assigned customer release.
 RELEASE_NOTE_REQUIRED: NO: bounded original result-truth repair, no feature announcement.
-RELEASE_TRUTH_BOUNDARY: PROOF OWED: source23/1139 only, normal exact review/CI/release/readback plus rendered/customer coverage still required.
+RELEASE_TRUTH_BOUNDARY: PROOF OWED: source34/1150 and eight isolated UI cases only, normal exact review/CI/release/readback plus authenticated customer coverage still required.
 RELEASE_RECOVERY: position=existing uncertain-row/no-replay semantics and ordinary source forward-fix; reference=docs/comms/SEND-MESSAGE-CONTRACT.md section6
 
 SOLO_1536X770_PAIGE_CLOSED: UNVERIFIED: no new full-shell drive.

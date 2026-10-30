@@ -2,8 +2,8 @@
 // The reply composer only appears once a thread is selected; this modal lets a coach START
 // a thread with any contact. It reuses every existing seam (§18): CustomerSelector for
 // search-select, the channel_connectors the reply composer already reads,
-// subagent-email-composer for "Draft with Paige", and the ONE send-message seam via the
-// shared readSendResult (§37) + canonicalThreadKey (the fragmentation fix). Gold is spent
+// subagent-email-composer for "Draft with Paige", the existing governed email check,
+// and the original SMS send-message seam + canonicalThreadKey. Gold is spent
 // ONLY on Send (§11).
 //
 // §49 — inline contact create is routed through the ONE atomic RPC `create_and_attach_conversation`
@@ -43,6 +43,7 @@ import { CLIENT_CONTACT_METHODS_EMBED, withPrimaryAddresses, type WithClientCont
 import { LeadReplyDrafts } from "./LeadReplyDrafts";
 import { useLeadReplyReview,canReplaceFollowupDraft } from "./useLeadReplyReview";
 import { useBeforeUnloadGuard } from "@/hooks/useBeforeUnloadGuard";
+import { useGovernedEmailReply } from "./useGovernedEmailReply";
 
 // Structural subset of the page's Connector — only what the channel picker needs.
 export interface ComposeConnector {
@@ -73,6 +74,8 @@ export function ComposeThreadDialog({
   onOpenChange,
   activeConnectors,
   tenantId,
+  activeTenantId = null,
+  settingsHref = "/admin/settings",
   actorId=null,
   approvalId,
   onHoldChange,
@@ -83,12 +86,15 @@ export function ComposeThreadDialog({
   onSent,
 }: {
   isSolo?: boolean;
-  /** Parent account-readiness hold for historical status/recording only. */
+  /** Parent account-readiness hold; also withholds a new email check while unresolved. */
   recordDisabled?: boolean;
   open: boolean;
   onOpenChange: (v: boolean) => void;
   activeConnectors: ComposeConnector[];
   tenantId: string | null;
+  /** Displayed account and independently resolved session tenant must agree. */
+  activeTenantId?: string | null;
+  settingsHref?: string;
   actorId?: string | null;
   /** Present only for a strictly parsed exact approval locator; never ordinary compose authority. */
   approvalId?: string;
@@ -118,16 +124,23 @@ export function ComposeThreadDialog({
   );
 
   const [client, setClient] = useState<PickedClient | null>(null);
+  const hydrationRequestRef=useRef(0);
   const [channel, setChannel] = useState<ChannelType | "">("");
   const [connectorId, setConnectorId] = useState("");
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
   const [leadReplyApprovalId,setLeadReplyApprovalId]=useState<string|null>(null);
   const bound=approvalId!==undefined;
-  const scopeKey=JSON.stringify([actorId,tenantId,initialContact?.id,approvalId,open]);
+  const scopeKey=JSON.stringify([actorId,tenantId,activeTenantId,initialContact?.id,approvalId,open]);
   const scopeRef=useRef({key:scopeKey});
   if(scopeRef.current.key!==scopeKey)scopeRef.current={key:scopeKey};
   const scope=scopeRef.current;
+  const emailScopeKey=JSON.stringify([scopeKey,recordDisabled]);
+  const emailEpochRef=useRef({key:emailScopeKey,guard:createAccountEpochGuard(emailScopeKey)});
+  if(emailEpochRef.current.key!==emailScopeKey){emailEpochRef.current.key=emailScopeKey;emailEpochRef.current.guard.advance(emailScopeKey);}
+  useEffect(()=>{const guard=emailEpochRef.current.guard;guard.advance(emailScopeKey);return()=>guard.advance(null);},[emailScopeKey]);
+  const resolvedTenantRef=useRef(tenantId);resolvedTenantRef.current=tenantId;
+  const composerRef=useRef<HTMLDivElement>(null);
   useEffect(()=>{onHoldChange?.(open&&bound);return()=>onHoldChange?.(false);},[open,bound,onHoldChange]);
   const [scheduledFor, setScheduledFor] = useState<string | null>(null);
   const [scheduleOpen, setScheduleOpen] = useState(false);
@@ -196,21 +209,23 @@ export function ComposeThreadDialog({
     // the contact's email/phone/name through the same one-row read the search-select uses.
     if (initialContact?.id) void hydrateClient(initialContact.id, initialContact.name ?? "");
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open]);
+  }, [open,tenantId,activeTenantId,actorId]);
 
-  // Address resolver — send-message hard-requires an explicit `to` and never derives it
-  // from contact_id. One RLS-scoped read serves both the search-select and create paths.
+  // Resolve display/SMS addresses through the original tenant-scoped contact read.
+  // The governed email door independently resolves the actual recipient at check/send.
   const hydrateClient = useCallback(async (id: string, fallbackName: string) => {
     const capturedScope=scopeRef.current;
+    const request=++hydrationRequestRef.current;
+    if(!tenantId)return;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let query = (supabase as any)
       .from("clients")
       .select(`id,tenant_id,first_name, last_name, entity_name, ${CLIENT_CONTACT_METHODS_EMBED}`)
       .eq("id", id);
-    if(bound)query=query.eq("tenant_id",tenantId);
+    query=query.eq("tenant_id",tenantId);
     const {data,error}=await query.single();
-    if(scopeRef.current!==capturedScope)return;
-    if(bound&&(error||data?.id!==id||data?.tenant_id!==tenantId))return;
+    if(scopeRef.current!==capturedScope||request!==hydrationRequestRef.current)return;
+    if(error||data?.id!==id||data?.tenant_id!==tenantId)return;
     // The address a message goes to is the contact's PRIMARY email / phone.
     const row = withPrimaryAddresses((data ?? {}) as {
       first_name?: string | null; last_name?: string | null; entity_name?: string | null;
@@ -225,12 +240,12 @@ export function ComposeThreadDialog({
       first_name: row.first_name ?? null, last_name: row.last_name ?? null,
       entity_name: row.entity_name ?? null,
     });
-  }, [bound,tenantId]);
+  }, [tenantId]);
 
   const onPick = (f: FocusedClient) => {
     // Seed name immediately for responsiveness; resolve email/phone (esp. phone, which
     // FocusedClient doesn't carry) via the 1-row read.
-    setClient({ id: f.id, name: f.name, email: f.email ?? null, phone: null });
+    setClient({ id: f.id, name: f.name, email: null, phone: null });
     void hydrateClient(f.id, f.name);
   };
 
@@ -410,16 +425,47 @@ export function ComposeThreadDialog({
     current:()=>scopeRef.current===scope},()=>{
       if(tenantId&&client&&scopeRef.current===scope)onSent(canonicalThreadKey("email",tenantId,client.email??"",client.id));
     });
-  const close=()=>{if(leadReplyReview.blocksEditing){toast.error("The original outcome is still unconfirmed. Check its recorded status before closing.");return;}
+  const governedEmail=!bound&&channel==="email";
+  const governedEmailReview=useGovernedEmailReply({
+    activeTenantId:open&&governedEmail&&!recordDisabled?activeTenantId:null,tenantIdRef:resolvedTenantRef,
+    threadKey:client&&tenantId?canonicalThreadKey("email",tenantId,client.email??"",client.id):null,
+    contactId:client?.id??null,contactName:client?.name??"",connectorId,connectors:sendable.map(c=>({id:c.id,display_name:c.display_name,from_address:c.from_address??null})),
+    subject,text:body,attachments,scheduledFor,epoch:emailEpochRef.current.guard,composerRef,settingsHref,
+    onChooseSender:id=>{setConnectorId(id);setChannel("email");},
+    onRecorded:({outcome,contactId})=>{
+      toast.success(outcome==="scheduled"?"Scheduled.":"Accepted by the email service. Delivery is not confirmed.");
+      if(tenantId)onSent(canonicalThreadKey("email",tenantId,client?.email??"",contactId));
+      setSubject("");setBody("");resetAttachments();onOpenChange(false);
+    },
+  });
+  const emailLocked=governedEmail&&governedEmailReview.blocksEditing;
+  const emailFilesLocked=governedEmail&&governedEmailReview.filesLocked;
+  // The modal already owns vertical scrolling. Keep its original check/focus target
+  // in that viewport when the action row grows; never add another scroll container.
+  const previousStripOpen=useRef(false);
+  useEffect(()=>{
+    const root=composerRef.current;
+    if(governedEmail&&governedEmailReview.stripOpen){
+      root?.querySelector<HTMLElement>('[data-governed-reply-strip]')?.scrollIntoView?.({block:"nearest",inline:"nearest"});
+    }else if(previousStripOpen.current){
+      const textarea=root?.querySelector<HTMLTextAreaElement>('[data-composer-writing-surface="true"] textarea');
+      if(textarea===document.activeElement)textarea?.scrollIntoView?.({block:"nearest",inline:"nearest"});
+    }
+    previousStripOpen.current=governedEmail&&governedEmailReview.stripOpen;
+  },[governedEmail,governedEmailReview.stripOpen,governedEmailReview.phase]);
+  const close=()=>{if(leadReplyReview.blocksEditing||emailLocked){toast.error("The original outcome is still unconfirmed. Check its recorded status before closing.");return;}
+    if(governedEmail)governedEmailReview.closeStrip();
     leadReplyReview.reset();onHoldChange?.(false);onOpenChange(false);};
-  useBeforeUnloadGuard(open && bound && (!!subject.trim() || !!body.trim() || leadReplyReview.blocksEditing));
+  useBeforeUnloadGuard(open && (bound||governedEmail) && (!!subject.trim() || !!body.trim() || leadReplyReview.blocksEditing||emailLocked));
   const canSend =
     !!client && !!channel && !!connectorId && !!toAddress && !!body.trim() &&
     (channel !== "email" || !!subject.trim()) && !sending && !drafting && !uploading
-    && (!bound||!locatorConflicted&&leadReplyApprovalId===approvalId&&!leadReplyReview.blocksSending);
+    && (!bound||!locatorConflicted&&leadReplyApprovalId===approvalId&&!leadReplyReview.blocksSending)
+    && !emailLocked&&!governedEmailReview.checking&&!(governedEmail&&recordDisabled);
 
   const send = async () => {
     if(bound){if(locatorConflicted||leadReplyApprovalId!==approvalId){toast.error("Open the exact selected reply before reviewing. No replacement was selected.");return;}await leadReplyReview.prepare();return;}
+    if(governedEmail){await governedEmailReview.check();return;}
     if (!client || !channel) { toast.error("Pick a recipient and channel first."); return; }
     if (!toAddress) { toast.error("This contact has no address for that channel."); return; }
     if (!body.trim()) { toast.error("Write a message first."); return; }
@@ -518,7 +564,9 @@ export function ComposeThreadDialog({
 
   return (
     <Dialog open={open} onOpenChange={value=>{if(value)onOpenChange(true);else if(bound&&(leadReplyReview.blocksEditing||subject.trim()||body.trim()))toast.error("Use Cancel reply edit to discard this draft, or inspect its original outcome.");else close();}}>
-      <DialogContent className="sm:max-w-lg max-h-[calc(100dvh-2rem)] overflow-y-auto">
+      <DialogContent ref={composerRef} className="sm:max-w-lg max-h-[calc(100dvh-2rem)] overflow-y-auto"
+        onEscapeKeyDown={event=>{if(governedEmail&&governedEmailReview.stripOpen){event.preventDefault();governedEmailReview.closeStrip();}}}>
+          {governedEmailReview.liveRegion}
           <DialogHeader>
             <DialogTitle>{bound?"Review reply":"New conversation"}</DialogTitle>
             <DialogDescription>
@@ -557,7 +605,7 @@ export function ComposeThreadDialog({
                   <Button
                     variant="ghost" size="icon"
                     className="h-7 w-7 text-muted-foreground hover:text-foreground focus-visible:ring-2 focus-visible:ring-[hsl(var(--ring))]"
-                    onClick={() => setClient(null)} disabled={bound} aria-label="Clear recipient"
+                    onClick={() => {hydrationRequestRef.current+=1;setClient(null);}} disabled={bound||emailLocked} aria-label="Clear recipient"
                   >
                     <X className="h-4 w-4" />
                   </Button>
@@ -642,6 +690,7 @@ export function ComposeThreadDialog({
               <Label>Channel</Label>
               <Select
                 value={connectorId}
+                disabled={emailLocked}
                 onValueChange={(id) => {
                   const connector = sendable.find((c) => c.id === id);
                   setConnectorId(id);
@@ -676,16 +725,16 @@ export function ComposeThreadDialog({
             {channel === "email" && (
               <div className="space-y-1.5">
                 <Label>Subject</Label>
-                <Input value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="Subject" className="h-9" disabled={bound&&leadReplyReview.blocksEditing} />
+                <Input value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="Subject" className="h-9" disabled={emailLocked||bound&&leadReplyReview.blocksEditing} />
               </div>
             )}
 
             {/* Body */}
-            <div className="space-y-1.5">
+            <div className="space-y-1.5" data-composer-writing-surface="true">
               <Label>Message</Label>
               <Textarea
                 value={body}
-                disabled={bound&&leadReplyReview.blocksEditing}
+                disabled={emailLocked||bound&&leadReplyReview.blocksEditing}
                 onChange={(e) => setBody(e.target.value)}
                 rows={5}
                 placeholder={client ? `Write your message to ${client.name}…` : "Write your message…"}
@@ -693,27 +742,25 @@ export function ComposeThreadDialog({
               />
             </div>
 
-            {/* Attachments — EMAIL-ONLY parity with the reply composer, through the ONE shared
-                upload seam (§18). §13 honest note: send-message persists `attachments` on the
-                messages row (inbox render) but does NOT deliver Twilio MMS media, so the SMS
-                path never offers them — email only, matching Draft-with-Paige's email scope. */}
+            {/* The original private upload seam feeds the governed email check. Approved
+                bytes/time remain bound by that door; SMS still offers no MMS attachment. */}
             {channel === "email" && (
               <div className="space-y-1.5">
                 <input
                   ref={fileInputRef} type="file" multiple hidden
-                  onChange={(e) => { if (e.target.files?.length) void uploadFiles(e.target.files); e.target.value = ""; }}
+                  onChange={(e) => { if (!emailFilesLocked&&e.target.files?.length) void uploadFiles(e.target.files); e.target.value = ""; }}
                 />
                 {attachments.length > 0 && (
                   <div className="flex flex-wrap gap-1.5">
                     {attachments.map((a) => (
-                      <AttachmentChip key={a.url} a={a} onRemove={() => void removeAttachment(a)} />
+                      <AttachmentChip key={a.url} a={a} onRemove={() => void removeAttachment(a)} disabled={emailFilesLocked} />
                     ))}
                   </div>
                 )}
                 <Button
                   variant="outline" size="sm" className="h-8"
                   onClick={() => fileInputRef.current?.click()}
-                  disabled={uploading || sending || !client}
+                  disabled={uploading || sending || !client || emailFilesLocked}
                   title={!client ? "Pick a recipient first" : undefined}
                 >
                   {uploading
@@ -731,7 +778,7 @@ export function ComposeThreadDialog({
                   variant="outline" size="sm"
                   className="h-8 min-w-[8.5rem] justify-center rounded-r-none border-r-0 border-[hsl(var(--primary)/0.4)]"
                   onClick={() => void draftWithPaige()}
-                  disabled={drafting || sending || !client}
+                  disabled={drafting || sending || !client || emailLocked}
                   aria-busy={drafting}
                   title={!client ? "Pick a recipient first" : undefined}
                 >
@@ -745,7 +792,7 @@ export function ComposeThreadDialog({
                     <Button
                       variant="outline" size="sm"
                       className="h-8 rounded-l-none border-[hsl(var(--primary)/0.4)] px-2"
-                      aria-label="Guide Paige's draft" disabled={drafting || !client}
+                      aria-label="Guide Paige's draft" disabled={drafting || !client || emailLocked}
                     >
                       <ChevronDown className="h-3.5 w-3.5" />
                     </Button>
@@ -770,7 +817,7 @@ export function ComposeThreadDialog({
                       </SelectContent>
                     </Select>
                     <Button variant="outline" size="sm" className="h-8 w-full"
-                      onClick={() => void draftWithPaige()} disabled={drafting}>
+                      onClick={() => void draftWithPaige()} disabled={drafting||emailLocked}>
                       <Sparkles className="mr-1.5 h-3.5 w-3.5 text-[hsl(var(--gold-dark))]" /> Draft it
                     </Button>
                   </PopoverContent>
@@ -781,7 +828,7 @@ export function ComposeThreadDialog({
             {/* Saved email templates (ported §31) — email-only, needs a picked recipient to
                 resolve {{merge}} vars. Non-gold utility (§11). */}
             {channel === "email" && client && emailTemplates.length > 0 && (
-              <Select onValueChange={applyTemplate}>
+              <Select onValueChange={applyTemplate} disabled={emailLocked}>
                 <SelectTrigger className="h-9">
                   <SelectValue placeholder="Insert a saved template…" />
                 </SelectTrigger>
@@ -808,7 +855,7 @@ export function ComposeThreadDialog({
               <span className="inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-2 py-1 text-[11px] text-foreground">
                 <Clock className="h-3 w-3 text-muted-foreground" />
                 {new Date(scheduledFor).toLocaleString()}
-                <button type="button" onClick={() => setScheduledFor(null)}
+                <button type="button" onClick={() => setScheduledFor(null)} disabled={emailFilesLocked}
                   className="rounded p-0.5 text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--ring))]"
                   aria-label="Clear schedule">
                   <X className="h-3 w-3" />
@@ -818,14 +865,15 @@ export function ComposeThreadDialog({
           </div>
 
           {leadReplyReview.panel}
+          {governedEmail&&governedEmailReview.actions}
           <DialogFooter className="flex-row items-center justify-between gap-2 sm:justify-between">
             <div className="flex items-center gap-2">
-              <Button variant="ghost" size="sm" onClick={close} disabled={sending||leadReplyReview.blocksEditing}>
+              <Button variant="ghost" size="sm" onClick={close} disabled={sending||leadReplyReview.blocksEditing||emailLocked}>
                 {bound?"Cancel reply edit":"Cancel"}
               </Button>
               <Popover open={scheduleOpen} onOpenChange={setScheduleOpen}>
                 <PopoverTrigger asChild>
-                  <Button variant="outline" size="sm" className="h-9">
+                  <Button variant="outline" size="sm" className="h-9" disabled={emailFilesLocked}>
                     <Clock className="mr-1.5 h-3.5 w-3.5" />
                     {scheduledFor ? "Scheduled" : "Schedule"}
                   </Button>
@@ -860,14 +908,14 @@ export function ComposeThreadDialog({
                 </PopoverContent>
               </Popover>
             </div>
-            <Button variant="gold" size="sm" onClick={send} disabled={!canSend} className="h-9">
+            {!(governedEmail&&governedEmailReview.stripOpen)&&<Button variant="gold" size="sm" onClick={send} disabled={!canSend} className="h-9" data-composer-send="">
               {sending
                 ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
                 : scheduledFor
                   ? <Clock className="mr-1.5 h-4 w-4" />
                   : <Send className="mr-1.5 h-4 w-4" />}
-              {bound?"Review reply":scheduledFor ? "Schedule" : "Send"}
-            </Button>
+              {bound?"Review reply":governedEmailReview.checking?"Checking…":scheduledFor ? "Schedule" : "Send"}
+            </Button>}
           </DialogFooter>
         </DialogContent>
       </Dialog>

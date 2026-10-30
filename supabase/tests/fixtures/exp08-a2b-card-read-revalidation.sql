@@ -104,5 +104,51 @@ SELECT pg_temp.check(pg_temp.card_read_post(:'u3',:'ta','nexus','["crm_list_task
 SELECT pg_temp.check(pg_temp.card_read_post(:'u3',:'ta','paige','["agreement_list"]')->'stage' ? 'error',
  'P1: PAIGE cannot widen the closed A2b attestation set');
 ROLLBACK;
+-- P2: original UI cannot recover the approved/unsettled/unclaimed card, even after reload.
+SELECT pg_temp.j(:'u3',format('public.team_hub_open_agent_dm(%L::uuid,%L)',:'ta','zion'))->>'channel_id' AS resumedm \gset
+SELECT pg_temp.make_card(:'u3',:'ta',:'resumedm','zion','crm_cancel_task','task_cancel','P2 stranded resume') AS resumecard \gset
+UPDATE public.team_hub_message_cards SET decision='approved',decided_at=now()-interval '15 seconds'
+ WHERE message_id=((:'resumecard')::jsonb->>'card')::uuid;
+SELECT pg_temp.cs(pg_temp.cstates(:'u3',:'ta',:'resumedm',ARRAY[(:'resumecard')::jsonb->>'card']),(:'resumecard')::jsonb->>'card')->'card' AS oldresume \gset
+SELECT pg_temp.check((:'oldresume')::jsonb->>'state'='working' AND NOT ((:'oldresume')::jsonb ? 'can_resume')
+ AND NOT ((:'oldresume')::jsonb#>'{actions,0}' ? 'fingerprint'),
+ 'P2 reproduction: approved unclaimed card has no reachable recovery binding');
+\ir ../../migrations/20271126035008_exp08_team_hub_stranded_card_resume.sql
+\ir ../../migrations/20271126035008_exp08_team_hub_stranded_card_resume.sql
+BEGIN;
+SELECT pg_temp.cs(pg_temp.cstates(:'u3',:'ta',:'resumedm',ARRAY[(:'resumecard')::jsonb->>'card']),(:'resumecard')::jsonb->>'card')->'card' AS newresume \gset
+SELECT pg_temp.check((:'newresume')::jsonb->>'can_resume'='true'
+ AND (:'newresume')::jsonb#>>'{actions,0,fingerprint}'=(:'resumecard')::jsonb->>'fp',
+ 'P2: exact approved unclaimed proposal recoverable by its original asker');
+SAVEPOINT resume_other_reader;
+SELECT pg_temp.peek(:'resumedm',:'ta',:'u2');
+SELECT pg_temp.cs(pg_temp.cstates(:'u2',:'ta',:'resumedm',ARRAY[(:'resumecard')::jsonb->>'card']),(:'resumecard')::jsonb->>'card')->'card' AS otherresume \gset
+SELECT pg_temp.check((:'otherresume')::jsonb->>'can_resume'='false'
+ AND NOT ((:'otherresume')::jsonb#>'{actions,0}' ? 'fingerprint'),
+ 'P2: even a hostile visible non-approver cannot receive a resume binding');
+ROLLBACK TO SAVEPOINT resume_other_reader;
+SAVEPOINT resume_settled;
+UPDATE public.team_hub_message_cards SET outcome='unconfirmed',settled_at=now() WHERE message_id=((:'resumecard')::jsonb->>'card')::uuid;
+SELECT pg_temp.cs(pg_temp.cstates(:'u3',:'ta',:'resumedm',ARRAY[(:'resumecard')::jsonb->>'card']),(:'resumecard')::jsonb->>'card')->'card' AS settledresume \gset
+SELECT pg_temp.check((:'settledresume')::jsonb->>'can_resume'='false','P2: settled unknown outcome never permits a retry');
+ROLLBACK TO SAVEPOINT resume_settled;
+SAVEPOINT resume_claimed;
+UPDATE public.paige_pending_confirmations SET consumed_at=now() WHERE id=((:'resumecard')::jsonb->>'conf')::uuid;
+SELECT pg_temp.cs(pg_temp.cstates(:'u3',:'ta',:'resumedm',ARRAY[(:'resumecard')::jsonb->>'card']),(:'resumecard')::jsonb->>'card')->'card' AS claimedresume \gset
+SELECT pg_temp.check((:'claimedresume')::jsonb->>'can_resume'='false'
+ AND NOT ((:'claimedresume')::jsonb#>'{actions,0}' ? 'fingerprint'),
+ 'P2: claimed/unknown execution cannot be resumed or duplicate an effect');
+ROLLBACK TO SAVEPOINT resume_claimed;
+SAVEPOINT resume_recent;
+UPDATE public.team_hub_message_cards SET decided_at=now() WHERE message_id=((:'resumecard')::jsonb->>'card')::uuid;
+SELECT pg_temp.cs(pg_temp.cstates(:'u3',:'ta',:'resumedm',ARRAY[(:'resumecard')::jsonb->>'card']),(:'resumecard')::jsonb->>'card')->'card' AS recentresume \gset
+SELECT pg_temp.check((:'recentresume')::jsonb->>'can_resume'='false','P2: first request retains its10second bounded attempt window');
+ROLLBACK TO SAVEPOINT resume_recent;
+SAVEPOINT resume_expired;
+UPDATE public.paige_pending_confirmations SET expires_at=now()-interval '1 second' WHERE id=((:'resumecard')::jsonb->>'conf')::uuid;
+SELECT pg_temp.cs(pg_temp.cstates(:'u3',:'ta',:'resumedm',ARRAY[(:'resumecard')::jsonb->>'card']),(:'resumecard')::jsonb->>'card')->'card' AS expiredresume \gset
+SELECT pg_temp.check((:'expiredresume')::jsonb->>'can_resume'='false','P2: expired proposal cannot resume');
+ROLLBACK TO SAVEPOINT resume_expired;
+ROLLBACK;
 \ir ../exp10_nexus_team_hub_connection_read.sql
 \echo 'PASS: P1 card-read guard replay, original peer body inverse, staged admin read, demotion and roster revocation'

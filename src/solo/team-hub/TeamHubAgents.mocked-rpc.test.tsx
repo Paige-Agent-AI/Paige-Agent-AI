@@ -1547,6 +1547,26 @@ describe("A2b: a Team Hub card, read and redeemed in the asker's DM", () => {
     expect(card.querySelector('[data-confirm-part="refusal"]')).toBeNull();
   });
 
+  it("reopens a stranded approval and resumes through the original card handler once", async () => {
+    inDm();
+    cardRows["r-zion-m-ask"] = serverCard({ state: "working", can_resume: true, decided_at: "2026-10-28T15:35:00Z", decided_by_name: "Morgan Reyes" });
+    const pending = deferred(); cardAnswers.push(pending.answer);
+    const host = await mount(); await openDm(host);
+    const resume = cardIn(host)!.querySelector<HTMLElement>('button[aria-label="Resume this approved action"]');
+    expect(resume).not.toBeNull();
+    await click(resume);
+    expect(cardActs).toHaveLength(1);
+    expect(cardActs[0].teamHubCardAct).toEqual({ conversationId: "c-dm-zion", messageId: "r-zion-m-ask", act: "approve", fingerprint: "a1b2c3d4e5f60718" });
+    expect(cardIn(host)!.querySelector('button[aria-label="Resume this approved action"]')).toBeNull();
+    expect(turns).toHaveLength(0);
+    // The original writer has now claimed it: fresh native reads must withhold Resume too.
+    cardRows["r-zion-m-ask"] = serverCard({ state: "unconfirmed", actions: [{ summary: SUMMARY }] });
+    pending.resolve({ ok: true, outcome: "unconfirmed", card: cardRows["r-zion-m-ask"].card });
+    await flush();
+    expect(cardIn(host)!.querySelector('button[aria-label="Resume this approved action"]')).toBeNull();
+    expect(cardActs).toHaveLength(1);
+  });
+
   it("Approve sends exactly the four keys, reads Running while it runs, then Done with the outcome in the card's thread", async () => {
     inDm();
     cardRows["r-zion-m-ask"] = serverCard();

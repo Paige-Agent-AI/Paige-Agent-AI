@@ -202,3 +202,17 @@ describe("dmRequestPrefill (channel redirect → the asker's request in the DM b
     expect(dmRequestPrefill("  @ZION  ", "zion")).toBeNull();
   });
 });
+
+
+describe("stranded approved card recovery", () => {
+  it("keeps the native resume binding only for an explicitly recoverable approved state", () => {
+    const read = parseCardStates({ ok: true, cards: [row({}, { state: "working", can_resume: true })] }, null)!["m-card"];
+    expect(read.approval.can_resume).toBe(true);
+    expect(read.approval.actions[0].fingerprint).toBe("a1b2c3d4e5f60718");
+    for (const state of ["done", "failed", "expired", "declined"]) {
+      const invalid = parseCardStates({ ok: true, cards: [row({}, { state, can_resume: true })] }, null)!["m-card"];
+      expect(invalid.approval.can_resume).not.toBe(true);
+      expect(invalid.approval.actions[0].fingerprint).toBeUndefined();
+    }
+  });
+});

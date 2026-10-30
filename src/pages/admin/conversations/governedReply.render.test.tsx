@@ -856,6 +856,19 @@ describe("everything else keeps its own path", () => {
     expect((db.doorBodies[1].command as Record<string,unknown>).body).toContain("\n\n--\nJordan Lee");
     expect(db.doorBodies[1]).not.toHaveProperty("draft_source");
   });
+  it("a rechecked uncertain saved draft never claims that nothing was sent, even on Edit",async()=>{
+    db.messages=[message(),message({id:DRAFT_ID,updated_at:DRAFT_VERSION,direction:"outbound",status:"draft",subject:"Re: Tuesday",body_text:"Original saved words."})];
+    const host=await mount();await click(buttonByText(host,"Review email"));
+    db.door.push(httpError(503,{ok:false,outcome:"outcome_unknown",code:"COMMS_EMAIL_RECONCILIATION_REQUIRED"}));
+    await click(buttonByText(host,"Send now"));const originalOperation=db.doorBodies[0].operation_id;
+    await click(stripButton(host,"edit"));await click(buttonByText(host,"Send edited"));
+    expect(db.doorBodies[2].operation_id).toBe(originalOperation);
+    expect(stripText(host)).not.toMatch(/Nothing has been sent/);
+    expect(status(host)).toMatch(/don't resend/i);
+    await click(stripButton(host,"edit"));
+    expect(status(host)).not.toMatch(/Nothing was sent/);
+    expect(status(host)).toMatch(/unconfirmed/i);
+  });
   it("opening a saved draft cannot erase an existing reply",async()=>{
     db.messages=[message(),message({id:DRAFT_ID,updated_at:DRAFT_VERSION,direction:"outbound",status:"draft",subject:"Re: Tuesday",body_text:"Saved original words."})];
     const host=await mount();await write(host);const words=textarea(host).value;

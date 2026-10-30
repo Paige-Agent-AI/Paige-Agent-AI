@@ -136,10 +136,15 @@ export function useGovernedEmailReply(input: GovernedEmailReplyInput) {
       if (!originalReceipt) view = LOCAL_COPY.draftStatusUnverified();
     }
     if (view.kind === "ready") {
+      // A new readiness check cannot settle an earlier uncertain dispatch. Retain
+      // that operation's uncertainty even when this call was made through Send.
+      if (idsRef.current.isUnknown(scope, sourceKey)) view = { ...view, check: { ...view.check, uncertain: true } };
       // Focus Edit, never the gold act: a second Enter must not confirm a check nobody has read.
       setCheck(view.check); go("check"); focusRef.current = "edit";
       const act = view.check.when ? "Schedule send" : "Send now";
-      say(stage === "check"
+      say(view.check.uncertain
+        ? `Couldn't confirm the last try went out — don't resend unless you're sure it didn't. ${act} is there if it didn't.`
+        : stage === "check"
         ? `Ready to send to ${view.check.preview.to_name || i.contactName}. Check To and From, then ${act}.`
         // Check status found no recorded answer: it may still be going out. Never "nothing went out".
         : stage === "status" ? `Couldn't confirm the last try went out — don't resend unless you're sure it didn't. ${act} is there if it didn't.`
@@ -240,12 +245,16 @@ export function useGovernedEmailReply(input: GovernedEmailReplyInput) {
 
   const close = useCallback((how: "edit" | "typing" | "reset") => {
     const was = phaseRef.current;
+    const held = heldRef.current;
+    const uncertain = held && idsRef.current.isUnknown(held.scope, governedReplySourceKey(held.draft));
     seqRef.current += 1; inFlightRef.current = false; clearExpiry();
     if (was === "composing") return;
     stripScopeRef.current = null; recheckOnScopeRef.current = false;
     go("composing"); setCheck(null); setCantView(null);
     if (how === "edit") focusRef.current = "body";
-    if ((was === "check" || was === "expired") && how !== "reset") say("Check closed. Nothing was sent.");
+    if ((was === "check" || was === "expired") && how !== "reset") say(uncertain
+      ? "Check closed. The earlier send is still unconfirmed. Check its status before sending again."
+      : "Check closed. Nothing was sent.");
   }, []);
 
   const onAction = (action: StripAction) => {

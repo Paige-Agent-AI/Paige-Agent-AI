@@ -25,8 +25,21 @@
     {
       "path": "scripts/live-drive/harness/team-hub-shell-mount/team-hub-task-result-drive.mjs",
       "sha256": "ca3d2ea4fd46c1c97ebedd1a6377a2211493a0e8492788b404869ec50a55d73b"
+    },
+    {
+      "path": "src/lib/paigeComposerScopeIdentity.ts",
+      "sha256": "1bac53d19b85ee381451cd8d1f804bb89ed83b3c32d47b075904dfcb24e7892d"
+    },
+    {
+      "path": "src/lib/paigeComposerScopeState.ts",
+      "sha256": "70e7aa820a8302bf354b7a5d4342b37765a74216fe2d92a79aef68a0c83f5b64"
+    },
+    {
+      "path": "src/lib/paigePromptHandoff.ts",
+      "sha256": "a15d391cd471da2d3ea48145947c00a02a965d8c9b75ca94055ab0cbd4cd6171"
     }
   ],
   "nativeZoom": "PARTIAL, Computer Use URL-confidence stop; report failure retained",
-  "authenticated": "UNVERIFIED"
+  "authenticated": "UNVERIFIED",
+  "runtimeCommit": "2b03f6409e0ebee045a4b6f03e5e1841c53343fd"
 }

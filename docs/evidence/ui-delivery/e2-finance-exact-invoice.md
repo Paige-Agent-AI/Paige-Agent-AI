@@ -8,14 +8,14 @@ FLOW_PROTOTYPE: NOT_REQUIRED: bounded repair of the existing source-inspection n
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: every eligible current/future SOLO user with original financial read access opens the inspected invoice, rather than accidentally reviewing another list row.
 VISUAL_DIRECTION: PASS: incumbent Finance Mineral/Obsidian, Schibsted type, original evidence Sheet and shared frozen link label. No geometry or styling change.
 AUTOMATED_EVIDENCE: PASS: actual causal4FAIL/59PASS before repair ->117PASS across Finance consumer, source fencing, canonical link map and original E04 focused-invoice reader. Existing wrong-tenant/wrong-record/auth-change/refusal controls retained.
-STATIC_EVIDENCE: PARTIAL: scoped ESLint and own whitespace PASS; exact-head hosted types/build/security/CI and final detector remain required.
+STATIC_EVIDENCE: UNVERIFIED: scoped ESLint, pinned Impeccable detector[] and own whitespace PASS; exact-head hosted types/build/security/CI remain required.
 RENDERED_EVIDENCE: UNVERIFIED: existing local full SoloApp/Finance harness and synthetic two-invoice port prepared. Edge loaded its title/URL, but page control reported debugger unattached before candidate rendering could be inspected. No screenshot or accepted layout inferred.
-BEHAVIORAL_EVIDENCE: PARTIAL: component/router tests verify second-record identity/current account, malformed-ID surface fallback, source-read invalidation and return to the original period. Synthetic destination stub is not a real Sales read. Actual candidate browser workflow remains owed.
+BEHAVIORAL_EVIDENCE: UNVERIFIED: component/router tests verify second-record identity/current account, malformed-ID surface fallback, source-read invalidation and return to the original period. Synthetic destination stub is not a real Sales read. Actual candidate browser workflow remains owed.
 AUTHENTICATED_RUNTIME: UNVERIFIED: prior released Finance baseline in protected ANT52/e753f1e8 remains separate. This source is not merged or deployed; no exact-candidate customer result claimed.
 KEYBOARD_FOCUS: UNVERIFIED: original Sheet/button/focus contracts retained; new exact-target browser keyboard verification remains owed.
 ZOOM_REFLOW: UNVERIFIED: native Edge AX and returned capture did not identify the same foreground surface; native input stopped. Previous source-bound zoom proof is not renewed candidate proof.
 REDUCED_MOTION: NOT_APPLICABLE: no new or changed motion.
-STATE_COVERAGE: PARTIAL: two records/current accounts, malformed locator, source-identity invalidation, existing denied/unavailable/auth-fence tests pass; rendered state checks remain owed.
+STATE_COVERAGE: UNVERIFIED: two records/current accounts, malformed locator, source-identity invalidation, existing denied/unavailable/auth-fence tests pass; rendered state checks remain owed.
 TRUTHFUL_STATE_LABELS: PASS: canonical exact link says Open invoice; invalid locator safely falls back to Open invoices. Neither label claims action, approval, payment or readiness.
 SOLO_UI: YES: common original Finance source-inspection consumer, no account-specific implementation.
 SOLO_1536X770_PAIGE_CLOSED: UNVERIFIED: candidate rendered proof owed.

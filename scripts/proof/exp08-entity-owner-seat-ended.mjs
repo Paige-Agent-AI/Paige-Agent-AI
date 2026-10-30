@@ -224,6 +224,59 @@ async function firstOwnerInvitationWait(expire,stage='tenant',scopeChange=null){
     await Promise.allSettled([firstDone,...(secondDone?[secondDone]:[])]);
   }
 }
+async function firstOwnerTwoTokenRace(){
+  const ids=JSON.parse(sql(`WITH seed AS (SELECT gen_random_uuid() AS p,gen_random_uuid() AS u,
+    gen_random_uuid() AS v,gen_random_uuid() AS t,gen_random_uuid() AS i,gen_random_uuid() AS j)
+    SELECT row_to_json(seed) FROM seed;`));
+  for(const id of Object.values(ids))assert.match(id,/^[0-9a-f-]{36}$/);
+  const {p,u,v,t,i,j}=ids;
+  sql(`INSERT INTO auth.users(id,email) VALUES('${p}','platform@example.invalid'),('${u}','first@example.invalid'),('${v}','second@example.invalid');
+    INSERT INTO proof.platform_owners VALUES('${p}');INSERT INTO public.tenants(id,account_type) VALUES('${t}','standalone');
+    INSERT INTO public.profiles VALUES('${u}',NULL),('${v}',NULL);
+    INSERT INTO public.tenant_invite_tokens(id,tenant_id,token,kind,default_role,created_by,max_uses)
+      VALUES('${i}','${t}','${i}','subaccount_owner','admin','${p}',1),('${j}','${t}','${j}','subaccount_owner','admin','${p}',1);`);
+  const first=spawn(executable,connectionArgs(database),{env:{...process.env,PGAPPNAME:'exp08_first_owner_token_first'},stdio:['pipe','pipe','pipe']});
+  const firstDone=new Promise((resolve,reject)=>{first.on('error',reject);first.on('close',resolve);});
+  let second,secondDone,timer,output='',errors='';
+  try{
+    const ready=new Promise((resolve,reject)=>{
+      timer=setTimeout(()=>reject(new Error('First original invitation did not settle under its transaction')),10000);
+      first.stdout.on('data',c=>{output+=c;if(output.includes('EXP08_FIRST_OWNER_ACCEPTED'))resolve();});first.on('error',reject);
+    });
+    first.stdin.write(`BEGIN;SET request.jwt.claim.sub='${u}';SELECT public.accept_tenant_invite('${i}');\n\\echo EXP08_FIRST_OWNER_ACCEPTED\n`);
+    await ready;clearTimeout(timer);
+    second=spawn(executable,connectionArgs(database),{env:{...process.env,PGAPPNAME:'exp08_first_owner_token_second'},stdio:['pipe','pipe','pipe']});
+    secondDone=new Promise((resolve,reject)=>{second.on('error',reject);second.on('close',resolve);});
+    second.stderr.on('data',c=>{errors+=c;});
+    second.stdin.end(`SET statement_timeout='20000';SET request.jwt.claim.sub='${v}';SELECT public.accept_tenant_invite('${j}');`);
+    let waited=false;
+    for(let attempt=0;attempt<40;attempt++){
+      waited=sql(`SELECT EXISTS(SELECT 1 FROM pg_stat_activity s WHERE s.datname='${database}'
+        AND s.application_name='exp08_first_owner_token_second' AND s.wait_event_type='Lock'
+        AND EXISTS(SELECT 1 FROM pg_stat_activity f WHERE f.datname='${database}'
+          AND f.application_name='exp08_first_owner_token_first' AND f.pid=ANY(pg_blocking_pids(s.pid))));`)==='t';
+      if(waited)break;await new Promise(resolve=>setTimeout(resolve,50));
+    }
+    assert.ok(waited,'The second actual invitation must wait on the first original writer');
+    first.stdin.end('COMMIT;\n\\q\n');assert.equal(await firstDone,0);const exit=await secondDone;
+    const state=JSON.parse(sql(`SELECT json_build_object('seats',(SELECT count(*) FROM public.tenant_members WHERE tenant_id='${t}'),
+      'owners',(SELECT count(*) FROM public.tenant_members WHERE tenant_id='${t}' AND is_owner),
+      'holder',(SELECT owner_user_id='${u}' AND first_owner_seated_at IS NOT NULL FROM public.tenants WHERE id='${t}'),
+      'first_uses',(SELECT uses FROM public.tenant_invite_tokens WHERE id='${i}'),
+      'second_uses',(SELECT uses FROM public.tenant_invite_tokens WHERE id='${j}'),
+      'first_profile',(SELECT active_tenant_id='${t}' FROM public.profiles WHERE user_id='${u}'),
+      'second_profile',(SELECT active_tenant_id IS NOT NULL FROM public.profiles WHERE user_id='${v}'),
+      'audits',(SELECT count(*) FROM public.paige_audit_log WHERE tenant_id='${t}'));`));
+    console.log(JSON.stringify({phase:'first-owner-two-token-race',wait_on_first_writer:true,exit,state,error:errors.trim()}));
+    assert.notEqual(exit,0,'The second first-owner token must refuse after the first owner commits');
+    assert.match(errors,/OWNER_HISTORY_REQUIRES_RECOVERY/);
+    assert.deepEqual(state,{seats:1,owners:1,holder:true,first_uses:1,second_uses:0,first_profile:true,second_profile:false,audits:1});
+  }finally{
+    clearTimeout(timer);if(first.exitCode===null)first.stdin.end('ROLLBACK;\n\\q\n');
+    if(second&&second.exitCode===null)second.kill();
+    await Promise.allSettled([firstDone,...(secondDone?[secondDone]:[])]);
+  }
+}
 function connectionArgs(db) {
   return ['-X', '-q', '-A', '-t', '-h', host, '-p', process.env.PGPORT,
     '-U', process.env.PGUSER || 'postgres', '-d', db, '-v', 'ON_ERROR_STOP=1'];
@@ -504,6 +557,7 @@ try {
     // Same uniquely-created database, real original writer and independent psql sessions. Restore
     // the original fixture afterward so no history/invitation ports leak into older proof groups.
     sql(`${invitationSetup}${invitationPatch}\nCOMMIT;`);
+    await firstOwnerTwoTokenRace();
     await firstOwnerInvitationWait(false,'mint','agency_retained');await firstOwnerInvitationWait(false,'mint','platform_lost');await firstOwnerInvitationWait(false,'mint','agency_lost');
     await firstOwnerInvitationWait(false,'profile','agency_retained');await firstOwnerInvitationWait(false,'profile','agency_lost');
     await firstOwnerInvitationWait(false,'profile','platform_lost');
@@ -511,6 +565,12 @@ try {
     await firstOwnerInvitationWait(false);await firstOwnerInvitationWait(true);
     await firstOwnerInvitationWait(false,'profile');await firstOwnerInvitationWait(true,'profile');
     const finalExpiryDefinition=sql("SELECT pg_get_functiondef('public.accept_tenant_invite(text)'::regprocedure);").replace(/\r\n/g,'\n');
+    try{
+      const mutant=finalExpiryDefinition.replace('PERFORM 1 FROM public.tenants WHERE id=_tok.tenant_id FOR UPDATE;','PERFORM 1;');
+      assert.notEqual(mutant,finalExpiryDefinition);sql(mutant);
+      await assert.rejects(()=>firstOwnerTwoTokenRace(),/The second first-owner token must refuse after the first owner commits/);
+      console.log(JSON.stringify({phase:'first-owner-two-token-mutant',name:'original tenant serialization removed',killed_by:'two actual original acceptances'}));
+    }finally{sql(finalExpiryDefinition);}
     try{
       const mutant=finalExpiryDefinition.replace("IF _tok.kind='subaccount_owner' AND _tok.expires_at<=pg_catalog.clock_timestamp() THEN",'IF false THEN');
       assert.notEqual(mutant,finalExpiryDefinition);sql(mutant);

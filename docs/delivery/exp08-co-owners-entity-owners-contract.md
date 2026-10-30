@@ -1880,3 +1880,31 @@ integration remain coding work. Full assignment remains **STILL CODING**; releas
 NON-AUTHOR SOURCE review reports no additional material issue in the bounded final-mint repair;
 no native execution by the reviewer. Two-token/full-lock/schema composition, provisioning,
 Setup/recovery and guarded migration admission remain unfinished; no release/customer assurance.
+
+### I2 two actual first-owner acceptances — component proof, 2026-10-30
+
+Same original native runner, original acceptance and uniquely-created local database. Two valid
+synthetic legacy tokens target the same fresh Solo-shell tenant, for distinct authenticated-user
+ports. First original acceptance settles inside its uncommitted transaction. The second actually
+waits on that FIRST writer, verified by pg_blocking_pids and both named sessions. After the first
+commits, the second refuses with the authored recovery hint. Exactly one seat/owner/audit exists,
+holder and first profile belong to the first invitee, first token uses1, second token uses0 and
+second profile unchanged. No replacement acceptance implementation is used.
+
+Actual causal control removes ONLY the explicit original tenant serialization in the candidate:
+the second writer still really waits, now later in history effects, but its pre-effect fact is stale.
+Both tokens then consume and two owners/audits commit, so the original assertion rejects it. Restore
+the real definition afterward. This establishes why serialization must precede history capture;
+it does not assert serialization alone closes every full-schema lock-order interaction.
+
+`exp08-first-owner-two-token.log` final selected run exits0/only own database disposed, retaining
+all history22/six mutants, invitation13/four mutants/five drifts/replay, twelve earlier real waits,
+five earlier actual-wait causal controls, and adding this two-token race plus its serialization
+mutant. No product source change was needed for this new regression proof. Native table/Auth/
+platform ports are explicit; no authenticated customer/RLS/full-schema/release evidence follows.
+Full lock/schema composition, all original lifecycle/provisioning/Setup/recovery integration and
+guarded migration readiness remain unfinished. Full EXP08 **STILL CODING**.
+
+NON-AUTHOR SOURCE review finds no material issue in the two-token regression proof; it executes
+no race independently. It retains selected synthetic/native, full-schema/authenticated and release
+assurance as separate evidence classes. Existing full-run and original lifecycle gaps remain.

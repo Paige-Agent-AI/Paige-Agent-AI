@@ -1,3 +1,19 @@
+# C144 - original received-payment assignments and retained corrections
+
+Status: LOCAL source preparation, not merged/deployed/activated or accepted. Same full O1-O12; O1-O4 first, O5/O9 next, then O6-O8/O10-O12.
+
+Reuses original immutable invoice command, accepted signing/terms, receipt/reversal/operation and Rail. Explicit split/partial assignments validate current native remaining facts under the existing invoice/actor locks. Same-operation replay precedes eligibility. A full manual correction restores ONLY the original receipt assignments and preserves history; provider payments stay with provider reconciliation. No FIFO, new ledger, approval, calculator or sender.
+
+Original Sales form, HIGH review, assigned receipt inspection and existing PAIGE/MERIT invoice read share closed transport/decoder. Existing read opts into an exact manual_payment_id from original bounded history, caller JWT only. Original Portal/Work/Root and financial DTOs are unchanged. Native echo is required before approval mint; no new Chat admission or availability promotion.
+
+Local proof: original43 within92 PostgreSQL checks, real three-session permission-lock serialization, exact replay/full correction/original-receipt readback/ACL/guard/rollback controls. Original391 payment cases; invoice/UI/HTTP187 and separate Chat/history90 (15 overlap), focused857 types0 and frozenDeno. Synthetic Auth/table/preview/Rail ports are not full-schema, actual provider or customer evidence. Actual desktop review/keyboard return/discard plus current390-frame corrected receipt/keyboard footer are bounded source proof; native200/AT/full shell/two cohorts and actual financial acceptance remain owed. [Evidence](../evidence/ui-delivery/e04-manual-payment-assignments.md).
+
+Separate deployed3116 Owner QA now PASS, protected ANT52/60f4d7f5: original chooser, same saved draft/new labels/refusal advice, keyboard return/close focus, full reload/version1/zero receipts and actual loaded source match. No issue/approval/sign/send/payment/provider. Current9e6b mainCI41082134346 also completedSUCCESS. This does not accept the new allocation source or all O4.
+
+Native candidate20271126080004 is unapplied; actual production frontier35008 and four original body pins rechecked. Preserve published40008 ->50005 ->60009 ->70005 prerequisites and release/readback before new financial Owner QA. Required exact review/CI/Preview/native+all affected Edge source readback and CentralQA remain owed. No founder signoff per routine slice; final full Experience acceptance remains OPEN.
+
+---
+
 # C143 — invoice repair released; explicit original receipt allocation is next
 
 Same MERIT and full O1–O12. Connected O1–O4 first, O5/O9 next, then the remaining

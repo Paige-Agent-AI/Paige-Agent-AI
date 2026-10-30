@@ -43,8 +43,15 @@ const files={
  _sales_payment_operation_service:'20270597000001_sales_invoice_provider_operations.sql',
 };
 const definitions=Object.fromEntries(Object.entries(files).map(([name,file])=>[name,original(file,name)]));
+// Optional extension of this SAME reduced-schema proof; original checks run first.
+// Native actor/governance/replay/writer bodies are original tracked source. Result
+// projection, preview predecessor and Rail ports below are explicit local stand-ins;
+// this does not prove full-schema RLS, real receipts, hosted Auth or customer use.
+const manualMode=process.argv.includes('--manual-allocations');
+const manualBaseline=process.argv.includes('--manual-baseline');
+const allocationBaseline=process.argv.includes('--allocation-baseline');
 const financial=Object.entries(definitions).map(([identity,definition])=>({identity:identity+'(',definition}));
-let activeDatabase='postgres',created=false,passes=0;const log=[];
+let activeDatabase='postgres',created=false,passes=0,manualSourceHash=null;const log=[];
 const literal=v=>"'"+JSON.stringify(v).replaceAll("'","''")+"'::jsonb";
 function run(sql){const r=cp.spawnSync(binary,['-X','-w','-h','127.0.0.1','-p',port,'-U',user,'-d',activeDatabase,'-v','ON_ERROR_STOP=1','-qAt'],{input:sql,encoding:'utf8',windowsHide:true,timeout:20000,maxBuffer:16e6});if(r.status!==0)throw Error(r.stderr||r.error?.message||'local SQL refused');return r.stdout.trim();}
 function check(label,value){assert.equal(value,true,label);passes++;log.push('PASS '+label);}
@@ -143,8 +150,202 @@ try{
  check('financial source observation does not declare service completion',!('service_completed'in completed)&&!('engagement_completed'in completed));
  run(migration);check('same migration replay preserves exact observation',JSON.stringify(observe())===JSON.stringify(completed));
  check('replay still preserves entire old reader metadata',run(`SELECT jsonb_build_object('oid',p.oid,'body',md5(p.prosrc),'acl',p.proacl,'config',p.proconfig,'owner',p.proowner) FROM pg_proc p WHERE p.oid='public.read_sales_accepted_agreement(uuid,uuid,uuid)'::regprocedure;`)===old);
+ if(manualMode){
+  run(`DELETE FROM public.paige_invoice_payments;DELETE FROM public.paige_invoice_provider_operations;
+   UPDATE public.paige_invoices SET billing_lifecycle_version=2;
+   ALTER TABLE public.paige_invoice_payments ADD PRIMARY KEY(id);
+   ALTER TABLE public.paige_invoice_payments ALTER COLUMN evidence_kind SET DEFAULT 'manual_recorded';
+   CREATE UNIQUE INDEX manual_proof_one_full_reversal ON public.paige_invoice_payments(reverses_payment_id) WHERE reverses_payment_id IS NOT NULL;
+   CREATE TABLE public.paige_invoice_operations(id uuid PRIMARY KEY,tenant_id uuid,invoice_id uuid,actor_user_id uuid,command jsonb,result jsonb,created_at timestamptz DEFAULT now());
+   CREATE TABLE public.messages(id uuid PRIMARY KEY,meta jsonb);
+   CREATE FUNCTION public._sales_invoice_read(uuid,uuid) RETURNS jsonb LANGUAGE sql AS $$SELECT jsonb_build_object('scope','Synthetic projection port only')$$;
+   CREATE FUNCTION public.record_capability_run(t uuid,a uuid,tool text,outcome text,op uuid,detail text) RETURNS uuid LANGUAGE plpgsql AS $$BEGIN
+    INSERT INTO public.paige_workspace_events(id,tenant_id,actor_id,source_kind,source_id,source_revision,outcome,capability_key)
+    VALUES(op,t,a,'capability',op,1,outcome,tool);RETURN op;END$$;
+   CREATE FUNCTION public._preview_sales_invoice_before_provider(a uuid,t uuid,c jsonb) RETURNS jsonb LANGUAGE plpgsql AS $$BEGIN
+    PERFORM public._sales_invoice_actor(a,t);RETURN jsonb_build_object('eligible',true,'summary','Synthetic predecessor consequence only; not production preview evidence.','scope','Synthetic predecessor port only');END$$;`);
+  for(const name of ['_sales_invoice_governance','read_sales_invoice_command_result'])run(original('20270543000000_sales_invoice_lifecycle.sql',name));
+  let incumbent=original('20270543000000_sales_invoice_lifecycle.sql','execute_sales_invoice_command')
+   .replace('public.execute_sales_invoice_command(','public._sales_invoice_prior_execute(')
+   .replace("allowed:=ARRAY['action','invoice_id','expected_version'];","allowed:=ARRAY['action','invoice_id','expected_version','template'];")
+   .replace("r.billing_draft->'schema_version' IS DISTINCT FROM '2'::jsonb","(r.billing_draft->'schema_version' IS DISTINCT FROM '2'::jsonb AND r.billing_draft->'schema_version' IS DISTINCT FROM '3'::jsonb)");
+  run(incumbent);
+  run(original('20270553000000_sales_invoice_preferences.sql','execute_sales_invoice_command'));
+  run(original('20270597000001_sales_invoice_provider_operations.sql','preview_sales_invoice_command'));
+  run(`REVOKE ALL ON FUNCTION public._sales_invoice_prior_execute(uuid,uuid,uuid,jsonb,jsonb) FROM PUBLIC,anon,authenticated,service_role;
+   REVOKE ALL ON FUNCTION public._sales_invoice_actor(uuid,uuid) FROM PUBLIC,anon,authenticated;
+   GRANT EXECUTE ON FUNCTION public._sales_invoice_actor(uuid,uuid) TO service_role;
+   REVOKE ALL ON FUNCTION public.preview_sales_invoice_command(uuid,uuid,jsonb),public.execute_sales_invoice_command(uuid,uuid,uuid,jsonb,jsonb) FROM PUBLIC,anon,authenticated;
+   GRANT EXECUTE ON FUNCTION public.preview_sales_invoice_command(uuid,uuid,jsonb),public.execute_sales_invoice_command(uuid,uuid,uuid,jsonb,jsonb) TO service_role;`);
+  check('tracked incumbent manual executor matches actual reviewed native source',run("SELECT md5(prosrc) FROM pg_proc WHERE oid='public._sales_invoice_prior_execute(uuid,uuid,uuid,jsonb,jsonb)'::regprocedure;")==='fcbb272628a13b5dc218bb72489b5c0a');
+  check('tracked incumbent public preview matches actual reviewed native source',run("SELECT md5(prosrc) FROM pg_proc WHERE oid='public.preview_sales_invoice_command(uuid,uuid,jsonb)'::regprocedure;")==='6a7e67779cc1f1cf04f7ba9b63306b29');
+  const nativeBefore=run(`SELECT jsonb_agg(jsonb_build_object('oid',oid,'owner',proowner,'acl',proacl,'path',proconfig,'args',pg_get_function_arguments(oid),'return',pg_get_function_result(oid),'definer',prosecdef) ORDER BY oid)
+   FROM pg_proc WHERE oid IN ('public._sales_invoice_prior_execute(uuid,uuid,uuid,jsonb,jsonb)'::regprocedure,'public.preview_sales_invoice_command(uuid,uuid,jsonb)'::regprocedure,'public._sales_invoice_accepted_obligations(public.paige_invoices,uuid)'::regprocedure);`);
+  const manualForward=read('supabase/migrations/20271126080004_e04_original_manual_payment_allocations.sql');
+  manualSourceHash=crypto.createHash('sha256').update(manualForward).digest('hex');
+  if(!manualBaseline&&!allocationBaseline)run(manualForward);
+  // Test-only caller context ports; the production API still uses the ORIGINAL
+  // current_user_tenant_id/auth.uid/actor contract, never a supplied actor.
+  run(`CREATE OR REPLACE FUNCTION public.current_user_tenant_id() RETURNS uuid LANGUAGE sql STABLE AS $$SELECT nullif(current_setting('test.tenant',true),'')::uuid$$;`);
+  const receiptRead=(payment,expected=version(),tenant=fixture.tenant_id)=>`public.read_sales_invoice_manual_allocations('${tenant}','${fixture.effective.invoice_id}',${expected},'${payment}')`;
+  const asOwner=sql=>`SET ROLE authenticated;SET test.actor='${fixture.actor_id}';SET test.tenant='${fixture.tenant_id}';SELECT ${sql};RESET ROLE;RESET test.actor;RESET test.tenant;`;
+  const inspectReceipt=(payment,expected)=>JSON.parse(run(asOwner(receiptRead(payment,expected))).split('\n').find(x=>x.startsWith('{')));
+  const denyReceipt=(payment,label,{expected=version(),tenant=fixture.tenant_id,patch='',state='42501'}={})=>{
+   run(`BEGIN;${patch}SET ROLE authenticated;SET test.actor='${fixture.actor_id}';SET test.tenant='${fixture.tenant_id}';
+    DO $deny$ BEGIN BEGIN PERFORM ${receiptRead(payment,expected,tenant)};RAISE EXCEPTION 'Expected receipt read refusal absent' USING ERRCODE='P9001';
+    EXCEPTION WHEN SQLSTATE '${state}' THEN NULL;END;END $deny$;RESET ROLE;ROLLBACK;`);check(label,true);
+  };
+  const recordedAt='2026-10-01T12:00:00.000Z';
+  const governance=action=>({actor_user_id:fixture.actor_id,tenant_id:fixture.tenant_id,action,
+   tool:action==='invoice.record_manual_payment'?'sales_record_manual_payment':'sales_reverse_manual_payment',
+   approval_channel:'operator_card',approved_fingerprint:'0123456789abcdef',decision_receipt_recorded:true});
+  const nativeCall=(op,c)=>`public.execute_sales_invoice_command('${fixture.actor_id}','${fixture.tenant_id}','${op}',${literal(c)},${literal(governance(c.action))})`;
+  const native=(op,c)=>`SET ROLE service_role;SELECT ${nativeCall(op,c)};RESET ROLE;`;
+  const expectRefusal=(op,c,label,patch='',state='22023')=>{
+   assert.match(state,/^[A-Z0-9]{5}$/);
+   run(`BEGIN;${patch}SET ROLE service_role;DO $refusal$ BEGIN BEGIN
+    PERFORM ${nativeCall(op,c)};RAISE EXCEPTION 'Expected native refusal absent' USING ERRCODE='P9001';
+    EXCEPTION WHEN SQLSTATE '${state}' THEN NULL;END;END $refusal$;RESET ROLE;ROLLBACK;`);check(label,true);
+  };
+  const version=()=>Number(run('SELECT billing_lifecycle_version FROM public.paige_invoices;'));
+  const manualCommand=(amount,allocations)=>({action:'invoice.record_manual_payment',invoice_id:fixture.effective.invoice_id,expected_version:version(),amount_cents:amount,currency:'usd',method:'cash',received_at:recordedAt,reference:null,notes:null,...(allocations?{allocations}:{})});
+  const reverse=(payment_id)=>({action:'invoice.reverse_manual_payment',invoice_id:fixture.effective.invoice_id,expected_version:version(),payment_id,reason:'Synthetic correction of the original business record, no refund'});
+  async function authorityRace(label,table,cmd){
+   assert(['paige_invoices','paige_agreements'].includes(table));
+   const token=crypto.randomUUID().replaceAll('-',''),blockName='e04_block_'+token,writerName='e04_write_'+token,op=crypto.randomUUID();
+   const args=['-X','-w','-h','127.0.0.1','-p',port,'-U',user,'-d',activeDatabase,'-v','ON_ERROR_STOP=1','-v','VERBOSITY=verbose','-qAt'];
+   const child=()=>{const process=cp.spawn(binary,args,{windowsHide:true});let out='',err='';const done=new Promise((resolve,reject)=>{process.stdout.on('data',b=>out+=b);process.stderr.on('data',b=>err+=b);process.on('error',reject);process.on('close',code=>resolve({code,out,err}));});return{process,done};};
+   const blocker=child();let writer,revoker,released=false,writerSucceeded=false;
+   const before=observe();
+   try{
+    const id=table==='paige_invoices'?fixture.effective.invoice_id:fixture.effective.signing_id;
+    blocker.process.stdin.write(`SET application_name='${blockName}';BEGIN;SELECT id FROM public.${table} WHERE id='${id}' FOR UPDATE;SELECT 'lock ready';\n`);
+    let blocking=false;
+    for(let attempt=0;attempt<30&&!blocking;attempt++){
+     blocking=run(`SELECT EXISTS(SELECT 1 FROM pg_stat_activity WHERE datname=current_database() AND application_name='${blockName}' AND state='idle in transaction');`)==='t';
+     if(!blocking)await new Promise(r=>setTimeout(r,30));
+    }
+    assert(blocking,'owned native blocker reached held transaction');
+    writer=child();writer.process.stdin.end(`SET application_name='${writerName}';${native(op,cmd)}`);
+    let waiting=false;
+    for(let attempt=0;attempt<30&&!waiting;attempt++){
+     waiting=run(`SELECT EXISTS(SELECT 1 FROM pg_stat_activity w JOIN pg_stat_activity b ON b.application_name='${blockName}'
+      WHERE w.datname=current_database() AND w.application_name='${writerName}' AND w.wait_event_type='Lock' AND b.pid=ANY(pg_blocking_pids(w.pid)));`)==='t';
+     if(!waiting)await new Promise(r=>setTimeout(r,30));
+    }
+    assert(waiting,'actual native writer waits on the identified original row lock');
+    revoker=child();const revokeName='e04_revoke_'+token;
+    revoker.process.stdin.end(`SET application_name='${revokeName}';UPDATE public.tenant_members SET status='inactive';`);
+    let revokeWaiting=false;
+    for(let attempt=0;attempt<30&&!revokeWaiting;attempt++){
+     revokeWaiting=run(`SELECT EXISTS(SELECT 1 FROM pg_stat_activity r JOIN pg_stat_activity w ON w.application_name='${writerName}'
+      WHERE r.datname=current_database() AND r.application_name='${revokeName}' AND r.wait_event_type='Lock' AND w.pid=ANY(pg_blocking_pids(r.pid)));`)==='t';
+     if(!revokeWaiting)await new Promise(r=>setTimeout(r,30));
+    }
+    assert(revokeWaiting,'original authority row lock holds revocation behind the admitted writer');
+    blocker.process.stdin.end('ROLLBACK;\n');released=true;await blocker.done;
+    const result=await writer.done;
+    writerSucceeded=result.code===0;
+    const revoked=await revoker.done;
+    check(label,writerSucceeded&&revoked.code===0&&run("SELECT count(*) FROM tenant_members WHERE status='inactive';")==='1'
+     &&run(`SELECT (SELECT count(*) FROM paige_invoice_payments WHERE id='${op}')=1 AND (SELECT count(*) FROM paige_invoice_operations WHERE id='${op}')=1;`)==='t');
+    expectRefusal(crypto.randomUUID(),manualCommand(1000),'next original write is refused after serialized revocation','','42501');
+   }finally{
+    if(!released){blocker.process.stdin.end('ROLLBACK;\n');await blocker.done;}
+    if(writer)await writer.done;
+    if(revoker)await revoker.done;
+    run("UPDATE public.tenant_members SET status='active';");
+   }
+   if(writerSucceeded){
+    run(native(crypto.randomUUID(),reverse(op)));
+    check('original full correction restores the concurrency-case allocation without deleting its history',JSON.stringify(observe().obligations)===JSON.stringify(before.obligations));
+   }
+  }
+  if(!allocationBaseline){
+   const providerPayment=crypto.randomUUID();
+   const providerRow={id:providerPayment,tenant_id:fixture.tenant_id,invoice_id:fixture.effective.invoice_id,actor_user_id:fixture.actor_id,kind:'receipt',amount_cents:1000,currency:'usd',method:'stripe',received_at:recordedAt,evidence_kind:'provider_verified',provider:'stripe',merchant_account_id:'acct_fixture',provider_environment:'live',provider_operation_id:crypto.randomUUID(),provider_transaction_id:'pi_fixture',provider_settlement_id:'txn_fixture',provider_verified_at:recordedAt};
+   expectRefusal(crypto.randomUUID(),reverse(providerPayment),'actual native manual reversal refuses provider evidence, even when preview is not used',`INSERT INTO public.paige_invoice_payments SELECT * FROM jsonb_populate_record(NULL::public.paige_invoice_payments,${literal(providerRow)});`);
+  }
+  const beforeManual=observe(),first=crypto.randomUUID();
+  const firstCommand=manualCommand(80000,[{obligation:beforeManual.obligations[0],amount_cents:50000},{obligation:beforeManual.obligations[1],amount_cents:30000}]);
+  if(!manualBaseline&&!allocationBaseline){
+   const preview=JSON.parse(run(`SET ROLE service_role;SELECT preview_sales_invoice_command('${fixture.actor_id}','${fixture.tenant_id}',${literal(firstCommand)});RESET ROLE;`).split('\n').find(x=>x.startsWith('{')));
+   check('native review returns the exact validated manual allocation instruction',JSON.stringify(preview.manual_allocations)===JSON.stringify(firstCommand.allocations));
+   check('canonical approval summary names every exact received-payment assignment',firstCommand.allocations.every(item=>preview.summary.includes(`Payment ${item.obligation.reference.sequence} · $${(item.amount_cents/100).toFixed(2)} USD · due ${item.obligation.due_date} · accepted terms version ${item.obligation.reference.terms_version} · signing version ${item.obligation.reference.signing_version}`)));
+   check('canonical approval summary uses readable lines rather than escaped newline text',preview.summary.includes('\nAccepted payment assignments:\n')&&!preview.summary.includes('\\n'));
+   check('new composition/validation helpers have no browser or service execution grant',run(`SELECT bool_and(NOT has_function_privilege(r.role,s.signature,'EXECUTE')) FROM (VALUES('anon'),('authenticated'),('service_role'))r(role)
+    CROSS JOIN (VALUES('public._sales_invoice_manual_allocation_intent(jsonb)'),('public._sales_invoice_manual_receipt_allocations(public.paige_invoices,public.paige_invoice_payments)'),('public._sales_invoice_manual_allocations(public.paige_invoices)'),('public._sales_invoice_require_manual_allocations(public.paige_invoices,jsonb)'))s(signature);`)==='t');
+   const maximumSplits=Array.from({length:240},(_,index)=>({obligation:{...beforeManual.obligations[2],reference:{...beforeManual.obligations[2].reference,sequence:index+1}},amount_cents:1}));
+   const maximumCommand=manualCommand(240,maximumSplits);
+   check('all240 bounded native transport assignments survive without truncation',run(`SELECT jsonb_array_length(public._sales_invoice_manual_allocation_intent(${literal(maximumCommand)}))=240 AND octet_length(${literal(maximumCommand)}::text)>8000 AND octet_length(${literal(maximumCommand)}::text)<=131072;`)==='t');
+   expectRefusal(crypto.randomUUID(),maximumCommand,'large bounded assignment transport still requires exact ORIGINAL accepted targets','','40001');
+   expectRefusal(crypto.randomUUID(),manualCommand(241,[...maximumSplits,{...maximumSplits[0]}]),'native assignment transport refuses more than240 targets');
+  }
+  const firstResult=JSON.parse(run(native(first,firstCommand)).split('\n').find(x=>x.startsWith('{')));
+  let current=observe();
+  check('one original manual receipt explicitly allocates deposit and installment',current.state==='available'&&current.obligations[0].remaining_minor===0&&current.obligations[1].remaining_minor===0&&current.obligations[2].remaining_minor===30000);
+  check('original manual receipt and immutable operation are singular and source-bound',run(`SELECT (SELECT count(*) FROM paige_invoice_payments WHERE id='${first}')=1 AND (SELECT count(*) FROM paige_invoice_operations WHERE id='${first}' AND command=${literal(firstCommand)})=1;`)==='t');
+  const receiptHistory=inspectReceipt(first,3);
+  check('ordinary original owner can reopen the immutable receipt assignments',receiptHistory.state==='assigned'&&receiptHistory.invoice_version===3&&receiptHistory.payment_id===first&&receiptHistory.reversal_payment_id===null&&receiptHistory.amount_cents===80000&&JSON.stringify(receiptHistory.allocations)===JSON.stringify(firstCommand.allocations));
+  check('original receipt inspection is Auth-only and never exposes the raw command or notes',run(`SELECT has_function_privilege('authenticated','public.read_sales_invoice_manual_allocations(uuid,uuid,bigint,uuid)','EXECUTE') AND NOT has_function_privilege('anon','public.read_sales_invoice_manual_allocations(uuid,uuid,bigint,uuid)','EXECUTE') AND NOT has_function_privilege('service_role','public.read_sales_invoice_manual_allocations(uuid,uuid,bigint,uuid)','EXECUTE');`)==='t'&&Object.keys(receiptHistory).sort().join(',')==='allocations,amount_cents,currency,invoice_id,invoice_version,payment_id,reversal_payment_id,state');
+  denyReceipt(first,'stale original receipt observation requires reloading the invoice',{expected:2,state:'40001'});
+  denyReceipt(first,'receipt inspection refuses a foreign workspace',{tenant:'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'});
+  denyReceipt(crypto.randomUUID(),'receipt inspection refuses an unknown original receipt');
+  denyReceipt(first,'receipt inspection retires revoked original membership',{patch:"UPDATE tenant_members SET status='inactive';"});
+  denyReceipt(first,'receipt inspection does not grant financial authority to an unassigned member',{patch:"UPDATE tenant_members SET role='member';"});
+  const malformed=JSON.parse(run(`BEGIN;UPDATE paige_invoice_operations SET command=jsonb_set(command,'{amount_cents}','79999') WHERE id='${first}';`+asOwner(receiptRead(first,3))+'ROLLBACK;').split('\n').find(x=>x.startsWith('{')));
+  check('corrupt original receipt provenance is visibly unverified with no invented assignments',malformed.state==='unverified'&&malformed.allocations.length===0);
+  const replay=JSON.parse(run(native(first,firstCommand)).split('\n').find(x=>x.startsWith('{')));
+  check('same operation replays original result before stale invoice or allocation eligibility',JSON.stringify(replay)===JSON.stringify(firstResult)&&version()===3&&run(`SELECT count(*) FROM paige_invoice_payments WHERE id='${first}';`)==='1');
+  expectRefusal(first,{...firstCommand,amount_cents:79999},'same operation cannot be rebound to different receipt money');
+  const partial=crypto.randomUUID(),partialCommand=manualCommand(12000,[{obligation:current.obligations[2],amount_cents:12000}]);
+  run(native(partial,partialCommand));current=observe();
+  check('partial original manual receipt retains exact dated remaining amount',current.state==='available'&&current.obligations[2].remaining_minor===18000);
+  const adminOp=crypto.randomUUID(),adminCommand=manualCommand(1000,[{obligation:current.obligations[3],amount_cents:1000}]);
+  const adminResult=run("BEGIN;UPDATE public.tenant_members SET role='admin';"+native(adminOp,adminCommand)+'ROLLBACK;');
+  check('original tenant Admin remains admitted without a global role or new grant',adminResult.includes(adminOp)&&version()===4&&run(`SELECT count(*) FROM paige_invoice_payments WHERE id='${adminOp}';`)==='0');
+  expectRefusal(crypto.randomUUID(),manualCommand(12000,partialCommand.allocations),'captured remaining amount must still match current accepted source','','40001');
+  expectRefusal(crypto.randomUUID(),manualCommand(1000,[{obligation:current.obligations[3],amount_cents:999}]),'native amount must equal exact split sum');
+  expectRefusal(crypto.randomUUID(),manualCommand(1000,[{obligation:current.obligations[3],amount_cents:500},{obligation:current.obligations[3],amount_cents:500}]),'native duplicate accepted target is refused');
+  const changed=structuredClone(current.obligations[3]);changed.source_digest='b'.repeat(64);
+  expectRefusal(crypto.randomUUID(),manualCommand(1000,[{obligation:changed,amount_cents:1000}]),'native rejects changed accepted digest','','40001');
+  expectRefusal(crypto.randomUUID(),manualCommand(1000,[{obligation:current.obligations[3],amount_cents:1000}]),'revoked original actor cannot record a split',"UPDATE tenant_members SET status='inactive';",'42501');
+  expectRefusal(crypto.randomUUID(),manualCommand(1000,[{obligation:current.obligations[3],amount_cents:1000}]),'unassigned member cannot record a split',"UPDATE tenant_members SET role='member';",'42501');
+  const correction=crypto.randomUUID(),correctionCommand=reverse(first);
+  run(native(correction,correctionCommand));current=observe();
+  check('full original reversal restores only its deposit/installment allocation',current.state==='available'&&current.obligations[0].remaining_minor===50000&&current.obligations[1].remaining_minor===30000&&current.obligations[2].remaining_minor===18000);
+  check('correction retains original receipt and exact full reversal, never a provider refund',run(`SELECT count(*) FROM paige_invoice_payments WHERE id='${first}' OR (id='${correction}' AND reverses_payment_id='${first}' AND amount_cents=80000 AND evidence_kind='manual_recorded' AND provider_operation_id IS NULL);`)==='2');
+  const correctedHistory=inspectReceipt(first,5);
+  check('reopened corrected receipt retains its exact original assignments and full reversal identity',correctedHistory.state==='assigned'&&correctedHistory.reversal_payment_id===correction&&JSON.stringify(correctedHistory.allocations)===JSON.stringify(firstCommand.allocations));
+  const correctionReplay=run(native(correction,correctionCommand));
+  check('correction replay does not add another reversal or invoice',correctionReplay.includes(correction)&&version()===5&&run(`SELECT count(*) FROM paige_invoice_payments WHERE reverses_payment_id='${first}';`)==='1'&&run('SELECT count(*) FROM paige_invoices;')==='1');
+  expectRefusal(crypto.randomUUID(),reverse(first),'a second correction cannot reverse the same original receipt');
+  // Actual PostgreSQL rollback with an explicit synthetic Rail port failing inside
+  // the original function transaction. Full original Rail implementation proof owed.
+  await authorityRace('original actor lock serializes revocation during invoice wait','paige_invoices',manualCommand(1000));
+  await authorityRace('original actor lock serializes revocation during accepted-source wait','paige_agreements',manualCommand(1000,[{obligation:current.obligations[3],amount_cents:1000}]));
+  const beforeRail=version();
+  run(`CREATE FUNCTION manual_proof_fail_rail() RETURNS trigger LANGUAGE plpgsql AS $$BEGIN RAISE EXCEPTION 'Synthetic Rail port failed' USING ERRCODE='P9002';END$$;
+   CREATE TRIGGER manual_proof_fail_rail BEFORE INSERT ON paige_workspace_events FOR EACH ROW EXECUTE FUNCTION manual_proof_fail_rail();`);
+  const failed=crypto.randomUUID();expectRefusal(failed,manualCommand(1000,[{obligation:current.obligations[3],amount_cents:1000}]),'Rail-port failure rolls back the original manual writer','','P9002');
+  check('failed transaction retains no receipt/operation/version change',version()===beforeRail&&run(`SELECT (SELECT count(*) FROM paige_invoice_payments WHERE id='${failed}')=0 AND (SELECT count(*) FROM paige_invoice_operations WHERE id='${failed}')=0;`)==='t');
+  run('DROP TRIGGER manual_proof_fail_rail ON paige_workspace_events;');
+  const sourceAfter=run(`SELECT jsonb_agg(jsonb_build_object('oid',oid,'owner',proowner,'acl',proacl,'path',proconfig,'args',pg_get_function_arguments(oid),'return',pg_get_function_result(oid),'definer',prosecdef) ORDER BY oid)
+   FROM pg_proc WHERE oid IN ('public._sales_invoice_prior_execute(uuid,uuid,uuid,jsonb,jsonb)'::regprocedure,'public.preview_sales_invoice_command(uuid,uuid,jsonb)'::regprocedure,'public._sales_invoice_accepted_obligations(public.paige_invoices,uuid)'::regprocedure);`);
+  check('all original patched function OIDs/ABI/ACL/owner/searchpath/definer preserved',sourceAfter===nativeBefore);
+  const state=JSON.stringify(observe());run(manualForward);
+  check('forward replay preserves exact original allocation state',JSON.stringify(observe())===state);
+  for(const [sql,label] of [
+   ['GRANT EXECUTE ON FUNCTION public._sales_invoice_manual_receipt_allocations(public.paige_invoices,public.paige_invoice_payments) TO authenticated;','forward guard refuses a widened private receipt helper'],
+   ['GRANT EXECUTE ON FUNCTION public.read_sales_invoice_manual_allocations(uuid,uuid,bigint,uuid) TO anon;','forward guard refuses anonymous receipt inspection'],
+   ['ALTER FUNCTION public._sales_invoice_actor(uuid,uuid) SECURITY INVOKER;','forward guard refuses changed original authority'],
+  ])deniedSql('BEGIN;'+sql+manualForward,/reconcile before applying/,label);
+  const guardedHistory=inspectReceipt(first,version());
+  check('failed hostile guard attempts leave original owner history and source state exact',JSON.stringify(observe())===state&&guardedHistory.state==='assigned'&&guardedHistory.reversal_payment_id===correction&&JSON.stringify(guardedHistory.allocations)===JSON.stringify(firstCommand.allocations));
+  log.push('MANUAL BOUNDARY: original tracked actor/governance/executor/replay and actual bounded three-session authority-lock characterization; reduced tables/Test Auth/synthetic result-preview-Rail ports. Full-schema RLS/other races/actual Rail/provider/customer/authenticated UI proof remain owed.');
+ }
  log.push('BOUNDARY: minimal-table original-source composition and simulated provider metadata only; full-schema writer/role/concurrency/provider/customer proof owed.');
- console.log(JSON.stringify({passes,scope:'isolated original-source PostgreSQL composition',database,sourceHash:crypto.createHash('sha256').update(migration).digest('hex')}));
+ console.log(JSON.stringify({passes,scope:'isolated original-source PostgreSQL composition',database,sourceHash:crypto.createHash('sha256').update(migration).digest('hex'),...(manualMode?{manualSourceHash}:{})}));
 }catch(e){log.push('FAIL '+e.stack);console.error(e.message);process.exitCode=1;}
 finally{
  if(created){activeDatabase='postgres';try{run('DROP DATABASE '+database+';');log.push('Disposable database removed.');}catch(e){log.push('CLEANUP FAILED '+e.message);process.exitCode=1;}}

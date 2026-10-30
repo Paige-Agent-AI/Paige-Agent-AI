@@ -14,6 +14,15 @@ export const PAYMENT_OBLIGATION_REFERENCE_SCHEMA={
   sequence:{type:'integer',minimum:1,maximum:MAX_SCHEDULE}},
  required:['commercial_terms_id','signing_id','signing_version','terms_version','sequence'],
 } as const;
+/** The same closed evidence transport parsed below. Native records and locks,
+ * rather than this declaration, establish accepted source and current amounts. */
+export const PAYMENT_OBLIGATION_EVIDENCE_SCHEMA={
+ type:'object',additionalProperties:false,
+ properties:{reference:PAYMENT_OBLIGATION_REFERENCE_SCHEMA,
+  source_digest:{type:'string',pattern:'^[a-f0-9]{64}$'},due_date:{type:'string',pattern:'^[0-9]{4}-[0-9]{2}-[0-9]{2}$'},
+  scheduled_minor:{type:'integer',minimum:1,maximum:MAX_MINOR},remaining_minor:{type:'integer',minimum:0,maximum:MAX_MINOR}},
+ required:['reference','source_digest','due_date','scheduled_minor','remaining_minor'],
+} as const;
 /** Transport shape only. The canonical writer must revalidate original signing/effective
  * source, invoice, allocation and permissions under its existing locks. Parsing is not proof. */
 export type PaymentObligationEvidence=Readonly<{

@@ -1,0 +1,52 @@
+{
+  "at": "2026-10-30T17:18:45.688Z",
+  "boundary": "Actual components with synthetic local ports/CSP, not full SOLO shell or authenticated financial/provider proof. Review image proves unchanged review markup; final narrow reload reflects current receipt source. Earlier unfocused/loading frames excluded.",
+  "files": [
+    {
+      "file": "src/solo/sales/InvoiceAcceptedPaymentPlan.tsx",
+      "sha256": "10932b479b7f394859ad04034ff7140c4129d7028bdce998ec45efbce6bb85a0"
+    },
+    {
+      "file": "src/solo/sales/InvoiceLifecycleActions.tsx",
+      "sha256": "1818c3747131da5f6dcab4b4eea6c9448630cd0426499a1823c87705d9ba6b4d"
+    },
+    {
+      "file": "src/solo/sales/InvoiceCommandReview.tsx",
+      "sha256": "5c36de5e7d01296e1b1730c903cec5d54e8d32557b90960ef6dc57c28d32be9e"
+    },
+    {
+      "file": "src/solo/sales/InvoiceReceiptAssignments.tsx",
+      "sha256": "48fdc1912388ecb39844f59f46da62df560ff751b4214fd359c3cd3a843934b3"
+    },
+    {
+      "file": "src/solo/sales/invoice-accepted-payment-plan.css",
+      "sha256": "2cffc34f93e4d1e55cd22282351fdfc6f6e350fd7717613353b84fb7a83d9115"
+    },
+    {
+      "file": "src/solo/sales/manualReceiptAssignments.ts",
+      "sha256": "091e338f7d00e4b610e5325f22a399d97662d0952b2d9e573c1897cc68630182"
+    },
+    {
+      "file": "supabase/functions/_shared/sales-invoice-command/manual-allocation-read.ts",
+      "sha256": "5944e4548be0537a4d9916598c573da40cfc5ea7dd2e1f16359891ee0d2844db"
+    },
+    {
+      "file": "scripts/live-drive/sales-payments/mount/accepted-plan.ts",
+      "sha256": "c222cbc2101c40f20735ea3a57cf501643da136b58873eaba11a44ccef98a551"
+    }
+  ],
+  "captures": [
+    {
+      "file": "corrected-receipt-390.jpg",
+      "sha256": "0f2c21b825997c639e34643912e2905e2e685b57d21178d5cf2781b3c8f17840"
+    },
+    {
+      "file": "manual-review.jpg",
+      "sha256": "9b3a71296bc010c37aaa73b20d027bcc3f56b66349ed672c0f4d884f83266e64"
+    },
+    {
+      "file": "receipt-keyboard-end-390.jpg",
+      "sha256": "55bfa114c8b729293d2f315a4af32c9d72fab5e018c0c0352e6a68adab8d1763"
+    }
+  ]
+}

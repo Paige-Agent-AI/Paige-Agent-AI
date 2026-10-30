@@ -1,0 +1,79 @@
+# Original manual receipts, accepted payment assignments and corrections
+
+UI_DELIVERY_EVIDENCE_VERSION: 1
+FLOW_BY_FLOW: PASS: ANT-51 C144, original invoice → received amount → explicit accepted schedule assignments → original HIGH review → one original receipt → original record/reload; correction appends one full reversal.
+PAIGE_UI_DESIGN: PASS: project router, five composable modules, shared delivery doctrine, existing invoice workspace/approval/tokens inspected. Flow Prototype and Impeccable craft floor applied before UI edits.
+MATERIAL_FLOW_CHANGE: YES: choose explicit installment amounts when recording a receipt and inspect those exact assignments before approval.
+FLOW_PROTOTYPE: PASS: private outputs/e04-c144-allocation-prototype.html, isolated local CSP/no-effects flow inspected before implementation. Actual read→500+300 split→review→keyboard return restored focus; 600 against500 remaining disables review. First local server access failed/excluded, then restored local access. Author engineering design decision under October21 owner-delegated UI authority; LOWER ASSURANCE, not founder approval. Remaining states require actual component proof.
+PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: current authorized SOLO financial owner/admin records an actually received manual payment against exact accepted obligations, with review and recoverable correction.
+VISUAL_DIRECTION: PASS: existing Operate invoice workspace. Dated obligations remain beside original scheduled/remaining amounts, with optional labeled allocation inputs. Same original modal protects consequential review; no new navigation, token system or inner scroll owner.
+AUTOMATED_EVIDENCE: PASS: original native43 retained within92 isolated PostgreSQL controls, real three-session lock/revocation tests, split/partial/full correction/replay/readback/ACL/hostile guard/Rail-port rollback and bounded240 transport. Seven original invoice/UI/command suites187; separate five Chat/history suites90 (overlaps15 history cases), original payment17suites391. Reduced Auth/table/result/preview/Rail ports are not full-schema, hosted customer or provider proof.
+STATIC_EVIDENCE: PASS: strict focused857-file type graph zero diagnostics and frozenDeno2.9.8 actual endpoint/Chat/Spine checks; strict scoped lint, six original native/authority/Spine/risk/version/approval guards. Pinned official Impeccable4.1.0 complete21 changed code/style/test paths0, strict lint0. Hosted exact-head CI and full production build still owed.
+RENDERED_EVIDENCE: PASS: actual original components, native1280x720 review plus390 CSS-width corrected-receipt frame, assets/e04-manual-payment-assignments. Local CSP/synthetic RPC ports only; this is not full shell, physical mobile, native200percent or authenticated financial proof. Review component markup remains source-exact; final narrow reload uses current receipt source. Earlier loading/font-settling frames excluded from geometry.
+BEHAVIORAL_EVIDENCE: PASS: actual received800→explicit500+300→same original review, keyboard Cancel returns to enabled original receipt-plan read, input retained and fresh read required; actual unsaved-payment discard guard; original corrected-receipt inspection/heading focus and keyboard footer reachability after reload. Native wheel action in nested local frame had no visible effect, so wheel reachability is not claimed. Other runtime states remain unit/native evidence or explicitly owed.
+AUTHENTICATED_RUNTIME: UNVERIFIED: #3116 bounded original Owner invoice labels/refusal/keyboard/reload proof is separately protected in ANT-52; new allocation source is LOCAL and never applied.
+KEYBOARD_FOCUS: PASS: actual linked receipt review keyboard Cancel returns to original enabled read trigger; actual receipt inspection focuses original heading. Both assigned and incumbent unassigned Cancel cases pass component tests after fixing original asynchronous status-read focus. Screen-reader/physical-device proof remains owed.
+ZOOM_REFLOW: UNVERIFIED: actual390 CSS-frame reflow inspected with full new receipt footer reachable by keyboard; native200percent/full-shell/physical mobile proof remains owed.
+REDUCED_MOTION: UNVERIFIED: no new animation planned; preference-specific actual render owed.
+STATE_COVERAGE: PASS: original read/loading/cancel/held/refused/stale, exact split/over-allocation/precision/unknown-target validation, source/session/role/business retirement, review/native-echo mismatch, discard, retained correction history and original replay tested. Batched actor A→B→A causal failure repaired by source incarnation retirement. Actual provider/financial/all-role/current-new-SOLO/unknown-outcome customer recovery remains owed.
+TRUTHFUL_STATE_LABELS: PASS: assignments are business-recorded receipt facts, not provider settlement or service completion. Unassigned history stays held; no guessed FIFO. Provider payment requires original provider reconciliation.
+SOLO_UI: YES: original Sales invoice Payments & records and receipt editor, same universal shell.
+SOLO_1536X770_PAIGE_CLOSED: UNVERIFIED: complete signed-in shell/two-cohort proof owed.
+SOLO_1536X770_PAIGE_OPEN: UNVERIFIED: complete signed-in shell/two-cohort proof owed.
+SOLO_1366X768_PAIGE_CLOSED: UNVERIFIED: complete signed-in shell/two-cohort proof owed.
+SOLO_1366X768_PAIGE_OPEN: UNVERIFIED: complete signed-in shell/two-cohort proof owed.
+SOLO_1024X768_PAIGE_CLOSED: UNVERIFIED: complete signed-in shell/two-cohort proof owed.
+SOLO_1024X768_PAIGE_OPEN: UNVERIFIED: complete signed-in shell/two-cohort proof owed.
+SOLO_900X1000_PAIGE_CLOSED: UNVERIFIED: complete signed-in shell/two-cohort proof owed.
+SOLO_900X1000_PAIGE_OPEN: UNVERIFIED: complete signed-in shell/two-cohort proof owed.
+UNVERIFIED: final source/review/CI/managed Preview/production native and all affected Edge importer release, full-schema/real Rail and accepted240-row end-to-end case, provider/full-role/customer continuity, complete eight-view/two-cohort shell/native200/AT, Central QA, all twelve complete outcomes and founder acceptance. 240 transport retention is not a240-row authenticated schedule acceptance.
+
+OWNER_INTENT: finish installment allocations and reversal handling within all twelve original EXP04 outcomes, with usable Owner review/QA and durable original records.
+MUST_NOT_HAPPEN: duplicate obligation/receipt, guessed allocation, silent source or actor substitution, new approval/ledger/calculator, provider payment manually reversed, TEST counted as live, signing mistaken for collection or task completion for client acceptance.
+MUST_PRESERVE: original native actor locks/governance/replay/invoice lock/current accepted terms; original receipt/operation/Rail; old unassigned command compatibility; original provider path and closed financial DTOs; unsaved form guard, immutable review and same-operation recovery; all E01/E05/E08/E09 source boundaries and published migration history.
+ACCEPTANCE_CRITERIA: genuine authorized owner can record exact deposit+installment split, inspect original receipt/source and native remaining amounts after reload, append a truthful correction restoring only original assignments; revoked/wrong-scope/stale/provider/uncertain paths refuse or recover without duplicate effects. Full real-role/provider/Central QA remains separate.
+MOTION_PURPOSE: NONE: existing modal/focus behavior, no added animation or haptics.
+PROTECTED_SEAMS: AFFECTED tenant/client/account isolation and current authority, canonical writes/readback, original HIGH approval/Spine transport, Rail/audit/idempotency/recovery, financial-provider distinction, accessibility and local responsive composition—native/command/component/current-source proof required. NOT AFFECTED authentication/account chooser implementation; SOLO entitlement/signup/paywall/billing/provisioning; Chat transcript/stream/thread/popout/minimize/history implementation; Live state; Secure Browser/Vault; durable scheduler/provider adapters; shell geometry implementation; Memory learning/publication and secrets policy. Session observation only retires local private source; no role grant or new permission rule.
+
+INTERNAL_BUILD_IDENTITY: local continuation from19d3e3798aa0c8dcf4614f1c64c71236991a629e; deployment=NOT_APPLICABLE; environment=development; migrations=NOT_APPLICABLE(local never-applied candidate only); edge=NOT_APPLICABLE; evidence=ANT-51 C144 and this record.
+RELEASE_CHANNEL: development: new source not published, applied or activated.
+RELEASE_CLASSIFICATION: internal-only: safe source preparation, no complete payment or Experience claim.
+CUSTOMER_RELEASE_IDENTITY: none: no customer announcement or founder acceptance.
+RELEASE_NOTE_REQUIRED: no: unreleased engineering increment.
+RELEASE_TRUTH_BOUNDARY: PARTIAL: original native/transport local proof only; final integrated customer result owed.
+RELEASE_RECOVERY: position=preserve original same-operation recovery and append-only correction; reference=supabase/functions/sales-invoice-command/index.ts and src/solo/sales/InvoiceCommandReview.tsx. No repeat dispatch, automatic refund or applied migration rewrite.
+
+## Pre-edit compact brief and transitions
+
+Goal: assign actually received money to exact accepted dated obligations, inspect and correct the same original receipt.
+Human and feel: consultant owner, confident about where received money belongs.
+Entry and exit: original invoice → inline payment editor → existing HIGH modal → same editor or refreshed original invoice.
+System: incumbent SOLO Operate tokens, readable dense dated rows, no second scroll container.
+Signature: scheduled/remaining facts and explicit owner-entered assignment on each original dated obligation.
+Feedback: immediate validation and server-verified consequence; no new motion/haptics.
+Rejecting: auto-FIFO, fabricated settlement, new payment ledgers, success before canonical result.
+Variants: financial owner/admin can review; no source after signout/role/business/invoice retirement; narrow rows stack.
+
+Entry opens original received-payment form. Assigning to accepted schedule requires an explicit original read; empty/unlinked source offers truthful unassigned receipt instead. Loading can cancel; refused/held can refresh/return without mutation. Exact positive split must sum to received amount and stay within each native remaining amount. Review captures immutable command/source; native preview must echo exact validated assignments. Cancel returns input/focus unchanged. Unknown result retains same operation; actual successful original write triggers original reread. Correction retains original receipt and appends one full reversal; actual native read restores only assigned amounts. Offline/source drift refuses, never guesses. Provider refund/dispute remains its original provider path.
+
+## Orchestration and algorithms
+
+Sales native form / eligible PAIGE and MERIT reuse original registered sales_invoice.record_manual_payment and HIGH confirmation, sales-invoice-command, same native executor/governance/operation/Rail. Draft input/read does not need Layer C. No Root/Team Hub host, new scheduler or registry. Manual split is not a live payment charge. Native-first release is required before connected UI/Edge review can succeed; missing native echo is refused before approval creation. Existing read_sales_invoice optionally consumes exact manual_payment_id from its original bounded receipt history through the SAME shared closed decoder and caller-JWT reader; unavailable/currentness evidence stays withheld. No new capability or service impersonation. Existing read/Rail declarations and maturity preserved.
+
+## Native contract and release order
+
+`read_sales_invoice_manual_allocations(uuid,uuid,bigint,uuid)` is authenticated-only, empty-search-path, original current_user_tenant_id/auth.uid/_sales_invoice_actor admission, exact original invoice version/receipt/immutable operation. One private receipt validator is shared with aggregate allocation. Closed DTO retains exact original assignments and full reversal identity, never raw command/notes, provider refund, payment or service completion inference. Original invoice/Portal financial DTOs and all peer readers remain unchanged.
+
+Production SELECT before publication: frontier20271126035008; candidate80004count0/new API absent. Original actor27202521, executorfcbb2726, acceptedhelper30fc276b, preview6a7e6777 source pins exact. Proposed80004 follows already-published E09native60009 and E05Planning70005. Actual prerequisite release40008→50005→60009→70005 remains held; no source guard, applied history, approval or deployment marker is changed to skip that order. Exact review/CI/native production readback must precede new financial Owner QA.
+
+## Material findings and disposition
+
+1. Early UI change removed an existing selected provider-request context while opening the receipt editor: caught by original discard-guard test; existing selector instance/selection restored, distinct receipt-editor labels, original assertions retained.
+2. New and incumbent unassigned receipt return focus raced the original payment-status reload: causal failures retained; restoration waits for original status readiness. Seventeen original/composite flow cases pass; actual linked-receipt return observed.
+3. Batched actor A→B→A could retain the prior read scope without an intermediate render: one causal RED, repaired through existing session incarnation, with no permission/Root change. No production authorization incident inferred.
+4. First native concurrency test incorrectly assumed original permission rows were unlocked. Test design INVALID and corrected to characterize existing FOR UPDATE serialization; no new authority path added.
+5. Native approval summary now carries exact assignments, readable line breaks and signing-record version, not a generic amount-only consequence. Native echo is required before approval mint; original historical replay still precedes current eligibility.
+
+Normal correction appends one full manual reversal and retains original history; no automatic replacement, refund or provider reversal. Unassigned historical receipts are never retroactively guessed. Schedule amendments, older-history pagination, actual Stripe TEST reconciliation, Collections/consent/delivery, verified onboarding/delivery/client acceptance and final integrated twelve-outcome proof remain in the original assignment.
+
+ALG-01/12 bounded deterministic support: permitted same-tenant invoice + immutable accepted payload + current native remaining + owner exact split → canonical parser and native current-source validator → original receipt/op/Rail or refusal. Baselines include original43 native checks, changed-source/sum/duplicate/current authority/repeat/full correction/failed-Rail controls. Native actor's existing FOR UPDATE locks serialize permission revocation; next action refuses after revocation. No new authority engine. Replay uses same operation and original result; no guessed retry. Feedback is reviewed original-record correction only, no cross-tenant learning. ALG-02 onboarding/completion remains a separate original outcome gap; ALG-13 recommendations are not implemented by this deterministic allocation increment. No algorithm maturity promotion.

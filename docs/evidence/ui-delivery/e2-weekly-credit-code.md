@@ -4,7 +4,7 @@ UI_DELIVERY_EVIDENCE_VERSION: 1
 FLOW_BY_FLOW: PASS: original ANT138/a4e90476 ten-part pre-edit packet; O01/O02/O16 same permitted weekly request, original parser/Fabric and current authority/budget, no new runtime.
 PAIGE_UI_DESIGN: PASS: existing approved SOLO Chat/Executive presentation and shared states retained; no UI implementation, markup, style, focus or navigation delta.
 MATERIAL_FLOW_CHANGE: NO: restores an existing proven-failure classification to its already-governed fallback, without a new flow, permission or interaction.
-FLOW_PROTOTYPE: NOT_APPLICABLE: no new presentation, container, action or approval step; owner authorized the existing complete weekly-review outcome.
+FLOW_PROTOTYPE: NOT_REQUIRED: no new presentation, container, action or approval step; owner authorized the existing complete weekly-review outcome.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: eligible ordinary SOLO owner asks a permitted weekly question and receives an honest sourced answer; useful customer completion still requires released verification.
 VISUAL_DIRECTION: PASS: existing PAIGE design system remains unchanged; no new design, decorative display or premium-completion claim.
 AUTOMATED_EVIDENCE: PASS: failure-first Fabric202PASS/2FAIL and adapter108PASS/1FAIL become204/0 and109/0. Original controls retained. Native Deno and final exact-head CI remain owed.

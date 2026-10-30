@@ -2,6 +2,8 @@
 
 ## Database-first production order
 
+This is the companion Chat mount in PR #3117, based on native-first PR #3118. It restores the exact prepared consumer after inheriting the native predecessor. It becomes eligible for production only after #3118 is normally merged and native60009 is actually applied/read back. The following native-first description records the parent release boundary; it does not mean this companion lacks its prepared Root integration.
+
 The release is split into two dependent increments to preserve ordinary CURA during rollout. This native branch supplies only original invoice context/admission/terminal/history/publication and the existing native fixture. It does **not** import the new consumer into Root or change the deployed Chat model path. The complete prepared consumer and its143 passing cases remain preserved in companion PR #3117 at source005eb8407cfcde47cc3f47b7cbfd0c16e9dc07ab. That consumer must follow native60009's normal merge, production application and exact authoritative readback. Native source alone is not a working invoice answer or a completed pillar.
 
 Reason: the existing production Edge and migration pipelines run independently. The prepared consumer intentionally refuses an unverifiable accepted invoice source; mounting it before its new native API is present could interrupt ordinary Chat. Releasing the additive native contract first avoids that transient dependency without weakening refusal or adding a fallback authority. Same approved implementation and full outcome, no permanent shipping-dark scope reduction.
@@ -9,6 +11,8 @@ Reason: the existing production Edge and migration pipelines run independently. 
 Earlier local consumer and rendered review paragraphs below describe the companion integration; their source/test evidence is retained, not a claim that Root is mounted in this native-only increment. Existing EXP08 and EXP05 predecessor source stays exact, and original permissions remain unchanged.
 
 ## Current implementation checkpoint — October 30
+
+Companion verification extension: original upload/owner/Task/weekly handler regressions were added to the existing focused run. The file admission harness reproduced6PASS/5FAIL because it omitted the new lexical invoice flag; supplying false preserves every original assertion and changes no production guard. Fresh212/212 across11 suites PASS, including the earlier143 rather than adding them again. The actual Root/helper/source fingerprints remain exact005; required new-head CI/review still applies. Additional rollback-only native cases use the ORIGINAL access writer for pause/restore/end, actual synthetic Auth ban/deletion, thread expiry and second-business survival. Stale-history omission must return a successful native context, not merely an error lacking the sentinel. These new native cases await the companion's fresh full-schema run; migration60009 is unchanged.
 
 Direct owner authority in the original EXP09 conversation resolves the former automatic-approval hold: implement and test the proposed native integration, preserve existing billing permissions, complete review and CI, deploy normally, and continue the seven-pillar assignment. No additional account, access, send, payment, provider, Research or Live activation follows from that approval.
 

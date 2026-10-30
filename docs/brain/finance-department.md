@@ -690,9 +690,20 @@ provider, approval, execution or receipt system is added.
 
 Actual source verification: causal4FAIL/59PASS before repair, then117PASS across
 the consumer and three existing original source/navigation/permission suites;
-scoped lint and whitespace pass. Candidate rendering/control is currently held;
+scoped lint and whitespace pass. At the initial source checkpoint candidate rendering/control was held;
 the earlier actual released seven-page Finance/VERA/Chat continuity evidence is
 separate in protected ANT52/e753f1e8. No merge, deployment or candidate customer
 acceptance inferred. [Same-feature evidence](../evidence/ui-delivery/e2-finance-exact-invoice.md).
 Finance binding stays PROOF_OWED, nine catalogue/algorithm maturity unchanged.
 Functional source subset; Visual/Experiential proof owed; Founder Acceptance OPEN.
+
+
+October30 source-proof follow-up: correct owned foreground tab selection cleared
+stale capture behavior. All eight required full-shell folded/open configurations
+plus390x844 are freshly rendered, exact raster sizes, original product font and
+15.71:1 action contrast verified. Browser keyboard/source2 exact route/Back/full
+reload retain the original period. Earlier stale/rounded/INVALID captures are
+excluded. No product code changed during this proof. Native200/AT/customer exact
+record/cohort acceptance remain owed under normal source-release policy; do not
+borrow synthetic inputs as authentication. Original3018 material finding remains
+OPEN independently. See the same-feature evidence and neutral frame packet.

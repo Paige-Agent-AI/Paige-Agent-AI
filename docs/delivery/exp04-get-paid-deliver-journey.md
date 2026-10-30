@@ -1,5 +1,20 @@
 # C133 — Forward financial authority source after the actual database frontier
 
+Original #3110/f0324c004f938015a44ea2f8aa01d2eae5667e8e received sequential
+AUTHOR-REVIEW / LOWER ASSURANCE and managed Preview15 SUCCESS. Actual full
+`customer_portal_payments.sql`248 PASS at database job123857165350/step102.
+That WHOLE job FAILED: existing source pins and two pause-race stand-ins still
+inspected the former wrapper body. No overall green or release is inferred.
+Adapt only the five original SQL fixture files: pin the exact delegated wrapper
+AND the complete inverse of its canonical core, retaining the original hashes,
+assertion IDs/counts, role/lifecycle expectations and unrelated source bytes.
+Move rolled-back race injection/restoration to that same factored resolver, with
+an explicit failure if the stand-in replacement changes nothing. Keep the
+positive stale-read and all locked-refusal controls; no vacuous race PASS.
+Five whole-file inverses verify all other bytes and plans. Migration15 is now
+durably Preview-applied and stays immutable; no runtime or permission edit.
+Renew exact-head review and full CI before any ordinary source release.
+
 The connected O1–O4 outcome is unchanged. Production advanced through EXP03
 #3105/b763e1937366376dd35a7fe1d1f21da6652f0b27 to migration
 20271126010014 while original E05 Task12 and this factor13 remained absent.

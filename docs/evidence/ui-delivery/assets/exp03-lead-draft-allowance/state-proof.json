@@ -1,0 +1,357 @@
+{
+  "at": "2026-10-30T02:16:29.742Z",
+  "results": [
+    {
+      "name": "light-1536-closed",
+      "width": 1536,
+      "height": 770,
+      "horizontalOverflow": false,
+      "scrollOwners": [
+        "div",
+        "div"
+      ],
+      "draftVisible": true,
+      "errors": [],
+      "proof": "synthetic native inbox"
+    },
+    {
+      "name": "light-1536-open",
+      "width": 1536,
+      "height": 770,
+      "horizontalOverflow": false,
+      "scrollOwners": [
+        "div",
+        "div",
+        "div"
+      ],
+      "draftVisible": true,
+      "errors": [],
+      "proof": "synthetic native inbox"
+    },
+    {
+      "name": "light-1366-closed",
+      "width": 1366,
+      "height": 768,
+      "horizontalOverflow": false,
+      "scrollOwners": [
+        "div",
+        "div"
+      ],
+      "draftVisible": true,
+      "errors": [],
+      "proof": "synthetic native inbox"
+    },
+    {
+      "name": "light-1366-open",
+      "width": 1366,
+      "height": 768,
+      "horizontalOverflow": false,
+      "scrollOwners": [
+        "div",
+        "div",
+        "div"
+      ],
+      "draftVisible": true,
+      "errors": [],
+      "proof": "synthetic native inbox"
+    },
+    {
+      "name": "light-1024-closed",
+      "width": 1024,
+      "height": 768,
+      "horizontalOverflow": false,
+      "scrollOwners": [
+        "div",
+        "div",
+        "div"
+      ],
+      "draftVisible": true,
+      "errors": [],
+      "proof": "synthetic native inbox"
+    },
+    {
+      "name": "light-1024-open",
+      "width": 1024,
+      "height": 768,
+      "horizontalOverflow": false,
+      "scrollOwners": [
+        "div",
+        "div",
+        "div"
+      ],
+      "draftVisible": true,
+      "errors": [],
+      "proof": "UNVERIFIED inherited dock placeholder obscures pointer path"
+    },
+    {
+      "name": "light-900-closed",
+      "width": 900,
+      "height": 1000,
+      "horizontalOverflow": false,
+      "scrollOwners": [
+        "div",
+        "div"
+      ],
+      "draftVisible": true,
+      "errors": [],
+      "proof": "synthetic native inbox"
+    },
+    {
+      "name": "light-900-open",
+      "width": 900,
+      "height": 1000,
+      "horizontalOverflow": false,
+      "scrollOwners": [
+        "div",
+        "div"
+      ],
+      "draftVisible": true,
+      "errors": [],
+      "proof": "UNVERIFIED inherited dock placeholder obscures pointer path"
+    },
+    {
+      "name": "dark-1536-closed",
+      "width": 1536,
+      "height": 770,
+      "horizontalOverflow": false,
+      "scrollOwners": [
+        "div",
+        "div"
+      ],
+      "draftVisible": true,
+      "errors": [],
+      "proof": "synthetic native inbox"
+    },
+    {
+      "name": "dark-1536-open",
+      "width": 1536,
+      "height": 770,
+      "horizontalOverflow": false,
+      "scrollOwners": [
+        "div",
+        "div",
+        "div"
+      ],
+      "draftVisible": true,
+      "errors": [],
+      "proof": "synthetic native inbox"
+    },
+    {
+      "name": "dark-1366-closed",
+      "width": 1366,
+      "height": 768,
+      "horizontalOverflow": false,
+      "scrollOwners": [
+        "div",
+        "div"
+      ],
+      "draftVisible": true,
+      "errors": [],
+      "proof": "synthetic native inbox"
+    },
+    {
+      "name": "dark-1366-open",
+      "width": 1366,
+      "height": 768,
+      "horizontalOverflow": false,
+      "scrollOwners": [
+        "div",
+        "div",
+        "div"
+      ],
+      "draftVisible": true,
+      "errors": [],
+      "proof": "synthetic native inbox"
+    },
+    {
+      "name": "dark-1024-closed",
+      "width": 1024,
+      "height": 768,
+      "horizontalOverflow": false,
+      "scrollOwners": [
+        "div",
+        "div",
+        "div"
+      ],
+      "draftVisible": true,
+      "errors": [],
+      "proof": "synthetic native inbox"
+    },
+    {
+      "name": "dark-1024-open",
+      "width": 1024,
+      "height": 768,
+      "horizontalOverflow": false,
+      "scrollOwners": [
+        "div",
+        "div",
+        "div"
+      ],
+      "draftVisible": true,
+      "errors": [],
+      "proof": "UNVERIFIED inherited dock placeholder obscures pointer path"
+    },
+    {
+      "name": "dark-900-closed",
+      "width": 900,
+      "height": 1000,
+      "horizontalOverflow": false,
+      "scrollOwners": [
+        "div",
+        "div"
+      ],
+      "draftVisible": true,
+      "errors": [],
+      "proof": "synthetic native inbox"
+    },
+    {
+      "name": "dark-900-open",
+      "width": 900,
+      "height": 1000,
+      "horizontalOverflow": false,
+      "scrollOwners": [
+        "div",
+        "div"
+      ],
+      "draftVisible": true,
+      "errors": [],
+      "proof": "UNVERIFIED inherited dock placeholder obscures pointer path"
+    },
+    {
+      "name": "case-hourly",
+      "width": 1366,
+      "height": 768,
+      "horizontalOverflow": false,
+      "scrollOwners": [
+        "div",
+        "div"
+      ],
+      "noApprovalEntry": true,
+      "errors": []
+    },
+    {
+      "name": "case-contact",
+      "width": 1366,
+      "height": 768,
+      "horizontalOverflow": false,
+      "scrollOwners": [
+        "div",
+        "div"
+      ],
+      "noApprovalEntry": true,
+      "errors": []
+    },
+    {
+      "name": "case-optout",
+      "width": 1366,
+      "height": 768,
+      "horizontalOverflow": false,
+      "scrollOwners": [
+        "div",
+        "div"
+      ],
+      "noApprovalEntry": true,
+      "errors": []
+    },
+    {
+      "name": "case-foreign",
+      "width": 1366,
+      "height": 768,
+      "horizontalOverflow": false,
+      "scrollOwners": [
+        "div",
+        "div"
+      ],
+      "noApprovalEntry": true,
+      "errors": []
+    },
+    {
+      "name": "case-member",
+      "width": 1366,
+      "height": 768,
+      "horizontalOverflow": false,
+      "scrollOwners": [
+        "div",
+        "div"
+      ],
+      "noApprovalEntry": true,
+      "errors": []
+    },
+    {
+      "name": "case-error",
+      "width": 1366,
+      "height": 768,
+      "horizontalOverflow": false,
+      "scrollOwners": [
+        "div",
+        "div"
+      ],
+      "noApprovalEntry": true,
+      "errors": []
+    },
+    {
+      "name": "case-malformed",
+      "width": 1366,
+      "height": 768,
+      "horizontalOverflow": false,
+      "scrollOwners": [
+        "div",
+        "div"
+      ],
+      "noApprovalEntry": true,
+      "errors": []
+    },
+    {
+      "name": "light-approval-required",
+      "width": 1366,
+      "height": 768,
+      "horizontalOverflow": false,
+      "scrollOwners": [
+        "div",
+        "div",
+        "div"
+      ],
+      "nothingApproved": true,
+      "keyboardEntryAndReview": true,
+      "approvalFocus": "DIV"
+    },
+    {
+      "name": "light-reopened",
+      "width": 1366,
+      "height": 768,
+      "horizontalOverflow": false,
+      "scrollOwners": [
+        "div",
+        "div"
+      ],
+      "syntheticDraftStillAvailable": true,
+      "errors": []
+    },
+    {
+      "name": "dark-approval-required",
+      "width": 1366,
+      "height": 768,
+      "horizontalOverflow": false,
+      "scrollOwners": [
+        "div",
+        "div",
+        "div"
+      ],
+      "nothingApproved": true,
+      "keyboardEntryAndReview": true,
+      "approvalFocus": "DIV"
+    },
+    {
+      "name": "dark-reopened",
+      "width": 1366,
+      "height": 768,
+      "horizontalOverflow": false,
+      "scrollOwners": [
+        "div",
+        "div"
+      ],
+      "syntheticDraftStillAvailable": true,
+      "errors": []
+    }
+  ]
+}

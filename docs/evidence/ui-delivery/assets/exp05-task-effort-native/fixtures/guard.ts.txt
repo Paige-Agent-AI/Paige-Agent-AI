@@ -1,0 +1,5 @@
+// Private offline UI fixture: no backend, account, provider or business effect.
+window.fetch=async()=>{throw new Error('Offline effort fixture forbids network');};
+window.WebSocket=class{constructor(){throw new Error('Offline effort fixture forbids WebSocket');}} as unknown as typeof WebSocket;
+window.XMLHttpRequest=class{constructor(){throw new Error('Offline effort fixture forbids XHR');}} as unknown as typeof XMLHttpRequest;
+navigator.sendBeacon=()=>false;

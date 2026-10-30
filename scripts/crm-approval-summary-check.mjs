@@ -169,6 +169,17 @@ for (const assignee of [undefined, null, "", "   ", "unassigned", "Not a user", 
   }
 }
 const progress={action:"task.update",task_id:id(6),expected_updated_at:"2026-10-10T12:00:00.123456Z",patch:{status:"in_progress"}};
+for (const minutes of [35, 0, 1, 2147483647]) {
+  await proposed({...progress,patch:{estimated_minutes:minutes}}, `Update task ${id(6)}. Set its recorded effort estimate to ${minutes} ${minutes === 1 ? 'minute' : 'minutes'}.`);
+}
+await proposed({...progress,patch:{estimated_minutes:null}}, `Update task ${id(6)}. Clear its recorded effort estimate; the effort becomes unknown, not zero.`);
+await proposed({...progress,patch:{estimated_minutes:45,status:'in_progress',title:'Keep the actual title'}}, `Move task ${id(6)} to In progress. Set its recorded effort estimate to 45 minutes. Also update title="Keep the actual title".`);
+for (const estimated_minutes of [-1, 0.5, 2147483648, '30', true, {}, []]) {
+  const refused=await request({...progress,patch:{estimated_minutes}});
+  assert.equal(refused.status,400);assert.equal(proposals(refused.rec).length,0);assert.equal(executions(refused.rec).length,0);checks++;
+}
+const conflictingEffort=await request({...progress,patch:{estimated_minutes:30,metadata:{priority:'P1'}}});
+assert.equal(conflictingEffort.status,400);assert.equal(proposals(conflictingEffort.rec).length,0);assert.equal(executions(conflictingEffort.rec).length,0);checks++;
 const progressApproval=await proposed(progress,`Move task ${id(6)} to In progress.`);
 await proposed({...progress,contact_id:id(8),company_id:id(9)},`Move task ${id(6)} to In progress.`);
 await proposed({...progress,patch:{title:"Retained title",status:"in_progress",description:"Retained description"}},`Move task ${id(6)} to In progress. Also update description="Retained description", title="Retained title".`);

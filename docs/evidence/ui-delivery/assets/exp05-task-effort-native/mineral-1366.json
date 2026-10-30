@@ -1,0 +1,48 @@
+{
+  "buttons": [
+    {
+      "height": 31.5,
+      "label": "Approve",
+      "width": 94.4124984741211
+    },
+    {
+      "height": 31.5,
+      "label": "Not now",
+      "width": 95.2874984741211
+    },
+    {
+      "height": 31.5,
+      "label": "Approve",
+      "width": 94.4124984741211
+    },
+    {
+      "height": 31.5,
+      "label": "Not now",
+      "width": 95.2874984741211
+    },
+    {
+      "height": 31.5,
+      "label": "Approve",
+      "width": 94.4124984741211
+    },
+    {
+      "height": 31.5,
+      "label": "Not now",
+      "width": 95.2874984741211
+    },
+    {
+      "height": 31.5,
+      "label": "Approve",
+      "width": 94.4124984741211
+    },
+    {
+      "height": 31.5,
+      "label": "Not now",
+      "width": 95.2874984741211
+    }
+  ],
+  "height": 900,
+  "scrollWidth": 1366,
+  "text": "OFFLINE COMPONENT PROOF · SYNTHETIC · NO BUSINESS ACTION\n\nSet effort\n\nNeeds your OK\n\nUpdate task 00000000-0000-4000-8000-000000000006. Set its recorded effort estimate to 35 minutes.\nApprove\nNot now\nRecorded zero\n\nNeeds your OK\n\nUpdate task 00000000-0000-4000-8000-000000000006. Set its recorded effort estimate to 0 minutes.\nApprove\nNot now\nClear to unknown\n\nNeeds your OK\n\nUpdate task 00000000-0000-4000-8000-000000000006. Clear its recorded effort estimate; the effort becomes unknown, not zero.\nApprove\nNot now\nCombined original change\n\nNeeds your OK\n\nMove task 00000000-0000-4000-8000-000000000006 to In progress. Set its recorded effort estimate to 45 minutes. Also update title=\"Keep the actual title\".\nApprove\nNot now",
+  "width": 1366
+}

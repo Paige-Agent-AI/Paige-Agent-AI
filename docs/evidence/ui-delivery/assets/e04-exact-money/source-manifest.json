@@ -1,0 +1,144 @@
+{
+  "scope": "EXPLICIT direct product/transport/style inputs; not a complete transitive graph or authenticated proof",
+  "sources": [
+    {
+      "file": "supabase/functions/_shared/client-engagement/money.ts",
+      "sha256": "55f8af230547abef88d3064d281dc6a306730ef0804b135ad95a6a03410f8a05"
+    },
+    {
+      "file": "supabase/functions/_shared/client-engagement/chat.ts",
+      "sha256": "a379d2714a81975b51014cdc8ee129b635dd6e9465cf631c8beeaa9c46067f64"
+    },
+    {
+      "file": "src/solo/sales/customerPaymentRequest.ts",
+      "sha256": "61afb3f733fbcefb1f6345ad4894f370b00da97c0230e8628d8eea7b719d7391"
+    },
+    {
+      "file": "src/pages/InvoiceDocument.tsx",
+      "sha256": "dd9b1ec9a0ed6ecb16e820d49b508fc56e700fdd731ac98dd0471e4b6f26df21"
+    },
+    {
+      "file": "src/pages/invoice-document.css",
+      "sha256": "615ce3f3eebdcfd3d018c5181fc45a145eff408f2dcb3d1232115830d6233876"
+    },
+    {
+      "file": "scripts/live-drive/sales-payments/mount/main.tsx",
+      "sha256": "13ce16cd84c13a334bd7e163995af92fa462d2c2cea4c872fda5b770ce9142d5"
+    },
+    {
+      "file": "scripts/live-drive/sales-payments/mount/vite.config.ts",
+      "sha256": "7d48478e735218e7498e05bb29e55bec20c0c4631f5981fa0bc38ae896ea7685"
+    },
+    {
+      "file": "scripts/live-drive/sales-payments/mount/index.html",
+      "sha256": "7147f46e42a58adf3d582f998800e2c0ff500607c1e52c5352eadee9d15fe692"
+    },
+    {
+      "file": "scripts/live-drive/sales-payments/mount/supabase.ts",
+      "sha256": "96be6827fdd3e07489045432f91416ef0b8b105765d36dcfa0400a7caed29801"
+    },
+    {
+      "file": "scripts/live-drive/sales-payments/mount/accepted-plan.ts",
+      "sha256": "e6c6f6b02f86d49c2d105b8c9e3751e1f646de80f12f0a9b197a57fea113ed9f"
+    },
+    {
+      "file": "scripts/live-drive/sales-payments/accepted-plan-fixture.ts",
+      "sha256": "73e989b02f93c66b8c12cc40199310de8ca5a1bf3b2fd6d304d010c57500c749"
+    },
+    {
+      "file": "src/index.css",
+      "sha256": "85a3adb5668238e91cdb6c8189488db1fd24ce6698f7456ae23a3de6aa572482"
+    },
+    {
+      "file": "src/solo/solo-tokens.css",
+      "sha256": "77edc9fc35a6d2dab87318996fbb0dc6d80a0a04115d1757016c10da2c7b3197"
+    },
+    {
+      "file": "src/solo/solo-campaigns.css",
+      "sha256": "4e4f40fd641823c0865958295d8a4ab3c42dd7f880922c798cfcea4c29cc516f"
+    },
+    {
+      "file": "src/solo/sales/sales-billing.css",
+      "sha256": "707ab36fb8573c0f00b31d8b12a28fea2b33ab8277f19f50309076a1fb38132e"
+    },
+    {
+      "file": "package.json",
+      "sha256": "46039f2fb72a44a390becfc609cdf92d7a174944d11678476800b3c1221b0893"
+    }
+  ],
+  "captures": [
+    {
+      "name": "usd-320",
+      "sha256": "74b7af0161f014cd45ed66208e08d1170fa3bc56e510d9ef5271dbcda31e621b",
+      "pixelWidth": 65536,
+      "pixelHeight": 4292542531,
+      "file": "assets/e04-exact-money/usd-320.png",
+      "capturedAt": "2026-10-30T03:12:16.868Z"
+    },
+    {
+      "name": "kwd-390",
+      "sha256": "8c9c879178ab9126c6e1fe75026e8d66e90e85bd83fa901e9faa3f885999ae16",
+      "pixelWidth": 65536,
+      "pixelHeight": 4292542531,
+      "file": "assets/e04-exact-money/kwd-390.png",
+      "capturedAt": "2026-10-30T03:13:51.741Z"
+    },
+    {
+      "name": "unknown-320",
+      "sha256": "990cff2e69638d20a0e6299c8123b0f1447402175c0cc966892404a590ae5211",
+      "pixelWidth": 65536,
+      "pixelHeight": 4292542531,
+      "file": "assets/e04-exact-money/unknown-320.png",
+      "capturedAt": "2026-10-30T03:14:08.938Z"
+    },
+    {
+      "name": "usd-desktop",
+      "sha256": "ed671cdb788cb2b564bc5910c278bb68700484cdbe52a956c2eebd7ba1b4a7e8",
+      "pixelWidth": 65536,
+      "pixelHeight": 4292542531,
+      "file": "assets/e04-exact-money/usd-desktop.png",
+      "capturedAt": "2026-10-30T03:14:48.680Z"
+    }
+  ],
+  "frames": {
+    "usd-320": {
+      "width": 320,
+      "height": 680,
+      "scrollWidth": 320,
+      "state": "customer_action_required"
+    },
+    "kwd-390": {
+      "width": 390,
+      "height": 680,
+      "scrollWidth": 390,
+      "state": "provider_accepted"
+    },
+    "unknown-320": {
+      "width": 320,
+      "height": 680,
+      "scrollWidth": 320,
+      "state": "provider_accepted"
+    },
+    "usd-desktop": {
+      "width": 1280,
+      "height": 720,
+      "scrollWidth": 1280,
+      "state": "provider_accepted"
+    }
+  },
+  "keyboard": {
+    "actual": true,
+    "linkFocusVisible": true,
+    "linkHeight": 44,
+    "refreshWithKeyboard": true,
+    "amountRetained": true,
+    "checkoutOpened": false
+  },
+  "limits": [
+    "synthetic ports, not a customer/provider/payment result",
+    "no physical phone/native200%/AT/Solo shell image proof",
+    "initial controller/empty-frame failures excluded",
+    "public invoice original fixed-light styling; no alternate-theme claim"
+  ],
+  "renderedSourceCommit": "0a61633688b990dac2c4e71464ab2b2d5336c27e"
+}

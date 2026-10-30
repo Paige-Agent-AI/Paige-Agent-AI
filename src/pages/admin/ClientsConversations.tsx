@@ -2213,6 +2213,8 @@ export default function ClientsConversations() {
         onOpenChange={(v) => { setComposeOpen(v); if (!v) { setComposeContact(null); setComposeApprovalId(undefined); if(followupLocator.kind!=="none")setSearchParams(params=>{const next=new URLSearchParams(params);next.delete("approval");return next;},{replace:true}); } }}
         activeConnectors={composerConnectors}
         tenantId={tenantIdRef.current}
+        activeTenantId={activeTenantId}
+        settingsHref={connectionsHref}
         actorId={activeUserId}
         approvalId={composeApprovalId}
         locatorConflicted={composeApprovalId!==undefined&&(followupLocator.kind!=="bound"||followupLocator.approvalId!==composeApprovalId||followupLocator.contactId!==composeContact?.id)}

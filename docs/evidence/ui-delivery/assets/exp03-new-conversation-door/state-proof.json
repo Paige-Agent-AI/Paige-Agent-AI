@@ -1,0 +1,613 @@
+{
+  "at": "2026-10-30T04:01:50.026Z",
+  "results": [
+    {
+      "name": "light-1536-closed",
+      "width": 1536,
+      "height": 770,
+      "horizontalOverflow": false,
+      "dialog": {
+        "x": 512,
+        "y": 16,
+        "width": 512,
+        "height": 738,
+        "fits": true
+      },
+      "focus": "edit",
+      "nothingSent": true,
+      "errors": [],
+      "dock": "inherited mocked background; actual dock not verified"
+    },
+    {
+      "name": "light-1536-open",
+      "width": 1536,
+      "height": 770,
+      "horizontalOverflow": false,
+      "dialog": {
+        "x": 512,
+        "y": 16,
+        "width": 512,
+        "height": 738,
+        "fits": true
+      },
+      "focus": "edit",
+      "nothingSent": true,
+      "errors": [],
+      "dock": "inherited mocked background; actual dock not verified"
+    },
+    {
+      "name": "light-1366-closed",
+      "width": 1366,
+      "height": 768,
+      "horizontalOverflow": false,
+      "dialog": {
+        "x": 427,
+        "y": 16,
+        "width": 512,
+        "height": 736,
+        "fits": true
+      },
+      "focus": "edit",
+      "nothingSent": true,
+      "errors": [],
+      "dock": "inherited mocked background; actual dock not verified"
+    },
+    {
+      "name": "light-1366-open",
+      "width": 1366,
+      "height": 768,
+      "horizontalOverflow": false,
+      "dialog": {
+        "x": 427,
+        "y": 16,
+        "width": 512,
+        "height": 736,
+        "fits": true
+      },
+      "focus": "edit",
+      "nothingSent": true,
+      "errors": [],
+      "dock": "inherited mocked background; actual dock not verified"
+    },
+    {
+      "name": "light-1024-closed",
+      "width": 1024,
+      "height": 768,
+      "horizontalOverflow": false,
+      "dialog": {
+        "x": 256,
+        "y": 16,
+        "width": 512,
+        "height": 736,
+        "fits": true
+      },
+      "focus": "edit",
+      "nothingSent": true,
+      "errors": [],
+      "dock": "inherited mocked background; actual dock not verified"
+    },
+    {
+      "name": "light-1024-open",
+      "width": 1024,
+      "height": 768,
+      "horizontalOverflow": false,
+      "dialog": {
+        "x": 256,
+        "y": 16,
+        "width": 512,
+        "height": 736,
+        "fits": true
+      },
+      "focus": "edit",
+      "nothingSent": true,
+      "errors": [],
+      "dock": "inherited mocked background; actual dock not verified"
+    },
+    {
+      "name": "light-900-closed",
+      "width": 900,
+      "height": 1000,
+      "horizontalOverflow": false,
+      "dialog": {
+        "x": 194,
+        "y": 75.75,
+        "width": 512,
+        "height": 848.5,
+        "fits": true
+      },
+      "focus": "edit",
+      "nothingSent": true,
+      "errors": [],
+      "dock": "inherited mocked background; actual dock not verified"
+    },
+    {
+      "name": "light-900-open",
+      "width": 900,
+      "height": 1000,
+      "horizontalOverflow": false,
+      "dialog": {
+        "x": 194,
+        "y": 75.75,
+        "width": 512,
+        "height": 848.5,
+        "fits": true
+      },
+      "focus": "edit",
+      "nothingSent": true,
+      "errors": [],
+      "dock": "inherited mocked background; actual dock not verified"
+    },
+    {
+      "name": "dark-1536-closed",
+      "width": 1536,
+      "height": 770,
+      "horizontalOverflow": false,
+      "dialog": {
+        "x": 512,
+        "y": 16,
+        "width": 512,
+        "height": 738,
+        "fits": true
+      },
+      "focus": "edit",
+      "nothingSent": true,
+      "errors": [],
+      "dock": "inherited mocked background; actual dock not verified"
+    },
+    {
+      "name": "dark-1536-open",
+      "width": 1536,
+      "height": 770,
+      "horizontalOverflow": false,
+      "dialog": {
+        "x": 512,
+        "y": 16,
+        "width": 512,
+        "height": 738,
+        "fits": true
+      },
+      "focus": "edit",
+      "nothingSent": true,
+      "errors": [],
+      "dock": "inherited mocked background; actual dock not verified"
+    },
+    {
+      "name": "dark-1366-closed",
+      "width": 1366,
+      "height": 768,
+      "horizontalOverflow": false,
+      "dialog": {
+        "x": 427,
+        "y": 16,
+        "width": 512,
+        "height": 736,
+        "fits": true
+      },
+      "focus": "edit",
+      "nothingSent": true,
+      "errors": [],
+      "dock": "inherited mocked background; actual dock not verified"
+    },
+    {
+      "name": "dark-1366-open",
+      "width": 1366,
+      "height": 768,
+      "horizontalOverflow": false,
+      "dialog": {
+        "x": 427,
+        "y": 16,
+        "width": 512,
+        "height": 736,
+        "fits": true
+      },
+      "focus": "edit",
+      "nothingSent": true,
+      "errors": [],
+      "dock": "inherited mocked background; actual dock not verified"
+    },
+    {
+      "name": "dark-1024-closed",
+      "width": 1024,
+      "height": 768,
+      "horizontalOverflow": false,
+      "dialog": {
+        "x": 256,
+        "y": 16,
+        "width": 512,
+        "height": 736,
+        "fits": true
+      },
+      "focus": "edit",
+      "nothingSent": true,
+      "errors": [],
+      "dock": "inherited mocked background; actual dock not verified"
+    },
+    {
+      "name": "dark-1024-open",
+      "width": 1024,
+      "height": 768,
+      "horizontalOverflow": false,
+      "dialog": {
+        "x": 256,
+        "y": 16,
+        "width": 512,
+        "height": 736,
+        "fits": true
+      },
+      "focus": "edit",
+      "nothingSent": true,
+      "errors": [],
+      "dock": "inherited mocked background; actual dock not verified"
+    },
+    {
+      "name": "dark-900-closed",
+      "width": 900,
+      "height": 1000,
+      "horizontalOverflow": false,
+      "dialog": {
+        "x": 194,
+        "y": 75.75,
+        "width": 512,
+        "height": 848.5,
+        "fits": true
+      },
+      "focus": "edit",
+      "nothingSent": true,
+      "errors": [],
+      "dock": "inherited mocked background; actual dock not verified"
+    },
+    {
+      "name": "dark-900-open",
+      "width": 900,
+      "height": 1000,
+      "horizontalOverflow": false,
+      "dialog": {
+        "x": 194,
+        "y": 75.75,
+        "width": 512,
+        "height": 848.5,
+        "fits": true
+      },
+      "focus": "edit",
+      "nothingSent": true,
+      "errors": [],
+      "dock": "inherited mocked background; actual dock not verified"
+    },
+    {
+      "name": "light-empty",
+      "width": 1366,
+      "height": 768,
+      "horizontalOverflow": false,
+      "dialog": {
+        "x": 438.3537292480469,
+        "y": 78.50384521484375,
+        "width": 489.2925109863281,
+        "height": 634.55126953125,
+        "fits": true
+      },
+      "focus": "BUTTON",
+      "state": "empty",
+      "errors": []
+    },
+    {
+      "name": "light-scheduled",
+      "width": 1366,
+      "height": 768,
+      "horizontalOverflow": false,
+      "dialog": {
+        "x": 427,
+        "y": 16,
+        "width": 512,
+        "height": 736,
+        "fits": true
+      },
+      "focus": "edit",
+      "state": "scheduled",
+      "errors": [],
+      "sendAt": "2026-10-30T05:00:00.000Z"
+    },
+    {
+      "name": "light-file",
+      "width": 1366,
+      "height": 768,
+      "horizontalOverflow": false,
+      "dialog": {
+        "x": 427,
+        "y": 16,
+        "width": 512,
+        "height": 736,
+        "fits": true
+      },
+      "focus": "edit",
+      "state": "file",
+      "errors": [],
+      "filesLocked": true
+    },
+    {
+      "name": "light-accepted",
+      "width": 1366,
+      "height": 768,
+      "horizontalOverflow": false,
+      "dialog": null,
+      "focus": "BODY",
+      "state": "accepted",
+      "errors": []
+    },
+    {
+      "name": "light-unknown",
+      "width": 1366,
+      "height": 768,
+      "horizontalOverflow": false,
+      "dialog": {
+        "x": 427,
+        "y": 16,
+        "width": 512,
+        "height": 736,
+        "fits": true
+      },
+      "focus": "recheck",
+      "state": "unknown",
+      "errors": [],
+      "sameOperationStatus": true
+    },
+    {
+      "name": "light-sending",
+      "width": 1366,
+      "height": 768,
+      "horizontalOverflow": false,
+      "dialog": {
+        "x": 427,
+        "y": 16,
+        "width": 512,
+        "height": 736,
+        "fits": true
+      },
+      "focus": "confirm",
+      "state": "sending",
+      "errors": []
+    },
+    {
+      "name": "light-expired",
+      "width": 1366,
+      "height": 768,
+      "horizontalOverflow": false,
+      "dialog": {
+        "x": 427,
+        "y": 16,
+        "width": 512,
+        "height": 736,
+        "fits": true
+      },
+      "focus": "edit",
+      "state": "expired",
+      "errors": []
+    },
+    {
+      "name": "light-suppressed",
+      "width": 1366,
+      "height": 768,
+      "horizontalOverflow": false,
+      "dialog": {
+        "x": 427,
+        "y": 16,
+        "width": 512,
+        "height": 736,
+        "fits": true
+      },
+      "focus": "edit",
+      "state": "suppressed",
+      "errors": []
+    },
+    {
+      "name": "light-member",
+      "width": 1366,
+      "height": 768,
+      "horizontalOverflow": false,
+      "dialog": {
+        "x": 427,
+        "y": 16,
+        "width": 512,
+        "height": 736,
+        "fits": true
+      },
+      "focus": "edit",
+      "state": "member",
+      "errors": []
+    },
+    {
+      "name": "light-offline",
+      "width": 1366,
+      "height": 768,
+      "horizontalOverflow": false,
+      "dialog": {
+        "x": 427,
+        "y": 16,
+        "width": 512,
+        "height": 736,
+        "fits": true
+      },
+      "focus": "recheck",
+      "state": "offline",
+      "errors": []
+    },
+    {
+      "name": "light-cancel",
+      "width": 1366,
+      "height": 768,
+      "horizontalOverflow": false,
+      "dialog": null,
+      "focus": "BODY",
+      "state": "cancel",
+      "errors": [],
+      "escapeKeptWordsThenExplicitCancel": true
+    },
+    {
+      "name": "dark-empty",
+      "width": 1366,
+      "height": 768,
+      "horizontalOverflow": false,
+      "dialog": {
+        "x": 438.35357666015625,
+        "y": 78.50354766845703,
+        "width": 489.2928466796875,
+        "height": 634.5516357421875,
+        "fits": true
+      },
+      "focus": "BUTTON",
+      "state": "empty",
+      "errors": []
+    },
+    {
+      "name": "dark-scheduled",
+      "width": 1366,
+      "height": 768,
+      "horizontalOverflow": false,
+      "dialog": {
+        "x": 427,
+        "y": 16,
+        "width": 512,
+        "height": 736,
+        "fits": true
+      },
+      "focus": "edit",
+      "state": "scheduled",
+      "errors": [],
+      "sendAt": "2026-10-30T05:01:00.000Z"
+    },
+    {
+      "name": "dark-file",
+      "width": 1366,
+      "height": 768,
+      "horizontalOverflow": false,
+      "dialog": {
+        "x": 427,
+        "y": 16,
+        "width": 512,
+        "height": 736,
+        "fits": true
+      },
+      "focus": "edit",
+      "state": "file",
+      "errors": [],
+      "filesLocked": true
+    },
+    {
+      "name": "dark-accepted",
+      "width": 1366,
+      "height": 768,
+      "horizontalOverflow": false,
+      "dialog": null,
+      "focus": "BODY",
+      "state": "accepted",
+      "errors": []
+    },
+    {
+      "name": "dark-unknown",
+      "width": 1366,
+      "height": 768,
+      "horizontalOverflow": false,
+      "dialog": {
+        "x": 427,
+        "y": 16,
+        "width": 512,
+        "height": 736,
+        "fits": true
+      },
+      "focus": "recheck",
+      "state": "unknown",
+      "errors": [],
+      "sameOperationStatus": true
+    },
+    {
+      "name": "dark-sending",
+      "width": 1366,
+      "height": 768,
+      "horizontalOverflow": false,
+      "dialog": {
+        "x": 427,
+        "y": 16,
+        "width": 512,
+        "height": 736,
+        "fits": true
+      },
+      "focus": "confirm",
+      "state": "sending",
+      "errors": []
+    },
+    {
+      "name": "dark-expired",
+      "width": 1366,
+      "height": 768,
+      "horizontalOverflow": false,
+      "dialog": {
+        "x": 427,
+        "y": 16,
+        "width": 512,
+        "height": 736,
+        "fits": true
+      },
+      "focus": "edit",
+      "state": "expired",
+      "errors": []
+    },
+    {
+      "name": "dark-suppressed",
+      "width": 1366,
+      "height": 768,
+      "horizontalOverflow": false,
+      "dialog": {
+        "x": 427,
+        "y": 16,
+        "width": 512,
+        "height": 736,
+        "fits": true
+      },
+      "focus": "edit",
+      "state": "suppressed",
+      "errors": []
+    },
+    {
+      "name": "dark-member",
+      "width": 1366,
+      "height": 768,
+      "horizontalOverflow": false,
+      "dialog": {
+        "x": 427,
+        "y": 16,
+        "width": 512,
+        "height": 736,
+        "fits": true
+      },
+      "focus": "edit",
+      "state": "member",
+      "errors": []
+    },
+    {
+      "name": "dark-offline",
+      "width": 1366,
+      "height": 768,
+      "horizontalOverflow": false,
+      "dialog": {
+        "x": 427,
+        "y": 16,
+        "width": 512,
+        "height": 736,
+        "fits": true
+      },
+      "focus": "recheck",
+      "state": "offline",
+      "errors": []
+    },
+    {
+      "name": "dark-cancel",
+      "width": 1366,
+      "height": 768,
+      "horizontalOverflow": false,
+      "dialog": null,
+      "focus": "BODY",
+      "state": "cancel",
+      "errors": [],
+      "escapeKeptWordsThenExplicitCancel": true
+    }
+  ]
+}

@@ -860,6 +860,12 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**2026-10-30 UTC — EXP03 lead-reply daily allowance removed; original approval and abuse controls retained.**
+
+| Increment | Exact source and production release | Useful result and proof boundary |
+| --- | --- | --- |
+| [#3106](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3106) | Reviewed `a3ddd767634ad9e92c164be398bf5ef2c6a2c275`; renewed exact-head automated review completed/no findings and separate AUTHOR-REVIEW / LOWER ASSURANCE. Initial visible-flow finding4419744083 accepted/repaired with yestrailers/template evidence/27 actual-component synthetic captures; resolved, no waiver. All11 returned checks including verify/database-contract/Preview/UI evidence and both web statuses SUCCESS. Merge `bfb525444519a4af665a0c52bf40448018dc37dd`, tree`21e8ce5bfed6c4912e1da4e5b1cb7f76be2f12ae` matches checked composition. Normal [Edge40994456015](https://github.com/Paige-Agent-AI/Paige-Agent-AI/actions/runs/40994456015)/job123864216814 SUCCESS; retained artifact12951000870 downloaded/inspected, ZIP SHA256`fc0606bb1f4567806c5978bc9566b575cb837337075d943a4665f12bb5e0e13b`, all_pass=true, growth-process-submission141/JWTfalse/all9 selected source leaves match including lead-reply SHA256`99105b56ddf4afa5d0aea5d3367cccbeaa76cece0e36c269534542e22de276e7`. No migration. Both official origins200 serve `bfb525444519a4af665a0c52bf40448018dc37dd-mvudr9a0`, customerUpdate:null. | An eligible opted-in inquiry can file its original approval-required draft after100 earlier drafts that day, including concurrent crossing100;20/hour public-form burst and1/contact/day safeguards/recount, consent/readiness/tenant/contact identity and original worker/approval door remain. Local62producer/69worker/36approval and ratchet no-new-errors PASS.27 synthetic post-worker captures are separate from server tests; native dock/AT/200percent/authenticated lead→worker→draft/role/cohort/receipt/reload, metering/invoice and owner proof remain owed. Same original producer for eligible existing/future SOLO; full EXP03 STILL CODING. Internal-only source increment/no customer release identity. [Original evidence](evidence/ui-delivery/exp03-lead-draft-no-daily-allowance.md#production-source-readback-october30). |
+
 **2026-10-30 UTC — EXP03 uncapped Marketing email; bounded source release, full Experience STILL CODING.**
 
 | Increment | Exact source and production release | Useful result and proof boundary |

@@ -1108,6 +1108,16 @@ with its own proof; the six slices below keep their detail and are tagged with t
 **Slices, smallest first.** Each merges on verified (§4) with its own proof.
 
 1. **Reopen links (client only).** *(A2a ships the task-card half; the rest stays open)*
+   - **Successor update, 2026-10-30, BUILT locally / PROOF OWED:** current E05 Operations and the
+     shared route already accept an exact typed Planning reference (`record_kind: planning_item`
+     becomes `?planningItem=`), with a neutral inspector and fresh actor/tenant/membership reads.
+     TaskCard now consumes that original seam, only when the shared resolver returns `exact`.
+     The existing label, keyboard anchor and denied/loading behavior remain; malformed ids offer no
+     link. Five regression failures reproduced before the change; all 177 cases across the card,
+     shared link readers and original destination suites pass after it. Independent read-only
+     source review found no actionable issue. Release and authenticated open/reload/denial remain
+     owed. This supersedes the address-absence statement below, which describes A2a's original
+     shipped state; slice 1(b) and the full both-chat workshop remain open.
    - **What A2a built:** the Team Hub task card links to Operations → Work in the current SOLO
      account (`workspaceLinkTarget({ destination: "operations_work", record_id: null }, activeTenant)`,
      `TeamHubWorkspace.tsx:2100-2144`), shown when the task's status was read or the read failed, and

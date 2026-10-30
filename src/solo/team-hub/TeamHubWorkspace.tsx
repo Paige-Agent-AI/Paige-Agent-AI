@@ -2161,20 +2161,19 @@ function assigneeLabel(userId: string | null, people: TeamHubPerson[], meId: str
  * RLS doesn't return is said to be out of sight — its status is never guessed.
  *
  * EXP08 A2 slice 1: the card reopens its work in Operations, by reference. A Team Hub task is a
- * Planning item, and Operations has no address for one Planning item: `?task=` opens a CRM task and
- * `?weeklySource=planning_item&item=` says the work came from a weekly check. So the link opens
- * Operations → Work, where the same record is listed under the reader's own permissions — never
- * `record_id: id`, which would address a different (CRM) record. The address is built from the
- * account on screen now, through the shared route map; it fails closed outside SOLO, and is not
- * offered to someone who cannot see the task there.
+ * Planning item, so its typed reference uses Operations' original Planning inspector and fresh
+ * authorized read, never a CRM task or weekly-check attribution. The shared route map builds the
+ * address from the account on screen now. Only an exact address is offered; an unreadable task,
+ * malformed identity or unsupported account cannot turn into a misleading surface-only link.
  */
 export function TaskCard({ id, read, people, meId }: { id: string; read: TeamHubTaskRead | undefined; people: TeamHubPerson[]; meId: string }) {
   const short = id.slice(0, 8);
   const state = read?.state ?? "loading";
   const { activeTenant } = useTenantContext();
   const inRouter = useInRouterContext();
-  const open = read && (read.state === "read" || read.state === "failed")
-    ? workspaceLinkTarget({ destination: "operations_work", record_id: null }, activeTenant) : null;
+  const target = read && (read.state === "read" || read.state === "failed")
+    ? workspaceLinkTarget({ destination: "operations_work", record_id: id, record_kind: "planning_item" }, activeTenant) : null;
+  const open = target?.status === "exact" ? { ...target, label: "Open delivery work" } : null;
   return <div className="th-src" role="group" aria-label={`Task in Operations, record ${short}`}>
     <div className="th-src-top"><ClipboardList aria-hidden="true" /><span className="th-src-kind">Task in Operations</span>
       <span className="th-src-id" title={id}>{short}</span></div>

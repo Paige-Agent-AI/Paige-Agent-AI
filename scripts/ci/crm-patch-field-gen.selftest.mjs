@@ -217,7 +217,7 @@ export async function selfTest() {
     const migrations=join(dirname(CLI), "../../supabase/migrations");
     const definition=(name)=>readFileSync(join(migrations,name),"utf8").split("CREATE OR REPLACE FUNCTION")[1];
     const base=definition("20271108121000_task_progress_contract.sql");
-    const effort=definition("20271126010012_task_effort_scalar.sql");
+    const effort=definition("20271126050005_task_effort_scalar.sql");
     const start="    if v_action = 'task.update' then";
     const end="    elsif v_action = 'task.reschedule' then";
     check("effort preserves every byte before the original Task update branch",

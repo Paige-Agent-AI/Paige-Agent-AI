@@ -1179,7 +1179,13 @@ const SOURCES = {
   // (4) Nothing else: the door-path refusal of body.attachments, serverAttachments, the invoice PDF path, the H2
   // refusal, authority, recipient, tenant gate and dispatch branches are unchanged. Old fffd0a7f… reproduced from
   // main 0fcd5a331 first.
-  "supabase/functions/send-message/index.ts": "0acfd997a123d5b73cc3a5fb13a1dff2d841f5d8ae9f17e86147bd0bfbc5ae82",
+  // EXP03 original SMS result/recovery review, immutable pre-pin9d212ac1f:
+  // exactly the SMS adapter classification and existing uncertainty projection;
+  // original validators/dispatch/peer identities remain unchanged. Lower assurance.
+  // Revised immutable d13e78995: lower-assurance four-hunk review adds original
+  // channel validation and literal SMS body preservation; external P2 source repair.
+  // Original checker assertions, Root and other source identities remain unchanged.
+  "supabase/functions/send-message/index.ts": "16bce7f0caa4919a52fb299bf5d05ba266cc5912451d24858870e14c2e73f299",
   "supabase/functions/_shared/paige-spine/contracts.ts": "2d771686d636c04d2e07d9b8c336e19cde246b9a303ddd034d7ae8500f7eefb4",
   // Operator retirement adds opt-in timeout/no-retry controls; ordinary callers retain
   // their existing behavior. Renewed non-author review and actual retry controls are

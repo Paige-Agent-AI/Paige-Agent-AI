@@ -649,14 +649,24 @@ const smsOutboundAdapter: OutboundChannelAdapter = {
       body: bodyText,
       statusCallback: ctx.statusCallbackUrl ?? undefined,
       messagingServiceSid, // A2P Messaging Service takes precedence over From when present.
-    }, subApiKeySid); // C-2a: SK… as the Basic-auth username (API-Key auth)
-    if (!result.ok || !result.data) {
+    }, subApiKeySid).catch(() => ({
+      ok: false, status: 0, error: "sms_provider_result_unconfirmed", data: null, needs_config: false,
+    })); // C-2a: SK… as the Basic-auth username (API-Key auth)
+    const sid = typeof result.data?.sid === "string" && /^(SM|MM)[0-9a-fA-F]{32}$/.test(result.data.sid)
+      ? result.data.sid : null;
+    if (!result.ok || !sid) {
+      // A lost answer, 5xx or receipt-less success may already have created a message.
+      // Twilio documents 429 as not processed; other definitive 4xx stay failures.
+      const rejected = Number.isInteger(result.status) && result.status >= 400 && result.status < 500
+        && result.status !== 408 && result.status !== 409;
+      const unconfirmed = result.needs_config !== true && (!result.ok ? !rejected : !sid);
       return {
-        ok: false, status: "failed" as const, reason: "twilio_send_failed",
-        error: result.error ?? "twilio_send_failed", meta: { from_number: fromNumber },
+        ok: false, status: "failed" as const,
+        reason: unconfirmed ? "sms_delivery_unconfirmed" : "twilio_send_failed",
+        error: unconfirmed ? "SMS provider result could not be confirmed." : result.error ?? "twilio_send_failed",
+        meta: { from_number: fromNumber, http_status: result.status, delivery_unconfirmed: unconfirmed },
       };
     }
-    const sid = (result.data as { sid?: string }).sid ?? null;
     return {
       ok: true, status: "sent" as const, provider_message_id: sid,
       meta: { from_number: fromNumber, messaging_service_sid: messagingServiceSid ?? null },
@@ -745,6 +755,11 @@ Deno.serve(async (req) => {
   }
   if (!body?.channel || !body?.to || !body?.body) {
     return new Response(JSON.stringify({ error: "missing_fields" }), {
+      status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+  if (body.channel !== "email" && body.channel !== "sms") {
+    return new Response(JSON.stringify({ error: "unsupported_channel" }), {
       status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
@@ -1883,6 +1898,7 @@ Deno.serve(async (req) => {
       }
       const delivery = await adapter.send(outMsg, ctx);
       pipe_used = "twilio";
+      providerUnconfirmed = delivery.meta?.delivery_unconfirmed === true;
 
       // Record the tenant number the adapter actually used (audit + messages row).
       const fromUsed = (delivery.meta?.from_number as string | undefined) ?? null;
@@ -2023,8 +2039,8 @@ Deno.serve(async (req) => {
           sender: fromAddress ? { address: (fromAddress.match(/<([^>]+)>/)?.[1] ?? fromAddress) } : null,
           recipients: [{ address: body.to }],
           subject: body.subject ?? null,
-          body_html: body.body,
-          body_text: null,
+          body_html: body.channel === "email" ? body.body : null,
+          body_text: body.channel === "sms" ? body.body : null,
           provider_message_id: null,
           in_reply_to_provider_id: body.in_reply_to ?? null,
           attachments: body.attachments ?? [],

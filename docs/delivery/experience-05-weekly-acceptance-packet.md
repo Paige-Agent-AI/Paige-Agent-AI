@@ -994,6 +994,32 @@ SOLO/role/revocation and all ten/E5-CV1–9 acceptance remain owed. Original Adm
 reminder repair is separate pending EXP01's frozen-writer disposition. Founder
 NOT_ACCEPTED; STILL CODING / NOT_READY; one complete integrated evaluation.
 
+### October30 — native reminder Admin repair (O03/O04/O08)
+
+Continue original ten outcomes and E5-CV1–E5-CV9; no closure count changes.
+The previously inferred blanket native-source hold was too broad: ANT50's
+actual freeze protects the five Planning registry/admission bindings. Narrow
+predicate repair is recorded at ANT50/dfa434c4, preserving those bindings and
+shared Root/resume custody. Forward20271126075005 follows published70005;
+native-first release precedes the separately reviewed existing editor correction.
+
+Current local PostgreSQL result: 138 behavior checks PASS, plus exact two-function
+metadata/source conservation, replay, two source-drift refusals and authority
+metadata refusal. A non-owner current-tenant Admin can move another person's
+active reminder time without a global-role fixture row. No Task/milestone/mixed
+field authority is added; held Agency/parent/company classes, wrong actor/tenant,
+revoked seat, stale source, closed work, invalid time, concurrency and unknown
+acknowledgments remain bounded. Full-schema rollback coverage is added to the
+original Operations test but its hosted result is still owed. No existing role
+sync trigger is disabled and no real account/permission is manufactured.
+
+Exact native/evidence boundary is docs/evidence/ui-delivery/exp05-reminder-admin-native.md.
+Source is PREPARED, not merged/deployed/activated/authenticated/accepted. Visual
+unchanged; original UI still withholds the Admin-only control until its separate
+native-dependent child. Experiential record/Rail/reload, current/new SOLO cohorts,
+both chats, full automation lifecycle, ZION, monitoring/recovery and founder
+acceptance remain open. ALG-01/08/12/13 remain PARTIAL; no capability Live promotion.
+
 ## October29 — safe saved-effort producer, review branch only
 
 O02/O03 and CV1/2/5/9: extend only original `task.update` in
@@ -1154,6 +1180,31 @@ E04financial15, E09tentative16 and E08native/Root/host/card/record-link leases,
 same ZION/personality, both Chat/Team Hub and fullten/E5 remain preserved. This is
 routine engineering reconciliation, not founder approval or outcome closure.
 
+### October30 — native release and composed receipt/reminder checkpoint
+
+All ten outcomes/E5-CV1–E5-CV9 remain controlling; no closure count is inferred.
+Task producer3102 merged571f after required checks/review and its50005 normal
+migration/source/ACL readback passed. crm-command matched deployed571f, but
+full selected Edge certification failed on two other incumbent paths; one
+original failed-job recovery is pending, no verifier bypass or business replay.
+Editor3103 now targetsmain at03ab50de0, exact lower5716351476; all11 original
+source/test blobs preserved, rebuilt126-input/eight-valid-frame evidence and
+165 assertions/10 distinct files. One stale screenshot is retained INVALID and
+replaced; no customer, original approval/Rail or full-shell claim is borrowed.
+
+Receipt3121 now composesmain571f asbb8145339, same original six-file225/4 delta,
+all18,473 outside main leaves/five owned non-packet files exact, both packet
+appendices conserved. Lower review5716380977; new required CI/Preview remains
+owed and production70005 still follows original published E09native60009.
+Native reminder3127 composes this same parent: four non-packet product/test/
+evidence files remain exact tobacb, full-schema native SQL passed in the actual
+managed Preview with all fixtures rolled back and post-counts0Auth/0Work/0Tasks.
+Its prior hosted CI failed before reviewed changes because the old chain lacked
+released40008 grants; this current-main reconciliation fixes that source drift,
+without weakening hashes/authority or calling the failed run green. New clean
+CI/composed Preview, production75005 and separate mounted Admin editor remain
+owed. Full lifecycle/automation/ZION/monitoring/recovery, both chats, eligible
+current/new SOLO, founder acceptance and final source-log closeout stay open.
 ### Forward parent received by original editor
 
 Dependent UI now normally composes nativec5d0/main3f37 intoe78ac4f56, retaining

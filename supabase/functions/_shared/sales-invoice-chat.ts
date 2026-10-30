@@ -1,6 +1,7 @@
 import {SALES_MERCHANT_TOOLS,SALES_MERCHANT_TOOL_NAMES,dispatchMerchantChat} from './sales-payments/merchant-chat.ts';
 import {paymentRequestIntentFromCommand} from "./sales-payments/request-command.ts";
 import {readAcceptedInvoicePaymentPlan} from './sales-payments/accepted-obligation-read.ts';
+import {readOriginalManualReceiptAssignments,type ManualReceiptAssignmentRead} from './sales-invoice-command/manual-allocation-read.ts';
 import {SALES_COMMERCIAL_OFFERS_TOOL,readCommercialOffers} from './sales-commercial/offers-read.ts';
 import {SALES_COMMERCIAL_PACKAGE_TOOL,readCommercialPackage} from './sales-commercial/package-read.ts';
 import {SALES_DRAFT_TOOLS,SALES_DRAFT_TOOL_NAMES,dispatchCommercialDraftChat} from './sales-commercial/draft-chat.ts';
@@ -35,7 +36,7 @@ export const SALES_INVOICE_TOOLS = [
  {type:'function',function:{name:'sales_create_payment_request',description:'With exact canonical approval, create a tenant-owned hosted invoice payment request. Read the issued invoice and current version first. For an accepted dated deposit/installment, read include_accepted_payment_plan and pass its exact obligation_reference without amount_minor; never invent a date, source or allocation. Full amount is server-resolved; unbound partial/deposit requires the owner’s exact minor amount. Hosted request is not payment; customer credentials stay with provider. Unknown outcomes require readback of this operation, never a new request. PayPal is unavailable until its adapter and seller permission are ready.',parameters:chatInput(SALES_INVOICE_KIT_BY_ACTION.sales_create_payment_request)}},
  {type:'function',function:{name:'read_sales_invoice_preferences',description:'Read current tenant invoice preferences and version. This does not change issued invoices.',parameters:SALES_INVOICE_PREFERENCES_READ_CAPABILITY.input}},
  {type:'function',function:{name:'sales_update_invoice_settings',description:'With canonical approval, update future invoice numbering and document preferences at the current settings version. Issued invoices remain unchanged.',parameters:chatInput(SALES_INVOICE_SETTINGS_CAPABILITY)}},
- {type:'function',function:{name:'read_sales_invoice',description:'Read this workspace invoice and manual receipt history. Set include_accepted_payment_plan to inspect exact accepted dates, original references and native remaining allocations before proposing a scheduled request. Refused, unverified, stale or held plans supply no eligible targets. Recorded acceptance does not prove present signed-file availability; allocation is not provider settlement or completed service. Manual settlement is a record, not a processor charge.',parameters:SALES_INVOICE_READ_CAPABILITY.input}},
+ {type:'function',function:{name:'read_sales_invoice',description:'Read this workspace invoice and manual receipt history. Set include_accepted_payment_plan to inspect exact accepted dates, original references and native remaining allocations before proposing a scheduled request. Refused, unverified, stale or held plans supply no eligible targets. Recorded acceptance does not prove present signed-file availability; allocation is not provider settlement or completed service. Set manual_payment_id from the original receipt history to inspect its retained exact assignments and full correction. Refused, stale or unverified assignments are unavailable, never guessed. Manual settlement is a record, not a processor charge.',parameters:SALES_INVOICE_READ_CAPABILITY.input}},
  {type:'function',function:{name:'sales_publish_invoice',description:'Issue an existing saved invoice with approval. This creates an obligation snapshot; it does not charge, send, or create a payment link. Read the invoice first for its current version.',parameters:chatInput(SALES_INVOICE_PUBLISH_CAPABILITY)}},
  {type:'function',function:{name:'sales_record_manual_payment',description:'With approval, record money the owner says was received off platform against a managed or imported obligation. Read its currency, kind, balance and version first. Never claim a processor verified or charged it.',parameters:receiptInput(SALES_INVOICE_RECORD_PAYMENT_CAPABILITY)}},
  {type:'function',function:{name:'sales_reverse_manual_payment',description:'With approval, append a reversal of an existing manual receipt on a managed or imported obligation. This does not refund or transfer money.',parameters:receiptInput(SALES_INVOICE_REVERSE_PAYMENT_CAPABILITY)}},
@@ -145,8 +146,9 @@ export async function dispatchSalesInvoiceChat(ctx: Context, deps: Dependencies)
     }catch{return {content:{success:false,error:'Invoice preferences unavailable in this workspace.'}};}
   }
   if (ctx.toolName === 'read_sales_invoice') {
-    if (Object.keys(ctx.args).some(k => !['invoice_id','include_accepted_payment_plan'].includes(k)) ||
+    if (Object.keys(ctx.args).some(k => !['invoice_id','include_accepted_payment_plan','manual_payment_id'].includes(k)) ||
         ('include_accepted_payment_plan' in ctx.args&&typeof ctx.args.include_accepted_payment_plan!=='boolean') ||
+        ('manual_payment_id' in ctx.args&&(typeof ctx.args.manual_payment_id!=='string'||!UUID.test(ctx.args.manual_payment_id))) ||
         typeof ctx.args.invoice_id !== 'string' || !UUID.test(ctx.args.invoice_id)) return { content: { success: false, error: 'Invalid invoice request.' } };
     try {
       const reply = await deps.caller.rpc('read_sales_invoice', { _expected_tenant_id: ctx.tenantId, _invoice_id: ctx.args.invoice_id.toLowerCase() });
@@ -160,8 +162,18 @@ export async function dispatchSalesInvoiceChat(ctx: Context, deps: Dependencies)
         return { content: { success: false, error: 'Invoice unavailable in this workspace.' } };
       }
       const invoice=salesInvoiceSafeResult(row);
-      if(ctx.args.include_accepted_payment_plan===true)return {content:{success:true,invoice,payment_plan:await invoicePaymentPlanForChat(ctx.tenantId,row,deps.caller)}};
-      return { content: { success: true, invoice } };
+      let manualAssignments:ManualReceiptAssignmentRead|undefined;
+      if(typeof ctx.args.manual_payment_id==='string'){
+        const paymentId=ctx.args.manual_payment_id.toLowerCase();
+        const receipt=Array.isArray(row.payments)?row.payments.find((value:unknown)=>value&&typeof value==='object'&&!Array.isArray(value)&&(value as Record<string,unknown>).id===paymentId) as Record<string,unknown>|undefined:undefined;
+        manualAssignments=receipt?.kind==='receipt'&&(receipt.evidence_kind===undefined||receipt.evidence_kind==='manual_recorded')&&Number.isSafeInteger(receipt.amount_cents)&&Number(receipt.amount_cents)>0
+          ?await readOriginalManualReceiptAssignments((name,args)=>deps.caller.rpc(name,args),{tenantId:ctx.tenantId,invoiceId:String(row.id),version:Number(row.version),receipt:{id:paymentId,kind:'receipt',amount_cents:Number(receipt.amount_cents),evidence_kind:'manual_recorded'}})
+          :{state:'refused'};
+      }
+      return { content: { success: true, invoice,
+        ...(ctx.args.include_accepted_payment_plan===true?{payment_plan:await invoicePaymentPlanForChat(ctx.tenantId,row,deps.caller)}:{}),
+        ...(manualAssignments?{manual_payment_assignments:manualAssignments}:{}),
+      } };
     } catch { return { content: { success: false, error: 'Invoice read unavailable.' } }; }
   }
   if(ctx.toolName==='billing_send_invoice'&&ctx.args.channel!==undefined&&(typeof ctx.args.channel!=='string'||!['email','sms'].includes(ctx.args.channel)))return {content:{success:false,error:'Invoice delivery channel unavailable.'}};

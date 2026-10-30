@@ -30,7 +30,7 @@ UNVERIFIED: fresh composed browser render, final exact-head review/CI/editor rel
 OWNER_INTENT: repair legitimate reminder access while continuing the complete Operations assignment; no new systems or routine founder testing.
 MUST_NOT_HAPPEN: global labels alone confer no target-business authority; no early UI release, approval bypass, provider/cron invocation, unknown replay or invented success.
 RELEASE_SCOPE: build=existing Operations reminder editor; delivery=native-dependent correction; effect=no provider or activation; native=SOURCE_VERIFIED(75005/1515); editor=PROOF_OWED; edge=NOT_APPLICABLE(no Edge source change); records=PROOF_OWED(original customer Work and Rail result).
-INTERNAL_BUILD_IDENTITY: source=f30e2e88cd4b3f458c96a347e3c13b68eb921ef5; deployment=PROOF_OWED(editor release); environment=development; migrations=APPLIED(20271126075005); edge=NOT_APPLICABLE; evidence=assets/exp05-reminder-admin-editor/current-main/source-manifest.json and conservation.json; historical browser-proof.json remains separate
+INTERNAL_BUILD_IDENTITY: source=f30e2e88cd4b3f458c96a347e3c13b68eb921ef5; deployment=PROOF_OWED(editor release); environment=development; migrations=APPLIED(20271126075005_reminder_tenant_admin_access); edge=NOT_APPLICABLE; evidence=assets/exp05-reminder-admin-editor/current-main/source-manifest.json and conservation.json; historical browser-proof.json remains separate
 RELEASE_CHANNEL: development: original offline Workspace with neutral synthetic ports; no customer or provider action.
 RELEASE_CLASSIFICATION: internal-only: bounded existing reminder availability correction; no complete Experience claim.
 CUSTOMER_RELEASE_IDENTITY: none: native-dependent editor and authenticated customer outcome not yet released or verified.

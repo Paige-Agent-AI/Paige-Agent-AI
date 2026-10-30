@@ -133,6 +133,15 @@ const commandSchema = z.object({
       ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["patch", "metadata"], message: "Task metadata must be an object." });
     }
   }
+  if (command.action === "task.update" && command.patch && Object.prototype.hasOwnProperty.call(command.patch, "estimated_minutes")) {
+    const effort = command.patch.estimated_minutes;
+    if (effort !== null && !(typeof effort === "number" && Number.isInteger(effort) && effort >= 0 && effort <= 2147483647)) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["patch", "estimated_minutes"], message: "Task effort must be whole minutes from 0 to 2147483647, or null to clear." });
+    }
+    if (Object.prototype.hasOwnProperty.call(command.patch, "metadata")) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["patch"], message: "Change task effort separately from replacing task metadata." });
+    }
+  }
   if (command.action === "activity.log") { requireContact("contact_id", "client_ref"); requireField("patch"); }
   if (command.action === "deal.create") { requireField("title"); requireField("pipeline_id"); requireField("stage_id"); }
   if (command.action === "deal.update") {
@@ -221,6 +230,15 @@ function summaryFor(command: z.infer<typeof commandSchema>, actorUserId: string,
     : typeof taskAssignee === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(taskAssignee)
       ? taskAssignee.toLowerCase() === actorUserId.toLowerCase() ? "you" : `user ${taskAssignee}`
       : null;
+  if (command.action === "task.update" && commandPatch && Object.prototype.hasOwnProperty.call(commandPatch, "estimated_minutes")) {
+    const effort = commandPatch.estimated_minutes;
+    const change = effort === null ? "Clear its recorded effort estimate; the effort becomes unknown, not zero."
+      : `Set its recorded effort estimate to ${effort} ${effort === 1 ? "minute" : "minutes"}.`;
+    const otherChanges = Object.entries(commandPatch).filter(([field]) => field !== "estimated_minutes"
+      && !(field === "status" && commandPatch.status === "in_progress"))
+      .sort(([left], [right]) => left.localeCompare(right)).map(([field, value]) => `${field}=${JSON.stringify(value)}`);
+    return `${commandPatch.status === "in_progress" ? `Move task ${command.task_id} to In progress.` : `Update task ${command.task_id}.`} ${change}${otherChanges.length ? ` Also update ${otherChanges.join(", ")}.` : ""}`;
+  }
   if (command.action === "task.update" && commandPatch?.status === "in_progress") {
     const otherChanges = Object.entries(commandPatch).filter(([field]) => field !== "status")
       .sort(([left], [right]) => left.localeCompare(right)).map(([field, value]) => `${field}=${JSON.stringify(value)}`);

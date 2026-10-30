@@ -264,7 +264,49 @@ try{
   db.run(zoneDefinition.replace('DECLARE\n','DECLARE\n  -- unknown timezone writer drift\n'));const unknown=verify();
   assert.throws(()=>db.run(timezonePatch),/source drift/);assert.equal(verify(),unknown);checks++;
  }
- console.log(JSON.stringify({checks,scope:'actual original native writer and current authority helpers; optional timezone recovery is inert native-only; contact methods unexercised; no UI/both-chat/delegation/jurisdiction/migration/production proof'}));
+ if(process.argv.includes('--combined-number-carrier')){
+  assert(process.argv.includes('--recipient-timezone'),'combined carrier retains the original timezone suite');
+  // Compose the SAME two reviewed patches; no copied writer or migration/version.
+  const zonePatch=read('scripts/proof/exp03-contact-recipient-timezone-patch.sql').replaceAll('\r\n','\n');
+  const numberPatch=read('scripts/proof/exp03-number-current-authority-patch.sql').replaceAll('\r\n','\n');
+  const numberSignatures=['public.tenant_phone_number_rename(uuid,text,uuid)','public.tenant_phone_number_set_primary(uuid,uuid)'];
+  db.run(`CREATE TABLE public.tenant_phone_numbers(id uuid PRIMARY KEY,tenant_id uuid,friendly_name text,status text,is_primary boolean DEFAULT false,updated_at timestamptz DEFAULT now());
+   CREATE UNIQUE INDEX uq_tenant_phone_numbers_primary ON public.tenant_phone_numbers(tenant_id) WHERE is_primary;
+   INSERT INTO public.tenant_phone_numbers(id,tenant_id,status) VALUES('${contact}','${tenant}','active');`);
+  const resetSources=()=>{
+   db.run(read('scripts/proof/fixtures/exp03-contact-management-before.sql'));
+   db.run(read('scripts/proof/fixtures/exp03-number-management-before.sql'));
+   db.run(`REVOKE ALL ON FUNCTION ${numberSignatures.join(',')} FROM PUBLIC;
+    GRANT EXECUTE ON FUNCTION ${numberSignatures.join(',')} TO authenticated,service_role;`);
+  };
+  const definitions=()=>JSON.parse(db.run(`SELECT jsonb_object_agg(p.oid::regprocedure::text,md5(pg_get_functiondef(p.oid))) FROM pg_proc p
+   WHERE p.oid IN ('${signature}'::regprocedure,${numberSignatures.map(s=>`'${s}'::regprocedure`).join(',')})`));
+  const businessState=()=>JSON.stringify({contacts:state(),numbers:db.run('SELECT jsonb_agg(n ORDER BY id) FROM public.tenant_phone_numbers n')});
+  const carrier=(first,second)=>`BEGIN;\n${first}\n${second}\nCOMMIT;`;
+  resetSources();const before=definitions(),beforeBusiness=businessState();
+  const badNumberReadback=numberPatch.replace('IF NOT EXISTS (SELECT 1 FROM pg_proc WHERE oid = target','IF NOT EXISTS (SELECT 1 FROM pg_proc WHERE false AND oid = target');
+  assert.notEqual(badNumberReadback,numberPatch);
+  assert.throws(()=>db.run(carrier(zonePatch,badNumberReadback)),/metadata\/source mismatch/);
+  assert.deepEqual(definitions(),before,'later number readback failure must roll back ALL three original definitions');checks++;
+  assert.equal(businessState(),beforeBusiness,'failed carrier cannot change original business rows');checks++;
+  resetSources();const badZoneReadback=zonePatch.replace("IF md5(pg_get_functiondef(target))<>'0d05ed2429366f1215c3d7363ee56b4b'", "IF md5(pg_get_functiondef(target))<>'00000000000000000000000000000000'");
+  assert.notEqual(badZoneReadback,zonePatch);
+  assert.throws(()=>db.run(carrier(numberPatch,badZoneReadback)),/readback mismatch/);
+  assert.deepEqual(definitions(),before,'later contact failure must roll back both earlier number replacements');checks++;
+  assert.equal(businessState(),beforeBusiness);checks++;
+  resetSources();db.run(`GRANT EXECUTE ON FUNCTION ${numberSignatures[1]} TO anon;`);
+  const drifted=definitions();
+  assert.throws(()=>db.run(carrier(zonePatch,numberPatch)),/metadata drift/);
+  assert.deepEqual(definitions(),drifted,'later metadata refusal must not retain the contact replacement');checks++;
+  assert.equal(businessState(),beforeBusiness);checks++;
+  db.run(`REVOKE EXECUTE ON FUNCTION ${numberSignatures[1]} FROM anon;`);
+  resetSources();db.run(carrier(zonePatch,numberPatch));
+  assert.deepEqual(Object.values(definitions()).sort(),['0d05ed2429366f1215c3d7363ee56b4b','888151f66ecb36acac49c2fa94d63dbf','9ddc5ca147674afc4df886ec30a139f7'].sort());checks++;
+  assert.equal(businessState(),beforeBusiness,'source-only carrier changes no customer rows');checks++;
+  const after=definitions();db.run(carrier(zonePatch,numberPatch));
+  assert.deepEqual(definitions(),after);assert.equal(businessState(),beforeBusiness);checks++;
+ }
+ console.log(JSON.stringify({checks,scope:'actual original native writers/current authority helpers; optional combined carrier remains inert and unversioned; contact methods unexercised; no UI/both-chat/delegation/jurisdiction/migration/production proof'}));
 }finally{
  const r=spawnSync(db.psql,db.args('postgres'),{input:`DROP DATABASE ${db.database} WITH (FORCE);`,encoding:'utf8',timeout:60000});
  if(r.status!==0)throw new Error('Owned disposable database cleanup failed');

@@ -237,7 +237,10 @@ SELECT pg_temp.invoice_issue(3,pg_temp.c('a2'));
 SELECT is((SELECT pg_temp.invoice_ctx('a2',th,intent)->>'sqlstate' FROM invoice_turn),'42501','new original invoice invalidates accepted facts without replacing the snapshot');
 SELECT ok((SELECT NOT(pg_temp.as_user('a2',format('SELECT to_jsonb(public.paige_chat_interactive_publication_context_v2(%L,%L))',th,intent))#>>'{}')::boolean FROM invoice_turn),
  'late original publication withholds an invoice answer after facts change');
-SELECT ok((SELECT NOT (pg_temp.as_user('a2',format('SELECT public.client_portal_assistant_context_v2(%L,%L,NULL)',th,gen_random_uuid()))::text LIKE '%NATIVE-INVOICE-ANSWER-SENTINEL%') FROM invoice_turn),
+CREATE TEMP TABLE invoice_model_after AS SELECT pg_temp.as_user('a2',format(
+ 'SELECT public.client_portal_assistant_context_v2(%L,%L,NULL)',th,gen_random_uuid())) context FROM invoice_turn;
+SELECT ok((SELECT NOT(context ? 'sqlstate') AND jsonb_typeof(context->'history')='array'
+ AND NOT(context::text LIKE '%NATIVE-INVOICE-ANSWER-SENTINEL%') FROM invoice_model_after),
  'new model context omits stale invoice-derived facts');
 SELECT is((SELECT count(*) FROM public.paige_chat_turns p,invoice_turn x WHERE p.thread_id=x.th AND p.interactive_intent_id=x.intent
  AND p.role='assistant' AND p.content='NATIVE-INVOICE-ANSWER-SENTINEL'),1::bigint,'saved customer UI history is retained, never deleted for model filtering');
@@ -250,5 +253,48 @@ SELECT ok((SELECT (pg_temp.executor(th,intent,'acquire')->>'acquired')::boolean 
 SELECT pg_temp.invoice_issue(4,pg_temp.c('a2'));
 SELECT ok((SELECT NOT(pg_temp.invoice_settle(th,intent,'',NULL,'WITHHELD') ? 'sqlstate') FROM invoice_withheld),'changed invoice source still permits empty original cleanup');
 SELECT pg_temp.executor(th,intent,'release') FROM invoice_withheld;
+
+-- Current financial authority, using ORIGINAL native Auth and access writer.
+-- Every identity/transition is synthetic and this complete fixture rolls back.
+CREATE TEMP TABLE invoice_access AS SELECT x.th,gen_random_uuid() intent,t.auto_delete_at expiry,NULL::jsonb snapshot
+ FROM invoice_turn x JOIN public.paige_chat_threads t ON t.id=x.th;
+SELECT is((SELECT pg_temp.invoice_begin(th,intent)->>'status' FROM invoice_access),'accepted','authority checks start from a genuine accepted invoice turn');
+UPDATE invoice_access SET snapshot=pg_temp.invoice_ctx('a2',th,intent)->'snapshot';
+SELECT ok((SELECT public._client_invoices_snapshot_current(pg_temp.u('a2'),pg_temp.t('a'),pg_temp.c('a2'),th,intent,snapshot)
+ FROM invoice_access),'exact invoice authority is positive before withdrawal controls');
+SELECT is((SELECT pg_temp.as_user('a2',format(
+ 'SELECT public.client_portal_assistant_begin_invoices(%L,%L,NULL,%L,%L,%L,%L,NULL,NULL,NULL)',th,gen_random_uuid(),
+ 'Unsupported invoice admission',bound_answer,stop,effectful))->>'sqlstate' FROM invoice_access),'42501','invoice API refuses '||kind)
+ FROM (VALUES(true,false,true,'bound answer'),(false,true,true,'Stop'),(false,false,false,'draining')) v(bound_answer,stop,effectful,kind);
+CREATE FUNCTION pg_temp.invoice_access_change(action text) RETURNS jsonb LANGUAGE sql AS $$
+ SELECT pg_temp.as_user('a1',format('SELECT public.set_client_portal_access(%L,%L,%L,%L,%L,NULL,%L::timestamptz)',
+ pg_temp.u('a1'),pg_temp.t('a'),pg_temp.c('a2'),action,'other',
+ (SELECT portal_access_changed_at FROM public.clients WHERE id=pg_temp.c('a2')))) $$;
+SELECT ok((pg_temp.invoice_access_change('pause')->>'ok')::boolean,'ORIGINAL owner writer pauses the synthetic relationship');
+SELECT is((SELECT pg_temp.invoice_ctx('a2',th,intent)->>'sqlstate' FROM invoice_access),'42501','paused relationship cannot read accepted invoice facts');
+SELECT ok((SELECT NOT public._client_invoices_snapshot_current(pg_temp.u('a2'),pg_temp.t('a'),pg_temp.c('a2'),th,intent,snapshot)
+ FROM invoice_access),'trusted terminal financial authority also closes when paused');
+SELECT ok((pg_temp.invoice_access_change('restore')->>'ok')::boolean,'ORIGINAL version-bound writer restores this synthetic relationship');
+SELECT ok((SELECT public._client_invoices_snapshot_current(pg_temp.u('a2'),pg_temp.t('a'),pg_temp.c('a2'),th,intent,snapshot)
+ FROM invoice_access),'financial source becomes available only after legitimate restoration');
+UPDATE auth.users SET banned_until=now()+interval '1 day' WHERE id=pg_temp.u('a2');
+SELECT ok((SELECT NOT public._client_invoices_snapshot_current(pg_temp.u('a2'),pg_temp.t('a'),pg_temp.c('a2'),th,intent,snapshot)
+ FROM invoice_access),'invoice terminal rejects the genuinely banned original Auth actor');
+UPDATE auth.users SET banned_until=NULL,deleted_at=now() WHERE id=pg_temp.u('a2');
+SELECT ok((SELECT NOT public._client_invoices_snapshot_current(pg_temp.u('a2'),pg_temp.t('a'),pg_temp.c('a2'),th,intent,snapshot)
+ FROM invoice_access),'invoice terminal rejects the genuinely deleted original Auth actor');
+UPDATE auth.users SET deleted_at=NULL WHERE id=pg_temp.u('a2');
+UPDATE public.paige_chat_threads SET auto_delete_at=now()-interval '1 second' WHERE id=(SELECT th FROM invoice_access);
+SELECT ok((SELECT NOT public._client_invoices_snapshot_current(pg_temp.u('a2'),pg_temp.t('a'),pg_temp.c('a2'),th,intent,snapshot)
+ FROM invoice_access),'expired private thread cannot retain invoice authority');
+UPDATE public.paige_chat_threads t SET auto_delete_at=x.expiry FROM invoice_access x WHERE t.id=x.th;
+SELECT ok((pg_temp.invoice_access_change('end')->>'ok')::boolean,'ORIGINAL owner writer ends synthetic access with its current version');
+SELECT is((SELECT pg_temp.invoice_ctx('a2',th,intent)->>'sqlstate' FROM invoice_access),'42501','ended relationship cannot read old invoice context');
+SELECT ok((SELECT NOT public._client_invoices_snapshot_current(pg_temp.u('a2'),pg_temp.t('a'),pg_temp.c('a2'),th,intent,snapshot)
+ FROM invoice_access),'trusted invoice publication cannot survive ended access');
+SELECT set_config('request.headers',jsonb_build_object('x-client-portal-business',pg_temp.t('b'))::text,true);
+SELECT is((SELECT pg_temp.invoice_ctx('a2',th,gen_random_uuid())#>>'{billing,tenant_id}' FROM link_second_business),
+ pg_temp.t('b')::text,'ending the first relationship preserves only the separately authorized second business');
+SELECT set_config('request.headers',jsonb_build_object('x-client-portal-business',pg_temp.t('a'))::text,true);
 SELECT * FROM finish();
 ROLLBACK;

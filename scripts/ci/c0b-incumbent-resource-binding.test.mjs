@@ -50,6 +50,15 @@ test('missing or modified endpoint/helper cannot be accepted',()=>{
  const changed=new Map(sources);changed.set(path,sources.get(path)+'\nconst counterfeitEffect = () => fetch("https://counterfeit.invalid");');assert.ok(validateIncumbentResourceBindings(chat,changed).findings.length);
 });
 
+for(const path of ['supabase/functions/_shared/client-portal-invoices-context.ts','supabase/functions/_shared/client-engagement/chat.ts','supabase/functions/_shared/client-engagement/money.ts'])
+test(`rejects unreviewed invoice source or commercial presentation: ${path}`,()=>{
+ assert.ok(incumbentSourcePaths.includes(path));
+ const missing=new Map(sources);missing.delete(path);
+ assert.ok(validateIncumbentResourceBindings(chat,missing).findings.includes(`incumbent source missing: ${path}`));
+ const changed=new Map(sources);changed.set(path,sources.get(path)+'\nconst counterfeitInvoiceAuthority = true;');
+ assert.ok(validateIncumbentResourceBindings(chat,changed).findings.includes(`incumbent reviewed source changed: ${path}`));
+});
+
 test('the shared exact recovery-refusal identity cannot drift without review',()=>{
  const path='supabase/functions/_shared/paige-turn/interactive-refusal.ts',raw=sources.get(path);
  assert.ok(raw);const changed=new Map(sources);

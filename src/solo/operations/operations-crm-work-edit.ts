@@ -1,13 +1,13 @@
 import type { TeamMemberRecord } from "@/solo/team-workspace-contract";
 import type { CrmWorkRecord } from "./operations-native-work";
 
-export type CrmWorkEditTarget = Readonly<{kind:"assignment";assigneeId:string}|{kind:"due";dueAt:string|null}>;
+export type CrmWorkEditTarget = Readonly<{kind:"assignment";assigneeId:string}|{kind:"due";dueAt:string|null}|{kind:"effort";minutes:number|null}>;
 type Scope=Readonly<{actorId:string;tenantId:string;key:string}>;
 export type CrmWorkEditOperation = Scope & Readonly<{
   taskId:string; target:CrmWorkEditTarget;
   command:Readonly<{
-    action:"task.assign"|"task.reschedule";task_id:string;expected_updated_at:string;
-    patch:Readonly<{assignee_user_id:string}|{due_date:string|null}>;
+    action:"task.assign"|"task.reschedule"|"task.update";task_id:string;expected_updated_at:string;
+    patch:Readonly<{assignee_user_id:string}|{due_date:string|null}|{estimated_minutes:number|null}>;
   }>;
 }>;
 const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -23,6 +23,7 @@ const instant=(value:unknown):value is string=>{
   return +month>=1&&+month<=12&&+day>=1&&+day<=days[+month-1]&&+hour<24&&+minute<60&&+second<60&&+offsetHour<=14&&+offsetMinute<60&&(+offsetHour<14||+offsetMinute===0);
 };
 const sameInstant=(left:string|null,right:string|null)=>left===null||right===null?left===right:instant(left)&&instant(right)&&Date.parse(left)===Date.parse(right);
+const validEffort=(value:unknown):value is number|null=>value===null||typeof value==="number"&&Number.isSafeInteger(value)&&value>=0&&value<=2147483647;
 
 /** Proposal only. Existing CRM Trust/CAS/Rail and server authority remain required. */
 export function buildCrmWorkEditOperation(record:CrmWorkRecord,target:CrmWorkEditTarget,scope:Scope,members:TeamMemberRecord[]):CrmWorkEditOperation|null {
@@ -32,16 +33,22 @@ export function buildCrmWorkEditOperation(record:CrmWorkRecord,target:CrmWorkEdi
     if(!uuid.test(target.assigneeId)||target.assigneeId===record.user_id||!members.some(person=>person.user_id===target.assigneeId&&person.status==="active"))return null;
     return Object.freeze({...scope,taskId:record.id,target:Object.freeze({...target}),command:Object.freeze({action:"task.assign",task_id:record.id,expected_updated_at:version,patch:Object.freeze({assignee_user_id:target.assigneeId})})});
   }
+  if(target.kind==="effort") {
+    if(!validEffort(target.minutes)||target.minutes===(record.estimated_minutes??null))return null;
+    return Object.freeze({...scope,taskId:record.id,target:Object.freeze({...target}),command:Object.freeze({action:"task.update",task_id:record.id,expected_updated_at:version,patch:Object.freeze({estimated_minutes:target.minutes})})});
+  }
   if(target.dueAt!==null&&!instant(target.dueAt)||sameInstant(record.due_date,target.dueAt))return null;
   return Object.freeze({...scope,taskId:record.id,target:Object.freeze({...target}),command:Object.freeze({action:"task.reschedule",task_id:record.id,expected_updated_at:version,patch:Object.freeze({due_date:target.dueAt})})});
 }
 
 /** Recovery pins one supported command; stored metadata never proves permission. */
 export function restoreCrmWorkEditOperation(value:unknown,actorId:string,tenantId:string):CrmWorkEditOperation|null {
-  if(!object(value)||value.actorId!==actorId||value.tenantId!==tenantId||!actorId||!tenantId||typeof value.key!=="string"||!value.key||value.key.length>192||typeof value.taskId!=="string"||!value.taskId||!object(value.command)||!object(value.target))return null;
+  if(!object(value)||"targetStatus" in value||value.actorId!==actorId||value.tenantId!==tenantId||!actorId||!tenantId||typeof value.key!=="string"||!value.key||value.key.length>192||typeof value.taskId!=="string"||!value.taskId||!object(value.command)||!object(value.target))return null;
   const {command,target}=value;
   if(command.task_id!==value.taskId||!instant(command.expected_updated_at)||!object(command.patch)||Object.keys(command).some(key=>!["action","task_id","expected_updated_at","patch"].includes(key)))return null;
   const patch=command.patch;
+  if(command.action==="task.update"&&target.kind==="effort"&&validEffort(target.minutes)&&patch.estimated_minutes===target.minutes&&Object.keys(patch).length===1&&Object.keys(target).length===2)
+    return Object.freeze({actorId,tenantId,key:value.key,taskId:value.taskId,target:Object.freeze({kind:"effort",minutes:target.minutes}),command:Object.freeze({action:"task.update",task_id:value.taskId,expected_updated_at:command.expected_updated_at,patch:Object.freeze({estimated_minutes:target.minutes})})});
   if(command.action==="task.assign"&&target.kind==="assignment"&&typeof target.assigneeId==="string"&&uuid.test(target.assigneeId)&&patch.assignee_user_id===target.assigneeId&&Object.keys(patch).length===1&&Object.keys(target).length===2)
     return Object.freeze({actorId,tenantId,key:value.key,taskId:value.taskId,target:Object.freeze({kind:"assignment",assigneeId:target.assigneeId}),command:Object.freeze({action:"task.assign",task_id:value.taskId,expected_updated_at:command.expected_updated_at,patch:Object.freeze({assignee_user_id:target.assigneeId})})});
   if(command.action==="task.reschedule"&&target.kind==="due"&&(target.dueAt===null||instant(target.dueAt))&&patch.due_date===target.dueAt&&Object.keys(patch).length===1&&Object.keys(target).length===2){
@@ -54,5 +61,6 @@ export function restoreCrmWorkEditOperation(value:unknown,actorId:string,tenantI
 /** Independent source read after acknowledgement, not a completion/outcome claim. */
 export function crmWorkEditMatchesReadback(operation:CrmWorkEditOperation,record:CrmWorkRecord):boolean {
   if(record.id!==operation.taskId||record.tenant_id!==operation.tenantId||!instant(record.updated_at))return false;
-  return operation.target.kind==="assignment"?record.user_id===operation.target.assigneeId:sameInstant(record.due_date,operation.target.dueAt);
+  return operation.target.kind==="assignment"?record.user_id===operation.target.assigneeId:
+    operation.target.kind==="effort"?record.estimated_minutes===operation.target.minutes:sameInstant(record.due_date,operation.target.dueAt);
 }

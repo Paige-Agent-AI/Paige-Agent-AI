@@ -44,7 +44,11 @@ export interface RelationshipPerson {
   owner: string;
   lastTouch: string | null;
   createdAt: string | null;
+  /** Native version is retained verbatim for optimistic contact saves (including microseconds). */
   updatedAt: string | null;
+  /** Present only in the full SOLO projection; never inferred from address or browser location. */
+  timezone?: string | null;
+  timezoneVerified?: boolean;
 }
 
 interface ClientRow {
@@ -77,6 +81,8 @@ interface ClientRow {
   last_contacted_at: string | null;
   created_at: string;
   updated_at: string;
+  timezone?: string | null;
+  timezone_verified?: boolean | null;
 }
 
 const clientName = (row: ClientRow, primaryEmail: string | null) => {
@@ -88,7 +94,7 @@ const clientName = (row: ClientRow, primaryEmail: string | null) => {
 
 // Widened to string on purpose: the generated types do not know the contact-methods embed yet,
 // and a literal select string makes the client's type parser recurse past its limit.
-const SOLO_PERSON_SELECT: string = `id,first_name,last_name,entity_name,entity_type,${CLIENT_CONTACT_METHODS_EMBED},title,website,linkedin_url,street_address,city,state,zip_code,source,status,tags,do_not_contact,paige_shared_context_consent,linked_user_id,portal_access_state,portal_access_changed_at,lifecycle_stage,primary_offer,current_notes,assigned_coach_user_id,lead_owner_user_id,last_contacted_at,created_at,updated_at`;
+const SOLO_PERSON_SELECT: string = `id,first_name,last_name,entity_name,entity_type,${CLIENT_CONTACT_METHODS_EMBED},title,website,linkedin_url,street_address,city,state,zip_code,source,status,tags,do_not_contact,paige_shared_context_consent,linked_user_id,portal_access_state,portal_access_changed_at,lifecycle_stage,primary_offer,current_notes,assigned_coach_user_id,lead_owner_user_id,last_contacted_at,created_at,updated_at,timezone,timezone_verified`;
 const ROSTER_PERSON_SELECT: string = `id,first_name,last_name,entity_name,${CLIENT_CONTACT_METHODS_EMBED},linked_user_id,lifecycle_stage,assigned_coach_user_id,last_contacted_at`;
 
 const trimOrNull = (value: string | null | undefined) => value?.trim() || null;
@@ -139,6 +145,10 @@ const mapClient = (row: ClientRow, soloPeople = false): RelationshipPerson => {
   lastTouch: row.last_contacted_at,
   createdAt: row.created_at ?? null,
   updatedAt: row.updated_at ?? null,
+  ...(soloPeople ? {
+    timezone: typeof row.timezone === "string" && row.timezone.trim() ? row.timezone : null,
+    timezoneVerified: row.timezone_verified === true && typeof row.timezone === "string" && Boolean(row.timezone.trim()),
+  } : {}),
   };
 };
 

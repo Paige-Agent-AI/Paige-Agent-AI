@@ -109,6 +109,10 @@ if (!/^work\/owner-task-frame-[a-z0-9-]+$/i.test(output.replace(/\\/g, "/"))) {
 }
 // Read the retained local build; never overwrite its earlier bounded evidence/assets.
 const assets = "work/owner-task-render/dist/assets";
+// An explicit freshly compiled original stylesheet may replace a missing
+// retained application bundle; the current frame and all original CSS are kept.
+const freshCss = process.env.OWNER_TASK_RENDER_CSS;
+const stylesAvailable = freshCss ? existsSync(freshCss) : existsSync(assets);
 const scenes = ["draft", "review", "unknown"] as const;
 const sizes = [[1536, 770], [1366, 768], [1024, 768], [900, 1000], [390, 768]] as const;
 type Scene = typeof scenes[number];
@@ -137,7 +141,7 @@ function assertIncumbentFrame() {
     `<div className="paige-solo" data-theme={theme} style={{width:'100%',maxWidth:'none',height:'100%',minWidth:0,minHeight:0,alignSelf:'stretch',display:'flex',flexDirection:'column'}}>`,
     `<div style={{display:'flex',flex:1,minHeight:0,overflow:'hidden'}}>`,
     `<main key={screenRoute} data-solo-screen-host style={{flex:1,overflow:full?'hidden':'auto',minHeight:0,minWidth:0}}><SoloScreenBoundary`,
-    `const full=screenRoute==='operations'||route==='finance'||route==='paige'||route==='auto'||route==='cal'||route==='home'||route==='market';`,
+    `const full=screenRoute==='operations'||route==='teamhub'||route==='finance'||route==='paige'||route==='auto'||route==='cal'||route==='home'||route==='market';`,
     `import { SoloScreenBoundary } from "./SoloScreenBoundary";`,
     `import "./solo-tokens.css";`,
     `settings:<SoloSettings openPaige={openPaige}/>`,
@@ -145,10 +149,10 @@ function assertIncumbentFrame() {
 }
 
 function compiledCss(): string {
-  const files = readdirSync(assets).filter(f => f.endsWith(".css"));
+  const files = freshCss ? [] : readdirSync(assets).filter(f => f.endsWith(".css"));
   const picked = ["main-", "SoloEntry-", "PaigeAIChat-"].map(prefix => files.find(f => f.startsWith(prefix)));
-  if (picked.some(f => !f)) throw new Error("Current build is missing a required shell/chat CSS bundle");
-  return (picked as string[]).map(f => readFileSync(`${assets}/${f}`, "utf8")).join("\n") + "\n"
+  if (!freshCss && picked.some(f => !f)) throw new Error("Current build is missing a required shell/chat CSS bundle");
+  return (freshCss ? readFileSync(freshCss, "utf8") : (picked as string[]).map(f => readFileSync(`${assets}/${f}`, "utf8")).join("\n")) + "\n"
     + ["src/solo/solo-tokens.css", "src/components/tenant-shell/tenant-command-center-shell.css", "src/solo/solo-paige-workspace.css", "src/solo/settings.css", "src/solo/settings-integrations.css"]
       .map(path => readFileSync(path, "utf8")).join("\n");
 }
@@ -213,8 +217,9 @@ async function capture(scene: Scene, width: number, height: number, theme: "ligh
     expect(host.querySelector(".sa-owner-task-description")?.textContent).toBe(description);
     expect(host.querySelectorAll(".sa-owner-task-step")).toHaveLength(stepCount);
     if (stepCount > 1) {
-      expect(host.querySelector(".sa-owner-task-step:last-child")?.textContent).toContain(`Step ${stepCount}`);
-      expect(host.querySelector(".sa-owner-task-step:last-child")?.textContent).toContain(`Review internal responsibility ${stepCount}`);
+      const lastStep = host.querySelectorAll(".sa-owner-task-step").item(stepCount - 1);
+      expect(lastStep?.textContent).toContain(`Step ${stepCount}`);
+      expect(lastStep?.textContent).toContain(`Review internal responsibility ${stepCount}`);
     }
     expect(controls(host, "Review to enable")).toHaveLength(1);
     expect(h.controls).toHaveLength(0);
@@ -252,7 +257,7 @@ async function capture(scene: Scene, width: number, height: number, theme: "ligh
 }
 
 describe("owner task full-shell rendered fixture", () => {
-  it.skipIf(!existsSync(assets))("serializes complete two-step review and twenty-step recovery in the original frame", async () => {
+  it.skipIf(!stylesAvailable)("serializes complete two-step review and twenty-step recovery in the original frame", async () => {
     assertIncumbentFrame(); const sources = sourceIdentity();
     mkdirSync(output, { recursive: true }); const css = compiledCss(), records = [];
     for (const theme of ["light", "dark"] as const) for (const [width, height] of sizes.slice(0, 4)) for (const open of [false, true]) {
@@ -271,13 +276,14 @@ describe("owner task full-shell rendered fixture", () => {
     }
     expect(records).toHaveLength(20); expect(sourceIdentity()).toEqual(sources);
     writeFileSync(`${output}/multistep-render-manifest.json`, JSON.stringify({
-      proofClass: "SYNTHETIC_RENDERED_SOLO_APP_FRAME", sources, retainedAssetDirectory: assets,
+      proofClass: "SYNTHETIC_RENDERED_SOLO_APP_FRAME", sources, retainedAssetDirectory: freshCss ? null : assets,
+      freshCss: freshCss ? { path: freshCss, sha256: digest(readFileSync(freshCss)) } : null,
       realOwnerTaskHookAndCaller: true, compiledCssSha256: digest(css),
       actualBrowserProof: "PENDING_ROOT_BROWSER_CAPTURE", authenticatedQa: "UNVERIFIED", records,
     }, null, 2));
   }, 180_000);
 
-  it.skipIf(!existsSync(assets))("serializes actual draft/review/unknown trees with current styles and zero real effects", async () => {
+  it.skipIf(!stylesAvailable)("serializes actual draft/review/unknown trees with current styles and zero real effects", async () => {
     assertIncumbentFrame();
     const sources = sourceIdentity();
     mkdirSync(output, { recursive: true }); const css = compiledCss(); const records = [];

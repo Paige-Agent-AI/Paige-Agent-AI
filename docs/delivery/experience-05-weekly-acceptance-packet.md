@@ -1365,3 +1365,32 @@ earlier failures retained. Actual customer event timing/role/cohort/record-Rail-
 reload, native full-schema concurrency, mounted multi-step review and both-chat
 full Experience/founder acceptance remain owed. New test/evidence head needs
 renewed review/exactCI; no live automation/event/provider or customer task enabled.
+
+### October30 21:10UTC — complete internal-task chain review
+
+O05/O06, E5-CV1/4/5: the existing process card now reviews every supported
+original literal Task in a1–20step chain before exact deliberate enablement.
+Each later occurrence still needs its own original approval and Task/result/
+Rail. Recorded order is not dependency scheduling. Original single-step flow,
+unsupported design inspection, native whole-chain/source/version checks,
+history and uncertain-result no-repeat recovery remain.
+
+Causal8RED/80retained controls became final285PASS/five original component,
+hook, caller, complete-read and history suites. Original rendered fixture
+2tests passed/84states including20new multistep states; eleven raw settled
+frames and source/style hashes are in the existing UI evidence
+[record](../evidence/ui-delivery/exp05-owner-task-multistep-review.md).
+Original main/PAIGE scroll and responsive overlay retained; native200percent
+zoom/AT and ordinary authenticated acceptance remain owed. Initial skipped
+asset run, current-frame pin mismatch and new selector error remain historical;
+only fixture setup/expected current source was corrected.
+
+Native3137/fd0 remains the mandatory production prerequisite; its complete
+schema/native proof is not live customer authorization. This child adds no
+writer, scheduler, provider, approval engine or specialist. Workflow Design
+Draft stays draft-only and operations.department remains PARTIAL.
+ALG-01 bounded state/receipt/replay support remains distinct from incomplete
+ALG-08 scheduling/capacity, ALG-12 monitoring and ALG-13 recommendation coverage.
+Allten/E5, same ZION through both chats, weekly execution, full automation
+lifecycle, permitted proactivity, new/existing SOLO cohorts and one integrated
+founder evaluation remain OPEN; this is not complete Experience acceptance.

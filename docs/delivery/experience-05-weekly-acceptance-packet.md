@@ -198,7 +198,7 @@ PAIGE coordination adds a route and never forces a PAIGE intermediary.
 | Original outcome / E5 cases | PAIGE Chat / original source and current boundary | Team Hub gap, receiving owner and terminal proof |
 | --- | --- | --- |
 | 01 Responsibilities / CV3,4,9 | PARTIAL R1: `plan_list`, `crm_list_tasks`, exact `crm_get_task`, original Calendar/weekly reads. | EXP08 A2 original permitted reads; private Work in asker DM. E05 exact record/coverage references. Compare both chats with actual authorized sources. |
-| 02 Plan week / CV1,2,5,9 | PARTIAL R1/R2/R8; capacity/dependency correction remains missing. Held2961 is a read-preview, never execution. | E05 original correction loop; EXP08 consumes same plan/result. Prove changed context, zone, correction, save and reopen without another plan engine. |
+| 02 Plan week / CV1,2,5,9 | PARTIAL R1/R2/R8; released3091 reviews explicit net capacity and temporary effort corrections. Dependency handling and durable correction/save/reopen remain owed. Held2961 is a read-preview, never execution. | E05 original correction loop; EXP08 consumes same plan/result. Prove changed context, zone, correction, save and reopen without another plan engine. |
 | 03 Manage work / CV4,5,6 | PARTIAL R3: original `crm_create_task`/`crm_update_task`, `plan_create`/`plan_add_milestone`/`plan_assign_task`/`plan_update_item`, exact stored arguments/current version. | EXP08 A2 original Task admission/authority presentation; E05 original writer/assignee contract. Suggest/Prepare/Execute follows current original policy and goal scope; obtain exact approval when required. Private results stay permitted-recipient scoped. Same domain record/readback/Rail, no duplicate. |
 | 04 Calendar/reminders / CV2,5,7 | PARTIAL R2/R5: `read_calendar_agenda`, `read_calendar_booking`, `plan_set_reminder`, `read_weekly_commitment_status`; recurrence proof still owed. | EXP08 original private reads/actions under real scope; E05 original zone/DST/schedule/result. E03/09 retain customer bookings. No new scheduler/recurrence activation. |
 | 05 Build automations / CV1,5,9 | PARTIAL R4/R7: `automation_draft`/`weekly_commitment_draft` only prepare/save. Full multi-step clarification/correction Builder remains missing. | E05 original definitions/goal and dependency plan; EXP08 permitted preview/correction and original authority/approval presentation. Saved draft is not authorized/enabled/executed work. |
@@ -939,3 +939,107 @@ current guard excludes ZION. operations.department PARTIAL; both-chat/private
 record/Rail/reload/cohort/native/negative/full ten/E5/founder proof remains owed.
 Functional source/web verified; Visual original source preserved, no new rendered
 flow claim; Experiential incomplete; Founder NOT_ACCEPTED. STILL CODING / NOT_READY.
+
+## October29 — safe saved-effort producer, review branch only
+
+O02/O03 and CV1/2/5/9: extend only original `task.update` in
+`execute_crm_command_reversible` with nullable integer `estimated_minutes`.
+Set/zero/clear preserve unrelated Task metadata. Simultaneous whole-metadata
+replacement is refused; existing explicit metadata replacement stays unchanged.
+Native actor/tenant locks, CAS, replay, receipt transaction, ACL and function
+identity remain original. All source outside the Task update branch is exact.
+The existing generated Task patch schema derives this field from native SQL;
+no new task writer, approval, scheduler, provider or registry is introduced.
+
+Source reservation: ANT-161/51d8c74d. Tentative NEVER-APPLIED migration
+20271126010012 remains held behind E04 reserved10 and E09 tentative11.
+Do not open a migration-applying Preview ahead of that coordinated frontier.
+Production structural read showed native09, executor OID289875/service-only
+ACL and no scalar support. No production schema/data write has occurred.
+
+Local verification: 20 actual-executor PostgreSQL16 component checks pass,
+including baseline refusal, metadata preservation, whole-number/zero/upper
+bound/clear, malformed source, stale version, replay and receipt rollback.
+These use explicit peripheral fixture ports; they do NOT prove original
+Auth/RLS/Trust, canonical Rail or full-schema concurrency. Original governed
+CRM pgTAP suite retains its194 cases and adds31 effort cases (225 total),
+including native actor/tenant/workspace/version denials and original receipt
+failure. Those full-schema cases remain UNRUN. Original generator negative
+controls plus cross-domain conservation pass15/15. UTF8/diff checks pass.
+
+Orchestration: existing governed CRM direct command, `crm_update_task`, original
+Task readback/correlation and recovery. `crm_clients.task_read` remains the
+original read capability. No static Spine write key was found for this Task
+tool; do not claim a new Layer C/Spine write integration. ALG-01 native
+reconciliation support is extended locally; ALG-08 saved inputs and ALG-13
+weekly explanation still require the correction UI and integrated proof.
+
+Functional LOCAL / NOT_MERGED / NOT_DEPLOYED. Visual N/A: no UI change.
+Experiential INCOMPLETE: original effort editor, exact approval, saved readback,
+reload/recovery, eligible existing/new SOLO cohorts and both-chat proof owed.
+`operations.department` and catalogue stay PARTIAL; no Live promotion.
+All ten outcomes/E5 cases remain open for integrated verification.
+Founder NOT_ACCEPTED; STILL CODING / NOT_READY.
+
+## October30 UTC — saved-design source release and Task producer continuation
+
+Earlier source-only checkpoints above remain historical. #3097 closed the original
+3091/3093 Master rows and merged7b33ff3d after all10 exact checks/BOTH web statuses,
+schema-free PreviewSKIP and lower review5705422755. Its editing window returned
+to E04 then E02; no concurrent new Master edit is authorized by this packet.
+
+#3098 saved-design inspection mergedb696ea038b6e26b43c8d1787dc65c59da5c89b86
+from reviewed9bf995467 after all10 exact checks/BOTH web statuses/zero threads,
+PreviewSKIP and AUTHOR-REVIEW / LOWER ASSURANCE5705572872. Original203 assertions,
+16 frames/139 input pins and unchanged one-step guard retained. Vercel exact
+b696 READY; BOTH public origins00:02:40–42UTC serve buildb696-mvu7ftrs and the
+actual static module settings-integrations-CaOH2jQG.js, SHA256
+6bca20fa7e5d85cc331d052e4d7247a5a5d83311e58504e81fdbd78a3a463d01/all4 markers.
+GH3098/6511496787 retains source readback. This is source/web verified, NOT
+authenticated saved-design/full lifecycle/Rail/new-existing SOLO acceptance.
+
+The original native-order hold is resolved: E04#3099/native10 and E09#3100/native11
+are merged/published and production9/10/11eachONCE/frontier11,12ABSENT. Original
+Task executor OID289875/MD5bbcae6a52f1967ac78128ddb125491bb/service-onlyACL remains.
+Own native candidate normally composes mainb696 into26a08338; migration12 remains
+NEVER-APPLIED, exact source preserved. No applied history rewrite or activation.
+
+The newly advertised Task effort field exposed a pre-publication exact-approval
+gap in the actual original CRM handler. Bounded Task-only validation/summary now
+shows set35/zero/one/max/clear-to-unknown and combined original status/title,
+refusing malformed input or metadata replacement conflict before proposal. Actual
+handler104 cases, original CRM47 contracts/four suites and generator15 controls
+PASS. Native20 component checks/three actual two-connection races retain explicit
+synthetic peripheral Auth/access/hash/receipt ports; they are not native RLS/Rail.
+Full-schema225 pgTAP cases, hosted required exact-head CI/Preview/review and native
+deployment remain owed. Dependent original Operations editor stays separately
+preserved, not shipped ahead of native support. No new writer/approval/registry.
+
+This backend-visible-flow change has an explicit Visible-Flow-Impact trailer and
+[original approval evidence](../evidence/ui-delivery/exp05-task-effort-native.md).
+Four neutral unchanged-card frames prove bounded layout/focus, not authenticated
+stored approvals, full SOLO shell, native200%, AT or customer records. Native12
+and affected original Edge deployment/readback must precede production claims.
+All ten outcomes/E5-CV1–9, same ZION/both chats, O02 feasible saved plan then full
+O05/O07/O09, current/new SOLO/customer/founder acceptance remain OPEN. Catalogue
+and algorithms remain PARTIAL. STILL CODING / NOT_READY; no founder test request.
+
+## October30 04:40UTC — forward publication before safe Task release
+
+Original3102/fdc now has all13 observed checks/managedPreview and BOTH web statuses
+SUCCESS; original3103/3151 has all applicable checks green at its temporary
+native-parent base. Neither is merged. Currentmain3f37c5b72/production15 advances
+past unapplied12, so original deploy-migrations.yml would correctly refuse it.
+The SAME original Task function is forwarded to20271126050005 after published
+E08native40008; no --include-all, production ledger repair or peer source edit.
+Normal main composition082eb3b0 preserves all18191 outside-owned leaves. Native
+body/text, handler summary104 and all five rendered card inputs remain exact;
+generator15/field check and whitespace PASS. Fresh new-head review/CI/managed
+Preview/native225 are mandatory; historical green evidence is not transferred.
+The owned no-data/nonpersistent Preview12 source/catalogue proof is retained
+before supported disposable-environment recreation. No production schema/data,
+provider or business action occurred. Dependent UI remains DRAFT/preserved;
+retarget/final exact CI/release follows its verified native/Edge dependency.
+E04financial15, E09tentative16 and E08native/Root/host/card/record-link leases,
+same ZION/personality, both Chat/Team Hub and fullten/E5 remain preserved. This is
+routine engineering reconciliation, not founder approval or outcome closure.

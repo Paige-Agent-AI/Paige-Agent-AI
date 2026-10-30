@@ -207,6 +207,7 @@ const FIELD_DESCRIPTIONS = {
   due_date: "When the task is due.",
   track: "Workstream the task belongs to.",
   metadata: "Structured object of extra task fields; must be an object.",
+  estimated_minutes: "Task update only: whole minutes from 0 to 2147483647, or null to clear. Preserves other task metadata; cannot be combined with metadata replacement. Zero means recorded zero, not unknown.",
   description: "Longer body text for the task.",
   status: "Task update only: in_progress starts pending work or updates work already in progress. Use the separate complete, reopen or cancel command for other stages.",
   assigned_coach_user_id: "Exact active member UUID to set as coach across the selected contacts.",

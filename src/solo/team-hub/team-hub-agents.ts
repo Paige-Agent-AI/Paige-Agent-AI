@@ -430,6 +430,15 @@ export interface CardRead {
   expiresAt: string | null;
 }
 
+/** Reopen a verified original result, not a proposal or an unknown outcome. The native
+ * settlement already records CRM task references; this closed projection adds no read grant. */
+export function cardResultReference(card: CardRead): TeamHubMessage["approval_result_reference"] {
+  if (card.approval.state !== "done"
+    || ![CARD_KIND_LABEL.task_handover, CARD_KIND_LABEL.task_cancel].includes(card.approval.kind)
+    || card.record?.destination !== "operations_work" || !UUID.test(card.record.recordId)) return undefined;
+  return { destination: "operations_work", record_id: card.record.recordId };
+}
+
 /** The states the A2b read derives. `standing` is A2c's, so a read that says it is not one this build knows. */
 const CARD_STATES = ["waiting", "working", "done", "failed", "unconfirmed", "declined", "expired"] as const;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;

@@ -1,0 +1,48 @@
+{
+  "buttons": [
+    {
+      "height": 31.5,
+      "label": "Approve",
+      "width": 94.4124984741211
+    },
+    {
+      "height": 31.5,
+      "label": "Not now",
+      "width": 95.2874984741211
+    },
+    {
+      "height": 31.5,
+      "label": "Approve",
+      "width": 94.4124984741211
+    },
+    {
+      "height": 31.5,
+      "label": "Not now",
+      "width": 95.2874984741211
+    },
+    {
+      "height": 31.5,
+      "label": "Approve",
+      "width": 94.4124984741211
+    },
+    {
+      "height": 31.5,
+      "label": "Not now",
+      "width": 95.2874984741211
+    },
+    {
+      "height": 31.5,
+      "label": "Approve",
+      "width": 94.4124984741211
+    },
+    {
+      "height": 31.5,
+      "label": "Not now",
+      "width": 95.2874984741211
+    }
+  ],
+  "clippedText": 0,
+  "height": 900,
+  "scrollWidth": 320,
+  "width": 320
+}

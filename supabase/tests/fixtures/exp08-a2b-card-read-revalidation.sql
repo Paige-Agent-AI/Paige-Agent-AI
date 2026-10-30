@@ -85,4 +85,5 @@ SELECT pg_temp.check(pg_temp.card_read_post(:'u3',:'ta','nexus','["crm_list_task
 SELECT pg_temp.check(pg_temp.card_read_post(:'u3',:'ta','paige','["agreement_list"]')->'stage' ? 'error',
  'P1: PAIGE cannot widen the closed A2b attestation set');
 ROLLBACK;
+\ir ../exp10_nexus_team_hub_connection_read.sql
 \echo 'PASS: P1 card-read guard replay, original peer body inverse, staged admin read, demotion and roster revocation'

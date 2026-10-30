@@ -92,6 +92,27 @@ The agents' replies above the cards and the Suggest sentence are hand-written st
 
 ## Evidence index
 
+### Exact native EXP10 receiving compatibility — October 30, 2026
+
+Database-contract job `123852114883` on `98c4a26022` failed at the original EXP10 native
+test line 35: `A3: scope access changed: card`. Earlier domain-duplicate migration errors in
+the same log are expected negative probes followed by PASS; they are not the failed step.
+The actual compatibility failure reproduced locally, exit 3. The EXP10 test expected only
+the original version-1/read/eight-tool scope; reviewed A2b intentionally adds version-2/card
+with exactly those eight reads followed by `growth_page_publish`.
+
+The receiving test now validates only those two exact version/access/ordered-tool contracts,
+retaining actual platform-row, other-agent isolation and original absent-guard replay checks.
+Both positive configurations and eleven hostile mode/access/version/missing-read/extra-action/
+order/null configurations are checked. No EXP10 migration, helper, provider or credential code
+changes. Existing-owner notices are ANT-164/`53878a54-b948-4982-b16a-8b4942bb51e4` and ANT-161.
+The original disposable A2b proof now includes this real native test after all original assertions
+and mutants and the new P1 proof. It passes locally, exit 0. A test-only JSONB operator precedence
+error during development was corrected and is not counted as passing evidence.
+Fresh hosted exact-head gates remain required; this correction does not waive the failed run.
+The local full-app compiler attempt on the repair was stopped without a result; only the earlier
+head has the recorded baseline comparison. Current type/build assurance must come from fresh checks.
+
 ### New task-read freshness P1 — repair under review, October 30, 2026
 
 Automated review `5707385501` on #3108/`98c4a26022` found a real authority-snapshot gap

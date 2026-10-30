@@ -1,0 +1,48 @@
+{
+  "scope": "Actual original component/hook with explicitly synthetic native ports",
+  "inputs": [
+    {
+      "path": "src/hooks/useCustomerChatAttachments.ts",
+      "sha256": "33dc2da03dc99bc0df6f71a6fe4ad32afd9d2bda14f622a57dcc1327584a6c31"
+    },
+    {
+      "path": "src/components/chat/CustomerChatAttachments.tsx",
+      "sha256": "26656ffc276aee1a91865a0b369e342ae05290698b798c6b323e236fe42fd443"
+    },
+    {
+      "path": "src/components/app/PaigeChat.tsx",
+      "sha256": "48ce7d8b15e47bcb5389c533102cab69903f9c867394551f8fcac9d67555b3e6"
+    },
+    {
+      "path": "src/index.css",
+      "sha256": "85a3adb5668238e91cdb6c8189488db1fd24ce6698f7456ae23a3de6aa572482"
+    },
+    {
+      "path": "scripts/live-drive/harness/cura-picker-recheck/main.tsx",
+      "sha256": "7fc4266227ee7b1a7f7fb7280c535d965a07440bf15e9f87b1110240f57ef019"
+    },
+    {
+      "path": "scripts/live-drive/harness/cura-picker-recheck/ports.ts",
+      "sha256": "92bb3b5912856f870360a76d3379be4b8abe2db8ed3e98fb938a69e5484a1f56"
+    },
+    {
+      "path": "scripts/live-drive/harness/cura-picker-recheck/unused-paste-ports.ts",
+      "sha256": "8aa3fd5d6489d922203d45fa09148e6c474f601c7d1f4ffecaf16e3494afd3d1"
+    },
+    {
+      "path": "scripts/live-drive/harness/cura-picker-recheck/vite.config.mts",
+      "sha256": "7b66f4090204a94a1b4b951188c6bc52c84548982a7dfaa6eb29b33353c73fb4"
+    },
+    {
+      "path": "scripts/live-drive/harness/cura-picker-recheck/index.html",
+      "sha256": "e0047a76586bb475a186568692b666c5794d9ef2829f74a6d45a5e257dc4e7c6"
+    }
+  ],
+  "captures": [
+    "desktop-checking.jpg",
+    "desktop-recovered.jpg",
+    "narrow-checking-dark.jpg",
+    "narrow-recovered-dark.jpg",
+    "narrow-retired-dark.jpg"
+  ]
+}

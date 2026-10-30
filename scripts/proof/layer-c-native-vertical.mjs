@@ -116,7 +116,7 @@ async function ownerTaskNativeProof() {
     if (!ci) {
       const probe = createServer(); await new Promise((yes, no) => { probe.once("error", no); probe.listen(port, "127.0.0.1", yes); });
       await new Promise(yes => probe.close(yes));
-      call("initdb", ["-D", data, "-U", "postgres", "--auth=trust", "--no-locale", "--encoding=UTF8", "--no-sync"]);
+      call("initdb", ["-D", data, "-U", "postgres", "--auth=trust", "--no-locale", "--encoding=UTF8", "--no-sync"], { timeout: 120000 });
       call("pg_ctl", ["-D", data, "-l", resolve(scratch, "server.log"), "-o", `-h 127.0.0.1 -p ${port} -F`, "-w", "-t", "30", "start"], { stdio: "ignore" });
       started = true;
       // Reproduce a shared CI cluster where an earlier proof created this role
@@ -225,6 +225,14 @@ async function ownerTaskNativeProof() {
     const controlStatement = (process, action, review = controlReview(process), who = actor) => human(who)+
       `select control_owner_task_automation('${process}',${literal(action)},${literal(review.updated_at)}::timestamptz,${json(review.process)},${json(review.acts)})::text;`;
     const control = (process, action, review, who) => JSON.parse(sql(controlStatement(process, action, review, who)));
+    const runControlAttempt = statement => new Promise((yes,no) => {
+      const peer=spawn(exe("psql"),[...args(database),"-c",statement],{windowsHide:true,stdio:["ignore","pipe","pipe"]});
+      let out="",err="";const timer=setTimeout(()=>peer.kill(),30000);
+      peer.stdout.on("data",d=>{out+=d;});peer.stderr.on("data",d=>{err+=d;});
+      peer.once("error",error=>{clearTimeout(timer);no(error);});
+      // close joins both pipes; exit can precede the final response bytes.
+      peer.once("close",code=>{clearTimeout(timer);yes({code,out,err});});
+    });
     let controlInstalled = false, multistepMetadataBefore;
     function held(number) {
       const process = id(number), act = id(number + 1), contact = id(number + 2);
@@ -306,22 +314,28 @@ async function ownerTaskNativeProof() {
         insert into paige_automation_acts(id,automation_id,position,action_kind,config)values('${act}','${process}',1,'owner.task',${json(config)});`);
       return {process,act};
     }
+    let multistepProof;
     const proveMultistep = async () => {
       check("shared rollback-only literal/ACL SQL contract passes without business fixtures or effects", () => {
         sql(text("supabase/tests/owner_task_multistep.sql"));
       });
       const { proveOwnerTaskMultistep } = await import("./owner-task-multistep-cases.mjs");
-      proveOwnerTaskMultistep({ sql, text, draft, control, controlReview, native, actor, tenant,
+      multistepProof = proveOwnerTaskMultistep({ sql, text, draft, control, controlReview, native, actor, tenant,
         check, refuses, literal, json, approve, claim, bridge, resultCount, human, multistepMetadataBefore });
     };
     const proveStepRevision = async () => {
       // Explicit counterfactual mode drives the unchanged released controller.
       // Normal proof requires the actual next reviewed migration, never a stub.
+      const beforeRevision = multistepProof.catalog();
+      const revisionSql = process.env.OWNER_TASK_STEP_REVISION_SQL ?? "supabase/migrations/20271126160005_owner_task_step_revision.sql";
       if (!process.argv.includes("--without-step-revision-patch")) {
-        sql(text("supabase/migrations/20271126160005_owner_task_step_revision.sql"));
+        if (revisionSql !== "work/owner-task-step-revision/native-candidate.sql"
+          && !/^supabase\/migrations\/\d{14}_owner_task_step_revision\.sql$/.test(revisionSql)) throw new Error("Owned step-revision SQL required");
+        sql(text(revisionSql));
       }
       const { proveOwnerTaskStepRevision } = await import("./owner-task-multistep-cases.mjs");
-      proveOwnerTaskStepRevision({ sql, draft, control, controlReview, check });
+      await proveOwnerTaskStepRevision({ sql, draft, control, controlReview, check, tenant, actor, other,
+        controlStatement, runControlAttempt, text, revisionSql, beforeRevision, ...multistepProof, approve, claim, bridge, resultCount });
     };
     if (multistepOnly) {
       await proveMultistep();
@@ -807,14 +821,7 @@ async function ownerTaskNativeProof() {
         check("released "+label+" lock permits the same exact owner review once",()=>{assert.equal(control(x.process,"arm",r).state,"live");assert.equal(auditCount(x.process),"1");});
       }
       const race=draft(),raceReview=controlReview(race.process);
-      const controlAttempts=await Promise.all(Array.from({length:8},()=>new Promise((yes,no)=>{
-        const peer=spawn(exe("psql"),[...args(database),"-c",controlStatement(race.process,"arm",raceReview)],{windowsHide:true,stdio:["ignore","pipe","pipe"]});
-        let out="",err="";const timer=setTimeout(()=>peer.kill(),30000);
-        peer.stdout.on("data",d=>{out+=d;});peer.stderr.on("data",d=>{err+=d;});
-        peer.once("error",error=>{clearTimeout(timer);no(error);});
-        // exit may precede the final pipe data; close joins both stdout and stderr.
-        peer.once("close",code=>{clearTimeout(timer);yes({code,out,err});});
-      })));
+      const controlAttempts=await Promise.all(Array.from({length:8},()=>runControlAttempt(controlStatement(race.process,"arm",raceReview))));
       check("eight actual simultaneous owner controls mint one activation/audit; every loser is stale or NOWAIT refused",()=>{
         const succeeded=controlAttempts.filter(r=>r.code===0);assert.equal(succeeded.length,1);
         assert.equal(JSON.parse(succeeded[0].out).changed,true);

@@ -19,7 +19,7 @@ const heldCopy:Record<Extract<AcceptedPaymentPlanRead,{state:'held'}>['reason'],
  accepted_source_changed:'The invoice and accepted agreement no longer match. Review both versions without rewriting signed history.',
  test_payment_evidence:'TEST payment evidence cannot fulfill this customer’s actual commercial obligations. Inspect the original payment records.',
  allocation_conflict:'The original payment allocations conflict with this accepted schedule. Review the original receipts before proceeding.',
- allocation_required:'A recorded payment has not been assigned to an accepted obligation. Review its original receipt; PAIGE will not guess the allocation.',
+ allocation_required:'Accepted-payment assignments could not be verified. Review the original receipts and corrections; PAIGE will not guess the allocation.',
 };
 const day=(value:string)=>new Intl.DateTimeFormat(undefined,{dateStyle:'medium',timeZone:'UTC'}).format(new Date(value+'T12:00:00Z'));
 

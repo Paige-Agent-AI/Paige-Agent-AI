@@ -4,7 +4,7 @@
   "files": [
     {
       "file": "src/solo/sales/InvoiceAcceptedPaymentPlan.tsx",
-      "sha256": "10932b479b7f394859ad04034ff7140c4129d7028bdce998ec45efbce6bb85a0"
+      "sha256": "2054a74b7f9713f92bd414aaafd47ec2edb7937139d7c9e191f455b4152cc995"
     },
     {
       "file": "src/solo/sales/InvoiceLifecycleActions.tsx",
@@ -49,5 +49,6 @@
       "sha256": "0f2c21b825997c639e34643912e2905e2e685b57d21178d5cf2781b3c8f17840"
     }
   ],
-  "productCommit": "955da6dc3d69710122a06b67b57eede892a75af8"
+  "productCommit": "955da6dc3d69710122a06b67b57eede892a75af8",
+  "note": "Only held-source recovery copy changed after assigned-state captures; captured review/assigned receipt markup remains identical."
 }

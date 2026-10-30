@@ -6,8 +6,9 @@
 //      next email as a planned recipient of the series' own campaign. Sending is then steps 1-4, unchanged.
 //   1. Claims a batch of one due campaign (email_campaign_dispatch_claim). The database has already
 //      expired stale leases to outcome_unknown, blocked a campaign whose business, postal address or
-//      approved sender is no longer valid, re-checked every recipient's eligibility and applied the
-//      500-a-day ceiling. Only leased recipients come back.
+//      approved sender is no longer valid, and re-checked every recipient's eligibility. There is no daily
+//      ceiling (20271121140003); the claim takes due campaigns fairly across businesses, the business it
+//      claimed least recently first. Only leased recipients come back.
 //   2. Opens the dispatch's durable-work envelope (idempotent) and sends each recipient through the
 //      ONE send seam, send-message (sender resolution, pre-send checks, suppression, provider adapter,
 //      messages + audit). There is no second sending implementation here (owner ruling 2).
@@ -213,8 +214,10 @@ Deno.serve(async (req) => {
       continue;
     }
     if (claim.waiting || !claim.recipients?.length) {
-      // At the daily ceiling, or another worker holds the rest of the batch. Settle what may be
-      // finished and stop rather than claim the same campaign again in a loop.
+      // Nothing was leased: another worker holds the rest of the batch, or the send-time check left
+      // everyone still planned out.
+      // (There is no daily ceiling since 20271121140003; `waiting` is kept for any older claim answer.)
+      // Settle what may be finished and stop rather than claim the same campaign again in a loop.
       notes.push({ campaign_id: claim.campaign.id, waiting: claim.waiting ?? "nothing_leased" });
       await admin.rpc("email_campaign_dispatch_settle", { p_campaign_id: claim.campaign.id });
       break;

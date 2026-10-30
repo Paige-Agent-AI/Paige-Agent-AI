@@ -410,3 +410,34 @@ describe("Marketing › Email campaign editor", () => {
     expect(text()).toContain("Add a subject line first.");
   });
 });
+
+// Owner ruling 2026-10-27: PAIGE imposes no sending stop (migration 20271121140003). The database still
+// reports its old 500 display figure; no screen may present it as a limit.
+const NO_LIMIT = /a day|-a-day|daily|limit|left in the last 24|send tomorrow|used up/i;
+describe("Marketing › Email names no daily sending limit", () => {
+  it("the dashboard shows the real count of the last 24 hours, not a limit or what is left of one", async () => {
+    await mount();
+    expect(text()).toContain("100 marketing emails sent or sending in the last 24 hours.");
+    expect(text()).not.toMatch(NO_LIMIT);
+  });
+
+  it("the dashboard says one email, not one emails", async () => {
+    answers.read_email_marketing_dashboard = { data: { ...dashboard, sending: { ...dashboard.sending, used_last_24h: 1, remaining_today: 499 } }, error: null };
+    await mount();
+    expect(text()).toContain("1 marketing email sent or sending in the last 24 hours.");
+  });
+
+  it("the editor counts 900 people who can receive it and never says today's limit leaves room for fewer", async () => {
+    window.history.replaceState(null, "", "/solo/1/growth/email?campaign=c-new");
+    answers.read_email_campaign = { data: campaignRead(), error: null };
+    answers.email_audience_preview = { data: { matched: 900, eligible: 900, no_address: 0, opted_out: 0, suppressed: 0, no_consent: 0, daily_cap: 500, remaining_today: 400, postal_address_set: true }, error: null };
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    await mount();
+    await act(async () => { vi.advanceTimersByTime(900); });
+    await flush();
+    expect(calls.some((c) => c.fn === "email_audience_preview")).toBe(true);
+    expect(text()).toContain("900 people can receive it");
+    expect(text()).toContain("PAIGE’s sender · opens and clicks reported");
+    expect(text()).not.toMatch(NO_LIMIT);
+  });
+});

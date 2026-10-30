@@ -1,0 +1,96 @@
+[
+ {
+  "id": "light/dashboard",
+  "renders": true,
+  "pageErrors": [],
+  "limitWording": null,
+  "gold": [],
+  "countLine": true,
+  "senderLine": false
+ },
+ {
+  "id": "light/editor-draft",
+  "renders": true,
+  "pageErrors": [],
+  "limitWording": null,
+  "gold": [],
+  "countLine": null,
+  "senderLine": true
+ },
+ {
+  "id": "light/series-pending",
+  "renders": true,
+  "pageErrors": [],
+  "limitWording": null,
+  "gold": [
+   "Approve and start"
+  ],
+  "countLine": null,
+  "senderLine": false
+ },
+ {
+  "id": "light/series-running",
+  "renders": true,
+  "pageErrors": [],
+  "limitWording": null,
+  "gold": [],
+  "countLine": null,
+  "senderLine": false
+ },
+ {
+  "id": "light/series-draft",
+  "renders": true,
+  "pageErrors": [],
+  "limitWording": null,
+  "gold": [],
+  "countLine": null,
+  "senderLine": true
+ },
+ {
+  "id": "dark/dashboard",
+  "renders": true,
+  "pageErrors": [],
+  "limitWording": null,
+  "gold": [],
+  "countLine": true,
+  "senderLine": false
+ },
+ {
+  "id": "dark/editor-draft",
+  "renders": true,
+  "pageErrors": [],
+  "limitWording": null,
+  "gold": [],
+  "countLine": null,
+  "senderLine": true
+ },
+ {
+  "id": "dark/series-pending",
+  "renders": true,
+  "pageErrors": [],
+  "limitWording": null,
+  "gold": [
+   "Approve and start"
+  ],
+  "countLine": null,
+  "senderLine": false
+ },
+ {
+  "id": "dark/series-running",
+  "renders": true,
+  "pageErrors": [],
+  "limitWording": null,
+  "gold": [],
+  "countLine": null,
+  "senderLine": false
+ },
+ {
+  "id": "dark/series-draft",
+  "renders": true,
+  "pageErrors": [],
+  "limitWording": null,
+  "gold": [],
+  "countLine": null,
+  "senderLine": true
+ }
+]

@@ -1,3 +1,108 @@
+# C144 - original received-payment assignments and retained corrections
+
+Status: LOCAL source preparation, not merged/deployed/activated or accepted. Same full O1-O12; O1-O4 first, O5/O9 next, then O6-O8/O10-O12.
+
+Reuses original immutable invoice command, accepted signing/terms, receipt/reversal/operation and Rail. Explicit split/partial assignments validate current native remaining facts under the existing invoice/actor locks. Same-operation replay precedes eligibility. A full manual correction restores ONLY the original receipt assignments and preserves history; provider payments stay with provider reconciliation. No FIFO, new ledger, approval, calculator or sender.
+
+Original Sales form, HIGH review, assigned receipt inspection and existing PAIGE/MERIT invoice read share closed transport/decoder. Existing read opts into an exact manual_payment_id from original bounded history, caller JWT only. Original Portal/Work/Root and financial DTOs are unchanged. Native echo is required before approval mint; no new Chat admission or availability promotion.
+
+Local proof: original43 within93 PostgreSQL checks, real three-session permission-lock serialization, exact replay/full correction/original-receipt readback/ACL/guard/rollback controls. Original391 payment cases; invoice/UI/HTTP187 and separate Chat/history90 (15 overlap), focused857 types0 and frozenDeno. Synthetic Auth/table/preview/Rail ports are not full-schema, actual provider or customer evidence. Actual desktop review/keyboard return/discard plus current390-frame corrected receipt/keyboard footer are bounded source proof; native200/AT/full shell/two cohorts and actual financial acceptance remain owed. [Evidence](../evidence/ui-delivery/e04-manual-payment-assignments.md).
+
+Separate deployed3116 Owner QA now PASS, protected ANT52/60f4d7f5: original chooser, same saved draft/new labels/refusal advice, keyboard return/close focus, full reload/version1/zero receipts and actual loaded source match. No issue/approval/sign/send/payment/provider. Current9e6b mainCI41082134346 also completedSUCCESS. This does not accept the new allocation source or all O4.
+
+Native candidate20271126080004 is unapplied; actual production frontier35008 and four original body pins rechecked. Preserve published40008 ->50005 ->60009 ->70005 prerequisites and release/readback before new financial Owner QA. Required exact review/CI/Preview/native+all affected Edge source readback and CentralQA remain owed. No founder signoff per routine slice; final full Experience acceptance remains OPEN.
+
+---
+
+# C143 — invoice repair released; explicit original receipt allocation is next
+
+Same MERIT and full O1–O12. Connected O1–O4 first, O5/O9 next, then the remaining
+onboarding/delivery/completion/self-service outcomes. All integrated customer,
+Central QA and founder acceptance remains open.
+
+## Released O4 increment
+
+[#3116](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3116) reviewed
+`3e95d649a84881f27a598f6a4421c1779aab2ae6`, sequential AUTHOR-REVIEW / LOWER
+ASSURANCE5713801389, all ten applicable checks and both web contexts SUCCESS,
+schema-free Preview SKIPPED and zero unresolved threads. Normal merge
+`9e6b2514a0a59153097cbb4602065167fbca7987`, tree
+`7a9f006cae29aa6df23f893ec5f9688c49bf2dd2`, is the exact inspected union of
+maina54 and reviewed3e95; outside-owned leaves remain unchanged. Original main
+CI41072179082's ONE unchanged normal retry passed before merge. Its first
+failure remains evidence, not a waived test or a claimed root cause.
+
+Vercel `dpl_FesBRzEHfTQazb25T4Z9yifGaV52` is READY/exact. Canonical public build
+`9e6b2514a0a59153097cbb4602065167fbca7987-mvv4x3rg`, root, seven linked assets and
+actual bootstrap→application→SOLO→Sales imports return200. Served Sales source
+`growth2-4pvbjHHw.js` SHA256
+`7f110274de1e2b7a600e670e2351de110f74192bdd9935ee1c0d0bf152efab08`
+contains all six lifecycle amount labels and the exact typed-refusal correction
+advice. No native/Edge/workflow source delta or new activation.
+[Release receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3116#issuecomment-6526852004).
+
+Actual separately authorized read-only Admin invoice/agreement empty states,
+reload and return navigation work. That cohort has no saved invoice, so this
+does not exercise the repaired record labels/refusal. The intended Owner route
+opened the other authorized read-only context: INVALID for Owner repair proof,
+stopped without domain actions or an account/workspace change. Protected details
+stay in ANT-52. Prior Owner draft/history/preparation proof remains historical;
+corrected saved-record/review, client/staff/provider and Central QA proof is owed.
+
+## LOCAL, incomplete explicit manual receipt allocation
+
+The original invoice command now validates optional explicit accepted-obligation
+splits using the SAME canonical obligation decoder and money bounds. Unique
+references must identify one accepted signing/source, positive splits must fit
+the captured remaining amounts and sum exactly to the reported receipt. Input
+order is retained; absence preserves the old manual command exactly. A reversal
+does not accept a caller-authored replacement allocation. Parsing is transport,
+not currentness, authorization, money movement or fulfillment evidence.
+
+Initial three causal failures with60 controls preceded implementation. A separate
+adversarial sparse-array reproduction then failed with63 controls, and was repaired
+without skipping unchecked slots. Final93 command/endpoint tests pass; the original
+391 payment tests/17 suites separately pass. Focused original-config types, lint
+and frozen Deno checks are supporting source proof; the actual native writer,
+Kit declaration, UI and release are NOT yet extended. Do not publish or activate
+this partial transport as a completed capability.
+
+Next, extend ONLY the original private manual executor and its preview under exact
+source/metadata guards. Re-read the original accepted source and remaining targets
+after the existing invoice lock; preserve actor/version/approval/idempotency order.
+Store the reviewed instruction in the existing immutable
+`paige_invoice_operations.command`, beside the SAME original manual receipt.
+The accepted-obligation reader must derive assigned amounts from those original
+operations/receipts, and derive correction effects from the original full reversal.
+No allocation table, duplicate receipt, FIFO, new approval or financial engine.
+Unassigned historical receipts remain held; fully reversed historical amounts
+must retain their original zero-net behavior. Human-recorded and provider-verified
+evidence remain distinct; TEST evidence never fulfills an actual obligation.
+
+Require exact old-source inverses and old-consumer controls, new native positive
+split/partial/reversal proofs, malformed/mixed/duplicate/stale/over-allocation
+refusals, role/tenant/revocation, original replay/concurrency and receipt/Rail
+rollback. Then mount explicit selection and inspectable history in the original
+manual-payment/review surface with real rendered/recovery proof. Preserve the
+legitimate E08 through40008→E05 50005→E09 60009 dependency chain. A new forward
+carrier has NOT been named, applied or published; reconcile actual frontier before
+release. Do not rename applied history or use an isolated Preview to waive peers.
+
+Historical#2913 guard SQL is whole-file exact to the current21131204 forward,
+SHA256 `3bbc17a4597968faa0a91b99ca659b916b2476499cc949105d3defbbfa5a43db`,
+also present in merged#2971/9c05. Production21131204/21131304 each appear once;
+current amount-basis/evidence helpers matcha7c2887f/86404f3e. Reuse the evolved
+accepted deposit/custom-quote and recurring semantics; do not remerge the old
+candidate or recreate its agreement/collection engine.
+
+Owner ALL50/every-call-text and delegated-management directives are incorporated
+in the original ANT-51 matrix. EXP03 retains the canonical final dispatch gate and
+state-source matrix; E04 consumes its original hold/result contract. No50-state
+compliance or delegated-member grant is inferred. ALG01/12 remain PARTIAL,
+ALG02/13 UNVERIFIED and capability maturity unchanged. Full12 work continues.
+
+---
+
 # C133 — Forward financial authority source after the actual database frontier
 
 Original #3110/f0324c004f938015a44ea2f8aa01d2eae5667e8e received sequential

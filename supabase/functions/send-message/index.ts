@@ -641,6 +641,42 @@ const smsOutboundAdapter: OutboundChannelAdapter = {
       };
     }
 
+    // Preparation awaits can outlive the earlier eligibility decision. Re-enter
+    // the ONE original gate immediately before the provider attempt; never turn
+    // changed eligibility into an automatic queue or an uncertain provider effect.
+    if (!await commsProviderExecutionAllowed(admin, {
+      tenantId,
+      actorUserId: typeof msg.meta?.provider_actor_user_id === "string" ? msg.meta.provider_actor_user_id : null,
+    })) {
+      return {
+        ok: false, status: "failed" as const, reason: COMMS_PROVIDER_EXECUTION_DISABLED,
+        error: "Provider execution is unavailable. Nothing was sent.",
+        meta: { dispatch_not_attempted: true },
+      };
+    }
+    let eligibility: Awaited<ReturnType<typeof runPreSend>>;
+    try {
+      eligibility = await runPreSend(admin, {
+        tenantId, channel: "sms", to: ctx.to, contactId: msg.contact_id,
+        overrideClientDnd: msg.meta?.client_dnd_override === true,
+      });
+    } catch {
+      return {
+        ok: false, status: "failed" as const, reason: "sms_final_eligibility_unavailable",
+        error: "Couldn't verify this text's current message permissions. Nothing was sent. Review and try again.",
+        meta: { dispatch_not_attempted: true },
+      };
+    }
+    if (!eligibility.proceed) {
+      return {
+        ok: false, status: "failed" as const, reason: "sms_final_eligibility_refused",
+        error: eligibility.outcome.startsWith("queued_")
+          ? "This text is on hold because message hours or preferences changed. Nothing was sent or scheduled. Review before trying again."
+          : eligibility.reason ?? "This text's message permissions changed. Nothing was sent. Review before trying again.",
+        meta: { dispatch_not_attempted: true, eligibility_outcome: eligibility.outcome },
+      };
+    }
+
     // 4) Send via the ONE authenticated seam. Body is plain text for SMS.
     const bodyText = msg.body_text ?? msg.body_html ?? "";
     const result = await sendSms(subaccountSid, subToken, {
@@ -649,14 +685,24 @@ const smsOutboundAdapter: OutboundChannelAdapter = {
       body: bodyText,
       statusCallback: ctx.statusCallbackUrl ?? undefined,
       messagingServiceSid, // A2P Messaging Service takes precedence over From when present.
-    }, subApiKeySid); // C-2a: SK… as the Basic-auth username (API-Key auth)
-    if (!result.ok || !result.data) {
+    }, subApiKeySid).catch(() => ({
+      ok: false, status: 0, error: "sms_provider_result_unconfirmed", data: null, needs_config: false,
+    })); // C-2a: SK… as the Basic-auth username (API-Key auth)
+    const sid = typeof result.data?.sid === "string" && /^(SM|MM)[0-9a-fA-F]{32}$/.test(result.data.sid)
+      ? result.data.sid : null;
+    if (!result.ok || !sid) {
+      // A lost answer, 5xx or receipt-less success may already have created a message.
+      // Twilio documents 429 as not processed; other definitive 4xx stay failures.
+      const rejected = Number.isInteger(result.status) && result.status >= 400 && result.status < 500
+        && result.status !== 408 && result.status !== 409;
+      const unconfirmed = result.needs_config !== true && (!result.ok ? !rejected : !sid);
       return {
-        ok: false, status: "failed" as const, reason: "twilio_send_failed",
-        error: result.error ?? "twilio_send_failed", meta: { from_number: fromNumber },
+        ok: false, status: "failed" as const,
+        reason: unconfirmed ? "sms_delivery_unconfirmed" : "twilio_send_failed",
+        error: unconfirmed ? "SMS provider result could not be confirmed." : result.error ?? "twilio_send_failed",
+        meta: { from_number: fromNumber, http_status: result.status, delivery_unconfirmed: unconfirmed },
       };
     }
-    const sid = (result.data as { sid?: string }).sid ?? null;
     return {
       ok: true, status: "sent" as const, provider_message_id: sid,
       meta: { from_number: fromNumber, messaging_service_sid: messagingServiceSid ?? null },
@@ -745,6 +791,11 @@ Deno.serve(async (req) => {
   }
   if (!body?.channel || !body?.to || !body?.body) {
     return new Response(JSON.stringify({ error: "missing_fields" }), {
+      status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+  if (body.channel !== "email" && body.channel !== "sms") {
+    return new Response(JSON.stringify({ error: "unsupported_channel" }), {
       status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
@@ -1864,6 +1915,8 @@ Deno.serve(async (req) => {
         connector_id: effectiveConnectorId,
         recipients: [{ address: body.to }],
         body_text: body.body, // SMS body is plain text
+        // Server-produced adapter context, preserving only the existing explicit override.
+        meta: { client_dnd_override: body.override_client_dnd === true, provider_actor_user_id: user?.id ?? null },
       };
       const ctx: OutboundSendContext = {
         from: { address: "" },     // real from-number is resolved INSIDE the adapter (§9)
@@ -1883,6 +1936,10 @@ Deno.serve(async (req) => {
       }
       const delivery = await adapter.send(outMsg, ctx);
       pipe_used = "twilio";
+      providerUnconfirmed = delivery.meta?.delivery_unconfirmed === true;
+      // Original invoice claim/finalizer stays authoritative. A final eligibility
+      // refusal made no provider attempt, so it must not be recorded as unknown.
+      if (invoiceBinding && !delivery.ok && delivery.meta?.dispatch_not_attempted === true) invoiceProviderAttempted = false;
 
       // Record the tenant number the adapter actually used (audit + messages row).
       const fromUsed = (delivery.meta?.from_number as string | undefined) ?? null;
@@ -1891,7 +1948,9 @@ Deno.serve(async (req) => {
       if (!delivery.ok) {
         // Honest failure surface (§13): reason/needs_config preserved; status stays 'failed'
         // (§37). The thrown message lands in errorText for the audit row.
-        reason = delivery.reason ?? (delivery.needs_config ? "needs_config" : null);
+        reason = delivery.reason === "sms_final_eligibility_refused" || delivery.reason === "sms_final_eligibility_unavailable"
+          ? delivery.error ?? delivery.reason
+          : delivery.reason ?? (delivery.needs_config ? "needs_config" : null);
         throw new Error(invoiceBinding ? "invoice_provider_result_unconfirmed" : delivery.error || delivery.reason || "sms_send_failed");
       }
       vendor_message_id = delivery.provider_message_id ?? null;
@@ -2023,8 +2082,8 @@ Deno.serve(async (req) => {
           sender: fromAddress ? { address: (fromAddress.match(/<([^>]+)>/)?.[1] ?? fromAddress) } : null,
           recipients: [{ address: body.to }],
           subject: body.subject ?? null,
-          body_html: body.body,
-          body_text: null,
+          body_html: body.channel === "email" ? body.body : null,
+          body_text: body.channel === "sms" ? body.body : null,
           provider_message_id: null,
           in_reply_to_provider_id: body.in_reply_to ?? null,
           attachments: body.attachments ?? [],

@@ -33,12 +33,12 @@ MUST_PRESERVE: original reads, parse/authority/bearer/provider URL guards, recor
 ACCEPTANCE_CRITERIA: after reviewed release, authorized existing owner/client can inspect exact source amounts, current state and original navigation/recovery; final customer proof must use actual records and legitimate roles.
 MOTION_PURPOSE: NONE: no motion change.
 PROTECTED_SEAMS: original money presentation only. Native financial facts/calculators/allocations, signed terms, caller authorization, provider/approval/execution/receipt, Chat/Live/Team Hub hosts, customer Portal contracts and registry writers are not changed.
-INTERNAL_BUILD_IDENTITY: 0a61633688b990dac2c4e71464ab2b2d5336c27e; deployment=none; environment=local; migrations=NOT_APPLICABLE; edge=NOT_DEPLOYED; evidence=assets/e04-exact-money/source-manifest.json
+INTERNAL_BUILD_IDENTITY: 0a61633688b990dac2c4e71464ab2b2d5336c27e; deployment=none; environment=local; migrations=NOT_APPLICABLE; edge=PROOF_OWED(normal affected-importer deployment and source readback); evidence=assets/e04-exact-money/source-manifest.json
 RELEASE_CHANNEL: development: local candidate, no staged/production/customer activation.
-RELEASE_CLASSIFICATION: maintenance: accurate amount presentation in existing approved commercial read surfaces.
+RELEASE_CLASSIFICATION: patch: accurate amount presentation in existing approved commercial read surfaces.
 CUSTOMER_RELEASE_IDENTITY: none: no customer release yet.
 RELEASE_NOTE_REQUIRED: no: maintenance correction, no new approved product capability or activation.
-RELEASE_TRUTH_BOUNDARY: PARTIAL source candidate; full release/authenticated/provider proof remains PROOF OWED. No capability/algorithm maturity promotion.
+RELEASE_TRUTH_BOUNDARY: PARTIAL: source candidate; full release/authenticated/provider proof remains PROOF OWED. No capability/algorithm maturity promotion.
 RELEASE_RECOVERY: position=reviewed forward-fix through original formatter entrypoints; reference=original request/standing source contracts and original EXP04 delivery packet. No data/ledger rollback.
 
 ## Scope and collisions

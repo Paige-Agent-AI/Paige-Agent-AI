@@ -158,6 +158,16 @@ export const toolObjectCount = (source) => [...source.matchAll(/\btype:\s*["']fu
 export const spreadSymbols = (source) =>
   [...source.matchAll(/^\s*\.\.\.([A-Za-z_$][\w$]*)(\(\))?,\s*$/gm)].map((m) => ({ symbol: m[1], call: Boolean(m[2]) }));
 
+/**
+ * `builder(),` alone on its line: ONE tool definition returned by an imported factory (EXP08 A2b moved
+ * `growth_page_publish` to `_shared/growth-publish-command/chat-tools.ts` this way, a fresh object per
+ * request because the handler writes into its tool definitions). Without this the tool is invisible:
+ * the literal loses one `type: "function"` and one `name` together, so the cross-check above still
+ * balances and the tool silently leaves the surface.
+ */
+export const elementCalls = (source) =>
+  [...source.matchAll(/^\s*([A-Za-z_$][\w$]*)\(\),\s*$/gm)].map((m) => ({ symbol: m[1], call: true, element: true }));
+
 /** Every line-leading spread, resolvable or not. Anything here that spreadSymbols missed is fatal. */
 export const allSpreadLines = (source) =>
   [...source.matchAll(/^\s*\.\.\..*$/gm)].map((m) => m[0].trim());
@@ -233,6 +243,7 @@ export function resolveChatTools(source, resolveSpread) {
   }
 
   for (const spread of spreadSymbols(literal)) for (const n of resolveSpread(spread)) names.add(n);
+  for (const element of elementCalls(literal)) for (const n of resolveSpread(element)) names.add(n);
 
   const at = source.indexOf("const legacyCrmMutationTools = new Set([");
   if (at < 0) throw new Error("could not find the legacy CRM splice set");
@@ -435,6 +446,7 @@ if (process.argv.includes("--self-test")) {
     '  } },',
     '  ...DOMAIN_TOOLS,',
     '  ...buildGatewayToolDefs(),',
+    '  buildOneToolDef(),',
     '];',
     'const legacyCrmMutationTools = new Set([',
     '  "crm_create_contact", "gone_for_good",',
@@ -444,15 +456,17 @@ if (process.argv.includes("--self-test")) {
     '      name: "ask_choices",',
     '} });',
   ].join("\n");
-  const fixtureSpread = ({ symbol, call }) => ({
+  const fixtureSpread = ({ symbol, call, element }) => ({
     DOMAIN_TOOLS: ["domain_write"],
     buildGatewayToolDefs: call ? ["capability_status"] : [],
+    buildOneToolDef: element ? ["one_tool"] : [],
     CRM_COMMAND_TOOLS: ["crm_create_contact", "crm_close_deal"],
   })[symbol] ?? [];
   const resolved = resolveChatTools(fixtureHandler, fixtureSpread);
   ok("resolves inline names", resolved.has("keeper"));
   ok("resolves a spread identifier", resolved.has("domain_write"));
   ok("resolves a spread CALL", resolved.has("capability_status"));
+  ok("resolves a bare tool-definition CALL element", resolved.has("one_tool"));
   ok("keeps a studio-gated push that lives outside the literal", resolved.has("ask_choices"));
   ok("drops a spliced legacy name that nothing re-adds", !resolved.has("gone_for_good"));
   // THE NEGATIVE THAT PINS THE BUG: splice-then-push order. Delete-after-add loses this name.
@@ -624,7 +638,7 @@ const source = fs.readFileSync(HANDLER, "utf8");
 const imports = importSpecifiers(source);
 
 /** Import the module a spread symbol comes from and read the REAL array. Fail closed on empty. */
-function resolveSpread({ symbol, call }) {
+function resolveSpread({ symbol, call, element = false }) {
   const specifier = imports.get(symbol);
   if (!specifier) fail(`the Chat tool array spreads \`${symbol}\`, which is not an import this guard can resolve.\n  Resolve it deliberately — an unresolved spread means the guard is grading a SUBSET while reporting a total.`);
   let value;
@@ -632,6 +646,8 @@ function resolveSpread({ symbol, call }) {
     const url = new URL(specifier, pathToFileURL(HANDLER).href).href;
     const module = moduleCache.get(url) ?? fail(`internal: ${specifier} was not preloaded`);
     value = call ? module[symbol]() : module[symbol];
+    // A bare element call contributes ONE tool definition, not an array of them.
+    if (element) value = value && !Array.isArray(value) ? [value] : [];
   } catch (error) {
     fail(`could not read \`${symbol}\` from ${specifier} — ${error?.message ?? error}`);
   }
@@ -648,6 +664,7 @@ const moduleCache = new Map();
   if (!literal) fail("could not bracket-match the toolDefs literal in the Chat handler.");
   const symbols = [
     ...spreadSymbols(literal),
+    ...elementCalls(literal),
     ...[...source.matchAll(/toolDefs\.push\(\s*\.\.\.([A-Za-z_$][\w$]*)/g)].map((m) => ({ symbol: m[1], call: false })),
   ];
   for (const { symbol } of symbols) {

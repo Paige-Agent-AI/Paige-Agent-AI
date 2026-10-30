@@ -2,7 +2,8 @@
 -- Disposable database only. No synthetic tenant data is needed — the migration touches exactly one
 -- platform row, so the proof pins that row and its blast radius:
 --   (A) the nexus platform row's capability_scope.tools now carries "integrations_list", appended
---       AFTER the seven seeded names, with the scope's mode still allowlist and access still read;
+--       AFTER the seven seeded names; original v1/read or reviewed EXP08 v2/card with ONLY
+--       growth_page_publish appended after those eight reads. No broader action set is accepted;
 --   (B) every OTHER agent's platform row is untouched by the read registration (no
 --       integrations_list anywhere else);
 --   (C) replay-safety: the migration's own predicate (absent-guard) matches ZERO rows now, so a
@@ -17,21 +18,49 @@
 BEGIN;
 \set ON_ERROR_STOP on
 
--- (A) + (D) the nexus platform row: the seven seeded names, in order, then the one append.
-DO $$
+-- (A) + (D) both exact published compositions retain the original eight-name read prefix.
+-- This is test-only receiving compatibility for EXP08 A2b, not a provider/credential grant.
+CREATE FUNCTION pg_temp.exp10_assert_nexus_scope(got jsonb) RETURNS void LANGUAGE plpgsql AS $$
 DECLARE
-  got jsonb;
+  expected jsonb:='["ask_choices","capability_status","read_business_time_zone","team_hub_read_conversation","growth_list","campaign_brief_list","read_campaign_leads","integrations_list"]'::jsonb;
 BEGIN
-  SELECT config->'capability_scope' INTO got FROM public.paige_subagents
-   WHERE slug = 'nexus' AND tenant_id IS NULL;
   IF got IS NULL THEN RAISE EXCEPTION 'A1: nexus platform row lost its capability_scope'; END IF;
-  IF got->>'mode' <> 'allowlist' THEN RAISE EXCEPTION 'A2: scope mode changed: %', got->>'mode'; END IF;
-  IF got->>'access' <> 'read' THEN RAISE EXCEPTION 'A3: scope access changed: %', got->>'access'; END IF;
+  IF got->>'mode' IS DISTINCT FROM 'allowlist' THEN RAISE EXCEPTION 'A2: scope mode changed: %', got->>'mode'; END IF;
+  IF got->'version'='2'::jsonb AND got->>'access'='card' THEN
+    expected:=expected||'["growth_page_publish"]'::jsonb;
+  ELSIF got->'version' IS DISTINCT FROM '1'::jsonb OR got->>'access' IS DISTINCT FROM 'read' THEN
+    RAISE EXCEPTION 'A3: scope version/access is not an exact supported composition: %', got;
+  END IF;
   IF NOT (got->'tools') ? 'integrations_list' THEN RAISE EXCEPTION 'A4: integrations_list not registered'; END IF;
-  IF jsonb_array_length(got->'tools') <> 8 THEN RAISE EXCEPTION 'D1: tools length %, expected exactly the 7 seeded names + 1 append', jsonb_array_length(got->'tools'); END IF;
-  IF (got->'tools') <> '["ask_choices","capability_status","read_business_time_zone","team_hub_read_conversation","growth_list","campaign_brief_list","read_campaign_leads","integrations_list"]'::jsonb THEN
+  IF jsonb_array_length(got->'tools') IS DISTINCT FROM jsonb_array_length(expected) THEN
+    RAISE EXCEPTION 'D1: tools length %, expected exactly %', jsonb_array_length(got->'tools'),jsonb_array_length(expected); END IF;
+  IF (got->'tools') IS DISTINCT FROM expected THEN
     RAISE EXCEPTION 'D2: seeded names dropped or reordered: %', got->'tools';
   END IF;
+END $$;
+DO $$ BEGIN
+ PERFORM pg_temp.exp10_assert_nexus_scope((SELECT config->'capability_scope' FROM public.paige_subagents
+  WHERE slug='nexus' AND tenant_id IS NULL));
+END $$;
+
+-- The new compatibility branch must not accept an arbitrary card scope or lose any read guard.
+DO $$ DECLARE base jsonb; card jsonb; candidate jsonb; refused boolean; BEGIN
+ base:='{"version":1,"mode":"allowlist","access":"read","tools":["ask_choices","capability_status","read_business_time_zone","team_hub_read_conversation","growth_list","campaign_brief_list","read_campaign_leads","integrations_list"]}'::jsonb;
+ card:=jsonb_set(jsonb_set(jsonb_set(base,'{version}','2'),'{access}','"card"'),'{tools}',(base->'tools')||'["growth_page_publish"]'::jsonb);
+ PERFORM pg_temp.exp10_assert_nexus_scope(base);
+ PERFORM pg_temp.exp10_assert_nexus_scope(card);
+ FOR candidate IN SELECT value FROM jsonb_array_elements(jsonb_build_array(
+  NULL,jsonb_set(base,'{mode}','"all"'),jsonb_set(base,'{access}','"auto"'),
+  jsonb_set(base,'{access}','"card"'),jsonb_set(card,'{access}','"read"'),
+  jsonb_set(card,'{version}','3'),jsonb_set(card,'{version}','"2"'),
+  jsonb_set(card,'{tools}',(card->'tools')-'integrations_list'),
+  jsonb_set(card,'{tools}',(card->'tools')||'["comms_send_email"]'::jsonb),
+  jsonb_set(card,'{tools}','["integrations_list","ask_choices","capability_status","read_business_time_zone","team_hub_read_conversation","growth_list","campaign_brief_list","read_campaign_leads","growth_page_publish"]'),
+  jsonb_set(card,'{tools}','null'))) LOOP
+  refused:=false;
+  BEGIN PERFORM pg_temp.exp10_assert_nexus_scope(candidate); EXCEPTION WHEN OTHERS THEN refused:=true; END;
+  IF NOT refused THEN RAISE EXCEPTION 'A/D negative control accepted an unsupported scope: %',candidate; END IF;
+ END LOOP;
 END $$;
 
 -- (B) no other agent's platform row carries the read.

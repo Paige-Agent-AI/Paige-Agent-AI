@@ -1,6 +1,6 @@
 // Server-only source projection for the ORIGINAL governed email door. Call only
 // after that door authenticates its actor, current workspace and original seat.
-import { commsEmailBodyHtml, parseCommsEmailAttachmentRequest, type CommsEmailCommand } from "./contract.ts";
+import { commsEmailBodyHtml, parseCommsEmailAttachmentRequest, UUID, type CommsEmailCommand } from "./contract.ts";
 import { parseCommsEmailDraftSource, type CommsEmailDraftSource } from "./draft-source.ts";
 import { readableMessageBody } from "./message-reading.ts";
 import { decideContentRead } from "../inbox-intelligence/policy.ts";
@@ -18,6 +18,8 @@ export async function readCommsEmailDraftProposal(admin: CommsEmailAdmin, input:
   contentReader: CommsEmailAdmin;
   /** Absent retains the original files. Explicit [] removes them in this approval. */
   attachments?: unknown;
+  /** Server-only result of the original approval reader, never deserialized wire data. */
+  originalApproval?: { tenantId: string; approvalId: string; contactId: string; actionId: string };
 }): Promise<DraftProposal> {
   const unavailable = (): DraftProposal => ({ ok: false, code: "COMMS_EMAIL_DRAFT_SOURCE_UNAVAILABLE" });
   let source: CommsEmailDraftSource;
@@ -32,8 +34,15 @@ export async function readCommsEmailDraftProposal(admin: CommsEmailAdmin, input:
       || message.direction !== "outbound" || message.status !== "draft" || message.provider_message_id
       || typeof message.connector_id !== "string") return unavailable();
     const meta = message.meta == null ? {} : row(message.meta);
-    if (!meta || message.action_id || ["comms_email_binding", "sales_invoice_binding", "growth_sequence_binding", "email_campaign_binding"]
+    if (!meta || ["comms_email_binding", "sales_invoice_binding", "growth_sequence_binding", "email_campaign_binding"]
       .some(key => Object.prototype.hasOwnProperty.call(meta, key))) return { ok: false, code: "COMMS_EMAIL_DRAFT_OWNED_FLOW_REQUIRED" };
+    const original = input.originalApproval;
+    if (message.action_id != null || original !== undefined) {
+      if (!original || original.tenantId !== input.tenantId || original.contactId !== input.command.contact_id
+        || !UUID.test(original.approvalId) || !UUID.test(original.actionId) || message.action_id !== original.actionId) {
+        return { ok: false, code: "COMMS_EMAIL_DRAFT_OWNED_FLOW_REQUIRED" };
+      }
+    }
     // Privacy is checked before content/version is returned or fingerprinted. Neither
     // tenant membership nor picking another From grants access to a personal source.
     const connectorRead = await admin.from("channel_connectors")

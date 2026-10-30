@@ -28,6 +28,15 @@ function fixture(message:Record<string,unknown>={},connector:Record<string,unkno
  return{admin:makeAdmin("service"),contentReader:makeAdmin("authenticated"),reads};
 }
 describe("original saved draft server projection",()=>{
+ it("retains an original action only with matching server-proven approval context",async()=>{
+  const actionId="60000000-0000-4000-8000-000000000001",approvalId="70000000-0000-4000-8000-000000000001";
+  const f=fixture({action_id:actionId});
+  const originalApproval={tenantId:T,contactId:C,actionId,approvalId};
+  expect(await readCommsEmailDraftProposal(f.admin,{tenantId:T,actorUserId:A,contentReader:f.contentReader,source,command,originalApproval})).toMatchObject({ok:true,source,bodyHtml:html});
+  for(const change of [{actionId:M},{tenantId:C},{contactId:A},{approvalId:"invalid"}]){
+   expect(await readCommsEmailDraftProposal(f.admin,{tenantId:T,actorUserId:A,contentReader:f.contentReader,source,command,originalApproval:{...originalApproval,...change}})).toEqual({ok:false,code:"COMMS_EMAIL_DRAFT_OWNED_FLOW_REQUIRED"});
+  }
+ });
  it("uses scoped reads and preserves unchanged rich content and raw version",async()=>{
   const f=fixture();expect(await readCommsEmailDraftProposal(f.admin,{tenantId:T,actorUserId:A,contentReader:f.contentReader,source,command})).toEqual({ok:true,source,connectorId:S,bodyHtml:html,attachmentPaths:null});
   expect(f.reads.map(r=>r.filters)).toEqual([{tenant_id:T,id:M},{tenant_id:T,id:S},{tenant_id:T,id:M,connector_id:S,contact_id:C,updated_at:source.updated_at,channel_type:"email",direction:"outbound",status:"draft"}]);

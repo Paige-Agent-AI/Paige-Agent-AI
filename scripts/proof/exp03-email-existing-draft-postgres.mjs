@@ -35,13 +35,20 @@ function prepare(options){
  return JSON.parse(lines[0]);
 }
 const businessState=()=>db.run(`SELECT jsonb_build_object('messages',(SELECT jsonb_agg(m ORDER BY id) FROM public.messages m),'users',(SELECT jsonb_agg(u ORDER BY id) FROM auth.users u),'seats',(SELECT jsonb_agg(s ORDER BY user_id,tenant_id) FROM public.tenant_members s),'profiles',(SELECT jsonb_agg(p ORDER BY user_id) FROM public.profiles p),'connectors',(SELECT jsonb_agg(c ORDER BY id) FROM public.channel_connectors c))`);
-function reset(){db.run(`DELETE FROM public.messages;${seedDraft}
+function reset(){db.run(`DELETE FROM public.messages;DELETE FROM public.paige_actions;DELETE FROM public.paige_pending_approvals;DELETE FROM public.paige_action_kinds;${seedDraft}
  UPDATE auth.users SET deleted_at=NULL,banned_until=NULL;
  UPDATE public.tenants SET status='active';UPDATE public.profiles SET active_tenant_id='${tenant}' WHERE user_id='${actor}';
  UPDATE public.tenant_members SET status='active',role='owner' WHERE user_id='${actor}';
  UPDATE public.channel_connectors SET mailbox_class='shared_support',mailbox_owner_user_id=NULL,active=true,status='active',channel_type='email';`);}
 function refuse(run,pattern){const before=businessState();assert.throws(run,pattern);assert.equal(businessState(),before,'refusal preserves every source and business row');checks++;}
 const currentSource=()=>JSON.parse(db.run(`SELECT jsonb_build_object('message_id',id,'updated_at',updated_at) FROM public.messages WHERE id='${draft}'`));
+const approval='80000000-0000-4000-8000-000000000001',action='90000000-0000-4000-8000-000000000001';
+function seedOriginalAction(kind='owner.lead_followup') {
+ reset();db.run(`INSERT INTO public.paige_pending_approvals VALUES('${approval}','${tenant}','${contact}','pending','{"action_id":"${action}"}');
+ INSERT INTO public.paige_actions(id,approval_id,tenant_id,contact_id,action_kind,status) VALUES('${action}','${approval}','${tenant}','${contact}',${quote(kind)},'pending_approval');
+ INSERT INTO public.paige_action_kinds VALUES(${quote(kind)},'send_via_approval');
+ UPDATE public.messages SET action_id='${action}' WHERE id='${draft}';`);
+}
 function concurrentPrepare(tag,options){
  const child=spawn(db.psql,db.args(),{stdio:['pipe','pipe','pipe'],windowsHide:true});let out='',err='';
  child.stdout.on('data',chunk=>{out+=chunk;});child.stderr.on('data',chunk=>{err+=chunk;});
@@ -71,7 +78,7 @@ try{
  CREATE TABLE public.client_contact_methods(tenant_id uuid,client_id uuid,kind text,value text);
  CREATE TABLE public.channel_connectors(id uuid PRIMARY KEY,tenant_id uuid,active boolean,status text,channel_type text,provider text,from_address text,mailbox_class text,mailbox_owner_user_id uuid);
  CREATE TABLE public.paige_pending_approvals(id uuid PRIMARY KEY,tenant_id uuid,contact_id uuid,status text,metadata jsonb);
- CREATE TABLE public.paige_actions(id uuid PRIMARY KEY,approval_id uuid,tenant_id uuid,contact_id uuid,action_kind text);
+ CREATE TABLE public.paige_actions(id uuid PRIMARY KEY,approval_id uuid,tenant_id uuid,contact_id uuid,action_kind text,status text);
  CREATE TABLE public.paige_action_kinds(slug text,executor text);
  CREATE TABLE storage.objects(bucket_id text,name text,metadata jsonb);
  CREATE TABLE public.tenant_email_domains(tenant_id uuid,domain text,sendgrid_status text,sendgrid_verified_at timestamptz,sendgrid_domain_id text);
@@ -132,6 +139,20 @@ $function$;
   assert.equal(db.run('SELECT count(*) FROM public.messages'),'1');checks++;
   refuse(()=>prepare({op:'50000000-0000-4000-8000-000000000002'}),/COMMS_EMAIL_DRAFT_SOURCE_UNAVAILABLE/);
   refuse(()=>prepare({source:{...source,updated_at:version.replace('123456','123457')}}),/COMMS_EMAIL_REPLAY_MISMATCH/);
+  // These exercise the ORIGINAL action/approval branch, previously unexercised by
+  // the ordinary-source fixture. Its real status field and original kind registry
+  // are fixture data, never new authority or a production schema modification.
+  for(const kind of ['owner.lead_followup','client.followup','owner.followup_email']) {
+   seedOriginalAction(kind);
+   const owned=prepare({source:currentSource(),governance:{...governance,approval_id:approval}});
+   assert.equal(owned.message_id,draft);assert.equal(db.run('SELECT count(*) FROM public.messages'),'1');
+   assert.equal(db.run(`SELECT action_id::text||':'||(meta#>>'{comms_email_binding,approval_id}') FROM public.messages WHERE id='${draft}'`),`${action}:${approval}`);checks++;
+  }
+  seedOriginalAction();refuse(()=>prepare({source:currentSource()}),/COMMS_EMAIL_DRAFT_OWNED_FLOW_REQUIRED/);
+  seedOriginalAction();db.run(`UPDATE public.messages SET action_id=NULL WHERE id='${draft}'`);
+  refuse(()=>prepare({source:currentSource(),governance:{...governance,approval_id:approval}}),/COMMS_EMAIL_DRAFT_OWNED_FLOW_REQUIRED/);
+  seedOriginalAction('agreement.signature_request');
+  refuse(()=>prepare({source:currentSource(),governance:{...governance,approval_id:approval}}),/COMMS_EMAIL_APPROVAL_INVALID/);
   for(const role of ['anon','authenticated']){reset();refuse(()=>prepare({role}),/permission denied for function/);}
   for(const locator of [null,[],{}, {...source,tenant_id:other},{...source,message_id:'not-an-id'},{...source,updated_at:'yesterday'}]){reset();refuse(()=>prepare({source:locator}),/COMMS_EMAIL_DRAFT_SOURCE_INVALID/);}
   for(const [change,reason] of [

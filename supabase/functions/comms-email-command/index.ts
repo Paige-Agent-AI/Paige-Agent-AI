@@ -7,7 +7,7 @@ import { COMMS_EMAIL_SEND_CAPABILITY } from "../_shared/paige-spine/domains/comm
 import { COMMS_EMAIL_TOOL, COMMS_EMAIL_ACTION, FINGERPRINT, UUID, parseCommsEmailCommand, commsEmailBodyHtml, commsEmailContentDigest, parseCommsEmailSendAt, canonicalCommsEmailSendAt, COMMS_EMAIL_SCHEDULED_RELEASE_GRACE_MS, parseCommsEmailAttachmentRequest, COMMS_EMAIL_FILE_PROVIDERS } from "../_shared/comms-email/contract.ts";
 import { readCommsEmailAttachmentSources, copyCommsEmailAttachmentsToGoverned, parseCommsEmailAttachmentManifest, commsEmailManifestsEqual, commsEmailAttachmentPreview, commsEmailAttachmentSummary, commsEmailManifestDigest, readGovernedCommsEmailAttachmentFiles, type CommsEmailAttachmentFile, type CommsEmailAttachmentManifest, type CommsEmailStorage } from "../_shared/comms-email/attachments.ts";
 import { resolveCommsEmailParties, readCommsEmailReadiness, commsEmailReadinessOutcome, emailProvidersFor, type CommsEmailAdmin } from "../_shared/comms-email/readiness.ts";
-import { verifyLeadReplyApproval, storedApprovalMatches, recordLeadReplySend, bindingApprovalMatches, leadReplyPrepareRefusal, type LeadReplyApprovalAdmin } from "./lead-reply-approval.ts";
+import { readLeadReplyApproval, verifyLeadReplyApproval, storedApprovalMatches, recordLeadReplySend, bindingApprovalMatches, leadReplyPrepareRefusal, type LeadReplyApprovalAdmin, type VerifiedLeadReplyApproval } from "./lead-reply-approval.ts";
 import { executeCommsEmailSend, reconcileCommsEmailSend, parseCommsEmailStoredCall, commsEmailSafeResult } from "../_shared/comms-email/adapter.ts";
 import { parseCommsEmailDraftSource, commsEmailDraftSourcesEqual, type CommsEmailDraftSource } from "../_shared/comms-email/draft-source.ts";
 import { readCommsEmailDraftProposal } from "../_shared/comms-email/draft-proposal.ts";
@@ -294,9 +294,11 @@ Deno.serve(async req => {
 
   // 2b — A named lead-reply approval must be THIS business's pending owner.lead_followup approval for
   // THIS contact, before any card is raised or anything is prepared (re-checked on the stored call).
+  let originalApproval: VerifiedLeadReplyApproval | undefined;
   if (body.approval_id !== undefined) {
-    const refusal = await verifyLeadReplyApproval(approvalAdmin, { tenantId, approvalId: body.approval_id, contactId: command.contact_id, operationId: body.operation_id });
-    if (refusal) return refusedBeforeDispatch(refusal === "LEAD_REPLY_APPROVAL_UNAVAILABLE" ? 503 : 409, refusal);
+    const checked = await readLeadReplyApproval(approvalAdmin, { tenantId, approvalId: body.approval_id, contactId: command.contact_id, operationId: body.operation_id });
+    if (typeof checked === "string") return refusedBeforeDispatch(checked === "LEAD_REPLY_APPROVAL_UNAVAILABLE" ? 503 : 409, checked);
+    originalApproval = checked;
   }
 
   let draftBodyHtml: string | undefined;
@@ -317,7 +319,7 @@ Deno.serve(async req => {
         if (JSON.stringify(named) !== JSON.stringify(attachmentPaths)) return response(409, { ok: false, outcome: "outcome_unknown", code: "COMMS_EMAIL_ATTACHMENTS_CHANGED" });
       }
     } else {
-      const draft = await readCommsEmailDraftProposal(admin as unknown as CommsEmailAdmin, { tenantId, actorUserId: user.id, source: body.draft_source, command, attachments: body.attachments, contentReader: caller as unknown as CommsEmailAdmin });
+      const draft = await readCommsEmailDraftProposal(admin as unknown as CommsEmailAdmin, { tenantId, actorUserId: user.id, source: body.draft_source, command, attachments: body.attachments, contentReader: caller as unknown as CommsEmailAdmin, originalApproval });
       if (!draft.ok) return refusedBeforeDispatch(409, draft.code);
       draftBodyHtml = draft.bodyHtml; attachmentPaths = draft.attachmentPaths;
       command = parseCommsEmailCommand({ ...command, connector_id: draft.connectorId });

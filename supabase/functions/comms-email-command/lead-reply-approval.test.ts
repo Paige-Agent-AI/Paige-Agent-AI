@@ -176,6 +176,30 @@ test("saved draft check and approval use the same original door, source version 
  const prepared=w.rpcCalls.find(c=>c.name==="prepare_comms_email_send");assert.deepEqual(prepared?.args._draft_source,DRAFT_SOURCE);assert.equal(prepared?.args._body_html,DRAFT_HTML);
  const replay=await call(w,{draft_source:DRAFT_SOURCE});assert.equal(replay.body.outcome,"provider_accepted");assert.equal(w.fetches.length,1);
 });
+test("an action-owned saved reply uses its original verified approval and original message",async()=>{
+ const w=withOriginalDraft({action_id:ACT});const p=await call(w,{draft_source:DRAFT_SOURCE,approval_id:AP});
+ assert.equal(p.status,202,JSON.stringify(p.body));assert.equal(w.fetches.length,0);
+ assert.equal((p.body.preview as Row).body_html,DRAFT_HTML);
+ const r=await call(w,{draft_source:DRAFT_SOURCE,approval_id:AP,approved_fingerprint:p.body.fingerprint});
+ assert.equal(r.body.outcome,"provider_accepted",JSON.stringify(r.body));assert.equal(w.messages.length,1);
+ const prepared=w.rpcCalls.find(c=>c.name==="prepare_comms_email_send");
+ assert.equal((prepared?.args._governance as Row).approval_id,AP);assert.deepEqual(prepared?.args._draft_source,DRAFT_SOURCE);
+ assert.equal(w.rpcCalls.filter(c=>c.name==="lead_reply_record_send_service").length,1);
+});
+test("an action-owned source cannot borrow another otherwise valid approval or omit its owner",async()=>{
+ for(const extra of [{draft_source:DRAFT_SOURCE},{draft_source:DRAFT_SOURCE,approval_id:AP2}]){
+  const w=withOriginalDraft({action_id:ACT});const r=await call(w,extra);
+  assert.equal(r.body.code,"COMMS_EMAIL_DRAFT_OWNED_FLOW_REQUIRED",JSON.stringify(r.body));
+  assert.equal(w.proposals.length,0);assert.equal(w.fetches.length,0);
+ }
+});
+test("changing the original action after source review never consumes or dispatches its approval",async()=>{
+ const w=withOriginalDraft({action_id:ACT});const p=await call(w,{draft_source:DRAFT_SOURCE,approval_id:AP});
+ assert.equal(p.status,202,JSON.stringify(p.body));w.messages[0].action_id=ACT2;
+ const r=await call(w,{draft_source:DRAFT_SOURCE,approval_id:AP,approved_fingerprint:p.body.fingerprint});
+ assert.equal(r.body.code,"COMMS_EMAIL_DRAFT_OWNED_FLOW_REQUIRED");assert.equal(w.fetches.length,0);
+ assert.equal(w.proposals[0].consumed_at,undefined);
+});
 test("changing original HTML without changing visible plain text does not consume its approval",async()=>{
  const w=withOriginalDraft();const p=await call(w,{draft_source:DRAFT_SOURCE});
  w.messages[0].body_html="<p><em>Hi Riley, thanks for your note.</em></p>";

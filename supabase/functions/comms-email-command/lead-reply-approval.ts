@@ -46,11 +46,14 @@ export interface LeadReplyApprovalAdmin {
 const object = (v: unknown): Record<string, unknown> | null => v && typeof v === "object" && !Array.isArray(v) ? v as Record<string, unknown> : null;
 const lower = (v: unknown): string | null => typeof v === "string" ? v.trim().toLowerCase() : null;
 
-/** null = the approval may carry this send; otherwise the refusal code. Never throws. */
-export async function verifyLeadReplyApproval(
+/** Facts proven by the ORIGINAL approval reader; never accepted from a request. */
+export type VerifiedLeadReplyApproval = { tenantId: string; approvalId: string; contactId: string; actionId: string };
+
+/** Same canonical read/guards; success also identifies the original action owner. */
+export async function readLeadReplyApproval(
   admin: LeadReplyApprovalAdmin,
   input: { tenantId: string; approvalId: string; contactId: string; operationId?: string },
-): Promise<LeadReplyApprovalRefusal | null> {
+): Promise<LeadReplyApprovalRefusal | VerifiedLeadReplyApproval> {
   try {
     const tenantId = lower(input.tenantId), approvalId = lower(input.approvalId), contactId = lower(input.contactId);
     if (!tenantId || !approvalId || !contactId || !UUID.test(tenantId) || !UUID.test(approvalId) || !UUID.test(contactId)) return "LEAD_REPLY_APPROVAL_NOT_FOUND";
@@ -81,10 +84,19 @@ export async function verifyLeadReplyApproval(
       && lower(m.operation_id) !== operationId && !["failed", "refused"].includes(String(m.state ?? "")));
     if (live.some((m) => m.state === "provider_accepted")) return "LEAD_REPLY_APPROVAL_ALREADY_SENT";
     if (live.length > 0) return "LEAD_REPLY_APPROVAL_SEND_IN_PROGRESS";
-    return null;
+    return { tenantId, approvalId, contactId, actionId };
   } catch {
     return "LEAD_REPLY_APPROVAL_UNAVAILABLE";
   }
+}
+
+/** Historical API: null = the approval may carry this send; otherwise the refusal. */
+export async function verifyLeadReplyApproval(
+  admin: LeadReplyApprovalAdmin,
+  input: { tenantId: string; approvalId: string; contactId: string; operationId?: string },
+): Promise<LeadReplyApprovalRefusal | null> {
+  const result = await readLeadReplyApproval(admin, input);
+  return typeof result === "string" ? result : null;
 }
 
 /**

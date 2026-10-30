@@ -39,6 +39,7 @@ export const DESTINATION_LABEL: Readonly<Record<ReadLinkDestination, string>> = 
   sales_invoices: "Open invoices",
   sales_collections: "Open collections",
   operations_work: "Open delivery work",
+  team_hub: "Open Team Hub",
   business_time_zone: "Open business time zone setting",
   executive: "Open Executive",
   finance: "Open Finance",
@@ -78,6 +79,7 @@ export function routeLinkTarget(link: ReadRecordLink, tier: WorkspaceLinkTier, a
     recordKind: link.record_kind,
   });
   if (!resolved) return null;
+  if (link.destination === "team_hub" && resolved.status !== "exact") return null;
   const label = resolved.status === "exact" && link.destination === "systems_check"
     ? "Open recorded finding"
     : resolved.status === "exact" && link.destination === "contacts"

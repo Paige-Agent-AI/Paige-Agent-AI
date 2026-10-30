@@ -132,6 +132,9 @@ describe("teammates' words enter only inside the untrusted fence", () => {
     const r = await TEAM_HUB_READERS.team_hub_read_conversation(scope, caller, { conversation_id: LAUNCH });
     assert.equal(r.envelope.status, "available");
     assert.equal(r.carriesContent, true);
+    assert.equal(r.recordLinks?.length, 1);
+    assert.equal(r.recordLinks?.[0].destination, "team_hub");
+    assert.ok(!JSON.stringify(r.envelope).includes('"recordLinks"'));
     const p = r.envelope.projection!;
     const lines = p.split("\n");
     assert.equal(lines[0], `BEGIN TEAM HUB DATA — ${TEAM_HUB_FENCE}`);
@@ -198,6 +201,7 @@ describe("refusals say what happened (contract section 2, flow 5)", () => {
       assert.ok(r.envelope.message.includes(sentence));
       assert.equal(r.carriesContent, false);
       assert.equal(r.envelope.projection, undefined);
+      assert.equal(r.recordLinks, undefined);
     });
   }
   it("a thrown transport error is unavailable", async () => {

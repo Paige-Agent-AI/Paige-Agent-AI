@@ -1,0 +1,139 @@
+Window: "EXP08 isolated local QA — synthetic - Google Chrome", App: chrome.exe.
+	0 window EXP08 isolated local QA — synthetic - Google Chrome Secondary Actions: Raise
+		1 pane (disabled)
+		2 region EXP08 isolated local QA — synthetic - Google Chrome
+			3 region
+				4 region
+					5 region
+						6 button Minimize ID: view_1
+						7 button Maximize ID: view_2
+						8 button Close ID: view_4
+					9 region
+						10 region
+							11 tool bar ID: view_1000
+								12 button Back ID: view_1001
+								13 button (disabled) Forward ID: view_1002
+								14 button Reload ID: view_1003
+								15 group
+									16 button View site information ID: view_1011
+									17 edit (settable, string) Address and search bar Description: Ask Google or type a URL Value: 127.0.0.1:5297/solo/3855/team-hub?theme=dark&message=e8000000-0000-4000-8000-0000000a0001 ID: view_1012
+									18 region
+										162 button Zoom: 200%
+										19 button Bookmark this tab
+								20 button Chrome ID: view_1007
+						21 region
+							22 region
+								23 region
+								24 document EXP08 isolated local QA — synthetic Value: http://127.0.0.1:5297/solo/3855/team-hub?theme=dark&message=e8000000-0000-4000-8000-0000000a0001 ID: RootWebArea
+									25 group ID: root
+										26 group
+											27 text PAIGE folded; your conversation is preserved
+										28 link Skip to content Value: http://127.0.0.1:5297/solo/3855/team-hub?theme=dark&message=e8000000-0000-4000-8000-0000000a0001#tenant-shell-main
+										29 navigation Tenant workspace
+											30 link PAIGE Solo home Description: PAIGE Solo home Value: http://127.0.0.1:5297/solo/3855/command-center
+												31 graphic PAIGE
+											32 button Expand navigation Description: Expand navigation
+												33 graphic
+											34 link Command Center Description: Command Center Value: http://127.0.0.1:5297/solo/3855/command-center
+											35 link Operations Description: Operations Value: http://127.0.0.1:5297/solo/3855/operations/overview
+											36 link Team Hub Description: Team Hub Value: http://127.0.0.1:5297/solo/3855/team-hub
+											37 link Clients Description: Clients Value: http://127.0.0.1:5297/solo/3855/clients
+											38 link Marketing Description: Marketing Value: http://127.0.0.1:5297/solo/3855/growth
+											39 link Ads Description: Ads Value: http://127.0.0.1:5297/solo/3855/ads
+											40 link Sales Description: Sales Value: http://127.0.0.1:5297/solo/3855/sales
+											41 link Finance Description: Finance Value: http://127.0.0.1:5297/solo/3855/finance
+											42 link Marketplace Description: Marketplace Value: http://127.0.0.1:5297/solo/3855/marketplace
+											43 link Settings Description: Settings Value: http://127.0.0.1:5297/solo/3855/settings
+											44 button Use Mineral theme Description: Mineral theme
+											45 button Sign out Description: Sign out
+											46 group Description: Harbor Lane Studio
+												47 text HA
+										48 section header
+											249 button Direct PAIGE
+												250 graphic PAIGE
+											57 button Dialer
+												58 graphic
+										59 main ID: tenant-shell-main
+											60 main
+												81 complementary Thread
+													82 section header
+														83 heading Thread · #handover-notes
+														84 button Close thread
+													85 article Priya Nair at 9:00 AM ID: th-msg-e8000000-0000-4000-8000-0000000b0001
+														86 text Priya Nair
+														87 text Admin
+														88 time
+															89 text 9:00 AM
+														90 text Original onboarding handover notes
+													91 separator 120 replies
+													92 button Show earlier replies
+													93 article Jordan Lee at 5:10 AM ID: th-msg-e8000000-0000-4000-8000-0000000a0001
+														94 text Jordan Lee
+														95 time
+															96 text 5:10 AM
+														97 text The welcome packet is ready for the original review. Reopen this handover here.
+													98 text Reply in thread
+													99 combo box (settable, string) Reply in thread Description: Reply in thread ID: th-thread-reply
+													100 button Mention someone
+													101 button Attach files (not scanned) Description: Attach files (not scanned)
+													102 text Replies stay in this thread
+													103 button Send reply
+												104 status
+												105 text Files aren't scanned for viruses. Only open files from people you trust.
+										106 group
+							150 region
+						151 region
+							152 region
+								153 button Tab search
+							154 region ID: view_21
+								155 tab
+									156 tab item (selectable) EXP08 isolated local QA — synthetic - Memory usage - 143 MB ID: view_20
+										157 button Close
+								158 region
+							159 button New Tab
+							160 region
+						161 region
+
+Document text: ```
+PAIGE folded; your conversation is preserved
+Skip to content
+￼
+￼
+￼
+￼
+￼
+￼
+￼
+￼
+￼
+￼
+￼
+￼
+Use Mineral theme
+￼
+HA
+￼
+Direct PAIGE, or press ⌘\
+⌘\
+￼
+Thread · #handover-notes
+Close thread
+Priya Nair
+Admin
+9:00 AM
+Original onboarding handover notes
+120 replies
+Show earlier replies
+Jordan Lee
+5:10 AM
+The welcome packet is ready for the original review. Reopen this handover here.
+Reply in thread
+￼
+Mention someone
+Attach files (not scanned)
+Replies stay in this thread
+Send reply
+￼
+Files aren't scanned for viruses. Only open files from people you trust.
+￼
+```

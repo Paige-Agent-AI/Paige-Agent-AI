@@ -167,7 +167,7 @@ export function proveOwnerTaskMultistep({ sql, text, draft, control, controlRevi
     for (const role of ["anon", "authenticated", "service_role"])
       assert.equal(sql(`select has_function_privilege('${role}','public._owner_task_literal_chain_supported(jsonb)','EXECUTE');`), "f");
   });
-  const forward = text("supabase/migrations/20271126140005_owner_task_multistep_review.sql");
+  const forward = text("supabase/migrations/20271126080005_owner_task_multistep_review.sql");
   check("exact forward replay conserves native metadata and repaired source byte for byte", () => {
     sql(forward); assert.deepEqual(catalog(), after);
   });

@@ -265,7 +265,7 @@ async function ownerTaskNativeProof() {
         'public.control_owner_task_automation(uuid,text,timestamptz,jsonb,jsonb)'::regprocedure,
         'public._owner_task_source_snapshot(uuid,uuid)'::regprocedure,'public.paige_owner_task_hold_context()'::regprocedure,
         'public._read_owner_task_act(uuid,uuid,text)'::regprocedure);`));
-      sql(text("supabase/migrations/20271126140005_owner_task_multistep_review.sql"));
+      sql(text("supabase/migrations/20271126080005_owner_task_multistep_review.sql"));
       controlInstalled = true;
       check("human control exists as an authenticated-only exact five-argument domain writer", () => {
         const abi = "public.control_owner_task_automation(uuid,text,timestamptz,jsonb,jsonb)";
@@ -307,6 +307,9 @@ async function ownerTaskNativeProof() {
       return {process,act};
     }
     const proveMultistep = async () => {
+      check("shared rollback-only literal/ACL SQL contract passes without business fixtures or effects", () => {
+        sql(text("supabase/tests/owner_task_multistep.sql"));
+      });
       const { proveOwnerTaskMultistep } = await import("./owner-task-multistep-cases.mjs");
       proveOwnerTaskMultistep({ sql, text, draft, control, controlReview, native, actor, tenant,
         check, refuses, literal, json, approve, claim, bridge, resultCount, human, multistepMetadataBefore });

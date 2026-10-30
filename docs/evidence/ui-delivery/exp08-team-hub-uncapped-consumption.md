@@ -12,21 +12,21 @@ STATIC_EVIDENCE: PASS: exact changed UI ESLint and git diff checks; definer lint
 RENDERED_EVIDENCE: PASS: assets/exp08-team-hub-uncapped/report.json records32 labeled real-SoloApp frames, failures empty; two fictional contexts, both themes, four prescribed sizes, PAIGE open/folded. No document overflow or page errors; remote requests blocked, no actual model/provider/account.
 BEHAVIORAL_EVIDENCE: PASS: keyboard Enter on original Ask again reaches exactly one synthetic original Chat invocation, current refusal text, no offered action or false reply, exactly one foreground failure status and empty separate card-announcement region. Existing PAIGE fold returns to visible thread. Original main/thread source question stays the same.
 AUTHENTICATED_RUNTIME: UNVERIFIED: isolated synthetic transports are not ordinary customer authentication, role/provider/billing or production outcome proof.
-KEYBOARD_FOCUS: PARTIAL: actual keyboard Enter drives the existing recovery control; final screen-reader speech, full focus/zoom/revocation and designated customer walkthrough remain owed.
+KEYBOARD_FOCUS: UNVERIFIED: actual keyboard Enter drives the existing recovery control; final screen-reader speech, full focus/zoom/revocation and designated customer walkthrough remain owed.
 ZOOM_REFLOW: UNVERIFIED: prescribed native-size frames pass; these captures do not establish a fresh native200percent run for this refusal state.
 REDUCED_MOTION: UNVERIFIED: this change adds no motion; fresh preference-specific browser observation remains owed.
-STATE_COVERAGE: PARTIAL: same/unrelated/loading/refused/unavailable thread announcement negatives, technical refusal/recovery and native admission repeats covered; actual production role/tenant/revoke/unknown outcomes remain owed.
+STATE_COVERAGE: UNVERIFIED: same/unrelated/loading/refused/unavailable thread announcement negatives, technical refusal/recovery and native admission repeats covered; actual production role/tenant/revoke/unknown outcomes remain owed.
 TRUTHFUL_STATE_LABELS: PASS: all screenshots say harness render/synthetic/not live; refusal states never claim execution or completion.
 SOLO_UI: YES: original Team Hub real SoloApp shell.
 UNVERIFIED: current-main composition, exact-head hosted review/checks/Preview, native zoom/reduced-motion and authenticated tenant/role/billing/result proof; this increment is not coding-complete or owner-review-ready.
 
-INTERNAL_BUILD_IDENTITY: parent2d466098e plus recorded local change; deployment=NOT_DEPLOYED; environment=isolated development; migrations=NOT_APPLIED(20271126110008); edge=NOT_DEPLOYED(comment-only agent-turn source); evidence=assets/exp08-team-hub-uncapped/report.json
+INTERNAL_BUILD_IDENTITY: 7aca04a1c3a147d511ebd6cfea22bfc29dc27e05 product-source checkpoint; deployment=NOT_DEPLOYED; environment=development; migrations=PROOF_OWED(ordered normal release and native readback of 20271126080008, 20271126090008, 20271126100008, 20271126110008); edge=PROOF_OWED(normal release and emitted-source readback of comment-only agent-turn change); evidence=assets/exp08-team-hub-uncapped/report.json
 RELEASE_CHANNEL: development: synthetic local proof only; no activation or customer release.
 RELEASE_CLASSIFICATION: internal-only: incomplete development increment of full original EXP08.
 CUSTOMER_RELEASE_IDENTITY: none: complete integrated owner outcome and acceptance remain open.
 RELEASE_NOTE_REQUIRED: NO: no customer release is asserted by this development checkpoint.
 RELEASE_TRUTH_BOUNDARY: PARTIAL: native admission/source repair and synthetic UI behavior built; actual customer outcome and full Experience remain proof owed/missing.
-RELEASE_RECOVERY: position=preserve prior commits, original3041 and applied history; ordinary reviewed forward fix for current source; reference=ANT161 original full matrix and source leases.
+RELEASE_RECOVERY: position=preserve prior commits, original3041 and applied history with an ordinary reviewed forward fix; reference=ANT161 original full matrix and source leases.
 
 SOLO_1536X770_PAIGE_CLOSED: PASS: a/b dark/light1536 closed frames; no document overflow, visible refusal.
 SOLO_1536X770_PAIGE_OPEN: PASS: a/b dark/light1536 open frames; original panel opens/folds, no document overflow.
@@ -55,6 +55,13 @@ Impeccable checks applied: original hierarchy/identity preserved, honest neutral
 wrapping, no redundant controls or cosmetic redesign; duplicate-announcement source finding repaired.
 Canonical upstream: https://github.com/pbakaus/impeccable/blob/main/.claude/skills/impeccable/SKILL.md .
 This is a development checkpoint, not the final Experience finish review.
+
+Hosted3130 UI evidence job124230722094 failed on record grammar, including two partial-status
+prefixes and unsupported native/Edge state syntax. The exact build/environment and recovery grammar
+were also corrected. This record now uses
+UNVERIFIED and PROOF_OWED(boundary) without changing the guard or promoting incomplete proof.
+Native200percent remains UNVERIFIED after the browser-control URL-confidence stop; no alternate
+control or customer session was substituted.
 
 Final source regression receipt: three original suites, **251/251 PASS**,89.17seconds after the
 foreground correction and five added negative cases. Exact changed UI ESLint PASS. Distinct source

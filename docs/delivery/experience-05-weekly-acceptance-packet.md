@@ -1205,6 +1205,30 @@ without weakening hashes/authority or calling the failed run green. New clean
 CI/composed Preview, production75005 and separate mounted Admin editor remain
 owed. Full lifecycle/automation/ZION/monitoring/recovery, both chats, eligible
 current/new SOLO, founder acceptance and final source-log closeout stay open.
+
+### October30 18:18UTC — current-tenant reminder editor and dependency readback
+
+E09 original3118 independently observed merged7a1e16a55; actual production60009
+read back after40008/50005. Receipt70005 then native reminder75005 still require
+ordinary exact-head release/readback. Editor3103/03ab and receipt/reminder
+bb814/d44 clean database-contract/Preview checks are green; verify still running.
+No pending gate is relabelled PASS and no UI precedes its native prerequisite.
+
+Current-tenant reminder editor localef8b removes only redundant global role labels
+after original current-business Admin, actor and loading evidence.126 assertions
+across3 suites PASS; five original Workspace/inspector captures demonstrate
+1366/320 light/dark, native keyboard/discard, assignee/loading/stale denial and
+return-to-original-card. These are network-disabled neutral fixture observations,
+not customer authorization, records, receipts, native200% or full-shell proof.
+The original writer/version/readback/unknown handling is retained. Separate
+AUTHOR-REVIEW / LOWER ASSURANCE, exact-head CI and release remain required.
+
+Owner recordkeeping0ba344ff received in original ANT11/3a4e31da. Existing Google
+Assignment LocksF5/ProgramI7 checkpoint NOTES updated/read back18:15UTC; original
+values/prior notes/format/peer history preserved. E08 current Master/Brain lease
+respected. Same ZION, both chats, all ten outcomes/E5-CV1–9, algorithm maturity,
+full Builder/monitoring/permitted updates and authenticated cohorts remain OPEN.
+Next order O02→O05→O07→O09; STILL CODING / NOT_READY / NOT_ACCEPTED.
 ### Forward parent received by original editor
 
 Dependent UI now normally composes nativec5d0/main3f37 intoe78ac4f56, retaining
@@ -1217,3 +1241,70 @@ MD5caea59ab335ecaf295391c41a1a0522f/service-onlyACL exact. Earlier retirement-ti
 failure is retained; replacement success is independently read, not assumed.
 Native wholeCI/production migration+Edge readback and dependent final main
 retarget/review/CI remain owed. No customer effect, full outcome or owner acceptance.
+
+### October30 19:50UTC — native reminder released; composed editor proof
+
+Original3127/5b passed all13 exact-head checks/Preview and both web statuses,
+review5717729953, merged1515a9ff. Normal migration41116346469 succeeded;
+production75005ONCE/db-live1515. Original base body69755a72 inverses exactly once
+to guarded9e57d9e3; wrapper73f3a1af/OIDs/owner/definers/paths/ACLs preserved.
+Both official1515-mvvdg7m8 builds/assets were actually read19:38:54UTC. Native-only
+change has no Edge delta; edge-liveaa is incoming CURA source. This clears the
+child's native dependency without a reminder/cron/customer/provider invocation.
+
+Child3131 normally composes currentmain1515 to f30e2e88c: all18,564 incoming
+outside-owned leaves and all10 own non-packet blobs conserved; one packet conflict
+removed only markers, retaining BOTH full histories as ordered-line subsequences.
+Current editor41/Workspace63 plus separately executed adapter22 all PASS; lint and
+fresh original-Workspace125-input build PASS. Five incoming Task-effort/CSS inputs
+changed, so historical five frames are retained separately from the new manifest.
+Fresh composed browser render is requested in original ANT11/704c450e; no peer
+tab/viewport or customer session taken. Exact-head review/CI/public editor release
+and authenticated Admin Work/audit/Rail/reload remain owed.
+
+Original Google Delivery Evidence Register Program I7/J7 and LockF5 note were
+updated and explicitly read back19:50:28UTC; prior text/notes, original LockF5
+value, formatting and authenticated/founder columns are unchanged. Original
+ANT11/249eb3d9 and E04 receiving ANT51/e6ed650d retain the source/native handoff.
+Shared Master/Brain custody remains requested, not silently taken. Local type
+check's three missing-RealtimeKit diagnostics and failed isolated ENOSPC install
+remain recorded; only that verified own partial install was removed, preserving
+the original store/source/lock/baseline. Clean-install hosted CI stays required.
+
+Catalogue remains PARTIAL: original planning.list is read-only; manual versioned
+reminder correction is not a new advertised Chat/Live write binding. Operations
+planning/draft skills are unchanged and imply no execution. Same original manual
+writer/audit/Rail/CAS/recovery, ALG01/08 boundaries, fullten/E5, same ZION/both
+chats, eligible current/new SOLO and one complete founder evaluation remain OPEN.
+
+### October30 20:16UTC — reminder editor current-main verification / automation proof
+
+Original3131 now normally composes E04adb84 and E03main055 to f7281451.
+Original editor/test blobs unchanged; fresh126 assertions across allthree actual
+suites, lint and structural evidence guard PASS. A first obsolete minWorkers CLI
+argument was refused before tests; supported maxWorkers-only invocation then
+completed126/0failure/0skip. Both transcripts preserved; no implementation or
+assertion change. All125 compiled product input hashes match the current source.
+
+Actual offline original Workspace/inspector passed Admin1366/320 light/dark,
+assignee-only/loading/stale-actor refusal, native keyboard date change, discard,
+Tab and Escape/original-card focus. Six confirmed frames/current geometry are
+attached. Three immediate stale board captures are retained privately EXCLUDED;
+settled recaptures were inspected. No Save, account or business action occurred.
+Own loopback tab/server closed, viewport reset; receiving browser return is
+ANT11/c5c8e08f. Final exact-head review, required CI, editor deployment and genuine
+customer original record/audit/Rail/reload remain separate owed evidence.
+
+The preserved unpublished native multistep branch c1c6c19e separately completed
+FULL143 actual PostgreSQL control cases and56 actual native engine/C5 tests;
+owned disposable server stopped. This includes original one-step and two-step
+execution/readback/replay, exact company/SOLO classification, per-act receipts,
+source/version/claim/refusal and concurrency controls. Earlier137/28 results are
+historical. Full-schema/authenticated-caller/cohort proof, final review/CI/native
+release and the customer multistep review UI remain owed; no production activation.
+
+Same O02→O05→O07→O09, allten/E5-CV1–9, same ZION through both chats and universal
+eligible existing/new SOLO implementation remain the assignment. No complete
+outcome or founder acceptance is claimed. Shared Master/Brain queue is re-grounded
+against E02's explicit returned edit slot; preserve incoming unmerged rows and
+obtain/record the exact bounded source custody before its closeout update.

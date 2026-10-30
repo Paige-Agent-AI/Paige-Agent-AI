@@ -92,6 +92,41 @@ The agents' replies above the cards and the Suggest sentence are hand-written st
 
 ## Evidence index
 
+### Successor integration checkpoint — October 30, 2026
+
+**STILL CODING.** Local integration commits `3d2c30918` and `aa58f08fc` preserve original
+PR #3041 history and receive main through `b763e1937366376dd35a7fe1d1f21da6652f0b27`.
+The later peer payment-plan and removal-of-email-allowance changes are retained.
+The original and current-main C0b inspectors each reproduced all 29 dispatch bindings
+with no findings (126 and 128 dependency paths respectively). Only the composed dispatch
+fingerprint scalars were renewed; peer source pins, inspector and negative controls remain.
+All **222/222** binding/negative tests passed on the composition. Direct TypeScript execution
+completed with six diagnostic signatures, all within the existing baseline; no baseline grew.
+
+The source reviewer identified lost private planning/commercial visibility wording in the
+composed agent prompt. The original clauses are restored; three new cases first reproduced
+the defect and then passed. They cover MENTOR, MERIT and CURA DMs and private-source omission
+in a shared channel even with a poisoned offered-tool list. The complete agent-turn suite
+passes **120/120**. The independent reviewer confirmed that bounded P2 resolved by source
+inspection; this is not authenticated runtime or full SQL approval.
+
+Migration `20271126020008` is the forward candidate. The exact original Preview-applied
+`20271121140008` is preserved in this evidence packet's `migration-history/` directory
+(SHA256 `03a4c78a530c3bd97f2134dece27a09666c7a78f35b1e98234c3a0e18da1b766`).
+The candidate retains E04's current read-context revalidation and EXP10's NEXUS connection
+read, and retains service-only trusted settlement. The original disposable PostgreSQL proof
+passes all 16 sections and kills all 16 mutants, including replay and whole-body inverse
+comparisons. The fixture uses actual peer prerequisite migrations, not replacement writers.
+Migration-order lint passes 1,528 files. These are local engineering results.
+
+The supported Preview rebase API returned success, but SQL readback still showed 1,510
+applied migrations, frontier `20271121140008`, original A2b post body `c9d9dc13…`, and no
+E04 scope function. Therefore Preview reconciliation is **UNVERIFIED**, not successful.
+No production migration, ledger repair, reset, branch deletion or authenticated action was
+performed. Fresh hosted exact-head checks, final review, deployment/readback and customer
+proof remain owed; historical red checks are not waived. A2c, specialist action waves,
+goal/workshop/initiative integration and the full original lifecycle matrix remain open.
+
 ### Sole-successor recovery checkpoint — October 29, 2026
 
 Status: **STILL CODING**. The sole Codex successor retains the original branch and PR #3041

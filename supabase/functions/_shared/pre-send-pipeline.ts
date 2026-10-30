@@ -254,17 +254,20 @@ export async function runPreSend(
   }
 
   // ─── STEP 1 — Client DND (block, overridable) ──────────────────────────────
-  if (cid && clientDndActive) {
-    const holdLive = !clientDndUntil || new Date(clientDndUntil).getTime() > now.getTime();
-    if (holdLive && overrideClientDnd !== true) {
+  const clientHold = (active: boolean, until: string | null, reason: string | null): PreSendResult | null => {
+    const holdLive = active && (!until || new Date(until).getTime() > now.getTime());
+    if (cid && holdLive && overrideClientDnd !== true) {
       return {
         proceed: false,
         outcome: "blocked_client_dnd",
-        reason: clientDndReason || "This contact is on a do-not-disturb hold.",
+        reason: reason || "This contact is on a do-not-disturb hold.",
         queueUntil: null,
       };
     }
-  }
+    return null;
+  };
+  const initialHold = clientHold(clientDndActive, clientDndUntil, clientDndReason);
+  if (initialHold) return initialHold;
 
   // ─── STEP 2 — Suppression (block, NOT overridable) — applies to EVERY channel ──
   {
@@ -374,11 +377,15 @@ export async function runPreSend(
     let tz: string;
     try {
       // Consent/preferences above may have awaited a changed contact. Read the original
-      // tenant-scoped recipient again at THIS decision; the early DND snapshot is not location proof.
+      // tenant-scoped recipient again at THIS decision; neither its location nor DND snapshot
+      // remains current across those awaits. Reuse the SAME hold/override disposition above.
       if (!cid) throw new Error("missing_recipient_contact");
-      const { data: recipient, error } = await admin.from("clients").select("timezone,timezone_verified")
+      const { data: recipient, error } = await admin.from("clients").select("timezone,timezone_verified,dnd_active,dnd_until,dnd_reason")
         .eq("id", cid).eq("tenant_id", tenantId).maybeSingle();
-      if (error || recipient?.timezone_verified !== true || typeof recipient.timezone !== "string" || !recipient.timezone.trim()) throw new Error("missing_recipient_zone");
+      if (error || !recipient) throw new Error("missing_recipient_zone");
+      const currentHold = clientHold(recipient.dnd_active === true, recipient.dnd_until ?? null, recipient.dnd_reason ?? null);
+      if (currentHold) return currentHold;
+      if (recipient.timezone_verified !== true || typeof recipient.timezone !== "string" || !recipient.timezone.trim()) throw new Error("missing_recipient_zone");
       tz = recipient.timezone.trim();
       // Fixed offsets and abbreviations do not identify a recipient location or its DST rules.
       if (!tz.includes("/") || tz.startsWith("Etc/")) throw new Error("nonregional_recipient_zone");

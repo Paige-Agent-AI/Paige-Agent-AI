@@ -4,11 +4,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { LeadReplyDrafts } from "./LeadReplyDrafts";
 import {parseFollowupLocator,canReplaceFollowupDraft} from "./useLeadReplyReview";
 import { ComposeThreadDialog } from "./ComposeThreadDialog";
+import { MemoryRouter } from "react-router-dom";
 vi.mock("@/components/paige/CustomerSelector",()=>({CustomerSelector:()=>null}));
 
 const db=vi.hoisted(()=>({items:[] as Record<string,unknown>[],filters:[] as unknown[][],read:vi.fn(),role:vi.fn(),invoke:vi.fn(),getUser:vi.fn(),auth:new Set<(event:string)=>void>()}));
 vi.mock("@/hooks/usePendingApprovals",()=>({usePendingApprovals:()=>({items:db.items,error:null,refresh:vi.fn()})}));
-vi.mock("@/integrations/supabase/client",()=>({supabase:{auth:{getUser:db.getUser,onAuthStateChange:(cb:(event:string)=>void)=>{db.auth.add(cb);return{data:{subscription:{unsubscribe:()=>db.auth.delete(cb)}}};}},rpc:db.role,functions:{invoke:db.invoke},from:(table:string)=>{
+vi.mock("@/integrations/supabase/client",()=>({supabase:{auth:{getUser:db.getUser,onAuthStateChange:(cb:(event:string)=>void)=>{db.auth.add(cb);return{data:{subscription:{unsubscribe:()=>db.auth.delete(cb)}}};}},rpc:db.role,functions:{invoke:db.invoke},storage:{from:()=>({upload:async()=>({error:null}),remove:async()=>({error:null}),createSignedUrl:async()=>({data:null,error:null})})},from:(table:string)=>{
   db.filters.push(["table",table]);const q:Record<string,unknown>={};
   for(const method of ["select","eq","order","limit"])q[method]=(...args:unknown[])=>{db.filters.push([method,...args]);return q;};
   q.then=(done:(value:unknown)=>unknown,fail:(reason:unknown)=>unknown)=>db.read(table).then(done,fail);
@@ -165,6 +166,99 @@ describe("exact follow-up entry and dirty draft boundary",()=>{
   const empty={subject:"",body:"",attachmentCount:0,scheduledFor:null,editingDraftId:null,approvalId:null,pending:false};
   it("permits a deliberate selection only into an empty composer",()=>{expect(canReplaceFollowupDraft(empty)).toBe(true);});
   it.each([{subject:"Subject only"},{body:"Words"},{attachmentCount:1},{scheduledFor:"2026-12-01T00:00:00Z"},{editingDraftId:"draft"},{approvalId:approval},{pending:true}])("holds existing words or original work %j",dirty=>{expect(canReplaceFollowupDraft({...empty,...dirty})).toBe(false);});
+});
+
+describe("an ordinary new email uses the original governed check",()=>{
+  const actor="88888888-8888-4888-8888-888888888888",connector="33333333-3333-4333-8333-333333333333";
+  const close=vi.fn(),sent=vi.fn();
+  let current:Parameters<typeof ComposeThreadDialog>[0];
+  const action=(text:string)=>[...document.querySelectorAll<HTMLButtonElement>('[role="dialog"] button')].find(button=>button.textContent?.trim()===text);
+  async function press(text:string){expect(action(text)).toBeTruthy();await act(async()=>{action(text)!.click();await flush();});}
+  async function rerender(over:Partial<typeof current>={}){current={...current,...over};await act(async()=>{root.render(<MemoryRouter><ComposeThreadDialog {...current}/></MemoryRouter>);await flush();});}
+  async function mount(over:Partial<typeof current>={}){
+    close.mockReset();sent.mockReset();
+    db.getUser.mockResolvedValue({data:{user:{id:actor}},error:null});
+    db.read.mockImplementation(async(table:string)=>({data:table==="clients"?{id:contact,tenant_id:tenant,first_name:"Neutral",last_name:"Contact",client_contact_methods:[{id:"email",kind:"email",value:"lead@example.test",label:null,is_primary:true,position:0},{id:"phone",kind:"phone",value:"+15555550123",label:null,is_primary:true,position:0}]}:table==="profiles"?{full_name:"Reviewer"}:[],error:null}));
+    db.invoke.mockImplementation(async(_name:string,options:{body:Record<string,unknown>})=>({data:{ok:false,outcome:"approval_required",operation_id:options.body.operation_id,fingerprint:"abcdef0123456789",summary:"Email this contact",expires_at:new Date(Date.now()+60000).toISOString(),preview:{kind:"email",to_address:"lead@example.test",from_address:"hello@business.example",subject:"Your inquiry",body_text:"Thanks for asking.",...(options.body.send_at?{send_at:options.body.send_at}:{}),...(Array.isArray(options.body.attachments)?{attachments:options.body.attachments.map(()=>({name:"brief.txt",size:5,mime:"text/plain"}))}:{})}},error:null}));
+    current={open:true,actorId:actor,tenantId:tenant,activeTenantId:tenant,initialContact:{id:contact},activeConnectors:[{id:connector,channel_type:"email",display_name:"Business email",from_address:"hello@business.example"}],onOpenChange:close,onSent:sent,...over};
+    await rerender();
+    await act(async()=>{
+      const subject=document.querySelector<HTMLInputElement>('[role="dialog"] input[placeholder="Subject"]');
+      if(subject){Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,"value")!.set!.call(subject,"Your inquiry");subject.dispatchEvent(new Event("input",{bubbles:true}));}
+      const body=document.querySelector<HTMLTextAreaElement>('[role="dialog"] textarea')!;
+      Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,"value")!.set!.call(body,"Thanks for asking.");body.dispatchEvent(new Event("input",{bubbles:true}));await flush();
+    });
+  }
+  it("Send checks the exact email without invoking the legacy sender",async()=>{
+    await mount();
+    const send=[...document.querySelectorAll<HTMLButtonElement>('[role="dialog"] button')].find(b=>b.textContent?.trim()==="Send")!;
+    expect(send.disabled).toBe(false);await act(async()=>{send.click();await flush();});
+    expect(db.invoke.mock.calls.map(([name])=>name)).toEqual(["comms-email-command"]);
+    const call=db.invoke.mock.calls[0][1].body;
+    expect(call.expected_tenant_id).toBe(tenant);expect(call.command.contact_id).toBe(contact);
+    expect(call).not.toHaveProperty("approval_id");expect(call).not.toHaveProperty("to");expect(call).not.toHaveProperty("approved_fingerprint");
+    expect(document.body.textContent).toContain("Send now");expect(sent).not.toHaveBeenCalled();expect(close).not.toHaveBeenCalled();
+  });
+  it("only explicit confirmation replays the exact checked operation and opens its canonical thread",async()=>{
+    await mount();await press("Send");const call=db.invoke.mock.calls[0][1].body;
+    expect(document.querySelector('[data-composer-send]')).toBeNull();
+    db.invoke.mockResolvedValueOnce({data:{ok:true,outcome:"provider_accepted",operation_id:call.operation_id,message_id:operation,provider_receipt_available:true,delivery_confirmed:false},error:null});
+    await press("Send now");expect(db.invoke.mock.calls[1][1].body).toEqual({...call,approved_fingerprint:"abcdef0123456789"});
+    expect(sent).toHaveBeenCalledOnce();expect(sent).toHaveBeenCalledWith(`contact:${tenant}:${contact}`);expect(close).toHaveBeenCalledWith(false);
+  });
+  it("Edit keeps the exact words and restores the composing action without sending",async()=>{
+    await mount();await press("Send");await press("Edit");
+    expect(document.querySelector<HTMLInputElement>('[placeholder="Subject"]')?.value).toBe("Your inquiry");
+    expect(document.querySelector('[data-composer-send]')).not.toBeNull();expect(db.invoke).toHaveBeenCalledOnce();expect(sent).not.toHaveBeenCalled();
+  });
+  it("a displayed account differing from the resolved tenant makes no door call",async()=>{
+    await mount({activeTenantId:"99999999-9999-4999-8999-999999999999"});await press("Send");expect(db.invoke).not.toHaveBeenCalled();expect(sent).not.toHaveBeenCalled();
+  });
+  it("account readiness withholds the new email check",async()=>{
+    await mount({recordDisabled:true});expect(action("Send")?.disabled).toBe(true);await press("Send");expect(db.invoke).not.toHaveBeenCalled();
+  });
+  it("switching account clears old recipient and words before another action",async()=>{
+    await mount();await rerender({tenantId:"99999999-9999-4999-8999-999999999999",activeTenantId:"99999999-9999-4999-8999-999999999999"});
+    expect(document.querySelector<HTMLInputElement>('[placeholder="Subject"]')?.value).toBe("");expect(action("Send")?.disabled).toBe(true);expect(db.invoke).not.toHaveBeenCalled();
+  });
+  it("SMS retains its original queue and never enters the email door",async()=>{
+    await mount({activeConnectors:[{id:connector,channel_type:"sms",display_name:"Business phone",from_address:"+15555550100"}]});
+    expect(action("Send")?.disabled).toBe(false);
+    db.invoke.mockResolvedValueOnce({data:{ok:true,outcome:"queued_scheduled",message_id:operation},error:null});
+    await press("Send");expect(db.invoke.mock.calls.map(([name])=>name)).toEqual(["send-message"]);
+    expect(db.invoke.mock.calls[0][1].body).toMatchObject({channel:"sms",to:"+15555550123",contact_id:contact,connector_id:connector});
+    expect(db.invoke.mock.calls[0][1].body.scheduled_for).toEqual(expect.any(String));expect(sent).toHaveBeenCalledOnce();
+  });
+  it("a late check from a closed and reopened dialog never paints an approval",async()=>{
+    await mount();let resolve!:(value:unknown)=>void;db.invoke.mockImplementationOnce(()=>new Promise(done=>{resolve=done;}));
+    await press("Send");const call=db.invoke.mock.calls[0][1].body;
+    await rerender({open:false});await rerender({open:true});
+    await act(async()=>{resolve({data:{ok:false,outcome:"approval_required",operation_id:call.operation_id,fingerprint:"abcdef0123456789",summary:"Old email",expires_at:new Date(Date.now()+60000).toISOString(),preview:{kind:"email",to_address:"lead@example.test",from_address:"hello@business.example",subject:"Your inquiry",body_text:"Thanks for asking."}},error:null});await flush();});
+    expect(action("Send now")).toBeUndefined();expect(sent).not.toHaveBeenCalled();expect(document.querySelector<HTMLInputElement>('[placeholder="Subject"]')?.value).toBe("");
+  });
+  it("the chosen schedule is in the original check and exact confirmation",async()=>{
+    await mount();await press("Schedule");await press("In 1 hour");
+    await act(async()=>{document.querySelector<HTMLButtonElement>('[data-composer-send]')!.click();await flush();});
+    const call=db.invoke.mock.calls[0][1].body;expect(call.send_at).toEqual(expect.any(String));expect(action("Schedule send")).toBeDefined();
+    db.invoke.mockResolvedValueOnce({data:{ok:true,outcome:"scheduled",operation_id:call.operation_id,message_id:operation,send_at:call.send_at,delivery_confirmed:false},error:null});
+    await press("Schedule send");expect(db.invoke.mock.calls[1][1].body).toEqual({...call,approved_fingerprint:"abcdef0123456789"});expect(sent).toHaveBeenCalledOnce();
+  });
+  it("the original upload's private path reaches the governed check and remains locked until Edit",async()=>{
+    await mount();const input=document.querySelector<HTMLInputElement>('[role="dialog"] input[type="file"]')!;
+    Object.defineProperty(input,"files",{configurable:true,value:[new File(["brief"],"brief.txt",{type:"text/plain"})]});
+    await act(async()=>{input.dispatchEvent(new Event("change",{bubbles:true}));await flush();});
+    await press("Send");const call=db.invoke.mock.calls[0][1].body;expect(call.attachments).toHaveLength(1);
+    expect(call.attachments[0].path).toMatch(new RegExp(`^${tenant}/[0-9a-f-]+-brief\\.txt$`));
+    expect(document.querySelector<HTMLButtonElement>('[aria-label="Remove brief.txt"]')?.disabled).toBe(true);
+    await press("Edit");expect(document.querySelector<HTMLButtonElement>('[aria-label="Remove brief.txt"]')?.disabled).toBe(false);expect(db.invoke).toHaveBeenCalledOnce();
+  });
+  it("confirming locks the words and close while the original send is in flight",async()=>{
+    await mount();await press("Send");let resolve!:(value:unknown)=>void;db.invoke.mockImplementationOnce(()=>new Promise(done=>{resolve=done;}));
+    await press("Send now");expect(document.querySelector<HTMLInputElement>('[placeholder="Subject"]')?.disabled).toBe(true);
+    expect(action("Cancel")?.disabled).toBe(true);expect(action("Sending…")).toBeDefined();expect(close).not.toHaveBeenCalled();
+    await act(async()=>{resolve({data:null,error:new Error("lost ACK")});await flush();});
+    expect(document.body.textContent).toContain("don't resend");expect(sent).not.toHaveBeenCalled();expect(db.invoke).toHaveBeenCalledTimes(2);
+  });
 });
 
 describe("the existing no-thread conversation composer",()=>{

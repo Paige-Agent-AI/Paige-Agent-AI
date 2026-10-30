@@ -67,7 +67,6 @@ growth_funnel_generate
 growth_funnel_publish
 growth_list
 growth_page_generate
-growth_page_publish
 growth_page_save
 # GROWN A SECOND TIME, 2026-09-23, and again the reason is recorded here rather than in a commit
 # message nobody will read again. These five shipped into the handler without this list being

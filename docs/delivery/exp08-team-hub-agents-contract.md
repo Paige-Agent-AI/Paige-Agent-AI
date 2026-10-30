@@ -1693,6 +1693,44 @@ Where a ruling takes effect is the build order in section 5 A2 (A2a / A2b / A2c)
      the asker's seat, by the same three modes and rules. It applies to her DM from A2b, where the
      approved frames include her Prepare card (`a2-paige-dm-prepare-*`).
 
+### A2b design review rulings (owner, 2026-10-28, "go with your recommendations")
+
+Reviewed on the rendered A2b frames (`docs/evidence/ui-delivery/assets/exp08-team-hub-agents-a2b/`).
+1. **The line under a card when an act didn't reach the server is APPROVED:** "That didn't go through just
+   now. Try again." Approve stays live; the existing `.th-fail` row style, no CSS change.
+2. **A channel redirect's Open DM prefills the request.** The asker's DM with that agent opens with the
+   asker's own words in its box (the agent's mention removed), unsent. Nothing is posted until Send.
+3. **Every agent gets cards, in waves, through this one card path** (owner question, answered from the
+   A2 capability matrix): MERIT (agreement_send, billing_send_invoice, sales_create_payment_request),
+   CURA (client_portal_invitation_send, client_portal_access_set), VERA (mission_create / revise),
+   NEXUS (comms_send_email, form / funnel publish), MENTOR (planning). Each needs its domain lead's
+   confirmation of the exact tools and summary sentences in ANT-161; the lead keeps its door and writer.
+   owner_only acts stay out of Team Hub (every door refuses them).
+
+### A2b review hardening (2026-10-28, #3041)
+
+- **Successor P1, 2026-10-30, #3108:** the A2b read offer's authority snapshot does not authorize
+  later service reads. Fresh actor/tenant/admin/seat/DM/roster checks bracket every card read and
+  provider continuation; the original accepted-token staging/post guard rechecks authority in
+  the publication transaction. New forward `20271126030008` adds only the A2b private-source
+  branch while preserving the original E04 guard body and metadata. Original applied files
+  remain unchanged. Regression/native mutation proof is in the original A2b evidence packet.
+  Release remains held pending published repair, renewed exact-head review/checks and readback.
+
+- **Codex P1, fixed:** `team_hub_settle_card` is service_role only `(tenant, actor, message, outcome)`;
+  card-act settles with the service client after running the door, passing the approver it verified
+  from the JWT; a call carrying a user's JWT is refused `not_allowed`. The approver can no longer assert
+  Done with their own token.
+- **Peer review, fixed:** an approved card whose request died before it settled is resumed by the
+  approver's own Approve once it is 10 s old (same fingerprint, proposal still unclaimed); inside those
+  10 s Approve says try again. A proposal that can't be read settles failed (the door never ran) and is
+  retired.
+- **Peer review, recorded, not changed:** a narrow race where PAIGE chat mints a publish proposal for the
+  same page between the agent turn's acceptance and the card's prepare would link the chat's proposal
+  to the card. It needs the same person on both surfaces within seconds; nothing runs without their own
+  Approve. Anchoring the check to the prepare's own start would wrongly refuse a legitimate re-asked turn
+  (the CRM proposal is idempotent on the asking message), so it stays on the turn's acceptance time.
+
 ## 13. Proof owed after merge (per increment)
 
 - **§32 persisted apply:** the `db-live` readback of each migration. The `schema_migrations` row

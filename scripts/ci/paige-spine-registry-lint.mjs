@@ -292,6 +292,7 @@ const fundingStudioProof = validateFundingStudioBindings(readFileSync(chatSource
  studioCaller:readFileSync(join(root,"supabase/functions/_shared/studio-caller.ts"),"utf8"),
  rates:readFileSync(join(root,"supabase/functions/fetch-economic-rates/index.ts"),"utf8"),
  sba:readFileSync(join(root,"supabase/functions/search-sba-lenders/index.ts"),"utf8"),
+ growthList:readFileSync(join(root,"supabase/functions/_shared/growth/list-pages.ts"),"utf8"),
 });
 function provenIncumbentSymbol(capability,role,symbol){
  const spec=incumbentProof.tools.get(capability.action?.chatTool);

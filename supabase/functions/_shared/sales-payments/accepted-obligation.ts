@@ -4,6 +4,16 @@ import {date,integer,MAX_MINOR,MAX_SCHEDULE,object,only,UUID} from '../sales-col
 export type PaymentObligationReference=Readonly<{
  commercial_terms_id:string;signing_id:string;signing_version:number;terms_version:number;sequence:number;
 }>;
+/** Declaration of the SAME selector accepted below. No amounts, dates or grants
+ * are caller fields; the canonical writer resolves and rechecks those facts. */
+export const PAYMENT_OBLIGATION_REFERENCE_SCHEMA={
+ type:'object',additionalProperties:false,
+ properties:{commercial_terms_id:{type:'string',format:'uuid'},signing_id:{type:'string',format:'uuid'},
+  signing_version:{type:'integer',minimum:1,maximum:Number.MAX_SAFE_INTEGER},
+  terms_version:{type:'integer',minimum:0,maximum:Number.MAX_SAFE_INTEGER},
+  sequence:{type:'integer',minimum:1,maximum:MAX_SCHEDULE}},
+ required:['commercial_terms_id','signing_id','signing_version','terms_version','sequence'],
+} as const;
 /** Transport shape only. The canonical writer must revalidate original signing/effective
  * source, invoice, allocation and permissions under its existing locks. Parsing is not proof. */
 export type PaymentObligationEvidence=Readonly<{

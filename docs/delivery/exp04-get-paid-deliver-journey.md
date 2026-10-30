@@ -4596,3 +4596,254 @@ REPAIR the two incumbent Sales callbacks to retain initialization; preserve all 
 Failing-first tests: unchanged code produced three causal failures with36 original controls passing. After correction,39/2 owning tests PASS5.83s and162/7 adjacent Sales/Analytics tests PASS13.58s. Scoped ESLint, whole-source inverse and the unchanged UI-record validator PASS. This is synthetic/static source evidence. The first local build failed dependency realpath EPERM; actual machine free RAM later fell to144MiB and a shell failed initialization out-of-memory. The local type check and unchanged build retry were stopped to recover memory; neither is green. Required hosted exact-head checks, fresh final review, rendered browser lifecycle, release/readback and protected independent ordinary-role original-reference acceptance remain incomplete.
 
 The original customer interface and every noninitial auth invalidation remain intact. The owner October24 clarification makes small PRs a review-efficiency preference, not a size cap: keep these two inseparable duplicate-issuance causes and their negative controls together. No peer implementation assignment. ALG01/12 remain bounded PARTIAL; no capability maturity or founder acceptance is promoted. Shipped Log N/A while this source increment has not reached main. Evidence: docs/evidence/ui-delivery/e04-sales-metric-initial-session.md.
+
+### C136 — Original accepted-plan discovery and exact Chat target — October30
+
+Same sole EXP04/MERIT lead and full O1–O12. Continue the owner-calibrated
+agreement/signing/dated obligations/invoice closure first. This is REPAIR of a
+missing declared selector and EXTEND of the original invoice read, not a new
+financial, authorization, execution or orchestration system.
+
+The original native writer, request parser, approved-operation replay and owner
+Payments UI already support an exact accepted obligation reference. The original
+Kit/Chat declaration omitted that field, and the original invoice Chat read did
+not expose the accepted plan. Nineteen causal failing cases with58 old/control
+passes establish the source gap. A preceding Windows temporary-file rename error
+ran no tests and is excluded from the causal result.
+
+The original read_sales_invoice gains an optional include_accepted_payment_plan
+boolean. Omitted or false preserves the exact original result and one RPC.
+Explicit inspection derives invoice/client/agreement/currency/revision coordinates
+only from the original caller-JWT invoice read, then uses the SAME
+readAcceptedInvoicePaymentPlan and retained signed-payload decoder. There is no
+new query, schedule/date calculation, financial amount calculation, FIFO allocation,
+permission predicate, document reader, provider call or model-authored context.
+The closed result contains accepted principal, original recorded completion/receipt,
+exact dated references and native scheduled/remaining amounts. Agreement words,
+private document/seal material, customer contact data and credentials are omitted.
+Refused, unverified, stale and the original seven native held states expose no
+eligible targets. Unissued/void invoices do not trigger accepted-plan reads.
+
+The exact reference schema is colocated with its ORIGINAL parser and projected
+through the existing sales_invoice.payment_request Kit declaration. The existing
+parser still rejects caller amounts alongside references, unsupported purposes,
+later payments mislabeled as deposits and extra authority/source fields. A read
+supplies no payment approval. The original server resolves the amount and rechecks
+accepted source, allocations, actor, invoice and merchant under the existing
+prepare/claim locks. Stored and pinned approvals retain the SAME original target
+and operation; unknown results never mint a fresh request.
+
+Orchestration contract and pre-edit routing (ANT-51/161 C136):
+1. Event/request: inspect one original accepted invoice plan and propose its exact
+   dated deposit/installment target; no automatic schedule or charge.
+2. Entry: existing owner Sales/PAIGE/MERIT Chat tool surface; no Root, C0b,
+   Team Hub, renderer, Live, Portal host or shared specialist change.
+3. Original records/capabilities: canonical invoice, immutable signing/terms and
+   allocations; existing sales_invoice.read and sales_invoice.payment_request.
+4. Path: existing authenticated read + governed sales-invoice-command. Layer C is
+   unnecessary for an ordinary read/proposal; no new ActionAdapter/runtime.
+5. Authority: original caller-JWT tenant/actor/owner-financial native admission;
+   all client/signing/version coordinates are server-read, never tool arguments.
+6. Risk: read_only/no approval for inspection; external_effect/HIGH/CONFIRM and
+   original owner-grantable permission/canonical gate for a payment request.
+7. Durable identity: existing payment operation/dispatch claim/atomic Rail only;
+   no scheduler, event, receipt store or extra execution identity.
+8. Provider/readback: no provider for inspection; unchanged Stripe-first merchant
+   readiness and original request/readback/verified settlement at actual execution.
+9. Recovery: original withheld states/version/source checks and same-operation
+   uncertain recovery; no signing, settlement, file availability or service claim.
+10. Result: bounded plan/source facts and the existing Needs your OK proposal.
+
+Verification at this source checkpoint: original actual read/Chat/declaration
+entry tests pass142/5 suites, including one discovered target reaching the SAME
+approval endpoint without a caller amount, original stored/pinned approval
+regressions, source/tenant/version/refusal/held/transport/redaction controls.
+These are isolated original-adapter fixtures, not authenticated model, RLS,
+provider, customer persistence, Rail or full financial acceptance. Exact final
+review, CI, normal affected-importer deployment/source readback and authenticated
+owner/staff/client QA remain owed. sales.department remains PROOF_OWED and existing
+capability maturity is unchanged. ALG01/12 bounded validation/recovery PARTIAL;
+ALG02/13 and usefulness remain UNVERIFIED. No provider, Chat admission, financial
+effect or customer communication is activated. Founder Acceptance and all12 remain
+OPEN; follow with actual invoice usability/payment reconciliation/Collections,
+then original onboarding/delivery/client decision/completion/self-service work.
+
+Final local source verification:142/5 original suites PASS again after normal
+composition of released money repair3112; focused ORIGINAL tsconfig/Vite ambient
+graph694 files/0 diagnostics, scoped ESLint0, frozen Deno2.9.8 actual Chat module,
+canonical registry245/declaration232-of233 baseline and zero source disagreements,
+Solo paritySP1–SP5 plus its COMPLETE original negative/legitimate controls PASS.
+Original Chat handler check passes through its unchanged canonical knowledge-scope
+loader, including DRAINING/no effect/claim and original admitted-read receipts.
+Its first direct Node strip-only invocation failed at an existing parameter
+property before the handler proof; it is INVALID_SETUP, not a product regression
+or passing test. Original entire mutation/approval/replay/readback tail and all
+accepted-reference parser implementations remain byte-exact.
+
+Availability boundary: original DRAINING admission does not offer read_sales_invoice
+among its admitted reads. This domain adapter/declaration change does not activate
+that tool or consequential Chat. Current owner Payments workspace uses its
+legitimate existing native path independently. Signed-in model/Spine admission,
+all-role/provider/accepted-target execution and complete Experience proof remain
+OPEN; no synthetic adapter injection is described as that acceptance.
+
+### C137 — Actual draft persistence and truthful lifecycle amounts — October30
+
+Same sole MERIT lead/full12/O1–O4-first. Private financial-currentness3110 is
+normally merged92621b8018f7beda6fb97945ee9c66c6131487a4 and production15 applied
+ONCE through41002315232/job123889462539. Twelve actual catalogue identities,
+three complete old-source inverses and private INVOKER ACL readback PASS.
+Exact money presentation3112 is merged3f37c5b72a140dff56b6a1c05de00938ddf8e045,
+Verceldpl_GkHd3pUMEMcSeYphMFZdw5tpRavW READY/exact; normal Edge41003567195/
+job123893260018 and downloaded report12954207496/digest2154b226 PASS,
+Chat594/JWTtrue/all310 source-runtime matches. Scratch cleanup warning remains
+separate. These are source releases, not financial/client/founder acceptance.
+
+Original accepted-plan Chat handoff3114/b2decb7c/lower5708218840 remains separately
+frozen in exact-head CI. It does not activate the invoice tool under DRAINING.
+The current UI correction is a local successor; no duplicate native work or
+premature parent release, shared-host change or new agent is introduced.
+
+Actual ordinary-owner engineering verification saved ONE clearly labeled
+internal UNISSUED draft, then full reload and edit/reopen retained its sampled
+date, item, amount, note and version1. Protected evidence lives only in existing
+ANT-52/60f4d7f5; no private screenshots/identity data are committed here. This is
+bounded author engineering persistence evidence, not CentralQA, a signed contract,
+issued obligation, provider payment or completed O4. Initial control loading and
+generic date-fill driver failures were not declared product access/date defects.
+Native keyboard date entry and the missing-date refusal were genuinely observed.
+
+That drive exposed an owning presentation defect: unissued draft amounts were
+labeled Total obligation/Outstanding balance. REPAIR the original display-only
+invoicePaymentCopy module and SAME Sales record/action panels. Draft labels now
+say planned/unissued amounts, issued labels stay original, and voided amounts
+are clearly recorded audit values. Exact native amounts, lifecycle, receipt
+calculations, parsers, permissions, approvals and effectful paths are unchanged.
+The complete DraftEditor/save/selection/navigation tail and lifecycle effects/
+action prefix/complete approval-and-receipt suffix are byte-exact to the parent.
+
+Four causal draft/void failures with52 baseline/control passes preceded the fix;
+final60/3 original component suites PASS. A new test initially assumed the issued
+fixture's150 amount for the original draft fixture's200; corrected only that
+fixture expectation, with no changed money calculation. Focused original-config
+graph831 files/0 diagnostics, scoped lint0 and full seven-code-path pinned
+Impeccable4.1.0 scan0 anti-patterns PASS. Two original synthetic-document color
+advisories remain unsuppressed. Eight actual original focused-record/draft-dialog
+rendered captures cover desktop1280 and320/390 CSS frames, both themes, exact
+label states, zero document horizontal overflow and keyboard close/return focus.
+The20-direct-input manifest is explicit about its incomplete transitive/full-shell
+scope; raw JPEG dimensions/digests/UTC captures are verified. Existing dev-only
+ports/CSP and original components are reused; no QA engine or competing pane.
+
+Orchestration: ordinary owner inspection through original sales_invoice.read and
+canonical lifecycle records; no LayerC act, provider, new event/job, approval,
+execution, receipt or authority. All existing review/publish/financial actions
+stay governed by their original native writers. Current-state label copy cannot
+establish settlement, refund, accepted service or a signed agreement.
+
+Functional: source/component/type/lint verified; exact final review/CI/release
+and corrected authenticated readback remain owed. Visual: original tokens/layout,
+eight bounded captures and truthful format/viewport limits; no full-shell/native
+zoom/AT proof. Experiential: original keyboard flow works and prior draft values
+persist; ordinary staff/client/provider/full12 and Founder Acceptance remain OPEN.
+ALG01/12 PARTIAL,02/13 UNVERIFIED and sales.department PROOF_OWED unchanged. Same
+existing Master document windows/peer source leases; no activation or extra agent.
+
+C138 parent source release:3114/b2decb7c/lower5708218840 passed ALL12 check-runs
+and2 web statuses with0 unresolved review threads, then normally merged
+915c977fed6d87a3570d2a5008faddcd8b22489f at05:40:33UTC. Actual tree7d42d0a8
+matches the inspected6d4+b2de union, with every outside-owned leaf preserved.
+Normal Edge/web deployment and authoritative source readback are tracked
+separately; no DRAINING availability/effect or customer acceptance is promoted.
+The UI successor normally composes that source and original EXP03 conversation
+release; ALL20 direct rendered source pins remain exact, no peer content lost.
+Original paritySP1–SP5 and COMPLETE hostile/legitimate self-test PASS on this UI
+candidate; the evidence-record validator PASS covers3 UI files/1 record only.
+
+Latest original ANT-161 receiving: E05 reserves native50005 AFTER the published
+E08 20008→30008→35008→40008 chain. E09 records an automatic-approval hold on its
+proposed native financial context/publication adaptation; its16 file/reservation
+was NOT created. Native15 producer is satisfied; that specific downstream owner/
+security decision remains separate, with no E04 bypass or duplicate permission
+writer. These current source/activation boundaries do not block this owning
+display correction or other safe commercial work. All12/founder remain OPEN.
+
+### C139–C140 — Original records, production recovery and actionable review — October30
+
+Same sole MERIT/full12/O1–O4-first. Original3114 now has exact production source
+proof: normal41009746030 attempt1 failed two shared declaration identities,
+marker held; ONE unchanged attempt2/job124096717778 succeeds. Independently
+downloaded artifact12981658847 SHA2561b46e43e6baa3ea7d1ace839104a7a428249c461db6e12c0ae5eac2422339043
+matches provider digest; all11 source/runtime/config matches, Chat595/JWTtrue/
+315source+315emitted. Normal certified marker915, no manual tag. Original scratch
+cleanup warning remains. Exact webdpl_4qi4fUojK59TiiquzxYFsBvMCoMC/canonical
+915c977fed6d87a3570d2a5008faddcd8b22489f-mvujnn3s/root+8assets200. Source receipt
+is3114/6524417679. DRAINING invoice read remains unadmitted; no activation.
+
+Actual authorized ordinary Owner reopened the original internal unissued invoice
+and retained unsigned agreement, not new customer records. Invoice refused review
+Cancel/Close/fullreload preserves version1 and draft state; date/amount reopen
+without editing. Agreement current wording2, retained wording1/2, return and full
+reload remain distinguishable and unsigned. Original PDF preparation6/one assigned
+field and saved signing-request review are genuinely mounted; readback confirms
+saved source/recipient/field match. No words/fields/signers/sender changed, complete
+request approved, invitation sent, signature performed, invoice issued or money
+recorded. Listed sender identity does not establish provider readiness. Protected
+evidence stays in ANT52/60f4d7f5; these are author engineering subsets, not CentralQA.
+
+Parent draft/void label repair3116/c74 stays independently frozen through required
+CI/release. Its next bounded local follow-up repairs the original publication
+review itself: typed SALES_INVOICE_INELIGIBLE gives a useful saved-version/amount/
+due-date/payment-method correction path, without pretending to know the specific
+missing field. Its preview uses the same original Unissued draft amount copy.
+Unknown-operation precedence/storage, other native messages, immutable command,
+approval and receipt logic remain unchanged. Two actual causal failures with16
+controls preceded the repair. Final76/3 original suites PASS, focused753types0,
+lint0, official pinned4.1.0 wrapper empty findings. Four actual original-component
+desktop/320/390/Mineral/Obsidian frames,21 direct source pins, raw JPEG metadata,
+keyboard Cancel/Close/visible-focus proof are recorded in
+[original review evidence](../evidence/ui-delivery/e04-invoice-review-recovery.md).
+No synthetic approval was clicked. Final review/CI/release/corrected signed-in proof
+remain owed. This is not another workflow, authority system or financial engine.
+
+OWNER delegated-management directive ANT51/cb2b86d0-fd48-49da-a2a8-0cd32775e7af
+is read and explicitly incorporated across ALL O1–O12/native app/PAIGE/same MERIT
+in both chats. Effective scoped role/resource/action/delegation authority must
+support authorized management without globally promoting members or overriding
+personal signer consent/private context/genuine owner-only actions. Original
+invoice edge/native guards admit active owner/admin IN SOURCE; actual Admin
+action and authorized management-member coverage remain OWED. A hard-coded role
+gate is a source gap candidate pending the original canonical Holder/delegation
+contract and reproduction, not a confirmed regression. EXP01/EXP08 retain shared
+Auth/RBAC/TeamHub definitions; no copied permission logic or new grant is introduced.
+Required positives/negatives include delegated Admin/management, unassigned member,
+foreign tenant, revoked/expired delegation and escalation through original writers.
+
+Original allocation/manual/split/reversal/schedule-revision integration remains
+next feature work through canonical invoice payments/operations, never a second
+ledger. Preserve current E08 native20008→30008→35008→40008 then E05forward50005,
+and E09 automatic-approval-held native consumer/no file/reservation. Existing
+Master source windows remain; four original closeout rows are privately prepared,
+not concurrently inserted. Functional/visual/experiential/role/provider/full12/
+founder acceptance remain separate. ALG01/12 PARTIAL,02/13 UNVERIFIED/catalogue
+unchanged; no new specialist identity, agent, provider or business activation.
+
+C141 coherent release preparation: keep the original record/action amounts,
+publication preview and refused-review recovery in ONE existing3116 correction.
+Oldc74/source60 evidence remains historical and was never released. This is an
+ordinary fast-forward continuation, no duplicate PR or history rewrite. Current
+source normally composes E08 releasee984db704bc4a6517a4e5fa471b169f8005c7cd2,
+preserving every outside-owned leaf and all21 current rendered-source pins. Fresh
+composed76/3 and focused753types0 pass. Original paritySP1–SP5 plus COMPLETE
+hostile/legitimate controls pass. Initial evidence grammar failure was corrected
+with an explicit release position/reference and accurate uncertain-recovery
+wording; unchanged attestation validator now passes6UI/2records, not runtime proof.
+
+The three original record/action/copy product modules remain byte-exact toc74.
+Their earlier8captures remain historical:19of20 direct inputs are unchanged; the
+only changed fixture input adds a conditional draft-publication response. Its
+complete old-file inverse is exact. Current4actual review captures pin that new
+port and same components; no blanket20-of20 or whole-transitive claim. All exact
+final review/hosted gates, normal release/readback and corrected ordinary-user
+proof must be renewed before readiness. Shared40008→E05forward50005 order, E09
+held financial consumer and delegated-management assessment remain separate.

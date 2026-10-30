@@ -24,6 +24,8 @@ const helpers = new Map([
   ["applyContactSearchFilter", "../_shared/contact-search.ts"],
   ["projectDealRelationshipIntegrity", "../_shared/crm-command/deal-relationship-integrity.ts"],
   ["readPipelineWorkspace", "../_shared/pipelineWorkspaceRead.ts"],
+  // EXP08 A2b: crm_list_tasks' read has one home shared with Team Hub; the branch delegates to it.
+  ["listCrmTasks", "../_shared/crm-reads/list-tasks.ts"],
 ]);
 const scopedChain = (call) => {
   let n = call;
@@ -36,7 +38,10 @@ const dependencySpecs = [
   ["contact-methods.ts", ["orderedContactMethods"]],
   ["crm-command/deal-relationship-integrity.ts", ["projectDealRelationshipIntegrity"]],
   ["pipelineWorkspaceRead.ts", ["readPipelineWorkspace"]],
+  ["crm-reads/list-tasks.ts", ["listCrmTasks"]],
 ];
+const TASK_LIST_FILE = "crm-reads/list-tasks.ts";
+const TASK_LIST_COLUMNS = "id, title, status, due_date, track, user_id, biz_id, deal_id, source_thread_id, updated_at, created_at";
 const dependencies = () => Object.fromEntries(dependencySpecs.map(([file]) => [file,
   readFileSync(new URL(`../../supabase/functions/_shared/${file}`, import.meta.url), "utf8")]));
 function validateDependencies(sources, require) {
@@ -63,17 +68,30 @@ function validateDependencies(sources, require) {
         if (funcs.has(called)) { check(called); continue; }
         let safe = ["String", "Number", "Array.isArray", "Number.isSafeInteger", "Number.isFinite", "Date.parse", "console.error", "console.warn"].includes(called)
           || (pure.has(m) && (!r || r === "String" || locals.has(r)));
+        // The task list's limit clamp and its due-date window: pure arithmetic over the clock, no I/O.
+        if (file === TASK_LIST_FILE && (["Math.min", "Math.max", "Date.now"].includes(called) || (r === "Date" && ["toISOString", "slice"].includes(m)))) safe = true;
         if (r === "admin") safe = readMethods.has(m) || m === "or";
         if (["query", "q"].includes(r)) safe = readMethods.has(m) || m === "or";
         if (called === "callerRpc") safe = file === "pipelineWorkspaceRead.ts" && ["current_user_tenant_id", "get_pipeline_workspace"].includes(str(call.arguments[0]));
         require(safe, `${file}: reachable unknown/effectful call ${called}`);
       }
-      require(visit(fn, ts.isNewExpression).every(n => ["Map", "Set"].includes(id(n.expression))), `${file}: no effectful constructor`);
+      require(visit(fn, ts.isNewExpression).every(n => ["Map", "Set", ...(file === TASK_LIST_FILE ? ["Date"] : [])].includes(id(n.expression))), `${file}: no effectful constructor`);
     };
     for (const entry of entries) check(entry);
     if (file === "client-ref.ts") {
       const fn = funcs.get("resolveClientRef");
       require(!!fn && visit(fn, n => ts.isCallExpression(n) && method(n) === "eq" && str(n.arguments[0]) === "tenant_id" && id(n.arguments[1]) === "tenantId").length === 1, "client reference lookup stays tenant-pinned");
+    }
+    if (file === TASK_LIST_FILE) {
+      const fn = funcs.get("listCrmTasks");
+      const froms = fn ? visit(fn, n => ts.isCallExpression(n) && method(n) === "from") : [];
+      const chain = froms.length === 1 ? scopedChain(froms[0]) : [];
+      require(froms.length === 1 && root(froms[0].expression) === "admin" && str(froms[0].arguments[0]) === "tasks"
+        && chain.some(c => method(c) === "eq" && str(c.arguments[0]) === "tenant_id" && id(c.arguments[1]) === "tenantId"), "task list reads only tasks and stays tenant-pinned");
+      require(!!fn && !visit(fn, n => ts.isBinaryExpression(n) && n.operatorToken.kind === ts.SyntaxKind.EqualsToken && ["admin", "tenantId"].includes(id(n.left))).length, "task list client and tenant cannot be reassigned");
+      const columns = visit(source, n => ts.isVariableDeclaration(n) && id(n.name) === "CRM_TASK_LIST_COLUMNS");
+      require(chain.some(c => method(c) === "select" && id(c.arguments[0]) === "CRM_TASK_LIST_COLUMNS") && columns.length === 1
+        && str(columns[0].initializer) === TASK_LIST_COLUMNS, "task list closed explicit columns");
     }
     if (file === "contact-search.ts") {
       const fn = funcs.get("contactIdsByAddressToken");
@@ -124,7 +142,12 @@ function inspectCrmReadBindings(chatText, dependencySources) {
     require(!visit(body, n => (ts.isVariableDeclaration(n) || ts.isParameter(n)) && protectedNames.includes(id(n.name))).length, `${tool}: trusted bindings cannot be shadowed`);
     require(!visit(body, n => ts.isBinaryExpression(n) && ["admin", "crmTenantId", ...(summary ? ["supabaseClient", "Array"] : [])].includes(id(n.left))).length, `${tool}: trusted bindings cannot be reassigned`);
     const reads = calls.filter(c => (root(c.expression) === "admin" || summary && root(c.expression) === "supabaseClient") && method(c) === "from");
-    require(reads.some(c => str(c.arguments[0]) === primaryTable), `${tool}: real primary read`);
+    if (tool === "crm_list_tasks") {
+      // EXP08 A2b: the read lives in _shared/crm-reads/list-tasks.ts (validated above as a dependency).
+      // The branch must hand it exactly the server client and the server tenant.
+      const delegated = calls.filter(c => text(c.expression) === "listCrmTasks");
+      require(delegated.length === 1 && text(delegated[0].arguments[0]) === "admin" && ["crmTenantId", "crmTenantId!"].includes(text(delegated[0].arguments[1])), `${tool}: real primary read`);
+    } else require(reads.some(c => str(c.arguments[0]) === primaryTable), `${tool}: real primary read`);
     if (summary) {
       const callers = decls("supabaseClient").filter(ts.isVariableDeclaration);
       require(callers.length === 1 && text(callers[0].initializer) === "createClient(supabaseUrl,supabaseKey,{global:{headers:{Authorization:authHeader}}})", `${tool}: actual caller-JWT client`);

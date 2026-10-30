@@ -65,6 +65,51 @@ import { TEAM_HUB_READ_TOOLS, TEAM_HUB_POST_TOOLS, TEAM_HUB_READ_TOOL_NAMES, TEA
 import { TEAM_HUB_READERS, postTeamHubReply, teamHubPostConfirmSummary, teamHubSessionTainted, COULD_NOT_READ as TEAM_HUB_COULD_NOT_READ, TEAM_HUB_EGRESS_WITHHELD_TOOLS, TEAM_HUB_EGRESS_REFUSAL } from '../_shared/team-hub/chat.ts';
 // EXP08 Team Hub agents A1b: one agent turn (mention or agent DM), its own closed request and module.
 import { isTeamHubAgentTurnRequest, runTeamHubAgentTurn } from '../_shared/team-hub/agent-turn.ts';
+// EXP08 Team Hub agents A2b: Approve / Not now on a Team Hub card (its own closed request and module),
+// and the one choke point that keeps a Team Hub card's bare token from being redeemed in this chat.
+import { isTeamHubCardActRequest, runTeamHubCardAct } from '../_shared/team-hub/card-act.ts';
+
+// Three read tools with no shared definition yet. Each is defined once, here, and used by this chat's
+// tool list and by the Team Hub agent turn (handed to it below), so Team Hub never keeps a second copy.
+const GROWTH_LIST_TOOL_DEF = {
+  type: "function",
+  function: {
+    name: "growth_list",
+    description: "Team only. List the tenant's landing pages (growth pages) with their slug, title, status (draft/published/archived), and — for published pages — the real public URL. Read-only; safe to run. Use when the operator asks 'what pages do I have?', 'show my landing pages', or before saving/publishing so you can reference an existing page by id.",
+    parameters: { type: "object", properties: {} }
+  }
+};
+const CRM_LIST_TEAM_TOOL_DEF = {
+  type: "function",
+  function: {
+    name: "crm_list_team",
+    description: "Team only. List the tenant's team members (coaches, brokers, admins, sales reps) with their names, roles, and user ids. Use this to resolve 'assign her to the coach named X' into a user_id before calling crm_assign_contact.",
+    parameters: { type: "object", properties: {} }
+  }
+};
+const CRM_LIST_TASKS_TOOL_DEF = {
+  type: "function",
+  function: {
+    name: "crm_list_tasks",
+    description: "Team only. List operator tasks. Use for 'what's due today', 'overdue tasks', or 'tasks for [coach]'. Returns id, title, due_date, status, assignee user_id, track, deal_id, updated_at and created_at. Before changing an existing task, use this current updated_at as expected_updated_at; use created_at only when updated_at is null. If neither supplies a valid timestamp, do not guess a version or change the task. Omitted status excludes completed tasks; status all includes every status.",
+    parameters: {
+      type: "object",
+      properties: {
+        status: { type: "string", enum: ["pending","in_progress","completed","cancelled","all"] },
+        overdue: { type: "boolean", description: "Only return tasks past due_date and not completed." },
+        assignee_email: { type: "string" },
+        due_within_days: { type: "number", description: "Tasks due within N days from today." },
+        limit: { type: "number" }
+      }
+    }
+  }
+};
+import { withoutTeamHubCardTokens, TEAM_HUB_CARD_ALREADY_WAITING } from '../_shared/team-hub/card-binding.ts';
+// EXP08 A2b: three reads and one tool definition moved to _shared byte for byte, so Team Hub uses the same ones.
+import { listCrmTasks } from '../_shared/crm-reads/list-tasks.ts';
+import { listCrmTeam } from '../_shared/crm-reads/list-team.ts';
+import { listGrowthPages } from '../_shared/growth/list-pages.ts';
+import { growthPagePublishToolDef } from '../_shared/growth-publish-command/chat-tools.ts';
 import { TEAM_LIFECYCLE_TOOLS, TEAM_LIFECYCLE_READ_TOOL_NAMES, TEAM_LIFECYCLE_WRITE_TOOL_NAMES, TEAM_LIFECYCLE_MEMBER_TOOL_NAMES } from '../_shared/paige-spine/domains/team_lifecycle.ts';
 import { TEAM_LIFECYCLE_READERS, runTeamLifecycleWrite, teamLifecycleConfirmSummary, readHoldingsForCard, readWorkItemForCard, parseHandoverArgs, conversationsValue, teamLifecyclePreCardProblem, findTeamRosterMember, HANDOVER_SOLO_ONLY } from '../_shared/team-lifecycle/chat.ts';
 import { setPlanItemClientShare, type ClientShareFailure } from '../_shared/planning/scoped-write.ts';
@@ -1382,11 +1427,28 @@ serve(async (req) => {
     // this hands it only the asker's own session, the service role (turn accept/end, the agent's platform
     // row and receipts), the verified actor and the one model seam (fabricCompletion). It also gets the
     // control hint: a turn sent with one is refused, so agent turns stay on the chat's 20/min limit.
+    // EXP08 A2b: both Team Hub routes also get `invokeAs`, a door call made AS THE ASKER (their own JWT,
+    // the same shape the chat's own door branches use), so a Team Hub card is prepared and redeemed by
+    // the one door that owns it and never under the service role.
+    const teamHubInvokeAs = (name: string, body: Record<string, unknown>) =>
+      supabaseClient.functions.invoke(name, { headers: { Authorization: authHeader }, body });
     if (isTeamHubAgentTurnRequest(rawData)) {
       const agentTurn = await runTeamHubAgentTurn({ caller: supabaseClient, service: supabase, userId: user.id,
-        complete: fabricCompletion, signal: req.signal, controlHint }, rawData);
+        complete: fabricCompletion, signal: req.signal, controlHint, invokeAs: teamHubInvokeAs,
+        chatReadToolDefs: { growth_list: GROWTH_LIST_TOOL_DEF, crm_list_team: CRM_LIST_TEAM_TOOL_DEF, crm_list_tasks: CRM_LIST_TASKS_TOOL_DEF } }, rawData);
       return new Response(JSON.stringify(agentTurn.body),
         { status: agentTurn.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+    // EXP08 Team Hub agents A2b: Approve / Not now on a Team Hub card is its own closed request
+    // ({ teamHubCardAct: {...} }, nothing else), routed exactly like the agent turn: after the verified
+    // actor and the ingress rate limit, before the chat schema, returning without reaching anything
+    // below. The logic is _shared/team-hub/card-act.ts. No model runs, so it is handed no model seam;
+    // a request sent with a control hint is refused there.
+    if (isTeamHubCardActRequest(rawData)) {
+      const cardAct = await runTeamHubCardAct({ caller: supabaseClient, service: supabase, userId: user.id,
+        signal: req.signal, controlHint, invokeAs: teamHubInvokeAs }, rawData);
+      return new Response(JSON.stringify(cardAct.body),
+        { status: cardAct.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
     let validatedData;
     try {
@@ -1947,8 +2009,42 @@ serve(async (req) => {
     // The approvals this request carries, as a set. Derived ONCE from the validated body — never
     // re-read from a raw field further down, which is how a validated value stops being the value
     // that gets used.
-    const approvedConfirmations = new Set<string>(validatedData.approvedConfirmations ?? []);
-    const declinedConfirmations = validatedData.declinedConfirmations ?? [];
+    // EXP08 A2b (plan D10) — THE ONE CHOKE POINT for Team Hub cards. A Team Hub card is a door proposal
+    // row like any other, so its bare 16-hex fingerprint would otherwise be redeemable (or declinable)
+    // from this chat. Every token the body carries passes through withoutTeamHubCardTokens once, here,
+    // before either set exists: a bare token bound to a Team Hub card is dropped from BOTH sets, a
+    // `fp:nonce` token passes through, and an unbound token behaves exactly as before (§58). If the
+    // binding lookup cannot answer, the module drops the bare tokens (fail closed); if it throws, the
+    // same rule is applied here, so a broken lookup can never let a card's token through.
+    // Known gap, not closed here: Studio's direct growth-door call and the browser's direct CRM call do
+    // not pass through this handler (A2b plan D10).
+    let requestApproved = validatedData.approvedConfirmations ?? [];
+    let requestDeclined = validatedData.declinedConfirmations ?? [];
+    // The approvals the choke point withheld, and why, so the approval report still answers for each one
+    // instead of going silent (verifier fixes 1 and 3): a card's token is "unclaimable" here (it is decided
+    // on its card in Team Hub), and a lookup that did not answer is "lookup_failed" (the person is told
+    // something went wrong on our side). Declines are never reported, so only approvals are kept here.
+    const teamHubWithheldApprovals = new Map<string, ApprovalRefusalReason>();
+    // Every approval this request reports on, in the order the person sent them.
+    const approvalReportOrder = [...new Set(requestApproved)];
+    if (requestApproved.length || requestDeclined.length) {
+      let keptTokens: ReadonlySet<string>;
+      let bindingFailed = false;
+      try {
+        const binding = await withoutTeamHubCardTokens(supabase, user.id, [...requestApproved, ...requestDeclined]);
+        keptTokens = new Set(binding.kept);
+        bindingFailed = binding.failed;
+      } catch (e) {
+        console.error("[paige] Team Hub card binding lookup threw; bare approval tokens dropped:", (e as Error)?.message);
+        keptTokens = new Set([...requestApproved, ...requestDeclined].filter((token) => token.includes(":")));
+        bindingFailed = true;
+      }
+      for (const token of requestApproved) if (!keptTokens.has(token)) teamHubWithheldApprovals.set(token, bindingFailed ? "lookup_failed" : "unclaimable");
+      requestApproved = requestApproved.filter((token) => keptTokens.has(token));
+      requestDeclined = requestDeclined.filter((token) => keptTokens.has(token));
+    }
+    const approvedConfirmations = new Set<string>(requestApproved);
+    const declinedConfirmations = requestDeclined;
     /**
      * HOW EACH EXECUTED CALL WAS AUTHORISED, keyed by tool_call id.
      *
@@ -7979,14 +8075,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               }
             }
           },
-          {
-            type: "function",
-            function: {
-              name: "growth_list",
-              description: "Team only. List the tenant's landing pages (growth pages) with their slug, title, status (draft/published/archived), and — for published pages — the real public URL. Read-only; safe to run. Use when the operator asks 'what pages do I have?', 'show my landing pages', or before saving/publishing so you can reference an existing page by id.",
-              parameters: { type: "object", properties: {} }
-            }
-          },
+          GROWTH_LIST_TOOL_DEF,
           {
             type: "function",
             function: {
@@ -8021,20 +8110,9 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               }
             }
           },
-          {
-            type: "function",
-            function: {
-              name: "growth_page_publish",
-              description: "Team only. Publish a saved landing page so it goes LIVE at its public URL. This is a going-live action — always confirm with the operator first, and on success report back the REAL public URL the publish returns (never claim it's live without the link). The page must already be saved as a draft (growth_page_save) and free of unfilled [PLACEHOLDER] prompts, which the publish step rejects.",
-              parameters: {
-                type: "object",
-                properties: {
-                  page_id: { type: "string", description: "The growth page id to publish (from growth_list or growth_page_save)." }
-                },
-                required: ["page_id"]
-              }
-            }
-          },
+          // EXP08 A2b: one home, _shared/growth-publish-command/chat-tools.ts (a fresh object per request,
+          // as the inline literal was, because the approval loops below write into it).
+          growthPagePublishToolDef(),
           {
             type: "function",
             function: {
@@ -8232,14 +8310,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               }
             }
           },
-          {
-            type: "function",
-            function: {
-              name: "crm_list_team",
-              description: "Team only. List the tenant's team members (coaches, brokers, admins, sales reps) with their names, roles, and user ids. Use this to resolve 'assign her to the coach named X' into a user_id before calling crm_assign_contact.",
-              parameters: { type: "object", properties: {} }
-            }
-          },
+          CRM_LIST_TEAM_TOOL_DEF,
           {
             type: "function",
             function: {
@@ -8524,23 +8595,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               }
             }
           },
-          {
-            type: "function",
-            function: {
-              name: "crm_list_tasks",
-              description: "Team only. List operator tasks. Use for 'what's due today', 'overdue tasks', or 'tasks for [coach]'. Returns id, title, due_date, status, assignee user_id, track, deal_id, updated_at and created_at. Before changing an existing task, use this current updated_at as expected_updated_at; use created_at only when updated_at is null. If neither supplies a valid timestamp, do not guess a version or change the task. Omitted status excludes completed tasks; status all includes every status.",
-              parameters: {
-                type: "object",
-                properties: {
-                  status: { type: "string", enum: ["pending","in_progress","completed","cancelled","all"] },
-                  overdue: { type: "boolean", description: "Only return tasks past due_date and not completed." },
-                  assignee_email: { type: "string" },
-                  due_within_days: { type: "number", description: "Tasks due within N days from today." },
-                  limit: { type: "number" }
-                }
-              }
-            }
-          },
+          CRM_LIST_TASKS_TOOL_DEF,
           {
             type: "function",
             function: {
@@ -12130,6 +12185,18 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
           });
           for (const token of result.tokens ?? []) approvalTokenTool.set(token, tc.function.name);
           if (result.refusal) approvalRefusals.set(tc.function.name, result.refusal);
+          // EXP08 A2b (D11, the other direction): the door reuses a live proposal for the same piece, so a
+          // proposal already on a Team Hub card would come back here with that card's token, and its chat
+          // card's Approve would be dropped at the choke point above. It is never shown here: the person is
+          // pointed at the card that already asks for it. A lookup that does not answer keeps today's card
+          // (its Approve still passes the choke point, which fails closed on its own).
+          if (!doorPin && result.content.needs_confirm === true && typeof result.content.confirm_fingerprint === "string") {
+            const waiting = await withoutTeamHubCardTokens(supabase, user.id, [result.content.confirm_fingerprint]).catch(() => null);
+            if (waiting && !waiting.failed && waiting.bound.length) {
+              toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(TEAM_HUB_CARD_ALREADY_WAITING) });
+              continue;
+            }
+          }
           // The door claims the stored proposal atomically; what it returns is this approval's outcome.
           if (doorPin) {
             toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(
@@ -16480,38 +16547,9 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
                 }
               }
             } else if (tc.function.name === "growth_list") {
-              // Caller-authed read, EXPLICITLY tenant-pinned (§9). Don't rely on RLS
-              // alone: a platform admin's manage-RLS would span tenants, and the URLs
-              // below are built from personaCtx's single slug — cross-tenant rows would
-              // get wrong links (§13). No tenant context → empty, never a leak.
-              const _listTid = personaCtx?.tenant_id ?? null;
-              const { data: pages, error } = _listTid
-                ? await supabaseClient
-                    .from("growth_pages")
-                    .select("id, slug, title, status, published_at, updated_at")
-                    .eq("tenant_id", _listTid)
-                    .order("updated_at", { ascending: false })
-                    .limit(100)
-                : { data: [] as any[], error: null };
-              if (error) throw error;
-              // Resolve the tenant slug once to build the REAL public URL for published
-              // pages (§13 — never a made-up link); drafts have no public URL yet.
-              let tenantSlug: string | null = null;
-              if ((pages || []).some((p: any) => p.status === "published") && personaCtx?.tenant_id) {
-                const { data: t } = await admin.from("tenants").select("slug").eq("id", personaCtx.tenant_id).maybeSingle();
-                tenantSlug = (t as any)?.slug ?? null;
-              }
-              result = {
-                success: true,
-                count: (pages || []).length,
-                pages: (pages || []).map((p: any) => ({
-                  id: p.id,
-                  slug: p.slug,
-                  title: p.title,
-                  status: p.status,
-                  url: p.status === "published" && tenantSlug ? `/p/${tenantSlug}/${p.slug}` : null,
-                })),
-              };
+              // Caller-authed read, EXPLICITLY tenant-pinned (§9); the service role reads only this
+              // workspace's public slug. One home since EXP08 A2b: _shared/growth/list-pages.ts.
+              result = await listGrowthPages(supabaseClient, admin, personaCtx?.tenant_id ?? null);
             } else if (tc.function.name === "growth_page_generate") {
               // Draft-only preview: designs the page blocks, writes nothing (§13). The
               // edge fn resolves the tenant brand and enforces §2 coaching-generic defaults.
@@ -17024,11 +17062,8 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               result = { success: true, count: (data as any[])?.length ?? 0, actions: data ?? [] };
               if (tc.function.name === "action_get" && rememberEmailOrigin(data, args.action_id)) unresolvedEmailOrigins.delete(tc);
             } else if (tc.function.name === "crm_list_team") {
-              const { data, error } = await supabaseClient.rpc("list_team_members", {
-                p_tenant_id: personaCtx?.tenant_id ?? null,
-              });
-              if (error) throw error;
-              result = { success: true, count: (data as any[])?.length ?? 0, members: data ?? [] };
+              // Caller JWT; the definer pins the caller's own tenant. One home since EXP08 A2b.
+              result = await listCrmTeam(supabaseClient, personaCtx?.tenant_id ?? null);
             } else if (tc.function.name === "presence_who_online") {
               // p_tenant_id: null so the platform OWNER sees platform-wide and a
               // tenant member is auto-pinned to their own team by the DEFINER RPC.
@@ -17212,24 +17247,17 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               if (error) throw error;
               result = { success: true, count: data?.length || 0, deals: data || [] };
             } else if (tc.function.name === "crm_list_tasks") {
-              const limit = Math.min(Math.max(Number(args.limit) || 25, 1), 100);
-              let q = admin.from("tasks").select("id, title, status, due_date, track, user_id, biz_id, deal_id, source_thread_id, updated_at, created_at").eq("tenant_id", crmTenantId);
-              if (args.status && args.status !== "all") q = q.eq("status", args.status);
-              else if (!args.status) q = q.neq("status", "completed");
+              // The list itself has one home since EXP08 A2b (_shared/crm-reads/list-tasks.ts). The
+              // person-by-email lookup stays HERE, in the chat only: Team Hub never lists auth users.
+              // crmTenantId is non-null here: crm_list_tasks is a CRM_SERVICE_TOOLS member, refused above
+              // when the workspace cannot be resolved.
+              let assigneeUserId: string | undefined;
               if (args.assignee_email) {
                 const { data: us } = await admin.auth.admin.listUsers();
                 const a = us?.users?.find((x: any) => (x.email || "").toLowerCase() === String(args.assignee_email).toLowerCase());
-                q = a ? q.eq("user_id", a.id) : q.eq("user_id", "00000000-0000-0000-0000-000000000000");
+                assigneeUserId = a ? a.id : "00000000-0000-0000-0000-000000000000";
               }
-              const today = new Date().toISOString().slice(0, 10);
-              if (args.overdue) q = q.lt("due_date", today);
-              if (args.due_within_days) {
-                const end = new Date(Date.now() + Number(args.due_within_days) * 86400000).toISOString().slice(0, 10);
-                q = q.gte("due_date", today).lte("due_date", end);
-              }
-              const { data, error } = await q.order("due_date", { ascending: true, nullsFirst: false }).limit(limit);
-              if (error) throw error;
-              result = { success: true, count: data?.length || 0, tasks: data || [] };
+              result = await listCrmTasks(admin, crmTenantId!, args, { assigneeUserId });
             } else if (tc.function.name === "crm_pipeline_summary") {
               const sevenDaysAgo = new Date(Date.now() - 7 * 86400000).toISOString();
               const thirtyDaysAgo = new Date(Date.now() - 30 * 86400000).toISOString();
@@ -20152,11 +20180,14 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
       // The report exactly as it went out, so the resumed turn's record can keep it (C4a).
       let approvalOutcomeFrame: unknown = null;
       const emitApprovalOutcome = async (controller: ReadableStreamDefaultController) => {
-        if (approvalOutcomeSent || approvedConfirmations.size === 0) return;
+        // EXP08 A2b: an approval the Team Hub choke point withheld still gets its line (verifier fixes 1, 3).
+        if (approvalOutcomeSent || (approvedConfirmations.size === 0 && teamHubWithheldApprovals.size === 0)) return;
         approvalOutcomeSent = true;
         try {
-          const tokens = [...approvedConfirmations];
+          const tokens = approvalReportOrder.filter((token) => approvedConfirmations.has(token) || teamHubWithheldApprovals.has(token));
           const classified = tokens.map((token) => {
+            // Withheld before anything could use it, so nothing ran here: the reason is the choke point's.
+            if (teamHubWithheldApprovals.has(token)) return classifyUnspentApproval(teamHubWithheldApprovals.get(token));
             // C4a — an approval the resume handled has ONE reading, shared with the turn's record.
             if (resumeTokens.has(token)) return resumedApprovalClassified(token);
             const spentBy = approvalSpend.get(token);

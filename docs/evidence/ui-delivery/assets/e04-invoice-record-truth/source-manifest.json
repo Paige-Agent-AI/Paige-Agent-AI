@@ -1,0 +1,277 @@
+{
+  "scope": "Original focused record and draft action components only; synthetic ports, no customer/provider acceptance",
+  "renderedSourceCommit": "62c960d9ba8ccb26f7a961049cab42bc4630ab27",
+  "normalization": "UTF-8 CRLF to LF for source pins; raw JPEG bytes",
+  "sources": [
+    {
+      "file": "src/solo/sales/invoicePaymentCopy.ts",
+      "sha256": "11be106f8d5cc5c63de4a78d6028977b9c3d78a2f025448abc8c6f523faf0846"
+    },
+    {
+      "file": "src/solo/sales/SalesBillingWorkspace.tsx",
+      "sha256": "0c998b22bf6b12c9dabd229ce1dcd184694228e61dae2f17bf8572fb6e2edcf1"
+    },
+    {
+      "file": "src/solo/sales/InvoiceLifecycleActions.tsx",
+      "sha256": "76f7eed58ffeb3918535c92fea4ae88828d3cd275558adbbf6f31b633729a1ed"
+    },
+    {
+      "file": "src/solo/sales/InvoiceWorkspace.tsx",
+      "sha256": "b3647f9b4ac593e7e70ee5954acd5c3230b20b4c2ea70745b0f0a3daf1e2d89d"
+    },
+    {
+      "file": "src/solo/sales/CommercialPackageInspection.tsx",
+      "sha256": "24da4b929d39272c6887027075c1aee76f6016e6a06b98cc01c423e1c20e6cfa"
+    },
+    {
+      "file": "src/solo/sales/invoiceLifecycleApi.ts",
+      "sha256": "24b30dd5617e77e483f591d52b1053dc888c7c976ff81fd842c4cc8a3af9cb58"
+    },
+    {
+      "file": "src/solo/sales/invoiceDraftApi.ts",
+      "sha256": "d6fdffd9bba7b2722bb94dfa17513f472c8d6a9cc3cd81287b5ebbc4274e09f2"
+    },
+    {
+      "file": "src/solo/sales/invoiceDraftSnapshot.ts",
+      "sha256": "55b275a2454695a5091e8bf106ec6233776fd443e5dbf7e29a54d8ef88ce675d"
+    },
+    {
+      "file": "src/solo/sales/sales-billing.css",
+      "sha256": "707ab36fb8573c0f00b31d8b12a28fea2b33ab8277f19f50309076a1fb38132e"
+    },
+    {
+      "file": "scripts/live-drive/sales-payments/mount/main.tsx",
+      "sha256": "3ea01ddc36398e612cf094a729a1e0b47d86fd94970ab95d95ed520a166cea00"
+    },
+    {
+      "file": "scripts/live-drive/sales-payments/mount/supabase.ts",
+      "sha256": "e617aaad44bc3da19fd8007d87b49c168c78f2dfa66c162d6292c095a5923564"
+    },
+    {
+      "file": "scripts/live-drive/sales-payments/mount/accepted-plan.ts",
+      "sha256": "e6c6f6b02f86d49c2d105b8c9e3751e1f646de80f12f0a9b197a57fea113ed9f"
+    },
+    {
+      "file": "scripts/live-drive/sales-payments/accepted-plan-fixture.ts",
+      "sha256": "73e989b02f93c66b8c12cc40199310de8ca5a1bf3b2fd6d304d010c57500c749"
+    },
+    {
+      "file": "scripts/live-drive/sales-payments/mount/vite.config.ts",
+      "sha256": "7d48478e735218e7498e05bb29e55bec20c0c4631f5981fa0bc38ae896ea7685"
+    },
+    {
+      "file": "scripts/live-drive/sales-payments/mount/index.html",
+      "sha256": "7147f46e42a58adf3d582f998800e2c0ff500607c1e52c5352eadee9d15fe692"
+    },
+    {
+      "file": "src/index.css",
+      "sha256": "85a3adb5668238e91cdb6c8189488db1fd24ce6698f7456ae23a3de6aa572482"
+    },
+    {
+      "file": "src/solo/solo-tokens.css",
+      "sha256": "77edc9fc35a6d2dab87318996fbb0dc6d80a0a04115d1757016c10da2c7b3197"
+    },
+    {
+      "file": "src/solo/solo-campaigns.css",
+      "sha256": "4e4f40fd641823c0865958295d8a4ab3c42dd7f880922c798cfcea4c29cc516f"
+    },
+    {
+      "file": "package.json",
+      "sha256": "46039f2fb72a44a390becfc609cdf92d7a174944d11678476800b3c1221b0893"
+    },
+    {
+      "file": "package-lock.json",
+      "sha256": "54af2870b4d4c167fca773bfad885777689894540ad2e05c7e792c21bbd59e6d"
+    }
+  ],
+  "frames": [
+    {
+      "file": "draft-desktop.jpg",
+      "capturedAt": "2026-10-30T05:12:44.890Z",
+      "labels": [
+        "Reference",
+        "Draft total",
+        "Planned initial amount",
+        "Planned later amount",
+        "Unissued draft amount",
+        "Provider-verified payments",
+        "Manual payment records",
+        "Version"
+      ],
+      "scrollWidth": 1280,
+      "url": "http://127.0.0.1:5268/?surface=record&record_status=draft&theme=light&state=prepared",
+      "width": 1280,
+      "pixelWidth": 1280,
+      "pixelHeight": 720,
+      "format": "JPEG",
+      "sha256": "08382fda558c9c58e75f828fc40275957ad69ba6b67603a88129e9e36576b4c9",
+      "byteLength": 45481
+    },
+    {
+      "file": "draft-actions-desktop.jpg",
+      "capturedAt": "2026-10-30T05:14:01.564Z",
+      "labels": [
+        "Invoice number",
+        "Draft total",
+        "Less business-recorded payments",
+        "Less provider-confirmed payments",
+        "Unissued draft amount"
+      ],
+      "scope": "Original Draft invoice dialog",
+      "scrollWidth": 1280,
+      "url": "http://127.0.0.1:5268/?surface=record&record_status=draft&theme=light&state=prepared",
+      "width": 1280,
+      "pixelWidth": 1280,
+      "pixelHeight": 720,
+      "format": "JPEG",
+      "sha256": "5d1d26ae948ef63c1c74310a2f6a0ef1c29ccdf3fb886683499382ede1f1390b",
+      "byteLength": 37096
+    },
+    {
+      "file": "draft-320-dark.jpg",
+      "capturedAt": "2026-10-30T05:17:12.398Z",
+      "scope": "Original focused record in320px CSS frame; native1280x720 screenshot",
+      "labels": [
+        "Reference",
+        "Draft total",
+        "Planned initial amount",
+        "Planned later amount",
+        "Unissued draft amount",
+        "Provider-verified payments",
+        "Manual payment records",
+        "Version"
+      ],
+      "scrollWidth": 320,
+      "width": 320,
+      "pixelWidth": 1280,
+      "pixelHeight": 720,
+      "format": "JPEG",
+      "sha256": "79a4a437fd4bf6f96fa560bb770ed243012977abaae1815f010b3bbc05017296",
+      "byteLength": 35059
+    },
+    {
+      "file": "draft-actions-320-dark.jpg",
+      "capturedAt": "2026-10-30T05:17:34.634Z",
+      "labels": [
+        "Invoice number",
+        "Draft total",
+        "Less business-recorded payments",
+        "Less provider-confirmed payments",
+        "Unissued draft amount"
+      ],
+      "scope": "Original Draft invoice dialog in320px CSS frame",
+      "scrollWidth": 320,
+      "width": 320,
+      "pixelWidth": 1280,
+      "pixelHeight": 720,
+      "format": "JPEG",
+      "sha256": "7c189255a6855e0a7d2a3100864b3699bb87996940f5f1a2a27d570ace91f2b6",
+      "byteLength": 31414
+    },
+    {
+      "file": "void-desktop-dark.jpg",
+      "capturedAt": "2026-10-30T05:18:52.745Z",
+      "labels": [
+        "Reference",
+        "Original invoice total",
+        "Original requested amount",
+        "Original remaining schedule",
+        "Recorded balance (voided)",
+        "Provider-verified payments",
+        "Manual payment records",
+        "Version"
+      ],
+      "scrollWidth": 1280,
+      "url": "http://127.0.0.1:5268/?surface=record&record_status=void&theme=dark&state=prepared",
+      "width": 1280,
+      "pixelWidth": 1280,
+      "pixelHeight": 720,
+      "format": "JPEG",
+      "sha256": "1c642435acd17b3feeed110497e15fc2c07fa04993144c2a919215f475267688",
+      "byteLength": 46572
+    },
+    {
+      "file": "void-320-light.jpg",
+      "capturedAt": "2026-10-30T05:19:18.483Z",
+      "scope": "Original record in320px CSS frame; native1280x720 screenshot",
+      "labels": [
+        "Reference",
+        "Original invoice total",
+        "Original requested amount",
+        "Original remaining schedule",
+        "Recorded balance (voided)",
+        "Provider-verified payments",
+        "Manual payment records",
+        "Version"
+      ],
+      "scrollWidth": 320,
+      "width": 320,
+      "pixelWidth": 1280,
+      "pixelHeight": 720,
+      "format": "JPEG",
+      "sha256": "05937c91d0a5b7117a7e5395ef0cfc00d2cedaf2f80e856e466e96d8a8f12fda",
+      "byteLength": 39184
+    },
+    {
+      "file": "issued-desktop.jpg",
+      "capturedAt": "2026-10-30T05:19:49.932Z",
+      "url": "http://127.0.0.1:5268/?surface=record&record_status=issued&theme=light&state=prepared",
+      "scope": "Native desktop viewport",
+      "labels": [
+        "Reference",
+        "Total obligation",
+        "Original requested amount",
+        "Original remaining schedule",
+        "Outstanding balance",
+        "Provider-verified payments",
+        "Manual payment records",
+        "Version"
+      ],
+      "scrollWidth": 1280,
+      "width": 1280,
+      "pixelWidth": 1280,
+      "pixelHeight": 720,
+      "format": "JPEG",
+      "sha256": "4633da25c648845c2a422baf6cf204afd0664ebf32e04125b6169798b3915262",
+      "byteLength": 45373
+    },
+    {
+      "file": "issued-390-dark.jpg",
+      "capturedAt": "2026-10-30T05:19:50.938Z",
+      "url": "http://127.0.0.1:5268/?surface=record&record_status=issued&theme=dark&viewport=390&state=prepared",
+      "scope": "390px CSS frame; native1280x720 screenshot",
+      "labels": [
+        "Reference",
+        "Total obligation",
+        "Original requested amount",
+        "Original remaining schedule",
+        "Outstanding balance",
+        "Provider-verified payments",
+        "Manual payment records",
+        "Version"
+      ],
+      "scrollWidth": 390,
+      "width": 390,
+      "pixelWidth": 1280,
+      "pixelHeight": 720,
+      "format": "JPEG",
+      "sha256": "5b049a4cb96d34c7fa890b49e0ee913a5108423f44fa364f59f41eadeefe3179",
+      "byteLength": 37244
+    }
+  ],
+  "keyboard": {
+    "desktop": "Tab from Inspect commercial package reached Open actions & records with visible focus; Enter opened Draft invoice; Close returned visible focus to same trigger",
+    "narrow": {
+      "dialogOpen": false,
+      "focusVisible": "Open actions & records"
+    }
+  },
+  "limits": [
+    "Synthetic SDK/document ports and unchanged CSP deny all connections",
+    "Focused record component context, not complete signed-in shell",
+    "320/390 CSS frames in native1280x720 screenshot, not physical phone/native200percent/AT",
+    "No approval, issue, send, signing or payment executed",
+    "Initial stale-header render and initial navigation timeout excluded; actual later DOM/source states checked",
+    "Browser screenshots are raw JPEG; initial assumed PNG-header guard refused and filenames were corrected without changing pixels"
+  ]
+}

@@ -860,6 +860,13 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**2026-10-30 UTC — EXP08 original source return/scoped continuation, bounded source release.**
+
+| Increment | Exact source/release evidence | Customer result and remaining boundary |
+| --- | --- | --- |
+| [#3109](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3109) | Reviewed0c771919262a6dd914000f4c21680d2fc484ffc9; normal merge62bdeca0866d31c7a2ce7f03516b2b333e70a730, tree d532cc5dd60cb4b2c43c35e595415725b0db4a81 equals reviewed tree. Required exact-head13 checks/two web statuses SUCCESS; genuine Preview124178767045 SUCCESS; automated review6527753761, distinct source-only composition review and explicitly labelled AUTHOR-REVIEW / LOWER ASSURANCE retained. Original two review threads resolved. | Reopen same original task/message/thread; scoped unsent Continue-in-PAIGE; per-thread drafts/pinned source refresh recovery. Original Work/Trust/domain writers retained; no duplicate task/approval/result engine. [Original evidence](evidence/ui-delivery/exp08-team-hub-source-return-continuity.md), original ANT161 full matrix. Local/synthetic tests are not authenticated outcome proof. |
+| Production source readback | Vercel dpl_BC92y5whGqob5X152sW22ZTDKdiE READY/exact62; both official origins200/build62-mvv8ks54 before peer571. Normal native41097594442 SUCCESS;40008 once, reference body9a1213b77cd4efd6443ebd6b02b60d45/postgres/definer/STABLE/empty path/authenticated-only execute. Old62 Edge41097594827 strict readback FAIL retained. Source-owner-coordinated notify-only four-file refresh56/JWTtrue exact. Compatible cumulative571f8aa84be2fdb1f089a3fc65c8e94ad1b613d4 normal41098303978 attempt2/job124216585533 logs ALL24 source/config PASS17:41UTC/artifact12998667402; unchanged workflow advanced edge-live571, direct db-live/edge-live571 and both public200/build571-mvv8qskj verified. Terminal API conclusion separately pending at this checkpoint. | No source verifier waiver or incompatible old62 broad retry; newer E05 CRM preserved. Preview recovery changed only own disposable infrastructure via original integration, no production reset/history rewrite. No authenticated A2b execution/receipt/reopen, all-role/account/lifecycle or full Experience acceptance inferred. Internal-only source increment, no customer release identity/announcement. FULL ASSIGNMENT STILL CODING; one integrated owner review later. |
+
 **2026-10-30 UTC — EXP02 Finance evidence period survives forecast reload and return; bounded released customer proof.**
 
 | Increment | Exact source and production release | Customer result and remaining boundary |

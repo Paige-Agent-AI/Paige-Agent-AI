@@ -1895,3 +1895,42 @@ Release chronology correction,2026-10-30: earlier carrier-pending statements des
 Owner ALL50/every-dispatch amendment incorporated2026-10-30: originalANT87/50784beb,ANT11/76a06dc8,ANT164/646332af read in full. Both-chat PAIGE/same-specialist standing follow-through must preserve the original final-provider-effect eligibility boundary for EVERY call/text, including schedules/queues/retries/campaign steps: current sourced applicable jurisdiction/channel/purpose/effective rules, recipient local time/DST, current consent/DNC/revocation, actor/delegated action permission, attempt history and stricter preferences. Unknown required lawful eligibility remains HOLD with truthful next step, no 'sent'; approval/standing grant/cached readiness/area code/generic national hours cannot replace it. E03 owns original canonical communication gate and50-state coverage, E05 timing/queue, E10 custody/providerfacts; E08 consumes those boundaries without a second policy engine/sender/ledger. ExistingA2b task/page tools dispatch no call/text; broader waves' integration/negative proof remains owed. No all50 legal audit or released enforcement claim is made by this ACK.
 
 Originalknown-copyrepair disposition: TeamHub paused-access sentence now matches approved prototype 'your permissions are unchanged'; existing three switched-off access mounted cases PASS, no permission behavior change. Original source note above retained as historical. Initial wrong test-name filter skipped all123 and is NOT passing evidence.
+
+## October 30 receiving amendment: Solo bell and persistent activity panel
+
+**ACK / STILL CODING.** Owner explicitly approved adding the Solo notification bell and activity
+panel; Coordinator assigned the existing EXP08 successor presentation/integration custody. This
+supersedes the final bell-retirement intent of #883/#896, preserving their operator isolation and
+history. All original rows 1–18, amendments 1–6 and five lifecycle journeys remain required.
+
+| Additive outcome | Current disposition | Original producer / consumer contract still required |
+| --- | --- | --- |
+| Solo bell, accurate unread count, persistent activity panel | MISSING | E01 current Solo shell seam; E08 presentation and integration |
+| Actual approvals awaiting action | PROOF OWED | Original Trust/domain approval source, effective current resource/action eligibility, same original approval link |
+| Task and reminder notices | PROOF OWED | E05 original Work/reminder producer, stable event identity, authorized recipient, same task link |
+| Verified completion, failures and concrete attention | PROOF OWED | Original execution/result writers and receipts; unknown is never success; original outcome/recovery link |
+| Read/unread controls and save/reopen | MISSING | Demonstrate suitable existing permitted storage first; read-state never approves or grants authority |
+| Honest loading, empty, error, stale and revoked states | MISSING | Actor/workspace invalidation and fresh source/resource admission on reopen |
+| Existing/new SOLO and legitimate management roles | PROOF OWED | Original Holder/Owner/Admin/authorized-member authority; unassigned, revoked, private and cross-tenant negatives |
+
+Source discovery, not a new implementing lease: `solo-contextual-notifications-retirement.md`
+preserves the historical separation. The current shell header is
+`TenantCommandCenterShell.tsx` → `tcs-command-actions`. `useSoloActivityFeed` already consumes
+`get_solo_rail_activity`; it provides recorded history, not approval state, stable original action
+links or per-recipient read-state. Its existing caller/workspace refusal contract must be reconciled
+with actual current resource/delegation authority before reuse. `useNotifications` reads legacy
+user-only `notifications`; historical schema has no tenant key. That hook is **not** demonstrated
+suitable for this amendment. `paige_admin_notifications` and operator tools are explicitly excluded.
+No shell edit, storage extension, new sender or provider activation follows from this inventory.
+
+For every source event, implementation evidence must name permitted inputs; deterministic
+eligibility/recipient/priority/grouping/dedup/currentness rules; actual file/function and existing ALG
+support or explicit gap; original producer and read-state semantics; uncertainty/abstention;
+baseline/varied-repeat/negative checks; useful result, receipt, same-record reopen/recovery; and
+controlled feedback. No new ALG maturity, fabricated events, duplicate execution/approval/result
+engine, scheduler or approval inbox. In-app read/approval does not authorize external delivery.
+
+Original ANT50 and ANT164 received narrow source-contract requests; current shell/Trust and
+Work/reminder/result writers remain with their existing owners. Agreement-to-Work integration and
+release-source recovery continue independently. Source, release, authenticated usability and owner
+acceptance remain separate; receiving this amendment is not implementation or full readiness.

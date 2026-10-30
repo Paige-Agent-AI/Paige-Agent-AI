@@ -329,6 +329,14 @@ export interface TeamHubPageCursor {
   id: string;
 }
 
+export interface TeamHubMessageReference {
+  channelId: string;
+  rootId: string;
+  messageId: string;
+  /** Native microsecond boundary for a direct old-reply read, preserved verbatim. */
+  cursor: TeamHubPageCursor | null;
+}
+
 /** Thread mode (A7): the root, and its replies newest-first under the same compound cursor. */
 export interface TeamHubThreadPage {
   channel: TeamHubChannelSummary;
@@ -376,6 +384,35 @@ function envelope(data: unknown, error: unknown): TeamHubResult<Row> {
   if (data.ok === true) return { kind: "ok", value: data };
   if (data.ok === false && isRefusal(data.code)) return { kind: "refused", code: data.code };
   return { kind: "unavailable" };
+}
+
+const REFERENCE_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+export function parseTeamHubReferenceSearch(search: string): { kind: "none" } | { kind: "invalid" } | { kind: "reference"; id: string } {
+  const query = new URLSearchParams(search);
+  if (!query.has("message")) return { kind: "none" };
+  const id = query.get("message");
+  return query.getAll("message").length === 1 && typeof id === "string" && REFERENCE_UUID.test(id)
+    ? { kind: "reference", id: id.toLowerCase() } : { kind: "invalid" };
+}
+
+/** Metadata from the original native permission gate; never copy arbitrary server fields. */
+export function parseTeamHubMessageReference(data: unknown, error: unknown, expectedMessage: string): TeamHubResult<TeamHubMessageReference> {
+  const result = envelope(data, error);
+  if (result.kind !== "ok") return result;
+  const r = result.value;
+  const uuid = (v: unknown): v is string => typeof v === "string" && REFERENCE_UUID.test(v);
+  if (!uuid(expectedMessage) || !uuid(r.channel_id) || !uuid(r.thread_root_id) || !uuid(r.message_id)
+    || r.message_id.toLowerCase() !== expectedMessage.toLowerCase()) return { kind: "unavailable" };
+  const rootId = r.thread_root_id.toLowerCase(), messageId = r.message_id.toLowerCase();
+  let cursor: TeamHubPageCursor | null = null;
+  if (rootId !== messageId) {
+    const c = r.cursor;
+    if (!isRow(c) || !uuid(c.id) || typeof c.created_at !== "string"
+      || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,6})?(?:Z|[+-]\d{2}:\d{2})$/.test(c.created_at)
+      || !Number.isFinite(Date.parse(c.created_at))) return { kind: "unavailable" };
+    cursor = { id: c.id.toLowerCase(), created_at: c.created_at };
+  } else if (r.cursor !== null) return { kind: "unavailable" };
+  return { kind: "ok", value: { channelId: r.channel_id.toLowerCase(), rootId, messageId, cursor } };
 }
 
 function parsePerson(value: unknown): TeamHubPerson | null {

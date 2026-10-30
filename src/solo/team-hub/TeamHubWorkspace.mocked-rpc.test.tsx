@@ -8,6 +8,7 @@
  * authenticated runtime stays UNVERIFIED until the owner-designated drive.
  */
 import { act, StrictMode } from "react";
+import { MemoryRouter } from "react-router-dom";
 import { createRoot } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, onTestFinished, vi } from "vitest";
 import { TeamHubWorkspace } from "./TeamHubWorkspace";
@@ -187,12 +188,13 @@ async function flush() {
   }
 }
 
-async function mount(props: { onOpenTeamSettings?: () => void; openPaige?: () => void } = {}, options: { strict?: boolean } = {}) {
+async function mount(props: { onOpenTeamSettings?: () => void; openPaige?: () => void } = {}, options: { strict?: boolean; url?: string } = {}) {
   const host = document.createElement("div");
   document.body.append(host);
   const root = createRoot(host);
   mounted.push(root);
-  const view = <TeamHubWorkspace {...props} />;
+  const content = <TeamHubWorkspace {...props} />;
+  const view = options.url ? <MemoryRouter initialEntries={[options.url]}>{content}</MemoryRouter> : content;
   await act(async () => root.render(options.strict ? <StrictMode>{view}</StrictMode> : view));
   await flush();
   return { host, root };
@@ -2286,5 +2288,66 @@ describe("EXP08 lifecycle: Team conversations switched off (mocked RPC)", () => 
     const options = Array.from(host.querySelectorAll("[role=listbox] [role=option]")).map((o) => o.textContent ?? "");
     expect(options.some((o) => o.includes("Dana Reyes"))).toBe(true);
     expect(options.some((o) => o.includes("Theo Brandt")), "not offered as a mention the server would refuse").toBe(false);
+  });
+});
+
+
+describe("original Team Hub source references", () => {
+  const rootId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+  const replyId = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
+  const channelId = "cccccccc-cccc-4ccc-8ccc-cccccccccccc";
+  function source() {
+    db.conversations.push(channel({ id: channelId, name: "source", unread: 4 }));
+    db.messages[channelId] = [msg({ id: rootId, body: "Original source", reply_count: 120 })];
+    db.replies[rootId] = [msg({ id: replyId, body: "Exact older reply", parent_message_id: rootId, created_at: "2026-10-28T09:00:00.123456+00:00" })];
+    db.override.team_hub_message_reference = () => ({ ok: true, channel_id: channelId, thread_root_id: rootId, message_id: replyId,
+      cursor: { created_at: "2026-10-28T09:00:00.123456+00:00", id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbc" } });
+  }
+  it("reopens and focuses the exact old reply via its native cursor in StrictMode", async () => {
+    source();
+    const { host } = await mount({}, { strict: true, url: `/solo/account/team-hub?message=${replyId}` });
+    await flush();
+    expect(host.querySelector('aside[aria-label="Thread"]')?.textContent).toContain("Exact older reply");
+    expect(document.activeElement?.id).toBe(`th-msg-${replyId}`);
+    const read = calls.find(c => c.name === "team_hub_list_messages" && c.params.p_thread_root === rootId)!;
+    expect(read.params).toMatchObject({ p_channel_id: channelId, p_before: "2026-10-28T09:00:00.123456+00:00", p_before_id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbc" });
+    expect(calls.filter(c => c.name === "team_hub_list_messages" && c.params.p_thread_root === rootId)).toHaveLength(1);
+    expect(calls.some(c => c.name === "team_hub_post_message")).toBe(false);
+    expect(calls.some(c => c.name === "team_hub_mark_read" && c.params.p_channel_id === channelId)).toBe(false);
+  });
+  it("refuses unavailable source metadata without reading its conversation", async () => {
+    source(); db.override.team_hub_message_reference = () => ({ ok: false, code: "not_found" });
+    const { host } = await mount({}, { url: `/solo/account/team-hub?message=${replyId}` });
+    expect(host.textContent).toContain("This message isn't available to you.");
+    expect(calls.some(c => c.name === "team_hub_list_messages" && c.params.p_channel_id === channelId)).toBe(false);
+  });
+  it("a delayed source cannot replace a conversation the person chose meanwhile", async () => {
+    source(); const pending = deferred(); const backendRead = mocks.rpc.getMockImplementation()!;
+    mocks.rpc.mockImplementation(async (name: string, params: Record<string, unknown>) => {
+      if (name === "team_hub_message_reference") await pending.promise;
+      return backendRead(name, params);
+    });
+    const { host } = await mount({}, { url: `/solo/account/team-hub?message=${replyId}` });
+    const general = Array.from(host.querySelectorAll<HTMLButtonElement>(".th-conv-item")).find(b => b.textContent?.includes("general"))!;
+    await act(async () => general.click()); await flush();
+    await act(async () => pending.resolve()); await flush();
+    expect(host.querySelector(".th-conv-head")?.textContent).toContain("general");
+    expect(host.querySelector('aside[aria-label="Thread"]')).toBeNull();
+    expect(calls.some(c => c.name === "team_hub_list_messages" && c.params.p_thread_root === rootId)).toBe(false);
+  });
+  it("fresh message read can refuse after metadata resolution without revealing cached content", async () => {
+    source(); db.override.team_hub_list_messages = params => params.p_channel_id === channelId
+      ? { ok: false, code: "not_found" } : { ok: true, channel: { id: "c-general", kind: "channel", name: "general", visibility: "team", joined: true }, messages: [], has_more: false };
+    const { host } = await mount({}, { url: `/solo/account/team-hub?message=${replyId}` });
+    await flush();
+    expect(host.textContent).not.toContain("Exact older reply");
+    expect(host.textContent).not.toContain("Original source");
+    expect(host.textContent).toContain("This message isn't available to you.");
+  });
+  it("duplicate message parameters never resolve or reveal a source", async () => {
+    source();
+    const { host } = await mount({}, { url: `/solo/account/team-hub?message=${replyId}&message=${rootId}` });
+    expect(host.textContent).toContain("This message link isn't valid.");
+    expect(calls.some(c => c.name === "team_hub_message_reference")).toBe(false);
   });
 });

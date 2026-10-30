@@ -2,6 +2,28 @@
 
 ## Exact Planning reopen follow-up — October 30, 2026 — STILL CODING
 
+### Original slice 1(b) pre-edit extension: return to the exact Team Hub source
+
+The same owner intent now includes opening the original Team Hub message/thread from PAIGE's
+existing source-link frame. Use the approved A2 reopen flow, current canonical SOLO route map,
+same links/thread/keyboard/loading/refusal presentation and original caller-scoped message reader.
+The native reference lookup returns ids and an exact cursor only; the original message read
+rechecks current membership. An old reply opens directly rather than searching unlimited history.
+No message body or private context is copied into a reference, URL, Knowledge or Memory.
+
+Additional must-not-happen: a missing, deleted, private/foreign or revoked reference cannot reveal
+its channel, body, file or unread state; a late answer cannot redirect a changed actor/workspace,
+route or later navigation. Receipt failure cannot emit a source reference. No model-authored URL
+or source id becomes authority. Preserve all original E04/E09/Work/provider and card-state spans.
+
+Additional acceptance: native current/foreign/private/revoked/deleted and compound-cursor cases;
+shared typed route/serializer and metadata-only source-link handling; actual mounted optional-router
+entry, old root/reply opening, keyboard focus, repeated navigation and pending-result cancellation.
+Affected protected seams additionally include Chat source-reference transport and history hydration;
+the original privacy/memory marker must gate references and text. No other previously declared
+unaffected seam changes. New rendered/browser/authenticated/release proof is pending and distinct
+from the earlier task-card 177 tests. This return-link leg alone is not the complete shared workshop.
+
 OWNER_INTENT: Complete original A2 slice 1(a): a teammate opens the same original Planning task from its Team Hub card. Reuse the current shared typed Planning reference and Operations' fresh caller-authorized inspector. Approved task card appearance, label and keyboard interaction remain the direction; no new design decision.
 
 MUST_NOT_HAPPEN: A Planning UUID must not become a CRM `task` address, a weekly-check attribution, an unscoped query, an action or a copied Work record. No navigation grants access, and stale/foreign account context must not expose a record. Missing/malformed identity must not produce a misleading exact link.
@@ -94,3 +116,16 @@ RELEASE_RECOVERY: position=revert the merge: A2a is client and docs only (no mig
 - The SOLO viewport matrix beyond 1366×768 with PAIGE closed, npm run build and the ci:tsc ratchet are the integrator's before merge.
 - An independent verifier and a compliance officer read the A2a diff (§39); their findings were applied by a fixer pass. A fresh §39 read of the fixed diff is still owed before merge.
 - The task-card link is new visible UI outside the frozen A2 frames: its frames (a2a-taskcard-*) are owed to the owner before merge (§00).
+
+
+## Original slice1(b) successor implementation checkpoint — October30
+
+PAIGE's existing TeamHub conversation/search reader now supplies sanitized server-only original message references through the existing receipt/privacy-gated record-link transport. Model envelopes remain unchanged. SOLO canonical route resolves the current account's TeamHub/message UUID; references grant no content permission. New read-only native message-reference RPC returns only channel/root/message IDs and exact native keyset cursor after original current visibility; original message reader authorizes content afresh. Never-applied40008 owns only this new reader with exact body/replay/owner/path/ACL guard. Old replies use UUID successor at native microsecond, maximum UUID next microsecond; no transcript copy, new task store or broad history paging.
+
+Mounted source navigation suppresses default channel auto-open while a source intent is pending (new tests reproduced the old race). Actor/tenant remount, route and later-navigation cancellation, fresh-read refusal, duplicate parameter refusal and keyboard focus remain bounded. Five source-specific mounted cases PASS; full five UI/link files212/212PASS, host reader/wiring62/62PASS. Full original disposable native proof exits0 including original16sections/16mutants, guard replay/inverse, EXP10 compatibility and new root/oldreply/99same-microsecond/maxUUID/private/foreign/deleted/revoked cases. These are synthetic engineering tests, not authenticated proof.
+
+Real SoloApp shell harness:16 labeled synthetic frames at1536/1366/1024/900, dark/light, PAIGEclosed/open; reportfailures[]; no page overflow/runtime errors. Original approved identity tokens/style preserved. Personally inspected dark1366closed and light900open: existing900PAIGEoverlay covers TeamHub while open; frames do not claim simultaneous visibility or authenticated Chat continuity. Existing source-return fixture is opt-in and original harness states unchanged otherwise. Frames/report: assets/exp08-team-hub-source-return; drive: scripts/live-drive/harness/team-hub-shell-mount/team-hub-source-return-drive.mjs. Initial restricted loopback run failed NETWORK_ACCESS_DENIED, native Chrome setup timed out, then isolated no-proxy localChrome/nativeVite succeeded; failed attempts not counted as proof.
+
+Original inspector independently reproduces f78629dispatch/126source and current mainbfb52544429/128 with findings[]. CurrentRoot delta only4lines in existing TeamHub receipt/privacy span; renewed29dispatch scalars plus existing canonical-app-url/record-links2helper hashes using original TypeScript printer/hash. First pre-renewal binding suite correctly FAILed on changed dependencies; original222hostile cases rerun after finalrenewal still pending at this checkpoint. Independent fresh source-only reviews found no actionable issue in source integration and exact29+2scalar delta; no fullsecurity/authenticated/release approval. React checklist applied: stable callbacks, primitive reference intent dependencies, cleanup/cancellation/StrictMode and keyboard focus; no new parallel private reads.
+
+Current full assignment STILL CODING. This is original return-link leg only; complete shared workshop, goals/initiative, A2c, specialist actions and lifecycle outcomes remain open. Carrier3108 has new stranded-card recoveryP2 requiring repair and renewed release checks; no normal release/customer/owner acceptance claimed here.

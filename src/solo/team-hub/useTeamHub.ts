@@ -16,6 +16,8 @@ import {
   parseConversationList,
   parseFinished,
   parseMessagePage,
+  parseTeamHubMessageReference,
+  parseTeamHubReferenceSearch,
   parsePosted,
   parseTaskReads,
   parseTaskRequested,
@@ -323,6 +325,7 @@ function withCards(messages: TeamHubMessage[], cards: Record<string, CardRead> |
 }
 
 export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => unknown; onIncoming?: (announcement: string) => void; onAttachment?: (announcement: string) => void } = {}) {
+  const navigationEpoch = useRef(0);
   const [status, setStatus] = useState<HubStatus>("loading");
   const [overview, setOverview] = useState<TeamHubOverview | null>(null);
   const [refreshFailed, setRefreshFailed] = useState(false);
@@ -483,10 +486,10 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
     return result;
   }, [call, settle]);
 
-  const loadThread = useCallback(async (channelId: string, rootId: string, mode: "open" | "refresh" | "older"): Promise<number> => {
+  const loadThread = useCallback(async (channelId: string, rootId: string, mode: "open" | "refresh" | "older", referenceCursor?: TeamHubPageCursor | null): Promise<number> => {
     if (mode === "open") setThread({ channelId, rootId, status: "loading", root: null, replies: [], hasMore: false, loadingOlder: false, olderFailed: false });
     if (mode === "older") setThread((current) => current && current.rootId === rootId ? { ...current, loadingOlder: true, olderFailed: false } : current);
-    const cursor = cursorBefore(mode === "older" ? live.current.thread?.olderCursor ?? live.current.thread?.replies[0] : undefined);
+    const cursor = cursorBefore(mode === "older" ? live.current.thread?.olderCursor ?? live.current.thread?.replies[0] : mode === "open" ? referenceCursor : undefined);
     const answer = await call("team_hub_list_messages", { p_channel_id: channelId, p_thread_root: rootId, ...cursor, p_limit: THREAD_PAGE_SIZE });
     const result = settle(parseThreadPage(answer.data, answer.error, channelId, rootId));
     if (!alive.current || live.current.thread?.rootId !== rootId) return 0;
@@ -647,13 +650,14 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
     };
   }, []);
 
-  const openConversation = useCallback(async (channelId: string) => {
+  const openConversation = useCallback(async (channelId: string, markVisibleRead = true) => {
+    navigationEpoch.current += 1;
     const conversation = listedIn(live.current.overview, channelId);
     setActiveId(channelId);
     live.current.activeId = channelId;
     setThread(null);
     const { result, newestId } = await loadStream(channelId, "open", conversation?.unread ?? 0);
-    if (result.kind === "ok" && result.value.channel.joined && newestId && alive.current && live.current.activeId === channelId && streamVisible.current) {
+    if (markVisibleRead && result.kind === "ok" && result.value.channel.joined && newestId && alive.current && live.current.activeId === channelId && streamVisible.current) {
       void markRead(channelId, newestId);
     }
   }, [loadStream, markRead]);
@@ -676,6 +680,7 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
   }, [markRead]);
 
   const clearConversation = useCallback(() => {
+    navigationEpoch.current += 1;
     setActiveId(null);
     live.current.activeId = null;
     setStream(null);
@@ -689,6 +694,7 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
   }, [loadStream]);
 
   const openThread = useCallback((rootId: string) => {
+    navigationEpoch.current += 1;
     const channelId = live.current.activeId;
     if (!channelId) return;
     live.current.thread = { channelId, rootId, status: "loading", root: null, replies: [], hasMore: false, loadingOlder: false, olderFailed: false };
@@ -701,7 +707,33 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
     await loadThread(current.channelId, current.rootId, "older");
   }, [loadThread]);
 
-  const closeThread = useCallback(() => { setThread(null); live.current.thread = null; }, []);
+  const closeThread = useCallback(() => { navigationEpoch.current += 1; setThread(null); live.current.thread = null; }, []);
+
+  /** Original-message navigation: metadata resolution grants nothing; list_messages reads afresh. */
+  const openMessageReference = useCallback(async (messageId: string) => {
+    const unavailable = { kind: "unavailable" as const };
+    if (parseTeamHubReferenceSearch(new URLSearchParams({ message: messageId }).toString()).kind !== "reference") return unavailable;
+    const epoch = ++navigationEpoch.current;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    let answer: RpcAnswer;
+    try {
+      answer = await Promise.race([call("team_hub_message_reference", { p_message_id: messageId }),
+        new Promise<RpcAnswer>(resolve => { timer = setTimeout(() => resolve({ data: null, error: new Error("Reference read timed out") }), 5000); })]);
+    } finally { if (timer !== undefined) clearTimeout(timer); }
+    if (!alive.current || navigationEpoch.current !== epoch) return unavailable;
+    const result = settle(parseTeamHubMessageReference(answer.data, answer.error, messageId));
+    if (result.kind !== "ok") return result;
+    const reference = result.value;
+    // Opening an old source must not mark the newest hidden channel messages read.
+    await openConversation(reference.channelId, false);
+    if (!alive.current || navigationEpoch.current !== epoch + 1 || live.current.activeId !== reference.channelId) return unavailable;
+    live.current.thread = { channelId: reference.channelId, rootId: reference.rootId, status: "loading", root: null,
+      replies: [], hasMore: false, loadingOlder: false, olderFailed: false };
+    await loadThread(reference.channelId, reference.rootId, "open", reference.cursor);
+    if (!alive.current || navigationEpoch.current !== epoch + 1) return unavailable;
+    return result;
+  }, [call, settle, openConversation, loadThread]);
+  const cancelReferenceNavigation = useCallback(() => { navigationEpoch.current += 1; }, []);
 
   // ── Attachments (increment 3) ──
   const removedChips = useRef(new Set<string>());
@@ -1543,6 +1575,8 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
     loadOlder,
     setStreamVisible,
     openThread,
+    openMessageReference,
+    cancelReferenceNavigation,
     loadEarlierReplies,
     closeThread,
     send,

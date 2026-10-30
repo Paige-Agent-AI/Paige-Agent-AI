@@ -104,5 +104,49 @@ SELECT pg_temp.check(pg_temp.card_read_post(:'u3',:'ta','nexus','["crm_list_task
 SELECT pg_temp.check(pg_temp.card_read_post(:'u3',:'ta','paige','["agreement_list"]')->'stage' ? 'error',
  'P1: PAIGE cannot widen the closed A2b attestation set');
 ROLLBACK;
+-- Original message return link: current access and native microsecond keyset.
+\ir ../../migrations/20271126040008_exp08_team_hub_message_reference.sql
+\ir ../../migrations/20271126040008_exp08_team_hub_message_reference.sql
+BEGIN;
+SELECT pg_temp.j(:'u3',format('public.team_hub_open_agent_dm(%L::uuid,%L)',:'ta','zion'))->>'channel_id' AS refdm \gset
+SELECT pg_temp.post(:'u3',:'ta',:'refdm','Original reference root')->'message'->>'id' AS refroot \gset
+INSERT INTO public.team_hub_messages(id,tenant_id,channel_id,author_user_id,body,parent_message_id,created_at,client_request_id)
+ VALUES('e8000000-0000-4000-8000-000000000001',:'ta',:'refdm',:'u3','Original old reply',:'refroot','2026-10-20T09:10:11.123456Z',gen_random_uuid());
+SELECT pg_temp.j(:'u3',format('public.team_hub_message_reference(%L::uuid,%L::uuid)',:'ta','e8000000-0000-4000-8000-000000000001')) AS refreply \gset
+SELECT pg_temp.check((:'refreply')::jsonb->>'ok'='true'
+ AND (:'refreply')::jsonb->>'thread_root_id'=:'refroot'
+ AND (:'refreply')::jsonb#>>'{cursor,id}'='e8000000-0000-4000-8000-000000000002'
+ AND ((:'refreply')::jsonb#>>'{cursor,created_at}')::timestamptz='2026-10-20T09:10:11.123456Z'::timestamptz
+ AND NOT ((:'refreply')::jsonb ?| ARRAY['body','name','tenant_id','author_user_id']),
+ 'Reference: exact old reply returns only identifiers and strict native cursor');
+SELECT pg_temp.check(pg_temp.j(:'u3',format('public.team_hub_message_reference(%L::uuid,%L::uuid)',:'ta',:'refroot'))->'cursor'='null'::jsonb,
+ 'Reference: root opens without a fabricated reply cursor');
+INSERT INTO public.team_hub_messages(id,tenant_id,channel_id,author_user_id,body,parent_message_id,created_at,client_request_id)
+ SELECT ('e8000000-0000-4000-8000-'||lpad(to_hex(n),12,'0'))::uuid,:'ta',:'refdm',:'u3','Later same-microsecond reply',:'refroot','2026-10-20T09:10:11.123456Z',gen_random_uuid()
+ FROM generate_series(2,100) n;
+SELECT pg_temp.j(:'u3',format('public.team_hub_list_messages(p_expected_tenant=>%L::uuid,p_channel_id=>%L::uuid,p_thread_root=>%L::uuid,p_before=>%L::timestamptz,p_before_id=>%L::uuid,p_limit=>40)',
+ :'ta',:'refdm',:'refroot',(:'refreply')::jsonb#>>'{cursor,created_at}',(:'refreply')::jsonb#>>'{cursor,id}')) AS refpage \gset
+SELECT pg_temp.check((:'refpage')::jsonb->>'ok'='true' AND (:'refpage')::jsonb->'messages' @> '[{"id":"e8000000-0000-4000-8000-000000000001"}]'::jsonb,
+ 'Reference: exact old reply reachable despite99 newer same-microsecond replies');
+INSERT INTO public.team_hub_messages(id,tenant_id,channel_id,author_user_id,body,parent_message_id,created_at,client_request_id)
+ VALUES('ffffffff-ffff-ffff-ffff-ffffffffffff',:'ta',:'refdm',:'u3','Maximum UUID reply',:'refroot','2026-10-20T09:10:11.123456Z',gen_random_uuid());
+SELECT pg_temp.check((pg_temp.j(:'u3',format('public.team_hub_message_reference(%L::uuid,%L::uuid)',:'ta','ffffffff-ffff-ffff-ffff-ffffffffffff'))#>>'{cursor,created_at}')::timestamptz='2026-10-20T09:10:11.123457Z'::timestamptz,
+ 'Reference: maximum UUID uses next native microsecond');
+SAVEPOINT ref_revoked;
+UPDATE public.tenant_members SET status='inactive' WHERE tenant_id=:'ta' AND user_id=:'u3';
+SELECT pg_temp.check(pg_temp.j(:'u3',format('public.team_hub_message_reference(%L::uuid,%L::uuid)',:'ta',:'refroot'))->>'ok' IS DISTINCT FROM 'true',
+ 'Reference: membership revocation refuses original source');
+ROLLBACK TO SAVEPOINT ref_revoked;
+SELECT pg_temp.check(pg_temp.j(:'u2',format('public.team_hub_message_reference(%L::uuid,%L::uuid)',:'ta','e8000000-0000-4000-8000-000000000001'))->>'ok' IS DISTINCT FROM 'true',
+ 'Reference: another tenant member cannot access the private agent DM');
+SELECT pg_temp.check(pg_temp.j(:'u7',format('public.team_hub_message_reference(%L::uuid,%L::uuid)',:'ta','e8000000-0000-4000-8000-000000000001'))->>'ok' IS DISTINCT FROM 'true',
+ 'Reference: foreign tenant actor refused');
+UPDATE public.team_hub_messages SET deleted_at=now() WHERE id='e8000000-0000-4000-8000-000000000001';
+SELECT pg_temp.check(pg_temp.j(:'u3',format('public.team_hub_message_reference(%L::uuid,%L::uuid)',:'ta','e8000000-0000-4000-8000-000000000001'))->>'ok' IS DISTINCT FROM 'true',
+ 'Reference: deleted original refused');
+SELECT pg_temp.check(NOT has_function_privilege('anon','public.team_hub_message_reference(uuid,uuid)','EXECUTE')
+ AND NOT has_function_privilege('service_role','public.team_hub_message_reference(uuid,uuid)','EXECUTE'),
+ 'Reference: reader available only under authenticated actor context');
+ROLLBACK;
 \ir ../exp10_nexus_team_hub_connection_read.sql
 \echo 'PASS: P1 card-read guard replay, original peer body inverse, staged admin read, demotion and roster revocation'

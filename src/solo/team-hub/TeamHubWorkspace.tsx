@@ -1,5 +1,5 @@
 import { createContext, Fragment, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type DragEvent as ReactDragEvent, type KeyboardEvent as ReactKeyboardEvent, type MutableRefObject, type ReactNode, type RefObject } from "react";
-import { Link, useInRouterContext } from "react-router-dom";
+import { Link, useInRouterContext, useLocation } from "react-router-dom";
 import { ArrowLeft, ArrowRight, AtSign, ClipboardList, CornerDownRight, Download, FileImage, FileSpreadsheet, FileText, Hash, Lock, MessageSquareOff, MessageSquareReply, PanelRight, Paperclip, Plus, Radio, Search, SendHorizontal, Slash, UserPlus, Users, WifiOff, X } from "lucide-react";
 import { useTenantContext } from "@/hooks/useTenantContext";
 import { PaigeRecordLinks } from "@/components/chat/PaigeRecordLinks";
@@ -11,6 +11,7 @@ import { workStatusLabel } from "@/solo/operations/operations-presentation";
 import { useTierFeatures } from "@/hooks/useTierFeatures";
 import {
   bodyProblem,
+  parseTeamHubReferenceSearch,
   commandMatches,
   commandQuery,
   commandRemainder,
@@ -105,7 +106,16 @@ import "./team-hub.css";
  */
 export type TeamHubApprovalHandler = (message: TeamHubMessage, act: TeamHubApprovalAct) => void;
 
-export function TeamHubWorkspace({ onOpenTeamSettings, openPaige, onApprovalAct }: { onOpenTeamSettings?: () => void; openPaige?: () => void; onApprovalAct?: TeamHubApprovalHandler }) {
+type TeamHubWorkspaceProps = { onOpenTeamSettings?: () => void; openPaige?: () => void; onApprovalAct?: TeamHubApprovalHandler };
+export function TeamHubWorkspace(props: TeamHubWorkspaceProps) {
+  return useInRouterContext() ? <RoutedHubEntry {...props} /> : <HubEntry {...props} />;
+}
+function RoutedHubEntry(props: TeamHubWorkspaceProps) {
+  const location = useLocation();
+  return <HubEntry {...props} referenceSearch={location.search} referenceKey={location.key} />;
+}
+function HubEntry({ onOpenTeamSettings, openPaige, onApprovalAct, referenceSearch = "", referenceKey = "" }:
+  TeamHubWorkspaceProps & { referenceSearch?: string; referenceKey?: string }) {
   const { activeTenant, activeUserId, loading, accountContextStatus, refresh } = useTenantContext();
   if (loading || accountContextStatus === "resolving") return <HubSkeleton />;
   const tenantId = activeTenant?.id ?? null;
@@ -116,11 +126,13 @@ export function TeamHubWorkspace({ onOpenTeamSettings, openPaige, onApprovalAct 
   }
   // Remount per actor and workspace: a switch clears every conversation, draft and pending send.
   return <ScopedTeamHub key={`${activeUserId}:${tenantId}`} tenantId={tenantId} onTenantRefresh={refresh}
-    onOpenTeamSettings={onOpenTeamSettings} openPaige={openPaige} onApprovalAct={onApprovalAct} />;
+    onOpenTeamSettings={onOpenTeamSettings} openPaige={openPaige} onApprovalAct={onApprovalAct}
+    referenceSearch={referenceSearch} referenceKey={referenceKey} />;
 }
 
-function ScopedTeamHub({ tenantId, onTenantRefresh, onOpenTeamSettings, openPaige, onApprovalAct }: {
+function ScopedTeamHub({ tenantId, onTenantRefresh, onOpenTeamSettings, openPaige, onApprovalAct, referenceSearch, referenceKey }: {
   tenantId: string; onTenantRefresh?: () => unknown; onOpenTeamSettings?: () => void; openPaige?: () => void; onApprovalAct?: TeamHubApprovalHandler;
+  referenceSearch: string; referenceKey: string;
 }) {
   const [announcement, setAnnouncement] = useState("");
   // One polite region, one write per frame. Everything said before the next frame paints (a pick
@@ -179,7 +191,8 @@ function ScopedTeamHub({ tenantId, onTenantRefresh, onOpenTeamSettings, openPaig
     }
     return <HubSkeleton />;
   }
-  return <ReadyHub hub={hub} announce={announce} announcement={announcement} onOpenTeamSettings={onOpenTeamSettings} openPaige={openPaige} onApprovalAct={onApprovalAct} />;
+  return <ReadyHub hub={hub} announce={announce} announcement={announcement} onOpenTeamSettings={onOpenTeamSettings} openPaige={openPaige} onApprovalAct={onApprovalAct}
+    referenceSearch={referenceSearch} referenceKey={referenceKey} />;
 }
 
 /** Several messages for the one live region, read as sentences in the order they were said. */
@@ -258,8 +271,9 @@ const localDay = (instant: string | null) => {
   return Number.isNaN(date.getTime()) ? "" : `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 };
 
-function ReadyHub({ hub, announce, announcement, onOpenTeamSettings, openPaige, onApprovalAct }: {
+function ReadyHub({ hub, announce, announcement, onOpenTeamSettings, openPaige, onApprovalAct, referenceSearch, referenceKey }: {
   hub: TeamHub; announce: (text: string) => void; announcement: string; onOpenTeamSettings?: () => void; openPaige?: () => void; onApprovalAct?: TeamHubApprovalHandler;
+  referenceSearch: string; referenceKey: string;
 }) {
   const overview = hub.overview!;
   const people = overview.people;
@@ -291,6 +305,12 @@ function ReadyHub({ hub, announce, announcement, onOpenTeamSettings, openPaige, 
   const hubRef = useRef<HTMLDivElement>(null);
   const { layout, workOverlays } = useHubLayout(hubRef);
   const [preview, setPreview] = useState<Preview | null>(null);
+  const [referenceFocus, setReferenceFocus] = useState<{ rootId: string; messageId: string } | null>(null);
+  const consumedReference = useRef("");
+  const referenceGeneration = useRef(0);
+  const referenceBlocked = form !== null || preview !== null;
+  const referenceBlockedNow = useRef(referenceBlocked);
+  referenceBlockedNow.current = referenceBlocked;
   const [workOpen, setWorkOpen] = useState(false);
   // A1b: the agent profile shares the thread's slot; only one of thread, Team work and profile is open.
   const [profile, setProfile] = useState<TeamHubAgentKey | null>(null);
@@ -326,11 +346,13 @@ function ReadyHub({ hub, announce, announcement, onOpenTeamSettings, openPaige, 
   // Open the first conversation once, so a wide screen never starts on an empty pane. In one
   // column the list is what is on screen, so nothing is opened (or marked read) behind it.
   useEffect(() => {
+    // An explicit source intent owns initial navigation, including slow metadata reads.
+    if (parseTeamHubReferenceSearch(referenceSearch).kind !== "none") return;
     if (!multiColumn || opened.current || hub.activeId || !conversations.length) return;
     opened.current = true;
     const first = conversations.find((conversation) => conversation.joined) ?? conversations[0];
     void hub.openConversation(first.id);
-  }, [multiColumn, conversations, hub]);
+  }, [multiColumn, conversations, hub, referenceSearch]);
 
   // A conversation that disappears from the list (left, removed from a private channel) closes.
   useEffect(() => {
@@ -656,6 +678,54 @@ function ReadyHub({ hub, announce, announcement, onOpenTeamSettings, openPaige, 
     threadReturn.current = null;
     window.requestAnimationFrame(() => (target?.isConnected ? target : composerRef.current)?.focus());
   }, [hub]);
+
+  const { openMessageReference, cancelReferenceNavigation } = hub;
+  useEffect(() => {
+    const key = `${referenceKey}:${referenceSearch}`;
+    const generation = ++referenceGeneration.current;
+    const parsed = parseTeamHubReferenceSearch(referenceSearch);
+    setReferenceFocus(null);
+    if (parsed.kind === "none" || consumedReference.current === key) return;
+    if (parsed.kind === "invalid") {
+      consumedReference.current = key;
+      announce("This message link isn't valid. Open the original source and try again.");
+      return;
+    }
+    if (referenceBlocked) {
+      announce("Close the current form to open the original message.");
+      return;
+    }
+    let retired = false;
+    void openMessageReference(parsed.id).then(result => {
+      if (retired || referenceGeneration.current !== generation || referenceBlockedNow.current) return;
+      consumedReference.current = key;
+      if (result.kind !== "ok") {
+        announce(result.kind === "refused" && result.code === "not_found"
+          ? "This message isn't available to you." : "That source couldn't be opened. Try its link again.");
+        return;
+      }
+      closeWork(false); setProfile(null); setMobileView("conv");
+      threadReturn.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+      setReferenceFocus({ rootId: result.value.rootId, messageId: result.value.messageId });
+    });
+    return () => { retired = true; referenceGeneration.current += 1; cancelReferenceNavigation(); };
+    // Layout and already-visible conversation state do not restart an accepted URL intent.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [referenceSearch, referenceKey, referenceBlocked, openMessageReference, cancelReferenceNavigation, announce]);
+  useEffect(() => {
+    if (!referenceFocus) return;
+    const thread = hub.thread;
+    if (!thread || thread.rootId !== referenceFocus.rootId) { setReferenceFocus(null); return; }
+    if (thread.status === "loading") return;
+    if (thread.status !== "ready" || ![thread.root, ...thread.replies].some(m => m?.id === referenceFocus.messageId)) {
+      setReferenceFocus(null); announce("This message isn't available to you."); return;
+    }
+    const element = hubRef.current?.querySelector<HTMLElement>(`aside[aria-label="Thread"] #th-msg-${referenceFocus.messageId}`);
+    setReferenceFocus(null);
+    window.requestAnimationFrame(() => {
+      if (!referenceBlockedNow.current && element?.isConnected) { element.scrollIntoView?.({ block: "center" }); element.focus(); }
+    });
+  }, [referenceFocus, hub.thread, announce]);
 
   // Esc closes the thread from anywhere in the hub. It is handled here, inside React, and marked
   // handled, so the shell's own window-level Esc (which folds PAIGE) leaves it alone. Controls

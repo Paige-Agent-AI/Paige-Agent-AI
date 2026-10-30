@@ -48,6 +48,7 @@ export type CanonicalDestination =
   | "sales_invoices"
   | "sales_collections"
   | "operations_work"
+  | "team_hub"
   | "business_time_zone";
 
 export interface CanonicalAppRouteInput {
@@ -100,6 +101,7 @@ const ROUTES: Record<MountedTier, Partial<Record<CanonicalDestination, string>>>
     sales_invoices: "/solo/{account}/sales/payments?view=invoices",
     sales_collections: "/solo/{account}/sales/payments?view=collections",
     operations_work: "/solo/{account}/operations/work",
+    team_hub: "/solo/{account}/team-hub",
     business_time_zone: "/solo/{account}/settings/setup/business-profile#business-time-zone",
   },
   sub_account: {
@@ -173,7 +175,7 @@ export type CanonicalRecordLink = { path: string; status: "exact" | "surface_onl
 /** The focus parameters the mounted surfaces already read (UUIDs only). */
 const RECORD_FOCUS: Record<MountedTier, Partial<Record<CanonicalDestination, string>>> = {
   operator: {},
-  solo: { contacts: "person", pipeline: "deal", sales_agreements: "agreement", sales_invoices: "invoice", tasks: "task", operations_work: "task", business_game_plan: "play", portal_knowledge: "source", systems_check: "finding" },
+  solo: { contacts: "person", pipeline: "deal", sales_agreements: "agreement", sales_invoices: "invoice", tasks: "task", operations_work: "task", team_hub: "message", business_game_plan: "play", portal_knowledge: "source", systems_check: "finding" },
   sub_account: {},
   agency: {},
 };

@@ -47,6 +47,15 @@ const messages: Record<string, Row[]> = {
   "c-dm-priya": [msg({ id: "p1", author_user_id: "u-priya", body: "Can we move our 1:1 to 3pm?", created_at: today(8, 12) })],
 };
 
+// Opt-in fictional original-message fixture, isolated from existing shell evidence states.
+const SOURCE_CHANNEL = "e8000000-0000-4000-8000-0000000c0001";
+const SOURCE_ROOT = "e8000000-0000-4000-8000-0000000b0001";
+const SOURCE_REPLY = "e8000000-0000-4000-8000-0000000a0001";
+if (params.has("message")) {
+  conversations.push(conv({ id: SOURCE_CHANNEL, name: "handover-notes", unread: 3 }));
+  messages[SOURCE_CHANNEL] = [msg({ id: SOURCE_ROOT, author_user_id: "u-priya", body: "Original onboarding handover notes", created_at: today(9, 0), reply_count: 120 })];
+}
+
 function turnStates(p: Row) {
   const all = messages[String(p.p_channel_id)] ?? [];
   const states: Row[] = [];
@@ -68,10 +77,16 @@ function teamHub(name: string, p: Row) {
   const tenant = harnessActiveTenant().id;
   if (p.p_expected_tenant !== tenant) return { ok: false, code: "scope_changed" };
   if (name === "team_hub_list_conversations") return { ok: true, tenant_id: tenant, me: { user_id: viewer }, people, conversations };
+  if (name === "team_hub_message_reference") return params.get("source") === "refused" || p.p_message_id !== SOURCE_REPLY
+    ? { ok: false, code: "not_found" } : { ok: true, channel_id: SOURCE_CHANNEL, thread_root_id: SOURCE_ROOT,
+      message_id: SOURCE_REPLY, cursor: { created_at: "2026-10-20T09:10:11.123456+00:00", id: "e8000000-0000-4000-8000-0000000a0002" } };
   if (name === "team_hub_mark_read") return { ok: true };
   if (name === "team_hub_list_messages") {
     const c = conversations.find((item) => item.id === p.p_channel_id);
     if (!c) return { ok: false, code: "not_found" };
+    if (p.p_thread_root === SOURCE_ROOT && c.id === SOURCE_CHANNEL) return { ok: true,
+      channel: { id: c.id, kind: c.kind, name: c.name, visibility: c.visibility, joined: c.joined }, root: messages[SOURCE_CHANNEL][0],
+      messages: [msg({ id: SOURCE_REPLY, parent_message_id: SOURCE_ROOT, author_user_id: "u-jordan", body: "The welcome packet is ready for the original review. Reopen this handover here.", created_at: "2026-10-20T09:10:11.123456+00:00" })], has_more: true };
     if (p.p_thread_root) return { ok: false, code: "not_found" };
     return { ok: true, channel: { id: c.id, kind: c.kind, name: c.name, visibility: c.visibility, joined: c.joined }, messages: [...(messages[String(c.id)] ?? [])].reverse(), has_more: false };
   }

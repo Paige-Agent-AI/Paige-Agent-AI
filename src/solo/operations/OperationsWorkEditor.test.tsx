@@ -66,10 +66,10 @@ it("allows an active target-tenant admin to review a reminder time without a glo
   expect(container.querySelector('input[type="datetime-local"]')).not.toBeNull();
   expect(mock.submit).not.toHaveBeenCalled();
 });
-it.each(["creator", "admin", "super_admin"])("preserves the qualified %s reminder-time path and exact submitted field", async role => {
+it.each(["creator", "admin", "super_admin", "tenant_admin"])("preserves the qualified %s reminder-time path and exact submitted field", async role => {
   const reminder = { ...item, item_type: "reminder" as const, priority: "normal" as const };
   const actor = role === "creator" ? "creator" : "manager";
-  mock.roles = { loading: false, userId: actor, roles: role === "creator" ? [] : [role] };
+  mock.roles = { loading: false, userId: actor, roles: ["creator","tenant_admin"].includes(role) ? [] : [role] };
   mock.rpc.mockResolvedValue({ data: role !== "creator", error: null });
   mock.submit.mockResolvedValue({ kind: "acknowledged" });
   await render(reminder, actor);
@@ -79,19 +79,21 @@ it.each(["creator", "admin", "super_admin"])("preserves the qualified %s reminde
     { remindAt: new Date("2099-02-01T09:30").toISOString() });
 });
 it.each([
-  ["missing app role", { loading: false, userId: "manager", roles: [] }],
-  ["unavailable role-read output", { loading: false, userId: "manager", roles: [] }],
-  ["retired title role", { loading: false, userId: "manager", roles: ["coach"] }],
-  ["platform role alone", { loading: false, userId: "manager", roles: ["platform_admin"] }],
-  ["loading role proof", { loading: true, userId: "manager", roles: ["admin"] }],
-  ["another actor's roles", { loading: false, userId: "someone-else", roles: ["admin"] }],
-  ["absent actor", { loading: false, userId: null, roles: ["super_admin"] }],
-] as const)("keeps a noncreator tenant admin's reminder time read-only with %s", async (_label, roles) => {
+  ["no target-tenant authority or app role", { loading: false, userId: "manager", roles: [] }, { data: false, error: null }],
+  ["unavailable target-tenant authority", { loading: false, userId: "manager", roles: ["admin"] }, { data: true, error: { message: "permission lookup unavailable" } }],
+  ["retired title role alone", { loading: false, userId: "manager", roles: ["coach"] }, { data: false, error: null }],
+  ["platform role alone", { loading: false, userId: "manager", roles: ["platform_admin"] }, { data: false, error: null }],
+  ["loading role proof", { loading: true, userId: "manager", roles: ["admin"] }, { data: true, error: null }],
+  ["another actor's roles", { loading: false, userId: "someone-else", roles: ["admin"] }, { data: true, error: null }],
+  ["absent actor", { loading: false, userId: null, roles: ["super_admin"] }, { data: true, error: null }],
+] as const)("keeps reminder time read-only without current authority: %s", async (_label, roles, reply) => {
   mock.roles = { ...roles, roles: [...roles.roles] };
-  mock.rpc.mockResolvedValue({ data: true, error: null });
+  mock.rpc.mockResolvedValue(reply);
   await render({ ...item, item_type: "reminder" }, "manager");
   expect(container.querySelector('input[type="datetime-local"]')).toBeNull();
-  expect(container.querySelector('[role="status"]')?.textContent).toContain("Reminder time is read-only");
+  if (reply.data === true && !reply.error)
+    expect(container.querySelector('[role="status"]')?.textContent).toContain("Reminder time is read-only");
+  else expect(container.querySelector("form")).toBeNull();
   expect(mock.submit).not.toHaveBeenCalled();
 });
 it.each([{ data: false, error: null }, { data: true, error: { message: "permission lookup unavailable" } }])("does not replace tenant authority with app admin (%j)", async reply => {

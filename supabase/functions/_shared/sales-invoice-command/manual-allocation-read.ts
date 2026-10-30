@@ -18,6 +18,7 @@ export function readManualReceiptAssignments(value:unknown,scope:ManualReceiptSc
   ||value.amount_cents!==scope.receipt.amount_cents||value.currency!=='usd'
   ||!(value.reversal_payment_id===null||typeof value.reversal_payment_id==='string'&&UUID.test(value.reversal_payment_id)&&value.reversal_payment_id!==scope.receipt.id))return unavailable;
  const reversalPaymentId=value.reversal_payment_id as string|null;
+ if(value.state==='unverified'&&reversalPaymentId!==null)return unavailable;
  if(value.state==='assigned'){
   try{return{state:'assigned',allocations:parseManualPaymentAllocations(value.allocations,scope.receipt.amount_cents),reversalPaymentId};}catch{return unavailable;}
  }

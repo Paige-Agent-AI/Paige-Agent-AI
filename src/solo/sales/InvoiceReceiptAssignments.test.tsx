@@ -35,6 +35,12 @@ it.each([{invoice_id:'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'},{invoice_version:4}
 it.each(['unassigned','unverified'] as const)('reports %s history without inventing installment allocations',async state=>{
  data={...data,state,allocations:[]};await render();await click('Inspect payment assignments');expect(host.textContent).not.toContain('Payment 1 ·');expect(host.textContent).toContain(state==='unassigned'?'PAIGE will not guess':'could not be verified');
 });
+it('retains a corrected legacy unassigned receipt without inventing earlier assignments',async()=>{
+ data={...data,state:'unassigned',allocations:[],reversal_payment_id:'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee'};await render();await click('Inspect payment assignments');expect(host.textContent).toContain('recorded full correction');expect(host.textContent).toContain('does not assign it to accepted payments');expect(host.textContent).not.toContain('original assignments are retained');
+});
+it('withholds a correction claim when the receipt observation itself is unverified',()=>{
+ expect(readManualReceiptAssignments({...data,state:'unverified',allocations:[],reversal_payment_id:'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee'},scope)).toEqual({state:'unverified',allocations:[],reversalPaymentId:null});
+});
 it('retries a denied read and offers original reload after an actual stale read without writing',async()=>{
  h.rpc.mockResolvedValueOnce({data:null,error:{code:'42501'}}).mockResolvedValueOnce({data:null,error:{code:'40001'}}).mockResolvedValueOnce({data,error:null});
  await render();await click('Inspect payment assignments');expect(host.textContent).toContain('Check workspace access');await click('Refresh receipt assignments');await click('Reload original invoice');expect(reload).toHaveBeenCalledOnce();await click('Refresh receipt assignments');expect(host.textContent).toContain('Payment 2 · $300.00');

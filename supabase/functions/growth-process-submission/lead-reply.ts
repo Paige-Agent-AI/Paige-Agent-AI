@@ -81,9 +81,9 @@ export const LEAD_REPLY_ACTION_KIND = "owner.lead_followup";
 export const LEAD_REPLY_STEP = "lead_reply_draft";
 export const LEAD_REPLY_SOURCE = "growth_form";
 
-// Drafting cost caps, per business — the drafting twin of the processor's alert caps.
+// Public-form burst protection, not a monetary allowance. The owner removed the
+// 100/day drafting-cost stop; an eligible business does not exhaust a daily wallet.
 export const LEAD_REPLIES_PER_BUSINESS_PER_HOUR = 20;
-export const LEAD_REPLIES_PER_BUSINESS_PER_DAY = 100;
 // Spam protection: the form is public, so anyone can type someone else's address into it. At most one
 // reply draft per recipient per day stops the form being used to make a business email a stranger
 // over and over, and stops a bot re-submitting one address from burning drafting cost.
@@ -332,7 +332,8 @@ export async function fileLeadReply(admin: LeadReplyAdmin, input: LeadReplyInput
   const blocked = leadReplyReadinessBlock(readiness);
   if (blocked) return notDrafted(blocked);
 
-  // 4. Caps: this business's reply drafts in the last hour / day, and this recipient's in the last day.
+  // 4. Abuse guards: this business's drafts in the last hour, and this recipient's
+  //    in the last day. The business-day count is informational, never an allowance.
   //    `upTo` (the re-count after filing): only rows created at or before ours, ours excluded.
   const filedSince = async (hours: number, contactId: string | null, upTo?: { createdAt: string; id: string }) => {
     let q = admin.from("paige_actions")
@@ -345,10 +346,9 @@ export async function fileLeadReply(admin: LeadReplyAdmin, input: LeadReplyInput
     const { count, error } = await q;
     return { count: error ? null : (count ?? 0), error };
   };
-  const overCap = (hourCount: number, dayCount: number, contactCount: number): string | null =>
+  const overCap = (hourCount: number, contactCount: number): string | null =>
     contactCount >= LEAD_REPLIES_PER_CONTACT_PER_DAY ? "contact_daily_cap"
       : hourCount >= LEAD_REPLIES_PER_BUSINESS_PER_HOUR ? "business_hourly_cap"
-      : dayCount >= LEAD_REPLIES_PER_BUSINESS_PER_DAY ? "business_daily_cap"
       : null;
   const hour = await filedSince(1, null);
   const day = await filedSince(24, null);
@@ -361,9 +361,8 @@ export async function fileLeadReply(admin: LeadReplyAdmin, input: LeadReplyInput
   if (recipientDay.count >= LEAD_REPLIES_PER_CONTACT_PER_DAY) {
     return notDrafted("contact_daily_cap", { contact_last_day: recipientDay.count });
   }
-  if (hour.count >= LEAD_REPLIES_PER_BUSINESS_PER_HOUR || day.count >= LEAD_REPLIES_PER_BUSINESS_PER_DAY) {
-    const reason = hour.count >= LEAD_REPLIES_PER_BUSINESS_PER_HOUR ? "business_hourly_cap" : "business_daily_cap";
-    return notDrafted(reason, { business_last_hour: hour.count, business_last_day: day.count });
+  if (hour.count >= LEAD_REPLIES_PER_BUSINESS_PER_HOUR) {
+    return notDrafted("business_hourly_cap", { business_last_hour: hour.count, business_last_day: day.count });
   }
 
   // 5. File the draft request. The kind's default lane (confirm) applies; it always needs the owner.
@@ -418,7 +417,7 @@ export async function fileLeadReply(admin: LeadReplyAdmin, input: LeadReplyInput
     if (h2.count === null || d2.count === null || c2.count === null) {
       result.cap_recheck = "unreadable";
     } else {
-      const overflow = overCap(h2.count, d2.count, c2.count);
+      const overflow = overCap(h2.count, c2.count);
       if (overflow) {
         const { error: dismissErr } = await admin.rpc("advance_action", {
           p_action_id: actionId,

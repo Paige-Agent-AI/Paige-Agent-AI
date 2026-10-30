@@ -4748,3 +4748,22 @@ zoom/AT proof. Experiential: original keyboard flow works and prior draft values
 persist; ordinary staff/client/provider/full12 and Founder Acceptance remain OPEN.
 ALG01/12 PARTIAL,02/13 UNVERIFIED and sales.department PROOF_OWED unchanged. Same
 existing Master document windows/peer source leases; no activation or extra agent.
+
+C138 parent source release:3114/b2decb7c/lower5708218840 passed ALL12 check-runs
+and2 web statuses with0 unresolved review threads, then normally merged
+915c977fed6d87a3570d2a5008faddcd8b22489f at05:40:33UTC. Actual tree7d42d0a8
+matches the inspected6d4+b2de union, with every outside-owned leaf preserved.
+Normal Edge/web deployment and authoritative source readback are tracked
+separately; no DRAINING availability/effect or customer acceptance is promoted.
+The UI successor normally composes that source and original EXP03 conversation
+release; ALL20 direct rendered source pins remain exact, no peer content lost.
+Original paritySP1–SP5 and COMPLETE hostile/legitimate self-test PASS on this UI
+candidate; the evidence-record validator PASS covers3 UI files/1 record only.
+
+Latest original ANT-161 receiving: E05 reserves native50005 AFTER the published
+E08 20008→30008→35008→40008 chain. E09 records an automatic-approval hold on its
+proposed native financial context/publication adaptation; its16 file/reservation
+was NOT created. Native15 producer is satisfied; that specific downstream owner/
+security decision remains separate, with no E04 bypass or duplicate permission
+writer. These current source/activation boundaries do not block this owning
+display correction or other safe commercial work. All12/founder remain OPEN.

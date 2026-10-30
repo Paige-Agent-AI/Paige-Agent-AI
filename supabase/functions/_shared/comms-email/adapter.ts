@@ -313,7 +313,7 @@ export function parseScheduledCommsEmailBinding(value: unknown): ScheduledCommsE
   let draftCommand: CommsEmailCommand | undefined;
   let draftAttachments: CommsEmailAttachmentManifest | undefined;
   const governance = object(b.governance);
-  if (governance && Object.hasOwn(governance, "draft_source")) {
+  if (governance && Object.prototype.hasOwnProperty.call(governance, "draft_source")) {
     try { draftSource = parseCommsEmailDraftSource(governance.draft_source); } catch { return null; }
     if ((b.body_html as string).length > 100000 || (b.body_html as string).includes("\0")) return null;
     try { draftCommand = parseCommsEmailCommand(b.command); } catch { return null; }

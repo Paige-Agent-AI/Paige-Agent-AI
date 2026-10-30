@@ -33,7 +33,7 @@ export async function readCommsEmailDraftProposal(admin: CommsEmailAdmin, input:
       || typeof message.connector_id !== "string") return unavailable();
     const meta = message.meta == null ? {} : row(message.meta);
     if (!meta || message.action_id || ["comms_email_binding", "sales_invoice_binding", "growth_sequence_binding", "email_campaign_binding"]
-      .some(key => Object.hasOwn(meta, key))) return { ok: false, code: "COMMS_EMAIL_DRAFT_OWNED_FLOW_REQUIRED" };
+      .some(key => Object.prototype.hasOwnProperty.call(meta, key))) return { ok: false, code: "COMMS_EMAIL_DRAFT_OWNED_FLOW_REQUIRED" };
     // Privacy is checked before content/version is returned or fingerprinted. Neither
     // tenant membership nor picking another From grants access to a personal source.
     const connectorRead = await admin.from("channel_connectors")

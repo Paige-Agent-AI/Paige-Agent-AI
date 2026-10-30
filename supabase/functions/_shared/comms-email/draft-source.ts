@@ -11,7 +11,7 @@ export function parseCommsEmailDraftSource(value: unknown): CommsEmailDraftSourc
   const invalid = () => new TypeError("COMMS_EMAIL_DRAFT_SOURCE_INVALID");
   if (!value || typeof value !== "object" || Array.isArray(value)) throw invalid();
   const v = value as Record<string, unknown>;
-  if (Object.keys(v).length !== 2 || !Object.hasOwn(v, "message_id") || !Object.hasOwn(v, "updated_at")
+  if (Object.keys(v).length !== 2 || !Object.prototype.hasOwnProperty.call(v, "message_id") || !Object.prototype.hasOwnProperty.call(v, "updated_at")
     || typeof v.message_id !== "string" || !UUID.test(v.message_id) || typeof v.updated_at !== "string") throw invalid();
   const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.\d{1,6})?(Z|([+-])(\d{2}):(\d{2}))$/.exec(v.updated_at);
   if (!m) throw invalid();

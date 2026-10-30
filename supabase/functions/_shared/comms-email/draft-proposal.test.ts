@@ -73,6 +73,6 @@ describe("original saved draft server projection",()=>{
   for(const fault of ["messages","channel_connectors"]){const f=fixture({},{},fault);expect(await readCommsEmailDraftProposal(f.admin,{tenantId:T,actorUserId:A,contentReader:f.contentReader,source,command})).toEqual({ok:false,code:"COMMS_EMAIL_DRAFT_SOURCE_UNAVAILABLE"});}
  });
  it("an authenticated content denial or an intervening version change cannot contribute approved content",async()=>{
-  for(const fault of ["content_denied","content_changed"]){const f=fixture({},{},fault);expect(await readCommsEmailDraftProposal(f.admin,{tenantId:T,actorUserId:A,contentReader:f.contentReader,source,command})).toEqual({ok:false,code:"COMMS_EMAIL_DRAFT_SOURCE_UNAVAILABLE"});expect(f.reads.at(-1)?.surface).toBe("authenticated");}
+  for(const fault of ["content_denied","content_changed"]){const f=fixture({},{},fault);expect(await readCommsEmailDraftProposal(f.admin,{tenantId:T,actorUserId:A,contentReader:f.contentReader,source,command})).toEqual({ok:false,code:"COMMS_EMAIL_DRAFT_SOURCE_UNAVAILABLE"});expect(f.reads[f.reads.length-1]?.surface).toBe("authenticated");}
  });
 });

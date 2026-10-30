@@ -1,0 +1,15 @@
+{
+  "proof": "Actual native inbox/dialog/check; synthetic session, data, door, storage and outcomes only. No real auth/database/provider execution.",
+  "files": {
+    "src/pages/admin/ClientsConversations.tsx": "f61d010badc81e263fcc725072a211003d6a6150691362a315dd06fb9f97463e",
+    "src/pages/admin/conversations/ComposeThreadDialog.tsx": "1d9761a3e9c315b6d204f421073480f47dadce2a40e2a5946bddb2dcccd07e41",
+    "src/pages/admin/conversations/LeadReplyDrafts.test.tsx": "2791a51dc423b0d6cd14aa14d22342f1a9ee94e360bade77b39249230b81fd89",
+    "src/pages/admin/conversations/useGovernedEmailReply.tsx": "6b2b46da3b6275617589364501418308a8eff8a7ba34568a3d107bbbb4000029",
+    "src/pages/admin/conversations/GovernedReplyStrip.tsx": "eae5d309551768ccf1fe680b0ca6c7ebf4a28c58f11954d3b6d1a5616dc68787",
+    "scripts/live-drive/harness/exp03-new-conversation-door-mount/index.html": "795a49fe52ff1b878dbaf5364d12b2099563ab82eeb30c43c96bcece05ec4039",
+    "scripts/live-drive/harness/exp03-new-conversation-door-mount/main.tsx": "86672f68aa1e3332c599ca2152c26be9351bcdd9c425e0cdaf8250a8922150c9",
+    "scripts/live-drive/harness/exp03-new-conversation-door-mount/stubs.ts": "a6d28d79e8d73f0932c0679f669059300bc46622b2b2375575cfdd39aa8e6e55",
+    "scripts/live-drive/harness/exp03-new-conversation-door-mount/vite.config.ts": "1bf68dab023777cda4d55babe1434165e667b528f3f0494fb274e29aacd21d82",
+    "scripts/live-drive/harness/exp03-new-conversation-door-mount/drive.mjs": "ccffcb3fd457310b281788c7324227a87fbc869bda05b7bc79b9aed5bc5a322d"
+  }
+}

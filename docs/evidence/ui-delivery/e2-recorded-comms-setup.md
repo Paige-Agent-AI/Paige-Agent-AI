@@ -208,3 +208,20 @@ customer proof. Required rendered/role/cohort/recovery and candidate runtime
 proof remains OWED; material PRRT_kwDOSAAXqM6w8IJP stays OPEN. No full-Experience,
 capability or algorithm promotion, scan/action/provider activation, or receipt.
 No new agent/engine/account. Original monthlyUNKNOWNUNRETRIEDUNINSPECTED retained.
+
+## October30 receiving correction — current native dependency and release guard
+
+Original2bbfa database-contract41001866775/job123887881658 FAILED at production
+grant reproduction. Its old14-only chain lacked four private functions already
+released by EXP04native15/92621. Later failure/ordering evidence is retained;
+not a generic infrastructure assumption or a reason to weaken the checker.
+The same branch now receives exactmain915c977f with original15/fixture/guard/
+peer history unchanged. New exact CI remains required before calling it fixed.
+No SQL, grant, migration number/history or domain-writer edit by EXP02.
+Original code/test/raster leaves remain exact; older frames are not renewed
+current-shell/candidate customer proof. Original materialP1 remains OPEN.
+
+Independent current915 Edge41009746030/job123912694812 failed source parity
+for two original importers. Existing EXP04 release owner receiving request is
+ANT51/9442bda5. No E02 upload/tag/retry, containing-merge bypass or action/provider
+activation. Same full19/nine/role/Live/founder/monthly boundaries remain open.

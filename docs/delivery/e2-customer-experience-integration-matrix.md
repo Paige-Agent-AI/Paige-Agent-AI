@@ -1,5 +1,23 @@
 # Experience 02 — Customer Experience Integration Matrix
 
+## EXP02 October30 receiving checkpoint — native15 included, release holds retained
+
+Original3018 required database-contract41001866775/123887881658 failed its
+production-grant reproduction: the old14-only branch lacked FOUR released
+EXP04private actor functions. Normally receive full current915c977f/native15
+and original fixture/history/guards, without editing any SQL, grant or test
+assertion. This is source-order recovery, not proof the new CI has passed.
+Original component/test/raster sources remain exact; new-head review/CI and
+candidate rendered/cohort/role/recovery proof still required. Original P1OPEN.
+
+A SEPARATE current915 normal Edge41009746030/123912694812 source-verification
+failure (two original importers mismatched) is routed to the original EXP04
+release owner in ANT51/9442bda5. No E02upload/tag/retry or containing-merge bypass.
+Master3113 now receives the full E03row with its exact original23line insertion;
+no new shared Master content or queue takeover. Full19/nine/founderOPEN, original
+catalogue/algorithms/monthlyUNKNOWNUNRETRIEDUNINSPECTED and privacy holds retained.
+
+
 ## EXP02 October30 — original held recorded-Communications source reconciliation
 
 O06/O14/O16 remains the SAME draft3018, not a new capability or scan. Receive

@@ -31,7 +31,7 @@ try{
  CREATE TABLE public.user_roles(user_id uuid,role app_role);
  CREATE FUNCTION public.agency_can_manage_child(uuid,uuid) RETURNS boolean LANGUAGE sql AS $$SELECT false$$;
  CREATE FUNCTION public.agency_team_role(uuid,uuid) RETURNS text LANGUAGE sql AS $$SELECT NULL::text$$;
- CREATE TABLE public.clients(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),tenant_id uuid,first_name text,last_name text,entity_name text,entity_type text,title text,website text,linkedin_url text,street_address text,city text,state text,zip_code text,lifecycle_stage text,source text,tags text[],primary_offer text,current_notes text,status text,assigned_coach_user_id uuid,do_not_contact boolean,timezone text,timezone_verified boolean NOT NULL DEFAULT false,created_by uuid,created_by_channel_type text,updated_at timestamptz DEFAULT now());
+ CREATE TABLE public.clients(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),tenant_id uuid,first_name text,last_name text,entity_name text,entity_type text,title text,website text,linkedin_url text,street_address text,city text,state text,zip_code text,lifecycle_stage text,source text,tags text[],primary_offer text,current_notes text,status text,assigned_coach_user_id uuid,do_not_contact boolean,timezone text,timezone_verified boolean NOT NULL DEFAULT false,created_by uuid,created_by_channel_type text,updated_at timestamptz NOT NULL DEFAULT now());
  CREATE TABLE public.audit_logs(id bigserial PRIMARY KEY,user_id uuid,entity text,action text,entity_id uuid,data jsonb);
  -- Address methods are outside this authority component. Fail loudly if this proof enters them.
  CREATE FUNCTION public.contact_methods_canonical(jsonb) RETURNS jsonb LANGUAGE plpgsql AS $$BEGIN RAISE EXCEPTION 'UNEXERCISED_METHODS';END$$;
@@ -101,28 +101,55 @@ try{
  assert.throws(()=>db.run(patch),/source drift/);assert.equal(verify(),drift);checks++;
  if(process.argv.includes('--recipient-timezone')){
   // Reset ONLY the original disposable function after the authority drift tests.
-  db.run(read('scripts/proof/fixtures/exp03-contact-management-before.sql'));db.run(patch);
+  db.run(read('scripts/proof/fixtures/exp03-contact-management-before.sql'));
   // psql/native definitions use LF; compare the tracked SQL source without Windows CRLF transport.
   const timezonePatch=read('scripts/proof/exp03-contact-recipient-timezone-patch.sql').replaceAll('\r\n','\n');
-  if(process.env.EXP03_ZONE_BASELINE!=='1')db.run(timezonePatch);
-  const zone=()=>JSON.parse(db.run(`SELECT json_build_object('timezone',timezone,'verified',timezone_verified) FROM clients WHERE id='${contact}'`));
-  const expected=()=>({expected_timezone:zone().timezone,expected_timezone_verified:zone().verified});
+  if(process.env.EXP03_ZONE_BASELINE==='1')db.run(patch);
+  else{
+   // An unpublished intermediate is not an allowed production starting state.
+   db.run(patch);assert.throws(()=>db.run(timezonePatch),/source drift/);checks++;
+   db.run(read('scripts/proof/fixtures/exp03-contact-management-before.sql'));
+   const originalDefinition=db.run(`SELECT pg_get_functiondef('${signature}'::regprocedure)`).replaceAll('\r\n','\n');
+   const atomicState=state();
+   // Fail after EXECUTE: the one DO must roll the entire definition back.
+   const brokenReadback=timezonePatch.replace("IF md5(pg_get_functiondef(target))<>'0d05ed2429366f1215c3d7363ee56b4b'", "IF md5(pg_get_functiondef(target))<>'00000000000000000000000000000000'");
+   assert.notEqual(brokenReadback,timezonePatch);
+   assert.throws(()=>db.run(brokenReadback),/readback mismatch/);
+   assert.equal(verify(),'0b3e44a65443104b2068168faf452b0f');assert.equal(state(),atomicState);checks++;
+   const spans=[...timezonePatch.matchAll(/revised := replace\(revised, \$old(\d+)\$([\s\S]*?)\$old\1\$, \$new\1\$([\s\S]*?)\$new\1\$\);/g)];
+   assert.equal(spans.length,13);let forward=originalDefinition;
+   for(const [,index,before,after] of spans){assert.equal(forward.split(before).length-1,1,`source forward span ${index}`);forward=forward.replace(before,()=>after);}
+   assert.equal(createHash('md5').update(forward+'\n').digest('hex'),'0d05ed2429366f1215c3d7363ee56b4b');checks++;
+   db.run(timezonePatch);
+  }
+  const record=()=>JSON.parse(db.run(`SELECT json_build_object('timezone',timezone,'verified',timezone_verified,'updated_at',updated_at) FROM clients WHERE id='${contact}'`));
+  const zone=()=>{const r=record();return{timezone:r.timezone,verified:r.verified};};
+  const expected=()=>{const r=record();return{expected_timezone:r.timezone,expected_timezone_verified:r.verified,expected_updated_at:r.updated_at};};
   const write=(fields)=>caller(actor)+save({...expected(),...fields});
+  for(const invalid of [null,42,{},'tomorrow','2026-10-30','2026-02-30T10:00:00Z','2026-10-30T10:00:00.1234567Z'])refuse(write({timezone:'America/New_York',timezone_verified:true,expected_updated_at:invalid}),/CONTACT_BAD_EXPECTED_VERSION/);
+  refuse(caller(actor)+save({timezone:'America/New_York',timezone_verified:true,expected_timezone:null,expected_timezone_verified:false}),/CONTACT_TIMEZONE_EXPECTED_REQUIRED/);
   db.run(write({timezone:'America/New_York',timezone_verified:true}));
   assert.deepEqual(zone(),{timezone:'America/New_York',verified:true});checks++;
   const confirmation=JSON.parse(db.run(`SELECT data->'recipient_timezone' FROM audit_logs ORDER BY id DESC LIMIT 1`));
   assert.equal(confirmation.timezone,'America/New_York');assert.equal(confirmation.verified,true);assert.equal(confirmation.actor_user_id,actor);assert.equal(confirmation.source,'authenticated_manual_confirmation');assert(Number.isFinite(Date.parse(confirmation.recorded_at)));checks++;
   const auditedFields=JSON.parse(db.run(`SELECT data->'fields' FROM audit_logs ORDER BY id DESC LIMIT 1`));
-  assert(!auditedFields.includes('expected_timezone')&&!auditedFields.includes('expected_timezone_verified'));checks++;
+  assert(!auditedFields.includes('expected_timezone')&&!auditedFields.includes('expected_timezone_verified')&&!auditedFields.includes('expected_updated_at'));checks++;
   db.run(caller(actor)+save({current_notes:'Keep the confirmed time zone'}));
   assert.deepEqual(zone(),{timezone:'America/New_York',verified:true});assert.equal(db.run(`SELECT data ? 'recipient_timezone' FROM audit_logs ORDER BY id DESC LIMIT 1`),'f');checks++;
   db.run(write({timezone:'America/Chicago'}));assert.deepEqual(zone(),{timezone:'America/Chicago',verified:false});checks++;
-  refuse(caller(actor)+save({timezone:'America/New_York',timezone_verified:true,expected_timezone:'America/New_York',expected_timezone_verified:true}),/CONTACT_TIMEZONE_STALE/);
-  refuse(caller(actor)+save({timezone:'America/Chicago',timezone_verified:true,expected_timezone:'America/Chicago',expected_timezone_verified:true}),/CONTACT_TIMEZONE_STALE/);
+  refuse(caller(actor)+save({...expected(),timezone:'America/New_York',timezone_verified:true,expected_timezone:'America/New_York',expected_timezone_verified:true}),/CONTACT_TIMEZONE_STALE/);
+  refuse(caller(actor)+save({...expected(),timezone:'America/Chicago',timezone_verified:true,expected_timezone:'America/Chicago',expected_timezone_verified:true}),/CONTACT_TIMEZONE_STALE/);
+  db.run(`UPDATE clients SET updated_at='2026-10-30T10:00:00.123456Z' WHERE id='${contact}';`);
+  const precise=expected();assert(precise.expected_updated_at.includes('.123456'));
+  refuse(caller(actor)+save({...precise,timezone:'America/Chicago',timezone_verified:true,expected_updated_at:precise.expected_updated_at.replace('.123456','.123')}),/CONTACT_TIMEZONE_STALE/);
+  db.run(caller(actor)+save({...precise,timezone:'America/Chicago',timezone_verified:true}));checks++;
+  const olderNotes=expected().expected_updated_at;
+  db.run(caller(actor)+save({current_notes:'Versioned note',expected_updated_at:olderNotes}));checks++;
+  refuse(caller(actor)+save({current_notes:'Stale note',expected_updated_at:olderNotes}),/CONTACT_VERSION_STALE/);
   refuse(write({timezone_verified:true}),/CONTACT_TIMEZONE_MANUAL_CONFIRMATION_REQUIRED/);
   refuse(caller(actor)+save({timezone:'America/Chicago',timezone_verified:true}),/CONTACT_TIMEZONE_EXPECTED_REQUIRED/);
   refuse(caller(actor)+save({timezone:'America/Chicago',expected_timezone:'America/Chicago'}),/CONTACT_TIMEZONE_EXPECTED_REQUIRED/);
-  refuse(caller(actor)+save({timezone:'America/Chicago',expected_timezone:'America/Chicago',expected_timezone_verified:'false'}),/CONTACT_BAD_TIMEZONE_EXPECTED/);
+  refuse(caller(actor)+save({...expected(),timezone:'America/Chicago',expected_timezone:'America/Chicago',expected_timezone_verified:'false'}),/CONTACT_BAD_TIMEZONE_EXPECTED/);
   refuse(caller(actor)+save({expected_timezone:'America/Chicago'}),/CONTACT_TIMEZONE_EXPECTED_WITHOUT_CHANGE/);
   for(const invalid of ['UTC','Etc/GMT+5','EST','Nope/Unknown',42,{}])refuse(write({timezone:invalid,timezone_verified:true}),/CONTACT_BAD_TIMEZONE/);
   for(const invalid of ['true',null,1,{}])refuse(write({timezone:'America/Chicago',timezone_verified:invalid}),/CONTACT_BAD_TIMEZONE_CONFIRMATION/);
@@ -143,18 +170,21 @@ try{
   db.run(`UPDATE tenant_members SET role='member' WHERE user_id='${actor}';`);
   refuse(write({timezone:'America/New_York',timezone_verified:true}),/CONTACT_FORBIDDEN/);
   db.run(`UPDATE tenant_members SET role='admin' WHERE user_id='${actor}';`);
-  refuse(caller(actor)+save({timezone:'America/New_York',timezone_verified:true,expected_timezone:null,expected_timezone_verified:false},foreign),/CONTACT_NOT_FOUND_OR_FORBIDDEN/);
+  refuse(caller(actor)+save({...expected(),timezone:'America/New_York',timezone_verified:true,expected_timezone:null,expected_timezone_verified:false},foreign),/CONTACT_NOT_FOUND_OR_FORBIDDEN/);
+  db.run(write({timezone:'America/New_York',timezone_verified:true}));const olderConfirmation=expected();
+  db.run(write({timezone:'America/Chicago',timezone_verified:true}));db.run(write({timezone:'America/New_York',timezone_verified:true}));
+  refuse(caller(actor)+save({...olderConfirmation,timezone:'America/Los_Angeles',timezone_verified:true}),/CONTACT_TIMEZONE_STALE/);
   const reviewedZoneDefinition=db.run(`SELECT pg_get_functiondef('${signature}'::regprocedure)`).replaceAll('\r\n','\n');
-  assert.equal(createHash('md5').update(reviewedZoneDefinition+'\n').digest('hex'),'119df7983978f861e538be500064a946','exact native definition export');
+  assert.equal(createHash('md5').update(reviewedZoneDefinition+'\n').digest('hex'),'0d05ed2429366f1215c3d7363ee56b4b','exact native definition export');
   const changes=[...timezonePatch.matchAll(/revised := replace\(revised, \$old(\d+)\$([\s\S]*?)\$old\1\$, \$new\1\$([\s\S]*?)\$new\1\$\);/g)];
-  assert.equal(changes.length,9);let inverse=reviewedZoneDefinition;
-  for(const [,index,before,after] of changes.reverse()){assert.equal(inverse.split(after).length-1,1,`source inverse span ${index}`);inverse=inverse.replace(after,()=>before);}
+  assert.equal(changes.length,13);let inverse=reviewedZoneDefinition;
+  for(const [,index,before,after] of changes.filter(c=>Number(c[1])<11).reverse()){assert.equal(inverse.split(after).length-1,1,`source inverse span ${index}`);inverse=inverse.replace(after,()=>before);}
   assert.equal(createHash('md5').update(inverse+'\n').digest('hex'),'bb9b4de901b59d776ec3c82fa649770f','complete non-owned original source inverse');checks++;
   // Observe an actual second native writer waiting on the original contact row lock.
   for(const removeLock of [false,true]){
    if(removeLock){assert(reviewedZoneDefinition.includes('FOR UPDATE;'));db.run(reviewedZoneDefinition.replace('FOR UPDATE;',';'));}
    db.run(`UPDATE clients SET timezone=NULL,timezone_verified=false WHERE id='${contact}';`);
-   const loaded={expected_timezone:null,expected_timezone_verified:false};
+   const loaded=expected();
    const held=await db.holdArchive(caller(actor)+save({...loaded,timezone:'America/New_York',timezone_verified:true}),[],{manualRelease:true});
    let child,pending;
    try{
@@ -179,15 +209,54 @@ try{
    }
    db.run(reviewedZoneDefinition);
   }
+  const authorityWait=async(kind,shouldRefuse)=>{
+   db.run(`UPDATE tenant_members SET role='admin' WHERE tenant_id='${tenant}' AND user_id='${actor}';UPDATE profiles SET active_tenant_id='${tenant}' WHERE user_id='${actor}';`);
+   if(kind==='root-workspace')db.run(`INSERT INTO user_roles VALUES('${actor}','super_admin');`);
+   // A second owner keeps the demotion fixture compatible with an owner floor.
+   db.run(`INSERT INTO tenant_members(tenant_id,user_id,role,status) SELECT '${tenant}','70000000-0000-4000-8000-000000000003','owner','active' WHERE NOT EXISTS(SELECT 1 FROM tenant_members WHERE tenant_id='${tenant}' AND user_id='70000000-0000-4000-8000-000000000003');`);
+   const before=state(),loaded=expected();
+   const held=await db.holdArchive(`SELECT 1 FROM clients WHERE id='${contact}' FOR UPDATE;`,[],{manualRelease:true});let child,pending;
+   try{
+    const app=`exp03_authority_wait_${process.pid}`;child=spawn(db.psql,db.args(),{stdio:['pipe','pipe','pipe'],windowsHide:true});let errors='';child.stdout.resume();child.stderr.on('data',d=>{errors+=d;});
+    pending=new Promise((resolve,reject)=>{child.on('error',reject);child.on('close',code=>resolve({code,errors}));});pending.catch(()=>{});
+    child.stdin.end(`SET application_name='${app}';SET lock_timeout='6s';SET statement_timeout='10s';${caller(actor)}${save({...loaded,timezone:'America/New_York',timezone_verified:true})}`);
+    let waiting=false;const deadline=Date.now()+5000;
+    while(Date.now()<deadline){waiting=db.run(`SELECT EXISTS(SELECT 1 FROM pg_stat_activity WHERE datname=current_database() AND application_name='${app}' AND wait_event_type='Lock')`)==='t';if(waiting)break;await new Promise(resolve=>setTimeout(resolve,40));}
+    assert(waiting,'original writer must wait before the authority change');
+    if(kind==='role')db.run(`UPDATE tenant_members SET role='member' WHERE tenant_id='${tenant}' AND user_id='${actor}';`);
+    if(kind==='workspace'||kind==='root-workspace')db.run(`INSERT INTO tenant_members(tenant_id,user_id,role,status) VALUES('${other}','${actor}','owner','active');UPDATE profiles SET active_tenant_id='${other}' WHERE user_id='${actor}';`);
+    held.release();await held.completed;const result=await pending;
+    if(shouldRefuse){assert.notEqual(result.code,0,'changed authority after a lock wait must refuse');assert.match(result.errors,/CONTACT_AUTHORITY_CHANGED/);assert.equal(state(),before);}
+    else{assert.equal(result.code,0);assert.deepEqual(zone(),{timezone:'America/New_York',verified:true});}
+    checks++;
+   }finally{
+    held.release(false);await held.completed.catch(()=>{});if(child&&child.exitCode===null)child.kill();if(pending)await pending.catch(()=>{});
+    db.run(`UPDATE tenant_members SET role='admin' WHERE tenant_id='${tenant}' AND user_id='${actor}';DELETE FROM tenant_members WHERE tenant_id='${other}' AND user_id='${actor}';UPDATE profiles SET active_tenant_id='${tenant}' WHERE user_id='${actor}';`);
+    if(kind==='root-workspace')db.run(`DELETE FROM user_roles WHERE user_id='${actor}' AND role='super_admin';`);
+   }
+  };
+  await authorityWait('role',true);await authorityWait('workspace',true);await authorityWait('root-workspace',true);await authorityWait('unchanged',false);
+  const updateSpan=changes.find(x=>x[1]==='10');assert(updateSpan);
+  db.run(reviewedZoneDefinition.replace(updateSpan[3],()=>updateSpan[2]));
+  await authorityWait('role',false);await authorityWait('workspace',false);db.run(reviewedZoneDefinition);
+  db.run(`INSERT INTO user_roles VALUES('${actor}','super_admin');`+caller(actor)+save({current_notes:'Explicit root target'},foreign,`'${other}'`));
+  assert.equal(db.run(`SELECT current_notes FROM clients WHERE id='${foreign}'`),'Explicit root target');checks++;
+  db.run(caller(actor)+save({first_name:'Explicit root create',timezone:'Europe/London',timezone_verified:true},null,`'${other}'`));
+  assert.equal(db.run(`SELECT count(*) FROM clients WHERE tenant_id='${other}' AND first_name='Explicit root create' AND timezone_verified`),'1');checks++;
+  db.run(`DELETE FROM user_roles WHERE user_id='${actor}' AND role='super_admin';`);
+  const versionGate="p_patch ? 'expected_updated_at' AND _existing_updated_at IS DISTINCT FROM _expected_updated_at";
+  assert(reviewedZoneDefinition.includes(versionGate));db.run(reviewedZoneDefinition.replace(versionGate,'false'));
+  const versionBefore=expected();db.run(write({timezone:'America/New_York',timezone_verified:true}));
+  db.run(caller(actor)+save({...versionBefore,timezone:'America/New_York',timezone_verified:true}));checks++;db.run(reviewedZoneDefinition);
   const flagCheck="OR _existing_timezone_verified IS DISTINCT FROM (p_patch->>'expected_timezone_verified')::boolean";
   assert(reviewedZoneDefinition.includes(flagCheck));db.run(reviewedZoneDefinition.replace(flagCheck,'OR false'));
-  db.run(caller(actor)+save({timezone:'America/Los_Angeles',timezone_verified:true,expected_timezone:'America/Los_Angeles',expected_timezone_verified:false}));checks++;
+  const currentFlag=expected();db.run(caller(actor)+save({...currentFlag,timezone:'America/New_York',timezone_verified:true,expected_timezone_verified:!currentFlag.expected_timezone_verified}));checks++;
   db.run(reviewedZoneDefinition);
   const manualCheck="_caller IS NULL OR p_channel IS DISTINCT FROM 'manual'";
   assert(reviewedZoneDefinition.includes(manualCheck));db.run(reviewedZoneDefinition.replace(manualCheck,'false'));
   db.run(service+save({...expected(),timezone:'America/Chicago',timezone_verified:true},contact,`'${tenant}'`,`'${actor}'`));
   assert.deepEqual(zone(),{timezone:'America/Chicago',verified:true});checks++;db.run(reviewedZoneDefinition);
-  assert.equal(verify(),'119df7983978f861e538be500064a946');checks++;
+  assert.equal(verify(),'0d05ed2429366f1215c3d7363ee56b4b');checks++;
   const auditCount=db.run('SELECT count(*) FROM audit_logs');db.run(timezonePatch);assert.equal(db.run('SELECT count(*) FROM audit_logs'),auditCount);checks++;
   db.run(`GRANT EXECUTE ON FUNCTION ${signature} TO anon;`);assert.throws(()=>db.run(timezonePatch),/metadata drift/);checks++;
   db.run(`REVOKE EXECUTE ON FUNCTION ${signature} FROM anon;`);

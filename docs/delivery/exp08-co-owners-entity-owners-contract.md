@@ -1680,3 +1680,53 @@ native Billing failure and invitation-source-owner receiving ACK remain separate
 NON-AUTHOR SOURCE review finds no material baseline-fixture/evidence-classification issue and
 executes no native proof. For the actual repair, extend assertions to the specific authored refusal
 reason and exact minted-token contract, in addition to current row snapshots/compatibility positives.
+
+### I2 original invitation gate candidate — 2026-10-30, unversioned/local
+
+Before edit, original ANT161 compact marker names the exact E08-owned subaccount_owner mint/accept
+spans, owning native runner/fixtures and new UNVERSIONED patch. E09 consumer source-contract
+renewal remains requested; no overlapping writer edit was received. This does not claim receiving
+ACK. E08 implements only its original ownership spans; every consumer/contact/recipient/team/agency
+branch remains the incumbent. No original/applied migration file is edited and no native slot is
+reserved. Existing original invitation RPCs are the entry points; no new tool, approval or runtime.
+The owner outcome is that platform-only invitations cannot bypass the approved account-holder/
+recovery rule on a previously owned Solo-shell business. Existing domain/source ownership, provider,
+Trust and account applicability boundaries from the pre-edit routing above continue to apply.
+
+`scripts/proof/exp08-first-owner-invitation-patch.sql` changes only the two named spans in the
+actual incumbent functions. Exact original body identities0194a076/a42d7b28 admit the operation;
+inverse replacement must reproduce the entire original body. Both original metadata and ACL are
+preserved, checked before application AND replay. Live catalogue separately confirms accept ACL
+`{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}` and mint ACL
+`{=X/postgres,postgres=X/postgres,authenticated=X/postgres}`. The incumbent public EXECUTE on mint
+is preserved, not newly granted or treated as authorization; its original in-body gates still apply.
+No candidate GRANT/REVOKE is introduced. Native fixture now reproduces those exact ACLs.
+
+For original platform-only Solo-shell mint, lock the tenant and require private never-owned state
+before token insertion. For original subaccount_owner acceptance, after the existing token lock
+lock the tenant and refuse the platform-only previously-owned path before any owner/admin seat,
+pointer, profile, usage or audit write. Preserve managing-agency/dual-role and non-shell behavior.
+Both use the approved authored §4.10 messages with stable `OWNER_HISTORY_REQUIRES_RECOVERY` hint.
+There is no silent admin downgrade on the refused path and no generic blanket always-click rule.
+
+Actual selected proof: original **six FAIL/seven positives PASS →13 PASS**. Refusals require that
+specific hint/42501 plus unchanged tenant/member/token/profile/audit snapshots. Positive mint
+asserts the original kind/admin role/minter/uses/max-use/expiry contract. Four deliberately broken
+gates each revive the expected failure, and five actual path/ACL/security/source drift controls
+refuse application. Replay succeeds without metadata changes. Existing history22 cases and six
+mutants/replay remain included. Final run exits0 and disposes only its unique database; log
+`exp08-first-owner-invitations-final.log`. This remains actual-original-writer/minimal-schema proof,
+not full-schema/Auth SDK/RLS, authenticated acceptance, release or a completed I2 journey.
+
+Unfinished before release: concurrent two-token/tenant/member lock composition and late changes,
+full-schema/source-owner consumer assurance, complete original invitation negative matrix,
+provisioning/recovery/Setup integration, guarded versioned history migration admission, renewed
+whole-head technical review/CI/Preview, normal release/readback and authorized customer proof.
+Original Billing producer repair/parent3130 hold remains. Full assignment **STILL CODING**.
+
+NON-AUTHOR SOURCE review of the bounded unversioned invitation patch finds no additional material
+finding; no native proof was independently executed. It does not clear authority changes during
+waits or the remaining full-I2 dependencies. Next failing-first races must include tenant-kind
+changes and platform/agency authority changes while waiting, plus token expiry during the new
+tenant wait: the current candidate evaluates some scope predicates before that wait. Do not
+release this intermediate component before those currentness paths are tested and repaired.

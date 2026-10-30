@@ -397,10 +397,38 @@ try {
     console.log(JSON.stringify({phase:'first-owner-history-replay',rows_unchanged:true}));
     const invitationFixture=readFileSync(new URL('../../supabase/tests/exp08_first_owner_invitations.sql',import.meta.url),'utf8');
     const invitationBodies=['create_tenant_invite_token','accept_tenant_invite'].map(name=>originalFunction(invitationSource,name)).join('\n');
-    const invitationBefore=sql(`BEGIN;\n${historyFixture}\n${historyPatch}\n${invitationFixture}\n${invitationBodies}\nSELECT row_to_json(t) FROM proof.owner_invitation_cases() t;\nROLLBACK;`).split('\n').filter(Boolean).map(JSON.parse);
+    // Exact live original ACLs, including the incumbent public mint EXECUTE: preserve, never widen.
+    const invitationACL="REVOKE ALL ON FUNCTION public.accept_tenant_invite(text) FROM PUBLIC; GRANT EXECUTE ON FUNCTION public.accept_tenant_invite(text) TO authenticated,service_role; GRANT EXECUTE ON FUNCTION public.create_tenant_invite_token(uuid,text,public.tenant_role,integer,integer,uuid,text) TO authenticated;";
+    const invitationSetup=`BEGIN;\n${historyFixture}\n${historyPatch}\n${invitationFixture}\n${invitationBodies}\n${invitationACL}\n`;
+    const invitationBefore=sql(`${invitationSetup}SELECT row_to_json(t) FROM proof.owner_invitation_cases() t;\nROLLBACK;`).split('\n').filter(Boolean).map(JSON.parse);
     console.log(JSON.stringify({phase:'first-owner-original-invitations-before',cases:invitationBefore}));
     assert.equal(invitationBefore.length,13);
     assert.deepEqual(invitationBefore.filter(r=>!r.passed).map(r=>r.case_name),['mint_pointer','mint_suspended','mint_history','accept_pointer','accept_suspended','accept_history'],'Only approved missing platform-only first-owner gates may fail; original compatibility controls must work');
+    const invitationPatch=readFileSync(new URL('./exp08-first-owner-invitation-patch.sql',import.meta.url),'utf8').replace(/\r\n/g,'\n');
+    const invitationRun=patch=>sql(`${invitationSetup}${patch}\nSELECT row_to_json(t) FROM proof.owner_invitation_cases() t;\n${patch}\nROLLBACK;`).split('\n').filter(Boolean).map(JSON.parse);
+    const invitationAfter=invitationRun(invitationPatch);
+    console.log(JSON.stringify({phase:'first-owner-original-invitations-after',cases:invitationAfter}));
+    assert.equal(invitationAfter.length,13);assert.ok(invitationAfter.every(r=>r.passed),JSON.stringify(invitationAfter));
+    for(const [name,from,to] of [
+      ['history gate bypassed','IF NOT public._tenant_never_owned(_tenant_id) THEN','IF false THEN'],
+      ['accept history gate bypassed','AND NOT public._tenant_never_owned(_tok.tenant_id) THEN','AND false THEN'],
+      ['agency exception removed','AND NOT public.agency_can_manage_child(_tok.tenant_id, _tok.created_by)',''],
+      ['non-shell acceptance incorrectly restricted','IF public._solo_shell_tenant(_tok.tenant_id) THEN','IF true THEN'],
+    ]){
+      const mutated=invitationPatch.replaceAll(from,to);assert.notEqual(mutated,invitationPatch,name);
+      const failed=invitationRun(mutated).filter(r=>!r.passed).map(r=>r.case_name);
+      assert.ok(failed.length,`${name}: survived`);console.log(JSON.stringify({phase:'first-owner-invitation-mutant',name,killed_by:failed}));
+    }
+    for(const [name,drift] of [
+      ['accept path',"ALTER FUNCTION public.accept_tenant_invite(text) SET search_path TO public,auth;"],
+      ['accept ACL',"GRANT EXECUTE ON FUNCTION public.accept_tenant_invite(text) TO anon;"],
+      ['mint ACL',"REVOKE EXECUTE ON FUNCTION public.create_tenant_invite_token(uuid,text,public.tenant_role,integer,integer,uuid,text) FROM PUBLIC;"],
+      ['accept security',"ALTER FUNCTION public.accept_tenant_invite(text) SECURITY INVOKER;"],
+      ['accept source',originalFunction(invitationSource,'accept_tenant_invite').replace('\nBEGIN','\nBEGIN\n  PERFORM 1;')],
+    ]){
+      sql(`${invitationSetup}${invitationPatch}\n${drift}\n${invitationPatch}\nROLLBACK;`,database,true,/EXP08 first owner invitation requires (original writer metadata|exact original source)/);
+      console.log(JSON.stringify({phase:'first-owner-invitation-drift',name,refused:true}));
+    }
   }
   if(onlyOwnerHistory){
     console.log('Selected original first-owner history component only; NOT full native release proof.');

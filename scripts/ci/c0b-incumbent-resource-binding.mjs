@@ -1188,7 +1188,10 @@ const SOURCES = {
   // only change is purchaseNumber — PurchaseNumberOptions gains optional voiceUrl, and the form body
   // gains VoiceUrl + VoiceMethod=POST when it is set (omitted otherwise, so no other request changes).
   // No other function, auth path or request shape is touched. Old afe6b57d… reproduced from 4fb4b0398.
-  "supabase/functions/_shared/twilio.ts": "3b6fe3eeb8c6e4211e82012d08f63b5d8b14811ee780fef19eaa735b6c5d0b1d",
+  // EXP03 bounded SMS effect-retry source review, AUTHOR-REVIEW / LOWER ASSURANCE:
+  // sendSms alone disables hidden request replay; all other wrappers/auth exact.
+  // Original hostile controls remain unchanged; this identity grants no authority.
+  "supabase/functions/_shared/twilio.ts": "da6bae61fb454b1ed0ed3f059a9d37de8e5994e7822d100b9978b71247fb633b",
   // SendGrid Inbound Parse (2026-10-27), AUTHOR-REVIEW / LOWER ASSURANCE: the inbound registry gains an
   // optional provider qualifier — InboundChannelAdapter.provider?, a `channel:provider` key when it is set,
   // and getInboundAdapter(ch, provider?) — so handle-inbound-email can register its SendGrid adapter beside

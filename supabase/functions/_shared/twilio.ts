@@ -649,6 +649,10 @@ export async function sendSms(
     "POST",
     params,
     authUser,
+    // A message creation is an effect, not a read. A transport/response failure
+    // does not prove that no message was created. Even a provider-rejected retry
+    // must return through the caller's current consent/legal/authority checks.
+    { retryTransient: false },
   );
 }
 

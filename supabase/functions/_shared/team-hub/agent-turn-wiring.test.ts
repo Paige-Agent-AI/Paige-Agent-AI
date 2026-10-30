@@ -17,7 +17,8 @@ const at = (needle: string): number => {
 };
 const SEAM = "    if (isTeamHubAgentTurnRequest(rawData)) {\n"
   + "      const agentTurn = await runTeamHubAgentTurn({ caller: supabaseClient, service: supabase, userId: user.id,\n"
-  + "        complete: fabricCompletion, signal: req.signal, controlHint }, rawData);\n"
+  + "        complete: fabricCompletion, signal: req.signal, controlHint, invokeAs: teamHubInvokeAs,\n"
+  + "        chatReadToolDefs: { growth_list: GROWTH_LIST_TOOL_DEF, crm_list_team: CRM_LIST_TEAM_TOOL_DEF, crm_list_tasks: CRM_LIST_TASKS_TOOL_DEF } }, rawData);\n"
   + "      return new Response(JSON.stringify(agentTurn.body),\n"
   + "        { status: agentTurn.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });\n"
   + "    }\n";
@@ -26,7 +27,7 @@ describe("the agent-turn seam in paige-ai-chat", () => {
   it("imports the module once, from its one home", () => {
     at("import { isTeamHubAgentTurnRequest, runTeamHubAgentTurn } from '../_shared/team-hub/agent-turn.ts';");
   });
-  it("hands over exactly the asker's session, the service role, the verified actor, the one model seam and the request's signal", () => {
+  it("hands over exactly the asker's session, the service role, the verified actor, the one model seam, the request's signal and (A2b) the asker's door seam and the chat's own three read definitions", () => {
     at(SEAM);
   });
   it("runs after the verified actor and the ingress rate limit, and before the chat schema or anything else", () => {
@@ -45,6 +46,13 @@ describe("the agent-turn seam in paige-ai-chat", () => {
     assert.ok(hint < seam);
     // Nothing between the header read and the seam reassigns it.
     assert.equal(/controlHint\s*=(?!=)/.test(CHAT.slice(hint + 60, seam)), false);
+  });
+  it("the three read definitions it hands over are the module-level ones its own tool list uses", () => {
+    for (const c of ["GROWTH_LIST_TOOL_DEF", "CRM_LIST_TEAM_TOOL_DEF", "CRM_LIST_TASKS_TOOL_DEF"]) {
+      const decl = at(`const ${c} = {`);
+      assert.ok(decl < at(SEAM), `${c} is declared at module level, before the handler`);
+      at(`          ${c},`);
+    }
   });
   it("uses the handler's own model seam, the one the chat imports", () => {
     at('import { describeAttempts, fabricChatStream, fabricCompletion, type FabricStream } from "../_shared/model-fabric.ts";');

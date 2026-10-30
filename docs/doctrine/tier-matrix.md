@@ -637,7 +637,7 @@ Owner approval 2026-10-27 ("approved, go with your recommendations and start bui
 
 **Evidence:** `supabase/tests/exp08_team_hub_a1c.sql` (disposable PG16, in CI): production md5 guards for the post door and the message JSON, replay no-op, byte identity with the A1c hunks undone, writing for another member and the owner in a team channel and a thread, nothing once posted, ended or stale, private-channel non-member, agent DM, another workspace, @channel / @here recipients by the activity rule with join / seat-start / toggle values left in place and not reached, an agent reply not counted as the asker posting, read door at 9 minutes reached and at 11 not, an empty broadcast stored plain, the read door the only writer of `last_active_at`, refusals outside a channel, retry, every existing caller resolving, storage backstops, the md5 guard refusing drift, 16/16 mutants; `src/solo/team-hub` vitest 281 with client mutants killed; rendered harness 18 frames. Migration order re-checked round 2: production newest `20271119000000`; A1b `20271119010008` and I1 `20271119020008` apply first; `20271120000000` on `origin/claude/great-heisenberg-u7kyd9` sorts above — renumber if it lands first. **Owed:** the §32 persisted-apply read-back of `20271120020008` after merge (with A1b's `20271119010008` before it), and the authenticated drive.
 
-### EXP08 Team Hub agents: what is LIVE after A1a–A1c, and A2a (2026-10-28; A2a in progress, this PR)
+### EXP08 Team Hub agents: what is LIVE after A1a–A1c, and A2a (2026-10-28; A2a merged #3029 `6d8e5c56a` and #3033 `cf1a07b0b`, LIVE)
 
 **LIVE on production (read back 2026-10-28):** A1a (#2969), A1b (#2999 `956b47ef5`) and A1c (#3020 `536eeb7e5`), with migrations `20271117010008`, `20271117010108`, `20271119010008` and `20271120020008` applied. **All seven agents proven inline on production:** one agent-authored `team_hub_messages` row each from PAIGE, VERA, NEXUS, MENTOR, MERIT, ZION and CURA between 02:20:16 and 02:24:46 UTC on 2026-10-28, on the owner's SOLO account (read-only production query; the first live specialist turn's 2026-10-27 `http_400` is fixed). Agents answer, read, and say *I can't take actions here yet.*; no agent writes a business record from Team Hub.
 
@@ -653,6 +653,21 @@ Owner approval 2026-10-27 ("approved, go with your recommendations and start bui
 | Anonymous | ✗ no grant | ✗ | ✗ |
 
 **Owed:** the signed-in open of the task-card link on a SOLO seat after merge (and whether Operations → Work still lists a done or cancelled task); the PAIGE chat → Team Hub link and the exact-task address (both unbuilt, slice 1); A2b's and A2c's own rows when they ship (§66). Evidence: `docs/evidence/ui-delivery/exp08-team-hub-agents-a2a.md`.
+
+### EXP08 Team Hub agents A2b: approval cards in agent DMs (2026-10-28; this PR, migration `20271121140008`, NOT live until merged and applied)
+
+In the asker's own DM with an agent, the agent can **prepare** an act as the approved card (A2 design, APPROVED-FROZEN): ZION `crm_assign_task` (hand a task over) and `crm_cancel_task`; NEXUS `growth_page_publish`; PAIGE any of the three. The card is the door's own `paige_pending_confirmations` row (no new approval store), linked by `team_hub_message_cards`; **only the asker** sees Approve / Not now; Approve runs the door under the asker's JWT (decide → run → settle), and the agent posts the outcome into the card's thread. Card summaries name the task and the person, never a record id. In a shared channel an act is never carded: the agent answers and ends with "I can do that with you in our DM.", and the asker alone gets **Open DM**, which opens that DM with the asker's request in its box, unsent (owner ruling 2026-10-28). If an act does not reach the server, "That didn't go through just now. Try again." shows under the card (owner-approved). `owner_only` acts stay out of Team Hub (every door refuses them). Other agents' acts follow in waves through this same path (contract §5 A2b rulings).
+
+| Tier | A2b cards |
+|---|---|
+| God / Operator | ✗ no seat |
+| Agency / Enterprise | ✗ held (`team_hub_agents` not in the tier set) |
+| Standalone (Solo) | ✓ any active seat with Team conversations on; Approve only for the asker, and the door re-checks the asker's own authority (a member without the CRM role is refused by the CRM door, unchanged) |
+| Sub-account | ✗ held (Team Hub `unavailable` there) |
+| Client | ✗ no seat |
+| Anonymous | ✗ no grant |
+
+**Evidence:** `docs/evidence/ui-delivery/exp08-team-hub-agents-a2b.md` (rendered harness through the real hook path, 77 frames; 353 Team Hub vitest, 265 node tests; `supabase/tests/exp08_team_hub_a2b_cards.sql` 16/16 mutants). **Authenticated runtime `UNVERIFIED`** until the drive on the owner's SOLO account after deploy.
 
 ### Solo Settings → Team: the screens for the team lifecycle (2026-10-26; owner-approved design, APPROVED-FROZEN §28)
 

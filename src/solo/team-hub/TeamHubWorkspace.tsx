@@ -69,7 +69,7 @@ import {
   type TeamHubFile,
 } from "./team-hub-contract";
 import { agentTurnKey, attachmentScope, teamHubNavigation, useTeamHub, type AgentTurn, type AttachmentChip, type PendingMessage, type TaskDraft, type TeamHub, type TurnStateRead } from "./useTeamHub";
-import { agentMentionsIn, agentName, agentOutcomeLine, agentRuns, answers, bringInSuggestions, FIXED_PRIVATE_LINE, MAX_AGENTS_PER_MESSAGE, splitPrivateLine, TEAM_HEAD, TEAM_HUB_AGENT_PROFILES, TOO_MANY_AGENTS, type AgentLineOutcome } from "./team-hub-agents";
+import { agentMentionsIn, agentName, agentOutcomeLine, agentRuns, answers, bringInSuggestions, dmRequestPrefill, endsWithRedirect, FIXED_PRIVATE_LINE, MAX_AGENTS_PER_MESSAGE, splitPrivateLine, TEAM_HEAD, TEAM_HUB_AGENT_PROFILES, TOO_MANY_AGENTS, type AgentLineOutcome } from "./team-hub-agents";
 import { AgentDmEmpty, AgentDmNote, AgentFailRow, AgentGlyph, AgentPlate, AgentProfilePanel, AgentTag, AgentTyping, BringInRow, PrivateNote, PrivateOthersNote } from "./TeamHubAgents";
 import { TeamHubApprovalCard, type TeamHubApprovalAct } from "./TeamHubApproval";
 import "./team-hub.css";
@@ -100,8 +100,8 @@ import "./team-hub.css";
  * omitted, not shown dead.
  */
 /**
- * EXP08 A2: what an approval card's buttons do. Absent (the Solo shell today, because the A2 backend
- * is not built), every card refuses honestly instead of offering a control that would do nothing.
+ * EXP08 A2: what an approval card's buttons do. A2b: absent (the Solo shell), the hub's own
+ * `actOnCard` redeems the card through `paige-ai-chat`; a host passes one only to replace that.
  */
 export type TeamHubApprovalHandler = (message: TeamHubMessage, act: TeamHubApprovalAct) => void;
 
@@ -271,6 +271,8 @@ function ReadyHub({ hub, announce, announcement, onOpenTeamSettings, openPaige, 
   const agentsOn = has("team_hub_agents");
   const canInvite = Boolean(onOpenTeamSettings) && (me?.permission === "owner" || me?.permission === "admin");
   const [search, setSearch] = useState("");
+  // A2b: an act on a card that didn't go through, said under that card (review fix 2).
+  const [cardNotices, setCardNotices] = useState<Record<string, string>>({});
   const [form, setForm] = useState<Form>(null);
   const [mobileView, setMobileView] = useState<"list" | "conv">("list");
   const [drafts, setDrafts] = useState<Record<string, string>>({});
@@ -735,14 +737,53 @@ function ReadyHub({ hub, announce, announcement, onOpenTeamSettings, openPaige, 
     announce(`The mention for ${agentName(agent)} is in your message box. Send it to bring them in.`);
   };
 
+  // A2b: the hub redeems a card itself (`{ teamHubCardAct }`); a host may still pass its own seam.
+  // A turned-down act is said in words through the hub's live region, never left silent (verifier fix 5),
+  // and an act that didn't go through says so under the card too, where a sighted person is looking
+  // (review fix 2). Approve and Not now leave the card when it settles, so focus goes to the card's own
+  // message row instead of falling to the page (review fix 3); focus a person moved elsewhere stays there.
+  const actOnCardHere: TeamHubApprovalHandler = (message, act) => {
+    const active = document.activeElement;
+    const row = active instanceof HTMLElement ? active.closest<HTMLElement>(".th-msg") : null;
+    const keepFocus = () => window.requestAnimationFrame(() => {
+      const now = document.activeElement;
+      if (row?.isConnected && (!now || now === document.body)) row.focus({ preventScroll: true });
+    });
+    setCardNotices((current) => {
+      if (!(message.id in current)) return current;
+      const next = { ...current };
+      delete next[message.id];
+      return next;
+    });
+    keepFocus();
+    void hub.actOnCard(message, act).then((report) => {
+      keepFocus();
+      if (!report?.line) return;
+      announce(report.line);
+      if (report.outcome === "could_not_start") setCardNotices((current) => ({ ...current, [message.id]: report.line! }));
+    });
+  };
+
+  /** A message on screen now, in the conversation or the open thread; never a fetch. */
+  const findLoadedMessage = (id: string): TeamHubMessage | null =>
+    hub.stream?.messages.find((message) => message.id === id)
+    ?? (hub.thread?.root?.id === id ? hub.thread.root : hub.thread?.replies.find((message) => message.id === id))
+    ?? null;
+
   const agentProps: AgentView = {
     on: agentsOn, turns: hub.agentTurns, states: hub.turnStates, online: hub.online, meId,
     onProfile: openProfile,
     onOpenDm: (agent) => void openAgent(agent),
+    onOpenDmWithRequest: (agent, sourceMessageId) => {
+      const source = sourceMessageId ? findLoadedMessage(sourceMessageId) : null;
+      const prefill = source && source.agent_key == null && source.author_user_id === meId ? dmRequestPrefill(source.body, agent) : null;
+      void openAgent(agent, prefill ?? undefined);
+    },
     onAskAgain: (request) => void hub.askAgain(request),
     onCheck: (request) => void hub.checkTurn(request),
     onBringIn: bringIn,
-    onApprovalAct,
+    onApprovalAct: onApprovalAct ?? actOnCardHere,
+    cardNotices,
   };
 
   const closeForm = (returnTo: "channel" | "dm") => {
@@ -1452,12 +1493,16 @@ type AgentView = {
   meId: string;
   onProfile: (agent: TeamHubAgentKey, trigger: HTMLElement | null) => void;
   onOpenDm: (agent: TeamHubAgentKey) => void;
+  /** A2b: the channel redirect's "Open DM": the DM opens with the asker's own request in its box, unsent. */
+  onOpenDmWithRequest?: (agent: TeamHubAgentKey, sourceMessageId: string | null) => void;
   onAskAgain: (request: AgentTurn["request"]) => void;
   /** Check again for an unknown state: re-read the turn's state, never start a turn. */
   onCheck: (request: AgentTurn["request"]) => void;
   onBringIn: (reply: TeamHubMessage, prefill: string, agent: TeamHubAgentKey) => void;
-  /** A2: absent until a seam redeems the card (the card then refuses rather than offering Approve). */
+  /** A2: what redeems a card: the host's seam, or (A2b) the hub's own `actOnCard`. */
   onApprovalAct?: TeamHubApprovalHandler;
+  /** A2b: what the last act on a card came to, by message id, where the card itself can't say it. */
+  cardNotices?: Record<string, string>;
 };
 
 /** Where a row sits: the rows around it (the stream, or a thread's root and replies) and its kind of place. */
@@ -1644,11 +1689,20 @@ function AgentMessageRow({ message, agentKey, people, meId, onOpenThread, agent,
           ?? { conversationId: place?.conversationId ?? "", sourceMessageId: message.asked_in_message_id!, threadRootId: message.parent_message_id, agent: agentKey, privateFollowUp: true })}
         onCheck={() => agent.onCheck({ conversationId: place?.conversationId ?? "", sourceMessageId: message.asked_in_message_id!, threadRootId: message.parent_message_id, agent: agentKey })} />}
       {othersLine && <PrivateOthersNote agent={agentKey} askerName={askerShort} state={othersLine} />}
+      {/* A2b: an act asked in a shared conversation is offered in the asker's DM with this agent; the
+          agent's reply ends with the server's line saying so. The asker gets the way there, read from
+          that line, so it is still here after a reload. Everyone else has nothing to press. */}
+      {agent?.on && isAsker && !place?.agentDm && endsWithRedirect(message.body) && <div className="th-ag-bring">
+        <button type="button" className="th-btn th-ag-bring-btn" data-ag={agentKey}
+          onClick={() => agent.onOpenDmWithRequest ? agent.onOpenDmWithRequest(agentKey, message.asked_in_message_id ?? null) : agent.onOpenDm(agentKey)}>
+          <AgentPlate agent={agentKey} size="sm" />Open DM with {name}</button>
+      </div>}
       {message.files.length > 0 && <MessageFiles files={message.files} />}
       {message.approval && <TeamHubApprovalCard approval={message.approval} agent={agentKey} meId={meId}
         askerName={approvalAsker(message.approval.asker_user_id, people, askerShort)}
         decidedLabel={message.approval.decided_at ? timeLabel(message.approval.decided_at) : null} online={agent?.online ?? true}
         onAct={agent?.onApprovalAct ? (act) => agent.onApprovalAct?.(message, act) : undefined} />}
+      {message.approval && agent?.cardNotices?.[message.id] && <div className="th-fail">{agent.cardNotices[message.id]}</div>}
       {bring.length > 0 && agent && <BringInRow agents={bring.map((item) => item.agent)} askerName={askerShort} isAsker={isAsker}
         onBring={(key) => { const item = bring.find((entry) => entry.agent === key); if (item) agent.onBringIn(message, item.prefill, key); }} />}
       {onOpenThread && message.reply_count > 0 && <button type="button" className="th-replies"

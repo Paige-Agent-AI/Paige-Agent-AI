@@ -5490,3 +5490,20 @@ board captures must remain excluded when current DOM describes a dialog; inspect
 a settled original frame instead. Synthetic UI/native fixtures remain distinct
 from genuine caller authority, saved business records/Rails, reload, both-chat,
 universal SOLO and full Experience acceptance. No second scheduler/ledger/runtime.
+
+## 2026-10-30 EXP02 — weekly delivery and Billing release readback
+
+Original3132/3140/3142 exact releases, earlier source/customer failures and native/
+web readbacks are recorded in [Master§4.0](../PAIGE-MASTER-PROJECT-REFERENCE.md).
+One new released weekly answer and its full reload PASS are bounded actual
+customer evidence, not universal reliability or final acceptance. Original failed
+requests remain; protected monthly stays UNKNOWN/UNRETRIED. The separate later
+Finance module-load failure is not counted as successful navigation.
+
+Billing80006 history remains exact; forward80007 released through the normal
+ordered native workflow with original body/metadata/ACL/comment readback.
+EXP08 has acknowledged ONLY the producer prerequisite; its integration/CI/role/
+customer gates remain. No new grant, writer, provider or autonomous action.
+Original19/nine, catalogue and algorithm maturity remain unchanged. See existing
+[weekly evidence](../evidence/ui-delivery/e2-weekly-credit-code.md) and
+[Billing evidence](../evidence/ui-delivery/e2-billing-current-authority.md).

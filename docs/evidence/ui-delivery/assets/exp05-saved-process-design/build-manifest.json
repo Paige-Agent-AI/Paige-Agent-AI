@@ -1,0 +1,637 @@
+{
+  "boundary": "OFFLINE ORIGINAL OPERATIONS MOUNT; SYNTHETIC AUTH/READ PORTS; NO CUSTOMER OR EXECUTION PROOF",
+  "inputs": [
+    {
+      "path": "src/solo/operations/OperationsWorkspace.tsx",
+      "sha256": "e4d49ba743f2aeacf4447d894cc5004756bba646bfdea201c06672f855c6a1c4"
+    },
+    {
+      "path": "src/index.css",
+      "sha256": "85a3adb5668238e91cdb6c8189488db1fd24ce6698f7456ae23a3de6aa572482"
+    },
+    {
+      "path": "src/components/tenant-shell/tenant-command-center-shell.css",
+      "sha256": "e9756f8cfc04a330748711d798afeda35cb8f02bd133914dfee9a5fe4b0bf355"
+    },
+    {
+      "path": "src/solo/operations/OperationsAssignee.tsx",
+      "sha256": "d47cc80849a7fbd0f9bc91ffdc5ccebcd3f46bc24771e4e390eb714464a00dd7"
+    },
+    {
+      "path": "src/solo/operations/OperationsWorkEditor.tsx",
+      "sha256": "fa04762f75f30eeab96ad61391b2fd06781d91dd0043a12993293a29b4caa52e"
+    },
+    {
+      "path": "src/solo/operations/OperationsWorkCreator.tsx",
+      "sha256": "cab2b22f14caface089feea983bc127ffb2a33f9c36c62714d944146f081ef9b"
+    },
+    {
+      "path": "src/solo/operations/OperationsWorkActivity.tsx",
+      "sha256": "8ede652ffa232088eaeb1a67c668f0e388f9f0cb7cbf57c393a214852138c93e"
+    },
+    {
+      "path": "src/solo/operations/OperationsItemRelease.tsx",
+      "sha256": "34a7cdde4001acadf4cc122a1da6d6e02419169f7f8d249f07bab5ce8288b6fe"
+    },
+    {
+      "path": "src/solo/operations/operations-item-release.ts",
+      "sha256": "bdcc2921b52b55736bbc168e548a26c95b7ab7b6d8fad3a3ef02774b7b876254"
+    },
+    {
+      "path": "src/solo/operations/OperationsProjectCreator.tsx",
+      "sha256": "73f8fae5e490484dc810cdc2c440112e3f9ebaeca69d267dfa184b952caf7f9c"
+    },
+    {
+      "path": "src/solo/operations/OperationsProjectEditor.tsx",
+      "sha256": "7faab43dd1ac2c89ca178246fb6103d037759345776f32d494ea936d4c6f7e91"
+    },
+    {
+      "path": "src/solo/operations/OperationsWork.tsx",
+      "sha256": "bdfd8d5ae1b951fc1f578dba08bd9b44c2549b464b662ef476288e85ff8687cd"
+    },
+    {
+      "path": "src/solo/operations/operations-native-work.ts",
+      "sha256": "6088d748b01cc8925ae78e64f1d0866beffde0598d8bbff81b1a39bcba045d66"
+    },
+    {
+      "path": "src/solo/operations/operations-crm-work-command.ts",
+      "sha256": "0b9777b21f2583456e0dc5d715be3f75c76e38f7acac89a5b0012540a0e544e8"
+    },
+    {
+      "path": "src/solo/operations/OperationsCrmStageReview.tsx",
+      "sha256": "233c36924bc40dda327083984edbf9990677fc1d9b23a4730d8f1dd5e0a011ec"
+    },
+    {
+      "path": "src/solo/operations/OperationsCrmWorkEditor.tsx",
+      "sha256": "9b3d84accd9dba81e03760f4d39dff1d5ec989a265be18d807bf764b384d320d"
+    },
+    {
+      "path": "src/solo/operations/operations-presentation.ts",
+      "sha256": "6e61315e808af0701e8c8cb34e9021b8bff97f9961257fce2b70cf465a7d1844"
+    },
+    {
+      "path": "src/solo/operations/OperationsProjects.tsx",
+      "sha256": "6a938c3b8739dd3d6fcea015e1ee57db3a7e6dc1109340a4504dae0c3900a5c1"
+    },
+    {
+      "path": "src/solo/operations/OperationsOverview.tsx",
+      "sha256": "e69adc489c26c7c6b83e575bcc04b00d2c7b423eeb607a954e59f3c8f28b3b9b"
+    },
+    {
+      "path": "src/solo/operations/OperationsRecordedFindings.tsx",
+      "sha256": "e7e522707342193778d3959a7478a50eb361183842663eaed6023607c40a78cd"
+    },
+    {
+      "path": "src/solo/operations/OperationsZionHistory.tsx",
+      "sha256": "597946ebff071ba0731bec0ad6f557f9e7439196b1bff8536372797f8fb50fe0"
+    },
+    {
+      "path": "src/solo/operations/operations-overview-work.ts",
+      "sha256": "b828c44d62ac5f67c3db0c536b5e28d9e64fae4a9591ee407cac9db0ec20f253"
+    },
+    {
+      "path": "src/solo/operations/OperationsCapacity.tsx",
+      "sha256": "6bfe6d7865600a74dcf0a16891165206967423e373932a1e636243640e21103f"
+    },
+    {
+      "path": "src/solo/operations/OperationsDelivery.tsx",
+      "sha256": "3c737ac54e649068f487fd50f5876e47bd7d92f33b6bb2d9e989527492bcae74"
+    },
+    {
+      "path": "src/solo/operations/OperationsPlaybooks.tsx",
+      "sha256": "377a91b3af627052cd5e3269d1e46a63b2921304c48de522dca5deb8396f9dbf"
+    },
+    {
+      "path": "src/solo/operations/operations-source-contract.ts",
+      "sha256": "6ef3b484c2902e2a9b6fb623241a290ad460b62012fa2911b6d708a979e787d3"
+    },
+    {
+      "path": "src/solo/operations/operations-weekly-source.ts",
+      "sha256": "d891749430be5b4efc6010a2dfaa39cd55ee6297d9f2234de4cedcad9f3fbe33"
+    },
+    {
+      "path": "src/solo/operations/operations-task-focus.ts",
+      "sha256": "e612beb83323c720cb9b06cfcc0b760c47e638f9419329dd930c2ecb7f1ba931"
+    },
+    {
+      "path": "src/solo/operations/OperationsDeliveryInspection.tsx",
+      "sha256": "2240a8d46c9b16c2aafe614f5e8fe9f4c0975398ee29604f3d07129df7e2cfdf"
+    },
+    {
+      "path": "src/solo/operations/OperationsDeliveryReviewQueue.tsx",
+      "sha256": "bf7043e04e36866268b560562ad895a64bdaa2d972f8917cac9e3689eb6081c5"
+    },
+    {
+      "path": "src/solo/operations/operations-work-delivery-scope.ts",
+      "sha256": "a908de90dcafdc92e082b9725efb04b9d4b9e4e98aa1c0cbab38f201965efdb8"
+    },
+    {
+      "path": "src/solo/operations/operations-delivery-recovery-targets.ts",
+      "sha256": "8f10ed67154ceaa86c3448747d25cba7ce8f025abcdc15e783debc78f2343ab2"
+    },
+    {
+      "path": "src/solo/operations/operations-delivery-inspection.css",
+      "sha256": "db6fcc9717bcdb5a58a798c66342dbc0dcd40001b141be3c62248038b8fcedb1"
+    },
+    {
+      "path": "src/solo/operations/operations-workspace.css",
+      "sha256": "f502346c0f2ffb1ba0aa516ab88403a4aa47d27f09aece69d3f2d989b4dd3f2f"
+    },
+    {
+      "path": "src/lib/paigePromptHandoff.ts",
+      "sha256": "ff2ce8f41aa8f7b95b25c8a4675bde3f97f94a372ed2419e79ca30b6188a288f"
+    },
+    {
+      "path": "src/solo/paigeClientScope.ts",
+      "sha256": "670a2031a4f180b564348fcd2592a83a87a1f0fe4df43c67f28318c472fbd1c0"
+    },
+    {
+      "path": "src/solo/paigePublicPresenceScope.ts",
+      "sha256": "52f11ac31abcfb748744866c102b5a2f67139ede2c2bf6add0a0c2bad4b56d70"
+    },
+    {
+      "path": "src/contexts/ImpersonationContext.tsx",
+      "sha256": "cb640d21852f3ad416729db75e608da951dd722756692c51b1f058e806eb73ed"
+    },
+    {
+      "path": "src/lib/scopedUser.ts",
+      "sha256": "ba4a0e7293f21bdd9a9f7a19be4dde43fc65cfdf920fb6ee05e659309db3e7ca"
+    },
+    {
+      "path": "src/components/ui/sheet.tsx",
+      "sha256": "56877e67e260514dc8df4347ae2a0d516c9d5cfbb341d104da2a9bc9484865a5"
+    },
+    {
+      "path": "src/solo/operations/operations-delivery-local-recovery.ts",
+      "sha256": "c8b8af644117a72ad13ff6d9757ad0d58d337e5269fba0d66fc64acb486e3ce8"
+    },
+    {
+      "path": "src/solo/operations/OperationsDeliverablePreparation.tsx",
+      "sha256": "5f7f395fefef21ba87953ecf23fbda55c129e5316db991decf43249015b223ac"
+    },
+    {
+      "path": "src/solo/operations/OperationsStaffDeliveryReview.tsx",
+      "sha256": "05f9cba1a6235e594be09999c81255e0d077d40ffa836ed9fc1d7ca5118bb7b5"
+    },
+    {
+      "path": "src/solo/operations/operations-views.css",
+      "sha256": "18c5139a5966de593d2ad6480f1cdb676b834f10e077fc7927d5203ccc8d5e5e"
+    },
+    {
+      "path": "supabase/functions/_shared/paige-orchestration/weekly-draft-deadline.ts",
+      "sha256": "f8ee3cd39d5b942eb64b0343ae50bcd0614c750f111c3c1a1a1cf77d7c103bda"
+    },
+    {
+      "path": "src/solo/operations/operations-project-create.ts",
+      "sha256": "cbdce3c997bc95ec2692cbfb419e61a3a4e24ec7ec639cd7d2197e083e2ac586"
+    },
+    {
+      "path": "src/hooks/useBeforeUnloadGuard.ts",
+      "sha256": "d4a4b3d02b7cccbea8b615cec0829027854d232db0a94ced6bf29187ec0cfd3e"
+    },
+    {
+      "path": "src/lib/auth/accountSwitchGuard.ts",
+      "sha256": "81b5ceff2074c87aa364d70bd334b7d16c4a6311d52d83c267bdc9149c93dd97"
+    },
+    {
+      "path": "src/components/ui/alert-dialog.tsx",
+      "sha256": "c8b01137c7552e63c9ccf2c38ef92e5417bd6616b6980d56d3015db027465283"
+    },
+    {
+      "path": "src/solo/operations/operations-crm-work-edit.ts",
+      "sha256": "32c8ad0cb4f335f97fce7dd39014b88df06abfeeb9bb55b63d02898b6da8744b"
+    },
+    {
+      "path": "src/solo/team-workspace-contract.ts",
+      "sha256": "8fee82e6057b3425370e648be878f6c324d4415d3b6100155e6a1d2b2c39371b"
+    },
+    {
+      "path": "src/solo/operations/operations-work-create.ts",
+      "sha256": "fa432d93bcdbec44815410f39e6b4d2ef511f7c5207f4fb050c7f4d44e43d599"
+    },
+    {
+      "path": "src/solo/operations/operations-delivery-reviews.ts",
+      "sha256": "59fd0362270a98bb318f4937b01bc9823031c57cf87901f948f099a7769ce230"
+    },
+    {
+      "path": "src/solo/operations/operations-delivery-source.ts",
+      "sha256": "6aff6452e60b63c57e9c95b0786c35429d5212534f72c87d20062a69533aba84"
+    },
+    {
+      "path": "src/solo/operations/operations-work-update.ts",
+      "sha256": "14158b51df6c86aca3c716935fba79da284f5f559451b2b6a38bbf92e0c2a23f"
+    },
+    {
+      "path": "src/hooks/useUserRoles.ts",
+      "sha256": "91b236913c0a7e02efee04bfa2dbdd967d5bfcf3c8355c3e2c6aa42ab8691363"
+    },
+    {
+      "path": "src/lib/utils.ts",
+      "sha256": "d1f1e0d62cb8d8d1e04c26e14de842d8a151f75812d81b046c65b5d1fe8e4b27"
+    },
+    {
+      "path": "supabase/functions/_shared/paige-context/vp-address.ts",
+      "sha256": "6a9a434273d4ef0bfed19f219c92156b5016c0e3b19259feb1c2034f6f0336df"
+    },
+    {
+      "path": "src/solo/weekly/WeeklyResponsibilityEntry.tsx",
+      "sha256": "8975693256a6fccb98acc6322e98ab67d95477adda9cb21092941c98e5965d1a"
+    },
+    {
+      "path": "src/solo/operations/OperationsWeek.tsx",
+      "sha256": "0839ef0f09fdaea1cb48252c0cb4c27d15fd9f2e4aca5b092e7d444ad44f12ff"
+    },
+    {
+      "path": "src/solo/operations/operations-overview.css",
+      "sha256": "65e72a7d07eb8bfe4ef338cdfcd220b858df37dfb1866422e6ed914d5b223494"
+    },
+    {
+      "path": "src/solo/operations/operations-project-update.ts",
+      "sha256": "4b73cbf1013ddbd83bb600e2ed03cc82476cd800db9b1abd99025d870c4606f8"
+    },
+    {
+      "path": "src/hooks/useKnowledgeDocuments.ts",
+      "sha256": "34f473274e6eb1032b779cda52c1d309c061ae02ff6306646fe7dd961c25e6d6"
+    },
+    {
+      "path": "src/lib/knowledge-service.ts",
+      "sha256": "66f0ecfd3df48591381e1aa15c60eb88e768ae38fe6e7e6cc6fa0d7d513c007f"
+    },
+    {
+      "path": "src/solo/owner-task-automations.tsx",
+      "sha256": "81b363cd4239f39d08317f8302d2e516a7787927f1acefbb1b68d2a518be28d7"
+    },
+    {
+      "path": "src/solo/settings-integrations.css",
+      "sha256": "da6904f7b252c9399bb74d82e11c8604db8ec3ac63644accdd537b78721d9a4d"
+    },
+    {
+      "path": "src/solo/operations/OperationsEngagementEvidence.tsx",
+      "sha256": "ba3aefdc6b3d88d320970e49aee653ef11450e46bd45f0d4decb7d485d6ef79e"
+    },
+    {
+      "path": "src/solo/operations/operations-engagement-project.ts",
+      "sha256": "1b4606e1178fb97b8a9e900cd2820e024e8f2498ebef7d356b6fc87f84dfd2ec"
+    },
+    {
+      "path": "src/solo/operations/operations-delivery.css",
+      "sha256": "f8a2c1f25b769d20764aff5659dd4caa9a7860b1f01157404243b9d2025b9887"
+    },
+    {
+      "path": "src/solo/useSoloCommercialTerms.ts",
+      "sha256": "e3223a2fd9e912771e4da9b93a9d266489f3eb5b5430d706dd973b652f40f493"
+    },
+    {
+      "path": "src/solo/useSoloAgreementSignings.ts",
+      "sha256": "629f17785a98e258f2b3747d92d87602b6325ba49b2f94602091ab1116245055"
+    },
+    {
+      "path": "src/solo/catalog-offers.tsx",
+      "sha256": "df369a826ecee87ef97e96a6077e47a506f07ce7e2ac979dbf0496a5eac0818d"
+    },
+    {
+      "path": "src/solo/data/useBusinessReview.ts",
+      "sha256": "fd2626dbbfddc85220a7f9ab7b4c097425d911017e874540f01daeef0508db86"
+    },
+    {
+      "path": "src/solo/executive-review.ts",
+      "sha256": "87ba37fb56d151b3643fb797db669843dcabd30cf11e0cc71667a5c14d1835eb"
+    },
+    {
+      "path": "src/solo/operations/operations-recorded-findings.css",
+      "sha256": "f9490234ef94a9e8ca0b1e1ab737b8976a3a0cf77e80ff9b15ed214bb0155578"
+    },
+    {
+      "path": "src/lib/links/workspaceLinks.ts",
+      "sha256": "ec9df60122c1d831a0db39e9b2f2b9fbae42303e7563c87e4e4ff84d63d6a8c2"
+    },
+    {
+      "path": "src/solo/operations/operations-delivery-staff.ts",
+      "sha256": "e82faa815346f9ec301abcf97373a7f4314fab110b0f4fc73e01e9414f4b7062"
+    },
+    {
+      "path": "src/components/ui/avatar.tsx",
+      "sha256": "4a8bc00e5514912c54d414e207266fa100906aec2754d590adcc8ccc46d4c5c9"
+    },
+    {
+      "path": "src/lib/client-portal-access.ts",
+      "sha256": "45a1247b93721b6c7bcc5f8163a5c4876c9cd4e2dd5a4c7eb84c45bc19992abe"
+    },
+    {
+      "path": "src/solo/operations/zion-assignment-read.ts",
+      "sha256": "7dbb6a5033cfde6d42fa2b1cdfa6f598ff8950a821d63003cccbbe9219ae09f8"
+    },
+    {
+      "path": "src/solo/operations/operations-zion-history.css",
+      "sha256": "d1368882d7abe49c0922fe38891f4781ff1e767e3cfdbd3ca845e155d7e6a536"
+    },
+    {
+      "path": "src/solo/operations/operations-engagement-readiness.ts",
+      "sha256": "a2f9818bd4c5e678354b924c35eddcb118f9c306cfde30cf782f01d48cf36f0f"
+    },
+    {
+      "path": "src/solo/operations/useOperationsEngagementEvidence.ts",
+      "sha256": "939b8cbc2c7f5540cc85195e671a2c693f041894fd1f227349c5b0384ae2eef4"
+    },
+    {
+      "path": "src/solo/operations/OperationsEngagementHandoff.tsx",
+      "sha256": "0839ebfed98ca9a143c7d2d2f306923e49c101c7baa231a9b6d042c96fbe0166"
+    },
+    {
+      "path": "src/solo/owner-task-process-history.tsx",
+      "sha256": "ebf4d1a87c1bf3ae7fbe0b1ab748afcc611e903f9ed06fbde7b3e145e0367d42"
+    },
+    {
+      "path": "src/components/ui/button.tsx",
+      "sha256": "ec4ff2011e99ab79bb56528befb6904cb9ea4c58eefcc4e325b5b18e2c832103"
+    },
+    {
+      "path": "src/solo/operations/operations-staff-delivery-review.css",
+      "sha256": "933346721554d0c362b7955057deb3fb113c1ca0f2e7b62d18b3a482e0dffdb0"
+    },
+    {
+      "path": "src/components/ui/select.tsx",
+      "sha256": "a2b62120a033b36c8d6c4a1693aa9231645fa69251740e15eacec24c1eea4d82"
+    },
+    {
+      "path": "src/solo/data/useBusinessTimeZone.ts",
+      "sha256": "c53f1dff5e929f521ea2eeaaf7ae0706e0e7537511d9986cc8b56a2e1d860bb8"
+    },
+    {
+      "path": "src/solo/operations/operations-week.ts",
+      "sha256": "73be807c7ff94a2bc3a8dda8ae821492223742431183aaf444b61c98e569a75a"
+    },
+    {
+      "path": "src/solo/operations/OperationsWeeklyWorkload.tsx",
+      "sha256": "870fb16cda5a5a0577c62fe95569c2b69bd1d6eabf59c1aa4b04f50817a7c81d"
+    },
+    {
+      "path": "src/solo/operations/operations-week.css",
+      "sha256": "b8d69eaec1fc4252df5910bf3ff86404641ce825dc307c7b2c5d6f0bbaa455f7"
+    },
+    {
+      "path": "src/solo/weekly/useWeeklyResponsibility.ts",
+      "sha256": "1024f3c1fa174e2d03b775834da27e62ee9e63ebef7b4b613e44cf912714afbe"
+    },
+    {
+      "path": "src/solo/weekly/WeeklyResponsibilityPanel.tsx",
+      "sha256": "13028fcacf67cfcfddf2952be436c0becab74883b40d8a79c7403acc899e9e2a"
+    },
+    {
+      "path": "src/solo/weekly/weekly-responsibility.ts",
+      "sha256": "796067513eaad0f1144c92757c9dfe3aecf092e6f973c04095cae25d14446553"
+    },
+    {
+      "path": "src/solo/weekly/WeeklyDraftComposer.tsx",
+      "sha256": "34377f6b9a3e42dd44850235459abed9792a1fad88bbdb69fd4c429327d8cf7b"
+    },
+    {
+      "path": "src/components/tenant-shell/tenantShellRoutes.ts",
+      "sha256": "c88b329c2667f125e47cf9a5a0b8ed407f6df2416917570f33bf84a50c470b0d"
+    },
+    {
+      "path": "supabase/functions/_shared/paige-context/snapshot.ts",
+      "sha256": "b1d8af02e04889c26ea4533d42bcdcd1473bde1c29c1b421d60892bed2b24dc2"
+    },
+    {
+      "path": "src/lib/userClock.ts",
+      "sha256": "9582325d04f5b18599330a1126f66886800e0b59f2982400e736e9a1132e42cf"
+    },
+    {
+      "path": "src/solo/_shared.tsx",
+      "sha256": "b6537ce521b4d83232dfcc21b5f03c00202d6360c1678f4d72628835aba0ce0c"
+    },
+    {
+      "path": "src/solo/useCatalogOffers.ts",
+      "sha256": "4afdb0eaf5c05d9780d7c398ca7a0b05470bc2a47e0e43f48b9c06e71d564bcd"
+    },
+    {
+      "path": "src/solo/catalog-offers.css",
+      "sha256": "3baf710ea48c59b7728758cdaba1d229d6acd8c8cdbb2485cd4170cb5088cb90"
+    },
+    {
+      "path": "supabase/functions/_shared/canonical-app-url.ts",
+      "sha256": "6939c2205b2b4c04bb2befaa2fc2b314848754723cb72278ffb425e658274adf"
+    },
+    {
+      "path": "src/lib/tier/tierFeatures.ts",
+      "sha256": "a1ec9dda16861ef87c6ef7f2832e156cdda774138954ac185dfc8b04930706b2"
+    },
+    {
+      "path": "src/lib/client-portal-scope.ts",
+      "sha256": "7da8e203a5153adf3a834aba79d7350e0db4420fbc710007bdee9221a56690c9"
+    },
+    {
+      "path": "supabase/functions/_shared/client-portal-access.ts",
+      "sha256": "455d9c6b6757f8732b005939dd223f92e307b031fbbf71335660604edf5f5085"
+    },
+    {
+      "path": "src/lib/contact-methods.ts",
+      "sha256": "810bf4319fd744f4a27a59d868cb890376c156d9fabd7314a08ebb0c04f09e6d"
+    },
+    {
+      "path": "src/solo/sales/agreementVocabulary.ts",
+      "sha256": "b37288058de91d37dcaa49f1657363e6ef663d65441fb6d5fd8ae88cdd03f69c"
+    },
+    {
+      "path": "src/solo/sales/agreementPdfIntake.ts",
+      "sha256": "0c4065a341baff61ff6490d2b03a95c2087f3edc7cb6c3f2684c557078cad0c2"
+    },
+    {
+      "path": "src/solo/operations/operations-engagement-read.ts",
+      "sha256": "8c78081bc1a064d56e89df51d69b3c9d85a7ebc2a70c2007066dcfa9efc4b2a5"
+    },
+    {
+      "path": "src/solo/settings-contract.ts",
+      "sha256": "dac7493f3c3c665d3697cf68b54537af435ce9548aa06fc5a4801e96f44e1656"
+    },
+    {
+      "path": "src/solo/weekly/weekly-owner-read.ts",
+      "sha256": "7d5678ffe83e4bedfdc466207fa19872fc71b4cb9125cd5733862c853e01ecd7"
+    },
+    {
+      "path": "src/solo/operations/operations-engagement-handoff.ts",
+      "sha256": "d108c49cb762f96054824888afcce44bad15a5618d5d321f54cdeef3e7e344f7"
+    },
+    {
+      "path": "src/solo/operations/operations-engagement-handoff-write.ts",
+      "sha256": "b634ff270341c2240cbb0241ba9d4af7e73e09fb3d8752922b27b5b207210c8e"
+    },
+    {
+      "path": "src/solo/operations/operations-handoff-recovery.ts",
+      "sha256": "557b4f135f5607bd5bcf5c6315d92b8ae9c5a8d1d03a1b56053098ad4fb1624f"
+    },
+    {
+      "path": "src/solo/operations/operations-handoff-intent.ts",
+      "sha256": "68c7ac65cdf45098acc73be5a8720b5389db5ac942cd72d8c1051d41a334b114"
+    },
+    {
+      "path": "src/solo/operations/operations-handoff-date.ts",
+      "sha256": "ff4ecee41ea95041d115850aa898a20de9acc50ffd0493d70b7216152c64de0c"
+    },
+    {
+      "path": "src/solo/weekly/WeeklyScheduleChange.tsx",
+      "sha256": "dd97ffe954f4561ac895c6cd449db8cde0ef54d105336544bee4138af2327946"
+    },
+    {
+      "path": "src/solo/weekly/weekly-responsibility.css",
+      "sha256": "a999cecb1193b49590ed830f633a7644bcff0d37e45003e4fbec3fc3673f8323"
+    },
+    {
+      "path": "supabase/functions/_shared/paige-context/mod.ts",
+      "sha256": "608d221c85d8fba5999ed4da613e3ce41b1aff9a17ae534666013f0d6002c70f"
+    },
+    {
+      "path": "supabase/functions/_shared/finance/business-review-evidence.ts",
+      "sha256": "46e8acd3fe62dcb6d0dbc4d937bc21f82074af16f488b13d8dacd1d3da7bb084"
+    },
+    {
+      "path": "supabase/functions/_shared/business-mission-targets/presentation.ts",
+      "sha256": "47d312f526c8315f713b8fea570347e9bd6e633574c98b3373a9d7036776e5d8"
+    },
+    {
+      "path": "src/solo/weekly/weekly-draft-command.ts",
+      "sha256": "884adc1efd51b9c09d000f79691a2ed954f0be133e40d99f596f9e25f2978380"
+    },
+    {
+      "path": "src/solo/weekly/WeeklyDraftReview.tsx",
+      "sha256": "71603bc24810bcc3042001110a22ccf0438f74b2826467df3cc65af93f783f4b"
+    },
+    {
+      "path": "src/solo/operations/operations-weekly-workload.ts",
+      "sha256": "56a9fad722053792870046e3b111fc41179859fb4643f39f2d69c099022877de"
+    },
+    {
+      "path": "src/solo/operations/OperationsWeeklyCalendar.tsx",
+      "sha256": "c8b404f498bbcff7e930dfbaf89c3be0f99ef54219d5e79d186e79c4e6018ef9"
+    },
+    {
+      "path": "supabase/functions/_shared/solo-classification.ts",
+      "sha256": "51daa30a31f55912ecda5aa00847aee82b78dfa61050f99c3e8e4c43a63e3245"
+    },
+    {
+      "path": "supabase/functions/_shared/paige-orchestration/weekly-commitment-projection.ts",
+      "sha256": "963e06334151ecba57c072a81677c1ec7d8b031faf76fded86d7ad88d51c7de1"
+    },
+    {
+      "path": "supabase/functions/_shared/paige-orchestration/weekly-commitment-read.ts",
+      "sha256": "a3e293167c5af9b73d613f2c3a4e6f8914de7069a149ac3f17b5f058b3f1e59e"
+    },
+    {
+      "path": "supabase/functions/_shared/paige-orchestration/weekly-draft-projection.ts",
+      "sha256": "73f9635112d5e3b5a0bf7e4c9b27d67ee4879c503a1a890ccfe9cec3058ceb88"
+    },
+    {
+      "path": "supabase/functions/_shared/business-mission-targets/contract.ts",
+      "sha256": "a57e5acde00407adae272c94850993b1a666f90529b46c0b9b339c7253370174"
+    },
+    {
+      "path": "src/components/chat/PaigeConfirmCard.tsx",
+      "sha256": "7dac99fbfd31e41a791204cfff88a12d1af93876f8cdcc496423a20e60b9f952"
+    },
+    {
+      "path": "src/solo/operations/operations-weekly-calendar.ts",
+      "sha256": "eaa5fa94464d71fac5a93045d7502bbc89a976a5928d06ffd51a4eb9a02644ce"
+    },
+    {
+      "path": "src/components/tenant-calendar/useSoloCalendar.ts",
+      "sha256": "af195674f43b6ed551f69d0e5ee79b127da2d4a7880d2b4cb6deb54d4592a6f5"
+    },
+    {
+      "path": "supabase/functions/_shared/paige-orchestration/weekly-commitment-chat.ts",
+      "sha256": "07b8f49acb4e300a3632cf86289c335892783874fb50e91ad1045156a53ccd32"
+    },
+    {
+      "path": "supabase/functions/_shared/paige-orchestration/weekly-commitment-control-intent.ts",
+      "sha256": "4c5336d7b98bbb8f829120e453e548d18fd8face1640a40b945c53279cf299db"
+    },
+    {
+      "path": "src/components/chat/confirmPreview.ts",
+      "sha256": "194f9441087a3a04298797d38b063db39beca091fbc51261e67113931e0dc7ce"
+    },
+    {
+      "path": "supabase/functions/_shared/analytics-metrics/metric-contract.ts",
+      "sha256": "9b7c3f8bebcafad7976d9baf571829f8928a4e0fb01e97939518d3b15714ba61"
+    },
+    {
+      "path": "src/hooks/useRealtimeTable.ts",
+      "sha256": "bc9bb60ed73ef4bff820d277fdccd54257f9816ff7b12a66e1d6c80eca586f24"
+    }
+  ],
+  "source": "260c8081a30d2ae7fd803974e7d60ac8fe05b699",
+  "fixtureSources": [
+    {
+      "path": "work/process-design-ui/main.tsx",
+      "sha256": "1618369a5d01812490d35a281d70767d7b558b57e8e74871c65b5190b2837c3a",
+      "source": "import './guard';\n// E09 Slice 4 (4B) \u2014 the REAL Solo Operations workspace (OperationsWorkspace, Work view) with the REAL work-item\n// detail sheet, where OperationsItemRelease mounts the release flow (OperationsDeliverablePreparation +\n// OperationsStaffDeliveryReview). HARNESS RENDER \u00b7 SYNTHETIC DATA \u00b7 NOT LIVE (see stubs.ts). Same mount as the other\n// Solo harnesses: the tenant shell's classes and the data-pg theme on <html>.\nimport { StrictMode } from \"react\";\nimport { createRoot } from \"react-dom/client\";\nimport { BrowserRouter } from \"react-router-dom\";\nimport { QueryClient, QueryClientProvider } from \"@tanstack/react-query\";\nimport { OperationsWorkspace } from \"@/solo/operations/OperationsWorkspace\";\nimport \"@/index.css\";\nimport \"@/components/tenant-shell/tenant-command-center-shell.css\";\n\nconst params = new URLSearchParams(window.location.search);\nconst theme = params.get(\"theme\") === \"dark\" ? \"dark\" : \"light\";\ndocument.documentElement.setAttribute(\"data-pg\", theme);\ndocument.documentElement.classList.toggle(\"dark\", theme === \"dark\");\ndocument.documentElement.setAttribute(\"data-theme\", theme);\nconst client = new QueryClient({ defaultOptions: { queries: { retry: false } } });\n\ncreateRoot(document.getElementById(\"root\")!).render(\n  <StrictMode>\n    <QueryClientProvider client={client}>\n      <BrowserRouter>\n        <div data-tenant-shell data-nav=\"compact\" data-paige=\"closed\" style={{ height: \"100vh\" }}>\n          <nav className=\"tcs-nav\" />\n          <section className=\"tcs-canvas\">\n            <main id=\"tenant-shell-main\" className=\"tcs-main paige-solo\" data-pg={theme}>\n              <OperationsWorkspace view=\"playbooks\" openPaige={() => undefined} />\n            </main>\n          </section>\n          <aside className=\"tcs-paige\" hidden aria-label=\"PAIGE dock (harness placeholder)\" />\n        </div>\n        <span\n          data-harness-tag\n          aria-hidden=\"true\"\n          style={{ position: \"fixed\", bottom: 0, left: \"50%\", transform: \"translateX(-50%)\", fontSize: 10, lineHeight: \"14px\", padding: \"0 6px\", zIndex: 1000, pointerEvents: \"none\", whiteSpace: \"nowrap\", background: \"#111111\", color: \"#ffffff\", borderRadius: \"4px 4px 0 0\", fontFamily: \"ui-monospace, monospace\" }}\n        >\n          HARNESS RENDER \u00b7 SYNTHETIC DATA \u00b7 NOT LIVE\n        </span>\n      </BrowserRouter>\n    </QueryClientProvider>\n  </StrictMode>,\n);\n"
+    },
+    {
+      "path": "work/process-design-ui/ports.ts",
+      "sha256": "f21025163693d48d6e948debc5327dfc5bc8f63456046e3581c539a682f49923",
+      "source": "export * from '../../scripts/live-drive/harness/operations-release-mount/stubs';\nimport {ACTOR,TENANT} from '../../scripts/live-drive/harness/operations-release-mount/stubs';\nconst state = new URLSearchParams(location.search).get('design') ?? 'multi';\nconst step=(position:number,title:string)=>({id:`neutral-step-${position}`,position,action_kind:'owner.task',tool_key:null,config:{title,description:'Review the original business record before proposing the next action.'}});\nconst steps=state==='single'?[step(1,'Prepare the kickoff review')]:state==='large'?Array.from({length:21},(_,i)=>step(i+1,`Recorded purpose ${i+1}`)):[step(1,'Review the new contact'),step(state==='order'?3:2,'Prepare the kickoff review')];\nif(state==='mixed') steps.push({id:'unverified',position:3,action_kind:null,tool_key:'provider.send',config:{title:'Private unverified action',token:'never-display-fixture-token'}} as never);\nconst item={id:'neutral-process',updatedAt:'2026-10-29T12:00:00Z',process:{id:'neutral-process',tenant_id:TENANT,name:'Client kickoff preparation',category:'operations',trigger_key:'contact.created',trigger_config:state==='mixed'?{token:'never-display-trigger-value'}:{},conditions:[],created_by:ACTOR,state:'draft',granted_lane:'confirm',owner_task_armed_at:null},acts:steps};\nexport function useOwnerTaskAutomations(){return {read:['loading','refused','unavailable'].includes(state)?{status:state}:{status:'ready',items:state==='empty'?[]:[item],hasMore:false},busy:false,needsRefresh:false,feedback:null,scopeKey:`offline:${TENANT}`,history:{status:'closed'},refresh:async()=>undefined,control:async()=>{throw Error('OFFLINE: no configuration action is permitted');},openHistory:async()=>undefined,inspectOutcome:async()=>undefined,closeHistory:()=>undefined};}\n"
+    },
+    {
+      "path": "work/process-design-ui/guard.ts",
+      "sha256": "0e5911af051107486b4d63b0ac561bd298b19ee3560e7abd12dba1dc2eb1a34d",
+      "source": "// Private offline UI fixture: no backend, account, provider or business effect.\nwindow.fetch=async()=>{throw new Error('Offline effort fixture forbids network');};\nwindow.WebSocket=class{constructor(){throw new Error('Offline effort fixture forbids WebSocket');}} as unknown as typeof WebSocket;\nwindow.XMLHttpRequest=class{constructor(){throw new Error('Offline effort fixture forbids XHR');}} as unknown as typeof XMLHttpRequest;\nnavigator.sendBeacon=()=>false;\n"
+    },
+    {
+      "path": "work/process-design-ui/vite.config.ts",
+      "sha256": "a6b4870e0a197047cffb3ee9f928669d42bca61bca257ba2aaf46a9994ca10b4",
+      "source": "import path from 'node:path';\nimport {readFileSync,writeFileSync} from 'node:fs';\nimport {createHash} from 'node:crypto';\nimport base from '../../scripts/live-drive/harness/operations-release-mount/vite.config';\nconst root=import.meta.dirname,repo=path.resolve(root,'../..'),ports=path.join(root,'ports.ts');\nconst sha=(p:string)=>createHash('sha256').update(readFileSync(p)).digest('hex');\nexport default {...base,root,envDir:root,publicDir:path.join(repo,'public'),cacheDir:path.join(root,'cache'),\n resolve:{...base.resolve,alias:[{find:/^\\.\\/data\\/useOwnerTaskAutomations$/,replacement:ports},...base.resolve.alias.map(entry=>({...entry,replacement:entry.replacement.endsWith('stubs.ts')?ports:entry.replacement}))]},\n build:{outDir:path.join(root,'dist'),emptyOutDir:false},\n plugins:[...base.plugins,{name:'private-process-design-manifest',generateBundle(){const repoPosix=repo.replaceAll('\\\\','/');const inputs=[...this.getModuleIds()].filter(p=>{const clean=p.replaceAll('\\\\','/');return (clean.startsWith(repoPosix+'/src/')||clean.startsWith(repoPosix+'/supabase/functions/_shared/'))&&!p.includes('?');}).map(p=>({path:path.relative(repo,p).replaceAll('\\\\','/'),sha256:sha(p)}));if(inputs.length<4)throw Error('Missing original product inputs');writeFileSync(path.join(root,'source-manifest.json'),JSON.stringify({boundary:'OFFLINE ORIGINAL OPERATIONS MOUNT; SYNTHETIC AUTH/READ PORTS; NO CUSTOMER OR EXECUTION PROOF',inputs},null,2));}}],\n};\n"
+    },
+    {
+      "path": "work/process-design-ui/serve.mjs",
+      "sha256": "2a24eba019c48e7617258ac1fb652adf0a2df623cf8e4889365792d547826e62",
+      "source": "import http from 'node:http';\nimport fs from 'node:fs';\nimport path from 'node:path';\nconst root=path.resolve(import.meta.dirname,'dist');\nconst server=http.createServer((req,res)=>{const url=new URL(req.url,'http://localhost');const wanted=path.resolve(root,'.'+decodeURIComponent(url.pathname));if(!wanted.startsWith(root+path.sep)){res.writeHead(403).end();return;}const file=fs.existsSync(wanted)&&fs.statSync(wanted).isFile()?wanted:path.join(root,'index.html');const ext=path.extname(file);res.setHeader('Content-Type',({'.html':'text/html','.js':'text/javascript','.css':'text/css','.woff2':'font/woff2','.svg':'image/svg+xml'})[ext]??'application/octet-stream');res.setHeader('Cache-Control','no-store');res.end(fs.readFileSync(file));});\nserver.listen(0,'127.0.0.1',()=>console.log(JSON.stringify({origin:'http://127.0.0.1:'+server.address().port,boundary:'offline synthetic full Operations mount'})));\n"
+    },
+    {
+      "path": "work/process-design-ui/index.html",
+      "sha256": "a9ad7e692747071792dd2cb63536898541f4c210495982f87958b15c65341410",
+      "source": "<!doctype html><html lang=\"en\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'self';script-src 'self';style-src 'self' 'unsafe-inline';font-src 'self' data:;img-src 'self' data:;connect-src 'none';form-action 'none';base-uri 'none'\"><title>EXP05 saved process design \u2014 offline fixture</title><style>[data-harness-tag]{top:0!important;bottom:auto!important}</style></head><body><div id=\"root\"></div><script type=\"module\" src=\"/main.tsx\"></script></body></html>\n"
+    },
+    {
+      "path": "scripts/live-drive/harness/operations-release-mount/stubs.ts",
+      "sha256": "3f4329a958e5176c4fb75e2429f7a2fa4507da3fe98058b74b67322e57e2ced2",
+      "source": "// Deterministic data boundary for the Operations release harness (E09 Slice 4, 4B).\n// HARNESS RENDER \u00b7 SYNTHETIC DATA \u00b7 NOT LIVE. Every name is fictional (\"Northwind Studio\", \"Morgan Lee\",\n// \"Sam Okafor\", \"Jordan Rivera\"); the signed-in Operations sheet against the real operations_delivery_* RPCs on a\n// seeded test tenant with a second team member and a Studio text version is owed (\u00a732/\u00a770.1).\n//\n// The RPCs answer in exactly the shapes the parsers in src/solo/operations/operations-delivery-staff.ts and\n// operations-delivery-source.ts accept (they refuse anything else, so a wrong shape here shows as \"unavailable\", not\n// as a pass), from a small store the writers mutate so a drive can go picker \u2192 confirm \u2192 submitted:\n//   operations_delivery_list_scoped / _client_status_scoped / _artifact_scoped (reads)\n//   operations_delivery_submit_scoped / _review_scoped / _release_scoped (writes, version-checked)\n//   list_studio_sessions / list_artifact_versions / current_user_tenant_id (Studio source reads)\n//   is_tenant_admin, plan_item_activity_scoped (the sheet's own small reads)\n//\n//   ?state=single|picker|confirm|submitted|in-review|approved|release-confirm|released|accepted|client-changes|\n//          people-loading|reading|unavailable\nimport type { Plan, PlanItem } from \"@/hooks/usePlanList\";\nimport type { TeamMemberRecord } from \"@/solo/team-workspace-contract\";\n\nconst params = new URLSearchParams(window.location.search);\nconst state = params.get(\"state\") ?? \"picker\";\n\nexport const TENANT = \"e4000000-0000-4000-8000-00000000aaaa\";\nexport const ACTOR = \"e0900000-0000-4000-8000-00000000f001\"; // Morgan Lee, the business owner, signed in\nconst SAM = \"e0900000-0000-4000-8000-00000000f002\"; // Sam Okafor, a second member of the team\nconst INVITED = \"e0900000-0000-4000-8000-00000000f003\"; // invited, not yet active: never a reviewer\nexport const CLIENT = \"e4000000-0000-4000-8000-0000000c0001\"; // Jordan Rivera\nconst PLAN = \"e4000000-0000-4000-8000-0000000a0001\";\nexport const ITEM = \"e4000000-0000-4000-8000-0000000b0001\";\nexport const ITEM_TITLE = \"Final brand guidelines\";\nconst SESSION = \"e4000000-0000-4000-8000-0000000d0001\";\nconst ARTIFACT = \"e4000000-0000-4000-8000-0000000e0001\";\nconst V1 = \"e4000000-0000-4000-8000-0000000f0001\", V2 = \"e4000000-0000-4000-8000-0000000f0002\";\nconst DIGEST = \"3f1c\".repeat(16);\nconst ITEM_VERSION = \"2026-10-14T13:05:00.000000+00:00\";\n\nconst member = (user_id: string, full_name: string, status = \"active\", is_owner = false): TeamMemberRecord => ({\n  membership_id: `m-${user_id}`, user_id, full_name, email: null, avatar_url: null, status,\n  permission: (is_owner ? \"owner\" : \"member\") as TeamMemberRecord[\"permission\"], is_owner,\n  job_title: null, responsibilities: null, last_sign_in_at: null,\n});\nconst team: TeamMemberRecord[] = state === \"single\"\n  ? [member(ACTOR, \"Morgan Lee\", \"active\", true), member(INVITED, \"Riley Park\", \"invited\")]\n  : [member(ACTOR, \"Morgan Lee\", \"active\", true), member(SAM, \"Sam Okafor\"), member(INVITED, \"Riley Park\", \"invited\")];\n\nexport const harness = { reads: 0, writes: [] as Array<{ name: string; args: Record<string, unknown> }>, invokes: 0 };\n(window as unknown as { __harness: typeof harness }).__harness = harness;\n\n// \u2500\u2500 Planning: one client project with one piece of client work in it \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\nconst finished = [\"approved\", \"release-confirm\", \"released\", \"accepted\", \"client-changes\"].includes(state);\nconst item: PlanItem = {\n  id: ITEM, tenant_id: TENANT, plan_id: PLAN, item_type: \"milestone\", assigned_to_user_id: SAM, contact_id: CLIENT,\n  title: ITEM_TITLE, summary: \"The full guidelines document for Jordan's sign-off: type, colour, logo use and voice.\",\n  status: finished ? \"done\" : \"in_progress\", priority: \"high\", due_at: \"2026-10-20T15:00:00+00:00\", remind_at: null,\n  remind_target: null, reminded_at: null, created_by: ACTOR, linked_action_id: null, updated_at: ITEM_VERSION,\n};\nconst plan: Plan = {\n  id: PLAN, tenant_id: TENANT, title: \"Rivera Design brand launch\", summary: null, horizon: \"quarter\", scope: \"team\",\n  status: \"active\", starts_on: \"2026-09-01\", ends_on: \"2026-11-30\", owner_user_id: ACTOR, created_by: ACTOR, items: [item],\n  updated_at: \"2026-10-01T09:00:00.000000+00:00\",\n};\nexport function usePlanList() {\n  return { plans: [plan], looseItems: [], allItems: [item], loading: false, error: null, forbidden: false, userId: ACTOR, refresh: async () => undefined };\n}\nexport function useOperationsPeople() {\n  const loading = state === \"people-loading\";\n  return { members: loading ? [] : team.filter(m => m.status === \"active\"), loading, error: null, partial: false, refresh: async () => undefined };\n}\nexport function useOperationsCrmWork() {\n  return { tasks: [], loading: false, error: null, forbidden: false, hasMore: false, refresh: async () => undefined, readTask: async () => null };\n}\nexport function useTenantContext() {\n  return {\n    activeTenantId: TENANT, activeUserId: ACTOR, loading: false, accountContextLoading: false, accountContextStatus: \"ready\",\n    activeTenant: { id: TENANT, name: \"Northwind Studio\", account_type: \"standalone\", parent_tenant_id: null },\n    isPlatformOwner: false, isPlatformStaff: false, refresh: () => undefined,\n  };\n}\nexport const useOptionalTenantContext = useTenantContext;\nexport function useTierFeatures() {\n  return { has: () => true, tierKey: \"solo\", soloStandalone: true, loading: false };\n}\n\n// \u2500\u2500 The delivery store \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\ntype Submission = {\n  id: string; tenant_id: string; work_item_id: string; plan_id: string; client_id: string; artifact_version_id: string;\n  artifact_digest: string; revision_no: number; submitted_by: string; submitted_at: string; reviewer_user_id: string;\n  state: \"in_review\" | \"revision_requested\" | \"approved\"; review_note: string | null; reviewed_by: string | null;\n  reviewed_at: string | null; updated_at: string;\n};\ntype Release = {\n  release_id: string; submission_id: string; state: \"awaiting_client\" | \"client_revision_requested\" | \"accepted\";\n  released_by: string; released_at: string; decision_by: string | null; decision_at: string | null; client_note: string | null; updated_at: string;\n};\nlet tick = 0;\nconst stamp = () => `2026-10-14T14:${String(10 + tick++).padStart(2, \"0\")}:00.000000+00:00`;\nconst submission = (o: Partial<Submission>): Submission => ({\n  id: \"e4000000-0000-4000-8000-000000110001\", tenant_id: TENANT, work_item_id: ITEM, plan_id: PLAN, client_id: CLIENT,\n  artifact_version_id: V2, artifact_digest: DIGEST, revision_no: 1, submitted_by: SAM, submitted_at: \"2026-10-13T16:00:00.000000+00:00\",\n  reviewer_user_id: ACTOR, state: \"in_review\", review_note: null, reviewed_by: null, reviewed_at: null,\n  updated_at: \"2026-10-13T16:00:00.000000+00:00\", ...o,\n});\nconst approved = { state: \"approved\" as const, reviewed_by: ACTOR, reviewed_at: \"2026-10-13T18:00:00.000000+00:00\", updated_at: \"2026-10-13T18:00:00.000000+00:00\" };\nconst release = (o: Partial<Release>): Release => ({\n  release_id: \"e4000000-0000-4000-8000-000000120001\", submission_id: \"e4000000-0000-4000-8000-000000110001\", state: \"awaiting_client\",\n  released_by: ACTOR, released_at: \"2026-10-13T19:00:00.000000+00:00\", decision_by: null, decision_at: null, client_note: null,\n  updated_at: \"2026-10-13T19:00:00.000000+00:00\", ...o,\n});\nconst CLIENT_USER = \"e0900000-0000-4000-8000-00000000c001\";\nconst submissions: Submission[] = [\"in-review\"].includes(state) ? [submission({})]\n  : [\"approved\", \"release-confirm\", \"released\", \"accepted\", \"client-changes\"].includes(state) ? [submission(approved)] : [];\nconst releases: Release[] = state === \"released\" ? [release({})]\n  : state === \"accepted\" ? [release({ state: \"accepted\", decision_by: CLIENT_USER, decision_at: \"2026-10-14T10:30:00.000000+00:00\", updated_at: \"2026-10-14T10:30:00.000000+00:00\" })]\n  : state === \"client-changes\" ? [release({ state: \"client_revision_requested\", decision_by: CLIENT_USER, decision_at: \"2026-10-14T10:30:00.000000+00:00\",\n    client_note: \"Could the logo clear-space section show the dark-background version too?\", updated_at: \"2026-10-14T10:30:00.000000+00:00\" })] : [];\n\nconst BODY = `Rivera Design \u2014 brand guidelines\n\n1. Logo\nUse the full wordmark wherever it has room. Keep clear space equal to the height of the R on every side.\n\n2. Colour\nHarbour blue leads; sand and charcoal support it. Never place the wordmark on a photograph without a solid panel.\n\n3. Type\nHeadlines in the display face at tight tracking; body copy in the text face at 16px or larger.\n\n4. Voice\nPlain, warm, specific. Say what the studio does for the client, not what it is.`;\nconst versions = [\n  { id: V2, version_no: 2, title: \"Brand guidelines \u2014 final\", body: BODY, created_at: \"2026-10-13T15:30:00.000000+00:00\" },\n  { id: V1, version_no: 1, title: \"Brand guidelines \u2014 first draft\", body: \"Rivera Design \u2014 brand guidelines (first draft)\\n\\nLogo, colour and type, outlined for review.\", created_at: \"2026-10-08T11:00:00.000000+00:00\" },\n];\n\nconst never = () => new Promise<never>(() => undefined);\nconst reply = (data: unknown, error: unknown = null) => ({ data, error });\ntype Reply = { data: unknown; error: unknown };\nconst builder = (work: () => Promise<Reply>) => {\n  const p = work();\n  return { then: p.then.bind(p), catch: p.catch.bind(p), abortSignal() { return this; } };\n};\n\nasync function rpc(name: string, args: Record<string, unknown>): Promise<Reply> {\n  await new Promise(r => setTimeout(r, 30));\n  switch (name) {\n    case \"current_user_tenant_id\": return reply(TENANT);\n    case \"is_tenant_admin\": case \"is_tenant_member\": return reply(true);\n    case \"plan_item_activity_scoped\":\n      return reply({ ok: true, item_id: args.p_item_id, tenant_id: TENANT, actor_id: ACTOR, events: [] });\n    case \"list_studio_sessions\":\n      if (state === \"reading\") return never();\n      return reply([{ id: SESSION, tenant_id: TENANT, title: \"Rivera Design brand launch\", artifact_refs: [\n        { id: ARTIFACT, kind: \"content\", title: \"Brand guidelines\" },\n        { id: \"e4000000-0000-4000-8000-0000000e0002\", kind: \"page\", title: \"Launch landing page\" },\n      ] }]);\n    case \"list_artifact_versions\":\n      return reply(versions.map(v => ({ id: v.id, tenant_id: TENANT, session_id: SESSION, lineage_id: ARTIFACT, kind: \"content\",\n        version_no: v.version_no, created_at: v.created_at, snapshot: { kind: \"text\", title: v.title, body: v.body } })));\n    case \"operations_delivery_list_scoped\": {\n      harness.reads++;\n      if (state === \"reading\") return never();\n      if (state === \"unavailable\") return reply(null, { code: \"PGRST301\", message: \"harness: read refused\" });\n      return reply({ work_item_id: ITEM, submissions: submissions.map(s => ({ ...s })) });\n    }\n    case \"operations_delivery_client_status_scoped\":\n      return reply({ work_item_id: ITEM, client_releases: releases.map(r => ({ ...r })) });\n    case \"operations_delivery_artifact_scoped\": {\n      const s = submissions.find(x => x.id === args.p_submission_id);\n      const v = versions.find(x => x.id === s?.artifact_version_id);\n      if (!s || !v) return reply(null, { code: \"P0002\", message: \"not found\" });\n      return reply({ actor_id: ACTOR, tenant_id: TENANT, submission_id: s.id, work_item_id: ITEM, plan_id: PLAN, client_id: CLIENT,\n        artifact_version_id: s.artifact_version_id, artifact_digest: s.artifact_digest, revision_no: s.revision_no, submitted_by: s.submitted_by,\n        title: v.title, body: v.body, state: s.state, updated_at: s.updated_at, reviewer_user_id: s.reviewer_user_id });\n    }\n    case \"operations_delivery_submit_scoped\": {\n      harness.writes.push({ name, args });\n      const revision = submissions.length + 1;\n      if (args.p_expected_revision_no !== submissions.length || args.p_expected_work_updated_at !== ITEM_VERSION) return reply(null, { code: \"40001\", message: \"changed\" });\n      const at = stamp();\n      const row = submission({ id: `e4000000-0000-4000-8000-0000001100${String(10 + revision)}`, revision_no: revision, artifact_version_id: String(args.p_artifact_version_id),\n        submitted_by: ACTOR, reviewer_user_id: String(args.p_reviewer_user_id), submitted_at: at, updated_at: at });\n      submissions.unshift(row);\n      return reply({ ok: true, submission_id: row.id, state: \"in_review\", revision_no: revision });\n    }\n    case \"operations_delivery_review_scoped\": {\n      harness.writes.push({ name, args });\n      const s = submissions.find(x => x.id === args.p_submission_id);\n      if (!s || s.updated_at !== args.p_expected_updated_at) return reply(null, { code: \"40001\", message: \"changed\" });\n      Object.assign(s, { state: args.p_decision, review_note: args.p_note ?? null, reviewed_by: ACTOR, reviewed_at: stamp(), updated_at: stamp() });\n      return reply({ ok: true, submission_id: s.id, state: s.state });\n    }\n    case \"operations_delivery_release_scoped\": {\n      harness.writes.push({ name, args });\n      const s = submissions.find(x => x.id === args.p_submission_id);\n      if (!s || s.updated_at !== args.p_expected_updated_at || s.state !== \"approved\") return reply(null, { code: \"40001\", message: \"changed\" });\n      const at = stamp();\n      releases.push(release({ submission_id: s.id, released_at: at, updated_at: at }));\n      return reply({ ok: true, release_id: releases[releases.length - 1].release_id, state: \"awaiting_client\" });\n    }\n    default:\n      return reply(null, { code: \"PGRST202\", message: `harness: ${name} is not stubbed` });\n  }\n}\n\nconst emptyQuery = () => {\n  const q: Record<string, unknown> = {};\n  const self = () => q;\n  for (const k of [\"select\", \"eq\", \"neq\", \"in\", \"is\", \"order\", \"limit\", \"range\", \"gte\", \"lte\", \"lt\", \"gt\", \"or\", \"filter\", \"match\", \"abortSignal\"]) q[k] = self;\n  q.maybeSingle = async () => reply(null);\n  q.single = async () => reply(null);\n  q.then = (resolve: (v: Reply) => unknown) => Promise.resolve(reply([])).then(resolve);\n  return q;\n};\n\nexport const supabase = {\n  rpc: (name: string, args: Record<string, unknown> = {}) => builder(() => rpc(name, args)),\n  from: () => emptyQuery(),\n  auth: {\n    getSession: async () => ({ data: { session: { user: { id: ACTOR }, access_token: \"harness\" } }, error: null }),\n    getUser: async () => ({ data: { user: { id: ACTOR } }, error: null }),\n    onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => undefined } } }),\n  },\n  functions: { invoke: async () => { harness.invokes++; return reply(null, { message: \"harness: no functions\" }); } },\n  channel: () => ({ on() { return this; }, subscribe() { return this; }, unsubscribe: () => undefined }),\n  removeChannel: () => undefined,\n};\n"
+    },
+    {
+      "path": "scripts/live-drive/harness/operations-release-mount/vite.config.ts",
+      "sha256": "d928353a673f1dc4f8f4aea86e44bf5473219297dab216b08c7d671d0405a259",
+      "source": "import path from \"node:path\";\nimport { defineConfig } from \"vite\";\nimport react from \"@vitejs/plugin-react-swc\";\n\n// E09 Slice 4 (4B) \u2014 releasing finished work to a client, inside the REAL Operations work-item detail sheet\n// (OperationsWorkspace \u2192 OperationsItemRelease \u2192 OperationsDeliverablePreparation + OperationsStaffDeliveryReview),\n// with the real CSS and pg tokens. Only the data boundary is stubbed (stubs.ts): the session/tenant context, the tier\n// read, the Planning read, the Team read, the CRM task read and the Supabase transport (the operations_delivery_*\n// RPCs, the Studio source reads, and the small admin/activity reads the sheet makes). Its own root: never in the app\n// build.\n//   /solo/42/operations/work?state=single|picker|confirm|submitted|in-review|approved|release-confirm|released|\n//     accepted|client-changes|people-loading|reading|unavailable&theme=light|dark\n// HARNESS_RELEASE_MUTANT=<name> (drive self-test only) injects harness-only defects through a transform; no product\n// file is edited. See release-drive.mjs --selftest.\nconst repo = path.resolve(import.meta.dirname, \"../../../..\");\nconst stubs = path.join(import.meta.dirname, \"stubs.ts\");\nconst mutant = process.env.HARNESS_RELEASE_MUTANT ?? \"\";\nexport default defineConfig({\n  root: import.meta.dirname,\n  cacheDir: path.join(repo, `node_modules/.vite/harness-operations-release${mutant ? `-${mutant}` : \"\"}`),\n  css: { postcss: repo },\n  plugins: [\n    react(),\n    {\n      name: \"harness-release-mutant\",\n      enforce: \"pre\",\n      transform(code, id) {\n        if (!mutant) return null;\n        const swap = (from: string, to: string) => {\n          if (!code.includes(from)) throw new Error(`harness mutant ${mutant}: anchor not found: ${from}`);\n          return code.replace(from, to);\n        };\n        if (id.endsWith(\"/operations-staff-delivery-review.css\")) {\n          // A recorded stage painted gold: gold spent on a resting state, not on the act.\n          if (mutant === \"gold\") return swap(`.ops-staff-progression li[data-complete=true] svg{color:var(--pg-violet)}`, `.ops-staff-progression li[data-complete=true] svg{color:var(--pg-gold-fill)}`);\n          if (mutant === \"contrast\") return swap(`.ops-staff-people span{color:var(--pg-muted);`, `.ops-staff-people span{color:color-mix(in srgb,var(--pg-muted) 25%,transparent);`);\n          if (mutant === \"target\") return swap(`.ops-staff-review button{min-height:44px;background:var(--pg-surface);color:var(--pg-ink);border:1px solid var(--pg-line);border-radius:8px;padding:10px 14px}`, `.ops-staff-review button{min-height:20px;background:var(--pg-surface);color:var(--pg-ink);border:1px solid var(--pg-line);border-radius:8px;padding:1px 6px;line-height:1.1}`);\n          // The source choices shrink to a 32px trigger, under the 44px touch floor.\n          if (mutant === \"select-target\") return swap(`height:auto;min-height:44px;padding:10px 12px;`, `height:32px;min-height:0;padding:4px 12px;`);\n          if (mutant === \"overflow\") return swap(`.ops-staff-document{`, `.ops-staff-document{min-width:900px;white-space:pre;`);\n          return code;\n        }\n        if (id.endsWith(\"/OperationsItemRelease.tsx\")) {\n          // The reviewer picker offered with nobody in it (owner decision D2 broken).\n          if (mutant === \"empty-picker\") return swap(`const single = peopleReady && reviewers.length === 0;`, `const single = false;`);\n        }\n        return null;\n      },\n    },\n  ],\n  resolve: {\n    alias: [\n      { find: /^@\\/integrations\\/supabase\\/client$/, replacement: stubs },\n      { find: /^@\\/hooks\\/useTenantContext$/, replacement: stubs },\n      { find: /^@\\/hooks\\/useTierFeatures$/, replacement: stubs },\n      { find: /^@\\/hooks\\/usePlanList$/, replacement: stubs },\n      { find: /^\\.\\/useOperationsPeople$/, replacement: stubs },\n      { find: /^\\.\\/useOperationsCrmWork$/, replacement: stubs },\n      { find: \"@\", replacement: path.join(repo, \"src\") },\n    ],\n  },\n  define: {\n    \"import.meta.env.VITE_SUPABASE_URL\": JSON.stringify(\"http://harness.invalid\"),\n    \"import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY\": JSON.stringify(\"harness-not-a-real-key\"),\n  },\n  appType: \"spa\",\n  server: { host: \"127.0.0.1\", port: 5273, strictPort: true },\n});\n"
+    }
+  ],
+  "compiled": [
+    {
+      "path": "embed.js",
+      "bytes": 17134,
+      "sha256": "ef361d05cf8af63d671a869c22849d393349eaa2a78529f4c44613758a27a1b4"
+    },
+    {
+      "path": "index.html",
+      "bytes": 678,
+      "sha256": "87ff2c1425b6350c679ac1c9766d7ebb78f3e5eadad7b6746422afe8baadd04e"
+    },
+    {
+      "path": "sw.js",
+      "bytes": 2482,
+      "sha256": "a8dbc7b22c1a4c001d4a0bfc02e3db3d644bb61738cd8539cf610b9772493c1c"
+    },
+    {
+      "path": "assets/index-C1osL84J.css",
+      "bytes": 407013,
+      "sha256": "a45340cfa762f698db57f012ed27d69fc8f4babde8409f99d6a7f9a16b044265"
+    },
+    {
+      "path": "assets/index-uMqa5qjw.js",
+      "bytes": 733523,
+      "sha256": "114ca65ce0e120d7ba097d5bcc18e8be79326db354e69d7ca62bb03e60fb0c44"
+    }
+  ],
+  "fixedBoundaries": [
+    "Synthetic original hook read ports, not original Auth/RLS evidence",
+    "Original Operations workspace with inert navigation/dock, not full SoloApp shell",
+    "No configuration or business action in browser QA",
+    "No native zoom or assistive technology claim"
+  ]
+}

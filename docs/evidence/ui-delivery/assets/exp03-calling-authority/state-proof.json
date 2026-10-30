@@ -1,0 +1,238 @@
+[
+  {
+    "name": "light-1536-closed",
+    "width": 1536,
+    "height": 770,
+    "horizontalOverflow": false,
+    "theme": "light",
+    "scrollOwner": "flex: 1 1 0%; overflow: auto; min-height: 0px; min-width: 0px;",
+    "seat": "owner",
+    "paige": false,
+    "setupExecuted": false
+  },
+  {
+    "name": "light-1536-open",
+    "width": 1536,
+    "height": 770,
+    "horizontalOverflow": false,
+    "theme": "light",
+    "scrollOwner": "flex: 1 1 0%; overflow: auto; min-height: 0px; min-width: 0px;",
+    "seat": "owner",
+    "paige": true,
+    "setupExecuted": false
+  },
+  {
+    "name": "light-1366-closed",
+    "width": 1366,
+    "height": 768,
+    "horizontalOverflow": false,
+    "theme": "light",
+    "scrollOwner": "flex: 1 1 0%; overflow: auto; min-height: 0px; min-width: 0px;",
+    "seat": "owner",
+    "paige": false,
+    "setupExecuted": false
+  },
+  {
+    "name": "light-1366-open",
+    "width": 1366,
+    "height": 768,
+    "horizontalOverflow": false,
+    "theme": "light",
+    "scrollOwner": "flex: 1 1 0%; overflow: auto; min-height: 0px; min-width: 0px;",
+    "seat": "owner",
+    "paige": true,
+    "setupExecuted": false
+  },
+  {
+    "name": "light-1024-closed",
+    "width": 1024,
+    "height": 768,
+    "horizontalOverflow": false,
+    "theme": "light",
+    "scrollOwner": "flex: 1 1 0%; overflow: auto; min-height: 0px; min-width: 0px;",
+    "seat": "owner",
+    "paige": false,
+    "setupExecuted": false
+  },
+  {
+    "name": "light-1024-open",
+    "width": 1024,
+    "height": 768,
+    "horizontalOverflow": false,
+    "theme": "light",
+    "scrollOwner": "flex: 1 1 0%; overflow: auto; min-height: 0px; min-width: 0px;",
+    "seat": "owner",
+    "paige": true,
+    "setupExecuted": false
+  },
+  {
+    "name": "light-900-closed",
+    "width": 900,
+    "height": 1000,
+    "horizontalOverflow": false,
+    "theme": "light",
+    "scrollOwner": "flex: 1 1 0%; overflow: auto; min-height: 0px; min-width: 0px;",
+    "seat": "owner",
+    "paige": false,
+    "setupExecuted": false
+  },
+  {
+    "name": "light-900-open",
+    "width": 900,
+    "height": 1000,
+    "horizontalOverflow": false,
+    "theme": "light",
+    "scrollOwner": "flex: 1 1 0%; overflow: auto; min-height: 0px; min-width: 0px;",
+    "seat": "owner",
+    "paige": true,
+    "setupExecuted": false
+  },
+  {
+    "name": "dark-1536-closed",
+    "width": 1536,
+    "height": 770,
+    "horizontalOverflow": false,
+    "theme": "dark",
+    "scrollOwner": "flex: 1 1 0%; overflow: auto; min-height: 0px; min-width: 0px;",
+    "seat": "owner",
+    "paige": false,
+    "setupExecuted": false
+  },
+  {
+    "name": "dark-1536-open",
+    "width": 1536,
+    "height": 770,
+    "horizontalOverflow": false,
+    "theme": "dark",
+    "scrollOwner": "flex: 1 1 0%; overflow: auto; min-height: 0px; min-width: 0px;",
+    "seat": "owner",
+    "paige": true,
+    "setupExecuted": false
+  },
+  {
+    "name": "dark-1366-closed",
+    "width": 1366,
+    "height": 768,
+    "horizontalOverflow": false,
+    "theme": "dark",
+    "scrollOwner": "flex: 1 1 0%; overflow: auto; min-height: 0px; min-width: 0px;",
+    "seat": "owner",
+    "paige": false,
+    "setupExecuted": false
+  },
+  {
+    "name": "dark-1366-open",
+    "width": 1366,
+    "height": 768,
+    "horizontalOverflow": false,
+    "theme": "dark",
+    "scrollOwner": "flex: 1 1 0%; overflow: auto; min-height: 0px; min-width: 0px;",
+    "seat": "owner",
+    "paige": true,
+    "setupExecuted": false
+  },
+  {
+    "name": "dark-1024-closed",
+    "width": 1024,
+    "height": 768,
+    "horizontalOverflow": false,
+    "theme": "dark",
+    "scrollOwner": "flex: 1 1 0%; overflow: auto; min-height: 0px; min-width: 0px;",
+    "seat": "owner",
+    "paige": false,
+    "setupExecuted": false
+  },
+  {
+    "name": "dark-1024-open",
+    "width": 1024,
+    "height": 768,
+    "horizontalOverflow": false,
+    "theme": "dark",
+    "scrollOwner": "flex: 1 1 0%; overflow: auto; min-height: 0px; min-width: 0px;",
+    "seat": "owner",
+    "paige": true,
+    "setupExecuted": false
+  },
+  {
+    "name": "dark-900-closed",
+    "width": 900,
+    "height": 1000,
+    "horizontalOverflow": false,
+    "theme": "dark",
+    "scrollOwner": "flex: 1 1 0%; overflow: auto; min-height: 0px; min-width: 0px;",
+    "seat": "owner",
+    "paige": false,
+    "setupExecuted": false
+  },
+  {
+    "name": "dark-900-open",
+    "width": 900,
+    "height": 1000,
+    "horizontalOverflow": false,
+    "theme": "dark",
+    "scrollOwner": "flex: 1 1 0%; overflow: auto; min-height: 0px; min-width: 0px;",
+    "seat": "owner",
+    "paige": true,
+    "setupExecuted": false
+  },
+  {
+    "name": "light-member",
+    "width": 1366,
+    "height": 768,
+    "horizontalOverflow": false,
+    "theme": "light",
+    "scrollOwner": "flex: 1 1 0%; overflow: auto; min-height: 0px; min-width: 0px;",
+    "seat": "member",
+    "setupExecuted": false
+  },
+  {
+    "name": "light-operator",
+    "width": 1366,
+    "height": 768,
+    "horizontalOverflow": false,
+    "theme": "light",
+    "scrollOwner": "flex: 1 1 0%; overflow: auto; min-height: 0px; min-width: 0px;",
+    "seat": "operator",
+    "setupExecuted": false
+  },
+  {
+    "name": "light-error",
+    "width": 1366,
+    "height": 768,
+    "horizontalOverflow": false,
+    "theme": "light",
+    "scrollOwner": "flex: 1 1 0%; overflow: auto; min-height: 0px; min-width: 0px;",
+    "seat": "error",
+    "setupExecuted": false
+  },
+  {
+    "name": "dark-member",
+    "width": 1366,
+    "height": 768,
+    "horizontalOverflow": false,
+    "theme": "dark",
+    "scrollOwner": "flex: 1 1 0%; overflow: auto; min-height: 0px; min-width: 0px;",
+    "seat": "member",
+    "setupExecuted": false
+  },
+  {
+    "name": "dark-operator",
+    "width": 1366,
+    "height": 768,
+    "horizontalOverflow": false,
+    "theme": "dark",
+    "scrollOwner": "flex: 1 1 0%; overflow: auto; min-height: 0px; min-width: 0px;",
+    "seat": "operator",
+    "setupExecuted": false
+  },
+  {
+    "name": "dark-error",
+    "width": 1366,
+    "height": 768,
+    "horizontalOverflow": false,
+    "theme": "dark",
+    "scrollOwner": "flex: 1 1 0%; overflow: auto; min-height: 0px; min-width: 0px;",
+    "seat": "error",
+    "setupExecuted": false
+  }
+]

@@ -125,6 +125,7 @@ const COMMS_COPY: Record<string, string> = {
   // `is_current_user_tenant_admin` while the RPC requires a GLOBAL admin/coach row, so a
   // tenant admin without one sees the control, clicks, and is told to retry.
   FORBIDDEN: "You don’t have permission to change this business’s numbers — ask a workspace admin.",
+  NUMBER_AUTHORITY_CHANGED: "Nothing was changed. Your permission or active business changed. Return to the correct business and check your access.",
   NUMBER_ID_REQUIRED: "We couldn’t tell which number you meant. Reload and try again.",
   NUMBER_NOT_FOUND: "We couldn’t find that number on this business.",
   NUMBER_NOT_ACTIVE: "That number isn’t active, so it can’t be the one you send from.",

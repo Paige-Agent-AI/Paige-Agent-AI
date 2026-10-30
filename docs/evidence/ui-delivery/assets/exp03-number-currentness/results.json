@@ -1,0 +1,148 @@
+{
+  "results": [
+    {
+      "name": "light-1536-closed",
+      "fits": true,
+      "unobscured": true,
+      "horizontalOverflow": false,
+      "overlayReturnChecked": false,
+      "attempts": 2,
+      "scope": "Actual Settings/source reader; fictional native refusal, no provider/backend/authenticated proof"
+    },
+    {
+      "name": "light-1536-open",
+      "fits": true,
+      "unobscured": true,
+      "horizontalOverflow": false,
+      "overlayReturnChecked": false,
+      "attempts": 2,
+      "scope": "Actual Settings/source reader; fictional native refusal, no provider/backend/authenticated proof"
+    },
+    {
+      "name": "light-1366-closed",
+      "fits": true,
+      "unobscured": true,
+      "horizontalOverflow": false,
+      "overlayReturnChecked": false,
+      "attempts": 2,
+      "scope": "Actual Settings/source reader; fictional native refusal, no provider/backend/authenticated proof"
+    },
+    {
+      "name": "light-1366-open",
+      "fits": true,
+      "unobscured": true,
+      "horizontalOverflow": false,
+      "overlayReturnChecked": false,
+      "attempts": 2,
+      "scope": "Actual Settings/source reader; fictional native refusal, no provider/backend/authenticated proof"
+    },
+    {
+      "name": "light-1024-closed",
+      "fits": true,
+      "unobscured": true,
+      "horizontalOverflow": false,
+      "overlayReturnChecked": false,
+      "attempts": 2,
+      "scope": "Actual Settings/source reader; fictional native refusal, no provider/backend/authenticated proof"
+    },
+    {
+      "name": "light-1024-returned-from-overlay",
+      "fits": true,
+      "unobscured": true,
+      "horizontalOverflow": false,
+      "overlayReturnChecked": true,
+      "attempts": 2,
+      "scope": "Actual Settings/source reader; fictional native refusal, no provider/backend/authenticated proof"
+    },
+    {
+      "name": "light-900-closed",
+      "fits": true,
+      "unobscured": true,
+      "horizontalOverflow": false,
+      "overlayReturnChecked": false,
+      "attempts": 2,
+      "scope": "Actual Settings/source reader; fictional native refusal, no provider/backend/authenticated proof"
+    },
+    {
+      "name": "light-900-returned-from-overlay",
+      "fits": true,
+      "unobscured": true,
+      "horizontalOverflow": false,
+      "overlayReturnChecked": true,
+      "attempts": 2,
+      "scope": "Actual Settings/source reader; fictional native refusal, no provider/backend/authenticated proof"
+    },
+    {
+      "name": "dark-1536-closed",
+      "fits": true,
+      "unobscured": true,
+      "horizontalOverflow": false,
+      "overlayReturnChecked": false,
+      "attempts": 2,
+      "scope": "Actual Settings/source reader; fictional native refusal, no provider/backend/authenticated proof"
+    },
+    {
+      "name": "dark-1536-open",
+      "fits": true,
+      "unobscured": true,
+      "horizontalOverflow": false,
+      "overlayReturnChecked": false,
+      "attempts": 2,
+      "scope": "Actual Settings/source reader; fictional native refusal, no provider/backend/authenticated proof"
+    },
+    {
+      "name": "dark-1366-closed",
+      "fits": true,
+      "unobscured": true,
+      "horizontalOverflow": false,
+      "overlayReturnChecked": false,
+      "attempts": 2,
+      "scope": "Actual Settings/source reader; fictional native refusal, no provider/backend/authenticated proof"
+    },
+    {
+      "name": "dark-1366-open",
+      "fits": true,
+      "unobscured": true,
+      "horizontalOverflow": false,
+      "overlayReturnChecked": false,
+      "attempts": 2,
+      "scope": "Actual Settings/source reader; fictional native refusal, no provider/backend/authenticated proof"
+    },
+    {
+      "name": "dark-1024-closed",
+      "fits": true,
+      "unobscured": true,
+      "horizontalOverflow": false,
+      "overlayReturnChecked": false,
+      "attempts": 2,
+      "scope": "Actual Settings/source reader; fictional native refusal, no provider/backend/authenticated proof"
+    },
+    {
+      "name": "dark-1024-returned-from-overlay",
+      "fits": true,
+      "unobscured": true,
+      "horizontalOverflow": false,
+      "overlayReturnChecked": true,
+      "attempts": 2,
+      "scope": "Actual Settings/source reader; fictional native refusal, no provider/backend/authenticated proof"
+    },
+    {
+      "name": "dark-900-closed",
+      "fits": true,
+      "unobscured": true,
+      "horizontalOverflow": false,
+      "overlayReturnChecked": false,
+      "attempts": 2,
+      "scope": "Actual Settings/source reader; fictional native refusal, no provider/backend/authenticated proof"
+    },
+    {
+      "name": "dark-900-returned-from-overlay",
+      "fits": true,
+      "unobscured": true,
+      "horizontalOverflow": false,
+      "overlayReturnChecked": true,
+      "attempts": 2,
+      "scope": "Actual Settings/source reader; fictional native refusal, no provider/backend/authenticated proof"
+    }
+  ]
+}

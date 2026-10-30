@@ -159,6 +159,10 @@ jobs:
         run: node scripts/ci/comms-provider-boundary-wiring.mjs
       - name: Gmail native connection authority, private credential isolation and concurrent rollback
         run: node scripts/proof/gmail-connection-postgres.mjs 5432
+      - name: EXP03 original contact currentness, recipient recovery and combined carrier rollback in disposable PostgreSQL
+        run: node scripts/proof/exp03-contact-current-authority-postgres.mjs 5432 --recipient-timezone --combined-number-carrier
+      - name: EXP03 original number authority after native lock waits and exact source recovery in disposable PostgreSQL
+        run: node scripts/proof/exp03-number-current-authority-postgres.mjs 5432 --currentness
       - name: Operator account archive, restore, physical deletion and concurrent isolation in disposable PostgreSQL
         run: node scripts/proof/operator-account-archive.mjs --postgres
       - name: Operator provider retirement SQL proof
@@ -1425,6 +1429,10 @@ jobs:
       - name: Smoke — comms number purchase (money-spent exits and price verification)
         if: ${{ !cancelled() }}
         run: npm run smoke:comms-purchase-safety
+
+      - name: Smoke — original calling workspace authority (synthetic provider ports)
+        if: ${{ !cancelled() }}
+        run: node scripts/comms-workspace-authority-smoke.mjs
 
       - name: Smoke — comms tenant scope (§9/§53 webhook scoping)
         if: ${{ !cancelled() }}

@@ -12,8 +12,8 @@ const testState = vi.hoisted(() => ({ tab: "team" }));
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
 vi.mock("@/hooks/useUserRoles", () => ({
-  // The predicate the SERVER gates on (platform owner OR global admin/coach). Mocked
-  // rather than left to the real hook, which opens its own auth subscription.
+  // Shared legacy Settings fixture. Calling separately reads the canonical
+  // current-business administrator and explicit platform-owner predicates.
   useUserRoles: () => ({ loading: false, userId: "u1", roles: ["admin"], isAdmin: true, isClient: false, isBroker: false, isStaff: true }),
 }));
 vi.mock("@/integrations/supabase/client", () => ({

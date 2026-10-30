@@ -58,7 +58,7 @@ export function createClient() {
   };
   return {
     auth: { getUser: () => Promise.resolve({ data: { user: { id: "user-1" } } }) },
-    rpc: (name) => Promise.resolve(g.rpc(name)),
+    rpc: (name,args) => Promise.resolve(g.rpc(name,args)),
     from: (t) => q(t),
   };
 }
@@ -125,7 +125,7 @@ globalThis.__smoke = {
   rpc(name) {
     if (name === "comms_provider_execution_allowed") return { data: scenario.providerAllowed !== false };
     if (name === "is_platform_owner") return { data: false };
-    if (name === "has_role") return { data: true };          // admin
+    if (name === "is_tenant_admin_as") return { data: true }; // original tenant admin predicate
     if (name === "current_user_tenant_id") return { data: "tenant-1" };
     return { data: null };
   },

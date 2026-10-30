@@ -198,6 +198,61 @@ it('named readback strips unknown internal columns and does not manufacture a re
   expect(JSON.stringify(result)).not.toContain('PRIVATE_INTERNAL');
   expect(result).not.toHaveProperty('receipt');
 });
+
+const nativeReceipt = { railRecorded: true, receipt_status: 'recorded', receipt_run_id: id(10) };
+const taskAck = { ok: true, item_id: id(4), actor_id: id(1), tenant_id: id(2) };
+const taskArgs = { title: item.title, assigned_to_user_id: id(3) };
+const standalone = { ...item, plan_id: null, contact_id: null };
+
+it('returns only the original native task receipt after exact independent work readback', async () => {
+  const c = caller(standalone, { ...taskAck, ...nativeReceipt, private_trace: 'PRIVATE_INTERNAL' });
+  const result = await run(c, decision('plan_assign_task', taskArgs));
+  expect(result).toMatchObject({ outcome: 'source_verified', operationIdentity,
+    record: { table: 'plan_items', id: id(4) }, nativeReceipt, proofBoundary: 'planning_record_only' });
+  expect(c.rpc).toHaveBeenCalledTimes(1);
+  expect(JSON.stringify(result)).not.toContain('PRIVATE_INTERNAL');
+  expect(result).not.toHaveProperty('receipt');
+});
+
+it.each([
+  { railRecorded: false, receipt_status: 'recorded', receipt_run_id: id(10) },
+  { railRecorded: true, receipt_status: 'actor_unavailable', receipt_run_id: id(10) },
+  { railRecorded: true, receipt_status: 'recorded', receipt_run_id: null },
+  { railRecorded: true, receipt_status: 'recorded', receipt_run_id: 'not-a-run-id' },
+  { railRecorded: true },
+  { receipt_status: 'recorded' },
+  { receipt_run_id: id(10) },
+])('an explicit incomplete or unrecorded native receipt cannot become successful work: %j', async (receipt) => {
+  const c = caller(standalone, { ...taskAck, ...receipt });
+  const result = await run(c, decision('plan_assign_task', taskArgs));
+  expect(result).toMatchObject({ outcome: 'unverified', writeAttempted: true, retryAllowed: false });
+  expect(result).not.toHaveProperty('record');
+  expect(result).not.toHaveProperty('nativeReceipt');
+  expect(c.rpc).toHaveBeenCalledTimes(1);
+});
+
+it('an original receipt cannot bypass scope, caller-RLS readback or exact saved-field verification', async () => {
+  for (const row of [null, { ...standalone, tenant_id: id(8) }, { ...standalone, title: 'Different task' }]) {
+    const c = caller(row, { ...taskAck, ...nativeReceipt });
+    const result = await run(c, decision('plan_assign_task', taskArgs));
+    expect(result).toMatchObject({ outcome: 'unverified', retryAllowed: false });
+    expect(result).not.toHaveProperty('nativeReceipt');
+    expect(c.rpc).toHaveBeenCalledTimes(1);
+  }
+  const foreign = caller(standalone, { ...taskAck, ...nativeReceipt, tenant_id: id(8) });
+  expect(await run(foreign, decision('plan_assign_task', taskArgs))).not.toHaveProperty('nativeReceipt');
+  const retired = caller(standalone, { ...taskAck, ...nativeReceipt });
+  retired.readRecord.mockImplementation(async () => { retired.getScope.mockResolvedValue({ ...scope, tenantId: id(8) });
+    return { data: standalone, error: null }; });
+  expect(await run(retired, decision('plan_assign_task', taskArgs))).toMatchObject({ outcome: 'scope_changed' });
+});
+
+it('legacy acknowledgments retain their exact record-only result and cannot invent a receipt from other fields', async () => {
+  const legacy = await run(caller(standalone), decision('plan_assign_task', taskArgs));
+  const unrelated = await run(caller(standalone, { ...taskAck, nativeReceipt }), decision('plan_assign_task', taskArgs));
+  expect(unrelated).toEqual(legacy);
+  expect(legacy).not.toHaveProperty('nativeReceipt');
+});
 it('service principals and unadmitted decisions cannot use the ordinary-person writer', async () => {
   for (const extra of [{ principal: 'service' }, { decision: 'propose' }, { userId: null }, { tenantId: null }]) {
     const c = caller(item), d = decision('plan_create', project);

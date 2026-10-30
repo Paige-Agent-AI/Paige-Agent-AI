@@ -154,3 +154,30 @@ describe("parseApproval", () => {
     expect(parseTeamHubMessage({ ...row, author_kind: "agent", agent_key: "zion", approval })?.approval?.state).toBe("waiting");
   });
 });
+
+
+describe("stranded approval recovery control", () => {
+  it("resumes the existing approved binding without a second decision or a Not now control", () => {
+    const onAct=vi.fn();
+    const el=render(<TeamHubApprovalCard approval={waiting({ state: "working", can_resume: true })} agent="zion" meId="u-morgan" askerName="Morgan" decidedLabel={null} onAct={onAct} />);
+    const resume=el.querySelector<HTMLButtonElement>('button[aria-label="Resume this approved action"]');
+    expect(resume).not.toBeNull();
+    act(()=>resume!.click());
+    expect(onAct).toHaveBeenCalledWith({ kind: "approve", fingerprints: ["fp-1"] });
+    expect(el.textContent).not.toContain("Not now");
+  });
+  it("another reader cannot resume even a leaked binding",()=>{
+    const el=render(<TeamHubApprovalCard approval={waiting({ state: "working", can_resume: true })} agent="zion" meId="u-priya" askerName="Morgan" decidedLabel={null} onAct={vi.fn()} />);
+    expect(el.querySelectorAll("button")).toHaveLength(0);
+  });
+});
+
+it("resume stays disabled offline",()=>{
+  const el=render(<TeamHubApprovalCard approval={waiting({ state: "working", can_resume: true })} agent="zion" meId="u-morgan" askerName="Morgan" decidedLabel={null} onAct={vi.fn()} online={false} />);
+  expect(el.querySelector<HTMLButtonElement>('button[aria-label="Resume this approved action"]')?.disabled).toBe(true);
+});
+
+it("a recoverable approval has no Resume when this surface has no handler",()=>{
+  const el=render(<TeamHubApprovalCard approval={waiting({ state: "working", can_resume: true })} agent="zion" meId="u-morgan" askerName="Morgan" decidedLabel={null} />);
+  expect(el.querySelector('button[aria-label="Resume this approved action"]')).toBeNull();
+});

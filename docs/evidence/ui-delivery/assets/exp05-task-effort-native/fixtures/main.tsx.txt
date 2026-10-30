@@ -1,0 +1,13 @@
+import './guard';
+import {createRoot} from 'react-dom/client';
+import {PaigeConfirmCard} from '@/components/chat/PaigeConfirmCard';
+import '@/index.css';
+const dark=new URLSearchParams(location.search).get('theme')==='dark';
+document.documentElement.classList.toggle('dark',dark);
+document.documentElement.dataset.pg=dark?'dark':'light';
+const id='00000000-0000-4000-8000-000000000006';
+// Exact neutral strings asserted against the ACTUAL handler by the original
+// crm-approval-summary-check.mjs. No Auth, stored approval or execution proof.
+const cases=[['Set effort',`Update task ${id}. Set its recorded effort estimate to 35 minutes.`],['Recorded zero',`Update task ${id}. Set its recorded effort estimate to 0 minutes.`],['Clear to unknown',`Update task ${id}. Clear its recorded effort estimate; the effort becomes unknown, not zero.`],['Combined original change',`Move task ${id} to In progress. Set its recorded effort estimate to 45 minutes. Also update title="Keep the actual title".`]];
+const refuse=()=>{throw Error('OFFLINE fixture forbids all approval/denial dispatch');};
+createRoot(document.getElementById('root')!).render(<main style={{maxWidth:720,margin:'0 auto',padding:16}}><p style={{fontSize:12}}>OFFLINE COMPONENT PROOF · SYNTHETIC · NO BUSINESS ACTION</p>{cases.map(([name,summary])=><section key={name} style={{marginBottom:24}}><h2 style={{fontSize:16}}>{name}</h2><PaigeConfirmCard actions={[{summary,fingerprint:'f'.repeat(64)}]} onApprove={refuse} onDeny={refuse}/></section>)}</main>);

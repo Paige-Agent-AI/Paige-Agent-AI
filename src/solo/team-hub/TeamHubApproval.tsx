@@ -82,6 +82,17 @@ function Card({ approval, isAsker, askerName, decidedLabel, online, onAct }: {
       onApprove={(fingerprints) => onAct?.({ kind: "approve", fingerprints })}
       onDeny={(fingerprints) => onAct?.({ kind: "decline", fingerprints })} />;
   }
+  const resumeFingerprint = approval.actions.length === 1 ? approval.actions[0].fingerprint : null;
+  if (approval.can_resume === true && (state === "working" || state === "unconfirmed") && isAsker && onAct && resumeFingerprint) {
+    return <>
+      <PaigeConfirmCard mode="report" className="th-ap-card"
+        heading="Approval ready to resume"
+        actions={approval.actions.map(({ summary }) => ({ summary, state: "unconfirmed" as const }))}
+        note="Your approval was recorded, but the action has not been claimed. Resume uses the same approval." />
+      <div className="th-ap-foot"><button type="button" className="th-ap-pause" disabled={!online}
+        aria-label="Resume this approved action" onClick={() => onAct({ kind: "approve", fingerprints: [resumeFingerprint] })}>Resume</button></div>
+    </>;
+  }
   const fallback = REPORT_STATES.has(state) ? state as ConfirmAction["state"] : undefined;
   const actions: ConfirmAction[] = approval.actions.map(({ summary, state: own, note }) => {
     const rowState = own ?? fallback;

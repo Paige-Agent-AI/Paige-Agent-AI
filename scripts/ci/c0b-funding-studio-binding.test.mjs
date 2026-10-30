@@ -4,6 +4,7 @@ const read=p=>readFileSync(new URL(`../../${p}`,import.meta.url),'utf8');
 const chat=read('supabase/functions/paige-ai-chat/index.ts');
 const sources={contentDraft:read('supabase/functions/content-draft/index.ts'),pageDraft:read('supabase/functions/growth-page-draft/index.ts'),funnelDraft:read('supabase/functions/growth-funnel-draft/index.ts'),studioCaller:read('supabase/functions/_shared/studio-caller.ts'),rates:read('supabase/functions/fetch-economic-rates/index.ts')};
 sources.sba=read('supabase/functions/search-sba-lenders/index.ts');
+sources.growthList=read('supabase/functions/_shared/growth/list-pages.ts');
 test('actual eleven composite source bindings are bounded',()=>{const p=validateFundingStudioBindings(chat,sources);assert.deepEqual(p.findings,[]);assert.equal(p.tools.size,11);assert.equal(p.tools.get('search_funding_marketplace').chatBinding,'UNAVAILABLE');});
 for(const [label,mutate] of [
  ['caller key uses service',s=>s.replace('createClient(supabaseUrl, supabaseKey, {','createClient(supabaseUrl, supabaseServiceKey, {')],
@@ -13,7 +14,9 @@ for(const [label,mutate] of [
  ['rate refresh endpoint swapped',s=>s.replace('/functions/v1/fetch-economic-rates','/functions/v1/send-message')],
  ['marketplace verified actor removed',s=>s.replace('_tenant_id: dispatchMarketplaceTenantId,\n            _actor_user_id: user.id','_tenant_id: dispatchMarketplaceTenantId,\n            _actor_user_id: a.actorId')],
  ['marketplace final active tenant bypassed',s=>s.replace('dispatchMarketplaceTenantId,\n            await resolveCurrentMarketplaceTenant(),','dispatchMarketplaceTenantId,\n            dispatchMarketplaceTenantId,')],
- ['growth list tenant pin replaced',s=>s.replace('.eq("tenant_id", _listTid)','.eq("tenant_id", args.tenant_id)')],
+ ['growth list tenant pin replaced',s=>s.replace('listGrowthPages(supabaseClient, admin, personaCtx?.tenant_id ?? null)','listGrowthPages(supabaseClient, admin, args.tenant_id)')],
+ ['growth list read under the service role',s=>s.replace('listGrowthPages(supabaseClient, admin,','listGrowthPages(admin, admin,')],
+ ['growth list read beside the helper',s=>s.replace('result = await listGrowthPages(','await supabaseClient.from("growth_pages").select("*"); result = await listGrowthPages(')],
  ['page draft writer substituted',s=>s.replace('functions.invoke("growth-page-draft"','functions.invoke("growth-publish-command"')],
  ['funnel draft writer substituted',s=>s.replace('functions.invoke("growth-funnel-draft"','functions.invoke("growth-publish-command"')],
  ['content draft caller client substituted',s=>s.replace('supabaseClient.functions.invoke("content-draft"','supabase.functions.invoke("content-draft"')],
@@ -31,6 +34,12 @@ for(const [label,key,mutate] of [
  ['rate cache key changed','rates',s=>s.replace('onConflict: "series_id"','onConflict: "tenant_id"')],
  ['artifact writer added to draft','pageDraft',s=>s+'\nadmin.from("growth_pages").insert({});'],
  ['SBA token verification bypassed','sba',s=>s.replace('supabase.auth.getClaims(token)','supabase.auth.getClaims("unrelated-token")')],
+ ['page list tenant pin replaced','growthList',s=>s.replace('.eq("tenant_id", _listTid)','.eq("tenant_id", args.tenant_id)')],
+ ['page list tenant pin removed','growthList',s=>s.replace('.eq("tenant_id", _listTid)','')],
+ ['page list read under the service role','growthList',s=>s.replace('? await caller\n','? await admin\n')],
+ ['page list slug read unpinned','growthList',s=>s.replace('.eq("id", tenantId).maybeSingle()','.maybeSingle()')],
+ ['page list writer added','growthList',s=>s.replace('if (error) throw error;','if (error) throw error; await admin.from("growth_pages").update({});')],
+ ['page list tenant reassigned','growthList',s=>s.replace('const _listTid = tenantId ?? null;','tenantId = null; const _listTid = tenantId ?? null;')],
 ])test(`adapter mutation rejected: ${label}`,()=>{const changed=mutate(sources[key]);assert.notEqual(changed,sources[key]);assert.ok(validateFundingStudioBindings(chat,{...sources,[key]:changed}).findings.length);});
 test('malformed source fails closed',()=>assert.ok(validateFundingStudioBindings('(',sources).findings.length));
 for(const [tool,binding] of [['draft_marketing_content','supabaseClient'],['marketplace_browse','supabase'],['get_current_rates','supabase'],['search_regional_lenders','supabaseServiceKey'],['get_current_rates','supabaseServiceKey'],['search_sba_lenders','authHeader'],['marketplace_browse','user'],['growth_page_generate','personaCtx']]){

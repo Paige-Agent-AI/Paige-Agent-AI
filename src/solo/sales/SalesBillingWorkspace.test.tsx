@@ -30,6 +30,18 @@ function reopenCatalog(currentUnit = 15000) {
   h.offers = [{ id: '66666666-6666-4666-8666-666666666666', name: 'Catalog service', availability: 'active', prices: [{ id: '55555555-5555-4555-8555-555555555555', active: true, currency: 'usd', unitAmount: currentUnit, kind: 'one_time', billingInterval: 'one_time' }] }];
   act(() => root.render(<SalesBillingWorkspace view="invoices" />)); click('Edit');
 }
+it.each(['draft','issued','void'] as const)('keeps %s record amounts distinct from a current issued debt',status=>{
+ reopenCatalog();click('Back to records');
+ Object.assign(h.rows[0] as Record<string,unknown>,{status,number:status==='draft'?'DRAFT-44444444-4444-4444-8444-444444444444':'INV-1042',remainingMinor:20000,manualRecordedMinor:0,providerVerifiedMinor:0});
+ act(()=>root.render(<SalesBillingWorkspace view="invoices"/>));
+ const paper=host.querySelector('.sb-detail-grid .sb-paper')!;
+ const terms=Array.from(paper.querySelectorAll('dt')).map(el=>el.textContent);
+ expect(terms).toContain(status==='draft'?'Draft total':status==='void'?'Original invoice total':'Total obligation');
+ expect(terms).toContain(status==='draft'?'Unissued draft amount':status==='void'?'Recorded balance (voided)':'Outstanding balance');
+ if(status!=='issued'){expect(terms).not.toContain('Total obligation');expect(terms).not.toContain('Outstanding balance');expect(paper.textContent).not.toContain('Paid');}
+ expect(paper.textContent).toContain('$200.00');expect(paper.textContent).toContain('Version3');
+ expect(h.save).not.toHaveBeenCalled();expect(h.invoke).not.toHaveBeenCalled();
+});
 it('reopens a changed Catalog draft with matching current amount and explicit repricing',async()=>{reopenCatalog();expect(host.textContent).toContain('Catalog price changed from $100.00 to $150.00 per unit');expect(host.textContent).toContain('$300.00');field('Due date','2026-12-01');h.save.mockResolvedValue({ok:false,outcome:'refused',message:'Test refusal'});await act(async()=>button('Save draft').click());expect(h.save.mock.calls[0][0]).toMatchObject({expectedVersion:3,draft:{items:[{price_id:'55555555-5555-4555-8555-555555555555',unit_minor:null,quantity:2}]}});});
 it('keeps unknown Catalog recovery pricing and operation immutable while the Catalog changes', async () => {
   reopenCatalog(); field('Due date','2026-12-01'); h.save.mockResolvedValue({ ok: false, outcome: 'unknown', message: 'Unknown save' });

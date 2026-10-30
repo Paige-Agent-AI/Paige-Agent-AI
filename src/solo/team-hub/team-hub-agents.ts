@@ -19,10 +19,12 @@
  */
 import {
   isTeamHubAgentKey,
+  parseApproval,
   parseTeamHubMessage,
   refusalMessage,
   TEAM_HUB_AGENT_KEYS,
   type TeamHubAgentKey,
+  type TeamHubApproval,
   type TeamHubMessage,
 } from "./team-hub-contract";
 
@@ -300,6 +302,9 @@ export function parseAgentTurn(data: unknown, error: unknown, request: AgentTurn
   }
   const bringIn = parseBringIn(data.bring_in, true);
   if (!bringIn) return { outcome: "unconfirmed" };
+  // A2b: the answer may say `card: { message_id } | null`. It is not read here, and never makes a reply
+  // unconfirmed: the reply was read back, so it posted. The card itself, and who may act on it, come only
+  // from `team_hub_card_states`, which the screen reads as soon as the reply is in place.
   return { outcome: "posted", message, conversationId: data.conversation_id, duplicate: data.duplicate === true, privateFollowUp, bringIn };
 }
 
@@ -374,6 +379,204 @@ export function askingMessageIds(messages: readonly TeamHubMessage[], agentDm: b
 /** Whether an agent message answers this person's question for this agent (top level or in its thread). */
 export function answers(message: Pick<TeamHubMessage, "author_kind" | "agent_key" | "asked_in_message_id">, questionId: string, agent: TeamHubAgentKey): boolean {
   return message.author_kind === "agent" && message.agent_key === agent && message.asked_in_message_id === questionId;
+}
+
+// ── A2b: Team Hub cards (`team_hub_card_states`, and `{ teamHubCardAct }` through `paige-ai-chat`) ──
+
+/**
+ * The line an agent ends with when an act is asked of it in a shared conversation (a channel, or a DM
+ * between people): the suggestion stays in the room, and the card is made in the asker's DM with that
+ * agent. The server writes it (decision D7). The screen keys the asker's Open DM on it, so it survives a
+ * reload with nothing stored for it.
+ */
+/**
+ * A2b (owner ruling 2026-10-28): what "Open DM with ZION" puts in the DM's message box after a channel
+ * redirect, so the asker doesn't type the request twice. The asker's own words, with that agent's
+ * mention taken out (the DM is already with them); nothing is sent until they press Send. Null when
+ * nothing would be left.
+ */
+export function dmRequestPrefill(body: string, agent: TeamHubAgentKey): string | null {
+  const name = TEAM_HUB_AGENT_PROFILES[agent].name;
+  const text = body.replace(agentToken(), (match, lead: string, found: string) => found === name ? lead : match)
+    .replace(/[ \t]{2,}/g, " ").replace(/^[\s,:;–—-]+/, "").trim();
+  if (!text) return null;
+  // The mention opened the sentence, so what follows it now does: capitalise it.
+  const led = body.trimStart().startsWith(`@${name}`);
+  return led ? text.charAt(0).toLocaleUpperCase() + text.slice(1) : text;
+}
+
+export const REDIRECT_LINE = "I can do that with you in our DM.";
+export function endsWithRedirect(body: string): boolean {
+  return body.trimEnd().endsWith(REDIRECT_LINE);
+}
+
+/** The kind line on a card's strip, from the server's kind key (A2b's three, hand-listed). */
+export const CARD_KIND_LABEL: Readonly<Record<string, string>> = {
+  task_handover: "Task hand-over",
+  task_cancel: "Task cancel",
+  page_publish: "Page publish",
+};
+
+/** What the act produced, by reference only (never its contents): where it lives, and its id. */
+export interface CardRecord { destination: string; recordId: string }
+
+/** One card as the member-safe read says it stands, in the shape the approved card draws. */
+export interface CardRead {
+  approval: TeamHubApproval;
+  /** The agent's outcome message in the card's thread, once it is posted. */
+  outcomeMessageId: string | null;
+  record: CardRecord | null;
+  /** When the proposal stops being approvable. Each door sets its own (decision D12). */
+  expiresAt: string | null;
+}
+
+/** Reopen a verified original result, not a proposal or an unknown outcome. The native
+ * settlement already records CRM task references; this closed projection adds no read grant. */
+export function cardResultReference(card: CardRead): TeamHubMessage["approval_result_reference"] {
+  if (card.approval.state !== "done"
+    || ![CARD_KIND_LABEL.task_handover, CARD_KIND_LABEL.task_cancel].includes(card.approval.kind)
+    || card.record?.destination !== "operations_work" || !UUID.test(card.record.recordId)) return undefined;
+  return { destination: "operations_work", record_id: card.record.recordId };
+}
+
+/** The states the A2b read derives. `standing` is A2c's, so a read that says it is not one this build knows. */
+const CARD_STATES = ["waiting", "working", "done", "failed", "unconfirmed", "declined", "expired"] as const;
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const isInstant = (value: unknown): value is string => isText(value) && !Number.isNaN(Date.parse(value));
+
+/** The expiry, said as a time on the card's one action while it waits (to everyone). Never a duration. */
+export function cardExpiryNote(expiresAt: string): string {
+  const at = new Date(expiresAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+  return `Expires at ${at}.`;
+}
+
+/**
+ * The failed card's reason, said as the sentence the approved card draws (A2b review fix 1). The server
+ * keeps its reason as a clause so its outcome line can read "That didn't run: <reason>. Nothing was
+ * changed."; on the card it stands alone, so it starts with a capital and ends with a full stop. A
+ * reason that is already a sentence is left as it is.
+ */
+export function cardReasonSentence(reason: string): string {
+  const text = reason.trim();
+  if (!text) return text;
+  const first = text.charAt(0).toLocaleUpperCase() + text.slice(1);
+  return /[.!?\u2026]["\u201d\u2019]?$/.test(first) ? first : `${first}.`;
+}
+
+function parseCardRecord(value: unknown): CardRecord | null | undefined {
+  if (value === undefined || value === null) return null;
+  if (!isRow(value) || Object.keys(value).some((key) => key !== "destination" && key !== "record_id")) return undefined;
+  if (typeof value.destination !== "string" || !/^[a-z][a-z0-9_]{0,63}$/.test(value.destination)
+    || typeof value.record_id !== "string" || !UUID.test(value.record_id)) return undefined;
+  return { destination: value.destination, recordId: value.record_id };
+}
+
+/**
+ * One server card (`{ state, kind, actions, asker_user_id, decided_by_name, decided_at, expires_at }`)
+ * mapped into the approval the card draws, or null when it is not whole. The binding is kept only where
+ * the read may give it (the asker, while the card waits); a state or kind this build does not know is
+ * dropped, never guessed at.
+ */
+function parseServerCard(card: unknown, outcomeMessageId: unknown, record: unknown): CardRead | null {
+  if (!isRow(card) || typeof card.state !== "string" || !(CARD_STATES as readonly string[]).includes(card.state)) return null;
+  const kind = typeof card.kind === "string" ? CARD_KIND_LABEL[card.kind] : undefined;
+  if (!kind || !Array.isArray(card.actions)) return null;
+  const expiresAt = card.expires_at === undefined || card.expires_at === null ? null : isInstant(card.expires_at) ? card.expires_at : undefined;
+  if (expiresAt === undefined) return null;
+  if (!(outcomeMessageId === undefined || outcomeMessageId === null || isText(outcomeMessageId))) return null;
+  const parsedRecord = parseCardRecord(record);
+  if (parsedRecord === undefined) return null;
+  const waiting = card.state === "waiting";
+  const resumable = card.can_resume === true && (card.state === "working" || card.state === "unconfirmed");
+  // A done or failed card carries the server's outcome note (what now exists, or why it didn't run); the
+  // approved card puts it in the summary's place on done and as the reason on failed. Never on another state.
+  const settled = card.state === "done" || card.state === "failed";
+  const actions = card.actions.map((item) => isRow(item) ? {
+    summary: item.summary,
+    ...((waiting || resumable) && isText(item.fingerprint) ? { fingerprint: item.fingerprint } : {}),
+    ...(waiting && expiresAt ? { note: cardExpiryNote(expiresAt) }
+      : settled && isText(item.note) ? { note: card.state === "failed" ? cardReasonSentence(item.note) : item.note } : {}),
+  } : item);
+  const approval = parseApproval({ state: card.state, kind, actions, ...(resumable ? { can_resume: true } : {}), asker_user_id: card.asker_user_id,
+    decided_by_name: card.decided_by_name, decided_at: card.decided_at });
+  if (!approval) return null;
+  return { approval, outcomeMessageId: isText(outcomeMessageId) ? outcomeMessageId : null, record: parsedRecord, expiresAt };
+}
+
+/** The read's answer by message id, checked; a malformed row is dropped. `null` when the read failed. */
+export function parseCardStates(data: unknown, error: unknown): Record<string, CardRead> | null {
+  if (error || !isRow(data) || data.ok !== true || !Array.isArray(data.cards)) return null;
+  const out: Record<string, CardRead> = {};
+  for (const row of data.cards) {
+    if (!isRow(row) || !isText(row.message_id)) continue;
+    const card = parseServerCard(row.card, row.outcome_message_id, row.record);
+    if (card) out[row.message_id] = card;
+  }
+  return out;
+}
+
+/** The agent messages whose cards to read: in an agent DM only (A2b makes cards nowhere else). Newest 100. */
+export function cardMessageIds(messages: readonly TeamHubMessage[]): string[] {
+  return messages.filter((m) => m.author_kind === "agent").map((m) => m.id).slice(-100);
+}
+
+export interface CardActRequest { conversationId: string; messageId: string; act: "approve" | "decline"; fingerprint: string }
+
+/** The exact request body: the four keys and nothing else. */
+export function cardActBody(request: CardActRequest): { teamHubCardAct: CardActRequest } {
+  return { teamHubCardAct: { conversationId: request.conversationId, messageId: request.messageId, act: request.act, fingerprint: request.fingerprint } };
+}
+
+export const CARD_ACT_OUTCOMES = ["done", "failed", "unconfirmed", "declined", "expired", "already_decided", "not_yours",
+  "not_visible", "conversations_off", "could_not_start"] as const;
+export type CardActOutcome = typeof CARD_ACT_OUTCOMES[number];
+
+/**
+ * The card act's answer, checked. `no_answer` is a transport error, a non-2xx answer or a 200 that is
+ * not the documented shape: the act may or may not have happened, so the screen re-reads the card and
+ * never says it ran. `card` is the card as it now stands, when the server sent it.
+ */
+export type CardActAnswer =
+  | { outcome: CardActOutcome; card: CardRead | null; outcomeMessage: TeamHubMessage | null }
+  | { outcome: "no_answer" };
+
+/**
+ * What the hub announces after Approve or Not now, by outcome (verifier fix 5): the card shows the state, and
+ * this says it in words through the hub's one live region, so a turned-down click is never silent. A closed
+ * set, the screen's own; null where the card and its outcome message already say it (done, failed,
+ * couldn't confirm, Not now), so the same thing is not said twice.
+ */
+export function cardActLine(outcome: CardActOutcome | "no_answer"): string | null {
+  switch (outcome) {
+    case "not_yours": return "Only the person who asked can approve this card.";
+    case "not_visible": return "That card isn't available to you any more. Nothing was changed.";
+    case "already_decided": return "That card was already decided. It shows what happened.";
+    case "expired": return "That card ran out of time. Nothing was changed.";
+    case "conversations_off": return "Team conversations are off for you, so this card can't be decided.";
+    case "could_not_start": return "That didn't go through just now. Try again.";
+    case "no_answer": return "I couldn't confirm that went through. The card shows what's known now.";
+    default: return null;
+  }
+}
+
+export function parseCardAct(data: unknown, error: unknown, request: CardActRequest): CardActAnswer {
+  if (error || !isRow(data) || typeof data.ok !== "boolean" || typeof data.outcome !== "string"
+    || !(CARD_ACT_OUTCOMES as readonly string[]).includes(data.outcome)) return { outcome: "no_answer" };
+  const outcome = data.outcome as CardActOutcome;
+  let card: CardRead | null = null;
+  if (data.card !== undefined && data.card !== null) {
+    // The card itself, or its whole state row; a row must name this card.
+    const row = isRow(data.card) && "card" in data.card ? data.card : null;
+    if (row && row.message_id !== request.messageId) return { outcome: "no_answer" };
+    card = row ? parseServerCard(row.card, row.outcome_message_id, row.record) : parseServerCard(data.card, undefined, undefined);
+    if (!card) return { outcome: "no_answer" };
+  }
+  let outcomeMessage: TeamHubMessage | null = null;
+  if (data.outcome_message !== undefined && data.outcome_message !== null) {
+    outcomeMessage = parseTeamHubMessage(data.outcome_message);
+    if (!outcomeMessage || outcomeMessage.author_kind !== "agent") return { outcome: "no_answer" };
+  }
+  return { outcome, card, outcomeMessage };
 }
 
 export { isTeamHubAgentKey };

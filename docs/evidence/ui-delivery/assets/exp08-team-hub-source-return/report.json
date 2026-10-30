@@ -1,0 +1,358 @@
+{
+  "label": "harness render · not live",
+  "records": [
+    {
+      "name": "dark-1536-closed",
+      "theme": "dark",
+      "width": 1536,
+      "paige": "closed",
+      "viewport": {
+        "width": 1536,
+        "height": 770
+      },
+      "visible": true,
+      "rect": {
+        "x": 1205,
+        "y": 279.5,
+        "w": 323,
+        "h": 74.5
+      },
+      "focused": false,
+      "pageOverflowX": 0,
+      "pageOverflowY": 0,
+      "text": "JLJordan Lee5:10 AMThe welcome packet is ready for the original review. Reopen this handover here.",
+      "errors": []
+    },
+    {
+      "name": "dark-1536-open",
+      "theme": "dark",
+      "width": 1536,
+      "paige": "open",
+      "viewport": {
+        "width": 1536,
+        "height": 770
+      },
+      "visible": true,
+      "rect": {
+        "x": 662.765625,
+        "y": 279.5,
+        "w": 343,
+        "h": 74.5
+      },
+      "focused": true,
+      "pageOverflowX": 0,
+      "pageOverflowY": 0,
+      "text": "JLJordan Lee5:10 AMThe welcome packet is ready for the original review. Reopen this handover here.",
+      "errors": []
+    },
+    {
+      "name": "dark-1366-closed",
+      "theme": "dark",
+      "width": 1366,
+      "paige": "closed",
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "visible": true,
+      "rect": {
+        "x": 1035,
+        "y": 279.5,
+        "w": 323,
+        "h": 74.5
+      },
+      "focused": false,
+      "pageOverflowX": 0,
+      "pageOverflowY": 0,
+      "text": "JLJordan Lee5:10 AMThe welcome packet is ready for the original review. Reopen this handover here.",
+      "errors": []
+    },
+    {
+      "name": "dark-1366-open",
+      "theme": "dark",
+      "width": 1366,
+      "paige": "open",
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "visible": true,
+      "rect": {
+        "x": 550.5625,
+        "y": 279.5,
+        "w": 343,
+        "h": 74.5
+      },
+      "focused": true,
+      "pageOverflowX": 0,
+      "pageOverflowY": 0,
+      "text": "JLJordan Lee5:10 AMThe welcome packet is ready for the original review. Reopen this handover here.",
+      "errors": []
+    },
+    {
+      "name": "dark-1024-closed",
+      "theme": "dark",
+      "width": 1024,
+      "paige": "closed",
+      "viewport": {
+        "width": 1024,
+        "height": 768
+      },
+      "visible": true,
+      "rect": {
+        "x": 673,
+        "y": 279.5,
+        "w": 343,
+        "h": 74.5
+      },
+      "focused": false,
+      "pageOverflowX": 0,
+      "pageOverflowY": 0,
+      "text": "JLJordan Lee5:10 AMThe welcome packet is ready for the original review. Reopen this handover here.",
+      "errors": []
+    },
+    {
+      "name": "dark-1024-open",
+      "theme": "dark",
+      "width": 1024,
+      "paige": "open",
+      "viewport": {
+        "width": 1024,
+        "height": 768
+      },
+      "visible": true,
+      "rect": {
+        "x": 673,
+        "y": 279.5,
+        "w": 343,
+        "h": 74.5
+      },
+      "focused": true,
+      "pageOverflowX": 0,
+      "pageOverflowY": 0,
+      "text": "JLJordan Lee5:10 AMThe welcome packet is ready for the original review. Reopen this handover here.",
+      "errors": []
+    },
+    {
+      "name": "dark-900-closed",
+      "theme": "dark",
+      "width": 900,
+      "paige": "closed",
+      "viewport": {
+        "width": 900,
+        "height": 1000
+      },
+      "visible": true,
+      "rect": {
+        "x": 549,
+        "y": 279.5,
+        "w": 343,
+        "h": 74.5
+      },
+      "focused": false,
+      "pageOverflowX": 0,
+      "pageOverflowY": 0,
+      "text": "JLJordan Lee5:10 AMThe welcome packet is ready for the original review. Reopen this handover here.",
+      "errors": []
+    },
+    {
+      "name": "dark-900-open",
+      "theme": "dark",
+      "width": 900,
+      "paige": "open",
+      "viewport": {
+        "width": 900,
+        "height": 1000
+      },
+      "visible": true,
+      "rect": {
+        "x": 549,
+        "y": 279.5,
+        "w": 343,
+        "h": 74.5
+      },
+      "focused": true,
+      "pageOverflowX": 0,
+      "pageOverflowY": 0,
+      "text": "JLJordan Lee5:10 AMThe welcome packet is ready for the original review. Reopen this handover here.",
+      "errors": []
+    },
+    {
+      "name": "light-1536-closed",
+      "theme": "light",
+      "width": 1536,
+      "paige": "closed",
+      "viewport": {
+        "width": 1536,
+        "height": 770
+      },
+      "visible": true,
+      "rect": {
+        "x": 1205,
+        "y": 279.5,
+        "w": 323,
+        "h": 74.5
+      },
+      "focused": false,
+      "pageOverflowX": 0,
+      "pageOverflowY": 0,
+      "text": "JLJordan Lee5:10 AMThe welcome packet is ready for the original review. Reopen this handover here.",
+      "errors": []
+    },
+    {
+      "name": "light-1536-open",
+      "theme": "light",
+      "width": 1536,
+      "paige": "open",
+      "viewport": {
+        "width": 1536,
+        "height": 770
+      },
+      "visible": true,
+      "rect": {
+        "x": 662.765625,
+        "y": 279.5,
+        "w": 343,
+        "h": 74.5
+      },
+      "focused": true,
+      "pageOverflowX": 0,
+      "pageOverflowY": 0,
+      "text": "JLJordan Lee5:10 AMThe welcome packet is ready for the original review. Reopen this handover here.",
+      "errors": []
+    },
+    {
+      "name": "light-1366-closed",
+      "theme": "light",
+      "width": 1366,
+      "paige": "closed",
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "visible": true,
+      "rect": {
+        "x": 1035,
+        "y": 279.5,
+        "w": 323,
+        "h": 74.5
+      },
+      "focused": false,
+      "pageOverflowX": 0,
+      "pageOverflowY": 0,
+      "text": "JLJordan Lee5:10 AMThe welcome packet is ready for the original review. Reopen this handover here.",
+      "errors": []
+    },
+    {
+      "name": "light-1366-open",
+      "theme": "light",
+      "width": 1366,
+      "paige": "open",
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "visible": true,
+      "rect": {
+        "x": 550.5625,
+        "y": 279.5,
+        "w": 343,
+        "h": 74.5
+      },
+      "focused": true,
+      "pageOverflowX": 0,
+      "pageOverflowY": 0,
+      "text": "JLJordan Lee5:10 AMThe welcome packet is ready for the original review. Reopen this handover here.",
+      "errors": []
+    },
+    {
+      "name": "light-1024-closed",
+      "theme": "light",
+      "width": 1024,
+      "paige": "closed",
+      "viewport": {
+        "width": 1024,
+        "height": 768
+      },
+      "visible": true,
+      "rect": {
+        "x": 673,
+        "y": 279.5,
+        "w": 343,
+        "h": 74.5
+      },
+      "focused": false,
+      "pageOverflowX": 0,
+      "pageOverflowY": 0,
+      "text": "JLJordan Lee5:10 AMThe welcome packet is ready for the original review. Reopen this handover here.",
+      "errors": []
+    },
+    {
+      "name": "light-1024-open",
+      "theme": "light",
+      "width": 1024,
+      "paige": "open",
+      "viewport": {
+        "width": 1024,
+        "height": 768
+      },
+      "visible": true,
+      "rect": {
+        "x": 673,
+        "y": 279.5,
+        "w": 343,
+        "h": 74.5
+      },
+      "focused": true,
+      "pageOverflowX": 0,
+      "pageOverflowY": 0,
+      "text": "JLJordan Lee5:10 AMThe welcome packet is ready for the original review. Reopen this handover here.",
+      "errors": []
+    },
+    {
+      "name": "light-900-closed",
+      "theme": "light",
+      "width": 900,
+      "paige": "closed",
+      "viewport": {
+        "width": 900,
+        "height": 1000
+      },
+      "visible": true,
+      "rect": {
+        "x": 549,
+        "y": 279.5,
+        "w": 343,
+        "h": 74.5
+      },
+      "focused": false,
+      "pageOverflowX": 0,
+      "pageOverflowY": 0,
+      "text": "JLJordan Lee5:10 AMThe welcome packet is ready for the original review. Reopen this handover here.",
+      "errors": []
+    },
+    {
+      "name": "light-900-open",
+      "theme": "light",
+      "width": 900,
+      "paige": "open",
+      "viewport": {
+        "width": 900,
+        "height": 1000
+      },
+      "visible": true,
+      "rect": {
+        "x": 549,
+        "y": 279.5,
+        "w": 343,
+        "h": 74.5
+      },
+      "focused": true,
+      "pageOverflowX": 0,
+      "pageOverflowY": 0,
+      "text": "JLJordan Lee5:10 AMThe welcome packet is ready for the original review. Reopen this handover here.",
+      "errors": []
+    }
+  ],
+  "failures": []
+}

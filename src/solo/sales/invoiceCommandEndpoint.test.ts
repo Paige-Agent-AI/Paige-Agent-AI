@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import { decideDeclaredCapability } from "../../../supabase/functions/_shared/capability-kit/decision";
 import { SALES_INVOICE_KIT_BY_ACTION } from "../../../supabase/functions/_shared/paige-spine/domains/sales_invoice";
 import { FINGERPRINT, UUID, SALES_INVOICE_ACTIONS, parseSalesInvoiceCommand } from "../../../supabase/functions/_shared/sales-invoice-command/contract";
+import { manualAllocationReviewMatches } from "../../../supabase/functions/_shared/sales-invoice-command/manual-allocation";
 import { PAIGE_APP_ORIGIN } from "../../../supabase/functions/_shared/canonical-app-url";
 import { invoicePublicOriginReady } from "../../../supabase/functions/_shared/sales-invoice-delivery/binding";
 
@@ -13,7 +14,7 @@ const command = { action: "invoice.record_manual_payment", invoice_id: "30000000
 const source = readFileSync("supabase/functions/sales-invoice-command/index.ts", "utf8").replace(/^import .*;\r?\n/gm, "");
 const compiled = transpileModule(source, { compilerOptions: { module: ModuleKind.None, target: ScriptTarget.ES2022 } }).outputText;
 
-type Setup = { role?: string; currentTenant?: string; replay?: unknown; auditFails?: boolean; claimed?: unknown; pendingCycle?: unknown; executeError?: unknown; authenticated?: boolean; deliveryResult?: unknown; publicOrigin?: string; readiness?:boolean; };
+type Setup = { role?: string; currentTenant?: string; replay?: unknown; auditFails?: boolean; claimed?: unknown; pendingCycle?: unknown; executeError?: unknown; authenticated?: boolean; deliveryResult?: unknown; publicOrigin?: string; readiness?:boolean; preview?:unknown; };
 function setup(options: Setup = {}) {
   const calls: { name: string; args: unknown }[] = [];
   const claims: Record<string, unknown>[][] = [];
@@ -23,7 +24,7 @@ function setup(options: Setup = {}) {
     rpc: async (name: string, args: unknown) => {
       calls.push({ name, args });
       if (name === "read_sales_invoice_command_result" || name === "read_sales_invoice_delivery_result") return { data: options.replay ?? null, error: null };
-      if (name === "preview_sales_invoice_command" || name === "preview_sales_invoice_delivery_command") return { data: { eligible: true, summary: "Review the exact commercial action" }, error: null };
+      if (name === "preview_sales_invoice_command" || name === "preview_sales_invoice_delivery_command") return { data: options.preview??{ eligible: true, summary: "Review the exact commercial action" }, error: null };
       return { data: { ok: true, row: { status: "issued", outstanding_cents: 9000 } }, error: options.executeError ?? null };
     },
     from: (table: string) => {
@@ -55,7 +56,7 @@ function setup(options: Setup = {}) {
     databaseAnswered: (error: unknown) => Boolean(error && typeof error === "object" && "code" in error && error.code === "23514"),
     mintSignerToken: () => "one-time-secret", sha256Hex: async () => "a".repeat(64),
     executeSalesInvoiceDelivery: async (args: unknown) => { calls.push({ name: "delivery", args }); return options.deliveryResult ?? { ok: true, outcome: "provider_accepted", provider_receipt_available: true, delivery_confirmed: false }; },
-    FINGERPRINT, UUID, SALES_INVOICE_ACTIONS, parseSalesInvoiceCommand,
+    FINGERPRINT, UUID, SALES_INVOICE_ACTIONS, parseSalesInvoiceCommand, manualAllocationReviewMatches,
     PAIGE_APP_ORIGIN: options.publicOrigin ?? PAIGE_APP_ORIGIN, invoicePublicOriginReady,
     readInvoiceDeliveryReadiness:async()=>({eligible:options.readiness!==false,state:options.readiness===false?'needs_setup':'ready',reason:options.readiness===false?'SMS_A2P_NOT_APPROVED':'READY_FOR_GOVERNED_REVIEW',provider_execution_verified:false}),
   };
@@ -70,6 +71,27 @@ function setup(options: Setup = {}) {
 }
 
 describe("actual invoice HTTP adapter authority and recovery", () => {
+  const allocations=[{obligation:{reference:{commercial_terms_id:'40000000-0000-4000-8000-000000000001',signing_id:'50000000-0000-4000-8000-000000000001',signing_version:2,terms_version:1,sequence:1},source_digest:'a'.repeat(64),due_date:'2026-11-01',scheduled_minor:50000,remaining_minor:50000},amount_cents:1000}];
+  it('proposes the exact native-validated manual allocation through the same high-risk gate',async()=>{
+    const test=setup({preview:{eligible:true,summary:'Record one actual business-reported receipt against the reviewed accepted payment.',manual_allocations:allocations}});
+    const result=await test.request({command:{...command,allocations}});
+    expect(result.body).toMatchObject({outcome:'approval_required',preview:{manual_allocations:allocations}});
+    expect(test.details('insert:paige_pending_confirmations')).toMatchObject({args:{command:{...command,allocations}}});
+    expect(test.calls.some(c=>c.name==='execute_sales_invoice_command')).toBe(false);
+  });
+  it.each([undefined,[],[{...allocations[0],amount_cents:999}]])('refuses missing or mismatched native allocation review before minting approval %#',async manual_allocations=>{
+    const test=setup({preview:{eligible:true,summary:'Legacy or inconsistent native preview',...(manual_allocations===undefined?{}:{manual_allocations})}});
+    const result=await test.request({command:{...command,allocations}});
+    expect(result.body).toMatchObject({outcome:'refused',code:'INVOICE_ALLOCATION_REVIEW_UNAVAILABLE'});
+    expect(test.calls.some(c=>c.name==='insert:paige_pending_confirmations'||c.name==='execute_sales_invoice_command')).toBe(false);
+  });
+  it('returns the exact recorded split result before current native preview or another approval',async()=>{
+    const result={ok:true,operation:{id:operation,action:'invoice.record_manual_payment'}};
+    const test=setup({replay:result});
+    expect((await test.request({command:{...command,allocations}})).body).toMatchObject({...result,replayed:true});
+    expect(test.calls.map(c=>c.name)).toEqual(['read_sales_invoice_command_result']);
+    expect(test.claims).toEqual([]);
+  });
   it('does not raise or redeem approval for an unready invoice channel',async()=>{
     const test=setup({readiness:false});
     const result=await test.request({command:{action:'invoice.sms_send',invoice_id:command.invoice_id,expected_version:2,connector_id:null}});

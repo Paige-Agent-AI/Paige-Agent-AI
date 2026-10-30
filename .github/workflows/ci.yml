@@ -72,6 +72,8 @@ jobs:
           supabase/functions/_shared/comms-email-provider-boundary.test.mjs
           supabase/functions/_shared/comms-phone-provider-boundary.test.mjs
           supabase/functions/_shared/twilio-purchase-voice.test.ts
+          supabase/functions/_shared/twilio-sms-dispatch.test.ts
+          supabase/functions/_shared/comms-sms-result.test.mjs
           supabase/functions/twilio-status-callback/call-status.test.ts
           supabase/functions/_shared/booking-provider-boundary.test.mjs
           supabase/functions/_shared/client-portal-booking.test.ts
@@ -83,6 +85,14 @@ jobs:
           supabase/functions/_shared/team-hub/chat-wiring.test.ts
           supabase/functions/_shared/team-hub/agent-turn.test.ts
           supabase/functions/_shared/team-hub/agent-turn-wiring.test.ts
+          supabase/functions/_shared/team-hub/card-tools.test.ts
+          supabase/functions/_shared/team-hub/card-act.test.ts
+          supabase/functions/_shared/team-hub/card-binding.test.ts
+          supabase/functions/paige-ai-chat/team-hub-a2b-wiring.test.ts
+          supabase/functions/_shared/crm-reads/list-tasks.test.ts
+          supabase/functions/_shared/crm-reads/list-team.test.ts
+          supabase/functions/_shared/growth/list-pages.test.ts
+          supabase/functions/_shared/growth-publish-command/chat-tools.test.ts
           supabase/functions/_shared/team-hub/cura-service-read.test.ts
           supabase/functions/_shared/team-hub/mentor-plan-read.test.ts
           supabase/functions/_shared/team-hub/zion-planning-read.test.ts
@@ -134,6 +144,8 @@ jobs:
         run: psql -h 127.0.0.1 -U postgres -d postgres -v ON_ERROR_STOP=1 -f supabase/tests/exp08_team_hub_agent_turn_states.sql
       - name: EXP08 Team Hub agents A1c, writing state for everyone who can see the conversation, @channel and @here through the post door, byte identity and mutants in a disposable database
         run: psql -h 127.0.0.1 -U postgres -d postgres -v ON_ERROR_STOP=1 -f supabase/tests/exp08_team_hub_a1c.sql
+      - name: EXP08 Team Hub agents A2b, cards as the door's own proposal, the one link row, decide/settle/states doors, outcome turn, scope trigger, roster v2 and mutants in a disposable database
+        run: psql -h 127.0.0.1 -U postgres -d postgres -v ON_ERROR_STOP=1 -f supabase/tests/exp08_team_hub_a2b_cards.sql
       - name: EXP01 MENTOR Team Hub plan read, roster gains exactly one read tool once, no other row or key moves, idempotent in a disposable database
         run: psql -h 127.0.0.1 -U postgres -d postgres -v ON_ERROR_STOP=1 -f supabase/tests/e01_mentor_team_hub_plan_read.sql
       - name: EXP04 original Team Hub commercial read scope, references and publication restrictions

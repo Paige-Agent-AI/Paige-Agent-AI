@@ -1,0 +1,157 @@
+{
+  "renderedSourceCommit": "706ec8c6475aff6ea2d5489b88574dfde25701e7",
+  "scope": "Actual original invoice components with synthetic SDK responses. Not authenticated, provider or full-shell acceptance.",
+  "normalization": "UTF-8 CRLF to LF; raw JPEG bytes",
+  "sources": [
+    {
+      "file": "src/solo/sales/invoicePaymentCopy.ts",
+      "sha256": "11be106f8d5cc5c63de4a78d6028977b9c3d78a2f025448abc8c6f523faf0846"
+    },
+    {
+      "file": "src/solo/sales/SalesBillingWorkspace.tsx",
+      "sha256": "0c998b22bf6b12c9dabd229ce1dcd184694228e61dae2f17bf8572fb6e2edcf1"
+    },
+    {
+      "file": "src/solo/sales/InvoiceLifecycleActions.tsx",
+      "sha256": "76f7eed58ffeb3918535c92fea4ae88828d3cd275558adbbf6f31b633729a1ed"
+    },
+    {
+      "file": "src/solo/sales/InvoiceWorkspace.tsx",
+      "sha256": "b3647f9b4ac593e7e70ee5954acd5c3230b20b4c2ea70745b0f0a3daf1e2d89d"
+    },
+    {
+      "file": "src/solo/sales/CommercialPackageInspection.tsx",
+      "sha256": "24da4b929d39272c6887027075c1aee76f6016e6a06b98cc01c423e1c20e6cfa"
+    },
+    {
+      "file": "src/solo/sales/invoiceLifecycleApi.ts",
+      "sha256": "24b30dd5617e77e483f591d52b1053dc888c7c976ff81fd842c4cc8a3af9cb58"
+    },
+    {
+      "file": "src/solo/sales/invoiceDraftApi.ts",
+      "sha256": "d6fdffd9bba7b2722bb94dfa17513f472c8d6a9cc3cd81287b5ebbc4274e09f2"
+    },
+    {
+      "file": "src/solo/sales/invoiceDraftSnapshot.ts",
+      "sha256": "55b275a2454695a5091e8bf106ec6233776fd443e5dbf7e29a54d8ef88ce675d"
+    },
+    {
+      "file": "src/solo/sales/sales-billing.css",
+      "sha256": "707ab36fb8573c0f00b31d8b12a28fea2b33ab8277f19f50309076a1fb38132e"
+    },
+    {
+      "file": "scripts/live-drive/sales-payments/mount/main.tsx",
+      "sha256": "3ea01ddc36398e612cf094a729a1e0b47d86fd94970ab95d95ed520a166cea00"
+    },
+    {
+      "file": "scripts/live-drive/sales-payments/mount/supabase.ts",
+      "sha256": "1177df51a49910a66d733999787021581a8e407692d361fe8c035d02b3ebe187"
+    },
+    {
+      "file": "scripts/live-drive/sales-payments/mount/accepted-plan.ts",
+      "sha256": "e6c6f6b02f86d49c2d105b8c9e3751e1f646de80f12f0a9b197a57fea113ed9f"
+    },
+    {
+      "file": "scripts/live-drive/sales-payments/accepted-plan-fixture.ts",
+      "sha256": "73e989b02f93c66b8c12cc40199310de8ca5a1bf3b2fd6d304d010c57500c749"
+    },
+    {
+      "file": "scripts/live-drive/sales-payments/mount/vite.config.ts",
+      "sha256": "7d48478e735218e7498e05bb29e55bec20c0c4631f5981fa0bc38ae896ea7685"
+    },
+    {
+      "file": "scripts/live-drive/sales-payments/mount/index.html",
+      "sha256": "7147f46e42a58adf3d582f998800e2c0ff500607c1e52c5352eadee9d15fe692"
+    },
+    {
+      "file": "src/index.css",
+      "sha256": "85a3adb5668238e91cdb6c8189488db1fd24ce6698f7456ae23a3de6aa572482"
+    },
+    {
+      "file": "src/solo/solo-tokens.css",
+      "sha256": "77edc9fc35a6d2dab87318996fbb0dc6d80a0a04115d1757016c10da2c7b3197"
+    },
+    {
+      "file": "src/solo/solo-campaigns.css",
+      "sha256": "4e4f40fd641823c0865958295d8a4ab3c42dd7f880922c798cfcea4c29cc516f"
+    },
+    {
+      "file": "package.json",
+      "sha256": "46039f2fb72a44a390becfc609cdf92d7a174944d11678476800b3c1221b0893"
+    },
+    {
+      "file": "package-lock.json",
+      "sha256": "54af2870b4d4c167fca773bfad885777689894540ad2e05c7e792c21bbd59e6d"
+    },
+    {
+      "file": "src/solo/sales/InvoiceCommandReview.tsx",
+      "sha256": "79cd5de3e08b275c59743549ce22fa25ea13c0daa49381eb4b5c4c8541f52096"
+    }
+  ],
+  "frames": [
+    {
+      "file": "refused-desktop-light.jpg",
+      "capturedAt": "2026-10-30T14:17:37.540Z",
+      "text": "Review invoice action\nInvoice template\nBusiness default\nClassic\nModern\nService detail\n\nCheck the saved invoice and its current version before preparing this action.\n\nPrepare review\n\nCheck the saved invoice’s current version, amount, due date and payment methods. Return to the invoice to make any correction, then prepare a fresh review.\n\nCancel\nClose",
+      "geometry": {
+        "scrollWidth": 1280,
+        "width": 1280
+      },
+      "approvalCount": 0,
+      "format": "JPEG",
+      "pixelWidth": 1280,
+      "pixelHeight": 720,
+      "sha256": "fd0097153d27d2358db4332a80f083ebaaaf82b2ab1099b2948bd836647f6e46",
+      "bytes": 31808
+    },
+    {
+      "file": "proposal-desktop-light.jpg",
+      "capturedAt": "2026-10-30T14:17:53.629Z",
+      "text": "Review invoice action\nInvoice template\nBusiness default\nClassic\nModern\nService detail\nInvoice number\nAssigned when issued\nUnissued draft amount\n$3,500.00\n\nPublish the saved invoice as a frozen off-platform obligation. No email, online charge or payment receipt is created.\n\nApprove action\nCancel\nClose",
+      "geometry": {
+        "scrollWidth": 1280,
+        "width": 1280
+      },
+      "approvalCount": 1,
+      "approvalClicked": false,
+      "format": "JPEG",
+      "pixelWidth": 1280,
+      "pixelHeight": 720,
+      "sha256": "de7c9d9fdee4e3f223eafe0dd1811582b983b524a3d588fd576ff2d98bb46689",
+      "bytes": 30434
+    },
+    {
+      "file": "refused-320-dark.jpg",
+      "capturedAt": "2026-10-30T14:18:13.780Z",
+      "text": "Review invoice action\nInvoice template\nBusiness default\nClassic\nModern\nService detail\n\nCheck the saved invoice and its current version before preparing this action.\n\nPrepare review\n\nCheck the saved invoice’s current version, amount, due date and payment methods. Return to the invoice to make any correction, then prepare a fresh review.\n\nCancel\nClose",
+      "geometry": {
+        "scrollWidth": 320,
+        "width": 320
+      },
+      "approvalCount": 0,
+      "format": "JPEG",
+      "pixelWidth": 1280,
+      "pixelHeight": 720,
+      "sha256": "e93f952e17134ce32eabb323006fa88a79767493951748ca49852971197d9ac6",
+      "bytes": 29204
+    },
+    {
+      "file": "proposal-390-dark.jpg",
+      "capturedAt": "2026-10-30T14:18:29.320Z",
+      "text": "Review invoice action\nInvoice template\nBusiness default\nClassic\nModern\nService detail\nInvoice number\nAssigned when issued\nUnissued draft amount\n$3,500.00\n\nPublish the saved invoice as a frozen off-platform obligation. No email, online charge or payment receipt is created.\n\nApprove action\nCancel\nClose",
+      "geometry": {
+        "scrollWidth": 390,
+        "width": 390
+      },
+      "approvalCount": 1,
+      "approvalClicked": false,
+      "format": "JPEG",
+      "pixelWidth": 1280,
+      "pixelHeight": 720,
+      "sha256": "0a27d67eabc3e95f6537e98ca7ad2bc8a0cc2fa049b86bfcbe3e5694731fe446",
+      "bytes": 27148
+    }
+  ],
+  "keyboard": "Enter open/review/prepare; Cancel then Close returns visible focus to original trigger at desktop and320. Approval never clicked.",
+  "limits": "Synthetic original components and CSP, not signed-in/native/provider/full-shell/physical phone/native200percent/AT acceptance."
+}

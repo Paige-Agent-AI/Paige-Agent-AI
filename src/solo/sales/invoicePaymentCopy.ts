@@ -1,4 +1,10 @@
 /** Display-only labels. Canonical lifecycle and approval identity remain server owned. */
+export function invoiceRecordAmountLabels(status: 'draft' | 'issued' | 'void') {
+  if (status === 'draft') return {total:'Draft total',requested:'Planned initial amount',schedule:'Planned later amount',balance:'Unissued draft amount'} as const;
+  if (status === 'void') return {total:'Original invoice total',requested:'Original requested amount',schedule:'Original remaining schedule',balance:'Recorded balance (voided)'} as const;
+  return {total:'Total obligation',requested:'Original requested amount',schedule:'Original remaining schedule',balance:'Outstanding balance'} as const;
+}
+
 export function invoicePaymentStatus(status: 'draft' | 'issued' | 'void', total: number, recorded: number, remaining: number, verified = 0): string {
   if (status === 'draft') return 'Draft · not issued';
   if (status === 'void') return 'Void';

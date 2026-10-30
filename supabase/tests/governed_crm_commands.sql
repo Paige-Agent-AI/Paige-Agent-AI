@@ -1,6 +1,6 @@
 -- Canonical governed CRM command: synthetic tenant fixtures only; always rolled back.
 BEGIN;
-SELECT plan(194);
+SELECT plan(225);
 
 SELECT ok(NOT has_function_privilege('anon','public.execute_crm_command(uuid,uuid,jsonb,text)','EXECUTE'),'anon cannot execute the CRM domain writer');
 SELECT ok(NOT has_function_privilege('authenticated','public.execute_crm_command(uuid,uuid,jsonb,text)','EXECUTE'),'authenticated callers cannot bypass the CRM action door');
@@ -285,6 +285,66 @@ SELECT is((SELECT count(*)::integer FROM public.crm_command_results WHERE tenant
 SELECT is((SELECT count(*) FROM public.paige_workspace_events WHERE tenant_id='c7100000-0000-4000-8000-000000001111'),(SELECT receipts FROM task_progress_rollback_before),'receipt failure leaves no extra Rail event');
 RESET ROLE;
 DROP TRIGGER task_progress_receipt_failure ON public.paige_workspace_events;
+SET LOCAL ROLE service_role;
+
+-- EXP05 scalar effort: use the ORIGINAL executor, replay cache and atomic Rail.
+CREATE TEMP TABLE task_effort_fixture AS SELECT public.execute_crm_command(
+ 'c7100000-0000-4000-8000-000000001111','c7100000-0000-4000-8000-000000000001',
+ '{"approval_channel":"operator_card","action":"task.create","patch":{"title":"Protected effort fixture","metadata":{"priority":"P1","source":{"version":4},"estimated_minutes":15}}}','task-effort-create-1') result;
+CREATE FUNCTION pg_temp.task_effort_call(_patch jsonb,_key text,
+ _actor uuid DEFAULT 'c7100000-0000-4000-8000-000000000001',
+ _tenant uuid DEFAULT 'c7100000-0000-4000-8000-000000001111',_version text DEFAULT NULL)
+RETURNS jsonb LANGUAGE sql AS $$
+ SELECT public.execute_crm_command(_tenant,_actor,jsonb_build_object('approval_channel','operator_card','action','task.update',
+  'task_id',(SELECT result->'readback'->>'id' FROM task_effort_fixture),
+  'expected_updated_at',coalesce(_version,(SELECT coalesce(t.updated_at,t.created_at)::text FROM public.tasks t WHERE t.id=(SELECT (result->'readback'->>'id')::uuid FROM task_effort_fixture))),
+  'patch',_patch),_key)
+$$;
+CREATE TEMP TABLE task_effort_command AS SELECT jsonb_build_object('approval_channel','operator_card','action','task.update',
+ 'task_id',result->'readback'->>'id','expected_updated_at',result->'readback'->>'updated_at','patch',jsonb_build_object('estimated_minutes',35)) command FROM task_effort_fixture;
+CREATE TEMP TABLE task_effort_before AS SELECT count(*) receipts FROM public.paige_workspace_events WHERE tenant_id='c7100000-0000-4000-8000-000000001111';
+CREATE TEMP TABLE task_effort_set AS SELECT public.execute_crm_command('c7100000-0000-4000-8000-000000001111','c7100000-0000-4000-8000-000000000001',command,'task-effort-set-1') result FROM task_effort_command;
+SELECT is((SELECT result->'readback'->'metadata' FROM task_effort_set),'{"priority":"P1","source":{"version":4},"estimated_minutes":35}'::jsonb,'scalar effort preserves all unrelated metadata in original readback');
+SELECT is((SELECT metadata FROM public.tasks WHERE id=(SELECT (result->'readback'->>'id')::uuid FROM task_effort_fixture)),'{"priority":"P1","source":{"version":4},"estimated_minutes":35}'::jsonb,'effort is saved in the original Task');
+SELECT ok((SELECT (result->>'receipt_recorded')::boolean AND result->>'correlation_id' IS NOT NULL FROM task_effort_set),'effort returns original receipt correlation');
+SELECT ok((public.execute_crm_command('c7100000-0000-4000-8000-000000001111','c7100000-0000-4000-8000-000000000001',(SELECT command FROM task_effort_command),'task-effort-set-1')->>'replayed')::boolean,'lost effort acknowledgement recovers original command');
+SELECT is((SELECT count(*) FROM public.paige_workspace_events WHERE tenant_id='c7100000-0000-4000-8000-000000001111'),(SELECT receipts+1 FROM task_effort_before),'effort replay emits no second receipt');
+SELECT throws_ok($$SELECT public.execute_crm_command('c7100000-0000-4000-8000-000000001111','c7100000-0000-4000-8000-000000000001',(SELECT jsonb_set(command,'{patch,estimated_minutes}','36') FROM task_effort_command),'task-effort-set-1')$$,'22023','CRM_IDEMPOTENCY_REUSE','changed effort cannot reuse an original key');
+SELECT throws_ok(format('SELECT pg_temp.task_effort_call(%L::jsonb,%L,_version=>%L)','{"estimated_minutes":36}','task-effort-stale-1',(SELECT result->'readback'->>'updated_at' FROM task_effort_fixture)),'40001','CRM_VERSION_CONFLICT','stale effort cannot overwrite newer Work');
+SELECT is(pg_temp.task_effort_call('{"estimated_minutes":0}','task-effort-zero-1')->'readback'->'metadata'->'estimated_minutes','0'::jsonb,'recorded zero is not unknown');
+SELECT is(pg_temp.task_effort_call('{"estimated_minutes":1.0}','task-effort-whole-decimal-1')->'readback'->'metadata'->'estimated_minutes','1'::jsonb,'whole JSON numbers normalize to native integer effort');
+SELECT is(pg_temp.task_effort_call('{"estimated_minutes":2147483647}','task-effort-max-1')->'readback'->'metadata'->'estimated_minutes','2147483647'::jsonb,'effort accepts exact native upper bound');
+SELECT is(pg_temp.task_effort_call('{"estimated_minutes":null}','task-effort-clear-1')->'readback'->'metadata','{"priority":"P1","source":{"version":4}}'::jsonb,'clear removes only recorded effort');
+SELECT throws_ok(format('SELECT pg_temp.task_effort_call(%L::jsonb,%L)',jsonb_build_object('estimated_minutes',value)::text,'task-effort-invalid-'||ordinal),'22023','CRM_TASK_EFFORT_INVALID','invalid effort is refused: '||ordinal)
+ FROM (VALUES (1,'-1'::jsonb),(2,'0.5'::jsonb),(3,'2147483648'::jsonb),(4,'"30"'::jsonb),(5,'true'::jsonb),(6,'{}'::jsonb),(7,'[]'::jsonb)) bad(ordinal,value);
+SELECT throws_ok($$SELECT pg_temp.task_effort_call('{"estimated_minutes":30,"metadata":{}}','task-effort-conflict-1')$$,'22023','CRM_TASK_EFFORT_METADATA_CONFLICT','scalar effort cannot silently compose with whole metadata replacement');
+SELECT throws_ok($$SELECT pg_temp.task_effort_call('{"estimated_minutes":30}','task-effort-member-1',_actor=>'c7100000-0000-4000-8000-000000000002')$$,'42501','CRM_FORBIDDEN','plain member has no owner task-update authority');
+SELECT throws_ok($$SELECT pg_temp.task_effort_call('{"estimated_minutes":30}','task-effort-foreign-1','c7200000-0000-4000-8000-000000000001','c7200000-0000-4000-8000-000000002222')$$,'P0002','CRM_TASK_NOT_FOUND','foreign owner cannot change effort');
+SELECT throws_ok($$SELECT pg_temp.task_effort_call('{"estimated_minutes":30}','task-effort-workspace-1',_tenant=>'c7200000-0000-4000-8000-000000002222')$$,'42501','CRM_ACTIVE_ACCOUNT_CHANGED','effort retains active-workspace authority');
+SELECT throws_ok($$SELECT public.execute_crm_command('c7100000-0000-4000-8000-000000001111','c7100000-0000-4000-8000-000000000001',(SELECT command-'expected_updated_at' FROM task_effort_command),'task-effort-no-version-1')$$,'22023','CRM_EXPECTED_VERSION_REQUIRED','effort requires original native version');
+SELECT is(pg_temp.task_effort_call('{"metadata":{"explicit_replacement":true}}','task-effort-replace-1')->'readback'->'metadata','{"explicit_replacement":true}'::jsonb,'existing explicit metadata replacement semantics stay unchanged');
+RESET ROLE;
+UPDATE public.tasks SET metadata=NULL WHERE id=(SELECT (result->'readback'->>'id')::uuid FROM task_effort_fixture);
+SET LOCAL ROLE service_role;
+SELECT is(pg_temp.task_effort_call('{"estimated_minutes":40}','task-effort-null-source-1')->'readback'->'metadata','{"estimated_minutes":40}'::jsonb,'SQL-null metadata supports a first effort estimate');
+RESET ROLE;
+UPDATE public.tasks SET metadata='[]'::jsonb WHERE id=(SELECT (result->'readback'->>'id')::uuid FROM task_effort_fixture);
+SET LOCAL ROLE service_role;
+SELECT throws_ok($$SELECT pg_temp.task_effort_call('{"estimated_minutes":30}','task-effort-malformed-source-1')$$,'22023','CRM_TASK_METADATA_INVALID','malformed prior metadata is refused rather than erased');
+SELECT is((SELECT metadata FROM public.tasks WHERE id=(SELECT (result->'readback'->>'id')::uuid FROM task_effort_fixture)),'[]'::jsonb,'refusal preserves the original malformed record');
+RESET ROLE;
+UPDATE public.tasks SET metadata='{"keep":"original","estimated_minutes":40}'::jsonb WHERE id=(SELECT (result->'readback'->>'id')::uuid FROM task_effort_fixture);
+CREATE TRIGGER task_effort_receipt_failure BEFORE INSERT ON public.paige_workspace_events FOR EACH ROW EXECUTE FUNCTION pg_temp.task_progress_receipt_failure();
+SET LOCAL ROLE service_role;
+CREATE TEMP TABLE task_effort_rollback_before AS SELECT metadata,updated_at,(SELECT count(*) FROM public.paige_workspace_events WHERE tenant_id='c7100000-0000-4000-8000-000000001111') receipts FROM public.tasks WHERE id=(SELECT (result->'readback'->>'id')::uuid FROM task_effort_fixture);
+SET LOCAL test.task_progress_receipt_failure='on';
+SELECT throws_ok($$SELECT pg_temp.task_effort_call('{"estimated_minutes":60}','task-effort-receipt-failure-1')$$,'P0001','TASK_PROGRESS_FIXTURE_RECEIPT_FAILURE','effort cannot succeed without its canonical receipt');
+SET LOCAL test.task_progress_receipt_failure='off';
+SELECT ok((SELECT t.metadata=b.metadata AND t.updated_at=b.updated_at FROM public.tasks t CROSS JOIN task_effort_rollback_before b WHERE t.id=(SELECT (result->'readback'->>'id')::uuid FROM task_effort_fixture)),'receipt failure rolls back effort, unrelated metadata and version');
+SELECT is((SELECT count(*)::integer FROM public.crm_command_results WHERE tenant_id='c7100000-0000-4000-8000-000000001111' AND actor_user_id='c7100000-0000-4000-8000-000000000001' AND idempotency_key='task-effort-receipt-failure-1'),0,'failed effort leaves no replay success');
+SELECT is((SELECT count(*) FROM public.paige_workspace_events WHERE tenant_id='c7100000-0000-4000-8000-000000001111'),(SELECT receipts FROM task_effort_rollback_before),'failed effort leaves no extra Rail');
+RESET ROLE;
+DROP TRIGGER task_effort_receipt_failure ON public.paige_workspace_events;
 SET LOCAL ROLE service_role;
 
 -- Chat task reads must supply the native optimistic version rather than guessing it.

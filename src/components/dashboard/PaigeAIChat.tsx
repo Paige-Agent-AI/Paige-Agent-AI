@@ -695,8 +695,16 @@ const PaigeAIChatInner = ({
   // src/lib/paigePromptHandoff.ts. Typed work is kept; an explicitly addressed
   // surface invitation retains its specialist address. Recovery merges are unchanged.
   // The composer accepts writes only once its scope is writable; until then a question waits.
-  const composerWritable = Boolean(draft.writableHandle);
-  useEffect(() => composerWritable ? subscribePaigePromptHandoff((prompt) => setInput((current) => mergeIntoDraft(current, prompt, { preserveAddressee: true }))) : undefined, [composerWritable, setInput]);
+  useEffect(() => {
+    const acceptedHandle = composerScope.writableHandle;
+    if (!acceptedHandle) return;
+    return subscribePaigePromptHandoff(
+      (prompt) => setInput((current) => mergeIntoDraft(current, prompt, { preserveAddressee: true })),
+      // This listener's setter captured this handle. A newer render cannot validate a
+      // handoff through the older setter while passive-effect cleanup is still pending.
+      () => composerDraftHandlesMatch(acceptedHandle, composerScopeRef.current.writableHandle) ? acceptedHandle : null,
+    );
+  }, [composerScope.writableHandle, setInput]);
   const dictationEpoch = requestScopeEpoch;
   const dictationDeliveryEpoch = `${dictationEpoch}:${dictationGeneration}`;
   const [dictationActivity, setDictationActivity] = useState({

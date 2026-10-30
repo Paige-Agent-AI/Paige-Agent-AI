@@ -18,7 +18,10 @@ export type OwnerTaskCaller = {
 export type OwnerTaskReview = { id: string; updatedAt: string; process: JsonObject; acts: JsonObject[] };
 export type OwnerTaskRead = { status: "ready"; items: OwnerTaskReview[]; hasMore: boolean }
   | { status: "loading" | "refused" | "unavailable" };
-export type OwnerTaskControl = { status: "saved"; state: "live" | "paused" }
+export type OwnerTaskAction = "arm" | "pause" | "revise_step";
+export type OwnerTaskRevision = { act_id: string; config: { title: string; description?: string } };
+export type OwnerTaskControl = { status: "saved"; state: "live" | "paused" | "draft";
+  revision?: { changed: boolean; configurationAuditId: string | null; updatedAt: string } }
   | { status: "refused" | "stale" | "busy" | "unsupported" | "unavailable" | "unknown" };
 // Local denial provenance only. Never copied from a resource/Edge response and
 // never accepted by a writer as permission or execution evidence.
@@ -32,6 +35,30 @@ const object = (v: unknown): v is JsonObject => !!v && typeof v === "object" && 
 const instant = (v: unknown): v is string => typeof v === "string" && Number.isFinite(Date.parse(v));
 const uuid = (v: unknown): v is string => typeof v === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
 const canonical = (v: unknown): string => JSON.stringify(v, (_k, x) => object(x) ? Object.fromEntries(Object.keys(x).sort().map(k => [k, x[k]])) : x);
+export function ownerTaskEditableText(v: unknown, max: number): v is string {
+  if (typeof v !== 'string' || v.length > max*2) return false;
+  const chars=[...v];
+  return chars.length<=max && !/[\u202a-\u202e\u2066-\u2069]/.test(v)
+    && !chars.some(char=>{const code=char.charCodeAt(0);return code<32 && ![9,10,13].includes(code) || code>=127 && code<=159;});
+}
+/** Presentation/preflight guard only. The original native writer remains authoritative. */
+export function reviewedOwnerTaskRevision(review: OwnerTaskReview, revision: OwnerTaskRevision): Record<string, unknown>[] | null {
+  const literal = (v: unknown, max: number): v is string => ownerTaskEditableText(v,max) && !/(\{\{|\$\{|\{%|<%)/.test(v);
+  const p = review.process;
+  if (!object(revision) || !uuid(revision.act_id) || Object.keys(revision).some(k => !['act_id','config'].includes(k))
+    || !['draft','paused'].includes(String(p.state)) || p.owner_task_armed_at !== null || !p.created_by
+    || p.trigger_key !== 'contact.created' || !object(p.trigger_config) || Object.keys(p.trigger_config).length
+    || !Array.isArray(p.conditions) || p.conditions.length || !Array.isArray(review.acts)
+    || !review.acts.some(a => a.id === revision.act_id)) return null;
+  const acts = review.acts.map(a => a.id === revision.act_id ? { ...a, config: revision.config } : a);
+  if (acts.length < 1 || acts.length > 20 || new Set(acts.map(a => a.id)).size !== acts.length || acts.some((a,i) =>
+    !uuid(a.id) || a.position !== i+1 || a.action_kind !== 'owner.task' || a.tool_key !== null
+    || Object.keys(a).some(k => !['id','position','action_kind','tool_key','config'].includes(k))
+    || !object(a.config) || !literal(a.config.title,500) || !a.config.title.trim()
+    || Object.keys(a.config).some(k => !['title','description'].includes(k))
+    || Object.prototype.hasOwnProperty.call(a.config,'description') && !literal(a.config.description,10000))) return null;
+  return acts;
+}
 function matches(scope: OwnerTaskScope, current: () => OwnerTaskScope | null) {
   const now = current(); return now?.actorId === scope.actorId && now.tenantId === scope.tenantId && now.epoch === scope.epoch;
 }
@@ -208,12 +235,20 @@ export async function readOwnerTaskAutomations(scope: OwnerTaskScope, caller: Ow
   } catch { return { status: matches(scope, current) ? "unavailable" : "refused" }; }
 }
 /** One deliberate human request. Ambiguous responses require inspection, never automatic replay. */
-export async function controlOwnerTaskAutomation(scope: OwnerTaskScope, review: OwnerTaskReview, action: "arm" | "pause", caller: OwnerTaskCaller, current: () => OwnerTaskScope | null): Promise<OwnerTaskControl> {
+export async function controlOwnerTaskAutomation(scope: OwnerTaskScope, review: OwnerTaskReview, action: OwnerTaskAction, caller: OwnerTaskCaller, current: () => OwnerTaskScope | null, revision?: OwnerTaskRevision): Promise<OwnerTaskControl> {
+  scope = { ...scope };
   const deadline = operationDeadline(scope, current);
   let dispatched = false;
   try {
+    // Capture the reviewed bytes before any awaited admission. A changed form or
+    // mutable source object must not silently change a decision in flight.
+    review = JSON.parse(JSON.stringify(review));
+    revision = revision === undefined ? undefined : JSON.parse(JSON.stringify(revision));
     if (review.process.tenant_id !== scope.tenantId || review.process.id !== review.id || !instant(review.updatedAt) ||
-      !["arm", "pause"].includes(action)) return { status: "refused" };
+      !["arm", "pause", "revise_step"].includes(action)) return { status: "refused" };
+    const proposedActs = action === 'revise_step' && revision ? reviewedOwnerTaskRevision(review,revision) : null;
+    if (action === 'revise_step' && !proposedActs) return { status: 'unsupported' };
+    if (action !== 'revise_step' && revision !== undefined) return { status: 'refused' };
     const admitted = await authority(scope, caller, current, deadline);
     if (admitted !== "ready") return { status: admitted };
     const result = await deadline.wait(() => {
@@ -221,7 +256,8 @@ export async function controlOwnerTaskAutomation(scope: OwnerTaskScope, review: 
       // effect RPC. Once started, interruption means unknown, never a replay.
       dispatched = true;
       return caller.rpc("control_owner_task_automation", { _automation_id: review.id, _action: action,
-        _expected_updated_at: review.updatedAt, _expected_process: review.process, _expected_acts: review.acts });
+        _expected_updated_at: review.updatedAt, _expected_process: review.process,
+        _expected_acts: action === 'revise_step' ? { reviewed_acts: review.acts, revision } : review.acts });
     });
     if (!matches(scope, current)) return { status: "refused" };
     if (result.error) {
@@ -230,6 +266,19 @@ export async function controlOwnerTaskAutomation(scope: OwnerTaskScope, review: 
     }
     const data = result.data, expected = action === "arm" ? "live" : "paused";
     const expectedGrant = action === "arm" ? "confirm" : review.process.granted_lane;
+    if (action === 'revise_step') {
+      const changed = canonical(proposedActs) !== canonical(review.acts);
+      if (!object(data) || data.automation_id !== review.id || data.state !== review.process.state
+        || data.granted_lane !== review.process.granted_lane || data.armed_at !== null
+        || data.execution_started !== false || data.future_events_only !== true || data.changed !== changed
+        || !instant(data.updated_at) || (changed ? data.updated_at === review.updatedAt : data.updated_at !== review.updatedAt)
+        || (changed ? !uuid(data.configuration_audit_id) : data.configuration_audit_id !== null)
+        || canonical(data.process) !== canonical(review.process) || canonical(data.acts) !== canonical(proposedActs)) return { status: 'unknown' };
+      const after = await authority(scope,caller,current,deadline); deadline.check();
+      return after === 'ready' ? {status:'saved',state:review.process.state as 'draft'|'paused',revision:{
+        changed,configurationAuditId:data.configuration_audit_id as string|null,updatedAt:data.updated_at}}
+        : {status:after === 'refused' ? 'refused' : 'unknown'};
+    }
     if (!object(data) || data.automation_id !== review.id || data.state !== expected || data.granted_lane !== expectedGrant ||
       data.execution_started !== false || data.future_events_only !== true || typeof data.changed !== "boolean" ||
       !instant(data.updated_at) || !object(data.process) || !Array.isArray(data.acts) || canonical(data.acts) !== canonical(review.acts) ||

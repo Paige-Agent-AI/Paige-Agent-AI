@@ -381,3 +381,66 @@ describe("Operations host navigation contract", () => {
       expect(document.querySelector("output")?.textContent).toBe("/solo/test-account/operations/work"); }
   });
 });
+
+describe('correct one original inactive task purpose',()=>{
+  const originalAct='11111111-1111-4111-8111-111111111111';
+  beforeEach(()=>{row.acts[0].id=originalAct;});
+  const edit=()=>fireEvent.click(screen.getByRole('button',{name:'Edit task purpose, step 1'}));
+  const field=(id:string)=>document.querySelector<HTMLInputElement|HTMLTextAreaElement>(`input[id$="-${id}"],textarea[id$="-${id}"]`)!;
+  const type=(input:HTMLInputElement|HTMLTextAreaElement,value:string)=>act(()=>{
+    Object.getOwnPropertyDescriptor(input instanceof HTMLInputElement?HTMLInputElement.prototype:HTMLTextAreaElement.prototype,'value')!.set!.call(input,value);
+    input.dispatchEvent(new Event('input',{bubbles:true}));
+  });
+  it.each(['Cancel','Escape'])('%s leaves the original record untouched and restores its opener',choice=>{
+    view();const opener=screen.getByRole('button',{name:'Edit task purpose, step 1'});edit();expect(document.activeElement).toBe(field('title'));
+    type(field('title'),'A local proposal');
+    if(choice==='Cancel')fireEvent.click(screen.getByRole('button',{name:'Cancel'}));else fireEvent.keyDown(field('title'),{key:'Escape'});
+    expect(document.querySelector('form')).toBeNull();expect(document.activeElement).toBe(opener);expect(m.control).not.toHaveBeenCalled();expect(m.refresh).not.toHaveBeenCalled();
+  });
+  it('submits exact literal title and notes to the same original process/act without enabling it',async()=>{
+    m.control.mockResolvedValue({status:'saved',state:'draft',revision:{changed:true,configurationAuditId:'audit',updatedAt:'2026-10-30T12:00:00Z'}});
+    view();edit();type(field('title'),'Review delivery scope');type(field('notes'),'Keep the original commitment.');
+    await act(async()=>{document.querySelector('form')!.dispatchEvent(new Event('submit',{bubbles:true,cancelable:true}));});
+    expect(m.control).toHaveBeenCalledExactlyOnceWith(row,'revise_step',{act_id:originalAct,config:{title:'Review delivery scope',description:'Keep the original commitment.'}});
+    expect(m.refresh).not.toHaveBeenCalled();expect(document.querySelector('form')).toBeNull();
+  });
+  it('preserves absent notes for a genuine no-op',async()=>{
+    row.acts[0].config={title:'Review scope'};view();edit();
+    await act(async()=>{document.querySelector('form')!.dispatchEvent(new Event('submit',{bubbles:true,cancelable:true}));});
+    expect(m.control).toHaveBeenCalledExactlyOnceWith(row,'revise_step',{act_id:originalAct,config:{title:'Review scope'}});
+  });
+  it.each(['','{{contact.name}}','hidden\u202etext'])('keeps unsupported input local: %s',value=>{
+    view();edit();type(field('title'),value);expect((screen.getByRole('button',{name:'Save changes'}) as HTMLButtonElement).disabled).toBe(true);
+    fireEvent.click(screen.getByRole('button',{name:'Save changes'}));expect(m.control).not.toHaveBeenCalled();
+  });
+  it('guards original navigation and refresh until the local edit is cancelled',()=>{
+    let guard:()=>string|null=()=>null;render(<MemoryRouter><OwnerTaskAutomations onNavigationGuardChange={next=>{guard=next??(()=>null);}} /></MemoryRouter>);
+    edit();expect(guard()).toContain('Save or cancel');fireEvent.click(screen.getByRole('button',{name:'Refresh'}));expect(m.refresh).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button',{name:'Cancel'}));expect(guard()).toBeNull();
+  });
+  it.each(['scope','refused','read'])('retires private proposal and editor when %s changes',change=>{
+    const h=view();edit();type(field('title'),'Private proposal');
+    if(change==='scope')m.state.scopeKey='new-context';else if(change==='refused')m.state.read={status:'refused'};else m.state.read={status:'ready',items:[review()],hasMore:false};
+    h.rerender(<MemoryRouter><OwnerTaskAutomations /></MemoryRouter>);expect(document.querySelector('form')).toBeNull();expect(document.body.textContent).not.toContain('Private proposal');expect(m.control).not.toHaveBeenCalled();
+  });
+  it('keeps an unknown proposal visible only in the same authorized context and never repeats it',async()=>{
+    m.control.mockResolvedValue({status:'unknown'});const h=view();edit();type(field('title'),'Original uncertain proposal');
+    await act(async()=>{document.querySelector('form')!.dispatchEvent(new Event('submit',{bubbles:true,cancelable:true}));});
+    m.state.needsRefresh=true;m.state.feedback={action:'revise_step',result:{status:'unknown'}};h.rerender(<MemoryRouter><OwnerTaskAutomations /></MemoryRouter>);
+    expect(screen.getByText('Original uncertain proposal')).toBeTruthy();expect(document.querySelector('form')).toBeNull();expect(m.control).toHaveBeenCalledTimes(1);
+    m.state.scopeKey='foreign-context';h.rerender(<MemoryRouter><OwnerTaskAutomations /></MemoryRouter>);expect(document.body.textContent).not.toContain('Original uncertain proposal');
+  });
+  it('does not pretend to repair multiple unresolved siblings or an active process',()=>{
+    row.acts.push({...row.acts[0],id:'22222222-2222-4222-8222-222222222222',position:2,config:{title:'{{unresolved}}'}});
+    row.acts[0].config={title:'{{also_unresolved}}'};const h=view();expect(screen.queryByRole('button',{name:'Edit task purpose, step 1'})).toBeNull();
+    row.acts.pop();row.process.state='live';h.rerender(<MemoryRouter><OwnerTaskAutomations /></MemoryRouter>);expect(screen.queryByRole('button',{name:'Edit task purpose, step 1'})).toBeNull();expect(m.control).not.toHaveBeenCalled();
+  });
+  it('repairs one unresolved purpose and keeps the original inspection open until correction or cancellation',()=>{
+    row.acts[0].config={title:'{{unresolved}}'};view();
+    const summary=screen.getByText('Inspect saved configuration');fireEvent.click(summary);edit();
+    expect(field('title').value).toBe('{{unresolved}}');expect((screen.getByRole('button',{name:'Save changes'}) as HTMLButtonElement).disabled).toBe(true);
+    const toggle=new MouseEvent('click',{bubbles:true,cancelable:true});act(()=>{summary.dispatchEvent(toggle);});expect(toggle.defaultPrevented).toBe(true);
+    type(field('title'),'Review the original scope');expect((screen.getByRole('button',{name:'Save changes'}) as HTMLButtonElement).disabled).toBe(false);
+    expect(m.control).not.toHaveBeenCalled();fireEvent.click(screen.getByRole('button',{name:'Cancel'}));
+  });
+});

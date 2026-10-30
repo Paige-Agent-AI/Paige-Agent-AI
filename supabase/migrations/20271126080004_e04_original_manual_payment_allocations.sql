@@ -19,7 +19,7 @@ BEGIN
  FOR r IN SELECT * FROM (VALUES
 ('public._sales_invoice_manual_allocation_intent(jsonb)','ec8901155ca379109b5943bd70f7b21f'),
 ('public._sales_invoice_manual_receipt_allocations(public.paige_invoices,public.paige_invoice_payments)','e78b33d1d51b1d8c17917c8b187aab49'),
-('public._sales_invoice_manual_allocations(public.paige_invoices)','3c61f861589053563c036341548117bf'),
+('public._sales_invoice_manual_allocations(public.paige_invoices)','44782c13824bdaf69281ad948d89338c'),
 ('public._sales_invoice_require_manual_allocations(public.paige_invoices,jsonb)','e176660d985e862db589fc11d9c2d4fa')
  ) s(signature,body_hash) LOOP
   SELECT * INTO p FROM pg_catalog.pg_proc WHERE oid=pg_catalog.to_regprocedure(r.signature);
@@ -172,7 +172,7 @@ BEGIN
    IF reverse_row.kind IS DISTINCT FROM 'reversal' OR reverse_row.tenant_id IS DISTINCT FROM payment.tenant_id
     OR reverse_row.invoice_id IS DISTINCT FROM payment.invoice_id OR reverse_row.amount_cents IS DISTINCT FROM payment.amount_cents
     OR reverse_row.currency IS DISTINCT FROM payment.currency OR reverse_row.evidence_kind IS DISTINCT FROM 'manual_recorded'
-    OR reverse_row.provider_operation_id IS NOT NULL THEN RETURN NULL; END IF;
+    OR reverse_row.provider_operation_id IS NOT NULL OR reverse_row.provider_environment IS NOT NULL THEN RETURN NULL; END IF;
    CONTINUE;
   END IF;
   allocations:=public._sales_invoice_manual_receipt_allocations(_invoice,payment);
@@ -507,7 +507,7 @@ BEGIN
  FOR r IN SELECT * FROM (VALUES
 ('public._sales_invoice_manual_allocation_intent(jsonb)','ec8901155ca379109b5943bd70f7b21f'),
 ('public._sales_invoice_manual_receipt_allocations(public.paige_invoices,public.paige_invoice_payments)','e78b33d1d51b1d8c17917c8b187aab49'),
-('public._sales_invoice_manual_allocations(public.paige_invoices)','3c61f861589053563c036341548117bf'),
+('public._sales_invoice_manual_allocations(public.paige_invoices)','44782c13824bdaf69281ad948d89338c'),
 ('public._sales_invoice_require_manual_allocations(public.paige_invoices,jsonb)','e176660d985e862db589fc11d9c2d4fa')
  ) s(signature,body_hash) LOOP
   SELECT * INTO p FROM pg_catalog.pg_proc WHERE oid=pg_catalog.to_regprocedure(r.signature);

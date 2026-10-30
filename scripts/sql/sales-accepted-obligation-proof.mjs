@@ -317,6 +317,7 @@ try{
   check('correction retains original receipt and exact full reversal, never a provider refund',run(`SELECT count(*) FROM paige_invoice_payments WHERE id='${first}' OR (id='${correction}' AND reverses_payment_id='${first}' AND amount_cents=80000 AND evidence_kind='manual_recorded' AND provider_operation_id IS NULL);`)==='2');
   const correctedHistory=inspectReceipt(first,5);
   check('reopened corrected receipt retains its exact original assignments and full reversal identity',correctedHistory.state==='assigned'&&correctedHistory.reversal_payment_id===correction&&JSON.stringify(correctedHistory.allocations)===JSON.stringify(firstCommand.allocations));
+  withPatch(`UPDATE public.paige_invoice_payments SET provider_environment='test' WHERE id='${correction}';`,'allocation_required','provider-tagged correction cannot restore accepted manual obligations');
   const correctionReplay=run(native(correction,correctionCommand));
   check('correction replay does not add another reversal or invoice',correctionReplay.includes(correction)&&version()===5&&run(`SELECT count(*) FROM paige_invoice_payments WHERE reverses_payment_id='${first}';`)==='1'&&run('SELECT count(*) FROM paige_invoices;')==='1');
   expectRefusal(crypto.randomUUID(),reverse(first),'a second correction cannot reverse the same original receipt');

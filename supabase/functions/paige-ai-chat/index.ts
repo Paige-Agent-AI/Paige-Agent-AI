@@ -10075,7 +10075,7 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
             : `Save a new email series draft${a?.name ? ` "${String(a.name).slice(0, 120)}"` : ""}${count} in Marketing › Email › Automations. Nothing is sent.`;
         }
         case "email_series_request_approval":
-          return "File this email series for your decision. Its emails, waits, who enters, when people leave and the sender are locked. You approve it in Marketing › Email; nothing sends until you do. One approval covers everyone who enters this version, within the daily limit, until you pause or stop it. Any later change is a new version that needs its own approval.";
+          return "File this email series for your decision. Its emails, waits, who enters, when people leave and the sender are locked. You approve it in Marketing › Email; nothing sends until you do. One approval covers everyone who enters this version, until you pause or stop it. Any later change is a new version that needs its own approval.";
         case "set_ad_creative_featured": {
           // Name the picture the owner is approving, read on the caller's own session in this business. A
           // card that cannot name it says "this picture" rather than guessing (§13).

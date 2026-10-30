@@ -20,18 +20,18 @@ type Step = { position: number; delay_minutes: number; subject: string; preheade
 /** A database double that remembers what the series draft wrote, so the readback is real. */
 function database(opts: {
   links?: Record<string, unknown>; existing?: Step[]; state?: string; draftError?: unknown; fileError?: unknown;
-  approval?: string; readback?: (steps: Step[]) => Step[]; liveVersion?: boolean;
+  approval?: string; readback?: (steps: Step[]) => Step[]; liveVersion?: boolean; entryMode?: string; eligibleNew?: number;
 } = {}) {
   const calls: { name: string; args: Record<string, unknown> }[] = [];
   let steps: Step[] = opts.existing ?? [];
-  let version: Record<string, unknown> = { id: VERSION, version_no: 1, state: opts.state ?? "draft", entry_mode: "new_contacts",
+  let version: Record<string, unknown> = { id: VERSION, version_no: 1, state: opts.state ?? "draft", entry_mode: opts.entryMode ?? "new_contacts",
     audience: { stages: ["new_lead", "lead"] }, segment_id: null, exit_on_goal: "none", exit_when_unmatched: false };
   let name = "Welcome series";
   const view = () => ({
     sequence: { id: SERIES, name, kind: "welcome", status: "draft", live_version_id: opts.liveVersion ? "66666666-6666-4666-8666-666666666666" : null },
     version: { ...version, steps: opts.readback ? opts.readback(steps) : steps },
     resolves: { ok: true, mode: "connector", from_address: "hello@acme.test", from_name: "Acme" },
-    postal_address: "1 Main St", entry_preview: { matched: 4, eligible: 3, eligible_new: 3, no_address: 1, opted_out: 0, suppressed: 0 },
+    postal_address: "1 Main St", entry_preview: { matched: 4, eligible: 3, eligible_new: opts.eligibleNew ?? 3, no_address: 1, opted_out: 0, suppressed: 0 },
     sending: { daily_cap: 500, remaining_today: 480 }, approval: opts.approval ? { status: opts.approval } : null,
     people: { in_now: 0, completed: 0, left: 0, left_because: {} }, choices: { stages: [], sources: [], tags: [] }, segments: [],
     waiting_to_enter: null,
@@ -75,6 +75,20 @@ describe("email series chat tools", () => {
     const file = EMAIL_SERIES_TOOLS.find((t) => t.function.name === "email_series_request_approval")!.function.description;
     expect(file).toMatch(/does NOT approve, start or send/);
     expect(file).toMatch(/any later change needs a new approval/);
+  });
+
+  it("puts no daily limit before filing a matching series, because none is enforced (owner ruling 2026-10-27)", async () => {
+    // The database still reports the old 500 display figure; 900 people matching now is not a blocker.
+    const db = database({ entryMode: "matching", eligibleNew: 900, existing: [
+      { position: 1, delay_minutes: 0, subject: "Welcome", preheader: "", body_html: markupToHtml("Glad you're here.") }] });
+    const result = await run("read_email_series", { series_id: SERIES }, db);
+    expect(result.outcome).toBe("succeeded");
+    expect(result.content.ready_to_file).toBe(true);
+    expect(result.content.before_filing).toEqual([]);
+    expect(result.content).not.toHaveProperty("daily_limit");
+    expect(result.content).not.toHaveProperty("remaining_today");
+    for (const tool of EMAIL_SERIES_TOOLS) expect(tool.function.description).not.toMatch(/daily|sending limit|a day/i);
+    expect(fs.readFileSync("supabase/functions/_shared/email-series-chat.ts", "utf8")).not.toMatch(/over_daily_cap|daily_cap|daily limit|remaining_today/);
   });
 
   it("is an owner/admin tool, and a new series' create key is not part of what the owner approves", () => {

@@ -665,7 +665,7 @@ export async function readCampaignBriefAssets(input:{caller:CampaignBriefRpcPort
   if(typeof input.briefId!=="string"||!UUID_RE.test(input.briefId)||!UUID_RE.test(input.expectedTenantId))return{ok:false,code:"CAMPAIGN_ASSET_ARGUMENTS_INVALID"};
   const briefId=input.briefId.toLowerCase(),observedAt=input.observedAt??new Date();
   const before=await readCanonicalList({...input,observedAt});
-  if(!before.ok)return{ok:false,code:before.code};
+  if(before.ok===false)return{ok:false,code:before.code};
   if(!before.briefs.some(brief=>brief.id===briefId&&brief.lifecycleStatus!=="archived"))return{ok:false,code:"CAMPAIGN_BRIEF_NOT_FOUND"};
   let response:{data:unknown;error:RpcError};
   try{response=await input.caller.rpc("get_campaign_brief_assets",{_tenant_id:before.tenantId,_brief_id:briefId});}
@@ -689,7 +689,7 @@ export async function readCampaignBriefAssets(input:{caller:CampaignBriefRpcPort
     available.push({kind:row.kind,id:row.id,name:row.name,status:stringValue(row.status),channel:stringValue(row.channel)});
   }
   const after=await readCanonicalList({...input,observedAt});
-  if(!after.ok)return{ok:false,code:after.code};
+  if(after.ok===false)return{ok:false,code:after.code};
   if(!after.briefs.some(brief=>brief.id===briefId&&brief.lifecycleStatus!=="archived"))return{ok:false,code:"CAMPAIGN_BRIEF_NOT_FOUND"};
   if(after.canManage!==body.can_manage)return{ok:false,code:"CAMPAIGN_BRIEF_FORBIDDEN"};
   return{ok:true,tenantId:after.tenantId,briefId,canManage:body.can_manage,links,available,
@@ -707,7 +707,7 @@ export async function executeVerifiedCampaignAssetMutation(input:{caller:Campaig
   if(typeof input.readCommandReceipt!=="function")return fail("CAMPAIGN_BRIEF_RECEIPT_READER_REQUIRED");
   const briefId=a.briefId.toLowerCase(),assetId=a.assetId.toLowerCase(),kind=a.assetKind;
   const before=await readCampaignBriefAssets({...input,briefId});
-  if(!before.ok)return fail(before.code);
+  if(before.ok===false)return fail(before.code);
   if(!before.canManage)return fail("CAMPAIGN_BRIEF_FORBIDDEN");
   let response:{data:unknown;error:RpcError};
   try{response=await input.caller.rpc("configure_campaign_brief_assets",{_tenant_id:before.tenantId,_command:{type:input.tool==="campaign_asset_attach"?"attach_asset":"detach_asset",briefId,assetKind:kind,assetId},_idempotency_key:key,_actor_kind:"paige"});}
@@ -720,7 +720,7 @@ export async function executeVerifiedCampaignAssetMutation(input:{caller:Campaig
   if(!assetObject(result)||result.ok!==true||result.brief_id!==briefId||result.asset_kind!==kind||result.asset_id!==assetId
     ||!(wanted?["attached","already_attached"]:["detached","not_attached"]).includes(String(result.outcome)))return fail("CAMPAIGN_ASSET_WRITE_RESULT_INVALID",true);
   const after=await readCampaignBriefAssets({...input,briefId});
-  if(!after.ok)return fail(after.code,true);
+  if(after.ok===false)return fail(after.code,true);
   if(!after.canManage)return fail("CAMPAIGN_BRIEF_FORBIDDEN",true);
   if(after.links.some(link=>link.briefId===briefId&&link.kind===kind&&link.id===assetId)!==wanted)return fail("CAMPAIGN_ASSET_READBACK_MISMATCH",true);
   let receipt:Record<string,unknown>|null;
@@ -728,7 +728,7 @@ export async function executeVerifiedCampaignAssetMutation(input:{caller:Campaig
   catch{return fail("CAMPAIGN_BRIEF_RECEIPT_READ_FAILED",true);}
   if(!receipt||receipt.ok!==true||receipt.outcome!==result.outcome||receipt.brief_id!==briefId||receipt.asset_kind!==kind||receipt.asset_id!==assetId)return fail("CAMPAIGN_BRIEF_RECEIPT_READ_FAILED",true);
   const current=await readCanonicalList({...input,observedAt:input.observedAt??new Date()});
-  if(!current.ok)return fail(current.code,true);
+  if(current.ok===false)return fail(current.code,true);
   if(!current.canManage||!current.briefs.some(brief=>brief.id===briefId&&brief.lifecycleStatus!=="archived"))return fail("CAMPAIGN_BRIEF_FORBIDDEN",true);
   let recorded=false;
   for(let attempt=0;attempt<2&&!recorded;attempt++){try{recorded=await input.recordRun({tenantId:after.tenantId,actorId:input.actorId,capabilityKey:input.tool,outcome:"capability_succeeded",runId:key});}catch{recorded=false;}}

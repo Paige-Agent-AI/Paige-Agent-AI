@@ -1,0 +1,509 @@
+{
+  "observedAt": "2026-10-30T00:38:57.907Z",
+  "sourceHead": "02a140923d40783737d2c9d3598078ab3e8b8e74",
+  "basis": "Actual product component imports with explicit synthetic Supabase alias; lexical local import closure, not an emitted production bundle or native proof.",
+  "inputs": [
+    {
+      "path": "package-lock.json",
+      "bytes": 509815,
+      "sha256": "54af2870b4d4c167fca773bfad885777689894540ad2e05c7e792c21bbd59e6d"
+    },
+    {
+      "path": "package.json",
+      "bytes": 18007,
+      "sha256": "46039f2fb72a44a390becfc609cdf92d7a174944d11678476800b3c1221b0893"
+    },
+    {
+      "path": "scripts/live-drive/sales-payments/accepted-plan-fixture.ts",
+      "bytes": 5201,
+      "sha256": "73e989b02f93c66b8c12cc40199310de8ca5a1bf3b2fd6d304d010c57500c749"
+    },
+    {
+      "path": "scripts/live-drive/sales-payments/mount/accepted-plan.ts",
+      "bytes": 4550,
+      "sha256": "e6c6f6b02f86d49c2d105b8c9e3751e1f646de80f12f0a9b197a57fea113ed9f"
+    },
+    {
+      "path": "scripts/live-drive/sales-payments/mount/index.html",
+      "bytes": 175,
+      "sha256": "7147f46e42a58adf3d582f998800e2c0ff500607c1e52c5352eadee9d15fe692"
+    },
+    {
+      "path": "scripts/live-drive/sales-payments/mount/main.tsx",
+      "bytes": 4109,
+      "sha256": "bbefd31604d9b8c52612dcb8745dfb3011f8ec6d822714166be3db02bde72d0f"
+    },
+    {
+      "path": "scripts/live-drive/sales-payments/mount/supabase.ts",
+      "bytes": 3212,
+      "sha256": "96be6827fdd3e07489045432f91416ef0b8b105765d36dcfa0400a7caed29801"
+    },
+    {
+      "path": "scripts/live-drive/sales-payments/mount/vite.config.ts",
+      "bytes": 564,
+      "sha256": "7d48478e735218e7498e05bb29e55bec20c0c4631f5981fa0bc38ae896ea7685"
+    },
+    {
+      "path": "src/components/ui/dialog.tsx",
+      "bytes": 3902,
+      "sha256": "9107e63b84d67eafb311c13cb52bc48f32ef3b36eddebe65365b10fdfbd9d2ca"
+    },
+    {
+      "path": "src/hooks/useBeforeUnloadGuard.ts",
+      "bytes": 1662,
+      "sha256": "d4a4b3d02b7cccbea8b615cec0829027854d232db0a94ced6bf29187ec0cfd3e"
+    },
+    {
+      "path": "src/hooks/useTenantContext.tsx",
+      "bytes": 38900,
+      "sha256": "ef4fbf387c068dd3a3a39c9f400c30722c119877644e2dcc6f3656c2aac2a73b"
+    },
+    {
+      "path": "src/index.css",
+      "bytes": 100956,
+      "sha256": "85a3adb5668238e91cdb6c8189488db1fd24ce6698f7456ae23a3de6aa572482"
+    },
+    {
+      "path": "src/integrations/supabase/types.ts",
+      "bytes": 722171,
+      "sha256": "bad22625e15367d95f1be8deaeb7586cd873b302617069b0b91d1a412fc8efdc"
+    },
+    {
+      "path": "src/lib/agency/tierLabels.ts",
+      "bytes": 2903,
+      "sha256": "9eaea544439ce9f1c3568c0c792feaf944b3a13926a0fd62d293a59c6d5b6cbf"
+    },
+    {
+      "path": "src/lib/auth/signOut.ts",
+      "bytes": 8521,
+      "sha256": "27ce12c219727abff8130cb1a1c7de66bce065b4312f44f02e077d91f4ab12f7"
+    },
+    {
+      "path": "src/lib/auth/workspaceEntry.ts",
+      "bytes": 24094,
+      "sha256": "cb5ef5ba9a503e4f245cb04e35ff8af98bd3f69455b93258d2e763112c22d0ca"
+    },
+    {
+      "path": "src/lib/contact-methods.ts",
+      "bytes": 12881,
+      "sha256": "810bf4319fd744f4a27a59d868cb890376c156d9fabd7314a08ebb0c04f09e6d"
+    },
+    {
+      "path": "src/lib/platform/fleetCommunications.ts",
+      "bytes": 689,
+      "sha256": "2118b5eff6cb518d41e7551089ebb1312d3ba268630502ee5eb8b6b59a77b8bd"
+    },
+    {
+      "path": "src/lib/tier/tierFeatures.ts",
+      "bytes": 22407,
+      "sha256": "a1ec9dda16861ef87c6ef7f2832e156cdda774138954ac185dfc8b04930706b2"
+    },
+    {
+      "path": "src/lib/utils.ts",
+      "bytes": 169,
+      "sha256": "d1f1e0d62cb8d8d1e04c26e14de842d8a151f75812d81b046c65b5d1fe8e4b27"
+    },
+    {
+      "path": "src/pages/InvoiceDocument.tsx",
+      "bytes": 5944,
+      "sha256": "dd9b1ec9a0ed6ecb16e820d49b508fc56e700fdd731ac98dd0471e4b6f26df21"
+    },
+    {
+      "path": "src/pages/invoice-document.css",
+      "bytes": 1720,
+      "sha256": "615ce3f3eebdcfd3d018c5181fc45a145eff408f2dcb3d1232115830d6233876"
+    },
+    {
+      "path": "src/solo/data/useSoloBusiness.ts",
+      "bytes": 8284,
+      "sha256": "cfb32db697c719db6c9bd323ef0719beadddb5dbf197d236673f04ebe35be677"
+    },
+    {
+      "path": "src/solo/sales-dialog.tsx",
+      "bytes": 12057,
+      "sha256": "48f23e48f91305649bbeb4fb18b96775e49dcec3c64f4619be69011cf9d94019"
+    },
+    {
+      "path": "src/solo/sales/AcceptedCommercialInspection.tsx",
+      "bytes": 9628,
+      "sha256": "68c6b81da30f12adf48710870f4e1460792e058ae3b7b972610c2314145af6fe"
+    },
+    {
+      "path": "src/solo/sales/CommercialPackageInspection.tsx",
+      "bytes": 5807,
+      "sha256": "24da4b929d39272c6887027075c1aee76f6016e6a06b98cc01c423e1c20e6cfa"
+    },
+    {
+      "path": "src/solo/sales/InvoiceAcceptedPaymentPlan.tsx",
+      "bytes": 11718,
+      "sha256": "0e0b200e89c0e35f2fc222ee94d31445e1dc0fa431b8b14c5230da34a5037676"
+    },
+    {
+      "path": "src/solo/sales/InvoiceAppearanceWorkspace.tsx",
+      "bytes": 10811,
+      "sha256": "54081575e6753d5deca441cda25710c9ffb9eea4eb58cff0f503806d0969f196"
+    },
+    {
+      "path": "src/solo/sales/InvoiceCommandReview.tsx",
+      "bytes": 11227,
+      "sha256": "12ee90322183de91b5cc035552d05c5d1c5d59bdc8872e9e70325e3aeb41d0a5"
+    },
+    {
+      "path": "src/solo/sales/InvoiceCommercialConditions.tsx",
+      "bytes": 6930,
+      "sha256": "afc2379fc14f0da9ce6477f36036ac68e34b03eec0ed6173e3dd30ca2010b2b0"
+    },
+    {
+      "path": "src/solo/sales/InvoiceCommercialSourceAmount.tsx",
+      "bytes": 2436,
+      "sha256": "6c66d248a6e25695f4cd32429d3d094be7da00c8fc2cd5ab03be1e3a7a7f0c39"
+    },
+    {
+      "path": "src/solo/sales/InvoiceDraftEditor.tsx",
+      "bytes": 28103,
+      "sha256": "00eca3f1774dcd30c8e0fd015bba0e413006621dbb6359371fc1803a869b8754"
+    },
+    {
+      "path": "src/solo/sales/InvoiceLifecycleActions.tsx",
+      "bytes": 21178,
+      "sha256": "b5192024bd775e4a4863910a651a17d4726265037454d31f6ff9edbd1de81eff"
+    },
+    {
+      "path": "src/solo/sales/InvoicePaymentRequests.tsx",
+      "bytes": 6037,
+      "sha256": "bb4a858087f499aa1d4d68d478e1aff1ce115cbc34bc44586ed0c78e7e3ac774"
+    },
+    {
+      "path": "src/solo/sales/InvoiceWorkspace.tsx",
+      "bytes": 4012,
+      "sha256": "b3647f9b4ac593e7e70ee5954acd5c3230b20b4c2ea70745b0f0a3daf1e2d89d"
+    },
+    {
+      "path": "src/solo/sales/SalesBillingWorkspace.tsx",
+      "bytes": 22772,
+      "sha256": "606eb4373ead2c808bf19bd194d8834f0e82a9aa50fcb09276e89e1ef7af5340"
+    },
+    {
+      "path": "src/solo/sales/accepted-commercial-inspection.css",
+      "bytes": 2507,
+      "sha256": "0e69ee4b4f16958460020f055f8ad847b5425bacd13b8e8ec43b1f937d31fc44"
+    },
+    {
+      "path": "src/solo/sales/billingAmounts.ts",
+      "bytes": 2669,
+      "sha256": "ee88c50b611b4a4bb88b3f289f51266fd70aae8b9d3533535798e778b3bfd65b"
+    },
+    {
+      "path": "src/solo/sales/billingDrafts.ts",
+      "bytes": 8144,
+      "sha256": "175a26182929569bb7874423c5ee1d601c72776f7066a89d2b4c09aa97d752d9"
+    },
+    {
+      "path": "src/solo/sales/collections/CollectionCommandReview.tsx",
+      "bytes": 11469,
+      "sha256": "150af284c23272cb9dd7acaf035f4217dfaafac3d4a23f5006c419691b694395"
+    },
+    {
+      "path": "src/solo/sales/collections/api.ts",
+      "bytes": 10261,
+      "sha256": "e55ae8b52c6ab33f2bae2aefd478323f7bfeee2803d9bd1fef66273498de83db"
+    },
+    {
+      "path": "src/solo/sales/collections/collections.css",
+      "bytes": 13966,
+      "sha256": "2fd12e9d285c27799b4faa316ce79c83eda1c7f964ddcc25b53e7bf9dec2e1a7"
+    },
+    {
+      "path": "src/solo/sales/collections/consequence.ts",
+      "bytes": 2028,
+      "sha256": "18db7ecce0a8e8e421b31e8cede058dab23e60aec1406c34c67d2e51b3e6af6b"
+    },
+    {
+      "path": "src/solo/sales/collections/presentation.ts",
+      "bytes": 1828,
+      "sha256": "e6e0cf5d0021dcf12d5833774c642f4645c5e50b43a73a997f292eb8a294fb9f"
+    },
+    {
+      "path": "src/solo/sales/customerPaymentRequest.ts",
+      "bytes": 2806,
+      "sha256": "9f852311b93775017f681a0351f530b89b94ba6dfb90472bb4706274ff0fa888"
+    },
+    {
+      "path": "src/solo/sales/invoice-accepted-payment-plan.css",
+      "bytes": 3117,
+      "sha256": "2554872729287f6bb7a566e089087372a8422a40529a9d755f72dac16ed78c25"
+    },
+    {
+      "path": "src/solo/sales/invoice-appearance.css",
+      "bytes": 4510,
+      "sha256": "917b39dea9368fcf5b46b3fd2d187bbd5a43d27803d59be5bc384b6ec253c500"
+    },
+    {
+      "path": "src/solo/sales/invoice-draft-editor.css",
+      "bytes": 13966,
+      "sha256": "0e460fec1caf8e71147c557798810e546fe855b7f8fac9619a7345d9ad830b5f"
+    },
+    {
+      "path": "src/solo/sales/invoiceDeliveryCopy.ts",
+      "bytes": 1655,
+      "sha256": "7323776889e91b63f430b824828032d52b9b8b56eefd5d87e1a450b806028b93"
+    },
+    {
+      "path": "src/solo/sales/invoiceDraftApi.ts",
+      "bytes": 4168,
+      "sha256": "d6fdffd9bba7b2722bb94dfa17513f472c8d6a9cc3cd81287b5ebbc4274e09f2"
+    },
+    {
+      "path": "src/solo/sales/invoiceDraftSnapshot.ts",
+      "bytes": 10741,
+      "sha256": "55b275a2454695a5091e8bf106ec6233776fd443e5dbf7e29a54d8ef88ce675d"
+    },
+    {
+      "path": "src/solo/sales/invoiceLifecycleApi.ts",
+      "bytes": 4324,
+      "sha256": "24b30dd5617e77e483f591d52b1053dc888c7c976ff81fd842c4cc8a3af9cb58"
+    },
+    {
+      "path": "src/solo/sales/invoicePaymentCopy.ts",
+      "bytes": 1103,
+      "sha256": "73c9e2a8ae875e15d4ee4ffe4845c5096405acae942ed4723de40020b15a8a11"
+    },
+    {
+      "path": "src/solo/sales/invoicePdf.ts",
+      "bytes": 955,
+      "sha256": "6bd30bf518601694c98d67a57aa7edf67a907d32aee905f513bd65ca88498013"
+    },
+    {
+      "path": "src/solo/sales/invoicePreferences.ts",
+      "bytes": 1617,
+      "sha256": "f0be2042bd3acac3f31fb4da0fefa4f85022cce0324eb61c9a80999edc61c420"
+    },
+    {
+      "path": "src/solo/sales/sales-billing.css",
+      "bytes": 23014,
+      "sha256": "707ab36fb8573c0f00b31d8b12a28fea2b33ab8277f19f50309076a1fb38132e"
+    },
+    {
+      "path": "src/solo/sales/useFocusedSalesInvoice.ts",
+      "bytes": 6645,
+      "sha256": "fae9550c13d4c4f05e5668b6b746b3974f925b1ee0409941dc6a04aaf0f84ff4"
+    },
+    {
+      "path": "src/solo/sales/useInvoiceBillingSources.ts",
+      "bytes": 7228,
+      "sha256": "65d4cb5c1017cc525393b0b65e10aa45a4a8b6738cff41fdd27ddb7994fae555"
+    },
+    {
+      "path": "src/solo/sales/useInvoiceCommercialTermsSources.ts",
+      "bytes": 4734,
+      "sha256": "ddd057446109b93b6ec2991524f4fcaa388e0a5322c24fb77e87651013e9b1c7"
+    },
+    {
+      "path": "src/solo/settings-contract.ts",
+      "bytes": 6324,
+      "sha256": "dac7493f3c3c665d3697cf68b54537af435ce9548aa06fc5a4801e96f44e1656"
+    },
+    {
+      "path": "src/solo/solo-campaigns.css",
+      "bytes": 116892,
+      "sha256": "285437c02b85aa850a1337f1bfd1f185e87ba15d6ffa67fdb5cdc31595d0d006"
+    },
+    {
+      "path": "src/solo/solo-tokens.css",
+      "bytes": 16720,
+      "sha256": "77edc9fc35a6d2dab87318996fbb0dc6d80a0a04115d1757016c10da2c7b3197"
+    },
+    {
+      "path": "src/solo/useCatalogOffers.ts",
+      "bytes": 30251,
+      "sha256": "4afdb0eaf5c05d9780d7c398ca7a0b05470bc2a47e0e43f48b9c06e71d564bcd"
+    },
+    {
+      "path": "src/solo/useSalesInvoiceDrafts.ts",
+      "bytes": 5317,
+      "sha256": "4dc427590e392b589069f33c57a8f8cd15b1c72576e6965b5797b3d6bc3f08e5"
+    },
+    {
+      "path": "src/solo/useSoloCommercialTerms.ts",
+      "bytes": 28553,
+      "sha256": "e3223a2fd9e912771e4da9b93a9d266489f3eb5b5430d706dd973b652f40f493"
+    },
+    {
+      "path": "supabase/functions/_shared/agreements/accepted-commercial-read.ts",
+      "bytes": 4491,
+      "sha256": "55f1366165b196a6c4dac31a340e68f0148161fee3813434efa44db86e593029"
+    },
+    {
+      "path": "supabase/functions/_shared/agreements/commercial-engagement.ts",
+      "bytes": 861,
+      "sha256": "6e70aff3ff4fc023c4f0bc3890d221abc4f0cdd51a21abe5023eacf97820d574"
+    },
+    {
+      "path": "supabase/functions/_shared/agreements/commercial-presentation.ts",
+      "bytes": 9257,
+      "sha256": "427b30c45bdba3e7905770af54f2812091bccf3b4459aa27ee57ab07328ab7bd"
+    },
+    {
+      "path": "supabase/functions/_shared/agreements/preparation-json.ts",
+      "bytes": 871,
+      "sha256": "d009e8fa5b07e9deb542076fdcbb24dda1d778e1d1c6fb2d39b15b67aa73ffd8"
+    },
+    {
+      "path": "supabase/functions/_shared/agreements/token.ts",
+      "bytes": 5368,
+      "sha256": "079fe34a7b8d37410fcbfc6193109058c3ac527b5f250eefb51018b9e9c2d6b2"
+    },
+    {
+      "path": "supabase/functions/_shared/canonical-app-url.ts",
+      "bytes": 8625,
+      "sha256": "6939c2205b2b4c04bb2befaa2fc2b314848754723cb72278ffb425e658274adf"
+    },
+    {
+      "path": "supabase/functions/_shared/sales-collections/amount-basis.ts",
+      "bytes": 5065,
+      "sha256": "149b2779e415ef44193f8323d64b377aa974152982f230b22a499b5099b1bdfa"
+    },
+    {
+      "path": "supabase/functions/_shared/sales-collections/contract.ts",
+      "bytes": 13717,
+      "sha256": "0d538a7c9b51f2065a36bae4c70095ec622971202807dc9b97766b9971f01c64"
+    },
+    {
+      "path": "supabase/functions/_shared/sales-collections/model.ts",
+      "bytes": 6290,
+      "sha256": "21ab19f168ab8063e9f1c5cdb919185acdd23b641c6041842c93d7dc1edec8a6"
+    },
+    {
+      "path": "supabase/functions/_shared/sales-collections/primitives.ts",
+      "bytes": 1235,
+      "sha256": "945e7794c62defde7da83718b1c1910afeb805bed080ee73903ce451e2b5ac91"
+    },
+    {
+      "path": "supabase/functions/_shared/sales-commercial/conditions.ts",
+      "bytes": 4395,
+      "sha256": "4d869fa15f8a479386e745f758bc966e27bad012546101e095771f16fc588da2"
+    },
+    {
+      "path": "supabase/functions/_shared/sales-commercial/effectuation-command.ts",
+      "bytes": 5974,
+      "sha256": "dbb81094e9b7903e9458533c7e81dad71f4f0fc0d11d51931fdaba36ad26aad1"
+    },
+    {
+      "path": "supabase/functions/_shared/sales-commercial/invoice-amounts.ts",
+      "bytes": 1863,
+      "sha256": "9f32a07a477a33414a729d283d8f624c95d28034bf366bbf7b4d85f904e72006"
+    },
+    {
+      "path": "supabase/functions/_shared/sales-commercial/package-projection.ts",
+      "bytes": 9689,
+      "sha256": "e65a4549d40ee09482aaa36033367f898bafc64e4eae38caf9f7639db70bbb51"
+    },
+    {
+      "path": "supabase/functions/_shared/sales-commercial/terms-command.ts",
+      "bytes": 3844,
+      "sha256": "6d663e9766f5e7feb7811b921b6a517db33bf629e728831687fc4c8e0e1bd98e"
+    },
+    {
+      "path": "supabase/functions/_shared/sales-commercial/terms-reference.ts",
+      "bytes": 890,
+      "sha256": "d9048bb3aae0e7507930c5d7257c7398614e966792868d0bfef04e4c5d3d1b5f"
+    },
+    {
+      "path": "supabase/functions/_shared/sales-invoice-command/contract.ts",
+      "bytes": 6708,
+      "sha256": "b24ca5db8fabb6d3f4502c06c46a02e46789f9524051a860c39f79c3a26f0c14"
+    },
+    {
+      "path": "supabase/functions/_shared/sales-invoice-document.ts",
+      "bytes": 23683,
+      "sha256": "c2ef6e35741a8275707bec6a01419ea5e0c7eda0ae36b311c9a48b1f1b744360"
+    },
+    {
+      "path": "supabase/functions/_shared/sales-payments/accepted-obligation-read.ts",
+      "bytes": 4699,
+      "sha256": "ef059d79b670f1e817c341f26f4b58e293b1c83045922b829498240eaf22d4dd"
+    },
+    {
+      "path": "supabase/functions/_shared/sales-payments/accepted-obligation.ts",
+      "bytes": 2997,
+      "sha256": "1d0b10a9f447f04207d3dfdb27556610428af3cd5049fbe3b8d1a7fd704dc9fb"
+    },
+    {
+      "path": "supabase/functions/_shared/sales-payments/balance-projection.ts",
+      "bytes": 869,
+      "sha256": "810271a4ee5c856948772ea6444b58d18896eab11514175cd47f720a2198f2a7"
+    },
+    {
+      "path": "supabase/functions/_shared/sales-payments/merchant.ts",
+      "bytes": 4425,
+      "sha256": "0e3e07cf5aba43e6c360a6102a068743cf9b21b113174c33ee512430ff5a6dd2"
+    },
+    {
+      "path": "supabase/functions/_shared/sales-payments/payment-contract.ts",
+      "bytes": 5986,
+      "sha256": "a7155deb1082d19032501a9aa08156cbbf990e0b4832fc939952a9153fad064f"
+    },
+    {
+      "path": "supabase/functions/_shared/sales-payments/request-command.ts",
+      "bytes": 10088,
+      "sha256": "df42bd2bb09f0e8f1c8838a6f8db994d95255914059a9e2809ce9344d21f719e"
+    },
+    {
+      "path": "supabase/functions/_shared/solo-classification.ts",
+      "bytes": 434,
+      "sha256": "51daa30a31f55912ecda5aa00847aee82b78dfa61050f99c3e8e4c43a63e3245"
+    }
+  ],
+  "assets": [
+    {
+      "path": "docs/evidence/ui-delivery/assets/e04-accepted-payment-plan-workspace/desktop.jpg",
+      "bytes": 41136,
+      "sha256": "803cbc82d914f52463744249938141f167697c4a91ce3c8bc565e189a76b6dda"
+    },
+    {
+      "path": "docs/evidence/ui-delivery/assets/e04-accepted-payment-plan-workspace/review-desktop.jpg",
+      "bytes": 47091,
+      "sha256": "b4ef0b83af73b8b12c23ade4275ea0dd7e45bf8965f1f55a5436640dd21d01ad"
+    },
+    {
+      "path": "docs/evidence/ui-delivery/assets/e04-accepted-payment-plan-workspace/narrow-390.jpg",
+      "bytes": 43324,
+      "sha256": "277ff00bf20f79b52a26c2e55bf0369283ef83d8a1b725543b49ff8faca59dbf"
+    },
+    {
+      "path": "docs/evidence/ui-delivery/assets/e04-accepted-payment-plan-workspace/review-390.jpg",
+      "bytes": 46919,
+      "sha256": "1243691e030fa70ac6cfe82593995dc835987fc5114126906b64a2f70dfc7c0c"
+    },
+    {
+      "path": "docs/evidence/ui-delivery/assets/e04-accepted-payment-plan-workspace/dark-320.jpg",
+      "bytes": 33693,
+      "sha256": "9677f98c3c586aacc833bb702bb200d804c8ad305cfc40f167654550a4905d66"
+    },
+    {
+      "path": "docs/evidence/ui-delivery/assets/e04-accepted-payment-plan-workspace/state-proof.json",
+      "bytes": 14220,
+      "sha256": "6f9d9eb61c9ce8b5e73eacd3ef663ea8f34ee468bff7e3a00ee6087b43a3a1c5"
+    }
+  ],
+  "invalidExcluded": [
+    "first stale-compositor screenshots",
+    "first dark query rendered light due fixture forcedTheme/resolvedTheme mismatch",
+    "aborted in-progress review navigation",
+    "old prototype screenshots are not product proof"
+  ],
+  "limits": [
+    "CSS frames, no native viewport command",
+    "390 captures used earlier960px frame height;320 corrected frame680px",
+    "only outer-frame geometry measured for embedded cases",
+    "no full SOLO/two cohort/real native or provider acceptance"
+  ],
+  "postRenderChange": {
+    "path": "src/solo/sales/invoice-accepted-payment-plan.css",
+    "renderedSha256": "2554872729287f6bb7a566e089087372a8422a40529a9d755f72dac16ed78c25",
+    "currentSha256": "7370aefe94c41af89aa7a1b4895b2c00f34240edad144d6f2c02f8ff55a7b9c8",
+    "reason": "Required full changed-file design scanner rejected decorative thick side border; source divider/held outline now use thin neutral rules. No behavior or amount/approval/source change.",
+    "visualVerification": "UNVERIFIED: three existing-browser local-tab attach/recovery attempts stalled/reset; original renders retained as historical exact source, no new browser engine.",
+    "requiredNext": "Reinspect changed plan source and held blocks using original browser, then authenticated original production read when available."
+  }
+}

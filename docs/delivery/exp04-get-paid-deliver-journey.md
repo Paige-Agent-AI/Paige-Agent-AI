@@ -1,3 +1,88 @@
+# C131 — accepted payment-plan selection in the original invoice workspace (2026-10-30 UTC)
+
+**Release correction:** first CI full-file Impeccable scan rejected the new CSS side-tab. Initial local scan had omitted CSS; same full ten-file scan reproduced it. Two neutral-border rules repair the finding, full scan0; no gate exclusion. Actual post-refinement rendering is UNVERIFIED after three browser attach/recovery timeouts/reset. Earlier exact product-source renders remain bounded evidence; final style/authenticated proof remains owed.
+
+**Implementation/local proof; not released or customer accepted.** Same complete O1–O12 destination and owner-recalibrated sequence: connected O1–O4, O5/O9, then O6–O8/O10–O12. No new agent, platform lane, financial authority or activation.
+
+The owner can inspect native accepted economics, dated deposit/installments and original remaining allocations, select one exact positive obligation and continue through the existing HIGH invoice review. No caller amount or due date replaces its immutable reference. The original operation list blocks a competing request; Cancel retains source/selection and restores focus after that list rereads. Pending/expired account review now has a focused return without forgetting an uncertain operation. Scope/actor/role/version changes retire the local accepted source. The caller-JWT SDK consumer reuses the retained decoder and distinct native10 owner admission; no permission logic is copied.
+
+The new selector is mounted by the original SalesBillingWorkspace→InvoiceWorkspace→InvoiceLifecycleActions chain for eligible existing and future SOLO tenants; no hard-coded customer dispatch, tenant backfill, provisioning change or new schema is required by this consumer. Neutral UUIDs are confined to test/render ports. Existing/new-account authenticated evidence remains owed. Original agreement, principal, invoice, payment operations/claims, HIGH approval, provider, Rail and native history stay authoritative.
+
+Local 150 assertions/10 suites pass, including all original retained-reader/inspection and invoice cases plus source/selector/composite regressions. Full canonical type ratchet: baseline10/current6, no new error; baseline unchanged. Strict scoped lint and pinned Impeccable checks pass. Initial genuine type errors and a corrected test-port expectation remain in private diagnostics, not waived. Actual component desktop and narrow source→selection→exact original review→keyboard Cancel/return, loading/cancel, source-held/TEST/stale/error, denied/signed-out/session-retirement paths are rendered with explicit synthetic SDK ports and network-denying CSP. This is NOT signed-in/native/provider or Central QA acceptance. See [bounded UI proof](../evidence/ui-delivery/e04-accepted-payment-plan-workspace.md).
+
+The original #3099 native10 release now has production source/configuration proof after one unchanged normal Edge retry; #3092 bounded MERIT source navigation/reload proof remains separate. Their single additive Master closeout preserves all original history. Normal received main includes E09 native11 and E05 source/docs releases; preserve E05 Task12 and original E04 private financial-currentness13. EXP09's native11 producer handoff is received; private service-actor currentness factor13 and canonical exact-string amount formatting remain unbuilt producer dependencies for the next connected financial increment. No E09 Portal source takeover or relaxed Progress authority.
+
+**Not complete O3/O4:** manual/split/correction/reversal allocations, schedule amendments and initial conversational target discovery/schema are still missing. Legacy generic full/partial requests remain their original separate paths and are not represented as accepted installment targeting. Complete signed-to-obligation/client/merchant/provider behavior, production selector read/approval/recovery, two cohorts/all roles and remaining twelve outcomes remain open. No request initiated here is a settlement or completed service. Next: final scoped source review/exact-head CI/normal release/readback, then canonical allocation/revision and financial-currentness contracts before moving through O5/O9.
+
+---
+
+# C130 — accepted-obligation foundation released; invoice consumer next (2026-10-29 UTC)
+
+The original O3/O4 foundation [#3099](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3099)
+is normally merged at `218c7fd9e3e4662df3d5813991623a5ab944bec1`, reviewed head
+`5533abc346c69b777c378cfd03402227f3874b52`, final AUTHOR-REVIEW / LOWER ASSURANCE
+`5706079173`. All 13 exact check runs and both web statuses passed. Actual merge
+tree `137633b89c66dc14526612eac97232ddc37ffc75` equals the inspected receiving
+union; all 28 reviewed leaves and 18,033 incoming outside-owned leaves are exact.
+
+Normal migration workflow `40970247517` / job `123785126946` succeeded. Production
+read-only catalogue observes `20271126010010` exactly once/frontier10; eight relevant
+function bodies, owner, security, search path, defaults and ACL match reviewed
+source. Original accepted-reader/native billing and relationship authority remain intact.
+
+Normal Edge workflow `40970247500` first uploaded but correctly held its marker:
+one importer still had older source. The supported API read confirmed that upload
+acknowledgment was insufficient. ONE unchanged normal failed-job retry, attempt2 /
+job `123790025308`, succeeded. Independently downloaded artifact `12940657290`
+has ZIP SHA256 `9e28c58f4a0bb40783903c81226d4e94449bc07925353f907be73569418f9dc5`;
+all 11 selected functions and their actual configuration match. Chat592/JWTtrue
+has 309 raw/emitted leaves; invoice-command217/JWTtrue and orchestrator169/JWTtrue
+are verified. Current selected metadata matches. Original scratch-cleanup permission
+warning and failed attempt/artifact are retained; no manual marker or privilege change.
+The ordinary db-live and edge-live tags both advanced through their original gates.
+
+Web `dpl_4wc2qKWMAUbHCoJf4CiKzBwZJuXZ` is READY/exact218c. Canonical public build
+`218c7fd9e3e4662df3d5813991623a5ab944bec1-mvu5ezf1`, app and seven root assets
+return200/customerUpdate:null. Actual Sales-imported `growth2-CroyC1N0.js`
+(`706b726db7a626bd24d89bc53cde9e491f2b055fe23ee634121152e272a27fab`)
+contains the original recovery, accepted-selector parser and async-ready contract.
+The ordinary Vercel alias requires existing Authentication for anonymous reads;
+no both-origin200 or bypass claim. Initial guessed wrapper locations and a bounded
+incomplete graph are excluded; source was located through the actual Sales imports.
+
+This is source/native/web/Edge delivery, **not a completed installment lifecycle**.
+No signing, sending, money movement, provider activation or service acceptance occurred.
+Native11 remains EXP09's original consumer, native12 EXP05's Task work; the
+acknowledged private financial-currentness factor13 is still unbuilt.
+
+## Next connected invoice consumer — LOCAL, unmounted
+
+Same full O1–O12 and calibrated sequence. The next original caller-JWT consumer
+uses native10's distinct admission and the SAME extracted retained-record decoder.
+Its old owner RPC/name/closed DTO/digest validation is preserved; the entire original
+validation tail is byte-exact. Exact source/selector/date/amount plus current
+invoice/client/lifecycle/draft/issued context must match. Native remaining amounts
+are retained; no schedule, allocation or date arithmetic is added.
+
+Thirteen causal new cases first failed while all 19 incumbent reader cases passed;
+the completed transport now passes all63 old/new cases. The original accepted
+inspection/package UI's 23 cases, strict frozen Deno2.9.8 and scoped lint also pass.
+These are local synthetic tests, not native/provider or customer acceptance.
+
+Before product UI, the throwaway framework-native flow exercises inline plan
+inspection, an adjacent selected-row consequence and the existing invoice approval
+modal. Actual local source/TEST/allocation holds, failures, role/allocated variants,
+keyboard review, exact consequence, interruption recovery and return focus were
+observed. The viewport-control attempt stalled and is INVALID/EXCLUDED; narrow,
+full-shell/native/AT/real-role proof is still owed. No new schedule-selection UI is
+mounted or claimed released yet.
+
+Learning retained in the original packet: provider acknowledgment cannot replace
+original complete-source readback; preserve the first failure and repeat only the
+unchanged normal path after diagnosis. Public wrapper names do not identify the
+changed component's chunk; inspect the actual mounted import chain. Do not promote
+these delivery observations into payment, capability, algorithm or full Experience acceptance.
+
 # C129 — accepted-obligation source and same-operation recovery (2026-10-29 UTC)
 
 Keep the owner's calibrated order below. MERIT #3092 is now merged at

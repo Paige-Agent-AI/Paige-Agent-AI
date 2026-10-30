@@ -377,23 +377,37 @@ export async function responsesCompletion(body: ChatShapeBody, opts: ResponsesCa
  * readers that do not know it ignore it. A failure mid-stream is reported (trace status "error") and the
  * stream still terminates with [DONE] — never a hang, never a fabricated finish.
  */
-export async function responsesStream(body: ChatShapeBody, opts: ResponsesCallOpts, trace?: TraceCtx): Promise<{ ok: boolean; status: number; body?: ReadableStream<Uint8Array>; error?: string; failureClass?: ProviderFailureClass }> {
+export interface ResponsesStreamOpts extends ResponsesCallOpts {
+  /** Trusted caller cancellation; never supplied by model/request JSON. */
+  signal?: AbortSignal;
+}
+
+export interface ResponsesAcquisition {
+  ok: boolean;
+  failureClass?: ProviderFailureClass;
+  aborted?: boolean;
+}
+
+export async function responsesStream(body: ChatShapeBody, opts: ResponsesStreamOpts, trace?: TraceCtx): Promise<{ ok: boolean; status: number; body?: ReadableStream<Uint8Array>; error?: string; failureClass?: ProviderFailureClass; acquisition?: Promise<ResponsesAcquisition> }> {
   const req = buildResponsesRequest(body, opts);
   const key = openaiKey();
   const started = Date.now();
   const doFetch = opts.fetchImpl ?? fetch;
+  if (opts.signal?.aborted) return { ok: false, status: 0, failureClass: "unknown" };
+  const deadline = AbortSignal.timeout(MODEL_CALL_DEADLINE_MS);
+  const signal = opts.signal ? AbortSignal.any([opts.signal, deadline]) : deadline;
   let resp: Response;
   try {
     resp = await doFetch(`${baseUrl()}${RESPONSES_PATH}`, {
       method: "POST",
       headers: { "content-type": "application/json", authorization: `Bearer ${key}` },
       body: JSON.stringify({ ...req, stream: true }),
-      signal: AbortSignal.timeout(MODEL_CALL_DEADLINE_MS),
+      signal,
     });
   } catch (e) {
     const m = String((e as Error)?.message ?? e).slice(0, 500);
     emitTrace(trace, { model: opts.model, status: "error", started, input: body.messages, error_class: "network", error_message: m });
-    return { ok: false, status: 0, error: m, failureClass: classifyProviderFailure({ provider: "openai", status: 0, transport: (e as Error)?.name === "TimeoutError" ? "timeout" : "network" }) };
+    return { ok: false, status: 0, error: m, failureClass: opts.signal?.aborted ? "unknown" : classifyProviderFailure({ provider: "openai", status: 0, transport: (e as Error)?.name === "TimeoutError" ? "timeout" : "network" }) };
   }
   if (!resp.ok || !resp.body) {
     const f = resp.ok ? { detail: "missing_body", failureClass: "provider_outage" as ProviderFailureClass } : await failureOf(resp);
@@ -404,6 +418,19 @@ export async function responsesStream(body: ChatShapeBody, opts: ResponsesCallOp
   const enc = new TextEncoder();
   const dec = new TextDecoder();
   const upstream = resp.body.getReader();
+  // The existing serialized parser owns acquisition truth too. A role/status
+  // frame is not an answer; text, tools, refusal, reasoning or uncertainty
+  // irrevocably commits this attempt. No second parser or buffered answer.
+  let resolveAcquisition!: (value: ResponsesAcquisition) => void;
+  let acquired = false, acquisitionFailed = false;
+  const acquisition = new Promise<ResponsesAcquisition>((resolve) => { resolveAcquisition = resolve; });
+  const acquire = (value: ResponsesAcquisition) => {
+    if (acquired) return false;
+    acquired = true;
+    resolveAcquisition(value);
+    return true;
+  };
+  let onAbort: (() => void) | undefined;
   // Coalesce while the governed consumer is busy checking authority, irrespective
   // of provider packet boundaries. Keep at most one queued chunk and one pending
   // byte batch; never wait for another provider packet when the consumer is ready.
@@ -442,6 +469,15 @@ export async function responsesStream(body: ChatShapeBody, opts: ResponsesCallOp
 
   const stream = new ReadableStream<Uint8Array>({
     start(controller) {
+      onAbort = () => {
+        cancelled = true;
+        batchBytes = 0;
+        acquire({ ok: false, failureClass: "unknown", aborted: opts.signal?.aborted === true });
+        wakeCapacity?.(); wakeCapacity = null;
+        void upstream.cancel(signal.reason).catch(() => {});
+        controller.error(signal.reason);
+      };
+      signal.addEventListener("abort", onAbort, { once: true });
       // start must return promptly so pull can wake a pump waiting for capacity.
       const pump = async () => {
       let buf = "";
@@ -487,7 +523,7 @@ export async function responsesStream(body: ChatShapeBody, opts: ResponsesCallOp
       send(controller, { choices: [{ index: 0, delta: { role: "assistant" }, finish_reason: null }] });
       flush(controller);
       try {
-        while (true) {
+        readLoop: while (true) {
           const { done, value } = await upstream.read();
           if (done) break;
           buf += dec.decode(value, { stream: true });
@@ -499,8 +535,13 @@ export async function responsesStream(body: ChatShapeBody, opts: ResponsesCallOp
             const js = t.slice(5).trim();
             if (!js || js === "[DONE]") continue;
             let ev: any;
-            try { ev = JSON.parse(js); } catch { continue; }
+            try { ev = JSON.parse(js); } catch { acquire({ ok: true }); continue; }
             const type: string = ev?.type ?? "";
+            const output = ev?.response?.output;
+            if (output != null && (!Array.isArray(output) || output.length > 0)) acquire({ ok: true });
+            // Only these known metadata/terminal events are safe to inspect
+            // before committing the attempt. Future/unknown events abstain.
+            if (!["response.created", "response.in_progress", "response.completed", "response.incomplete", "response.failed", "error"].includes(type)) acquire({ ok: true });
             if (type === "response.created" || type === "response.in_progress") {
               if (typeof ev.response?.model === "string") servedModel = ev.response.model;
             } else if (type === "response.output_text.delta" && typeof ev.delta === "string") {
@@ -523,13 +564,29 @@ export async function responsesStream(body: ChatShapeBody, opts: ResponsesCallOp
             } else if (type === "response.output_item.done" && ev.item?.type === "reasoning") {
               await send(controller, { choices: [{ index: 0, delta: { paige_provider_items: [ev.item], paige_provider: providerTag(opts.model) }, finish_reason: null }] });
             } else if (type === "response.completed" || type === "response.incomplete") {
+              acquire({ ok: true });
               finalResponse = ev.response;
               if (typeof ev.response?.model === "string") servedModel = ev.response.model;
             } else if (type === "response.failed") {
               finalResponse = ev.response;
               failure = String(ev.response?.error?.message ?? "response failed").slice(0, 500);
+              const error = ev.response?.error;
+              const failureClass = ev.response?.status === "failed" ? classifyProviderFailure({
+                provider: "openai", status: resp.status,
+                errorCode: typeof error?.code === "string" ? error.code : null,
+                errorType: typeof error?.type === "string" ? error.type : null,
+              }) : "unknown";
+              acquisitionFailed = acquire({ ok: false, failureClass });
+              if (acquisitionFailed) { void upstream.cancel().catch(() => {}); break readLoop; }
             } else if (type === "error") {
               failure = String(ev.message ?? ev.error?.message ?? "stream error").slice(0, 500);
+              const error = ev.error ?? ev;
+              acquisitionFailed = acquire({ ok: false, failureClass: classifyProviderFailure({
+                provider: "openai", status: resp.status,
+                errorCode: typeof error?.code === "string" ? error.code : null,
+                errorType: typeof error?.type === "string" ? error.type : null,
+              }) });
+              if (acquisitionFailed) { void upstream.cancel().catch(() => {}); break readLoop; }
             }
           }
           if ((controller.desiredSize ?? 0) > 0) flush(controller);
@@ -543,6 +600,7 @@ export async function responsesStream(body: ChatShapeBody, opts: ResponsesCallOp
           failure = `response_${typeof finalResponse.status === "string" ? finalResponse.status.slice(0, 40) : "status_missing"}`;
         }
         const truncated = !finalResponse && !failure; // the stream ended without a terminal event
+        acquire({ ok: !streamErrored && !cancelled && !failure && !truncated, failureClass: "unknown", aborted: opts.signal?.aborted === true });
         const stop = stopFor(finalResponse?.status, finalResponse?.incomplete_details?.reason, refused, nextTool > 0);
         const errored = streamErrored || cancelled || !!failure || truncated;
         try {
@@ -564,14 +622,17 @@ export async function responsesStream(body: ChatShapeBody, opts: ResponsesCallOp
           usage: readUsage(finalResponse?.usage),
           input: body.messages,
           output: outText,
-          error_class: streamErrored || cancelled ? "stream_interrupted" : failure ? "response_failed" : truncated ? "stream_truncated" : null,
+          error_class: acquisitionFailed && failure ? "response_failed" : streamErrored || cancelled ? "stream_interrupted" : failure ? "response_failed" : truncated ? "stream_truncated" : null,
           error_message: failure,
           stop_reason: errored || cancelled ? undefined : stop.stop_reason,
         });
+        if (onAbort) signal.removeEventListener("abort", onAbort);
         }
       }
       };
       void pump().catch((error) => { if (!cancelled) controller.error(error); });
+      // The pump's finally owns metering even if cancellation raced the open.
+      if (signal.aborted) onAbort();
     },
     pull(controller) {
       if (!cancelled && (controller.desiredSize ?? 0) > 0) flush(controller);
@@ -581,6 +642,8 @@ export async function responsesStream(body: ChatShapeBody, opts: ResponsesCallOp
     },
     cancel(reason) {
       cancelled = true;
+      acquire({ ok: false, failureClass: "unknown", aborted: true });
+      if (onAbort) signal.removeEventListener("abort", onAbort);
       batchBytes = 0;
       const wake = wakeCapacity;
       wakeCapacity = null;
@@ -588,7 +651,7 @@ export async function responsesStream(body: ChatShapeBody, opts: ResponsesCallOp
       return upstream.cancel(reason);
     },
   });
-  return { ok: true, status: 200, body: stream };
+  return { ok: true, status: 200, body: stream, acquisition };
 }
 
 // ── PAIGE primitives (the vocabulary callers use; no provider names leak out) ───────────────────

@@ -85,7 +85,7 @@ jobs:
       - name: Accepted dated obligations, exact target source, service-only admission and stale refusals
         env:
           PGPASSWORD: isolated-test-password
-        run: node scripts/sql/sales-accepted-obligation-proof.mjs "$(command -v psql)" 56347 postgres /var/lib/postgresql/data
+        run: node scripts/sql/sales-accepted-obligation-proof.mjs "$(command -v psql)" 56347 postgres /var/lib/postgresql/data --manual-allocations
       - name: Commercial package canonical bridge, two-tenant read scope and receipt rollback
         env:
           PGPASSWORD: isolated-test-password

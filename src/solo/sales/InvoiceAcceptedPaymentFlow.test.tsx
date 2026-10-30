@@ -18,6 +18,7 @@ vi.mock('@/integrations/supabase/client',()=>({supabase:{rpc:h.rpc,functions:{in
 let host:HTMLDivElement,root:Root,fixture:Awaited<ReturnType<typeof acceptedPlanFixture>>,operations:Array<Record<string,unknown>>;
 const changed=vi.fn();
 beforeEach(async()=>{
+ sessionStorage.clear();
  host=document.createElement('div');document.body.append(host);root=createRoot(host);fixture=await acceptedPlanFixture();operations=[];h.pending=null;h.callbacks.clear();h.rpc.mockReset();h.invoke.mockReset();changed.mockReset();
  h.rpc.mockImplementation(async(name:string)=>({data:name==='read_sales_invoice'?fixture.raw:name==='list_sales_invoice_payment_operations'?{rows:operations}:name==='read_sales_accepted_invoice_obligations'?fixture.native:[],error:null}));
 });
@@ -27,6 +28,17 @@ const button=(label:string)=>Array.from(document.querySelectorAll<HTMLButtonElem
 const click=async(label:string)=>act(async()=>{const target=button(label);expect(target).toBeDefined();target!.click();await Promise.resolve()});
 const inspect=async()=>{await click('Read accepted payment plan');expect(h.pending).not.toBeNull();await act(async()=>{await h.pending})};
 const field=async(value:string)=>act(()=>{const input=host.querySelector<HTMLInputElement>('input[inputmode="decimal"]')!;expect(input).not.toBeNull();Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value')!.set!.call(input,value);input.dispatchEvent(new Event('input',{bubbles:true}))});
+const assignment=async(sequence:number,value:string)=>act(()=>{const label=Array.from(host.querySelectorAll('label')).find(label=>label.textContent===`Assign to payment ${sequence} (USD)`);const input=label?.querySelector('input');expect(input).toBeDefined();Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value')!.set!.call(input,value);input!.dispatchEvent(new Event('input',{bubbles:true}))});
+it('prepares an exact split through the ORIGINAL received-payment form, preserves inputs on return and requires a fresh accepted read',async()=>{
+ h.invoke.mockImplementation(async(_name:string,{body}:{body:{command:Record<string,unknown>}})=>({data:{outcome:'approval_required',fingerprint:'0123456789abcdef',summary:'Record received payment with exact assignments',preview:{invoice_number:'INV-1042',remaining_cents:350000,currency:'usd',manual_allocations:body.command.allocations}},error:null}));
+ await render();await click('Record received payment');await field('800');expect(button('Review received payment')?.disabled).toBe(true);
+ await click('Read accepted plan for receipt');await act(async()=>{await h.pending});await assignment(1,'500');await assignment(2,'300');expect(button('Review received payment')?.disabled).toBe(false);
+ await click('Review received payment');await click('Prepare review');const captured=h.invoke.mock.calls[0][1].body;
+ expect(captured.command).toMatchObject({action:'invoice.record_manual_payment',invoice_id:ids.invoice,expected_version:2,amount_cents:80000,allocations:[{obligation:fixture.view.obligations[0],amount_cents:50000},{obligation:fixture.view.obligations[1],amount_cents:30000}]});expect(document.body.textContent).toContain('Payment 2 · $300.00');
+ await click('Cancel');expect(host.querySelector<HTMLInputElement>('input[inputmode="decimal"]')?.value).toBe('800');expect(button('Review received payment')?.disabled).toBe(true);expect(document.activeElement).toBe(button('Read accepted plan for receipt'));
+ await click('Read accepted plan for receipt');await act(async()=>{await h.pending});expect(button('Review received payment')?.disabled).toBe(false);
+ expect(Array.from(host.querySelectorAll<HTMLInputElement>('.sb-manual-assignment-input input')).slice(0,2).map(input=>input.value)).toEqual(['500','300']);expect(h.invoke).toHaveBeenCalledOnce();expect(changed).not.toHaveBeenCalled();
+});
 it('preserves the inspected plan/selection across the original approval and returns focus after original status reload',async()=>{
  h.invoke.mockResolvedValue({data:{outcome:'approval_required',fingerprint:'0123456789abcdef',summary:'Review the exact accepted payment',preview:{invoice_number:'INV-1042',remaining_cents:350000,client_name:'Synthetic client',client_id:ids.client,invoice_id:ids.invoice,amount_minor:30000,currency:'usd',provider:'stripe',merchant_account_id:'acct_fixture',environment:'test'}},error:null});
  await render();await inspect();await click('Select payment 2');const originalPlan=host.querySelector('[aria-label="Accepted payment plan"]');

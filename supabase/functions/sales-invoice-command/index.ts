@@ -11,6 +11,7 @@ import { SALES_INVOICE_KIT_BY_ACTION } from "../_shared/paige-spine/domains/sale
 import { databaseAnswered } from "../_shared/approval-outcome.ts";
 import { mintSignerToken, sha256Hex } from "../_shared/agreements/token.ts";
 import { FINGERPRINT, UUID, SALES_INVOICE_ACTIONS, parseSalesInvoiceCommand } from "../_shared/sales-invoice-command/contract.ts";
+import { manualAllocationReviewMatches } from "../_shared/sales-invoice-command/manual-allocation.ts";
 import { executeSalesInvoiceDelivery } from "../_shared/sales-invoice-delivery/adapter.ts";
 import { readInvoiceDeliveryReadiness, type InvoiceReadinessAdmin } from "../_shared/sales-invoice-delivery/readiness-reader.ts";
 
@@ -109,6 +110,11 @@ Deno.serve(async req => {
   const { data: previewData, error: previewError } = paymentAction ? {data:{eligible:true,client_name:paymentInvoicePreview?.client_name,invoice_number:paymentInvoicePreview?.invoice_number,remaining_cents:paymentInvoicePreview?.remaining_cents,summary:paymentRequestReviewSummary(command),invoice_id:command.invoice_id,amount_minor:command.amount_minor,currency:command.currency,client_id:command.client_id,provider:command.provider,merchant_account_id:command.merchant_account_id,environment:command.environment},error:null} : await admin.rpc(emailAction ? "preview_sales_invoice_delivery_command" : "preview_sales_invoice_command", { _actor_user_id: user.id, _expected_tenant_id: tenantId, _command: command });
   const preview = object(previewData);
   if (previewError || !preview || preview.eligible !== true) return response(422, { ok: false, outcome: "refused", code: "SALES_INVOICE_INELIGIBLE", ...(preview ? { preview } : {}) });
+  if(command.action==='invoice.record_manual_payment'&&command.allocations!==undefined
+    &&!manualAllocationReviewMatches(command.allocations,Number(command.amount_cents),preview.manual_allocations)){
+    return response(422,{ok:false,outcome:'refused',code:'INVOICE_ALLOCATION_REVIEW_UNAVAILABLE',
+      message:'Accepted payment assignments could not be verified for review. Return to the invoice, refresh the accepted plan and prepare a fresh review.'});
+  }
   if (emailAction) {
     const { data: invoice, error } = await admin.rpc("_sales_invoice_read", { _tenant:tenantId, _invoice:command.invoice_id });
     if (error) return response(503, { ok:false,outcome:"refused",code:"INVOICE_READ_UNAVAILABLE" });

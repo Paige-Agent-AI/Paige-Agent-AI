@@ -258,6 +258,7 @@ async function ownerTaskNativeProof() {
       sql(base.slice(base.indexOf("ALTER TABLE public.paige_automations      ENABLE ROW LEVEL SECURITY;"), base.indexOf("-- ── 5."))+
         [...base.matchAll(/GRANT [^;]* ON public\.paige_(?:automations|automation_acts) TO authenticated;/g)].map(m=>m[0]).join("\n"));
       sql(text("supabase/migrations/20271108242000_owner_task_human_control.sql"));
+      sql(text("supabase/migrations/20271126140005_owner_task_multistep_review.sql"));
       controlInstalled = true;
       check("human control exists as an authenticated-only exact five-argument domain writer", () => {
         const abi = "public.control_owner_task_automation(uuid,text,timestamptz,jsonb,jsonb)";
@@ -551,6 +552,18 @@ async function ownerTaskNativeProof() {
         return {process,act};
       }
       const auditCount=p=>sql(`select count(*)from audit_logs where entity_id='${p}';`);
+      check("two literal internal-task steps can be reviewed together without creating or approving either task",()=>{
+        const x=draft(), second=id(nextControl++);
+        sql(`insert into paige_automation_acts(id,automation_id,position,action_kind,config)
+          values('${second}','${x.process}',2,'owner.task','{"title":"Review the delivery handoff","description":"Prepare the next internal responsibility."}');`);
+        const review=controlReview(x.process), before=sql("select count(*)from tasks;"), rails=sql("select count(*)from paige_workspace_events;");
+        assert.equal(review.acts.length,2);
+        const result=control(x.process,"arm",review);
+        assert.equal(result.state,"live");assert.equal(result.granted_lane,"confirm");assert.equal(result.execution_started,false);
+        assert.equal(result.future_events_only,true);assert.equal(result.acts.length,2);
+        assert.deepEqual(result.acts,review.acts);assert.equal(auditCount(x.process),"1");
+        assert.equal(sql("select count(*)from tasks;"),before);assert.equal(sql("select count(*)from paige_workspace_events;"),rails);
+      });
       const armed=draft(), initial=controlReview(armed.process);
       check("ordinary owner arms only the exact reviewed stored process with confirm; canonical audit is configuration, not a task receipt",()=>{
         const before=sql("select count(*)from tasks;"), rails=sql("select count(*)from paige_workspace_events;");
@@ -646,7 +659,7 @@ async function ownerTaskNativeProof() {
         assert.equal(control(x.process,"pause").state,"paused");assert.equal(auditCount(x.process),"1");
       });
       for(const [label,mutation] of [
-        ["multi-step",x=>`insert into paige_automation_acts(id,automation_id,position,action_kind,config)values('${id(nextControl++)}','${x.process}',2,'owner.task','{"title":"Second"}');`],
+        ["more than twenty steps",x=>`insert into paige_automation_acts(id,automation_id,position,action_kind,config)select gen_random_uuid(),'${x.process}',v,'owner.task','{"title":"Next internal task"}' from generate_series(2,21) v;`],
         ["nonempty trigger configuration",x=>`update paige_automations set trigger_config='{"delay":1}'where id='${x.process}';`],
         ["conditions",x=>`update paige_automations set conditions='[{"field":"source","op":"eq","value":"test"}]'where id='${x.process}';`],
       ])check(label+" cannot arm; owner can pause the exact unsupported process",()=>{

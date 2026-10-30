@@ -1,5 +1,7 @@
 # C131 — accepted payment-plan selection in the original invoice workspace (2026-10-30 UTC)
 
+**Release correction:** first CI full-file Impeccable scan rejected the new CSS side-tab. Initial local scan had omitted CSS; same full ten-file scan reproduced it. Two neutral-border rules repair the finding, full scan0; no gate exclusion. Actual post-refinement rendering is UNVERIFIED after three browser attach/recovery timeouts/reset. Earlier exact product-source renders remain bounded evidence; final style/authenticated proof remains owed.
+
 **Implementation/local proof; not released or customer accepted.** Same complete O1–O12 destination and owner-recalibrated sequence: connected O1–O4, O5/O9, then O6–O8/O10–O12. No new agent, platform lane, financial authority or activation.
 
 The owner can inspect native accepted economics, dated deposit/installments and original remaining allocations, select one exact positive obligation and continue through the existing HIGH invoice review. No caller amount or due date replaces its immutable reference. The original operation list blocks a competing request; Cancel retains source/selection and restores focus after that list rereads. Pending/expired account review now has a focused return without forgetting an uncertain operation. Scope/actor/role/version changes retire the local accepted source. The caller-JWT SDK consumer reuses the retained decoder and distinct native10 owner admission; no permission logic is copied.

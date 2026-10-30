@@ -497,5 +497,13 @@
     "390 captures used earlier960px frame height;320 corrected frame680px",
     "only outer-frame geometry measured for embedded cases",
     "no full SOLO/two cohort/real native or provider acceptance"
-  ]
+  ],
+  "postRenderChange": {
+    "path": "src/solo/sales/invoice-accepted-payment-plan.css",
+    "renderedSha256": "2554872729287f6bb7a566e089087372a8422a40529a9d755f72dac16ed78c25",
+    "currentSha256": "7370aefe94c41af89aa7a1b4895b2c00f34240edad144d6f2c02f8ff55a7b9c8",
+    "reason": "Required full changed-file design scanner rejected decorative thick side border; source divider/held outline now use thin neutral rules. No behavior or amount/approval/source change.",
+    "visualVerification": "UNVERIFIED: three existing-browser local-tab attach/recovery attempts stalled/reset; original renders retained as historical exact source, no new browser engine.",
+    "requiredNext": "Reinspect changed plan source and held blocks using original browser, then authenticated original production read when available."
+  }
 }

@@ -8,7 +8,7 @@ FLOW_PROTOTYPE: NOT_REQUIRED: no new or redesigned interaction.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: an authorized owner can obtain a sourced review when an incumbent provider proves failure before any semantic output; no automatic business action.
 VISUAL_DIRECTION: PASS: preserve the approved immersive Executive and shared Chat design.
 AUTOMATED_EVIDENCE: PASS: original Fabric172/0 and adapter99/0 baselines; failure-first Fabric177/8; current extended Fabric196/0 and adapter106/0. Synthetic recording ports, no provider effect. Final composed C0b/type/hosted checks remain owed.
-STATIC_EVIDENCE: PASS: whole current-main Root inverse after exactly five signal fields; original test source/assertions additive; entire nonstreaming adapter/Fabric unchanged. Pre-pin source review786aa65619314669db504aed76f3828e5f81c85c, AUTHOR-REVIEW / LOWER ASSURANCE. Final-head review/CI remains required.
+STATIC_EVIDENCE: PASS: whole incoming E09 Root inverse after exactly five signal fields; all18,555 incoming outside-owned leaves and original tests retained. Pre-pin source188a70aae41ec8489178c0520d67ac290c74f3b7, AUTHOR-REVIEW / LOWER ASSURANCE. Final-head review/CI remains required.
 RENDERED_EVIDENCE: UNVERIFIED: no layout change; a released repaired weekly answer and its existing rendered feedback remain proof owed. Finance rendering does not establish this model behavior.
 BEHAVIORAL_EVIDENCE: PASS: pre-header and authority-await cancellation now report actual abort/interrupted, never fallback. Failure-first194/2 Fabric and105/1 adapter controls now196/0 and106/0. Production weekly recovery remains unverified.
 AUTHENTICATED_RUNTIME: UNVERIFIED: earlier useful weekly answers and the latest interrupted request remain dated evidence; no automatic retry or new success is inferred.
@@ -50,6 +50,14 @@ The first unrenewed run failed admission as expected and supplies no final PASS.
 This270/0 result supports786aa only; the cancellation correction still requires
 its own immutable review, changed hash renewal and final original controls.
 
+Current source188a70aa receives actual E09 mainaa0220a5. The one C0b conflict
+retains the complete incoming checker/pins/history and original dated E02 note;
+all131 incoming dependencies and29 dispatches reproduce before renewal. The
+whole Root inverse removes exactly five signal fields, retaining all E09
+customer-context/lifetime source. Current196/106 controls pass after composition.
+Renew only two changed dependency scalars and29 enclosing fingerprints; all
+other129 dependency pins and all metadata/validation/hostile controls stay exact.
+
 The incumbent parser reports acquisition to the incumbent Fabric. Ordinary role
 and status frames commit no answer. Text, tool, refusal, reasoning, unexpected
 events, malformed data or output within an envelope prevent another attempt.
@@ -75,13 +83,13 @@ domain write or business Rail receipt is created. Existing turn settlement and
 per-attempt traces remain the evidence of conversation delivery. A useful
 answer, original sources and later return must still be proved after release.
 
-INTERNAL_BUILD_IDENTITY: 786aa65619314669db504aed76f3828e5f81c85c; supporting immutable pre-pin source; deployment=none; environment=development; migrations=NOT_APPLICABLE; affected-edge=PROOF_OWED via original dependency resolver.
+INTERNAL_BUILD_IDENTITY: 188a70aae41ec8489178c0520d67ac290c74f3b7; supporting immutable pre-pin source; deployment=none; environment=development; migrations=NOT_APPLICABLE; affected-edge=PROOF_OWED via original dependency resolver.
 RELEASE_CHANNEL: development: source candidate, not deployed recovery.
 RELEASE_CLASSIFICATION: internal-only: bounded existing-path repair.
 CUSTOMER_RELEASE_IDENTITY: none: no customer announcement.
 RELEASE_NOTE_REQUIRED: no: no complete Experience release claim.
 RELEASE_TRUTH_BOUNDARY: PROOF OWED: source controls do not establish production-parent cause or authenticated recovery.
-RELEASE_RECOVERY: position=reviewed forward fix preserving original turn and source; reference=ANT50/0f4c2421.
+RELEASE_RECOVERY: position=reviewed forward fix preserving original turn and source; reference=ANT50/8aa9e1d4.
 SOLO_1536X770_PAIGE_CLOSED: UNVERIFIED: no new visual source; repaired customer answer owed.
 SOLO_1536X770_PAIGE_OPEN: UNVERIFIED: repaired customer answer/reload owed.
 SOLO_1366X768_PAIGE_CLOSED: UNVERIFIED: no new render claim.

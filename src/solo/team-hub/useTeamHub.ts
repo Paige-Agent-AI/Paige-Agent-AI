@@ -42,7 +42,7 @@ import {
   type TeamHubAgentKey,
 } from "./team-hub-contract";
 import {
-  agentTurnBody, askingMessageIds, cardActBody, cardActLine, cardMessageIds, parseAgentTurn, parseCardAct, parseCardStates, parseTurnStates,
+  agentTurnBody, askingMessageIds, cardActBody, cardActLine, cardMessageIds, cardResultReference, parseAgentTurn, parseCardAct, parseCardStates, parseTurnStates,
   type AgentLineOutcome, type AgentTurnAnswer, type AgentTurnRequest, type BringInSuggestion, type CardActAnswer, type CardActRequest,
   type CardActOutcome, type CardRead, type ServerTurnState,
 } from "./team-hub-agents";
@@ -314,14 +314,16 @@ function listedIn(overview: TeamHubOverview | null | undefined, id: string | nul
 }
 
 /** A2b: the messages with each card put on the agent message it belongs to; the same list when none changes. */
-function withCards(messages: TeamHubMessage[], cards: Record<string, CardRead> | undefined): TeamHubMessage[] {
+function withCards(messages: TeamHubMessage[], cards: Record<string, CardRead> | undefined, resultReadReady: boolean): TeamHubMessage[] {
   if (!cards) return messages;
   let changed = false;
   const out = messages.map((message) => {
     const card = message.author_kind === "agent" ? cards[message.id] : undefined;
-    if (!card || message.approval === card.approval) return message;
+    if (!card) return message;
+    const reference = resultReadReady ? cardResultReference(card) : undefined;
+    if (message.approval === card.approval && message.approval_result_reference?.record_id === reference?.record_id) return message;
     changed = true;
-    return { ...message, approval: card.approval };
+    return { ...message, approval: card.approval, approval_result_reference: reference };
   });
   return changed ? out : messages;
 }
@@ -1455,14 +1457,14 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
   // Each card goes onto the agent message it belongs to, as the approval the approved card draws.
   const shownStream = useMemo(() => {
     if (!stream) return stream;
-    const messages = withCards(stream.messages, cardReads[stream.channelId]?.cards);
+    const messages = withCards(stream.messages, cardReads[stream.channelId]?.cards, cardReads[stream.channelId]?.read === "ready");
     return messages === stream.messages ? stream : { ...stream, messages };
   }, [stream, cardReads]);
   const shownThread = useMemo(() => {
     if (!thread) return thread;
     const cards = cardReads[thread.channelId]?.cards;
-    const replies = withCards(thread.replies, cards);
-    const [root] = thread.root ? withCards([thread.root], cards) : [null];
+    const replies = withCards(thread.replies, cards, cardReads[thread.channelId]?.read === "ready");
+    const [root] = thread.root ? withCards([thread.root], cards, cardReads[thread.channelId]?.read === "ready") : [null];
     return replies === thread.replies && root === thread.root ? thread : { ...thread, replies, root };
   }, [thread, cardReads]);
 

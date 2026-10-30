@@ -1845,3 +1845,6 @@ No invented score, uplift, staffing activity or hidden employee ranking closes t
   - **out of scope here, recorded only:** the live `TeamHubWorkspace.tsx` (line 135) and its test
     still say "your permission are unchanged". Prototype v3 shows "your permissions are
     unchanged"; the shipped copy needs the same grammar fix in its own small PR.
+
+
+Successor original-result reopening checkpoint (2026-10-30, STILL CODING): original acceptance rows8/9/14 now additionally have a LOCAL source implementation for reopening the original CRM task from the already service-settled Done hand-over/cancel reference. No second record/receipt/writer. Actual two failing-before mounted cases; final272 affected assertions and19 fictional render cases pass; source-only review clean. Unknown/failed/unavailable/raw-message references withheld. Remaining native zoom states were not completed after a Computer Use URL-confidence stop; authenticated/current-new account/role/tenant/recovery and exact release proof remain owed. This does not close the shared task/artifact workshop, lifecycle, goal-driven execution or any full-assignment row. All original matrices/denominators and owner amendments above remain controlling.

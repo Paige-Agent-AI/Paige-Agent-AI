@@ -1,0 +1,32 @@
+{
+  "label": "fictional local source/render proof only",
+  "baseCommit": "cb9990f7ea2d1e93f31cdaa954f9be897151fbd5",
+  "sources": [
+    {
+      "path": "src/solo/team-hub/TeamHubWorkspace.tsx",
+      "sha256": "00b0426a37dd47162c64ec605627fde9eb57c59da2791c9ac6e16d60fa759405"
+    },
+    {
+      "path": "src/solo/team-hub/useTeamHub.ts",
+      "sha256": "124f7615cb9f918aa10874812217b824e10ff7ed5f9c9bce427bfc6606b021b6"
+    },
+    {
+      "path": "src/solo/team-hub/team-hub-contract.ts",
+      "sha256": "30acb85d4f363b388a55fd5fd2fdb12d429f67d1a84c602d58018933d44e1a34"
+    },
+    {
+      "path": "src/solo/team-hub/team-hub-agents.ts",
+      "sha256": "2fdfe3a269586678ee38faa7c9ca77245e20fe29df8b589292a5106b5f48f4c4"
+    },
+    {
+      "path": "scripts/live-drive/harness/team-hub-shell-mount/supabase-stub.ts",
+      "sha256": "be71365b4b95dafc2613bd1ed04a36e1916d86fd7053648b6eb387fcb776f2e5"
+    },
+    {
+      "path": "scripts/live-drive/harness/team-hub-shell-mount/team-hub-task-result-drive.mjs",
+      "sha256": "ca3d2ea4fd46c1c97ebedd1a6377a2211493a0e8492788b404869ec50a55d73b"
+    }
+  ],
+  "nativeZoom": "PARTIAL, Computer Use URL-confidence stop; report failure retained",
+  "authenticated": "UNVERIFIED"
+}

@@ -115,6 +115,8 @@ export interface TeamHubOverview {
 }
 
 export interface TeamHubMessage {
+  /** Derived only from the separate current native card read; raw message fields cannot supply it. */
+  approval_result_reference?: ReadRecordLink;
   /** Original source references, attached only to a native verified private agent reply. */
   record_links?: ReadRecordLink[];
   source_backed_read?: true;
@@ -192,8 +194,8 @@ export interface TeamHubApproval {
    * it ran under is not whole, so the parser refuses it rather than guessing.
    */
   covered_by: string | null;
-  // Deliberately absent: a link to the record the act produced (the A2 state read returns state,
-  // approver and time only, never the arguments). It has no seam, so it does not render.
+  // Result references are projected separately from the service-settled native card record,
+  // never from this approval payload or its arguments.
 }
 
 const APPROVAL_ACTION_STATES = ["pending", "working", "done", "failed", "unconfirmed"] as const;

@@ -1801,6 +1801,8 @@ function AgentMessageRow({ message, agentKey, people, meId, onOpenThread, agent,
         decidedLabel={message.approval.decided_at ? timeLabel(message.approval.decided_at) : null} online={agent?.online ?? true}
         onAct={agent?.onApprovalAct ? (act) => agent.onApprovalAct?.(message, act) : undefined} />}
       {message.approval && agent?.cardNotices?.[message.id] && <div className="th-fail">{agent.cardNotices[message.id]}</div>}
+      {message.approval?.state === "done" && message.approval_result_reference
+        && <PaigeRecordLinks links={[message.approval_result_reference]} account={activeTenant} />}
       {bring.length > 0 && agent && <BringInRow agents={bring.map((item) => item.agent)} askerName={askerShort} isAsker={isAsker}
         onBring={(key) => { const item = bring.find((entry) => entry.agent === key); if (item) agent.onBringIn(message, item.prefill, key); }} />}
       {onOpenThread && message.reply_count > 0 && <button type="button" className="th-replies"

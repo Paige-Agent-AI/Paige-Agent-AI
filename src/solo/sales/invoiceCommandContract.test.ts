@@ -33,3 +33,53 @@ it('refuses the terminal sequence while accepting the final issuable preference'
  expect(parseSalesInvoiceCommand({...preferences,settings:{...preferences.settings,next_number:999999998}})).toMatchObject({settings:{next_number:999999998}});
  expect(()=>parseSalesInvoiceCommand({...preferences,settings:{...preferences.settings,next_number:999999999}})).toThrow();
 });
+
+const acceptedObligation=(sequence:number,remaining=sequence===1?50000:30000)=>({
+ reference:{commercial_terms_id:'a0000000-0000-4000-8000-000000000001',signing_id:'b0000000-0000-4000-8000-000000000001',signing_version:2,terms_version:1,sequence},
+ source_digest:'a'.repeat(64),due_date:sequence===1?'2026-11-01':'2026-12-01',scheduled_minor:sequence===1?50000:30000,remaining_minor:remaining,
+});
+const split=(sequence:number,amount_cents:number)=>({obligation:acceptedObligation(sequence),amount_cents});
+describe('explicit original manual receipt allocation transport',()=>{
+ it('retains a partial allocation to one exact accepted obligation',()=>{
+  const allocations=[split(1,1000)];
+  expect(parseSalesInvoiceCommand({...payment,allocations})).toEqual({...payment,reference:null,notes:null,allocations});
+ });
+ it('retains explicit splits and order without creating another receipt or guessing FIFO',()=>{
+  const allocations=[split(2,25000),split(1,50000)];
+  const parsed=parseSalesInvoiceCommand({...payment,amount_cents:75000,allocations});
+  expect(parsed.allocations).toEqual(allocations);
+  expect(Object.keys(parsed).sort()).toEqual([...Object.keys(payment),'reference','notes','allocations'].sort());
+ });
+ it('normalizes original UUID references using the canonical obligation parser',()=>{
+  const item=split(1,1000);item.obligation.reference.signing_id=item.obligation.reference.signing_id.toUpperCase();
+  const parsed=parseSalesInvoiceCommand({...payment,allocations:[item]});
+  expect(parsed.allocations).toEqual([split(1,1000)]);
+ });
+ it('does not retrofit an allocation onto the original reversal command',()=>{
+  expect(()=>parseSalesInvoiceCommand({...base,action:'invoice.reverse_manual_payment',payment_id:base.invoice_id,reason:'Correction',allocations:[split(1,1000)]})).toThrow();
+ });
+ it('refuses a sparse allocation array rather than preserving an unchecked empty slot',()=>{
+  const allocations=Array.from({length:2},()=>split(1,1000));delete allocations[1];
+  expect(()=>parseSalesInvoiceCommand({...payment,allocations})).toThrow();
+ });
+ it.each([[],null,{},[split(1,999)],[split(1,1001)],[split(1,0)],[split(1,-1)],[split(1,0.5)],
+  [{...split(1,1000),amount_cents:'1000'}],[{...split(1,1000),provider_verified:true}],
+  [{...split(1,1000),obligation:{...acceptedObligation(1),remaining_minor:999}}],
+  [{...split(1,1000),obligation:{...acceptedObligation(1),remaining_minor:0}}],
+  [{...split(1,1000),obligation:{...acceptedObligation(1),due_date:'2026-02-30'}}],
+  [{...split(1,1000),obligation:{...acceptedObligation(1),source_digest:'guessed'}}],
+  [split(1,500),split(1,500)],Array.from({length:241},()=>split(1,1)),
+ ])('refuses malformed, duplicate, unbalanced or over-allocated splits %#',allocations=>{
+  expect(()=>parseSalesInvoiceCommand({...payment,allocations})).toThrow();
+ });
+ it.each(['commercial_terms_id','signing_id','signing_version','terms_version','source_digest'] as const)('refuses mixed accepted source %s',key=>{
+  const one=split(1,500),two=split(2,500);
+  if(key==='source_digest')two.obligation.source_digest='b'.repeat(64);
+  else if(key==='signing_version'||key==='terms_version')two.obligation.reference[key]++;
+  else two.obligation.reference[key]='c0000000-0000-4000-8000-000000000001';
+  expect(()=>parseSalesInvoiceCommand({...payment,allocations:[one,two]})).toThrow();
+ });
+ it('retains the incumbent unassigned manual command without invented allocations',()=>{
+  expect(parseSalesInvoiceCommand(payment)).toEqual({...payment,reference:null,notes:null});
+ });
+});

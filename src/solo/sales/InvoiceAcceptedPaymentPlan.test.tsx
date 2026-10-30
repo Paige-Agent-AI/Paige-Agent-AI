@@ -70,3 +70,28 @@ it.each(['invoice_not_issued','accepted_source_unavailable','commercial_terms_in
 it.each(['stale','unverified','refused'] as const)('does not fabricate an empty or signed plan after %s',async state=>{h.read.mockResolvedValue({state});await render();await inspect();expect(host.textContent).not.toContain('$3,500.00 accepted principal');expect(button('Select payment 1')).toBeUndefined();expect(button('Refresh payment plan')).toBeDefined();expect(review).not.toHaveBeenCalled()});
 it('retries a refused read through the same original source without executing anything',async()=>{h.read.mockResolvedValueOnce({state:'refused'}).mockResolvedValueOnce(fixture.view);await render();await inspect();await click('Refresh payment plan');expect(h.read).toHaveBeenCalledTimes(2);expect(host.textContent).toContain('$3,500.00 accepted principal');expect(review).not.toHaveBeenCalled()});
 it('does not call the plan admission for a missing agreement or absent financial permission',async()=>{await render({invoice:{...fixture.invoice,snapshot:{...fixture.invoice.snapshot,agreement_id:null,agreement_snapshot:null}}});expect(host.textContent).toContain('no retained agreement reference');expect(button('Read accepted payment plan')).toBeUndefined();await render({canManage:false});expect(button('Read accepted payment plan')).toBeUndefined();expect(h.read).not.toHaveBeenCalled()});
+
+it('uses the same accepted read to assign one received receipt across deposit and monthly payment without a provider request',async()=>{
+ const changed=vi.fn(),values={1:'500',2:'300'};
+ await render({manual:{amountMinor:80000,values,onChange:vi.fn(),onAssignmentsChange:changed}});expect(changed).toHaveBeenLastCalledWith(null);await click('Read accepted plan for receipt');
+ expect(changed).toHaveBeenLastCalledWith([{obligation:fixture.view.obligations[0],amount_cents:50000},{obligation:fixture.view.obligations[1],amount_cents:30000}]);
+ expect(host.textContent).toContain('All received money is assigned');expect(button('Select payment 1')).toBeUndefined();expect(button('Review selected payment request')).toBeUndefined();
+ expect(host.querySelectorAll('input[inputmode="decimal"]')).toHaveLength(11);expect(review).not.toHaveBeenCalled();
+ await click('Close plan');expect(changed).toHaveBeenLastCalledWith(null);expect(values).toEqual({1:'500',2:'300'});expect(document.activeElement).toBe(button('Read accepted plan for receipt'));
+});
+it.each([{amountMinor:79999,values:{1:'500',2:'300'}},{amountMinor:90000,values:{1:'600',2:'300'}},{amountMinor:50000,values:{99:'500'}},{amountMinor:0,values:{}},{amountMinor:100,values:{1:'1.001'}}])('withholds incomplete, excessive, unknown or imprecise assignments: %o',async input=>{
+ const changed=vi.fn();await render({manual:{...input,onChange:vi.fn(),onAssignmentsChange:changed}});await click('Read accepted plan for receipt');expect(changed).toHaveBeenLastCalledWith(null);expect(host.textContent).not.toContain('All received money is assigned');expect(review).not.toHaveBeenCalled();
+});
+it('retires manual assignment eligibility when authority, invoice or original payment-request currentness changes',async()=>{
+ const changed=vi.fn(),manual={amountMinor:12000,values:{2:'120'},onChange:vi.fn(),onAssignmentsChange:changed};
+ await render({manual});await click('Read accepted plan for receipt');expect(changed).toHaveBeenLastCalledWith([{obligation:fixture.view.obligations[1],amount_cents:12000}]);
+ await render({manual,paymentRequestActive:true});expect(changed).toHaveBeenLastCalledWith(null);
+ await render({manual,canManage:false});expect(host.querySelector('input')).toBeNull();expect(changed).toHaveBeenLastCalledWith(null);
+ await render({manual,invoice:{...fixture.invoice,version:3}});expect(host.textContent).not.toContain('$3,500.00 accepted principal');expect(changed).toHaveBeenLastCalledWith(null);
+});
+it('retires an accepted receipt source after batched actor A→B→A events without relying on an intermediate render',async()=>{
+ const changed=vi.fn(),manual={amountMinor:12000,values:{2:'120'},onChange:vi.fn(),onAssignmentsChange:changed};
+ await render({manual});await click('Read accepted plan for receipt');expect(changed).toHaveBeenLastCalledWith([{obligation:fixture.view.obligations[1],amount_cents:12000}]);
+ await act(async()=>{h.authChanged?.('SIGNED_IN',{user:{id:'88888888-8888-4888-8888-888888888888'}});h.authChanged?.('SIGNED_IN',{user:{id:ids.actor}})});
+ expect(host.textContent).not.toContain('$3,500.00 accepted principal');expect(changed).toHaveBeenLastCalledWith(null);expect(review).not.toHaveBeenCalled();
+});

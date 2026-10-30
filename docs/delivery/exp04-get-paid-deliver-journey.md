@@ -4827,3 +4827,23 @@ Master source windows remain; four original closeout rows are privately prepared
 not concurrently inserted. Functional/visual/experiential/role/provider/full12/
 founder acceptance remain separate. ALG01/12 PARTIAL,02/13 UNVERIFIED/catalogue
 unchanged; no new specialist identity, agent, provider or business activation.
+
+C141 coherent release preparation: keep the original record/action amounts,
+publication preview and refused-review recovery in ONE existing3116 correction.
+Oldc74/source60 evidence remains historical and was never released. This is an
+ordinary fast-forward continuation, no duplicate PR or history rewrite. Current
+source normally composes E08 releasee984db704bc4a6517a4e5fa471b169f8005c7cd2,
+preserving every outside-owned leaf and all21 current rendered-source pins. Fresh
+composed76/3 and focused753types0 pass. Original paritySP1–SP5 plus COMPLETE
+hostile/legitimate controls pass. Initial evidence grammar failure was corrected
+with an explicit release position/reference and accurate uncertain-recovery
+wording; unchanged attestation validator now passes6UI/2records, not runtime proof.
+
+The three original record/action/copy product modules remain byte-exact toc74.
+Their earlier8captures remain historical:19of20 direct inputs are unchanged; the
+only changed fixture input adds a conditional draft-publication response. Its
+complete old-file inverse is exact. Current4actual review captures pin that new
+port and same components; no blanket20-of20 or whole-transitive claim. All exact
+final review/hosted gates, normal release/readback and corrected ordinary-user
+proof must be renewed before readiness. Shared40008→E05forward50005 order, E09
+held financial consumer and delegated-management assessment remain separate.

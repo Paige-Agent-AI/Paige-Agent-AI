@@ -4,6 +4,7 @@ import { ArrowLeft, ArrowRight, AtSign, ClipboardList, CornerDownRight, Download
 import { useTenantContext } from "@/hooks/useTenantContext";
 import { PaigeRecordLinks } from "@/components/chat/PaigeRecordLinks";
 import { workspaceLinkTarget } from "@/lib/links/workspaceLinks";
+import { createComposerScopeIdentity } from "@/lib/paigeComposerScopeState";
 import { handOffPaigePrompt } from "@/lib/paigePromptHandoff";
 import { clearPaigeClientScope } from "@/solo/paigeClientScope";
 import { clearPaigePublicPresenceScope } from "@/solo/paigePublicPresenceScope";
@@ -278,6 +279,8 @@ function ReadyHub({ hub, announce, announcement, onOpenTeamSettings, openPaige, 
   const overview = hub.overview!;
   const people = overview.people;
   const meId = overview.me.user_id;
+  const pendingPaigeHandoff = useRef<(() => void) | undefined>(undefined);
+  useEffect(() => () => { pendingPaigeHandoff.current?.(); }, []);
   const me = people.find((person) => person.user_id === meId) ?? null;
   const teammates = people.filter((person) => person.user_id !== meId);
   // A1b: PAIGE and her agents, only where the tier has them (§60); the server still decides what runs.
@@ -473,11 +476,14 @@ function ReadyHub({ hub, announce, announcement, onOpenTeamSettings, openPaige, 
     const open = previewRef.current;
     if (!open || open.kind === "task" || open.busy || !openPaige) return;
     const conversation = conversations.find((item) => item.id === open.channelId);
-    handOffPaigePrompt(paigeHandoffDraft(open.kind, open.ask, {
+    const targetScope = createComposerScopeIdentity({ tenantId: overview.tenant_id, userId: meId });
+    if (!targetScope) return;
+    pendingPaigeHandoff.current?.();
+    pendingPaigeHandoff.current = handOffPaigePrompt(paigeHandoffDraft(open.kind, open.ask, {
       conversation: conversation ? conversationTitle(conversation, people) : "Team Hub conversation",
       channel_id: open.channelId,
       message_id: null,
-    }));
+    }), { scope: targetScope });
     // The words went to PAIGE's composer; they don't also stay here.
     setDrafts((current) => ({ ...current, [open.channelId]: "" }));
     setPreview(null);

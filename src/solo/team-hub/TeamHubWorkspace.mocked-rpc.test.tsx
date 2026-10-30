@@ -1527,10 +1527,23 @@ describe("PAIGE handoffs (increment 2, mocked RPC)", () => {
       const draft = String(mocks.handoff.mock.calls[0][0]);
       expect(draft.startsWith(start)).toBe(true);
       expect(draft).toContain('"channel_id":"c-general"');
+      expect(mocks.handoff.mock.calls[0][1]).toEqual({ scope: { userId: ME, tenantId: TENANT,
+        focusedClientId: "none", focusedBusinessMissionId: "none" } });
       expect(openPaige).toHaveBeenCalledTimes(1);
       expect(rpcNames().filter((name) => name !== "team_hub_list_conversations" && name !== "team_hub_list_messages" && name !== "team_hub_mark_read")).toEqual([]);
       expect(mocks.invoke).not.toHaveBeenCalled();
     });
+});
+
+it("retires only its own pending PAIGE handoff when the Team Hub actor/workspace remounts",async()=>{
+  const retire=vi.fn();mocks.handoff.mockReturnValue(retire);
+  const {host,root}=await mount({openPaige:vi.fn()});
+  await type(composer(host),"/PAIGE request approval Review the welcome checklist");await press(composer(host),"Enter");
+  await act(async()=>button(host,"Continue in PAIGE")!.click());await flush();
+  expect(retire).not.toHaveBeenCalled();
+  mocks.tenant.id="tenant-b";
+  await act(async()=>root.render(<TeamHubWorkspace openPaige={vi.fn()} />));await flush();
+  expect(retire).toHaveBeenCalledTimes(1);
 });
 
 describe("Team work panel (increment 2, mocked RPC)", () => {

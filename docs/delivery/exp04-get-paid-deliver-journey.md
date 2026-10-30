@@ -4686,3 +4686,65 @@ that tool or consequential Chat. Current owner Payments workspace uses its
 legitimate existing native path independently. Signed-in model/Spine admission,
 all-role/provider/accepted-target execution and complete Experience proof remain
 OPEN; no synthetic adapter injection is described as that acceptance.
+
+### C137 — Actual draft persistence and truthful lifecycle amounts — October30
+
+Same sole MERIT lead/full12/O1–O4-first. Private financial-currentness3110 is
+normally merged92621b8018f7beda6fb97945ee9c66c6131487a4 and production15 applied
+ONCE through41002315232/job123889462539. Twelve actual catalogue identities,
+three complete old-source inverses and private INVOKER ACL readback PASS.
+Exact money presentation3112 is merged3f37c5b72a140dff56b6a1c05de00938ddf8e045,
+Verceldpl_GkHd3pUMEMcSeYphMFZdw5tpRavW READY/exact; normal Edge41003567195/
+job123893260018 and downloaded report12954207496/digest2154b226 PASS,
+Chat594/JWTtrue/all310 source-runtime matches. Scratch cleanup warning remains
+separate. These are source releases, not financial/client/founder acceptance.
+
+Original accepted-plan Chat handoff3114/b2decb7c/lower5708218840 remains separately
+frozen in exact-head CI. It does not activate the invoice tool under DRAINING.
+The current UI correction is a local successor; no duplicate native work or
+premature parent release, shared-host change or new agent is introduced.
+
+Actual ordinary-owner engineering verification saved ONE clearly labeled
+internal UNISSUED draft, then full reload and edit/reopen retained its sampled
+date, item, amount, note and version1. Protected evidence lives only in existing
+ANT-52/60f4d7f5; no private screenshots/identity data are committed here. This is
+bounded author engineering persistence evidence, not CentralQA, a signed contract,
+issued obligation, provider payment or completed O4. Initial control loading and
+generic date-fill driver failures were not declared product access/date defects.
+Native keyboard date entry and the missing-date refusal were genuinely observed.
+
+That drive exposed an owning presentation defect: unissued draft amounts were
+labeled Total obligation/Outstanding balance. REPAIR the original display-only
+invoicePaymentCopy module and SAME Sales record/action panels. Draft labels now
+say planned/unissued amounts, issued labels stay original, and voided amounts
+are clearly recorded audit values. Exact native amounts, lifecycle, receipt
+calculations, parsers, permissions, approvals and effectful paths are unchanged.
+The complete DraftEditor/save/selection/navigation tail and lifecycle effects/
+action prefix/complete approval-and-receipt suffix are byte-exact to the parent.
+
+Four causal draft/void failures with52 baseline/control passes preceded the fix;
+final60/3 original component suites PASS. A new test initially assumed the issued
+fixture's150 amount for the original draft fixture's200; corrected only that
+fixture expectation, with no changed money calculation. Focused original-config
+graph831 files/0 diagnostics, scoped lint0 and full seven-code-path pinned
+Impeccable4.1.0 scan0 anti-patterns PASS. Two original synthetic-document color
+advisories remain unsuppressed. Eight actual original focused-record/draft-dialog
+rendered captures cover desktop1280 and320/390 CSS frames, both themes, exact
+label states, zero document horizontal overflow and keyboard close/return focus.
+The20-direct-input manifest is explicit about its incomplete transitive/full-shell
+scope; raw JPEG dimensions/digests/UTC captures are verified. Existing dev-only
+ports/CSP and original components are reused; no QA engine or competing pane.
+
+Orchestration: ordinary owner inspection through original sales_invoice.read and
+canonical lifecycle records; no LayerC act, provider, new event/job, approval,
+execution, receipt or authority. All existing review/publish/financial actions
+stay governed by their original native writers. Current-state label copy cannot
+establish settlement, refund, accepted service or a signed agreement.
+
+Functional: source/component/type/lint verified; exact final review/CI/release
+and corrected authenticated readback remain owed. Visual: original tokens/layout,
+eight bounded captures and truthful format/viewport limits; no full-shell/native
+zoom/AT proof. Experiential: original keyboard flow works and prior draft values
+persist; ordinary staff/client/provider/full12 and Founder Acceptance remain OPEN.
+ALG01/12 PARTIAL,02/13 UNVERIFIED and sales.department PROOF_OWED unchanged. Same
+existing Master document windows/peer source leases; no activation or extra agent.

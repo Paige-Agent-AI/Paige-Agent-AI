@@ -40,7 +40,7 @@ export function Fixture(){
   <details><summary>Synthetic request evidence</summary><pre id="e04-last-request" style={{whiteSpace:'pre-wrap',overflowWrap:'anywhere'}}>No request made.</pre></details>
   {acceptedPlanEnabled&&<p><button className="btn" disabled={expired} onClick={()=>{expireAcceptedFixtureSession();setExpired(true)}}>Expire simulated account session</button></p>}
   {query.get('surface')==='record'?
-   <InvoiceRecordInspection row={invoiceFixtureRecord()} tenantId={ids.tenant} canManage={canManage} canInspectAccepted={canManage} accountEpoch="synthetic-record-1" open={workspace} onOpenChange={setWorkspace} onChanged={()=>{}}/>:
+   <section className="sb-workspace sb-focused-invoice" style={{height:'calc(100dvh - 140px)'}}><InvoiceRecordInspection row={invoiceFixtureRecord()} tenantId={ids.tenant} canManage={canManage} canInspectAccepted={canManage} accountEpoch="synthetic-record-1" open={workspace} onOpenChange={setWorkspace} onChanged={()=>{}}/></section>:
    query.get('surface')==='workspace'?
    <InvoiceWorkspace tenantId={ids.tenant} invoiceId={ids.invoice} version={2} number="INV-1042" status="issued" canManage={canManage} open={workspace} onOpenChange={setWorkspace} onChanged={()=>{}}/>:
    <InvoiceLifecycleActions tenantId={ids.tenant} invoiceId={ids.invoice} version={2} canManage={canManage} onChanged={()=>{}}/>}

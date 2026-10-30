@@ -49,7 +49,7 @@ Pre-renewal source review:19da6cacc883b41d805a098b5bcb451941c88134 versus maine9
 
 Functional: implemented locally, full native/release/customer proof owed. Visual: bounded existing-shell rendered proof and explicit narrow/AT gaps. Experiential: original request/source/receipt/recovery implemented, actual joined journey owed. Acceptance: full42/seven-pillars founder evaluation NOT_READY.
 
-RELEASE_INTERNAL_BUILD: development: source19da6cacc883b41d805a098b5bcb451941c88134; later exact final head and actual deployment identifiers must be recorded independently.
+INTERNAL_BUILD_IDENTITY: source-freeze=19da6cacc883b41d805a098b5bcb451941c88134; current-head=see-Git-and-PR; deployment=none; environment=local-development; migrations=PROOF_OWED(20271126060009 after original EXP08 and EXP05 publication chain); edge=PROOF_OWED(paige-ai-chat exact deployed source readback); evidence=outputs/e09-invoice-incumbent-review.json
 RELEASE_CHANNEL: development: no production claim or customer announcement.
 RELEASE_CLASSIFICATION: internal-only: coherent source-backed invoice-read integration within existing EXP09.
 CUSTOMER_RELEASE_IDENTITY: none: no version or announcement assigned from local source.

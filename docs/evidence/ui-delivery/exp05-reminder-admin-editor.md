@@ -30,6 +30,10 @@ UNVERIFIED: final review/exact-head CI; ordered native75005 before editor releas
 OWNER_INTENT: repair legitimate reminder access while continuing the complete Operations assignment; no new systems or routine founder testing.
 MUST_NOT_HAPPEN: global labels alone confer no target-business authority; no early UI release, approval bypass, provider/cron invocation, unknown replay or invented success.
 RELEASE_SCOPE: build=existing Operations reminder editor; delivery=native-dependent correction; effect=no provider or activation; live=PROOF_OWED(native75005 and editor readback); edge=NOT_APPLICABLE(no Edge source change); records=PROOF_OWED(original customer Work and Rail result).
+INTERNAL_BUILD_IDENTITY: source=ef8b280dd50e5d46e662c1b3ebd880eed86206d6; deployment=PROOF_OWED(native-dependent editor release); environment=development; migrations=PROOF_OWED(20271126075005); edge=NOT_APPLICABLE; evidence=assets/exp05-reminder-admin-editor/source-manifest.json and browser-proof.json
+RELEASE_CHANNEL: development: original offline Workspace with neutral synthetic ports; no customer or provider action.
+RELEASE_CLASSIFICATION: internal-only: bounded existing reminder availability correction; no complete Experience claim.
+CUSTOMER_RELEASE_IDENTITY: none: native-dependent editor and authenticated customer outcome not yet released or verified.
 RELEASE_NOTE_REQUIRED: no: internal bounded correction; full Experience remains in development.
 RELEASE_TRUTH_BOUNDARY: PARTIAL: source/component/rendered proof only; production/customer outcome and founder acceptance separate.
 RELEASE_RECOVERY: position=forward editor correction after guarded native75005; reference=original versioned Operations writer and refresh-and-review behavior; never replay an unconfirmed change.

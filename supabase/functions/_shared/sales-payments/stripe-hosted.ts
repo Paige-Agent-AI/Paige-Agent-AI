@@ -135,11 +135,11 @@ interface ProviderBalanceObservation {
  id:string;amount_minor:number;currency:string;status:'available'|'pending';created_at:string;
 }
 interface RefundObservation {
- id:string;amount_minor:number;currency:string;status:'pending'|'requires_action'|'succeeded'|'failed'|'canceled';
+ id:string;amount_minor:number;currency:string;created_at:string;status:'pending'|'requires_action'|'succeeded'|'failed'|'canceled';
  balance_transaction:ProviderBalanceObservation|null;failure_balance_transaction:ProviderBalanceObservation|null;
 }
 interface DisputeObservation {
- id:string;amount_minor:number;currency:string;status:string;balance_transactions:ProviderBalanceObservation[];
+ id:string;amount_minor:number;currency:string;created_at:string;status:string;balance_transactions:ProviderBalanceObservation[];
 }
 export type StripePaymentAdjustments = {
  state:'observed';provider_transaction_id:string;provider_settlement_id:string;
@@ -206,7 +206,7 @@ export async function readStripePaymentAdjustments(request:PaymentRequest,op:Pro
    const failure=row.failure_balance_transaction===null?null:retainBalance(row.failure_balance_transaction,row.id as string,row.amount,'refund_failure');
    if((row.status==='succeeded'&&(!debit||failure))||(failure&&(!debit||!['failed','canceled'].includes(String(row.status))))||
     (debit&&['failed','canceled'].includes(String(row.status))&&!failure))throw Error('PROVIDER_ADJUSTMENT_READBACK_REQUIRED');
-   return {id:row.id as string,amount_minor:row.amount,currency:request.currency,status:row.status as RefundObservation['status'],balance_transaction:debit,failure_balance_transaction:failure};
+   return {id:row.id as string,amount_minor:row.amount,currency:request.currency,created_at:new Date(Number(row.created)*1000).toISOString(),status:row.status as RefundObservation['status'],balance_transaction:debit,failure_balance_transaction:failure};
   });
   const disputes:DisputeObservation[]=rawDisputes.map(row=>{
    if(!/^du_[A-Za-z0-9]+$/.test(row.id as string)||row.object!=='dispute'||row.charge!==charge.id||row.payment_intent!==intent.id||row.livemode!==(op.environment==='live')||
@@ -217,7 +217,7 @@ export async function readStripePaymentAdjustments(request:PaymentRequest,op:Pro
     return retainBalance(item,row.id as string,Number(item.amount),'adjustment');
    });
    if(moves.length===2&&moves[0].amount_minor===moves[1].amount_minor)throw Error('PROVIDER_ADJUSTMENT_READBACK_REQUIRED');
-   return {id:row.id as string,amount_minor:amount,currency:request.currency,status:String(row.status),balance_transactions:moves};
+   return {id:row.id as string,amount_minor:amount,currency:request.currency,created_at:new Date(Number(row.created)*1000).toISOString(),status:String(row.status),balance_transactions:moves};
   });
   if(charge.disputed&&disputes.length===0)return adjustmentUnknown();
   const succeeded=refunds.filter(row=>row.status==='succeeded').reduce((sum,row)=>sum+row.amount_minor,0),inFlight=refunds.filter(row=>row.status==='pending'||row.status==='requires_action').reduce((sum,row)=>sum+row.amount_minor,0);

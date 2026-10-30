@@ -4971,12 +4971,12 @@ no refund POST, new client, balance ledger, scheduler or invoice calculation.
 Refund success/pending/action-required/failure/cancellation and actual debit/
 failure-credit entries stay distinct. Dispute status never substitutes for actual
 withdrawal/reinstatement entries. Raw provider/customer/error content is excluded.
-All391 original+54 new assertions PASS in18 suites. Original17 test files and
+All391 original+55 new assertions PASS in18 suites. Original17 test files and
 hosted implementation inverse remain exact. The new-contract41 missing-function
 failures are not a production incident. Initial syntax failure is excluded; three
 NEW positive fixture aggregates were corrected, without weakening any assertion
 or guard. A separate causal final-metadata-fence failure/53 controls preceded its
-repair. Final445 PASS, lint3paths0, actual pinned SDK Deno2.9.8 check plus private
+repair. Final446 PASS, lint3paths0, actual pinned SDK Deno2.9.8 check plus private
 lock/frozen check PASS; lock SHA256
 451e4cea176b18f0909312eccedec14a816a87700ec14a4b6020a93693faa821.
 

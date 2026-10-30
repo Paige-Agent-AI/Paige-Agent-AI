@@ -65,6 +65,12 @@ describe('source-bound post-settlement Stripe observations, without a financial 
   const result=await read(ports({...capture(),amount_refunded:0},[refund({status:'failed',failure_balance_transaction:balance('txn_failure','re_original',10000,'refund_failure')})]));
   expect(result).toMatchObject({state:'observed',refunds:[{status:'failed',balance_transaction:{amount_minor:-10000},failure_balance_transaction:{amount_minor:10000}}]});
  });
+ it('retains original provider chronology while excluding private provider content',async()=>{
+  const result=await read(ports(capture(),[refund({metadata:{private_note:'private-client-note'},receipt_number:'private-receipt-number'})]));
+  expect(result).toMatchObject({state:'observed',refunds:[{created_at:new Date(1760000001*1000).toISOString(),balance_transaction:{created_at:new Date(1760000000*1000).toISOString()}}]});
+  expect(JSON.stringify(result)).not.toContain('private-client-note');expect(JSON.stringify(result)).not.toContain('private-receipt-number');
+  if(result.state==='observed')expect(Object.keys(result.refunds[0]).sort()).toEqual(['amount_minor','balance_transaction','created_at','currency','failure_balance_transaction','id','status']);
+ });
  it('holds an inconsistent provider aggregate instead of guessing which refunds count',async()=>{
   expect(await read(ports({...capture(),amount_refunded:9999}))).toMatchObject({state:'outcome_unknown'});
   expect(await read(ports(capture(),[]))).toMatchObject({state:'outcome_unknown'});

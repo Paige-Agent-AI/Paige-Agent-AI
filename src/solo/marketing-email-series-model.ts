@@ -36,7 +36,7 @@ export type SeriesRead = {
   postal_address: string | null; business_name: string | null;
   segments: { id: string; name: string; rule: Rule }[];
   choices: { stages: { key: string; count: number }[]; sources: { key: string; count: number }[]; tags: { key: string; count: number }[] };
-  sending: { daily_cap: number; used_last_24h: number; remaining_today: number };
+  sending: { used_last_24h: number };
   /** People who qualify for a started series but have not entered yet (they enter on the next check, or on resume). */
   waiting_to_enter?: number | null;
 };
@@ -129,7 +129,6 @@ export const SERIES_ERROR: Record<string, string> = {
   nothing_to_discard: "There are no changes to discard.",
   entry_mode_invalid: "Choose who enters again.",
   kind_invalid: "That kind of series does not exist.",
-  over_daily_cap: "More people match this right now than your daily limit allows. Narrow who enters, or start it as new contacts only.",
   series_approval_requires_review: "Approve a series from its own page.",
   not_awaiting_approval: "This series is no longer waiting for approval. Reload to see where it stands.",
   approval_not_pending: "That approval was already decided. Reload to see where the series stands.",
@@ -141,10 +140,10 @@ export const SERIES_ERROR: Record<string, string> = {
 };
 
 /** A series' approval summary, as the card says it. */
-export function startSummary(input: { name: string; emails: number; mode: "new_contacts" | "matching"; matching: number | null; from: string; cap: number; change: boolean }): string {
+export function startSummary(input: { name: string; emails: number; mode: "new_contacts" | "matching"; matching: number | null; from: string; change: boolean }): string {
   const n = plural(input.emails, "email");
   const head = input.change ? `Update “${input.name}”: ${n}. The people in it carry on with the new emails from where they are.`
     : input.mode === "new_contacts" ? `Start “${input.name}”: ${n} to new contacts as they arrive.`
     : `Start “${input.name}”: ${n} to the ${plural(input.matching ?? 0, "person", "people")} who match today, and anyone who matches later.`;
-  return `${head} From ${input.from}. Up to ${input.cap.toLocaleString()} emails a day across all your marketing email.`;
+  return `${head} From ${input.from}.`;
 }

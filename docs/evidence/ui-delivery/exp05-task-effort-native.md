@@ -1,7 +1,7 @@
 # EXP05 O02/O03 — original Task effort producer and exact approval
 
 UI_DELIVERY_EVIDENCE_VERSION: 1
-INTERNAL_BUILD_IDENTITY: source=b2d6cd9fb1b8821d79c14661081d3db9f7ce0ed0; deployment=offline-original-PaigeConfirmCard; environment=local; migrations=PROOF_OWED(20271126010012_task_effort_scalar never applied); edge=PROOF_OWED(crm-command exact source deployment after native12); evidence=assets/exp05-task-effort-native/build-manifest.json
+INTERNAL_BUILD_IDENTITY: source=4c6729d6f0f11cbde2cb932e9904cd8723c0ebae; deployment=offline-original-PaigeConfirmCard; environment=local; migrations=PROOF_OWED(20271126050005_task_effort_scalar forward publication); edge=PROOF_OWED(crm-command exact source deployment after forward migration); evidence=docs/evidence/exp05-task-effort-forward-order.json
 RELEASE_CHANNEL: development: original native Task writer and actual served-handler tests; isolated unchanged approval component with neutral summary ports.
 RELEASE_CLASSIFICATION: internal-only: bounded original Task-effort correction inside the unfinished EXP05 Experience.
 CUSTOMER_RELEASE_IDENTITY: none: no authenticated saved-effort or complete weekly-planning acceptance.
@@ -40,6 +40,36 @@ MUST_PRESERVE: original actor/tenant authority, FOR UPDATE/advisory locks, versi
 ACCEPTANCE_CRITERIA: nullable whole minutes0..2147483647; explicit zero/clear; unrelated metadata preserved; malformed/nonobject/conflicting input refused; exact approval values; stale/replay/race/rollback controls; original saved record and receipt prove the eventual action.
 MOTION_PURPOSE: none added.
 PROTECTED_SEAMS: only original Task-update scalar/native/generated schema and Task approval validation/summary spans; no shared Chat host, Root, Team Hub, Calendar, registry, provider, approval engine or other Experience writer edit.
+
+## October30 forward-publication correction
+
+The earlier12 references and originalb2d6/fdc input manifest below are historical,
+not current production applicability. Native3102/fdc and dependent3103/3151 now
+have all applicable required exact-head checks green, but currentmain3f37c5b72
+has advanced to production native15. Original deploy-migrations.yml expressly
+refuses an unapplied older version and prohibits --include-all. Therefore the
+unchanged original Task migration is forwarded to20271126050005, after the
+published E08 source chain through40008. No applied production history is reset,
+repaired or bypassed; migration12 remains absent from production.
+
+The normalized original migration text, function body and two actual-handler
+source files are BYTE-EXACT to reviewedfdc. Only the migration filename and the
+incumbent generated-artifact/self-test source references change. Body MD5 remains
+caea59ab335ecaf295391c41a1a0522f. All five rendered card inputs are unchanged, so
+the four original neutral frames keep their bounded component relevance; their
+old native-path pins remain tied to their actual historical source. All18191
+outside-owned incoming main leaves are conserved. Current generator15/field
+check, actual-handler104 and whitespace controls PASS. Full new-head CI/managed
+Preview/native225 remain owed; old green checks are not reused as new-head proof.
+
+Original no-data/nonpersistent native12 Preview identity/body/catalogue and scope
+are preserved in [forward evidence](../exp05-task-effort-forward-order.json).
+It has no Auth users or Tasks and three tenant rows; their provenance was not
+examined and they do not prove customer use. Supported retirement/recreation of ONLY this
+owned disposable Preview is planned after publication; no production/peer
+environment mutation, credentials, account or provider action. Subsequent actual
+retirement/new-Preview result must be recorded separately, never presumed here.
+Original authority/ACL/function identity and full customer-proof limits remain.
 
 ## Original orchestration and source contract
 

@@ -141,7 +141,10 @@ $from1$,$to1$$to1$),$from2$    AND (p_tenant_id IS NULL OR c.tenant_id = p_tenan
 $from3$,$to3$    -- Future multi-business support must select a legitimate relationship explicitly.
     -- A tenant argument narrows existing authority; it never supplies authority.
 $to3$) AS body
- FROM pg_proc WHERE oid='public.client_portal_relationship_id(uuid)'::regprocedure;
+ FROM (SELECT replace(replace(prosrc,'_uid uuid := p_actor_id;','_uid uuid := auth.uid();'),
+ '_business := CASE WHEN p_use_request_business THEN public._client_portal_request_business() ELSE NULL::uuid END;',
+ '_business := public._client_portal_request_business();') AS prosrc FROM pg_proc
+ WHERE oid='public._client_portal_relationship_for_actor(uuid,uuid,boolean)'::regprocedure AND (SELECT md5(prosrc) FROM pg_proc WHERE oid='public.client_portal_relationship_id(uuid)'::regprocedure)='4529aa68b6a624d557a307c7d9098bcb') AS canonical;
 SELECT is(md5(replace((SELECT body FROM resolver_preservation_source),
   $access$
     AND c.portal_access_state = 'open'$access$,'')),'f79189022b4dc36760b618a086a80e28',
@@ -358,9 +361,12 @@ SELECT is(pg_temp.as_user('e0917000-0000-4000-8000-000000000003',$q$SELECT to_js
 INSERT INTO public.internal_bookings(id,tenant_id,host_user_id,contact_id,title,start_at,end_at,status) VALUES
  ('e0987000-0000-4000-8000-000000000001','e0927000-0000-4000-8000-000000000001','e0917000-0000-4000-8000-000000000001',
   'e0937000-0000-4000-8000-0000000000c1','Race window session',now()+interval '3 days',now()+interval '3 days 1 hour','scheduled');
-CREATE TEMP TABLE resolver_def AS SELECT pg_get_functiondef('public.client_portal_relationship_id(uuid)'::regprocedure) d;
-DO $$ BEGIN
- EXECUTE replace((SELECT d FROM resolver_def),E'\n    AND c.portal_access_state = ''open''','');
+CREATE TEMP TABLE resolver_def AS SELECT pg_get_functiondef('public._client_portal_relationship_for_actor(uuid,uuid,boolean)'::regprocedure) d;
+DO $$ DECLARE actual text; stand_in text; BEGIN
+ actual := (SELECT d FROM resolver_def);
+ stand_in := replace(actual,E'\n    AND c.portal_access_state = ''open''','');
+ IF stand_in = actual THEN RAISE EXCEPTION 'Race fixture did not change the canonical relationship predicate'; END IF;
+ EXECUTE stand_in;
 END $$;
 SELECT is(pg_temp.as_user('e0917000-0000-4000-8000-000000000003',$q$SELECT to_jsonb(public.client_portal_relationship_id())$q$),
  to_jsonb('e0937000-0000-4000-8000-0000000000c1'::text),'race fixture: the resolver answers as it did before the pause committed');

@@ -3,22 +3,41 @@ import {createRoot,type Root} from 'react-dom/client';
 import {beforeEach,afterEach,it,expect,vi} from 'vitest';
 import {InvoiceCommandReview} from './InvoiceCommandReview';
 globalThis.IS_REACT_ACT_ENVIRONMENT=true;
-const h=vi.hoisted(()=>({invoke:vi.fn(),actor:'66666666-6666-4666-8666-666666666666',onAuth:null as null|((event:string,session:{user:{id:string}}|null)=>void)}));
+const h=vi.hoisted(()=>({invoke:vi.fn(),actor:'66666666-6666-4666-8666-666666666666',sessionRead:null as null|(()=>Promise<{data:{session:{user:{id:string}}|null}}>),onAuth:null as null|((event:string,session:{user:{id:string}}|null)=>void)}));
 vi.mock('@/integrations/supabase/client',()=>({supabase:{
  functions:{invoke:h.invoke},
  auth:{
-  getSession:async()=>({data:{session:{user:{id:h.actor}}}}),
+  getSession:async()=>h.sessionRead?await h.sessionRead():({data:{session:{user:{id:h.actor}}}}),
   onAuthStateChange:(callback:typeof h.onAuth)=>{h.onAuth=callback;return {data:{subscription:{unsubscribe(){}}}};},
  },
 }}));
 let host:HTMLDivElement,root:Root;const done=vi.fn(),close=vi.fn();
 const command={action:'invoice.publish' as const,invoice_id:'22222222-2222-4222-8222-222222222222',expected_version:1};
 const tenant='11111111-1111-4111-8111-111111111111';
-beforeEach(()=>{sessionStorage.clear();h.actor='66666666-6666-4666-8666-666666666666';h.invoke.mockReset();done.mockReset();close.mockReset();host=document.createElement('div');document.body.append(host);root=createRoot(host);});
+beforeEach(()=>{sessionStorage.clear();h.actor='66666666-6666-4666-8666-666666666666';h.sessionRead=null;h.onAuth=null;h.invoke.mockReset();done.mockReset();close.mockReset();host=document.createElement('div');document.body.append(host);root=createRoot(host);});
 afterEach(()=>{act(()=>root.unmount());host.remove();});
 const render=async(id=tenant)=>act(async()=>{root.render(<InvoiceCommandReview tenantId={id} command={command} onComplete={done} onClose={close}/>);await Promise.resolve();});
 const button=(name:string)=>Array.from(document.querySelectorAll('button')).find(b=>b.textContent===name)!;
 const click=async(name:string)=>act(async()=>{button(name).click();await Promise.resolve()});
+it('can leave a pending account check without invoking an invoice action',async()=>{
+ let resolve!:(value:{data:{session:{user:{id:string}}|null}})=>void;
+ h.sessionRead=()=>new Promise(r=>{resolve=r});await render();
+ expect(document.body.textContent).toContain('Checking your account');expect(button('Return to invoice')).toBeDefined();
+ await click('Return to invoice');expect(close).toHaveBeenCalledOnce();expect(h.invoke).not.toHaveBeenCalled();
+ await act(async()=>{root.render(null);resolve({data:{session:{user:{id:h.actor}}}});await Promise.resolve()});expect(done).not.toHaveBeenCalled();
+});
+it('provides a focused return when a session is unavailable, without granting an action',async()=>{
+ h.sessionRead=async()=>({data:{session:null}});await render();
+ expect(document.body.textContent).toContain('Sign in to review');expect(button('Return to invoice')).toBeDefined();
+ expect(document.activeElement).toBe(button('Return to invoice'));await click('Return to invoice');expect(close).toHaveBeenCalledOnce();expect(h.invoke).not.toHaveBeenCalled();expect(done).not.toHaveBeenCalled();
+});
+it('retains the original uncertain operation when sign-out requires returning to the invoice',async()=>{
+ h.invoke.mockRejectedValue(Error('Synthetic interruption'));await render();await click('Prepare review');
+ const stored=sessionStorage.getItem(sessionStorage.key(0)!);expect(stored).not.toBeNull();
+ await act(async()=>{h.onAuth?.('SIGNED_OUT',null);await Promise.resolve()});
+ expect(button('Return to invoice')).toBeDefined();await click('Return to invoice');expect(close).toHaveBeenCalledOnce();
+ expect(sessionStorage.getItem(sessionStorage.key(0)!)).toBe(stored);expect(h.invoke).toHaveBeenCalledOnce();expect(done).not.toHaveBeenCalled();
+});
 it('proposes then approves the identical immutable command and operation; cancel never executes',async()=>{
  h.invoke.mockResolvedValueOnce({data:{outcome:'approval_required',fingerprint:'0123456789abcdef',summary:'Publish frozen invoice'},error:null}).mockResolvedValueOnce({data:{ok:true},error:null});await render();
  await click('Prepare review');expect(document.querySelector('[role="dialog"]')).not.toBeNull();expect(document.activeElement?.closest('[role="dialog"]')).not.toBeNull();

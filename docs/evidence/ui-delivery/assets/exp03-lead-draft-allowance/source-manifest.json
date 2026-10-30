@@ -1,0 +1,15 @@
+{
+  "proof": "synthetic post-worker projection; server eligibility separately tested; not live intake, auth, worker, database or provider execution",
+  "files": {
+    "supabase/functions/growth-process-submission/lead-reply.ts": "99105b56ddf4afa5d0aea5d3367cccbeaa76cece0e36c269534542e22de276e7",
+    "supabase/functions/growth-process-submission/lead-reply.test.ts": "61ecdd92415d4e046b7f2eec84ae577a90fb9554943425de05d3fae5f84021b2",
+    "src/pages/admin/ClientsConversations.tsx": "6f221fdd4e3df640bd1b87ba8805be22514c7ead3c4e68393a2f196d49f1282d",
+    "src/pages/admin/conversations/LeadReplyDrafts.tsx": "1dacc8424da34b2289db74f271bf042a5c7f5b316ba78e650c1d1afd165186eb",
+    "src/pages/admin/conversations/useLeadReplyReview.tsx": "748946ed94ef97ab52fd306d5288fcc02af3305b2a7c3d4ab86f733a1c7b0089",
+    "scripts/live-drive/harness/exp03-lead-draft-allowance-mount/index.html": "b69e9dc20a52b1986fde0c90b2ddb9be595c59dc6509742fb51f91baff83cd2d",
+    "scripts/live-drive/harness/exp03-lead-draft-allowance-mount/main.tsx": "e8b46e355429a25b49f9a6f07018d537b3ec31a5126d9b163161a7a75607fe02",
+    "scripts/live-drive/harness/exp03-lead-draft-allowance-mount/stubs.ts": "39f593498ca833186c691f377d14d15c64594ed6171bd7ddbbd8070890fc9939",
+    "scripts/live-drive/harness/exp03-lead-draft-allowance-mount/vite.config.ts": "838ead3a44e87caa4e9b835f8cfef8048d9e0932642d3cf2cf933637d95362df",
+    "scripts/live-drive/harness/exp03-lead-draft-allowance-mount/drive.mjs": "f71ac0be08fc5d69eb084895f10647e6c511a51df41341cfe2e714788699157c"
+  }
+}

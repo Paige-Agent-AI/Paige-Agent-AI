@@ -388,8 +388,8 @@ export function useSoloNumbers(): SoloNumbersData {
     try {
       const { data, error } = await supabase.functions.invoke("comms-setup-calling", { body: {} });
       if (error) {
-        // Non-2xx (a real failure). The invoke error carries no body we can trust.
-        return { ok: false, outcome: "failed", message: "Calling setup couldn't reach the platform. Try again in a moment.", calling: null };
+        const { message } = await resolveFunctionError({ error, data, action: "set up calling" });
+        return { ok: false, outcome: "failed", message, calling: null };
       }
       const rec = (data ?? {}) as Record<string, unknown>;
       const outcome = typeof rec.outcome === "string" ? rec.outcome : "failed";

@@ -2,7 +2,7 @@
   "proof": "Original whole Settings/shell and actual calling hook/card, synthetic read/identity ports only; all effect invocations refuse; no authenticated/provider proof.",
   "files": {
     "src/solo/settings.tsx": "bc68d474819250421f6619c25efb075952c88b3c2d76386654ca2845af44955f",
-    "src/solo/data/useSoloNumbers.ts": "61c02c2a728025220ea88ccf1ecd879f170bc09709bf2b60153073997644c3df",
+    "src/solo/data/useSoloNumbers.ts": "51b544850d1f68641745dff73f4f1d794670c0a044aed56c8048532e29522df2",
     "src/solo/CallingSetupCard.tsx": "e8c67be28f2c3d5315e123abf867c141edda3ce7ae9c390928e7662e02191447",
     "src/components/tenant-shell/TenantCommandCenterShell.tsx": "7aaa24d867af1ac5e2222f3581ab361288ba54e6319e5c86db245875adb13e7c",
     "scripts/live-drive/harness/exp03-calling-authority-mount/index.html": "28abed925470d7640b2f4dc5ea5d9cc78d0a19132b18d34584b3fa856875a14a",

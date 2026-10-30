@@ -3,20 +3,25 @@ import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useSoloNumbers, type SoloNumbersData } from "./useSoloNumbers";
 
-const state=vi.hoisted(()=>({activeTenantId:"tenant-a" as string|null,throwRole:false,admin:false as unknown,owner:false as unknown,adminError:null as unknown,ownerError:null as unknown,roleHook:vi.fn(),reads:[] as string[]}));
+const state=vi.hoisted(()=>({fnError:null as unknown,activeTenantId:"tenant-a" as string|null,throwRole:false,admin:false as unknown,owner:false as unknown,adminError:null as unknown,ownerError:null as unknown,roleHook:vi.fn(),reads:[] as string[]}));
 vi.mock("@/hooks/useTenantContext",()=>({useTenantContext:()=>({activeTenantId:state.activeTenantId,loading:false})}));
 vi.mock("@/hooks/useUserRoles",()=>({useUserRoles:()=>{state.roleHook();return{isStaff:true};}}));
 vi.mock("@/integrations/supabase/client",()=>({supabase:{
   rpc:async(name:string)=>{state.reads.push(name);if(name==="is_current_user_tenant_admin"&&state.throwRole)throw new Error("synthetic unavailable");return name==="current_user_tenant_id"?{data:"tenant-a",error:null}:name==="is_current_user_tenant_admin"?{data:state.admin,error:state.adminError}:{data:state.owner,error:state.ownerError};},
   from:()=>({select:()=>({eq:()=>({order:async()=>({data:[],error:null})})})}),
+  functions:{invoke:async()=>({data:null,error:state.fnError})},
 }}));
 globalThis.IS_REACT_ACT_ENVIRONMENT=true;
 let root:Root,host:HTMLDivElement,latest:SoloNumbersData;
 function Projection(){const data=useSoloNumbers();latest=data;return <output>{data.loading?"loading":String(data.canManage)}</output>;}
 async function mount(){await act(async()=>{root.render(<Projection/>);for(let i=0;i<12;i++)await Promise.resolve();await new Promise(resolve=>setTimeout(resolve,0));});}
-beforeEach(()=>{host=document.createElement("div");document.body.append(host);root=createRoot(host);state.activeTenantId="tenant-a";state.throwRole=false;state.admin=false;state.owner=false;state.adminError=null;state.ownerError=null;state.reads=[];state.roleHook.mockClear();});
+beforeEach(()=>{host=document.createElement("div");document.body.append(host);root=createRoot(host);state.fnError=null;state.activeTenantId="tenant-a";state.throwRole=false;state.admin=false;state.owner=false;state.adminError=null;state.ownerError=null;state.reads=[];state.roleHook.mockClear();});
 afterEach(async()=>{await act(async()=>root.unmount());host.remove();});
 describe("original SOLO calling authority projection",()=>{
+  it("uses the original friendly error reader for a setup permission refusal",async()=>{
+    state.admin=true;await mount();state.fnError={context:new Response(JSON.stringify({error:"forbidden"}),{status:403})};
+    const result=await latest.setupCalling();expect(result.ok).toBe(false);expect(result.message).toMatch(/permission/i);expect(result.message).not.toContain("couldn't reach the platform");
+  });
   it("retires previous management authority when a role refresh throws",async()=>{
     state.admin=true;await mount();expect(host.textContent).toBe("true");state.throwRole=true;
     await act(async()=>{latest.refresh();for(let i=0;i<12;i++)await Promise.resolve();await new Promise(resolve=>setTimeout(resolve,0));});

@@ -1,0 +1,24 @@
+{
+  "controls": [
+    {
+      "disabled": false,
+      "height": 44,
+      "label": "Recover original action",
+      "width": 169.8625030517578
+    },
+    {
+      "disabled": false,
+      "height": 44,
+      "label": "Close · recovery retained",
+      "width": 180.4375
+    }
+  ],
+  "dialog": "Recover the earlier task change: Prepare the client delivery reviewNeutral offline workflow fixture. No customer or provider action.Refresh task detailsResponsible personMLMorgan LeeStatusReadyPriorityP1Due dateNot scheduledEstimated effort45 minutesSourceCRM taskRecover the earlier task changeSet this task’s effort estimate to 45 minutes. This does not reserve Calendar time.Recover original actionClose · recovery retainedClose",
+  "focus": "Recover original action",
+  "overflow": false,
+  "url": "http://127.0.0.1:57444/solo/42/operations/work?theme=dark&effortState=unknown",
+  "viewport": {
+    "height": 700,
+    "width": 320
+  }
+}

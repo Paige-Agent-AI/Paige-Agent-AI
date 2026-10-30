@@ -1,0 +1,6 @@
+import http from 'node:http';
+import fs from 'node:fs';
+import path from 'node:path';
+const root=path.resolve(import.meta.dirname,'dist');
+const server=http.createServer((req,res)=>{const url=new URL(req.url,'http://localhost');const wanted=path.resolve(root,'.'+decodeURIComponent(url.pathname));if(!wanted.startsWith(root+path.sep)){res.writeHead(403).end();return;}const file=fs.existsSync(wanted)&&fs.statSync(wanted).isFile()?wanted:path.join(root,'index.html');const ext=path.extname(file);res.setHeader('Content-Type',({'.html':'text/html','.js':'text/javascript','.css':'text/css','.woff2':'font/woff2','.svg':'image/svg+xml'})[ext]??'application/octet-stream');res.setHeader('Cache-Control','no-store');res.end(fs.readFileSync(file));});
+server.listen(0,'127.0.0.1',()=>console.log(JSON.stringify({origin:'http://127.0.0.1:'+server.address().port,boundary:'offline synthetic full Operations mount'})));

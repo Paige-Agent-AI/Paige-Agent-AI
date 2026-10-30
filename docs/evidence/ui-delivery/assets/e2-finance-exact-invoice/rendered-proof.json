@@ -1,0 +1,137 @@
+[
+  {
+    "configuration": "fresh-390x844-open",
+    "buttonVisible": true,
+    "color": "rgb(32, 30, 35)",
+    "documentWidth": 390,
+    "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+    "label": "Open invoice",
+    "paigeExpanded": "true",
+    "source": "INV-SYNTHETIC-2",
+    "surface": "rgb(251, 249, 245)",
+    "viewport": [
+      390,
+      844
+    ]
+  },
+  {
+    "configuration": "fresh-1536x770-open",
+    "buttonVisible": true,
+    "color": "rgb(32, 30, 35)",
+    "documentWidth": 1536,
+    "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+    "label": "Open invoice",
+    "paigeExpanded": "true",
+    "source": "INV-SYNTHETIC-2",
+    "surface": "rgb(251, 249, 245)",
+    "viewport": [
+      1536,
+      770
+    ]
+  },
+  {
+    "configuration": "fresh-1366x768-open",
+    "buttonVisible": true,
+    "color": "rgb(32, 30, 35)",
+    "documentWidth": 1366,
+    "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+    "label": "Open invoice",
+    "paigeExpanded": "true",
+    "source": "INV-SYNTHETIC-2",
+    "surface": "rgb(251, 249, 245)",
+    "viewport": [
+      1366,
+      768
+    ]
+  },
+  {
+    "configuration": "fresh-1024x768-open",
+    "buttonVisible": true,
+    "color": "rgb(32, 30, 35)",
+    "documentWidth": 1024,
+    "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+    "label": "Open invoice",
+    "paigeExpanded": "true",
+    "source": "INV-SYNTHETIC-2",
+    "surface": "rgb(251, 249, 245)",
+    "viewport": [
+      1024,
+      768
+    ]
+  },
+  {
+    "configuration": "fresh-900x1000-open",
+    "buttonVisible": true,
+    "color": "rgb(32, 30, 35)",
+    "documentWidth": 900,
+    "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+    "label": "Open invoice",
+    "paigeExpanded": "true",
+    "source": "INV-SYNTHETIC-2",
+    "surface": "rgb(251, 249, 245)",
+    "viewport": [
+      900,
+      1000
+    ]
+  },
+  {
+    "configuration": "fresh-900x1000-closed",
+    "buttonVisible": true,
+    "color": "rgb(32, 30, 35)",
+    "documentWidth": 900,
+    "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+    "label": "Open invoice",
+    "paigeExpanded": "false",
+    "source": "INV-SYNTHETIC-2",
+    "surface": "rgb(251, 249, 245)",
+    "viewport": [
+      900,
+      1000
+    ]
+  },
+  {
+    "configuration": "fresh-1024x768-closed",
+    "buttonVisible": true,
+    "color": "rgb(32, 30, 35)",
+    "documentWidth": 1024,
+    "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+    "label": "Open invoice",
+    "paigeExpanded": "false",
+    "source": "INV-SYNTHETIC-2",
+    "surface": "rgb(251, 249, 245)",
+    "viewport": [
+      1024,
+      768
+    ]
+  },
+  {
+    "configuration": "fresh-1366x768-closed",
+    "buttonVisible": true,
+    "color": "rgb(32, 30, 35)",
+    "documentWidth": 1366,
+    "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+    "label": "Open invoice",
+    "paigeExpanded": "false",
+    "source": "INV-SYNTHETIC-2",
+    "surface": "rgb(251, 249, 245)",
+    "viewport": [
+      1366,
+      768
+    ]
+  },
+  {
+    "configuration": "fresh-1536x770-closed",
+    "buttonVisible": true,
+    "color": "rgb(32, 30, 35)",
+    "documentWidth": 1536,
+    "font": "\"Schibsted Grotesk\", \"Segoe UI Variable Text\", \"SF Pro Text\", system-ui, sans-serif",
+    "label": "Open invoice",
+    "paigeExpanded": "false",
+    "source": "INV-SYNTHETIC-2",
+    "surface": "rgb(251, 249, 245)",
+    "viewport": [
+      1536,
+      770
+    ]
+  }
+]

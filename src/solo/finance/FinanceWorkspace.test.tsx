@@ -23,6 +23,57 @@ beforeEach(() => { mocks.phase = "ready"; mocks.metricPhase = "ready"; mocks.row
 beforeEach(() => { targetContext.value = { activeUserId: 'test-owner', activeTenantId: TEST_REVIEW_TENANT, loading: false, accountContextStatus: 'ready' }; });
 beforeEach(() => { mocks.metricRead.mockReset(); });
 afterEach(() => { act(() => root.unmount()); host.remove(); });
+describe('Finance original-invoice handoff', () => {
+ const firstId = 'e2000000-0000-4000-8000-000000000001';
+ const secondId = 'e2000000-0000-4000-8000-000000000002';
+ const invoice = (id: string, number: string) => ({ id, tenantId: 'A', number, status: 'issued', totalMinor: 10000,
+  remainingMinor: 10000, manualRecordedMinor: 0, providerVerifiedMinor: 0, payments: [], paymentsHasMore: false,
+  snapshot: { memo: null, due_date: null, currency: 'usd', items: [] } });
+ const button = (name: string) => [...document.querySelectorAll<HTMLButtonElement>('button')].find(node => node.textContent === name);
+ function OriginalDestination() {
+  const location = useLocation(), navigate = useNavigate();
+  return <><output aria-label="Original Sales destination">{location.pathname}{location.search}</output><button onClick={() => navigate(-1)}>Return to Finance</button></>;
+ }
+ async function mount(account: string) {
+  await act(async () => root.render(<MemoryRouter initialEntries={[`/solo/${account}/finance/receivables?range=week`]}><Routes>
+   <Route path="/solo/:account/sales/payments" element={<OriginalDestination/>}/>
+   <Route path="/solo/:account/*" element={<FinanceWorkspace epoch="A"/>}/>
+  </Routes></MemoryRouter>));
+ }
+ it.each(['123', '456'])('opens the inspected second invoice in current account %s, then returns to the original window', async account => {
+  mocks.rows = [invoice(firstId, 'INV-FIRST'), invoice(secondId, 'INV-SECOND')];
+  await mount(account);
+  await act(async () => button('Inspect INV-SECOND')!.click());
+  const open = button('Open invoice');
+  expect(open).toBeDefined();
+  await act(async () => open!.click());
+  expect(host.querySelector('output')?.textContent).toBe(`/solo/${account}/sales/payments?view=invoices&invoice=${secondId}`);
+  expect(host.textContent).not.toContain(firstId);
+  await act(async () => button('Return to Finance')!.click());
+  expect(host.querySelector<HTMLSelectElement>('select')?.value).toBe('week');
+  expect(button('Inspect INV-SECOND')).toBeDefined();
+ });
+ it('keeps a malformed record id at the canonical list without injecting a destination', async () => {
+  mocks.rows = [invoice('../foreign?invoice=other', 'INV-MALFORMED')];
+  await mount('123');
+  await act(async () => button('Inspect INV-MALFORMED')!.click());
+  expect(button('Open invoice')).toBeUndefined();
+  const open = button('Open invoices');
+  expect(open).toBeDefined();
+  await act(async () => open!.click());
+  expect(host.querySelector('output')?.textContent).toBe('/solo/123/sales/payments?view=invoices');
+ });
+ it('removes the inspected handoff when the original source read is replaced', async () => {
+  mocks.rows = [invoice(secondId, 'INV-SECOND')];
+  await render('/solo/123/finance/receivables');
+  await act(async () => button('Inspect INV-SECOND')!.click());
+  expect(button('Open invoice')).toBeDefined();
+  mocks.identity = 'A:0:1';
+  await render('/solo/123/finance/receivables');
+  expect(document.querySelector('[role="dialog"]')).toBeNull();
+  expect(button('Open invoice')).toBeUndefined();
+ });
+});
 async function render(path = "/solo/123/finance/overview", epoch = "A") { await act(async () => root.render(<MemoryRouter initialEntries={[path]}><Routes><Route path="/solo/:account/*" element={<FinanceWorkspace epoch={epoch}/>}/></Routes></MemoryRouter>)); }
 const readySourceReview = () => ({ state: "ready", snapshot: { period: { timezone: "UTC" }, domains: { finance: { status: "available", data: { finance_evidence: {
    tenant_id: "A", eligible_sources: 1, sources: [{ company_id: "test-company", company_label: "Original company", company_version: 1,

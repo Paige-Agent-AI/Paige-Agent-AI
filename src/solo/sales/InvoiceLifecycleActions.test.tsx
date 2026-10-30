@@ -26,6 +26,16 @@ it('a draft number is assigned on issuance and never described as previously iss
  expect(host.textContent).toContain('Draft · not issued');expect(host.textContent).toContain('Assigned when issued');expect(host.textContent).not.toContain('Previously issued invoice');expect(host.textContent).not.toContain(row.invoice_number);
 });
 
+it.each(['draft','issued','void'] as const)('does not call a %s lifecycle audit amount a different lifecycle obligation',async status=>{
+ const row=invoiceLifecycleFixtureRow(id,status);
+ h.rpc.mockImplementation(async(name:string)=>({data:name==='read_sales_invoice'?row:name==='list_sales_invoice_payment_operations'?{rows:[]}:[],error:null}));
+ await render();const terms=Array.from(host.querySelectorAll('dt')).map(el=>el.textContent);
+ expect(terms).toContain(status==='draft'?'Draft total':status==='void'?'Original invoice total':'Invoice total');
+ expect(terms).toContain(status==='draft'?'Unissued draft amount':status==='void'?'Recorded balance (voided)':'Outstanding balance');
+ if(status!=='issued'){expect(terms).not.toContain('Outstanding balance');expect(host.textContent).not.toContain('Paid');}
+ expect(host.textContent).toContain(status==='draft'?'$200.00':'$150.00');expect(h.invoke).not.toHaveBeenCalled();expect(changed).not.toHaveBeenCalled();
+});
+
 it('request-editor abandonment is visible outside the hidden manual editor',async()=>{await render();await click('Request customer payment');await click('Send invoice');const dialog=document.querySelector('[role="alertdialog"]');expect(dialog).not.toBeNull();expect(dialog!.closest('[hidden]')).toBeNull();await click('Continue editing');expect(document.body.textContent).toContain('Prepare payment review');});
 
 it('unknown accepted payment recovery closes to its original trigger and retains exact selector',async()=>{

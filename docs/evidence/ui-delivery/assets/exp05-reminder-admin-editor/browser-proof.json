@@ -1,0 +1,68 @@
+{
+  "boundary": "Offline original OperationsWorkspace and Work inspector. Synthetic role/data ports; no authenticated action, original record, approval, provider, Rail or full-shell claim.",
+  "observations": [
+    {
+      "state": "admin-desktop-edited",
+      "documentWidth": 1366,
+      "saveDisabled": false,
+      "time": "2099-02-02T10:30",
+      "width": 1366
+    },
+    {
+      "state": "admin-dark-320",
+      "dialog": {
+        "bottom": 1000,
+        "height": 1000,
+        "left": 0,
+        "right": 320,
+        "top": 0,
+        "width": 320,
+        "x": 0,
+        "y": 0
+      },
+      "documentWidth": 320,
+      "field": {
+        "bottom": 761.5,
+        "height": 43.75,
+        "left": 24.80000114440918,
+        "right": 286.4000072479248,
+        "top": 717.75,
+        "width": 261.6000061035156,
+        "x": 24.80000114440918,
+        "y": 717.75
+      },
+      "saveDisabled": true,
+      "width": 320
+    },
+    {
+      "state": "assignee-read-only",
+      "documentWidth": 1366,
+      "readOnly": true,
+      "statusSelectCount": 1,
+      "timeControlCount": 0,
+      "width": 1366
+    },
+    {
+      "state": "role-loading-dark-320",
+      "documentWidth": 320,
+      "readOnly": true,
+      "timeControlCount": 0,
+      "width": 320
+    },
+    {
+      "state": "wrong-actor-light-320",
+      "documentWidth": 320,
+      "readOnly": true,
+      "timeControlCount": 0,
+      "width": 320
+    }
+  ],
+  "interaction": {
+    "nativeKeyboardDateEdit": true,
+    "discardReturnedSaveDisabled": true,
+    "tabReachedDatetimeField": true,
+    "escapeReturnedFocusToOriginalCard": true,
+    "actual200PercentZoom": "PROOF_OWED",
+    "screenReader": "PROOF_OWED"
+  }
+}

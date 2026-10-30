@@ -85,8 +85,8 @@ select pg_temp.check_true(jsonb_array_length(public.plan_list_operations_scoped(
 
 -- Real schema/role-sync coverage complements the isolated no-global-role port.
 -- Keep both role-sync triggers: this does not manufacture an impossible seat.
-insert into public.plan_items(id,tenant_id,item_type,title,created_by,assigned_to_user_id,remind_at) values
- ('ee010000-0000-4000-8000-00000000a021','ee010000-0000-4000-8000-000000001111','reminder','Test Admin reminder boundary','ee010000-0000-4000-8000-000000000001','ee010000-0000-4000-8000-000000000002','2099-06-01');
+insert into public.plan_items(id,tenant_id,item_type,title,created_by,assigned_to_user_id,remind_at,updated_at) values
+ ('ee010000-0000-4000-8000-00000000a021','ee010000-0000-4000-8000-000000001111','reminder','Test Admin reminder boundary','ee010000-0000-4000-8000-000000000001','ee010000-0000-4000-8000-000000000002','2099-06-01','2000-01-01');
 do $reminder$
 declare
  item uuid := 'ee010000-0000-4000-8000-00000000a021';

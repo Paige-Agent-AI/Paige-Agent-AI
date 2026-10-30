@@ -7,9 +7,9 @@ MATERIAL_FLOW_CHANGE: NO: existing control availability correction after native 
 FLOW_PROTOTYPE: NOT_REQUIRED: original rendered Workspace/inspector and component interactions provide the bounded existing-flow review surface.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: current-business Admin may move another person's active reminder to a finite future time through the original native writer, without a redundant global role label.
 VISUAL_DIRECTION: PASS: incumbent labels, tokens, typography, spacing and focus behavior; no style or motion change.
-AUTOMATED_EVIDENCE: PASS: current-main1515 composition has editor41/Workspace63 and separately executed original adapter22;126 assertions across3 distinct suites, no failure or skip. Causal baseline2 FAIL/39 PASS becomes41 editor PASS. Focused ESLint and whitespace checks passed.
-STATIC_EVIDENCE: PASS: both product/test blobs and all10 owned non-packet blobs are exact originale6e9;18,564 incoming outside-owned main1515 leaves conserved. Fresh original-Workspace build has125 product inputs; five incoming Task-effort/CSS inputs differ from the historical render. Current manifest/conservation attached; no source/lockfile/baseline change to repair local dependencies.
-RENDERED_EVIDENCE: UNVERIFIED: five original candidate frames remain valid historical evidence of the exact editor source. Fresh composed render is pending the requested non-overlapping Edge window, ANT11/704c450e; no new screenshot is claimed from a source manifest or build. Synthetic ports are not customer or full-shell proof.
+AUTOMATED_EVIDENCE: PASS: current-main055 composition has editor41/Workspace63/original adapter22;126 assertions across3 distinct suites, no failure or skip. Causal baseline2 FAIL/39 PASS becomes41 editor PASS. Focused ESLint and whitespace checks passed. Initial invocation refused obsolete minWorkers before running tests; the corrected supported invocation completed all126, with both logs retained.
+STATIC_EVIDENCE: PASS: original product/test blobs are unchanged. Historical f30 conservation retains all10 original non-packet blobs and18,564 outside-owned main1515 leaves. Fresh f728 render-conservation.json separately verifies every incoming main055 leaf outside the declared candidate paths and all125 compiled product inputs. Later evidence documents intentionally differ; no source/lockfile/baseline change to repair local dependencies.
+RENDERED_EVIDENCE: PASS: current-main f728 composed original Workspace/inspector rendered at1366×768 Mineral and320×1000 Obsidian; six fresh confirmed frames and browser-proof.json are under current-main. All125 compiled product inputs match current source. Three immediate captures showed an earlier board despite current dialog DOM; retained EXCLUDED, replaced by separately observed settled captures. Synthetic ports are not customer or full-shell proof.
 BEHAVIORAL_EVIDENCE: PASS: native keyboard date entry enables save; discard clears it. Tab reaches the date field; Escape restores focus to the original Work card. Assignee/loading/stale identity cannot edit reminder time. No browser save was submitted.
 AUTHENTICATED_RUNTIME: UNVERIFIED: native75005 is independently verified in production1515; dependent editor release and authenticated eligible role/cohort records, original audit/Rail/reload and both chats remain owed.
 KEYBOARD_FOCUS: PASS: actual Tab/field and Escape/original-card return observed. Screen-reader/full-shell proof remains owed.
@@ -26,11 +26,11 @@ SOLO_1024X768_PAIGE_CLOSED: UNVERIFIED: no fresh full-shell proof.
 SOLO_1024X768_PAIGE_OPEN: UNVERIFIED: no fresh full-shell proof.
 SOLO_900X1000_PAIGE_CLOSED: UNVERIFIED: no fresh full-shell proof.
 SOLO_900X1000_PAIGE_OPEN: UNVERIFIED: no fresh full-shell proof.
-UNVERIFIED: fresh composed browser render, final exact-head review/CI/editor release; customer record/Rail/reload, full-shell/native200%/AT, both chats, ten outcomes/E5 and founder evaluation. Native75005 ordering/readback is now satisfied.
+UNVERIFIED: final exact-head review/CI/editor release; customer record/Rail/reload, full-shell/native200%/AT, both chats, ten outcomes/E5 and founder evaluation. Native75005 ordering/readback and bounded composed browser render are now satisfied.
 OWNER_INTENT: repair legitimate reminder access while continuing the complete Operations assignment; no new systems or routine founder testing.
 MUST_NOT_HAPPEN: global labels alone confer no target-business authority; no early UI release, approval bypass, provider/cron invocation, unknown replay or invented success.
 RELEASE_SCOPE: build=existing Operations reminder editor; delivery=native-dependent correction; effect=no provider or activation; native=SOURCE_VERIFIED(75005/1515); editor=PROOF_OWED; edge=NOT_APPLICABLE(no Edge source change); records=PROOF_OWED(original customer Work and Rail result).
-INTERNAL_BUILD_IDENTITY: source=f30e2e88cd4b3f458c96a347e3c13b68eb921ef5; deployment=PROOF_OWED(editor release); environment=development; migrations=APPLIED(20271126075005_reminder_tenant_admin_access); edge=NOT_APPLICABLE; evidence=assets/exp05-reminder-admin-editor/current-main/source-manifest.json and conservation.json; historical browser-proof.json remains separate
+INTERNAL_BUILD_IDENTITY: source=f7281451b56b3a27b3d715e715687759e073b488; deployment=PROOF_OWED(editor release); environment=development; migrations=APPLIED(20271126075005_reminder_tenant_admin_access); edge=NOT_APPLICABLE; evidence=assets/exp05-reminder-admin-editor/current-main/source-manifest.json, conservation.json and browser-proof.json; historical browser-proof.json remains separate
 RELEASE_CHANNEL: development: original offline Workspace with neutral synthetic ports; no customer or provider action.
 RELEASE_CLASSIFICATION: internal-only: bounded existing reminder availability correction; no complete Experience claim.
 CUSTOMER_RELEASE_IDENTITY: none: native-dependent editor and authenticated customer outcome not yet released or verified.
@@ -39,6 +39,25 @@ RELEASE_TRUTH_BOUNDARY: PARTIAL: source/component/rendered proof only; productio
 RELEASE_RECOVERY: position=forward editor correction after guarded native75005; reference=original versioned Operations writer and refresh-and-review behavior; never replay an unconfirmed change.
 
 ## Exact scope and proof boundary
+
+### October30 20:14UTC — current-main rendered verification
+
+Normally composed E04 adb84 and E03 05519c969 to f7281451, preserving incoming
+source and the original reminder product/test blobs. All125 actual compiled
+product file hashes match the current checkout exactly; reuse of the inspected
+build is therefore explicit, not a stale-source screenshot claim. Admin has the
+original reminder-time control with no global app-role label. Assignee-only,
+loading and stale-actor fixtures remain read-only. Native keyboard month editing
+enables Save; Discard clears the intent and disables Save; Tab reaches the date
+control and Escape restores original-card focus. No Save was submitted.
+
+Fresh light/dark1366/320 frames and DOM geometry are in current-main. Three first
+captures showed a prior board frame rather than the observed dialog, so those
+are preserved privately as EXCLUDED and are not release evidence. Separately
+settled captures visibly contain the corresponding refusal. The exact browser
+window returned under ANT11/c5c8e08f; only the owned loopback tab and static server
+were used, viewport reset and tab/server closed. No customer account or action.
+The earlier pending-render checkpoint below remains historical.
 
 ### October30 current-main integration
 

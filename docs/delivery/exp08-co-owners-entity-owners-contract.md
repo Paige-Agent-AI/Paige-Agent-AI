@@ -1450,3 +1450,27 @@ do not silently expand it or its maturity. No provider, action verb, approval ch
 receipt store is added. Existing shared actor/scope admission and domain writers remain mandatory;
 ALG-01/08 reconciliation/currentness support is PARTIAL, not a new algorithm claim. All original
 18 rows,6 amendments and five journeys remain; full assignment STILL CODING.
+
+Later final selected-phase receipt (October30): `--only-owner-read` completes with32/32 cases,
+baseline29 expected failures/3 existing refusals,9 static-predicate mutants killed,22 reader
+source/metadata/ACL drift variants plus1 default-ABI drift refused, exact zero-row/metadata replay,
+an actual authenticated-role call and4 anon/service execution denials. Two early demotion races
+and4 post-admission identity/seat races observe real PostgreSQL waits. Two role-check mutants and
+4 lock-removal mutants are also killed by actual concurrent sessions. The review P1 is resolved
+in source after a genuine failing-before three-session counterexample; non-author assurance remains
+SOURCE-ONLY, not an independently rerun native or authenticated customer certificate.
+
+Canonical stored body MD5s in that local run are `28c9a41b7359825ef25b787a60b43cd8`
+(`get_solo_team_workspace`) and `76647016a6e0c303dd200845defcffc1`
+(`get_paige_team_context`). Windows psql text output/candidate Git text is normalized to LF for
+source-edit fixtures; actual in-database MD5s, inverse guards and every assertion remain exact.
+The caught non-editing multiline mutant is retained as test-transport failure, not a killed mutant.
+The run disposes only its own database. These receipts do NOT replace the complete default runner,
+full Vitest/app checks, exact final-head review/CI/Preview, managed release/readback or customer proof.
+
+Separate parent3130 release HOLD: original90008's newly reachable entity-owner demotion still needs
+the approved§5.8 original Billing cleanup/last-primary integration. Source-only review confirms
+that missing prerequisite; actual billing powers/data delivery and affected customer accounts are
+UNVERIFIED. Original E02 writer contract requested in ANT138/152c950c-f074-4357-913f-4bbb27109862.
+No raw Billing update, Auth-context override, paid-rule waiver or parallel writer is authorized by
+this read projection. Parent and child remain separate; full assignment STILL CODING.

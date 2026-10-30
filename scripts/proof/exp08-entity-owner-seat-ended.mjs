@@ -29,7 +29,8 @@ const identityMigration=readFileSync(new URL('../../supabase/migrations/20271126
 const ownerReadFixture=readFileSync(new URL('../../supabase/tests/exp08_owner_read_projection.sql',import.meta.url),'utf8');
 const workspaceReadSource=readFileSync(new URL('../../supabase/migrations/20261107000000_the_headline_is_the_furthest_the_email_got.sql',import.meta.url),'utf8');
 const contextReadSource=readFileSync(new URL('../../supabase/migrations/20260901150000_solo_paige_team_invitation_context.sql',import.meta.url),'utf8');
-const ownerReadPatch=readFileSync(new URL('./exp08-owner-read-projection-patch.sql',import.meta.url),'utf8');
+// Use the canonical Git/LF candidate on Windows too. Database MD5/source guards are NOT normalized.
+const ownerReadPatch=readFileSync(new URL('./exp08-owner-read-projection-patch.sql',import.meta.url),'utf8').replace(/\r\n/g,'\n');
 function privateHelper(source,name,signature) {
   const start=source.indexOf(`CREATE OR REPLACE FUNCTION public.${name}(`);
   const endPattern=`REVOKE ALL ON FUNCTION public.${name}(${signature})`;
@@ -616,7 +617,9 @@ try {
   console.error(`EXP08 owner read candidate: ${ownerReadAfter.length} cases passed; original metadata/rows conserved`);
   await ownerReadAfterAdmissionRace(false);await ownerReadAfterAdmissionRace(true);
   await ownerReadAfterAdmissionRace(false,true);await ownerReadAfterAdmissionRace(true,true);
-  const readerDefinitions=readerSignatures.map(signature=>({signature,definition:sql(`select pg_get_functiondef('${signature}'::regprocedure);`)}));
+  // psql's Windows text stdout uses CRLF; source-edit mutants must target the actual LF SQL
+  // rather than silently missing a multiline predicate. Native stored-body MD5s remain exact.
+  const readerDefinitions=readerSignatures.map(signature=>({signature,definition:sql(`select pg_get_functiondef('${signature}'::regprocedure);`).replace(/\r\n/g,'\n')}));
   const readerReplayRows=readRows();sql(ownerReadPatch);assert.equal(readRows(),readerReplayRows);assert.equal(readerMetadata(),readerBeforeMetadata);
   records.push({phase:'original-owner-read-replay',row_changes:0,metadata_changes:0});
   const restoreReaders=()=>{for(const {signature,definition} of readerDefinitions)sql(`ALTER FUNCTION ${signature} OWNER TO postgres;\n${definition};\nREVOKE ALL ON FUNCTION ${signature} FROM PUBLIC,anon,authenticated,service_role; GRANT EXECUTE ON FUNCTION ${signature} TO authenticated;`);};

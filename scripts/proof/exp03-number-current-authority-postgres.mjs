@@ -76,8 +76,28 @@ try{
  refuse(asActor+primary,/NUMBER_NOT_ACTIVE/);
  refuse(asActor+`SELECT public.tenant_phone_number_rename('${first}',repeat('x',121))`,/NAME_TOO_LONG/);
  refuse(`SELECT set_config('test.actor','',false);`+primary,/TENANT_REQUIRED/);
- // Strict source drift guard must refuse even an otherwise valid second application.
- refuse(read('scripts/proof/exp03-number-current-authority-patch.sql'),/source drift/);
+ // Replaying ONLY exact reviewed source is inert; unknown source or grants refuse.
+ const patch=read('scripts/proof/exp03-number-current-authority-patch.sql');
+ db.run(patch);checks++;
+ refuse(`SET ROLE anon;`+primary,/permission denied/);
+ db.run(`GRANT EXECUTE ON FUNCTION public.tenant_phone_number_set_primary(uuid,uuid) TO anon;`);
+ refuse(patch,/metadata drift/);
+ db.run(`REVOKE EXECUTE ON FUNCTION public.tenant_phone_number_set_primary(uuid,uuid) FROM anon;`);
+ // Original label writer accepts any owned number; primary requires active status.
+ db.run(`SELECT set_config('test.actor','',false);SELECT public.tenant_phone_number_rename('${first}',' Service ','${tenant}');`);
+ assert.match(db.run(`SELECT friendly_name FROM tenant_phone_numbers WHERE id='${first}'`),/Service/);checks++;
+ db.run(`INSERT INTO tenant_phone_numbers(id,tenant_id,status) VALUES('20000000-0000-4000-8000-000000000003','${other}','active');`);
+ refuse(asActor+`SELECT public.tenant_phone_number_set_primary('20000000-0000-4000-8000-000000000003')`,/NUMBER_NOT_FOUND/);
+ db.run(`ALTER FUNCTION public.tenant_phone_number_rename(uuid,text,uuid) SET search_path TO public,pg_catalog;`);
+ refuse(patch,/metadata drift/);
+ // A later writer's unknown source rolls back even the first writer's repair.
+ db.run(read('scripts/proof/fixtures/exp03-number-management-before.sql'));
+ const primaryDefinition=db.run(`SELECT pg_get_functiondef('public.tenant_phone_number_set_primary(uuid,uuid)'::regprocedure)`).replaceAll('\r\n','\n');
+ assert(primaryDefinition.includes('begin\n'));
+ db.run(primaryDefinition.replace('begin\n','begin\n  -- synthetic source drift\n'));
+ const beforeAtomic=db.run(`SELECT md5(pg_get_functiondef('public.tenant_phone_number_rename(uuid,text,uuid)'::regprocedure))`);
+ refuse(patch,/source drift/);
+ assert.equal(db.run(`SELECT md5(pg_get_functiondef('public.tenant_phone_number_rename(uuid,text,uuid)'::regprocedure))`),beforeAtomic);checks++;
  console.log(JSON.stringify({checks,scope:'native component fixture only; no provider/purchase/runtime/customer proof'}));
 }finally{
  const r=spawnSync(db.psql,db.args('postgres'),{input:`DROP DATABASE ${db.database} WITH (FORCE);`,encoding:'utf8',timeout:60000});

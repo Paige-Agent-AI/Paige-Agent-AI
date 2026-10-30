@@ -1,3 +1,4 @@
+import { formatExactMinor } from '../../../supabase/functions/_shared/client-engagement/money';
 export type CustomerPaymentRequest={amountMinor:number;currency:string;state:string;url:string|null;remainingMinor:number;expiresAt:number|null};
 const states=['prepared','dispatching','provider_accepted','customer_action_required','outcome_unknown','settled','failed','expired','cancelled'];
 /** Read-only presentation of the server's existing invoice/bearer projection. */
@@ -28,8 +29,6 @@ export function customerPaymentRequestCopy(state:string):string{
  }
 }
 
-export function formatPaymentMinor(amount:number,currency:string):string{
- const formatter=new Intl.NumberFormat(undefined,{style:'currency',currency});
- const exponent=formatter.resolvedOptions().maximumFractionDigits;
- return formatter.format(amount/(10**exponent));
+export function formatPaymentMinor(amount:number|string,currency:string,locale?:string|string[]):string{
+ return formatExactMinor(amount,currency,{locale})??'Amount unavailable';
 }

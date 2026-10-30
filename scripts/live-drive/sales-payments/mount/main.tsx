@@ -3,6 +3,8 @@ import {createRoot} from 'react-dom/client';
 import {ThemeProvider} from 'next-themes';
 import {InvoiceLifecycleActions} from '@/solo/sales/InvoiceLifecycleActions';
 import {InvoiceWorkspace} from '@/solo/sales/InvoiceWorkspace';
+import {InvoiceRecordInspection} from '@/solo/sales/SalesBillingWorkspace';
+import {invoiceFixtureRecord} from './supabase';
 import InvoiceDocument from '@/pages/InvoiceDocument';
 import {formatPaymentMinor} from '@/solo/sales/customerPaymentRequest';
 import {acceptedPlanEnabled,expireAcceptedFixtureSession} from './accepted-plan';
@@ -34,10 +36,12 @@ export function Fixture(){
  const canManage=query.get('role')!=='readonly';
  return <main className="paige-solo solo-campaigns" data-theme={theme} style={{minHeight:'100dvh',padding:20}}>
   <p>LOCAL RENDERED FIXTURE · no backend, authenticated acceptance, payment or signature evidence.</p>
-  <h1>Invoice INV-1042</h1>
+  <h1>{query.get('surface')==='record'?'Invoice record inspection':'Invoice INV-1042'}</h1>
   <details><summary>Synthetic request evidence</summary><pre id="e04-last-request" style={{whiteSpace:'pre-wrap',overflowWrap:'anywhere'}}>No request made.</pre></details>
   {acceptedPlanEnabled&&<p><button className="btn" disabled={expired} onClick={()=>{expireAcceptedFixtureSession();setExpired(true)}}>Expire simulated account session</button></p>}
-  {query.get('surface')==='workspace'?
+  {query.get('surface')==='record'?
+   <InvoiceRecordInspection row={invoiceFixtureRecord()} tenantId={ids.tenant} canManage={canManage} canInspectAccepted={canManage} accountEpoch="synthetic-record-1" open={workspace} onOpenChange={setWorkspace} onChanged={()=>{}}/>:
+   query.get('surface')==='workspace'?
    <InvoiceWorkspace tenantId={ids.tenant} invoiceId={ids.invoice} version={2} number="INV-1042" status="issued" canManage={canManage} open={workspace} onOpenChange={setWorkspace} onChanged={()=>{}}/>:
    <InvoiceLifecycleActions tenantId={ids.tenant} invoiceId={ids.invoice} version={2} canManage={canManage} onChanged={()=>{}}/>}
  </main>;

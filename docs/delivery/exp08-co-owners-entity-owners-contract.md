@@ -1635,3 +1635,26 @@ Those remain coding dependencies before release. No production/RLS/customer proo
 Follow-on NON-AUTHOR SOURCE review reports no material finding in the bounded initial-marker
 guard/test change, with no independent proof execution. Privileged-writer inventory, lock ordering,
 provisioning, consumer integration and guarded versioned migration admission remain unfinished.
+
+Invitation-consumer grounding before shared edits, 2026-10-30: refreshed actual main to
+`60fe883ee4dce82f88937b366fa763243ed10da9`. Incoming47-path peer diff includes E05 native80005,
+original Work editor/reminder proof, E02 Fabric/Responses/credit repair and E04 original payment
+readback; no incoming change to the original I1 invitation or Setup writer files. Those incoming
+changes are not yet composed into this child and must all be preserved at integration.
+
+Catalog-only production source read (no customer records/effects) verifies original
+`accept_tenant_invite(text)` body MD5 `0194a076acce065d23de842cab9b6d29` and original
+`create_tenant_invite_token(uuid,text,tenant_role,integer,integer,uuid,text)` body MD5
+`a42d7b2852daf7dcd3e108f0eb588679`; both postgres-owned DEFINER, search_path=public. Exact LF
+bodies extracted from released `20271120010008_exp08_owner_invitations.sql` reproduce both hashes.
+Do not copy the older function definitions cited in historical contract opening summaries.
+The platform-only `subaccount_owner` branch remains the approved I2 integration target; all E09
+consumer/contact/recipient protections and every unrelated branch must survive byte-exact.
+Current E09 source-reservation/consumer-contract renewal was requested through its existing chat
+before any writer edit. No receiving ACK or implemented invitation gate is claimed yet.
+
+Billing original ANT138/f9c9e693 now reports that its first producer repair80006 was actually
+applied to its OWN disposable Preview. E08 receiving ACK25642543 gives explicit own no-conflict
+for forward-only80007 after80006/before80008, preserving applied history. It covers E08-owned
+order only, not unknown peers or source/release approval. Both original producer/consumer PRs
+remain held; no stale pin renewal or production Billing mutation has been performed.

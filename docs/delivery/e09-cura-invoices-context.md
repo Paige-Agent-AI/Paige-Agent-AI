@@ -1,11 +1,12 @@
 # CURA original customer invoice context — authorized integration
 
-## Current production source — October 30, 2026
+## Production release evidence — October 30, 2026
 
 Native #3118 and the dependent Chat consumer #3117 are now normally merged,
 deployed and source-verified. Earlier approval-hold, local and unmounted wording
-below is historical implementation evidence; this section is the current release
-boundary. Source availability does not establish a useful signed-in customer
+below is historical implementation evidence; this section records the release
+observed at19:10–19:19UTC. Later production builds may supersede its deployment
+identity without changing these historical results. Source availability does not establish a useful signed-in customer
 answer, a complete pillar or founder acceptance.
 
 | Evidence | Actual result |
@@ -13,7 +14,7 @@ answer, a complete pillar or founder acceptance.
 | Native | [#3118](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3118), reviewed`7e65c940b3fd856dec2c2de7d524eb38c85299a2`, merged`7a1e16a55a60eebf7dda4be4834027af9ccf3e62`; all13 exact-head checks/two web contexts passed. Normal migrator41104343471/job124230260653 succeeded. Immutable20271126060009 is present once;19:10UTC readback matches all13 new/original function bodies, owners, ACLs, arguments/defaults/results/settings/volatility and the original enabled terminal trigger. |
 | Chat | [#3117](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3117), reviewed`72a5a927fbe69464a7f5fb9627bc8056dc031597`, all11 exact-head checks/two web contexts passed; final sequential **AUTHOR-REVIEW / LOWER ASSURANCE**5717457146. Merge`aa0220a5510c27caebdd3b108381c20baa32d8df`, tree`cb81b4f1d0cd21e6e6136e6592c559978cec14ab`, exactly matches the checked Finance/Operations union. All18,545 outside-owned incoming leaves/17 reviewed owned blobs were retained. |
 | Edge | Normal [run41113191672](https://github.com/Paige-Agent-AI/Paige-Agent-AI/actions/runs/41113191672)/job124260579840 succeeded. Original strict certificate13004841533/SHA256`e42d8771875e992e55f1de0f8e6c558fa3abf1703ca2d0c166f5c5f007a6f0d9` verifies all selected source/configuration: one function, paige-ai-chat600/JWTtrue. Direct metadata agrees; the invoice helper is named in verified manifest`44f48c95c9566138749b1ef4bec099ea676374830bf67d1ba8e6dc1f6148b02a`. edge-live equalsaa0220a55. |
-| Web | Vercel`dpl_oZfec7UcGe7QgAC1KzntbzSfC4e9` is production READY for the exact merge. Both official origins serve`aa0220a5510c27caebdd3b108381c20baa32d8df-mvvcmk63`; original current-default-cache entry, sampled assets, missing-path, special-page and conditional-cache checks pass. This is unauthenticated delivery proof. |
+| Web | Vercel`dpl_oZfec7UcGe7QgAC1KzntbzSfC4e9` is production READY for the exact merge. At19:14UTC both official origins served`aa0220a5510c27caebdd3b108381c20baa32d8df-mvvcmk63`; original current-default-cache entry, sampled assets, missing-path, special-page and conditional-cache checks passed. This is unauthenticated delivery proof. |
 | Controlled proof | Final hosted original`e09_customer_public_link.sql` executes118 assertions/PASS. The original validator over exact composed Git source passes29 dispatches/131 required sources/zero findings. These controlled tests do not substitute for ordinary customer Auth/HTTP or model results. |
 
 The read reuses EXP04's original financial authority, observation and exact amount

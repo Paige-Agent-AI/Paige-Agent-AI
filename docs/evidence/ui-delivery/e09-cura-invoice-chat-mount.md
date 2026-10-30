@@ -2,13 +2,15 @@
 
 Companion release scope: PR3117 mounts the preserved original Chat consumer after native-first PR3118. Both are now deployed/source-verified; actual customer outcomes remain proof owed.
 
-## Current release evidence — October 30, 2026
+## Production release evidence observed — October 30, 2026
+
+The following observations were made at19:10–19:19UTC for this release. Subsequent production builds do not rewrite this source/deployment history or establish the still-owed customer outcomes.
 
 Reviewed72a5a927fbe69464a7f5fb9627bc8056dc031597 passed all11 required exact-head checks and both web contexts; final sequential AUTHOR-REVIEW / LOWER ASSURANCE5717457146, zero unresolved threads. Mergeaa0220a5510c27caebdd3b108381c20baa32d8df/treecb81b4f1d0cd21e6e6136e6592c559978cec14ab exactly preserves the reviewed union, all18,545 outside-owned leaves and17 reviewed own blobs. Original composed-source validation passes29 dispatches/131 required sources/zero findings.
 
 Native parent3118/7a1e16a55a60eebf7dda4be4834027af9ccf3e62 deployed60009 once through normal run41104343471; all13 source/permission/default/trigger contracts were reverified19:10UTC. Normal Edge41113191672/job124260579840 and original certificate13004841533 verify all selected source/configuration: paige-ai-chat600/JWTtrue, edge-liveaa0220a55. Production Verceldpl_oZfec7UcGe7QgAC1KzntbzSfC4e9 is READY/exactaa; both official origins serveaa0220a5510c27caebdd3b108381c20baa32d8df-mvvcmk63 and original public/default-cache checks pass. Final hosted original invoice/link fixture118PASS is controlled native evidence, not a customer session.
 
-Functional: DEPLOYED / SOURCE VERIFIED. Visual: previous bounded original-shell rendering remains supporting evidence; no new mobile/zoom/AT claim. Experiential: controlled native request/receipt/replay/withdrawal verified; ordinary customer useful reply, Payments exit, saved private-history reload and wrong-role/business/revoked-access return still PROOF OWED. Founder Acceptance: NOT_READY / NOT_ACCEPTED, full42/seven pillars and one complete evaluation remain open. No source/provider/Live activation, send, charge, new identity or grant is inferred. Earlier implementation checkpoint language below is historical evidence.
+Functional: DEPLOYED / SOURCE VERIFIED. Visual: previous bounded original-shell rendering remains supporting evidence; no new mobile/zoom/AT claim. Experiential: controlled native request/receipt/replay/withdrawal verified; ordinary customer useful reply, Payments exit, saved private-history reload and wrong-role/business/revoked-access return still PROOF OWED. Founder Acceptance: NOT_READY / NOT_ACCEPTED, full42/seven pillars and one complete evaluation remain open. No provider/Live activation, send, charge, new identity or grant is inferred. Earlier implementation checkpoint language below is historical evidence.
 
 ## Implementation evidence recorded before release
 

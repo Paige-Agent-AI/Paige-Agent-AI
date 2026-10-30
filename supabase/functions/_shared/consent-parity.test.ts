@@ -55,7 +55,9 @@ function admin(rows: Row[]) {
     if (r.table === "suppression") tables.paige_suppressions.push({ ...rec, reason: r.reason, source: r.source });
     else tables.paige_consent_events.push({ ...rec, action: r.action, source: r.source, topic: r.topic ?? null });
   }
-  tables.clients.push({ id: CLIENT, tenant_id: TENANT, dnd_active: false, dnd_until: null, dnd_reason: null, timezone: null });
+  // These fixtures isolate consent/suppression at noon in a KNOWN recipient zone. Unknown
+  // recipient location has separate failing-first dispatch coverage; it is no longer a permit.
+  tables.clients.push({ id: CLIENT, tenant_id: TENANT, dnd_active: false, dnd_until: null, dnd_reason: null, timezone: "America/New_York" });
   return {
     from(table: string) {
       const data = tables[table];

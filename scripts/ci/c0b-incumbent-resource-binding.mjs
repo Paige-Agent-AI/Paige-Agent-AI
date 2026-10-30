@@ -1205,7 +1205,10 @@ const SOURCES = {
   // the only change vs main is one added `case "customer_request"` in suppressionReason (the plain
   // sentence a portal opt-out returns). Step order, every block/queue condition, the consent channel
   // list and the normalizers are byte-identical. Renew this one scalar only.
-  "supabase/functions/_shared/pre-send-pipeline.ts": "dd7193c8f9663462f045de0eb937c6cf728a1c0ce0dce6451f4fa4cc9fd545b6",
+  // EXP03 October30 source review / LOWER ASSURANCE: SMS missing/invalid recipient timezone
+  // now refuses via the existing error disposition; tenant/default zone is not recipient location.
+  // Consent/suppression precedence, email behavior and every original validator/assertion retained.
+  "supabase/functions/_shared/pre-send-pipeline.ts": "9078ba89e3e206be326d8a13d61b6cd205a980229aa74dd435e7e5963470eb01",
   // SendGrid Inbound Parse review fix M4a (2026-10-27), AUTHOR-REVIEW / LOWER ASSURANCE: adds
   // lookupClientIdByAddress (same client_id_for_address RPC, same log line, but returns the error instead of
   // reading it as "not found"); findClientIdByAddress now delegates to it and returns its `.id`, so every

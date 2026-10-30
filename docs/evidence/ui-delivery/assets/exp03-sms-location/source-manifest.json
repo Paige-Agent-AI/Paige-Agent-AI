@@ -1,0 +1,12 @@
+{
+  "proof": "Actual original dialog plus actual dispatch decision; fictional transport/identity. No full shell/PAIGE dock or authenticated/provider proof.",
+  "files": {
+    "src/pages/admin/conversations/ComposeThreadDialog.tsx": "1d9761a3e9c315b6d204f421073480f47dadce2a40e2a5946bddb2dcccd07e41",
+    "supabase/functions/_shared/pre-send-pipeline.ts": "8d0beb34f93349e02c3e827b46045c3b6aaf2d44c3db9793d983c44254994673",
+    "scripts/live-drive/harness/exp03-sms-location-mount/index.html": "4c85ed68ab387a3e47f9e3d022334048d3a88875026e08e4cf565eff6cd07319",
+    "scripts/live-drive/harness/exp03-sms-location-mount/main.tsx": "1fec71c642ff5108b691b36840a5cd6ceab44bb717845b4311f79280a8d4a696",
+    "scripts/live-drive/harness/exp03-sms-location-mount/stubs.ts": "06f749c0217d625b7fe5ed8d0e759c4a19a1739558d89ef14df120aed2584965",
+    "scripts/live-drive/harness/exp03-sms-location-mount/vite.config.ts": "3a71497505091d9e22f9f65c2efcd6bc154458b684373a1edcb283e7632586d6",
+    "scripts/live-drive/harness/exp03-sms-location-mount/drive.mjs": "e47c65cccf3079413f821b90830b3d148a45c5e5fa82daf345ce72382c811323"
+  }
+}

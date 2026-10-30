@@ -35,3 +35,61 @@ describe("runPreSend suppression reasons", () => {
     });
   }
 });
+
+const TENANT = "11111111-1111-4111-8111-111111111111";
+const CONTACT = "22222222-2222-4222-8222-222222222222";
+function dispatchFixture(options: { timezone?: unknown; finalTimezone?: unknown; clientMissing?: boolean; clientError?: boolean; consent?: string; suppressed?: boolean; tenantTimezone?: string } = {}) {
+  let clientReads = 0;
+  return { from(table: string) {
+    const q = {
+      select: () => q, eq: () => q, or: () => q, order: () => q,
+      limit: async () => ({ data: table === "paige_suppressions" ? options.suppressed ? [{ id: "suppression", reason: "user_stop" }] : [] : [{ action: options.consent ?? "granted" }], error: null }),
+      maybeSingle: async () => table === "clients" ? { data: options.clientMissing ? null : { dnd_active: false, timezone: ++clientReads > 1 && Object.hasOwn(options, "finalTimezone") ? options.finalTimezone : options.timezone }, error: options.clientError ? { message: "synthetic unavailable" } : null }
+        : { data: { autosend_dnd_enabled: false, autosend_dnd_timezone: options.tenantTimezone ?? "America/New_York" }, error: null },
+    };
+    return q;
+  } } as unknown as Parameters<typeof runPreSend>[0];
+}
+const sms = { tenantId: TENANT, contactId: CONTACT, channel: "sms" as const, to: "+12025550123", now: new Date("2026-10-30T16:00:00Z") };
+describe("SMS dispatch requires the recipient's known timezone", () => {
+  for (const [label, options] of [
+    ["missing", {}], ["null", { timezone: null }], ["blank", { timezone: " " }],
+    ["invalid", { timezone: "not/a-zone" }], ["non-string", { timezone: 7 }],
+    ["missing contact", { clientMissing: true }], ["failed contact read", { clientError: true }],
+    ["tenant zone cannot supply recipient location", { tenantTimezone: "Pacific/Honolulu" }],
+  ] as const) it(`holds ${label} without inventing a release time`, async () => {
+    const r = await runPreSend(dispatchFixture(options), sms);
+    assert.equal(r.proceed, false); assert.equal(r.outcome, "error"); assert.equal(r.queueUntil, null);
+    assert.match(r.reason ?? "", /recipient.*time zone/i);
+  });
+  it("does not infer the recipient timezone from their phone number", async () => {
+    const r = await runPreSend(dispatchFixture(), { ...sms, contactId: null });
+    assert.equal(r.proceed, false); assert.equal(r.queueUntil, null);
+  });
+  it("keeps suppression and revoked consent ahead of location recovery", async () => {
+    assert.equal((await runPreSend(dispatchFixture({ suppressed: true }), sms)).outcome, "blocked_suppressed");
+    assert.equal((await runPreSend(dispatchFixture({ consent: "revoked" }), sms)).outcome, "blocked_no_consent");
+  });
+  it("retains email behavior without imposing SMS location requirements", async () => {
+    assert.equal((await runPreSend(dispatchFixture(), { ...sms, channel: "email", to: "a@tests.invalid" })).proceed, true);
+  });
+  it("rechecks location on queue re-entry after a contact changes", async () => {
+    assert.equal((await runPreSend(dispatchFixture({ timezone: "America/New_York" }), sms)).proceed, true);
+    assert.equal((await runPreSend(dispatchFixture({ timezone: null }), sms)).proceed, false);
+  });
+  it("does not keep the old location while consent and preferences were awaited", async () => {
+    assert.equal((await runPreSend(dispatchFixture({ timezone: "America/New_York", finalTimezone: null }), sms)).proceed, false);
+    const r = await runPreSend(dispatchFixture({ timezone: "America/New_York", finalTimezone: "Pacific/Honolulu" }), { ...sms, now: new Date("2026-10-30T13:00:00Z") });
+    assert.equal(r.proceed, false); assert.equal(r.queueUntil, "2026-10-30T18:00:00.000Z");
+  });
+  for (const [instant, expected, release] of [
+    ["2026-10-30T11:59:00Z", false, "2026-10-30T12:00:00.000Z"],
+    ["2026-10-30T12:00:00Z", true, null],
+    ["2026-10-31T00:00:00Z", false, "2026-10-31T12:00:00.000Z"],
+    ["2026-11-01T12:59:00Z", false, "2026-11-01T13:00:00.000Z"],
+    ["2026-11-01T13:00:00Z", true, null],
+  ] as const) it(`preserves the existing known-zone boundary at ${instant}`, async () => {
+    const r = await runPreSend(dispatchFixture({ timezone: "America/New_York" }), { ...sms, now: new Date(instant) });
+    assert.equal(r.proceed, expected); assert.equal(r.queueUntil, release);
+  });
+});

@@ -14,12 +14,15 @@ import { TenantCommandCenterShell } from "@/components/tenant-shell/TenantComman
 import { SoloPaigeWorkspace } from "@/solo/SoloPaigeWorkspace";
 import { SoloSettings } from "@/solo/settings";
 import { SoloScreenBoundary } from "@/solo/SoloScreenBoundary";
+import { OperationsRoute } from "@/solo/operations/OperationsRoute";
 
 const h = vi.hoisted(() => ({
   theme: "light" as "light" | "dark", open: false,
   tenant: "00000000-0000-4000-8000-000000000101", actor: "00000000-0000-4000-8000-000000000102",
   process: {} as Record<string, unknown>, step: {} as Record<string, unknown>, steps: [] as Array<Record<string, unknown>>,
   reads: [] as string[], controls: [] as Array<Record<string, unknown>>, unexpected: [] as string[],
+  empty: [] as never[], refresh: vi.fn(async () => undefined), taskRead: vi.fn(async () => ({ kind: "unavailable" })),
+  day: { kind: "unset" },
 }));
 vi.mock("next-themes", () => ({ useTheme: () => ({ resolvedTheme: h.theme, setTheme: vi.fn() }) }));
 vi.mock("@/components/admin/voice/DialPadTrigger", () => ({ DialPadTrigger: () => null }));
@@ -31,6 +34,22 @@ vi.mock("@/components/ui/paige", () => ({ useAgentPresence: () => {
   return { railExpanded, expandRail: () => setRailExpanded(true), collapseRail: () => setRailExpanded(false) };
 } }));
 vi.mock("@tanstack/react-query", () => ({ useQuery: () => ({ data: null }) }));
+// Unrelated Operations data ports are explicitly empty, never customer evidence.
+// Keep the real Operations route/workspace/playbooks and task hook/caller.
+vi.mock("@/hooks/usePlanList", () => ({ usePlanList: () => ({
+  plans: h.empty, allItems: h.empty, loading: false, error: null, forbidden: false, refresh: h.refresh,
+}) }));
+vi.mock("@/solo/operations/useOperationsPeople", () => ({ useOperationsPeople: () => ({
+  members: h.empty, loading: false, error: null, partial: false, refresh: h.refresh,
+}) }));
+vi.mock("@/solo/operations/useOperationsCrmWork", () => ({ useOperationsCrmWork: () => ({
+  tasks: h.empty, loading: false, error: null, forbidden: false, hasMore: false, refresh: h.refresh,
+  readTask: h.taskRead,
+}) }));
+vi.mock("@/solo/data/useBusinessTimeZone", async original => ({
+  ...await original<typeof import("@/solo/data/useBusinessTimeZone")>(),
+  useBusinessCalendarDay: () => ({ day: h.day, refresh: h.refresh }),
+}));
 vi.mock("@/hooks/useTenantContext", () => ({ useTenantContext: () => ({
   activeTenantId: h.tenant, activeUserId: h.actor, loading: false, accountContextLoading: false,
   accountContextStatus: "ready", isPlatformStaff: false,
@@ -112,6 +131,12 @@ const assets = "work/owner-task-render/dist/assets";
 // An explicit freshly compiled original stylesheet may replace a missing
 // retained application bundle; the current frame and all original CSS are kept.
 const freshCss = process.env.OWNER_TASK_RENDER_CSS;
+const operationsCss = process.env.OWNER_TASK_RENDER_OPERATIONS_CSS;
+for (const css of [freshCss, operationsCss]) {
+  if (css && (!/^work\/owner-task-[a-z0-9/-]+\/assets\/[A-Za-z0-9_-]+\.css$/.test(css.replace(/\\/g, "/")) || !existsSync(css))) {
+    throw new Error("An explicit render stylesheet must be an existing owned workspace build");
+  }
+}
 const stylesAvailable = freshCss ? existsSync(freshCss) : existsSync(assets);
 const scenes = ["draft", "review", "unknown"] as const;
 const sizes = [[1536, 770], [1366, 768], [1024, 768], [900, 1000], [390, 768]] as const;
@@ -131,6 +156,13 @@ const sourcePaths = ["src/components/tenant-shell/TenantCommandCenterShell.tsx",
   "src/solo/__render__/owner-task-automations.render.test.tsx",
   "public/fonts/schibsted-grotesk/schibsted-grotesk-latin-wght-normal.woff2"];
 const sourceIdentity = () => sourcePaths.map(path => ({ path, sha256: digest(readFileSync(path)) }));
+const operationsSources = () => [...sourceIdentity(), ...[
+  "src/index.css", "src/solo/owner-task-process-history.tsx",
+  "src/solo/operations/OperationsRoute.tsx", "src/solo/operations/OperationsWorkspace.tsx",
+  "src/solo/operations/OperationsPlaybooks.tsx", "src/solo/operations/operations-workspace.css",
+  "src/solo/operations/operations-views.css",
+  "src/solo/operations/operations-delivery-inspection.css",
+].map(path => ({ path, sha256: digest(readFileSync(path)) }))];
 
 function assertIncumbentFrame() {
   const source = readFileSync("src/solo/SoloApp.tsx", "utf8");
@@ -148,7 +180,16 @@ function assertIncumbentFrame() {
   ]) expect(compact(source)).toContain(compact(fragment));
 }
 
-function compiledCss(): string {
+function compiledCss(hostKind: "settings" | "operations" = "settings"): string {
+  if (hostKind === "operations") {
+    if (!operationsCss) throw new Error("Fresh original Operations stylesheet required");
+    return readFileSync(operationsCss, "utf8") + "\n" + [
+      "src/solo/solo-tokens.css", "src/components/tenant-shell/tenant-command-center-shell.css",
+      "src/solo/solo-paige-workspace.css", "src/solo/settings-integrations.css",
+      "src/solo/operations/operations-workspace.css", "src/solo/operations/operations-delivery-inspection.css",
+      "src/solo/operations/operations-views.css",
+    ].map(path => readFileSync(path, "utf8")).join("\n");
+  }
   const files = freshCss ? [] : readdirSync(assets).filter(f => f.endsWith(".css"));
   const picked = ["main-", "SoloEntry-", "PaigeAIChat-"].map(prefix => files.find(f => f.startsWith(prefix)));
   if (!freshCss && picked.some(f => !f)) throw new Error("Current build is missing a required shell/chat CSS bundle");
@@ -162,7 +203,8 @@ function page(html: string, css: string, theme: string): string {
   return `<!doctype html><html lang="en" class="${theme === "dark" ? "dark" : ""}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; font-src data:; img-src data:; connect-src 'none'"><title>Local SOLO internal task proof</title><style>@font-face{font-family:'Schibsted Grotesk';font-style:normal;font-weight:100 900;font-display:block;src:url(data:font/woff2;base64,${font}) format('woff2')} ${css} html,body{margin:0;height:100%;}</style></head><body>${html}</body></html>`;
 }
 
-async function capture(scene: Scene, width: number, height: number, theme: "light" | "dark", open: boolean, stepCount = 1) {
+async function capture(scene: Scene, width: number, height: number, theme: "light" | "dark", open: boolean, stepCount = 1,
+  hostKind: "settings" | "operations" = "settings", verifyNavigation = false) {
   const oldWidth = window.innerWidth, oldHeight = window.innerHeight, oldMatchMedia = window.matchMedia;
   Object.defineProperty(window, "innerWidth", { value: width, configurable: true });
   Object.defineProperty(window, "innerHeight", { value: height, configurable: true });
@@ -187,14 +229,15 @@ async function capture(scene: Scene, width: number, height: number, theme: "ligh
   const host = document.createElement("div"); document.body.append(host); const root = createRoot(host);
   try {
     await act(async () => {
-      root.render(<MemoryRouter initialEntries={["/solo/1234567/settings/integrations/automations"]}>
+      root.render(<MemoryRouter initialEntries={[hostKind === "operations"
+        ? "/solo/1234567/operations/playbooks?playbooks=automations" : "/solo/1234567/settings/integrations/automations"]}>
         <Routes><Route path="/solo/:account/*" element={<TenantCommandCenterShell accountName="Test services" accountType="standalone" userRole="admin" onSignOut={() => {}}
           soloPaigeWorkspace={<SoloPaigeWorkspace visible={open} />}>
           <div className="paige-solo" data-theme={theme} style={{ width: "100%", maxWidth: "none", height: "100%", minWidth: 0, minHeight: 0, alignSelf: "stretch", display: "flex", flexDirection: "column" }}>
             <div style={{ display: "flex", flex: 1, minHeight: 0, overflow: "hidden" }}>
-              <main key="settings" data-solo-screen-host style={{ flex: 1, overflow: "auto", minHeight: 0, minWidth: 0 }}>
-                <SoloScreenBoundary key={`${h.actor}:${h.tenant}:/solo/1234567/settings/integrations/automations`}>
-                  <SoloSettings />
+              <main key={hostKind} data-solo-screen-host style={{ flex: 1, overflow: hostKind === "operations" ? "hidden" : "auto", minHeight: 0, minWidth: 0 }}>
+                <SoloScreenBoundary key={`${h.actor}:${h.tenant}:${hostKind}`}>
+                  {hostKind === "operations" ? <OperationsRoute openPaige={() => {}} /> : <SoloSettings />}
                 </SoloScreenBoundary>
               </main>
             </div>
@@ -209,9 +252,13 @@ async function capture(scene: Scene, width: number, height: number, theme: "ligh
     expect(frame?.style.height).toBe("100%");
     expect(screenHost).toBeTruthy();
     expect(screenHost?.parentElement?.style.overflow).toBe("hidden");
-    expect(screenHost?.style.overflow).toBe("auto");
+    expect(screenHost?.style.overflow).toBe(hostKind === "operations" ? "hidden" : "auto");
     expect(screenHost?.style.minHeight).toBe("0px");
-    expect(host.querySelector(".ss-content[data-settings-tab='integrations']")).toBeTruthy();
+    if (hostKind === "operations") {
+      expect(host.querySelector(".ops-workspace[aria-label='Operations department']")).toBeTruthy();
+      expect(host.querySelector(".ops-department-body")).toBeTruthy();
+      expect(host.querySelector(".ops-saved-processes[aria-label='Saved automations']")).toBeTruthy();
+    } else expect(host.querySelector(".ss-content[data-settings-tab='integrations']")).toBeTruthy();
     expect(host.querySelector(".sa-owner-tasks")).toBeTruthy();
     expect(host.querySelector(".sa-owner-task-title")?.textContent).toBe(title);
     expect(host.querySelector(".sa-owner-task-description")?.textContent).toBe(description);
@@ -241,6 +288,20 @@ async function capture(scene: Scene, width: number, height: number, theme: "ligh
       expect(controls(host, "Enable future contacts")).toHaveLength(0);
       expect(document.activeElement).toBe(controls(host, "Refresh")[0]); focus = "Refresh";
     }
+    if (verifyNavigation) {
+      expect(hostKind).toBe("operations"); expect(scene).toBe("review");
+      await act(async () => { controls(host, "Procedures")[0].click(); await flush(); });
+      expect(controls(host, "Enable future contacts")).toHaveLength(1);
+      expect(controls(host, "Automations")[0].getAttribute("aria-pressed")).toBe("true");
+      await act(async () => { controls(host, "Work")[0].click(); await flush(); });
+      expect(host.querySelector("[aria-label='Department views'] [aria-current='page']")?.textContent).toBe("Playbooks");
+      expect(h.controls).toHaveLength(0);
+      await act(async () => { controls(host, "Cancel")[0].click(); await flush(); });
+      expect(document.activeElement).toBe(controls(host, "Review to enable")[0]);
+      await act(async () => { controls(host, "Work")[0].click(); await flush(); });
+      expect(host.querySelector("[aria-label='Department views'] [aria-current='page']")?.textContent).toBe("Work");
+      expect(h.controls).toHaveLength(0);
+    }
     const shell = host.querySelector("[data-tenant-shell]")!;
     expect(shell.getAttribute("data-paige")).toBe(open ? "open" : "closed");
     if (open && width <= 1080) expect((shell as HTMLElement).style.getPropertyValue("--tcs-paige")).toBe("0px");
@@ -257,6 +318,37 @@ async function capture(scene: Scene, width: number, height: number, theme: "ligh
 }
 
 describe("owner task full-shell rendered fixture", () => {
+  it.skipIf(!operationsCss)("keeps actual Operations route and Playbooks navigation held until the original review is cancelled", async () => {
+    assertIncumbentFrame();
+    const result = await capture("review", 1366, 768, "light", false, 2, "operations", true);
+    expect(result.realEffects).toBe(0); expect(result.simulatedControls).toBe(0);
+  }, 60_000);
+
+  it.skipIf(!operationsCss)("serializes the original Operations host with exact multistep review and recovery", async () => {
+    assertIncumbentFrame(); const sources = operationsSources(), css = compiledCss("operations"), records = [];
+    mkdirSync(output, { recursive: true });
+    for (const theme of ["light", "dark"] as const) for (const [width, height] of sizes.slice(0, 4)) for (const open of [false, true]) {
+      const captured = await capture("review", width, height, theme, open, 2, "operations");
+      const name = `operations-2-${theme}-${width}x${height}-${open ? "open" : "closed"}-review.html`;
+      const html = page(captured.html, css, theme); writeFileSync(`${output}/${name}`, html);
+      records.push({ name, theme, width, height, open, steps: 2, scene: "review", focus: captured.focus,
+        htmlSha256: digest(html), simulatedControls: captured.simulatedControls, realEffects: 0 });
+    }
+    for (const theme of ["light", "dark"] as const) for (const scene of ["review", "unknown"] as const) {
+      const captured = await capture(scene, 320, 768, theme, false, 20, "operations");
+      const name = `operations-20-${theme}-320x768-closed-${scene}.html`;
+      const html = page(captured.html, css, theme); writeFileSync(`${output}/${name}`, html);
+      records.push({ name, theme, width: 320, height: 768, open: false, steps: 20, scene, focus: captured.focus,
+        htmlSha256: digest(html), simulatedControls: captured.simulatedControls, realEffects: 0 });
+    }
+    expect(records).toHaveLength(20); expect(operationsSources()).toEqual(sources);
+    writeFileSync(`${output}/operations-render-manifest.json`, JSON.stringify({
+      proofClass: "SYNTHETIC_ACTUAL_OPERATIONS_ROUTE_WORKSPACE_PLAYBOOKS", sources,
+      originalTaskHookAndCaller: true, unrelatedOperationsData: "explicit empty read ports",
+      compiledCssSha256: digest(css), authenticatedQa: "UNVERIFIED", records,
+    }, null, 2));
+  }, 180_000);
+
   it.skipIf(!stylesAvailable)("serializes complete two-step review and twenty-step recovery in the original frame", async () => {
     assertIncumbentFrame(); const sources = sourceIdentity();
     mkdirSync(output, { recursive: true }); const css = compiledCss(), records = [];

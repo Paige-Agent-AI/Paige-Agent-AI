@@ -7,10 +7,10 @@ MATERIAL_FLOW_CHANGE: YES: extend the existing review from one literal internal 
 FLOW_PROTOTYPE: PASS: bounded offline same-component prototype inspected before product port; original owner design-choice green light and final integrated-evaluation policy apply. Original ANT11/5cfc4b04 and17100195 record the flow, exits and review; this is agent review, not founder acceptance.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: an eligible SOLO owner/admin inspects every original Task purpose before enabling the exact saved process for future contacts.
 VISUAL_DIRECTION: PASS: preserve the existing PAIGE operating workspace; numbered purposes carry actual sequence information, compact headings and existing confirmation hierarchy remain.
-AUTOMATED_EVIDENCE: PASS: causal8failures/80controls before port; final285tests/five original component, hook, caller, complete-read and history suites. Original frame fixture2tests passed, generating84 states including20new multistep states; frame count is not test count.
+AUTOMATED_EVIDENCE: PASS: causal8failures/80controls before port; final285tests/five original component, hook, caller, complete-read and history suites. Extended original frame fixture4tests passed, generating104 states:84 preserved Settings states and20 actual Operations states. Frame count is not test count.
 STATIC_EVIDENCE: PASS: three changed source files ESLint0errors; installed Impeccable detector exit0; whitespace check and exact render-input hashes match. Required hosted checks remain separate.
-RENDERED_EVIDENCE: PASS: eleven raw JPEGs and exact hashes in assets/exp05-owner-task-multistep-review/geometry.json; eight settled prescribed Mineral views plus Obsidian1366 and320twenty-step review/recovery. Browser1536CSS viewport produced1535pixel bridge JPEGs, retained without resizing.
-BEHAVIORAL_EVIDENCE: PASS: original React controls verify exact whole-chain submission only on confirmation, Cancel/Escape/source focus, scope/read/refresh retirement, malformed final-step refusal and original no-repeat recovery. Offline prototype confirms the same exits; serialized shell frames prove geometry only.
+RENDERED_EVIDENCE: PASS: eleven historical Settings JPEGs/geometry.json plus eleven actual Operations JPEGs/operations-geometry.json. Each set includes eight prescribed Mineral views plus Obsidian1366 and320twenty-step review/recovery. Browser1536CSS viewports produced1535pixel bridge JPEGs, retained without resizing; serialized geometry is not full-application acceptance.
+BEHAVIORAL_EVIDENCE: PASS: original React controls verify exact whole-chain submission only on confirmation, Cancel/Escape/source focus, scope/read/refresh retirement, malformed final-step refusal and original no-repeat recovery. Actual OperationsRoute/Workspace/Playbooks holds Procedures and Work navigation during review; Cancel restores focus/navigation with zero simulated controls. Serialized browser frames prove geometry only.
 AUTHENTICATED_RUNTIME: UNVERIFIED: ordinary owner/admin process enablement, separate real approvals, canonical Tasks/Rails and later-session readback are owed after native3137 release; no actual automation or customer effect was activated.
 KEYBOARD_FOCUS: PASS: original React review initially focuses Cancel and restores its invoker on cancellation; component prototype confirms Escape. Settled frame keyboard reachability is recorded separately from live modal focus trapping.
 ZOOM_REFLOW: UNVERIFIED: current320CSS-pixel twenty-step review fits without document overflow; native browser200percent zoom and assistive-technology proof remain owed.
@@ -18,14 +18,14 @@ REDUCED_MOTION: NOT_APPLICABLE: no motion, animation or preference behavior chan
 STATE_COVERAGE: PASS: one/two/twenty-step review; empty/loading/refused; unsupported/external/dynamic/duplicate/incorrect-position/oversized chain; busy response and current-context retirement retain original controls.
 TRUTHFUL_STATE_LABELS: PASS: saved, enabled and executed remain distinct; each later Task still requires its own original approval and canonical result. Existing catalogue and algorithm maturity retained.
 SOLO_UI: YES: existing internal-task process review in Operations/Playbooks and Settings/Automations; original domain/hook/caller only.
-UNVERIFIED: final Operations/Playbooks host rendering (the captured actual frame is Settings/Automations), complete Workflow Automation Builder, scheduled/event/provider coverage, native full-schema concurrency, actual caller/cohort authority, both chats/eligible Live, native zoom/AT and final founder acceptance remain open.
+UNVERIFIED: full-application authenticated Operations interaction, complete Workflow Automation Builder, scheduled/event/provider coverage, native full-schema concurrency, actual caller/cohort authority, both chats/eligible Live, native zoom/AT and final founder acceptance remain open.
 OWNER_INTENT: complete EXP05 O05/O06 review-to-authorized-execution for equivalent eligible current/new SOLO businesses; this slice makes every supported original Task visible before the decision.
 MUST_NOT_HAPPEN: approving one step must not authorize another; a partial list, source change, stale scope or lost acknowledgment must not enable or replay work; recorded order must not imply dependency scheduling.
 MUST_PRESERVE: original one-step behavior/copy, actor/business/currentness/version fences, exact native control, saved process inspection, approvals/history/Work destinations and protected neighboring Experiences.
 ACCEPTANCE_CRITERIA: read all exact purposes; correct the original draft where needed; cancel with no effects or deliberately enable; each real future occurrence obtains its own authority and original Task/Rail; refresh/reload returns the same original process/outcomes without duplication.
 MOTION_PURPOSE: NONE: no motion change.
 PROTECTED_SEAMS: tested original OwnerTaskAutomations/hook/caller/count-complete read/history; unchanged Spine/Harness/Trust/LayerC/native writers, shared Chat/TeamHub/Root/registry/model/provider/scheduler.
-INTERNAL_BUILD_IDENTITY: source=local child of fd0ed918c468f8de1fc9470692ad9c9db7acf500; deployment=UNVERIFIED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=this record and original ANT11/5cfc4b04
+INTERNAL_BUILD_IDENTITY: source=product6f1a31e1073e7cba26529399b8295b37b6252fa1 with evidence-only Operations-host follow-up over nativee79f0620b2f37217a4b8983ec2a15a34ea836fa2; deployment=UNVERIFIED; environment=development; migrations=NOT_APPLICABLE; edge=NOT_APPLICABLE; evidence=this record and original ANT11/5cfc4b04
 RELEASE_CHANNEL: development: original component/source review, no deployed child claim.
 RELEASE_CLASSIFICATION: internal-only: bounded existing process-review extension, native3137 prerequisite; no complete customer-release claim.
 CUSTOMER_RELEASE_IDENTITY: none: no customer release name or announcement authorized.
@@ -75,7 +75,11 @@ new last-child selector failure, causal red and final green. Corrected only the
 test ports/count/range/current TeamHub frame pin/selector; no production guard
 was relaxed. Fresh CSS builds original index/PAIGE/Settings sources; the actual
 React frame/hook/caller is serialized with synthetic identity/backend ports.
-Current input hashes match render-manifest.json. Eight fast-loop screenshots,
+Historical Settings input hashes matched render-manifest.json at capture. Its
+only current source difference is the later test-only Operations fixture
+extension; all historical product/style inputs remain exact. New Operations
+captures match all25 current listed inputs in operations-render-manifest.json.
+Eight fast-loop screenshots,
 two stale narrow frames and prototype images are excluded from committed proof.
 The manifest retains its pre-capture pending marker; geometry.json records the
 subsequent actual browser captures rather than rewriting that historical state.
@@ -89,3 +93,25 @@ dark prototype omitted the original data-theme ancestor and was excluded;
 current original-frame Obsidian uses rgb(239,236,250) ink on rgb(33,29,39).
 No visual redesign, motion or shared source was introduced. Full founder
 acceptance remains pending for the complete integrated Experience.
+
+## Actual Operations host verification
+
+The same original renderer now mounts OperationsRoute, OperationsWorkspace and
+OperationsPlaybooks, the actual task hook/caller, source guards and current
+Operations styles. Unrelated Planning/people/CRM/calendar read ports are
+explicitly empty fixtures. No ordinary account, process activation or business
+effect is represented. Four tests passed, including review-held navigation and
+Cancel/source-focus restoration. The twenty new Operations frame states are
+additional states, not twenty tests or customer proofs.
+
+Initial Operations frames omitted canonical operations-views.css and are
+excluded. After adding only that original stylesheet to the test build/input
+list, the four tests passed again. Eleven separate-call current browser images
+and exact raw JPEG hashes/dimensions are recorded in operations-geometry.json.
+The actual department body owns vertical scrolling; no document-width overflow
+was observed. Existing narrow PAIGE overlays cover background reviews and must
+be closed to interact with them. One direct-locator-focus recovery capture
+scrolled hidden ancestors and is excluded; a natural initial recovery frame
+is recorded separately. Native full-application keyboard/scroll behavior,
+200percent zoom, assistive technology and authenticated approval/execution
+remain owed. No product CSS, shell, Team Hub, model or provider changed.

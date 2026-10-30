@@ -42,6 +42,19 @@ it('hosted request is high confirm and accepts only caller intent, never merchan
  expect(SALES_INVOICE_CAPABILITIES.find(x=>x.key==='sales_invoice.payment_request')?.action?.chatTool).toBe('sales_create_payment_request');
 });
 
+it('declares the existing accepted target to Chat without admitting caller economics or authority',()=>{
+ const capability=SALES_INVOICE_KIT_BY_ACTION.sales_create_payment_request;
+ const tool=SALES_INVOICE_TOOLS.find(t=>t.function.name==='sales_create_payment_request')!;
+ const target=capability.input.properties.obligation_reference;
+ expect(target).toMatchObject({type:'object',additionalProperties:false,required:['commercial_terms_id','signing_id','signing_version','terms_version','sequence']});
+ expect(tool.function.parameters.properties).toHaveProperty('obligation_reference',target);
+ expect(capability.input.required).not.toContain('obligation_reference');
+ expect(capability.governance).toMatchObject({risk:'high',approval:'confirm'});
+ const read=SALES_INVOICE_TOOLS.find(t=>t.function.name==='read_sales_invoice')!;
+ expect(SALES_INVOICE_READ_CAPABILITY.input.properties.include_accepted_payment_plan).toMatchObject({type:'boolean'});
+ expect(read.function.parameters.required).toEqual(['invoice_id']);
+});
+
 it('four mounted merchant tools preserve closed canonical schemas and shared approval/Rail declarations',()=>{
  const names=['read_sales_merchant_status','read_sales_merchant_refresh','sales_start_merchant_onboarding','sales_create_merchant_login_link'];
  expect(SALES_MERCHANT_TOOLS.map(t=>t.function.name)).toEqual(names);

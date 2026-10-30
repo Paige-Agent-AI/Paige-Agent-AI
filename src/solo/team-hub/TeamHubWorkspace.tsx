@@ -173,7 +173,7 @@ function ScopedTeamHub({ tenantId, onTenantRefresh, onOpenTeamSettings, openPaig
     // conversations switch is off. Not "couldn't load", and not "no longer on this team".
     return <div className="th-hub th-hub--state" data-state="conversations-off"><CenterState icon={<MessageSquareOff aria-hidden="true" />} title="Team conversations are off for you" role="status"
       action={<button type="button" className="th-btn" onClick={() => void hub.retryLoad()}>Check again</button>}>
-      In this workspace you work on what you're assigned without Team Hub, so channels, direct messages and shared files aren't open to you. Your tasks, the clients you're assigned and your permission are unchanged. To join team conversations, ask an owner or admin.
+      In this workspace you work on what you're assigned without Team Hub, so channels, direct messages and shared files aren't open to you. Your tasks, the clients you're assigned and your permissions are unchanged. To join team conversations, ask an owner or admin.
     </CenterState></div>;
   }
   if (hub.status === "scope_changed") {

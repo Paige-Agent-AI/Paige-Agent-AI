@@ -148,7 +148,11 @@ SELECT ok(CASE WHEN to_regprocedure('public._client_portal_lock_relationship(uui
    AND NOT has_function_privilege('service_role','public._client_portal_lock_relationship(uuid,text)','EXECUTE') END,
  'the shared helper _client_portal_lock_relationship exists and no API role can call it directly');
 SELECT is(pg_temp.helper('bogus')->>'sqlstate','22023','the helper refuses a lock mode it does not know');
-SELECT ok(pg_temp.def(sig) LIKE '%public._client_portal_lock_relationship(%' AND pg_temp.def(sig) NOT LIKE '%client_portal_relationship_id(%',
+SELECT ok(CASE WHEN sig='public._client_portal_billing_client(uuid)' THEN
+ pg_temp.def(sig) LIKE '%RETURN public._client_portal_billing_client_for_actor(p_tenant_id,auth.uid(),true)%'
+ AND pg_temp.def('public._client_portal_billing_client_for_actor(uuid,uuid,boolean)') LIKE '%public._client_portal_lock_relationship_for_actor(%'
+ AND pg_temp.def('public._client_portal_billing_client_for_actor(uuid,uuid,boolean)') NOT LIKE '%client_portal_relationship_id(%'
+ ELSE pg_temp.def(sig) LIKE '%public._client_portal_lock_relationship(%' AND pg_temp.def(sig) NOT LIKE '%client_portal_relationship_id(%' END,
   format('%s re-proves the relationship through the shared helper, never the bare resolver', sig))
 FROM unnest(ARRAY[
  'public.client_portal_documents(uuid,integer,timestamptz,uuid)',
@@ -206,9 +210,14 @@ SELECT ok(pg_temp.d('payment_request') IS NULL,'ended: the payment request answe
 -- The resolver is restated WITHOUT its access predicate, standing in for a read whose snapshot
 -- predates the pause (a pause committed between the resolver and the door's locked re-proof). The
 -- doors must refuse on their own re-proof, which is the shared helper's.
-CREATE TEMP TABLE resolver_def AS SELECT pg_get_functiondef('public.client_portal_relationship_id(uuid)'::regprocedure) AS def;
-DO $$ BEGIN EXECUTE replace((SELECT def FROM resolver_def), E'\n    AND c.portal_access_state = ''open''', ''); END $$;
-SELECT ok(pg_temp.def('public.client_portal_relationship_id(uuid)') NOT LIKE '%portal_access_state%','(the stand-in resolver no longer reads the access state)');
+CREATE TEMP TABLE resolver_def AS SELECT pg_get_functiondef('public._client_portal_relationship_for_actor(uuid,uuid,boolean)'::regprocedure) AS def;
+DO $$ DECLARE actual text; stand_in text; BEGIN
+ actual := (SELECT def FROM resolver_def);
+ stand_in := replace(actual, E'\n    AND c.portal_access_state = ''open''', '');
+ IF stand_in = actual THEN RAISE EXCEPTION 'Race fixture did not change the canonical relationship predicate'; END IF;
+ EXECUTE stand_in;
+END $$;
+SELECT ok(pg_temp.def('public._client_portal_relationship_for_actor(uuid,uuid,boolean)') NOT LIKE '%portal_access_state%','(the stand-in canonical resolver no longer reads the access state)');
 SELECT pg_temp.set_access('paused');
 SELECT ok(pg_temp.d('documents') IS NULL,'late pause: Documents is still refused');
 SELECT is(pg_temp.d('can_upload'),'false'::jsonb,'late pause: the upload is still refused');

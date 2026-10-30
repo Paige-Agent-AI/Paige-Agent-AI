@@ -17,7 +17,7 @@ const email = {kind:"email" as const,to_address:"client@example.invalid",from_ad
 describe("same original email body in approval cards and the inline check", () => {
   it.each(["shared card", "body reused by inline check"])("%s shows structure and inert destinations without resources", surface => {
     const host = mount(surface === "shared card"
-      ? <PaigeConfirmCard actions={[{summary:"Review original email",fingerprint:"0123456789abcdef",preview:email}]} />
+      ? <PaigeConfirmCard actions={[{summary:"Review original email",fingerprint:"0123456789abcdef",preview:email}]} onApprove={()=>{}} onDeny={()=>{}} />
       : <EmailBodyPreview email={email} />);
     expect(host.querySelector("strong")?.textContent).toBe("Welcome.");
     expect(host.textContent).toContain("https://offer.example.invalid/terms");

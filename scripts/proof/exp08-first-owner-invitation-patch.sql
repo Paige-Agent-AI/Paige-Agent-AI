@@ -22,14 +22,15 @@ BEGIN
      $before$  IF _kind = 'subaccount_owner'
      AND NOT (public.is_platform_owner()$before$,
      $after$  -- EXP08_FIRST_OWNER_MINT_V1: existing platform-only ownership recovery boundary.
-  IF _kind = 'subaccount_owner' AND public._solo_shell_tenant(_tenant_id)
-     AND public.is_platform_owner()
-     AND NOT public.agency_can_manage_child(_tenant_id, auth.uid()) THEN
+  IF _kind = 'subaccount_owner' THEN
     PERFORM 1 FROM public.tenants WHERE id=_tenant_id FOR UPDATE;
-    IF NOT public._tenant_never_owned(_tenant_id) THEN
-      RAISE EXCEPTION '% has had an owner, so a new owner can only be added by its account holder or through owner recovery. Nothing changed.',
-        (SELECT COALESCE(NULLIF(btrim(name),''),'This business') FROM public.tenants WHERE id=_tenant_id)
-        USING ERRCODE='42501',HINT='OWNER_HISTORY_REQUIRES_RECOVERY';
+    IF public._solo_shell_tenant(_tenant_id) AND public.is_platform_owner()
+       AND NOT public.agency_can_manage_child(_tenant_id, auth.uid()) THEN
+      IF NOT public._tenant_never_owned(_tenant_id) THEN
+        RAISE EXCEPTION '% has had an owner, so a new owner can only be added by its account holder or through owner recovery. Nothing changed.',
+          (SELECT COALESCE(NULLIF(btrim(name),''),'This business') FROM public.tenants WHERE id=_tenant_id)
+          USING ERRCODE='42501',HINT='OWNER_HISTORY_REQUIRES_RECOVERY';
+      END IF;
     END IF;
   END IF;
   IF _kind = 'subaccount_owner'
@@ -38,11 +39,11 @@ BEGIN
      $before$  ELSIF _tok.kind = 'subaccount_owner' THEN$before$,
      $after$  ELSIF _tok.kind = 'subaccount_owner' THEN
     -- EXP08_FIRST_OWNER_ACCEPT_V1: same token, original tenant serialization, no silent admin downgrade.
+    PERFORM 1 FROM public.tenants WHERE id=_tok.tenant_id FOR UPDATE;
+    IF _tok.expires_at<=pg_catalog.clock_timestamp() THEN
+      RAISE EXCEPTION 'invite has expired' USING ERRCODE='42501',HINT='OWNER_INVITE_EXPIRED';
+    END IF;
     IF public._solo_shell_tenant(_tok.tenant_id) THEN
-      PERFORM 1 FROM public.tenants WHERE id=_tok.tenant_id FOR UPDATE;
-      IF _tok.expires_at<=pg_catalog.clock_timestamp() THEN
-        RAISE EXCEPTION 'invite has expired' USING ERRCODE='42501',HINT='OWNER_INVITE_EXPIRED';
-      END IF;
       IF public.is_platform_owner(_tok.created_by)
          AND NOT public.agency_can_manage_child(_tok.tenant_id, _tok.created_by)
          AND NOT public._tenant_never_owned(_tok.tenant_id) THEN

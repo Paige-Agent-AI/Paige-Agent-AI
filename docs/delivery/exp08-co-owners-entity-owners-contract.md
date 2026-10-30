@@ -1769,3 +1769,40 @@ independent native execution. It retains authority/type/agency wait changes, ful
 provisioning and release integration as unfinished work. Next specific scope race: a non-shell
 tenant becoming Solo while original acceptance waits on the original owner-pointer write; a
 pre-wait non-shell classification must not bypass the applicable first-owner rule afterward.
+
+### I2 account-type wait repair and Billing receiving checkpoint — 2026-10-30
+
+Actual native failure-first scope race now reproduces: an enterprise account with recorded prior
+ownership becomes Solo while original acceptance waits at the owner-pointer UPDATE. Pre-wait
+classification skips the Solo gate, and the intermediate candidate incorrectly commits all five
+effects. Preserve `exp08-first-owner-type-wait-before.log` as FAIL. Repair only original
+subaccount_owner spans: both mint and accept lock the exact tenant BEFORE resolving current
+Solo/platform/agency/history applicability. Existing original mint authority checks still follow;
+no new permission resolver or role grant. Exact inverse/metadata/ACL and unrelated branches remain.
+
+Final selected run `exp08-first-owner-type-wait-after.log` exits0: actual enterprise→Solo wait
+refuses with the specific recovery hint and all five effects absent; actual Solo→enterprise wait
+retains original permitted non-shell outcome. Existing22 history cases/six mutants,13 invitation
+cases/four mutants/five drifts/replay, four tenant/profile valid/expiry waits and final-expiry causal
+control remain passing. This is minimal-schema original-writer proof, not product support or
+activation of held Agency/Enterprise features. Authority/agency changes at later waits, complete
+lock composition and all earlier full-I2/full-assignment integration work remain unfinished.
+
+Independent Billing receiving checkpoint: actual PR3142 head is now published
+`5437bf53c7c07556fb583034f613ba3d026a894f`, OPEN/DRAFT. Fetched exact Git objects and inspected
+forward80007; preserve old80006 and earlier failing receiving artifacts. The EXISTING temporary
+E08 contact-row-wait adapter, using actual published80006+80007, now passes the formerly failing
+public revoke/suspension case: final body `f8fa3a425f70d301f47b5b5750c57ad3`, actual transactionid/
+tuple wait, committed suspension, `billing_workspace_owner_only` refusal, contact unrevoked,
+audit0 and target owner unchanged. Terminal exit0/only own unique database disposed. Original
+ANT138 receiving receipt `3ba06b79-4033-4076-af61-2346f30ab3bb`; local log
+`exp08-billing-final-contact-wait-receiving.log`. This independently executes ONE receiving case,
+not the producer's full25/12 suite or full SQL/security/customer assurance. Producer reports its
+own Preview80007/final bodies and hosted proof; required CI/normal production release/readback
+remain separate. No Team pin renewal, production mutation, release or owner acceptance follows.
+Parent3130 and producer3142 remain held; full EXP08 remains **STILL CODING**.
+
+NON-AUTHOR SOURCE review reports no new material issue in the account-type repair, with no native
+execution by the reviewer. It retains later authority/agency changes, full lock ordering,
+provisioning/recovery and migration readiness as unfinished. Single-case Billing receiving proof
+does not become a full-suite/source-release approval.

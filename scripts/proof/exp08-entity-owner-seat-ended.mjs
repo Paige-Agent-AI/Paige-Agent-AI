@@ -152,16 +152,19 @@ assert.ok(representativeDefinition, 'Original FK companion required');
 const definitions = [['public._business_owner_seat_ended()', definition, '75d4a8e014e495c5e0a819881b6a79bd'],
   ['public._business_owner_representative_deleted()', representativeDefinition, 'f95cbff2d3f69c274b287ef0b9bc0067']];
 const records = [];
-async function firstOwnerInvitationWait(expire,stage='tenant'){
+async function firstOwnerInvitationWait(expire,stage='tenant',scopeChange=null){
   assert.ok(['tenant','profile'].includes(stage));
+  assert.ok([null,'to_solo','to_enterprise'].includes(scopeChange));
+  assert.ok(!scopeChange||(!expire&&stage==='tenant'));
   const ids=JSON.parse(sql(`WITH p AS (SELECT gen_random_uuid() AS p,gen_random_uuid() AS u,gen_random_uuid() AS t,gen_random_uuid() AS i)
     SELECT row_to_json(seed) FROM p seed;`));
   const {p,u,t,i}=ids;for(const id of Object.values(ids))assert.match(id,/^[0-9a-f-]{36}$/);
   sql(`INSERT INTO auth.users(id,email) VALUES('${p}','platform@example.invalid'),('${u}','invitee@example.invalid');
-    INSERT INTO proof.platform_owners VALUES('${p}'); INSERT INTO public.tenants(id,account_type) VALUES('${t}','standalone');
+    INSERT INTO proof.platform_owners VALUES('${p}'); INSERT INTO public.tenants(id,account_type) VALUES('${t}','${scopeChange==='to_solo'?'enterprise':'standalone'}');
     INSERT INTO public.profiles VALUES('${u}',NULL);
     INSERT INTO public.tenant_invite_tokens(id,tenant_id,token,kind,default_role,created_by,max_uses)
       VALUES('${i}','${t}','${i}','subaccount_owner','admin','${p}',1);`);
+  if(scopeChange)sql(`UPDATE public.tenants SET first_owner_seated_at='2021-01-01Z' WHERE id='${t}';`);
   const first=spawn(executable,connectionArgs(database),{env:process.env,stdio:['pipe','pipe','pipe']});
   const firstDone=new Promise((resolve,reject)=>{first.on('error',reject);first.on('close',resolve);});
   let second,secondDone,timer,output='',errors='';
@@ -170,12 +173,13 @@ async function firstOwnerInvitationWait(expire,stage='tenant'){
       timer=setTimeout(()=>reject(new Error('First-owner tenant lock not acquired')),10000);
       first.stdout.on('data',c=>{output+=c;if(output.includes('EXP08_FIRST_OWNER_LOCKED'))resolve();});first.on('error',reject);
     });
-    const lock=stage==='tenant'?`SELECT 1 FROM public.tenants WHERE id='${t}' FOR UPDATE;`
+    const lock=scopeChange?`UPDATE public.tenants SET account_type='${scopeChange==='to_solo'?'standalone':'enterprise'}' WHERE id='${t}';`
+      :stage==='tenant'?`SELECT 1 FROM public.tenants WHERE id='${t}' FOR UPDATE;`
       :`UPDATE public.profiles SET active_tenant_id=active_tenant_id WHERE user_id='${u}';`;
     first.stdin.write(`BEGIN; ${lock}\n\\echo EXP08_FIRST_OWNER_LOCKED\n`);
     await ready;clearTimeout(timer);
     if(expire)sql(`UPDATE public.tenant_invite_tokens SET expires_at=clock_timestamp()+interval '5 seconds' WHERE id='${i}';`);
-    const app='exp08_first_owner_wait_'+stage+'_'+(expire?'expiry':'valid');
+    const app='exp08_first_owner_wait_'+stage+'_'+(scopeChange||(expire?'expiry':'valid'));
     second=spawn(executable,connectionArgs(database),{env:{...process.env,PGAPPNAME:app},stdio:['pipe','pipe','pipe']});
     secondDone=new Promise((resolve,reject)=>{second.on('error',reject);second.on('close',resolve);});
     second.stderr.on('data',c=>{errors+=c;});
@@ -196,8 +200,9 @@ async function firstOwnerInvitationWait(expire,stage='tenant'){
       'uses',(SELECT uses FROM public.tenant_invite_tokens WHERE id='${i}'),
       'profile',(SELECT active_tenant_id IS NOT NULL FROM public.profiles WHERE user_id='${u}'),
       'audit',(SELECT count(*) FROM public.paige_audit_log WHERE tenant_id='${t}'));`));
-    console.log(JSON.stringify({phase:'first-owner-invitation-actual-wait',case:(expire?'expired during ':'valid ')+stage+' wait',wait_observed:true,exit,state,error:errors.trim()}));
-    if(expire){assert.notEqual(exit,0,'An invitation expiring during the actual tenant wait must refuse');assert.match(errors,/invite has expired/);assert.deepEqual(state,{seats:0,pointer:false,uses:0,profile:false,audit:0});}
+    console.log(JSON.stringify({phase:'first-owner-invitation-actual-wait',case:scopeChange||((expire?'expired during ':'valid ')+stage+' wait'),wait_observed:true,exit,state,error:errors.trim()}));
+    if(scopeChange==='to_solo'){assert.notEqual(exit,0,'An account becoming Solo during the actual wait must enforce existing owner history');assert.match(errors,/OWNER_HISTORY_REQUIRES_RECOVERY/);assert.deepEqual(state,{seats:0,pointer:false,uses:0,profile:false,audit:0});}
+    else if(expire){assert.notEqual(exit,0,'An invitation expiring during the actual tenant wait must refuse');assert.match(errors,/invite has expired/);assert.deepEqual(state,{seats:0,pointer:false,uses:0,profile:false,audit:0});}
     else{assert.equal(exit,0,errors);assert.deepEqual(state,{seats:1,pointer:true,uses:1,profile:true,audit:1});}
   }finally{
     clearTimeout(timer);if(first.exitCode===null)first.stdin.end('ROLLBACK;\n\\q\n');
@@ -485,6 +490,7 @@ try {
     // Same uniquely-created database, real original writer and independent psql sessions. Restore
     // the original fixture afterward so no history/invitation ports leak into older proof groups.
     sql(`${invitationSetup}${invitationPatch}\nCOMMIT;`);
+    await firstOwnerInvitationWait(false,'tenant','to_solo');await firstOwnerInvitationWait(false,'tenant','to_enterprise');
     await firstOwnerInvitationWait(false);await firstOwnerInvitationWait(true);
     await firstOwnerInvitationWait(false,'profile');await firstOwnerInvitationWait(true,'profile');
     const finalExpiryDefinition=sql("SELECT pg_get_functiondef('public.accept_tenant_invite(text)'::regprocedure);").replace(/\r\n/g,'\n');

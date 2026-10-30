@@ -34,12 +34,13 @@ MUST_PRESERVE: original explicit platform-owner exception; current tenant from c
 ACCEPTANCE_CRITERIA: authorized own-business administrator reaches the original controls and writer; member/global-only/unavailable/stale authority is refused before provider effects; exact original result/readback/reopen remains attributable to that business. Actual external effects require their existing authority.
 MOTION_PURPOSE: NONE: no motion change.
 PROTECTED_SEAMS: original current_user_tenant_id, is_tenant_admin_as and is_platform_owner; original setup core, number provider, price/quote, audit and provider-execution boundary; EXP08 host/cards/Root/checker and EXP04/05/09/10 shared ownership untouched.
-INTERNAL_BUILD_IDENTITY: 6fe01f61a603c6297939e3bf4e585ce309a69c8e; deployment=none-candidate; environment=development; migrations=NOT_APPLICABLE; edge=three-original-handlers-not-deployed; evidence=original-handler-tests-and-source-manifest
+INTERNAL_BUILD_IDENTITY: candidate6690ec69322d2bdf06e7206b8d027c192453939d with reviewed own source42b0b6d5f and nine-file source manifest; deployment=none-candidate; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(normal exact-source deployment of comms-search-numbers, comms-purchase-number and comms-setup-calling after all gates); evidence=original-handler-tests-and-source-manifest
 RELEASE_CHANNEL: development: candidate repair; normal release and exact source readback required.
 RELEASE_CLASSIFICATION: patch: restore original current-business permission boundary on existing calling operations and Settings management projection.
 CUSTOMER_RELEASE_IDENTITY: none: no customer release identity assigned.
 RELEASE_NOTE_REQUIRED: YES: current-business administrators can use original calling controls; an unrelated global role does not authorize them. No customer update published.
-RELEASE_TRUTH_BOUNDARY: UNVERIFIED: deterministic and rendered local evidence do not establish actual authenticated/provider/customer acceptance.
+RELEASE_TRUTH_BOUNDARY: PROOF OWED: deterministic and rendered local evidence do not establish normal source release or actual authenticated/provider/customer acceptance.
+RELEASE_RECOVERY: position=forward-fix; reference=original three calling handlers, native current-business predicates and original SOLO role projection; preserve current authority and provider guards rather than restoring the retired global-role gate.
 
 ## Source and review boundaries
 

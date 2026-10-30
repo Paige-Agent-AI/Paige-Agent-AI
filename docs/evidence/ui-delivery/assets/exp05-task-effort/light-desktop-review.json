@@ -1,0 +1,24 @@
+{
+  "controls": [
+    {
+      "disabled": false,
+      "height": 44,
+      "label": "Confirm task change",
+      "width": 156
+    },
+    {
+      "disabled": false,
+      "height": 44,
+      "label": "Back to details",
+      "width": 118.5374984741211
+    }
+  ],
+  "dialog": "Prepare the client delivery reviewNeutral offline workflow fixture. No customer or provider action.Refresh task detailsResponsible personMLMorgan LeeStatusReadyPriorityP1Due dateNot scheduledEstimated effort45 minutesSourceCRM taskReview the task changeSet this task’s effort estimate to 30 minutes. This does not reserve Calendar time.Confirm task changeBack to detailsClose",
+  "focus": "Prepare the client delivery reviewNeutral offline workflow fixture. No customer or provider action.Refresh task detailsResponsible personMLMorgan LeeStatusReadyPriorityP1Due dateNot scheduledEstimated effort45 minutesSourceCRM taskReview the task changeSet this task’s effort estimate to 30 minutes. This does not reserve Calendar time.Confirm task changeBack to detailsClose",
+  "overflow": false,
+  "url": "http://127.0.0.1:57444/solo/42/operations/work?theme=light&effortState=ready",
+  "viewport": {
+    "height": 720,
+    "width": 1280
+  }
+}

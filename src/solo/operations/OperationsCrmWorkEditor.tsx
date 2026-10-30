@@ -18,8 +18,10 @@ export function OperationsCrmWorkEditor({task,actorId,tenantId,members,unavailab
   const [assignee,setAssignee]=useState(task.user_id);
   const [due,setDue]=useState("");
   const [clearDate,setClearDate]=useState(false);
+  const [effort,setEffort]=useState(task.estimated_minutes?.toString()??"");
+  const [clearEffort,setClearEffort]=useState(false);
   const [notice,setNotice]=useState("");
-  const dirty=assignee!==original.current.user_id||Boolean(due)||clearDate;
+  const dirty=assignee!==original.current.user_id||Boolean(due)||clearDate||clearEffort||effort!==(original.current.estimated_minutes?.toString()??"");
   useEffect(()=>{
     onNavigationGuardChange?.(()=>dirty?"Review unsaved changes or close this task before leaving it.":null);
     return()=>onNavigationGuardChange?.(null);
@@ -32,20 +34,24 @@ export function OperationsCrmWorkEditor({task,actorId,tenantId,members,unavailab
     }catch{if(current)setPermission({scope,admin:false});}})();
     return()=>{current=false;};
   },[scope,tenantId]);
-  const stale=(task.updated_at??task.created_at)!==(original.current.updated_at??original.current.created_at);
+  const stale=task.id!==original.current.id||(task.updated_at??task.created_at)!==(original.current.updated_at??original.current.created_at);
   const disabled=unavailable||stale||task.tenant_id!==tenantId;
-  const propose=(kind:"assignment"|"due")=>{
-    if(disabled||kind==="assignment"&&admin!==true)return;
+  const propose=(kind:"assignment"|"due"|"effort")=>{
+    if(disabled||(kind==="assignment"||kind==="effort")&&admin!==true)return;
     const parsed=due?new Date(due):null;
     const parts=/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/.exec(due);
     const validLocal=parsed&&parts&&Number.isFinite(parsed.getTime())&&parsed.getFullYear()===+parts[1]&&parsed.getMonth()+1===+parts[2]&&parsed.getDate()===+parts[3]&&parsed.getHours()===+parts[4]&&parsed.getMinutes()===+parts[5];
     if(kind==="due"&&!clearDate&&!validLocal){setNotice("Choose a valid due date and time.");return;}
-    const operation=buildCrmWorkEditOperation(original.current,kind==="assignment"?{kind,assigneeId:assignee}:{kind,dueAt:clearDate?null:parsed!.toISOString()},
+    const parsedEffort=Number(effort),minutes=clearEffort?null:parsedEffort;
+    if(kind==="effort"&&!clearEffort&&(!effort.trim()||!Number.isSafeInteger(parsedEffort)||parsedEffort<0||parsedEffort>2147483647)){
+      setNotice("Enter a valid whole-minute estimate, or choose to remove the recorded estimate.");return;
+    }
+    const operation=buildCrmWorkEditOperation(original.current,kind==="assignment"?{kind,assigneeId:assignee}:kind==="effort"?{kind,minutes}:{kind,dueAt:clearDate?null:parsed!.toISOString()},
       {actorId,tenantId,key:crypto.randomUUID()},members);
     if(!operation){setNotice("This change is unavailable or already matches current work. Refresh the task and team before trying again.");return;}
     setNotice("");onPropose(operation);
   };
-  return <section className="ops-work-editor" aria-label="Edit task responsibility and due date">
+  return <section className="ops-work-editor" aria-label="Edit task responsibility, due date and effort">
     <h3>Plan the next step</h3>
     {stale&&<p role="alert">This task changed while you were editing. Close and reopen its current details before proposing another change.</p>}
     {notice&&<p role="alert">{notice}</p>}
@@ -60,5 +66,11 @@ export function OperationsCrmWorkEditor({task,actorId,tenantId,members,unavailab
     <p>Time uses your device’s timezone. Review the exact date before confirming.</p>
     {task.due_date&&<label className="ops-work-editor-check"><input type="checkbox" checked={clearDate} disabled={disabled} onChange={event=>setClearDate(event.target.checked)} />Remove the current due date</label>}
     <button type="button" disabled={disabled||!due&&!clearDate} onClick={()=>propose("due")}>Review due date</button>
+    {admin===true&&<div className="ops-work-effort">
+      <label>Effort estimate (minutes)<input aria-label="Task effort estimate in minutes" type="number" inputMode="numeric" min="0" max="2147483647" step="1" value={effort} disabled={disabled||clearEffort} onChange={event=>setEffort(event.target.value)} /></label>
+      <p>Saved effort helps review workload. It does not reserve time; zero is a recorded estimate.</p>
+      {original.current.estimated_minutes!=null&&<label className="ops-work-editor-check"><input type="checkbox" checked={clearEffort} disabled={disabled} onChange={event=>setClearEffort(event.target.checked)} />Remove the recorded effort estimate</label>}
+      <button type="button" disabled={disabled||!clearEffort&&effort===(original.current.estimated_minutes?.toString()??"")} onClick={()=>propose("effort")}>Review effort estimate</button>
+    </div>}
   </section>;
 }

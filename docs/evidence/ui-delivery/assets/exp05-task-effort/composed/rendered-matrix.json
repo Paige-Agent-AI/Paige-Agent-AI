@@ -1,0 +1,357 @@
+{
+  "sourceCommit": "f5a5720d636d7774ea1c53ad2bf053aa1d98c196",
+  "boundary": "OFFLINE ORIGINAL OPERATIONS; synthetic Auth/Trust/Task/execution/read ports. Simulated save/reload is not a customer/native record or Rail receipt.",
+  "frames": [
+    {
+      "name": "mineral-1366-editor.jpg",
+      "geometry": {
+        "controls": [
+          {
+            "disabled": false,
+            "height": 21.700000762939453,
+            "label": "Refresh task details"
+          },
+          {
+            "disabled": true,
+            "height": 44,
+            "label": "Review reassignment"
+          },
+          {
+            "disabled": false,
+            "height": 43.75,
+            "label": "New CRM task due date"
+          },
+          {
+            "disabled": true,
+            "height": 44,
+            "label": "Review due date"
+          },
+          {
+            "disabled": false,
+            "height": 44,
+            "label": "Task effort estimate in minutes"
+          },
+          {
+            "disabled": false,
+            "height": 18,
+            "label": ""
+          },
+          {
+            "disabled": true,
+            "height": 44,
+            "label": "Review effort estimate"
+          },
+          {
+            "disabled": false,
+            "height": 44,
+            "label": "Close"
+          }
+        ],
+        "dialog": "Prepare the client delivery reviewNeutral offline workflow fixture. No customer or provider action.Refresh task detailsResponsible personMLMorgan LeeStatusReadyPriorityP1Due dateNot scheduledEstimated effort15 minutesSourceCRM taskReview a stage changependingIn progressCompletedPlan the next stepResponsible personMorgan LeeSam OkaforReview reassignmentNew due date and timeTime uses your device’s timezone. Review the exact date before confirming.Review due dateEffort estimate (minutes)Saved effort helps review workload. It does not reserve time; zero is a recorded estimate.Remove the recorded effort estimateReview effort estimateClose",
+        "focus": "Refresh task details",
+        "scrollWidth": 1366,
+        "viewport": {
+          "height": 768,
+          "width": 1366
+        }
+      },
+      "sha256": "7233ad8a8e7d0192a11e8777797257fc2dee10e9c4e6c8fc9d6ddee94f28f532"
+    },
+    {
+      "name": "mineral-1366-review.jpg",
+      "geometry": {
+        "controls": [
+          {
+            "disabled": true,
+            "height": 21.700000762939453,
+            "label": "Refresh task details"
+          },
+          {
+            "disabled": false,
+            "height": 44,
+            "label": "Confirm task change"
+          },
+          {
+            "disabled": false,
+            "height": 44,
+            "label": "Back to details"
+          },
+          {
+            "disabled": false,
+            "height": 44,
+            "label": "Close"
+          }
+        ],
+        "dialog": "Prepare the client delivery reviewNeutral offline workflow fixture. No customer or provider action.Refresh task detailsResponsible personMLMorgan LeeStatusReadyPriorityP1Due dateNot scheduledEstimated effort15 minutesSourceCRM taskReview the task changeSet this task’s effort estimate to 30 minutes. This does not reserve Calendar time.Confirm task changeBack to detailsClose",
+        "focus": "Prepare the client delivery reviewNeutral offline workflow fixture. No customer or provider action.Refresh task detailsResponsible personMLMorgan LeeStatusReadyPriorityP1Due dateNot scheduledEstimated effort15 minutesSourceCRM taskReview the task changeSet this task’s effort estimate to 30 minutes. This does not reserve Calendar time.Confirm task changeBack to detailsClose",
+        "scrollWidth": 1366,
+        "viewport": {
+          "height": 768,
+          "width": 1366
+        }
+      },
+      "sha256": "de1c0b8d066758fed29f8e50e3adc68717237d1ad93a1b912ea0413b20da8454"
+    },
+    {
+      "name": "mineral-1366-approval.jpg",
+      "geometry": {
+        "controls": [
+          {
+            "disabled": true,
+            "height": 21.700000762939453,
+            "label": "Refresh task details"
+          },
+          {
+            "disabled": false,
+            "height": 44,
+            "label": "Approve exact change"
+          },
+          {
+            "disabled": false,
+            "height": 44,
+            "label": "Back to details"
+          },
+          {
+            "disabled": false,
+            "height": 44,
+            "label": "Close"
+          }
+        ],
+        "dialog": "Prepare the client delivery reviewNeutral offline workflow fixture. No customer or provider action.Refresh task detailsResponsible personMLMorgan LeeStatusReadyPriorityP1Due dateNot scheduledEstimated effort15 minutesSourceCRM taskReview the task changeOffline Trust response · review the exact Task change below.Set this task’s effort estimate to 30 minutes. This does not reserve Calendar time.Approve exact changeBack to detailsClose",
+        "focus": "Approve exact change",
+        "scrollWidth": 1366,
+        "viewport": {
+          "height": 768,
+          "width": 1366
+        }
+      },
+      "sha256": "6dfeb30317cc020356d26ade6daddb435a12a0297e7fd0bb5120446f09dd957f"
+    },
+    {
+      "name": "mineral-1366-saved-fixture.jpg",
+      "geometry": {
+        "controls": [
+          {
+            "disabled": false,
+            "height": 21.700000762939453,
+            "label": "Refresh task details"
+          },
+          {
+            "disabled": true,
+            "height": 44,
+            "label": "Review reassignment"
+          },
+          {
+            "disabled": false,
+            "height": 43.75,
+            "label": "New CRM task due date"
+          },
+          {
+            "disabled": true,
+            "height": 44,
+            "label": "Review due date"
+          },
+          {
+            "disabled": false,
+            "height": 44,
+            "label": "Task effort estimate in minutes"
+          },
+          {
+            "disabled": false,
+            "height": 18,
+            "label": ""
+          },
+          {
+            "disabled": true,
+            "height": 44,
+            "label": "Review effort estimate"
+          },
+          {
+            "disabled": false,
+            "height": 44,
+            "label": "Close"
+          }
+        ],
+        "dialog": "Prepare the client delivery reviewNeutral offline workflow fixture. No customer or provider action.This task’s change is saved and confirmed in current CRM work.Refresh task detailsResponsible personMLMorgan LeeStatusReadyPriorityP1Due dateNot scheduledEstimated effort30 minutesSourceCRM taskReview a stage changependingIn progressCompletedPlan the next stepResponsible personMorgan LeeSam OkaforReview reassignmentNew due date and timeTime uses your device’s timezone. Review the exact date before confirming.Review due dateEffort estimate (minutes)Saved effort helps review workload. It does not reserve time; zero is a recorded estimate.Remove the recorded effort estimateReview effort estimateClose",
+        "focus": "Prepare the client delivery reviewNeutral offline workflow fixture. No customer or provider action.This task’s change is saved and confirmed in current CRM work.Refresh task detailsResponsible personMLMorgan LeeStatusReadyPriorityP1Due dateNot scheduledEstimated effort30 minutesSourceCRM taskReview a stage changependingIn progressCompletedPlan the next stepResponsible personMorgan LeeSam OkaforReview reassignmentNew due date and timeTime uses your device’s timezone. Review the exact date before confirming.Review due dateEffort estimate (minutes)Saved effort helps review workload. It does not reserve time; zero is a recorded estimate.Remove the recorded effort estimateReview effort estimateClose",
+        "scrollWidth": 1366,
+        "viewport": {
+          "height": 768,
+          "width": 1366
+        }
+      },
+      "sha256": "4ae6543fff9cacad520022f3f8f7acf0a8525d2c63f1287ce901946b0e2e83b0"
+    },
+    {
+      "name": "mineral-1366-reopened-editor.jpg",
+      "geometry": {
+        "controls": [
+          {
+            "disabled": false,
+            "height": 21.700000762939453,
+            "label": "Refresh task details"
+          },
+          {
+            "disabled": true,
+            "height": 44,
+            "label": "Review reassignment"
+          },
+          {
+            "disabled": false,
+            "height": 43.75,
+            "label": "New CRM task due date"
+          },
+          {
+            "disabled": true,
+            "height": 44,
+            "label": "Review due date"
+          },
+          {
+            "disabled": false,
+            "height": 44,
+            "label": "Task effort estimate in minutes"
+          },
+          {
+            "disabled": false,
+            "height": 18,
+            "label": ""
+          },
+          {
+            "disabled": true,
+            "height": 44,
+            "label": "Review effort estimate"
+          },
+          {
+            "disabled": false,
+            "height": 44,
+            "label": "Close"
+          }
+        ],
+        "dialog": "Prepare the client delivery reviewNeutral offline workflow fixture. No customer or provider action.Refresh task detailsResponsible personMLMorgan LeeStatusReadyPriorityP1Due dateNot scheduledEstimated effort30 minutesSourceCRM taskReview a stage changependingIn progressCompletedPlan the next stepResponsible personMorgan LeeSam OkaforReview reassignmentNew due date and timeTime uses your device’s timezone. Review the exact date before confirming.Review due dateEffort estimate (minutes)Saved effort helps review workload. It does not reserve time; zero is a recorded estimate.Remove the recorded effort estimateReview effort estimateClose",
+        "focus": "",
+        "scrollWidth": 1366,
+        "viewport": {
+          "height": 768,
+          "width": 1366
+        }
+      },
+      "sha256": "2c12085e56566d370cca54beab131360403c683fb9756ba16a0f5f682c9f46b9"
+    },
+    {
+      "name": "obsidian-320-editor-keyboard.jpg",
+      "geometry": {
+        "controls": [
+          {
+            "disabled": false,
+            "height": 21.700000762939453,
+            "label": "Refresh task details"
+          },
+          {
+            "disabled": true,
+            "height": 44,
+            "label": "Review reassignment"
+          },
+          {
+            "disabled": false,
+            "height": 43.75,
+            "label": "New CRM task due date"
+          },
+          {
+            "disabled": true,
+            "height": 44,
+            "label": "Review due date"
+          },
+          {
+            "disabled": false,
+            "height": 44,
+            "label": "Task effort estimate in minutes"
+          },
+          {
+            "disabled": false,
+            "height": 18,
+            "label": ""
+          },
+          {
+            "disabled": false,
+            "height": 44,
+            "label": "Review effort estimate"
+          },
+          {
+            "disabled": false,
+            "height": 44,
+            "label": "Close"
+          }
+        ],
+        "dialog": "Prepare the client delivery reviewNeutral offline workflow fixture. No customer or provider action.Refresh task detailsResponsible personMLMorgan LeeStatusReadyPriorityP1Due dateNot scheduledEstimated effort30 minutesSourceCRM taskReview a stage changependingIn progressCompletedPlan the next stepResponsible personMorgan LeeSam OkaforReview reassignmentNew due date and timeTime uses your device’s timezone. Review the exact date before confirming.Review due dateEffort estimate (minutes)Saved effort helps review workload. It does not reserve time; zero is a recorded estimate.Remove the recorded effort estimateReview effort estimateClose",
+        "focus": "",
+        "scrollWidth": 320,
+        "viewport": {
+          "height": 1000,
+          "width": 320
+        }
+      },
+      "sha256": "c3ac400d41d4090cb142f3a29aa2e2676c715f8d6b4a562e33263741226db9e9"
+    },
+    {
+      "name": "obsidian-320-cancel-return.jpg",
+      "geometry": {
+        "controls": [
+          {
+            "disabled": false,
+            "height": 21.700000762939453,
+            "label": "Refresh task details"
+          },
+          {
+            "disabled": true,
+            "height": 44,
+            "label": "Review reassignment"
+          },
+          {
+            "disabled": false,
+            "height": 43.75,
+            "label": "New CRM task due date"
+          },
+          {
+            "disabled": true,
+            "height": 44,
+            "label": "Review due date"
+          },
+          {
+            "disabled": false,
+            "height": 44,
+            "label": "Task effort estimate in minutes"
+          },
+          {
+            "disabled": false,
+            "height": 18,
+            "label": ""
+          },
+          {
+            "disabled": true,
+            "height": 44,
+            "label": "Review effort estimate"
+          },
+          {
+            "disabled": false,
+            "height": 44,
+            "label": "Close"
+          }
+        ],
+        "dialog": "Prepare the client delivery reviewNeutral offline workflow fixture. No customer or provider action.Refresh task detailsResponsible personMLMorgan LeeStatusReadyPriorityP1Due dateNot scheduledEstimated effort30 minutesSourceCRM taskReview a stage changependingIn progressCompletedPlan the next stepResponsible personMorgan LeeSam OkaforReview reassignmentNew due date and timeTime uses your device’s timezone. Review the exact date before confirming.Review due dateEffort estimate (minutes)Saved effort helps review workload. It does not reserve time; zero is a recorded estimate.Remove the recorded effort estimateReview effort estimateClose",
+        "focus": "Prepare the client delivery reviewNeutral offline workflow fixture. No customer or provider action.Refresh task detailsResponsible personMLMorgan LeeStatusReadyPriorityP1Due dateNot scheduledEstimated effort30 minutesSourceCRM taskReview a stage changependingIn progressCompletedPlan the next stepResponsible personMorgan LeeSam OkaforReview reassignmentNew due date and timeTime uses your device’s timezone. Review the exact date before confirming.Review due dateEffort estimate (minutes)Saved effort helps review workload. It does not reserve time; zero is a recorded estimate.Remove the recorded effort estimateReview effort estimateClose",
+        "scrollWidth": 320,
+        "viewport": {
+          "height": 1000,
+          "width": 320
+        }
+      },
+      "sha256": "f280792cd2deb30b2eef472c054f27ada904a4f8a876270f92e3de9dff5bd53e"
+    }
+  ],
+  "invalidExcluded": [
+    {
+      "file": "obsidian-320-clear-review.jpg",
+      "reason": "Pixels captured before the rendered transition; DOM text alone is not matching visual proof."
+    }
+  ]
+}

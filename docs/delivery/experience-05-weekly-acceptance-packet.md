@@ -1061,6 +1061,44 @@ reload/recovery, eligible existing/new SOLO cohorts and both-chat proof owed.
 All ten outcomes/E5 cases remain open for integrated verification.
 Founder NOT_ACCEPTED; STILL CODING / NOT_READY.
 
+## October29 — effort correction UI, reviewed local checkpoint
+
+Dependent source83d97fb1e/tree d3217465 adds the effort field to the ORIGINAL
+Task editor/review/command consumer. One scalar command retains raw native
+version, original approval fingerprint and operation key. Native metadata
+readback must match, then the independently scoped Work read must agree.
+Unknown/reload recovers that same operation; clear is unknown, zero is recorded.
+Stage targets cannot masquerade as effort proposals. Refusal focus now returns
+to Back to details instead of the disabled action. No new approval or writer.
+
+117 assertions/seven original suites PASS, including exact Task focus and
+SoloApp retention. The two original selector families changed only to match
+the expanded accessible labels; all positive/negative assertions remain.
+Full application TypeScript has nine unchanged-file diagnostics, zero changed;
+the empty root-solution result is excluded. Focused lint/UTF8/diff and pinned
+Impeccable pass (zero anti-patterns, three inherited type-size advisories).
+15 final rendered frames/121 product input hashes verify desktop and narrow
+states with explicit offline ports; native/AT/full-shell dock matrix owed.
+[Exact flow and proof boundary](../evidence/ui-delivery/exp05-task-effort-review.md).
+
+Reusable native-writer lesson: existing Task metadata update is a WHOLE
+replacement. Never send a partial effort object through it. Extend the original
+scalar contract with CAS and key-preserving mutation, retain the explicit
+replacement semantics, and verify both executor and independent native read.
+
+Separately, released workload3091 has bounded ordinary-owner production proof
+in protected ANT-52/c8eeddbf: current work/roster, truthful undated exclusions,
+temporary engineering capacity input, loaded reload reset, original Task read
+and stable sidebar Operations→Overview. No business write, dated/over-capacity
+case or new effort-save proof is inferred. Earlier wrong-active-context attempt
+remains INVALID. Browser custody was returned without touching peer tabs.
+
+Source/UI LOCAL, native12 NOT_APPLIED, full-schema/required CI/merge/deployment
+and actual saved/receipt/cohort/both-chat proof remain owed. E04/E09 migration
+order is a pending receiving handoff; E04 original ZION Planning ABI remains
+separate. All ten outcomes/E5-CV1–9 and one integrated founder evaluation remain
+OPEN. Catalogue/operations.department PARTIAL; founder NOT_ACCEPTED/NOT_READY.
+
 ## October30 UTC — saved-design source release and Task producer continuation
 
 Earlier source-only checkpoints above remain historical. #3097 closed the original
@@ -1103,6 +1141,24 @@ and affected original Edge deployment/readback must precede production claims.
 All ten outcomes/E5-CV1–9, same ZION/both chats, O02 feasible saved plan then full
 O05/O07/O09, current/new SOLO/customer/founder acceptance remain OPEN. Catalogue
 and algorithms remain PARTIAL. STILL CODING / NOT_READY; no founder test request.
+
+## October30 UTC — original effort editor composed with native3102
+
+Original42b editor normally composes exact3102/fdc313d21 and mainb696 to f5a5720d6.
+The single own packet append/append conflict retains both dated sections intact;
+all original peer product/contracts and historical screenshots are preserved.
+Seven actual original suites now125PASS/0FAIL/0skip on the composed source.
+Rebuilt original Operations fixture binds125 current product inputs/nine explicit
+synthetic ports and seven valid desktop/narrow frames, with five incoming graph
+changes disclosed relative to original83d97/121 inputs. Exact30-minute review,
+synthetic approval→fixture reread→reload/reopen, keyboard and Cancel were observed.
+A transition-time stale clear-review image is INVALID and excluded; actual
+accessibility wording and current clear tests remain separate semantic evidence.
+No real customer approval/record/Rail, full shell/native zoom/AT/cohort claim.
+Native3102 managed Preview is SUCCESS; required broad/database CI and native12/
+affected original Edge release/readback remain owed. UI cannot release ahead of
+that dependency. Same original fullten/E5/ZION/both-chat/founder obligations,
+O02→O05→O07→O09 priority and existing source ownership remain. STILL CODING.
 
 ## October30 04:40UTC — forward publication before safe Task release
 
@@ -1173,3 +1229,15 @@ values/prior notes/format/peer history preserved. E08 current Master/Brain lease
 respected. Same ZION, both chats, all ten outcomes/E5-CV1–9, algorithm maturity,
 full Builder/monitoring/permitted updates and authenticated cohorts remain OPEN.
 Next order O02→O05→O07→O09; STILL CODING / NOT_READY / NOT_ACCEPTED.
+### Forward parent received by original editor
+
+Dependent UI now normally composes nativec5d0/main3f37 intoe78ac4f56, retaining
+both complete packet append sections and all18203 outside-owned incoming leaves.
+All11 original product/test paths,125 rendered inputs/nine fixture sources and
+package/lockfile remain exact. Actual seven suites again125PASS/0FAIL/0skip;
+original seven bounded composed frames retain their original proof scope.
+Replacement managed Preview yalqqd is SUCCESS:50005ONCE/old12ABSENT/native body
+MD5caea59ab335ecaf295391c41a1a0522f/service-onlyACL exact. Earlier retirement-time
+failure is retained; replacement success is independently read, not assumed.
+Native wholeCI/production migration+Edge readback and dependent final main
+retarget/review/CI remain owed. No customer effect, full outcome or owner acceptance.

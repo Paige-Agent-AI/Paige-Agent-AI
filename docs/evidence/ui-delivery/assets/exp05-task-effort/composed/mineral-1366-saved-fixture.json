@@ -1,0 +1,51 @@
+{
+  "controls": [
+    {
+      "disabled": false,
+      "height": 21.700000762939453,
+      "label": "Refresh task details"
+    },
+    {
+      "disabled": true,
+      "height": 44,
+      "label": "Review reassignment"
+    },
+    {
+      "disabled": false,
+      "height": 43.75,
+      "label": "New CRM task due date"
+    },
+    {
+      "disabled": true,
+      "height": 44,
+      "label": "Review due date"
+    },
+    {
+      "disabled": false,
+      "height": 44,
+      "label": "Task effort estimate in minutes"
+    },
+    {
+      "disabled": false,
+      "height": 18,
+      "label": ""
+    },
+    {
+      "disabled": true,
+      "height": 44,
+      "label": "Review effort estimate"
+    },
+    {
+      "disabled": false,
+      "height": 44,
+      "label": "Close"
+    }
+  ],
+  "dialog": "Prepare the client delivery reviewNeutral offline workflow fixture. No customer or provider action.This task’s change is saved and confirmed in current CRM work.Refresh task detailsResponsible personMLMorgan LeeStatusReadyPriorityP1Due dateNot scheduledEstimated effort30 minutesSourceCRM taskReview a stage changependingIn progressCompletedPlan the next stepResponsible personMorgan LeeSam OkaforReview reassignmentNew due date and timeTime uses your device’s timezone. Review the exact date before confirming.Review due dateEffort estimate (minutes)Saved effort helps review workload. It does not reserve time; zero is a recorded estimate.Remove the recorded effort estimateReview effort estimateClose",
+  "focus": "Prepare the client delivery reviewNeutral offline workflow fixture. No customer or provider action.This task’s change is saved and confirmed in current CRM work.Refresh task detailsResponsible personMLMorgan LeeStatusReadyPriorityP1Due dateNot scheduledEstimated effort30 minutesSourceCRM taskReview a stage changependingIn progressCompletedPlan the next stepResponsible personMorgan LeeSam OkaforReview reassignmentNew due date and timeTime uses your device’s timezone. Review the exact date before confirming.Review due dateEffort estimate (minutes)Saved effort helps review workload. It does not reserve time; zero is a recorded estimate.Remove the recorded effort estimateReview effort estimateClose",
+  "scrollWidth": 1366,
+  "viewport": {
+    "height": 768,
+    "width": 1366
+  }
+}

@@ -57,13 +57,18 @@ const plannedReport={...reportMetadata,metric_requests:[{
   metric_key:'sales.invoices.issued_amount',metric_version:currentMetricVersion('sales.invoices.issued_amount'),
 }]};
 
-function originalDocumentTool(text=chat) {
+function originalDocumentToolSource(text=chat) {
   const source=ts.createSourceFile('chat.ts',text,ts.ScriptTarget.Latest,true);
   const tools=walk(source,n=>ts.isObjectLiteralExpression(n)&&n.properties.some(p=>
     ts.isPropertyAssignment(p)&&p.name.getText(source)==='name'
       &&ts.isStringLiteral(p.initializer)&&p.initializer.text==='document_generate'));
   expect(tools).toHaveLength(1);
-  const code=ts.transpileModule(`const tool=${tools[0].getText(source)};`,{
+  return tools[0].getText(source);
+}
+
+function originalDocumentTool(text=chat) {
+  const source=ts.createSourceFile('chat.ts',text,ts.ScriptTarget.Latest,true);
+  const code=ts.transpileModule(`const tool=${originalDocumentToolSource(text)};`,{
     compilerOptions:{target:ts.ScriptTarget.ES2022},
   }).outputText;
   // Bind only exports actually imported by the production module. Supplying every
@@ -96,7 +101,7 @@ describe("durable long-form Chat reach", () => {
     expect(()=>originalDocumentTool(missing)).toThrow(ReferenceError);
   });
   it('offers source-bound reviews through the original document tool',()=>{
-    const tool=chat.slice(chat.indexOf('name: "document_generate"'),chat.indexOf('name: "growth_list"'));
+    const tool=originalDocumentToolSource();
     expect(tool).toContain('"business_review"');
     expect(tool).toContain('report_period');expect(tool).toContain('evidence_refs');
   });
@@ -227,7 +232,7 @@ describe("durable long-form Chat reach", () => {
   });
 
   it("submits a bounded brief to the canonical durable RPC instead of model-authored blocks", () => {
-    const tool = chat.slice(chat.indexOf('name: "document_generate"'), chat.indexOf('name: "growth_list"'));
+    const tool = originalDocumentToolSource();
     const handlerStart = chat.indexOf('} else if (tc.function.name === "document_generate") {');
     const handler = chat.slice(handlerStart, chat.indexOf('} else if (tc.function.name === "growth_list") {', handlerStart));
     expect(tool).toContain('required: ["doc_type", "title", "brief"]');
@@ -271,7 +276,7 @@ describe("durable long-form Chat reach", () => {
   });
 
   it("keeps ordinary documents visibly non-signable", () => {
-    const tool = chat.slice(chat.indexOf('name: "document_generate"'), chat.indexOf('name: "growth_list"'));
+    const tool = originalDocumentToolSource();
     expect(tool).toContain("never request signature lines");
     expect(tool).toContain("If the document is meant to be signed, use agreement_draft");
     expect(tool).not.toContain("worksheet-field signature lines");

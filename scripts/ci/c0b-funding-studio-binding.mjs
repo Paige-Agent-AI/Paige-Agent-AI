@@ -58,7 +58,21 @@ function inspect(chatText,sources){
   const body=bodies.get(tool);const calls=walk(body,n=>call(n,'supabaseClient.functions.invoke'));
   require(calls.length===1&&str(calls[0].arguments[0])===endpointName&&print(prop(prop(calls[0].arguments[1],'body'),'tenant_id'))==='personaCtx?.tenant_id??null',`${tool}: caller-JWT exact draft route and server tenant`);
  }
- const list=bodies.get('growth_list');require(walk(list,n=>ts.isCallExpression(n)&&ts.isPropertyAccessExpression(n.expression)&&n.expression.name.text==='eq'&&str(n.arguments[0])==='tenant_id'&&id(n.arguments[1])==='_listTid').length===1&&decl(list,'_listTid').some(n=>print(n.initializer)==='personaCtx?.tenant_id??null'),'growth list exact server tenant pin');
+ // EXP08 A2b: the page list has one home shared with Team Hub (_shared/growth/list-pages.ts). The chat
+ // branch must hand it the caller-JWT client and the server tenant, and the helper itself must pin
+ // the caller read to that tenant and read only the workspace's own slug with the service role.
+ const list=bodies.get('growth_list');const listCalls=walk(list,n=>call(n,'listGrowthPages'));
+ require(walk(chat,ts.isImportDeclaration).some(n=>str(n.moduleSpecifier)==='../_shared/growth/list-pages.ts'&&n.importClause?.namedBindings&&ts.isNamedImports(n.importClause.namedBindings)&&n.importClause.namedBindings.elements.some(e=>id(e.name)==='listGrowthPages'&&!e.propertyName))&&decl(chat,'listGrowthPages').length===0,'growth list canonical unshadowed helper import');
+ require(listCalls.length===1&&print(listCalls[0].arguments[0])==='supabaseClient'&&print(listCalls[0].arguments[1])==='admin'&&print(listCalls[0].arguments[2])==='personaCtx?.tenant_id??null'&&io(list).length===0,'growth list exact server tenant pin');
+ const pages=adapters.growthList;const helper=pages?walk(pages,n=>ts.isFunctionDeclaration(n)&&id(n.name)==='listGrowthPages'):[];
+ require(helper.length===1,'growth list helper present');
+ if(helper.length===1){const h=helper[0];const froms=walk(h,n=>ts.isCallExpression(n)&&ts.isPropertyAccessExpression(n.expression)&&n.expression.name.text==='from');
+  require(walk(h,n=>ts.isCallExpression(n)&&ts.isPropertyAccessExpression(n.expression)&&n.expression.name.text==='eq'&&str(n.arguments[0])==='tenant_id'&&id(n.arguments[1])==='_listTid').length===1&&decl(h,'_listTid').some(n=>print(n.initializer)==='tenantId??null'),'growth list helper exact tenant pin');
+  require(froms.length===2&&froms.some(n=>print(n.expression)==='caller.from'&&str(n.arguments[0])==='growth_pages')&&froms.some(n=>print(n.expression)==='admin.from'&&str(n.arguments[0])==='tenants'),'growth list helper reads only pages (caller) and the workspace slug (service)');
+  const outer=n=>{let x=n;while(ts.isPropertyAccessExpression(x.parent)&&x.parent.expression===x&&ts.isCallExpression(x.parent.parent))x=x.parent.parent;return x;};
+  require(walk(h,n=>call(n,'admin.from')).every(n=>walk(outer(n),x=>ts.isCallExpression(x)&&ts.isPropertyAccessExpression(x.expression)&&x.expression.name.text==='eq'&&str(x.arguments[0])==='id'&&id(x.arguments[1])==='tenantId').length===1),'growth list slug read is pinned to the server tenant');
+  require(!walk(h,n=>ts.isCallExpression(n)&&(/\.(?:rpc|invoke|insert|update|upsert|delete)$/.test(print(n.expression))||print(n.expression)==='fetch')).length,'growth list helper has no other I/O');
+  require(!walk(h,n=>ts.isBinaryExpression(n)&&n.operatorToken.kind===ts.SyntaxKind.EqualsToken&&['tenantId','_listTid','caller','admin'].includes(id(n.left))).length,'growth list helper scope cannot be reassigned');}
  const image=bodies.get('generate_image');const media=walk(image,n=>call(n,'supabaseClient.functions.invoke')&&str(n.arguments[0])==='paige-media');
  require(media.length===1&&print(prop(prop(media[0].arguments[1],'body'),'request_id'))==='awaitstableRunId(["studio-chat-image",payloadThreadId??"",tc.id])','Studio image existing request correlation');
  const legacyImages=walk(image,n=>call(n,'supabaseClient.functions.invoke')&&str(n.arguments[0])==='generate-image');

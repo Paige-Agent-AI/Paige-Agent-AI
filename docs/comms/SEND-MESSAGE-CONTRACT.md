@@ -137,3 +137,11 @@ reads the structured payload, L519-521) with `status:"failed"`-or-`"sent"` seman
 > composer, `paige-action-worker` drain, `comms-draft-reply` materialized drafts, any MCP/
 > n8n caller, the new cron drainer) and proves the new request/response shape still works
 > for each. `outcome` being additive is the reason this stays safe — prove it, don't assume.
+
+## 6. EXP03 SMS uncertainty candidate — October30,2026
+
+Source candidate only; normal exact-head review/CI/release/readback still required. Earlier response examples remain historical: the existing additive `outcome_unknown` plus `unconfirmed:true` contract must also carry uncertain SMS results. `status` remains `failed`, never a successful-send claim. A transport/response-read exception, HTTP408/409/5xx or successful response without a valid provider Message SID cannot establish unsent. Original SMS adapter sets its existing result metadata; send-message projects that through the existing uncertain-row marker/response/replay guard. No new outcome enum, message table, approval or receipt ledger.
+
+Twilio's [Message resource schema](https://www.twilio.com/docs/messaging/api/message-resource) identifies receipts as `SM` or `MM` followed by32 hexadecimal characters. Its [20429 guidance](https://www.twilio.com/docs/api/errors/20429) documents429 requests as not processed; a configured provider's definite4xx refusal remains failed, while408/409 are conservatively uncertain. A later retry must still obtain current legal/consent/action authority through the original caller. Provider acceptance does not establish handset delivery.
+
+Original consumers: Conversations and New conversation already parse `unconfirmed`/`outcome_unknown` and use the existing warning/record line; the original same-message replay guard refuses an uncertain row before another provider call. Actual-source adapter/handler tests cover that reuse, known accepted receipt, definitive refusal, missing configuration, original provider floor and original words/thread. Rendered/authenticated UI, both-chat/domain consumers, durable SMS operation claiming and all50-state final-dispatch integration remain verification/integration work. Do not automatically resubmit an unknown operation, label a mock as a provider receipt or treat this bounded correction as complete SMS governance.

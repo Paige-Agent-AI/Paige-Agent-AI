@@ -1,0 +1,157 @@
+// Actual original handler AND its registered SMS adapter, with only external ports replaced.
+// No provider request is possible: the original transport has separate inert wrapper tests.
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {stripTypeScriptTypes} from 'node:module';
+import vm from 'node:vm';
+import {webcrypto} from 'node:crypto';
+import {execFileSync} from 'node:child_process';
+
+const tenant='20000000-0000-4000-8000-000000000001';
+const actor='10000000-0000-4000-8000-000000000001';
+const contact='30000000-0000-4000-8000-000000000001';
+const message='40000000-0000-4000-8000-000000000001';
+const to='+15555550101', words='Fictional approved text';
+const sid='SM'+'1'.repeat(32);
+
+function harness(result,{floor=true,configured=true}={}) {
+  const writes=[],attempts=[],adapters=new Map();
+  const rows={
+    messages:{id:message,tenant_id:tenant,status:'draft',contact_id:contact,channel_type:'sms',meta:{}},
+    clients:{id:contact,tenant_id:tenant},
+    tenant_a2p_registrations:{status:'approved',messaging_service_sid:'MGfixture'},
+    tenant_phone_numbers:[{phone_number:'+15555550100',status:'active',is_primary:true,capabilities:{sms:true}}],
+    tenant_twilio_subaccounts:{inbound_webhook_secret:null},
+    tenant_members:{role:'owner',status:'active'},
+    profiles:{active_tenant_id:tenant},
+  };
+  const admin={auth:{getUser:async()=>({data:{user:{id:actor}},error:null})},rpc:async name=>({data:
+    name==='current_user_tenant_id'?tenant:name==='is_platform_owner'?false:
+    name==='comms_provider_execution_allowed'?floor:name==='has_role'||name==='is_tenant_admin_as'?true:null,error:null}),
+    from(table){
+      let change=null;
+      const answer=()=>({data:change?{id:message}:rows[table]??null,error:null});
+      const q=new Proxy({},{get(_,key){
+        if(key==='then')return resolve=>resolve(answer());
+        if(key==='single'||key==='maybeSingle')return async()=>answer();
+        return(...args)=>{
+          if(['insert','update','upsert','delete'].includes(key)){
+            change=args[0];writes.push({table,kind:key,payload:structuredClone(change)});
+            if(table==='messages')rows.messages={...rows.messages,...structuredClone(change)};
+          }
+          return q;
+        };
+      }});
+      return q;
+    },
+  };
+  const context=vm.createContext({console,Request,Response,Headers,URL,URLSearchParams,TextEncoder,TextDecoder,
+    AbortController,AbortSignal,Date,setTimeout,clearTimeout,crypto:webcrypto,btoa,atob,
+    createClient:()=>admin,registerOutboundAdapter:a=>adapters.set(a.channel_type,a),getOutboundAdapter:c=>adapters.get(c),
+    CLIENT_CONTACT_METHODS_EMBED:'contact_methods',clientAddresses:()=>({emails:[],phones:[to]}),
+    // This fixture assumes the separately-tested current consent/location decision allows the attempt.
+    runPreSend:async()=>({proceed:true,outcome:'proceed',reason:null,queueUntil:null}),
+    resolveTwilioCreds:async()=>configured?{ok:true,data:{accountSid:'ACfixture',authToken:'fixture-secret',apiKeySid:'SKfixture'}}:
+      {ok:false,needs_config:true,data:null,error:'twilio_subaccount_not_provisioned'},
+    sendSms:async(_account,_secret,options)=>{
+      attempts.push({to:options.to,body:options.body});
+      if(result==='throw')throw new TypeError('Fictional provider port lost its answer');
+      return structuredClone(result);
+    },
+    Deno:{env:{get:key=>key==='SUPABASE_SERVICE_ROLE_KEY'?'internal':'https://fixture.example.test'},serve:fn=>context.handler=fn},
+    fetch:async()=>{throw Error('Unexpected network access in inert SMS result test');},
+  });
+  const floorSource=readFileSync(new URL('./comms-provider-boundary.ts',import.meta.url),'utf8').replace(/\bexport /g,'');
+  vm.runInContext(stripTypeScriptTypes(floorSource),context);
+  const raw=process.env.COMMS_SMS_BASELINE
+    ?execFileSync('git',['show',`${process.env.COMMS_SMS_BASELINE}:supabase/functions/send-message/index.ts`],{encoding:'utf8'})
+    :readFileSync(new URL('../send-message/index.ts',import.meta.url),'utf8');
+  const source=raw
+    .replace(/^import[\s\S]*?from\s+["'][^"']+["'];?\s*/gm,'').replace(/^import\s+["'][^"']+["'];?\s*/gm,'');
+  vm.runInContext(stripTypeScriptTypes(source),context);
+  return {writes,attempts,rows,run:async({existing=true}={})=>{
+    const response=await context.handler(new Request('https://fixture.example.test/send-message',{
+      method:'POST',headers:{Authorization:'Bearer user','Content-Type':'application/json'},
+      body:JSON.stringify({channel:'sms',to,body:words,contact_id:contact,...existing?{message_id:message}:{}}),
+    }));
+    return {status:response.status,body:await response.json()};
+  }};
+}
+
+for(const [label,result] of [
+  ['lost response',{ok:false,status:0,error:'Fictional lost response',data:null}],
+  ['provider port throws','throw'],
+  ['request timeout',{ok:false,status:408,error:'Fictional request timeout',data:null}],
+  ['conflict response',{ok:false,status:409,error:'Fictional conflict',data:null}],
+  ['server failure',{ok:false,status:503,error:'Fictional provider error',data:null}],
+  ['empty successful response',{ok:true,status:201,error:null,data:null}],
+  ['missing receipt',{ok:true,status:201,error:null,data:{}}],
+  ['empty receipt',{ok:true,status:201,error:null,data:{sid:'   '}}],
+  ['non-string receipt',{ok:true,status:201,error:null,data:{sid:42}}],
+  ['short receipt',{ok:true,status:201,error:null,data:{sid:'SMfixture'}}],
+  ['wrong-resource receipt',{ok:true,status:201,error:null,data:{sid:'PN'+'1'.repeat(32)}}],
+  ['space-padded receipt',{ok:true,status:201,error:null,data:{sid:' '+sid+' '}}],
+])test(`SMS ${label} is unconfirmed, never sent or plain failed`,async()=>{
+  const h=harness(result);const response=await h.run();
+  assert.equal(response.status,200,JSON.stringify(response));
+  assert.equal(h.attempts.length,1);
+  assert.equal(response.body.status,'failed');
+  assert.equal(response.body.outcome,'outcome_unknown');
+  assert.equal(response.body.unconfirmed,true);
+  assert.equal(response.body.scheduled_for,null);
+  assert.equal(h.rows.messages.error,'delivery_unconfirmed');
+  const again=await h.run();
+  assert.equal(again.body.outcome,'outcome_unknown');
+  assert.equal(h.attempts.length,1,'same-row replay must stop before another provider attempt');
+});
+
+for(const status of [400,401,403,404,422,429])test(`SMS HTTP${status} retains a definitive failed result`,async()=>{
+  const h=harness({ok:false,status,error:'Fictional provider rejection',data:{code:status}});
+  const response=await h.run();
+  assert.equal(h.attempts.length,1);
+  assert.equal(response.body.outcome,'failed');
+  assert.notEqual(response.body.unconfirmed,true);
+  assert.notEqual(h.rows.messages.error,'delivery_unconfirmed');
+});
+
+test('a send without an existing draft retains uncertain words on the original thread',async()=>{
+  const h=harness({ok:false,status:0,error:'Fictional lost response',data:null});
+  const response=await h.run({existing:false});
+  assert.equal(response.body.outcome,'outcome_unknown');
+  const saved=h.writes.find(x=>x.table==='messages'&&x.kind==='insert')?.payload;
+  assert.equal(saved?.thread_key,`contact:${tenant}:${contact}`);
+  assert.equal(saved?.error,'delivery_unconfirmed');
+  assert.equal(saved?.body_html,words);
+  assert.equal(saved?.meta?.delivery_unconfirmed,true);
+});
+
+test('known accepted receipt and exact original words retain the existing contract',async()=>{
+  const h=harness({ok:true,status:201,error:null,data:{sid,status:'queued'}});
+  const response=await h.run();
+  assert.equal(response.body.outcome,'sent');
+  assert.equal(response.body.vendor_message_id,sid);
+  assert.notEqual(response.body.unconfirmed,true);
+  assert.deepEqual(h.attempts,[{to,body:words}]);
+});
+
+test('the documented MM receipt form is retained unchanged',async()=>{
+  const mm='MM'+'A'.repeat(32);
+  const h=harness({ok:true,status:201,error:null,data:{sid:mm,status:'queued'}});
+  const response=await h.run();
+  assert.equal(response.body.outcome,'sent');
+  assert.equal(response.body.vendor_message_id,mm);
+});
+
+test('unconfigured original SMS provider fails before a provider attempt',async()=>{
+  const h=harness(null,{configured:false});const response=await h.run();
+  assert.equal(h.attempts.length,0);
+  assert.equal(response.body.outcome,'failed');
+  assert.notEqual(response.body.unconfirmed,true);
+});
+
+test('original provider execution refusal cannot reach SMS adapter transport',async()=>{
+  const h=harness(null,{floor:false});const response=await h.run();
+  assert.equal(response.status,403);
+  assert.equal(h.attempts.length,0);
+});

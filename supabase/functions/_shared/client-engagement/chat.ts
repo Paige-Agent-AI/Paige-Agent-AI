@@ -10,6 +10,7 @@ import {
 } from './status.ts';
 import { AGREEMENT_TEXT, ATTENTION_TEXT, DELIVERY_PHASE_TEXT, PAYMENT_STATE_TEXT, standingDeliveryEvidence, standingRecordLinks, standingTermsEvidence, standingTimingReason } from './labels.ts';
 import type { ReadRecordLink } from '../paige-turn/record-links.ts';
+import { formatExactMinor } from './money.ts';
 
 // Experience 04 E4-S2 — "where does this client stand?" and the business time zone, from chat.
 //
@@ -94,22 +95,9 @@ function failure(error: { code?: string } | null, byId = false): EngagementChatR
 
 // ---------------------------------------------------------------- formatting
 
-function digitsFor(currency: string): number {
-  try {
-    return new Intl.NumberFormat('en-US', { style: 'currency', currency }).resolvedOptions().maximumFractionDigits ?? 2;
-  } catch {
-    return 2;
-  }
-}
-
 /** Minor units → "USD 3,500.00". A null amount is never formatted as zero. */
-export function money(minor: number | null, currency: string | null, unknown = 'not known'): string {
-  if (minor === null || !Number.isFinite(minor)) return unknown;
-  if (!currency) return `${minor} (minor units; currency not recorded)`;
-  const code = currency.toUpperCase();
-  const d = digitsFor(code);
-  const major = minor / 10 ** d;
-  return `${code} ${major.toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d })}`;
+export function money(minor: number | string | null, currency: string | null, unknown = 'not known'): string {
+  return formatExactMinor(minor, currency, { locale: 'en-US', currencyDisplay: 'code' }) ?? unknown;
 }
 
 /**

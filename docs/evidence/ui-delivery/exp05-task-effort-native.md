@@ -64,8 +64,8 @@ Preview/native225 remain owed; old green checks are not reused as new-head proof
 
 Original no-data/nonpersistent native12 Preview identity/body/catalogue and scope
 are preserved in [forward evidence](../exp05-task-effort-forward-order.json).
-It has no Auth users or Tasks and three migration-created tenant rows; those
-rows do not prove customer use. Supported retirement/recreation of ONLY this
+It has no Auth users or Tasks and three tenant rows; their provenance was not
+examined and they do not prove customer use. Supported retirement/recreation of ONLY this
 owned disposable Preview is planned after publication; no production/peer
 environment mutation, credentials, account or provider action. Subsequent actual
 retirement/new-Preview result must be recorded separately, never presumed here.

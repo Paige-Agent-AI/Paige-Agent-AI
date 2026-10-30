@@ -7,7 +7,7 @@ MATERIAL_FLOW_CHANGE: YES: add explicit inspection/selection of an original acce
 FLOW_PROTOTYPE: PASS: original framework/tokens/original review prototype was inspected before implementation under standing owner design delegation. Dated private C130 flow decision is author engineering review/LOWER ASSURANCE, not founder approval or customer proof. It introduced no alternative production UI.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: eligible SOLO owner/admin inspects accepted economics/allocations and reviews one exact positive dated obligation without inventing amount, due date or commercial acceptance.
 VISUAL_DIRECTION: PASS: incumbent Operate workspace; selected row shows its next action in context. Responsive container columns avoid using the outer desktop viewport to size a narrow invoice action pane. No added inner scroll owner or new visual system.
-AUTOMATED_EVIDENCE: PASS: combined150 assertions/10 suites, all original retained-reader/inspection and invoice cases included. Source-retirement, exact-reference, allocated/held/refused, old draft guard, focus, same-operation unknown recovery tested through original components/decoder with synthetic ports. Not native/provider or actual role proof.
+AUTOMATED_EVIDENCE: PASS: combined150 assertions/10 suites, all original retained-reader/inspection and invoice cases included. Source-retirement, exact-reference, allocated/held/refused, old draft guard, focus, same-operation uncertain recovery tested through original components/decoder with synthetic ports. Not native/provider or actual role proof.
 STATIC_EVIDENCE: PASS: full canonical type ratchet baseline10/current6/no new error, baseline unchanged; strict scoped eslint0 and pinned impeccable4.1.0 detector0. Immutable-test assignments/index-signature mismatch and one stale mock expectation were corrected; earlier failures retained privately.
 RENDERED_EVIDENCE: PASS: actual original invoice workspace and new plan component. Native1280x720 desktop,390px CSS frame and320x680 dark CSS frame; exact approval, retained selection and return in assets/e04-accepted-payment-plan-workspace. Local mock ports/CSP deny network, static invoice preview explicitly synthetic. No full shell, native mobile or production identity claim.
 BEHAVIORAL_EVIDENCE: PASS: original exact $300/payment2/due2026-11-15/terms3 review, keyboard Cancel restores same selection/focus; loading cancellation returns read focus; TEST/unassigned/stale/refused reads have no target; denied/signed-out/session change removes source. Original unsaved receipt/partial draft guard and unknown recovery are composite-tested.
@@ -15,7 +15,7 @@ AUTHENTICATED_RUNTIME: UNVERIFIED: new selector is local/source only. Existing g
 KEYBOARD_FOCUS: PASS: desktop native Tab→Cancel/Enter returns to selected review after original operation-list read. Read completion focuses heading, cancellation read trigger, clear-selection original row. Source-retirement and interrupted account-review exits tested. Screen-reader/native-device proof remains owed.
 ZOOM_REFLOW: UNVERIFIED: bounded390/320 CSS-frame reflow and actual desktop geometry inspected; native200percent zoom/physical mobile/full shell not driven. First stale compositor frames and light-rendered dark-fixture attempt excluded; corrected dark frame retained.
 REDUCED_MOTION: UNVERIFIED: no new animation and original reduced-motion policy retained; preference-specific runtime not repeated.
-STATE_COVERAGE: PASS: explicit read/loading/cancel/available/allocated/pending request/held/refused/stale/denied/signed-out/retired source, selection, approval cancel, uncertain original recovery. Seven native held reasons tested; actual provider effect remains held.
+STATE_COVERAGE: PASS: explicit read/loading/cancel/available/allocated/unresolved request/held/refused/stale/denied/signed-out/retired source, selection, approval cancel, uncertain original recovery. Seven native held reasons tested; actual provider effect remains held.
 TRUTHFUL_STATE_LABELS: PASS: scheduled/remaining/allocated are original native facts, not payment or service completion. TEST cannot fulfill actual obligations. Current signed-file availability is unchecked. Approval/request/settlement remain distinct.
 SOLO_UI: YES: original Sales invoice records, one universal tenant/role path; neutral fixture IDs never select product behavior.
 SOLO_1536X770_PAIGE_CLOSED: UNVERIFIED: complete signed-in shell/two-cohort proof remains owed for this new financial consumer; local component frames do not substitute.
@@ -35,13 +35,13 @@ ACCEPTANCE_CRITERIA: authorized customer can inspect same retained agreement/sch
 MOTION_PURPOSE: NONE: original modal behavior retained.
 PROTECTED_SEAMS: caller-JWT source read; real actor/role authority stays native; no service impersonation, new permission predicate, Root/host/registry/Portal change or provider effect.
 
-INTERNAL_BUILD_IDENTITY: source02a140923d40783737d2c9d3598078ab3e8b8e74; local Vite actual components, synthetic SDK ports, no deployment identity; source hashes/assets in source-manifest.json
+INTERNAL_BUILD_IDENTITY: 02a140923d40783737d2c9d3598078ab3e8b8e74; deployment=NOT_APPLICABLE; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(normal shared-reader importer release); evidence=assets/e04-accepted-payment-plan-workspace/source-manifest.json
 RELEASE_CHANNEL: development: no customer release or new activation.
 RELEASE_CLASSIFICATION: internal-only: connected accepted-target inspection/selection, not complete payment-plan or Experience launch.
 CUSTOMER_RELEASE_IDENTITY: none: no customer announcement or acceptance claim.
 RELEASE_NOTE_REQUIRED: no: safe internal increment; normal policy retained.
 RELEASE_TRUTH_BOUNDARY: PARTIAL: local component/source proof, released native10 prerequisite; authenticated financial/customer result owed.
-RELEASE_RECOVERY: original saved actor/tenant/invoice operation remains the only recovery identity; unknown stays held, no duplicate dispatch. New read cache is disposable and retires on scope changes.
+RELEASE_RECOVERY: position=source preparation with original same-operation financial recovery retained; reference=src/solo/sales/InvoiceCommandReview.tsx and supabase/functions/_shared/sales-payments/request-command.ts. No duplicate dispatch; disposable read cache retires on scope changes.
 
 ## Original capability and orchestration contract
 

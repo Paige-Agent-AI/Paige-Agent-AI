@@ -103,10 +103,15 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: sales-collections-sql-proof
-          path: |
-            supabase/functions/_shared/sales-collections/sql-proof-result.txt
-            work/sales-provider-observation-proof.json
+          path: supabase/functions/_shared/sales-collections/sql-proof-result.txt
           if-no-files-found: warn
+      - name: Preserve source-pinned provider observation proof
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sales-provider-observation-proof
+          path: work/sales-provider-observation-proof.json
+          if-no-files-found: error
       - name: Sales Performance canonical sums, business-calendar overdue, balance equivalence and tenant gates
         env:
           PGPASSWORD: isolated-test-password

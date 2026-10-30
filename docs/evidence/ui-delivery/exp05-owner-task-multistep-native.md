@@ -7,18 +7,18 @@ MATERIAL_FLOW_CHANGE: NO: native foundation extends the existing literal interna
 FLOW_PROTOTYPE: NOT_REQUIRED: no UI implementation in this native-first slice; a changed multi-step customer review must reuse and verify the original workflow preview before activation.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: prepare existing governed infrastructure for equivalent eligible SOLO owners/admins to review one-to-twenty literal internal responsibilities, retaining separate per-occurrence approvals and true original results.
 VISUAL_DIRECTION: NOT_APPLICABLE: no UI/style/motion source changed.
-AUTOMATED_EVIDENCE: PASS: final-path80005 original full run-d3bc7v completed143 native controls and56 actual original engine/C5 tests, including named one-step and two-step native execution/receipt/replay. Added shared rollback-only SQL contract and all29 selected native cases then passed in run-eCShoI; selected cases are not added to or substituted for the full-regression count. Both owned PostgreSQL servers stopped normally. Full Supabase schema proof remains owed.
+AUTOMATED_EVIDENCE: PASS: final-path80005 original full run-d3bc7v completed143 native controls and56 actual original engine/C5 tests. Shared rollback-only SQL and29 selected native cases passed separately in run-eCShoI, not inflated into the full count. Own managed full-schema Preview then passed the exact literal/ACL SQL and owner_task_multistep_lifecycle.sql: two synthetic owner/admin businesses, cross-tenant refusal, separate approvals/Tasks/original receipt IDs and no-repeat recovery; rollback/post-counts0Auth/0Task/0Process. SQL claims and explicit later-event clock fixture are not ordinary authenticated customer proof.
 STATIC_EVIDENCE: PASS: production four original function OIDs/bodies/owners/ACLs match the guarded inputs; frontier80004 and candidate ABSENT read independently. Normal main055 composition preserves peer source. One unapplied migration path reconciled before publication, no production migration history edit.
 RENDERED_EVIDENCE: NOT_APPLICABLE: no rendered source changes; existing single-step UI is not presented as a working multi-step builder.
-BEHAVIORAL_EVIDENCE: PASS: actual selected native PostgreSQL + original engine proves separate second-act hold/approval/Task/Rail/recovery; equal arguments do not merge steps, a step position creates no dependency, paused/stale/reclassified/foreign state refuses. Synthetic Auth/eligibility/Realtime ports remain explicitly excluded from full-schema/customer claims.
+BEHAVIORAL_EVIDENCE: PASS: actual selected native PostgreSQL + original engine proves separate second-act hold/approval/Task/Rail/recovery; equal arguments do not merge steps, a step position creates no dependency, paused/stale/reclassified/foreign state refuses. Actual managed-schema SQL separately proves two synthetic owner/admin businesses through original native functions and original returned receipt IDs. Original local Auth/eligibility/Realtime ports and Preview SQL-role/clock fixtures remain excluded from ordinary customer claims.
 AUTHENTICATED_RUNTIME: UNVERIFIED: ordinary caller-JWT/owner-cohort/mounted multi-step review and production execution/reload are not proven. No real customer automation enabled or event replayed.
 KEYBOARD_FOCUS: NOT_APPLICABLE: no rendered keyboard/focus behavior changed.
 ZOOM_REFLOW: NOT_APPLICABLE: native-only source, no changed interface.
 REDUCED_MOTION: NOT_APPLICABLE: no animation or motion listener.
-STATE_COVERAGE: PASS: exact per-act binding, missing/expired/foreign/revoked approval, nonrepeating recovery, interrupted dispatch, stale chain, wrong position/correlation, source/metadata drift, literal limits and held account classes have bounded existing native coverage; rebuilt-schema SQL and new-cohort integration remain separate owed proof.
+STATE_COVERAGE: PASS: exact per-act binding, missing/expired/foreign/revoked approval, nonrepeating recovery, interrupted dispatch, stale chain, wrong position/correlation, source/metadata drift, literal limits and held account classes have bounded native coverage. Rebuilt-schema owner/admin/foreign-seat, exact Task/Rail and replay SQL passed; genuine customer/cohort integration remains separate owed proof.
 TRUTHFUL_STATE_LABELS: PASS: prepared/armed is not executed; each action requires its own original Task/result/Rail. Catalogue and algorithms are not promoted LIVE by this migration or fixture.
 SOLO_UI: NO: native foundation only; one shared tenant-neutral implementation, no customer-specific condition or new account.
-UNVERIFIED: final-path exact review/CI/Preview/full-schema SQL, production migration/readback, genuine caller authority/cohorts, mounted multi-step workflow, both-chat ZION, full ten/E5 and founder acceptance.
+UNVERIFIED: final updated-head review/CI, production migration/readback, genuine caller-JWT/cohorts, actual event timing across customer requests, full-schema concurrency, mounted multi-step workflow, both-chat ZION, full ten/E5 and founder acceptance. Earlier812 Preview/literal/lifecycle SQL evidence remains exact source-bound.
 OWNER_INTENT: complete governed Workflow Automation Builder/execution/recovery without replacing existing systems; native support is a dependency, not a reduced final outcome.
 MUST_NOT_HAPPEN: no auto-approval, grant expansion, held Agency/PO/sub-account multistep activation, dynamic/external arguments, duplicate effect, fabricated receipt, unknown replay, legacy held-JSON rewrite or migration-history reset.
 MUST_PRESERVE: same four original native functions/OIDs/ABI/metadata/ACLs, canonical class helper, exact chain/source hashes, original control/approval/claim/Task/Rail/reconciler and legitimate original one-step contracts.
@@ -53,6 +53,28 @@ ALG-12: original failed/unknown outcomes only, not broad anomaly automation.
 ALG-13: do not recommend unsupported dynamic/provider actions as executable.
 All wider algorithm maturity remains unchanged. ZION/Team Hub admission, E04's
 native Planning ABI, E01/E08 continuation/card contracts stay separately owned.
+
+## October30 20:38UTC — managed complete-schema lifecycle
+
+Original no-data PR Preview4844b175/projectwwnbsywgmylkhhizdwob applied80005 and
+passed the exact literal/private-ACL SQL. The separate lifecycle SQL then used
+actual schema, Auth/profile/membership triggers, authenticated/service SQL roles,
+the original control/event/record/approve/claim/Task/result/Rail/recovery calls.
+Two synthetic owner/admin businesses each received two independent original
+Tasks and one Rail per returned canonical receipt; one step's approval never
+authorized the other. Foreign actor refuses; replay/read keeps original IDs.
+The entire fixture rolled back; independent post-counts0Auth/0Task/0Process.
+
+Initial new fixture failed on a CASE expression's text versus canonical tenant_role
+enum, then on the temporal guard: transaction-start now() predates clock_timestamp
+at arming in a single rolled-back transaction. The explicit test-only later-event
+server-clock fixture models separate requests; the production guard stays exact,
+and actual customer timing is not claimed. The next fixture assertion used input
+dispatch correlation rather than the returned original CRM receipt correlation;
+corrected to the original canonical result contract, retaining exact once-only
+Rail and distinct Task/receipt checks. Original failed diagnostics are retained;
+no product source, permission, native invariant or prior assertion was weakened.
+The final unwrapped SQL completed with its explicit PASS marker after rollback.
 
 Functional: native dependency implemented/proof bounded, release/customer proof owed.
 Visual: no UI change; multi-step customer review remains a future verified slice.

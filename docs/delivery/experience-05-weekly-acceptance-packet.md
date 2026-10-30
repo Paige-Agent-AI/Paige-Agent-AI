@@ -1342,3 +1342,26 @@ complete Workflow Automation Builder. No provider, trigger, recurrence, real
 Task or approval is activated by the proof. Fullten/E5, same ZION/both chats,
 remaining weekly execution/monitoring/proactive outcomes and founder evaluation
 remain OPEN. No new framework, scheduler, registry, Task store or ledger.
+
+### October30 20:38UTC — actual complete-schema per-act lifecycle
+
+Original3137/812 managed no-data Preview4844b175/projectwwnbsywgmylkhhizdwob
+applied80005 and the exact literal/private-ACL SQL passed. New original lifecycle
+SQL then passed on the real rebuilt schema: two synthetic owner/admin businesses,
+real Auth/profile/membership triggers and native control/event/record/approval/
+claim/CRM Task/result/Rail/recovery calls. Each step's original approval is
+separate, two original Tasks and returned receipt IDs remain distinct, exactly
+one Rail per canonical receipt and no-repeat recovery verified. The full fixture
+rolled back; independent final0Auth users/0CRM Tasks/0Processes. This is genuine
+schema/native integration with explicit SQL-role/clock fixtures, NOT ordinary
+Auth/JWT, production business effects or universally accepted customer cohorts.
+
+Initial fixture enum type error, valid temporal refusal from transaction-start
+now() versus arm clock_timestamp, and wrong input-versus-returned receipt-key
+assertion were diagnosed from original schema/source. Test-only enum/clock/input
+construction corrected; exact production function/guard bodies remain unchanged.
+Final unwrapped SQL completed all assertions and explicit post-rollback PASS;
+earlier failures retained. Actual customer event timing/role/cohort/record-Rail-
+reload, native full-schema concurrency, mounted multi-step review and both-chat
+full Experience/founder acceptance remain owed. New test/evidence head needs
+renewed review/exactCI; no live automation/event/provider or customer task enabled.

@@ -22,7 +22,7 @@ INSERT INTO public.paige_audit_log(action,tenant_id,created_at) VALUES
  ('tenant:grant_co_owner','e8000000-0000-4000-8000-000000070004','2022-01-01Z');
 CREATE FUNCTION proof.owner_history_cases() RETURNS TABLE(case_name text,passed boolean)
 LANGUAGE plpgsql AS $$
-DECLARE t uuid:='e8000000-0000-4000-8000-000000070001'; stamp timestamptz;
+DECLARE t uuid:='e8000000-0000-4000-8000-000000070001'; stamp timestamptz; r text;
 BEGIN
  RETURN QUERY SELECT 'fresh workspace',public._tenant_never_owned(t);
  RETURN QUERY SELECT 'missing workspace refused',NOT public._tenant_never_owned('e8000000-0000-4000-8000-000000079999');
@@ -31,6 +31,37 @@ BEGIN
  RETURN QUERY SELECT 'pointer creation fallback precedes later audit',first_owner_seated_at='2020-01-01Z'::timestamptz FROM public.tenants WHERE id='e8000000-0000-4000-8000-000000070004';
  RETURN QUERY SELECT 'existing suspended boolean owner backfilled',first_owner_seated_at='2020-01-01Z'::timestamptz FROM public.tenants WHERE id='e8000000-0000-4000-8000-000000070006';
  RETURN QUERY SELECT 'existing suspended role-only owner backfilled',first_owner_seated_at='2020-01-01Z'::timestamptz FROM public.tenants WHERE id='e8000000-0000-4000-8000-000000070007';
+ -- Fixture-only broad table grants ensure a genuine trigger test, not an ACL-only refusal.
+ GRANT SELECT,UPDATE,INSERT ON public.tenants TO authenticated,anon,service_role;
+ FOREACH r IN ARRAY ARRAY['authenticated','anon','service_role'] LOOP
+   BEGIN
+     EXECUTE format('SET LOCAL ROLE %I',r);
+     UPDATE public.tenants SET first_owner_seated_at=now() WHERE id='e8000000-0000-4000-8000-000000070005';
+     RAISE EXCEPTION 'initial marker write was accepted' USING ERRCODE='P0001';
+   EXCEPTION
+     WHEN insufficient_privilege THEN RETURN QUERY SELECT r||' initial marker refused',true;
+     WHEN raise_exception THEN RETURN QUERY SELECT r||' initial marker refused',false;
+   END;
+   SET LOCAL ROLE postgres;
+   BEGIN
+     EXECUTE format('SET LOCAL ROLE %I',r);
+     UPDATE public.tenants SET first_owner_seated_at=first_owner_seated_at WHERE id='e8000000-0000-4000-8000-000000070005';
+     SET LOCAL ROLE postgres;
+     RETURN QUERY SELECT r||' unchanged marker allowed',true;
+   EXCEPTION WHEN insufficient_privilege THEN RETURN QUERY SELECT r||' unchanged marker allowed',false;
+   END;
+   SET LOCAL ROLE postgres;
+ END LOOP;
+ BEGIN
+   SET LOCAL ROLE authenticated;
+   INSERT INTO public.tenants(id,account_type,first_owner_seated_at)
+   VALUES ('e8000000-0000-4000-8000-000000070008','standalone',now());
+   RAISE EXCEPTION 'inserted marker was accepted' USING ERRCODE='P0001';
+ EXCEPTION
+   WHEN insufficient_privilege THEN RETURN QUERY SELECT 'inserted initial marker refused',true;
+   WHEN raise_exception THEN RETURN QUERY SELECT 'inserted initial marker refused',false;
+ END;
+ SET LOCAL ROLE postgres;
  INSERT INTO public.tenant_members(id,tenant_id,user_id,is_owner,role,status)
  VALUES ('e8000000-0000-4000-8000-000000071001',t,'e8000000-0000-4000-8000-000000070100',false,'owner','suspended');
  SELECT first_owner_seated_at INTO stamp FROM public.tenants WHERE id=t;

@@ -1613,3 +1613,25 @@ Bounded NON-AUTHOR SOURCE review of these four component paths reports no new ma
 it did not independently execute the native proof. It explicitly retains initial-marker protection,
 guarded migration/replay admission, tenant/member lock ordering, provisioning and original
 invitation/recovery consumers as required unfinished work before release. No full-I2 approval follows.
+
+Follow-on initial-marker repair (same narrow unversioned component): actual fixture table grants
+allow authenticated, anon and service_role UPDATE/INSERT so the trigger, rather than an unrelated
+table ACL, must refuse manufacturing history. Before repair **four cases FAIL /18 PASS**: all three
+roles can populate a null marker and authenticated can insert a fabricated marker. Keep that failed
+log. The new private tenant trigger guard runs **SECURITY INVOKER** to inspect the actual SQL caller;
+the original private member trigger remains DEFINER and can record real owner history as postgres.
+Unchanged marker values remain compatible. Existing non-null history remains immutable. No grants
+were added by the candidate; broad grants exist only in the rolled-back disposable fixture.
+
+Final selected result **22 cases PASS**, now **six causal mutants rejected**, replay unchanged.
+Turning the guard into DEFINER or deleting initial-write admission each revives all four failures.
+Original member/history/backfill assertions remain. Logs `exp08-first-owner-initial-writes-before.log`
+(FAIL), `exp08-first-owner-initial-writes-after.log` and
+`exp08-first-owner-initial-writes-controls.log` (PASS) are retained. This closes the bounded local
+initial direct-write gap, not full migration admission, PostgreSQL lock-order/concurrency,
+provisioning, privileged-writer field inventory or original invitation/recovery integration.
+Those remain coding dependencies before release. No production/RLS/customer proof is claimed.
+
+Follow-on NON-AUTHOR SOURCE review reports no material finding in the bounded initial-marker
+guard/test change, with no independent proof execution. Privileged-writer inventory, lock ordering,
+provisioning, consumer integration and guarded versioned migration admission remain unfinished.

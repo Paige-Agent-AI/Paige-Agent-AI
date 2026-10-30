@@ -378,12 +378,14 @@ try {
     const historyRun=patch=>sql(`BEGIN;\n${historyFixture}\n${patch}\nSELECT row_to_json(t) FROM proof.owner_history_cases() t;\nROLLBACK;`).split('\n').filter(Boolean).map(JSON.parse);
     const rows=historyRun(historyPatch);
     console.log(JSON.stringify({phase:'first-owner-history-component',cases:rows}));
-    assert.equal(rows.length,15);assert.ok(rows.every(r=>r.passed),JSON.stringify(rows));
+    assert.equal(rows.length,22);assert.ok(rows.every(r=>r.passed),JSON.stringify(rows));
     for(const [name,from,to] of [
       ['owner role evidence removed',"m.is_owner OR m.role='owner'::public.tenant_role",'m.is_owner'],
       ['injected parent counted as child owner',"'tenant:subaccount_owner_established','tenant:grant_co_owner'","'tenant:deleted_injected_owner','tenant:subaccount_owner_established','tenant:grant_co_owner'"],
       ['first history rewrite permitted','IF OLD.first_owner_seated_at IS NOT NULL','IF false AND OLD.first_owner_seated_at IS NOT NULL'],
       ['owner tenant move forgotten','UPDATE OF is_owner,role,tenant_id','UPDATE OF is_owner,role'],
+      ['guard hides caller as definer','RETURNS trigger LANGUAGE plpgsql SECURITY INVOKER','RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER'],
+      ['initial history write admission removed',"AND current_user<>'postgres'",'AND false'],
     ]){
       const mutated=historyPatch.replaceAll(from,to);assert.notEqual(mutated,historyPatch,name);
       const failed=historyRun(mutated).filter(r=>!r.passed).map(r=>r.case_name);

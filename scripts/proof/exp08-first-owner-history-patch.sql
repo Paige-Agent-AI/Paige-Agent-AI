@@ -33,12 +33,7 @@ REVOKE ALL ON FUNCTION public._tenant_never_owned(uuid) FROM PUBLIC,anon,authent
 CREATE OR REPLACE FUNCTION public._tenant_first_owner_history()
 RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path TO '' AS $$
 BEGIN
-  IF TG_TABLE_NAME='tenants' THEN
-    IF OLD.first_owner_seated_at IS NOT NULL
-       AND NEW.first_owner_seated_at IS DISTINCT FROM OLD.first_owner_seated_at THEN
-      RAISE EXCEPTION 'The first owner history cannot be changed.' USING ERRCODE='42501';
-    END IF;
-  ELSIF NEW.is_owner OR NEW.role='owner'::public.tenant_role THEN
+  IF NEW.is_owner OR NEW.role='owner'::public.tenant_role THEN
     UPDATE public.tenants SET first_owner_seated_at=now()
       WHERE id=NEW.tenant_id AND first_owner_seated_at IS NULL;
   END IF;
@@ -46,9 +41,29 @@ BEGIN
 END
 $$;
 REVOKE ALL ON FUNCTION public._tenant_first_owner_history() FROM PUBLIC,anon,authenticated,service_role;
+-- INVOKER is essential here: a definer guard would turn every direct table caller into postgres.
+-- Original private member trigger/migration writes run as postgres; table access alone must not
+-- manufacture history. Existing non-null history is immutable even to those original writers.
+CREATE OR REPLACE FUNCTION public._tenant_first_owner_history_guard()
+RETURNS trigger LANGUAGE plpgsql SECURITY INVOKER SET search_path TO '' AS $$
+BEGIN
+  IF TG_OP='UPDATE' THEN
+    IF OLD.first_owner_seated_at IS NOT NULL
+       AND NEW.first_owner_seated_at IS DISTINCT FROM OLD.first_owner_seated_at THEN
+      RAISE EXCEPTION 'The first owner history cannot be changed.' USING ERRCODE='42501';
+    END IF;
+    IF NEW.first_owner_seated_at IS NOT DISTINCT FROM OLD.first_owner_seated_at THEN RETURN NEW; END IF;
+  END IF;
+  IF NEW.first_owner_seated_at IS NOT NULL AND current_user<>'postgres' THEN
+    RAISE EXCEPTION 'Owner history is recorded only by the original ownership writer.' USING ERRCODE='42501';
+  END IF;
+  RETURN NEW;
+END
+$$;
+REVOKE ALL ON FUNCTION public._tenant_first_owner_history_guard() FROM PUBLIC,anon,authenticated,service_role;
 DROP TRIGGER IF EXISTS trg_tenant_first_owner_history ON public.tenant_members;
 CREATE TRIGGER trg_tenant_first_owner_history AFTER INSERT OR UPDATE OF is_owner,role,tenant_id
   ON public.tenant_members FOR EACH ROW EXECUTE FUNCTION public._tenant_first_owner_history();
 DROP TRIGGER IF EXISTS trg_tenant_first_owner_history_immutable ON public.tenants;
-CREATE TRIGGER trg_tenant_first_owner_history_immutable BEFORE UPDATE OF first_owner_seated_at
-  ON public.tenants FOR EACH ROW EXECUTE FUNCTION public._tenant_first_owner_history();
+CREATE TRIGGER trg_tenant_first_owner_history_immutable BEFORE INSERT OR UPDATE OF first_owner_seated_at
+  ON public.tenants FOR EACH ROW EXECUTE FUNCTION public._tenant_first_owner_history_guard();

@@ -1,0 +1,6 @@
+import path from 'node:path';
+import {readFileSync,writeFileSync} from 'node:fs';
+import {createHash} from 'node:crypto';
+import react from '@vitejs/plugin-react-swc';
+const root=import.meta.dirname,repo=path.resolve(root,'../..');
+export default {root,envDir:root,publicDir:path.join(repo,'public'),cacheDir:path.join(root,'cache'),resolve:{alias:{'@':path.join(repo,'src')}},css:{postcss:repo},plugins:[react(),{name:'original-approval-manifest',generateBundle(){const inputs=[...this.getModuleIds()].filter(p=>p.replaceAll('\\','/').startsWith(repo.replaceAll('\\','/')+'/src/')&&!p.includes('?')).map(p=>({path:path.relative(repo,p).replaceAll('\\','/'),sha256:createHash('sha256').update(readFileSync(p)).digest('hex')}));writeFileSync(path.join(root,'source-manifest.json'),JSON.stringify({boundary:'UNCHANGED ORIGINAL PaigeConfirmCard; exact asserted neutral summary ports; not stored approvals/Auth/customer/whole-shell proof',inputs},null,2));}}],build:{outDir:path.join(root,'dist'),emptyOutDir:false}};

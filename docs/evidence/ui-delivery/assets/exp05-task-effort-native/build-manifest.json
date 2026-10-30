@@ -1,0 +1,135 @@
+{
+  "sourceCommit": "b2d6cd9fb1b8821d79c14661081d3db9f7ce0ed0",
+  "boundary": "UNCHANGED ORIGINAL PaigeConfirmCard; exact asserted neutral summary ports; not stored approvals/Auth/customer/whole-shell proof",
+  "renderedProductInputs": [
+    {
+      "path": "src/components/chat/PaigeConfirmCard.tsx",
+      "sha256": "7dac99fbfd31e41a791204cfff88a12d1af93876f8cdcc496423a20e60b9f952"
+    },
+    {
+      "path": "src/index.css",
+      "sha256": "85a3adb5668238e91cdb6c8189488db1fd24ce6698f7456ae23a3de6aa572482"
+    },
+    {
+      "path": "src/components/chat/confirmPreview.ts",
+      "sha256": "194f9441087a3a04298797d38b063db39beca091fbc51261e67113931e0dc7ce"
+    },
+    {
+      "path": "src/components/ui/button.tsx",
+      "sha256": "ec4ff2011e99ab79bb56528befb6904cb9ea4c58eefcc4e325b5b18e2c832103"
+    },
+    {
+      "path": "src/lib/utils.ts",
+      "sha256": "d1f1e0d62cb8d8d1e04c26e14de842d8a151f75812d81b046c65b5d1fe8e4b27"
+    }
+  ],
+  "nativeAndActualHandlerInputs": [
+    {
+      "path": "supabase/functions/crm-command/index.ts",
+      "sha256": "a19c720b6f6cdb4d0dc16e06eca22c6d73c2b62ab506732d68e0b23e696d4c53"
+    },
+    {
+      "path": "scripts/crm-approval-summary-check.mjs",
+      "sha256": "5f13292230d83fc42f4c99596ae07ac173bb8ee31fe058eb0930b2b96daf649e"
+    },
+    {
+      "path": "supabase/migrations/20271126010012_task_effort_scalar.sql",
+      "sha256": "4f3feb85f5de979862bfa072edab205f41e90cea73a00d30a9c73db21a88cb35"
+    },
+    {
+      "path": "scripts/ci/crm-patch-field-gen.mjs",
+      "sha256": "b6ce50053fb2f1989ab686d523a0df66f736fc24a9609de57813d8c45e1e1695"
+    },
+    {
+      "path": "scripts/ci/crm-patch-field-gen.selftest.mjs",
+      "sha256": "bd70751c3425b592414532434764b3bd8a9a8391890c8cd4d1af909918054122"
+    },
+    {
+      "path": "supabase/functions/_shared/crm-command/patch-fields.generated.ts",
+      "sha256": "2fc9d90bea55ad925532dea57dc24cf9f952cedbdb7cc2092c6282b48321422f"
+    },
+    {
+      "path": "supabase/tests/governed_crm_commands.sql",
+      "sha256": "bcab43d226c5c83bfe6a60e2b9a55ec180488ea455c6380d16648e1d4eb280a5"
+    },
+    {
+      "path": "supabase/tests/crm_patch_fields_match_database.sql",
+      "sha256": "1f0786e6e2748d620394f2a93e50707afaf7da075fe4b787aeeef3c2de618e88"
+    }
+  ],
+  "fixtureSources": [
+    {
+      "file": "fixtures/main.tsx.txt",
+      "sha256": "99ec6030e239235be9848f2119509a9f24d3ce8550fc27822ea3b96a2f36d1d5"
+    },
+    {
+      "file": "fixtures/guard.ts.txt",
+      "sha256": "0e5911af051107486b4d63b0ac561bd298b19ee3560e7abd12dba1dc2eb1a34d"
+    },
+    {
+      "file": "fixtures/index.html.txt",
+      "sha256": "64c4ee8389ae2937754db6038e52fa4cd9878674e350f340bdb682d6a80afdd3"
+    },
+    {
+      "file": "fixtures/vite.config.ts.txt",
+      "sha256": "9507b88d8bae59ac97bb65776af950f54edef8aba3b336483d9f70a0f4b86684"
+    },
+    {
+      "file": "fixtures/serve.mjs.txt",
+      "sha256": "a9ade5f778b293ded9f64aea3227d12aa87f1e2286741777cc57aa37659d8691"
+    }
+  ],
+  "compiledAssets": [
+    {
+      "file": "index-C5JUaNSH.js",
+      "sha256": "e0bbf7d0aae7b0b96306cf4f9e4b1fb45763590ab1290a8082775d3d2a27375c",
+      "bytes": 186834
+    },
+    {
+      "file": "index-DRPlsAMl.css",
+      "sha256": "c27e9e473bb36e9c8307a9578c36b8bda69b6f3fe736ddde7f5884576d4e2632",
+      "bytes": 265763
+    }
+  ],
+  "frames": [
+    {
+      "file": "mineral-1366.jpg",
+      "sha256": "15e141cc2a181514d3872089f2a271f5d0b5ae899655502a448e5503de358475",
+      "height": 900,
+      "width": 1366
+    },
+    {
+      "file": "mineral-320.jpg",
+      "sha256": "1af60825eebce85304f260f2fb9ef223f9577a0fbdac46c54ba85e024e8dc215",
+      "height": 900,
+      "width": 320
+    },
+    {
+      "file": "obsidian-320.jpg",
+      "sha256": "8d07dd263a8e6255544469aeb4774a014c37310625da973def6c4337f10b330c",
+      "height": 900,
+      "width": 320
+    },
+    {
+      "file": "mineral-320-focus.jpg",
+      "sha256": "63094391b939a0567455c4e9b2e785f424026b923b72edcc21ab8f9863aa0e3f",
+      "height": 900,
+      "width": 320
+    }
+  ],
+  "invalidExcluded": [
+    "initial root403/server-error page",
+    "obsidian-1366 resize-time blank capture"
+  ],
+  "proofOwed": [
+    "full native schema/225 pgTAP",
+    "native Auth/RLS/Trust/Rail",
+    "real stored approval",
+    "full SOLO shell/both chats",
+    "native200percent/assistive technology",
+    "authenticated persistence/reload/role/cohort",
+    "exact-head CI/Preview/review/merge/deployment",
+    "founder acceptance"
+  ],
+  "noBrowserApprovalOrDenial": true
+}

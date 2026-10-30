@@ -887,7 +887,7 @@ openaiPlan = { status: 200 }; anthropicPlan = { status: 200 };
     status: 'failed', error: { code, message: 'Synthetic provider failure.' },
   } });
   for (const [code, expected] of [
-    ['insufficient_quota', 'billing'], ['rate_limit_exceeded', 'rate_limit'],
+    ['insufficient_quota', 'billing'], ['credit_balance_exhausted', 'billing'], ['rate_limit_exceeded', 'rate_limit'],
     ['model_not_found', 'model_unavailable'], ['invalid_api_key', 'auth_config'],
   ]) {
     let gates = 0, opens = 0;
@@ -914,7 +914,7 @@ openaiPlan = { status: 200 }; anthropicPlan = { status: 200 };
     ok(r.s.served?.provider === 'openai' && r.calls.length === 0 && r.runnable.length === 0,
       `J2 ${semantic.type} prevents replay/fallback even after a provider failure`);
   }
-  for (const terminal of [failed('unrecognised_code'),
+  for (const terminal of [failed('unrecognised_code'), failed('credit_balance_exhausted_extra'),
     { type: 'response.failed', response: { status: 'completed', error: { code: 'insufficient_quota' } } },
   ]) {
     const r = await run('frontier', { ...ON, openaiFetch: async () => new Response(sse([created, terminal])) });
@@ -927,6 +927,27 @@ openaiPlan = { status: 200 }; anthropicPlan = { status: 200 };
   });
   ok(!refused.s.ok && gates === 2 && refused.calls.length === 0
     && refused.s.attempts.at(-1)?.failure === 'caller_refused', 'J4 changed authority after stream failure prevents fallback');
+
+  let creditGates = 0;
+  const refusedCredits = await run('frontier', { ...ON, beforeProviderAttempt: async () => ++creditGates === 1,
+    openaiFetch: async () => new Response(sse([created, failed('credit_balance_exhausted')])),
+  });
+  ok(!refusedCredits.s.ok && creditGates === 2 && refusedCredits.calls.length === 0
+    && refusedCredits.s.attempts.at(-1)?.failure === 'caller_refused',
+    'J4 credit exhaustion cannot bypass current authority on the existing fallback');
+  for (const semantic of [
+    { type: 'response.output_text.delta', delta: 'Already received.' },
+    { type: 'response.output_item.added', item: { type: 'function_call', id: 'fc-credit', call_id: 'call-credit', name: 'crm_contact_lookup' } },
+    { type: 'response.refusal.delta', delta: 'Refused.' },
+    { type: 'response.output_item.done', item: { type: 'reasoning', id: 'rs-credit', encrypted_content: 'synthetic-opaque', summary: [] } },
+    { type: 'response.future_unknown_event' },
+  ]) {
+    const r = await run('frontier', { ...ON,
+      openaiFetch: async () => new Response(sse([created, semantic, failed('credit_balance_exhausted')])),
+    });
+    ok(r.s.served?.provider === 'openai' && r.calls.length === 0 && r.runnable.length === 0,
+      `J4 credit exhaustion after ${semantic.type} cannot replay received or uncertain work`);
+  }
   const cancelled = new AbortController(); cancelled.abort(); let opens = 0;
   const aborted = await fabric.fabricChatStream('frontier', BODY, { ...ON, signal: cancelled.signal,
     openaiFetch: async () => { opens++; return new Response(sse([created, failed('insufficient_quota')])); },

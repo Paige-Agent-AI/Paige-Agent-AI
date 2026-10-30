@@ -53,6 +53,20 @@ it("an ignored business hint withholds the foreign page and cannot enable sendin
  expect(state.messages).toEqual([]);expect(state.tenantId).toBeNull();expect(state.error).toContain("couldn't load");
  await act(async()=>{expect(await state.send("Do not send","message")).toBe(false);});expect(f.native).toHaveLength(1);
 });
+it.each(["missing messages","partial page","invalid paging"])("selected-business %s cannot become an empty success or enable a send",async(kind)=>{
+ const value=page(businessB);
+ f.reply.mockResolvedValue({data:{...value.data,
+  ...(kind==="missing messages"?{messages:null}:kind==="partial page"?{messages:[message(businessB),null]}:{has_more:"false"}),
+ },error:null});
+ await render(businessB);
+ expect(state.messages).toEqual([]);expect(state.tenantId).toBeNull();expect(state.unavailable).toBe(false);
+ expect(state.error).toContain("couldn't load");
+ await act(async()=>{expect(await state.send("Unverified history must not dispatch","help")).toBe(false);});
+ expect(f.native).toHaveLength(1);expect(f.native[0].args.p_tenant_id).toBe(businessB);
+ f.reply.mockResolvedValue(value);await act(async()=>{await state.refresh();await flush();});
+ expect(state.error).toBeNull();expect(state.messages.map(m=>m.body)).toEqual([`Saved ${businessB}`]);
+ expect(f.native.every(call=>call.name==="client_portal_conversation")).toBe(true);
+});
 it("a late A read cannot appear in B, including the first B render before effect cleanup",async()=>{
  const old=pending<ReturnType<typeof page>>();f.reply.mockImplementation((name:string,args:Record<string,unknown>)=>args.p_tenant_id===businessA?old.promise:page(businessB));
  await render(businessA);await render(businessB);old.resolve(page(businessA));await act(flush);

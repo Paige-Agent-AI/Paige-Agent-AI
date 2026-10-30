@@ -1,0 +1,251 @@
+{
+  "proofClass": "SYNTHETIC_CURRENT_SOLO_FRAME",
+  "records": [
+    {
+      "file": "settled-mineral-1536-closed-review.jpg",
+      "button": {
+        "bottom": 436.0375061035156,
+        "height": 36,
+        "left": 314,
+        "right": 478.90000915527344,
+        "top": 400.0375061035156,
+        "width": 164.90000915527344,
+        "x": 314,
+        "y": 400.0375061035156
+      },
+      "documentOverflow": false,
+      "focus": "Enable future contacts",
+      "height": 770,
+      "screenHost": {
+        "height": 704,
+        "scroll": 1400
+      },
+      "stepCount": 2,
+      "width": 1536
+    },
+    {
+      "file": "settled-mineral-1536-open-review.jpg",
+      "button": {
+        "bottom": 436.4875183105469,
+        "height": 36,
+        "left": 278.8000183105469,
+        "right": 443.7000274658203,
+        "top": 400.4875183105469,
+        "width": 164.90000915527344,
+        "x": 278.8000183105469,
+        "y": 400.4875183105469
+      },
+      "documentOverflow": false,
+      "focus": "Enable future contacts",
+      "height": 770,
+      "screenHost": {
+        "height": 704,
+        "scroll": 1420
+      },
+      "stepCount": 2,
+      "width": 1536
+    },
+    {
+      "file": "settled-mineral-1366-closed-review.jpg",
+      "button": {
+        "bottom": 435.2375183105469,
+        "height": 36,
+        "left": 157.1999969482422,
+        "right": 322.1000061035156,
+        "top": 399.2375183105469,
+        "width": 164.90000915527344,
+        "x": 157.1999969482422,
+        "y": 399.2375183105469
+      },
+      "documentOverflow": false,
+      "focus": "Enable future contacts",
+      "height": 768,
+      "screenHost": {
+        "height": 702,
+        "scroll": 1400
+      },
+      "stepCount": 2,
+      "width": 1366
+    },
+    {
+      "file": "settled-mineral-1366-open-review.jpg",
+      "button": {
+        "bottom": 434.8875122070313,
+        "height": 36,
+        "left": 134.8000030517578,
+        "right": 299.70001220703125,
+        "top": 398.8875122070313,
+        "width": 164.90000915527344,
+        "x": 134.8000030517578,
+        "y": 398.8875122070313
+      },
+      "documentOverflow": false,
+      "focus": "Enable future contacts",
+      "height": 768,
+      "screenHost": {
+        "height": 702,
+        "scroll": 1420
+      },
+      "stepCount": 2,
+      "width": 1366
+    },
+    {
+      "file": "settled-mineral-1024-closed-review.jpg",
+      "button": {
+        "bottom": 434.6125183105469,
+        "height": 36,
+        "left": 127.32500457763672,
+        "right": 292.22501373291016,
+        "top": 398.6125183105469,
+        "width": 164.90000915527344,
+        "x": 127.32500457763672,
+        "y": 398.6125183105469
+      },
+      "documentOverflow": false,
+      "focus": "Enable future contacts",
+      "height": 768,
+      "screenHost": {
+        "height": 702,
+        "scroll": 1405
+      },
+      "stepCount": 2,
+      "width": 1024
+    },
+    {
+      "file": "settled-mineral-1024-open-review.jpg",
+      "button": {
+        "bottom": 434.6125183105469,
+        "height": 36,
+        "left": 127.32500457763672,
+        "right": 292.22501373291016,
+        "top": 398.6125183105469,
+        "width": 164.90000915527344,
+        "x": 127.32500457763672,
+        "y": 398.6125183105469
+      },
+      "documentOverflow": false,
+      "focus": "Enable future contacts",
+      "height": 768,
+      "screenHost": {
+        "height": 702,
+        "scroll": 1405
+      },
+      "stepCount": 2,
+      "width": 1024
+    },
+    {
+      "file": "settled-mineral-900-closed-review.jpg",
+      "button": {
+        "bottom": 551.0875244140625,
+        "height": 36,
+        "left": 124.5999984741211,
+        "right": 289.50000762939453,
+        "top": 515.0875244140625,
+        "width": 164.90000915527344,
+        "x": 124.5999984741211,
+        "y": 515.0875244140625
+      },
+      "documentOverflow": false,
+      "focus": "Enable future contacts",
+      "height": 1000,
+      "screenHost": {
+        "height": 934,
+        "scroll": 1400
+      },
+      "stepCount": 2,
+      "width": 900
+    },
+    {
+      "file": "settled-mineral-900-open-review.jpg",
+      "button": {
+        "bottom": 551.0875244140625,
+        "height": 36,
+        "left": 124.5999984741211,
+        "right": 289.50000762939453,
+        "top": 515.0875244140625,
+        "width": 164.90000915527344,
+        "x": 124.5999984741211,
+        "y": 515.0875244140625
+      },
+      "documentOverflow": false,
+      "focus": "Enable future contacts",
+      "height": 1000,
+      "screenHost": {
+        "height": 934,
+        "scroll": 1400
+      },
+      "stepCount": 2,
+      "width": 900
+    }
+  ],
+  "captures": [
+    {
+      "file": "settled-mineral-1536-closed-review.jpg",
+      "sha256": "8a7cf7bb4048c4ec36bb3b05451521960a72dc586d40cce623ae391d545fc2b2",
+      "width": 1535,
+      "height": 770
+    },
+    {
+      "file": "settled-mineral-1536-open-review.jpg",
+      "sha256": "ad1095b6f7b024a14fc7bab96845063d02e991e6d5ae86f3717d3a7a794a84bd",
+      "width": 1535,
+      "height": 770
+    },
+    {
+      "file": "settled-mineral-1366-closed-review.jpg",
+      "sha256": "d5769e9e3ffaccb943369bfda124bfcc570cebf78aeb9dd334b41a8b7c8bb15f",
+      "width": 1366,
+      "height": 768
+    },
+    {
+      "file": "settled-mineral-1366-open-review.jpg",
+      "sha256": "fdeda044e065a01082cff254c51d646cdc4d47f6d851246017f372c779d41b9f",
+      "width": 1366,
+      "height": 768
+    },
+    {
+      "file": "settled-mineral-1024-closed-review.jpg",
+      "sha256": "1a6513a363484ed95a5a9db24e0a4a42da4a9718aa36531133209543974ffbae",
+      "width": 1024,
+      "height": 768
+    },
+    {
+      "file": "settled-mineral-1024-open-review.jpg",
+      "sha256": "cd5d25f30ae0cd87171e63ad1936ef62e3840349149a8526c6814dee91adb817",
+      "width": 1024,
+      "height": 768
+    },
+    {
+      "file": "settled-mineral-900-closed-review.jpg",
+      "sha256": "315934671118501030a1a69038a1995e556ab3edfd92d23ecfbf09ffe22d03fe",
+      "width": 900,
+      "height": 1000
+    },
+    {
+      "file": "settled-mineral-900-open-review.jpg",
+      "sha256": "c2526b3271ba0369b19d7c810ed8737e67e7f50d5534fcb881384171ed736e10",
+      "width": 900,
+      "height": 1000
+    },
+    {
+      "file": "obsidian-1366-closed-review.jpg",
+      "sha256": "d46a6a402c332f969c58751a0a2182a9e4b4369b37579c7105151fef163fbf93",
+      "width": 1366,
+      "height": 768
+    },
+    {
+      "file": "obsidian-320-twenty-review-settled.jpg",
+      "sha256": "7559d8779329618b605a1a48c2e3dc36485f90f02804e958b953c1c43a70174a",
+      "width": 320,
+      "height": 768
+    },
+    {
+      "file": "obsidian-320-twenty-unknown-settled.jpg",
+      "sha256": "151f98b7c750206a30435001fe9b80a8a21ea38e4e605afd7dcc751e131adbba",
+      "width": 320,
+      "height": 768
+    }
+  ],
+  "captureProtocol": "Separate-call settled screenshots inspected after preceding navigation/viewport/focus observation. Earlier immediate/fast-loop shots are excluded.",
+  "boundary": "Serialized React/CSS geometry, not ordinary authentication or modal focus-trap behavior. Original narrow PAIGE overlay covers background review until closed. Browser client viewport1536x770 is independently recorded; the bridge JPEG for those two views is1535x770, preserved without resizing or editing."
+}

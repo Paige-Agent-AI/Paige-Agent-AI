@@ -15,7 +15,7 @@ import { classifyAction, mutatingTools } from "../action-risk.ts";
 import { chatReadToolDefs } from "./a2b-test-fakes.ts";
 
 const CHAT = readFileSync(fileURLToPath(new URL("../../paige-ai-chat/index.ts", import.meta.url)), "utf8");
-const MIGRATION = readFileSync(fileURLToPath(new URL("../../../migrations/20271121140008_exp08_team_hub_a2b_cards.sql", import.meta.url)), "utf8");
+const MIGRATION = readFileSync(fileURLToPath(new URL("../../../migrations/20271126020008_exp08_team_hub_a2b_cards.sql", import.meta.url)), "utf8");
 
 const DEFS = chatReadToolDefs(CHAT);
 
@@ -28,7 +28,7 @@ describe("the A2b card set is hand-listed, and every card is a high write", () =
     for (const t of A2B_CARD_TOOLS) { assert.equal(classifyAction(t), "high", t); assert.ok(mutatingTools().has(t), t); }
     for (const t of A2B_READ_TOOLS) assert.equal(mutatingTools().has(t), false, t);
   });
-  it("the kinds are exactly the ones the link table's CHECK admits (20271121140008)", () => {
+  it("the kinds are exactly the ones the link table's CHECK admits (20271126020008)", () => {
     for (const [tool, kind] of Object.entries(CARD_KIND)) assert.ok(MIGRATION.includes(`('${tool}','${kind}')`), `${tool} → ${kind}`);
   });
   it("PAIGE's DM scope is the same list the post door inlines (D13), so the two cannot disagree", () => {

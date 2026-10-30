@@ -92,6 +92,25 @@ The agents' replies above the cards and the Suggest sentence are hand-written st
 
 ## Evidence index
 
+### Hosted failure disposition and sequential carrier — October 30, 2026
+
+Original #3041 is preserved at successor integration head
+`6a629d8f1435274e74075c755ca99fa1c8d0fcfc`, including its original Preview and history.
+Fresh check `123849303546` failed explicitly: "Remote migration versions not found in local
+migrations directory." Readback confirms the old Preview still has applied `20271121140008`.
+No reset, ledger edit, applied-file rewrite or deletion was used. The sequential successor
+branch carries the same original ancestry and reviewed forward migration into a fresh ordinary
+PR Preview based on current main. This is a replacement release carrier for one implementation,
+not a parallel feature build. Original #3041 failure evidence remains valid and unwaived.
+
+Fresh comms boundary job `123848855368` passed 1,051 tests and failed loading one test file:
+`card-tools.test.ts` still read the old migration path (ENOENT at line 18). That loader now reads
+the actual forward migration `20271126020008`, retaining all assertions; the focused suite passes
+**16/16**. Latest composed UI/document cases pass **157/157** and agent-turn **120/120**.
+The normal TypeScript ratchet completed baseline 10/current 6/no new errors, consistent with
+the direct compiler diagnostic comparison. Required fresh carrier checks/Preview, final review,
+release/readback and authenticated proof remain owed. Full assignment remains **STILL CODING**.
+
 ### Successor integration checkpoint — October 30, 2026
 
 **STILL CODING.** Local integration commits `3d2c30918` and `aa58f08fc` preserve original

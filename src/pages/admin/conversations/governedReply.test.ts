@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   buildGovernedReplyRequest, checkGovernedSendAt, classifyDoorAnswer, floorSendAtToMinute, governedReplyFiles,
   governedReplyScope, governedReplyText, readDoorAnswer, signaturePlainText, type GovernedReplyDraft,
+  createGovernedOperationIds,
 } from "./governedReply";
 import { scheduledForLabel } from "./governedSend";
 
@@ -10,6 +11,7 @@ const CONTACT = "0c1d2e3f-4a5b-4c6d-8e7f-a0b1c2d3e4f5";
 const CONN = "1d2e3f4a-5b6c-4d7e-8f90-a1b2c3d4e5f6";
 const OP = "5a6b7c8d-9e0f-4a1b-8c2d-3e4f5a6b7c8d";
 const NOW = Date.parse("2026-10-27T15:00:00.000Z");
+const SOURCE={message_id:"8a1b2c3d-4e5f-4a60-8b7c-9d0e1f2a3b4c",updated_at:"2026-10-30T16:00:00.123456Z"};
 const draft = (over: Partial<GovernedReplyDraft> = {}): GovernedReplyDraft => ({ tenantId: TENANT, contactId: CONTACT, connectorId: CONN, subject: "Thursday", text: "Hello.", paths: [], ...over });
 const request = (over: Partial<GovernedReplyDraft> = {}) => { const r = buildGovernedReplyRequest(draft(over), OP); if (!r.ok) throw new Error("bad"); return r.request; };
 const ctx = { name: "Maya Ortiz", from: "jordan@northlight.example" };
@@ -20,6 +22,37 @@ const ready = (over: Record<string, unknown> = {}, preview: Record<string, unkno
 });
 
 describe("the words the governed email carries", () => {
+  it("saved drafts carry the original raw source and an explicit file selection, never browser HTML",()=>{
+    const result=buildGovernedReplyRequest(draft({source:SOURCE}),OP);
+    expect(result.ok&&result.request).toMatchObject({draft_source:SOURCE,attachments:[]});
+    expect(result.ok&&result.request).not.toHaveProperty("draft_body_html");
+  });
+  it("a raw source version or original message change changes the review scope",()=>{
+    const base=governedReplyScope(draft({source:SOURCE}));
+    expect(governedReplyScope(draft({source:{...SOURCE,updated_at:SOURCE.updated_at.replace("123456","123457")}}))).not.toBe(base);
+    expect(governedReplyScope(draft({source:{...SOURCE,message_id:OP}}))).not.toBe(base);
+  });
+  it("a saved draft without a valid raw source cannot fall back to a new email",()=>{
+    for(const source of [null,{...SOURCE,updated_at:"2026-10-30"},{...SOURCE,message_id:"bad"}]){
+      expect(buildGovernedReplyRequest(draft({source}),OP)).toEqual({ok:false,problem:"source"});
+    }
+  });
+  it("another operation or message receipt never clears the original saved draft",()=>{
+    const built=buildGovernedReplyRequest(draft({source:SOURCE}),OP);if(!built.ok)throw Error("fixture");
+    for(const [operation_id,message_id] of [[OP,CONTACT],[CONTACT,SOURCE.message_id]]){
+      const view=classifyDoorAnswer({transport:false,status:200,body:{ok:true,outcome:"provider_accepted",operation_id,message_id}},"confirm",built.request,ctx,NOW);
+      expect(view).toMatchObject({kind:"cant",keepId:true});
+    }
+  });
+  it("an uncertain original source keeps the same operation even when its words change",()=>{
+    let next=0;const ids=createGovernedOperationIds(()=>`operation-${++next}`);
+    const original=ids.idFor("original words","same-original-source");
+    ids.markUnknown("original words",original,"same-original-source");
+    expect(ids.idFor("edited words","same-original-source")).toBe(original);
+    expect(ids.idFor("original words","different-original-source")).not.toBe(original);
+    ids.clearPending();expect(ids.idFor("more edits","same-original-source")).toBe(original);
+    ids.settle("more edits","same-original-source");expect(ids.idFor("original words","same-original-source")).not.toBe(original);
+  });
   it("a signature is carried as plain text under a -- line; no signature, no line", () => {
     expect(signaturePlainText("<p>Jordan Lee</p><p>Northlight &amp; Co</p>")).toBe("Jordan Lee\nNorthlight & Co");
     expect(governedReplyText("  Hi Maya.  ", "<p>Jordan</p>")).toBe("Hi Maya.\n\n--\nJordan");

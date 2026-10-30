@@ -22,6 +22,7 @@ const CONN = "1d2e3f4a-5b6c-4d7e-8f90-a1b2c3d4e5f6";
 const CONN_2 = "2e3f4a5b-6c7d-4e8f-9a01-b2c3d4e5f6a7";
 const SMS_CONN = "3f4a5b6c-7d8e-4f90-8a12-c3d4e5f6a7b8";
 const FP = "0123456789abcdef";
+const DRAFT_ID="8a1b2c3d-4e5f-4a60-8b7c-9d0e1f2a3b4c",DRAFT_VERSION="2026-10-30T16:00:00.123456Z";
 
 const db = vi.hoisted(() => ({
   messages: [] as Array<Record<string, unknown>>,
@@ -96,7 +97,7 @@ vi.mock("@/integrations/supabase/client", () => {
           kind: "email", to_name: "Maya Ortiz", to_address: "maya.server@ortizlandscaping.example", from_address: "jordan@northlightadvisory.example",
           subject: command.subject, body_text: command.body,
           ...(body.send_at ? { send_at: body.send_at } : {}),
-          ...(Array.isArray(body.attachments) ? { attachments: (body.attachments as Array<{ path: string }>).map((a, i) => ({ name: a.path.slice(a.path.indexOf("/") + 38), size: [48_000, 2_400_000][i] ?? 900, mime: "application/pdf" })) } : {}),
+          ...(Array.isArray(body.attachments) && body.attachments.length ? { attachments: (body.attachments as Array<{ path: string }>).map((a, i) => ({ name: a.path.slice(a.path.indexOf("/") + 38), size: [48_000, 2_400_000][i] ?? 900, mime: "application/pdf" })) } : {}),
         },
       },
       error: null,
@@ -807,16 +808,62 @@ describe("everything else keeps its own path", () => {
     expect(db.sendBodies[0]).toMatchObject({ channel: "sms", connector_id: SMS_CONN });
     expect(vi.mocked(toast).mock.calls.some(([, o]) => (o as { action?: { label?: string } } | undefined)?.action?.label === "Undo")).toBe(true);
   });
-  it("Approve & send on a Paige draft, and Send edited, stay on send-message", async () => {
-    db.messages = [message(), message({ id: "d-1", direction: "outbound", status: "draft", subject: "Re: Tuesday", body_text: "Here is the summary." })];
+  it("Review email checks the original saved draft, and only Send now confirms that same source", async () => {
+    db.messages = [message(), message({ id: DRAFT_ID, updated_at:DRAFT_VERSION,direction: "outbound", status: "draft", subject: "Re: Tuesday", body_text: "Here is the summary." })];
     const host = await mount("/admin/clients/conversations");
-    await click(buttonByText(host, "Approve & send"));
-    expect(db.invokes).toEqual(["send-message"]);
-    expect(db.sendBodies[0]).toMatchObject({ message_id: "d-1" });
+    await click(buttonByText(host, "Review email"));
+    expect(db.invokes).toEqual(["comms-email-command"]);expect(db.sendBodies).toEqual([]);
+    expect(db.doorBodies[0]).toMatchObject({draft_source:{message_id:DRAFT_ID,updated_at:DRAFT_VERSION},attachments:[],command:{body:"Here is the summary."}});
+    expect(strip(host)).not.toBeNull();expect(buttonByText(host,"Send now")).toBeTruthy();
+    db.door.push(accepted({message_id:DRAFT_ID}));await click(buttonByText(host,"Send now"));
+    expect(db.doorBodies[1]).toMatchObject({draft_source:db.doorBodies[0].draft_source,operation_id:db.doorBodies[0].operation_id,approved_fingerprint:FP});
+    expect(db.sendBodies).toEqual([]);
+  });
+  it("Send edited uses the original saved source through the same inline check", async () => {
+    db.messages = [message(), message({ id:DRAFT_ID,updated_at:DRAFT_VERSION,direction:"outbound",status:"draft",subject:"Re: Tuesday",body_text:"Here is the summary." })];
+    const host=await mount("/admin/clients/conversations");
     await click(buttonByText(host, "Edit"));
+    await type(textarea(host),"An edited summary.");
     await click(buttonByText(host, "Send edited"));
-    expect(db.invokes).toEqual(["send-message", "send-message"]);
-    expect(db.sendBodies[1]).toMatchObject({ message_id: "d-1", channel: "email" });
-    expect(db.doorBodies).toEqual([]);
+    expect(db.invokes).toEqual(["comms-email-command"]);expect(db.sendBodies).toEqual([]);
+    expect(db.doorBodies[0]).toMatchObject({draft_source:{message_id:DRAFT_ID,updated_at:DRAFT_VERSION},command:{body:"An edited summary."}});
+  });
+  it("a cached saved draft without its raw native version makes no door or legacy send call",async()=>{
+    db.messages=[message(),message({id:DRAFT_ID,direction:"outbound",status:"draft",subject:"Re: Tuesday",body_text:"Original saved words."})];
+    const host=await mount("/admin/clients/conversations");await click(buttonByText(host,"Review email"));
+    expect(db.invokes).toEqual([]);expect(vi.mocked(toast.error).mock.calls.some(([text])=>String(text).includes("saved version"))).toBe(true);
+  });
+  it("an unconfirmed saved draft keeps its operation after edits and a refused status check",async()=>{
+    db.messages=[message(),message({id:DRAFT_ID,updated_at:DRAFT_VERSION,direction:"outbound",status:"draft",subject:"Re: Tuesday",body_text:"Original saved words."})];
+    const host=await mount();await click(buttonByText(host,"Review email"));
+    db.door.push(httpError(503,{ok:false,outcome:"outcome_unknown",code:"COMMS_EMAIL_RECONCILIATION_REQUIRED"}));
+    await click(buttonByText(host,"Send now"));const originalOperation=db.doorBodies[0].operation_id;
+    await click(stripButton(host,"edit"));await type(textarea(host),"Edited words after an uncertain send.");
+    db.door.push(httpError(403,{ok:false,outcome:"refused",code:"COMMS_EMAIL_FORBIDDEN"}));
+    await click(buttonByText(host,"Send edited"));
+    expect(db.doorBodies[2]).toMatchObject({operation_id:originalOperation,draft_source:{message_id:DRAFT_ID,updated_at:DRAFT_VERSION}});
+    expect(strip(host)?.textContent).toMatch(/don't resend/);expect(strip(host)?.textContent).not.toMatch(/Nothing was sent/);
+    expect(db.sendBodies).toEqual([]);
+  });
+  it("saved content does not gain a second signature, and cancelling restores the fresh-reply preference",async()=>{
+    db.signatures=[{id:"sig-1",user_id:"owner-1",name:"Main",html:"<p>Jordan Lee</p>",variables:null,is_default:true}];
+    db.messages=[message(),message({id:DRAFT_ID,updated_at:DRAFT_VERSION,direction:"outbound",status:"draft",subject:"Re: Tuesday",body_text:"Original words.\n\nJordan Lee"})];
+    const host=await mount();await click(buttonByText(host,"Review email"));
+    expect((db.doorBodies[0].command as Record<string,unknown>).body).toBe("Original words.\n\nJordan Lee");
+    await click(stripButton(host,"edit"));
+    const cancel=buttonByText(host,"Cancel");
+    expect(cancel).toBeTruthy();await click(cancel);await write(host);await click(sendButton(host));
+    expect((db.doorBodies[1].command as Record<string,unknown>).body).toContain("\n\n--\nJordan Lee");
+    expect(db.doorBodies[1]).not.toHaveProperty("draft_source");
+  });
+  it("opening a saved draft cannot erase an existing reply",async()=>{
+    db.messages=[message(),message({id:DRAFT_ID,updated_at:DRAFT_VERSION,direction:"outbound",status:"draft",subject:"Re: Tuesday",body_text:"Saved original words."})];
+    const host=await mount();await write(host);const words=textarea(host).value;
+    await click(buttonByText(host,"Review email"));expect(textarea(host).value).toBe(words);expect(db.invokes).toEqual([]);
+  });
+  it("action-owned original drafts cannot enter the generic saved-email path",async()=>{
+    db.messages=[message(),message({id:DRAFT_ID,updated_at:DRAFT_VERSION,direction:"outbound",status:"draft",subject:"Re: Tuesday",body_text:"Original action reply.",action_id:CONTACT})];
+    const host=await mount();await click(buttonByText(host,"Review email"));expect(db.invokes).toEqual([]);expect(db.sendBodies).toEqual([]);
+    expect(vi.mocked(toast.error).mock.calls.some(([text])=>String(text).includes("original approval"))).toBe(true);
   });
 });

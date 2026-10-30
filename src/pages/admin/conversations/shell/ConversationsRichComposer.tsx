@@ -78,7 +78,7 @@ export function ConversationsRichComposer(model: ConversationsComposerModel) {
     <div className="space-y-2">
       {editingDraft && (
         <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
-          <Pencil className="h-3 w-3" /> Editing Paige's draft — Send replaces and delivers it.
+          <Pencil className="h-3 w-3" /> {showSubject ? "Editing the saved email — review before sending." : "Editing Paige's draft — Send replaces and delivers it."}
           {onCancelEdit && (
             <button type="button" className="ml-1 underline hover:text-foreground" onClick={onCancelEdit}>
               Cancel

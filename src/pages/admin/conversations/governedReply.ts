@@ -15,6 +15,7 @@ import {
 import type { Attachment } from "./inbox-shared";
 import { readableMessageBody } from "./messageReading";
 import { governedAttachmentRequest, governedNotSentLine, scheduledForLabel } from "./governedSend";
+import { parseCommsEmailDraftSource, type CommsEmailDraftSource } from "../../../../supabase/functions/_shared/comms-email/draft-source.ts";
 
 /* ───────────────────────── the request ───────────────────────── */
 
@@ -96,6 +97,8 @@ export interface GovernedReplyDraft {
   sendAt?: string;
   /** Composer upload paths, in the order staged. */
   paths: string[];
+  /** Undefined = fresh reply; null = saved draft missing its required raw version. */
+  source?: CommsEmailDraftSource | null;
 }
 
 /**
@@ -103,7 +106,14 @@ export interface GovernedReplyDraft {
  * reuse the same operation (a replay, never a second email) and any change starts a new one.
  */
 export function governedReplyScope(d: GovernedReplyDraft): string {
-  return JSON.stringify([d.tenantId, d.contactId, d.connectorId, d.subject, d.text, d.sendAt ?? null, d.paths]);
+  const fields: unknown[] = [d.tenantId, d.contactId, d.connectorId, d.subject, d.text, d.sendAt ?? null, d.paths];
+  if (d.source !== undefined) fields.push(d.source);
+  return JSON.stringify(fields);
+}
+
+/** The original source's unknown-send fence survives edits to words, sender, files or time. */
+export function governedReplySourceKey(d: GovernedReplyDraft): string | undefined {
+  return d.source === undefined ? undefined : JSON.stringify([d.tenantId, d.contactId, d.source]);
 }
 
 export type GovernedReplyRequest = {
@@ -114,6 +124,7 @@ export type GovernedReplyRequest = {
   send_at?: string;
   attachments?: { path: string }[];
   approved_fingerprint?: string;
+  draft_source?: CommsEmailDraftSource;
 };
 
 /**
@@ -121,10 +132,14 @@ export type GovernedReplyRequest = {
  * characters or a body over 10,000 is caught here and never sent as a call that can only be refused.
  */
 export function buildGovernedReplyRequest(d: GovernedReplyDraft, operationId: string, fingerprint?: string):
-  { ok: true; request: GovernedReplyRequest } | { ok: false; problem: "subject" | "body" | "sender" | "contact" | "command" } {
+  { ok: true; request: GovernedReplyRequest } | { ok: false; problem: "subject" | "body" | "sender" | "contact" | "command" | "source" } {
   // The ids are named first, so the owner is told WHICH part the door could not take.
   if (!UUID.test(d.contactId)) return { ok: false, problem: "contact" };
   if (d.connectorId && !UUID.test(d.connectorId)) return { ok: false, problem: "sender" };
+  let source: CommsEmailDraftSource | undefined;
+  if (d.source !== undefined) {
+    try { source = parseCommsEmailDraftSource(d.source); } catch { return { ok: false, problem: "source" }; }
+  }
   const command = { action: COMMS_EMAIL_ACTION, contact_id: d.contactId, connector_id: d.connectorId || null, subject: d.subject, body: d.text };
   try { parseCommsEmailCommand(command); }
   catch (e) {
@@ -137,6 +152,7 @@ export function buildGovernedReplyRequest(d: GovernedReplyDraft, operationId: st
       expected_tenant_id: d.tenantId, operation_id: operationId, command,
       ...(d.sendAt ? { send_at: d.sendAt } : {}),
       ...(d.paths.length ? { attachments: d.paths.map((path) => ({ path })) } : {}),
+      ...(source ? { draft_source: source, attachments: d.paths.map((path) => ({ path })) } : {}),
       ...(fingerprint ? { approved_fingerprint: fingerprint } : {}),
     },
   };
@@ -162,21 +178,23 @@ export function governedReplyFiles(tenantId: string, staged: readonly Attachment
  * between — so asking about those words again is always a replay of that operation, never a new send.
  */
 export function createGovernedOperationIds(newId: () => string = () => crypto.randomUUID()) {
-  let pending: { scope: string; id: string } | null = null;
+  let pending: { scope: string; key: string; id: string } | null = null;
   const unknown = new Map<string, string>();
+  const key = (scope: string, sourceKey?: string) => sourceKey === undefined ? scope : `saved-source:${sourceKey}`;
   return {
-    idFor(scope: string): string {
-      const kept = unknown.get(scope);
+    idFor(scope: string, sourceKey?: string): string {
+      const kept = unknown.get(key(scope, sourceKey));
       if (kept) return kept;
-      if (!pending || pending.scope !== scope) pending = { scope, id: newId() };
+      if (!pending || pending.scope !== scope || pending.key !== key(scope, sourceKey)) pending = { scope, key: key(scope, sourceKey), id: newId() };
       return pending.id;
     },
     /** Nobody knows whether this one went out: it keeps its id until a definite answer. */
-    markUnknown(scope: string, id: string) { unknown.set(scope, id); },
+    markUnknown(scope: string, id: string, sourceKey?: string) { unknown.set(key(scope, sourceKey), id); },
+    isUnknown(scope: string, sourceKey?: string) { return unknown.has(key(scope, sourceKey)); },
     /** A definite answer: the next ask about these words is a new email. */
-    settle(scope: string) {
-      unknown.delete(scope);
-      if (pending?.scope === scope) pending = null;
+    settle(scope: string, sourceKey?: string) {
+      unknown.delete(key(scope, sourceKey));
+      if (pending?.key === key(scope, sourceKey)) pending = null;
     },
     /** A new business or conversation: only the not-yet-sent id is dropped. Unknown ones are kept. */
     clearPending() { pending = null; },
@@ -392,6 +410,9 @@ export function classifyDoorAnswer(answer: DoorAnswer, stage: "check" | "confirm
   const b = answer.body;
   const outcome = typeof b.outcome === "string" ? b.outcome : "";
   const code = codeOf(b);
+  if (request.draft_source && (["provider_accepted", "scheduled", "failed"].includes(outcome)
+    || outcome === "refused" && b.message_id !== undefined)
+    && (b.operation_id !== request.operation_id || b.message_id !== request.draft_source.message_id)) return lostAnswer();
   // A replay of this operation, or the settled result of an identical earlier send: either way final.
   const replayed = b.replayed === true || typeof b.reconciled_operation_id === "string";
 
@@ -462,6 +483,8 @@ export const LOCAL_COPY = {
   subjectTooLong: (): DoorView => cant("The subject is too long.", "Keep it under 200 characters."),
   bodyTooLong: (): DoorView => cant("This email is too long to send from here.", "Keep it under 10,000 characters, signature included."),
   cantBuild: (): DoorView => cant("This email can't be checked.", "Check the subject and message, then send."),
+  reopenDraft: (): DoorView => cant("Reopen this draft before sending.", "Its saved version could not be checked. Your words are kept."),
+  draftStatusUnverified: (): DoorView => lostAnswer("Couldn't confirm this draft's send — don't resend."),
   badSender: (): DoorView => cant("This sending address can't send email from here.", "Choose another sending address, or reconnect this one in Settings."),
   badContact: (name: string): DoorView => cant(`${name.trim() || "This contact"} can't be emailed from here.`, "Open their contact card and save it again, then send."),
 } as const;

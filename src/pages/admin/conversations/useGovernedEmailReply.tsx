@@ -20,10 +20,11 @@ import type { AccountEpochToken } from "./solo/soloConversationModel";
 import type { Attachment } from "./inbox-shared";
 import {
   LOCAL_COPY, buildGovernedReplyRequest, createGovernedOperationIds, checkGovernedSendAt, classifyDoorAnswer, governedReplyFiles,
-  doorAnswered, governedReplyScope, isFailed, readDoorAnswer, sendAtProblemCopy,
+  doorAnswered, governedReplyScope, governedReplySourceKey, isFailed, readDoorAnswer, sendAtProblemCopy,
   type DoorAnswer, type DoorView, type GovernedReplyDraft, type GovernedReplyRequest, type ReadyCheck, type StripAction,
 } from "./governedReply";
 import { GovernedReplyStrip, type GovernedStripState } from "./GovernedReplyStrip";
+import type { CommsEmailDraftSource } from "../../../../supabase/functions/_shared/comms-email/draft-source.ts";
 
 export interface GovernedReplyConnector { id: string; display_name: string | null; from_address: string | null }
 
@@ -41,6 +42,8 @@ export interface GovernedEmailReplyInput {
   text: string;
   attachments: readonly Attachment[];
   scheduledFor: string | null;
+  /** Saved source only. Null refuses locally; absence retains the fresh-reply path. */
+  draftSource?: CommsEmailDraftSource | null;
   epoch: { capture: () => AccountEpochToken; accept: (t: AccountEpochToken) => boolean };
   /** The element around the composer: focus targets are found inside it. */
   composerRef: RefObject<HTMLElement | null>;
@@ -97,14 +100,17 @@ export function useGovernedEmailReply(input: GovernedEmailReplyInput) {
       if (isFailed(at)) return { view: sendAtProblemCopy(at.why) };
       sendAt = at.sendAt;
     }
-    return { draft: { tenantId: i.activeTenantId, contactId: i.contactId, connectorId: i.connectorId, subject: i.subject.trim(), text: i.text, ...(sendAt ? { sendAt } : {}), paths: files.paths } };
+    return { draft: { tenantId: i.activeTenantId, contactId: i.contactId, connectorId: i.connectorId, subject: i.subject.trim(), text: i.text, ...(sendAt ? { sendAt } : {}), paths: files.paths,
+      ...(i.draftSource !== undefined ? { source: i.draftSource } : {}) } };
   }, []);
 
   // The scope of what is on screen right now. A strip is only ever about the scope it was raised for.
   const liveScope = useMemo(() => {
     const d = currentDraft();
-    return "draft" in d ? governedReplyScope(d.draft) : `local:${JSON.stringify([input.activeTenantId, input.contactId, input.connectorId, input.subject.trim(), input.text, input.scheduledFor, input.attachments.map((a) => a.url ?? a.name)])}`;
-  }, [currentDraft, input.activeTenantId, input.contactId, input.connectorId, input.subject, input.text, input.scheduledFor, input.attachments]);
+    const local: unknown[] = [input.activeTenantId, input.contactId, input.connectorId, input.subject.trim(), input.text, input.scheduledFor, input.attachments.map((a) => a.url ?? a.name)];
+    if (input.draftSource !== undefined) local.push(input.draftSource);
+    return "draft" in d ? governedReplyScope(d.draft) : `local:${JSON.stringify(local)}`;
+  }, [currentDraft, input.activeTenantId, input.contactId, input.connectorId, input.subject, input.text, input.scheduledFor, input.attachments, input.draftSource]);
   const stripScopeRef = useRef<string | null>(null);
   const liveScopeRef = useRef(liveScope);
   liveScopeRef.current = liveScope;
@@ -120,6 +126,15 @@ export function useGovernedEmailReply(input: GovernedEmailReplyInput) {
   const finish = (scope: string, view: DoorView, answer: DoorAnswer | null, stage: "check" | "confirm" | "status") => {
     const i = inputRef.current;
     const held = heldRef.current;
+    const sourceKey = held ? governedReplySourceKey(held.draft) : undefined;
+    if (held?.draft.source && idsRef.current.isUnknown(scope, sourceKey) && view.kind === "cant" && !view.keepId) {
+      const body = answer && doorAnswered(answer) ? answer.body : null;
+      const originalReceipt = body?.operation_id === held.request.operation_id && body?.message_id === held.draft.source.message_id
+        && ["provider_accepted", "scheduled", "failed", "refused"].includes(String(body.outcome));
+      // A refusal to check current authority is not proof that an earlier uncertain
+      // send failed. Keep that source's original operation until its own receipt resolves.
+      if (!originalReceipt) view = LOCAL_COPY.draftStatusUnverified();
+    }
     if (view.kind === "ready") {
       // Focus Edit, never the gold act: a second Enter must not confirm a check nobody has read.
       setCheck(view.check); go("check"); focusRef.current = "edit";
@@ -146,7 +161,7 @@ export function useGovernedEmailReply(input: GovernedEmailReplyInput) {
       return;
     }
     if (view.kind === "recorded") {
-      idsRef.current.settle(scope);
+      idsRef.current.settle(scope, sourceKey);
       clearExpiry(); heldRef.current = null; stripScopeRef.current = null;
       go("composing"); setCheck(null); focusRef.current = "body"; say(view.say);
       if (held) i.onRecorded({ outcome: view.outcome, contactId: held.draft.contactId, already: view.already });
@@ -155,8 +170,8 @@ export function useGovernedEmailReply(input: GovernedEmailReplyInput) {
     // No definite answer: the id is kept for good, so these words always ask about THIS operation.
     // Otherwise nothing went out: a final answer spends the id; so does a conflict (it can never succeed as is).
     const conflict = !!answer && doorAnswered(answer) && answer.status === 409;
-    if (view.keepId && held) idsRef.current.markUnknown(scope, held.request.operation_id);
-    else if (view.settle || conflict) idsRef.current.settle(scope);
+    if (view.keepId && held) idsRef.current.markUnknown(scope, held.request.operation_id, sourceKey);
+    else if (view.settle || conflict) idsRef.current.settle(scope, sourceKey);
     showCant(view);
     if (stage !== "check") i.onRefresh?.();
   };
@@ -188,10 +203,11 @@ export function useGovernedEmailReply(input: GovernedEmailReplyInput) {
     heldRef.current = null;
     if (!("draft" in d)) { if (d.view.kind === "cant") showCant(d.view, !!d.offline); return; }
     const scope = governedReplyScope(d.draft);
-    const built = buildGovernedReplyRequest(d.draft, idsRef.current.idFor(scope));
+    const built = buildGovernedReplyRequest(d.draft, idsRef.current.idFor(scope, governedReplySourceKey(d.draft)));
     if (isFailed(built)) {
       const view = built.problem === "subject" ? LOCAL_COPY.subjectTooLong() : built.problem === "body" ? LOCAL_COPY.bodyTooLong()
-        : built.problem === "sender" ? LOCAL_COPY.badSender() : built.problem === "contact" ? LOCAL_COPY.badContact(inputRef.current.contactName) : LOCAL_COPY.cantBuild();
+        : built.problem === "sender" ? LOCAL_COPY.badSender() : built.problem === "contact" ? LOCAL_COPY.badContact(inputRef.current.contactName)
+        : built.problem === "source" ? LOCAL_COPY.reopenDraft() : LOCAL_COPY.cantBuild();
       if (view.kind === "cant") showCant(view);
       return;
     }

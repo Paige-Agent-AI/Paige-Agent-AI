@@ -1474,3 +1474,80 @@ that missing prerequisite; actual billing powers/data delivery and affected cust
 UNVERIFIED. Original E02 writer contract requested in ANT138/152c950c-f074-4357-913f-4bbb27109862.
 No raw Billing update, Auth-context override, paid-rule waiver or parallel writer is authorized by
 this read projection. Parent and child remain separate; full assignment STILL CODING.
+
+### October30 original §5.8 integration and actual concurrent-authority failure
+
+E02's original producer response ANT138/7272091b was received/ACKed in98702508. Narrow E08
+ownership covers the unmerged90008 original Team writer composition and its existing native proof;
+Billing source, permissions and original audit remain with E02. Coordinator explicitly permits
+normal repair of this unmerged source, preserving production-applied history and the previous own
+Preview/failure evidence. The old own disposable Preview must be supported-replaced/rebuilt and
+read back against the final source before release; its existing90008 version is not updated proof.
+
+Intended outcome: a current authorized holder can demote a co-owner, or a co-owner can step down,
+only after their live original Billing designations are atomically ended through the original writer.
+The strict original last-primary refusal applies to ALL applicable workspaces, including unpaid ones.
+No paid-only exemption, raw contact update, synthetic actor/workspace, copied Billing rule or new
+authority/approval/runtime/receipt system is introduced. Original owner/holder/floor/tenant locks,
+non-SOLO behavior, target-seat link/vacancy provenance and Team/Billing audits remain authoritative.
+
+The local candidate calls `platform_billing_workspace_owner_scope()` before and after the SAME
+original billing advisory lock; both must match the already-authorized target. It enumerates only
+that tenant/person's live designations in stable ID order and invokes the original
+`platform_billing_contact_revoke(uuid)` BEFORE the seat UPDATE. Exceptions roll back every
+contact, audit and seat effect. Team authority is re-resolved after the owner-row wait. A private
+recovery or arbitrary-target ABI is NOT provided by this current-workspace public Billing door;
+full R9/I2 recovery remains a missing integration, never legitimized by fabricated context.
+
+Actual catalog-only production readback confirms unchanged original bodies and metadata:
+scope `3d33a31f95f308784853f7b3816b1e8c` (STABLE/private), Billing revoke
+`c67dc4c18e72fde1dbc89d15be09edd9` (authenticated only), Team revoke
+`e2ba8ca80d63df58ebc93b34e5dc5f01` (authenticated/service). All are postgres-owned definers
+with original public search paths. No production mutation, demotion or customer-data read occurred.
+
+The SAME original native runner now includes `exp08_owner_billing_interlock.sql`. Local
+`--only-billing` is a development selection, NOT complete release proof. Nine cases genuinely
+reproduce eight FAIL/one PASS against old90008, then nine PASS with the composition: no contacts,
+delegate cleanup, self-stepdown, unpaid sole-primary refusal, partial-loop rollback for duplicate
+target primaries, historical duplicate cleanup with another primary, two foreign-scope refusals
+(including no contacts), and foreign/already-revoked preservation. Four causal mutants are killed;
+eight original Billing body/path/anonymous/service-permission drifts are refused; migration replay
+changes zero rows and preserves original writer metadata. Minimal table/current-workspace/Auth
+ports are disclosed; these are original-writer native tests, not SDK/RLS/customer proof.
+
+The required REAL three-session negative exposes an ORIGINAL BILLING PRODUCER failure:
+one session holds the original billing advisory lock; an actual public revoke call reaches a
+verified lock wait under an initially active Owner; a third session suspends that caller and commits.
+After lock release, unchanged Billing revoke succeeds with contact revoked/audit1. The required
+authority-lost refusal assertion FAILS. Exact counterexample was returned to E02 in original
+ANT138/c1eca592; no E08 Billing takeover/bypass or speculative production exposure claim.
+The Team-door counterpart with an unaffected third owner (so the owner floor cannot mask the
+authority test) refuses `CO_OWNER_FORBIDDEN`/42501 with zero contact/audit/seat effects.
+
+The failing original producer assertion remains in the normal complete native suite. Source repair
+by its owner, final original ABI/pin composition, competing-designation proof, complete native and
+app checks, exact-head review/CI/Preview, normal release/readback and authenticated outcomes
+remain owed. Parent3130/421e now has all13 check-runs SUCCESS, including Supabase Preview,
+database-contract, verify and Spine contract; these certify THAT old published source only and
+do not clear this later material finding or certify the unpublished child. PR3130 remains HOLD.
+Original18 rows/six amendments/five journeys, both-chat and bell outcomes remain STILL CODING.
+
+Later source-review P2 and causal repair: the first interlock called Billing for every
+`_solo_shell_tenant`, which also includes sub-accounts; Billing intentionally rejects sub-accounts
+and parented workspaces. Actual added fixtures reproduce the two permitted-demotion failures and
+two missing explicit unavailable-cleanup refusals, then pass all13 cases after using the intersection
+of the original applicability contract (standalone and no parent, existing tenant row locked).
+Non-billable SOLO demotion with no live target designation preserves original behavior; inconsistent
+live designations refuse `CO_OWNER_BILLING_CLEANUP_UNAVAILABLE`/42501 before any seat effect.
+The consumer proposal was returned to Billing in original ANT138/cc0afe1f; final producer ACK and
+re-review remain owed. No public Billing refusal is caught/ignored to obtain the positive path.
+
+The complete native attempt also caught an old authority mutant now surviving because the new
+currentness gate and original Billing owner gate correctly provide additional defenses. Rather than
+remove its assertion, the original fixture now explicitly tests an ACTIVE co-owner trying to revoke
+ANOTHER co-owner; Billing legitimately admits that Owner but Team must refuse. The causal mutant
+removes both initial/current Team authority predicates, so it still must fail the original Team
+permission contract independently of Billing. Original cases are retained, now12 rather than11.
+That earlier complete attempt is FAIL/incomplete, not a full-suite PASS or solely infrastructure.
+E02 receiving ACK5d9652a0 confirms original designation/revoke post-wait revalidation repair remains
+with its producer. The original failing concurrency assertion remains in the complete suite.

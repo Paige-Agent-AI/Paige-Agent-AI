@@ -14,7 +14,7 @@ CREATE FUNCTION proof.revoke_cases() RETURNS TABLE(case_name text,passed boolean
 DECLARE n text; old_other jsonb; refused boolean; refused_reason text;
 BEGIN
  FOREACH n IN ARRAY ARRAY['holder_demotes_entity','entity_steps_down','person_demotes',
-  'holder_refused','ordinary_member_refused','foreign_target_refused','last_owner_refused',
+  'holder_refused','ordinary_member_refused','co_owner_revokes_other_refused','foreign_target_refused','last_owner_refused',
   'billing_paused_holder_refused','replacement_preserved','unsupported_tier_unchanged','repeat_refused'] LOOP
   PERFORM proof.revoke_setup();
   SELECT to_jsonb(b) INTO old_other FROM public.tenant_business_owners b
@@ -29,6 +29,10 @@ BEGIN
     -- Keep two other owners so the floor cannot accidentally mask a broken authority gate.
     INSERT INTO public.tenant_members(id,tenant_id,user_id,is_owner,role) VALUES
      ('e8000000-0000-4000-8000-000000061004','e8000000-0000-4000-8000-000000060010','e8000000-0000-4000-8000-000000060200',true,'owner');
+   ELSIF n='co_owner_revokes_other_refused' THEN
+    INSERT INTO public.tenant_members(id,tenant_id,user_id,is_owner,role) VALUES
+     ('e8000000-0000-4000-8000-000000061004','e8000000-0000-4000-8000-000000060010','e8000000-0000-4000-8000-000000060200',true,'owner');
+    PERFORM set_config('request.jwt.claim.sub','e8000000-0000-4000-8000-000000060200',false);
    ELSIF n='last_owner_refused' THEN
     UPDATE public.tenants SET owner_user_id=NULL WHERE id='e8000000-0000-4000-8000-000000060010';
     DELETE FROM public.tenant_members WHERE user_id='e8000000-0000-4000-8000-000000060300';
@@ -48,7 +52,7 @@ BEGIN
       WHEN 'foreign_target_refused' THEN 'e8000000-0000-4000-8000-000000060200'::uuid
       ELSE 'e8000000-0000-4000-8000-000000060100'::uuid END);
    EXCEPTION WHEN insufficient_privilege OR check_violation THEN refused:=true;refused_reason:=SQLSTATE||': '||SQLERRM; END;
-   IF n IN ('holder_refused','ordinary_member_refused','foreign_target_refused','last_owner_refused',
+   IF n IN ('holder_refused','ordinary_member_refused','co_owner_revokes_other_refused','foreign_target_refused','last_owner_refused',
      'billing_paused_holder_refused','unsupported_tier_unchanged') THEN
     PERFORM proof.assert_true(refused AND NOT EXISTS(SELECT 1 FROM public.paige_audit_log),'refusal must have no audit/effect');
    ELSE

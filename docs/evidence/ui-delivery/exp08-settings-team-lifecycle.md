@@ -54,3 +54,25 @@ RELEASE_RECOVERY: position=revert the merge commit, which restores the previous 
 ## Limitations
 
 Everything in UNVERIFIED above. The harness frame is not the tenant shell and the doubles are not the database or the edge functions, so none of these frames or drives is authenticated runtime proof.
+
+## October30 §5.8 original owner-demotion integration — local, release HOLD
+
+The earlier client-only release/recovery statements describe that historical increment. The local
+successor candidate also changes the original `revoke_co_owner` backend: original Billing cleanup
+must precede demotion in the same transaction, with original strict last-primary protection and
+current authority. No layout, approved tokens/personality or new confirmation/approval UI changes.
+Original entity/owner controls and full current authenticated interaction proof remain owed.
+
+`docs/delivery/exp08-co-owners-entity-owners-contract.md` records exact original producer ABI,
+native fixtures, failed-before cases, causal mutants, drift/replay controls and source-review repair.
+Thirteen isolated native Billing/Team cases pass after four additional applicability failures exposed
+the initial sub-account/parented regression. These are minimal-schema original-writer tests,
+not rendered or authenticated customer evidence. The original Billing public writer fails its
+three-session authority-loss assertion; its existing source owner acknowledged repair responsibility
+in ANT138/5d9652a0. That failure remains in the complete native suite, not waived by green old CI.
+
+PR3130/421e has all13 checks SUCCESS but remains HOLD for the actual integration finding.
+Local child source is not that published head. Final producer/source composition, whole-head
+review/tests/CI, supported replacement/readback of the own disposable managed Preview, normal
+release and authenticated owner/role/tenant/recovery outcomes are UNVERIFIED/owed. Do not infer
+activation or owner acceptance from the earlier harness frames or these native component tests.

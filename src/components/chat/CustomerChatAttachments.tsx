@@ -13,6 +13,7 @@ type Props = {
   notice: string;
   upload: {id: string | null; kind: string};
   onSelect: (files: File[]) => void;
+  onBeginSelection?: () => ((files: File[]) => void) | null;
   onRemove: (id: string) => void;
   onCheck: (id: string) => void;
   onResume: (id: string) => void;
@@ -31,6 +32,7 @@ function size(bytes: number) {
  */
 export function CustomerChatAttachments(props: Props) {
   const input = useRef<HTMLInputElement>(null), help = useId();
+  const pickerChoice = useRef<((files: File[]) => void) | null>(null);
   const add = useRef<HTMLButtonElement>(null), actions = useRef(new Map<string, HTMLButtonElement>());
   const recoveryFocus = useRef<{id:string;from:HTMLElement}|null>(null);
   const removal = useRef<{id: string; next: string | null; from: HTMLButtonElement} | null>(null);
@@ -68,10 +70,14 @@ export function CustomerChatAttachments(props: Props) {
       <input ref={input} type="file" multiple accept=".pdf,.jpg,.jpeg,.png,.docx" tabIndex={-1}
         aria-label="Choose private files for this message" className="sr-only"
         disabled={!props.enabled || props.locked || props.busy || uncertain || files.length >= CUSTOMER_CHAT_FILE_LIMIT}
+        onClick={() => {pickerChoice.current = props.onBeginSelection ? props.onBeginSelection() : props.onSelect;}}
         onChange={event => {
           const selected = Array.from(event.currentTarget.files ?? []);
+          const receive = pickerChoice.current; pickerChoice.current = null;
           event.currentTarget.value = "";
-          if (props.enabled && !props.locked && !props.busy && !uncertain && selected.length) props.onSelect(selected);
+          if (!selected.length) return;
+          if (receive) receive(selected);
+          else if (!props.onBeginSelection && props.enabled && !props.locked && !props.busy && !uncertain) props.onSelect(selected);
         }}/>
     </div>
     {files.length > 0 && <ul className="max-h-32 overflow-y-auto overscroll-contain rounded-lg border border-border bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"

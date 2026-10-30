@@ -997,7 +997,7 @@ function PaigeChatInner({ user, session, clientId, customerFrame, customerAvaila
         {customerFrame&&<CustomerChatPublicLink value={customerLink} locked={privateFilesBlocked||isLoading||!!customerRecovery||!customerAvailable||historyState!=="ready"}
           validationAttempt={linkValidationAttempt} onChange={setCustomerLink} onContinue={()=>inputRef.current?.focus()}>
           {({action,field})=><><CustomerChatAttachments enabled={privateFiles.available} locked={isLoading||!!customerRecovery} files={privateFiles.files} issues={privateFiles.issues}
-            busy={privateFiles.busy} notice={privateFiles.notice} upload={privateFiles.nativeUpload} onSelect={privateFiles.append} onRemove={privateFiles.remove}
+            busy={privateFiles.busy} notice={privateFiles.notice} upload={privateFiles.nativeUpload} onSelect={privateFiles.append} onBeginSelection={privateFiles.beginSelection} onRemove={privateFiles.remove}
             onCheck={privateFiles.check} onResume={privateFiles.resume} onStop={privateFiles.stop} secondaryAction={action}/>{field}</>}
         </CustomerChatPublicLink>}
         <div className={`flex gap-1.5 sm:gap-2 items-center${customerFrame ? " flex-wrap" : ""}`}>

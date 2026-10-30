@@ -78,3 +78,14 @@ it("restores focus to the same file after a successful Resume removes its old bu
  props.busy=true;render();props.files=[draft("original","saved")];props.busy=false;render();
  expect(document.activeElement).toBe(button("Remove Private notes.pdf from message"));
 });
+it("returns a previously admitted picker choice to its captured handler during an access recheck", () => {
+  const complete = vi.fn(), begin = vi.fn(() => complete);
+  Object.assign(props, {onBeginSelection: begin}); render();
+  const input = host.querySelector("input")!, files = [draft().file, draft("two", "selected", "Willow.pdf").file];
+  act(() => input.dispatchEvent(new MouseEvent("click", {bubbles: true})));
+  props.enabled = false; props.onSelect = vi.fn(); render();
+  Object.defineProperty(input, "files", {value: files});
+  act(() => input.dispatchEvent(new Event("change", {bubbles: true})));
+  expect(begin).toHaveBeenCalledTimes(1); expect(complete).toHaveBeenCalledWith(files);
+  expect(props.onSelect).not.toHaveBeenCalled();
+});

@@ -211,6 +211,12 @@ jobs:
         with:
           deno-version: v2.1.4
 
+      - name: Original Knowledge binary parsers on deployed Deno floor
+        run: >-
+          deno test --no-config --no-prompt --frozen
+          --lock=supabase/functions/_shared/knowledge-binary-adapters.deno.lock
+          supabase/functions/_shared/knowledge-binary-adapters.test.ts
+
       - name: Edge release source and bounded deployment recovery
         run: python3 -B -m unittest discover -s .github/scripts -p test_edge_source_readback.py -v
 

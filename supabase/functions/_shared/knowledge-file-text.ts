@@ -57,7 +57,8 @@ const byteView = (value: unknown): value is Uint8Array => ArrayBuffer.isView(val
  * This bounds declared expansion and rejects encrypted/macros/ambiguous entries.
  * It is NOT a malware scanner or a claim of process/resource isolation.
  */
-export function inspectDocxArchive(bytes: Uint8Array): void {
+export type KnowledgeArchiveEntry = { start: number; end: number; expandedSize: number; method: 0 | 8 };
+export function inspectDocxArchive(bytes: Uint8Array): KnowledgeArchiveEntry[] {
   const unsafe = () => fail('FILE_PACKAGE_UNSAFE');
   if (bytes.length < 22 || bytes.length > MAX_BYTES || !signature(bytes, [0x50, 0x4b, 3, 4])) unsafe();
   const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
@@ -72,6 +73,7 @@ export function inspectDocxArchive(bytes: Uint8Array): void {
   if (!count || count > MAX_ZIP_ENTRIES || view.getUint16(end + 8, true) !== count || directory + length !== end) unsafe();
   let offset = directory; let expanded = 0;
   const names = new Set<string>(); const ranges: Array<[number, number]> = [];
+  const entries: KnowledgeArchiveEntry[] = [];
   for (let index = 0; index < count; index++) {
     if (offset + 46 > end || view.getUint32(offset, true) !== 0x02014b50) unsafe();
     const flags = view.getUint16(offset + 8, true);
@@ -102,9 +104,11 @@ export function inspectDocxArchive(bytes: Uint8Array): void {
     const finish = data + compressed;
     if (ranges.some(([a, b]) => local < b && finish > a)) unsafe();
     ranges.push([local, finish]);
+    entries.push({ start: data, end: finish, expandedSize: size, method: method as 0 | 8 });
     offset = next;
   }
   if (offset !== end || !names.has('[content_types].xml') || !names.has('_rels/.rels') || !names.has('word/document.xml')) unsafe();
+  return entries;
 }
 
 function formatFor(bytes: Uint8Array, name: string, suppliedMime: string): KnowledgeFileFormat {

@@ -97,3 +97,76 @@ Migrations/Edge deployment NOT_APPLICABLE to this contribution. No provider,
 authority, recurring runner or other Experience is activated. Original Master
 Shipped Log N/A until actual main merge. Normal exact-head review/CI and owner
 release boundaries remain; removal of this unused helper is a source-only rollback.
+# October30 continuation: actual deployed-runtime parser adapters
+
+The original contribution now composes main571f8aa84 normally, preserving E08
+3109 and E05 3102, and adds `knowledge-binary-adapters.ts` to the same increment.
+It is still UNMOUNTED: no existing source submission, worker, native completion,
+publication, UI or catalogue availability is changed by this adapter alone.
+
+- Existing installed PDFJS5.5.207 failed on native Deno2.1.4 because DOMMatrix/
+  native canvas was unavailable. Node roundtrip was not Edge compatibility.
+  Demonstrated absence of a compatible existing adapter justifies pinned
+  `npm:unpdf@2.1.0`, a pure-JS serverless PDFJS6.4.299 build, not a new service or
+  runtime. Upstream: https://github.com/unjs/unpdf. Official package SHA512:
+  `G/Hsrm++g0EoubUhV8TDFItq6oQ+FUu9EMvIRtHUwseKXB0iJoCvaLvBGOpYUBqyvggv/XfxhYYtohL2QpE3xQ==`.
+- PDF parser uses the pinned resolved module directly, with no auto-discovered
+  font/CMap/storage paths, system fonts, WASM, XFA, image decoding or native
+  canvas. A standard-font-data warning remains: simple text roundtrip passes,
+  complex-font/CJK fidelity is not established. Coverage remains partial/no OCR.
+  PDFJS6 removed the prior isEvalSupported option; no fake option/type bypass is
+  used. No PDF JavaScript/action APIs are invoked.
+- Actual short-text control found an unhandled close/enqueue race from cancelling
+  a live serverless PDFJS text stream. Repair drains the current page without
+  retaining more than the text allowance plus one truncation-signal character,
+  then stops before further pages. It does not claim to limit all PDF internal
+  memory/CPU or preempt synchronous work. Original Edge isolation still applies.
+- Mammoth1.13.0 public Node and browser wrappers both failed under Deno2.1.4:
+  `ExternalPromise.resolve is not a function`; their compatibility wrapper uses
+  disabled __proto__ mutation. No unsafe-prototype flag or dependency patch is
+  used. The adapter reuses the exact pinned original internal raw-text pipeline
+  from lib/index.js: zipfile.openArrayBuffer → docx-reader.read → Result.map of
+  raw-text.convertElementToRawText, with native Promises. Internal API dependence
+  is deliberate, version-pinned and tested; upgrades require full reevaluation.
+- Metadata preflight now returns its already-checked compressed entry ranges.
+  Actual expansion is measured with native cancellable DEFLATE before Mammoth;
+  aggregate16MiB and exact declared entry length must match. A forged matching
+  local/central length cannot bypass the measured cap. Initial JSZip Node stream
+  pause left delayed resume/timer work under actual active cancellation; retained
+  failing controls led to native-stream repair. No filesystem/macro/code execution.
+- Native Deno2.1.4 actual tests: 9 PASS with leak tracing and NO runtime permission
+  flags. PDF/DOCX text/page/hash/partial evidence; encrypted PDF refusal; pre-abort;
+  actual returned text limit; active DOCX expansion cancellation; active PDF
+  cancellation while a real text reader exists; mixed PDF/DOCX/
+  text bulk plus duplicate/unsupported isolation; forged ZIP expansion rejection.
+  Independent review found the live-PDF destroy deadlock: valid synthetic PDF
+  stayed pending beyond28seconds/25second watchdog. The added control failed
+  first at3seconds; the repair drains/discards the current local phase/page and
+  destroys afterward, then rejects cancellation (independent final control5ms).
+  The25second deadline is cooperative, not synchronous-work preemption. General
+  hard internal resource limits, scanned/complex documents,
+  malware scanning and deployed/customer behavior remain unverified.
+- The parser dependency graph is integrity-locked in
+  `knowledge-binary-adapters.deno.lock`; CI uses `--frozen`. Independent review
+  encountered real no-lock transitive resolution drift/DNS failure before a
+  runtime case could run; that is not a parser result. The frozen graph pins
+  Mammoth's JSZip3.10.1 and every transitive integrity. Wiring these adapters into
+  original Edge handlers must also carry this graph through supported deployment
+  packaging; a CI lock alone does not prove deployed dependency identity.
+- Existing CI verify gains only this same native Deno test command after its
+  existing pinned2.1.4 setup. No prior check, assertion, permission or source
+  emitter is changed. Fresh exact-head review/hosted CI is required; old green
+  source heads are historical.
+
+Next original native integration must keep source-byte and extracted-text hashes
+distinct. The existing six-argument complete_knowledge_extraction remains an
+unchanged caller ABI for UTF8; a compatible overload must reuse the SAME native
+authority/lease/attempt/revision/receipt/transaction implementation, separately
+validate raw source hash against original work/source binding and text hash
+against extracted content, and persist coverage/citation manifest in the SAME
+Knowledge row through original review/publication. It must never substitute the
+text hash for source-byte identity, loosen RLS, fabricate a credit-report row,
+or call original Planning directly around absent admission. Precise native schema,
+consumer ABI and forward-version sequence remain integration work, not an applied
+migration or current upload support. E01 selected-fact confirmation and E02/E05
+original saved-plan/actual-Work handoffs remain independently owed.

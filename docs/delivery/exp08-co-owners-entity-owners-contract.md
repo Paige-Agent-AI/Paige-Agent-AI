@@ -1847,3 +1847,36 @@ not renewed consumer/Team Hub clearance. No production/pin update follows.
 NON-AUTHOR SOURCE review reports no additional material finding in the bounded late-authority
 repair and independently runs no native tests. Mint-side later authority changes, two-token races,
 full lock ordering/schema/RLS, provisioning/recovery and release readiness remain unfinished.
+
+### I2 mint-side late authority — local repair, 2026-10-30
+
+Reuse the SAME native runner and original create_tenant_invite_token. An actual table SHARE lock
+blocks its token INSERT (observed native relation lock); a separate session commits platform or
+agency revocation after admission. The intermediate mint writer incorrectly returns/saves a token
+after losing authority. `exp08-first-owner-mint-wait-before.log` retains actual FAIL. No fabricated
+trigger, alternate writer or external send is used.
+
+The UNVERSIONED patch now re-resolves the same original platform/agency/history facts immediately
+before the mint function returns. For subaccount_owner only, lost permission or a lost agency
+exception raises the specific authority/history refusal and rolls back the original INSERT.
+Other invite kinds, original ABI/metadata/ACL and every original statement remain protected by
+whole-body inverse, now including the exact mint-tail conditional. No new GRANT or action channel.
+
+Actual final `exp08-first-owner-mint-final.log`: history22/six mutants, invitation13/four mutants/
+five drifts/replay, twelve real mint/accept waits and five actual-wait causal controls PASS; own
+database disposed/exit0. Valid agency mint remains positive; both lost-authority mint cases save
+zero tokens and leave all other original effects unchanged. Removing each final mint check makes
+its real INSERT wait save a token again and is rejected. Earlier acceptance expiry/type/authority
+cases remain. An intermediate control run FAIL (`exp08-first-owner-mint-wait-after.log`) because
+removing only the old pre-write history check now correctly leaves the new final defense effective.
+Retain the assertion; make its causal mutant remove BOTH history checks. This is strengthened
+causal coverage, not an assertion waiver or a successful intermediate run.
+
+This remains minimal-schema engineering proof of the original writers, not authenticated SQL/RLS,
+actual invitation sending or customer acceptance. Two-token contention, full lock-order/schema,
+all actor/tenant/recovery negatives, provisioning/Setup/recovery and guarded versioned migration
+integration remain coding work. Full assignment remains **STILL CODING**; release holds unchanged.
+
+NON-AUTHOR SOURCE review reports no additional material issue in the bounded final-mint repair;
+no native execution by the reviewer. Two-token/full-lock/schema composition, provisioning,
+Setup/recovery and guarded migration admission remain unfinished; no release/customer assurance.

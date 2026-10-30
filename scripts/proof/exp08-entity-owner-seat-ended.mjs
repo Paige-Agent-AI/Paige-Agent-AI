@@ -153,18 +153,18 @@ const definitions = [['public._business_owner_seat_ended()', definition, '75d4a8
   ['public._business_owner_representative_deleted()', representativeDefinition, 'f95cbff2d3f69c274b287ef0b9bc0067']];
 const records = [];
 async function firstOwnerInvitationWait(expire,stage='tenant',scopeChange=null){
-  assert.ok(['tenant','profile'].includes(stage));
+  assert.ok(['tenant','profile','mint'].includes(stage));
   assert.ok([null,'to_solo','to_enterprise','agency_lost','agency_retained','platform_lost'].includes(scopeChange));
   const agencyCase=scopeChange?.startsWith('agency_');
   const lateAuthorityCase=agencyCase||scopeChange==='platform_lost';
-  assert.ok(!scopeChange||(!expire&&stage===(lateAuthorityCase?'profile':'tenant')));
+  assert.ok(!scopeChange||(!expire&&(stage==='mint'||stage===(lateAuthorityCase?'profile':'tenant'))));
   const ids=JSON.parse(sql(`WITH p AS (SELECT gen_random_uuid() AS p,gen_random_uuid() AS u,gen_random_uuid() AS t,gen_random_uuid() AS i)
     SELECT row_to_json(seed) FROM p seed;`));
   const {p,u,t,i}=ids;for(const id of Object.values(ids))assert.match(id,/^[0-9a-f-]{36}$/);
   sql(`INSERT INTO auth.users(id,email) VALUES('${p}','platform@example.invalid'),('${u}','invitee@example.invalid');
     INSERT INTO proof.platform_owners VALUES('${p}'); INSERT INTO public.tenants(id,account_type) VALUES('${t}','${scopeChange==='to_solo'?'enterprise':'standalone'}');
-    INSERT INTO public.profiles VALUES('${u}',NULL);
-    INSERT INTO public.tenant_invite_tokens(id,tenant_id,token,kind,default_role,created_by,max_uses)
+    INSERT INTO public.profiles VALUES('${u}',NULL);`);
+  if(stage!=='mint')sql(`INSERT INTO public.tenant_invite_tokens(id,tenant_id,token,kind,default_role,created_by,max_uses)
       VALUES('${i}','${t}','${i}','subaccount_owner','admin','${p}',1);`);
   if(scopeChange&&scopeChange!=='platform_lost')sql(`UPDATE public.tenants SET first_owner_seated_at='2021-01-01Z' WHERE id='${t}';`);
   if(agencyCase)sql(`INSERT INTO proof.agency_managers VALUES('${t}','${p}');`);
@@ -176,7 +176,8 @@ async function firstOwnerInvitationWait(expire,stage='tenant',scopeChange=null){
       timer=setTimeout(()=>reject(new Error('First-owner tenant lock not acquired')),10000);
       first.stdout.on('data',c=>{output+=c;if(output.includes('EXP08_FIRST_OWNER_LOCKED'))resolve();});first.on('error',reject);
     });
-    const lock=scopeChange&&!lateAuthorityCase?`UPDATE public.tenants SET account_type='${scopeChange==='to_solo'?'standalone':'enterprise'}' WHERE id='${t}';`
+    const lock=stage==='mint'?'LOCK TABLE public.tenant_invite_tokens IN SHARE MODE;'
+      :scopeChange&&!lateAuthorityCase?`UPDATE public.tenants SET account_type='${scopeChange==='to_solo'?'standalone':'enterprise'}' WHERE id='${t}';`
       :stage==='tenant'?`SELECT 1 FROM public.tenants WHERE id='${t}' FOR UPDATE;`
       :`UPDATE public.profiles SET active_tenant_id=active_tenant_id WHERE user_id='${u}';`;
     first.stdin.write(`BEGIN; ${lock}\n\\echo EXP08_FIRST_OWNER_LOCKED\n`);
@@ -186,10 +187,12 @@ async function firstOwnerInvitationWait(expire,stage='tenant',scopeChange=null){
     second=spawn(executable,connectionArgs(database),{env:{...process.env,PGAPPNAME:app},stdio:['pipe','pipe','pipe']});
     secondDone=new Promise((resolve,reject)=>{second.on('error',reject);second.on('close',resolve);});
     second.stderr.on('data',c=>{errors+=c;});
-    second.stdin.end(`SET statement_timeout='20000'; SET request.jwt.claim.sub='${u}'; SELECT public.accept_tenant_invite('${i}');`);
+    second.stdin.end(stage==='mint'
+      ?`SET statement_timeout='20000'; SET request.jwt.claim.sub='${p}'; SELECT public.create_tenant_invite_token('${t}','subaccount_owner','admin',7,1,NULL,NULL);`
+      :`SET statement_timeout='20000'; SET request.jwt.claim.sub='${u}'; SELECT public.accept_tenant_invite('${i}');`);
     let waited=false;
     for(let attempt=0;attempt<40;attempt++){
-      waited=sql(`SELECT EXISTS(SELECT 1 FROM pg_stat_activity WHERE datname='${database}' AND application_name='${app}' AND wait_event_type='Lock');`)==='t';
+      waited=sql(`SELECT EXISTS(SELECT 1 FROM pg_stat_activity WHERE datname='${database}' AND application_name='${app}' AND wait_event_type='Lock'${stage==='mint'?" AND wait_event='relation'":''});`)==='t';
       if(waited)break;await new Promise(resolve=>setTimeout(resolve,50));
     }
     assert.ok(waited,`Original acceptance must actually wait on the original ${stage} row`);
@@ -202,11 +205,17 @@ async function firstOwnerInvitationWait(expire,stage='tenant',scopeChange=null){
     first.stdin.end('COMMIT;\n\\q\n');assert.equal(await firstDone,0);const exit=await secondDone;
     const state=JSON.parse(sql(`SELECT json_build_object('seats',(SELECT count(*) FROM public.tenant_members WHERE tenant_id='${t}'),
       'pointer',(SELECT owner_user_id IS NOT NULL FROM public.tenants WHERE id='${t}'),
-      'uses',(SELECT uses FROM public.tenant_invite_tokens WHERE id='${i}'),
+      ${stage==='mint'?`'tokens',(SELECT count(*) FROM public.tenant_invite_tokens WHERE tenant_id='${t}')`:`'uses',(SELECT uses FROM public.tenant_invite_tokens WHERE id='${i}')`},
       'profile',(SELECT active_tenant_id IS NOT NULL FROM public.profiles WHERE user_id='${u}'),
       'audit',(SELECT count(*) FROM public.paige_audit_log WHERE tenant_id='${t}'));`));
     console.log(JSON.stringify({phase:'first-owner-invitation-actual-wait',case:scopeChange||((expire?'expired during ':'valid ')+stage+' wait'),wait_observed:true,exit,state,error:errors.trim()}));
-    if(scopeChange==='to_solo'||scopeChange==='agency_lost'||scopeChange==='platform_lost'){assert.notEqual(exit,0,'Current Solo/agency authority after the actual wait must enforce existing owner history');assert.match(errors,scopeChange==='platform_lost'?/OWNER_INVITE_AUTHORITY_CHANGED/:/OWNER_HISTORY_REQUIRES_RECOVERY/);assert.deepEqual(state,{seats:0,pointer:false,uses:0,profile:false,audit:0});}
+    if(stage==='mint'){
+      const refused=scopeChange==='agency_lost'||scopeChange==='platform_lost';
+      if(refused){assert.notEqual(exit,0,'Authority lost during actual token INSERT must refuse');assert.match(errors,scopeChange==='platform_lost'?/OWNER_INVITE_AUTHORITY_CHANGED/:/OWNER_HISTORY_REQUIRES_RECOVERY/);}
+      else assert.equal(exit,0,errors);
+      assert.deepEqual(state,{seats:0,pointer:false,tokens:refused?0:1,profile:false,audit:0});
+    }
+    else if(scopeChange==='to_solo'||scopeChange==='agency_lost'||scopeChange==='platform_lost'){assert.notEqual(exit,0,'Current Solo/agency authority after the actual wait must enforce existing owner history');assert.match(errors,scopeChange==='platform_lost'?/OWNER_INVITE_AUTHORITY_CHANGED/:/OWNER_HISTORY_REQUIRES_RECOVERY/);assert.deepEqual(state,{seats:0,pointer:false,uses:0,profile:false,audit:0});}
     else if(expire){assert.notEqual(exit,0,'An invitation expiring during the actual tenant wait must refuse');assert.match(errors,/invite has expired/);assert.deepEqual(state,{seats:0,pointer:false,uses:0,profile:false,audit:0});}
     else{assert.equal(exit,0,errors);assert.deepEqual(state,{seats:1,pointer:true,uses:1,profile:true,audit:1});}
   }finally{
@@ -473,7 +482,7 @@ try {
     console.log(JSON.stringify({phase:'first-owner-original-invitations-after',cases:invitationAfter}));
     assert.equal(invitationAfter.length,13);assert.ok(invitationAfter.every(r=>r.passed),JSON.stringify(invitationAfter));
     for(const [name,from,to] of [
-      ['history gate bypassed','IF NOT public._tenant_never_owned(_tenant_id) THEN','IF false THEN'],
+      ['all mint history gates bypassed','public._tenant_never_owned(_tenant_id)','true'],
       ['accept history gate bypassed','AND NOT _exp08_never_owned THEN','AND false THEN'],
       ['agency exception removed','AND NOT public.agency_can_manage_child(_tok.tenant_id, _tok.created_by)',''],
       ['non-shell acceptance incorrectly restricted','IF public._solo_shell_tenant(_tok.tenant_id) THEN','IF true THEN'],
@@ -495,6 +504,7 @@ try {
     // Same uniquely-created database, real original writer and independent psql sessions. Restore
     // the original fixture afterward so no history/invitation ports leak into older proof groups.
     sql(`${invitationSetup}${invitationPatch}\nCOMMIT;`);
+    await firstOwnerInvitationWait(false,'mint','agency_retained');await firstOwnerInvitationWait(false,'mint','platform_lost');await firstOwnerInvitationWait(false,'mint','agency_lost');
     await firstOwnerInvitationWait(false,'profile','agency_retained');await firstOwnerInvitationWait(false,'profile','agency_lost');
     await firstOwnerInvitationWait(false,'profile','platform_lost');
     await firstOwnerInvitationWait(false,'tenant','to_solo');await firstOwnerInvitationWait(false,'tenant','to_enterprise');
@@ -516,6 +526,17 @@ try {
         await assert.rejects(()=>firstOwnerInvitationWait(false,'profile',scenario),/Current Solo\/agency authority after the actual wait must enforce existing owner history/);
         console.log(JSON.stringify({phase:'first-owner-invitation-authority-mutant',name,killed_by:scenario+' actual profile-write wait'}));
       }finally{sql(finalExpiryDefinition);}
+    }
+    const finalMintDefinition=sql("SELECT pg_get_functiondef('public.create_tenant_invite_token(uuid,text,public.tenant_role,integer,integer,uuid,text)'::regprocedure);").replace(/\r\n/g,'\n');
+    for(const [name,from,to,scenario] of [
+      ['final mint authority removed','IF NOT (public.is_platform_owner() OR public.agency_can_manage_child(_tenant_id,auth.uid())) THEN','IF false THEN','platform_lost'],
+      ['final mint history removed','AND NOT public._tenant_never_owned(_tenant_id) THEN','AND false THEN','agency_lost'],
+    ]){
+      try{
+        const mutant=finalMintDefinition.replace(from,to);assert.notEqual(mutant,finalMintDefinition);sql(mutant);
+        await assert.rejects(()=>firstOwnerInvitationWait(false,'mint',scenario),/Authority lost during actual token INSERT must refuse/);
+        console.log(JSON.stringify({phase:'first-owner-invitation-mint-mutant',name,killed_by:scenario+' actual token INSERT wait'}));
+      }finally{sql(finalMintDefinition);}
     }
     sql(`DROP DATABASE ${database};`,'postgres');sql(`CREATE DATABASE ${database};`,'postgres');
     sql(fixture);sql(scopeHelper);

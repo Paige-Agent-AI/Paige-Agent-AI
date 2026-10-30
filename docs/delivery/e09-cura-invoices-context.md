@@ -1,5 +1,13 @@
 # CURA original customer invoice context — authorized integration
 
+## Database-first production order
+
+The release is split into two dependent increments to preserve ordinary CURA during rollout. This native branch supplies only original invoice context/admission/terminal/history/publication and the existing native fixture. It does **not** import the new consumer into Root or change the deployed Chat model path. The complete prepared consumer and its143 passing cases remain preserved in companion PR #3117 at source005eb8407cfcde47cc3f47b7cbfd0c16e9dc07ab. That consumer must follow native60009's normal merge, production application and exact authoritative readback. Native source alone is not a working invoice answer or a completed pillar.
+
+Reason: the existing production Edge and migration pipelines run independently. The prepared consumer intentionally refuses an unverifiable accepted invoice source; mounting it before its new native API is present could interrupt ordinary Chat. Releasing the additive native contract first avoids that transient dependency without weakening refusal or adding a fallback authority. Same approved implementation and full outcome, no permanent shipping-dark scope reduction.
+
+Earlier local consumer and rendered review paragraphs below describe the companion integration; their source/test evidence is retained, not a claim that Root is mounted in this native-only increment. Existing EXP08 and EXP05 predecessor source stays exact, and original permissions remain unchanged.
+
 ## Current implementation checkpoint — October 30
 
 Direct owner authority in the original EXP09 conversation resolves the former automatic-approval hold: implement and test the proposed native integration, preserve existing billing permissions, complete review and CI, deploy normally, and continue the seven-pillar assignment. No additional account, access, send, payment, provider, Research or Live activation follows from that approval.

@@ -58,10 +58,7 @@ const changes = [
 ];
 
 test('reviewed Calendar, Task, email, reminder and read-receipt context binds all incumbent adapters without replacing their contracts', () => {
-  assert.equal(incumbentSourcePaths.length, 131);
-  for (const path of ['supabase/functions/_shared/client-portal-invoices-context.ts', 'supabase/functions/_shared/client-engagement/chat.ts', 'supabase/functions/_shared/client-engagement/money.ts']) {
-    assert.ok(incumbentSourcePaths.includes(path), 'invoice source and original exact-string commercial presentation remain restrictive inputs');
-  }
+  assert.equal(incumbentSourcePaths.length, 128);
   assert.ok(incumbentSourcePaths.includes('supabase/functions/_shared/client-portal-public-link.ts'), 'reviewed customer selected-link authority must remain a restrictive input alongside all original127 sources');
   assert.ok(incumbentSourcePaths.includes(automationSummaryPath), 'the reviewed draft-only summary must remain a restrictive ancestry input');
   assert.ok(incumbentSourcePaths.includes(weeklyDeadlinePath), 'the shared elapsed-stage fence must remain a restrictive ancestry input');

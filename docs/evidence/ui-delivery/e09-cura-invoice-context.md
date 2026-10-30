@@ -1,5 +1,7 @@
 # UI delivery evidence: CURA reads the customer's original invoices
 
+Current release scope is DATABASE FIRST. This native-only branch leaves original Root/C0b/customer fixtures unchanged relative to the original EXP08 predecessor; it does not mount new invoice model context. Prepared Chat source,143 tests, binding118 and rendered source below belong to preserved companion PR3117/source005eb8407cfcde47cc3f47b7cbfd0c16e9dc07ab, not to a live answer from this native increment. This prevents independent Edge/migration pipeline order from interrupting ordinary CURA. Consumer production mount must follow native60009's actual application/readback, with fresh final review/CI. Whole outcome and founder acceptance remain open.
+
 UI_DELIVERY_EVIDENCE_VERSION: 1
 FLOW_BY_FLOW: PASS: Original EXP09/ANT-163 invoice outcome and ten pre-edit answers in docs/delivery/e09-cura-invoices-context.md. Same customer question, original native accepted intent, bounded authorized facts, unchanged CURA reply/history and Payments exit.
 PAIGE_UI_DESIGN: PASS: Existing project UI skill, original Portal/CURA/Payments and approved shared design direction retained. Impeccable audit, clarify and harden checks applied to provenance, exact amounts, refusal, recovery and unchanged layout; no new design system or shell.
@@ -49,7 +51,7 @@ Pre-renewal source review:19da6cacc883b41d805a098b5bcb451941c88134 versus maine9
 
 Functional: implemented locally, full native/release/customer proof owed. Visual: bounded existing-shell rendered proof and explicit narrow/AT gaps. Experiential: original request/source/receipt/recovery implemented, actual joined journey owed. Acceptance: full42/seven-pillars founder evaluation NOT_READY.
 
-INTERNAL_BUILD_IDENTITY: source-freeze=19da6cacc883b41d805a098b5bcb451941c88134; current-head=see-Git-and-PR; deployment=none; environment=local-development; migrations=PROOF_OWED(20271126060009 after original EXP08 and EXP05 publication chain); edge=PROOF_OWED(paige-ai-chat exact deployed source readback); evidence=outputs/e09-invoice-incumbent-review.json
+INTERNAL_BUILD_IDENTITY: source-freeze=005eb8407cfcde47cc3f47b7cbfd0c16e9dc07ab; current-head=see-Git-and-PR; deployment=none; environment=local-development; migrations=PROOF_OWED(20271126060009 after original EXP08 and EXP05 publication chain); edge=NOT_APPLICABLE; evidence=outputs/e09-invoice-native-component-20261030.json
 RELEASE_CHANNEL: development: no production claim or customer announcement.
 RELEASE_CLASSIFICATION: internal-only: coherent source-backed invoice-read integration within existing EXP09.
 CUSTOMER_RELEASE_IDENTITY: none: no version or announcement assigned from local source.

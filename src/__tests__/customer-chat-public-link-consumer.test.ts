@@ -1,4 +1,3 @@
-import {customerInvoicesTerminalSource} from "../../supabase/functions/_shared/client-portal-invoices-context";
 import {readFileSync} from "node:fs";
 import ts from "typescript";
 import {expect,it,vi} from "vitest";
@@ -87,7 +86,7 @@ async function currentness(){
  const p=await readCustomerProgressContext(caller,actor,thread,intent,k.data!.persona);expect(p.status).toBe("available");
  const s=await readCustomerSessionsContext(caller,actor,thread,intent,k.data!.persona);expect(s.status).toBe("available");
  const l=await readCustomerPublicLinkContext(caller,actor,thread,intent,k.data!.persona,url);expect(l.status).toBe("available");
- const make=new Function("env",compile("let tenantKnowledgeScopeRevoked=false;const customerPortal=true,customerInvoicesContext=null,customerFilesContext=null;const {customerCaller,user,payloadThreadId,validatedData,customerAssistant,customerPersona,customerProgressContext,customerSessionsContext,customerPublicLinkContext,readCustomerAssistantContext,readCustomerProgressContext,readCustomerSessionsContext,readCustomerPublicLinkContext}=env;const "+declaration("revalidateTenantKnowledgeScope")+";return revalidateTenantKnowledgeScope;"));
+ const make=new Function("env",compile("let tenantKnowledgeScopeRevoked=false;const customerPortal=true,customerFilesContext=null;const {customerCaller,user,payloadThreadId,validatedData,customerAssistant,customerPersona,customerProgressContext,customerSessionsContext,customerPublicLinkContext,readCustomerAssistantContext,readCustomerProgressContext,readCustomerSessionsContext,readCustomerPublicLinkContext}=env;const "+declaration("revalidateTenantKnowledgeScope")+";return revalidateTenantKnowledgeScope;"));
  const check=make({customerCaller:caller,user:{id:actor},payloadThreadId:thread,validatedData:{requestIntentId:intent},customerAssistant:k.data,customerPersona:k.data!.persona,
   customerProgressContext:p.data,customerSessionsContext:s.data,customerPublicLinkContext:l.data,readCustomerAssistantContext,readCustomerProgressContext,readCustomerSessionsContext,readCustomerPublicLinkContext});
  return {check,replace:(value:unknown,error:unknown=null)=>{link=value;linkError=error;},restore:()=>{link={thread_id:thread,intent_id:intent,mode:"bound",snapshot:{...snapshot}};linkError=null;}};
@@ -106,7 +105,7 @@ it.each(["changed URL","wrong actor","wrong business","wrong customer","legacy d
 
 function begin(customerPortal:boolean,customerPublicLink:string|null,customerFileIds?:string[]){
  const rpc=vi.fn(async(..._args:unknown[])=>({data:{status:"accepted"},error:null}));
- const make=new Function("env",compile("const {customerPortal,customerPublicLink,customerFileIds,customerCaller,supabaseClient,interactiveInput,validatedData,userText,customerQuery}=env;const customerInvoicesSelected=false;const "+declaration("beginTurn")+";return beginTurn;"));
+ const make=new Function("env",compile("const {customerPortal,customerPublicLink,customerFileIds,customerCaller,supabaseClient,interactiveInput,validatedData,userText,customerQuery}=env;const "+declaration("beginTurn")+";return beginTurn;"));
  return {rpc,call:make({customerPortal,customerPublicLink,customerFileIds,customerCaller:{rpc},supabaseClient:{rpc},interactiveInput:{kind:"message"},
   validatedData:{threadId:thread,requestIntentId:intent},userText:"Read the public guide",customerQuery:null})};
 }
@@ -121,9 +120,9 @@ it("preserves original no-link and owner begin paths",async()=>{
 });
 it.each(["FINAL","WITHHELD","INTERRUPTED","REFUSED"])("settles %s only with the original accepted link or source-free cleanup",async state=>{
  const rpc=vi.fn(async(..._args:unknown[])=>({data:id(9),error:null}));
- const make=new Function("env",compile("const {supabase,supabaseClient,user,interactiveReceiptScope,customerPublicLinkSnapshot,customerTerminalSource,customerProgressTerminalSource,customerSessionsTerminalSource,customerFilesTerminalSource,customerPublicLinkTerminalSource,customerInvoicesTerminalSource,z}=env;const customerSourceSnapshot=null,customerProgressSnapshot=null,customerSessionsSnapshot=null,customerFilesSnapshot=null,customerInvoicesSnapshot=null;const customerPortal=true;const "+declaration("appendAssistant")+";return appendAssistant;"));
+ const make=new Function("env",compile("const {supabase,supabaseClient,user,interactiveReceiptScope,customerPublicLinkSnapshot,customerTerminalSource,customerProgressTerminalSource,customerSessionsTerminalSource,customerFilesTerminalSource,customerPublicLinkTerminalSource,z}=env;const customerSourceSnapshot=null,customerProgressSnapshot=null,customerSessionsSnapshot=null,customerFilesSnapshot=null;const "+declaration("appendAssistant")+";return appendAssistant;"));
  await make({supabase:{rpc},supabaseClient:{rpc},user:{id:actor},interactiveReceiptScope:{thread,tenant,intent},customerPublicLinkSnapshot:snapshot,
-  customerTerminalSource,customerProgressTerminalSource,customerSessionsTerminalSource,customerFilesTerminalSource,customerPublicLinkTerminalSource,customerInvoicesTerminalSource,z})({
+  customerTerminalSource,customerProgressTerminalSource,customerSessionsTerminalSource,customerFilesTerminalSource,customerPublicLinkTerminalSource,z})({
    p_thread_id:thread,p_role:"assistant",p_content:"A real result, if read",p_bundle_ref:{turn_state:{state},customer_public_link:{url:"https://example.org/forged"}}});
  const args=rpc.mock.calls[0][1] as Record<string,unknown>,bundle=args.p_bundle_ref as Record<string,unknown>;
  expect(rpc.mock.calls[0][0]).toBe("paige_chat_interactive_settle");expect(args).toMatchObject({p_thread:thread,p_actor:actor,p_tenant:tenant,p_intent:intent});

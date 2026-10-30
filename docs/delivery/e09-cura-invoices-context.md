@@ -2,6 +2,8 @@
 
 ## Database-first production order
 
+This is the companion Chat mount in PR #3117, based on native-first PR #3118. It restores the exact prepared consumer after inheriting the native predecessor. It becomes eligible for production only after #3118 is normally merged and native60009 is actually applied/read back. The following native-first description records the parent release boundary; it does not mean this companion lacks its prepared Root integration.
+
 The release is split into two dependent increments to preserve ordinary CURA during rollout. This native branch supplies only original invoice context/admission/terminal/history/publication and the existing native fixture. It does **not** import the new consumer into Root or change the deployed Chat model path. The complete prepared consumer and its143 passing cases remain preserved in companion PR #3117 at source005eb8407cfcde47cc3f47b7cbfd0c16e9dc07ab. That consumer must follow native60009's normal merge, production application and exact authoritative readback. Native source alone is not a working invoice answer or a completed pillar.
 
 Reason: the existing production Edge and migration pipelines run independently. The prepared consumer intentionally refuses an unverifiable accepted invoice source; mounting it before its new native API is present could interrupt ordinary Chat. Releasing the additive native contract first avoids that transient dependency without weakening refusal or adding a fallback authority. Same approved implementation and full outcome, no permanent shipping-dark scope reduction.

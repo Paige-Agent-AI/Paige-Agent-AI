@@ -1,0 +1,51 @@
+{
+  "implementation": "e424b1d497e49cc0541545d9d8ad5c281add9125",
+  "mode": "synthetic original-component render",
+  "sourcePins": [
+    {
+      "path": "src/hooks/useClientPortalMessages.ts",
+      "sha256": "90f6a1e4971a736a4cd9110cd0ec3ee277944c79a31200f955f503dd233bfa34"
+    },
+    {
+      "path": "src/pages/app/Messages.tsx",
+      "sha256": "b844ed5baf3b372a57ca0a23ea91e62b25e1babf3a7ccc628fd205fd9cca83af"
+    },
+    {
+      "path": "src/components/app/AppNav.tsx",
+      "sha256": "c5abb43842d3e50ad4d29e607b2d04fd78a22e7b886374c96867bb643c40816e"
+    },
+    {
+      "path": "src/index.css",
+      "sha256": "85a3adb5668238e91cdb6c8189488db1fd24ce6698f7456ae23a3de6aa572482"
+    },
+    {
+      "path": "scripts/live-drive/harness/portal-messages-customer-mount/main.tsx",
+      "sha256": "f5d5af84aafc8e1e28b8fd08f0d9b68283a63e1122f98e22dd959657510adcfb"
+    },
+    {
+      "path": "scripts/live-drive/harness/portal-messages-customer-mount/stubs.ts",
+      "sha256": "59deb25b8eea7cfa8a0659196c272d313496b48e0017fc2798cbcd1713b17d7f"
+    }
+  ],
+  "screenshots": [
+    {
+      "path": "desktop-malformed.png",
+      "sha256": "78f906b818acaf52ae88532689e88b61786d4ce42831e0cff0608f6d60575549"
+    },
+    {
+      "path": "desktop-recovered.png",
+      "sha256": "9760d12f2d13f398c3c7135b372c2f031620786d6bc0f6bee06036cb0c5c8070"
+    },
+    {
+      "path": "mobile-partial-dark.png",
+      "sha256": "e4fed4c96ad66029d76e1b0a9a0aefde22865d4956543c911d36568e3cf59212"
+    },
+    {
+      "path": "mobile-recovered-dark.png",
+      "sha256": "c31579cf56d3445f4fe581bcb5b3c4620b517468411248348bb8839b9fd9cce2"
+    }
+  ],
+  "authenticatedRuntime": "UNVERIFIED",
+  "physicalIPhone": "UNVERIFIED",
+  "imageGeneration": false
+}

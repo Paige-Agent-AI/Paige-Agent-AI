@@ -34,3 +34,34 @@ it("prepares an explicit reviewed deadline removal with the original version",as
 it("does not prepare changes while the authoritative read is unavailable",async()=>{
  await render(task,true);await changePerson();await click("Review reassignment");expect(propose).not.toHaveBeenCalled();
 });
+const changeEffort=async(value:string)=>{
+ const input=node.querySelector<HTMLInputElement>('input[aria-label="Task effort estimate in minutes"]')!;
+ await act(async()=>{Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,"value")!.set!.call(input,value);input.dispatchEvent(new Event("input",{bubbles:true}));});
+};
+it("prepares only the exact effort value and original version for review",async()=>{
+ await render({...task,estimated_minutes:15});await changeEffort("30");await click("Review effort estimate");
+ expect(propose).toHaveBeenCalledOnce();expect(propose.mock.calls[0][0].command).toEqual({action:"task.update",task_id:task.id,expected_updated_at:task.updated_at,patch:{estimated_minutes:30}});
+ expect(mock.rpc).toHaveBeenCalledTimes(1);
+});
+it("prepares recorded zero and a separate explicit clear",async()=>{
+ await render({...task,estimated_minutes:null});await changeEffort("0");await click("Review effort estimate");
+ expect(propose.mock.calls[0][0].command.patch).toEqual({estimated_minutes:0});
+});
+it("clears a saved estimate without treating it as zero",async()=>{
+ await render({...task,estimated_minutes:0});
+ const label=Array.from(node.querySelectorAll("label")).find(x=>x.textContent?.includes("Remove the recorded effort estimate"))!;
+ await act(async()=>label.querySelector<HTMLInputElement>("input")!.click());await click("Review effort estimate");
+ expect(propose.mock.calls[0][0].command.patch).toEqual({estimated_minutes:null});
+});
+it.each(["-1","0.5","2147483648",""])("refuses invalid or empty effort %s",async value=>{
+ await render({...task,estimated_minutes:15});await changeEffort(value);await click("Review effort estimate");
+ expect(propose).not.toHaveBeenCalled();expect(node.textContent).toContain("Enter a valid whole-minute estimate");
+});
+it("withholds effort controls when native administration is refused",async()=>{
+ mock.rpc.mockResolvedValue({data:false,error:null});await render();
+ expect(node.querySelector('input[aria-label="Task effort estimate in minutes"]')).toBeNull();
+});
+it("refuses stale or unavailable effort proposals",async()=>{
+ await render({...task,estimated_minutes:15});await changeEffort("30");await render({...task,estimated_minutes:15,updated_at:"2026-10-10T12:01:00Z"});await click("Review effort estimate");
+ expect(propose).not.toHaveBeenCalled();
+});

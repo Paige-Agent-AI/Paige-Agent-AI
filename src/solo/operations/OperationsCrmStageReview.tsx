@@ -25,8 +25,10 @@ export function OperationsCrmStageReview({ operation: requested, refresh, onClos
   const [proposal,setProposal]=useState<{fingerprint:string;summary:string}|null>(null);
   const [notice,setNotice]=useState("");
   const alive=useRef(true),fence=useRef(false);
+  const backButton=useRef<HTMLButtonElement>(null);
   const latest=useRef(context);latest.current=context;
   useEffect(()=>{alive.current=true;return()=>{alive.current=false;};},[]);
+  useEffect(()=>{if(phase==="refused")backButton.current?.focus();},[phase]);
   const matches=()=>latest.current.accountContextStatus==="ready"&&latest.current.activeUserId===operation.actorId&&latest.current.activeTenantId===operation.tenantId;
   const forget=()=>{try {sessionStorage.removeItem(storageKey);}catch {/* No browser state confers authority. */}};
   const execute=async()=>{
@@ -60,10 +62,12 @@ export function OperationsCrmStageReview({ operation: requested, refresh, onClos
   const assignmentId=!stage&&operation.target.kind==="assignment"?operation.target.assigneeId:null;
   const summary=stage?(operation.targetStatus==="in_progress"?"Move this task to In progress.":`Move this task to ${operation.targetStatus === "pending" ? "Ready" : "Completed"}. Internal completion does not record client acceptance.`):
     operation.target.kind==="assignment"?"Change the responsible person for this task.":
+    operation.target.kind==="effort"?(operation.target.minutes===null?"Remove the recorded effort estimate from this task. Its effort will be unknown.":`Set this task’s effort estimate to ${operation.target.minutes} minutes. This does not reserve Calendar time.`):
     operation.target.dueAt===null?"Remove the recorded due date from this task.":`Set this task’s due date to ${new Intl.DateTimeFormat(undefined,{dateStyle:"medium",timeStyle:"short"}).format(new Date(operation.target.dueAt))}.`;
-  return <section className="ops-work-editor" aria-busy={phase==="busy"} aria-label={stage?"Review task stage change":"Review task assignment or due date"}>
+  return <section className="ops-work-editor" aria-busy={phase==="busy"} aria-label={stage?"Review task stage change":"Review task change"}>
     <h3>{restored?"Recover the earlier task change":stage?"Review the stage change":"Review the task change"}</h3>
     <p>{proposal?.summary??summary}</p>
+    {proposal&&!stage&&operation.target.kind==="effort"&&<p>{summary}</p>}
     {assignmentId&&<div><span>New responsible person</span>{members.some(person=>person.user_id===assignmentId)?<OperationsAssignee member={members.find(person=>person.user_id===assignmentId)} />:<p>Member unavailable in the current team read.</p>}</div>}
     {restored&&operation.taskId!==requested.taskId&&<p role="status">An earlier task change needs recovery. The newly selected task has not been changed.</p>}
     {notice&&<p role="alert">{notice}</p>}
@@ -72,7 +76,7 @@ export function OperationsCrmStageReview({ operation: requested, refresh, onClos
       <button className="ops-action-primary" type="button" disabled={phase==="busy"||phase==="refused"||changed} onClick={()=>void execute()}>
         {phase==="busy"?"Checking current work…":phase==="uncertain"?"Recover original action":phase==="approval"?"Approve exact change":stage?"Confirm stage change":"Confirm task change"}
       </button>
-      <button type="button" disabled={phase==="busy"} onClick={()=>{if(phase!=="uncertain")forget();onClose();}}>
+      <button ref={backButton} type="button" disabled={phase==="busy"} onClick={()=>{if(phase!=="uncertain")forget();onClose();}}>
         {phase==="uncertain"?"Close · recovery retained":"Back to details"}
       </button>
     </div>

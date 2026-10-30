@@ -1,0 +1,968 @@
+{
+  "boundary": "OFFLINE FULL OPERATIONS MOUNT; SYNTHETIC AUTH/TASK/EXECUTION PORTS; NO AUTHENTICATED OR PRODUCTION EFFECT PROOF",
+  "sourceBase": "4ed8acc917e45b43deebdee1231c218f32cd1abf",
+  "productInputs": [
+    {
+      "path": "src/solo/operations/OperationsWorkspace.tsx",
+      "sha256": "e4d49ba743f2aeacf4447d894cc5004756bba646bfdea201c06672f855c6a1c4"
+    },
+    {
+      "path": "src/index.css",
+      "sha256": "85a3adb5668238e91cdb6c8189488db1fd24ce6698f7456ae23a3de6aa572482"
+    },
+    {
+      "path": "src/components/tenant-shell/tenant-command-center-shell.css",
+      "sha256": "e9756f8cfc04a330748711d798afeda35cb8f02bd133914dfee9a5fe4b0bf355"
+    },
+    {
+      "path": "src/solo/operations/OperationsAssignee.tsx",
+      "sha256": "d47cc80849a7fbd0f9bc91ffdc5ccebcd3f46bc24771e4e390eb714464a00dd7"
+    },
+    {
+      "path": "src/solo/operations/OperationsWorkEditor.tsx",
+      "sha256": "fa04762f75f30eeab96ad61391b2fd06781d91dd0043a12993293a29b4caa52e"
+    },
+    {
+      "path": "src/solo/operations/OperationsWorkCreator.tsx",
+      "sha256": "cab2b22f14caface089feea983bc127ffb2a33f9c36c62714d944146f081ef9b"
+    },
+    {
+      "path": "src/solo/operations/OperationsWorkActivity.tsx",
+      "sha256": "8ede652ffa232088eaeb1a67c668f0e388f9f0cb7cbf57c393a214852138c93e"
+    },
+    {
+      "path": "src/solo/operations/OperationsItemRelease.tsx",
+      "sha256": "34a7cdde4001acadf4cc122a1da6d6e02419169f7f8d249f07bab5ce8288b6fe"
+    },
+    {
+      "path": "src/solo/operations/operations-item-release.ts",
+      "sha256": "bdcc2921b52b55736bbc168e548a26c95b7ab7b6d8fad3a3ef02774b7b876254"
+    },
+    {
+      "path": "src/solo/operations/OperationsProjectCreator.tsx",
+      "sha256": "73f8fae5e490484dc810cdc2c440112e3f9ebaeca69d267dfa184b952caf7f9c"
+    },
+    {
+      "path": "src/solo/operations/OperationsProjectEditor.tsx",
+      "sha256": "7faab43dd1ac2c89ca178246fb6103d037759345776f32d494ea936d4c6f7e91"
+    },
+    {
+      "path": "src/solo/operations/OperationsWork.tsx",
+      "sha256": "bdfd8d5ae1b951fc1f578dba08bd9b44c2549b464b662ef476288e85ff8687cd"
+    },
+    {
+      "path": "src/solo/operations/operations-native-work.ts",
+      "sha256": "6088d748b01cc8925ae78e64f1d0866beffde0598d8bbff81b1a39bcba045d66"
+    },
+    {
+      "path": "src/solo/operations/operations-crm-work-command.ts",
+      "sha256": "1e2fd6a4b839d1d742244560997eda1bf3c9546d7380bff27cd58cccfea56c12"
+    },
+    {
+      "path": "src/solo/operations/OperationsCrmStageReview.tsx",
+      "sha256": "77faa29679d6bf471af794c557aa9bae6888395922c6cf98356fd884f186ff62"
+    },
+    {
+      "path": "src/solo/operations/OperationsCrmWorkEditor.tsx",
+      "sha256": "b9b180d1b03354a6e086ac458f55d80e0efcf469d8179038989ff650885a1e6f"
+    },
+    {
+      "path": "src/solo/operations/operations-presentation.ts",
+      "sha256": "6e61315e808af0701e8c8cb34e9021b8bff97f9961257fce2b70cf465a7d1844"
+    },
+    {
+      "path": "src/solo/operations/OperationsProjects.tsx",
+      "sha256": "6a938c3b8739dd3d6fcea015e1ee57db3a7e6dc1109340a4504dae0c3900a5c1"
+    },
+    {
+      "path": "src/solo/operations/OperationsOverview.tsx",
+      "sha256": "e69adc489c26c7c6b83e575bcc04b00d2c7b423eeb607a954e59f3c8f28b3b9b"
+    },
+    {
+      "path": "src/solo/operations/OperationsRecordedFindings.tsx",
+      "sha256": "e7e522707342193778d3959a7478a50eb361183842663eaed6023607c40a78cd"
+    },
+    {
+      "path": "src/solo/operations/OperationsZionHistory.tsx",
+      "sha256": "597946ebff071ba0731bec0ad6f557f9e7439196b1bff8536372797f8fb50fe0"
+    },
+    {
+      "path": "src/solo/operations/operations-overview-work.ts",
+      "sha256": "b828c44d62ac5f67c3db0c536b5e28d9e64fae4a9591ee407cac9db0ec20f253"
+    },
+    {
+      "path": "src/solo/operations/OperationsCapacity.tsx",
+      "sha256": "6bfe6d7865600a74dcf0a16891165206967423e373932a1e636243640e21103f"
+    },
+    {
+      "path": "src/solo/operations/OperationsDelivery.tsx",
+      "sha256": "3c737ac54e649068f487fd50f5876e47bd7d92f33b6bb2d9e989527492bcae74"
+    },
+    {
+      "path": "src/solo/operations/OperationsPlaybooks.tsx",
+      "sha256": "377a91b3af627052cd5e3269d1e46a63b2921304c48de522dca5deb8396f9dbf"
+    },
+    {
+      "path": "src/solo/operations/operations-source-contract.ts",
+      "sha256": "6ef3b484c2902e2a9b6fb623241a290ad460b62012fa2911b6d708a979e787d3"
+    },
+    {
+      "path": "src/solo/operations/operations-weekly-source.ts",
+      "sha256": "d891749430be5b4efc6010a2dfaa39cd55ee6297d9f2234de4cedcad9f3fbe33"
+    },
+    {
+      "path": "src/solo/operations/operations-task-focus.ts",
+      "sha256": "e612beb83323c720cb9b06cfcc0b760c47e638f9419329dd930c2ecb7f1ba931"
+    },
+    {
+      "path": "src/solo/operations/OperationsDeliveryInspection.tsx",
+      "sha256": "2240a8d46c9b16c2aafe614f5e8fe9f4c0975398ee29604f3d07129df7e2cfdf"
+    },
+    {
+      "path": "src/solo/operations/OperationsDeliveryReviewQueue.tsx",
+      "sha256": "bf7043e04e36866268b560562ad895a64bdaa2d972f8917cac9e3689eb6081c5"
+    },
+    {
+      "path": "src/solo/operations/operations-work-delivery-scope.ts",
+      "sha256": "a908de90dcafdc92e082b9725efb04b9d4b9e4e98aa1c0cbab38f201965efdb8"
+    },
+    {
+      "path": "src/solo/operations/operations-delivery-recovery-targets.ts",
+      "sha256": "8f10ed67154ceaa86c3448747d25cba7ce8f025abcdc15e783debc78f2343ab2"
+    },
+    {
+      "path": "src/solo/operations/operations-delivery-inspection.css",
+      "sha256": "db6fcc9717bcdb5a58a798c66342dbc0dcd40001b141be3c62248038b8fcedb1"
+    },
+    {
+      "path": "src/solo/operations/operations-workspace.css",
+      "sha256": "991896fedb7b77e4cd620aa6e8dab443cad9536c31481cbe7adc6e9afbf23a72"
+    },
+    {
+      "path": "src/lib/paigePromptHandoff.ts",
+      "sha256": "ff2ce8f41aa8f7b95b25c8a4675bde3f97f94a372ed2419e79ca30b6188a288f"
+    },
+    {
+      "path": "src/solo/paigeClientScope.ts",
+      "sha256": "670a2031a4f180b564348fcd2592a83a87a1f0fe4df43c67f28318c472fbd1c0"
+    },
+    {
+      "path": "src/solo/paigePublicPresenceScope.ts",
+      "sha256": "52f11ac31abcfb748744866c102b5a2f67139ede2c2bf6add0a0c2bad4b56d70"
+    },
+    {
+      "path": "src/contexts/ImpersonationContext.tsx",
+      "sha256": "cb640d21852f3ad416729db75e608da951dd722756692c51b1f058e806eb73ed"
+    },
+    {
+      "path": "src/lib/scopedUser.ts",
+      "sha256": "ba4a0e7293f21bdd9a9f7a19be4dde43fc65cfdf920fb6ee05e659309db3e7ca"
+    },
+    {
+      "path": "src/components/ui/sheet.tsx",
+      "sha256": "56877e67e260514dc8df4347ae2a0d516c9d5cfbb341d104da2a9bc9484865a5"
+    },
+    {
+      "path": "src/solo/data/useBusinessReview.ts",
+      "sha256": "fd2626dbbfddc85220a7f9ab7b4c097425d911017e874540f01daeef0508db86"
+    },
+    {
+      "path": "src/solo/executive-review.ts",
+      "sha256": "87ba37fb56d151b3643fb797db669843dcabd30cf11e0cc71667a5c14d1835eb"
+    },
+    {
+      "path": "src/solo/operations/operations-recorded-findings.css",
+      "sha256": "f9490234ef94a9e8ca0b1e1ab737b8976a3a0cf77e80ff9b15ed214bb0155578"
+    },
+    {
+      "path": "src/lib/links/workspaceLinks.ts",
+      "sha256": "ec9df60122c1d831a0db39e9b2f2b9fbae42303e7563c87e4e4ff84d63d6a8c2"
+    },
+    {
+      "path": "src/solo/operations/operations-crm-work-edit.ts",
+      "sha256": "6cc365f2191b102b3e324ba3c28a8701cd6351f8ec92091d9d29f5c7c5e4a8db"
+    },
+    {
+      "path": "src/solo/operations/operations-project-update.ts",
+      "sha256": "4b73cbf1013ddbd83bb600e2ed03cc82476cd800db9b1abd99025d870c4606f8"
+    },
+    {
+      "path": "src/components/ui/alert-dialog.tsx",
+      "sha256": "c8b01137c7552e63c9ccf2c38ef92e5417bd6616b6980d56d3015db027465283"
+    },
+    {
+      "path": "src/solo/operations/operations-delivery-reviews.ts",
+      "sha256": "59fd0362270a98bb318f4937b01bc9823031c57cf87901f948f099a7769ce230"
+    },
+    {
+      "path": "src/solo/operations/operations-delivery-source.ts",
+      "sha256": "6aff6452e60b63c57e9c95b0786c35429d5212534f72c87d20062a69533aba84"
+    },
+    {
+      "path": "src/solo/operations/operations-views.css",
+      "sha256": "18c5139a5966de593d2ad6480f1cdb676b834f10e077fc7927d5203ccc8d5e5e"
+    },
+    {
+      "path": "src/solo/operations/operations-delivery-local-recovery.ts",
+      "sha256": "c8b8af644117a72ad13ff6d9757ad0d58d337e5269fba0d66fc64acb486e3ce8"
+    },
+    {
+      "path": "src/solo/operations/OperationsDeliverablePreparation.tsx",
+      "sha256": "5f7f395fefef21ba87953ecf23fbda55c129e5316db991decf43249015b223ac"
+    },
+    {
+      "path": "src/solo/operations/OperationsStaffDeliveryReview.tsx",
+      "sha256": "05f9cba1a6235e594be09999c81255e0d077d40ffa836ed9fc1d7ca5118bb7b5"
+    },
+    {
+      "path": "src/solo/operations/operations-work-update.ts",
+      "sha256": "14158b51df6c86aca3c716935fba79da284f5f559451b2b6a38bbf92e0c2a23f"
+    },
+    {
+      "path": "src/hooks/useBeforeUnloadGuard.ts",
+      "sha256": "d4a4b3d02b7cccbea8b615cec0829027854d232db0a94ced6bf29187ec0cfd3e"
+    },
+    {
+      "path": "src/hooks/useUserRoles.ts",
+      "sha256": "91b236913c0a7e02efee04bfa2dbdd967d5bfcf3c8355c3e2c6aa42ab8691363"
+    },
+    {
+      "path": "src/lib/auth/accountSwitchGuard.ts",
+      "sha256": "81b5ceff2074c87aa364d70bd334b7d16c4a6311d52d83c267bdc9149c93dd97"
+    },
+    {
+      "path": "src/solo/weekly/WeeklyResponsibilityEntry.tsx",
+      "sha256": "8975693256a6fccb98acc6322e98ab67d95477adda9cb21092941c98e5965d1a"
+    },
+    {
+      "path": "src/solo/operations/OperationsWeek.tsx",
+      "sha256": "559a2b7de67e0764b213fb49e9cd2e50a4033f95574e599547fd4ef8582b245d"
+    },
+    {
+      "path": "src/solo/operations/operations-overview.css",
+      "sha256": "65e72a7d07eb8bfe4ef338cdfcd220b858df37dfb1866422e6ed914d5b223494"
+    },
+    {
+      "path": "src/solo/operations/operations-delivery-staff.ts",
+      "sha256": "e82faa815346f9ec301abcf97373a7f4314fab110b0f4fc73e01e9414f4b7062"
+    },
+    {
+      "path": "src/hooks/useKnowledgeDocuments.ts",
+      "sha256": "34f473274e6eb1032b779cda52c1d309c061ae02ff6306646fe7dd961c25e6d6"
+    },
+    {
+      "path": "src/lib/knowledge-service.ts",
+      "sha256": "66f0ecfd3df48591381e1aa15c60eb88e768ae38fe6e7e6cc6fa0d7d513c007f"
+    },
+    {
+      "path": "src/solo/owner-task-automations.tsx",
+      "sha256": "1be8ff96943bac92fb446aa6c245a5488c4e044aa410b290cf0e85619d98b3dc"
+    },
+    {
+      "path": "src/solo/settings-integrations.css",
+      "sha256": "a58aa56d0d2e1a888cd4d9c9653f2c16b239fe14890a9df74bd9d70b2b94a168"
+    },
+    {
+      "path": "src/solo/operations/zion-assignment-read.ts",
+      "sha256": "7dbb6a5033cfde6d42fa2b1cdfa6f598ff8950a821d63003cccbbe9219ae09f8"
+    },
+    {
+      "path": "src/solo/operations/operations-zion-history.css",
+      "sha256": "d1368882d7abe49c0922fe38891f4781ff1e767e3cfdbd3ca845e155d7e6a536"
+    },
+    {
+      "path": "src/solo/team-workspace-contract.ts",
+      "sha256": "8fee82e6057b3425370e648be878f6c324d4415d3b6100155e6a1d2b2c39371b"
+    },
+    {
+      "path": "src/solo/operations/operations-project-create.ts",
+      "sha256": "cbdce3c997bc95ec2692cbfb419e61a3a4e24ec7ec639cd7d2197e083e2ac586"
+    },
+    {
+      "path": "src/components/ui/avatar.tsx",
+      "sha256": "4a8bc00e5514912c54d414e207266fa100906aec2754d590adcc8ccc46d4c5c9"
+    },
+    {
+      "path": "src/solo/operations/operations-work-create.ts",
+      "sha256": "fa432d93bcdbec44815410f39e6b4d2ef511f7c5207f4fb050c7f4d44e43d599"
+    },
+    {
+      "path": "src/lib/client-portal-access.ts",
+      "sha256": "45a1247b93721b6c7bcc5f8163a5c4876c9cd4e2dd5a4c7eb84c45bc19992abe"
+    },
+    {
+      "path": "src/solo/operations/OperationsEngagementEvidence.tsx",
+      "sha256": "ba3aefdc6b3d88d320970e49aee653ef11450e46bd45f0d4decb7d485d6ef79e"
+    },
+    {
+      "path": "src/solo/operations/operations-engagement-project.ts",
+      "sha256": "1b4606e1178fb97b8a9e900cd2820e024e8f2498ebef7d356b6fc87f84dfd2ec"
+    },
+    {
+      "path": "src/solo/operations/operations-delivery.css",
+      "sha256": "f8a2c1f25b769d20764aff5659dd4caa9a7860b1f01157404243b9d2025b9887"
+    },
+    {
+      "path": "src/solo/useSoloCommercialTerms.ts",
+      "sha256": "e3223a2fd9e912771e4da9b93a9d266489f3eb5b5430d706dd973b652f40f493"
+    },
+    {
+      "path": "src/solo/useSoloAgreementSignings.ts",
+      "sha256": "629f17785a98e258f2b3747d92d87602b6325ba49b2f94602091ab1116245055"
+    },
+    {
+      "path": "src/solo/catalog-offers.tsx",
+      "sha256": "df369a826ecee87ef97e96a6077e47a506f07ce7e2ac979dbf0496a5eac0818d"
+    },
+    {
+      "path": "src/lib/utils.ts",
+      "sha256": "d1f1e0d62cb8d8d1e04c26e14de842d8a151f75812d81b046c65b5d1fe8e4b27"
+    },
+    {
+      "path": "src/components/ui/button.tsx",
+      "sha256": "ec4ff2011e99ab79bb56528befb6904cb9ea4c58eefcc4e325b5b18e2c832103"
+    },
+    {
+      "path": "src/solo/data/useBusinessTimeZone.ts",
+      "sha256": "c53f1dff5e929f521ea2eeaaf7ae0706e0e7537511d9986cc8b56a2e1d860bb8"
+    },
+    {
+      "path": "src/solo/operations/operations-week.ts",
+      "sha256": "73be807c7ff94a2bc3a8dda8ae821492223742431183aaf444b61c98e569a75a"
+    },
+    {
+      "path": "src/solo/operations/OperationsWeeklyWorkload.tsx",
+      "sha256": "b57d6151d231e8c4ab24bfe158fa9bf91e1c6b0677717f630749c6e3ab2d440c"
+    },
+    {
+      "path": "src/solo/operations/operations-week.css",
+      "sha256": "db6ce6e497506b23f00830f6434e88ff24779d4af089ad9ae65826263f722076"
+    },
+    {
+      "path": "src/solo/data/useOwnerTaskAutomations.ts",
+      "sha256": "447ec3325c13d460c727f27f648855fb1e61c7ee4b44b2d2a8a8a34478afb42e"
+    },
+    {
+      "path": "src/solo/owner-task-process-history.tsx",
+      "sha256": "ebf4d1a87c1bf3ae7fbe0b1ab748afcc611e903f9ed06fbde7b3e145e0367d42"
+    },
+    {
+      "path": "src/solo/_shared.tsx",
+      "sha256": "b6537ce521b4d83232dfcc21b5f03c00202d6360c1678f4d72628835aba0ce0c"
+    },
+    {
+      "path": "src/solo/useCatalogOffers.ts",
+      "sha256": "4afdb0eaf5c05d9780d7c398ca7a0b05470bc2a47e0e43f48b9c06e71d564bcd"
+    },
+    {
+      "path": "src/solo/catalog-offers.css",
+      "sha256": "3baf710ea48c59b7728758cdaba1d229d6acd8c8cdbb2485cd4170cb5088cb90"
+    },
+    {
+      "path": "src/lib/contact-methods.ts",
+      "sha256": "810bf4319fd744f4a27a59d868cb890376c156d9fabd7314a08ebb0c04f09e6d"
+    },
+    {
+      "path": "src/solo/operations/operations-engagement-readiness.ts",
+      "sha256": "a2f9818bd4c5e678354b924c35eddcb118f9c306cfde30cf782f01d48cf36f0f"
+    },
+    {
+      "path": "src/solo/operations/useOperationsEngagementEvidence.ts",
+      "sha256": "939b8cbc2c7f5540cc85195e671a2c693f041894fd1f227349c5b0384ae2eef4"
+    },
+    {
+      "path": "src/solo/operations/OperationsEngagementHandoff.tsx",
+      "sha256": "0839ebfed98ca9a143c7d2d2f306923e49c101c7baa231a9b6d042c96fbe0166"
+    },
+    {
+      "path": "src/solo/operations/operations-staff-delivery-review.css",
+      "sha256": "933346721554d0c362b7955057deb3fb113c1ca0f2e7b62d18b3a482e0dffdb0"
+    },
+    {
+      "path": "src/components/ui/select.tsx",
+      "sha256": "a2b62120a033b36c8d6c4a1693aa9231645fa69251740e15eacec24c1eea4d82"
+    },
+    {
+      "path": "src/lib/client-portal-scope.ts",
+      "sha256": "7da8e203a5153adf3a834aba79d7350e0db4420fbc710007bdee9221a56690c9"
+    },
+    {
+      "path": "src/solo/sales/agreementVocabulary.ts",
+      "sha256": "b37288058de91d37dcaa49f1657363e6ef663d65441fb6d5fd8ae88cdd03f69c"
+    },
+    {
+      "path": "src/solo/sales/agreementPdfIntake.ts",
+      "sha256": "0c4065a341baff61ff6490d2b03a95c2087f3edc7cb6c3f2684c557078cad0c2"
+    },
+    {
+      "path": "src/lib/tier/tierFeatures.ts",
+      "sha256": "a1ec9dda16861ef87c6ef7f2832e156cdda774138954ac185dfc8b04930706b2"
+    },
+    {
+      "path": "src/solo/weekly/useWeeklyResponsibility.ts",
+      "sha256": "1024f3c1fa174e2d03b775834da27e62ee9e63ebef7b4b613e44cf912714afbe"
+    },
+    {
+      "path": "src/solo/weekly/WeeklyResponsibilityPanel.tsx",
+      "sha256": "13028fcacf67cfcfddf2952be436c0becab74883b40d8a79c7403acc899e9e2a"
+    },
+    {
+      "path": "src/solo/weekly/weekly-responsibility.ts",
+      "sha256": "796067513eaad0f1144c92757c9dfe3aecf092e6f973c04095cae25d14446553"
+    },
+    {
+      "path": "src/solo/weekly/WeeklyDraftComposer.tsx",
+      "sha256": "34377f6b9a3e42dd44850235459abed9792a1fad88bbdb69fd4c429327d8cf7b"
+    },
+    {
+      "path": "src/components/tenant-shell/tenantShellRoutes.ts",
+      "sha256": "c88b329c2667f125e47cf9a5a0b8ed407f6df2416917570f33bf84a50c470b0d"
+    },
+    {
+      "path": "src/lib/userClock.ts",
+      "sha256": "9582325d04f5b18599330a1126f66886800e0b59f2982400e736e9a1132e42cf"
+    },
+    {
+      "path": "src/solo/weekly/weekly-owner-read.ts",
+      "sha256": "7d5678ffe83e4bedfdc466207fa19872fc71b4cb9125cd5733862c853e01ecd7"
+    },
+    {
+      "path": "src/solo/data/ownerTaskAutomation.ts",
+      "sha256": "e28fccd3c644178c10ccd4f262175ccf0532eec30416370764fc2887731fe24a"
+    },
+    {
+      "path": "src/solo/operations/operations-engagement-read.ts",
+      "sha256": "8c78081bc1a064d56e89df51d69b3c9d85a7ebc2a70c2007066dcfa9efc4b2a5"
+    },
+    {
+      "path": "src/solo/settings-contract.ts",
+      "sha256": "dac7493f3c3c665d3697cf68b54537af435ce9548aa06fc5a4801e96f44e1656"
+    },
+    {
+      "path": "src/solo/operations/operations-engagement-handoff.ts",
+      "sha256": "d108c49cb762f96054824888afcce44bad15a5618d5d321f54cdeef3e7e344f7"
+    },
+    {
+      "path": "src/solo/operations/operations-engagement-handoff-write.ts",
+      "sha256": "b634ff270341c2240cbb0241ba9d4af7e73e09fb3d8752922b27b5b207210c8e"
+    },
+    {
+      "path": "src/solo/operations/operations-handoff-recovery.ts",
+      "sha256": "557b4f135f5607bd5bcf5c6315d92b8ae9c5a8d1d03a1b56053098ad4fb1624f"
+    },
+    {
+      "path": "src/solo/operations/operations-handoff-intent.ts",
+      "sha256": "68c7ac65cdf45098acc73be5a8720b5389db5ac942cd72d8c1051d41a334b114"
+    },
+    {
+      "path": "src/solo/operations/operations-handoff-date.ts",
+      "sha256": "ff4ecee41ea95041d115850aa898a20de9acc50ffd0493d70b7216152c64de0c"
+    },
+    {
+      "path": "src/solo/operations/operations-weekly-workload.ts",
+      "sha256": "56a9fad722053792870046e3b111fc41179859fb4643f39f2d69c099022877de"
+    },
+    {
+      "path": "src/solo/weekly/WeeklyScheduleChange.tsx",
+      "sha256": "dd97ffe954f4561ac895c6cd449db8cde0ef54d105336544bee4138af2327946"
+    },
+    {
+      "path": "src/solo/weekly/weekly-responsibility.css",
+      "sha256": "a999cecb1193b49590ed830f633a7644bcff0d37e45003e4fbec3fc3673f8323"
+    },
+    {
+      "path": "src/solo/weekly/weekly-draft-command.ts",
+      "sha256": "884adc1efd51b9c09d000f79691a2ed954f0be133e40d99f596f9e25f2978380"
+    },
+    {
+      "path": "src/solo/weekly/WeeklyDraftReview.tsx",
+      "sha256": "71603bc24810bcc3042001110a22ccf0438f74b2826467df3cc65af93f783f4b"
+    },
+    {
+      "path": "src/components/chat/PaigeConfirmCard.tsx",
+      "sha256": "7dac99fbfd31e41a791204cfff88a12d1af93876f8cdcc496423a20e60b9f952"
+    },
+    {
+      "path": "src/components/chat/confirmPreview.ts",
+      "sha256": "194f9441087a3a04298797d38b063db39beca091fbc51261e67113931e0dc7ce"
+    }
+  ],
+  "fixturePorts": [
+    {
+      "path": "work/effort-ui-native/main.tsx",
+      "sha256": "0cfbf0c76d79e114288d7cb321b025446323dd3f0583236b35491c70a779c98b",
+      "source": "import './guard';\nimport '../../scripts/live-drive/harness/operations-release-mount/main';\n"
+    },
+    {
+      "path": "work/effort-ui-native/guard.ts",
+      "sha256": "0e5911af051107486b4d63b0ac561bd298b19ee3560e7abd12dba1dc2eb1a34d",
+      "source": "// Private offline UI fixture: no backend, account, provider or business effect.\nwindow.fetch=async()=>{throw new Error('Offline effort fixture forbids network');};\nwindow.WebSocket=class{constructor(){throw new Error('Offline effort fixture forbids WebSocket');}} as unknown as typeof WebSocket;\nwindow.XMLHttpRequest=class{constructor(){throw new Error('Offline effort fixture forbids XHR');}} as unknown as typeof XMLHttpRequest;\nnavigator.sendBeacon=()=>false;\n"
+    },
+    {
+      "path": "work/effort-ui-native/ports.ts",
+      "sha256": "d8377d0c0fd1f231317b7a8b834731809c949620347127a13241038f61fb1474",
+      "source": "export * from '../../scripts/live-drive/harness/operations-release-mount/stubs';\nimport {useCallback,useMemo,useSyncExternalStore} from 'react';\nimport {ACTOR,TENANT,supabase as originalPorts} from '../../scripts/live-drive/harness/operations-release-mount/stubs';\nconst mode=new URLSearchParams(location.search).get('effortState')??'ready';\nconst key='offline-exp05-effort-source';\nconst initial={id:'ef050000-0000-4000-8000-00000000a001',tenant_id:TENANT,user_id:ACTOR,title:'Prepare the client delivery review',description:'Neutral offline workflow fixture. No customer or provider action.',status:'pending',due_date:null,updated_at:'2026-10-29T12:00:00.123456Z',created_at:'2026-10-28T12:00:00Z',deal_id:null,biz_id:null,recorded_priority:'P1',estimated_minutes:15};\nlet task=JSON.parse(sessionStorage.getItem(key)??'null')??initial;\nconst listeners=new Set<()=>void>();\nconst subscribe=(notify:()=>void)=>{listeners.add(notify);return()=>{listeners.delete(notify);};};\nconst snapshot=()=>task;\nexport function useOperationsCrmWork(){\n const record=useSyncExternalStore(subscribe,snapshot);\n const tasks=useMemo(()=>[record],[record]);\n const refresh=useCallback(async()=>[task],[]);\n const readTask=useCallback(async(id:string)=>({status:'available',found:id===task.id,task:id===task.id?task:null}),[]);\n return{tasks,loading:false,error:mode==='unavailable'?'Offline fixture source refused':null,forbidden:false,hasMore:false,refresh,readTask};\n}\nexport const supabase={...originalPorts,\n rpc:(name:string,args:Record<string,unknown>={})=>name==='is_tenant_admin'?Promise.resolve({data:mode!=='denied',error:null}):originalPorts.rpc(name,args),\n functions:{invoke:async(name:string,{body}:{body:Record<string,any>})=>{\n  if(name!=='crm-command')return{data:null,error:{message:'Offline fixture refuses unimplemented transport'}};\n  if(mode==='refused')return{data:{ok:false,outcome:'refused'},error:null};\n  const operation=body.command;\n  if(body.expected_tenant_id!==TENANT||operation.task_id!==task.id||operation.action!=='task.update'||Object.keys(operation.patch??{}).join(',')!=='estimated_minutes')throw Error('Offline fixture unexpected command');\n  const cacheKey='offline-effort-result:'+body.idempotency_key,cached=sessionStorage.getItem(cacheKey);\n  if(cached)return{data:JSON.parse(cached),error:null};\n  if(!body.approved_fingerprint)return{data:{outcome:'approval_required',fingerprint:'offline-effort-fingerprint',summary:'Offline Trust response · review the exact Task change below.'},error:null};\n  if(body.approved_fingerprint!=='offline-effort-fingerprint'||operation.expected_updated_at!==task.updated_at)return{data:{ok:false,outcome:'refused'},error:null};\n  const minutes=operation.patch.estimated_minutes;\n  if(minutes!==null&&(!Number.isSafeInteger(minutes)||minutes<0||minutes>2147483647))return{data:{ok:false,outcome:'refused'},error:null};\n  task={...task,estimated_minutes:minutes,updated_at:new Date().toISOString()};\n  sessionStorage.setItem(key,JSON.stringify(task));for(const notify of listeners)notify();\n  const result={ok:true,readback:{id:task.id,metadata:minutes===null?{fixture_other:'preserved'}:{fixture_other:'preserved',estimated_minutes:minutes},external_effect:false,notification_sent:false,updated_at:task.updated_at}};\n  sessionStorage.setItem(cacheKey,JSON.stringify(result));\n  return mode==='unknown'?{data:{outcome_unknown:true},error:null}:{data:result,error:null};\n }},\n};\n"
+    },
+    {
+      "path": "work/effort-ui-native/index.html",
+      "sha256": "a14bac33540a828327926c798d060fd8397714a13d09e2af85e691109c5d9b8e",
+      "source": "<!doctype html><html lang=\"en\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'self';script-src 'self';style-src 'self' 'unsafe-inline';font-src 'self' data:;img-src 'self' data:;connect-src 'none';form-action 'none';base-uri 'none'\"><title>EXP05 neutral effort workflow — offline fixture</title><style>[data-harness-tag]{top:0!important;bottom:auto!important}</style></head><body><div id=\"root\"></div><script type=\"module\" src=\"/main.tsx\"></script></body></html>\n"
+    },
+    {
+      "path": "work/effort-ui-native/vite.config.ts",
+      "sha256": "7d5b6b3aaffa52e8c23604af2a546ece74d5bf73b3c3b08c3cadafdcb73af28c",
+      "source": "import path from 'node:path';\nimport {readFileSync,writeFileSync} from 'node:fs';\nimport {createHash} from 'node:crypto';\nimport base from '../../scripts/live-drive/harness/operations-release-mount/vite.config';\nconst root=import.meta.dirname,repo=path.resolve(root,'../..'),ports=path.join(root,'ports.ts');\nconst sha=(p:string)=>createHash('sha256').update(readFileSync(p)).digest('hex');\nexport default {...base,root,envDir:root,publicDir:path.join(repo,'public'),cacheDir:path.join(root,'cache'),\n resolve:{...base.resolve,alias:base.resolve.alias.map(entry=>({...entry,replacement:entry.replacement.endsWith('stubs.ts')?ports:entry.replacement}))},\n build:{outDir:path.join(root,'dist'),emptyOutDir:false},\n plugins:[...base.plugins,{name:'private-effort-source-manifest',generateBundle(){const repoPosix=repo.replaceAll('\\\\','/');const inputs=[...this.getModuleIds()].filter(p=>p.replaceAll('\\\\','/').startsWith(repoPosix+'/src/')&&!p.includes('?')).map(p=>({path:path.relative(repo,p).replaceAll('\\\\','/'),sha256:sha(p)}));if(inputs.length<4)throw Error('No authoritative product input manifest');writeFileSync(path.join(root,'source-manifest.json'),JSON.stringify({boundary:'OFFLINE FULL OPERATIONS MOUNT; SYNTHETIC AUTH/TASK/EXECUTION PORTS; NO AUTHENTICATED OR PRODUCTION EFFECT PROOF',inputs},null,2));}}],\n};\n"
+    },
+    {
+      "path": "work/effort-ui-native/serve.mjs",
+      "sha256": "2a24eba019c48e7617258ac1fb652adf0a2df623cf8e4889365792d547826e62",
+      "source": "import http from 'node:http';\nimport fs from 'node:fs';\nimport path from 'node:path';\nconst root=path.resolve(import.meta.dirname,'dist');\nconst server=http.createServer((req,res)=>{const url=new URL(req.url,'http://localhost');const wanted=path.resolve(root,'.'+decodeURIComponent(url.pathname));if(!wanted.startsWith(root+path.sep)){res.writeHead(403).end();return;}const file=fs.existsSync(wanted)&&fs.statSync(wanted).isFile()?wanted:path.join(root,'index.html');const ext=path.extname(file);res.setHeader('Content-Type',({'.html':'text/html','.js':'text/javascript','.css':'text/css','.woff2':'font/woff2','.svg':'image/svg+xml'})[ext]??'application/octet-stream');res.setHeader('Cache-Control','no-store');res.end(fs.readFileSync(file));});\nserver.listen(0,'127.0.0.1',()=>console.log(JSON.stringify({origin:'http://127.0.0.1:'+server.address().port,boundary:'offline synthetic full Operations mount'})));\n"
+    }
+  ],
+  "compiledAssets": [
+    {
+      "path": "assets/index-BdnlZvc5.css",
+      "sha256": "28a287157d22a59f4b2978a1deef0102aa6f35f43a3a507fdd6cc094313e0429"
+    },
+    {
+      "path": "assets/index-BIQCOC7r.js",
+      "sha256": "de1197a75580e5aff813909024859f2f59f5ae3d4b0ae078c051d7c9b41ff630"
+    }
+  ],
+  "fixtureLabelOnly": "Move synthetic marker from bottom to top; no product styling transform",
+  "frames": [
+    {
+      "name": "dark-narrow-approval.png",
+      "sha256": "6eaced686768177a5a24712cc99ddc6eb72a218849df4ac181a35ba605ca272c",
+      "geometry": {
+        "controls": [
+          {
+            "disabled": false,
+            "height": 44,
+            "label": "Approve exact change",
+            "width": 166.3874969482422
+          },
+          {
+            "disabled": false,
+            "height": 44,
+            "label": "Back to details",
+            "width": 118.5374984741211
+          }
+        ],
+        "dialog": "Prepare the client delivery reviewNeutral offline workflow fixture. No customer or provider action.Refresh task detailsResponsible personMLMorgan LeeStatusReadyPriorityP1Due dateNot scheduledEstimated effort30 minutesSourceCRM taskReview the task changeOffline Trust response · review the exact Task change below.Set this task’s effort estimate to 45 minutes. This does not reserve Calendar time.Approve exact changeBack to detailsClose",
+        "focus": "Approve exact change",
+        "overflow": false,
+        "url": "http://127.0.0.1:57444/solo/42/operations/work?theme=dark&effortState=unknown",
+        "viewport": {
+          "height": 700,
+          "width": 320
+        }
+      }
+    },
+    {
+      "name": "dark-narrow-edit-keyboard.png",
+      "sha256": "77235f07dffd5e70597c1be634f3cf1c12908fffacd8a6764c4da251ed1f6ac9",
+      "geometry": {
+        "controls": [
+          {
+            "disabled": false,
+            "height": 44,
+            "label": "Task effort estimate in minutes",
+            "width": 261.6000061035156
+          },
+          {
+            "disabled": false,
+            "height": 18,
+            "label": "",
+            "width": 18
+          },
+          {
+            "disabled": false,
+            "height": 44,
+            "label": "Review effort estimate",
+            "width": 261.6000061035156
+          }
+        ],
+        "dialog": "Prepare the client delivery reviewNeutral offline workflow fixture. No customer or provider action.Refresh task detailsResponsible personMLMorgan LeeStatusReadyPriorityP1Due dateNot scheduledEstimated effort30 minutesSourceCRM taskReview a stage changependingIn progressCompletedPlan the next stepResponsible personMorgan LeeSam OkaforReview reassignmentNew due date and timeTime uses your device’s timezone. Review the exact date before confirming.Review due dateEffort estimate (minutes)Saved effort helps review workload. It does not reserve time; zero is a recorded estimate.Remove the recorded effort estimateReview effort estimateClose",
+        "focus": "",
+        "overflow": false,
+        "url": "http://127.0.0.1:57444/solo/42/operations/work?theme=dark&effortState=unknown",
+        "viewport": {
+          "height": 700,
+          "width": 320
+        }
+      }
+    },
+    {
+      "name": "dark-narrow-original-recovery.png",
+      "sha256": "800c8e7cebab38044ec1fdafeedbddd78b52e4ea78ad3e66e218469f91d3d5bf",
+      "geometry": {
+        "controls": [
+          {
+            "disabled": false,
+            "height": 44,
+            "label": "Recover original action",
+            "width": 169.8625030517578
+          },
+          {
+            "disabled": false,
+            "height": 44,
+            "label": "Close · recovery retained",
+            "width": 180.4375
+          }
+        ],
+        "dialog": "Recover the earlier task change: Prepare the client delivery reviewNeutral offline workflow fixture. No customer or provider action.Refresh task detailsResponsible personMLMorgan LeeStatusReadyPriorityP1Due dateNot scheduledEstimated effort45 minutesSourceCRM taskRecover the earlier task changeSet this task’s effort estimate to 45 minutes. This does not reserve Calendar time.Recover original actionClose · recovery retainedClose",
+        "focus": "Recover original action",
+        "overflow": false,
+        "url": "http://127.0.0.1:57444/solo/42/operations/work?theme=dark&effortState=unknown",
+        "viewport": {
+          "height": 700,
+          "width": 320
+        }
+      }
+    },
+    {
+      "name": "dark-narrow-permission-denied.png",
+      "sha256": "533254393116097627f44a809e6a534fd7cb13a3c8b9851c99c261e0120889d0",
+      "geometry": {
+        "controls": [],
+        "dialog": "Prepare the client delivery reviewNeutral offline workflow fixture. No customer or provider action.Refresh task detailsResponsible personMLMorgan LeeStatusReadyPriorityP1Due dateNot scheduledEstimated effort45 minutesSourceCRM taskReview a stage changependingIn progressCompletedPlan the next stepNew due date and timeTime uses your device’s timezone. Review the exact date before confirming.Review due dateClose",
+        "focus": "Refresh task details",
+        "overflow": false,
+        "url": "http://127.0.0.1:57444/solo/42/operations/work?theme=dark&effortState=denied",
+        "viewport": {
+          "height": 700,
+          "width": 320
+        }
+      }
+    },
+    {
+      "name": "dark-narrow-recovered-fixture.png",
+      "sha256": "0ed61497f97b475514745949d7255d1a3efb66b4dd8597771d21b391a79104cd",
+      "geometry": {
+        "controls": [
+          {
+            "disabled": false,
+            "height": 44,
+            "label": "Task effort estimate in minutes",
+            "width": 261.6000061035156
+          },
+          {
+            "disabled": false,
+            "height": 18,
+            "label": "",
+            "width": 18
+          },
+          {
+            "disabled": true,
+            "height": 44,
+            "label": "Review effort estimate",
+            "width": 261.6000061035156
+          }
+        ],
+        "dialog": "Prepare the client delivery reviewNeutral offline workflow fixture. No customer or provider action.This task’s change is saved and confirmed in current CRM work.Refresh task detailsResponsible personMLMorgan LeeStatusReadyPriorityP1Due dateNot scheduledEstimated effort45 minutesSourceCRM taskReview a stage changependingIn progressCompletedPlan the next stepResponsible personMorgan LeeSam OkaforReview reassignmentNew due date and timeTime uses your device’s timezone. Review the exact date before confirming.Review due dateEffort estimate (minutes)Saved effort helps review workload. It does not reserve time; zero is a recorded estimate.Remove the recorded effort estimateReview effort estimateClose",
+        "focus": "Prepare the client delivery reviewNeutral offline workflow fixture. No customer or provider action.This task’s change is saved and confirmed in current CRM work.Refresh task detailsResponsible personMLMorgan LeeStatusReadyPriorityP1Due dateNot scheduledEstimated effort45 minutesSourceCRM taskReview a stage changependingIn progressCompletedPlan the next stepResponsible personMorgan LeeSam OkaforReview reassignmentNew due date and timeTime uses your device’s timezone. Review the exact date before confirming.Review due dateEffort estimate (minutes)Saved effort helps review workload. It does not reserve time; zero is a recorded estimate.Remove the recorded effort estimateReview effort estimateClose",
+        "overflow": false,
+        "url": "http://127.0.0.1:57444/solo/42/operations/work?theme=dark&effortState=unknown",
+        "viewport": {
+          "height": 700,
+          "width": 320
+        }
+      }
+    },
+    {
+      "name": "dark-narrow-recovery-reentry.png",
+      "sha256": "980bffc609669fe2f045534448e3ef278ecf4c9b127965d88bd97e5a56fa5f37",
+      "geometry": {
+        "controls": [],
+        "focus": "OverviewWorkProjectsDeliveryPlaybooksCapacityRecover pending task changeNew taskReview with ZIONReady for your reviewInspect the exact submitted work before recording your decision.Refresh review assignmentsReview assignments unavailableCurrent work and source access could not be verified. Refresh to inspect your recorded nominations.Move the work forwardBoardListTimelineSearch work, people and projectsFilter workActive workAll workBlockedOverdueCompletedCancelled2 items shownDrag to review a stage change · Open a task to change it with the keyboardReady1P1 priority · taskPrepare the client delivery reviewStandalone workMLMorgan LeeNo due dateIn progress1high priority · milestoneFinal brand guidelinesRivera Design brand launchSOSam OkaforOverdue · Oct 20Blocked0Completed0This view combines the Planning work and CRM tasks loaded here. Planning uses a 200-plan read with its visible work; CRM returns up to 200 tasks. Unavailable sources are excluded.HARNESS RENDER · SYNTHETIC DATA · NOT LIVE\n",
+        "overflow": false,
+        "url": "http://127.0.0.1:57444/solo/42/operations/work?theme=dark&effortState=unknown",
+        "viewport": {
+          "height": 700,
+          "width": 320
+        }
+      }
+    },
+    {
+      "name": "dark-narrow-unknown.png",
+      "sha256": "bfd4c049eaf589d8aa65319784dcba73d4b6777ff59248ca2c1ebba6e5595af1",
+      "geometry": {
+        "controls": [
+          {
+            "disabled": false,
+            "height": 44,
+            "label": "Recover original action",
+            "width": 169.8625030517578
+          },
+          {
+            "disabled": false,
+            "height": 44,
+            "label": "Close · recovery retained",
+            "width": 180.4375
+          }
+        ],
+        "dialog": "Prepare the client delivery reviewNeutral offline workflow fixture. No customer or provider action.Refresh task detailsResponsible personMLMorgan LeeStatusReadyPriorityP1Due dateNot scheduledEstimated effort45 minutesSourceCRM taskReview the task changeSet this task’s effort estimate to 45 minutes. This does not reserve Calendar time.The result is unknown. Recover the original action before starting another.Recover original actionClose · recovery retainedClose",
+        "focus": "Recover original action",
+        "overflow": false,
+        "url": "http://127.0.0.1:57444/solo/42/operations/work?theme=dark&effortState=unknown",
+        "viewport": {
+          "height": 700,
+          "width": 320
+        }
+      }
+    },
+    {
+      "name": "light-desktop-approval.png",
+      "sha256": "0d6d6f8bd29538d1176a922b85456260280532d6d9c162ae1025930c60bc4f38",
+      "geometry": {
+        "controls": [
+          {
+            "disabled": false,
+            "height": 44,
+            "label": "Approve exact change",
+            "width": 166.3874969482422
+          },
+          {
+            "disabled": false,
+            "height": 44,
+            "label": "Back to details",
+            "width": 118.5374984741211
+          }
+        ],
+        "dialog": "Prepare the client delivery reviewNeutral offline workflow fixture. No customer or provider action.Refresh task detailsResponsible personMLMorgan LeeStatusReadyPriorityP1Due dateNot scheduledEstimated effort45 minutesSourceCRM taskReview the task changeOffline Trust response · review the exact Task change below.Set this task’s effort estimate to 30 minutes. This does not reserve Calendar time.Approve exact changeBack to detailsClose",
+        "focus": "Approve exact change",
+        "overflow": false,
+        "url": "http://127.0.0.1:57444/solo/42/operations/work?theme=light&effortState=ready",
+        "viewport": {
+          "height": 720,
+          "width": 1280
+        }
+      }
+    },
+    {
+      "name": "light-desktop-edit.png",
+      "sha256": "ee3d82ca3e21474b7205000181d4b9acd6892dddfdb221a19163377423660aca",
+      "geometry": {
+        "controls": [
+          {
+            "disabled": false,
+            "height": 44,
+            "label": "Task effort estimate in minutes",
+            "width": 421.6000061035156
+          },
+          {
+            "disabled": false,
+            "height": 18,
+            "label": "",
+            "width": 18
+          },
+          {
+            "disabled": false,
+            "height": 44,
+            "label": "Review effort estimate",
+            "width": 421.6000061035156
+          }
+        ],
+        "dialog": "Prepare the client delivery reviewNeutral offline workflow fixture. No customer or provider action.Refresh task detailsResponsible personMLMorgan LeeStatusReadyPriorityP1Due dateNot scheduledEstimated effort45 minutesSourceCRM taskReview a stage changependingIn progressCompletedPlan the next stepResponsible personMorgan LeeSam OkaforReview reassignmentNew due date and timeTime uses your device’s timezone. Review the exact date before confirming.Review due dateEffort estimate (minutes)Saved effort helps review workload. It does not reserve time; zero is a recorded estimate.Remove the recorded effort estimateReview effort estimateClose",
+        "focus": "Task effort estimate in minutes",
+        "overflow": false,
+        "url": "http://127.0.0.1:57444/solo/42/operations/work?theme=light&effortState=ready",
+        "viewport": {
+          "height": 720,
+          "width": 1280
+        }
+      }
+    },
+    {
+      "name": "light-desktop-review.png",
+      "sha256": "10955c91ebb1c7c14d3a9370520de2775d166b0f3a57970a83eca78b3a0f20f5",
+      "geometry": {
+        "controls": [
+          {
+            "disabled": false,
+            "height": 44,
+            "label": "Confirm task change",
+            "width": 156
+          },
+          {
+            "disabled": false,
+            "height": 44,
+            "label": "Back to details",
+            "width": 118.5374984741211
+          }
+        ],
+        "dialog": "Prepare the client delivery reviewNeutral offline workflow fixture. No customer or provider action.Refresh task detailsResponsible personMLMorgan LeeStatusReadyPriorityP1Due dateNot scheduledEstimated effort45 minutesSourceCRM taskReview the task changeSet this task’s effort estimate to 30 minutes. This does not reserve Calendar time.Confirm task changeBack to detailsClose",
+        "focus": "Prepare the client delivery reviewNeutral offline workflow fixture. No customer or provider action.Refresh task detailsResponsible personMLMorgan LeeStatusReadyPriorityP1Due dateNot scheduledEstimated effort45 minutesSourceCRM taskReview the task changeSet this task’s effort estimate to 30 minutes. This does not reserve Calendar time.Confirm task changeBack to detailsClose",
+        "overflow": false,
+        "url": "http://127.0.0.1:57444/solo/42/operations/work?theme=light&effortState=ready",
+        "viewport": {
+          "height": 720,
+          "width": 1280
+        }
+      }
+    },
+    {
+      "name": "light-desktop-saved-fixture.png",
+      "sha256": "d6e16244521ae311d03ac64d7720acb0d794c9fdc5f77a4f70c9b8afc7c6385d",
+      "geometry": {
+        "controls": [
+          {
+            "disabled": false,
+            "height": 44,
+            "label": "Task effort estimate in minutes",
+            "width": 421.6000061035156
+          },
+          {
+            "disabled": false,
+            "height": 18,
+            "label": "",
+            "width": 18
+          },
+          {
+            "disabled": true,
+            "height": 44,
+            "label": "Review effort estimate",
+            "width": 421.6000061035156
+          }
+        ],
+        "dialog": "Prepare the client delivery reviewNeutral offline workflow fixture. No customer or provider action.This task’s change is saved and confirmed in current CRM work.Refresh task detailsResponsible personMLMorgan LeeStatusReadyPriorityP1Due dateNot scheduledEstimated effort30 minutesSourceCRM taskReview a stage changependingIn progressCompletedPlan the next stepResponsible personMorgan LeeSam OkaforReview reassignmentNew due date and timeTime uses your device’s timezone. Review the exact date before confirming.Review due dateEffort estimate (minutes)Saved effort helps review workload. It does not reserve time; zero is a recorded estimate.Remove the recorded effort estimateReview effort estimateClose",
+        "focus": "Prepare the client delivery reviewNeutral offline workflow fixture. No customer or provider action.This task’s change is saved and confirmed in current CRM work.Refresh task detailsResponsible personMLMorgan LeeStatusReadyPriorityP1Due dateNot scheduledEstimated effort30 minutesSourceCRM taskReview a stage changependingIn progressCompletedPlan the next stepResponsible personMorgan LeeSam OkaforReview reassignmentNew due date and timeTime uses your device’s timezone. Review the exact date before confirming.Review due dateEffort estimate (minutes)Saved effort helps review workload. It does not reserve time; zero is a recorded estimate.Remove the recorded effort estimateReview effort estimateClose",
+        "overflow": false,
+        "url": "http://127.0.0.1:57444/solo/42/operations/work?theme=light&effortState=ready",
+        "viewport": {
+          "height": 720,
+          "width": 1280
+        }
+      }
+    },
+    {
+      "name": "light-narrow-clear-review.png",
+      "sha256": "eeda886ca22d19c320628cdad456b5d393305f34de8ba8b3b0898f8cb76b1e7d",
+      "geometry": {
+        "controls": [
+          {
+            "disabled": false,
+            "height": 44,
+            "label": "Confirm task change",
+            "width": 156
+          },
+          {
+            "disabled": false,
+            "height": 44,
+            "label": "Back to details",
+            "width": 118.5374984741211
+          }
+        ],
+        "dialog": "Prepare the client delivery reviewNeutral offline workflow fixture. No customer or provider action.Refresh task detailsResponsible personMLMorgan LeeStatusReadyPriorityP1Due dateNot scheduledEstimated effort45 minutesSourceCRM taskReview the task changeRemove the recorded effort estimate from this task. Its effort will be unknown.Confirm task changeBack to detailsClose",
+        "focus": "Prepare the client delivery reviewNeutral offline workflow fixture. No customer or provider action.Refresh task detailsResponsible personMLMorgan LeeStatusReadyPriorityP1Due dateNot scheduledEstimated effort45 minutesSourceCRM taskReview the task changeRemove the recorded effort estimate from this task. Its effort will be unknown.Confirm task changeBack to detailsClose",
+        "overflow": false,
+        "url": "http://127.0.0.1:57444/solo/42/operations/work?theme=light&effortState=ready",
+        "viewport": {
+          "height": 700,
+          "width": 320
+        }
+      }
+    },
+    {
+      "name": "light-narrow-refused-final-focus.png",
+      "sha256": "1f9f7448f18466fa5df6936b6c484f6d1c1f9dd65283b502205089baac56f725",
+      "geometry": {
+        "controls": [
+          {
+            "disabled": true,
+            "height": 44,
+            "label": "Confirm task change",
+            "width": 156
+          },
+          {
+            "disabled": false,
+            "height": 44,
+            "label": "Back to details",
+            "width": 118.5374984741211
+          }
+        ],
+        "dialog": "Prepare the client delivery reviewNeutral offline workflow fixture. No customer or provider action.Refresh task detailsResponsible personMLMorgan LeeStatusReadyPriorityP1Due dateNot scheduledEstimated effort45 minutesSourceCRM taskReview the task changeSet this task’s effort estimate to 60 minutes. This does not reserve Calendar time.The task change was refused. Refresh its current details and review your permissions.Confirm task changeBack to detailsClose",
+        "focus": "Back to details",
+        "overflow": false,
+        "url": "http://127.0.0.1:57444/solo/42/operations/work?theme=light&effortState=refused",
+        "viewport": {
+          "height": 700,
+          "width": 320
+        }
+      }
+    },
+    {
+      "name": "light-narrow-zero-review.png",
+      "sha256": "4e02c40b0bc35f4c739c43d7f19eeaf66b9d257db0c733f99a1994a7269503e7",
+      "geometry": {
+        "controls": [
+          {
+            "disabled": false,
+            "height": 44,
+            "label": "Confirm task change",
+            "width": 156
+          },
+          {
+            "disabled": false,
+            "height": 44,
+            "label": "Back to details",
+            "width": 118.5374984741211
+          }
+        ],
+        "dialog": "Prepare the client delivery reviewNeutral offline workflow fixture. No customer or provider action.Refresh task detailsResponsible personMLMorgan LeeStatusReadyPriorityP1Due dateNot scheduledEstimated effort45 minutesSourceCRM taskReview the task changeSet this task’s effort estimate to 0 minutes. This does not reserve Calendar time.Confirm task changeBack to detailsClose",
+        "focus": "Prepare the client delivery reviewNeutral offline workflow fixture. No customer or provider action.Refresh task detailsResponsible personMLMorgan LeeStatusReadyPriorityP1Due dateNot scheduledEstimated effort45 minutesSourceCRM taskReview the task changeSet this task’s effort estimate to 0 minutes. This does not reserve Calendar time.Confirm task changeBack to detailsClose",
+        "overflow": false,
+        "url": "http://127.0.0.1:57444/solo/42/operations/work?theme=light&effortState=ready",
+        "viewport": {
+          "height": 700,
+          "width": 320
+        }
+      }
+    },
+    {
+      "name": "light-reopened-fixture.png",
+      "sha256": "6ac2979007d28a95793d48c21fda28f6cd3db0a1b9087e4ca580467aa61af99d",
+      "geometry": {
+        "controls": [
+          {
+            "disabled": false,
+            "height": 44,
+            "label": "Task effort estimate in minutes",
+            "width": 421.6000061035156
+          },
+          {
+            "disabled": false,
+            "height": 18,
+            "label": "",
+            "width": 18
+          },
+          {
+            "disabled": true,
+            "height": 44,
+            "label": "Review effort estimate",
+            "width": 421.6000061035156
+          }
+        ],
+        "dialog": "Prepare the client delivery reviewNeutral offline workflow fixture. No customer or provider action.Refresh task detailsResponsible personMLMorgan LeeStatusReadyPriorityP1Due dateNot scheduledEstimated effort30 minutesSourceCRM taskReview a stage changependingIn progressCompletedPlan the next stepResponsible personMorgan LeeSam OkaforReview reassignmentNew due date and timeTime uses your device’s timezone. Review the exact date before confirming.Review due dateEffort estimate (minutes)Saved effort helps review workload. It does not reserve time; zero is a recorded estimate.Remove the recorded effort estimateReview effort estimateClose",
+        "focus": "Refresh task details",
+        "overflow": false,
+        "url": "http://127.0.0.1:57444/solo/42/operations/work?theme=light&effortState=ready",
+        "viewport": {
+          "height": 720,
+          "width": 1280
+        }
+      }
+    }
+  ],
+  "checkboxTarget": {
+    "checkboxVisualHeight": 18,
+    "labelTarget": {
+      "height": 44,
+      "width": 261.6000061035156
+    }
+  },
+  "nativeZoom": "UNVERIFIED",
+  "authenticatedRuntime": "UNVERIFIED for effort writer/UI",
+  "sourceCommit": "83d97fb1e8ba56e8fc56b92ed00f2a15a9733e7c"
+}

@@ -26,12 +26,12 @@ const dialog=()=>document.querySelector<HTMLElement>('[role="dialog"]');
 const checkbox=()=>dialog()!.querySelector<HTMLInputElement>('input[type="checkbox"]')!;
 async function click(text:string){const button=Array.from(document.querySelectorAll<HTMLButtonElement>("button")).find(node=>node.textContent?.trim()===text);expect(button).toBeTruthy();await act(async()=>button!.click());}
 it("mounts the incumbent real editor for an exact current task even when both bounded lists failed",async()=>{
- port.listError="List unavailable";await render();expect(dialog()?.textContent).toContain(task().title);expect(dialog()?.querySelector('[aria-label="Edit task responsibility and due date"]')).toBeTruthy();
+ port.listError="List unavailable";await render();expect(dialog()?.textContent).toContain(task().title);expect(dialog()?.querySelector('[aria-label="Edit task responsibility, due date and effort"]')).toBeTruthy();
  expect(port.readTask).toHaveBeenCalledExactlyOnceWith(id,expect.any(AbortSignal));expect(port.submit).not.toHaveBeenCalled();
 });
 it.each(["empty","refused","unavailable"]) ("does not paint a task or editor for %s current authority",async status=>{
  port.readTask.mockResolvedValue(status==="empty"?{status:"available",found:false,task:null}:{status});await render();
- expect(dialog()?.textContent).not.toContain(task().title);expect(dialog()?.querySelector('[aria-label="Edit task responsibility and due date"]')).toBeNull();
+ expect(dialog()?.textContent).not.toContain(task().title);expect(dialog()?.querySelector('[aria-label="Edit task responsibility, due date and effort"]')).toBeNull();
  expect(dialog()?.textContent).toContain(status==="empty"?"isn’t available in your current workspace":"couldn’t be confirmed");
  expect(dialog()?.textContent).not.toContain("no task was created or changed");expect(port.submit).not.toHaveBeenCalled();
 });
@@ -124,7 +124,7 @@ it.each(["empty","unavailable","refused"])("keeps the earlier-action confirmatio
  await click("Recover original action");
  expect(dialog()?.textContent).toContain("earlier task’s change is saved and confirmed");
  expect(dialog()?.textContent).not.toContain("Earlier recovered Task");expect(dialog()?.textContent).not.toContain(task().title);
- expect(dialog()?.querySelector('[aria-label="Edit task responsibility and due date"]')).toBeNull();
+ expect(dialog()?.querySelector('[aria-label="Edit task responsibility, due date and effort"]')).toBeNull();
  expect(port.submit).toHaveBeenCalledTimes(1);expect(sessionStorage.length).toBe(0);
 });
 it.each(["close","new-query","scope-ABA"])("retires the original Task restoration after %s and never paints its late reply",async departure=>{

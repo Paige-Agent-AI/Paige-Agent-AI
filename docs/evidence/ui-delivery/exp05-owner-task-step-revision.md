@@ -7,7 +7,7 @@ MATERIAL_FLOW_CHANGE: NO: the new native operation is not mounted in a customer 
 FLOW_PROTOTYPE: NOT_REQUIRED: no UI implementation is included. Do not infer prototype or mounted-flow acceptance for the future consumer.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: an equivalent eligible SOLO owner/admin corrects one captured inactive process step without enabling work, replacing the process or rewriting a completed result.
 VISUAL_DIRECTION: NOT_APPLICABLE: unchanged original Operations interface.
-AUTOMATED_EVIDENCE: PASS: actual generated carrier passed66 selected native controls in run-bVO8qK. Earlier private bytes passed179 full native controls plus56 original engine/C5 tests in run-pZpgnU; these remain historical, not the refined carrier's full result. Final composed full regression, including the added eight-session revision race, is running separately. Rebuilt-schema SQL is registered but not yet executed.
+AUTOMATED_EVIDENCE: PASS: final composed run-xm7J0I completed182 native controls plus56 original engine/C5 tests with zero failures/skips, including eight simultaneous exact revisions yielding one change/audit. Its runtime source blobs are unchanged through publication. Generated-carrier66 selected cases in run-bVO8qK and earlier private179/56 in run-pZpgnU remain separate historical evidence, never added together. Rebuilt-schema SQL is registered but not yet executed.
 STATIC_EVIDENCE: PASS: syntax and whitespace checks; generated never-applied160005 carrier follows recorded lower reservations. Composition9e148508e673d8de3a1b3bfc0fa50f46004716cd conserves all18,688 incoming outside-owned leaves and allfive native/proof candidate paths exactly.
 RENDERED_EVIDENCE: NOT_APPLICABLE: no rendered source is changed and no new customer editor is claimed.
 BEHAVIORAL_EVIDENCE: PASS: actual PostgreSQL run-bVO8qK verifies original identity/version, exact closed proposals, owner/admin and foreign/refused actors, stale/no-op/lost-acknowledgment reconciliation, audit/caller rollback, immutable predecessor Task/Rail and refusal of the old uncompleted effect, metadata/ACL conservation and strict drift/replay guards. Fixture Auth/eligibility/Realtime ports are explicit exclusions.
@@ -15,10 +15,10 @@ AUTHENTICATED_RUNTIME: UNVERIFIED: no ordinary caller-JWT, real customer correct
 KEYBOARD_FOCUS: NOT_APPLICABLE: unchanged rendered controls; future editor focus/keyboard work remains owed.
 ZOOM_REFLOW: NOT_APPLICABLE: no interface or responsive change.
 REDUCED_MOTION: NOT_APPLICABLE: no motion change.
-STATE_COVERAGE: PASS: selected checks cover draft/paused, live refusal, execution-paused draft correction with original arm refusal, stale source, no-op replay, invalid/foreign/unsupported inputs and atomic audit failure. Full-schema and the new native race remain separate pending results.
+STATE_COVERAGE: PASS: final native controls cover draft/paused, live refusal, execution-paused draft correction with original arm refusal, stale source, no-op replay, invalid/foreign/unsupported inputs, atomic audit failure and the actual eight-session revision race. Rebuilt-schema SQL has its own separate execution gate.
 TRUTHFUL_STATE_LABELS: PASS: configuration saved is not automation enabled, task completed or business effect. Configuration audit ID is not a Rail receipt. Catalogue/algorithm maturity is not promoted.
 SOLO_UI: NO: native prerequisite only; one tenant-neutral implementation and no new account or customer exception.
-UNVERIFIED: final full native regression/race, rebuilt-schema SQL, exact-head review/CI, managed Preview, ordered merge/deployment/source readback, mounted correction UI and native keyboard/zoom/AT, ordinary customer/cohort/original record/audit/reload, same ZION through both chats, allten/E5 and founder acceptance.
+UNVERIFIED: rebuilt-schema SQL, exact-head review/CI, managed Preview, ordered merge/deployment/source readback, mounted correction UI and native keyboard/zoom/AT, ordinary customer/cohort/original record/audit/reload, same ZION through both chats, allten/E5 and founder acceptance.
 OWNER_INTENT: complete EXP05 Workflow Automation Builder correction, authorization, execution and recovery on original canonical records for eligible current and future SOLO businesses.
 MUST_NOT_HAPPEN: no duplicate draft, changed act identity/order, automatic arm, provider effect, arbitrary tool/configuration, broadened grants, old receipt rewrite, unknown-outcome replay or native-history reset.
 MUST_PRESERVE: original five-argument RPC/OID/defaults/owner/ACL/search path, unchanged arm/pause authority and locks, original per-occurrence Trust/C5 approvals, LayerC/claim/CRM Task/result/Rail and original readers.
@@ -72,14 +72,17 @@ there is no model request or routing/budget change.
 - Existing causal RED: released controller rejects `revise_step`; execution-held
   draft correction and selected unresolved-purpose repair failed before their
   respective corrections. Failures remain in the local proof transcripts.
-- Generated carrier selected proof:66 controls, owned PostgreSQL stopped,
-  `work/owner-task-native-proof/run-bVO8qK`. Added race/full composed proof has
-  its own result; earlier totals are not added together or relabelled.
+- Final composed native proof:182 controls and56 original engine/C5 tests,
+  zero failed/skipped, `work/owner-task-native-proof/run-xm7J0I`; owned PostgreSQL
+  stopped. Generated-carrier66 selected controls in run-bVO8qK and private179/56
+  remain historical. Totals are not added together or relabelled. The final
+  publication changes only this evidence and explicit Auth-claim isolation in
+  the separate, still-unexecuted rebuilt-schema fixture; runtime inputs are exact.
 - New `supabase/tests/owner_task_step_revision.sql` uses the real rebuilt schema
   with two synthetic owner/admin businesses, explicit SQL claims and rollback.
   The existing Spine database job invokes it after original production grants
   and candidate application. No peer/held Preview is repurposed.
-- Native160005 is never applied/published at this checkpoint. Preserve actual
+- Native160005 is published only in DRAFT3145 and is not applied. Preserve actual
   production80005; E02published80006/P1HOLD and local80007; E08published80008–110008;
   E13LOCAL130013/E08LOCAL140008 and E03published150003 before higher release.
   A reservation is not permission to override those owners or their holds.

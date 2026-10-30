@@ -1,7 +1,7 @@
 # EXP05 O02/O03 — correct saved Task effort through original Work
 
 UI_DELIVERY_EVIDENCE_VERSION: 1
-INTERNAL_BUILD_IDENTITY: source=f5a5720d636d7774ea1c53ad2bf053aa1d98c196; base=fdc313d213888c22331c564844a90abf1eedf19f; deployment=offline-original-Operations-mount; environment=local; migrations=PROOF_OWED(20271126010012_task_effort_scalar original PR3102 required CI and production release); edge=PROOF_OWED(compiled Task patch schema and crm-command after native release); evidence=docs/evidence/ui-delivery/assets/exp05-task-effort/composed/build-manifest.json
+INTERNAL_BUILD_IDENTITY: source=e78ac4f56e55dbdd22395f0854b13be7b6d156fd; base=c5d0ddc5110cbad6987767db0bc12aec26f4cf57; deployment=offline-original-Operations-mount; environment=local; migrations=PROOF_OWED(20271126050005_task_effort_scalar original PR3102 final gates and production release); edge=PROOF_OWED(compiled Task patch schema and crm-command after native release); evidence=docs/evidence/ui-delivery/assets/exp05-task-effort/composed/forward-conservation.json
 RELEASE_CHANNEL: development: local source and isolated browser/SQL fixtures only.
 RELEASE_CLASSIFICATION: internal-only: one correction/save/reopen leg of O02/O03, not complete weekly planning or EXP05.
 CUSTOMER_RELEASE_IDENTITY: none: no launch, activation or founder acceptance.
@@ -126,3 +126,24 @@ UNVERIFIED. Local restricted-socket attempt was INVALID; the ordinary authorized
 loopback helper then served correctly. Only own temporary tab closed, viewport
 restored and helper stopped. No browser permission/security setting changed.
 Exact native3102 and dependent UI review/CI/deployment remain controlling.
+
+## October30 — forward-native dependency received without new UI changes
+
+Original3151 editor normally receives currentmain3f37 and native3102/c5d0 to
+e78ac4f56. One append/append packet conflict retains BOTH full dated sections.
+Native filename is now50005 after the advanced production15/published E08 chain;
+no unapplied older12 or --include-all is shipped. Current seven original suites
+again125PASS/0FAIL/0skip. All11 original product/test paths,125 rendered product
+inputs, nine fixture sources, package and lockfile are byte-identical to their
+previously inspected versions; all18203 outside-owned incoming leaves conserved.
+The same seven composed frames therefore retain their actual original synthetic
+boundary without recapturing unchanged pixels or claiming a new customer test.
+[Exact conservation](assets/exp05-task-effort/composed/forward-conservation.json).
+
+Native replacement managed Preview is SUCCESS; forward50005ONCE/old12ABSENT,
+actual body MD5caea59ab335ecaf295391c41a1a0522f and original service-onlyACL match.
+Whole required native CI and production migration/Edge readback remain separate.
+Original UI draft3103 cannot merge into its temporary native feature base. Final
+main retarget/review/exact-head CI follows producer release; original real
+approval/Task/Rail/reload, eligible existing/new SOLO, both chats/full shell/
+native zoom/AT/fullten/E5/founder acceptance remain owed. No activation or action.

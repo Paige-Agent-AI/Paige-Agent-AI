@@ -1,0 +1,130 @@
+{
+  "scope": "LOCAL throwaway prototype only; captured source raw bytes and canonical LF transport separately; no production claim",
+  "source": [
+    {
+      "path": "scripts/live-drive/harness/exp03-contact-timezone-prototype/README.md",
+      "capturedRawSha256": "d8144802fbefcf9a361abdd6f8e8e0ed7fc7990f06164022213d17b1f8c218cc",
+      "lfTransportSha256": "a444acd93154f291a79540958a3350696d239a8a45dbb59e1ce3a5a24b2482d3"
+    },
+    {
+      "path": "scripts/live-drive/harness/exp03-contact-timezone-prototype/index.html",
+      "capturedRawSha256": "4ad123a17268f921a387485af51db79ccc9f7dcbe96282df90758e850fc4bb0a",
+      "lfTransportSha256": "4ad123a17268f921a387485af51db79ccc9f7dcbe96282df90758e850fc4bb0a"
+    },
+    {
+      "path": "scripts/live-drive/harness/exp03-contact-timezone-prototype/vite.config.ts",
+      "capturedRawSha256": "d6de210c03e64c29afa3ebec2e02b357b7ccb164cfe2e9de7138b6bcdb6952c4",
+      "lfTransportSha256": "de416d416c58a2263780afbd59f8f379cecf9ee847959dbba3e9f2b74374af03"
+    },
+    {
+      "path": "scripts/live-drive/harness/exp03-contact-timezone-prototype/ports.ts",
+      "capturedRawSha256": "73be669996e21fad8f34aa5d0a39cbda909ad6667fbaf5e784c99ceb3ea88909",
+      "lfTransportSha256": "956cafa1eef491d527fd699c4d8f99127abadb18118a5f032365a8522011a065"
+    },
+    {
+      "path": "scripts/live-drive/harness/exp03-contact-timezone-prototype/main.tsx",
+      "capturedRawSha256": "b9f27820403fcf4e19428b321e78028e0d24dfdd6b51a61c92d761ee1a08ae5a",
+      "lfTransportSha256": "396d858b58afa070ca89f534aba8595200fe22cd93cf4e29260f3dd66b5189ba"
+    },
+    {
+      "path": "scripts/live-drive/harness/exp03-contact-timezone-prototype/PeopleContactEditor.prototype.tsx",
+      "capturedRawSha256": "0624e04177639bec9c310d2708efd6ca05e8451308f0509f489ac830f8630ad0",
+      "lfTransportSha256": "2c602baab8a28092771b4578a765612989e6528f6cdde43b7a1c287202fa473d"
+    },
+    {
+      "path": "scripts/live-drive/harness/exp03-contact-timezone-prototype/drive.mjs",
+      "capturedRawSha256": "396f5f4c2b1ce39159fee9f6e81c9db7d5e25f1dcd562824d52b675411039a8d",
+      "lfTransportSha256": "5f89b41595fe38d1c8665df06a6896a0f82a5d67357d88fc42ffa16b422a39c3"
+    }
+  ],
+  "captures": [
+    {
+      "name": "dark-1024-confirm.jpg",
+      "sha256": "8d17623a0dcc746d19e20629bcd2cf2aa9cea711b8db147dafd492c98e6e3cb2"
+    },
+    {
+      "name": "dark-1366-confirm.jpg",
+      "sha256": "182ef8558ecff7c43c67b77bd5b60f7357c2da4de973591251c9aabaec4a1ab7"
+    },
+    {
+      "name": "dark-1536-confirm.jpg",
+      "sha256": "924ba651ad5aca06d4c10bd4c9e74fe19791b03bbf44fd12208f0ca9c6356540"
+    },
+    {
+      "name": "dark-900-cancel.jpg",
+      "sha256": "5d869f04d327123cd1820729343f8134037c2b094e87385d5f8ab52a4ae2009b"
+    },
+    {
+      "name": "dark-900-confirm.jpg",
+      "sha256": "3aa680c03c2e37555e46d72f3292c0cb60140642992742ab719d38ec26e84edd"
+    },
+    {
+      "name": "dark-900-offline.jpg",
+      "sha256": "2c6e29342166a53d381039c8c3d217e81d09bedcce657fce920916f3891a0aec"
+    },
+    {
+      "name": "dark-900-refused.jpg",
+      "sha256": "3f222ac06c8ee5274587d6035464fd83bb0f19efce4fae24ce05489c590e571f"
+    },
+    {
+      "name": "dark-900-stale.jpg",
+      "sha256": "cd8da276583d02bd2f429c0e472ec78ec6f7a8330eefdc0d5cb80344ad692d87"
+    },
+    {
+      "name": "dark-900-unavailable.jpg",
+      "sha256": "00d4879d97bead6936e5e1968e31dcfa7eec860d3466d2616c96451428309947"
+    },
+    {
+      "name": "dark-900-unknown.jpg",
+      "sha256": "2fc347db9f1fedc93dd56ffa7d52f3edfd0fdd507142827180a71ca76530f564"
+    },
+    {
+      "name": "dark-900-validation.jpg",
+      "sha256": "0412447bee4405fee5d09a9f82783eae00c82bd581b8b8201620fcda1c1485da"
+    },
+    {
+      "name": "light-1024-confirm.jpg",
+      "sha256": "ae76ba1d47950e8461575d4646e517826f4f73c27cfcc4d683f097869a00987e"
+    },
+    {
+      "name": "light-1366-cancel.jpg",
+      "sha256": "d9eff6303d660fb5fd346a58cc40a0d936b37459e38ad9dac275febe219dab75"
+    },
+    {
+      "name": "light-1366-confirm.jpg",
+      "sha256": "924ddcdedf1ed71f031806f6ad854d10e2880469a26a45217690c456e416fde1"
+    },
+    {
+      "name": "light-1366-offline.jpg",
+      "sha256": "1ca94098613c79c37ed4e379666f5945b29c677fd4c536e928e55bbe4a6659a0"
+    },
+    {
+      "name": "light-1366-refused.jpg",
+      "sha256": "b598ad69b4891f114f1746b582e1bb16c2899d57e1b8c61dc1f9040ddf522df0"
+    },
+    {
+      "name": "light-1366-stale.jpg",
+      "sha256": "0fd56d269df6f2b3bcdece1b2550ad1225f604bb89bd23a66a17df5c7febd043"
+    },
+    {
+      "name": "light-1366-unavailable.jpg",
+      "sha256": "f602bc296a5e4cb0350d5a9aeeedcb8d4de37953c70286994188918281c4b982"
+    },
+    {
+      "name": "light-1366-unknown.jpg",
+      "sha256": "54198fc59b72535a2f6134c34422f8fd12978a90220fa0893a319aafa5ad5a7b"
+    },
+    {
+      "name": "light-1366-validation.jpg",
+      "sha256": "077ac5d51e04ec32c7b00d9904893816370b6a0c5e7fe8e01fed14aed8b36ef9"
+    },
+    {
+      "name": "light-1536-confirm.jpg",
+      "sha256": "2390c6d7395f9a4a64993d80e247cca980f94d8615db7bb212e0d98993e9fa24"
+    },
+    {
+      "name": "light-900-confirm.jpg",
+      "sha256": "658fafda4cc0b67ded08b587b15ac4a1d7a6ea6ae7e396a07adc9d23a3c18958"
+    }
+  ]
+}

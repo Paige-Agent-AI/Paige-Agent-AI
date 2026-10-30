@@ -1,12 +1,22 @@
 -- Original EXP08 co-owner contract I2/R6/R11 component proof, DISPOSABLE DATABASE ONLY.
 -- The runner creates an empty local database; this file never targets a linked project.
 -- REAL: the candidate trigger/function, I1 composite FK, owner-only CHECK and unique entity seat.
--- DOUBLES: minimal original table shapes and already-authorized seat writes. No Auth, RLS,
--- billing writer, ownership grant/revoke decision, production account or customer proof is claimed.
+-- DOUBLES: minimal table shapes, Auth/platform/company inputs and direct seat writes.
+-- The runner separately loads the REAL original revoke/owner/holder functions for its second
+-- fixture; no Auth SDK, RLS, billing, production account or customer proof is claimed.
 CREATE SCHEMA proof;
 CREATE SCHEMA auth;
 CREATE TABLE auth.users (id uuid PRIMARY KEY);
-CREATE TABLE public.tenants (id uuid PRIMARY KEY,account_type text NOT NULL,company boolean NOT NULL DEFAULT false);
+CREATE TYPE public.tenant_role AS ENUM ('owner','admin','member');
+CREATE TABLE public.tenants (id uuid PRIMARY KEY,account_type text NOT NULL,company boolean NOT NULL DEFAULT false,owner_user_id uuid);
+-- Auth/platform ports only; the runner loads the REAL original owner/holder/revoke functions.
+CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE AS $$
+ SELECT nullif(current_setting('request.jwt.claim.sub',true),'')::uuid $$;
+CREATE FUNCTION auth.role() RETURNS text LANGUAGE sql STABLE AS $$ SELECT 'authenticated'::text $$;
+CREATE FUNCTION public.is_platform_owner() RETURNS boolean LANGUAGE sql STABLE AS $$ SELECT false $$;
+CREATE FUNCTION public.is_platform_admin(uuid) RETURNS boolean LANGUAGE sql STABLE AS $$ SELECT false $$;
+CREATE TABLE public.paige_audit_log (id uuid PRIMARY KEY DEFAULT gen_random_uuid(),actor_user_id uuid,
+ actor_role text,action text,target_type text,target_id uuid,payload jsonb,tenant_id uuid);
 CREATE FUNCTION public.is_company_workspace(t uuid) RETURNS boolean LANGUAGE sql AS $$
  SELECT company FROM public.tenants WHERE id=t $$;
 CREATE TABLE public.tenant_business_owners (
@@ -18,7 +28,7 @@ CREATE TABLE public.tenant_business_owners (
 CREATE TABLE public.tenant_members (
  id uuid PRIMARY KEY, tenant_id uuid NOT NULL, user_id uuid NOT NULL,
  is_owner boolean NOT NULL DEFAULT false, business_owner_id uuid, status text NOT NULL DEFAULT 'active',
- job_title text,
+ job_title text,role public.tenant_role NOT NULL DEFAULT 'owner',updated_at timestamptz DEFAULT now(),
  FOREIGN KEY(tenant_id,business_owner_id) REFERENCES public.tenant_business_owners(tenant_id,id),
  CHECK(business_owner_id IS NULL OR is_owner), UNIQUE(tenant_id,user_id)
 );

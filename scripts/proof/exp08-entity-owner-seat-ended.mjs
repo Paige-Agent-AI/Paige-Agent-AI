@@ -13,6 +13,17 @@ const database = `exp08_entity_seat_proof_${Date.now()}`;
 const fixture = readFileSync(new URL('../../supabase/tests/exp08_entity_owner_seat_ended.sql', import.meta.url), 'utf8');
 const migration = readFileSync(new URL('../../supabase/migrations/20271126080008_exp08_entity_owner_seat_ended.sql', import.meta.url), 'utf8');
 const invitationSource = readFileSync(new URL('../../supabase/migrations/20271120010008_exp08_owner_invitations.sql', import.meta.url), 'utf8');
+const coOwnerSource = readFileSync(new URL('../../supabase/migrations/20271116020008_exp08_co_owner_authority.sql', import.meta.url), 'utf8');
+const tenantAuthoritySource = readFileSync(new URL('../../supabase/migrations/20270521000000_operator_authority_in_company_workspaces.sql', import.meta.url), 'utf8');
+const revokeFixture = readFileSync(new URL('../../supabase/tests/exp08_entity_owner_revoke_integration.sql', import.meta.url), 'utf8');
+const revokeMigration = readFileSync(new URL('../../supabase/migrations/20271126090008_exp08_entity_owner_revoke_link.sql', import.meta.url), 'utf8');
+function originalFunction(source, name) {
+  const start = source.indexOf(`CREATE OR REPLACE FUNCTION public.${name}(`);
+  assert.ok(start >= 0, `Original ${name} missing`);
+  const end = source.indexOf('$function$;', start);
+  assert.ok(end > start, `Original ${name} body delimiter missing`);
+  return source.slice(start, end + '$function$;'.length);
+}
 const scopeHelper = invitationSource.match(/CREATE OR REPLACE FUNCTION public\._solo_shell_tenant\(_tenant uuid\)[\s\S]*?REVOKE ALL ON FUNCTION public\._solo_shell_tenant\(uuid\)[^;]*;/)?.[0];
 assert.ok(scopeHelper, 'Original I1 scope helper required; never replace it with a second eligibility rule');
 const definition = migration.match(/CREATE OR REPLACE FUNCTION public\._business_owner_seat_ended\(\)[\s\S]*?END \$\$;/)?.[0];
@@ -26,13 +37,13 @@ function connectionArgs(db) {
   return ['-X', '-q', '-A', '-t', '-h', host, '-p', process.env.PGPORT,
     '-U', process.env.PGUSER || 'postgres', '-d', db, '-v', 'ON_ERROR_STOP=1'];
 }
-function sql(query, db = database, expectFailure = false) {
+function sql(query, db = database, expectFailure = false, failurePattern = /EXP08 entity seat lifecycle (already exists|trigger drift|requires the original)/) {
   const r = spawnSync(executable, connectionArgs(db),
   { input: query, encoding: 'utf8', timeout: 30_000, env: process.env });
   if (r.error) throw r.error;
   if (expectFailure) {
     assert.notEqual(r.status, 0, 'Drifted candidate unexpectedly applied');
-    assert.match(r.stderr, /EXP08 entity seat lifecycle (already exists|trigger drift|requires the original)/);
+    assert.match(r.stderr, failurePattern);
   } else assert.equal(r.status, 0, r.stderr);
   return r.stdout.trim();
 }
@@ -73,6 +84,39 @@ async function replacementRace() {
 }
 function cases() {
   return sql('select row_to_json(t) from proof.run_cases() t;').split('\n').filter(Boolean).map(JSON.parse);
+}
+async function originalOwnerFloorRace() {
+  sql("select proof.revoke_setup(); update public.tenants set owner_user_id=null where id='e8000000-0000-4000-8000-000000060010';");
+  const first=spawn(executable,connectionArgs(database),{env:process.env,stdio:['pipe','pipe','pipe']});
+  const firstDone=new Promise((resolve,reject)=>{first.on('error',reject);first.on('close',resolve);});
+  let second;let secondDone;let output='';let secondError='';let timer;
+  try {
+    const locked=new Promise((resolve,reject)=>{
+      timer=setTimeout(()=>reject(new Error('Original revoke did not acquire floor locks')),10_000);
+      first.stdout.on('data',chunk=>{output+=chunk;if(output.includes('EXP08_FLOOR_LOCKED'))resolve();});
+      first.on('error',reject);
+    });
+    first.stdin.write("BEGIN;\nselect set_config('request.jwt.claim.sub','e8000000-0000-4000-8000-000000060100',false);\nselect public.revoke_co_owner('e8000000-0000-4000-8000-000000060010','e8000000-0000-4000-8000-000000060100');\n\\echo EXP08_FLOOR_LOCKED\n");
+    await locked;clearTimeout(timer);
+    second=spawn(executable,connectionArgs(database),{env:{...process.env,PGAPPNAME:'exp08_original_owner_floor_race'},stdio:['pipe','pipe','pipe']});
+    secondDone=new Promise((resolve,reject)=>{second.on('error',reject);second.on('close',resolve);});
+    second.stderr.on('data',chunk=>{secondError+=chunk;});
+    second.stdin.end("select set_config('request.jwt.claim.sub','e8000000-0000-4000-8000-000000060300',false);\nselect public.revoke_co_owner('e8000000-0000-4000-8000-000000060010','e8000000-0000-4000-8000-000000060300');\n");
+    let observed=false;
+    for(let i=0;i<20;i++) {
+      observed=sql(`select exists(select 1 from pg_stat_activity where datname='${database}' and application_name='exp08_original_owner_floor_race' and wait_event_type='Lock');`)==='t';
+      if(observed)break;await new Promise(resolve=>setTimeout(resolve,50));
+    }
+    assert.ok(observed,'Original concurrent second step-down must actually wait on the owner lock');
+    first.stdin.end('COMMIT;\n\\q\n');
+    assert.equal(await firstDone,0);assert.notEqual(await secondDone,0);assert.match(secondError,/CO_OWNER_LAST/);
+    assert.equal(sql("select count(*) from public.tenant_members where tenant_id='e8000000-0000-4000-8000-000000060010' and is_owner and status='active';"),'1');
+    assert.equal(sql("select count(*) from public.paige_audit_log where action='tenant:revoke_co_owner';"),'1');
+    records.push({phase:'original-revoke-two-session-floor-race',observed_lock_wait:true,remaining_active_owners:1,original_audits:1});
+  } finally {
+    clearTimeout(timer);if(first.exitCode===null)first.kill();if(second&&second.exitCode===null)second.kill();
+    await Promise.allSettled([firstDone,...(secondDone?[secondDone]:[])]);
+  }
 }
 function restore() {
   for (const [signature, body] of definitions) sql(`ALTER FUNCTION ${signature} OWNER TO postgres;\n${body}\nREVOKE ALL ON FUNCTION ${signature} FROM PUBLIC, anon, authenticated, service_role;`);
@@ -153,7 +197,80 @@ try {
   assert.ok(cases().every(r => r.passed));
   records.push({ phase: 'final-cases', passed: true });
   await replacementRace();
-  console.log(JSON.stringify({ evidence: 'isolated native component only; no Auth/RLS/writer/customer proof', records }, null, 2));
+  sql(originalFunction(tenantAuthoritySource, 'is_tenant_owner'));
+  sql(originalFunction(coOwnerSource, 'is_tenant_account_holder'));
+  sql(originalFunction(coOwnerSource, 'revoke_co_owner'));
+  sql('REVOKE ALL ON FUNCTION public.revoke_co_owner(uuid,uuid) FROM PUBLIC,anon; GRANT EXECUTE ON FUNCTION public.revoke_co_owner(uuid,uuid) TO authenticated,service_role;');
+  assert.equal(sql("select md5(prosrc) from pg_proc where oid='public.is_tenant_owner(uuid,uuid)'::regprocedure;"),'f392787e7469ed325960850ad091473d');
+  assert.equal(sql("select md5(prosrc) from pg_proc where oid='public.is_tenant_account_holder(uuid,uuid)'::regprocedure;"),'4a3cab59aad7a70ff06a9054aa4aa60e');
+  assert.equal(sql("select md5(prosrc) from pg_proc where oid='public.revoke_co_owner(uuid,uuid)'::regprocedure;"),'e2ba8ca80d63df58ebc93b34e5dc5f01');
+  sql(revokeFixture);
+  const writerCases = sql('select row_to_json(t) from proof.revoke_cases() t;').split('\n').filter(Boolean).map(JSON.parse);
+  assert.deepEqual(writerCases.filter(r=>!r.passed).map(r=>r.case_name),
+    ['holder_demotes_entity','entity_steps_down','replacement_preserved','repeat_refused']);
+  assert.ok(writerCases.filter(r=>!r.passed).every(r=>r.detail.includes('23514')),'Original owner-link CHECK must be the actual baseline failure');
+  records.push({phase:'original-revoke-before-repair',cases:writerCases});
+  const writerMetadata="select (to_jsonb(p)-'prosrc')::text from pg_proc p where oid='public.revoke_co_owner(uuid,uuid)'::regprocedure;";
+  const beforeWriter=sql(writerMetadata);
+  sql(revokeMigration);
+  assert.equal(sql(writerMetadata),beforeWriter,'Original writer OID/ACL/security/defaults/arguments conserved');
+  const integratedCases=sql('select row_to_json(t) from proof.revoke_cases() t;').split('\n').filter(Boolean).map(JSON.parse);
+  assert.equal(integratedCases.length,11);assert.ok(integratedCases.every(r=>r.passed),JSON.stringify(integratedCases));
+  records.push({phase:'original-revoke-after-repair',cases:integratedCases});
+  const writerSnapshot=sql(snapshot);const auditSnapshot=sql('select json_agg(a order by id) from public.paige_audit_log a;');
+  sql(revokeMigration);
+  assert.equal(sql(snapshot),writerSnapshot);assert.equal(sql('select json_agg(a order by id) from public.paige_audit_log a;'),auditSnapshot);
+  records.push({phase:'original-revoke-migration-replay',row_changes:0});
+  const patchedRevoke=sql("select pg_get_functiondef('public.revoke_co_owner(uuid,uuid)'::regprocedure);");
+  const revokeCases=()=>sql('select row_to_json(t) from proof.revoke_cases() t;').split('\n').filter(Boolean).map(JSON.parse);
+  for(const [name,mutate] of [
+    ['SOLO scope removed',s=>s.replace('CASE WHEN public._solo_shell_tenant(_tenant) THEN NULL ELSE business_owner_id END','NULL')],
+    ['original authority removed',s=>s.replace('IF NOT (public.is_tenant_account_holder','IF false AND NOT (public.is_tenant_account_holder')],
+    ['original holder protection removed',s=>s.replace('IF EXISTS (SELECT 1 FROM public.tenants WHERE id = _tenant AND owner_user_id = _user) THEN','IF false THEN')],
+    ['original last-owner floor removed',s=>s.replace('IF _owner_count <= 1 THEN','IF false THEN')],
+  ]) {
+    const changed=mutate(patchedRevoke);assert.notEqual(changed,patchedRevoke,name);
+    sql(changed);const failures=revokeCases().filter(r=>!r.passed).map(r=>r.case_name);
+    assert.ok(failures.length,`${name}: integration mutant survived`);
+    records.push({phase:'original-revoke-mutant',name,killed_by:failures});sql(patchedRevoke);
+  }
+  const drift=[
+    ['unknown body',patchedRevoke.replace('BEGIN','BEGIN\n PERFORM 1;')],
+    ['partial link patch',patchedRevoke.replace('THEN NULL ELSE business_owner_id END','THEN business_owner_id ELSE business_owner_id END')],
+    ['ACL','GRANT EXECUTE ON FUNCTION public.revoke_co_owner(uuid,uuid) TO anon;'],
+    ['grant option','GRANT EXECUTE ON FUNCTION public.revoke_co_owner(uuid,uuid) TO authenticated WITH GRANT OPTION;'],
+    ['owner','ALTER FUNCTION public.revoke_co_owner(uuid,uuid) OWNER TO service_role;'],
+    ['path',"ALTER FUNCTION public.revoke_co_owner(uuid,uuid) SET search_path='pg_catalog';"],
+    ['security','ALTER FUNCTION public.revoke_co_owner(uuid,uuid) SECURITY INVOKER;'],
+    ['volatility','ALTER FUNCTION public.revoke_co_owner(uuid,uuid) STABLE;'],
+  ];
+  for(const [name,changed] of drift) {
+    sql(changed);const before=sql("select pg_get_functiondef('public.revoke_co_owner(uuid,uuid)'::regprocedure);");
+    sql(revokeMigration,database,true,/EXP08 entity revoke/);
+    assert.equal(sql("select pg_get_functiondef('public.revoke_co_owner(uuid,uuid)'::regprocedure);"),before);
+    sql(`ALTER FUNCTION public.revoke_co_owner(uuid,uuid) OWNER TO postgres;\n${patchedRevoke};\nREVOKE ALL ON FUNCTION public.revoke_co_owner(uuid,uuid) FROM PUBLIC,anon,authenticated,service_role; GRANT EXECUTE ON FUNCTION public.revoke_co_owner(uuid,uuid) TO authenticated,service_role;`);
+    records.push({phase:'original-revoke-drift',name,refused:true});
+  }
+  for(const [name,changed] of [
+    ['seat helper body',definition.replace('BEGIN','BEGIN\n PERFORM 1;')],
+    ['representative helper body',representativeDefinition.replace('BEGIN','BEGIN\n PERFORM 1;')],
+    ['Solo helper body',scopeHelper.replace('SELECT EXISTS','SELECT /* unknown */ EXISTS')],
+  ]) {
+    sql(changed);sql(revokeMigration,database,true,/EXP08 entity revoke/);restore();sql(scopeHelper);
+    records.push({phase:'original-revoke-drift',name,refused:true});
+  }
+  for(const [relation,name] of [['tenant_members','trg_tenant_members_business_owner_seat_ended'],['tenant_business_owners','trg_business_owner_representative_deleted']]) {
+    const trigger=sql(`select pg_get_triggerdef(oid) from pg_trigger where tgrelid='public.${relation}'::regclass and tgname='${name}';`);
+    sql(`DROP TRIGGER ${name} ON public.${relation}; ${trigger.replace(' FOR EACH ROW',' FOR EACH ROW WHEN (false)')};`);
+    sql(revokeMigration,database,true,/EXP08 entity revoke/);
+    sql(`DROP TRIGGER ${name} ON public.${relation}; ${trigger};`);
+    records.push({phase:'original-revoke-drift',name:`${name} disabled by WHEN`,refused:true});
+  }
+  assert.ok(revokeCases().every(r=>r.passed));
+  const revokeMetadata=JSON.parse(sql("select json_build_object('body',md5(prosrc),'owner',proowner::regrole::text,'definer',prosecdef,'path',proconfig,'acl',proacl::text) from pg_proc where oid='public.revoke_co_owner(uuid,uuid)'::regprocedure;"));
+  records.push({phase:'original-revoke-final-metadata',metadata:revokeMetadata});
+  await originalOwnerFloorRace();
+  console.log(JSON.stringify({ evidence: 'isolated native component and original revoke source integration; Auth/platform/tables are ports; no authenticated/RLS/billing/provider/customer proof', records }, null, 2));
 } finally {
   if (created) { sql(`DROP DATABASE ${database};`, 'postgres'); console.log('Disposed only the database created by this run.'); }
 }

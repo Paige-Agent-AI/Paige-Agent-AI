@@ -17,6 +17,17 @@ const coOwnerSource = readFileSync(new URL('../../supabase/migrations/2027111602
 const tenantAuthoritySource = readFileSync(new URL('../../supabase/migrations/20270521000000_operator_authority_in_company_workspaces.sql', import.meta.url), 'utf8');
 const revokeFixture = readFileSync(new URL('../../supabase/tests/exp08_entity_owner_revoke_integration.sql', import.meta.url), 'utf8');
 const revokeMigration = readFileSync(new URL('../../supabase/migrations/20271126090008_exp08_entity_owner_revoke_link.sql', import.meta.url), 'utf8');
+const collaborationSource=readFileSync(new URL('../../supabase/migrations/20271113850008_exp08_team_hub_collaboration.sql',import.meta.url),'utf8');
+const lifecycleSource=readFileSync(new URL('../../supabase/migrations/20271115040008_exp08_team_lifecycle.sql',import.meta.url),'utf8');
+const actorFixture=readFileSync(new URL('../../supabase/tests/exp08_team_hub_actor_lifecycle.sql',import.meta.url),'utf8');
+const actorMigration=readFileSync(new URL('../../supabase/migrations/20271126100008_exp08_team_hub_actor_lifecycle.sql',import.meta.url),'utf8');
+function privateHelper(source,name,signature) {
+  const start=source.indexOf(`CREATE OR REPLACE FUNCTION public.${name}(`);
+  const endPattern=`REVOKE ALL ON FUNCTION public.${name}(${signature})`;
+  const revoke=source.indexOf(endPattern,start);const end=source.indexOf(';',revoke);
+  assert.ok(start>=0&&revoke>start&&end>revoke,`Original ${name} with its private ACL required`);
+  return source.slice(start,end+1);
+}
 function originalFunction(source, name) {
   const start = source.indexOf(`CREATE OR REPLACE FUNCTION public.${name}(`);
   assert.ok(start >= 0, `Original ${name} missing`);
@@ -270,6 +281,55 @@ try {
   const revokeMetadata=JSON.parse(sql("select json_build_object('body',md5(prosrc),'owner',proowner::regrole::text,'definer',prosecdef,'path',proconfig,'acl',proacl::text) from pg_proc where oid='public.revoke_co_owner(uuid,uuid)'::regprocedure;"));
   records.push({phase:'original-revoke-final-metadata',metadata:revokeMetadata});
   await originalOwnerFloorRace();
+  sql(privateHelper(collaborationSource,'_team_hub_is_active','uuid,uuid'));
+  sql(privateHelper(lifecycleSource,'_team_hub_participates','uuid,uuid'));
+  sql(privateHelper(lifecycleSource,'_team_hub_refusal','uuid'));
+  assert.equal(sql("select md5(prosrc) from pg_proc where oid='public._team_hub_refusal(uuid)'::regprocedure;"),'b6ee98245fdbb9e0229547061a9391d2');
+  sql(actorFixture);
+  const actorCases=()=>sql('select row_to_json(t) from proof.actor_cases() t;').split('\n').filter(Boolean).map(JSON.parse);
+  const actorBaseline=actorCases();
+  assert.deepEqual(actorBaseline.filter(r=>!r.passed).map(r=>r.case_name),['deleted_identity','missing_identity_member','foreign_expected_ended_identity']);
+  records.push({phase:'original-actor-lifecycle-before',cases:actorBaseline});
+  const actorMetadata="select (to_jsonb(p)-'prosrc')::text from pg_proc p where oid='public._team_hub_refusal(uuid)'::regprocedure;";
+  const actorBefore=sql(actorMetadata);
+  sql(actorMigration);assert.equal(sql(actorMetadata),actorBefore);
+  const actorCurrent=actorCases();assert.equal(actorCurrent.length,15);assert.ok(actorCurrent.every(r=>r.passed),JSON.stringify(actorCurrent));
+  records.push({phase:'original-actor-lifecycle-after',cases:actorCurrent});
+  const actorSnapshot=sql(snapshot);sql(actorMigration);assert.equal(sql(snapshot),actorSnapshot);
+  records.push({phase:'original-actor-lifecycle-replay',row_changes:0});
+  const patchedActor=sql("select pg_get_functiondef('public._team_hub_refusal(uuid)'::regprocedure);");
+  for(const [name,mutate] of [
+    ['identity correlation removed',s=>s.replace('WHERE u.id=actor','WHERE true')],
+    ['identity predicate inverted',s=>s.replace('OR NOT EXISTS(SELECT 1 FROM auth.users','OR EXISTS(SELECT 1 FROM auth.users')],
+    ['original active-seat refusal removed',s=>s.replace('IF resolved IS NULL OR NOT public._team_hub_is_active(resolved, actor)','IF resolved IS NULL')],
+    ['original workspace fence removed',s=>s.replace('IF p_expected_tenant IS DISTINCT FROM resolved','IF false AND p_expected_tenant IS DISTINCT FROM resolved')],
+    ['original tier restriction removed',s=>s.replace('IF NOT EXISTS(SELECT 1 FROM public.tenants','IF false AND NOT EXISTS(SELECT 1 FROM public.tenants')],
+    ['original conversations switch removed',s=>s.replace('IF NOT public._team_hub_participates','IF false AND NOT public._team_hub_participates')],
+  ]) {
+    const changed=mutate(patchedActor);assert.notEqual(changed,patchedActor,name);sql(changed);
+    const failed=actorCases().filter(r=>!r.passed).map(r=>r.case_name);assert.ok(failed.length,`${name}: actor mutant survived`);
+    records.push({phase:'original-actor-lifecycle-mutant',name,killed_by:failed});sql(patchedActor);
+  }
+  for(const [name,changed] of [
+    ['unknown body',patchedActor.replace('BEGIN','BEGIN\n PERFORM 1;')],
+    ['partial guard',patchedActor.replace('WHERE u.id=actor','WHERE false')],
+    ['ACL','GRANT EXECUTE ON FUNCTION public._team_hub_refusal(uuid) TO authenticated;'],
+    ['owner','ALTER FUNCTION public._team_hub_refusal(uuid) OWNER TO service_role;'],
+    ['path',"ALTER FUNCTION public._team_hub_refusal(uuid) SET search_path='public';"],
+    ['security','ALTER FUNCTION public._team_hub_refusal(uuid) SECURITY DEFINER;'],
+    ['volatility','ALTER FUNCTION public._team_hub_refusal(uuid) VOLATILE;'],
+    ['strictness','ALTER FUNCTION public._team_hub_refusal(uuid) STRICT;'],
+    ['leakproof','ALTER FUNCTION public._team_hub_refusal(uuid) LEAKPROOF;'],
+    ['parallel','ALTER FUNCTION public._team_hub_refusal(uuid) PARALLEL SAFE;'],
+  ]) {
+    sql(changed);const before=sql("select pg_get_functiondef('public._team_hub_refusal(uuid)'::regprocedure);");
+    sql(actorMigration,database,true,/EXP08 actor lifecycle/);
+    assert.equal(sql("select pg_get_functiondef('public._team_hub_refusal(uuid)'::regprocedure);"),before);
+    sql(`ALTER FUNCTION public._team_hub_refusal(uuid) OWNER TO postgres;\n${patchedActor};\nREVOKE ALL ON FUNCTION public._team_hub_refusal(uuid) FROM PUBLIC,anon,authenticated,service_role;`);
+    records.push({phase:'original-actor-lifecycle-drift',name,refused:true});
+  }
+  sql(actorMigration);assert.ok(actorCases().every(r=>r.passed));
+  records.push({phase:'original-actor-lifecycle-final-metadata',metadata:JSON.parse(sql("select json_build_object('body',md5(prosrc),'owner',proowner::regrole::text,'definer',prosecdef,'path',proconfig,'acl',proacl::text) from pg_proc where oid='public._team_hub_refusal(uuid)'::regprocedure;"))});
   console.log(JSON.stringify({ evidence: 'isolated native component and original revoke source integration; Auth/platform/tables are ports; no authenticated/RLS/billing/provider/customer proof', records }, null, 2));
 } finally {
   if (created) { sql(`DROP DATABASE ${database};`, 'postgres'); console.log('Disposed only the database created by this run.'); }

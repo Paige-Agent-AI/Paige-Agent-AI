@@ -8,7 +8,7 @@ CREATE SCHEMA proof;
 CREATE SCHEMA auth;
 CREATE TABLE auth.users (id uuid PRIMARY KEY);
 CREATE TYPE public.tenant_role AS ENUM ('owner','admin','member');
-CREATE TABLE public.tenants (id uuid PRIMARY KEY,account_type text NOT NULL,company boolean NOT NULL DEFAULT false,owner_user_id uuid);
+CREATE TABLE public.tenants (id uuid PRIMARY KEY,account_type text NOT NULL,company boolean NOT NULL DEFAULT false,owner_user_id uuid,parent_tenant_id uuid);
 -- Auth/platform ports only; the runner loads the REAL original owner/holder/revoke functions.
 CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE AS $$
  SELECT nullif(current_setting('request.jwt.claim.sub',true),'')::uuid $$;
@@ -28,7 +28,7 @@ CREATE TABLE public.tenant_business_owners (
 CREATE TABLE public.tenant_members (
  id uuid PRIMARY KEY, tenant_id uuid NOT NULL, user_id uuid NOT NULL,
  is_owner boolean NOT NULL DEFAULT false, business_owner_id uuid, status text NOT NULL DEFAULT 'active',
- job_title text,role public.tenant_role NOT NULL DEFAULT 'owner',updated_at timestamptz DEFAULT now(),
+ job_title text,role public.tenant_role NOT NULL DEFAULT 'owner',updated_at timestamptz DEFAULT now(),team_hub_access boolean NOT NULL DEFAULT true,
  FOREIGN KEY(tenant_id,business_owner_id) REFERENCES public.tenant_business_owners(tenant_id,id),
  CHECK(business_owner_id IS NULL OR is_owner), UNIQUE(tenant_id,user_id)
 );

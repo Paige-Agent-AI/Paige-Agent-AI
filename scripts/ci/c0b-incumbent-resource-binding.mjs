@@ -1,3 +1,8 @@
+// EXP02 explicit credit code source8f83c9624903e91cc1803c4c6522f2e26314cb0e.
+// Separate AUTHOR-REVIEW / LOWER ASSURANCE before this single pin renewal.
+// Whole classifier inverse restores277; original131 dependencies/29 dispatches
+// reproduced. Renew ONLY provider-failure; other130 pins, all dispatches,
+// validators, metadata and dated history remain unchanged. Customer proof owed.
 // EXP02 final acquisition source188a70aae41ec8489178c0520d67ac290c74f3b7.
 // AUTHOR-REVIEW / LOWER ASSURANCE, original ANT50/8aa9e1d4.
 // Original E09 mainaa0220a5 reproduces131 dependencies/29 dispatches.
@@ -1375,7 +1380,7 @@ const SOURCES = {
   "supabase/functions/_shared/comms-email/readiness.ts": "8bfab4b5fe9453736b8f68b82d76434cc9884e9ea39583d7d32e97454affba5f",
   "supabase/functions/_shared/openai-models.ts": "a76ac476a2cbd298421a9d7d37f3605cf384e4a4e53a1635719405d52e70905e",
   "supabase/functions/_shared/openai-responses.ts": "56c7e138a8598c312bbabd397ee869f19b3a08d949153bdb142c5537e7df94e1",
-  "supabase/functions/_shared/provider-failure.ts": "3a3507a6ddc6f6e5051a5d17b7a5ff30624643c6bd39d07793224eb0177873b5",
+  "supabase/functions/_shared/provider-failure.ts": "eef5a70437a8952dde4fbb46a29e9696d1b9f31c48e2a76a0c9ae60c99e7c35b",
   "supabase/functions/_shared/paige-turn/route.ts": "657f0c9ee1d3724a5eca72f661718d560e090cd7ee36707cadbbf94f1f463d6e",
   "supabase/functions/_shared/brand-tokens.ts": "225f25c0ed74155012b7959766adfe51d4fd8c8341ad7da57c26b650caad06ca",
   "supabase/functions/_shared/cheesy-tells.ts": "7710d88a2999f0ab23870ff22f9ce46999d35d598982ce7f517a7fea0f4fab9a",

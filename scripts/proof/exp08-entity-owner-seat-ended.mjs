@@ -9,10 +9,11 @@ const host = process.env.PGHOST;
 assert.ok(host === '127.0.0.1' || host === 'localhost' || host === '::1', 'Loopback database only');
 assert.match(process.env.PGPORT ?? '', /^\d+$/, 'Explicit local port required');
 const executable = process.env.PSQL || 'psql';
-assert.ok(process.argv.slice(2).every(arg=>['--only-owner-read','--only-billing'].includes(arg)),'Unknown native proof selection');
+assert.ok(process.argv.slice(2).every(arg=>['--only-owner-read','--only-billing','--only-owner-history'].includes(arg)),'Unknown native proof selection');
+const onlyOwnerHistory=process.argv.includes('--only-owner-history');
 const onlyOwnerRead=process.argv.includes('--only-owner-read');
 const onlyBilling=process.argv.includes('--only-billing');
-assert.ok(!(onlyOwnerRead&&onlyBilling),'Select only one local proof group');
+assert.ok([onlyOwnerRead,onlyBilling,onlyOwnerHistory].filter(Boolean).length<=1,'Select only one local proof group');
 const database = `exp08_entity_seat_proof_${Date.now()}`;
 const fixture = readFileSync(new URL('../../supabase/tests/exp08_entity_owner_seat_ended.sql', import.meta.url), 'utf8');
 const migration = readFileSync(new URL('../../supabase/migrations/20271126080008_exp08_entity_owner_seat_ended.sql', import.meta.url), 'utf8');
@@ -371,6 +372,31 @@ try {
   sql(`CREATE DATABASE ${database};`, 'postgres'); created = true;
   sql(fixture);
   sql(scopeHelper);
+  if(!onlyOwnerRead&&!onlyBilling){
+    const historyFixture=readFileSync(new URL('../../supabase/tests/exp08_first_owner_history.sql',import.meta.url),'utf8');
+    const historyPatch=readFileSync(new URL('./exp08-first-owner-history-patch.sql',import.meta.url),'utf8');
+    const historyRun=patch=>sql(`BEGIN;\n${historyFixture}\n${patch}\nSELECT row_to_json(t) FROM proof.owner_history_cases() t;\nROLLBACK;`).split('\n').filter(Boolean).map(JSON.parse);
+    const rows=historyRun(historyPatch);
+    console.log(JSON.stringify({phase:'first-owner-history-component',cases:rows}));
+    assert.equal(rows.length,15);assert.ok(rows.every(r=>r.passed),JSON.stringify(rows));
+    for(const [name,from,to] of [
+      ['owner role evidence removed',"m.is_owner OR m.role='owner'::public.tenant_role",'m.is_owner'],
+      ['injected parent counted as child owner',"'tenant:subaccount_owner_established','tenant:grant_co_owner'","'tenant:deleted_injected_owner','tenant:subaccount_owner_established','tenant:grant_co_owner'"],
+      ['first history rewrite permitted','IF OLD.first_owner_seated_at IS NOT NULL','IF false AND OLD.first_owner_seated_at IS NOT NULL'],
+      ['owner tenant move forgotten','UPDATE OF is_owner,role,tenant_id','UPDATE OF is_owner,role'],
+    ]){
+      const mutated=historyPatch.replaceAll(from,to);assert.notEqual(mutated,historyPatch,name);
+      const failed=historyRun(mutated).filter(r=>!r.passed).map(r=>r.case_name);
+      assert.ok(failed.length,`${name}: survived`);
+      console.log(JSON.stringify({phase:'first-owner-history-mutant',name,killed_by:failed}));
+    }
+    const replay=sql(`BEGIN;\n${historyFixture}\n${historyPatch}\nCREATE TEMP TABLE history_before AS SELECT jsonb_agg(to_jsonb(t) ORDER BY id) AS rows FROM public.tenants t;\n${historyPatch}\nSELECT jsonb_build_object('rows_unchanged',(SELECT rows FROM history_before)=(SELECT jsonb_agg(to_jsonb(t) ORDER BY id) FROM public.tenants t));\nROLLBACK;`);
+    assert.deepEqual(JSON.parse(replay),{rows_unchanged:true});
+    console.log(JSON.stringify({phase:'first-owner-history-replay',rows_unchanged:true}));
+  }
+  if(onlyOwnerHistory){
+    console.log('Selected original first-owner history component only; NOT full native release proof.');
+  } else {
   if(onlyBilling){
     sql(migration);
     sql(originalFunction(tenantAuthoritySource,'is_tenant_owner'));
@@ -805,6 +831,7 @@ try {
   // Do not suppress the upstream current-authority failure. Keep it in the complete release suite.
   // Its fixture uses the original Billing table shape, separate from owner-read projection ports.
   if(!onlyOwnerRead){sql('DROP TABLE public.platform_billing_contacts; DROP FUNCTION proof.billing_cases(); DROP FUNCTION public.billing_active_tenant_id();');billingBootstrap();await billingAuthorityRace(false);}
+  }
   }
 } finally {
   if (created) { sql(`DROP DATABASE ${database};`, 'postgres'); console.log('Disposed only the database created by this run.'); }

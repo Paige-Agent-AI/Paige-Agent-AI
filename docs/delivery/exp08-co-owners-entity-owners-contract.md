@@ -1570,3 +1570,46 @@ source finding; the reviewer did not independently execute native tests. Origina
 repair remains outstanding. Published parent421e greens are separate from this child and its
 terminal FAIL. No Preview, migration deployment, source release, activation, authenticated QA or
 owner acceptance follows. Full EXP08 remains STILL CODING, with all original matrix rows retained.
+
+### I2 first-owner history component — local work checkpoint, 2026-10-30
+
+Pre-edit routing: intended outcome is to distinguish a genuinely never-owned account from one whose
+last owner seat disappeared. EXP08 owns this original ownership component; EXP01 retains Setup/Auth,
+and E02 retains Billing. Existing native Team invitation/recovery writers will consume the private
+predicate; no new Spine tool, Harness layer, provider, approval flow, runtime or task store is added.
+This component grants no ownership/action authority and changes no existing customer invitation
+entry point. It is reusable across account identities, with no founder/cohort branch. Its only
+persisted datum is the approved timestamp on the original tenant row; existing owner facts/audits
+are historical backfill inputs. No financial limits, metering, external effects or activation change.
+The native proof is minimal-schema engineering evidence; full-schema compatibility, concurrent
+writer composition, source review, exact-head CI/Preview, release and customer proof remain owed.
+
+Active narrow source lease was posted in the existing ANT161 marker before editing: original
+`scripts/proof/exp08-entity-owner-seat-ended.mjs`, new UNVERSIONED
+`scripts/proof/exp08-first-owner-history-patch.sql`, and its owning native SQL fixture. This is not
+an applied/versioned migration or permission to take over Setup. The existing normal runner now
+includes the component in a rolled-back transaction before its unchanged original proofs; local
+`--only-owner-history` explicitly does not claim complete native release proof.
+
+Candidate implements the original private `_tenant_never_owned` predicate, earliest accepted-audit
+or existing-owner creation-time backfill, and first-seat history. Existing suspended boolean-owner
+and role-only-owner evidence counts. `tenant:deleted_injected_owner` does not count. The private
+trigger retains history after deletion and also records an owner moved to another tenant; it refuses
+clearing/rewriting a non-null history timestamp. This is not yet the complete column write-admission
+or provisioning contract: direct initial marker writes, exact tenant/member lock order and all
+invitation/recovery writer consumers must be reconciled before any migration is released.
+
+Actual local native result: **15 cases PASS**, four deliberately regressed implementations rejected,
+and replay leaves tenant rows unchanged. Initial control run correctly **FAILS** because removing
+role-only evidence survived the old fixture: add an existing suspended role-only owner rather than
+remove that assertion. Final control run exits0 and removes only its uniquely created database.
+Tables/Auth are ports; no production/customer account, RLS, effect or acceptance claim follows.
+Original logs `exp08-first-owner-history-controls.log` (FAIL) and
+`exp08-first-owner-history-controls-v2.log` (PASS) remain in the coding workspace. Original Billing
+full-run failure remains unresolved; this selected component does not supersede it. Setup protection
+handoff ANT50/b618c8ac awaits its original owner. Full EXP08 remains **STILL CODING**.
+
+Bounded NON-AUTHOR SOURCE review of these four component paths reports no new material finding;
+it did not independently execute the native proof. It explicitly retains initial-marker protection,
+guarded migration/replay admission, tenant/member lock ordering, provisioning and original
+invitation/recovery consumers as required unfinished work before release. No full-I2 approval follows.

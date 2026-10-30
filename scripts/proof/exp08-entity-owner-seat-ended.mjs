@@ -9,6 +9,8 @@ const host = process.env.PGHOST;
 assert.ok(host === '127.0.0.1' || host === 'localhost' || host === '::1', 'Loopback database only');
 assert.match(process.env.PGPORT ?? '', /^\d+$/, 'Explicit local port required');
 const executable = process.env.PSQL || 'psql';
+assert.ok(process.argv.slice(2).every(arg=>arg==='--only-owner-read'),'Unknown native proof selection');
+const onlyOwnerRead=process.argv.includes('--only-owner-read');
 const database = `exp08_entity_seat_proof_${Date.now()}`;
 const fixture = readFileSync(new URL('../../supabase/tests/exp08_entity_owner_seat_ended.sql', import.meta.url), 'utf8');
 const migration = readFileSync(new URL('../../supabase/migrations/20271126080008_exp08_entity_owner_seat_ended.sql', import.meta.url), 'utf8');
@@ -24,6 +26,10 @@ const actorMigration=readFileSync(new URL('../../supabase/migrations/20271126100
 const holderStateFixture=readFileSync(new URL('../../supabase/tests/exp08_account_holder_state.sql',import.meta.url),'utf8');
 const identityFixture=readFileSync(new URL('../../supabase/tests/exp08_team_hub_identity_currentness.sql',import.meta.url),'utf8');
 const identityMigration=readFileSync(new URL('../../supabase/migrations/20271126140008_exp08_team_hub_identity_currentness.sql',import.meta.url),'utf8');
+const ownerReadFixture=readFileSync(new URL('../../supabase/tests/exp08_owner_read_projection.sql',import.meta.url),'utf8');
+const workspaceReadSource=readFileSync(new URL('../../supabase/migrations/20261107000000_the_headline_is_the_furthest_the_email_got.sql',import.meta.url),'utf8');
+const contextReadSource=readFileSync(new URL('../../supabase/migrations/20260901150000_solo_paige_team_invitation_context.sql',import.meta.url),'utf8');
+const ownerReadPatch=readFileSync(new URL('./exp08-owner-read-projection-patch.sql',import.meta.url),'utf8');
 function privateHelper(source,name,signature) {
   const start=source.indexOf(`CREATE OR REPLACE FUNCTION public.${name}(`);
   const endPattern=`REVOKE ALL ON FUNCTION public.${name}(${signature})`;
@@ -174,6 +180,92 @@ async function identityAdmissionRace(revocationFirst) {
     await Promise.allSettled([firstDone,...(secondDone?[secondDone]:[])]);
   }
 }
+async function ownerReadDemotionRace(context) {
+  sql("SELECT proof.owner_read_setup('admin');");
+  const first=spawn(executable,connectionArgs(database),{env:process.env,stdio:['pipe','pipe','pipe']});
+  const firstDone=new Promise((resolve,reject)=>{first.on('error',reject);first.on('close',resolve);});
+  const application=`exp08_owner_reader_${context?'context':'screen'}_race`;
+  let second;let secondDone;let timer;let firstOutput='';let secondOutput='';let secondError='';
+  try{
+    const locked=new Promise((resolve,reject)=>{
+      timer=setTimeout(()=>reject(new Error('Original invitation read barrier not acquired')),10000);
+      first.stdout.on('data',chunk=>{firstOutput+=chunk;if(firstOutput.includes('OWNER_READ_LOCKED'))resolve();});first.on('error',reject);
+    });
+    first.stdin.write('BEGIN; LOCK TABLE public.tenant_invite_tokens IN ACCESS EXCLUSIVE MODE;\n\\echo OWNER_READ_LOCKED\n');
+    await locked;clearTimeout(timer);
+    second=spawn(executable,connectionArgs(database),{env:{...process.env,PGAPPNAME:application},stdio:['pipe','pipe','pipe']});
+    secondDone=new Promise((resolve,reject)=>{second.on('error',reject);second.on('close',resolve);});
+    second.stdout.on('data',chunk=>{secondOutput+=chunk;});second.stderr.on('data',chunk=>{secondError+=chunk;});
+    const reader=context?'public.get_paige_team_context()':'public.get_solo_team_workspace()';
+    second.stdin.end(`SET request.jwt.claim.sub='e8000000-0000-4000-8000-000000060300'; SET proof.current_tenant='e8000000-0000-4000-8000-000000060010'; SELECT coalesce(${reader},'null'::jsonb);\n`);
+    let waited=false;
+    for(let i=0;i<40;i++){
+      waited=sql(`select exists(select 1 from pg_stat_activity where datname='${database}' and application_name='${application}' and wait_event_type='Lock');`)==='t';
+      if(waited)break;await new Promise(resolve=>setTimeout(resolve,50));
+    }
+    assert.ok(waited,'Original reader must actually wait after its first Admin check');
+    first.stdin.end("UPDATE public.tenant_members SET role='member' WHERE tenant_id='e8000000-0000-4000-8000-000000060010' AND user_id='e8000000-0000-4000-8000-000000060300'; COMMIT;\n\\q\n");
+    assert.equal(await firstDone,0);assert.equal(await secondDone,0,secondError);
+    const value=JSON.parse(secondOutput.trim());
+    assert.equal(value,null,'Original read must abstain after role changed while waiting, including its old invitation fields');
+    records.push({phase:'original-owner-read-two-session-demotion',reader:context?'context':'screen',observed_lock_wait:true,whole_stale_read_withheld:true,seat_change_is_fixture_port:true});
+  }finally{
+    clearTimeout(timer);if(first.exitCode===null)first.stdin.end('ROLLBACK;\n\\q\n');
+    if(second&&second.exitCode===null)second.kill();await Promise.allSettled([firstDone,...(secondDone?[secondDone]:[])]);
+  }
+}
+async function ownerReadAfterAdmissionRace(context,identity=false) {
+  sql("SELECT proof.owner_read_setup('admin');");
+  const first=spawn(executable,connectionArgs(database),{env:process.env,stdio:['pipe','pipe','pipe']});
+  const firstDone=new Promise((resolve,reject)=>{first.on('error',reject);first.on('close',resolve);});
+  const application=`exp08_owner_after_admission_${context?'context':'screen'}_${identity?'identity':'seat'}`;
+  const mutatorApplication=application+'_change';
+  let second;let third;let secondDone;let thirdDone;let timer;let output='';let readOutput='';let readError='';let mutationError='';
+  try{
+    const locked=new Promise((resolve,reject)=>{
+      timer=setTimeout(()=>reject(new Error('Post-admission projection barrier not acquired')),10000);
+      first.stdout.on('data',chunk=>{output+=chunk;if(output.includes('PROJECTION_LOCKED'))resolve();});first.on('error',reject);
+    });
+    first.stdin.write('BEGIN; LOCK TABLE public.platform_billing_contacts IN ACCESS EXCLUSIVE MODE;\n\\echo PROJECTION_LOCKED\n');
+    await locked;clearTimeout(timer);
+    second=spawn(executable,connectionArgs(database),{env:{...process.env,PGAPPNAME:application},stdio:['pipe','pipe','pipe']});
+    secondDone=new Promise((resolve,reject)=>{second.on('error',reject);second.on('close',resolve);});
+    second.stdout.on('data',chunk=>{readOutput+=chunk;});second.stderr.on('data',chunk=>{readError+=chunk;});
+    const reader=context?'public.get_paige_team_context()':'public.get_solo_team_workspace()';
+    second.stdin.end(`SET request.jwt.claim.sub='e8000000-0000-4000-8000-000000060300'; SET proof.current_tenant='e8000000-0000-4000-8000-000000060010'; SELECT coalesce(${reader},'null'::jsonb);\n`);
+    let readWait=false;
+    for(let i=0;i<40;i++){
+      readWait=sql(`select exists(select 1 from pg_stat_activity where datname='${database}' and application_name='${application}' and wait_event_type='Lock');`)==='t';
+      if(readWait)break;await new Promise(resolve=>setTimeout(resolve,50));
+    }
+    assert.ok(readWait,'Native projection must wait AFTER its initial terminal admission');
+    third=spawn(executable,connectionArgs(database),{env:{...process.env,PGAPPNAME:mutatorApplication},stdio:['pipe','pipe','pipe']});
+    thirdDone=new Promise((resolve,reject)=>{third.on('error',reject);third.on('close',resolve);});
+    third.stderr.on('data',chunk=>{mutationError+=chunk;});
+    third.stdin.end(identity
+      ? "UPDATE auth.users SET banned_until=now()+interval '1 hour' WHERE id='e8000000-0000-4000-8000-000000060300';\n"
+      : "UPDATE public.tenant_members SET role='member' WHERE tenant_id='e8000000-0000-4000-8000-000000060010' AND user_id='e8000000-0000-4000-8000-000000060300';\n");
+    let changeWait=false;
+    for(let i=0;i<40;i++){
+      changeWait=sql(`select exists(select 1 from pg_stat_activity where datname='${database}' and application_name='${mutatorApplication}' and wait_event_type='Lock');`)==='t';
+      if(changeWait || third.exitCode!==null)break;await new Promise(resolve=>setTimeout(resolve,50));
+    }
+    const changedBeforeReturn=third.exitCode===0;
+    first.stdin.end('COMMIT;\n\\q\n');
+    assert.equal(await firstDone,0);assert.equal(await secondDone,0,readError);assert.equal(await thirdDone,0,mutationError);
+    const value=JSON.parse(readOutput.trim());
+    if(!changeWait)console.error(`EXP08 post-admission counterexample: reader=${context?'context':'screen'}; change_committed_before_projection_release=${changedBeforeReturn}; cached_invitations=${value?.invitations?.length??0}`);
+    assert.ok(changeWait,'Actor change must wait until the already-authorized projection returns');
+    assert.ok(value && value.invitations.length===1,'The first authorized read completes before the grant changes');
+    const next=JSON.parse(sql(`SET request.jwt.claim.sub='e8000000-0000-4000-8000-000000060300'; SET proof.current_tenant='e8000000-0000-4000-8000-000000060010'; SELECT coalesce(${reader},'null'::jsonb);`));
+    if(identity)assert.equal(next,null);else{assert.deepEqual(next.invitations,[]);assert.equal(next.account_holder_state,null);}
+    records.push({phase:'original-owner-read-after-admission-race',reader:context?'context':'screen',change:identity?'identity-ban':'seat-demotion',projection_wait_observed:true,grant_change_wait_observed:true,current_followup_private_fields_withheld:true,authority_changes_are_fixture_ports:true});
+  }finally{
+    clearTimeout(timer);if(first.exitCode===null)first.stdin.end('ROLLBACK;\n\\q\n');
+    if(second&&second.exitCode===null)second.kill();if(third&&third.exitCode===null)third.kill();
+    await Promise.allSettled([firstDone,...(secondDone?[secondDone]:[]),...(thirdDone?[thirdDone]:[])]);
+  }
+}
 const snapshot = `select json_build_object('members',(select json_agg(m order by id) from public.tenant_members m),
  'owners',(select json_agg(b order by id) from public.tenant_business_owners b));`;
 let created = false;
@@ -181,6 +273,19 @@ try {
   sql(`CREATE DATABASE ${database};`, 'postgres'); created = true;
   sql(fixture);
   sql(scopeHelper);
+  if(onlyOwnerRead){
+    // Local development selection only. Normal CI invokes this runner WITHOUT arguments and
+    // still executes every earlier lifecycle/admission assertion, mutant and two-session race.
+    sql(migration);
+    sql(originalFunction(tenantAuthoritySource,'is_tenant_owner'));
+    sql(originalFunction(coOwnerSource,'is_tenant_account_holder'));
+    const acl=coOwnerSource.match(/REVOKE ALL ON FUNCTION public\.is_tenant_account_holder\(uuid, uuid\) FROM PUBLIC, anon, authenticated;\s*GRANT EXECUTE ON FUNCTION public\.is_tenant_account_holder\(uuid, uuid\) TO service_role;/)?.[0];
+    assert.ok(acl);sql(acl);
+    sql(holderStateFixture);
+    sql(originalFunction(invitationSource,'_tenant_account_holder_state'));
+    const stateAcl=invitationSource.match(/REVOKE ALL ON FUNCTION public\._tenant_account_holder_state\(uuid\) FROM PUBLIC, anon, authenticated, service_role;/)?.[0];
+    assert.ok(stateAcl);sql(stateAcl);sql(actorFixture);
+  } else {
   const baseline = cases();
   assert.deepEqual(baseline.filter(r => !r.passed).map(r => r.case_name),
     ['delete', 'demote', 'unlink', 'identity_move', 'first_vacancy', 'other_tenant_unchanged',
@@ -473,7 +578,113 @@ try {
   assert.equal(identityMetadata(),identityInitialMetadata);
   await identityAdmissionRace(false);await identityAdmissionRace(true);
   records.push({phase:'original-identity-final-metadata',metadata:JSON.parse(sql(`select json_agg(json_build_object('signature',p.oid::regprocedure::text,'body',md5(p.prosrc),'owner',p.proowner::regrole::text,'definer',p.prosecdef,'path',p.proconfig,'acl',p.proacl::text) order by p.oid) from pg_proc p where p.oid in (${identitySignatures.map(s=>`'${s}'::regprocedure`).join(',')});`))});
-  console.log(JSON.stringify({ evidence: 'isolated native component and original revoke source integration; Auth/platform/tables are ports; no authenticated/RLS/billing/provider/customer proof', records }, null, 2));
+  }
+  sql(ownerReadFixture);
+  sql(originalFunction(workspaceReadSource,'get_solo_team_workspace'));
+  sql(originalFunction(contextReadSource,'get_paige_team_context'));
+  sql('REVOKE ALL ON FUNCTION public.get_solo_team_workspace(text,text,integer,integer),public.get_paige_team_context() FROM PUBLIC,anon,service_role; GRANT EXECUTE ON FUNCTION public.get_solo_team_workspace(text,text,integer,integer),public.get_paige_team_context() TO authenticated;');
+  assert.equal(sql("select md5(prosrc) from pg_proc where oid='public.get_solo_team_workspace(text,text,integer,integer)'::regprocedure;"),'ded4ae3cb9d57f2c1ed0cef52493590b');
+  assert.equal(sql("select md5(prosrc) from pg_proc where oid='public.get_paige_team_context()'::regprocedure;"),'623d712d745867ed8f7d29374e3a6078');
+  // Each group retains the same assertions. Bound expensive fixture TRUNCATE/reset work per
+  // psql call instead of weakening the original 30-second command timeout or omitting cases.
+  const ownerReadNames=['holder','admin','coowner','member','owner_label_only','holder_missing','holder_paused','holder_archived',
+    'self_billing','other_billing_private','revoked_billing','foreign_billing','entity_label','private_legal_fields','held_seat',
+    'holder_options','options_private','pending_option','expired_option','individual_excluded','foreign_entity_excluded',
+    'search_paging','invitations_preserved','conversations_off','suspended_viewer','no_actor','no_workspace',
+    'missing_identity','soft_deleted_identity','banned_identity','expired_ban','unsupported_tier'];
+  const ownerReadCases=()=>{
+    const result=[];
+    for(let i=0;i<ownerReadNames.length;i+=9){
+      const names=ownerReadNames.slice(i,i+9);
+      const group=sql(`select row_to_json(t) from proof.owner_read_cases(ARRAY[${names.map(n=>`'${n}'`).join(',')}]) t;`).split('\n').filter(Boolean).map(JSON.parse);
+      assert.deepEqual(group.map(r=>r.case_name),names,'Every original case must execute exactly once in order');result.push(...group);
+    }
+    return result;
+  };
+  const ownerReadBefore=ownerReadCases();
+  records.push({phase:'original-owner-read-before',cases:ownerReadBefore});
+  assert.equal(ownerReadBefore.length,32);
+  assert.deepEqual(ownerReadBefore.filter(r=>r.passed).map(r=>r.case_name),['suspended_viewer','no_actor','no_workspace']);
+  console.error(`EXP08 owner read baseline: ${ownerReadBefore.filter(r=>!r.passed).length} expected failing / ${ownerReadBefore.length} cases`);
+  const readerSignatures=['public.get_solo_team_workspace(text,text,integer,integer)','public.get_paige_team_context()'];
+  const readerMetadata=()=>sql(`select jsonb_agg((to_jsonb(p)-'prosrc'-'proargdefaults')||jsonb_build_object('proargdefaults',pg_get_expr(proargdefaults,0)) order by p.oid)::text from pg_proc p where p.oid in (${readerSignatures.map(s=>`'${s}'::regprocedure`).join(',')});`);
+  const readRows=()=>sql("select jsonb_build_object('tenants',(select jsonb_agg(to_jsonb(t) order by id) from public.tenants t),'members',(select jsonb_agg(to_jsonb(m) order by id) from public.tenant_members m),'owners',(select jsonb_agg(to_jsonb(b) order by id) from public.tenant_business_owners b),'invites',(select jsonb_agg(to_jsonb(i) order by id) from public.tenant_invite_tokens i),'billing',(select jsonb_agg(to_jsonb(b) order by id) from public.platform_billing_contacts b),'audit',(select jsonb_agg(to_jsonb(a) order by id) from public.paige_audit_log a))::text;");
+  const readerBeforeMetadata=readerMetadata();const readerBeforeRows=readRows();
+  sql(ownerReadPatch);assert.equal(readerMetadata(),readerBeforeMetadata);assert.equal(readRows(),readerBeforeRows);
+  const ownerReadAfter=ownerReadCases();records.push({phase:'original-owner-read-after',cases:ownerReadAfter});
+  assert.ok(ownerReadAfter.every(r=>r.passed),JSON.stringify(ownerReadAfter));
+  console.error(`EXP08 owner read candidate: ${ownerReadAfter.length} cases passed; original metadata/rows conserved`);
+  await ownerReadAfterAdmissionRace(false);await ownerReadAfterAdmissionRace(true);
+  await ownerReadAfterAdmissionRace(false,true);await ownerReadAfterAdmissionRace(true,true);
+  const readerDefinitions=readerSignatures.map(signature=>({signature,definition:sql(`select pg_get_functiondef('${signature}'::regprocedure);`)}));
+  const readerReplayRows=readRows();sql(ownerReadPatch);assert.equal(readRows(),readerReplayRows);assert.equal(readerMetadata(),readerBeforeMetadata);
+  records.push({phase:'original-owner-read-replay',row_changes:0,metadata_changes:0});
+  const restoreReaders=()=>{for(const {signature,definition} of readerDefinitions)sql(`ALTER FUNCTION ${signature} OWNER TO postgres;\n${definition};\nREVOKE ALL ON FUNCTION ${signature} FROM PUBLIC,anon,authenticated,service_role; GRANT EXECUTE ON FUNCTION ${signature} TO authenticated;`);};
+  for(const [name,mutate] of [
+    ['holder options widened to admin',s=>s.replace("AND public.is_tenant_account_holder(_actor,_tenant) THEN","AND _can_manage THEN")],
+    ['billing privacy removed',s=>s.replace('(public.is_tenant_account_holder(_actor,_tenant) OR tm.user_id=_actor)','true')],
+    ['member entity privacy removed',s=>s.replace(/AND \(public\.is_tenant_owner\(_actor,_tenant\) OR EXISTS\(SELECT 1 FROM public\.tenant_members current_admin[^\n]*?\)\) THEN/,'THEN')],
+    ['owner role label treated as actual owner',s=>s.replace(/\(public\.is_tenant_owner\(_actor,_tenant\) OR EXISTS\(SELECT 1 FROM public\.tenant_members current_admin[^\n]*?\)\)/,'_can_manage')],
+    ['option live expiry removed',s=>s.replace('AND ti.expires_at>now()','')],
+    ['held individual filter removed',s=>s.replace("AND bo.owner_kind<>'individual' AND bo.owner_seat_vacant_since",'AND bo.owner_seat_vacant_since')],
+    ['option individual filter removed',s=>s.replace("AND bo.owner_kind<>'individual'),'[]'::jsonb)","),'[]'::jsonb)")],
+    ['billing tenant scope removed',s=>s.replace('bc.tenant_id=_tenant AND','')],
+    ['billing revocation removed',s=>s.replace('AND bc.revoked_at IS NULL','')],
+  ]){
+    const original=readerDefinitions[0].definition;const changed=mutate(original);assert.notEqual(changed,original,name);sql(changed);
+    const failed=ownerReadCases().filter(r=>!r.passed).map(r=>r.case_name);assert.ok(failed.length,`${name}: owner read mutant survived`);
+    records.push({phase:'original-owner-read-mutant',name,killed_by:failed});restoreReaders();
+  }
+  for(const {signature,definition} of readerDefinitions){
+    for(const [name,statement] of [
+      ['source',definition.replace('exp08_original_owner_read_v1','changed_owner_read')],
+      ['public grant',`GRANT EXECUTE ON FUNCTION ${signature} TO PUBLIC;`],
+      ['service grant',`GRANT EXECUTE ON FUNCTION ${signature} TO service_role;`],
+      ['grant option',`GRANT EXECUTE ON FUNCTION ${signature} TO authenticated WITH GRANT OPTION;`],
+      ['owner',`ALTER FUNCTION ${signature} OWNER TO authenticated;`],
+      ['security',`ALTER FUNCTION ${signature} SECURITY INVOKER;`],
+      ['path',`ALTER FUNCTION ${signature} SET search_path=public;`],
+      ['stability',`ALTER FUNCTION ${signature} STABLE;`],
+      ['strict',`ALTER FUNCTION ${signature} STRICT;`],
+      ['parallel',`ALTER FUNCTION ${signature} PARALLEL SAFE;`],
+      ['leakproof',`ALTER FUNCTION ${signature} LEAKPROOF;`],
+    ]){
+      sql(statement);const before=readerSignatures.map(s=>sql(`select pg_get_functiondef('${s}'::regprocedure);`));const beforeRows=readRows();
+      sql(ownerReadPatch,database,true,/EXP08 owner read/);
+      assert.deepEqual(readerSignatures.map(s=>sql(`select pg_get_functiondef('${s}'::regprocedure);`)),before);assert.equal(readRows(),beforeRows);
+      records.push({phase:'original-owner-read-drift',signature,name,refused:true,no_partial_rewrite:true});restoreReaders();
+    }
+  }
+  const defaultDrift=readerDefinitions[0].definition.replace('_limit integer DEFAULT 25','_limit integer DEFAULT 26');
+  assert.notEqual(defaultDrift,readerDefinitions[0].definition);sql(defaultDrift);
+  sql(ownerReadPatch,database,true,/EXP08 owner read original reader metadata drift/);restoreReaders();
+  records.push({phase:'original-owner-read-default-drift',refused:true});
+  sql(ownerReadPatch);assert.ok(ownerReadCases().every(r=>r.passed));
+  sql("SELECT proof.owner_read_setup('holder');");
+  assert.equal(sql("BEGIN; SET LOCAL request.jwt.claim.sub='e8000000-0000-4000-8000-000000060100'; SET LOCAL proof.current_tenant='e8000000-0000-4000-8000-000000060010'; SET LOCAL ROLE authenticated; SELECT (public.get_solo_team_workspace()->>'viewer_is_account_holder')::boolean AND (public.get_paige_team_context()->>'viewer_is_account_holder')::boolean; ROLLBACK;"),'t');
+  records.push({phase:'original-owner-read-authenticated-role',admitted:true,claims_resolver_are_ports:true});
+  for(const role of ['anon','service_role'])for(const signature of readerSignatures){
+    const call=signature.includes('workspace')?'public.get_solo_team_workspace()':'public.get_paige_team_context()';
+    sql(`BEGIN; SET LOCAL ROLE ${role}; SELECT ${call};`,database,true,/permission denied for function/);
+    records.push({phase:'original-owner-read-other-role',role,signature,execution_denied:true});
+  }
+  records.push({phase:'original-owner-read-final-metadata',metadata:JSON.parse(readerMetadata()),bodies:JSON.parse(sql(`select jsonb_agg(jsonb_build_object('signature',p.oid::regprocedure::text,'body',md5(p.prosrc))) from pg_proc p where p.oid in (${readerSignatures.map(s=>`'${s}'::regprocedure`).join(',')});`))});
+  for(let index=0;index<readerDefinitions.length;index++){
+    const original=readerDefinitions[index].definition;
+    const changed=original.replace("    AND current_member.role=_viewer_role AND (current_member.is_owner OR current_member.role='owner'::public.tenant_role)=_viewer_is_owner",'');
+    assert.notEqual(changed,original,'Current role race mutant must edit the real predicate');sql(changed);
+    await assert.rejects(()=>ownerReadDemotionRace(index===1),/Original read must abstain after role changed/);
+    records.push({phase:'original-owner-read-race-mutant',reader:index===1?'context':'screen',killed:true});restoreReaders();
+    for(const identity of [true,false]){
+      const lockRemoved=identity ? original.replace('   FOR SHARE;','   ;')
+        : original.replace('   FOR SHARE;\n  IF NOT FOUND THEN RETURN NULL; END IF;\n  SELECT _result','   ;\n  IF NOT FOUND THEN RETURN NULL; END IF;\n  SELECT _result');
+      assert.notEqual(lockRemoved,original,'Post-admission lock mutant must edit the real lock');sql(lockRemoved);
+      await assert.rejects(()=>ownerReadAfterAdmissionRace(index===1,identity),/Actor change must wait until/);
+      records.push({phase:'original-owner-read-lock-mutant',reader:index===1?'context':'screen',change:identity?'identity-ban':'seat-demotion',killed:true});restoreReaders();
+    }
+  }
+  await ownerReadDemotionRace(false);await ownerReadDemotionRace(true);
+  console.log(JSON.stringify({ selection:onlyOwnerRead?'owner-read-only; NOT full native release proof':'full-original-runner',evidence: 'isolated native component and original revoke source integration; Auth/platform/tables are ports; no authenticated/RLS/billing/provider/customer proof', records }, null, 2));
 } finally {
   if (created) { sql(`DROP DATABASE ${database};`, 'postgres'); console.log('Disposed only the database created by this run.'); }
 }

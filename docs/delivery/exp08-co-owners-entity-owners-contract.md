@@ -1396,3 +1396,57 @@ Publication order stays original EXP08through40008 → EXP05Task50005 → a fres
 
 
 Final component scope hardening: both triggers now reuse the ORIGINAL I1 _solo_shell_tenant (verified production body9ade6efeff0689b78ff57b116a28c9d4), with a fail-closed prerequisite/body/owner/security/path/ACL guard. No second eligibility rule. Unsupported Agency/Enterprise/company-workspace departure is unchanged; the original FK still clears a deleted Auth reference outside this feature scope without a new held-seat classification. The fixture loads the real helper from I1; its underlying minimal tenants/company predicate is an explicit port. Final20cases PASS (unchanged baseline9FAIL/11PASS),9load-bearing mutants killed,13drift controls refused, exact replay0rows and true two-session replacement lock race PASS. Final private function bodies75d4a8e014e495c5e0a819881b6a79bd/f95cbff2d3f69c274b287ef0b9bc0067 supersede the earlier unscoped local hashes above. Original migration-version guard includes1533tracked migrations PASS; explicit signature-ACL run retains4/4historical baseline entries/no new debt plus12/12self-tests PASS. Direct Windows entrypoint of that scanner does not execute it; the explicit original exported run/selfTest was used, not a silent exit counted as proof. Still local/unreleased/component-only, no original Auth/RLS/permission or full lifecycle acceptance.
+
+### October30 successor §5.5 implementation — LOCAL / partial integration
+
+Actual production reads recovered the ORIGINAL I1 `_tenant_account_holder_state(uuid)` body
+8f9d27463a4c825994f165a5777aca1f. It already exists; preserve it. The earlier never-published
+duplicate candidate was withdrawn, not applied or substituted. Recovery, removal, billing cleanup,
+Setup/provisioning and first-owner/backfill integration remain separate unfinished I2 work.
+
+The inert `scripts/proof/exp08-owner-read-projection-patch.sql` now extends the ORIGINAL
+`get_solo_team_workspace(text,text,integer,integer)` (ded4ae3cb9d57f2c1ed0cef52493590b) and
+`get_paige_team_context()` (623d712d745867ed8f7d29374e3a6078). No migration number is assigned.
+Exact body/inverse, ABI/default, owner/ACL/security/path guards preserve original fields, search,
+paging, delivery history, speaker and governance. Current actor identity and membership must remain
+admitted; Auth then membership SHARE locks protect the same caller through projection. Current
+workspace is rechecked in the projection statement. An intervening role change refuses the entire
+stale result, including original private invitations. These are reads/locks, never grants or writes.
+
+New private legal facts require the original actual owner predicate or a fresh active Admin seat;
+the legacy displayed Owner role label alone does not authorize them. Holder-only legal-owner
+options include same-record representative and live invitation labels needed by the approved
+picker. Billing designation remains self-or-holder only. Never return ownership interest or a full
+legal profile. The existing held-seat row has a vacancy timestamp but no durable former-person
+field: that required history/receipt integration remains missing; no departed identity is invented.
+
+Consumers are the existing `_shared/team-context.ts` formatter and
+`team-workspace-contract.ts:normalizeTeamWorkspace`. The latter previously discarded the new
+top-level fields; its genuine failing-before assertion is retained locally. Both now whitelist named
+facts; absent/malformed values are unknown, not role inference. Context is reference data, never
+an action grant; existing Trust standing authority and required approval remain independent.
+Actual owner/entity controls and confirmed-refusal UI invalidation remain I3 integration work.
+
+Verification extends the SAME `exp08-entity-owner-seat-ended.mjs` runner. Normal CI without
+arguments retains ALL earlier lifecycle, admission, mutation/drift and two-session checks.
+`--only-owner-read` selects local development proof only and is explicitly NOT full native release
+proof. Current32-case baseline has29 expected failures/3 existing refusals; an intermediate candidate
+passes32,9 static mutants,23 reader/default drifts and actual-role checks. Separate review then
+found a post-admission interval not covered by the earlier races; a real three-session counterexample
+was captured before the locking repair. Final identity/seat locking races and causal mutants,
+complete native runner, final review, exact-head hosted CI/Preview, ordered managed release,
+catalogue/ACL readback and authenticated customer proof remain required. Intermediate green
+checks never close a later finding.
+
+Retain actual initial SQL/test-transport failures, timeout, OS spawn UNKNOWN, OOM/OS1455 and
+ENOSPC as failed/incomplete history. Every completed disposable run removed only its own database.
+Root solution-only tsc checked no app files and is not app proof. Focused two-file semantic checking
+and direct original-module assertions are bounded evidence; full Vitest/app checks remain owed
+after host capacity failure. No peer process, unknown scratch directory or infrastructure was altered.
+
+Routing: this is original Team collaboration/lifecycle ownership, not another registry or authority
+engine. Existing Spine `team.authority` remains its narrower caller-seat contract; these new facts
+do not silently expand it or its maturity. No provider, action verb, approval channel, job, event or
+receipt store is added. Existing shared actor/scope admission and domain writers remain mandatory;
+ALG-01/08 reconciliation/currentness support is PARTIAL, not a new algorithm claim. All original
+18 rows,6 amendments and five journeys remain; full assignment STILL CODING.

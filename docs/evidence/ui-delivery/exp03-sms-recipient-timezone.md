@@ -1,5 +1,7 @@
 # SMS recipient-location refusal — EXP03 original dispatch safety
 
+Release follow-up (2026-10-30): exact b83 verify124162956742 failed two original execute-approval hold tests. Those purpose-specific fixtures supplied a timezone without the newly required original timezone_verified flag (one omitted both), so the actual pre-send seam refused unknown location before the intended quiet-hours/DND scenario. Only these two fixture records now supply a confirmed regional timezone. Original held/no-fetch/current-claim assertions are unchanged; unknown-location refusal controls in the owning106case suite are retained. Original execute-approval Vitest configuration:122PASS. An initial root-config invocation found no tests and is not counted as proof. No execute-approval product change or new source identity; fresh exact-head CI/review/release remains required. Original consumer intentionally delegates non-hold blocks/errors to send-message for its original recorded refusal; full integration/recovery proof remains separately owed.
+
 UI_DELIVERY_EVIDENCE_VERSION: 1
 FLOW_BY_FLOW: PASS: original Conversations New conversation SMS → original send-message result contract → actual runPreSend refusal → original toast/retained text → deliberate retry or close/reopen, no provider effect.
 PAIGE_UI_DESIGN: PASS: original mandatory project skill and routed references read during successor grounding; same approved dialog/tokens/scroll owner, no product layout change. Impeccable preserve/clarify checks applied to truthful refusal and recovery.

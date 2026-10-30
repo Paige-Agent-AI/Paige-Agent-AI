@@ -605,6 +605,22 @@ console.log("9. transport-read batching preserves the existing SSE protocol and 
   ok(traceCount() === from + 1 && failedTrace?.status === 'error' && failedTrace?.error_class === 'response_failed',
     '10.1 the failed original attempt still emits exactly one error trace');
 
+  for (const [code, expected] of [['credit_balance_exhausted', 'billing'], ['credit_balance_exhausted_extra', 'unknown'], [null, 'unknown']]) {
+    const start = traceCount();
+    const terminal = { type: 'response.failed', response: { status: 'failed', error: {
+      code, message: 'You have no credits remaining. Add credits to continue using the API.',
+    } } };
+    const r = await ad.responsesStream(message, { model: 'gpt-6.1-sol',
+      fetchImpl: transport(() => sse([created, terminal])),
+    }, TRACE);
+    const acquisition = await r.acquisition;
+    const wire = await drain(r.body);
+    const [row] = await tracesSince(start);
+    ok(!acquisition.ok && acquisition.failureClass === expected && !wire.includes('"finish_reason":"stop"')
+      && traceCount() === start + 1 && row?.status === 'error',
+      `10.1 exact terminal credit code ${String(code)} preserves error truth and closed classification`);
+  }
+
   const ctrl = new AbortController(); let upstreamCancelled = 0, fetchSignal;
   const cancelFrom = traceCount();
   const pending = await ad.responsesStream(message, { model: 'gpt-6.1-sol', signal: ctrl.signal,

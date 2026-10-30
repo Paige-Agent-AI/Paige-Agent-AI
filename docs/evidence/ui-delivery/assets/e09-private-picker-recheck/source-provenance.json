@@ -1,5 +1,6 @@
 {
-  "scope": "Actual original component/hook with explicitly synthetic native ports",
+  "scope": "Final original component/hook with explicitly synthetic native ports",
+  "implementation": "4fff19ccdb12da927972539b7f4bc7c4d1af0f23",
   "inputs": [
     {
       "path": "src/hooks/useCustomerChatAttachments.ts",
@@ -7,7 +8,7 @@
     },
     {
       "path": "src/components/chat/CustomerChatAttachments.tsx",
-      "sha256": "26656ffc276aee1a91865a0b369e342ae05290698b798c6b323e236fe42fd443"
+      "sha256": "eae2a21043d9fbde97b688cbd195a19f870ce8fd535e1dfef5b1fb16988b9b9b"
     },
     {
       "path": "src/components/app/PaigeChat.tsx",

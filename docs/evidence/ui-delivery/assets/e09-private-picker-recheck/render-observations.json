@@ -1,6 +1,6 @@
 {
-  "observedAt": "2026-10-30T23:34:01.816Z",
-  "scope": "Original component and hook with synthetic Documents ports; connect-src none; no customer, Auth, Storage, model or provider execution",
+  "observedAt": "2026-10-30T23:40:50.057Z",
+  "scope": "Final original component/hook; synthetic Documents ports; connect-src none; no native/Auth/Storage/model/provider actions",
   "captures": [
     "desktop-checking.jpg",
     "desktop-recovered.jpg",
@@ -10,40 +10,15 @@
   ],
   "measurements": [
     {
-      "buttons": [
-        {
-          "disabled": false,
-          "height": 44,
-          "label": "Start interrupted choice"
-        },
-        {
-          "disabled": true,
-          "height": 44,
-          "label": "Finish access check"
-        },
-        {
-          "disabled": false,
-          "height": 44,
-          "label": "Retire original context"
-        },
-        {
-          "disabled": false,
-          "height": 44,
-          "label": "Add files"
-        },
-        {
-          "disabled": false,
-          "height": 44,
-          "label": "Remove Harbor.pdf from message"
-        },
-        {
-          "disabled": false,
-          "height": 44,
-          "label": "Remove Willow.pdf from message"
-        }
+      "buttonHeights": [
+        44,
+        44,
+        44,
+        44,
+        44,
+        44
       ],
       "documentWidth": 1366,
-      "focused": "BODY",
       "height": 768,
       "label": "desktop-recovered",
       "selectedFiles": [
@@ -53,40 +28,15 @@
       "width": 1366
     },
     {
-      "buttons": [
-        {
-          "disabled": false,
-          "height": 44,
-          "label": "Start interrupted choice"
-        },
-        {
-          "disabled": true,
-          "height": 44,
-          "label": "Finish access check"
-        },
-        {
-          "disabled": false,
-          "height": 44,
-          "label": "Retire original context"
-        },
-        {
-          "disabled": false,
-          "height": 44,
-          "label": "Add files"
-        },
-        {
-          "disabled": false,
-          "height": 44,
-          "label": "Remove Harbor.pdf from message"
-        },
-        {
-          "disabled": false,
-          "height": 44,
-          "label": "Remove Willow.pdf from message"
-        }
+      "buttonHeights": [
+        44,
+        44,
+        44,
+        44,
+        44,
+        44
       ],
       "documentWidth": 390,
-      "focused": "BODY",
       "height": 844,
       "label": "narrow-recovered-dark",
       "selectedFiles": [
@@ -96,14 +46,13 @@
       "width": 390
     },
     {
-      "componentText": "Add filesPDF, JPG, PNG or Word · up to 5 files, 20 MB total",
       "documentWidth": 390,
       "label": "narrow-retired-dark",
       "selectedCount": 0,
       "width": 390
     }
   ],
-  "keyboard": "Enter starts/completes recheck; removing Harbor with Enter focuses Remove Willow.pdf from message; retired original epoch does not restore either old filename",
-  "excluded": "Initial non-shared localhost connection attempts timed out before any source render; no image from those attempts counted",
-  "nativeCustomer": "Separate private production invoice/Payments proof and failed picker selection remain outside these neutral source captures"
+  "keyboard": "Enter starts/completes checking; Remove Harbor focuses Remove Willow; original retired epoch discards selected and pending names",
+  "review": "Legacy receiver9PASS1FAIL reproduced, restricted to admitted picker tickets, then these five source captures repeated",
+  "excluded": "Initial non-shared server waits, final cold-load timeout and stale old-tab viewport/capture helper request are excluded; valid final viewport and captures independently observed"
 }

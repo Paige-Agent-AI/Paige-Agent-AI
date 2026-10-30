@@ -1,0 +1,16 @@
+{
+  "dialog": {
+    "bottom": 768,
+    "height": 768,
+    "left": 886.4000244140625,
+    "right": 1366.4000244140625,
+    "top": 0,
+    "width": 480,
+    "x": 886.4000244140625,
+    "y": 0
+  },
+  "focused": "Task effort estimate in minutes",
+  "height": 768,
+  "scrollWidth": 1366,
+  "width": 1366
+}

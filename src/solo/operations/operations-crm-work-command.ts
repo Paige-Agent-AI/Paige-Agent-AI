@@ -79,6 +79,7 @@ export async function submitCrmWorkStageOperation(operation:CrmWorkOperation,app
       const read=data.readback;
       const fieldMatches=object(read)&&("targetStatus" in operation?read.status===operation.targetStatus:
         operation.target.kind==="assignment"?read.assignee_user_id===operation.target.assigneeId:
+        operation.target.kind==="effort"?object(read.metadata)&&(operation.target.minutes===null?!Object.prototype.hasOwnProperty.call(read.metadata,"estimated_minutes"):read.metadata.estimated_minutes===operation.target.minutes):
         operation.target.dueAt===null?read.due_date===null:
         typeof read.due_date==="string"&&Number.isFinite(Date.parse(read.due_date))&&Date.parse(read.due_date)===Date.parse(operation.target.dueAt));
       if(!object(read)||read.id!==operation.taskId||!fieldMatches||

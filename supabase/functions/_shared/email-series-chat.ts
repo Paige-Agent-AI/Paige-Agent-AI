@@ -7,7 +7,7 @@ import {
 // Marketing email series from chat (E3c). PAIGE reads the business's series, writes a whole series — who
 // enters, every email and its wait, when people leave — and files it for the owner's one approval. Everything
 // underneath is E3: the same series records, the same owner functions the series view calls, the same tick,
-// worker, sender rules, footer, unsubscribe and daily limit. Every call runs on the signed-in person's own
+// worker, sender rules, footer and unsubscribe. Every call runs on the signed-in person's own
 // session and names the business the chat is in, so the database decides scope. PAIGE never approves,
 // starts, pauses, stops or sends a series; those stay with a person in Marketing › Email.
 //
@@ -22,7 +22,7 @@ const writable = (schema: unknown): Record<string, unknown> => JSON.parse(JSON.s
 export const EMAIL_SERIES_TOOLS = [
   {type:'function',function:{name:'read_email_series',description:'Read this business\'s email series (welcome, nurture and win-back emails that send by themselves), or pass series_id for one series in full: who enters, every email with its wait and words, when people leave, the sender, who would enter today, who is waiting to enter, how it is doing, and its approval state. Also returns the business\'s own live links (pages, forms, funnels, booking pages, confirmed website) and recorded prices, the only links and prices you may use without asking. Read before changing a series. Shows no recipient addresses.',parameters:EMAIL_SERIES_READ_CAPABILITY.input}},
   {type:'function',function:{name:'email_series_draft',description:'Write a new email series draft (omit series_id; give kind and the emails) or change one (pass series_id from read_email_series). A series is a set of emails that send by themselves to each person who enters, one after another. emails is the WHOLE list in order (one to ten) and replaces what the draft had, so read the series first and include every email that should stay. Each email: subject, optional preview_text, body, and its wait — email 1 waits from when the person enters, each later one from when the previous was sent (wait_days 0-90, wait_hours 0-23); give the wait for every email after the first. Write the body in plain marks, one per line: "# Heading", "- item", "[link text](https://...)", "[[Button text|https://...]]", blank line between paragraphs. Use only facts you were given: the business context, its approved knowledge, the links and prices read_email_series returns, and what the owner tells you. Never invent an offer, price, deadline, link, guarantee, client result, product detail or claim, and never leave a fill-in like [Your name] or {{first_name}}; if a fact is missing, ask the owner for it. entry: "new_contacts" (people added after the series starts) or "matching" (anyone who matches now or later). audience is a rule over stages, sources and tags read_email_series lists (empty means everyone who can be emailed), plus inactive_days (people not contacted in at least that many days), or a saved segment_id; it replaces the whole rule. leave_on_goal ends someone\'s series when they reach it (form_submission, booking, deal_created, invoice_paid or none); leave_when_unmatched ends it when they stop matching. The sender is the business\'s connected email first; the owner changes it in the series view. A draft sends nothing. A series waiting for approval cannot be changed here (the owner uses Make changes); a running series keeps sending its approved emails until the change is approved; a stopped series cannot be changed (the owner starts a copy).',parameters:writable(EMAIL_SERIES_DRAFT_CAPABILITY.input)}},
-  {type:'function',function:{name:'email_series_request_approval',description:'File one series\' draft for the owner\'s approval. This freezes every email, wait, rule and the sender under one approval; it does NOT approve, start or send anything. Only the owner or an admin approves, in Marketing › Email or Approvals. Once approved, the series sends by itself to everyone who enters that version, within the daily sending limit, until it is paused or stopped; any later change needs a new approval. Needs every email written, the business postal address, a working sender, and (for "matching") no more people matching now than the daily limit.',parameters:writable(EMAIL_SERIES_REQUEST_APPROVAL_CAPABILITY.input)}},
+  {type:'function',function:{name:'email_series_request_approval',description:'File one series\' draft for the owner\'s approval. This freezes every email, wait, rule and the sender under one approval; it does NOT approve, start or send anything. Only the owner or an admin approves, in Marketing › Email or Approvals. Once approved, the series sends by itself to everyone who enters that version, until it is paused or stopped; any later change needs a new approval. Needs every email written, the business postal address and a working sender.',parameters:writable(EMAIL_SERIES_REQUEST_APPROVAL_CAPABILITY.input)}},
 ] as const;
 export const EMAIL_SERIES_TOOL_NAMES = new Set<string>(EMAIL_SERIES_TOOLS.map((t) => t.function.name));
 
@@ -59,7 +59,6 @@ const REFUSALS: Record<string, string> = {
   step_incomplete: 'Every email in the series needs a subject and words before it can be filed.',
   too_many_steps: 'A series holds at most ten emails.',
   postal_address_missing: 'The business postal address is not set, and every marketing email must carry it. Add it in Settings › Connections › Registration, then file again.',
-  over_daily_cap: 'More people match this series right now than the business can email in a day. Narrow who enters, or choose "new contacts" so it starts with people added from now on.',
   sender_not_found: 'The series\' sender is no longer connected. The owner can pick another sender in the series.',
   sender_needs_attention: 'The sender needs attention before it can send. The owner can reconnect it or pick another sender in the series.',
   rule_invalid: 'I couldn\'t use that rule for who enters. Choose by stage, source, tag, or how long since someone was last contacted.',
@@ -257,7 +256,6 @@ function seriesView(data: Record<string, unknown>): Record<string, unknown> {
   const resolves = object(data.resolves) ?? {};
   const preview = object(data.entry_preview) ?? {};
   const people = object(data.people) ?? {};
-  const sending = object(data.sending) ?? {};
   const choices = object(data.choices) ?? {};
   const steps = Array.isArray(version.steps) ? version.steps.map((s) => object(s)).filter(Boolean) as Record<string, unknown>[] : [];
   const keys = (v: unknown) => Array.isArray(v) ? v.map((x) => object(x)).filter(Boolean).map((x) => ({ key: text(x!.key, 120), contacts: count(x!.count) })) : [];
@@ -271,7 +269,6 @@ function seriesView(data: Record<string, unknown>): Record<string, unknown> {
       body_note: source === null && html ? 'This email was written as HTML. Rewriting it replaces its formatting with plain marks, so ask the owner first.' : undefined,
     };
   });
-  const cap = count(sending.daily_cap);
   const postal = typeof data.postal_address === 'string' && data.postal_address.trim() !== '';
   const blockers: string[] = [];
   if (version.state === 'draft') {
@@ -280,8 +277,6 @@ function seriesView(data: Record<string, unknown>): Record<string, unknown> {
     if (empty.length) blockers.push(`Email ${empty.join(', ')} still ${empty.length === 1 ? 'needs' : 'need'} a subject and words.`);
     if (!postal) blockers.push('The business postal address is not set (Settings › Connections › Registration).');
     if (resolves.ok !== true) blockers.push(REFUSALS[String(resolves.reason)] ?? 'The sender needs attention.');
-    const eligibleNew = count(preview.eligible_new);
-    if (version.entry_mode === 'matching' && cap !== null && eligibleNew !== null && eligibleNew > cap) blockers.push(`${eligibleNew} people match now; the daily limit is ${cap}.`);
   }
   return {
     series: { id: seq.id, name: text(seq.name, 200), kind: seq.kind, kind_in_words: KIND_WORDS[String(seq.kind)] ?? 'Series', status: seq.status,
@@ -301,7 +296,6 @@ function seriesView(data: Record<string, unknown>): Record<string, unknown> {
     running_version: live ? { version_no: count(live.version_no), emails: (Array.isArray(live.steps) ? live.steps : []).map((s) => object(s)).filter(Boolean)
       .map((s) => ({ email: count(s!.position), wait: waitOf(s!.delay_minutes), subject: text(s!.subject, 300) })) } : null,
     people: { in_now: count(people.in_now), completed: count(people.completed), left: count(people.left), left_because: object(people.left_because) ?? {} },
-    daily_limit: cap, remaining_today: count(sending.remaining_today),
     ready_to_file: version.state === 'draft' ? blockers.length === 0 : null, before_filing: version.state === 'draft' ? blockers : [],
     audience_choices: { stages: keys(choices.stages), sources: keys(choices.sources), tags: keys(choices.tags) },
     saved_segments: Array.isArray(data.segments) ? data.segments.map((s) => object(s)).filter(Boolean).map((s) => ({ id: s!.id, name: text(s!.name, 200) })) : [],
@@ -499,6 +493,6 @@ export async function dispatchEmailSeriesChat(ctx: EmailSeriesChatContext, deps:
   return { outcome: 'succeeded', runId: String(filed.approval_id), content: {
     success: true, series_id: seriesId, version_no: count(version.version_no), waiting_for_approval: true, replayed: filed.replayed === true,
     emails: count(filed.emails), matching_now: count(filed.matching_now), from: text(filed.from_address, 320),
-    note: 'Filed for approval. Nothing is sent until the owner or an admin approves it in Marketing › Email or Approvals; you cannot approve it. Once approved, it sends by itself to everyone who enters this version, within the daily limit, until it is paused or stopped. Any later change is a new version that needs its own approval.',
+    note: 'Filed for approval. Nothing is sent until the owner or an admin approves it in Marketing › Email or Approvals; you cannot approve it. Once approved, it sends by itself to everyone who enters this version, until it is paused or stopped. Any later change is a new version that needs its own approval.',
   } };
 }

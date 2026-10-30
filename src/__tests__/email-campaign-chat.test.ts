@@ -198,8 +198,22 @@ describe("email campaign chat tools", () => {
       daily_cap: 500, used_last_24h: 20, remaining_today: 480, postal_address_set: true, newsletter_subscribers_only: false,
     } } });
     const result = await run("read_email_campaign_audience", { campaign_id: CAMPAIGN }, deps);
-    expect(result.content).toMatchObject({ success: true, can_receive_today: 7, matched: 10, remaining_today: 480 });
+    expect(result.content).toMatchObject({ success: true, can_receive_today: 7, matched: 10, sent_last_24h: 20 });
     expect(JSON.stringify(result.content)).not.toMatch(/@/);
+  });
+
+  it("tells PAIGE of no daily sending limit, because none is enforced (owner ruling 2026-10-27)", async () => {
+    // The database still reports the old display figure; the chat must not repeat it as a limit.
+    const { deps } = caller({ read_email_campaign_audience: { data: {
+      campaign_id: CAMPAIGN, version_no: 1, state: "draft", matched: 900, eligible: 880, no_address: 0, opted_out: 0, suppressed: 0, no_consent: 0,
+      daily_cap: 500, used_last_24h: 0, remaining_today: 500, postal_address_set: true, newsletter_subscribers_only: false,
+    } } });
+    const result = await run("read_email_campaign_audience", { campaign_id: CAMPAIGN }, deps);
+    expect(result.content.can_receive_today).toBe(880);
+    expect(result.content).not.toHaveProperty("daily_limit");
+    expect(result.content).not.toHaveProperty("remaining_today");
+    for (const tool of EMAIL_CAMPAIGN_TOOLS) expect(tool.function.description).not.toMatch(/daily|sending limit|a day/i);
+    expect(fs.readFileSync("supabase/functions/_shared/email-campaign-chat.ts", "utf8")).not.toMatch(/over_daily_cap|daily_cap|remaining_today/);
   });
 
   it("gives PAIGE the words a campaign was written in, so her change keeps it editable", async () => {

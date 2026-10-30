@@ -57,7 +57,22 @@ begin
     ('public._owner_task_source_snapshot(uuid,uuid)',
       'f87fb95e2b6c02009b73a68468183dba',false,
       'if p.id is null or a.id is null or n<>1',
-      'if p.id is null or a.id is null or /* owner_task_multistep_v1 */ not public._owner_task_literal_chain_supported(chain)')
+      'if p.id is null or a.id is null or /* owner_task_multistep_v1 */ not public._owner_task_literal_chain_supported(chain)'),
+    ('public.paige_owner_task_hold_context()',
+      '57bfcbd265264ddcb93051fa5f8050ea',false,
+      $old_hold$snap#>>'{acts,0,id}' is distinct from new.act_id::text or snap#>>'{acts,0,position}' is distinct from new.act_position::text
+        or snap#>'{acts,0,config}' is distinct from new.detail->'snapshot_args'$old_hold$,
+      $new_hold$/* owner_task_multistep_v1 */ (select source_act from pg_catalog.jsonb_array_elements(snap->'acts') as source(source_act)
+          where source_act->>'id'=new.act_id::text and source_act->'position'=to_jsonb(new.act_position))
+        is distinct from jsonb_build_object('id',new.act_id,'position',new.act_position,'action_kind','owner.task',
+          'tool_key',null,'config',new.detail->'snapshot_args')$new_hold$),
+    ('public._read_owner_task_act(uuid,uuid,text)',
+      'ee93f5e2c3bd3ad46a06e4a2823cc2f5',false,
+      $old_read$l.detail#>'{owner_task_source,acts,0,config}' is distinct from l.detail->'snapshot_args'$old_read$,
+      $new_read$/* owner_task_multistep_v1 */ (select source_act from pg_catalog.jsonb_array_elements(l.detail#>'{owner_task_source,acts}') as source(source_act)
+        where source_act->>'id'=l.act_id::text and source_act->'position'=to_jsonb(l.act_position))
+      is distinct from jsonb_build_object('id',l.act_id,'position',l.act_position,'action_kind','owner.task',
+        'tool_key',null,'config',l.detail->'snapshot_args')$new_read$)
   ) as s(signature,known_source,authenticated_execute,old_text,new_text)
   loop
     select p.*,pg_get_functiondef(p.oid) as definition into strict installed

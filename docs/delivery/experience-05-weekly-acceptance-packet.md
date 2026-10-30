@@ -1,3 +1,65 @@
+## October30 19:20UTC — source releases and per-step automation recovery
+
+Full O01–O10 and E5-CV1–CV9 remain OPEN: STILL CODING / NOT_READY / NOT_ACCEPTED.
+This checkpoint adds bounded evidence to the existing matrix, not a new inventory.
+
+- Task-effort UI #3103, reviewed03ab50de, merged66cd3820; Planning Task receipt
+  #3121, reviewedbb814533, mergedaca47567. Required exact-head checks/reviews
+  cleared. Production70005 applied once with original function body2f2ceac5,
+  OID/owner/definer/empty-path/authenticated-only authority preserved. Normal
+  native41109843494 and Edge41109843772 succeeded; actual db-live/edge-liveaca.
+  Original certificate13002357663 independently verifies selected Chat599/JWTtrue,
+  all322 immutable source links and original runtime closure. Both official web
+  origins were read at buildaca-mvvbrd3r with the actual Task-effort artifact.
+  These are source/deployment proofs; authenticated saved effort, exact approval,
+  original record/Rail/reload, cohorts and complete weekly planning remain owed.
+- Original Google Delivery Evidence Register Program I7/J7 and Assignment Locks
+  F5 note were updated/read back19:01:21UTC, preserving prior text/notes, unrelated
+  rows and authenticated/founder columns. Original ANT11/87553428 records exact
+  release and Google references. E08's shared Master§4.0/BrainREADME custody
+  clarification remains requested at ANT11/7bede4ef; those files stay untouched.
+- Native reminder #3127 is main-based5bfe6354 with its three original native
+  implementation blobs conserved. Twelve of13 observed checks, managed Preview
+  and both web statuses pass; final verify is still running. Production75005
+  remains unapplied. Dependent editor #3131/e6e9 remains DRAFT and cannot release
+  ahead of the native dependency, current-main composition and its own gates.
+- Existing internal owner.task automation locally supports a reviewed literal
+  chain of1–20 steps, retaining original contact.created/confirm-only control.
+  The original second-act hold failed OWNER_TASK_SOURCE_CHANGED because the
+  native hold/readback selected acts[0]. Guarded forward140005 now selects the
+  exact original act by BOTH ID and position. Complete-chain source binding,
+  separate exact approvals/claims, native CRM Task writer and Rails stay intact;
+  position alone creates no dependency ordering or authority for another step.
+- Actual isolated PostgreSQL run137 controls passes, including distinct and
+  identical-argument Tasks, separate original receipts, lost acknowledgments,
+  pause/later-step edit, cross-step correlation refusal, malformed/over-limit
+  chains, twenty-step configuration with zero execution, exact forward replay,
+  source/definer drift refusal and original function identity/default/ACL
+  conservation. Existing engine/C5 tests run through real native SQL; structured
+  results explicitly confirm BOTH original single-step and new two-step cases
+  passed. All fixtures use the original disposable harness; peripheral Auth,
+  authority and Realtime ports remain synthetic. Full-schema/Auth/PostgREST,
+  eligible existing/new cohorts and ordinary customer proof are NOT supplied by
+  this selected-native run. The first drift test's missing SQL separator is
+  retained as a failed test-construction attempt; corrected run passes unchanged
+  source guards. Only the owned disposable PostgreSQL server was stopped.
+- This multi-step source is LOCAL/unpublished, not independently reviewed,
+  hosted-CI-verified, merged, deployed, activated or customer accepted. Existing
+  UI still refuses multi-step enablement until the native release and its own
+  complete review flow are verified. Broader trigger/condition/dependency,
+  provider, recurring and cross-domain automation limitations remain explicit.
+
+Orchestration: original native event → LayerC registry/Gateway/Harness → separate
+Trust companion approvals/dispatch claims → existing execute_owner_task_act →
+canonical CRM Task/result and Rail → original per-act reader/replay. No new
+engine, ledger, scheduler, approval service or provider activation. ALG01 uses
+original identity/CAS/receipts/recovery; ALG08 does not infer reserved capacity or
+dependency scheduling; ALG12/13 retain evidence-based refusal/unknown handling,
+not broad anomaly or recommendation maturity. Same ZION/both conversational
+surfaces and original E01/E04/E08 technical handoffs remain unresolved separately.
+Next: reminder native/editor release after actual gates, full-schema multi-step
+proof/review, existing Automation review UI, then remaining O02/O05/O07/O09.
+
 ## October29 — weekly workload and Calendar review released; O02 remains open
 
 Original O02/O03 inputs and E5-CV1/CV2/CV5/CV9: #3091 reviewed ebb0fc7e6,

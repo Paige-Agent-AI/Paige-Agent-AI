@@ -223,7 +223,7 @@ async function ownerTaskNativeProof() {
     const controlStatement = (process, action, review = controlReview(process), who = actor) => human(who)+
       `select control_owner_task_automation('${process}',${literal(action)},${literal(review.updated_at)}::timestamptz,${json(review.process)},${json(review.acts)})::text;`;
     const control = (process, action, review, who) => JSON.parse(sql(controlStatement(process, action, review, who)));
-    let controlInstalled = false;
+    let controlInstalled = false, multistepMetadataBefore;
     function held(number) {
       const process = id(number), act = id(number + 1), contact = id(number + 2);
       sql(`insert into paige_automations(id,tenant_id,name,trigger_key,created_by,granted_lane,state)values('${process}','${tenant}','Native task ${number}','contact.created','${actor}','confirm','${controlInstalled ? "draft" : "live"}');
@@ -258,6 +258,10 @@ async function ownerTaskNativeProof() {
       sql(base.slice(base.indexOf("ALTER TABLE public.paige_automations      ENABLE ROW LEVEL SECURITY;"), base.indexOf("-- ── 5."))+
         [...base.matchAll(/GRANT [^;]* ON public\.paige_(?:automations|automation_acts) TO authenticated;/g)].map(m=>m[0]).join("\n"));
       sql(text("supabase/migrations/20271108242000_owner_task_human_control.sql"));
+      multistepMetadataBefore = JSON.parse(sql(`select jsonb_object_agg(p.oid::regprocedure::text,to_jsonb(p)-'prosrc')from pg_proc p where p.oid in(
+        'public.control_owner_task_automation(uuid,text,timestamptz,jsonb,jsonb)'::regprocedure,
+        'public._owner_task_source_snapshot(uuid,uuid)'::regprocedure,'public.paige_owner_task_hold_context()'::regprocedure,
+        'public._read_owner_task_act(uuid,uuid,text)'::regprocedure);`));
       sql(text("supabase/migrations/20271126140005_owner_task_multistep_review.sql"));
       controlInstalled = true;
       check("human control exists as an authenticated-only exact five-argument domain writer", () => {
@@ -564,6 +568,9 @@ async function ownerTaskNativeProof() {
         assert.deepEqual(result.acts,review.acts);assert.equal(auditCount(x.process),"1");
         assert.equal(sql("select count(*)from tasks;"),before);assert.equal(sql("select count(*)from paige_workspace_events;"),rails);
       });
+      const { proveOwnerTaskMultistep } = await import("./owner-task-multistep-cases.mjs");
+      proveOwnerTaskMultistep({ sql, text, draft, control, controlReview, native, actor, tenant,
+        check, refuses, literal, json, approve, claim, bridge, resultCount, human, multistepMetadataBefore });
       const armed=draft(), initial=controlReview(armed.process);
       check("ordinary owner arms only the exact reviewed stored process with confirm; canonical audit is configuration, not a task receipt",()=>{
         const before=sql("select count(*)from tasks;"), rails=sql("select count(*)from paige_workspace_events;");
@@ -792,8 +799,10 @@ async function ownerTaskNativeProof() {
         evidence:"actual selected native SQL + canonical resolver body; auth/agency/operator/Realtime ports; synthetic new-tenant fixture, not full provisioning",authenticatedQA:"NOT_RUN",fullSchema:"NOT_RUN"},null,2));
     }
     check("saved draft drives actual engine/C5 and native recorder/claim/CRM SQL, including receipt-backed replay", () => {
+      const nativeReport = resolve(scratch, "engine-c5-native.json");
       const log = execFileSync(process.execPath, [resolve(root, "node_modules/vitest/vitest.mjs"), "run",
-        "src/__tests__/automation-chat-draft-recovery.test.ts", "--testTimeout=30000", "--maxWorkers=2"], {
+        "src/__tests__/automation-chat-draft-recovery.test.ts", "--testTimeout=30000", "--maxWorkers=2",
+        "--reporter=default", "--reporter=json", "--outputFile.json=" + nativeReport], {
         cwd: root, encoding: "utf8", windowsHide: true, timeout: 120000,
         env: { ...process.env, OWNER_TASK_NATIVE_DB: `postgresql://postgres@127.0.0.1:${port}/${database}`,
           PSQL_BIN: exe("psql"), TEMP: scratch, TMP: scratch },
@@ -803,8 +812,15 @@ async function ownerTaskNativeProof() {
       // then inspect the same report without terminal presentation controls.
       const report = stripVTControlCharacters(log);
       const passed = report.match(/Tests\s+(\d+) passed/);
-      assert.ok(passed && Number(passed[1]) >= 43, "all native engine/C5 controls must actually pass");
+      assert.ok(passed && Number(passed[1]) >= (humanControl ? 44 : 43), "all native engine/C5 controls must actually pass");
       assert.doesNotMatch(report, /\d+ (?:failed|skipped)/, "the optional native SQL case must actually execute");
+      const assertions = JSON.parse(readFileSync(nativeReport, "utf8")).testResults.flatMap(result => result.assertionResults);
+      const original = assertions.find(test => test.title === "carries the saved draft through actual engine/C5 and the real native CRM SQL writer");
+      assert.equal(original?.status, "passed", "the original native SQL test must execute");
+      if (humanControl) {
+        const multistep = assertions.find(test => test.title === "runs a saved two-step process through the actual engine, separate C5 approvals, native Tasks and recovery");
+        assert.equal(multistep?.status, "passed", "the actual multi-step engine/C5 test must execute, not merely raise the suite count");
+      }
     });
     writeFileSync(resolve(scratch, "result.json"), JSON.stringify({ passed: cases.length, cases, database, port,
       evidence: "isolated-native-postgresql-selected-real-functions", fullSchema: "NOT_RUN", authenticatedQA: "NOT_RUN" }, null, 2));

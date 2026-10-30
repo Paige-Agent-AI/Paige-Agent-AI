@@ -11,7 +11,7 @@ assert.match(process.env.PGPORT ?? '', /^\d+$/, 'Explicit local port required');
 const executable = process.env.PSQL || 'psql';
 const database = `exp08_entity_seat_proof_${Date.now()}`;
 const fixture = readFileSync(new URL('../../supabase/tests/exp08_entity_owner_seat_ended.sql', import.meta.url), 'utf8');
-const migration = readFileSync(new URL('../../supabase/migrations/20271126060008_exp08_entity_owner_seat_ended.sql', import.meta.url), 'utf8');
+const migration = readFileSync(new URL('../../supabase/migrations/20271126080008_exp08_entity_owner_seat_ended.sql', import.meta.url), 'utf8');
 const invitationSource = readFileSync(new URL('../../supabase/migrations/20271120010008_exp08_owner_invitations.sql', import.meta.url), 'utf8');
 const scopeHelper = invitationSource.match(/CREATE OR REPLACE FUNCTION public\._solo_shell_tenant\(_tenant uuid\)[\s\S]*?REVOKE ALL ON FUNCTION public\._solo_shell_tenant\(uuid\)[^;]*;/)?.[0];
 assert.ok(scopeHelper, 'Original I1 scope helper required; never replace it with a second eligibility rule');

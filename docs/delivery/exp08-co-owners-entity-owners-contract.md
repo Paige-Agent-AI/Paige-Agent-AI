@@ -1,5 +1,7 @@
 # EXP08 co-owners and entity owners: delivery contract
 
+October30 current unpublished-component order: original E05 PR3121/604d0888 records already-published E09 60009 and original Planning receipt70005 after40008→Task50005. The local NEVER-MANAGED I2 candidate60008 below was therefore forward-renumbered to **20271126080008_exp08_entity_owner_seat_ended.sql** before managed publication. Historical60008 references are retained as history, not an apply instruction. SQL body is byte-identical; only its own runner path changes. No peer/applied migration changes or release-order waiver. Original I2 trigger source review found no material finding; native component proof remains bounded and must still accompany exact-head hosted/release gates.
+
 Status: **CONTRACT, round 7 (2026-10-27): design APPROVED by the owner (§28 frozen), open questions §10.1, §10.2a, §10.11 and §10.13 owner-ruled (R12–R15); R16 (operator powers over Solo accounts kept as shipped) reverses B3, D-A, D-B. I1 built (branch `exp08-owners-i1`, migration `20271120010008`), round 2, 3, 4, 5, 6 and 7 review findings applied.** Round 5 text follows, amended only where those rulings change it; reversed text is kept struck through and marked (§58), never silently deleted. Grounded on **`origin/main` at `50468eec2`** (fetched
 2026-10-26). **PR #2945 is merged, as squash `51ede67eb`, and applied on production:** the `db-live` tag, which
 `deploy-migrations.yml` moves only after a persisted apply (§32), points at `51ede67eb` (`git ls-remote origin

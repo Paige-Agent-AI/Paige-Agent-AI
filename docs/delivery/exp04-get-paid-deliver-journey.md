@@ -1,3 +1,19 @@
+# C131 — accepted payment-plan selection in the original invoice workspace (2026-10-30 UTC)
+
+**Implementation/local proof; not released or customer accepted.** Same complete O1–O12 destination and owner-recalibrated sequence: connected O1–O4, O5/O9, then O6–O8/O10–O12. No new agent, platform lane, financial authority or activation.
+
+The owner can inspect native accepted economics, dated deposit/installments and original remaining allocations, select one exact positive obligation and continue through the existing HIGH invoice review. No caller amount or due date replaces its immutable reference. The original operation list blocks a competing request; Cancel retains source/selection and restores focus after that list rereads. Pending/expired account review now has a focused return without forgetting an uncertain operation. Scope/actor/role/version changes retire the local accepted source. The caller-JWT SDK consumer reuses the retained decoder and distinct native10 owner admission; no permission logic is copied.
+
+The new selector is mounted by the original SalesBillingWorkspace→InvoiceWorkspace→InvoiceLifecycleActions chain for eligible existing and future SOLO tenants; no hard-coded customer dispatch, tenant backfill, provisioning change or new schema is required by this consumer. Neutral UUIDs are confined to test/render ports. Existing/new-account authenticated evidence remains owed. Original agreement, principal, invoice, payment operations/claims, HIGH approval, provider, Rail and native history stay authoritative.
+
+Local 150 assertions/10 suites pass, including all original retained-reader/inspection and invoice cases plus source/selector/composite regressions. Full canonical type ratchet: baseline10/current6, no new error; baseline unchanged. Strict scoped lint and pinned Impeccable checks pass. Initial genuine type errors and a corrected test-port expectation remain in private diagnostics, not waived. Actual component desktop and narrow source→selection→exact original review→keyboard Cancel/return, loading/cancel, source-held/TEST/stale/error, denied/signed-out/session-retirement paths are rendered with explicit synthetic SDK ports and network-denying CSP. This is NOT signed-in/native/provider or Central QA acceptance. See [bounded UI proof](../evidence/ui-delivery/e04-accepted-payment-plan-workspace.md).
+
+The original #3099 native10 release now has production source/configuration proof after one unchanged normal Edge retry; #3092 bounded MERIT source navigation/reload proof remains separate. Their single additive Master closeout preserves all original history. Normal received main includes E09 native11 and E05 source/docs releases; preserve E05 Task12 and original E04 private financial-currentness13. EXP09's native11 producer handoff is received; private service-actor currentness factor13 and canonical exact-string amount formatting remain unbuilt producer dependencies for the next connected financial increment. No E09 Portal source takeover or relaxed Progress authority.
+
+**Not complete O3/O4:** manual/split/correction/reversal allocations, schedule amendments and initial conversational target discovery/schema are still missing. Legacy generic full/partial requests remain their original separate paths and are not represented as accepted installment targeting. Complete signed-to-obligation/client/merchant/provider behavior, production selector read/approval/recovery, two cohorts/all roles and remaining twelve outcomes remain open. No request initiated here is a settlement or completed service. Next: final scoped source review/exact-head CI/normal release/readback, then canonical allocation/revision and financial-currentness contracts before moving through O5/O9.
+
+---
+
 # C130 — accepted-obligation foundation released; invoice consumer next (2026-10-29 UTC)
 
 The original O3/O4 foundation [#3099](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3099)

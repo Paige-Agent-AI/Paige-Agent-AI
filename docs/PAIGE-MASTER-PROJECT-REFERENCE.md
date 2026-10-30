@@ -860,6 +860,12 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**2026-10-29 UTC — EXP04 MERIT record continuity and accepted-obligation foundation; complete O1–O12 acceptance remains open.**
+
+| Increment | Exact source and production release | Useful result and proof boundary |
+| --- | --- | --- |
+| [#3092](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3092#issuecomment-6507998715) and [#3099](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3099#issuecomment-6511223391) | MERIT reviewed `c35507f165e6564d93a5edb48fe28f035e43c01e`, lower5704320229/all13 required checks; merged `a0ba8016618a68bd4ef93a5f92a7550c850bafbb`. Accepted-obligation reviewed `5533abc346c69b777c378cfd03402227f3874b52`, final AUTHOR-REVIEW / LOWER ASSURANCE5706079173/all13 checks+two webSUCCESS; merged `218c7fd9e3e4662df3d5813991623a5ab944bec1`/tree137633b89. Normal native40970247517/123785126946 applies10ONCE; eight source bodies/metadata exact. Web `dpl_4wc2qKWMAUbHCoJf4CiKzBwZJuXZ` READY/exact218c; canonical public build218c-mvu5ezf1 and actual Sales module verified. Normal Edge40970247500 attempt1 source failure retained; one unchanged failed-job retry/attempt2/123790025308SUCCESS, artifact12940657290/SHA2569e28c58f4a0bb40783903c81226d4e94449bc07925353f907be73569418f9dc5 independently verified: all11 source/configuration matches, Chat592/invoice217/orchestrator169. Ordinary release markers218c; scratch cleanup warning retained. | MERIT original private reply→same unsigned agreement→reload→explicit original-DM reopen has bounded ordinary Owner proof in protected ANT52/60f4d7f5; no signature/send/payment claimed. Native accepted economics/dated target and original allocation guards plus exact stored-request recovery are released; TEST/unassigned/conflicting evidence is held. Schedule-selection UI, manual/split/revision completion and initial Chat target selection are separate build/integration work, not completed by this foundation. Full owner/staff/client financial/provider/reload/recovery and O1–O12/founder acceptance remain OPEN; no activation or customer-release identity. Earlier dated source paragraphs remain historical. |
+
 **2026-10-29 UTC — EXP05 weekly workload and Calendar review; bounded source releases, complete planning proof owed.**
 
 | Increment | Exact source and production release | Useful result and proof boundary |

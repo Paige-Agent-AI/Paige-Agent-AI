@@ -939,3 +939,57 @@ current guard excludes ZION. operations.department PARTIAL; both-chat/private
 record/Rail/reload/cohort/native/negative/full ten/E5/founder proof remains owed.
 Functional source/web verified; Visual original source preserved, no new rendered
 flow claim; Experiential incomplete; Founder NOT_ACCEPTED. STILL CODING / NOT_READY.
+
+## October30 — original Planning task receipt projection, review preparation
+
+O02/O03/O08/O10 foundation, not full-outcome closure. Shared coordination is
+ANT161/51d8c74d; EXP01 retains its frozen base Planning writers/Root/resume,
+EXP08 retains A2c proposal/claim/current-context/settlement and Team Hub source,
+EXP04 retains private Planning observation. No duplicate execution path is added.
+
+Forward `20271126070005_planning_task_receipt_projection.sql` extends only the
+installed `plan_assign_task_scoped` acknowledgment with the original writer's
+`railRecorded`, `receipt_status`, `receipt_run_id`. Current source MD5
+`6117c2fba66658677ead7a457d83479e` and unique source/inverse guards protect every
+incumbent precondition. OID/owner/ACL/security/config/defaults remain unchanged;
+metadata compares resolved defaults rather than parser source offsets. Repeat
+application preserves the exact definition; drift/partial projection refuses.
+This forward follows already-published E09 `20271126060009`, preserving the
+existing E08 `40008` → Task `50005` → E09 `60009` release order. No peer migration
+or applied history is renamed, inserted below, reset or rewritten.
+
+The existing caller-JWT `writeScopedPlanning` adapter returns optional
+`nativeReceipt` only from a complete recorded native acknowledgment AND exact
+original actor/tenant/record/current-scope/RLS readback. Legacy acknowledgments
+without those fields keep their exact record-only DTO. Explicit incomplete or
+unrecorded receipts remain unverified with no automatic retry. An arbitrary
+nested receipt or unknown fields cannot become server evidence. The original
+operationIdentity is still an upstream identity, not a claim or idempotency key.
+
+Engineering: 45 original adapter/create-suite tests PASS after eight causal RED
+tests; existing PostgreSQL Planning runner 117 checks PASS, plus exact replay,
+metadata preservation and two source-drift refusal assertions. The same native
+task/audit/Rail identity and actual adapter lost-acknowledgment behavior are
+checked (one original task/receipt, unverified result, no retry). Original permission, tenant, stale-version,
+concurrency, rollback and interruption negatives stay intact. These local SQL
+ports are synthetic and do not establish production/customer authentication.
+The original full-schema rollback test adds same-create receipt correlation;
+its required hosted execution remains owed.
+
+Orchestration: canonical `planning.assign_task` → `plan_assign_task` domain
+writer remains unchanged. No new Layer C, stored approval, claim, sender, job,
+receipt store or recovery executor. Team Hub's original Planning DoorFamily /
+proposal / claim / resume / settlement integration is still missing. This
+projection does not authorize calling a non-idempotent writer again after an
+unknown outcome; original-operation reconciliation must come from that shared
+contract. Native receipt evidence is not customer completion or acceptance.
+
+Functional SOURCE/PREPARED, not merged/deployed/activated. Visual N/A: no UI,
+rendered entry, styling, keyboard or navigation change. Experiential INCOMPLETE:
+no new mounted caller, authenticated approval/record/Rail/reload or both-chat
+proof. ALG-01/12/13 maturity and operations.department/Task Prioritization
+Review/Weekly Priorities Plan remain PARTIAL; no catalogue Live promotion.
+Full review, exact-head CI/Preview, production readback, eligible new/existing
+SOLO/role/revocation and all ten/E5-CV1–9 acceptance remain owed. Original Admin
+reminder repair is separate pending EXP01's frozen-writer disposition. Founder
+NOT_ACCEPTED; STILL CODING / NOT_READY; one complete integrated evaluation.

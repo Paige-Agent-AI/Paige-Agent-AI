@@ -19185,6 +19185,10 @@ Ask only what's relevant, act on the yes's, and file the ones that need doing on
               hubEnvelope = { status: "unavailable", message: `Tell the person: "${TEAM_HUB_COULD_NOT_READ}" Nothing was read. Do not guess what any conversation says.` };
             }
           }
+          // References share the original receipt/privacy gate and remain outside model context.
+          if (hubEnvelope.status === "available" && read.recordLinks?.length) {
+            readRecordLinkSource.set(tc, readRecordLinks(read.recordLinks));
+          }
           toolResults.push({ tool_call_id: tc.id, role: "tool", content: JSON.stringify(hubEnvelope) });
         } else if (tc.function.name === TEAM_HUB_POST_TOOL_NAME) {
           // EXP08 Team Hub increment 4 — the approved reply, LAST IN THE CHAIN. `high` in action-risk.ts,

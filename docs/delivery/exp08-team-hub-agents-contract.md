@@ -1108,6 +1108,16 @@ with its own proof; the six slices below keep their detail and are tagged with t
 **Slices, smallest first.** Each merges on verified (§4) with its own proof.
 
 1. **Reopen links (client only).** *(A2a ships the task-card half; the rest stays open)*
+   - **Successor update, 2026-10-30, BUILT locally / PROOF OWED:** current E05 Operations and the
+     shared route already accept an exact typed Planning reference (`record_kind: planning_item`
+     becomes `?planningItem=`), with a neutral inspector and fresh actor/tenant/membership reads.
+     TaskCard now consumes that original seam, only when the shared resolver returns `exact`.
+     The existing label, keyboard anchor and denied/loading behavior remain; malformed ids offer no
+     link. Five regression failures reproduced before the change; all 177 cases across the card,
+     shared link readers and original destination suites pass after it. Independent read-only
+     source review found no actionable issue. Release and authenticated open/reload/denial remain
+     owed. This supersedes the address-absence statement below, which describes A2a's original
+     shipped state; slice 1(b) and the full both-chat workshop remain open.
    - **What A2a built:** the Team Hub task card links to Operations → Work in the current SOLO
      account (`workspaceLinkTarget({ destination: "operations_work", record_id: null }, activeTenant)`,
      `TeamHubWorkspace.tsx:2100-2144`), shown when the task's status was read or the read failed, and
@@ -1731,6 +1741,67 @@ Reviewed on the rendered A2b frames (`docs/evidence/ui-delivery/assets/exp08-tea
   Approve. Anchoring the check to the prepare's own start would wrongly refuse a legitimate re-asked turn
   (the CRM proposal is idempotent on the asking message), so it stays on the turn's acceptance time.
 
+## Full-assignment successor disposition — October 30, 2026
+
+**STILL CODING.** This crosswalk retains the original full assignment's numbered acceptance
+cases 1–18 and owner amendment sections 1–6. It supplements, and does not replace, the original
+role/tier, lifecycle, co-owner and per-specialist tool matrices. Historical opening summaries
+are not current source assertions. No row below is owner acceptance. The current source carrier
+is [#3108](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3108), exact head
+`98c4a26022c25e5177508058839c488958c2556e`; original #3041/Preview/history are preserved.
+Required exact-head checks and production release/readback remain pending for this carrier.
+The exact Planning reopen follow-up is local, separately reviewed, and not part of that head.
+
+Common evidence: original tier-matrix EXP08 sections and the original increment 1–4, lifecycle,
+co-owner and A1/A2 evidence packets retain exact historical PR/release records. A1's seven inline
+answers are bounded conversation proof. Current A2b engineering results are in the original
+`exp08-team-hub-agents-a2b.md`; they are not authenticated A2b proof. Every current/future eligible
+SOLO account uses the same implementation; none of these cases authorizes a QA account, borrowed
+session, account-specific fork, provider activation or consequential employment decision.
+
+| Original acceptance case / useful outcome | Disposition and actual source / producer → consumer | Remaining integration or proof |
+|---|---|---|
+| 1. First-class Team Hub; usable states/devices | BUILT / PROOF OWED: original SOLO Team Hub route, `TeamHubWorkspace`, `useTeamHub`; approved shell below Operations → same customer destination | Full integrated narrow/keyboard/theme/offline/recovery drive; no new visual design inferred |
+| 2. Real human/AI roster and permissions | PARTIAL / PROOF OWED: original Team roster/`VP_ROSTER`, membership doors and stored specialist config → Team settings/Hub; title grants nothing | Current role/configuration/consent differences and current/new-account proof; co-owner I2–I5 remain missing |
+| 3. Invite intended recipient and accept | BUILT / PROOF OWED: original `solo-team-invitations`, invite acceptance and recipient-binding SQL → Team membership/Hub admission | Actual authorized invite/accept/reload plus expired/revoked/replaced/reused/wrong-recipient negatives; provider acceptance is not recipient acceptance |
+| 4. Least privilege and departure/revocation | PARTIAL / PROOF OWED: original Team lifecycle/grant/revoke/holdings doors → Settings/Hub and original resource readers | Recheck channels/files/Work/session/retrieval after suspend/revoke/reentry; co-owner/entity/recovery remaining I2–I5 and real concurrent proof |
+| 5. Channels, DMs, threads, durable communication | BUILT / PROOF OWED: original `team_hub_*` collaboration doors/RLS → original hook and conversation UI | Current membership/reload/reconnect/private/foreign-business inference negatives; no transcript sharing by implication |
+| 6. Correct mentions and restrained notices | PARTIAL: original stored human/agent/broadcast mentions and turn state → same conversation | Full duplicate-name/stale-member negatives; quiet-hours/preferences/notice privacy wiring must be verified, no external notification implied |
+| 7. Scoped PAIGE evidence and governed request | PARTIAL: original Team Hub read/search/receipt marker, agent-turn scope and domain doors → PAIGE/Hub; A2b prepares only the named three tools | Broader specialist action waves, current Trust display/standing authority and channel Operations action; original source/fingerprint/revocation negatives |
+| 8. One original Work assignment and handover | PARTIAL: `team_hub_request_task` → EXP05 `plan_assign_task_scoped` and one work ref; A2b CRM task handover/cancel → original CRM door | Exact Planning reopen and PAIGE-to-original-Hub message/thread return/focus built on successor3109 via existing typed references/current native readers (350UI/368host/native source proof; unreleased); dependency/coverage and original run receipt integration remain; no second task |
+| 9. Honest waiting/result/cancel/unknown states | PARTIAL: original turn/card state and domain proposal/claim/readback → thread outcome; trusted settlement and positively unclaimed stranded-approval Resume repairs retained (35008; claimed/settled unknown never retry) | Actual lost ACK, duplicate, revocation/cancel/late result and unknown reconciliation under original runtime; ALG-01/12 evidence remains partial |
+| 10. Scoped attachment lifecycle | BUILT / PROOF OWED: original `team_hub_files`, private storage policies and `team-hub-file` validator → Hub download/reopen | Authenticated upload/revoke/download/unsafe/cross-tenant proof; signed URLs are not persistent permission; no malware-scan claim |
+| 11. Usable saved artifact/research/deliverable | PARTIAL / MISSING integration: shared original document/domain producers exist outside the bounded A2b tool set; Hub must consume their actual artifact/result | Same saved original artifact and citation/rights/result/reopen from both chats; general Computer/code/file runner remains HELD EXP19, not activated by workshop design |
+| 12. Availability, workload, meetings and coverage | PARTIAL: E05 original Work/Planning/Calendar/workload consumers and current specialist reads → Hub integration | Confirmed availability/absence/coverage and original scheduling/version/cancel/recovery contract; task counts are not available hours; no new scheduler |
+| 13. Private context, Knowledge/Memory and freshness | PARTIAL: original caller-scoped Team reads and pre-model receipt/memory suppression → permitted answer | Explicit private-context handoff, retention/revocation/deletion/account-switch proof; Hub access never grants a Knowledge/Memory save |
+| 14. Both-chat and eligible Live continuity | PARTIAL: original PAIGE Team reader and direct specialist DMs; shared Model Fabric is reused | Exact original-message return and Planning reopen source built locally on3109, source-release/authenticated proof owed. Full original task/artifact/result workshop remains; Live consent/admission/tool eligibility remains separately unverified |
+| 15. Recruiting/onboarding/quality/offboarding assistance | MISSING dedicated integrated journeys / PROOF OWED for reusable drafting: generic conversation is not a complete reviewable saved recruitment, onboarding or quality workflow | Ground shared original artifact/Work producers, human review and source evidence; build missing bounded assistance without hiring/firing/pay decisions or unsupported workforce scores |
+| 16. Universal SOLO and real authority negatives | PARTIAL / PROOF OWED: canonical provisioning, Team Hub new-SOLO parity proof and existing admission/RLS → same product | Owner/admin/member/former/foreign/private/Portal/cohort/current-new account, cache/realtime/in-flight race proof; wrong active workspace INVALID |
+| 17. Complete functional/visual/experiential verification | PROOF OWED: original approved flow packs and local engineering evidence exist | One integrated authorized ordinary-customer journey and full device/role/reload/recovery evidence; no synthetic-to-authenticated promotion |
+| 18. Reviewed normal release and one owner evaluation | PARTIAL: preserved original history; successor source-only independent review; fresh required gates on #3108 | Exact-head technical checks/Preview/merge/deployment/source readback, full remaining coding/integration and accessible full-matrix review; OWNER ACCEPTED remains separate |
+
+| Owner amendment section | Current disposition / original dependency |
+|---|---|
+| 1. Shared goals and adaptive PAIGE coordination | MISSING integration: same identities/direct conversations retained; original EXP05 Work/Harness must own the actual goal/plan, run and recovery |
+| 2. Proactive useful suggestions with dismiss/defer/pause | MISSING integration: legitimate original triggers and persisted controls must be identified/reused; no fabricated workforce activity or recommendation ledger |
+| 3. Suggest / Prepare / Execute via existing standing authority | PARTIAL: A2b Suggest/Prepare/redeem source built; A2c standing-authority display/execution and channel task remain missing. Model confidence/persona grants nothing; each original domain's actual clamp still controls |
+| 4. Independent authorized follow-through and verified result | PARTIAL: current A2b domain readback and service-only settlement; broader EXP05 runtime/cancellation/revocation/unknown reconciliation integration remains, no attended-only rule invented as final policy |
+| 5. One original task/artifact workshop from both chats | MISSING integration: exact Planning reopen follow-up consumes original E05 inspector; shared save/reopen/resume/context-handoff workshop remains; EXP19 and PO25 are separate held dependencies |
+| 6. Actual decision/evaluation grounding | PARTIAL / PROOF OWED: existing Model Fabric `fabricCompletion`/`team_hub_agent_turn` reused, no Team-only router; actual outcome evaluation and algorithm wiring remain below |
+
+Algorithm disposition is deliberately limited to actual source signals: **ALG-01** consumes original
+turn/request/proposal ids, claim and outcome state; replay/idempotency negatives are local engineering
+evidence, full authorized unknown-effect recovery is PROOF OWED. **ALG-12** has visible waiting/failed/
+unknown turn/card states, but no validated proactive anomaly detector in this Hub: PARTIAL, not a
+measured detection claim. **ALG-08** belongs to original E05 workload/Calendar computation; the Hub
+must consume its real constraints and unknowns, and optimization/absence coverage remains unverified.
+**ALG-11** uses shared Fabric task traces; representative seven-identity accuracy/privacy/tool/result/
+recovery cases, baseline comparison, measured latency and actual total variable cost per verified
+outcome (including retries) remain PROOF OWED before a separate production routing change.
+For **ALG-03/13** goal ranking, suggestion relevance/impact/urgency and restrained triggers:
+**NO VERIFIED SUPPORTING ALGORITHM IDENTIFIED — GAP OR VERIFICATION OWED** for this integration.
+No invented score, uplift, staffing activity or hidden employee ranking closes that gap.
+
 ## 13. Proof owed after merge (per increment)
 
 - **§32 persisted apply:** the `db-live` readback of each migration. The `schema_migrations` row
@@ -1774,3 +1845,6 @@ Reviewed on the rendered A2b frames (`docs/evidence/ui-delivery/assets/exp08-tea
   - **out of scope here, recorded only:** the live `TeamHubWorkspace.tsx` (line 135) and its test
     still say "your permission are unchanged". Prototype v3 shows "your permissions are
     unchanged"; the shipped copy needs the same grammar fix in its own small PR.
+
+
+Successor original-result reopening checkpoint (2026-10-30, STILL CODING): original acceptance rows8/9/14 now additionally have a LOCAL source implementation for reopening the original CRM task from the already service-settled Done hand-over/cancel reference. No second record/receipt/writer. Actual two failing-before mounted cases; final272 affected assertions and19 fictional render cases pass; source-only review clean. Unknown/failed/unavailable/raw-message references withheld. Remaining native zoom states were not completed after a Computer Use URL-confidence stop; authenticated/current-new account/role/tenant/recovery and exact release proof remain owed. This does not close the shared task/artifact workshop, lifecycle, goal-driven execution or any full-assignment row. All original matrices/denominators and owner amendments above remain controlling.

@@ -1651,6 +1651,50 @@ describe("A2b: a Team Hub card, read and redeemed in the asker's DM", () => {
     });
   }
 
+  for (const kind of ["task_cancel", "task_handover"]) {
+    it(`reopens the original CRM task from a native completed ${kind} after reload`, async () => {
+      mocks.tenant.accountType = "standalone";
+      inDm();
+      const taskId = "e8000000-0000-4000-8000-0000000d0001";
+      cardRows["r-zion-m-ask"] = { ...serverCard({ state: "done", kind,
+        actions: [{ summary: SUMMARY, note: "The original change was confirmed." }] }),
+        record: { destination: "operations_work", record_id: taskId } };
+      const host = await mount();
+      await openDm(host);
+      const link = rowOf(host, "r-zion-m-ask")!.querySelector<HTMLAnchorElement>('[data-paige-record-links] a');
+      expect(link).not.toBeNull();
+      expect(link!.getAttribute("href")).toBe(`/solo/4242424/operations/work?task=${taskId}`);
+      expect(link!.textContent).toBe("Open task");
+      expect(turns).toHaveLength(0);
+      expect(cardActs).toHaveLength(0);
+    });
+  }
+
+  it("withholds the completed-task link when its native card read becomes unavailable", async () => {
+    mocks.tenant.accountType = "standalone";
+    inDm();
+    cardRows["r-zion-m-ask"] = { ...serverCard({ state: "done" }),
+      record: { destination: "operations_work", record_id: "e8000000-0000-4000-8000-0000000d0001" } };
+    const host = await mount(); await openDm(host);
+    expect(rowOf(host, "r-zion-m-ask")!.querySelector('[data-paige-record-links] a')).not.toBeNull();
+    db.override.team_hub_card_states = () => ({ ok: false, code: "unavailable" });
+    await act(async () => { window.dispatchEvent(new Event("focus")); }); await flush();
+    expect(rowOf(host, "r-zion-m-ask")!.querySelector('[data-paige-record-links] a')).toBeNull();
+    expect(cardActs).toHaveLength(0);
+  });
+
+  for (const state of ["waiting", "working", "failed", "unconfirmed"]) {
+    it(`never presents a completed-task source for ${state}`, async () => {
+      mocks.tenant.accountType = "standalone";
+      inDm();
+      cardRows["r-zion-m-ask"] = { ...serverCard({ state }),
+        record: { destination: "operations_work", record_id: "e8000000-0000-4000-8000-0000000d0001" } };
+      const host = await mount(); await openDm(host);
+      expect(rowOf(host, "r-zion-m-ask")!.querySelector('[data-paige-record-links] a')).toBeNull();
+      expect(cardActs).toHaveLength(0);
+    });
+  }
+
   it("a done card shows the server's note in the summary's place (compliance fix 2)", async () => {
     inDm();
     cardRows["r-zion-m-ask"] = serverCard({ state: "done", decided_at: "2026-10-28T15:35:00Z", decided_by_name: "Morgan Reyes",

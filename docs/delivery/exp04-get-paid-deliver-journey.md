@@ -4999,3 +4999,86 @@ Primary sources: [refund objects](https://docs.stripe.com/api/refunds/object),
 [dispute pagination](https://docs.stripe.com/api/disputes/list), and
 [credit versus refund](https://docs.stripe.com/invoicing/integration/programmatic-credit-notes).
 Newer documentation does not upgrade the existing API pin or activate a provider.
+
+### C153 — Source-bound provider observations, reviewed foundation
+
+The original O3/O4 allocation/correction parent3129 is now mergedadb84deceb2d52787c2bf49364e712bf7893cdaf.
+Normal native80004 follows75005 exactly once; all eight changed functions and
+the unchanged original actor have matching production source/ACL readback.
+Webdpl_85MTmsLBwe3ZW2d5GFy94wYGmx6r is READY with canonical200/exactadb84-mvvdp0n1.
+Original Edge41117267588 first failed on a stale approval package; one diagnosed
+normal attempt2/job124279501843 passes all11 source/configuration closures.
+Artifact13006908295 ZIP SHA25686c4e80ab235f811052fa2e60501d5ed49b2c71102f96447a8f8dcf2146f1df7
+and normal db-live/edge-liveadb84 are verified. Scratch cleanup permission debt
+remains explicit. This is source release, not authenticated financial acceptance.
+
+This next O5 foundation normally composes that complete main into the existing
+provider-readback branch: original three own code/test blobs and all18,576
+outside-owned incoming leaves were exact; original main journey text recovered
+by the exact inverse of the datedC150 appendix. No source history was restarted.
+Sequential source review then proved and fixed two strict status-shape refusals
+and one mutable-source fingerprint refusal in this NEW, UNMOUNTED reader.
+Malformed array statuses cannot become a won dispute or a verified balance;
+the first validated capture fingerprint is retained before asynchronous reads.
+The unchanged new negatives failed2/57 then1/58 before their respective repairs.
+No production defect or independent non-author review is inferred.
+
+Final local source checks:449 assertions/18 suites PASS, retaining all391
+incumbent assertions and55 prior new cases plus3 causal controls. All17 incumbent
+test files and the original hosted implementation inverse remain exact; only
+erased import/binding annotations differ before the new helper. Three-path lint0,
+actual pinned Stripe17.5/API2024-11-20.acacia Deno2.9.8 frozen check PASS; original
+private lock451e4cea176b18f0909312eccedec14a816a87700ec14a4b6020a93693faa821 unchanged.
+An earlier root src-only configuration ran0 tests and is INVALID, not evidence.
+The final run uses the original CI sales-payments/vitest.config.ts unchanged.
+
+Orchestration Contract for this internal-only increment:
+
+1. Intended outcome: reconcile actual post-settlement refund/dispute evidence
+   for the original payment. Current scope only supplies a GET-only reader.
+2. Entry surface: none mounted. Sales/PAIGE/MERIT/Live/Portal availability is
+   unchanged; no customer action, model call or new specialist registry.
+3. Original records: existing invoice, provider operation, verified capture and
+   tenant merchant binding. Existing sales_invoice.read/payment_request remain
+   their bounded capabilities; refund/credit execution is UNAVAILABLE.
+4. Execution path: same pinned Stripe client, selected original connected
+   account and exact charge. No new ActionAdapter, charge/refund POST or sender.
+5. Authorization: this helper grants none. Future mounting must derive context
+   from the original service-only native reader and current merchant binding;
+   callers cannot nominate another tenant, customer, charge or environment.
+6. Risk/approval: observation only. Financial, credit, commercial and collection
+   decisions still require their original Trust/domain permissions and review.
+7. Durable work/Rail: none created here. Later integration extends original
+   Sales wrappers in paige_durable_work with finite event occurrences; never
+   resets terminal settlement work or introduces another queue/scheduler.
+8. Readback/reconciliation: full bounded pagination and repeated immutable-source
+   comparison; normalized success/pending/failure/cash facts remain distinct.
+   Native persistence, original Rail and financial allocation are still owed.
+9. Failure/uncertainty: malformed, unsupported, incomplete, changed, duplicate or
+   late source returns PROVIDER_ADJUSTMENT_READBACK_REQUIRED; no inferred money,
+   automatic retry of a business effect or optimistic account balance.
+10. Customer result: none newly exposed. Original owner/Chat/private-Portal UI,
+    Collections holds and eventual approved credit/refund disposition must be
+    integrated and proven before describing the complete outcome as available.
+
+The private C151 full-schema context/CAS/journal prototype passed21 controls and
+three causal guard-removal negatives, with all fixtures/DDL rolled back. It is
+not included in this source release, a financial writer or an adopted Portal
+contract. Its remaining single-snapshot, metadata/pointer/guard and finite-work
+requirements must be resolved before mounting; its old disposable Preview was
+retired normally after3129 merged. No unsafe reuse, applied-history rewrite,
+new permanent QA business or provider activation is authorized.
+
+Functional: source foundation only, required new-head review/CI/release owed.
+Visual: no UI/interaction/style change; no prior render borrowed as new proof.
+Experiential: original financial and service journey remains incomplete.
+Acceptance: new3129 Owner QA is UNVERIFIED while browser page access fails;
+prior bounded unsigned-document/PDF/history/reload observations stay source-scoped.
+CentralQA/all roles/current-new SOLO/full O1–O12/founder acceptance remain OPEN.
+ALG01/12 retain bounded local comparison/abstention; ALG02/13 and maturity unchanged.
+
+Source coordination correction: NO active E04 Master/Brain edit. Original
+Coordinator906463c6 receiving4256aaa7 returns the current slot to E02's ONE3122
+row, followed by existing E05/E09/E13 queued rows. An unmerged E08 PR is incoming
+work to preserve, not an indefinite exclusive edit. E04's prepared closeout rows
+remain private until the actual source is returned; no competing ledger or hold.

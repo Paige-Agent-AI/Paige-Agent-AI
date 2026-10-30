@@ -15,6 +15,25 @@ function ports(charge:unknown=capture(),refunds:unknown[]=[refund()],disputes:un
  return client;
 }
 const read=(client:StripeAdjustmentClient,op=operation,original=settlement)=>readStripePaymentAdjustments(request,op,original,client);
+describe('closed provider status primitives',()=>{
+ it('refuses a refund balance status array instead of returning it as a verified status',async()=>{
+  const client=ports(capture(),[refund({balance_transaction:{...balance('txn_refund','re_original',-10000),status:['available']}})]);
+  expect(await read(client)).toEqual({state:'outcome_unknown',code:'PROVIDER_ADJUSTMENT_READBACK_REQUIRED'});
+ });
+ it('refuses a dispute status array instead of coercing it into a won decision',async()=>{
+  const dispute={id:'du_original',object:'dispute',charge:'ch_original',payment_intent:'pi_original',livemode:false,amount:20000,currency:'usd',created:1760000001,status:['won'],balance_transactions:[]};
+  expect(await read(ports({...capture(),disputed:true},[refund()],[dispute]))).toEqual({state:'outcome_unknown',code:'PROVIDER_ADJUSTMENT_READBACK_REQUIRED'});
+ });
+ it('retains the first validated source fingerprint across asynchronous provider reads',async()=>{
+  const source=capture();source.payment_intent.metadata={...metadata};
+  const client=ports(source);
+  client.listRefunds.mockImplementationOnce(async()=>{
+   source.payment_intent.metadata.invoice_id='changed-source';
+   return {object:'list',data:[refund()],has_more:false};
+  });
+  expect(await read(client)).toEqual({state:'outcome_unknown',code:'PROVIDER_ADJUSTMENT_READBACK_REQUIRED'});
+ });
+});
 describe('source-bound post-settlement Stripe observations, without a financial writer',()=>{
  it('reads the exact original merchant and charge and retains refund facts without changing original settlement',async()=>{
   const client=ports(),before=JSON.stringify({request,operation,settlement});const result=await read(client);

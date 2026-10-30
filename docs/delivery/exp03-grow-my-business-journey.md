@@ -4,7 +4,9 @@ Date: 2026-10-12 · Journey Lead at authoring: Claude Code (one accountable lead
 record at authoring; now with active EXP04 — historical EXP03 references preserved, not taken over), ANT-147
 (integration), ANT-15 (Marketing), ANT-45 (Ads), ANT-21 (historical PC-1 QA) · Shell: SOLO
 
-**Current state — 2026-10-26: the owner moved the remaining EXP03 assignment to ONE Claude Code successor lead,
+**Historical state — superseded by the sole Codex succession of 2026-10-29 (§14.9).**
+
+**Prior current state — 2026-10-26: the owner moved the remaining EXP03 assignment to ONE Claude Code successor lead,
 replacing the zCod lead (zCod credits exhausted). This is not parallel staffing. The successor's ACK, full
 mapped-row matrix and next deliverable are in §14.** The zCod staffing named below is historical. Its branches,
 PRs, reviews and evidence are preserved.
@@ -1022,6 +1024,28 @@ Both closed as superseded with links; their branches are kept.
   businesses; SendGrid's account-wide bounce list, a row outliving SendGrid's entry, and a clear for a wrongly held
   address are owner decisions (decision log 2026-10-28). The two production rows are not back-filled. Proof:
   `exp03_governed_bounce_suppression.sql` 59/59; evidence `docs/evidence/ui-delivery/exp03-governed-bounce-suppression.md`.
+- **No daily sending allowance on marketing email (this change, migration `20271121140003`, NOT live).** Owner ruling
+  2026-10-27 (billing): each business's own usage is billed uncapped against a 25% contribution target, and PAIGE
+  imposes no spending or sending stop. The fixed 500-a-day `email_campaign_daily_cap()` was enforced in three seams;
+  all three bodies are re-emitted verbatim from production (md5 read back) minus only the allowance:
+  `email_campaign_request_approval` and `email_sequence_request_approval` no longer refuse `over_daily_cap` (the
+  series approval also drops its `daily_limit` and the `daily_cost_bound_usd` derived from it), and
+  `email_campaign_dispatch_claim` no longer skips a business at 500 in 24 hours. Suppression, opt-out and consent
+  at plan and at send, the postal address, the sender, owner/admin filing and person-only approval are unchanged.
+  PAIGE's campaign and series chat tools no longer mention or report a daily limit. Without the cap the claim
+  would have handed one business's large campaign every pass, so it now takes due campaigns fairly: the business
+  claimed least recently first (keyed on the claim, not a successful send, so a business whose sends are all
+  deferred or failing cannot stay first — round-3 review), then oldest due — scheduling order only, nobody refused or
+  held. Series emails go through the same claim. The migration was renumbered `20271121140003` in review so it sorts
+  after production's and main's `20271121110019` (a plain `db push` refuses an older one). Proof:
+  `exp03_email_send_allowance_removed.sql` 37/37 (36/36 before the round-3 finished-campaign case) on a fresh replay of all 1506 migrations (20 fail on the old
+  bodies; with only the pre-fairness claim, the passes go ash,ash,ash and the fairness assertions fail), neighbours
+  299/299. The Marketing › Email screens and PAIGE's series approval card no longer
+  state a limit: the dashboard shows the real "N marketing emails sent or sending in the last 24 hours", and the
+  editor warning, the series Daily limit row and "used up" notice are gone (copy removal only; C0b pins for
+  `paige-ai-chat` renewed; evidence `docs/evidence/ui-delivery/exp03-no-email-send-allowance.md`, harness frames light
+  and dark). The readers still return `daily_cap`; nothing reads it. On PAIGE's managed sender the real ceiling is now the provider's, shared by every
+  business: SendGrid's trial allows 100 a day (owner-held paid plan, below).
 
 **Open, in order:** the New conversation dialog and draft approval on the door; (chat `send_at` + When row:
 built above — Team Hub/NEXUS use still open);
@@ -1035,3 +1059,30 @@ campaign test send; Gmail send scopes; iCloud transport; ad launch/spend; tenant
 
 **States reached:** source · review · exact CI · merge · deploy · configured · connected for inbound replies.
 Not reached: authenticated owner drive of the reply flow in the app, and founder acceptance.
+
+
+### 14.9 Sole Codex successor recovery — 2026-10-29
+
+**STILL CODING.** Direct owner appointment replaces the credit-blocked Claude coding lead; this is not parallel staffing. SAME NEXUS, approved magenta/Megaphone/personality and original registry/runtime are retained. Actual complete-scope ACK: ANT87/3bd85230-ee45-41db-8971-e71236a47b51. Assignment Locks row11 C:E updated and read back with previous contents retained. ANT161 links the ACK in an additive description entry because its existing2000-comment quota refused a new comment.
+
+All original F1–F9/S1–S6/O1–O15/WEB01–14/annex rows and E1–16 remain, including CRM/Communications/Marketing/Ads/AI Sales/Setter, full managed/custom-domain/company/private-personal mailbox, Gmail/iCloud, newsletter/webinar and later agentic/both-chat amendments. Earlier matrix classifications are dated evidence, not a claim that the successor has reverified every row. Existing/new eligible SOLO use the same original tenant-resolved implementation; no founder allowlist or new account.
+
+**Recovery evidence:** fresh main b696ea038b6e26b43c8d1787dc65c59da5c89b86; original remote branch claude/great-heisenberg-u7kyd9 and PR3037/head74a4c797a97bf8c0e59683ff4146e407614b1f71 preserved. Owner supplied the prior session transcript ending at this head with repeated Preview failure and credit/organization-access failures. Cloud-only uncommitted work remains UNKNOWN; transcript/GitHub cannot establish its absence. Original historical handoff and coordinator successor grounding recovered.
+
+**3037 disposition:** OPEN/UNMERGED, mergeable=false. All12 other returned check-runs and two web statuses succeeded; Supabase Preview122996983274 FAILED. The old Codex summary covers d80852c, not final74a4; GitHub reviews array is empty. No full-green/final-review claim. Actual SELECT: Preview jmrbgjllrntgaliuqdwd contains20271121120003; current branch instead carries140003. Production contains neither and has advanced to20271126010011. Its three original function-body md5/security/search_path/ACL values still exactly match the migration's recorded starting bodies.
+
+Successor review branch codex/exp03-successor-20261029 merges the preserved74a4 ancestry into actual main. Both complete lessons entries retained; current checker metadata/peer helpers retained. SQL bytes are forwarded through a CLI-generated empty carrier to20271126010014, above applied11 and peer reservations12/13. CLI2.109.1 created the file; shutdown telemetry timeout exit1 is recorded separately. Original migration history/Preview are untouched: no reset/delete/repair/include-all or guard waiver. Test loader names only the forward carrier. Source review, exact-head CI, fresh Preview, ordinary merge/deploy/native+Edge+web readback remain required. This recovery is not runtime cap removal or metering/invoice correctness.
+
+**Original remaining outcomes:** F1/F2/S6 numeric-goal and evidence-backed strategy/current producer proof remain; F3/S3 original chat attach/capture integration and original creative/public-site owners remain; F4/S4b activation behavior/design and F7 qualification/follow-up/booking integration remain; F5/F6/S1/S2 retain original attribution/source proof and owe ordinary authenticated/reload/role/cohort acceptance; F8/S5 actual original Sales conversion and booking/agreement/invoice associations remain with accountable writers; F9 acquisition/conversion/metrics and honest unknown spend/ROAS remain. No original row is closed by this grouped orientation.
+
+O1–O4 original form/campaign/chat/link acceptance remains; O5–O9 reply draft/review/approval and existing delivered email door must be integrated rather than rebuilt; O10–O15 Gmail lifecycle/private mailbox/search/attachments/iCloud/newsletter/disconnect remain individually source-reconciled or proof owed per later §14 chronology. Delivered2930/2986/2997/3005/3011/3023/3026/3027 are retained, not relisted as missing. New conversation and draft approval through the door, company none/read/read-and-reply, private personal mailbox policy, custom-domain SendGrid lifecycle, follow-up and callback repair remain coding/integration work.
+
+WEB01–14 register read at startup: original Studio/publish/embed/export/host/DNS/HTTPS/isolation/email-Vault/conversion/Portal/readiness/instrumentation/recovery controls stay individually open to their named proof; original E06/E07/E04/E05/E09/E10 writers retained. No source release closes authenticated website-to-Sales/Portal acceptance.
+
+**Both chats/shared source:** inspected E08 open3041/f7867db12 and original ANT161 reservations. Preserve direct mentions/DMs; email is approval-required high risk through comms.email_send/comms_send_email and original comms-email-command, never natural-assent or standing-authority sends. Original campaign/series draft/request approval remain distinct from sending; no new approval path. E05 Task-only metadata/effort/native12/3102–3103 owns that span, EXP03 Contact/Company/Deal spans excluded. Current E04 MERIT/CURA and E09 Root/public-link renderer reservations retained. This increment edits none of their host/Task/native spans.
+
+**Security/dependencies:** E09641cd4cd caller/after-hours/callback request received; caller-number association grants no Portal identity or private CURA transcript. Original sanitized EXP10 custody/continuity packet recovered. SharedKey/account/product support and retry assumptions remain UNVERIFIED; no credential read/rotation/provider URL/log operation. Safe inert code/proof may continue after actual official-contract grounding. Number purchases, live sends/calls, real merges/backfills, DNS/provider configuration, Gmail scopes/iCloud transport and ad spend keep their exact existing effect authority. None is a blanket coding stop.
+
+**Algorithms:** ALG05 unsupported qualification/scoring remains NO VERIFIED SUPPORTING ALGORITHM IDENTIFIED — GAP OR VERIFICATION OWED; ALG09 attributed form-source subset retained, not full paid optimization; ALG10 eligibility/suppression subset retained, obsolete daily cap is the owned removal in this increment, timing/channel selection remains unverified. ALG01/08/11/12/13 only where actual canonical wiring is established; no maturity promoted.
+
+**Completion:** full assignment STILL CODING; CODING COMPLETE — READY FOR OWNER REVIEW and OWNER ACCEPTED not reached. Exact row-by-row current source/integration/repair/proof classification continues in this original matrix. One complete integrated owner evaluation, not founder testing per increment.

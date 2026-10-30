@@ -1,0 +1,88 @@
+{
+  "label": "fictional local native browser200percent, not authenticated",
+  "baseline": {
+    "width": 1352,
+    "height": 807,
+    "dpr": 1.25,
+    "scale": 1
+  },
+  "records": [
+    {
+      "name": "dark-closed",
+      "width": 676,
+      "height": 403,
+      "dpr": 2.5,
+      "scale": 1,
+      "overflowX": 0,
+      "overflowY": 0,
+      "href": "/solo/3855/operations/work?task=e8000000-0000-4000-8000-0000000a0001",
+      "rect": {
+        "x": 263.3374938964844,
+        "y": 247.60000610351562,
+        "w": 80.91875457763672,
+        "h": 26.5
+      },
+      "covered": false,
+      "focused": true,
+      "paige": "closed"
+    },
+    {
+      "name": "dark-open",
+      "width": 676,
+      "height": 403,
+      "dpr": 2.5,
+      "scale": 1,
+      "overflowX": 0,
+      "overflowY": 0,
+      "href": "/solo/3855/operations/work?task=e8000000-0000-4000-8000-0000000a0001",
+      "rect": {
+        "x": 263.3374938964844,
+        "y": 247.60000610351562,
+        "w": 80.91875457763672,
+        "h": 26.5
+      },
+      "covered": true,
+      "focused": false,
+      "paige": "open"
+    },
+    {
+      "name": "light-closed",
+      "width": 676,
+      "height": 403,
+      "dpr": 2.5,
+      "scale": 1,
+      "overflowX": 0,
+      "overflowY": 0,
+      "href": "/solo/3855/operations/work?task=e8000000-0000-4000-8000-0000000a0001",
+      "rect": {
+        "x": 263.3374938964844,
+        "y": 247.60000610351562,
+        "w": 80.91875457763672,
+        "h": 26.5
+      },
+      "covered": false,
+      "focused": true,
+      "paige": "closed"
+    },
+    {
+      "name": "light-open",
+      "width": 676,
+      "height": 403,
+      "dpr": 2.5,
+      "scale": 1,
+      "overflowX": 0,
+      "overflowY": 0,
+      "href": "/solo/3855/operations/work?task=e8000000-0000-4000-8000-0000000a0001",
+      "rect": {
+        "x": 263.3374938964844,
+        "y": 247.60000610351562,
+        "w": 80.91875457763672,
+        "h": 26.5
+      },
+      "covered": true,
+      "focused": false,
+      "paige": "open"
+    }
+  ],
+  "failures": []
+}

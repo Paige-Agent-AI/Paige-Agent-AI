@@ -1,0 +1,61 @@
+{
+  "runtimeCodeCommit": "95c01c559b77d794313a62ece9fd348b098faeaa",
+  "evidenceClass": "synthetic local shell and mocked transport; not authenticated",
+  "recordedAt": "2026-10-30T05:21:22.090061+00:00",
+  "runtimeInputs": [
+    {
+      "path": "src/solo/team-hub/TeamHubWorkspace.tsx",
+      "sha256": "cb6bf1565d8192796c6d66809ba093e2e4a59ec22047040a4accff5831a45ccb"
+    },
+    {
+      "path": "src/solo/team-hub/useTeamHub.ts",
+      "sha256": "a0fdb26cd7c09f9bb1a0a8c975bc1e5fa182ab711a35eb116ceec009420cb417"
+    },
+    {
+      "path": "src/solo/team-hub/team-hub-contract.ts",
+      "sha256": "148dc0d803cbaa361d1595509eeac6e639aacecc300134b98e295885477d303a"
+    },
+    {
+      "path": "src/lib/paigePromptHandoff.ts",
+      "sha256": "0f07362fde0af0ce07b65e4a26cec166122fac12c1ebee5de4a4551c995f123c"
+    },
+    {
+      "path": "src/components/dashboard/PaigeAIChat.tsx",
+      "sha256": "3c667b735c19643097d07cf2b96b02cd6a9d09cb45e56d4a9cf02e4938008a64"
+    },
+    {
+      "path": "src/lib/links/workspaceLinks.ts",
+      "sha256": "e5450e24cef3712daa80cf806044992cd2cea5e0f04f83c381e4ec418421d298"
+    },
+    {
+      "path": "supabase/functions/_shared/canonical-app-url.ts",
+      "sha256": "8b7ded7ceb0fd7c60cb97659953a6d363123a55079853cd094a5e2f3058ddf7c"
+    },
+    {
+      "path": "supabase/functions/_shared/paige-turn/record-links.ts",
+      "sha256": "ca6a49ba93b7470adf4ddedc3bead31149d5b3666253bd252a7a80d8b28c2896"
+    },
+    {
+      "path": "supabase/functions/_shared/team-hub/chat.ts",
+      "sha256": "3c9192b16d04070c5bdd76b20c70bd67ec47ea587dd223d1d28026f6aeebae9a"
+    },
+    {
+      "path": "supabase/functions/paige-ai-chat/index.ts",
+      "sha256": "6cb5ddbce2702cb85fbfe5866b612a30cf1caf2fc63b4b5a60947a8d5040d765"
+    },
+    {
+      "path": "supabase/migrations/20271126040008_exp08_team_hub_message_reference.sql",
+      "sha256": "bf3ecc34247fcf29d9d9203f7d9f584041a9ddf6a2d43944bb976c08b421d43f"
+    },
+    {
+      "path": "scripts/ci/c0b-incumbent-resource-binding.mjs",
+      "sha256": "748384c04cf14a0a9458ed59a95b3ac3ff2a800269413672cad78b711c6afab3"
+    }
+  ],
+  "reports": {
+    "source-return": "report.json",
+    "card-recovery": "../exp08-team-hub-card-recovery/report.json",
+    "scoped-handoff": "../exp08-team-hub-scoped-handoff/report.json"
+  },
+  "handoffReportCodeCommit": "a5711ff40fb1487efae49221795ee54f015b0022"
+}

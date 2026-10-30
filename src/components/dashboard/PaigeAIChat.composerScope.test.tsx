@@ -1,4 +1,4 @@
-import { act, useState } from "react";
+import { act, useLayoutEffect, useState, type ReactNode } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { ChatRailApi } from "./PaigeAIChat";
@@ -75,7 +75,7 @@ vi.mock("@/components/paige/live/PaigeLiveConversation", () => ({
 import { PaigeAIChat } from "./PaigeAIChat";
 import { handOffPaigePrompt } from "@/lib/paigePromptHandoff";
 import { supabase } from "@/integrations/supabase/client";
-import { setComposerDraftSessionScope } from "@/lib/paigeComposerScopeState";
+import { createComposerScopeIdentity, setComposerDraftSessionScope } from "@/lib/paigeComposerScopeState";
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -103,6 +103,11 @@ async function settle() {
   await Promise.resolve();
   await Promise.resolve();
   await new Promise((resolve) => setTimeout(resolve, 0));
+}
+
+function HandoffAtLayout({children,onCommit}:{children:ReactNode;onCommit?:()=>void}) {
+  useLayoutEffect(()=>{onCommit?.();},[onCommit]);
+  return children;
 }
 
 describe("PaigeAIChat ComposerScopeState integration", () => {
@@ -138,10 +143,10 @@ describe("PaigeAIChat ComposerScopeState integration", () => {
     vi.restoreAllMocks();
   });
 
-  const render = async (extra: Record<string, unknown> = {}) => {
+  const render = async (extra: Record<string, unknown> = {}, onCommit?:()=>void) => {
     await act(async () => {
       root.render(
-        <PaigeAIChat
+        <HandoffAtLayout onCommit={onCommit}><PaigeAIChat
           hideHeader
           fill
           enableHistory
@@ -149,7 +154,7 @@ describe("PaigeAIChat ComposerScopeState integration", () => {
           liveConversation={false}
           renderRail={(api) => { harness.rail = api; return null; }}
           {...extra}
-        />,
+        /></HandoffAtLayout>,
       );
       await settle();
     });
@@ -281,6 +286,75 @@ describe("PaigeAIChat ComposerScopeState integration", () => {
     await waitForWritable();
     expect(textarea().value).toBe("How did my leads do this month?");
     expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it("delivers a Team Hub prompt only after its exact composer scope becomes writable",async()=>{
+    const scope=createComposerScopeIdentity({tenantId:harness.tenantId,userId:harness.userId})!;
+    harness.isFetched=false;
+    const retire=handOffPaigePrompt("Review our Team Hub request",{scope});
+    try {
+      await render();expect(textarea().disabled).toBe(true);expect(textarea().value).not.toContain("Review our Team Hub request");
+      harness.isFetched=true;await render();await waitForWritable();
+      expect(textarea().value).toBe("Review our Team Hub request");expect(fetch).not.toHaveBeenCalled();
+    } finally {retire();}
+  });
+  it("does not merge a Team Hub request into a client-focused draft and retains both drafts",async()=>{
+    const scope=createComposerScopeIdentity({tenantId:harness.tenantId,userId:harness.userId})!;
+    await render({clientId:"client-a"});await waitForWritable();await type("Client-specific note");
+    let retire=()=>{};
+    try {
+      await act(async()=>{retire=handOffPaigePrompt("Team-only request",{scope});await settle();});
+      expect(textarea().value).toBe("Client-specific note");
+      await render({clientId:null});await waitForWritable();
+      expect(textarea().value).toBe("Team-only request");expect(fetch).not.toHaveBeenCalled();
+      await render({clientId:"client-a"});await waitForWritable();expect(textarea().value).toBe("Client-specific note");
+    } finally {retire();}
+  });
+  it("a layout-phase handoff during focus change cannot use the previous draft setter",async()=>{
+    const scope=createComposerScopeIdentity({tenantId:harness.tenantId,userId:harness.userId})!;
+    await render({clientId:"previous-client"});await waitForWritable();await type("Keep private client draft");
+    let retire=()=>{};
+    try {
+      await render({clientId:null},()=>{retire=handOffPaigePrompt("New team request",{scope});});
+      await waitForWritable();
+      expect(textarea().value).toBe("New team request");
+      await render({clientId:"previous-client"});await waitForWritable();
+      expect(textarea().value).toBe("Keep private client draft");
+      expect(fetch).not.toHaveBeenCalled();
+    } finally {retire();}
+  });
+
+  it("a retained old-scope listener cannot drain a handoff for the new writable scope",async()=>{
+    const listeners:EventListener[]=[];const nativeAdd=window.addEventListener.bind(window);
+    vi.spyOn(window,"addEventListener").mockImplementation((type,listener,options)=>{
+      if(type==="paige:prefill")listeners.push(listener as EventListener);
+      nativeAdd(type,listener,options);
+    });
+    await render({clientId:"previous-client"});await waitForWritable();await type("Keep private client draft");
+    const previous=listeners.at(-1)!;
+    await render({clientId:null});await waitForWritable();
+    const scope=createComposerScopeIdentity({tenantId:harness.tenantId,userId:harness.userId})!;
+    const nativeDispatch=window.dispatchEvent.bind(window);let held:Event|null=null;
+    const dispatch=vi.spyOn(window,"dispatchEvent").mockImplementation(event=>{
+      if(event.type==="paige:prefill"){held=event;previous(event);return true;}
+      return nativeDispatch(event);
+    });
+    let retire=()=>{};
+    try {
+      await act(async()=>{retire=handOffPaigePrompt("New team request",{scope});await settle();});
+      dispatch.mockRestore();
+      await act(async()=>{nativeDispatch(held!);await settle();});
+      expect(textarea().value).toBe("New team request");
+      await render({clientId:"previous-client"});await waitForWritable();
+      expect(textarea().value).toBe("Keep private client draft");expect(fetch).not.toHaveBeenCalled();
+    } finally {dispatch.mockRestore();retire();}
+  });
+
+  it("a scoped pending request for another actor or workspace never enters this draft",async()=>{
+    const scope=createComposerScopeIdentity({tenantId:"different-tenant",userId:"different-actor"})!;
+    const retire=handOffPaigePrompt("Private other-context request",{scope});
+    try {await render();await waitForWritable();expect(textarea().value).not.toContain("Private other-context request");expect(fetch).not.toHaveBeenCalled();}
+    finally {retire();}
   });
 
   it("appends a later Ask PAIGE question after what the owner already typed", async () => {

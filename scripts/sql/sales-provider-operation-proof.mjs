@@ -1,7 +1,7 @@
 // Explicit disposable localhost cluster only. Real PostgreSQL locks/caller roles; no provider claim.
-import {readFileSync} from 'node:fs';
+import {readFileSync,writeFileSync,mkdirSync} from 'node:fs';
 import {spawn,spawnSync} from 'node:child_process';
-import {randomUUID} from 'node:crypto';
+import {randomUUID,createHash} from 'node:crypto';
 import assert from 'node:assert/strict';
 const [binary,port,user,expectedDirectory,mode]=process.argv.slice(2);
 if(!binary||!/^\d+$/.test(port??'')||!user||!expectedDirectory)throw Error('Explicit local cluster arguments required');
@@ -26,8 +26,15 @@ const claim=(op,token=randomUUID(),t=tenant)=>`SELECT claim_sales_invoice_paymen
 const final=(op,token,state='customer_action_required',object='cs_test_fixture',url='https://checkout.stripe.com/c/pay/cs_test_fixture')=>`SELECT finalize_sales_invoice_payment_request('${tenant}','${op}','${token}','${state}',${object===null?'NULL':"'"+object+"'"},'open',${url===null?'NULL':"'"+url+"'"},NULL);`;
 const deny=(sql,pattern)=>assert.throws(()=>run(sql),pattern);
 const execute=sql=>new Promise((resolve,reject)=>{const p=spawn(binary,args(),{windowsHide:true});let out='',err='';p.stdout.on('data',v=>out+=v);p.stderr.on('data',v=>err+=v);p.on('error',reject);p.on('close',code=>resolve({code,out,err}));p.stdin.end(sql);});
-let originalListDefinition=null,forwardListDefinition=null;
+let originalListDefinition=null,forwardListDefinition=null,observationProof=null;
 try {
+ if(process.argv.includes('--provider-observations')){
+  mkdirSync(new URL('../../work/',import.meta.url),{recursive:true});
+  writeFileSync(new URL('../../work/sales-provider-observation-proof.json',import.meta.url),JSON.stringify({
+   proof:'E04_PROVIDER_OBSERVATION_SELECTED_SCHEMA',status:'NOT_COMPLETED',observed_at:new Date().toISOString(),
+   boundary:'Selected-schema native proof; no hosted Auth, provider, financial adjustment or customer acceptance'
+  },null,2)+'\n');
+ }
  run(`DO $$ BEGIN IF NOT EXISTS(SELECT 1 FROM pg_roles WHERE rolname='anon') THEN CREATE ROLE anon;END IF;IF NOT EXISTS(SELECT 1 FROM pg_roles WHERE rolname='authenticated') THEN CREATE ROLE authenticated;END IF;IF NOT EXISTS(SELECT 1 FROM pg_roles WHERE rolname='service_role') THEN CREATE ROLE service_role;END IF;END $$;
  CREATE SCHEMA auth;CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE AS $$SELECT nullif(current_setting('test.actor',true),'')::uuid$$;
  CREATE TABLE auth.users(id uuid PRIMARY KEY,deleted_at timestamptz,banned_until timestamptz);
@@ -98,6 +105,22 @@ try {
    +exact('claim_sales_invoice_payment_request','function')+forwardListDefinition;
   run(forward);run(forward);
   run('REVOKE ALL ON FUNCTION public._sales_invoice_require_accepted_obligation(public.paige_invoices,jsonb) FROM PUBLIC,anon,authenticated,service_role;');
+ }
+ // Install the additive test-only candidate BEFORE all incumbent cases. This
+ // proves old prepare/claim/settlement/recovery writes retain their behavior
+ // with the new row guard, rather than testing two disconnected schemas.
+ if(process.argv.includes('--provider-observations')){
+  const railSource=read('supabase/migrations/20270107000000_receipt_correlation_and_detail.sql');
+  const rail=/create or replace function public\._record_workspace_rail_event\([\s\S]*?as \$\$[\s\S]*?\$\$;/i.exec(railSource)?.[0];
+  assert(rail?.includes('_job_attempt_id'),'actual original twelve-argument Rail writer');
+  const balanceSource=read('supabase/migrations/20270601000002_sales_performance_contract.sql');
+  const balance=/CREATE OR REPLACE FUNCTION public\._sales_invoice_balance_rows\([\s\S]*?AS \$\$[\s\S]*?\$\$;/i.exec(balanceSource)?.[0];
+  assert(balance,'actual original canonical receipt balance projection');
+  run(balance+`REVOKE ALL ON FUNCTION public._sales_invoice_balance_rows(uuid,uuid) FROM PUBLIC,anon,authenticated,service_role;`);
+  run(`ALTER TABLE public.paige_workspace_events ADD COLUMN IF NOT EXISTS job_attempt_id text,
+   ADD COLUMN IF NOT EXISTS llm_trace_id uuid,ADD COLUMN IF NOT EXISTS release_id text,ADD COLUMN IF NOT EXISTS detail jsonb;`);
+  run(rail+`REVOKE ALL ON FUNCTION public._record_workspace_rail_event(uuid,uuid,text,uuid,bigint,text,text,text,text,uuid,text,jsonb) FROM PUBLIC,anon,authenticated,service_role;`);
+  run(read('supabase/tests/fixtures/exp04_provider_observation.sql'));
  }
  const first=randomUUID();
  // --baseline intentionally fails here on current-main: there is no asynchronous operation RPC.
@@ -403,7 +426,74 @@ try {
  deny(`SET test.actor='${actor}';SET test.workspace='${tenant}';SELECT list_sales_collection_register('${otherTenant}','invoice',50,NULL);`,/workspace changed/);
  deny(service(prepare(randomUUID(),{...command,expected_version:5,amount_minor:1,purpose:'partial'})),/amount or currency/);
  assert.equal(publicRequest().payment_request.provider_url,null,'fully allocated request cannot be paid again');
+ // Extend this SAME disposable provider proof; this fixture is deliberately not
+ // a migration. All incumbent cases use the extended schema and original
+ // writers. The additional journal does not adjust any financial balance.
+ if(process.argv.includes('--provider-observations')){
+  if(process.argv.includes('--observation-link-baseline')){
+   // Causal negative control, ONLY in this uniquely owned disposable database.
+   // The first direct-pointer assertion must fail without the original guard.
+   run('DROP TRIGGER e04_provider_observation_link_guard ON public.paige_invoice_provider_operations;');
+  }
+  let checks=read('supabase/tests/fixtures/exp04_provider_observation_checks.sql').replaceAll('\r\n','\n');
+  for(const [placeholder,value]of [['__OPERATION__',paidOp],['__TOKEN__',paidToken],['__TENANT__',tenant]]){
+   assert(/^[a-f0-9-]{36}$/i.test(value),'runner-owned synthetic UUID');
+   assert(checks.includes(placeholder),'explicit observation fixture input');
+   checks=checks.replaceAll(placeholder,value);
+  }
+  assert(!/__\w+__/.test(checks),'no unresolved observation fixture input');
+  if(process.argv.includes('--observation-self-test')){
+   const control=checks.replace('begin;\n',()=> 'begin;\nDROP TRIGGER e04_provider_observation_link_guard ON public.paige_invoice_provider_operations;\n');
+   assert.notEqual(control,checks,'explicit transaction-scoped guard-removal control');
+   deny(control,/FAIL: source counter cannot advance without a matching immutable observation accepted/);
+   console.log('SALES_PROVIDER_OBSERVATION_LINK_CONTROL_PASS: missing guard produced the exact pointer-integrity failure; connection rollback restored the guard and fixtures.');
+  }
+  const result=run(checks).split('\n').find(line=>line.startsWith('{')&&line.includes('E04_PROVIDER_OBSERVATION_SELECTED_SCHEMA'));
+  assert(result,'native observation checks returned their actual summary');
+  observationProof=JSON.parse(result);
+  assert.equal(observationProof.checks,36,'all selected-schema observation controls executed');
+  console.log('SALES_PROVIDER_OBSERVATION_SQL_PASS: '+result);
+  const paymentBefore=run(`SELECT to_jsonb(p) FROM public.paige_invoice_payments p WHERE provider_operation_id='${paidOp}';`);
+  const workBefore=run(`SELECT to_jsonb(w) FROM public.paige_durable_work w JOIN public.paige_invoice_provider_operations p ON p.reconciliation_work_id=w.id WHERE p.id='${paidOp}';`);
+  assert(workBefore,'original terminal settlement work exists');
+  const invoiceVersion=Number(run(`SELECT billing_lifecycle_version FROM public.paige_invoices WHERE id='${invoice}';`));
+  const snapshot={state:'observed',provider_transaction_id:'ch_fixture',provider_settlement_id:'txn_fixture',refunds:[{
+   id:'re_concurrency',amount_minor:100,currency:'usd',created_at:new Date(Date.now()-60000).toISOString(),status:'pending',
+   balance_transaction:null,failure_balance_transaction:null
+  }],disputes:[]};
+  const observe=(version,facts,reference)=>service(`BEGIN;SELECT jsonb_build_object('backend',pg_backend_pid(),'result',public.record_sales_invoice_provider_observation('${tenant}','${paidOp}','${paidToken}',${version},${literal(facts)},'${reference}'));SELECT pg_sleep(0.1);COMMIT;`);
+  const same=await Promise.all([execute(observe(0,snapshot,'evt_race_same_a')),execute(observe(0,snapshot,'evt_race_same_b'))]);
+  assert(same.every(r=>r.code===0),'both same-fact sessions resolve safely');
+  const decoded=same.map(r=>JSON.parse(r.out.split('\n').find(line=>line.startsWith('{'))));
+  assert.notEqual(decoded[0].backend,decoded[1].backend,'actual distinct PostgreSQL sessions');
+  assert.equal(decoded[0].result.observation_id,decoded[1].result.observation_id,'one same-fact observation identity');
+  assert.deepEqual(decoded.map(x=>x.result.replayed).sort(),[false,true],'one commit and one retained replay');
+  assert.equal(run(`SELECT provider_observation_version FROM public.paige_invoice_provider_operations WHERE id='${paidOp}';`),'1');
+  const failed=structuredClone(snapshot),canceled=structuredClone(snapshot);failed.refunds[0].status='failed';canceled.refunds[0].status='canceled';
+  const changed=await Promise.all([execute('\\set VERBOSITY verbose\n'+observe(1,failed,'evt_race_changed_a')),execute('\\set VERBOSITY verbose\n'+observe(1,canceled,'evt_race_changed_b'))]);
+  assert.equal(changed.filter(r=>r.code===0).length,1,'only one changed-fact session commits');
+  assert.equal(changed.filter(r=>r.code!==0&&/40001/.test(r.err)&&/Payment observation changed/.test(r.err)).length,1,'other source incarnation receives exact stale-source refusal');
+  assert.equal(run(`SELECT provider_observation_version FROM public.paige_invoice_provider_operations WHERE id='${paidOp}';`),'2');
+  assert.equal(Number(run(`SELECT billing_lifecycle_version FROM public.paige_invoices WHERE id='${invoice}';`)),invoiceVersion+2,'invoice advances exactly once per accepted source');
+  assert.equal(run(`SELECT count(*) FROM public.paige_invoice_operations WHERE command->>'action'='invoice.provider_observation';`),'2');
+  assert.equal(run(`SELECT count(*) FROM public.paige_workspace_events WHERE detail->>'effect'='provider_observation_only';`),'2');
+  assert.equal(run(`SELECT to_jsonb(p) FROM public.paige_invoice_payments p WHERE provider_operation_id='${paidOp}';`),paymentBefore,'concurrent observations preserve original payment');
+  assert.equal(run(`SELECT to_jsonb(w) FROM public.paige_durable_work w JOIN public.paige_invoice_provider_operations p ON p.reconciliation_work_id=w.id WHERE p.id='${paidOp}';`),workBefore,'later observations never reopen or reset terminal settlement work');
+  observationProof.concurrency_cases=2;
+  console.log('SALES_PROVIDER_OBSERVATION_CONCURRENCY_PASS: two actual-session cases; same facts commit once, changed facts refuse the stale incarnation; original payment and terminal settlement work unchanged.');
+ }
  run(`UPDATE paige_invoices SET status='void' WHERE id='${invoice}';`);
  assert.equal(publicRequest(),null,'void invoice bearer refused');
+ if(observationProof){
+  const files=['scripts/sql/sales-provider-operation-proof.mjs','supabase/tests/fixtures/exp04_provider_observation.sql','supabase/tests/fixtures/exp04_provider_observation_checks.sql'];
+  const hashes=Object.fromEntries(files.map(file=>[file,createHash('sha256').update(read(file)).digest('hex')]));
+  mkdirSync(new URL('../../work/',import.meta.url),{recursive:true});
+  writeFileSync(new URL('../../work/sales-provider-observation-proof.json',import.meta.url),JSON.stringify({
+   ...observationProof,status:'PASS',observed_at:new Date().toISOString(),source_hashes:hashes,
+   incumbent_lifecycle_passed:true,guard_installed_before_incumbent_cases:true,
+   link_guard_negative_control:process.argv.includes('--observation-self-test'),
+   native_carrier:'UNPUBLISHED',activation:'UNMOUNTED',hosted_authentication:'UNVERIFIED',provider_settlement:'UNVERIFIED',customer_acceptance:'UNVERIFIED'
+  },null,2)+'\n');
+ }
  console.log('SALES_PROVIDER_OPERATION_SQL_PASS: real PostgreSQL exact scoped operation/dispatch replay, concurrent once-only allocation, partial/full canonical balance, provider/manual provenance, system Rail after owner deactivation, receipt/Rail rollback, truthful Collections zero-balance stop projection. Local synthetic provider facts; hosted/provider/authenticated production UNVERIFIED.');
 } finally {database='postgres';run(`DROP DATABASE ${db};`);}

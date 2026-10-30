@@ -53,6 +53,18 @@ Orchestration contract: customer Portal Messages/Support → original verified a
 
 Release and acceptance: local implementation/test/render proof only at this checkpoint. Exact-head review, required CI, normal merge/deployment/readback and actual customer acceptance remain separate. The shared owner Chat gateway failure, legitimate customer connection, original support-case handoff and other full-Experience work remain open. No founder slice evaluation is requested.
 
+## October 30 — restore the original business chooser and keyboard read recovery
+
+Original outcomes PCO-PORTAL-016/018/020, PCO-CUSTOMER-011/012 and J20 remain part of the full original assignment. This sequential child of the reviewed history-decoder repair changes only the Messages page, the outer customer Support redirect, their tests and the existing synthetic Messages drive. The platform support-desk implementation, native relationship authorization, canonical messages and private CURA history are unchanged.
+
+Known multi-business ambiguity now offers the existing `CLIENT_PORTAL_CHOOSE_HREF` (`/app?chooseBusiness=1`) instead of claiming that business selection is unavailable or routing the customer to the platform desk. The Messages action uses full navigation to preserve the original unsaved-work guard; the actual CustomerAccessGate/native chooser remains responsible for fresh relationship admission. A chooser link is not authorization. Errors take precedence over a cached brand in the outer Support redirect; ambiguity never mounts the platform desk or offers a composer.
+
+A successful deliberate keyboard retry returns focus to the original composer only when its original hook epoch and retry intent are still current and the customer has not moved focus elsewhere. Pointer retry does not force composer focus. A refused read, unmount, later retry or actor/business retirement cannot use an old completion to move focus. A first successful read resolving an initially null business is not treated as a change of actor/business; the original scope epoch, including A-to-B-to-A retirement, is the fence. There is no automatic send, new conversation, second retry engine or restored privilege.
+
+Failing-first proof against the unchanged pages produced five failures and forty passes. The first implementation then exposed one additional incorrect focus fence; that failure was retained and corrected by using the original epoch. Final automated and rendered evidence, exact source pins, release status and limits are recorded in `docs/evidence/ui-delivery/e09-conversation-recovery.md`. Actual ordinary external-client multi-business, authenticated return/revocation, physical iPhone and the integrated founder evaluation remain proof owed; synthetic component rendering does not close them.
+
+The execution contract remains customer Messages/Support -> existing verified actor and selected relationship -> original native conversation read -> original message identity -> the same customer page. Ordinary read/navigation recovery needs no Layer C ActionAdapter, approval, provider, durable job or Rail writer. ALG-12 gains only this bounded deterministic error recovery; no broader algorithm, Team Hub, case/SLA, Chat/Live or seven-pillar completion is implied.
+
 ### Direction contract
 
 **THESIS:** make existing customer-service work findable in the approved Portal Overview, using a compact source-backed list rather than a second inbox.

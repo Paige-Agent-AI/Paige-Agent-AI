@@ -1,4 +1,5 @@
 import {parsePaymentRequestIntent} from '../sales-payments/request-command.ts';
+import {parseManualPaymentAllocations} from './manual-allocation.ts';
 export const SALES_INVOICE_ACTIONS = {
   "invoice.payment_request": "sales_create_payment_request",
   "invoice.settings_update": "sales_update_invoice_settings",
@@ -67,6 +68,10 @@ export function parseSalesInvoiceCommand(value: unknown): SalesInvoiceCommand {
     const receivedAt = new Date(v.received_at).toISOString();
     if (receivedAt.slice(0, 19) !== v.received_at.slice(0, 19)) return invalid();
     Object.assign(out, { amount_cents: v.amount_cents, currency: "usd", method: v.method, received_at: receivedAt, reference: text("reference", 200), notes: text("notes", 2000) });
+    if(v.allocations!==undefined){
+      allowed.add('allocations');
+      try{out.allocations=parseManualPaymentAllocations(v.allocations,v.amount_cents as number);}catch{return invalid();}
+    }
   } else if (action === "invoice.reverse_manual_payment") {
     allowed.add("payment_id");
     if (typeof v.payment_id !== "string" || !UUID.test(v.payment_id)) return invalid();

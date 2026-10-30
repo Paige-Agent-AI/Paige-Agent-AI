@@ -51,10 +51,18 @@ select pg_temp.check_true((select count(*)=0 from public.plan_items where tenant
 select pg_temp.refused($s$select public.plan_assign_task_scoped('ec010000-0000-4000-8000-000000000001','ec010000-0000-4000-8000-000000001111','Test unauthorized self task','ec010000-0000-4000-8000-000000000001')$s$,'42501','canonical action-bus authority refuses ordinary member creation');
 select pg_temp.check_true((select count(*)=0 from public.plan_items where tenant_id='ec010000-0000-4000-8000-000000001111' and item_type='task'),'canonical writer refusal rolls back tentative item');
 select set_config('request.jwt.claim.sub','ec010000-0000-4000-8000-000000000003',true);
-create temporary table ops_created_identity(id uuid);
-insert into ops_created_identity select (public.plan_assign_task_scoped('ec010000-0000-4000-8000-000000000003','ec010000-0000-4000-8000-000000001111','Test assigned task','ec010000-0000-4000-8000-000000000001','ec010000-0000-4000-8000-00000000a001','ec010000-0000-4000-8000-00000000b001',null,'high','Test context')->>'item_id')::uuid;
+create temporary table ops_created_identity(id uuid,result jsonb);
+with created as materialized (
+ select public.plan_assign_task_scoped('ec010000-0000-4000-8000-000000000003','ec010000-0000-4000-8000-000000001111','Test assigned task','ec010000-0000-4000-8000-000000000001','ec010000-0000-4000-8000-00000000a001','ec010000-0000-4000-8000-00000000b001',null,'high','Test context') as result
+) insert into ops_created_identity select (result->>'item_id')::uuid,result from created;
 select pg_temp.check_true((select count(*)=1 from public.plan_items where id=(select id from ops_created_identity) and title='Test assigned task' and priority='high' and parent_item_id='ec010000-0000-4000-8000-00000000b001' and created_by='ec010000-0000-4000-8000-000000000003'),'canonical creation fields readback');
 select pg_temp.check_true((select count(*)=1 from public.audit_logs where entity_id=(select id from ops_created_identity) and action='plan_assign_task'),'canonical creation audit preserved');
+select pg_temp.check_true((select result->'railRecorded'='true'::jsonb and result->>'receipt_status'='recorded' from ops_created_identity),'original native receipt is projected');
+select pg_temp.check_true((select count(*)=1 from public.audit_logs a join ops_created_identity c on a.entity_id=c.id and a.id=(c.result->>'receipt_run_id')::uuid where a.action='plan_assign_task'),'projected run identity is the original task audit');
+select pg_temp.check_true((select count(*)=1 from public.paige_workspace_events e join ops_created_identity c on e.source_id=(c.result->>'receipt_run_id')::uuid
+ where e.source_kind='capability_run' and e.outcome='capability_succeeded' and e.capability_key='plan_assign_task'
+ and e.tenant_id='ec010000-0000-4000-8000-000000001111' and e.actor_id='ec010000-0000-4000-8000-000000000003'
+ and e.detail->>'record_id'=c.id::text and e.detail->>'audit_id'=c.result->>'receipt_run_id'),'original task audit and Rail correlate once');
 -- All event/bus inserts, including any queued pg_net work, roll back here.
 -- Preserve both canonical role-sync triggers: grant administration while in B,
 -- establish ordinary membership in A, then switch to A for the API assertion.

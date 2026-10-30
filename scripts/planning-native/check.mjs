@@ -29,7 +29,9 @@ END $$;
 CREATE SCHEMA auth; CREATE SCHEMA realtime;
 CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE AS $$ SELECT nullif(current_setting('test.actor',true),'')::uuid $$;
 CREATE TABLE auth.users(id uuid PRIMARY KEY);
-CREATE TABLE public.tenants(id uuid PRIMARY KEY,account_type text DEFAULT 'standalone',parent_tenant_id uuid);
+CREATE TABLE public.tenants(id uuid PRIMARY KEY,account_type text DEFAULT 'standalone',parent_tenant_id uuid,company_workspace boolean NOT NULL DEFAULT false);
+-- Explicit eligibility port; the production migration calls the original helper.
+CREATE FUNCTION public.is_company_workspace(t uuid) RETURNS boolean LANGUAGE sql STABLE AS $$ SELECT coalesce((SELECT company_workspace FROM public.tenants WHERE id=t),false) $$;
 CREATE TABLE public.profiles(user_id uuid PRIMARY KEY,active_tenant_id uuid);
 CREATE TABLE public.tenant_members(tenant_id uuid,user_id uuid,role text,status text,is_owner boolean DEFAULT false);
 CREATE TABLE public.user_roles(user_id uuid,role text);
@@ -100,6 +102,25 @@ const bodiesSQL="SELECT proname,pg_get_functiondef(oid) AS definition FROM pg_pr
 const priorBodies=(await db.query(bodiesSQL)).rows;
 await db.exec(migration);
 await db.exec(migration); // Replay must not add wrappers, signatures or receipts.
+const scopedSignature='public.plan_assign_task_scoped(uuid,uuid,text,uuid,uuid,uuid,timestamptz,text,text,uuid)';
+const scopedSnapshotSQL=`SELECT oid,prosrc,pg_get_functiondef(oid) AS definition,(to_jsonb(p)-'prosrc'-'proargdefaults')||jsonb_build_object('proargdefaults',pg_get_expr(proargdefaults,0)) AS metadata FROM pg_proc p WHERE oid='${scopedSignature}'::regprocedure`;
+const scopedBefore=(await db.query(scopedSnapshotSQL)).rows[0];
+const taskReceiptMigration=read('20271126070005_planning_task_receipt_projection.sql');
+await db.exec(taskReceiptMigration);
+const scopedAfter=(await db.query(scopedSnapshotSQL)).rows[0];
+assert.deepEqual(scopedAfter.metadata,scopedBefore.metadata,'task receipt projection retains OID/owner/ACL/security/defaults');
+await db.exec(taskReceiptMigration);
+assert.deepEqual((await db.query(scopedSnapshotSQL)).rows[0],scopedAfter,'receipt projection replay is exact');
+// A partial marker and unrelated source drift must refuse, not overwrite new work.
+for (const changed of [scopedAfter.definition.replace("'receipt_status', v_result->'receipt_status'", "'receipt_status', 'incomplete'"),
+  scopedBefore.definition.replace('begin', '-- unrelated later source\nbegin')]) {
+  await db.exec(changed);
+  const before=(await db.query(scopedSnapshotSQL)).rows[0];
+  let refused;try { await db.exec(taskReceiptMigration); } catch(error) { refused=error; }
+  assert.match(refused?.message??'',/PLANNING_SOURCE_CHANGED/,'drift/partial projection refuses');
+  assert.deepEqual((await db.query(scopedSnapshotSQL)).rows[0],before,'refused migration conserves installed source');
+  await db.exec(scopedAfter.definition);
+}
 assert.deepEqual((await db.query(writerMetadataSQL)).rows,priorMetadata,'writer signatures/owner/definer/settings/ACL must be preserved');
 for(const before of priorBodies) {
   const after=(await db.query(bodiesSQL)).rows.find(row=>row.proname===before.proname).definition;
@@ -110,6 +131,29 @@ for(const before of priorBodies) {
   assert.ok(start>=0&&end>start);restored=restored.slice(0,start)+originalReturn+restored.slice(end+'_planning_receipt_audit ELSE NULL END);'.length);
   assert.equal(restored.replace(/\s+/g,' ').trim(),before.definition.replace(/\s+/g,' ').trim(),before.proname+' retains installed native source outside the bounded receipt insertion');
 }
+const reminderSignatures="'public.plan_update_item(uuid,text,text,text,timestamptz,timestamptz,text,uuid,uuid)'::regprocedure,'public.plan_reschedule_reminder_versioned(uuid,uuid,uuid,timestamptz,timestamptz)'::regprocedure";
+const reminderSnapshotSQL=`SELECT oid,proname,prosrc,pg_get_functiondef(oid) AS definition,(to_jsonb(p)-'prosrc'-'proargdefaults')||jsonb_build_object('proargdefaults',pg_get_expr(proargdefaults,0)) AS metadata FROM pg_proc p WHERE oid IN (${reminderSignatures}) ORDER BY proname`;
+const reminderBefore=(await db.query(reminderSnapshotSQL)).rows;
+console.log('INFO reminder baseline '+JSON.stringify((await db.query(`SELECT proname,md5(prosrc) AS source_md5 FROM pg_proc WHERE oid IN (${reminderSignatures}) ORDER BY proname`)).rows));
+const reminderAdminMigration=read('20271126075005_reminder_tenant_admin_access.sql');
+await db.exec(reminderAdminMigration);
+const reminderAfter=(await db.query(reminderSnapshotSQL)).rows;
+assert.deepEqual(reminderAfter.map(x=>x.metadata),reminderBefore.map(x=>x.metadata),'reminder repair preserves OIDs/owners/ACL/security/defaults');
+assert.ok(reminderAfter.every(x=>x.prosrc.includes('reminder_tenant_admin_v1')),'both reminder authority predicates repaired');
+await db.exec(reminderAdminMigration);
+assert.deepEqual((await db.query(reminderSnapshotSQL)).rows,reminderAfter,'reminder repair replay is exact');
+for(const source of reminderAfter) {
+  await db.exec(source.definition.replace('BEGIN','BEGIN\n -- Unreviewed source drift'));
+  const before=(await db.query(reminderSnapshotSQL)).rows;
+  let error;try {await db.exec(reminderAdminMigration);} catch(e){error=e;}
+  assert.match(error?.message??'',/PLANNING_SOURCE_CHANGED/,'each reminder source drift refuses');
+  assert.deepEqual((await db.query(reminderSnapshotSQL)).rows,before,'refused repair cannot overwrite drifted source');
+  await db.exec(source.definition);
+}
+await db.exec(`ALTER FUNCTION public.plan_reschedule_reminder_versioned(uuid,uuid,uuid,timestamptz,timestamptz) SECURITY INVOKER`);
+let metadataRefusal;try{await db.exec(reminderAdminMigration);}catch(e){metadataRefusal=e;}
+assert.match(metadataRefusal?.message??'',/PLANNING_SOURCE_CHANGED/,'unexpected authority metadata refuses');
+await db.exec(reminderAfter.find(x=>x.proname==='plan_reschedule_reminder_versioned').definition);
 const id = n => `00000000-0000-4000-8000-${String(n).padStart(12,'0')}`;
 const actor=id(1), other=id(2), foreign=id(3), admin=id(4), tenant=id(10), foreignTenant=id(11);
 await db.exec(`INSERT INTO auth.users VALUES('${actor}'),('${other}'),('${foreign}'),('${admin}');
@@ -149,6 +193,38 @@ const attached=await call(`public.plan_set_reminder('Attached history','2099-02-
 await call(`public.plan_remove_item('${attached.item_id}')`);
 const task=await call(`public.plan_assign_task('Self task','${actor}',p_plan_id:='${freshPlan.plan_id}')`);
 check(task.ok&&task.railRecorded&&task.action_id,'native self-task receipt and incumbent linked action');
+const scopedTask=await call(`public.plan_assign_task_scoped('${actor}','${tenant}','Scoped task','${actor}')`);
+check(scopedTask.ok&&scopedTask.railRecorded===true&&scopedTask.receipt_status==='recorded','scoped task projects the native recorded receipt');
+const scopedReceipt=await observe(`(SELECT to_jsonb(e) FROM public.paige_workspace_events e WHERE source_kind='capability_run' AND source_id='${scopedTask.receipt_run_id}')`);
+check(scopedReceipt?.tenant_id===tenant&&scopedReceipt.actor_id===actor&&scopedReceipt.capability_key==='plan_assign_task'
+  &&scopedReceipt.detail?.record_id===scopedTask.item_id&&scopedReceipt.detail?.audit_id===scopedTask.receipt_run_id,'projected receipt identifies the same original task/audit/actor/tenant');
+check(await observe(`(SELECT count(*)=1 FROM public.audit_logs WHERE id='${scopedTask.receipt_run_id}' AND entity_id='${scopedTask.item_id}' AND action='plan_assign_task')`),'projection introduces no second audit identity');
+// The actual scoped adapter must hold a lost acknowledgment, never repeat create.
+const scopedAdapterSource=readFileSync(new URL('../../supabase/functions/_shared/planning/scoped-write.ts',import.meta.url),'utf8');
+const scopedAdapterJS=ts.transpileModule(scopedAdapterSource,{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.CommonJS}}).outputText;
+const scopedExports={};let taskAttempts=0;
+new Function('require','exports',scopedAdapterJS)(name=>{
+ assert.equal(name,'../client-portal-access.ts');
+ return {readPortalShareAccess:()=>{throw Error('Unrelated sharing path must not run');}};
+},scopedExports);
+const priorTaskCount=await observe(`(SELECT count(*)::integer FROM public.plan_items WHERE tenant_id='${tenant}' AND item_type='task')`);
+const priorTaskEvents=await beforeEvents();
+const lostTask=await scopedExports.writeScopedPlanning({scope:{actorId:actor,tenantId:tenant},operationIdentity:'fixture-original-task',current:()=>true,
+ decision:{kind:'execute',args:{title:'Interrupted native task',assigned_to_user_id:actor},
+ audit:{capability:'plan_assign_task',decision:'execute',effect:'mutate',principal:'person',userId:actor,tenantId:tenant}},
+ caller:{getScope:async()=>({actorId:actor,tenantId:tenant}),readRecord:async()=>{throw Error('No acknowledgment to read');},
+ rpc:async(name,args)=>{
+  assert.equal(name,'plan_assign_task_scoped');taskAttempts++;
+  assert.deepEqual(args,{p_expected_actor_id:actor,p_expected_tenant_id:tenant,p_title:'Interrupted native task',p_summary:null,
+   p_assigned_to_user_id:actor,p_priority:'normal',p_due_at:null,p_plan_id:null,p_milestone_id:null,p_contact_id:null});
+  await call(`public.plan_assign_task_scoped('${actor}','${tenant}','Interrupted native task','${actor}')`);
+  throw new TypeError('Native task committed; acknowledgment lost');
+ }}});
+check(lostTask.outcome==='unverified'&&lostTask.writeAttempted===true&&lostTask.retryAllowed===false&&taskAttempts===1
+ &&!('nativeReceipt' in lostTask)&&!('record' in lostTask),'actual scoped adapter holds lost task acknowledgment without retry or invented receipt');
+check(await beforeEvents()===priorTaskEvents+1
+ &&await observe(`(SELECT count(*)::integer FROM public.plan_items WHERE tenant_id='${tenant}' AND item_type='task')`)===priorTaskCount+1,
+ 'lost scoped acknowledgment retains one original task and native Rail');
 const updated=await call(`public.plan_update_item('${task.item_id}',p_status:='in_progress')`);
 check(updated.ok&&updated.railRecorded,'native item update receipt');
 await setActor(admin);
@@ -364,10 +440,47 @@ await db.exec('RESET ROLE');await db.exec(`INSERT INTO public.user_roles VALUES(
 await refuses(reschedule(await scheduleVersion(),undefined,other),'42501','global/retired roles cannot replace target-workspace authority');
 await db.exec('RESET ROLE');await db.exec(`DELETE FROM public.user_roles WHERE user_id='${other}'`);await db.exec('SET ROLE authenticated');
 await setActor(admin);
-await db.exec('RESET ROLE');await db.exec(`DELETE FROM public.user_roles WHERE user_id='${admin}' AND role='admin'`);await db.exec('SET ROLE authenticated');
-await refuses(reschedule(await scheduleVersion(),undefined,admin),'42501','tenant admin alone cannot widen incumbent native field authority');
+await db.exec('RESET ROLE');await db.exec(`DELETE FROM public.user_roles WHERE user_id='${admin}' AND role='admin'; UPDATE public.tenant_members SET is_owner=false WHERE user_id='${admin}' AND tenant_id='${tenant}'`);await db.exec('SET ROLE authenticated');
+check(await observe(`(SELECT role='admin' AND NOT is_owner FROM public.tenant_members WHERE user_id='${admin}' AND tenant_id='${tenant}')`),'positive fixture is a non-owner current-tenant Admin');
+const adminVersion=await scheduleVersion(),adminBefore=await scheduleRow(),adminEvents=await beforeEvents();
+const adminChanged=await call(reschedule(adminVersion,"'2099-07-01T13:00:00Z'",admin));
+check(adminChanged.ok&&adminChanged.railRecorded===true&&adminChanged.receipt_status==='recorded'
+ &&adminChanged.actor_id===admin&&adminChanged.tenant_id===tenant,'current active tenant Admin can reschedule without a global app role');
+check(JSON.stringify(unchanged(await scheduleRow()))===JSON.stringify(unchanged(adminBefore))
+ &&await beforeEvents()===adminEvents+1,'Admin time edit preserves original work fields and one native receipt');
+await refuses(reschedule(adminVersion,"'2099-07-02'",admin),'40001','Admin replay of an old version cannot reschedule again');
+const restrictedBefore=await scheduleRow(),restrictedEvents=await beforeEvents();
+for(const fields of ["p_status:='done'","p_title:='Different title'","p_priority:='urgent'",`p_assigned_to_user_id:='${admin}'`])
+ await refuses(`public.plan_update_item('${schedule.item_id}',p_remind_at:='2099-07-03',${fields})`,'42501','Admin-only reminder exception does not admit mixed fields');
+await refuses(`public.plan_update_item('${task.item_id}',p_due_at:='2099-07-03')`,'42501','reminder exception grants no task-edit permission');
+// The earlier milestone belongs to this Admin; its creator permission is valid.
+// A separate synthetic, non-owned milestone isolates the new Admin exception.
+const unownedMilestone=id(912);
+await db.exec('RESET ROLE');await db.exec(`INSERT INTO public.plan_items(id,tenant_id,item_type,title,created_by,assigned_to_user_id) VALUES('${unownedMilestone}','${tenant}','milestone','Non-owned boundary','${other}','${other}')`);await db.exec('SET ROLE authenticated');
+await refuses(`public.plan_update_item('${unownedMilestone}',p_due_at:='2099-07-03')`,'42501','reminder exception grants no milestone-edit permission');
+await refuses(`public.plan_update_item('${schedule.item_id}',p_remind_at:='2099-07-03',p_tenant_id:='${foreignTenant}')`,'42501','Admin time edit refuses an explicit foreign tenant');
+for(const time of ["'2000-01-01'","'infinity'","'-infinity'"])
+ await refuses(`public.plan_update_item('${schedule.item_id}',p_remind_at:=${time})`,'42501','Admin exception admits only a finite future reminder time');
+check(JSON.stringify(await scheduleRow())===JSON.stringify(restrictedBefore)&&await beforeEvents()===restrictedEvents,'refused Admin field changes create no work or receipt changes');
+for(const [change,restore,label] of [["account_type='agency'","account_type='standalone'",'held Agency'],
+ [`parent_tenant_id='${foreignTenant}'`,'parent_tenant_id=NULL','parented workspace'],
+ ['company_workspace=true','company_workspace=false','Platform Operator company']]) {
+ await db.exec('RESET ROLE');await db.exec(`UPDATE public.tenants SET ${change} WHERE id='${tenant}'`);await db.exec('SET ROLE authenticated');
+ await refuses(`public.plan_update_item('${schedule.item_id}',p_remind_at:='2099-07-03')`,'42501',`${label} gains no new Admin exception`);
+ await db.exec('RESET ROLE');await db.exec(`UPDATE public.tenants SET ${restore} WHERE id='${tenant}'`);await db.exec('SET ROLE authenticated');
+}
+for(const state of ['done','cancelled']) {
+ await db.exec('RESET ROLE');await db.exec(`UPDATE public.plan_items SET status='${state}' WHERE id='${schedule.item_id}'`);await db.exec('SET ROLE authenticated');
+ await refuses(`public.plan_update_item('${schedule.item_id}',p_remind_at:='2099-07-03')`,'42501','Admin exception cannot reschedule closed work');
+}
+await db.exec('RESET ROLE');await db.exec(`UPDATE public.plan_items SET status='open' WHERE id='${schedule.item_id}'`);await db.exec('SET ROLE authenticated');
+await db.exec('RESET ROLE');await db.exec(`UPDATE public.tenant_members SET status='inactive' WHERE user_id='${admin}' AND tenant_id='${tenant}'`);await db.exec('SET ROLE authenticated');
+await refuses(reschedule(await scheduleVersion(),undefined,admin),'42501','revoked tenant Admin cannot use the reminder exception');
+await db.exec('RESET ROLE');await db.exec(`UPDATE public.tenant_members SET status='active' WHERE user_id='${admin}' AND tenant_id='${tenant}'; UPDATE public.profiles SET active_tenant_id='${foreignTenant}' WHERE user_id='${admin}'`);await db.exec('SET ROLE authenticated');
+await refuses(reschedule(await scheduleVersion(),undefined,admin),'42501','Admin in a different active workspace cannot reschedule the original reminder');
+await db.exec('RESET ROLE');await db.exec(`UPDATE public.profiles SET active_tenant_id='${tenant}' WHERE user_id='${admin}'`);await db.exec('SET ROLE authenticated');
 await db.exec('RESET ROLE');await db.exec(`INSERT INTO public.user_roles VALUES('${admin}','coach')`);await db.exec('SET ROLE authenticated');
-await refuses(reschedule(await scheduleVersion(),undefined,admin),'42501','target-tenant admin with only a retired coach role still cannot reschedule');
+check((await call(reschedule(await scheduleVersion(),"'2099-07-04'",admin))).ok,'an unrelated retired coach label cannot remove current tenant Admin authority');
 await db.exec('RESET ROLE');await db.exec(`DELETE FROM public.user_roles WHERE user_id='${admin}' AND role='coach'`);await db.exec('SET ROLE authenticated');
 await db.exec('RESET ROLE');await db.exec(`INSERT INTO public.user_roles VALUES('${admin}','admin')`);await db.exec('SET ROLE authenticated');
 check((await call(reschedule(await scheduleVersion(),"'2099-07-01'",admin))).ok,'native admin with target-workspace authority can reschedule');

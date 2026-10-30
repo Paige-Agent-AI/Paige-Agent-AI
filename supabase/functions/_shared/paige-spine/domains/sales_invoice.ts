@@ -2,6 +2,7 @@ import {SALES_COMMERCIAL_OFFERS_SPINE} from '../../sales-commercial/offers-read.
 import {SALES_DRAFT_SPINE} from '../../sales-commercial/draft-capabilities.ts';
 import {SALES_COMMERCIAL_PACKAGE_SPINE} from '../../sales-commercial/package-read.ts';
 import {PAYMENT_OBLIGATION_REFERENCE_SCHEMA} from '../../sales-payments/accepted-obligation.ts';
+import {MANUAL_PAYMENT_ALLOCATIONS_SCHEMA} from '../../sales-invoice-command/manual-allocation.ts';
 import type { SpineCapability } from '../contracts.ts';
 import {defineCapability, objectInputSchema, ownerGrantablePermission} from '../../capability-kit/mod.ts';
 
@@ -58,7 +59,7 @@ export const SALES_INVOICE_PUBLISH_CAPABILITY = defineCapability({
 
 export const SALES_INVOICE_RECORD_PAYMENT_CAPABILITY = defineCapability({
  identity:{id:'sales_invoice.record_manual_payment',version:1,domain:'sales_invoice',owner:'sales',humanSurface:'/solo/:account/sales/payments',description:'Append a human-reported receipt and reduce outstanding balance. Never provider verification.'},
- input:objectInputSchema({description:'The canonical saved-version command; governance, actor, tenant, approval and generated token are server-only.',properties:{...INVOICE_INPUT,action:{type:'string',enum:['invoice.record_manual_payment']},amount_cents:{type:'integer',minimum:1,maximum:2147483647},currency:{type:'string',enum:['usd']},method:{type:'string',enum:['zelle','cash','wire','check','bank_transfer','other']},received_at:{type:'string',pattern:'^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{3})?Z$'},reference:{anyOf:[{type:'string',maxLength:200},{type:'null'}]},notes:{anyOf:[{type:'string',maxLength:2000},{type:'null'}]}},required:['action','invoice_id','expected_version','amount_cents','currency','method','received_at']}),
+ input:objectInputSchema({description:'The canonical saved-version command; governance, actor, tenant, approval and generated token are server-only. Optional explicit accepted-plan splits apply to managed invoices only and require current native review.',properties:{...INVOICE_INPUT,action:{type:'string',enum:['invoice.record_manual_payment']},amount_cents:{type:'integer',minimum:1,maximum:2147483647},currency:{type:'string',enum:['usd']},method:{type:'string',enum:['zelle','cash','wire','check','bank_transfer','other']},received_at:{type:'string',pattern:'^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{3})?Z$'},reference:{anyOf:[{type:'string',maxLength:200},{type:'null'}]},notes:{anyOf:[{type:'string',maxLength:2000},{type:'null'}]},allocations:MANUAL_PAYMENT_ALLOCATIONS_SCHEMA},required:['action','invoice_id','expected_version','amount_cents','currency','method','received_at']}),
  effect:'mutation',
  governance:{actionRiskKey:'sales_record_manual_payment',risk:'high',approval:'confirm',requiredPermission:ownerGrantablePermission('sales_invoice.record_manual_payment.execute')},
  tenantScope:INVOICE_SCOPE,availability:INVOICE_AVAILABILITY,
@@ -117,7 +118,7 @@ export const SALES_INVOICE_KIT_CAPABILITIES = [SALES_INVOICE_SETTINGS_CAPABILITY
 // Read and email declarations describe the existing authenticated read and governed delivery door.
 export const SALES_INVOICE_READ_CAPABILITY = defineCapability({
  identity:{id:'sales_invoice.read',version:1,domain:'sales_invoice',owner:'sales',humanSurface:'/solo/:account/sales/payments',description:'Read bounded current invoice and manually recorded receipt facts; never processor verification.'},
- input:objectInputSchema({properties:{invoice_id:{type:'string',format:'uuid'},include_accepted_payment_plan:{type:'boolean',description:'Opt in to the original accepted dated obligations and native remaining allocations. Does not authorize a payment request.'}},required:['invoice_id']}),effect:'read',
+ input:objectInputSchema({properties:{invoice_id:{type:'string',format:'uuid'},include_accepted_payment_plan:{type:'boolean',description:'Opt in to the original accepted dated obligations and native remaining allocations. Does not authorize a payment request.'},manual_payment_id:{type:'string',format:'uuid',description:'Inspect one exact manual receipt from this invoice’s bounded original payment history, including retained assignments and full correction. Refused, stale or unverified facts are unavailable; never guess an allocation.'}},required:['invoice_id']}),effect:'read',
  governance:{actionRiskKey:null,risk:'read_only',approval:'none',requiredPermission:ownerGrantablePermission('sales_invoice.read.execute')},
  tenantScope:INVOICE_SCOPE,availability:INVOICE_AVAILABILITY,providerBinding:{kind:'internal',operation:'public.read_sales_invoice',connectionResolver:null},
  idempotency:{mode:'not_applicable'},receipt:INVOICE_RECEIPT,outcome:{projector:'capability-record'},

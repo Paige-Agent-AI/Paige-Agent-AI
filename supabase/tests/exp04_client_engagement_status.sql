@@ -518,3 +518,4 @@ rollback;
 \ir exp04_reviewed_delivery_handoff.sql
 \ir exp04_private_client_invoice_facts.sql
 \ir exp04_native_client_invoice_observation_replay.sql
+\ir exp04_manual_payment_allocations.sql

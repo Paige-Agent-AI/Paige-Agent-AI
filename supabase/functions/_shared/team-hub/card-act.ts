@@ -29,7 +29,7 @@ import {
   TEAM_HUB_AGENT_KEYS,
 } from "./agent-turn.ts";
 import type { TeamHubCaller } from "./chat.ts";
-import { A2B_CARD_TOOLS, CARD_KIND, type DoorInvoke } from "./card-tools.ts";
+import { A2B_CARD_TOOLS, CARD_KIND, PAIGE_A2B_DM_SCOPE, type DoorInvoke } from "./card-tools.ts";
 import { classifyResumedApproval, doorResumeShape, storedRowState, type DoorFamily } from "../paige-turn/resume.ts";
 import { CRM_ACTION_CAPABILITY, CRM_PREVIEW_REQUIRED_ACTIONS } from "../crm-command/catalog.ts";
 import { PUBLISH_DOOR_CHAT_TOOLS } from "../growth-publish-command/contract.ts";
@@ -301,12 +301,29 @@ export async function runTeamHubCardAct(deps: CardActDeps, raw: unknown): Promis
   const rowState = row ? storedRowState(row, Date.now()) : null;
   let publishedUrl: string | null = null;
 
+  // A stored proposal is not a standing agent grant. Re-resolve the platform-owned
+  // scope for this card's verified agent immediately before dispatch, including resumes.
+  const currentAgentAllows = async (): Promise<boolean> => {
+    if (!toolName || !A2B_CARD_TOOLS.has(toolName)) return false;
+    if (meta!.agent === "paige") return (PAIGE_A2B_DM_SCOPE as readonly string[]).includes(toolName);
+    try {
+      const platform = await service.from("paige_subagents").select("slug,config")
+        .eq("slug", meta!.agent).is("tenant_id", null).maybeSingle();
+      if (platform?.error || platform?.data?.slug !== meta!.agent) return false;
+      const scope = object(object(platform?.data?.config)?.capability_scope);
+      return scope?.mode === "allowlist" && scope.access === "card"
+        && Array.isArray(scope.tools) && scope.tools.every(t => typeof t === "string")
+        && scope.tools.includes(toolName);
+    } catch { return false; }
+  };
+
   // The proposal could not be read, so the door was never called: it didn't run, and settling it failed
   // retires the proposal so nothing can run it later (peer review on #3041).
   if (row === undefined) classified = { state: "failed", reason: "unusable" };
   else if (!shape) classified = fromKind(classifyResumedApproval({ spent: false, withheld: true }).outcome, "unusable");
   else if (rowState === "expired") classified = fromKind(classifyResumedApproval({ spent: false, expired: true }).outcome, "expired");
   else if (rowState === "used") classified = fromKind(classifyResumedApproval({ spent: false, lost: true }).outcome, "unusable");
+  else if (!await currentAgentAllows()) classified = { state: "failed", reason: "refused" };
   else {
     // The door found nothing to claim for exactly this proposal: re-read it to say why, never guess.
     const claimNotFound = async (again: string | null): Promise<Classified> => {

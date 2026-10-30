@@ -37,6 +37,8 @@ type Opts = {
   accept?: () => unknown; post?: () => unknown;
   /** The proposal read does not answer (a database error). */
   rowError?: boolean;
+  currentScope?: unknown;
+  scopeError?: boolean;
   /** The card's message row as the service read returns it, or "error" for a read that does not answer. */
   msg?: Record<string, unknown> | null | "error";
   /** The task's title and the assignee's name, as the done note reads them (absent: no row). */
@@ -79,6 +81,9 @@ async function world(opts: Opts = {}) {
     }
     if (q.table === "team_hub_messages") return opts.msg === "error" ? { data: null, error: { message: "down" } }
       : { data: opts.msg !== undefined ? opts.msg : { id: CARD, channel_id: ZION_DM, parent_message_id: null, agent_key: "zion", author_kind: "agent" }, error: null };
+    if (q.table === "paige_subagents") return { data: { slug: "zion", config: { capability_scope: opts.currentScope ?? {
+      mode: "allowlist", access: "card", tools: ["crm_cancel_task", "crm_assign_task", "growth_page_publish"],
+    } } }, error: opts.scopeError ? { message: "unavailable" } : null };
     if (q.table === "tasks") return { data: opts.title ? { title: opts.title } : null, error: null };
     if (q.table === "profiles") return { data: opts.fullName ? { full_name: opts.fullName } : null, error: null };
     if (q.table === "team_hub_agent_turns") return { data: { source_message_id: ASK, agent_key: "zion", channel_id: ZION_DM }, error: null };
@@ -373,5 +378,36 @@ describe("Not now, and the people who cannot decide", () => {
     const r = await runTeamHubCardAct(w.deps, act(w.fp));
     assert.equal(named(w, "team_hub_post_agent_message").length, 0);
     assert.equal((r.body as any).outcome_message.id, OUTCOME_MSG);
+  });
+});
+
+
+describe("current agent permission at redemption", () => {
+  for (const currentScope of [
+    { mode: "allowlist", access: "card", tools: ["crm_assign_task"] },
+    { mode: "allowlist", access: "read", tools: ["crm_cancel_task"] },
+    { mode: "allowlist", access: "card", tools: null },
+    { mode: "all", access: "card", tools: ["crm_cancel_task"] },
+  ]) it(`withholds the original writer after grant revocation: ${JSON.stringify(currentScope)}`, async () => {
+    const w = await world({ currentScope });
+    const r = await runTeamHubCardAct(w.deps, act(w.fp));
+    assert.equal(named(w, "crm-command").length, 0);
+    assert.equal(r.body.outcome, "failed");
+    assert.equal(named(w, "team_hub_settle_card").length, 1);
+    assert.equal((named(w, "team_hub_settle_card")[0].args.p_outcome as any).state, "failed");
+  });
+  it("an unavailable current scope cannot invoke the writer", async () => {
+    const w = await world({ scopeError: true });
+    const r = await runTeamHubCardAct(w.deps, act(w.fp));
+    assert.equal(named(w, "crm-command").length, 0);
+    assert.equal(r.body.outcome, "failed");
+  });
+  it("a stranded approval rechecks permission before resuming", async () => {
+    const w = await world({ currentScope: { mode: "allowlist", access: "read", tools: ["crm_cancel_task"] },
+      decide: () => ({ ok: true, already: true, decision: "approved", confirmation_id: CONF,
+        decided_at: new Date(Date.now() - STRANDED_APPROVAL_MS - 1000).toISOString(), outcome: null }) });
+    const r = await runTeamHubCardAct(w.deps, act(w.fp));
+    assert.equal(named(w, "crm-command").length, 0);
+    assert.equal(r.body.outcome, "failed");
   });
 });

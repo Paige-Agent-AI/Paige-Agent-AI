@@ -758,6 +758,11 @@ Deno.serve(async (req) => {
       status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
+  if (body.channel !== "email" && body.channel !== "sms") {
+    return new Response(JSON.stringify({ error: "unsupported_channel" }), {
+      status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
 
   const { data: config } = await admin.from("paige_config").select("*").eq("id", 1).maybeSingle();
 
@@ -2034,8 +2039,8 @@ Deno.serve(async (req) => {
           sender: fromAddress ? { address: (fromAddress.match(/<([^>]+)>/)?.[1] ?? fromAddress) } : null,
           recipients: [{ address: body.to }],
           subject: body.subject ?? null,
-          body_html: body.body,
-          body_text: null,
+          body_html: body.channel === "email" ? body.body : null,
+          body_text: body.channel === "sms" ? body.body : null,
           provider_message_id: null,
           in_reply_to_provider_id: body.in_reply_to ?? null,
           attachments: body.attachments ?? [],

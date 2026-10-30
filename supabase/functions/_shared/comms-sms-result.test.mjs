@@ -7,6 +7,7 @@ import {stripTypeScriptTypes} from 'node:module';
 import vm from 'node:vm';
 import {webcrypto} from 'node:crypto';
 import {execFileSync} from 'node:child_process';
+import {readableMessageBody} from '../../../src/pages/admin/conversations/messageReading.ts';
 
 const tenant='20000000-0000-4000-8000-000000000001';
 const actor='10000000-0000-4000-8000-000000000001';
@@ -70,10 +71,10 @@ function harness(result,{floor=true,configured=true}={}) {
   const source=raw
     .replace(/^import[\s\S]*?from\s+["'][^"']+["'];?\s*/gm,'').replace(/^import\s+["'][^"']+["'];?\s*/gm,'');
   vm.runInContext(stripTypeScriptTypes(source),context);
-  return {writes,attempts,rows,run:async({existing=true}={})=>{
+  return {writes,attempts,rows,run:async({existing=true,text=words,channel='sms'}={})=>{
     const response=await context.handler(new Request('https://fixture.example.test/send-message',{
       method:'POST',headers:{Authorization:'Bearer user','Content-Type':'application/json'},
-      body:JSON.stringify({channel:'sms',to,body:words,contact_id:contact,...existing?{message_id:message}:{}}),
+      body:JSON.stringify({channel,to,body:text,contact_id:contact,...existing?{message_id:message}:{}}),
     }));
     return {status:response.status,body:await response.json()};
   }};
@@ -122,8 +123,21 @@ test('a send without an existing draft retains uncertain words on the original t
   const saved=h.writes.find(x=>x.table==='messages'&&x.kind==='insert')?.payload;
   assert.equal(saved?.thread_key,`contact:${tenant}:${contact}`);
   assert.equal(saved?.error,'delivery_unconfirmed');
-  assert.equal(saved?.body_html,words);
+  assert.equal(saved?.body_text,words);
+  assert.equal(saved?.body_html,null);
   assert.equal(saved?.meta?.delivery_unconfirmed,true);
+});
+
+for(const text of ['Use code <1234>','Keep literal &amp; and &lt;safe&gt;','<b>These are literal SMS characters</b>','A < B & C > D'])
+test('uncertain SMS reopens through the original reader with literal text: '+text,async()=>{
+  const h=harness({ok:false,status:0,error:'Fictional lost response',data:null});
+  const response=await h.run({existing:false,text});
+  assert.equal(response.body.outcome,'outcome_unknown');
+  assert.deepEqual(h.attempts,[{to,body:text}]);
+  const saved=h.writes.find(x=>x.table==='messages'&&x.kind==='insert')?.payload;
+  assert.equal(saved?.body_text,text);
+  assert.equal(saved?.body_html,null);
+  assert.equal(readableMessageBody(saved),text,'the actual reopened message reader preserves the attempted SMS');
 });
 
 test('known accepted receipt and exact original words retain the existing contract',async()=>{
@@ -154,4 +168,13 @@ test('original provider execution refusal cannot reach SMS adapter transport',as
   const h=harness(null,{floor:false});const response=await h.run();
   assert.equal(response.status,403);
   assert.equal(h.attempts.length,0);
+});
+
+for(const channel of ['voice','whatsapp','SMS',[],{},true,17])
+test('unsupported request channel refuses before any dispatch: '+JSON.stringify(channel),async()=>{
+  const h=harness({ok:true,status:201,error:null,data:{sid,status:'queued'}});
+  const response=await h.run({channel});
+  assert.equal(response.status,400);
+  assert.equal(h.attempts.length,0);
+  assert.equal(h.writes.length,0);
 });

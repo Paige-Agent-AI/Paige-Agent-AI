@@ -3246,3 +3246,36 @@ action receipt. Corrections reread the original writer; no automatic Memory or
 cross-tenant feedback. Source/review/CI/merge/deployment/authenticated verification
 and founder acceptance remain separate. Full19/nine and original3018 material
 finding stay OPEN; historical9PASS0FAIL and12PASS0FAIL4BLOCKED are preserved.
+
+## October30 O01/O02/O16 weekly acquisition repair — development
+
+All original19 outcome definitions and nine analytics remain required. The
+latest interrupted weekly request is preserved; exact production-parent cause
+and repaired customer acceptance remain unverified. EXP02 is the one bounded
+implementer under original E01 architecture custody and precise E08/E09 handoffs.
+
+Permitted input is the original caller-authorized conversation/class, unchanged
+tool manifest and business evidence. The existing Responses parser exposes
+whether semantic output started; only a proven presemantic terminal provider
+failure may enter the original Fabric classifier/mayFallback/candidates. Every
+fallback rechecks current authority. Text, tools, refusals, reasoning, uncertain
+envelopes, cancellation and authority/budget refusal prevent replay. Root forwards
+the true request signal in only five existing option objects; no new runner,
+provider configuration, business writer, approval or Rail action is introduced.
+
+Useful output remains the original weekly explanation with accurate periods,
+currency, sources and unavailable coverage, persisted by original Chat settlement.
+Evaluation: incumbent source177PASS8FAIL; current Fabric194/0 and adapter105/0,
+including abort races, fragmented input, per-attempt traces and forbidden replay.
+An additional unreleased pre-header abort probe safely prevents fallback but
+misclassifies cancellation; this remains an OPEN correction before release.
+Root whole-file inverse and original assertions are preserved. Final source-pin
+review/negative controls/exact CI/deployment/readback and actual weekly answer,
+reload, interruption, legitimate cohorts/roles/Live remain owed. See
+[bounded evidence](../evidence/ui-delivery/e2-weekly-model-recovery.md).
+
+Algorithm support: deterministic transport state and canonical failure policy;
+business scoring/prediction N/A for this slice. ALG03/06/11/12Partial/13Unverified
+and catalogue3ComingSoon/3Limited/3Unverified/allAccessUnverified unchanged.
+No automatic Knowledge/Memory promotion, cross-tenant learning, causal business
+improvement claim or founder acceptance follows from recovery or source tests.

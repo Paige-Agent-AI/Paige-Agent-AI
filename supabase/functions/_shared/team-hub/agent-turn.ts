@@ -880,12 +880,20 @@ export async function runTeamHubAgentTurn(deps: AgentTurnDeps, raw: unknown): Pr
           const config = platform && !platform.error ? object(platform.data?.config) : null;
           const scope = object(config?.capability_scope);
           const fresh = agent === "paige" ? [...PAIGE_DM_SCOPE] : storedToolNames(scope);
-          return !deps.signal?.aborted && context?.tenant_id === tenantId
+          const allowed = !deps.signal?.aborted && context?.tenant_id === tenantId
             && freshAuthority.seat === true && freshAuthority.workspaceAdmin === true
             && !!freshNames && "people" in freshNames && freshNames.people.has(userId)
             && freshNames.conversation?.kind === "agent_dm" && freshNames.conversation.agent_key === agent
             && fresh !== null && JSON.stringify(fresh) === JSON.stringify(storedDm)
             && (agent === "paige" || scope?.access === "read" || scope?.access === "card");
+          if (!allowed) return false;
+          if (!cardReadTools.size) return true;
+          // Reuse the native actor guard BEFORE any service read or provider continuation.
+          // Membership alone does not establish that auth.users is available (ban/deletion).
+          const staged = await rpcSafe(service, "team_hub_stage_agent_read_context", {
+            p_turn_id: turnId, p_token_hash: hash, p_read_tools: [...cardReadTools], p_record_links: [],
+          });
+          return !deps.signal?.aborted && !staged?.error && object(staged?.data)?.ok === true;
         } catch { return false; }
       })(), new Promise<boolean>(resolve => {
         timer = setTimeout(() => resolve(false), 5000);

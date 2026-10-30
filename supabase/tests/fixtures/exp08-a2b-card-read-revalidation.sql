@@ -23,6 +23,25 @@ SELECT pg_temp.j(NULL,format('public.team_hub_stage_agent_read_context(%L::uuid,
  (:'p1accept')::jsonb->>'turn_id',pg_temp.h(pg_temp.tok('P1')),'["crm_list_tasks"]','[]'),'service_role') AS p1stage \gset
 SELECT pg_temp.check((:'p1stage')::jsonb->>'ok'='true','P1: current admin task read staged on original token');
 
+-- The same accepted context is intentionally revalidated before each private continuation.
+SELECT pg_temp.j(NULL,format('public.team_hub_stage_agent_read_context(%L::uuid,%L,%L::jsonb,%L::jsonb)',
+ (:'p1accept')::jsonb->>'turn_id',pg_temp.h(pg_temp.tok('P1')),'["crm_list_tasks"]','[]'),'service_role') AS p1repeat \gset
+SELECT pg_temp.check((:'p1repeat')::jsonb->>'ok'='true','P1: same authorized token can revalidate before continuation');
+SAVEPOINT p1_ban;
+UPDATE auth.users SET banned_until=now()+interval '1 day' WHERE id=:'u3'::uuid;
+SELECT pg_temp.j(NULL,format('public.team_hub_stage_agent_read_context(%L::uuid,%L,%L::jsonb,%L::jsonb)',
+ (:'p1accept')::jsonb->>'turn_id',pg_temp.h(pg_temp.tok('P1')),'["crm_list_tasks"]','[]'),'service_role') AS p1ban \gset
+SELECT pg_temp.check((:'p1ban')::jsonb ? 'error' AND EXISTS(SELECT 1 FROM public.tenant_members
+ WHERE tenant_id=:'ta'::uuid AND user_id=:'u3'::uuid AND role='admin' AND status='active'),
+ 'P1: trusted ban refuses staging despite unchanged active admin membership');
+ROLLBACK TO SAVEPOINT p1_ban;
+SAVEPOINT p1_deleted;
+UPDATE auth.users SET deleted_at=now() WHERE id=:'u3'::uuid;
+SELECT pg_temp.j(NULL,format('public.team_hub_stage_agent_read_context(%L::uuid,%L,%L::jsonb,%L::jsonb)',
+ (:'p1accept')::jsonb->>'turn_id',pg_temp.h(pg_temp.tok('P1')),'["crm_list_tasks"]','[]'),'service_role') AS p1deleted \gset
+SELECT pg_temp.check((:'p1deleted')::jsonb ? 'error','P1: trusted actor deletion refuses staging');
+ROLLBACK TO SAVEPOINT p1_deleted;
+
 -- Demotion keeps the seat and DM active: the ordinary Team Hub seat gate alone would still post.
 UPDATE public.tenant_members SET role='member' WHERE tenant_id=:'ta'::uuid AND user_id=:'u3'::uuid;
 SAVEPOINT p1_native_mutant;

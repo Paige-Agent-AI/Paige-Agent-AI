@@ -1027,6 +1027,7 @@ type DmOpts = {
   linked?: boolean;
   onTaskRead?: () => void;
   scopeNow?: () => unknown;
+  actorAvailable?: boolean;
 };
 function dmWorld(opts: DmOpts = {}) {
   const agent = opts.agent ?? "zion";
@@ -1096,7 +1097,7 @@ function dmWorld(opts: DmOpts = {}) {
     rpc(name: string, args: Record<string, unknown> = {}) {
       calls.push({ who: "service", name, args });
       if (name === "team_hub_accept_agent_turn") return Promise.resolve({ data: { ok: true, turn_id: TURN, ...(opts.acceptedAt === null ? {} : { accepted_at: opts.acceptedAt ?? ACCEPTED_AT }) }, error: null });
-      if (name === "team_hub_stage_agent_read_context") return Promise.resolve({ data: { ok: true }, error: null });
+      if (name === "team_hub_stage_agent_read_context") return Promise.resolve({ data: { ok: opts.actorAvailable !== false }, error: null });
       if (name === "is_tenant_admin_as") return Promise.resolve({ data: opts.admin ?? true, error: null });
       if (name === "agency_can_manage_child") return Promise.resolve({ data: opts.agency ?? false, error: null });
       return Promise.resolve({ data: null, error: null });
@@ -1242,14 +1243,34 @@ describe("A2b: private card reads revalidate the current authority", () => {
     assert.equal(named(w, "team_hub_post_agent_message").length, 0);
     assert.equal(r.body.outcome, "no_reply");
   });
+  for (const revokedAt of ["provider", "read"] as const) it(`trusted actor revocation during ${revokedAt} prevents private continuation despite an unchanged admin seat`, async () => {
+    const opts: DmOpts = { role: "admin", admin: true, actorAvailable: true };
+    if (revokedAt === "read") opts.onTaskRead = () => { opts.actorAvailable = false; };
+    const w = dmWorld(opts), m = model([{ tool_calls: [LIST] }, FINAL]);
+    if (revokedAt === "provider") {
+      const make = m.make;
+      m.make = calls => { const complete = make(calls); return async (request, options) => {
+        opts.actorAvailable = false; return complete(request, options);
+      }; };
+    }
+    const r = await runDm(w, m);
+    assert.equal(opts.role, "admin"); assert.equal(opts.admin, true);
+    assert.equal(w.queries.filter(q => q.table === "tasks").length, revokedAt === "provider" ? 0 : 1);
+    assert.equal(m.requests.length, 1);
+    assert.equal(named(w, "team_hub_post_agent_message").length, 0);
+    assert.equal(r.body.outcome, "no_reply");
+  });
   it("stages successful card reads on the exact accepted turn before publication", async () => {
     const w = dmWorld(), m = model([{ tool_calls: [LIST] }, FINAL]);
     const r = await runDm(w, m);
     assert.equal(r.body.outcome, "posted");
     const staged = named(w, "team_hub_stage_agent_read_context");
-    assert.equal(staged.length, 1);
-    assert.deepEqual(staged[0].args.p_read_tools, ["crm_list_tasks"]);
-    assert.equal(staged[0].args.p_turn_id, TURN);
+    assert.ok(staged.length >= 3, "native authority is checked before read, continuation and publication");
+    for (const check of staged) {
+      assert.deepEqual(check.args.p_read_tools, ["crm_list_tasks"]);
+      assert.equal(check.args.p_turn_id, TURN);
+      assert.deepEqual(check.args, staged[0].args, "every check binds the same accepted token and tools");
+    }
     assert.ok(w.calls.indexOf(staged[0]) < w.calls.indexOf(named(w, "team_hub_post_agent_message")[0]));
   });
 });

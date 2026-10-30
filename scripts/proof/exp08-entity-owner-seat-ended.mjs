@@ -22,6 +22,8 @@ const lifecycleSource=readFileSync(new URL('../../supabase/migrations/2027111504
 const actorFixture=readFileSync(new URL('../../supabase/tests/exp08_team_hub_actor_lifecycle.sql',import.meta.url),'utf8');
 const actorMigration=readFileSync(new URL('../../supabase/migrations/20271126100008_exp08_team_hub_actor_lifecycle.sql',import.meta.url),'utf8');
 const holderStateFixture=readFileSync(new URL('../../supabase/tests/exp08_account_holder_state.sql',import.meta.url),'utf8');
+const identityFixture=readFileSync(new URL('../../supabase/tests/exp08_team_hub_identity_currentness.sql',import.meta.url),'utf8');
+const identityMigration=readFileSync(new URL('../../supabase/migrations/20271126140008_exp08_team_hub_identity_currentness.sql',import.meta.url),'utf8');
 function privateHelper(source,name,signature) {
   const start=source.indexOf(`CREATE OR REPLACE FUNCTION public.${name}(`);
   const endPattern=`REVOKE ALL ON FUNCTION public.${name}(${signature})`;
@@ -133,6 +135,44 @@ async function originalOwnerFloorRace() {
 function restore() {
   for (const [signature, body] of definitions) sql(`ALTER FUNCTION ${signature} OWNER TO postgres;\n${body}\nREVOKE ALL ON FUNCTION ${signature} FROM PUBLIC, anon, authenticated, service_role;`);
   sql('ALTER TABLE public.tenant_members ENABLE TRIGGER trg_tenant_members_business_owner_seat_ended; ALTER TABLE public.tenant_business_owners ENABLE TRIGGER trg_business_owner_representative_deleted;');
+}
+async function identityAdmissionRace(revocationFirst) {
+  sql('select proof.reset_rows();');
+  const target="'e8000000-0000-4000-8000-000000060010'";
+  const person="'e8000000-0000-4000-8000-000000060100'";
+  const hold=`SELECT public._team_hub_hold_seats(${target},ARRAY[${person}::uuid]);`;
+  const revoke=`UPDATE auth.users SET banned_until=now()+interval '1 hour' WHERE id=${person};`;
+  const first=spawn(executable,connectionArgs(database),{env:process.env,stdio:['pipe','pipe','pipe']});
+  const firstDone=new Promise((resolve,reject)=>{first.on('error',reject);first.on('close',resolve);});
+  let second;let secondDone;let firstOutput='';let secondOutput='';let secondError='';let timer;
+  const application=`exp08_identity_${revocationFirst?'revocation':'admission'}_race`;
+  try {
+    const locked=new Promise((resolve,reject)=>{
+      timer=setTimeout(()=>reject(new Error('Original identity/admission lock not acquired')),10000);
+      first.stdout.on('data',chunk=>{firstOutput+=chunk;if(firstOutput.includes('EXP08_IDENTITY_LOCKED'))resolve();});
+      first.on('error',reject);
+    });
+    first.stdin.write(`BEGIN;\n${revocationFirst?revoke:hold}\n\\echo EXP08_IDENTITY_LOCKED\n`);
+    await locked;clearTimeout(timer);
+    second=spawn(executable,connectionArgs(database),{env:{...process.env,PGAPPNAME:application},stdio:['pipe','pipe','pipe']});
+    second.stdout.on('data',chunk=>{secondOutput+=chunk;});second.stderr.on('data',chunk=>{secondError+=chunk;});
+    secondDone=new Promise((resolve,reject)=>{second.on('error',reject);second.on('close',resolve);});
+    second.stdin.end(revocationFirst?hold:revoke);
+    let waited=false;
+    for(let i=0;i<20;i++){
+      waited=sql(`select exists(select 1 from pg_stat_activity where datname='${database}' and application_name='${application}' and wait_event_type='Lock');`)==='t';
+      if(waited)break;await new Promise(resolve=>setTimeout(resolve,50));
+    }
+    assert.ok(waited,'Competing transaction must really wait on the current identity row');
+    first.stdin.end('COMMIT;\n\\q\n');assert.equal(await firstDone,0);assert.equal(await secondDone,0,secondError);
+    if(revocationFirst)assert.equal(secondOutput.trim(),'f','Admission must recheck the identity changed while its lock waited');
+    else assert.ok(firstOutput.split(/\r?\n/).includes('t'),'The first admission must actually have held a valid identity');
+    assert.equal(sql(hold),'f');
+    records.push({phase:'original-identity-two-session-race',order:revocationFirst?'revocation-first':'admission-first',observed_lock_wait:true,current_admission_after_revocation:false});
+  }finally{
+    clearTimeout(timer);if(first.exitCode===null)first.kill();if(second&&second.exitCode===null)second.kill();
+    await Promise.allSettled([firstDone,...(secondDone?[secondDone]:[])]);
+  }
 }
 const snapshot = `select json_build_object('members',(select json_agg(m order by id) from public.tenant_members m),
  'owners',(select json_agg(b order by id) from public.tenant_business_owners b));`;
@@ -376,6 +416,63 @@ try {
   assert.ok(holderCases().every(r=>r.passed));
   assert.equal(holderMetadata(),holderBeforeReplay);assert.equal(sql(incumbentHolderMetadata),incumbentBefore);
   records.push({phase:'original-holder-state-final-metadata',metadata:JSON.parse(holderMetadata())});
+  sql(privateHelper(lifecycleSource,'_team_hub_hold_seats','uuid,uuid[]'));
+  sql(identityFixture);
+  const identityCases=()=>sql('select row_to_json(t) from proof.identity_cases() t;').split('\n').filter(Boolean).map(JSON.parse);
+  const identityBefore=identityCases();assert.equal(identityBefore.length,22);
+  assert.deepEqual(identityBefore.filter(r=>!r.passed).map(r=>r.case_name),['deleted_actor','deleted_target','soft_deleted_actor','soft_deleted_target','banned_actor','banned_target','indefinite_ban','mixed_banned_selection']);
+  records.push({phase:'original-identity-before',cases:identityBefore});
+  const identitySignatures=['public._team_hub_is_active(uuid,uuid)','public._team_hub_participates(uuid,uuid)','public._team_hub_hold_seats(uuid,uuid[])'];
+  const identityMetadata=()=>sql(`select json_agg(to_jsonb(p)-'prosrc' order by p.oid)::text from pg_proc p where p.oid in (${identitySignatures.map(s=>`'${s}'::regprocedure`).join(',')});`);
+  const identityInitialMetadata=identityMetadata();const identityInitialRows=sql(holderSnapshot);
+  sql(identityMigration);assert.equal(identityMetadata(),identityInitialMetadata);assert.equal(sql(holderSnapshot),identityInitialRows);
+  const identityAfter=identityCases();assert.ok(identityAfter.every(r=>r.passed),JSON.stringify(identityAfter));
+  records.push({phase:'original-identity-after',cases:identityAfter});
+  const identityDefinitions=identitySignatures.map(signature=>({signature,definition:sql(`select pg_get_functiondef('${signature}'::regprocedure);`)}));
+  const identityReplayRows=sql(holderSnapshot);sql(identityMigration);
+  assert.equal(identityMetadata(),identityInitialMetadata);assert.equal(sql(holderSnapshot),identityReplayRows);
+  records.push({phase:'original-identity-replay',row_changes:0,metadata_changes:0});
+  const identityRestore=()=>{for(const {signature,definition} of identityDefinitions)
+    sql(`ALTER FUNCTION ${signature} OWNER TO postgres;\n${definition};\nREVOKE ALL ON FUNCTION ${signature} FROM PUBLIC,anon,authenticated,service_role;\nREVOKE GRANT OPTION FOR EXECUTE ON FUNCTION ${signature} FROM postgres;`);};
+  for(const [index,name,mutate] of [
+    [0,'active identity correlation removed',s=>s.replace('u.id=p_user','true')],
+    [0,'soft deletion ignored',s=>s.replace('u.deleted_at IS NULL','true')],
+    [0,'ban ignored',s=>s.replace('(u.banned_until IS NULL OR u.banned_until<=now())','true')],
+    [0,'expired ban remains blocked',s=>s.replace('(u.banned_until IS NULL OR u.banned_until<=now())','u.banned_until IS NULL')],
+    [1,'participation current identity bypassed',s=>s.replace('AND public._team_hub_is_active(p_tenant,p_user)','')],
+    [2,'held identity correlation removed',s=>s.replace('ON u.id=m.user_id','ON true')],
+    [2,'held soft deletion ignored',s=>s.replace('u.deleted_at IS NULL','true')],
+    [2,'held ban ignored',s=>s.replace('(u.banned_until IS NULL OR u.banned_until<=now())','true')],
+  ]){
+    const original=identityDefinitions[index].definition;const changed=mutate(original);assert.notEqual(changed,original,name);sql(changed);
+    const failed=identityCases().filter(r=>!r.passed).map(r=>r.case_name);assert.ok(failed.length,`${name}: identity mutant survived`);
+    records.push({phase:'original-identity-mutant',name,killed_by:failed});identityRestore();
+  }
+  for(const {signature,definition} of identityDefinitions){
+    for(const [name,change] of [
+      ['unknown source',definition.replace('/* exp08_current_identity_v1 */','')],
+      ['partial source',definition.replace('exp08_current_identity_v1','exp08_current_identity_v1 altered')],
+      ['authenticated ACL',`GRANT EXECUTE ON FUNCTION ${signature} TO authenticated;`],
+      ['service ACL',`GRANT EXECUTE ON FUNCTION ${signature} TO service_role;`],
+      ['grant option',`GRANT EXECUTE ON FUNCTION ${signature} TO postgres WITH GRANT OPTION;`],
+      ['owner',`ALTER FUNCTION ${signature} OWNER TO service_role;`],
+      ['security',`ALTER FUNCTION ${signature} SECURITY DEFINER;`],
+      ['path',`ALTER FUNCTION ${signature} SET search_path='public';`],
+      ['volatility',`ALTER FUNCTION ${signature} ${signature.includes('_hold_seats')?'STABLE':'VOLATILE'};`],
+      ['strictness',`ALTER FUNCTION ${signature} STRICT;`],
+      ['parallel',`ALTER FUNCTION ${signature} PARALLEL SAFE;`],
+      ['leakproof',`ALTER FUNCTION ${signature} LEAKPROOF;`],
+    ]){
+      sql(change);const before=sql(`select to_jsonb(p)::text from pg_proc p where oid='${signature}'::regprocedure;`);
+      sql(identityMigration,database,true,/EXP08 identity currentness/);
+      assert.equal(sql(`select to_jsonb(p)::text from pg_proc p where oid='${signature}'::regprocedure;`),before);
+      identityRestore();records.push({phase:'original-identity-drift',signature,name,refused:true,drift_not_rewritten:true});
+    }
+  }
+  sql(identityMigration);assert.ok(identityCases().every(r=>r.passed));
+  assert.equal(identityMetadata(),identityInitialMetadata);
+  await identityAdmissionRace(false);await identityAdmissionRace(true);
+  records.push({phase:'original-identity-final-metadata',metadata:JSON.parse(sql(`select json_agg(json_build_object('signature',p.oid::regprocedure::text,'body',md5(p.prosrc),'owner',p.proowner::regrole::text,'definer',p.prosecdef,'path',p.proconfig,'acl',p.proacl::text) order by p.oid) from pg_proc p where p.oid in (${identitySignatures.map(s=>`'${s}'::regprocedure`).join(',')});`))});
   console.log(JSON.stringify({ evidence: 'isolated native component and original revoke source integration; Auth/platform/tables are ports; no authenticated/RLS/billing/provider/customer proof', records }, null, 2));
 } finally {
   if (created) { sql(`DROP DATABASE ${database};`, 'postgres'); console.log('Disposed only the database created by this run.'); }

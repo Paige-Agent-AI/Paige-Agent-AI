@@ -1047,13 +1047,13 @@ const SOURCES = {
   "supabase/functions/_shared/research-source-policy.ts": "df0ca1d9f4ee256051ff51927500b25b5fd071a057a6d868c6448f6f852e144b",
   "supabase/functions/fetch-url-content/index.ts": "4e10fe5cd2e189ced5c0cf929586626297b7c9653b34f8a109eede4b88d2926b",
   "supabase/functions/kb-ingest-doc/index.ts": "09c54913f8c844a0e7bb2826947cb002496fb800c34d2e46ae0f6a3f5a0ea7a7",
-  "supabase/functions/comms-search-numbers/index.ts": "828ac020a9c984a808e3c9375748f1762a8667bd5a9da1c81d1fac902782d4f8",
+  "supabase/functions/comms-search-numbers/index.ts": "3fdf8a069b6213daabd0cfdb7abcbee505c8c862d0118eda3eb97215e62d1105",
   // Purchased-number voice wiring (2026-10-28), AUTHOR-REVIEW / LOWER ASSURANCE before renewal: the
   // handler now builds the number's inbound voice webhook with the existing voiceTwimlUrl(secret)
   // helper (the one repair-voice-twiml-app stamps), refuses needs_config/voice_twiml_url_unavailable
   // BEFORE any buy when it cannot, and passes voiceUrl to purchaseNumber. Authority, tenant derivation,
   // price verification, audit and record exits are unchanged. Old 23f47973… reproduced from 4fb4b0398.
-  "supabase/functions/comms-purchase-number/index.ts": "34a2ed1199818913b5e861be571095cbc3a212adb3f5062a33060e48f7a921e4",
+  "supabase/functions/comms-purchase-number/index.ts": "a86f913d6474e1bec5dd60dd4b8abf3d89d340f871e1d51a2cac870188a0f865",
   "supabase/functions/comms-a2p-draft/index.ts": "49bd8acc5ed4ec7d60ba79b917438ae5eba0ce2ffcbf862baa9caa56293ada29",
   "supabase/functions/paige-write-back/index.ts": "5ff11463820b7c38e69f683cbcd8542359d5a72c37724c06846bf3dcc6d41de8",
   // EXP05 durable-outcome review a5f5e38ce, AUTHOR-REVIEW / LOWER ASSURANCE.

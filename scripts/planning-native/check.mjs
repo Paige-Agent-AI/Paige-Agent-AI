@@ -100,6 +100,25 @@ const bodiesSQL="SELECT proname,pg_get_functiondef(oid) AS definition FROM pg_pr
 const priorBodies=(await db.query(bodiesSQL)).rows;
 await db.exec(migration);
 await db.exec(migration); // Replay must not add wrappers, signatures or receipts.
+const scopedSignature='public.plan_assign_task_scoped(uuid,uuid,text,uuid,uuid,uuid,timestamptz,text,text,uuid)';
+const scopedSnapshotSQL=`SELECT oid,prosrc,pg_get_functiondef(oid) AS definition,(to_jsonb(p)-'prosrc'-'proargdefaults')||jsonb_build_object('proargdefaults',pg_get_expr(proargdefaults,0)) AS metadata FROM pg_proc p WHERE oid='${scopedSignature}'::regprocedure`;
+const scopedBefore=(await db.query(scopedSnapshotSQL)).rows[0];
+const taskReceiptMigration=read('20271126070005_planning_task_receipt_projection.sql');
+await db.exec(taskReceiptMigration);
+const scopedAfter=(await db.query(scopedSnapshotSQL)).rows[0];
+assert.deepEqual(scopedAfter.metadata,scopedBefore.metadata,'task receipt projection retains OID/owner/ACL/security/defaults');
+await db.exec(taskReceiptMigration);
+assert.deepEqual((await db.query(scopedSnapshotSQL)).rows[0],scopedAfter,'receipt projection replay is exact');
+// A partial marker and unrelated source drift must refuse, not overwrite new work.
+for (const changed of [scopedAfter.definition.replace("'receipt_status', v_result->'receipt_status'", "'receipt_status', 'incomplete'"),
+  scopedBefore.definition.replace('begin', '-- unrelated later source\nbegin')]) {
+  await db.exec(changed);
+  const before=(await db.query(scopedSnapshotSQL)).rows[0];
+  let refused;try { await db.exec(taskReceiptMigration); } catch(error) { refused=error; }
+  assert.match(refused?.message??'',/PLANNING_SOURCE_CHANGED/,'drift/partial projection refuses');
+  assert.deepEqual((await db.query(scopedSnapshotSQL)).rows[0],before,'refused migration conserves installed source');
+  await db.exec(scopedAfter.definition);
+}
 assert.deepEqual((await db.query(writerMetadataSQL)).rows,priorMetadata,'writer signatures/owner/definer/settings/ACL must be preserved');
 for(const before of priorBodies) {
   const after=(await db.query(bodiesSQL)).rows.find(row=>row.proname===before.proname).definition;
@@ -149,6 +168,38 @@ const attached=await call(`public.plan_set_reminder('Attached history','2099-02-
 await call(`public.plan_remove_item('${attached.item_id}')`);
 const task=await call(`public.plan_assign_task('Self task','${actor}',p_plan_id:='${freshPlan.plan_id}')`);
 check(task.ok&&task.railRecorded&&task.action_id,'native self-task receipt and incumbent linked action');
+const scopedTask=await call(`public.plan_assign_task_scoped('${actor}','${tenant}','Scoped task','${actor}')`);
+check(scopedTask.ok&&scopedTask.railRecorded===true&&scopedTask.receipt_status==='recorded','scoped task projects the native recorded receipt');
+const scopedReceipt=await observe(`(SELECT to_jsonb(e) FROM public.paige_workspace_events e WHERE source_kind='capability_run' AND source_id='${scopedTask.receipt_run_id}')`);
+check(scopedReceipt?.tenant_id===tenant&&scopedReceipt.actor_id===actor&&scopedReceipt.capability_key==='plan_assign_task'
+  &&scopedReceipt.detail?.record_id===scopedTask.item_id&&scopedReceipt.detail?.audit_id===scopedTask.receipt_run_id,'projected receipt identifies the same original task/audit/actor/tenant');
+check(await observe(`(SELECT count(*)=1 FROM public.audit_logs WHERE id='${scopedTask.receipt_run_id}' AND entity_id='${scopedTask.item_id}' AND action='plan_assign_task')`),'projection introduces no second audit identity');
+// The actual scoped adapter must hold a lost acknowledgment, never repeat create.
+const scopedAdapterSource=readFileSync(new URL('../../supabase/functions/_shared/planning/scoped-write.ts',import.meta.url),'utf8');
+const scopedAdapterJS=ts.transpileModule(scopedAdapterSource,{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.CommonJS}}).outputText;
+const scopedExports={};let taskAttempts=0;
+new Function('require','exports',scopedAdapterJS)(name=>{
+ assert.equal(name,'../client-portal-access.ts');
+ return {readPortalShareAccess:()=>{throw Error('Unrelated sharing path must not run');}};
+},scopedExports);
+const priorTaskCount=await observe(`(SELECT count(*)::integer FROM public.plan_items WHERE tenant_id='${tenant}' AND item_type='task')`);
+const priorTaskEvents=await beforeEvents();
+const lostTask=await scopedExports.writeScopedPlanning({scope:{actorId:actor,tenantId:tenant},operationIdentity:'fixture-original-task',current:()=>true,
+ decision:{kind:'execute',args:{title:'Interrupted native task',assigned_to_user_id:actor},
+ audit:{capability:'plan_assign_task',decision:'execute',effect:'mutate',principal:'person',userId:actor,tenantId:tenant}},
+ caller:{getScope:async()=>({actorId:actor,tenantId:tenant}),readRecord:async()=>{throw Error('No acknowledgment to read');},
+ rpc:async(name,args)=>{
+  assert.equal(name,'plan_assign_task_scoped');taskAttempts++;
+  assert.deepEqual(args,{p_expected_actor_id:actor,p_expected_tenant_id:tenant,p_title:'Interrupted native task',p_summary:null,
+   p_assigned_to_user_id:actor,p_priority:'normal',p_due_at:null,p_plan_id:null,p_milestone_id:null,p_contact_id:null});
+  await call(`public.plan_assign_task_scoped('${actor}','${tenant}','Interrupted native task','${actor}')`);
+  throw new TypeError('Native task committed; acknowledgment lost');
+ }}});
+check(lostTask.outcome==='unverified'&&lostTask.writeAttempted===true&&lostTask.retryAllowed===false&&taskAttempts===1
+ &&!('nativeReceipt' in lostTask)&&!('record' in lostTask),'actual scoped adapter holds lost task acknowledgment without retry or invented receipt');
+check(await beforeEvents()===priorTaskEvents+1
+ &&await observe(`(SELECT count(*)::integer FROM public.plan_items WHERE tenant_id='${tenant}' AND item_type='task')`)===priorTaskCount+1,
+ 'lost scoped acknowledgment retains one original task and native Rail');
 const updated=await call(`public.plan_update_item('${task.item_id}',p_status:='in_progress')`);
 check(updated.ok&&updated.railRecorded,'native item update receipt');
 await setActor(admin);

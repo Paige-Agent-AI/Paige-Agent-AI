@@ -108,6 +108,7 @@ it("preserves recovery and suppresses success when scope changes during dispatch
 });
 it("does not retry a refused command with stale inputs",async()=>{
  mocks.submit.mockResolvedValue({kind:"refused",message:"Refused"});await render();await click("Confirm stage change");
+ expect(document.activeElement?.textContent).toBe("Back to details");
  await click("Confirm stage change");expect(mocks.submit).toHaveBeenCalledOnce();expect(sessionStorage.length).toBe(0);expect(verified).not.toHaveBeenCalled();
 });
 it("confirms due-date changes independently without presenting completed work",async()=>{
@@ -121,4 +122,29 @@ it("retains a due change when the independent read does not confirm it",async()=
  mocks.submit.mockResolvedValue({kind:"acknowledged"});refresh.mockResolvedValue([{...task,due_date:null}]);
  await render(operation);await click("Confirm task change");expect(verified).not.toHaveBeenCalled();expect(sessionStorage.length).toBe(1);
  await click("Recover original action");expect(mocks.submit.mock.calls[1][0]).toEqual(operation);
+});
+const effortOperation=()=>buildCrmWorkEditOperation({...task,estimated_minutes:15},{kind:"effort",minutes:30},{actorId:"actor",tenantId:"workspace",key:"effort-original-key"},[])!;
+it("keeps exact effort and units visible during original Trust approval",async()=>{
+ const operation=effortOperation();mocks.submit.mockResolvedValueOnce({kind:"approval",fingerprint:"exact-effort",summary:serverSummary(operation.command)}).mockResolvedValueOnce({kind:"acknowledged"});
+ refresh.mockResolvedValue([{...task,estimated_minutes:30,updated_at:"2026-10-10T12:01:00Z"}]);
+ await render(operation);expect(node.textContent).toContain("30 minutes");expect(mocks.submit).not.toHaveBeenCalled();capture("effort-review");
+ await click("Confirm task change");expect(node.textContent).toContain("30 minutes");capture("effort-approval");
+ await click("Approve exact change");expect(mocks.submit.mock.calls[1]).toEqual([operation,"exact-effort"]);
+ expect(verified).toHaveBeenCalledExactlyOnceWith(task.id);expect(sessionStorage.length).toBe(0);
+});
+it("withholds saved effort until the independent original Work read confirms it",async()=>{
+ const operation=effortOperation();mocks.submit.mockResolvedValue({kind:"acknowledged"});refresh.mockResolvedValue([{...task,estimated_minutes:15}]);
+ await render(operation);await click("Confirm task change");expect(verified).not.toHaveBeenCalled();expect(node.textContent).toContain("has not confirmed");capture("effort-unknown");
+ refresh.mockResolvedValue([{...task,estimated_minutes:30,updated_at:"2026-10-10T12:01:00Z"}]);
+ await click("Recover original action");expect(mocks.submit.mock.calls[1][0]).toEqual(operation);expect(verified).toHaveBeenCalledExactlyOnceWith(task.id);
+});
+it("reopens only the original effort operation after acknowledgement loss",async()=>{
+ const operation=effortOperation();sessionStorage.setItem("paige:operations-crm-stage:actor:workspace",JSON.stringify(operation));
+ mocks.submit.mockResolvedValue({kind:"uncertain",message:"Original outcome unknown"});
+ await render({...operation,key:"new-key-that-must-not-run"});expect(node.textContent).toContain("Recover the earlier task change");
+ await click("Recover original action");expect(mocks.submit).toHaveBeenCalledExactlyOnceWith(operation,undefined);expect(verified).not.toHaveBeenCalled();
+});
+it("keeps an effort operation inactive after workspace context changes",async()=>{
+ const operation=effortOperation();await render(operation);mocks.context={...mocks.context,activeTenantId:"foreign"};await render(operation);
+ await click("Confirm task change");expect(mocks.submit).not.toHaveBeenCalled();expect(node.textContent).toContain("Account or workspace changed");
 });

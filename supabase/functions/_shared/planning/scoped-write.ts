@@ -16,9 +16,12 @@ export type PlanningDecision = { kind: string; args?: unknown; audit?: {
   capability: string; decision: string; effect: string; principal: string;
   userId: string | null; tenantId: string | null;
 } };
+/** Original domain acknowledgment only; not an approval, claim or recovery token. */
+export type PlanningNativeReceipt = { railRecorded: true; receipt_status: 'recorded'; receipt_run_id: string };
 export type PlanningWriteResult =
   | { outcome: 'source_verified'; operationIdentity: string; record: { table: 'plans' | 'plan_items'; id: string };
-      readback: Record<string, unknown>; proofBoundary: 'planning_record_only'; retryAllowed: false }
+      readback: Record<string, unknown>; nativeReceipt?: PlanningNativeReceipt;
+      proofBoundary: 'planning_record_only'; retryAllowed: false }
   | { outcome: 'refused' | 'unavailable' | 'conflict' | 'unverified' | 'scope_changed';
       writeAttempted: boolean; retryAllowed: false; message: string };
 
@@ -191,6 +194,11 @@ export async function writeScopedPlanning(input: {
     const ack = object(reply.data), recordId = request.table === 'plans' ? ack?.plan_id : ack?.item_id;
     if (!ack || ack.ok !== true || ack.actor_id !== input.scope.actorId || ack.tenant_id !== input.scope.tenantId
       || !uuid(recordId) || request.itemId && recordId !== request.itemId) return uncertain();
+    let nativeReceipt: PlanningNativeReceipt | undefined;
+    if (['railRecorded', 'receipt_status', 'receipt_run_id'].some(key => owns(ack, key))) {
+      if (ack.railRecorded !== true || ack.receipt_status !== 'recorded' || !uuid(ack.receipt_run_id)) return uncertain();
+      nativeReceipt = { railRecorded: true, receipt_status: 'recorded', receipt_run_id: ack.receipt_run_id };
+    }
     const read = await input.caller.readRecord(request.table, recordId, input.scope);
     const afterReadScope = await input.caller.getScope();
     if (!isCurrent() || !matchesScope(afterReadScope)) return fail('scope_changed', 'The result belongs to the original request, not the current workspace.');
@@ -204,7 +212,7 @@ export async function writeScopedPlanning(input: {
     fields.updated_at = row.updated_at;
     return { outcome: 'source_verified', operationIdentity: input.operationIdentity,
       record: { table: request.table, id: recordId }, readback: fields,
-      proofBoundary: 'planning_record_only', retryAllowed: false };
+      ...(nativeReceipt ? { nativeReceipt } : {}), proofBoundary: 'planning_record_only', retryAllowed: false };
   } catch (error) {
     if (error instanceof InvalidInput && !attempted) return fail('refused', 'The requested work details are incomplete or unsupported.');
     if (!isCurrent()) return fail('scope_changed', 'The active request changed.');

@@ -1179,7 +1179,13 @@ const SOURCES = {
   // (4) Nothing else: the door-path refusal of body.attachments, serverAttachments, the invoice PDF path, the H2
   // refusal, authority, recipient, tenant gate and dispatch branches are unchanged. Old fffd0a7f… reproduced from
   // main 0fcd5a331 first.
-  "supabase/functions/send-message/index.ts": "0acfd997a123d5b73cc3a5fb13a1dff2d841f5d8ae9f17e86147bd0bfbc5ae82",
+  // EXP03 original SMS result/recovery review, immutable pre-pin9d212ac1f:
+  // exactly the SMS adapter classification and existing uncertainty projection;
+  // original validators/dispatch/peer identities remain unchanged. Lower assurance.
+  // Revised immutable d13e78995: lower-assurance four-hunk review adds original
+  // channel validation and literal SMS body preservation; external P2 source repair.
+  // Original checker assertions, Root and other source identities remain unchanged.
+  "supabase/functions/send-message/index.ts": "6b3be9a8187dd08895a07a9a3b6151f7d83b319bc3deb6fd3dc94f5e4a06530a",
   "supabase/functions/_shared/paige-spine/contracts.ts": "2d771686d636c04d2e07d9b8c336e19cde246b9a303ddd034d7ae8500f7eefb4",
   // Operator retirement adds opt-in timeout/no-retry controls; ordinary callers retain
   // their existing behavior. Renewed non-author review and actual retry controls are
@@ -1188,7 +1194,10 @@ const SOURCES = {
   // only change is purchaseNumber — PurchaseNumberOptions gains optional voiceUrl, and the form body
   // gains VoiceUrl + VoiceMethod=POST when it is set (omitted otherwise, so no other request changes).
   // No other function, auth path or request shape is touched. Old afe6b57d… reproduced from 4fb4b0398.
-  "supabase/functions/_shared/twilio.ts": "3b6fe3eeb8c6e4211e82012d08f63b5d8b14811ee780fef19eaa735b6c5d0b1d",
+  // EXP03 bounded SMS effect-retry source review, AUTHOR-REVIEW / LOWER ASSURANCE:
+  // sendSms alone disables hidden request replay; all other wrappers/auth exact.
+  // Original hostile controls remain unchanged; this identity grants no authority.
+  "supabase/functions/_shared/twilio.ts": "da6bae61fb454b1ed0ed3f059a9d37de8e5994e7822d100b9978b71247fb633b",
   // SendGrid Inbound Parse (2026-10-27), AUTHOR-REVIEW / LOWER ASSURANCE: the inbound registry gains an
   // optional provider qualifier — InboundChannelAdapter.provider?, a `channel:provider` key when it is set,
   // and getInboundAdapter(ch, provider?) — so handle-inbound-email can register its SendGrid adapter beside

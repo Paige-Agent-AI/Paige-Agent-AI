@@ -1241,3 +1241,38 @@ MD5caea59ab335ecaf295391c41a1a0522f/service-onlyACL exact. Earlier retirement-ti
 failure is retained; replacement success is independently read, not assumed.
 Native wholeCI/production migration+Edge readback and dependent final main
 retarget/review/CI remain owed. No customer effect, full outcome or owner acceptance.
+
+### October30 19:50UTC — native reminder released; composed editor proof
+
+Original3127/5b passed all13 exact-head checks/Preview and both web statuses,
+review5717729953, merged1515a9ff. Normal migration41116346469 succeeded;
+production75005ONCE/db-live1515. Original base body69755a72 inverses exactly once
+to guarded9e57d9e3; wrapper73f3a1af/OIDs/owner/definers/paths/ACLs preserved.
+Both official1515-mvvdg7m8 builds/assets were actually read19:38:54UTC. Native-only
+change has no Edge delta; edge-liveaa is incoming CURA source. This clears the
+child's native dependency without a reminder/cron/customer/provider invocation.
+
+Child3131 normally composes currentmain1515 to f30e2e88c: all18,564 incoming
+outside-owned leaves and all10 own non-packet blobs conserved; one packet conflict
+removed only markers, retaining BOTH full histories as ordered-line subsequences.
+Current editor41/Workspace63 plus separately executed adapter22 all PASS; lint and
+fresh original-Workspace125-input build PASS. Five incoming Task-effort/CSS inputs
+changed, so historical five frames are retained separately from the new manifest.
+Fresh composed browser render is requested in original ANT11/704c450e; no peer
+tab/viewport or customer session taken. Exact-head review/CI/public editor release
+and authenticated Admin Work/audit/Rail/reload remain owed.
+
+Original Google Delivery Evidence Register Program I7/J7 and LockF5 note were
+updated and explicitly read back19:50:28UTC; prior text/notes, original LockF5
+value, formatting and authenticated/founder columns are unchanged. Original
+ANT11/249eb3d9 and E04 receiving ANT51/e6ed650d retain the source/native handoff.
+Shared Master/Brain custody remains requested, not silently taken. Local type
+check's three missing-RealtimeKit diagnostics and failed isolated ENOSPC install
+remain recorded; only that verified own partial install was removed, preserving
+the original store/source/lock/baseline. Clean-install hosted CI stays required.
+
+Catalogue remains PARTIAL: original planning.list is read-only; manual versioned
+reminder correction is not a new advertised Chat/Live write binding. Operations
+planning/draft skills are unchanged and imply no execution. Same original manual
+writer/audit/Rail/CAS/recovery, ALG01/08 boundaries, fullten/E5, same ZION/both
+chats, eligible current/new SOLO and one complete founder evaluation remain OPEN.

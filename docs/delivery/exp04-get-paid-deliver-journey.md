@@ -4767,3 +4767,63 @@ was NOT created. Native15 producer is satisfied; that specific downstream owner/
 security decision remains separate, with no E04 bypass or duplicate permission
 writer. These current source/activation boundaries do not block this owning
 display correction or other safe commercial work. All12/founder remain OPEN.
+
+### C139–C140 — Original records, production recovery and actionable review — October30
+
+Same sole MERIT/full12/O1–O4-first. Original3114 now has exact production source
+proof: normal41009746030 attempt1 failed two shared declaration identities,
+marker held; ONE unchanged attempt2/job124096717778 succeeds. Independently
+downloaded artifact12981658847 SHA2561b46e43e6baa3ea7d1ace839104a7a428249c461db6e12c0ae5eac2422339043
+matches provider digest; all11 source/runtime/config matches, Chat595/JWTtrue/
+315source+315emitted. Normal certified marker915, no manual tag. Original scratch
+cleanup warning remains. Exact webdpl_4qi4fUojK59TiiquzxYFsBvMCoMC/canonical
+915c977fed6d87a3570d2a5008faddcd8b22489f-mvujnn3s/root+8assets200. Source receipt
+is3114/6524417679. DRAINING invoice read remains unadmitted; no activation.
+
+Actual authorized ordinary Owner reopened the original internal unissued invoice
+and retained unsigned agreement, not new customer records. Invoice refused review
+Cancel/Close/fullreload preserves version1 and draft state; date/amount reopen
+without editing. Agreement current wording2, retained wording1/2, return and full
+reload remain distinguishable and unsigned. Original PDF preparation6/one assigned
+field and saved signing-request review are genuinely mounted; readback confirms
+saved source/recipient/field match. No words/fields/signers/sender changed, complete
+request approved, invitation sent, signature performed, invoice issued or money
+recorded. Listed sender identity does not establish provider readiness. Protected
+evidence stays in ANT52/60f4d7f5; these are author engineering subsets, not CentralQA.
+
+Parent draft/void label repair3116/c74 stays independently frozen through required
+CI/release. Its next bounded local follow-up repairs the original publication
+review itself: typed SALES_INVOICE_INELIGIBLE gives a useful saved-version/amount/
+due-date/payment-method correction path, without pretending to know the specific
+missing field. Its preview uses the same original Unissued draft amount copy.
+Unknown-operation precedence/storage, other native messages, immutable command,
+approval and receipt logic remain unchanged. Two actual causal failures with16
+controls preceded the repair. Final76/3 original suites PASS, focused753types0,
+lint0, official pinned4.1.0 wrapper empty findings. Four actual original-component
+desktop/320/390/Mineral/Obsidian frames,21 direct source pins, raw JPEG metadata,
+keyboard Cancel/Close/visible-focus proof are recorded in
+[original review evidence](../evidence/ui-delivery/e04-invoice-review-recovery.md).
+No synthetic approval was clicked. Final review/CI/release/corrected signed-in proof
+remain owed. This is not another workflow, authority system or financial engine.
+
+OWNER delegated-management directive ANT51/cb2b86d0-fd48-49da-a2a8-0cd32775e7af
+is read and explicitly incorporated across ALL O1–O12/native app/PAIGE/same MERIT
+in both chats. Effective scoped role/resource/action/delegation authority must
+support authorized management without globally promoting members or overriding
+personal signer consent/private context/genuine owner-only actions. Original
+invoice edge/native guards admit active owner/admin IN SOURCE; actual Admin
+action and authorized management-member coverage remain OWED. A hard-coded role
+gate is a source gap candidate pending the original canonical Holder/delegation
+contract and reproduction, not a confirmed regression. EXP01/EXP08 retain shared
+Auth/RBAC/TeamHub definitions; no copied permission logic or new grant is introduced.
+Required positives/negatives include delegated Admin/management, unassigned member,
+foreign tenant, revoked/expired delegation and escalation through original writers.
+
+Original allocation/manual/split/reversal/schedule-revision integration remains
+next feature work through canonical invoice payments/operations, never a second
+ledger. Preserve current E08 native20008→30008→35008→40008 then E05forward50005,
+and E09 automatic-approval-held native consumer/no file/reservation. Existing
+Master source windows remain; four original closeout rows are privately prepared,
+not concurrently inserted. Functional/visual/experiential/role/provider/full12/
+founder acceptance remain separate. ALG01/12 PARTIAL,02/13 UNVERIFIED/catalogue
+unchanged; no new specialist identity, agent, provider or business activation.

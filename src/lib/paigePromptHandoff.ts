@@ -15,10 +15,22 @@
 
 import { detectVpAddress } from "../../supabase/functions/_shared/paige-context/vp-address";
 
+import { COMPOSER_SCOPE_FIELDS, composerScopeIdentityKey, type ComposerScopeIdentity } from "./paigeComposerScopeIdentity";
+
 const EVENT = "paige:prefill";
 const MAX = 4000;
 
-let pending: { text: string } | null = null;
+let pending: { text: string; scope: ComposerScopeIdentity | null } | null = null;
+
+function promptScope(value: unknown): ComposerScopeIdentity | null {
+  try {
+    if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+    const row = value as Record<string, unknown>;
+    const entries = COMPOSER_SCOPE_FIELDS.map(key => [key, row[key]] as const);
+    if (!entries.every(([, value]) => typeof value === "string" && value.trim())) return null;
+    return Object.freeze(Object.fromEntries(entries)) as ComposerScopeIdentity;
+  } catch { return null; }
+}
 
 /** Strip control characters and cap the length; a handed-off question is plain text. */
 export function cleanPaigePrompt(prompt: unknown): string | null {
@@ -30,17 +42,24 @@ export function cleanPaigePrompt(prompt: unknown): string | null {
 
 /** Hand a question to PAIGE's composer; the optional returned cleanup retires only
  * this still-waiting question, never another producer's question or a typed draft. */
-export function handOffPaigePrompt(prompt: unknown): () => void {
+export function handOffPaigePrompt(prompt: unknown, options?: { scope: ComposerScopeIdentity | null }): () => void {
   const text = cleanPaigePrompt(prompt);
   if (!text) return () => {};
-  const waiting = { text };
+  const scoped = options !== undefined;
+  const scope = scoped ? promptScope(options?.scope) : null;
+  if (scoped && !scope) return () => {};
+  const waiting = { text, scope };
   pending = waiting;
-  if (typeof window !== "undefined") window.dispatchEvent(new CustomEvent(EVENT, { detail: { prompt: text } }));
+  if (typeof window !== "undefined") window.dispatchEvent(new CustomEvent(EVENT, { detail: { prompt: text, ...(scope ? { scope } : {}) } }));
   return () => { if (pending === waiting) pending = null; };
 }
 
 /** Take the waiting question, if any. It is handed out once. */
-export function takePendingPaigePrompt(): string | null {
+export function takePendingPaigePrompt(receiver?: ComposerScopeIdentity | null): string | null {
+  if (pending?.scope) {
+    const target = promptScope(receiver);
+    if (!target || composerScopeIdentityKey(target) !== composerScopeIdentityKey(pending.scope)) return null;
+  }
   const text = pending?.text ?? null;
   pending = null;
   return text;
@@ -66,13 +85,23 @@ export function mergeIntoDraft(current: string, prompt: string, options?: { pres
  * Subscribe a composer: applies a question waiting from before it mounted, then every later one.
  * Returns the unsubscribe function. `apply` receives cleaned text only.
  */
-export function subscribePaigePromptHandoff(apply: (prompt: string) => void): () => void {
-  const waiting = takePendingPaigePrompt();
+export function subscribePaigePromptHandoff(apply: (prompt: string) => void, getScope?: () => ComposerScopeIdentity | null): () => void {
+  const receiver = () => { try { return getScope?.() ?? null; } catch { return null; } };
+  const waiting = takePendingPaigePrompt(receiver());
   if (waiting) apply(waiting);
   if (typeof window === "undefined") return () => {};
   const listener = (event: Event) => {
-    // A handoff from this module also set `pending`; take it so it is not applied twice later.
-    const text = takePendingPaigePrompt() ?? cleanPaigePrompt((event as CustomEvent)?.detail?.prompt);
+    // Scoped text is delivered only by its original event/envelope, once. An unrelated
+    // legacy event may still prefill its own text, but cannot drain a scoped request.
+    const detail = (event as CustomEvent)?.detail;
+    if (detail && typeof detail === "object" && Object.prototype.hasOwnProperty.call(detail, "scope")) {
+      if (!pending?.scope || detail.scope !== pending.scope) return;
+      const text = takePendingPaigePrompt(receiver());
+      if (text) apply(text);
+      return;
+    }
+    const text = pending?.scope ? cleanPaigePrompt(detail?.prompt)
+      : takePendingPaigePrompt(receiver()) ?? cleanPaigePrompt(detail?.prompt);
     if (text) apply(text);
   };
   window.addEventListener(EVENT, listener);

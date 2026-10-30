@@ -395,6 +395,12 @@ try {
     const replay=sql(`BEGIN;\n${historyFixture}\n${historyPatch}\nCREATE TEMP TABLE history_before AS SELECT jsonb_agg(to_jsonb(t) ORDER BY id) AS rows FROM public.tenants t;\n${historyPatch}\nSELECT jsonb_build_object('rows_unchanged',(SELECT rows FROM history_before)=(SELECT jsonb_agg(to_jsonb(t) ORDER BY id) FROM public.tenants t));\nROLLBACK;`);
     assert.deepEqual(JSON.parse(replay),{rows_unchanged:true});
     console.log(JSON.stringify({phase:'first-owner-history-replay',rows_unchanged:true}));
+    const invitationFixture=readFileSync(new URL('../../supabase/tests/exp08_first_owner_invitations.sql',import.meta.url),'utf8');
+    const invitationBodies=['create_tenant_invite_token','accept_tenant_invite'].map(name=>originalFunction(invitationSource,name)).join('\n');
+    const invitationBefore=sql(`BEGIN;\n${historyFixture}\n${historyPatch}\n${invitationFixture}\n${invitationBodies}\nSELECT row_to_json(t) FROM proof.owner_invitation_cases() t;\nROLLBACK;`).split('\n').filter(Boolean).map(JSON.parse);
+    console.log(JSON.stringify({phase:'first-owner-original-invitations-before',cases:invitationBefore}));
+    assert.equal(invitationBefore.length,13);
+    assert.deepEqual(invitationBefore.filter(r=>!r.passed).map(r=>r.case_name),['mint_pointer','mint_suspended','mint_history','accept_pointer','accept_suspended','accept_history'],'Only approved missing platform-only first-owner gates may fail; original compatibility controls must work');
   }
   if(onlyOwnerHistory){
     console.log('Selected original first-owner history component only; NOT full native release proof.');

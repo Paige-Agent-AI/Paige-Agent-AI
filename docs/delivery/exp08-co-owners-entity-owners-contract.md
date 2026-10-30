@@ -1658,3 +1658,25 @@ applied to its OWN disposable Preview. E08 receiving ACK25642543 gives explicit 
 for forward-only80007 after80006/before80008, preserving applied history. It covers E08-owned
 order only, not unknown peers or source/release approval. Both original producer/consumer PRs
 remain held; no stale pin renewal or production Billing mutation has been performed.
+
+Original invitation failure-first integration fixture, 2026-10-30: the SAME entity-owner native
+runner loads the exact released I1 mint/accept bodies into the rolled-back minimal schema, plus
+the local history candidate. Actual original subaccount-owner statements execute; no handwritten
+acceptance replacement is used. New owning fixture is
+`supabase/tests/exp08_first_owner_invitations.sql`. Real pgcrypto creates local synthetic tokens;
+Auth/platform/agency inputs and tables remain ports, not customer or RLS proof.
+
+Observed original behavior: **six required outcomes FAIL / seven compatibility controls PASS**.
+Platform-only mint and accept each incorrectly succeed with (a) owner pointer present, (b) a
+suspended owner seat, or (c) retained first-owner history. The fixture snapshots original tenant,
+member, token, profile and audit rows so the future refusal must also leave them unchanged.
+Fresh standalone/sub-account mint, fresh acceptance, managing-agency/dual-role paused-owner
+acceptance, and non-shell enterprise mint/accept remain positive controls. Source writers are
+unchanged. The runner currently asserts this exact baseline failing set; exit0 means the baseline
+was reproduced, NOT that those six required features pass. Log
+`exp08-first-owner-invitations-before.log` retains the individual false outcomes. Original complete
+native Billing failure and invitation-source-owner receiving ACK remain separate outstanding work.
+
+NON-AUTHOR SOURCE review finds no material baseline-fixture/evidence-classification issue and
+executes no native proof. For the actual repair, extend assertions to the specific authored refusal
+reason and exact minted-token contract, in addition to current row snapshots/compatibility positives.

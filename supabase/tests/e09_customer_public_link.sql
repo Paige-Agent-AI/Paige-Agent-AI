@@ -156,5 +156,99 @@ SELECT is((SELECT pg_temp.ctx('a2',th,intent)#>>'{snapshot,url}' FROM link_secon
 SELECT set_config('request.headers',jsonb_build_object('x-client-portal-business',pg_temp.t('a'))::text,true);
 SELECT is((SELECT pg_temp.ctx('a2',th,intent)->>'sqlstate' FROM link_second_business),'42501','returning first-business context cannot read second-business turn');
 SELECT is((SELECT pg_temp.ctx('a2',th,intent)#>>'{snapshot,url}' FROM link_turn),'https://example.org/program','returning customer retains the first business exact original URL');
+
+-- Invoice integration reuses this ORIGINAL rollback-only native private-turn
+-- fixture, actual Auth roles, admission/executor/settlement and publisher.
+-- No new runner, live identity/provider/payment or replacement financial query.
+CREATE FUNCTION pg_temp.invoice_issue(n integer,client uuid) RETURNS void LANGUAGE sql AS $$
+ INSERT INTO public.paige_invoices(id,tenant_id,contact_id,invoice_number,status,amount_total_cents,currency,due_date,memo,
+  billing_draft_version,billing_draft,billing_last_operation_id,billing_last_request,billing_lifecycle_version,
+  billing_issued_snapshot_version,billing_issued_at,billing_issued_by,billing_document,billing_document_digest,created_by)
+ SELECT ('e0997540-0000-4000-8000-'||lpad(n::text,12,'0'))::uuid,t.id,client,'TEST-INVOICE-'||n,'issued',1000,'usd',current_date+14,'PRIVATE TEST NOTE',
+  1,'{}'::jsonb,gen_random_uuid(),'{}'::jsonb,2,1,now()-interval '1 day',m.user_id,
+  jsonb_build_object('schema_version',1,'invoice_number','TEST-INVOICE-'||n,'issuer_name',t.name,'client_name','Synthetic client','total_cents',1000),
+  repeat('a',64),m.user_id FROM public.tenants t JOIN public.tenant_members m ON m.tenant_id=t.id AND m.is_owner
+  WHERE t.id=pg_temp.t('a')
+$$;
+SELECT pg_temp.invoice_issue(1,pg_temp.c('a2'));
+SELECT pg_temp.invoice_issue(2,pg_temp.c('a3'));
+CREATE FUNCTION pg_temp.invoice_ctx(who text,th uuid,intent uuid,actor_role text DEFAULT 'authenticated') RETURNS jsonb LANGUAGE sql AS $$
+ SELECT pg_temp.as_user(who,format('SELECT public.client_portal_assistant_invoices_context(%L,%L)',th,intent),actor_role) $$;
+CREATE FUNCTION pg_temp.invoice_begin(th uuid,intent uuid) RETURNS jsonb LANGUAGE sql AS $$
+ SELECT pg_temp.as_user('a2',format('SELECT public.client_portal_assistant_begin_invoices(%L,%L,NULL,%L,false,false,true,NULL,NULL,NULL)',
+  th,intent,'What are my invoices?')) $$;
+CREATE FUNCTION pg_temp.invoice_settle(th uuid,intent uuid,content text,snapshot jsonb,state text DEFAULT 'FINAL') RETURNS jsonb LANGUAGE plpgsql AS $$
+DECLARE bundle jsonb;
+BEGIN
+ SELECT bundle_ref INTO bundle FROM public.paige_chat_turns WHERE thread_id=th AND role='user' AND interactive_intent_id=intent;
+ bundle:=(bundle-'customer_invoices')||jsonb_build_object('interactive',jsonb_build_object('request_intent_id',intent),'turn_state',jsonb_build_object('v',1,'state',state));
+ IF content='' AND state IN('WITHHELD','REFUSED','INTERRUPTED') THEN
+  bundle:=bundle-ARRAY['customer_knowledge','customer_progress','customer_sessions','customer_files','customer_public_link']; END IF;
+ IF snapshot IS NOT NULL THEN bundle:=bundle||jsonb_build_object('customer_invoices',snapshot); END IF;
+ RETURN pg_temp.as_user('a2',format('SELECT to_jsonb(public.paige_chat_interactive_settle(%L,%L,%L,%L,%L,NULL,NULL,%L::jsonb,NULL))',
+  th,pg_temp.u('a2'),pg_temp.t('a'),intent,content,bundle::text),'service_role');
+END $$;
+SELECT ok(NOT has_function_privilege('authenticated',f,'EXECUTE') AND NOT has_function_privilege('anon',f,'EXECUTE')
+ AND NOT has_function_privilege('service_role',f,'EXECUTE'),'invoice trusted helper remains private: '||f)
+FROM unnest(ARRAY['public._client_invoices_snapshot_valid(jsonb)',
+ 'public._client_invoices_snapshot_current(uuid,uuid,uuid,uuid,uuid,jsonb)',
+ 'public._client_invoices_terminal_guard()','public._client_invoices_publication_current(uuid,uuid)']) f;
+SELECT ok(has_function_privilege('authenticated',f,'EXECUTE') AND NOT has_function_privilege('anon',f,'EXECUTE')
+ AND NOT has_function_privilege('service_role',f,'EXECUTE'),'invoice entry requires original customer JWT: '||f)
+FROM unnest(ARRAY['public.client_portal_assistant_invoices_context(uuid,uuid)',
+ 'public.client_portal_assistant_begin_invoices(uuid,uuid,uuid,text,boolean,boolean,boolean,extensions.vector,text,jsonb)']) f;
+SELECT is(provolatile::text,'v','original POST context/publication permits financial SHARE locks: '||oid::regprocedure::text)
+ FROM pg_proc WHERE oid IN('public.client_portal_assistant_context(uuid,uuid)'::regprocedure,
+ 'public.client_portal_assistant_context_v2(uuid,uuid,extensions.vector)'::regprocedure,
+ 'public.paige_chat_interactive_publication_context_v2(uuid,uuid)'::regprocedure);
+CREATE TEMP TABLE invoice_turn AS SELECT th,gen_random_uuid() intent FROM link_turn;
+ALTER TABLE invoice_turn ADD COLUMN pre jsonb;
+UPDATE invoice_turn SET pre=pg_temp.invoice_ctx('a2',th,intent);
+SELECT is((SELECT pre->>'mode' FROM invoice_turn),'fresh','invoice native projection uses current original financial source');
+SELECT is((SELECT pre#>>'{billing,invoice_count}' FROM invoice_turn),'1','another customer invoice is excluded by ORIGINAL query');
+SELECT is((SELECT pre#>>'{billing,invoices,0,remaining_minor}' FROM invoice_turn),'1000','native exact integer string is retained');
+SELECT ok((SELECT NOT (pre->'billing') ? '_native_sources' AND NOT (pre::text LIKE '%PRIVATE TEST NOTE%') FROM invoice_turn),'model projection excludes internal source and private invoice memo');
+SELECT is((SELECT pg_temp.invoice_ctx('a2',th,intent,role)->>'sqlstate' FROM invoice_turn),'42501','invoice JWT entry refuses '||role)
+ FROM unnest(ARRAY['anon','service_role']) role;
+SELECT is((SELECT pg_temp.invoice_ctx(who,th,intent)->>'sqlstate' FROM invoice_turn),'42501','invoice entry refuses wrong original actor '||who)
+ FROM unnest(ARRAY['a1','a3','b2']) who;
+SELECT is((SELECT pg_temp.invoice_begin(th,intent)->>'status' FROM invoice_turn),'accepted','invoice begin delegates original native admission');
+SELECT ok((SELECT bundle_ref ?& ARRAY['customer_invoices','customer_knowledge','customer_progress','customer_sessions']
+ FROM public.paige_chat_turns p,invoice_turn x WHERE p.thread_id=x.th AND p.interactive_intent_id=x.intent AND p.role='user'),
+ 'one original receipt retains every original source plus invoice binding');
+SELECT is((SELECT pg_temp.invoice_begin(th,intent)->>'turn_id' FROM invoice_turn),
+ (SELECT p.id::text FROM public.paige_chat_turns p,invoice_turn x WHERE p.thread_id=x.th AND p.interactive_intent_id=x.intent AND p.role='user'),
+ 'invoice replay returns the SAME accepted user receipt');
+SELECT is((SELECT pg_temp.invoice_ctx('a2',th,intent)#>>'{snapshot,captured_at}' FROM invoice_turn),
+ (SELECT p.bundle_ref#>>'{customer_invoices,captured_at}' FROM public.paige_chat_turns p,invoice_turn x
+ WHERE p.thread_id=x.th AND p.interactive_intent_id=x.intent AND p.role='user'),'new read timestamp never replaces accepted capture time');
+SELECT ok((SELECT NOT public._client_invoices_snapshot_valid((pre->'snapshot')||'{"owner_override":true}') FROM invoice_turn),'invoice binding is closed, never carries owner authority');
+SELECT ok((SELECT (pg_temp.executor(th,intent,'acquire')->>'acquired')::boolean FROM invoice_turn),'invoice uses the ORIGINAL executor');
+SELECT is((SELECT pg_temp.invoice_settle(th,intent,'Unbound invoice reply',NULL)->>'error' FROM invoice_turn),
+ 'CUSTOMER_INVOICES_SOURCE_WITHDRAWN','missing accepted invoice snapshot cannot settle');
+SELECT is((SELECT pg_temp.invoice_settle(th,intent,'Changed actor',jsonb_set(pg_temp.invoice_ctx('a2',th,intent)->'snapshot','{actor_id}',to_jsonb(pg_temp.u('a3'))))->>'error' FROM invoice_turn),
+ 'CUSTOMER_INVOICES_SOURCE_WITHDRAWN','service terminal cannot substitute the customer');
+SELECT ok((SELECT NOT(pg_temp.invoice_settle(th,intent,'NATIVE-INVOICE-ANSWER-SENTINEL',pg_temp.invoice_ctx('a2',th,intent)->'snapshot') ? 'sqlstate') FROM invoice_turn),
+ 'exact accepted invoice source settles in original private history');
+SELECT pg_temp.executor(th,intent,'release') FROM invoice_turn;
+SELECT ok((SELECT (pg_temp.as_user('a2',format('SELECT to_jsonb(public.paige_chat_interactive_publication_context_v2(%L,%L))',th,intent))#>>'{}')::boolean FROM invoice_turn),
+ 'original publisher allows unchanged authorized invoice answer');
+SELECT pg_temp.invoice_issue(3,pg_temp.c('a2'));
+SELECT is((SELECT pg_temp.invoice_ctx('a2',th,intent)->>'sqlstate' FROM invoice_turn),'42501','new original invoice invalidates accepted facts without replacing the snapshot');
+SELECT ok((SELECT NOT(pg_temp.as_user('a2',format('SELECT to_jsonb(public.paige_chat_interactive_publication_context_v2(%L,%L))',th,intent))#>>'{}')::boolean FROM invoice_turn),
+ 'late original publication withholds an invoice answer after facts change');
+SELECT ok((SELECT NOT (pg_temp.as_user('a2',format('SELECT public.client_portal_assistant_context_v2(%L,%L,NULL)',th,gen_random_uuid()))::text LIKE '%NATIVE-INVOICE-ANSWER-SENTINEL%') FROM invoice_turn),
+ 'new model context omits stale invoice-derived facts');
+SELECT is((SELECT count(*) FROM public.paige_chat_turns p,invoice_turn x WHERE p.thread_id=x.th AND p.interactive_intent_id=x.intent
+ AND p.role='assistant' AND p.content='NATIVE-INVOICE-ANSWER-SENTINEL'),1::bigint,'saved customer UI history is retained, never deleted for model filtering');
+SELECT set_config('request.headers',jsonb_build_object('x-client-portal-business',pg_temp.t('b'))::text,true);
+SELECT is((SELECT pg_temp.invoice_ctx('a2',th,intent)->>'sqlstate' FROM invoice_turn),'42501','same customer second legitimate business cannot reuse original invoice context');
+SELECT set_config('request.headers',jsonb_build_object('x-client-portal-business',pg_temp.t('a'))::text,true);
+CREATE TEMP TABLE invoice_withheld AS SELECT th,gen_random_uuid() intent FROM invoice_turn;
+SELECT is((SELECT pg_temp.invoice_begin(th,intent)->>'status' FROM invoice_withheld),'accepted','next turn captures current original facts');
+SELECT ok((SELECT (pg_temp.executor(th,intent,'acquire')->>'acquired')::boolean FROM invoice_withheld),'same executor handles interrupted invoice read');
+SELECT pg_temp.invoice_issue(4,pg_temp.c('a2'));
+SELECT ok((SELECT NOT(pg_temp.invoice_settle(th,intent,'',NULL,'WITHHELD') ? 'sqlstate') FROM invoice_withheld),'changed invoice source still permits empty original cleanup');
+SELECT pg_temp.executor(th,intent,'release') FROM invoice_withheld;
 SELECT * FROM finish();
 ROLLBACK;

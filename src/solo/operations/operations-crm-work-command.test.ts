@@ -2,10 +2,11 @@ import { beforeEach, expect, it, vi } from "vitest";
 import type { CrmWorkRecord } from "./operations-native-work";
 const mocks=vi.hoisted(()=>({getUser:vi.fn(),invoke:vi.fn()}));
 vi.mock("@/integrations/supabase/client",()=>({supabase:{auth:{getUser:mocks.getUser},functions:{invoke:mocks.invoke}}}));
-import { buildCrmWorkStageOperation, restoreCrmWorkStageOperation, submitCrmWorkStageOperation } from "./operations-crm-work-command";
+import { buildCrmWorkStageOperation, restoreCrmWorkStageOperation, restoreCrmWorkOperation, submitCrmWorkStageOperation } from "./operations-crm-work-command";
 import { buildCrmWorkEditOperation } from "./operations-crm-work-edit";
 const task={id:"native-task",tenant_id:"workspace",status:"pending",updated_at:"2026-10-10T12:00:00.123456Z"} as CrmWorkRecord;
 const operation=()=>buildCrmWorkStageOperation(task,"done","actor","workspace","original-key")!;
+const effort=(minutes:number|null)=>buildCrmWorkEditOperation({...task,estimated_minutes:15},{kind:"effort",minutes},{actorId:"actor",tenantId:"workspace",key:"effort-original-key"},[])!;
 const ack=()=>({data:{ok:true,readback:{id:task.id,status:"completed",updated_at:"2026-10-10T12:01:00Z",external_effect:false,notification_sent:false}},error:null});
 beforeEach(()=>{vi.clearAllMocks();mocks.getUser.mockResolvedValue({data:{user:{id:"actor"}},error:null});});
 it("preserves the raw native version and refuses unsupported stages or foreign scope",()=>{
@@ -78,4 +79,20 @@ it("acknowledges only the changed assignment or date field through the same exec
  expect(mocks.invoke.mock.calls[0][1].body.command).toEqual(due.command);
  Object.assign(result.data.readback,{due_date:null});
  expect((await submitCrmWorkStageOperation(due)).kind).toBe("uncertain");
+});
+it("uses the original CRM door and exact scalar effort readback",async()=>{
+ const original=effort(30),result=ack();Object.assign(result.data.readback,{metadata:{estimated_minutes:30,private_other:"not copied"}});mocks.invoke.mockResolvedValue(result);
+ expect(await submitCrmWorkStageOperation(original,"exact-fingerprint")).toEqual({kind:"acknowledged"});
+ expect(mocks.invoke).toHaveBeenCalledExactlyOnceWith("crm-command",{body:{expected_tenant_id:"workspace",command:original.command,idempotency_key:original.key,approved_fingerprint:"exact-fingerprint"}});
+ expect(restoreCrmWorkOperation(JSON.parse(JSON.stringify(original)),"actor","workspace")).toEqual(original);
+});
+it.each([null,[],{}, {estimated_minutes:"30"},{estimated_minutes:31}])("withholds effort acknowledgement for mismatched native metadata %j",async metadata=>{
+ const result=ack();Object.assign(result.data.readback,{metadata});mocks.invoke.mockResolvedValue(result);
+ expect((await submitCrmWorkStageOperation(effort(30))).kind).toBe("uncertain");
+});
+it("requires an absent effort key for a clear rather than accepting zero",async()=>{
+ const result=ack();Object.assign(result.data.readback,{metadata:{}});mocks.invoke.mockResolvedValue(result);
+ expect((await submitCrmWorkStageOperation(effort(null))).kind).toBe("acknowledged");
+ Object.assign(result.data.readback,{metadata:{estimated_minutes:0}});
+ expect((await submitCrmWorkStageOperation(effort(null))).kind).toBe("uncertain");
 });

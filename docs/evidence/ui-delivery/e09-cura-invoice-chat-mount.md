@@ -1,6 +1,18 @@
 # UI delivery evidence: mount the authorized CURA invoice consumer
 
-Companion release scope: PR3117 mounts the preserved original Chat consumer on native-first PR3118. Production mount is held until native60009's actual application/readback. The parent release description below remains its separate database boundary; this companion contains the prepared Root/decoder/bindings/tests.
+Companion release scope: PR3117 mounts the preserved original Chat consumer after native-first PR3118. Both are now deployed/source-verified; actual customer outcomes remain proof owed.
+
+## Production release evidence observed — October 30, 2026
+
+The following observations were made at19:10–19:19UTC for this release. Subsequent production builds do not rewrite this source/deployment history or establish the still-owed customer outcomes.
+
+Reviewed72a5a927fbe69464a7f5fb9627bc8056dc031597 passed all11 required exact-head checks and both web contexts; final sequential AUTHOR-REVIEW / LOWER ASSURANCE5717457146, zero unresolved threads. Mergeaa0220a5510c27caebdd3b108381c20baa32d8df/treecb81b4f1d0cd21e6e6136e6592c559978cec14ab exactly preserves the reviewed union, all18,545 outside-owned leaves and17 reviewed own blobs. Original composed-source validation passes29 dispatches/131 required sources/zero findings.
+
+Native parent3118/7a1e16a55a60eebf7dda4be4834027af9ccf3e62 deployed60009 once through normal run41104343471; all13 source/permission/default/trigger contracts were reverified19:10UTC. Normal Edge41113191672/job124260579840 and original certificate13004841533 verify all selected source/configuration: paige-ai-chat600/JWTtrue, edge-liveaa0220a55. Production Verceldpl_oZfec7UcGe7QgAC1KzntbzSfC4e9 is READY/exactaa; both official origins serveaa0220a5510c27caebdd3b108381c20baa32d8df-mvvcmk63 and original public/default-cache checks pass. Final hosted original invoice/link fixture118PASS is controlled native evidence, not a customer session.
+
+Functional: DEPLOYED / SOURCE VERIFIED. Visual: previous bounded original-shell rendering remains supporting evidence; no new mobile/zoom/AT claim. Experiential: controlled native request/receipt/replay/withdrawal verified; ordinary customer useful reply, Payments exit, saved private-history reload and wrong-role/business/revoked-access return still PROOF OWED. Founder Acceptance: NOT_READY / NOT_ACCEPTED, full42/seven pillars and one complete evaluation remain open. No provider/Live activation, send, charge, new identity or grant is inferred. Earlier implementation checkpoint language below is historical evidence.
+
+## Implementation evidence recorded before release
 
 
 UI_DELIVERY_EVIDENCE_VERSION: 1
@@ -56,10 +68,10 @@ Pre-renewal source review:19da6cacc883b41d805a098b5bcb451941c88134 versus maine9
 
 Functional: implemented locally, full native/release/customer proof owed. Visual: bounded existing-shell rendered proof and explicit narrow/AT gaps. Experiential: original request/source/receipt/recovery implemented, actual joined journey owed. Acceptance: full42/seven-pillars founder evaluation NOT_READY.
 
-INTERNAL_BUILD_IDENTITY: source-freeze=005eb8407cfcde47cc3f47b7cbfd0c16e9dc07ab; current-head=see-Git-and-PR; deployment=none; environment=local-development; migrations=PROOF_OWED(parent PR3118 native60009 actual application and readback); edge=PROOF_OWED(paige-ai-chat upload after native readiness); evidence=outputs/e09-invoice-incumbent-review.json
-RELEASE_CHANNEL: development: no production claim or customer announcement.
+INTERNAL_BUILD_IDENTITY: reviewed=72a5a927fbe69464a7f5fb9627bc8056dc031597; merge=aa0220a5510c27caebdd3b108381c20baa32d8df; deployment=dpl_oZfec7UcGe7QgAC1KzntbzSfC4e9; environment=production; migrations=parent3118/native20271126060009_ONCE; edge=paige-ai-chat600/JWTtrue/strict-certificate13004841533; evidence=original deploy41113191672 and current-release section above; supporting-source-freeze=005eb8407cfcde47cc3f47b7cbfd0c16e9dc07ab
+RELEASE_CHANNEL: production: deployed/source-verified; actual customer outcome proof remains owed; no customer announcement.
 RELEASE_CLASSIFICATION: internal-only: coherent source-backed invoice-read integration within existing EXP09.
-CUSTOMER_RELEASE_IDENTITY: none: no version or announcement assigned from local source.
+CUSTOMER_RELEASE_IDENTITY: none: no customer version, name or publication assigned by this source increment.
 RELEASE_NOTE_REQUIRED: no: ordinary internal increment; complete Experience publication remains owner-controlled.
-RELEASE_TRUTH_BOUNDARY: PROOF OWED: original full-schema authorization, exact CI/merge/deploy/readback and actual external-client invoice history are unverified.
+RELEASE_TRUTH_BOUNDARY: PROOF OWED: actual ordinary customer Auth/HTTP/useful invoice reply/Payments return/private-history reload, wrong-role/business/revocation, fresh mobile/zoom/AT, complete42/seven and founder acceptance. Required exact-head CI/native controlled118/merge/production source readback are verified as recorded above; none substitutes for a customer result.
 RELEASE_RECOVERY: position=reviewed forward fix; reference=original deploy pipeline/accepted-intent recovery; preserve immutable applied history and unknown outcomes.

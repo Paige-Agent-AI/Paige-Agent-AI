@@ -25,6 +25,90 @@ function deps(over: Partial<CommsEmailExecutorDependencies> = {}) {
   return { d, log, set: (s: string | null) => { state = s; } };
 }
 
+describe("original saved draft binding through the governed executor", () => {
+  const draftSource = { message_id: M, updated_at: "2026-10-30T20:00:00.123456+00:00" };
+  const draftHtml = "<p><strong>Hello there</strong></p>";
+  async function savedInput() {
+    const i = await input();
+    return { ...i, stored: { ...i.stored, draftSource, draftBodyHtml: draftHtml } };
+  }
+  it("keeps source identity/version and approved HTML in the stored call", async () => {
+    const { parseCommsEmailStoredCall } = await import("./adapter.ts"); const i = await input();
+    const args = { expected_tenant_id: T, operation_id: OP, command, recipient: i.stored.recipient,
+      from_address: i.stored.fromAddress, content_digest: i.stored.contentDigest };
+    expect(parseCommsEmailStoredCall({ ...args, draft_source: draftSource, draft_body_html: draftHtml }, T))
+      .toMatchObject({ draftSource, draftBodyHtml: draftHtml });
+    for (const extra of [{ draft_source: draftSource }, { draft_body_html: draftHtml },
+      { draft_source: { ...draftSource, tenant_id: T }, draft_body_html: draftHtml },
+      { draft_source: { ...draftSource, updated_at: "2026-10-30" }, draft_body_html: draftHtml },
+      { draft_source: draftSource, draft_body_html: "" }, { draft_source: draftSource, draft_body_html: "x\0y" },
+    ]) expect(parseCommsEmailStoredCall({ ...args, ...extra }, T)).toBeNull();
+    expect(parseCommsEmailStoredCall(args, T)).not.toHaveProperty("draftSource");
+    expect(parseCommsEmailStoredCall(args, T)).not.toHaveProperty("draftBodyHtml");
+  });
+  it("names the new native overload and sends the exact approved original HTML", async () => {
+    const prepared: Record<string, unknown>[] = [], sent: Record<string, unknown>[] = [];
+    const t = deps(); t.d.prepare = async args => { prepared.push(args); t.set("prepared"); return { data: { ok: true, state: "prepared", message_id: M }, error: null }; };
+    t.d.send = async body => { sent.push(body); t.set("provider_accepted"); return {}; };
+    expect(await executeCommsEmailSend(await savedInput(), t.d)).toMatchObject({ ok: true, outcome: "provider_accepted", message_id: M });
+    expect(prepared).toHaveLength(1);
+    expect(prepared[0]).toMatchObject({ _draft_source: draftSource, _send_at: null, _attachments: null, _body_html: draftHtml });
+    expect(sent).toHaveLength(1); expect(sent[0]).toMatchObject({ message_id: M, body: draftHtml });
+    expect(draftHtml).not.toEqual(commsEmailBodyHtml(command.body));
+  });
+  it("an older database refuses before any transport instead of silently taking the old INSERT path", async () => {
+    const t = deps({ prepare: async args => {
+      expect(args).toHaveProperty("_draft_source", draftSource);
+      return { data: null, error: { code: "PGRST202", message: "Could not find the function public.prepare_comms_email_send with the supplied arguments" } };
+    } });
+    expect(await executeCommsEmailSend(await savedInput(), t.d)).toMatchObject({ outcome: "refused", reason: "COMMS_EMAIL_DRAFT_BINDING_UNAVAILABLE" });
+    expect(t.log).toEqual([]);
+  });
+  it("never sends a different row returned in place of the original draft", async () => {
+    const t = deps({ prepare: async () => ({ data: { ok: true, state: "prepared", message_id: OP }, error: null }) });
+    expect(await executeCommsEmailSend(await savedInput(), t.d)).toMatchObject({ outcome: "outcome_unknown" });
+    expect(t.log).toEqual([]);
+  });
+  for (const change of ["row", "version", "html", "command"] as const) {
+    it(`does not report a terminal operation as this draft after its ${change} changes`, async () => {
+      const i = await savedInput();
+      const binding = { operation_id: OP, tenant_id: T, actor_user_id: A, command, recipient: i.stored.recipient,
+        from_address: i.stored.fromAddress, content_digest: i.stored.contentDigest, body_html: draftHtml,
+        governance: { draft_source: draftSource } };
+      const t = deps({
+        readResult: async () => ({ outcome: "provider_accepted", operation_id: OP, message_id: change === "row" ? OP : M }),
+        readBinding: async () => change === "version" ? { ...binding, governance: { draft_source: { ...draftSource, updated_at: draftSource.updated_at.replace("123456", "123457") } } }
+          : change === "html" ? { ...binding, body_html: "<p>Changed</p>" }
+          : change === "command" ? { ...binding, command: { ...command, body: "Changed" } } : binding,
+      });
+      expect(await executeCommsEmailSend(i, t.d)).toMatchObject({ outcome: "outcome_unknown" });
+      expect(t.log).toEqual([]);
+    });
+  }
+  it("reopens the matching terminal operation without another prepare or send", async () => {
+    const i = await savedInput();
+    const t = deps({
+      readResult: async () => ({ outcome: "provider_accepted", operation_id: OP, message_id: M, provider_receipt_available: true }),
+      readBinding: async () => ({ operation_id: OP, tenant_id: T, actor_user_id: A, command, recipient: i.stored.recipient,
+        from_address: i.stored.fromAddress, content_digest: i.stored.contentDigest, body_html: draftHtml, governance: { draft_source: draftSource } }),
+    });
+    expect(await executeCommsEmailSend(i, t.d)).toMatchObject({ outcome: "provider_accepted", message_id: M, replayed: true });
+    expect(t.log).toEqual([]);
+  });
+  it("a failed source-binding read cannot replay a completed operation or create another draft", async () => {
+    const t = deps({ readResult: async () => ({ outcome: "provider_accepted", operation_id: OP, message_id: M }),
+      readBinding: async () => { throw new Error("Fictional read failure"); } });
+    expect(await executeCommsEmailSend(await savedInput(), t.d)).toMatchObject({ outcome: "outcome_unknown" });
+    expect(t.log).toEqual([]);
+  });
+  for (const code of ["COMMS_EMAIL_DRAFT_SOURCE_CHANGED", "COMMS_EMAIL_DRAFT_SOURCE_UNAVAILABLE", "COMMS_EMAIL_DRAFT_SOURCE_INVALID", "COMMS_EMAIL_DRAFT_OWNED_FLOW_REQUIRED"]) {
+    it(`retains the native source refusal ${code} without dispatch`, async () => {
+      const t = deps({ prepare: async () => ({ data: null, error: { code: "40001", message: code } }) });
+      expect(await executeCommsEmailSend(await savedInput(), t.d)).toMatchObject({ outcome: "refused", reason: code }); expect(t.log).toEqual([]);
+    });
+  }
+});
+
 describe("executeCommsEmailSend", () => {
   it("prepares then sends the derived HTML and reports only the readback", async () => {
     const t = deps(); const sent: Record<string, unknown>[] = []; t.d.send = async b => { sent.push(b); t.set("provider_accepted"); return { provider_message_id: "re_x" }; };

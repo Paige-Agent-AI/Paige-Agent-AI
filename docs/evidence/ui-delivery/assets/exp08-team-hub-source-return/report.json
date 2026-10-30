@@ -6,6 +6,10 @@
       "theme": "dark",
       "width": 1536,
       "paige": "closed",
+      "viewport": {
+        "width": 1536,
+        "height": 770
+      },
       "visible": true,
       "rect": {
         "x": 1205,
@@ -24,6 +28,10 @@
       "theme": "dark",
       "width": 1536,
       "paige": "open",
+      "viewport": {
+        "width": 1536,
+        "height": 770
+      },
       "visible": true,
       "rect": {
         "x": 662.765625,
@@ -42,6 +50,10 @@
       "theme": "dark",
       "width": 1366,
       "paige": "closed",
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
       "visible": true,
       "rect": {
         "x": 1035,
@@ -60,6 +72,10 @@
       "theme": "dark",
       "width": 1366,
       "paige": "open",
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
       "visible": true,
       "rect": {
         "x": 550.5625,
@@ -78,6 +94,10 @@
       "theme": "dark",
       "width": 1024,
       "paige": "closed",
+      "viewport": {
+        "width": 1024,
+        "height": 768
+      },
       "visible": true,
       "rect": {
         "x": 673,
@@ -96,6 +116,10 @@
       "theme": "dark",
       "width": 1024,
       "paige": "open",
+      "viewport": {
+        "width": 1024,
+        "height": 768
+      },
       "visible": true,
       "rect": {
         "x": 673,
@@ -114,6 +138,10 @@
       "theme": "dark",
       "width": 900,
       "paige": "closed",
+      "viewport": {
+        "width": 900,
+        "height": 1000
+      },
       "visible": true,
       "rect": {
         "x": 549,
@@ -132,6 +160,10 @@
       "theme": "dark",
       "width": 900,
       "paige": "open",
+      "viewport": {
+        "width": 900,
+        "height": 1000
+      },
       "visible": true,
       "rect": {
         "x": 549,
@@ -150,6 +182,10 @@
       "theme": "light",
       "width": 1536,
       "paige": "closed",
+      "viewport": {
+        "width": 1536,
+        "height": 770
+      },
       "visible": true,
       "rect": {
         "x": 1205,
@@ -168,6 +204,10 @@
       "theme": "light",
       "width": 1536,
       "paige": "open",
+      "viewport": {
+        "width": 1536,
+        "height": 770
+      },
       "visible": true,
       "rect": {
         "x": 662.765625,
@@ -186,6 +226,10 @@
       "theme": "light",
       "width": 1366,
       "paige": "closed",
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
       "visible": true,
       "rect": {
         "x": 1035,
@@ -204,6 +248,10 @@
       "theme": "light",
       "width": 1366,
       "paige": "open",
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
       "visible": true,
       "rect": {
         "x": 550.5625,
@@ -222,6 +270,10 @@
       "theme": "light",
       "width": 1024,
       "paige": "closed",
+      "viewport": {
+        "width": 1024,
+        "height": 768
+      },
       "visible": true,
       "rect": {
         "x": 673,
@@ -240,6 +292,10 @@
       "theme": "light",
       "width": 1024,
       "paige": "open",
+      "viewport": {
+        "width": 1024,
+        "height": 768
+      },
       "visible": true,
       "rect": {
         "x": 673,
@@ -258,6 +314,10 @@
       "theme": "light",
       "width": 900,
       "paige": "closed",
+      "viewport": {
+        "width": 900,
+        "height": 1000
+      },
       "visible": true,
       "rect": {
         "x": 549,
@@ -276,6 +336,10 @@
       "theme": "light",
       "width": 900,
       "paige": "open",
+      "viewport": {
+        "width": 900,
+        "height": 1000
+      },
       "visible": true,
       "rect": {
         "x": 549,

@@ -6,7 +6,7 @@ const report={label:'harness render · not live',records:[],failures:[]};
 const browser=await chromium.launch({executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe',headless:true,args:['--no-proxy-server']});
 try {
  for(const theme of ['dark','light']) for(const width of [1536,1366,1024,900]) for(const paige of ['closed','open']) {
-  const page=await browser.newPage({viewport:{width,height:864}});
+  const page=await browser.newPage({viewport:{width,height:width===1536?770:width===900?1000:768}});
   const errors=[];page.on('pageerror',e=>errors.push(String(e).slice(0,200)));
   await page.goto(`http://127.0.0.1:5297/solo/3855/team-hub?theme=${theme}&message=e8000000-0000-4000-8000-0000000a0001`,{waitUntil:'domcontentloaded',timeout:60000});
   const row=page.locator('aside[aria-label="Thread"] #th-msg-e8000000-0000-4000-8000-0000000a0001');
@@ -17,7 +17,7 @@ try {
     else await page.getByRole('button',{name:'Fold PAIGE conversation',exact:true}).first().click();
   }
   await page.waitForTimeout(500);
-  const measured=await row.evaluate(el=>{const r=el.getBoundingClientRect();return {visible:r.width>0&&r.height>0,rect:{x:r.x,y:r.y,w:r.width,h:r.height},focused:document.activeElement===el,pageOverflowX:document.documentElement.scrollWidth-innerWidth,pageOverflowY:document.documentElement.scrollHeight-innerHeight,paige:document.querySelector('[data-tenant-shell]')?.getAttribute('data-paige'),text:el.textContent};});
+  const measured=await row.evaluate(el=>{const r=el.getBoundingClientRect();return {viewport:{width:innerWidth,height:innerHeight},visible:r.width>0&&r.height>0,rect:{x:r.x,y:r.y,w:r.width,h:r.height},focused:document.activeElement===el,pageOverflowX:document.documentElement.scrollWidth-innerWidth,pageOverflowY:document.documentElement.scrollHeight-innerHeight,paige:document.querySelector('[data-tenant-shell]')?.getAttribute('data-paige'),text:el.textContent};});
   const name=`${theme}-${width}-${paige}`;
   if(!measured.visible||measured.pageOverflowX>1||measured.pageOverflowY>1||measured.paige!==paige||errors.length)report.failures.push({name,measured,errors});
   report.records.push({name,theme,width,paige,...measured,errors});

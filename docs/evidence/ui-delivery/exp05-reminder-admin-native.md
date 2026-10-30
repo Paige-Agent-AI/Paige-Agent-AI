@@ -28,8 +28,8 @@ RELEASE_CHANNEL: development: isolated local PostgreSQL only; no production migr
 RELEASE_CLASSIFICATION: internal-only: native prerequisite for a bounded reminder correction; no customer release identity.
 CUSTOMER_RELEASE_IDENTITY: none: complete customer outcome is not yet released or authenticated.
 RELEASE_NOTE_REQUIRED: no: internal native preparation, no publication authorization or LIVE claim.
-RELEASE_TRUTH_BOUNDARY: PARTIAL source behavior; PROOF OWED hosted/native production, mounted UI, authenticated customer outcome, all ten/E5 and founder acceptance.
-RELEASE_RECOVERY: position=forward-fix; reason=guarded transaction preserves existing function identity and refuses unknown source or metadata; no applied migration history changes.
+RELEASE_TRUTH_BOUNDARY: PARTIAL: local native source behavior; PROOF OWED: hosted/native production, mounted UI, authenticated customer outcome, all ten/E5 and founder acceptance.
+RELEASE_RECOVERY: position=reviewed forward-fix preserving existing function identity and original receipts; reference=20271126075005 guarded exact inverse/source/metadata checks and original EXP05 acceptance packet; no applied migration history changes.
 
 ## Source and release boundaries
 

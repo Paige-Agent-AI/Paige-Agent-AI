@@ -5552,3 +5552,21 @@ pin also advances the existing exact ancestry-count assertion; run ALL original
 C0b files plus int304, not only the83-case resource suite. Causal249/248/1 became
 full250/250/0 plus11/11/0 without weakening any original guard or negative.
 Original product Root/card/helper/checker source and prior evidence remain.
+
+## 2026-10-30 EXP05 — original effort, receipt and reminder integration
+
+Released3102/3103/3121/3127 retain the original CRM Task, Planning writer,
+actor/business/version checks and durable receipt path; exact source/deployment
+identities and limitations are in Master§4.0 and the existing E05 acceptance packet.
+Saved effort is an input, not confirmed capacity. A saved reminder time is not
+notification delivery. Target-business Admin authority must use the original
+native predicate; an unrelated global role label cannot stand in for it or add
+a contradictory presentation-only prerequisite. Actor/loading and unknown-result
+fences still apply; repeat work only after authoritative original-operation readback.
+
+Source-conserved build inputs support a current render only when every actual
+input hash matches; a manifest alone never proves a screenshot. Immediate stale
+board captures must remain excluded when current DOM describes a dialog; inspect
+a settled original frame instead. Synthetic UI/native fixtures remain distinct
+from genuine caller authority, saved business records/Rails, reload, both-chat,
+universal SOLO and full Experience acceptance. No second scheduler/ledger/runtime.

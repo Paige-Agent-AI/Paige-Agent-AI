@@ -53,7 +53,7 @@ export function classifyProviderFailure(e: ProviderFailureEvidence): ProviderFai
   const msg = typeof e.message === "string" ? e.message.slice(0, 2000) : "";
 
   // Codes and types the providers define for exactly these conditions.
-  if (code === "insufficient_quota" || code === "billing_hard_limit_reached" || code === "billing_not_active") return "billing";
+  if (code === "insufficient_quota" || code === "billing_hard_limit_reached" || code === "billing_not_active" || code === "credit_balance_exhausted") return "billing";
   if (code === "rate_limit_exceeded" || type === "rate_limit_error") return "rate_limit";
   if (code === "model_not_found" || type === "not_found_error") return "model_unavailable";
   if (type === "authentication_error" || code === "invalid_api_key" || status === 401) return "auth_config";

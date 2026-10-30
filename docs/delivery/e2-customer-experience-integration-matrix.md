@@ -3329,3 +3329,124 @@ action receipt. Corrections reread the original writer; no automatic Memory or
 cross-tenant feedback. Source/review/CI/merge/deployment/authenticated verification
 and founder acceptance remain separate. Full19/nine and original3018 material
 finding stay OPEN; historical9PASS0FAIL and12PASS0FAIL4BLOCKED are preserved.
+
+## October30 O01/O02/O16 weekly acquisition repair — development
+
+All original19 outcome definitions and nine analytics remain required. The
+latest interrupted weekly request is preserved; exact production-parent cause
+and repaired customer acceptance remain unverified. EXP02 is the one bounded
+implementer under original E01 architecture custody and precise E08/E09 handoffs.
+
+Permitted input is the original caller-authorized conversation/class, unchanged
+tool manifest and business evidence. The existing Responses parser exposes
+whether semantic output started; only a proven presemantic terminal provider
+failure may enter the original Fabric classifier/mayFallback/candidates. Every
+fallback rechecks current authority. Text, tools, refusals, reasoning, uncertain
+envelopes, cancellation and authority/budget refusal prevent replay. Root forwards
+the true request signal in only five existing option objects; no new runner,
+provider configuration, business writer, approval or Rail action is introduced.
+
+Useful output remains the original weekly explanation with accurate periods,
+currency, sources and unavailable coverage, persisted by original Chat settlement.
+Evaluation: incumbent source177PASS8FAIL; current Fabric196/0 and adapter106/0,
+including abort races, fragmented input, per-attempt traces and forbidden replay.
+An additional unreleased pre-header abort probe exposed a cancellation-label
+defect, corrected with failure-first194/2 and105/1 ->196/0 and106/0 controls.
+Root whole-file inverse and original assertions are preserved. Final source-pin
+review/negative controls/exact CI/deployment/readback and actual weekly answer,
+reload, interruption, legitimate cohorts/roles/Live remain owed. See
+[bounded evidence](../evidence/ui-delivery/e2-weekly-model-recovery.md).
+
+Algorithm support: deterministic transport state and canonical failure policy;
+business scoring/prediction N/A for this slice. ALG03/06/11/12Partial/13Unverified
+and catalogue3ComingSoon/3Limited/3Unverified/allAccessUnverified unchanged.
+No automatic Knowledge/Memory promotion, cross-tenant learning, causal business
+improvement claim or founder acceptance follows from recovery or source tests.
+
+## October30 weekly review follow-up — exact exhausted-credit code
+
+O01/O02/O16 and the original nineteen outcomes remain open. The preceding
+transport repair #3132 released as `72b6188779018c3a4dca550727e1cda2eeafcc64`:
+reviewed07166/all11 exact checks and both web statuses passed; production web
+and original four-function source certification succeeded after one diagnosed
+normal retry. The original failed source check and scratch-cleanup debt remain
+separate. Actual ordinary-owner weekly QA STILL FAILED; the same request and
+INTERRUPTED result survived full reload. Protected ANT52/4f15b03d holds the
+customer evidence. Source release is not reliable briefing acceptance.
+
+The next bounded REPAIR recognizes only `credit_balance_exhausted` as the
+existing canonical billing failure class. The adapter already forwards the
+provider code; existing Fabric policy already allows a proven presemantic
+billing failure to use an admitted fallback after current authority and budget.
+No parser, Root, provider setting, candidate order, spending policy, business
+writer, approval, runtime or receipt store changes. A message alone, a prefixed
+unknown code, semantic output and uncertain work never authorize replay.
+
+| Original outcome / owner | Decision, inputs and uncertainty | Evaluation and acceptance boundary |
+| --- | --- | --- |
+| O01/O02/O16; E02 consumer/repair, original E01 conversation architecture | Existing provider error code -> `classifyProviderFailure` -> existing `mayFallback`/per-attempt authority/budget -> original candidate/turn settlement. Live traces show exhausted primary credits, but lack exact model-parent correlation; no new CPU-cause assertion. | Supporting immutable source8f83c962; genuine failure-first Fabric202/2 and adapter108/1 become204/0 and109/0. Original131 source pins/29 dispatches reproduce through the one-line inverse before one reviewed pin renewal. Native Deno, final negative controls/review/exact CI, original release/readback and actual useful weekly answer/reload remain owed. |
+
+Algorithm Support: exact deterministic error classification, not new business
+scoring, prediction, learning or an ALG maturity promotion. Original source
+inputs and varied positive/negative controls are the repeatability baseline;
+useful-result measure is an actual sourced answer retained after reload.
+Orchestration: read-only analysis and original conversation settlement; business
+ActionAdapter/Layer C/domain mutation/Rail completion are not introduced.
+Capabilities: original nine remain3ComingSoon/3Limited/3Unverified and all
+account-accessUnverified. Functional source proof, unchanged visual source,
+partial interruption recovery and OPEN founder acceptance remain distinct.
+The current follow-up has its own [delivery evidence](../evidence/ui-delivery/e2-weekly-credit-code.md).
+
+## October30 original Billing producer current-authority repair — development
+
+Original19 definitions/IDs and nine analytics remain unchanged. This supports
+authorized-work/evidence/continuity integrity (O12/O13/O16) and EXP08's original
+Team consumer; it does not add another Experience outcome or execution engine.
+
+Both original Billing writers now re-resolve their original current-workspace
+Owner scope after the SAME advisory wait and compare it with the retained
+initial locked workspace. They never retarget under a stale workspace lock.
+Original public ABI, all-workspace sole-primary refusal, contacts, atomic audit,
+metadata and ACL remain unchanged; no grant, payment or provider effect.
+
+Actual isolated original producer proof:8 changed-authority races FAIL before
+repair and PASS after, with2 unchanged-authority waited positives retained;
+4 causal mutants killed,9 prerequisite drift controls refuse atomically,
+whole metadata/idempotent replay and original validation/audit rollback PASS.
+Minimal Auth/workspace fixture ports are NOT hosted Auth/RLS/customer proof.
+Exact review/CI/managed Preview/native release after E05published80005 and before
+E08published80008, original-source readback, Team receiving composition and
+authenticated regression remain owed. [Bounded evidence](../evidence/ui-delivery/e2-billing-current-authority.md).
+
+Functional: local source/native proof. Visual: unchanged/no new acceptance.
+Experiential: original controls/context, hosted recovery still owed. Founder:
+OPEN. No catalogue or algorithm maturity promotion; this is deterministic
+authority validation, not predictive intelligence or causal business improvement.
+
+### October30 receiving correction — forward-only final transaction gate
+
+The preceding advisory-only proof is historical and does not close the later
+contact-row/audit wait finding. Original repaired80006 is already present in
+its managed Preview and remains byte-exact. Forward80007, in the SAME3142,
+revalidates the original scope after BOTH original writes, before RETURN;
+stale authority rolls contact and audit back together. Original `_t`, resolver,
+ABI, strict sole-primary rule, metadata/ACL and lock order remain unchanged.
+No new grant, executor, financial transaction, Team writer or activation.
+
+Actual source-native failure-first evidence retains4 contact and8 audit
+changed-authority failures against80006, with3 valid waited positives. Final
+local cc683091 source passes25 real waits,12 permission/tenant refusals,
+7 causal mutants,9 atomic drift refusals, missing-predecessor refusal and
+whole metadata/comments/replay/validation/audit rollback. Fixture Auth/scope
+ports exclude hosted Auth/RLS/recipient-trigger and customer acceptance.
+E05's original80005 production readback is received; E08 acknowledges80007
+before its first80008, and all59 open-PR manifests/current main have no80007
+collision. Applied history is preserved; final review, new exact-head CI,
+managed Preview, normal deployment/readback and receiving proof remain owed.
+3142 and dependent3130 remain HOLD until those gates pass.
+
+Functional: bounded native proof PASS; production repair unverified. Visual:
+no interface source changes or new visual acceptance. Experiential: original
+controls/context preserved, authenticated regression owed. Founder Acceptance:
+all original19/nine OPEN. Algorithm and Capabilities maturity remain unchanged;
+original contact/audit currentness is not an executed business-action Rail receipt.

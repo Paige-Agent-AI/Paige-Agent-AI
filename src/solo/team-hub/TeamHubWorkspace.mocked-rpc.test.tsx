@@ -2315,13 +2315,14 @@ describe("EXP08 lifecycle: Team conversations switched off (mocked RPC)", () => 
 describe("original Team Hub source references", () => {
   const rootId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
   const replyId = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
+  const referenceCursorId = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbc";
   const channelId = "cccccccc-cccc-4ccc-8ccc-cccccccccccc";
   function source() {
     db.conversations.push(channel({ id: channelId, name: "source", unread: 4 }));
     db.messages[channelId] = [msg({ id: rootId, body: "Original source", reply_count: 120 })];
     db.replies[rootId] = [msg({ id: replyId, body: "Exact older reply", parent_message_id: rootId, created_at: "2026-10-28T09:00:00.123456+00:00" })];
     db.override.team_hub_message_reference = () => ({ ok: true, channel_id: channelId, thread_root_id: rootId, message_id: replyId,
-      cursor: { created_at: "2026-10-28T09:00:00.123456+00:00", id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbc" } });
+      cursor: { created_at: "2026-10-28T09:00:00.123456+00:00", id: referenceCursorId } });
   }
   it("reopens and focuses the exact old reply via its native cursor in StrictMode", async () => {
     source();
@@ -2330,7 +2331,7 @@ describe("original Team Hub source references", () => {
     expect(host.querySelector('aside[aria-label="Thread"]')?.textContent).toContain("Exact older reply");
     expect(document.activeElement?.id).toBe(`th-msg-${replyId}`);
     const read = calls.find(c => c.name === "team_hub_list_messages" && c.params.p_thread_root === rootId)!;
-    expect(read.params).toMatchObject({ p_channel_id: channelId, p_before: "2026-10-28T09:00:00.123456+00:00", p_before_id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbc" });
+    expect(read.params).toMatchObject({ p_channel_id: channelId, p_before: "2026-10-28T09:00:00.123456+00:00", p_before_id: referenceCursorId });
     expect(calls.filter(c => c.name === "team_hub_list_messages" && c.params.p_thread_root === rootId)).toHaveLength(1);
     expect(calls.some(c => c.name === "team_hub_post_message")).toBe(false);
     expect(calls.some(c => c.name === "team_hub_mark_read" && c.params.p_channel_id === channelId)).toBe(false);
@@ -2389,7 +2390,7 @@ describe("original Team Hub source references", () => {
       cursor:{created_at:"2026-10-28T09:00:00.123456+00:00",id:"dddddddd-dddd-4ddd-8ddd-ddddddddddde"}};
     const pending=deferred(),backendRead=mocks.rpc.getMockImplementation()!;
     mocks.rpc.mockImplementation(async(name:string,params:Record<string,unknown>)=>{
-      if(name==="team_hub_list_messages"&&params.p_thread_root===rootId&&params.p_before_id==="bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbc")await pending.promise;
+      if(name==="team_hub_list_messages"&&params.p_thread_root===rootId&&params.p_before_id===referenceCursorId)await pending.promise;
       return backendRead(name,params);
     });
     const {host}=await mount({}, {url:`/solo/account/team-hub?message=${replyId}`});

@@ -15,7 +15,7 @@
 
 import { detectVpAddress } from "../../supabase/functions/_shared/paige-context/vp-address";
 
-import { COMPOSER_SCOPE_FIELDS, composerScopeIdentityKey, type ComposerScopeIdentity } from "./paigeComposerScopeState";
+import { COMPOSER_SCOPE_FIELDS, composerScopeIdentityKey, type ComposerScopeIdentity } from "./paigeComposerScopeIdentity";
 
 const EVENT = "paige:prefill";
 const MAX = 4000;

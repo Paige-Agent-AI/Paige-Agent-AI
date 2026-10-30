@@ -1,0 +1,133 @@
+{
+  "controls": [
+    {
+      "height": 37.29999923706055,
+      "tag": "BUTTON",
+      "text": "Overview",
+      "width": 76.36250305175781
+    },
+    {
+      "height": 37.29999923706055,
+      "tag": "BUTTON",
+      "text": "Work",
+      "width": 52.04999923706055
+    },
+    {
+      "height": 37.29999923706055,
+      "tag": "BUTTON",
+      "text": "Projects",
+      "width": 68.1624984741211
+    },
+    {
+      "height": 37.29999923706055,
+      "tag": "BUTTON",
+      "text": "Delivery",
+      "width": 68.9749984741211
+    },
+    {
+      "height": 37.29999923706055,
+      "tag": "BUTTON",
+      "text": "Playbooks",
+      "width": 82.0250015258789
+    },
+    {
+      "height": 37.29999923706055,
+      "tag": "BUTTON",
+      "text": "Capacity",
+      "width": 71.9000015258789
+    },
+    {
+      "height": 37.29999923706055,
+      "tag": "BUTTON",
+      "text": "Review with ZION",
+      "width": 151.5625
+    },
+    {
+      "height": 44,
+      "tag": "BUTTON",
+      "text": "Procedures",
+      "width": 96.7249984741211
+    },
+    {
+      "height": 44,
+      "tag": "BUTTON",
+      "text": "Automations",
+      "width": 106.9875030517578
+    },
+    {
+      "height": 44,
+      "tag": "BUTTON",
+      "text": "Design with ZION",
+      "width": 128.97500610351562
+    },
+    {
+      "height": 44,
+      "tag": "BUTTON",
+      "text": "Refresh",
+      "width": 63.86249923706055
+    },
+    {
+      "height": 44,
+      "tag": "SUMMARY",
+      "text": "Inspect saved configuration",
+      "width": 176.8000030517578
+    },
+    {
+      "height": 44,
+      "tag": "BUTTON",
+      "text": "Pause future contacts",
+      "width": 143.6875
+    },
+    {
+      "height": 44,
+      "tag": "BUTTON",
+      "text": "View history",
+      "width": 91.0999984741211
+    },
+    {
+      "height": 44,
+      "tag": "A",
+      "text": "Review pending tasks",
+      "width": 122.4625015258789
+    },
+    {
+      "height": 44,
+      "tag": "A",
+      "text": "Open work",
+      "width": 62.91250228881836
+    }
+  ],
+  "documentWidth": 320,
+  "focus": {
+    "tag": "SUMMARY",
+    "text": "Inspect saved configuration"
+  },
+  "steps": [
+    "Step 1Recorded purpose 1Review the original business record before proposing the next action.",
+    "Step 2Recorded purpose 2Review the original business record before proposing the next action.",
+    "Step 3Recorded purpose 3Review the original business record before proposing the next action.",
+    "Step 4Recorded purpose 4Review the original business record before proposing the next action.",
+    "Step 5Recorded purpose 5Review the original business record before proposing the next action.",
+    "Step 6Recorded purpose 6Review the original business record before proposing the next action.",
+    "Step 7Recorded purpose 7Review the original business record before proposing the next action.",
+    "Step 8Recorded purpose 8Review the original business record before proposing the next action.",
+    "Step 9Recorded purpose 9Review the original business record before proposing the next action.",
+    "Step 10Recorded purpose 10Review the original business record before proposing the next action.",
+    "Step 11Recorded purpose 11Review the original business record before proposing the next action.",
+    "Step 12Recorded purpose 12Review the original business record before proposing the next action.",
+    "Step 13Recorded purpose 13Review the original business record before proposing the next action.",
+    "Step 14Recorded purpose 14Review the original business record before proposing the next action.",
+    "Step 15Recorded purpose 15Review the original business record before proposing the next action.",
+    "Step 16Recorded purpose 16Review the original business record before proposing the next action.",
+    "Step 17Recorded purpose 17Review the original business record before proposing the next action.",
+    "Step 18Recorded purpose 18Review the original business record before proposing the next action.",
+    "Step 19Recorded purpose 19Review the original business record before proposing the next action.",
+    "Step 20Recorded purpose 20Review the original business record before proposing the next action."
+  ],
+  "text": "Overview\nWork\nProjects\nDelivery\nPlaybooks\nCapacity\nReview with ZION\nProcedures\nAutomations\nAutomations\nDesign with ZION\n\nContact created\n→\nTask approval\n→\nOriginal work and receipt\n\nInternal task processes\n\nA new contact can prepare a task for your approval.\n\nRefresh\nClient kickoff preparation\n\nWhen a contact is created · Unsupported configuration · Execution support is not verified\n\nThis configuration cannot be enabled here. You can pause it.\n\nInspect saved configuration\n\nSaved status: Draft.\n\nMultiple steps are saved for design review. This control currently enables only one supported internal-task step.\n\nStep 1\n\nRecorded purpose 1\n\nReview the original business record before proposing the next action.\n\nStep 2\n\nRecorded purpose 2\n\nReview the original business record before proposing the next action.\n\nStep 3\n\nRecorded purpose 3\n\nReview the original business record before proposing the next action.\n\nStep 4\n\nRecorded purpose 4\n\nReview the original business record before proposing the next action.\n\nStep 5\n\nRecorded purpose 5\n\nReview the original business record before proposing the next action.\n\nStep 6\n\nRecorded purpose 6\n\nReview the original business record before proposing the next action.\n\nStep 7\n\nRecorded purpose 7\n\nReview the original business record before proposing the next action.\n\nStep 8\n\nRecorded purpose 8\n\nReview the original business record before proposing the next action.\n\nStep 9\n\nRecorded purpose 9\n\nReview the original business record before proposing the next action.\n\nStep 10\n\nRecorded purpose 10\n\nReview the original business record before proposing the next action.\n\nStep 11\n\nRecorded purpose 11\n\nReview the original business record before proposing the next action.\n\nStep 12\n\nRecorded purpose 12\n\nReview the original business record before proposing the next action.\n\nStep 13\n\nRecorded purpose 13\n\nReview the original business record before proposing the next action.\n\nStep 14\n\nRecorded purpose 14\n\nReview the original business record before proposing the next action.\n\nStep 15\n\nRecorded purpose 15\n\nReview the original business record before proposing the next action.\n\nStep 16\n\nRecorded purpose 16\n\nReview the original business record before proposing the next action.\n\nStep 17\n\nRecorded purpose 17\n\nReview the original business record before proposing the next action.\n\nStep 18\n\nRecorded purpose 18\n\nReview the original business record before proposing the next action.\n\nStep 19\n\nRecorded purpose 19\n\nReview the original business record before proposing the next action.\n\nStep 20\n\nRecorded purpose 20\n\nReview the original business record before proposing the next action.\n\n1 additional saved step is not shown. Review the complete process before making a decision.\n\nReading this design does not approve, enable or execute work. Provider readiness and results are not verified by saved settings.\n\nPause future contacts\nView history\nReview pending tasks\nOpen work\nHARNESS RENDER · SYNTHETIC DATA · NOT LIVE",
+  "url": "http://127.0.0.1:56483/solo/42/operations/playbooks?theme=dark&design=large",
+  "viewport": {
+    "height": 700,
+    "width": 320
+  }
+}

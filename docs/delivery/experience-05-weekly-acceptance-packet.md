@@ -1,3 +1,44 @@
+## October29 — weekly workload and Calendar review released; O02 remains open
+
+Original O02/O03 inputs and E5-CV1/CV2/CV5/CV9: #3091 reviewed ebb0fc7e6,
+lower-assurance review5703813142, merged19dded728/treea7415d89. #3093 reviewed
+b8f8a6ff8, lower-assurance review5704689335, mergedc7564183/tree2f110e56.
+Each passed all10 exact required checks/two web statuses; schema-free Preview
+correctly SKIPPED. Both actual merges preserve reviewed source and incoming
+peer implementations. Both normal Vercel releases READY; both official origins
+returned the exact respective versions and declared Operations modules.
+[Workload production receipt](../evidence/exp05-weekly-workload-production.json)
+and [Calendar production receipt](../evidence/exp05-weekly-calendar-production.json).
+No database migration, Edge source upload or capability activation is introduced.
+
+Functional: dated original Work effort can be compared with a selected person's
+explicit temporary net work-capacity input; unknown/undated work stays separate.
+An explicit Calendar read adds genuine native commitments/recorded overlaps,
+with original refresh/freshness, per-host business-week boundaries and withheld
+stale/refused results. Entered capacity is unchanged; no provider free/busy,
+actual working hours, feasible saved schedule or dependency optimization claimed.
+
+Visual: original workload source-bound responsive/theme/keyboard/native200%
+evidence and new Calendar20-frame responsive/interaction evidence retain their
+individual scope. New Calendar native200%/AT remains UNVERIFIED.
+
+Experiential: protected ANT52/c8eeddbf records bounded authorized ordinary-owner
+workload disclosure/person/engineering-only8h input, original Task read, stable
+Operations→Overview navigation and loaded-reload reset PASS. This is not actual
+business capacity, a saved edit or a second cohort. The fresh Calendar check
+redirected to a different active workspace: INVALID designated-account proof;
+closed only the owned tab before interaction. No account switch, message,
+approval, work/booking write or provider effect. Calendar customer proof is not
+borrowed from the parent workload check.
+
+Remaining O02: canonical effort correction/save/reopen; genuine deadlines,
+dependencies, availability and feasible alternatives; same ZION in both chats;
+current/new SOLO/role/RLS/revocation and original records/receipts/recovery.
+operations.department/catalogue and ALG-01/08/13 maturity remain PARTIAL, other
+algorithms unchanged. O05 Builder→O07 monitoring→O09 permitted updates remain
+the next owner-prioritized outcomes; all original ten and E5-CV1–E5-CV9 stay in
+scope. Founder NOT_ACCEPTED; STILL CODING / NOT_READY; one integrated evaluation.
+
 ## October29 — original automation draft preview source released
 
 Outcome05 / E5-CV1,CV5,CV9: the original stored automation draft now shows its
@@ -977,3 +1018,46 @@ and actual saved/receipt/cohort/both-chat proof remain owed. E04/E09 migration
 order is a pending receiving handoff; E04 original ZION Planning ABI remains
 separate. All ten outcomes/E5-CV1–9 and one integrated founder evaluation remain
 OPEN. Catalogue/operations.department PARTIAL; founder NOT_ACCEPTED/NOT_READY.
+
+## October30 UTC — saved-design source release and Task producer continuation
+
+Earlier source-only checkpoints above remain historical. #3097 closed the original
+3091/3093 Master rows and merged7b33ff3d after all10 exact checks/BOTH web statuses,
+schema-free PreviewSKIP and lower review5705422755. Its editing window returned
+to E04 then E02; no concurrent new Master edit is authorized by this packet.
+
+#3098 saved-design inspection mergedb696ea038b6e26b43c8d1787dc65c59da5c89b86
+from reviewed9bf995467 after all10 exact checks/BOTH web statuses/zero threads,
+PreviewSKIP and AUTHOR-REVIEW / LOWER ASSURANCE5705572872. Original203 assertions,
+16 frames/139 input pins and unchanged one-step guard retained. Vercel exact
+b696 READY; BOTH public origins00:02:40–42UTC serve buildb696-mvu7ftrs and the
+actual static module settings-integrations-CaOH2jQG.js, SHA256
+6bca20fa7e5d85cc331d052e4d7247a5a5d83311e58504e81fdbd78a3a463d01/all4 markers.
+GH3098/6511496787 retains source readback. This is source/web verified, NOT
+authenticated saved-design/full lifecycle/Rail/new-existing SOLO acceptance.
+
+The original native-order hold is resolved: E04#3099/native10 and E09#3100/native11
+are merged/published and production9/10/11eachONCE/frontier11,12ABSENT. Original
+Task executor OID289875/MD5bbcae6a52f1967ac78128ddb125491bb/service-onlyACL remains.
+Own native candidate normally composes mainb696 into26a08338; migration12 remains
+NEVER-APPLIED, exact source preserved. No applied history rewrite or activation.
+
+The newly advertised Task effort field exposed a pre-publication exact-approval
+gap in the actual original CRM handler. Bounded Task-only validation/summary now
+shows set35/zero/one/max/clear-to-unknown and combined original status/title,
+refusing malformed input or metadata replacement conflict before proposal. Actual
+handler104 cases, original CRM47 contracts/four suites and generator15 controls
+PASS. Native20 component checks/three actual two-connection races retain explicit
+synthetic peripheral Auth/access/hash/receipt ports; they are not native RLS/Rail.
+Full-schema225 pgTAP cases, hosted required exact-head CI/Preview/review and native
+deployment remain owed. Dependent original Operations editor stays separately
+preserved, not shipped ahead of native support. No new writer/approval/registry.
+
+This backend-visible-flow change has an explicit Visible-Flow-Impact trailer and
+[original approval evidence](../evidence/ui-delivery/exp05-task-effort-native.md).
+Four neutral unchanged-card frames prove bounded layout/focus, not authenticated
+stored approvals, full SOLO shell, native200%, AT or customer records. Native12
+and affected original Edge deployment/readback must precede production claims.
+All ten outcomes/E5-CV1–9, same ZION/both chats, O02 feasible saved plan then full
+O05/O07/O09, current/new SOLO/customer/founder acceptance remain OPEN. Catalogue
+and algorithms remain PARTIAL. STILL CODING / NOT_READY; no founder test request.

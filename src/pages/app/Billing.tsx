@@ -212,7 +212,7 @@ export default function Billing() {
                 <span className="text-lg font-semibold tabular-nums [text-wrap:balance]">
                   {owed} due{open > 0 ? ` across ${open} open invoice${open === 1 ? "" : "s"}` : ""}
                 </span>
-                {pastDue > 0 && !invoices.hasMore && (
+                {pastDue > 0 && !invoices.hasMore && invoices.pastDueKnown !== false && (
                   <span data-testid="payments-past-due" className="inline-flex items-center gap-1 text-sm font-medium tabular-nums">
                     <AlertCircle aria-hidden="true" className="h-3.5 w-3.5 self-center text-destructive" /> {pastDue} past due
                   </span>
@@ -234,6 +234,11 @@ export default function Billing() {
           </div>
         )}
       </header>
+      {!blocked && invoices.loaded && !empty && invoices.calendar && invoices.calendar.state !== "configured" && (
+        <p data-testid="invoice-calendar-note" role="status" className="mb-4 text-sm text-muted-foreground">
+          Due dates are shown as issued. We can’t confirm overdue status right now. Contact the business if you need help.
+        </p>
+      )}
 
       {invoices.error && !blocked && (
         <div role="alert" className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-destructive/40 px-4 py-3 text-sm">

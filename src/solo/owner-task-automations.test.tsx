@@ -81,7 +81,9 @@ describe("internal task process customer controls", () => {
   it.each([{ title: "Review", assignee_user_id: "unsupported" }, ["unsupported"], { title: "{{payload.contact_id}}" }])("keeps unsupported %j inspectable and safely pausable", config => {
     row.acts[0].config = config; view(); expect(screen.queryByRole("button", { name: "Review to enable" })).toBeNull();
     fireEvent.click(screen.getByText("Inspect saved configuration")); expect(screen.getByText(/This configuration cannot be enabled/)).toBeTruthy();
-    expect(document.querySelector("pre")!.textContent).toContain(JSON.stringify(config, null, 2).split("\n")[0]);
+    expect(document.querySelector(".sa-owner-task-design")).not.toBeNull();
+    expect(document.querySelector("pre")).toBeNull();
+    expect(m.control).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole("button", { name: "Pause future contacts" })); expect(m.control).toHaveBeenCalledExactlyOnceWith(row, "pause");
   });
   it("rejects multistep/bare-tool/external/dynamic/unsupported trigger shapes as enable choices", () => {
@@ -262,6 +264,48 @@ describe("original internal-task history inspection", () => {
   });
 });
 
+
+describe("saved process design inspection", () => {
+  const inspect = () => fireEvent.click(screen.getByText("Inspect saved configuration"));
+  it("shows actual ordered task purposes in a multistep design without enabling it", () => {
+    row.acts.push({ ...row.acts[0], id: "step2", position: 2, config: { title: "Prepare the kickoff", description: "Check the signed scope." } });
+    const before = JSON.stringify(row); view(); inspect();
+    const steps = document.querySelectorAll(".sa-owner-task-design li");
+    expect(steps).toHaveLength(2); expect(steps[0].textContent).toContain("Step 1");
+    expect(steps[1].textContent).toContain("Step 2"); expect(steps[1].textContent).toContain("Prepare the kickoff");
+    expect(document.body.textContent).toContain("Multiple steps are saved for design review");
+    expect(screen.queryByRole("button", { name: "Review to enable" })).toBeNull();
+    expect(m.control).not.toHaveBeenCalled(); expect(JSON.stringify(row)).toBe(before);
+  });
+  it("withholds arbitrary settings and external-step content from the design preview", () => {
+    row.acts[0].config = { title: "Review the brief", api_key: "secret-fixture-key" };
+    row.acts.push({ id: "other", position: 2, action_kind: null, tool_key: "send_email", config: { title: "Hidden outside action", token: "hidden-fixture-token" } });
+    row.process.trigger_config = { secret: "hidden-trigger-value" }; row.process.conditions = [{ secret: "hidden-condition-value" }];
+    view(); inspect(); const text = document.body.textContent ?? "";
+    expect(text).toContain("Review the brief"); expect(text).toContain("Additional saved settings are not displayed");
+    expect(text).toContain("Action support is unverified"); expect(text).toContain("Trigger settings and conditions need separate review");
+    expect(text).not.toMatch(/secret-fixture-key|hidden-fixture-token|hidden-trigger-value|hidden-condition-value|Hidden outside action/);
+    expect(document.querySelector("pre")).toBeNull(); expect(m.control).not.toHaveBeenCalled();
+  });
+  it.each(["{{payload.name}}", "${private}", "<% unsafe %>", "x".repeat(501), "\u202eReversed", "\u0000Hidden"])("does not present an invalid or dynamic title as a ready task: %j", title => {
+    row.acts[0].config = { title, extra: true }; view(); inspect();
+    expect(document.querySelector(".sa-owner-task-design")?.textContent).toContain("Literal task details need review");
+    expect(document.body.textContent).not.toContain(title); expect(m.control).not.toHaveBeenCalled();
+  });
+  it.each([[2, 1], [1, 1], [1, 3]])("retains recorded positions and warns about unsupported ordering: %j", (first, second) => {
+    row.acts[0].position = first; row.acts.push({ ...row.acts[0], id: "step2", position: second }); view(); inspect();
+    expect(document.body.textContent).toContain("Saved step order needs review");
+    const steps = document.querySelectorAll(".sa-owner-task-design li");
+    expect(steps[0].textContent).toContain(`Step ${first}`); expect(steps[1].textContent).toContain(`Step ${second}`);
+    expect(m.control).not.toHaveBeenCalled();
+  });
+  it("bounds oversized saved designs without implying all steps were inspected", () => {
+    row.acts = Array.from({ length: 21 }, (_, i) => ({ ...row.acts[0], id: `step${i}`, position: i + 1, config: { title: `Purpose ${i + 1}` } }));
+    view(); inspect(); expect(document.querySelectorAll(".sa-owner-task-design li")).toHaveLength(20);
+    expect(document.body.textContent).toContain("1 additional saved step is not shown");
+    expect(document.body.textContent).not.toContain("Purpose 21"); expect(m.control).not.toHaveBeenCalled();
+  });
+});
 
 describe("Operations host navigation contract", () => {
   function Location() { const location = useLocation(); return <output>{location.pathname}</output>; }

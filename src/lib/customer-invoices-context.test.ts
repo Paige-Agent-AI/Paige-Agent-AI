@@ -121,7 +121,7 @@ test("terminal metadata is the original accepted source, while withdrawal/interr
   assert.deepEqual(customerInvoicesTerminalSource(s,"late",{turn_state:{state}}),{content:"",metadata:{}});
 });
 
-test("uses canonical commercial amount labels only for exact safe integers and retains large native strings",async()=>{
+test("uses canonical exact-string commercial labels and retains large native strings",async()=>{
  const f=fixture();f.billing.calendar={state:"configured",zone:"America/New_York",local_date:"2026-10-29"};
  f.billing.invoices=[{...f.billing.invoices[0],amount_minor:"100",remaining_minor:"9007199254740993",provider_verified_minor:"25",manual_recorded_minor:"10",test_provider_minor:"5"}];
  const r=await read(f);if(r.status!=="available"||!r.data)throw Error("Expected original facts");
@@ -130,19 +130,19 @@ test("uses canonical commercial amount labels only for exact safe integers and r
  assert.ok(text.includes('"provider_verified":"USD 0.25"'));
  assert.ok(text.includes('"manual_recorded":"USD 0.10"'));
  assert.ok(text.includes('"test_provider":"USD 0.05"'));
- assert.ok(text.includes('USD 9007199254740993 minor units'));
+ assert.ok(text.includes('USD 90,071,992,547,409.93'));
  assert.equal(text.includes('90,071,992,547,409.92'),false);
  assert.equal(r.data.billing.invoices[0].remaining_minor,"9007199254740993");
 });
 
-for(const [currency,minor] of [["usd","9007199254740991"],["kwd","9007199254740991"],["eur","-9007199254740991"]])
- test("withholds rounded canonical labels even when the native minor value is a safe integer "+currency,async()=>{
+for(const [currency,minor,label] of [["usd","9007199254740991","USD 90,071,992,547,409.91"],
+ ["kwd","9007199254740991","KWD 9,007,199,254,740.991"],["eur","-9007199254740991","EUR -90,071,992,547,409.91"]])
+ test("retains every minor unit through the original exact-string formatter "+currency,async()=>{
   const f=fixture();f.billing.invoices[0].currency=currency;f.billing.invoices[0].remaining_minor=minor;
   f.billing.balances[0].currency=currency;f.billing.balances[0].remaining_minor=minor;
-  assert.equal(Number.isSafeInteger(Number(minor)),true,"Integer admission alone does not prove decimal presentation fidelity");
   const r=await read(f);if(r.status!=="available"||!r.data?.billing)throw Error("Expected original facts");
   const content=customerInvoicesMessages(r.data)[0].content;
-  assert.ok(content.includes(`${currency.toUpperCase()} ${minor} minor units (exact; inspect the original invoice)`));
+  assert.ok(content.includes(label));
   assert.equal(r.data.billing.invoices[0].remaining_minor,minor);
   assert.equal(r.data.billing.balances[0].remaining_minor,minor);
  });

@@ -25,7 +25,7 @@ const calendarDate=(v:unknown):v is string=>typeof v==="string"&&/^\d{4}-\d{2}-\
 const count=(v:unknown):v is number=>typeof v==="number"&&Number.isSafeInteger(v)&&v>=0;
 const currency=(v:unknown):v is string=>typeof v==="string"&&/^[a-z]{3}$/.test(v);
 // Captured money stays in original PostgreSQL decimal strings. Display delegates
-// to the original commercial formatter with an exact textual round-trip check;
+// directly to the original exact-string commercial formatter;
 // this consumer never calculates, clamps, aggregates, settles or writes money.
 const minor=(v:unknown,signed=false):v is string=>typeof v==="string"&&(signed?/^-?\d{1,50}$/:/^\d{1,50}$/).test(v);
 const invoiceKeys=["id","invoice_number","status","currency","issued_at","due_date","amount_minor","remaining_minor",
@@ -113,20 +113,10 @@ export async function readCustomerInvoicesContext(caller:Caller,actorInput:strin
 export function customerInvoicesMessages(context:CustomerInvoicesContext):Array<{role:"system";content:string}>{
  if(!context.snapshot||!context.billing)return[];
  const{tenant_id:_tenant,contact_id:_contact,...facts}=context.billing;
- // Reuse the ORIGINAL commercial presentation, only in its exact Number range.
- // Larger native strings stay explicit minor units; never round them merely to
- // obtain a display label. The original source facts are retained unmodified.
- const label=(value:string,currency:string)=>{
-  const exact=`${currency.toUpperCase()} ${value} minor units (exact; inspect the original invoice)`;
-  if(!Number.isSafeInteger(Number(value)))return exact;
-  const display=money(Number(value),currency),prefix=currency.toUpperCase()+" ";
-  const numeric=display.startsWith(prefix)?display.slice(prefix.length):"";
-  // Safe integer input alone does not prove that the original formatter's
-  // decimal division retained every minor unit. Validate its output digits,
-  // without calculating an amount or duplicating currency-exponent rules.
-  if(!/^-?(?:\d{1,3}(?:,\d{3})*|\d+)(?:\.\d+)?$/.test(numeric))return exact;
-  return BigInt(numeric.replace(/[,.]/g,""))===BigInt(value)?display:exact;
- };
+ // EXP04's original formatter accepts native integer text without a Number
+ // conversion. Its unknown-currency fallback also preserves exact minor units.
+ const label=(value:string,currency:string)=>money(value,currency,
+  `${currency.toUpperCase()} ${value} minor units (exact; inspect the original invoice)`);
  const presentation={...facts,invoices:facts.invoices.map(invoice=>({...invoice,display:{
   amount:label(invoice.amount_minor,invoice.currency),remaining:label(invoice.remaining_minor,invoice.currency),
   provider_verified:label(invoice.provider_verified_minor,invoice.currency),manual_recorded:label(invoice.manual_recorded_minor,invoice.currency),

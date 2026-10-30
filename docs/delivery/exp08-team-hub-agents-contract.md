@@ -1896,6 +1896,49 @@ Owner ALL50/every-dispatch amendment incorporated2026-10-30: originalANT87/50784
 
 Originalknown-copyrepair disposition: TeamHub paused-access sentence now matches approved prototype 'your permissions are unchanged'; existing three switched-off access mounted cases PASS, no permission behavior change. Original source note above retained as historical. Initial wrong test-name filter skipped all123 and is NOT passing evidence.
 
+## October 30 native identity-currentness repair — built locally, release proof owed
+
+Original matrix rows4/13/16 retain their full scope. Sequential child commit `2d0eb4c44`
+extends the ORIGINAL admission helpers; it is not an Auth writer, session validator or new
+permission engine. `20271126140008_exp08_team_hub_identity_currentness.sql` adds matching
+existing Auth identity, non-deleted status and current ban expiry to `_team_hub_is_active`,
+reuses that predicate in `_team_hub_participates`, and locks the same matching Auth and
+membership rows in `_team_hub_hold_seats`. Existing tenant, membership, Conversations switch,
+selection and distinct-input behavior remain. Parent100008 remains a narrower caller-existence
+repair; neither migration alone proves every original door rechecks all authority at dispatch.
+
+The existing `scripts/proof/exp08-entity-owner-seat-ended.mjs` runner loads the actual original
+functions and `supabase/tests/exp08_team_hub_identity_currentness.sql`. Its baseline has22
+cases:8 fail before the repair; all22 pass afterward. Eight changed-predicate mutants are killed;
+36 source/metadata/ACL drift variants are refused without rewriting the drifted definition.
+Replay changes zero business rows and zero function metadata. Two actual PostgreSQL sessions
+exercise admission-first and revocation-first order, observe a real Auth-row lock wait and
+recheck changed identity availability afterward. These are disposable local PostgreSQL tests,
+not authenticated customer behavior, deployed full-schema proof or provider execution.
+
+| Original private function | Original body MD5 | Repaired body MD5 |
+| --- | --- | --- |
+| `_team_hub_is_active(uuid,uuid)` | c290399dc80d95d16116a0f88b0abd8c | 0bb50fd64a0410d09df23e7e6e29ab2d |
+| `_team_hub_participates(uuid,uuid)` | 4f2fb69d09f7b362027edf195a37da83 | 508c4d54cf9bbc3a233afbdad68e4325 |
+| `_team_hub_hold_seats(uuid,uuid[])` | af0dee455ee0413ee5b907505ff89acd | f607181e3473a846718ac317751d6af5 |
+
+Exact inverse/body guards preserve every other original statement; owner, invoker mode,
+private ACL, empty search path, signature, defaults, language and volatility are conserved.
+Expired/equal-now bans remain eligible; missing, soft-deleted, actively banned and mixed invalid
+selections abstain. This deterministic eligibility wiring maps to the existing ALG-01/08 boundary;
+no algorithm maturity or model-confidence authority is asserted. No customer identity, role or
+provider was changed to obtain evidence.
+
+Distinct non-author review of the local source reported no material finding; it did not rerun
+the native proof or certify production. Hosted exact-head CI, final current-main composition,
+managed Preview, ordered native release, catalogue/ACL readback and real customer negatives
+remain PROOF OWED. LOCAL_ONLY140008 is unpublished; renew the actual peer/frontier order
+before publication. E03's earlier proposed120003 was subsequently withdrawn, so its historical
+reservation is not an active predecessor hold. Preserve E13's independently owned Knowledge
+source and current ordering contract. Existing46 lifecycle/admission cases, original I1 holder-state
+20-case characterization, their mutation/drift controls and earlier two-session races remain in
+the SAME runner. No original matrix row is closed. Full assignment STILL CODING.
+
 ## October 30 receiving amendment: Solo bell and persistent activity panel
 
 **ACK / STILL CODING.** Owner explicitly approved adding the Solo notification bell and activity

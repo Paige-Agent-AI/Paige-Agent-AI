@@ -4,7 +4,7 @@
  * PROOF CLASS: automated (pure function).
  */
 import { describe, expect, it } from "vitest";
-import { rehydrateConfirmItems } from "./confirmPreview";
+import { parseConfirmPreview, rehydrateConfirmItems } from "./confirmPreview";
 
 const EMAIL = {
   to_name: "Maya Ortiz",
@@ -16,6 +16,14 @@ const EMAIL = {
 const item = (extra: Record<string, unknown>) => ({ tool: "comms_send_email", summary: "Email Maya", ...extra });
 
 describe("rehydrateConfirmItems", () => {
+  it("retains server-authored rich content through the same live/history parser without interpreting it", () => {
+    const preview = { ...EMAIL, body_html: '<p><strong>Original rich words</strong></p>' };
+    expect(parseConfirmPreview(preview)?.body_html).toBe(preview.body_html);
+    expect(rehydrateConfirmItems([item({ preview })])?.[0].preview?.body_html).toBe(preview.body_html);
+  });
+  it.each([null, 5, [], {}, "", "x".repeat(1_000_001)])("a declared malformed rich projection refuses the whole preview", body_html => {
+    expect(parseConfirmPreview({ ...EMAIL, body_html })).toBeUndefined();
+  });
   it("a malformed stored preview is dropped, the summary kept", () => {
     expect(rehydrateConfirmItems([item({ preview: { ...EMAIL, body_text: 5 } })])).toEqual([item({})]);
     expect(rehydrateConfirmItems([item({ confirm_preview: { ...EMAIL, subject: ["x"] } })])).toEqual([item({})]);

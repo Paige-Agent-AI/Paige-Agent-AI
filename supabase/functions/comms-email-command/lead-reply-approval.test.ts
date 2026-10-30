@@ -168,6 +168,7 @@ function withOriginalDraft(overrides:Row={}){
 test("saved draft check and approval use the same original door, source version and server rich HTML",async()=>{
  const w=withOriginalDraft();const p=await call(w,{draft_source:DRAFT_SOURCE});
  assert.equal(p.status,202,JSON.stringify(p.body));assert.equal(w.fetches.length,0);assert.equal(w.messages.length,1);
+ assert.equal((p.body.preview as Row).body_html,DRAFT_HTML,"review must expose the same server-read rich body being approved");
  assert.deepEqual((w.proposals[0].args as Row).draft_source,DRAFT_SOURCE);assert.equal((w.proposals[0].args as Row).draft_body_html,DRAFT_HTML);
  assert.match(String((w.proposals[0].args as Row).draft_body_digest),/^[a-f0-9]{64}$/);
  const sent=await call(w,{draft_source:DRAFT_SOURCE,approved_fingerprint:p.body.fingerprint});

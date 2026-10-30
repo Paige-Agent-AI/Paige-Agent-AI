@@ -460,6 +460,7 @@ Deno.serve(async req => {
     + (attachmentManifest ? commsEmailAttachmentSummary(attachmentManifest) : "")
     + (body.send_at !== undefined ? ` — scheduled for ${body.send_at.slice(0, 16).replace("T", " ")} UTC` : "");
   const preview = { kind: "email", to_name: parties.contactName, to_address: parties.recipient, from_address: parties.fromAddress, subject: command.subject, body_text: command.body,
+    ...(body.draft_source && draftBodyHtml !== undefined ? { body_html: draftBodyHtml } : {}),
     ...(body.send_at !== undefined ? { send_at: body.send_at } : {}),
     ...(attachmentManifest ? { attachments: commsEmailAttachmentPreview(attachmentManifest) } : {}) };
   if (preparedRecovery || body.approved_fingerprint === undefined) {

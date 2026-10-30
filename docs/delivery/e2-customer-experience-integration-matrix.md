@@ -3339,3 +3339,31 @@ Functional: local source/native proof. Visual: unchanged/no new acceptance.
 Experiential: original controls/context, hosted recovery still owed. Founder:
 OPEN. No catalogue or algorithm maturity promotion; this is deterministic
 authority validation, not predictive intelligence or causal business improvement.
+
+### October30 receiving correction — forward-only final transaction gate
+
+The preceding advisory-only proof is historical and does not close the later
+contact-row/audit wait finding. Original repaired80006 is already present in
+its managed Preview and remains byte-exact. Forward80007, in the SAME3142,
+revalidates the original scope after BOTH original writes, before RETURN;
+stale authority rolls contact and audit back together. Original `_t`, resolver,
+ABI, strict sole-primary rule, metadata/ACL and lock order remain unchanged.
+No new grant, executor, financial transaction, Team writer or activation.
+
+Actual source-native failure-first evidence retains4 contact and8 audit
+changed-authority failures against80006, with3 valid waited positives. Final
+local cc683091 source passes25 real waits,12 permission/tenant refusals,
+7 causal mutants,9 atomic drift refusals, missing-predecessor refusal and
+whole metadata/comments/replay/validation/audit rollback. Fixture Auth/scope
+ports exclude hosted Auth/RLS/recipient-trigger and customer acceptance.
+E05's original80005 production readback is received; E08 acknowledges80007
+before its first80008, and all59 open-PR manifests/current main have no80007
+collision. Applied history is preserved; final review, new exact-head CI,
+managed Preview, normal deployment/readback and receiving proof remain owed.
+3142 and dependent3130 remain HOLD until those gates pass.
+
+Functional: bounded native proof PASS; production repair unverified. Visual:
+no interface source changes or new visual acceptance. Experiential: original
+controls/context preserved, authenticated regression owed. Founder Acceptance:
+all original19/nine OPEN. Algorithm and Capabilities maturity remain unchanged;
+original contact/audit currentness is not an executed business-action Rail receipt.

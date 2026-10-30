@@ -1,5 +1,5 @@
 -- Forward-only final transaction authority check after original contact and audit writes.
--- Preserve Preview-applied80006; proposed80007 precedes EXP08 published80008.
+-- Preserve Preview-applied80006; reserved80007 precedes EXP08 published80008.
 -- No new function, grant, table, caller, lock order, provider act or target-workspace ABI.
 BEGIN;
 SET LOCAL lock_timeout = '2s';
@@ -10,7 +10,7 @@ DECLARE
   original_oid oid;
   before_metadata jsonb;
   corrected text;
-  anchor text := '  RETURN jsonb_build_object('; 
+  anchor text := '  RETURN jsonb_build_object(';
   addition text := E'  -- Revalidate after all contact and audit writes; a refusal rolls back both.\n'
     '  IF public.platform_billing_workspace_owner_scope() IS DISTINCT FROM _t THEN\n'
     '    RAISE EXCEPTION ''billing_workspace_owner_only'' USING ERRCODE = ''42501'';\n'

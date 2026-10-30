@@ -19,7 +19,7 @@ import type { User } from "@supabase/supabase-js";
 import { AppNav } from "@/components/app/AppNav";
 import Messages from "@/pages/app/Messages";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
-import { harnessUser } from "./stubs";
+import { harnessUser, restoreHarnessHistory } from "./stubs";
 import "@/index.css";
 
 const params = new URLSearchParams(window.location.search);
@@ -50,6 +50,11 @@ createRoot(document.getElementById("root")!).render(
     <QueryClientProvider client={client}>
       <BrowserRouter>
         <div className="h-dvh min-h-0 flex flex-col bg-background overflow-x-hidden" data-harness-app>
+          {["malformed", "partial"].includes(params.get("state") ?? "") && (
+            <button type="button" onClick={restoreHarnessHistory} className="min-h-[44px] border-b bg-muted px-4 text-sm text-foreground">
+              Restore synthetic response (test control)
+            </button>
+          )}
           <div style={{ display: "contents" }} data-harness-region="nav">
             <AppNav user={user} />
           </div>

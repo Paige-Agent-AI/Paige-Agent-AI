@@ -1,0 +1,34 @@
+{
+  "head": "f7281451b56b3a27b3d715e715687759e073b488",
+  "main": "05519c969224c682aeba8f3230adbbc2addde5e4",
+  "incomingLeavesPreserved": 18628,
+  "compiledProductInputsVerified": 125,
+  "frames": [
+    {
+      "path": "mineral-1366-admin.png",
+      "sha256": "d2adc2c210ef7d49595236be2eda540b80549c6d7039076fb7210050ad8ab91f"
+    },
+    {
+      "path": "mineral-1366-edited.png",
+      "sha256": "e8090c5564c170fad09332dce6335b1abe05c17f7db885696bee966461827e25"
+    },
+    {
+      "path": "obsidian-320-admin.png",
+      "sha256": "6f5ccd28fb263cc0e3bc45bc68fef2293fa63effbd0ffd3220c560d5e14765c9"
+    },
+    {
+      "path": "light-1366-denied-confirmed.png",
+      "sha256": "fa302a2703ba2fef942e923561ab7a645f8ade05ffc745c7010b429d07f6689e"
+    },
+    {
+      "path": "dark-320-loading-confirmed.png",
+      "sha256": "66e0f5672b67ca4003463d5b33cdc356accf466f45e07e245dfb8b40e8f964cf"
+    },
+    {
+      "path": "light-320-wrong-actor-confirmed.png",
+      "sha256": "f9a35a0d6826f2191223df26462b0332cc72d06198ea2df94d7f4fba03026f6b"
+    }
+  ],
+  "excluded": "Three immediate stale screenshots remain private EXCLUDED; no image editing or inferred customer proof.",
+  "boundary": "OFFLINE original OperationsWorkspace/inspector; synthetic neutral ports; no actual auth/record/approval/provider/Rail/full-shell proof"
+}

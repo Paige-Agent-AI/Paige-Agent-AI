@@ -4952,3 +4952,50 @@ port and same components; no blanket20-of20 or whole-transitive claim. All exact
 final review/hosted gates, normal release/readback and corrected ordinary-user
 proof must be renewed before readiness. Shared40008→E05forward50005 order, E09
 held financial consumer and delegated-management assessment remain separate.
+
+### C150 — Original provider refund/dispute readback — October30
+
+Same sole EXP04/MERIT/full12. Parent3129 remains frozen at reviewed
+f5a7f251cb130892448c3f29108f70435add50ca, all13 check-runs+both web SUCCESS,
+READY/not merged. Production70005 is observed; original E05 published75005 must
+normally precede own immutable80004. No peer merge or native/activation bypass.
+
+LOCAL REUSE+EXTEND: GET-only methods on the SAME pinned Stripe17.5 client and
+original stripe-hosted.ts, requiring the original verified capture, operation,
+merchant/environment, invoice/intent metadata and available capture balance.
+Complete bounded refund/dispute pagination refuses duplicate, truncated, stale,
+inconsistent or unsupported facts. The final full capture/metadata fingerprint
+refuses a changed source. Original settlement/create/read bodies are retained;
+no refund POST, new client, balance ledger, scheduler or invoice calculation.
+
+Refund success/pending/action-required/failure/cancellation and actual debit/
+failure-credit entries stay distinct. Dispute status never substitutes for actual
+withdrawal/reinstatement entries. Raw provider/customer/error content is excluded.
+All391 original+54 new assertions PASS in18 suites. Original17 test files and
+hosted implementation inverse remain exact. The new-contract41 missing-function
+failures are not a production incident. Initial syntax failure is excluded; three
+NEW positive fixture aggregates were corrected, without weakening any assertion
+or guard. A separate causal final-metadata-fence failure/53 controls preceded its
+repair. Final445 PASS, lint3paths0, actual pinned SDK Deno2.9.8 check plus private
+lock/frozen check PASS; lock SHA256
+451e4cea176b18f0909312eccedec14a816a87700ec14a4b6020a93693faa821.
+
+This helper remains UNMOUNTED/LOCAL. Native context/authority, append-only original
+adjustment receipts, exact event location/idempotency, settled-work recovery,
+canonical balance/Collections hold, owner/Chat/private-Portal readback and actual
+provider/customer proof are still OWED. A provider refund does not forgive signed
+debt or authorize more collection. PAIGE's invoice remains the receivable; any
+commercial credit/amendment is a separate reviewed original-record decision.
+
+Existing sales_invoice.read/payment_request stay PARTIAL; refund/credit execution
+is UNAVAILABLE. Reuse original signed ingress/native work/Harness/Trust/Rail; E02
+reads/E03 Communications/E05 Work/E08 shared Chat/E09 Portal retain their writers.
+ALG01/12 bounded LOCAL comparison/abstention only;02/13/maturity unchanged. No new
+UI, hosted financial acceptance, CentralQA or founder completion is claimed.
+
+Primary sources: [refund objects](https://docs.stripe.com/api/refunds/object),
+[refund pagination](https://docs.stripe.com/api/refunds/list),
+[disputes](https://docs.stripe.com/api/disputes/object),
+[dispute pagination](https://docs.stripe.com/api/disputes/list), and
+[credit versus refund](https://docs.stripe.com/invoicing/integration/programmatic-credit-notes).
+Newer documentation does not upgrade the existing API pin or activate a provider.

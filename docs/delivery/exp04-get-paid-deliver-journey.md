@@ -15,6 +15,19 @@ Five whole-file inverses verify all other bytes and plans. Migration15 is now
 durably Preview-applied and stays immutable; no runtime or permission edit.
 Renew exact-head review and full CI before any ordinary source release.
 
+The renewed8dd whole database job still FAILED at exactly the two E04 status
+proofs; all repaired Portal fixture steps passed. Its historical04 replay
+correctly refuses the later15 billing-wrapper source. Keep both applied
+migrations immutable. In the existing isolated replay fixture only, capture
+all twelve complete final function records, restore the exact original
+billing body through its already-verified inverse, run unchanged04 and ALL
+eight original replay/calendar checks, then restore the exact final wrapper
+definition and require twelve-record conservation. Original eight-check body
+is byte-exact. The observed8dd refusal is retained as the genuine negative;
+this positive replay is explicitly under historical compatible inputs, not
+a claim that old04 accepts changed current prerequisites. No production
+execution, migration ledger or workflow relaxation. New full CI still owed.
+
 The connected O1–O4 outcome is unchanged. Production advanced through EXP03
 #3105/b763e1937366376dd35a7fe1d1f21da6652f0b27 to migration
 20271126010014 while original E05 Task12 and this factor13 remained absent.

@@ -17,6 +17,7 @@ await page.waitForFunction(()=>window.smsLocationCalls?.length===2);
 const calls=await page.evaluate(()=>window.smsLocationCalls);assert.equal(calls.length,2);for(const call of calls){assert.equal(call.result.proceed,false);assert.equal(call.result.queueUntil,null);}
 const geometry=await dialog.evaluate(el=>{const r=el.getBoundingClientRect();return{fits:r.x>=0&&r.y>=0&&r.right<=innerWidth+1&&r.bottom<=innerHeight+1,horizontal:document.documentElement.scrollWidth>innerWidth};});
 assert.equal(geometry.fits,true);assert.equal(geometry.horizontal,false);assert.deepEqual(errors,[]);
+await page.waitForFunction(()=>[...document.querySelectorAll('[data-sonner-toast]')].some(el=>{const r=el.getBoundingClientRect();return el.textContent.includes("Couldn't verify the recipient's time zone")&&r.top>=0&&r.bottom<=innerHeight&&getComputedStyle(el).opacity==='1';}));
 await page.screenshot({path:path.join(out,theme+'-'+width+'.jpg'),type:'jpeg',quality:85});
 await dialog.locator('textarea').press('Escape');await dialog.waitFor({state:'hidden'});
 await page.getByRole('button',{name:'Reopen conversation'}).click();await dialog.waitFor();assert.equal(await dialog.locator('textarea').inputValue(),'');

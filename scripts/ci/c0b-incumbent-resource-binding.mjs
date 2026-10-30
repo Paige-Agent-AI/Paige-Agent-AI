@@ -1208,7 +1208,7 @@ const SOURCES = {
   // EXP03 October30 source review / LOWER ASSURANCE: SMS missing/invalid recipient timezone
   // now refuses via the existing error disposition; tenant/default zone is not recipient location.
   // Consent/suppression precedence, email behavior and every original validator/assertion retained.
-  "supabase/functions/_shared/pre-send-pipeline.ts": "9078ba89e3e206be326d8a13d61b6cd205a980229aa74dd435e7e5963470eb01",
+  "supabase/functions/_shared/pre-send-pipeline.ts": "308f96819715d49349f40a57cea35a6b870d4c5192866305288a9283c71e45df",
   // SendGrid Inbound Parse review fix M4a (2026-10-27), AUTHOR-REVIEW / LOWER ASSURANCE: adds
   // lookupClientIdByAddress (same client_id_for_address RPC, same log line, but returns the error instead of
   // reading it as "not found"); findClientIdByAddress now delegates to it and returns its `.id`, so every

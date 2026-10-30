@@ -38,13 +38,13 @@ describe("runPreSend suppression reasons", () => {
 
 const TENANT = "11111111-1111-4111-8111-111111111111";
 const CONTACT = "22222222-2222-4222-8222-222222222222";
-function dispatchFixture(options: { timezone?: unknown; finalTimezone?: unknown; clientMissing?: boolean; clientError?: boolean; consent?: string; suppressed?: boolean; tenantTimezone?: string } = {}) {
+function dispatchFixture(options: { timezone?: unknown; finalTimezone?: unknown; verified?: unknown; clientMissing?: boolean; clientError?: boolean; consent?: string; suppressed?: boolean; tenantTimezone?: string } = {}) {
   let clientReads = 0;
   return { from(table: string) {
     const q = {
       select: () => q, eq: () => q, or: () => q, order: () => q,
       limit: async () => ({ data: table === "paige_suppressions" ? options.suppressed ? [{ id: "suppression", reason: "user_stop" }] : [] : [{ action: options.consent ?? "granted" }], error: null }),
-      maybeSingle: async () => table === "clients" ? { data: options.clientMissing ? null : { dnd_active: false, timezone: ++clientReads > 1 && Object.hasOwn(options, "finalTimezone") ? options.finalTimezone : options.timezone }, error: options.clientError ? { message: "synthetic unavailable" } : null }
+      maybeSingle: async () => table === "clients" ? { data: options.clientMissing ? null : { dnd_active: false, timezone_verified: Object.hasOwn(options, "verified") ? options.verified : true, timezone: ++clientReads > 1 && Object.hasOwn(options, "finalTimezone") ? options.finalTimezone : options.timezone }, error: options.clientError ? { message: "synthetic unavailable" } : null }
         : { data: { autosend_dnd_enabled: false, autosend_dnd_timezone: options.tenantTimezone ?? "America/New_York" }, error: null },
     };
     return q;
@@ -52,9 +52,14 @@ function dispatchFixture(options: { timezone?: unknown; finalTimezone?: unknown;
 }
 const sms = { tenantId: TENANT, contactId: CONTACT, channel: "sms" as const, to: "+12025550123", now: new Date("2026-10-30T16:00:00Z") };
 describe("SMS dispatch requires the recipient's known timezone", () => {
+  for (const verified of [false, undefined, null, "true"]) it(`refuses an unconfirmed recipient zone (${String(verified)})`, async () => {
+    const r = await runPreSend(dispatchFixture({ timezone: "America/New_York", verified }), sms);
+    assert.equal(r.proceed, false); assert.equal(r.outcome, "error"); assert.equal(r.queueUntil, null);
+  });
   for (const [label, options] of [
     ["missing", {}], ["null", { timezone: null }], ["blank", { timezone: " " }],
     ["invalid", { timezone: "not/a-zone" }], ["non-string", { timezone: 7 }],
+    ["UTC is not a recipient location", { timezone: "UTC" }], ["fixed offset", { timezone: "Etc/GMT+5" }], ["abbreviation", { timezone: "EST" }],
     ["missing contact", { clientMissing: true }], ["failed contact read", { clientError: true }],
     ["tenant zone cannot supply recipient location", { tenantTimezone: "Pacific/Honolulu" }],
   ] as const) it(`holds ${label} without inventing a release time`, async () => {

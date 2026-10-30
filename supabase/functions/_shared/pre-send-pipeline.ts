@@ -376,10 +376,12 @@ export async function runPreSend(
       // Consent/preferences above may have awaited a changed contact. Read the original
       // tenant-scoped recipient again at THIS decision; the early DND snapshot is not location proof.
       if (!cid) throw new Error("missing_recipient_contact");
-      const { data: recipient, error } = await admin.from("clients").select("timezone")
+      const { data: recipient, error } = await admin.from("clients").select("timezone,timezone_verified")
         .eq("id", cid).eq("tenant_id", tenantId).maybeSingle();
-      if (error || typeof recipient?.timezone !== "string" || !recipient.timezone.trim()) throw new Error("missing_recipient_zone");
+      if (error || recipient?.timezone_verified !== true || typeof recipient.timezone !== "string" || !recipient.timezone.trim()) throw new Error("missing_recipient_zone");
       tz = recipient.timezone.trim();
+      // Fixed offsets and abbreviations do not identify a recipient location or its DST rules.
+      if (!tz.includes("/") || tz.startsWith("Etc/")) throw new Error("nonregional_recipient_zone");
       new Intl.DateTimeFormat("en-US", { timeZone: tz });
     } catch {
       return { proceed: false, outcome: "error", reason: "Couldn't verify the recipient's time zone. Confirm their current location before sending this text.", queueUntil: null };

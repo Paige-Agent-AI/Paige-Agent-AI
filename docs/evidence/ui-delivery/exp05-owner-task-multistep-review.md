@@ -18,7 +18,7 @@ REDUCED_MOTION: NOT_APPLICABLE: no motion, animation or preference behavior chan
 STATE_COVERAGE: PASS: one/two/twenty-step review; empty/loading/refused; unsupported/external/dynamic/duplicate/incorrect-position/oversized chain; busy response and current-context retirement retain original controls.
 TRUTHFUL_STATE_LABELS: PASS: saved, enabled and executed remain distinct; each later Task still requires its own original approval and canonical result. Existing catalogue and algorithm maturity retained.
 SOLO_UI: YES: existing internal-task process review in Operations/Playbooks and Settings/Automations; original domain/hook/caller only.
-UNVERIFIED: complete Workflow Automation Builder, scheduled/event/provider coverage, native full-schema concurrency, actual caller/cohort authority, both chats/eligible Live, native zoom/AT and final founder acceptance remain open.
+UNVERIFIED: final Operations/Playbooks host rendering (the captured actual frame is Settings/Automations), complete Workflow Automation Builder, scheduled/event/provider coverage, native full-schema concurrency, actual caller/cohort authority, both chats/eligible Live, native zoom/AT and final founder acceptance remain open.
 OWNER_INTENT: complete EXP05 O05/O06 review-to-authorized-execution for equivalent eligible current/new SOLO businesses; this slice makes every supported original Task visible before the decision.
 MUST_NOT_HAPPEN: approving one step must not authorize another; a partial list, source change, stale scope or lost acknowledgment must not enable or replay work; recorded order must not imply dependency scheduling.
 MUST_PRESERVE: original one-step behavior/copy, actor/business/currentness/version fences, exact native control, saved process inspection, approvals/history/Work destinations and protected neighboring Experiences.
@@ -77,6 +77,8 @@ was relaxed. Fresh CSS builds original index/PAIGE/Settings sources; the actual
 React frame/hook/caller is serialized with synthetic identity/backend ports.
 Current input hashes match render-manifest.json. Eight fast-loop screenshots,
 two stale narrow frames and prototype images are excluded from committed proof.
+The manifest retains its pre-capture pending marker; geometry.json records the
+subsequent actual browser captures rather than rewriting that historical state.
 Raw browser bytes are JPEGs; extensions corrected by byte-preserving copies,
 not image edits. The bridge's one-pixel1536 capture boundary is explicit.
 

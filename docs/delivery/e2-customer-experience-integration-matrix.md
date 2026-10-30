@@ -3279,3 +3279,36 @@ business scoring/prediction N/A for this slice. ALG03/06/11/12Partial/13Unverifi
 and catalogue3ComingSoon/3Limited/3Unverified/allAccessUnverified unchanged.
 No automatic Knowledge/Memory promotion, cross-tenant learning, causal business
 improvement claim or founder acceptance follows from recovery or source tests.
+
+## October30 weekly review follow-up — exact exhausted-credit code
+
+O01/O02/O16 and the original nineteen outcomes remain open. The preceding
+transport repair #3132 released as `72b6188779018c3a4dca550727e1cda2eeafcc64`:
+reviewed07166/all11 exact checks and both web statuses passed; production web
+and original four-function source certification succeeded after one diagnosed
+normal retry. The original failed source check and scratch-cleanup debt remain
+separate. Actual ordinary-owner weekly QA STILL FAILED; the same request and
+INTERRUPTED result survived full reload. Protected ANT52/4f15b03d holds the
+customer evidence. Source release is not reliable briefing acceptance.
+
+The next bounded REPAIR recognizes only `credit_balance_exhausted` as the
+existing canonical billing failure class. The adapter already forwards the
+provider code; existing Fabric policy already allows a proven presemantic
+billing failure to use an admitted fallback after current authority and budget.
+No parser, Root, provider setting, candidate order, spending policy, business
+writer, approval, runtime or receipt store changes. A message alone, a prefixed
+unknown code, semantic output and uncertain work never authorize replay.
+
+| Original outcome / owner | Decision, inputs and uncertainty | Evaluation and acceptance boundary |
+| --- | --- | --- |
+| O01/O02/O16; E02 consumer/repair, original E01 conversation architecture | Existing provider error code -> `classifyProviderFailure` -> existing `mayFallback`/per-attempt authority/budget -> original candidate/turn settlement. Live traces show exhausted primary credits, but lack exact model-parent correlation; no new CPU-cause assertion. | Supporting immutable source8f83c962; genuine failure-first Fabric202/2 and adapter108/1 become204/0 and109/0. Original131 source pins/29 dispatches reproduce through the one-line inverse before one reviewed pin renewal. Native Deno, final negative controls/review/exact CI, original release/readback and actual useful weekly answer/reload remain owed. |
+
+Algorithm Support: exact deterministic error classification, not new business
+scoring, prediction, learning or an ALG maturity promotion. Original source
+inputs and varied positive/negative controls are the repeatability baseline;
+useful-result measure is an actual sourced answer retained after reload.
+Orchestration: read-only analysis and original conversation settlement; business
+ActionAdapter/Layer C/domain mutation/Rail completion are not introduced.
+Capabilities: original nine remain3ComingSoon/3Limited/3Unverified and all
+account-accessUnverified. Functional source proof, unchanged visual source,
+partial interruption recovery and OPEN founder acceptance remain distinct.

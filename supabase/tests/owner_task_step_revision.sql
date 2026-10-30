@@ -10,6 +10,7 @@ declare
   expected_process jsonb; expected_acts jsonb; request jsonb; answer jsonb; saved jsonb;
   before_version timestamptz; audit_id uuid; i integer;
 begin
+  perform set_config('request.jwt.claims','{}',true);
   for i in 1..2 loop
     insert into auth.users(id,aud,role,email)
       values(actors[i],'authenticated','authenticated','operations-revision-'||i||'@tests.invalid');
@@ -87,6 +88,7 @@ begin
       or exists(select 1 from public.paige_act_executions where tenant_id=businesses[i]) then
       raise exception 'FAIL: editing an inactive draft created executable work or a business receipt';
     end if;
+    perform set_config('request.jwt.claims','{}',true);
   end loop;
 end $revision$;
 

@@ -1,4 +1,5 @@
 {
+  "capture": "Same pixels returned by settled cua getScreenshot; earlier stale capture retained as invalid.",
   "height": 1000,
   "scrollWidth": 320,
   "text": [

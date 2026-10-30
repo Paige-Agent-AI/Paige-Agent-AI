@@ -1,5 +1,5 @@
 {
-  "sourceCommit": "933410a371d72dafef5a6625f9ed2f47f4fea66f",
+  "sourceCommit": "e5fce0b2241811fe642088d1ed8fe7f503cf4dc5",
   "main": "571f8aa84be2fdb1f089a3fc65c8e94ad1b613d4",
   "nativeMigration": "20271126050005",
   "nativeSourceMd5": "caea59ab335ecaf295391c41a1a0522f",
@@ -661,8 +661,8 @@
     },
     {
       "file": "obsidian-320-clear-review.jpg",
-      "sha256": "d07db43e61aea97fdedda3d485d585a5c56d5d765031d8d61a448174485a38a3",
-      "bytes": 31261,
+      "sha256": "8460a6ba7cdd63811b448c7a3ee1f7ce746c88460e4933eecc6e2bfbad854cdf",
+      "bytes": 24133,
       "viewport": {
         "width": 320,
         "height": 1000
@@ -701,5 +701,12 @@
     "clear review explicitly becomes unknown"
   ],
   "releaseHold": "Original selected Edge verification failed for paige-ai-chat and notify-approval-event; crm-command matched571f. No LIVE/customer/authenticated/Trust/Rail proof from offline fixtures.",
-  "founderAcceptance": "NOT_ACCEPTED"
+  "founderAcceptance": "NOT_ACCEPTED",
+  "invalidExcluded": [
+    {
+      "file": "invalid-obsidian-320-clear-review.jpg",
+      "reason": "Original capture contained the prior editor pixels despite the new review DOM. Preserved as INVALID; replacement uses the settled screenshot bytes inspected directly.",
+      "sha256": "d07db43e61aea97fdedda3d485d585a5c56d5d765031d8d61a448174485a38a3"
+    }
+  ]
 }

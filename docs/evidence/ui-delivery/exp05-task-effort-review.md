@@ -176,3 +176,11 @@ recovery is pending; UI merge remains held for certified compatible source.
 No broad source/runtime edit or relaxed verifier. Hosted editor exact-head CI,
 authenticated record/approval/Rail/reload, full-shell/native zoom/AT, both chats,
 eligible current/new cohorts and full EXP05/founder acceptance remain owed.
+
+Rendered finish-review correction before final review: the initial current-main
+dark clear-review image still contained prior editor pixels although its DOM
+had changed. Preserved as invalid-obsidian-320-clear-review.jpg and excluded
+from the eight valid frames. Replacement captures the same settled screenshot
+bytes visibly inspected through CUA. The other reopened/keyboard/zero frames
+were inspected directly and match their stated UI; no source or assertion was
+changed to disguise the mismatch. Both test helpers and own tabs are stopped.

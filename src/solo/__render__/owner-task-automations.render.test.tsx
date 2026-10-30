@@ -18,7 +18,7 @@ import { SoloScreenBoundary } from "@/solo/SoloScreenBoundary";
 const h = vi.hoisted(() => ({
   theme: "light" as "light" | "dark", open: false,
   tenant: "00000000-0000-4000-8000-000000000101", actor: "00000000-0000-4000-8000-000000000102",
-  process: {} as Record<string, unknown>, step: {} as Record<string, unknown>,
+  process: {} as Record<string, unknown>, step: {} as Record<string, unknown>, steps: [] as Array<Record<string, unknown>>,
   reads: [] as string[], controls: [] as Array<Record<string, unknown>>, unexpected: [] as string[],
 }));
 vi.mock("next-themes", () => ({ useTheme: () => ({ resolvedTheme: h.theme, setTheme: vi.fn() }) }));
@@ -53,18 +53,20 @@ vi.mock("@/hooks/usePaigeThreads", () => ({ usePaigeThreads: () => ({
 vi.mock("@/integrations/supabase/client", () => {
   const forbidden = (operation: string): never => { h.unexpected.push(operation); throw new Error(`Fixture prohibits ${operation}`); };
   const from = (table: string) => {
-    const filters = new Map<string, unknown>(); let single = false;
+    const filters = new Map<string, unknown>(); let single = false, range: [number, number] | null = null;
     const result = () => {
       h.reads.push(table);
       const rows = table === "paige_automations" ? [h.process]
-        : table === "paige_automation_acts" ? [h.step]
+        : table === "paige_automation_acts" ? h.steps
           : table === "tenant_members" ? [{ tenant_id: h.tenant, user_id: h.actor, role: "owner", status: "active" }] : [];
       const selected = rows.filter(row => [...filters].every(([key, value]) => !(key in row) || row[key] === value));
-      return { data: single ? selected[0] ?? null : selected, error: null };
+      const page = range ? selected.slice(range[0], range[1] + 1) : selected;
+      return { data: single ? page[0] ?? null : page, count: selected.length, error: null };
     };
     const query = {
       select: () => query, eq: (key: string, value: unknown) => { filters.set(key, value); return query; },
       is: () => query, in: () => query, order: () => query, limit: () => query,
+      range: (start: number, end: number) => { range = [start, end]; return query; },
       maybeSingle: () => { single = true; return query; }, single: () => { single = true; return query; },
       then: (resolve: (value: ReturnType<typeof result>) => unknown, reject?: (error: unknown) => unknown) => Promise.resolve(result()).then(resolve, reject),
       insert: () => forbidden(`insert:${table}`), update: () => forbidden(`update:${table}`), delete: () => forbidden(`delete:${table}`),
@@ -156,7 +158,7 @@ function page(html: string, css: string, theme: string): string {
   return `<!doctype html><html lang="en" class="${theme === "dark" ? "dark" : ""}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; font-src data:; img-src data:; connect-src 'none'"><title>Local SOLO internal task proof</title><style>@font-face{font-family:'Schibsted Grotesk';font-style:normal;font-weight:100 900;font-display:block;src:url(data:font/woff2;base64,${font}) format('woff2')} ${css} html,body{margin:0;height:100%;}</style></head><body>${html}</body></html>`;
 }
 
-async function capture(scene: Scene, width: number, height: number, theme: "light" | "dark", open: boolean) {
+async function capture(scene: Scene, width: number, height: number, theme: "light" | "dark", open: boolean, stepCount = 1) {
   const oldWidth = window.innerWidth, oldHeight = window.innerHeight, oldMatchMedia = window.matchMedia;
   Object.defineProperty(window, "innerWidth", { value: width, configurable: true });
   Object.defineProperty(window, "innerHeight", { value: height, configurable: true });
@@ -173,6 +175,9 @@ async function capture(scene: Scene, width: number, height: number, theme: "ligh
     state: "draft", granted_lane: "confirm", owner_task_armed_at: null, updated_at: "2026-10-16T12:00:00.123456Z" };
   h.step = { id: "00000000-0000-4000-8000-000000000104", automation_id: h.process.id, position: 1,
     action_kind: "owner.task", tool_key: null, config: { title, description } };
+  h.steps = Array.from({ length: stepCount }, (_, index) => ({ ...h.step,
+    id: `00000000-0000-4000-8000-${String(index + 104).padStart(12, "0")}`, position: index + 1,
+    config: { title: index === 0 ? title : `Review internal responsibility ${index + 1}`, description } }));
   const network = vi.fn(() => { throw new Error("No network permitted in rendered fixture"); });
   vi.stubGlobal("fetch", network);
   const host = document.createElement("div"); document.body.append(host); const root = createRoot(host);
@@ -206,6 +211,11 @@ async function capture(scene: Scene, width: number, height: number, theme: "ligh
     expect(host.querySelector(".sa-owner-tasks")).toBeTruthy();
     expect(host.querySelector(".sa-owner-task-title")?.textContent).toBe(title);
     expect(host.querySelector(".sa-owner-task-description")?.textContent).toBe(description);
+    expect(host.querySelectorAll(".sa-owner-task-step")).toHaveLength(stepCount);
+    if (stepCount > 1) {
+      expect(host.querySelector(".sa-owner-task-step:last-child")?.textContent).toContain(`Step ${stepCount}`);
+      expect(host.querySelector(".sa-owner-task-step:last-child")?.textContent).toContain(`Review internal responsibility ${stepCount}`);
+    }
     expect(controls(host, "Review to enable")).toHaveLength(1);
     expect(h.controls).toHaveLength(0);
     let focus: string | null = null;
@@ -220,7 +230,7 @@ async function capture(scene: Scene, width: number, height: number, theme: "ligh
       expect(h.controls).toHaveLength(1);
       expect(h.controls[0]).toEqual({ _automation_id: h.process.id, _action: "arm", _expected_updated_at: h.process.updated_at,
         _expected_process: Object.fromEntries(Object.entries(h.process).filter(([key]) => key !== "updated_at")),
-        _expected_acts: [{ id: h.step.id, position: 1, action_kind: "owner.task", tool_key: null, config: { title, description } }] });
+        _expected_acts: h.steps.map(({ id, position, action_kind, tool_key, config }) => ({ id, position, action_kind, tool_key, config })) });
       expect(host.querySelector(".sa-owner-tasks")?.textContent).toContain("The outcome could not be confirmed. The process may have changed.");
       expect(controls(host, "Review to enable")[0].disabled).toBe(true);
       expect(controls(host, "Enable future contacts")).toHaveLength(0);
@@ -242,6 +252,31 @@ async function capture(scene: Scene, width: number, height: number, theme: "ligh
 }
 
 describe("owner task full-shell rendered fixture", () => {
+  it.skipIf(!existsSync(assets))("serializes complete two-step review and twenty-step recovery in the original frame", async () => {
+    assertIncumbentFrame(); const sources = sourceIdentity();
+    mkdirSync(output, { recursive: true }); const css = compiledCss(), records = [];
+    for (const theme of ["light", "dark"] as const) for (const [width, height] of sizes.slice(0, 4)) for (const open of [false, true]) {
+      const captured = await capture("review", width, height, theme, open, 2);
+      const name = `chain-2-${theme}-${width}x${height}-${open ? "open" : "closed"}-review.html`;
+      const html = page(captured.html, css, theme); writeFileSync(`${output}/${name}`, html);
+      records.push({ name, theme, width, height, open, steps: 2, scene: "review", focus: captured.focus,
+        htmlSha256: digest(html), backendReads: captured.reads, simulatedControls: captured.simulatedControls, realEffects: 0 });
+    }
+    for (const theme of ["light", "dark"] as const) for (const scene of ["review", "unknown"] as const) {
+      const captured = await capture(scene, 320, 768, theme, false, 20);
+      const name = `chain-20-${theme}-320x768-closed-${scene}.html`;
+      const html = page(captured.html, css, theme); writeFileSync(`${output}/${name}`, html);
+      records.push({ name, theme, width: 320, height: 768, open: false, steps: 20, scene, focus: captured.focus,
+        htmlSha256: digest(html), backendReads: captured.reads, simulatedControls: captured.simulatedControls, realEffects: 0 });
+    }
+    expect(records).toHaveLength(20); expect(sourceIdentity()).toEqual(sources);
+    writeFileSync(`${output}/multistep-render-manifest.json`, JSON.stringify({
+      proofClass: "SYNTHETIC_RENDERED_SOLO_APP_FRAME", sources, retainedAssetDirectory: assets,
+      realOwnerTaskHookAndCaller: true, compiledCssSha256: digest(css),
+      actualBrowserProof: "PENDING_ROOT_BROWSER_CAPTURE", authenticatedQa: "UNVERIFIED", records,
+    }, null, 2));
+  }, 180_000);
+
   it.skipIf(!existsSync(assets))("serializes actual draft/review/unknown trees with current styles and zero real effects", async () => {
     assertIncumbentFrame();
     const sources = sourceIdentity();

@@ -12,7 +12,7 @@
 -- is active staff of the same business, a platform owner, and a deleted or banned account (section 4b);
 -- a linked client whose membership of that business is no longer active (suspended) still reads.
 BEGIN;
-SELECT plan(211);
+SELECT plan(248);
 INSERT INTO auth.users(id,aud,role,email,email_confirmed_at,raw_app_meta_data) VALUES
  ('e0995100-0000-4000-8000-000000000001','authenticated','authenticated','payments-owner-a@tests.invalid',now(),'{"comms_provider_execution":"disabled"}'),
  ('e0995100-0000-4000-8000-000000000002','authenticated','authenticated','payments-owner-b@tests.invalid',now(),'{"comms_provider_execution":"disabled"}'),
@@ -398,7 +398,7 @@ SELECT ok(NOT (pg_temp.as_user('e0995100-0000-4000-8000-000000000001',format('SE
 
 
 -- EXP09 exact original Billing intent. Same original financial records and caller roles.
-SELECT is((SELECT md5(prosrc) FROM pg_proc WHERE oid='public._client_portal_billing_client(uuid)'::regprocedure),'7785ae6623f447c23b040d06d3c701a2','original commercial native source remains unchanged: public._client_portal_billing_client(uuid)');
+SELECT is((SELECT md5(prosrc) FROM pg_proc WHERE oid='public._client_portal_billing_client(uuid)'::regprocedure),'e7e882b76516c67b6a9b5a4e03dce37b','Auth-bound financial source delegates the same canonical actor factor (Native13): public._client_portal_billing_client(uuid)');
 SELECT is((SELECT md5(prosrc) FROM pg_proc WHERE oid='public.client_portal_invoices(uuid,integer,jsonb)'::regprocedure),'91f0344a6231205da5763af3755f0ad3','original scoped invoice wrapper delegates the unchanged financial query: public.client_portal_invoices(uuid,integer,jsonb)');
 SELECT is((SELECT md5(prosrc) FROM pg_proc WHERE oid='public.client_portal_invoice_ledger(uuid,uuid,integer,jsonb)'::regprocedure),'a871c10fdea9b0f8e9bf3b7a9bdda887','original commercial native source remains unchanged: public.client_portal_invoice_ledger(uuid,uuid,integer,jsonb)');
 SELECT is((SELECT md5(prosrc) FROM pg_proc WHERE oid='public.client_portal_invoice_payment_request(uuid,uuid)'::regprocedure),'e59ce09de1660f47341787a89b7269ec','original commercial native source remains unchanged: public.client_portal_invoice_payment_request(uuid,uuid)');
@@ -562,15 +562,88 @@ SELECT set_config('paige.link_ok','1',true);
 UPDATE public.clients SET linked_user_id=NULL WHERE id='e0995300-0000-4000-8000-000000000006';
 SELECT set_config('paige.link_ok','',true);
 
+-- EXP04 Native13: SAME original financial authority under explicit native actor context.
+-- These are rolled-back full-schema native assertions, NOT hosted identity or safe
+-- final-publication proof. No private function is an API; E09 must bind the original
+-- accepted requester/tenant/client/thread and recheck original facts before publishing.
+CREATE FUNCTION pg_temp.e04_financial_actor(actor uuid,business uuid,customer uuid) RETURNS jsonb
+LANGUAGE plpgsql AS $e04_fixture$
+BEGIN
+ RETURN jsonb_build_object('current',public._client_portal_financial_actor_current(actor,business,customer));
+EXCEPTION WHEN OTHERS THEN
+ RETURN jsonb_build_object('sqlstate',SQLSTATE,'error',SQLERRM);
+END $e04_fixture$;
+CREATE TEMP TABLE e04_financial_actor_before AS SELECT row(
+ (SELECT count(*) FROM public.paige_invoice_provider_operations),(SELECT count(*) FROM public.paige_invoice_payments),
+ (SELECT count(*) FROM public.paige_invoice_access_grants),(SELECT count(*) FROM public.paige_invoice_operations),
+ (SELECT count(*) FROM public.paige_invoices),(SELECT count(*) FROM public.paige_audit_log))::text AS counts;
+SELECT ok(EXISTS(SELECT 1 FROM pg_proc p WHERE p.oid='public._client_portal_financial_actor_current(uuid,uuid,uuid)'::regprocedure
+ AND p.prorettype='boolean'::regtype AND NOT p.prosecdef AND p.provolatile='v' AND p.pronargdefaults=0
+ AND p.proargnames=ARRAY['p_actor_id','p_tenant_id','p_expected_client_id'] AND p.proconfig=ARRAY['search_path=""']
+ AND pg_get_userbyid(p.proowner)='postgres' AND p.proacl::text='{postgres=X/postgres}'),
+ 'private financial actor currentness has the exact non-API native ABI');
+SELECT ok(NOT has_function_privilege('anon','public._client_portal_relationship_for_actor(uuid,uuid,boolean)','EXECUTE'),'anon cannot invoke private _client_portal_relationship_for_actor(uuid,uuid,boolean)');
+SELECT ok(NOT has_function_privilege('authenticated','public._client_portal_relationship_for_actor(uuid,uuid,boolean)','EXECUTE'),'authenticated cannot invoke private _client_portal_relationship_for_actor(uuid,uuid,boolean)');
+SELECT ok(NOT has_function_privilege('service_role','public._client_portal_relationship_for_actor(uuid,uuid,boolean)','EXECUTE'),'service_role cannot invoke private _client_portal_relationship_for_actor(uuid,uuid,boolean)');
+SELECT ok(NOT has_function_privilege('anon','public._client_portal_lock_relationship_for_actor(uuid,text,uuid,boolean)','EXECUTE'),'anon cannot invoke private _client_portal_lock_relationship_for_actor(uuid,text,uuid,boolean)');
+SELECT ok(NOT has_function_privilege('authenticated','public._client_portal_lock_relationship_for_actor(uuid,text,uuid,boolean)','EXECUTE'),'authenticated cannot invoke private _client_portal_lock_relationship_for_actor(uuid,text,uuid,boolean)');
+SELECT ok(NOT has_function_privilege('service_role','public._client_portal_lock_relationship_for_actor(uuid,text,uuid,boolean)','EXECUTE'),'service_role cannot invoke private _client_portal_lock_relationship_for_actor(uuid,text,uuid,boolean)');
+SELECT ok(NOT has_function_privilege('anon','public._client_portal_billing_client_for_actor(uuid,uuid,boolean)','EXECUTE'),'anon cannot invoke private _client_portal_billing_client_for_actor(uuid,uuid,boolean)');
+SELECT ok(NOT has_function_privilege('authenticated','public._client_portal_billing_client_for_actor(uuid,uuid,boolean)','EXECUTE'),'authenticated cannot invoke private _client_portal_billing_client_for_actor(uuid,uuid,boolean)');
+SELECT ok(NOT has_function_privilege('service_role','public._client_portal_billing_client_for_actor(uuid,uuid,boolean)','EXECUTE'),'service_role cannot invoke private _client_portal_billing_client_for_actor(uuid,uuid,boolean)');
+SELECT ok(NOT has_function_privilege('anon','public._client_portal_financial_actor_current(uuid,uuid,uuid)','EXECUTE'),'anon cannot invoke private _client_portal_financial_actor_current(uuid,uuid,uuid)');
+SELECT ok(NOT has_function_privilege('authenticated','public._client_portal_financial_actor_current(uuid,uuid,uuid)','EXECUTE'),'authenticated cannot invoke private _client_portal_financial_actor_current(uuid,uuid,uuid)');
+SELECT ok(NOT has_function_privilege('service_role','public._client_portal_financial_actor_current(uuid,uuid,uuid)','EXECUTE'),'service_role cannot invoke private _client_portal_financial_actor_current(uuid,uuid,uuid)');
+SELECT is(pg_temp.as_user('e0995100-0000-4000-8000-000000000003','SELECT to_jsonb(public._client_portal_financial_actor_current(''e0995100-0000-4000-8000-000000000003'',''e0995200-0000-4000-8000-000000000001'',''e0995300-0000-4000-8000-000000000001''))','anon')->>'sqlstate','42501','anon cannot bypass native admission with a valid customer actor');
+SELECT is(pg_temp.as_user('e0995100-0000-4000-8000-000000000003','SELECT to_jsonb(public._client_portal_financial_actor_current(''e0995100-0000-4000-8000-000000000003'',''e0995200-0000-4000-8000-000000000001'',''e0995300-0000-4000-8000-000000000001''))','authenticated')->>'sqlstate','42501','authenticated cannot bypass native admission with a valid customer actor');
+SELECT is(pg_temp.as_user('e0995100-0000-4000-8000-000000000003','SELECT to_jsonb(public._client_portal_financial_actor_current(''e0995100-0000-4000-8000-000000000003'',''e0995200-0000-4000-8000-000000000001'',''e0995300-0000-4000-8000-000000000001''))','service_role')->>'sqlstate','42501','service_role cannot bypass native admission with a valid customer actor');
+SELECT is(pg_temp.e04_financial_actor('e0995100-0000-4000-8000-000000000003','e0995200-0000-4000-8000-000000000001','e0995300-0000-4000-8000-000000000001')->>'current','true','financial actor source: exact original customer');
+SELECT is(pg_temp.e04_financial_actor('e0995100-0000-4000-8000-000000000003','e0995200-0000-4000-8000-000000000001','e0995300-0000-4000-8000-000000000002')->>'current','false','financial actor source: wrong expected customer');
+SELECT is(pg_temp.e04_financial_actor('e0995100-0000-4000-8000-000000000003','e0995200-0000-4000-8000-000000000002','e0995300-0000-4000-8000-000000000001')->>'current','false','financial actor source: wrong business');
+SELECT is(pg_temp.e04_financial_actor(NULL,'e0995200-0000-4000-8000-000000000001','e0995300-0000-4000-8000-000000000001')->>'current','false','financial actor source: null actor');
+SELECT is(pg_temp.e04_financial_actor('e0995100-0000-4000-8000-000000000003',NULL,'e0995300-0000-4000-8000-000000000001')->>'current','false','financial actor source: null business');
+SELECT is(pg_temp.e04_financial_actor('e0995100-0000-4000-8000-000000000003','e0995200-0000-4000-8000-000000000001',NULL)->>'current','false','financial actor source: null expected client');
+SELECT is(pg_temp.e04_financial_actor('e0995100-0000-4000-8000-000000000011','e0995200-0000-4000-8000-000000000001','e0995300-0000-4000-8000-000000000009')->>'current','false','financial actor source: same-business staff excluded');
+SELECT is(pg_temp.e04_financial_actor('e0995100-0000-4000-8000-000000000012','e0995200-0000-4000-8000-000000000001','e0995300-0000-4000-8000-000000000010')->>'current','false','financial actor source: platform owner excluded');
+SELECT is(pg_temp.e04_financial_actor('e0995100-0000-4000-8000-000000000014','e0995200-0000-4000-8000-000000000001','e0995300-0000-4000-8000-000000000012')->>'current','true','financial actor source: staff of another business retained');
+SELECT is(pg_temp.e04_financial_actor('e0995100-0000-4000-8000-000000000015','e0995200-0000-4000-8000-000000000001','e0995300-0000-4000-8000-000000000013')->>'current','true','financial actor source: suspended staff membership does not invent a denial');
+SELECT is((SELECT counts FROM e04_financial_actor_before),row(
+ (SELECT count(*) FROM public.paige_invoice_provider_operations),(SELECT count(*) FROM public.paige_invoice_payments),
+ (SELECT count(*) FROM public.paige_invoice_access_grants),(SELECT count(*) FROM public.paige_invoice_operations),
+ (SELECT count(*) FROM public.paige_invoices),(SELECT count(*) FROM public.paige_audit_log))::text,
+ 'private financial currentness creates no invoice, payment, provider operation, bearer grant, command or audit effect');
+
+UPDATE auth.users SET deleted_at=now() WHERE id='e0995100-0000-4000-8000-000000000003';
+SELECT is(pg_temp.e04_financial_actor('e0995100-0000-4000-8000-000000000003','e0995200-0000-4000-8000-000000000001','e0995300-0000-4000-8000-000000000001')->>'error','customer authentication required','explicit original actor must still be present and not deleted in Auth');
+UPDATE auth.users SET deleted_at=NULL WHERE id='e0995100-0000-4000-8000-000000000003';
+UPDATE auth.users SET banned_until='infinity'::timestamptz WHERE id='e0995100-0000-4000-8000-000000000003';
+SELECT is(pg_temp.e04_financial_actor('e0995100-0000-4000-8000-000000000003','e0995200-0000-4000-8000-000000000001','e0995300-0000-4000-8000-000000000001')->>'error','customer authentication required','explicit original actor cannot bypass a ban');
+UPDATE auth.users SET banned_until=NULL WHERE id='e0995100-0000-4000-8000-000000000003';
+SELECT is(pg_temp.e04_financial_actor('e0995100-0000-4000-8000-000000000099','e0995200-0000-4000-8000-000000000001','e0995300-0000-4000-8000-000000000001')->>'error','customer authentication required','missing Auth actor is not an accepted customer');
+
+SELECT set_config('request.headers','not json',true);
+SELECT set_config('request.jwt.claims',jsonb_build_object('sub','e0995100-0000-4000-8000-000000000011','role','authenticated')::text,true);
+SELECT is(pg_temp.e04_financial_actor('e0995100-0000-4000-8000-000000000003','e0995200-0000-4000-8000-000000000001','e0995300-0000-4000-8000-000000000001')->>'current','true','private native actor is explicit; unrelated JWT/header never impersonates or replaces that actor');
+SELECT is(pg_temp.as_user('e0995100-0000-4000-8000-000000000011','SELECT public.client_portal_invoices(''e0995200-0000-4000-8000-000000000001'')')->>'error','customer business selection invalid','Auth-bound financial wrapper still parses its original narrowing header before staff refusal');
+SELECT is(pg_temp.as_user('e0995100-0000-4000-8000-000000000012','SELECT public.client_portal_invoices(''e0995200-0000-4000-8000-000000000001'')'),NULL::jsonb,'platform refusal remains before malformed business-header parsing');
+UPDATE auth.users SET deleted_at=now() WHERE id='e0995100-0000-4000-8000-000000000003';
+SELECT is(pg_temp.as_user('e0995100-0000-4000-8000-000000000003','SELECT public.client_portal_invoices(''e0995200-0000-4000-8000-000000000001'')')->>'error','customer authentication required','Auth deletion remains before malformed business-header parsing');
+UPDATE auth.users SET deleted_at=NULL WHERE id='e0995100-0000-4000-8000-000000000003';
+SELECT set_config('request.headers','{}',true);
+SELECT set_config('request.jwt.claims','{}',true);
+
 CREATE TEMP TABLE calendar_read_before AS SELECT row((SELECT count(*) FROM public.paige_invoice_provider_operations),(SELECT count(*) FROM public.paige_invoice_payments),(SELECT count(*) FROM public.paige_invoice_access_grants),(SELECT count(*) FROM public.paige_invoice_operations),(SELECT count(*) FROM public.paige_invoices),(SELECT count(*) FROM public.paige_audit_log))::text AS counts;
 SELECT is(pg_temp.calendar_invoices()->>'schema_version','2','repeated original-context read is available without a financial effect');
 SELECT is((SELECT counts FROM calendar_read_before),row((SELECT count(*) FROM public.paige_invoice_provider_operations),(SELECT count(*) FROM public.paige_invoice_payments),(SELECT count(*) FROM public.paige_invoice_access_grants),(SELECT count(*) FROM public.paige_invoice_operations),(SELECT count(*) FROM public.paige_invoices),(SELECT count(*) FROM public.paige_audit_log))::text,'calendar read writes no invoice, allocation, grant, provider operation or audit record');
 SELECT is((pg_temp.calendar_access('pause')->>'ok')::boolean,true,'original owner pauses access with original version-checked writer');
 SELECT is(pg_temp.calendar_invoices()->>'sqlstate','42501','paused relationship immediately loses calendar financial access');
+SELECT is(pg_temp.e04_financial_actor('e0995100-0000-4000-8000-000000000003','e0995200-0000-4000-8000-000000000001','e0995300-0000-4000-8000-000000000001')->>'current','false','native financial actor currentness observes the same actual access pause');
 SELECT is((pg_temp.calendar_access('restore')->>'ok')::boolean,true,'original owner restores the same paused relationship without manufacturing identity');
 SELECT is(pg_temp.calendar_invoices()->>'schema_version','2','ordinary restored relationship can return to original financial records');
+SELECT is(pg_temp.e04_financial_actor('e0995100-0000-4000-8000-000000000003','e0995200-0000-4000-8000-000000000001','e0995300-0000-4000-8000-000000000001')->>'current','true','original restored relationship regains native financial currentness');
 SELECT is((pg_temp.calendar_access('end')->>'ok')::boolean,true,'original owner ends the synthetic relationship through the original writer');
 SELECT is(pg_temp.calendar_invoices()->>'sqlstate','42501','ended relationship cannot return to financial records');
+SELECT is(pg_temp.e04_financial_actor('e0995100-0000-4000-8000-000000000003','e0995200-0000-4000-8000-000000000001','e0995300-0000-4000-8000-000000000001')->>'current','false','ended relationship also loses native financial currentness');
 
 SELECT * FROM finish();
 ROLLBACK;

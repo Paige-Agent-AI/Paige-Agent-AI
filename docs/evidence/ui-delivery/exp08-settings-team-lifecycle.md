@@ -179,3 +179,38 @@ render failures because that older fixture also supplied no actor/Auth client; s
 fictional `u1` actor and neutral example names, preserving every lifecycle/delivery assertion.
 Product source is unchanged from the126-case run: combined bounded evidence **169 PASS /11 suites**.
 No broad/full-app or authenticated claim is implied by adding those counts.
+
+### Hosted source checkpoint and remaining Setup integration — 2026-10-30
+
+Published child `032e3eb1c6bcd6082e1e93315c0ea590773dc605` was independently reviewed
+for the bounded Team currentness/pause source changes. That review did not independently execute
+the local 169 tests. Original CI run
+[41134479447](https://github.com/Paige-Agent-AI/Paige-Agent-AI/actions/runs/41134479447)
+is a manual dispatch of the existing workflow on that exact child, not parent PR3130's earlier
+green checks. Its hosted verify job `124333440477` has passed changed-source ESLint, gold discipline,
+Impeccable, typecheck ratchet, production build and Solo entry-size guard. At the latest observation
+the job remains **IN PROGRESS** at the original INT-336 native thread-fence proof; those passed
+steps do not mean the verify job or complete workflow passed.
+
+The same run's original `comms-provider-boundary` job `124333440777` is **FAIL**. Exact failed logs
+were inspected: the original EXP08 native runner's `Authority lost while waiting must refuse`
+assertion fails against the incumbent Billing public writer. This is a genuine retained safety
+assertion, not a stale infrastructure diagnosis. The subsequent Team native steps are skipped,
+not passed. The original Billing producer owns repair in PR3142; the later contact-row-wait
+counterexample against its first proposed repair remains an additional release hold. Parent3130
+and the unpublished final producer/consumer composition remain held pending corrected published
+source, renewed review, complete exact-head checks and compatible managed Preview.
+
+Independent remaining lifecycle work: the approved co-owner contract §5.4 requires original
+`save_solo_setup_context` to protect seated, held or live-Owner-invitation legal-owner records
+against removal (including omitted IDs), kind changes and representative changes. Inspection of
+the original `20261046000000` writer and released I1 triggers confirms that documented I2 gap
+remains. This is source evidence, not an authenticated production reproduction. The narrow
+writer/source-owner handoff is recorded in original ANT-50 comment
+`b618c8ac-a5d8-48be-a000-c17903812ccf`; no Setup writer edit or parallel guard has been made.
+Preserve original CAS/proposals/provenance, harmless permitted edits, and revoked/used-token
+compatibility when composing that repair. Existing source-owner acknowledgment is still owed.
+
+These observations do not establish release, activation, universal account/customer proof, or
+owner acceptance. All original matrix rows, five lifecycle journeys and full-assignment coding
+and integration remain open; status **STILL CODING**.

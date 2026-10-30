@@ -3312,3 +3312,4 @@ ActionAdapter/Layer C/domain mutation/Rail completion are not introduced.
 Capabilities: original nine remain3ComingSoon/3Limited/3Unverified and all
 account-accessUnverified. Functional source proof, unchanged visual source,
 partial interruption recovery and OPEN founder acceptance remain distinct.
+The current follow-up has its own [delivery evidence](../evidence/ui-delivery/e2-weekly-credit-code.md).

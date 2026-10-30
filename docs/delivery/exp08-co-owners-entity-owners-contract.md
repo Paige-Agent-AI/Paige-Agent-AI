@@ -1908,3 +1908,47 @@ guarded migration readiness remain unfinished. Full EXP08 **STILL CODING**.
 NON-AUTHOR SOURCE review finds no material issue in the two-token regression proof; it executes
 no race independently. It retains selected synthetic/native, full-schema/authenticated and release
 assurance as separate evidence classes. Existing full-run and original lifecycle gaps remain.
+
+### Current-main and released Billing composition — 2026-10-30
+
+Existing child merges peer6dacc3c14 as `4ac216caf1725ddfbed1f175efd5433399513c30`. Only conflict
+was simultaneous Master§4.0 additions: preserve exact original E08 release block AND every incoming
+E05/E02 entry, not either side alone. Index readback proves18667 incoming outside-owned leaves and
+76 uncontested original E08 leaves exact. Removing ONLY the original E08 additions recovers each
+ENTIRE incoming Master and Brain document. First temporary readback attempt hit a Node stdout
+buffer limit before assertions; increasing that local read buffer produced the actual checks,
+not a source change/waiver. Original receipt `exp08-6dacc-composition.json` retained.
+
+Then compose verified main8684a38a2 as `55be185905b62937b078184313fb468538662801`. All six E02
+producer paths remain byte-exact; no overlap,18671 incoming leaves and78 original E08 leaves exact,
+both document whole-inverses retained. Actual original Spine lint **245 capabilities PASS**.
+ALL original C0b test files plus int304 observation suite **284 PASS/0 FAIL/0 skipped**, normal
+single-worker local run; logs `exp08-8684-spine.log` and `exp08-8684-c0b.log`. No checker, declaration,
+assertion or source pin changed in these merges. These are local source tests, not new required
+exact-head CI or authenticated execution. Second receipt `exp08-8684a38a2-composition.json`.
+
+Independent read-only production catalog now records both producer80006+80007/frontier80007 and
+exact ab1e51f4 designate/f8fa3a42 revoke/scope3d33 with original owner/definer/path/ACL. GitHub normal
+native41143811589 is independently terminalSUCCESS/head8684. Original E02 full29-field/OID/comment
+conservation and ready web are attributed to its23:22 producer receipt, not an E08 independent
+rerun. Original receivingACK ANT138/0b54e52b clears this PRODUCER dependency only. Consumer90008
+still pins oldc67 at this checkpoint; exact renewal, current producer loading in the original
+native harness, complete original native tests, whole-head review/required CI/own managed Preview
+and normal release/readback remain required. No own production migration or native effect occurred.
+
+Read original E09 shared handoff ANT161/ea0882f6 in full for the relevant invitation contract:
+NO active accept-body edit/lease, narrow E08 subaccount_owner window acknowledged. E09's normalized
+definition12553chars/MD5 20539b691522c34f2d9a518d7c7f2229, common-prefix SHA256 a341f89a090d06163d1d1098e0e8f26a7f03732b3babbfc51f25cf54a2655973,
+consumer SHA2561f9add8d39f9b9e192c9a56d3a5461ecc6b9a9ae3ab42298ff91cf3b1c69f1af are method-labelled
+producer pins, not new C0b bindings. Own earlier catalog definition also has12553chars; prosrc0194
+is a different extraction, not a contradictory hash. Preserve all original common authorization,
+recipient/contact/one-use/expiry/linkage/receipt and consumer early-return semantics. Candidate
+whole-body inverse removes only E08 additions, including its local declaration; do not falsely
+claim a prefix containing that added declaration has an unchanged hash. E09's current mechanical
+Master/Brain slot and subsequent original E13 queue are not taken over by source-conserving merges.
+
+Canonical register own F13/D10/I10 NOTES updated23:29:36UTC, all prior history/value/format/validation
+preserved. Exact21 completeCellData readback: only three intended notes changed, zero collateral
+differences. This is coordination evidence, never product readiness. All original18 rows/six
+amendments/five journeys, workshop/goals/standing authority, bell and one complete owner review
+remain in the full assignment. Status **STILL CODING**, not ready/accepted.

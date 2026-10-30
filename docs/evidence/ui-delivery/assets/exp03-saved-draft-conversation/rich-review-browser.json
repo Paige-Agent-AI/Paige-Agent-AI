@@ -1,0 +1,32 @@
+{
+  "proofClass": "isolated actual Chromium component/network behavior; fictional content",
+  "sourceBaseCommit": "358bd452bb87a4cc9e99e7980975132f00e1774f",
+  "sourceWorkingTreeDirty": true,
+  "sourceHashes": {
+    "src/components/admin/comms/mergeVars.ts": "89b4ee74ebc7807db3a0cb0c78a12df34903425f84397777be58a79c809c0b53",
+    "src/components/chat/confirmPreview.ts": "bd0e23558911ec7e89ff4ca8ba7110f960a08aff9c25d2976316fdb3d191bb96",
+    "src/components/chat/PaigeConfirmCard.tsx": "bb16707dfc2d42e1f809a770cd7356a35f23bd922857bf84b7bc44efe81de776",
+    "src/pages/admin/conversations/GovernedReplyStrip.tsx": "f6dd2535627e4ec27e01e9ece73f505d451bdd6acef5751bd8f7ab43d812b14a",
+    "scripts/live-drive/harness/email-review-mount/main.tsx": "19df8b9c4e48d127732c9b7b527b4e502aa05f34d2b629a75f5a78521203cbef",
+    "scripts/live-drive/harness/email-review-mount/drive.mjs": "8af2d140f9061e13898387733c124d3c0c0b930824177e20ed55fd0a862d859c"
+  },
+  "authenticated": false,
+  "fullShell": false,
+  "providerEffects": false,
+  "results": [
+    {
+      "width": 1366,
+      "consumers": 2,
+      "externalRequests": 0,
+      "activeContent": 0,
+      "pageErrors": 0
+    },
+    {
+      "width": 390,
+      "consumers": 2,
+      "externalRequests": 0,
+      "activeContent": 0,
+      "pageErrors": 0
+    }
+  ]
+}

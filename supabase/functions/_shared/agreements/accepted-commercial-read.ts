@@ -23,8 +23,19 @@ export async function readAcceptedCommercialAgreement(tenant:unknown,args:unknow
  if(!id(tenant)||!object(args)||!only(args,['invoice_id','agreement_id'])||!id(args.invoice_id)||!id(args.agreement_id))return refused;
  try{
   const result=await caller.rpc('read_sales_accepted_agreement',{_expected_tenant_id:tenant,_invoice_id:args.invoice_id,_agreement_id:args.agreement_id});
-  if(result.error||!object(result.data))return refused;
-  const r=result.data;
+  if(result.error)return refused;
+  return decodeAcceptedCommercialAgreement(tenant,args,result.data);
+ }catch{return refused;}
+}
+
+/** The SAME closed retained-record validation for original owner-read transports.
+ * Pure decoding is not admission, signature authority or current file verification. */
+export async function decodeAcceptedCommercialAgreement(tenant:unknown,args:unknown,value:unknown):Promise<AcceptedCommercialRead>{
+ const refused:AcceptedCommercialRead={state:'refused'};
+ if(!id(tenant)||!object(args)||!only(args,['invoice_id','agreement_id'])||!id(args.invoice_id)||!id(args.agreement_id))return refused;
+ try{
+  if(!object(value))return refused;
+  const r=value;
   if(r.schema_version!==1||r.tenant_id!==tenant||r.invoice_id!==args.invoice_id||r.agreement_id!==args.agreement_id||!id(r.receipt_id))return refused;
   const base=['schema_version','state','tenant_id','invoice_id','agreement_id','receipt_id'];
   if(r.state==='unverified')return only(r,base)?{state:'unverified'}:refused;

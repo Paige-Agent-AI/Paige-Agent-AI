@@ -10,13 +10,14 @@ type ReviewProps={tenantId:string;command:SalesInvoiceCommand;operationId?:strin
 /** One immutable operation and command, proposed then approved through the canonical server card. */
 export function InvoiceCommandReview(props:ReviewProps){
   const [actorId,setActorId]=React.useState<string|null>(null),[resolved,setResolved]=React.useState(false);
+  const returnButton=React.useRef<HTMLButtonElement>(null);
+  React.useLayoutEffect(()=>{if(!actorId)returnButton.current?.focus();},[actorId,resolved]);
   React.useEffect(()=>{let alive=true,epoch=0;const opened=epoch;
     void supabase.auth.getSession().then(({data})=>{if(alive&&epoch===opened){setActorId(data.session?.user.id??null);setResolved(true);}}).catch(()=>{if(alive){setActorId(null);setResolved(true);}});
     const {data}=supabase.auth.onAuthStateChange((_event,session)=>{epoch++;if(alive){setActorId(session?.user.id??null);setResolved(true);}});
     return()=>{alive=false;data.subscription.unsubscribe();};
   },[]);
-  if(!resolved)return <p role="status">Checking your account before invoice review…</p>;
-  if(!actorId)return <p role="alert">Sign in to review this invoice action.</p>;
+  if(!resolved||!actorId)return <div className="sb-paper" aria-label="Invoice review account access"><p role={resolved?'alert':'status'}>{resolved?'Sign in to review this invoice action.':'Checking your account before invoice review…'}</p><button ref={returnButton} className="btn" onClick={props.onClose}>Return to invoice</button></div>;
   return <ActorInvoiceCommandReview key={`${actorId}:${props.tenantId}`} {...props} actorId={actorId}/>;
 }
 function ActorInvoiceCommandReview({tenantId,command,operationId,onComplete,onClose,actorId}:ReviewProps&{actorId:string}){

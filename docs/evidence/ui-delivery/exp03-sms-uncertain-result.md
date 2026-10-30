@@ -7,18 +7,18 @@ MATERIAL_FLOW_CHANGE: NO: original SMS failure result now reuses the already-exi
 FLOW_PROTOTYPE: NOT_REQUIRED: existing approved uncertainty interaction reused, no new UI flow or visible control; rendered SMS reuse verification still owed.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: sender can distinguish an uncertain SMS attempt from a definite refusal and avoid sending the same message twice.
 VISUAL_DIRECTION: PASS: unchanged canonical Conversations/composer and original message/warning presentation.
-AUTOMATED_EVIDENCE: PASS: immutable original b49 source18cases9PASS/9FAIL, corrected18PASS; malformed receipt neighborhood20PASS/3FAIL→23PASS; entire original Communications CI list plus added cases1139PASS. Every provider port inert.
+AUTOMATED_EVIDENCE: PASS: immutable original b49 source18cases9PASS/9FAIL, corrected18PASS; malformed receipt neighborhood20PASS/3FAIL→23PASS; entire original Communications CI list plus added cases1139PASS; original hostile C0b83PASS. Every provider port inert.
 STATIC_EVIDENCE: UNVERIFIED: exact source review/type/lint/C0b identity/hosted review and checks remain required; local Deno unavailable.
-RENDERED_EVIDENCE: UNVERIFIED: no new rendered packet claimed for this candidate; original parent dialog captures do not prove the new SMS uncertainty path.
-BEHAVIORAL_EVIDENCE: PASS: actual original handler and registered SMS adapter run together;23cases cover response loss/throw/408/409/503/receipt absence or malformed, definitive4xx/429, same-row replay, original thread/words, SM/MM receipts, configuration and original provider-floor refusal.
+RENDERED_EVIDENCE: PASS: assets/exp03-sms-uncertain/results.json and eight light/dark1536/1366/1024/900 JPGs; actual original dialog with explicitly injected fictional response, visible original warning, no root overflow. Light1536 and dark900 images manually inspected. Eight-file manifest, not fullshell/authenticated/provider/saved-thread proof.
+BEHAVIORAL_EVIDENCE: PASS: actual original handler and registered SMS adapter23cases cover uncertainty, definitive refusals, receipt/replay/words and provider floor; separate actual-dialog prototype eight geometries/themes shows Enter→original warning→closed attempt→one callback, exact words in one injected transport request, reopening does not resend.
 AUTHENTICATED_RUNTIME: UNVERIFIED: no actual send or customer/tenant mutation; exact release/readback and legitimate customer proof owed.
-KEYBOARD_FOCUS: UNVERIFIED: no new keyboard drive; original UI source unchanged.
+KEYBOARD_FOCUS: UNVERIFIED: focused original Send activated by Enter in all eight browser cases; complete focus-restoration/saved-thread/AT route not exercised.
 ZOOM_REFLOW: UNVERIFIED: no new native zoom drive; original UI source unchanged.
-REDUCED_MOTION: PASS: no product motion change.
+REDUCED_MOTION: PASS: all eight isolated browser contexts use reduced motion; no product motion change.
 STATE_COVERAGE: UNVERIFIED: source-bound SMS result/replay tests in supabase/functions/_shared/comms-sms-result.test.mjs pass; rendered/both-chat/durable operation/complete legal-dispatch coverage remains open.
 TRUTHFUL_STATE_LABELS: PASS: uncertain result cannot become sent or ordinary retryable failed; provider accepted SID is distinct from delivery, mock distinct from customer proof.
 SOLO_UI: YES: original Conversations/New conversation uncertainty/recovery flow.
-UNVERIFIED: actual rendered SMS warning/record/reopen, fullshell/PAIGE/native200/AT, authenticated two-cohort/source deployment, both-chat consumers, durable SMS claim/unknown reconciliation, all50state dispatch and full Experience readiness/acceptance.
+UNVERIFIED: actual saved-thread/receipt reopening, fullshell/PAIGE/native200/AT, authenticated two-cohort/source deployment, both-chat consumers, durable SMS claim/unknown reconciliation, all50state dispatch and full Experience readiness/acceptance.
 OWNER_INTENT: every provider effect requires current eligibility and uncertain effects must not be automatically replayed; source correction reuses the original operation/message path.
 MUST_NOT_HAPPEN: missing/invalid provider receipt claims sent, lost response claims definitely unsent, same uncertain row replays, provider configuration failure becomes a false accepted effect, or a mock calls a real provider.
 MUST_PRESERVE: original tenant/provider/consent gates, invoice/email/governed writers, message/error marker/replay guard, original UI/parser and callback/custody boundaries.
@@ -43,3 +43,5 @@ SOLO_900X1000_PAIGE_CLOSED: UNVERIFIED: no new full-shell drive.
 SOLO_900X1000_PAIGE_OPEN: UNVERIFIED: no new full-shell drive.
 
 The first mutable-source18case baseline overlapped a product edit and is EXCLUDED. Reproduced the baseline again from immutable original b49 source through COMMS_SMS_BASELINE,9PASS/9FAIL. Final23cases and full1139 use actual current source. No reduced assertion or global policy change; no real provider/customer/legal compliance claim.
+
+Impeccable finish/clarity check on unchanged original warning: existing icon plus plain-language uncertainty/next step remains legible in inspected light1536/dark900 frames; all eight in-viewport warning checks and no-horizontal-overflow assertions pass. This isolated background is a labeled harness, not product shell evidence. Original UI/font/tokens unchanged. Browser closed in finally and owned temporary Vite5255 stopped after proof.

@@ -568,6 +568,32 @@ function ReadyHub({ hub, announce, announcement, onOpenTeamSettings, openPaige, 
   const openRootRef = useRef<string | null>(null);
   openRootRef.current = hub.thread?.rootId ?? null;
   const heldReplies = useRef<Record<string, string>>({});
+  const unsentReplies = useRef<Record<string, { text: string; picked: PickedMention[]; error: string | null }>>({});
+  const replyDraftOwner = useRef<string | null>(null);
+  const replyDraftNow = useRef({ rootId: replyDraftOwner.current, text: threadDraft, picked: threadPicked, error: threadError });
+  // Ownership follows the prepared draft, including the loading/closed interval when no
+  // thread is drawn. A transient null thread must not discard or reassign an unsent reply.
+  replyDraftNow.current = { rootId: replyDraftOwner.current, text: threadDraft, picked: threadPicked, error: threadError };
+  const prepareThreadDraft = useCallback((rootId: string) => {
+    const previous = replyDraftNow.current;
+    if (previous.rootId === rootId) {
+      const refused = heldReplies.current[rootId]; delete heldReplies.current[rootId];
+      if (refused && !previous.text) {
+        setThreadDraft(refused); setThreadPicked([]); setThreadError(null);
+        replyDraftNow.current = { rootId, text: refused, picked: [], error: null };
+      }
+      return;
+    }
+    if (previous.rootId && (previous.text || previous.picked.length || previous.error)) {
+      unsentReplies.current[previous.rootId] = { text: previous.text, picked: [...previous.picked], error: previous.error };
+    }
+    const saved = unsentReplies.current[rootId], refused = heldReplies.current[rootId];
+    delete unsentReplies.current[rootId]; delete heldReplies.current[rootId];
+    const text = saved?.text || refused || "", picked = saved?.text ? saved.picked : [], error = saved?.text ? saved.error : null;
+    setThreadDraft(text); setThreadPicked(picked); setThreadError(error);
+    replyDraftOwner.current = rootId;
+    replyDraftNow.current = { rootId, text, picked, error };
+  }, []);
   const restoreReply = (rootId: string, body: string, message: string) => {
     if (openRootRef.current === rootId) {
       setThreadDraft((current) => current || body);
@@ -662,11 +688,7 @@ function ReadyHub({ hub, announce, announcement, onOpenTeamSettings, openPaige, 
     if (workOpen) closeWork(false);
     setProfile(null);
     threadReturn.current = trigger;
-    const held = heldReplies.current[rootId];
-    delete heldReplies.current[rootId];
-    setThreadDraft(held ?? "");
-    setThreadPicked([]);
-    setThreadError(null);
+    prepareThreadDraft(rootId);
     // The reply box exists only once the thread has loaded; focus moves there then, not before.
     focusThreadWhenReady.current = true;
     hub.openThread(rootId);
@@ -702,7 +724,7 @@ function ReadyHub({ hub, announce, announcement, onOpenTeamSettings, openPaige, 
       return;
     }
     let retired = false;
-    void openMessageReference(parsed.id).then(result => {
+    void openMessageReference(parsed.id, reference => prepareThreadDraft(reference.rootId)).then(result => {
       if (retired || referenceGeneration.current !== generation || referenceBlockedNow.current) return;
       consumedReference.current = key;
       if (result.kind !== "ok") {
@@ -717,7 +739,7 @@ function ReadyHub({ hub, announce, announcement, onOpenTeamSettings, openPaige, 
     return () => { retired = true; referenceGeneration.current += 1; cancelReferenceNavigation(); };
     // Layout and already-visible conversation state do not restart an accepted URL intent.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [referenceSearch, referenceKey, referenceBlocked, openMessageReference, cancelReferenceNavigation, announce]);
+  }, [referenceSearch, referenceKey, referenceBlocked, openMessageReference, cancelReferenceNavigation, prepareThreadDraft, announce]);
   useEffect(() => {
     if (!referenceFocus) return;
     const thread = hub.thread;

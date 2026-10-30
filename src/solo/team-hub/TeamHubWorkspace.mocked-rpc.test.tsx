@@ -7,8 +7,8 @@
  * goes. They prove nothing about the database: the SQL isolation proof is a separate suite, and
  * authenticated runtime stays UNVERIFIED until the owner-designated drive.
  */
-import { act, StrictMode } from "react";
-import { MemoryRouter } from "react-router-dom";
+import { act, StrictMode, useLayoutEffect } from "react";
+import { MemoryRouter, useNavigate, type NavigateFunction } from "react-router-dom";
 import { createRoot } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, onTestFinished, vi } from "vitest";
 import { TeamHubWorkspace } from "./TeamHubWorkspace";
@@ -188,13 +188,20 @@ async function flush() {
   }
 }
 
+let navigateReference: NavigateFunction | null = null;
+function ReferenceNavigationPort() {
+  const navigate=useNavigate();
+  useLayoutEffect(()=>{navigateReference=navigate;return()=>{if(navigateReference===navigate)navigateReference=null;};},[navigate]);
+  return null;
+}
+
 async function mount(props: { onOpenTeamSettings?: () => void; openPaige?: () => void } = {}, options: { strict?: boolean; url?: string } = {}) {
   const host = document.createElement("div");
   document.body.append(host);
   const root = createRoot(host);
   mounted.push(root);
   const content = <TeamHubWorkspace {...props} />;
-  const view = options.url ? <MemoryRouter initialEntries={[options.url]}>{content}</MemoryRouter> : content;
+  const view = options.url ? <MemoryRouter initialEntries={[options.url]}><ReferenceNavigationPort />{content}</MemoryRouter> : content;
   await act(async () => root.render(options.strict ? <StrictMode>{view}</StrictMode> : view));
   await flush();
   return { host, root };
@@ -2328,6 +2335,70 @@ describe("original Team Hub source references", () => {
     expect(calls.some(c => c.name === "team_hub_post_message")).toBe(false);
     expect(calls.some(c => c.name === "team_hub_mark_read" && c.params.p_channel_id === channelId)).toBe(false);
   });
+  it("keeps private reply drafts with their original thread when following another source",async()=>{
+    source();
+    const otherRoot="dddddddd-dddd-4ddd-8ddd-dddddddddddd",otherReply="eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",otherChannel="ffffffff-ffff-4fff-8fff-ffffffffffff";
+    db.conversations.push(channel({id:otherChannel,name:"other-audience"}));
+    db.messages[otherChannel]=[msg({id:otherRoot,body:"Other source",reply_count:1})];
+    db.replies[otherRoot]=[msg({id:otherReply,parent_message_id:otherRoot,body:"Other reply",created_at:"2026-10-28T09:00:00.123456+00:00"})];
+    const original=db.override.team_hub_message_reference;
+    db.override.team_hub_message_reference=p=>p.p_message_id===replyId?original(p):{ok:true,channel_id:otherChannel,thread_root_id:otherRoot,message_id:otherReply,
+      cursor:{created_at:"2026-10-28T09:00:00.123456+00:00",id:"eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeef"}};
+    const {host}=await mount({}, {url:`/solo/account/team-hub?message=${replyId}`});
+    const threadBox=()=>host.querySelector<HTMLTextAreaElement>('aside[aria-label="Thread"] textarea[role="combobox"]')!;
+    await type(threadBox(),"Keep this unsent private reply");
+    await act(async()=>navigateReference!(`/solo/account/team-hub?message=${otherReply}`));await flush();
+    expect(threadBox().value).toBe("");
+    await press(threadBox(),"Enter");expect(calls.some(c=>c.name==="team_hub_post_message")).toBe(false);
+    await act(async()=>navigateReference!(`/solo/account/team-hub?message=${replyId}`));await flush();
+    expect(threadBox().value).toBe("Keep this unsent private reply");
+  });
+  it("keeps an old referenced reply across a background refresh with70 newer replies",async()=>{
+    source();
+    db.replies[rootId].push(...Array.from({length:70},(_,i)=>msg({id:`newer-${i}`,parent_message_id:rootId,body:`Newer reply ${i}`,created_at:"2026-10-29T10:00:00.000Z"})));
+    const {host}=await mount({}, {url:`/solo/account/team-hub?message=${replyId}`});
+    expect(host.querySelector('aside[aria-label="Thread"]')!.textContent).toContain("Exact older reply");
+    await act(async()=>window.dispatchEvent(new Event("focus")));await flush();
+    expect(calls.filter(c=>c.name==="team_hub_list_messages"&&c.params.p_thread_root===rootId).length).toBeGreaterThan(1);
+    expect(host.querySelector('aside[aria-label="Thread"]')!.textContent).toContain("Exact older reply");
+  });
+
+  it("normal thread reopening deliberately returns to current replies and preserves its own draft",async()=>{
+    source();db.replies[rootId].push(...Array.from({length:70},(_,i)=>msg({id:`newer-${i}`,parent_message_id:rootId,body:`Newer reply ${i}`,created_at:"2026-10-29T10:00:00.000Z"})));
+    const {host}=await mount({}, {url:`/solo/account/team-hub?message=${replyId}`});
+    const threadBox=()=>host.querySelector<HTMLTextAreaElement>('aside[aria-label="Thread"] textarea[role="combobox"]')!;
+    await type(threadBox(),"Same-thread unsent draft");
+    await act(async()=>button(host,"Close thread")!.click());await flush();
+    await act(async()=>button(host,/120 replies/)!.click());await flush();
+    expect(host.querySelector('aside[aria-label="Thread"]')!.textContent).toContain("Newer reply");
+    expect(threadBox().value).toBe("Same-thread unsent draft");
+    expect(calls.filter(c=>c.name==="team_hub_list_messages"&&c.params.p_thread_root===rootId).at(-1)!.params.p_before).toBeNull();
+  });
+
+  it("a deleted referenced reply is removed on the next successful anchored read",async()=>{
+    source();const {host}=await mount({}, {url:`/solo/account/team-hub?message=${replyId}`});
+    expect(host.textContent).toContain("Exact older reply");db.replies[rootId]=[];
+    await act(async()=>window.dispatchEvent(new Event("focus")));await flush();
+    expect(host.querySelector('aside[aria-label="Thread"]')!.textContent).not.toContain("Exact older reply");
+  });
+  it("a late older reference read cannot replace a newer window in the same thread",async()=>{
+    source();const nextId="dddddddd-dddd-4ddd-8ddd-dddddddddddd";
+    db.replies[rootId].push(msg({id:nextId,parent_message_id:rootId,body:"Next exact source",created_at:"2026-10-28T09:00:00.123456+00:00"}));
+    const original=db.override.team_hub_message_reference;
+    db.override.team_hub_message_reference=p=>p.p_message_id===replyId?original(p):{ok:true,channel_id:channelId,thread_root_id:rootId,message_id:nextId,
+      cursor:{created_at:"2026-10-28T09:00:00.123456+00:00",id:"dddddddd-dddd-4ddd-8ddd-ddddddddddde"}};
+    const pending=deferred(),backendRead=mocks.rpc.getMockImplementation()!;
+    mocks.rpc.mockImplementation(async(name:string,params:Record<string,unknown>)=>{
+      if(name==="team_hub_list_messages"&&params.p_thread_root===rootId&&params.p_before_id==="bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbc")await pending.promise;
+      return backendRead(name,params);
+    });
+    const {host}=await mount({}, {url:`/solo/account/team-hub?message=${replyId}`});
+    await act(async()=>navigateReference!(`/solo/account/team-hub?message=${nextId}`));await flush();
+    expect(host.querySelector('aside[aria-label="Thread"]')!.textContent).toContain("Next exact source");
+    await act(async()=>pending.resolve());await flush();
+    expect(host.querySelector('aside[aria-label="Thread"]')!.textContent).toContain("Next exact source");
+  });
+
   it("refuses unavailable source metadata without reading its conversation", async () => {
     source(); db.override.team_hub_message_reference = () => ({ ok: false, code: "not_found" });
     const { host } = await mount({}, { url: `/solo/account/team-hub?message=${replyId}` });

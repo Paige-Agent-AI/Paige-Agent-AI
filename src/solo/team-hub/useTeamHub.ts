@@ -153,6 +153,8 @@ export interface ThreadState {
   listedNewest?: TeamHubMessage | null;
   /** As on StreamState: where the next older page starts. */
   olderCursor?: TeamHubPageCursor | null;
+  /** An explicit old-source window stays anchored until normal thread navigation replaces it. */
+  referenceWindow?: { messageId: string; cursor: TeamHubPageCursor };
 }
 
 /** What a task request asks Operations for; kept with the attempt so Retry sends the same thing. */
@@ -326,6 +328,7 @@ function withCards(messages: TeamHubMessage[], cards: Record<string, CardRead> |
 
 export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => unknown; onIncoming?: (announcement: string) => void; onAttachment?: (announcement: string) => void } = {}) {
   const navigationEpoch = useRef(0);
+  const threadReadEpoch = useRef(0);
   const [status, setStatus] = useState<HubStatus>("loading");
   const [overview, setOverview] = useState<TeamHubOverview | null>(null);
   const [refreshFailed, setRefreshFailed] = useState(false);
@@ -486,22 +489,31 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
     return result;
   }, [call, settle]);
 
-  const loadThread = useCallback(async (channelId: string, rootId: string, mode: "open" | "refresh" | "older", referenceCursor?: TeamHubPageCursor | null): Promise<number> => {
-    if (mode === "open") setThread({ channelId, rootId, status: "loading", root: null, replies: [], hasMore: false, loadingOlder: false, olderFailed: false });
+  const loadThread = useCallback(async (channelId: string, rootId: string, mode: "open" | "refresh" | "older", referenceWindow?: ThreadState["referenceWindow"]): Promise<number> => {
+    const readEpoch = mode === "open" ? ++threadReadEpoch.current : threadReadEpoch.current;
+    const pinned = mode === "open" ? referenceWindow : live.current.thread?.referenceWindow;
+    if (mode === "open") setThread({ channelId, rootId, status: "loading", root: null, replies: [], hasMore: false, loadingOlder: false, olderFailed: false,
+      ...(pinned ? { referenceWindow: pinned } : {}) });
     if (mode === "older") setThread((current) => current && current.rootId === rootId ? { ...current, loadingOlder: true, olderFailed: false } : current);
-    const cursor = cursorBefore(mode === "older" ? live.current.thread?.olderCursor ?? live.current.thread?.replies[0] : mode === "open" ? referenceCursor : undefined);
+    const cursor = cursorBefore(mode === "older" ? live.current.thread?.olderCursor ?? live.current.thread?.replies[0] : pinned?.cursor);
     const answer = await call("team_hub_list_messages", { p_channel_id: channelId, p_thread_root: rootId, ...cursor, p_limit: THREAD_PAGE_SIZE });
     const result = settle(parseThreadPage(answer.data, answer.error, channelId, rootId));
-    if (!alive.current || live.current.thread?.rootId !== rootId) return 0;
+    if (!alive.current || threadReadEpoch.current !== readEpoch || live.current.thread?.rootId !== rootId
+      || live.current.thread.channelId !== channelId) return 0;
     if (result.kind === "refused" && ENDS_HUB.has(result.code)) return 0;
     const meId = live.current.overview?.me.user_id ?? "";
     const heldIds = new Set((live.current.thread?.replies ?? []).map((reply) => reply.id));
     const incoming = mode === "refresh" && result.kind === "ok"
       ? result.value.replies.filter((reply) => !heldIds.has(reply.id) && byOther(reply, meId)).length : 0;
     setThread((current) => {
-      if (!current || current.rootId !== rootId) return current;
+      if (!current || threadReadEpoch.current !== readEpoch || current.rootId !== rootId || current.channelId !== channelId) return current;
       if (result.kind === "ok") {
         const page = result.value;
+        // The exact source is the newest row before its exclusive native boundary. If
+        // it is absent on a fresh anchored read, never retain its deleted cached body.
+        if (pinned && mode !== "older" && !page.replies.some(reply => reply.id === pinned.messageId)) {
+          return { ...current, status: "not_found", root: null, replies: [], loadingOlder: false };
+        }
         const held = mode === "open" ? [] : current.replies;
         // Same rule as the stream: a newest page that can't be joined to the held replies replaces them.
         const anchor = mode === "open" ? null : current.listedNewest ?? null;
@@ -513,6 +525,7 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
         const listedNewest = mode === "older" ? anchor : gap ? pageNewest ?? anchor : newestOf([...(anchor ? [anchor] : []), ...page.replies]) ?? null;
         return {
           channelId, rootId, status: "ready", root: page.root, replies, listedNewest,
+          ...(pinned ? { referenceWindow: pinned } : {}),
           olderCursor: mode === "refresh" && !gap ? current.olderCursor ?? page.oldest ?? null : mode === "older" ? page.oldest ?? current.olderCursor ?? null : page.oldest ?? null,
           // A refresh that joins the held replies decides nothing about what lies above them.
           hasMore: gap ? true : mode === "refresh" ? current.hasMore : page.has_more,
@@ -710,7 +723,7 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
   const closeThread = useCallback(() => { navigationEpoch.current += 1; setThread(null); live.current.thread = null; }, []);
 
   /** Original-message navigation: metadata resolution grants nothing; list_messages reads afresh. */
-  const openMessageReference = useCallback(async (messageId: string) => {
+  const openMessageReference = useCallback(async (messageId: string, beforeOpen?: (reference: { channelId: string; rootId: string; messageId: string }) => void) => {
     const unavailable = { kind: "unavailable" as const };
     if (parseTeamHubReferenceSearch(new URLSearchParams({ message: messageId }).toString()).kind !== "reference") return unavailable;
     const epoch = ++navigationEpoch.current;
@@ -724,12 +737,15 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
     const result = settle(parseTeamHubMessageReference(answer.data, answer.error, messageId));
     if (result.kind !== "ok") return result;
     const reference = result.value;
+    // Prepare the destination's composer while the previous thread still owns its draft.
+    try { beforeOpen?.(reference); } catch { return unavailable; }
     // Opening an old source must not mark the newest hidden channel messages read.
     await openConversation(reference.channelId, false);
     if (!alive.current || navigationEpoch.current !== epoch + 1 || live.current.activeId !== reference.channelId) return unavailable;
     live.current.thread = { channelId: reference.channelId, rootId: reference.rootId, status: "loading", root: null,
       replies: [], hasMore: false, loadingOlder: false, olderFailed: false };
-    await loadThread(reference.channelId, reference.rootId, "open", reference.cursor);
+    await loadThread(reference.channelId, reference.rootId, "open", reference.cursor
+      ? { messageId: reference.messageId, cursor: reference.cursor } : undefined);
     if (!alive.current || navigationEpoch.current !== epoch + 1) return unavailable;
     return result;
   }, [call, settle, openConversation, loadThread]);

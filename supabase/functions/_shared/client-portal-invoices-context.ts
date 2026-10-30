@@ -13,7 +13,7 @@ type Calendar=Readonly<{state:"configured"|"missing"|"invalid";zone:string|null;
 export type CustomerInvoicesBilling=Readonly<{tenant_id:string;contact_id:string;captured_at:string;calendar:Calendar;
  invoices:readonly Invoice[];balances:readonly Balance[];invoice_count:number;open_count:number;has_more:boolean;
  next_cursor:Readonly<{issued_at:string;id:string}>|null}>;
-export type CustomerInvoicesContext=Readonly<{threadId:string;intentId:string;snapshot:CustomerInvoicesSnapshot|null;billing:CustomerInvoicesBilling|null}>;
+export type CustomerInvoicesContext=Readonly<{threadId:string;intentId:string;mode:"fresh"|"bound"|"legacy";snapshot:CustomerInvoicesSnapshot|null;billing:CustomerInvoicesBilling|null}>;
 const object=(v:unknown):Record<string,unknown>|null=>v!==null&&typeof v==="object"&&!Array.isArray(v)?v as Record<string,unknown>:null;
 const closed=(v:unknown,keys:readonly string[])=>{const o=object(v);return o&&Object.keys(o).length===keys.length
  &&keys.every(k=>Object.prototype.hasOwnProperty.call(o,k))?o:null;};
@@ -95,13 +95,13 @@ export async function readCustomerInvoicesContext(caller:Caller,actorInput:strin
   if(JSON.stringify(data)?.length>32000)return contextDegraded("customer_invoices_context_too_large");
   const r=closed(data,["thread_id","intent_id","mode","snapshot","billing"]);
   if(!r||r.thread_id!==threadId||r.intent_id!==intentId)return contextDegraded("customer_invoices_invalid");
-  if(r.mode==="legacy")return r.snapshot===null&&r.billing===null?contextAvailable({threadId,intentId,snapshot:null,billing:null}):contextDegraded("customer_invoices_invalid");
+  if(r.mode==="legacy")return r.snapshot===null&&r.billing===null?contextAvailable({threadId,intentId,mode:"legacy",snapshot:null,billing:null}):contextDegraded("customer_invoices_invalid");
   const s=closed(r.snapshot,["version","kind","actor_id","tenant_id","contact_id","thread_id","intent_id","observation_identity","captured_at"]);
   if((r.mode!=="fresh"&&r.mode!=="bound")||!s||s.version!==1||s.kind!=="customer_invoices"||s.actor_id!==actor||s.tenant_id!==tenant
    ||s.contact_id!==contact||s.thread_id!==threadId||s.intent_id!==intentId||typeof s.observation_identity!=="string"
    ||!/^[a-f0-9]{64}$/.test(s.observation_identity)||!instant(s.captured_at))return contextDegraded("customer_invoices_invalid");
   const billing=decodeBilling(r.billing,tenant,contact,s.captured_at);if(!billing)return contextDegraded("customer_invoices_invalid");
-  const context:CustomerInvoicesContext={threadId,intentId,snapshot:{version:1,kind:"customer_invoices",actor_id:actor,tenant_id:tenant,contact_id:contact,
+  const context:CustomerInvoicesContext={threadId,intentId,mode:r.mode,snapshot:{version:1,kind:"customer_invoices",actor_id:actor,tenant_id:tenant,contact_id:contact,
    thread_id:threadId,intent_id:intentId,observation_identity:s.observation_identity,captured_at:s.captured_at},billing};
   // The final source message includes canonical display labels. Never truncate
   // facts or round their original values to make an over-budget answer fit.

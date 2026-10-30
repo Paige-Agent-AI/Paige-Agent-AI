@@ -1,4 +1,18 @@
-# CURA original customer invoice context — consumer preparation
+# CURA original customer invoice context — authorized integration
+
+## Current implementation checkpoint — October 30
+
+Direct owner authority in the original EXP09 conversation resolves the former automatic-approval hold: implement and test the proposed native integration, preserve existing billing permissions, complete review and CI, deploy normally, and continue the seven-pillar assignment. No additional account, access, send, payment, provider, Research or Live activation follows from that approval.
+
+Local carrier `20271126060009_e09_cura_invoice_context.sql` was created through the CLI as `20261030140549` and moved forward **before any application**. It follows the published EXP08 chain through `20271126040008` and EXP05 Task `20271126050005`; deployment preserves that order and exact current source. The earlier 16-first offer was never applied and is obsolete after EXP08's release. No applied migration is renumbered.
+
+The original customer Root path now consumes caller-authenticated invoice context, attaches only the accepted financial snapshot, and revalidates it before model use and publication. Knowledge, Progress, Sessions, files, selected public links, private history, execution and settlement remain their original systems. Owner/platform/Team Hub branches and shared billing writers are outside this change. General CURA without financial access retains the original begin path and receives no invoice facts. Invoice-bound replays cannot become unbound or acquire new facts.
+
+Local proof: 143 focused tests PASS (43 original exact-string DTO/presentation cases, 77 existing customer handler regressions, 23 new extracted-original-Root cases); focused TypeScript and ESLint exit 0. The new Stop negative caught invoice-only argument spill; source routing is repaired. The isolated PostgreSQL16 component runs the complete migration against frozen original incumbent bodies and passes 23 controls; its owned server is stopped. Peripheral Auth/role/balance/Knowledge/begin ports are synthetic: this is **not** full-schema Auth/RLS/HTTP or customer proof. The existing rollback fixture `supabase/tests/e09_customer_public_link.sql` includes native invoice admission, terminal, replay, source withdrawal, publication, private-history and wrong-business cases. Full-schema CI/managed Preview, exact-head review, release/readback and actual external-client outcomes remain owed.
+
+The metadata inverse preserves the default-expression AST and argument text while normalizing only parser `:location` offsets introduced by CREATE OR REPLACE. Original OID, owner, ACL, argument/default semantics, settings and attributes remain exact apart from the approved STABLE-to-VOLATILE transition. A component negative distinguishes NULL from a changed default value.
+
+Historical preparation and contracts below remain evidence; earlier unmounted/pending-approval descriptions are superseded by this checkpoint. Functional: IMPLEMENTED LOCALLY / NOT RELEASED. Visual/experiential: bounded existing-shell proof, joined customer outcomes owed. Founder Acceptance: NOT_READY. Full original 42 requirements, seven pillars and one integrated founder evaluation remain open.
 
 This is part of original EXP09/ANT-163 and its existing financial producer handoff, not another assignment, registry, ledger or financial permission system. The complete original42 requirements and seven pillars remain open. This packet records LOCAL, UNMOUNTED consumer preparation. No customer invoice context RPC, begin/settlement/publication integration, availability or production proof is created by these two TypeScript files.
 

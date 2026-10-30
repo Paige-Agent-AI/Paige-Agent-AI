@@ -7,7 +7,7 @@ MATERIAL_FLOW_CHANGE: NO: clarify existing refusal and planned-amount labels wit
 FLOW_PROTOTYPE: NOT_REQUIRED: existing approved original dialog/exit flow and original sales-payments fixture, no new visual world or workflow.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: authorized business user knows what invoice details to inspect after an ineligible publication review and can leave safely; draft preview amounts do not imply existing debt.
 VISUAL_DIRECTION: PASS: original PAIGE Sales dialogs and Mineral/Obsidian treatments, no competing pane, component system or scroll owner.
-AUTOMATED_EVIDENCE: PASS: two causal failures with16 original controls before the repair; final76 assertions across original InvoiceCommandReview, InvoiceLifecycleActions and SalesBillingWorkspace suites. Typed HTTP refusal never offers approval; unknown recovery retains identical stored operation and blocks fresh-review advice; issued void-preview label stays original.
+AUTOMATED_EVIDENCE: PASS: two causal failures with16 original controls before the repair; final76 assertions across original InvoiceCommandReview, InvoiceLifecycleActions and SalesBillingWorkspace suites. Typed HTTP refusal never offers approval; uncertain recovery retains identical stored operation and blocks fresh-review advice; issued void-preview label stays original.
 STATIC_EVIDENCE: PASS: original-config focused TypeScript5.9.3 graph753files/0diagnostics; scoped ESLint0; official cached pinned Impeccable CLI wrapper reports4.1.0 and all3 changed code paths return empty JSON findings. Direct bundled engine reports4.0.0 and is not substituted for the pinned wrapper evidence. Initial npm launcher quoting failure is excluded.
 RENDERED_EVIDENCE: PASS: four actual original-component raw JPEG captures at source706ec8c6475aff6ea2d5489b88574dfde25701e7. Desktop1280/Mineral and320-refusal/390-proposal CSS frames/Obsidian. Source-manifest.json pins21 explicit direct product/fixture/toolchain inputs, image digests, actual geometry and native1280x720 JPEG metadata. Not a full transitive graph.
 BEHAVIORAL_EVIDENCE: PASS: Enter opens original actions/review and prepares the synthetic native response. Known refusal gives correction guidance without Approve; Cancel then Close returns visible focus to original trigger on desktop and320. Eligible proposal displays Unissued draft amount; Cancel is used, never Approve.
@@ -39,7 +39,7 @@ RELEASE_CLASSIFICATION: patch: actionable original publication refusal and truth
 CUSTOMER_RELEASE_IDENTITY: none: no version or announcement.
 RELEASE_NOTE_REQUIRED: no: maintenance correction in existing review flow.
 RELEASE_TRUTH_BOUNDARY: PARTIAL: source and bounded rendered verification; review/release/authenticated/full Experience proof owed. No algorithm or capability promotion.
-RELEASE_RECOVERY: normal source forward-fix in the original review component; no financial-data rollback.
+RELEASE_RECOVERY: position=normal reviewed source forward-fix in the original review component; reference=existing EXP04 delivery packet and original invoice lifecycle/recovery contract. No financial-data rollback.
 
 ## Rendered source and scope
 

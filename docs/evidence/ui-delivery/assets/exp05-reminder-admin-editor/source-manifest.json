@@ -1,0 +1,587 @@
+{
+  "boundary": "OFFLINE ORIGINAL OPERATIONS; synthetic identity/tenant/role/data ports; NO actual Auth/approval/record/Rail proof",
+  "inputs": [
+    {
+      "path": "src/solo/operations/OperationsWorkspace.tsx",
+      "sha256": "e4d49ba743f2aeacf4447d894cc5004756bba646bfdea201c06672f855c6a1c4"
+    },
+    {
+      "path": "src/index.css",
+      "sha256": "85a3adb5668238e91cdb6c8189488db1fd24ce6698f7456ae23a3de6aa572482"
+    },
+    {
+      "path": "src/components/tenant-shell/tenant-command-center-shell.css",
+      "sha256": "e9756f8cfc04a330748711d798afeda35cb8f02bd133914dfee9a5fe4b0bf355"
+    },
+    {
+      "path": "src/solo/operations/OperationsAssignee.tsx",
+      "sha256": "d47cc80849a7fbd0f9bc91ffdc5ccebcd3f46bc24771e4e390eb714464a00dd7"
+    },
+    {
+      "path": "src/solo/operations/OperationsWorkEditor.tsx",
+      "sha256": "c94ac924025042f9081e3e8c9061ae8fefb86cae97d167a31cd73ec4419c4332"
+    },
+    {
+      "path": "src/solo/operations/OperationsWorkCreator.tsx",
+      "sha256": "cab2b22f14caface089feea983bc127ffb2a33f9c36c62714d944146f081ef9b"
+    },
+    {
+      "path": "src/solo/operations/OperationsWorkActivity.tsx",
+      "sha256": "8ede652ffa232088eaeb1a67c668f0e388f9f0cb7cbf57c393a214852138c93e"
+    },
+    {
+      "path": "src/solo/operations/OperationsItemRelease.tsx",
+      "sha256": "34a7cdde4001acadf4cc122a1da6d6e02419169f7f8d249f07bab5ce8288b6fe"
+    },
+    {
+      "path": "src/solo/operations/operations-item-release.ts",
+      "sha256": "bdcc2921b52b55736bbc168e548a26c95b7ab7b6d8fad3a3ef02774b7b876254"
+    },
+    {
+      "path": "src/solo/operations/OperationsProjectCreator.tsx",
+      "sha256": "73f8fae5e490484dc810cdc2c440112e3f9ebaeca69d267dfa184b952caf7f9c"
+    },
+    {
+      "path": "src/solo/operations/OperationsProjectEditor.tsx",
+      "sha256": "7faab43dd1ac2c89ca178246fb6103d037759345776f32d494ea936d4c6f7e91"
+    },
+    {
+      "path": "src/solo/operations/OperationsWork.tsx",
+      "sha256": "bdfd8d5ae1b951fc1f578dba08bd9b44c2549b464b662ef476288e85ff8687cd"
+    },
+    {
+      "path": "src/solo/operations/operations-native-work.ts",
+      "sha256": "6088d748b01cc8925ae78e64f1d0866beffde0598d8bbff81b1a39bcba045d66"
+    },
+    {
+      "path": "src/solo/operations/operations-crm-work-command.ts",
+      "sha256": "0b9777b21f2583456e0dc5d715be3f75c76e38f7acac89a5b0012540a0e544e8"
+    },
+    {
+      "path": "src/solo/operations/OperationsCrmStageReview.tsx",
+      "sha256": "233c36924bc40dda327083984edbf9990677fc1d9b23a4730d8f1dd5e0a011ec"
+    },
+    {
+      "path": "src/solo/operations/OperationsCrmWorkEditor.tsx",
+      "sha256": "9b3d84accd9dba81e03760f4d39dff1d5ec989a265be18d807bf764b384d320d"
+    },
+    {
+      "path": "src/solo/operations/operations-presentation.ts",
+      "sha256": "6e61315e808af0701e8c8cb34e9021b8bff97f9961257fce2b70cf465a7d1844"
+    },
+    {
+      "path": "src/solo/operations/OperationsProjects.tsx",
+      "sha256": "6a938c3b8739dd3d6fcea015e1ee57db3a7e6dc1109340a4504dae0c3900a5c1"
+    },
+    {
+      "path": "src/solo/operations/OperationsOverview.tsx",
+      "sha256": "e69adc489c26c7c6b83e575bcc04b00d2c7b423eeb607a954e59f3c8f28b3b9b"
+    },
+    {
+      "path": "src/solo/operations/OperationsRecordedFindings.tsx",
+      "sha256": "e7e522707342193778d3959a7478a50eb361183842663eaed6023607c40a78cd"
+    },
+    {
+      "path": "src/solo/operations/OperationsZionHistory.tsx",
+      "sha256": "597946ebff071ba0731bec0ad6f557f9e7439196b1bff8536372797f8fb50fe0"
+    },
+    {
+      "path": "src/solo/operations/operations-overview-work.ts",
+      "sha256": "b828c44d62ac5f67c3db0c536b5e28d9e64fae4a9591ee407cac9db0ec20f253"
+    },
+    {
+      "path": "src/solo/operations/OperationsCapacity.tsx",
+      "sha256": "6bfe6d7865600a74dcf0a16891165206967423e373932a1e636243640e21103f"
+    },
+    {
+      "path": "src/solo/operations/OperationsDelivery.tsx",
+      "sha256": "3c737ac54e649068f487fd50f5876e47bd7d92f33b6bb2d9e989527492bcae74"
+    },
+    {
+      "path": "src/solo/operations/OperationsPlaybooks.tsx",
+      "sha256": "377a91b3af627052cd5e3269d1e46a63b2921304c48de522dca5deb8396f9dbf"
+    },
+    {
+      "path": "src/solo/operations/operations-source-contract.ts",
+      "sha256": "6ef3b484c2902e2a9b6fb623241a290ad460b62012fa2911b6d708a979e787d3"
+    },
+    {
+      "path": "src/solo/operations/operations-weekly-source.ts",
+      "sha256": "d891749430be5b4efc6010a2dfaa39cd55ee6297d9f2234de4cedcad9f3fbe33"
+    },
+    {
+      "path": "src/solo/operations/operations-task-focus.ts",
+      "sha256": "e612beb83323c720cb9b06cfcc0b760c47e638f9419329dd930c2ecb7f1ba931"
+    },
+    {
+      "path": "src/solo/operations/OperationsDeliveryInspection.tsx",
+      "sha256": "2240a8d46c9b16c2aafe614f5e8fe9f4c0975398ee29604f3d07129df7e2cfdf"
+    },
+    {
+      "path": "src/solo/operations/OperationsDeliveryReviewQueue.tsx",
+      "sha256": "bf7043e04e36866268b560562ad895a64bdaa2d972f8917cac9e3689eb6081c5"
+    },
+    {
+      "path": "src/solo/operations/operations-work-delivery-scope.ts",
+      "sha256": "a908de90dcafdc92e082b9725efb04b9d4b9e4e98aa1c0cbab38f201965efdb8"
+    },
+    {
+      "path": "src/solo/operations/operations-delivery-recovery-targets.ts",
+      "sha256": "8f10ed67154ceaa86c3448747d25cba7ce8f025abcdc15e783debc78f2343ab2"
+    },
+    {
+      "path": "src/solo/operations/operations-delivery-inspection.css",
+      "sha256": "db6fcc9717bcdb5a58a798c66342dbc0dcd40001b141be3c62248038b8fcedb1"
+    },
+    {
+      "path": "src/solo/operations/operations-workspace.css",
+      "sha256": "f502346c0f2ffb1ba0aa516ab88403a4aa47d27f09aece69d3f2d989b4dd3f2f"
+    },
+    {
+      "path": "src/lib/paigePromptHandoff.ts",
+      "sha256": "a15d391cd471da2d3ea48145947c00a02a965d8c9b75ca94055ab0cbd4cd6171"
+    },
+    {
+      "path": "src/solo/paigeClientScope.ts",
+      "sha256": "670a2031a4f180b564348fcd2592a83a87a1f0fe4df43c67f28318c472fbd1c0"
+    },
+    {
+      "path": "src/solo/paigePublicPresenceScope.ts",
+      "sha256": "52f11ac31abcfb748744866c102b5a2f67139ede2c2bf6add0a0c2bad4b56d70"
+    },
+    {
+      "path": "src/contexts/ImpersonationContext.tsx",
+      "sha256": "cb640d21852f3ad416729db75e608da951dd722756692c51b1f058e806eb73ed"
+    },
+    {
+      "path": "src/lib/scopedUser.ts",
+      "sha256": "ba4a0e7293f21bdd9a9f7a19be4dde43fc65cfdf920fb6ee05e659309db3e7ca"
+    },
+    {
+      "path": "src/components/ui/sheet.tsx",
+      "sha256": "56877e67e260514dc8df4347ae2a0d516c9d5cfbb341d104da2a9bc9484865a5"
+    },
+    {
+      "path": "src/solo/operations/operations-delivery-reviews.ts",
+      "sha256": "59fd0362270a98bb318f4937b01bc9823031c57cf87901f948f099a7769ce230"
+    },
+    {
+      "path": "src/solo/operations/operations-delivery-source.ts",
+      "sha256": "6aff6452e60b63c57e9c95b0786c35429d5212534f72c87d20062a69533aba84"
+    },
+    {
+      "path": "src/solo/operations/operations-views.css",
+      "sha256": "18c5139a5966de593d2ad6480f1cdb676b834f10e077fc7927d5203ccc8d5e5e"
+    },
+    {
+      "path": "src/hooks/useKnowledgeDocuments.ts",
+      "sha256": "34f473274e6eb1032b779cda52c1d309c061ae02ff6306646fe7dd961c25e6d6"
+    },
+    {
+      "path": "src/lib/knowledge-service.ts",
+      "sha256": "66f0ecfd3df48591381e1aa15c60eb88e768ae38fe6e7e6cc6fa0d7d513c007f"
+    },
+    {
+      "path": "src/solo/owner-task-automations.tsx",
+      "sha256": "81b363cd4239f39d08317f8302d2e516a7787927f1acefbb1b68d2a518be28d7"
+    },
+    {
+      "path": "src/solo/settings-integrations.css",
+      "sha256": "da6904f7b252c9399bb74d82e11c8604db8ec3ac63644accdd537b78721d9a4d"
+    },
+    {
+      "path": "src/solo/operations/operations-work-update.ts",
+      "sha256": "14158b51df6c86aca3c716935fba79da284f5f559451b2b6a38bbf92e0c2a23f"
+    },
+    {
+      "path": "src/components/ui/alert-dialog.tsx",
+      "sha256": "c8b01137c7552e63c9ccf2c38ef92e5417bd6616b6980d56d3015db027465283"
+    },
+    {
+      "path": "src/hooks/useBeforeUnloadGuard.ts",
+      "sha256": "d4a4b3d02b7cccbea8b615cec0829027854d232db0a94ced6bf29187ec0cfd3e"
+    },
+    {
+      "path": "src/lib/auth/accountSwitchGuard.ts",
+      "sha256": "81b5ceff2074c87aa364d70bd334b7d16c4a6311d52d83c267bdc9149c93dd97"
+    },
+    {
+      "path": "src/components/ui/avatar.tsx",
+      "sha256": "4a8bc00e5514912c54d414e207266fa100906aec2754d590adcc8ccc46d4c5c9"
+    },
+    {
+      "path": "src/solo/team-workspace-contract.ts",
+      "sha256": "8fee82e6057b3425370e648be878f6c324d4415d3b6100155e6a1d2b2c39371b"
+    },
+    {
+      "path": "src/solo/operations/operations-crm-work-edit.ts",
+      "sha256": "32c8ad0cb4f335f97fce7dd39014b88df06abfeeb9bb55b63d02898b6da8744b"
+    },
+    {
+      "path": "src/solo/operations/operations-work-create.ts",
+      "sha256": "fa432d93bcdbec44815410f39e6b4d2ef511f7c5207f4fb050c7f4d44e43d599"
+    },
+    {
+      "path": "src/solo/operations/operations-delivery-local-recovery.ts",
+      "sha256": "c8b8af644117a72ad13ff6d9757ad0d58d337e5269fba0d66fc64acb486e3ce8"
+    },
+    {
+      "path": "src/solo/operations/operations-project-update.ts",
+      "sha256": "4b73cbf1013ddbd83bb600e2ed03cc82476cd800db9b1abd99025d870c4606f8"
+    },
+    {
+      "path": "src/solo/operations/operations-delivery-staff.ts",
+      "sha256": "e82faa815346f9ec301abcf97373a7f4314fab110b0f4fc73e01e9414f4b7062"
+    },
+    {
+      "path": "src/solo/operations/OperationsEngagementEvidence.tsx",
+      "sha256": "ba3aefdc6b3d88d320970e49aee653ef11450e46bd45f0d4decb7d485d6ef79e"
+    },
+    {
+      "path": "src/solo/operations/operations-engagement-project.ts",
+      "sha256": "1b4606e1178fb97b8a9e900cd2820e024e8f2498ebef7d356b6fc87f84dfd2ec"
+    },
+    {
+      "path": "src/solo/operations/operations-delivery.css",
+      "sha256": "f8a2c1f25b769d20764aff5659dd4caa9a7860b1f01157404243b9d2025b9887"
+    },
+    {
+      "path": "src/solo/useSoloCommercialTerms.ts",
+      "sha256": "e3223a2fd9e912771e4da9b93a9d266489f3eb5b5430d706dd973b652f40f493"
+    },
+    {
+      "path": "src/solo/useSoloAgreementSignings.ts",
+      "sha256": "629f17785a98e258f2b3747d92d87602b6325ba49b2f94602091ab1116245055"
+    },
+    {
+      "path": "src/solo/catalog-offers.tsx",
+      "sha256": "df369a826ecee87ef97e96a6077e47a506f07ce7e2ac979dbf0496a5eac0818d"
+    },
+    {
+      "path": "src/solo/operations/OperationsDeliverablePreparation.tsx",
+      "sha256": "5f7f395fefef21ba87953ecf23fbda55c129e5316db991decf43249015b223ac"
+    },
+    {
+      "path": "src/solo/operations/OperationsStaffDeliveryReview.tsx",
+      "sha256": "05f9cba1a6235e594be09999c81255e0d077d40ffa836ed9fc1d7ca5118bb7b5"
+    },
+    {
+      "path": "src/solo/operations/operations-project-create.ts",
+      "sha256": "cbdce3c997bc95ec2692cbfb419e61a3a4e24ec7ec639cd7d2197e083e2ac586"
+    },
+    {
+      "path": "src/solo/data/useBusinessReview.ts",
+      "sha256": "fd2626dbbfddc85220a7f9ab7b4c097425d911017e874540f01daeef0508db86"
+    },
+    {
+      "path": "src/solo/executive-review.ts",
+      "sha256": "87ba37fb56d151b3643fb797db669843dcabd30cf11e0cc71667a5c14d1835eb"
+    },
+    {
+      "path": "src/solo/operations/operations-recorded-findings.css",
+      "sha256": "f9490234ef94a9e8ca0b1e1ab737b8976a3a0cf77e80ff9b15ed214bb0155578"
+    },
+    {
+      "path": "src/lib/links/workspaceLinks.ts",
+      "sha256": "e5450e24cef3712daa80cf806044992cd2cea5e0f04f83c381e4ec418421d298"
+    },
+    {
+      "path": "src/lib/paigeComposerScopeIdentity.ts",
+      "sha256": "1bac53d19b85ee381451cd8d1f804bb89ed83b3c32d47b075904dfcb24e7892d"
+    },
+    {
+      "path": "src/lib/client-portal-access.ts",
+      "sha256": "45a1247b93721b6c7bcc5f8163a5c4876c9cd4e2dd5a4c7eb84c45bc19992abe"
+    },
+    {
+      "path": "src/solo/operations/zion-assignment-read.ts",
+      "sha256": "7dbb6a5033cfde6d42fa2b1cdfa6f598ff8950a821d63003cccbbe9219ae09f8"
+    },
+    {
+      "path": "src/solo/operations/operations-zion-history.css",
+      "sha256": "d1368882d7abe49c0922fe38891f4781ff1e767e3cfdbd3ca845e155d7e6a536"
+    },
+    {
+      "path": "src/solo/weekly/WeeklyResponsibilityEntry.tsx",
+      "sha256": "8975693256a6fccb98acc6322e98ab67d95477adda9cb21092941c98e5965d1a"
+    },
+    {
+      "path": "src/solo/operations/OperationsWeek.tsx",
+      "sha256": "0839ef0f09fdaea1cb48252c0cb4c27d15fd9f2e4aca5b092e7d444ad44f12ff"
+    },
+    {
+      "path": "src/solo/operations/operations-overview.css",
+      "sha256": "65e72a7d07eb8bfe4ef338cdfcd220b858df37dfb1866422e6ed914d5b223494"
+    },
+    {
+      "path": "src/lib/utils.ts",
+      "sha256": "d1f1e0d62cb8d8d1e04c26e14de842d8a151f75812d81b046c65b5d1fe8e4b27"
+    },
+    {
+      "path": "src/components/ui/button.tsx",
+      "sha256": "ec4ff2011e99ab79bb56528befb6904cb9ea4c58eefcc4e325b5b18e2c832103"
+    },
+    {
+      "path": "src/lib/tier/tierFeatures.ts",
+      "sha256": "a1ec9dda16861ef87c6ef7f2832e156cdda774138954ac185dfc8b04930706b2"
+    },
+    {
+      "path": "src/solo/operations/operations-engagement-readiness.ts",
+      "sha256": "a2f9818bd4c5e678354b924c35eddcb118f9c306cfde30cf782f01d48cf36f0f"
+    },
+    {
+      "path": "src/solo/operations/useOperationsEngagementEvidence.ts",
+      "sha256": "939b8cbc2c7f5540cc85195e671a2c693f041894fd1f227349c5b0384ae2eef4"
+    },
+    {
+      "path": "src/solo/operations/OperationsEngagementHandoff.tsx",
+      "sha256": "0839ebfed98ca9a143c7d2d2f306923e49c101c7baa231a9b6d042c96fbe0166"
+    },
+    {
+      "path": "src/lib/userClock.ts",
+      "sha256": "9582325d04f5b18599330a1126f66886800e0b59f2982400e736e9a1132e42cf"
+    },
+    {
+      "path": "src/solo/data/useBusinessTimeZone.ts",
+      "sha256": "c53f1dff5e929f521ea2eeaaf7ae0706e0e7537511d9986cc8b56a2e1d860bb8"
+    },
+    {
+      "path": "src/solo/operations/operations-week.ts",
+      "sha256": "73be807c7ff94a2bc3a8dda8ae821492223742431183aaf444b61c98e569a75a"
+    },
+    {
+      "path": "src/solo/operations/OperationsWeeklyWorkload.tsx",
+      "sha256": "870fb16cda5a5a0577c62fe95569c2b69bd1d6eabf59c1aa4b04f50817a7c81d"
+    },
+    {
+      "path": "src/solo/operations/operations-week.css",
+      "sha256": "b8d69eaec1fc4252df5910bf3ff86404641ce825dc307c7b2c5d6f0bbaa455f7"
+    },
+    {
+      "path": "src/solo/operations/operations-staff-delivery-review.css",
+      "sha256": "933346721554d0c362b7955057deb3fb113c1ca0f2e7b62d18b3a482e0dffdb0"
+    },
+    {
+      "path": "src/components/ui/select.tsx",
+      "sha256": "a2b62120a033b36c8d6c4a1693aa9231645fa69251740e15eacec24c1eea4d82"
+    },
+    {
+      "path": "src/lib/client-portal-scope.ts",
+      "sha256": "7da8e203a5153adf3a834aba79d7350e0db4420fbc710007bdee9221a56690c9"
+    },
+    {
+      "path": "src/solo/sales/agreementVocabulary.ts",
+      "sha256": "b37288058de91d37dcaa49f1657363e6ef663d65441fb6d5fd8ae88cdd03f69c"
+    },
+    {
+      "path": "src/solo/sales/agreementPdfIntake.ts",
+      "sha256": "0c4065a341baff61ff6490d2b03a95c2087f3edc7cb6c3f2684c557078cad0c2"
+    },
+    {
+      "path": "src/solo/weekly/useWeeklyResponsibility.ts",
+      "sha256": "1024f3c1fa174e2d03b775834da27e62ee9e63ebef7b4b613e44cf912714afbe"
+    },
+    {
+      "path": "src/solo/weekly/WeeklyResponsibilityPanel.tsx",
+      "sha256": "13028fcacf67cfcfddf2952be436c0becab74883b40d8a79c7403acc899e9e2a"
+    },
+    {
+      "path": "src/solo/weekly/weekly-responsibility.ts",
+      "sha256": "796067513eaad0f1144c92757c9dfe3aecf092e6f973c04095cae25d14446553"
+    },
+    {
+      "path": "src/solo/weekly/WeeklyDraftComposer.tsx",
+      "sha256": "34377f6b9a3e42dd44850235459abed9792a1fad88bbdb69fd4c429327d8cf7b"
+    },
+    {
+      "path": "src/components/tenant-shell/tenantShellRoutes.ts",
+      "sha256": "c88b329c2667f125e47cf9a5a0b8ed407f6df2416917570f33bf84a50c470b0d"
+    },
+    {
+      "path": "src/solo/_shared.tsx",
+      "sha256": "b6537ce521b4d83232dfcc21b5f03c00202d6360c1678f4d72628835aba0ce0c"
+    },
+    {
+      "path": "src/solo/useCatalogOffers.ts",
+      "sha256": "4afdb0eaf5c05d9780d7c398ca7a0b05470bc2a47e0e43f48b9c06e71d564bcd"
+    },
+    {
+      "path": "src/solo/catalog-offers.css",
+      "sha256": "3baf710ea48c59b7728758cdaba1d229d6acd8c8cdbb2485cd4170cb5088cb90"
+    },
+    {
+      "path": "src/lib/contact-methods.ts",
+      "sha256": "810bf4319fd744f4a27a59d868cb890376c156d9fabd7314a08ebb0c04f09e6d"
+    },
+    {
+      "path": "src/solo/data/useOwnerTaskAutomations.ts",
+      "sha256": "447ec3325c13d460c727f27f648855fb1e61c7ee4b44b2d2a8a8a34478afb42e"
+    },
+    {
+      "path": "src/solo/owner-task-process-history.tsx",
+      "sha256": "ebf4d1a87c1bf3ae7fbe0b1ab748afcc611e903f9ed06fbde7b3e145e0367d42"
+    },
+    {
+      "path": "src/solo/weekly/weekly-draft-command.ts",
+      "sha256": "884adc1efd51b9c09d000f79691a2ed954f0be133e40d99f596f9e25f2978380"
+    },
+    {
+      "path": "src/solo/weekly/WeeklyDraftReview.tsx",
+      "sha256": "71603bc24810bcc3042001110a22ccf0438f74b2826467df3cc65af93f783f4b"
+    },
+    {
+      "path": "src/solo/operations/operations-engagement-read.ts",
+      "sha256": "8c78081bc1a064d56e89df51d69b3c9d85a7ebc2a70c2007066dcfa9efc4b2a5"
+    },
+    {
+      "path": "src/solo/settings-contract.ts",
+      "sha256": "dac7493f3c3c665d3697cf68b54537af435ce9548aa06fc5a4801e96f44e1656"
+    },
+    {
+      "path": "src/solo/operations/operations-weekly-workload.ts",
+      "sha256": "56a9fad722053792870046e3b111fc41179859fb4643f39f2d69c099022877de"
+    },
+    {
+      "path": "src/solo/operations/OperationsWeeklyCalendar.tsx",
+      "sha256": "c8b404f498bbcff7e930dfbaf89c3be0f99ef54219d5e79d186e79c4e6018ef9"
+    },
+    {
+      "path": "src/solo/data/ownerTaskAutomation.ts",
+      "sha256": "e28fccd3c644178c10ccd4f262175ccf0532eec30416370764fc2887731fe24a"
+    },
+    {
+      "path": "src/solo/weekly/weekly-owner-read.ts",
+      "sha256": "7d5678ffe83e4bedfdc466207fa19872fc71b4cb9125cd5733862c853e01ecd7"
+    },
+    {
+      "path": "src/solo/operations/operations-engagement-handoff.ts",
+      "sha256": "d108c49cb762f96054824888afcce44bad15a5618d5d321f54cdeef3e7e344f7"
+    },
+    {
+      "path": "src/solo/operations/operations-engagement-handoff-write.ts",
+      "sha256": "b634ff270341c2240cbb0241ba9d4af7e73e09fb3d8752922b27b5b207210c8e"
+    },
+    {
+      "path": "src/solo/operations/operations-handoff-recovery.ts",
+      "sha256": "557b4f135f5607bd5bcf5c6315d92b8ae9c5a8d1d03a1b56053098ad4fb1624f"
+    },
+    {
+      "path": "src/solo/operations/operations-handoff-intent.ts",
+      "sha256": "68c7ac65cdf45098acc73be5a8720b5389db5ac942cd72d8c1051d41a334b114"
+    },
+    {
+      "path": "src/solo/operations/operations-handoff-date.ts",
+      "sha256": "ff4ecee41ea95041d115850aa898a20de9acc50ffd0493d70b7216152c64de0c"
+    },
+    {
+      "path": "src/solo/weekly/WeeklyScheduleChange.tsx",
+      "sha256": "dd97ffe954f4561ac895c6cd449db8cde0ef54d105336544bee4138af2327946"
+    },
+    {
+      "path": "src/solo/weekly/weekly-responsibility.css",
+      "sha256": "a999cecb1193b49590ed830f633a7644bcff0d37e45003e4fbec3fc3673f8323"
+    },
+    {
+      "path": "src/components/chat/PaigeConfirmCard.tsx",
+      "sha256": "7dac99fbfd31e41a791204cfff88a12d1af93876f8cdcc496423a20e60b9f952"
+    },
+    {
+      "path": "src/solo/operations/operations-weekly-calendar.ts",
+      "sha256": "eaa5fa94464d71fac5a93045d7502bbc89a976a5928d06ffd51a4eb9a02644ce"
+    },
+    {
+      "path": "src/components/tenant-calendar/useSoloCalendar.ts",
+      "sha256": "af195674f43b6ed551f69d0e5ee79b127da2d4a7880d2b4cb6deb54d4592a6f5"
+    },
+    {
+      "path": "src/components/chat/confirmPreview.ts",
+      "sha256": "194f9441087a3a04298797d38b063db39beca091fbc51261e67113931e0dc7ce"
+    },
+    {
+      "path": "src/hooks/useRealtimeTable.ts",
+      "sha256": "bc9bb60ed73ef4bff820d277fdccd54257f9816ff7b12a66e1d6c80eca586f24"
+    }
+  ],
+  "reviewedProductHead": "ef8b280dd50e5d46e662c1b3ebd880eed86206d6",
+  "parent": "d44b9bf103b30acdabd9da6a2d73764d6b4bac8e",
+  "fixtureInputs": [
+    {
+      "path": "work/reminder-admin-ui/main.tsx",
+      "sha256": "d0eedada4dfc3caaca994bdfc4882d54b85490807108e91ed58f69edcb649175"
+    },
+    {
+      "path": "work/reminder-admin-ui/index.html",
+      "sha256": "77452424169a244605c3a7ad2fd580dc876e0167882f1f082e40923e67da7c9f"
+    },
+    {
+      "path": "work/reminder-admin-ui/ports.ts",
+      "sha256": "a178c7e48c57fd42259b295fae96433a07983863eff27602446a227fbd11f7ca"
+    },
+    {
+      "path": "work/reminder-admin-ui/vite.config.ts",
+      "sha256": "2005559d5c397540f471af5f9eda28538ad0c49f3be2a293509e705e663bb051"
+    },
+    {
+      "path": "scripts/live-drive/harness/operations-release-mount/stubs.ts",
+      "sha256": "3f4329a958e5176c4fb75e2429f7a2fa4507da3fe98058b74b67322e57e2ced2"
+    },
+    {
+      "path": "scripts/live-drive/harness/operations-release-mount/main.tsx",
+      "sha256": "5576ac3ef976cc4aa4da1ef9c48f4b9a24128455a05661369cfac15404aa9162"
+    },
+    {
+      "path": "work/effort-ui-native/guard.ts",
+      "sha256": "0e5911af051107486b4d63b0ac561bd298b19ee3560e7abd12dba1dc2eb1a34d"
+    }
+  ],
+  "assets": [
+    {
+      "path": "work/reminder-admin-ui/dist/assets/index-1uqEK06O.js",
+      "sha256": "02b96fce44d69e4a78ca8ec0fffae53fbe8a3ad0fdd28728ddf4b83ad4d8c922"
+    },
+    {
+      "path": "work/reminder-admin-ui/dist/assets/index-C1osL84J.css",
+      "sha256": "a45340cfa762f698db57f012ed27d69fc8f4babde8409f99d6a7f9a16b044265"
+    }
+  ],
+  "evidence": [
+    {
+      "path": "admin-dark-320.jpg",
+      "sha256": "140e1ecc895ae5ad5060185fe0168f3a38b0b0b3e94a62bc753f7f2017d8869e"
+    },
+    {
+      "path": "admin-desktop.jpg",
+      "sha256": "84fd89db55906784edca4c9a5389b5343467bd4d68c3acb4286c77754ccc3b06"
+    },
+    {
+      "path": "assignee-read-only-desktop.jpg",
+      "sha256": "fa302a2703ba2fef942e923561ab7a645f8ade05ffc745c7010b429d07f6689e"
+    },
+    {
+      "path": "browser-proof.json",
+      "sha256": "2b9a1f8009716cbf52336708a828bebd2e38ea38b79a6b4edda8289231bbe531"
+    },
+    {
+      "path": "role-loading-dark-320.jpg",
+      "sha256": "8623291f5c29605fc065e0231cb07c7cedff37e2ac8c78048ade58f300c04fe2"
+    },
+    {
+      "path": "wrong-actor-light-320.jpg",
+      "sha256": "56d2ba8253813923d31237c59c6c246bb74a2a915a6df7d02ef6df25d33a1567"
+    }
+  ],
+  "tests": [
+    {
+      "path": "work/reminder-admin-editor-red.log",
+      "sha256": "73dcfb502e0c4d2c08d48aaca0b40c642bbd185f4417618c12a6ce17b9a5fbd0"
+    },
+    {
+      "path": "work/reminder-admin-editor-green.log",
+      "sha256": "361de30f009424f49f7cfbaa6b8f34668c510cfdaee9c471e76f6f8d3f443fde"
+    },
+    {
+      "path": "work/reminder-admin-workspace-green.log",
+      "sha256": "8df685781f207d74481a5984f518d3336498c2f1db2d7a07894536ad0894e70e"
+    }
+  ]
+}

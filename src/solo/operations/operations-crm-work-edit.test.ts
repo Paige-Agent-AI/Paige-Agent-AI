@@ -45,3 +45,34 @@ it("checks changed-field readback without equating assignment or a date with com
  expect(crmWorkEditMatchesReadback(due(),{...task,tenant_id:"foreign",due_date:"2026-10-16T13:00:00Z"})).toBe(false);
  expect(crmWorkEditMatchesReadback(due(),{...task,id:"other",due_date:"2026-10-16T13:00:00Z"})).toBe(false);
 });
+it("prepares and restores one scalar effort patch without copying metadata",()=>{
+ const effort=buildCrmWorkEditOperation({...task,estimated_minutes:15},{kind:"effort",minutes:30},scope,members)!;
+ expect(effort.command).toEqual({action:"task.update",task_id:task.id,expected_updated_at:task.updated_at,patch:{estimated_minutes:30}});
+ expect(Object.isFrozen(effort.command.patch)).toBe(true);
+ expect(restoreCrmWorkEditOperation(JSON.parse(JSON.stringify(effort)),scope.actorId,scope.tenantId)).toEqual(effort);
+ expect(crmWorkEditMatchesReadback(effort,{...task,estimated_minutes:30})).toBe(true);
+ expect(crmWorkEditMatchesReadback(effort,{...task,estimated_minutes:15})).toBe(false);
+ expect(crmWorkEditMatchesReadback(effort,{...task,tenant_id:"foreign",estimated_minutes:30})).toBe(false);
+});
+it("keeps effort zero, clear, unchanged and invalid values distinct",()=>{
+ expect(buildCrmWorkEditOperation({...task,estimated_minutes:null},{kind:"effort",minutes:0},scope,members)?.command.patch).toEqual({estimated_minutes:0});
+ const clear=buildCrmWorkEditOperation({...task,estimated_minutes:0},{kind:"effort",minutes:null},scope,members)!;
+ expect(clear.command.patch).toEqual({estimated_minutes:null});
+ expect(crmWorkEditMatchesReadback(clear,{...task,estimated_minutes:null})).toBe(true);
+ expect(crmWorkEditMatchesReadback(clear,{...task,estimated_minutes:0})).toBe(false);
+ expect(buildCrmWorkEditOperation({...task,estimated_minutes:null},{kind:"effort",minutes:null},scope,members)).toBeNull();
+ expect(buildCrmWorkEditOperation({...task,estimated_minutes:30},{kind:"effort",minutes:30},scope,members)).toBeNull();
+ for(const minutes of [-1,0.5,2147483648,NaN,Infinity])expect(buildCrmWorkEditOperation(task,{kind:"effort",minutes},scope,members)).toBeNull();
+});
+it("rejects widened or mismatched recovered effort proposals",()=>{
+ const effort=buildCrmWorkEditOperation(task,{kind:"effort",minutes:30},scope,members)!;
+ for(const altered of [
+  {...effort,target:{kind:"effort",minutes:31}},
+  {...effort,targetStatus:"in_progress"},
+  {...effort,command:{...effort.command,patch:{estimated_minutes:30,metadata:{}}}},
+  {...effort,command:{...effort.command,patch:{estimated_minutes:"30"}}},
+  {...effort,command:{...effort.command,action:"task.assign"}},
+  {...effort,command:{...effort.command,expected_updated_at:"yesterday"}},
+ ])expect(restoreCrmWorkEditOperation(altered,scope.actorId,scope.tenantId)).toBeNull();
+ expect(restoreCrmWorkEditOperation(effort,"different-actor",scope.tenantId)).toBeNull();
+});

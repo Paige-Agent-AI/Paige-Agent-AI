@@ -4260,6 +4260,11 @@ group("32 Explicit customer audience uses native private history and customer pr
       client_portal_assistant_context_v2:{data:customerContext(),error:null},
       client_portal_assistant_progress_context:{data:progressContext(),error:null},
       client_portal_assistant_sessions_context:{data:sessionsContext(),error:null},
+      // This original Knowledge scenario has no accepted financial source. The
+      // native invoice contract returns legacy with no snapshot or billing data;
+      // an absent RPC result is a refusal, not this valid general conversation.
+      client_portal_assistant_invoices_context:args=>({data:{thread_id:args.p_thread,intent_id:args.p_intent,
+        mode:"legacy",snapshot:null,billing:null},error:null}),
       client_portal_assistant_begin_sessions:args=>({data:{status:args.p_stop?"stopped":"accepted",turn_id:contact},error:null}),
       paige_chat_customer_thread_authorized:{data:true,error:null},
       paige_chat_interactive_protocol:{data:{version:2,active:false},error:null},
@@ -4290,6 +4295,19 @@ group("32 Explicit customer audience uses native private history and customer pr
     good.rec.rpc.some(x=>x.name==="client_portal_assistant_begin_sessions")
     &&!good.rec.rpc.some(x=>x.name==="paige_chat_interactive_begin_v2")
     &&JSON.stringify(good.rec.rpc.find(x=>x.name==="paige_chat_interactive_settle")?.args.p_bundle_ref.customer_knowledge)===JSON.stringify(snapshot));
+  assert("32 general customer invoice context uses the same captured caller and intent",
+    good.rec.rpc.some(x=>x.name==="client_portal_assistant_invoices_context"&&x.client==="jwt"&&x.args.p_thread===thread&&x.args.p_intent===intent));
+  assert("32 legacy invoice context grants no financial admission or terminal facts",
+    !good.rec.rpc.some(x=>x.name==="client_portal_assistant_begin_invoices")
+    &&good.rec.rpc.find(x=>x.name==="paige_chat_interactive_settle")?.args.p_bundle_ref.customer_invoices===undefined);
+  {
+    terminal=false;
+    const refused=await drive({...scenario,rpcExtras:{...scenario.rpcExtras,
+      client_portal_assistant_invoices_context:{data:null,error:{code:"42501"}}}});
+    assert("32 withdrawn invoice read after general admission retains the accepted question and refuses provider egress",
+      refused.providerCalls.length===0&&refused.responseText.includes('"message_accepted":true')
+      &&refused.rec.rpc.some(x=>x.name==="client_portal_assistant_begin_sessions"));
+  }
   {
     // E09 K2: the customer's question is embedded once (voyage only), only after this thread's customer
     // is authorized, and that one vector binds the ranked customer read and the begin overload, so the

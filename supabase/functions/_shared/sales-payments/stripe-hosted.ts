@@ -1,4 +1,4 @@
-import type {PaymentRequest,ProviderOperation} from './payment-contract.ts';
+import type {PaymentRequest,ProviderOperation,VerifiedSettlement} from './payment-contract.ts';
 import type {ProviderEnvironment} from './merchant.ts';
 
 type JsonRecord=Record<string,unknown>;
@@ -27,7 +27,7 @@ function definiteRequestRefusal(error:unknown):boolean {
   (e.type==='StripePermissionError'&&e.statusCode===403)||
   (e.type==='StripeInvalidRequestError'&&e.statusCode===400&&e.code!=='idempotency_key_in_use'));
 }
-function bind(request:PaymentRequest,op:ProviderOperation,client:StripeHostedClient) {
+function bind(request:PaymentRequest,op:ProviderOperation,client:Pick<StripeHostedClient,'environment'>) {
  if(op.provider!=='stripe'||op.tenant_id!==request.tenant_id||op.request_id!==request.id||
   !/^acct_[A-Za-z0-9]+$/.test(op.merchant_id)||!op.id||!op.idempotency_key||
   op.application_fee_minor!==0||!Number.isSafeInteger(op.merchant_version)||op.merchant_version<1||
@@ -121,4 +121,120 @@ export async function readStripeHostedRequest(request:PaymentRequest,op:Provider
   const value=await client.retrieveSession(id,{expand:['payment_intent.latest_charge.balance_transaction']},{stripeAccount:op.merchant_id});
   if(record(value)?.id!==id)return unknown();return project(request,op,value);
  }catch {return unknown();}
+}
+
+/** GET-only ports on the same pinned Stripe client. This reader cannot create a refund,
+ * decide a credit, change an invoice, or reclassify the original immutable settlement. */
+export interface StripeAdjustmentClient {
+ environment:ProviderEnvironment;
+ retrieveCharge(id:string,params:{expand:string[]},options:{stripeAccount:string}):Promise<unknown>;
+ listRefunds(params:{charge:string;limit:number;starting_after?:string;expand:string[]},options:{stripeAccount:string}):Promise<unknown>;
+ listDisputes(params:{charge:string;limit:number;starting_after?:string},options:{stripeAccount:string}):Promise<unknown>;
+}
+interface ProviderBalanceObservation {
+ id:string;amount_minor:number;currency:string;status:'available'|'pending';created_at:string;
+}
+interface RefundObservation {
+ id:string;amount_minor:number;currency:string;created_at:string;status:'pending'|'requires_action'|'succeeded'|'failed'|'canceled';
+ balance_transaction:ProviderBalanceObservation|null;failure_balance_transaction:ProviderBalanceObservation|null;
+}
+interface DisputeObservation {
+ id:string;amount_minor:number;currency:string;created_at:string;status:string;balance_transactions:ProviderBalanceObservation[];
+}
+export type StripePaymentAdjustments = {
+ state:'observed';provider_transaction_id:string;provider_settlement_id:string;
+ refunds:RefundObservation[];disputes:DisputeObservation[];
+}|{state:'outcome_unknown';code:'PROVIDER_ADJUSTMENT_READBACK_REQUIRED'};
+const adjustmentUnknown=():StripePaymentAdjustments=>({state:'outcome_unknown',code:'PROVIDER_ADJUSTMENT_READBACK_REQUIRED'});
+const minor=(value:unknown):value is number=>Number.isSafeInteger(value)&&Number(value)>0&&Number(value)<=2147483647;
+const providerTime=(value:unknown)=>Number.isSafeInteger(value)&&Number(value)>0&&Number(value)<=Math.floor(Date.now()/1000);
+const refundStates=['pending','requires_action','succeeded','failed','canceled'] as const;
+// API versions may add states. An unrecognised state remains verification-pending instead
+// of guessing whether the customer or merchant won or money was returned.
+const disputeStates=['warning_needs_response','warning_under_review','warning_closed','needs_response','under_review','won','lost'];
+function providerBalance(value:unknown,source:string,amount:number,currency:string,type:string):ProviderBalanceObservation {
+ const row=record(value);
+ if(!row||typeof row.id!=='string'||!/^txn_[A-Za-z0-9]+$/.test(row.id)||row.source!==source||row.type!==type||
+  row.amount!==amount||row.currency!==currency||typeof row.status!=='string'||!['available','pending'].includes(row.status)||!providerTime(row.created))throw Error('PROVIDER_ADJUSTMENT_READBACK_REQUIRED');
+ return {id:row.id,amount_minor:amount,currency,status:row.status as 'available'|'pending',created_at:new Date(Number(row.created)*1000).toISOString()};
+}
+/** The native original-operation reader must supply the already verified settlement.
+ * Provider event payloads and user-entered refund amounts are never accepted as its source.
+ * Native persistence/financial interpretation is a separate, not-yet-mounted contract. */
+export async function readStripePaymentAdjustments(request:PaymentRequest,op:ProviderOperation,settlement:VerifiedSettlement,client:StripeAdjustmentClient,deadline=Date.now()+40_000):Promise<StripePaymentAdjustments> {
+ try {
+  bind(request,op,client);
+  if(op.state!=='settled'||settlement.state!=='verified'||settlement.tenant_id!==request.tenant_id||
+   settlement.operation_id!==op.id||settlement.provider!==op.provider||settlement.merchant_id!==op.merchant_id||settlement.environment!==op.environment||
+   !minor(settlement.amount_minor)||settlement.amount_minor!==request.amount_minor||settlement.currency!==request.currency||
+   !/^ch_[A-Za-z0-9]+$/.test(settlement.provider_transaction_id)||!/^txn_[A-Za-z0-9]+$/.test(settlement.provider_settlement_id)||
+   !settlement.id||!settlement.readback_reference||Date.now()>=deadline)return adjustmentUnknown();
+  const sourceFingerprint=(value:unknown)=>{
+   const row=record(value),payment=record(row?.payment_intent),entry=record(row?.balance_transaction),meta=record(payment?.metadata);
+   return JSON.stringify([
+    ...['id','object','livemode','status','paid','captured','amount','amount_captured','amount_refunded','currency','refunded','disputed','created','application_fee_amount','transfer','transfer_data'].map(key=>row?.[key]),
+    ...['id','source','amount','currency','status','created','type'].map(key=>entry?.[key]),
+    ...['id','livemode','status','amount','amount_received','currency'].map(key=>payment?.[key]),
+    ...Object.keys(metadata(request,op)).map(key=>meta?.[key]),
+   ]);
+  };
+  const options={stripeAccount:op.merchant_id},params={expand:['payment_intent','balance_transaction']};
+  const raw=await client.retrieveCharge(settlement.provider_transaction_id,params,options),charge=record(raw),intent=record(charge?.payment_intent);
+  if(!charge||!intent||charge.id!==settlement.provider_transaction_id||charge.object!=='charge'||charge.livemode!==(op.environment==='live')||
+   charge.status!=='succeeded'||charge.paid!==true||charge.captured!==true||charge.amount!==request.amount_minor||charge.amount_captured!==request.amount_minor||
+   charge.currency!==request.currency||!providerTime(charge.created)||!Number.isSafeInteger(charge.amount_refunded)||Number(charge.amount_refunded)<0||Number(charge.amount_refunded)>request.amount_minor||
+   typeof charge.refunded!=='boolean'||charge.refunded!==(charge.amount_refunded===request.amount_minor)||typeof charge.disputed!=='boolean'||
+   (charge.application_fee_amount!==null&&charge.application_fee_amount!==0)||charge.transfer!==null||charge.transfer_data!==null||
+   typeof intent.id!=='string'||!/^pi_[A-Za-z0-9]+$/.test(intent.id)||intent.livemode!==(op.environment==='live')||intent.status!=='succeeded'||
+   intent.amount!==request.amount_minor||intent.amount_received!==request.amount_minor||intent.currency!==request.currency||!matchesMetadata(intent.metadata,metadata(request,op)))return adjustmentUnknown();
+  const captureBalance=providerBalance(charge.balance_transaction,charge.id as string,request.amount_minor,request.currency,'charge');
+  if(captureBalance.id!==settlement.provider_settlement_id||captureBalance.status!=='available')return adjustmentUnknown();
+  const originalSourceFingerprint=sourceFingerprint(raw);
+  const readAll=async(kind:'refunds'|'disputes'):Promise<JsonRecord[]>=>{
+   const rows:JsonRecord[]=[],ids=new Set<string>();let cursor:string|undefined;
+   for(let page=0;page<10;page++){
+    if(Date.now()>=deadline)throw Error('PROVIDER_ADJUSTMENT_READBACK_REQUIRED');
+    const scope={charge:settlement.provider_transaction_id,limit:100,...(cursor?{starting_after:cursor}:{})};
+    const result=record(await(kind==='refunds'?client.listRefunds({...scope,expand:['data.balance_transaction','data.failure_balance_transaction']},options):client.listDisputes(scope,options)));
+    if(!result||result.object!=='list'||!Array.isArray(result.data)||result.data.length>100||typeof result.has_more!=='boolean')throw Error('PROVIDER_ADJUSTMENT_READBACK_REQUIRED');
+    for(const item of result.data){const row=record(item);if(!row||typeof row.id!=='string'||ids.has(row.id))throw Error('PROVIDER_ADJUSTMENT_READBACK_REQUIRED');ids.add(row.id);rows.push(row);}
+    if(result.has_more===false)return rows;
+    if(result.data.length===0)throw Error('PROVIDER_ADJUSTMENT_READBACK_REQUIRED');
+    cursor=rows.at(-1)!.id as string;
+   }
+   throw Error('PROVIDER_ADJUSTMENT_READBACK_REQUIRED');
+  };
+  const rawRefunds=await readAll('refunds'),rawDisputes=await readAll('disputes'),balanceIds=new Set([captureBalance.id]);
+  const retainBalance=(value:unknown,source:string,amount:number,type:string)=>{
+   const result=providerBalance(value,source,amount,request.currency,type);if(balanceIds.has(result.id))throw Error('PROVIDER_ADJUSTMENT_READBACK_REQUIRED');balanceIds.add(result.id);return result;
+  };
+  const refunds:RefundObservation[]=rawRefunds.map(row=>{
+   if(!/^re_[A-Za-z0-9]+$/.test(row.id as string)||row.object!=='refund'||row.charge!==charge.id||row.payment_intent!==intent.id||row.currency!==request.currency||
+    !minor(row.amount)||row.amount>request.amount_minor||!providerTime(row.created)||!refundStates.includes(row.status as typeof refundStates[number])||
+    row.source_transfer_reversal!==null||row.transfer_reversal!==null)throw Error('PROVIDER_ADJUSTMENT_READBACK_REQUIRED');
+   const debit=row.balance_transaction===null?null:retainBalance(row.balance_transaction,row.id as string,-row.amount,'refund');
+   const failure=row.failure_balance_transaction===null?null:retainBalance(row.failure_balance_transaction,row.id as string,row.amount,'refund_failure');
+   if((row.status==='succeeded'&&(!debit||failure))||(failure&&(!debit||!['failed','canceled'].includes(String(row.status))))||
+    (debit&&['failed','canceled'].includes(String(row.status))&&!failure))throw Error('PROVIDER_ADJUSTMENT_READBACK_REQUIRED');
+   return {id:row.id as string,amount_minor:row.amount,currency:request.currency,created_at:new Date(Number(row.created)*1000).toISOString(),status:row.status as RefundObservation['status'],balance_transaction:debit,failure_balance_transaction:failure};
+  });
+  const disputes:DisputeObservation[]=rawDisputes.map(row=>{
+   if(!/^du_[A-Za-z0-9]+$/.test(row.id as string)||row.object!=='dispute'||row.charge!==charge.id||row.payment_intent!==intent.id||row.livemode!==(op.environment==='live')||
+    row.currency!==request.currency||!minor(row.amount)||row.amount>request.amount_minor||!providerTime(row.created)||typeof row.status!=='string'||!disputeStates.includes(row.status)||
+    !Array.isArray(row.balance_transactions)||row.balance_transactions.length>2)throw Error('PROVIDER_ADJUSTMENT_READBACK_REQUIRED');
+   const amount=row.amount,moves=row.balance_transactions.map(value=>{
+    const item=record(value);if(!item||![amount,-amount].includes(Number(item.amount)))throw Error('PROVIDER_ADJUSTMENT_READBACK_REQUIRED');
+    return retainBalance(item,row.id as string,Number(item.amount),'adjustment');
+   });
+   if(moves.length===2&&moves[0].amount_minor===moves[1].amount_minor)throw Error('PROVIDER_ADJUSTMENT_READBACK_REQUIRED');
+   return {id:row.id as string,amount_minor:amount,currency:request.currency,created_at:new Date(Number(row.created)*1000).toISOString(),status:row.status,balance_transactions:moves};
+  });
+  if(charge.disputed&&disputes.length===0)return adjustmentUnknown();
+  const succeeded=refunds.filter(row=>row.status==='succeeded').reduce((sum,row)=>sum+row.amount_minor,0),inFlight=refunds.filter(row=>row.status==='pending'||row.status==='requires_action').reduce((sum,row)=>sum+row.amount_minor,0);
+  // Provider consistency only, never a receivable or available-cash calculation.
+  if(Number(charge.amount_refunded)<succeeded||Number(charge.amount_refunded)>succeeded+inFlight||Date.now()>=deadline)return adjustmentUnknown();
+  const latest=await client.retrieveCharge(settlement.provider_transaction_id,params,options);
+  if(sourceFingerprint(latest)!==originalSourceFingerprint||Date.now()>=deadline)return adjustmentUnknown();
+  return {state:'observed',provider_transaction_id:settlement.provider_transaction_id,provider_settlement_id:settlement.provider_settlement_id,refunds,disputes};
+ }catch {return adjustmentUnknown();}
 }

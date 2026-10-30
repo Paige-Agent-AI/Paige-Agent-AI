@@ -3228,3 +3228,88 @@ Founder Acceptance: all19/nine OPEN; one complete evaluation remains required.
 ALG03/06/11/12 Partial, ALG13 Unverified; no algorithm or catalogue promotion.
 Owner's four-hour daily existing-thread Linear heartbeat is ACTIVE; actual ACK
 ANT16192c70179, not evidence that a future scheduled run has already occurred.
+
+
+## October30 O14 exact Finance invoice receiving seam — development, not accepted
+
+Original19 definitions/IDs and nine analytics are unchanged. PR3122 reuses the
+original E04 record router/reader in the Finance evidence control; it adds no
+source store, approval, provider, execution or navigation engine.
+
+| Outcome | Permitted input / actual logic / original output | Algorithm / evaluation / evidence boundary |
+|---|---|---|
+| O14, supports O04/O16 | Current validated InvoiceRecord UUID + current route account -> existing routeLinkTarget/resolveCanonicalRecordLink -> original useFocusedSalesInvoice/read_sales_invoice current-session read. Malformed ID falls back to canonical list; replaced source invalidates detail. | Deterministic routing, scoring/ML N/A; no new ALG ID or maturity.117 original consumer/source/permission/navigation checks, two-record/two-account/foreign-source/actor/refusal cases; fresh full-shell8+390 and keyboard/exact-route/Back/reload source proof. Actual deployed record/reload/roles/cohorts/Live/TeamHub proof owed. |
+
+Useful result is the inspected original invoice, not a first-row substitute.
+Navigation/read is not approval, execution, payment, causal improvement or a Rail
+action receipt. Corrections reread the original writer; no automatic Memory or
+cross-tenant feedback. Source/review/CI/merge/deployment/authenticated verification
+and founder acceptance remain separate. Full19/nine and original3018 material
+finding stay OPEN; historical9PASS0FAIL and12PASS0FAIL4BLOCKED are preserved.
+
+## October30 O01/O02/O16 weekly acquisition repair — development
+
+All original19 outcome definitions and nine analytics remain required. The
+latest interrupted weekly request is preserved; exact production-parent cause
+and repaired customer acceptance remain unverified. EXP02 is the one bounded
+implementer under original E01 architecture custody and precise E08/E09 handoffs.
+
+Permitted input is the original caller-authorized conversation/class, unchanged
+tool manifest and business evidence. The existing Responses parser exposes
+whether semantic output started; only a proven presemantic terminal provider
+failure may enter the original Fabric classifier/mayFallback/candidates. Every
+fallback rechecks current authority. Text, tools, refusals, reasoning, uncertain
+envelopes, cancellation and authority/budget refusal prevent replay. Root forwards
+the true request signal in only five existing option objects; no new runner,
+provider configuration, business writer, approval or Rail action is introduced.
+
+Useful output remains the original weekly explanation with accurate periods,
+currency, sources and unavailable coverage, persisted by original Chat settlement.
+Evaluation: incumbent source177PASS8FAIL; current Fabric196/0 and adapter106/0,
+including abort races, fragmented input, per-attempt traces and forbidden replay.
+An additional unreleased pre-header abort probe exposed a cancellation-label
+defect, corrected with failure-first194/2 and105/1 ->196/0 and106/0 controls.
+Root whole-file inverse and original assertions are preserved. Final source-pin
+review/negative controls/exact CI/deployment/readback and actual weekly answer,
+reload, interruption, legitimate cohorts/roles/Live remain owed. See
+[bounded evidence](../evidence/ui-delivery/e2-weekly-model-recovery.md).
+
+Algorithm support: deterministic transport state and canonical failure policy;
+business scoring/prediction N/A for this slice. ALG03/06/11/12Partial/13Unverified
+and catalogue3ComingSoon/3Limited/3Unverified/allAccessUnverified unchanged.
+No automatic Knowledge/Memory promotion, cross-tenant learning, causal business
+improvement claim or founder acceptance follows from recovery or source tests.
+
+## October30 weekly review follow-up — exact exhausted-credit code
+
+O01/O02/O16 and the original nineteen outcomes remain open. The preceding
+transport repair #3132 released as `72b6188779018c3a4dca550727e1cda2eeafcc64`:
+reviewed07166/all11 exact checks and both web statuses passed; production web
+and original four-function source certification succeeded after one diagnosed
+normal retry. The original failed source check and scratch-cleanup debt remain
+separate. Actual ordinary-owner weekly QA STILL FAILED; the same request and
+INTERRUPTED result survived full reload. Protected ANT52/4f15b03d holds the
+customer evidence. Source release is not reliable briefing acceptance.
+
+The next bounded REPAIR recognizes only `credit_balance_exhausted` as the
+existing canonical billing failure class. The adapter already forwards the
+provider code; existing Fabric policy already allows a proven presemantic
+billing failure to use an admitted fallback after current authority and budget.
+No parser, Root, provider setting, candidate order, spending policy, business
+writer, approval, runtime or receipt store changes. A message alone, a prefixed
+unknown code, semantic output and uncertain work never authorize replay.
+
+| Original outcome / owner | Decision, inputs and uncertainty | Evaluation and acceptance boundary |
+| --- | --- | --- |
+| O01/O02/O16; E02 consumer/repair, original E01 conversation architecture | Existing provider error code -> `classifyProviderFailure` -> existing `mayFallback`/per-attempt authority/budget -> original candidate/turn settlement. Live traces show exhausted primary credits, but lack exact model-parent correlation; no new CPU-cause assertion. | Supporting immutable source8f83c962; genuine failure-first Fabric202/2 and adapter108/1 become204/0 and109/0. Original131 source pins/29 dispatches reproduce through the one-line inverse before one reviewed pin renewal. Native Deno, final negative controls/review/exact CI, original release/readback and actual useful weekly answer/reload remain owed. |
+
+Algorithm Support: exact deterministic error classification, not new business
+scoring, prediction, learning or an ALG maturity promotion. Original source
+inputs and varied positive/negative controls are the repeatability baseline;
+useful-result measure is an actual sourced answer retained after reload.
+Orchestration: read-only analysis and original conversation settlement; business
+ActionAdapter/Layer C/domain mutation/Rail completion are not introduced.
+Capabilities: original nine remain3ComingSoon/3Limited/3Unverified and all
+account-accessUnverified. Functional source proof, unchanged visual source,
+partial interruption recovery and OPEN founder acceptance remain distinct.
+The current follow-up has its own [delivery evidence](../evidence/ui-delivery/e2-weekly-credit-code.md).

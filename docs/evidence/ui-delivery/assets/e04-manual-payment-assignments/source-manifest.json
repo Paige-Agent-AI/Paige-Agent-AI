@@ -1,0 +1,54 @@
+{
+  "at": "2026-10-30T17:26:14.359Z",
+  "boundary": "Actual components with synthetic local ports/CSP, not full SOLO shell or authenticated financial/provider proof. Review image proves unchanged review markup; final narrow reload reflects current receipt source. Earlier unfocused/loading frames excluded.",
+  "files": [
+    {
+      "file": "src/solo/sales/InvoiceAcceptedPaymentPlan.tsx",
+      "sha256": "2054a74b7f9713f92bd414aaafd47ec2edb7937139d7c9e191f455b4152cc995"
+    },
+    {
+      "file": "src/solo/sales/InvoiceLifecycleActions.tsx",
+      "sha256": "1818c3747131da5f6dcab4b4eea6c9448630cd0426499a1823c87705d9ba6b4d"
+    },
+    {
+      "file": "src/solo/sales/InvoiceCommandReview.tsx",
+      "sha256": "5c36de5e7d01296e1b1730c903cec5d54e8d32557b90960ef6dc57c28d32be9e"
+    },
+    {
+      "file": "src/solo/sales/InvoiceReceiptAssignments.tsx",
+      "sha256": "5d95b99eb63a4dd4236849ab8923e72b97f2030877305b20432129af37059e65"
+    },
+    {
+      "file": "src/solo/sales/invoice-accepted-payment-plan.css",
+      "sha256": "2cffc34f93e4d1e55cd22282351fdfc6f6e350fd7717613353b84fb7a83d9115"
+    },
+    {
+      "file": "src/solo/sales/manualReceiptAssignments.ts",
+      "sha256": "091e338f7d00e4b610e5325f22a399d97662d0952b2d9e573c1897cc68630182"
+    },
+    {
+      "file": "supabase/functions/_shared/sales-invoice-command/manual-allocation-read.ts",
+      "sha256": "d4c157623c43b1a1f3543072f5f11e5bfb88239aa0e1825d98bca351a39920e9"
+    },
+    {
+      "file": "scripts/live-drive/sales-payments/mount/accepted-plan.ts",
+      "sha256": "c222cbc2101c40f20735ea3a57cf501643da136b58873eaba11a44ccef98a551"
+    }
+  ],
+  "captures": [
+    {
+      "file": "corrected-receipt-390.jpg",
+      "sha256": "0f2c21b825997c639e34643912e2905e2e685b57d21178d5cf2781b3c8f17840"
+    },
+    {
+      "file": "manual-review.jpg",
+      "sha256": "9b3a71296bc010c37aaa73b20d027bcc3f56b66349ed672c0f4d884f83266e64"
+    },
+    {
+      "file": "receipt-keyboard-end-390.jpg",
+      "sha256": "0f2c21b825997c639e34643912e2905e2e685b57d21178d5cf2781b3c8f17840"
+    }
+  ],
+  "productCommit": "955da6dc3d69710122a06b67b57eede892a75af8",
+  "note": "Only held-source recovery copy changed after assigned-state captures; captured review/assigned receipt markup remains identical."
+}

@@ -2,6 +2,7 @@ import React,{act} from 'react';
 import {createRoot,type Root} from 'react-dom/client';
 import {beforeEach,afterEach,it,expect,vi} from 'vitest';
 import {InvoiceCommandReview} from './InvoiceCommandReview';
+import {acceptedPlanFixture} from '../../../scripts/live-drive/sales-payments/accepted-plan-fixture';
 globalThis.IS_REACT_ACT_ENVIRONMENT=true;
 const h=vi.hoisted(()=>({invoke:vi.fn(),actor:'66666666-6666-4666-8666-666666666666',sessionRead:null as null|(()=>Promise<{data:{session:{user:{id:string}}|null}}>),onAuth:null as null|((event:string,session:{user:{id:string}}|null)=>void)}));
 vi.mock('@/integrations/supabase/client',()=>({supabase:{
@@ -19,6 +20,20 @@ afterEach(()=>{act(()=>root.unmount());host.remove();});
 const render=async(id=tenant)=>act(async()=>{root.render(<InvoiceCommandReview tenantId={id} command={command} onComplete={done} onClose={close}/>);await Promise.resolve();});
 const button=(name:string)=>Array.from(document.querySelectorAll('button')).find(b=>b.textContent===name)!;
 const click=async(name:string)=>act(async()=>{button(name).click();await Promise.resolve()});
+const manualReview=async(echo:'exact'|'missing'|'changed')=>{
+ const fixture=await acceptedPlanFixture(),allocations=[{obligation:fixture.view.obligations[0],amount_cents:50000},{obligation:fixture.view.obligations[1],amount_cents:30000}];
+ const received={action:'invoice.record_manual_payment' as const,invoice_id:fixture.invoice.id,expected_version:fixture.invoice.version,amount_cents:80000,currency:'usd',method:'cash',received_at:'2026-10-30T12:00:00.000Z',reference:null,notes:null,allocations};
+ const copy=structuredClone(allocations);if(echo==='changed')copy[1]={...copy[1],obligation:{...copy[1].obligation,due_date:'2027-02-15'}};
+ h.invoke.mockResolvedValue({data:{outcome:'approval_required',fingerprint:'0123456789abcdef',summary:'Record received payment',preview:{invoice_number:'INV-1042',remaining_cents:350000,currency:'usd',...(echo==='missing'?{}:{manual_allocations:copy})}},error:null});
+ await act(async()=>{root.render(<InvoiceCommandReview tenantId={tenant} command={received} onComplete={done} onClose={close}/>);await Promise.resolve()});await click('Prepare review');return received;
+};
+it('shows exact deposit and installment assignments before approving the original immutable manual receipt',async()=>{
+ const received=await manualReview('exact');expect(document.querySelector('[aria-label="Reviewed received-payment assignments"]')?.textContent).toContain('Payment 1 · $500.00');expect(document.body.textContent).toContain('Payment 2 · $300.00');expect(document.body.textContent).toContain('Accepted terms version 3');expect(button('Approve action').disabled).toBe(false);
+ h.invoke.mockResolvedValueOnce({data:{ok:true},error:null});await click('Approve action');expect(h.invoke.mock.calls[1][1].body).toEqual({...h.invoke.mock.calls[0][1].body,approved_fingerprint:'0123456789abcdef'});expect(h.invoke.mock.calls[1][1].body.command).toEqual(received);expect(done).toHaveBeenCalledOnce();
+});
+it.each(['missing','changed'] as const)('refuses approval when the native allocation review is %s without guessing a review',async echo=>{
+ await manualReview(echo);expect(button('Approve action').disabled).toBe(true);expect(document.body.textContent).toContain('exact accepted payment assignments could not be verified');expect(document.querySelector('[aria-label="Reviewed received-payment assignments"]')).toBeNull();await click('Approve action');expect(h.invoke).toHaveBeenCalledOnce();await click('Cancel');expect(close).toHaveBeenCalledOnce();expect(sessionStorage.length).toBe(0);
+});
 it('can leave a pending account check without invoking an invoice action',async()=>{
  let resolve!:(value:{data:{session:{user:{id:string}}|null}})=>void;
  h.sessionRead=()=>new Promise(r=>{resolve=r});await render();

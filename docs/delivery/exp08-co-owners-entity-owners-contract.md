@@ -1551,3 +1551,22 @@ permission contract independently of Billing. Original cases are retained, now12
 That earlier complete attempt is FAIL/incomplete, not a full-suite PASS or solely infrastructure.
 E02 receiving ACK5d9652a0 confirms original designation/revoke post-wait revalidation repair remains
 with its producer. The original failing concurrency assertion remains in the complete suite.
+
+Terminal full-run receipt on published product source `7eedd8949c2d667f3f563aef9d9934b693cb6877`:
+the normal no-argument original runner finishes **EXIT1 / FAIL**, specifically at the final original
+Billing public-writer authority-loss invariant. It does NOT pass overall. Before that failure, all
+134 post-repair isolated cases pass: lifecycle20, original revoke12, Billing interlock13, actor15,
+original I1 holder-state20, identity22 and original owner-read32. The complete JSON has188 recorded
+phases/controls, retaining all original baseline failures, mutation/drift/replay/role negatives and
+actual multi-session races; the additional six Billing mutants/eight drifts/replay are also logged.
+The original public Billing race still commits a revoked contact/audit after caller authority is lost.
+The runner removes only its uniquely created database. This is original-writer/minimal-schema
+engineering evidence, not full production schema, Auth SDK/RLS, provider or customer proof.
+
+Original Billing source-owner applicability ACK `ANT138/fc21c1f6` confirms the consumer intersection
+and no-live-contact non-billable path. E08 receiving ACK `73984153` preserves that authority boundary.
+NON-AUTHOR SOURCE re-review at7eedd894 resolves the sub-account P2 with no additional material
+source finding; the reviewer did not independently execute native tests. Original E02 producer
+repair remains outstanding. Published parent421e greens are separate from this child and its
+terminal FAIL. No Preview, migration deployment, source release, activation, authenticated QA or
+owner acceptance follows. Full EXP08 remains STILL CODING, with all original matrix rows retained.

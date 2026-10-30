@@ -83,7 +83,7 @@ domain write or business Rail receipt is created. Existing turn settlement and
 per-attempt traces remain the evidence of conversation delivery. A useful
 answer, original sources and later return must still be proved after release.
 
-INTERNAL_BUILD_IDENTITY: 188a70aae41ec8489178c0520d67ac290c74f3b7; supporting immutable pre-pin source; deployment=none; environment=development; migrations=NOT_APPLICABLE; affected-edge=PROOF_OWED via original dependency resolver.
+INTERNAL_BUILD_IDENTITY: 188a70aae41ec8489178c0520d67ac290c74f3b7; supporting immutable pre-pin source; deployment=none; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(original resolver affected functions, source certificate and readback); evidence=ANT50/8aa9e1d4.
 RELEASE_CHANNEL: development: source candidate, not deployed recovery.
 RELEASE_CLASSIFICATION: internal-only: bounded existing-path repair.
 CUSTOMER_RELEASE_IDENTITY: none: no customer announcement.

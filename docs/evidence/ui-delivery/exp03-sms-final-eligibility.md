@@ -25,13 +25,13 @@ MUST_PRESERVE: original tenant/provider/consent gates, invoice/email/governed wr
 ACCEPTANCE_CRITERIA: uncertain SMS uses original warning/record and same-row replay refusal, definite rejection/configuration retains failed, valid receipt preserves original acceptance; real rendered/customer proof remains owed.
 MOTION_PURPOSE: NONE: no motion change.
 PROTECTED_SEAMS: Original send-message SMS adapter, server-produced context and no-dispatch invoice result projection only; no native invoice claim/finalizer/schema, Root, Team Hub, credential or callback edit.
-INTERNAL_BUILD_IDENTITY: base d3aa5c57626e134aabd9607ca423e072fe0c4795; candidate branch codex/exp03-sms-final-eligibility-20261030; no deployment or migration.
+INTERNAL_BUILD_IDENTITY: base d3aa5c57626e134aabd9607ca423e072fe0c4795; deployment=none-candidate; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(normal source importer release after gates); evidence=supabase/functions/_shared/comms-sms-result.test.mjs
 RELEASE_CHANNEL: development: fictional source/transport fixtures only, no actual call/text or provider configuration.
 RELEASE_CLASSIFICATION: patch: original SMS final eligibility and known no-dispatch result.
 CUSTOMER_RELEASE_IDENTITY: none: source candidate, no assigned customer release.
 RELEASE_NOTE_REQUIRED: NO: bounded original result-truth repair, no feature announcement.
 RELEASE_TRUTH_BOUNDARY: PROOF OWED: source and isolated browser checks only; exact review/CI/Preview/merge/release/readback and authenticated cohort proof pending.
-RELEASE_RECOVERY: position=known failed row and retained original draft; normal forward source repair; reference=docs/comms/SEND-MESSAGE-CONTRACT.md.
+RELEASE_RECOVERY: position=known failed row and retained original draft with ordinary source forward-fix; reference=docs/comms/SEND-MESSAGE-CONTRACT.md section6
 
 SOLO_1536X770_PAIGE_CLOSED: UNVERIFIED: no new full-shell drive.
 SOLO_1536X770_PAIGE_OPEN: UNVERIFIED: no new full-shell drive.
@@ -43,3 +43,7 @@ SOLO_900X1000_PAIGE_CLOSED: UNVERIFIED: no new full-shell drive.
 SOLO_900X1000_PAIGE_OPEN: UNVERIFIED: no new full-shell drive.
 
 Initial browser check FAILED because the new reason code would render as an internal code. Fixed original handler response for only the two new final eligibility cases, leaving original UI/parser unchanged. Focused47PASS and renewed eight browser cases PASS; test-author typo result versus response.body also failed and was corrected without dropping assertions. Historical before/after logs retained outside tracked repository. No legal compliance, production deployment, owner acceptance or complete-assignment readiness claim.
+
+Sequential AUTHOR REVIEW of immutable667cd5f8a: LOWER ASSURANCE, not non-author approval. Reviewed original SMS adapter final gate, server-produced tenant/actor/override context, exact no-dispatch invoice projection and new refusal reason projection. Existing provider uncertainty, original receipt/SID validation, invoice claim/finalizer and email branches remain. No new storage/runtime/queue/provider client or callback credential handling. Eleven preparation-change cases load actual original gate; known no-attempt refusal cannot claim provider acceptance. Explicit client-DND override does not bypass STOP. Complete legal/current-actor atomicity and durable SMS operation remain missing. Only original send-message C0b identity is renewed; validators and peer identities unchanged. Hosted exact-head review remains required.
+
+Verification failures preserved: first pin update failed UTF-8 decoding before mutation; the subsequent C0b and registry checks correctly refused the stale source identity. UI evidence guard rejected incomplete build/recovery fields, then fields were completed truthfully. No guard/assertion weakened. Temporary owned Vite process36356 verified by full original command and stopped after eight-case browser proof.

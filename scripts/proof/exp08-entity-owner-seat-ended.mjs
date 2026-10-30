@@ -25,13 +25,18 @@ const revokeMigration = readFileSync(new URL('../../supabase/migrations/20271126
 const billingFixture=readFileSync(new URL('../../supabase/tests/exp08_owner_billing_interlock.sql',import.meta.url),'utf8');
 const billingFoundation=readFileSync(new URL('../../supabase/migrations/20261045000000_platform_billing_accounts_foundation_a.sql',import.meta.url),'utf8');
 const billingRevokeSource=readFileSync(new URL('../../supabase/migrations/20261111050000_the_workspace_can_connect_a_payment_method.sql',import.meta.url),'utf8');
+const billingCurrentAuthority=readFileSync(new URL('../../supabase/migrations/20271126080006_exp02_billing_current_authority.sql',import.meta.url),'utf8');
+const billingFinalAuthority=readFileSync(new URL('../../supabase/migrations/20271126080007_exp02_billing_final_authority.sql',import.meta.url),'utf8');
 function billingBootstrap(){
   sql(billingFixture);
-  for(const [source,name] of [[billingFoundation,'platform_billing_workspace_owner_scope'],[billingRevokeSource,'platform_billing_contact_revoke']]){
+  for(const [source,name] of [[billingFoundation,'platform_billing_workspace_owner_scope'],[billingFoundation,'platform_billing_contact_designate'],[billingRevokeSource,'platform_billing_contact_revoke']]){
     const start=source.indexOf(`CREATE OR REPLACE FUNCTION public.${name}(`);const end=source.indexOf('$$;',start);
     assert.ok(start>=0&&end>start);sql(source.slice(start,end+3));
   }
   sql('REVOKE ALL ON FUNCTION public.platform_billing_workspace_owner_scope() FROM PUBLIC,anon,authenticated,service_role; REVOKE ALL ON FUNCTION public.platform_billing_contact_revoke(uuid) FROM PUBLIC,anon,service_role; GRANT EXECUTE ON FUNCTION public.platform_billing_contact_revoke(uuid) TO authenticated;');
+  sql('REVOKE ALL ON FUNCTION public.platform_billing_contact_designate(uuid,text) FROM PUBLIC,anon,service_role; GRANT EXECUTE ON FUNCTION public.platform_billing_contact_designate(uuid,text) TO authenticated;');
+  // Actual released E02 migrations, not copied financial logic or a test-only permission bypass.
+  sql(billingCurrentAuthority);sql(billingFinalAuthority);
 }
 function billingCases(requirePass=true){
   const rows=sql('select row_to_json(t) from proof.billing_cases() t;').split('\n').filter(Boolean).map(JSON.parse);
@@ -75,7 +80,8 @@ function billingMigrationChecks(){
     }
   }
 }
-async function billingAuthorityRace(team){
+async function billingAuthorityRace(team,contactWait=false){
+  assert.ok(!team||!contactWait,'Team actor and Billing contact races are separate controls');
   sql("select proof.revoke_setup(); TRUNCATE public.platform_billing_contacts; INSERT INTO public.platform_billing_contacts(id,tenant_id,user_id,designation) VALUES ('e8000000-0000-4000-8000-000000063001','e8000000-0000-4000-8000-000000060010','e8000000-0000-4000-8000-000000060100','delegate');");
   // An unaffected third owner keeps the owner floor from masking a stale-caller defect.
   sql("INSERT INTO public.tenant_members(id,tenant_id,user_id,is_owner,role) VALUES ('e8000000-0000-4000-8000-000000061004','e8000000-0000-4000-8000-000000060010','e8000000-0000-4000-8000-000000060200',true,'owner');");
@@ -89,9 +95,10 @@ async function billingAuthorityRace(team){
     });
     first.stdin.write(team
       ? "BEGIN; UPDATE public.tenant_members SET status='suspended' WHERE tenant_id='e8000000-0000-4000-8000-000000060010' AND user_id='e8000000-0000-4000-8000-000000060300';\n\\echo EXP08_BILLING_LOCKED\n"
+      : contactWait?"BEGIN; UPDATE public.platform_billing_contacts SET designation=designation WHERE id='e8000000-0000-4000-8000-000000063001';\n\\echo EXP08_BILLING_LOCKED\n"
       : "BEGIN; SELECT pg_advisory_xact_lock(hashtextextended('platform_billing_contacts:e8000000-0000-4000-8000-000000060010',0));\n\\echo EXP08_BILLING_LOCKED\n");
     await ready;clearTimeout(timer);
-    const app=team?'exp08_team_billing_authority_race':'exp08_original_billing_authority_race';
+    const app=team?'exp08_team_billing_authority_race':contactWait?'exp08_original_billing_contact_race':'exp08_original_billing_authority_race';
     second=spawn(executable,connectionArgs(database),{env:{...process.env,PGAPPNAME:app},stdio:['pipe','pipe','pipe']});
     secondDone=new Promise((resolve,reject)=>{second.on('error',reject);second.on('close',resolve);});
     second.stderr.on('data',c=>{errors+=c;});
@@ -100,7 +107,7 @@ async function billingAuthorityRace(team){
       : "SELECT public.platform_billing_contact_revoke('e8000000-0000-4000-8000-000000063001');\n"));
     let waited=false;
     for(let i=0;i<40;i++){
-      waited=sql(`select exists(select 1 from pg_stat_activity where datname='${database}' and application_name='${app}' and wait_event_type='Lock');`)==='t';
+      waited=sql(`select exists(select 1 from pg_stat_activity where datname='${database}' and application_name='${app}' and wait_event_type='Lock'${contactWait?" and wait_event IN ('transactionid','tuple')":''});`)==='t';
       if(waited)break;await new Promise(resolve=>setTimeout(resolve,50));
     }
     assert.ok(waited,'Actual second-session lock wait required');
@@ -108,7 +115,7 @@ async function billingAuthorityRace(team){
     first.stdin.end('COMMIT;\n\\q\n');assert.equal(await firstDone,0);
     const exit=await secondDone;
     const state=JSON.parse(sql("select json_build_object('revoked',(select revoked_at IS NOT NULL from public.platform_billing_contacts where id='e8000000-0000-4000-8000-000000063001'),'audits',(select count(*) from public.paige_audit_log),'target_owner',(select is_owner from public.tenant_members where tenant_id='e8000000-0000-4000-8000-000000060010' AND user_id='e8000000-0000-4000-8000-000000060100'));"));
-    console.log(JSON.stringify({phase:'original-billing-authority-loss-race',door:team?'Team':'Billing',wait_observed:waited,exit,state,error:errors.trim()}));
+    console.log(JSON.stringify({phase:'original-billing-authority-loss-race',door:team?'Team':'Billing',blocker:team?'member':contactWait?'contact':'advisory',wait_observed:waited,exit,state,error:errors.trim()}));
     assert.notEqual(exit,0,'Authority lost while waiting must refuse');
     assert.deepEqual(state,{revoked:false,audits:0,target_owner:true});
   }finally{
@@ -613,7 +620,7 @@ try {
     sql(revokeFixture);billingBootstrap();
     console.log(sql("select json_agg(json_build_object('signature',oid::regprocedure::text,'body',md5(prosrc))) from pg_proc where proname in ('platform_billing_workspace_owner_scope','platform_billing_contact_revoke');"));
     sql(revokeMigration);billingCases();billingMigrationChecks();billingMutationControls();
-    await billingAuthorityRace(true);await billingAuthorityRace(false);
+    await billingAuthorityRace(true);await billingAuthorityRace(false);await billingAuthorityRace(false,true);
     console.log('Selected original Billing integration only; NOT full native release proof.');
   } else {
   if(onlyOwnerRead){
@@ -1037,7 +1044,7 @@ try {
   console.log(JSON.stringify({ selection:onlyOwnerRead?'owner-read-only; NOT full native release proof':'full-original-runner',evidence: 'isolated native component and original revoke source integration; Auth/platform/tables are ports; no authenticated/RLS/provider/customer proof', records }, null, 2));
   // Do not suppress the upstream current-authority failure. Keep it in the complete release suite.
   // Its fixture uses the original Billing table shape, separate from owner-read projection ports.
-  if(!onlyOwnerRead){sql('DROP TABLE public.platform_billing_contacts; DROP FUNCTION proof.billing_cases(); DROP FUNCTION public.billing_active_tenant_id();');billingBootstrap();await billingAuthorityRace(false);}
+  if(!onlyOwnerRead){sql('DROP TABLE public.platform_billing_contacts; DROP FUNCTION proof.billing_cases(); DROP FUNCTION public.billing_active_tenant_id();');billingBootstrap();await billingAuthorityRace(false);await billingAuthorityRace(false,true);}
   }
   }
 } finally {

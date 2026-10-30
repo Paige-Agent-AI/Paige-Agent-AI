@@ -1952,3 +1952,55 @@ preserved. Exact21 completeCellData readback: only three intended notes changed,
 differences. This is coordination evidence, never product readiness. All original18 rows/six
 amendments/five journeys, workshop/goals/standing authority, bell and one complete owner review
 remain in the full assignment. Status **STILL CODING**, not ready/accepted.
+
+### Released producer prerequisite renewal — 2026-10-30
+
+After independently verified producer release/readback and original receivingACK0b54e52b, renew
+ONLY90008's exact public revoke prerequisite from oldc67 to released
+`f8fa3a425f70d301f47b5b5750c57ad3`. Restoring that single scalar recovers the ENTIRE prior migration;
+consumer body, authorization, locks, financial rules, metadata/ACL guards and assertions do not
+change. No E02 writer file is edited. This is an unmerged/unapplied-to-production E08 revision;
+the old applied copy exists only in OWN disposable Preview and must be reconciled through its
+supported rebuild, never treated as a production history rewrite or same-version automatic repair.
+
+Original native harness now loads the actual original designate/scope/revoke functions with the
+original authenticated-only writer ACLs, then the EXACT released E02 native80006+80007 files.
+No copied financial rules or mock replacement Billing writer. Actual first run with the old
+prerequisite correctly FAILS on the real f8fa source; retain
+`exp08-released-billing-pin-before.log`. After the one-scalar renewal, selected original Billing
+interlock **13 cases/six mutants/eight drift controls/replay PASS**, with actual Team member wait,
+public advisory wait and public contact-row wait each refusing lost authority and preserving
+contact/audit/owner state. Integrate the previous temporary contact counterexample into the SAME
+original runner; retain the original failure assertion verbatim. Selected exit0/own database
+disposed; log `exp08-released-billing-pin-after.log`. This is NOT complete native release proof.
+
+NON-AUTHOR SOURCE review of the two source paths confirms the exact scalar inverse and unchanged
+consumer/permission guards, original producer loading and preserved refusal assertions. It executes
+no native tests or production verification independently. Complete no-argument original runner is
+now active against this frozen source; final conclusion is pending at this checkpoint. New required
+exact-head CI/Preview, full modified-source review and normal source release remain owed.
+
+Actual own managed Preview read: branch62c86253/projectayxuygtityxdtqlctkmz is nonpersistent,
+with_data:false, linked to original3130, FUNCTIONS_DEPLOYED/ACTIVE_HEALTHY. Its actual ledger frontier
+is110008, with80008/90008/100008/110008 and WITHOUT new producer80006/80007 or child140008. Its
+original old linked revoke body is9d4e28f6d75ee91c0b40db6059d3ba5d. Healthy metadata therefore does
+NOT certify this current source. Preserve that applied-state evidence before a supported OWN
+disposable Preview replacement/rebuild; do not rerun new90008 over its applied ledger or alter
+production/peer Preview history. Full assignment remains **STILL CODING**.
+
+Complete native terminal receipt: the NORMAL no-argument original runner now finishes **EXIT0 /
+PASS** on the frozen renewal above, log `exp08-released-billing-full-native.log`, selection
+`full-original-runner`. All original lifecycle/revoke/actor/holder/identity/read phases, baseline
+failures, causal mutants, drift/replay/role negatives and actual waits remain present; original
+lost-authority refusal is not removed or weakened. Both final public advisory and contact-row
+waits refuse with contact unrevoked/audit0/target owner intact. All new unversioned history/
+invitation/authority/type/expiry/two-token component proof also remains. Only its own unique
+database is disposed. Earlier full-run FAILs remain historical evidence, not retroactively green.
+This closes the LOCAL original native integration failure, not fresh hosted CI/managed Preview,
+full SQL/security/UI assurance, authenticated customer proof, release or full-assignment readiness.
+
+Parsed terminal original record packet retains188 phases and all original post-repair case counts:
+lifecycle20, revoke12, Billing13, actor15, incumbent holder20, identity22, owner-read32 (134 total).
+New unversioned component history22/invitation13 adds35 separately; do not conflate those with
+the baseline intentionally failing sets, causal mutations or real-wait counts. Original packet
+selection is explicitly full-original-runner, not a selected-only invocation.

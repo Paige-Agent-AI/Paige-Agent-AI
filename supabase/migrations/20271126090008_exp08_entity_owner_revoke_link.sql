@@ -59,7 +59,7 @@ BEGIN
  -- Consume E02's exact original writers, never clone or weaken their financial rules.
  FOR prerequisite IN SELECT * FROM (VALUES
   ('public.platform_billing_workspace_owner_scope()','3d33a31f95f308784853f7b3816b1e8c','s'),
-  ('public.platform_billing_contact_revoke(uuid)','c67dc4c18e72fde1dbc89d15be09edd9','v'))
+  ('public.platform_billing_contact_revoke(uuid)','f8fa3a425f70d301f47b5b5750c57ad3','v'))
   v(signature,body_hash,volatility) LOOP
   SELECT * INTO p FROM pg_proc WHERE oid=to_regprocedure(prerequisite.signature);
   IF NOT FOUND OR md5(p.prosrc)<>prerequisite.body_hash OR p.proowner<>'postgres'::regrole

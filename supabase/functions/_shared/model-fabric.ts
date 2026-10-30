@@ -10,11 +10,11 @@
 // OpenAI path through `responsesStream` — so the loop's hooks, the claim guard, the held-step logic and
 // the finished-round tool gate (paige-turn/round.ts) see one shape whatever served the round.
 //
-// FALLBACK IS NARROW (route.ts `mayFallback`). The next candidate is tried only when the stream never
-// opened AND the provider's own response proves a health failure (auth/config, billing, rate limit,
-// model unavailable, outage — `_shared/provider-failure.ts`). Never on an invalid request or an
-// unknown 4xx, never once a stream opened (anything after that is the round gate's business), never for
-// a budget stop. A provider being chosen grants nothing: tools, approvals and authority are decided
+// FALLBACK IS NARROW (route.ts `mayFallback`). The next candidate is tried only before semantic output
+// AND when the provider proves a health failure (including a terminal Responses failure after HTTP
+// open, before text/tools/refusal/reasoning). Unknown/contradictory state, cancellation, invalid
+// requests and budget/authority stops never replay. Anything after semantic acquisition remains the
+// round gate's business. A provider being chosen grants nothing: tools, approvals and authority are decided
 // downstream, unchanged.
 //
 // OPENAI IS THE OWNER-DIRECTED PRIMARY (2026-10-08): the flag below is ON, admission is
@@ -143,6 +143,8 @@ export interface FabricStream {
 
 export interface FabricOptions {
   trace?: TraceCtx;
+  /** Trusted current-turn cancellation, including model acquisition. */
+  signal?: AbortSignal;
   /** Trusted caller authority after each leg's budget awaits; never model/request JSON. */
   beforeProviderAttempt?: () => boolean | Promise<boolean>;
   /** Anthropic-only request extras the chat already sends (e.g. the dormant Studio thinking flag). */
@@ -232,12 +234,18 @@ export async function fabricChatStream(cls: CognitiveClass, body: ChatShapeBody 
 
   for (const c of use) {
     const model = c.model as string;
+    const aborted = (): FabricStream => {
+      attempts.push({ provider: c.provider, model, failure: "aborted", status: 0 });
+      if (opts.trace) opts.trace.fabric_route = null;
+      return { ok: false, status: 0, served: null, attempts };
+    };
+    if (opts.signal?.aborted) return aborted();
     const callerRefused = (): FabricStream => {
       attempts.push({ provider: c.provider, model, failure: "caller_refused", status: 0 });
       if (opts.trace) opts.trace.fabric_route = null;
       return { ok: false, status: 0, served: null, attempts };
     };
-    let opened: { ok: boolean; status: number; body?: ReadableStream<Uint8Array>; failureClass?: ProviderFailureClass };
+    let opened: Awaited<ReturnType<typeof responsesStream>>;
     // #1856 — the projected route rides the ctx BEFORE the leg: the Anthropic gateway copies the ctx
     // at call time, so the attach must precede the dispatch; on open-success the projection is exact.
     if (opts.trace) {
@@ -270,10 +278,21 @@ export async function fabricChatStream(cls: CognitiveClass, body: ChatShapeBody 
         if (opts.beforeProviderAttempt) {
           let current = false;
           try { current = await opts.beforeProviderAttempt() === true; } catch { /* authority unavailable */ }
+          if (opts.signal?.aborted) return aborted();
           if (!current) return callerRefused();
         }
+        if (opts.signal?.aborted) return aborted();
         const effort = OPENAI_EFFORT_BY_CLASS[klass as OpenAIReasoningClass];
-        opened = await responsesStream(body, { model, effort, fetchImpl: opts.openaiFetch }, opts.trace);
+        opened = await responsesStream(body, { model, effort, fetchImpl: opts.openaiFetch, signal: opts.signal }, opts.trace);
+        if (opts.signal?.aborted) { await opened.body?.cancel().catch(() => {}); return aborted(); }
+        if (opened.acquisition) {
+          const acquired = await opened.acquisition;
+          if (!acquired.ok || opts.signal?.aborted) {
+            await opened.body?.cancel().catch(() => {});
+            if (acquired.aborted || opts.signal?.aborted) return aborted();
+            opened = { ok: false, status: opened.status, failureClass: acquired.failureClass ?? "unknown" };
+          }
+        }
       } else {
         // The Anthropic path keeps its own budget gate, request shaping and trace (gatewayCompat). A real
         // Claude id resolves to its own tier there (sonnet → reasoning, haiku → classification).
@@ -281,7 +300,12 @@ export async function fabricChatStream(cls: CognitiveClass, body: ChatShapeBody 
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ ...body, model, stream: true, ...(opts.anthropicExtras ?? {}) }),
-        }, opts.trace, opts.beforeProviderAttempt);
+        }, opts.trace, opts.signal ? async () => {
+          if (opts.signal?.aborted) return false;
+          const current = !opts.beforeProviderAttempt || await opts.beforeProviderAttempt() === true;
+          return current && !opts.signal?.aborted;
+        } : opts.beforeProviderAttempt);
+        if (opts.signal?.aborted) { await r.body?.cancel().catch(() => {}); return aborted(); }
         if (r.failureClass === "caller_refused") return callerRefused();
         const proven = PROVIDER_FAILURE_CLASSES.includes(r.failureClass as ProviderFailureClass) ? r.failureClass as ProviderFailureClass : undefined;
         opened = { ok: r.ok, status: r.status, body: r.body, failureClass: r.ok ? undefined : proven ?? classifyProviderFailure({ provider: "anthropic", status: r.status }) };
@@ -293,6 +317,7 @@ export async function fabricChatStream(cls: CognitiveClass, body: ChatShapeBody 
         if (opts.trace) opts.trace.fabric_route = null;
         throw e;
       }
+      if (opts.signal?.aborted) return aborted();
       // What the throw proves, and nothing more: a missing key is configuration; a timeout or a fetch
       // TypeError is transport; anything else thrown before a response (a refused tool, a model outside
       // the allow-list) proves no provider-health failure, so it is `unknown` and never falls back.

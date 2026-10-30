@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { AlertTriangle, CheckCircle2, Clock, Mail, MailX, MessageSquare, MessageSquareOff, Pause, Pencil, RefreshCw, Search, Send, ShieldCheck, Sparkles, Undo2, UserMinus, UserPlus, Users } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -51,70 +51,78 @@ function permissionTone(permission: string | null | undefined, isOwner: boolean)
   return permission === "admin" || permission === "member" ? permission : undefined;
 }
 
-function useTeamWorkspace(search: string, permission: string) {
+function useTeamWorkspace(search: string, permission: string, viewerId: string | null) {
   const { activeTenantId, loading: tenantLoading } = useTenantContext();
+  const scope = activeTenantId && viewerId ? `${activeTenantId}:${viewerId}` : null;
+  const scopeRef = useRef(scope);
   const seq = useRef(0);
-  const [state, setState] = useState<{ tenantId: string | null; loading: boolean; loadingMore: boolean; error: string | null; value: TeamWorkspaceRecord | null }>({ tenantId: null, loading: true, loadingMore: false, error: null, value: null });
+  const [state, setState] = useState<{ scope: string | null; loading: boolean; loadingMore: boolean; error: string | null; errorDuring: "page" | "reload" | null; invalidated: boolean; value: TeamWorkspaceRecord | null }>({ scope: null, loading: true, loadingMore: false, error: null, errorDuring: null, invalidated: false, value: null });
+  useLayoutEffect(() => {
+    if (scopeRef.current === scope) return;
+    scopeRef.current = scope;
+    seq.current += 1;
+    // Persist withdrawal on EVERY transition, including A -> unknown/B -> A before debounce.
+    // Returning to an old key alone must not resurrect its cached admission or queued effects.
+    setState({ scope: null, loading: Boolean(scope), loadingMore: false, error: null, errorDuring: null, invalidated: true, value: null });
+  }, [scope]);
+  const scopeMatches = scope !== null && scopeRef.current === scope && state.scope === scope;
+  const shownRef = useRef(0);
+  useLayoutEffect(() => { shownRef.current = scopeMatches ? state.value?.members.length ?? 0 : 0; }, [scopeMatches, state.value]);
 
-  const load = useCallback(async (offset = 0) => {
+  const load = useCallback(async (offset = 0, inPlace = false) => {
     const request = ++seq.current;
-    if (!activeTenantId) { setState({ tenantId: null, loading: false, loadingMore: false, error: null, value: null }); return; }
-    setState((current) => offset === 0
-      ? { tenantId: null, loading: true, loadingMore: false, error: null, value: null }
-      : { ...current, loadingMore: true, error: null });
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- migration RPC awaits generated types
-    const { data, error } = await (supabase as any).rpc("get_solo_team_workspace", {
-      _search: search.trim() || null,
-      _permission: permission,
-      _limit: PAGE_SIZE,
-      _offset: offset,
-    });
-    if (request !== seq.current) return;
+    const requestScope = scope;
+    if (!activeTenantId || !requestScope) { setState({ scope: null, loading: false, loadingMore: false, error: "Team information is unavailable until your account and workspace are confirmed.", errorDuring: null, invalidated: true, value: null }); return; }
+    setState((current) => offset === 0 && !inPlace
+      ? { scope: requestScope, loading: true, loadingMore: false, error: null, errorDuring: null, invalidated: false, value: null }
+      : { ...current, loadingMore: offset > 0, error: null, errorDuring: null });
+    let data: unknown = null;
+    let error: { code?: string; message?: string } | null = null;
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- migration RPC awaits generated types
+      ({ data, error } = await (supabase as any).rpc("get_solo_team_workspace", {
+        _search: search.trim() || null,
+        _permission: permission,
+        _limit: inPlace ? Math.min(100, Math.max(PAGE_SIZE, shownRef.current)) : PAGE_SIZE,
+        _offset: offset,
+      }));
+    } catch (thrown) { error = { message: thrown instanceof Error ? thrown.message : "Team information could not be refreshed." }; }
+    if (request !== seq.current || scopeRef.current !== requestScope) return;
     const next = normalizeTeamWorkspace(data);
     if (error || !next || next.tenant_id !== activeTenantId) {
-      setState((current) => ({ ...current, tenantId: activeTenantId, loading: false, loadingMore: false, error: error?.message || "Team information is unavailable.", value: offset === 0 ? null : current.value }));
+      // A confirmed native refusal/invalid contract withdraws the snapshot. A transport failure
+      // says nothing about access or an earlier write: keep same-scope drafts for reconciliation.
+      const invalidated = !error || ["42501", "PGRST301", "PGRST302", "PGRST202", "42883"].includes(error.code ?? "") || Boolean(next && next.tenant_id !== activeTenantId);
+      setState((current) => ({ ...current, scope: requestScope, loading: false, loadingMore: false, invalidated,
+        error: error?.message || "Team information is unavailable.", errorDuring: inPlace ? "reload" : offset > 0 ? "page" : null,
+        value: invalidated || current.scope !== requestScope ? null : current.value }));
       return;
     }
     setState((current) => ({
-      tenantId: activeTenantId,
+      scope: requestScope,
       loading: false,
       loadingMore: false,
       error: null,
+      errorDuring: null,
+      invalidated: false,
       value: offset === 0 ? next : { ...next, members: [...(current.value?.members ?? []), ...next.members] },
     }));
-  }, [activeTenantId, permission, search]);
+  }, [activeTenantId, scope, permission, search]);
 
   useEffect(() => {
     const timer = setTimeout(() => { if (!tenantLoading) void load(0); }, 180);
     return () => { clearTimeout(timer); seq.current += 1; };
   }, [load, tenantLoading]);
 
-  // RE-READ IN PLACE after a write on a row (the switch, suspend, reinstate, a removal). `refresh()`
-  // nulls the roster before it awaits, which flashes the skeleton and drops every page past the
-  // first: the row the operator just acted on would jump away. This keeps what is on screen until the
-  // server's answer replaces it, and asks for as many rows as are showing, so the persisted state is
-  // what the roster then shows. A failed re-read leaves the screen as it was rather than blanking it.
-  const shownRef = useRef(0);
-  useEffect(() => { shownRef.current = state.value?.members.length ?? 0; });
-  const reload = useCallback(async () => {
-    const request = ++seq.current;
-    if (!activeTenantId) return;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- migration RPC awaits generated types
-    const { data, error } = await (supabase as any).rpc("get_solo_team_workspace", {
-      _search: search.trim() || null,
-      _permission: permission,
-      _limit: Math.min(100, Math.max(PAGE_SIZE, shownRef.current)),
-      _offset: 0,
-    });
-    if (request !== seq.current) return;
-    const next = normalizeTeamWorkspace(data);
-    if (error || !next || next.tenant_id !== activeTenantId) return;
-    setState((current) => ({ ...current, tenantId: activeTenantId, loading: false, loadingMore: false, error: null, value: next }));
-  }, [activeTenantId, permission, search]);
+  // Preserve pagination and same-scope drafts during an ordinary reread, never after refusal.
+  const reload = useCallback(() => load(0, true), [load]);
 
   return {
     ...state,
-    loading: tenantLoading || state.loading || Boolean(activeTenantId && state.tenantId !== activeTenantId),
+    value: scopeMatches ? state.value : null,
+    invalidated: !scopeMatches || state.invalidated,
+    error: scopeMatches ? state.error : scope ? null : "Team information is unavailable until your account and workspace are confirmed.",
+    loading: tenantLoading || Boolean(scope && (!scopeMatches || state.loading)),
     refresh: () => load(0),
     reload,
     loadMore: () => load(state.value?.members.length ?? 0),
@@ -287,7 +295,7 @@ export function InviteDialog({ workspace, onClose, onInvited }: { workspace: Tea
  * dialog, focus on Cancel. What it says about approvals and the mailbox comes from the departure
  * review read when it is available, and is said in general terms when it is not — never invented.
  */
-function SuspendDialog({ member, workspace, onClose, onSuspended }: { member: TeamMemberRecord; workspace: TeamWorkspaceRecord; onClose: () => void; onSuspended: (approvals: number) => void }) {
+function SuspendDialog({ member, workspace, contextBlocked = false, onClose, onSuspended }: { member: TeamMemberRecord; workspace: TeamWorkspaceRecord; contextBlocked?: boolean; onClose: () => void; onSuspended: (approvals: number) => void }) {
   const identity = memberVisibleIdentity(member);
   const first = member.full_name?.trim() ? member.full_name.trim().split(/\s+/)[0] : identity.primary;
   const [stage, setStage] = useState<"idle" | "pending" | "error">("idle");
@@ -327,7 +335,7 @@ function SuspendDialog({ member, workspace, onClose, onSuspended }: { member: Te
       : `No approvals are assigned to ${first}. New ones can still be assigned to ${first} while suspended, and ${first} is still emailed about them.`;
   const pending = stage === "pending";
   const suspend = async () => {
-    if (inFlight.current) return;
+    if (inFlight.current || contextBlocked || activeTenantId !== workspace.tenant_id) return;
     inFlight.current = true;
     setStage("pending"); setRefusal(null);
     let data: { tenant_id?: string; status?: string } | null = null;
@@ -362,7 +370,7 @@ function SuspendDialog({ member, workspace, onClose, onSuspended }: { member: Te
       {stage === "error" && refusal && <div className="stw-alert" role="alert" tabIndex={-1}><AlertTriangle aria-hidden="true" /><p>{refusal.message}</p></div>}
       {pending && <p className="stw-status" role="status" tabIndex={-1}><RefreshCw className="stw-spin" aria-hidden="true" />Suspending {first}…</p>}
     </div>
-    <footer className="stw-modal-actions"><button type="button" data-initial-focus className="stw-btn secondary" disabled={pending} onClick={onClose}>Cancel</button><button type="button" className="stw-btn primary" disabled={pending || (stage === "error" && refusal?.retryable === false)} aria-busy={pending || undefined} onClick={suspend}>{pending ? "Suspending…" : stage === "error" ? "Try again" : "Suspend access"}</button></footer>
+    <footer className="stw-modal-actions"><button type="button" data-initial-focus className="stw-btn secondary" disabled={pending} onClick={onClose}>Cancel</button><button type="button" className="stw-btn primary" disabled={pending || contextBlocked || activeTenantId !== workspace.tenant_id || (stage === "error" && refusal?.retryable === false)} aria-busy={pending || undefined} onClick={suspend}>{pending ? "Suspending…" : stage === "error" ? "Try again" : "Suspend access"}</button></footer>
   </Modal>;
 }
 
@@ -510,14 +518,17 @@ export function SoloTeamWorkspace({ openPaige, openConnections }: { openPaige?: 
   const [notice, setNotice] = useState<TeamNotice | null>(null);
   const noticeSeq = useRef(0);
   const announce = useCallback((n: Omit<TeamNotice, "key">) => setNotice({ ...n, key: ++noticeSeq.current }), []);
-  const [suspending, setSuspending] = useState<{ member: TeamMemberRecord; workspace: TeamWorkspaceRecord } | null>(null);
-  const [departing, setDeparting] = useState<{ member: TeamMemberRecord; workspace: TeamWorkspaceRecord } | null>(null);
+  const [suspending, setSuspending] = useState<{ member: TeamMemberRecord; workspace: TeamWorkspaceRecord; viewerId: string | null } | null>(null);
+  const [departing, setDeparting] = useState<{ member: TeamMemberRecord; workspace: TeamWorkspaceRecord; viewerId: string | null } | null>(null);
   const [busy, setBusy] = useState<Record<string, "convo" | "reinstate">>({});
   const [flash, setFlash] = useState<string | null>(null);
   // Who is looking: from the account context when it carries it, else the session. An unknown viewer
   // is offered no act on anyone (canActOn), because "yourself" can't be ruled out.
   const [sessionUserId, setSessionUserId] = useState<string | null>(null);
+  const sessionContext = useRef(activeUserId);
   useEffect(() => {
+    sessionContext.current = activeUserId;
+    setSessionUserId(null);
     if (activeUserId) return;
     let live = true;
     try {
@@ -525,7 +536,7 @@ export function SoloTeamWorkspace({ openPaige, openConnections }: { openPaige?: 
     } catch { /* no session reader: stays unknown */ }
     return () => { live = false; };
   }, [activeUserId]);
-  const viewerId = activeUserId ?? sessionUserId;
+  const viewerId = activeUserId ?? (sessionContext.current === activeUserId ? sessionUserId : null);
 
   useEffect(() => {
     setInviteWorkspace((current) => {
@@ -539,7 +550,14 @@ export function SoloTeamWorkspace({ openPaige, openConnections }: { openPaige?: 
     // whether a call is in flight whose outcome must still be reported.)
     setNotice(null);
   }, [activeTenantId]);
-  const team = useTeamWorkspace(search, permission); const workspace = team.value;
+  const team = useTeamWorkspace(search, permission, viewerId); const workspace = team.value;
+  const currentScope = activeTenantId && viewerId ? `${activeTenantId}:${viewerId}` : null;
+  const liveAccess = useRef({ scope: currentScope, valid: !team.invalidated });
+  useLayoutEffect(() => { liveAccess.current = { scope: currentScope, valid: !team.invalidated }; });
+  const mayPublish = (scope: string | null) => liveAccess.current.valid && liveAccess.current.scope === scope;
+  const confirmedRefusal = currentScope !== null && team.invalidated && team.scope === currentScope;
+  const refusalTarget = useRef<HTMLDivElement>(null);
+  useEffect(() => { if (team.invalidated && !team.loading && !suspending && !departing) refusalTarget.current?.focus(); }, [team.invalidated, team.loading, suspending, departing]);
   const conversations = useConversationAccess(workspace, viewerId);
   // The last known roster, so the editor can outlive the null flash of a refetch.
   const lastWorkspace = useRef<TeamWorkspaceRecord | null>(null);
@@ -555,10 +573,23 @@ export function SoloTeamWorkspace({ openPaige, openConnections }: { openPaige?: 
   // rendering the editor would show a person who is gone — so it is CLEARED, not merely hidden.
   const selectedLive = selected && workspace ? workspace.members.some((row) => row.membership_id === selected.membership_id) : false;
   if (workspace) lastWorkspace.current = workspace;
-  const editorWorkspace = workspace ?? lastWorkspace.current;
+  const editorWorkspace = team.invalidated ? null : workspace ?? lastWorkspace.current;
   // Unsaved contact edits hold the dialog open across a roster reload (saving work details reloads
   // it, and for a frame the roster is empty).
   const [contactHold, setContactHold] = useState(false);
+  useEffect(() => {
+    if (!team.invalidated) return;
+    lastWorkspace.current = null;
+    setSelected(null); setContactHold(false); setInviteWorkspace(null); setNotice(null);
+    // Existing same-actor workspace-switch handling owns an in-flight write's eventual result.
+    // No captured privileged surface survives actor loss, missing context or confirmed refusal.
+    if (confirmedRefusal) { setSuspending(null); setDeparting(null); }
+    else {
+      setSuspending((current) => current?.viewerId === viewerId ? current : null);
+      setDeparting((current) => current?.viewerId === viewerId ? current : null);
+    }
+  }, [team.invalidated, activeTenantId, viewerId, confirmedRefusal]);
+  useEffect(() => { if (workspace && !workspace.can_manage_invitations) setInviteWorkspace(null); }, [workspace]);
   useEffect(() => { if (selected && workspace && !selectedLive) setSelected(null); }, [selected, workspace, selectedLive]);
   useEffect(() => { if (!flash) return; const t = window.setTimeout(() => setFlash(null), 1200); return () => window.clearTimeout(t); }, [flash]);
   const pending = useMemo(() => workspace?.invitations.filter((item) => inviteLifecycle(item) === "pending") ?? [], [workspace]);
@@ -575,7 +606,9 @@ export function SoloTeamWorkspace({ openPaige, openConnections }: { openPaige?: 
     return { ok: true, emailed: data?.emailed === true };
   };
   const manageInvite = async (action: "resend" | "revoke" | "archive", invite: TeamInviteRecord) => {
+    if (!mayPublish(currentScope)) return;
     const result = await inviteWrite(action, invite);
+    if (!mayPublish(currentScope)) return;
     if ("message" in result) { toast.error(result.message); return; }
     if (action === "resend") {
       // `emailed` means the provider ACCEPTED it, which is still not delivery.
@@ -590,8 +623,10 @@ export function SoloTeamWorkspace({ openPaige, openConnections }: { openPaige?: 
     team.refresh();
   };
   const rowInvite = async (action: "resend" | "revoke", invite: TeamInviteRecord, again = false) => {
+    if (!mayPublish(currentScope)) return;
     const email = invite.email || "this address";
     const result = await inviteWrite(action, invite);
+    if (!mayPublish(currentScope)) return;
     if ("message" in result) { announce({ tone: "bad", text: result.message, spoken: result.message }); return; }
     void team.reload();
     if (action === "revoke") {
@@ -605,7 +640,7 @@ export function SoloTeamWorkspace({ openPaige, openConnections }: { openPaige?: 
 
   const unavailable = useRef<Set<string>>(new Set());
   const conversationsSwitch = async (member: TeamMemberRecord, next: boolean) => {
-    if (!workspace || busy[member.user_id]) return;
+    if (!workspace || busy[member.user_id] || !mayPublish(currentScope)) return;
     const identity = memberVisibleIdentity(member).primary;
     if (unavailable.current.has("conversations")) { const s = `Changing team conversations isn't available in ${workspace.tenant_name} yet. Nothing was changed.`; announce({ tone: "bad", text: s, spoken: s }); return; }
     setBusy((b) => ({ ...b, [member.user_id]: "convo" }));
@@ -616,6 +651,7 @@ export function SoloTeamWorkspace({ openPaige, openConnections }: { openPaige?: 
       ({ data, error } = await (supabase as any).rpc("set_solo_team_member_team_hub_access", { _member_user_id: member.user_id, _expected_tenant_id: workspace.tenant_id, _on: next }));
     } catch (thrown) { error = { message: thrown instanceof Error ? thrown.message : "network request failed" }; }
     setBusy((b) => { const n = { ...b }; delete n[member.user_id]; return n; });
+    if (!mayPublish(currentScope)) return;
     if (error || data?.tenant_id !== workspace.tenant_id || data?.team_hub_access !== next) {
       const r = error ? lifecycleRefusal(error, "conversations", identity, workspace.tenant_name) : null;
       if (r?.unavailable) unavailable.current.add("conversations");
@@ -640,7 +676,7 @@ export function SoloTeamWorkspace({ openPaige, openConnections }: { openPaige?: 
   };
 
   const reinstate = async (member: TeamMemberRecord) => {
-    if (!workspace || busy[member.user_id]) return;
+    if (!workspace || busy[member.user_id] || !mayPublish(currentScope)) return;
     const identity = memberVisibleIdentity(member).primary;
     if (unavailable.current.has("reinstate")) { const s = `Reinstating isn't available in ${workspace.tenant_name} yet. Nothing was changed.`; announce({ tone: "bad", text: s, spoken: s }); return; }
     setBusy((b) => ({ ...b, [member.user_id]: "reinstate" }));
@@ -651,6 +687,7 @@ export function SoloTeamWorkspace({ openPaige, openConnections }: { openPaige?: 
       ({ data, error } = await (supabase as any).rpc("reinstate_solo_team_member", { _member_user_id: member.user_id, _expected_tenant_id: workspace.tenant_id }));
     } catch (thrown) { error = { message: thrown instanceof Error ? thrown.message : "network request failed" }; }
     setBusy((b) => { const n = { ...b }; delete n[member.user_id]; return n; });
+    if (!mayPublish(currentScope)) return;
     if (error || data?.tenant_id !== workspace.tenant_id || data?.status !== "active") {
       const r = error ? lifecycleRefusal(error, "reinstate", identity, workspace.tenant_name) : null;
       if (r?.unavailable) unavailable.current.add("reinstate");
@@ -671,9 +708,9 @@ export function SoloTeamWorkspace({ openPaige, openConnections }: { openPaige?: 
   const openSuspend = (member: TeamMemberRecord) => {
     if (!workspace) return;
     if (unavailable.current.has("suspend")) { const s = `Suspending isn't available in ${workspace.tenant_name} yet. Nothing was changed.`; announce({ tone: "bad", text: s, spoken: s }); return; }
-    setNotice(null); setDeparting(null); setSuspending({ member, workspace });
+    setNotice(null); setDeparting(null); setSuspending({ member, workspace, viewerId });
   };
-  const openDeparture = (member: TeamMemberRecord) => { if (!workspace) return; setNotice(null); setSelected(null); setDeparting({ member, workspace }); };
+  const openDeparture = (member: TeamMemberRecord) => { if (!workspace) return; setNotice(null); setSelected(null); setDeparting({ member, workspace, viewerId }); };
 
   const canInvite = Boolean(workspace?.can_manage_invitations);
   const viewerPermission = workspace?.viewer_permission ?? "member";
@@ -756,13 +793,13 @@ export function SoloTeamWorkspace({ openPaige, openConnections }: { openPaige?: 
       <section className="stw-permission-note" aria-label="Workspace permissions"><ShieldCheck/><div><strong>Workspace permissions</strong><span>The owner manages admins and members; admins manage members. Permissions apply only to {workspace?.tenant_name ?? "this workspace"}.</span></div><button type="button" onClick={() => setView("roles")}>Review roles</button></section>
       <section className="stw-roster" aria-labelledby="stw-people-h"><div className="stw-filters"><label><span className="sr-only">Search team</span><Search/><input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search people, titles, responsibilities" autoComplete="off"/></label><TeamPicker value={filter} label="Show" prefix="Show:" options={FILTERS} onChange={(v) => setFilter(v as Filter)} className="stw-filter-pick" /></div>
         {team.loading ? <><p className="sr-only" role="status">Loading the team…</p><div aria-hidden="true">{[0, 1, 2, 3].map((i) => <div key={i} className="stw-skelrow"><div className="stw-skel c" /><div><div className="stw-skel" style={{ width: "70%", marginBottom: 7 }} /><div className="stw-skel" style={{ width: "52%" }} /></div><div><div className="stw-skel" style={{ width: "60%", marginBottom: 7 }} /><div className="stw-skel" style={{ width: "84%" }} /></div><div className="stw-skel" style={{ width: 64 }} /><div className="stw-skel" style={{ width: 70 }} /><div className="stw-skel" style={{ width: "76%" }} /><span /></div>)}</div></>
-          : team.error && !workspace ? <div className="stw-rstate" role="alert"><AlertTriangle aria-hidden="true" /><strong>{denied ? "You don’t have access to this team" : "The team didn't load"}</strong><span>{denied ? "Your current workspace permission does not allow this roster to load." : "Check your connection and try again. Nothing on the team changed."}</span><button type="button" className="stw-btn secondary" onClick={team.refresh}><RefreshCw aria-hidden="true" />Try again</button></div>
+          : team.error && !workspace ? <div ref={refusalTarget} className="stw-rstate" role="alert" tabIndex={-1}><AlertTriangle aria-hidden="true" /><strong>{denied ? "You don’t have access to this team" : "The team didn't load"}</strong><span>{denied ? "Your current workspace permission does not allow this roster to load." : team.invalidated ? "Team details are unavailable in this account or workspace. Reopen the original workspace to check access and any earlier request." : "Check your connection and try again. Nothing on the team changed."}</span><button type="button" className="stw-btn secondary" onClick={team.refresh}><RefreshCw aria-hidden="true" />Try again</button></div>
           : <>{firstUse && <div className="stw-first-use"><Users/><div><strong>Your workspace starts with you</strong><span>Invite the first teammate, then give them a title and clear responsibilities.</span></div>{canInvite && <button type="button" className="stw-btn primary" onClick={() => setInviteWorkspace(workspace)}>Invite first teammate</button>}</div>}
             {memberRows.length + invitedRows.length === 0
               ? <div className="stw-empty"><strong>No one matches</strong><span>Clear the search or show everyone.</span><button type="button" className="stw-btn secondary" onClick={() => { setSearch(""); setFilter("all"); }}>Show everyone</button></div>
               : <><div className="stw-cols" aria-hidden="true"><span /><span>Person</span><span className="stw-c-work">Work</span><span>Permission</span><span>Team conversations</span><span>Status</span><span /></div>
                 <div className="stw-list" role="list" aria-label="Team roster">{memberRows.map(memberRow)}{invitedRows.map(inviteRow)}</div></>}</>}
-        {team.error && workspace && <div className="stw-inline-error" role="alert"><AlertTriangle aria-hidden="true" /><span>The next page didn't load.</span><button type="button" className="stw-quiet" onClick={team.loadMore}>Retry</button></div>}{workspace && filter !== "invited" && workspace.members.length < workspace.total_members && <button type="button" className="stw-load" disabled={team.loadingMore} aria-busy={team.loadingMore || undefined} onClick={team.loadMore}>{team.loadingMore ? <><RefreshCw className="stw-spin" aria-hidden="true" />Loading…</> : `Load more (${workspace.total_members - workspace.members.length} remaining)`}</button>}
+        {team.error && workspace && <div className="stw-inline-error" role="alert"><AlertTriangle aria-hidden="true" /><span>{team.errorDuring === "reload" ? "The team couldn't be refreshed. These details may be out of date." : "The next page didn't load."}</span><button type="button" className="stw-quiet" onClick={team.errorDuring === "reload" ? team.reload : team.loadMore}>Retry</button></div>}{workspace && filter !== "invited" && workspace.members.length < workspace.total_members && <button type="button" className="stw-load" disabled={team.loadingMore} aria-busy={team.loadingMore || undefined} onClick={team.loadMore}>{team.loadingMore ? <><RefreshCw className="stw-spin" aria-hidden="true" />Loading…</> : `Load more (${workspace.total_members - workspace.members.length} remaining)`}</button>}
       </section>
       {workspace?.can_manage_invitations && <section className="stw-invites">
         <header><Mail/><div><h2>Invitations</h2><p>Delivery is reported by the email provider. Accepted, expired, and revoked are derived from the invitation record.</p></div><span>{pending.length} pending</span></header>
@@ -793,22 +830,25 @@ export function SoloTeamWorkspace({ openPaige, openConnections }: { openPaige?: 
     </>}
     {editorWorkspace && selected && (selectedLive || (contactHold && !workspace)) && <MemberEditor member={selected} workspace={editorWorkspace} onClose={closeEditor} onSaved={handleSaved} onContactDirtyChange={setContactHold}
       canRemove={canActOn(editorWorkspace.viewer_permission, viewerId, selected)} onRequestRemoval={() => openDeparture(selected)}/>}
-    {inviteWorkspace && <InviteDialog workspace={inviteWorkspace} onClose={() => setInviteWorkspace(null)} onInvited={({ email, conversations: on, emailed }) => {
+    {!team.invalidated && inviteWorkspace && (!workspace || workspace.can_manage_invitations) && <InviteDialog workspace={inviteWorkspace} onClose={() => setInviteWorkspace(null)} onInvited={({ email, conversations: on, emailed }) => {
+      if (!mayPublish(currentScope)) return;
       void team.reload();
       const s = emailed ? `Invitation sent to ${email}. ${on ? "They'll join the open team channels when they accept." : "They won't join Team Hub; they'll see only their assigned work."}` : `The invitation for ${email} is pending, but the email wasn't sent. You can resend it from Team.`;
       announce({ tone: emailed ? "ok" : "bad", text: s, spoken: s, focus: true });
     }}/>}
-    {suspending && <SuspendDialog member={suspending.member} workspace={suspending.workspace} onClose={() => setSuspending(null)} onSuspended={(approvals) => {
+    {!confirmedRefusal && suspending && suspending.viewerId === viewerId && <SuspendDialog member={suspending.member} workspace={suspending.workspace} contextBlocked={team.invalidated || !workspace || workspace.tenant_id !== suspending.workspace.tenant_id} onClose={() => setSuspending(null)} onSuspended={(approvals) => {
+      if (!mayPublish(currentScope)) return;
       const m = suspending.member; const name = memberVisibleIdentity(m).primary; const first = m.full_name?.trim() ? m.full_name.trim().split(/\s+/)[0] : name;
       setSuspending(null); setFlash(m.user_id); void team.reload();
       const tail = ` is suspended and can't open ${suspending.workspace.tenant_name}.${approvals ? ` ${approvals === 1 ? "1 approval stays" : `${approvals} approvals stay`} assigned to ${first}.` : ""}`;
       announce({ text: <><strong>{name}</strong>{tail}</>, spoken: `${name}${tail}`, focus: true, action: { label: "Reinstate", run: () => void reinstate({ ...m, status: "suspended" }) } });
     }}/>}
-    {departing && viewerId && <DepartureReview member={departing.member} workspace={departing.workspace} viewerId={viewerId} members={departing.workspace.tenant_id === workspace?.tenant_id ? workspace.members : departing.workspace.members}
+    {!confirmedRefusal && departing && viewerId && departing.viewerId === viewerId && <DepartureReview member={departing.member} workspace={departing.workspace} viewerId={viewerId} members={departing.workspace.tenant_id === workspace?.tenant_id ? workspace.members : departing.workspace.members}
+      contextBlocked={team.invalidated || !workspace || workspace.tenant_id !== departing.workspace.tenant_id}
       onOpenConnections={openConnections}
       onSuspendInstead={departing.member.status === "active" ? () => { const d = departing; setDeparting(null); openSuspend(d.member); } : undefined}
-      onClose={(outcome?: DepartureOutcome) => { const d = departing; setDeparting(null); if (outcome) announce({ text: outcome.text, spoken: outcome.spoken, focus: true, action: outcome.action === "review-again" ? { label: "Review again", run: () => setDeparting(d) } : undefined }); }}
-      onRemoved={(outcome) => { setDeparting(null); void team.reload(); announce({ text: outcome.text, spoken: outcome.spoken, focus: true }); }}/>}
+      onClose={(outcome?: DepartureOutcome) => { const d = departing; setDeparting(null); if (outcome && mayPublish(currentScope)) announce({ text: outcome.text, spoken: outcome.spoken, focus: true, action: outcome.action === "review-again" ? { label: "Review again", run: () => setDeparting(d) } : undefined }); }}
+      onRemoved={(outcome) => { if (!mayPublish(currentScope)) return; setDeparting(null); void team.reload(); announce({ text: outcome.text, spoken: outcome.spoken, focus: true }); }}/>}
     <NoticeBar notice={notice} onDismiss={() => setNotice(null)} />
   </div>;
 }

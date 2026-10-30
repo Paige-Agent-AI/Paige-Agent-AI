@@ -1,7 +1,7 @@
 // Dedicated disposable loopback database, incumbent adapter and original SQL sources.
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {spawnSync} from 'node:child_process';
+import {spawn,spawnSync} from 'node:child_process';
 import {OperatorPostgresFixture} from './operator-postgres-fixture.mjs';
 const db=new OperatorPostgresFixture(Number(process.argv[2]));db.prefix=()=>'';
 const read=p=>readFileSync(p,'utf8');
@@ -77,7 +77,7 @@ try{
  refuse(asActor+`SELECT public.tenant_phone_number_rename('${first}',repeat('x',121))`,/NAME_TOO_LONG/);
  refuse(`SELECT set_config('test.actor','',false);`+primary,/TENANT_REQUIRED/);
  // Replaying ONLY exact reviewed source is inert; unknown source or grants refuse.
- const patch=read('scripts/proof/exp03-number-current-authority-patch.sql');
+ const patch=read('scripts/proof/exp03-number-current-authority-patch.sql').replaceAll('\r\n','\n');
  db.run(patch);checks++;
  refuse(`SET ROLE anon;`+primary,/permission denied/);
  db.run(`GRANT EXECUTE ON FUNCTION public.tenant_phone_number_set_primary(uuid,uuid) TO anon;`);
@@ -98,6 +98,67 @@ try{
  const beforeAtomic=db.run(`SELECT md5(pg_get_functiondef('public.tenant_phone_number_rename(uuid,text,uuid)'::regprocedure))`);
  refuse(patch,/source drift/);
  assert.equal(db.run(`SELECT md5(pg_get_functiondef('public.tenant_phone_number_rename(uuid,text,uuid)'::regprocedure))`),beforeAtomic);checks++;
+ if(process.argv.includes('--currentness')){
+  db.run(read('scripts/proof/fixtures/exp03-contact-authority-helpers-before.sql'));
+  for(const [,name,digest] of read('scripts/proof/fixtures/exp03-contact-authority-helpers-before.sql').matchAll(/^-- ([^\r\n]+): ([a-f0-9]{32})$/gm)){
+   assert.equal(db.run(`SELECT md5(pg_get_functiondef('public.${name}'::regprocedure))`),digest);checks++;
+  }
+  db.run(read('scripts/proof/fixtures/exp03-number-management-before.sql'));db.run(patch);
+  const snapshot=()=>db.run('SELECT jsonb_agg(n ORDER BY id) FROM tenant_phone_numbers n');
+  const wait=async(writer,kind,allowLost=false)=>{
+   db.run(`DELETE FROM user_roles;DELETE FROM tenant_members WHERE user_id='${actor}' AND tenant_id='${other}';UPDATE tenant_members SET role='admin',status='active' WHERE user_id='${actor}';UPDATE profiles SET active_tenant_id='${tenant}' WHERE user_id='${actor}';UPDATE tenant_phone_numbers SET friendly_name='Before',status='active',is_primary=false,updated_at='2026-10-30T18:00:00.123456Z';`);
+   db.run(`INSERT INTO tenant_members(tenant_id,user_id,role,status) SELECT '${tenant}','70000000-0000-4000-8000-000000000003','owner','active' WHERE NOT EXISTS(SELECT 1 FROM tenant_members WHERE user_id='70000000-0000-4000-8000-000000000003');`);
+   if(writer==='primary-old-row')db.run(`UPDATE tenant_phone_numbers SET is_primary=true WHERE id='${second}';`);
+   if(kind.startsWith('root'))db.run(`INSERT INTO user_roles VALUES('${actor}','super_admin');`);
+   const before=snapshot();
+   const lock=writer==='primary-advisory'?`SELECT pg_advisory_xact_lock(hashtextextended('${tenant}'::text,0));`:`SELECT 1 FROM tenant_phone_numbers WHERE id='${writer==='primary-old-row'?second:first}' FOR UPDATE;`;
+   const held=await db.holdArchive(lock,[],{manualRelease:true});let child,pending;
+   try{
+    const app=`exp03_number_wait_${process.pid}`;
+    child=spawn(db.psql,db.args(),{stdio:['pipe','pipe','pipe'],windowsHide:true});let errors='';child.stdout.resume();child.stderr.on('data',d=>{errors+=d;});
+    pending=new Promise((resolve,reject)=>{child.on('error',reject);child.on('close',code=>resolve({code,errors}));});pending.catch(()=>{});
+    const tenantArg=kind==='root-explicit'?`, '${tenant}'`:'';
+    const call=writer==='rename'?`SELECT public.tenant_phone_number_rename('${first}','After'${tenantArg});`:`SELECT public.tenant_phone_number_set_primary('${first}'${tenantArg});`;
+    child.stdin.end(`SET application_name='${app}';SET lock_timeout='8s';SET statement_timeout='12s';${asActor}SET ROLE authenticated;${call}`);
+    let waiting=false;const deadline=Date.now()+6000;
+    while(Date.now()<deadline){waiting=db.run(`SELECT EXISTS(SELECT 1 FROM pg_stat_activity WHERE datname=current_database() AND application_name='${app}' AND wait_event_type='Lock')`)==='t';if(waiting)break;await new Promise(resolve=>setTimeout(resolve,40));}
+    assert(waiting,'actual original number writer must be observed waiting');
+    if(kind==='role')db.run(`UPDATE tenant_members SET role='member' WHERE tenant_id='${tenant}' AND user_id='${actor}';`);
+    if(['workspace','root-workspace','root-explicit'].includes(kind))db.run(`INSERT INTO tenant_members(tenant_id,user_id,role,status) VALUES('${other}','${actor}','owner','active');UPDATE profiles SET active_tenant_id='${other}' WHERE user_id='${actor}';`);
+    held.release();await held.completed;const result=await pending;
+    if(allowLost||['none','root-explicit'].includes(kind)){assert.equal(result.code,0,JSON.stringify(result));assert.notEqual(snapshot(),before);}
+    else{assert.notEqual(result.code,0,`${writer}/${kind}: lost current authority must refuse`);assert.match(result.errors,/NUMBER_AUTHORITY_CHANGED/);assert.equal(snapshot(),before,'no number mutation after authority changed');}
+    checks++;
+   }finally{held.release(false);await held.completed.catch(()=>{});if(child&&child.exitCode===null)child.kill();if(pending)await pending.catch(()=>{});}
+  };
+  for(const writer of ['rename','primary-advisory','primary-target-row','primary-old-row'])for(const kind of ['role','workspace','none','root-workspace','root-explicit'])await wait(writer,kind);
+  const gate=patch.match(/authority_guard text := \$gate\$([\s\S]*?)\$gate\$;/)[1];
+  const renameLock=patch.match(/rename_lock text := \$rlock\$([\s\S]*?)\$rlock\$;/)[1];
+  const primaryLock=patch.match(/primary_lock text := \$plock\$([\s\S]*?)\$plock\$;/)[1];
+  const definitions=new Map();
+  for(const [name,originalHash] of [['tenant_phone_number_rename(uuid,text,uuid)','a8297d7bba472a3148c57e80265ce72d'],['tenant_phone_number_set_primary(uuid,uuid)','f15793f40cdd05c228984d3daa8f5ecc']]){
+   const definition=db.run(`SELECT pg_get_functiondef('public.${name}'::regprocedure)`).replaceAll('\r\n','\n');definitions.set(name,definition);
+   assert.equal(definition.split(gate).length-1,1);
+   const lock=name.startsWith('tenant_phone_number_rename')?renameLock:primaryLock;
+   assert.equal(definition.split(lock).length-1,1);
+   const inverse=definition.replace(gate,'').replace(lock,'').replace('or public.is_tenant_admin_as(v_caller, v_tenant)',"or public.has_any_role(v_caller, array['admin'])");
+   db.run(inverse);assert.equal(db.run(`SELECT md5(pg_get_functiondef('public.${name}'::regprocedure))`),originalHash);db.run(definition);checks++;
+  }
+  for(const [name,span,writer,kind] of [
+   ['tenant_phone_number_rename(uuid,text,uuid)',gate,'rename','role'],
+   ['tenant_phone_number_set_primary(uuid,uuid)',gate,'primary-advisory','workspace'],
+   ['tenant_phone_number_set_primary(uuid,uuid)',gate,'primary-old-row','role'],
+   ['tenant_phone_number_rename(uuid,text,uuid)',renameLock,'rename','role'],
+   ['tenant_phone_number_set_primary(uuid,uuid)',primaryLock,'primary-old-row','role'],
+  ]){
+   const original=definitions.get(name);db.run(original.replace(span,''));await wait(writer,kind,true);db.run(original);
+  }
+  db.run(`SELECT set_config('test.actor','',false);SET ROLE service_role;SELECT public.tenant_phone_number_set_primary('${second}','${tenant}');`);
+  assert.equal(db.run(`SELECT count(*) FROM tenant_phone_numbers WHERE tenant_id='${tenant}' AND is_primary`),'1');assert.equal(db.run(`SELECT is_primary FROM tenant_phone_numbers WHERE id='${second}'`),'t');checks++;
+  const beforeForeignService=snapshot();refuse(`SELECT set_config('test.actor','',false);SET ROLE service_role;SELECT public.tenant_phone_number_set_primary('${first}','${other}');`,/NUMBER_NOT_FOUND/);assert.equal(snapshot(),beforeForeignService);
+  const beforeReplay=snapshot();db.run(patch);assert.equal(snapshot(),beforeReplay);checks++;
+
+ }
  console.log(JSON.stringify({checks,scope:'native component fixture only; no provider/purchase/runtime/customer proof'}));
 }finally{
  const r=spawnSync(db.psql,db.args('postgres'),{input:`DROP DATABASE ${db.database} WITH (FORCE);`,encoding:'utf8',timeout:60000});

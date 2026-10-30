@@ -4,6 +4,8 @@ DO $patch$
 DECLARE sig text; expected text; original text; replacement text; old_body text; new_body text;
   definition text; before_metadata jsonb; after_metadata jsonb; target oid;
   inverse_body text;
+  declaration_before constant text:=E'\nDECLARE\n';
+  declaration_after constant text:=E'\nDECLARE\n  _exp08_never_owned boolean;\n';
   tail_before constant text:=$before$
   RETURN _tok.tenant_id;
 END$before$;
@@ -12,6 +14,22 @@ END$before$;
   -- rolls back seat, pointer, profile, token and audit together, including waits after admission.
   IF _tok.kind='subaccount_owner' AND _tok.expires_at<=pg_catalog.clock_timestamp() THEN
     RAISE EXCEPTION 'invite has expired' USING ERRCODE='42501',HINT='OWNER_INVITE_EXPIRED';
+  END IF;
+  IF _tok.kind='subaccount_owner' THEN
+    IF _minter_ok AND NOT (public.is_platform_owner(_tok.created_by)
+       OR public.agency_can_manage_child(_tok.tenant_id, _tok.created_by)) THEN
+      RAISE EXCEPTION 'This invitation can''t be used because its sender''s access has changed. Ask for a new invitation.'
+        USING ERRCODE='42501',HINT='OWNER_INVITE_AUTHORITY_CHANGED';
+    END IF;
+    -- Reuse the pre-effect history fact: our own legitimate first-owner writes now make the
+    -- current predicate false. Current minter authority must not revive an agency exception.
+    IF public._solo_shell_tenant(_tok.tenant_id) AND public.is_platform_owner(_tok.created_by)
+       AND NOT public.agency_can_manage_child(_tok.tenant_id, _tok.created_by)
+       AND NOT _exp08_never_owned THEN
+      RAISE EXCEPTION 'This invitation can''t be used. Owners of % are added by its account holder. Ask them for a new invitation.',
+        (SELECT COALESCE(NULLIF(btrim(name),''),'this business') FROM public.tenants WHERE id=_tok.tenant_id)
+        USING ERRCODE='42501',HINT='OWNER_HISTORY_REQUIRES_RECOVERY';
+    END IF;
   END IF;
   RETURN _tok.tenant_id;
 END$after$;
@@ -40,13 +58,14 @@ BEGIN
      $after$  ELSIF _tok.kind = 'subaccount_owner' THEN
     -- EXP08_FIRST_OWNER_ACCEPT_V1: same token, original tenant serialization, no silent admin downgrade.
     PERFORM 1 FROM public.tenants WHERE id=_tok.tenant_id FOR UPDATE;
+    _exp08_never_owned:=public._tenant_never_owned(_tok.tenant_id);
     IF _tok.expires_at<=pg_catalog.clock_timestamp() THEN
       RAISE EXCEPTION 'invite has expired' USING ERRCODE='42501',HINT='OWNER_INVITE_EXPIRED';
     END IF;
     IF public._solo_shell_tenant(_tok.tenant_id) THEN
       IF public.is_platform_owner(_tok.created_by)
          AND NOT public.agency_can_manage_child(_tok.tenant_id, _tok.created_by)
-         AND NOT public._tenant_never_owned(_tok.tenant_id) THEN
+         AND NOT _exp08_never_owned THEN
         RAISE EXCEPTION 'This invitation can''t be used. Owners of % are added by its account holder. Ask them for a new invitation.',
           (SELECT COALESCE(NULLIF(btrim(name),''),'this business') FROM public.tenants WHERE id=_tok.tenant_id)
           USING ERRCODE='42501',HINT='OWNER_HISTORY_REQUIRES_RECOVERY';
@@ -68,6 +87,8 @@ BEGIN
       IF sig='public.accept_tenant_invite(text)' THEN
         IF strpos(inverse_body,tail_after)=0 THEN RAISE EXCEPTION 'EXP08 first owner invitation requires exact original source: %',sig; END IF;
         inverse_body:=replace(inverse_body,tail_after,tail_before);
+        IF strpos(inverse_body,declaration_after)=0 THEN RAISE EXCEPTION 'EXP08 first owner invitation requires exact original source: %',sig; END IF;
+        inverse_body:=replace(inverse_body,declaration_after,declaration_before);
       END IF;
       IF strpos(old_body,replacement)=0 OR md5(replace(inverse_body,replacement,original))<>expected THEN
         RAISE EXCEPTION 'EXP08 first owner invitation requires exact original source: %',sig;
@@ -78,9 +99,13 @@ BEGIN
     IF sig='public.accept_tenant_invite(text)' THEN
       IF strpos(new_body,tail_before)=0 THEN RAISE EXCEPTION 'EXP08 first owner invitation tail is not exact: %',sig; END IF;
       new_body:=replace(new_body,tail_before,tail_after);
+      IF strpos(new_body,declaration_before)=0 THEN RAISE EXCEPTION 'EXP08 first owner invitation declaration is not exact: %',sig; END IF;
+      new_body:=replace(new_body,declaration_before,declaration_after);
     END IF;
     inverse_body:=new_body;
-    IF sig='public.accept_tenant_invite(text)' THEN inverse_body:=replace(inverse_body,tail_after,tail_before); END IF;
+    IF sig='public.accept_tenant_invite(text)' THEN
+      inverse_body:=replace(replace(inverse_body,tail_after,tail_before),declaration_after,declaration_before);
+    END IF;
     IF new_body=old_body OR replace(inverse_body,replacement,original)<>old_body THEN
       RAISE EXCEPTION 'EXP08 first owner invitation replacement is not exact: %',sig;
     END IF;

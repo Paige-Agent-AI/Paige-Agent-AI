@@ -1806,3 +1806,44 @@ NON-AUTHOR SOURCE review reports no new material issue in the account-type repai
 execution by the reviewer. It retains later authority/agency changes, full lock ordering,
 provisioning/recovery and migration readiness as unfinished. Single-case Billing receiving proof
 does not become a full-suite/source-release approval.
+
+### I2 late agency/platform authority — local repair, 2026-10-30
+
+Actual failure-first extension uses the same original acceptance and profile-row blocker. The
+minter initially qualifies through both platform and managing agency on a previously owned Solo
+account. While the original profile UPDATE actually waits, a third session commits removal of the
+agency mapping. The intermediate candidate incorrectly commits the owner change despite now
+being platform-only on a previously owned account. Retain
+`exp08-first-owner-agency-wait-before.log` as FAIL; actual original writes, no model/transport.
+
+Repair only the same UNVERSIONED original acceptance: capture the private never-owned fact after
+the tenant lock and before effects in a function-local boolean; do not recompute history from our
+own new seat/pointer after effects. At the final native return re-resolve the SAME original
+platform/agency predicates. If the previously qualified minter lost both, refuse with authored
+`OWNER_INVITE_AUTHORITY_CHANGED`; if an agency exception disappeared, enforce the recorded prior
+history with the existing recovery refusal. Both roll back the original transaction. This is
+per-call native derived state, not new standing authority, memory, registry or ledger. Original
+already-unqualified-minter fallback semantics are not broadened or relabeled as a new owner grant.
+Full-body inverse also removes the exact added local declaration; all original metadata/ACL and
+unrelated branches remain protected.
+
+Final selected `exp08-first-owner-authority-final.log` exits0 and disposes only this run's database.
+Nine real wait cases pass: retained/lost agency, lost platform, both account-type directions, and
+tenant/profile valid/expired cases. All refusal cases leave the five original effect categories
+unchanged; valid agency and first-owner requests retain their positive outcomes. Three additional
+actual-wait causal controls remove final expiry, agency/history, or minter authority checks; each
+then commits all five effects and is rejected. History22/six mutants and invitation13/four mutants/
+five drifts/replay remain passing. Earlier setup and real failures remain evidence, never waived.
+
+This does not prove full-schema locks/RLS/Auth SDK, all initial/late actor and tenant negatives,
+mint-time later-effect authority, two-token contention, provisioning/Setup/recovery or full-I2
+integration. Versioned migration admission, complete exact-head review/CI/Preview, production
+readback, customer proof and one integrated owner review remain owed. Full EXP08 **STILL CODING**.
+
+Producer Billing check41140203128/5437 currently has comms-provider-boundary and web-fetch SUCCESS,
+verify still genuinely IN PROGRESS at its original INT336 native proof. This is the producer head,
+not renewed consumer/Team Hub clearance. No production/pin update follows.
+
+NON-AUTHOR SOURCE review reports no additional material finding in the bounded late-authority
+repair and independently runs no native tests. Mint-side later authority changes, two-token races,
+full lock ordering/schema/RLS, provisioning/recovery and release readiness remain unfinished.

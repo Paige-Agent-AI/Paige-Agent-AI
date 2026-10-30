@@ -7,7 +7,7 @@ MATERIAL_FLOW_CHANGE: NO: repair the existing reminder reschedule permission pre
 FLOW_PROTOTYPE: NOT_REQUIRED: original versioned reminder flow preserved; the separate Operations editor correction requires its own rendered role/state proof after native release.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: active current-business Admin may move another person's active reminder to a finite future time through the existing versioned writer.
 VISUAL_DIRECTION: NOT_APPLICABLE: this source changes no UI component, typography, spacing, icon, color or animation.
-AUTOMATED_EVIDENCE: PASS: scripts/planning-native/check.mjs completed 138 PostgreSQL checks, source/metadata conservation, exact replay and source/metadata refusal; original tests also cover concurrency, receipt rollback and lost acknowledgment without retry. Full-schema hosted execution remains owed.
+AUTOMATED_EVIDENCE: PASS: scripts/planning-native/check.mjs completed138 PostgreSQL checks plus source/metadata conservation, replay and drift refusal. Original full-schema Operations SQL also passed completely in the managed Preview atbacb source, including its new Admin role, stale replay, actor substitution, assignee and native audit/Rail assertions; every fixture rolled back. Clean hosted CI reconstruction remains owed.
 STATIC_EVIDENCE: PASS: node syntax check, migration-version-collision-lint, definer-signature-acl and solo-parity-guard completed successfully. Only two existing function predicates change; metadata and exact inverse source are guarded.
 RENDERED_EVIDENCE: NOT_APPLICABLE: no rendered file changes; the original editor still withholds Admin-only time editing until a separately verified native-dependent UI change.
 BEHAVIORAL_EVIDENCE: PASS: real local PostgreSQL function calls with explicit synthetic Auth/bus/realtime/eligibility ports; non-owner Admin succeeds without a global-role fixture row, one original audit/Rail; wrong actor/tenant, inactive seat, other workspace, held account classes, invalid time, mixed fields, non-reminder and closed records refuse. These ports are not production Auth/RLS evidence.
@@ -18,7 +18,7 @@ REDUCED_MOTION: NOT_APPLICABLE: no animation, style or motion listener.
 STATE_COVERAGE: PASS: existing creator/global-role compatibility retained; added authority limited to active SOLO reminder time only. Stale, revoked, foreign, invalid, unknown, concurrent and receipt-failure controls remain explicit.
 TRUTHFUL_STATE_LABELS: PASS: recorded reminder time is not reminder delivery or execution of recurring work. Catalogue stays PARTIAL; no customer LIVE, authenticated success or founder acceptance claimed.
 SOLO_UI: NO: no Solo UI source changed; this is the tenant-neutral native prerequisite to the separate existing editor correction.
-UNVERIFIED: full-schema/hosted CI and genuine managed Preview, production readback, mounted Admin control, authenticated role/cohort/record/Rail/reload and both-chat integration; complete ten outcomes/E5-CV1–9 and founder acceptance.
+UNVERIFIED: new exact-head clean hosted CI and composed Preview freshness, production readback, mounted Admin control, authenticated role/cohort/record/Rail/reload and both-chat integration; complete ten outcomes/E5-CV1–9 and founder acceptance.
 OWNER_INTENT: Repair legitimate reminder access without a new privilege grant or another scheduler; continue complete EXP05 independently of held shared Chat spans.
 MUST_NOT_HAPPEN: No added Task/milestone/other-field authority, held Agency or Platform Operator exception, raw provider effect, automatic retry after unknown or mutation-history rewrite.
 MUST_PRESERVE: Same original native functions, OIDs, owners, ACLs, search paths, signatures/defaults, profile/row locks, actor/tenant binding, source versions, exact readback and original audit/Rail.
@@ -65,3 +65,26 @@ Forward75005 follows published70005. Never merge this stacked child into its
 temporary feature base. Native source/full-schema/Preview/review/exact-head CI,
 ordered production apply/readback precede enabling the separate existing editor.
 No general management-member delegation/grant/expiry contract is invented.
+
+## Full-schema proof and current-main correction
+
+Original full-schema operations_versioned_work_update.sql at exactbacb489b6
+executed completely through the managed3127 Preview, using the actual schema,
+authority helpers and canonical role-sync triggers. The new native Admin time
+edit, stale/actor/assignee refusals, exact original fields/audit/Rail and all
+incumbent assertions passed. Source was extracted directly from that immutable
+Git revision and ended in ROLLBACK; independent post-read remained0Auth users,
+0Work items and0CRM Tasks. This is synthetic database-role/GUC proof, not an
+ordinary customer login, JWT/PostgREST or universal cohort claim. Preview75005
+was recorded once, actual base/wrapper MD5a0187ca641b89fa899fcdef49fdf02b8 and
+73f3a1af266605471434fa83f46d0ccd with original metadata. Production is unchanged.
+
+Hosted database-contract failed earlier during production-grant reproduction,
+before the reviewed change: old branch lacked newly released40008's original
+team_hub_message_reference objects. Cascading failures do not count as native
+proof. Receipt parent now normally composes main571f intobb8145339; this child
+composes that parent without a source-policy change. Both packet appendices
+are conserved, all18,476 outside-owned parent leaves and all four owned
+non-packet files remain exact. Required clean new-head gates are renewed, not
+waived. Preview's35008/70005/75005 history is preserved; no manual lower insertion,
+reset or include-all. Production order60009→70005→75005 remains binding.

@@ -1,5 +1,5 @@
 -- TEST-ONLY native candidate; no deployment migration or activation.
--- Installed only by the original disposable localhost provider proof.
+-- Installed only by existing disposable native proof paths; never a migration.
 -- Original-operation observations and canonical Rail; no financial adjustment.
 do $guard$
 begin

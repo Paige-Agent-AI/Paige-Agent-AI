@@ -4,6 +4,7 @@ import {ThemeProvider} from 'next-themes';
 import {InvoiceLifecycleActions} from '@/solo/sales/InvoiceLifecycleActions';
 import {InvoiceWorkspace} from '@/solo/sales/InvoiceWorkspace';
 import InvoiceDocument from '@/pages/InvoiceDocument';
+import {formatPaymentMinor} from '@/solo/sales/customerPaymentRequest';
 import {acceptedPlanEnabled,expireAcceptedFixtureSession} from './accepted-plan';
 import {acceptedPlanFixtureIds as ids} from '../accepted-plan-fixture';
 import '@/index.css';
@@ -17,7 +18,12 @@ const width=Number(query.get('viewport'));
 const framed=query.get('frame')==='1';
 if(customer){
  const state=query.get('state')||'customer_action_required';
- window.fetch=async(input)=>new Response(String(input).includes('format=payment-request')?JSON.stringify({remaining_cents:300000,payment_request:state==='empty'?null:{amount_minor:50000,currency:'usd',state:state==='expired_fixture'?'customer_action_required':state,provider_url:'https://checkout.stripe.com/c/pay/test',expires_at:new Date(Date.now()+(state==='expired_fixture'?-1000:3600000)).toISOString()}}):'<h1>Invoice INV-1042</h1><p>Jordan Lee</p><p>Total $3,500.00 · Recorded $500.00 · Outstanding $3,000.00</p>',{status:200,headers:{'content-type':String(input).includes('format=payment-request')?'application/json':'text/html'}});
+ const amountCase=query.get('money');
+ const large=['large-usd','large-kwd','unknown-currency'].includes(amountCase||'');
+ const currency=amountCase==='large-kwd'?'kwd':amountCase==='unknown-currency'?'zzz':'usd';
+ const requested=large?Number.MAX_SAFE_INTEGER:50000,remaining=large?Number.MAX_SAFE_INTEGER:300000;
+ const document=large?`<h1>Invoice INV-1042</h1><p>SYNTHETIC LOCAL DOCUMENT · no customer or provider result.</p><p>Outstanding ${formatPaymentMinor(remaining,currency)}</p>`:'<h1>Invoice INV-1042</h1><p>Jordan Lee</p><p>Total $3,500.00 · Recorded $500.00 · Outstanding $3,000.00</p>';
+ window.fetch=async(input)=>new Response(String(input).includes('format=payment-request')?JSON.stringify({remaining_cents:remaining,payment_request:state==='empty'?null:{amount_minor:requested,currency,state:state==='expired_fixture'?'customer_action_required':state,provider_url:'https://checkout.stripe.com/c/pay/test',expires_at:new Date(Date.now()+(state==='expired_fixture'?-1000:3600000)).toISOString()}}):document,{status:200,headers:{'content-type':String(input).includes('format=payment-request')?'application/json':'text/html'}});
 }else if(acceptedPlanEnabled){
  // A static document port only; CSP denies all network connections.
  window.fetch=async()=>new Response('<html><meta name="viewport" content="width=device-width,initial-scale=1"><body style="font:16px system-ui;padding:24px;color:#201c18;background:#fff"><p>SYNTHETIC LOCAL DOCUMENT</p><h1>Invoice INV-1042</h1><h2>Consulting engagement</h2><p>Accepted principal $3,500.00</p><p>Deposit $500.00 · Ten monthly payments of $300.00</p><p>This preview is not a customer invoice or signed document.</p></body></html>',{status:200,headers:{'content-type':'text/html'}});

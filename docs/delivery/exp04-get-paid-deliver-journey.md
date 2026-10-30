@@ -4596,3 +4596,93 @@ REPAIR the two incumbent Sales callbacks to retain initialization; preserve all 
 Failing-first tests: unchanged code produced three causal failures with36 original controls passing. After correction,39/2 owning tests PASS5.83s and162/7 adjacent Sales/Analytics tests PASS13.58s. Scoped ESLint, whole-source inverse and the unchanged UI-record validator PASS. This is synthetic/static source evidence. The first local build failed dependency realpath EPERM; actual machine free RAM later fell to144MiB and a shell failed initialization out-of-memory. The local type check and unchanged build retry were stopped to recover memory; neither is green. Required hosted exact-head checks, fresh final review, rendered browser lifecycle, release/readback and protected independent ordinary-role original-reference acceptance remain incomplete.
 
 The original customer interface and every noninitial auth invalidation remain intact. The owner October24 clarification makes small PRs a review-efficiency preference, not a size cap: keep these two inseparable duplicate-issuance causes and their negative controls together. No peer implementation assignment. ALG01/12 remain bounded PARTIAL; no capability maturity or founder acceptance is promoted. Shipped Log N/A while this source increment has not reached main. Evidence: docs/evidence/ui-delivery/e04-sales-metric-initial-session.md.
+
+### C136 — Original accepted-plan discovery and exact Chat target — October30
+
+Same sole EXP04/MERIT lead and full O1–O12. Continue the owner-calibrated
+agreement/signing/dated obligations/invoice closure first. This is REPAIR of a
+missing declared selector and EXTEND of the original invoice read, not a new
+financial, authorization, execution or orchestration system.
+
+The original native writer, request parser, approved-operation replay and owner
+Payments UI already support an exact accepted obligation reference. The original
+Kit/Chat declaration omitted that field, and the original invoice Chat read did
+not expose the accepted plan. Nineteen causal failing cases with58 old/control
+passes establish the source gap. A preceding Windows temporary-file rename error
+ran no tests and is excluded from the causal result.
+
+The original read_sales_invoice gains an optional include_accepted_payment_plan
+boolean. Omitted or false preserves the exact original result and one RPC.
+Explicit inspection derives invoice/client/agreement/currency/revision coordinates
+only from the original caller-JWT invoice read, then uses the SAME
+readAcceptedInvoicePaymentPlan and retained signed-payload decoder. There is no
+new query, schedule/date calculation, financial amount calculation, FIFO allocation,
+permission predicate, document reader, provider call or model-authored context.
+The closed result contains accepted principal, original recorded completion/receipt,
+exact dated references and native scheduled/remaining amounts. Agreement words,
+private document/seal material, customer contact data and credentials are omitted.
+Refused, unverified, stale and the original seven native held states expose no
+eligible targets. Unissued/void invoices do not trigger accepted-plan reads.
+
+The exact reference schema is colocated with its ORIGINAL parser and projected
+through the existing sales_invoice.payment_request Kit declaration. The existing
+parser still rejects caller amounts alongside references, unsupported purposes,
+later payments mislabeled as deposits and extra authority/source fields. A read
+supplies no payment approval. The original server resolves the amount and rechecks
+accepted source, allocations, actor, invoice and merchant under the existing
+prepare/claim locks. Stored and pinned approvals retain the SAME original target
+and operation; unknown results never mint a fresh request.
+
+Orchestration contract and pre-edit routing (ANT-51/161 C136):
+1. Event/request: inspect one original accepted invoice plan and propose its exact
+   dated deposit/installment target; no automatic schedule or charge.
+2. Entry: existing owner Sales/PAIGE/MERIT Chat tool surface; no Root, C0b,
+   Team Hub, renderer, Live, Portal host or shared specialist change.
+3. Original records/capabilities: canonical invoice, immutable signing/terms and
+   allocations; existing sales_invoice.read and sales_invoice.payment_request.
+4. Path: existing authenticated read + governed sales-invoice-command. Layer C is
+   unnecessary for an ordinary read/proposal; no new ActionAdapter/runtime.
+5. Authority: original caller-JWT tenant/actor/owner-financial native admission;
+   all client/signing/version coordinates are server-read, never tool arguments.
+6. Risk: read_only/no approval for inspection; external_effect/HIGH/CONFIRM and
+   original owner-grantable permission/canonical gate for a payment request.
+7. Durable identity: existing payment operation/dispatch claim/atomic Rail only;
+   no scheduler, event, receipt store or extra execution identity.
+8. Provider/readback: no provider for inspection; unchanged Stripe-first merchant
+   readiness and original request/readback/verified settlement at actual execution.
+9. Recovery: original withheld states/version/source checks and same-operation
+   uncertain recovery; no signing, settlement, file availability or service claim.
+10. Result: bounded plan/source facts and the existing Needs your OK proposal.
+
+Verification at this source checkpoint: original actual read/Chat/declaration
+entry tests pass142/5 suites, including one discovered target reaching the SAME
+approval endpoint without a caller amount, original stored/pinned approval
+regressions, source/tenant/version/refusal/held/transport/redaction controls.
+These are isolated original-adapter fixtures, not authenticated model, RLS,
+provider, customer persistence, Rail or full financial acceptance. Exact final
+review, CI, normal affected-importer deployment/source readback and authenticated
+owner/staff/client QA remain owed. sales.department remains PROOF_OWED and existing
+capability maturity is unchanged. ALG01/12 bounded validation/recovery PARTIAL;
+ALG02/13 and usefulness remain UNVERIFIED. No provider, Chat admission, financial
+effect or customer communication is activated. Founder Acceptance and all12 remain
+OPEN; follow with actual invoice usability/payment reconciliation/Collections,
+then original onboarding/delivery/client decision/completion/self-service work.
+
+Final local source verification:142/5 original suites PASS again after normal
+composition of released money repair3112; focused ORIGINAL tsconfig/Vite ambient
+graph694 files/0 diagnostics, scoped ESLint0, frozen Deno2.9.8 actual Chat module,
+canonical registry245/declaration232-of233 baseline and zero source disagreements,
+Solo paritySP1–SP5 plus its COMPLETE original negative/legitimate controls PASS.
+Original Chat handler check passes through its unchanged canonical knowledge-scope
+loader, including DRAINING/no effect/claim and original admitted-read receipts.
+Its first direct Node strip-only invocation failed at an existing parameter
+property before the handler proof; it is INVALID_SETUP, not a product regression
+or passing test. Original entire mutation/approval/replay/readback tail and all
+accepted-reference parser implementations remain byte-exact.
+
+Availability boundary: original DRAINING admission does not offer read_sales_invoice
+among its admitted reads. This domain adapter/declaration change does not activate
+that tool or consequential Chat. Current owner Payments workspace uses its
+legitimate existing native path independently. Signed-in model/Spine admission,
+all-role/provider/accepted-target execution and complete Experience proof remain
+OPEN; no synthetic adapter injection is described as that acceptance.

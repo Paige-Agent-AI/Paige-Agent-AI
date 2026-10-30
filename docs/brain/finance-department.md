@@ -677,3 +677,22 @@ cohorts/Live/full Finance remain owed. Founder NOT_ACCEPTED; all 19/nine and
 historical 9PASS/0FAIL plus 12PASS/0FAIL/4BLOCKED remain unchanged. The original monthly
 CPU-failed request stays unknown/unretried; this was an independent Finance read.
 No algorithm/catalogue/provider/permission/INT346 or consequential activation.
+
+## October30 — original invoice navigation repair, development only
+
+Finance's invoice evidence control now consumes E04's existing canonical
+`routeLinkTarget` with the original invoice ID and current route account, rather
+than always opening the general invoice list. E04's mounted exact-record reader,
+session/tenant checks, refusal handling and governed actions remain unchanged.
+Invalid locators retain the canonical surface fallback; a replaced source read
+invalidates the inspected handoff. No copied invoice, financial write, privilege,
+provider, approval, execution or receipt system is added.
+
+Actual source verification: causal4FAIL/59PASS before repair, then117PASS across
+the consumer and three existing original source/navigation/permission suites;
+scoped lint and whitespace pass. Candidate rendering/control is currently held;
+the earlier actual released seven-page Finance/VERA/Chat continuity evidence is
+separate in protected ANT52/e753f1e8. No merge, deployment or candidate customer
+acceptance inferred. [Same-feature evidence](../evidence/ui-delivery/e2-finance-exact-invoice.md).
+Finance binding stays PROOF_OWED, nine catalogue/algorithm maturity unchanged.
+Functional source subset; Visual/Experiential proof owed; Founder Acceptance OPEN.

@@ -1,28 +1,28 @@
 # EXP05 O02/O03 — correct saved Task effort through original Work
 
 UI_DELIVERY_EVIDENCE_VERSION: 1
-INTERNAL_BUILD_IDENTITY: source=e78ac4f56e55dbdd22395f0854b13be7b6d156fd; base=c5d0ddc5110cbad6987767db0bc12aec26f4cf57; deployment=offline-original-Operations-mount; environment=local; migrations=PROOF_OWED(20271126050005_task_effort_scalar original PR3102 final gates and production release); edge=PROOF_OWED(compiled Task patch schema and crm-command after native release); evidence=docs/evidence/ui-delivery/assets/exp05-task-effort/composed/forward-conservation.json
+INTERNAL_BUILD_IDENTITY: source=933410a371d72dafef5a6625f9ed2f47f4fea66f; base=571f8aa84be2fdb1f089a3fc65c8e94ad1b613d4; deployment=offline-original-Operations-current-main-mount; environment=local; migrations=APPLIED(20271126050005_task_effort_scalar); edge=PROOF_OWED(selected-source certification for paige-ai-chat and notify-approval-event, crm-command matched571f); evidence=docs/evidence/ui-delivery/assets/exp05-task-effort/current-main/source-manifest.json
 RELEASE_CHANNEL: development: local source and isolated browser/SQL fixtures only.
 RELEASE_CLASSIFICATION: internal-only: one correction/save/reopen leg of O02/O03, not complete weekly planning or EXP05.
 CUSTOMER_RELEASE_IDENTITY: none: no launch, activation or founder acceptance.
 RELEASE_NOTE_REQUIRED: NO: original issue/PR are the unfinished increment's record.
-RELEASE_TRUTH_BOUNDARY: PARTIAL: actual original editor, command door consumer, review and recovery rendered with explicit offline ports; native producer is OPEN3102, unmerged and unapplied.
-RELEASE_RECOVERY: position=hold until original native12 review/full-schema/exact-head CI and source-compatible deployment clear; reference=original Task operation/key/version, original CRM read and receipt. Never retry an unknown write with a fresh operation.
+RELEASE_TRUTH_BOUNDARY: PARTIAL: native producer3102 is merged571f and50005 applied/source-verified; current-main editor remains offline prepared, not production UI or authenticated proof. Full selected Edge verification failed and UI merge stays held.
+RELEASE_RECOVERY: position=hold UI release for certified compatible Edge source; reference=original Task operation/key/version, CRM source reread and receipt; normal reviewed forward fix, never retry an unknown business write with a fresh operation.
 FLOW_BY_FLOW: PASS: original Work → inspect Task → change whole-minute estimate or clear → review exact units → original Trust approval if required → original executor acknowledgement → independent original Work read → saved status; lost acknowledgement → reload → original recovery → readback.
 PAIGE_UI_DESIGN: PASS: existing Task inspector, typography, tokens, gold action, native controls and focus ring. New effort input/review action are44px; clear uses an18px visual checkbox inside its44px label target. No new banner, tab, drawer engine or design system.
 MATERIAL_FLOW_CHANGE: YES: durable effort correction, distinct from temporary workload estimates.
 FLOW_PROTOTYPE: PASS: actual original OperationsWorkspace, editor, command consumer and review in the incumbent full Operations harness; only explicit source/Auth/transport ports are synthetic. No production test route.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: permitted SOLO owner/admin corrects one original Task estimate without overwriting unrelated metadata or reserving Calendar time.
 VISUAL_DIRECTION: PASS: compact inline planning fields and exact review inside the existing inspector; original work remains visible behind its modal.
-AUTOMATED_EVIDENCE: PASS:125 assertions in seven original effort/command/editor/review/task-focus/SoloApp-retention/focused-read suites on the composed source. Original denial, account switching, unavailable source, CAS/replay, zero/clear, widened proposals, independent readback and refusal focus retained. Native component20 and generator15 are separate bounded evidence below.
+AUTOMATED_EVIDENCE: PASS:147 assertions/nine suites plus18 original focused-reader assertions/one suite,165 total in10 distinct files on current-main composition. Original denial, account switching, unavailable source, CAS/replay, zero/clear, widened proposals, independent readback and refusal focus retained; native component20/generator15 remain separate evidence.
 STATIC_EVIDENCE: UNVERIFIED: actual tsconfig.app.json reports nine unchanged-file diagnostics and zero changed-path diagnostics. Empty root-solution tsc result is EXCLUDED. Diff/UTF8/focused lint are separate checks; hosted exact-lock CI remains required.
-RENDERED_EVIDENCE: PASS: docs/evidence/ui-delivery/assets/exp05-task-effort/composed/build-manifest.json binds current product inputs, nine explicit fixture sources, compiled assets and seven valid composed-source frames at1366x768/320x1000. The original fifteen83d97 frames remain historical, with their original121 hashes; five incoming source changes are identified instead of silently borrowing the old complete graph. One transition-time stale capture is excluded.
-BEHAVIORAL_EVIDENCE: PASS: docs/evidence/ui-delivery/assets/exp05-task-effort/composed/rendered-matrix.json records original editor→exact30-minute review→synthetic approval→independent fixture reread→reload/reopen30, narrow keyboard reachability, explicit clear and Cancel return. Prior original response-loss/recovery/refusal/role/zero cases retain their historical evidence and current125 test coverage. All Auth/Trust/execution/read data ports are synthetic; real domain execution is excluded.
+RENDERED_EVIDENCE: PASS: current-main/source-manifest.json binds126 actual product inputs, nine unchanged fixture sources, compiled assets and eight new1366x768/320x1000 frames. Team Hub changed paigePromptHandoff/workspaceLinks and added composer scope identity; the old composed graph is retained as historical, not borrowed. The prior invalid transition capture remains excluded.
+BEHAVIORAL_EVIDENCE: PASS: current-main frames show original editor→exact30-minute review→offline approval→simulated save→full reload/reopen30; narrow keyboard reaches clear, zero stays0 minutes and clear explicitly removes the recorded estimate. Measured document widths equal1366/320. Original response-loss/recovery/refusal/role controls remain in tests and historical captures. All Auth/Trust/execution/read ports are synthetic, not native customer/receipt proof; only own test tab closed and viewport reset.
 AUTHENTICATED_RUNTIME: UNVERIFIED: new effort write, original approval/receipt and later real read/reload require legitimate protected production verification after release. Parent3091 has separate bounded owner read-only proof in ANT-52/c8eeddbf; it does not prove this new writer.
 KEYBOARD_FOCUS: PASS: native numeric entry/Tab reaches clear label; exact review/approval/recovery retain original controls. A real refusal focus loss was found and repaired: focus moves to Back to details after disabling the refused action. Original focus/retention assertions remain, with only their changed accessible-label selectors reconciled.
 ZOOM_REFLOW: UNVERIFIED:320px reflow has no document overflow and new targets are44px; native200% zoom and screen-reader testing of this added flow remain owed. Parent native zoom is not borrowed.
 REDUCED_MOTION: PASS: no new animation, timer or polling; original drawer motion retained.
-STATE_COVERAGE: PASS:117 assertions cover missing/recorded effort, zero, clear, invalid/unchanged values, permission loading/denial, stale/native-record change, exact review/approval, refusal, saved and response-loss recovery. Original absent-task and account-switch retention assertions remain intact.
+STATE_COVERAGE: PASS: current165 assertions cover recorded/missing/zero/clear effort, invalid/unchanged values, permission loading/denial, stale record, review/approval/refusal, saved/reload and response-loss recovery plus scoped prompt/link regressions. Original absent-task/account-switch retention assertions remain intact; historical117/125 results are preserved separately.
 TRUTHFUL_STATE_LABELS: PASS: effort is neither free time nor a Calendar reservation. Clear means unknown, not zero. Executor response alone never establishes saved Work; refused/unknown cannot become optimistic completion.
 SOLO_UI: YES: one shared tenant-neutral Task/Operations implementation, no per-account condition, provisioning fork or Platform Operator change.
 SOLO_1536X770_PAIGE_CLOSED: UNVERIFIED: full original shell at this size remains owed; current changed-path evidence is1280px plus320px original Operations mount.
@@ -33,7 +33,7 @@ SOLO_1024X768_PAIGE_CLOSED: UNVERIFIED: full-shell size remains owed.
 SOLO_1024X768_PAIGE_OPEN: UNVERIFIED: original dock overlay/return remains owed.
 SOLO_900X1000_PAIGE_CLOSED: UNVERIFIED: full-shell size remains owed.
 SOLO_900X1000_PAIGE_OPEN: UNVERIFIED: original dock overlay/return remains owed.
-UNVERIFIED: full-schema225-case pgTAP run, original Trust/Rail/native role proof, native12 release, final review/exact-head CI, deployment, new/existing eligible SOLO cohorts, Chat/Team Hub tool behavior, native zoom/AT, full-shell dock matrix and founder acceptance.
+UNVERIFIED: full selected Edge source certification, final editor review/exact-head CI and web deployment; authenticated exact approval/Task/Rail/reload, existing/new eligible SOLO cohorts and both chats; native zoom/AT, full-shell dock matrix and founder acceptance. Original225 native full-schema passed on producer3102; that does not prove editor or customer acceptance.
 OWNER_INTENT: finish realistic weekly planning first, then bounded Automation Builder, monitoring and permitted proactive updates; retain full ten outcomes/E5-CV1–9 and one founder evaluation.
 MUST_NOT_HAPPEN: whole metadata erased by a partial update, unknown effort converted to zero, stale/foreign actor or Task reuse, fresh-key replay after response loss, invented receipt/saved status, new approval/writer/ledger/scheduler, provider effect or held ZION activation.
 MUST_PRESERVE: native service-only executor/ACL/OID, actor/tenant and record checks, raw Task version/CAS, exact stored command/Trust, original replay/receipt transaction, explicit metadata replacement semantics and all non-Task branches.
@@ -147,3 +147,32 @@ Original UI draft3103 cannot merge into its temporary native feature base. Final
 main retarget/review/exact-head CI follows producer release; original real
 approval/Task/Rail/reload, eligible existing/new SOLO, both chats/full shell/
 native zoom/AT/fullten/E5/founder acceptance remain owed. No activation or action.
+
+## October30 — native release received, current-main editor reverified
+
+Producer3102 merged571f8aa84be2fdb1f089a3fc65c8e94ad1b613d4 after all13 exact
+checks and both web statuses. Normal migration41098303945 succeeded; actual
+production50005 is recorded once and original executorOID289875/bodycaea59ab
+with unchanged owner/security/settings/privateACL is read back. Vercel exact571f
+is READY at dpl_6aXvXVrfzYCcVtGVxTHqdr9RTHrF. Those are native/source receipts,
+not this editor's production or authenticated result.
+
+Normal current-main composition is933410a371d72dafef5a6625f9ed2f47f4fea66f.
+All11 original product/test blobs remain exact. The126-input graph now contains
+Team Hub's changed paigePromptHandoff/workspaceLinks plus original shared composer
+scope identity; it was rebuilt instead of borrowing stale125-input evidence.
+All nine fixture sources remain exact. Actual147/nine plus18/one focused-reader
+tests PASS (165 assertions in10 distinct files). Eight new local frames cover
+1366x768/320x1000 editor, exact30 review, offline approval, simulated save,
+reload/reopen30, narrow keyboard, zero and clear-as-unknown. No business data,
+provider, real approval or original Rail was created; fixture transport guards
+remain active. Temporary viewport reset, own tab closed and helper stopped.
+
+Normal Edge41098303978 uploaded its selected functions but failed strict source
+verification for notify-approval-event/canonical-app-url and paige-ai-chat's
+generated Task patch schema; crm-command itself matched. Original failed report
+is retained, certified edge-live did not advance. A single existing failed-job
+recovery is pending; UI merge remains held for certified compatible source.
+No broad source/runtime edit or relaxed verifier. Hosted editor exact-head CI,
+authenticated record/approval/Rail/reload, full-shell/native zoom/AT, both chats,
+eligible current/new cohorts and full EXP05/founder acceptance remain owed.

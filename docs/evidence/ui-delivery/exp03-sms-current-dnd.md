@@ -27,12 +27,12 @@ SOLO_1024X768_PAIGE_CLOSED: UNVERIFIED: no fresh full-shell render; original UI 
 SOLO_1024X768_PAIGE_OPEN: UNVERIFIED: no fresh full-shell render; original PAIGE overlay unchanged.
 SOLO_900X1000_PAIGE_CLOSED: UNVERIFIED: no fresh full-shell render; original UI unchanged.
 SOLO_900X1000_PAIGE_OPEN: UNVERIFIED: no fresh full-shell render; original PAIGE overlay unchanged.
-INTERNAL_BUILD_IDENTITY: source3cfce077d75f65a69b8ac64e848d0c5322000d13; deployment=local-original-controlled-handlers; environment=development; migrations=NOT_APPLICABLE(no database definition change); edge=UNVERIFIED(normal source deployment requires final gates); evidence=supabase/functions/_shared/comms-sms-result.test.mjs
+INTERNAL_BUILD_IDENTITY: source 3cfce077d75f65a69b8ac64e848d0c5322000d13; deployment=local-original-controlled-handlers; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(normal source deployment requires final review and CI); evidence=supabase/functions/_shared/comms-sms-result.test.mjs
 RELEASE_CHANNEL: development: inert controlled handlers only; no production SMS or provider configuration.
 RELEASE_CLASSIFICATION: patch: original recipient-hold timing correction.
 CUSTOMER_RELEASE_IDENTITY: none: backend patch has no separate customer release identity.
 RELEASE_NOTE_REQUIRED: NO: bounded existing-refusal correction, no new feature announcement.
-RELEASE_TRUTH_BOUNDARY: UNVERIFIED: exact current CI/Preview/source release and ordinary customer behavior need verification; source tests do not establish runtime acceptance.
+RELEASE_TRUTH_BOUNDARY: PROOF OWED: exact current CI/Preview/source release and ordinary customer behavior need verification; source tests do not establish runtime acceptance.
 RELEASE_RECOVERY: position=known failed result with original draft recovery and ordinary reviewed forward source fix; reference=docs/comms/SEND-MESSAGE-CONTRACT.md section6
 
 The gate initially rejected a modified prior evidence record because it requires a newly added per-change record. This record supplies that requirement truthfully; no guard, assertion or evidence criterion was changed. Historical failure and prior original record remain retained. Impeccable preservation/clarity/recovery checks retain the original layout, plain refusal and no automatic retry; contrast/zoom/AT remain unverified. Same NEXUS, full original matrix and STILL CODING status retained.

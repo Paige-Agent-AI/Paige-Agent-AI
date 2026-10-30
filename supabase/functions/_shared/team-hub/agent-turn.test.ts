@@ -8,14 +8,31 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
+import { readFileSync } from "node:fs";
 import {
-  ANSWER_PRIVATELY_TOOL, EXECUTABLE_AGENT_TOOLS, PINNED_READ_TOOL, PRIVATE_PART_LINE, bringInLines, effectiveAgentTools, isTeamHubAgentTurnRequest, isTransportError, parseAgentAnswer, parseAgentTurnRequest,
+  ANSWER_PRIVATELY_TOOL, EXECUTABLE_AGENT_TOOLS, PINNED_READ_TOOL, PRIVATE_PART_LINE, buildAgentSystemPrompt, bringInLines, effectiveAgentTools, isTeamHubAgentTurnRequest, isTransportError, parseAgentAnswer, parseAgentTurnRequest,
   parseBringIn, privateRouteAllowed, runTeamHubAgentTurn, storedToolNames, uuidFrom, type AgentTurnDeps, type CompleteFn,
 } from "./agent-turn.ts";
 import { chatReadToolDefs, fakeDb, eqOf, hasFilter, type Query } from "./a2b-test-fakes.ts";
-import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { crmCommandFallbackIdempotencyKeys, canonicalizeCrmCommand } from "../crm-command/catalog.ts";
+
+describe("composed private read visibility", () => {
+  for (const [agent, tools, expected] of [
+    ["mentor", ["plan_list"], "current plans and plan items"],
+    ["merit", ["agreement_list", "agreement_status"], "current original commercial/client records"],
+    ["cura", ["read_client_engagement_status"], "current original commercial/client records"],
+  ] as const) {
+    it(`describes ${agent}'s offered private read without broadening a channel`, () => {
+      const base = { agent, tenantName: "Brightline Studio", askerName: "Sam", privateFollowUp: false,
+        personality: null, tools: [...tools], privateRoute: false };
+      const dm = buildAgentSystemPrompt({ ...base, where: { kind: "agent_dm", visibility: "private", label: "Agent DM" } });
+      assert.ok(dm.includes(expected), "the model must know which offered original sources it can read");
+      const channel = buildAgentSystemPrompt({ ...base, where: { kind: "channel", visibility: "team", label: "general" } });
+      assert.ok(!channel.includes(expected), "a poisoned offered list must not promise private sources in a channel");
+    });
+  }
+});
 
 const TENANT = "11111111-1111-4111-8111-111111111111";
 const SAM = "22222222-2222-4222-8222-222222222222";
@@ -35,6 +52,13 @@ const DM_SCOPE = { version: 1, mode: "allowlist", access: "read", tools: ["ask_c
 const MERIT_CONFIG = { team_hub_tools: SHARED_LIST, capability_scope: DM_SCOPE,
   personality: { short_role: "Sales & getting paid", role_line: "Sales & getting paid: deals, proposals & agreements", intro: "I'm MERIT.", warmth: 4, length: 2, formality: 3, energy: 4, humour: "off",
     house_words: [], things_to_avoid: ["Pressure tactics"], never_does: ["Post a deal value in a channel"], sounds_like: ["Next step: proposal by Oct 30."] } };
+// EXP01: MENTOR's roster row once the plan-read migration lands — DM scope gains plan_list.
+const MENTOR_DM_SCOPE = { version: 1, mode: "allowlist", access: "read", tools: ["ask_choices", "capability_status", "read_business_time_zone", "team_hub_read_conversation", "read_tenant_knowledge", "marketplace_browse", "plan_list"] };
+const MENTOR_CONFIG = { team_hub_tools: SHARED_LIST, capability_scope: MENTOR_DM_SCOPE,
+  personality: { short_role: "Discovery & strategy", role_line: "Discovery & strategy", intro: "I'm MENTOR.", warmth: 4, length: 3, formality: 2, energy: 3, humour: "light",
+    house_words: [], things_to_avoid: ["Lecturing"], never_does: ["Lecture"], sounds_like: ["One thing first."] } };
+const PLAN_ROW = "99999999-9999-4999-8999-999999999990";
+const PLAN_ITEM = "99999999-9999-4999-8999-999999999991";
 
 type Msg = Record<string, unknown>;
 type Call = { who: "caller" | "service"; name: string; args: Record<string, unknown> };
@@ -46,10 +70,14 @@ function message(id: string, channel: string, author: string, body: string, extr
 }
 
 type Opts = {
-  sourceAuthor?: string; mentions?: string[]; config?: unknown; configThrows?: boolean;
+  privateAgent?: "merit" | "cura";
+  domainRole?: string; domainRead?: (name: string, args: Record<string, unknown>) => unknown;
+  stageReads?: (args: Record<string, unknown>) => unknown;
+  sourceAuthor?: string; mentions?: string[]; config?: unknown; configThrows?: boolean; configFn?: () => unknown;
   accept?: (args: Record<string, unknown>) => unknown; end?: () => unknown; recordFails?: string[];
   post?: (args: Record<string, unknown>, attempt: number) => unknown; readbackHides?: boolean; launchVisibility?: unknown;
   sourceIn?: string; sourceThread?: string | null; stage?: (args: Record<string, unknown>) => unknown;
+  agentDmKey?: string; authorityRows?: unknown[]; planList?: unknown; planListError?: boolean; tenantPin?: string;
 };
 /** A raw client answer (`{ data, error }`), for the transport failures the Supabase client returns instead of throwing. */
 const raw = (data: unknown, error: { message?: string; code?: string } | null, commit = false) => ({ __rpc: { data, error }, commit });
@@ -68,12 +96,15 @@ function world(opts: Opts = {}) {
     { agent_mentions: opts.mentions ?? ["merit"], parent_message_id: opts.sourceThread ?? null });
   if (opts.sourceThread) store.set(`${sourceIn}:${opts.sourceThread}`, [src]); else store.get(sourceIn)!.unshift(src);
   let postAttempt = 0;
+  let stagedRead: Record<string, unknown> | null = null;
   const postedByRequest = new Map<string, Msg>();
   const caller = {
     rpc(name: string, args: Record<string, unknown> = {}) {
       calls.push({ who: "caller", name, args });
       const answer = (() => {
         switch (name) {
+          case "paige_agreement_overview": return opts.domainRead?.(name, args) ?? [];
+          case "read_client_engagement_status": return opts.domainRead?.(name, args) ?? null;
           case "get_paige_persona_context": return [{ tenant_id: TENANT, tenant_name: "Brightline Studio" }];
           case "team_hub_list_conversations": return { ok: true, me: { user_id: SAM },
             people: [{ user_id: SAM, display_name: "Sam Lee" }, { user_id: PRIYA, display_name: "Priya Shah" }],
@@ -81,7 +112,7 @@ function world(opts: Opts = {}) {
               { id: LAUNCH, kind: "channel", name: "launch", visibility: "launchVisibility" in opts ? opts.launchVisibility : "team", joined: true, unread: 0 },
               { id: SECRET_CHANNEL, kind: "channel", name: "acquisition-talks", visibility: "private", joined: true, unread: 3 },
               { id: SAM_PRIYA_DM, kind: "dm", name: null, visibility: "private", dm_user_id: PRIYA, joined: true, unread: 1 },
-              { id: MERIT_DM, kind: "agent_dm", name: null, visibility: "private", agent_key: "merit", joined: true, unread: 0 },
+              { id: MERIT_DM, kind: "agent_dm", name: null, visibility: "private", agent_key: opts.agentDmKey ?? opts.privateAgent ?? "merit", joined: true, unread: 0 },
             ] };
           case "team_hub_list_messages": {
             const key = args.p_thread_root ? `${args.p_channel_id}:${args.p_thread_root}` : String(args.p_channel_id);
@@ -93,6 +124,16 @@ function world(opts: Opts = {}) {
           }
           case "team_hub_open_agent_dm": return { ok: true, channel_id: MERIT_DM };
           case "read_business_time_zone": return { state: "configured", zone: "America/Chicago", can_set: false, local_date: "2026-10-27" };
+          case "get_team_authority_readiness": return opts.agentDmKey !== "mentor" && opts.authorityRows === undefined
+            ? (opts.domainRole ? [{ tenant_id: TENANT, fact_key: "viewer_permission", value: opts.domainRole, status: "available" }] : null)
+            : opts.authorityRows ?? [
+            { fact_key: "viewer_permission", value: "owner", status: "available", source: null, reason: null, tenant_id: TENANT },
+            { fact_key: "viewer_is_legal_owner", value: "true", status: "available", source: null, reason: null, tenant_id: TENANT },
+          ];
+          case "plan_list": return opts.planListError
+            ? { __rpc: { data: null, error: { message: "PLAN_FORBIDDEN" } } }
+            : (opts.planList ?? { plans: [{ id: PLAN_ROW, title: "Launch week", horizon: "week", items: [{ id: PLAN_ITEM, title: "Confirm venue", status: "not_started", due_at: "2026-10-30" }] }], loose_items: [] });
+          case "current_user_tenant_id": return opts.tenantPin ?? TENANT;
           case "team_hub_post_agent_message": {
             postAttempt += 1;
             let after: unknown;
@@ -107,7 +148,8 @@ function world(opts: Opts = {}) {
             if (earlier) return after ?? { ok: true, message: earlier, duplicate: true };
             const posted = message("f0f0f0f0-f0f0-4f0f-8f0f-f0f0f0f0f0f0", String(args.p_channel_id), SAM,
               `${args.p_body}${args.p_private_answer ? "\n\nThat part is just for you, so I'm answering it in our DM." : ""}`.trim(),
-              { author_kind: "agent", agent_key: args.p_agent_key, asked_in_message_id: args.p_asked_in_message_id, parent_message_id: args.p_parent_message_id });
+              { author_kind: "agent", agent_key: args.p_agent_key, asked_in_message_id: args.p_asked_in_message_id, parent_message_id: args.p_parent_message_id,
+                ...(stagedRead ? { source_backed_read: true, paige_record_links: stagedRead.p_record_links } : {}) });
             const key = args.p_parent_message_id ? `${args.p_channel_id}:${args.p_parent_message_id}` : String(args.p_channel_id);
             store.set(key, [posted, ...(store.get(key) ?? [])]);
             postedByRequest.set(String(args.p_client_request_id), posted);
@@ -121,6 +163,12 @@ function world(opts: Opts = {}) {
       if (answer && typeof answer === "object" && "__rpc" in (answer as object)) return Promise.resolve((answer as any).__rpc);
       return Promise.resolve({ data: answer, error: null });
     },
+    from(_table: string) {
+      const response = Promise.resolve({ data: [{ id: TENANT, account_type: "standalone", parent_tenant_id: null }], error: null });
+      const q = { select: () => q, eq: () => q, limit: () => q, abortSignal: () => q,
+        then: response.then.bind(response) };
+      return q;
+    },
   };
   const service = {
     rpc(name: string, args: Record<string, unknown> = {}) {
@@ -130,6 +178,11 @@ function world(opts: Opts = {}) {
         return Promise.resolve(a && a.__rpc ? a.__rpc : { data: a, error: null });
       }
       if (name === "team_hub_stage_agent_suggestions") return Promise.resolve({ data: opts.stage ? opts.stage(args) : { ok: true }, error: null });
+      if (name === "team_hub_stage_agent_read_context") {
+        const data = opts.stageReads ? opts.stageReads(args) : { ok: true };
+        if (data && typeof data === "object" && "ok" in data && data.ok) stagedRead = args;
+        return Promise.resolve({ data, error: null });
+      }
       if (name === "team_hub_end_agent_turn") return Promise.resolve({ data: opts.end ? opts.end() : { ok: true }, error: null });
       if (name === "record_capability_run") {
         const failed = opts.recordFails?.includes(String(args._capability_key));
@@ -140,7 +193,11 @@ function world(opts: Opts = {}) {
     from(table: string) {
       calls.push({ who: "service", name: `from:${table}`, args: {} });
       const chain: any = { select: () => chain, eq: () => chain, is: () => chain,
-        maybeSingle: async () => { if (opts.configThrows) throw new Error("down"); return { data: opts.config === undefined ? { slug: "merit", config: MERIT_CONFIG } : opts.config, error: null }; } };
+        maybeSingle: async () => {
+          if (opts.configThrows) throw new Error("down");
+          const data = opts.configFn ? opts.configFn() : (opts.config === undefined ? { slug: "merit", config: MERIT_CONFIG } : opts.config);
+          return { data, error: null };
+        } };
       return chain;
     },
   };
@@ -171,6 +228,106 @@ async function run(w: ReturnType<typeof world>, m: ReturnType<typeof model>, bod
 const TOKEN = "07".repeat(32);
 const named = (w: ReturnType<typeof world>, name: string) => w.calls.filter((c) => c.name === name);
 const promptText = (m: ReturnType<typeof model>) => m.requests.map((r) => JSON.stringify(r.request.messages)).join("\n");
+
+describe("MERIT's canonical private commercial integration", () => {
+  const id = "12345678-1234-4234-8234-123456789012";
+  const row = () => ({ id, title: "Consulting engagement", status: "draft", contact_id: null,
+    signers_total: 1, signers_signed: 0, outstanding_names: ["Test Signer"], updated_at: "2026-01-01T00:00:00Z" });
+  it("offers original agreement read, marks facts, revalidates then uses the same post and reload result", async () => {
+    const w = world({ sourceIn: MERIT_DM, domainRole: "owner", domainRead: () => [row()] });
+    const m = model([{ tool_calls: [{ name: "agreement_list" }] }, { content: "The consulting engagement is a draft." }]);
+    const r = await run(w, m, turn({ conversationId: MERIT_DM }));
+    assert.ok(m.requests[0].request.tools?.some(t => t.function.name === "agreement_list"));
+    assert.equal(named(w, "paige_agreement_overview").length, 2);
+    assert.equal(named(w, "team_hub_stage_agent_read_context").length, 1);
+    const marker = named(w, "record_capability_run").find(c => c.args._capability_key === "agreement_list")!;
+    assert.ok(marker); assert.ok(w.calls.indexOf(marker) < m.requests[1].callsBefore);
+    assert.equal(r.body.outcome, "posted");
+    assert.ok("message" in r.body);
+    assert.deepEqual((r.body.message as Record<string, unknown>).paige_record_links, [{ destination: "sales_agreements", record_id: id }]);
+    assert.equal(promptText(m).includes("paige_record_links"), false);
+    const system = String(m.requests[0].request.messages[0].content);
+    assert.match(system, /Do not comment on the presence or absence of record links/);
+    assert.match(system, /workspace supplies authorized original-record navigation separately/);
+    assert.equal(promptText(m).includes("sales/agreements?agreement="), false, "workspace navigation remains outside the model context");
+    assert.equal(named(w, "team_hub_post_agent_message")[0].who, "caller");
+  });
+  it("never offers or executes private commercial reads to a poisoned shared scope", async () => {
+    const config = structuredClone(MERIT_CONFIG); config.team_hub_tools.tools.push("agreement_list");
+    const w = world({ domainRole: "owner", config: { slug: "merit", config }, domainRead: () => [row()] });
+    const m = model([{ tool_calls: [{ name: "agreement_list" }] }]); await run(w, m);
+    assert.equal(m.requests[0].request.tools?.some(t => t.function.name === "agreement_list"), false);
+    assert.equal(named(w, "paige_agreement_overview").length, 0);
+  });
+  it("member authority cannot offer or execute the owner/admin domain adapter", async () => {
+    const w = world({ sourceIn: MERIT_DM, domainRole: "member" });
+    const m = model([{ tool_calls: [{ name: "agreement_list" }] }, { content: "I cannot read it." }]);
+    await run(w, m, turn({ conversationId: MERIT_DM }));
+    assert.equal(m.requests[0].request.tools?.some(t => t.function.name === "agreement_list"), false);
+    assert.equal(named(w, "paige_agreement_overview").length, 0);
+  });
+  it("a changed private access classification cannot retain reads from old tool names", async () => {
+    const config = structuredClone(MERIT_CONFIG);
+    config.capability_scope.access = "disabled";
+    const w = world({ sourceIn: MERIT_DM, domainRole: "owner", config: { slug: "merit", config }, domainRead: () => [row()] });
+    const m = model([{ tool_calls: [{ name: "agreement_list" }] }, { content: "That read is unavailable." }]);
+    await run(w, m, turn({ conversationId: MERIT_DM }));
+    assert.equal(m.requests[0].request.tools?.some(t => t.function.name === "agreement_list"), false);
+    assert.equal(named(w, "paige_agreement_overview").length, 0);
+  });
+  it("malformed private tool JSON cannot turn a requested filter into the whole agreement book", async () => {
+    const w = world({ sourceIn: MERIT_DM, domainRole: "owner", domainRead: () => [row()] });
+    let round = 0;
+    const r = await runTeamHubAgentTurn({ caller: w.caller, service: w.service, userId: SAM,
+      complete: async () => ({ ok: true, response: { choices: [{ message: round++ === 0
+        ? { content: "", tool_calls: [{ id: "bad-json", type: "function", function: { name: "agreement_list", arguments: "{broken" } }] }
+        : { content: "Please check the request." } }] } }) }, turn({ conversationId: MERIT_DM }));
+    assert.equal(named(w, "paige_agreement_overview").length, 0);
+    assert.equal(named(w, "team_hub_stage_agent_read_context").length, 0);
+    assert.equal(r.body.outcome, "posted", "a factual input error may be explained without reading or changing business records");
+  });
+  it("a changed original agreement before publication ends without posting stale facts", async () => {
+    let n = 0;
+    const w = world({ sourceIn: MERIT_DM, domainRole: "owner", domainRead: () => [{ ...row(), status: n++ ? "completed" : "draft" }] });
+    const m = model([{ tool_calls: [{ name: "agreement_list" }] }, { content: "It is a draft." }]);
+    const r = await run(w, m, turn({ conversationId: MERIT_DM }));
+    assert.equal(r.body.outcome, "no_reply"); assert.equal(named(w, "team_hub_post_agent_message").length, 0);
+  });
+  it("bounds private read fanout inside the original turn even if a provider returns extra calls", async () => {
+    const w = world({ sourceIn: MERIT_DM, domainRole: "owner", domainRead: () => [row()] });
+    const m = model([{ tool_calls: Array.from({ length: 4 }, () => ({ name: "agreement_list" })) }, { content: "The original agreement is a draft." }]);
+    const r = await run(w, m, turn({ conversationId: MERIT_DM }));
+    assert.equal(r.body.outcome, "posted");
+    assert.equal(named(w, "paige_agreement_overview").length, 6, "at most three reads plus their original-source revalidation");
+    assert.match(promptText(m), /read limit/i);
+  });
+  it("missing commercial marker or native read-context acknowledgement prevents publication", async () => {
+    for (const extra of [{ recordFails: ["agreement_list"] }, { stageReads: () => ({ ok: false }) }]) {
+      const w = world({ sourceIn: MERIT_DM, domainRole: "owner", domainRead: () => [row()], ...extra });
+      const m = model([{ tool_calls: [{ name: "agreement_list" }] }, { content: "It is a draft." }]);
+      const r = await run(w, m, turn({ conversationId: MERIT_DM }));
+      assert.equal(r.body.outcome, "no_reply"); assert.equal(named(w, "team_hub_post_agent_message").length, 0);
+    }
+  });
+});
+
+for (const agent of ["merit", "cura"] as const) it("mounts " + agent + "'s original client-standing adapter in its own private turn", async () => {
+  const standing = JSON.parse(readFileSync(new URL("../../../../src/__tests__/fixtures/exp04-client-status-source.json", import.meta.url), "utf8"));
+  standing.tenant_id = TENANT;
+  const config = structuredClone(MERIT_CONFIG);
+  config.capability_scope.tools.push("read_client_engagement_status");
+  const w = world({ privateAgent: agent, mentions: [agent], sourceIn: MERIT_DM, domainRole: "owner",
+    config: { slug: agent, config }, domainRead: () => structuredClone(standing) });
+  const m = model([{ tool_calls: [{ name: "read_client_engagement_status", args: { client_id: standing.contact_id } }] },
+    { content: "The original client records distinguish recorded receipts from verified payment." }]);
+  const r = await run(w, m, turn({ agent, conversationId: MERIT_DM }));
+  assert.ok(m.requests[0].request.tools?.some(t => t.function.name === "read_client_engagement_status"));
+  assert.equal(named(w, "read_client_engagement_status").length, 2);
+  assert.equal(named(w, "team_hub_stage_agent_read_context").length, 1);
+  assert.equal(r.body.outcome, "posted");
+  assert.equal(named(w, "team_hub_post_agent_message")[0].args.p_agent_key, agent);
+  assert.equal(promptText(m).includes("paige_record_links"), false);
+});
 
 describe("the request is closed and strict", () => {
   it("routes only on its own key, and refuses anything beyond the five fields", () => {
@@ -1240,5 +1397,107 @@ describe("A2b: the duplicate branch rebuilds the DM redirect's follow-up", () =>
     assert.equal((r.body as any).duplicate, true);
     assert.deepEqual((r.body as any).private_followup, { conversationId: LAUNCH, sourceMessageId: ASK, threadRootId: null, agent: "merit", privateFollowUp: true, dm_conversation_id: MERIT_DM });
     assert.equal(m.requests.length, 0);
+
+  });
+});
+
+// EXP01 (MENTOR) plan read — the one DM-scope read this module runs for MENTOR: the existing
+// planning read, offered only in MENTOR's DM under the asker's current owner/admin authority with
+// the roster still listing exactly the offered scope. Every gate fails closed.
+describe("MENTOR plan read (EXP01)", () => {
+  const mentorWorld = (over: Opts = {}) => world({ sourceIn: MERIT_DM, mentions: [], agentDmKey: "mentor", config: { slug: "mentor", config: MENTOR_CONFIG }, ...over });
+  const mentorTurn = (extra: Record<string, unknown> = {}) => turn({ conversationId: MERIT_DM, agent: "mentor", ...extra });
+
+  it("offers plan_list only in MENTOR's DM, reads it under the asker's client, receipts it, and answers from the rows", async () => {
+    const w = mentorWorld(), m = model([
+      { tool_calls: [{ name: "plan_list", args: { horizon: "week" } }] },
+      { content: JSON.stringify({ reply: "One thing on your plate: Confirm venue, due the 30th.", route: "answer" }) },
+    ]);
+    const r = await run(w, m, mentorTurn());
+    assert.equal(r.status, 200);
+    assert.equal(r.body.outcome, "posted");
+    assert.ok(m.requests[0].request.tools!.some((t: any) => t.function.name === "plan_list"), "the read is offered to the model");
+    const read = named(w, "plan_list")[0];
+    assert.equal(read.who, "caller");
+    assert.equal(read.args.p_tenant_id, TENANT);
+    const planCall = w.calls.findIndex((c) => c.name === "plan_list");
+    const pinCall = w.calls.findIndex((c) => c.name === "current_user_tenant_id");
+    assert.ok(planCall >= 0 && pinCall > planCall, "the tenant pin runs after the read");
+    const receipts = named(w, "record_capability_run").filter((c) => c.args._capability_key === "plan_list");
+    assert.equal(receipts.length, 1, "the read is receipted exactly once");
+    assert.match(promptText(m), /Confirm venue/, "the model saw the real rows");
+  });
+
+  it("a member seat never sees the read, and an attempted call is answered unavailable, never guessed", async () => {
+    const w = mentorWorld({ authorityRows: [
+      { fact_key: "viewer_permission", value: "member", status: "available", source: null, reason: null, tenant_id: TENANT },
+      { fact_key: "viewer_is_legal_owner", value: "false", status: "available", source: null, reason: null, tenant_id: TENANT },
+    ] }), m = model([
+      { tool_calls: [{ name: "plan_list", args: {} }] },
+      { content: "I can't see your plans from here, so I won't guess what's on them." },
+    ]);
+    const r = await run(w, m, mentorTurn());
+    assert.equal(r.body.outcome, "posted");
+    assert.ok(!m.requests[0].request.tools!.some((t: any) => t.function.name === "plan_list"), "a member is never offered the read");
+    assert.equal(named(w, "plan_list").length, 0);
+  });
+
+  it("ZION's stored plan_list entry is NOT offered (the executor is MENTOR-scoped), and a channel never offers it", async () => {
+    const zionScope = { version: 1, mode: "allowlist", access: "read", tools: ["read_business_time_zone", "team_hub_read_conversation", "crm_list_tasks", "plan_list"] };
+    const w = world({ sourceIn: MERIT_DM, mentions: [], agentDmKey: "zion", config: { slug: "zion", config: { team_hub_tools: SHARED_LIST, capability_scope: zionScope, personality: {} } } });
+    const m = model([{ content: "Three things. Owner, task, due. Here they are." }]);
+    const r = await run(w, m, turn({ conversationId: MERIT_DM, agent: "zion" }));
+    assert.equal(r.body.outcome, "posted");
+    assert.ok(!m.requests[0].request.tools!.some((t: any) => t.function.name === "plan_list"), "only MENTOR's span runs this executor");
+
+    const wc = world({ mentions: ["mentor"], config: { slug: "mentor", config: MENTOR_CONFIG } }), mc = model([{ content: "Let's take it from the top." }]);
+    await run(wc, mc, turn({ agent: "mentor" }));
+    assert.ok(!mc.requests[0].request.tools!.some((t: any) => t.function.name === "plan_list"), "a channel reply never offers a DM-scope read");
+  });
+
+  it("a roster that drops plan_list mid-turn withholds the rows and ends the turn — no post, never a widened read", async () => {
+    let rosterReads = 0;
+    const withList = { slug: "mentor", config: JSON.parse(JSON.stringify(MENTOR_CONFIG)) };
+    const withoutList = { slug: "mentor", config: JSON.parse(JSON.stringify(MENTOR_CONFIG)) };
+    withoutList.config.capability_scope.tools = withoutList.config.capability_scope.tools.filter((t: string) => t !== "plan_list");
+    const w = mentorWorld({ configFn: () => (rosterReads += 1) <= 3 ? withList : withoutList }), m = model([
+      { tool_calls: [{ name: "plan_list", args: { horizon: "week" } }] },
+      { content: JSON.stringify({ reply: "One thing on your plate: Confirm venue.", route: "answer" }) },
+    ]);
+    const r = await run(w, m, mentorTurn());
+    assert.equal(r.body.ok, false);
+    assert.equal(r.body.outcome, "no_reply", "the turn fails closed before the post");
+    assert.equal(named(w, "team_hub_post_agent_message").length, 0);
+    assert.ok(rosterReads >= 4, "the gate re-read the roster before posting");
+  });
+
+  it("at most three plan reads a turn; the fourth is a limit message, and the reply stays honest", async () => {
+    const w = mentorWorld(), m = model([
+      { tool_calls: [{ name: "plan_list", args: {} }] },
+      { tool_calls: [{ name: "plan_list", args: {} }] },
+      { tool_calls: [{ name: "plan_list", args: {} }, { name: "plan_list", args: {} }] },
+      { content: "Three reads is my limit here — ask me again for the rest." },
+    ]);
+    const r = await run(w, m, mentorTurn());
+    assert.equal(r.body.outcome, "posted");
+    assert.equal(named(w, "plan_list").length, 3);
+    assert.match(r.body.message.body, /Three reads is my limit/);
+  });
+
+  it("a refused planning WRITE stays unavailable — the read executor admits no writer", async () => {
+    const w = mentorWorld(), m = model([
+      { tool_calls: [{ name: "plan_create", args: { title: "Q4 push" } }] },
+      { content: JSON.stringify({ reply: "I can suggest the plan, but can't create it from here yet. Nothing was changed.", route: "answer" }) },
+    ]);
+    const r = await run(w, m, mentorTurn());
+    assert.equal(r.body.outcome, "posted");
+    assert.equal(named(w, "plan_create").length, 0, "no writer ever runs");
+    assert.ok(!m.requests[0].request.tools!.some((t: any) => t.function.name === "plan_create"), "the writer is never offered");
+    assert.equal(toolResults(m)[0].status, "unavailable");
+    assert.equal(toolResults(m)[0].not_applied, true);
+    assert.match(toolResults(m)[0].message, /Nothing was changed/);
+    const [post] = named(w, "team_hub_post_agent_message");
+    assert.match(post.args.p_body, /Nothing was changed\./);
+    assert.equal("p_confirmation_id" in post.args, false, "no card is fabricated");
   });
 });

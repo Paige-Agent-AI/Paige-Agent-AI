@@ -17,6 +17,46 @@ function reviewableOwnerTask(r: OwnerTaskReview): boolean {
     && Object.keys(c).every(k => ["title", "description"].includes(k))
     && !/(\{\{|\$\{|\{%|<%)/.test(c.title + (typeof c.description === "string" ? c.description : ""));
 }
+/** Display only known literal task fields; this never admits an execution. */
+function SavedProcessDesign({ review }: { review: OwnerTaskReview }) {
+  const literal = (value: unknown, limit: number): value is string => {
+    if (typeof value !== "string" || value.length > limit * 2) return false;
+    const chars = [...value];
+    return chars.length <= limit && !/(\{\{|\$\{|\{%|<%|[\u202a-\u202e\u2066-\u2069])/.test(value)
+      && !chars.some(char => { const code = char.charCodeAt(0); return code < 32 && ![9, 10, 13].includes(code) || code >= 127 && code <= 159; });
+  };
+  const steps = review.acts.slice(0, 20);
+  const ordered = review.acts.every((step, index) => step.position === index + 1);
+  const settings = !object(review.process.trigger_config) || Object.keys(review.process.trigger_config).length > 0
+    || !Array.isArray(review.process.conditions) || review.process.conditions.length > 0;
+  return <div className="sa-owner-task-design">
+    <p>Saved status: {review.process.state === "draft" ? "Draft" : review.process.state === "paused" ? "Paused"
+      : review.process.state === "live" ? "Recorded live; activation is unverified" : "Unverified"}.</p>
+    {review.acts.length > 1 && <p>Multiple steps are saved for design review. This control currently enables only one supported internal-task step.</p>}
+    {!ordered && <p>Saved step order needs review. Recorded positions are shown without rearranging them.</p>}
+    {settings && <p>Trigger settings and conditions need separate review. Their values are not displayed here.</p>}
+    <ol aria-label="Saved process steps">{steps.map((step, index) => {
+      const config = object(step.config) ? step.config : null;
+      const native = step.action_kind === "owner.task" && step.tool_key === null;
+      const title = native && config && literal(config.title, 500) && config.title.trim() ? config.title : null;
+      const description = native && config && literal(config.description, 10_000) ? config.description : null;
+      const extra = config && Object.keys(config).some(key => !["title", "description"].includes(key));
+      const position = typeof step.position === "number" && Number.isSafeInteger(step.position) && step.position > 0 ? step.position : null;
+      return <li key={`${String(step.id)}:${index}`}>
+        <strong>{position === null ? "Position unavailable" : `Step ${position}`}</strong>
+        {!native ? <p>Action support is unverified. Its configuration is not displayed here.</p>
+          : title ? <><p className="sa-rule-sentence sa-owner-task-title">{title}</p>
+            {description && <p className="sa-note sa-owner-task-description">{description}</p>}
+            {config && "description" in config && description === null && <p>Saved description needs review.</p>}</>
+            : <p>Literal task details need review. No ready task is inferred.</p>}
+        {extra && <p>Additional saved settings are not displayed. This preview does not verify their execution support.</p>}
+      </li>;
+    })}</ol>
+    {review.acts.length > steps.length && <p>{review.acts.length - steps.length} additional saved {review.acts.length - steps.length === 1 ? "step is" : "steps are"} not shown. Review the complete process before making a decision.</p>}
+    {!steps.length && <p>No saved steps are available to inspect.</p>}
+    <p>Reading this design does not approve, enable or execute work. Provider readiness and results are not verified by saved settings.</p>
+  </div>;
+}
 function stateWords(r: OwnerTaskReview): string {
   if (r.process.state === "live") return r.process.granted_lane === "confirm"
     && typeof r.process.owner_task_armed_at === "string" && Number.isFinite(Date.parse(r.process.owner_task_armed_at))
@@ -46,6 +86,14 @@ export function OwnerTaskAutomations({ navigationHeld = false, onNavigationGuard
     if (historySourceRef.current?.isConnected) historySourceRef.current.focus();
   };
   const cancelRef = useRef<HTMLButtonElement>(null), refreshRef = useRef<HTMLButtonElement>(null);
+  const previousRead = useRef(a.read.status);
+  useLayoutEffect(() => {
+    const retired = previousRead.current === "ready" && a.read.status === "refused" && a.needsRefresh;
+    previousRead.current = a.read.status;
+    // Restore focus only when the requesting control disappeared. A user who
+    // moved to another connected control keeps their chosen focus.
+    if (retired && document.activeElement === document.body) refreshRef.current?.focus({ preventScroll: true });
+  }, [a.read.status, a.needsRefresh]);
   const sourceRef = useRef<HTMLButtonElement | null>(null), scopeRef = useRef(a.scopeKey);
   scopeRef.current = a.scopeKey;
   const selected = review?.scope === a.scopeKey && a.read.status === "ready" && a.read.items.includes(review.item) && !a.needsRefresh ? review.item : null;
@@ -81,14 +129,14 @@ export function OwnerTaskAutomations({ navigationHeld = false, onNavigationGuard
           const canEnable = supported && ["draft", "paused"].includes(String(r.process.state));
           return <li className="sa-rule sa-owner-task-rule" key={r.id}><div className="sa-rule-copy">
             <h3 className="sa-rule-sentence" id={`${id}-${r.id}-name`}>{String(r.process.name)}</h3>
-            <p className="sa-rule-meta">When a contact is created · {a.needsRefresh ? "Last read: " : ""}{supported ? stateWords(r) : "Unsupported configuration"} · Each task needs your approval</p>
-            {r.acts.map(step => <div className="sa-owner-task-step" key={String(step.id)}>
+            <p className="sa-rule-meta">When a contact is created · {a.needsRefresh ? "Last read: " : ""}{supported ? stateWords(r) : "Unsupported configuration"} · {supported ? "Each task needs your approval" : "Execution support is not verified"}</p>
+            {supported && r.acts.map(step => <div className="sa-owner-task-step" key={String(step.id)}>
               {object(step.config) && typeof step.config.title === "string" && <p className="sa-rule-sentence sa-owner-task-title">{step.config.title}</p>}
               {object(step.config) && typeof step.config.description === "string" && <p className="sa-note sa-owner-task-description">{step.config.description}</p>}
             </div>)}
             {!supported && <><p className="sa-note">This configuration cannot be enabled here. You can pause it.</p>
               <details className="sa-owner-task-config"><summary>Inspect saved configuration</summary>
-                <pre>{JSON.stringify({ trigger: r.process.trigger_key, trigger_config: r.process.trigger_config, conditions: r.process.conditions, steps: r.acts }, null, 2)}</pre></details></>}
+                <SavedProcessDesign review={r} /></details></>}
             {legacy && <p className="sa-note">This older process has no verified activation. Pause it, then review it again.</p>}
             <div className="sa-rule-controls">
               {canEnable && <button type="button" className="sa-ctl" disabled={a.busy || a.needsRefresh} aria-expanded={selected === r}

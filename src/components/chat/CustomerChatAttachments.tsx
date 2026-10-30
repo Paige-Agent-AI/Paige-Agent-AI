@@ -1,4 +1,4 @@
-import {useEffect, useId, useRef} from "react";
+import {useEffect, useId, useRef, type ReactNode} from "react";
 import {Check, FileText, Loader2, Paperclip, X} from "lucide-react";
 import {Button} from "@/components/ui/button";
 import {CUSTOMER_CHAT_FILE_LIMIT, type CustomerChatFileSelection} from "@/lib/customer-chat-files";
@@ -17,6 +17,7 @@ type Props = {
   onCheck: (id: string) => void;
   onResume: (id: string) => void;
   onStop: () => void;
+  secondaryAction?: ReactNode;
 };
 const NO_FILES: readonly CustomerAttachmentDraft[] = [];
 
@@ -55,11 +56,14 @@ export function CustomerChatAttachments(props: Props) {
   }, [files, props.enabled, props.busy]);
   return <section aria-label="Files for this message" aria-busy={props.enabled && props.busy} className="min-w-0 space-y-1.5">
     <div className="flex min-w-0 flex-wrap items-center justify-between gap-x-3 gap-y-1">
+      <div className="flex min-w-0 flex-wrap items-center gap-1">
       <Button ref={add} type="button" variant="ghost" className="min-h-11 shrink-0 gap-2 px-2 text-sm"
         disabled={!props.enabled || props.locked || props.busy || uncertain || files.length >= CUSTOMER_CHAT_FILE_LIMIT}
         aria-describedby={help} onClick={() => input.current?.click()}>
         <Paperclip aria-hidden="true" className="h-4 w-4"/>Add files
       </Button>
+      {props.secondaryAction}
+      </div>
       {files.length > 0 && <span className="text-xs text-muted-foreground">{files.length} of {CUSTOMER_CHAT_FILE_LIMIT} files</span>}
       <input ref={input} type="file" multiple accept=".pdf,.jpg,.jpeg,.png,.docx" tabIndex={-1}
         aria-label="Choose private files for this message" className="sr-only"

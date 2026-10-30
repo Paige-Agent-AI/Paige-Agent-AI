@@ -27,6 +27,8 @@ const harness = vi.hoisted(() => ({
 }));
 
 vi.mock("./useSocialCommand", () => ({ useSocialCommand: () => harness.social }));
+// The Go Live panel owns its own door/world suite; this harness proves the tab around it.
+vi.mock("./go-live", () => ({ GoLive: () => <div data-golive-stub /> }));
 vi.mock("./data/useSoloPendingActions", () => ({ useSoloPendingActions: () => harness.pending }));
 vi.mock("./data/useSoloTrust", () => ({ useSoloTrust: () => harness.trust }));
 

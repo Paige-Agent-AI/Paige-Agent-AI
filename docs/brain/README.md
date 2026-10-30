@@ -1,3 +1,32 @@
+## EXP02 October29 - Calendar source increment and acceptance boundary
+
+Original3019 is composed with receiving maina58e9d8d; unchanged owning source
+passes118 focused checks. Bounded source release is eligible after final review
+and exact-head CI, with original Edge/web readback still owed. Earlier blanket
+source-hold wording is corrected under existing merge-after-green governance.
+Native zoom/AT, released model compliance, legitimate cohorts, full19/nine and
+founder acceptance remain PROOF OWED; original3018 material P1 stays OPEN.
+
+## EXP02 October28 - actual Calendar proof and navigation repair
+
+Original3012/21fff source deployment is independently verified. Actual bounded
+authorized-owner QA ANT52/e2015a9a verifies Calendar source/one ordinary read-only
+Chat request/whole saved business answer and source after reload/original
+Calendar/native Back. Settled by35.596s observation/UI20s, not an SLO. Initial
+other-workspace observation was INVALID and excluded; no action or monthly
+report retry. This does not close roles/cohorts/Live or the original19.
+
+The observed missing Executive Calendar link and contradictory model navigation
+claim are repaired through existing original metadata/read-message guidance.
+Actual references remain deliberately stripped from model context; original E4
+rendering/persistence stays separate.134 local source controls and bounded
+original-shell synthetic rendering/keyboard/draft return are not released
+customer proof. See the [navigation evidence](../evidence/ui-delivery/e2-calendar-review-navigation.md).
+Separate Sales Back-loading remains OPEN. Recorded-comms3018 has a material
+full-shell/cohort/zoom review hold; catalogue3014 I1 migration hold is CLEAR after
+original4400 deployment/frontier, with final required CI still pending.
+All19/nine/algorithm maturity/founder acceptance remain OPEN.
+
 ## EXP02 October28 - source release and bounded customer proof
 
 Original3014 normally merged557d9a7ab155dfd073f052fb393ab741b74a9714/treefe9e76bd;
@@ -594,6 +623,18 @@ manual capability remains UNAVAILABLE and analytics/catalogue maturity unchanged
 Original9/0 and12/0/4 remain historical; all19/nine continue. Protected monthly
 UNKNOWN/UNRETRIED remains intact. Earlier development/failure evidence is retained.
 
+## EXP04 useful commercial results and verification lessons — October28 development
+
+Release-diagnostic lesson: preserve a failed upload as a failure while reporting only bounded numeric CLI exit/HTTP status and a closed error category. Never publish raw CLI stdout/stderr, vendor JSON, credentials, private URLs or compiler payloads, and never let diagnostic classification authorize a retry. The original exact413 source-limit predicate, source/configuration checks, upload count, unknown-outcome refusal and downloaded-source verifier remain the authority. ACTIVE function metadata and a successful Preview label are not a verified source bundle or an authenticated commercial result. Local Windows Bash launch restrictions and a missing Deno executable are runner prerequisites to diagnose, not reasons to skip original release tests or relax assertions. Current source/review/CI/release and customer-proof receipts remain in original ANT-51 and ANT-161; a source-only diagnostic repair does not resolve the held Chat upload or promote any capability/algorithm.
+
+The full original O1–O12 remains the target. Reuse the native agreement engine, governed signing request, canonical financial and Work records, and same page/PAIGE explanations. The [#2971](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2971) invoice release and [#3040](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3040) signing/delivery release retain separate source, database, web, held shared-Chat source-readback and authenticated evidence; neither establishes completed customer acceptance. The original [journey](../delivery/exp04-get-paid-deliver-journey.md), Master and ANT-51 retain the full matrix and exact current disposition.
+
+Verified reusable lessons: internal review and a client decision are different facts; name internal versus client revision requests explicitly, and do not turn an unreleased reviewed version into release eligibility or a finished engagement. A long contextual action can enlarge a grid’s intrinsic column on a phone: bound the original card’s track and wrap the original control, preserving the parent scroll owner, focus and44px target. Neutral rendered frames prove layout and local recovery, never a signed agreement, payment, tenant permission or service acceptance. See [bounded actual source/rendered evidence](../evidence/ui-delivery/exp04-commercial-source-contracts.md).
+
+Full-schema integration lesson: original review uses wall-clock time while original release and audit events use transaction time. Compare matching audit receipt timestamps when checking that release follows review; require the actual exact-version review/release/client records rather than inferring them from clocks. E04's additive private projection correction preserves original writers and all grants. The existing full-schema client-status proof now drives real Operations handoff, internal review, separate client revision and acceptance, and later readback; every neutral row rolls back. Synthetic DB-role proof is not actual customer authentication or hosted signing. Accepted delivery cannot be silently reopened: the canonical submit writer requires a revision request, so tests must follow that real lifecycle rather than weakening it.
+
+For release sequencing, re-read the actual production migration frontier immediately before release. Forward only never-applied carriers with byte-exact SQL and original proof-loader references; never reset or rewrite applied history. Diagnose local runner permission failures in a task-owned temporary cache. Preserve timed-concurrency failures and record actual database event ordering; do not lengthen/relax assertions or claim a timeout established security. Source, exact review/CI, merge, native/Edge/web readback, activation, authenticated results and founder acceptance remain separate. No capability/algorithm Live promotion or new runtime/sender/ledger follows from these lessons.
+
 ## EXP04 original signature factory and native PDF source — October26
 
 [#2888 source receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/2888#issuecomment-6407684085) records reviewed02902badb898aef1ba67708a56c9c2ac658869f7 → actual main99c63316dfc6a9a0ddd19d80660fe43fe724b564/tree5a905090e11c3ab07f0177c297591572da9fa4d8, LOWER6405130919/all13 exact checks/two webSUCCESS. The originating governed factory is SOURCE MERGED; this dated statement supersedes the earlier source-unreleased label below without rewriting its history. It reuses original Work/approval/sender/publication, immutable documents and receipts; actual signing/send/payment acceptance is separate.
@@ -1070,6 +1111,14 @@ checks unchanged. [Original UI/source evidence](../evidence/ui-delivery/exp05-pl
 keeps synthetic ports separate from authenticated roles, real records/Rails and
 full ten/E5/owner-away/Builder/both-chat/Live/founder acceptance. Development,
 reviewed source, green hosted checks and released customer results remain distinct.
+
+Production follow-on: [original3035 receipt6476586277](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3035#issuecomment-6476586277)
+verifies source/web/17 Edge closures at59fc; authenticated acceptance stays open.
+Newer provider versions are neither proof of drift nor proof of equivalence:
+directly compare the current files/configuration to immutable reviewed source.
+Here all205 files in13 newer versions matched; no speculative redeploy was needed.
+Preserve failed local proof assumptions as INVALID and correct the locator or
+encoding without weakening the original verifier or relabeling runtime evidence.
 
 ### October26 whole-Experience receiving reconciliation
 
@@ -4744,6 +4793,19 @@ mechanical source-release accounting, not another delivery log or activation.
 
 ## EXP05 routine automation session recovery — October25 source correction
 
+October28 continuation: distinguish an original caller/workspace authority refusal
+from a refused individual result before retiring cached native process controls.
+Only local authority checks may supply denial provenance; resource/provider data
+must not. Preserve valid inspection, unknown-action holds, current-scope tickets
+and deliberate Refresh; restore only lost focus, never steal connected focus.
+Review also exposed the original Auth-error collapse: only confirmed SDK missing-
+session/API401/403 denial retires access; transient/ambiguous Auth errors stay
+unavailable and fail closed before private reads/controls. Unchanged geometry
+does not exempt a UI correction from the original-shell interaction matrix.
+Bounded source/native-fixture evidence is in
+`../evidence/ui-delivery/exp05-owner-task-access-recovery.md`; this does not close
+actual customer/cohort/both-chat recovery or the full ten/E5 acceptance cases.
+
 The existing native Operations/Settings process hook must not discard original history or a pending/inconclusive control on routine same-session SIGNED_IN. Reuse canonical nonsecret actor/sign-in metadata for retention only; genuine session/scope changes still retire synchronously and original caller/native CAS remain authority. Actual hook causal38/4 becomes228/0 across five owning data/hook/UI files, including original native component/result/link preservation and all negative controls. [Source and proof limits](../evidence/ui-delivery/exp05-owner-task-session-recovery.md) retain strict base/candidate15 inherited failures/zero new, unchanged native markup/styles and actual pre-release ordinary-owner original Task/receipt/reload retrieval separately from corrected deployment acceptance. No Root lease, runtime, writer, provider, capability/catalogue/algorithm maturity or full-Experience closure; exact review/CI/deployment/current authenticated return still owed.
 ## EXP02 original manual result finalization — source only, October26
 
@@ -5360,3 +5422,53 @@ or causal improvement inferred. Original9PASS0FAIL/12PASS0FAIL4BLOCKED and prote
 monthlyUNKNOWNUNRETRIED stay unchanged. Existing ordinary-owner Edge handback,
 all seven Finance pages/roles/cohorts/reload/native zoom/AT, actual Chat/Live and
 the full19/nine integrated customer/founder acceptance remain open.
+
+## EXP05 native recovery source readback — October29 UTC
+
+#3055 production web/source verification is3f80ec8f5de5ce990d9f3674f538cf74037bbb0c,
+READY original web deployment and both official origins. Follow the actual
+declared bootstrap→application→SoloEntry→native dependency graph when locating
+emitted source; the released load boundary means a one-level asset assumption
+is insufficient. Private probe failures were excluded, not called a deployment
+defect. Exact receipt6484939699/§4.0 and
+../evidence/exp05-owner-task-access-recovery-production.json preserve observed
+versions/hashes. Source signatures are not authenticated customer, domain/Rail,
+full EXP05 or founder proof; no activation or extra Edge upload.
+
+## EXP05 original ZION Auth availability lesson — October28
+
+An SDK Auth error is not automatically a confirmed authority refusal. Preserve
+scope/actor/tenant/deadline/server checks; classify actual missing-session/API
+401/403 separately from retryable503/network/429/ambiguous unavailability, with
+no additional private read or transport retry. In native result inspection,
+confirmed denial must withdraw the private sample and recover keyboard focus
+only when its removed control leaves BODY focused. Another connected control
+must keep focus. Original ZION reader/component92 focused tests and actual
+untransformed shell evidence are in
+`../evidence/ui-delivery/exp05-zion-auth-unavailability.md`; fixtures remain
+separate from authenticated customer, same-ZION both-chat and full EXP05 proof.
+
+
+## 2026-10-29 EXP05 — original automation draft review
+
+Original automation_draft describes only saving a nonexecuting draft. Bounded
+trigger/task-purpose preview is the shared pure formatter; never stringify
+arbitrary step config or treat a draft/enablement as executed Work. Original
+stored args, fingerprints, Trust, writer, ActionAdapter/Layer C and Rail remain.
+[Proof and limitations](../evidence/ui-delivery/exp05-automation-draft-preview.md).
+
+Returning E08#3041/f786: original Root/card two-location preview composes cleanly,
+but source-binding pins must be composed from BOTH actual heads; git --check
+may return0 while reporting conflicts. Private original E08 baseline126/29 and
+unapplied composed127/29 proof preserve its exact metadata/peer pins. Never
+replace E08 checker wholesale. Owner9fd6 / Coordinator35471 permit this narrow
+current fix; E04 MERIT and E06/E04 Edge holds remain separately owned. Source/
+fixture/build/review/CI/merge/deploy/authenticated/full-Experience/founder states
+stay distinct. No new scheduler, registry, agent, provider or activation.
+
+
+EXP05 original draft-preview CI lesson (2026-10-29): adding one reviewed source
+pin also advances the existing exact ancestry-count assertion; run ALL original
+C0b files plus int304, not only the83-case resource suite. Causal249/248/1 became
+full250/250/0 plus11/11/0 without weakening any original guard or negative.
+Original product Root/card/helper/checker source and prior evidence remain.

@@ -1,6 +1,6 @@
 import React, { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
-import { MemoryRouter, Route, Routes, useLocation, useNavigationType } from "react-router-dom";
+import { MemoryRouter, Route, Routes, useLocation, useNavigate, useNavigationType, useParams, type NavigateFunction } from "react-router-dom";
 import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
 import { FinanceWorkspace } from "./FinanceWorkspace";
 import { financeDebtReviewPrompt } from "./financeDebtSource";
@@ -31,6 +31,64 @@ const readySourceReview = () => ({ state: "ready", snapshot: { period: { timezon
     accounts: [{ native_id: "native-account", label: "Original account", product: "deposit", currency: "USD",
      current_balance: "900719925474099312345.123456", available_cash: "0", available_credit: null, credit_limit: null }] }],
   } } } } } });
+
+describe("Finance history focus continuity", () => {
+ let navigate: NavigateFunction;
+ async function history(entries: string[], initialIndex = entries.length - 1) {
+  function Subject() {
+   navigate = useNavigate();
+   const { account } = useParams();
+   return <FinanceWorkspace epoch={account}/>;
+  }
+  await act(async () => root.render(<MemoryRouter initialEntries={entries} initialIndex={initialIndex}>
+   <Routes><Route path="/solo/:account/*" element={<Subject/>}/></Routes>
+   <textarea aria-label="Existing Chat draft" defaultValue="Keep this unsent question"/>
+  </MemoryRouter>));
+ }
+ const tab = (label: string) => [...host.querySelectorAll<HTMLButtonElement>('[role="tab"]')].find(node => node.textContent === label)!;
+ const entries = ["/solo/123/finance/overview", "/solo/123/finance/profitability", "/solo/123/finance/budgeting-forecasting"];
+
+ it.each([
+  { start: 2, delta: -1, from: "Budgeting & Forecasting", to: "Profitability" },
+  { start: 1, delta: 1, from: "Profitability", to: "Budgeting & Forecasting" },
+  { start: 2, delta: -2, from: "Budgeting & Forecasting", to: "Overview" },
+ ])("follows native history $delta to the selected $to tab when the tab strip owns focus", async ({ start, delta, from, to }) => {
+  await history(entries, start);
+  tab(from).focus();
+  await act(async () => navigate(delta));
+  expect(tab(to).getAttribute("aria-selected")).toBe("true");
+  expect(document.activeElement).toBe(tab(to));
+  expect(host.querySelectorAll('[role="tab"][tabindex="0"]')).toHaveLength(1);
+  expect(host.querySelector('[role="tabpanel"]')?.getAttribute("aria-labelledby")).toBe(tab(to).id);
+ });
+
+ it("preserves the existing Chat draft and its focus during history navigation", async () => {
+  await history(entries);
+  const draft = host.querySelector<HTMLTextAreaElement>('textarea[aria-label="Existing Chat draft"]')!;
+  draft.focus(); draft.setSelectionRange(5, 9);
+  await act(async () => navigate(-1));
+  expect(tab("Profitability").getAttribute("aria-selected")).toBe("true");
+  expect(document.activeElement).toBe(draft);
+  expect(draft.value).toBe("Keep this unsent question");
+  expect([draft.selectionStart, draft.selectionEnd]).toEqual([5, 9]);
+ });
+
+ it("does not take over focus for a non-history route transition", async () => {
+  await history(entries);
+  const previous = tab("Budgeting & Forecasting"); previous.focus();
+  await act(async () => navigate("/solo/123/finance/profitability"));
+  expect(tab("Profitability").getAttribute("aria-selected")).toBe("true");
+  expect(document.activeElement).toBe(previous);
+ });
+
+ it("does not restore tab focus across a workspace change", async () => {
+  await history(["/solo/456/finance/profitability", entries[2]]);
+  const previous = tab("Budgeting & Forecasting"); previous.focus();
+  await act(async () => navigate(-1));
+  expect(tab("Profitability").getAttribute("aria-selected")).toBe("true");
+  expect(document.activeElement).toBe(previous);
+ });
+});
 
 describe("Finance canonical destination", () => {
  it('shows original financial Play evidence in Forecast without claiming a company budget or bank forecast', async () => {

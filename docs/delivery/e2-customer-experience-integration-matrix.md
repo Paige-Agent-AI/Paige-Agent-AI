@@ -1,5 +1,232 @@
 # Experience 02 — Customer Experience Integration Matrix
 
+## October29 — released Calendar proof and failed VERA read handoff
+
+Calendar3019 merged0a8b95f9; finala08 lower-assurance review5704091183,
+all11 exact checks/genuine managed Preview/two webSUCCESS, normal serialized
+Edge40950644173 source/configurationPASS for Chat and Review. Direct original
+checker independently matched37 Review files. Chat raw dump unavailable; an
+optional artifact download was blocked by Edge and not bypassed/independently
+ZIP-hashed. Both public origins verified source-equivalent descendant193d0b1e,
+not an observed exact0a8 public build. GH3019/6508394193 preserves the boundary.
+
+Actual authorized original Calendar roundtrip and full reload subsequently PASS
+(ANT52/9162cafd): native receiver, original period/source-open/scroll/opener focus,
+whole conversation/card facts/source owners and empty composer retained. The
+earlier unverifiable review/active-workspace redirect remains INVALID, preserved
+separately in ANT52/e2f833a9. Original chooser restored the authorized owner; no
+Auth/RLS/role change or unapproved-workspace QA. Other cohorts/AT/Live remain owed.
+Finance3082 bounded customer regression PASS and Master-only3094 merge193d0b1e/
+deployment/source-equivalence proof supersede the historical candidate state below.
+
+The next genuine weekly read was **FAILED**, not accepted: source snapshot read
+then specialist discovery/timezone read ended in a proposed VERA assignment
+awaiting approval instead of a useful briefing. EXP02 did not approve/execute/
+dismiss it. Request/proposal text persists after reload, which does not establish
+current original action status. No protected monthly request/variant inspected.
+
+Original ANT138/3e3b91ee pre-edit packet reserves only the existing E02 snapshot
+tool/narration instructions and original tests/evidence. Candidate shared note
+distinguishes VERA attribution from a separately requested durable assignment.
+It preserves all registry/runtime/authority/domain/source/transport contracts.
+Executed1FAIL/21PASS ->48PASS/two suites proves instruction/transport contracts,
+not model compliance. Actual useful released answer/links/reload remains required.
+[Original evidence](../evidence/ui-delivery/e2-vera-read-review-handoff.md).
+
+Functional source-only repair; Visual unchanged frontend/unverified candidate
+output; Experiential failed released request; Founder Acceptance OPEN. Existing
+closure order, original3018 materialP1/Sales history, all19/nine, historical9/0,
+12/0/4/monthlyUNKNOWNUNRETRIEDUNINSPECTED, ALG and catalogue maturity unchanged.
+
+## October29 - bounded Calendar source-release reconciliation
+
+3019 receives maina58e9d8d with original source/tests/assets retained and fresh
+118PASS/four suites. Final review/exact-head CI and original Edge/web deployment
+readback remain required. This safe source increment is distinct from native
+zoom/AT, released model compliance, two-cohort, Live and complete-outcome proof;
+those remain PROOF OWED and excluded from LIVE. Earlier blanket source-hold
+wording is superseded only for this bounded increment under existing AGENTS.
+No registry/algorithm/activation promotion;3018 material P1 and Sales-history
+finding remain OPEN. Original19/nine definitions and historical acceptance stay.
+
+## October28 - authorized Calendar read proof and original navigation correction
+
+O01/O02/O05/O14/O16: original3012/21fff source proof and original release
+certificate remain distinct from actual owner QA ANT52/e2015a9a. One ordinary
+read-only Calendar Chat request settled by35.596s observation/UI20s, with real
+partial/unknown-not-zero/source/window, whole business answer/source reload,
+original Calendar destination and native Back. No appointment mutation, scan,
+approval, provider, monthly report retry or other action ran. Initial wrong
+workspace observation was INVALID and excluded. Exact business/source text was
+compared independently of observed transient Done/trace/footer-time chrome;
+the initial unnormalized mismatch remains recorded. One owner/empty-source
+subset only, not general latency, populated/cohort/permission/Live acceptance.
+
+Two observed gaps are now an owning-source navigation correction: existing
+typed Calendar destination added to Bookings, and generic conditional guidance
+acknowledges separately rendered original links. No actual refs/IDs/URLs enter
+model context; original Root stripping/E4 renderer/persistence unchanged.
+Causal3FAIL/84PASS ->134PASS/four suites, scoped lint/pinned detector pass.
+Original-shell synthetic eight DOM combinations plus390 narrow, native
+Tab/Enter/Back/focus/scroll and preserved synthetic Chat draft were inspected.
+Actual1536DOM raster is1535;390DOM height844 raster843; exact1366/1024/900
+rasters verified. Disabled synthetic Chat/actor/source ports are not authentic
+customer/cohort proof. Zoom/AT/current correction source release/model compliance
+remain owed; see original UI record. Source fields never imply action receipt,
+booking attendance/completion or free capacity.
+
+3018 recorded-comms presentation is HELD on material full-shell/cohort/zoom
+review finding PRRT_kwDOSAAXqM6w8IJP; prior honest unverified labels are not a
+waiver. Separate Sales Back-loading ANT161/1117655d remains OPEN. Catalogue3014
+I1 hold is genuinely CLEAR: original3016/4400 migration20010008 applied/read back;
+final2237 required CI and canonical description deployment/readback remain owed.
+No new authority/registry/metric/provider/action activation. ALG03/06/11/12
+Partial,13Unverified; nine3Limited/3Unverified/3ComingSoon/AccessUnverified,
+historical9/0 and12/0/4, protected monthly UNKNOWN/UNRETRIED/uninspected and
+all19/founder acceptance remain unchanged.
+
+
+## October29 — owner-directed closure-first sequence
+
+Original ANT138/5e3a19cb records the recalibrated plan. All original19 definitions,
+nine analytics and historical proof remain unchanged; no full row is closed.
+Finish existing3082/3018/3019 release holds before accumulating unrelated work.
+Then target complete original outcomes in this dependency order:
+
+| Order | Original outcomes | Required customer result |
+| --- | --- | --- |
+| 1 | O14/O13 | Original departmental record and accountable activity, correct authority, return/reload/recovery |
+| 2 | O01/O02/O06/O16 | Reliable sourced briefing, matched Executive/Chat, recorded findings and eligible modality continuity |
+| 3 | O09/O10/O11 | Same Play direction/revision, matched numeric target/actual and enforced current Trust policy |
+| 4 | O03/O04/O05/O08 | Original commercial/financial/client evidence, supported comparisons and useful priorities |
+| 5 | O07/O12/O19 | Legitimately authorized real check/action, original result/Rail receipt and uncertain-outcome recovery |
+| 6 | O15/O17/O18 | Permitted context, original Conversations and cited persisted/retrievable research |
+
+One active deliverable proceeds through build, review, exact CI, normal release,
+source readback and actual useful-result/reopen proof. A named external hold
+permits the next independent REQUIRED step; it does not permit a gate waiver,
+discretionary polish or new infrastructure. Existing EXP01 Auth/Chat/eligible Live,
+EXP04/05/08 shared Team Hub and original departmental writers retain ownership.
+Both-chat applicability and two legitimate SOLO cohorts stay explicit. Engineering
+closure is separate from the one final founder evaluation. No acceptance or
+capability/algorithm maturity promotion follows from this sequencing correction.
+
+## October29 — Finance native Back/Forward focus repair, candidate
+
+Source-release applicability correction ANT138/b35fd421 follows AGENTS.md and
+module5: safe reviewed exact-CI source release is separate from complete native,
+authenticated/cohort and founder acceptance. Those gaps stay UNVERIFIED; no
+material finding/security gate is waived and no full outcome is closed.
+
+REPAIR O04/O14/O16 in the original Finance tab component only. Same-workspace POP
+restores selected-tab focus only while that tab strip owns it; Chat draft/caret,
+non-history navigation and workspace-change focus are protected. No route/store/
+capability/authority/readiness delta. Source causal3FAIL/39PASS ->62 related PASS,
+original8 provisioning controls, parity/hostile controls, types0new/lint/detector
+and bounded original-shell desktop/narrow/Back/Forward proof are separate from
+candidate release/customer/cohort/native200percent/AT acceptance, still owed.
+[Original evidence](../evidence/ui-delivery/e2-finance-history-focus.md).
+Functional LOCAL, Visual native synthetic, Experiential partial, Founder OPEN.
+Historical9/0,12/0/4/monthlyUNKNOWN/UNRETRIED, original19 definitions/nine catalogue
+states/algorithm maturity and original3018/3019 holds remain unchanged.
+
+## October29 — O13 original commercial lookups remain reads
+
+**REPAIR:** original shared Rail presentation only. E04 request ANT138/2bc79b0c
+and receiving bce36fd6 / ANT161/77ed54cd/ae5585e1 reserve the exact formatter;
+E04 retains Sales/native Team Hub execution and source ownership. Originally
+reserved22010102/#3067 passed all13 exact-head checks, but would overtake E04's
+pending lower versions. Successor22000002 follows native21150004 and precedes
+E04 reserved22010004/22010005. Old applied Preview/history remains unchanged;
+fresh successor review/CI/Preview/release proof is required. No new reader, registry,
+receipt, event, worker, tool, tenant authority, approval or action is introduced.
+
+**Functional:** successful `agreement_list`, `agreement_status` and original nested
+`find_clients_for_status` receive factual read titles/summaries through the SAME
+`_workspace_event_display` identity. All other fields/tuples and original scoped
+getter remain intact. Native original20/candidate32/replay32, identity/no-event
+and six source/metadata refusal mutants pass. Local assertion adapter executes
+the original SQL expressions; this is not hosted pgTAP/RLS/customer proof.
+
+**Visual:** incumbent Schibsted/tokens/renderer/spacing and controls unchanged;
+actual synthetic desktop/320px and all eight original-shell viewport states pass
+copy wrapping without page/row horizontal overflow. Sequential Impeccable
+clarity/craft-floor finish pass found no material defect in the changed copy.
+Other domain data are fixtures; native200percent/AT/customer proof remains due.
+**Experiential:** same original records and read-only refresh; source semantics
+are not a completed commercial action. Released reload/cohort/role acceptance
+remains due. **Founder Acceptance:** NOT_ACCEPTED; all original19/nine persist.
+
+**Algorithm Support:** no new algorithm/scoring/prediction or maturity promotion.
+**Orchestration Contract:** original read request/caller/native writer/immutable
+receipt precede the unchanged scoped getter and this pure display projection.
+No LayerC action/approval is run by rendering. Failures/unknowns delegate unchanged.
+**Capabilities:** no registry/availability/provider change; no Live promotion
+from wording or local tests. Exact review/required CI/migration/web readback and
+appropriate actual customer proof are separate release obligations. [UI evidence](../evidence/ui-delivery/e2-commercial-read-receipts.md).
+
+## October29 — SAME VERA original-metric Team Hub foundation
+
+O01/O02/O04/O08/O14/O16 remain the customer outcome: ask VERA for a verified
+business measurement, explain its actual scope and limitations and reopen the
+original Executive. Temporary owner direction ANT138/a1e5137d is incorporated
+in receiving ACK8fc611a3 and narrow source contract ANT161/a3cd4dc4/f46394ea.
+**REUSE** INT340 `analytics.metric_read` / `read_business_metric`, original
+`BUSINESS_METRIC_TOOLS`, `readBusinessMetric`, native issuer/resolver and original
+record links. **EXTEND** only the SAME VERA private-business-DM consumer adapter;
+no duplicate source engine, metric math, provider, roster, grant or runtime.
+
+**Functional:** new `team-hub/vera-metric-read.ts` is deliberately unmounted.
+Original stored VERA DM scope already permits this read. Server-resolved exact
+specialist/audience/tenant/actor, current owner/admin and stored scope are checked;
+the original native caller JWT still decides source authority. Strict five-second
+read and revalidation bounds, abort/late-result fences and original host read-marker
+ACK precede exposure. Before posting, revalidation reads the SAME immutable
+evidence reference through the original resolver, without reissuance/fallback.
+Original count/currency/coverage/freshness/caveats and zero-versus-unavailable
+remain intact. No bank balance, completed action or causal improvement is inferred.
+
+Meaningful pre-implementation positive control failed on unavailable-versus-available;
+the final local original-reader/host/negative-control suite has155 PASS/0 FAIL/
+0 SKIP, including41 new VERA tests. Strict new-module/test TypeScript and scoped
+ESLint PASS. A separate source review caught and corrected an unbounded later
+clarification scope check; it now uses the same deadline. Automated review of
+the first candidate caught expiry passing during later marker/authority awaits.
+Three real failing-before regressions cover initial exposure, same-reference
+revalidation and the final authority await. A further source review reproduced
+four failing expiry/cancel cases during the bounded promise's result delivery;
+the final checks now sit at the OUTER publication boundary after that delivery.
+All seven regressions pass, with no replacement issuance. The original C0b suite actually executes249 PASS;
+an earlier direct exports-only module load is excluded as guard proof. Original
+Metric/contract80 and SOLO parity/all mutation controls PASS, with the initial
+sandbox Vite EPERM retained as setup failure before the unchanged authorized run.
+Review of the exact
+committed head, hosted CI, merge and release readback remain owed. Master4.0 is
+N/A while this candidate is unmerged. No production identity is anticipated.
+
+**Visual:** no changed rendered surface; existing specialist presentation reused
+when mounted. **Experiential:** E04 owns the single overlapping original Team Hub
+offer/definition/dispatch/pre-publication span; exact adapter exports are handed
+to that writer alongside original CURA/MERIT, preserving E08#3041/f786 and E05's
+automation scope/pins. Mounting, both-chat useful result/reopen, two legitimate
+SOLO cohorts, tenant/role/revoke/unknown recovery and actual customer proof remain
+integration/acceptance work. Full `get_business_snapshot` and Mission HIGH-write
+integration remain separate required follow-ups, not replaced by one measurement.
+
+**Orchestration:** LayersA/B original admission/current authority, D original
+specialist turn, F original result/reference and G verification are reused and
+remain partial/proof owed. Read_only, no MUTATION_VERB/approval/job/LayerC action;
+the original read marker is provenance, not a business-effect Rail receipt.
+Integration Registry R1/R8 unchanged; no external provider or model call by this
+adapter. Universal eligible current/future SOLO source path; no account-specific
+code or new test identities. Existing provisioning/role defaults remain native.
+**Algorithms:** this adds measurement transport, no priority/scoring/prediction;
+ALG03/06/11/12 Partial and ALG13 Unverified remain unchanged. **Capabilities:**
+CAP009–017 original3Limited/3Unverified/3ComingSoon, account access Unverified;
+Executive PARTIAL/Team Hub PROOF_OWED remain unchanged. **Founder Acceptance:**
+NOT_ACCEPTED; all19/nine remain OPEN. Preserve historical9PASS/0FAIL,
+12PASS/0FAIL/4BLOCKED and protected monthly UNKNOWN/UNRETRIED/UNINSPECTED.
+
 ## October28 - verified releases, Finance and catalogue read/reload
 
 Functional:3012 normal21fff7a49632868382ce51da70d97c9eb4d428cb after exactd958

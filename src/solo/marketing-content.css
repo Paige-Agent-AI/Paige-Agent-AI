@@ -132,3 +132,12 @@
 .mct-pubdoor-history li{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px;font-size:12px;color:var(--ink-2)}
 .mct-pubdoor-history li span{font-weight:600;color:var(--ink)}
 .mct-pubdoor-history li em{font-style:normal}
+
+/* ── Videos (the tenant media library surface) ─────────────────────────────────────────────── */
+.mct-media-list{margin:0;padding:0;list-style:none;display:grid;gap:10px}
+.mct-media-card{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;padding:12px 14px;border:1px solid var(--line-soft);border-radius:var(--r-m);background:var(--surface)}
+.mct-media-info{display:grid;gap:2px;min-width:0}
+.mct-media-info small{font-size:12px;color:var(--ink-2)}
+.mct-media-drop{display:grid;gap:4px;padding:12px 14px;border:1px dashed var(--line);border-radius:var(--r-m);background:var(--surface-sunk);font-size:12px;color:var(--ink-2);cursor:pointer}
+.mct-media-drop input{font:inherit}
+.mct-media-player{width:100%;max-width:420px;border-radius:var(--r-s);background:#000}

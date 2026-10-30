@@ -92,6 +92,50 @@ The agents' replies above the cards and the Suggest sentence are hand-written st
 
 ## Evidence index
 
+### Sole-successor recovery checkpoint — October 29, 2026
+
+Status: **STILL CODING**. The sole Codex successor retains the original branch and PR #3041
+at `f7867db12b6eb7d9e53b8add5a657e28ce42406c`, composing current main
+`b696ea038b6e26b43c8d1787dc65c59da5c89b86` locally. No successor release or authenticated A2b
+proof is claimed. The owner supplied the interrupted Claude transcript: it preserves the approval
+of the retry line and unsent channel-to-DM prefill and the every-specialist action-wave plan.
+It does not establish that the old cloud session had no other unsaved work; that session remains
+preserved. Full custody/amendment ACK and narrow source ownership are saved in ANT-161's description
+because new comments returned the issue's 2,000-comment quota error. Readback confirmed the ACK.
+
+Original failed `ci` run `40742041076` is not waived. Its failure-attribution artifact
+`12842231828` was downloaded and independently matched to SHA256
+`5349d99b3900507a3096ccbc23a662dde48d4142b2033ba0f88f654f9db2c42e`.
+It identifies three document-tool source-contract failures; all three reproduced locally in the
+composed source (43 passed, 3 failed). A2b moved the canonical `growth_list` definition before
+`document_generate`, making the tests' string slices empty. The repair selects the original document
+definition with the test's existing TypeScript AST predicate, retaining every assertion and the
+original import-binding checks. The same suite then passed **46/46**. No document writer changed.
+
+The combined A2b agent/card and original MERIT/CURA/MENTOR/VERA/NEXUS/ZION adapter suites passed
+**303/303** using the repository's Node preload. The composed agent-turn suite includes **117** of
+those tests. The MENTOR refusal case now verifies the A2b unavailable/non-applied envelope, no offered
+writer, no executed writer and no fabricated card rather than the superseded blanket A1 action line.
+These are scripted engineering tests, not authenticated customer proof. Original Test-step full-log
+downloads failed transport; the verified attribution artifact and local reproduction are the bounded
+diagnostic evidence. Initial Windows temporary-directory test startup failure is retained separately;
+it executed no tests and is not counted as a product failure or passing proof.
+
+The database-contract log for `40742041226` first refused production ACL reconciliation because the
+branch lacked production media-asset objects; numerous later permission failures follow. It remains
+**FAIL**, requiring fresh replay and exact-head CI after composition. Read-only production inspection
+found A2b `20271121140008` absent and frontier `20271126010011`; the original PR Preview has A2b
+`20271121140008` applied. Production's original ten-argument post body is now
+`d9739dd46a7c93a73a3d054a7cf098da` and accept-turn is `f28f30095f96a0c58e1206cbe61340d2`.
+Their peer read-context/publication changes must survive reconciliation. No migration was applied,
+renamed or rewritten at this checkpoint. Binding-literal reproduction/review, final integration,
+settlement-trust thread disposition, migration strategy, technical review, hosted exact-head gates,
+release/readback and authenticated result/reload/recovery remain open.
+
+The full original matrix/five people journeys, A2c standing-authority/channel work, all specialist
+action waves, shared goal/workshop/privacy integration and evaluation obligations remain in scope.
+This local repair is not full-assignment coding completion or owner acceptance.
+
 - Harness: docs/evidence/ui-delivery/assets/exp08-team-hub-agents-a2b/harness/ (index.html, vite.config.mjs, src/main.tsx, src/mock-supabase.ts, src/mock-tenant.ts, shoot.mjs). Serve `npx vite --config docs/evidence/ui-delivery/assets/exp08-team-hub-agents-a2b/harness/vite.config.mjs`, then `node docs/evidence/ui-delivery/assets/exp08-team-hub-agents-a2b/harness/shoot.mjs` (PW_EXECUTABLE_PATH defaults to /opt/pw-browsers/chromium-1243/chrome-linux64/chrome).
 - Scenario query: `s=b2-handover|b2-cancel|b2-publish|b2-handover-done|b2-handover-failed|b2-publish-done|b2-publish-done-noaddr|b2-redirect|b2-paige-handover`, `act=done|hold|failed|not_yours|already_decided|done-noaddr|could_not_start`, `as=priya`, `t=b`, `theme=dark|light`.
 - Server strings copied from: card-tools.ts CardProvenance.summary and REDIRECT_LINE; card-act.ts doneNote, DONE_NOTE.page_publish, FAILED_REASON.changed, OUTCOME_LINE; growth-publish-command/contract.ts previewSummary; team-hub-agents.ts cardExpiryNote and cardActLine.

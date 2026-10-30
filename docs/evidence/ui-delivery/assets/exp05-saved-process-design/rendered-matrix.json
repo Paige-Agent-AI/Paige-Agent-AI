@@ -1,0 +1,149 @@
+{
+  "boundary": "Original OperationsWorkspace/Playbooks/OwnerTaskAutomations with synthetic read/Auth/transport ports, inert navigation/dock. No authenticated or full SoloApp-shell proof.",
+  "frames": [
+    {
+      "name": "light-1366-multi",
+      "viewport": {
+        "height": 768,
+        "width": 1366
+      },
+      "documentWidth": 1366,
+      "steps": 2
+    },
+    {
+      "name": "light-1366-keyboard-pause",
+      "viewport": {
+        "height": 768,
+        "width": 1366
+      },
+      "documentWidth": 1366,
+      "steps": 2
+    },
+    {
+      "name": "light-1536-multi",
+      "viewport": {
+        "height": 770,
+        "width": 1536
+      },
+      "documentWidth": 1536,
+      "steps": 2
+    },
+    {
+      "name": "light-1024-multi",
+      "viewport": {
+        "height": 768,
+        "width": 1024
+      },
+      "documentWidth": 1024,
+      "steps": 2
+    },
+    {
+      "name": "dark-900-multi",
+      "viewport": {
+        "height": 1000,
+        "width": 900
+      },
+      "documentWidth": 900,
+      "steps": 2
+    },
+    {
+      "name": "dark-320-multi",
+      "viewport": {
+        "height": 700,
+        "width": 320
+      },
+      "documentWidth": 320,
+      "steps": 2
+    },
+    {
+      "name": "dark-320-keyboard-pause",
+      "viewport": {
+        "height": 700,
+        "width": 320
+      },
+      "documentWidth": 320,
+      "steps": 2
+    },
+    {
+      "name": "dark-1366-mixed",
+      "viewport": {
+        "height": 768,
+        "width": 1366
+      },
+      "documentWidth": 1366,
+      "steps": 3
+    },
+    {
+      "name": "light-320-order",
+      "viewport": {
+        "height": 700,
+        "width": 320
+      },
+      "documentWidth": 320,
+      "steps": 2
+    },
+    {
+      "name": "dark-320-large",
+      "viewport": {
+        "height": 700,
+        "width": 320
+      },
+      "documentWidth": 320,
+      "steps": 20
+    },
+    {
+      "name": "light-1366-original-review",
+      "viewport": {
+        "height": 768,
+        "width": 1366
+      },
+      "documentWidth": 1366,
+      "steps": 0
+    },
+    {
+      "name": "light-1366-original-cancel",
+      "viewport": {
+        "height": 768,
+        "width": 1366
+      },
+      "documentWidth": 1366,
+      "steps": 0
+    },
+    {
+      "name": "light-320-loading",
+      "viewport": {
+        "height": 700,
+        "width": 320
+      },
+      "documentWidth": 320,
+      "steps": 0
+    },
+    {
+      "name": "light-320-refused",
+      "viewport": {
+        "height": 700,
+        "width": 320
+      },
+      "documentWidth": 320,
+      "steps": 0
+    },
+    {
+      "name": "light-320-unavailable",
+      "viewport": {
+        "height": 700,
+        "width": 320
+      },
+      "documentWidth": 320,
+      "steps": 0
+    },
+    {
+      "name": "light-320-empty",
+      "viewport": {
+        "height": 700,
+        "width": 320
+      },
+      "documentWidth": 320,
+      "steps": 0
+    }
+  ]
+}

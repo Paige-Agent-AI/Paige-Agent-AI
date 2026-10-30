@@ -21,12 +21,26 @@ export interface StreamVideoMetadata {
   thumbnail: string | null;
 }
 
+export interface DirectCreateResult {
+  ok: true;
+  uid: string;
+  /** ONE-TIME upload URL the browser POSTs the file to (multipart, <=200MB). Never the API token. */
+  uploadUrl: string;
+}
 export interface StreamReadAdapter {
   isConfigured(): boolean;
   getVideo(uid: string): Promise<{ ok: true; video: StreamVideoMetadata } | { ok: false; code: "adapter_not_configured" | "cloudflare_refused" | "transport_failed" | "video_missing"; httpStatus?: number }>;
+  /** Create a fresh direct-upload slot. The API token stays server-side; only the one-time
+   *  uploadURL + uid cross to the caller. maxDurationSeconds reserves storage billing until
+   *  the upload completes/expires (Cloudflare's own contract) — the door picks a bounded default. */
+  directCreate(input: { maxDurationSeconds: number }): Promise<DirectCreateResult | { ok: false; code: "adapter_not_configured" | "cloudflare_refused" | "transport_failed" }>;
 }
 
 const API_ROOT = "https://api.cloudflare.com/client/v4/accounts";
+/** Every provider call is bounded (independent-review P3): a hung Cloudflare connection must
+ *  never pin the edge worker to the platform's own limits. The API host is fixed (no SSRF
+ *  surface), so AbortSignal.timeout is sufficient — safeFetch's URL validation adds nothing here. */
+const STREAM_TIMEOUT_MS = 10_000;
 
 /** The non-secret fields we serve, defensively mapped: absent stays absent, never invented. */
 function mapVideo(v: Record<string, unknown>): StreamVideoMetadata {
@@ -60,6 +74,7 @@ export const streamReadAdapter: StreamReadAdapter = {
       const res = await fetch(`${API_ROOT}/${account}/stream/${encodeURIComponent(uid)}`, {
         headers: { Authorization: `Bearer ${token}` },
         method: "GET",
+        signal: AbortSignal.timeout(STREAM_TIMEOUT_MS),
       });
       // Only the HTTP status crosses on failure — never provider prose (which could echo
       // request material) and never the credential.
@@ -72,6 +87,31 @@ export const streamReadAdapter: StreamReadAdapter = {
       const result = body.result && typeof body.result === "object" && !Array.isArray(body.result) ? body.result as Record<string, unknown> : null;
       if (!result) return { ok: false as const, code: "cloudflare_refused" as const, httpStatus: 200 };
       return { ok: true as const, video: mapVideo(result) };
+    } catch {
+      return { ok: false as const, code: "transport_failed" as const };
+    }
+  },
+  async directCreate(input: { maxDurationSeconds: number }) {
+    const token = env("CLOUDFLARE_STREAM_API_TOKEN");
+    const account = env("CLOUDFLARE_ACCOUNT_ID");
+    if (!token || !account) return { ok: false as const, code: "adapter_not_configured" as const };
+    const bounded = Math.min(Math.max(Math.floor(input.maxDurationSeconds) || 3600, 1), 7200);
+    try {
+      const res = await fetch(`${API_ROOT}/${account}/stream/direct_upload`, {
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        method: "POST",
+        body: JSON.stringify({ maxDurationSeconds: bounded }),
+        signal: AbortSignal.timeout(STREAM_TIMEOUT_MS),
+      });
+      if (!res.ok) return { ok: false as const, code: "cloudflare_refused" as const, httpStatus: res.status };
+      const body = await res.json() as Record<string, unknown>;
+      const result = body.result && typeof body.result === "object" && !Array.isArray(body.result) ? body.result as Record<string, unknown> : null;
+      const uid = typeof result?.uid === "string" ? result.uid : "";
+      const uploadUrl = typeof result?.uploadURL === "string" ? result.uploadURL : "";
+      if (!/^[0-9a-f]{32}$/.test(uid) || !/^https:\/\//.test(uploadUrl)) {
+        return { ok: false as const, code: "cloudflare_refused" as const, httpStatus: 200 };
+      }
+      return { ok: true as const, uid, uploadUrl };
     } catch {
       return { ok: false as const, code: "transport_failed" as const };
     }

@@ -1,0 +1,275 @@
+{
+  "boundary": "Actual current SoloApp/Operations/Week and original Calendar hooks; explicit synthetic native Calendar transport, Work, roster, Auth and Chat ports. Not authenticated customer/RLS/provider proof.",
+  "frames": [
+    {
+      "theme": "light",
+      "paige": "closed",
+      "file": "light-1536-closed.png",
+      "bounds": "{\"bottom\":745.2000122070312,\"height\":331.20001220703125,\"left\":258.8000183105469,\"right\":1483.6000671386719,\"top\":414,\"width\":1224.800048828125,\"x\":258.8000183105469,\"y\":414}",
+      "calendarText": "Calendar commitmentsRefresh Calendar2 recorded appointments returned for this person in this week.Read Thu, Oct 29, 3:37 PM · America/New_York2 appointments overlap. Review these commitments before placing more work.Client delivery reviewconfirmed · OverlapThu, Oct 29, 10:00 AM – Thu, Oct 29, 11:00 AMWorkshop preparationconfirmed · OverlapThu, Oct 29, 10:30 AM – Thu, Oct 29, 11:30 AM1 appointment has no recorded host and cannot be assigned to this person in this review.Native Calendar records only; connected-provider free/busy and working hours are not verified here. Your entered work capacity already excludes appointments and is unchanged. Dependencies still need review.",
+      "controls": [
+        {
+          "height": 44,
+          "text": "Refresh Calendar"
+        }
+      ],
+      "documentWidth": 1536,
+      "focus": "Refresh Calendar",
+      "height": 770,
+      "width": 1536
+    },
+    {
+      "theme": "light",
+      "paige": "closed",
+      "file": "light-1366-closed.png",
+      "bounds": "{\"bottom\":744.4000244140625,\"height\":331.20001220703125,\"left\":114.80000305175781,\"right\":1314.0000762939453,\"top\":413.20001220703125,\"width\":1199.2000732421875,\"x\":114.80000305175781,\"y\":413.20001220703125}",
+      "calendarText": "Calendar commitmentsRefresh Calendar2 recorded appointments returned for this person in this week.Read Thu, Oct 29, 3:37 PM · America/New_York2 appointments overlap. Review these commitments before placing more work.Client delivery reviewconfirmed · OverlapThu, Oct 29, 10:00 AM – Thu, Oct 29, 11:00 AMWorkshop preparationconfirmed · OverlapThu, Oct 29, 10:30 AM – Thu, Oct 29, 11:30 AM1 appointment has no recorded host and cannot be assigned to this person in this review.Native Calendar records only; connected-provider free/busy and working hours are not verified here. Your entered work capacity already excludes appointments and is unchanged. Dependencies still need review.",
+      "controls": [
+        {
+          "height": 44,
+          "text": "Refresh Calendar"
+        }
+      ],
+      "documentWidth": 1366,
+      "focus": "Refresh Calendar",
+      "height": 768,
+      "width": 1366
+    },
+    {
+      "theme": "light",
+      "paige": "closed",
+      "file": "light-1024-closed.png",
+      "bounds": "{\"bottom\":763.6000061035156,\"height\":350.3999938964844,\"left\":114.80000305175781,\"right\":971.5999908447266,\"top\":413.20001220703125,\"width\":856.7999877929688,\"x\":114.80000305175781,\"y\":413.20001220703125}",
+      "calendarText": "Calendar commitmentsRefresh Calendar2 recorded appointments returned for this person in this week.Read Thu, Oct 29, 3:37 PM · America/New_York2 appointments overlap. Review these commitments before placing more work.Client delivery reviewconfirmed · OverlapThu, Oct 29, 10:00 AM – Thu, Oct 29, 11:00 AMWorkshop preparationconfirmed · OverlapThu, Oct 29, 10:30 AM – Thu, Oct 29, 11:30 AM1 appointment has no recorded host and cannot be assigned to this person in this review.Native Calendar records only; connected-provider free/busy and working hours are not verified here. Your entered work capacity already excludes appointments and is unchanged. Dependencies still need review.",
+      "controls": [
+        {
+          "height": 44,
+          "text": "Refresh Calendar"
+        }
+      ],
+      "documentWidth": 1024,
+      "focus": "Refresh Calendar",
+      "height": 768,
+      "width": 1024
+    },
+    {
+      "theme": "light",
+      "paige": "closed",
+      "file": "light-900-closed.png",
+      "bounds": "{\"bottom\":879.6000061035156,\"height\":350.3999938964844,\"left\":114.80000305175781,\"right\":847.5999908447266,\"top\":529.2000122070312,\"width\":732.7999877929688,\"x\":114.80000305175781,\"y\":529.2000122070312}",
+      "calendarText": "Calendar commitmentsRefresh Calendar2 recorded appointments returned for this person in this week.Read Thu, Oct 29, 3:37 PM · America/New_York2 appointments overlap. Review these commitments before placing more work.Client delivery reviewconfirmed · OverlapThu, Oct 29, 10:00 AM – Thu, Oct 29, 11:00 AMWorkshop preparationconfirmed · OverlapThu, Oct 29, 10:30 AM – Thu, Oct 29, 11:30 AM1 appointment has no recorded host and cannot be assigned to this person in this review.Native Calendar records only; connected-provider free/busy and working hours are not verified here. Your entered work capacity already excludes appointments and is unchanged. Dependencies still need review.",
+      "controls": [
+        {
+          "height": 44,
+          "text": "Refresh Calendar"
+        }
+      ],
+      "documentWidth": 900,
+      "focus": "Refresh Calendar",
+      "height": 1000,
+      "width": 900
+    },
+    {
+      "theme": "dark",
+      "paige": "closed",
+      "file": "dark-1536-closed.png",
+      "bounds": "{\"bottom\":745.2000122070312,\"height\":331.20001220703125,\"left\":258.8000183105469,\"right\":1483.6000671386719,\"top\":414,\"width\":1224.800048828125,\"x\":258.8000183105469,\"y\":414}",
+      "calendarText": "Calendar commitmentsRefresh Calendar2 recorded appointments returned for this person in this week.Read Thu, Oct 29, 3:38 PM · America/New_York2 appointments overlap. Review these commitments before placing more work.Client delivery reviewconfirmed · OverlapThu, Oct 29, 10:00 AM – Thu, Oct 29, 11:00 AMWorkshop preparationconfirmed · OverlapThu, Oct 29, 10:30 AM – Thu, Oct 29, 11:30 AM1 appointment has no recorded host and cannot be assigned to this person in this review.Native Calendar records only; connected-provider free/busy and working hours are not verified here. Your entered work capacity already excludes appointments and is unchanged. Dependencies still need review.",
+      "controls": [
+        {
+          "height": 44,
+          "text": "Refresh Calendar"
+        }
+      ],
+      "documentWidth": 1536,
+      "focus": "Refresh Calendar",
+      "height": 770,
+      "width": 1536
+    },
+    {
+      "theme": "dark",
+      "paige": "closed",
+      "file": "dark-1366-closed.png",
+      "bounds": "{\"bottom\":744.4000244140625,\"height\":331.20001220703125,\"left\":114.80000305175781,\"right\":1314.0000762939453,\"top\":413.20001220703125,\"width\":1199.2000732421875,\"x\":114.80000305175781,\"y\":413.20001220703125}",
+      "calendarText": "Calendar commitmentsRefresh Calendar2 recorded appointments returned for this person in this week.Read Thu, Oct 29, 3:38 PM · America/New_York2 appointments overlap. Review these commitments before placing more work.Client delivery reviewconfirmed · OverlapThu, Oct 29, 10:00 AM – Thu, Oct 29, 11:00 AMWorkshop preparationconfirmed · OverlapThu, Oct 29, 10:30 AM – Thu, Oct 29, 11:30 AM1 appointment has no recorded host and cannot be assigned to this person in this review.Native Calendar records only; connected-provider free/busy and working hours are not verified here. Your entered work capacity already excludes appointments and is unchanged. Dependencies still need review.",
+      "controls": [
+        {
+          "height": 44,
+          "text": "Refresh Calendar"
+        }
+      ],
+      "documentWidth": 1366,
+      "focus": "Refresh Calendar",
+      "height": 768,
+      "width": 1366
+    },
+    {
+      "theme": "dark",
+      "paige": "closed",
+      "file": "dark-1024-closed.png",
+      "bounds": "{\"bottom\":763.6000061035156,\"height\":350.3999938964844,\"left\":114.80000305175781,\"right\":971.5999908447266,\"top\":413.20001220703125,\"width\":856.7999877929688,\"x\":114.80000305175781,\"y\":413.20001220703125}",
+      "calendarText": "Calendar commitmentsRefresh Calendar2 recorded appointments returned for this person in this week.Read Thu, Oct 29, 3:38 PM · America/New_York2 appointments overlap. Review these commitments before placing more work.Client delivery reviewconfirmed · OverlapThu, Oct 29, 10:00 AM – Thu, Oct 29, 11:00 AMWorkshop preparationconfirmed · OverlapThu, Oct 29, 10:30 AM – Thu, Oct 29, 11:30 AM1 appointment has no recorded host and cannot be assigned to this person in this review.Native Calendar records only; connected-provider free/busy and working hours are not verified here. Your entered work capacity already excludes appointments and is unchanged. Dependencies still need review.",
+      "controls": [
+        {
+          "height": 44,
+          "text": "Refresh Calendar"
+        }
+      ],
+      "documentWidth": 1024,
+      "focus": "Refresh Calendar",
+      "height": 768,
+      "width": 1024
+    },
+    {
+      "theme": "dark",
+      "paige": "closed",
+      "file": "dark-900-closed.png",
+      "bounds": "{\"bottom\":879.6000061035156,\"height\":350.3999938964844,\"left\":114.80000305175781,\"right\":847.5999908447266,\"top\":529.2000122070312,\"width\":732.7999877929688,\"x\":114.80000305175781,\"y\":529.2000122070312}",
+      "calendarText": "Calendar commitmentsRefresh Calendar2 recorded appointments returned for this person in this week.Read Thu, Oct 29, 3:38 PM · America/New_York2 appointments overlap. Review these commitments before placing more work.Client delivery reviewconfirmed · OverlapThu, Oct 29, 10:00 AM – Thu, Oct 29, 11:00 AMWorkshop preparationconfirmed · OverlapThu, Oct 29, 10:30 AM – Thu, Oct 29, 11:30 AM1 appointment has no recorded host and cannot be assigned to this person in this review.Native Calendar records only; connected-provider free/busy and working hours are not verified here. Your entered work capacity already excludes appointments and is unchanged. Dependencies still need review.",
+      "controls": [
+        {
+          "height": 44,
+          "text": "Refresh Calendar"
+        }
+      ],
+      "documentWidth": 900,
+      "focus": "Refresh Calendar",
+      "height": 1000,
+      "width": 900
+    },
+    {
+      "theme": "light",
+      "paige": "open",
+      "file": "light-1536-open.png",
+      "bounds": "{\"bottom\":764.3999938964844,\"height\":350.3999938964844,\"left\":258.8000183105469,\"right\":961.3625183105469,\"top\":414,\"width\":702.5625,\"x\":258.8000183105469,\"y\":414}",
+      "calendarText": "Calendar commitmentsRefresh Calendar2 recorded appointments returned for this person in this week.Read Thu, Oct 29, 3:38 PM · America/New_York2 appointments overlap. Review these commitments before placing more work.Client delivery reviewconfirmed · OverlapThu, Oct 29, 10:00 AM – Thu, Oct 29, 11:00 AMWorkshop preparationconfirmed · OverlapThu, Oct 29, 10:30 AM – Thu, Oct 29, 11:30 AM1 appointment has no recorded host and cannot be assigned to this person in this review.Native Calendar records only; connected-provider free/busy and working hours are not verified here. Your entered work capacity already excludes appointments and is unchanged. Dependencies still need review.",
+      "controls": [
+        {
+          "height": 44,
+          "text": "Refresh Calendar"
+        }
+      ],
+      "documentWidth": 1536,
+      "focus": "Refresh Calendar",
+      "height": 770,
+      "width": 1536
+    },
+    {
+      "theme": "light",
+      "paige": "open",
+      "file": "light-1366-open.png",
+      "bounds": "{\"bottom\":763.6000061035156,\"height\":350.3999938964844,\"left\":114.80000305175781,\"right\":849.4250030517578,\"top\":413.20001220703125,\"width\":734.625,\"x\":114.80000305175781,\"y\":413.20001220703125}",
+      "calendarText": "Calendar commitmentsRefresh Calendar2 recorded appointments returned for this person in this week.Read Thu, Oct 29, 3:38 PM · America/New_York2 appointments overlap. Review these commitments before placing more work.Client delivery reviewconfirmed · OverlapThu, Oct 29, 10:00 AM – Thu, Oct 29, 11:00 AMWorkshop preparationconfirmed · OverlapThu, Oct 29, 10:30 AM – Thu, Oct 29, 11:30 AM1 appointment has no recorded host and cannot be assigned to this person in this review.Native Calendar records only; connected-provider free/busy and working hours are not verified here. Your entered work capacity already excludes appointments and is unchanged. Dependencies still need review.",
+      "controls": [
+        {
+          "height": 44,
+          "text": "Refresh Calendar"
+        }
+      ],
+      "documentWidth": 1366,
+      "focus": "Refresh Calendar",
+      "height": 768,
+      "width": 1366
+    },
+    {
+      "theme": "light",
+      "paige": "open",
+      "file": "light-1024-open.png",
+      "calendarText": "Calendar commitmentsRefresh Calendar2 recorded appointments returned for this person in this week.Read Thu, Oct 29, 3:39 PM · America/New_York2 appointments overlap. Review these commitments before placing more work.Client delivery reviewconfirmed · OverlapThu, Oct 29, 10:00 AM – Thu, Oct 29, 11:00 AMWorkshop preparationconfirmed · OverlapThu, Oct 29, 10:30 AM – Thu, Oct 29, 11:30 AM1 appointment has no recorded host and cannot be assigned to this person in this review.Native Calendar records only; connected-provider free/busy and working hours are not verified here. Your entered work capacity already excludes appointments and is unchanged. Dependencies still need review.",
+      "controls": [
+        {
+          "height": 44,
+          "text": "Refresh Calendar"
+        }
+      ],
+      "documentWidth": 1024,
+      "focus": "Refresh Calendar",
+      "height": 768,
+      "width": 1024,
+      "narrowReentry": "Calendar commitments\nRefresh Calendar\n\n2 recorded appointments returned for this person in this week.\n\nRead Thu, Oct 29, 3:39 PM · America/New_York\n\n2 appointments overlap. Review these commitments before placing more work.\n\nClient delivery review\nconfirmed · Overlap\nThu, Oct 29, 10:00 AM – Thu, Oct 29, 11:00 AM\nWorkshop preparation\nconfirmed · Overlap\nThu, Oct 29, 10:30 AM – Thu, Oct 29, 11:30 AM\n\n1 appointment has no recorded host and cannot be assigned to this person in this review.\n\nNative Calendar records only; connected-provider free/busy and working hours are not verified here. Your entered work capacity already excludes appointments and is unchanged. Dependencies still need review."
+    },
+    {
+      "theme": "light",
+      "paige": "open",
+      "file": "light-900-open.png",
+      "calendarText": "Calendar commitmentsRefresh Calendar2 recorded appointments returned for this person in this week.Read Thu, Oct 29, 3:39 PM · America/New_York2 appointments overlap. Review these commitments before placing more work.Client delivery reviewconfirmed · OverlapThu, Oct 29, 10:00 AM – Thu, Oct 29, 11:00 AMWorkshop preparationconfirmed · OverlapThu, Oct 29, 10:30 AM – Thu, Oct 29, 11:30 AM1 appointment has no recorded host and cannot be assigned to this person in this review.Native Calendar records only; connected-provider free/busy and working hours are not verified here. Your entered work capacity already excludes appointments and is unchanged. Dependencies still need review.",
+      "controls": [
+        {
+          "height": 44,
+          "text": "Refresh Calendar"
+        }
+      ],
+      "documentWidth": 900,
+      "focus": "Refresh Calendar",
+      "height": 1000,
+      "width": 900,
+      "narrowReentry": "Calendar commitments\nRefresh Calendar\n\n2 recorded appointments returned for this person in this week.\n\nRead Thu, Oct 29, 3:39 PM · America/New_York\n\n2 appointments overlap. Review these commitments before placing more work.\n\nClient delivery review\nconfirmed · Overlap\nThu, Oct 29, 10:00 AM – Thu, Oct 29, 11:00 AM\nWorkshop preparation\nconfirmed · Overlap\nThu, Oct 29, 10:30 AM – Thu, Oct 29, 11:30 AM\n\n1 appointment has no recorded host and cannot be assigned to this person in this review.\n\nNative Calendar records only; connected-provider free/busy and working hours are not verified here. Your entered work capacity already excludes appointments and is unchanged. Dependencies still need review."
+    },
+    {
+      "theme": "dark",
+      "paige": "open",
+      "file": "dark-1536-open.png",
+      "calendarText": "Calendar commitmentsRefresh Calendar2 recorded appointments returned for this person in this week.Read Thu, Oct 29, 3:39 PM · America/New_York2 appointments overlap. Review these commitments before placing more work.Client delivery reviewconfirmed · OverlapThu, Oct 29, 10:00 AM – Thu, Oct 29, 11:00 AMWorkshop preparationconfirmed · OverlapThu, Oct 29, 10:30 AM – Thu, Oct 29, 11:30 AM1 appointment has no recorded host and cannot be assigned to this person in this review.Native Calendar records only; connected-provider free/busy and working hours are not verified here. Your entered work capacity already excludes appointments and is unchanged. Dependencies still need review.",
+      "controls": [
+        {
+          "height": 44,
+          "text": "Refresh Calendar"
+        }
+      ],
+      "documentWidth": 1536,
+      "focus": "Refresh Calendar",
+      "height": 770,
+      "width": 1536
+    },
+    {
+      "theme": "dark",
+      "paige": "open",
+      "file": "dark-1366-open.png",
+      "calendarText": "Calendar commitmentsRefresh Calendar2 recorded appointments returned for this person in this week.Read Thu, Oct 29, 3:39 PM · America/New_York2 appointments overlap. Review these commitments before placing more work.Client delivery reviewconfirmed · OverlapThu, Oct 29, 10:00 AM – Thu, Oct 29, 11:00 AMWorkshop preparationconfirmed · OverlapThu, Oct 29, 10:30 AM – Thu, Oct 29, 11:30 AM1 appointment has no recorded host and cannot be assigned to this person in this review.Native Calendar records only; connected-provider free/busy and working hours are not verified here. Your entered work capacity already excludes appointments and is unchanged. Dependencies still need review.",
+      "controls": [
+        {
+          "height": 44,
+          "text": "Refresh Calendar"
+        }
+      ],
+      "documentWidth": 1366,
+      "focus": "Refresh Calendar",
+      "height": 768,
+      "width": 1366
+    },
+    {
+      "theme": "dark",
+      "paige": "open",
+      "file": "dark-1024-open.png",
+      "calendarText": "Calendar commitmentsRefresh Calendar2 recorded appointments returned for this person in this week.Read Thu, Oct 29, 3:39 PM · America/New_York2 appointments overlap. Review these commitments before placing more work.Client delivery reviewconfirmed · OverlapThu, Oct 29, 10:00 AM – Thu, Oct 29, 11:00 AMWorkshop preparationconfirmed · OverlapThu, Oct 29, 10:30 AM – Thu, Oct 29, 11:30 AM1 appointment has no recorded host and cannot be assigned to this person in this review.Native Calendar records only; connected-provider free/busy and working hours are not verified here. Your entered work capacity already excludes appointments and is unchanged. Dependencies still need review.",
+      "controls": [
+        {
+          "height": 44,
+          "text": "Refresh Calendar"
+        }
+      ],
+      "documentWidth": 1024,
+      "focus": "Refresh Calendar",
+      "height": 768,
+      "width": 1024,
+      "narrowReentry": "Calendar commitments\nRefresh Calendar\n\n2 recorded appointments returned for this person in this week.\n\nRead Thu, Oct 29, 3:39 PM · America/New_York\n\n2 appointments overlap. Review these commitments before placing more work.\n\nClient delivery review\nconfirmed · Overlap\nThu, Oct 29, 10:00 AM – Thu, Oct 29, 11:00 AM\nWorkshop preparation\nconfirmed · Overlap\nThu, Oct 29, 10:30 AM – Thu, Oct 29, 11:30 AM\n\n1 appointment has no recorded host and cannot be assigned to this person in this review.\n\nNative Calendar records only; connected-provider free/busy and working hours are not verified here. Your entered work capacity already excludes appointments and is unchanged. Dependencies still need review."
+    },
+    {
+      "theme": "dark",
+      "paige": "open",
+      "file": "dark-900-open.png",
+      "calendarText": "Calendar commitmentsRefresh Calendar2 recorded appointments returned for this person in this week.Read Thu, Oct 29, 3:39 PM · America/New_York2 appointments overlap. Review these commitments before placing more work.Client delivery reviewconfirmed · OverlapThu, Oct 29, 10:00 AM – Thu, Oct 29, 11:00 AMWorkshop preparationconfirmed · OverlapThu, Oct 29, 10:30 AM – Thu, Oct 29, 11:30 AM1 appointment has no recorded host and cannot be assigned to this person in this review.Native Calendar records only; connected-provider free/busy and working hours are not verified here. Your entered work capacity already excludes appointments and is unchanged. Dependencies still need review.",
+      "controls": [
+        {
+          "height": 44,
+          "text": "Refresh Calendar"
+        }
+      ],
+      "documentWidth": 900,
+      "focus": "Refresh Calendar",
+      "height": 1000,
+      "width": 900,
+      "narrowReentry": "Calendar commitments\nRefresh Calendar\n\n2 recorded appointments returned for this person in this week.\n\nRead Thu, Oct 29, 3:39 PM · America/New_York\n\n2 appointments overlap. Review these commitments before placing more work.\n\nClient delivery review\nconfirmed · Overlap\nThu, Oct 29, 10:00 AM – Thu, Oct 29, 11:00 AM\nWorkshop preparation\nconfirmed · Overlap\nThu, Oct 29, 10:30 AM – Thu, Oct 29, 11:30 AM\n\n1 appointment has no recorded host and cannot be assigned to this person in this review.\n\nNative Calendar records only; connected-provider free/busy and working hours are not verified here. Your entered work capacity already excludes appointments and is unchanged. Dependencies still need review."
+    }
+  ]
+}

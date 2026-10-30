@@ -1327,6 +1327,10 @@ SELECT pg_temp.check((SELECT count(*) FROM mutant_results)=16 AND NOT EXISTS(SEL
  'mutants: all 16 weakened guards break the property they protect: '||(SELECT string_agg(mutant||'='||coalesce(guarded::text,'null'), '; ' ORDER BY mutant) FROM mutant_results));
 \echo 'PASS: 16 of 16 mutants (conversation visibility, others reading failed or stale turns, writing masked as replied, writing for the asker only, workspace door, broadcast in a DM, @here reaching the inactive, author as recipient, conversations-off member reached, unknown kind, plain JSON changed, recipients granted, @here reading arrival last_read_at, an agent reply counted as the asker posting, the read door recording nothing, an empty broadcast stored as one) each fail their probe; controls hold'
 
+-- Optional EXP04 extension uses this exact disposable fixture after every original assertion.
+\if :{?e04_source_reads}
+\ir e04_team_hub_source_reads.sql
+\endif
 RESET ROLE;
 \c postgres
 DROP DATABASE exp08_team_hub_a1c_proof;

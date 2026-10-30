@@ -44,6 +44,21 @@ it("reuses native creation and reloads only the canonical customer transcript",a
  expect(f.reads).toEqual(["paige_chat_threads","paige_chat_turns","paige_chat_threads"]);
  expect(f.filters).toContainEqual(["audience","eq","customer_private"]);
 });
+it("reloads only the selected link from the original user receipt without inventing a read result",async()=>{
+ f.turns=[{id:"e0957000-0000-4000-8000-000000000001",role:"user",content:"Read this guide",customer_link_url:"https://example.org/guide"},
+  {id:"e0957000-0000-4000-8000-000000000002",role:"assistant",content:"Saved answer",customer_link_url:"https://example.org/guide"}];
+ const result=await readCustomerChat(frame());
+ expect(result.messages[1]).toMatchObject({role:"user",publicLink:"https://example.org/guide"});
+ expect(result.messages[0]).not.toHaveProperty("publicLink");
+ expect(result.messages[1]).not.toHaveProperty("readStatus");
+ expect(f.columns.some(c=>c.includes("customer_link_url:bundle_ref->customer_public_link->>url"))).toBe(true);
+ expect(f.reads).toEqual(["paige_chat_threads","paige_chat_turns","paige_chat_threads"]);
+});
+for(const selected of [{url:"https://example.org/"},"http://example.org/","https://example.org/?private=1","https://EXAMPLE.org/guide"])
+ it("refuses malformed or noncanonical saved selection instead of presenting a read: "+JSON.stringify(selected),async()=>{
+  f.turns=[{id:"e0957000-0000-4000-8000-000000000001",role:"user",content:"Read this",customer_link_url:selected}];
+  await expect(readCustomerChat(frame())).rejects.toThrow("Saved link could not be verified");
+ });
 for(const field of ["caller_user_id","contact_id","tenant_id","lens"])it("refuses a mismatched "+field+" before reading turns",async()=>{
  f.thread={...(f.thread as object),[field]:"foreign"};
  await expect(readCustomerChat(frame())).rejects.toThrow("Customer conversation changed");
@@ -227,7 +242,7 @@ it("restores the original ordered private attachments, including an older own or
  fileHistory();const result=await readCustomerChat(frame());
  expect(result.messages[0].files?.map(file=>file.filename)).toEqual(["Private 1.pdf","Private 2.pdf"]);
  expect(result.messages[0].requestIntentId).toBe(fileId(81));
- expect(f.columns.find(c=>c.includes("customer_file_ids"))).toBe("id,role,content,customer_file_ids:bundle_ref->customer_files->file_ids,request_intent_id:bundle_ref->interactive->>request_intent_id");
+ expect(f.columns.find(c=>c.includes("customer_file_ids"))).toBe("id,role,content,customer_file_ids:bundle_ref->customer_files->file_ids,customer_link_url:bundle_ref->customer_public_link->>url,request_intent_id:bundle_ref->interactive->>request_intent_id");
  expect(f.columns).not.toContain("bundle_ref");expect(f.filters).toContainEqual(["client_files","uploaded_by_user_id",actor]);
 });
 for(const key of ["tenant_id","contact_id","uploaded_by_user_id","storage_path"])it("withholds saved attachments with foreign "+key,async()=>{

@@ -2,6 +2,7 @@ import { createContext, Fragment, useCallback, useContext, useEffect, useLayoutE
 import { Link, useInRouterContext } from "react-router-dom";
 import { ArrowLeft, ArrowRight, AtSign, ClipboardList, CornerDownRight, Download, FileImage, FileSpreadsheet, FileText, Hash, Lock, MessageSquareOff, MessageSquareReply, PanelRight, Paperclip, Plus, Radio, Search, SendHorizontal, Slash, UserPlus, Users, WifiOff, X } from "lucide-react";
 import { useTenantContext } from "@/hooks/useTenantContext";
+import { PaigeRecordLinks } from "@/components/chat/PaigeRecordLinks";
 import { workspaceLinkTarget } from "@/lib/links/workspaceLinks";
 import { handOffPaigePrompt } from "@/lib/paigePromptHandoff";
 import { clearPaigeClientScope } from "@/solo/paigeClientScope";
@@ -1634,6 +1635,7 @@ function AgentMessageRow({ message, agentKey, people, meId, onOpenThread, agent,
   message: TeamHubMessage; agentKey: TeamHubAgentKey; people: TeamHubPerson[]; meId: string;
   onOpenThread?: (rootId: string, trigger: HTMLElement) => void; agent?: AgentView; place?: RowPlace;
 }) {
+  const { activeTenant } = useTenantContext();
   const name = agentName(agentKey);
   const profile = TEAM_HUB_AGENT_PROFILES[agentKey];
   const asker = people.find((person) => person.user_id === message.author_user_id) ?? null;
@@ -1678,6 +1680,8 @@ function AgentMessageRow({ message, agentKey, people, meId, onOpenThread, agent,
       </div>
       {text && <p className="th-text">{agentRuns(text, "all").map((part, index) => part.agent
         ? <AgentChip key={index} agent={part.agent} /> : <span key={index}>{part.text}</span>)}</p>}
+      {place?.agentDm && isAsker && message.source_backed_read && !!message.record_links?.length
+        && <PaigeRecordLinks links={message.record_links} account={activeTenant} />}
       {privatePart && !place?.agentDm && <p className="th-text th-text--fixed">{FIXED_PRIVATE_LINE}</p>}
       {privatePart && isAsker && privateStatus && agent && message.asked_in_message_id && <PrivateNote agent={agentKey} status={privateStatus} online={agent.online}
         onOpenDm={() => agent.onOpenDm(agentKey)}

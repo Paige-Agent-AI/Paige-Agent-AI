@@ -8,6 +8,7 @@ import { NeedsConfigError } from "../provider-types.ts";
 import type { SocialProviderPostOutcome, SocialProviderPostResult } from "./mod.ts";
 import { safeFetch } from "../ssrfGuard.ts";
 import {
+  SOCIAL_OAUTH_PLATFORMS,
   SocialProviderError,
   type SocialProviderAccount,
   type SocialProviderAdapter,
@@ -16,12 +17,7 @@ import {
 
 const DEFAULT_API_BASE = "https://api.upload-post.com/api/uploadposts";
 const PROFILE_KEY_PATTERN = /^ps_[a-f0-9]{40}$/;
-// Current Connect API catalogue. Reddit is deliberately absent because the
-// provider currently reports its OAuth path as unavailable.
-export const SOCIAL_OAUTH_PLATFORMS = [
-  "tiktok", "instagram", "facebook", "linkedin", "youtube", "x", "threads",
-  "pinterest", "google_business", "snapchat",
-] as const;
+export { SOCIAL_OAUTH_PLATFORMS };
 
 const AUTHORIZATION_HOSTS: Readonly<Record<string, readonly string[]>> = {
   tiktok: ["tiktok.com"], instagram: ["instagram.com", "facebook.com"],

@@ -108,6 +108,18 @@ function campaignLeadsReadDoorBound(resolver) {
     && chat.includes('readCampaignBriefLeads({ caller: supabaseClient');
 }
 
+function mentorPlanReadDoorBound(resolver) {
+  // EXP01: the read rides the Team Hub agent-turn adapter only — the asker's own client calls
+  // public.plan_list, the tenant is re-pinned after the read, and every read re-checks the
+  // per-turn isCurrent gate before rows reach the model. Nothing else may mount this tool.
+  const adapter=resolver.sourceFile(path.join(ROOT,'supabase/functions/_shared/team-hub/mentor-plan-read.ts'))?.text??'';
+  const turn=resolver.sourceFile(path.join(ROOT,'supabase/functions/_shared/team-hub/agent-turn.ts'))?.text??'';
+  return adapter.includes('deps.caller.rpc("plan_list"')
+    && adapter.includes('"current_user_tenant_id"')
+    && adapter.includes('deps.isCurrent()')
+    && turn.includes('mentorPlanReadTools(mentorScope)');
+}
+
 export function businessSnapshotReadDoorBound(resolver) {
   const read=p=>resolver.sourceFile(path.join(ROOT,p))?.text??'';
   const adapter=read(BUSINESS_SNAPSHOT_ADAPTER_FILE);
@@ -260,6 +272,21 @@ function calendarAgendaReadDoorBound(resolver) {
 // Only this exact Task selector/schema, original-JWT mount and reviewed native
 // read closure qualify. This never clears a classified mutation or list debt.
 const CRM_TASK_DECLARATION_FILE = "supabase/functions/_shared/paige-spine/domains/crm_task.ts";
+// EXP10 Team Hub (ANT-164, directive 385a54eb): the integrations surface read. The RPC's list_*
+// name predates the read_* naming heuristic; only this exact read tuple, its kit-declared schema,
+// and BOTH real caller-JWT doors bound (the chat's existing mount and the NEXUS Team Hub consumer)
+// qualify. Never clears risk debt or any list/effect tool.
+const INTEGRATIONS_SURFACE_DECLARATION_FILE = "supabase/functions/_shared/paige-spine/domains/integrations_surface.ts";
+const NEXUS_CONNECTION_READ_FILE = "supabase/functions/_shared/team-hub/nexus-connection-read.ts";
+function integrationsListReadDoorBound(resolver) {
+  const read = file => resolver.sourceFile(path.join(ROOT, file))?.text ?? "";
+  const chat = read("supabase/functions/paige-ai-chat/index.ts");
+  const nexus = read(NEXUS_CONNECTION_READ_FILE);
+  // The chat's own dispatch (its integrations_list executor) and the Team Hub consumer must BOTH
+  // call the invoker-scoped projection under the caller's own session — never the service role.
+  return chat.includes('supabaseClient.rpc("list_integration_surface")')
+    && nexus.includes('deps.caller.rpc("list_integration_surface")');
+}
 // EXP00 O-3: the Platform Operator's company reads. Exact platform.* SQL executors, empty
 // exact inputs, and a chat mount that only a verified operator turn reaches. The RPC gate
 // (is_platform_admin on auth.uid()) is the authority; this pin only names the reviewed
@@ -416,6 +443,15 @@ function collectDeclaredCapabilityNames(files, resolver) {
                 if(identity&&literalProperty(identity,'id')==='campaign.leads'&&owner.name.text==='CAMPAIGN_LEADS_READ_CAPABILITY'
                   &&campaignLeadsReadDoorBound(resolver))readTools.set('read_campaign_leads',owner.name.text);
             }
+            else if(operation==='public.plan_list'&&relative(file)==='supabase/functions/_shared/paige-spine/domains/planning.ts'){
+                // EXP01 slice 1: MENTOR's Team Hub DM plan read. The RPC's plan_list name predates
+                // the read_* naming heuristic; admit this exact read tuple and schema only when the
+                // actual caller-JWT door is bound (asker's client, tenant pin, per-read isCurrent
+                // re-check); never clear risk debt.
+                const identity=nestedProperties(sections,'identity',sourceFile);
+                if(identity&&literalProperty(identity,'id')==='planning.list'&&owner.name.text==='PLAN_LIST_READ_CAPABILITY'
+                  &&mentorPlanReadDoorBound(resolver))readTools.set('plan_list',owner.name.text);
+            }
             else if(operation==='public.issue_analytics_evidence_bundle'&&relative(file)===BUSINESS_SNAPSHOT_DECLARATION_FILE){
                 const identity=nestedProperties(sections,'identity',sourceFile);
                 if(identity&&literalProperty(identity,'id')==='business.operating_snapshot'&&owner.name.text==='BUSINESS_OPERATING_SNAPSHOT_READ_CAPABILITY'
@@ -442,6 +478,14 @@ function collectDeclaredCapabilityNames(files, resolver) {
                 const identity=nestedProperties(sections,'identity',sourceFile);
                 if(identity&&literalProperty(identity,'id')==='crm_clients.task_read'&&owner.name.text==='CRM_TASK_READ_CAPABILITY'
                   && crmTaskReadDoorBound(resolver))readTools.set('crm_get_task',owner.name.text);
+              }
+              else if(operation==='public.list_integration_surface'&&relative(file)===INTEGRATIONS_SURFACE_DECLARATION_FILE){
+                // EXP10 Team Hub: admit ONLY the exact integrations.list read tuple (kit input schema,
+                // read/none/null governance) and only while BOTH caller-JWT doors stay bound. The
+                // chat's pre-existing inline def is NOT admitted by this branch and stays outside it.
+                const identity=nestedProperties(sections,'identity',sourceFile);
+                if(identity&&literalProperty(identity,'id')==='integrations.list'&&owner.name.text==='INTEGRATIONS_LIST_READ_CAPABILITY'
+                  && integrationsListReadDoorBound(resolver))readTools.set('integrations_list',owner.name.text);
               }
               else if(operation==='public.operator_commercial_customers'&&relative(file)===PLATFORM_OPERATOR_READ_DECLARATION_FILE){
                 const identity=nestedProperties(sections,'identity',sourceFile);

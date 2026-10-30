@@ -1,0 +1,35 @@
+# tenant-media-assets-proof — the isolated-DB proof for 20271120110000_tenant_media_assets.sql
+# (the EXP07 media library catalogue + the three P3 repairs it carries). Mirrors
+# content-publications-proof.yml: a real postgres service, a fresh database with the exact
+# name the fixture's guard demands, and the fixture's own verdict as the gate.
+name: tenant-media-assets-proof
+on:
+  pull_request:
+    paths:
+      - "supabase/migrations/20271120110000_tenant_media_assets.sql"
+      - "supabase/migrations/20271113870000_content_publications.sql"
+      - "supabase/tests/tenant_media_assets.sql"
+      - ".github/workflows/tenant-media-assets-proof.yml"
+  workflow_dispatch:
+
+jobs:
+  proof:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: "Create the isolated database the fixture's guard demands"
+        run: |
+          PGPASSWORD=postgres psql -U postgres -h localhost -tAc "CREATE DATABASE tenant_media_assets_contract"
+      - name: "Run the fixture (the REAL migration chain, then 29 checks)"
+        run: |
+          PGPASSWORD=postgres psql -U postgres -h localhost -d tenant_media_assets_contract -v ON_ERROR_STOP=1 -f supabase/tests/tenant_media_assets.sql 2>&1 | tee proof.log
+          grep -E "tenant_media_assets: [0-9]+ checks passed" proof.log

@@ -453,6 +453,15 @@ describe("normal PaigeChat remount scroll behavior", () => {
     return {user:{id:memoryFixture.actor,user_metadata:{}} as never,session:null};
   };
 
+  it("keeps saved customer response illustrations inert without removing source citations or answer text",async()=>{
+    const props=returningCustomer();portalFixture.read.mockResolvedValue({threadId:"private-thread",messages:[{id:"private-answer",role:"assistant",
+      content:"**Saved answer**\n\n![Reference illustration](https://assets.example.invalid/customer.png)\n\n[Source](https://example.org/guide)"}]});
+    await act(async()=>{root.render(<PaigeChat {...props}/>);await memoryFlush();});
+    expect(host.querySelector('img[src="https://assets.example.invalid/customer.png"]')).toBeNull();
+    expect(host.textContent).toContain("Saved answer");expect(host.textContent).toContain("Reference illustration");
+    expect(host.querySelector('a[href="https://example.org/guide"]')).not.toBeNull();
+  });
+
   it("sends the selected customer business, verified bearer and private-only turn to CURA",async()=>{
     const props=returningCustomer();portalFixture.read.mockResolvedValue({threadId:"e0945000-0000-4000-8000-000000000001",messages:[]});
     const sent=vi.fn(async(..._args:unknown[])=>new Response('data: {"choices":[{"delta":{"content":"Authorized customer reply"}}]}\n\ndata: [DONE]\n\n',{status:200,headers:{"Content-Type":"text/event-stream"}}));vi.stubGlobal("fetch",sent);
@@ -771,6 +780,62 @@ describe("normal PaigeChat remount scroll behavior", () => {
     expect(host.querySelector<HTMLButtonElement>('button[aria-label="Send message"]')!.disabled).toBe(true);
     await act(async()=>{host.querySelector("textarea")!.dispatchEvent(new KeyboardEvent("keydown",{key:"Enter",bubbles:true}));await memoryFlush();});
     expect(privateFileFixture.prepare).not.toHaveBeenCalled();expect(sent).not.toHaveBeenCalled();
+  });
+
+  const selectPublicLink=async(value:string)=>{
+    await act(async()=>{[...host.querySelectorAll("button")].find(b=>b.textContent==="Add link")!.click();await memoryFlush();});
+    const field=host.querySelector<HTMLInputElement>('input[type="url"]')!;
+    await act(async()=>{Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,"value")!.set!.call(field,value);field.dispatchEvent(new Event("input",{bubbles:true}));});
+    return field;
+  };
+  it("retains a bad public address and question without sending or preparing private files",async()=>{
+    const props=returningCustomer();portalFixture.read.mockResolvedValue({threadId:"private-thread",messages:[]});const sent=vi.fn();vi.stubGlobal("fetch",sent);
+    await act(async()=>{root.render(<PaigeChat {...props}/>);await memoryFlush();});
+    const url="https://example.org/"+"a".repeat(490),field=await selectPublicLink(url);
+    const message=host.querySelector("textarea")!;
+    act(()=>{Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,"value")!.set!.call(message,"Keep my question");message.dispatchEvent(new Event("input",{bubbles:true}));});
+    await act(async()=>{host.querySelector<HTMLButtonElement>('button[aria-label="Send message"]')!.click();await memoryFlush();});
+    expect(field.value).toBe(url);expect(field.getAttribute("aria-invalid")).toBe("true");expect(document.activeElement).toBe(field);
+    expect(message.value).toBe("Keep my question");expect(sent).not.toHaveBeenCalled();expect(privateFileFixture.prepare).not.toHaveBeenCalled();
+  });
+  it("sends a deliberately selected normalized link only on Send and releases it after exact original history readback",async()=>{
+    const props=returningCustomer(),thread="e0945000-0000-4000-8000-000000000001",url="https://example.org/guide";
+    portalFixture.read.mockResolvedValue({threadId:thread,messages:[]});
+    const sent=vi.fn(async(_url:unknown,init:RequestInit)=>{const body=JSON.parse(String(init.body));
+      portalFixture.read.mockResolvedValue({threadId:thread,messages:[{id:"selected-question",role:"user",content:"Please read this public page.",requestIntentId:body.requestIntentId,publicLink:url},
+        {id:"actual-answer",role:"assistant",content:"Original page answer"}]});
+      return new Response('data: {"choices":[{"delta":{"content":"Original page answer"}}]}\n\ndata: [DONE]\n\n');});vi.stubGlobal("fetch",sent);
+    await act(async()=>{root.render(<PaigeChat {...props}/>);await memoryFlush();});
+    const field=await selectPublicLink("https://EXAMPLE.org/guide");
+    act(()=>field.dispatchEvent(new KeyboardEvent("keydown",{key:"Enter",bubbles:true})));
+    expect(document.activeElement).toBe(host.querySelector("textarea"));expect(sent).not.toHaveBeenCalled();
+    await act(async()=>{host.querySelector<HTMLButtonElement>('button[aria-label="Send message"]')!.click();await memoryFlush();});
+    expect(sent).toHaveBeenCalledTimes(1);const body=JSON.parse(String(sent.mock.calls[0][1].body));
+    expect(body.customerPublicLink).toBe(url);expect(body.messages).toEqual([{role:"user",content:"Please read this public page."}]);
+    for(const key of ["document","attachments","clientId","clientContext","approvedConfirmations"])expect(body).not.toHaveProperty(key);
+    expect(portalFixture.read).toHaveBeenCalledTimes(2);expect(host.querySelector('input[type="url"]')).toBeNull();
+    expect(host.textContent).toContain(url);expect(host.textContent).toContain("Selected link");expect(host.textContent).toContain("Original page answer");
+  });
+  it.each([true,false])("requires exact selected-link recovery without a second send; correct receipt=%s",async(correct)=>{
+    const props=returningCustomer(),thread="e0945000-0000-4000-8000-000000000001",url="https://example.org/guide";
+    portalFixture.read.mockResolvedValue({threadId:thread,messages:[]});
+    const sent=vi.fn(async(_url:unknown,init:RequestInit)=>{const body=JSON.parse(String(init.body));
+      portalFixture.read.mockResolvedValue({threadId:thread,messages:[{id:"saved-question",role:"user",content:"Please read this public page.",requestIntentId:body.requestIntentId,
+        publicLink:correct?url:"https://example.org/another"},{id:"saved-answer",role:"assistant",content:"Saved original reply"}]});throw Error("Synthetic lost reply");});vi.stubGlobal("fetch",sent);
+    await act(async()=>{root.render(<PaigeChat {...props}/>);await memoryFlush();});await selectPublicLink(url);
+    await act(async()=>{host.querySelector<HTMLButtonElement>('button[aria-label="Send message"]')!.click();await memoryFlush();});
+    expect(host.querySelector<HTMLInputElement>('input[type="url"]')!.disabled).toBe(true);
+    await act(async()=>{[...host.querySelectorAll("button")].find(b=>b.textContent==="Check conversation")!.click();await memoryFlush();});
+    expect(sent).toHaveBeenCalledTimes(1);expect(portalFixture.outcome).toHaveBeenCalledOnce();
+    if(correct){expect(host.querySelector('input[type="url"]')).toBeNull();expect(host.textContent).toContain("Saved original reply");}
+    else{expect(host.querySelector<HTMLInputElement>('input[type="url"]')!.disabled).toBe(true);expect(host.textContent).not.toContain("Saved original reply");}
+  });
+  it("does not transfer a selected link into another customer relationship",async()=>{
+    const props=returningCustomer();portalFixture.read.mockResolvedValue({threadId:"private-thread",messages:[]});
+    await act(async()=>{root.render(<PaigeChat {...props}/>);await memoryFlush();});await selectPublicLink("https://example.org/previous");
+    portalFixture.frame={...(portalFixture.frame as object),profile:{id:"e0935000-0000-4000-8000-000000000002",tenant_id:"e0925000-0000-4000-8000-000000000002"},brand:{tenant_name:"Other test business"},config:{}};
+    await act(async()=>{root.render(<PaigeChat {...props}/>);await memoryFlush();});
+    expect(host.querySelector('input[type="url"]')).toBeNull();expect(host.textContent).not.toContain("example.org/previous");
   });
 
 });

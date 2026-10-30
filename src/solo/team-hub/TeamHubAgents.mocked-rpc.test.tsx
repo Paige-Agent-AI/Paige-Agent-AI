@@ -30,7 +30,7 @@ vi.mock("@/integrations/supabase/client", () => ({ supabase: { rpc: mocks.rpc, f
 vi.mock("@/lib/paigePromptHandoff", () => ({ handOffPaigePrompt: mocks.handoff }));
 vi.mock("@/hooks/useTenantContext", () => ({
   useTenantContext: () => ({
-    activeTenant: { id: TENANT, account_type: mocks.tenant.accountType }, activeTenantId: TENANT, activeUserId: ME,
+    activeTenant: { id: TENANT, account_type: mocks.tenant.accountType, parent_tenant_id: null, account_number: 4242424 }, activeTenantId: TENANT, activeUserId: ME,
     loading: false, accountContextStatus: "ready", refresh: vi.fn(),
   }),
 }));
@@ -231,6 +231,35 @@ async function click(element: HTMLElement | undefined | null) {
 const rowOf = (host: HTMLElement, id: string) => host.querySelector<HTMLElement>(`#th-msg-${id}`);
 const liveRegion = (host: HTMLElement) => host.querySelector<HTMLElement>("[aria-live=polite]")!;
 const turnBody = (index: number) => turns[index].teamHubAgentTurn as Row;
+
+describe("source-backed MERIT answer and original record navigation", () => {
+  const id = "12345678-1234-4234-8234-123456789012";
+  const links = [{ destination: "sales_agreements", record_id: id }];
+  it("reopens the same source from the private DM after a fresh workspace mount", async () => {
+    mocks.tenant.accountType = "standalone";
+    db.conversations = [agentDm("merit")];
+    db.messages["c-dm-merit"] = [reply("merit", null, "The agreement is a draft.", {
+      id: "r-source", source_backed_read: true, paige_record_links: links,
+    })];
+    for (let i = 0; i < 2; i++) {
+      const host = await mount(); await click(host.querySelector<HTMLButtonElement>('[aria-label^="MERIT, agent,"]'));
+      const row = rowOf(host, "r-source")!;
+      expect(row.textContent).toContain("The agreement is a draft.");
+      expect(row.querySelector("[data-paige-record-links]")?.textContent).toContain("See it in your workspace");
+      const link = row.querySelector<HTMLAnchorElement>("[data-paige-record-links] a")!;
+      expect(link.getAttribute("href")).toContain("/solo/4242424/sales/agreements");
+      expect(link.getAttribute("href")).toContain(id);
+      await act(async () => mounted.pop()!.unmount()); host.remove();
+    }
+  });
+  it("never presents private source links in a shared channel even if a malformed DTO carries them", async () => {
+    mocks.tenant.accountType = "standalone";
+    db.messages["c-launch"] = [reply("merit", null, "A general answer.", {
+      id: "r-shared", source_backed_read: true, paige_record_links: links,
+    })];
+    const host = await mount(); expect(rowOf(host, "r-shared")?.querySelector("[data-paige-record-links]")).toBeNull();
+  });
+});
 
 describe("flow 2: mention an agent in a channel", () => {
   it("sends the mention with the message, shows CURA is writing… to the asker, then CURA's reply as CURA", async () => {

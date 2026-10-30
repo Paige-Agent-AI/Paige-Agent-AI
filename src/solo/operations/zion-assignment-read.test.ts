@@ -1,5 +1,5 @@
 import { afterEach, expect, it, vi } from 'vitest';
-import { createClient, FunctionsHttpError } from '@supabase/supabase-js';
+import { AuthApiError, AuthRetryableFetchError, AuthSessionMissingError, createClient, FunctionsHttpError } from '@supabase/supabase-js';
 import { readZionAssignments } from './zion-assignment-read';
 
 const actor = '10000000-0000-4000-8000-000000000001';
@@ -14,10 +14,30 @@ const detail = () => ({ ok: true, matches: [], invocation: { ...summary, created
   receipt_state: 'verified', receipt_id: receipt as string | null, receipt_at: time as string | null, response_text: 'Review the original commitment.',
   response_truncated: false, completion_scope: 'specialist_response_only', note: 'Response only, no business effect.' } });
 function ports(data: unknown = sample()) {
-  return { auth: { getSession: vi.fn(async () => ({ data: { session: { user: { id: actor } } }, error: null as unknown })) },
+  type SessionRead = Awaited<ReturnType<Parameters<typeof readZionAssignments>[1]['auth']['getSession']>>;
+  return { auth: { getSession: vi.fn(async (): Promise<SessionRead> => ({ data: { session: { user: { id: actor } } }, error: null })) },
     functions: { invoke: vi.fn(async (_name: string, _options: { body: Record<string, unknown> }) => ({ data, error: null as unknown })) } };
 }
 afterEach(() => vi.useRealTimers());
+it.each(['sample-before', 'sample-after', 'detail-before', 'detail-after'])('keeps actual retryable Auth503 unavailable during %s', async stage => {
+  const isDetail = stage.startsWith('detail'), caller = ports(isDetail ? detail() : sample());
+  const failed = { data: { session: null }, error: new AuthRetryableFetchError('Temporary Auth outage', 503) };
+  if (stage.endsWith('before')) caller.auth.getSession.mockResolvedValueOnce(failed);
+  else caller.auth.getSession.mockResolvedValueOnce({ data: { session: { user: { id: actor } } }, error: null }).mockResolvedValueOnce(failed);
+  expect(await readZionAssignments(scope, caller, () => scope, isDetail ? summary : undefined)).toEqual({ status: 'unavailable' });
+  expect(caller.auth.getSession).toHaveBeenCalledTimes(stage.endsWith('before') ? 1 : 2);
+  expect(caller.functions.invoke).toHaveBeenCalledTimes(stage.endsWith('before') ? 0 : 1);
+});
+it.each([new AuthRetryableFetchError('Network unavailable', 0), new AuthApiError('Rate limited', 429, 'over_request_rate_limit'), new TypeError('Unknown Auth transport failure')])('does not claim revoked access from ambiguous Auth: %s', async error => {
+  const caller = ports(); caller.auth.getSession.mockResolvedValueOnce({ data: { session: null }, error });
+  expect(await readZionAssignments(scope, caller, () => scope)).toEqual({ status: 'unavailable' });
+  expect(caller.functions.invoke).not.toHaveBeenCalled();
+});
+it.each([new AuthSessionMissingError(), new AuthApiError('Invalid session', 401, 'bad_jwt'), new AuthApiError('Denied', 403, 'not_admin')])('preserves actual confirmed SDK session denial: %s', async error => {
+  const caller = ports(); caller.auth.getSession.mockResolvedValueOnce({ data: { session: null }, error });
+  expect(await readZionAssignments(scope, caller, () => scope)).toEqual({ status: 'refused' });
+  expect(caller.functions.invoke).not.toHaveBeenCalled();
+});
 it('uses only caller-bound original discovery and keeps non-ZION sample coverage honest', async () => {
   const payload = sample(); payload.recent_invocations.push({ ...summary, id: '30000000-0000-4000-8000-000000000002', specialist: 'vera' });
   const caller = ports(payload);

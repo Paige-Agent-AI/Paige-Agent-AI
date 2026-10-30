@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createClient, type User } from '@supabase/supabase-js';
 import { createBookingsSnapshotAdapter } from '../../supabase/functions/_shared/paige-context/adapters/bookings.ts';
 import { composeBusinessReview } from '../../supabase/functions/_shared/paige-context/business-review.ts';
-import { businessReviewRecordLinks } from '../../supabase/functions/_shared/paige-context/business-review-chat.ts';
+import { businessReviewRecordLinks, dispatchBusinessSnapshotChat } from '../../supabase/functions/_shared/paige-context/business-review-chat.ts';
 import { resolveSnapshotPeriod, validateDomainSnapshot } from '../../supabase/functions/_shared/paige-context/snapshot.ts';
 import type { ContextIdentity } from '../../supabase/functions/_shared/paige-context/mod.ts';
 
@@ -139,6 +139,19 @@ describe('original Calendar agenda within Business Review', () => {
     expect(result.snapshot.domains.bookings.status).toBe('available');
     expect(result.projection).toContain('Saved appointment');
     expect(businessReviewRecordLinks(result.snapshot)).toContainEqual({ destination: 'calendar', record_id: null });
+  });
+  it.each([true, false])('keeps separately rendered navigation truthful when native Calendar authority is %s', async authorized => {
+    const f = fixture(); f.source.list_team_bookings = []; f.source.is_tenant_admin = authorized;
+    const result = await dispatchBusinessSnapshotChat({ who: { actorId: id(1), tenantId: id(2), role: 'owner', accountShape: 'solo' }, timezone: 'UTC' },
+      { caller: f.client }, { focus: ['bookings'] }, now);
+    expect(result.status).toBe('available');
+    expect(result.record_links).toEqual(authorized ? [{ destination: 'executive', record_id: null }, { destination: 'calendar', record_id: null }] : []);
+    expect(result.message).toContain('Original workspace links, when supplied, are rendered separately');
+    expect(result.message).toContain('Do not assert that no link was returned');
+    expect(result.message).not.toContain('/solo/');
+    expect(result.projection).not.toContain('https://');
+    expect(result.projection).not.toContain('PRIVATE');
+    expect(f.calls.every(call => !/create|update|cancel|delete|send/.test(call.name))).toBe(true);
   });
   it('withholds both source content and the Calendar reference when original native authority refuses', async () => {
     const f = fixture(); f.source.is_tenant_admin = false;

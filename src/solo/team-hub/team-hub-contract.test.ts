@@ -22,6 +22,7 @@ import {
   isAgentAuthored,
   TEAM_HUB_AGENT_KEYS,
   parseMessagePage,
+  parseTeamHubMessage,
   parsePosted,
   parseThreadPage,
   refreshLeavesGap,
@@ -77,6 +78,25 @@ const list = (over: Record<string, unknown> = {}) => ({
   ok: true, tenant_id: TENANT, me: { user_id: "u-me" },
   people: [person(), person({ user_id: "u-me", display_name: "Morgan Hale", permission: "owner" })],
   conversations: [conversation()], ...over,
+});
+
+describe("original source-backed agent record references", () => {
+  const id = "12345678-1234-4234-8234-123456789012";
+  it("retains sanitized original references on a native tagged agent reply", () => {
+    const parsed = parseTeamHubMessage({ ...message({ author_kind: "agent", agent_key: "merit" }), source_backed_read: true,
+      paige_record_links: [{ destination: "sales_agreements", record_id: id, url: "https://example.test/not-authority" }] });
+    expect(parsed?.record_links).toEqual([{ destination: "sales_agreements", record_id: id }]);
+    expect(parsed?.source_backed_read).toBe(true);
+  });
+  it("ordinary people, untagged replies and unknown reference destinations cannot manufacture links", () => {
+    for (const row of [message(), message({ author_kind: "agent", agent_key: "merit" })]) {
+      const parsed = parseTeamHubMessage({ ...row, paige_record_links: [{ destination: "sales_agreements", record_id: id }] });
+      expect(parsed?.record_links).toBeUndefined();
+    }
+    const parsed = parseTeamHubMessage({ ...message({ author_kind: "agent", agent_key: "merit" }), source_backed_read: true,
+      paige_record_links: [{ destination: "invented", record_id: id }] });
+    expect(parsed?.record_links).toEqual([]);
+  });
 });
 
 describe("response validation", () => {

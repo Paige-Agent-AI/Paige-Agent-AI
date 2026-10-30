@@ -181,6 +181,12 @@ export const supabase = {
   functions: {
     invoke: async (fn: string, opts?: { body?: Record<string, unknown> }) => {
       window.__studioCalls.push({ fn: `invoke:${fn}`, args: opts?.body ?? null });
+      if (fn === "growth-hosting-command") {
+        // The honest DORMANT answer the real door gives today (no platform token configured):
+        // refused, disabled, no approval minted — the product's own sentence.
+        const body = { ok: false, refused: true, disabled: true, code: "HOSTING_NOT_ENABLED", error: "Hosting isn't switched on yet. Nothing was changed." };
+        return { data: null, error: { name: "FunctionsHttpError", message: "status 403", context: { json: async () => body } } };
+      }
       if (fn !== "growth-publish-command") return { data: null, error: { message: "unstubbed" } };
       return door(opts?.body ?? {});
     },

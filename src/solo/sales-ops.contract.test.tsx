@@ -83,6 +83,8 @@ vi.mock("./useSocialCommand", () => ({
     recordHandles: async () => ({ ok: true, recordedCount: 0 }), retry() {},
   }),
 }));
+// The Social tab mounts the Go Live panel; its own door/world suite owns its proof.
+vi.mock("./go-live", () => ({ GoLive: () => <div data-golive-stub /> }));
 vi.mock("./data/useSoloPendingActions", () => ({
   useSoloPendingActions: () => ({ items: [], loading: false, error: null, refresh() {} }),
 }));

@@ -1,5 +1,5 @@
 -- EXP08 Team Hub agents, A2b: Prepare in an agent DM, then Approve / Not now / the outcome.
--- Migration: supabase/migrations/20271121140008_exp08_team_hub_a2b_cards.sql.
+-- Migration: supabase/migrations/20271126020008_exp08_team_hub_a2b_cards.sql.
 -- Contract: docs/delivery/exp08-team-hub-agents-contract.md, section 5 A2 ("A2b").
 -- Disposable PostgreSQL only. Never target the linked project. The proof runs in a database it creates
 -- and drops.
@@ -752,6 +752,9 @@ INSERT INTO public.paige_subagents(slug,name,department,domain,rail_display_name
 CREATE FUNCTION pg_temp.check(ok boolean, label text) RETURNS void LANGUAGE plpgsql AS $$
 BEGIN IF ok IS NOT TRUE THEN RAISE EXCEPTION 'FAIL: %', label; END IF; END $$;
 
+-- Current released native publication and NEXUS connection prerequisites.
+\ir fixtures/exp08-a2b-peer-prerequisites.sql
+
 -- 1. Before the change: the four helpers are production's bodies (the values the migration pins), and
 -- the two doors it replaces are this chain's bodies (A1a's post door, A1b's acceptance).
 DO $$ DECLARE r record; BEGIN
@@ -761,7 +764,7 @@ DO $$ DECLARE r record; BEGIN
    ('_team_hub_is_active(uuid,uuid)','c290399dc80d95d16116a0f88b0abd8c'),
    ('_team_hub_participates(uuid,uuid)','4f2fb69d09f7b362027edf195a37da83'),
    ('team_hub_accept_agent_turn(uuid,uuid,uuid,uuid,text,text,text)','f28f30095f96a0c58e1206cbe61340d2'),
-   ('team_hub_post_agent_message(uuid,uuid,text,text,uuid,uuid,uuid,text,text,boolean)','c6930cf3329da4c0db6a8390f1564eaa')) v(sig, md)
+   ('team_hub_post_agent_message(uuid,uuid,text,text,uuid,uuid,uuid,text,text,boolean)','d9739dd46a7c93a73a3d054a7cf098da')) v(sig, md)
  LOOP
   IF (SELECT md5(prosrc) FROM pg_proc WHERE oid=('public.'||r.sig)::regprocedure) IS DISTINCT FROM r.md THEN
    RAISE EXCEPTION 'FAIL: % is not the body the migration was written against', r.sig; END IF;
@@ -773,7 +776,7 @@ CREATE TEMP TABLE before_src AS SELECT p.oid::regprocedure::text AS sig, p.prona
 CREATE TEMP TABLE roster_before AS SELECT * FROM public.paige_subagents;
 
 -- 2. The change, then a second apply: a no-op.
-\ir ../migrations/20271121140008_exp08_team_hub_a2b_cards.sql
+\ir ../migrations/20271126020008_exp08_team_hub_a2b_cards.sql
 CREATE TEMP VIEW a2b_state AS
 SELECT 'fn:'||p.oid::regprocedure::text AS k, concat_ws('|', p.proacl::text, p.prosecdef::text, p.provolatile::text, p.proconfig::text, md5(p.prosrc)) AS v
  FROM pg_proc p WHERE p.pronamespace='public'::regnamespace AND (p.proname LIKE '%team_hub%' OR p.proname='operator_retirement_disposition')
@@ -792,7 +795,7 @@ SELECT 'tg:'||t.tgname, t.tgrelid::regclass::text||'|'||t.tgfoid::regprocedure::
 UNION ALL
 SELECT 'roster:'||a.slug, (to_jsonb(a)-'updated_at')::text FROM public.paige_subagents a;
 CREATE TEMP TABLE a2b_before AS SELECT * FROM a2b_state;
-\ir ../migrations/20271121140008_exp08_team_hub_a2b_cards.sql
+\ir ../migrations/20271126020008_exp08_team_hub_a2b_cards.sql
 DO $$ BEGIN
  IF EXISTS(SELECT k,v FROM a2b_before EXCEPT SELECT k,v FROM a2b_state)
    OR EXISTS(SELECT k,v FROM a2b_state EXCEPT SELECT k,v FROM a2b_before) THEN
@@ -872,7 +875,7 @@ BEGIN$h$,
   -- Already$h$,
   $h$ UPDATE public.team_hub_agent_turns t SET consumed_at=now(), posted_message_id=msg.id WHERE t.id=turn.id;
  RETURN$h$, (SELECT substring(src FROM ' UPDATE public\.team_hub_agent_turns t SET consumed_at=now\(\), posted_message_id=msg\.id WHERE t\.id=turn\.id;\n -- A2b: the card link.*?\n END IF;\n RETURN'))]))
-  <>'c6930cf3329da4c0db6a8390f1564eaa' THEN
+  <>'d9739dd46a7c93a73a3d054a7cf098da' THEN
   RAISE EXCEPTION 'FAIL: outside its A2b hunks, team_hub_post_agent_message differs from the A1a body'; END IF;
  -- Every A2b block undone above starts with an "A2b:" comment (the regex hunks match from it).
  IF (length(src)-length(replace(src,'-- A2b:','')))/length('-- A2b:')<>6 THEN
@@ -976,7 +979,7 @@ DO $$ BEGIN
  IF (SELECT config->'capability_scope' FROM public.paige_subagents WHERE slug='zion')
     <>'{"version":2,"mode":"allowlist","access":"card","tools":["ask_choices","capability_status","read_business_time_zone","team_hub_read_conversation","crm_list_tasks","crm_get_task","plan_list","read_weekly_commitment_status","read_calendar_agenda","read_calendar_booking","crm_list_team","crm_assign_task","crm_cancel_task"]}'::jsonb
    OR (SELECT config->'capability_scope' FROM public.paige_subagents WHERE slug='nexus')
-    <>'{"version":2,"mode":"allowlist","access":"card","tools":["ask_choices","capability_status","read_business_time_zone","team_hub_read_conversation","growth_list","campaign_brief_list","read_campaign_leads","growth_page_publish"]}'::jsonb THEN
+    <>'{"version":2,"mode":"allowlist","access":"card","tools":["ask_choices","capability_status","read_business_time_zone","team_hub_read_conversation","growth_list","campaign_brief_list","read_campaign_leads","integrations_list","growth_page_publish"]}'::jsonb THEN
   RAISE EXCEPTION 'FAIL: ZION and NEXUS do not read back their version 2 scopes'; END IF;
  IF EXISTS(SELECT 1 FROM roster_before b JOIN public.paige_subagents a USING (slug)
    WHERE a.version IS DISTINCT FROM b.version + CASE WHEN a.slug IN ('zion','nexus') THEN 1 ELSE 0 END
@@ -990,7 +993,7 @@ CREATE FUNCTION pg_temp.try(q text) RETURNS text LANGUAGE plpgsql AS $$
 BEGIN EXECUTE q; RETURN 'ran'; EXCEPTION WHEN OTHERS THEN RETURN SQLERRM; END $$;
 BEGIN;
 UPDATE public.paige_subagents SET config=jsonb_set(config,'{capability_scope,tools}','["ask_choices"]'), version=version+1 WHERE slug='nexus';
-\set rostersql `sed -n '/^UPDATE public.paige_subagents a SET/,/^END \$\$;/p' supabase/migrations/20271121140008_exp08_team_hub_a2b_cards.sql`
+\set rostersql `sed -n '/^UPDATE public.paige_subagents a SET/,/^END \$\$;/p' supabase/migrations/20271126020008_exp08_team_hub_a2b_cards.sql`
 SELECT pg_temp.try(:'rostersql') AS rs \gset
 SELECT pg_temp.check((SELECT config->'capability_scope'->'tools'='["ask_choices"]'::jsonb FROM public.paige_subagents WHERE slug='nexus')
  AND :'rs' LIKE 'Team Hub A2b: the ZION or NEXUS platform row does not read back%', 'roster: a customised NEXUS scope is never overwritten, and the read-back refuses it: '||:'rs');
@@ -1588,7 +1591,7 @@ INSERT INTO mutant_results VALUES ('K15 decline does not consume', :'g');
 
 -- The migration's own guard: run on its own, it accepts the bodies as they are now (this file's) and
 -- refuses a dependency or a replaced body that differs.
-\set guardsql `sed -n '/^DO \$guard\$/,/^END \$guard\$;/p' supabase/migrations/20271121140008_exp08_team_hub_a2b_cards.sql`
+\set guardsql `sed -n '/^DO \$guard\$/,/^END \$guard\$;/p' supabase/migrations/20271126020008_exp08_team_hub_a2b_cards.sql`
 SELECT pg_temp.try(:'guardsql') AS gd0 \gset
 BEGIN;
 SELECT pg_temp.mutate('public._team_hub_participates(uuid,uuid)'::regprocedure, 'AND m.team_hub_access)', 'AND m.team_hub_access) -- drift');

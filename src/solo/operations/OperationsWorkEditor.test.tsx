@@ -55,6 +55,17 @@ it("preserves supported admin controls for work assigned to another person", asy
   expect(container.querySelector('input[type="datetime-local"]')).not.toBeNull();
   expect(Array.from(container.querySelectorAll("label")).some(label => label.textContent?.startsWith("Responsible person"))).toBe(true);
 });
+it("allows an active target-tenant admin to review a reminder time without a global app role", async () => {
+  // The existing tenant predicate is the authority fact; a global role elsewhere
+  // must not be an additional prerequisite for this workspace's administrator.
+  mock.roles = { loading: false, userId: "manager", roles: [] };
+  mock.rpc.mockImplementation(async (name, args) => ({
+    data: name === "is_tenant_admin" && args._tenant === "tenant-a", error: null,
+  }));
+  await render({ ...item, item_type: "reminder" }, "manager");
+  expect(container.querySelector('input[type="datetime-local"]')).not.toBeNull();
+  expect(mock.submit).not.toHaveBeenCalled();
+});
 it.each(["creator", "admin", "super_admin"])("preserves the qualified %s reminder-time path and exact submitted field", async role => {
   const reminder = { ...item, item_type: "reminder" as const, priority: "normal" as const };
   const actor = role === "creator" ? "creator" : "manager";

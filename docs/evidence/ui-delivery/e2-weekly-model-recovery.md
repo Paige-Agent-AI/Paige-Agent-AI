@@ -7,10 +7,10 @@ MATERIAL_FLOW_CHANGE: NO: reliability repair inside the approved weekly read flo
 FLOW_PROTOTYPE: NOT_REQUIRED: no new or redesigned interaction.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: an authorized owner can obtain a sourced review when an incumbent provider proves failure before any semantic output; no automatic business action.
 VISUAL_DIRECTION: PASS: preserve the approved immersive Executive and shared Chat design.
-AUTOMATED_EVIDENCE: PASS: original Fabric172/0 and adapter99/0 baselines; failure-first Fabric177/8; current extended Fabric194/0 and adapter105/0. Synthetic recording ports, no provider effect. Final C0b/type/hosted checks remain owed.
+AUTOMATED_EVIDENCE: PASS: original Fabric172/0 and adapter99/0 baselines; failure-first Fabric177/8; current extended Fabric196/0 and adapter106/0. Synthetic recording ports, no provider effect. Final composed C0b/type/hosted checks remain owed.
 STATIC_EVIDENCE: PASS: whole current-main Root inverse after exactly five signal fields; original test source/assertions additive; entire nonstreaming adapter/Fabric unchanged. Pre-pin source review786aa65619314669db504aed76f3828e5f81c85c, AUTHOR-REVIEW / LOWER ASSURANCE. Final-head review/CI remains required.
 RENDERED_EVIDENCE: UNVERIFIED: no layout change; a released repaired weekly answer and its existing rendered feedback remain proof owed. Finance rendering does not establish this model behavior.
-BEHAVIORAL_EVIDENCE: FAIL: additional pre-header abort probe safely refuses fallback but labels the actual caller cancellation unknown/network. Correct before release; prior194/105 controls remain supporting and production weekly recovery is unverified.
+BEHAVIORAL_EVIDENCE: PASS: pre-header and authority-await cancellation now report actual abort/interrupted, never fallback. Failure-first194/2 Fabric and105/1 adapter controls now196/0 and106/0. Production weekly recovery remains unverified.
 AUTHENTICATED_RUNTIME: UNVERIFIED: earlier useful weekly answers and the latest interrupted request remain dated evidence; no automatic retry or new success is inferred.
 KEYBOARD_FOCUS: NOT_APPLICABLE: no control/focus code changes; new caller-cancellation source controls are automated, not physical keyboard acceptance.
 ZOOM_REFLOW: NOT_APPLICABLE: no markup, dimensions or styling change; no new viewport claim.
@@ -37,8 +37,11 @@ which remains unverified. This repair does not rewrite that historical failure.
 
 Additional unreleased-source probe on786aa confirms that cancellation before
 HTTP headers avoids fallback but is recorded as unknown/network rather than
-caller-aborted/interrupted. This source finding remains OPEN before release;
-original ANT50/fa8c91d6 and the private bounded probe retain the failed control.
+caller-aborted/interrupted. Original ANT50/fa8c91d6 and the private bounded probe
+retain that failed control. The corrective source now reports actual abort at
+both waits, preserves budget refusal and records an interrupted provider trace;
+new tests reproduce194/2 and105/1 before the correction, then196/0 and106/0.
+This resolves the local finding; final composed review/release proof is owed.
 
 The original full six-file C0b suite passes270/0 after the reviewed two dependency
 and29 enclosing-literal renewals. All128 current-main source pins and29 dispatches

@@ -637,6 +637,14 @@ console.log("9. transport-read batching preserves the existing SSE protocol and 
   const [raceTrace] = await tracesSince(raceFrom);
   ok(raceAcquisition?.aborted && raceTrace?.status === 'error' && traceCount() === raceFrom + 1,
     '10.3 cancellation between HTTP open and parser start cannot lose the original attempt trace');
+
+  const preHeader = new AbortController(), preHeaderFrom = traceCount();
+  const stopped = await ad.responsesStream(message, { model: 'gpt-6.1-sol', signal: preHeader.signal,
+    fetchImpl: async () => { preHeader.abort(); throw new DOMException('Synthetic cancellation.', 'AbortError'); },
+  }, TRACE);
+  const [preHeaderTrace] = await tracesSince(preHeaderFrom);
+  ok(!stopped.ok && !stopped.body && preHeaderTrace?.error_class === 'stream_interrupted'
+    && traceCount() === preHeaderFrom + 1, '10.4 pre-header caller cancellation retains one interrupted trace, not a provider network incident');
 }
 console.log(`\nopenai-responses: ${pass} passed, ${fail} failed`);
 if (fail) process.exit(1);

@@ -3265,10 +3265,10 @@ provider configuration, business writer, approval or Rail action is introduced.
 
 Useful output remains the original weekly explanation with accurate periods,
 currency, sources and unavailable coverage, persisted by original Chat settlement.
-Evaluation: incumbent source177PASS8FAIL; current Fabric194/0 and adapter105/0,
+Evaluation: incumbent source177PASS8FAIL; current Fabric196/0 and adapter106/0,
 including abort races, fragmented input, per-attempt traces and forbidden replay.
-An additional unreleased pre-header abort probe safely prevents fallback but
-misclassifies cancellation; this remains an OPEN correction before release.
+An additional unreleased pre-header abort probe exposed a cancellation-label
+defect, corrected with failure-first194/2 and105/1 ->196/0 and106/0 controls.
 Root whole-file inverse and original assertions are preserved. Final source-pin
 review/negative controls/exact CI/deployment/readback and actual weekly answer,
 reload, interruption, legitimate cohorts/roles/Live remain owed. See

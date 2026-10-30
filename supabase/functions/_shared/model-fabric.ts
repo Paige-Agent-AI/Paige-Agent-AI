@@ -278,11 +278,13 @@ export async function fabricChatStream(cls: CognitiveClass, body: ChatShapeBody 
         if (opts.beforeProviderAttempt) {
           let current = false;
           try { current = await opts.beforeProviderAttempt() === true; } catch { /* authority unavailable */ }
+          if (opts.signal?.aborted) return aborted();
           if (!current) return callerRefused();
         }
         if (opts.signal?.aborted) return aborted();
         const effort = OPENAI_EFFORT_BY_CLASS[klass as OpenAIReasoningClass];
         opened = await responsesStream(body, { model, effort, fetchImpl: opts.openaiFetch, signal: opts.signal }, opts.trace);
+        if (opts.signal?.aborted) { await opened.body?.cancel().catch(() => {}); return aborted(); }
         if (opened.acquisition) {
           const acquired = await opened.acquisition;
           if (!acquired.ok || opts.signal?.aborted) {
@@ -309,13 +311,13 @@ export async function fabricChatStream(cls: CognitiveClass, body: ChatShapeBody 
         opened = { ok: r.ok, status: r.status, body: r.body, failureClass: r.ok ? undefined : proven ?? classifyProviderFailure({ provider: "anthropic", status: r.status }) };
       }
     } catch (e) {
-      if (opts.signal?.aborted) return aborted();
       // A budget stop is a decision, not a provider failure: it is never retried elsewhere.
       if ((e as { code?: unknown })?.code === "budget_exceeded") {
         attempts.push({ provider: c.provider, model, failure: "budget_exceeded" });
         if (opts.trace) opts.trace.fabric_route = null;
         throw e;
       }
+      if (opts.signal?.aborted) return aborted();
       // What the throw proves, and nothing more: a missing key is configuration; a timeout or a fetch
       // TypeError is transport; anything else thrown before a response (a refused tool, a model outside
       // the allow-list) proves no provider-health failure, so it is `unknown` and never falls back.

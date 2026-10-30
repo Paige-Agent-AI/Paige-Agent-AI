@@ -406,7 +406,7 @@ export async function responsesStream(body: ChatShapeBody, opts: ResponsesStream
     });
   } catch (e) {
     const m = String((e as Error)?.message ?? e).slice(0, 500);
-    emitTrace(trace, { model: opts.model, status: "error", started, input: body.messages, error_class: "network", error_message: m });
+    emitTrace(trace, { model: opts.model, status: "error", started, input: body.messages, error_class: opts.signal?.aborted ? "stream_interrupted" : "network", error_message: m });
     return { ok: false, status: 0, error: m, failureClass: opts.signal?.aborted ? "unknown" : classifyProviderFailure({ provider: "openai", status: 0, transport: (e as Error)?.name === "TimeoutError" ? "timeout" : "network" }) };
   }
   if (!resp.ok || !resp.body) {

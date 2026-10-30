@@ -984,6 +984,23 @@ openaiPlan = { status: 200 }; anthropicPlan = { status: 200 };
     && secondary.metadata?.route_fallback === true && trace.fabric_route?.served_provider === 'anthropic',
     `J9 each original trace retains its own provider/route while the caller observes the actual fallback (${rows.length} rows)`);
 }
+// Cancellation before HTTP open is the caller's state, never a provider fault.
+{
+  setScenario({});
+  const ctrl = new AbortController(); let opens = 0;
+  const r = await run('frontier', { ...ON, signal: ctrl.signal,
+    openaiFetch: async () => { opens++; ctrl.abort(); throw new DOMException('Synthetic cancellation.', 'AbortError'); },
+  });
+  ok(!r.s.ok && r.s.served === null && opens === 1 && r.calls.length === 0
+    && r.s.attempts.at(-1)?.failure === 'aborted', 'J11 pre-header cancellation is reported as aborted with no fallback');
+  const atAuthority = new AbortController(); opens = 0;
+  const refused = await run('frontier', { ...ON, signal: atAuthority.signal,
+    beforeProviderAttempt: async () => { atAuthority.abort(); return false; },
+    openaiFetch: async () => { opens++; throw new Error('CANCELLED_DISPATCH_FORBIDDEN'); },
+  });
+  ok(!refused.s.ok && opens === 0 && refused.calls.length === 0
+    && refused.s.attempts.at(-1)?.failure === 'aborted', 'J11 cancellation during authority check is not misreported as an authority refusal');
+}
 // The five incumbent Root entry points must actually forward cancellation;
 // an adapter-only signal test cannot establish that the owner can interrupt.
 {

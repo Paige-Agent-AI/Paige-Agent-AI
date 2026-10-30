@@ -92,6 +92,41 @@ The agents' replies above the cards and the Suggest sentence are hand-written st
 
 ## Evidence index
 
+### New task-read freshness P1 — repair under review, October 30, 2026
+
+Automated review `5707385501` on #3108/`98c4a26022` found a real authority-snapshot gap
+(`PRRT_kwDOSAAXqM6x0z0D`). **Release held.** Prior source-only reviews did not identify it;
+the successful Preview and local SQL do not waive it. No customer incident is asserted.
+Four new regression cases reproduced **120 PASS / 4 FAIL** before the repair: demotion before
+dispatch, during read, after the final answer, and absent native staging. The application now
+re-resolves current actor/workspace/seat/admin/DM/stored scope before and after each A2b read,
+before provider attempts and before publication; a lost scope ends the turn without a post.
+The final host suite passes **126/126**, including additional shared-Fabric pre-attempt refusal
+and roster-change cases. The combined original agent/card/specialist suites passed **310/310**
+before those final two test-only cases were added. These are author-run engineering tests.
+
+Forward migration `20271126030008` extends the ORIGINAL accepted-token read-context guard for
+PAIGE/ZION/NEXUS. Original MERIT/CURA/VERA logic is byte-exact after removing the marked A2b
+branch and restoring the original three-agent predicate; the complete original OID/metadata/
+ACL guard and metadata inverse remain. New native body MD5 `a75a322d43e4cde08f5142d1eabf6ddb`.
+Original applied `26020008` and E04 applied history are unchanged. Staging and posting remain
+the same original path; there is no second authority engine or attestation store.
+
+The disposable PostgreSQL proof passes all original 16 sections/16 mutants plus new guard
+replay, whole-peer-body inverse, current admin staging, demotion/roster/account-change refusal,
+browser attestation refusal, authorized PAIGE/ZION/NEXUS publication and out-of-scope source
+refusals. An additional native mutant removes the authority guard, demonstrates the forbidden
+post, then rolls back; the unmutated guard refuses it. No original assertion was removed.
+An independent read-only reviewer found no actionable source issue in the repair; they did not
+rerun tests or certify hosted/authenticated behavior. Renewed exact-head review/CI, application
+of the new forward migration, native readback and actual authorized customer proof remain owed.
+
+Reusable lesson: offer-time authorization is not permission to use a service-role read later.
+Revalidate around the read and provider continuation, and serialize current authority with the
+original publication transaction. Private-read staging admits at most three distinct sources
+per turn, matching the original protocol; this is a scope/technical bound with a follow-up path,
+not a monetary allowance or a change to uncapped consuming-tenant billing.
+
 ### Hosted failure disposition and sequential carrier — October 30, 2026
 
 Original #3041 is preserved at successor integration head

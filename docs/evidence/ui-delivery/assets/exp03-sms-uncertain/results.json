@@ -1,0 +1,90 @@
+[
+  {
+    "theme": "light",
+    "width": 1536,
+    "height": 770,
+    "requestCount": 1,
+    "originalWords": true,
+    "originalWarningVisible": true,
+    "closedAttempt": true,
+    "reopenDoesNotResend": true,
+    "errors": []
+  },
+  {
+    "theme": "light",
+    "width": 1366,
+    "height": 768,
+    "requestCount": 1,
+    "originalWords": true,
+    "originalWarningVisible": true,
+    "closedAttempt": true,
+    "reopenDoesNotResend": true,
+    "errors": []
+  },
+  {
+    "theme": "light",
+    "width": 1024,
+    "height": 768,
+    "requestCount": 1,
+    "originalWords": true,
+    "originalWarningVisible": true,
+    "closedAttempt": true,
+    "reopenDoesNotResend": true,
+    "errors": []
+  },
+  {
+    "theme": "light",
+    "width": 900,
+    "height": 1000,
+    "requestCount": 1,
+    "originalWords": true,
+    "originalWarningVisible": true,
+    "closedAttempt": true,
+    "reopenDoesNotResend": true,
+    "errors": []
+  },
+  {
+    "theme": "dark",
+    "width": 1536,
+    "height": 770,
+    "requestCount": 1,
+    "originalWords": true,
+    "originalWarningVisible": true,
+    "closedAttempt": true,
+    "reopenDoesNotResend": true,
+    "errors": []
+  },
+  {
+    "theme": "dark",
+    "width": 1366,
+    "height": 768,
+    "requestCount": 1,
+    "originalWords": true,
+    "originalWarningVisible": true,
+    "closedAttempt": true,
+    "reopenDoesNotResend": true,
+    "errors": []
+  },
+  {
+    "theme": "dark",
+    "width": 1024,
+    "height": 768,
+    "requestCount": 1,
+    "originalWords": true,
+    "originalWarningVisible": true,
+    "closedAttempt": true,
+    "reopenDoesNotResend": true,
+    "errors": []
+  },
+  {
+    "theme": "dark",
+    "width": 900,
+    "height": 1000,
+    "requestCount": 1,
+    "originalWords": true,
+    "originalWarningVisible": true,
+    "closedAttempt": true,
+    "reopenDoesNotResend": true,
+    "errors": []
+  }
+]

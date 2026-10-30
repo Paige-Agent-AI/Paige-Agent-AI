@@ -70,7 +70,7 @@ export function CustomerChatAttachments(props: Props) {
       <input ref={input} type="file" multiple accept=".pdf,.jpg,.jpeg,.png,.docx" tabIndex={-1}
         aria-label="Choose private files for this message" className="sr-only"
         disabled={!props.enabled || props.locked || props.busy || uncertain || files.length >= CUSTOMER_CHAT_FILE_LIMIT}
-        onClick={() => {pickerChoice.current = props.onBeginSelection ? props.onBeginSelection() : props.onSelect;}}
+        onClick={() => {pickerChoice.current = props.onBeginSelection?.() ?? null;}}
         onChange={event => {
           const selected = Array.from(event.currentTarget.files ?? []);
           const receive = pickerChoice.current; pickerChoice.current = null;

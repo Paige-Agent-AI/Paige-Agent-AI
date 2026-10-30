@@ -89,3 +89,12 @@ it("returns a previously admitted picker choice to its captured handler during a
   expect(begin).toHaveBeenCalledTimes(1); expect(complete).toHaveBeenCalledWith(files);
   expect(props.onSelect).not.toHaveBeenCalled();
 });
+
+it("keeps a legacy presentation callback blocked when access is withdrawn while its picker is open", () => {
+  render(); const input = host.querySelector("input")!, original = props.onSelect;
+  act(() => input.dispatchEvent(new MouseEvent("click", {bubbles: true})));
+  props.enabled = false; render();
+  Object.defineProperty(input, "files", {value: [draft().file]});
+  act(() => input.dispatchEvent(new Event("change", {bubbles: true})));
+  expect(original).not.toHaveBeenCalled();
+});

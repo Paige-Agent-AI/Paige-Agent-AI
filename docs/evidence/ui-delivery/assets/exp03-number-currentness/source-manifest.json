@@ -1,0 +1,40 @@
+{
+  "scope": "Captured raw bytes; LF transport hash separately, not production evidence",
+  "files": [
+    {
+      "path": "src/lib/integrations/connectError.ts",
+      "rawSha256": "26f5a47233fdea5520dc51230fc45d8a3b5cf15bf3c5fee7b0176fd589c8be3b",
+      "lfSha256": "26f5a47233fdea5520dc51230fc45d8a3b5cf15bf3c5fee7b0176fd589c8be3b"
+    },
+    {
+      "path": "src/solo/data/useSoloNumbers.ts",
+      "rawSha256": "51b544850d1f68641745dff73f4f1d794670c0a044aed56c8048532e29522df2",
+      "lfSha256": "51b544850d1f68641745dff73f4f1d794670c0a044aed56c8048532e29522df2"
+    },
+    {
+      "path": "src/solo/settings.tsx",
+      "rawSha256": "bc68d474819250421f6619c25efb075952c88b3c2d76386654ca2845af44955f",
+      "lfSha256": "bc68d474819250421f6619c25efb075952c88b3c2d76386654ca2845af44955f"
+    },
+    {
+      "path": "scripts/live-drive/harness/exp03-number-currentness-mount/main.tsx",
+      "rawSha256": "639ea50bbc62c2854d60b06806165c3e4b32ff6daf92b52ba7e8bbb5c5e6769a",
+      "lfSha256": "987184bd3f021ecaebd300560e003e3dd42f4a0dc182993a3ea2445bcdc9eda7"
+    },
+    {
+      "path": "scripts/live-drive/harness/exp03-number-currentness-mount/stubs.ts",
+      "rawSha256": "22d8a90e3042319530240eba35498ac35901bf0a842f546db8d8ed56099f40bb",
+      "lfSha256": "e1ed366c4d443f94e49ca4d22382c0ee5b29cb70f0d527e207534ef59fb96315"
+    },
+    {
+      "path": "scripts/live-drive/harness/exp03-number-currentness-mount/vite.config.ts",
+      "rawSha256": "c996213c5a6cdb69ba3d308195872d3deadaa0f9bf7656ea10e47dfbfe08fc89",
+      "lfSha256": "285500a912d9a0b22eea65d228b196c36ec4fbbb683a99ff2ff5596a35ac29b0"
+    },
+    {
+      "path": "scripts/live-drive/harness/exp03-number-currentness-mount/drive.mjs",
+      "rawSha256": "4c7cc7d35904502929886dd40c668fa7a224bcf6e660fc016ec0235802ffafa7",
+      "lfSha256": "f6b004fa3592c0a24aeaf744b510ca0c1181a372e0d5785b510edefe7ab4a955"
+    }
+  ]
+}

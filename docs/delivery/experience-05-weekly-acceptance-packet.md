@@ -980,3 +980,46 @@ reload/recovery, eligible existing/new SOLO cohorts and both-chat proof owed.
 `operations.department` and catalogue stay PARTIAL; no Live promotion.
 All ten outcomes/E5 cases remain open for integrated verification.
 Founder NOT_ACCEPTED; STILL CODING / NOT_READY.
+
+## October30 UTC — saved-design source release and Task producer continuation
+
+Earlier source-only checkpoints above remain historical. #3097 closed the original
+3091/3093 Master rows and merged7b33ff3d after all10 exact checks/BOTH web statuses,
+schema-free PreviewSKIP and lower review5705422755. Its editing window returned
+to E04 then E02; no concurrent new Master edit is authorized by this packet.
+
+#3098 saved-design inspection mergedb696ea038b6e26b43c8d1787dc65c59da5c89b86
+from reviewed9bf995467 after all10 exact checks/BOTH web statuses/zero threads,
+PreviewSKIP and AUTHOR-REVIEW / LOWER ASSURANCE5705572872. Original203 assertions,
+16 frames/139 input pins and unchanged one-step guard retained. Vercel exact
+b696 READY; BOTH public origins00:02:40–42UTC serve buildb696-mvu7ftrs and the
+actual static module settings-integrations-CaOH2jQG.js, SHA256
+6bca20fa7e5d85cc331d052e4d7247a5a5d83311e58504e81fdbd78a3a463d01/all4 markers.
+GH3098/6511496787 retains source readback. This is source/web verified, NOT
+authenticated saved-design/full lifecycle/Rail/new-existing SOLO acceptance.
+
+The original native-order hold is resolved: E04#3099/native10 and E09#3100/native11
+are merged/published and production9/10/11eachONCE/frontier11,12ABSENT. Original
+Task executor OID289875/MD5bbcae6a52f1967ac78128ddb125491bb/service-onlyACL remains.
+Own native candidate normally composes mainb696 into26a08338; migration12 remains
+NEVER-APPLIED, exact source preserved. No applied history rewrite or activation.
+
+The newly advertised Task effort field exposed a pre-publication exact-approval
+gap in the actual original CRM handler. Bounded Task-only validation/summary now
+shows set35/zero/one/max/clear-to-unknown and combined original status/title,
+refusing malformed input or metadata replacement conflict before proposal. Actual
+handler104 cases, original CRM47 contracts/four suites and generator15 controls
+PASS. Native20 component checks/three actual two-connection races retain explicit
+synthetic peripheral Auth/access/hash/receipt ports; they are not native RLS/Rail.
+Full-schema225 pgTAP cases, hosted required exact-head CI/Preview/review and native
+deployment remain owed. Dependent original Operations editor stays separately
+preserved, not shipped ahead of native support. No new writer/approval/registry.
+
+This backend-visible-flow change has an explicit Visible-Flow-Impact trailer and
+[original approval evidence](../evidence/ui-delivery/exp05-task-effort-native.md).
+Four neutral unchanged-card frames prove bounded layout/focus, not authenticated
+stored approvals, full SOLO shell, native200%, AT or customer records. Native12
+and affected original Edge deployment/readback must precede production claims.
+All ten outcomes/E5-CV1–9, same ZION/both chats, O02 feasible saved plan then full
+O05/O07/O09, current/new SOLO/customer/founder acceptance remain OPEN. Catalogue
+and algorithms remain PARTIAL. STILL CODING / NOT_READY; no founder test request.

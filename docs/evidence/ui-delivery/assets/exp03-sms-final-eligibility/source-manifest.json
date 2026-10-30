@@ -1,0 +1,14 @@
+{
+  "proof": "Unchanged original dialog plus explicitly fictional injected refusal. Separate actual backend/gate tests; no full shell, PAIGE, authenticated, saved-thread or provider proof.",
+  "files": {
+    "src/pages/admin/conversations/ComposeThreadDialog.tsx": "1d9761a3e9c315b6d204f421073480f47dadce2a40e2a5946bddb2dcccd07e41",
+    "src/pages/admin/conversations/inbox-shared.ts": "d6b844b5ff1616f0c97108b177de3eb06f7647bb66735a03d65480960a021a35",
+    "supabase/functions/_shared/pre-send-pipeline.ts": "ecce9022e76edc26c6fe6594315e50416fc3ac4e3c7dde49119cc03c6d75d511",
+    "supabase/functions/send-message/index.ts": "394ea96d49bd9794021ca8fdc72735bee3c1f8ca80ddc98e690b17048d301e22",
+    "scripts/live-drive/harness/exp03-sms-final-eligibility-mount/index.html": "b1bc574c04638e01d86f966f1d3090e6c1abe28adc05382ac83f43299839efed",
+    "scripts/live-drive/harness/exp03-sms-final-eligibility-mount/main.tsx": "018bfa30dd34d3f9a3e18377b783367f41b3387a8b86a73aacad8f996e5d5c58",
+    "scripts/live-drive/harness/exp03-sms-final-eligibility-mount/stubs.ts": "5630b5cac58591452ebbf00743ab4f147215b6774cd73c7382141aeba01dcab0",
+    "scripts/live-drive/harness/exp03-sms-final-eligibility-mount/vite.config.ts": "582854bbaf7bf2fbe698304a6d07e1a17c2f767d3d052b95002a7700c4b53a69",
+    "scripts/live-drive/harness/exp03-sms-final-eligibility-mount/drive.mjs": "4251b13bef96a1e30969a50b474ee8cbe1620de085c1f25c186cdaf17f78de27"
+  }
+}

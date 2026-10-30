@@ -1730,3 +1730,42 @@ waits or the remaining full-I2 dependencies. Next failing-first races must inclu
 changes and platform/agency authority changes while waiting, plus token expiry during the new
 tenant wait: the current candidate evaluates some scope predicates before that wait. Do not
 release this intermediate component before those currentness paths are tested and repaired.
+
+### I2 actual expiry waits — local repair and proof, 2026-10-30
+
+Extend the same original native runner using independent psql sessions in its own uniquely-created
+database. The original acceptance really waits on the tenant row, then separately on the original
+profile UPDATE. No fake trigger/clock/transport/sleep assertion substitutes for observing a real
+`pg_stat_activity` lock wait. An actual short-lived token expires by wall-clock before releasing
+the blocker. The first attempt hit a fixture `row_to_json(uuid)` alias error before any race and
+remains a failed setup attempt. The corrected failure-first run proves the candidate incorrectly
+accepts the expired token: seat/pointer/token/profile/audit all commit. Preserve
+`exp08-first-owner-invitation-wait-before-v2.log` as **FAIL**.
+
+Repair the same UNVERSIONED original-function patch: re-check actual clock expiry after the tenant
+wait and at the function's final return for subaccount_owner only, after original writes. Late
+`OWNER_INVITE_EXPIRED`/42501 rolls back the whole original transaction. Whole-body inverse now also
+removes that exact final bounded conditional before proving the original0194 body; no unrelated
+consumer/agency/team statements or existing ACL/metadata change. No existing applied migration is
+edited. The native currentness fixture is reset only by recreating the SAME database made by this
+run, then reloading the original fixture before older proof groups; no peer database is touched.
+
+Actual final selected run: history22 cases/six mutants/replay and invitation13 cases/four mutants/
+five drifts/replay still pass. Both tenant and profile **valid waits PASS**, and both **expired waits
+PASS** with zero effects across the five original outputs. Deliberately removing ONLY the final
+expiry check makes the actual profile wait commit all five effects again, killing that mutant.
+Log `exp08-first-owner-invitation-final-waits.log`; terminal exit0/own database disposed. These are
+native minimal-schema/original-writer controls, not authenticated customer or full-schema proof.
+Actor/agency/tenant-kind changes, broader lock ordering and all prior full-I2 integration/release
+dependencies remain coding work; this expiry repair does not close them.
+
+Separately, original manual CI41134479447 on published032e is terminal verify124333440477 **SUCCESS**,
+web-fetch124333440955 **SUCCESS**, comms124333440777 **FAIL** at the retained original Billing
+authority-loss assertion. Thus the workflow is not green. It does not cover this later local
+unversioned candidate. Parent3130/producer3142 remain held; full EXP08 **STILL CODING**.
+
+NON-AUTHOR SOURCE review reports no material issue within this bounded expiry repair and no
+independent native execution. It retains authority/type/agency wait changes, full lock ordering,
+provisioning and release integration as unfinished work. Next specific scope race: a non-shell
+tenant becoming Solo while original acceptance waits on the original owner-pointer write; a
+pre-wait non-shell classification must not bypass the applicable first-owner rule afterward.

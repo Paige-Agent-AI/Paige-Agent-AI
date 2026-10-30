@@ -3,6 +3,18 @@
 DO $patch$
 DECLARE sig text; expected text; original text; replacement text; old_body text; new_body text;
   definition text; before_metadata jsonb; after_metadata jsonb; target oid;
+  inverse_body text;
+  tail_before constant text:=$before$
+  RETURN _tok.tenant_id;
+END$before$;
+  tail_after constant text:=$after$
+  -- EXP08_FIRST_OWNER_FINAL_EXPIRY_V1: all original writes are transactional; a late refusal
+  -- rolls back seat, pointer, profile, token and audit together, including waits after admission.
+  IF _tok.kind='subaccount_owner' AND _tok.expires_at<=pg_catalog.clock_timestamp() THEN
+    RAISE EXCEPTION 'invite has expired' USING ERRCODE='42501',HINT='OWNER_INVITE_EXPIRED';
+  END IF;
+  RETURN _tok.tenant_id;
+END$after$;
 BEGIN
   FOR sig,expected,original,replacement IN SELECT * FROM (VALUES
     ('public.create_tenant_invite_token(uuid,text,public.tenant_role,integer,integer,uuid,text)',
@@ -28,6 +40,9 @@ BEGIN
     -- EXP08_FIRST_OWNER_ACCEPT_V1: same token, original tenant serialization, no silent admin downgrade.
     IF public._solo_shell_tenant(_tok.tenant_id) THEN
       PERFORM 1 FROM public.tenants WHERE id=_tok.tenant_id FOR UPDATE;
+      IF _tok.expires_at<=pg_catalog.clock_timestamp() THEN
+        RAISE EXCEPTION 'invite has expired' USING ERRCODE='42501',HINT='OWNER_INVITE_EXPIRED';
+      END IF;
       IF public.is_platform_owner(_tok.created_by)
          AND NOT public.agency_can_manage_child(_tok.tenant_id, _tok.created_by)
          AND NOT public._tenant_never_owned(_tok.tenant_id) THEN
@@ -48,13 +63,24 @@ BEGIN
     END IF;
     -- Replay is admitted only when removing this exact complete span recovers the exact incumbent.
     IF md5(old_body)<>expected THEN
-      IF strpos(old_body,replacement)=0 OR md5(replace(old_body,replacement,original))<>expected THEN
+      inverse_body:=old_body;
+      IF sig='public.accept_tenant_invite(text)' THEN
+        IF strpos(inverse_body,tail_after)=0 THEN RAISE EXCEPTION 'EXP08 first owner invitation requires exact original source: %',sig; END IF;
+        inverse_body:=replace(inverse_body,tail_after,tail_before);
+      END IF;
+      IF strpos(old_body,replacement)=0 OR md5(replace(inverse_body,replacement,original))<>expected THEN
         RAISE EXCEPTION 'EXP08 first owner invitation requires exact original source: %',sig;
       END IF;
       CONTINUE;
     END IF;
     new_body:=replace(old_body,original,replacement);
-    IF new_body=old_body OR replace(new_body,replacement,original)<>old_body THEN
+    IF sig='public.accept_tenant_invite(text)' THEN
+      IF strpos(new_body,tail_before)=0 THEN RAISE EXCEPTION 'EXP08 first owner invitation tail is not exact: %',sig; END IF;
+      new_body:=replace(new_body,tail_before,tail_after);
+    END IF;
+    inverse_body:=new_body;
+    IF sig='public.accept_tenant_invite(text)' THEN inverse_body:=replace(inverse_body,tail_after,tail_before); END IF;
+    IF new_body=old_body OR replace(inverse_body,replacement,original)<>old_body THEN
       RAISE EXCEPTION 'EXP08 first owner invitation replacement is not exact: %',sig;
     END IF;
     definition:=pg_get_functiondef(target);

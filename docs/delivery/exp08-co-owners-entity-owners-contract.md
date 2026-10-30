@@ -1,5 +1,32 @@
 # EXP08 co-owners and entity owners: delivery contract
 
+### October30 actual-source recovery: holder state already belongs to I1
+
+The original applied I1 `20271120010008` already defines `_tenant_account_holder_state(uuid)`
+at lines326–347 and `_assert_tenant_account_holder` immediately afterward. Fresh production
+catalogue read confirms the actual SQL/STABLE/definer/postgres/pathpublic/private-only helper,
+body **8f9d27463a4c825994f165a5777aca1f**, matching that original source. It derives archived,
+missing pointer/identity, working, exact suspended holder and none, with NULL for a missing tenant.
+This is BUILT/source-released I1 support, not a missing I2 implementation or a recovery permission.
+
+The successor initially missed that implementation in the historical handoff. Its proposed LOCAL
+140008 replacement was preserved in the local work packet and withdrawn before commit, managed
+publication or apply. No duplicate helper or new migration ships. Its unpublished candidate-only
+drift tests do not claim to enforce production; they are retired with that candidate. The original
+source characterization remains in the original lifecycle proof runner: **20 current-I1 cases**,
+seven load-bearing mutants, actual denied execution as anon/authenticated/service roles, exact
+original-definition replay with no row/metadata change, and unchanged incumbent owner/holder helpers.
+The first expanded fixture omitted the incumbent's original ACL and correctly met a strict refusal;
+the fixture now extracts the actual source ACL. No production guard was relaxed. Original earlier
+46 cases, mutation/drift controls and two real PostgreSQL lock races remain unchanged.
+
+Fresh production signature read separately confirms `platform_owner_recovery`, `_tenant_never_owned`
+and `remove_solo_team_co_owner` absent. Full R9/R12 recovery, first-owner history/backfill, billing
+contact cleanup, original Setup/provisioning changes, native projections, approved I3 interfaces,
+both-chat I4 and I5 still require implementation/integration/proof. Existing I1 does not complete them.
+Use actual source chronology over the historical I2 descriptions below; preserve all original
+rulings, denominators and later management-delegation amendments. Full EXP08 remains STILL CODING.
+
 October30 current unpublished-component order: original E05 PR3121/604d0888 records already-published E09 60009 and original Planning receipt70005 after40008→Task50005. The local NEVER-MANAGED I2 candidate60008 below was therefore forward-renumbered to **20271126080008_exp08_entity_owner_seat_ended.sql** before managed publication. Historical60008 references are retained as history, not an apply instruction. SQL body is byte-identical; only its own runner path changes. No peer/applied migration changes or release-order waiver. Original I2 trigger source review found no material finding; native component proof remains bounded and must still accompany exact-head hosted/release gates.
 
 Status: **CONTRACT, round 7 (2026-10-27): design APPROVED by the owner (§28 frozen), open questions §10.1, §10.2a, §10.11 and §10.13 owner-ruled (R12–R15); R16 (operator powers over Solo accounts kept as shipped) reverses B3, D-A, D-B. I1 built (branch `exp08-owners-i1`, migration `20271120010008`), round 2, 3, 4, 5, 6 and 7 review findings applied.** Round 5 text follows, amended only where those rulings change it; reversed text is kept struck through and marked (§58), never silently deleted. Grounded on **`origin/main` at `50468eec2`** (fetched

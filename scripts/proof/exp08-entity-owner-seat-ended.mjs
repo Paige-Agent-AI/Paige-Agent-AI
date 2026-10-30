@@ -21,6 +21,7 @@ const collaborationSource=readFileSync(new URL('../../supabase/migrations/202711
 const lifecycleSource=readFileSync(new URL('../../supabase/migrations/20271115040008_exp08_team_lifecycle.sql',import.meta.url),'utf8');
 const actorFixture=readFileSync(new URL('../../supabase/tests/exp08_team_hub_actor_lifecycle.sql',import.meta.url),'utf8');
 const actorMigration=readFileSync(new URL('../../supabase/migrations/20271126100008_exp08_team_hub_actor_lifecycle.sql',import.meta.url),'utf8');
+const holderStateFixture=readFileSync(new URL('../../supabase/tests/exp08_account_holder_state.sql',import.meta.url),'utf8');
 function privateHelper(source,name,signature) {
   const start=source.indexOf(`CREATE OR REPLACE FUNCTION public.${name}(`);
   const endPattern=`REVOKE ALL ON FUNCTION public.${name}(${signature})`;
@@ -210,6 +211,10 @@ try {
   await replacementRace();
   sql(originalFunction(tenantAuthoritySource, 'is_tenant_owner'));
   sql(originalFunction(coOwnerSource, 'is_tenant_account_holder'));
+  // Load the incumbent's REAL private/service ACL too; default CREATE FUNCTION PUBLIC execution
+  // is not the production prerequisite and must not be accepted by the candidate's drift guard.
+  const holderAcl=coOwnerSource.match(/REVOKE ALL ON FUNCTION public\.is_tenant_account_holder\(uuid, uuid\) FROM PUBLIC, anon, authenticated;\s*GRANT EXECUTE ON FUNCTION public\.is_tenant_account_holder\(uuid, uuid\) TO service_role;/)?.[0];
+  assert.ok(holderAcl,'Original account-holder helper ACL required');sql(holderAcl);
   sql(originalFunction(coOwnerSource, 'revoke_co_owner'));
   sql('REVOKE ALL ON FUNCTION public.revoke_co_owner(uuid,uuid) FROM PUBLIC,anon; GRANT EXECUTE ON FUNCTION public.revoke_co_owner(uuid,uuid) TO authenticated,service_role;');
   assert.equal(sql("select md5(prosrc) from pg_proc where oid='public.is_tenant_owner(uuid,uuid)'::regprocedure;"),'f392787e7469ed325960850ad091473d');
@@ -330,6 +335,47 @@ try {
   }
   sql(actorMigration);assert.ok(actorCases().every(r=>r.passed));
   records.push({phase:'original-actor-lifecycle-final-metadata',metadata:JSON.parse(sql("select json_build_object('body',md5(prosrc),'owner',proowner::regrole::text,'definer',prosecdef,'path',proconfig,'acl',proacl::text) from pg_proc where oid='public._team_hub_refusal(uuid)'::regprocedure;"))});
+  sql(holderStateFixture);
+  // Already shipped in I1: characterize the REAL source, never install a duplicate I2 implementation.
+  const originalHolderState=originalFunction(invitationSource,'_tenant_account_holder_state');
+  const stateAcl=invitationSource.match(/REVOKE ALL ON FUNCTION public\._tenant_account_holder_state\(uuid\) FROM PUBLIC, anon, authenticated, service_role;/)?.[0];
+  assert.ok(stateAcl,'Original private holder-state ACL required');sql(`${originalHolderState}\n${stateAcl}`);
+  const holderCases=()=>sql('select row_to_json(t) from proof.holder_state_cases() t;').split('\n').filter(Boolean).map(JSON.parse);
+  const holderCurrent=holderCases();assert.equal(holderCurrent.length,20);
+  assert.ok(holderCurrent.every(r=>r.passed),JSON.stringify(holderCurrent));
+  records.push({phase:'original-holder-state-current-I1',cases:holderCurrent});
+  const incumbentHolderMetadata="select (to_jsonb(p)-'prosrc')::text from pg_proc p where oid='public.is_tenant_account_holder(uuid,uuid)'::regprocedure;";
+  const holderSnapshot="select json_build_object('tenants',(select json_agg(t order by id) from public.tenants t),'users',(select json_agg(u order by id) from auth.users u),'members',(select json_agg(m order by id) from public.tenant_members m),'owners',(select json_agg(o order by id) from public.tenant_business_owners o),'audit',(select json_agg(a order by id) from public.paige_audit_log a));";
+  const incumbentBefore=sql(incumbentHolderMetadata);
+  const holderSignature='public._tenant_account_holder_state(uuid)';
+  const holderDefinition=sql(`select pg_get_functiondef('${holderSignature}'::regprocedure);`);
+  const holderMetadata=()=>sql(`select to_jsonb(p)::text from pg_proc p where oid='${holderSignature}'::regprocedure;`);
+  assert.equal(sql(`select md5(prosrc) from pg_proc where oid='${holderSignature}'::regprocedure;`),'8f9d27463a4c825994f165a5777aca1f');
+  const holderBeforeReplay=holderMetadata();const holderBeforeRows=sql(holderSnapshot);
+  sql(`${originalHolderState}\n${stateAcl}`);
+  assert.equal(holderMetadata(),holderBeforeReplay);assert.equal(sql(holderSnapshot),holderBeforeRows);
+  assert.equal(sql(incumbentHolderMetadata),incumbentBefore);
+  records.push({phase:'original-holder-state-original-definition-replay',row_changes:0,metadata_changes:0});
+  for(const role of ['anon','authenticated','service_role']){
+    sql(`BEGIN; SET LOCAL ROLE ${role}; SELECT public._tenant_account_holder_state('e8000000-0000-4000-8000-000000060010');`,database,true,/permission denied for function _tenant_account_holder_state/);
+    records.push({phase:'original-holder-state-private-role',role,execution_denied:true});
+  }
+  for(const [name,mutate] of [
+    ['archive precedence removed',s=>s.replace('WHEN t.archived_at IS NOT NULL','WHEN false AND t.archived_at IS NOT NULL')],
+    ['current identity check removed',s=>s.replace('OR NOT EXISTS (SELECT 1 FROM auth.users u WHERE u.id = t.owner_user_id)','')],
+    ['incumbent holder check removed',s=>s.replace('WHEN public.is_tenant_account_holder(t.owner_user_id, t.id)','WHEN false AND public.is_tenant_account_holder(t.owner_user_id, t.id)')],
+    ['paused tenant correlation removed',s=>s.replace('m.tenant_id = t.id AND ','')],
+    ['paused person correlation removed',s=>s.replace('m.user_id = t.owner_user_id','true')],
+    ['paused owner predicate removed',s=>s.replace('AND m.is_owner = true ', '')],
+    ['missing target abstention removed',s=>s.replace('WHERE t.id = _tenant','WHERE true')],
+  ]){
+    const changed=mutate(holderDefinition);assert.notEqual(changed,holderDefinition,name);sql(changed);
+    const failed=holderCases().filter(r=>!r.passed).map(r=>r.case_name);assert.ok(failed.length,`${name}: holder mutant survived`);
+    records.push({phase:'original-holder-state-mutant',name,killed_by:failed});sql(holderDefinition);
+  }
+  assert.ok(holderCases().every(r=>r.passed));
+  assert.equal(holderMetadata(),holderBeforeReplay);assert.equal(sql(incumbentHolderMetadata),incumbentBefore);
+  records.push({phase:'original-holder-state-final-metadata',metadata:JSON.parse(holderMetadata())});
   console.log(JSON.stringify({ evidence: 'isolated native component and original revoke source integration; Auth/platform/tables are ports; no authenticated/RLS/billing/provider/customer proof', records }, null, 2));
 } finally {
   if (created) { sql(`DROP DATABASE ${database};`, 'postgres'); console.log('Disposed only the database created by this run.'); }

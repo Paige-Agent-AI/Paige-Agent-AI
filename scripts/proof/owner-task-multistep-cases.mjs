@@ -132,6 +132,31 @@ export function proveOwnerTaskMultistep({ sql, text, draft, control, controlRevi
     assert.equal(sql("select count(*)from tasks;"), tasks);
     assert.equal(sql("select count(*)from paige_workspace_events;"), rails);
   });
+  for (const [accountType, parent, system] of [["agency", null, false], ["standalone", randomUUID(), false], ["company", null, false], ["standalone", null, true]]) {
+    check(`new multi-step capability refuses ${accountType}/${parent ? "child" : system ? "system-workspace" : "top-level"} while preserving original single-step control`, () => {
+      const x = draft();
+      sql(`insert into paige_automation_acts(id,automation_id,position,action_kind,config)
+        values('${randomUUID()}','${x.process}',2,'owner.task','{"title":"Next internal responsibility"}');
+        update tenants set account_type=${literal(accountType)},parent_tenant_id=${literal(parent)},features=${json({ system_workspace: system })} where id='${tenant}';`);
+      try {
+        assert.throws(() => control(x.process, "arm"), /OWNER_TASK_CONTROL_UNSUPPORTED/);
+        assert.equal(control(x.process, "pause").state, "paused");
+        assert.equal(control(draft().process, "arm").state, "live");
+      } finally { sql(`update tenants set account_type='standalone',parent_tenant_id=null,features='{}'where id='${tenant}';`); }
+    });
+  }
+  for (const system of [false, true]) check(`${system ? "system-workspace" : "account-type"} eligibility change refuses the pending second effect while preserving the landed original receipt`, () => {
+    const x = sequence(), [first, second] = x.steps;
+    approve(first); claim(first); const result = bridge(first);
+    approve(second); claim(second);
+    const reclassify = system ? "features=" + json({ system_workspace: true }) : "account_type='company'";
+    sql(`update tenants set ${reclassify} where id='${tenant}';`);
+    try {
+      assert.equal(bridge(second).outcome, "failed"); assert.equal(resultCount(second), "0");
+      assert.equal(bridge(first, true).result.correlation_id, result.result.correlation_id);
+    } finally { sql(`update tenants set account_type='standalone',features='{}'where id='${tenant}';`); }
+    assert.equal(bridge(second).state, "found"); assert.equal(resultCount(second), "1");
+  });
   const signatures = ["control_owner_task_automation(uuid,text,timestamptz,jsonb,jsonb)",
     "_owner_task_source_snapshot(uuid,uuid)", "paige_owner_task_hold_context()", "_read_owner_task_act(uuid,uuid,text)"];
   const catalog = () => JSON.parse(sql(`select jsonb_object_agg(p.oid::regprocedure::text,to_jsonb(p))from pg_proc p

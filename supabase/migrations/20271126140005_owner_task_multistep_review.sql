@@ -53,11 +53,17 @@ begin
     ('public.control_owner_task_automation(uuid,text,timestamptz,jsonb,jsonb)',
       '482c0d9a996d45f084dc46067519f7c4',true,
       'if n<>1 or a.position<>1',
-      'if /* owner_task_multistep_v1 */ not public._owner_task_literal_chain_supported(acts) or a.position<>1'),
+      $new_control$if /* owner_task_multistep_v1 */ not public._owner_task_literal_chain_supported(acts)
+      or (n>1 and not exists(select 1 from public.tenants where id=tenant
+        and account_type::text='standalone' and parent_tenant_id is null
+        and not public.is_company_workspace(id) for share nowait)) or a.position<>1$new_control$),
     ('public._owner_task_source_snapshot(uuid,uuid)',
       'f87fb95e2b6c02009b73a68468183dba',false,
       'if p.id is null or a.id is null or n<>1',
-      'if p.id is null or a.id is null or /* owner_task_multistep_v1 */ not public._owner_task_literal_chain_supported(chain)'),
+      $new_snapshot$if p.id is null or a.id is null or /* owner_task_multistep_v1 */ not public._owner_task_literal_chain_supported(chain)
+    or (n>1 and not exists(select 1 from public.tenants where id=p.tenant_id
+      and account_type::text='standalone' and parent_tenant_id is null
+      and not public.is_company_workspace(id) for share nowait))$new_snapshot$),
     ('public.paige_owner_task_hold_context()',
       '57bfcbd265264ddcb93051fa5f8050ea',false,
       $old_hold$snap#>>'{acts,0,id}' is distinct from new.act_id::text or snap#>>'{acts,0,position}' is distinct from new.act_position::text

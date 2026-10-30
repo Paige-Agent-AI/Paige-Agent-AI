@@ -1,3 +1,37 @@
+## October30 19:39UTC — native reminder released; editor integration next
+
+Original #3127/5bfe6354 passed all13 exact-head checks/managed Preview and both
+web checks, received final AUTHOR-REVIEW / LOWER ASSURANCE5717729953, and merged
+1515a9ffdf3e86733e41d5dde9b58bde27d35b98. Normal migration41116346469 succeeded;
+production75005 is present once/db-live1515. Actual base function body69755a72
+inverts exactly once to reviewed original9e57d9e3; wrapper body73f3a1af,
+OID/owner/definer/search-path/ACLs remain preserved. Preview's other guarded body
+variant is not asserted as production. Verceldpl_BKJt55rvyEDdioc9AUPZASVpNduu is
+READY/exact; both official builds and actual assets were read at1515-mvvdg7m8
+19:38:54UTC. No Edge source changed in this repair; edge-liveaa is incoming CURA
+source, not a claimed Chat upgrade. Actual Admin reminder save/Rail/reload and
+dependent #3131 editor release remain owed. Original ANT11/249eb3d9 and receiving
+ANT51/e6ed650d record native-order clearance before each peer's own release.
+
+Review of unpublished multi-step source found that new1–20 support also needs
+the canonical SOLO classification. Corrected candidate now restricts NEW multi-
+step arm/capture to top-level standalone and NOT original is_company_workspace;
+one-step incumbent behavior remains unchanged for other existing departments.
+The original company classifier body is reused in the disposable native proof.
+Causal Agency denial failed before correction; all28 selected native cases now
+pass, including child/company/system-workspace refusal, reclassification before
+the pending effect, preserved landed receipts and exact replay/source guards.
+Original137/full56 evidence below belongs to its older checkpoint; full corrected
+regression/full-schema/review/CI/customer proof remain owed. No live activation.
+
+Local type ratchet returned FAIL with three missing-RealtimeKit diagnostics in
+unchanged LiveRoom. The existing linked dependency store lacks all four locked
+RealtimeKit packages; no type error was reported in the changed EXP05 files.
+Restore the exact committed dependency tree in an owned isolated install,
+preserving the old store, source/lockfile and baseline, then rerun verification.
+This is local dependency recovery, not an EXP01 source change or waived gate.
+Fullten/E5/same ZION/both chats/cohorts/founder acceptance remain OPEN.
+
 ## October30 19:20UTC — source releases and per-step automation recovery
 
 Full O01–O10 and E5-CV1–CV9 remain OPEN: STILL CODING / NOT_READY / NOT_ACCEPTED.

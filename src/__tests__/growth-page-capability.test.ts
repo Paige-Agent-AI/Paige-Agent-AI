@@ -11,9 +11,12 @@ import {
   GROWTH_PAGE_PUBLISH_CAPABILITY,
   GROWTH_PAGE_SAVE_CAPABILITY,
 } from "../../supabase/functions/_shared/paige-spine/domains/growth_page.ts";
+import { growthPagePublishToolDef } from "../../supabase/functions/_shared/growth-publish-command/chat-tools.ts";
 
-// The tool JSON the model sees stays inline in the Chat handler in this slice; read its `required`
-// list straight from the source so the declaration cannot drift from it unnoticed.
+// The save tool's JSON stays inline in the Chat handler; read its `required` list straight from the
+// source so the declaration cannot drift from it unnoticed. Publish's JSON has one home since EXP08
+// A2b (_shared/growth-publish-command/chat-tools.ts, which the handler and Team Hub both call), so its
+// `required` list is read from the real definition, and the handler is pinned to call that factory.
 const handler = readFileSync("supabase/functions/paige-ai-chat/index.ts", "utf8");
 const chatRequired = (tool: string): string[] => {
   const at = handler.indexOf(`name: "${tool}",`);
@@ -40,6 +43,8 @@ describe("Studio page tools are governed", () => {
 
   it("the declarations require what the model-facing tools require", () => {
     expect(declaredAsChat(GROWTH_PAGE_SAVE_CAPABILITY.input.required)).toEqual(chatRequired("growth_page_save"));
-    expect(declaredAsChat(GROWTH_PAGE_PUBLISH_CAPABILITY.input.required)).toEqual(chatRequired("growth_page_publish"));
+    expect(handler.includes(`name: "growth_page_publish",`), "publish is not re-declared inline").toBe(false);
+    expect(handler.match(/^\s*growthPagePublishToolDef\(\),\s*$/gm)?.length, "the handler offers the shared publish definition").toBe(1);
+    expect(declaredAsChat(GROWTH_PAGE_PUBLISH_CAPABILITY.input.required)).toEqual(growthPagePublishToolDef().function.parameters.required);
   });
 });

@@ -61,6 +61,14 @@ function turnStates(p: Row) {
   return { ok: true, states };
 }
 
+// Opt-in synthetic recovery presentation; it grants no writer or live connection.
+if (params.get("recovery") === "ready") {
+  const card=messages["c-daily"].find(m=>m.id==="a-zion-dm1")!;
+  card.body="Your task cancellation approval was recorded. You can resume it here.";
+  card.approval={ ...(card.approval as Row), kind:"Task cancel",state:"working",can_resume:true,
+    actions:[{summary:"ZION wants to cancel the task “Prepare the onboarding packet”.",fingerprint:"a1b2c3d4e5f60718"}],decided_by_name:"Morgan Reyes",decided_at:today(9,59) };
+}
+
 const harness = { calls: [] as string[] };
 (window as unknown as { __harnessCalls: typeof harness }).__harnessCalls = harness;
 

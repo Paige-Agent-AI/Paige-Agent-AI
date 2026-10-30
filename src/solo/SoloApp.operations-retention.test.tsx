@@ -139,13 +139,13 @@ it.each(["review", "pending", "unknown"])("retains %s command/inspection state a
   if (phase !== "review") await click("Confirm task change");
   const retained = sessionStorage.getItem(`paige:operations-crm-stage:${port.actor}:${port.tenant}`);
   const existingCalls = port.submit.mock.calls.length;
-  const review = dialog(); const panel = review?.querySelector('[aria-label="Review task assignment or due date"]');
+  const review = dialog(); const panel = review?.querySelector('[aria-label="Review task change"]');
   const reviewedText = panel?.textContent;
   expect(panel).toBeTruthy(); expect(Boolean(retained)).toBe(phase !== "review");
   await click("History Back"); expect(address()).toBe(work); expect(dialog()).toBeTruthy();
   // Opening the incumbent review intentionally replaces the editor. Retain
   // that exact current review/unknown panel, rather than resurrecting its input.
-  expect(dialog()).toBe(review); expect(dialog()?.querySelector('[aria-label="Review task assignment or due date"]')).toBe(panel);
+  expect(dialog()).toBe(review); expect(dialog()?.querySelector('[aria-label="Review task change"]')).toBe(panel);
   expect(panel?.textContent).toBe(reviewedText);
   expect(sessionStorage.getItem(`paige:operations-crm-stage:${port.actor}:${port.tenant}`)).toBe(retained);
   expect(port.submit).toHaveBeenCalledTimes(existingCalls); expect(existingCalls).toBe(phase === "review" ? 0 : 1);

@@ -1,0 +1,11 @@
+{
+  "controls": [],
+  "dialog": "Prepare the client delivery reviewNeutral offline workflow fixture. No customer or provider action.Refresh task detailsResponsible personMLMorgan LeeStatusReadyPriorityP1Due dateNot scheduledEstimated effort45 minutesSourceCRM taskReview a stage changependingIn progressCompletedPlan the next stepNew due date and timeTime uses your device’s timezone. Review the exact date before confirming.Review due dateClose",
+  "focus": "Refresh task details",
+  "overflow": false,
+  "url": "http://127.0.0.1:57444/solo/42/operations/work?theme=dark&effortState=denied",
+  "viewport": {
+    "height": 700,
+    "width": 320
+  }
+}

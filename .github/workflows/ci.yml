@@ -72,6 +72,8 @@ jobs:
           supabase/functions/_shared/comms-email-provider-boundary.test.mjs
           supabase/functions/_shared/comms-phone-provider-boundary.test.mjs
           supabase/functions/_shared/twilio-purchase-voice.test.ts
+          supabase/functions/_shared/twilio-sms-dispatch.test.ts
+          supabase/functions/_shared/comms-sms-result.test.mjs
           supabase/functions/twilio-status-callback/call-status.test.ts
           supabase/functions/_shared/booking-provider-boundary.test.mjs
           supabase/functions/_shared/client-portal-booking.test.ts

@@ -174,6 +174,8 @@ export interface TeamHubApprovalAction {
 }
 
 export interface TeamHubApproval {
+  /** Native read only: approved, unsettled and positively unclaimed. Never execution authority. */
+  can_resume?: boolean;
   state: TeamHubApprovalState;
   /** The kind line on the card's strip, e.g. "Operations task", "Invoice draft". */
   kind: string;
@@ -214,6 +216,7 @@ export function parseApproval(value: unknown): TeamHubApproval | null {
   const standing = value.state === "standing";
   if (standing && !isText(value.covered_by)) return null;
   return {
+    ...(value.can_resume === true && (value.state === "working" || value.state === "unconfirmed") ? { can_resume: true } : {}),
     state: value.state as TeamHubApprovalState, kind: value.kind, actions, asker_user_id: value.asker_user_id,
     decided_by_name: isText(value.decided_by_name) ? value.decided_by_name : null,
     decided_at: isInstant(value.decided_at) ? value.decided_at : null,

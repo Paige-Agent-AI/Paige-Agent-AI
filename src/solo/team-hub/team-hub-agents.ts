@@ -478,16 +478,17 @@ function parseServerCard(card: unknown, outcomeMessageId: unknown, record: unkno
   const parsedRecord = parseCardRecord(record);
   if (parsedRecord === undefined) return null;
   const waiting = card.state === "waiting";
+  const resumable = card.can_resume === true && (card.state === "working" || card.state === "unconfirmed");
   // A done or failed card carries the server's outcome note (what now exists, or why it didn't run); the
   // approved card puts it in the summary's place on done and as the reason on failed. Never on another state.
   const settled = card.state === "done" || card.state === "failed";
   const actions = card.actions.map((item) => isRow(item) ? {
     summary: item.summary,
-    ...(waiting && isText(item.fingerprint) ? { fingerprint: item.fingerprint } : {}),
+    ...((waiting || resumable) && isText(item.fingerprint) ? { fingerprint: item.fingerprint } : {}),
     ...(waiting && expiresAt ? { note: cardExpiryNote(expiresAt) }
       : settled && isText(item.note) ? { note: card.state === "failed" ? cardReasonSentence(item.note) : item.note } : {}),
   } : item);
-  const approval = parseApproval({ state: card.state, kind, actions, asker_user_id: card.asker_user_id,
+  const approval = parseApproval({ state: card.state, kind, actions, ...(resumable ? { can_resume: true } : {}), asker_user_id: card.asker_user_id,
     decided_by_name: card.decided_by_name, decided_at: card.decided_at });
   if (!approval) return null;
   return { approval, outcomeMessageId: isText(outcomeMessageId) ? outcomeMessageId : null, record: parsedRecord, expiresAt };

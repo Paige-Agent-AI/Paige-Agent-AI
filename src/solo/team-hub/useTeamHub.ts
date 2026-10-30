@@ -1409,7 +1409,7 @@ export function useTeamHub(tenantId: string, options: { onTenantRefresh?: () => 
     if (!conversationId || !prior || !fingerprint || actingCards.current.has(message.id)) return null;
     actingCards.current.add(message.id);
     // The card as the server would now draw it in `state`: the binding and the expiry go with the wait.
-    const settledAs = (state: CardRead["approval"]["state"]): CardRead => ({ ...prior, approval: { ...prior.approval, state,
+    const settledAs = (state: CardRead["approval"]["state"]): CardRead => ({ ...prior, approval: { ...prior.approval, state, can_resume: false,
       actions: prior.approval.actions.map(({ summary, state: own }) => ({ summary, ...(own ? { state: own } : {}) })) } });
     if (act.kind === "approve") putCard(conversationId, message.id, settledAs("working"));
     const answer = await invokeCardAct({ conversationId, messageId: message.id, act: act.kind, fingerprint })

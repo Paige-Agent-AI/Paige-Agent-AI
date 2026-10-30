@@ -3279,3 +3279,29 @@ business scoring/prediction N/A for this slice. ALG03/06/11/12Partial/13Unverifi
 and catalogue3ComingSoon/3Limited/3Unverified/allAccessUnverified unchanged.
 No automatic Knowledge/Memory promotion, cross-tenant learning, causal business
 improvement claim or founder acceptance follows from recovery or source tests.
+
+## October30 original Billing producer current-authority repair — development
+
+Original19 definitions/IDs and nine analytics remain unchanged. This supports
+authorized-work/evidence/continuity integrity (O12/O13/O16) and EXP08's original
+Team consumer; it does not add another Experience outcome or execution engine.
+
+Both original Billing writers now re-resolve their original current-workspace
+Owner scope after the SAME advisory wait and compare it with the retained
+initial locked workspace. They never retarget under a stale workspace lock.
+Original public ABI, all-workspace sole-primary refusal, contacts, atomic audit,
+metadata and ACL remain unchanged; no grant, payment or provider effect.
+
+Actual isolated original producer proof:8 changed-authority races FAIL before
+repair and PASS after, with2 unchanged-authority waited positives retained;
+4 causal mutants killed,9 prerequisite drift controls refuse atomically,
+whole metadata/idempotent replay and original validation/audit rollback PASS.
+Minimal Auth/workspace fixture ports are NOT hosted Auth/RLS/customer proof.
+Exact review/CI/managed Preview/native release after E05published80005 and before
+E08published80008, original-source readback, Team receiving composition and
+authenticated regression remain owed. [Bounded evidence](../evidence/ui-delivery/e2-billing-current-authority.md).
+
+Functional: local source/native proof. Visual: unchanged/no new acceptance.
+Experiential: original controls/context, hosted recovery still owed. Founder:
+OPEN. No catalogue or algorithm maturity promotion; this is deterministic
+authority validation, not predictive intelligence or causal business improvement.

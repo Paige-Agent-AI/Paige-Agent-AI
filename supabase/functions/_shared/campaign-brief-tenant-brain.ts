@@ -1,5 +1,5 @@
 /**
- * Solo Tenant Brain — verified Campaign Brief create/revise.
+ * Solo Tenant Brain — original Campaign Brief readers and verified planning writes.
  *
  * This composes the existing caller-scoped Campaign Brief projector and writer.
  * It owns no table, authority resolver, approval path, Mind projection, Memory
@@ -16,7 +16,10 @@ export type CampaignBriefRpcPort = {
   ) => PromiseLike<{ data: unknown; error: RpcError }>;
 };
 
-export type CampaignBriefToolName = "campaign_brief_create" | "campaign_brief_revise";
+// Lifecycle dispatch is a domain adapter only. Its outer caller must use the
+// original high-risk human gate; no model-supplied approval field is authority.
+export type CampaignBriefToolName = "campaign_brief_create" | "campaign_brief_revise" | "campaign_brief_transition";
+export type CampaignAssetMutationToolName = "campaign_asset_attach" | "campaign_asset_detach";
 
 type CanonicalBrief = {
   id: string;
@@ -63,7 +66,7 @@ export type CampaignBriefListContextResult =
 type RecordRun = (input: {
   tenantId: string;
   actorId: string;
-  capabilityKey: CampaignBriefToolName;
+  capabilityKey: CampaignBriefToolName | CampaignAssetMutationToolName;
   outcome: "capability_succeeded";
   runId: string;
 }) => Promise<boolean>;
@@ -99,6 +102,13 @@ const normalizedInputChannels = (value: unknown): string[] | null =>
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 function validMutationArgs(tool: CampaignBriefToolName, args: Record<string, unknown>): boolean {
+  if(tool==="campaign_brief_transition"){
+    return typeof args.briefId==="string"&&UUID_RE.test(args.briefId)
+      &&Number.isSafeInteger(args.expectedVersion)&&Number(args.expectedVersion)>0
+      &&typeof args.status==="string"&&["draft","ready_for_review","blocked","approved","active","paused","completed"].includes(args.status)
+      &&(args.blocker===undefined||(typeof args.blocker==="string"&&args.blocker.length<=4000))
+      &&Object.keys(args).every(key=>["briefId","expectedVersion","status","blocker","idempotency_key"].includes(key));
+  }
   if (tool === "campaign_brief_create" && !stringValue(args.name)) return false;
   if (tool === "campaign_brief_revise") {
     const briefId = stringValue(args.briefId);
@@ -319,6 +329,7 @@ export async function readCampaignBriefLeads(input: {
 }
 
 function commandFor(tool: CampaignBriefToolName, args: Record<string, unknown>): Record<string, unknown> {
+  if(tool==="campaign_brief_transition")return{type:"transition-brief",briefId:args.briefId,expectedVersion:args.expectedVersion,status:args.status,...(args.blocker!==undefined?{blocker:args.blocker}:{})};
   const command: Record<string, unknown> = tool === "campaign_brief_create"
     ? { type: "create-brief" }
     : { type: "update-brief", briefId: args.briefId, expectedVersion: args.expectedVersion };
@@ -351,13 +362,15 @@ function verifyBrief(input: {
 }): boolean {
   const writeId = stringValue(input.writeResult.brief_id);
   const writeVersion = integerValue(input.writeResult.version);
-  const expectedOutcome = input.tool === "campaign_brief_create" ? "created" : "updated";
+  const expectedOutcome = input.tool === "campaign_brief_create" ? "created" : input.tool === "campaign_brief_transition" ? "transitioned" : "updated";
   if (
     input.writeResult.ok === false || input.writeResult.outcome !== expectedOutcome ||
     !writeId || input.after.id !== writeId || !writeVersion || input.after.version !== writeVersion
   ) return false;
   if (input.tool === "campaign_brief_create" && input.after.lifecycleStatus !== "draft") return false;
   if (input.tool === "campaign_brief_revise" && input.before && input.after.lifecycleStatus !== input.before.lifecycleStatus) return false;
+  if(input.tool==="campaign_brief_transition"&&(input.writeResult.ok!==true||input.writeResult.lifecycle_status!==input.args.status
+    ||input.after.lifecycleStatus!==input.args.status||input.after.blocker!==(input.args.status==="blocked"?stringValue(input.args.blocker):null)))return false;
 
   for (const field of WRITABLE_FIELDS) {
     const expected = input.args[field] !== undefined
@@ -384,6 +397,9 @@ export async function executeVerifiedCampaignBriefMutation(input: {
   if (!idempotencyKey) return { success: false, verified: false, code: "CAMPAIGN_BRIEF_IDEMPOTENCY_REQUIRED" };
   if (!UUID_RE.test(idempotencyKey) || !validMutationArgs(input.tool, input.args)) {
     return { success: false, verified: false, code: "CAMPAIGN_BRIEF_ARGUMENTS_INVALID" };
+  }
+  if(input.tool==="campaign_brief_transition"&&(!UUID_RE.test(input.expectedTenantId)||!UUID_RE.test(input.actorId)||!input.readCommandReceipt)){
+    return{success:false,verified:false,code:"CAMPAIGN_BRIEF_RECEIPT_READER_REQUIRED"};
   }
 
   const beforeRead = await readCanonicalList({
@@ -427,6 +443,10 @@ export async function executeVerifiedCampaignBriefMutation(input: {
   }
 
   let before: CanonicalBrief | null = null;
+  if(input.tool==="campaign_brief_transition"){
+    before=beforeRead.briefs.find(brief=>brief.id===input.args.briefId)??null;
+    if(!before)return{success:false,verified:false,code:"CAMPAIGN_BRIEF_NOT_FOUND"};
+  }
   if (input.tool === "campaign_brief_revise") {
     const briefId = stringValue(input.args.briefId);
     if (!briefId) return { success: false, verified: false, code: "CAMPAIGN_BRIEF_NOT_FOUND" };
@@ -536,6 +556,9 @@ export async function executeVerifiedCampaignBriefMutation(input: {
     return { success: false, verified: false, mutationMayHavePersisted: true, code: "CAMPAIGN_BRIEF_READBACK_INVALID" };
   }
   const envelope = readbackResponse.data as Record<string, unknown>;
+  if(input.tool==="campaign_brief_transition"&&envelope.can_manage!==true){
+    return{success:false,verified:false,mutationMayHavePersisted:true,code:"CAMPAIGN_BRIEF_FORBIDDEN"};
+  }
   if (!Array.isArray(envelope.briefs)) {
     return { success: false, verified: false, mutationMayHavePersisted: true, code: "CAMPAIGN_BRIEF_READBACK_INVALID" };
   }
@@ -545,6 +568,20 @@ export async function executeVerifiedCampaignBriefMutation(input: {
   }
   if (!verifyBrief({ tool: input.tool, args: input.args, before, after, writeResult })) {
     return { success: false, verified: false, mutationMayHavePersisted: true, code: "CAMPAIGN_BRIEF_READBACK_MISMATCH" };
+  }
+  if(input.tool==="campaign_brief_transition"){
+    // The incumbent reader is fenced to this actor/business/key. A tenant-global
+    // cached result from another actor is not this person's approval or receipt.
+    let receipt:Record<string,unknown>|null;
+    try{receipt=await input.readCommandReceipt!({tenantId:beforeRead.tenantId,actorId:input.actorId,idempotencyKey});}
+    catch{return{success:false,verified:false,mutationMayHavePersisted:true,code:"CAMPAIGN_BRIEF_RECEIPT_READ_FAILED"};}
+    if(!receipt||receipt.ok!==true||receipt.outcome!=="transitioned"||receipt.brief_id!==after.id
+      ||receipt.version!==after.version||receipt.lifecycle_status!==after.lifecycleStatus){
+      return{success:false,verified:false,mutationMayHavePersisted:true,code:"CAMPAIGN_BRIEF_RECEIPT_READ_FAILED"};
+    }
+    if(await resolveTenant(input.caller)!==input.expectedTenantId){
+      return{success:false,verified:false,mutationMayHavePersisted:true,code:"ACTIVE_ACCOUNT_CHANGED"};
+    }
   }
 
   let railRecorded = false;
@@ -584,7 +621,7 @@ export async function executeVerifiedCampaignBriefMutation(input: {
   const receipt = {
     source: "public.campaign_brief_command_results",
     runId: idempotencyKey,
-    outcome: input.tool === "campaign_brief_create" ? "created" : "updated",
+    outcome: input.tool === "campaign_brief_create" ? "created" : input.tool === "campaign_brief_transition" ? "transitioned" : "updated",
   };
 
   if (!railRecorded) {
@@ -608,4 +645,95 @@ export async function executeVerifiedCampaignBriefMutation(input: {
     receipt,
     note: "The canonical Campaign Brief planning record was verified and recorded on the workspace Rail. Nothing launched, published, spent money, performed, or completed. Mind and Memory remain unavailable.",
   };
+}
+
+const LINKABLE_ASSET_KINDS=["page","form","funnel","email_campaign","email_series","content"] as const;
+type LinkableAssetKind=typeof LINKABLE_ASSET_KINDS[number];
+type AssetKind=LinkableAssetKind|"social_post";
+type AssetLink={briefId:string;kind:AssetKind;id:string;name:string|null;status:string|null;slug:string|null;channel:string|null;createdThrough:string|null;linkedAt:string|null;detachable:boolean};
+type AvailableAsset={kind:LinkableAssetKind;id:string;name:string;status:string|null;channel:string|null};
+type AssetContext=Omit<CampaignBriefContext,"canonicalSource">&{canonicalSource:"public.get_campaign_brief_assets"};
+export type CampaignBriefAssetsResult=
+  |{ok:true;tenantId:string;briefId:string;canManage:boolean;context:AssetContext;links:AssetLink[];available:AvailableAsset[];note:string}
+  |{ok:false;code:string};
+const assetObject=(value:unknown):value is Record<string,unknown>=>!!value&&typeof value==="object"&&!Array.isArray(value);
+const assetKind=(value:unknown):value is LinkableAssetKind=>typeof value==="string"&&(LINKABLE_ASSET_KINDS as readonly string[]).includes(value);
+const nullableAssetString=(value:unknown)=>value===null||value===undefined||typeof value==="string";
+
+/** The original native composition read, never an asset/permission/publishing store. */
+export async function readCampaignBriefAssets(input:{caller:CampaignBriefRpcPort;expectedTenantId:string;briefId:unknown;observedAt?:Date}):Promise<CampaignBriefAssetsResult>{
+  if(typeof input.briefId!=="string"||!UUID_RE.test(input.briefId)||!UUID_RE.test(input.expectedTenantId))return{ok:false,code:"CAMPAIGN_ASSET_ARGUMENTS_INVALID"};
+  const briefId=input.briefId.toLowerCase(),observedAt=input.observedAt??new Date();
+  const before=await readCanonicalList({...input,observedAt});
+  if(!before.ok)return{ok:false,code:before.code};
+  if(!before.briefs.some(brief=>brief.id===briefId&&brief.lifecycleStatus!=="archived"))return{ok:false,code:"CAMPAIGN_BRIEF_NOT_FOUND"};
+  let response:{data:unknown;error:RpcError};
+  try{response=await input.caller.rpc("get_campaign_brief_assets",{_tenant_id:before.tenantId,_brief_id:briefId});}
+  catch{return{ok:false,code:"CAMPAIGN_ASSET_READ_OUTCOME_UNKNOWN"};}
+  if(response.error)return{ok:false,code:rpcCode(response.error,"CAMPAIGN_ASSET_READ_FAILED")};
+  const body=response.data;
+  if(!assetObject(body)||typeof body.can_manage!=="boolean"||!Array.isArray(body.links)||!Array.isArray(body.available))return{ok:false,code:"CAMPAIGN_ASSET_READBACK_INVALID"};
+  const links:AssetLink[]=[],available:AvailableAsset[]=[];
+  for(const row of body.links){
+    if(!assetObject(row)||row.brief_id!==briefId||typeof row.id!=="string"||!UUID_RE.test(row.id)
+      ||(!assetKind(row.kind)&&row.kind!=="social_post")||typeof row.detachable!=="boolean"
+      ||!["name","status","slug","channel","created_through","linked_at"].every(key=>nullableAssetString(row[key])))return{ok:false,code:"CAMPAIGN_ASSET_READBACK_INVALID"};
+    // Native member redaction is also enforced at this model-facing projection.
+    if(!body.can_manage&&(row.detachable||((row.kind==="email_campaign"||row.kind==="email_series"||row.kind==="content")&&(row.name!==null||row.status!==null||row.channel!==null))))return{ok:false,code:"CAMPAIGN_ASSET_READBACK_INVALID"};
+    if(row.kind==="social_post"&&row.detachable)return{ok:false,code:"CAMPAIGN_ASSET_READBACK_INVALID"};
+    links.push({briefId,kind:row.kind as AssetKind,id:row.id,name:stringValue(row.name),status:stringValue(row.status),slug:stringValue(row.slug),channel:stringValue(row.channel),createdThrough:stringValue(row.created_through),linkedAt:stringValue(row.linked_at),detachable:row.detachable});
+  }
+  if(!body.can_manage&&body.available.length)return{ok:false,code:"CAMPAIGN_ASSET_READBACK_INVALID"};
+  for(const row of body.available){
+    if(!assetObject(row)||!assetKind(row.kind)||typeof row.id!=="string"||!UUID_RE.test(row.id)||typeof row.name!=="string"||!["status","channel"].every(key=>nullableAssetString(row[key])))return{ok:false,code:"CAMPAIGN_ASSET_READBACK_INVALID"};
+    available.push({kind:row.kind,id:row.id,name:row.name,status:stringValue(row.status),channel:stringValue(row.channel)});
+  }
+  const after=await readCanonicalList({...input,observedAt});
+  if(!after.ok)return{ok:false,code:after.code};
+  if(!after.briefs.some(brief=>brief.id===briefId&&brief.lifecycleStatus!=="archived"))return{ok:false,code:"CAMPAIGN_BRIEF_NOT_FOUND"};
+  if(after.canManage!==body.can_manage)return{ok:false,code:"CAMPAIGN_BRIEF_FORBIDDEN"};
+  return{ok:true,tenantId:after.tenantId,briefId,canManage:body.can_manage,links,available,
+    context:{lane:"campaign_brief",canonicalSource:"public.get_campaign_brief_assets",observedAt:observedAt.toISOString(),freshness:"current_canonical_projection",mindEligibility:"UNAVAILABLE",memoryRetention:"UNAVAILABLE"},
+    note:"Original campaign composition only. Native available choices are at most200 per kind, not a complete inventory. Linking is not publishing, sending, approval of an email, spending or performance. Private member fields stay withheld."};
+}
+
+/** Caller-JWT original link writer + actor-scoped original ledger/readback + existing Rail. */
+export async function executeVerifiedCampaignAssetMutation(input:{caller:CampaignBriefRpcPort;expectedTenantId:string;actorId:string;tool:CampaignAssetMutationToolName;args:Record<string,unknown>;readCommandReceipt:ReadCommandReceipt;recordRun:RecordRun;observedAt?:Date}):Promise<Record<string,unknown>>{
+  const a=input.args,key=stringValue(a.idempotency_key);
+  const fail=(code:string,persisted=false)=>({success:false,verified:false,mutationMayHavePersisted:persisted,code});
+  if(!["campaign_asset_attach","campaign_asset_detach"].includes(input.tool)||!key||!UUID_RE.test(key)||!UUID_RE.test(input.expectedTenantId)||!UUID_RE.test(input.actorId)
+    ||typeof a.briefId!=="string"||!UUID_RE.test(a.briefId)||typeof a.assetId!=="string"||!UUID_RE.test(a.assetId)||!assetKind(a.assetKind)
+    ||Object.keys(a).some(name=>!["briefId","assetId","assetKind","idempotency_key"].includes(name)))return fail("CAMPAIGN_ASSET_ARGUMENTS_INVALID");
+  if(typeof input.readCommandReceipt!=="function")return fail("CAMPAIGN_BRIEF_RECEIPT_READER_REQUIRED");
+  const briefId=a.briefId.toLowerCase(),assetId=a.assetId.toLowerCase(),kind=a.assetKind;
+  const before=await readCampaignBriefAssets({...input,briefId});
+  if(!before.ok)return fail(before.code);
+  if(!before.canManage)return fail("CAMPAIGN_BRIEF_FORBIDDEN");
+  let response:{data:unknown;error:RpcError};
+  try{response=await input.caller.rpc("configure_campaign_brief_assets",{_tenant_id:before.tenantId,_command:{type:input.tool==="campaign_asset_attach"?"attach_asset":"detach_asset",briefId,assetKind:kind,assetId},_idempotency_key:key,_actor_kind:"paige"});}
+  catch{return fail("CAMPAIGN_ASSET_WRITE_OUTCOME_UNKNOWN",true);}
+  if(response.error){
+    const known=["CAMPAIGN_ASSET_NOT_FOUND","CAMPAIGN_ASSET_KIND_INVALID","CAMPAIGN_ASSET_ARGUMENTS_INVALID"].find(code=>response.error?.message?.includes(code));
+    const code=known??rpcCode(response.error,"CAMPAIGN_ASSET_WRITE_OUTCOME_UNKNOWN");return fail(code,code==="CAMPAIGN_ASSET_WRITE_OUTCOME_UNKNOWN");
+  }
+  const result=response.data,wanted=input.tool==="campaign_asset_attach";
+  if(!assetObject(result)||result.ok!==true||result.brief_id!==briefId||result.asset_kind!==kind||result.asset_id!==assetId
+    ||!(wanted?["attached","already_attached"]:["detached","not_attached"]).includes(String(result.outcome)))return fail("CAMPAIGN_ASSET_WRITE_RESULT_INVALID",true);
+  const after=await readCampaignBriefAssets({...input,briefId});
+  if(!after.ok)return fail(after.code,true);
+  if(!after.canManage)return fail("CAMPAIGN_BRIEF_FORBIDDEN",true);
+  if(after.links.some(link=>link.briefId===briefId&&link.kind===kind&&link.id===assetId)!==wanted)return fail("CAMPAIGN_ASSET_READBACK_MISMATCH",true);
+  let receipt:Record<string,unknown>|null;
+  try{receipt=await input.readCommandReceipt({tenantId:after.tenantId,actorId:input.actorId,idempotencyKey:key});}
+  catch{return fail("CAMPAIGN_BRIEF_RECEIPT_READ_FAILED",true);}
+  if(!receipt||receipt.ok!==true||receipt.outcome!==result.outcome||receipt.brief_id!==briefId||receipt.asset_kind!==kind||receipt.asset_id!==assetId)return fail("CAMPAIGN_BRIEF_RECEIPT_READ_FAILED",true);
+  const current=await readCanonicalList({...input,observedAt:input.observedAt??new Date()});
+  if(!current.ok)return fail(current.code,true);
+  if(!current.canManage||!current.briefs.some(brief=>brief.id===briefId&&brief.lifecycleStatus!=="archived"))return fail("CAMPAIGN_BRIEF_FORBIDDEN",true);
+  let recorded=false;
+  for(let attempt=0;attempt<2&&!recorded;attempt++){try{recorded=await input.recordRun({tenantId:after.tenantId,actorId:input.actorId,capabilityKey:input.tool,outcome:"capability_succeeded",runId:key});}catch{recorded=false;}}
+  const proof={source:"public.campaign_brief_command_results",runId:key,outcome:result.outcome};
+  if(!recorded)return{success:false,verified:true,railRecorded:false,mutationMayHavePersisted:true,code:"CAMPAIGN_BRIEF_RAIL_WRITE_FAILED",receipt:proof,note:"Original campaign link verified; Rail evidence remains unconfirmed. Do not repeat the link mutation to repair evidence."};
+  return{success:true,verified:true,railRecorded:true,asset:{briefId,kind,id:assetId,linked:wanted},receipt:proof,context:after.context,
+    note:"Original campaign link and Rail verified. Nothing published, sent, approved for sending, spent or launched. A form link can change attribution/routing for future inquiries under the original native intake rules."};
 }

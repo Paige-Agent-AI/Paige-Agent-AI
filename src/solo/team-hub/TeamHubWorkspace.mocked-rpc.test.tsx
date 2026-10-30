@@ -2265,7 +2265,7 @@ describe("EXP08 lifecycle: Team conversations switched off (mocked RPC)", () => 
     db.override.team_hub_list_conversations = () => ({ ok: false, code: "conversations_off" });
     const { host } = await mount();
     expect(host.textContent).toContain("Team conversations are off for you");
-    expect(host.textContent).toContain("Your tasks, the clients you're assigned and your permission are unchanged.");
+    expect(host.textContent).toContain("Your tasks, the clients you're assigned and your permissions are unchanged.");
     expect(host.textContent).not.toContain("Team Hub couldn't load");
     expect(host.textContent).not.toContain("You're no longer on this team");
     expect(host.querySelector("textarea"), "no composer behind a door that refuses them").toBeNull();

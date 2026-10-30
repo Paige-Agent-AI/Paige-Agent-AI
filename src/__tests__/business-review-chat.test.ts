@@ -72,6 +72,20 @@ describe("E2-1 registration", () => {
 });
 
 describe("E2-3a briefing narrative contract", () => {
+  it("keeps a VERA-attributed read as an answer, while reserving durable assignments for a separate explicit request", async () => {
+    const result = await dispatch({ period: 'last_7_days' });
+    expect(result.status).toBe('available');
+    // Both decision points matter: tool selection, then narration after the read.
+    // These are instruction-contract checks, not proof of a model's compliance.
+    for (const text of [BUSINESS_SNAPSHOT_TOOLS[0].function.description, result.message]) {
+      expect(text).toMatch(/Naming VERA.*does not request.*assignment/);
+      expect(text).toMatch(/Do not call list_subagents or delegate_to_subagent to answer this read/);
+      expect(text).toMatch(/separate explicit request.*durable specialist work/);
+    }
+    expect(BUSINESS_OPERATING_SNAPSHOT_READ_CAPABILITY.effect).toBe('read');
+    expect(BUSINESS_OPERATING_SNAPSHOT_READ_CAPABILITY.governance.approval).toBe('none');
+  });
+
   it("#2102 narrates Sales' last completed UTC day cutoff without replacing current balance freshness", async () => {
     const d = BUSINESS_SNAPSHOT_TOOLS[0].function.description;
     const r = await dispatch({});

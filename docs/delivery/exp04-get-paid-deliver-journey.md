@@ -1,3 +1,169 @@
+# C131 — accepted payment-plan selection in the original invoice workspace (2026-10-30 UTC)
+
+**Release correction:** first CI full-file Impeccable scan rejected the new CSS side-tab. Initial local scan had omitted CSS; same full ten-file scan reproduced it. Two neutral-border rules repair the finding, full scan0; no gate exclusion. Actual post-refinement rendering is UNVERIFIED after three browser attach/recovery timeouts/reset. Earlier exact product-source renders remain bounded evidence; final style/authenticated proof remains owed.
+
+**Implementation/local proof; not released or customer accepted.** Same complete O1–O12 destination and owner-recalibrated sequence: connected O1–O4, O5/O9, then O6–O8/O10–O12. No new agent, platform lane, financial authority or activation.
+
+The owner can inspect native accepted economics, dated deposit/installments and original remaining allocations, select one exact positive obligation and continue through the existing HIGH invoice review. No caller amount or due date replaces its immutable reference. The original operation list blocks a competing request; Cancel retains source/selection and restores focus after that list rereads. Pending/expired account review now has a focused return without forgetting an uncertain operation. Scope/actor/role/version changes retire the local accepted source. The caller-JWT SDK consumer reuses the retained decoder and distinct native10 owner admission; no permission logic is copied.
+
+The new selector is mounted by the original SalesBillingWorkspace→InvoiceWorkspace→InvoiceLifecycleActions chain for eligible existing and future SOLO tenants; no hard-coded customer dispatch, tenant backfill, provisioning change or new schema is required by this consumer. Neutral UUIDs are confined to test/render ports. Existing/new-account authenticated evidence remains owed. Original agreement, principal, invoice, payment operations/claims, HIGH approval, provider, Rail and native history stay authoritative.
+
+Local 150 assertions/10 suites pass, including all original retained-reader/inspection and invoice cases plus source/selector/composite regressions. Full canonical type ratchet: baseline10/current6, no new error; baseline unchanged. Strict scoped lint and pinned Impeccable checks pass. Initial genuine type errors and a corrected test-port expectation remain in private diagnostics, not waived. Actual component desktop and narrow source→selection→exact original review→keyboard Cancel/return, loading/cancel, source-held/TEST/stale/error, denied/signed-out/session-retirement paths are rendered with explicit synthetic SDK ports and network-denying CSP. This is NOT signed-in/native/provider or Central QA acceptance. See [bounded UI proof](../evidence/ui-delivery/e04-accepted-payment-plan-workspace.md).
+
+The original #3099 native10 release now has production source/configuration proof after one unchanged normal Edge retry; #3092 bounded MERIT source navigation/reload proof remains separate. Their single additive Master closeout preserves all original history. Normal received main includes E09 native11 and E05 source/docs releases; preserve E05 Task12 and original E04 private financial-currentness13. EXP09's native11 producer handoff is received; private service-actor currentness factor13 and canonical exact-string amount formatting remain unbuilt producer dependencies for the next connected financial increment. No E09 Portal source takeover or relaxed Progress authority.
+
+**Not complete O3/O4:** manual/split/correction/reversal allocations, schedule amendments and initial conversational target discovery/schema are still missing. Legacy generic full/partial requests remain their original separate paths and are not represented as accepted installment targeting. Complete signed-to-obligation/client/merchant/provider behavior, production selector read/approval/recovery, two cohorts/all roles and remaining twelve outcomes remain open. No request initiated here is a settlement or completed service. Next: final scoped source review/exact-head CI/normal release/readback, then canonical allocation/revision and financial-currentness contracts before moving through O5/O9.
+
+---
+
+# C130 — accepted-obligation foundation released; invoice consumer next (2026-10-29 UTC)
+
+The original O3/O4 foundation [#3099](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3099)
+is normally merged at `218c7fd9e3e4662df3d5813991623a5ab944bec1`, reviewed head
+`5533abc346c69b777c378cfd03402227f3874b52`, final AUTHOR-REVIEW / LOWER ASSURANCE
+`5706079173`. All 13 exact check runs and both web statuses passed. Actual merge
+tree `137633b89c66dc14526612eac97232ddc37ffc75` equals the inspected receiving
+union; all 28 reviewed leaves and 18,033 incoming outside-owned leaves are exact.
+
+Normal migration workflow `40970247517` / job `123785126946` succeeded. Production
+read-only catalogue observes `20271126010010` exactly once/frontier10; eight relevant
+function bodies, owner, security, search path, defaults and ACL match reviewed
+source. Original accepted-reader/native billing and relationship authority remain intact.
+
+Normal Edge workflow `40970247500` first uploaded but correctly held its marker:
+one importer still had older source. The supported API read confirmed that upload
+acknowledgment was insufficient. ONE unchanged normal failed-job retry, attempt2 /
+job `123790025308`, succeeded. Independently downloaded artifact `12940657290`
+has ZIP SHA256 `9e28c58f4a0bb40783903c81226d4e94449bc07925353f907be73569418f9dc5`;
+all 11 selected functions and their actual configuration match. Chat592/JWTtrue
+has 309 raw/emitted leaves; invoice-command217/JWTtrue and orchestrator169/JWTtrue
+are verified. Current selected metadata matches. Original scratch-cleanup permission
+warning and failed attempt/artifact are retained; no manual marker or privilege change.
+The ordinary db-live and edge-live tags both advanced through their original gates.
+
+Web `dpl_4wc2qKWMAUbHCoJf4CiKzBwZJuXZ` is READY/exact218c. Canonical public build
+`218c7fd9e3e4662df3d5813991623a5ab944bec1-mvu5ezf1`, app and seven root assets
+return200/customerUpdate:null. Actual Sales-imported `growth2-CroyC1N0.js`
+(`706b726db7a626bd24d89bc53cde9e491f2b055fe23ee634121152e272a27fab`)
+contains the original recovery, accepted-selector parser and async-ready contract.
+The ordinary Vercel alias requires existing Authentication for anonymous reads;
+no both-origin200 or bypass claim. Initial guessed wrapper locations and a bounded
+incomplete graph are excluded; source was located through the actual Sales imports.
+
+This is source/native/web/Edge delivery, **not a completed installment lifecycle**.
+No signing, sending, money movement, provider activation or service acceptance occurred.
+Native11 remains EXP09's original consumer, native12 EXP05's Task work; the
+acknowledged private financial-currentness factor13 is still unbuilt.
+
+## Next connected invoice consumer — LOCAL, unmounted
+
+Same full O1–O12 and calibrated sequence. The next original caller-JWT consumer
+uses native10's distinct admission and the SAME extracted retained-record decoder.
+Its old owner RPC/name/closed DTO/digest validation is preserved; the entire original
+validation tail is byte-exact. Exact source/selector/date/amount plus current
+invoice/client/lifecycle/draft/issued context must match. Native remaining amounts
+are retained; no schedule, allocation or date arithmetic is added.
+
+Thirteen causal new cases first failed while all 19 incumbent reader cases passed;
+the completed transport now passes all63 old/new cases. The original accepted
+inspection/package UI's 23 cases, strict frozen Deno2.9.8 and scoped lint also pass.
+These are local synthetic tests, not native/provider or customer acceptance.
+
+Before product UI, the throwaway framework-native flow exercises inline plan
+inspection, an adjacent selected-row consequence and the existing invoice approval
+modal. Actual local source/TEST/allocation holds, failures, role/allocated variants,
+keyboard review, exact consequence, interruption recovery and return focus were
+observed. The viewport-control attempt stalled and is INVALID/EXCLUDED; narrow,
+full-shell/native/AT/real-role proof is still owed. No new schedule-selection UI is
+mounted or claimed released yet.
+
+Learning retained in the original packet: provider acknowledgment cannot replace
+original complete-source readback; preserve the first failure and repeat only the
+unchanged normal path after diagnosis. Public wrapper names do not identify the
+changed component's chunk; inspect the actual mounted import chain. Do not promote
+these delivery observations into payment, capability, algorithm or full Experience acceptance.
+
+# C129 — accepted-obligation source and same-operation recovery (2026-10-29 UTC)
+
+Keep the owner's calibrated order below. MERIT #3092 is now merged at
+`a0ba8016618a68bd4ef93a5f92a7550c850bafbb`, with exact-head checks, lower-assurance
+author review and normal source-verified web/Edge release. The first source mismatch
+held its release marker; one unchanged normal retry verified all 308 source and
+emitted leaves. Fresh authorized Owner production read, original agreement link,
+same document reload and explicit original-DM reopen passed. Protected identities
+and screenshots remain in ANT-52; this is not full twelve-outcome acceptance.
+
+The next **LOCAL, UNRELEASED** O3/O4 increment composes the ORIGINAL signed/effective
+payload, canonical invoice balance, immutable provider operation and approval gate.
+Native `20271126010010` follows released E09 `20271126010009`; it has not been applied
+to a durable Preview or production. Its unique owner admission
+`read_sales_accepted_invoice_obligations` leaves the old three-argument accepted
+reader's OID/body/ACL/DTO unchanged. The command service's distinct
+`read_sales_invoice_payment_obligation` reuses the original explicit-actor and
+service-only guards; no caller-JWT impersonation or new permission system.
+
+The exact accepted target survives initial review, canonical Chat approval resume,
+historical operation recovery, and the original owner's operation-list projection.
+Preparation and dispatch repeat the same target/source/remaining-amount check under
+their existing locks. The review consequence names the accepted sequence, due date
+and terms revision. The original recovery control keeps its operation ID and returns
+keyboard focus after its asynchronous list reload. Unknown remains unknown;
+malformed targets use the existing read-failure/retry state. No extra invoice,
+principal, sender, provider adapter, scheduler or financial store was introduced.
+
+Current proof: 391 payment checks/17 suites; 202 adjacent Chat/endpoint/ledger checks;
+28 existing review/recovery UI checks; 43 reduced-schema PostgreSQL checks using
+tracked original functions; the ENTIRE original provider/role/claim/allocation/Rail
+proof also passes with the extended writers. Genuine provider facts are simulated
+in those native tests. Strict Deno 2.9.8, original Kit/risk and definer/version guards
+pass. Actual original-component desktop and 390px rendered recovery, keyboard exit,
+reload/reopen and invalid-source refusal are synthetic-port evidence; full shell,
+real payment/signing/provider/cohort verification and founder acceptance remain owed.
+
+**Next, not silently omitted:** mount accepted schedule selection/inspection through
+the existing invoice workspace and authorized conversation source; add explicit
+original receipt/split allocation and correction/reversal binding; prove schedule
+revision integrity and full-schema/concurrent caller behavior. Unassigned manual
+receipts are held rather than guessed FIFO. TEST receipts never establish actual
+commercial fulfillment. No target-creation UI or new Chat capability is claimed Live.
+
+E09 calendar consumer retains never-applied native11 and its original billing
+authority. E05 retains native12 Task work. The acknowledged E04 private financial
+currentness factor will use a distinct legitimate forward above those reservations;
+it is still unbuilt and must preserve original billing/relationship semantics.
+ALG-01/02/12/13, capability catalogue and Binding Ledger maturity are unchanged.
+The existing registered `sales_invoice.payment_request` uses its legitimate governed
+direct command path: original actor/tenant/role, HIGH approval/fingerprint, immutable
+operation/claim, GET-only uncertain reconciliation and canonical Rail. Source reads
+and calculations are not forced into Layer C, and source proof does not activate it.
+
+# C128 — connected commercial outcome first (2026-10-29 UTC)
+
+Owner recalibration: finish the current original MERIT release; then close the connected O1–O4 agreement → authorized signing/exact effective terms → deposit/installments → original invoice lifecycle. Next O5/O9 payment/reconciliation/Collections; then O6–O8/O10–O12 onboarding, actual delivery/client decisions, completion, self-service and standing. No new platform stream or agent. Native ZION observation stays an explicit later/unbuilt delivery dependency, not an assumed capability. All original twelve outcomes and one integrated founder evaluation remain mandatory.
+
+## Next original O3/O4 boundary — local, not released
+
+1. Owner outcome: inspect the accepted $3,500 principal, $500 initial obligation and ten dated $300 installments; prepare a review for the correct remaining accepted obligation, inspect its original invoice/payment result, recover the same operation and reload the same facts.
+2. Owner/source: EXP04 original Sales/Finance/Agreements. Extend existing invoice inspectors/payment review and canonical writers, not another ledger. Preserve EXP09 Portal and EXP05 Work/Planning/Calendar/E08 collaboration ownership.
+3. Harness/Gateway: original sales-invoice-command and canonical Trust gate; original bounded payment preparation/dispatch/reconciliation. Missing native target contract must refuse before a provider request.
+4. Spine: existing sales_create_payment_request / invoice.payment_request and original agreement/accepted-commercial reads. A targeted dated-obligation adapter is still UNBUILT; current purpose=installment plus an amount does not establish allocation to an accepted date.
+5. Provider: existing Stripe-first merchant binding and genuine readiness/settlement evidence; listed/TEST is not live collected money. No provider or payments activated by this work.
+6. Authority: exact accepted signing/terms/source digest, tenant/client/invoice/draft/issued/lifecycle versions, original HIGH approval/fingerprint and native locks. A signature does not authorize a charge; source transport parsing is not authority.
+7. Durable work: original invoice/provider operations and existing reconciliation work only. One pending request per invoice, original claim/idempotency/replay before current eligibility. No second scheduler, financial store or execution stream.
+8. Evidence: retained accepted payload already contains the canonical dated schedule; reuse it and _sales_collection_accepted_total_evidence. Original paige_invoices/paige_invoice_payments remain money truth. Explicit allocation references belong to original immutable operations/receipts, never a guessed FIFO or fabricated extra payments.
+9. Surface: existing Sales invoice/payment review and accepted-commercial inspection; sales.department remains PROOF_OWED. Show accepted obligations, allocation uncertainty, exact review, pending/settled/failed/recovery states and original record links. Do not hide missing manual/provider allocation behind an invoice-level paid total.
+10. Proof: original $500 + ten $300 schedule, revision/source drift, original receipt split allocation and reversal, no duplicate principal/effect, currentness/role/tenant isolation, concurrent lock/replay, provider uncertainty and normal reload. Safe source/native/render proof first; actual signing/payment effects and final acceptance keep their original authorization gates.
+
+Actual production source was re-grounded with read-only catalogue access: frontier20271126010004; accepted payload235026b3, accepted-total evidence86404f3e, accepted owner readerffc77952, original preparef613c538/claimfa5f6d0f/verified allocationd68a90d2. No schema or customer data changed. E09 native26010009 is already applied in its Preview; a genuine forward must reconcile above that before publication, never rename an applied migration or edit history.
+
+Original read_sales_commercial_package has a closed DTO and must not acquire surprise fields. Prefer an explicit opt-in extension of the existing accepted-agreement owner read, keeping the original three-argument call, its authorization and exact document parser unchanged; any final native overload/helper must be fully proved before adoption. Service-context reads must not impersonate caller-JWT authority. No new reader is claimed available here.
+
+Local first binding preserves the exact accepted target in intent/immutable command and rejects wrong scope/source/amount/already allocated targets. Original operation recovery now reconstructs that accepted selector instead of changing it into a free-form amount, and remains ahead of present balance/provider eligibility. The initial accepted obligation can retain the owner's explicit deposit intent; a later row cannot be mislabeled as the initial deposit. Sixteen original payment suites376PASS, original eight adjacent Chat/C4/permission suites168PASS, and strict Deno2.9.8 actual handler/Chat/parser PASS. Causal original Chat target loss was RED in both stored and pinned approval paths before the shared-helper repair. Original Kit288of296 remains valid; no C0b source pin is changed (the modified adapter/helper are not in its original source-pin list). Native target read/writer/allocations and invoice UI remain incomplete; this WIP is not deployed or customer-accepted.
+
+ALG01/12 existing duplicate/exception mechanisms PARTIAL; ALG02 actual onboarding progression incomplete; ALG13 source-backed recommendations UNVERIFIED. Binding Ledger/catalogue and activation are not promoted. Current original MERIT backend #3089 is independently released; its retained four-file UI completion and truthful navigation wording forward are #3092, with separate exact review/CI/release/customer proof.
+
+---
+
 # C87 — migration-chain receiving and actual Preview resource return (2026-10-28 UTC)
 
 Same full O1–O12/approved Agreements journey and MERIT remain. Actual original ANT51/147/161/163/52 and live Owner North Star leading amendments were read at the four-hour check. Received I1 CLEAR6f6bd279/ANT511ce1117c: original3016 merged4400de573, deploy40609950230 SUCCESS is independently reported/verified; actual production metadata now20010008, own six pending carriers applied0. Existing all11 observed CODE checks for published2971/29 are SUCCESS; native Preview is separately SKIPPED/unassociated. No code check is a customer acceptance or gate waiver.

@@ -1,5 +1,5 @@
 BEGIN;
-SELECT plan(20);
+SELECT plan(32);
 CREATE TEMP TABLE e02_read_label_event_count AS SELECT count(*) AS n FROM public.paige_workspace_events;
 
 SELECT is(public._workspace_event_display('capability_run','capability_succeeded','read_sales_collections')->>'title',
@@ -67,5 +67,50 @@ SELECT ok(pg_get_functiondef('public.get_solo_rail_activity(integer)'::regproced
   'existing scoped Rail reader still uses the shared display chain');
 SELECT is((SELECT count(*) FROM public.paige_workspace_events),(SELECT n FROM e02_read_label_event_count),
   'display, repetition and denied-access checks append no activity receipt');
+
+SELECT is(public._workspace_event_display('capability_run','capability_succeeded','agreement_list')->>'title',
+  'Read agreement records','agreement listing names a read, not completed commercial work');
+SELECT is(public._workspace_event_display('capability_run','capability_succeeded','agreement_status')->>'title',
+  'Read agreement status','agreement status lookup is not signing or execution');
+SELECT is(public._workspace_event_display('capability_run','capability_succeeded','find_clients_for_status')->>'title',
+  'Looked up client records','nested client lookup remains a read');
+SELECT is(public._workspace_event_display('capability_run','capability_succeeded','agreement_list')->>'summary',
+  'Existing agreements were looked up. No agreement was sent, signed or changed.','agreement listing makes no effect claim');
+SELECT is(public._workspace_event_display('capability_run','capability_succeeded','agreement_status')->>'summary',
+  'The recorded status was checked. No agreement was approved, sent or signed.','status is not an authorized business action');
+SELECT is(public._workspace_event_display('capability_run','capability_succeeded','find_clients_for_status')->>'summary',
+  'Existing clients were searched for a status lookup. No business records were changed.','client matching claims no new client or changed status');
+SELECT ok((SELECT bool_and((public._workspace_event_display('capability_run','capability_succeeded',c)-'title'-'summary')
+  =(public._workspace_event_display_before_e04_effectuation('capability_run','capability_succeeded',c)-'title'-'summary'))
+  FROM unnest(ARRAY['agreement_list','agreement_status','find_clients_for_status']) c),
+  'all original non-copy fields and actor attribution remain exact');
+SELECT ok((SELECT bool_and(public._workspace_event_display('capability_run',o,c)
+  =public._workspace_event_display_before_e04_effectuation('capability_run',o,c))
+  FROM unnest(ARRAY['agreement_list','agreement_status','find_clients_for_status']) c
+  CROSS JOIN unnest(ARRAY['capability_failed','capability_refused','capability_unreachable','capability_outcome_unknown',
+    'capability_completed_unrecorded','future_outcome',NULL]) o),
+  'failed, uncertain, future and missing outcomes never acquire successful-read wording');
+SELECT ok((SELECT bool_and(public._workspace_event_display(s,'capability_succeeded',c)
+  =public._workspace_event_display_before_e04_effectuation(s,'capability_succeeded',c))
+  FROM unnest(ARRAY['agreement_list','agreement_status','find_clients_for_status']) c
+  CROSS JOIN unnest(ARRAY['owner_edit','mcp_connection','capability_run_future',NULL]) s),
+  'only the original successful capability-run family is relabelled');
+SELECT ok((SELECT bool_and(public._workspace_event_display('capability_run',o,c)
+  =public._workspace_event_display_before_e04_effectuation('capability_run',o,c))
+  FROM unnest(ARRAY['read_sales_collections','read_sales_commercial_package','read_client_engagement_status',
+    'read_business_time_zone','owner_mission_target_save','weekly_commitment_draft',
+    'agreement_list_future','agreement_status_future','find_clients_for_status_future',NULL]) c
+  CROSS JOIN unnest(ARRAY['capability_succeeded','capability_failed','capability_refused','capability_outcome_unknown',NULL]) o),
+  'other capabilities, future aliases and earlier read/owner/draft labels delegate unchanged');
+SELECT ok(public._workspace_event_display('capability_run','capability_succeeded','sales_effectuate_commercial_terms')->>'title'
+  ='Signed commercial terms made effective'
+  AND public._workspace_event_display('capability_run','capability_succeeded','sales_effectuate_commercial_terms')->>'actor_type'='owner_staff'
+  AND public._workspace_event_display('capability_run','capability_failed','sales_effectuate_commercial_terms')->>'title'
+  ='Commercial terms not made effective','original signed-terms outcome and owner attribution are preserved');
+SELECT ok((SELECT proargnames=ARRAY['_source_kind','_outcome','_capability'] AND prorettype='jsonb'::regtype
+  AND prokind='f' AND proparallel='u' AND NOT proleakproof AND NOT proisstrict AND pronargdefaults=0
+  AND pg_get_userbyid(proowner)='postgres' AND proacl=ARRAY['postgres=X/postgres']::aclitem[]
+  FROM pg_proc WHERE oid='public._workspace_event_display(text,text,text)'::regprocedure),
+  'original private function signature, owner and execution contract remain unchanged');
 SELECT * FROM finish();
 ROLLBACK;

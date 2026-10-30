@@ -23,6 +23,9 @@ SPEC.loader.exec_module(readback)
 
 SIZE_MESSAGE = ('Function source code exceeds the maximum deployment size (5 MB). '
                 'Reduce the size of your function and try again.')
+# Routing headroom, NOT a claim about API payload size or a retry predicate.
+# Keep the same vendor local path for large trusted source graphs.
+API_SOURCE_BUDGET_BYTES = 4 * 1024 * 1024
 MAX_SECONDS = 600
 
 
@@ -43,6 +46,41 @@ def rejected_for_source_size(result):
         return json.loads(match.group(1)) == {'message': SIZE_MESSAGE}
     except (TypeError, ValueError):
         return False
+
+
+def failure_diagnostic(result):
+    """Closed, nonsecret observations only; NEVER authority for another upload.
+
+    Raw stdout, stderr and vendor JSON can contain credentials or private URLs.
+    An interrupted process cannot establish a trustworthy HTTP result either.
+    The original strict source-size predicate alone controls local recovery.
+    """
+    code = result.returncode
+    diagnostic = {'exit_code': code} if type(code) is int and -255 <= code <= 255 else {}
+    if type(code) is not int or code != 1 or not isinstance(result.stderr, str) or len(result.stderr) > 1024 * 1024:
+        return diagnostic
+    lines = [line.strip() for line in result.stderr.splitlines()
+             if 'unexpected deploy status' in line]
+    if len(lines) != 1:
+        return diagnostic
+    match = re.fullmatch(r'unexpected deploy status ([45]\d{2}): (\{[^\r\n]*\})', lines[0])
+    if match is None or len(match.group(2)) > 8192:
+        return diagnostic
+    try:
+        payload = json.loads(match.group(2))
+    except (TypeError, ValueError, RecursionError):
+        return diagnostic
+    if not isinstance(payload, dict):
+        return diagnostic
+    message = payload.get('message')
+    category = 'other'
+    if message == SIZE_MESSAGE:
+        category = 'source_size'
+    elif isinstance(message, str) and re.match(r'Failed to bundle function(?:[: (]|$)', message, re.I):
+        category = 'compiler_rejected'
+    elif message == 'Failed to retrieve function bundle':
+        category = 'bundle_unavailable'
+    return {**diagnostic, 'http_status': int(match.group(1)), 'category': category}
 
 
 def checked_source(repo, commit, name):
@@ -67,9 +105,12 @@ def deploy(repo, commit, name, runner=cli, clock=time.monotonic,
            source_check=checked_source):
     deadline = clock() + MAX_SECONDS
 
-    def result(ok, reason, mode=None):
-        return {'ok': ok, 'reason': reason, 'mode': mode,
-                'source_verified': False}
+    def result(ok, reason, mode=None, diagnostic=None):
+        value = {'ok': ok, 'reason': reason, 'mode': mode,
+                 'source_verified': False}
+        if diagnostic is not None:
+            value['diagnostic'] = diagnostic
+        return value
 
     def invoke(args, maximum=300):
         remaining = deadline - clock()
@@ -82,16 +123,26 @@ def deploy(repo, commit, name, runner=cli, clock=time.monotonic,
     except (readback.ReadbackError, ValueError, UnicodeError, OSError):
         return result(False, 'source_validation_refused')
     project, expected = original
+    try:
+        # Reuse original verifier's committed local graph; no new resolver,
+        # source rewriting, remote fetch, credential or vendor error inference.
+        source_bytes = sum(len(readback.commit_file(repo, commit, path))
+                           for path in expected['files'])
+    except (readback.ReadbackError, ValueError, UnicodeError, OSError):
+        return result(False, 'source_validation_refused')
     command = ['supabase', 'functions', 'deploy', name, '--project-ref', project,
                '--workdir', str(repo)]
-    try:
-        api = invoke([*command, '--use-api'])
-    except (OSError, subprocess.SubprocessError):
-        return result(False, 'api_outcome_unknown_no_retry')
-    if api.returncode == 0:
-        return result(True, 'upload_acknowledged_readback_required', 'api')
-    if not rejected_for_source_size(api):
-        return result(False, 'api_failed_no_retry')
+    if source_bytes <= API_SOURCE_BUDGET_BYTES:
+        try:
+            api = invoke([*command, '--use-api'])
+        except (OSError, subprocess.SubprocessError):
+            return result(False, 'api_outcome_unknown_no_retry')
+        if api.returncode == 0:
+            return result(True, 'upload_acknowledged_readback_required', 'api')
+        if not rejected_for_source_size(api):
+            return result(False, 'api_failed_no_retry', diagnostic=failure_diagnostic(api))
+    # Otherwise choose the existing local method BEFORE any upload. This is
+    # resource routing only, not proof of a size error or local bundle capacity.
 
     # The Docker path previously omitted a configured deno.json. Do not silently
     # drop or change a map; keep API-only delivery until that contract is proved.
@@ -108,6 +159,13 @@ def deploy(repo, commit, name, runner=cli, clock=time.monotonic,
         return result(False, 'local_builder_unavailable')
     if docker.returncode != 0:
         return result(False, 'local_builder_unavailable')
+    # Docker preflight can take time; recheck original source immediately before
+    # the sole local upload as well. No API fallback after local uncertainty.
+    try:
+        if source_check(repo, commit, name) != original:
+            return result(False, 'source_changed_no_retry')
+    except (readback.ReadbackError, ValueError, UnicodeError, OSError):
+        return result(False, 'source_changed_no_retry')
     try:
         # CLI2.116: these flags are mutually exclusive. Do NOT combine
         # --use-api=false and --use-docker. No auth/map override is supplied.
@@ -115,7 +173,7 @@ def deploy(repo, commit, name, runner=cli, clock=time.monotonic,
     except (OSError, subprocess.SubprocessError):
         return result(False, 'local_outcome_unknown_no_retry', 'local_requested')
     if local.returncode != 0:
-        return result(False, 'local_failed_no_retry', 'local_requested')
+        return result(False, 'local_failed_no_retry', 'local_requested', failure_diagnostic(local))
     # This states the requested path, not a claim about bundler internals.
     return result(True, 'upload_acknowledged_readback_required', 'local_requested')
 

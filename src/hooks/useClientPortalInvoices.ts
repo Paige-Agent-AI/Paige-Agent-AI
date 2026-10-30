@@ -7,7 +7,8 @@ import { formatPaymentMinor, readCustomerPaymentRequest, type CustomerPaymentReq
 /**
  * The invoices a business has issued to the signed-in customer (E09 Slice 5, "Payments").
  *
- * Reads go through client_portal_invoices(), which resolves the customer relationship from the auth
+ * Selected-business reads go through client_portal_invoices_calendar_scoped(); compatible legacy
+ * reads retain client_portal_invoices(). Both reuse the original financial query and resolve the relationship from the auth
  * subject server-side (§9) and returns only managed invoices the business ISSUED to this client
  * (issued or voided; never a draft, a CSV import, another client's or another business's). It never
  * returns a payment link: `payable` only says the business has sent one. The link itself is read per
@@ -39,7 +40,9 @@ export interface PortalInvoice {
   test_provider_minor: number;
   /** The business has sent a payment link that is usable right now. The link is not in the list. */
   payable: boolean;
-  past_due: boolean;
+  past_due: boolean | null;
+  /** Original immutable issued version, present only in the calendar-aware projection. */
+  issued_snapshot_version?: number | null;
 }
 
 export interface PortalInvoiceBalance {
@@ -51,6 +54,12 @@ export interface PortalInvoiceBalance {
 }
 
 export interface PortalInvoiceCursor { issued_at: string; id: string }
+
+export type PortalInvoiceCalendar = Readonly<{
+  state: "configured" | "missing" | "invalid";
+  zone: string | null;
+  local_date: string | null;
+}>;
 
 export interface PortalInvoicePage {
   tenant_id: string;
@@ -65,6 +74,8 @@ export interface PortalInvoicePage {
   /** Issued invoices with something still owed, across all pages. */
   open_count: number;
   read_at: string;
+  /** Absent on the compatible legacy UTC reader. Never derived from the viewer's clock. */
+  calendar?: PortalInvoiceCalendar;
 }
 
 /**
@@ -195,20 +206,29 @@ function remainingMinor(v: unknown): number {
   return minor(v);
 }
 
-function parseInvoice(raw: unknown): PortalInvoice {
-  if (!isObject(raw) || !exactKeys(raw, INVOICE_KEYS)) throw new Error("Unexpected invoice");
+function parseInvoice(raw: unknown, calendar?: PortalInvoiceCalendar): PortalInvoice {
+  if (!isObject(raw) || !exactKeys(raw, calendar ? [...INVOICE_KEYS, "issued_snapshot_version"] : INVOICE_KEYS)) throw new Error("Unexpected invoice");
   const { id, invoice_number, status, currency, issued_at, due_date, payable, past_due } = raw;
   if (!isId(id) || (invoice_number !== null && typeof invoice_number !== "string") || (status !== "issued" && status !== "void")
     || !isCurrency(currency) || !isInstant(issued_at) || (due_date !== null && !isCalendarDate(due_date))
-    || typeof payable !== "boolean" || typeof past_due !== "boolean") {
+    || typeof payable !== "boolean" || (typeof past_due !== "boolean" && !(calendar && past_due === null))) {
     throw new Error("Unexpected invoice");
   }
   const amount = minor(raw.amount_minor), remaining = remainingMinor(raw.remaining_minor);
   if (remaining > amount) throw new Error("Unexpected invoice");
   // A voided invoice is never payable or past due; an invoice with nothing owed cannot be either.
   if ((status === "void" || remaining === 0) && (payable || past_due)) throw new Error("Unexpected invoice");
+  if (calendar) {
+    if (raw.issued_snapshot_version !== null && (!Number.isSafeInteger(raw.issued_snapshot_version) || Number(raw.issued_snapshot_version) < 1)) throw new Error("Unexpected invoice version");
+    if (calendar.state === "configured") {
+      if (past_due === null) throw new Error("Unexpected invoice date state");
+    } else {
+      const unknown = status === "issued" && remaining > 0 && due_date !== null;
+      if (unknown ? past_due !== null : past_due !== false) throw new Error("Unexpected invoice date state");
+    }
+  }
   return {
-    id, status, currency, issued_at, payable, past_due,
+    id, status, currency, issued_at, payable, past_due: past_due as boolean | null,
     due_date: typeof due_date === "string" ? due_date : null,
     invoice_number: typeof invoice_number === "string" && invoice_number.trim() ? invoice_number.trim() : null,
     amount_minor: amount,
@@ -216,6 +236,7 @@ function parseInvoice(raw: unknown): PortalInvoice {
     provider_verified_minor: minor(raw.provider_verified_minor),
     manual_recorded_minor: minor(raw.manual_recorded_minor),
     test_provider_minor: minor(raw.test_provider_minor),
+    ...(calendar ? {issued_snapshot_version: raw.issued_snapshot_version as number | null} : {}),
   };
 }
 
@@ -233,7 +254,18 @@ function parseBalance(raw: unknown): PortalInvoiceBalance {
 /** Null = no customer relationship. Throws on any payload outside the promised shape. */
 export function parseInvoicePage(data: unknown): PortalInvoicePage | null {
   if (data === null || data === undefined) return null;
-  if (!isObject(data) || !exactKeys(data, PAGE_KEYS) || data.schema_version !== 1) throw new Error("Unexpected invoices response");
+  if (!isObject(data) || (data.schema_version !== 1 && data.schema_version !== 2)
+    || !exactKeys(data, data.schema_version === 2 ? [...PAGE_KEYS, "calendar"] : PAGE_KEYS)) throw new Error("Unexpected invoices response");
+  let calendar: PortalInvoiceCalendar | undefined;
+  if (data.schema_version === 2) {
+    const c = data.calendar;
+    if (!isObject(c) || !exactKeys(c, ["state", "zone", "local_date"]) || !["configured", "missing", "invalid"].includes(String(c.state))) throw new Error("Unexpected invoice calendar");
+    if (c.state === "configured") {
+      if (typeof c.zone !== "string" || !c.zone || c.zone.length > 100 || Array.from(c.zone).some((character) => character.charCodeAt(0) < 32 || character.charCodeAt(0) === 127)
+        || !isCalendarDate(c.local_date) || new Date(`${c.local_date}T00:00:00Z`).toISOString().slice(0, 10) !== c.local_date) throw new Error("Unexpected invoice calendar");
+    } else if (c.zone !== null || c.local_date !== null) throw new Error("Unexpected invoice calendar");
+    calendar = {state: c.state as PortalInvoiceCalendar["state"], zone: c.zone as string | null, local_date: c.local_date as string | null};
+  }
   const { tenant_id, business_name, invoices, invoice_count, has_more, next_cursor, balances, open_count, read_at } = data;
   if (!isId(tenant_id) || (business_name !== null && typeof business_name !== "string") || !Array.isArray(invoices)
     || invoices.length > PORTAL_INVOICES_MAX_PAGE || !isCount(invoice_count) || typeof has_more !== "boolean"
@@ -249,7 +281,7 @@ export function parseInvoicePage(data: unknown): PortalInvoicePage | null {
   }
   // A page that says there is more must say where it continues, and only then.
   if (has_more !== (cursor !== null)) throw new Error("Unexpected invoices response");
-  const parsed = invoices.map(parseInvoice);
+  const parsed = invoices.map((invoice) => parseInvoice(invoice, calendar));
   if (new Set(parsed.map((i) => i.id)).size !== parsed.length) throw new Error("Unexpected invoices response");
   const parsedBalances = balances.map(parseBalance);
   if (new Set(parsedBalances.map((b) => b.currency)).size !== parsedBalances.length) throw new Error("Unexpected invoices response");
@@ -259,6 +291,7 @@ export function parseInvoicePage(data: unknown): PortalInvoicePage | null {
     invoices: parsed,
     next_cursor: cursor,
     balances: parsedBalances,
+    ...(calendar ? {calendar} : {}),
   };
 }
 
@@ -269,8 +302,9 @@ export async function readPortalInvoices(args: { tenantId?: string | null; limit
     p_limit: args.limit ?? PORTAL_INVOICES_PAGE,
     p_after: args.after ?? null,
   };
-  const {data, error} = await (args.context ? scopedBillingRpc("client_portal_invoices_scoped", params, args.context) : portalRpc("client_portal_invoices", params));
+  const {data, error} = await (args.context ? scopedBillingRpc("client_portal_invoices_calendar_scoped", params, args.context) : portalRpc("client_portal_invoices", params));
   if (error) throw error;
+  if (data !== null && data !== undefined && (!isObject(data) || data.schema_version !== (args.context ? 2 : 1))) throw new Error("Unexpected invoices response");
   const page = parseInvoicePage(data);
   if (args.context && (!page || page.tenant_id !== args.context.scope.tenantId)) throw new PortalBillingAccessFailure("Customer financial scope changed");
   return page;
@@ -332,6 +366,9 @@ export interface ClientPortalInvoicesState {
    * whole figure only once every page is loaded (hasMore false); the page shows it only then.
    */
   pastDueCount: number;
+  /** False when any loaded dated obligation has unknown overdue status. */
+  pastDueKnown?: boolean;
+  calendar?: PortalInvoiceCalendar;
   invoiceCount: number;
   hasMore: boolean;
   /** The business's name as the server read it, or null. */
@@ -395,6 +432,8 @@ export function useClientPortalInvoices(enabled = true, initialLimit = PORTAL_IN
   const [tenantId, setTenantId] = useState<string | null>(null);
   const [, setScopeEpoch] = useState(0);
   const [loaded, setLoaded] = useState(false);
+  const [calendar, setCalendar] = useState<PortalInvoiceCalendar>();
+  const calendarRef = useRef<PortalInvoiceCalendar | undefined>(undefined);
 
   // Mirrors for async callbacks; each async result is applied only if its epoch is current.
   const epoch = useRef(0);
@@ -420,6 +459,8 @@ export function useClientPortalInvoices(enabled = true, initialLimit = PORTAL_IN
     setHasMore(false);
     setBusinessName(null);
     setLoaded(false);
+    setCalendar(undefined);
+    calendarRef.current = undefined;
   }, []);
 
   const resetScope = useCallback(() => {
@@ -448,6 +489,8 @@ export function useClientPortalInvoices(enabled = true, initialLimit = PORTAL_IN
     setOpenCount(page.open_count);
     setInvoiceCount(page.invoice_count);
     setHasMore(page.has_more);
+    setCalendar(page.calendar);
+    calendarRef.current = page.calendar;
     setInvoices((prev) => {
       if (!append) { countRef.current = page.invoices.length; return page.invoices; }
       const seen = new Set(prev.map((i) => i.id));
@@ -517,6 +560,14 @@ export function useClientPortalInvoices(enabled = true, initialLimit = PORTAL_IN
       const page = await readPortalInvoices({ tenantId: pinned, after, context: requestContext });
       if (!current()) return;
       if (!page || page.tenant_id !== pinned) throw new Error("Invoice business changed");
+      // Never blend invoice-date states from different original business days.
+      // This is a fresh read, not a retry of any financial or provider action.
+      if (JSON.stringify(page.calendar) !== JSON.stringify(calendarRef.current)) {
+        clearData();
+        setLoading(true);
+        await refresh();
+        return;
+      }
       apply(page, true);
       setError(null);
     } catch (err) {
@@ -525,7 +576,7 @@ export function useClientPortalInvoices(enabled = true, initialLimit = PORTAL_IN
     } finally {
       if (myEpoch === epoch.current) { moreInFlight.current = false; if (alive.current) setLoadingMore(false); }
     }
-  }, [apply, fail, requestContext, scopeCurrent]);
+  }, [apply, clearData, fail, refresh, requestContext, scopeCurrent]);
 
   // Identity scope + initial read.
   useEffect(() => {
@@ -589,7 +640,7 @@ export function useClientPortalInvoices(enabled = true, initialLimit = PORTAL_IN
     loading: !origin.current.signedOut && !refused && !heldError, loadingMore: false, error: heldError ? PORTAL_INVOICES_LOAD_ERROR : null, unavailable: origin.current.signedOut || refused, multipleBusinesses: false, tenantId: null,
     scopeEpoch: generation, loaded: false, requestContext, refresh, loadMore};
   return {
-    invoices, balances, openCount, pastDueCount, invoiceCount, hasMore, businessName, loading, loadingMore, error, unavailable,
+    invoices, balances, openCount, pastDueCount, pastDueKnown: invoices.every((i) => i.past_due !== null), calendar, invoiceCount, hasMore, businessName, loading, loadingMore, error, unavailable,
     multipleBusinesses, tenantId, scopeEpoch: generation, loaded, requestContext, refresh, loadMore,
   };
 }
@@ -610,7 +661,7 @@ export function usePortalInvoicesGlance(enabled = true): PortalInvoicesGlance {
   if (!enabled || source.unavailable || source.multipleBusinesses) return {state: "unavailable"};
   if (source.error) return {state: "error"};
   if (source.loading || !source.loaded) return {state: "loading"};
-  return {state: "ready", openCount: source.openCount, balances: source.balances, pastDue: source.hasMore ? null : source.pastDueCount};
+  return {state: "ready", openCount: source.openCount, balances: source.balances, pastDue: source.hasMore || source.pastDueKnown === false ? null : source.pastDueCount};
 }
 
 /** "Mon, Nov 3" for an instant in the viewer's zone; the year only when it is not this year. */

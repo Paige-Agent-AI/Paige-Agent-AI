@@ -1,5 +1,5 @@
 import {SALES_MERCHANT_TOOLS,SALES_MERCHANT_TOOL_NAMES,dispatchMerchantChat} from './sales-payments/merchant-chat.ts';
-import {parseCanonicalPaymentRequestCommand,parsePaymentRequestIntent} from "./sales-payments/request-command.ts";
+import {paymentRequestIntentFromCommand} from "./sales-payments/request-command.ts";
 import {SALES_COMMERCIAL_OFFERS_TOOL,readCommercialOffers} from './sales-commercial/offers-read.ts';
 import {SALES_COMMERCIAL_PACKAGE_TOOL,readCommercialPackage} from './sales-commercial/package-read.ts';
 import {SALES_DRAFT_TOOLS,SALES_DRAFT_TOOL_NAMES,dispatchCommercialDraftChat} from './sales-commercial/draft-chat.ts';
@@ -180,8 +180,7 @@ export async function dispatchSalesInvoiceChat(ctx: Context, deps: Dependencies)
     const rawCommand=approvedArgs ? approvedArgs.command : {...sendArgs,action};
     const storedAction=rawCommand&&typeof rawCommand==='object'&&!Array.isArray(rawCommand)?(rawCommand as Record<string,unknown>).action:null;
     if(approvedArgs&&storedAction==='invoice.payment_request'){
-      const exact=parseCanonicalPaymentRequestCommand(rawCommand);
-      command={...parsePaymentRequestIntent({action:exact.action,invoice_id:exact.invoice_id,expected_version:exact.expected_version,provider:exact.provider,purpose:exact.purpose,...(exact.purpose==='full'?{}:{amount_minor:exact.amount_minor})})};
+      command={...paymentRequestIntentFromCommand(rawCommand)};
     }else command=typeof storedAction==='string'&&storedAction.startsWith('collection.')?parseCollectionCommand(rawCommand):parseSalesInvoiceCommand(rawCommand);
     const policy=command.action.startsWith('collection.')?COLLECTION_ACTIONS[command.action as keyof typeof COLLECTION_ACTIONS]:SALES_INVOICE_ACTIONS[command.action as keyof typeof SALES_INVOICE_ACTIONS];
     if (policy !== ctx.toolName) return { ...refusal('unclaimable'), tokens };

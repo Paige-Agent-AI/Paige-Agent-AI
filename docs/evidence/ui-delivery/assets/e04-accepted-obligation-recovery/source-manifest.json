@@ -1,0 +1,93 @@
+{
+  "scope": "Actual original component/local synthetic SDK ports, NOT full SOLO shell/authenticated/provider acceptance",
+  "captured_at": "2026-10-29T21:43:08.235Z",
+  "source_state": "working tree hashes; final reviewed head recorded separately",
+  "images": [
+    {
+      "file": "desktop.png",
+      "width": 1536,
+      "height": 770,
+      "sha256": "525d0e9d104cd3a03edcb349bc59b3cb82e8f842d2f98069813e079e3ed89dce"
+    },
+    {
+      "file": "narrow.png",
+      "width": 390,
+      "height": 844,
+      "sha256": "b2f153cce97e99ffd96ce7b7a2c1410e530e0a6e4861195ad7d04519131ebe3a"
+    },
+    {
+      "file": "invalid.png",
+      "width": 1536,
+      "height": 770,
+      "sha256": "c3a0a876667965b33ae6ef076ff3ca936e1c45ff7bdaad6b7da2a74d228ae1b7"
+    }
+  ],
+  "sources": [
+    {
+      "file": "src/solo/sales/InvoicePaymentRequests.tsx",
+      "sha256": "80231d795d720ad7a48ec4e943930ad729d7f1a41dd382c358e6d6c76af0f222"
+    },
+    {
+      "file": "src/solo/sales/InvoiceLifecycleActions.tsx",
+      "sha256": "124cc8d44785bd6b7a3af307cbb97059de2d13fd9412e57aeec5afbfef57a88e"
+    },
+    {
+      "file": "src/solo/sales/InvoiceCommandReview.tsx",
+      "sha256": "e7a1e3df8441e26d51bf3f9daad1dc20cb18c69dbc9eb084b36d7c31f2603f19"
+    },
+    {
+      "file": "src/solo/sales/sales-billing.css",
+      "sha256": "707ab36fb8573c0f00b31d8b12a28fea2b33ab8277f19f50309076a1fb38132e"
+    },
+    {
+      "file": "src/solo/solo-tokens.css",
+      "sha256": "77edc9fc35a6d2dab87318996fbb0dc6d80a0a04115d1757016c10da2c7b3197"
+    },
+    {
+      "file": "src/index.css",
+      "sha256": "85a3adb5668238e91cdb6c8189488db1fd24ce6698f7456ae23a3de6aa572482"
+    },
+    {
+      "file": "scripts/live-drive/sales-payments/mount/main.tsx",
+      "sha256": "77f7a27b2307cdf0d3def0df15a173b95a786802e4e08169f54fe7b9317c75ce"
+    },
+    {
+      "file": "scripts/live-drive/sales-payments/mount/supabase.ts",
+      "sha256": "15c4878104fc3d4f80c47872a5fc71f8d6e83355ae2037860d639e9ac5ac7063"
+    },
+    {
+      "file": "scripts/live-drive/sales-payments/mount/vite.config.ts",
+      "sha256": "7d48478e735218e7498e05bb29e55bec20c0c4631f5981fa0bc38ae896ea7685"
+    }
+  ],
+  "checks": {
+    "desktop_width": 1536,
+    "narrow_width": 390,
+    "narrow_height": 844,
+    "narrow_document_client_width": 390,
+    "narrow_document_scroll_width": 390,
+    "narrow_dialog": {
+      "left": 12,
+      "right": 378.3999938964844,
+      "top": 242.25,
+      "bottom": 601.75
+    },
+    "same_operation_and_accepted_reference": true,
+    "unknown_retained": true,
+    "keyboard_enter_and_return_focus": true,
+    "full_reload_reopen": true,
+    "malformed_target_unavailable": true
+  },
+  "excluded": [
+    "Default screenshot compositor-scaled narrow frame",
+    "Initial pre-ready navigation timeout",
+    "PNG header read on JPEG screenshot was invalid metadata; only verified PNG capture dimensions above accepted"
+  ],
+  "unverified": [
+    "Full shell four widths/open+closed/two actual cohorts for this financial change",
+    "Native 200-percent zoom",
+    "Screen reader/high contrast/physical mobile",
+    "Actual signature/provider/sending/payment result",
+    "Founder acceptance"
+  ]
+}

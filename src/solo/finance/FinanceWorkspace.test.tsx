@@ -1,26 +1,27 @@
 import React, { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
-import { MemoryRouter, Route, Routes, useLocation, useNavigationType } from "react-router-dom";
+import { MemoryRouter, Route, Routes, useLocation, useNavigate, useNavigationType, useParams, type NavigateFunction } from "react-router-dom";
 import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
 import { FinanceWorkspace } from "./FinanceWorkspace";
 import { financeDebtReviewPrompt } from "./financeDebtSource";
 import { branchBySlug, subtabByKey } from "@/lib/routing/tierBranches";
 import { tenantShellDestinationsForPath } from "@/components/tenant-shell/tenantShellRoutes";
-import type { SalesMetricBundle } from "../sales/performance/types";
+import type { SalesMetricBundle, SalesPerformanceRangeKey } from "../sales/performance/types";
 import { financialPlayReview } from '@/test/fixtures/financial-play-review';
 import { TEST_REVIEW_TENANT } from '@/test/fixtures/business-review';
 const targetContext = vi.hoisted(() => ({ value: { activeUserId: 'test-owner',
  activeTenantId: '10000000-0000-4000-8000-000000000001', loading: false, accountContextStatus: 'ready' } }));
 vi.mock('@/hooks/useTenantContext', () => ({ useOptionalTenantContext: () => targetContext.value }));
-const mocks = vi.hoisted(() => ({ phase: "ready", metricPhase: "ready", retry: vi.fn(), rows: [] as unknown[], metrics: [] as SalesMetricBundle[], identity: "A:0:0" }));
+const mocks = vi.hoisted(() => ({ phase: "ready", metricPhase: "ready", retry: vi.fn(), metricRead: vi.fn(), rows: [] as unknown[], metrics: [] as SalesMetricBundle[], identity: "A:0:0" }));
 const sourceRead = vi.hoisted(() => ({ value: { state: "loading" } as Record<string, unknown>, refresh: vi.fn(), read: vi.fn() }));
 vi.mock("../data/useBusinessReview", () => ({ useBusinessReview: (epoch: string | null | undefined, period?: string, focused?: unknown) => { if (focused) sourceRead.read(epoch, period, focused); else sourceRead.read(epoch); return { ...sourceRead.value, refresh: sourceRead.refresh }; } }));
-vi.mock("../sales/performance/useSalesPerformanceMetrics", () => ({ useSalesPerformanceMetrics: () => ({ phase: mocks.metricPhase, metrics: mocks.metrics, retry: mocks.retry, unavailableKeys: {} }) }));
+vi.mock("../sales/performance/useSalesPerformanceMetrics", () => ({ useSalesPerformanceMetrics: (epoch: string | null | undefined, range: SalesPerformanceRangeKey) => { mocks.metricRead(epoch, range); return { phase: mocks.metricPhase, metrics: mocks.metrics, retry: mocks.retry, unavailableKeys: {} }; } }));
 vi.mock("./useFinanceInvoices", () => ({ useFinanceInvoices: () => ({ identity: mocks.identity, phase: mocks.phase, rows: mocks.rows, hasMore: false, readAt: null, retry: mocks.retry, loadMore: vi.fn() }) }));
 (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 let root: Root, host: HTMLDivElement;
 beforeEach(() => { mocks.phase = "ready"; mocks.metricPhase = "ready"; mocks.rows = []; mocks.metrics = []; mocks.identity = "A:0:0"; mocks.retry.mockReset(); sourceRead.value = { state: "loading" }; sourceRead.refresh.mockReset(); sourceRead.read.mockReset(); host = document.createElement("div"); document.body.append(host); root = createRoot(host); });
 beforeEach(() => { targetContext.value = { activeUserId: 'test-owner', activeTenantId: TEST_REVIEW_TENANT, loading: false, accountContextStatus: 'ready' }; });
+beforeEach(() => { mocks.metricRead.mockReset(); });
 afterEach(() => { act(() => root.unmount()); host.remove(); });
 async function render(path = "/solo/123/finance/overview", epoch = "A") { await act(async () => root.render(<MemoryRouter initialEntries={[path]}><Routes><Route path="/solo/:account/*" element={<FinanceWorkspace epoch={epoch}/>}/></Routes></MemoryRouter>)); }
 const readySourceReview = () => ({ state: "ready", snapshot: { period: { timezone: "UTC" }, domains: { finance: { status: "available", data: { finance_evidence: {
@@ -31,6 +32,168 @@ const readySourceReview = () => ({ state: "ready", snapshot: { period: { timezon
     accounts: [{ native_id: "native-account", label: "Original account", product: "deposit", currency: "USD",
      current_balance: "900719925474099312345.123456", available_cash: "0", available_credit: null, credit_limit: null }] }],
   } } } } } });
+
+describe('Finance evidence-window continuity', () => {
+ let navigate: NavigateFunction;
+ function Subject() {
+  navigate = useNavigate();
+  const { account } = useParams();
+  return <FinanceWorkspace epoch={account}/>;
+ }
+ function Address() {
+  const location = useLocation(), action = useNavigationType();
+  return <output aria-label="Finance view address" data-action={action} data-state={JSON.stringify(location.state)}>{location.pathname}{location.search}{location.hash}</output>;
+ }
+ async function mountWindow(entries: NonNullable<React.ComponentProps<typeof MemoryRouter>['initialEntries']>, key = 'initial', initialIndex = entries.length - 1) {
+  await act(async () => root.render(<MemoryRouter key={key} initialEntries={entries} initialIndex={initialIndex}>
+   <Routes><Route path="/solo/:account/*" element={<><Subject/><Address/></>}/></Routes>
+   <textarea aria-label="Existing Chat question" defaultValue="Keep this question unsent"/>
+  </MemoryRouter>));
+ }
+ const address = () => host.querySelector<HTMLOutputElement>('output[aria-label="Finance view address"]')!;
+ const period = () => host.querySelector<HTMLSelectElement>('select')!;
+ const tab = (name: string) => [...host.querySelectorAll<HTMLButtonElement>('[role="tab"]')].find(e => e.textContent === name)!;
+
+ it.each(['week', 'month', 'quarter', 'year'] as const)('reopens the original %s Sales window from its Finance address', async range => {
+  await mountWindow([`/solo/123/finance/profitability?range=${range}`]);
+  expect(period().value).toBe(range);
+  expect(mocks.metricRead).toHaveBeenLastCalledWith('123', range);
+ });
+
+ it.each(['', '?range=', '?range=unknown', '?range=WEEK', '?range=week&range=year', '?range=week&range=week', '?range=https%3A%2F%2Funtrusted.example'])('keeps the legacy30-day fallback for absent or ambiguous input %s', async search => {
+  await mountWindow([`/solo/123/finance/overview${search}`]);
+  expect(period().value).toBe('month');
+  expect(mocks.metricRead).toHaveBeenLastCalledWith('123', 'month');
+ });
+
+ it('retains the selected window through Forecast, a complete route remount and the return to Profitability', async () => {
+  await mountWindow(['/solo/123/finance/profitability']);
+  await act(async () => { period().value = 'week'; period().dispatchEvent(new Event('change', { bubbles: true })); });
+  expect(address().textContent).toBe('/solo/123/finance/profitability?range=week');
+  await act(async () => tab('Budgeting & Forecasting').click());
+  const saved = address().textContent!;
+  expect(saved).toBe('/solo/123/finance/budgeting-forecasting?range=week');
+  expect(mocks.metricRead).toHaveBeenLastCalledWith('123', 'week');
+  // A new Router models opening the saved address, without retained component state.
+  await mountWindow([saved], 'after-full-remount');
+  expect(mocks.metricRead).toHaveBeenLastCalledWith('123', 'week');
+  await act(async () => tab('Profitability').click());
+  expect(period().value).toBe('week');
+  expect(address().textContent).toBe('/solo/123/finance/profitability?range=week');
+ });
+
+ it('replaces only the existing filter address and preserves its other context', async () => {
+  await mountWindow([{ pathname: '/solo/123/finance/overview', search: '?range=week&from=source', hash: '#position', state: { source: 'original-review' } }]);
+  await act(async () => { period().value = 'quarter'; period().dispatchEvent(new Event('change', { bubbles: true })); });
+  expect(address().textContent).toBe('/solo/123/finance/overview?range=quarter&from=source#position');
+  expect(address().dataset.action).toBe('REPLACE');
+  expect(JSON.parse(address().dataset.state!)).toEqual({ source: 'original-review', financeRangeScope: 'test-owner:123:123' });
+  await act(async () => tab('Receivables').click());
+  expect(address().textContent).toBe('/solo/123/finance/receivables?range=quarter&from=source#position');
+  expect(address().dataset.action).toBe('PUSH');
+  expect(JSON.parse(address().dataset.state!)).toEqual({ source: 'original-review', financeRangeScope: 'test-owner:123:123' });
+ });
+
+ it('resets a saved view from a different actor or business before any metric read', async () => {
+  await mountWindow([{ pathname: '/solo/123/finance/profitability', search: '?range=year&from=source', hash: '#position', state: { source: 'original-review', financeRangeScope: 'other-actor:other-business:123' } }]);
+  expect(period().value).toBe('month');
+  expect(mocks.metricRead.mock.calls.every(([, range]) => range === 'month')).toBe(true);
+  expect(address().textContent).toBe('/solo/123/finance/profitability?from=source#position');
+  expect(JSON.parse(address().dataset.state!)).toEqual({ source: 'original-review' });
+ });
+
+ it('follows Back and Forward windows without disturbing the existing Chat draft or caret', async () => {
+  await mountWindow(['/solo/123/finance/overview?range=week', '/solo/123/finance/profitability?range=year']);
+  const draft = host.querySelector<HTMLTextAreaElement>('textarea[aria-label="Existing Chat question"]')!;
+  draft.focus(); draft.setSelectionRange(2, 8);
+  await act(async () => navigate(-1));
+  expect(period().value).toBe('week');
+  expect(mocks.metricRead).toHaveBeenLastCalledWith('123', 'week');
+  expect(document.activeElement).toBe(draft);
+  expect([draft.selectionStart, draft.selectionEnd]).toEqual([2, 8]);
+  await act(async () => navigate(1));
+  expect(period().value).toBe('year');
+  expect(mocks.metricRead).toHaveBeenLastCalledWith('123', 'year');
+  expect(draft.value).toBe('Keep this question unsent');
+  expect(document.activeElement).toBe(draft);
+ });
+
+ it('uses each workspace address without retaining another workspace window', async () => {
+  await mountWindow(['/solo/123/finance/overview?range=week', '/solo/456/finance/overview']);
+  expect(period().value).toBe('month');
+  expect(mocks.metricRead).toHaveBeenLastCalledWith('456', 'month');
+  await act(async () => navigate(-1));
+  expect(period().value).toBe('week');
+  expect(mocks.metricRead).toHaveBeenLastCalledWith('123', 'week');
+ });
+
+ it('retains the original inline mode without adding an address or changing its controls', async () => {
+  await act(async () => root.render(<MemoryRouter initialEntries={['/inline-finance']}><FinanceWorkspace epoch="A"/><Address/></MemoryRouter>));
+  await act(async () => { period().value = 'year'; period().dispatchEvent(new Event('change', { bubbles: true })); });
+  await act(async () => tab('Receivables').click());
+  expect(period().value).toBe('year');
+  expect(mocks.metricRead).toHaveBeenLastCalledWith('A', 'year');
+  expect(address().textContent).toBe('/inline-finance');
+ });
+});
+
+describe("Finance history focus continuity", () => {
+ let navigate: NavigateFunction;
+ async function history(entries: string[], initialIndex = entries.length - 1) {
+  function Subject() {
+   navigate = useNavigate();
+   const { account } = useParams();
+   return <FinanceWorkspace epoch={account}/>;
+  }
+  await act(async () => root.render(<MemoryRouter initialEntries={entries} initialIndex={initialIndex}>
+   <Routes><Route path="/solo/:account/*" element={<Subject/>}/></Routes>
+   <textarea aria-label="Existing Chat draft" defaultValue="Keep this unsent question"/>
+  </MemoryRouter>));
+ }
+ const tab = (label: string) => [...host.querySelectorAll<HTMLButtonElement>('[role="tab"]')].find(node => node.textContent === label)!;
+ const entries = ["/solo/123/finance/overview", "/solo/123/finance/profitability", "/solo/123/finance/budgeting-forecasting"];
+
+ it.each([
+  { start: 2, delta: -1, from: "Budgeting & Forecasting", to: "Profitability" },
+  { start: 1, delta: 1, from: "Profitability", to: "Budgeting & Forecasting" },
+  { start: 2, delta: -2, from: "Budgeting & Forecasting", to: "Overview" },
+ ])("follows native history $delta to the selected $to tab when the tab strip owns focus", async ({ start, delta, from, to }) => {
+  await history(entries, start);
+  tab(from).focus();
+  await act(async () => navigate(delta));
+  expect(tab(to).getAttribute("aria-selected")).toBe("true");
+  expect(document.activeElement).toBe(tab(to));
+  expect(host.querySelectorAll('[role="tab"][tabindex="0"]')).toHaveLength(1);
+  expect(host.querySelector('[role="tabpanel"]')?.getAttribute("aria-labelledby")).toBe(tab(to).id);
+ });
+
+ it("preserves the existing Chat draft and its focus during history navigation", async () => {
+  await history(entries);
+  const draft = host.querySelector<HTMLTextAreaElement>('textarea[aria-label="Existing Chat draft"]')!;
+  draft.focus(); draft.setSelectionRange(5, 9);
+  await act(async () => navigate(-1));
+  expect(tab("Profitability").getAttribute("aria-selected")).toBe("true");
+  expect(document.activeElement).toBe(draft);
+  expect(draft.value).toBe("Keep this unsent question");
+  expect([draft.selectionStart, draft.selectionEnd]).toEqual([5, 9]);
+ });
+
+ it("does not take over focus for a non-history route transition", async () => {
+  await history(entries);
+  const previous = tab("Budgeting & Forecasting"); previous.focus();
+  await act(async () => navigate("/solo/123/finance/profitability"));
+  expect(tab("Profitability").getAttribute("aria-selected")).toBe("true");
+  expect(document.activeElement).toBe(previous);
+ });
+
+ it("does not restore tab focus across a workspace change", async () => {
+  await history(["/solo/456/finance/profitability", entries[2]]);
+  const previous = tab("Budgeting & Forecasting"); previous.focus();
+  await act(async () => navigate(-1));
+  expect(tab("Profitability").getAttribute("aria-selected")).toBe("true");
+  expect(document.activeElement).toBe(previous);
+ });
+});
 
 describe("Finance canonical destination", () => {
  it('shows original financial Play evidence in Forecast without claiming a company budget or bank forecast', async () => {

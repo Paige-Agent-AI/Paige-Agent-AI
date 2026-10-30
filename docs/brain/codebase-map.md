@@ -1,5 +1,36 @@
 # Codebase Map — shipped surface area (routes · components · edge functions · gates · integrations)
 
+## EXP02 Finance native history focus (2026-10-29, candidate)
+
+Original FinanceWorkspace now aligns selected/focused tabs on same-workspace
+browser POP only while the original tab strip owns focus. Existing Chat/form/
+source-sheet focus, routes, VERA, canonical readers and authority are preserved.
+Actual causal3FAIL/39PASS ->62 owning/adjacent PASS plus8 provisioning source
+controls; original parity/hostile controls, types0new, scoped lint/detector pass.
+Native synthetic Back/Forward/Chat draft/390 reachability and full8 CSS viewport
+captures are bounded separately from actual candidate/cohort/native200percent/AT
+and final release proof, all still owed. See
+[original UI evidence](../evidence/ui-delivery/e2-finance-history-focus.md).
+No shared routing hook, runtime, data writer, capability or activation change.
+
+## EXP02 original commercial read wording (2026-10-29, candidate)
+
+Forward `20271122000002_e2_commercial_read_receipt_labels.sql` composes the exact
+original E04 `_workspace_event_display(text,text,text)` body in place. Only three
+successful capability-run tuples receive read wording: `agreement_list`,
+`agreement_status`, `find_clients_for_status`. The last is an original nested RPC,
+not a new model tool. Existing event identities, actor fields, failures/unknowns,
+private owner/ACL/OID and original scoped `get_solo_rail_activity` stay unchanged.
+No new receipt, domain writer, grant, approval or completion is created.
+The successor releases after native21150004 and before pending E04 host10004/5;
+old #3067/10102 and its applied Preview remain unchanged, explicitly superseded.
+Native original20/candidate32/replay32 and six source/metadata refusal controls
+pass in isolated PostgreSQL16; local expression adapter is not hosted pgTAP,
+customer authentication, RLS or durability acceptance. Review, exact-head CI,
+native release/readback and customer proof remain due. Original source owners
+and all19/nine obligations are retained in the [E02 matrix](../delivery/e2-customer-experience-integration-matrix.md)
+and [proportional UI packet](../evidence/ui-delivery/e2-commercial-read-receipts.md).
+
 ## E09 customer role, approved resources and invitation convergence (2026-10-17)
 
 Customer `/app` retains `AppShell`/`AppNav` and `components/app/PaigeChat.tsx`. The actual customer frame selects the business-branded role; `functions/_shared/client-portal-chat-scope.ts`, `client-portal-persona.ts` and `client-portal-assistant-context.ts` bind native membership, explicitly shared program Knowledge and issued private history in the existing `paige-ai-chat` handler. Private `customer_private` threads/turns remain separate from business-shared `messages`/`threads`; owner Knowledge/Memory/tools are not customer context. These are bounded production source releases2274/2276/2287, not independent authenticated customer reply/reload acceptance. The owner reports a new customer reply on2026-10-17; reload remains UNVERIFIED. The customer identity correction reuses Cura from the existing Client Success roster through pure `client-portal-identity.ts`, preserving custom tenant names and PAIGE as the owner's COO. Its exact production source/model-identity proof remains owed until its normal release/readback.
@@ -13,6 +44,24 @@ Dashboard `PortalInvitationManager.tsx` delegates sends to `PortalInvitationComm
 ## INT-340 / #1837 conversational Metric/Evidence binding
 
 `_shared/analytics-metrics/read.ts` declares the single `analytics.metric_read` / `read_business_metric` capability. `paige-ai-chat` binds it after existing runtime gates using the real caller-JWT client; Live reaches the same handler. The canonical issuer/resolver and shared pure validator own values, scope and evidence. The frontend validator import reexports the same implementation. Current-turn evidence uses `paige-context/mod.ts`, without extending Pipeline Mind signals or persisting metrics as Memory. Source wiring is not authenticated acceptance. Exact integration/proof boundaries: `docs/delivery/int340-conversational-metric-read.md`.
+
+EXP02's `_shared/team-hub/vera-metric-read.ts` is an **unmounted foundation** for
+the SAME VERA's private business DM. It offers the original definition and calls
+that original reader with the asking actor's caller-JWT client; no new metric
+query, calculation, store, identity, model or authority. Server-resolved current
+owner/admin, tenant/actor, business-DM audience and stored tool scope are required.
+Each read/revalidation has a five-second deadline and cancellation fence; a late
+native completion cannot publish. The host's original read-marker ACK is required.
+Before publication it resolves the SAME original immutable evidence reference,
+never issuing a replacement after refusal, expiry or uncertainty. Reference
+expiry and cancellation are checked again at the outer publication boundary
+after bounded-result delivery, not only inside the native reader/work promise. Original
+Executive links remain outside model context; a read marker is not an action or
+settlement receipt. The existing Team Hub turn must still mount offer/dispatch,
+current-scope checks and pre-post revalidation under its single source owner.
+Both-chat result/reopen, role/revocation and legitimate existing/new SOLO proof
+remain owed; no catalogue or Binding Ledger state is promoted by this adapter.
+See the [original EXP02 matrix](../delivery/e2-customer-experience-integration-matrix.md).
 
 ## Ads from chat — lead funnel read + Ads showroom feature (2026-10-12)
 

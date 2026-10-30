@@ -1,0 +1,290 @@
+{
+  "at": "2026-10-29T21:11:36.419Z",
+  "scope": "Actual original Payments and Invoice detail source with explicitly synthetic role, facts and unavailable document/payment ports. No native, account, provider or customer acceptance proof.",
+  "listFrames": [
+    {
+      "size": {
+        "width": 1536,
+        "height": 770
+      },
+      "buttons": [
+        {
+          "rect": {
+            "width": 670.4000244140625,
+            "x": 432.8000183105469
+          },
+          "text": "Invoice TEST-001Issued Oct 28 · Due Oct 28$100.00 dueOpen"
+        },
+        {
+          "rect": {
+            "width": 144.08750915527344,
+            "x": 601.0250244140625
+          },
+          "text": "Message Test Advisory"
+        }
+      ],
+      "invoice": "Invoice TEST-001Issued Oct 28 · Due Oct 28$100.00 dueOpen",
+      "note": "Due dates are shown as issued. We can’t confirm overdue status right now. Contact the business if you need help.",
+      "scroll": 1536,
+      "width": 1536
+    },
+    {
+      "size": {
+        "width": 1366,
+        "height": 768
+      },
+      "buttons": [
+        {
+          "rect": {
+            "width": 670.4000244140625,
+            "x": 348
+          },
+          "text": "Invoice TEST-001Issued Oct 28 · Due Oct 28$100.00 dueOpen"
+        },
+        {
+          "rect": {
+            "width": 144.08750915527344,
+            "x": 516.2250366210938
+          },
+          "text": "Message Test Advisory"
+        }
+      ],
+      "invoice": "Invoice TEST-001Issued Oct 28 · Due Oct 28$100.00 dueOpen",
+      "note": "Due dates are shown as issued. We can’t confirm overdue status right now. Contact the business if you need help.",
+      "scroll": 1366,
+      "width": 1366
+    },
+    {
+      "size": {
+        "width": 1024,
+        "height": 768
+      },
+      "buttons": [
+        {
+          "rect": {
+            "width": 670.4000244140625,
+            "x": 176.8000030517578
+          },
+          "text": "Invoice TEST-001Issued Oct 28 · Due Oct 28$100.00 dueOpen"
+        },
+        {
+          "rect": {
+            "width": 144.08750915527344,
+            "x": 345.0249938964844
+          },
+          "text": "Message Test Advisory"
+        }
+      ],
+      "invoice": "Invoice TEST-001Issued Oct 28 · Due Oct 28$100.00 dueOpen",
+      "note": "Due dates are shown as issued. We can’t confirm overdue status right now. Contact the business if you need help.",
+      "scroll": 1024,
+      "width": 1024
+    },
+    {
+      "size": {
+        "width": 900,
+        "height": 1000
+      },
+      "links": [
+        {
+          "rect": {
+            "width": 670.4000244140625,
+            "x": 114.8000030517578
+          },
+          "text": "Invoice TEST-001Issued Oct 28 · Due Oct 28$100.00 dueOpen"
+        },
+        {
+          "rect": {
+            "width": 144.08750915527344,
+            "x": 283.0249938964844
+          },
+          "text": "Message Test Advisory"
+        }
+      ],
+      "note": "Due dates are shown as issued. We can’t confirm overdue status right now. Contact the business if you need help.",
+      "scroll": 900,
+      "width": 900
+    },
+    {
+      "size": {
+        "width": 390,
+        "height": 844
+      },
+      "links": [
+        {
+          "rect": {
+            "width": 356.8000183105469,
+            "x": 16.80000114440918
+          },
+          "text": "Invoice TEST-001Issued Oct 28 · Due Oct 28$100.00 dueOpen"
+        },
+        {
+          "rect": {
+            "width": 144.08750915527344,
+            "x": 185.02500915527344
+          },
+          "text": "Message Test Advisory"
+        }
+      ],
+      "note": "Due dates are shown as issued. We can’t confirm overdue status right now. Contact the business if you need help.",
+      "scroll": 390,
+      "width": 390
+    },
+    {
+      "size": {
+        "width": 320,
+        "height": 768
+      },
+      "links": [
+        {
+          "rect": {
+            "width": 271.20001220703125,
+            "x": 16.80000114440918
+          },
+          "text": "Invoice TEST-001Issued Oct 28 · Due Oct 28$100.00 dueOpen"
+        },
+        {
+          "rect": {
+            "width": 144.08750915527344,
+            "x": 16
+          },
+          "text": "Message Test Advisory"
+        }
+      ],
+      "note": "Due dates are shown as issued. We can’t confirm overdue status right now. Contact the business if you need help.",
+      "scroll": 305,
+      "width": 320
+    }
+  ],
+  "detailFrames": [
+    {
+      "size": {
+        "width": 1536,
+        "height": 770
+      },
+      "note": "Due dates are shown as issued. We can’t confirm overdue status right now. Contact the business if you need help.",
+      "scroll": 1536,
+      "text": "Payments\nOpen PDF / print\nDownload PDF\nInvoice TEST-001\n\nOpen · Issued Oct 28 · Due Oct 28 · from Test Advisory\n\nDue dates are shown as issued. We can’t confirm overdue status right now. Contact the business if you need help.\n\nPayment\n\n$100.00 due\n\nWe couldn't check for a payment link.\n\nTry again\n\nWe couldn't open the invoice document.\n\nTry again",
+      "width": 1536
+    },
+    {
+      "size": {
+        "width": 1366,
+        "height": 768
+      },
+      "note": "Due dates are shown as issued. We can’t confirm overdue status right now. Contact the business if you need help.",
+      "scroll": 1366,
+      "text": "Payments\nOpen PDF / print\nDownload PDF\nInvoice TEST-001\n\nOpen · Issued Oct 28 · Due Oct 28 · from Test Advisory\n\nDue dates are shown as issued. We can’t confirm overdue status right now. Contact the business if you need help.\n\nPayment\n\n$100.00 due\n\nWe couldn't check for a payment link.\n\nTry again\n\nWe couldn't open the invoice document.\n\nTry again",
+      "width": 1366
+    },
+    {
+      "size": {
+        "width": 1024,
+        "height": 768
+      },
+      "note": "Due dates are shown as issued. We can’t confirm overdue status right now. Contact the business if you need help.",
+      "scroll": 1024,
+      "text": "Payments\nOpen PDF / print\nDownload PDF\nInvoice TEST-001\n\nOpen · Issued Oct 28 · Due Oct 28 · from Test Advisory\n\nDue dates are shown as issued. We can’t confirm overdue status right now. Contact the business if you need help.\n\nPayment\n\n$100.00 due\n\nWe couldn't check for a payment link.\n\nTry again\n\nWe couldn't open the invoice document.\n\nTry again",
+      "width": 1024
+    },
+    {
+      "size": {
+        "width": 900,
+        "height": 1000
+      },
+      "note": "Due dates are shown as issued. We can’t confirm overdue status right now. Contact the business if you need help.",
+      "scroll": 900,
+      "text": "Payments\nOpen PDF / print\nDownload PDF\nInvoice TEST-001\n\nOpen · Issued Oct 28 · Due Oct 28 · from Test Advisory\n\nDue dates are shown as issued. We can’t confirm overdue status right now. Contact the business if you need help.\n\nPayment\n\n$100.00 due\n\nWe couldn't check for a payment link.\n\nTry again\n\nWe couldn't open the invoice document.\n\nTry again",
+      "width": 900
+    },
+    {
+      "size": {
+        "width": 390,
+        "height": 844
+      },
+      "note": "Due dates are shown as issued. We can’t confirm overdue status right now. Contact the business if you need help.",
+      "scroll": 375,
+      "text": "Payments\nOpen PDF / print\nDownload PDF\nInvoice TEST-001\n\nOpen · Issued Oct 28 · Due Oct 28 · from Test Advisory\n\nDue dates are shown as issued. We can’t confirm overdue status right now. Contact the business if you need help.\n\nPayment\n\n$100.00 due\n\nWe couldn't check for a payment link.\n\nTry again\n\nWe couldn't open the invoice document.\n\nTry again",
+      "width": 390
+    },
+    {
+      "size": {
+        "width": 320,
+        "height": 768
+      },
+      "note": "Due dates are shown as issued. We can’t confirm overdue status right now. Contact the business if you need help.",
+      "scroll": 305,
+      "text": "Payments\nOpen PDF / print\nDownload PDF\nInvoice TEST-001\n\nOpen · Issued Oct 28 · Due Oct 28 · from Test Advisory\n\nDue dates are shown as issued. We can’t confirm overdue status right now. Contact the business if you need help.\n\nPayment\n\n$100.00 due\n\nWe couldn't check for a payment link.\n\nTry again\n\nWe couldn't open the invoice document.\n\nTry again",
+      "width": 320
+    }
+  ],
+  "states": [
+    {
+      "state": "configured",
+      "noteCount": 0,
+      "overflow": false,
+      "text": "Payments\n\nInvoices Test Advisory has sent you.\n\n$100.00 due across 1 open invoice\n\nInvoice TEST-001\n\nIssued Oct 28 · Due Oct 28\n\n$100.00 due\n\nOpen\n\nPayments are processed by Test Advisory's payment provider.\n\nQuestions about a charge?\nMessage Test Advisory"
+    },
+    {
+      "state": "missing",
+      "noteCount": 1,
+      "overflow": false,
+      "text": "Payments\n\nInvoices Test Advisory has sent you.\n\n$100.00 due across 1 open invoice\n\nDue dates are shown as issued. We can’t confirm overdue status right now. Contact the business if you need help.\n\nInvoice TEST-001\n\nIssued Oct 28 · Due Oct 28\n\n$100.00 due\n\nOpen\n\nPayments are processed by Test Advisory's payment provider.\n\nQuestions about a charge?\nMessage Test Advisory"
+    },
+    {
+      "state": "invalid",
+      "noteCount": 1,
+      "overflow": false,
+      "text": "Payments\n\nInvoices Test Advisory has sent you.\n\n$100.00 due across 1 open invoice\n\nDue dates are shown as issued. We can’t confirm overdue status right now. Contact the business if you need help.\n\nInvoice TEST-001\n\nIssued Oct 28 · Due Oct 28\n\n$100.00 due\n\nOpen\n\nPayments are processed by Test Advisory's payment provider.\n\nQuestions about a charge?\nMessage Test Advisory"
+    },
+    {
+      "state": "advanced",
+      "noteCount": 0,
+      "overflow": false,
+      "text": "Payments\n\nInvoices Test Advisory has sent you.\n\n$100.00 due across 1 open invoice\n1 past due\n\nInvoice TEST-001\n\nIssued Oct 28 · Was due Oct 28\n\n$100.00 due\n\nPast due\n\nPayments are processed by Test Advisory's payment provider.\n\nQuestions about a charge?\nMessage Test Advisory"
+    },
+    {
+      "state": "empty",
+      "noteCount": 0,
+      "overflow": false,
+      "text": "Payments\n\nInvoices Test Advisory has sent you.\n\nTest Advisory hasn't sent you any invoices\n\nWhen Test Advisory sends you an invoice, you'll see what's due and can open it here.\n\nMessage Test Advisory"
+    },
+    {
+      "state": "loading",
+      "noteCount": 0,
+      "overflow": false,
+      "text": "Payments\n\nInvoices Test Advisory has sent you.\n\nLoading your invoices…"
+    },
+    {
+      "state": "error",
+      "noteCount": 0,
+      "overflow": false,
+      "text": "Payments\n\nInvoices Test Advisory has sent you.\n\nWe couldn't load your invoices. Check your connection and try again.\n\nTry again"
+    },
+    {
+      "state": "denied",
+      "noteCount": 0,
+      "overflow": false,
+      "text": "Payments\nPayments isn't available on this account\n\nInvoices can't be shown to this account in the client portal.\n\nBack to Home"
+    },
+    {
+      "state": "alternate",
+      "noteCount": 0,
+      "overflow": false,
+      "text": "Payments\n\nInvoices Test Studio has sent you.\n\n$100.00 due across 1 open invoice\n\nInvoice TEST-001\n\nIssued Oct 28 · Due Oct 28\n\n$100.00 due\n\nOpen\n\nPayments are processed by Test Studio's payment provider.\n\nQuestions about a charge?\nMessage Test Studio"
+    }
+  ],
+  "retry": "Payments\n\nInvoices Test Advisory has sent you.\n\n$100.00 due across 1 open invoice\n\nInvoice TEST-001\n\nIssued Oct 28 · Due Oct 28\n\n$100.00 due\n\nOpen\n\nPayments are processed by Test Advisory's payment provider.\n\nQuestions about a charge?\nMessage Test Advisory",
+  "keyboard": {
+    "outline": "rgba(0, 0, 0, 0) solid 1.6px",
+    "shadow": "rgb(255, 255, 255) 0px 0px 0px 0px, rgb(92, 38, 217) 0px 0px 0px 2px, rgba(0, 0, 0, 0) 0px 0px 0px 0px",
+    "tag": "A",
+    "text": "Message Test Advisory"
+  },
+  "exit": "Local exit — no connected original record.\n\nBack to Payments",
+  "reduced": {
+    "animations": [],
+    "reduced": true
+  },
+  "viewportReset": true
+}

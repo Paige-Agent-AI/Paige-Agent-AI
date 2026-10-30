@@ -12,7 +12,7 @@
 -- is active staff of the same business, a platform owner, and a deleted or banned account (section 4b);
 -- a linked client whose membership of that business is no longer active (suspended) still reads.
 BEGIN;
-SELECT plan(171);
+SELECT plan(211);
 INSERT INTO auth.users(id,aud,role,email,email_confirmed_at,raw_app_meta_data) VALUES
  ('e0995100-0000-4000-8000-000000000001','authenticated','authenticated','payments-owner-a@tests.invalid',now(),'{"comms_provider_execution":"disabled"}'),
  ('e0995100-0000-4000-8000-000000000002','authenticated','authenticated','payments-owner-b@tests.invalid',now(),'{"comms_provider_execution":"disabled"}'),
@@ -399,7 +399,7 @@ SELECT ok(NOT (pg_temp.as_user('e0995100-0000-4000-8000-000000000001',format('SE
 
 -- EXP09 exact original Billing intent. Same original financial records and caller roles.
 SELECT is((SELECT md5(prosrc) FROM pg_proc WHERE oid='public._client_portal_billing_client(uuid)'::regprocedure),'7785ae6623f447c23b040d06d3c701a2','original commercial native source remains unchanged: public._client_portal_billing_client(uuid)');
-SELECT is((SELECT md5(prosrc) FROM pg_proc WHERE oid='public.client_portal_invoices(uuid,integer,jsonb)'::regprocedure),'28df84d29fcde1e64bb09153f4d3e77b','original commercial native source remains unchanged: public.client_portal_invoices(uuid,integer,jsonb)');
+SELECT is((SELECT md5(prosrc) FROM pg_proc WHERE oid='public.client_portal_invoices(uuid,integer,jsonb)'::regprocedure),'91f0344a6231205da5763af3755f0ad3','original scoped invoice wrapper delegates the unchanged financial query: public.client_portal_invoices(uuid,integer,jsonb)');
 SELECT is((SELECT md5(prosrc) FROM pg_proc WHERE oid='public.client_portal_invoice_ledger(uuid,uuid,integer,jsonb)'::regprocedure),'a871c10fdea9b0f8e9bf3b7a9bdda887','original commercial native source remains unchanged: public.client_portal_invoice_ledger(uuid,uuid,integer,jsonb)');
 SELECT is((SELECT md5(prosrc) FROM pg_proc WHERE oid='public.client_portal_invoice_payment_request(uuid,uuid)'::regprocedure),'e59ce09de1660f47341787a89b7269ec','original commercial native source remains unchanged: public.client_portal_invoice_payment_request(uuid,uuid)');
 SELECT ok(has_function_privilege('authenticated','public.client_portal_invoices_scoped(uuid,uuid,integer,jsonb)','EXECUTE') AND NOT has_function_privilege('anon','public.client_portal_invoices_scoped(uuid,uuid,integer,jsonb)','EXECUTE') AND NOT has_function_privilege('service_role','public.client_portal_invoices_scoped(uuid,uuid,integer,jsonb)','EXECUTE'),'client_portal_invoices_scoped has exactly the intended customer execution grant');
@@ -482,6 +482,95 @@ UPDATE public.clients SET linked_user_id='e0995100-0000-4000-8000-000000000004' 
 UPDATE public.clients SET linked_user_id=NULL WHERE id='e0995300-0000-4000-8000-000000000006';
 SELECT set_config('paige.link_ok','',true);
 SELECT ok(to_regclass('public.clients_linked_user_id_unique') IS NULL AND EXISTS(SELECT 1 FROM pg_index WHERE indexrelid=to_regclass('public.clients_tenant_linked_user_key') AND indisunique AND indisvalid AND indisready AND pg_get_indexdef(indexrelid)='CREATE UNIQUE INDEX clients_tenant_linked_user_key ON public.clients USING btree (tenant_id, linked_user_id)') AND EXISTS(SELECT 1 FROM pg_index WHERE indexrelid=to_regclass('public.clients_linked_user_lookup_idx') AND NOT indisunique AND indisvalid AND indisready AND pg_get_indexdef(indexrelid)='CREATE INDEX clients_linked_user_lookup_idx ON public.clients USING btree (linked_user_id) WHERE (linked_user_id IS NOT NULL)'),'Native63 current per-business uniqueness and indexed user lookup phase 2');
+
+-- EXP09 calendar consumer: append-only extension of the SAME rolled-back fixture.
+-- All incumbent financial/authority assertions above are retained unchanged.
+CREATE FUNCTION pg_temp.calendar_invoices(_business uuid DEFAULT 'e0995200-0000-4000-8000-000000000001',
+ _contact uuid DEFAULT 'e0995300-0000-4000-8000-000000000001',_actor uuid DEFAULT 'e0995100-0000-4000-8000-000000000003',
+ _limit integer DEFAULT 20,_after jsonb DEFAULT NULL) RETURNS jsonb LANGUAGE sql AS $$
+ SELECT pg_temp.billing_intent(format('SELECT public.client_portal_invoices_calendar_scoped(%L,%L,%L,%L::jsonb)',_business,_contact,_limit,_after),_business::text,_actor)
+$$;
+CREATE FUNCTION pg_temp.calendar_zone(_zone text) RETURNS jsonb LANGUAGE sql AS $$
+ SELECT pg_temp.as_user('e0995100-0000-4000-8000-000000000001',format('SELECT public.set_business_time_zone(%L,%L)','e0995200-0000-4000-8000-000000000001',_zone))
+$$;
+CREATE FUNCTION pg_temp.calendar_access(_action text) RETURNS jsonb LANGUAGE plpgsql AS $$
+DECLARE v jsonb;
+BEGIN
+ v:=pg_temp.as_user('e0995100-0000-4000-8000-000000000001',
+  'SELECT public.read_client_portal_access(''e0995200-0000-4000-8000-000000000001'',''e0995300-0000-4000-8000-000000000001'')');
+ RETURN pg_temp.as_user('e0995100-0000-4000-8000-000000000001',format('SELECT public.set_client_portal_access(%L,%L,%L,%L,%L,NULL,%L)',
+  'e0995100-0000-4000-8000-000000000001','e0995200-0000-4000-8000-000000000001','e0995300-0000-4000-8000-000000000001',_action,
+  CASE _action WHEN 'pause' THEN 'engagement_paused' WHEN 'end' THEN 'engagement_ended' END,v->>'since'));
+END $$;
+
+SELECT ok(has_function_privilege('authenticated','public.client_portal_invoices_calendar_scoped(uuid,uuid,integer,jsonb)','EXECUTE')
+ AND NOT has_function_privilege('anon','public.client_portal_invoices_calendar_scoped(uuid,uuid,integer,jsonb)','EXECUTE')
+ AND NOT has_function_privilege('service_role','public.client_portal_invoices_calendar_scoped(uuid,uuid,integer,jsonb)','EXECUTE'),'calendar admission grants no anonymous or service API authority');
+SELECT ok((SELECT p.prosecdef AND pg_get_userbyid(p.proowner)='postgres' AND p.proconfig=ARRAY['search_path=""']::text[]
+ AND p.provolatile='v' AND p.pronargdefaults=2 AND p.proargnames=ARRAY['p_tenant_id','p_expected_client_id','p_limit','p_after']::text[]
+ AND p.proacl=ARRAY['postgres=X/postgres','authenticated=X/postgres']::aclitem[]
+ FROM pg_proc p WHERE p.oid='public.client_portal_invoices_calendar_scoped(uuid,uuid,integer,jsonb)'::regprocedure),'calendar API has exact guarded inputs and least-privilege metadata, no caller actor/date override');
+
+SELECT ok(pg_temp.calendar_zone('America/New_York') ? 'receipt_id','original owner writer configures the original business calendar');
+SELECT is(pg_temp.calendar_invoices()->>'schema_version','2','calendar consumer returns only the new explicit version');
+SELECT is(pg_temp.keys(pg_temp.calendar_invoices()),'balances,business_name,calendar,has_more,invoice_count,invoices,next_cursor,open_count,read_at,schema_version,tenant_id','calendar consumer exposes the exact minimized root shape');
+SELECT is(pg_temp.keys(pg_temp.calendar_invoices()->'calendar'),'local_date,state,zone','calendar excludes internal setting/actor metadata');
+SELECT is(pg_temp.calendar_invoices()->'calendar',public._business_time_zone_for_tenant('e0995200-0000-4000-8000-000000000001',statement_timestamp())-ARRAY['set_at','read_at'],'business date comes from the original native calendar source');
+SELECT is(pg_temp.calendar_invoices()-ARRAY['calendar','schema_version'],
+ public._client_portal_invoice_facts_for_client('e0995200-0000-4000-8000-000000000001','e0995300-0000-4000-8000-000000000001',20,NULL,
+ (public._business_time_zone_for_tenant('e0995200-0000-4000-8000-000000000001',statement_timestamp())->>'local_date')::date)-ARRAY['_native_sources','schema_version'],
+ 'entire financial JSON matches the ONE original query at the original business date');
+SELECT ok(NOT(pg_temp.calendar_invoices() ? '_native_sources') AND NOT(pg_temp.calendar_invoices() ? 'payment_request'),'calendar read exposes neither source internals nor payment bearer links');
+SELECT ok(NOT EXISTS(SELECT 1 FROM jsonb_array_elements(pg_temp.calendar_invoices()->'invoices') e WHERE NOT(e ? 'issued_snapshot_version')),'original issued snapshot versions are retained, never inferred');
+SELECT ok((pg_temp.calendar_invoices(_limit=>1)->>'has_more')::boolean AND pg_temp.calendar_invoices(_limit=>1)->'next_cursor'<>'null'::jsonb,'original bounded pagination retains the exact continuation cursor');
+
+SELECT is(pg_temp.calendar_invoices('e0995200-0000-4000-8000-000000000002','e0995300-0000-4000-8000-000000000006')->>'sqlstate','42501','foreign business/client is refused');
+SELECT is(pg_temp.calendar_invoices(_contact=>'e0995300-0000-4000-8000-000000000002')->>'sqlstate','42501','another client of the same business is refused');
+SELECT is(pg_temp.calendar_invoices(_actor=>'e0995100-0000-4000-8000-000000000001')->>'sqlstate','42501','business owner identity cannot substitute for a customer');
+SELECT is(pg_temp.calendar_invoices(_contact=>'e0995300-0000-4000-8000-000000000009',_actor=>'e0995100-0000-4000-8000-000000000011')->>'sqlstate','42501','same-business active staff cannot read as a linked customer');
+SELECT is(pg_temp.calendar_invoices(_contact=>'e0995300-0000-4000-8000-000000000010',_actor=>'e0995100-0000-4000-8000-000000000012')->>'sqlstate','42501','platform owner cannot read as a linked customer');
+SELECT is(pg_temp.calendar_invoices(_actor=>NULL)->>'sqlstate','42501','null customer identity is refused');
+SELECT is(pg_temp.as_user('e0995100-0000-4000-8000-000000000003','SELECT public.client_portal_invoices_calendar_scoped(''e0995200-0000-4000-8000-000000000001'',''e0995300-0000-4000-8000-000000000001'')','anon')->>'sqlstate','42501','anonymous role cannot invoke calendar API even with a supplied subject');
+SELECT is(pg_temp.as_user('e0995100-0000-4000-8000-000000000003','SELECT public.client_portal_invoices_calendar_scoped(''e0995200-0000-4000-8000-000000000001'',''e0995300-0000-4000-8000-000000000001'')','service_role')->>'sqlstate','42501','service API cannot impersonate a financial customer');
+SELECT is(pg_temp.calendar_invoices(_contact=>'e0995300-0000-4000-8000-000000000012',_actor=>'e0995100-0000-4000-8000-000000000014')->>'schema_version','2','staff of another business retain their genuine customer relationship');
+SELECT is(pg_temp.calendar_invoices(_contact=>'e0995300-0000-4000-8000-000000000013',_actor=>'e0995100-0000-4000-8000-000000000015')->>'schema_version','2','former suspended staff retain original external-client eligibility');
+
+UPDATE auth.users SET banned_until=now()+interval '1 hour' WHERE id='e0995100-0000-4000-8000-000000000003';
+SELECT is(pg_temp.calendar_invoices()->>'sqlstate','42501','banned ordinary customer is refused by the original financial gate');
+UPDATE auth.users SET banned_until=NULL,deleted_at=now() WHERE id='e0995100-0000-4000-8000-000000000003';
+SELECT is(pg_temp.calendar_invoices()->>'sqlstate','42501','deleted ordinary customer is refused despite an otherwise matching subject');
+UPDATE auth.users SET deleted_at=NULL WHERE id='e0995100-0000-4000-8000-000000000003';
+
+SELECT ok(pg_temp.calendar_zone(NULL) ? 'receipt_id','original owner writer explicitly clears the calendar');
+SELECT is(pg_temp.calendar_invoices()->'calendar','{"state":"missing","zone":null,"local_date":null}'::jsonb,'missing business time zone never becomes UTC');
+SELECT ok(EXISTS(SELECT 1 FROM jsonb_array_elements(pg_temp.calendar_invoices()->'invoices') e
+ WHERE e->>'status'='issued' AND (e->>'remaining_minor')::numeric>0 AND e->>'due_date' IS NOT NULL AND e->'past_due'='null'::jsonb),'unknown date retains unpaid issued obligations with unknown overdue status');
+SELECT is(pg_temp.calendar_invoices()->'balances',public._client_portal_invoice_facts_for_client('e0995200-0000-4000-8000-000000000001','e0995300-0000-4000-8000-000000000001',20,NULL,NULL)->'balances','unknown date retains exact original all-currency balances');
+-- Invalid legacy setting is a fixture-only source counterfactual; owner writer still rejects it.
+INSERT INTO public.tenant_business_time_zones(tenant_id,time_zone,set_by) VALUES
+ ('e0995200-0000-4000-8000-000000000001','America/Invalid_Portal_Test','e0995100-0000-4000-8000-000000000001');
+SELECT is(pg_temp.calendar_invoices()->'calendar','{"state":"invalid","zone":null,"local_date":null}'::jsonb,'invalid stored calendar is explicit and never guessed');
+SELECT ok(pg_temp.calendar_zone('America/New_York') ? 'receipt_id','original owner corrects the stored time zone through the existing writer');
+
+SELECT set_config('paige.link_ok','1',true);
+UPDATE public.clients SET linked_user_id='e0995100-0000-4000-8000-000000000003' WHERE id='e0995300-0000-4000-8000-000000000006';
+SELECT set_config('paige.link_ok','',true);
+SELECT is(pg_temp.calendar_invoices()->>'tenant_id','e0995200-0000-4000-8000-000000000001','same actor explicitly reads the original A relationship');
+SELECT is(pg_temp.calendar_invoices('e0995200-0000-4000-8000-000000000002','e0995300-0000-4000-8000-000000000006')->>'tenant_id','e0995200-0000-4000-8000-000000000002','same actor explicitly reads the original B relationship');
+SELECT ok(NOT EXISTS(SELECT 1 FROM jsonb_array_elements(pg_temp.calendar_invoices()->'invoices') e WHERE e->>'id'='e0995400-0000-4000-8000-000000000009'),'B invoice never appears in A after a genuine two-business relationship is linked');
+SELECT set_config('paige.link_ok','1',true);
+UPDATE public.clients SET linked_user_id=NULL WHERE id='e0995300-0000-4000-8000-000000000006';
+SELECT set_config('paige.link_ok','',true);
+
+CREATE TEMP TABLE calendar_read_before AS SELECT row((SELECT count(*) FROM public.paige_invoice_provider_operations),(SELECT count(*) FROM public.paige_invoice_payments),(SELECT count(*) FROM public.paige_invoice_access_grants),(SELECT count(*) FROM public.paige_invoice_operations),(SELECT count(*) FROM public.paige_invoices),(SELECT count(*) FROM public.paige_audit_log))::text AS counts;
+SELECT is(pg_temp.calendar_invoices()->>'schema_version','2','repeated original-context read is available without a financial effect');
+SELECT is((SELECT counts FROM calendar_read_before),row((SELECT count(*) FROM public.paige_invoice_provider_operations),(SELECT count(*) FROM public.paige_invoice_payments),(SELECT count(*) FROM public.paige_invoice_access_grants),(SELECT count(*) FROM public.paige_invoice_operations),(SELECT count(*) FROM public.paige_invoices),(SELECT count(*) FROM public.paige_audit_log))::text,'calendar read writes no invoice, allocation, grant, provider operation or audit record');
+SELECT is((pg_temp.calendar_access('pause')->>'ok')::boolean,true,'original owner pauses access with original version-checked writer');
+SELECT is(pg_temp.calendar_invoices()->>'sqlstate','42501','paused relationship immediately loses calendar financial access');
+SELECT is((pg_temp.calendar_access('restore')->>'ok')::boolean,true,'original owner restores the same paused relationship without manufacturing identity');
+SELECT is(pg_temp.calendar_invoices()->>'schema_version','2','ordinary restored relationship can return to original financial records');
+SELECT is((pg_temp.calendar_access('end')->>'ok')::boolean,true,'original owner ends the synthetic relationship through the original writer');
+SELECT is(pg_temp.calendar_invoices()->>'sqlstate','42501','ended relationship cannot return to financial records');
 
 SELECT * FROM finish();
 ROLLBACK;

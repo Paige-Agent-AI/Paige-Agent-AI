@@ -1,0 +1,10 @@
+{
+  "boundary": "Explicit 521x357 viewport, NOT native browser zoom. Native window identity did not match the local QA tab; no native keys sent. Parent workload native200% remains recorded separately.",
+  "documentWidth": 522,
+  "dpr": 1.0000000149011612,
+  "focus": "Reset review inputs",
+  "focusBounds": "{\"bottom\":230.1999969482422,\"height\":44,\"left\":104.80000305175781,\"right\":232.22500610351562,\"top\":186.1999969482422,\"width\":127.42500305175781,\"x\":104.80000305175781,\"y\":186.1999969482422}",
+  "height": 358,
+  "scale": 1,
+  "width": 522
+}

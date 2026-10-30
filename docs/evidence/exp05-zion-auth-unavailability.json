@@ -1,0 +1,239 @@
+{
+  "schema": 1,
+  "base": "4e1b309b7782888c9c65eac82b96032b5d926580",
+  "source": {
+    "src/solo/operations/zion-assignment-read.ts": "7dbb6a5033cfde6d42fa2b1cdfa6f598ff8950a821d63003cccbbe9219ae09f8",
+    "src/solo/operations/zion-assignment-read.test.ts": "166a34ab22abbb1ff1c0d03bdb357d1cc28b89b9d9e071f1604afa12dfced1f0",
+    "src/solo/operations/OperationsZionHistory.test.tsx": "eaca1eef3c97a7f72f0847ad3084d90c1846973f3bb4572004678ee6b5675f4a",
+    "src/solo/operations/OperationsZionHistory.tsx": "597946ebff071ba0731bec0ad6f557f9e7439196b1bff8536372797f8fb50fe0"
+  },
+  "invariants": {
+    "classificationOnly": true,
+    "nativeJsx": true,
+    "unchanged": {
+      "src/solo/operations/operations-zion-history.css": true,
+      "src/solo/operations/OperationsOverview.tsx": true,
+      "src/components/chat/specialistHistory.ts": true,
+      "supabase/functions/_shared/paige-orchestration/weekly-draft-deadline.ts": true
+    }
+  },
+  "strictGraph": {
+    "same": true,
+    "baseDiagnostics": 0,
+    "candidateDiagnostics": 0,
+    "baseline": [],
+    "candidate": []
+  },
+  "tests": {
+    "causalRed": {
+      "sha256": "d76ac80b8b0859ecfbbf2ec2f8631e198c94f65def298c23fcd0cb9b67b7bbce",
+      "passed": 36,
+      "failed": 7,
+      "pending": 0,
+      "success": false
+    },
+    "focusRed": {
+      "sha256": "168458dc25ae590a8fdc1b08c38c0811dcd3b31e074a40cba35210b20476d945",
+      "passed": 22,
+      "failed": 2,
+      "pending": 0,
+      "success": false
+    },
+    "candidate": {
+      "sha256": "a96483c2560efc8ab0ae29009371deb267c76855d4838ba53d9ac9dfa1d771ab",
+      "passed": 92,
+      "failed": 0,
+      "pending": 0,
+      "success": true
+    }
+  },
+  "browser": {
+    "manifestSha256": "275efed7c60177e6c11ff7a3c3e83bf5a234e05f7c93a51304516233422953e5",
+    "productInputs": 392,
+    "transformedProductModules": 0,
+    "status": "PASS_WITH_DISCLOSED_FIXTURE_BOUNDARY",
+    "frames": [
+      {
+        "context": "a/Mineral",
+        "panel": "closed",
+        "width": 1536,
+        "height": 770,
+        "documentWidth": 1536,
+        "originalSamplePreserved": true,
+        "originalResponseUnavailable": true,
+        "screenshot": "Original coding conversation, isolated IAB tab14; final rebuilt source"
+      },
+      {
+        "context": "a/Mineral",
+        "panel": "closed",
+        "width": 1366,
+        "height": 768,
+        "documentWidth": 1366,
+        "originalSamplePreserved": true,
+        "originalResponseUnavailable": true,
+        "screenshot": "Original coding conversation, isolated IAB tab14; final rebuilt source"
+      },
+      {
+        "context": "a/Mineral",
+        "panel": "closed",
+        "width": 1024,
+        "height": 768,
+        "documentWidth": 1024,
+        "originalSamplePreserved": true,
+        "originalResponseUnavailable": true,
+        "screenshot": "Original coding conversation, isolated IAB tab14; final rebuilt source"
+      },
+      {
+        "context": "a/Mineral",
+        "panel": "closed",
+        "width": 900,
+        "height": 1000,
+        "documentWidth": 900,
+        "originalSamplePreserved": true,
+        "originalResponseUnavailable": true,
+        "screenshot": "Original coding conversation, isolated IAB tab14; final rebuilt source"
+      },
+      {
+        "context": "a/Mineral",
+        "panel": "open",
+        "width": 1536,
+        "height": 770,
+        "documentWidth": 1536,
+        "originalSamplePreserved": true,
+        "originalResponseUnavailable": true,
+        "screenshot": "Original coding conversation, isolated IAB tab14; final rebuilt source"
+      },
+      {
+        "context": "a/Mineral",
+        "panel": "open",
+        "width": 1366,
+        "height": 768,
+        "documentWidth": 1366,
+        "originalSamplePreserved": true,
+        "originalResponseUnavailable": true,
+        "screenshot": "Original coding conversation, isolated IAB tab14; final rebuilt source"
+      },
+      {
+        "context": "a/Mineral",
+        "panel": "open",
+        "width": 1024,
+        "height": 768,
+        "documentWidth": 1024,
+        "originalSamplePreserved": true,
+        "originalResponseUnavailable": true,
+        "screenshot": "Original coding conversation, isolated IAB tab14; final rebuilt source"
+      },
+      {
+        "context": "a/Mineral",
+        "panel": "open",
+        "width": 900,
+        "height": 1000,
+        "documentWidth": 900,
+        "originalSamplePreserved": true,
+        "originalResponseUnavailable": true,
+        "screenshot": "Original coding conversation, isolated IAB tab14; final rebuilt source"
+      },
+      {
+        "context": "b/Obsidian",
+        "panel": "closed",
+        "width": 1536,
+        "height": 770,
+        "documentWidth": 1536,
+        "originalSamplePreserved": true,
+        "originalResponseUnavailable": true,
+        "screenshot": "Original coding conversation, isolated IAB tab14; final rebuilt source"
+      },
+      {
+        "context": "b/Obsidian",
+        "panel": "closed",
+        "width": 1366,
+        "height": 768,
+        "documentWidth": 1366,
+        "originalSamplePreserved": true,
+        "originalResponseUnavailable": true,
+        "screenshot": "Original coding conversation, isolated IAB tab14; final rebuilt source"
+      },
+      {
+        "context": "b/Obsidian",
+        "panel": "closed",
+        "width": 1024,
+        "height": 768,
+        "documentWidth": 1024,
+        "originalSamplePreserved": true,
+        "originalResponseUnavailable": true,
+        "screenshot": "Original coding conversation, isolated IAB tab14; final rebuilt source"
+      },
+      {
+        "context": "b/Obsidian",
+        "panel": "closed",
+        "width": 900,
+        "height": 1000,
+        "documentWidth": 900,
+        "originalSamplePreserved": true,
+        "originalResponseUnavailable": true,
+        "screenshot": "Original coding conversation, isolated IAB tab14; final rebuilt source"
+      },
+      {
+        "context": "b/Obsidian",
+        "panel": "open",
+        "width": 1536,
+        "height": 770,
+        "documentWidth": 1536,
+        "originalSamplePreserved": true,
+        "originalResponseUnavailable": true,
+        "screenshot": "Original coding conversation, isolated IAB tab14; final rebuilt source"
+      },
+      {
+        "context": "b/Obsidian",
+        "panel": "open",
+        "width": 1366,
+        "height": 768,
+        "documentWidth": 1366,
+        "originalSamplePreserved": true,
+        "originalResponseUnavailable": true,
+        "screenshot": "Original coding conversation, isolated IAB tab14; final rebuilt source"
+      },
+      {
+        "context": "b/Obsidian",
+        "panel": "open",
+        "width": 1024,
+        "height": 768,
+        "documentWidth": 1024,
+        "originalSamplePreserved": true,
+        "originalResponseUnavailable": true,
+        "screenshot": "Original coding conversation, isolated IAB tab14; final rebuilt source"
+      },
+      {
+        "context": "b/Obsidian",
+        "panel": "open",
+        "width": 900,
+        "height": 1000,
+        "documentWidth": 900,
+        "originalSamplePreserved": true,
+        "originalResponseUnavailable": true,
+        "screenshot": "Original coding conversation, isolated IAB tab14; final rebuilt source"
+      }
+    ],
+    "interactions": [
+      "Actual original reader/component: SDK503 detail leaves original sampled assignment and Inspect original response focused; no false owner/admin denial",
+      "Explicit Ready fixture followed by original reinspection recovers same original response, receipt remains unverified and business action completion is not claimed",
+      "Final SDK403 withdraws private sample/detail, restores lost BODY focus to original Close inspection without scrolling",
+      "Actual original PAIGE Fold returns Direct PAIGE focus; open-panel frames are visual only behind original narrow overlay, no covered-button interaction claimed",
+      "Original Close inspection, neutral workspace B to A and release of held Auth response do not revive the old result",
+      "320x568 original shell documentWidth320; ops-department-body height335/scrollHeight3757, scrollTop2167; Close returns Inspect recent work focus and Tab reaches All work"
+    ],
+    "reducedMotion": "Actual matchMedia prefers-reduced-motion:true; no added animation or CSS change",
+    "unverified": [
+      "Authenticated customer denial/recovery, actor/role/tenant/cohort/new-account/RLS proof",
+      "Physical200-percent zoom and assistive technology",
+      "Full original ten outcomes/E5 cases/weekly/Builder/same-ZION both-chat customer/founder acceptance"
+    ],
+    "invalidProbes": [
+      "Initial Playwright label-select helper timed out; documented native AX setValue used instead",
+      "Initial private AX parser received diff-only observation; no mode changed, corrected to full observation before native input",
+      "Earlier captures before focus correction are historical; final16 frames use rebuilt source"
+    ],
+    "cleanup": "Only owned IAB tab14 closed, viewport reset and exact verified own loopback helper14480 stopped. No customer session or shared browser lease used."
+  },
+  "boundary": "Original availability selection and lost-focus recovery only. Not an authentication grant or completed business execution. No transport retry, approval, mutation, provider, recurring activation, Edge, schema, registry, tenant-specific behavior or new framework. All ten/E5/both-chat/customer/founder obligations remain open."
+}

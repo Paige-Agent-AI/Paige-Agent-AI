@@ -569,3 +569,79 @@ export async function confirmPublication(kind: ArtifactKind, id: string, action:
   }
   throw new PublishUnverified(serverSentence(data.error, unverifiedFallback(action)));
 }
+
+// ── Hosted copies (WEB-05) ──────────────────────────────────────────────────────────────────────
+// The hosting door (growth-hosting-command) is the ONE executor for putting a published page's
+// portable export on external hosting and taking it down. It ships DORMANT: with no platform
+// token configured it answers HOSTING_NOT_ENABLED and mints no approval, and these functions
+// surface that honestly. When the owner enables the service, the same two-step discipline as
+// publishing applies: prepare never executes (it returns the door's preview + fingerprint), and
+// only the owner's click (confirm) redeems the fingerprint.
+
+export const HOSTING_DOOR = "growth-hosting-command";
+
+export interface HostingPrepared {
+  state: "disabled" | "forbidden" | "ready" | "blocked" | "refused";
+  message: string;
+  fingerprint?: string;
+  summary?: string;
+  address?: string;
+}
+
+export class HostingNotDone extends Said {}
+
+async function callHostingDoor(body: Record<string, unknown>): Promise<DoorReply> {
+  const { data, error } = await supabase.functions.invoke(HOSTING_DOOR, { body });
+  if (!error) return data && typeof data === "object" ? { data: data as Record<string, unknown>, transport: false } : { data: null, transport: true };
+  const ctx = (error as { context?: { json?: () => Promise<unknown> } }).context;
+  if (ctx && typeof ctx.json === "function") {
+    try {
+      const parsed = await ctx.json();
+      if (parsed && typeof parsed === "object") return { data: parsed as Record<string, unknown>, transport: false };
+    } catch { /* no readable body */ }
+  }
+  return { data: null, transport: true };
+}
+
+/** Asks the hosting door to prepare a deploy. Never sends a fingerprint, so it never executes. */
+export async function prepareHostingDeployment(pageId: string): Promise<HostingPrepared> {
+  const { data, transport } = await callHostingDoor({ action: "deploy", page_id: pageId });
+  if (transport || !data) throw new Said("Hosting couldn't be checked just now. Nothing was changed. Try again.");
+  if (data.disabled === true) {
+    // The honest dormant state — the door's own sentence, never paraphrased into a promise.
+    return { state: "disabled", message: serverSentence(data.error, "Hosting isn't switched on yet. Nothing was changed.") };
+  }
+  if (data.forbidden === true) return { state: "forbidden", message: serverSentence(data.error, FORBIDDEN_FALLBACK) };
+  if (data.approval_required === true && data.outcome !== "not_ready") {
+    const fingerprint = str(data.fingerprint);
+    const preview = (data.preview && typeof data.preview === "object" ? data.preview : {}) as Record<string, unknown>;
+    return fingerprint
+      ? { state: "ready", message: serverSentence(data.summary, "Put a hosted copy of this page online."), fingerprint, summary: serverSentence(data.summary, ""), address: str(preview.address) || undefined }
+      : { state: "blocked", message: serverSentence(data.error, "Hosting isn't ready for this page yet.") };
+  }
+  if (data.outcome === "not_ready" || data.refused === true || typeof data.error === "string") {
+    return { state: "refused", message: serverSentence(data.error, "Hosting isn't ready for this page yet. Nothing was changed.") };
+  }
+  throw new Said("Hosting couldn't be checked just now. Nothing was changed. Try again.");
+}
+
+/** Redeems a prepared hosting fingerprint: the owner's click. */
+export async function confirmHostingDeployment(pageId: string, fingerprint: string): Promise<{ url: string | null; verified: boolean; status: string }> {
+  const { data, transport } = await callHostingDoor({ action: "deploy", page_id: pageId, approved_fingerprint: fingerprint });
+  if (transport || !data) throw new PublishUnverified("The answer never came back, so this panel can't confirm what happened. Check the page's hosted address before sharing it.");
+  if (data.ok === true) {
+    return { url: str(data.url) || null, verified: data.verified === true, status: str(data.status) };
+  }
+  if (data.outcome === "unverified" || data.outcome === "outcome_unknown") {
+    throw new PublishUnverified(serverSentence(data.error, "The answer never came back, so this panel can't confirm what happened. Check before sharing the address."));
+  }
+  if (data.disabled === true) throw new PublishOff(serverSentence(data.error, OFF_FALLBACK));
+  if (data.forbidden === true) throw new PublishForbidden(forbiddenReason(data.code), serverSentence(data.error, FORBIDDEN_FALLBACK));
+  if (data.outcome === "failed" || data.outcome === "refused" || (typeof data.code === "string" && NOTHING_RAN.has(data.code))) {
+    throw new HostingNotDone(serverSentence(data.error, "It didn't deploy. Nothing was changed."));
+  }
+  if (data.refused === true || data.approval_required === true) {
+    throw new PublishRefused(serverSentence(data.error, "Something changed since this opened. Review it again."));
+  }
+  throw new PublishUnverified(serverSentence(data.error, "The answer never came back, so this panel can't confirm what happened."));
+}

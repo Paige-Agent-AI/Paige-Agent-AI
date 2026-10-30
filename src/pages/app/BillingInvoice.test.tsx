@@ -56,6 +56,12 @@ const render = async (path = `/app/billing/${id(1)}`) => {
 const text = () => host.textContent?.replace(/\s+/g, " ") ?? "";
 const $ = (sel: string) => host.querySelector(sel);
 
+it("unknown business dates preserve the original invoice and payment read without claiming it is overdue",async()=>{
+ f.state.invoices=[inv({past_due:null,due_date:"2026-10-28"})];await render();
+ expect($("[data-testid=invoice-calendar-note]")?.textContent).toContain("can’t confirm overdue status");
+ expect($("[data-testid=invoice-state]")?.textContent?.trim()).toBe("Open");expect(f.payment).toHaveBeenCalled();
+});
+
 beforeEach(() => {
   f.payment.mockReset();
   f.payment.mockResolvedValue(ready(null));

@@ -11,6 +11,9 @@ on:
       - 'scripts/sql/sales-collections-proof.*'
       - 'scripts/sql/sales-commercial-create-proof.mjs'
       - 'scripts/sql/sales-provider-operation-proof.mjs'
+      - 'scripts/sql/sales-accepted-obligation-proof.mjs'
+      - 'supabase/tests/fixtures/exp04_accepted_obligation_types.json'
+      - 'supabase/tests/fixtures/exp04_reviewed_commercial_native.sql'
       - 'scripts/sql/sales-package-read-proof.mjs'
       - 'scripts/sql/sales-commercial-conditions-proof.mjs'
       - 'scripts/sql/sales-performance-proof.mjs'
@@ -29,6 +32,9 @@ on:
       - 'scripts/sql/sales-collections-proof.*'
       - 'scripts/sql/sales-commercial-create-proof.mjs'
       - 'scripts/sql/sales-provider-operation-proof.mjs'
+      - 'scripts/sql/sales-accepted-obligation-proof.mjs'
+      - 'supabase/tests/fixtures/exp04_accepted_obligation_types.json'
+      - 'supabase/tests/fixtures/exp04_reviewed_commercial_native.sql'
       - 'scripts/sql/sales-package-read-proof.mjs'
       - 'scripts/sql/sales-commercial-conditions-proof.mjs'
       - 'scripts/sql/sales-performance-proof.mjs'
@@ -72,6 +78,14 @@ jobs:
         env:
           PGPASSWORD: isolated-test-password
         run: node scripts/sql/sales-provider-operation-proof.mjs "$(command -v psql)" 56347 postgres /var/lib/postgresql/data
+      - name: Incumbent provider lifecycle against accepted-target preparation and dispatch writers
+        env:
+          PGPASSWORD: isolated-test-password
+        run: node scripts/sql/sales-provider-operation-proof.mjs "$(command -v psql)" 56347 postgres /var/lib/postgresql/data --current --accepted-obligation-writers
+      - name: Accepted dated obligations, exact target source, service-only admission and stale refusals
+        env:
+          PGPASSWORD: isolated-test-password
+        run: node scripts/sql/sales-accepted-obligation-proof.mjs "$(command -v psql)" 56347 postgres /var/lib/postgresql/data
       - name: Commercial package canonical bridge, two-tenant read scope and receipt rollback
         env:
           PGPASSWORD: isolated-test-password

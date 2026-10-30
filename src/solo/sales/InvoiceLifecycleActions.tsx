@@ -4,6 +4,7 @@ import type {BillingRpc} from './billingDrafts';
 import {readInvoiceRecord,type InvoiceRecord} from './invoiceLifecycleApi';
 import {InvoiceCommandReview} from './InvoiceCommandReview';
 import {InvoicePaymentRequests} from './InvoicePaymentRequests';
+import {InvoiceAcceptedPaymentPlan} from './InvoiceAcceptedPaymentPlan';
 import type {SalesInvoiceCommand} from '../../../supabase/functions/_shared/sales-invoice-command/contract';
 import {PAIGE_APP_ORIGIN} from '../../../supabase/functions/_shared/canonical-app-url';
 import {useSalesDraftExit} from '../sales-dialog';
@@ -12,11 +13,12 @@ import {useTheme} from 'next-themes';
 import {invoiceDeliveryReadinessCopy} from './invoiceDeliveryCopy';
 import {invoiceDisplayNumber,invoicePaymentStatus} from './invoicePaymentCopy';
 const cash=(n:number)=>new Intl.NumberFormat(undefined,{style:'currency',currency:'USD'}).format(n/100);
-export function InvoiceLifecycleActions({tenantId,invoiceId,version,canManage,onChanged,workspaceCloseEvent,onWorkspaceClose}:{tenantId:string;invoiceId:string;version:number;canManage:boolean;onChanged():void;workspaceCloseEvent?:string;onWorkspaceClose?:()=>void}){
+export function InvoiceLifecycleActions({tenantId,invoiceId,version,canManage,onChanged,workspaceCloseEvent,onWorkspaceClose,accountEpoch=null}:{tenantId:string;invoiceId:string;version:number;canManage:boolean;onChanged():void;workspaceCloseEvent?:string;onWorkspaceClose?:()=>void;accountEpoch?:string|null}){
   const [pane,setPane]=React.useState<'records'|'send'>('records');
   const [row,setRow]=React.useState<InvoiceRecord|null>(null),[error,setError]=React.useState(false),[refresh,setRefresh]=React.useState(0);
   const [correctionReceipt,setCorrectionReceipt]=React.useState<string|null>(null);
   const [providerPaymentActive,setProviderPaymentActive]=React.useState(true);
+  const [paymentStatusRead,setPaymentStatusRead]=React.useState(false);
   const [paymentEditorEpoch,setPaymentEditorEpoch]=React.useState(0);
   const [paymentRequestDraft,setPaymentRequestDraft]=React.useState<{partial:boolean;amount:string}|null>(null);
   const [paymentOperationId,setPaymentOperationId]=React.useState<string|undefined>();
@@ -29,20 +31,30 @@ export function InvoiceLifecycleActions({tenantId,invoiceId,version,canManage,on
   const alive=React.useRef(true),scope=React.useRef(`${tenantId}:${invoiceId}`);scope.current=`${tenantId}:${invoiceId}`;
   const deliveryRequest=React.useRef(0);
   const emailScope=React.useRef('');emailScope.current=`${tenantId}:${invoiceId}:${version}:${row?.version??''}:${sender}:${deliveryChannel}`;
+  const planScope=React.useRef('');planScope.current=JSON.stringify([tenantId,invoiceId,row?.version,canManage,accountEpoch]);
   React.useEffect(()=>{alive.current=true;return()=>{alive.current=false}},[]);
-  React.useLayoutEffect(()=>{if(command||form||!returnFocusLabel.current)return;const button=[...(actionWrapper.current?.querySelectorAll<HTMLButtonElement>('button')??[])].find(b=>b.textContent===returnFocusLabel.current);button?.focus();},[command,form]);
+  const restoreActionFocus=React.useCallback(()=>{
+    if(command||form||!returnFocusLabel.current)return;
+    const label=returnFocusLabel.current,plan=label==='Review selected payment request';
+    if(plan&&!paymentStatusRead)return;
+    const buttons=[...(actionWrapper.current?.querySelectorAll<HTMLButtonElement>('button')??[])],find=(text:string)=>buttons.find(button=>button.textContent===text&&!button.disabled);
+    const button=find(label)??(plan?(providerPaymentActive?find('Check existing request'):undefined)??find('Retry payment status')??find('Refresh payment plan'):['Check existing request','Request customer payment'].includes(label)?find('Retry payment status'):undefined);
+    if(button){button.focus();returnFocusLabel.current='';}
+  },[command,form,paymentStatusRead,providerPaymentActive]);
+  React.useLayoutEffect(restoreActionFocus,[restoreActionFocus]);
+  const paymentReadReady=React.useCallback((active:boolean)=>{setProviderPaymentActive(active);setPaymentStatusRead(true);restoreActionFocus();},[restoreActionFocus]);
   const exit=useSalesDraftExit(form?{amount,method,date,reference,notes,reason}:paymentRequestDraft,!!command,()=>{setForm(null);setPaymentRequestDraft(null);setPaymentEditorEpoch(n=>n+1);});
   const requestFormExit=exit.request;
   const enterForm=(next:'payment'|'void'|'correction',receipt?:string)=>{const open=()=>{if(next==='correction'){setReason('');setCorrectionReceipt(receipt??null);}setForm(next);};if(form||paymentRequestDraft)exit.request(()=>{setPaymentRequestDraft(null);setPaymentEditorEpoch(n=>n+1);open();});else open();};
   React.useLayoutEffect(()=>{if(!form||command)return;if(restoreFormFocus.current){restoreFormFocus.current=false;formReview.current?.focus();return;}const target=[...(actionWrapper.current?.querySelectorAll<HTMLElement>('input,textarea,select')??[])].find(el=>el.offsetParent!==null);target?.focus();target?.scrollIntoView({block:'nearest'});},[form,command]);
-  React.useEffect(()=>{if(!workspaceCloseEvent||!onWorkspaceClose)return;const close=()=>{if(!command)exit.request(onWorkspaceClose);};window.addEventListener(workspaceCloseEvent,close);return()=>window.removeEventListener(workspaceCloseEvent,close);},[workspaceCloseEvent,onWorkspaceClose,command,exit.request]);
+  React.useEffect(()=>{if(!workspaceCloseEvent||!onWorkspaceClose)return;const close=()=>{if(!command)requestFormExit(onWorkspaceClose);};window.addEventListener(workspaceCloseEvent,close);return()=>window.removeEventListener(workspaceCloseEvent,close);},[workspaceCloseEvent,onWorkspaceClose,command,requestFormExit]);
   const navigationAllowed=React.useRef(false);
   React.useEffect(()=>{if(!form&&!paymentRequestDraft)return;const intercept=(event:MouseEvent)=>{if(navigationAllowed.current||!(event.target instanceof Element))return;const target=event.target.closest<HTMLButtonElement>('.sales-tabs button,.sales-payments-tabs button,.sb-toolbar button,.sb-row-link');if(!target||target.disabled)return;event.preventDefault();event.stopImmediatePropagation();requestFormExit(()=>{navigationAllowed.current=true;try{target.click()}finally{navigationAllowed.current=false}});};window.document.addEventListener('click',intercept,true);return()=>window.document.removeEventListener('click',intercept,true);},[form,paymentRequestDraft,requestFormExit]);
-  React.useEffect(()=>{let alive=true;deliveryRequest.current++;setRow(null);setError(false);setCommand(null);setLink('');setForm(null);
+  React.useEffect(()=>{let alive=true;deliveryRequest.current++;setRow(null);setError(false);setCommand(null);setLink('');setForm(null);setProviderPaymentActive(true);setPaymentStatusRead(false);
     const rpc:BillingRpc=(name,args)=>(supabase.rpc as unknown as BillingRpc).call(supabase,name,args);
     void Promise.resolve(rpc('read_sales_invoice',{_expected_tenant_id:tenantId,_invoice_id:invoiceId})).then(({data,error})=>{if(!alive)return;const record=!error?readInvoiceRecord(data,tenantId):null;setRow(record);setError(!record);}).catch(()=>{if(alive)setError(true)});
     return()=>{alive=false};
-  },[tenantId,invoiceId,version,refresh]);
+  },[tenantId,invoiceId,version,refresh,accountEpoch]);
   React.useEffect(()=>{let current=true;setSenders([]);setSender('');setEmailEligible(false);setEmailBusy(false);if(!row||row.status!=='issued'){setSenderStatus('Publish an invoice before preparing its email.');return;}
     setSenderStatus('Reading email connections…');
     const rpc:BillingRpc=(name,args)=>(supabase.rpc as unknown as BillingRpc).call(supabase,name,args);
@@ -64,12 +76,13 @@ export function InvoiceLifecycleActions({tenantId,invoiceId,version,canManage,on
   };
   if(error)return <p role="alert">Invoice lifecycle could not be read. <button className="btn" onClick={()=>setRefresh(n=>n+1)}>Retry invoice</button></p>;
   if(!row)return <p role="status">Reading invoice status…</p>;
-  if(command)return <InvoiceCommandReview key={`${tenantId}:${invoiceId}`} tenantId={tenantId} command={command} operationId={paymentOperationId} onClose={()=>{restoreFormFocus.current=!!form;setCommand(null);setPaymentOperationId(undefined);}} onComplete={result=>{setCommand(null);setPaymentOperationId(undefined);setForm(null);if(typeof result.access_token==='string'){setLink(`${PAIGE_APP_ORIGIN}/invoice?token=${encodeURIComponent(result.access_token)}`);const saved=readInvoiceRecord(result.row,tenantId);if(saved)setRow(saved);}else{setRefresh(n=>n+1);onChanged();}}}/>;
+  const review=command?<InvoiceCommandReview key={`${tenantId}:${invoiceId}`} tenantId={tenantId} command={command} operationId={paymentOperationId} onClose={()=>{restoreFormFocus.current=!!form;setProviderPaymentActive(true);setPaymentStatusRead(false);setCommand(null);setPaymentOperationId(undefined);}} onComplete={result=>{setCommand(null);setPaymentOperationId(undefined);setForm(null);setProviderPaymentActive(true);setPaymentStatusRead(false);if(typeof result.access_token==='string'){setLink(`${PAIGE_APP_ORIGIN}/invoice?token=${encodeURIComponent(result.access_token)}`);const saved=readInvoiceRecord(result.row,tenantId);if(saved)setRow(saved);}else{setRefresh(n=>n+1);onChanged();}}}/>:null;
   return <div className="sb-paper sb-invoice-actions" ref={actionWrapper}>
+    {command?review:<>
     <p><strong>{invoicePaymentStatus(row.status,row.totalMinor,row.manualRecordedMinor,row.remainingMinor,row.providerVerifiedMinor)}</strong></p><dl><dt>Invoice number</dt><dd>{invoiceDisplayNumber(row.number,row.status!=="draft")}</dd><dt>Invoice total</dt><dd>{cash(row.totalMinor)}</dd><dt>Less business-recorded payments</dt><dd>− {cash(row.manualRecordedMinor)}</dd><dt>Less provider-confirmed payments</dt><dd>− {cash(row.providerVerifiedMinor)}</dd><dt>Outstanding balance</dt><dd>{cash(row.remainingMinor)}</dd></dl><p>{cash(row.totalMinor)} − {cash(row.manualRecordedMinor)} − {cash(row.providerVerifiedMinor)} = {cash(row.remainingMinor)}. Business-recorded receipts and provider-confirmed payments remain separately identified.</p>
     {row.status==='issued'&&<nav className="sb-invoice-action-tabs" aria-label="Invoice workspace views">{(['records','send'] as const).map(tab=><button key={tab} className="btn" aria-pressed={pane===tab} onClick={()=>{const change=()=>{setForm(null);setPaymentRequestDraft(null);setPane(tab);};if(form||paymentRequestDraft)exit.request(change);else change();}}>{tab==='records'?'Payments & records':'Send invoice'}</button>)}</nav>}
     {row.status==='draft'?<button className="btn btn-p" disabled={!canManage} onClick={()=>action('invoice.publish')}>Review and publish invoice</button>:<><button className="btn" disabled={pdfBusy} onClick={()=>void downloadDocument()}>Download PDF</button><button className="btn" disabled={pdfBusy} onClick={()=>void downloadDocument(true)}>Open PDF / print</button></>}
-    {row.status==='issued'&&pane==='records'&&<InvoicePaymentRequests key={`${tenantId}:${invoiceId}:${paymentEditorEpoch}`} tenantId={tenantId} invoiceId={invoiceId} version={row.version} remaining={row.remainingMinor} canManage={canManage} onActivity={setProviderPaymentActive} onDraftChange={setPaymentRequestDraft} onReview={(request,id)=>{setPaymentOperationId(id);setCommand(request);}}/>}
+    {row.status==='issued'&&pane==='records'&&<InvoicePaymentRequests key={`${tenantId}:${invoiceId}:${paymentEditorEpoch}`} tenantId={tenantId} invoiceId={invoiceId} version={row.version} remaining={row.remainingMinor} canManage={canManage} onActivity={setProviderPaymentActive} onReady={paymentReadReady} onDraftChange={setPaymentRequestDraft} onReview={(request,id)=>{returnFocusLabel.current=id?'Check existing request':'Request customer payment';setPaymentOperationId(id);setCommand(request);}}/>}
     {row.status==='issued'&&pane==='records'&&<><button className="btn btn-p" disabled={!canManage||row.remainingMinor===0||providerPaymentActive} onClick={()=>enterForm('payment')}>Record received payment</button><button className="btn" disabled={!canManage} onClick={()=>action('invoice.link_create',{expires_in_days:30,grant_scope:'share'})}>Create / replace share link</button><button className="btn" disabled={!canManage} onClick={()=>enterForm('void')}>Void invoice</button></>}
     {row.status==='issued'&&pane==='send'&&<section><h4>Send invoice</h4><div role="group" aria-label="Invoice delivery channel">{(['email','sms'] as const).map(channel=><button className="btn" key={channel} aria-pressed={deliveryChannel===channel} onClick={()=>{deliveryRequest.current++;setDeliveryChannel(channel);setEmailEligible(false);setEmailBusy(false);setSenderStatus(channel==='sms'?'Check A2P registration, business number and this recipient’s consent.':'Check this business email connection.');}}>{channel==='email'?'Email':'SMS'}</button>)}<button className="btn" disabled aria-describedby="invoice-imessage-unavailable">iMessage · unavailable</button></div><p id="invoice-imessage-unavailable">iMessage requires a supported business messaging adapter; no connection is currently available.</p><p>{senderStatus}</p>{deliveryChannel==='email'&&senders.length>0&&<label>Business email connection<select disabled={emailBusy} value={sender} onChange={e=>{deliveryRequest.current++;setSender(e.target.value);setEmailBusy(false);setEmailEligible(false);}}><option value="">Choose a connected sender</option>{senders.map(s=><option value={s.id} key={s.id}>{s.from_address} · {s.provider}</option>)}</select></label>}<button className="btn" disabled={(deliveryChannel==='email'&&!sender)||emailBusy||!canManage||row.remainingMinor===0} onClick={checkEmail}>{emailBusy?'Checking…':'Check delivery readiness'}</button><button className="btn btn-p" disabled={!emailEligible||!canManage||emailBusy} onClick={()=>action(deliveryChannel==='email'?'invoice.email_send':'invoice.sms_send',{connector_id:deliveryChannel==='email'?sender:null})}>Review invoice delivery</button><p>Uses the frozen invoice recipient and customer link. This check sends nothing. Provider acceptance does not prove delivery or payment.</p></section>}
     {link&&<div><label>Copy this share link now<input readOnly value={link}/></label><p>This link is shown once. If lost, explicitly create a replacement.</p><button className="btn" onClick={()=>{setLink('');onChanged();}}>Done with link</button></div>}
@@ -78,5 +91,11 @@ export function InvoiceLifecycleActions({tenantId,invoiceId,version,canManage,on
     {notice&&<p role="alert">{notice}</p>}</div></section>
     {notice&&<p role="alert">{notice}</p>}
     {pane==='records'&&row.payments.length>0&&<><h4>Recorded payment history</h4>{row.payments.map(p=><article key={p.id}><p>{p.kind==='reversal'?'Reversal':p.evidence_kind==='provider_verified'?'Provider-confirmed payment':'Human-recorded receipt'} · {cash(p.amount_cents)} · {p.method} · {p.received_at.slice(0,10)}</p><p>{p.evidence_kind==='provider_verified'?'Confirmed with the payment provider':`Recorded by ${p.actor_label||'workspace member (name unavailable)'}`}</p><p>{p.reference} {p.notes} {p.reason}</p>{p.kind==='receipt'&&p.evidence_kind!=='provider_verified'&&row.status==='issued'&&<><button className="btn" disabled={!canManage||row.payments.some(r=>r.reverses_payment_id===p.id)} onClick={()=>enterForm('correction',p.id)}>Correct payment</button>{form==='correction'&&correctionReceipt===p.id&&<div className="sb-correction-editor"><label>Correction reason<textarea maxLength={500} value={reason} onChange={e=>setReason(e.target.value)}/></label><p>The original receipt remains. This appends a reversal; record a replacement separately if needed.</p><button ref={formReview} className="btn btn-p" disabled={!reason.trim()} onClick={()=>action('invoice.reverse_manual_payment',{payment_id:p.id,reason})}>Review correction / reversal</button><button className="btn" onClick={exit.close}>Cancel correction</button></div>}</>}</article>)}{row.paymentsHasMore&&<p>Showing the latest {row.payments.length} of {row.paymentsCount} payment facts. Older history is retained.</p>}</>}
+    </>}
+    {row.status==='issued'&&pane==='records'&&<div hidden={Boolean(command)}><InvoiceAcceptedPaymentPlan tenantId={tenantId} invoice={row} canManage={canManage} paymentStatusRead={paymentStatusRead} paymentRequestActive={providerPaymentActive} accountEpoch={`${accountEpoch??''}:${refresh}`} onReview={request=>{
+      const opened=planScope.current;
+      const open=()=>{if(planScope.current!==opened){setNotice('The invoice or access changed. Read the accepted plan again.');return;}setForm(null);setPaymentRequestDraft(null);setPaymentEditorEpoch(n=>n+1);returnFocusLabel.current='Review selected payment request';setPaymentOperationId(undefined);setCommand({...request})};
+      if(form||paymentRequestDraft)exit.request(open);else open();
+    }}/></div>}
   </div>;
 }

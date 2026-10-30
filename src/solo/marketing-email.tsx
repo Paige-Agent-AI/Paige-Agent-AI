@@ -11,7 +11,7 @@
 import React from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Ic as SharedIcons } from "./_shared";
-import { ACTIVITY_LABEL, EMAIL_PERIODS, KIND_LABEL, activityDetail, ago, campaignState, deriveStats, ratePoints, type CampaignRow, type Dashboard, type Delta } from "./marketing-email-model";
+import { ACTIVITY_LABEL, EMAIL_PERIODS, KIND_LABEL, activityDetail, ago, campaignState, deriveStats, ratePoints, sentLast24h, type CampaignRow, type Dashboard, type Delta } from "./marketing-email-model";
 import { AskPaige, ChartBoundary, OverviewStat } from "./marketing-ui";
 import { AskPaigeButton, Frame, TabActions, type Phase } from "./marketing-planned";
 import { EmailCampaignEditor, EmailCampaignList, SegmentDialog } from "./marketing-email-editor";
@@ -229,7 +229,6 @@ export function MarketingEmail({ tenantId, onOpenAudience, onOpenConnections, on
             <div className="mo-panel-head"><div><h2 id="me-auto">Automations</h2><p>Email series that send by themselves once you approve them.</p></div></div>
             <SeriesPanel tenantId={tenantId} onOpen={(id) => go({ kind: "series", id })}/>
             <AskPaige prompt="Write an email series for my business that sends by itself. Ask me who it is for, what I want them to do, and how many emails over how long before you write it. Use only links and prices I give you or that are already in my business. Save it as a draft in Marketing › Email › Automations. Do not file it for approval unless I ask, and never say anything was sent."/>
-            <p className="mo-note">Series share the {d.sending.daily_cap.toLocaleString()}-a-day limit with your campaigns. Series emails that don’t fit today wait; they’re never dropped.</p>
           </section>
           <section className="campaigns-surface mo-panel" aria-labelledby="me-activity">
             <div className="mo-panel-head"><div><h2 id="me-activity">Recent activity</h2></div></div>
@@ -240,7 +239,7 @@ export function MarketingEmail({ tenantId, onOpenAudience, onOpenConnections, on
             </li>)}</ul> : <p className="mo-note">Sends, new subscribers and unsubscribes appear here.</p>}
           </section>
         </div>
-        <p className="mo-note me-cap">Up to {d.sending.daily_cap.toLocaleString()} marketing emails a day through PAIGE’s sender; {d.sending.remaining_today.toLocaleString()} left in the last 24 hours.</p>
+        <p className="mo-note me-cap">{sentLast24h(d.sending.used_last_24h)}</p>
       </>}
     </Frame>
     {segment.open && <SegmentDialog segmentId={segment.id} segment={d?.segments.find((s) => s.id === segment.id) ?? null}

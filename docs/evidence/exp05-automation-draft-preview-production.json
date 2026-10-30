@@ -1,0 +1,151 @@
+{
+  "schema": 1,
+  "pr": 3061,
+  "reviewedHead": "966d614bf50503bb56d1a118587388837cbca9d1",
+  "merge": "9da96dfb4eaa331ab2d83de575323cde3b2838dc",
+  "tree": "49247dc1b5f2f2f40e4b7e15cebc86c6af1c4be3",
+  "parents": [
+    "7378cf49a5d95cabe2156bff5cde790fb3c488a4",
+    "966d614bf50503bb56d1a118587388837cbca9d1"
+  ],
+  "channel": "production",
+  "releaseClass": "internal-only patch; no customer release name or announcement",
+  "review": {
+    "assurance": "AUTHOR-REVIEW / LOWER ASSURANCE",
+    "id": 5699648814
+  },
+  "ci": {
+    "checks": 11,
+    "result": "SUCCESS",
+    "nativePreview": "SUCCESS",
+    "webContexts": 2,
+    "webResult": "SUCCESS",
+    "reviewThreads": 0
+  },
+  "observed": {
+    "commit": "9da96dfb4eaa331ab2d83de575323cde3b2838dc",
+    "channel": "production",
+    "web": {
+      "id": "dpl_3VsY2yR86moEGfdVggzbkiKigpbb",
+      "status": "READY",
+      "publicReadback": [
+        {
+          "origin": "https://paigeagent.ai",
+          "at": "2026-10-29T14:51:40.776Z",
+          "status": 200,
+          "version": {
+            "buildId": "9da96dfb4eaa331ab2d83de575323cde3b2838dc-mvtnmqk9",
+            "customerUpdate": null
+          },
+          "versionSha256": "a0501adea2f976c7e7bb41274026a1c02a38a1a80c0ed82df4f1d4b6bb526385",
+          "bootstrap": "/assets/main-l2G21DpY.js",
+          "application": "/assets/main-DBh8yMaS.js",
+          "solo": "/assets/SoloEntry-BMkggcQ5.js",
+          "operations": "/assets/OperationsRoute-DnoeV8bG.js",
+          "chat": "/assets/PaigeAIChat-Qszd_HmJ.js",
+          "originalChunk": "/assets/VoiceDeviceProvider-nktyaTP5.js",
+          "chunkStatus": 200,
+          "chunkBytes": 36398,
+          "chunkSha256": "3933ee70e453f14d444c9f5b10dcdaf290bc69e85d6060628896e11ab6b54708",
+          "signatures": {
+            "originalSummary": true,
+            "preservedLineBreaks": true,
+            "originalSummaryText": true,
+            "originalSettledClass": true
+          }
+        },
+        {
+          "origin": "https://app.paigeagent.ai",
+          "at": "2026-10-29T14:51:42.694Z",
+          "status": 200,
+          "version": {
+            "buildId": "9da96dfb4eaa331ab2d83de575323cde3b2838dc-mvtnmqk9",
+            "customerUpdate": null
+          },
+          "versionSha256": "a0501adea2f976c7e7bb41274026a1c02a38a1a80c0ed82df4f1d4b6bb526385",
+          "bootstrap": "/assets/main-l2G21DpY.js",
+          "application": "/assets/main-DBh8yMaS.js",
+          "solo": "/assets/SoloEntry-BMkggcQ5.js",
+          "operations": "/assets/OperationsRoute-DnoeV8bG.js",
+          "chat": "/assets/PaigeAIChat-Qszd_HmJ.js",
+          "originalChunk": "/assets/VoiceDeviceProvider-nktyaTP5.js",
+          "chunkStatus": 200,
+          "chunkBytes": 36398,
+          "chunkSha256": "3933ee70e453f14d444c9f5b10dcdaf290bc69e85d6060628896e11ab6b54708",
+          "signatures": {
+            "originalSummary": true,
+            "preservedLineBreaks": true,
+            "originalSummaryText": true,
+            "originalSettledClass": true
+          }
+        }
+      ]
+    },
+    "edge": {
+      "run": 40894439135,
+      "job": 123519597038,
+      "status": "SUCCESS",
+      "artifact": 12907320009,
+      "artifactBytes": 42101,
+      "artifactSha256": "874ce616e0cdedd0f58046e1a1b92a1e03183f7fc82da0576e7b7b344b83cd01",
+      "selected": [
+        "paige-ai-chat"
+      ],
+      "allPass": true,
+      "function": "paige-ai-chat",
+      "version": 582,
+      "verifyJwt": true,
+      "mode": "docker_requested",
+      "files": 305,
+      "emitted": 305,
+      "manifestSha256": "54e4509c2ef26dafff8e4106a27edbd0e01e31368e9ac897d9c88453ec35c467",
+      "archiveSha256": "729e5be7fa6108265784f38baa95b44ecb4ea635cf737b73491991c5c74b95c8",
+      "ownedRaw": {
+        "supabase/functions/paige-ai-chat/index.ts": "7d20dd836ecc573144973f2afb76ff90986e58d61a47d914d8e35a7fdd4ed298",
+        "supabase/functions/_shared/paige-orchestration/automation-draft-summary.ts": "2ba93f51ee47c98ec1ad49c5294e1fe1dabd2b69054e38d73692cea767083c2f"
+      },
+      "helperEmitted": "067fde29d545428a3c836f89510eb6ba183e2b0cf5b83c3557236f42acae2613"
+    },
+    "boundary": "Actual source/web/Edge readback only. No customer draft request/approval/save/record/Rail/reload/tenant-cohort or full-Experience/founder acceptance inferred; no provider or recurrence activation."
+  },
+  "sourceEvidence": {
+    "focused": {
+      "passed": 78,
+      "failed": 0,
+      "skipped": 0
+    },
+    "fullC0b": {
+      "passed": 250,
+      "failed": 0,
+      "skipped": 0
+    },
+    "sourcePins": 127,
+    "dispatches": 29,
+    "findings": 0,
+    "strictBaseline": 0,
+    "strictCandidate": 0,
+    "renderedFrames": 16,
+    "boundary": "Actual original shell with disclosed neutral ports, not authenticated customer authority"
+  },
+  "orchestration": {
+    "capability": "automations.automation_draft",
+    "risk": "ordinary",
+    "argsFingerprintTrustAndWriter": "UNCHANGED",
+    "enablement": "Separate original automation_set_state owner_only contract; not enabled or executed by a draft save",
+    "receipts": "No new domain record or Rail receipt generated by source verification"
+  },
+  "catalogue": "operations.department remains PARTIAL; no generic recipe, Binding Ledger, provider readiness or algorithm maturity promotion",
+  "applicability": "Shared tenant-neutral original handler and confirm card, not account-specific. Equivalent eligible existing/new-account, role/tenant/revocation customer proof remains owed.",
+  "remaining": [
+    "Actual ordinary customer request and exact stored draft preview",
+    "Original authorized draft persistence/domain act/Rail and reload correlation",
+    "Full automation prepare/correct/save/authorize/enable/execute/pause/cancel/recover lifecycle within original authority",
+    "Same ZION/personality through PAIGE Chat and Team Hub; weekly execution and proactive work",
+    "All ten outcomes/E5-CV1–E5-CV9; authenticated current/new eligible SOLO, tenant/role/provider negatives",
+    "Physical zoom/AT and complete founder evaluation"
+  ],
+  "fullExperience": "STILL CODING / NOT_READY",
+  "founder": "NOT_ACCEPTED",
+  "rollback": "Ordinary reviewed source forward-fix/revert through normal web/Edge pipeline, never replay an uncertain action",
+  "receipt": "https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3061#issuecomment-6500028795"
+}

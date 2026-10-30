@@ -2,10 +2,11 @@ import React from "react";
 import { resolveDepartmentSpecialist } from "@/lib/paige/vpDepartments";
 import { useOptionalTenantContext } from "@/hooks/useTenantContext";
 import { useTheme } from "next-themes";
-import { Navigate, useLocation, useNavigate } from "react-router-dom";
+import { Navigate, useLocation, useNavigate, useNavigationType, useParams } from "react-router-dom";
 import { RefreshCw, ArrowUpRight, Landmark, Wallet, Sparkles } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { useSubtabRoute } from "@/lib/routing/useSubtabRoute";
+import { subtabByKey, subtabPath } from "@/lib/routing/tierBranches";
 import { useSalesPerformanceMetrics } from "../sales/performance/useSalesPerformanceMetrics";
 import type { SalesMetricBundle, SalesPerformancePhase, SalesPerformanceRangeKey } from "../sales/performance/types";
 import { formatMetricMoney, performanceDate, chartRatio, chartMaximum } from "../sales/performance/format";
@@ -45,11 +46,45 @@ function financeMetricReviewContext(metric: SalesMetricBundle | undefined, range
 /** Addressable Finance consumer. The Sales server owns records and every financial aggregate. */
 export function FinanceWorkspace({ epoch }: { epoch?: string | null }) {
  const { resolvedTheme } = useTheme();
- const [tab, setTab] = useSubtabRoute("solo", "finance", "overview");
- const [range, setRange] = React.useState<SalesPerformanceRangeKey>("month");
+ const navigate = useNavigate(), location = useLocation();
+ const { account } = useParams();
+ const context = useOptionalTenantContext();
+ const viewScope = context?.activeUserId && epoch && account ? `${context.activeUserId}:${epoch}:${account}` : null;
+ const savedScope = location.state?.financeRangeScope;
+ const foreignView = typeof savedScope === "string" && savedScope !== viewScope;
+ const [tab, setInlineTab] = useSubtabRoute("solo", "finance", "overview");
+ const [inlineRange, setInlineRange] = React.useState<SalesPerformanceRangeKey>("month");
+ // A view filter, never tenant or source authority. Derive it before any read
+ // so Back/reload cannot briefly request the previous window under a new label.
+ const requestedRanges = new URLSearchParams(location.search).getAll("range");
+ const range: SalesPerformanceRangeKey = !account ? inlineRange
+  : !foreignView && requestedRanges.length === 1 && PERIODS.includes(requestedRanges[0] as SalesPerformanceRangeKey)
+   ? requestedRanges[0] as SalesPerformanceRangeKey : "month";
+ const setRange = (next: SalesPerformanceRangeKey) => {
+  if (!PERIODS.includes(next)) return;
+  if (!account) { setInlineRange(next); return; }
+  const search = new URLSearchParams(location.search);
+  search.set("range", next);
+  navigate({ pathname: location.pathname, search: search.toString(), hash: location.hash },
+   { replace: true, state: { ...location.state, financeRangeScope: viewScope }, preventScrollReset: true });
+ };
+ const setTab = (key: string) => {
+  const slug = subtabByKey("solo", "finance", key)?.slug;
+  if (!account || !slug) { setInlineTab(key); return; }
+  navigate({ pathname: subtabPath("solo", account, "finance", slug), search: location.search, hash: location.hash }, { state: location.state });
+ };
+ React.useEffect(() => {
+  // Retain the shell's actor/business reset. This history marker scopes only a
+  // view preference; original readers still resolve every permission themselves.
+  if (!foreignView || !viewScope) return;
+  const search = new URLSearchParams(location.search);
+  search.delete("range");
+  const { financeRangeScope: _oldScope, ...state } = location.state;
+  navigate({ pathname: location.pathname, search: search.toString(), hash: location.hash },
+   { replace: true, state, preventScrollReset: true });
+ }, [foreignView, viewScope, location.pathname, location.search, location.hash, location.state, navigate]);
  const metrics = useSalesPerformanceMetrics(epoch, range);
  const invoices = useFinanceInvoices(epoch);
- const context = useOptionalTenantContext();
  const targetActor = context && !context.loading && context.accountContextStatus === "ready" && context.activeTenantId === epoch ? context.activeUserId : null;
  const reviewTab = tab === "banking" || tab === "forecast";
  const bankingRead = useBusinessReview((tab === "banking" || tab === "forecast" && targetActor) && metrics.phase !== "denied" && invoices.phase !== "denied" ? epoch : null,
@@ -57,8 +92,19 @@ export function FinanceWorkspace({ epoch }: { epoch?: string | null }) {
  const [filter, setFilter] = React.useState("issued");
  const [search, setSearch] = React.useState("");
  const [detail, setDetail] = React.useState<{ epoch: string; range: string; readIdentity: string; value: SalesMetricBundle | InvoiceRecord } | null>(null);
- const navigate = useNavigate(), location = useLocation();
  const refs = React.useRef<Array<HTMLButtonElement | null>>([]);
+ const navigationType = useNavigationType();
+ const focusScope = React.useRef(epoch);
+ React.useLayoutEffect(() => {
+  const sameWorkspace = focusScope.current === epoch;
+  focusScope.current = epoch;
+  if (!sameWorkspace || navigationType !== "POP") return;
+  // History updates selection without the click/key handler. Follow it only
+  // while this tab strip owns focus; leave Chat, forms and source sheets alone.
+  const focused = refs.current.find(node => node && node === document.activeElement);
+  const selected = refs.current.find(node => node?.getAttribute("aria-selected") === "true");
+  if (focused && selected && focused !== selected) selected.focus();
+ }, [epoch, tab, navigationType]);
  const evidenceReturn = React.useRef<{ element: HTMLButtonElement; epoch: string; range: SalesPerformanceRangeKey } | null>(null);
  const prefix = location.pathname.match(/^\/solo\/[^/]+/)?.[0];
  const openOwner = (path: string) => { if (prefix) navigate(`${prefix}/${path}`); };

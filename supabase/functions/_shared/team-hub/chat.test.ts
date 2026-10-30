@@ -59,6 +59,30 @@ const messages = {
   ],
 };
 
+describe("source-backed agent history is not fresh domain evidence", () => {
+  it("keeps ordinary messages but omits a prior domain answer from new model context", async () => {
+    const prior = { ...messages.messages[0], body: "PRIVATE-OLD-MONEY-FACT", author_kind: "agent", agent_key: "merit", source_backed_read: true };
+    const { caller } = fakeCaller({ team_hub_list_conversations: roster,
+      team_hub_list_messages: { ...messages, messages: [prior, { ...messages.messages[1], body: "Ordinary conversation retained" }] } });
+    const r = await TEAM_HUB_READERS.team_hub_read_conversation(scope, caller, { conversation_id: LAUNCH });
+    assert.doesNotMatch(r.envelope.projection ?? "", /PRIVATE-OLD-MONEY-FACT/);
+    assert.match(r.envelope.projection ?? "", /Ordinary conversation retained/);
+    assert.match(r.envelope.projection ?? "", /original records/i);
+    assert.equal(prior.body, "PRIVATE-OLD-MONEY-FACT", "authorized stored/UI history is never rewritten");
+  });
+  it("omits a native tagged search snippet without altering ordinary matching snippets", async () => {
+    const common = { message_id: MSG, conversation_id: LAUNCH, conversation_kind: "channel", conversation_label: "launch",
+      author_name: "MERIT", created_at: "2026-10-24T09:30:00.000Z" };
+    const { caller } = fakeCaller({ team_hub_search: { ok: true, results: [
+      { ...common, source_backed_read: true, snippet: "PRIVATE-OLD-MONEY-FACT" },
+      { ...common, snippet: "Ordinary match retained" },
+    ] } });
+    const r = await TEAM_HUB_READERS.team_hub_search(scope, caller, { query: "match" });
+    assert.doesNotMatch(r.envelope.projection ?? "", /PRIVATE-OLD-MONEY-FACT/);
+    assert.match(r.envelope.projection ?? "", /Ordinary match retained/);
+  });
+});
+
 describe("tenant and person are the server's, never the model's", () => {
   it("every read sends the scope tenant as p_expected_tenant and forwards no model-supplied identity", async () => {
     const { caller, calls } = fakeCaller({ team_hub_list_conversations: roster, team_hub_list_messages: messages, team_hub_search: { ok: true, results: [] } });

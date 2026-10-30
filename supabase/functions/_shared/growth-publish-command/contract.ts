@@ -9,6 +9,7 @@
 //
 // Pure: no I/O and no Deno globals, so the readiness checks and the sentence mapping are driven by
 // tests directly. The executor lives in ./door.ts.
+import { PAIGE_APP_ORIGIN } from "../canonical-app-url.ts";
 
 export const PUBLISH_ACTIONS = ["publish", "unpublish"] as const;
 export const PUBLISH_KINDS = ["page", "form", "funnel", "image"] as const;
@@ -289,15 +290,22 @@ export function previewReady(preview: PublishPreview): boolean {
   return preview.checks.every((c) => c.ok || !c.blocking);
 }
 
-/** The card's one sentence. Names the thing and the consequence. */
+/** The card's one sentence. Names the thing and the consequence. The address is ABSOLUTE and the
+ *  title carries typographic quotes — the same card renders in the Studio panel and in Team Hub
+ *  (EXP08 be5134d7), so the sentence must read finished wherever it lands. */
 export function previewSummary(preview: PublishPreview): string {
   const noun = KIND_NOUN[preview.kind];
   if (preview.action === "unpublish") {
-    return `Take the ${noun} "${preview.title}" offline. It goes back to a draft in the Studio${preview.kind === "page" ? "; the forms on it stay live" : preview.kind === "funnel" ? "; its pages and forms stay live" : ""}.`;
+    return `Take the ${noun} “${preview.title}” offline. It goes back to a draft in the Studio${preview.kind === "page" ? "; the forms on it stay live" : preview.kind === "funnel" ? "; its pages and forms stay live" : ""}.`;
   }
-  const where = preview.address ? ` at ${preview.address}` : "";
+  const where = preview.address ? ` at ${absoluteAddress(preview.address)}` : "";
   const carried = preview.kind === "page" ? " The forms on it go live too." : preview.kind === "funnel" ? " Every page and form in it goes live together." : "";
-  return `Publish the ${noun} "${preview.title}"${where}. Anyone with the link can open it.${carried}`;
+  return `Publish the ${noun} “${preview.title}”${where}. Anyone with the link can open it.${carried}`;
+}
+
+/** Relative public paths become the full https address (already-absolute URLs pass through). */
+function absoluteAddress(address: string): string {
+  return /^https?:\/\//i.test(address) ? address : `${PAIGE_APP_ORIGIN}${address}`;
 }
 
 /** Postgres codes the publish RPCs raise when they refuse. */

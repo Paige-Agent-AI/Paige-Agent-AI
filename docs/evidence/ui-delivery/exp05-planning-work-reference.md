@@ -97,3 +97,24 @@ The local host's initial overview-only reload bootstrap was corrected for native
 proof; no product source was changed by that harness correction. All effects and
 external networking were refused. Physical-device/AT and real signed-in acceptance
 are explicitly not supplied by this isolated browser evidence.
+
+### October28 production source follow-on — customer acceptance remains open
+
+Original [release receipt6476586277](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3035#issuecomment-6476586277)
+records reviewed022b0bceb/LOWER5686310555, all11 exact checks/two web statuses,
+normal merge59fc5c1e17bf93bf0196177c352770d72a196030 and identical reviewed tree.
+Exact READY web and both official version artifacts were read back17:37UTC.
+The original17-function deployment/source certificate independently matches517
+source entries/config/closures/manifests; Chat575 has300 pinned-emitter links.
+Subsequent newer metadata versions were resolved by directly reading205 files
+from13 functions, not by inferring source from version or uploading again.
+Their full path sets, JWT configuration, ACTIVE status and native entrypoints
+match immutable59fc. Cleanup warning and invalid local proof probes are retained.
+
+This releases the compatible reference consumer, not every producer or customer
+outcome. Existing Chrome control timed out before page content or navigation;
+no new authenticated record, role, original receipt, reload or cohort PASS is
+claimed. No business operation, approval, recurrence/provider/Live activation,
+catalogue/algorithm promotion or founder evaluation occurred. All original ten
+outcomes/E5-CV1–9 remain OPEN/PARTIAL; isolated renders keep their original source
+and synthetic-port identities rather than inheriting the deployed build label.

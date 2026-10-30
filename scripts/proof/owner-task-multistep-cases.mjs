@@ -183,3 +183,25 @@ export function proveOwnerTaskMultistep({ sql, text, draft, control, controlRevi
     assert.deepEqual(catalog(), after);
   });
 }
+
+/** Same native domain writer and original process/act, never a replacement draft. */
+export function proveOwnerTaskStepRevision({ sql, draft, control, controlReview, check }) {
+  check("one exact draft-step revision preserves original identity and creates no executable work", () => {
+    const original = draft(), review = controlReview(original.process);
+    const proposed = { title: "Review the revised internal handoff", description: "Keep the original workflow and ask before later work." };
+    const before = sql("select jsonb_build_array((select count(*)from paige_automations),(select count(*)from paige_automation_acts),(select count(*)from tasks),(select count(*)from paige_workspace_events))::text;");
+    const result = control(original.process, "revise_step", { ...review, acts: {
+      reviewed_acts: review.acts, revision: { act_id: original.act, config: proposed },
+    } });
+    assert.equal(result.automation_id, original.process);
+    assert.equal(result.state, "draft"); assert.equal(result.armed_at, null);
+    assert.equal(result.changed, true); assert.equal(result.execution_started, false);
+    assert.equal(result.future_events_only, true); assert.notEqual(result.updated_at, review.updated_at);
+    assert.deepEqual(result.process, review.process);
+    assert.deepEqual(result.acts, [{ ...review.acts[0], config: proposed }]);
+    const reread = controlReview(original.process);
+    assert.equal(reread.updated_at, result.updated_at); assert.deepEqual(reread.acts, result.acts);
+    assert.equal(sql("select jsonb_build_array((select count(*)from paige_automations),(select count(*)from paige_automation_acts),(select count(*)from tasks),(select count(*)from paige_workspace_events))::text;"), before);
+    assert.equal(sql(`select count(*)from audit_logs where entity_id='${original.process}'and action='owner_task_automation.revise_step';`), "1");
+  });
+}

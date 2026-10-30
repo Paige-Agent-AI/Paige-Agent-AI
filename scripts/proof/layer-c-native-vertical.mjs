@@ -314,10 +314,20 @@ async function ownerTaskNativeProof() {
       proveOwnerTaskMultistep({ sql, text, draft, control, controlReview, native, actor, tenant,
         check, refuses, literal, json, approve, claim, bridge, resultCount, human, multistepMetadataBefore });
     };
+    const proveStepRevision = async () => {
+      // Explicit counterfactual mode drives the unchanged released controller.
+      // Normal proof requires the actual next reviewed migration, never a stub.
+      if (!process.argv.includes("--without-step-revision-patch")) {
+        sql(text("supabase/migrations/20271126160005_owner_task_step_revision.sql"));
+      }
+      const { proveOwnerTaskStepRevision } = await import("./owner-task-multistep-cases.mjs");
+      proveOwnerTaskStepRevision({ sql, draft, control, controlReview, check });
+    };
     if (multistepOnly) {
       await proveMultistep();
+      await proveStepRevision();
       writeFileSync(resolve(scratch,"multistep-result.json"),JSON.stringify({passed:cases.length,cases,
-        proofClass:"SELECTED_DISPOSABLE_NATIVE_MULTISTEP",fullRegression:"NOT_RUN",fullSchema:"NOT_RUN",authenticatedQA:"NOT_RUN"},null,2));
+        proofClass:"SELECTED_DISPOSABLE_NATIVE_MULTISTEP_AND_STEP_REVISION",fullRegression:"NOT_RUN",fullSchema:"NOT_RUN",authenticatedQA:"NOT_RUN"},null,2));
       console.log(`PASS ${cases.length} selected native multi-step controls; evidence ${scratch}`);
       return;
     }
@@ -811,6 +821,7 @@ async function ownerTaskNativeProof() {
         for(const failure of controlAttempts.filter(r=>r.code!==0))assert.match(failure.err,/OWNER_TASK_CONTROL_STALE|could not obtain lock/);
         assert.equal(auditCount(race.process),"1");assert.equal(control(race.process,"arm").changed,false);
       });
+      await proveStepRevision();
       writeFileSync(resolve(scratch,"human-control-result.json"),JSON.stringify({passed:cases.length-controlCasesStart,cases:cases.slice(controlCasesStart),
         evidence:"actual selected native SQL + canonical resolver body; auth/agency/operator/Realtime ports; synthetic new-tenant fixture, not full provisioning",authenticatedQA:"NOT_RUN",fullSchema:"NOT_RUN"},null,2));
     }

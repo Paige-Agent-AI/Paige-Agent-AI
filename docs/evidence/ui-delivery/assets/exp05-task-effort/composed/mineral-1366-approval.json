@@ -1,0 +1,31 @@
+{
+  "controls": [
+    {
+      "disabled": true,
+      "height": 21.700000762939453,
+      "label": "Refresh task details"
+    },
+    {
+      "disabled": false,
+      "height": 44,
+      "label": "Approve exact change"
+    },
+    {
+      "disabled": false,
+      "height": 44,
+      "label": "Back to details"
+    },
+    {
+      "disabled": false,
+      "height": 44,
+      "label": "Close"
+    }
+  ],
+  "dialog": "Prepare the client delivery reviewNeutral offline workflow fixture. No customer or provider action.Refresh task detailsResponsible personMLMorgan LeeStatusReadyPriorityP1Due dateNot scheduledEstimated effort15 minutesSourceCRM taskReview the task changeOffline Trust response · review the exact Task change below.Set this task’s effort estimate to 30 minutes. This does not reserve Calendar time.Approve exact changeBack to detailsClose",
+  "focus": "Approve exact change",
+  "scrollWidth": 1366,
+  "viewport": {
+    "height": 768,
+    "width": 1366
+  }
+}

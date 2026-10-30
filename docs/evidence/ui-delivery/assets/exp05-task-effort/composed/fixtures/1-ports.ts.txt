@@ -1,0 +1,37 @@
+export * from '../../scripts/live-drive/harness/operations-release-mount/stubs';
+import {useCallback,useMemo,useSyncExternalStore} from 'react';
+import {ACTOR,TENANT,supabase as originalPorts} from '../../scripts/live-drive/harness/operations-release-mount/stubs';
+const mode=new URLSearchParams(location.search).get('effortState')??'ready';
+const key='offline-exp05-effort-source';
+const initial={id:'ef050000-0000-4000-8000-00000000a001',tenant_id:TENANT,user_id:ACTOR,title:'Prepare the client delivery review',description:'Neutral offline workflow fixture. No customer or provider action.',status:'pending',due_date:null,updated_at:'2026-10-29T12:00:00.123456Z',created_at:'2026-10-28T12:00:00Z',deal_id:null,biz_id:null,recorded_priority:'P1',estimated_minutes:15};
+let task=JSON.parse(sessionStorage.getItem(key)??'null')??initial;
+const listeners=new Set<()=>void>();
+const subscribe=(notify:()=>void)=>{listeners.add(notify);return()=>{listeners.delete(notify);};};
+const snapshot=()=>task;
+export function useOperationsCrmWork(){
+ const record=useSyncExternalStore(subscribe,snapshot);
+ const tasks=useMemo(()=>[record],[record]);
+ const refresh=useCallback(async()=>[task],[]);
+ const readTask=useCallback(async(id:string)=>({status:'available',found:id===task.id,task:id===task.id?task:null}),[]);
+ return{tasks,loading:false,error:mode==='unavailable'?'Offline fixture source refused':null,forbidden:false,hasMore:false,refresh,readTask};
+}
+export const supabase={...originalPorts,
+ rpc:(name:string,args:Record<string,unknown>={})=>name==='is_tenant_admin'?Promise.resolve({data:mode!=='denied',error:null}):originalPorts.rpc(name,args),
+ functions:{invoke:async(name:string,{body}:{body:Record<string,any>})=>{
+  if(name!=='crm-command')return{data:null,error:{message:'Offline fixture refuses unimplemented transport'}};
+  if(mode==='refused')return{data:{ok:false,outcome:'refused'},error:null};
+  const operation=body.command;
+  if(body.expected_tenant_id!==TENANT||operation.task_id!==task.id||operation.action!=='task.update'||Object.keys(operation.patch??{}).join(',')!=='estimated_minutes')throw Error('Offline fixture unexpected command');
+  const cacheKey='offline-effort-result:'+body.idempotency_key,cached=sessionStorage.getItem(cacheKey);
+  if(cached)return{data:JSON.parse(cached),error:null};
+  if(!body.approved_fingerprint)return{data:{outcome:'approval_required',fingerprint:'offline-effort-fingerprint',summary:'Offline Trust response · review the exact Task change below.'},error:null};
+  if(body.approved_fingerprint!=='offline-effort-fingerprint'||operation.expected_updated_at!==task.updated_at)return{data:{ok:false,outcome:'refused'},error:null};
+  const minutes=operation.patch.estimated_minutes;
+  if(minutes!==null&&(!Number.isSafeInteger(minutes)||minutes<0||minutes>2147483647))return{data:{ok:false,outcome:'refused'},error:null};
+  task={...task,estimated_minutes:minutes,updated_at:new Date().toISOString()};
+  sessionStorage.setItem(key,JSON.stringify(task));for(const notify of listeners)notify();
+  const result={ok:true,readback:{id:task.id,metadata:minutes===null?{fixture_other:'preserved'}:{fixture_other:'preserved',estimated_minutes:minutes},external_effect:false,notification_sent:false,updated_at:task.updated_at}};
+  sessionStorage.setItem(cacheKey,JSON.stringify(result));
+  return mode==='unknown'?{data:{outcome_unknown:true},error:null}:{data:result,error:null};
+ }},
+};

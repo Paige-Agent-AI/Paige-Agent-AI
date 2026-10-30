@@ -1,23 +1,23 @@
 # EXP05 O02/O03 — correct saved Task effort through original Work
 
 UI_DELIVERY_EVIDENCE_VERSION: 1
-INTERNAL_BUILD_IDENTITY: source=83d97fb1e8ba56e8fc56b92ed00f2a15a9733e7c; base=4ed8acc917e45b43deebdee1231c218f32cd1abf; deployment=offline-original-Operations-mount; environment=local; migrations=PROOF_OWED(20271126010012_task_effort_scalar held for forward ordering); edge=PROOF_OWED(compiled Task patch schema after native release); evidence=docs/evidence/ui-delivery/assets/exp05-task-effort/build-manifest.json. Exact eventual head/review/CI must be recorded before release.
+INTERNAL_BUILD_IDENTITY: source=f5a5720d636d7774ea1c53ad2bf053aa1d98c196; base=fdc313d213888c22331c564844a90abf1eedf19f; deployment=offline-original-Operations-mount; environment=local; migrations=PROOF_OWED(20271126010012_task_effort_scalar original PR3102 required CI and production release); edge=PROOF_OWED(compiled Task patch schema and crm-command after native release); evidence=docs/evidence/ui-delivery/assets/exp05-task-effort/composed/build-manifest.json
 RELEASE_CHANNEL: development: local source and isolated browser/SQL fixtures only.
 RELEASE_CLASSIFICATION: internal-only: one correction/save/reopen leg of O02/O03, not complete weekly planning or EXP05.
 CUSTOMER_RELEASE_IDENTITY: none: no launch, activation or founder acceptance.
 RELEASE_NOTE_REQUIRED: NO: original issue/PR are the unfinished increment's record.
-RELEASE_TRUTH_BOUNDARY: PARTIAL: actual original editor, command door consumer, review and recovery rendered with explicit offline ports; native producer is local, unmerged and unapplied.
-RELEASE_RECOVERY: position=hold until migration ordering/review/full-schema/exact-head CI clear; reference=original Task operation/key/version, original CRM read and receipt. Never retry an unknown write with a fresh operation.
+RELEASE_TRUTH_BOUNDARY: PARTIAL: actual original editor, command door consumer, review and recovery rendered with explicit offline ports; native producer is OPEN3102, unmerged and unapplied.
+RELEASE_RECOVERY: position=hold until original native12 review/full-schema/exact-head CI and source-compatible deployment clear; reference=original Task operation/key/version, original CRM read and receipt. Never retry an unknown write with a fresh operation.
 FLOW_BY_FLOW: PASS: original Work → inspect Task → change whole-minute estimate or clear → review exact units → original Trust approval if required → original executor acknowledgement → independent original Work read → saved status; lost acknowledgement → reload → original recovery → readback.
 PAIGE_UI_DESIGN: PASS: existing Task inspector, typography, tokens, gold action, native controls and focus ring. New effort input/review action are44px; clear uses an18px visual checkbox inside its44px label target. No new banner, tab, drawer engine or design system.
 MATERIAL_FLOW_CHANGE: YES: durable effort correction, distinct from temporary workload estimates.
 FLOW_PROTOTYPE: PASS: actual original OperationsWorkspace, editor, command consumer and review in the incumbent full Operations harness; only explicit source/Auth/transport ports are synthetic. No production test route.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: permitted SOLO owner/admin corrects one original Task estimate without overwriting unrelated metadata or reserving Calendar time.
 VISUAL_DIRECTION: PASS: compact inline planning fields and exact review inside the existing inspector; original work remains visible behind its modal.
-AUTOMATED_EVIDENCE: PASS:117 assertions in seven original effort/command/editor/review/task-focus/SoloApp-retention suites. Original denial, account switching, unavailable source, CAS/replay, zero/clear, widened proposals, independent readback and refusal focus retained. Native component20 and generator15 are separate bounded evidence below.
+AUTOMATED_EVIDENCE: PASS:125 assertions in seven original effort/command/editor/review/task-focus/SoloApp-retention/focused-read suites on the composed source. Original denial, account switching, unavailable source, CAS/replay, zero/clear, widened proposals, independent readback and refusal focus retained. Native component20 and generator15 are separate bounded evidence below.
 STATIC_EVIDENCE: UNVERIFIED: actual tsconfig.app.json reports nine unchanged-file diagnostics and zero changed-path diagnostics. Empty root-solution tsc result is EXCLUDED. Diff/UTF8/focused lint are separate checks; hosted exact-lock CI remains required.
-RENDERED_EVIDENCE: PASS:121 current product input hashes, explicit private fixture ports, compiled asset hashes and15 final frames: light desktop1280x720 plus both themes at narrow320x700. All final product hashes match the inspected source. Fixture label is moved above controls only; no product styling transform.
-BEHAVIORAL_EVIDENCE: PASS: docs/evidence/ui-delivery/assets/exp05-task-effort/build-manifest.json correlates15 actual rendered states for exact-minute review, saved/read/reopen, response loss, original-operation recovery, refusal focus, role denial and zero versus clear. UI wiring uses synthetic ports; real domain execution is excluded.
+RENDERED_EVIDENCE: PASS: docs/evidence/ui-delivery/assets/exp05-task-effort/composed/build-manifest.json binds current product inputs, nine explicit fixture sources, compiled assets and seven valid composed-source frames at1366x768/320x1000. The original fifteen83d97 frames remain historical, with their original121 hashes; five incoming source changes are identified instead of silently borrowing the old complete graph. One transition-time stale capture is excluded.
+BEHAVIORAL_EVIDENCE: PASS: docs/evidence/ui-delivery/assets/exp05-task-effort/composed/rendered-matrix.json records original editor→exact30-minute review→synthetic approval→independent fixture reread→reload/reopen30, narrow keyboard reachability, explicit clear and Cancel return. Prior original response-loss/recovery/refusal/role/zero cases retain their historical evidence and current125 test coverage. All Auth/Trust/execution/read data ports are synthetic; real domain execution is excluded.
 AUTHENTICATED_RUNTIME: UNVERIFIED: new effort write, original approval/receipt and later real read/reload require legitimate protected production verification after release. Parent3091 has separate bounded owner read-only proof in ANT-52/c8eeddbf; it does not prove this new writer.
 KEYBOARD_FOCUS: PASS: native numeric entry/Tab reaches clear label; exact review/approval/recovery retain original controls. A real refusal focus loss was found and repaired: focus moves to Back to details after disabling the refused action. Original focus/retention assertions remain, with only their changed accessible-label selectors reconciled.
 ZOOM_REFLOW: UNVERIFIED:320px reflow has no document overflow and new targets are44px; native200% zoom and screen-reader testing of this added flow remain owed. Parent native zoom is not borrowed.
@@ -33,7 +33,7 @@ SOLO_1024X768_PAIGE_CLOSED: UNVERIFIED: full-shell size remains owed.
 SOLO_1024X768_PAIGE_OPEN: UNVERIFIED: original dock overlay/return remains owed.
 SOLO_900X1000_PAIGE_CLOSED: UNVERIFIED: full-shell size remains owed.
 SOLO_900X1000_PAIGE_OPEN: UNVERIFIED: original dock overlay/return remains owed.
-UNVERIFIED: full-schema225-case pgTAP run, original Trust/Rail/concurrency/native role proof, migration ordering, independent review/exact-head CI, deployment, new/existing eligible SOLO cohorts, Chat/Team Hub tool behavior, native zoom/AT, full-shell dock matrix and founder acceptance.
+UNVERIFIED: full-schema225-case pgTAP run, original Trust/Rail/native role proof, native12 release, final review/exact-head CI, deployment, new/existing eligible SOLO cohorts, Chat/Team Hub tool behavior, native zoom/AT, full-shell dock matrix and founder acceptance.
 OWNER_INTENT: finish realistic weekly planning first, then bounded Automation Builder, monitoring and permitted proactive updates; retain full ten outcomes/E5-CV1–9 and one founder evaluation.
 MUST_NOT_HAPPEN: whole metadata erased by a partial update, unknown effort converted to zero, stale/foreign actor or Task reuse, fresh-key replay after response loss, invented receipt/saved status, new approval/writer/ledger/scheduler, provider effect or held ZION activation.
 MUST_PRESERVE: native service-only executor/ACL/OID, actor/tenant and record checks, raw Task version/CAS, exact stored command/Trust, original replay/receipt transaction, explicit metadata replacement semantics and all non-Task branches.
@@ -47,9 +47,11 @@ The native producer is review checkpoint4ed8acc91. Nullable integer
 `task.update.patch.estimated_minutes` changes only that key, preserving nested
 metadata. Whole metadata replacement retains its prior explicit semantics;
 combining it with scalar effort is refused. No applied migration changes.
-Tentative forward12 follows actual production09; E04 reserved10/E09 tentative11
-ordering is being reconciled in original ANT-161/51d8c74d. No durable Preview
-was opened ahead of that reservation and no production write was made.
+Original ordering checkpoint was production09 with E04reserved10/E09tentative11.
+That hold is now resolved in ANT161/51d8c74d/ea0882f6: published10/11 are merged
+and production9/10/11eachONCE. Native12 is OPEN#3102/fdc313d21 with its managed
+Preview now SUCCESS; required broad/database gates and native production release
+remain separate. No applied history was rewritten and no production write was made.
 
 Twenty isolated PostgreSQL16 checks execute the actual whole function, with
 baseline refusal first, unchanged OID/ACL, set/clear/zero/bounds, malformed input
@@ -91,3 +93,36 @@ the glyph; checkbox-target.json records its44px interactive label.
 Functional: LOCAL/NOT_MERGED/NOT_DEPLOYED. Visual: changed-path source rendering
 and material focus/target correction verified; full-shell/native/AT gaps above.
 Experiential: integrated native/customer proof still owed. Founder: NOT_ACCEPTED.
+
+## October30 UTC composition and current rendered boundary
+
+Original editor42b9259 normally merged exact native3102/fdc313d21 plus current
+mainb696 to f5a5720d636d7774ea1c53ad2bf053aa1d98c196. One append/append packet
+conflict was resolved by retaining BOTH complete dated sections. All45 original
+editor/evidence leaves remain, with no incoming non-owned product loss. The
+current seven original suites pass125 assertions, including focused read-scope
+controls; no failed or skipped assertion. The deliberate synthetic department
+failure output is an exercised error-boundary negative, not a failing test.
+
+The composed original Operations fixture was rebuilt against125 actual product
+inputs and nine disclosed source/transport/Auth/Trust fixture files. Its source
+manifest explicitly lists five incoming changes since the earlier121-input
+graph; the original fifteen screenshots are kept as historical83d97 evidence.
+Seven valid new JPG/DOM records cover the actual original inspector, exact30
+review, simulated approval/save, independent fixture reread/reload/reopen and
+narrow keyboard/Cancel continuation. The clear-to-unknown wording was observed
+in the actual accessibility state; its transition-time pixel capture was stale,
+so that image is INVALID/excluded and is not visual proof of the clear review.
+The earlier neutral source fixture and current125 cases retain clear controls.
+No real approval, customer Task, server receipt or native Rail was created.
+
+![Composed exact approval](assets/exp05-task-effort/composed/mineral-1366-approval.jpg)
+![Narrow keyboard reachability](assets/exp05-task-effort/composed/obsidian-320-editor-keyboard.jpg)
+
+Actual viewport1366x768/320x1000, original dialog scroll owner and no document
+overflow retained. New44px effort controls/label target and narrow keyboard focus
+were observed; native200%/AT/complete SoloApp and actual PAIGE-open shell remain
+UNVERIFIED. Local restricted-socket attempt was INVALID; the ordinary authorized
+loopback helper then served correctly. Only own temporary tab closed, viewport
+restored and helper stopped. No browser permission/security setting changed.
+Exact native3102 and dependent UI review/CI/deployment remain controlling.

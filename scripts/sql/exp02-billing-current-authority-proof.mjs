@@ -1,7 +1,7 @@
 // Native producer proof ONLY. Auth/current-workspace helpers are explicit fixture ports,
 // not evidence of hosted Auth, RLS, tenant permissions or customer acceptance.
 // EXP02_DISPOSABLE=1 PGHOST=127.0.0.1 PGPORT=... PGUSER=... PSQL=...
-// EXP02_PG_DATA_DIRECTORY=<verified existing disposable cluster> node this-file [--baseline]
+// EXP02_PG_DATA_DIRECTORY=<verified existing disposable cluster> node this-file [--baseline|--contact-wait|--audit-wait]
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { spawn, spawnSync } from 'node:child_process';
@@ -12,14 +12,19 @@ assert.equal(process.env.PGHOST, '127.0.0.1', 'Loopback only');
 assert.match(process.env.PGPORT ?? '', /^\d+$/);
 assert.ok(Number(process.env.PGPORT) >= 1024 && Number(process.env.PGPORT) <= 65535, 'Explicit unprivileged local port required');
 assert.ok(process.env.PGUSER && process.env.PSQL && process.env.EXP02_PG_DATA_DIRECTORY);
-assert.ok(process.argv.slice(2).every(a => a === '--baseline'), 'Unknown proof option');
+assert.ok(process.argv.slice(2).every(a => ['--baseline', '--contact-wait', '--audit-wait'].includes(a)), 'Unknown proof option');
 const baseline = process.argv.includes('--baseline');
+const contactWaitOnly = process.argv.includes('--contact-wait');
+const auditWaitOnly = process.argv.includes('--audit-wait');
+const focused = contactWaitOnly || auditWaitOnly;
+assert.ok([baseline, contactWaitOnly, auditWaitOnly].filter(Boolean).length <= 1, 'Select one focused proof mode');
 const database = `exp02_billing_${randomUUID().replaceAll('-', '')}`;
 const binary = process.env.PSQL;
 const args = db => ['-X', '--no-password', '-q', '-A', '-t', '-h', '127.0.0.1', '-p', process.env.PGPORT,
   '-U', process.env.PGUSER, '-d', db, '-v', 'ON_ERROR_STOP=1'];
 function sql(query, db = database, failure) {
-  const r = spawnSync(binary, args(db), { input: query, encoding: 'utf8', timeout: 30000, env: process.env, windowsHide: true });
+  const r = spawnSync(binary, args(db), { input: failure ? '\\set VERBOSITY verbose\n' + query : query,
+    encoding: 'utf8', timeout: 30000, env: process.env, windowsHide: true });
   if (r.error) throw r.error;
   if (failure) { assert.notEqual(r.status, 0); assert.match(r.stderr, failure); }
   else assert.equal(r.status, 0, r.stderr);
@@ -64,7 +69,7 @@ function reset() {
 }
 const results = [];
 let created = false;
-async function waitRace(door, change, expectedRefusal = true, collect = true) {
+async function waitRace(door, change, expectedRefusal = true, collect = true, waitAt = 'advisory') {
   reset();
   if (door === 'revoke') sql(`INSERT INTO public.platform_billing_contacts(id,tenant_id,user_id,designation) VALUES ('${contact}','${A}','${recipient}','delegate');`);
   const first = spawn(binary, args(database), { env: process.env, windowsHide: true, stdio: ['pipe', 'pipe', 'pipe'] });
@@ -76,7 +81,11 @@ async function waitRace(door, change, expectedRefusal = true, collect = true) {
       first.stdout.on('data', c => { out += c; if (out.includes('EXP02_LOCKED')) resolve(); });
       first.on('error', reject);
     });
-    first.stdin.write(`BEGIN; SELECT pg_advisory_xact_lock(hashtextextended('platform_billing_contacts:${A}',0));\n\\echo EXP02_LOCKED\n`);
+    const blocker = waitAt === 'contact'
+      ? `UPDATE public.platform_billing_contacts SET designation=designation WHERE id='${contact}';`
+      : waitAt === 'audit' ? 'LOCK TABLE public.paige_audit_log IN SHARE MODE;'
+      : `SELECT pg_advisory_xact_lock(hashtextextended('platform_billing_contacts:${A}',0));`;
+    first.stdin.write(`BEGIN; ${blocker}\n\\echo EXP02_LOCKED\n`);
     await ready; clearTimeout(timer);
     const app = `exp02_billing_${door}_${randomUUID().slice(0,8)}`;
     second = spawn(binary, args(database), { env: { ...process.env, PGAPPNAME: app }, windowsHide: true, stdio: ['pipe', 'pipe', 'pipe'] });
@@ -85,7 +94,11 @@ async function waitRace(door, change, expectedRefusal = true, collect = true) {
     second.stdin.end('\\set VERBOSITY verbose\nSET statement_timeout=15000;\n' + identity + '\n' + call(door));
     let waited = false;
     for (let i = 0; i < 50; i++) {
-      waited = sql(`SELECT EXISTS(SELECT 1 FROM pg_stat_activity WHERE datname='${database}' AND application_name='${app}' AND wait_event_type='Lock');`) === 't';
+      waited = sql(`SELECT EXISTS(SELECT 1 FROM pg_stat_activity a WHERE a.datname='${database}' AND a.application_name='${app}' AND a.wait_event_type='Lock'
+        ${waitAt === 'contact' ? "AND a.wait_event IN ('transactionid','tuple')" : waitAt === 'audit'
+          ? "AND a.wait_event='relation' AND EXISTS(SELECT 1 FROM pg_locks l WHERE l.pid=a.pid AND l.relation='public.paige_audit_log'::regclass AND l.mode='RowExclusiveLock' AND NOT l.granted)"
+          : "AND a.wait_event='advisory'"}
+        ${waitAt !== 'advisory' ? "AND EXISTS(SELECT 1 FROM pg_locks l WHERE l.pid=a.pid AND l.locktype='advisory' AND l.granted)" : ''});`) === 't';
       if (waited) break;
       await new Promise(resolve => setTimeout(resolve, 50));
     }
@@ -102,7 +115,7 @@ async function waitRace(door, change, expectedRefusal = true, collect = true) {
       : change === 'parented' ? 'billing_not_applicable' : 'billing_workspace_owner_only';
     const passed = expectedRefusal ? exit !== 0 && errors.includes(`42501: ${expectedError}`) && state.contacts === (door === 'revoke' ? 1 : 0) && state.revoked === 0 && state.audits === 0
       : exit === 0 && state.contacts === 1 && state.revoked === (door === 'revoke' ? 1 : 0) && state.audits === 1;
-    const row = { phase: collect ? 'original-billing-wait' : 'causal-mutant-wait', door, change, waited, exit, state, passed };
+    const row = { phase: collect ? 'original-billing-wait' : 'causal-mutant-wait', door, waitAt, change, waited, exit, state, passed };
     if (collect) results.push(row);
     console.log(JSON.stringify(row));
     return row;
@@ -137,19 +150,58 @@ try {
     COMMENT ON FUNCTION public.platform_billing_contact_revoke(uuid) IS 'Test-only incumbent revoke comment';`);
   assert.deepEqual(JSON.parse(sql(`SELECT jsonb_agg(md5(prosrc) ORDER BY proname) FROM pg_proc WHERE proname IN (${names.map(x => `'${x}'`).join(',')});`)), expectedBodies);
   const before = metadata();
-  let migration;
+  let migration, initialMigration;
   if (!baseline) {
-    migration = source('20271126080006_exp02_billing_current_authority.sql');
+    initialMigration = source('20271126080006_exp02_billing_current_authority.sql');
+    migration = source('20271126080007_exp02_billing_final_authority.sql');
+    const unapplied = sql(`SELECT jsonb_agg(to_jsonb(p) ORDER BY proname) FROM pg_proc p WHERE proname IN (${names.map(x => `'${x}'`).join(',')});`);
+    sql(migration, database, /23514: Original Billing final-authority prerequisite drift/);
+    assert.equal(sql(`SELECT jsonb_agg(to_jsonb(p) ORDER BY proname) FROM pg_proc p WHERE proname IN (${names.map(x => `'${x}'`).join(',')});`), unapplied,
+      'Final correction refuses a missing80006 prerequisite without partial source or metadata changes');
+    sql(initialMigration);
     sql(migration); assert.deepEqual(metadata(), before, 'Whole pg_proc metadata, OIDs, ACLs and comments preserved');
     const once = sql(`SELECT jsonb_agg(to_jsonb(p) ORDER BY proname) FROM pg_proc p WHERE proname IN (${names.map(x => `'${x}'`).join(',')});`);
     sql(migration); assert.equal(sql(`SELECT jsonb_agg(to_jsonb(p) ORDER BY proname) FROM pg_proc p WHERE proname IN (${names.map(x => `'${x}'`).join(',')});`), once, 'Replay is byte/metadata-identical');
     console.log(JSON.stringify({ phase: 'migration-metadata-and-replay', passed: true }));
   }
-  for (const door of ['revoke','designate']) {
+  if (!focused) for (const door of ['revoke','designate']) {
     for (const change of ['owner-lost','suspended','workspace-changed','parented']) await waitRace(door, change);
     await waitRace(door, 'unchanged', false);
   }
-  if (!baseline) {
+  // The advisory check is not the last possible wait: the original UPDATE can wait
+  // on its target contact while another transaction commits a caller-scope change.
+  if (!auditWaitOnly) {
+    for (const change of ['owner-lost','suspended','workspace-changed','parented']) await waitRace('revoke', change, true, true, 'contact');
+    await waitRace('revoke', 'unchanged', false, true, 'contact');
+  }
+  // A table SHARE lock blocks the ORIGINAL audit INSERT without adding a fake
+  // business trigger or changing the production writer/receipt implementation.
+  if (!contactWaitOnly) for (const door of ['revoke','designate']) {
+    for (const change of ['owner-lost','suspended','workspace-changed','parented']) await waitRace(door, change, true, true, 'audit');
+    await waitRace(door, 'unchanged', false, true, 'audit');
+  }
+  if (!baseline && !focused) {
+    const effects = () => sql(`SELECT jsonb_build_object(
+      'contacts',(SELECT coalesce(jsonb_agg(to_jsonb(c) ORDER BY c.id),'[]') FROM public.platform_billing_contacts c),
+      'audits',(SELECT coalesce(jsonb_agg(to_jsonb(a) ORDER BY a.action,a.target_id),'[]') FROM public.paige_audit_log a));`);
+    const denied = (label, prepare, statement, failure) => {
+      reset(); if (prepare) sql(prepare);
+      const unchanged = effects();
+      sql(statement, database, failure);
+      assert.equal(effects(), unchanged, `${label}: original contact and audit stay byte-identical`);
+      console.log(JSON.stringify({ phase: 'authorization-and-tenant-refusal', label, passed: true }));
+    };
+    for (const door of ['designate','revoke']) {
+      denied(`${door} non-owner`, `UPDATE public.tenant_members SET is_owner=false WHERE tenant_id='${A}';`, identity + call(door), /42501: billing_workspace_owner_only/);
+      denied(`${door} no active workspace`, 'DELETE FROM proof.active_workspaces;', identity + call(door), /42501: no_active_workspace/);
+      denied(`${door} null actor`, '', `SET test.actor=''; SET ROLE authenticated; ${call(door)}`, /42501: no_active_workspace/);
+      for (const role of ['anon','service_role']) denied(`${door} ${role} cannot execute`, '',
+        `SET test.actor='${actor}'; SET ROLE ${role}; ${call(door)}`, /42501: permission denied for function platform_billing_contact_/);
+    }
+    denied('foreign contact in another owned workspace', `INSERT INTO public.platform_billing_contacts(id,tenant_id,user_id,designation)
+      VALUES ('${contact}','${B}','${recipient}','delegate');`, identity + call('revoke'), /P0002: billing_contact_not_found/);
+    denied('already revoked contact', `INSERT INTO public.platform_billing_contacts(id,tenant_id,user_id,designation,revoked_at)
+      VALUES ('${contact}','${A}','${recipient}','delegate',now());`, identity + call('revoke'), /P0002: billing_contact_not_found/);
     reset(); sql(`INSERT INTO public.platform_billing_contacts(id,tenant_id,user_id,designation) VALUES ('${contact}','${A}','${recipient}','primary_contact');`);
     sql(identity + call('revoke'), database, /billing_primary_contact_required/);
     assert.equal(sql('SELECT count(*) FROM public.paige_audit_log;'), '0');
@@ -168,17 +220,22 @@ try {
     const guard = "  -- Re-resolve after waiting, retaining the workspace whose lock was acquired.\n"
       + "  IF public.platform_billing_workspace_owner_scope() IS DISTINCT FROM _t THEN\n"
       + "    RAISE EXCEPTION 'billing_workspace_owner_only' USING ERRCODE = '42501';\n  END IF;\n";
-    for (const [label, index, change, replacement] of [
-      ['revoke post-wait check removed', 1, 'owner-lost', ''],
-      ['designate post-wait check removed', 0, 'owner-lost', ''],
-      ['workspace silently retargeted after locking', 0, 'workspace-changed', '  _t := public.platform_billing_workspace_owner_scope();\n'],
-      ['workspace comparison removed', 0, 'workspace-changed', '  PERFORM public.platform_billing_workspace_owner_scope();\n'],
+    const finalGuard = guard.replace('Re-resolve after waiting, retaining the workspace whose lock was acquired.',
+      'Revalidate after all contact and audit writes; a refusal rolls back both.');
+    for (const [label, index, change, waitAt, mutate] of [
+      ['revoke all currentness checks removed', 1, 'owner-lost', 'advisory', s => s.replace(guard, '').replace(finalGuard, '')],
+      ['designate all currentness checks removed', 0, 'owner-lost', 'advisory', s => s.replace(guard, '').replace(finalGuard, '')],
+      ['revoke final check removed before contact wait', 1, 'owner-lost', 'contact', s => s.replace(finalGuard, '')],
+      ['designate final check removed before audit wait', 0, 'owner-lost', 'audit', s => s.replace(finalGuard, '')],
+      ['revoke final check removed before audit wait', 1, 'workspace-changed', 'audit', s => s.replace(finalGuard, '')],
+      ['workspace silently retargeted after locking', 0, 'workspace-changed', 'advisory', s => s.replace(guard, '  _t := public.platform_billing_workspace_owner_scope();\n')],
+      ['both workspace comparisons removed', 0, 'workspace-changed', 'audit', s => s.replace(guard, '  PERFORM public.platform_billing_workspace_owner_scope();\n').replace(finalGuard, '  PERFORM public.platform_billing_workspace_owner_scope();\n')],
     ]) {
-      const mutant = repaired[index].replace(guard, replacement);
+      const mutant = mutate(repaired[index]);
       assert.notEqual(mutant, repaired[index], 'Mutant must actually change the production body');
       try {
         sql(mutant);
-        assert.equal((await waitRace(index === 0 ? 'designate' : 'revoke', change, true, false)).passed, false, label);
+        assert.equal((await waitRace(index === 0 ? 'designate' : 'revoke', change, true, false, waitAt)).passed, false, label);
         console.log(JSON.stringify({ phase: 'causal-mutant-killed', label, passed: true }));
       } finally { sql(repaired[index]); }
     }
@@ -188,6 +245,7 @@ try {
       sql(`ALTER FUNCTION public.platform_billing_contact_designate(uuid,text) OWNER TO postgres;
         REVOKE ALL ON FUNCTION public.platform_billing_contact_designate(uuid,text) FROM PUBLIC,anon,authenticated,service_role;
         GRANT EXECUTE ON FUNCTION public.platform_billing_contact_designate(uuid,text) TO authenticated;`);
+      sql(initialMigration);
     };
     for (const [label, drift] of [
       ['scope body drift', originals[0].replace('  RETURN _t;', '  RETURN _t; -- fixture drift')],
@@ -202,7 +260,7 @@ try {
     ]) {
       restore(); sql(drift);
       const drifted = allState();
-      sql(migration, database, /Original Billing current-authority prerequisite drift/);
+      sql(migration, database, /Original Billing final-authority prerequisite drift/);
       assert.equal(allState(), drifted, 'Any prerequisite refusal rolls the entire migration back, including a prior writer correction');
       console.log(JSON.stringify({ phase: 'prerequisite-drift-refused', label, passed: true }));
     }

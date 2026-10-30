@@ -1,0 +1,11 @@
+import path from 'node:path';
+import {readFileSync,writeFileSync} from 'node:fs';
+import {createHash} from 'node:crypto';
+import base from '../../scripts/live-drive/harness/operations-release-mount/vite.config';
+const root=import.meta.dirname,repo=path.resolve(root,'../..'),ports=path.join(root,'ports.ts');
+const sha=(p:string)=>createHash('sha256').update(readFileSync(p)).digest('hex');
+export default {...base,root,envDir:root,publicDir:path.join(repo,'public'),cacheDir:path.join(root,'cache'),
+ resolve:{...base.resolve,alias:base.resolve.alias.map(entry=>({...entry,replacement:entry.replacement.endsWith('stubs.ts')?ports:entry.replacement}))},
+ build:{outDir:path.join(root,'dist'),emptyOutDir:false},
+ plugins:[...base.plugins,{name:'private-effort-source-manifest',generateBundle(){const repoPosix=repo.replaceAll('\\','/');const inputs=[...this.getModuleIds()].filter(p=>p.replaceAll('\\','/').startsWith(repoPosix+'/src/')&&!p.includes('?')).map(p=>({path:path.relative(repo,p).replaceAll('\\','/'),sha256:sha(p)}));if(inputs.length<4)throw Error('No authoritative product input manifest');writeFileSync(path.join(root,'source-manifest.json'),JSON.stringify({boundary:'OFFLINE FULL OPERATIONS MOUNT; SYNTHETIC AUTH/TASK/EXECUTION PORTS; NO AUTHENTICATED OR PRODUCTION EFFECT PROOF',inputs},null,2));}}],
+};

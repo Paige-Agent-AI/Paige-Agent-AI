@@ -993,3 +993,29 @@ Full review, exact-head CI/Preview, production readback, eligible new/existing
 SOLO/role/revocation and all ten/E5-CV1–9 acceptance remain owed. Original Admin
 reminder repair is separate pending EXP01's frozen-writer disposition. Founder
 NOT_ACCEPTED; STILL CODING / NOT_READY; one complete integrated evaluation.
+
+### October30 — native reminder Admin repair (O03/O04/O08)
+
+Continue original ten outcomes and E5-CV1–E5-CV9; no closure count changes.
+The previously inferred blanket native-source hold was too broad: ANT50's
+actual freeze protects the five Planning registry/admission bindings. Narrow
+predicate repair is recorded at ANT50/dfa434c4, preserving those bindings and
+shared Root/resume custody. Forward20271126075005 follows published70005;
+native-first release precedes the separately reviewed existing editor correction.
+
+Current local PostgreSQL result: 138 behavior checks PASS, plus exact two-function
+metadata/source conservation, replay, two source-drift refusals and authority
+metadata refusal. A non-owner current-tenant Admin can move another person's
+active reminder time without a global-role fixture row. No Task/milestone/mixed
+field authority is added; held Agency/parent/company classes, wrong actor/tenant,
+revoked seat, stale source, closed work, invalid time, concurrency and unknown
+acknowledgments remain bounded. Full-schema rollback coverage is added to the
+original Operations test but its hosted result is still owed. No existing role
+sync trigger is disabled and no real account/permission is manufactured.
+
+Exact native/evidence boundary is docs/evidence/ui-delivery/exp05-reminder-admin-native.md.
+Source is PREPARED, not merged/deployed/activated/authenticated/accepted. Visual
+unchanged; original UI still withholds the Admin-only control until its separate
+native-dependent child. Experiential record/Rail/reload, current/new SOLO cohorts,
+both chats, full automation lifecycle, ZION, monitoring/recovery and founder
+acceptance remain open. ALG-01/08/12/13 remain PARTIAL; no capability Live promotion.

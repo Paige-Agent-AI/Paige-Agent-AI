@@ -83,6 +83,47 @@ select set_config('request.jwt.claim.sub','ee010000-0000-4000-8000-000000000003'
 select pg_temp.check_true(jsonb_array_length(public.plan_list_operations_scoped('ee010000-0000-4000-8000-000000000003','ee010000-0000-4000-8000-000000001111')->'loose_items')=1,'target admin retains authorized work read');
 select pg_temp.check_true(jsonb_array_length(public.plan_list_operations_scoped('ee010000-0000-4000-8000-000000000003','ee010000-0000-4000-8000-000000001111')->'plans')=2,'target admin retains private and team project read');
 
+-- Real schema/role-sync coverage complements the isolated no-global-role port.
+-- Keep both role-sync triggers: this does not manufacture an impossible seat.
+insert into public.plan_items(id,tenant_id,item_type,title,created_by,assigned_to_user_id,remind_at) values
+ ('ee010000-0000-4000-8000-00000000a021','ee010000-0000-4000-8000-000000001111','reminder','Test Admin reminder boundary','ee010000-0000-4000-8000-000000000001','ee010000-0000-4000-8000-000000000002','2099-06-01');
+do $reminder$
+declare
+ item uuid := 'ee010000-0000-4000-8000-00000000a021';
+ actor uuid := 'ee010000-0000-4000-8000-000000000003';
+ tenant uuid := 'ee010000-0000-4000-8000-000000001111';
+ old_version timestamptz;
+ before_row jsonb;
+ result jsonb;
+begin
+ perform pg_temp.check_true(public.is_tenant_admin(tenant)
+   and exists(select 1 from public.tenant_members where tenant_id=tenant and user_id=actor and not is_owner),
+   'real-schema reminder fixture is a current non-owner Admin');
+ select updated_at,to_jsonb(i) into old_version,before_row from public.plan_items i where id=item;
+ execute 'SET LOCAL ROLE authenticated';
+ result := public.plan_reschedule_reminder_versioned(item,actor,tenant,old_version,'2099-07-01T13:00:00Z');
+ perform pg_temp.check_true((result->>'ok')::boolean and (result->>'railRecorded')::boolean
+   and result->>'receipt_status'='recorded','authenticated Admin reschedule retains native acknowledgment');
+ perform pg_temp.refused(format('select public.plan_reschedule_reminder_versioned(%L,%L,%L,%L,%L)',item,actor,tenant,old_version,'2099-08-01'),
+   '40001','authenticated Admin cannot replay a stale reminder');
+ perform pg_temp.refused(format('select public.plan_reschedule_reminder_versioned(%L,%L,%L,%L,%L)',item,'ee010000-0000-4000-8000-000000000001',tenant,old_version,'2099-08-01'),
+   '42501','authenticated Admin cannot substitute the expected actor');
+ perform set_config('request.jwt.claim.sub','ee010000-0000-4000-8000-000000000002',true);
+ perform pg_temp.refused(format('select public.plan_reschedule_reminder_versioned(%L,%L,%L,%L,%L)',item,'ee010000-0000-4000-8000-000000000002',tenant,old_version,'2099-08-01'),
+   '42501','assignee-only identity cannot acquire Admin time authority');
+ perform set_config('request.jwt.claim.sub',actor::text,true);
+ execute 'RESET ROLE';
+ perform pg_temp.check_true((select remind_at='2099-07-01T13:00:00Z' and updated_at<>old_version
+   and to_jsonb(i)-array['remind_at','updated_at','reminded_at','resolved_at']
+     =before_row-array['remind_at','updated_at','reminded_at','resolved_at']
+   from public.plan_items i where id=item),'Admin time change preserves other original work fields');
+ perform pg_temp.check_true((select count(*)=1 from public.audit_logs where entity_id=item and id=(result->>'receipt_run_id')::uuid),
+   'reminder acknowledgment identifies its original audit');
+ perform pg_temp.check_true((select count(*)=1 from public.paige_workspace_events where source_id=(result->>'receipt_run_id')::uuid
+   and tenant_id=tenant and actor_id=actor and detail->>'record_id'=item::text),
+   'Admin time change and refused replays retain one correlated native Rail');
+end $reminder$;
+
 -- Excluded registry scopes must not gain Operations through direct RPC calls.
 update public.tenants set account_type='agency' where id='ee010000-0000-4000-8000-000000001111';
 select pg_temp.refused($s$select public.plan_list_operations_scoped('ee010000-0000-4000-8000-000000000003','ee010000-0000-4000-8000-000000001111')$s$,'42501','agency Operations read refused');

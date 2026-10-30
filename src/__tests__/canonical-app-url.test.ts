@@ -243,3 +243,13 @@ describe("resolveCanonicalRecordLink", () => {
     expect(canonicalAppUrl({ ...solo, destination: "sales_invoices" })).toBe("https://paigeagent.ai/solo/1971670/sales/payments?view=invoices");
   });
 });
+describe("Team Hub original-message reference", () => {
+  const id = "e8000000-0000-4000-8000-0000000a0001";
+  it("opens the original source only in the current SOLO route", () => {
+    expect(resolveCanonicalRecordLink({ actor: "account", tier: "solo", account: 3855, destination: "team_hub", recordId: id }))
+      .toEqual({ path: `/solo/3855/team-hub?message=${id}`, status: "exact" });
+    for (const tier of ["operator", "agency", "sub_account", "enterprise"] as const) {
+      expect(resolveCanonicalRecordLink({ actor: "account", tier, account: 3855, destination: "team_hub", recordId: id })).toBeNull();
+    }
+  });
+});

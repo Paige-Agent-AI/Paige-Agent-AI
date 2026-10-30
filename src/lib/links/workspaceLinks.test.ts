@@ -40,6 +40,7 @@ describe("DESTINATION_LABEL — the frozen words", () => {
       sales_invoices: "Open invoices",
       sales_collections: "Open collections",
       operations_work: "Open delivery work",
+      team_hub: "Open Team Hub",
       business_time_zone: "Open business time zone setting",
       executive: "Open Executive",
       finance: "Open Finance",

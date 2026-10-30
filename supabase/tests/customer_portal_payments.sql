@@ -398,7 +398,7 @@ SELECT ok(NOT (pg_temp.as_user('e0995100-0000-4000-8000-000000000001',format('SE
 
 
 -- EXP09 exact original Billing intent. Same original financial records and caller roles.
-SELECT is((SELECT md5(prosrc) FROM pg_proc WHERE oid='public._client_portal_billing_client(uuid)'::regprocedure),'e7e882b76516c67b6a9b5a4e03dce37b','Auth-bound financial source delegates the same canonical actor factor (Native13): public._client_portal_billing_client(uuid)');
+SELECT is((SELECT md5(prosrc) FROM pg_proc WHERE oid='public._client_portal_billing_client(uuid)'::regprocedure),'e7e882b76516c67b6a9b5a4e03dce37b','Auth-bound financial source delegates the same canonical actor factor (Native15): public._client_portal_billing_client(uuid)');
 SELECT is((SELECT md5(prosrc) FROM pg_proc WHERE oid='public.client_portal_invoices(uuid,integer,jsonb)'::regprocedure),'91f0344a6231205da5763af3755f0ad3','original scoped invoice wrapper delegates the unchanged financial query: public.client_portal_invoices(uuid,integer,jsonb)');
 SELECT is((SELECT md5(prosrc) FROM pg_proc WHERE oid='public.client_portal_invoice_ledger(uuid,uuid,integer,jsonb)'::regprocedure),'a871c10fdea9b0f8e9bf3b7a9bdda887','original commercial native source remains unchanged: public.client_portal_invoice_ledger(uuid,uuid,integer,jsonb)');
 SELECT is((SELECT md5(prosrc) FROM pg_proc WHERE oid='public.client_portal_invoice_payment_request(uuid,uuid)'::regprocedure),'e59ce09de1660f47341787a89b7269ec','original commercial native source remains unchanged: public.client_portal_invoice_payment_request(uuid,uuid)');
@@ -562,7 +562,7 @@ SELECT set_config('paige.link_ok','1',true);
 UPDATE public.clients SET linked_user_id=NULL WHERE id='e0995300-0000-4000-8000-000000000006';
 SELECT set_config('paige.link_ok','',true);
 
--- EXP04 Native13: SAME original financial authority under explicit native actor context.
+-- EXP04 Native15: SAME original financial authority under explicit native actor context.
 -- These are rolled-back full-schema native assertions, NOT hosted identity or safe
 -- final-publication proof. No private function is an API; E09 must bind the original
 -- accepted requester/tenant/client/thread and recheck original facts before publishing.

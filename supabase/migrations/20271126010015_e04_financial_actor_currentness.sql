@@ -1,7 +1,8 @@
 -- EXP04 O11: one original financial authority, explicit accepted actor.
 -- PRIVATE native factors only. Original Auth-bound APIs/defaults/ACL/OIDs remain.
 -- No new API grant, token/GUC impersonation, financial query, ledger or effect.
--- Source order: original E04 native10, E09 native11, E05 Task12, then this13.
+-- Forward carrier15 after actual production14. Original unpublished13 is retained
+-- in source history; Task12 has no semantic dependency and is NOT carried here.
 BEGIN;
 
 DO $e04_financial_actor$

@@ -1,3 +1,31 @@
+# C133 — Forward financial authority source after the actual database frontier
+
+The connected O1–O4 outcome is unchanged. Production advanced through EXP03
+#3105/b763e1937366376dd35a7fe1d1f21da6652f0b27 to migration
+20271126010014 while original E05 Task12 and this factor13 remained absent.
+The current migration guard correctly rejects both older additions. The proposed
+12→13 dependent review was stopped before any composed push or durable Preview.
+No `--include-all`, applied-history rewrite, schema reset or marker change is used.
+
+Preserve original published factor64e2137970d4eadfa3e8f691b3f903762ed1f299
+and local composedc00a40e246e21357821e40805255911d11f1d122. This successor
+starts at actual mainb763 and carries ONLY the original three E04 paths. Rename
+the NEVER-applied factor to forward20271126010015; apart from this explanatory
+header its SQL is byte-exact. The original private executable ABI, original
+Auth-bound wrappers, authority predicates, source guards and negative controls
+remain unchanged. No E05 Task12 source is adopted; its original owner retains
+the applied Preview and legitimate forward-release reconciliation.
+
+This is infrastructure for trusted original native financial context, not an
+activated financial Chat reader. Full native248 (original211 plus37 controls),
+exact-head review/CI, managed Preview, ordinary release and production source
+readback remain required. Prior reduced61 proof is bounded local engineering
+evidence. Actual customer financial read/reload, second cohort, client/staff,
+provider outcomes, all12 integrated acceptance and founder acceptance stay OPEN.
+E09 receiving source must follow the current15 reservation and actual frontier;
+already-live14 cannot be reused. No public/service grant, caller impersonation,
+financial calculation, ledger, provider, customer action or Master edit changes.
+
 # C132 — invoice selector released; original financial actor contract in progress (2026-10-30 UTC)
 
 Same full O1–O12 assignment and sequence. **No full outcome/founder acceptance.**

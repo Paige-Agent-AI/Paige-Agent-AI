@@ -1,3 +1,4 @@
+import { createComposerScopeIdentity } from "./paigeComposerScopeState";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanPaigePrompt, handOffPaigePrompt, mergeIntoDraft, subscribePaigePromptHandoff, takePendingPaigePrompt } from "./paigePromptHandoff";
 
@@ -103,4 +104,58 @@ describe("Ask PAIGE handoff", () => {
     const partial = "ZION, My note mentions review our work. without being the prepared question.";
     expect(mergeIntoDraft(partial, prompt, options)).toBe(`${partial}\n\nreview our work.`);
   });
+});
+
+
+describe("Team Hub scoped unsent handoff",()=>{
+  const source=createComposerScopeIdentity({userId:"actor-a",tenantId:"tenant-a"})!;
+  it("does not reveal a scoped pending prompt to a legacy unscoped composer",()=>{
+    const apply=vi.fn(), stop=subscribePaigePromptHandoff(apply);
+    const retire=handOffPaigePrompt("Own Team Hub request",{scope:source});
+    try { expect(apply).not.toHaveBeenCalled(); expect(takePendingPaigePrompt()).toBeNull(); }
+    finally {stop();retire();}
+  });
+  it("wrong actor, workspace and client focus cannot consume the pending request",()=>{
+    const retire=handOffPaigePrompt("Own Team Hub request",{scope:source});
+    try {
+      for(const scope of [{...source,userId:"actor-b"},{...source,tenantId:"tenant-b"},{...source,focusedClientId:"client-a"},{...source,focusedBusinessMissionId:"mission-a"}]) {
+        expect(takePendingPaigePrompt(scope)).toBeNull();
+      }
+      expect(takePendingPaigePrompt(source)).toBe("Own Team Hub request");
+      expect(takePendingPaigePrompt(source)).toBeNull();
+    } finally {retire();}
+  });
+  it("only the matching writable scope receives the same unsent request once",()=>{
+    const wrong=vi.fn(), right=vi.fn();
+    const stopWrong=subscribePaigePromptHandoff(wrong,()=>({...source,tenantId:"tenant-b"}));
+    const stopRight=subscribePaigePromptHandoff(right,()=>source);
+    const retire=handOffPaigePrompt("Own Team Hub request",{scope:source});
+    try {expect(wrong).not.toHaveBeenCalled();expect(right).toHaveBeenCalledExactlyOnceWith("Own Team Hub request");}
+    finally {stopWrong();stopRight();retire();}
+  });
+  it("a scoped event without its original pending envelope cannot replay raw text",()=>{
+    const apply=vi.fn(),stop=subscribePaigePromptHandoff(apply,()=>source);
+    try {window.dispatchEvent(new CustomEvent("paige:prefill",{detail:{prompt:"Copied private text",scope:source}}));expect(apply).not.toHaveBeenCalled();}
+    finally {stop();}
+  });
+});
+
+it("legacy events retain their own prefill without draining a different scoped pending request",()=>{
+  const scope=createComposerScopeIdentity({tenantId:"team-a",userId:"actor-a"})!;
+  const retire=handOffPaigePrompt("Scoped own request",{scope});const apply=vi.fn();const stop=subscribePaigePromptHandoff(apply);
+  try {
+    window.dispatchEvent(new CustomEvent("paige:prefill",{detail:{prompt:"Legacy surface request"}}));
+    expect(apply).toHaveBeenCalledExactlyOnceWith("Legacy surface request");
+    expect(takePendingPaigePrompt(scope)).toBe("Scoped own request");
+  } finally {stop();retire();}
+});
+
+it("a malformed explicit scope cannot silently become a legacy unscoped handoff",()=>{
+  const apply=vi.fn(),stop=subscribePaigePromptHandoff(apply);
+  try {
+    for(const options of [null,{}, {scope:null},{scope:{tenantId:"team-a",userId:"actor-a"}}]) {
+      const retire=handOffPaigePrompt("Scoped request",options as Parameters<typeof handOffPaigePrompt>[1]);
+      expect(apply).not.toHaveBeenCalled();expect(takePendingPaigePrompt()).toBeNull();retire();
+    }
+  } finally {stop();}
 });

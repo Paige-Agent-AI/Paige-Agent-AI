@@ -18,6 +18,7 @@ export const READ_LINK_DESTINATIONS = [
   "sales_invoices",
   "sales_collections",
   "operations_work",
+  "team_hub",
   "business_time_zone",
   "executive",
   "finance",
@@ -61,6 +62,11 @@ function one(value: unknown): ReadRecordLink | null {
   const v = value as Record<string, unknown>;
   if (typeof v.destination !== "string" || !DESTINATIONS.has(v.destination)) return null;
   const destination = v.destination as ReadLinkDestination;
+  if (destination === "team_hub") {
+    // Original message identity only: no channel names, private text or stored address.
+    if (Object.prototype.hasOwnProperty.call(v, "record_kind") || typeof v.record_id !== "string" || !UUID.test(v.record_id)) return null;
+    return { destination, record_id: v.record_id.toLowerCase() };
+  }
   const typedPlanning = Object.prototype.hasOwnProperty.call(v, "record_kind");
   if (typedPlanning && (destination !== "operations_work" || v.record_kind !== "planning_item")) return null;
   if (destination !== "contacts" && destination !== "sales_agreements" && destination !== "sales_invoices" && destination !== "pipeline" && destination !== "operations_work" && destination !== "business_game_plan" && destination !== "portal_knowledge" && destination !== "systems_check") return { destination, record_id: null };

@@ -1,5 +1,47 @@
 # UI delivery evidence: EXP08 Team Hub agents, A2a (the contract with the owner's 2026-10-28 rulings, the approved Team Hub card component shipped inert, and the Team Hub task card's link to Operations → Work)
 
+## Exact Planning reopen follow-up — October 30, 2026 — STILL CODING
+
+### Original slice 1(b) pre-edit extension: return to the exact Team Hub source
+
+The same owner intent now includes opening the original Team Hub message/thread from PAIGE's
+existing source-link frame. Use the approved A2 reopen flow, current canonical SOLO route map,
+same links/thread/keyboard/loading/refusal presentation and original caller-scoped message reader.
+The native reference lookup returns ids and an exact cursor only; the original message read
+rechecks current membership. An old reply opens directly rather than searching unlimited history.
+No message body or private context is copied into a reference, URL, Knowledge or Memory.
+
+Additional must-not-happen: a missing, deleted, private/foreign or revoked reference cannot reveal
+its channel, body, file or unread state; a late answer cannot redirect a changed actor/workspace,
+route or later navigation. Receipt failure cannot emit a source reference. No model-authored URL
+or source id becomes authority. Preserve all original E04/E09/Work/provider and card-state spans.
+
+Additional acceptance: native current/foreign/private/revoked/deleted and compound-cursor cases;
+shared typed route/serializer and metadata-only source-link handling; actual mounted optional-router
+entry, old root/reply opening, keyboard focus, repeated navigation and pending-result cancellation.
+Affected protected seams additionally include Chat source-reference transport and history hydration;
+the original privacy/memory marker must gate references and text. No other previously declared
+unaffected seam changes. New rendered/browser/authenticated/release proof is pending and distinct
+from the earlier task-card 177 tests. This return-link leg alone is not the complete shared workshop.
+
+OWNER_INTENT: Complete original A2 slice 1(a): a teammate opens the same original Planning task from its Team Hub card. Reuse the current shared typed Planning reference and Operations' fresh caller-authorized inspector. Approved task card appearance, label and keyboard interaction remain the direction; no new design decision.
+
+MUST_NOT_HAPPEN: A Planning UUID must not become a CRM `task` address, a weekly-check attribution, an unscoped query, an action or a copied Work record. No navigation grants access, and stale/foreign account context must not expose a record. Missing/malformed identity must not produce a misleading exact link.
+
+MUST_PRESERVE: The approved card's markup/classes/label, unreadable and loading refusals, failed-read retry destination, current-account route construction, router/plain-anchor behavior, all E04 source-linked specialist spans and all peer Work/Chat/renderer writers and permissions.
+
+ACCEPTANCE_CRITERIA: A readable or failed-read task card uses the original typed `planningItem` reference in the current SOLO account. The exact original task is freshly read by Operations; an unauthorized or missing record is unavailable. No link while loading/unreadable, outside SOLO, without an account address or with malformed task identity. Keyboard focus remains on the same named link. Account switching changes only the address's current account scope. Actual authenticated open/reload/denial remains PROOF OWED until driven.
+
+PROTECTED_SEAMS: Affected: tenant/account isolation and account choice (current account and typed reference negatives); canonical readback (unchanged original Operations inspector, exercised through its existing destination tests); accessibility (same anchor, keyboard/name assertions). Not affected: entitlement/signup/paywall/billing/provisioning; approval/autonomy/authority writes; Spine execution; Rail/receipts/audit/Memory; Chat scroll/stream/identity/popout/history; Live; Secure Browser/Vault; provider/external effects; durable scheduling/retries; responsive shell geometry; privacy/secrets handling. No new fetch, body/transcript transfer, provider or credential path.
+
+VISUAL_DIRECTION: Existing approved A2a task-card link and container, no markup/style/token change. MOTION_PURPOSE: No motion added or changed. Geometry/theme/zoom/reduced-motion expectations remain the original A2a pack; this follow-up's changed destination and authenticated behavior are separately unverified, not certified by old frames.
+
+Engineering status: pre-edit contract/reservation saved in original ANT-161. Original shared `ReadRecordLink` supports `record_kind: planning_item`; canonical route uses `planningItem`, and current Operations consumes it with actor/tenant/membership checks before and after its exact read. No producer or destination change is needed. Fresh tests/review/CI/deployment and actual ordinary-customer proof are pending. This does not complete slice 1(b), A2c or the full assignment.
+
+Automated: **PASS 177/177** across TaskCard, workspace links, record links, canonical URL, original OperationsWorkspace and exact Planning-source suites. Before implementation, changed TaskCard cases reproduced **5 FAIL / 3 PASS**. The final TaskCard suite has eight cases, including malformed identity, wrong account type, account switch, unreadable/loading, failed status read and keyboard focus. Static diff/check: PASS. Independent read-only source/test review: no actionable findings; reviewer did not rerun tests. Authenticated navigation, new rendered/browser drive, deployment and production acceptance: **UNVERIFIED**. No source effect or provider is claimed.
+
+The original dated evidence below remains historical; its surface-only link limitation is superseded only when this follow-up is released and verified.
+
 UI_DELIVERY_EVIDENCE_VERSION: 1
 FLOW_BY_FLOW: PASS: flow packet is docs/delivery/exp08-team-hub-agents-contract.md — §4 actor-goal flows 4, 5 and 6 (DM an agent, the private part's DM, the agent proposes an action) and section 5 A2 (Suggest, Prepare, Execute; the per-specialist capability matrix grounded at 536eeb7e5; the six slices regrouped A2a / A2b / A2c by the owner's 2026-10-28 build order); section 12's four decisions are RULED 2026-10-28 as recommended; grounding before this record: production read-only query 2026-10-28 (schema_migrations has 20271120020008, one agent-authored team_hub_messages row each from PAIGE, VERA, NEXUS, MENTOR, MERIT, ZION and CURA between 02:20:16 and 02:24:46 UTC), db-live at 536eeb7e5 and edge-live at a21830d8e, which contains it
 PAIGE_UI_DESIGN: PASS: the A2 card design is APPROVED-FROZEN by the owner 2026-10-28 (§28, "go with your recommendations") exactly as rendered in docs/evidence/ui-delivery/assets/exp08-team-hub-agents-a2/harness; built inside the approved prototype v3 and the APPROVED-FROZEN v5 agent colours and symbols; the shared PaigeConfirmCard is mounted, never forked; Impeccable's craft floor applied (tokens only, every settled state drawn, gold only on Approve, the asking agent's colour only on the card's top strip and never on the footer or a status row, copy in plain words); the harness report (assets/exp08-team-hub-agents-a2/report.json) finds goldOutsideApprove false in 50/50 frames, with PAIGE's identity gold reported separately as her plate and mark; npx --yes impeccable@4.1.0 detect on TeamHubApproval.tsx, TeamHubWorkspace.tsx, team-hub.css, team-hub-contract.ts and PaigeConfirmCard.tsx reported "0 anti-patterns found." and 22 advisory design-system notes (radius and font-size steps off the DESIGN.md scales; re-run by the fixer on the final tree, exit 0); the advisories that sit inside the approved frames (12.5px text, 11px padding, the standing receipt's Pause as a hand-rolled button rather than the Button primitive) are known deviations frozen with the A2 design (§28) and change only with the owner; the task-card link's layout moved from inline styles into team-hub.css (.th-src-foot--open, .th-src-open), no new hex, ink not gold
@@ -74,3 +116,41 @@ RELEASE_RECOVERY: position=revert the merge: A2a is client and docs only (no mig
 - The SOLO viewport matrix beyond 1366×768 with PAIGE closed, npm run build and the ci:tsc ratchet are the integrator's before merge.
 - An independent verifier and a compliance officer read the A2a diff (§39); their findings were applied by a fixer pass. A fresh §39 read of the fixed diff is still owed before merge.
 - The task-card link is new visible UI outside the frozen A2 frames: its frames (a2a-taskcard-*) are owed to the owner before merge (§00).
+
+
+## Original slice1(b) successor implementation checkpoint — October30
+
+PAIGE's existing TeamHub conversation/search reader now supplies sanitized server-only original message references through the existing receipt/privacy-gated record-link transport. Model envelopes remain unchanged. SOLO canonical route resolves the current account's TeamHub/message UUID; references grant no content permission. New read-only native message-reference RPC returns only channel/root/message IDs and exact native keyset cursor after original current visibility; original message reader authorizes content afresh. Never-applied40008 owns only this new reader with exact body/replay/owner/path/ACL guard. Old replies use UUID successor at native microsecond, maximum UUID next microsecond; no transcript copy, new task store or broad history paging.
+
+Mounted source navigation suppresses default channel auto-open while a source intent is pending (new tests reproduced the old race). Actor/tenant remount, route and later-navigation cancellation, fresh-read refusal, duplicate parameter refusal and keyboard focus remain bounded. Five source-specific mounted cases PASS; full five UI/link files212/212PASS, host reader/wiring62/62PASS. Full original disposable native proof exits0 including original16sections/16mutants, guard replay/inverse, EXP10 compatibility and new root/oldreply/99same-microsecond/maxUUID/private/foreign/deleted/revoked cases. These are synthetic engineering tests, not authenticated proof.
+
+Real SoloApp shell harness:16 labeled synthetic frames at1536/1366/1024/900, dark/light, PAIGEclosed/open; reportfailures[]; no page overflow/runtime errors. Original approved identity tokens/style preserved. Personally inspected dark1366closed and light900open: existing900PAIGEoverlay covers TeamHub while open; frames do not claim simultaneous visibility or authenticated Chat continuity. Existing source-return fixture is opt-in and original harness states unchanged otherwise. Frames/report: assets/exp08-team-hub-source-return; drive: scripts/live-drive/harness/team-hub-shell-mount/team-hub-source-return-drive.mjs. Initial restricted loopback run failed NETWORK_ACCESS_DENIED, native Chrome setup timed out, then isolated no-proxy localChrome/nativeVite succeeded; failed attempts not counted as proof.
+
+Original inspector independently reproduces f78629dispatch/126source and current mainbfb52544429/128 with findings[]. CurrentRoot delta only4lines in existing TeamHub receipt/privacy span; renewed29dispatch scalars plus existing canonical-app-url/record-links2helper hashes using original TypeScript printer/hash. First pre-renewal binding suite correctly FAILed on changed dependencies; original222hostile cases rerun after finalrenewal still pending at this checkpoint. Independent fresh source-only reviews found no actionable issue in source integration and exact29+2scalar delta; no fullsecurity/authenticated/release approval. React checklist applied: stable callbacks, primitive reference intent dependencies, cleanup/cancellation/StrictMode and keyboard focus; no new parallel private reads.
+
+Current full assignment STILL CODING. This is original return-link leg only; complete shared workshop, goals/initiative, A2c, specialist actions and lifecycle outcomes remain open. Carrier3108 has new stranded-card recoveryP2 requiring repair and renewed release checks; no normal release/customer/owner acceptance claimed here.
+
+
+### Final composed successor source checkpoint — October30
+
+Received carrier a27683a7e and current main92621b801 without losing source-return or P1/P2/native recovery controls. The only conflict was original EXP08 proof: retained entire incoming P1/P2 block and inserted entire original reference block afterward, preserving native35008before40008 and each rollback. Full final native proofPASS,368host/58suitesPASS, nineUI/link/card/mountedfiles350/350PASS. Original C0b incumbent83/83 plus other five suites187/187PASS in separate runs; Root/helper/inspector source unchanged across the final incoming nonoverlapping peer merge,270total rather than historical222subset. Guard/printer/SOURCES/ancestry/hostile assertions intact. Migrationlint and exact hostedCI/review still required.
+
+Independent source integration review at1e62 no new finding. Required Impeccable finish review viewed four source/recovery frames, found misleading recovery fixture text; corrected supported task-cancel fixture and all16recoveryframes regenerated, re-viewed dark1366/light1024 and confirmed defect resolved/readable/unclipped. OriginalA2a task-create fixture remains historical and does not prove A2bcreate. Source-return16frames remain local synthetic with900PAIGEoverlay truth preserved. Stale design sidecar noted; no redesign/sidecar repair or authenticated proof claimed.
+
+
+### Scoped unsent handoff privacy/continuity repair — October30
+
+Original handoff held plain pending text without actor/workspace/focus. Four new pure cases genuinely reproduced10PASS/4FAIL before repair. TeamHub now tags its existing transient pending question with original ComposerScopeIdentity/native overview actor+tenant/no-client focus and retires only its own still-pending envelope on remount/replacement. Only a matching writable PAIGE composer can consume it; unscoped consumers cannot drain it, scoped events cannot replay raw text, malformed explicit scope fails closed, legacy producers/events remain compatible. No transcript copying, Knowledge/Memory write, new persistence or implicit Send.
+
+Independent source review caught a real stale-setter/new-getter race in initial repair. A layout scheduling test passed before and is not failing-before proof; a deterministic retained-old-listener/new-writable-scope control genuinely failed before repair. Subscription now captures the setter's exact render handle and compares the latest full writable handle before consumption; actor/tenant/client/mission/conversation transition cannot admit through a previous setter. Fresh source review confirms repaired; source-only, not authenticated privacy closure. Reusable lesson: validation and draft write must share one captured scope, not independently read latest identity and an older effect closure.
+
+Final four original pure/realComposer/realHub/realSoloApp test files210/210PASS. Exact implementation ESLint0; diffcheckPASS. Existing realSoloApp+PaigeAIChat harness Continue-only flow in two fictional workspaces PASS (same request appears unsent; no Send pressed or model/provider/business effect); two labeled screenshots/report under assets/exp08-team-hub-scoped-handoff. Personally viewed tenant-a; finish reviewer viewed both and found readable unclipped controls. First browser selector failure is retained and not counted; corrected driver uses observed accessible combobox. This does not complete explicit sharing of private context or the whole workshop.
+
+New exact3109 gate123892197092 diagnosis: UI evidence validator classifies only ADDED records, so modifying this original record alone is insufficient even though it contains evidence. No gate change or waiver: a new correctly formatted source-return/continuity delivery record must be added in the existing evidence directory and link this original chronology/matrix. Native zoom/precise prescribed viewport/source readback/authenticated outcomes remain separately assessed. Source-return P1 thread-draft recipient and P2 anchored refresh findings remain ACK/releaseHELD for next repair. Full assignment STILL CODING.
+
+
+### Exact-source thread repairs — October30
+
+Automated3109 review4420462324(P1) and4420462334(P2) each reproduced as a failing real-workspace mocked-RPC test before repair (2FAIL). Before authorized source navigation changes conversations, a shared thread preparation step now holds unsent text/mentions/errors under its original root; the same preparation is used by ordinary thread opening. Draft ownership persists through loading/closed intervals inside the existing actor/tenant-remounted workspace. Returning restores only that thread's draft; Enter in a different destination cannot post the old text. No server draft, memory or additional store was introduced.
+
+Old-reply windows now retain native cursor and exact sourceID across background refresh; ordinary close/reopen deliberately returns to current replies. A successful anchored read missing the source clears cached source content, and read epochs checked before and inside state update reject late responses for replaced windows, including the same root. Final complete Workspace123/123PASS (original cases retained), including70newer replies, original-draft restoration, explicit current-window reopening, deleted source and same-root late response. Scoped-handoff four-file suite210PASS remains bounded source evidence; implementation ESLint0/diffcheckPASS. Fresh independent source-only review found no new actionable finding; no authenticated privacy/isolation closure or release assurance.

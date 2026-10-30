@@ -1,0 +1,152 @@
+Window: "Team Hub real-shell harness - Google Chrome", App: chrome.exe.
+	0 window Team Hub real-shell harness - Google Chrome Secondary Actions: Raise
+		1 pane (disabled)
+		2 region Team Hub real-shell harness - Google Chrome
+			3 region
+				4 region
+					5 region
+						6 button Minimize ID: view_1
+						7 button Maximize ID: view_2
+						8 button Close ID: view_4
+					9 region
+						10 region
+							11 tool bar ID: view_1000
+								12 button Back ID: view_1001
+								13 button (disabled) Forward ID: view_1002
+								14 button Reload ID: view_1003
+								15 group
+									16 button View site information ID: view_1011
+									17 edit (settable, string) Address and search bar Description: Ask Google or type a URL Value: 127.0.0.1:5297/solo/3855/team-hub?theme=dark&recovery=ready ID: view_1012
+									18 region
+										313 button Zoom: 200%
+										314 button Bookmark this tab
+								20 button Chrome ID: view_1007
+						21 region
+							22 region
+								23 region
+								315 document Team Hub real-shell harness Value: http://127.0.0.1:5297/solo/3855/team-hub?theme=dark&recovery=ready ID: RootWebArea
+									316 group ID: root
+										317 group
+											318 text PAIGE folded; your conversation is preserved
+										319 link Skip to content Value: http://127.0.0.1:5297/solo/3855/team-hub?theme=dark&recovery=ready#tenant-shell-main
+										320 navigation Tenant workspace
+											321 link PAIGE Solo home Description: PAIGE Solo home Value: http://127.0.0.1:5297/solo/3855/command-center
+												322 graphic PAIGE
+											323 button Expand navigation Description: Expand navigation
+												324 graphic
+											325 link Command Center Description: Command Center Value: http://127.0.0.1:5297/solo/3855/command-center
+											326 link Operations Description: Operations Value: http://127.0.0.1:5297/solo/3855/operations/overview
+											327 link Team Hub Description: Team Hub Value: http://127.0.0.1:5297/solo/3855/team-hub
+											328 link Clients Description: Clients Value: http://127.0.0.1:5297/solo/3855/clients
+											329 link Marketing Description: Marketing Value: http://127.0.0.1:5297/solo/3855/growth
+											330 link Ads Description: Ads Value: http://127.0.0.1:5297/solo/3855/ads
+											331 link Sales Description: Sales Value: http://127.0.0.1:5297/solo/3855/sales
+											332 link Finance Description: Finance Value: http://127.0.0.1:5297/solo/3855/finance
+											333 link Marketplace Description: Marketplace Value: http://127.0.0.1:5297/solo/3855/marketplace
+											334 link Settings Description: Settings Value: http://127.0.0.1:5297/solo/3855/settings
+											335 button Use Obsidian theme Description: Obsidian theme
+											336 button Sign out Description: Sign out
+											337 group Description: Harbor Lane Studio
+												338 text HA
+										339 section header
+											416 button Direct PAIGE
+												417 graphic PAIGE
+											342 button Dialer
+												343 graphic
+										344 main ID: tenant-shell-main
+											345 main
+												419 region #daily-management
+													420 section header
+														421 button Back to conversations
+														422 heading daily-management
+														423 button Leave
+													424 region Messages
+														425 separator Today
+														426 article Priya Nair at 9:41 AM ID: th-msg-dm0
+															427 text Priya Nair
+															428 text Admin
+															429 time
+																430 text 9:41 AM
+															431 text Harper & Co. intake form came back this morning. Everything is filled in.
+															432 button Reply in thread to Priya Nair
+														433 article Morgan Reyes at 9:58 AM ID: th-msg-dm1
+															434 text Morgan Reyes
+															435 text (you)
+															436 text Owner
+															437 time
+																438 text 9:58 AM
+															439 text @
+															440 text ZION
+															441 text what's the next step for the Harper & Co. onboarding?
+															442 button Reply in thread to Morgan Reyes
+														443 article ZION, agent, at 9:59 AM ID: th-msg-a-zion-dm1
+															444 button ZION's profile
+															445 text Agent
+															446 text Operations & tasks
+															447 time
+																448 text 9:59 AM
+															449 text Your task cancellation approval was recorded. You can resume it here.
+															450 region ZION asks: Task cancel
+																451 text Task cancel
+																452 group Approval ready to resume
+																	453 group
+																		454 text Approval ready to resume
+																		455 text Your approval was recorded, but the action has not been claimed. Resume uses the same approval.
+																	456 list
+																		457 list item ZION wants to cancel the task “Prepare the onboarding packet”.
+																458 button Resume this approved action
+															459 button Reply in thread to ZION
+														460 article Morgan Reyes at 10:06 AM ID: th-msg-dm4
+															461 text Morgan Reyes
+															462 text (you)
+															463 text Owner
+															464 time
+																465 text 10:06 AM
+															466 text /PAIGE draft a task
+															467 group Task in Operations, record e8000000
+																468 text Task in Operations
+																469 group Description: e8000000-0000-4000-8000-0000000a0001
+																	470 text e8000000
+																471 text Prepare the onboarding packet
+																472 list
+																	473 term Assignee
+																		474 text Assignee
+																	475 text Jordan Lee
+																	476 term Due
+																		477 text Due
+																	478 text Sat, Oct 31
+																	479 term Status
+																		480 text Status
+																	481 text Ready
+																482 text Read from Operations · 1:35 AM
+																483 link Open delivery work Value: http://127.0.0.1:5297/solo/3855/operations/work?planningItem=e8000000-0000-4000-8000-0000000a0001
+															484 button Reply in thread to Morgan Reyes
+													485 text Message #daily-management
+													486 combo box (settable, string) Message #daily-management Description: Message #daily-management ID: th-composer-c-daily
+													487 button Mention someone
+													488 button Attach files (not scanned) Description: Attach files (not scanned)
+													489 button PAIGE commands
+													490 text @ to mention · / for PAIGE
+													491 button Send
+												414 status
+													418 text That person isn't an active teammate.
+												415 text Files aren't scanned for viruses. Only open files from people you trust.
+										351 group
+							150 region
+						151 region
+							152 region
+								153 button Tab search
+							154 region ID: view_21
+								155 tab
+									156 tab item (selectable) Team Hub real-shell harness - Memory usage - 166 MB ID: view_20
+										157 button Close
+								158 region
+							159 button New Tab
+							160 region
+						161 region
+
+Selected text: ```
+127.0.0.1:5297/solo/3855/team-hub?theme=dark&recovery=ready
+```
+
+Note: Pay special attention to the content selected by the user. If the user asks a question or refers to the content they are looking at on-screen, they might be referring to the selected content (but they might be referring to something else that's visible, too).

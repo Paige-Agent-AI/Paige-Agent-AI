@@ -1,0 +1,57 @@
+{
+  "label": "isolated fictional local QA, not authenticated",
+  "runtimeCommit": "5dd402f5ddf0a7c17621bb3146cb6e76cd84114d",
+  "nativeZoom": "200percent browser UI /100percent restored",
+  "evidence": [
+    {
+      "file": "dark-recovery-200-keyboard.png",
+      "sha256": "3f4f0751d42915920421128cffe0b7178dfb2548f5f2ce510160751846aaf938"
+    },
+    {
+      "file": "dark-recovery-200.ax.txt",
+      "sha256": "ee70843c58ec3c340b696ac60152c676a7b24e37a3173605f5c7456634c4fd41"
+    },
+    {
+      "file": "dark-recovery-200.png",
+      "sha256": "0ad4dabec55ff54053ff557fea2c9ef55dbfe1a33ae0d2ef8dd32e20ee3868a5"
+    },
+    {
+      "file": "dark-source-200-keyboard.png",
+      "sha256": "0c1d94775754f259f55df5e711f66e46840d7b7f297983bb61203e6e662e6f09"
+    },
+    {
+      "file": "dark-source-200-paige.png",
+      "sha256": "da6ea46eb78c3c4321de37cc1adc859b5e7cc3ed7476557ddf2cbf843dbb1241"
+    },
+    {
+      "file": "dark-source-200.ax.txt",
+      "sha256": "ff12ff7c56258edf5fe940a40e6e4f52452af79572c11ae8d3dac3991dbbce2c"
+    },
+    {
+      "file": "dark-source-200.png",
+      "sha256": "bb3b0afcc33937609b5dc3a2fa56e559e437a95a8615307a70832b503d53bcc1"
+    },
+    {
+      "file": "light-recovery-200.ax.txt",
+      "sha256": "86f4da15d97a4fb98ea56a4003326ffd10cce38d2f7d49a9178bf42b06ce360c"
+    },
+    {
+      "file": "light-recovery-200.png",
+      "sha256": "6b61314b94dea4d7266785b2ce2fbd6d406efe5328a24d28ba286653530b93f6"
+    },
+    {
+      "file": "light-source-200-paige.png",
+      "sha256": "9d9fea951c3c4a8870492041a26292cdadbf8c911dabe4e6f94a6dd8e8202502"
+    },
+    {
+      "file": "light-source-200.png",
+      "sha256": "898ea78bc26ac2a0d5ec23bb50df85dfbc3895c0680e7c60b810bde89fa1338a"
+    }
+  ],
+  "notProved": [
+    "screen-reader speech",
+    "native DOM/DPR geometry",
+    "authenticated privacy or execution",
+    "release acceptance"
+  ]
+}

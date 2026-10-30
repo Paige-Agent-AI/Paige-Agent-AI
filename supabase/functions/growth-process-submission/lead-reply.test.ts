@@ -11,7 +11,7 @@ import ts from "typescript";
 
 import {
   appendLeadReply, fileLeadReply, isLeadReplyBusiness, isLeadReplyBusinessOpen, isTransientDbError, leadReplyEnabled, leadReplyKeyPoints, leadReplyPayload,
-  leadReplyReadinessBlock, LEAD_REPLIES_PER_BUSINESS_PER_DAY, LEAD_REPLIES_PER_BUSINESS_PER_HOUR, LEAD_REPLIES_PER_CONTACT_PER_DAY,
+  leadReplyReadinessBlock, LEAD_REPLIES_PER_BUSINESS_PER_HOUR, LEAD_REPLIES_PER_CONTACT_PER_DAY,
   LEAD_REPLY_ACTION_KIND, LEAD_REPLY_INTENT, type LeadReplyDeps, type PlanStep,
 } from "./lead-reply.ts";
 
@@ -365,15 +365,29 @@ test("the hourly cap stops drafting at exactly the cap; the lead itself is untou
   assert.equal(skippedReason(h2, at), "business_hourly_cap");
 });
 
-test("the daily cap counts the last 24 hours only, and only this business's drafts", async () => {
-  const at = ready({ paige_actions: [...recent(LEAD_REPLIES_PER_BUSINESS_PER_DAY, 120), ...recent(50, 60 * 30)] });
+test("100 earlier drafts do not exhaust an allowance: the next eligible lead still gets a draft", async () => {
+  const at = ready({ paige_actions: [...recent(100, 120), ...recent(50, 60 * 30)] });
   const h = db(at, { rpc: filedOk });
-  assert.equal((await fileLeadReply(h.admin, input(), deps())).result.reason, "business_daily_cap");
+  assert.equal((await fileLeadReply(h.admin, input(), deps())).result.action_id, FILED_ID);
+  assert.deepEqual(h.rpcs.map((r) => r.fn), ["file_action"], "no daily-allowance dismissal after filing either");
 
-  const foreign = ready({ paige_actions: recent(LEAD_REPLIES_PER_BUSINESS_PER_DAY, 120).map((r) => ({ ...r, tenant_id: OTHER })) });
+  const foreign = ready({ paige_actions: recent(100, 120).map((r) => ({ ...r, tenant_id: OTHER })) });
   const h2 = db(foreign, { rpc: filedOk });
   assert.equal((await fileLeadReply(h2.admin, input(), deps())).status, "done");
   assert.equal(h2.rpcs.length, 1);
+});
+
+test("crossing 100 drafts during filing does not dismiss an eligible lead's draft", async () => {
+  const tables = ready({ paige_actions: recent(99, 120) });
+  const h = db(tables, { rpc: filedOk, onFile: (rows) => rows.paige_actions.push({
+    id: "another-eligible-draft", tenant_id: T, action_kind: LEAD_REPLY_ACTION_KIND,
+    contact_id: "30000000-0000-4000-8000-000000000002", payload: { submission_id: "another-submission" },
+    status: "filed", created_at: new Date(NOW.getTime() - 1).toISOString(),
+  }) });
+  const out = await fileLeadReply(h.admin, input(), deps());
+  assert.equal(out.result.action_id, FILED_ID);
+  assert.deepEqual(h.rpcs.map((r) => r.fn), ["file_action"]);
+  assert.notEqual(tables.paige_actions.find((r) => r.id === FILED_ID)?.status, "dismissed");
 });
 
 test("spam protection: one reply draft per recipient per day — the form cannot make the business email a stranger repeatedly", async () => {

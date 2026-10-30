@@ -596,7 +596,9 @@ SELECT is((SELECT count(*) FROM pg_policies WHERE schemaname='public' AND tablen
 -- EXP09 exact customer intent; all incumbent 184 controls above remain unchanged.
 -- Future-shape data is isolated inside this existing CI outer rollback only.
 
-SELECT is((SELECT md5(prosrc) FROM pg_proc WHERE oid='public._client_portal_lock_relationship(uuid,text)'::regprocedure),'416002c40cb71ed54cc4c3387c37563f','public._client_portal_lock_relationship(uuid,text) original body unchanged');
+SELECT is((SELECT md5(replace(replace(prosrc,'v_uid uuid := p_actor_id;','v_uid uuid := auth.uid();'),
+ 'v_client := public._client_portal_relationship_for_actor(p_tenant_id,p_actor_id,p_use_request_business);',
+ 'v_client := public.client_portal_relationship_id(p_tenant_id);')) FROM pg_proc WHERE oid='public._client_portal_lock_relationship_for_actor(uuid,text,uuid,boolean)'::regprocedure AND (SELECT md5(prosrc) FROM pg_proc WHERE oid='public._client_portal_lock_relationship(uuid,text)'::regprocedure)='2d08b76a1d995bd0f55379aa2ade5c90'),'416002c40cb71ed54cc4c3387c37563f','original lock authority inverse and exact Auth-bound wrapper remain unchanged');
 SELECT is((SELECT md5(prosrc) FROM pg_proc WHERE oid='public.client_portal_agreements(uuid,integer)'::regprocedure),'9d9b93e88eb887fc2f1b947d50492c6b','public.client_portal_agreements(uuid,integer) original body unchanged');
 SELECT is((SELECT md5(prosrc) FROM pg_proc WHERE oid='public.client_portal_open_agreement_signing(uuid,uuid)'::regprocedure),'b49d1e37dd9bbacfec8f2430b8997288','public.client_portal_open_agreement_signing(uuid,uuid) original body unchanged');
 SELECT is((SELECT md5(prosrc) FROM pg_proc WHERE oid='public.client_portal_agreement_document_scope(uuid,uuid)'::regprocedure),'118fd4f7f29cbe060c932224d0a743ae','public.client_portal_agreement_document_scope(uuid,uuid) original body unchanged');

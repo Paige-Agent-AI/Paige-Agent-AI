@@ -47,7 +47,10 @@ begin
  perform pg_temp.e04_core_check(not core.prosecdef and core.provolatile='v' and core.proconfig=array['search_path=""']::text[] and pg_catalog.pg_get_userbyid(core.proowner)='postgres','private invoker has canonical owner and closed search path');
  perform pg_temp.e04_core_check(core.proacl is not null and not exists(select 1 from pg_catalog.aclexplode(core.proacl) a where a.grantee<>core.proowner or a.privilege_type<>'EXECUTE' or a.is_grantable),'only the original database owner may execute the financial core');
  perform pg_temp.e04_core_check(wrapper.prosecdef and wrapper.provolatile='v' and wrapper.proconfig=array['search_path=public, pg_temp']::text[] and wrapper.pronargdefaults=3 and wrapper.proargnames=array['p_tenant_id','p_limit','p_after']::text[],'original public ABI defaults and authority retained');
- perform pg_temp.e04_core_check((select pg_catalog.md5(prosrc)='7785ae6623f447c23b040d06d3c701a2' from pg_catalog.pg_proc where oid='public._client_portal_billing_client(uuid)'::regprocedure),'original JWT/role/revocation/SHARE-lock resolver is unchanged');
+ perform pg_temp.e04_core_check((select pg_catalog.md5(replace(replace(replace(prosrc,'_uid uuid := p_actor_id;','_uid uuid := auth.uid();'),
+ 'public.is_platform_owner(p_actor_id)','public.is_platform_owner()'),
+ 'public._client_portal_lock_relationship_for_actor(p_tenant_id,''share'',p_actor_id,p_use_request_business)',
+ 'public._client_portal_lock_relationship(p_tenant_id, ''share'')'))='7785ae6623f447c23b040d06d3c701a2' from pg_catalog.pg_proc where oid='public._client_portal_billing_client_for_actor(uuid,uuid,boolean)'::regprocedure AND (SELECT md5(prosrc) FROM pg_proc WHERE oid='public._client_portal_billing_client(uuid)'::regprocedure)='e7e882b76516c67b6a9b5a4e03dce37b'),'original financial authority inverse and exact Auth-bound wrapper preserve JWT/role/revocation/SHARE-lock source');
  perform pg_temp.e04_core_check((select pg_catalog.md5(prosrc)='a13ec7e7ebd4985091aba7381e851a87' from pg_catalog.pg_proc where oid='public.client_portal_invoices_scoped(uuid,uuid,integer,jsonb)'::regprocedure),'original expected-client wrapper remains unchanged');
 end $identity$;
 do $$begin execute format('grant usage on schema %I to anon,authenticated,service_role',(select nspname from pg_namespace where oid=pg_my_temp_schema()));end $$;

@@ -1,5 +1,61 @@
 # CURA original customer invoice context — authorized integration
 
+## Production release evidence — October 30, 2026
+
+Native #3118 and the dependent Chat consumer #3117 are now normally merged,
+deployed and source-verified. Earlier approval-hold, local and unmounted wording
+below is historical implementation evidence; this section records the release
+observed at19:10–19:19UTC. Later production builds may supersede its deployment
+identity without changing these historical results. Source availability does not establish a useful signed-in customer
+answer, a complete pillar or founder acceptance.
+
+| Evidence | Actual result |
+| --- | --- |
+| Native | [#3118](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3118), reviewed`7e65c940b3fd856dec2c2de7d524eb38c85299a2`, merged`7a1e16a55a60eebf7dda4be4834027af9ccf3e62`; all13 exact-head checks/two web contexts passed. Normal migrator41104343471/job124230260653 succeeded. Immutable20271126060009 is present once;19:10UTC readback matches all13 new/original function bodies, owners, ACLs, arguments/defaults/results/settings/volatility and the original enabled terminal trigger. |
+| Chat | [#3117](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3117), reviewed`72a5a927fbe69464a7f5fb9627bc8056dc031597`, all11 exact-head checks/two web contexts passed; final sequential **AUTHOR-REVIEW / LOWER ASSURANCE**5717457146. Merge`aa0220a5510c27caebdd3b108381c20baa32d8df`, tree`cb81b4f1d0cd21e6e6136e6592c559978cec14ab`, exactly matches the checked Finance/Operations union. All18,545 outside-owned incoming leaves/17 reviewed owned blobs were retained. |
+| Edge | Normal [run41113191672](https://github.com/Paige-Agent-AI/Paige-Agent-AI/actions/runs/41113191672)/job124260579840 succeeded. Original strict certificate13004841533/SHA256`e42d8771875e992e55f1de0f8e6c558fa3abf1703ca2d0c166f5c5f007a6f0d9` verifies all selected source/configuration: one function, paige-ai-chat600/JWTtrue. Direct metadata agrees; the invoice helper is named in verified manifest`44f48c95c9566138749b1ef4bec099ea676374830bf67d1ba8e6dc1f6148b02a`. edge-live equalsaa0220a55. |
+| Web | Vercel`dpl_oZfec7UcGe7QgAC1KzntbzSfC4e9` is production READY for the exact merge. At19:14UTC both official origins served`aa0220a5510c27caebdd3b108381c20baa32d8df-mvvcmk63`; original current-default-cache entry, sampled assets, missing-path, special-page and conditional-cache checks passed. This is unauthenticated delivery proof. |
+| Controlled proof | Final hosted original`e09_customer_public_link.sql` executes118 assertions/PASS. The original validator over exact composed Git source passes29 dispatches/131 required sources/zero findings. These controlled tests do not substitute for ordinary customer Auth/HTTP or model results. |
+
+The read reuses EXP04's original financial authority, observation and exact amount
+formatter. General CURA remains usable without financial facts; clients gain no
+owner authority. No invoice, payment, ledger, sender, identity, permission system,
+runtime or held provider/execution activation is introduced. Original requests,
+receipts, private history and publication remain authoritative.
+
+**Functional:** native and Chat DEPLOYED / SOURCE VERIFIED; ordinary customer
+invoice reply/history/Billing return/withdrawal/role/business proof owed.
+**Visual:** bounded original-shell evidence retained; fresh mobile/zoom/AT reply
+unverified. **Experiential:** native receipt/replay/withdrawal verified in
+controlled tests; joined authenticated return remains open. **Founder Acceptance:**
+NOT_READY / NOT_ACCEPTED; full42/seven pillars and one complete evaluation remain.
+
+Original ANT-163/ANT-161 and existing Delivery RegisterF142/Assignment LocksF6/
+ProgramI11 were updated and all nine CellData packets read back19:19:21UTC,
+preserving six neighbors, formatting and history. No new register is created.
+Client-profile reconnection is pending; owner sessions do not substitute. The same
+authorized QA relationship ends by November6,2026 at23:00UTC or earlier when tests
+finish, with ordinary End access/denial readback and retained receipts/history.
+
+### Canonical algorithm support for the invoice outcome
+
+This consumer assessment reuses the existing register and [original EXP09
+reconciliation](e09-customer-actions-business-scope.md); it creates no algorithm
+registry, learning store or maturity promotion.
+
+| ID | Permitted input → actual logic → original result / owner | Evidence, uncertainty and remaining measurement |
+| --- | --- | --- |
+| ALG-01 | Accepted actor/business/CRM client/thread/intent, observation identity and retained capture → `client_portal_assistant_begin_invoices`, `_client_invoices_snapshot_current` and original terminal/publication in [native60009](../../supabase/migrations/20271126060009_e09_cura_invoice_context.sql) → same original user receipt and bound financial source. EXP04 owns financial facts; EXP09 owns this private-conversation consumer. | Original118-case aggregate fixture includes positive, same-receipt replay, wrong actor/business and source withdrawal;118 is not an algorithm-specific test count. Source is deployed, but useful real-customer question→receipt→reload remains owed. Unknown/stale outcomes abstain and reconcile the same intent; no duplicate effect or replacement record. |
+| ALG-12 | Original authority/source identity, Auth status, private-thread lifetime and read failures → native currentness/terminal checks plus [original decoder](../../supabase/functions/_shared/client-portal-invoices-context.ts) → accepted-but-unavailable/withheld state and safe empty original cleanup. Same domain owners, no new incident engine. | Controlled withdrawal and stale-model-omission tests pass while saved UI history is retained. This is deterministic exception handling, not measured anomaly precision, alert lead time or a complete incident algorithm. Actual customer recovery/usefulness remains unmeasured. |
+| ALG-02 | No added implementation in this invoice increment. Existing invitations, entry, Welcome and first-use records keep their original owners and full-journey assessment. | An invoice read does not create activation or a first-value milestone. Actual returning-customer proof and measured first-value improvement remain open. |
+| ALG-04 | No new risk score or retention model. Only this client's permitted original service/billing facts enter its private conversation. | Absent Portal usage, private AI history and an unpaid request are not churn or financial-performance evidence. Existing engagement/consent/client-success integration, cohort evaluation and useful follow-up remain separate obligations. |
+| ALG-13 | No new ranking implementation. Authorized context explains current facts/limits and the existing Payments/Messages return; it creates or executes no next-best-action record. | Actual usefulness, ranked priorities, preference/snooze and measured follow-through remain unverified. Future actions retain original domain approval and receipt gates. |
+
+Private history/feedback is never automatically published, trained on, copied to
+Memory or reused across businesses. Future feedback/revisions use original consent
+and Knowledge/domain writers. Accurate answers and recoverable requests are the
+expected benefit; observed customer benefit is not claimed before actual proof.
+
 ## Database-first production order
 
 This is the companion Chat mount in PR #3117, based on native-first PR #3118. It restores the exact prepared consumer after inheriting the native predecessor. It becomes eligible for production only after #3118 is normally merged and native60009 is actually applied/read back. The following native-first description records the parent release boundary; it does not mean this companion lacks its prepared Root integration.

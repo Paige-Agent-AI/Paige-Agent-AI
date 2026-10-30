@@ -26,12 +26,12 @@ MUST_PRESERVE: original scope resolver, signatures, Owner-only authority, adviso
 ACCEPTANCE_CRITERIA: both original writers refuse stale actor/scope without original contact/audit changes; valid waited requests still work; production identity/permission/regression evidence is separately required.
 MOTION_PURPOSE: NONE: no motion change.
 PROTECTED_SEAMS: original Billing scope/designate/revoke and audit/ACL; EXP08 owns Team consumer/recovery. No payment, provider, Chat runtime, Trust approval or Rail writer changes.
-INTERNAL_BUILD_IDENTITY: source=commit-containing-this-record; deployment=NOT_DEPLOYED; environment=local; migrations=NOT_APPLIED(20271126080006); edge=NOT_APPLICABLE; evidence=ANT138/07ec8a24,df160dc7 and original native proof.
-RELEASE_CHANNEL: internal: production release remains subject to normal review, exact CI, native ordering and readback; no activation or customer announcement.
+INTERNAL_BUILD_IDENTITY: 08f705bd9a44008456a046658374fcf7c9b76e06; immutable runtime/proof source; deployment=NOT_DEPLOYED; environment=local; migrations=PROOF_OWED(20271126080006 normal release after80005); edge=NOT_APPLICABLE; evidence=ANT138/07ec8a24,df160dc7 and original native proof.
+RELEASE_CHANNEL: development: production release remains subject to normal review, exact CI, native ordering and readback; no activation or customer announcement.
 RELEASE_CLASSIFICATION: patch: restores original current-authority semantics; no additional capability.
 CUSTOMER_RELEASE_IDENTITY: none: no new customer release name or readiness claim.
 RELEASE_NOTE_REQUIRED: no: bounded internal authorization repair, not a feature announcement.
-RELEASE_TRUTH_BOUNDARY: LOCAL source/native proof only; production and complete Experience PROOF OWED. settings.billing remains PARTIAL; all19/nine/founder remain open.
+RELEASE_TRUTH_BOUNDARY: PROOF OWED: local source/native proof only; production and complete Experience remain unverified. settings.billing remains PARTIAL; all19/nine/founder remain open.
 RELEASE_RECOVERY: position=transactional refusal on unknown source/metadata, failed native apply rolls back; reference=original Billing contract and this native drift/replay proof; forward correction rather than applied-history editing.
 
 ## Source, verification and release order

@@ -7,7 +7,7 @@ MATERIAL_FLOW_CHANGE: NO: mechanical repair removes a second hidden provider req
 FLOW_PROTOTYPE: NOT_REQUIRED: no new or materially changed human interaction; original request runs once and returns its original result.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: an authorized sender makes one original message attempt; uncertainty must not cause an invisible duplicate.
 VISUAL_DIRECTION: PASS: original Conversations/composer/receipt presentation retained without a UI edit.
-AUTOMATED_EVIDENCE: PASS: actual original sendSms10 cases initially3PASS/7FAIL, then10PASS; unchanged original purchase/voice3PASS. Mocked fetch only; no credentials or live effects.
+AUTOMATED_EVIDENCE: PASS: actual original sendSms10 cases initially3PASS/7FAIL, then10PASS; unchanged original purchase/voice3PASS; entire original Communications CI list plus ten additions1116PASS; original hostile source controls83PASS. Mocked fetch only; no credentials or live effects.
 STATIC_EVIDENCE: UNVERIFIED: reviewed product inverse is exactly one sendSms options argument and its explanation; final lint/type/hostile source controls/CI remain to run.
 RENDERED_EVIDENCE: UNVERIFIED: no new render is claimed; earlier original-dialog packet exp03-sms-recipient-timezone.md remains bounded parent evidence, not runtime proof of this repair.
 BEHAVIORAL_EVIDENCE: PASS: real client wrapper, inert transport; one POST for429/500/502/503/504/connection loss/body-read loss; exact auth/form/accepted SID preserved; absent credentials makes zero requests; separate GET retains original retry.
@@ -15,7 +15,7 @@ AUTHENTICATED_RUNTIME: UNVERIFIED: no actual tenant send or provider effect auth
 KEYBOARD_FOCUS: UNVERIFIED: no new keyboard drive; UI source unchanged.
 ZOOM_REFLOW: UNVERIFIED: no new native zoom drive; UI source unchanged.
 REDUCED_MOTION: PASS: no motion or presentation change.
-STATE_COVERAGE: PASS: bounded transport cases exercised; global every-dispatch legality and original SMS unknown-result/reconciliation integration remain incomplete.
+STATE_COVERAGE: UNVERIFIED: ten bounded actual-wrapper cases exercised in twilio-sms-dispatch.test.ts; global every-dispatch legality and original SMS uncertainty/reconciliation integration remain incomplete.
 TRUTHFUL_STATE_LABELS: PASS: tests preserve provider queued acceptance as distinct from handset delivery; no successful customer outcome inferred from a mock.
 SOLO_UI: YES: original Conversations send/receipt flow; no new interface source.
 UNVERIFIED: complete50-state applicability/enforcement, current jurisdiction confirmation, delegated-member authority, original SMS unknown-result UI/receipt/retry recovery, full-shell/native200/AT/authenticated two-cohort proof, final review/CI/release/readback and owner acceptance.
@@ -25,7 +25,7 @@ MUST_PRESERVE: original client/auth/credentials/form encoding/provider constrain
 ACCEPTANCE_CRITERIA: one original SMS creation request per wrapper call, original result returned, later attempt routed through original caller; complete same-operation recovery/customer proof remains owed.
 MOTION_PURPOSE: NONE: no motion change.
 PROTECTED_SEAMS: sendSms owns one request option; original global twilioRequest, auth/custody/callback URLs, other wrappers, E05 scheduler, E08 host/Root and E04/09 writers unchanged.
-INTERNAL_BUILD_IDENTITY: base79ef68511ac62608b50f68332fcb0f74e407c058 plus final source head; deployment=none-candidate; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(normal importer release after exact gates); evidence=twilio-sms-dispatch.test.ts
+INTERNAL_BUILD_IDENTITY: base 79ef68511ac62608b50f68332fcb0f74e407c058 plus source 009cd58127032fc8dfa2fd04207c84fb8d1e1792; deployment=none-candidate; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(normal importer release after exact gates); evidence=supabase/functions/_shared/twilio-sms-dispatch.test.ts
 RELEASE_CHANNEL: development: inert fictional transport only; no live text/call/provider setting change.
 RELEASE_CLASSIFICATION: patch: remove hidden duplicate SMS creation attempt.
 CUSTOMER_RELEASE_IDENTITY: none: candidate only, no customer version assigned.

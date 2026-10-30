@@ -1,0 +1,354 @@
+{
+  "label": "harness render · not live",
+  "records": [
+    {
+      "name": "dark-1536-closed",
+      "viewport": {
+        "width": 1536,
+        "height": 770
+      },
+      "href": "/solo/3855/operations/work?task=e8000000-0000-4000-8000-0000000a0001",
+      "text": "Open task",
+      "visible": true,
+      "covered": false,
+      "rect": {
+        "x": 647.34375,
+        "y": 454,
+        "w": 80.921875,
+        "h": 26.5
+      },
+      "overflowX": 0,
+      "overflowY": 0,
+      "paige": "closed",
+      "errors": []
+    },
+    {
+      "name": "dark-1536-open",
+      "viewport": {
+        "width": 1536,
+        "height": 770
+      },
+      "href": "/solo/3855/operations/work?task=e8000000-0000-4000-8000-0000000a0001",
+      "text": "Open task",
+      "visible": true,
+      "covered": false,
+      "rect": {
+        "x": 627.34375,
+        "y": 472,
+        "w": 80.921875,
+        "h": 26.5
+      },
+      "overflowX": 0,
+      "overflowY": 0,
+      "paige": "open",
+      "errors": []
+    },
+    {
+      "name": "dark-1366-closed",
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "href": "/solo/3855/operations/work?task=e8000000-0000-4000-8000-0000000a0001",
+      "text": "Open task",
+      "visible": true,
+      "covered": false,
+      "rect": {
+        "x": 503.34375,
+        "y": 454,
+        "w": 80.921875,
+        "h": 26.5
+      },
+      "overflowX": 0,
+      "overflowY": 0,
+      "paige": "closed",
+      "errors": []
+    },
+    {
+      "name": "dark-1366-open",
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "href": "/solo/3855/operations/work?task=e8000000-0000-4000-8000-0000000a0001",
+      "text": "Open task",
+      "visible": true,
+      "covered": false,
+      "rect": {
+        "x": 483.34375,
+        "y": 472,
+        "w": 80.921875,
+        "h": 26.5
+      },
+      "overflowX": 0,
+      "overflowY": 0,
+      "paige": "open",
+      "errors": []
+    },
+    {
+      "name": "dark-1024-closed",
+      "viewport": {
+        "width": 1024,
+        "height": 768
+      },
+      "href": "/solo/3855/operations/work?task=e8000000-0000-4000-8000-0000000a0001",
+      "text": "Open task",
+      "visible": true,
+      "covered": false,
+      "rect": {
+        "x": 483.34375,
+        "y": 472,
+        "w": 80.921875,
+        "h": 26.5
+      },
+      "overflowX": 0,
+      "overflowY": 0,
+      "paige": "closed",
+      "errors": []
+    },
+    {
+      "name": "dark-1024-open",
+      "viewport": {
+        "width": 1024,
+        "height": 768
+      },
+      "href": "/solo/3855/operations/work?task=e8000000-0000-4000-8000-0000000a0001",
+      "text": "Open task",
+      "visible": true,
+      "covered": true,
+      "rect": {
+        "x": 483.34375,
+        "y": 472,
+        "w": 80.921875,
+        "h": 26.5
+      },
+      "overflowX": 0,
+      "overflowY": 0,
+      "paige": "open",
+      "errors": []
+    },
+    {
+      "name": "dark-900-closed",
+      "viewport": {
+        "width": 900,
+        "height": 1000
+      },
+      "href": "/solo/3855/operations/work?task=e8000000-0000-4000-8000-0000000a0001",
+      "text": "Open task",
+      "visible": true,
+      "covered": false,
+      "rect": {
+        "x": 483.34375,
+        "y": 472,
+        "w": 80.921875,
+        "h": 26.5
+      },
+      "overflowX": 0,
+      "overflowY": 0,
+      "paige": "closed",
+      "errors": []
+    },
+    {
+      "name": "dark-900-open",
+      "viewport": {
+        "width": 900,
+        "height": 1000
+      },
+      "href": "/solo/3855/operations/work?task=e8000000-0000-4000-8000-0000000a0001",
+      "text": "Open task",
+      "visible": true,
+      "covered": true,
+      "rect": {
+        "x": 483.34375,
+        "y": 472,
+        "w": 80.921875,
+        "h": 26.5
+      },
+      "overflowX": 0,
+      "overflowY": 0,
+      "paige": "open",
+      "errors": []
+    },
+    {
+      "name": "light-1536-closed",
+      "viewport": {
+        "width": 1536,
+        "height": 770
+      },
+      "href": "/solo/3855/operations/work?task=e8000000-0000-4000-8000-0000000a0001",
+      "text": "Open task",
+      "visible": true,
+      "covered": false,
+      "rect": {
+        "x": 647.34375,
+        "y": 454,
+        "w": 80.921875,
+        "h": 26.5
+      },
+      "overflowX": 0,
+      "overflowY": 0,
+      "paige": "closed",
+      "errors": []
+    },
+    {
+      "name": "light-1536-open",
+      "viewport": {
+        "width": 1536,
+        "height": 770
+      },
+      "href": "/solo/3855/operations/work?task=e8000000-0000-4000-8000-0000000a0001",
+      "text": "Open task",
+      "visible": true,
+      "covered": false,
+      "rect": {
+        "x": 627.34375,
+        "y": 472,
+        "w": 80.921875,
+        "h": 26.5
+      },
+      "overflowX": 0,
+      "overflowY": 0,
+      "paige": "open",
+      "errors": []
+    },
+    {
+      "name": "light-1366-closed",
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "href": "/solo/3855/operations/work?task=e8000000-0000-4000-8000-0000000a0001",
+      "text": "Open task",
+      "visible": true,
+      "covered": false,
+      "rect": {
+        "x": 503.34375,
+        "y": 454,
+        "w": 80.921875,
+        "h": 26.5
+      },
+      "overflowX": 0,
+      "overflowY": 0,
+      "paige": "closed",
+      "errors": []
+    },
+    {
+      "name": "light-1366-open",
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "href": "/solo/3855/operations/work?task=e8000000-0000-4000-8000-0000000a0001",
+      "text": "Open task",
+      "visible": true,
+      "covered": false,
+      "rect": {
+        "x": 483.34375,
+        "y": 472,
+        "w": 80.921875,
+        "h": 26.5
+      },
+      "overflowX": 0,
+      "overflowY": 0,
+      "paige": "open",
+      "errors": []
+    },
+    {
+      "name": "light-1024-closed",
+      "viewport": {
+        "width": 1024,
+        "height": 768
+      },
+      "href": "/solo/3855/operations/work?task=e8000000-0000-4000-8000-0000000a0001",
+      "text": "Open task",
+      "visible": true,
+      "covered": false,
+      "rect": {
+        "x": 483.34375,
+        "y": 472,
+        "w": 80.921875,
+        "h": 26.5
+      },
+      "overflowX": 0,
+      "overflowY": 0,
+      "paige": "closed",
+      "errors": []
+    },
+    {
+      "name": "light-1024-open",
+      "viewport": {
+        "width": 1024,
+        "height": 768
+      },
+      "href": "/solo/3855/operations/work?task=e8000000-0000-4000-8000-0000000a0001",
+      "text": "Open task",
+      "visible": true,
+      "covered": true,
+      "rect": {
+        "x": 483.34375,
+        "y": 472,
+        "w": 80.921875,
+        "h": 26.5
+      },
+      "overflowX": 0,
+      "overflowY": 0,
+      "paige": "open",
+      "errors": []
+    },
+    {
+      "name": "light-900-closed",
+      "viewport": {
+        "width": 900,
+        "height": 1000
+      },
+      "href": "/solo/3855/operations/work?task=e8000000-0000-4000-8000-0000000a0001",
+      "text": "Open task",
+      "visible": true,
+      "covered": false,
+      "rect": {
+        "x": 483.34375,
+        "y": 472,
+        "w": 80.921875,
+        "h": 26.5
+      },
+      "overflowX": 0,
+      "overflowY": 0,
+      "paige": "closed",
+      "errors": []
+    },
+    {
+      "name": "light-900-open",
+      "viewport": {
+        "width": 900,
+        "height": 1000
+      },
+      "href": "/solo/3855/operations/work?task=e8000000-0000-4000-8000-0000000a0001",
+      "text": "Open task",
+      "visible": true,
+      "covered": true,
+      "rect": {
+        "x": 483.34375,
+        "y": 472,
+        "w": 80.921875,
+        "h": 26.5
+      },
+      "overflowX": 0,
+      "overflowY": 0,
+      "paige": "open",
+      "errors": []
+    },
+    {
+      "name": "unknown",
+      "links": 0
+    },
+    {
+      "name": "refused",
+      "links": 0
+    },
+    {
+      "name": "forged",
+      "links": 0
+    }
+  ],
+  "failures": []
+}

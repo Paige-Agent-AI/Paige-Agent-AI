@@ -656,6 +656,17 @@ Owner approval 2026-10-27 ("approved, go with your recommendations and start bui
 
 ### EXP08 Team Hub agents A2b: approval cards in agent DMs (2026-10-28; this PR, migration `20271121140008`, NOT live until merged and applied)
 
+**Successor disposition, 2026-10-30: STILL CODING.** Original #3041/Preview/history remain preserved.
+Sequential carrier #3108 at `98c4a26022c25e5177508058839c488958c2556e` uses forward
+`20271126020008`, retaining the byte-identical original migration as evidence, current native
+read guard and peer scopes. Fresh exact-head checks/Preview/release/readback remain owed; the
+historical header describes the original PR, not the current migration frontier. The original
+18 acceptance cases and six owner amendment sections are retained in the agents contract's
+"Full-assignment successor disposition" crosswalk, alongside all original matrices. Exact
+Planning-task reopen is separately built locally with 177 focused passing tests, using current
+E05 typed `planningItem`/fresh-read semantics; release and authenticated reopen are PROOF OWED.
+A2c, broader actions, goals/workshop/initiative and lifecycle integration remain open.
+
 In the asker's own DM with an agent, the agent can **prepare** an act as the approved card (A2 design, APPROVED-FROZEN): ZION `crm_assign_task` (hand a task over) and `crm_cancel_task`; NEXUS `growth_page_publish`; PAIGE any of the three. The card is the door's own `paige_pending_confirmations` row (no new approval store), linked by `team_hub_message_cards`; **only the asker** sees Approve / Not now; Approve runs the door under the asker's JWT (decide → run → settle), and the agent posts the outcome into the card's thread. Card summaries name the task and the person, never a record id. In a shared channel an act is never carded: the agent answers and ends with "I can do that with you in our DM.", and the asker alone gets **Open DM**, which opens that DM with the asker's request in its box, unsent (owner ruling 2026-10-28). If an act does not reach the server, "That didn't go through just now. Try again." shows under the card (owner-approved). `owner_only` acts stay out of Team Hub (every door refuses them). Other agents' acts follow in waves through this same path (contract §5 A2b rulings).
 
 | Tier | A2b cards |

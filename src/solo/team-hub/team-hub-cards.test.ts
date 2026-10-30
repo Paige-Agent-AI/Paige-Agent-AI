@@ -8,6 +8,7 @@
 import { describe, expect, it } from "vitest";
 import {
   cardReasonSentence,
+  cardResultReference,
   dmRequestPrefill,
   CARD_KIND_LABEL,
   cardActBody,
@@ -20,7 +21,7 @@ import {
   parseCardStates,
   REDIRECT_LINE,
 } from "./team-hub-agents";
-import { parseApproval, type TeamHubMessage } from "./team-hub-contract";
+import { parseApproval, parseTeamHubMessage, type TeamHubMessage } from "./team-hub-contract";
 
 const ME = "u-me";
 const EXPIRES = "2026-10-28T15:42:00Z";
@@ -37,6 +38,29 @@ const agentRow = (over: Record<string, unknown> = {}) => ({
   author_kind: "agent", agent_key: "zion", asked_in_message_id: null, agent_mentions: [], ...over,
 });
 const actRequest = { conversationId: "c-dm-zion", messageId: "m-card", act: "approve" as const, fingerprint: "a1b2c3d4e5f60718" };
+
+describe("original completed task result references", () => {
+  const taskId = "e8000000-0000-4000-8000-0000000d0001";
+  for (const state of ["waiting", "working", "unconfirmed", "failed", "declined", "expired"]) {
+    it(`withholds a record on ${state}, even if a record is returned`, () => {
+      const parsed = parseCardStates({ ok: true, cards: [row({ record: { destination: "operations_work", record_id: taskId } }, { state })] }, null)!;
+      expect(cardResultReference(parsed["m-card"])).toBeUndefined();
+    });
+  }
+  it("accepts only the original task result destination and kinds", () => {
+    for (const [kind, destination] of [["task_cancel", "operations_work"], ["task_handover", "operations_work"], ["page_publish", "operations_work"], ["task_cancel", "finance"]]) {
+      const parsed = parseCardStates({ ok: true, cards: [row({ record: { destination, record_id: taskId } }, { state: "done", kind })] }, null)!;
+      expect(cardResultReference(parsed["m-card"])).toEqual(destination === "operations_work" && kind !== "page_publish"
+        ? { destination: "operations_work", record_id: taskId } : undefined);
+    }
+  });
+  it("raw agent message fields cannot inject a trusted result reference", () => {
+    const parsed = parseTeamHubMessage(agentRow({ approval_result_reference: { destination: "operations_work", record_id: taskId },
+      record: { destination: "operations_work", record_id: taskId }, approval: { ...card({ state: "done" }), kind: "Task cancel" } }));
+    expect(parsed).not.toBeNull();
+    expect(parsed!.approval_result_reference).toBeUndefined();
+  });
+});
 
 describe("parseCardStates: the server's card, in the shape the approved card draws", () => {
   it("maps the card key into parseApproval's shape: the kind's label, the binding, and the expiry as a time", () => {

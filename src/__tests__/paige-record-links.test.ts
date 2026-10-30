@@ -59,7 +59,7 @@ it("retains a Systems Check finding UUID through the original reference frame wi
 describe("readRecordLinks — the defensive reader for live frames and persisted bundle_ref", () => {
   it("retains the existing destinations and admits the bounded owner Portal Knowledge reference", () => {
     expect([...READ_LINK_DESTINATIONS]).toEqual([
-      "contacts", "sales_agreements", "sales_invoices", "sales_collections", "operations_work", "business_time_zone",
+      "contacts", "sales_agreements", "sales_invoices", "sales_collections", "operations_work", "team_hub", "business_time_zone",
       "executive", "finance", "marketing", "sales_pipeline", "systems_check", "business_game_plan", "trust_compass", "mind", "portal_knowledge", "calendar", "pipeline", "conversations",
     ]);
   });

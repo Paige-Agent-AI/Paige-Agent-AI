@@ -1,0 +1,50 @@
+{
+  "boundary": "FORWARD ORDER / SOURCE ONLY; no production migration or customer proof",
+  "sourceCommit": "4c6729d6f0f11cbde2cb932e9904cd8723c0ebae",
+  "main": "3f37c5b72a140dff56b6a1c05de00938ddf8e045",
+  "originalReviewedHead": "fdc313d213888c22331c564844a90abf1eedf19f",
+  "oldPath": "supabase/migrations/20271126010012_task_effort_scalar.sql",
+  "newPath": "supabase/migrations/20271126050005_task_effort_scalar.sql",
+  "exactMigrationTextPreserved": true,
+  "normalizedMigrationSHA256": "94d03a75533561eef40528a1f5bc7c3cd1730102f10f266f6b274f620c136329",
+  "bodyMD5": "caea59ab335ecaf295391c41a1a0522f",
+  "bodySHA256": "dbed70524f42f574692f6d13be4b4ef4e7369e7962f29e3fbe0a936f7d16ff64",
+  "actualApprovalSourcesPreserved": 2,
+  "originalRenderedInputsPreserved": 5,
+  "incomingOutsideLeavesPreserved": 18191,
+  "conservationFailures": [],
+  "productionReadBefore": {
+    "frontier": "20271126010015",
+    "old12": 0,
+    "new50005": "NOT_APPLIED",
+    "writerOID": 289875,
+    "writerBodyMD5": "22419ccee92deb0e739da276b03761f5",
+    "acl": "postgres, service_role execute only"
+  },
+  "originalPreview": {
+    "branchId": "ebdaace2-5325-4103-90c4-dcf1948cc31c",
+    "projectRef": "advkyfxqstklpupfcjch",
+    "parent": "xygzykjyynhzqytbqnzu",
+    "gitBranch": "feat/exp05-task-effort-native-20261029",
+    "persistent": false,
+    "withData": false,
+    "authUsers": 0,
+    "tasks": 0,
+    "tenantRows": 3,
+    "old12": 1,
+    "bodyMD5": "caea59ab335ecaf295391c41a1a0522f",
+    "historicalReceipt": "https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3102#issuecomment-6511976734",
+    "retirement": "PLANNED after updated branch publication; not yet performed"
+  },
+  "originalExactCI": "fdc: all13 observed checks SUCCESS plus both web statuses; historical only",
+  "forwardExactCI": "PROOF_OWED: fresh head/managed Preview/native225 and whole required gates",
+  "sourceOrder": "after published E08 through20271126040008; do not edit peer sources",
+  "officialPreviewRecovery": "https://supabase.com/docs/guides/deployment/branching/working-with-branches#rolling-back-migrations",
+  "prohibited": [
+    "production history repair",
+    "include-all",
+    "peer Preview mutation",
+    "new customer tenant",
+    "provider/action activation"
+  ]
+}

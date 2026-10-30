@@ -9,6 +9,9 @@ import { readCommsEmailAttachmentSources, copyCommsEmailAttachmentsToGoverned, p
 import { resolveCommsEmailParties, readCommsEmailReadiness, commsEmailReadinessOutcome, emailProvidersFor, type CommsEmailAdmin } from "../_shared/comms-email/readiness.ts";
 import { verifyLeadReplyApproval, storedApprovalMatches, recordLeadReplySend, bindingApprovalMatches, leadReplyPrepareRefusal, type LeadReplyApprovalAdmin } from "./lead-reply-approval.ts";
 import { executeCommsEmailSend, reconcileCommsEmailSend, parseCommsEmailStoredCall, commsEmailSafeResult } from "../_shared/comms-email/adapter.ts";
+import { parseCommsEmailDraftSource, commsEmailDraftSourcesEqual, type CommsEmailDraftSource } from "../_shared/comms-email/draft-source.ts";
+import { readCommsEmailDraftProposal } from "../_shared/comms-email/draft-proposal.ts";
+import { sha256Hex } from "../_shared/webhookSig.ts";
 
 // INT-328 comms.email_send — the governed door for ONE business email to ONE existing contact.
 // Mirrors sales-invoice-command: authenticated actor, server-derived tenant, owner/admin seat,
@@ -42,12 +45,12 @@ Deno.serve(async req => {
   const admin = createClient(url, serviceKey);
   const { data: { user }, error: userError } = await caller.auth.getUser();
   if (userError || !user) return refusedBeforeDispatch(401, "UNAUTHENTICATED");
-  let body: Record<string, unknown> & { expected_tenant_id: string; operation_id: string; approval_id?: string; send_at?: string; cancel?: true; attachments?: unknown }, command: ReturnType<typeof parseCommsEmailCommand>;
+  let body: Record<string, unknown> & { expected_tenant_id: string; operation_id: string; approval_id?: string; send_at?: string; cancel?: true; attachments?: unknown; draft_source?: CommsEmailDraftSource }, command: ReturnType<typeof parseCommsEmailCommand>;
   try {
     const raw = await req.text();
     if (raw.length > 100000) throw new TypeError("BODY_TOO_LARGE");
     const parsed = object(JSON.parse(raw));
-    if (!parsed || Object.keys(parsed).some(key => !["expected_tenant_id", "operation_id", "command", "approved_fingerprint", "approval_id", "send_at", "cancel", "attachments"].includes(key))) throw new TypeError("INVALID_BODY");
+    if (!parsed || Object.keys(parsed).some(key => !["expected_tenant_id", "operation_id", "command", "approved_fingerprint", "approval_id", "send_at", "cancel", "attachments", "draft_source"].includes(key))) throw new TypeError("INVALID_BODY");
     if (typeof parsed.expected_tenant_id !== "string" || !UUID.test(parsed.expected_tenant_id) || typeof parsed.operation_id !== "string" || !UUID.test(parsed.operation_id)) throw new TypeError("INVALID_SCOPE");
     // Cancel of a scheduled send: exactly { expected_tenant_id, operation_id, cancel: true } — no command,
     // no approval, no time. It is answered further down, after the workspace/seat/profile checks.
@@ -61,6 +64,7 @@ Deno.serve(async req => {
       // Experience 03: the drafted lead reply this email answers (paige_pending_approvals.id). Optional.
       if (parsed.approval_id !== undefined && (typeof parsed.approval_id !== "string" || !UUID.test(parsed.approval_id))) throw new TypeError("INVALID_APPROVAL");
       command = parseCommsEmailCommand(parsed.command);
+      const draftSource = parsed.draft_source === undefined ? undefined : parseCommsEmailDraftSource(parsed.draft_source);
       // "Approve now, send later": a top-level send time, never part of the command (the command and its
       // content digest are unchanged). Raising a card checks the window (2 min .. 30 days ahead); a
       // confirm only canonicalizes it — the STORED call's time is what runs, and the execute step below
@@ -79,6 +83,7 @@ Deno.serve(async req => {
       // text; an uppercase id from a direct caller would otherwise never match its own binding.
       const { send_at: _requestedSendAt, ...rest } = parsed;
       body = { ...rest, expected_tenant_id: parsed.expected_tenant_id.toLowerCase(), operation_id: parsed.operation_id.toLowerCase(),
+        ...(draftSource ? { draft_source: draftSource } : {}),
         ...(typeof parsed.approval_id === "string" ? { approval_id: parsed.approval_id.toLowerCase() } : {}),
         ...(sendAt !== undefined ? { send_at: sendAt } : {}) };
     }
@@ -89,7 +94,7 @@ Deno.serve(async req => {
   // The files named, checked against the SERVER-derived tenant before anything is read: a path in
   // another business, the Team Hub or the governed folder is refused here, with no storage call at all.
   let attachmentPaths: string[] | null = null;
-  if (body.attachments !== undefined) {
+  if (body.attachments !== undefined && !body.draft_source) {
     try { attachmentPaths = parseCommsEmailAttachmentRequest(body.attachments, tenantId); }
     catch { return refusedBeforeDispatch(400, "COMMS_EMAIL_ATTACHMENTS_INVALID"); }
   }
@@ -228,6 +233,25 @@ Deno.serve(async req => {
   // A failed replay read proves nothing about this operation: it may already have been sent on an
   // earlier attempt. Never "Not sent" — unknown, and no send is attempted.
   try { replay = object(await readResult(body.operation_id)); } catch { return response(503, { ok: false, outcome: "outcome_unknown", code: "COMMS_EMAIL_REPLAY_UNAVAILABLE" }); }
+  let replayBinding: Record<string, unknown> | null = null;
+  if (replay) {
+    try { replayBinding = typeof replay.message_id === "string" && UUID.test(replay.message_id) ? object(await readBinding(replay.message_id)) : null; }
+    catch { return response(503, { ok: false, outcome: "outcome_unknown", code: "COMMS_EMAIL_REPLAY_UNAVAILABLE" }); }
+    const boundSource = object(replayBinding?.governance)?.draft_source;
+    if (body.draft_source !== undefined || boundSource !== undefined) {
+      let matches = false;
+      try {
+        const recordedSource = parseCommsEmailDraftSource(boundSource);
+        const recordedCommand = parseCommsEmailCommand(replayBinding?.command);
+        matches = body.draft_source !== undefined && commsEmailDraftSourcesEqual(recordedSource, body.draft_source)
+          && replay.message_id === recordedSource.message_id && replayBinding?.message_id === recordedSource.message_id
+          && replayBinding?.operation_id === body.operation_id && replayBinding?.tenant_id === tenantId && replayBinding?.actor_user_id === user.id
+          && (command.connector_id === null || command.connector_id === recordedCommand.connector_id)
+          && JSON.stringify(parseCommsEmailCommand({ ...command, connector_id: recordedCommand.connector_id })) === JSON.stringify(recordedCommand);
+      } catch { /* an existing operation never becomes permission for another source */ }
+      if (!matches) return response(409, { ok: false, outcome: "outcome_unknown", code: "COMMS_EMAIL_DRAFT_REPLAY_MISMATCH", operation_id: body.operation_id });
+    }
+  }
   // A scheduled operation is 'prepared' for days by design: it is answered as scheduled, never taken
   // into the prepared-recovery path (which would mint a fresh card and send it at once).
   const scheduledReplay = replay?.outcome === "prepared" && typeof replay.send_at === "string";
@@ -273,6 +297,31 @@ Deno.serve(async req => {
   if (body.approval_id !== undefined) {
     const refusal = await verifyLeadReplyApproval(approvalAdmin, { tenantId, approvalId: body.approval_id, contactId: command.contact_id, operationId: body.operation_id });
     if (refusal) return refusedBeforeDispatch(refusal === "LEAD_REPLY_APPROVAL_UNAVAILABLE" ? 503 : 409, refusal);
+  }
+
+  let draftBodyHtml: string | undefined;
+  if (body.draft_source) {
+    if (preparedRecovery) {
+      // The original row is now bound, so its updated_at is no longer the pre-approval
+      // source version. Recover only that same binding, never read a replacement draft.
+      if (!replayBinding || typeof replayBinding.body_html !== "string" || typeof replayBinding.connector_id !== "string") return response(503, { ok: false, outcome: "outcome_unknown", code: "COMMS_EMAIL_BINDING_UNAVAILABLE" });
+      draftBodyHtml = replayBinding.body_html;
+      command = parseCommsEmailCommand({ ...command, connector_id: replayBinding.connector_id });
+      const manifest = replayBinding.attachments == null ? null : parseCommsEmailAttachmentManifest(replayBinding.attachments, tenantId, body.operation_id);
+      if (replayBinding.attachments != null && !manifest) return response(503, { ok: false, outcome: "outcome_unknown", code: "COMMS_EMAIL_ATTACHMENTS_CHANGED" });
+      attachmentPaths = manifest?.map(file => file.source_path) ?? null;
+      if (body.attachments !== undefined) {
+        let named: string[] | null;
+        try { named = Array.isArray(body.attachments) && body.attachments.length === 0 ? null : parseCommsEmailAttachmentRequest(body.attachments, tenantId); }
+        catch { return refusedBeforeDispatch(400, "COMMS_EMAIL_ATTACHMENTS_INVALID"); }
+        if (JSON.stringify(named) !== JSON.stringify(attachmentPaths)) return response(409, { ok: false, outcome: "outcome_unknown", code: "COMMS_EMAIL_ATTACHMENTS_CHANGED" });
+      }
+    } else {
+      const draft = await readCommsEmailDraftProposal(admin as unknown as CommsEmailAdmin, { tenantId, actorUserId: user.id, source: body.draft_source, command, attachments: body.attachments, contentReader: caller as unknown as CommsEmailAdmin });
+      if (!draft.ok) return refusedBeforeDispatch(409, draft.code);
+      draftBodyHtml = draft.bodyHtml; attachmentPaths = draft.attachmentPaths;
+      command = parseCommsEmailCommand({ ...command, connector_id: draft.connectorId });
+    }
   }
 
   // 3 — Who it goes to and who it comes from, resolved here and never taken from the model.
@@ -389,6 +438,14 @@ Deno.serve(async req => {
   // 5 — The proposed call: the exact recipient address, sender address and content digest are part
   // of what is fingerprinted, so a change to any of them is a different approval.
   const requestArgs: Record<string, unknown> = { expected_tenant_id: tenantId, operation_id: body.operation_id, command: proposedCommand, recipient: parties.recipient, from_address: parties.fromAddress, content_digest: contentDigest };
+  const draftBodyDigest = draftBodyHtml === undefined ? undefined : await sha256Hex(draftBodyHtml);
+  if (body.draft_source) { requestArgs.draft_source = body.draft_source; requestArgs.draft_body_html = draftBodyHtml; requestArgs.draft_body_digest = draftBodyDigest; }
+  const sameDraftProposal = (args: unknown): boolean => {
+    const stored = object(args);
+    if (!body.draft_source) return stored?.draft_source === undefined && stored?.draft_body_html === undefined && stored?.draft_body_digest === undefined;
+    try { return commsEmailDraftSourcesEqual(parseCommsEmailDraftSource(stored?.draft_source), body.draft_source)
+      && stored?.draft_body_html === draftBodyHtml && stored?.draft_body_digest === draftBodyDigest; } catch { return false; }
+  };
   // The approval is part of what is fingerprinted: a card approved for one approval cannot be confirmed
   // against another. Absent when no approval is named, so every other send's fingerprint is unchanged.
   if (body.approval_id !== undefined) requestArgs.approval_id = body.approval_id;
@@ -425,6 +482,7 @@ Deno.serve(async req => {
       if (cycle.expected_tenant_id !== tenantId || cycle.operation_id !== body.operation_id || JSON.stringify(cycleCommand) !== JSON.stringify(proposedCommand)
         || cycle.recipient !== parties.recipient || cycle.from_address !== parties.fromAddress || cycle.content_digest !== contentDigest
         || !storedApprovalMatches(cycle, body.approval_id)
+        || !sameDraftProposal(cycle)
         || cycle.send_at !== body.send_at
         || !cycleAttachmentsMatch(cycle.attachments, cycle.attachments_digest)
         || typeof cycle.approval_cycle_nonce !== "string" || !UUID.test(cycle.approval_cycle_nonce))
@@ -451,6 +509,11 @@ Deno.serve(async req => {
     // manifest's digest (a short value, never the manifest itself in the request URL). A file changed since
     // the card was shown, or a confirm naming fewer or other files, has another digest: nothing is spent.
     if (attachmentsDigest) redeem = redeem.eq("args->>attachments_digest", attachmentsDigest);
+    // Filter with the short server-derived digest, never private HTML in a query URL.
+    // A changed source/content cannot consume the original approval cycle.
+    if (body.draft_source) redeem = redeem.eq("args->draft_source->>message_id", body.draft_source.message_id)
+      .eq("args->draft_source->>updated_at", body.draft_source.updated_at).eq("args->>draft_body_digest", draftBodyDigest);
+    else redeem = redeem.is("args->draft_source", null);
     const { data: claimed, error } = await redeem.select("args").maybeSingle();
     if (!error) claimedArgs = object(claimed?.args);
   }
@@ -500,6 +563,7 @@ Deno.serve(async req => {
   // it is not what runs.
   const stored = parseCommsEmailStoredCall(decision.args, tenantId);
   if (!stored) return response(403, { ok: false, outcome: "refused", code: "APPROVAL_CLAIM_INVALID" });
+  if (!sameDraftProposal(decision.args)) return refusedBeforeDispatch(403, "COMMS_EMAIL_DRAFT_SOURCE_CHANGED");
   // A scheduled call whose time has (nearly) come is not quietly turned into "send now": nothing is
   // prepared, nothing is sent, and the owner picks a new time. (The database refuses < 30 s too.)
   if (stored.sendAt !== undefined && Date.parse(stored.sendAt) <= Date.now() + 60_000) return refusedBeforeDispatch(409, "COMMS_EMAIL_SEND_AT_PASSED");

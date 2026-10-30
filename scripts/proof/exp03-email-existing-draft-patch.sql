@@ -8,7 +8,7 @@ BEGIN
  FOR item IN SELECT * FROM (VALUES
 ('_comms_email_actor(uuid,uuid)','ff1a928247c3d00c8641b639dacb7fb9','ff1a928247c3d00c8641b639dacb7fb9'),
 ('_comms_email_governance(uuid,uuid,jsonb)','eb2f2b6e3f58a4843bc330cfad17c25e','eb2f2b6e3f58a4843bc330cfad17c25e'),
-('prepare_comms_email_send(uuid,uuid,uuid,uuid,text,uuid,text,text,text,text,text,jsonb,jsonb)','44040e47f20c4a285177b09ea9f5a717','38a3a04e79cc471f945057a2df9be30b'),
+('prepare_comms_email_send(uuid,uuid,uuid,uuid,text,uuid,text,text,text,text,text,jsonb,jsonb)','44040e47f20c4a285177b09ea9f5a717','41cb53161afde5aa03d17013509f15f5'),
 ('prepare_comms_email_send(uuid,uuid,uuid,uuid,text,uuid,text,text,text,text,text,jsonb,jsonb,timestamp with time zone)','3e228c9e0298724b6f3b6de2eca892ca','3e228c9e0298724b6f3b6de2eca892ca'),
 ('prepare_comms_email_send(uuid,uuid,uuid,uuid,text,uuid,text,text,text,text,text,jsonb,jsonb,timestamp with time zone,jsonb)','9dd86fac153138c0639d969dbecd6bad','9dd86fac153138c0639d969dbecd6bad')
  ) AS expected(signature,before_md5,after_md5)
@@ -80,7 +80,9 @@ BEGIN
   -- Changing From must not turn another person's personal source into a shared draft.
   SELECT * INTO _source_connector FROM public.channel_connectors
    WHERE id=_source_message.connector_id AND tenant_id=_expected_tenant_id FOR SHARE;
-  IF _source_connector.id IS NULL OR NOT coalesce(_source_connector.mailbox_class='shared_support'
+  IF _source_connector.id IS NULL OR _source_connector.active IS DISTINCT FROM true
+   OR _source_connector.status IS DISTINCT FROM 'active' OR _source_connector.channel_type IS DISTINCT FROM 'email'
+   OR NOT coalesce(_source_connector.mailbox_class='shared_support'
     OR (_source_connector.mailbox_class='personal' AND _source_connector.mailbox_owner_user_id=_actor_user_id),false)
   THEN RAISE EXCEPTION 'COMMS_EMAIL_DRAFT_SOURCE_UNAVAILABLE' USING ERRCODE='42501'; END IF;
   IF _source_connector.mailbox_class='personal'
@@ -110,7 +112,7 @@ BEGIN
  EXCEPTION WHEN unique_violation THEN$e03_old_6$,$e03_new_6$  RETURNING * INTO m;
   END IF;
  EXCEPTION WHEN unique_violation THEN$e03_new_6$);
- IF md5(revised)<>'38a3a04e79cc471f945057a2df9be30b' THEN RAISE EXCEPTION 'EXP03 saved draft replacement mismatch';END IF;
+ IF md5(revised)<>'41cb53161afde5aa03d17013509f15f5' THEN RAISE EXCEPTION 'EXP03 saved draft replacement mismatch';END IF;
  inverse:=revised;
  inverse:=replace(inverse,$e03_rev_new_0$  RETURNING * INTO m;
   END IF;
@@ -148,7 +150,9 @@ BEGIN
   -- Changing From must not turn another person's personal source into a shared draft.
   SELECT * INTO _source_connector FROM public.channel_connectors
    WHERE id=_source_message.connector_id AND tenant_id=_expected_tenant_id FOR SHARE;
-  IF _source_connector.id IS NULL OR NOT coalesce(_source_connector.mailbox_class='shared_support'
+  IF _source_connector.id IS NULL OR _source_connector.active IS DISTINCT FROM true
+   OR _source_connector.status IS DISTINCT FROM 'active' OR _source_connector.channel_type IS DISTINCT FROM 'email'
+   OR NOT coalesce(_source_connector.mailbox_class='shared_support'
     OR (_source_connector.mailbox_class='personal' AND _source_connector.mailbox_owner_user_id=_actor_user_id),false)
   THEN RAISE EXCEPTION 'COMMS_EMAIL_DRAFT_SOURCE_UNAVAILABLE' USING ERRCODE='42501'; END IF;
   IF _source_connector.mailbox_class='personal'
@@ -181,7 +185,7 @@ BEGIN
  _source_connector public.channel_connectors%ROWTYPE; _source_version timestamptz;$e03_rev_new_6$,$e03_rev_old_6$ agreement_source jsonb;$e03_rev_old_6$);
  IF inverse IS DISTINCT FROM original THEN RAISE EXCEPTION 'EXP03 saved draft inverse mismatch';END IF;
  EXECUTE revised;
- IF md5(pg_get_functiondef(target))<>'38a3a04e79cc471f945057a2df9be30b' THEN RAISE EXCEPTION 'EXP03 saved draft readback mismatch';END IF;
+ IF md5(pg_get_functiondef(target))<>'41cb53161afde5aa03d17013509f15f5' THEN RAISE EXCEPTION 'EXP03 saved draft readback mismatch';END IF;
  END IF;
  EXECUTE $e03_create16$CREATE OR REPLACE FUNCTION public.prepare_comms_email_send(_actor_user_id uuid,_expected_tenant_id uuid,_operation_id uuid,_contact_id uuid,_recipient text,_connector_id uuid,_from_address text,_subject text,_body_text text,_body_html text,_content_digest text,_command jsonb,_governance jsonb,_send_at timestamptz,_attachments jsonb,_draft_source jsonb)
  RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path TO 'pg_catalog','public' AS $function$

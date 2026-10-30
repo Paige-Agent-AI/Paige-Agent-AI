@@ -39,7 +39,7 @@ function reset(){db.run(`DELETE FROM public.messages;${seedDraft}
  UPDATE auth.users SET deleted_at=NULL,banned_until=NULL;
  UPDATE public.tenants SET status='active';UPDATE public.profiles SET active_tenant_id='${tenant}' WHERE user_id='${actor}';
  UPDATE public.tenant_members SET status='active',role='owner' WHERE user_id='${actor}';
- UPDATE public.channel_connectors SET mailbox_class='shared_support',mailbox_owner_user_id=NULL,active=true,status='active';`);}
+ UPDATE public.channel_connectors SET mailbox_class='shared_support',mailbox_owner_user_id=NULL,active=true,status='active',channel_type='email';`);}
 function refuse(run,pattern){const before=businessState();assert.throws(run,pattern);assert.equal(businessState(),before,'refusal preserves every source and business row');checks++;}
 const currentSource=()=>JSON.parse(db.run(`SELECT jsonb_build_object('message_id',id,'updated_at',updated_at) FROM public.messages WHERE id='${draft}'`));
 function concurrentPrepare(tag,options){
@@ -113,7 +113,7 @@ $function$;
   refusePatch(`ALTER FUNCTION ${signature} SECURITY INVOKER`,candidate,/original metadata drift/);
   refusePatch(`GRANT EXECUTE ON FUNCTION ${signature} TO authenticated`,candidate,/original metadata drift/);
   refusePatch(`ALTER FUNCTION ${signature} SET search_path TO public`,candidate,/original metadata drift/);
-  refusePatch(`COMMENT ON FUNCTION ${signature} IS 'unchanged source metadata control'`,candidate.replace("38a3a04e79cc471f945057a2df9be30b' THEN RAISE EXCEPTION 'EXP03 saved draft readback mismatch'","00000000000000000000000000000000' THEN RAISE EXCEPTION 'EXP03 saved draft readback mismatch'"),/saved draft readback mismatch/);
+  refusePatch(`COMMENT ON FUNCTION ${signature} IS 'unchanged source metadata control'`,candidate.replace("41cb53161afde5aa03d17013509f15f5' THEN RAISE EXCEPTION 'EXP03 saved draft readback mismatch'","00000000000000000000000000000000' THEN RAISE EXCEPTION 'EXP03 saved draft readback mismatch'"),/saved draft readback mismatch/);
   const lateAnchor="THEN RAISE EXCEPTION 'EXP03 saved draft overload readback mismatch';END IF;";
   assert.equal(candidate.split(lateAnchor).length,2);
   refusePatch('',candidate.replace(lateAnchor,()=>lateAnchor+" RAISE EXCEPTION 'EXP03 forced late overload failure';"),/forced late overload failure/);
@@ -159,6 +159,10 @@ $function$;
   refuse(()=>prepare({connectorId:otherConnector}),/COMMS_EMAIL_DRAFT_OWNED_FLOW_REQUIRED/);
   reset();db.run(`UPDATE public.channel_connectors SET mailbox_class='personal',mailbox_owner_user_id='${otherActor}' WHERE id='${connector}'`);
   refuse(()=>prepare({connectorId:otherConnector}),/COMMS_EMAIL_DRAFT_SOURCE_UNAVAILABLE/);
+  for(const changed of ["active=false","status='revoked'","channel_type='sms'"]){
+   reset();db.run(`UPDATE public.channel_connectors SET ${changed} WHERE id='${connector}'`);
+   refuse(()=>prepare({connectorId:otherConnector}),/COMMS_EMAIL_DRAFT_SOURCE_UNAVAILABLE/);
+  }
   reset();db.run(`UPDATE public.tenant_members SET role='admin' WHERE user_id='${actor}'`);assert.equal(prepare().message_id,draft);checks++;
   reset();const ordinary=prepare({legacy:true,source:null});assert.notEqual(ordinary.message_id,draft);assert.equal(db.run('SELECT count(*) FROM public.messages'),'2');checks++;
   reset();const beforeReplay=businessState();db.run(read('scripts/proof/exp03-email-existing-draft-patch.sql'));assert.equal(businessState(),beforeReplay);checks++;

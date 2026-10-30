@@ -246,6 +246,38 @@ describe("releaseScheduledCommsEmail — the drainer's release matrix", () => {
       comms_email_operation_id: OP, idempotency_key: `comms-email:${OP}`, comms_email_scheduled_release: true }]);
     expect(t.log).toEqual(["send", "support"]);
   });
+  it("releases original rich draft HTML only from an identical fresh approved binding", async () => {
+    const source = { message_id: M, updated_at: "2026-10-30T16:00:00.123456Z" };
+    const original = await binding({ command, body_html: "<p><strong>Hello there</strong></p>", governance: { draft_source: source } });
+    let reads = 0;
+    const t = release({ readBinding: async () => ({ ...original, state: ++reads === 1 ? "prepared" : "provider_accepted", eligible: true }) });
+    expect(await releaseScheduledCommsEmail(original, M, t.d)).toEqual({ result: "released" });
+    expect(t.sends[0]?.body).toBe(original.body_html);
+    expect(t.closes).toEqual([]);
+  });
+  it("does not release rich drafts when any fresh binding identity, content or source moved", async () => {
+    const original = await binding({ command, body_html: "<p><strong>Hello there</strong></p>", governance: { draft_source: { message_id: M, updated_at: "2026-10-30T16:00:00.123456Z" } } });
+    for (const moved of [
+      { body_html: "<p>Changed</p>" }, { body_text: "Changed" }, { subject: "Changed" },
+      { content_digest: "a".repeat(64) }, { recipient: "other@tests.invalid" }, { from_address: "other@tests.invalid" },
+      { actor_user_id: C }, { tenant_id: C }, { contact_id: A }, { connector_id: C },
+      { governance: { draft_source: { message_id: M, updated_at: "2026-10-30T16:00:00.123457Z" } } },
+      { governance: {} }, { governance: { draft_source: null } },
+      { command: { ...command, body: "Changed" } }, { attachments: [{ path: "unapproved" }] },
+    ]) {
+      const t = release({ readBinding: async () => ({ ...original, ...moved, eligible: true }) });
+      expect(await releaseScheduledCommsEmail(original, M, t.d)).toEqual({ result: "left", reason: "binding_moved" });
+      expect(t.sends).toEqual([]); expect(t.closes).toEqual([]);
+    }
+  });
+  it("malformed or different original draft identity never admits scheduled rich HTML", async () => {
+    for (const source of [null, {}, { message_id: C, updated_at: "2026-10-30T16:00:00.123456Z" },
+      { message_id: M, updated_at: "invalid" }, { message_id: M, updated_at: "2026-10-30T16:00:00.123456Z", tenant_id: T }]) {
+      const t = release();
+      expect(await releaseScheduledCommsEmail(await binding({ governance: { draft_source: source } }), M, t.d)).toEqual({ result: "invalid" });
+      expect(t.log).toEqual([]);
+    }
+  });
   it("an edge clock up to a minute behind the database still releases (the database's claim is the authority)", async () => {
     const behind = release({}, { now: AT - 30_000 });
     expect(await releaseScheduledCommsEmail(await binding(), M, behind.d)).toEqual({ result: "released" });

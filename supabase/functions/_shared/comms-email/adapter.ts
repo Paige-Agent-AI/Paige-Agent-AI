@@ -290,6 +290,9 @@ export interface ScheduledCommsEmailBinding {
   operationId: string; tenantId: string; actorUserId: string; contactId: string; connectorId: string;
   recipient: string; fromAddress: string; subject: string; bodyText: string; bodyHtml: string;
   contentDigest: string; sendAt: string; state: string;
+  draftSource?: CommsEmailDraftSource;
+  draftCommand?: CommsEmailCommand;
+  draftAttachments?: CommsEmailAttachmentManifest;
 }
 
 /** The stored binding of a SCHEDULED governed email (one carrying a canonical send_at), or null. */
@@ -306,11 +309,28 @@ export function parseScheduledCommsEmailBinding(value: unknown): ScheduledCommsE
   let sendAt: string;
   try { sendAt = canonicalCommsEmailSendAt(b.send_at); } catch { return null; }
   if (sendAt !== b.send_at) return null;
+  let draftSource: CommsEmailDraftSource | undefined;
+  let draftCommand: CommsEmailCommand | undefined;
+  let draftAttachments: CommsEmailAttachmentManifest | undefined;
+  const governance = object(b.governance);
+  if (governance && Object.hasOwn(governance, "draft_source")) {
+    try { draftSource = parseCommsEmailDraftSource(governance.draft_source); } catch { return null; }
+    if ((b.body_html as string).length > 100000 || (b.body_html as string).includes("\0")) return null;
+    try { draftCommand = parseCommsEmailCommand(b.command); } catch { return null; }
+    if (draftCommand.contact_id !== b.contact_id || draftCommand.connector_id !== b.connector_id
+      || draftCommand.subject !== b.subject || draftCommand.body !== b.body_text) return null;
+    if (b.attachments !== undefined && b.attachments !== null) {
+      const manifest = parseCommsEmailAttachmentManifest(b.attachments, b.tenant_id as string, b.operation_id as string);
+      if (!manifest) return null;
+      draftAttachments = manifest;
+    }
+  }
   return {
     operationId: b.operation_id as string, tenantId: b.tenant_id as string, actorUserId: b.actor_user_id as string,
     contactId: b.contact_id as string, connectorId: b.connector_id as string, recipient: b.recipient as string,
     fromAddress: b.from_address as string, subject: b.subject as string, bodyText: b.body_text as string,
     bodyHtml: b.body_html as string, contentDigest: b.content_digest, sendAt, state: b.state as string,
+    ...(draftSource ? { draftSource, draftCommand, ...(draftAttachments ? { draftAttachments } : {}) } : {}),
   };
 }
 
@@ -388,6 +408,7 @@ const releaseReason = (code: string | null | undefined, fallback: string) => {
 export async function releaseScheduledCommsEmail(rawBinding: unknown, messageId: string, d: ScheduledReleaseDependencies): Promise<ScheduledReleaseResult> {
   const binding = parseScheduledCommsEmailBinding(rawBinding);
   if (!binding || typeof messageId !== "string" || !UUID.test(messageId)) return { result: "invalid" };
+  if (binding.draftSource && binding.draftSource.message_id !== messageId.toLowerCase()) return { result: "invalid" };
   const refuse = async (reason: string): Promise<ScheduledReleaseResult> =>
     await d.closeRefused({ messageId, operationId: binding.operationId, reason }).catch(() => false)
       ? { result: "refused", reason } : { result: "left", reason: `close_unrecorded:${reason}` };
@@ -413,6 +434,13 @@ export async function releaseScheduledCommsEmail(rawBinding: unknown, messageId:
     if (!fresh) return { result: "left", reason: "binding_unreadable" };
     if (fresh.state !== "prepared") return { result: "settled" };
     if (fresh.operation_id !== binding.operationId || fresh.send_at !== binding.sendAt) return { result: "left", reason: "binding_moved" };
+    if (binding.draftSource) {
+      // Rich HTML comes from the original server-read/approved binding, never a later
+      // regeneration. Revalidate the entire canonical snapshot after the actor/origin
+      // reader's lock wait; a changed or unreadable snapshot cannot authorize transport.
+      const current = parseScheduledCommsEmailBinding(fresh);
+      if (!current || JSON.stringify(current) !== JSON.stringify(binding)) return { result: "left", reason: "binding_moved" };
+    }
     if (fresh.eligible !== true) return await refuse("send_no_longer_eligible");
 
     let allowed: boolean;
@@ -433,7 +461,7 @@ export async function releaseScheduledCommsEmail(rawBinding: unknown, messageId:
     if (!readiness.eligible) return await refuse(releaseReason(readiness.reason, "send_no_longer_eligible"));
 
     const digest = await commsEmailContentDigest({ recipient: binding.recipient, connectorId: binding.connectorId, subject: binding.subject, bodyText: binding.bodyText });
-    if (digest !== binding.contentDigest || commsEmailBodyHtml(binding.bodyText) !== binding.bodyHtml) return await refuse("content_changed");
+    if (digest !== binding.contentDigest || (!binding.draftSource && commsEmailBodyHtml(binding.bodyText) !== binding.bodyHtml)) return await refuse("content_changed");
 
     let answer: { answered: boolean; code: string | null } = { answered: false, code: null };
     try {

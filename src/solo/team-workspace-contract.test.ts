@@ -4,6 +4,7 @@ import {
   isMissingFunction,
   lifecycleRefusal,
   normalizeHoldings,
+  normalizeTeamWorkspace,
   inviteLifecycle,
   memberVisibleIdentity,
   permissionPresentation,
@@ -11,6 +12,26 @@ import {
 } from "./team-workspace-contract";
 
 describe("Solo Team workspace contract", () => {
+  it('retains only named server ownership metadata for the existing Team consumer', () => {
+    const id='e8000000-0000-4000-8000-000000060001';
+    const business={id,kind:'company',display_name:'Test entity',ownership_interest:73,legal_name:'PRIVATE'};
+    const result=normalizeTeamWorkspace({tenant_id:'test-tenant',members:[],invitations:[],viewer_permission:'owner',viewer_is_account_holder:true,account_holder_state:'working',
+      owner_seats_held:[{...business,vacant_since:'2026-10-29T00:00:00Z'}],business_owner_options:[{...business,seat_state:'held',representative:null,pending_invitation:null}]})!;
+    expect(result.viewer_is_account_holder).toBe(true);
+    expect(result.account_holder_state).toBe('working');
+    expect(result.owner_seats_held).toEqual([{id,kind:'company',display_name:'Test entity',vacant_since:'2026-10-29T00:00:00Z'}]);
+    expect(result.business_owner_options).toEqual([{id,kind:'company',display_name:'Test entity',seat_state:'held',representative:null,pending_invitation:null}]);
+    expect(JSON.stringify(result)).not.toContain('PRIVATE');
+    expect(JSON.stringify(result)).not.toContain('ownership_interest');
+  });
+
+  it('keeps missing or malformed ownership unknown and never infers holder from Owner permission', () => {
+    const result=normalizeTeamWorkspace({tenant_id:'test-tenant',members:[],invitations:[],viewer_permission:'owner',viewer_is_account_holder:'true',account_holder_state:['working'],business_owner_options:[{id:'not-an-id',kind:'company'}]})!;
+    expect(result.viewer_is_account_holder).toBeNull();
+    expect(result.account_holder_state).toBeNull();
+    expect(result.business_owner_options).toEqual([]);
+    expect(result.owner_seats_held).toEqual([]);
+  });
   it("uses a verified stored name and otherwise identifies the real member by email", () => {
     expect(memberVisibleIdentity({ full_name: "  Avery Brooks  ", email: "avery@example.com" })).toEqual({
       primary: "Avery Brooks",

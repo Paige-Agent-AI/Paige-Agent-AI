@@ -10,6 +10,7 @@
 // re-proves it as the person who approved it and asks send-message to send exactly the bound row.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { releaseScheduledCommsEmail, scheduledDrainRoute, type ScheduledReleaseDependencies } from "../_shared/comms-email/adapter.ts";
+import { recordLeadReplySend, type LeadReplyApprovalAdmin } from "../comms-email-command/lead-reply-approval.ts";
 import { resolveCommsEmailParties, readCommsEmailReadiness, emailProvidersFor, type CommsEmailAdmin } from "../_shared/comms-email/readiness.ts";
 import { commsProviderExecutionAllowed } from "../_shared/comms-provider-boundary.ts";
 import { runPreSend } from "../_shared/pre-send-pipeline.ts";
@@ -68,6 +69,7 @@ const releaseDependencies: ScheduledReleaseDependencies = {
     return !error && (data as { closed?: unknown } | null)?.closed === true;
   },
   markSupportCase: async (messageId) => { await admin.rpc("mark_support_case_outbound", { _message_id: messageId }); },
+  recordAccepted: input => recordLeadReplySend(admin as unknown as LeadReplyApprovalAdmin,input),
 };
 
 const corsHeaders = {

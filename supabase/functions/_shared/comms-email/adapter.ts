@@ -13,6 +13,7 @@
 import { COMMS_EMAIL_ACTION, COMMS_EMAIL_SCHEDULED_RELEASE_GRACE_MS, UUID, canonicalCommsEmailSendAt, commsEmailBodyHtml, commsEmailContentDigest, parseCommsEmailCommand, type CommsEmailCommand } from "./contract.ts";
 import type { CommsEmailParties, CommsEmailReadiness } from "./readiness.ts";
 import { parseCommsEmailAttachmentManifest, type CommsEmailAttachmentManifest } from "./attachments.ts";
+import { commsEmailDraftSourcesEqual, parseCommsEmailDraftSource, type CommsEmailDraftSource } from "./draft-source.ts";
 
 type ObjectValue = Record<string, unknown>;
 const object = (v: unknown): ObjectValue | null => v && typeof v === "object" && !Array.isArray(v) ? v as ObjectValue : null;
@@ -55,6 +56,9 @@ export interface CommsEmailStoredCall {
   sendAt?: string;
   /** The files the person approved (their governed copies, sizes and sha256). Absent = no files. */
   attachments?: CommsEmailAttachmentManifest;
+  /** Existing row/version and exact server-read HTML covered by the same approved call. */
+  draftSource?: CommsEmailDraftSource;
+  draftBodyHtml?: string;
 }
 
 /** Re-parse the stored proposal arguments. Anything not exactly the shape the door stored refuses. */
@@ -82,8 +86,15 @@ export function parseCommsEmailStoredCall(args: unknown, tenantId: string): (Com
     if (!parsed || typeof a.attachments_digest !== "string" || !/^[0-9a-f]{64}$/.test(a.attachments_digest)) return null;
     attachments = parsed;
   }
+  let draftSource: CommsEmailDraftSource | undefined;
+  if ((a.draft_source === undefined) !== (a.draft_body_html === undefined)) return null;
+  if (a.draft_source !== undefined) {
+    try { draftSource = parseCommsEmailDraftSource(a.draft_source); } catch { return null; }
+    if (typeof a.draft_body_html !== "string" || !a.draft_body_html || a.draft_body_html.length > 100000 || a.draft_body_html.includes("\0")) return null;
+  }
   return { operationId: a.operation_id, command: command as CommsEmailCommand & { connector_id: string }, recipient: a.recipient, fromAddress: a.from_address, contentDigest: a.content_digest,
-    ...(sendAt ? { sendAt } : {}), ...(attachments ? { attachments } : {}) };
+    ...(sendAt ? { sendAt } : {}), ...(attachments ? { attachments } : {}),
+    ...(draftSource ? { draftSource, draftBodyHtml: a.draft_body_html as string } : {}) };
 }
 
 export interface CommsEmailExecutorInput {
@@ -118,6 +129,7 @@ const PREPARE_REFUSALS: [string, string][] = [
   ["COMMS_EMAIL_ATTACHMENTS_PROVIDER_UNSUPPORTED", "COMMS_EMAIL_ATTACHMENTS_PROVIDER_UNSUPPORTED"],
   ["COMMS_EMAIL_ATTACHMENTS_INVALID", "COMMS_EMAIL_ATTACHMENTS_INVALID"],
   ["COMMS_EMAIL_ATTACHMENTS_NOT_SUPPORTED", "COMMS_EMAIL_ATTACHMENTS_NOT_SUPPORTED"],
+  ...["COMMS_EMAIL_DRAFT_SOURCE_CHANGED", "COMMS_EMAIL_DRAFT_SOURCE_UNAVAILABLE", "COMMS_EMAIL_DRAFT_SOURCE_INVALID", "COMMS_EMAIL_DRAFT_OWNED_FLOW_REQUIRED"].map(code => [code, code] as [string, string]),
 ];
 
 export async function executeCommsEmailSend(input: CommsEmailExecutorInput, d: CommsEmailExecutorDependencies): Promise<ObjectValue> {
@@ -125,6 +137,12 @@ export async function executeCommsEmailSend(input: CommsEmailExecutorInput, d: C
   const refused = (reason: string) => ({ ok: false, outcome: "refused", operation_id: input.operationId, reason, delivery_confirmed: false });
   try {
     const { stored } = input;
+    let draftSource: CommsEmailDraftSource | undefined;
+    if ((stored.draftSource === undefined) !== (stored.draftBodyHtml === undefined)) return refused("COMMS_EMAIL_DRAFT_SOURCE_INVALID");
+    if (stored.draftSource !== undefined) {
+      try { draftSource = parseCommsEmailDraftSource(stored.draftSource); } catch { return refused("COMMS_EMAIL_DRAFT_SOURCE_INVALID"); }
+      if (typeof stored.draftBodyHtml !== "string" || !stored.draftBodyHtml || stored.draftBodyHtml.length > 100000 || stored.draftBodyHtml.includes("\0")) return refused("COMMS_EMAIL_DRAFT_SOURCE_INVALID");
+    }
     for (const id of [input.actorUserId, input.tenantId, input.operationId, stored.command.contact_id, stored.command.connector_id]) {
       if (typeof id !== "string" || !UUID.test(id)) return refused("COMMS_EMAIL_INVALID");
     }
@@ -132,6 +150,21 @@ export async function executeCommsEmailSend(input: CommsEmailExecutorInput, d: C
     if (input.governance.decision_receipt_recorded !== true || !await d.stillCurrent()) return refused("COMMS_EMAIL_AUTHORITY_UNAVAILABLE");
 
     const prior = object(await d.readResult(input.operationId));
+    if (prior && draftSource) {
+      // A terminal operation is not proof that THIS source/version/content was sent. Do not
+      // shortcut source validation on reload, nor prepare a replacement when it cannot be read.
+      if (prior.message_id !== draftSource.message_id) return unknown();
+      let binding: ObjectValue | null;
+      try { binding = object(await d.readBinding(draftSource.message_id)); } catch { return unknown(); }
+      if (!binding || binding.operation_id !== input.operationId || binding.tenant_id !== input.tenantId
+        || binding.actor_user_id !== input.actorUserId || binding.recipient !== stored.recipient
+        || binding.from_address !== stored.fromAddress || binding.content_digest !== stored.contentDigest
+        || binding.body_html !== stored.draftBodyHtml) return unknown();
+      try {
+        if (!commsEmailDraftSourcesEqual(parseCommsEmailDraftSource(object(binding.governance)?.draft_source), draftSource)
+          || JSON.stringify(parseCommsEmailCommand(binding.command)) !== JSON.stringify(parseCommsEmailCommand(stored.command))) return unknown();
+      } catch { return unknown(); }
+    }
     if (prior && prior.outcome !== "prepared") {
       return TERMINAL.has(String(prior.outcome)) ? commsEmailSafeResult(prior, { replayed: true }) : unknown();
     }
@@ -151,7 +184,7 @@ export async function executeCommsEmailSend(input: CommsEmailExecutorInput, d: C
       return { ok: false, outcome: readiness.state === "needs_setup" ? "needs_setup" : readiness.state === "held" && !readiness.reason.startsWith("BLOCKED_") ? "held" : "refused", operation_id: input.operationId, reason: readiness.reason, delivery_confirmed: false };
     }
 
-    const bodyHtml = commsEmailBodyHtml(stored.command.body);
+    const bodyHtml = draftSource ? stored.draftBodyHtml! : commsEmailBodyHtml(stored.command.body);
     const contentDigest = await commsEmailContentDigest({ recipient: stored.recipient, connectorId: stored.command.connector_id, subject: stored.command.subject, bodyText: stored.command.body });
     if (contentDigest !== stored.contentDigest) return refused("CONTENT_CHANGED");
     if (!await d.stillCurrent()) return refused("WORKSPACE_CHANGED");
@@ -165,10 +198,14 @@ export async function executeCommsEmailSend(input: CommsEmailExecutorInput, d: C
       _contact_id: stored.command.contact_id, _recipient: stored.recipient, _connector_id: stored.command.connector_id,
       _from_address: stored.fromAddress, _subject: stored.command.subject, _body_text: stored.command.body, _body_html: bodyHtml,
       _content_digest: contentDigest, _command: stored.command, _governance: input.governance,
-      ...(stored.attachments ? { _send_at: stored.sendAt ?? null, _attachments: stored.attachments } : stored.sendAt ? { _send_at: stored.sendAt } : {}),
+      // The REQUIRED new argument selects only the existing-draft overload. An old database
+      // must refuse before SQL executes, never silently choose its INSERT-only legacy path.
+      ...(draftSource ? { _send_at: stored.sendAt ?? null, _attachments: stored.attachments ?? null, _draft_source: draftSource }
+        : stored.attachments ? { _send_at: stored.sendAt ?? null, _attachments: stored.attachments } : stored.sendAt ? { _send_at: stored.sendAt } : {}),
     });
     if (error) {
       if (!answered(error)) return unknown(); // no answer: the prepare may have committed
+      if (draftSource && ["PGRST202", "42883"].includes(String(object(error)?.code))) return refused("COMMS_EMAIL_DRAFT_BINDING_UNAVAILABLE");
       const message = String(object(error)?.message ?? "");
       if (message.includes(COMMS_EMAIL_RECONCILIATION_CODE)) return unknown();
       const hit = PREPARE_REFUSALS.find(([needle]) => message.includes(needle));
@@ -176,6 +213,7 @@ export async function executeCommsEmailSend(input: CommsEmailExecutorInput, d: C
     }
     const prepared = object(data);
     if (!prepared || prepared.ok !== true || typeof prepared.message_id !== "string" || !UUID.test(prepared.message_id)) return unknown();
+    if (draftSource && prepared.message_id !== draftSource.message_id) return unknown();
     if (prepared.state !== "prepared") {
       if (!TERMINAL.has(String(prepared.state))) return unknown();
       return commsEmailSafeResult(await d.readResult(input.operationId), { replayed: true });
@@ -252,6 +290,10 @@ export interface ScheduledCommsEmailBinding {
   operationId: string; tenantId: string; actorUserId: string; contactId: string; connectorId: string;
   recipient: string; fromAddress: string; subject: string; bodyText: string; bodyHtml: string;
   contentDigest: string; sendAt: string; state: string;
+  draftSource?: CommsEmailDraftSource;
+  draftCommand?: CommsEmailCommand;
+  draftAttachments?: CommsEmailAttachmentManifest;
+  approvalId?: string;
 }
 
 /** The stored binding of a SCHEDULED governed email (one carrying a canonical send_at), or null. */
@@ -268,11 +310,33 @@ export function parseScheduledCommsEmailBinding(value: unknown): ScheduledCommsE
   let sendAt: string;
   try { sendAt = canonicalCommsEmailSendAt(b.send_at); } catch { return null; }
   if (sendAt !== b.send_at) return null;
+  let draftSource: CommsEmailDraftSource | undefined;
+  let draftCommand: CommsEmailCommand | undefined;
+  let draftAttachments: CommsEmailAttachmentManifest | undefined;
+  const governance = object(b.governance);
+  let approvalId:string|undefined;
+  if (governance && Object.prototype.hasOwnProperty.call(governance, "draft_source")) {
+    try { draftSource = parseCommsEmailDraftSource(governance.draft_source); } catch { return null; }
+    if ((b.body_html as string).length > 100000 || (b.body_html as string).includes("\0")) return null;
+    try { draftCommand = parseCommsEmailCommand(b.command); } catch { return null; }
+    if (draftCommand.contact_id !== b.contact_id || draftCommand.connector_id !== b.connector_id
+      || draftCommand.subject !== b.subject || draftCommand.body !== b.body_text) return null;
+    if (b.attachments !== undefined && b.attachments !== null) {
+      const manifest = parseCommsEmailAttachmentManifest(b.attachments, b.tenant_id as string, b.operation_id as string);
+      if (!manifest) return null;
+      draftAttachments = manifest;
+    }
+    if (b.approval_id!==undefined && b.approval_id!==null) {
+      if (typeof b.approval_id!=="string" || !UUID.test(b.approval_id) || governance.approval_id!==b.approval_id) return null;
+      approvalId=b.approval_id;
+    } else if (governance.approval_id!==undefined && governance.approval_id!==null) return null;
+  }
   return {
     operationId: b.operation_id as string, tenantId: b.tenant_id as string, actorUserId: b.actor_user_id as string,
     contactId: b.contact_id as string, connectorId: b.connector_id as string, recipient: b.recipient as string,
     fromAddress: b.from_address as string, subject: b.subject as string, bodyText: b.body_text as string,
     bodyHtml: b.body_html as string, contentDigest: b.content_digest, sendAt, state: b.state as string,
+    ...(draftSource ? { draftSource, draftCommand, ...(draftAttachments ? { draftAttachments } : {}), ...(approvalId?{approvalId}:{}) } : {}),
   };
 }
 
@@ -299,11 +363,13 @@ export interface ScheduledReleaseDependencies {
   closeRefused(input: { messageId: string; operationId: string; reason: string }): Promise<boolean>;
   /** Best-effort: the thread's support case (if any) now awaits the customer. Never blocks. */
   markSupportCase(messageId: string): Promise<void>;
+  /** Original approval bookkeeping only, after accepted readback. Never sends. */
+  recordAccepted?(input:{approvalId:string;operationId:string;actorUserId:string}):Promise<"recorded"|"pending_record">;
 }
 
 export type ScheduledReleaseResult =
   /** The email service accepted it (never "delivered"). */
-  | { result: "released" }
+  | { result: "released"; record_status?:"recorded"|"pending_record" }
   /** Closed as refused with this code: nothing went out. */
   | { result: "refused"; reason: string }
   /** Nothing written; the next lease (or a person) decides. `reason` says why, for the drain's log. */
@@ -350,6 +416,8 @@ const releaseReason = (code: string | null | undefined, fallback: string) => {
 export async function releaseScheduledCommsEmail(rawBinding: unknown, messageId: string, d: ScheduledReleaseDependencies): Promise<ScheduledReleaseResult> {
   const binding = parseScheduledCommsEmailBinding(rawBinding);
   if (!binding || typeof messageId !== "string" || !UUID.test(messageId)) return { result: "invalid" };
+  if (binding.draftSource && binding.draftSource.message_id !== messageId.toLowerCase()) return { result: "invalid" };
+  if (binding.approvalId && !d.recordAccepted) return {result:"left",reason:"approval_recorder_unavailable"};
   const refuse = async (reason: string): Promise<ScheduledReleaseResult> =>
     await d.closeRefused({ messageId, operationId: binding.operationId, reason }).catch(() => false)
       ? { result: "refused", reason } : { result: "left", reason: `close_unrecorded:${reason}` };
@@ -375,6 +443,13 @@ export async function releaseScheduledCommsEmail(rawBinding: unknown, messageId:
     if (!fresh) return { result: "left", reason: "binding_unreadable" };
     if (fresh.state !== "prepared") return { result: "settled" };
     if (fresh.operation_id !== binding.operationId || fresh.send_at !== binding.sendAt) return { result: "left", reason: "binding_moved" };
+    if (binding.draftSource) {
+      // Rich HTML comes from the original server-read/approved binding, never a later
+      // regeneration. Revalidate the entire canonical snapshot after the actor/origin
+      // reader's lock wait; a changed or unreadable snapshot cannot authorize transport.
+      const current = parseScheduledCommsEmailBinding(fresh);
+      if (!current || JSON.stringify(current) !== JSON.stringify(binding)) return { result: "left", reason: "binding_moved" };
+    }
     if (fresh.eligible !== true) return await refuse("send_no_longer_eligible");
 
     let allowed: boolean;
@@ -395,7 +470,7 @@ export async function releaseScheduledCommsEmail(rawBinding: unknown, messageId:
     if (!readiness.eligible) return await refuse(releaseReason(readiness.reason, "send_no_longer_eligible"));
 
     const digest = await commsEmailContentDigest({ recipient: binding.recipient, connectorId: binding.connectorId, subject: binding.subject, bodyText: binding.bodyText });
-    if (digest !== binding.contentDigest || commsEmailBodyHtml(binding.bodyText) !== binding.bodyHtml) return await refuse("content_changed");
+    if (digest !== binding.contentDigest || (!binding.draftSource && commsEmailBodyHtml(binding.bodyText) !== binding.bodyHtml)) return await refuse("content_changed");
 
     let answer: { answered: boolean; code: string | null } = { answered: false, code: null };
     try {
@@ -410,8 +485,16 @@ export async function releaseScheduledCommsEmail(rawBinding: unknown, messageId:
     const after = await read();
     if (after === "seat_gone" || !after) return { result: "left", reason: "readback_unavailable" };
     if (after.state === "provider_accepted") {
+      let recordStatus:"recorded"|"pending_record"|undefined;
+      if (binding.approvalId) {
+        const accepted=parseScheduledCommsEmailBinding(after);
+        if (!accepted || JSON.stringify({...accepted,state:binding.state})!==JSON.stringify(binding)) return {result:"left",reason:"accepted_binding_moved"};
+        recordStatus="pending_record";
+        try { recordStatus=await d.recordAccepted!({approvalId:binding.approvalId,operationId:binding.operationId,actorUserId:binding.actorUserId}); }
+        catch { /* Accepted stays accepted; original operation can repair only its record. */ }
+      }
       try { await d.markSupportCase(messageId); } catch { /* the next inbound re-syncs the case */ }
-      return { result: "released" };
+      return { result: "released",...(recordStatus?{record_status:recordStatus}:{}) };
     }
     if (after.state !== "prepared") return { result: "settled" };
     // Still prepared: no claim admitted it. Only an ANSWERED send-message proves that; an unanswered

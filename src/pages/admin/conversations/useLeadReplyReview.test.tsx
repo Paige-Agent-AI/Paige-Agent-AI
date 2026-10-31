@@ -1,7 +1,7 @@
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { useLeadReplyReview } from "./useLeadReplyReview";
+import { useLeadReplyReview, readSavedReplyApproval } from "./useLeadReplyReview";
 
 const db = vi.hoisted(() => ({ invoke: vi.fn(), from: vi.fn(), getUser:vi.fn(),rpc:vi.fn(),auth:null as null|((event:string)=>void), row: null as Record<string, unknown> | null, filters: [] as unknown[][] }));
 vi.mock("@/integrations/supabase/client", () => ({ supabase: { functions: { invoke: db.invoke }, from: db.from,rpc:db.rpc,auth:{getUser:db.getUser,onAuthStateChange:(cb:(event:string)=>void)=>{db.auth=cb;return{data:{subscription:{unsubscribe:vi.fn()}}};}} } }));
@@ -13,6 +13,38 @@ const approval = "44444444-4444-4444-8444-444444444444";
 const fingerprint = "abcdef0123456789";
 const actor="88888888-8888-4888-8888-888888888888";
 const base = { actorId:actor,tenantId: tenant, contactId: contact, threadKey: `contact:${tenant}:${contact}`, approvalId: approval, connectorId: connector, channel: "email", subject: "Your inquiry", body: "Thanks for asking. Here is the next step.", attachmentCount: 0, uploading: false, scheduledFor: null, signatureEnabled: false, disabled: false };
+
+describe("saved draft original approval navigation",()=>{
+  const actionId="99999999-9999-4999-8999-999999999999";
+  const context={tenantId:tenant,contactId:contact,actionId};
+  const action=()=>({id:actionId,tenant_id:tenant,contact_id:contact,approval_id:approval,action_kind:"owner.lead_followup"});
+  const queued=()=>({id:approval,tenant_id:tenant,contact_id:contact,status:"pending",metadata:{action_id:actionId}});
+  function rows(a:Record<string,unknown>,p:Record<string,unknown>,afterRead?:()=>void){
+    db.from.mockImplementation((table)=>{
+      const q:Record<string,unknown>={};
+      for(const name of ["select","eq"])q[name]=(...args:unknown[])=>{db.filters.push([table,name,...args]);return q;};
+      q.limit=async()=>{afterRead?.();return {data:[table==="paige_actions"?a:p],error:null};};return q;
+    });
+  }
+  it("reuses only the exact pending original backlink through caller-scoped readers",async()=>{
+    rows(action(),queued());expect(await readSavedReplyApproval(context,()=>true)).toBe(approval);
+    expect(db.filters).toContainEqual(["paige_actions","eq","tenant_id",tenant]);
+    expect(db.filters).toContainEqual(["paige_actions","eq","contact_id",contact]);
+    expect(db.filters).toContainEqual(["paige_approval_queue_v","eq","id",approval]);
+    expect(db.invoke).not.toHaveBeenCalled();
+  });
+  it("foreign records, wrong kinds, stale approvals and changed backlinks never supply an approval",async()=>{
+    for(const [a,p] of [
+      [{...action(),tenant_id:actor},queued()], [{...action(),contact_id:actor},queued()],
+      [{...action(),action_kind:"sales.work_followup"},queued()], [action(),{...queued(),status:"approved"}],
+      [action(),{...queued(),tenant_id:actor}], [action(),{...queued(),metadata:{action_id:actor}}],
+    ]){rows(a,p);expect(await readSavedReplyApproval(context,()=>true)).toBeNull();}
+  });
+  it("a revoked composer scope between either read cannot repopulate its draft",async()=>{
+    for(const stopAfter of [1,2]){let count=0;rows(action(),queued(),()=>{count++;});
+      expect(await readSavedReplyApproval(context,()=>count<stopAfter)).toBeNull();}
+  });
+});
 type Input = Parameters<typeof useLeadReplyReview>[0];
 let host: HTMLDivElement;
 let root: Root;
@@ -60,6 +92,19 @@ function originalPorts(value:ReturnType<typeof originalRecord>){
 }
 const historyInput=(value:unknown)=>({originalRecord:value} as Partial<Input>);
 describe("reloaded protected original recording",()=>{
+  it("a rich scheduled saved reply reopens its exact files and finishes only the original record",async()=>{
+    const value=originalRecord(),html=`<p><strong>${base.body}</strong></p>`,send_at="2026-10-30T16:30:00.000Z";
+    const files=[{path:`${tenant}/governed/${originalOp}/1-evidence.pdf`,source_path:`${tenant}/90000000-0000-4000-8000-000000000001-evidence.pdf`,name:"evidence.pdf",mime:"application/pdf",size:17,sha256:"a".repeat(64)}];
+    Object.assign(value.message,{body_html:html,attachments:files.map(f=>({url:f.path,name:f.name,mime:f.mime,size:f.size}))});
+    Object.assign(value.message.original_binding,{body_html:html,send_at,attachments:files});
+    Object.assign(value.message.original_binding.governance,{draft_source:{message_id:originalMessage,updated_at:"2026-10-30T16:00:00.123456Z"}});
+    originalPorts(value);await render(historyInput(value));
+    expect(host.textContent).toContain("evidence.pdf");expect(host.textContent).toContain("approval record is still unconfirmed");
+    await click("Finish recording reply");
+    expect(host.textContent).toContain("The original accepted reply is recorded");
+    expect(db.rpc.mock.calls.filter(([name])=>name==="lead_reply_record_send").map(([,args])=>args)).toEqual([{_approval_id:approval,_operation_id:originalOp}]);
+    expect(db.invoke).not.toHaveBeenCalled();
+  });
   it("a historical status control honors a current record hold",async()=>{const value=originalRecord();originalPorts(value);await render({...historyInput(value),disabled:true});expect([...host.querySelectorAll('button')].find(b=>b.textContent==="Check sending status")?.disabled).toBe(true);const before=db.filters.length;await click("Check sending status");expect(db.filters).toHaveLength(before);expect(db.invoke).not.toHaveBeenCalled();});
   it.each(["actor-read","tenant-read"])("an observed historical status hold during %s retires the read and releases only its owned busy token",async read=>{const value=originalRecord();originalPorts(value);await render(historyInput(value));let finish!:(v:unknown)=>void;if(read==="actor-read")db.getUser.mockReturnValueOnce(new Promise(done=>{finish=done;}));else db.rpc.mockReturnValueOnce(new Promise(done=>{finish=done;}));await act(async()=>{[...host.querySelectorAll('button')].find(b=>b.textContent==="Check sending status")!.click();for(let i=0;i<8;i++)await Promise.resolve();});await render({disabled:true});await render({disabled:false});await act(async()=>{finish(read==="actor-read"?{data:{user:{id:actor}},error:null}:{data:tenant,error:null});for(let i=0;i<24;i++)await Promise.resolve();});expect(db.filters).toHaveLength(0);expect(api.busy).toBe(false);expect(db.invoke).not.toHaveBeenCalled();expect(db.rpc.mock.calls.filter(([name])=>name==="lead_reply_record_send")).toHaveLength(0);});
   it("records the original accepted reply after reload through only the existing record RPC",async()=>{
@@ -90,6 +135,29 @@ describe("reloaded protected original recording",()=>{
   it.each(["declined","approved"])("a %s PPA without exact canonical original recording cannot enable record continuation",async status=>{const value=originalRecord();value.approval.status=status;originalPorts(value);await render(historyInput(value));expect(host.textContent).not.toContain("Finish recording reply");await prepare();expect(db.invoke).not.toHaveBeenCalled();});
   it.each(["actorId","tenantId","threadKey"]as const)("observed %s A-B-A cannot lend current authority to an old recovered action",async field=>{const value=originalRecord();originalPorts(value);await render(historyInput(value));let finish!:(v:unknown)=>void;db.getUser.mockReturnValueOnce(new Promise(done=>{finish=done;}));await act(async()=>{[...host.querySelectorAll('button')].find(b=>b.textContent==="Finish recording reply")!.click();});await render({[field]:"other"});await render({[field]:base[field]});await act(async()=>{finish({data:{user:{id:actor}},error:null});for(let i=0;i<25;i++)await Promise.resolve();});expect(db.rpc.mock.calls.filter(([name])=>name==="lead_reply_record_send")).toHaveLength(0);expect(db.invoke).not.toHaveBeenCalled();expect(api.busy).toBe(false);});
   it.each(["error","missing-action","duplicate-action","foreign-approval","truncated"])("unavailable exact original %s read never reaches record writer",async kind=>{const value=originalRecord();originalPorts(value);await render(historyInput(structuredClone(value)));const read=db.from.getMockImplementation()!;db.from.mockImplementation(table=>{if(kind==="foreign-approval")value.approval.tenant_id=contact;const q=read(table);if((kind==="error"&&table==="messages")||(kind.includes("action")&&table==="paige_actions")||(kind==="truncated"&&table==="messages"))q.then=(done:(v:unknown)=>unknown)=>Promise.resolve({data:kind==="truncated"?Array.from({length:21},()=>value.message):kind==="duplicate-action"?[value.action,value.action]:[],error:kind==="error"?{message:"private"}:null}).then(done);return q;});await click("Finish recording reply");expect(db.rpc.mock.calls.filter(([name])=>name==="lead_reply_record_send")).toHaveLength(0);expect(db.invoke).not.toHaveBeenCalled();expect(host.textContent).not.toContain("private");});
+});
+
+describe("original inbound saved reply receipt recovery",()=>{
+ function inboundRecord(){const value=originalRecord();
+  value.action.action_kind="comms-draft-reply";value.approval.category="comms-draft-reply";
+  value.message.original_binding.origin_action_kind="comms-draft-reply";
+  Object.assign(value.action,{channel_type:"email"});Object.assign(value.message,{action_id:originAction,original_source:"comms-draft-reply"});
+  Object.assign(value.message.original_binding.governance,{draft_source:{message_id:originalMessage,updated_at:"2026-10-30T16:00:00.123456Z"}});return value;
+ }
+ it("reopens and records only the original inbound receipt without a transport attempt",async()=>{
+  const value=inboundRecord();originalPorts(value);await render(historyInput(value));
+  expect(host.textContent).toContain("Accepted by the email service");await click("Finish recording reply");
+  expect(db.rpc).toHaveBeenCalledWith("lead_reply_record_send",{_approval_id:approval,_operation_id:originalOp});expect(db.invoke).not.toHaveBeenCalled();
+ });
+ it.each(["channel","source","action","binding-source"])("refuses changed inbound %s before record recovery",async kind=>{
+  const value=inboundRecord();
+  if(kind==="channel")Object.assign(value.action,{channel_type:"sms"});
+  if(kind==="source")Object.assign(value.message,{original_source:"another-producer"});
+  if(kind==="action")Object.assign(value.message,{action_id:contact});
+  if(kind==="binding-source")Object.assign(value.message.original_binding.governance,{draft_source:{message_id:contact,updated_at:"2026-10-30T16:00:00.123456Z"}});
+  originalPorts(value);await render(historyInput(value));expect(host.textContent).not.toContain("Accepted by the email service");
+  expect(db.rpc.mock.calls.filter(([name])=>name==="lead_reply_record_send")).toHaveLength(0);expect(db.invoke).not.toHaveBeenCalled();
+ });
 });
 
 describe("lead reply through the existing approval door", () => {

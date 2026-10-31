@@ -13,7 +13,9 @@
 import { COMMS_EMAIL_SEND_CAPABILITY } from "../paige-spine/domains/comms.ts";
 import { PORTAL_INVITATION_TOOLS, PORTAL_INVITATION_TOOL_NAMES, dispatchPortalInvitationChat } from "../client-portal-invitation/chat.ts";
 import { CRM_APPROVAL_CANDIDATE_LIMIT, resolveCrmApprovedFingerprint } from "../crm-command/approval-resolution.ts";
-import { COMMS_EMAIL_ACTION, COMMS_EMAIL_BODY_MAX, COMMS_EMAIL_SUBJECT_MAX, COMMS_EMAIL_TOOL, FINGERPRINT, UUID, canonicalCommsEmailSendAt, parseCommsEmailCommand, type CommsEmailCommand } from "./contract.ts";
+import { COMMS_EMAIL_ACTION, COMMS_EMAIL_BODY_MAX, COMMS_EMAIL_SUBJECT_MAX, COMMS_EMAIL_TOOL, FINGERPRINT, UUID, canonicalCommsEmailSendAt, parseCommsEmailCommand, parseCommsEmailAttachmentRequest, type CommsEmailCommand } from "./contract.ts";
+import { parseCommsEmailDraftSource, type CommsEmailDraftSource } from "./draft-source.ts";
+import { parseCommsEmailAttachmentManifest } from "./attachments.ts";
 
 const DOOR = "comms-email-command";
 
@@ -25,6 +27,9 @@ const DESCRIPTIONS: Record<string, Record<string, unknown>> = {
   contact_id: { type: "string", format: "uuid", description: "The id of ONE existing contact in this workspace, from a contact read. Never guess it from a name." },
   subject: { type: "string", minLength: 1, maxLength: COMMS_EMAIL_SUBJECT_MAX, description: "One-line subject, no line breaks." },
   body: { type: "string", minLength: 1, maxLength: COMMS_EMAIL_BODY_MAX, description: "The email body as plain text. Blank lines separate paragraphs. No HTML." },
+  draft_source:{...kitProperties.draft_source as object,description:"Only an exact original draft id and raw updated_at from a current permitted source read. Never guess or truncate its version; absent creates a fresh email."},
+  save_draft:{...kitProperties.save_draft as object,description:"True only when asked to save unsent changes to the exact saved source. This does not approve, schedule dispatch or send an email."},
+  attachments:{...kitProperties.attachments as object,description:"Existing permitted upload paths only. Omit to retain a saved source's files; [] explicitly removes them from that draft. Never URLs or provider identifiers."},
   connector_id: { type: "string", format: "uuid", description: "Omit unless this tool returned a list of sender addresses and the person chose one; then pass that choice's connector_id." },
   send_at: { ...kitProperties.send_at as object, description: "Only when the person asked for a later time. First read the business time zone with read_business_time_zone and confirm the time in words with the person. Then give it as ISO 8601 with the UTC offset in force on the TARGET date in that zone (daylight saving can differ from today's offset), 2 minutes to 30 days ahead. Leave it out to send on approval." },
 };
@@ -58,11 +63,11 @@ function canonical(value: unknown): unknown {
   return value;
 }
 /** Assistant/tool transcript growth cannot mint a second operation for the same user command. */
-export async function commsEmailOperationId(tenant: string, actor: string, command: unknown, turn: Turn, origin?: { action_id: string; approval_id: string }, sendAt?: string): Promise<string> {
+export async function commsEmailOperationId(tenant: string, actor: string, command: unknown, turn: Turn, origin?: { action_id: string; approval_id: string }, sendAt?: string, draft?:unknown): Promise<string> {
   // Omission retains the incumbent unbound identity byte for byte. A server-bound follow-up
   // adds its exact action/approval pair, so identical words cannot borrow another follow-up.
   // A canonical send time does the same: the same words for another minute are another email.
-  const bytes = new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(JSON.stringify(canonical({ namespace: "comms_email_chat_v1", tenant, actor, command, turn, ...(origin ? { origin } : {}), ...(sendAt ? { send_at: sendAt } : {}) }))))).slice(0, 16);
+  const bytes = new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(JSON.stringify(canonical({ namespace: "comms_email_chat_v1", tenant, actor, command, turn, ...(origin ? { origin } : {}), ...(sendAt ? { send_at: sendAt } : {}),...(draft!==undefined?{draft}:{}) }))))).slice(0, 16);
   bytes[6] = (bytes[6] & 15) | 64; bytes[8] = (bytes[8] & 63) | 128;
   const hex = [...bytes].map((b) => b.toString(16).padStart(2, "0")).join("");
   return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
@@ -129,7 +134,7 @@ function previewFiles(value: unknown): PreviewFile[] | null {
   return out;
 }
 /** The card's email preview, narrowed to exactly the fields the person approves. Null when malformed. */
-export function commsEmailConfirmPreview(value: unknown): { kind: "email"; to_name?: string; to_address: string; from_address: string; subject: string; body_text: string; send_at?: string; attachments?: PreviewFile[] } | null {
+export function commsEmailConfirmPreview(value: unknown): { kind: "email"; to_name?: string; to_address: string; from_address: string; subject: string; body_text: string; body_html?:string; send_at?: string; attachments?: PreviewFile[] } | null {
   if (!value || typeof value !== "object" || Array.isArray(value)) return null;
   const p = value as Record<string, unknown>;
   const to = text(p.to_address, 320), from = text(p.from_address, 320), subject = text(p.subject, COMMS_EMAIL_SUBJECT_MAX), body = text(p.body_text, COMMS_EMAIL_BODY_MAX);
@@ -138,9 +143,10 @@ export function commsEmailConfirmPreview(value: unknown): { kind: "email"; to_na
   // A time or file list the card cannot show faithfully drops the whole preview, never just itself.
   const sendAt = p.send_at === undefined ? undefined : canonicalSendAt(p.send_at);
   const files = p.attachments === undefined ? undefined : previewFiles(p.attachments);
-  if (sendAt === null || files === null) return null;
+  const html=p.body_html===undefined?undefined:text(p.body_html,100000);
+  if (sendAt === null || files === null || html===null || html?.includes("\0")) return null;
   return { kind: "email", ...(typeof p.to_name === "string" && p.to_name ? { to_name: p.to_name } : {}), to_address: to, from_address: from, subject, body_text: body,
-    ...(sendAt ? { send_at: sendAt } : {}), ...(files ? { attachments: files } : {}) };
+    ...(html?{body_html:html}:{}),...(sendAt ? { send_at: sendAt } : {}), ...(files ? { attachments: files } : {}) };
 }
 
 const CODE = /^[A-Z][A-Z0-9_]{0,63}$/;
@@ -237,7 +243,7 @@ function readSenders(value: unknown): { connector_id: string; from_address: stri
   });
 }
 
-const MODEL_KEYS = new Set(["contact_id", "subject", "body", "connector_id", "send_at"]);
+const MODEL_KEYS = new Set(["contact_id", "subject", "body", "connector_id", "send_at", "draft_source", "save_draft", "attachments"]);
 /** Door outcomes that guarantee nothing was dispatched for this operation. */
 const NOT_SENT_OUTCOMES = new Set<unknown>(["refused", "held", "needs_setup", "failed"]);
 
@@ -253,6 +259,22 @@ export async function dispatchCommsEmailChat(ctx: CommsEmailChatContext, deps: C
   const modelArgs = { ...ctx.args };
   if (typeof modelArgs.confirm === "boolean") delete modelArgs.confirm;
   if (Object.keys(modelArgs).some((key) => !MODEL_KEYS.has(key))) return { content: { success: false, error: "Invalid email request. Pass only contact_id, subject, body, send_at when the person asked for a later time and, when the person chose a sender, connector_id." } };
+  let source:CommsEmailDraftSource|undefined,files:{path:string}[]|undefined;
+  const modelPinned=own(ctx,"pinned");
+  const saveDraft=!modelPinned&&modelArgs.save_draft===true;
+  try{
+    // An approved C4b selection executes its stored call. New model file/source
+    // suggestions cannot replace it or reinterpret that approval as a draft save.
+    if(!modelPinned){
+    if(own(modelArgs,"draft_source"))source=parseCommsEmailDraftSource(modelArgs.draft_source);
+    if(own(modelArgs,"save_draft")&&typeof modelArgs.save_draft!=="boolean")throw Error("invalid_save");
+    if(saveDraft&&!source)throw Error("save_requires_source");
+    if(own(modelArgs,"attachments")){
+      const paths=source&&Array.isArray(modelArgs.attachments)&&modelArgs.attachments.length===0?[]:parseCommsEmailAttachmentRequest(modelArgs.attachments,tenantId);
+      files=paths.map(path=>({path}));
+    }
+    }
+  }catch{return {content:{success:false,outcome:"refused",error:"Reopen the exact original draft and its permitted files before changing it. Nothing was sent."}};}
   // Null is a model's way of leaving it out; anything else must be a real instant with an offset.
   let sendAt: string | undefined;
   if (modelArgs.send_at !== undefined && modelArgs.send_at !== null) {
@@ -275,11 +297,13 @@ export async function dispatchCommsEmailChat(ctx: CommsEmailChatContext, deps: C
     return !withdrawn;
   };
   const hasOrigin = own(ctx, "followupOrigin"), hasPin = own(ctx, "pinned");
-  let original = hasOrigin || hasPin;
+  let original = hasOrigin || hasPin || source!==undefined;
   const refuse = (reason: Refusal): CommsEmailChatResult => refusal(reason, original);
   const origin = hasOrigin ? readOrigin(ctx.followupOrigin) : null;
   let turn: Turn;
   try { turn = canonical(ctx.turn) as Turn; } catch { return refuse("unclaimable"); }
+  if(source&&(!uuid(userId)||!uuid(turn?.thread_id)||!isCurrent(true)))return refuse("unclaimable");
+  if(saveDraft&&(hasPin||ctx.approved.size>0))return refuse("unclaimable");
   if (hasOrigin && (!origin || origin.tenantId !== uuid(tenantId) || origin.actorId !== uuid(userId) || origin.threadId !== uuid(turn?.thread_id))) return refuse("unclaimable");
   if (!isCurrent(original)) return refuse("unclaimable");
   let pin: { fingerprint: string; args: Record<string, unknown> } | undefined;
@@ -314,7 +338,7 @@ export async function dispatchCommsEmailChat(ctx: CommsEmailChatContext, deps: C
       for (const row of rows) {
         if (!record(row) || typeof row.fingerprint !== "string" || !FINGERPRINT.test(row.fingerprint) || seen.has(row.fingerprint) || !record(row.args)) return { ...refuse("unclaimable"), tokens };
         seen.add(row.fingerprint);
-        if (own(row.args, "approval_id")) original = true;
+        if (own(row.args, "approval_id") || own(row.args, "draft_source")) original = true;
         storedApproval(row.args); // Malformed presence cannot disappear during selection.
         for (const token of approved) if (token.split(":")[0] === row.fingerprint) tokens.push(token);
       }
@@ -349,6 +373,7 @@ export async function dispatchCommsEmailChat(ctx: CommsEmailChatContext, deps: C
   let spent: string | undefined;
   try {
     if (approvedArgs) {
+      if(own(approvedArgs,"save_draft"))return {...refuse("unclaimable"),tokens};
       if (approvedArgs.expected_tenant_id !== tenantId || typeof approvedArgs.operation_id !== "string" || !UUID.test(approvedArgs.operation_id) || !fingerprint || !FINGERPRINT.test(fingerprint)) return { ...refuse("unclaimable"), tokens };
       command = parseCommsEmailCommand(approvedArgs.command);
       const approvalId = storedApproval(approvedArgs);
@@ -356,11 +381,25 @@ export async function dispatchCommsEmailChat(ctx: CommsEmailChatContext, deps: C
       if (approvalId && (!uuid(userId) || !uuid(turn?.thread_id) || !isCurrent(true))) return { ...refuse("unclaimable"), tokens };
       // The stored time, exactly as stored: the door re-reads it and refuses one it did not store.
       body = { expected_tenant_id: tenantId, operation_id: approvedArgs.operation_id, command, approved_fingerprint: fingerprint, ...(approvalId ? { approval_id: approvalId } : {}), ...(own(approvedArgs, "send_at") ? { send_at: approvedArgs.send_at } : {}) };
+      if(own(approvedArgs,"draft_source")){
+        original=true;
+        if(!uuid(userId)||!uuid(turn?.thread_id)||!isCurrent(true))return {...refuse("unclaimable"),tokens};
+        body.draft_source=parseCommsEmailDraftSource(approvedArgs.draft_source);
+      }
+      if(own(approvedArgs,"attachments")){
+        const manifest=parseCommsEmailAttachmentManifest(approvedArgs.attachments,tenantId,approvedArgs.operation_id);
+        if(!manifest)throw Error("invalid_original_files");
+        body.attachments=manifest.map(file=>({path:file.source_path}));
+      }else if(body.draft_source)body.attachments=[];
       spent = [...approved].find((token) => token.split(":")[0] === fingerprint);
     } else {
       command = parseCommsEmailCommand({ action: COMMS_EMAIL_ACTION, contact_id: modelArgs.contact_id, connector_id: modelArgs.connector_id ?? null, subject: modelArgs.subject, body: modelArgs.body });
       if (origin && command.contact_id !== origin.contactId) return refuse("unclaimable");
       body = { expected_tenant_id: tenantId, operation_id: await commsEmailOperationId(tenantId, userId, command, turn, origin ? { action_id: origin.actionId, approval_id: origin.approvalId } : undefined, sendAt), command, ...(origin ? { approval_id: origin.approvalId } : {}), ...(sendAt ? { send_at: sendAt } : {}) };
+      if(source||files!==undefined){
+        body.operation_id=await commsEmailOperationId(tenantId,userId,command,turn,origin?{action_id:origin.actionId,approval_id:origin.approvalId}:undefined,sendAt,{...(source?{source}:{}),...(files!==undefined?{files}:{}),...(saveDraft?{save_draft:true}:{})});
+        if(source)body.draft_source=source;if(files!==undefined)body.attachments=files;if(saveDraft)body.save_draft=true;
+      }
     }
   } catch {
     return approvedArgs ? { ...refuse("unclaimable"), tokens } : { content: { success: false, error: "Invalid email request. contact_id must be a contact's id from a contact read; subject is one line of at most 200 characters; body is plain text of at most 10000 characters." }, tokens };
@@ -379,8 +418,19 @@ export async function dispatchCommsEmailChat(ctx: CommsEmailChatContext, deps: C
     }
     if (!data || typeof data !== "object" || Array.isArray(data)) throw new Error("unanswered");
     const result = data as Record<string, unknown>;
+    if(saveDraft){
+      if(result.ok===true&&result.outcome==="draft_saved"&&result.operation_id===body.operation_id&&typeof result.receipt_id==="string"&&UUID.test(result.receipt_id)){
+        const saved=parseCommsEmailDraftSource(result.draft_source);
+        if(saved.message_id!==source?.message_id)throw Error("saved_source_changed");
+        return {content:{success:true,outcome:"draft_saved",draft_source:saved,receipt_id:result.receipt_id,replayed:result.replayed===true,delivery_confirmed:false,
+          note:"Saved the unsent changes on the original draft. Nothing was sent or approved. Reopen this draft to review its saved version before sending."}};
+      }
+      return {content:{success:false,outcome:result.outcome==="refused"?"refused":"outcome_unknown",delivery_confirmed:false,
+        note:"This save has no verified completed result. Reopen the original draft and check its saved version and recorded status before further changes. Do not retry a different operation automatically."}};
+    }
     if (result.outcome === "approval_required" && typeof result.fingerprint === "string" && FINGERPRINT.test(result.fingerprint)) {
       const preview = commsEmailConfirmPreview(result.preview);
+      if(body.draft_source&&!preview)return {tokens,content:{success:false,outcome:"refused",not_applied:true,delivery_confirmed:false,note:"The exact saved email could not be shown for review. Nothing was approved or sent by this request. Reopen the original draft; do not use a replacement sender or tool."}};
       return { tokens, spent, content: { success: false, needs_confirm: true, requires_operator_approval: true, confirm_fingerprint: result.fingerprint,
         confirm_summary: typeof result.summary === "string" && result.summary ? result.summary : "Approve this email", ...(preview ? { confirm_preview: preview } : {}),
         note: "Show the Needs your OK card. Nothing was sent yet. Do not call this tool again until the person approves." } };
@@ -419,6 +469,7 @@ export async function dispatchCommsEmailChat(ctx: CommsEmailChatContext, deps: C
     const notApplied = NOT_SENT_OUTCOMES.has(result.outcome) ? { not_applied: true } : {};
     return { tokens, spent, content: withReplay({ ...safe, success: false, ...notApplied, note: notSentNote(result.reason, result.code) }) };
   } catch {
+    if(saveDraft)return {content:{success:false,outcome:"outcome_unknown",delivery_confirmed:false,note:"The draft save could not be verified in this scope. Reopen the original draft before further changes; do not create a replacement automatically."}};
     return { tokens, spent, content: { success: false, outcome: "outcome_unknown", delivery_confirmed: false, note: `The email request has no verified response. ${UNKNOWN_NOTE}` } };
   }
 }

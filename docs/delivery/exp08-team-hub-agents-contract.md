@@ -2648,3 +2648,66 @@ source-only reviewer found no new material issue after the two guard repairs;
 that is not independent execution or publication clearance. Native helper/member-add/
 post candidates remain unversioned/unpublished. All remaining gates above, actual
 both-chat producer consumers and full original assignment remain STILL CODING.
+
+#### Same outcome4: original create/join/agent-DM context, unpublished
+
+Actual production source pins were re-read: create `66c82c0a843b9bf98aa8e18f7ab4c2a2`,
+join `b28a684657c15f092295c9a3b9f124c5`, agent-DM
+`84c7aed2b04bf0098c77105f6e7ea1d8`. Each original writer has a separately reproduced
+local native current-context failure, with original positive, actual database wait
+and persisted effect readback. No authenticated or production incident is claimed.
+Detailed mechanics remain in the local proof. Before-log SHA256s:
+create `b7da0fe5935f9685dfa8adc96084eabdf236bb07ae3163003ff1f890e0212d93`;
+join `203500f34e17791ee0eed6d7b9f88b5f61bc7fd5aae5ef0ee616bce5cf96e934`;
+agent-DM `76dd141ee1c3794c73be0b9afcf13db1cc194427f2a47da1f8b96e95bfcf5a59`.
+
+Three new INERT original-writer-only patches use existing admission/identity/profile
+rows, whole-source inverse and original ABI/helper/FK/RI/ACL guards; no native version,
+Auth/profile/Setup/Work/domain writer, grant or separate authority engine. Each selected
+three-case run passes original positive/retry, committed/rollback context changes and
+exact OID/all metadata/replay conservation. Create body
+`b95333f9c5c1100b173f3e78503852a9`, after log SHA256
+`76b8855b3ad59f6d420931bce92bec67ce2197268063d0b75e4999931a9ed06e`.
+Join/agent initial candidate bodies `728bcd10a7fb7ed2cdc5bed76f097e79` /
+`6944823067b4e2d7a79e062d572835ba`, after SHA256s
+`2fb9cb4954dc3ff264613a40141d29da37dc1902a46b2a56eb68f26c77ec9f02` /
+`ed4f47d8442be21de841cad1c7f882580a745166cc9518194874729a7d259031`.
+
+Source-only review found no material create-source issue, but identified a cross-writer
+lock-order concern in the initial join/agent candidates. That finding remains OPEN;
+selected context PASS does not clear it. Actual original-removal composition in both
+orders and causal verification are required next. Current full-child run was started
+before that review and remains a bounded test, never publication clearance. Original
+53 retained before create3, then join3/agent3; outer60 assertion unchanged. Full parent,
+remaining identity/participant/drift/lifecycle/file/retirement concurrency, managed/
+full-schema/JWT/RLS and useful customer receipt/reopen/recovery remain owed. Every
+original18+6/five journeys and full EXP08 remain STILL CODING.
+
+The earlier full CHILD completed all60 original outer checks plus62 nested controls
+(EXIT0/61 outer entries), raw log `exp08-departure-full-context-doors.log`, SHA256
+`973fa82d13cf1c6a65e6b133c8ca5e9dccad3cd9c44ee10ca4c294607bf56537`.
+That run predates the new cross-writer control and does NOT clear its finding.
+
+The reviewer lock-order finding was independently reproduced in BOTH original
+join/removal and agent-DM/removal interleavings, actual native deadlock failures.
+Before-log SHA256s `5064018fd274c339d885d360d7d80bfd5b553f57d68809e10720f47760738332`
+and `6233b76fd930c4a36ef9152f17533865c4ae080fc431f2e1efdb4a1b096d13cb`.
+The inert writers now retain Auth -> original seat hold/refusal -> profile -> context,
+then join's channel hold. Whole original hold blocks remain inside the inverse guard.
+Initial post-fix runs completed both real writers in both orders, but the test's
+initial disposition expectation contradicted the actual b254 seat-ended trigger:
+team-channel membership history remains while admission refuses it; file-free agent
+DMs are deleted. The oracle was corrected to require those ORIGINAL dispositions,
+actual receipt/pointer cleanup and later original-door refusal with no new effect.
+No trigger or product-history behavior changed to satisfy that test.
+
+Final selected5 each passed. Join body `2d96d038cb2c44c4e2b033aa6a7ea586`, log
+`exp08-join-removal-native-disposition-after.log`, SHA256
+`05a7da5c8bb87a76fb731c705e43aa44cfb391e4535f8a99bea9b39248078bdb`.
+Agent-DM body `8af7dc934f2a37a10573b84093156737`, log
+`exp08-agent-removal-native-disposition-after.log`, SHA256
+`ab806e36e0c8d7f2c6540844b60b9b8a30592687e722cabafc4be351a4e0a31d`.
+Distinct source-only reviewer found the lock-order P2 resolved in source; no execution
+or publication clearance. Current full-child60+66 run started with measured headroom;
+no terminal current result claimed here. All other broader/integration/customer gates
+above remain owed, patches unversioned/unpublished, full EXP08 STILL CODING.

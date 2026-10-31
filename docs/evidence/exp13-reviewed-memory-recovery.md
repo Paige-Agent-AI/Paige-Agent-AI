@@ -104,3 +104,51 @@ reconciliation, safe lifecycle and strict repeat/source guards for a published
 carrier, exact CI/managed Preview/ordered release/deploy/readback, actual UI and
 later-session/customer proof. This is NOT ready to mount or advertise. No Memory
 migration number/publication/application or source/algorithm maturity promotion.
+
+## Native lifecycle, access and real intent-lock concurrency
+
+New LOCAL original get_paige_memory5arg and forget_paige_memory4arg extensions
+preserve original4/3arg bodies. Exact actor/expected workspace/current identity
+and existing membership helpers gate ID/intent lookup and selected forget.
+Intent inspection takes the SAME save advisory lock before declaring absence;
+absence is an observed committed state, not permission to allocate a fresh intent
+for a potentially delayed request. Original Memory rows remain the only home.
+Current-source checks mark changed/unavailable and exclude them from context
+eligibility; unavailable quotes are not re-exposed. Retired records expose status
+and identity, withholding content and user metadata. Selected forget calls the
+ORIGINAL3arg writer, then verifies actual retirement; no physical cleanup claim.
+
+Feature-absence8110 reached missingget5/42883, not a production defect. Initial
+lifecycle96485 passed10 additional native observations. Independent review caught
+an inactive row being falsely labeled replay of forget. A deliberately superseded
+fact then FIRST-everforget reaches actual assertionFAIL41925. Earlier mistyped
+expected-data-path refusal and11412 original scale-control statement-timeout
+occurred BEFORE that regression and are retained, not causal failure/PASS. The
+unchanged retry preserves every original assertion/deadline and reaches the real
+failure. Repair returns effectalready_retired/replayedfalse for observed prior
+retirement, and effectretired_now only after actual original forget/readback.
+34110 passes lifecycle, retired-content suppression and11 access observations:
+foreign user/other workspace/current workspace departure/spoofed expected actor/
+deleted or banned actor/revoked membership all refuse; restoration returns valid
+own-scope Memory and unrelated rows remain unchanged. Auth/membership are still
+explicitly modeled fixture ports, not live customer-role proof.
+
+Final52708 original publication runner completes exit0 with a REAL native race:
+first save transaction remains open; second nine-argument save AND third exact
+intent inspection are each observed in pg_locks waiting on the same granted save
+intent. First commits; both saves return SAME UUID, native readback counts ONE
+Memory row, inspector sees that committed ID. No timing-only or model outcome is
+used. Only its own subprocess handles are cleaned up. Original runner DROPS the
+disposable database afterward. Logwork/exp13-reviewed-memory-lifecycle-race.log.
+Independent final source/race/cleanup recheck resolves the attributionP2 and finds
+no further material finding in this bounded increment; reviewer did not run tests.
+
+Oldget4 runtime/context source invalidation, further races (revocation/competing
+correction/forget), source eligible deletion/retention behavior, strict repeat and
+new-overload source/metadata guards, versioned carrier/exactCI/managedPreview/
+orderedrelease/readback, actual UI/late-session/ABA/customer proof remain OWNED
+and OWED. This is LOCALPARTIAL, not ready for customer mounting. No Memory native
+migration number/publication/application, other Experience activation, provider
+or protected customer material is involved. Binary-source3154 exact400a now all13
+hosted checksSUCCESS and READYfornormalfinalreview; lowerE08 order still holds
+merge/application, and full original EXP13/BULK/agreement-to-actualWork is NOTREADY.

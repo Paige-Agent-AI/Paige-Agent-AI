@@ -1,4 +1,4 @@
-import argparse,pathlib,re,subprocess,uuid
+import argparse,json,pathlib,re,subprocess,time,uuid
 p=argparse.ArgumentParser(); p.add_argument('--psql',default='psql'); p.add_argument('--port',default='55439'); p.add_argument('--user',default='knowledge_test'); p.add_argument('--expected-data-directory'); p.add_argument('--publication-recovery',action='store_true'); p.add_argument('--recovery-baseline',action='store_true'); p.add_argument('--recovery-migration',default='supabase/migrations/20271110011000_knowledge_publication_recovery.sql')
 p.add_argument('--memory-review-baseline',action='store_true'); p.add_argument('--memory-review-candidate',action='store_true'); p.add_argument('--memory-review-candidate-file',default='scripts/knowledge-service/reviewed-memory-candidate.sql'); a=p.parse_args()
 if (a.memory_review_baseline or a.memory_review_candidate) and not a.expected_data_directory: p.error('Memory proof requires a verified disposable data directory')
@@ -33,6 +33,7 @@ try:
   run(['-d',db,'-f','scripts/knowledge-service/reviewed-memory-source-check.sql'])
   if a.memory_review_candidate:
    run(['-d',db,'-f',a.memory_review_candidate_file])
+   run(['-d',db,'-f','scripts/knowledge-service/reviewed-memory-lifecycle-candidate.sql'])
    run(['-d',db,'-f','scripts/knowledge-service/reviewed-memory-behavior.sql'])
    failures=[]
    for case in ['uppercase','preseed','reserved-metadata']:
@@ -40,6 +41,50 @@ try:
     print(result.stdout);print(result.stderr)
     if result.returncode: failures.append(case)
    if failures: raise RuntimeError('Reviewed Memory adversarial controls failed: '+','.join(failures))
+   run(['-d',db,'-f','scripts/knowledge-service/reviewed-memory-lifecycle.sql'])
+   run(['-d',db,'-f','scripts/knowledge-service/reviewed-memory-access.sql'])
+   # Real native sessions contend on the SAME save intent; no timing-only race
+   # claim. Keep the first transaction open until both peers are observed waiting.
+   save="SELECT public.record_paige_memory('preference','Concurrent reviewed preference',NULL,'{}',false,'confirmed',NULL,NULL,jsonb_set(public.test_memory_review('70000000-0000-4000-8000-000000000088'),'{source_quote}','\"synthetic source\"'));"
+   inspect="SELECT public.get_paige_memory(NULL,1,NULL,NULL,public.test_memory_lookup(NULL,'70000000-0000-4000-8000-000000000088'));"
+   setup="SET test.actor='10000000-0000-0000-0000-000000000001'; BEGIN; SET ROLE authenticated; "
+   peers=[]; first=None; released=False
+   def observe_lock(tag,granted):
+    deadline=time.monotonic()+10
+    while time.monotonic()<deadline:
+     query="SELECT EXISTS(SELECT 1 FROM pg_locks l JOIN pg_stat_activity s ON s.pid=l.pid WHERE s.datname=current_database() AND s.application_name='"+tag+"' AND l.locktype='advisory' AND l.granted="+('true' if granted else 'false')+")"
+     result=subprocess.check_output(base+['-d',db,'-Atc',query],text=True,encoding='utf-8').strip()
+     if result=='t': return
+     if first.poll() is not None: raise RuntimeError('First native race session ended before lock observation')
+     time.sleep(0.02)
+    raise RuntimeError('Native advisory lock/wait was not observed: '+tag)
+   try:
+    first=subprocess.Popen(base+['-d',db,'-qAt'],stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True,encoding='utf-8'); peers.append(first)
+    first.stdin.write("SET application_name='exp13_memory_first'; "+setup+save+'\n'); first.stdin.flush()
+    observe_lock('exp13_memory_first',True)
+    for tag,statement in [('exp13_memory_second',save),('exp13_memory_inspect',inspect)]:
+     peer=subprocess.Popen(base+['-d',db,'-qAtc',"SET application_name='"+tag+"'; "+setup+statement+' COMMIT;'],stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True,encoding='utf-8'); peers.append(peer)
+     observe_lock(tag,False)
+    first.stdin.write('COMMIT;\n'); first.stdin.flush(); first.stdin.close(); first.stdin=None; released=True
+    results=[]
+    for peer in peers:
+     out,err=peer.communicate(timeout=20)
+     if peer.returncode: raise RuntimeError('Native race session failed: '+out+err)
+     results.append(out)
+    ids=[re.findall(r'(?m)^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$',out) for out in results[:2]]
+    if any(len(found)!=1 for found in ids) or ids[0][0]!=ids[1][0]: raise RuntimeError('Concurrent intent returned different original Memory IDs')
+    inspection=json.loads(next(line for line in results[2].splitlines() if line.startswith('{')))
+    if inspection.get('status')!='present' or inspection.get('memory',{}).get('id')!=ids[0][0]: raise RuntimeError('Unknown-save inspection missed the committed effect')
+    run(['-d',db,'-c',"SELECT public.test_assert((SELECT count(*)=1 FROM public.paige_owner_memory WHERE metadata#>>'{reviewed_save,intent_id}'='70000000-0000-4000-8000-000000000088'),'concurrent native save persists exactly one original Memory row')"])
+    print('PASS: both native duplicate-save and unknown-inspection sessions waited on the real held intent lock and read the same committed Memory')
+   finally:
+    if first is not None and not released and first.stdin is not None:
+     try: first.stdin.write('ROLLBACK;\n'); first.stdin.flush(); first.stdin.close(); first.stdin=None
+     except (BrokenPipeError,OSError): pass
+    for peer in peers:
+     if peer.poll() is None:
+      try: peer.communicate(timeout=5)
+      except subprocess.TimeoutExpired: peer.kill(); peer.communicate()
  if a.memory_review_baseline:
   failures=[]
   for case in ['scope','replay','supersession']:

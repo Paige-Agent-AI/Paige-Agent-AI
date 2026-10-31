@@ -121,5 +121,70 @@
     "raw_eslint": { "main_errors": [2, 31], "candidate_errors": [2, 31], "new_diagnostics": 0, "raw_exit": 1 },
     "strict_types": { "main_diagnostics": 6, "candidate_diagnostics": 6, "new_diagnostics": 0, "boundary": "Fresh strict host/test compiler comparison against main4c8, not a clean full-app compile or hosted CI. Old root snapshot remains historical." },
     "remaining": "E04 native source-stage/version/publication/history receiving contract; final review/CI, compatible rendered and ordinary customer proof, both chats/cohorts and full O01/ten/E5 acceptance. No merge/deployment/activation."
+  },
+  "source_currentness_reconciliation": {
+    "owner_date": "2026-10-31 America/New_York",
+    "main": "17338f6fb807c1a44fd481d1111fff9a3e77a0e5",
+    "composition": "cf364527a3f331e36dcb16af87c2aae6b37f230b",
+    "product": "43380c7344b7ec7f7f9be63652dc31375599fc19",
+    "prior_reviewed_head": "6a985bc2ef6f690572ffa39173efa67518e0193c",
+    "prior_CI": "All11 prior exact-head gates SUCCESS; supporting only, not successor clearance",
+    "source": {
+      "supabase/functions/_shared/team-hub/agent-turn.ts": "0717435781888d202ee620b556f2c22f4834e9b5a3ac26cf0cf9950b621debc6",
+      "supabase/functions/_shared/team-hub/agent-turn.test.ts": "df0df81f977db87191b1f724ff7ed1bef1d8f2763316b46f709defe3e4f93bb1",
+      "supabase/functions/_shared/team-hub/zion-planning-read.ts": "65638a7bbf4363f6624ca2e10056b35d696f1041c75b6f15627309be2caec724",
+      "supabase/functions/_shared/team-hub/zion-planning-read.test.ts": "56f8de650b63b4c3d81b1e2d56ad03e1acec845ec68de841644579ac0b920a5d"
+    },
+    "local": {
+      "tests": 164,
+      "passed": 164,
+      "failed": 0,
+      "skipped": 0,
+      "causal_reader_before": {
+        "passed": 14,
+        "failed": 3
+      },
+      "initial_host_integration": {
+        "passed": 155,
+        "failed": 5,
+        "disposition": "Own fixtures explicitly reconciled initial vs final source checks; no incumbent assertion removed"
+      },
+      "strict": {
+        "baseline": 6,
+        "candidate": 6,
+        "added": 0
+      },
+      "lint": [
+        {
+          "path": "supabase/functions/_shared/team-hub/agent-turn.ts",
+          "baselineErrors": 2,
+          "candidateErrors": 2,
+          "newDiagnostics": 0
+        },
+        {
+          "path": "supabase/functions/_shared/team-hub/agent-turn.test.ts",
+          "baselineErrors": 31,
+          "candidateErrors": 31,
+          "newDiagnostics": 0
+        },
+        {
+          "path": "supabase/functions/_shared/team-hub/zion-planning-read.ts",
+          "baselineErrors": 0,
+          "candidateErrors": 0,
+          "newDiagnostics": 0
+        },
+        {
+          "path": "supabase/functions/_shared/team-hub/zion-planning-read.test.ts",
+          "baselineErrors": 0,
+          "candidateErrors": 0,
+          "newDiagnostics": 0
+        }
+      ],
+      "conservation": "Original15 imports/protected6 declarations/429 host assertion predicates retained;509 current host assertions"
+    },
+    "original_native_reader": "Production plan_list OID306631/body702f2b52fc0d4e5c615fde7ec906b840 returns only original plans/loose_items. Raw versions and nested facts compared; no observation field excluded.",
+    "contract": "Same original caller-JWT reader/arguments under one elapsed5s budget per observation, immutable source snapshot, original stable read marker and same accepted-turn native stage. Final current-source mismatch/refusal/uncertain/timeout prevents post; lost post acknowledgment does not repeat source verification. Three requested tool reads retain three operation IDs.",
+    "native_boundary": "E04 original Planning admission/publication/history and receiving review remain a material release hold. Source observation comparison does not prove an atomic native source-version/post/history contract.",
+    "release": "DRAFT; new exact-head review/CI/compatible rendered/native/authenticated/reload/both-chat/cohort proof owed. No merge/deployment/activation/full O01 or founder acceptance."
   }
 }

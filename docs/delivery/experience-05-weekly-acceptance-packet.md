@@ -1,3 +1,14 @@
+## October31 — O01 original-source verification before publication
+
+Existing3087 now composes currentmain17338 in cf364527; source43380c734
+rechecks the SAME original Planning result/versions after model work, before
+publication. Scope alone no longer admits a changed plan. Actual164 host/reader
+cases pass; causal reader14PASS/3FAIL retained. Raw microseconds, nested facts,
+original arguments/receipts, same native turn and elapsed retirement are kept;
+lost post acknowledgment adds no new read. Native E04 Planning admission/post/
+history receiving proof still HOLD; full O01/ten/E5/both chats/cohorts/founder
+acceptance remain OPEN. Previous checkpoints below are dated supporting evidence.
+
 ## October30 Eastern — ONE primary O01 / existing ZION host reconciled locally
 
 Original3087 is reconciled in productad9c5c0427252bc43f4667232e857ef70ca48709,

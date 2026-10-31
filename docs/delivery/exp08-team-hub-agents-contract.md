@@ -2233,3 +2233,26 @@ independent of model prose, confidence and personality. No new Work/Memory/appro
 runtime or held EXP19/desktop execution is activated. Full assignment STILL CODING.
 Primary remains originalrow4 departure/revocation; released3130 to EXP13 was the named
 prerequisite exception, not another discretionary outcome or full Team Hub acceptance.
+
+Same-row4 identity-refusal copy now consumes only the anchored authored error code in
+the original `removalRefusal` vocabulary. It states that account access could not be
+confirmed, that nothing was removed, and asks the user to check access before reopening
+Team. No guessed cause, new dialog/state, retry or false reconciliation. Owning removal
+suite baseline40PASS/1FAIL becomes **41/41 PASS**; focused ESLint/whitespace PASS.
+Transcript `exp08-identity-copy-after.log` SHA256
+`b89ec3902c3098fa61c3cb7087efe6e233a6b7ef711f661062bb0cc38e2fe21c`.
+Non-author SOURCE review found no material finding and executed no tests/rendering.
+Impeccable clarify checks applied: plain factual cause uncertainty, clear next step,
+no backend jargon and existing refusal semantics. Identity-message rendered/keyboard/
+AT/zoom and actual customer proof remain owed; prior protected-message32 frames do not
+prove this new message. First CLI attempt failed on unsupported `--minWorkers`; retained
+separately, not counted as the behavior baseline or PASS.
+
+Current production catalog read independently confirms original removal bodyd8c0,
+postgres/definer/pathpublicpgtemp, required Auth SELECT/UPDATE privileges and actual
+id/deleted_at/banned_until types. Catalog lists profiles.user_id Auth CASCADE and
+profiles.suspended_by NO ACTION, no tenant_members Auth FK.22 original profile/member
+UPDATE/DELETE trigger bodies inspected; no direct opposing Auth write lock found.
+`admin-delete-user` uses separate requests, not a cross-request transaction. Transitive
+callees, actual FK interactions/both lock orders and full-schema managed proof remain
+owed. These are catalog/source facts, never full runtime or RLS clearance.

@@ -613,6 +613,15 @@ describe("the refusal vocabulary itself", () => {
     });
   });
 
+  it("explains unavailable actor access without disclosing a cause or inviting another removal", () => {
+    expect(removalRefusal("TEAM_MEMBER_IDENTITY_UNAVAILABLE: current account access could not be confirmed; nothing was removed", "Dana Reyes", "Example Team")).toEqual({
+      message: "Your account access could not be confirmed, so nothing was removed. Check your access before opening Team again.",
+      retryable: false,
+      reconciled: false,
+    });
+    expect(removalRefusal("unrecognised TEAM_MEMBER_IDENTITY_UNAVAILABLE: text", "Dana Reyes", "Example Team").message).not.toContain("Your account access");
+  });
+
   it("still offers a retry for a transport failure, and calls a server-decided timeout what it is", () => {
     for (const transient of ["TypeError: Failed to fetch", "NetworkError when attempting to fetch", "request timed out"]) {
       expect(removalRefusal(transient, "Dana Reyes", "Example Team").retryable, transient).toBe(true);

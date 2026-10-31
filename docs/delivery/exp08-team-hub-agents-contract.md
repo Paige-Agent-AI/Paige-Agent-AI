@@ -2256,3 +2256,12 @@ UPDATE/DELETE trigger bodies inspected; no direct opposing Auth write lock found
 `admin-delete-user` uses separate requests, not a cross-request transaction. Transitive
 callees, actual FK interactions/both lock orders and full-schema managed proof remain
 owed. These are catalog/source facts, never full runtime or RLS clearance.
+
+Subsequent complete combined departure runner at unchanged proof source1ca1baa (copy
+successorceb8 changes no SQL/proof input) passed **57/57 controls**, EXIT0.
+Transcript `exp08-member-identity-57.log` SHA256
+`4f9c7e64bb0cc8876926964a11a7cfa1f0908e576f2746cdcf10a401462eb000`.
+Own proof databases disposed/current QOF cluster cleanly stopped/PID marker absent.
+This supersedes only the combined57 pending statement above. Real FK/transitive
+lock interactions, parent full proof, rendered copy and all stated carrier/customer
+gates remain owed. No production mutation or outcome-acceptance promotion.

@@ -1,6 +1,27 @@
 -- LOCAL, unversioned original Memory producer candidate. Not a migration or
 -- release. Existing per-user rows and original eight-argument insert are reused.
 BEGIN;
+DO $reviewed_guard$
+DECLARE f record; target oid;
+BEGIN
+ target:=to_regprocedure('public.record_paige_memory(text,text,uuid,jsonb,boolean,text,uuid,uuid,jsonb)');
+ IF target IS NOT NULL THEN
+  SELECT * INTO STRICT f FROM pg_proc WHERE oid=target;
+  IF md5(f.prosrc)<>'ccdb8e22f84d12777787c411c1159dc1'
+   OR f.proowner<>current_user::regrole OR f.prolang IS DISTINCT FROM (SELECT oid FROM pg_language WHERE lanname='plpgsql')
+   OR f.prokind<>'f' OR f.prorettype<>'uuid'::regtype OR f.proretset OR f.pronargdefaults<>0
+   OR f.provolatile<>'v' OR f.proparallel<>'u' OR f.proisstrict OR f.proleakproof
+   OR NOT f.prosecdef OR f.proconfig IS DISTINCT FROM ARRAY['search_path=public']::text[]
+   OR has_function_privilege('anon',f.oid,'EXECUTE') OR has_function_privilege('service_role',f.oid,'EXECUTE')
+   OR NOT has_function_privilege('authenticated',f.oid,'EXECUTE')
+   OR EXISTS(SELECT 1 FROM aclexplode(coalesce(f.proacl,acldefault('f',f.proowner))) a
+    WHERE a.privilege_type<>'EXECUTE' OR a.grantor<>f.proowner
+     OR a.grantee NOT IN (f.proowner,'authenticated'::regrole::oid)
+     OR (a.grantee<>f.proowner AND a.is_grantable)) THEN
+   RAISE EXCEPTION 'PAIGE_MEMORY_SOURCE_DRIFT';
+  END IF;
+ END IF;
+END $reviewed_guard$;
 DO $guard$
 DECLARE f record; body text; old_block text; new_block text;
 BEGIN

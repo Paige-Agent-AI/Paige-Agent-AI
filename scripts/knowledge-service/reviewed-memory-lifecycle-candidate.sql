@@ -1,5 +1,31 @@
 -- LOCAL unversioned extension of the original get/forget producer. No new store.
 BEGIN;
+DO $lifecycle_guard$
+DECLARE expected record; f record; target oid;
+BEGIN
+ FOR expected IN SELECT * FROM (VALUES
+  ('public.get_paige_memory(text[],integer,uuid,uuid,jsonb)','0ac860f25b1a2548cefc12107d95bb6b'),
+  ('public.forget_paige_memory(uuid,uuid,uuid,jsonb)','91c3334e44331e1b5f3663a2fa25d416')
+ ) v(signature,body_hash) LOOP
+  target:=to_regprocedure(expected.signature);
+  IF target IS NOT NULL THEN
+   SELECT * INTO STRICT f FROM pg_proc WHERE oid=target;
+   IF md5(f.prosrc)<>expected.body_hash
+    OR f.proowner<>current_user::regrole OR f.prolang IS DISTINCT FROM (SELECT oid FROM pg_language WHERE lanname='plpgsql')
+    OR f.prokind<>'f' OR f.prorettype<>'jsonb'::regtype OR f.proretset OR f.pronargdefaults<>0
+    OR f.provolatile<>'v' OR f.proparallel<>'u' OR f.proisstrict OR f.proleakproof
+    OR NOT f.prosecdef OR f.proconfig IS DISTINCT FROM ARRAY['search_path=public']::text[]
+    OR has_function_privilege('anon',f.oid,'EXECUTE') OR has_function_privilege('service_role',f.oid,'EXECUTE')
+    OR NOT has_function_privilege('authenticated',f.oid,'EXECUTE')
+    OR EXISTS(SELECT 1 FROM aclexplode(coalesce(f.proacl,acldefault('f',f.proowner))) a
+     WHERE a.privilege_type<>'EXECUTE' OR a.grantor<>f.proowner
+      OR a.grantee NOT IN (f.proowner,'authenticated'::regrole::oid)
+      OR (a.grantee<>f.proowner AND a.is_grantable)) THEN
+    RAISE EXCEPTION 'PAIGE_MEMORY_SOURCE_DRIFT';
+   END IF;
+  END IF;
+ END LOOP;
+END $lifecycle_guard$;
 CREATE OR REPLACE FUNCTION public.get_paige_memory(
  p_memory_types text[],p_limit integer,p_user_id uuid,p_tenant_id uuid,p_review jsonb
 ) RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path TO 'public' AS $read$

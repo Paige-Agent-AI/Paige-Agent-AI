@@ -186,3 +186,29 @@ managed Preview, ordered release/readback and actual integrated UI/customer
 acceptance remain owed. No versioned migration has been published or applied.
 Owner explicitly reconfirmed incremental live merges: full EXP13 completion is
 not a release gate; applicable review, CI, Preview and migration order remain.
+
+## Native candidate install/repeat drift controls
+
+The LOCAL candidate now refuses an unexpected preexisting reviewed overload,
+rather than silently replacing its source or normalizing its permissions.
+Actual failing-first1713 changed the nine-argument save to SECURITY INVOKER;
+the installer accepted and replaced it, so the new assertion FAILED. The entire
+control transaction rolled back and the disposable database was dropped.
+
+Candidate preflight pins the existing nine/five/four-argument source bodies,
+owner, language, return shape, required arguments, volatility, parallel safety,
+strict/leakproof flags, definer/search path and ACL. Absent overloads are allowed;
+known exact installations replay. Native58686 passed the first 15 drift controls
+and all original save/lifecycle/access/race checks. Expanded native3502 passed
+30 refused-drift controls: security mode, volatility, parallel safety, strictness,
+owner, search path, anon/service grants, authenticated grant option and source
+changes across all three overloads. After each refusal, original function
+definition and ACL readback match the pre-control snapshot. Full original native
+publication, reviewed confirmation/access and actual intent-lock concurrency
+checks still run afterward. Log: work/exp13-memory-install-guards-adversarial.log;
+exit0 and original runner DROP DATABASE observed. No deadline/assertion weakened.
+
+Distinct bounded source review found no material issue in the first guards and
+15-control runner; final expanded-runner/evidence source recheck also found no
+material findings. Reviewer did not run native tests. This remains an unversioned LOCAL candidate,
+not a production carrier, applied migration or customer Memory capability.

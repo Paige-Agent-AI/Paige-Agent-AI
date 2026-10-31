@@ -21,7 +21,7 @@ type Query = PromiseLike<QueryResult> & {
 type Options = { tenant?: string; authorized?: boolean; authError?: unknown;
   beforeClaim?: (row: Row) => void; beforeRelease?: (row: Row) => void;
   notificationError?: unknown; notificationThrows?: boolean; committedBeforeError?: boolean;
-  teamError?: unknown; team?: boolean; providerThrows?: boolean; claimReply?: Row;
+  teamError?: unknown; team?: boolean; providerThrows?: boolean; claimReply?: Row | ((row: Row) => Row);
   teamEmpty?: boolean; email?: boolean; beforeMetadata?: (row: Row) => void };
 
 function fixture(options: Options = {}) {
@@ -62,7 +62,9 @@ function fixture(options: Options = {}) {
         writes.push({ values, filters: structuredClone(filters), matched: found });
         if (!found) return { data: null, error: null };
         Object.assign(row, values, { updated_at: stamp() });
-        return { data: values.reminded_at && options.claimReply ? options.claimReply : project(row, columns), error: null };
+        return { data: values.reminded_at && options.claimReply
+          ? typeof options.claimReply === 'function' ? options.claimReply({ ...row }) : options.claimReply
+          : project(row, columns), error: null };
       }
       return { data: matches(row, filters) ? [structuredClone(project(row, columns))] : [], error: null };
     };
@@ -100,6 +102,34 @@ describe('native reminder claim and interrupted-delivery boundaries', () => {
     const f = fixture({ tenant }); const result = await f.run();
     expect(result.result).toMatchObject({ in_app: 1, claimed: 1, failed: 0 });
     expect(f.notifications).toHaveLength(1); expect(f.row.reminded_at).not.toBeNull();
+  });
+  it.each([{ team: false, planId: null }, { team: true, planId: id(9) }])('emits only the exact original occurrence address for %j', async ({ team, planId }) => {
+    const f = fixture({ team }); f.row.plan_id = planId; f.row.remind_at = '2000-01-01T00:00:00.123456+00:00';
+    expect((await f.run()).result).toMatchObject({ in_app: 1, claimed: 1, failed: 0 });
+    expect(f.notifications[0]).toMatchObject({ user_id: id(3), type: 'task_reminder', is_read: false });
+    expect(f.notifications[0].metadata).toEqual({ tenant_id: f.row.tenant_id, plan_item_id: f.row.id, plan_id: planId,
+      remind_target: team ? 'team' : 'user', source: 'paige_planning', reminder_claimed_at: f.row.reminded_at,
+      scheduled_remind_at: '2000-01-01T00:00:00.123456+00:00', claim_source_version: '2026-02-01T00:00:00.000001Z' });
+  });
+  it('preserves acknowledged native timestamp precision and offsets without inventing a final version', async () => {
+    let acknowledged: Row = {};
+    const f = fixture({ claimReply: row => { acknowledged = { id: row.id, updated_at: String(row.updated_at).replace('Z', '+00:00'),
+      reminded_at: String(row.reminded_at).replace('Z', '000+00:00') }; return acknowledged; } });
+    await f.run(); const metadata = f.notifications[0].metadata as Row;
+    expect(metadata.reminder_claimed_at).toBe(acknowledged.reminded_at);
+    expect(metadata.claim_source_version).toBe('2026-02-01T00:00:00.000001+00:00');
+    expect(metadata.claim_source_version).not.toBe('2026-02-01T00:00:00.000Z');
+  });
+  it('preserves an original nullable target without inventing a recipient policy', async () => {
+    const f = fixture(); f.row.remind_target = null;
+    expect((await f.run()).result).toMatchObject({ in_app: 1, claimed: 1, failed: 0 });
+    expect(f.notifications[0]).toMatchObject({ user_id: id(3), metadata: { remind_target: null } });
+  });
+  it.each([undefined, null, 17, '', 'not-an-instant'])('holds an unacknowledged original occurrence without dispatch or replay: %s', async reminded_at => {
+    const f = fixture({ claimReply: { id: id(1), updated_at: '2026-02-01T00:00:00.000001Z', reminded_at } });
+    const result = await f.run(); expect(result.result.failures).toContainEqual(expect.objectContaining({ outcome_unknown: true }));
+    expect(f.notifications).toHaveLength(0); expect(f.row.reminded_at).not.toBeNull();
+    await f.run(); expect(f.notifications).toHaveLength(0); expect(f.writes).toHaveLength(1);
   });
   it.each(['cancelled', 'done'])('does not dispatch a reminder changed to %s after the due scan', async status => {
     const f = fixture({ beforeClaim: row => { row.status = status; } });
@@ -147,7 +177,8 @@ describe('native reminder claim and interrupted-delivery boundaries', () => {
     await f.run(); expect(f.row.reminded_at).toBe('2026-03-01T00:00:00Z');
   });
   it.each([{}, { id: id(99), updated_at: '2026-01-01T00:00:00Z' }, { id: id(1) }])('does not dispatch from an unverified claim reply %j', async claimReply => {
-    const f = fixture({ claimReply }); await f.run(); expect(f.notifications).toHaveLength(0);
+    const f = fixture({ claimReply: row => ({ reminded_at: row.reminded_at, ...claimReply }) });
+    await f.run(); expect(f.notifications).toHaveLength(0);
     expect(f.row.reminded_at).not.toBeNull();
   });
   it('marks a confirmed empty team undeliverable through its own claim', async () => {
@@ -164,5 +195,7 @@ describe('native reminder claim and interrupted-delivery boundaries', () => {
     const f = fixture({ email: true }); const result = await f.run();
     expect(result.result).toMatchObject({ in_app: 1, emailed: 0, email_blocked: 1 });
     expect(f.row.reminded_at).not.toBeNull();
+    expect((f.notifications[0].metadata as Row).claim_source_version).toBe('2026-02-01T00:00:00.000001Z');
+    expect(f.row.updated_at).toBe('2026-02-01T00:00:00.000002Z');
   });
 });

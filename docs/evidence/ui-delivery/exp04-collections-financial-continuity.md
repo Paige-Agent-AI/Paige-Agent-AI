@@ -58,3 +58,44 @@ and a later exact read succeeded. Both are environment evidence, not product def
 The local font assertion and overlay/ambiguous-selector failures remain explicit. Use a unique
 visible original Fold control in future authorized acceptance; never force a click/focus through
 a modal backdrop. The owned harness server is stopped and no unknown process was terminated.
+
+## C176 — same original PAIGE Collections financial read
+
+Continuing from local parent ea4a4a093698c552a7ab6fe42c9dc0304524c6f5, the original Sales
+read adapter now negotiates the SAME evidence2 header through the existing caller builder.
+The original native read receipt/tenant, argument bounds, source IDs and closed minimization
+remain. Actual rows verify their explicit version, tenant, currency, amounts and evidence via
+the existing balance validator; TEST/LIVE/manual facts stay distinct. Malformed/future/mixed
+financial records and contradictory native status/owed flags are refused. Legacy responses
+stay compatible with an explicit TEST/actual-debt caveat, not a false actual-cash claim.
+
+The whole original tool declaration/safe-summary prefix and mutation/approval/operation/error
+tail are byte-exact after only the added import/optional query-builder type. Root/index,
+Spine declarations, action-risk, permissions, admission and native function bodies are untouched.
+Actual current main's original adapter matched local source before editing; original native
+read_sales_collections body9a6d9c20 and authenticated-only metadata were read without invoking
+customer records. This changes no provider or effectful authority. Same tool consumption by
+both chats remains contingent on each original host actually admitting it; no E08 host/card edit
+or claim of actual both-chat integration.
+
+All107 cases in five existing/new Chat/commercial-context suites PASS. New30 first27FAIL/3PASS;
+four later amount/status/flag/source-reference counterexamples first4FAIL/30PASS then all34PASS.
+One intermediate failure was a wording-order assertion, corrected to test the same no-money
+meaning rather than a specific phrase. The array-valued environment fixture was wrapped so the
+test runner passes the array itself instead of spreading it; its intended refusal remains.
+Scoped lint and strict cached/frozen original Deno server graph pass with no lock rewrite.
+
+Actual selected-native invoice/receipt values also traverse the actual Chat projector in24
+checks, with zero network/provider/action calls. Original wrapper tenant/read-receipt metadata
+is explicitly synthetic in that bridge, so it is NOT native Rail, signed-in Chat or production
+financial evidence. Its first private loader rejected node:util before projection; the bounded
+loader now admits that exact builtin and uses one VM realm for the unchanged Kit snapshot
+guards, rather than weakening those guards. No product shim or additional runtime is shipped.
+
+No rendered markup/styles/control changes occur in C176; C175's visual limitations above remain.
+No actual Chat exchange, canonical authenticated read receipt/reopen/recovery, provider event,
+release/activation or O5/full12 acceptance is established. The native financial candidates are
+still unmounted; cumulative review, exact-head CI, ordered release/readback and ordinary
+Owner/client proof are owed. ALG-01/12 support remains bounded to original source/currentness/
+refusal checks; ALG-02/13 and catalogue maturity are unchanged. Next is SAME O5 original refund,
+reversal/dispute and explicit commercial disposition, not another outcome or registry.

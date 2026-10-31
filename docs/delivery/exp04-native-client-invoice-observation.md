@@ -456,3 +456,34 @@ integration before O5 acceptance. Existing additional Portal projection request 
 without a duplicate ping. ALG-01/12 have only bounded deterministic currentness/replay/refusal
 support; ALG-02/13 and all12/founder stay open. Concise original Linear records are updated while
 detailed publication/canonical tracker-note changes remain separately pending, without a bypass.
+
+## October 31 C176 — same financial meaning in the original conversational reader
+
+The original E04 read adapter now requests evidence2 through its existing authenticated caller
+builder and original read_sales_collections call/arguments/read receipt. It returns closed actual
+provider/manual/TEST fields and the native collection flag only after validating explicit source
+version, tenant, currency, canonical balance and original invoice reference. Malformed/future,
+mixed, coerced or contradictory facts are refused rather than entering model context. Older
+unversioned output stays compatible with an explicit TEST/actual-debt caveat. Agreement context,
+all original tool declarations and the complete mutation/approval/operation/result/error tail
+are conserved; no new tool, risk, permission, caller identity, native writer or shared admission.
+
+Current GitHub main's original adapter was byte-exact before editing. Production
+catalogue confirms original read_sales_collections9a6d9c20/postgres/definer/volatile/original
+search path/authenticated-only entry, without customer invocation. Same capability and domain
+adapter are used where an existing host actually admits them; this is not proof of MERIT's
+actual Team Hub/Chat availability or permission to modify E08/E01 admission.
+
+All107 tests in five original/new Chat/commercial-context suites pass, plus24 actual selected-
+native-value projector checks with zero network/provider/action calls. The bridge's enclosing
+read receipt/tenant metadata is synthetic, so it does not establish real Rail or signed-in Chat.
+Strict original cached/frozen Deno graph and scoped lint pass. The whole original mutation tail
+and declaration/summary prefix inverse is exact. Initial causal failures, the corrected literal
+word-order assertion and array test fixture, and the private loader's original builtin refusal
+remain documented in the [existing Collections UI evidence](../evidence/ui-delivery/exp04-collections-financial-continuity.md).
+
+No new visual cycle, markup, shared host, provider effect, native carrier, source publication,
+CI/merge/deployment/activation or customer acceptance is claimed. C175's expanded-layout limits
+still apply. The full12 remain open with O5 sole primary. Next is original provider refund/
+reversal/dispute and explicit commercial disposition, remaining paired producer/consumer paths,
+then cumulative review, exact-head release and actual merchant/Owner/client receipt/reload proof.

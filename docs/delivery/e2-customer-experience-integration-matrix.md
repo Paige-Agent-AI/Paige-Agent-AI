@@ -23,7 +23,7 @@ handoff is pending through Coordinator, not a new grant or product-defect claim.
 No alternate identity/account or private data is used to manufacture proof.
 
 Next coherent deliverable: finish this same read/reopen/permission/cohort outcome
-and correct only demonstrated material defects. #3157 records the preceding
+and correct only demonstrated material defects. #3157 proposes the preceding
 release in Master; its source is frozen/returned and required CI remains separate.
 The already-open #3153 is original acceptance-matrix documentation, not another
 product outcome. No discretionary secondary is started. All19, nine analytics,

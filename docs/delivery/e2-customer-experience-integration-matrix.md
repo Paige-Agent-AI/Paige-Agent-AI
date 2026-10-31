@@ -25,7 +25,7 @@ No alternate identity/account or private data is used to manufacture proof.
 Next coherent deliverable: finish this same read/reopen/permission/cohort outcome
 and correct only demonstrated material defects. #3157 proposes the preceding
 release in Master; its source is frozen/returned and required CI remains separate.
-The already-open #3153 is original acceptance-matrix documentation, not another
+Preceding #3153 released original acceptance-matrix documentation, not another
 product outcome. No discretionary secondary is started. All19, nine analytics,
 original domain writers, algorithm/readiness limits and one final founder review
 remain required. Metadata/RLS checks do not replace ordinary role acceptance.

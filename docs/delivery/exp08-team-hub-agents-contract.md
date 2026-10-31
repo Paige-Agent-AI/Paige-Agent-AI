@@ -2711,3 +2711,20 @@ Distinct source-only reviewer found the lock-order P2 resolved in source; no exe
 or publication clearance. Current full-child60+66 run started with measured headroom;
 no terminal current result claimed here. All other broader/integration/customer gates
 above remain owed, patches unversioned/unpublished, full EXP08 STILL CODING.
+
+Current full original departure CHILD now terminal EXIT0: all60 original outer controls
+then one separately counted66-control Hub integration group (61 outer entries).
+Raw log `exp08-departure-full-context-lock-order.log`, SHA256
+`0adf05b0863d26045302f9ab907152464a78a5671d5887d73fe6f81fb45de351`.
+Readback removalcc631/member-addcb353/postad54/createb953/join2d96/agent8af7 matches
+these guarded candidates. Both actual original-removal orders pass in this combined
+run. Exact final reviewer/source-only P2 disposition remains distinct from execution.
+Owned-port catalogue contained postgres only afterward; this chat's temporary server
+was stopped. Earlier native failures, wrong-oracle post-fix runs and historical62
+PASS remain retained with their original dispositions, not rewritten as current proof.
+
+This remains local native/component assurance with explicit Auth/table ports, not
+full entity-owner parent, linked-schema/JWT/RLS/customer proof or a released change.
+All currentness patches remain INERT/unversioned/unpublished. Human-DM late-context,
+remaining identity/participant/drift and cross-door/file/retirement proof, full-parent/
+managed/release and authenticated useful outcomes remain owed. Full EXP08 STILL CODING.

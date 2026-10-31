@@ -14,10 +14,11 @@
  * shapes and refusal sentences in supabase/migrations/20271115040008_exp08_team_lifecycle.sql. They
  * prove what the SCREEN does with those answers, not that the database gives them.
  */
-import { act } from "react";
+import { act, StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { SoloTeamWorkspace } from "./team-workspace";
+import { DepartureReview } from "./team-departure";
 import { removalRefusal, type TeamMemberRecord, type TeamWorkspaceRecord } from "./team-workspace-contract";
 
 const mocks = vi.hoisted(() => ({
@@ -522,6 +523,53 @@ describe("handing over, then removing", () => {
   });
 });
 
+describe("departure review lifecycle", () => {
+  it("focuses the authored refusal inside the review when removal becomes disabled", async () => {
+    route({
+      get_solo_team_workspace: () => ({ data: roster([owner, dana]), error: null }),
+      team_member_holdings: () => ({ data: holdings(), error: null }),
+      remove_solo_team_member: () => ({ data: null, error: { code: "42501", message: "TEAM_MEMBER_PROTECTED: this Paige account is protected; nothing was changed" } }),
+    });
+    await openScreen();
+    await openRemoval();
+    await act(async () => byText("Continue")!.click());
+    await act(async () => { removeButton()!.focus(); removeButton()!.click(); });
+    expect(removeButton()!.disabled).toBe(true);
+    expect(document.activeElement).toBe(drawer()!.querySelector('[role="alert"]'));
+    expect(removeCalls()).toHaveLength(1);
+  });
+
+  it("finishes the original holdings read after StrictMode effect teardown and setup", async () => {
+    route({ get_solo_team_workspace: () => ({ data: roster([owner, dana]), error: null }), team_member_holdings: () => ({ data: holdings(), error: null }) });
+    const screen = mount(<StrictMode><SoloTeamWorkspace /></StrictMode>);
+    await screen.render();
+    await wait();
+    await openRemoval();
+    expect(drawer()?.textContent).toContain("Dana Reyes holds nothing to hand over");
+    expect(drawer()?.textContent).not.toContain("Checking Dana's open work");
+    expect(removeCalls()).toHaveLength(0);
+  });
+
+  it("still suppresses a removal result after a genuine unmount", async () => {
+    let settle!: (value: unknown) => void;
+    const removed = vi.fn();
+    route({
+      get_solo_team_workspace: () => ({ data: roster([owner, dana]), error: null }),
+      team_member_holdings: () => ({ data: holdings(), error: null }),
+      remove_solo_team_member: () => new Promise((resolve) => { settle = resolve; }),
+    });
+    const screen = mount(<StrictMode><DepartureReview member={dana} workspace={roster([owner, dana])} viewerId="owner-1" members={[owner, dana]} onClose={vi.fn()} onRemoved={removed} /></StrictMode>);
+    await screen.render();
+    await wait(30);
+    await act(async () => byText("Continue")!.click());
+    await act(async () => removeButton()!.click());
+    expect(removeCalls()).toHaveLength(1);
+    act(() => screen.root.unmount());
+    await act(async () => settle({ data: { tenant_id: "tenant-1" }, error: null }));
+    expect(removed).not.toHaveBeenCalled();
+  });
+});
+
 describe("the refusal vocabulary itself", () => {
   it("recognises every reason this seam authors, and degrades honestly for anything else", () => {
     const cases: Array<[string, RegExp, boolean, boolean]> = [
@@ -555,6 +603,23 @@ describe("the refusal vocabulary itself", () => {
     const refusal = removalRefusal("Cannot remove admin role from platform owner", "Dana Reyes", "Example Team");
     expect(refusal.message).toMatch(/platform role/);
     expect(refusal.retryable).toBe(false);
+  });
+
+  it("translates the authored protected-account refusal without offering another removal", () => {
+    expect(removalRefusal("TEAM_MEMBER_PROTECTED: this Paige account is protected; nothing was changed", "Dana Reyes", "Example Team")).toEqual({
+      message: "Dana Reyes's Paige account is protected, so they can't be removed from the business here. Nothing changed.",
+      retryable: false,
+      reconciled: false,
+    });
+  });
+
+  it("explains unavailable actor access without disclosing a cause or inviting another removal", () => {
+    expect(removalRefusal("TEAM_MEMBER_IDENTITY_UNAVAILABLE: current account access could not be confirmed; nothing was removed", "Dana Reyes", "Example Team")).toEqual({
+      message: "Your account access could not be confirmed, so nothing was removed. Check your access before opening Team again.",
+      retryable: false,
+      reconciled: false,
+    });
+    expect(removalRefusal("unrecognised TEAM_MEMBER_IDENTITY_UNAVAILABLE: text", "Dana Reyes", "Example Team").message).not.toContain("Your account access");
   });
 
   it("still offers a retry for a transport failure, and calls a server-decided timeout what it is", () => {

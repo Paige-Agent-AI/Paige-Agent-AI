@@ -3,6 +3,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { spawn, spawnSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 
 assert.equal(process.env.EXP08_DISPOSABLE, '1', 'Explicit disposable proof opt-in required');
 const host = process.env.PGHOST;
@@ -1076,4 +1077,13 @@ try {
   }
 } finally {
   if (created) { sql(`DROP DATABASE ${database};`, 'postgres'); console.log('Disposed only the database created by this run.'); }
+}
+// Full original release proof also exercises the same departure writer's inert candidate.
+// Selected component runs remain bounded selections and never stand in for this whole run.
+if(!onlyOwnerRead&&!onlyBilling&&!onlyOwnerHistory){
+  const child=spawnSync(process.execPath,[fileURLToPath(new URL('./exp08-member-removal-currentness.mjs',import.meta.url))],{
+    env:{...process.env,OPERATOR_PROOF_PSQL:executable},stdio:'inherit',windowsHide:true,timeout:180000,
+  });
+  if(child.error)throw child.error;
+  assert.equal(child.status,0,'Original departure currentness, boundaries, replay, drift and causal controls must pass');
 }

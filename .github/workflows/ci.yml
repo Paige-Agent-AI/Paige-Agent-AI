@@ -138,7 +138,7 @@ jobs:
         run: psql -h 127.0.0.1 -U postgres -d postgres -v ON_ERROR_STOP=1 -f supabase/tests/exp08_co_owner_authority.sql
       - name: EXP08 owner invitations (I1), only the account holder invites an Owner, owner-token guard, accept-time re-checks, seat rule (no other seat while an owner invitation accept would honour waits), legal-owner links, production holes, byte-identity and mutants in a disposable database
         run: psql -h 127.0.0.1 -U postgres -d postgres -v ON_ERROR_STOP=1 -f supabase/tests/exp08_owner_invitations.sql
-      - name: EXP08 actor admission, entity departure, original revoke, replay, drift and concurrent replacement/owner-floor guards in an isolated database
+      - name: EXP08 actor admission, entity departure, original revoke, removal currentness, replay, drift and concurrent replacement/owner-floor guards in an isolated database
         env:
           EXP08_DISPOSABLE: '1'
           PGHOST: 127.0.0.1
@@ -165,6 +165,8 @@ jobs:
         run: node scripts/ci/comms-provider-boundary-wiring.mjs
       - name: Gmail native connection authority, private credential isolation and concurrent rollback
         run: node scripts/proof/gmail-connection-postgres.mjs 5432
+      - name: EXP03 saved email whole atomic carrier, original source approval receipt and refusal recovery
+        run: node --experimental-strip-types scripts/proof/exp03-email-existing-draft-postgres.mjs 5432 --whole-carrier
       - name: Operator account archive, restore, physical deletion and concurrent isolation in disposable PostgreSQL
         run: node scripts/proof/operator-account-archive.mjs --postgres
       - name: Operator provider retirement SQL proof
@@ -1661,6 +1663,14 @@ jobs:
       - name: Governed email door binds a lead reply approval to one send (verified PAIGE Email sender only)
         if: ${{ !cancelled() }}
         run: npm run test:comms-lead-reply-approval
+
+      - name: Saved email source projection and original scheduled receipt integration
+        if: ${{ !cancelled() }}
+        run: >-
+          npx vitest run --config vitest.sales-invoice-delivery.config.ts --maxWorkers=1 --no-file-parallelism
+          supabase/functions/_shared/comms-email/draft-proposal.test.ts
+          supabase/functions/_shared/comms-email/draft-source.test.ts
+          supabase/functions/_shared/comms-email/scheduled-drain.test.ts
 
       - name: SendGrid webhook door (signed events only, acceptance is never delivery)
         if: ${{ !cancelled() }}

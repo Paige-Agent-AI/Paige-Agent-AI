@@ -7,7 +7,7 @@ MATERIAL_FLOW_CHANGE: NO: additive occurrence-address metadata and stronger ackn
 FLOW_PROTOTYPE: NOT_REQUIRED: the original reminder claim/delivery flow and unknown-outcome exit are preserved; this is not a new interactive flow.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: eligible SOLO reminder recipients can eventually reopen the original authorized occurrence through the existing consumer without accepting a stale or foreign notification as authority.
 VISUAL_DIRECTION: PASS: no visual source changed; preserve the incumbent notification and Operations design.
-AUTOMATED_EVIDENCE: PASS: entire real worker under protected ports,31 cases/0 failures/0 skipped; causal predecessor22 PASS/8 FAIL. Exact nullable-target compatibility added after EXP08's original-source finding. Canonical SOLO parity SP1–SP5 and all negative mutations PASS; communications floor wiring PASS, structural only.
+AUTOMATED_EVIDENCE: PASS: entire real worker under protected ports,31 cases/0 failures/0 skipped; causal predecessor22 PASS/8 FAIL. Original booking/provider suite111 PASS/0 skipped after its claim acknowledgment fixture was reconciled; all assertions/provider payload comparisons unchanged. Exact nullable-target compatibility added after EXP08's original-source finding. Canonical SOLO parity SP1–SP5 and all negative mutations PASS; communications floor wiring PASS, structural only.
 STATIC_EVIDENCE: PASS: focused ESLint on both changed source files and whitespace checks exit0. Hosted exact-head compiler, required CI and release checks remain owed; no local Deno check is claimed.
 RENDERED_EVIDENCE: UNVERIFIED: no new UI source or presentation; this source-only producer patch does not supply EXP08 bell/mount screenshots or full-shell proof.
 BEHAVIORAL_EVIDENCE: PASS: executed original whole-worker tests cover exact metadata, nullable target, native timestamp precision/offsets, claim-stage versus final version, unknown claim/no replay, terminal/retimed/foreign-source refusal, concurrent metadata changes, unknown insert and provider refusal. These are protected-port tests, not customer notification delivery.
@@ -56,7 +56,19 @@ ActionAdapter, scheduler, approval system, event or receipt store.
 ALG-01 supports exact source identity and no-repeat; ALG-12 supports truthful
 unconfirmed outcomes only. No broader algorithm maturity is claimed.
 
-Capabilities synchronization: existing `planning.set_reminder` and
-`operations.department` declarations/readiness are unchanged. This adds no
+Capabilities synchronization: existing `planning.set_reminder` declaration and
+the existing Operations catalogue availability are unchanged. No registered
+`operations.department` key was found in current Spine source. This adds no
 new customer-callable capability or provider readiness; full reminder
 delivery and owner-attention acceptance remain open.
+
+## Required-CI fixture reconciliation
+
+Initial published cc44154c required comms-provider-boundary124420546238
+failed in the existing booking/provider test, whose reminder claim stub returned
+only ID/version. Local reproduction retained the same failures. Its one return
+expression now also acknowledges the actual claim payload timestamp; no worker
+guard, test assertion, provider byte comparison, no-repeat behavior or other
+handler was changed. The original111 cases then pass. This narrow fixture span
+was coordinated in original EXP03 ANT-87/3063d8fb; current3037 had no overlapping
+file. Hosted checks on the new head remain required; old failed CI is not waived.

@@ -23,6 +23,13 @@ const client = (data: unknown, error: unknown = null) => ({
   rpc: vi.fn(async () => ({ data, error })),
 });
 describe('original reviewed Memory inspection', () => {
+  it.each(['PGRST202', '42883'])('reports unavailable save contract %s without claiming an uncertain write', async code => {
+    const port = client(null, { code });
+    await expect(saveReviewedPaigeMemory(port, scope(), selection())).rejects.toMatchObject({
+      code: 'UNAVAILABLE', mutationMayHavePersisted: false, intentId,
+    });
+    expect(port.rpc).toHaveBeenCalledTimes(1);
+  });
   it('keeps the captured guard when the caller replaces its scope object guard', async () => {
     let active = true;
     let checks = 0;

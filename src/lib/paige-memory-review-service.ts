@@ -183,6 +183,10 @@ export async function saveReviewedPaigeMemory(client: MemoryReviewClient, scope:
       p_user_id: null, p_tenant_id: null, p_review: review,
     });
     if (!captured.isCurrent()) throw new MemoryReviewError('SCOPE_CHANGED', true, input.intentId);
+    if (response.data === null && object(response.error) && (response.error.code === 'PGRST202' || response.error.code === '42883')) {
+      attempted = false; // Missing overload is a refusal, not an accepted save.
+      throw new MemoryReviewError('UNAVAILABLE', false, input.intentId);
+    }
     if (response.error || !uuid(response.data)) throw new MemoryReviewError('SAVE_UNKNOWN', true, input.intentId);
     const saved = await inspectReviewedPaigeMemory(client, captured, input.intentId);
     if (!captured.isCurrent()) throw new MemoryReviewError('SCOPE_CHANGED', true, input.intentId);

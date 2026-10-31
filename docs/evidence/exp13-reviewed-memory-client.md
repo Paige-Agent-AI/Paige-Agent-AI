@@ -44,6 +44,12 @@ but did not execute them; service SHA256
 F4A35F8C7690C0F0F227F6C53F4B59662AA78E2D70AD0EB67AC3F662576E26BD.
 This receipt supersedes only the pending review statements above, not the
 remaining integration, release, native-contract or customer verification gaps.
+Rolling-release unavailable-save controls first FAILED twice: PGRST202/42883
+were incorrectly marked SAVE_UNKNOWN/may-have-persisted. The client now treats
+only an explicit missing-function error with null data as UNAVAILABLE/no effect;
+contradictory data or transport failure remain uncertain and are never replayed.
+Focused suite then 22 PASS, isolated strict source types/lint PASS. This narrow
+error-classification follow-up still needs bounded non-author source recheck.
 Remaining client proof includes exhaustive malformed row/selected correction,
 permission changes, missing native API and interruption cases. Consumer UI,
 reviewed Setup facts, saved Mission and original admitted Work/CRM creation remain

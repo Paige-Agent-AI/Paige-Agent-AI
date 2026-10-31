@@ -914,6 +914,23 @@ ALG-08 saved effort/time does not prove capacity or scheduling optimization. Ful
 outcomes/E5-CV1–CV9, same ZION through both chats, automation lifecycle, monitoring,
 permitted proactive work, eligible existing/new SOLO proof and founder evaluation remain OPEN.
 
+**2026-10-30 UTC — EXP02 weekly delivery and original Billing authority; mechanical release closeout.**
+
+| Increment | Exact source and production release | Bounded result and remaining proof |
+| --- | --- | --- |
+| [#3132 original weekly transport recovery](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3132) | Reviewed `07166c4f72c8aabc77aaa34ecf7724051ca071dd`; AUTHOR-REVIEW / LOWER ASSURANCE5718087126; all11 exact checks/managed Preview/both web statuses SUCCESS. Normal merge `72b6188779018c3a4dca550727e1cda2eeafcc64`/tree`c45584ec3407e90aa769cba888fd7ead9b712460` equals inspected union. Production Vercel`dpl_4hLtk8UiH87gcBMmDBVCt6Su4r4c` READY/exact72b; both official origins72b-mvvgc68t/null. First Edge41127010230 source failure retained; one unchanged-source attempt2/job124310590002 SUCCESS, independently verified artifact13011327721 and all4 original selected source/config closures. Own native N/A. | Original parser/Fabric/current-authority/budget/semantic-no-replay path only; no routing, provider, writer or activation change. Actual subsequent weekly customer request still FAILED; same interrupted request/result survived reload. Source release is not useful-answer acceptance. [Evidence](evidence/ui-delivery/e2-weekly-model-recovery.md), [original release/failure receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3132#issuecomment-6533544737). |
+| [#3140 exact exhausted-credit classification](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3140) | Reviewed`98518bb66e9af086f395168fce1b2947f2b5957a`; LOWER5718876553/all11 exact checks/managed Preview/both web SUCCESS. Merge`5d23909a20e139c3f3fbdab999ee043843b91d4d`; Vercel`dpl_88cocaSYXjj58DWCT1sjDGYJn7mr` READY/exact5d/both origins5d-mvvj002e/null. First Edge41136244421 FAIL39/2 retained; normal current-main successor`60fe883ee4dce82f88937b366fa763243ed10da9`/Edge41136673361/job124341060477 SUCCESS, original artifact13015829551 independently certifies ALL44 source/recorded emitted/config closures, Chat604. Own native N/A. | One exact code enters the existing failure policy; current authority/budget/semantic-no-replay remain. ONE genuinely new authorized ordinary-owner weekly answer useful FINAL/38s and FULL reload same answer/request once/old history/empty composer PASS, protected ANT52/e8e31b6f. Separate later Finance module-load failure is not a successful transition. No all-request/Live/role/cohort/full19 acceptance. [Evidence](evidence/ui-delivery/e2-weekly-credit-code.md), [sanitized customer receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3140#issuecomment-6535007620). |
+| [#3142 original Billing current-authority repair](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3142) | Reviewed`5437bf53c7c07556fb583034f613ba3d026a894f`; LOWER5719480857/all13 exact checks/managed Preview/both web SUCCESS/zero threads. Merge`8684a38a2d773c5dc14007aa2909829371e49d7d`/tree`2318e4a41113c9646054f2b3406dc047efc033a1` exact reviewed union. Normal native41143811589/job124364242949 SUCCESS; production80006+80007 once/frontier80007/db-live8684; final original bodies and all29 metadata fields/OIDs/ACLs/comments exact. Vercel`dpl_BXDindsxV5XB7k9kbJ3mS1yANmrN` READY/exact8684; both official origins23:22:14UTC8684-mvvlhzg6/null/actual asset200. Edge N/A. | Preserves original Billing ABI/scope/contacts/atomic audit/strict primary/permissions; no new grant, payment or Team writer. Local AND hosted25 waits/12 permission negatives/7 mutants/9 drifts and independent E08 single-case receiving proof are bounded native evidence, not full hosted Auth/RLS/customer mutation proof. Receiving ACK ANT138/0b54e52b clears ONLY the producer prerequisite; E08 consumer gates remain. First automatic merge hold/current AGENTS clarification/same normal expected-head merge retained. [Evidence](evidence/ui-delivery/e2-billing-current-authority.md), [verified native/web receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3142#issuecomment-6535623493). |
+
+Internal production increments only; no customer release identity or announcement.
+Functional source release, the one weekly customer read/reload case, unchanged visual
+implementation, incomplete full experiential proof and final Founder Acceptance
+remain distinct. All original19/nine remain OPEN; catalogue3ComingSoon/3Limited/
+3Unverified/allAccountAccessUnverified and ALG03/06/11/12Partial/13Unverified unchanged.
+Original failures, protected monthly UNKNOWN/UNRETRIED and held3018 materialP1 remain.
+Recovery uses normal reviewed forward fixes/reverts and, for applied native history,
+a forward migration; no uncertain business work is replayed.
+
 **2026-10-30 UTC — EXP02 exact Finance invoice navigation; mechanical delivery closeout.**
 
 | Increment | Exact source and production release | Bounded customer result and remaining proof |
@@ -8376,6 +8393,12 @@ NOT_APPLICABLE, no customer version/announcement or verified new algorithm.
 Separately gated MCP consumer2484 and authenticated capability/customer/full
 Experience proof remain PROOF OWED; native source cannot establish those claims.
 Recovery: reviewed additive forward correction preserving original records.
+
+**2026-10-30 UTC — EXP13 original Knowledge source-reference prerequisite; source-only merge.**
+
+| Increment | Exact merged source and review | Outcome and proof boundary |
+| --- | --- | --- |
+| [#3125](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3125) | Reviewed `8c6a81482a20225178173fbd8f0ac1edb66659a8`; merged `3e64e10056633bd15484f78d4fc9f39c64241934`. [Non-author review receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3125#issuecomment-6531670664), exact applicable source CI and19 source controls retained; Unicode excerpt-split failure repaired before release. | Original caller-JWT Knowledge reader supplies tenant/document/revision/text hash and bounded exact excerpts, with unavailable/stale outcomes. UNMOUNTED producer only: original-file evidence unavailable and fact confirmation not asserted. [Original contract/evidence](evidence/exp13-source-evidence-contract.md). SQL/native/deployed consumer N/A to this prerequisite; no authenticated retrieval, reviewed fact/Memory, saved plan, actual task, bulk outcome or full EXP13 readiness inferred. Prior Preview concurrency cancellation remains NOT PASS; no customer release identity/announcement or algorithm promotion. |
 
 ## 5. Current focus + known gaps
 

@@ -6,6 +6,14 @@ DO $departure_currentness$
 DECLARE target regprocedure:=to_regprocedure('public.remove_solo_team_member(uuid,uuid)');
  p pg_proc; prior_metadata jsonb; original text; changed text; definition text;
  anchor text:=$anchor$  -- Every owner is refused, which is what makes "the sole owner is never removable" true without$anchor$;
+ target_anchor text:=$target_anchor$  -- Locked, and deliberately NOT filtered by status.$target_anchor$;
+ ordered_locks text:=$ordered_locks$  -- exp08_departure_pair_locks_v1: opposing departures take the same membership lock order.
+  -- The existing authority check still precedes every target lookup or lock.
+  PERFORM 1 FROM public.tenant_members departure_seat
+    WHERE departure_seat.tenant_id = _tenant AND departure_seat.user_id IN (_actor, _member_user_id)
+    ORDER BY departure_seat.user_id FOR UPDATE;
+
+$ordered_locks$;
  guard text:=$guard$  -- exp08_departure_currentness_v1: a target-row wait cannot retain earlier authority.
   -- Keep existing actor-seat and workspace-pointer rows stable until the original act completes.
   -- Missing rows do not invent a new seat requirement: the original scope/owner helpers still decide.
@@ -41,19 +49,21 @@ BEGIN
  END IF;
  original:=p.prosrc;
  IF strpos(original,'exp08_departure_currentness_v1')>0 THEN
-  IF md5(replace(original,guard,''))<>'d8c0eb6a8fdc3fef52eda7df4f9274e1'
-   OR length(original)-length(replace(original,guard,''))<>length(guard) THEN
+  IF md5(replace(replace(original,guard,''),ordered_locks,''))<>'d8c0eb6a8fdc3fef52eda7df4f9274e1'
+   OR length(original)-length(replace(original,guard,''))<>length(guard)
+   OR length(original)-length(replace(original,ordered_locks,''))<>length(ordered_locks) THEN
    RAISE EXCEPTION 'EXP08 departure currentness replay drift';
   END IF;
   RETURN;
  END IF;
  IF md5(original)<>'d8c0eb6a8fdc3fef52eda7df4f9274e1'
-  OR length(original)-length(replace(original,anchor,''))<>length(anchor) THEN
+  OR length(original)-length(replace(original,anchor,''))<>length(anchor)
+  OR length(original)-length(replace(original,target_anchor,''))<>length(target_anchor) THEN
   RAISE EXCEPTION 'EXP08 departure currentness source drift';
  END IF;
  prior_metadata:=to_jsonb(p)-'prosrc';
- changed:=replace(original,anchor,guard||anchor);
- IF replace(changed,guard,'') IS DISTINCT FROM original THEN
+ changed:=replace(replace(original,anchor,guard||anchor),target_anchor,ordered_locks||target_anchor);
+ IF replace(replace(changed,guard,''),ordered_locks,'') IS DISTINCT FROM original THEN
   RAISE EXCEPTION 'EXP08 departure currentness inverse failed';
  END IF;
  definition:=pg_get_functiondef(target);

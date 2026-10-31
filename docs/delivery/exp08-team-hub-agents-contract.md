@@ -2076,3 +2076,19 @@ controls, mutants, original-runner integration and normal release remain owed.
 The first local startup observation timeout and its stopped test cluster are retained.
 No native version is reserved, published or applied; frozen PR3130 is unchanged.
 Full owner removal/recovery, protected-account and customer proof remain unfinished.
+
+Continuing the SAME departure candidate: ordered actor/target membership prelocks
+now prevent the opposing-call cycle. The new repository proof reuses the original
+`OperatorPostgresFixture`, requires explicit disposable loopback scope and disposes
+only its own created database. Current local15 controls pass: the original positive
+and three context changes, the actual opposing-call blocking graph with one removal,
+one refusal and one audit without deadlock/timeout, and ten source/security/metadata
+drift refusals with unchanged business rows. Original before-repair controls remain.
+Both inserted source spans have exact inverses; two applications conserve the whole
+original function metadata and ACL. The first portable-fixture quoting failure is
+retained; its database was disposed before the corrected successful run. All owned
+proof clusters are stopped. The distinct reviewer found no material source finding
+in the revised patch and runner, with SOURCE-ONLY assurance and no test execution.
+Mutants, broader company/agency/Auth/protected-account and other-writer interactions,
+original full-runner/CI registration and managed deployment are still owed. This
+unversioned successor candidate does not alter frozen3130/833 or complete outcome4.

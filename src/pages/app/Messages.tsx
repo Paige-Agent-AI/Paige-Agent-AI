@@ -22,6 +22,7 @@ import {
   type PortalMessage,
 } from "@/hooks/useClientPortalMessages";
 import { useClientPortalBrand } from "@/hooks/useClientPortalBrand";
+import { CLIENT_PORTAL_CHOOSE_HREF } from "@/lib/client-portal-entry";
 import { useCustomerPortalNav } from "@/hooks/useCustomerPortalNav";
 import { readableTextOn } from "@/lib/brand/contrast";
 import { useBeforeUnloadGuard } from "@/hooks/useBeforeUnloadGuard";
@@ -306,6 +307,39 @@ export default function Messages() {
   const blocked = thread.unavailable || thread.multipleBusinesses;
   const canCompose = !thread.loading && !blocked && !!thread.tenantId;
 
+  // The hook's epoch retires actor/business intents. A first successful read may
+  // resolve tenantId from null, which is not a customer scope change.
+  const focusScope = thread.scopeEpoch;
+  const retryLife = useRef({ scope: focusScope, sequence: 0, alive: true });
+  if (retryLife.current.scope !== focusScope) {
+    retryLife.current.scope = focusScope;
+    retryLife.current.sequence += 1;
+  }
+  const [completedRetry, setCompletedRetry] = useState<{ scope: number; sequence: number; trigger: HTMLButtonElement } | null>(null);
+  useEffect(() => {
+    const life = retryLife.current;
+    life.alive = true;
+    return () => { life.alive = false; life.sequence += 1; };
+  }, []);
+  const retryConversation = async (trigger: HTMLButtonElement, restoreFocus: boolean) => {
+    const life = retryLife.current;
+    const scope = life.scope, sequence = ++life.sequence;
+    try { await thread.refresh(); } catch { return; }
+    if (restoreFocus && life.alive && life.scope === scope && life.sequence === sequence) {
+      setCompletedRetry({ scope, sequence, trigger });
+    }
+  };
+  useEffect(() => {
+    if (!completedRetry) return;
+    setCompletedRetry(null);
+    const life = retryLife.current;
+    const active = document.activeElement;
+    if (life.alive && life.scope === completedRetry.scope && life.sequence === completedRetry.sequence
+      && canCompose && !thread.error && (active === completedRetry.trigger || active === document.body)) {
+      field.current?.focus();
+    }
+  }, [completedRetry, focusScope, canCompose, thread.error]);
+
   // Help mode puts the cursor in the composer once it can actually take text (after the first read).
   useEffect(() => {
     if (!help) { helpFocused.current = false; return; }
@@ -421,20 +455,21 @@ export default function Messages() {
           <p className="inline-flex items-center gap-2">
             <AlertCircle aria-hidden="true" className="h-4 w-4 shrink-0 text-destructive" /> {thread.error}
           </p>
-          <Button size="sm" variant="outline" onClick={() => void thread.refresh()}>Try again</Button>
+          <Button size="sm" variant="outline" onClick={(event) => void retryConversation(event.currentTarget, event.detail === 0)}>Try again</Button>
         </div>
       )}
 
       {thread.multipleBusinesses ? (
         <div className="rounded-xl border border-border p-8 text-center">
           <MessageSquare aria-hidden="true" className="mx-auto mb-3 h-8 w-8 text-muted-foreground" />
-          <p className="text-sm font-medium">Messaging for more than one business isn't available yet</p>
+          <p className="text-sm font-medium">Choose a business to message</p>
           <p className="mx-auto mt-1 max-w-sm text-sm text-muted-foreground">
-            Your account is connected to more than one business. Messages here work with one business at a time
-            for now, so nothing can be sent from this page yet. For help in the meantime, use{" "}
-            <Link to="/app/support" className="font-medium text-foreground underline underline-offset-4">Support</Link>.
+            Choose the business you're contacting so we can load the right conversation. Nothing can be sent until your access is checked.
           </p>
-          <BackHome />
+          <div className="flex flex-wrap items-end justify-center gap-x-3">
+            <Button asChild variant="outline" className="mt-5 min-h-[44px]"><a href={CLIENT_PORTAL_CHOOSE_HREF}>Choose business</a></Button>
+            <BackHome />
+          </div>
         </div>
       ) : thread.unavailable ? (
         <div className="rounded-xl border border-border p-8 text-center">

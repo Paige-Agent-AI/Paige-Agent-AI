@@ -107,6 +107,83 @@ it("shows a read failure with retry and never the empty invitation", async () =>
   expect(f.state.refresh).toHaveBeenCalledOnce();
 });
 
+function pendingRead() {
+  let resolve!: () => void;
+  const promise = new Promise<void>(done => { resolve = done; });
+  return { promise, resolve };
+}
+
+async function beginReadRetry(detail = 0) {
+  const pending = pendingRead();
+  f.state = { ...f.state, error: "We couldn't load your messages.", tenantId: null,
+    refresh: vi.fn(() => pending.promise) };
+  await render();
+  const trigger = button("Try again");
+  trigger.focus();
+  await act(async () => trigger.dispatchEvent(new MouseEvent("click", { bubbles: true, detail })));
+  return { ...pending, trigger };
+}
+
+it("returns keyboard focus to the composer after a deliberate read retry succeeds", async () => {
+  const read = await beginReadRetry();
+  f.state = { ...f.state, error: null, tenantId: T };
+  await act(async () => read.resolve());
+  await render();
+  expect(document.activeElement).toBe(host.querySelector("textarea"));
+  expect(f.state.send).not.toHaveBeenCalled();
+});
+
+it("keeps focus on retry when the read still fails, without a later polling focus jump", async () => {
+  const read = await beginReadRetry();
+  await act(async () => read.resolve());
+  await render();
+  expect(document.activeElement).toBe(read.trigger);
+  f.state = { ...f.state, error: null, tenantId: T };
+  await render();
+  expect(document.activeElement).not.toBe(host.querySelector("textarea"));
+});
+
+it("does not steal focus the customer moved elsewhere while a retry was pending", async () => {
+  const read = await beginReadRetry();
+  const elsewhere = host.querySelector('a[href="/app"]') as HTMLAnchorElement;
+  elsewhere.focus();
+  f.state = { ...f.state, error: null, tenantId: T };
+  await act(async () => read.resolve());
+  await render();
+  expect(document.activeElement).toBe(elsewhere);
+});
+
+it("does not force composer focus after a pointer retry", async () => {
+  const read = await beginReadRetry(1);
+  f.state = { ...f.state, error: null, tenantId: T };
+  await act(async () => read.resolve());
+  await render();
+  expect(document.activeElement).not.toBe(host.querySelector("textarea"));
+  expect(f.state.send).not.toHaveBeenCalled();
+});
+
+it("retires retry focus across a customer scope change, including A to B to A", async () => {
+  const read = await beginReadRetry();
+  f.state = { ...f.state, error: null, tenantId: "other-business", scopeEpoch: 1 };
+  await render();
+  f.state = { ...f.state, tenantId: T, scopeEpoch: 2 };
+  await render();
+  await act(async () => read.resolve());
+  await render();
+  expect(document.activeElement).not.toBe(host.querySelector("textarea"));
+  expect(f.state.send).not.toHaveBeenCalled();
+});
+
+it("does not restore focus or remount customer content after the page has closed", async () => {
+  const read = await beginReadRetry();
+  await act(async () => root.render(<button>Continue elsewhere</button>));
+  const elsewhere = button("Continue elsewhere");
+  elsewhere.focus();
+  await act(async () => read.resolve());
+  expect(document.activeElement).toBe(elsewhere);
+  expect(host.querySelector("textarea")).toBeNull();
+});
+
 it("explains honestly when the account has no customer relationship", async () => {
   f.state.unavailable = true; f.state.tenantId = null;
   await render();
@@ -339,12 +416,18 @@ it("shows no send hint when the composer is off because the thread failed to loa
   expect(host.textContent).not.toContain("Up to 4,000 characters");
 });
 
-it("explains the multi-business limit instead of offering a composer", async () => {
+it("recovers ambiguous business selection through the existing native chooser without offering a composer", async () => {
   f.state.multipleBusinesses = true; f.state.tenantId = null;
   await render();
-  expect(host.textContent).toContain("Messaging for more than one business isn't available yet");
+  expect(host.textContent).toContain("Choose a business to message");
+  expect(host.textContent).not.toContain("isn't available yet");
   expect(host.textContent).not.toContain("couldn't load");
   expect(host.querySelector("textarea")).toBeNull();
+  const choose = host.querySelector('a[href="/app?chooseBusiness=1"]');
+  expect(choose?.textContent).toContain("Choose business");
+  expect(choose?.getAttribute("target")).toBeNull();
+  expect(host.querySelector('a[href="/app/support"]')).toBeNull();
+  expect(f.state.send).not.toHaveBeenCalled();
   const back = host.querySelector('section a[href="/app"]') as HTMLAnchorElement;
   expect(back?.textContent).toContain("Back to Home");
   await act(async () => back.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true, button: 0 })));

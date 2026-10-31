@@ -1,0 +1,242 @@
+{
+  "schemaVersion": 1,
+  "executedSource": "ea41752aedb825007ca75dc8cd27c12c30308d4f",
+  "incomingMain": "d95f7ff3d060ef8060dbff11b8bdb63c4f6deea9",
+  "environment": "Synthetic original full shell/component/CSS; original read ports and disabled conversation; no backend/model/provider/action",
+  "frames": [
+    {
+      "viewport": [
+        1536,
+        770
+      ],
+      "chat": "closed",
+      "raster": "1536x770-closed.jpg",
+      "sha256": "d4a18d631dd4be519c9f95cd6640c9ccfdd34de7473fe0df4b91c551e7b12faf",
+      "documentWidth": 1536,
+      "fontLoaded": true,
+      "findingRetained": true,
+      "disclosurePresent": true,
+      "closeTarget": [
+        44,
+        44
+      ],
+      "scrollBody": {
+        "clientHeight": 551,
+        "scrollHeight": 587,
+        "scrollTop": 0
+      },
+      "privateSentinelVisible": false,
+      "readyOverclaim": false
+    },
+    {
+      "viewport": [
+        1536,
+        770
+      ],
+      "chat": "open",
+      "raster": "1536x770-open.jpg",
+      "sha256": "844e67b530401aacbc34918c37077fe04eb9d68c8d08eb84d8274e1671854567",
+      "documentWidth": 1536,
+      "fontLoaded": true,
+      "findingRetained": true,
+      "disclosurePresent": true,
+      "closeTarget": [
+        44,
+        44
+      ],
+      "scrollBody": {
+        "clientHeight": 551,
+        "scrollHeight": 570,
+        "scrollTop": 0
+      },
+      "privateSentinelVisible": false,
+      "readyOverclaim": false
+    },
+    {
+      "viewport": [
+        1366,
+        768
+      ],
+      "chat": "closed",
+      "raster": "1366x768-closed.jpg",
+      "sha256": "caf652f74d9424304c50330f157a9d7d5201a5f1921224cdd9e5f53cf68c91cd",
+      "documentWidth": 1366,
+      "fontLoaded": true,
+      "findingRetained": true,
+      "disclosurePresent": true,
+      "closeTarget": [
+        44,
+        44
+      ],
+      "scrollBody": {
+        "clientHeight": 548,
+        "scrollHeight": 570,
+        "scrollTop": 0
+      },
+      "privateSentinelVisible": false,
+      "readyOverclaim": false
+    },
+    {
+      "viewport": [
+        1366,
+        768
+      ],
+      "chat": "open",
+      "raster": "1366x768-open.jpg",
+      "sha256": "10939500e1fd9495e3dbf2651e27075ea7a31966227876150ca1f69ad8304fd2",
+      "documentWidth": 1366,
+      "fontLoaded": true,
+      "findingRetained": true,
+      "disclosurePresent": true,
+      "closeTarget": [
+        44,
+        44
+      ],
+      "scrollBody": {
+        "clientHeight": 548,
+        "scrollHeight": 587,
+        "scrollTop": 0
+      },
+      "privateSentinelVisible": false,
+      "readyOverclaim": false
+    },
+    {
+      "viewport": [
+        1024,
+        768
+      ],
+      "chat": "closed",
+      "raster": "1024x768-closed.jpg",
+      "sha256": "dd0e981593ced098a2421a35b82d927dafa1f8131feb2fef7d3db3341f4240fe",
+      "documentWidth": 1024,
+      "fontLoaded": true,
+      "findingRetained": true,
+      "disclosurePresent": true,
+      "closeTarget": [
+        44,
+        44
+      ],
+      "scrollBody": {
+        "clientHeight": 548,
+        "scrollHeight": 587,
+        "scrollTop": 0
+      },
+      "privateSentinelVisible": false,
+      "readyOverclaim": false
+    },
+    {
+      "viewport": [
+        1024,
+        768
+      ],
+      "chat": "open",
+      "raster": "1024x768-open.jpg",
+      "sha256": "e2ec9d7d8008410bb2352544c880eca5bb044a211b3d36a57db0e6c90445a4d4",
+      "documentWidth": 1024,
+      "fontLoaded": true,
+      "findingRetained": true,
+      "disclosurePresent": true,
+      "closeTarget": [
+        44,
+        44
+      ],
+      "scrollBody": {
+        "clientHeight": 548,
+        "scrollHeight": 570,
+        "scrollTop": 0
+      },
+      "privateSentinelVisible": false,
+      "readyOverclaim": false
+    },
+    {
+      "viewport": [
+        900,
+        1000
+      ],
+      "chat": "closed",
+      "raster": "900x1000-closed.jpg",
+      "sha256": "63f4df3de180f559d50b664a05692997b7867e37bc174daae7de8596321581b9",
+      "documentWidth": 900,
+      "fontLoaded": true,
+      "findingRetained": true,
+      "disclosurePresent": true,
+      "closeTarget": [
+        44,
+        44
+      ],
+      "scrollBody": {
+        "clientHeight": 570,
+        "scrollHeight": 570,
+        "scrollTop": 0
+      },
+      "privateSentinelVisible": false,
+      "readyOverclaim": false
+    },
+    {
+      "viewport": [
+        900,
+        1000
+      ],
+      "chat": "open",
+      "raster": "900x1000-open.jpg",
+      "sha256": "6ebe9c80327aa7a8332cad2eced7600f1f98076c9a1cb1293aa33ebbefd423ce",
+      "documentWidth": 900,
+      "fontLoaded": true,
+      "findingRetained": true,
+      "disclosurePresent": true,
+      "closeTarget": [
+        44,
+        44
+      ],
+      "scrollBody": {
+        "clientHeight": 587,
+        "scrollHeight": 587,
+        "scrollTop": 0
+      },
+      "privateSentinelVisible": false,
+      "readyOverclaim": false
+    }
+  ],
+  "mobile": {
+    "dom": [
+      390,
+      844
+    ],
+    "nativeRaster": [
+      390,
+      843
+    ],
+    "file": "390-mobile-native.jpg",
+    "sha256": "057bba82bbcd69aa171bb770c66f1bb6e1aea157ee50240f74b9d72a19e62aad",
+    "keyboardReturn": {
+      "activeText": "Email and phone setup",
+      "dialogOpen": false,
+      "documentWidth": 390,
+      "viewportWidth": 390
+    }
+  },
+  "priorActualNative200": {
+    "source": "443300fe137da1d45e5ce71a616cbd9949fd62dc",
+    "unchangedRenderedSources": [
+      "src/solo/CommandCenter.tsx",
+      "src/components/tenant-shell/TenantCommandCenterShell.tsx",
+      "src/components/tenant-shell/tenant-command-center-shell.css",
+      "src/components/tenant-shell/tenant-command-center-core.css",
+      "src/solo/SoloSystemsCheckWorkspace.tsx",
+      "src/solo/solo-systems-check-workspace.css",
+      "src/solo/solo-tokens.css",
+      "src/index.css",
+      "tailwind.config.ts",
+      "postcss.config.js",
+      "public/fonts",
+      "scripts/live-drive/harness/executive-mount"
+    ],
+    "changedIncumbentDependencyEntries": 0,
+    "newUnconsumedDependencyEntries": 16,
+    "originalEvidence": "../native-200-percent.png",
+    "freshAttempt": "INVALID: native target occluded; no native input or zoom change. No new native200 run claimed."
+  },
+  "excluded": "Blank/paused document, 384MiB heap failure and timed-out screenshots are not PASS; default phone raster is390x843, not844. No raster edits.",
+  "cleanup": "Temporary viewport reset; owned proof tab closed; only own controlled renderer stopped. Customer/peer tabs unchanged.",
+  "acceptance": "Source-render and keyboard evidence only; real released roles/cohorts/workflow/reload/AT/Live and full19/nine/founder acceptance remain owed."
+}

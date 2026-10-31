@@ -2765,3 +2765,24 @@ parent was started, including its existing complete departure child; no terminal
 whole-parent or fresh combined result is claimed yet. Remaining cross-door/file/
 retirement, drift, managed/full-schema/JWT/RLS and useful customer proof remain owed.
 All18+6/five journeys and full EXP08 remain STILL CODING.
+
+Full original parent attempt `exp08-full-lifecycle-human-dm.log` ended FAIL, raw SHA256
+`d91cb9e04f84fc420be391f6032b9903a27826a45eb9d98033b267165bfc3805`:
+its core report contains191 record entries, followed by successful original Billing
+advisory/contact authority-loss refusal controls, but its existing180000ms child
+ceiling produced ETIMEDOUT before the expanded departure child's terminal report.
+That is NOT full-parent PASS or a product-performance result. The exact owned child
+DB26516 left by forced termination was verified against the recorded process chain;
+no remaining client/process existed, and only that local database was removed.
+
+The UNCHANGED standalone child then completed EXIT0 in179.1296542 seconds: all60
+original outer entries then85 nested Hub controls (61 outer entries), own database
+disposed. Log `exp08-full-departure-human-dm-benchmark.log`, SHA256
+`4b3e269c5659b1a92e13e0978b1807ec40c9a8d998e061e8a993433a5a4cf45c`.
+Thus the old aggregate limit left less than0.9s measured headroom. The original
+parent's final child ceiling ONLY is renewed to600000ms with an evidence comment.
+Whole-file reverse substitution exactly reproduces the prior parent; every assertion,
+selector, individual SQL/wait/mutant bound and nonzero/error propagation is unchanged.
+Distinct source-only review found no material issue in this exact maintenance delta.
+No execution by reviewer, hosted CI allowance or product-latency waiver is claimed.
+A fresh normal full-parent pass and all normal release/customer gates remain owed.

@@ -1096,7 +1096,9 @@ try {
 // Selected component runs remain bounded selections and never stand in for this whole run.
 if(!onlyOwnerRead&&!onlyBilling&&!onlyOwnerHistory&&!onlyHubIdentity){
   const child=spawnSync(process.execPath,[fileURLToPath(new URL('./exp08-member-removal-currentness.mjs',import.meta.url))],{
-    env:{...process.env,OPERATOR_PROOF_PSQL:executable},stdio:'inherit',windowsHide:true,timeout:180000,
+    // Expanded original60 + Hub85 measured179.1s unchanged on Windows; retain
+    // all individual SQL/wait/mutant bounds and propagate every nonzero/error.
+    env:{...process.env,OPERATOR_PROOF_PSQL:executable},stdio:'inherit',windowsHide:true,timeout:600000,
   });
   if(child.error)throw child.error;
   assert.equal(child.status,0,'Original departure currentness, boundaries, replay, drift and causal controls must pass');

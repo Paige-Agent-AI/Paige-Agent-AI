@@ -16,6 +16,86 @@ Reuse lesson: validate the complete native history envelope and all rows before 
 
 Original ANT163/ANT52 and canonical Delivery Register retain all outcome IDs, acceptance gaps and the same protected QA access cutoff2026-11-06 23:00UTC/earlier ordinary End access with actual denial readback; no cleanup inferred. Prior Brain history follows unchanged.
 
+## EXP02 October30 receiving checkpoint — native15 included, release holds retained
+
+Original3018 required database-contract41001866775/123887881658 failed its
+production-grant reproduction: the old14-only branch lacked FOUR released
+EXP04private actor functions. Normally receive full current915c977f/native15
+and original fixture/history/guards, without editing any SQL, grant or test
+assertion. This is source-order recovery, not proof the new CI has passed.
+Original component/test/raster sources remain exact; new-head review/CI and
+candidate rendered/cohort/role/recovery proof still required. Original P1OPEN.
+
+A SEPARATE current915 normal Edge41009746030/123912694812 source-verification
+failure (two original importers mismatched) is routed to the original EXP04
+release owner in ANT51/9442bda5. No E02upload/tag/retry or containing-merge bypass.
+Master3113 now receives the full E03row with its exact original23line insertion;
+no new shared Master content or queue takeover. Full19/nine/founderOPEN, original
+catalogue/algorithms/monthlyUNKNOWNUNRETRIEDUNINSPECTED and privacy holds retained.
+
+## EXP02 October30 — original held recorded-Communications source reconciliation
+
+O06/O14/O16 remains the SAME draft3018, not a new capability or scan. Receive
+current main6fe01f61a and preserve every incoming department/registry/Trust/
+source/Writer/migration history. The original presentation, tests and actual
+neutral raster leaves are unchanged; fresh209 original checks/seven suites,
+scoped lint/pinned design/UTF8 and base parity have passed. New composed-head
+type and hostile-parity controls remain separate/in progress at this checkpoint. Existing P1 PRRT_kwDOSAAXqM6w8IJP remains OPEN. Earlier local/
+synthetic and two-cohort production BASELINE observations remain historical,
+not this candidate's release/runtime acceptance. Current candidate rendered/
+role/zoom/cohort/source proof and exact-head review/CI remain required.
+
+Finance3101 is already normally merged6fe01f61a and source-deployed/exact;
+protected ANT52/c3964953 verifies ONE ordinary-owner week/Forecast/full-reload/
+Back/Forward result. Raw transcript/focus/two-cohort claims remain excluded.
+Master-only3113/87757e2e9 is separately frozen in required CI; its returned
+shared-file preparation window and queued E05/E09 history are preserved. No
+new Master content here: only the original bounded3004 read-proof addendum.
+
+E08 retains current3108/3109 privacy/P1 host and original-source return spans;
+E04 current15/E05 Task-carrier migration disposition remains original-owned.
+E02 changes no shared Chat/Root/writer/SQL/permission/provider or activation.
+Nine catalogue/algorithm/historical9/0+12/0/4/monthlyUNKNOWNUNRETRIEDUNINSPECTED
+and complete19/founder boundaries stay unchanged. No new agent or engine.
+Earlier exact recorded-Communications packet follows as dated source history.
+
+## EXP02 October28 — recorded Communications repair and current proof boundaries
+
+REPAIR O06/O14/O16 only. Original finding/status/writer/authority stay intact;
+the existing drawer labels recorded setup and strict original boolean calling
+facts, and discloses untested calling/delivery/current provider readiness.
+Original157 local checks/six suites and pinned detector are historical source
+proof; new composed-head checks are required. Full original shell/eight DOM
+sizes/390/synthetic B/native200-percent and keyboard evidence remain explicitly
+synthetic; the first component/reserved-space frames are supporting history.
+
+Actual SECOND owner-authorized existing SOLO baseline proof ANT52/35dacff3:
+original recorded finding/reload whole text EXACT, all8 real-shell configurations
+at exact1536x770/1366x768/1024x768/900x1000 with Chat open/closed, actual native
+Zoom200-percent/scroll/44px close/Escape/opener/Enter. Original Chat overlay is
+retained; covered background is not claimed interactive. Finance Overview/all7
+exact390x844 pages/VERA/no document overflow and whole Forecast reload EXACT.
+VERA CTA prepares an original read-only source question; empty draft restored,
+not sent. Zoom100-percent/viewport reset, own tab closed/original retained;
+private captures/customer data not published. Source is BASELINE4fb4b0398/
+main-B9ZNVahV, not this candidate's released-runtime acceptance. Initial failed,
+stale and cropped observations retained/excluded. Material3018 finding
+PRRT_kwDOSAAXqM6w8IJP remains OPEN; candidate/release proof still owed. No role,
+credential, account creation, provider, approval, scan or business action used.
+
+Incoming canonical3012/3014 release histories below supersede the earlier
+unpublished preparatory pending wording, which is consolidated here rather than
+reintroduced as a current hold. Original3004 activity read ANT52/1e80826a and
+recorded-check proof5dd2e20b remain bounded; Sales Back-loading ANT161/1117655d
+and original E01 panel handoffc88c13d4 remain open. New E08 original7-identity
+inline-turn proof is attributed to ANT161/e578105f+1f7519cb/receiving ACKe49a4477;
+earlier MERIT400 is historical/resolved. E08 A2 BusinessReview tool admission,
+both-chat result/reopen and expanded goal outcomes remain owed. No new runtime.
+
+Nine3ComingSoon/3Limited/3Unverified/allAccessUnverified; ALG03/06/11/12Partial,
+13Unverified unchanged. Historical9/0 and12/0/4/protected monthlyUNKNOWN/
+UNRETRIED/uninspected and all19/founder acceptance remain OPEN. No activation.
+
 ## EXP02 October29 - Calendar source increment and acceptance boundary
 
 Original3019 is composed with receiving maina58e9d8d; unchanged owning source

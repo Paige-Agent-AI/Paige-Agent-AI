@@ -1659,6 +1659,7 @@ SELECT pg_temp.check((SELECT count(*) FROM mutant_results)=16 AND NOT EXISTS(SEL
 \echo 'PASS: 16 of 16 mutants (decide by a non-approver, declined read from consumed_at, fingerprint to a non-approver, arguments in the states read, a proposal from before the turn, a proposal in a chat thread, the agent scope unchecked, decide without visibility, approve consuming, no UNIQUE proposal link, an outcome before settle (door alone, and door with the storage CHECK gone), an inactive approver reading waiting, no scope trigger, failed leaving the proposal live, decline not consuming) each fail their probe; controls hold'
 
 \ir fixtures/exp08-a2b-card-read-revalidation.sql
+\ir fixtures/exp08-uncapped-consumption.sql
 
 RESET ROLE;
 \c postgres

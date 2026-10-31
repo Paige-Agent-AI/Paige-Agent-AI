@@ -869,6 +869,8 @@ function ReadyHub({ hub, announce, announcement, onOpenTeamSettings, openPaige, 
     ?? null;
 
   const agentProps: AgentView = {
+    foregroundThread: hub.thread?.status === "ready" && hub.thread.root
+      ? { channelId: hub.thread.channelId, messages: [hub.thread.root, ...hub.thread.replies] } : null,
     on: agentsOn, turns: hub.agentTurns, states: hub.turnStates, online: hub.online, meId,
     onProfile: openProfile,
     onOpenDm: (agent) => void openAgent(agent),
@@ -1583,6 +1585,8 @@ function Author({ person, people, meId, at }: { person: TeamHubPerson | null; pe
  * and the actions an agent row offers. One object so the stream, the thread and the agent DM share it.
  */
 type AgentView = {
+  /** Only the foreground copy announces a question shown in both conversation and thread. */
+  foregroundThread: { channelId: string; messages: TeamHubMessage[] } | null;
   on: boolean;
   turns: Record<string, AgentTurn>;
   /** The member-safe turn-state read, per conversation (what a reload or another viewer can know). */
@@ -1720,6 +1724,9 @@ function AskedAgentsStatus({ message, agent, place }: { message: TeamHubMessage;
   if (!lines.length) return null;
   // A state nobody can know yet is not a failure: a neutral mark, and Check again only re-reads it.
   return <>{lines.map((line) => <AgentFailRow key={line.key} text={line.text} action={line.action} online={agent.online} pending={line.unknown}
+    announce={!!place.inThread || !(agent.foregroundThread?.channelId === place.conversationId
+      && agent.foregroundThread.messages.some((other) => other.id === message.id)
+      && !agent.foregroundThread.messages.some((other) => answers(other, message.id, line.key)))}
     onAction={() => (line.unknown ? agent.onCheck : agent.onAskAgain)(line.request)} />)}</>;
 }
 

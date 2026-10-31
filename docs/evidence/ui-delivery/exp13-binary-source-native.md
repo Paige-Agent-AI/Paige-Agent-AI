@@ -39,3 +39,10 @@ repairs the omission; no trailer/check/required assertion is removed or waived.
 Original E08 lower110008 -> E13 130013 -> E03 150003 -> E05 160005 order stays
 protected. Local native runner terminated successfully and its exact cluster is
 stopped; no peer database/process or customer material was changed.
+
+CI registration: the original required database-contract publication-check
+invocation now appends ONLY --binary-source to --publication-recovery, with its
+existing verified disposable WORK/d, PostgreSQL and caller. Exact inverse removes
+that one argument and reproduces current main ci.yml; no other step/guard/runner/
+secret/assertion is changed. Earlier hosted heads did not execute these new
+controls; final hosted exact-head native verification remains required.

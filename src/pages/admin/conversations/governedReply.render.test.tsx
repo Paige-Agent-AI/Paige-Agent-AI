@@ -118,7 +118,7 @@ vi.mock("framer-motion", async (importOriginal) => ({
   ...(await importOriginal<typeof import("framer-motion")>()),
   useReducedMotion: () => db.reduce,
 }));
-vi.mock("sonner", () => ({ toast: Object.assign(vi.fn(), { success: vi.fn(), error: vi.fn(), message: vi.fn(), warning: vi.fn() }) }));
+vi.mock("sonner", () => ({ toast: Object.assign(vi.fn(), { success: vi.fn(() => "saved-draft-toast"), dismiss: vi.fn(), error: vi.fn(), message: vi.fn(), warning: vi.fn() }) }));
 
 import ClientsConversations from "@/pages/admin/ClientsConversations";
 import { toast } from "sonner";
@@ -844,6 +844,7 @@ describe("everything else keeps its own path", () => {
     expect(db.doorBodies[0]).toMatchObject({save_draft:true,draft_source:{message_id:DRAFT_ID,updated_at:DRAFT_VERSION},command:{body:"Durable edited words."}});
     expect(db.doorBodies[0]).not.toHaveProperty("approved_fingerprint");expect(db.sendBodies).toEqual([]);
     await click([...host.querySelectorAll("button")].find(b=>b.textContent?.trim()==="Cancel"));
+    expect(toast.dismiss).toHaveBeenCalledWith("saved-draft-toast");
     await click(buttonByText(host,"Review email"));
     expect(db.doorBodies[1]).toMatchObject({draft_source:{message_id:DRAFT_ID,updated_at:version},command:{body:"Durable edited words."}});
     expect(db.doorBodies[1]).not.toHaveProperty("save_draft");expect(db.sendBodies).toEqual([]);
@@ -856,6 +857,14 @@ describe("everything else keeps its own path", () => {
     db.door.push(request=>({data:{ok:true,outcome:"draft_saved",operation_id:request.operation_id,draft_source:{message_id:DRAFT_ID,updated_at:DRAFT_VERSION.replace("123456","123457")},attachments:[],replayed:true},error:null}));
     await click(buttonByText(host,"Check save status"));
     expect(db.doorBodies[1]).toEqual(db.doorBodies[0]);expect(db.sendBodies).toEqual([]);
+  });
+  it("a saved draft with unknown original mailbox cannot become an editable replacement sender",async()=>{
+    db.messages=[message(),message({id:DRAFT_ID,updated_at:DRAFT_VERSION,connector_id:null,direction:"outbound",status:"draft",subject:"Re: Tuesday",body_text:"Original saved words."})];
+    const host=await mount();await click(buttonByText(host,"Edit"));
+    expect(db.doorBodies).toEqual([]);expect(db.sendBodies).toEqual([]);
+    expect(vi.mocked(toast.error).mock.calls.some(([text])=>String(text).includes("original mailbox"))).toBe(true);
+    expect(host.textContent).not.toContain("Editing the saved email");
+    expect(db.messages[1].body_text).toBe("Original saved words.");
   });
   it("a cached saved draft without its raw native version makes no door or legacy send call",async()=>{
     db.messages=[message(),message({id:DRAFT_ID,direction:"outbound",status:"draft",subject:"Re: Tuesday",body_text:"Original saved words."})];

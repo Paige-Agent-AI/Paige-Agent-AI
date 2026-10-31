@@ -1207,6 +1207,9 @@ export default function ClientsConversations() {
     if (editingDraftId || subject.trim() || body.trim() || attachments.length || scheduledFor || leadReplyApprovalId) {
       toast.error("Keep or clear your current reply before opening another draft."); return false;
     }
+    if (!m.connector_id) {
+      toast.error("This draft's original mailbox cannot be verified. Its words are kept; check Connections before editing."); return false;
+    }
     let source: CommsEmailDraftSource;
     try { source = parseCommsEmailDraftSource({ message_id: m.id, updated_at: m.updated_at }); }
     catch { toast.error("Reopen this draft before sending. Its saved version could not be checked."); void load(); return false; }
@@ -1281,7 +1284,9 @@ export default function ClientsConversations() {
 
   const hasSignature = composeChannel === "email" && !!effectiveSignature();
 
+  const savedDraftToastRef = useRef<string | number | null>(null);
   const resetComposer = useCallback(() => {
+    if (savedDraftToastRef.current !== null) { toast.dismiss(savedDraftToastRef.current); savedDraftToastRef.current = null; }
     setBody(""); setSubject(""); resetAttachments();
     setScheduledFor(null); setEditingDraftId(null);
   }, [resetAttachments]);
@@ -1312,7 +1317,7 @@ export default function ClientsConversations() {
     onDraftSaved: ({source,attachments:savedFiles})=>{
       if(source.message_id!==editingDraftId)return;
       setEditingDraftSource(source);restoreAttachments(savedFiles);
-      toast.success("Draft saved. Nothing sent.");void load();void loadThreads();
+      savedDraftToastRef.current = toast.success("Draft saved. Nothing sent.", { id: savedDraftToastRef.current ?? undefined });void load();void loadThreads();
     },
     onChooseSender: (id) => { setComposeConnectorId(id); setComposeChannel("email"); },
     onRecorded: ({ contactId }) => {

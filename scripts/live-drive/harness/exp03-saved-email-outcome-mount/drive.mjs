@@ -41,7 +41,7 @@ try{
  server=spawn(process.execPath,[vite,'--config',path.join(here,'vite.config.ts'),'--host','127.0.0.1','--port',String(port),'--strictPort'],{cwd:repo,windowsHide:true,stdio:['ignore','pipe','pipe']});
  await new Promise((resolve,reject)=>{const timeout=setTimeout(()=>reject(Error('Owned Vite startup timeout: '+log.slice(-2000))),60000);const data=b=>{log+=String(b);if(log.includes('ready in')){clearTimeout(timeout);resolve();}};server.stdout.on('data',data);server.stderr.on('data',data);server.on('error',reject);server.on('exit',c=>{clearTimeout(timeout);reject(Error('Owned Vite exited '+c+': '+log.slice(-2000)));});});
  const {chromium}=await resolvePlaywright();browser=await chromium.launch(buildLaunchOptions());
- const variants=process.argv.includes('--smoke')?[{theme:'light',paige:'closed',w:1366,h:768}]:['light','dark'].flatMap(theme=>['closed','open'].flatMap(paige=>[[1536,770],[1366,768],[1024,768],[900,1000]].map(([w,h])=>({theme,paige,w,h}))));
+ const variants=process.argv.includes('--accepted-only')?[]:process.argv.includes('--smoke')?[{theme:'light',paige:'closed',w:1366,h:768}]:['light','dark'].flatMap(theme=>['closed','open'].flatMap(paige=>[[1536,770],[1366,768],[1024,768],[900,1000]].map(([w,h])=>({theme,paige,w,h}))));
  for(const variant of variants){
   const context=await browser.newContext({viewport:{width:variant.w,height:variant.h},reducedMotion:'reduce'});
   await context.route('**/*',route=>{const url=new URL(route.request().url());if(['127.0.0.1','localhost'].includes(url.hostname)||['data:','blob:'].includes(url.protocol))return route.continue();external.push(url.origin);return route.abort();});
@@ -62,7 +62,7 @@ try{
    const name=`${variant.theme}-${variant.w}-${variant.paige}`;await page.screenshot({path:path.join(out,name+'.png')});results.push({name,pass:true,overlay,measurement,originalMetrics,saveCalls:1,reopenWords:true,proof:'controlled original workspace; not authenticated/provider/Hub-host proof'});
   }finally{await context.close();}
  }
- if(!process.argv.includes('--smoke'))for(const theme of ['light','dark'])for(const recovery of ['save-unknown','save-refuse','accepted']){
+ if(!process.argv.includes('--smoke'))for(const theme of ['light','dark'])for(const recovery of (process.argv.includes('--accepted-only')?['accepted']:['save-unknown','save-refuse','accepted'])){
   const context=await browser.newContext({viewport:{width:1366,height:768},reducedMotion:'reduce'});
   await context.route('**/*',route=>{const u=new URL(route.request().url());if(['127.0.0.1','localhost'].includes(u.hostname)||['data:','blob:'].includes(u.protocol))return route.continue();external.push(u.origin);return route.abort();});
   const page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));
@@ -86,6 +86,7 @@ try{
     log=await calls(page);assert.equal(log[2].operation_id,log[1].operation_id);assert.equal(log[2].approved_fingerprint,'0123456789abcdef');assert.equal(log[2].approval_id,log[1].approval_id);
     await page.waitForFunction(()=>document.querySelector('[data-governed-reply-status]')?.textContent==='Accepted by the email service.');
     assert((await page.getByText('Accepted',{exact:true}).count())>=1,'visible acceptance receipt');
+    await page.getByText('Draft saved. Nothing sent.',{exact:false}).first().waitFor({state:'hidden',timeout:1500});
     assert.equal(await page.getByText('Delivered',{exact:true}).count(),0,'acceptance is never delivery');assert.equal(await textarea.inputValue(),'');
    }
    await page.screenshot({path:path.join(out,`${theme}-${recovery}.png`)});results.push({name:`${theme}-${recovery}`,pass:true,calls:(await calls(page)).length,proof:'fictional door boundary; no provider/authenticated or real Hub-host proof'});
@@ -93,7 +94,7 @@ try{
  }
  // Pointer setup selects the original conversation and opens its saved draft.
  // From that entry, exercise editing/save/cancel/reopen/check/approve only by keyboard.
- if(!process.argv.includes('--smoke'))for(const theme of ['light','dark']){
+ if(!process.argv.includes('--smoke')&&!process.argv.includes('--accepted-only'))for(const theme of ['light','dark']){
   const context=await browser.newContext({viewport:{width:1366,height:768},reducedMotion:'reduce'});
   await context.route('**/*',route=>{const u=new URL(route.request().url());if(['127.0.0.1','localhost'].includes(u.hostname)||['data:','blob:'].includes(u.protocol))return route.continue();external.push(u.origin);return route.abort();});
   const page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));

@@ -2056,3 +2056,23 @@ roster and captured controls after a native NULL or authority refusal; historica
 notes describing that source repair as missing do not override the current code.
 Existing notification/workshop work is preserved without starting another
 discretionary outcome. **STILL CODING**; one full integrated owner review remains owed.
+
+### Outcome4 continuing engineering: original departure currentness
+
+A bounded isolated-native counterexample was confirmed against the actual original
+`remove_solo_team_member` source; this is not a confirmed production exposure or
+authenticated customer result. The same successor's inert
+`scripts/proof/exp08-member-removal-currentness-patch.sql` preserves the original
+writer, helper authority, target protections, deletion, pointer cleanup and audit.
+It adds post-wait current-context validation and holds existing actor source rows.
+No original permission is replaced by an invented seat requirement.
+
+Initial local evidence: one unchanged authorized control succeeds, three changed
+context cases refuse without a membership or audit effect, exact original source
+inverse and all function metadata/ACLs are conserved, and replay passes. A distinct
+non-author source-only review found no confirmed material defect; it executed no
+tests. Opposing-call lock ordering, further role/tenant/identity negatives, drift
+controls, mutants, original-runner integration and normal release remain owed.
+The first local startup observation timeout and its stopped test cluster are retained.
+No native version is reserved, published or applied; frozen PR3130 is unchanged.
+Full owner removal/recovery, protected-account and customer proof remain unfinished.

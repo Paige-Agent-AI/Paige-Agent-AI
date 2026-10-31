@@ -61,6 +61,23 @@ original shell handler and genuine-unmount suppression. Final rendered/reopen pr
 native full-runner verification, actual assistive technology and customer proof remain
 owed. These local changes are separate from released lower3130/21da54c89.
 
+Final real-shell development drive on `2ad01113bcae1856817cb60cdf1a10cc302aaf38`
+completed **32/32 cases, zero failures,32 frames** in
+`assets/exp08-protected-departure/report.json`. Both fictional contexts, both themes,
+four prescribed viewports and PAIGE states retain the exact refusal, visible focused
+alert/restored geometry, one attempt, disabled retry, Escape/reopen without a new
+attempt, and context-switch closure. Four representative actual frames spanning all
+four widths, both themes/contexts were visually inspected: text, alert and footer fit;
+no style/layout edits were made. Captured/restored geometry are separately labelled.
+The existing shell shortcut toggles PAIGE while the drawer backdrop covers the command.
+
+The browser closed in finally and its own dev server stopped terminally. Earlier
+cold-load, StrictMode-loading and focus/reopen failures remain retained, not recast
+as passes. This is real-component/real-browser synthetic-transport proof only: no
+customer session, actual membership effect, database/RLS, screen-reader speech or
+native200percent zoom proof. Complete native runner on this protected delta and all
+normal managed/release/customer/remaining original-row obligations remain owed.
+
 UI_DELIVERY_EVIDENCE_VERSION: 1
 FLOW_BY_FLOW: PASS: flow packet is the tier-matrix ledger "EXP08 team lifecycle" (docs/doctrine/tier-matrix.md: the authority rule, the per-tier table, the departure-review hand-over contract naming each existing writer, and what a suspension does to mailboxes and approvals) plus "Solo Settings → Team: the screens for the team lifecycle" added in this PR; the flows are suspend, reinstate, the Team conversations switch (row and invitation form), departure review → hand-over → remove, Team Hub with conversations off, and accept-invite refused for a held seat; backend for all of them merged and applied in #2912 (e0263aac0)
 PAIGE_UI_DESIGN: PASS: Impeccable's reference/craft-floor.md and .agents/skills/paige-ui-design/SKILL.md applied (Solo verification: four viewports PAIGE closed and open, both themes, states, keyboard, reflow, reduced motion), recorded below; the owner saw the rendered design and approved it on 2026-10-26, then asked for "a touch more color", applied token-only

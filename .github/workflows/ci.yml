@@ -219,6 +219,11 @@ jobs:
           --lock=supabase/functions/_shared/knowledge-binary-adapters.deno.lock
           supabase/functions/_shared/knowledge-binary-adapters.test.ts
 
+      - name: Original Knowledge handler graphs on frozen Deno floor
+        run: |
+          deno check --frozen --config supabase/functions/kb-extract-submit/deno.json supabase/functions/kb-extract-submit/index.ts
+          deno check --frozen --config supabase/functions/paige-document-worker/deno.json supabase/functions/paige-document-worker/index.ts
+
       - name: Edge release source and bounded deployment recovery
         run: python3 -B -m unittest discover -s .github/scripts -p test_edge_source_readback.py -v
 

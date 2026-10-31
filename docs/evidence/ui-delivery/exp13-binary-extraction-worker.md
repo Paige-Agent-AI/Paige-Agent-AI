@@ -61,3 +61,10 @@ and focused handler fixture. It does not publish the cumulative37-file UI branch
 or import unrelated private Memory/source-binding candidates. Source tests,
 native prerequisite, release, activation and useful authenticated outcome stay
 separate. Original E01/E02/E05/E03 handoffs and the full matrix remain open.
+
+Required verify CI registers only the two same supported frozen handler-check
+commands after the existing pinned parser suite. Removing that one additive step
+recovers the entire preceding CI file exactly, including original parser tests
+and native binary-source publication proof; no check/assertion is weakened.
+Distinct final evidence/source recheck is clear. Actual hosted final-head CI and
+managed worker packaging/readback remain required before ordinary release.

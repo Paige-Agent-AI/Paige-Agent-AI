@@ -1,3 +1,21 @@
+## EXP09 October30 — customer recovery and private file-choice release
+
+Original #3143/d95f7ff3 and #3147/5e730388 source, exact lower-assurance reviews, green checks and production readback now appear in [Master §4.0](../PAIGE-MASTER-PROJECT-REFERENCE.md#40-shipped-delivery-log). Reuse the [original chooser/retry flow](../evidence/ui-delivery/e09-conversation-recovery.md) and [private picker evidence](../evidence/ui-delivery/e09-private-picker-recheck.md); native Documents, private history, staff uploader and original domain writers remain authoritative.
+
+Lesson: temporary access masking must conceal local file choices without treating it as a new customer identity. Bind one chooser completion to the original Documents view epoch; retire on actual scope/thread change, recheck before display/dispatch, and inspect uncertain original uploads rather than automatically retrying.31 local cases are INCLUDED in156, not additional; five source frames are not a real native-picker or device result.
+
+One ordinary external-client invoice answer, exact private history after two full reloads and original Payments empty state are bounded authenticated proof in protected ANT52. They do not prove populated/payment/file/isolation/revocation/full journey. The repaired customer bulk upload/read/history remains PROOF OWED. Functional/Visual/Experiential/Founder Acceptance stay separate; same full42/seven/one final founder evaluation and original ALG maturity. Original S21 paid-search permission/usage and Teach CURA completion-fence producer gaps remain open. QA cutoff2026-11-06T23:00UTC/earlier ordinary End access and actual denial/receipt readback remains; no data deletion or cleanup claim. Prior dated Brain history follows unchanged.
+
+## EXP09 October30 — original invoices and truthful customer Messages, bounded source releases
+
+Original [Master §4.0](../PAIGE-MASTER-PROJECT-REFERENCE.md#40-shipped-delivery-log) now records four dated EXP09 increments: #3100 business-calendar invoice status; #3118 original native invoice context/terminal source binding (60009 ONCE); #3117 CURA invoice consumption in the existing private Chat; and #3141 strict atomic native message-history decoding. Original EXP04 financial authority and writers, CRM/customer relationships, native history/outbox, tenant/role/revocation/consent and INT-346 remain authoritative. No invoice, payment, identity, consent, provider effect or new store/runtime was created by this closeout.
+
+Functional: these bounded source/native/web releases are verified with exact heads, reviews, CI and dated production readback in the original packets. Shared cumulative60fe source certificate verifies44 selected Edge rows, including Chat604; it does not prove a useful customer answer or erase earlier603 gateway failure. Visual: original source-pinned desktop/narrow component evidence stays bounded; no new UI or device/AT claim. Experiential: ordinary external-client invoice answer/private history/Payments return, actual booking→SOLOCalendar/reload, relationship isolation/revocation and complete seven-pillar journey remain PROOF OWED. Current customer-control timeouts are not missing implementation. Founder Acceptance: NOT_READY / NOT_ACCEPTED for the complete42. Existing/new eligible SOLO use the same original contracts; cohort/provisioning proof is not inferred.
+
+Reuse lesson: validate the complete native history envelope and all rows before publishing any page or settling an uncertain send; route an ambiguous business through the original chooser. Retain original unknown-outcome intent and receipts rather than invent empty history or automatically resend. ALG-01/12 deterministic source/currentness/recovery support is bounded; ALG-02/04/13 and overall maturity are not promoted. Recovery#3143 is a separate reviewed integration with CI pending. Teach CURA common-reader receiving review has one post-await lifetime finding in original ANT21/56145be8, not a production leak finding or approved publication. [Invoice context](../delivery/e09-cura-invoices-context.md), [private Chat mount](../evidence/ui-delivery/e09-cura-invoice-chat-mount.md), [invoice calendar](../evidence/ui-delivery/e09-invoice-business-calendar.md), [history decoding](../evidence/ui-delivery/e09-message-history-decoding.md).
+
+Original ANT163/ANT52 and canonical Delivery Register retain all outcome IDs, acceptance gaps and the same protected QA access cutoff2026-11-06 23:00UTC/earlier ordinary End access with actual denial readback; no cleanup inferred. Prior Brain history follows unchanged.
+
 ## EXP02 October29 - Calendar source increment and acceptance boundary
 
 Original3019 is composed with receiving maina58e9d8d; unchanged owning source
@@ -5490,3 +5508,20 @@ board captures must remain excluded when current DOM describes a dialog; inspect
 a settled original frame instead. Synthetic UI/native fixtures remain distinct
 from genuine caller authority, saved business records/Rails, reload, both-chat,
 universal SOLO and full Experience acceptance. No second scheduler/ledger/runtime.
+
+## 2026-10-30 EXP02 — weekly delivery and Billing release readback
+
+Original3132/3140/3142 exact releases, earlier source/customer failures and native/
+web readbacks are recorded in [Master§4.0](../PAIGE-MASTER-PROJECT-REFERENCE.md).
+One new released weekly answer and its full reload PASS are bounded actual
+customer evidence, not universal reliability or final acceptance. Original failed
+requests remain; protected monthly stays UNKNOWN/UNRETRIED. The separate later
+Finance module-load failure is not counted as successful navigation.
+
+Billing80006 history remains exact; forward80007 released through the normal
+ordered native workflow with original body/metadata/ACL/comment readback.
+EXP08 has acknowledged ONLY the producer prerequisite; its integration/CI/role/
+customer gates remain. No new grant, writer, provider or autonomous action.
+Original19/nine, catalogue and algorithm maturity remain unchanged. See existing
+[weekly evidence](../evidence/ui-delivery/e2-weekly-credit-code.md) and
+[Billing evidence](../evidence/ui-delivery/e2-billing-current-authority.md).

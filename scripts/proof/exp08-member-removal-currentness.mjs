@@ -6,13 +6,23 @@ import {join} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {OperatorPostgresFixture} from './operator-postgres-fixture.mjs';
 assert.equal(process.env.EXP08_DISPOSABLE,'1','Explicit disposable proof opt-in required');
-assert.equal(process.env.PGHOST,'127.0.0.1','Dedicated loopback proof only');
+const host=process.env.PGHOST;
+assert(['127.0.0.1','localhost','::1'].includes(host),'Dedicated loopback proof only');
 assert.match(process.env.PGPORT??'',/^\d+$/,'Explicit local port required');
 const options=process.argv.slice(2),mutants=['scope','authority','pair-locks'];
 assert(options.length<=1&&options.every(a=>a==='--baseline'||mutants.some(m=>a==='--mutant-'+m)),'Unknown proof option');
 const mutant=mutants.find(m=>options.includes('--mutant-'+m));
 const repo=fileURLToPath(new URL('../../',import.meta.url));
-const db=new OperatorPostgresFixture(Number(process.env.PGPORT));db.prefix=()=>'';
+// Reuse the shared fixture unchanged, preserving the original EXP08 loopback-host ABI.
+// Its constructor calls args() dynamically, so database creation uses this same selected host.
+class DeparturePostgresFixture extends OperatorPostgresFixture {
+ args(database){
+  const values=super.args(database),index=values.indexOf('-h');
+  assert(index>=0&&values[index+1]==='127.0.0.1','Shared local fixture host argument changed');
+  values[index+1]=host;return values;
+ }
+}
+const db=new DeparturePostgresFixture(Number(process.env.PGPORT));db.prefix=()=>'';
 const program=()=>db.psql,args=()=>db.args(),sql=s=>db.run(s);
 const source=(file,name)=>{const s=readFileSync(join(repo,file),'utf8');const a=s.indexOf('CREATE OR REPLACE FUNCTION public.'+name+'('),b=s.indexOf('$function$;',a);assert(a>=0&&b>a);return s.slice(a,b+11);};
 // Canonical Git/LF for this never-applied candidate only; incumbent source hashes stay exact.

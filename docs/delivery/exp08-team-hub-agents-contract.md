@@ -2107,3 +2107,21 @@ fallback remain usable under their original contracts. The final29-control run
 exited0 and stopped its owned cluster. Non-author SOURCE-ONLY review found no
 material finding; the reviewer ran no tests. Actual Auth/RLS/agency/protected-account,
 other-writer integration, full CI/native carrier and customer proof remain owed.
+
+The original no-argument native runner now invokes this same departure proof after
+its original database disposal; component selectors remain bounded selections. The
+existing CI step retains its command/environment and only names the added coverage.
+The combined local run is **FAIL**, with actual PostgreSQL ENOSPC/checkpoint failure
+before the child proof. Its failed cleanup and subsequent normal recovery/drop
+readback are preserved; this partial run supplies no full-suite clearance. Only four
+known stopped generated sibling clusters were retired after their logs and target
+provenance were preserved; no peer or unknown work was removed.
+
+A non-author review found a loopback-host compatibility P2 in the new child. The
+child now preserves the original `127.0.0.1` / `localhost` / `::1` contract through a
+narrow argument override of the unchanged shared fixture. Four selected original
+controls passed on each host, with own database disposal and clean cluster stop.
+These are host-compatibility checks, not a replacement for the failed full run or
+the earlier29-control candidate evidence. Review cleared the host fix in SOURCE
+only; it executed no tests. Full current native integration remains owed when local
+capacity permits. Frozen3130/833 and all original outcome4 obligations are retained.

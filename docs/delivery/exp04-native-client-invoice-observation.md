@@ -400,3 +400,59 @@ ordered release and genuine authorized proof still need completion. ALG-01/12 su
 to deterministic original currentness/replay/refusal checks; ALG-02/13 and full12/founder remain
 open. Safe concise original Linear reporting continues; detailed export permission and canonical
 tracker-note updates remain separately pending, with no alternate export or quota workaround.
+
+## October 31 C175 — original Collections financial consumers, same O5
+
+Collections still projected TEST-inclusive remaining debt even after the invoice read candidate
+used actual debt. The existing public register now has an unversioned, UNMOUNTED candidate that
+reuses the SAME actual financial position under the existing evidence2 header. The whole original
+actor/snapshot/cursor predecessor is unchanged. No header preserves whole legacy invoice/receipt
+rows. The original public ABI, owner, security, volatility, search path and authenticated-only ACL
+remain. New actual rows carry explicit representation and TEST/environment facts; no new amount
+calculation, financial write, provider action, sender, scheduler or permission exists.
+
+The original API, hook, detail, receipt trails and export consume those facts. Malformed/future
+or mismatched row/page evidence is refused. Empty pages retain their representation, initial
+invoice/receipt modes must agree, and a paging rollover invokes the same original refresh before
+append. Failed refresh uses original recoverable state/retry. CSV returns no blended result and
+retains native TEST/environment fields. Original date, approval, import, manual receipt/correction,
+dirty-form and navigation behavior is preserved. This is O5 debt integration, not a second O9
+follow-up workstream or completion of that outcome.
+
+The entire original native performance proof runs first:77 original controls PASS, followed by49
+appended Collections controls. Current production wrapper/predecessor/legacy7 source pins match;
+legacy payloads/security metadata, deterministic replay, role/tenant/cursor/header refusal and
+rollback hold. The first failing-source run reproduces20000 displayed remaining versus30000
+genuinely owed after TEST history. All original proof/default-report bytes are conserved outside
+the optional extension; existing metric bundles remain exact and their separate adoption is owed.
+The reduced scaffold's omitted original receipt display fields are explicitly filled before
+capturing, without changing amounts/identities. This is selected-source native proof, not full
+schema, hosted identity or genuine provider evidence. Owned databases were dropped/cluster stopped.
+
+Those actual native full invoice/receipt payloads traverse the actual SDK/header/export in24
+checks with zero network calls. All148 tests in11 Collections suites pass. Causal first runs
+retain SDK20 failures/2 passing, hook5/3 and UI3/5; selections overlap and are not summed.
+Scoped seven-file lint and whitespace pass. Focused actual API/hook compiler graph672 files uses
+original project options and returns baseline0/candidate0 diagnostics. Full UI/app/build and
+hosted exact-head checks remain owed.
+
+The source-equivalent pre-implementation original harness traverses desktop light/narrow dark
+register/receipts/detail/Escape with native30000 actual debt and separate10000 TEST; three frames
+were inspected. Whole proposed two-file executable UI is byte-exact to final source, with no CSS,
+layout/action or original harness change. Its final strict offline assertion fails on intercepted
+Google Fonts CSS, so actual font loading remains unverified. A wider final-source run completes
+five light shell-width/open/closed modes but encounters the intentional compact PAIGE modal.
+One confirmation stops because Fold names both backdrop/header. No forced click or shared-shell
+change occurs; full matrix, focus/zoom/AT/device and real Chat are not PASS. The first failure JSON
+was overwritten by confirmation and some image paths reused; earlier bytes are not claimed retained.
+The execution/read transcript and explicit current exclusions remain in the
+[original UI evidence record](../evidence/ui-delivery/exp04-collections-financial-continuity.md).
+
+Source/render/native/SDK evidence is still local and unmounted. No native forward/version,
+publication, review clearance, exact-head CI, merge, deployment, activation or authenticated
+financial result is inferred. Original Chat Collections representation adoption, other remaining
+financial consumers, actual refunds/disputes and explicit commercial disposition still need
+integration before O5 acceptance. Existing additional Portal projection request remains pending,
+without a duplicate ping. ALG-01/12 have only bounded deterministic currentness/replay/refusal
+support; ALG-02/13 and all12/founder stay open. Concise original Linear records are updated while
+detailed publication/canonical tracker-note changes remain separately pending, without a bypass.

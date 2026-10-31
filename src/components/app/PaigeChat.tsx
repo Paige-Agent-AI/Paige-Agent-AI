@@ -232,7 +232,10 @@ function PaigeChatInner({ user, session, clientId, customerFrame, customerAvaila
     const expired=()=>cancelled||lifetime.epoch!==epoch||historyAbort.signal.aborted;
     const deadlineAt=Date.now()+20_000;
     setHistoryState("loading");
-    setCustomerThread(null);
+    // Keep the verified thread through a same-customer recheck: null would retire
+    // the original Documents lifetime and a chooser still returning its files.
+    // History/admission still withhold actions; a new identity remounts this inner
+    // view, and a different native result below replaces the thread normally.
     const timeout=()=>{
       if(expired())return;
       historyAbort.abort();

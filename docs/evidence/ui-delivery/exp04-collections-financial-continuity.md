@@ -200,3 +200,20 @@ limits; the unresolved keyboard case and final full required viewport/role/reloa
 are still owed. Correct canonical read/write adoption and final paired rendering/authenticated
 QA are release holds. Spine/catalogue remains UNAVAILABLE; no deployment/activation/acceptance
 or complete-outcome promotion follows from the native tests. All twelve remain open, O5 only.
+
+### October31 C187 — backend collectibility/recovery integration, no fresh UI proof
+
+The INERT original payment prepare/claim/allocation companion uses current native
+actual debt and exact accepted targets. Original native55 +cash39/2 ACL and new23
+collectibility/recovery controls pass, including a refunded installment's exact
+re-collection, same-invoice TEST then LIVE, source-pending refusal, original
+undispatched cancellation/replay and observation/Rail rollback. Original writer
+metadata and legacy accepted payload are retained. Synthetic local source proof;
+no actual provider/signing/Owner/client result, deployment or activation.
+
+No new render is claimed. Raw compatibility amounts are not current financial
+presentation authority. Paired actual debt/refund/credit projections, payment
+review context, automatic recovery and Owner/client UI remain release holds.
+The prior compact-shell keyboard issue and final-contract render proof remain
+open. O5 only, all12/final integrated founder acceptance retained. Final exact
+AUTHOR-REVIEW / LOWER ASSURANCE has no non-author/full-schema/customer meaning.

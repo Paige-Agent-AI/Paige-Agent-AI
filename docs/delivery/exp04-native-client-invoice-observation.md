@@ -697,3 +697,70 @@ ALG-01/12 gain bounded native reconciliation/exception/recovery support only; AL
 and genuine provider/customer verification are unchanged. Functional source is PARTIAL/local;
 Visual/Experiential remain incomplete; Founder Acceptance is OPEN. O5 sole primary, no secondary,
 all twelve original outcomes and the full professional Agreements destination remain required.
+
+## October 31 C187 — original payment writers use actual collectibility
+
+O5 remains the sole current outcome, within the original twelve. Development only:
+the companion source is INERT/unversioned, with no new PR, hosted CI, merge, native
+carrier, deployment, activation or customer acceptance. No payment, signature,
+provider request, customer message, account or permission was changed.
+
+The original prepare, claim and verified-allocation writers now read the SAME
+canonical actual position under their original locks. Their original actor,
+merchant, authority, operation identity, immutable receipt, replay and Rail gates
+remain. The original service selector returns its exact six-field DTO with the
+current actual amount for the exact accepted target. The private accepted-source
+helper has one source-only mode; the old two-argument mode retains its whole
+legacy payload. This avoids both recursion and treating historical gross captures
+as current retained principal. No second obligation or financial store is created.
+
+The failing-first original writer refused a genuine $100 re-collection after a
+$100 refund on a $300 installment because its legacy target remaining was zero.
+The repaired original path prepares, claims and records that exact $100 once.
+The original installment is then satisfied without recreating its obligation;
+the separate $100 deposit refund payable and $2,400 future debt remain distinct.
+A same-invoice $3,500 TEST capture followed by $3,500 LIVE evidence leaves actual
+principal outstanding at zero, with TEST still separate. These are synthetic
+provider/signing/identity fixtures, not actual settlements or signatures.
+
+An additional native integration control exposed the original unresolved-request
+fence blocking a verified observation on an earlier settled payment. The ORIGINAL
+observation now records its original Rail before its invoice-version advance in
+the same atomic transaction. The ORIGINAL mutation guard permits only that exact
+observation-only advance, checked against its protected journal, current original
+payment and actual Rail. It still refuses unrelated invoice-state/version and
+manual-receipt changes; no bypass flag or grant was added. The changed source
+cannot claim a prepared request; original undispatched cancellation and replay
+then unblock review. A failed original Rail rolls back observation, pointer,
+journal and invoice version together.
+
+Fresh SAME-parent native run: original financial55, cash39 plus2 ACL controls,
+and new collectibility23 PASS. Candidate reapplication and nine original function
+metadata/OID/ACL/arguments are checked; unreviewed new requests, stale targets,
+foreign workspace, duplicate allocation and authority drift refuse. Owned
+disposable database count returned to zero and the exact owned cluster stopped.
+Node syntax, scoped lint and whitespace checks pass. Prior native/SQL guard
+parsing, SQL-text generation, blocked-observation, refusal-wording and
+serialization-order failures are retained; the last two were test defects fixed
+with exact per-case refusal expectations and whole structural DTO equality.
+
+Separate AUTHOR-REVIEW / LOWER ASSURANCE inspected the frozen source differences,
+contracts, guards and negative controls. No non-author or full-schema review is
+claimed. The private native overloads retain raw compatibility facts; public
+financial DTOs must explicitly project actual debt/refund/credit and must never
+display raw gross remaining as current debt. No fresh rendered evidence exists.
+
+Remaining release holds, SAME O5: canonical manual/explicit provider-target
+assignment and revision; source-backed current financial context in the original
+payment-review adapter; automatic original undispatched recovery; paired Owner,
+Collections, Chat and cleared Portal projections/UI and final rendered/focus
+proof; full native/schema/order compatibility, exact-head review/CI and ordinary
+release/readback. Genuine correct-merchant TEST and ordinary Owner/client
+receipt/reload/reopen/recovery plus founder acceptance remain UNVERIFIED/OPEN.
+The pending detailed-publication question is unchanged. ALG01/12 have bounded
+local reconciliation/exception support only; ALG02/13 maturity is unchanged.
+
+Lesson retained in this original delivery record: use literal function replacers
+when transforming SQL source; replacement-string dollar syntax can corrupt SQL
+regular expressions. Compare parsed transport objects structurally, preserving
+closed keys and exact values, rather than relying on JSON key order.

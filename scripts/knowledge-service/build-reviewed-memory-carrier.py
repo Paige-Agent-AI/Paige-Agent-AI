@@ -48,7 +48,35 @@ def build():
     reader = reader.replace(needle, predicate + needle, 1)
     if body_hash(reader) != '6f815ab77dac205aa2fef761716f8e30':
         raise ValueError('Reviewed reader body drift')
-    guard = """DO $original_guard$
+    guard = """DO $dependency_guard$
+DECLARE expected record; f record; target oid;
+BEGIN
+ FOR expected IN SELECT * FROM (VALUES
+  ('public.knowledge_actor_authorized(uuid,uuid)','a05876e786e8a6e7e3e15783cde684aa',
+   'sql','s','boolean',0,NULL::text,'service_role'),
+  ('public.read_tenant_knowledge(uuid,uuid,integer,integer)','9ee43da246514e9fb88b96a23c584d37',
+   'plpgsql','v','jsonb',3,'NULL::uuid, 50, 0','authenticated')
+ ) v(signature,body_hash,language,volatility,return_type,defaults_count,defaults_text,grantee) LOOP
+  target:=to_regprocedure(expected.signature);
+  IF target IS NULL THEN RAISE EXCEPTION 'PAIGE_MEMORY_SOURCE_DRIFT'; END IF;
+  SELECT * INTO STRICT f FROM pg_proc WHERE oid=target;
+  IF md5(f.prosrc)<>expected.body_hash OR f.proowner<>current_user::regrole
+   OR f.prolang IS DISTINCT FROM (SELECT oid FROM pg_language WHERE lanname=expected.language)
+   OR f.prokind<>'f' OR f.prorettype<>expected.return_type::regtype OR f.proretset
+   OR f.provolatile::text<>expected.volatility OR f.pronargdefaults<>expected.defaults_count
+   OR pg_get_expr(f.proargdefaults,0) IS DISTINCT FROM expected.defaults_text
+   OR f.proparallel<>'u' OR f.proisstrict OR f.proleakproof OR NOT f.prosecdef
+   OR f.proconfig IS DISTINCT FROM ARRAY['search_path=""']::text[]
+   OR NOT has_function_privilege(expected.grantee,f.oid,'EXECUTE')
+   OR EXISTS(SELECT 1 FROM aclexplode(coalesce(f.proacl,acldefault('f',f.proowner))) a
+    WHERE a.privilege_type<>'EXECUTE' OR a.grantor<>f.proowner
+     OR a.grantee NOT IN (f.proowner,expected.grantee::regrole::oid)
+     OR (a.grantee<>f.proowner AND a.is_grantable)) THEN
+   RAISE EXCEPTION 'PAIGE_MEMORY_SOURCE_DRIFT';
+  END IF;
+ END LOOP;
+END $dependency_guard$;
+DO $original_guard$
 DECLARE expected record; f record; target oid;
 BEGIN
  FOR expected IN SELECT * FROM (VALUES

@@ -260,3 +260,10 @@ this own cluster for the full test with finally-stop. Stale PID warning retained
 no PID file deletion, peer termination or unknown cluster restart. Fresh read-only
 production code catalogue confirms original8/4/3 body hashes/defaults/config/ACL
 and original Knowledge actor/read dependencies, without reading customer data.
+Bounded non-author carrier review received clear for hash8f3736d45, generation
+reproduced exactly; reviewer did not execute native controls. Follow-on local
+builder adds explicit source/metadata/default/ACL refusal guards for the SAME
+Knowledge actor and read dependencies, grounded in the fresh production code
+catalogue. New generated carrier hash0f1111fdc6b621933a1ac2ef1da771ed42f9b352240a71f5d996101cf8f22364
+has NOT yet run natively or received independent review. Prior60/native PASS
+applies only to preceding8f3736d45; no green borrowing across this change.

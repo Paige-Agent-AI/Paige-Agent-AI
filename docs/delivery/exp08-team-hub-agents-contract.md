@@ -1616,6 +1616,14 @@ L11755-11758).
     Team Hub.*
   - A private part costs two turns, the channel and the DM. That is accepted and stated.
 
+### October30 current-source cost/control reconciliation — STILL CODING
+
+The paragraphs above are historical A1–A3 implementation limits, not the final owner policy. Later owner direction requires uncapped attributable consumption billed to the consuming tenant at published rates under the accepted25percent contribution target, with existing Trust standing authority rather than a blanket attended-only rule. This is a required implementation reconciliation, not a request for the owner to approve that direction again.
+
+Actual source inventory: `agent-turn.ts` hands verified tenant/working-context/agent/job identity to the ORIGINAL `fabricCompletion` for `team_hub_agent_turn`; no Team-only router/provider client. Shared `router-budget/mod.ts:enforceBudget` already incorporates the October27 supersession: financial soft/hard thresholds return allow/allow_gated for every band, never block or model downgrade. Historical compatibility error/types and settings are not evidence of a live monetary stop. They must not be blindly deleted. Current production metadata also confirms ORIGINAL `meter_llm_usage(integer)` bodyd22d49b7309f6ecf6130aac5ec640265, postgres/definer/service-only ACL and active ORIGINAL hourly meter job (`35 * * * *`, command hash27ab8251f294f9d9025cd90f76b4431e). Consequently the old “M1 has not landed / none is billable” opening is stale as a source-wiring claim. A configured drainer/function and trace estimates are NOT proof that a particular Team Hub turn was successfully billed, correctly priced or met the contribution target; actual original usage/receipt/rate/reconciliation remains PROOF OWED.
+
+The original native `team_hub_accept_agent_turn` still returns rate_limited after30starts/person/workspace/hour, and UI outcome text still names30replies. Its historical rationale above is unmetered/attended cost containment; this remains an affected fixed usage-allowance/control requiring E08 reconciliation under the superseding policy, not final accepted uncapped behavior or permission to waive technical safeguards. Preserve original idempotency, one-in-flight/claim/currentness checks and the existing request-abuse gate. Current20/minute ingress, bounded per-message fan-out, tool rounds/private reads/context/output shapes and source/tenant/privacy/consent/action gates are separate technical/request-safety controls, not a tenant monetary balance or standing action grant. Wider original writers, sender legality, metering/billing custody and any provider/routing activation remain with their original owners. No live setting, provider, quota or billing write was made by this inventory. Full uncapped/both-chat/standing-authority behavior and billed-outcome proof remain incomplete.
+
 ## 10. Untrusted-content fence
 
 - **Instruction vs data.** Only the asker's own source message is the instruction. These enter
@@ -1887,3 +1895,141 @@ Release chronology correction,2026-10-30: earlier carrier-pending statements des
 Owner ALL50/every-dispatch amendment incorporated2026-10-30: originalANT87/50784beb,ANT11/76a06dc8,ANT164/646332af read in full. Both-chat PAIGE/same-specialist standing follow-through must preserve the original final-provider-effect eligibility boundary for EVERY call/text, including schedules/queues/retries/campaign steps: current sourced applicable jurisdiction/channel/purpose/effective rules, recipient local time/DST, current consent/DNC/revocation, actor/delegated action permission, attempt history and stricter preferences. Unknown required lawful eligibility remains HOLD with truthful next step, no 'sent'; approval/standing grant/cached readiness/area code/generic national hours cannot replace it. E03 owns original canonical communication gate and50-state coverage, E05 timing/queue, E10 custody/providerfacts; E08 consumes those boundaries without a second policy engine/sender/ledger. ExistingA2b task/page tools dispatch no call/text; broader waves' integration/negative proof remains owed. No all50 legal audit or released enforcement claim is made by this ACK.
 
 Originalknown-copyrepair disposition: TeamHub paused-access sentence now matches approved prototype 'your permissions are unchanged'; existing three switched-off access mounted cases PASS, no permission behavior change. Original source note above retained as historical. Initial wrong test-name filter skipped all123 and is NOT passing evidence.
+
+## October 30 native identity-currentness repair — built locally, release proof owed
+
+Original matrix rows4/13/16 retain their full scope. Sequential child commit `2d0eb4c44`
+extends the ORIGINAL admission helpers; it is not an Auth writer, session validator or new
+permission engine. `20271126140008_exp08_team_hub_identity_currentness.sql` adds matching
+existing Auth identity, non-deleted status and current ban expiry to `_team_hub_is_active`,
+reuses that predicate in `_team_hub_participates`, and locks the same matching Auth and
+membership rows in `_team_hub_hold_seats`. Existing tenant, membership, Conversations switch,
+selection and distinct-input behavior remain. Parent100008 remains a narrower caller-existence
+repair; neither migration alone proves every original door rechecks all authority at dispatch.
+
+The existing `scripts/proof/exp08-entity-owner-seat-ended.mjs` runner loads the actual original
+functions and `supabase/tests/exp08_team_hub_identity_currentness.sql`. Its baseline has22
+cases:8 fail before the repair; all22 pass afterward. Eight changed-predicate mutants are killed;
+36 source/metadata/ACL drift variants are refused without rewriting the drifted definition.
+Replay changes zero business rows and zero function metadata. Two actual PostgreSQL sessions
+exercise admission-first and revocation-first order, observe a real Auth-row lock wait and
+recheck changed identity availability afterward. These are disposable local PostgreSQL tests,
+not authenticated customer behavior, deployed full-schema proof or provider execution.
+
+| Original private function | Original body MD5 | Repaired body MD5 |
+| --- | --- | --- |
+| `_team_hub_is_active(uuid,uuid)` | c290399dc80d95d16116a0f88b0abd8c | 0bb50fd64a0410d09df23e7e6e29ab2d |
+| `_team_hub_participates(uuid,uuid)` | 4f2fb69d09f7b362027edf195a37da83 | 508c4d54cf9bbc3a233afbdad68e4325 |
+| `_team_hub_hold_seats(uuid,uuid[])` | af0dee455ee0413ee5b907505ff89acd | f607181e3473a846718ac317751d6af5 |
+
+Exact inverse/body guards preserve every other original statement; owner, invoker mode,
+private ACL, empty search path, signature, defaults, language and volatility are conserved.
+Expired/equal-now bans remain eligible; missing, soft-deleted, actively banned and mixed invalid
+selections abstain. This deterministic eligibility wiring maps to the existing ALG-01/08 boundary;
+no algorithm maturity or model-confidence authority is asserted. No customer identity, role or
+provider was changed to obtain evidence.
+
+Distinct non-author review of the local source reported no material finding; it did not rerun
+the native proof or certify production. Hosted exact-head CI, final current-main composition,
+managed Preview, ordered native release, catalogue/ACL readback and real customer negatives
+remain PROOF OWED. LOCAL_ONLY140008 is unpublished; renew the actual peer/frontier order
+before publication. E03's earlier proposed120003 was subsequently withdrawn, so its historical
+reservation is not an active predecessor hold. Preserve E13's independently owned Knowledge
+source and current ordering contract. Existing46 lifecycle/admission cases, original I1 holder-state
+20-case characterization, their mutation/drift controls and earlier two-session races remain in
+the SAME runner. No original matrix row is closed. Full assignment STILL CODING.
+
+## October 30 receiving amendment: Solo bell and persistent activity panel
+
+**ACK / STILL CODING.** Owner explicitly approved adding the Solo notification bell and activity
+panel; Coordinator assigned the existing EXP08 successor presentation/integration custody. This
+supersedes the final bell-retirement intent of #883/#896, preserving their operator isolation and
+history. All original rows 1–18, amendments 1–6 and five lifecycle journeys remain required.
+
+| Additive outcome | Current disposition | Original producer / consumer contract still required |
+| --- | --- | --- |
+| Solo bell, accurate unread count, persistent activity panel | MISSING | E01 current Solo shell seam; E08 presentation and integration |
+| Actual approvals awaiting action | PROOF OWED | Original Trust/domain approval source, effective current resource/action eligibility, same original approval link |
+| Task and reminder notices | PROOF OWED | E05 original Work/reminder producer, stable event identity, authorized recipient, same task link |
+| Verified completion, failures and concrete attention | PROOF OWED | Original execution/result writers and receipts; unknown is never success; original outcome/recovery link |
+| Read/unread controls and save/reopen | MISSING | Demonstrate suitable existing permitted storage first; read-state never approves or grants authority |
+| Honest loading, empty, error, stale and revoked states | MISSING | Actor/workspace invalidation and fresh source/resource admission on reopen |
+| Existing/new SOLO and legitimate management roles | PROOF OWED | Original Holder/Owner/Admin/authorized-member authority; unassigned, revoked, private and cross-tenant negatives |
+
+Source discovery, not a new implementing lease: `solo-contextual-notifications-retirement.md`
+preserves the historical separation. The current shell header is
+`TenantCommandCenterShell.tsx` → `tcs-command-actions`. `useSoloActivityFeed` already consumes
+`get_solo_rail_activity`; it provides recorded history, not approval state, stable original action
+links or per-recipient read-state. Its existing caller/workspace refusal contract must be reconciled
+with actual current resource/delegation authority before reuse. `useNotifications` reads legacy
+user-only `notifications`; historical schema has no tenant key. That hook is **not** demonstrated
+suitable for this amendment. `paige_admin_notifications` and operator tools are explicitly excluded.
+No shell edit, storage extension, new sender or provider activation follows from this inventory.
+
+For every source event, implementation evidence must name permitted inputs; deterministic
+eligibility/recipient/priority/grouping/dedup/currentness rules; actual file/function and existing ALG
+support or explicit gap; original producer and read-state semantics; uncertainty/abstention;
+baseline/varied-repeat/negative checks; useful result, receipt, same-record reopen/recovery; and
+controlled feedback. No new ALG maturity, fabricated events, duplicate execution/approval/result
+engine, scheduler or approval inbox. In-app read/approval does not authorize external delivery.
+
+Original ANT50 and ANT164 received narrow source-contract requests; current shell/Trust and
+Work/reminder/result writers remain with their existing owners. Agreement-to-Work integration and
+release-source recovery continue independently. Source, release, authenticated usability and owner
+acceptance remain separate; receiving this amendment is not implementation or full readiness.
+
+## October31 receiving incorporation: complete working-experience acceptance
+
+**Explicit receiving ACK / STILL CODING.** Read original [ANT-147](https://linear.app/paigeagentai/issue/ANT-147),
+“OWNER-APPROVED COMPLETE WORKING EXPERIENCE” (owner October30 local / October31 UTC), including all
+eight acceptance requirements and EXP00–19 applications. This applies to the SAME original cases
+1–18 and amendments1–6 above; no denominator, journey, persona or approved design is removed.
+Historical PR/head paragraphs remain dated history, not the current carrier or acceptance claim.
+
+Every applicable original row now owes: (1) useful goal, permitted source/version and current
+actor/delegation; (2) inspectable editable original plan, current step/dependencies and steering;
+(3) original authorized tools/writers and durable references shared by PAIGE and the SAME Hub
+specialists; (4) useful original editable result/revision/export where supported; (5) actual result
+and receipt readback, distinguishing prepared/attempted/saved/applied/external confirmation;
+(6) save/reload/reopen/continue in existing stores from BOTH chats with current authority;
+(7) cancellation/interruption/disconnect/partial/UNKNOWN, stale/ABA/concurrent/revoke recovery without
+blind replay or lost unsent revision; (8) actual logic, ALG wiring or an explicit supporting-algorithm
+gap, abstention, baseline/repeated/negative cases, useful verified result and controlled feedback.
+
+| Original cases retained | Complete-work application and producer → receiving owner | Current disposition / remaining evidence |
+|---|---|---|
+| 1 | Original Solo shell/Team Hub → EXP08 presentation of current goal/step/progress and steering | PARTIAL / MISSING workshop integration; source UI is not full device/reload/customer proof |
+| 2,3,4 | Original Team/Identity invitation and lifecycle writers; EXP01 Setup/provisioning, EXP10 custody → same Team/Hub admission | PARTIAL; local I2 history/invitation/reader candidates do not complete original recovery/Setup/I3–I5. Current Admin/delegated positive and revoked/foreign/stale negatives remain PROOF OWED |
+| 5,6,7 | Original Hub channels/DMs/threads/direct mentions and domain/Trust doors → same PAIGE/specialist identities and scoped activity | PARTIAL; preserve personalities/colors/icons and explicit private handoff; A2c/channel standing-authority and broader real specialist tools remain MISSING |
+| 8,9 | Original EXP05 Work/Harness task/plan/run/recovery and original domain results → both-chat shared work/approvals/results | PARTIAL; one original identity and current versions throughout; full durable progress/steering/resume/UNKNOWN reconciliation integration MISSING. A card or task ref alone is insufficient |
+| 10,11 | Original scoped Hub attachments + EXP13 Knowledge/document/artifact and EXP06/07 domain producers → same saved editable deliverable/workshop | PARTIAL / MISSING joined artifact integration; original provenance, authorized revision/export/reopen/revoke required. No detached copy, implicit private share or general runner |
+| 12 | Original EXP05 Work/Planning/Calendar/availability and absence/coverage → Hub coordination | PARTIAL; actual current constraints, permitted task handoff and verified outcome/recovery; no fabricated workload/hours or parallel scheduler |
+| 13,14 | Original EXP01 admission/Setup, EXP13 explicit Memory/Knowledge authority, EXP05 durable work and shared Fabric → both chats | PARTIAL; selected permitted facts rather than transcript copying, same original work/artifact references and current source/version checks. Eligible Live remains subject to its own consent/proof |
+| 15 | Original recruiting/onboarding/work-assignment/quality/offboarding writers and artifacts → human-reviewed shared work | MISSING integrated saved journeys; retain ALL five journeys. No consequential hiring/employment/pay automation, workforce score invention or prose-only completion |
+| 16 | Original server-resolved Solo classification/roles/configuration/provider consent → one reusable implementation | PARTIAL / PROOF OWED for existing/new Solo, authorized Admin/delegated member positives and unassigned/private/foreign/revoked/stale negatives; wrong workspace INVALID |
+| 17,18 | Original evidence/matrix, technical review/exact gates/release/source readback → one accessible integrated owner review | PROOF OWED; source/review/CI/merge/deploy/activation/authenticated result/owner acceptance remain distinct. Remaining coding prevents full readiness |
+| Amendments1–6 + approved bell/activity | EXP05 original adaptive plan/task/result and reminder producer, EXP01 shell/Trust sources, EXP13 artifacts, existing domain writers → EXP08 one workshop and permission-aware activity | PARTIAL / MISSING integration. Reminder occurrence/supplied-recipient consumer has bounded local source proof; authenticated notification fetch/read-state, producer extension and actual bell mounting remain owed. No algorithm maturity or authenticated usability inferred |
+
+For each outcome the existing matrix/evidence must identify permitted inputs → deterministic,
+retrieval or model logic → original output/writer → actual ALG ID/wiring, or **NO VERIFIED SUPPORTING
+ALGORITHM IDENTIFIED — GAP OR VERIFICATION OWED** → abstention → baseline/repeated/negative tests →
+real result/receipt/reopen/recovery → controlled feedback. Existing deterministic rules and justified
+N/A remain valid. Measure outcome quality/reliability, plus actual cost/latency per verified outcome
+where applicable; do not change routing/cohorts/cache policy from comparisons or token metrics.
+
+Joined milestone remains agreement upload → source/version-bound fact review and explicit Memory
+approval → original Setup CAS/readback and permitted Knowledge retrieval → editable grounded
+gameplan → authorized original EXP05 Work and EXP03 CRM handoffs → actual result/receipt → both-chat
+reload/reopen/continue. It is NOT READY without legitimate ordinary-customer proof. Never upload a
+private owner agreement, fabricate grants/accounts, or solicit per-PR founder testing to manufacture it.
+
+EXP08 remains sole collaboration/presentation/integration custodian. EXP05 retains Work/Harness,
+execution/finalization/recovery; EXP01 Setup/shared admission; EXP10 provider/Vault custody; EXP13
+Knowledge/explicit Memory/source artifacts; original specialists retain their writers. EXP19 general
+file/data/code/browser execution and PO25 are held dependencies. Desktop/local-folder/app bridging
+is a distinct UNVERIFIED architecture/product gap, not established by hosted/browser execution.
+No duplicate runtime, registry, Work/memory/meter, approval inbox, scheduler, provider client or clones.
+
+Receiving ACK, this original-matrix incorporation, canonical Google note readback, actual coding,
+integration, release, authenticated useful outcomes and final owner acceptance are separate evidence.
+One integrated owner evaluation remains; full assignment status is **STILL CODING**.

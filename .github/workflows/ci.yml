@@ -138,6 +138,12 @@ jobs:
         run: psql -h 127.0.0.1 -U postgres -d postgres -v ON_ERROR_STOP=1 -f supabase/tests/exp08_co_owner_authority.sql
       - name: EXP08 owner invitations (I1), only the account holder invites an Owner, owner-token guard, accept-time re-checks, seat rule (no other seat while an owner invitation accept would honour waits), legal-owner links, production holes, byte-identity and mutants in a disposable database
         run: psql -h 127.0.0.1 -U postgres -d postgres -v ON_ERROR_STOP=1 -f supabase/tests/exp08_owner_invitations.sql
+      - name: EXP08 actor admission, entity departure, original revoke, replay, drift and concurrent replacement/owner-floor guards in an isolated database
+        env:
+          EXP08_DISPOSABLE: '1'
+          PGHOST: 127.0.0.1
+          PGPORT: '5432'
+        run: node scripts/proof/exp08-entity-owner-seat-ended.mjs
       - name: EXP08 Team Hub agents A1a, accepted-turn record, single-use agent posts, one-reply rule, per-seat cap, agent DM isolation, roster correction and mutants in a disposable database
         run: psql -h 127.0.0.1 -U postgres -d postgres -v ON_ERROR_STOP=1 -f supabase/tests/exp08_team_hub_agents_a1.sql
       - name: EXP08 Team Hub agents A1b, member-safe turn-state read, staged Bring in suggestions, same-token acceptance retry and mutants in a disposable database

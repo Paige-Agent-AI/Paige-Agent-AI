@@ -13,7 +13,7 @@
  * workspace is not claimed; a workspace switch mid-call is reported through the channel that
  * outlives this component.
  */
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { AlertTriangle, ArrowRight, Briefcase, CheckCircle2, ClipboardList, Clock, Loader2, Mail, RefreshCw, Users } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -120,12 +120,14 @@ const newKey = () => (typeof crypto !== "undefined" && "randomUUID" in crypto ? 
 
 export type DepartureOutcome = { text: React.ReactNode; spoken: string; action?: "review-again" };
 
-export function DepartureReview({ member, workspace, viewerId, members, onClose, onRemoved, onSuspendInstead, onOpenConnections }: {
+export function DepartureReview({ member, workspace, viewerId, members, contextBlocked = false, onClose, onRemoved, onSuspendInstead, onOpenConnections }: {
   member: TeamMemberRecord;
   workspace: TeamWorkspaceRecord;
   viewerId: string;
   /** The roster as loaded. Used only until the review's own full read of the team arrives. */
   members: TeamMemberRecord[];
+  /** Pause new effects until the original Team reader re-confirms this actor/workspace. */
+  contextBlocked?: boolean;
   /** `outcome` is set when a hand-over ran and the person is still on the team. */
   onClose: (outcome?: DepartureOutcome) => void;
   onRemoved: (outcome: DepartureOutcome) => void;
@@ -140,7 +142,10 @@ export function DepartureReview({ member, workspace, viewerId, members, onClose,
   const opened = useRef({ tenantId: workspace.tenant_id, tenantName: workspace.tenant_name });
   const { activeTenantId } = useTenantContext();
   const activeTenantRef = useRef(activeTenantId);
-  useEffect(() => { activeTenantRef.current = activeTenantId; }, [activeTenantId]);
+  useLayoutEffect(() => { activeTenantRef.current = activeTenantId; }, [activeTenantId]);
+  const blocked = contextBlocked || activeTenantId !== opened.current.tenantId;
+  const blockedRef = useRef(blocked);
+  useLayoutEffect(() => { blockedRef.current = blocked; }, [blocked]);
   const switchedAway = () => Boolean(activeTenantRef.current) && activeTenantRef.current !== opened.current.tenantId;
   const alive = useRef(true);
   useEffect(() => () => { alive.current = false; }, []);
@@ -169,6 +174,7 @@ export function DepartureReview({ member, workspace, viewerId, members, onClose,
   const say = (text: string) => { setSpoken(""); window.setTimeout(() => { if (alive.current) setSpoken(text); }, 30); };
 
   const read = async (): Promise<MemberHoldings | "unavailable" | { error: string }> => {
+    if (blockedRef.current) return { error: "Confirm the original workspace before checking this review again." };
     let data: unknown = null;
     let error: { code?: string; message?: string } | null = null;
     try {
@@ -186,6 +192,7 @@ export function DepartureReview({ member, workspace, viewerId, members, onClose,
   };
 
   const load = async () => {
+    if (blockedRef.current) return;
     setStage("loading");
     say(`Checking what ${first} holds.`);
     const [result, roster] = await Promise.all([read(), everyoneRead ? Promise.resolve(everyoneRead) : readEveryone(opened.current.tenantId)]);
@@ -224,11 +231,11 @@ export function DepartureReview({ member, workspace, viewerId, members, onClose,
   const patchRow = (key: string, patch: Partial<RunRow>) => commit(runRef.current.map((r) => (itemKey(r.item) === key ? { ...r, ...patch } : r)));
   const pumping = useRef(false);
   const pump = async () => {
-    if (pumping.current) return;
+    if (pumping.current || blockedRef.current) return;
     pumping.current = true;
     try {
       for (;;) {
-        if (!alive.current) return;
+        if (!alive.current || blockedRef.current) return;
         const row = runRef.current.find((r) => r.state === "waiting");
         if (!row) return;
         const key = itemKey(row.item);
@@ -252,6 +259,7 @@ export function DepartureReview({ member, workspace, viewerId, members, onClose,
     else { patchRow(key, { state: "failed", message: outcome.message, key: outcome.uncertain ? row.key : newKey() }); say(`${t} didn't save.`); }
   };
   const confirmRow = async (key: string) => {
+    if (blockedRef.current) return;
     const row = runRef.current.find((r) => itemKey(r.item) === key);
     if (!row?.fingerprint || runRef.current.some((r) => r.state === "saving" || r.state === "checking")) return;
     patchRow(key, { state: "saving" });
@@ -262,10 +270,12 @@ export function DepartureReview({ member, workspace, viewerId, members, onClose,
     void pump();
   };
   const retryRow = (key: string, fresh: boolean) => {
+    if (blockedRef.current) return;
     patchRow(key, { state: "waiting", fingerprint: undefined, message: undefined, ...(fresh ? { key: newKey() } : {}) });
     void pump();
   };
   const checkAgain = async (key: string) => {
+    if (blockedRef.current) return;
     const row = runRef.current.find((r) => itemKey(r.item) === key);
     if (!row) return;
     patchRow(key, { state: "checking" });
@@ -279,6 +289,11 @@ export function DepartureReview({ member, workspace, viewerId, members, onClose,
   };
 
   const busy = removing || run.some((r) => r.state === "saving" || r.state === "checking");
+  useEffect(() => {
+    if (!blocked) void pump();
+    // Existing queued work resumes only after the original same-workspace Team read confirms it.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only current-context admission resumes the existing pump
+  }, [blocked]);
 
   // A workspace switch closes the review, because every choice in it names the workspace it was
   // opened in. Never under a write in flight: a removal reports its own outcome after it settles
@@ -293,6 +308,7 @@ export function DepartureReview({ member, workspace, viewerId, members, onClose,
 
 
   const startRun = () => {
+    if (blockedRef.current) return;
     commit(plan.map(({ item, to }) => ({ item, to, state: "waiting", key: newKey() })));
     setStep("run");
     say(`Handing over ${plan.length} ${plan.length === 1 ? "thing" : "things"}, one at a time.`);
@@ -303,7 +319,7 @@ export function DepartureReview({ member, workspace, viewerId, members, onClose,
   const remove = async () => {
     // `disabled` alone is not a guard: two clicks inside one React batch both run before the
     // disabling re-render commits.
-    if (inFlight.current) return;
+    if (inFlight.current || blockedRef.current) return;
     inFlight.current = true;
     setRemoving(true);
     setRemoveError(null);
@@ -374,7 +390,7 @@ export function DepartureReview({ member, workspace, viewerId, members, onClose,
   let body: React.ReactNode = null;
   let foot: React.ReactNode = null;
 
-  const removeButton = (label = `Remove ${name}`) => <button type="button" className="stw-btn danger" disabled={busy || removeError?.retryable === false} aria-busy={removing || undefined} onClick={remove}>
+  const removeButton = (label = `Remove ${name}`) => <button type="button" className="stw-btn danger" disabled={blocked || busy || removeError?.retryable === false} aria-busy={removing || undefined} onClick={remove}>
     {removing ? "Removing…" : removeError ? "Try again" : label}</button>;
   const removalStatus = <>
     {removeError && <div className="stw-alert" role="alert" tabIndex={-1}><AlertTriangle aria-hidden="true" /><p>{removeError.message}</p></div>}
@@ -389,7 +405,7 @@ export function DepartureReview({ member, workspace, viewerId, members, onClose,
     foot = <><button type="button" className="stw-btn secondary" onClick={close}>Cancel</button><button type="button" className="stw-btn primary" disabled>Continue</button></>;
   } else if (stage === "failed") {
     body = <div className="stw-alert" role="alert" tabIndex={-1}><AlertTriangle aria-hidden="true" /><div><p><strong>We couldn't load what {first} holds.</strong></p><p>Removal waits until this list loads, so nothing is left behind by accident. If access needs to stop right now, suspend {first} instead.</p>{loadMessage && <p className="stw-muted">{loadMessage}</p>}</div></div>;
-    foot = <>{onSuspendInstead && <button type="button" className="stw-btn secondary" onClick={onSuspendInstead}>Suspend instead</button>}<button type="button" className="stw-btn primary" onClick={() => void load()}><RefreshCw aria-hidden="true" />Try again</button></>;
+    foot = <>{onSuspendInstead && <button type="button" className="stw-btn secondary" disabled={blocked} onClick={onSuspendInstead}>Suspend instead</button>}<button type="button" className="stw-btn primary" disabled={blocked} onClick={() => void load()}><RefreshCw aria-hidden="true" />Try again</button></>;
   } else if (stage === "unavailable") {
     // The review is not deployed in this workspace yet, but removal is. Removal is NOT withheld for
     // that (it was available before this review existed, §58); the screen says plainly that it can't
@@ -477,7 +493,7 @@ export function DepartureReview({ member, workspace, viewerId, members, onClose,
       {removalStatus}
     </>;
     foot = <><button type="button" className="stw-btn secondary" onClick={() => setStep("review")} disabled={busy}>Back</button>{plan.length
-      ? <button type="button" className="stw-btn primary" onClick={startRun}>Start hand-over</button>
+      ? <button type="button" className="stw-btn primary" disabled={blocked} onClick={startRun}>Start hand-over</button>
       : removeButton()}</>;
   } else if (step === "run") {
     const saved = run.filter((r) => r.state === "saved").length;
@@ -499,13 +515,13 @@ export function DepartureReview({ member, workspace, viewerId, members, onClose,
           <div><strong>{t}</strong><small>{KIND[r.item.kind].label} → {to}</small></div>
           <span className="stw-chip" data-s={r.state}>{icon}{word}</span>
           {r.state === "confirm" && <div className="stw-detail"><p>{r.item.kind === "crm_tasks" ? `Assign the CRM task “${t}” to ${to}.` : r.item.kind === "clients" ? (r.item.relation === "assigned" ? `Assign the client ${t.replace(/\.+$/, "")} to ${to}.` : `Make ${to} the lead owner of ${t.replace(/\.+$/, "")}.`) : `Make ${to} the owner of the deal “${t}”.`}</p>
-            <button type="button" className="stw-btn primary" disabled={saving} onClick={() => void confirmRow(k)}>Confirm</button></div>}
+            <button type="button" className="stw-btn primary" disabled={blocked || saving} onClick={() => void confirmRow(k)}>Confirm</button></div>}
           {r.state === "failed" && <div className="stw-detail" data-tone="bad"><p>{r.message ?? "This change didn't save. Check your connection and retry; the others aren't affected."}</p>
-            {!r.gone && <button type="button" className="stw-btn secondary" disabled={saving} onClick={() => retryRow(k, false)}><RefreshCw aria-hidden="true" />Retry</button>}</div>}
+            {!r.gone && <button type="button" className="stw-btn secondary" disabled={blocked || saving} onClick={() => retryRow(k, false)}><RefreshCw aria-hidden="true" />Retry</button>}</div>}
           {r.state === "changed" && <div className="stw-detail" data-tone="bad"><p>{r.message ?? "Someone changed this after you opened the review, so nothing was saved. Check again reads the latest and tries once more."}</p>
-            <button type="button" className="stw-btn secondary" disabled={saving} onClick={() => void checkAgain(k)}><RefreshCw aria-hidden="true" />Check again</button></div>}
+            <button type="button" className="stw-btn secondary" disabled={blocked || saving} onClick={() => void checkAgain(k)}><RefreshCw aria-hidden="true" />Check again</button></div>}
           {r.state === "expired" && <div className="stw-detail" data-tone="bad"><p>The confirmation expired before it was confirmed, so nothing was saved.</p>
-            <button type="button" className="stw-btn secondary" disabled={saving} onClick={() => retryRow(k, true)}>Prepare it again</button></div>}
+            <button type="button" className="stw-btn secondary" disabled={blocked || saving} onClick={() => retryRow(k, true)}>Prepare it again</button></div>}
         </li>;
       })}</ul>
       {removalStatus}
@@ -515,6 +531,7 @@ export function DepartureReview({ member, workspace, viewerId, members, onClose,
   }
 
   return <Modal variant="drawer" title={title} description={description} busy={busy} onClose={close} titleRef={titleRef}>
+    {blocked && <p className="stw-alert" role="status">This review is paused until the original workspace is confirmed. A request already in progress can still return its result.</p>}
     <p className="sr-only" role="status" aria-live="polite">{spoken}</p>
     <div className="stw-drawer-body">{body}</div>
     <footer className="stw-modal-actions">{foot}</footer>

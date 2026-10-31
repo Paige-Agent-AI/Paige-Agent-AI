@@ -2125,3 +2125,20 @@ These are host-compatibility checks, not a replacement for the failed full run o
 the earlier29-control candidate evidence. Review cleared the host fix in SOURCE
 only; it executed no tests. Full current native integration remains owed when local
 capacity permits. Frozen3130/833 and all original outcome4 obligations are retained.
+
+After independently observed free space improved to about1.9GiB, one justified full
+rerun on exact `c4c27f3af94b9b1432ec336cd788f44fcb77c8ab` completed **EXIT0**:
+the original no-argument native suite, final original Billing authority controls,
+then all29 departure controls through the new full-runner tail, with `PGHOST=::1`.
+Parent and child test databases were disposed and the current QOF cluster stopped
+cleanly. The retry transcript SHA256 is
+`286123858a90015164ba4fdd1a28ceb34ed6530f0768ffa9eab96ee4d939c729`.
+The earlier ENOSPC failure remains evidence; no assertion or test selector was
+removed to obtain this later result. This clears that local integration-proof gap,
+not actual Auth/RLS/agency/protected-account/other-writer or customer acceptance.
+The guarded candidate remains inert/unversioned/unapplied and separate from3130.
+
+The capacity audit also found an older `pg-exp08/native-data` server still idle with
+two retained original fixture databases. That server and its material were preserved;
+stopped-cluster statements above concern the current run, not every historical server.
+No peer data, unknown cache, source branch or legacy cloud work was retired.

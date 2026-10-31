@@ -11,3 +11,4 @@ CREATE TABLE public.paige_owner_memory(
 -- native functions below are extracted byte-for-byte from ORIGINAL migrations.
 GRANT USAGE ON SCHEMA auth TO authenticated;
 GRANT SELECT ON public.paige_owner_memory TO authenticated;
+INSERT INTO auth.users(id) VALUES('10000000-0000-0000-0000-000000000001') ON CONFLICT DO NOTHING;

@@ -56,3 +56,51 @@ reviewer did not run native tests. Final UTF8/third-control re-review remains ow
 This local branch is not a migration/version reservation or a publish/apply gate.
 Original binary source release3154/400a runs separately. Full EXP13/BULK and the
 agreement-to-saved-plan-and-ACTUAL-task workflow remain STILL CODING/NOT READY.
+
+## Local original-producer implementation and review repairs
+
+The unversioned reviewed-memory-candidate.sql now extends the SAME native
+record_paige_memory with a required nine-argument reviewed interface. It validates
+explicit confirmed input, current actor/workspace and permitted canonical source
+version/hash/literal quote, locks existing scope/source/identity records, binds a
+save intent to exact request metadata, and calls the ORIGINAL eight-argument
+producer for insertion/confirmation/attribution. Exact original Memory row
+readback precedes return. One selected correction uses original-row updated_at
+CAS and leaves unrelated same-type rows active. Legacy unsafe broad supersession
+now refuses with PAIGE_MEMORY_SELECTED_REVIEW_REQUIRED; old eight-argument
+non-superseding calls/defaults/owner/ACL/search-path remain unchanged. Original
+get/forget are untouched and still require their reviewed-scope/recovery extension.
+
+First candidate83695 incorrectly required record_state from the original closed
+Knowledge JSON projection and refused a valid source. Actual source inspection
+confirmed the original reader omits that field and filters canonical rows itself.
+Repair retains original permission reads plus a canonical native source-row lock
+and absence refusal, without inventing a projection field. Core23933 and exact
+original-ACL/source-guard rerun33611 PASS. These are not customer acceptance.
+
+Independent review found uppercase intent spelling could miss a canonical lookup,
+and a legacy row with forged intent/fingerprint metadata could masquerade as the
+requested replay. Native intent/actor/workspace spelling is normalized; replay
+now verifies exact content/type/thread/created_by/whole protected metadata and
+confirmed personal audience/source binding. Initial adversarial96181/99530 failed
+fixture setup because actor claims were in another psql connection: INVALID
+causal proof, retained. Correct same-transaction claims then controlled mutation
+30155 (removing ONLY these two repairs) produces BOTH actual assertion failures.
+Actual repaired10098 passes both plus the core controls.
+
+A further review P2 found caller confirmed_at metadata could poison identical
+replay. Actual52590 fails the new reserved-key refusal control. New admission
+rejects server-owned provenance/confirmation/audience keys before any effect;
+96758 completes exit0: ten core Memory observations plus uppercase/preseed and
+three reserved-key observations (15 named observations, not business outcomes),
+with original publication/source checks retained. Native log is
+work/exp13-reviewed-memory-core-final.log. Original runner DROPPED its disposable
+DB. Independent bounded final recheck reports all three P2 findings resolved,
+no remaining material finding in that repair; reviewer did not run native tests.
+
+STILL OWED: read/forget expected-scope and exact-item recovery, current-source
+invalidation, full actor/membership/revocation negatives, concurrency/unknown-save
+reconciliation, safe lifecycle and strict repeat/source guards for a published
+carrier, exact CI/managed Preview/ordered release/deploy/readback, actual UI and
+later-session/customer proof. This is NOT ready to mount or advertise. No Memory
+migration number/publication/application or source/algorithm maturity promotion.

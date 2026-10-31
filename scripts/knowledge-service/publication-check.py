@@ -1,7 +1,7 @@
 import argparse,pathlib,re,subprocess,uuid
 p=argparse.ArgumentParser(); p.add_argument('--psql',default='psql'); p.add_argument('--port',default='55439'); p.add_argument('--user',default='knowledge_test'); p.add_argument('--expected-data-directory'); p.add_argument('--publication-recovery',action='store_true'); p.add_argument('--recovery-baseline',action='store_true'); p.add_argument('--recovery-migration',default='supabase/migrations/20271110011000_knowledge_publication_recovery.sql')
-p.add_argument('--memory-review-baseline',action='store_true'); a=p.parse_args()
-if a.memory_review_baseline and not a.expected_data_directory: p.error('Memory proof requires a verified disposable data directory')
+p.add_argument('--memory-review-baseline',action='store_true'); p.add_argument('--memory-review-candidate',action='store_true'); p.add_argument('--memory-review-candidate-file',default='scripts/knowledge-service/reviewed-memory-candidate.sql'); a=p.parse_args()
+if (a.memory_review_baseline or a.memory_review_candidate) and not a.expected_data_directory: p.error('Memory proof requires a verified disposable data directory')
 root=pathlib.Path(__file__).resolve().parents[2]; db='knowledge_publish_test_'+uuid.uuid4().hex
 base=[a.psql,'-X','-h','127.0.0.1','-p',a.port,'-U',a.user,'-v','ON_ERROR_STOP=1']
 def run(args):
@@ -20,7 +20,7 @@ try:
  files+=['scripts/knowledge-service/extraction-behavior.sql','scripts/knowledge-service/publication-behavior.sql']
  if a.publication_recovery: files+=['scripts/knowledge-service/publication-recovery-behavior.sql']
  for f in files: run(['-d',db,'-f',f])
- if a.memory_review_baseline:
+ if a.memory_review_baseline or a.memory_review_candidate:
   run(['-d',db,'-f','scripts/knowledge-service/reviewed-memory-fixture.sql'])
   # Execute the ORIGINAL writers, not a copied or modeled writer implementation.
   for name,path in [('record_paige_memory','20270599000000_s5_owner_memory_backfill.sql'),('get_paige_memory','20261223000000_paige_memory_governed_contract.sql'),('forget_paige_memory','20261223000000_paige_memory_governed_contract.sql')]:
@@ -31,6 +31,16 @@ try:
    print(result.stdout);print(result.stderr)
    if result.returncode: raise RuntimeError('Original Memory source installation failed: '+name)
   run(['-d',db,'-f','scripts/knowledge-service/reviewed-memory-source-check.sql'])
+  if a.memory_review_candidate:
+   run(['-d',db,'-f',a.memory_review_candidate_file])
+   run(['-d',db,'-f','scripts/knowledge-service/reviewed-memory-behavior.sql'])
+   failures=[]
+   for case in ['uppercase','preseed','reserved-metadata']:
+    result=subprocess.run(base+['-d',db,'-f','scripts/knowledge-service/reviewed-memory-'+case+'.sql'],cwd=root,text=True,capture_output=True,encoding='utf-8')
+    print(result.stdout);print(result.stderr)
+    if result.returncode: failures.append(case)
+   if failures: raise RuntimeError('Reviewed Memory adversarial controls failed: '+','.join(failures))
+ if a.memory_review_baseline:
   failures=[]
   for case in ['scope','replay','supersession']:
    result=subprocess.run(base+['-d',db,'-f','scripts/knowledge-service/reviewed-memory-'+case+'-baseline.sql'],cwd=root,text=True,capture_output=True,encoding='utf-8')

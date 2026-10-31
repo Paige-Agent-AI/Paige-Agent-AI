@@ -1,5 +1,102 @@
 # Experience 02 — Customer Experience Integration Matrix
 
+## October31 — complete working Experience receiving incorporation
+
+Received the [owner-approved complete working Experience amendment](https://linear.app/paigeagentai/issue/ANT-147/one-paige-foundational-systems-integration-and-end-to-end-readiness):
+all eight requirements and EXP00–19 applications. This extends acceptance of
+the SAME O01–O19 and nine analytics capabilities. Original definitions, IDs,
+historical denominators, specialists and writers below remain unchanged.
+Reception/source documentation is not implementation or acceptance. EXP02 is
+STILL CODING; one complete founder evaluation remains.
+
+Apply these eight requirements to each applicable original outcome:
+
+1. Goal/context: useful result, permitted tenant/resource/source/version, current
+   actor/delegation and success criteria; ask only material missing questions.
+   Private conversation/file context needs an explicit permitted handoff.
+2. Plan/steering: inspectable, editable scoped plan, original task/artifact,
+   current step and actual dependencies. Preserve steering, direct mentions,
+   DMs and the SAME specialists across PAIGE and EXP08 Team Hub.
+3. Execution: approved tools or original accountable writer with the same
+   resource/version. Action-specific Trust standing authority governs effects;
+   neither blanket autonomy nor a mandatory extra click for every covered step.
+4. Deliverable: useful original editable artifact/record, revision, provenance
+   and authorized export where applicable. Prose, screenshots and detached copies
+   do not prove a saved artifact. Ordinary analytical reads remain reads.
+5. Verification: actual original result/receipt; distinguish prepared, attempted,
+   saved, applied and externally confirmed. Explain uncertainty and next steps.
+6. Durable continuation: existing Work/Knowledge/domain stores, one identity,
+   both-chat save/reopen/continue with current permission/version checks.
+   Cross-device continuation is claimed only where actually supported/proven.
+7. Recovery: cancel, interrupt/disconnect, partial/UNKNOWN effects, stale/ABA/
+   concurrency and revoke/deny; reconcile before retry, preserve unsent/saved
+   revisions, prevent duplicates. Existing Harness/scheduling only where
+   legitimately available; no background/recurrence/general-runner activation.
+8. Grounded evaluation: outcome → permitted inputs → actual deterministic/
+   retrieval/model logic → original output/writer → exact canonical ALG wiring →
+   uncertainty → baseline/repeated/negative cases → useful result/receipt/reopen/
+   recovery → controlled feedback. Use `NO VERIFIED SUPPORTING ALGORITHM
+   IDENTIFIED — GAP OR VERIFICATION OWED` where appropriate; justified routing
+   N/A is valid. Measure useful result quality/reliability, not model/cache choice.
+
+The following adds receiving obligations to the existing rows, without creating
+new outcomes, tools, registrations, runtime availability or writers.
+
+| Original outcome | Useful original result / producer and receiving owner | Integration or proof still owed |
+| --- | --- | --- |
+| O01 | E02 source-backed briefing using `business.operating_snapshot` and Metric/Evidence; applicable review artifacts use the original EXP13 document contract. | Fresh sources, useful explanation and original saved editable artifact/retrieval where applicable; one weekly Owner case is bounded. |
+| O02 | Same Executive/Chat source, period/currency and references; EXP08 receives the SAME permitted review. | Matched result and both-chat reopen; a projection is not a saved review document. |
+| O03 | EXP03 pipeline/attribution and EXP04 commercial records, interpreted by E02/VERA. | Populated comparisons, permissions, useful next step and original-domain handoff/readback; no E02 CRM writer. |
+| O04 | EXP04 invoices/receipts plus verified Finance sources; EXP11 financial depth remains HELD. | Seven-page Owner read/reload is not connected banking/accounting, recognized revenue/profit, budgets/forecasts or all-role/cohort acceptance. |
+| O05 | EXP09 service signals, EXP04 accepted obligations and EXP05 delivery records. | Source/version-bound health interpretation, original result/reopen; absent Portal activity is not churn. |
+| O06 | Original Systems Check run/finding and read-only source review. | Original result/Chat/reload/focus and broader roles/cohorts; recorded counts do not prove current readiness or a new scan. |
+| O07 | Original request → Work/private runner → original new run/finding/result/Rail. | Product consumer, legitimate activation and real new result/cancel/UNKNOWN proof; merged private foundations are not active execution. |
+| O08 | One to three grounded priorities; original EXP03/04/05/09 writers receive permitted next steps. | Same plan/source/version, available capability, actual follow-through and later measurement; completion is not causal improvement. |
+| O09 | Original Setup direction and `business_mission.create/revise/transition` with mutation receipts. | Editable same-Play steering, stale/replay/UNKNOWN reconciliation and both-chat continuity; lifecycle Complete is not business success. |
+| O10 | Owner-approved Play-linked F7 targets/revisions and actuals from the existing Metric issuer. | Matched period/currency/variance, authorized lifecycle/readback/reload and both-chat continuity; no second actuals store. |
+| O11 | Original Trust role/delegation/policy and approval contract; receiving executors enforce current authority. | Eligible Admin/delegated-member positives and unassigned/foreign/revoked/stale negatives, including effect-time enforcement. |
+| O12 | Original proposal/approval → Harness/Layer C where applicable → original domain result/Rail. | Legitimate action-specific activation, real result and cancellation/uncertain-effect recovery; no second approval channel. |
+| O13 | Permission-filtered original Rail/Work/domain activity and current result references. | Accomplished/blocked/pending interpretation persisted with original work; a recorded line alone does not verify an effect. |
+| O14 | Existing record resolver and current-account department; destination reauthorizes. | Same original resource/version, return/reload/focus and denial/revocation/cohort cases; no copied records. |
+| O15 | Original Knowledge/Memory/Vault provenance; EXP13 source and EXP01 Setup contracts. | Required explicit durable-fact approval, correction/delete/revoke and later retrieval; no automatic private-DM/file sharing or Memory save. |
+| O16 | Existing PAIGE Chat/eligible Live and EXP08 presentation of the SAME specialists/work. | Fresh settlement, interruption, revision retention, mobile/current authority and both-chat recovery. Personal Live consent/audio stays separate; protected monthly UNKNOWN/UNRETRIED. |
+| O17 | EXP03 original Conversations/Communications thread, approval/provider state and department record. | Permitted history/reload/privacy; truthful prepared/accepted/delivered/failed/UNKNOWN; no duplicate inbox/sender. |
+| O18 | Original Deep Research run/citations/saved research and separately approved Knowledge publication. | Legitimate provider/cohort/spend/consent, useful editable artifact where applicable, persistence/retrieval/correction and recovery; no private-report replay to manufacture proof. |
+| O19 | Registered specialist/capability → original Trust/Harness/Layer C → original writer/result/Rail → review update. | Positive governed multistep work, same task/artifact/version across both chats, safe continuation; INT-346 and held EXP19 boundaries unchanged. Refusal does not close positive execution. |
+
+Joined milestone: original agreement/source/version review → explicit Memory
+approval → EXP01 Setup CAS/readback + permitted Knowledge retrieval → editable
+grounded gameplan → original EXP05 Work / EXP03 CRM handoff → actual result/
+receipt → reopen/continue. E02 owns interpretation and its consumer; EXP13
+source/artifacts, EXP01 Setup/admission, EXP05 Work/Harness, EXP08 presentation,
+EXP10 custody and original domain writers retain ownership. No private agreement
+upload, fabricated account/grant, provider/routing activation or general desktop/
+file/code/browser runner is authorized. EXP11/12/14–19 remain HELD.
+
+Each original row retains producer + receiving owner, actual writer/permission,
+implementation vs integration gap vs proof owed vs external decision vs held
+dependency, exact source/review/CI/release and ordinary customer evidence.
+Existing/new eligible SOLO behavior, authorized management-role positives and
+unassigned/foreign/revoked/stale negatives remain required. Functional, Visual,
+Experiential, Founder Acceptance, Algorithm Support, Orchestration Contract and
+Capabilities readiness are separate. ALG03/06/11/12 remain Partial, ALG13
+Unverified; nine catalogue states/all-account access proof are unchanged.
+
+
+### Current Mission/source handoff — integration and authority gaps
+
+Grounded in main90a99e6f and the existing EXP13 receiving handoff: the original
+Mission writers remain owner-only; authenticated execution grants do not admit
+Admin/delegated management. O09/O11/O19 must resolve eligible management through
+the canonical effective-authority contract, without blanket grants or impersonation.
+The original brief/projector has no typed Knowledge version/contentSHA, exact
+UTF16 per-field support or selected-fact confirmation receipt. EXP13 retains
+source/approved-intent validation; E02 retains the same immutable Mission brief,
+native writer, current readback and original Rail consumer. The atomic binding
+and current-source revocation/audience checks are integration gaps; prose,
+payload MD5, Memory approval or a source timestamp cannot substitute for them.
+No new native binding, permission expansion, grant or activation is claimed.
+
 ## EXP02 October30 receiving checkpoint — native15 included, release holds retained
 
 Original3018 required database-contract41001866775/123887881658 failed its

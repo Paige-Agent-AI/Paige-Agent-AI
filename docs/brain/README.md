@@ -1,9 +1,3 @@
-## EXP08 October30 — original source-return release and remaining integration
-
-Original3109 reviewed0c771919262a6dd914000f4c21680d2fc484ffc9 normally merged62bdeca0866d31c7a2ce7f03516b2b333e70a730 after required exact-head checks, genuine Preview and recorded reviews. Same original task/message/thread reopening and scoped unsent PAIGE continuation reuse Work/Trust/domain writers. Native40008 and exact62 web were read back. Old62 Edge strict failure is retained; source-owner-coordinated notify-only refresh and normal compatible cumulative571 verifier record24/24 source/config matches, db-live/edge-live571 and public571 builds. Exact terminal API conclusion remains separately pending at this checkpoint. See Master4.0 and originalANT161; no authenticated customer outcome follows from source parity.
-
-Full EXP08 remains STILL CODING: all original18 rows/6 amendments/five lifecycle journeys retained; I2–I5/current management delegation, goals/adaptive coordination, A2c standing execution, both-chat workshop/proactive continuity and production result/receipt/reopen/recovery/role negatives remain built/partial/missing/proof owed according to original matrix. Owner-approved Solo bell/activity amendment is incorporated as MISSING/PROOF OWED; discover original Work/approval/recipient/read-state contracts, never operator notification data or a duplicate engine. Existing E01/E05/domain writers retain custody. ALG01/08/11/12 partial,03/13 gaps, actual evaluation/cost per verified outcome proof owed; no invented maturity. One integrated owner review after complete coding/integration/release; no customer acceptance or new activation asserted.
-
 ## EXP09 October30 — the enclosing history reader owns file-context continuity
 
 Verified [#3152/90a99e6f](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3152) source/web release is now recorded in [Master §4.0](../PAIGE-MASTER-PROJECT-REFERENCE.md#40-shipped-delivery-log). Removing the enclosing history initializer's null reset preserves the original private Documents lifetime during the SAME customer recheck. Initial unknown identity remains empty; native currentness/admission, genuine scope remounts, different native threads and explicit upload/Send remain authoritative. A retained identifier is never an authorization grant.
@@ -5600,6 +5594,12 @@ board captures must remain excluded when current DOM describes a dialog; inspect
 a settled original frame instead. Synthetic UI/native fixtures remain distinct
 from genuine caller authority, saved business records/Rails, reload, both-chat,
 universal SOLO and full Experience acceptance. No second scheduler/ledger/runtime.
+
+## EXP08 October30 — original source-return release and remaining integration
+
+Original3109 reviewed0c771919262a6dd914000f4c21680d2fc484ffc9 normally merged62bdeca0866d31c7a2ce7f03516b2b333e70a730 after required exact-head checks, genuine Preview and recorded reviews. Same original task/message/thread reopening and scoped unsent PAIGE continuation reuse Work/Trust/domain writers. Native40008 and exact62 web were read back. Old62 Edge strict failure is retained; source-owner-coordinated notify-only refresh and normal compatible cumulative571 verifier record24/24 source/config matches, db-live/edge-live571 and public571 builds. Exact terminal API conclusion remains separately pending at this checkpoint. See Master4.0 and originalANT161; no authenticated customer outcome follows from source parity.
+
+Full EXP08 remains STILL CODING: all original18 rows/6 amendments/five lifecycle journeys retained; I2–I5/current management delegation, goals/adaptive coordination, A2c standing execution, both-chat workshop/proactive continuity and production result/receipt/reopen/recovery/role negatives remain built/partial/missing/proof owed according to original matrix. Owner-approved Solo bell/activity amendment is incorporated as MISSING/PROOF OWED; discover original Work/approval/recipient/read-state contracts, never operator notification data or a duplicate engine. Existing E01/E05/domain writers retain custody. ALG01/08/11/12 partial,03/13 gaps, actual evaluation/cost per verified outcome proof owed; no invented maturity. One integrated owner review after complete coding/integration/release; no customer acceptance or new activation asserted.
 
 ## 2026-10-30 EXP02 — weekly delivery and Billing release readback
 

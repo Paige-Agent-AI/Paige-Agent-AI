@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  prepareKnowledgeReplacementUpload, uploadKnowledgeFileOnce, inspectKnowledgeUploadedFile, type KnowledgeUploadSource,
   ExtractionConsumerError, readKnowledgeExtractionForDocument, readKnowledgeExtractionReview, readKnowledgeExtractionStatus, readKnowledgePublicationForDocument,
   submitKnowledgeExtraction, type ExtractionClient, type ExtractionInput, type ExtractionReadReference, type ExtractionReview,
   type ExtractionDocumentReview, type KnowledgePublicationReadReference,
@@ -15,8 +16,10 @@ import {
 } from "@/lib/knowledge-review-service";
 import { KnowledgeServiceError, submitKnowledgePublication, type KnowledgeDocument } from "@/lib/knowledge-service";
 import { useTenantContext } from "@/hooks/useTenantContext";
+import { BulkKnowledgeUploadFlow } from "./BulkKnowledgeUploadFlow";
+import { KnowledgeSourceEvidencePanel } from "./KnowledgeSourceEvidencePanel";
 
-type HaltAction = "retry-submit" | "check-extraction" | "reread" | "retry-publish" | "check-publication";
+type HaltAction = "inspect-upload" | "read-stored" | "retry-submit" | "check-extraction" | "reread" | "retry-publish" | "check-publication";
 type Halt = { title: string; message: string; action: HaltAction | null };
 type Step = "checking" | "choose" | "extracting" | "review" | "ready" | "publishing" | "done";
 export type KnowledgeCorrectionTarget = Pick<KnowledgeDocument, "id" | "tenant_id" | "revision" | "title" | "content" | "summary" | "category" | "tags">;
@@ -42,6 +45,7 @@ export function AddKnowledgeFlow(props: Props) {
 }
 
 function KnowledgeFlowSession({ tenantId, onPublished, onClose, replacementTarget, returnFocus }: Props) {
+  const identity = useTenantContext();
   const [target] = useState(() => replacementTarget ? { ...replacementTarget, tags: [...(replacementTarget.tags ?? [])] } : null);
   const [step, setStep] = useState<Step>(target ? "checking" : "choose");
   const [mode, setMode] = useState<"paste" | "file">("paste");
@@ -65,6 +69,9 @@ function KnowledgeFlowSession({ tenantId, onPublished, onClose, replacementTarge
   const extractIntent = useRef<string | null>(null);
   const publishIntent = useRef<string | null>(null);
   const submittedInput = useRef<ExtractionInput | null>(null);
+  const uploadSource = useRef<KnowledgeUploadSource | null>(null);
+  const uploadTitle = useRef<string | null>(null);
+  const uploadVerified = useRef(false);
   const busy = useRef(false);
   const mounted = useRef(true);
   const scope = useRef({ tenantId });
@@ -165,13 +172,36 @@ function KnowledgeFlowSession({ tenantId, onPublished, onClose, replacementTarge
    * lost acknowledgement after upload may leave the stored object behind — cleanup belongs
    * to the reconciled lifecycle, not to a second browser write.
    */
-  const uploadFile = async (): Promise<string> => {
-    if (!file) throw new ExtractionConsumerError("EXTRACTION_INPUT_INVALID", "Choose a file.");
-    const safe = file.name.replace(/[^\w.-]/g, "_");
-    const path = `${tenantId}/${crypto.randomUUID()}_${safe}`;
-    const { error: uploadError } = await supabase.storage.from("tenant-knowledge").upload(path, file);
-    if (uploadError) throw new ExtractionConsumerError("EXTRACTION_INPUT_INVALID", "The file could not be uploaded. Check your connection and try again.");
-    return path;
+  const uploadFile = async (inspect = false): Promise<string> => {
+    if (uploadVerified.current && uploadSource.current) return uploadSource.current.path;
+    if (!uploadSource.current) {
+      if (inspect || !file || !target) throw new ExtractionConsumerError("EXTRACTION_INPUT_INVALID", "Reopen the current document and choose a replacement file.");
+      const selected = file, selectedTitle = title.trim();
+      const bytes = new Uint8Array(await selected.arrayBuffer());
+      if (!current()) throw new ExtractionConsumerError("EXTRACTION_SCOPE_CHANGED", "Workspace changed.");
+      const prepared = await prepareKnowledgeReplacementUpload(extractionScope(), identity.activeUserId!,
+        {tenantId: target.tenant_id, documentId: target.id, revision: target.revision},
+        {name: selected.name, mime: selected.type, bytes}, selectedTitle);
+      if (prepared.phase !== 'prepared' || !prepared.source || !prepared.intentId) throw new ExtractionConsumerError("EXTRACTION_INPUT_INVALID", "This file could not be prepared. Choose a supported PDF, DOCX or text file.");
+      uploadSource.current = prepared.source; uploadTitle.current = selectedTitle; extractIntent.current = prepared.intentId;
+    }
+    const storage = supabase.storage.from("tenant-knowledge");
+    const result = await (inspect ? inspectKnowledgeUploadedFile : uploadKnowledgeFileOnce)(storage, extractionScope(), uploadSource.current);
+    if (result.phase !== 'stored') throw new ExtractionConsumerError(
+      result.phase === 'source_changed' ? 'EXTRACTION_UPLOAD_CHANGED' : 'EXTRACTION_UPLOAD_UNCONFIRMED',
+      'The original upload could not be verified.');
+    uploadVerified.current = true;
+    return result.path;
+  };
+  const inspectUpload = async () => {
+    if (busy.current || !current()) return;
+    busy.current = true;
+    try {
+      await uploadFile(true);
+      if (current()) stop({title: "Stored source verified", message: "The original file bytes are verified. Reading has not been started. Continue with this same source when ready.", action: "read-stored"});
+    } catch (error) {
+      if (current()) stop({title: "Upload inspection unavailable", message: error instanceof ExtractionConsumerError && error.code === 'EXTRACTION_UPLOAD_CHANGED' ? "The stored bytes differ. No reading was started. Close this review and inspect the original source." : "The original upload is still unconfirmed. Inspection did not upload or read the document.", action: error instanceof ExtractionConsumerError && error.code === 'EXTRACTION_UPLOAD_CHANGED' ? null : "inspect-upload"});
+    } finally { busy.current = false; }
   };
 
   const submit = async () => {
@@ -179,17 +209,16 @@ function KnowledgeFlowSession({ tenantId, onPublished, onClose, replacementTarge
     const trimmed = title.trim();
     if (!trimmed || trimmed.length > 300) { setNotice("Give the source a title of 1–300 characters."); return; }
     if (mode === "paste" && !content.trim()) { setNotice("Paste the text Paige should read."); return; }
-    if (mode === "file" && !file) { setNotice("Choose a text file for Paige to read."); return; }
-    if (mode === "file" && file && !/\.(txt|md|markdown|csv|json)$/i.test(file.name)) { setNotice("Paige reads .txt, .md, .markdown, .csv and .json files. Other formats arrive with expanded format support."); return; }
-    if (mode === "file" && file && file.size > 2097152) { setNotice("Paige reads text files up to 2 MB — try a smaller one."); return; }
+    if (mode === "file" && !file) { setNotice("Choose a PDF, DOCX or text file for Paige to read."); return; }
+    if (mode === "file" && file && !/\.(pdf|docx|txt|md|markdown|csv|json)$/i.test(file.name)) { setNotice("Choose a PDF, DOCX or supported text file. Scanned or encrypted files may not yield readable text."); return; }
+    if (mode === "file" && file && file.size > 2097152) { setNotice("Choose a file up to 2 MB — try a smaller one."); return; }
     busy.current = true; setHalt(null); setNotice("Sending to Paige…"); setStep("extracting");
     try {
       if (!extractIntent.current) extractIntent.current = crypto.randomUUID();
-      const intentId = extractIntent.current;
       if (!submittedInput.current) {
         const input: ExtractionInput = mode === "paste"
-          ? { intent_id: intentId, title: trimmed, kind: "paste", content }
-          : { intent_id: intentId, title: trimmed, kind: "file", path: await uploadFile() };
+          ? { intent_id: extractIntent.current, title: trimmed, kind: "paste", content }
+          : await (async () => { const path = await uploadFile(); return {intent_id: extractIntent.current!, title: uploadTitle.current!, kind: "file" as const, path}; })();
         if (!current()) return;
         submittedInput.current = target ? { ...input, doc_id: target.id, expected_revision: target.revision } : input;
       }
@@ -206,7 +235,12 @@ function KnowledgeFlowSession({ tenantId, onPublished, onClose, replacementTarge
       setTimeout(() => void watchExtraction(submission.reference, 0, run), 800);
     } catch (error) {
       if (!current()) return;
-      if (error instanceof ExtractionConsumerError && error.submissionUncertain) {
+      if ((uploadSource.current && !uploadVerified.current) || (error instanceof ExtractionConsumerError && ['EXTRACTION_UPLOAD_UNCONFIRMED','EXTRACTION_UPLOAD_CHANGED'].includes(error.code))) {
+        const changed = error instanceof ExtractionConsumerError && error.code === 'EXTRACTION_UPLOAD_CHANGED';
+        stop({title: changed ? "Stored source differs" : "Upload unconfirmed",
+          message: "No reading was started. Inspect the same original upload before continuing; no new file will be uploaded.",
+          action: changed ? null : "inspect-upload"});
+      } else if (error instanceof ExtractionConsumerError && error.submissionUncertain) {
         stop({ title: "Submission unconfirmed", message: "Paige may or may not have received this source — it was not rejected. Retry sends the same request again, never a duplicate.", action: "retry-submit" });
       } else if (error instanceof ExtractionConsumerError) {
         stop({ title: "Submission refused", message: plainRefusal(error), action: null });
@@ -350,16 +384,20 @@ function KnowledgeFlowSession({ tenantId, onPublished, onClose, replacementTarge
   };
 
   const restoreFocus = (event: Event) => { if (returnFocus) { event.preventDefault(); returnFocus()?.focus(); } };
+  if (!target && mode === "file" && step === "choose") {
+    return <BulkKnowledgeUploadFlow tenantId={tenantId} onClose={close} onBack={() => setMode("paste")} onPublished={onPublished} returnFocus={returnFocus} />;
+  }
+  const uploadPhase = step === "extracting" && mode === "file" && submittedInput.current === null;
   if (!targetValid) {
     return <DialogContent onCloseAutoFocus={restoreFocus}><DialogHeader><DialogTitle>Source unavailable</DialogTitle><DialogDescription>Read the current document in this workspace before correcting its content.</DialogDescription></DialogHeader><Button onClick={close}>Close</Button></DialogContent>;
   }
   return <DialogContent className="max-w-xl max-h-[90dvh] overflow-y-auto" onCloseAutoFocus={restoreFocus}>
     <DialogHeader>
-      <DialogTitle>{step === "done" ? "Published to Knowledge" : step === "publishing" ? "Publishing" : step === "ready" ? "Publish to Knowledge" : step === "review" ? "Review what Paige read" : step === "extracting" ? "Paige is reading" : target ? "Correct Knowledge content" : "Add Knowledge"}</DialogTitle>
+      <DialogTitle>{uploadPhase ? halt ? "Check original upload" : "Uploading source" : step === "done" ? "Published to Knowledge" : step === "publishing" ? "Publishing" : step === "ready" ? "Publish to Knowledge" : step === "review" ? "Review what Paige read" : step === "extracting" ? "Paige is reading" : target ? "Correct Knowledge content" : "Add Knowledge"}</DialogTitle>
       <DialogDescription>
         {step === "checking" && (halt ? "Check this document's current state before continuing." : "Checking the saved reading for this document.")}
         {step === "choose" && (target ? `Correct revision ${target.revision} of this document. Its published text stays in use until you review and publish the replacement.` : "Paige reads the source first; you review the exact text, then publish it to Knowledge.")}
-        {step === "extracting" && "The reading continues even if you close this."}
+        {step === "extracting" && (uploadPhase ? "Reading starts after the original uploaded bytes are verified." : "The reading continues even if you close this.")}
         {step === "review" && `Edit the text and details — this exact text becomes the Knowledge source.${review.current ? ` Revision ${review.current.revision}.` : ""}`}
         {step === "ready" && "Your review is saved. Publishing makes the exact reviewed text searchable and usable for this business."}
         {step === "publishing" && "Publishing continues even if you close this."}
@@ -371,6 +409,8 @@ function KnowledgeFlowSession({ tenantId, onPublished, onClose, replacementTarge
       <p className="text-sm">{halt.message}</p>
       <div className="flex flex-wrap justify-end gap-2">
         <Button variant="outline" onClick={close}>Close</Button>
+        {halt.action === "inspect-upload" && <Button onClick={() => void inspectUpload()}>Inspect original</Button>}
+        {halt.action === "read-stored" && <Button onClick={() => { setHalt(null); void submit(); }}>Read original source</Button>}
         {halt.action === "retry-submit" && <Button onClick={() => { setHalt(null); setStep("choose"); void submit(); }}>Retry same request</Button>}
         {halt.action === "check-extraction" && reference.current && <Button onClick={() => { setHalt(null); setStep("extracting"); const run = ++pollRun.current; setNotice("Checking Paige's reading…"); void watchExtraction(reference.current!, 0, run); }}>Check reading</Button>}
         {halt.action === "reread" && reference.current && <Button onClick={() => { setHalt(null); setNotice("Reading the current review…"); loadReview(reference.current!).catch(() => { if (current()) stop({ title: "Review unavailable", message: "The current review could not be read. Your draft is still here; try again in a moment.", action: "reread" }); }); }}>Reload review</Button>}
@@ -383,7 +423,7 @@ function KnowledgeFlowSession({ tenantId, onPublished, onClose, replacementTarge
       {(step === "choose" || step === "extracting") && <>
         <div className="space-y-1.5"><Label>Source type</Label>
           <div className="flex gap-2" role="group" aria-label="Source type">
-            {(["paste", "file"] as const).map(value => <Button key={value} type="button" variant={mode === value ? "default" : "outline"} aria-pressed={mode === value} disabled={step === "extracting"} onClick={() => setMode(value)}>{value === "paste" ? "Pasted text" : "Text file"}</Button>)}
+            {(["paste", "file"] as const).map(value => <Button key={value} type="button" variant={mode === value ? "default" : "outline"} aria-pressed={mode === value} disabled={step === "extracting"} onClick={() => setMode(value)}>{value === "paste" ? "Pasted text" : target ? "File" : "Files"}</Button>)}
           </div>
         </div>
         <div className="space-y-1.5"><Label htmlFor="knowledge-add-title">Title</Label>
@@ -393,14 +433,16 @@ function KnowledgeFlowSession({ tenantId, onPublished, onClose, replacementTarge
           ? <div className="space-y-1.5"><Label htmlFor="knowledge-add-content">Text for Paige to read</Label>
               <Textarea id="knowledge-add-content" value={content} onChange={event => setContent(event.target.value)} disabled={step === "extracting"} rows={8} placeholder="Paste the exact text Paige should learn from." />
             </div>
-          : <div className="space-y-1.5"><Label htmlFor="knowledge-add-file">Text file (.txt, .md, .markdown, .csv, .json)</Label>
-              <Input id="knowledge-add-file" type="file" accept=".txt,.md,.markdown,.csv,.json" onChange={event => setFile(event.target.files?.[0] ?? null)} disabled={step === "extracting"} />
+          : <div className="space-y-1.5"><Label htmlFor="knowledge-add-file">File (.pdf, .docx, .txt, .md, .markdown, .csv, .json)</Label>
+              <Input id="knowledge-add-file" type="file" accept=".pdf,.docx,.txt,.md,.markdown,.csv,.json" onChange={event => setFile(event.target.files?.[0] ?? null)} disabled={step === "extracting"} />
             </div>}
         <div className="flex flex-wrap justify-end gap-2">
           <Button variant="outline" onClick={close} disabled={step === "extracting"}>Close</Button>
           <Button onClick={() => void submit()} disabled={step === "extracting"}>{step === "extracting" ? "Reading…" : "Send to Paige"}</Button>
         </div>
       </>}
+      {(step === "review" || step === "ready") && review.current && <KnowledgeSourceEvidencePanel client={client} scope={extractionScope()}
+        review={{...review.current, revision: step === "ready" ? savedRevision.current ?? review.current.revision : review.current.revision}} />}
       {step === "review" && <>
         <div className="space-y-1.5"><Label htmlFor="knowledge-review-content">Reviewed text — this exact text becomes the source</Label>
           <Textarea id="knowledge-review-content" value={reviewContent} onChange={event => setReviewContent(event.target.value)} rows={10} maxLength={480000} />

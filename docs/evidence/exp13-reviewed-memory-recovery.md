@@ -1,6 +1,8 @@
 # EXP13 reviewed Memory recovery — original producer repair
 
-Status: LOCAL failing requirement controls, NOT IMPLEMENTED/RELEASED. Same sole
+Current status: LOCAL PARTIAL implementation with native tests and bounded review;
+UNPUBLISHED/UNAPPLIED, not ready for customer mounting. The original failing-first
+baseline and dated implementation/review history are retained below. Same sole
 EXP13 lead owns the Memory producer repair under the October30 owner clarification;
 E01 Setup/domain facts, E02 saved Mission, E05 Work and private client/shared
 business audiences retain their original ownership. No new Memory store or ledger.

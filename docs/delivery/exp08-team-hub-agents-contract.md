@@ -2469,3 +2469,36 @@ with31 prerequisite negatives and10 FK cases explicitly nested. Final60/full-par
 new exact-head CI, managed application/readback/full-schema/trigger integration,
 production and authenticated outcomes remain owed. Local full-parent ENOSPC FAIL
 remains open; current low capacity prohibits another broad rerun, not safe source work.
+
+#### Same outcome4: inert Hub helper permission preflight repair
+
+Sequential local branch `codex/exp08-hub-identity-currentness-20261031` preserves
+published3164/exact2ac unchanged. Distinct source-only review found that the existing
+INERT three-helper patch rejected unexpected ACL entries but accepted an empty ACL.
+The new named missing-owner-EXECUTE control genuinely failed before repair:
+`exp08-hub-identity-owner-grant-before-named.log`, SHA256
+`73ee32fc1bb2f5f888f084a2f1068edc9c3fbc3a225869e7cb619f54d3191c4d`.
+Its own disposable database was removed. No customer or production defect reproduction.
+
+The guard now additionally requires the original non-grantable postgres EXECUTE
+entry on each helper; no environment grant or function body is changed by this repair.
+The original runner exposes a bounded `--only-hub-identity` development selection,
+calling the SAME lifted proof group. Mechanical inverse verification recovers every
+original identity assertion/race and the entire former runner exactly after removing
+only the declared selection, three missing-owner controls and progress messages.
+Normal CI still invokes the complete no-argument runner and all original groups.
+
+Selected native run EXIT0: original22 cases, eight causal mutants, all36 original
+metadata/source negatives plus three missing-owner refusals, replay/row/raw-metadata
+conservation and both original actual ban/admission waits. Log
+`exp08-hub-identity-owner-grant-after.log`, SHA256
+`448a393cdd6720d99a4abc59ab927aec50aaf1f108bf54e586088ee86a7bdb70`.
+Only its own database disposed; owned local server stopped. This is explicit minimal
+Auth/table-port evidence, not full-schema/JWT/RLS/customer proof or new-head whole CI.
+
+The reviewer also identified missing proof of lock-order composition: joined
+`FOR SHARE OF m,u` is not an explicit Auth-before-membership order. Actual original
+Hub-door/removal/Auth-delete/ban both-order races and later-effect revalidation remain
+required before publication. No native version reserved, managed apply or release
+of this helper patch; no Setup/Work/Auth writer takeover or provider activation.
+Original18+6/five journeys and full EXP08 remain STILL CODING.

@@ -42,7 +42,9 @@ BEGIN
    OR p.prorettype<>'boolean'::regtype OR p.proretset OR p.pronargdefaults<>0
    OR p.proargnames IS DISTINCT FROM r.argnames OR p.proargmodes IS NOT NULL
    OR EXISTS(SELECT 1 FROM aclexplode(coalesce(p.proacl,acldefault('f',p.proowner))) a
-    WHERE a.grantee<>'postgres'::regrole OR a.privilege_type<>'EXECUTE' OR a.is_grantable) THEN
+    WHERE a.grantee<>'postgres'::regrole OR a.privilege_type<>'EXECUTE' OR a.is_grantable)
+   OR NOT EXISTS(SELECT 1 FROM aclexplode(coalesce(p.proacl,acldefault('f',p.proowner))) a
+    WHERE a.grantee='postgres'::regrole AND a.privilege_type='EXECUTE' AND NOT a.is_grantable) THEN
    RAISE EXCEPTION 'EXP08 identity currentness original metadata drift: %',r.signature;
   END IF;
   current_source:=p.prosrc;

@@ -405,6 +405,28 @@ $function$;
    assert.equal(JSON.parse(db.run(`SELECT public._lead_reply_record_send('${approval}','${operation}','${actor}')`)).ok,true);checks++;
    assert.equal(JSON.parse(db.run(`SELECT public._lead_reply_record_send('${approval}','${operation}','${actor}')`)).replayed,true);checks++;
    assert.equal(db.run('SELECT count(*) FROM public.messages'),'1');checks++;
+   // CURRENT original SQL fixtures must pin precisely the reviewed source generation.
+   // These controls validate actual native bodies and active fixture assertions, not
+   // execution of the four complete schema-dependent SQL suites (required CI does that).
+   const currentBodyPins=[
+    [signature,'f7fbbd2a430bf391f43dc6ca7e2692ee'],
+    [signature.replace('jsonb,jsonb)','jsonb,jsonb,timestamptz)'),'b814a323a2c319648888fe17bc5a7079'],
+    ['public.read_comms_email_send_binding(uuid)','3d1ce2b3524c6342a0c152af1ca482d6'],
+    ['public.paige_guard_send_approval_requires_governed_send()','ab1a41535dac3dce7a0790c084e609f1'],
+    ['public._lead_reply_record_send(uuid,uuid,uuid)','c008e09cad4a91473ec8a047c84494d5'],
+    ['public._comms_email_actor(uuid,uuid)','c9850c30ae7885c23eee1da268c8c0e0'],
+    ['public.claim_comms_email_send(uuid,uuid,boolean)','a9dfb75621838268a961152d19de954d'],
+   ];
+   for(const [sig,hash]of currentBodyPins){assert.equal(db.run(`SELECT md5(prosrc) FROM pg_proc WHERE oid=${quote(sig)}::regprocedure`),hash,'exact reviewed native body: '+sig);checks++;}
+   const pinAssertions=(sql,sig,hash)=>sql.includes(`'${sig}'::regprocedure,'${hash}'`)
+    ||sql.includes(`md5(prosrc)='${hash}' FROM pg_proc WHERE oid='${sig}'::regprocedure`);
+   for(const [file,indexes]of [
+    ['exp03_lead_reply_draft.sql',[0,2,3,4]],['paige_email_sendgrid_receipts.sql',[0,2,3,4]],
+    ['comms_email_scheduled_send.sql',[0,2]],['comms_email_governed_attachments.sql',[0,1]],
+   ]){const sql=read('supabase/tests/'+file);for(const index of indexes){const [sig,hash]=currentBodyPins[index];
+    assert(pinAssertions(sql,sig,hash),'original fixture current-source pin: '+file+' '+sig);checks++;
+    assert(!pinAssertions(sql.replace(hash,'0'.repeat(32)),sig,hash),'mutated source pin must be refused: '+file);checks++;
+   }}
   }
   if(process.argv.includes('--export-candidate')&&!process.argv.includes('--inbound-baseline')){
    const snapshot=db.run(`SELECT jsonb_agg(jsonb_build_object('signature',p.oid::regprocedure::text,'definition',pg_get_functiondef(p.oid),'full_md5',md5(pg_get_functiondef(p.oid)),'owner',pg_get_userbyid(p.proowner),'definer',p.prosecdef,'settings',p.proconfig,'acl',p.proacl::text) ORDER BY p.oid::regprocedure::text) FROM pg_proc p WHERE p.pronamespace='public'::regnamespace AND p.proname IN ('prepare_comms_email_send','save_comms_email_draft','read_comms_email_send_binding','_lead_reply_record_send','paige_guard_send_approval_requires_governed_send','read_message_content')`);

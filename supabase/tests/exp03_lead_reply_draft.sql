@@ -1,3 +1,5 @@
+-- 140003 saved-source extension: renew ONLY reviewed CURRENT body identities.
+-- Original behavior, ACL/metadata, historical replay and rollback assertions remain intact.
 -- ISOLATED full production-schema-only clone only; never execute on production.
 -- Current-contract continuation: historical replays retain their original assertions, then the
 -- six exact native90000 definitions/catalog are restored inside the existing transaction. Named
@@ -131,12 +133,12 @@ SELECT p.oid AS function_oid, pg_get_functiondef(p.oid) AS definition, e.expecte
   'cost',p.procost,'rows',p.prorows) AS metadata
 FROM (VALUES
  ('public.advance_action(uuid,text,jsonb,text,uuid,uuid,jsonb,text,text,uuid)'::regprocedure,'0d412f9c0a734aeb2815dca39ab061a3'),
- ('public.prepare_comms_email_send(uuid,uuid,uuid,uuid,text,uuid,text,text,text,text,text,jsonb,jsonb)'::regprocedure,'8da3b64c24552123b973db96a74ab986'),
+ ('public.prepare_comms_email_send(uuid,uuid,uuid,uuid,text,uuid,text,text,text,text,text,jsonb,jsonb)'::regprocedure,'f7fbbd2a430bf391f43dc6ca7e2692ee'),
  -- read_binding + claim: the scheduled-send bodies (20271119000000 — release actor, not-before, queued -> draft).
- ('public.read_comms_email_send_binding(uuid)'::regprocedure,'7cdafa1530f75a2d7c02b08f5c6ccc7d'),
+ ('public.read_comms_email_send_binding(uuid)'::regprocedure,'3d1ce2b3524c6342a0c152af1ca482d6'),
  ('public.claim_comms_email_send(uuid,uuid,boolean)'::regprocedure,'a9dfb75621838268a961152d19de954d'),
- ('public.paige_guard_send_approval_requires_governed_send()'::regprocedure,'0018e0f9a1b5c63b836cb4ef72558332'),
- ('public._lead_reply_record_send(uuid,uuid,uuid)'::regprocedure,'f0ecd87330486f154d5ffec709a5b579')
+ ('public.paige_guard_send_approval_requires_governed_send()'::regprocedure,'ab1a41535dac3dce7a0790c084e609f1'),
+ ('public._lead_reply_record_send(uuid,uuid,uuid)'::regprocedure,'c008e09cad4a91473ec8a047c84494d5')
 ) AS e(function_oid,expected_md5) JOIN pg_proc p ON p.oid=e.function_oid;
 SELECT pg_temp.check_true((SELECT count(*)=6 AND bool_and(md5(p.prosrc)=s.expected_md5)
  FROM current_comms_origin_contract s JOIN pg_proc p ON p.oid=s.function_oid),

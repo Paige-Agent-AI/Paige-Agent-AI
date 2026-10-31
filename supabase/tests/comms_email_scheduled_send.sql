@@ -1,3 +1,5 @@
+-- 140003 saved-source extension: renew ONLY reviewed CURRENT body identities.
+-- Original behavior, ACL/metadata, historical replay and rollback assertions remain intact.
 -- ─────────────────────────────────────────────────────────────────────────────────────────────
 -- "Approve now, send later" — rollback proof for 20271119000000_comms_email_scheduled_send.sql.
 --
@@ -58,14 +60,14 @@ SELECT pg_temp.ok(5, (SELECT md5(prosrc)='6f73777a47948368222f1d0e216fa325' AND 
    FROM pg_proc WHERE oid='public.claim_due_scheduled_messages(integer)'::regprocedure),
   'the lease is this migration''s body and keeps its service_role-only grant');
 SELECT pg_temp.ok(2, (SELECT pronargdefaults=0 FROM pg_proc WHERE oid='public.prepare_comms_email_send(uuid,uuid,uuid,uuid,text,uuid,text,text,text,text,text,jsonb,jsonb,timestamptz)'::regprocedure)
-  AND (SELECT md5(prosrc)='8da3b64c24552123b973db96a74ab986' FROM pg_proc WHERE oid='public.prepare_comms_email_send(uuid,uuid,uuid,uuid,text,uuid,text,text,text,text,text,jsonb,jsonb)'::regprocedure),
-  'the scheduled overload has no default (an immediate call can never reach it); the 13-argument prepare is byte-identical');
+  AND (SELECT md5(prosrc)='f7fbbd2a430bf391f43dc6ca7e2692ee' FROM pg_proc WHERE oid='public.prepare_comms_email_send(uuid,uuid,uuid,uuid,text,uuid,text,text,text,text,text,jsonb,jsonb)'::regprocedure),
+  'the scheduled overload has no default; the original 13-argument prepare matches the reviewed current saved-source composition');
 SELECT pg_temp.ok(3, (SELECT count(*)=4 AND bool_and(md5(p.prosrc)=e.body) FROM (VALUES
    ('public.read_comms_email_send_result(uuid,uuid,uuid)'::regprocedure,'d12d25b1d3859f5383dfde5bf4106060'),
-   ('public.read_comms_email_send_binding(uuid)'::regprocedure,'7cdafa1530f75a2d7c02b08f5c6ccc7d'),
+   ('public.read_comms_email_send_binding(uuid)'::regprocedure,'3d1ce2b3524c6342a0c152af1ca482d6'),
    ('public.claim_comms_email_send(uuid,uuid,boolean)'::regprocedure,'a9dfb75621838268a961152d19de954d'),
    ('public.cancel_scheduled_message(uuid)'::regprocedure,'c1fbef56be124fd68cc916dd54593f1c')) e(f,body) JOIN pg_proc p ON p.oid=e.f),
-  'the four replaced bodies are exactly this migration''s');
+  'the four current release bodies match the reviewed schedule and saved-source composition');
 SELECT pg_temp.ok(4, NOT has_function_privilege('authenticated','public.read_comms_email_send_binding(uuid)','EXECUTE')
   AND NOT has_function_privilege('authenticated','public.claim_comms_email_send(uuid,uuid,boolean)','EXECUTE')
   AND NOT has_function_privilege('authenticated','public.read_comms_email_send_result(uuid,uuid,uuid)','EXECUTE')

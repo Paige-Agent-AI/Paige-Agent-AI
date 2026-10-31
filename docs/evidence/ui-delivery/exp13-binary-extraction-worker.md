@@ -68,3 +68,16 @@ recovers the entire preceding CI file exactly, including original parser tests
 and native binary-source publication proof; no check/assertion is weakened.
 Distinct final evidence/source recheck is clear. Actual hosted final-head CI and
 managed worker packaging/readback remain required before ordinary release.
+
+Current release composition3c8281afa on actualmain eb60d58ba retains all incoming
+source and all12 own non-CI blobs exactly from frozenb189. Native3154 is now
+normally mergedeb60 and applied: deploy-migrations41170340974/deploy124446872016
+SUCCESS, actualprod frontier130013/owncount1/all10function body/owner/path/security/
+roleACLfields match reviewedmanagedwlj and bothsourcecolumns exact; db-live tag
+eb60 independently read. This clears native-before-worker only, not worker live.
+Fresh composed-source six Node suites89 PASS, real pinned Deno parser9 PASS and
+both frozen handler graphs PASS; font warning retained. Initial parser invocation
+omitted original --no-config and failed dependency lookup before tests; corrected
+to exact existing CI command, no dependencies installed or flags bypassed.
+Final hosted CI/managed packaging/source review, merge/Edge readback and actual
+single+BULK customer review/reopen/plan/Work acceptance remain owed.

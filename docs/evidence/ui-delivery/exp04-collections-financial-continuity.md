@@ -99,3 +99,32 @@ still unmounted; cumulative review, exact-head CI, ordered release/readback and 
 Owner/client proof are owed. ALG-01/12 support remains bounded to original source/currentness/
 refusal checks; ALG-02/13 and catalogue maturity are unchanged. Next is SAME O5 original refund,
 reversal/dispute and explicit commercial disposition, not another outcome or registry.
+
+Later C176 functional verification, unchanged product UI: the uniquely observed original Fold
+button corrected the driver ambiguity. Fourteen of eighteen source/theme/shell cases then completed,
+including all eight light required width/PAIGE modes and light390, dark1536/1366 closed/open and
+dark1024 closed. Those completed cases retain native amounts, zero outer overflow/page errors,
+original Enter/Escape paths and zero financial/provider/sending effects. The dark1024-open Tab
+assertion then failed; its cause is UNVERIFIED, not declared a confirmed production defect or
+closed by a forced interaction. Four remaining cases and complete keyboard proof are still owed.
+The complete retained failure is outputs/e04-c176-functional-layout-failure.json;43 frames were
+written before that stop. Google Fonts CSS attempts stayed intercepted/aborted. The owned server
+was stopped. This adds bounded functional evidence without a visual redesign or acceptance claim;
+earlier failure history and prototype/font/Auth/device limitations remain intact.
+
+### C177 backend cash-evidence continuation — not mounted customer UI
+
+The original private financial source now retains distinct capture/refund/dispute principal,
+explicit uncertain outcome and commercial-review facts without rewriting debt or creating a
+financial effect. The original native provider proof plus36 new cash controls and2 private
+ACL controls pass; an absent implementation and an ignored-cash-movement installation are
+causally rejected. Original receipt, document and both balance projections stay exact.
+All facts use selected native source with synthetic identity/table/provider ports; no genuine
+Stripe, signed-in financial result or full outcome acceptance. Full details and retained
+failure boundaries are in the [existing delivery record](../../delivery/exp04-native-client-invoice-observation.md).
+No UI, public-reader, host/admission, Portal source or provider activation is added by this
+private native increment. Original fourteen/eighteen synthetic layout result and unresolved
+dark compact keyboard assertion remain unchanged. Paired commercial decision/action/customer
+presentation, release and authentic proof are owed; do not interpret a private read as a live
+customer capability. All eight Solo visual modes and founder acceptance retain their prior
+applicable evidence limits.

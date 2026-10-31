@@ -6,6 +6,7 @@ import assert from 'node:assert/strict';
 const [binary,port,user,expectedDirectory,mode]=process.argv.slice(2);
 if(!binary||!/^\d+$/.test(port??'')||!user||!expectedDirectory)throw Error('Explicit local cluster arguments required');
 if(process.argv.includes('--observation-work'))assert(process.argv.includes('--provider-observations'),'event work requires the original observation proof');
+if(process.argv.includes('--provider-cash-position'))assert(process.argv.includes('--observation-work'),'cash evidence requires the original observation/work proof');
 let database='postgres';
 const args=()=>['-h','127.0.0.1','-p',port,'-U',user,'-d',database,'-v','ON_ERROR_STOP=1','-At'];
 const run=sql=>{const p=spawnSync(binary,args(),{input:sql,encoding:'utf8',maxBuffer:4e6,windowsHide:true});if(p.status!==0)throw Error(p.stderr);return p.stdout.trim();};
@@ -123,6 +124,18 @@ try {
   run(rail+`REVOKE ALL ON FUNCTION public._record_workspace_rail_event(uuid,uuid,text,uuid,bigint,text,text,text,text,uuid,text,jsonb) FROM PUBLIC,anon,authenticated,service_role;`);
   run(read('supabase/tests/fixtures/exp04_provider_observation.sql'));
   if(process.argv.includes('--observation-work'))run(read('supabase/tests/fixtures/exp04_provider_observation_work.sql'));
+  if(process.argv.includes('--provider-cash-position')){
+   run(read('supabase/tests/fixtures/exp04_invoice_financial_position.sql'));
+   if(!process.argv.includes('--provider-cash-baseline')){
+    let cashSource=read('supabase/tests/fixtures/exp04_invoice_provider_cash_position.sql');
+    if(process.argv.includes('--provider-cash-mutant')){
+     const original='observed_net:=base.live_provider_minor+refund_delta-dispute_debit+dispute_credit;';
+     assert(cashSource.includes(original),'exact cash movement negative-control anchor');
+     cashSource=cashSource.replace(original,'observed_net:=base.live_provider_minor;');
+    }
+    run(cashSource);
+   }
+  }
  }
  const first=randomUUID();
  // --baseline intentionally fails here on current-main: there is no asynchronous operation RPC.
@@ -548,6 +561,35 @@ try {
    console.log('SALES_PROVIDER_OBSERVATION_WORK_PASS: '+JSON.stringify(observationProof.work));
   }
   console.log('SALES_PROVIDER_OBSERVATION_CONCURRENCY_PASS: two actual-session cases; same facts commit once, changed facts refuse the stale incarnation; original payment and terminal settlement work unchanged.');
+ }
+ if(process.argv.includes('--provider-cash-position')){
+  let cashChecks=read('supabase/tests/fixtures/exp04_invoice_provider_cash_checks.sql');
+  for(const [key,value]of Object.entries({INVOICE:invoice,TENANT:tenant,ACTOR:actor,CLIENT:client,OTHER_TENANT:otherTenant})){
+   assert(/^[a-f0-9-]{36}$/i.test(value),'runner-owned cash proof identity');
+   assert(cashChecks.includes('__'+key+'__'),'explicit cash proof input');cashChecks=cashChecks.replaceAll('__'+key+'__',value);
+  }
+  assert(!/__\w+__/.test(cashChecks),'no unresolved cash proof inputs');
+  const cashLine=run(cashChecks).split('\n').find(x=>x.startsWith('{')&&x.includes('E04_PROVIDER_CASH_POSITION'));
+  assert(cashLine,'actual native cash evidence report');
+  const cashProof=JSON.parse(cashLine);assert(cashProof.checks>=25,'all cash evidence controls run');
+  const cashSource=read('supabase/tests/fixtures/exp04_invoice_provider_cash_position.sql');
+  const aclGuard=cashSource.slice(cashSource.indexOf('DO $private_acl$'));
+  assert(aclGuard.startsWith('DO $private_acl$'),'actual new private ACL guard');
+  const cashDefinitionBefore=run("SELECT pg_get_functiondef('public._sales_invoice_financial_position_rows(uuid,uuid,integer)'::regprocedure);");
+  const cashACLBefore=run("SELECT proacl::text FROM pg_proc WHERE oid='public._sales_invoice_financial_position_rows(uuid,uuid,integer)'::regprocedure;");
+  for(const permissionChange of [
+   'REVOKE ALL ON FUNCTION public._sales_invoice_financial_position_rows(uuid,uuid,integer) FROM postgres;',
+   'GRANT EXECUTE ON FUNCTION public._sales_invoice_financial_position_rows(uuid,uuid,integer) TO authenticated;'
+  ])deny('BEGIN;'+permissionChange+aclGuard+'ROLLBACK;',/Private financial evidence permission drift/);
+  assert.equal(run("SELECT pg_get_functiondef('public._sales_invoice_financial_position_rows(uuid,uuid,integer)'::regprocedure);"),cashDefinitionBefore,'guard controls preserve whole function definition');
+  assert.equal(run("SELECT proacl::text FROM pg_proc WHERE oid='public._sales_invoice_financial_position_rows(uuid,uuid,integer)'::regprocedure;"),cashACLBefore,'guard controls roll back exact private ACL');
+  cashProof.private_acl_controls=2;
+  writeFileSync(new URL('../../work/sales-provider-cash-proof.json',import.meta.url),JSON.stringify({
+   ...cashProof,status:'PASS',observed_at:new Date().toISOString(),incumbent_lifecycle_passed:true,
+   source_hashes:Object.fromEntries(['scripts/sql/sales-provider-operation-proof.mjs','supabase/tests/fixtures/exp04_invoice_provider_cash_position.sql','supabase/tests/fixtures/exp04_invoice_provider_cash_checks.sql'].map(f=>[f,createHash('sha256').update(read(f)).digest('hex')])),
+   native_carrier:'UNPUBLISHED',activation:'UNMOUNTED',hosted_authentication:'UNVERIFIED',provider_settlement:'UNVERIFIED',customer_acceptance:'UNVERIFIED'
+  },null,2)+'\n');
+  console.log('SALES_PROVIDER_CASH_POSITION_PASS: '+JSON.stringify(cashProof));
  }
  run(`UPDATE paige_invoices SET status='void' WHERE id='${invoice}';`);
  assert.equal(publicRequest(),null,'void invoice bearer refused');

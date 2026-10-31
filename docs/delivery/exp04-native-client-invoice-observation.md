@@ -487,3 +487,47 @@ CI/merge/deployment/activation or customer acceptance is claimed. C175's expande
 still apply. The full12 remain open with O5 sole primary. Next is original provider refund/
 reversal/dispute and explicit commercial disposition, remaining paired producer/consumer paths,
 then cumulative review, exact-head release and actual merchant/Owner/client receipt/reload proof.
+
+## October 31 C177 — original provider cash evidence and commercial-review boundary
+
+An UNMOUNTED private three-argument overload of the original financial position reuses the
+unchanged original ten-field calculation and immutable invoice/provider operation, receipt,
+observation and Rail. No new ledger/table, SDK, public grant, provider call, job or event writer.
+It retains original captured principal separately from successful/pending refunds, refund cash
+debit/recovery, dispute withdrawal/reinstatement, TEST history and exact current observation
+identities. A won label without the actual withdrawal/return pair, contradictory lost/return
+facts, pending balance, overlapping out-of-range principal or unverified original event work
+cannot become a settled net amount. Unknown is explicit/null rather than a fabricated zero.
+Historical merchant revocation preserves retained cash evidence without authorizing another
+provider action. Original issued document/economics, receipt, legacy seven-field and existing
+actual-debt ten-field results stay exact. Refund cash neither forgives nor reasserts debt; the
+separate commercial-review flag must be integrated into original public reads/actions/UI before
+this is a useful released payment outcome. Explicit commercial disposition is still unbuilt.
+
+The SAME original native provider proof runs with its real original prepare/claim/finalize/
+allocation/observation/Work/Rail source and disclosed synthetic Auth/table/provider ports. The
+new selected-native phase passes36 checks and2 actual permission-drift controls; all original
+provider controls,36 observation controls,54 Work controls and existing real-session races pass.
+The first control fails precisely when the new implementation is absent. Setup failures
+(reserved output name, fixture schema qualification and non-UTC synthetic timestamp) are
+retained and excluded from behavioral proof. Fourteen assertions then pass before the
+causal won-with-no-movements failure; the correction passes the whole phase. A separate
+transactional installation that ignores cash movements fails the exact refund-principal
+assertion. No required assertion was removed. Each owned proof database is dropped and its
+exact owned cluster stopped; no external database/provider or real payment was used.
+
+The entire default proof script inverse is byte-exact outside its three optional extensions,
+and both original financial projections are unchanged. This is selected-source local evidence,
+not full-schema/hosted identity, actual Stripe TEST settlement, signed-in Owner/client result,
+current production balance or final acceptance. No new frontend is claimed: C175 rendering
+remains14/18 with its retained dark compact keyboard failure and actual font/full-shell/device/
+authenticated limits. New fields are NOT mounted in public readers, Chat, Team Hub or Portal.
+
+ALG-01/12 gain only bounded local source/replay/cash-exception support. ALG-02/13 maturity and
+production verification are unchanged/unverified. No new Spine/catalogue Live state. Original
+event-to-Work-to-observation-to-Rail architecture stays unmounted for this candidate; ordinary
+reads do not need another executor. Existing additional Portal producer request remains pending
+without a duplicate ping. Next is explicit governed commercial disposition and the paired
+original payment/balance/action/customer surfaces, then cumulative exact-head review, required
+CI/release/readback and genuine merchant/Owner/client receipt/reload/recovery. O5 is sole primary,
+no secondary, all original twelve and integrated founder acceptance remain open.

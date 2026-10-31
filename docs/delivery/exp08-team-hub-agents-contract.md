@@ -2553,3 +2553,28 @@ privacy and useful receipt/reopen proofs remain owed before publication/acceptan
 Existing ALG IDs and maturity are unchanged; these are deterministic engineering
 signals, not new model evaluation or a measured proactive capability. No source/CI/
 release/authenticated or owner-acceptance leg is promoted. Full EXP08 STILL CODING.
+
+#### Same outcome4: expanded state-currentness proof, unpublished
+
+The existing local integration group now retains its original30 controls and adds18
+workspace, actual leave/last-leave, archive, access/removal, commit/rollback,
+post-effect hold and causal-mutation controls. Selected native run passed all48;
+log `exp08-hub-member-add-state-currentness-current-source.log`, SHA256
+`7338bfd95642b8436d9d90fd74d787e3555982741e93a607db7e41d16c70b53c`.
+The original member-add candidate remains `cb353daa578ca145243b2ac5b5dbad07`;
+released removal remains `cc631b7a8e2f6dc0bb711118493e62ae`. This increment
+changes proof only. Current leave source is the agents migration's original writer;
+an older-source fixture setup failure is excluded from causal evidence. Source-only
+non-author review found no material issue; independent execution is not claimed.
+
+The subsequent full no-argument child attempt could not complete: local Node launch/
+log redirection reported insufficient disk space. Its short partial log is NOT a
+terminal report or PASS. Current full-child/full-parent assurance remains owed;
+the older61/28 run remains historical evidence only. Inspection found no disposable
+test databases left on this chat's port56489; this chat's server was then stopped.
+No peer server, cache, customer data or preserved branch was removed for space.
+
+The48 controls use explicit local Auth/table/state ports. They do not establish
+full-schema/JWT/RLS/authenticated customer behavior or release this inert patch.
+Other original doors, producer handoffs, useful receipts/reopen/recovery and the
+complete original18+6/five journeys remain open. Full EXP08: STILL CODING.

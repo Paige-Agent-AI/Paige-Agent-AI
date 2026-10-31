@@ -1,6 +1,6 @@
 // Integration group of the ORIGINAL departure proof; never a linked-project runner.
 // Real: original DM door, admission helpers, removal writer and membership triggers.
-// Ports: minimal Auth/profile/tenant/role inputs from the owning disposable fixture.
+// Ports: minimal Auth/profile/tenant/role inputs and channel-state changes in the owning fixture.
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {join} from 'node:path';
@@ -41,6 +41,7 @@ export async function verifyHubDoorDeparture({repo,sql,connection,ids,database})
  original('lifecycle','team_hub_open_dm','uuid,uuid','14363512d49614142c3886a17dea11f6',true);
  original('core','_team_hub_visible','uuid,uuid,uuid','28a7e5c90f2a29b19b4481c4850a414f');
  original('lifecycle','team_hub_add_members','uuid,uuid,uuid[]','25bac1def127e3998036368329e4c80d',true);
+ original('agents','team_hub_leave_channel','uuid,uuid','4db9d98bdad81856480ef0594ca88c0a',true);
  const memberAddPatch=readFileSync(join(repo,'scripts/proof/exp08-team-hub-member-add-currentness-patch.sql'),'utf8').replace(/\r\n/g,'\n');
  const memberAddMetadata=sql("SELECT (to_jsonb(p)-'prosrc')::text FROM pg_proc p WHERE oid='public.team_hub_add_members(uuid,uuid,uuid[])'::regprocedure");
  sql(memberAddPatch);sql(memberAddPatch);
@@ -219,6 +220,65 @@ export async function verifyHubDoorDeparture({repo,sql,connection,ids,database})
   }finally{if(first.p.exitCode===null&&!first.p.stdin.writableEnded)first.p.stdin.end('ROLLBACK;\n\\q\n');await Promise.allSettled([first.done,...(second?[second.done]:[])]);}
  }
  assert.equal(results.length,30);
+ const third='e8000000-0000-4000-8000-000000080100';
+ const leave=`SELECT set_config('request.jwt.claim.sub','${ids.actor}',true);SET LOCAL ROLE authenticated;SELECT public.team_hub_leave_channel('${ids.tenant}','${channel}');`;
+ function prepareMemberChange(change){
+  reset();setupPrivate(channel,ids.actor);
+  if(change==='workspace')sql(`INSERT INTO public.tenant_members(tenant_id,user_id,status,is_owner,role,joined_at) VALUES('${ids.other}','${ids.actor}','active',false,'member',now()+interval '1 day');`);
+  if(change==='leave'||change==='remove-actor'){
+   sql(`INSERT INTO auth.users(id,email) VALUES('${third}','test-other-owner@tests.invalid');
+    INSERT INTO public.profiles(user_id,active_tenant_id) VALUES('${third}','${ids.tenant}');
+    INSERT INTO public.tenant_members(tenant_id,user_id,status,is_owner,role) VALUES('${ids.tenant}','${third}','active',true,'owner');`);
+   if(change==='leave')sql(`INSERT INTO public.team_hub_channel_members(channel_id,tenant_id,user_id,added_by) VALUES('${channel}','${ids.tenant}','${third}','${third}');`);
+  }
+  if(change==='access'||change==='remove-actor')sql(`UPDATE public.tenant_members SET role='member',is_owner=false WHERE tenant_id='${ids.tenant}' AND user_id='${ids.actor}';`);
+ }
+ const memberChanges={
+  workspace:`UPDATE public.profiles SET active_tenant_id='${ids.other}' WHERE user_id='${ids.actor}';`,
+  leave,lastleave:leave,
+  archive:`UPDATE public.team_hub_channels SET archived_at=clock_timestamp() WHERE id='${channel}';`,
+  access:`UPDATE public.tenant_members SET team_hub_access=false WHERE tenant_id='${ids.tenant}' AND user_id='${ids.actor}';`,
+  'remove-actor':`SELECT set_config('request.jwt.claim.sub','${third}',true);SET LOCAL ROLE authenticated;SELECT public.remove_solo_team_member('${ids.actor}','${ids.tenant}');`,
+ };
+ const refusalCodes={workspace:'scope_changed',leave:'not_found',lastleave:'not_found',archive:'not_found',access:'conversations_off','remove-actor':'not_member'};
+ async function changeDuringTargetWait(change,commit){
+  prepareMemberChange(change);
+  const holder=connection(`BEGIN;SET application_name='exp08_hub_door_first';SELECT id FROM auth.users WHERE id='${ids.target}' FOR UPDATE;\n\\echo EXP08_HUB_DOOR_READY`,true);let caller;
+  try{
+   await ready(holder);caller=connection(`BEGIN;SET application_name='exp08_hub_door_second';SET statement_timeout='20s';${addCall(ids.actor,channel,ids.target)}COMMIT;`);
+   assert(await blocked(caller,holder),'Member-add must actually wait before '+change+' changes');
+   const effect=sql('BEGIN;'+memberChanges[change]+(commit?'COMMIT;':'ROLLBACK;'));
+   if(change==='leave'||change==='lastleave')assert.equal(parsed(effect)?.ok,true,'The original leave writer must execute');
+   holder.p.stdin.end('COMMIT;\n\\q\n');const a=await holder.done,b=await caller.done;assert.equal(a.code,0,a.err);assert.equal(b.code,0,b.err);
+   assert.deepEqual(parsed(b.out),commit?{ok:false,code:refusalCodes[change]}:{ok:true,added:1},'Committed '+change+' must refuse; rollback must preserve valid member-add');
+   assert.equal(sql(`SELECT count(*) FROM public.team_hub_channel_members WHERE channel_id='${channel}' AND user_id='${ids.target}'`),commit?'0':'1','Membership effect must match the actual committed state');
+   return {change:'member-add during '+change,committed:commit,actualTargetWait:true,currentStateControlsEffect:true};
+  }finally{if(holder.p.exitCode===null&&!holder.p.stdin.writableEnded)holder.p.stdin.end('ROLLBACK;\n\\q\n');await Promise.allSettled([holder.done,...(caller?[caller.done]:[])]);}
+ }
+ for(const change of Object.keys(memberChanges))for(const commit of [true,false])results.push(await changeDuringTargetWait(change,commit));
+ async function holdAfterAdd(change){
+  prepareMemberChange(change);
+  const holder=connection(`BEGIN;SET application_name='exp08_hub_door_first';${addCall(ids.actor,channel,ids.target)}\n\\echo EXP08_HUB_DOOR_READY`,true);let updater;
+  try{
+   await ready(holder);assert.deepEqual(parsed(holder.read()),{ok:true,added:1});
+   updater=connection(`BEGIN;SET application_name='exp08_hub_door_second';SET statement_timeout='20s';${memberChanges[change]}COMMIT;`);
+   assert(await blocked(updater,holder),'Authorized member-add must hold '+change+' until its original transaction commits');
+   holder.p.stdin.end('COMMIT;\n\\q\n');const a=await holder.done,b=await updater.done;assert.equal(a.code,0,a.err);assert.equal(b.code,0,b.err);
+   assert.equal(sql(`SELECT count(*) FROM public.team_hub_channel_members WHERE channel_id='${channel}' AND user_id='${ids.target}'`),'1');
+   return {change:'member-add first then '+change,actualWait:true,sourceHeldThroughCommit:true};
+  }finally{if(holder.p.exitCode===null&&!holder.p.stdin.writableEnded)holder.p.stdin.end('ROLLBACK;\n\\q\n');await Promise.allSettled([holder.done,...(updater?[updater.done]:[])]);}
+ }
+ for(const change of ['workspace','archive','leave'])results.push(await holdAfterAdd(change));
+ const currentAdd=sql("SELECT pg_get_functiondef('public.team_hub_add_members(uuid,uuid,uuid[])'::regprocedure)").replace(/\r\n/g,'\n');
+ for(const [name,oldSpan,newSpan,exercise,pattern] of [
+  ['profile hold removed','PERFORM 1 FROM public.profiles current_actor_profile WHERE current_actor_profile.user_id=actor FOR SHARE;','PERFORM 1;',()=>holdAfterAdd('workspace'),/must hold workspace/],
+  ['channel hold removed',"AND c.visibility='private' AND c.archived_at IS NULL FOR SHARE;", "AND c.visibility='private' AND c.archived_at IS NULL;",()=>holdAfterAdd('archive'),/must hold archive/],
+  ['late workspace check removed',"refusal:=public._team_hub_refusal(p_expected_tenant);\n IF refusal IS NOT NULL THEN RETURN jsonb_build_object('ok',false,'code',refusal); END IF;",'PERFORM 1;',()=>changeDuringTargetWait('workspace',true),/Committed workspace must refuse/],
+ ]){
+  try{assert.equal(currentAdd.split(oldSpan).length,2,name+' exactly one source span');sql(currentAdd.replace(oldSpan,newSpan));await assert.rejects(exercise,pattern,name+' must be causal');results.push({change:'causal mutant: '+name,killed:true});}
+  finally{sql(currentAdd);}
+ }
+ assert.equal(results.length,48);
  const catalogue=JSON.parse(sql("SELECT jsonb_build_object('signature',p.oid::regprocedure::text,'body',md5(p.prosrc),'owner',p.proowner::regrole::text,'definer',p.prosecdef,'volatility',p.provolatile,'config',p.proconfig,'acl',p.proacl) FROM pg_proc p WHERE p.oid='public.team_hub_add_members(uuid,uuid,uuid[])'::regprocedure"));
  return {controls:results,catalogue};
 }

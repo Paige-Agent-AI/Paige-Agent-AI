@@ -81,3 +81,27 @@ omitted original --no-config and failed dependency lookup before tests; correcte
 to exact existing CI command, no dependencies installed or flags bypassed.
 Final hosted CI/managed packaging/source review, merge/Edge readback and actual
 single+BULK customer review/reopen/plan/Work acceptance remain owed.
+
+Required contract124447726745 on0b5a FAILED: original incumbent source validator
+refused the changed Knowledge extraction helper. Unchanged local self-test
+reproduced the failure. Guard-equivalent AST printer hashes independently verified:
+old-main458e778114b65959f35c5a65f1b371992faf199f6828d2928df8cb0c5435578d;
+reviewed helperc9d67abaf52d8426a8135f1e260c47ba04c38be6405fe5cc1a4111dd7ebde939.
+Replacing ONLY that source input with actual main restores131 dependencies and
+29 dispatches without findings. Distinct pre-renewal source review found no
+material issue; original E03 actual no-conflict ANT87/c8d78d41 received before
+editing its single shared entry. No Root, registry, authority or checker changes.
+
+Fresh main17338f6fb (E05 docs3159 only) was normally composed. Renewal changes
+ONLY the reviewed helper digest and dated attribution. Removing that comment and
+restoring that digest recovers the ENTIRE current-main verifier byte-exact:
+all130 other pins,29 dispatch fingerprints, metadata/extractor/hostile assertions
+are preserved. Original whole self-test and positive/hostile controls are now
+running, not yet PASS. Prior head successes and failed gate remain historical;
+new exact-head CI/Preview/review/packaging are required after publication.
+
+Actual prior-head managed Previewpptfjtmaznjslzvmmjln source/config readback:
+submit26/JWTtrue and worker87/JWTfalse, expected per-function config paths.
+All6 submit and39 worker source files match exact0b5a normalizedLF with zero
+different/unbound files. No handler/provider invocation or customer content was
+used; this is package source proof, not binary runtime/customer acceptance.

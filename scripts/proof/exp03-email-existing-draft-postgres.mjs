@@ -1,6 +1,6 @@
 // Isolated native writer component. No real account, provider, RLS or Auth SDK proof.
 import assert from 'node:assert/strict';
-import {readFileSync} from 'node:fs';
+import {readFileSync,writeFileSync} from 'node:fs';
 import {spawn,spawnSync} from 'node:child_process';
 import {createHash} from 'node:crypto';
 import {OperatorPostgresFixture} from './operator-postgres-fixture.mjs';
@@ -21,10 +21,10 @@ const signature16='public.prepare_comms_email_send(uuid,uuid,uuid,uuid,text,uuid
 const seedDraft=`INSERT INTO public.messages(id,tenant_id,contact_id,connector_id,thread_key,channel_type,direction,status,recipients,sender,subject,body_text,body_html,updated_at,meta)
  VALUES('${draft}','${tenant}','${contact}','${connector}','original-existing-thread','email','outbound','draft','[{"address":"client@tests.invalid","name":"Original client"}]','{"address":"business@tests.invalid","name":"Original business"}',${quote(command.subject)},${quote(command.body)},${quote(html)},'${version}','{"source":"original-manual-draft","keep":7}');`;
 let checks=0;
-function prepareSQL({source:locator=source,op=operation,legacy=false,governance:gov=governance,connectorId=connector,role='service_role',sendAt=null,attachments=null}={}){
- const selectedCommand={...command,connector_id:connectorId};
- const args=[`${quote(actor)}::uuid`,`${quote(tenant)}::uuid`,`${quote(op)}::uuid`,`${quote(contact)}::uuid`,quote('client@tests.invalid'),`${quote(connectorId)}::uuid`,quote('business@tests.invalid'),quote(command.subject),quote(command.body),quote(html),
-  quote(createHash('sha256').update('client@tests.invalid\n'+connectorId+'\n'+command.subject+'\n'+command.body).digest('hex')),`${quote(JSON.stringify(selectedCommand))}::jsonb`,`${quote(JSON.stringify(legacy&&locator!==null?{...gov,draft_source:locator}:gov))}::jsonb`];
+function prepareSQL({source:locator=source,op=operation,legacy=false,governance:gov=governance,connectorId=connector,role='service_role',sendAt=null,attachments=null,command:draftCommand=command,bodyHtml=html}={}){
+ const selectedCommand={...draftCommand,connector_id:connectorId};
+ const args=[`${quote(actor)}::uuid`,`${quote(tenant)}::uuid`,`${quote(op)}::uuid`,`${quote(contact)}::uuid`,quote('client@tests.invalid'),`${quote(connectorId)}::uuid`,quote('business@tests.invalid'),quote(selectedCommand.subject),quote(selectedCommand.body),quote(bodyHtml),
+  quote(createHash('sha256').update('client@tests.invalid\n'+connectorId+'\n'+selectedCommand.subject+'\n'+selectedCommand.body).digest('hex')),`${quote(JSON.stringify(selectedCommand))}::jsonb`,`${quote(JSON.stringify(legacy&&locator!==null?{...gov,draft_source:locator}:gov))}::jsonb`];
  if(!legacy)args.push(sendAt===null?'NULL::timestamptz':`${quote(sendAt)}::timestamptz`,attachments===null?'NULL::jsonb':`${quote(JSON.stringify(attachments))}::jsonb`,`${quote(JSON.stringify(locator))}::jsonb`);
  assert(['service_role','authenticated','anon'].includes(role));
  return `SET ROLE ${role};SELECT public.prepare_comms_email_send(${args.join(',')});`;
@@ -34,8 +34,8 @@ function prepare(options){
  assert.equal(lines.length,1,'one original RPC result, separate from psql SET acknowledgement');
  return JSON.parse(lines[0]);
 }
-const businessState=()=>db.run(`SELECT jsonb_build_object('messages',(SELECT jsonb_agg(m ORDER BY id) FROM public.messages m),'users',(SELECT jsonb_agg(u ORDER BY id) FROM auth.users u),'seats',(SELECT jsonb_agg(s ORDER BY user_id,tenant_id) FROM public.tenant_members s),'profiles',(SELECT jsonb_agg(p ORDER BY user_id) FROM public.profiles p),'connectors',(SELECT jsonb_agg(c ORDER BY id) FROM public.channel_connectors c))`);
-function reset(){db.run(`DELETE FROM public.messages;DELETE FROM public.paige_actions;DELETE FROM public.paige_pending_approvals;DELETE FROM public.paige_action_kinds;${seedDraft}
+const businessState=()=>db.run(`SELECT jsonb_build_object('messages',(SELECT jsonb_agg(m ORDER BY id) FROM public.messages m),'audit',(SELECT jsonb_agg(a ORDER BY id) FROM public.paige_audit_log a),'actions',(SELECT jsonb_agg(a ORDER BY id) FROM public.paige_actions a),'approvals',(SELECT jsonb_agg(a ORDER BY id) FROM public.paige_pending_approvals a),'users',(SELECT jsonb_agg(u ORDER BY id) FROM auth.users u),'seats',(SELECT jsonb_agg(s ORDER BY user_id,tenant_id) FROM public.tenant_members s),'profiles',(SELECT jsonb_agg(p ORDER BY user_id) FROM public.profiles p),'connectors',(SELECT jsonb_agg(c ORDER BY id) FROM public.channel_connectors c))`);
+function reset(){db.run(`DELETE FROM public.paige_audit_log;DELETE FROM public.messages;DELETE FROM public.paige_actions;DELETE FROM public.paige_pending_approvals;DELETE FROM public.paige_action_kinds;${seedDraft}
  UPDATE auth.users SET deleted_at=NULL,banned_until=NULL;
  UPDATE public.tenants SET status='active';UPDATE public.profiles SET active_tenant_id='${tenant}' WHERE user_id='${actor}';
  UPDATE public.tenant_members SET status='active',role='owner' WHERE user_id='${actor}';
@@ -44,7 +44,7 @@ function refuse(run,pattern){const before=businessState();assert.throws(run,patt
 const currentSource=()=>JSON.parse(db.run(`SELECT jsonb_build_object('message_id',id,'updated_at',updated_at) FROM public.messages WHERE id='${draft}'`));
 const approval='80000000-0000-4000-8000-000000000001',action='90000000-0000-4000-8000-000000000001';
 function seedOriginalAction(kind='owner.lead_followup') {
- reset();db.run(`INSERT INTO public.paige_pending_approvals VALUES('${approval}','${tenant}','${contact}','pending','{"action_id":"${action}"}');
+ reset();db.run(`INSERT INTO public.paige_pending_approvals(id,tenant_id,contact_id,status,metadata) VALUES('${approval}','${tenant}','${contact}','pending','{"action_id":"${action}"}');
  INSERT INTO public.paige_actions(id,approval_id,tenant_id,contact_id,action_kind,status) VALUES('${action}','${approval}','${tenant}','${contact}',${quote(kind)},'pending_approval');
  INSERT INTO public.paige_action_kinds VALUES(${quote(kind)},'send_via_approval');
  UPDATE public.messages SET action_id='${action}' WHERE id='${draft}';`);
@@ -78,8 +78,9 @@ try{
  CREATE TABLE public.client_contact_methods(tenant_id uuid,client_id uuid,kind text,value text);
  CREATE TABLE public.channel_connectors(id uuid PRIMARY KEY,tenant_id uuid,active boolean,status text,channel_type text,provider text,from_address text,mailbox_class text,mailbox_owner_user_id uuid);
  CREATE TABLE public.paige_pending_approvals(id uuid PRIMARY KEY,tenant_id uuid,contact_id uuid,status text,metadata jsonb);
- CREATE TABLE public.paige_actions(id uuid PRIMARY KEY,approval_id uuid,tenant_id uuid,contact_id uuid,action_kind text,status text);
+ CREATE TABLE public.paige_actions(id uuid PRIMARY KEY,approval_id uuid,tenant_id uuid,contact_id uuid,action_kind text,status text,payload jsonb DEFAULT '{}');
  CREATE TABLE public.paige_action_kinds(slug text,executor text);
+ CREATE TABLE public.paige_audit_log(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),actor_user_id uuid,actor_role text,tenant_id uuid,action text NOT NULL,target_type text,target_id uuid,payload jsonb NOT NULL DEFAULT '{}',created_at timestamptz NOT NULL DEFAULT now());
  CREATE TABLE storage.objects(bucket_id text,name text,metadata jsonb);
  CREATE TABLE public.tenant_email_domains(tenant_id uuid,domain text,sendgrid_status text,sendgrid_verified_at timestamptz,sendgrid_domain_id text);
  CREATE TABLE public.messages(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),tenant_id uuid,contact_id uuid,connector_id uuid,thread_key text,channel_type text,direction text,status text,recipients jsonb,sender jsonb,subject text,body_text text,body_html text,meta jsonb DEFAULT '{}',attachments jsonb DEFAULT '[]',provider_message_id text,action_id uuid,scheduled_for timestamptz,created_at timestamptz DEFAULT now(),updated_at timestamptz NOT NULL DEFAULT now());
@@ -130,6 +131,48 @@ $function$;
   refusePatch(`ALTER FUNCTION ${signature16} STABLE`,candidate,/overload drift/);
 
   assert.equal(db.run(`SELECT jsonb_object_agg(oid::regprocedure::text,to_jsonb(p)-'prosrc') FROM pg_proc p WHERE oid IN (SELECT oid FROM pg_proc WHERE pronamespace='public'::regnamespace AND proname IN ('prepare_comms_email_send','_comms_email_actor','_comms_email_governance') AND oid<>'${signature16}'::regprocedure)`),originalMetadata);checks++;
+  // Durable edits are on the SAME source row, without preparing/approving/sending it.
+  const saveCandidate=read('scripts/proof/exp03-email-save-draft.sql');db.run(saveCandidate);db.run(saveCandidate);
+  const saveId='b0000000-0000-4000-8000-000000000001';
+  const saveSQL=(expected=version,over={})=>{
+   const p={actor,tenant,id:saveId,message:draft,version:expected,contact,connector,subject:'Saved subject',text:'Saved unsent words.',html:'<p>Saved unsent words.</p>',files:[],time:null,approval:null,...over};
+   return `SET ROLE service_role;SELECT public.save_comms_email_draft(${[p.actor,p.tenant,p.id,p.message,p.version,p.contact,p.connector,p.subject,p.text,p.html,JSON.stringify(p.files),p.time,p.approval].map(v=>v===null?'NULL':quote(v)).join(',')});`;
+  };
+  const saved=JSON.parse(db.run(saveSQL()).split(/\r?\n/).find(x=>x.startsWith('{')));
+  assert.equal(saved.outcome,'draft_saved');assert.equal(saved.message_id,draft);checks++;
+  assert.equal(db.run(`SELECT status||':'||subject||':'||(meta?'comms_email_binding')::text||':'||(meta->>'keep') FROM public.messages WHERE id='${draft}'`),'draft:Saved subject:false:7');checks++;
+  const replaySaved=JSON.parse(db.run(saveSQL()).split(/\r?\n/).find(x=>x.startsWith('{')));
+  assert.equal(replaySaved.replayed,true);assert.equal(replaySaved.updated_at,saved.updated_at);checks++;
+  assert.equal(replaySaved.receipt_id,saved.receipt_id);assert.equal(db.run(`SELECT count(*) FROM public.paige_audit_log WHERE action='comms.email_draft_saved'`),'1');checks++;
+  refuse(()=>db.run(saveSQL(version,{text:'A different stale edit.'})),/COMMS_EMAIL_DRAFT_SAVE_REPLAY_MISMATCH/);
+  reset();db.run(`ALTER TABLE public.paige_audit_log ADD CONSTRAINT proof_save_audit_refusal CHECK (action<>'comms.email_draft_saved')`);
+  refuse(()=>db.run(saveSQL()),/proof_save_audit_refusal/);
+  db.run('ALTER TABLE public.paige_audit_log DROP CONSTRAINT proof_save_audit_refusal');
+  for(const role of ['anon','authenticated']){reset();refuse(()=>db.run(saveSQL().replace('SET ROLE service_role',`SET ROLE ${role}`)),/permission denied for function/);}
+  for(const [setup,reason] of [
+   [`UPDATE public.tenant_members SET role='member' WHERE user_id='${actor}'`,/COMMS_EMAIL_AUTHORITY_UNAVAILABLE/],
+   [`UPDATE public.profiles SET active_tenant_id='${other}' WHERE user_id='${actor}'`,/COMMS_EMAIL_WORKSPACE_CHANGED/],
+   [`UPDATE public.messages SET status='queued' WHERE id='${draft}'`,/COMMS_EMAIL_DRAFT_SOURCE_UNAVAILABLE/],
+   [`UPDATE public.channel_connectors SET mailbox_class='personal',mailbox_owner_user_id='${otherActor}' WHERE id='${connector}'`,/COMMS_EMAIL_DRAFT_SOURCE_UNAVAILABLE/],
+   [`UPDATE public.channel_connectors SET active=false WHERE id='${connector}'`,/COMMS_EMAIL_DRAFT_SOURCE_UNAVAILABLE/],
+   [`UPDATE public.messages SET meta=meta||'{"sales_invoice_binding":{}}' WHERE id='${draft}'`,/COMMS_EMAIL_DRAFT_SOURCE_UNAVAILABLE/],
+  ]){reset();db.run(setup);refuse(()=>db.run(saveSQL(currentSource().updated_at)),reason);}
+  reset();refuse(()=>db.run(saveSQL(version,{tenant:other})),/COMMS_EMAIL_WORKSPACE_CHANGED|COMMS_EMAIL_AUTHORITY_UNAVAILABLE/);
+  reset();refuse(()=>db.run(saveSQL(version,{contact:other})),/COMMS_EMAIL_DRAFT_SOURCE_UNAVAILABLE/);
+  seedOriginalAction();refuse(()=>db.run(saveSQL(currentSource().updated_at)),/COMMS_EMAIL_DRAFT_OWNED_FLOW_REQUIRED/);
+  seedOriginalAction();const actionSaved=JSON.parse(db.run(saveSQL(currentSource().updated_at,{approval})).split(/\r?\n/).find(x=>x.startsWith('{')));
+  assert.equal(actionSaved.outcome,'draft_saved');assert.equal(db.run(`SELECT status FROM public.paige_pending_approvals WHERE id='${approval}'`),'pending');checks++;
+  assert.equal(db.run(`SELECT count(*) FROM public.messages WHERE meta?'comms_email_binding'`),'0');checks++;
+  for(const state of ['drafted','pending_approval']){
+   seedOriginalAction();db.run(`UPDATE public.paige_actions SET status=${quote(state)} WHERE id='${action}'`);
+   const savedAction=JSON.parse(db.run(saveSQL(currentSource().updated_at,{approval})).split(/\r?\n/).find(x=>x.startsWith('{')));
+   assert.equal(savedAction.outcome,'draft_saved');assert.equal(db.run(`SELECT status FROM public.paige_actions WHERE id='${action}'`),state);checks++;
+  }
+  for(const state of ['blocked','executed','cancelled']){
+   seedOriginalAction();db.run(`UPDATE public.paige_actions SET status=${quote(state)} WHERE id='${action}'`);
+   refuse(()=>db.run(saveSQL(currentSource().updated_at,{approval})),/COMMS_EMAIL_DRAFT_OWNED_FLOW_REQUIRED/);
+  }
+  reset();
   const result=prepare();assert.equal(result.message_id,draft);checks++;
   assert.equal(db.run('SELECT count(*) FROM public.messages'),'1');checks++;
   assert.equal(db.run(`SELECT body_html FROM public.messages WHERE id='${draft}'`),html);checks++;
@@ -243,7 +286,131 @@ $function$;
    assert.match(results.find(x=>x.code!==0).err,/COMMS_EMAIL_DRAFT_SOURCE_UNAVAILABLE/);
    assert.equal(db.run('SELECT count(*) FROM public.messages'),'1');checks++;
   }finally{holder.release(false);await holder.completed.catch(()=>{});for(const c of claimers){if(c.child.exitCode===null)c.child.kill();await c.completed.catch(()=>{});}}
-  console.log(JSON.stringify({checks,overloadFullMd5:db.run(`SELECT md5(pg_get_functiondef('${signature16}'::regprocedure))`),scope:'original native prepare/actor/governance/version trigger/schedule/files wrappers; synthetic domain/storage metadata, not real bytes/provider verification; commercial/Auth SDK/RLS/customer proof unexercised'}));
+  // Real inbound producer kind: same original row predates its queued approval.
+  db.run(`ALTER TABLE public.paige_pending_approvals ADD COLUMN created_at timestamptz DEFAULT now(),ADD COLUMN reviewed_by_user_id uuid,ADD COLUMN reviewed_at timestamptz,ADD COLUMN sent_at timestamptz;
+   ALTER TABLE public.messages ADD COLUMN sent_at timestamptz,ADD COLUMN error text;
+   ALTER TABLE public.clients ADD COLUMN last_contacted_at timestamptz;
+   CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql AS $$SELECT NULL::uuid$$;
+   CREATE FUNCTION public.current_user_tenant_id() RETURNS uuid LANGUAGE sql AS $$SELECT NULL::uuid$$;`);
+  db.run(read('scripts/proof/fixtures/exp03-email-inbound-draft-before.sql'));
+  db.run(read('scripts/proof/fixtures/exp03-email-inbound-draft-admission.sql'));
+  const inboundSeed=()=>{seedOriginalAction('comms-draft-reply');db.run(`UPDATE public.messages SET meta=meta||'{"source":"comms-draft-reply"}',created_at=now()-interval '1 hour' WHERE id='${draft}'`);};
+  inboundSeed();
+  if(process.argv.includes('--inbound-baseline')){
+   refuse(()=>prepare({source:currentSource(),governance:{...governance,approval_id:approval}}),/COMMS_EMAIL_APPROVAL_INVALID/);
+   console.log(JSON.stringify({checks,inboundBaseline:'original producer refused by original native guard; no send'}));
+  }else{
+   const inboundCandidate=read('scripts/proof/exp03-email-inbound-draft-patch.sql');
+   refusePatch('GRANT EXECUTE ON FUNCTION public.read_comms_email_send_binding(uuid) TO authenticated',inboundCandidate,/inbound original metadata drift/);
+   refusePatch('',inboundCandidate.replace('END $inbound$;',"RAISE EXCEPTION 'EXP03 inbound forced late failure';END $inbound$;"),/forced late failure/);
+   db.run(inboundCandidate);const inboundCatalogue=originalCatalogue();db.run(inboundCandidate);
+   assert.equal(originalCatalogue(),inboundCatalogue,'inbound composition replay preserves original OIDs and ACLs');checks++;
+   for(const setup of [
+    `UPDATE public.paige_actions SET payload='{"channel_type":"sms"}' WHERE id='${action}'`,
+    `UPDATE public.messages SET meta=meta||'{"source":"another-producer"}' WHERE id='${draft}'`,
+    `UPDATE public.paige_actions SET status='blocked' WHERE id='${action}'`,
+   ]){
+    inboundSeed();db.run(setup);
+    refuse(()=>db.run(saveSQL(currentSource().updated_at,{approval})),/COMMS_EMAIL_DRAFT_OWNED_FLOW_REQUIRED/);
+    refuse(()=>prepare({source:currentSource(),governance:{...governance,approval_id:approval}}),/COMMS_EMAIL_APPROVAL_INVALID|COMMS_EMAIL_ORIGIN_NOT_SENDABLE/);
+   }
+   inboundSeed();
+   const savedInbound=JSON.parse(db.run(saveSQL(currentSource().updated_at,{approval})).split(/\r?\n/).find(x=>x.startsWith('{')));
+   assert.equal(savedInbound.outcome,'draft_saved');assert.equal(db.run(`SELECT status FROM public.paige_pending_approvals WHERE id='${approval}'`),'pending');checks++;
+   const reopened=JSON.parse(db.run(`SELECT jsonb_build_object('subject',subject,'body',body_text,'html',body_html) FROM public.messages WHERE id='${draft}'`));
+   assert.deepEqual(reopened,{subject:'Saved subject',body:'Saved unsent words.',html:'<p>Saved unsent words.</p>'});checks++;
+   const inbound=prepare({source:currentSource(),command:{...command,subject:reopened.subject,body:reopened.body},bodyHtml:reopened.html,governance:{...governance,approval_id:approval}});
+   assert.equal(inbound.message_id,draft);checks++;
+   const binding=JSON.parse(db.run(`SET ROLE service_role;SELECT public.read_comms_email_send_binding('${draft}')`).split(/\r?\n/).find(x=>x.startsWith('{')));
+   assert.equal(binding.origin_eligible,true);assert.equal(binding.eligible,true);checks++;
+   const claim=JSON.parse(db.run(`SET ROLE service_role;SELECT public.claim_comms_email_send('${draft}','${operation}')`).split(/\r?\n/).find(x=>x.startsWith('{')));
+   assert.equal(claim.admitted,true);assert.equal(claim.attempts,1);checks++;
+   // Synthetic provider outcome, not a live send. Original approval trigger and record writer run unchanged except the bounded source-kind extension.
+   db.run(`CREATE TRIGGER proof_send_guard BEFORE UPDATE ON public.paige_pending_approvals FOR EACH ROW EXECUTE FUNCTION public.paige_guard_send_approval_requires_governed_send();
+    UPDATE public.messages SET meta=jsonb_set(meta,'{comms_email_binding,state}','"provider_accepted"') WHERE id='${draft}'`);
+   const recorded=JSON.parse(db.run(`SELECT public._lead_reply_record_send('${approval}','${operation}','${actor}')`));
+   assert.equal(recorded.ok,true);assert.equal(db.run(`SELECT status FROM public.paige_pending_approvals WHERE id='${approval}'`),'approved');checks++;
+   assert.equal(JSON.parse(db.run(`SELECT public._lead_reply_record_send('${approval}','${operation}','${actor}')`)).replayed,true);checks++;
+   assert.equal(db.run('SELECT count(*) FROM public.messages'),'1');checks++;
+  }
+  // ORIGINAL gated reader projection. Actor/scope classification below are
+  // explicit fixture input ports, NOT live Auth SDK, role resolver or RLS proof.
+  db.run(`CREATE TABLE public.message_labels(message_id uuid,label text,source text);
+   CREATE TABLE public.message_classifications(message_id uuid,intent text,confidence numeric,risk_tier text,summary text,decided_at timestamptz);
+   CREATE OR REPLACE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE AS $$SELECT coalesce(nullif(current_setting('request.jwt.claim.sub',true),''),(nullif(current_setting('request.jwt.claims',true),'')::jsonb->>'sub'))::uuid$$;
+   CREATE OR REPLACE FUNCTION public.current_user_tenant_id() RETURNS uuid LANGUAGE sql STABLE AS $$SELECT nullif(current_setting('exp03.fixture_tenant',true),'')::uuid$$;
+   CREATE FUNCTION public.is_tenant_admin(uuid) RETURNS boolean LANGUAGE sql STABLE AS $$SELECT coalesce(nullif(current_setting('exp03.fixture_admin',true),''),'false')::boolean$$;
+   CREATE FUNCTION public.is_platform_owner() RETURNS boolean LANGUAGE sql STABLE AS $$SELECT false$$;`);
+  db.run(read('scripts/proof/fixtures/exp03-email-draft-content-before.sql'));
+  assert.equal(db.run(`SELECT md5(pg_get_functiondef('public.read_message_content(uuid)'::regprocedure))`),'3940dd0f8d7a9b5ae668707a2513212a');checks++;
+  const contentRead=(over={})=>{const p={tenant,actor,admin:true,role:'authenticated',id:draft,...over};assert(['authenticated','anon','service_role'].includes(p.role));
+   const output=db.run(`SET request.jwt.claim.sub=${quote(p.actor)};SET exp03.fixture_tenant=${quote(p.tenant)};SET exp03.fixture_admin=${quote(String(p.admin))};SET ROLE ${p.role};SELECT coalesce(public.read_message_content(${quote(p.id)}),'null'::jsonb);`);
+   return JSON.parse(output.split(/\r?\n/).find(x=>x.startsWith('{')||x==='null'));};
+  const contentCandidate=read('scripts/proof/exp03-email-draft-content-patch.sql');
+  refusePatch('GRANT EXECUTE ON FUNCTION public.read_message_content(uuid) TO service_role',contentCandidate,/original metadata drift/);
+  refusePatch('',contentCandidate.replace('END $exp03_draft_content$;',"RAISE EXCEPTION 'EXP03 content forced late failure';END $exp03_draft_content$;"),/content forced late failure/);
+  if(!process.argv.includes('--content-before')){db.run(contentCandidate);const contentCatalogue=originalCatalogue();db.run(contentCandidate);assert.equal(originalCatalogue(),contentCatalogue);checks++;}
+  inboundSeed();db.run(`UPDATE public.messages SET body_text=repeat('a',9000) WHERE id='${draft}'`);
+  const fullDraft=contentRead();assert.equal(fullDraft.body_text.length,8000);assert.equal(fullDraft.body_truncated,true);checks++;
+  assert.deepEqual(fullDraft.saved_email_draft.source,currentSource(),'original raw source precision, not a guessed/JS Date version');assert.equal(fullDraft.saved_email_draft.body_text.length,9000);checks++;
+  assert.deepEqual(Object.keys(fullDraft.saved_email_draft).sort(),['body_html','body_text','source']);checks++;
+  db.run(`UPDATE public.messages SET body_text=NULL,body_html='<p><strong>Native saved words.</strong></p>' WHERE id='${draft}'`);
+  assert.equal(contentRead().saved_email_draft.body_html,'<p><strong>Native saved words.</strong></p>');checks++;
+  for(const role of ['anon','service_role'])refuse(()=>contentRead({role}),/permission denied for function/);
+  assert.equal(contentRead({tenant:other}),null);checks++;
+  const refusedRead=contentRead({admin:false});assert.equal(refusedRead.code,'WORKSPACE_ROLE_REQUIRED');assert.equal(refusedRead.saved_email_draft,undefined);checks++;
+  db.run(`UPDATE public.channel_connectors SET mailbox_class='personal',mailbox_owner_user_id='${otherActor}' WHERE id='${connector}'`);
+  assert.equal(contentRead().code,'PERSONAL_MAILBOX_NOT_OWNER');
+  db.run(`INSERT INTO public.tenant_members VALUES('${otherActor}','${tenant}','active','member');UPDATE public.profiles SET active_tenant_id='${tenant}' WHERE user_id='${otherActor}'`);
+  assert.equal(contentRead({actor:otherActor}).ok,true);checks++;
+  db.run(`UPDATE public.channel_connectors SET active=false WHERE id='${connector}'`);
+  assert.equal(contentRead({actor:otherActor}).code,'MAILBOX_INACTIVE');checks++;
+  for(const setup of [
+   `UPDATE public.messages SET channel_type='sms' WHERE id='${draft}'`,
+   `UPDATE public.messages SET direction='inbound' WHERE id='${draft}'`,
+   `UPDATE public.messages SET status='sent' WHERE id='${draft}'`,
+   `UPDATE public.messages SET provider_message_id='fictional-provider-id' WHERE id='${draft}'`,
+   `UPDATE public.messages SET meta=meta||'{"comms_email_binding":{}}' WHERE id='${draft}'`,
+   `UPDATE public.messages SET meta=meta||'{"sales_invoice_binding":{}}' WHERE id='${draft}'`,
+   `UPDATE public.messages SET body_text=repeat('a',10001) WHERE id='${draft}'`,
+   `UPDATE public.messages SET body_html=repeat('a',100001) WHERE id='${draft}'`,
+   `UPDATE public.messages SET contact_id=NULL WHERE id='${draft}'`,
+  ]){inboundSeed();db.run(setup);const before=businessState();assert.equal(contentRead().saved_email_draft,null);assert.equal(businessState(),before,'read writes no message/action/approval/receipt/actor row');checks++;}
+  inboundSeed();
+  if(process.argv.includes('--whole-carrier')&&!process.argv.includes('--inbound-baseline')){
+   // Return ONLY this disposable fixture's function catalogue to the real baseline.
+   // Customer/business rows and the original attached approval trigger are conserved.
+   db.run(read('scripts/proof/fixtures/exp03-email-existing-draft-before.sql'));
+   db.run(read('scripts/proof/fixtures/exp03-email-inbound-draft-before.sql'));
+   db.run(read('scripts/proof/fixtures/exp03-email-draft-content-before.sql'));
+   db.run(`DROP FUNCTION ${signature16};DROP FUNCTION public.save_comms_email_draft(uuid,uuid,uuid,uuid,timestamptz,uuid,uuid,text,text,text,jsonb,timestamptz,uuid);`);
+   const whole=read('scripts/proof/exp03-email-saved-outcome-carrier.sql'),beforeRows=businessState();
+   refusePatch('GRANT EXECUTE ON FUNCTION public.read_comms_email_send_binding(uuid) TO authenticated',whole,/saved outcome original drift/);
+   refusePatch('',whole.replace('END $exp03_saved_outcome$;',"RAISE EXCEPTION 'EXP03 whole forced late failure';END $exp03_saved_outcome$;"),/whole forced late failure/);
+   assert.equal(db.run(`SELECT to_regprocedure('${signature16}') IS NULL AND to_regprocedure('public.save_comms_email_draft(uuid,uuid,uuid,uuid,timestamptz,uuid,uuid,text,text,text,jsonb,timestamptz,uuid)') IS NULL`),'t');checks++;
+   db.run(whole);assert.equal(businessState(),beforeRows,'whole carrier changes no business/identity/receipt row');checks++;
+   const finalCatalogue=originalCatalogue();db.run(whole);assert.equal(originalCatalogue(),finalCatalogue,'whole replay preserves every original OID/source/ACL');assert.equal(businessState(),beforeRows);checks++;
+   inboundSeed();
+   const beforeSave=contentRead();assert.deepEqual(beforeSave.saved_email_draft.source,currentSource());checks++;
+   const wholeSaved=JSON.parse(db.run(saveSQL(beforeSave.saved_email_draft.source.updated_at,{approval})).split(/\r?\n/).find(x=>x.startsWith('{')));
+   assert.equal(wholeSaved.outcome,'draft_saved');checks++;
+   const wholeReopened=contentRead();assert.equal(wholeReopened.saved_email_draft.source.updated_at,wholeSaved.updated_at);assert.equal(wholeReopened.saved_email_draft.body_text,'Saved unsent words.');checks++;
+   const wholePrepared=prepare({source:wholeReopened.saved_email_draft.source,command:{...command,subject:wholeReopened.subject,body:wholeReopened.saved_email_draft.body_text},bodyHtml:wholeReopened.saved_email_draft.body_html,governance:{...governance,approval_id:approval}});
+   assert.equal(wholePrepared.message_id,draft);checks++;
+   const wholeClaim=JSON.parse(db.run(`SET ROLE service_role;SELECT public.claim_comms_email_send('${draft}','${operation}')`).split(/\r?\n/).find(x=>x.startsWith('{')));
+   assert.equal(wholeClaim.admitted,true);assert.equal(wholeClaim.attempts,1);checks++;
+   db.run(`UPDATE public.messages SET meta=jsonb_set(meta,'{comms_email_binding,state}','"provider_accepted"') WHERE id='${draft}'`);
+   assert.equal(JSON.parse(db.run(`SELECT public._lead_reply_record_send('${approval}','${operation}','${actor}')`)).ok,true);checks++;
+   assert.equal(JSON.parse(db.run(`SELECT public._lead_reply_record_send('${approval}','${operation}','${actor}')`)).replayed,true);checks++;
+   assert.equal(db.run('SELECT count(*) FROM public.messages'),'1');checks++;
+  }
+  if(process.argv.includes('--export-candidate')&&!process.argv.includes('--inbound-baseline')){
+   const snapshot=db.run(`SELECT jsonb_agg(jsonb_build_object('signature',p.oid::regprocedure::text,'definition',pg_get_functiondef(p.oid),'full_md5',md5(pg_get_functiondef(p.oid)),'owner',pg_get_userbyid(p.proowner),'definer',p.prosecdef,'settings',p.proconfig,'acl',p.proacl::text) ORDER BY p.oid::regprocedure::text) FROM pg_proc p WHERE p.pronamespace='public'::regnamespace AND p.proname IN ('prepare_comms_email_send','save_comms_email_draft','read_comms_email_send_binding','_lead_reply_record_send','paige_guard_send_approval_requires_governed_send','read_message_content')`);
+   const candidate=JSON.parse(snapshot);assert.equal(candidate.length,9);
+   // Source/ACL only, no customer rows or secrets. Output is outside the checkout.
+   writeFileSync('../exp03-saved-email-native-candidate.json',JSON.stringify(candidate,null,2)+'\n','utf8');checks++;
+  }
+  console.log(JSON.stringify({checks,overloadFullMd5:db.run(`SELECT md5(pg_get_functiondef('${signature16}'::regprocedure))`),scope:'original native prepare/actor/governance/version trigger/schedule/files wrappers; inbound original producer/approval guard/read/claim/record/replay and unsent save; synthetic domain/storage/provider result, not real bytes/provider verification; commercial/Auth SDK/RLS/customer proof unexercised'}));
  }
 }finally{
  const r=spawnSync(db.psql,db.args('postgres'),{input:`DROP DATABASE ${db.database} WITH (FORCE);`,encoding:'utf8',timeout:60000});

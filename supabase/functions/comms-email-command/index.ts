@@ -11,6 +11,7 @@ import { readLeadReplyApproval, verifyLeadReplyApproval, storedApprovalMatches, 
 import { executeCommsEmailSend, reconcileCommsEmailSend, parseCommsEmailStoredCall, commsEmailSafeResult } from "../_shared/comms-email/adapter.ts";
 import { parseCommsEmailDraftSource, commsEmailDraftSourcesEqual, type CommsEmailDraftSource } from "../_shared/comms-email/draft-source.ts";
 import { readCommsEmailDraftProposal } from "../_shared/comms-email/draft-proposal.ts";
+import { saveOriginalEmailDraft } from "./save-draft.ts";
 import { sha256Hex } from "../_shared/webhookSig.ts";
 
 // INT-328 comms.email_send — the governed door for ONE business email to ONE existing contact.
@@ -45,12 +46,13 @@ Deno.serve(async req => {
   const admin = createClient(url, serviceKey);
   const { data: { user }, error: userError } = await caller.auth.getUser();
   if (userError || !user) return refusedBeforeDispatch(401, "UNAUTHENTICATED");
-  let body: Record<string, unknown> & { expected_tenant_id: string; operation_id: string; approval_id?: string; send_at?: string; cancel?: true; attachments?: unknown; draft_source?: CommsEmailDraftSource }, command: ReturnType<typeof parseCommsEmailCommand>;
+  let body: Record<string, unknown> & { expected_tenant_id: string; operation_id: string; approval_id?: string; send_at?: string; cancel?: true; save_draft?:true; attachments?: unknown; draft_source?: CommsEmailDraftSource }, command: ReturnType<typeof parseCommsEmailCommand>;
   try {
     const raw = await req.text();
     if (raw.length > 100000) throw new TypeError("BODY_TOO_LARGE");
     const parsed = object(JSON.parse(raw));
-    if (!parsed || Object.keys(parsed).some(key => !["expected_tenant_id", "operation_id", "command", "approved_fingerprint", "approval_id", "send_at", "cancel", "attachments", "draft_source"].includes(key))) throw new TypeError("INVALID_BODY");
+    if (!parsed || Object.keys(parsed).some(key => !["expected_tenant_id", "operation_id", "command", "approved_fingerprint", "approval_id", "send_at", "cancel", "save_draft", "attachments", "draft_source"].includes(key))) throw new TypeError("INVALID_BODY");
+    if (parsed.save_draft!==undefined && (parsed.save_draft!==true || parsed.draft_source===undefined || parsed.approved_fingerprint!==undefined || parsed.cancel!==undefined)) throw new TypeError("INVALID_DRAFT_SAVE");
     if (typeof parsed.expected_tenant_id !== "string" || !UUID.test(parsed.expected_tenant_id) || typeof parsed.operation_id !== "string" || !UUID.test(parsed.operation_id)) throw new TypeError("INVALID_SCOPE");
     // Cancel of a scheduled send: exactly { expected_tenant_id, operation_id, cancel: true } — no command,
     // no approval, no time. It is answered further down, after the workspace/seat/profile checks.
@@ -101,7 +103,7 @@ Deno.serve(async req => {
     catch { return refusedBeforeDispatch(400, "COMMS_EMAIL_ATTACHMENTS_INVALID"); }
   }
   // A cancel is a brake, not a send: it is not held behind the provider kill switch.
-  if (body.cancel !== true && !await commsProviderExecutionAllowed(admin, { tenantId, actorUserId: user.id })) return refusedBeforeDispatch(403, COMMS_PROVIDER_EXECUTION_DISABLED);
+  if (body.cancel !== true && body.save_draft!==true && !await commsProviderExecutionAllowed(admin, { tenantId, actorUserId: user.id })) return refusedBeforeDispatch(403, COMMS_PROVIDER_EXECUTION_DISABLED);
   const stillCurrent = async () => {
     const { data, error } = await caller.rpc("current_user_tenant_id");
     return !error && data === tenantId;
@@ -115,6 +117,40 @@ Deno.serve(async req => {
   const { data: profile, error: profileError } = await admin.from("profiles").select("active_tenant_id").eq("user_id", user.id).maybeSingle();
   if (profileError) return refusedBeforeDispatch(503, "COMMS_EMAIL_AUTHORITY_UNAVAILABLE");
   if (typeof profile?.active_tenant_id !== "string" || profile.active_tenant_id.toLowerCase() !== tenantId) return refusedBeforeDispatch(409, "WORKSPACE_CHANGED");
+
+  // Chat supplies an exact saved source, never an approval id chosen by a model.
+  // Locate its existing original backlink after actor/workspace admission. This is
+  // correlation only: pending/kind/contact/source/privacy are re-proven below and
+  // again by the native writer. Do not demand pending here: the SAME accepted
+  // operation must still reach original receipt-only replay after approval closes.
+  if(body.draft_source && body.approval_id===undefined){
+    const sourceRead=await admin.from("messages").select("id,tenant_id,contact_id,action_id,channel_type,direction")
+      .eq("id",body.draft_source.message_id).eq("tenant_id",tenantId).eq("contact_id",command.contact_id).maybeSingle();
+    if(sourceRead.error)return refusedBeforeDispatch(503,"COMMS_EMAIL_DRAFT_SOURCE_UNAVAILABLE");
+    const source=sourceRead.data;
+    if(source?.action_id!=null){
+      if(source.id!==body.draft_source.message_id||source.tenant_id!==tenantId||source.contact_id!==command.contact_id
+        ||source.channel_type!=="email"||source.direction!=="outbound"||!UUID.test(source.action_id))
+        return refusedBeforeDispatch(403,"COMMS_EMAIL_DRAFT_OWNED_FLOW_REQUIRED");
+      const actionRead=await admin.from("paige_actions").select("id,tenant_id,contact_id,approval_id")
+        .eq("id",source.action_id).eq("tenant_id",tenantId).eq("contact_id",command.contact_id).maybeSingle();
+      const original=actionRead.data;
+      if(actionRead.error||!original||original.id!==source.action_id||original.tenant_id!==tenantId
+        ||original.contact_id!==command.contact_id||typeof original.approval_id!=="string"||!UUID.test(original.approval_id))
+        return refusedBeforeDispatch(403,"COMMS_EMAIL_DRAFT_OWNED_FLOW_REQUIRED");
+      body.approval_id=original.approval_id.toLowerCase();
+    }
+  }
+
+  // Unsent edits use the same original source and current authority, but never enter
+  // send reconciliation, approval redemption, provider readiness or dispatch.
+  if (body.save_draft===true) {
+    const saved=await saveOriginalEmailDraft({tenantId,actorUserId:user.id,operationId:body.operation_id,source:body.draft_source!,
+      command,approvalId:body.approval_id,attachments:body.attachments,sendAt:body.send_at},
+      {admin:admin as unknown as CommsEmailAdmin & LeadReplyApprovalAdmin,caller:caller as unknown as CommsEmailAdmin,
+        storage:admin.storage as unknown as CommsEmailStorage,stillCurrent});
+    return response(statusOf(saved),saved);
+  }
 
   // 1b — Cancel a scheduled email (any owner/admin of this business may: a brake needs no special
   // authority). The database decides under the row lock: a scheduled operation still 'prepared' is
@@ -298,7 +334,7 @@ Deno.serve(async req => {
   // THIS contact, before any card is raised or anything is prepared (re-checked on the stored call).
   let originalApproval: VerifiedLeadReplyApproval | undefined;
   if (body.approval_id !== undefined) {
-    const checked = await readLeadReplyApproval(approvalAdmin, { tenantId, approvalId: body.approval_id, contactId: command.contact_id, operationId: body.operation_id });
+    const checked = await readLeadReplyApproval(approvalAdmin, { tenantId, approvalId: body.approval_id, contactId: command.contact_id, operationId: body.operation_id, savedSourceId: body.draft_source?.message_id });
     if (typeof checked === "string") return refusedBeforeDispatch(checked === "LEAD_REPLY_APPROVAL_UNAVAILABLE" ? 503 : 409, checked);
     originalApproval = checked;
   }
@@ -576,7 +612,7 @@ Deno.serve(async req => {
   // approval is a swap. Then the approval is re-proved against the STORED call's contact.
   if (!storedApprovalMatches(decision.args, body.approval_id)) return refusedBeforeDispatch(403, "LEAD_REPLY_APPROVAL_MISMATCH");
   if (body.approval_id !== undefined) {
-    const refusal = await verifyLeadReplyApproval(approvalAdmin, { tenantId, approvalId: body.approval_id, contactId: stored.command.contact_id, operationId: stored.operationId });
+    const refusal = await verifyLeadReplyApproval(approvalAdmin, { tenantId, approvalId: body.approval_id, contactId: stored.command.contact_id, operationId: stored.operationId, savedSourceId: body.draft_source?.message_id });
     if (refusal) return refusedBeforeDispatch(refusal === "LEAD_REPLY_APPROVAL_UNAVAILABLE" ? 503 : 409, refusal);
   }
   if (preparedRecovery && (stored.operationId !== body.operation_id || JSON.stringify(stored.command) !== JSON.stringify(proposedCommand)

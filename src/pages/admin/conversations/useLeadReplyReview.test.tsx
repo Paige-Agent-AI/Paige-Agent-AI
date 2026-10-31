@@ -137,6 +137,29 @@ describe("reloaded protected original recording",()=>{
   it.each(["error","missing-action","duplicate-action","foreign-approval","truncated"])("unavailable exact original %s read never reaches record writer",async kind=>{const value=originalRecord();originalPorts(value);await render(historyInput(structuredClone(value)));const read=db.from.getMockImplementation()!;db.from.mockImplementation(table=>{if(kind==="foreign-approval")value.approval.tenant_id=contact;const q=read(table);if((kind==="error"&&table==="messages")||(kind.includes("action")&&table==="paige_actions")||(kind==="truncated"&&table==="messages"))q.then=(done:(v:unknown)=>unknown)=>Promise.resolve({data:kind==="truncated"?Array.from({length:21},()=>value.message):kind==="duplicate-action"?[value.action,value.action]:[],error:kind==="error"?{message:"private"}:null}).then(done);return q;});await click("Finish recording reply");expect(db.rpc.mock.calls.filter(([name])=>name==="lead_reply_record_send")).toHaveLength(0);expect(db.invoke).not.toHaveBeenCalled();expect(host.textContent).not.toContain("private");});
 });
 
+describe("original inbound saved reply receipt recovery",()=>{
+ function inboundRecord(){const value=originalRecord();
+  value.action.action_kind="comms-draft-reply";value.approval.category="comms-draft-reply";
+  value.message.original_binding.origin_action_kind="comms-draft-reply";
+  Object.assign(value.action,{channel_type:"email"});Object.assign(value.message,{action_id:originAction,original_source:"comms-draft-reply"});
+  Object.assign(value.message.original_binding.governance,{draft_source:{message_id:originalMessage,updated_at:"2026-10-30T16:00:00.123456Z"}});return value;
+ }
+ it("reopens and records only the original inbound receipt without a transport attempt",async()=>{
+  const value=inboundRecord();originalPorts(value);await render(historyInput(value));
+  expect(host.textContent).toContain("Accepted by the email service");await click("Finish recording reply");
+  expect(db.rpc).toHaveBeenCalledWith("lead_reply_record_send",{_approval_id:approval,_operation_id:originalOp});expect(db.invoke).not.toHaveBeenCalled();
+ });
+ it.each(["channel","source","action","binding-source"])("refuses changed inbound %s before record recovery",async kind=>{
+  const value=inboundRecord();
+  if(kind==="channel")Object.assign(value.action,{channel_type:"sms"});
+  if(kind==="source")Object.assign(value.message,{original_source:"another-producer"});
+  if(kind==="action")Object.assign(value.message,{action_id:contact});
+  if(kind==="binding-source")Object.assign(value.message.original_binding.governance,{draft_source:{message_id:contact,updated_at:"2026-10-30T16:00:00.123456Z"}});
+  originalPorts(value);await render(historyInput(value));expect(host.textContent).not.toContain("Accepted by the email service");
+  expect(db.rpc.mock.calls.filter(([name])=>name==="lead_reply_record_send")).toHaveLength(0);expect(db.invoke).not.toHaveBeenCalled();
+ });
+});
+
 describe("lead reply through the existing approval door", () => {
   it.each(["prepare","approve","record","status"].flatMap(stage=>["actor-read","tenant-read"].map(read=>({stage,read}))))("owned cleanup recovers $stage after a parent hold during $read",async({stage,read})=>{
     let original:Record<string,unknown>|null=null;

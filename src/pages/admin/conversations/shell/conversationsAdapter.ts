@@ -268,6 +268,11 @@ interface ConversationsComposerModelBase {
   // editing-an-existing-draft banner
   editingDraft?: boolean;
   onCancelEdit?: () => void;
+  onSaveDraft?: () => void;
+  savingDraft?: boolean;
+  saveUnconfirmed?: boolean;
+  draftSaveDisabled?: boolean;
+  draftSaveNote?: string;
 
   // drop-zone (forwarded onto the textarea when hasAttachments)
   dragOver?: boolean;

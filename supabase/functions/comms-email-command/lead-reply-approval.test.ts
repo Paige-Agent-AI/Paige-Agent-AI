@@ -125,6 +125,15 @@ function scenario(w: World) {
         if (original) Object.assign(original, prepared); else w.messages.push(prepared);
         return { data: { ok: true, replayed: false, state: "prepared", message_id: MSG, ...(args._send_at?{send_at:args._send_at}:{}) }, error: null };
       }),
+      save_comms_email_draft: rpc("save_comms_email_draft",args=>{
+        const m=w.messages.find(m=>m.id===args._message_id);
+        const prior=m?.meta as Row|undefined,save=prior?.comms_draft_save as Row|undefined;
+        if(m&&save?.id===args._save_id&&save?.actor===args._actor&&m.body_text===args._text&&m.subject===args._subject)
+          return {data:{ok:true,outcome:"draft_saved",message_id:m.id,updated_at:m.updated_at,receipt_id:"a3e30300-0000-4000-8000-000000000301",replayed:true},error:null};
+        if(!m||m.updated_at!==args._expected_updated_at)return {data:null,error:{code:"40001",message:"COMMS_EMAIL_DRAFT_SOURCE_CHANGED"}};
+        Object.assign(m,{subject:args._subject,body_text:args._text,body_html:args._html,attachments:args._attachments,scheduled_for:args._send_at,updated_at:"2026-10-30T16:00:00.123457Z",meta:{...prior,comms_draft_save:{id:args._save_id,actor:args._actor}}});
+        return {data:{ok:true,outcome:"draft_saved",message_id:m.id,updated_at:m.updated_at,receipt_id:"a3e30300-0000-4000-8000-000000000301"},error:null};
+      }),
       read_comms_email_send_binding: rpc("read_comms_email_send_binding", () => ({ data: w.messages.find(m => m.binding)?.binding ?? { message_id: MSG, operation_id: OP, approval_id: w.bindingApproval }, error: null })),
       lead_reply_record_send_service: rpc("lead_reply_record_send_service", () => { if (typeof w.recordResult === "function") return w.recordResult(); return w.recordResult; }),
       mark_support_case_outbound: { data: null, error: null },
@@ -176,6 +185,22 @@ test("saved draft check and approval use the same original door, source version 
  const prepared=w.rpcCalls.find(c=>c.name==="prepare_comms_email_send");assert.deepEqual(prepared?.args._draft_source,DRAFT_SOURCE);assert.equal(prepared?.args._body_html,DRAFT_HTML);
  const replay=await call(w,{draft_source:DRAFT_SOURCE});assert.equal(replay.body.outcome,"provider_accepted");assert.equal(w.fetches.length,1);
 });
+test("saving an unsent edit changes only its original draft, without an approval or provider attempt",async()=>{
+ const w=withOriginalDraft({action_id:ACT});
+ const saved=await call(w,{draft_source:DRAFT_SOURCE,approval_id:AP,attachments:[],save_draft:true},{body:"An edited unsent reply."});
+ assert.equal(saved.body.outcome,"draft_saved",JSON.stringify(saved.body));
+ assert.deepEqual(saved.body.draft_source,{message_id:MSG,updated_at:"2026-10-30T16:00:00.123457Z"});
+ assert.equal(w.messages.length,1);assert.equal(w.messages[0].body_text,"An edited unsent reply.");
+ assert.equal(w.proposals.length,0);assertNoSend(w);assert.equal(w.approvals[0].status,"pending");
+ const replay=await call(w,{draft_source:DRAFT_SOURCE,approval_id:AP,attachments:[],save_draft:true},{body:"An edited unsent reply."});
+ assert.equal(replay.body.outcome,"draft_saved",JSON.stringify(replay.body));assert.equal(replay.body.replayed,true);assertNoSend(w);
+});
+test("save cannot be used without an original source or with an approval-redemption fingerprint",async()=>{
+ for(const request of [{save_draft:true},{save_draft:true,draft_source:DRAFT_SOURCE,approved_fingerprint:"a".repeat(16)}]){
+  const w=withOriginalDraft();const result=await call(w,request);assert.equal(result.status,400);assertNoSend(w);
+  assert.ok(!rpcNames(w).includes("save_comms_email_draft"));
+ }
+});
 test("an action-owned saved reply uses its original verified approval and original message",async()=>{
  const w=withOriginalDraft({action_id:ACT});const p=await call(w,{draft_source:DRAFT_SOURCE,approval_id:AP});
  assert.equal(p.status,202,JSON.stringify(p.body));assert.equal(w.fetches.length,0);
@@ -219,8 +244,8 @@ test("a saved action reply can approve a later send without prematurely recordin
  const prepared=w.rpcCalls.find(c=>c.name==="prepare_comms_email_send");
  assert.equal(prepared?.args._send_at,send_at);assert.equal((prepared?.args._governance as Row).approval_id,AP);
 });
-test("an action-owned source cannot borrow another otherwise valid approval or omit its owner",async()=>{
- for(const extra of [{draft_source:DRAFT_SOURCE},{draft_source:DRAFT_SOURCE,approval_id:AP2}]){
+test("an action-owned source cannot borrow another otherwise valid approval",async()=>{
+ for(const extra of [{draft_source:DRAFT_SOURCE,approval_id:AP2}]){
   const w=withOriginalDraft({action_id:ACT});const r=await call(w,extra);
   assert.equal(r.body.code,"COMMS_EMAIL_DRAFT_OWNED_FLOW_REQUIRED",JSON.stringify(r.body));
   assert.equal(w.proposals.length,0);assert.equal(w.fetches.length,0);
@@ -653,4 +678,33 @@ test("approval validation keeps the email-kind set closed with no coercion", asy
     const w = world({ actions: [{ id: ACT, tenant_id: T, approval_id: AP, action_kind: kind, contact_id: C }] });
     assert.equal(await verifyLeadReplyApproval(admin(w), { tenantId: T, approvalId: AP, contactId: C }), "LEAD_REPLY_APPROVAL_WRONG_KIND");
   }
+});
+
+
+test("original inbound email reply requires its exact saved source; generic or SMS approvals stay refused", async () => {
+  const source={id:MSG,tenant_id:T,contact_id:C,action_id:ACT,channel_type:"email",direction:"outbound",status:"draft",meta:{source:"comms-draft-reply"}};
+  const action={id:ACT,tenant_id:T,approval_id:AP,action_kind:"comms-draft-reply",contact_id:C,status:"pending_approval",channel_type:"email"};
+  const w=world({actions:[action],messages:[source]});
+  assert.equal(await verifyLeadReplyApproval(admin(w),{tenantId:T,approvalId:AP,contactId:C,savedSourceId:MSG}),null);
+  assert.equal(await verifyLeadReplyApproval(admin(w),{tenantId:T,approvalId:AP,contactId:C}),"LEAD_REPLY_APPROVAL_WRONG_KIND");
+  for(const change of [{channel_type:"sms"},{status:"blocked"},{approval_id:AP2}]){
+    const negative=world({actions:[{...action,...change}],messages:[source]});
+    assert.equal(await verifyLeadReplyApproval(admin(negative),{tenantId:T,approvalId:AP,contactId:C,savedSourceId:MSG}),"LEAD_REPLY_APPROVAL_WRONG_KIND");
+  }
+  for(const change of [{action_id:ACT2},{channel_type:"sms"},{status:"sent"},{meta:{source:"original-manual-draft"}},{tenant_id:T2},{contact_id:C2}]){
+    const negative=world({actions:[action],messages:[{...source,...change}]});
+    assert.equal(await verifyLeadReplyApproval(admin(negative),{tenantId:T,approvalId:AP,contactId:C,savedSourceId:MSG}),"LEAD_REPLY_APPROVAL_WRONG_KIND");
+  }
+});
+
+
+test("saved source derives only its original approval for Chat without accepting model approval authority", async()=>{
+ const w=withOriginalDraft({action_id:ACT,meta:{source:"comms-draft-reply"}});
+ w.actions[0]={...w.actions[0],action_kind:"comms-draft-reply",status:"pending_approval",channel_type:"email"};
+ const proposed=await call(w,{draft_source:DRAFT_SOURCE});
+ assert.equal(proposed.status,202,JSON.stringify(proposed.body));assert.equal(w.fetches.length,0);
+ assert.equal((w.proposals[0].args as Row).approval_id,AP);
+ const sent=await call(w,{draft_source:DRAFT_SOURCE,approved_fingerprint:proposed.body.fingerprint});
+ assert.equal(sent.body.outcome,"provider_accepted",JSON.stringify(sent.body));assert.equal(sent.body.record_status,"recorded");
+ assert.equal(w.fetches.length,1);assert.equal(w.rpcCalls.filter(c=>c.name==="lead_reply_record_send_service").length,1);
 });

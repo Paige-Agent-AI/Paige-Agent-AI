@@ -159,6 +159,8 @@ jobs:
         run: node scripts/ci/comms-provider-boundary-wiring.mjs
       - name: Gmail native connection authority, private credential isolation and concurrent rollback
         run: node scripts/proof/gmail-connection-postgres.mjs 5432
+      - name: EXP03 saved email whole atomic carrier, original source approval receipt and refusal recovery
+        run: node --experimental-strip-types scripts/proof/exp03-email-existing-draft-postgres.mjs 5432 --whole-carrier
       - name: Operator account archive, restore, physical deletion and concurrent isolation in disposable PostgreSQL
         run: node scripts/proof/operator-account-archive.mjs --postgres
       - name: Operator provider retirement SQL proof
@@ -1655,6 +1657,14 @@ jobs:
       - name: Governed email door binds a lead reply approval to one send (verified PAIGE Email sender only)
         if: ${{ !cancelled() }}
         run: npm run test:comms-lead-reply-approval
+
+      - name: Saved email source projection and original scheduled receipt integration
+        if: ${{ !cancelled() }}
+        run: >-
+          npx vitest run --config vitest.sales-invoice-delivery.config.ts --maxWorkers=1 --no-file-parallelism
+          supabase/functions/_shared/comms-email/draft-proposal.test.ts
+          supabase/functions/_shared/comms-email/draft-source.test.ts
+          supabase/functions/_shared/comms-email/scheduled-drain.test.ts
 
       - name: SendGrid webhook door (signed events only, acceptance is never delivery)
         if: ${{ !cancelled() }}

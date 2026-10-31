@@ -1218,7 +1218,7 @@ export default function ClientsConversations() {
     let approvalId:string|undefined;
     if (m.action_id) {
       if (!activeTenantId || !selected.contactId) return false;
-      const original=await readSavedReplyApproval({tenantId:activeTenantId,contactId:selected.contactId,actionId:m.action_id},current);
+      const original=await readSavedReplyApproval({tenantId:activeTenantId,contactId:selected.contactId,actionId:m.action_id,messageId:m.id},current);
       if (!current()) return false;
       if (!original) { toast.error("This draft's original approval is unavailable or no longer pending. Reopen its recorded status."); return false; }
       approvalId=original;
@@ -1309,6 +1309,11 @@ export default function ClientsConversations() {
     attachments, scheduledFor, epoch: accountEpochRef.current, composerRef: composerWrapRef, settingsHref: connectionsHref,
     draftSource: editingDraftId && composeChannel === "email" ? editingDraftSource : undefined,
     draftApprovalId: editingDraftId && composeChannel === "email" ? editingDraftApprovalId : undefined,
+    onDraftSaved: ({source,attachments:savedFiles})=>{
+      if(source.message_id!==editingDraftId)return;
+      setEditingDraftSource(source);restoreAttachments(savedFiles);
+      toast.success("Draft saved. Nothing sent.");void load();void loadThreads();
+    },
     onChooseSender: (id) => { setComposeConnectorId(id); setComposeChannel("email"); },
     onRecorded: ({ contactId }) => {
       resetComposer();
@@ -1828,7 +1833,7 @@ export default function ClientsConversations() {
       || (composeChannel === "email" && !subject.trim())
       || attachments.length > 10
       || suppressions.some((suppression) => suppression.channel === composeChannel)
-    ) || portalUnreachable || leadReplyReview.blocksSending || followupLocator.kind === "invalid" || (followupLocator.kind === "bound" && !leadReplyApprovalId),
+    ) || portalUnreachable || leadReplyReview.blocksSending || followupLocator.kind === "invalid" || (followupLocator.kind === "bound" && !leadReplyApprovalId && followupLocator.approvalId!==editingDraftApprovalId),
     sendOnEnter: isSolo,
     placeholder: portalMode
       ? `Message ${selected.name} in their client portal…`
@@ -1914,6 +1919,11 @@ export default function ClientsConversations() {
     onDictateError: (msg) => toast.error(msg),
     editingDraft: !!editingDraftId,
     onCancelEdit: resetComposer,
+    onSaveDraft: editingDraftId && composeChannel==="email" && editingDraftSource ? ()=>{void governedReply.saveDraft();} : undefined,
+    savingDraft: governedReply.savingDraft,
+    saveUnconfirmed: governedReply.saveUnconfirmed,
+    draftSaveNote: governedReply.draftSaveNote,
+    draftSaveDisabled: !selected.contactId || uploading || drafting || governedReply.savingDraft || (!governedReply.saveUnconfirmed && governedReply.phase!=="composing") || (isSolo && handlingMode==="governed"),
     dragOver,
     onDropFiles: uploadComposerFiles,
     onDragOverZone: () => setDragOver(true),

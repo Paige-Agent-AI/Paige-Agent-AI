@@ -24,7 +24,7 @@ import {
   type DoorAnswer, type DoorView, type GovernedReplyDraft, type GovernedReplyRequest, type ReadyCheck, type StripAction,
 } from "./governedReply";
 import { GovernedReplyStrip, type GovernedStripState } from "./GovernedReplyStrip";
-import type { CommsEmailDraftSource } from "../../../../supabase/functions/_shared/comms-email/draft-source.ts";
+import { parseCommsEmailDraftSource, type CommsEmailDraftSource } from "../../../../supabase/functions/_shared/comms-email/draft-source.ts";
 
 export interface GovernedReplyConnector { id: string; display_name: string | null; from_address: string | null }
 
@@ -56,6 +56,7 @@ export interface GovernedEmailReplyInput {
   /** A confirm's answer that keeps the words (unknown, failed, refused): the thread re-reads, so the row the
    *  server may have written (Couldn't confirm, Failed, Not sent) shows without waiting for realtime. */
   onRefresh?: () => void;
+  onDraftSaved?: (saved:{source:CommsEmailDraftSource;attachments:Attachment[]})=>void;
 }
 
 type Phase = "composing" | "checking" | "check" | "sending" | "choose" | "cant" | "expired";
@@ -82,6 +83,13 @@ export function useGovernedEmailReply(input: GovernedEmailReplyInput) {
   const idsRef = useRef(createGovernedOperationIds());
   const inputRef = useRef(input);
   inputRef.current = input;
+  type SaveAttempt={identity:string;epoch:AccountEpochToken;request:GovernedReplyRequest & {save_draft:true};busy:boolean;uncertain:boolean};
+  const saveRef=useRef<SaveAttempt|null>(null);
+  const [saveState,setSaveState]=useState<{attempt:SaveAttempt;busy:boolean;uncertain:boolean}|null>(null);
+  const saveIdentity=JSON.stringify([input.activeTenantId,input.threadKey,input.draftSource?.message_id,input.epoch.capture()]);
+  const saveIdentityRef=useRef(saveIdentity);saveIdentityRef.current=saveIdentity;
+  const activeSave=saveState?.attempt.identity===saveIdentity?saveState:null;
+  const [saveNotice,setSaveNotice]=useState<{identity:string;scope:string;text:string}|null>(null);
 
   const go = (next: Phase) => { phaseRef.current = next; setPhase(next); };
   const say = (text: string) => setAnnouncement((a) => ({ text, n: a.n + 1 }));
@@ -105,6 +113,53 @@ export function useGovernedEmailReply(input: GovernedEmailReplyInput) {
       ...(i.draftSource !== undefined ? { source: i.draftSource } : {}),
       ...(i.draftApprovalId !== undefined ? { approvalId: i.draftApprovalId } : {}) } };
   }, []);
+
+  const saveDraft=async()=>{
+    const i=inputRef.current;
+    if(!i.onDraftSaved||!i.draftSource||phaseRef.current!=="composing")return;
+    let attempt=saveRef.current?.identity===saveIdentityRef.current?saveRef.current:null;
+    if(attempt?.busy)return;
+    if(!attempt){
+      const built=currentDraft();
+      if(!("draft" in built)||!built.draft.source){say("Check the subject, message, files and time before saving this draft.");return;}
+      if(idsRef.current.isUnknown(governedReplyScope(built.draft),governedReplySourceKey(built.draft))){say("Check this draft's sending status before saving changes.");return;}
+      const request=buildGovernedReplyRequest(built.draft,crypto.randomUUID());
+      if(isFailed(request)){say("Reopen this draft before saving changes.");return;}
+      attempt={identity:saveIdentityRef.current,epoch:i.epoch.capture(),request:{...request.request,save_draft:true},busy:false,uncertain:false};
+      saveRef.current=attempt;
+    }
+    const held=attempt,current=()=>saveRef.current===held&&saveIdentityRef.current===held.identity&&inputRef.current.epoch.accept(held.epoch);
+    held.busy=true;setSaveState({attempt:held,busy:true,uncertain:held.uncertain});
+    let answer:DoorAnswer;
+    try{answer=await readDoorAnswer(await supabase.functions.invoke("comms-email-command",{body:held.request}));}
+    catch{answer={transport:true};}
+    if(!current())return;
+    held.busy=false;
+    const b=doorAnswered(answer)?answer.body:null;
+    if(b?.ok===true&&b.outcome==="draft_saved"&&b.operation_id===held.request.operation_id){
+      try{
+        const source=parseCommsEmailDraftSource(b.draft_source);
+        if(source.message_id!==held.request.draft_source?.message_id||!Array.isArray(b.attachments))throw Error("save_receipt_changed");
+        const files:Attachment[]=b.attachments.map(raw=>{
+          const a=raw as Record<string,unknown>;
+          if(!a||typeof a.url!=="string"||typeof a.name!=="string"||typeof a.mime!=="string"||typeof a.size!=="number"||!Number.isFinite(a.size))throw Error("save_files_changed");
+          return {url:a.url,name:a.name,mime:a.mime,size:a.size};
+        });
+        const checked=governedReplyFiles(held.request.expected_tenant_id,files);
+        if(isFailed(checked)||JSON.stringify(checked.paths)!==JSON.stringify((held.request.attachments??[]).map(a=>a.path)))throw Error("save_files_changed");
+        saveRef.current=null;setSaveState(null);say("Draft saved. Nothing sent.");
+        inputRef.current.onDraftSaved?.({source,attachments:files});return;
+      }catch{/* An unreadable receipt never clears the original save operation. */}
+    }
+    if(b?.outcome==="refused"&&!held.uncertain){
+      saveRef.current=null;setSaveState(null);
+      const text="The draft wasn't saved. Your edits are kept; reopen its current version before trying again.";
+      setSaveNotice({identity:held.identity,scope:liveScopeRef.current,text});say(text);return;
+    }
+    held.uncertain=true;setSaveState({attempt:held,busy:false,uncertain:true});
+    const text="Couldn't confirm the draft was saved. Check save status before sending.";
+    setSaveNotice({identity:held.identity,scope:liveScopeRef.current,text});say(text);
+  };
 
   // The scope of what is on screen right now. A strip is only ever about the scope it was raised for.
   const liveScope = useMemo(() => {
@@ -205,6 +260,7 @@ export function useGovernedEmailReply(input: GovernedEmailReplyInput) {
 
   /** Send: check the email as it stands now. */
   const runCheck = useCallback(async () => {
+    if(saveRef.current?.identity===saveIdentityRef.current){say("Check the draft's save status before sending.");return;}
     if (phaseRef.current === "checking" || phaseRef.current === "sending" || inFlightRef.current) return;
     const d = currentDraft();
     stripScopeRef.current = liveScopeRef.current;
@@ -296,6 +352,9 @@ export function useGovernedEmailReply(input: GovernedEmailReplyInput) {
     return () => { seqRef.current += 1; clearExpiry(); };
   }, [input.activeTenantId, input.threadKey, close]);
   useEffect(() => { idsRef.current.clearPending(); }, [input.activeTenantId]);
+  useEffect(()=>{
+    if(saveRef.current&&saveRef.current.identity!==saveIdentity){saveRef.current=null;setSaveState(null);setSaveNotice(null);}
+  },[saveIdentity]);
 
   // Focus follows the strip (§70: keyboard users land on the next thing to do).
   useEffect(() => {
@@ -348,6 +407,10 @@ export function useGovernedEmailReply(input: GovernedEmailReplyInput) {
 
   return {
     phase,
+    saveDraft,
+    savingDraft:activeSave?.busy===true,
+    saveUnconfirmed:activeSave?.uncertain===true,
+    draftSaveNote:saveNotice?.identity===saveIdentity&&saveNotice.scope===liveScope?saveNotice.text:undefined,
     /** Send on an email reply. */
     check: runCheck,
     /** Edit / Esc: close the strip and put the caret back at the end of the reply. */
@@ -355,9 +418,9 @@ export function useGovernedEmailReply(input: GovernedEmailReplyInput) {
     stripOpen: OPEN.has(phase),
     checking: phase === "checking",
     /** The confirm is out: the words stay exactly as approved until it answers. */
-    blocksEditing: phase === "sending",
+    blocksEditing: phase === "sending" || !!activeSave,
     /** A check is running, shown, or being confirmed: the staged files stay exactly as checked. */
-    filesLocked: phase === "checking" || phase === "check" || phase === "sending",
+    filesLocked: phase === "checking" || phase === "check" || phase === "sending" || !!activeSave,
     actions,
     liveRegion,
   };

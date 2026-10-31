@@ -19,7 +19,7 @@ export async function readCommsEmailDraftProposal(admin: CommsEmailAdmin, input:
   /** Absent retains the original files. Explicit [] removes them in this approval. */
   attachments?: unknown;
   /** Server-only result of the original approval reader, never deserialized wire data. */
-  originalApproval?: { tenantId: string; approvalId: string; contactId: string; actionId: string };
+  originalApproval?: { tenantId: string; approvalId: string; contactId: string; actionId: string; savedSourceId?: string };
 }): Promise<DraftProposal> {
   const unavailable = (): DraftProposal => ({ ok: false, code: "COMMS_EMAIL_DRAFT_SOURCE_UNAVAILABLE" });
   let source: CommsEmailDraftSource;
@@ -39,7 +39,8 @@ export async function readCommsEmailDraftProposal(admin: CommsEmailAdmin, input:
     const original = input.originalApproval;
     if (message.action_id != null || original !== undefined) {
       if (!original || original.tenantId !== input.tenantId || original.contactId !== input.command.contact_id
-        || !UUID.test(original.approvalId) || !UUID.test(original.actionId) || message.action_id !== original.actionId) {
+        || !UUID.test(original.approvalId) || !UUID.test(original.actionId) || message.action_id !== original.actionId
+        || (original.savedSourceId !== undefined && (original.savedSourceId !== source.message_id || meta.source !== "comms-draft-reply"))) {
         return { ok: false, code: "COMMS_EMAIL_DRAFT_OWNED_FLOW_REQUIRED" };
       }
     }

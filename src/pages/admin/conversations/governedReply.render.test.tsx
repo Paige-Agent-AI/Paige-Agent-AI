@@ -832,6 +832,31 @@ describe("everything else keeps its own path", () => {
     expect(db.invokes).toEqual(["comms-email-command"]);expect(db.sendBodies).toEqual([]);
     expect(db.doorBodies[0]).toMatchObject({draft_source:{message_id:DRAFT_ID,updated_at:DRAFT_VERSION},command:{body:"An edited summary."}});
   });
+  it("Save draft persists unsent edits and reopening reviews the same row's new raw version",async()=>{
+    db.messages=[message(),message({id:DRAFT_ID,updated_at:DRAFT_VERSION,direction:"outbound",status:"draft",subject:"Re: Tuesday",body_text:"Original saved words."})];
+    const host=await mount();await click(buttonByText(host,"Edit"));await type(textarea(host),"Durable edited words.");
+    const version=DRAFT_VERSION.replace("123456","123457");
+    db.door.push(request=>{
+      Object.assign(db.messages[1],{body_text:"Durable edited words.",updated_at:version});
+      return {data:{ok:true,outcome:"draft_saved",operation_id:request.operation_id,draft_source:{message_id:DRAFT_ID,updated_at:version},attachments:[]},error:null};
+    });
+    await click(buttonByText(host,"Save draft"));
+    expect(db.doorBodies[0]).toMatchObject({save_draft:true,draft_source:{message_id:DRAFT_ID,updated_at:DRAFT_VERSION},command:{body:"Durable edited words."}});
+    expect(db.doorBodies[0]).not.toHaveProperty("approved_fingerprint");expect(db.sendBodies).toEqual([]);
+    await click([...host.querySelectorAll("button")].find(b=>b.textContent?.trim()==="Cancel"));
+    await click(buttonByText(host,"Review email"));
+    expect(db.doorBodies[1]).toMatchObject({draft_source:{message_id:DRAFT_ID,updated_at:version},command:{body:"Durable edited words."}});
+    expect(db.doorBodies[1]).not.toHaveProperty("save_draft");expect(db.sendBodies).toEqual([]);
+  });
+  it("an unanswered draft save locks sending and recovers only the same save operation",async()=>{
+    db.messages=[message(),message({id:DRAFT_ID,updated_at:DRAFT_VERSION,direction:"outbound",status:"draft",subject:"Re: Tuesday",body_text:"Original saved words."})];
+    const host=await mount();await click(buttonByText(host,"Edit"));
+    db.door.push(httpError(503,{ok:false,outcome:"outcome_unknown",code:"COMMS_EMAIL_DRAFT_SAVE_UNVERIFIED"}));
+    await click(buttonByText(host,"Save draft"));expect(sendButton(host)?.disabled).toBe(true);expect(textarea(host).disabled).toBe(true);
+    db.door.push(request=>({data:{ok:true,outcome:"draft_saved",operation_id:request.operation_id,draft_source:{message_id:DRAFT_ID,updated_at:DRAFT_VERSION.replace("123456","123457")},attachments:[],replayed:true},error:null}));
+    await click(buttonByText(host,"Check save status"));
+    expect(db.doorBodies[1]).toEqual(db.doorBodies[0]);expect(db.sendBodies).toEqual([]);
+  });
   it("a cached saved draft without its raw native version makes no door or legacy send call",async()=>{
     db.messages=[message(),message({id:DRAFT_ID,direction:"outbound",status:"draft",subject:"Re: Tuesday",body_text:"Original saved words."})];
     const host=await mount("/admin/clients/conversations");await click(buttonByText(host,"Review email"));
@@ -886,6 +911,19 @@ describe("everything else keeps its own path", () => {
   it("an action-owned saved draft reviews and sends with its original approval through one inline check",async()=>{
     db.messages=[message(),message({id:DRAFT_ID,updated_at:DRAFT_VERSION,direction:"outbound",status:"draft",subject:"Re: Tuesday",body_text:"Original action reply.",action_id:CONTACT})];
     db.actions=[{id:CONTACT,tenant_id:TENANT,contact_id:CONTACT,approval_id:CONN_2,action_kind:"client.followup"}];
+    db.approvals=[{id:CONN_2,tenant_id:TENANT,contact_id:CONTACT,status:"pending",metadata:{action_id:CONTACT}}];
+    const host=await mount();await click(buttonByText(host,"Review email"));
+    expect(db.doorBodies).toHaveLength(1);
+    expect(db.doorBodies[0]).toMatchObject({approval_id:CONN_2,draft_source:{message_id:DRAFT_ID,updated_at:DRAFT_VERSION},attachments:[]});
+    expect(host.querySelectorAll("[data-governed-reply-strip]").length).toBeLessThanOrEqual(1);
+    db.door.push(accepted({message_id:DRAFT_ID,approval_id:CONN_2,record_status:"recorded"}));
+    await click(buttonByText(host,"Send now"));
+    expect(db.doorBodies[1]).toMatchObject({approval_id:CONN_2,operation_id:db.doorBodies[0].operation_id,approved_fingerprint:FP});
+    expect(db.sendBodies).toEqual([]);
+  });
+  it("an original inbound email draft preserves its own approval through inline review and send",async()=>{
+    db.messages=[message(),message({id:DRAFT_ID,updated_at:DRAFT_VERSION,direction:"outbound",status:"draft",subject:"Re: Tuesday",body_text:"Original action reply.",action_id:CONTACT,tenant_id:TENANT,source:"comms-draft-reply",meta:{source:"comms-draft-reply"}})];
+    db.actions=[{id:CONTACT,tenant_id:TENANT,contact_id:CONTACT,approval_id:CONN_2,action_kind:"comms-draft-reply",status:"pending_approval",channel_type:"email"}];
     db.approvals=[{id:CONN_2,tenant_id:TENANT,contact_id:CONTACT,status:"pending",metadata:{action_id:CONTACT}}];
     const host=await mount();await click(buttonByText(host,"Review email"));
     expect(db.doorBodies).toHaveLength(1);

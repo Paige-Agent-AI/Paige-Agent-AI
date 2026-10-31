@@ -47,12 +47,12 @@ const object = (v: unknown): Record<string, unknown> | null => v && typeof v ===
 const lower = (v: unknown): string | null => typeof v === "string" ? v.trim().toLowerCase() : null;
 
 /** Facts proven by the ORIGINAL approval reader; never accepted from a request. */
-export type VerifiedLeadReplyApproval = { tenantId: string; approvalId: string; contactId: string; actionId: string };
+export type VerifiedLeadReplyApproval = { tenantId: string; approvalId: string; contactId: string; actionId: string; savedSourceId?: string };
 
 /** Same canonical read/guards; success also identifies the original action owner. */
 export async function readLeadReplyApproval(
   admin: LeadReplyApprovalAdmin,
-  input: { tenantId: string; approvalId: string; contactId: string; operationId?: string },
+  input: { tenantId: string; approvalId: string; contactId: string; operationId?: string; savedSourceId?: string },
 ): Promise<LeadReplyApprovalRefusal | VerifiedLeadReplyApproval> {
   try {
     const tenantId = lower(input.tenantId), approvalId = lower(input.approvalId), contactId = lower(input.contactId);
@@ -65,12 +65,29 @@ export async function readLeadReplyApproval(
     if (approval.status !== "pending") return "LEAD_REPLY_APPROVAL_NOT_PENDING";
     const actionId = lower(object(approval.metadata)?.action_id);
     if (!actionId || !UUID.test(actionId)) return "LEAD_REPLY_APPROVAL_WRONG_KIND";
-    const act = await admin.from("paige_actions").select("id,tenant_id,approval_id,action_kind,contact_id")
+    const act = await admin.from("paige_actions").select("id,tenant_id,approval_id,action_kind,contact_id,status,channel_type:payload->>channel_type")
       .eq("id", actionId).eq("tenant_id", tenantId).eq("approval_id", approvalId).maybeSingle();
     if (act.error) return "LEAD_REPLY_APPROVAL_UNAVAILABLE";
     const action = object(act.data);
-    if (!action || lower(action.id) !== actionId || lower(action.tenant_id) !== tenantId || lower(action.approval_id) !== approvalId
-      || !isGovernedEmailReplyKind(action.action_kind)) return "LEAD_REPLY_APPROVAL_WRONG_KIND";
+    if (!action || lower(action.id) !== actionId || lower(action.tenant_id) !== tenantId || lower(action.approval_id) !== approvalId) return "LEAD_REPLY_APPROVAL_WRONG_KIND";
+    const inbound = action.action_kind === "comms-draft-reply";
+    if (!isGovernedEmailReplyKind(action.action_kind)) {
+      // This original producer also creates SMS replies. Its email extension is
+      // available ONLY through the exact original unsent email message, never by
+      // widening the generic approval-kind set or trusting a request's channel.
+      if (!inbound || !input.savedSourceId || !UUID.test(input.savedSourceId)
+        || (action.channel_type != null && action.channel_type !== "email")
+        || !["drafted", "pending_approval"].includes(String(action.status))) return "LEAD_REPLY_APPROVAL_WRONG_KIND";
+      const sourceRead = await admin.from("messages")
+        .select("id,tenant_id,contact_id,action_id,channel_type,direction,status,meta")
+        .eq("id", input.savedSourceId).eq("tenant_id", tenantId).eq("contact_id", contactId).maybeSingle();
+      if (sourceRead.error) return "LEAD_REPLY_APPROVAL_UNAVAILABLE";
+      const source = object(sourceRead.data);
+      if (!source || lower(source.id) !== input.savedSourceId.toLowerCase() || lower(source.tenant_id) !== tenantId
+        || lower(source.contact_id) !== contactId || lower(source.action_id) !== actionId
+        || source.channel_type !== "email" || source.direction !== "outbound" || source.status !== "draft"
+        || object(source.meta)?.source !== "comms-draft-reply") return "LEAD_REPLY_APPROVAL_WRONG_KIND";
+    }
     if (lower(action.contact_id) !== contactId) return "LEAD_REPLY_APPROVAL_CONTACT_MISMATCH";
     if (approval.contact_id !== null && approval.contact_id !== undefined && lower(approval.contact_id) !== contactId) return "LEAD_REPLY_APPROVAL_CONTACT_MISMATCH";
     // Any OTHER operation prepared for this approval that has not failed or been refused answers it.
@@ -84,7 +101,7 @@ export async function readLeadReplyApproval(
       && lower(m.operation_id) !== operationId && !["failed", "refused"].includes(String(m.state ?? "")));
     if (live.some((m) => m.state === "provider_accepted")) return "LEAD_REPLY_APPROVAL_ALREADY_SENT";
     if (live.length > 0) return "LEAD_REPLY_APPROVAL_SEND_IN_PROGRESS";
-    return { tenantId, approvalId, contactId, actionId };
+    return { tenantId, approvalId, contactId, actionId, ...(inbound ? { savedSourceId: input.savedSourceId } : {}) };
   } catch {
     return "LEAD_REPLY_APPROVAL_UNAVAILABLE";
   }
@@ -93,7 +110,7 @@ export async function readLeadReplyApproval(
 /** Historical API: null = the approval may carry this send; otherwise the refusal. */
 export async function verifyLeadReplyApproval(
   admin: LeadReplyApprovalAdmin,
-  input: { tenantId: string; approvalId: string; contactId: string; operationId?: string },
+  input: { tenantId: string; approvalId: string; contactId: string; operationId?: string; savedSourceId?: string },
 ): Promise<LeadReplyApprovalRefusal | null> {
   const result = await readLeadReplyApproval(admin, input);
   return typeof result === "string" ? result : null;

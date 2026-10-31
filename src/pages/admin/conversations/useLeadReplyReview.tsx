@@ -8,21 +8,41 @@ import { parseCommsEmailDraftSource, type CommsEmailDraftSource } from "../../..
 import { parseCommsEmailAttachmentManifest, commsEmailAttachmentPreview, type CommsEmailAttachmentManifest } from "../../../../supabase/functions/_shared/comms-email/attachments";
 import { GOVERNED_SEND_COLS } from "./governedSend";
 
+// The generated PostgREST conditional type cannot represent these additive JSON
+// projections without recursive instantiation. Keep the SAME caller-JWT client;
+// its result stays unknown until every original scope/backlink/shape is checked.
+interface OriginalReplyRowsQuery {
+  eq(column:string,value:string):OriginalReplyRowsQuery;
+  limit(count:number):PromiseLike<{data:unknown;error:unknown}>;
+}
+interface OriginalReplyRowsReader {from(table:string):{select(columns:string):OriginalReplyRowsQuery}}
+const originalReplyRows = supabase as unknown as OriginalReplyRowsReader;
+
 export const isFollowupEmailKind = (kind: unknown) => kind === "owner.lead_followup" || kind === "client.followup" || kind === "owner.followup_email";
 /** Locate the saved action's ORIGINAL pending queue entry with the caller's JWT. This is
  * navigation context only; the command door and native writer re-prove authority. */
-export async function readSavedReplyApproval(context: {tenantId:string;contactId:string;actionId:string}, current:()=>boolean): Promise<string|null> {
+export async function readSavedReplyApproval(context: {tenantId:string;contactId:string;actionId:string;messageId?:string}, current:()=>boolean): Promise<string|null> {
   const {tenantId,contactId,actionId}=context;
   if (![tenantId,contactId,actionId].every(id=>UUID.test(id)) || !current()) return null;
   try {
-    const actionRead=await supabase.from("paige_actions").select("id,tenant_id,contact_id,approval_id,action_kind")
+    const actionRead=await originalReplyRows.from("paige_actions").select("id,tenant_id,contact_id,approval_id,action_kind,status,channel_type:payload->>channel_type")
       .eq("id",actionId).eq("tenant_id",tenantId).eq("contact_id",contactId).limit(2);
     if (!current() || actionRead.error || !Array.isArray(actionRead.data) || actionRead.data.length!==1) return null;
     const action=object(actionRead.data[0]);
     if (!action || action.id!==actionId || action.tenant_id!==tenantId || action.contact_id!==contactId
-      || !isFollowupEmailKind(action.action_kind) || typeof action.approval_id!=="string" || !UUID.test(action.approval_id)) return null;
+      || (!isFollowupEmailKind(action.action_kind) && action.action_kind!=="comms-draft-reply") || typeof action.approval_id!=="string" || !UUID.test(action.approval_id)) return null;
+    if(action.action_kind==="comms-draft-reply"){
+      if(!context.messageId||!UUID.test(context.messageId)||(action.channel_type!=null&&action.channel_type!=="email")
+        ||!["drafted","pending_approval"].includes(String(action.status)))return null;
+      const sourceRead=await originalReplyRows.from("messages").select("id,tenant_id,contact_id,action_id,channel_type,direction,status,source:meta->>source")
+        .eq("id",context.messageId).eq("tenant_id",tenantId).eq("contact_id",contactId).limit(2);
+      if(!current()||sourceRead.error||!Array.isArray(sourceRead.data))return null;
+      const sources=sourceRead.data.map(object).filter(m=>m?.id===context.messageId),source=object(sources[0]);
+      if(sources.length!==1||!source||source.tenant_id!==tenantId||source.contact_id!==contactId||source.action_id!==actionId
+        ||source.channel_type!=="email"||source.direction!=="outbound"||source.status!=="draft"||source.source!=="comms-draft-reply")return null;
+    }
     const approvalId=action.approval_id;
-    const approvalRead=await supabase.from("paige_approval_queue_v").select("id,tenant_id,contact_id,status,metadata")
+    const approvalRead=await originalReplyRows.from("paige_approval_queue_v").select("id,tenant_id,contact_id,status,metadata")
       .eq("id",approvalId).eq("tenant_id",tenantId).limit(2);
     if (!current() || approvalRead.error || !Array.isArray(approvalRead.data) || approvalRead.data.length!==1) return null;
     const approval=object(approvalRead.data[0]);
@@ -91,7 +111,7 @@ type OriginalContext = Pick<Input,"actorId"|"tenantId"|"contactId"|"threadKey"|"
 type OriginalReplyRecord = { call:Call; messageId:string; actionId:string; kind:string; actorId:string; threadKey:string; recorded:boolean; deliveryConfirmed:boolean;
   approvedFingerprint:string; connectorId:string; recipient:string; sender:string; providerReceipt:string; preview:ConfirmEmailPreview;
   draftSource?:CommsEmailDraftSource;draftAttachments?:CommsEmailAttachmentManifest;contentDigest:string };
-export const ORIGINAL_REPLY_COLS=`id,tenant_id,contact_id,thread_key,connector_id,channel_type,direction,status,provider_message_id,sender,recipients,subject,body_text,body_html,attachments,original_binding:meta->comms_email_binding,lead_reply_approval_id:meta->comms_email_binding->>approval_id,${GOVERNED_SEND_COLS}`;
+export const ORIGINAL_REPLY_COLS=`id,tenant_id,contact_id,thread_key,connector_id,channel_type,direction,status,provider_message_id,sender,recipients,subject,body_text,body_html,attachments,action_id,original_source:meta->>source,original_binding:meta->comms_email_binding,lead_reply_approval_id:meta->comms_email_binding->>approval_id,${GOVERNED_SEND_COLS}`;
 /** A protected original read is historical evidence, never a new approval token. */
 export function parseOriginalReplyRecord(value:unknown,context:OriginalContext):OriginalReplyRecord|null {
   try{
@@ -106,7 +126,9 @@ export function parseOriginalReplyRecord(value:unknown,context:OriginalContext):
       ||m.comms_email_operation!==operation||m.comms_email_state!=="provider_accepted"||m.lead_reply_approval_id!==approval
       ||b.state!=="provider_accepted"||b.provider_message_id!==m.provider_message_id||b.tenant_id!==tenant||b.actor_user_id!==actor||b.contact_id!==contact
       ||b.connector_id!==connector||b.approval_id!==approval||b.origin_action_id!==action||b.origin_action_kind!==a.action_kind
-      ||!isFollowupEmailKind(a.action_kind)||a.tenant_id!==tenant||a.contact_id!==contact||a.approval_id!==approval
+      ||(!isFollowupEmailKind(a.action_kind)&&!(a.action_kind==="comms-draft-reply"
+        &&m.action_id===action&&m.original_source==="comms-draft-reply"
+        &&(a.channel_type==null||a.channel_type==="email")&&object(g.draft_source)?.message_id===id))||a.tenant_id!==tenant||a.contact_id!==contact||a.approval_id!==approval
       ||ap.id!==approval||ap.tenant_id!==tenant||(ap.contact_id!==null&&ap.contact_id!==contact)||!["pending","approved"].includes(String(ap.status))
       ||ap.category!==a.action_kind||object(ap.metadata)?.action_id!==action)return null;
     const prior=object(object(ap.metadata)?.governed_send),recorded=ap.status==="approved";
@@ -149,8 +171,8 @@ export async function readOriginalReplyRecord(context:OriginalContext,rows:unkno
     if(!(["failed","refused"].includes(String(row.comms_email_state))&&["draft","blocked","failed"].includes(String(row.status))&&row.provider_message_id===null))live.push(row);}
   if(live.length!==1)return null;
   const message=structuredClone(live[0]);
-  const ap=await wait(()=>supabase.from("paige_approval_queue_v").select("id,tenant_id,contact_id,status,category,metadata").eq("id",context.approvalId!).eq("tenant_id",context.tenantId!).limit(2));
-  const actions=await wait(()=>supabase.from("paige_actions").select("id,tenant_id,contact_id,approval_id,action_kind").eq("tenant_id",context.tenantId!).eq("approval_id",context.approvalId!).limit(2));
+  const ap=await wait(()=>originalReplyRows.from("paige_approval_queue_v").select("id,tenant_id,contact_id,status,category,metadata").eq("id",context.approvalId!).eq("tenant_id",context.tenantId!).limit(2));
+  const actions=await wait(()=>originalReplyRows.from("paige_actions").select("id,tenant_id,contact_id,approval_id,action_kind,channel_type:payload->>channel_type").eq("tenant_id",context.tenantId!).eq("approval_id",context.approvalId!).limit(2));
   if(ap.error!==null||!Array.isArray(ap.data)||ap.data.length!==1||actions.error!==null||!Array.isArray(actions.data)||actions.data.length!==1)return null;
   const result={message,approval:structuredClone(ap.data[0]),action:structuredClone(actions.data[0])};return parseOriginalReplyRecord(result,context)?result:null;
 }

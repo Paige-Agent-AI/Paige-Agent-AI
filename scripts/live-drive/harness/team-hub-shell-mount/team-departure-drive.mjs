@@ -37,7 +37,9 @@ try{
    width:r.width,height:r.height,overflow:document.documentElement.scrollWidth-innerWidth,text:el.textContent,
    covered:!hit||!el.contains(hit),paige:document.querySelector('[data-tenant-shell]')?.getAttribute('data-paige'),
   };});
-  if(paige==='open')await page.locator('[data-tenant-paige-command]').click();
+  // The original drawer backdrop covers the command field; use the shell's real Ctrl+\ shortcut.
+  if(paige==='open')await page.keyboard.press('Control+Backslash');
+  await page.waitForFunction(state=>document.querySelector('[data-tenant-shell]')?.getAttribute('data-paige')===state,paige);
   assert.equal(await shell.getAttribute('data-paige'),paige);
   await page.evaluate(()=>document.fonts.ready);
   const capturedGeometry=await measure(),overlayPermitted=paige==='open'&&width<=1080;
@@ -45,7 +47,8 @@ try{
   assert.equal(capturedGeometry.text,expected);assert(overlayPermitted||!capturedGeometry.covered,'Refusal must be exposed outside the incumbent narrow PAIGE overlay');
   const label=`${tenant}-${theme}-${width}-${paige}`;
   await page.screenshot({path:`${out}/${label}.png`});
-  if(paige==='open')await page.getByRole('button',{name:'Fold PAIGE conversation',exact:true}).first().click();
+  if(paige==='open')await page.keyboard.press('Control+Backslash');
+  await page.waitForFunction(()=>document.querySelector('[data-tenant-shell]')?.getAttribute('data-paige')==='closed');
   await alert.scrollIntoViewIfNeeded();
   const restoredGeometry=await measure();
   assert(restoredGeometry.width>0&&restoredGeometry.height>0&&restoredGeometry.overflow<=1&&!restoredGeometry.covered);

@@ -14,10 +14,11 @@
  * shapes and refusal sentences in supabase/migrations/20271115040008_exp08_team_lifecycle.sql. They
  * prove what the SCREEN does with those answers, not that the database gives them.
  */
-import { act } from "react";
+import { act, StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { SoloTeamWorkspace } from "./team-workspace";
+import { DepartureReview } from "./team-departure";
 import { removalRefusal, type TeamMemberRecord, type TeamWorkspaceRecord } from "./team-workspace-contract";
 
 const mocks = vi.hoisted(() => ({
@@ -519,6 +520,53 @@ describe("handing over, then removing", () => {
     expect(removeCalls()).toHaveLength(0);
     expect(document.querySelector(".stw-notice")?.textContent).toContain("Dana Reyes is still on the team. 0 of 1 hand-overs saved, and they stay saved.");
     expect(byText("Review again")).toBeTruthy();
+  });
+});
+
+describe("departure review lifecycle", () => {
+  it("focuses the authored refusal inside the review when removal becomes disabled", async () => {
+    route({
+      get_solo_team_workspace: () => ({ data: roster([owner, dana]), error: null }),
+      team_member_holdings: () => ({ data: holdings(), error: null }),
+      remove_solo_team_member: () => ({ data: null, error: { code: "42501", message: "TEAM_MEMBER_PROTECTED: this Paige account is protected; nothing was changed" } }),
+    });
+    await openScreen();
+    await openRemoval();
+    await act(async () => byText("Continue")!.click());
+    await act(async () => { removeButton()!.focus(); removeButton()!.click(); });
+    expect(removeButton()!.disabled).toBe(true);
+    expect(document.activeElement).toBe(drawer()!.querySelector('[role="alert"]'));
+    expect(removeCalls()).toHaveLength(1);
+  });
+
+  it("finishes the original holdings read after StrictMode effect teardown and setup", async () => {
+    route({ get_solo_team_workspace: () => ({ data: roster([owner, dana]), error: null }), team_member_holdings: () => ({ data: holdings(), error: null }) });
+    const screen = mount(<StrictMode><SoloTeamWorkspace /></StrictMode>);
+    await screen.render();
+    await wait();
+    await openRemoval();
+    expect(drawer()?.textContent).toContain("Dana Reyes holds nothing to hand over");
+    expect(drawer()?.textContent).not.toContain("Checking Dana's open work");
+    expect(removeCalls()).toHaveLength(0);
+  });
+
+  it("still suppresses a removal result after a genuine unmount", async () => {
+    let settle!: (value: unknown) => void;
+    const removed = vi.fn();
+    route({
+      get_solo_team_workspace: () => ({ data: roster([owner, dana]), error: null }),
+      team_member_holdings: () => ({ data: holdings(), error: null }),
+      remove_solo_team_member: () => new Promise((resolve) => { settle = resolve; }),
+    });
+    const screen = mount(<StrictMode><DepartureReview member={dana} workspace={roster([owner, dana])} viewerId="owner-1" members={[owner, dana]} onClose={vi.fn()} onRemoved={removed} /></StrictMode>);
+    await screen.render();
+    await wait(30);
+    await act(async () => byText("Continue")!.click());
+    await act(async () => removeButton()!.click());
+    expect(removeCalls()).toHaveLength(1);
+    act(() => screen.root.unmount());
+    await act(async () => settle({ data: { tenant_id: "tenant-1" }, error: null }));
+    expect(removed).not.toHaveBeenCalled();
   });
 });
 

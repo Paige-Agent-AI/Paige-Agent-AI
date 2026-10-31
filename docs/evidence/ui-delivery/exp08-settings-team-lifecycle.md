@@ -33,6 +33,34 @@ No new server, off-machine browser call, authenticated customer act or source re
 Run later with the derived config and the same drive when capacity permits; inspect
 actual frames/control clipping before accepting its limited center-point measurements.
 
+Same intended outcome/lease refinement before component repair: after capacity recovered,
+the first browser run timed out loading the page (zero frames), preserved separately.
+The unchanged warm run reached the real departure drawer but never displayed the empty
+holdings result (zero accepted frames). Source hypothesis: its alive ref is cleared by
+effect cleanup and not reset during StrictMode effect setup. Production entry and the
+original harness both retain StrictMode; development effect replay is not a production
+failure claim. Add a failing-first original-component StrictMode read test, then change
+ONLY that lifecycle setup/cleanup if reproduced. Preserve real unmount suppression,
+workspace/actor withdrawal, no automatic act, all writer/permission/recovery/layout and
+old test assertions. This repairs the approved loading→ready path, adds no flow or exit.
+
+The focused StrictMode control reproduced the stalled read before repair; the narrow
+setup reset then passed the entire39-test removal suite, including genuine-unmount
+late-result suppression. Non-author SOURCE review found no material issue, no execution.
+The subsequent real-shell run reached and captured the original authored refusal, then
+failed Escape/reopen: disabling removal had not moved focus into the refusal, allowing
+the shell's existing contextual Escape path to take the page away. A new exact focus
+control FAILS before repair. Next narrow owned change: focus the existing alert via a
+local ref when removalError arrives; preserve the original shell handler, all exits,
+authority and writes. This is an accessibility repair to the same approved error state,
+not a new flow or a production reproduction. Zero complete accepted browser cases yet.
+
+The focus control then passed with the complete40-test removal suite. Non-author
+SOURCE review reports no material issue in the local alert ref/effect, retaining the
+original shell handler and genuine-unmount suppression. Final rendered/reopen proof,
+native full-runner verification, actual assistive technology and customer proof remain
+owed. These local changes are separate from released lower3130/21da54c89.
+
 UI_DELIVERY_EVIDENCE_VERSION: 1
 FLOW_BY_FLOW: PASS: flow packet is the tier-matrix ledger "EXP08 team lifecycle" (docs/doctrine/tier-matrix.md: the authority rule, the per-tier table, the departure-review hand-over contract naming each existing writer, and what a suspension does to mailboxes and approvals) plus "Solo Settings → Team: the screens for the team lifecycle" added in this PR; the flows are suspend, reinstate, the Team conversations switch (row and invitation form), departure review → hand-over → remove, Team Hub with conversations off, and accept-invite refused for a held seat; backend for all of them merged and applied in #2912 (e0263aac0)
 PAIGE_UI_DESIGN: PASS: Impeccable's reference/craft-floor.md and .agents/skills/paige-ui-design/SKILL.md applied (Solo verification: four viewports PAIGE closed and open, both themes, states, keyboard, reflow, reduced motion), recorded below; the owner saw the rendered design and approved it on 2026-10-26, then asked for "a touch more color", applied token-only

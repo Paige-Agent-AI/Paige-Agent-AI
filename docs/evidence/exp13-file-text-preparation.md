@@ -170,3 +170,34 @@ or call original Planning directly around absent admission. Precise native schem
 consumer ABI and forward-version sequence remain integration work, not an applied
 migration or current upload support. E01 selected-fact confirmation and E02/E05
 original saved-plan/actual-Work handoffs remain independently owed.
+
+### October 30 native integration development checkpoint
+
+The local, unpublished forward migration now extends the original Knowledge
+completion/review/publication contracts with separate raw-file and extracted-text
+identity. The six-argument completion and two-argument review ABI remain
+compatible; an explicit authorized review overload exposes bounded extraction
+evidence. Pending evidence promotes atomically through original publication and
+does not replace the prior canonical evidence during a pending replacement.
+This is local implementation, not an applied migration or customer availability.
+
+The original submit handler now captures verified file metadata; parsing is
+mounted in the same original document worker. Binary readings require matching
+source and text hashes before native completion. Missing completion readback is
+`outcome_unknown`, not success or permission to replay. Safe parser refusal codes
+remain distinct from inaccessible-source refusal. No credit-report routing or
+Planning authority was added.
+
+After an independent test run hit ENOSPC during setup, the affected three-suite
+author rerun completed with **55 tests passing**, exit zero. The interrupted run
+remains invalid proof for those suites. Scoped frozen Deno runtime caching of
+both original handlers also completed with exit zero using the extended committed
+lock candidate. Managed Preview, deployment packaging identity, authenticated
+tenant behavior, upload UI/bulk persistence, selected facts and actual task
+creation remain proof owed. No protected customer material was used.
+
+The same frozen dependency graph subsequently completed all **nine actual Deno
+parser tests**, exit zero, without runtime permission flags. The existing
+standard-font-data warning remains visible; this does not establish complete
+font coverage, OCR or scanned-document support. The bulk control verifies parser
+isolation and identities, not persisted multi-upload UI or later-session recovery.

@@ -1,4 +1,6 @@
-import { downloadKnowledgeText, runKnowledgeExtraction } from '../_shared/knowledge-extraction.ts';
+import { runKnowledgeExtraction } from '../_shared/knowledge-extraction.ts';
+import { readKnowledgeFile } from '../_shared/knowledge-file-source.ts';
+import { knowledgeBinaryParsers } from '../_shared/knowledge-binary-adapters.ts';
 import { runKnowledgePublication } from '../_shared/knowledge-publication-worker.ts';
 import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.75.0";
 import { callModel } from "../_shared/model-router.ts";
@@ -219,9 +221,10 @@ async function runPublication(admin: SupabaseClient, workId: string): Promise<Re
 async function runKnowledge(admin: SupabaseClient, workId: string): Promise<Record<string, unknown>> {
   const url = Deno.env.get("SUPABASE_URL")!;
   const key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-  return runKnowledgeExtraction(admin, workId, path => downloadKnowledgeText(
+  return runKnowledgeExtraction(admin, workId, path => readKnowledgeFile(
     `${url}/storage/v1/object/authenticated/tenant-knowledge/${path.split("/").map(encodeURIComponent).join("/")}`,
     { Authorization: `Bearer ${key}`, apikey: key },
+    path, knowledgeBinaryParsers,
   ));
 }
 

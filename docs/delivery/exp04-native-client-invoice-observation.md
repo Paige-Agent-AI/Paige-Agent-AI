@@ -764,3 +764,78 @@ Lesson retained in this original delivery record: use literal function replacers
 when transforming SQL source; replacement-string dollar syntax can corrupt SQL
 regular expressions. Compare parsed transport objects structurally, preserving
 closed keys and exact values, rather than relying on JSON key order.
+
+## October31 C188 — actual payment review context and undispatched recovery
+
+The ORIGINAL service-only payment-obligation reader now supports an explicit
+financial-version3 envelope inside its existing reference argument. Its endpoint,
+arguments, owner, permissions, original actor checks and invoice lock remain;
+the legacy six-field selector path remains. The closed13-field new result carries
+canonical actual debt, separate refund payable, source hash and optional exact
+accepted target. Draft, void, unknown, foreign or ungranted sources refuse.
+
+The real payment-review adapter consumes that result and compares the original
+invoice/customer/tenant/version/snapshot/status/currency before provider readiness.
+It has no legacy gross-balance fallback and never subtracts a refund payable from
+future debt. It keeps the original exact command, fingerprint, high/confirm gate,
+native writer and provider adapter. This is transport/integration over the SAME
+native calculation, not another financial engine or read authority.
+
+A stale claim can now use the ORIGINAL undispatched-cancellation door. Before
+closing anything, the adapter reads and validates the original actor, tenant,
+operation, immutable command and prepared state; the native cancellation repeats
+its locked no-dispatch fence. Ambiguous acknowledgement remains unknown under
+the same identity and later readback recovers the original result. A dispatched
+or uncertain provider request retains GET-only reconciliation; no automatic new
+provider request, external cancellation, Work item or payment is introduced.
+
+Native verification exposed incomplete later provider facts being accepted:
+omitting a previously verified refund could otherwise restore captured principal.
+The ORIGINAL observation writer now refuses missing known refund/dispute identities.
+An explicit owner financial decision also requires current observation evidence
+after a source change. A legitimate failed-refund reversal remains reviewable;
+an omitted fact is unavailable evidence. The original receipt-failure control was
+updated to use a legitimate reversal retaining the original identity, so it still
+reaches the original Rail failure and proves whole-transaction rollback. The
+first missing-exception failure is retained, not relabeled as a pass.
+
+Fresh native proof: original financial55 and cash39/2 ACL run before the companion,
+then companion39 (original23 plus16 financial-context controls) PASS in the SAME
+owned disposable runner. The old six-field path, new closed context, current
+Owner/Admin boundaries, revoked/member/foreign/void/unknown refusals, source
+completeness, original metadata and replay are covered. Two actual native contexts
+pass8 strict production-decoder bridge checks with only exact-file read permission;
+no network/provider/identity action is allowed by that bridge. These remain
+reduced-schema/synthetic identity, signing and provider inputs, not acceptance.
+
+The original Sales provider CI configuration passes529 tests, including38
+production-adapter cases with synthetic ports. The final original root runner
+separately passes411 related contracts and endpoint checks. Initial root-runner
+attempts found zero domain tests and are
+INVALID as behavioral evidence. The temporary test-path move was undone after
+locating the EXISTING domain CI job; final workflow/config/path are preserved.
+The larger check also found an inherited six-action expectation after the new
+seventh internal declaration. Its corrected test preserves all governance checks
+and explicitly requires the new declaration to remain UNAVAILABLE with no Chat
+tool. No required test or execution restriction was removed.
+
+Catalog-only production readback found the new observation writer and actual
+position absent, with zero observation columns. This corroborates the INERT source
+boundary; it reads no customer/provider rows and proves no settlement or adoption.
+Strict unchanged frozen/cached Deno graph and scoped lint pass. Exact source/review
+receipts retain the original source, failures and final verified identities.
+
+Functional: PARTIAL/local backend integration. Visual: no fresh rendered claim;
+the old prototype and compact-shell keyboard/final-contract limits remain open.
+Experiential: source-verified review/recovery, not signed-in customer operation.
+Acceptance: UNVERIFIED/OPEN, with no new PR, hosted CI, main merge, versioned native
+carrier, deployment or activation. Same O5 only, all twelve original outcomes and
+one final integrated founder evaluation remain. ALG01/12 have bounded local
+reconciliation/exception support; ALG02/13 maturity is unchanged.
+
+Next: original manual and explicit provider-target assignment/revision; minimized
+actual financial reads and paired Owner/Collections/Chat/cleared Portal UI; final
+rendered/focus proof, combined schema/order/CI/release/readback, genuine correct-
+merchant TEST and ordinary Owner/client receipts/reload/reopen/recovery. Preserve
+every remaining original O5 financial-action requirement. The current native and
+adapter checkpoint is not completion of payment processing or the Experience.

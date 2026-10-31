@@ -5,16 +5,16 @@ DECLARE r record;p pg_proc%ROWTYPE;
 BEGIN
  FOR r IN SELECT * FROM (VALUES
 ('public._sales_invoice_accepted_obligations(public.paige_invoices,uuid)','4f52d722c9b965de563aa307e94e0f31','60f37a887ee106ef7761260fdeb6b637',false,'search_path=""'),
-('public._sales_invoice_financial_position_rows(uuid,uuid,integer,jsonb)','fd0ec0aabf95d46b8f052af027cbf6ce','fbd8e74265c35177386201bf9e0b4416',false,'search_path=""'),
+('public._sales_invoice_financial_position_rows(uuid,uuid,integer,jsonb)','fd0ec0aabf95d46b8f052af027cbf6ce','bdb0960fa3d88b21cca90b79636dc7e1',false,'search_path=""'),
 ('public._sales_invoice_require_accepted_obligation(public.paige_invoices,jsonb)','1de192b462e93708741b3933c15b0b8b','e07fdfc39975c26c2ec07f0ac290ba2c',false,'search_path=""'),
 ('public.prepare_sales_invoice_payment_request(uuid,uuid,uuid,jsonb,jsonb)','8bae7da7b9efc5c5ed21615b57df51ff','efefcdbf889d8524bd2b2440c4b8e055',true,'search_path=pg_catalog, public'),
 ('public.claim_sales_invoice_payment_request(uuid,uuid,uuid)','6a542fbff334c53d43c4fe6d734d138c','316accdf44a20806402c40cf690f0b14',true,'search_path=pg_catalog, public'),
 ('public.allocate_verified_sales_invoice_payment(uuid,uuid,uuid,jsonb)','d68a90d2773bbb1700fb29c89966229e','17310e2c68bc386ecbc0f2850476006d',true,'search_path=pg_catalog, public')
 ,
-('public.read_sales_invoice_payment_obligation(uuid,uuid,uuid,jsonb)','662fc0645d50fa24d3a0626d22598e51','8a985ead55ad1f5345a9e30fc7b84443',true,'search_path=""')
+('public.read_sales_invoice_payment_obligation(uuid,uuid,uuid,jsonb)','662fc0645d50fa24d3a0626d22598e51','04bfed78729d469de33c16c820358859',true,'search_path=""')
 ,
 ('public._sales_invoice_payment_request_mutation_guard()','6036f48c4bfd0c46fd20803be0e29070','ccbc654b650c3a096ae9779646448a5f',true,'search_path=pg_catalog, public'),
-('public.record_sales_invoice_provider_observation(uuid,uuid,uuid,bigint,jsonb,text)','d32856b434999f944b88a1499124c913','d7985123a579317abc9a2f248e0d8634',true,'search_path=""')
+('public.record_sales_invoice_provider_observation(uuid,uuid,uuid,bigint,jsonb,text)','d32856b434999f944b88a1499124c913','950fdbc386da780ae6ccefa89d0a0043',true,'search_path=""')
  ) x(signature,before_hash,after_hash,definer,setting) LOOP
  SELECT * INTO p FROM pg_proc WHERE oid=to_regprocedure(r.signature);
  IF NOT FOUND OR md5(p.prosrc) NOT IN (r.before_hash,r.after_hash)
@@ -244,7 +244,7 @@ BEGIN
    proposed:=true;
   END IF;
   known:=known AND payment_position->'verification_pending'='false'::jsonb
-   AND (payment_position->'commercial_review_required'='false'::jsonb OR
+   AND ((history->'version'='0'::jsonb AND payment_position->'commercial_review_required'='false'::jsonb) OR
     (history->'observation_id'=payment_position->'observation_id' AND history->'observation_version'=payment_position->'observation_version'));
   histories:=histories||jsonb_build_array(payment_position||jsonb_build_object('financial_decision',history));
  END LOOP;
@@ -528,26 +528,47 @@ END $$;
 CREATE OR REPLACE FUNCTION public.read_sales_invoice_payment_obligation(
  _actor_user_id uuid,_expected_tenant_id uuid,_invoice_id uuid,_reference jsonb
 ) RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $payment_read$
-DECLARE invoice public.paige_invoices%ROWTYPE; observation jsonb; obligation jsonb;
+DECLARE invoice public.paige_invoices%ROWTYPE; observation jsonb; obligation jsonb; selector jsonb;
+ financial_mode boolean:=coalesce(_reference ? 'financial_evidence_version',false);
 BEGIN
  PERFORM public._sales_payment_operation_service();
  PERFORM public._sales_invoice_actor(_actor_user_id,_expected_tenant_id);
- IF pg_catalog.jsonb_typeof(_reference) IS DISTINCT FROM 'object'
-  OR coalesce(_reference->>'signing_id','') !~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$' THEN
+ IF financial_mode THEN
+  IF pg_catalog.jsonb_typeof(_reference) IS DISTINCT FROM 'object' OR pg_catalog.octet_length(_reference::text)>4000
+   OR (SELECT count(*) FROM pg_catalog.jsonb_object_keys(_reference))<>2
+   OR _reference-ARRAY['financial_evidence_version','reference']<>'{}'::jsonb
+   OR _reference->'financial_evidence_version' IS DISTINCT FROM '3'::jsonb THEN
+   RAISE EXCEPTION 'Invalid payment financial context request' USING ERRCODE='22023';END IF;
+  selector:=CASE WHEN _reference->'reference'='null'::jsonb THEN NULL ELSE _reference->'reference' END;
+ ELSE selector:=_reference;END IF;
+ IF (NOT financial_mode OR selector IS NOT NULL) AND (pg_catalog.jsonb_typeof(selector) IS DISTINCT FROM 'object'
+  OR coalesce(selector->>'signing_id','') !~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$') THEN
   RAISE EXCEPTION 'Invalid accepted payment selector' USING ERRCODE='22023';
  END IF;
  SELECT * INTO invoice FROM public.paige_invoices WHERE id=_invoice_id AND tenant_id=_expected_tenant_id FOR SHARE;
  IF NOT FOUND THEN RAISE EXCEPTION 'Payment operation unavailable' USING ERRCODE='42501'; END IF;
+ IF financial_mode AND (invoice.status IS DISTINCT FROM 'issued' OR invoice.billing_issued_snapshot_version IS NULL
+  OR invoice.billing_issued_at IS NULL OR invoice.billing_document IS NULL) THEN
+  RAISE EXCEPTION 'Invoice changed or unavailable for payment' USING ERRCODE='40001';END IF;
  SELECT b.financial_position INTO STRICT observation FROM public._sales_invoice_financial_position_rows(invoice.tenant_id,invoice.id,3,NULL::jsonb) b;
  IF observation->>'financial_standing' IS DISTINCT FROM 'recorded' THEN
   RAISE EXCEPTION 'Accepted payment obligation unavailable; review again' USING ERRCODE='40001';
  END IF;
+ IF selector IS NOT NULL THEN
  SELECT pg_catalog.jsonb_build_object('reference',item.value->'reference','source_digest',item.value->'source_digest',
   'due_date',item.value->'due_date','scheduled_minor',item.value->'scheduled_minor','remaining_minor',item.value->'actual_outstanding_minor')
  INTO obligation FROM pg_catalog.jsonb_array_elements(observation->'obligations') item
-  WHERE item.value->'reference'=_reference;
+  WHERE item.value->'reference'=selector;
  IF NOT FOUND THEN RAISE EXCEPTION 'Accepted payment obligation changed; review again' USING ERRCODE='40001'; END IF;
+ END IF;
  PERFORM public._sales_invoice_actor(_actor_user_id,_expected_tenant_id);
+ IF financial_mode THEN
+  RETURN pg_catalog.jsonb_build_object('financial_evidence_version',3,'tenant_id',invoice.tenant_id,'client_id',invoice.contact_id,
+   'invoice_id',invoice.id,'invoice_version',invoice.billing_lifecycle_version,'issued_snapshot_version',invoice.billing_issued_snapshot_version,
+   'status',invoice.status,'currency',pg_catalog.lower(invoice.currency),'financial_standing',observation->'financial_standing',
+   'actual_outstanding_minor',observation->'actual_outstanding_minor','refund_payable_minor',observation->'refund_payable_minor',
+   'source_hash',observation->'financial_source_hash','obligation',obligation);
+ END IF;
  RETURN pg_catalog.jsonb_build_object('tenant_id',invoice.tenant_id,'client_id',invoice.contact_id,
   'invoice_id',invoice.id,'invoice_version',invoice.billing_lifecycle_version,
   'issued_snapshot_version',invoice.billing_issued_snapshot_version,'obligation',obligation);
@@ -628,6 +649,15 @@ begin
   if not found or prior.command->>'action'<>'invoice.provider_observation' or prior.command->>'provider_operation_id'<>op.id::text then
    raise exception 'Original observation history unavailable' using errcode='55000';end if;
   perform public._sales_provider_observation_entry(op,prior,op.provider_observation_version-1,true);
+  -- A complete readback cannot silently discard a previously verified refund
+  -- or dispute. Missing facts are unavailable evidence, never restored cash.
+  if exists(select 1 from jsonb_array_elements(prior.command#>'{snapshot,refunds}') old_fact
+    where not exists(select 1 from jsonb_array_elements(snapshot->'refunds') current_fact
+     where current_fact.value->'id'=old_fact.value->'id'))
+   or exists(select 1 from jsonb_array_elements(prior.command#>'{snapshot,disputes}') old_fact
+    where not exists(select 1 from jsonb_array_elements(snapshot->'disputes') current_fact
+     where current_fact.value->'id'=old_fact.value->'id')) then
+   raise exception 'Provider observation incomplete; reconcile the original verified history' using errcode='55000';end if;
   if prior.command->'snapshot'=snapshot then
    return prior.result||jsonb_build_object('replayed',true,'current_observation_version',op.provider_observation_version,'is_current',true);
   end if;

@@ -80,6 +80,10 @@ export async function proveFinancialCollectibility({run,read,actor,tenant,client
   check('original undispatched cancellation unblocks review and recovers without provider effect',cancelled.state==='cancelled'&&cancelled.provider_object_id===null&&JSON.stringify(cancelled)===JSON.stringify(replay));
  }
  const observed=value(service(`SELECT read_sales_invoice_provider_observation_context('${plan.tenant}','${first.id}');`));
+ const reversedRefund={state:'observed',provider_transaction_id:'ch_'+first.tag,provider_settlement_id:'txn_'+first.tag,
+  refunds:[{id:'re_'+first.tag,amount_minor:10000,currency:'usd',status:'failed',created_at:now,
+   balance_transaction:{id:'txn_refund'+first.tag,amount_minor:-10000,currency:'usd',status:'available',created_at:now},
+   failure_balance_transaction:{id:'txn_return'+first.tag,amount_minor:10000,currency:'usd',status:'available',created_at:now}}],disputes:[]};
  if(!baseline){
   const snapshot=()=>run(`SELECT jsonb_build_object('invoice',(SELECT to_jsonb(i) FROM paige_invoices i WHERE i.id='${plan.invoice}'),
    'payment',(SELECT to_jsonb(p) FROM paige_invoice_provider_operations p WHERE p.id='${first.id}'),
@@ -89,7 +93,7 @@ export async function proveFinancialCollectibility({run,read,actor,tenant,client
   const failRail=`BEGIN;CREATE FUNCTION pg_temp.e04_collectibility_receipt_failure() RETURNS trigger LANGUAGE plpgsql AS $$BEGIN RAISE EXCEPTION 'Fixture receipt failure';END$$;
    CREATE TRIGGER e04_collectibility_receipt_failure BEFORE INSERT ON paige_workspace_events FOR EACH ROW
    WHEN (NEW.capability_key='sales_payment_reconcile' AND NEW.detail->>'effect'='provider_observation_only') EXECUTE FUNCTION pg_temp.e04_collectibility_receipt_failure();`;
-  assert.throws(()=>run(failRail+service(`SELECT record_sales_invoice_provider_observation('${plan.tenant}','${first.id}','${first.token}',${observed.observation_version},${literal({state:'observed',provider_transaction_id:'ch_'+first.tag,provider_settlement_id:'txn_'+first.tag,refunds:[],disputes:[]})},'evt_ReceiptFailure');`)),/Fixture receipt failure/);
+  assert.throws(()=>run(failRail+service(`SELECT record_sales_invoice_provider_observation('${plan.tenant}','${first.id}','${first.token}',${observed.observation_version},${literal(reversedRefund)},'evt_ReceiptFailure');`)),/Fixture receipt failure/);
   check('failed original Rail rolls back observation, pointer and invoice version',snapshot()===before);
  }
  const decision={action:'invoice.record_provider_disposition',invoice_id:plan.invoice,expected_version:version(plan.invoice),provider_operation_id:first.id,observation_id:observed.observation_id,observation_version:observed.observation_version,expected_disposition_version:0,decision:'balance_due',reason:'Fixture owner explicitly retains the original refunded installment principal as owed.'};
@@ -131,5 +135,55 @@ export async function proveFinancialCollectibility({run,read,actor,tenant,client
  check('candidate replay refuses public or private authority drift',metadata()===metadataBefore);
  const after=position(plan.tenant,plan.invoice);run('BEGIN;'+source+'COMMIT;');
  check('repeat adoption preserves exact original current position and metadata',JSON.stringify(position(plan.tenant,plan.invoice))===JSON.stringify(after)&&metadata()===metadataBefore);
- return {proof:'E04_FINANCIAL_COLLECTIBILITY_SELECTED_SCHEMA',status:'PASS',checks,source_hashes:Object.fromEntries(['supabase/tests/fixtures/exp04_invoice_financial_collectibility.sql','scripts/sql/sales-financial-collectibility-proof.mjs'].map(f=>[f,createHash('sha256').update(read(f)).digest('hex')])),samples:{recollected:second.allocated,actualPosition:after,testThenLive:position(tenant,plain)},boundary:'Original native payment doors/accepted targets/immutable receipts, synthetic identity/schema/signing/provider facts only. No hosted Auth, real provider, full schema, rendered UI or customer acceptance.'};
+ assert.equal(checks,23,'all original collectibility controls execute before new service-context controls');
+ const collectibilityChecks=checks;
+ const contextSQL=(a,t,id,reference)=>`SELECT read_sales_invoice_payment_obligation('${a}','${t}','${id}',${literal(reference)});`;
+ const envelope=reference=>({financial_evidence_version:3,reference});
+ const targetContext=value(service(contextSQL(plan.actor,plan.tenant,plan.invoice,envelope(owed.reference))));
+ check('original endpoint emits a closed current actual target context',Object.keys(targetContext).length===13&&targetContext.financial_evidence_version===3
+  &&targetContext.tenant_id===plan.tenant&&targetContext.client_id===plan.client&&targetContext.invoice_id===plan.invoice
+  &&targetContext.invoice_version===version(plan.invoice)&&targetContext.status==='issued'&&targetContext.financial_standing==='recorded'
+  &&targetContext.actual_outstanding_minor===240000&&targetContext.refund_payable_minor===10000
+  &&targetContext.obligation.remaining_minor===0&&/^[a-f0-9]{64}$/.test(targetContext.source_hash));
+ const fullContext=value(service(contextSQL(actor,tenant,plain,envelope(null))));
+ check('full current context retains actual zero after TEST then LIVE without a selector',Object.keys(fullContext).length===13
+  &&fullContext.obligation===null&&fullContext.actual_outstanding_minor===0&&fullContext.refund_payable_minor===0&&fullContext.financial_evidence_version===3);
+ const administrator=value(`BEGIN;UPDATE tenant_members SET role='admin' WHERE tenant_id='${plan.tenant}' AND user_id='${plan.actor}';`+service(contextSQL(plan.actor,plan.tenant,plan.invoice,envelope(owed.reference)))+'ROLLBACK;');
+ check('existing original financial administrator retains the same authorized read',JSON.stringify(administrator)===JSON.stringify(targetContext));
+ for(const [bad,label,pattern]of [
+  [{financial_evidence_version:2,reference:null},'unsupported financial version cannot fall back',/Invalid payment financial context request/],
+  [{...envelope(null),actor_user_id:plan.actor},'envelope cannot supply actor authority',/Invalid payment financial context request/],
+  [{financial_evidence_version:3},'missing selector is not an implicit full request',/Invalid payment financial context request/],
+  [envelope(0),'scalar selector cannot become a full read',/Invalid accepted payment selector/],
+ ]){assert.throws(()=>run(service(contextSQL(plan.actor,plan.tenant,plan.invoice,bad))),pattern);check(label,true);}
+ assert.throws(()=>run(service(contextSQL(plan.actor,plan.tenant,plan.invoice,envelope({...owed.reference,sequence:240})))),/Accepted payment obligation changed/);
+ check('foreign accepted selector cannot acquire the current debt',metadata()===metadataBefore);
+ assert.throws(()=>run(service(contextSQL(plan.actor,otherTenant,plan.invoice,envelope(null)))),/workspace|authority/i);
+ check('new context cannot cross the original workspace boundary',metadata()===metadataBefore);
+ for(const [patch,label]of [["status='inactive'",'revoked membership'],["role='member'",'ordinary ungranted member']]){
+  assert.throws(()=>run(`BEGIN;UPDATE tenant_members SET ${patch} WHERE tenant_id='${plan.tenant}' AND user_id='${plan.actor}';`+service(contextSQL(plan.actor,plan.tenant,plan.invoice,envelope(null)))),/workspace|authority/i);
+  check(label+' cannot read the financial context',metadata()===metadataBefore);
+ }
+ assert.throws(()=>run(`BEGIN;UPDATE paige_invoices SET status='void' WHERE id='${plain}';`+service(contextSQL(actor,tenant,plain,envelope(null)))),/Invoice changed or unavailable for payment/);
+ check('void invoice cannot furnish a collectible current context',position(tenant,plain).actual_outstanding_minor===0);
+ const beforeUnknown=JSON.stringify(position(plan.tenant,plan.invoice));
+ assert.throws(()=>run(service(`SELECT record_sales_invoice_provider_observation('${plan.tenant}','${first.id}','${first.token}',${observed.observation_version},${literal({state:'observed',provider_transaction_id:'ch_'+first.tag,provider_settlement_id:'txn_'+first.tag,refunds:[],disputes:[]})},'evt_IncompleteContext');`)),/Provider observation incomplete/);
+ check('missing verified refund history cannot restore cash or furnish current debt',JSON.stringify(position(plan.tenant,plan.invoice))===beforeUnknown);
+ const disputeContext=value(service(`SELECT read_sales_invoice_provider_observation_context('${tenant}','${live.id}');`));
+ const plainBeforeDispute=JSON.stringify(position(tenant,plain));
+ const disputeSnapshot={state:'observed',provider_transaction_id:'ch_'+live.tag,provider_settlement_id:'txn_'+live.tag,
+  refunds:[],disputes:[{id:'du_ContextHistory',amount_minor:1000,currency:'usd',created_at:now,status:'under_review',
+   balance_transactions:[{id:'txn_disputeContext',amount_minor:-1000,currency:'usd',status:'available',created_at:now}]}]};
+ assert.throws(()=>run('BEGIN;'+service(`SELECT record_sales_invoice_provider_observation('${tenant}','${live.id}','${live.token}',${disputeContext.observation_version},${literal(disputeSnapshot)},'evt_DisputeContext');
+  SELECT record_sales_invoice_provider_observation('${tenant}','${live.id}','${live.token}',${disputeContext.observation_version+1},${literal({...disputeSnapshot,disputes:[]})},'evt_MissingDisputeContext');`)),/Provider observation incomplete/);
+ check('missing verified dispute history cannot restore cash and both attempted writes roll back',JSON.stringify(position(tenant,plain))===plainBeforeDispute);
+ assert.throws(()=>run('BEGIN;'+service(`SELECT record_sales_invoice_provider_observation('${plan.tenant}','${first.id}','${first.token}',${observed.observation_version},${literal(reversedRefund)},'evt_ContextUnknown');`)+service(contextSQL(plan.actor,plan.tenant,plan.invoice,envelope(null)))),/Accepted payment obligation unavailable/);
+ check('unreviewed provider change cannot be converted into zero or current debt',JSON.stringify(position(plan.tenant,plan.invoice))===beforeUnknown);
+ assert.throws(()=>run("SET ROLE authenticated;"+contextSQL(plan.actor,plan.tenant,plan.invoice,envelope(null))),/permission denied/);
+ check('context remains original service-only with no public grant',metadata()===metadataBefore);
+ assert.equal(checks,39,'original23 plus16 financial-context controls');
+ return {proof:'E04_FINANCIAL_COLLECTIBILITY_SELECTED_SCHEMA',status:'PASS',checks,collectibilityChecks,financialContextChecks:checks-collectibilityChecks,
+  source_hashes:Object.fromEntries(['supabase/tests/fixtures/exp04_invoice_financial_collectibility.sql','scripts/sql/sales-financial-collectibility-proof.mjs'].map(f=>[f,createHash('sha256').update(read(f)).digest('hex')])),
+  samples:{recollected:second.allocated,actualPosition:after,testThenLive:position(tenant,plain)},financialContexts:{targetContext,fullContext},
+  boundary:'Original native payment doors/accepted targets/immutable receipts, synthetic identity/schema/signing/provider facts only. No hosted Auth, real provider, full schema, rendered UI or customer acceptance.'};
 }

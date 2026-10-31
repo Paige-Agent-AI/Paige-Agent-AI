@@ -217,3 +217,20 @@ review context, automatic recovery and Owner/client UI remain release holds.
 The prior compact-shell keyboard issue and final-contract render proof remain
 open. O5 only, all12/final integrated founder acceptance retained. Final exact
 AUTHOR-REVIEW / LOWER ASSURANCE has no non-author/full-schema/customer meaning.
+
+### October31 C188 — original payment review and recovery, final UI still owed
+
+The original service read now supplies a closed current actual-debt context;
+the actual payment adapter rejects stale/unknown/gross fallback facts before
+provider readiness, keeps refund payable separate and reuses original safe
+undispatched recovery. Native39 controls follow original55/cash39+2; eight checks
+use actual native DTOs in the production decoder. The existing provider CI suite
+passes529 tests, including38 review/recovery cases; the original root runner
+passes411 related contract and endpoint checks. Synthetic local inputs only.
+
+The source test caught and repaired omitted verified provider history. No real
+provider call, payment, signature, send or production role change occurred. No new rendered evidence,
+availability promotion, production adoption or authenticated Owner/client result
+is claimed. Paired native financial projections, client/Owner statuses, exact
+review/consequence UI and prior compact-shell focus proof remain release holds.
+Same O5/all12; final integrated founder acceptance stays OPEN.

@@ -357,6 +357,8 @@ export function useGovernedEmailReply(input: GovernedEmailReplyInput) {
   },[saveIdentity]);
 
   // Focus follows the strip (§70: keyboard users land on the next thing to do).
+  // Native focus must also reveal that target in the existing scroll owner;
+  // suppressing scroll strands the Edit-first check below the viewport at zoom.
   useEffect(() => {
     const target = focusRef.current;
     if (!target) return;
@@ -365,11 +367,11 @@ export function useGovernedEmailReply(input: GovernedEmailReplyInput) {
     if (!root) return;
     if (target === "body") {
       const ta = root.querySelector<HTMLTextAreaElement>('[data-composer-writing-surface="true"] textarea');
-      if (ta) { ta.focus({ preventScroll: true }); ta.setSelectionRange(ta.value.length, ta.value.length); }
+      if (ta) { ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); }
       return;
     }
     const el = target === "send" ? root.querySelector<HTMLElement>("[data-composer-send]") : root.querySelector<HTMLElement>(`[data-strip-focus="${target}"]`);
-    el?.focus({ preventScroll: true });
+    el?.focus();
   });
 
   const connectorName = (id: string | null) => {

@@ -1639,9 +1639,10 @@ const planningAnswer = JSON.stringify({ reply: "Your saved plan includes Confirm
 
 describe("EXP05 ZION Planning read host composition — native contract proof still owed", () => {
   it("offers the canonical read in ZION's own owner DM and stages its original turn before model exposure", async () => {
+    let stages = 0;
     const w = zionWorld({ nativeReadStage: args => {
-      assert.equal(m.requests.length, 1, "no private model attempt before native acknowledgement");
-      assert.ok(!promptText(m).includes("Confirm venue"));
+      assert.equal(m.requests.length, ++stages === 1 ? 1 : 2, "initial exposure and final source check each require the same native turn");
+      if (stages === 1) assert.ok(!promptText(m).includes("Confirm venue"));
       assert.deepEqual(Object.keys(args).sort(), ["p_read_tools", "p_record_links", "p_token_hash", "p_turn_id"]);
       assert.equal(args.p_turn_id, TURN);
       assert.equal(args.p_token_hash, sha(TOKEN));
@@ -1654,10 +1655,11 @@ describe("EXP05 ZION Planning read host composition — native contract proof st
     assert.equal(r.body.outcome, "posted");
     assert.ok(m.requests[0].request.tools!.some(t => t.function.name === "plan_list"));
     assert.ok(!m.requests[0].request.tools!.some(t => t.function.name === "plan_create"));
-    assert.equal(named(w, "plan_list").length, 1);
+    assert.equal(named(w, "plan_list").length, 2);
     assert.equal(named(w, "plan_list")[0].args.p_tenant_id, TENANT);
     assert.ok(promptText(m).includes("Confirm venue"));
-    assert.equal(named(w, "team_hub_stage_agent_read_context").length, 1);
+    assert.equal(named(w, "team_hub_stage_agent_read_context").length, 2);
+    assert.deepEqual(named(w, "team_hub_stage_agent_read_context")[0].args, named(w, "team_hub_stage_agent_read_context")[1].args);
     assert.equal(named(w, "team_hub_post_agent_message").length, 1);
   });
 
@@ -1671,8 +1673,8 @@ describe("EXP05 ZION Planning read host composition — native contract proof st
     const result = await run(w, m, zionTurn());
     assert.ok(m.requests[0].request.tools!.some(t => t.function.name === "plan_list"));
     assert.equal(result.body.outcome, "posted");
-    assert.equal(named(w, "plan_list").length, 1);
-    assert.equal(named(w, "team_hub_stage_agent_read_context").length, 1);
+    assert.equal(named(w, "plan_list").length, 2);
+    assert.equal(named(w, "team_hub_stage_agent_read_context").length, 2);
     assert.ok(promptText(m).includes("Confirm venue"));
     assert.equal(w.calls.filter(call => ["plan_create", "plan_assign_task_scoped", "crm-command", "team_hub_decide_card"].includes(call.name)).length, 0);
   });
@@ -1762,8 +1764,10 @@ describe("EXP05 ZION Planning read host composition — native contract proof st
     ]);
     const r = await run(w, m, zionTurn());
     assert.equal(r.body.outcome, "posted");
-    assert.equal(named(w, "plan_list").length, 3);
-    assert.equal(named(w, "team_hub_stage_agent_read_context").length, 3);
+    assert.equal(named(w, "plan_list").length, 6, "three tool reads, each with one bounded original-source check");
+    assert.equal(named(w, "team_hub_stage_agent_read_context").length, 6);
+    const markers = named(w, "record_capability_run").filter(call => call.args._capability_key === "plan_list");
+    assert.equal(new Set(markers.map(call => call.args._run_id)).size, 3, "revalidation retains the original operation receipts");
     assert.ok("message" in r.body && r.body.message && typeof r.body.message.body === "string");
     assert.match(r.body.message.body, /three-read limit/);
   });
@@ -1823,16 +1827,51 @@ describe("EXP05 ZION Planning read host composition — native contract proof st
     assert.equal(named(w, "team_hub_post_agent_message").length, 0);
   });
 
-  it("a lost original post acknowledgement reconciles the same result without rereading plans", async () => {
-    const w = zionWorld({ post: (_args, attempt) => attempt === 1 ? raw(null, TRANSPORT, true) : undefined });
+  it("a lost original post acknowledgement reconciles the same result without repeating its source check", async () => {
+    const readsAtPost: number[] = [];
+    const w = zionWorld({ post: (_args, attempt) => {
+      readsAtPost.push(named(w, "plan_list").length);
+      return attempt === 1 ? raw(null, TRANSPORT, true) : undefined;
+    } });
     const m = model([{ tool_calls: [{ name: "plan_list", args: {} }] }, { content: planningAnswer }]);
     const r = await run(w, m, zionTurn());
     assert.equal(r.body.outcome, "posted");
     const posts = named(w, "team_hub_post_agent_message");
     assert.equal(posts.length, 2);
     assert.deepEqual(posts[0].args, posts[1].args);
-    assert.equal(named(w, "plan_list").length, 1);
-    assert.equal(named(w, "team_hub_stage_agent_read_context").length, 1);
+    assert.equal(named(w, "plan_list").length, 2);
+    assert.equal(named(w, "team_hub_stage_agent_read_context").length, 2);
+    assert.deepEqual(readsAtPost, [2, 2], "the lost post acknowledgment starts no new read or source check");
     assert.equal(w.store.get(MERIT_DM)!.filter(row => row.author_kind === "agent").length, 1);
+  });
+
+  it("a changed original Planning version during model work prevents publication under unchanged authority", async () => {
+    const source = { plans: [], loose_items: [{ id: TURN, tenant_id: TENANT, title: "Confirm venue",
+      updated_at: "2026-10-31T00:00:00.000001Z" }] };
+    const w = zionWorld({ planList: source }), m = model([{ tool_calls: [{ name: "plan_list", args: {} }] }, { content: planningAnswer }]);
+    const complete = m.make(w.calls); let round = 0;
+    const r = await run(w, m, zionTurn(), { complete: async (request, options) => {
+      const reply = await complete(request, options);
+      if (++round === 2) source.loose_items[0].updated_at = "2026-10-31T00:00:00.000002Z";
+      return reply;
+    } });
+    assert.equal(r.body.outcome, "no_reply");
+    assert.equal(named(w, "plan_list").length, 2);
+    assert.equal(named(w, "team_hub_post_agent_message").length, 0);
+    assert.equal(m.requests.length, 2);
+    assert.ok(promptText(m).includes("2026-10-31T00:00:00.000001Z"));
+    assert.ok(!promptText(m).includes("2026-10-31T00:00:00.000002Z"), "source recheck is not a second private model disclosure");
+  });
+
+  it("an uncertain final source-stage acknowledgment posts nothing and is not replayed", async () => {
+    let stages = 0;
+    const w = zionWorld({ nativeReadStage: () => ++stages === 1 ? { ok: true } : raw(null, TRANSPORT) });
+    const m = model([{ tool_calls: [{ name: "plan_list", args: {} }] }, { content: planningAnswer }]);
+    const r = await run(w, m, zionTurn());
+    assert.equal(r.body.outcome, "no_reply");
+    assert.equal(named(w, "plan_list").length, 2);
+    assert.equal(stages, 2);
+    assert.equal(m.requests.length, 2);
+    assert.equal(named(w, "team_hub_post_agent_message").length, 0);
   });
 });

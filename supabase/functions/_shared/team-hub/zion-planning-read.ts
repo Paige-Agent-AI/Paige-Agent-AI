@@ -58,33 +58,45 @@ export async function readZionPlans(scope: ZionPlanningScope, deps: ZionPlanning
       revalidate: async () => false,
     };
   } catch { return unavailable(); }
-  let retired = false;
-  const within = createWeeklyDraftDeadline(5000, () => !retired && !deps.signal?.aborted);
-  const current = () => within(() => deps.isCurrent(snapshot));
-  try {
-    if (await current() !== true || deps.takeRead() !== true) return unavailable();
-    const read = await within(() => readMentorPlan(snapshot, {
-      // The same elapsed deadline fences EVERY continuation. A late original
-      // RPC cannot start the canonical tenant-pin RPC after this read retires.
-      caller: { rpc: (rpc, values) => within(() => deps.caller.rpc(rpc, values)) },
-      isCurrent: current,
-      recordRead: tool => within(() => deps.recordRead(tool)),
-      signal: deps.signal,
-    }, name, args));
-    if (read.model.success !== true) return { model: read.model, revalidate: async () => false };
-    if (await current() !== true || await within(() => deps.stageReadContext(snapshot)) !== true
-      || await current() !== true) return unavailable();
-    return {
-      model: read.model,
-      // Scope-only check, not a domain-version assertion. Final native post
-      // and later history remain the original consumer's responsibility.
-      revalidate: async () => {
-        if (deps.signal?.aborted) return false;
-        const check = createWeeklyDraftDeadline(5000, () => !deps.signal?.aborted);
-        try { return await check(() => deps.isCurrent(snapshot)) === true; }
-        catch { return false; }
-      },
-    };
-  } catch { return unavailable(); }
-  finally { retired = true; }
+  // Same bounded original-reader recheck used by private MERIT/CURA reads.
+  // This is a source observation, not a second Work operation or a new receipt.
+  const inspect = async (initial: boolean) => {
+    let retired = false;
+    const within = createWeeklyDraftDeadline(5000, () => !retired && !deps.signal?.aborted);
+    const current = () => within(() => deps.isCurrent(snapshot));
+    let identity: string | null = null;
+    try {
+      if (await current() !== true || (initial && deps.takeRead() !== true)) return null;
+      const read = await within(() => readMentorPlan(snapshot, {
+        // One elapsed budget fences every continuation, including a late
+        // revalidation: it cannot start a pin read or native stage afterward.
+        caller: { rpc: (rpc, values) => within(async () => {
+          const reply = await deps.caller.rpc(rpc, values);
+          if (retired || deps.signal?.aborted) return { data: null, error: { code: "42501" } };
+          if (rpc !== "plan_list" || reply.error) return reply;
+          // Preserve raw source versions and all nested facts before any await
+          // can let a caller reuse/mutate its response object.
+          const data = structuredClone(reply.data);
+          identity = JSON.stringify(data);
+          return { ...reply, data };
+        }) },
+        isCurrent: current,
+        recordRead: tool => within(() => deps.recordRead(tool)),
+        signal: deps.signal,
+      }, name, args));
+      if (read.model.success !== true) return { model: read.model, identity: null };
+      if (identity === null || await current() !== true
+        || await within(() => deps.stageReadContext(snapshot)) !== true
+        || await current() !== true) return null;
+      return { model: read.model, identity };
+    } catch { return null; }
+    finally { retired = true; }
+  };
+  const first = await inspect(true);
+  if (!first) return unavailable();
+  if (first.model.success !== true) return { model: first.model, revalidate: async () => false };
+  return { model: first.model, revalidate: async () => {
+    const current = await inspect(false);
+    return !!current && current.model.success === true && current.identity === first.identity;
+  } };
 }

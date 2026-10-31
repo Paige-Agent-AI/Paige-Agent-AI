@@ -2848,3 +2848,34 @@ source-only review found no material issue, not independent execution/publicatio
 Fresh whole100, remaining broader locking/retirement/drift/full-schema/Auth/RLS/
 Storage-byte/customer and normal release gates remain owed. Earlier full-parent85
 PASS remains bounded historical proof. Original18+6/five journeys/full EXP08 STILL CODING.
+
+### October31 — actual original Hub currentness carrier packaged, not released
+
+Under original ANT147 reservation5f43153a, new never-applied
+`20271126150008_exp08_team_hub_currentness.sql` composes the eight reviewed inert
+pieces into ONE transaction: three original private admission helpers and seven
+original public Hub writers. No table, data, grant, Auth/profile/Setup/Work/domain
+writer, provider or held activation. LF SHA256
+`014ac2dc6edfa18a9ae1112b1e91a74e98484d5e4525b468a73e5cef20ad13ea`.
+Original applied14/history remain intact. Official CLI2.109.1 generated the empty
+unpublished file; only that unpublished file was renumbered to the reserved slot.
+
+Actual focused102 PASS retains original100 controls before two carrier controls:
+exact ordered inner-piece conservation; all10 original function snapshots; late
+original-post default ABI drift refuses and rolls back early helper/member-add
+changes; native original-to-candidate application and replay conserve expected
+body/ACL/OID/allmetadata/rows. Defaults normalize only parser-location integers
+alongside exact canonical expression checks. Log `exp08-currentness-native-carrier.log`
+SHA256 `a4a28645a13fd5fe4a8a0d8364231c82d0eba7b432b6c84a013f41eed5ccdb86`.
+Distinct SOURCE-ONLY reviewer found no material issue; executed no tests or DB/UI.
+
+Original Team Hub10 files/401 tests and original departure UI41 tests PASS. All src
+remains byte-identical to releasede0b3; no new render/authenticated claim. New UI
+evidence record `docs/evidence/ui-delivery/exp08-hub-currentness-2026-10-31.md`
+records open gates. Full current parent pending: initial missing-opt-in refusal,
+sandbox socket refusal and authorized run interrupted by owned local PostgreSQL
+lock-file shutdown are retained, not counted PASS. Clean owned restart succeeded;
+fresh run is separate. No assertions weakened. Current managed preview, final
+review/exact-head CI, release/source readback, broader retirement/full-schema and
+actual authenticated result/receipt/reopen/recovery remain owed. Original full
+18+6/five journeys/full EXP08 **STILL CODING**, no owner review or acceptance.

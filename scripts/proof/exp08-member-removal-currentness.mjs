@@ -508,7 +508,7 @@ try{
  // Retain the exact original 60-entry assertion BEFORE adding this distinct integration group.
  if(candidate&&!mutant&&(hubDoorsOnly||hubPostOnly||hubCreateOnly||contextDoorOnly||fileOnly||options.length===0)){
   const {controls,catalogue}=await verifyHubDoorDeparture({repo,sql,connection,ids,database:db.database,postOnly:hubPostOnly,createOnly:hubCreateOnly,contextDoorOnly,fileOnly});
-  assert.equal(controls.length,fileOnly?16:contextDoorOnly==='dm'?19:contextDoorOnly?5:hubCreateOnly?3:hubPostOnly?5:100,'Every original Hub-door/departure integration control must execute');
+  assert.equal(controls.length,fileOnly?16:contextDoorOnly==='dm'?19:contextDoorOnly?5:hubCreateOnly?3:hubPostOnly?5:102,'Every original Hub-door/departure integration control must execute');
   output.push({change:'original Hub DM and departure integration',candidateState:'INERT/unpublished original Hub admission/currentness patches; not part of versioned removal carrier',catalogue,controls});
  }
  const catalogue=JSON.parse(sql("SELECT jsonb_build_object('signature',p.oid::regprocedure::text,'md5',md5(p.prosrc),'owner',p.proowner::regrole::text,'definer',p.prosecdef,'volatility',p.provolatile,'config',p.proconfig,'acl',p.proacl) FROM pg_proc p WHERE p.oid='public.remove_solo_team_member(uuid,uuid)'::regprocedure"));

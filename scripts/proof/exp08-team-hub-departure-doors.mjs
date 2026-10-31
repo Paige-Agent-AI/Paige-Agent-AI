@@ -4,10 +4,24 @@
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {join} from 'node:path';
+import {createHash} from 'node:crypto';
 import {verifyHubFileCurrentness} from './exp08-team-hub-file-currentness.mjs';
 
 export async function verifyHubDoorDeparture({repo,sql,connection,ids,database,postOnly=false,createOnly=false,contextDoorOnly=null,fileOnly=false}){
  const results=[];
+ const carrierTargets=new Map([
+  ['public._team_hub_is_active(uuid,uuid)','c290399dc80d95d16116a0f88b0abd8c'],
+  ['public._team_hub_participates(uuid,uuid)','4f2fb69d09f7b362027edf195a37da83'],
+  ['public._team_hub_hold_seats(uuid,uuid[])','af0dee455ee0413ee5b907505ff89acd'],
+  ['public.team_hub_add_members(uuid,uuid,uuid[])','25bac1def127e3998036368329e4c80d'],
+  ['public.team_hub_post_message(uuid,uuid,text,uuid,uuid,uuid[],uuid[],text[],text)','2b9e0270f28b6c17fd3adb37d5b554d8'],
+  ['public.team_hub_create_channel(uuid,text,text,uuid[],uuid)','66c82c0a843b9bf98aa8e18f7ab4c2a2'],
+  ['public.team_hub_join_channel(uuid,uuid)','b28a684657c15f092295c9a3b9f124c5'],
+  ['public.team_hub_open_agent_dm(uuid,text)','84c7aed2b04bf0098c77105f6e7ea1d8'],
+  ['public.team_hub_open_dm(uuid,uuid)','14363512d49614142c3886a17dea11f6'],
+  ['public.team_hub_discard_file(uuid,uuid)','702b36cf1a248f80cff0fde4bc084d66'],
+ ]);
+ const originalDefinitions=new Map(); // Test-only PostgreSQL definition snapshots; no product registry.
  const files={core:'20271113850008_exp08_team_hub_collaboration.sql',lifecycle:'20271115040008_exp08_team_lifecycle.sql',agents:'20271117010008_exp08_team_hub_agents.sql',files:'20271114160008_exp08_team_hub_files.sql'};
  const text=name=>readFileSync(join(repo,'supabase/migrations',files[name]),'utf8');
  function table(file,name){const value=text(file);const start=value.indexOf('CREATE TABLE IF NOT EXISTS public.'+name+' (');const end=value.indexOf('\n);',start);assert(start>=0&&end>start,name);return value.slice(start,end+3);}
@@ -18,6 +32,8 @@ export async function verifyHubDoorDeparture({repo,sql,connection,ids,database,p
   assert(revoke>end&&revokeEnd>revoke,name+' original ACL');sql(value.slice(revoke,revokeEnd+1));
   if(isPublic){const grant=value.indexOf('GRANT EXECUTE ON FUNCTION public.'+name+'('+signature+')',revokeEnd),grantEnd=value.indexOf(';',grant);assert(grant>revokeEnd&&grantEnd>grant);sql(value.slice(grant,grantEnd+1));}
   assert.equal(sql(`SELECT md5(prosrc) FROM pg_proc WHERE oid='public.${name}(${signature})'::regprocedure`),hash,name+' must be actual current source');
+  const identity=`public.${name}(${signature})`;
+  if(carrierTargets.has(identity))originalDefinitions.set(identity,sql(`SELECT pg_get_functiondef('${identity}'::regprocedure)`).replace(/\r\n/g,'\n'));
  }
  sql(`TRUNCATE public.tenant_members,public.profiles,public.audit_logs,public.user_roles,auth.users,public.app_settings_owner;
   ALTER TABLE public.tenants ADD COLUMN account_type text NOT NULL DEFAULT 'standalone',ADD COLUMN parent_tenant_id uuid;
@@ -54,6 +70,47 @@ export async function verifyHubDoorDeparture({repo,sql,connection,ids,database,p
  let postCatalogue;
  let postContext;
  const fileCatalogue=()=>JSON.parse(sql("SELECT jsonb_agg(jsonb_build_object('signature',p.oid::regprocedure::text,'body',md5(p.prosrc),'acl',p.proacl) ORDER BY p.proname) FROM pg_proc p WHERE p.oid IN ('public.team_hub_discard_file(uuid,uuid)'::regprocedure,'public.team_hub_claim_stale_files(uuid)'::regprocedure)"));
+ async function verifyForwardCarrier(){
+  const path='supabase/migrations/20271126150008_exp08_team_hub_currentness.sql';
+  const carrier=readFileSync(join(repo,path),'utf8').replace(/\r\n/g,'\n');
+  const pieces=['identity','member-add','post','create','join','agent-dm','human-dm','discard'].map(n=>'exp08-team-hub-'+n+'-currentness-patch.sql');
+  const sections=pieces.map(name=>{
+   const source=readFileSync(join(repo,'scripts/proof',name),'utf8').replace(/\r\n/g,'\n');
+   const a=source.indexOf('\nBEGIN;\n'),b=source.lastIndexOf('\nCOMMIT;');
+   assert(a>=0&&b>a);assert.equal(source.slice(b).trim(),'COMMIT;');
+   return '-- Original reviewed piece: '+name+'\n'+source.slice(a+'\nBEGIN;\n'.length,b)+'\n';
+  });
+  const header='-- EXP08 forward currentness repair: ORIGINAL three admission helpers and seven Hub writers.\n-- No new table, authority/approval engine, role/grant, Auth/profile/domain writer or provider effect.\n-- Atomic guard/application/replay; applied native140008 and all prior history remain untouched.\nBEGIN;\n';
+  assert.equal(carrier,header+sections.join('\n')+'COMMIT;\n','Actual forward migration must conserve all eight reviewed inner pieces in one transaction');
+  assert.equal(originalDefinitions.size,10,'Every original target definition must have been loaded and source-pinned');
+  const signatures=[...carrierTargets.keys()].map(s=>`'${s}'::regprocedure`).join(',');
+  // Parser positions alone may change when defaults are reparsed. Retain the WHOLE
+  // normalized default tree, canonical expression and every other catalogue field.
+  const metadata=()=>sql(`SELECT md5(jsonb_agg(jsonb_build_object('fields',to_jsonb(p)-'proargdefaults','defaults',regexp_replace(p.proargdefaults::text,':location -?[0-9]+',':location -1','g'),'defaultExpression',pg_get_expr(p.proargdefaults,0)) ORDER BY p.oid::regprocedure::text)::text) FROM pg_proc p WHERE p.oid IN (${signatures})`);
+  const relations=['auth.users','public.tenants','public.tenant_members','public.profiles','public.audit_logs','public.user_roles','public.app_settings_owner','public.team_hub_channels','public.team_hub_channel_members','public.team_hub_messages','public.team_hub_message_mentions','public.team_hub_message_agent_mentions','public.team_hub_message_broadcast_recipients','public.team_hub_files','public.team_hub_agent_turns','public.team_hub_work_refs','storage.objects'];
+  const rows=()=>sql(`SELECT md5(jsonb_build_object(${relations.map((r,i)=>`'${r}',(SELECT coalesce(jsonb_agg(to_jsonb(t) ORDER BY to_jsonb(t)::text),'[]'::jsonb) FROM ${r} t)`).join(',')})::text)`);
+  const expectedCandidate=metadata(),beforeRows=rows();
+  for(const definition of originalDefinitions.values())sql(definition);
+  for(const [signature,hash]of carrierTargets)assert.equal(sql(`SELECT md5(prosrc) FROM pg_proc WHERE oid='${signature}'::regprocedure`),hash,'Restore actual original source before first carrier apply: '+signature);
+  const postSignature='public.team_hub_post_message(uuid,uuid,text,uuid,uuid,uuid[],uuid[],text[],text)';
+  const postDefinition=originalDefinitions.get(postSignature),oldDefault='p_broadcast_mention text DEFAULT NULL::text';
+  assert.equal(postDefinition.split(oldDefault).length,2);
+  sql(postDefinition.replace(oldDefault,"p_broadcast_mention text DEFAULT 'channel'::text"));
+  const driftedBefore=metadata();
+  assert.throws(()=>sql(carrier),/EXP08 post currentness original writer metadata drift/,'Late original ABI drift must reject the actual whole transaction');
+  assert.equal(metadata(),driftedBefore,'Earlier helper/member-add changes must roll back after the late carrier guard');
+  assert.equal(rows(),beforeRows,'Rejected carrier must change no original business/fixture row');
+  results.push({change:'actual forward carrier atomic late-guard refusal',allTenMetadataRolledBack:true,rowsConserved:true});
+  sql(postDefinition);
+  sql(carrier);
+  assert.equal(metadata(),expectedCandidate,'Actual carrier original-to-candidate must equal all ten reviewed definitions and metadata');
+  assert.equal(rows(),beforeRows);
+  sql(carrier);
+  assert.equal(metadata(),expectedCandidate,'Actual carrier replay must conserve all source/metadata/default semantics');
+  assert.equal(rows(),beforeRows);
+  results.push({change:'actual forward carrier first apply and replay',originalSourcePinned:true,allTenSourceAndMetadataConserved:true,rowsConserved:true});
+  return {path,sha256:createHash('sha256').update(carrier).digest('hex'),pieces:8,functions:10,atomicLateGuard:true,firstApplyAndReplay:true};
+ }
  const reset=()=>sql(`TRUNCATE ${extraResetTables.map(name=>'public.'+name+',').join('')}public.team_hub_channel_members,public.team_hub_message_mentions,public.team_hub_files,public.team_hub_agent_turns,public.team_hub_messages,public.team_hub_channels,public.tenant_members,public.profiles,public.audit_logs,public.user_roles,auth.users,public.tenants,public.app_settings_owner;
   INSERT INTO public.tenants(id) VALUES('${ids.tenant}'),('${ids.other}');
   INSERT INTO auth.users(id,email) VALUES('${ids.actor}','test-actor@tests.invalid'),('${ids.target}','test-target@tests.invalid');
@@ -493,6 +550,8 @@ export async function verifyHubDoorDeparture({repo,sql,connection,ids,database,p
  assert.equal(results.length,85);
  results.push(...await verifyHubFileCurrentness(postContext));
  assert.equal(results.length,100);
+ const carrierCatalogue=await verifyForwardCarrier();
+ assert.equal(results.length,102);
  const catalogue=JSON.parse(sql("SELECT jsonb_build_object('signature',p.oid::regprocedure::text,'body',md5(p.prosrc),'owner',p.proowner::regrole::text,'definer',p.prosecdef,'volatility',p.provolatile,'config',p.proconfig,'acl',p.proacl) FROM pg_proc p WHERE p.oid='public.team_hub_add_members(uuid,uuid,uuid[])'::regprocedure"));
- return {controls:results,catalogue:{...catalogue,post:postCatalogue,create:createCatalogue,join:joinCatalogue,agent:agentCatalogue,dm:dmCatalogue,files:fileCatalogue()}};
+ return {controls:results,catalogue:{...catalogue,post:postCatalogue,create:createCatalogue,join:joinCatalogue,agent:agentCatalogue,dm:dmCatalogue,files:fileCatalogue(),carrier:carrierCatalogue}};
 }

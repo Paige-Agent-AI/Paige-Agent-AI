@@ -212,3 +212,63 @@ continuation/PaymentPanel window remains pending and untouched. Native actual/le
 still compose with accepted-obligation allocation, provider-adjustment/disposition, every affected
 financial consumer, ordered release/readback and correct merchant/Owner/client proof. O5 is the
 sole primary; all twelve original outcomes and integrated founder acceptance remain open.
+
+## October 31 C170–C171 — actual accepted obligations and original manual correction
+
+The original accepted-obligation API already describes actual commercial debt. A presence-only
+TEST hold was compensating for its final comparison with the legacy TEST-inclusive balance.
+The test-only candidate now reads the same canonical actual position for that comparison;
+retained TEST history neither fulfills nor hides the original signed schedule. No second API,
+format, schedule, financial calculator or command is added. The same original manual executor
+uses that position for receipt eligibility and refuses a corrupt negative actual position.
+Its actor, approval, invoice/source locks, replay, receipt, correction and Rail statements remain.
+All original immutable migrations are preserved. The candidate is NOT a native forward or release.
+
+The original native proof first runs all 93 incumbent controls unchanged, then the optional
+`--manual-allocations --actual-receivable` extension. Three causal baseline controls reproduce
+the old TEST hold, false legacy settlement and refusal of a genuine manual receipt. Final
+evidence is 139 passing controls: 93 original plus 46 additional, including those counterexamples.
+Actual original native receipt/assignment/replay/full-correction paths, current invoice revisions,
+revoked/unassigned authority, missing approval, stale targets, consent/effectuation, overpayment,
+corrupt history and two further three-session authority-lock cases are exercised. TEST receipt
+and operation identities remain unchanged and singular. The single original principal remains.
+Whole function metadata and the original public reader/actor/governance/dispatch sources are
+conserved; replay and hostile widened-grant/changed-security guards pass. The uniquely owned
+disposable database was removed and the owned local cluster stopped, with zero databases left.
+
+Three real selected-native Owner payloads now traverse the original package/accepted-agreement
+read graph. Only the earlier explicitly synthetic two-argument result port is retired inside
+this disposable fixture; immutable original getter/validators/package source and its three
+original reader patches are loaded. The getter predecessor remains body
+`1d5f5ed876cc95722dc0ef72cb1090f6`; the complete original package body matches the actual catalog
+`d909de5729a47809119455d54952a5ef` with its authenticated-only entry grant. No package stub is
+substituted. `--actual-samples` emits only this neutral synthetic test output for downstream proof.
+
+Those native payloads also pass the unchanged original TypeScript retained-source decoder:
+all eleven exact obligations remain available at 338000 minor units owed, 308000 after the
+30000 manual receipt, and 338000 after its full original correction. Twenty-two controlled
+checks cover the three exact payloads, single original RPC/arguments, stale version, foreign
+workspace, changed/missing signed obligation and backend error; network/provider calls are zero.
+The two incumbent decoder/accepted-plan UI suites separately pass all 106 tests. Neither result
+establishes hosted authentication, a genuine provider payment, a full-schema Rail receipt, a
+rendered new customer path or customer acceptance.
+
+Earlier failed attempts are retained: an incorrect four-argument governance metadata lookup
+was corrected to the original five-argument signature; the stronger Owner probe exposed the
+missing original package dependency in the reduced fixture. A private decoder harness initially
+omitted the real `structuredClone` global and correctly refused; adding that environment global
+and comparing complete canonical facts resolved it without changing product code or assertions.
+The earlier 130-pass native run lacked the stronger public Owner probes and remains supporting
+evidence only. No failed result is relabeled as production success.
+
+Owner's complete-working-Experience amendment is incorporated additively: original goal/context,
+editable plan/artifact, governed execution, original result/readback, both-chat durable continuation,
+recovery and grounded algorithm evaluation remain acceptance criteria for every applicable O1–O12.
+For O5, deterministic original position/allocation/replay checks support ALG-01/ALG-12 only within
+these bounded tests; genuine provider reconciliation and exception recovery remain unverified.
+ALG-02 activation and ALG-13 next-step quality are not established here. No new agent, native
+version, provider activation, signature, charge, message or ordinary-account action occurred.
+Next remains SAME O5: integrate provider adjustments and explicit commercial disposition with
+the original receipts/obligations/consumers, ordered independent review and exact-head release,
+then correct-merchant and authorized Owner/client result/reload/reopen/recovery proof. The full
+twelve-outcome Experience is STILL CODING; no outcome or founder acceptance is claimed.

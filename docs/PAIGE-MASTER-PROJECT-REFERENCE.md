@@ -860,6 +860,12 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**Recorded2026-10-31 UTC — EXP08 original outcome4 departure current-authority repair; full Team Hub remains open.**
+
+| Increment | Exact source and observed production release | Useful result and remaining proof |
+| --- | --- | --- |
+| [#3164](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3164), original least-privilege departure | Reviewed `b13f26ba7a7dd6d4173560cfa1f98dead15a6fa0`; distinct non-author SOURCE-ONLY review, not independent execution. All13 exact-head checks including managed Preview and both web statuses SUCCESS, zero unresolved threads. Normal merge `e0b3ad082b8905985415c3c1a49fdcba5192a49b`/tree`b2bcabc88ea53b939d6f7273ba6320f2e99d06e9` equals the reviewed union. Normal migration41180088171/job124475648836 SUCCESS; `20271126140008` recorded once as4 statements, actual remove function MD5`cc631b7a8e2f6dc0bb711118493e62ae`, original three role-helper source/ACL conserved, db-livee0b3. Production Vercel`dpl_B9yoysnWtyit8TYJMh3rLTyXUu3D` READY/exacte0b3; both official origins version/root/bootstrap/app/Solo200, version`e0b3ad082b8905985415c3c1a49fdcba5192a49b-mvw2lri1`, customerUpdate:null, new Team refusal contract equal bytes. Edge delta NOT_APPLICABLE; certified edge-livebac91a retained. [Complete release receipt6540580071](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3164#issuecomment-6540580071). | Original removal re-resolves identity/workspace/authority after real waits and retains original role protections, cleanup and audit writer; UI presents truthful refusal and safe reopen without automatic replay. Native/fixture and source-bound synthetic renders remain bounded engineering evidence. Ordinary authenticated departure/result/receipt/reopen/recovery and tenant/role negatives remain **PROOF OWED**. Release receipt handed to EXP13 and Coordinator; receiving acceptance is not inferred. Internal correctness increment, no customer version/announcement, provider or held activation, full outcome closure or owner acceptance. All original18 rows, six amendments and five journeys/full EXP08 **STILL CODING**; one integrated owner review follows complete coding/integration/release. |
+
 **Recorded2026-10-31 UTC — EXP03 original saved-email production source; customer/Team Hub proof remains open.**
 
 | Increment | Exact source and observed production release | Useful result and remaining proof |

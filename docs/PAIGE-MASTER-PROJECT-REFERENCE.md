@@ -860,6 +860,19 @@ Reference or any domain ledger; it governs how their facts become release and cu
 
 ### 4.0 Shipped Delivery Log
 
+**Recorded2026-10-30 Eastern — EXP09 retains verified private-file context during customer history rechecks.**
+
+| Increment | Exact source and observed production release | Useful result and remaining proof |
+| --- | --- | --- |
+| [#3152](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3152) | Reviewed functional head `2e3aa53d40158f09b6c4e9d389f1f2658edc64f9`; sequential **AUTHOR-REVIEW / LOWER ASSURANCE**5720255118; all10 applicable exact-head checks/both web statuses SUCCESS, schema-free Preview SKIP, zero threads. Old2469/docs-only review is historical, not this head's review. Normal merge `90a99e6ffa17991b69a628dfda1caa22249d51e1`/tree`a18193075fdb3cc383922d47ebb3ed6e6cc47453`, parents e0c+2e3, exactly equals inspected union:6own paths298+/5-,18,717 outside leaves and all current peer Master/Brain bytes conserved. Vercel`dpl_8pzgjtQmhN9KdjuSPpjSnTmzUB6X` READY/exact90a. BOTH official origins2026-10-31T01:58:55UTC serve90a-mvvr2yk2, app/observedassets200/missing404/native304; observed AppShell-DOZHRT_v.js219656bytes/SHA62ecb2b4c6b3dd12f6c00fac02c954c961e352a6b6b95e4d15d7f950570131fc matches both sites. Static parse of that exact observed module binds the unique customer-history effect to its positive native-thread setter and finds ZERO null resets. Own native/Edge delta N/A. | The enclosing history reader no longer retires private file choices on every same-customer recheck. Initial thread remains null; current admission/history still withhold actions, genuine actor/business/contact changes remount and a different positive native thread replaces scope. Actual-host68PASS/3FAIL→71/71; broader256/12files INCLUDES71; focusedtypes0/lint0errors+3 unchangedwarnings. All85 JSX nodes/eight incumbent visual pins/six protected native/frame/access/upload sources exact; no new raster/mobile/AT claim. The real earlier3147 chooser failure remains retained; NEW3152 upload→Cura reading→private reload is **PROOF OWED**, with browser control stopped by physical Escape. No automatic upload/send/retry or cached-ID permission. [Original UI/source evidence](evidence/ui-delivery/e09-file-thread-recheck.md) and protected original ANT163/ANT52 retain exact boundaries. |
+
+Internal reliability source/web release only; no customer version, announcement,
+provider/role/consent/action activation, algorithm maturity or complete Experience
+acceptance. Original native private files/history and domain receipts remain the
+authority. Raw selected File objects remain ephemeral; this repair is not crash
+or durable Work/plan continuation proof. ALG-01/12 currentness/recovery support is
+bounded; ALG-02/04/13 and full42/seven-pillar acceptance remain separate.
+
 **Recorded2026-10-30 Eastern — EXP09 customer recovery and private file-choice continuity.**
 
 | Increment | Exact source and observed production release | Useful result and remaining proof |

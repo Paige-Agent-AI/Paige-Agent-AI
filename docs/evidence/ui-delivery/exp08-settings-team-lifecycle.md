@@ -54,3 +54,163 @@ RELEASE_RECOVERY: position=revert the merge commit, which restores the previous 
 ## Limitations
 
 Everything in UNVERIFIED above. The harness frame is not the tenant shell and the doubles are not the database or the edge functions, so none of these frames or drives is authenticated runtime proof.
+
+## October30 §5.8 original owner-demotion integration — local, release HOLD
+
+The earlier client-only release/recovery statements describe that historical increment. The local
+successor candidate also changes the original `revoke_co_owner` backend: original Billing cleanup
+must precede demotion in the same transaction, with original strict last-primary protection and
+current authority. No layout, approved tokens/personality or new confirmation/approval UI changes.
+Original entity/owner controls and full current authenticated interaction proof remain owed.
+
+`docs/delivery/exp08-co-owners-entity-owners-contract.md` records exact original producer ABI,
+native fixtures, failed-before cases, causal mutants, drift/replay controls and source-review repair.
+Thirteen isolated native Billing/Team cases pass after four additional applicability failures exposed
+the initial sub-account/parented regression. These are minimal-schema original-writer tests,
+not rendered or authenticated customer evidence. The original Billing public writer fails its
+three-session authority-loss assertion; its existing source owner acknowledged repair responsibility
+in ANT138/5d9652a0. That failure remains in the complete native suite, not waived by green old CI.
+
+PR3130/421e has all13 checks SUCCESS but remains HOLD for the actual integration finding.
+Local child source is not that published head. Final producer/source composition, whole-head
+review/tests/CI, supported replacement/readback of the own disposable managed Preview, normal
+release and authenticated owner/role/tenant/recovery outcomes are UNVERIFIED/owed. Do not infer
+activation or owner acceptance from the earlier harness frames or these native component tests.
+
+## October30 confirmed-refusal and actor-currentness repair — pre-edit contract
+
+OWNER_INTENT: a currently authorized teammate can manage the original Team roster and safely
+recover from a temporary failed read. Confirmed refusal, wrong workspace or changed actor must
+withdraw cached private roster/invitations and captured privileged dialogs. Existing approved
+Team layout, tokens and native flow remain the visual direction; this restores their denial and
+workspace-switch behavior rather than introducing a new journey or approval step.
+
+MUST_NOT_HAPPEN: retain private snapshots after confirmed access loss; present old-actor authority
+to the next actor; reuse an old actor's delayed response; mistake a temporary network failure for
+confirmed revocation and discard a recoverable invitation/contact draft; claim a pending write
+did or did not execute from a read failure. No extra domain writer, effects or transcript copying.
+
+MUST_PRESERVE: original server authorization, original row/invitation/contact/departure writers,
+least privilege, contact-draft preservation during ordinary refetch, in-flight result/reconciliation
+semantics, existing modal/focus and bottom notice patterns, all approved colors/icons/design.
+
+ACCEPTANCE_CRITERIA: actual mounted tests reproduce failed reload/pagination retaining a private
+snapshot; explicit null/no-error,42501,wrong tenant and actor/workspace loss clear it and captured
+dialogs; delayed previous-scope responses never restore it. A retryable read error keeps an
+unsent draft and authorized snapshot, with honest failure/retry feedback. Re-entry rereads native
+facts. Real rendered/focus/zoom/current authenticated role/tenant behavior remains proof owed.
+
+Routing/ownership before edits: EXP08 owns ONLY `team-workspace.tsx:useTeamWorkspace` /
+`SoloTeamWorkspace`, its same mounted regression suite and this existing feature evidence. The
+original `get_solo_team_workspace` reader/normalizer is the source contract; no new Spine key or
+registry (existing `team.authority` remains its narrower native caller-seat seam). Native read and
+UI invalidation require no new Harness/Gateway execution, provider connection, mutation verb,
+Trust approval, recurring job or durable event. Original writers and their actual native readback
+remain authoritative; a UI close is not a result receipt. Team settings/surface maturity remains
+PROOF OWED. Universal current/future SOLO uses the same implementation; no account selector.
+
+PROTECTED_SEAMS: affected: tenant/account isolation; actor/account choice; displayed action
+eligibility; original readback freshness; privacy; accessible refusal/focus recovery. Not affected:
+entitlement/signup/billing/provisioning; approval/standing-authority rules; Spine execution; Rail,
+audit/Memory storage; chat streaming/thread/pop-out/history; Live; Secure Browser/Vault;
+provider status/external effects; durable scheduling/retries; shell geometry/tokens. Tests must
+prove the affected UI seams, with source/automated/rendered/authenticated evidence kept separate.
+Impeccable hardening checks apply to permission/error/loading, recovery and focus; no new motion.
+No design reapproval or per-PR owner evaluation is requested for this approved-behavior repair.
+
+Pre-edit refinement after adjacent proof: preserve the ORIGINAL same-actor in-flight departure
+outcome when workspace selection is temporarily unknown; unknown is not a confirmed switch or
+cancellation. Withdraw the roster/invitation/editor, retain only the already-open result-bearing
+departure/suspend flow for that same confirmed actor, and pause further reads/writes/queued
+handovers until the original same-workspace Team read confirms access again. Actor loss or a
+confirmed native refusal still withdraws every private captured surface. Narrow ownership now
+also includes `team-departure.tsx:DepartureReview`'s existing context/pump/controls and owning tests;
+no original handover/domain writer, task store, scheduler, provider, approval or receipt seam changes.
+Two old invitation fixtures supplied NO actor/Auth client at all; supply an explicit fictional
+authenticated actor to those tests rather than weaken the new unknown-actor boundary or remove
+their search-refetch/workspace-switch assertions. Preserve the original UNKNOWN departure-result
+assertion and add no-new-effect controls for the pause.
+
+Actual implementation/proof receipt, October30 (source only; not release acceptance):
+
+- Original six failing mounted cases/21 existing passes reproduce cached NULL/42501/foreign-tenant
+  reload, actor/missing-workspace retention and silent transient failures; first repair passes27.
+  Subsequent focus/delayed-old-actor-result negatives genuinely fail then pass after scoped result
+  publication and focus recovery. Native error codes/contracts decide withdrawal; generic transport
+  errors retain same-scope drafts with explicit stale/retry feedback, never an invented write result.
+- The fallback actor cache is invalidated on every confirmed actor transition. Two real mounted
+  tests start with a populated Auth fallback and then defer/reject the next lookup after actor loss;
+  no old actor/roster is treated as current. NON-AUTHOR SOURCE review resolves its P1; no independent
+  native/Auth test is claimed. Refs used across async work update on commit, not discarded renders.
+- Original UNKNOWN in-flight departure assertion is preserved. A new queued-two-work test actually
+  catches A→unknown→A resurrecting cached admission before debounce. Committed transition withdrawal
+  now requires a fresh original same-workspace Team read before the EXISTING handover pump resumes;
+  first writer's confirmed result is retained, second writer is called once after renewed admission.
+  No new task/runtime/approval/receipt system or domain-writer replacement is introduced.
+- Review's paused-retry P2 is reproduced as an extra original roster RPC during unknown context;
+  guard `load()` before EITHER reader, disable paused retry/suspend, and keep Cancel/result handling.
+  Both pause/reentry controls pass. Full adjacent proof caught a fixture leak: old remove-test React
+  roots were never unmounted and consumed the next test's first read on context restore. Add actual
+  `afterEach` root cleanup; retain every original assertion. Earlier syntax/fixture failures stay
+  failed history, not successful executions or infrastructure waivers.
+- Final bounded NORMAL Vitest run: **126 PASS / seven suites**, actual original lifecycle, removal,
+  member editor, invitation/workspace, contact draft across refresh, Team normalizer and ordinary
+  PAIGE Team-context consumers. Five touched source/test files ESLint: **exit0/no findings**. JSX
+  parser checks pass. These are real components/original modules with mocked clients, not authenticated
+  production, provider, SQL/RLS or full-app build evidence. No heavy full-app compiler was retried
+  with observed host free RAM below1GiB; exact whole-head app/required CI remains owed.
+
+Impeccable hardening and React checks: same existing layout/tokens/icons/modal vocabulary; no CSS,
+new dependencies or motion. Tested refusal/loading/error/pause/retry, keyboard focus in jsdom,
+scope invalidation, late result fencing, contact draft preservation and queued-original-writer
+pause/resume. Actual prescribed rendered geometry/zoom/AT/authenticated roles and final finish
+review remain UNVERIFIED. Context tooling reported an older design sidecar; it is not changed as
+a side effect. Parent3130 Billing producer HOLD, new final-head checks/Preview/source release,
+customer proof and ONE integrated owner review remain separate and owed. Full scope STILL CODING.
+
+Pinned `impeccable@4.1.0` changed-file detector on both edited Team components: **exit0 / []**.
+The initial offline-only attempt had no cached package and did not scan; the normal authorized
+existing checker invocation completed without product dependency/config changes. No rendered or
+accessibility-conformance claim follows from that static detector result.
+
+Additional original neighboring flow run: invitation lifecycle, PAIGE-lane wording, Team title
+copy and original contact editor **43 PASS / four suites**. Initial invocation had15 invitation
+render failures because that older fixture also supplied no actor/Auth client; supply its explicit
+fictional `u1` actor and neutral example names, preserving every lifecycle/delivery assertion.
+Product source is unchanged from the126-case run: combined bounded evidence **169 PASS /11 suites**.
+No broad/full-app or authenticated claim is implied by adding those counts.
+
+### Hosted source checkpoint and remaining Setup integration — 2026-10-30
+
+Published child `032e3eb1c6bcd6082e1e93315c0ea590773dc605` was independently reviewed
+for the bounded Team currentness/pause source changes. That review did not independently execute
+the local 169 tests. Original CI run
+[41134479447](https://github.com/Paige-Agent-AI/Paige-Agent-AI/actions/runs/41134479447)
+is a manual dispatch of the existing workflow on that exact child, not parent PR3130's earlier
+green checks. Its hosted verify job `124333440477` has passed changed-source ESLint, gold discipline,
+Impeccable, typecheck ratchet, production build and Solo entry-size guard. At the latest observation
+the job remains **IN PROGRESS** at the original INT-336 native thread-fence proof; those passed
+steps do not mean the verify job or complete workflow passed.
+
+The same run's original `comms-provider-boundary` job `124333440777` is **FAIL**. Exact failed logs
+were inspected: the original EXP08 native runner's `Authority lost while waiting must refuse`
+assertion fails against the incumbent Billing public writer. This is a genuine retained safety
+assertion, not a stale infrastructure diagnosis. The subsequent Team native steps are skipped,
+not passed. The original Billing producer owns repair in PR3142; the later contact-row-wait
+counterexample against its first proposed repair remains an additional release hold. Parent3130
+and the unpublished final producer/consumer composition remain held pending corrected published
+source, renewed review, complete exact-head checks and compatible managed Preview.
+
+Independent remaining lifecycle work: the approved co-owner contract §5.4 requires original
+`save_solo_setup_context` to protect seated, held or live-Owner-invitation legal-owner records
+against removal (including omitted IDs), kind changes and representative changes. Inspection of
+the original `20261046000000` writer and released I1 triggers confirms that documented I2 gap
+remains. This is source evidence, not an authenticated production reproduction. The narrow
+writer/source-owner handoff is recorded in original ANT-50 comment
+`b618c8ac-a5d8-48be-a000-c17903812ccf`; no Setup writer edit or parallel guard has been made.
+Preserve original CAS/proposals/provenance, harmless permitted edits, and revoked/used-token
+compatibility when composing that repair. Existing source-owner acknowledgment is still owed.
+
+These observations do not establish release, activation, universal account/customer proof, or
+owner acceptance. All original matrix rows, five lifecycle journeys and full-assignment coding
+and integration remain open; status **STILL CODING**.

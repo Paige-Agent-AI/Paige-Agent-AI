@@ -18,6 +18,48 @@ completion or customer proof. [Current/historical evidence](../evidence/exp05-zi
 Full O01 and all ten/E5 remain OPEN; other outcomes are queued, not discretionary
 parallel work. Original current-main records and dated host checkpoint retained.
 
+## October30 Eastern — full-outcome release sequence
+
+Owner direction: release complete useful outcomes sequentially as they meet
+their original contracts, rather than wait for all of EXP05. Preserve all ten
+outcomes, E5-CV1–CV9 and the eight complete-working-Experience requirements.
+Founder acceptance remains one integrated evaluation after the full Experience;
+technical release/proof of each outcome does not require intermediate testing.
+
+1. **O01 understand responsibilities:** first completion target, feeding O02.
+   Reconcile original Work/Planning/Tasks/reminders/Calendar plus permitted
+   original delivery/people references. Confirm source/record/version,
+   actor/tenant authority, coverage and original-record navigation; distinguish
+   genuine unavailable sources from missing integration. Return the same
+   original read contract to E02 and EXP08, with no raw-table KPI shortcut.
+2. **O02 plan the week:** complete explainable prioritization from confirmed
+   goals, deadlines, capacity and dependencies; inspect/correct/save/reopen
+   the original plan from both chats. Existing read-only reviews are inputs,
+   not a saved plan or authorized schedule.
+3. **O03 then O04:** finish supported Work and Calendar/reminder journeys,
+   original approvals/records/receipts/reload, current role checks and actual
+   occurrence evidence. The bounded reminder producer correction below is a
+   prerequisite, not a declaration either full outcome is complete.
+4. **O05 then O06:** finish natural automation design/preview/correction/draft,
+   exact authorization, enablement and actual original domain execution.
+   Native #3145 and dependent UI #3148 remain ordered behind existing lower
+   migrations; local incomplete-draft work stays preserved, not deployed.
+5. **O07 then O09:** source-backed exceptions, permitted next steps and useful
+   owner attention through original notification/communication contracts.
+6. **O08 and O10:** verify recovery and returning-session result continuity
+   across each preceding journey; close their full rows only when all applicable
+   cancellation/revocation/concurrency/unknown/no-duplicate and both-chat cases pass.
+
+Current complete-outcome count remains **0/10**. Existing released components,
+local proof, review, CI, merge, deployment, activation, authenticated results and
+founder acceptance remain distinct. No new agent, system, provider/recurrence
+activation, special tenant or blanket source ownership is authorized.
+
+Original reminder producer product source is `915d6f9d966966fab3583de5c2d43b63a8b33834`.
+Whole-worker31/31, focused lint, original SOLO parity/negative controls and
+provider-floor structural check pass locally; review/hosted CI/production proof
+are still owed. [Exact evidence and receiving boundary](../evidence/ui-delivery/exp05-reminder-occurrence-reference.md).
+
 ## October30 19:39UTC — native reminder released; editor integration next
 
 Original #3127/5bfe6354 passed all13 exact-head checks/managed Preview and both

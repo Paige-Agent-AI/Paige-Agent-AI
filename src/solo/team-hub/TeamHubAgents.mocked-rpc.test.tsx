@@ -362,12 +362,39 @@ describe("flow 2: mention an agent in a channel", () => {
 });
 
 describe("flow 9: when an agent doesn't answer", () => {
+  it.each(["duplicate", "unrelated", "loading", "unavailable", "not_found"])("announces a failure once without silencing it for a %s thread", async (mode) => {
+    db.messages["c-launch"] = [
+      msg({ id: "m-mine", author_user_id: ME, body: "@MENTOR review the handover", agent_mentions: ["mentor"] }),
+      msg({ id: "m-other", body: "Unrelated discussion" }),
+    ];
+    db.states = { "m-mine:mentor": { state: "failed" } };
+    mocks.rpc.mockImplementation(async (name: string, params: Row) => {
+      if (name === "team_hub_list_messages" && params.p_thread_root) {
+        if (mode === "loading") return new Promise<never>(() => {});
+        if (mode === "unavailable") return { data: null, error: { message: "Unavailable" } };
+        if (mode === "not_found") return { data: { ok: false, code: "not_found" }, error: null };
+      }
+      return { data: backend(name, params), error: null };
+    });
+    const host = await mount();
+    const mainFailure = rowOf(host, "m-mine")!.querySelector(".th-ag-fail")!;
+    expect(mainFailure.getAttribute("role")).toBe("status");
+    const target = mode === "unrelated" ? "m-other" : "m-mine";
+    await click(rowOf(host, target)!.querySelector<HTMLElement>(".th-reply-action")!);
+    await flush();
+    expect(host.querySelectorAll('.th-ag-fail[role="status"]')).toHaveLength(1);
+    expect(mainFailure.getAttribute("role")).toBe(mode === "duplicate" ? null : "status");
+    if (mode === "duplicate") expect(host.querySelector('.th-thread .th-ag-fail[role="status"]')).not.toBeNull();
+    await click(button(host, "Close thread"));
+    expect(mainFailure.getAttribute("role")).toBe("status");
+  });
+
   it.each([
     [{ ok: false, outcome: "no_reply", agent: "cura" }, "CURA didn't reply.", "Ask again"],
     [{ error: { message: "Edge Function returned a non-2xx status code" } }, "CURA couldn't start just now.", "Ask again"],
     [{ ok: false, outcome: "unconfirmed", agent: "cura" }, "CURA's reply may not have posted.", "Check again"],
     [{ ok: true, outcome: "posted", agent: "cura", message: { id: "x" } }, "CURA's reply may not have posted.", "Check again"],
-    [{ ok: false, outcome: "rate_limited", agent: "cura" }, "You've reached 30 agent replies this hour. Try again later.", null],
+    [{ ok: false, outcome: "rate_limited", agent: "cura" }, "Too many requests right now. Try again shortly.", null],
     [{ ok: false, outcome: "cannot_post_here", agent: "cura" }, "CURA can't post here.", null],
   ])("shows the asker the exact line for %j, and the one recovery it offers", async (answer, line, action) => {
     answers.push(answer as Row);
@@ -379,6 +406,7 @@ describe("flow 9: when an agent doesn't answer", () => {
     // The line, then its one button: the recovery is never said twice.
     expect(fail.textContent).toBe(`${line}${action ?? ""}`);
     // A1c: a failure row is a status and carries no agent colour.
+    expect(fail.getAttribute("role")).toBe("status");
     expect(fail.hasAttribute("data-ag")).toBe(false);
     expect(fail.querySelector("[data-ag]")).toBeNull();
     expect(host.querySelector(".th-msg--agent")).toBeNull();

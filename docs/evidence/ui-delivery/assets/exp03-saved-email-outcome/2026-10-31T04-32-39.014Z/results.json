@@ -1,0 +1,446 @@
+{
+  "results": [
+    {
+      "name": "light-1536-closed",
+      "pass": true,
+      "overlay": null,
+      "measurement": {
+        "width": 75.25,
+        "height": 36,
+        "x": 803.90625,
+        "y": 453.953125,
+        "right": 879.15625,
+        "bottom": 489.953125,
+        "viewport": {
+          "w": 1536,
+          "h": 770
+        },
+        "scrollWidth": 1536,
+        "color": "rgb(103, 97, 107)",
+        "background": "rgba(0, 0, 0, 0)",
+        "focus": true
+      },
+      "saveCalls": 1,
+      "reopenWords": true,
+      "proof": "controlled original workspace; not authenticated/provider/Hub-host proof"
+    },
+    {
+      "name": "light-1366-closed",
+      "pass": true,
+      "overlay": null,
+      "measurement": {
+        "width": 75.25,
+        "height": 36,
+        "x": 759.171875,
+        "y": 451.953125,
+        "right": 834.421875,
+        "bottom": 487.953125,
+        "viewport": {
+          "w": 1366,
+          "h": 768
+        },
+        "scrollWidth": 1366,
+        "color": "rgb(103, 97, 107)",
+        "background": "rgba(0, 0, 0, 0)",
+        "focus": true
+      },
+      "saveCalls": 1,
+      "reopenWords": true,
+      "proof": "controlled original workspace; not authenticated/provider/Hub-host proof"
+    },
+    {
+      "name": "light-1024-closed",
+      "pass": true,
+      "overlay": null,
+      "measurement": {
+        "width": 75.25,
+        "height": 36,
+        "x": 669.171875,
+        "y": 411.953125,
+        "right": 744.421875,
+        "bottom": 447.953125,
+        "viewport": {
+          "w": 1024,
+          "h": 768
+        },
+        "scrollWidth": 1024,
+        "color": "rgb(103, 97, 107)",
+        "background": "rgba(0, 0, 0, 0)",
+        "focus": true
+      },
+      "saveCalls": 1,
+      "reopenWords": true,
+      "proof": "controlled original workspace; not authenticated/provider/Hub-host proof"
+    },
+    {
+      "name": "light-900-closed",
+      "pass": true,
+      "overlay": null,
+      "measurement": {
+        "width": 75.25,
+        "height": 36,
+        "x": 308.578125,
+        "y": 649,
+        "right": 383.828125,
+        "bottom": 685,
+        "viewport": {
+          "w": 900,
+          "h": 1000
+        },
+        "scrollWidth": 900,
+        "color": "rgb(103, 97, 107)",
+        "background": "rgba(0, 0, 0, 0)",
+        "focus": true
+      },
+      "saveCalls": 1,
+      "reopenWords": true,
+      "proof": "controlled original workspace; not authenticated/provider/Hub-host proof"
+    },
+    {
+      "name": "light-1536-open",
+      "pass": true,
+      "overlay": null,
+      "measurement": {
+        "width": 75.25,
+        "height": 36,
+        "x": 698.8125,
+        "y": 413.953125,
+        "right": 774.0625,
+        "bottom": 449.953125,
+        "viewport": {
+          "w": 1536,
+          "h": 770
+        },
+        "scrollWidth": 1536,
+        "color": "rgb(103, 97, 107)",
+        "background": "rgba(0, 0, 0, 0)",
+        "focus": true
+      },
+      "saveCalls": 1,
+      "reopenWords": true,
+      "proof": "controlled original workspace; not authenticated/provider/Hub-host proof"
+    },
+    {
+      "name": "light-1366-open",
+      "pass": true,
+      "overlay": null,
+      "measurement": {
+        "width": 75.25,
+        "height": 36,
+        "x": 669.703125,
+        "y": 411.953125,
+        "right": 744.953125,
+        "bottom": 447.953125,
+        "viewport": {
+          "w": 1366,
+          "h": 768
+        },
+        "scrollWidth": 1366,
+        "color": "rgb(103, 97, 107)",
+        "background": "rgba(0, 0, 0, 0)",
+        "focus": true
+      },
+      "saveCalls": 1,
+      "reopenWords": true,
+      "proof": "controlled original workspace; not authenticated/provider/Hub-host proof"
+    },
+    {
+      "name": "light-1024-open",
+      "pass": true,
+      "overlay": {
+        "width": 410,
+        "height": 768,
+        "left": 614,
+        "top": 0,
+        "interiorHit": true,
+        "fixtureFolded": true,
+        "hostProof": false,
+        "backdrop": "not mounted by original harness"
+      },
+      "measurement": {
+        "width": 75.25,
+        "height": 36,
+        "x": 669.171875,
+        "y": 411.953125,
+        "right": 744.421875,
+        "bottom": 447.953125,
+        "viewport": {
+          "w": 1024,
+          "h": 768
+        },
+        "scrollWidth": 1024,
+        "color": "rgb(103, 97, 107)",
+        "background": "rgba(0, 0, 0, 0)",
+        "focus": true
+      },
+      "saveCalls": 1,
+      "reopenWords": true,
+      "proof": "controlled original workspace; not authenticated/provider/Hub-host proof"
+    },
+    {
+      "name": "light-900-open",
+      "pass": true,
+      "overlay": {
+        "width": 410,
+        "height": 1000,
+        "left": 490,
+        "top": 0,
+        "interiorHit": true,
+        "fixtureFolded": true,
+        "hostProof": false,
+        "backdrop": "not mounted by original harness"
+      },
+      "measurement": {
+        "width": 75.25,
+        "height": 36,
+        "x": 308.578125,
+        "y": 649,
+        "right": 383.828125,
+        "bottom": 685,
+        "viewport": {
+          "w": 900,
+          "h": 1000
+        },
+        "scrollWidth": 900,
+        "color": "rgb(103, 97, 107)",
+        "background": "rgba(0, 0, 0, 0)",
+        "focus": true
+      },
+      "saveCalls": 1,
+      "reopenWords": true,
+      "proof": "controlled original workspace; not authenticated/provider/Hub-host proof"
+    },
+    {
+      "name": "dark-1536-closed",
+      "pass": true,
+      "overlay": null,
+      "measurement": {
+        "width": 75.25,
+        "height": 36,
+        "x": 803.90625,
+        "y": 453.953125,
+        "right": 879.15625,
+        "bottom": 489.953125,
+        "viewport": {
+          "w": 1536,
+          "h": 770
+        },
+        "scrollWidth": 1536,
+        "color": "rgb(173, 167, 159)",
+        "background": "rgba(0, 0, 0, 0)",
+        "focus": true
+      },
+      "saveCalls": 1,
+      "reopenWords": true,
+      "proof": "controlled original workspace; not authenticated/provider/Hub-host proof"
+    },
+    {
+      "name": "dark-1366-closed",
+      "pass": true,
+      "overlay": null,
+      "measurement": {
+        "width": 75.25,
+        "height": 36,
+        "x": 759.171875,
+        "y": 451.953125,
+        "right": 834.421875,
+        "bottom": 487.953125,
+        "viewport": {
+          "w": 1366,
+          "h": 768
+        },
+        "scrollWidth": 1366,
+        "color": "rgb(173, 167, 159)",
+        "background": "rgba(0, 0, 0, 0)",
+        "focus": true
+      },
+      "saveCalls": 1,
+      "reopenWords": true,
+      "proof": "controlled original workspace; not authenticated/provider/Hub-host proof"
+    },
+    {
+      "name": "dark-1024-closed",
+      "pass": true,
+      "overlay": null,
+      "measurement": {
+        "width": 75.25,
+        "height": 36,
+        "x": 669.171875,
+        "y": 411.953125,
+        "right": 744.421875,
+        "bottom": 447.953125,
+        "viewport": {
+          "w": 1024,
+          "h": 768
+        },
+        "scrollWidth": 1024,
+        "color": "rgb(173, 167, 159)",
+        "background": "rgba(0, 0, 0, 0)",
+        "focus": true
+      },
+      "saveCalls": 1,
+      "reopenWords": true,
+      "proof": "controlled original workspace; not authenticated/provider/Hub-host proof"
+    },
+    {
+      "name": "dark-900-closed",
+      "pass": true,
+      "overlay": null,
+      "measurement": {
+        "width": 75.25,
+        "height": 36,
+        "x": 308.578125,
+        "y": 649,
+        "right": 383.828125,
+        "bottom": 685,
+        "viewport": {
+          "w": 900,
+          "h": 1000
+        },
+        "scrollWidth": 900,
+        "color": "rgb(173, 167, 159)",
+        "background": "rgba(0, 0, 0, 0)",
+        "focus": true
+      },
+      "saveCalls": 1,
+      "reopenWords": true,
+      "proof": "controlled original workspace; not authenticated/provider/Hub-host proof"
+    },
+    {
+      "name": "dark-1536-open",
+      "pass": true,
+      "overlay": null,
+      "measurement": {
+        "width": 75.25,
+        "height": 36,
+        "x": 698.8125,
+        "y": 413.953125,
+        "right": 774.0625,
+        "bottom": 449.953125,
+        "viewport": {
+          "w": 1536,
+          "h": 770
+        },
+        "scrollWidth": 1536,
+        "color": "rgb(173, 167, 159)",
+        "background": "rgba(0, 0, 0, 0)",
+        "focus": true
+      },
+      "saveCalls": 1,
+      "reopenWords": true,
+      "proof": "controlled original workspace; not authenticated/provider/Hub-host proof"
+    },
+    {
+      "name": "dark-1366-open",
+      "pass": true,
+      "overlay": null,
+      "measurement": {
+        "width": 75.25,
+        "height": 36,
+        "x": 669.703125,
+        "y": 411.953125,
+        "right": 744.953125,
+        "bottom": 447.953125,
+        "viewport": {
+          "w": 1366,
+          "h": 768
+        },
+        "scrollWidth": 1366,
+        "color": "rgb(173, 167, 159)",
+        "background": "rgba(0, 0, 0, 0)",
+        "focus": true
+      },
+      "saveCalls": 1,
+      "reopenWords": true,
+      "proof": "controlled original workspace; not authenticated/provider/Hub-host proof"
+    },
+    {
+      "name": "dark-1024-open",
+      "pass": true,
+      "overlay": {
+        "width": 410,
+        "height": 768,
+        "left": 614,
+        "top": 0,
+        "interiorHit": true,
+        "fixtureFolded": true,
+        "hostProof": false,
+        "backdrop": "not mounted by original harness"
+      },
+      "measurement": {
+        "width": 75.25,
+        "height": 36,
+        "x": 669.171875,
+        "y": 411.953125,
+        "right": 744.421875,
+        "bottom": 447.953125,
+        "viewport": {
+          "w": 1024,
+          "h": 768
+        },
+        "scrollWidth": 1024,
+        "color": "rgb(173, 167, 159)",
+        "background": "rgba(0, 0, 0, 0)",
+        "focus": true
+      },
+      "saveCalls": 1,
+      "reopenWords": true,
+      "proof": "controlled original workspace; not authenticated/provider/Hub-host proof"
+    },
+    {
+      "name": "dark-900-open",
+      "pass": true,
+      "overlay": {
+        "width": 410,
+        "height": 1000,
+        "left": 490,
+        "top": 0,
+        "interiorHit": true,
+        "fixtureFolded": true,
+        "hostProof": false,
+        "backdrop": "not mounted by original harness"
+      },
+      "measurement": {
+        "width": 75.25,
+        "height": 36,
+        "x": 308.578125,
+        "y": 649,
+        "right": 383.828125,
+        "bottom": 685,
+        "viewport": {
+          "w": 900,
+          "h": 1000
+        },
+        "scrollWidth": 900,
+        "color": "rgb(173, 167, 159)",
+        "background": "rgba(0, 0, 0, 0)",
+        "focus": true
+      },
+      "saveCalls": 1,
+      "reopenWords": true,
+      "proof": "controlled original workspace; not authenticated/provider/Hub-host proof"
+    },
+    {
+      "name": "light-save-unknown",
+      "pass": true,
+      "calls": 2,
+      "proof": "fictional door boundary; no provider/authenticated or real Hub-host proof"
+    },
+    {
+      "name": "light-save-refuse",
+      "pass": true,
+      "calls": 1,
+      "proof": "fictional door boundary; no provider/authenticated or real Hub-host proof"
+    },
+    {
+      "pass": false,
+      "error": "TimeoutError: locator.waitFor: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByText(/Sent to Jordan Rivera/).first() to be visible\u001b[22m\n"
+    }
+  ],
+  "errors": [],
+  "external": [],
+  "proof": "LOCAL_CONTROLLED_WORKSPACE",
+  "voice": "UNEXERCISED",
+  "paige": "PLACEHOLDER",
+  "nativeBrowserZoom": "UNVERIFIED"
+}

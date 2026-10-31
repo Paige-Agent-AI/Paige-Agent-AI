@@ -129,3 +129,34 @@ reconciliation and release gates are satisfied. ALG-01/12 remain bounded local p
 ALG-13 unverified and ALG-02 sequenced; no catalogue or maturity promotion. Exact review, CI,
 ordered native/web/Edge release/readback, ordinary owner/client/provider proof and final integrated
 founder acceptance remain open.
+
+## October 31 C168 — original invoice document read continuity
+
+O5 remains the only primary outcome. The existing document collector now treats the original
+invoice identity, frozen document, financial representation, native totals and ledger metadata
+as one snapshot across its pages. It ignores only page rows, per-page completeness and the
+original continuation controls when comparing snapshots; JSON object-key order has no meaning.
+It does not recompute money, choose a new reader, change authority or silently restart a read.
+
+The same collector refuses contradictory counts, premature completion, empty continuations,
+repeated/cyclic server cursors and interrupted reads. The existing ten-page/1000-record cap still
+returns an explicitly incomplete history. Genuine empty history and ordinary scoped pagination
+remain supported. The original RPC name, captured arguments and server cursor are retained.
+No document renderer, frozen agreement/invoice, payment writer or Portal controller is replaced.
+
+The original collector reproduced fourteen new financial/identity/interruption counterexamples
+before the repair; a second bounded pass reproduced ten paging failures. Final focused evidence
+is 75 passing tests in four original suites, including the original owner, bearer and Portal
+read paths into both existing document renderers, and refusal before producing a mixed-invoice
+artifact. The collector passes strict Deno checking. These are controlled source/pipeline tests,
+not authenticated RPC, current provider, production document/download or customer acceptance.
+Existing legacy TEST presentation controls are retained; this does not mount the proposed new
+actual-receivable representation in the document renderer.
+
+Native metadata also confirms that the original prepare/claim writers already use
+`_sales_invoice_read` under their existing authorization, locks and currentness checks; reuse
+those writers. The original ledger wrapper omits the remaining balance when it copies provider
+truth, while its predecessor's running totals include TEST. Correct explicit representation and
+compatibility in that original ledger and renderer before adopting the new financial projection.
+EXP09's additional continuation/PaymentPanel financial window remains requested, not assumed.
+No new forward migration, provider call, approval, customer action or capability activation occurred.

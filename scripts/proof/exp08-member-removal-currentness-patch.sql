@@ -4,7 +4,7 @@ BEGIN;
 SET LOCAL lock_timeout='2s';
 DO $departure_currentness$
 DECLARE target regprocedure:=to_regprocedure('public.remove_solo_team_member(uuid,uuid)');
- p pg_proc; prior_metadata jsonb; original text; changed text; definition text;
+ p pg_proc; helper record; prior_metadata jsonb; original text; changed text; definition text;
  anchor text:=$anchor$  -- Every owner is refused, which is what makes "the sole owner is never removable" true without$anchor$;
  target_anchor text:=$target_anchor$  -- Locked, and deliberately NOT filtered by status.$target_anchor$;
  identity_guard text:=$identity_guard$  -- exp08_departure_identity_v1: serialize current identity before membership/profile locks.
@@ -68,6 +68,33 @@ BEGIN
    AND a.attname=c.name AND a.atttypid=to_regtype(c.kind) AND a.attnum>0 AND NOT a.attisdropped)) THEN
   RAISE EXCEPTION 'EXP08 departure currentness original Auth columns missing or drifted';
  END IF;
+ -- These original role-sync/protection functions are dependencies, never rewritten here.
+ FOR helper IN SELECT * FROM (VALUES
+  ('public.map_tenant_role_to_app_role(public.tenant_role)','60dfcc70ea811ca2ac255d9e19c20714',false,'i','sql',true),
+  ('public.sync_tenant_member_to_user_roles()','be8cc66ffe2f226a62a0d34c11303023',true,'v','plpgsql',false),
+  ('public.prevent_owner_admin_removal()','daeb1b91408969a62224140148a99414',true,'v','plpgsql',false)
+ ) expected(signature,body_md5,definer,volatility,language_name,public_mapping) LOOP
+  SELECT * INTO p FROM pg_proc WHERE oid=to_regprocedure(helper.signature);
+  IF NOT FOUND OR md5(p.prosrc) IS DISTINCT FROM helper.body_md5
+   OR p.proowner<>'postgres'::regrole OR p.prosecdef IS DISTINCT FROM helper.definer
+   OR p.provolatile::text IS DISTINCT FROM helper.volatility
+   OR p.prolang<>(SELECT oid FROM pg_language WHERE lanname=helper.language_name)
+   OR p.proconfig IS DISTINCT FROM ARRAY['search_path=public']::text[]
+   OR p.prorettype<>to_regtype(CASE WHEN helper.public_mapping THEN 'public.app_role' ELSE 'trigger' END)
+   OR p.proretset OR p.prokind<>'f' OR p.proisstrict OR p.proleakproof OR p.proparallel<>'u'
+   OR p.provariadic<>0 OR p.pronargdefaults<>0 OR p.proargdefaults IS NOT NULL
+   OR p.proargmodes IS NOT NULL OR p.proallargtypes IS NOT NULL
+   OR p.proargnames IS DISTINCT FROM (CASE WHEN helper.public_mapping THEN ARRAY['_tenant_role']::text[] ELSE NULL::text[] END)
+   OR pg_get_function_arguments(p.oid) IS DISTINCT FROM (CASE WHEN helper.public_mapping THEN '_tenant_role tenant_role' ELSE '' END)
+   OR (SELECT count(*) FROM aclexplode(coalesce(p.proacl,acldefault('f',p.proowner))))
+      <> (CASE WHEN helper.public_mapping THEN 5 ELSE 2 END)
+   OR EXISTS(SELECT 1 FROM aclexplode(coalesce(p.proacl,acldefault('f',p.proowner))) a
+     WHERE a.privilege_type<>'EXECUTE' OR a.is_grantable
+      OR (helper.public_mapping AND a.grantee NOT IN (0,'postgres'::regrole,'anon'::regrole,'authenticated'::regrole,'service_role'::regrole))
+      OR (NOT helper.public_mapping AND a.grantee NOT IN ('postgres'::regrole,'service_role'::regrole))) THEN
+   RAISE EXCEPTION 'EXP08 departure currentness original helper drift: %',helper.signature;
+  END IF;
+ END LOOP;
  SELECT * INTO p FROM pg_proc WHERE oid=target;
  IF NOT FOUND OR p.proowner<>'postgres'::regrole OR NOT p.prosecdef OR p.provolatile<>'v'
   OR p.proconfig IS DISTINCT FROM ARRAY['search_path=public, pg_temp']::text[]

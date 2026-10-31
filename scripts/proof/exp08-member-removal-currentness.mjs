@@ -1,19 +1,21 @@
 // Original EXP08 outcome4 departure proof. Explicit disposable loopback database only.
 import assert from 'node:assert/strict';
 import {spawn,spawnSync} from 'node:child_process';
-import {readFileSync} from 'node:fs';
+import {readFileSync,existsSync} from 'node:fs';
 import {join} from 'node:path';
 import {fileURLToPath} from 'node:url';
+import {createHash} from 'node:crypto';
 import {OperatorPostgresFixture} from './operator-postgres-fixture.mjs';
 assert.equal(process.env.EXP08_DISPOSABLE,'1','Explicit disposable proof opt-in required');
 const host=process.env.PGHOST;
 assert(['127.0.0.1','localhost','::1'].includes(host),'Dedicated loopback proof only');
 assert.match(process.env.PGPORT??'',/^\d+$/,'Explicit local port required');
 const options=process.argv.slice(2),mutants=['scope','authority','pair-locks','protected','identity-check','identity-lock'];
-const protectedOnly=options.includes('--protected-only');
+const prerequisitesOnly=options.includes('--prerequisites-only');
+const protectedOnly=options.includes('--protected-only')||prerequisitesOnly;
 const identityFkOnly=options.includes('--identity-fk-only');
 const identityOnly=options.includes('--identity-only')||identityFkOnly;
-assert(options.length<=1&&options.every(a=>a==='--baseline'||a==='--protected-only'||a==='--identity-only'||a==='--identity-fk-only'||mutants.some(m=>a==='--mutant-'+m)),'Unknown proof option');
+assert(options.length<=1&&options.every(a=>a==='--baseline'||a==='--protected-only'||a==='--prerequisites-only'||a==='--identity-only'||a==='--identity-fk-only'||mutants.some(m=>a==='--mutant-'+m)),'Unknown proof option');
 const mutant=mutants.find(m=>options.includes('--mutant-'+m));
 const repo=fileURLToPath(new URL('../../',import.meta.url));
 // Reuse the shared fixture unchanged, preserving the original EXP08 loopback-host ABI.
@@ -25,11 +27,15 @@ class DeparturePostgresFixture extends OperatorPostgresFixture {
   values[index+1]=host;return values;
  }
 }
-const db=new DeparturePostgresFixture(Number(process.env.PGPORT));db.prefix=()=>'';
-const program=()=>db.psql,args=()=>db.args(),sql=s=>db.run(s);
 const source=(file,name)=>{const s=readFileSync(join(repo,file),'utf8');const a=s.indexOf('CREATE OR REPLACE FUNCTION public.'+name+'('),b=s.indexOf('$function$;',a);assert(a>=0&&b>a);return s.slice(a,b+11);};
 // Canonical Git/LF for this never-applied candidate only; incumbent source hashes stay exact.
-const candidatePatch=readFileSync(join(repo,'scripts/proof/exp08-member-removal-currentness-patch.sql'),'utf8').replace(/\r\n/g,'\n');
+const inertPatch=readFileSync(join(repo,'scripts/proof/exp08-member-removal-currentness-patch.sql'),'utf8').replace(/\r\n/g,'\n');
+const carrierPath=join(repo,'supabase/migrations/20271126140008_exp08_departure_currentness.sql');
+assert(existsSync(carrierPath),'Actual versioned forward carrier is required; inert-only fallback is not release proof');
+const candidatePatch=readFileSync(carrierPath,'utf8').replace(/\r\n/g,'\n');
+assert.equal(candidatePatch.slice(candidatePatch.indexOf('\n')),inertPatch.slice(inertPatch.indexOf('\n')),'Actual forward carrier must preserve the reviewed inert SQL exactly after its first comment');
+const db=new DeparturePostgresFixture(Number(process.env.PGPORT));db.prefix=()=>'';
+const program=()=>db.psql,args=()=>db.args(),sql=s=>db.run(s);
 const connections=[];
 const ids={tenant:'e8000000-0000-4000-8000-000000080010',other:'e8000000-0000-4000-8000-000000080020',actor:'e8000000-0000-4000-8000-000000080300',target:'e8000000-0000-4000-8000-000000080200'};
 const resetIdentities=()=>sql(`TRUNCATE auth.users,public.profiles;INSERT INTO auth.users(id,email) VALUES('${ids.actor}','test-actor@tests.invalid'),('${ids.target}','test-target@tests.invalid');`);
@@ -67,7 +73,7 @@ try{
  sql(source('supabase/migrations/20271115040008_exp08_team_lifecycle.sql','remove_solo_team_member'));
  sql('REVOKE ALL ON FUNCTION public.remove_solo_team_member(uuid,uuid) FROM PUBLIC,anon,service_role; GRANT EXECUTE ON FUNCTION public.remove_solo_team_member(uuid,uuid) TO authenticated;');
  assert.equal(sql("SELECT md5(prosrc) FROM pg_proc WHERE oid='public.remove_solo_team_member(uuid,uuid)'::regprocedure"),'d8c0eb6a8fdc3fef52eda7df4f9274e1');
- if(candidate){
+ function applyCandidate(){
   const metadata=sql("SELECT (to_jsonb(p)-'prosrc')::text FROM pg_proc p WHERE oid='public.remove_solo_team_member(uuid,uuid)'::regprocedure");
   const patch=candidatePatch;
   sql(patch);sql(patch);
@@ -102,9 +108,14 @@ try{
   for(const [name,md5] of [['map_tenant_role_to_app_role','60dfcc70ea811ca2ac255d9e19c20714'],['sync_tenant_member_to_user_roles','be8cc66ffe2f226a62a0d34c11303023'],['prevent_owner_admin_removal','daeb1b91408969a62224140148a99414']]){
    assert.equal(sql(`SELECT md5(prosrc) FROM pg_proc WHERE proname='${name}'`),md5,'original production role writer/guard source must match');
   }
+  sql(`REVOKE ALL ON FUNCTION public.sync_tenant_member_to_user_roles(),public.prevent_owner_admin_removal() FROM PUBLIC,anon,authenticated,service_role;
+   GRANT EXECUTE ON FUNCTION public.sync_tenant_member_to_user_roles(),public.prevent_owner_admin_removal() TO service_role;
+   REVOKE ALL ON FUNCTION public.map_tenant_role_to_app_role(public.tenant_role) FROM PUBLIC,postgres,anon,authenticated,service_role;
+   GRANT EXECUTE ON FUNCTION public.map_tenant_role_to_app_role(public.tenant_role) TO postgres,PUBLIC,anon,authenticated,service_role;`);
+  applyCandidate();
   sql(`CREATE TRIGGER trg_sync_tenant_member_to_user_roles AFTER INSERT OR UPDATE OR DELETE ON public.tenant_members FOR EACH ROW EXECUTE FUNCTION public.sync_tenant_member_to_user_roles();
    CREATE TRIGGER protect_owner_admin BEFORE UPDATE OR DELETE ON public.user_roles FOR EACH ROW EXECUTE FUNCTION public.prevent_owner_admin_removal();`);
-  if((!mutant||mutant==='protected')&&!identityOnly)for(const c of [
+  if((!mutant||mutant==='protected')&&!identityOnly&&!prerequisitesOnly)for(const c of [
    {name:'protected last admin',refused:true},
    {name:'protected other active admin',otherRole:'admin',success:true},
    {name:'protected other active owner',otherRole:'owner',success:true},
@@ -393,6 +404,58 @@ try{
    output.push({change:'Auth schema: '+column,refused:true,functionUnchanged:true,fixtureRestored:true});
   }
  }
+ if(candidate&&!mutant&&(prerequisitesOnly||(!protectedOnly&&!identityOnly))){
+  const removal=sql("SELECT pg_get_functiondef('public.remove_solo_team_member(uuid,uuid)'::regprocedure)");
+  const before=business();
+  const checks=[];
+  for(const [signature,mapping]of [['public.map_tenant_role_to_app_role(public.tenant_role)',true],['public.sync_tenant_member_to_user_roles()',false],['public.prevent_owner_admin_removal()',false]]){
+   const saved=sql(`SELECT pg_get_functiondef('${signature}'::regprocedure)`).replace(/\r\n/g,'\n');
+   const metadata=sql(`SELECT to_jsonb(p)::text FROM pg_proc p WHERE oid='${signature}'::regprocedure`);
+   for(const[name,change]of [
+    ['body',saved.replace('AS $function$','AS $function$\n-- simulated prerequisite source change\n')],
+    ['security',`ALTER FUNCTION ${signature} SECURITY ${mapping?'DEFINER':'INVOKER'}`],
+    ['volatility',`ALTER FUNCTION ${signature} ${mapping?'VOLATILE':'IMMUTABLE'}`],
+    ['path',`ALTER FUNCTION ${signature} SET search_path='pg_temp'`],
+    ['strictness',`ALTER FUNCTION ${signature} STRICT`],
+    ['leakproof',`ALTER FUNCTION ${signature} LEAKPROOF`],
+    ['parallel',`ALTER FUNCTION ${signature} PARALLEL SAFE`],
+    ['owner',`ALTER FUNCTION ${signature} OWNER TO service_role`],
+    ['grant option',`GRANT EXECUTE ON FUNCTION ${signature} TO service_role WITH GRANT OPTION`],
+    ['missing grant',`REVOKE EXECUTE ON FUNCTION ${signature} FROM service_role`],
+   ]){
+    sql(change);
+    try{
+     assert.throws(()=>sql(candidatePatch),/EXP08 departure currentness original helper drift:/,'changed original helper must refuse through prerequisite guard: '+signature+'/'+name);
+     assert.equal(business(),before,'prerequisite refusal has no business effect');
+     assert.equal(sql("SELECT pg_get_functiondef('public.remove_solo_team_member(uuid,uuid)'::regprocedure)"),removal,'prerequisite refusal does not rewrite removal');
+    }finally{
+     sql(`ALTER FUNCTION ${signature} OWNER TO postgres;${saved};REVOKE ALL ON FUNCTION ${signature} FROM PUBLIC,postgres,anon,authenticated,service_role;GRANT EXECUTE ON FUNCTION ${signature} TO postgres,${mapping?'PUBLIC,anon,authenticated,':''}service_role;`);
+    }
+    assert.equal(sql(`SELECT to_jsonb(p)::text FROM pg_proc p WHERE oid='${signature}'::regprocedure`),metadata,'restore only original fixture helper source and all metadata');
+    sql(candidatePatch);
+    checks.push({signature,change:name,refused:true,removalUnchanged:true,metadataRestored:true});
+   }
+  }
+  const mapping='public.map_tenant_role_to_app_role(public.tenant_role)';
+  const saved=sql(`SELECT pg_get_functiondef('${mapping}'::regprocedure)`).replace(/\r\n/g,'\n');
+  assert.equal(saved.split('RETURNS app_role').length,2,'return drift changes exactly the mapping result ABI');
+  const metadata=sql(`SELECT (to_jsonb(p)-'oid')::text FROM pg_proc p WHERE oid='${mapping}'::regprocedure`);
+  try{
+   sql(`DROP FUNCTION ${mapping};${saved.replace('RETURNS app_role','RETURNS text')};GRANT EXECUTE ON FUNCTION ${mapping} TO anon,authenticated,service_role;`);
+   assert.throws(()=>sql(candidatePatch),/EXP08 departure currentness original helper drift:/,'same helper body with changed return ABI must refuse before removal rewrite');
+   assert.equal(business(),before);
+   assert.equal(sql("SELECT pg_get_functiondef('public.remove_solo_team_member(uuid,uuid)'::regprocedure)"),removal);
+  }finally{
+   sql(`DROP FUNCTION ${mapping};${saved};REVOKE ALL ON FUNCTION ${mapping} FROM PUBLIC,postgres,anon,authenticated,service_role;GRANT EXECUTE ON FUNCTION ${mapping} TO postgres,PUBLIC,anon,authenticated,service_role;`);
+  }
+  // Changing a return type requires DROP/recreate, so only this disposable helper's OID changes.
+  // Every other pg_proc field remains exact; the prior30 ALTER-only controls retain exact OID too.
+  assert.equal(sql(`SELECT (to_jsonb(p)-'oid')::text FROM pg_proc p WHERE oid='${mapping}'::regprocedure`),metadata);
+  sql(candidatePatch);
+  checks.push({signature:mapping,change:'return ABI',refused:true,removalUnchanged:true,metadataExceptRecreatedOidRestored:true});
+  assert.equal(checks.length,31);
+  output.push({change:'original helper prerequisites',controls:checks});
+ }
  if(candidate&&!mutant&&!protectedOnly&&!identityOnly){
   for(const name of mutants){
    const child=spawnSync(process.execPath,[fileURLToPath(import.meta.url),'--mutant-'+name],{encoding:'utf8',windowsHide:true,timeout:60000,maxBuffer:4e6});
@@ -412,8 +475,9 @@ try{
   assert.equal(report.cases.length,10,'all original profile FK cases must execute');
   output.push({change:'original profile FK suite',controls:report.cases,disposed:true});
  }
- if(!mutant)assert.equal(output.length,identityFkOnly?10:identityOnly?17:protectedOnly?8:candidate?58:4,'Every intended control must execute');
- console.log(JSON.stringify({scope:'isolated native original writer/helpers; minimal tables and Auth/platform ports, no customer or RLS proof',cases:output},null,2));
+ if(!mutant)assert.equal(output.length,prerequisitesOnly?1:identityFkOnly?10:identityOnly?17:protectedOnly?8:candidate?59:4,'Every intended control must execute');
+ const catalogue=JSON.parse(sql("SELECT jsonb_build_object('signature',p.oid::regprocedure::text,'md5',md5(p.prosrc),'owner',p.proowner::regrole::text,'definer',p.prosecdef,'volatility',p.provolatile,'config',p.proconfig,'acl',p.proacl) FROM pg_proc p WHERE p.oid='public.remove_solo_team_member(uuid,uuid)'::regprocedure"));
+ console.log(JSON.stringify({scope:'isolated native original writer/helpers; minimal tables and Auth/platform ports, no customer or RLS proof',carrier:'20271126140008_exp08_departure_currentness.sql',carrierLfSha256:createHash('sha256').update(candidatePatch).digest('hex'),catalogue,cases:output},null,2));
 }finally{
  db.run(`SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname='${db.database}' AND pid<>pg_backend_pid()`,[],'postgres');
  await Promise.allSettled(connections.map(c=>c.done));

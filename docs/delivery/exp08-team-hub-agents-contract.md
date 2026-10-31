@@ -2353,3 +2353,53 @@ terminal exit1 after deliberate stop, no peer process stopped. This is synthetic
 transport/render/keyboard proof, not authenticated/JWT/RLS/domain effect or full
 assistive-technology/native zoom/customer acceptance. Full-native ENOSPC failure
 remains open; this UI result does not waive it or clear the unpublished carrier.
+
+#### Same outcome4 — sequential departure release carrier prepared
+
+Original successor branch `codex/exp08-owner-recovery-20261030` remains preserved at
+ed99d734. Sequential `codex/exp08-departure-release-20261031` begins at that source;
+c8fed764 restores ONLY the earlier unmounted reminder-null consumer delta to actual
+main for this release. That work remains on original branch/commit579d97ee9, not lost
+or reassigned. No parallel coder/worktree or EXP05 producer edit.
+
+New LOCAL_ONLY `20271126140008_exp08_departure_currentness.sql` affects exactly the
+original `remove_solo_team_member(uuid,uuid)`. Earlier provisional Hub admission/helper
+work remains inert and is not silently included in this carrier. Fresh actual floor
+130013/own14count0, original bodyd8c0 and three original role-helper pins/metadata/ACLs
+were read before preparation. Coordinator routed the revised one-function contract to
+E03/E13; renewed published manifests show140003/PR3163,150003/PR3115 and160005/PR3145.
+All3163 pages230 paths and3115 pages118 paths were read, not just their first100.
+Normal source publication, actual floor/order, review/exact CI/managed/readback remain
+separate gates; no promise to hold peers or await an uncreated17/18.
+
+Carrier SQL and inert reference are LF-identical after their first comment. Actual
+carrier LF SHA256 `e3aa08fb4ac74c2ff642513ab12223da8ed4481e82b74b6761cfd09b51a6c8ec`.
+The runner requires that carrier BEFORE database construction; explicit missing-file
+negative refuses without opening a database, then restores the exact file. No inert
+fallback. Metadata guards now pin the original role mapping/sync/protection bodies,
+owner/security/config/language/volatility, grants and calling/return ABI/strictness/
+leakproof/parallel/default/shape fields; dependencies are never rewritten by migration.
+Non-author SOURCE reviewer found a return-ABI gap and fallback gap; both resolved in
+source, no new material finding, reviewer executed no tests.
+
+Final prerequisite selection **31 drift controls PASS**, EXIT0, including same-body
+mapping RETURNS text refusal. All30 ALTER-only controls restore exact full pg_proc;
+the necessary DROP/recreate return-type control excludes ONLY that helper's recreated
+OID and restores every other field. Log `exp08-departure-prerequisites-abi.log` SHA256
+`c8af3cb50cef0da2f425ad7a3559381a31cea2dada0a2b6a38eed899b1e14e06`.
+Actual-carrier protected8 and profile-FK10 selections also PASS; final catalogue body
+`cc631b7a8e2f6dc0bb711118493e62ae`, postgres/definer/volatile/original path and
+postgres+authenticated-only execute. Logs `exp08-departure-carrier-abi-protected.log`
+SHA256 `d4886ee6872b5c458d9a6e3db90e2adfc244ae0c7b3c31c893893aba85d9b006` and
+`exp08-departure-carrier-abi-fk.log` SHA256
+`a028c5885b874663c0b869997c67d96fbb472c64cc444baa82393c380e91799b`.
+Own databases disposed/current cluster stopped. Initial prerequisite syntax and fixture
+ACL-order failures retained; parentheses corrected and fixture grants matched actual
+catalogue, no assertion removed. Original source inverse/metadata/replay checks stay.
+
+No-argument departure runner now has59 outer entries: prior57 plus nested10-case FK
+suite and nested31-case prerequisite group. Full final59/normal-parent result remains
+OWED; earlier original-parent ENOSPC FAIL is not cleared by these selections. New
+staged carrier version-collision1546, definer-grant and managed-schema lint PASS.
+Managed full-schema/JWT/RLS/authenticated result/receipt/reopen/recovery and all original
+outcome acceptance remain owed. This carrier is preparation, not an applied release.

@@ -143,3 +143,46 @@ logs are work/exp13-source-quotation-collation-baseline.log and
 work/exp13-source-quotation-collation-final.log. No original helper is modified.
 Distinct final source recheck marks the P2 resolved and finds no remaining
 material issue in this bounded predicate; reviewer did not run native tests.
+
+## Local native permitted source binding
+
+LOCAL unversioned lock_knowledge_source_evidence(actor,tenant,reference,excerpts)
+is a PRIVATE SECURITY INVOKER integration candidate for the SAME original domain
+writer's transaction. Actor must equal actual auth.uid(); it reuses ORIGINAL
+lock_knowledge_extraction_authority and read_tenant_knowledge, locks the canonical
+document FOR SHARE, checks source revision/textSHA and bounded exact quotations,
+then returns only existing minimized evidence fields. No source URL/storage path,
+full document, private Vault data, approval token or fact confirmation is emitted.
+PUBLIC/anon/authenticated/service_role execution remains revoked. A returned JSON
+object cannot be reused as authority; the owning writer must call this again in
+its actual mutation transaction and enforce its OWN domain approval/readback.
+
+Baseline70369 reaches missing-function42883 (feature absence, not production
+defect). Native87465 passes the core source/version/hash/quote and current-scope
+controls. Expanded29273 also passes malformed JSON/extra fields/MD5-as-SHA/quote
+limits; banned/deleted actor, inactive tenant, revoked membership; Admin and
+member source-READ positives; minimized readback; changed source; and unavailable
+source after ORIGINAL delete_tenant_knowledge. Actor/Auth/role fixtures remain
+explicit modeled ports, not authenticated customer or delegated-write proof.
+Canonical-row deletion here proves retrieval invalidation only; original object
+cleanup, retention and eligible deletion policy remain separate full-scope work.
+
+Native61200 adds two REAL transaction races. A completed source-evidence call is
+observed idle-in-transaction; a source editor or membership revoker is separately
+observed in pg_locks NOT granted. Releasing the first transaction lets that update
+complete; the next original binding read refuses the stale source/revoked scope.
+Both native waits PASS and all original publication and quotation/ICU controls
+remain. Runner exits0 and DROPS its disposable database. Logs are
+work/exp13-source-binding-baseline.log, work/exp13-source-binding-native.log,
+work/exp13-source-binding-adversarial.log and
+work/exp13-source-binding-native-races.log. Cleanup targets only its own handles.
+Distinct source reviews find no material issue in the helper or expanded
+controls/race harness; reviewer did not independently run native tests.
+
+Safe carrier/replay/source/ACL guards, managed native Preview, ordered release,
+deployed caller/customer proof, exact selected domain-fact approval receipt and
+E02 immutable Mission binding remain owed. E05 confirms original domain writers
+exist but source-admitted proposal/claim/resume/settlement is STILL MISSING; no
+producer-built decision, raw-RPC shortcut or blind non-idempotent create retry.
+This integration candidate is not mounted/published/applied or a usable saved
+game plan/task outcome. The full original assignment remains ACTIVE/NOT READY.

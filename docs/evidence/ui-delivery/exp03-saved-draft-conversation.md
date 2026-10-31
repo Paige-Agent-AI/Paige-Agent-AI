@@ -13,33 +13,33 @@ PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: an authorized business sender confirms th
 VISUAL_DIRECTION: PASS: Operate; preserve original Mineral/Obsidian Conversations and its existing inline check, restrained tokens and original focus/recovery. Impeccable source https://github.com/pbakaus/impeccable/blob/main/.claude/skills/impeccable/SKILL.md; no redesign or stale design-sidecar repair.
 MOTION_PURPOSE: NOT_APPLICABLE: no new animation; preserve original reduced-motion/focus behavior and prove it in the new drive.
 PROTECTED_SEAMS: AFFECTED tenant/workspace/client/account isolation, original approval/authority, canonical message/source writes/readback, provider-result honesty, schedule/files/retry/idempotency/recovery, accessibility and privacy: require source/native/handler/consumer negatives and fresh driven proof. NOT AFFECTED authentication/account-choice writers, signup/paywall/billing/provisioning, Spine/Root tool registry/executor, Rail/Memory writers, Chat transcript/scroll/popout/history, Live activation, Secure Browser/Vault credential custody, provider configuration and shell/navigation/style ownership: no edits to those writers or hosts. Same original governed door/receipts are consumed, not replaced.
-AUTOMATED_EVIDENCE: UNVERIFIED: new consumer not complete. Parent69native/46door/290email/1163Comms tests are bounded supporting source evidence, not proof of this new consumer.
+AUTOMATED_EVIDENCE: PASS: local whole-carrier161, original source-discovery/Chat85, C0b86 and migration-order1545; prior source/door/drain/consumer results retained below. Required exact-head CI is separate.
 STATIC_EVIDENCE: UNVERIFIED: required focused lint/type/source-conservation and final exact checks pending.
-RENDERED_EVIDENCE: UNVERIFIED: historical original-flow frames inspected only; fresh consumer/theme/geometry drive owed.
+RENDERED_EVIDENCE: PASS: controlled original workspace24 cases, four required desktop sizes and both themes in assets/exp03-saved-email-outcome/2026-10-31T05-07-43.653Z/results.json; actual authenticated host and native zoom remain unexercised.
 BEHAVIORAL_EVIDENCE: UNVERIFIED: complete state/focus/recovery and original SMS/portal/fresh-reply regressions pending.
 AUTHENTICATED_RUNTIME: UNVERIFIED: no ordinary-account/provider effect performed or authorized by this evidence record.
-KEYBOARD_FOCUS: UNVERIFIED: preserve existing native controls and Edit-first focus; fresh proof pending.
+KEYBOARD_FOCUS: PASS: controlled original workspace keyboard edit/save/cancel/reopen/check/approve in both themes; pointer setup opens the saved entry, full application navigation unexercised. Evidence assets/exp03-saved-email-outcome/2026-10-31T05-07-43.653Z/results.json.
 ZOOM_REFLOW: UNVERIFIED: new integration not rendered at required zoom/geometries yet.
-REDUCED_MOTION: UNVERIFIED: original motion contract retained, fresh drive pending.
+REDUCED_MOTION: PASS: all24 controlled original-workspace browser contexts use reducedMotion reduce; no new animation. Evidence assets/exp03-saved-email-outcome/2026-10-31T05-07-43.653Z/results.json.
 STATE_COVERAGE: UNVERIFIED: state map below governs implementation and tests; no completed-flow claim yet.
 TRUTHFUL_STATE_LABELS: PASS: source/review/CI/merge/deployment/customer/owner gates remain separate; no new sent/delivered/accepted promise.
 SOLO_UI: YES: original Conversations host only; no tenant-id/account fork.
 UNVERIFIED: consumer integration/tests/rendered proof/source-pin and native CI registration/review/ordered migration/Preview/release/source readback/ordinary customer proof/full EXP03/all50 enforcement.
-SOLO_1536X770_PAIGE_CLOSED: UNVERIFIED: fresh full-shell consumer proof pending.
-SOLO_1536X770_PAIGE_OPEN: UNVERIFIED: fresh full-shell consumer proof pending.
-SOLO_1366X768_PAIGE_CLOSED: UNVERIFIED: fresh full-shell consumer proof pending.
-SOLO_1366X768_PAIGE_OPEN: UNVERIFIED: fresh full-shell consumer proof pending.
-SOLO_1024X768_PAIGE_CLOSED: UNVERIFIED: fresh full-shell consumer proof pending.
-SOLO_1024X768_PAIGE_OPEN: UNVERIFIED: fresh full-shell consumer proof pending.
-SOLO_900X1000_PAIGE_CLOSED: UNVERIFIED: fresh full-shell consumer proof pending.
-SOLO_900X1000_PAIGE_OPEN: UNVERIFIED: fresh full-shell consumer proof pending.
-INTERNAL_BUILD_IDENTITY: local sequential child of9535f58b with main2e366cb4a; no runtime deployment/native publication.
-RELEASE_CHANNEL: development: local unpublished source only.
+SOLO_1536X770_PAIGE_CLOSED: UNVERIFIED: controlled required geometry/theme cases PASS in assets/exp03-saved-email-outcome/2026-10-31T05-07-43.653Z/results.json, but the inherited PAIGE placeholder omits actual host fold/backdrop and voice provider; ordinary authenticated full-shell proof is not exercised.
+SOLO_1536X770_PAIGE_OPEN: UNVERIFIED: controlled required geometry/theme cases PASS in assets/exp03-saved-email-outcome/2026-10-31T05-07-43.653Z/results.json, but the inherited PAIGE placeholder omits actual host fold/backdrop and voice provider; ordinary authenticated full-shell proof is not exercised.
+SOLO_1366X768_PAIGE_CLOSED: UNVERIFIED: controlled required geometry/theme cases PASS in assets/exp03-saved-email-outcome/2026-10-31T05-07-43.653Z/results.json, but the inherited PAIGE placeholder omits actual host fold/backdrop and voice provider; ordinary authenticated full-shell proof is not exercised.
+SOLO_1366X768_PAIGE_OPEN: UNVERIFIED: controlled required geometry/theme cases PASS in assets/exp03-saved-email-outcome/2026-10-31T05-07-43.653Z/results.json, but the inherited PAIGE placeholder omits actual host fold/backdrop and voice provider; ordinary authenticated full-shell proof is not exercised.
+SOLO_1024X768_PAIGE_CLOSED: UNVERIFIED: controlled required geometry/theme cases PASS in assets/exp03-saved-email-outcome/2026-10-31T05-07-43.653Z/results.json, but the inherited PAIGE placeholder omits actual host fold/backdrop and voice provider; ordinary authenticated full-shell proof is not exercised.
+SOLO_1024X768_PAIGE_OPEN: UNVERIFIED: controlled required geometry/theme cases PASS in assets/exp03-saved-email-outcome/2026-10-31T05-07-43.653Z/results.json, but the inherited PAIGE placeholder omits actual host fold/backdrop and voice provider; ordinary authenticated full-shell proof is not exercised.
+SOLO_900X1000_PAIGE_CLOSED: UNVERIFIED: controlled required geometry/theme cases PASS in assets/exp03-saved-email-outcome/2026-10-31T05-07-43.653Z/results.json, but the inherited PAIGE placeholder omits actual host fold/backdrop and voice provider; ordinary authenticated full-shell proof is not exercised.
+SOLO_900X1000_PAIGE_OPEN: UNVERIFIED: controlled required geometry/theme cases PASS in assets/exp03-saved-email-outcome/2026-10-31T05-07-43.653Z/results.json, but the inherited PAIGE placeholder omits actual host fold/backdrop and voice provider; ordinary authenticated full-shell proof is not exercised.
+INTERNAL_BUILD_IDENTITY: source=2d1ae0f222a77ef9b1c58049f099c1b2e85c2917; deployment=NONE_LOCAL; environment=local; migrations=PROOF_OWED(20271126140003_exp03_saved_email_outcome requires required-check Preview and ordered normal release); edge=PROOF_OWED(original comms-email-command and comms-scheduled-drain source deployment after approved merge); evidence=scripts/proof/exp03-email-existing-draft-postgres.mjs --whole-carrier and assets/exp03-saved-email-outcome/2026-10-31T05-07-43.653Z/results.json
+RELEASE_CHANNEL: development: original saved-email source and local native/workspace proof; PR3163 required checks and normal release are separate.
 RELEASE_CLASSIFICATION: patch: complete the original approved email review path for saved drafts.
 CUSTOMER_RELEASE_IDENTITY: none: no customer release yet.
 RELEASE_NOTE_REQUIRED: NO: original repair; full assignment handoff remains separate.
 RELEASE_TRUTH_BOUNDARY: PROOF OWED: source integration, exact gates and runtime/customer verification remain open.
-RELEASE_RECOVERY: original source row/version and operation are retained; ordinary reviewed forward repair/release, no unknown replay or alternate sender.
+RELEASE_RECOVERY: position=preserve original row/version/operation and refuse unreadable or changed source; reference=scripts/proof/exp03-email-existing-draft-postgres.mjs --whole-carrier rollback/replay/currentness controls and original governedReply recovery tests
 
 Goal: review/edit the original saved email and send it once through its original governed owner.
 Human and feel: business sender; clear consequence and recoverable work.

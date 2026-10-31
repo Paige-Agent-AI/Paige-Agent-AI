@@ -2578,3 +2578,53 @@ The48 controls use explicit local Auth/table/state ports. They do not establish
 full-schema/JWT/RLS/authenticated customer behavior or release this inert patch.
 Other original doors, producer handoffs, useful receipts/reopen/recovery and the
 complete original18+6/five journeys remain open. Full EXP08: STILL CODING.
+
+#### Same outcome4: original message-admission currentness, inert checkpoint
+
+Original consumer remains `src/solo/team-hub/useTeamHub.ts`'s existing message RPC;
+writer remains the nine-argument `team_hub_post_message`, original messages/files,
+mentions and EXP04 source annotations. A local native currentness failure was
+reproduced with a successful attachment positive, actual database blocking and
+persisted result readback. It is not an authenticated or production incident.
+Detailed mechanics remain in local proof. Baseline log
+`exp08-post-currentness-before-native.log`, SHA256
+`4d565ab55b4fd26fb9dfb948d419e56f0d4b9442ee415b033e3beb89e87ff77d`.
+An initial fixture FK-reset failure is setup evidence only, excluded from causal RED.
+
+NEW INERT `scripts/proof/exp08-team-hub-post-currentness-patch.sql` changes only
+that original writer through an exact inverse/source guard. It re-resolves original
+actor/context/channel/membership authority before the effect, retains original
+private/team/DM permission, request deduplication, files and mentions, and orders
+existing DM identities before seat holds. No native version, production mutation,
+Auth/profile/Setup/Work/domain writer, grant, provider or independent engine.
+Original body `2b9e0270f28b6c17fd3adb37d5b554d8`; current candidate
+`ad54f00d716e48866f9be3fb02ea7dce`.
+
+The fixture uses actual original storage scope triggers and current serializer,
+including EXP04's exact incoming annotation composition; formatter production MD5
+`1876c9f943d5f51ddef29d4528e5e981` is required. Existing roles/Auth/schema/verdict
+inputs remain explicit local ports; no upload, model, domain fact or customer QA.
+
+Source-only review identified two additional guard gaps. Default argument values
+are now pinned, with an actual changed-default negative. Native diagnostic showed
+only serialized parser-location integers change during CREATE OR REPLACE. Every
+other metadata field is exact; the complete default AST is compared with only those
+location integers normalized, alongside unchanged canonical default expressions.
+No system-catalog write or metadata assertion removal. A complete-DM-identity
+review finding was independently reproduced and repaired; local before log
+`exp08-post-dm-pair-before.log`, SHA256
+`db6c1a9ab4ad6a8b270268b281c1db3dc019c27f8d5948759e9cf042635b18d1`.
+Selected5 passed afterward, `exp08-post-dm-pair-after.log`, SHA256
+`7d12ed004f0b8f288e78dd870b91a72768e784100fa501653cf1bbf241e76107`.
+Original OID/ACL/default semantics/other metadata and replay are conserved.
+
+Prior combined51 PASS (before complete-pair repair) is historical evidence:
+`exp08-hub-doors-post-composition.log`, SHA256
+`0c327d9d8d259b5c168a7d9bff6832255bab3e19b33faa1c01fa81c064143c10`.
+The proof retains original48 count before adding the new group, now53; original60
+outer assertion remains before integration. Current full no-argument child was
+started with measured disk headroom; no terminal result is claimed here.
+Opposing DM, lifecycle/file-cleanup/retirement composition, remaining original doors,
+full parent/managed/full-schema/JWT/RLS/customer receipt/reopen/recovery proof remain
+owed before publication. Source-only review is not independent execution. Existing
+ALG IDs/maturity unchanged; full18+6/five journeys and EXP08 remain STILL CODING.

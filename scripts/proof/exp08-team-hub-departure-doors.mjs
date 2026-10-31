@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {join} from 'node:path';
 
-export async function verifyHubDoorDeparture({repo,sql,connection,ids,database}){
+export async function verifyHubDoorDeparture({repo,sql,connection,ids,database,postOnly=false}){
  const results=[];
  const files={core:'20271113850008_exp08_team_hub_collaboration.sql',lifecycle:'20271115040008_exp08_team_lifecycle.sql',agents:'20271117010008_exp08_team_hub_agents.sql',files:'20271114160008_exp08_team_hub_files.sql'};
  const text=name=>readFileSync(join(repo,'supabase/migrations',files[name]),'utf8');
@@ -49,7 +49,9 @@ export async function verifyHubDoorDeparture({repo,sql,connection,ids,database})
  sql(`CREATE TRIGGER team_hub_member_scope BEFORE INSERT OR UPDATE OF channel_id,tenant_id,user_id ON public.team_hub_channel_members FOR EACH ROW EXECUTE FUNCTION public._team_hub_member_scope_guard();
   CREATE TRIGGER team_hub_seat_ended AFTER DELETE OR UPDATE OF status ON public.tenant_members FOR EACH ROW EXECUTE FUNCTION public._team_hub_seat_ended();
   CREATE TRIGGER team_hub_seat_started AFTER INSERT OR UPDATE OF status ON public.tenant_members FOR EACH ROW EXECUTE FUNCTION public._team_hub_seat_started();`);
- const reset=()=>sql(`TRUNCATE public.team_hub_channel_members,public.team_hub_message_mentions,public.team_hub_files,public.team_hub_agent_turns,public.team_hub_messages,public.team_hub_channels,public.tenant_members,public.profiles,public.audit_logs,public.user_roles,auth.users,public.tenants,public.app_settings_owner;
+ const extraResetTables=[];
+ let postCatalogue;
+ const reset=()=>sql(`TRUNCATE ${extraResetTables.map(name=>'public.'+name+',').join('')}public.team_hub_channel_members,public.team_hub_message_mentions,public.team_hub_files,public.team_hub_agent_turns,public.team_hub_messages,public.team_hub_channels,public.tenant_members,public.profiles,public.audit_logs,public.user_roles,auth.users,public.tenants,public.app_settings_owner;
   INSERT INTO public.tenants(id) VALUES('${ids.tenant}'),('${ids.other}');
   INSERT INTO auth.users(id,email) VALUES('${ids.actor}','test-actor@tests.invalid'),('${ids.target}','test-target@tests.invalid');
   INSERT INTO public.profiles(user_id,active_tenant_id) VALUES('${ids.actor}','${ids.tenant}'),('${ids.target}','${ids.tenant}');
@@ -90,6 +92,104 @@ export async function verifyHubDoorDeparture({repo,sql,connection,ids,database})
    await Promise.allSettled([first.done,...(second?[second.done]:[])]);
   }
  }
+ async function postAttachmentCurrentness(){
+  // Extend this same disposable fixture with the ORIGINAL storage backstops and
+  // serializer, including EXP04's incoming annotations. No provider/upload runs.
+  files.a1c='20271120020008_exp08_team_hub_a1c_writing_and_broadcast.sql';
+  files.work='20271113860008_exp08_team_hub_team_work.sql';
+  files.reads='20271122080004_e04_team_hub_source_reads.sql';
+  const agents=text('agents'),a1c=text('a1c');
+  const a=agents.indexOf('ALTER TABLE public.team_hub_messages ADD COLUMN'),b=agents.indexOf('-- ── B.',a);
+  assert(a>0&&b>a);sql(agents.slice(a,b));
+  sql('ALTER TABLE public.team_hub_channels ADD COLUMN agent_key text; ALTER TABLE public.team_hub_channel_members ADD COLUMN last_active_at timestamptz; ALTER TABLE public.team_hub_agent_turns ADD COLUMN read_context jsonb;');
+  const c=a1c.indexOf('ALTER TABLE public.team_hub_messages ADD COLUMN'),d=a1c.indexOf('CREATE TABLE IF NOT EXISTS public.team_hub_message_broadcast_recipients',c);
+  assert(c>0&&d>c);sql(a1c.slice(c,d));
+  for(const [file,name] of [['agents','team_hub_message_agent_mentions'],['a1c','team_hub_message_broadcast_recipients'],['work','team_hub_work_refs']]){
+   sql(table(file,name));sql(`ALTER TABLE public.${name} ENABLE ROW LEVEL SECURITY; REVOKE ALL ON public.${name} FROM PUBLIC,anon,authenticated,service_role;`);extraResetTables.push(name);
+  }
+  for(const [file,name,hash] of [
+   ['agents','_team_hub_message_scope_guard','ad43d41724b54020f25debfb9140b201'],
+   ['core','_team_hub_mention_scope_guard','eedaf37ce3415eb31275b6c05723a11c'],
+   ['agents','_team_hub_agent_mention_scope_guard','dbb3e52f074d5bfde864dd0f44f8a686'],
+   ['files','_team_hub_file_scope_guard','39677d0cfbabd81118bc0a5e9743e69d'],
+   ['a1c','_team_hub_broadcast_scope_guard','ac5bb46f986a81bd24c7d3355401cf5e'],
+  ]){
+   original(file,name,'',hash);
+   const source=text(file),start=source.indexOf('CREATE OR REPLACE TRIGGER ',source.indexOf('CREATE OR REPLACE FUNCTION public.'+name+'(')),end=source.indexOf(';',start);
+   assert(start>0&&end>start);sql(source.slice(start,end+1));
+  }
+  original('core','_team_hub_trim','text','299a334fd290fe2eb0dc9482da5aab05');
+  original('reads','_team_hub_agent_read_annotations','uuid','61bb33a7a92608e3090f25fbd477401d');
+  // Apply only EXP04's exact serializer composition, never its domain writers.
+  const source=a1c,start=source.indexOf('CREATE OR REPLACE FUNCTION public._team_hub_message_json('),end=source.indexOf('$$;',start);
+  assert(start>0&&end>start);sql(source.slice(start,end+3));
+  const formatter=sql("SELECT pg_get_functiondef('public._team_hub_message_json(public.team_hub_messages)'::regprocedure)").replace(/\r\n/g,'\n');
+  assert.equal(formatter.split('\n$function$').length,2);
+  sql(formatter.replace('\n$function$','\n  || public._team_hub_agent_read_annotations(p_message.id)\n$function$'));
+  sql('REVOKE ALL ON FUNCTION public._team_hub_message_json(public.team_hub_messages) FROM PUBLIC,anon,authenticated,service_role;');
+  assert.equal(sql("SELECT md5(prosrc) FROM pg_proc WHERE oid='public._team_hub_message_json(public.team_hub_messages)'::regprocedure"),'1876c9f943d5f51ddef29d4528e5e981');
+  original('a1c','team_hub_post_message','uuid,uuid,text,uuid,uuid,uuid[],uuid[],text[],text','2b9e0270f28b6c17fd3adb37d5b554d8',true);
+  const postSignature='public.team_hub_post_message(uuid,uuid,text,uuid,uuid,uuid[],uuid[],text[],text)';
+  const postPatch=readFileSync(join(repo,'scripts/proof/exp08-team-hub-post-currentness-patch.sql'),'utf8').replace(/\r\n/g,'\n');
+  const originalPost=sql(`SELECT pg_get_functiondef('${postSignature}'::regprocedure)`).replace(/\r\n/g,'\n');
+  const oldDefault='p_broadcast_mention text DEFAULT NULL::text';
+  assert.equal(originalPost.split(oldDefault).length,2,'Exactly one original broadcast default');
+  try{
+   sql(originalPost.replace(oldDefault,"p_broadcast_mention text DEFAULT 'channel'::text"));
+   assert.throws(()=>sql(postPatch),/original writer metadata drift/,'Changed omitted-argument behavior must refuse');
+  }finally{sql(originalPost);}
+  results.push({change:'post default ABI drift',changedBroadcastDefaultRefused:true});
+  const postMetadata=()=>sql(`SELECT jsonb_build_object('fields',to_jsonb(p)-'prosrc'-'proargdefaults','defaultTree',regexp_replace(p.proargdefaults::text,':location -?[0-9]+',':location -1','g'),'defaultExpression',pg_get_expr(p.proargdefaults,0))::text FROM pg_proc p WHERE oid='${postSignature}'::regprocedure`);
+  const beforePostMetadata=postMetadata();
+  sql(postPatch);sql(postPatch);
+  assert.equal(postMetadata(),beforePostMetadata,'Original post OID/ACL/metadata and default AST/expression conserved except observed parser locations');
+  postCatalogue=JSON.parse(sql(`SELECT jsonb_build_object('signature',p.oid::regprocedure::text,'body',md5(p.prosrc),'owner',p.proowner::regrole::text,'definer',p.prosecdef,'volatility',p.provolatile,'config',p.proconfig,'acl',p.proacl) FROM pg_proc p WHERE oid='${postSignature}'::regprocedure`));
+  const channel='e8000000-0000-4000-8000-000000080801',file='e8000000-0000-4000-8000-000000080802',request='e8000000-0000-4000-8000-000000080803';
+  const prepare=(dm=false)=>{
+   reset();sql(`INSERT INTO public.team_hub_channels(id,tenant_id,kind,name,dm_key,visibility,created_by) VALUES('${channel}','${ids.tenant}','${dm?'dm':'channel'}',${dm?'NULL':"'proof-post'"},${dm?"'"+[ids.actor,ids.target].sort().join(':')+"'":'NULL'},'private','${ids.actor}');
+    INSERT INTO public.team_hub_channel_members(channel_id,tenant_id,user_id,added_by) VALUES('${channel}','${ids.tenant}','${ids.actor}','${ids.actor}');
+    INSERT INTO public.team_hub_files(id,tenant_id,channel_id,uploaded_by,client_request_id,storage_path,file_name,mime_type,size_bytes,state,checked_at)
+    VALUES('${file}','${ids.tenant}','${channel}','${ids.actor}','${request}','${ids.tenant}/team-hub/${file}','proof.txt','text/plain',1,'ready',now());`);
+  };
+  const post=`SELECT set_config('request.jwt.claim.sub','${ids.actor}',true); SET LOCAL ROLE authenticated; SELECT public.team_hub_post_message('${ids.tenant}','${channel}','proof','${request}',NULL,'{}',ARRAY['${file}'::uuid],'{}',NULL);`;
+  prepare();const positive=parsed(sql('BEGIN;'+post+'COMMIT;'));
+  assert.equal(positive?.ok,true,'Original attachment post must actually succeed before testing currentness');
+  assert.equal(positive.message?.files?.[0]?.id,file);
+  assert.equal(sql(`SELECT count(*) FROM public.team_hub_files WHERE id='${file}' AND message_id='${positive.message.id}'`),'1');
+  results.push({change:'original attachment post positive',actualStorageScopeTriggers:true,originalExp04Serializer:true});
+  prepare();
+  const holder=connection(`BEGIN; SET application_name='exp08_hub_door_first'; SELECT id FROM public.team_hub_files WHERE id='${file}' FOR UPDATE;\n\\echo EXP08_HUB_DOOR_READY`,true);let caller;
+  try{
+   await ready(holder);
+   caller=connection(`BEGIN; SET application_name='exp08_hub_door_second'; SET statement_timeout='20s'; ${post} COMMIT;`);
+   assert(await blocked(caller,holder),'Original post must wait on its actual attachment row');
+   sql(`UPDATE auth.users SET banned_until=clock_timestamp()+interval '1 hour' WHERE id='${ids.actor}';`);
+   holder.p.stdin.end('COMMIT;\n\\q\n');const first=await holder.done,second=await caller.done;
+   assert.equal(first.code,0,first.err);assert.equal(second.code,0,second.err);
+   const response=parsed(second.out),readback=JSON.parse(sql("SELECT jsonb_build_object('messages',(SELECT count(*) FROM public.team_hub_messages),'postedFiles',(SELECT count(*) FROM public.team_hub_files WHERE message_id IS NOT NULL))"));
+   console.log(JSON.stringify({phase:'original-post-current-actor-readback',actualFileWait:true,response,readback}));
+   assert.equal(response?.ok,false,'Actor ban committed during actual attachment wait must refuse before posting');
+   assert.deepEqual(readback,{messages:0,postedFiles:0});
+   results.push({change:'original attachment wait actor currentness',actualWait:true,changedActorRefused:true});
+  }finally{if(holder.p.exitCode===null&&!holder.p.stdin.writableEnded)holder.p.stdin.end('ROLLBACK;\n\\q\n');await Promise.allSettled([holder.done,...(caller?[caller.done]:[])]);}
+  prepare(true);assert.equal(parsed(sql('BEGIN;'+post+'COMMIT;'))?.ok,true,'Original DM attachment positive must execute');
+  results.push({change:'original DM attachment positive',actualOriginalWriter:true});
+  prepare(true);
+  const dmHolder=connection(`BEGIN; SET application_name='exp08_hub_door_first'; SELECT id FROM public.team_hub_files WHERE id='${file}' FOR UPDATE;\n\\echo EXP08_HUB_DOOR_READY`,true);let dmCaller;
+  try{
+   await ready(dmHolder);dmCaller=connection(`BEGIN; SET application_name='exp08_hub_door_second'; SET statement_timeout='20s'; ${post} COMMIT;`);
+   assert(await blocked(dmCaller,dmHolder),'DM key mutation must occur during actual attachment wait');
+   const replacement='e8000000-0000-4000-8000-000000080900';
+   sql(`UPDATE public.team_hub_channels SET dm_key='${[ids.target,replacement].sort().join(':')}' WHERE id='${channel}';`);
+   dmHolder.p.stdin.end('COMMIT;\n\\q\n');const a=await dmHolder.done,b=await dmCaller.done;
+   assert.equal(a.code,0,a.err);assert.equal(b.code,0,b.err);
+   const response=parsed(b.out),readback=JSON.parse(sql("SELECT jsonb_build_object('messages',(SELECT count(*) FROM public.team_hub_messages),'postedFiles',(SELECT count(*) FROM public.team_hub_files WHERE message_id IS NOT NULL))"));
+   console.log(JSON.stringify({phase:'original-post-dm-pair-readback',actualFileWait:true,response,readback}));
+   assert.deepEqual(response,{ok:false,code:'not_found'},'Changed complete DM identity must refuse even when derived other stays the same');
+   assert.deepEqual(readback,{messages:0,postedFiles:0});results.push({change:'complete DM pair changed while waiting',actualWait:true,derivedOtherUnchanged:true,refused:true});
+  }finally{if(dmHolder.p.exitCode===null&&!dmHolder.p.stdin.writableEnded)dmHolder.p.stdin.end('ROLLBACK;\n\\q\n');await Promise.allSettled([dmHolder.done,...(dmCaller?[dmCaller.done]:[])]);}
+ }
+ if(postOnly){await postAttachmentCurrentness();return {controls:results,catalogue:postCatalogue};}
  reset();const positive=call();assert.equal(positive.ok,true);assert.deepEqual(shape(),{channels:1,members:2,audits:0});results.push({change:'original DM positive',originalChannel:positive.channel_id});
  for(const change of ['ban','delete'])for(const person of [ids.actor,ids.target])for(const first of [true,false])await race(change,first,person);
  for(const first of [true,false])await race('remove',first);
@@ -279,6 +379,8 @@ export async function verifyHubDoorDeparture({repo,sql,connection,ids,database})
   finally{sql(currentAdd);}
  }
  assert.equal(results.length,48);
+ await postAttachmentCurrentness();
+ assert.equal(results.length,53);
  const catalogue=JSON.parse(sql("SELECT jsonb_build_object('signature',p.oid::regprocedure::text,'body',md5(p.prosrc),'owner',p.proowner::regrole::text,'definer',p.prosecdef,'volatility',p.provolatile,'config',p.proconfig,'acl',p.proacl) FROM pg_proc p WHERE p.oid='public.team_hub_add_members(uuid,uuid,uuid[])'::regprocedure"));
- return {controls:results,catalogue};
+ return {controls:results,catalogue:{...catalogue,post:postCatalogue}};
 }

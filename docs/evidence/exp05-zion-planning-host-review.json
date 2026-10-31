@@ -100,5 +100,24 @@
     "Exact-head required CI and safe production readback, no activation inferred.",
     "Same ZION in both chats, existing/new eligible SOLO, actual original record/Rail/reopen and negative auth proof.",
     "Full ten outcomes/E5-CV1–9, weekly execution, Automation Builder lifecycle, proactive follow-through and founder evaluation."
-  ]
+  ],
+  "current_main_reconciliation": {
+    "owner_date": "2026-10-30 America/New_York",
+    "product_commit": "ad9c5c0427252bc43f4667232e857ef70ca48709",
+    "main": "fdff29d4e19d0b95921607643d3bb80725202861",
+    "historical_head": "c19df005f6a2e3604878c727a7bedad4e48cf2a8",
+    "historical_root_boundary": "The original root source/test/static evidence is retained as its dated supporting snapshot; this section identifies the current composition, not a retrospective update to that proof.",
+    "foundation": "3086 merged 7a30d3d503d6ad0723eeceb226727687bce74fd9",
+    "source": {
+      "supabase/functions/_shared/team-hub/agent-turn.ts": "c3de7b7155cd7fe031b99a3aa7df5e0adbf12214cd50b41d0a949023f305a973",
+      "supabase/functions/_shared/team-hub/agent-turn.test.ts": "18094c38bc7468f42ea98dd8f8502ded374ec0244a28e70878e511164499c080"
+    },
+    "local_tests": { "passed": 157, "failed": 0, "skipped": 0, "causal_v2_before": { "passed": 155, "failed": 2 } },
+    "current_native_roster_read": "Existing global ZION scope v2/access card explicitly includes plan_list; no roster or permission was changed.",
+    "compatibility": "Strict read-or-card mode plus exact stored tool, current owner/admin/SOLO/private DM and native stage; mode is not authority.",
+    "conservation": "All15 current imports and six protected authority/private-read declarations exact. All429 original assertion predicates retained among495; one old mentor-only failure message and explicit Member fixture correctly reconcile the approved ZION reuse.",
+    "raw_eslint": { "main_errors": [2, 31], "candidate_errors": [2, 31], "new_diagnostics": 0, "raw_exit": 1 },
+    "strict_types": "Current exact-head compiler proof owed; old6-to6 supporting snapshot is not reused as current verification.",
+    "remaining": "E04 native source-stage/version/publication/history receiving contract; final review/CI, compatible rendered and ordinary customer proof, both chats/cohorts and full O01/ten/E5 acceptance. No merge/deployment/activation."
+  }
 }

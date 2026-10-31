@@ -1,5 +1,20 @@
 # Experience 05 Weekly Internal Commitment Check
 
+## October30 Eastern — ONE primary O01 ZION compatibility reconciliation
+
+Existing host3087 locally composes currentmainfdff in productad9c5c0427252bc43f4667232e857ef70ca48709.
+Current approved global ZION v2/card already contains plan_list. Strict read/card
+compatibility preserves exact tool/current actor/tenant/owner-admin/SOLO/private
+DM, native staging before model and original receipts/recovery; no authority or
+registry change. Current host/reader157PASS/0skipped follows causal v2 test
+155PASS/2FAIL. Current shared declarations/assertion predicates are conserved;
+raw baseline/candidate ESLint2+31 errors unchanged, current compiler proof owed.
+Foundation3086 is actually merged; E04 native source-version/stage/publication/
+history and receiving review still HOLD release. No hosted CI/deployment/customer
+claim. Full first responsibilities outcome and all ten/E5/both chats/cohorts/
+founder acceptance remain open. Prior current-main text and the old host checkpoint
+are retained. [Current evidence](../evidence/exp05-zion-planning-host-review.json).
+
 ## October29 — original automation draft preview source released
 
 Outcome05 / E5-CV1,CV5,CV9: the original stored automation draft now shows its

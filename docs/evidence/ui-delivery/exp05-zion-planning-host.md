@@ -7,8 +7,8 @@ MATERIAL_FLOW_CHANGE: YES: ZION can request the original read-only Planning capa
 FLOW_PROTOTYPE: PASS: original owner-approved Team Hub v3 behavior/v5 presentation and A2 state surface in docs/delivery/exp08-team-hub-agents-contract.md reused, not replaced. Human explicitly approved this exact bounded review-branch connection on October29 after the earlier authorization rejection; this does not approve activation or waive native/receiving review.
 PURPOSE_AUDIENCE_PRIMARY_ACTION: PASS: equivalent eligible existing/new SOLO owners and admins review their original Planning records with the same ZION; channel readers, members and foreign accounts gain no private tool.
 VISUAL_DIRECTION: PASS: retain original approved ZION cobalt/Cog/name, personality and existing reply/recovery workspace; no competing specialist interface or visual library.
-AUTOMATED_EVIDENCE: PASS: 115 original/foundation/host tests; twelve host cases cover original read/stage/model/post ordering, false/uncertain stage, malformed calls, lost acknowledgement, role/workspace/roster withdrawal, provider retry and shared limit. Evidence ../exp05-zion-planning-host-review.json; no SQL/Auth or actual model claim.
-STATIC_EVIDENCE: PASS: source+test strict6 to6, ESLint2+19 to2+19, no added diagnostics; original Capability Kit288/296/no new bypass, eight peer files/four host spans preserved. Sequential AUTHOR-REVIEW / LOWER ASSURANCE; E04 receiving review remains required.
+AUTOMATED_EVIDENCE: PASS: current-main host/reader157 cases,0 failures/0 skipped. Actual v2 card Owner/Admin controls causally155PASS/2FAIL before the strict mode correction; missing tool/unsupported mode and all original tenant/role/stage/unknown/replay negatives retained. Original115-case snapshot remains supporting history in ../exp05-zion-planning-host-review.json, not new native/customer proof.
+STATIC_EVIDENCE: PASS: all15 current imports and six protected authority/private-read declarations preserved;429 original assertion predicates retained among495, with one documented mentor-only failure-message/explicit Member fixture reconciliation. Raw ESLint exits1 for BOTH currentmain and candidate2+31 inherited errors; no added diagnostic or any-type context. Current strict/hosted exact-head proof remains owed; old6-to6 proof is historical. E04 native receiving review remains required.
 RENDERED_EVIDENCE: UNVERIFIED: this draft has no native-compatible ZION production/Preview path yet; no new rendered private Planning result is claimed from Node recording ports or old prototype captures.
 BEHAVIORAL_EVIDENCE: UNVERIFIED: original module execution passes recording-port tests, but actual authenticated DM/read/native-stage/post/reopen behavior awaits E04 native compatibility and authorized browser integration proof.
 AUTHENTICATED_RUNTIME: UNVERIFIED: native ZION guard/source-version/history integration is unbuilt; current owner/member/tenant/revoke/reload and existing/new SOLO customer proof remains required, no account creation or impersonation used.
@@ -32,7 +32,7 @@ MUST_PRESERVE: Original MENTOR/NEXUS/MERIT/CURA/E08 spans, approved identities/p
 ACCEPTANCE_CRITERIA: On a reviewed native-compatible release, authorized owner/admin obtains genuine plans, correct original publication/receipt and later retrieval; member/foreign/channel/revoke/unknown negatives deny without leak or duplicate. Equivalent existing/new SOLO and both chats must be verified before full Experience acceptance.
 MOTION_PURPOSE: NONE: no motion or interaction layout changes.
 PROTECTED_SEAMS: Original domain definition/executor, caller JWT, native stage/post/readback/receipt tested through recording ports; original source/version/history/SQL/Auth/actual customer proof required from receiving E04 contract. Root/card/Calendar/other writers and personalities unchanged.
-INTERNAL_BUILD_IDENTITY: 9cfe0014d598c814d8bb1e54102d409215a330d3; deployment=local-zion-host-review; environment=local; migrations=NOT_APPLICABLE; edge=PROOF_OWED(E04 native compatibility and reviewed release); evidence=docs/evidence/exp05-zion-planning-host-review.json
+INTERNAL_BUILD_IDENTITY: product=ad9c5c0427252bc43f4667232e857ef70ca48709; deployment=NOT_DEPLOYED; environment=development; migrations=NOT_APPLICABLE; edge=PROOF_OWED(E04 native compatibility and reviewed release); evidence=docs/evidence/exp05-zion-planning-host-review.json current_main_reconciliation; final documentation/head identity recorded in PR review and exact CI
 RELEASE_CHANNEL: development: owner-approved review branch only, not a live capability or new rollout cohort.
 RELEASE_CLASSIFICATION: internal-only: integration draft held for E04 native/receiving review and exact CI; no customer release claim.
 CUSTOMER_RELEASE_IDENTITY: none: review branch only, no customer version assigned.
@@ -42,3 +42,14 @@ RELEASE_RECOVERY: position=preserve existing production host; reference=ANT161/8
 UNVERIFIED: E04 native admission/source-version/history/typed-link contract and receiving review, hosted exact-head gates, deployment/readback, rendered/authenticated private results, universal cohorts, all original full-Experience acceptance and founder evaluation. DRAFT / NOT_READY.
 
 Impeccable checks apply to existing Operate context: preserve hierarchy, approved identity and original reply/recovery controls; no visual design changes. Finish/rendered review remains owed on the actual compatible integration. Canonical guidance: https://github.com/pbakaus/impeccable/blob/main/.claude/skills/impeccable/SKILL.md .
+
+October30 Eastern current O01 reconciliation: actual global ZION v2 uses card
+access and already names plan_list. The host now accepts its original read under
+strict read/card modes, preserving exact tools, current actor/tenant/owner-admin,
+SOLO/private DM and native acknowledgment. No role, roster, tool or provider was
+granted. Current MERIT/CURA evidence/links, MENTOR/NEXUS, A2b authority and parser,
+provider/currentness and final post/recovery contracts remain. Existing foundation
+3086 is merged; native E04 source/version/publication/history remains a release
+hold. Capabilities retain their current status; actual registered read is
+planning.list, with no operations.department Spine key verified. Full O01,
+same ZION/both chats, original ten/E5 and founder acceptance remain OPEN.

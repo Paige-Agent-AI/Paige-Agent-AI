@@ -1,4 +1,4 @@
-import argparse,json,pathlib,re,subprocess,time,uuid
+import argparse,hashlib,json,pathlib,re,subprocess,time,uuid
 p=argparse.ArgumentParser(); p.add_argument('--psql',default='psql'); p.add_argument('--port',default='55439'); p.add_argument('--user',default='knowledge_test'); p.add_argument('--expected-data-directory'); p.add_argument('--publication-recovery',action='store_true'); p.add_argument('--recovery-baseline',action='store_true'); p.add_argument('--recovery-migration',default='supabase/migrations/20271110011000_knowledge_publication_recovery.sql')
 p.add_argument('--memory-review-baseline',action='store_true'); p.add_argument('--memory-review-candidate',action='store_true'); p.add_argument('--memory-review-candidate-file',default='scripts/knowledge-service/reviewed-memory-candidate.sql'); a=p.parse_args()
 if (a.memory_review_baseline or a.memory_review_candidate) and not a.expected_data_directory: p.error('Memory proof requires a verified disposable data directory')
@@ -23,15 +23,27 @@ try:
  if a.memory_review_baseline or a.memory_review_candidate:
   run(['-d',db,'-f','scripts/knowledge-service/reviewed-memory-fixture.sql'])
   # Execute the ORIGINAL writers, not a copied or modeled writer implementation.
+  memory_sources={}
   for name,path in [('record_paige_memory','20270599000000_s5_owner_memory_backfill.sql'),('get_paige_memory','20261223000000_paige_memory_governed_contract.sql'),('forget_paige_memory','20261223000000_paige_memory_governed_contract.sql')]:
    source=(root/'supabase/migrations'/path).read_text(encoding='utf-8')
    match=re.search(r'CREATE OR REPLACE FUNCTION public\.'+name+r'\([\s\S]+?\$function\$;',source,re.I)
    if not match: raise RuntimeError('Original Memory source missing: '+name)
+   memory_sources[name]=match.group(0)
    result=subprocess.run(base+['-d',db,'-c',"SET client_encoding='UTF8'",'-f','-'],input=match.group(0),cwd=root,text=True,capture_output=True,encoding='utf-8')
    print(result.stdout);print(result.stderr)
    if result.returncode: raise RuntimeError('Original Memory source installation failed: '+name)
   run(['-d',db,'-f','scripts/knowledge-service/reviewed-memory-source-check.sql'])
   if a.memory_review_candidate:
+   # Add the reviewed-source eligibility predicate to the ORIGINAL old reader,
+   # preserving its entire remaining body, signature, stability and ACL.
+   original=memory_sources['get_paige_memory']; needle='  ORDER BY m.created_at DESC\n'
+   if original.count(needle)!=1: raise RuntimeError('Original Memory context insertion point drifted')
+   predicate=(root/'scripts/knowledge-service/reviewed-memory-context-predicate.sql').read_text(encoding='utf-8')
+   context_source=original.replace(needle,predicate+needle,1)
+   if hashlib.md5(context_source.split('$function$')[1].encode('utf-8')).hexdigest()!='6f815ab77dac205aa2fef761716f8e30': raise RuntimeError('Reviewed Memory context source drifted')
+   result=subprocess.run(base+['-d',db,'-c',"SET client_encoding='UTF8'",'-f','-'],input=context_source,cwd=root,text=True,capture_output=True,encoding='utf-8')
+   print(result.stdout);print(result.stderr)
+   if result.returncode: raise RuntimeError('Reviewed Memory context source installation failed')
    run(['-d',db,'-f',a.memory_review_candidate_file])
    run(['-d',db,'-f','scripts/knowledge-service/reviewed-memory-lifecycle-candidate.sql'])
    run(['-d',db,'-f','scripts/knowledge-service/reviewed-memory-behavior.sql'])
@@ -41,6 +53,7 @@ try:
     print(result.stdout);print(result.stderr)
     if result.returncode: failures.append(case)
    if failures: raise RuntimeError('Reviewed Memory adversarial controls failed: '+','.join(failures))
+   run(['-d',db,'-f','scripts/knowledge-service/reviewed-memory-confirmation.sql'])
    run(['-d',db,'-f','scripts/knowledge-service/reviewed-memory-lifecycle.sql'])
    run(['-d',db,'-f','scripts/knowledge-service/reviewed-memory-access.sql'])
    # Real native sessions contend on the SAME save intent; no timing-only race

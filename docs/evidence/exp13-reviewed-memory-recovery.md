@@ -154,3 +154,35 @@ migration number/publication/application, other Experience activation, provider
 or protected customer material is involved. Binary-source3154 exact400a now all13
 hosted checksSUCCESS and READYfornormalfinalreview; lowerE08 order still holds
 merge/application, and full original EXP13/BULK/agreement-to-actualWork is NOTREADY.
+
+## Original context-reader source invalidation repair
+
+LOCAL PARTIAL: the original four-argument get_paige_memory reader now has an
+additive reviewed-source eligibility predicate in the native candidate runner.
+The original signature, returned columns, ordering, limit, stability and ACL are
+preserved. Legacy rows without reviewed_save retain their original behavior.
+Reviewed-source rows require existing Knowledge actor authority and the actual
+canonical document/version/text digest/quote match before entering context.
+This changes no stored confirmation state or original C6 runtime projection.
+Exact-item five-argument read remains the inspect/recovery door for changed
+sources; selected forget uses that authoritative row version rather than the
+context reader, which correctly withholds stale rows.
+
+Native72180 reached the actual stale-source context assertion failure. Native
+81132 passed that repair but exposed a test handoff using the filtered context
+reader for forget CAS; the control now reads the exact item instead. Native91122
+passed the complete unchanged publication/candidate/race suite. The final
+confirmation run, work/exp13-reviewed-memory-context-confirmation.log, also
+completed native publication and concurrent save/inspection controls, then
+dropped its disposable database. Proposed/retired source-current controls prove
+that source validity does not grant durable approval. The original C6 context
+suite was rerun separately: 19 tests PASS, exit0 (session12267).
+
+The runner pins the modified original get4 body MD5 to
+6f815ab77dac205aa2fef761716f8e30. Fixture actor inputs are modeled local ports,
+not authenticated customer-role evidence. Strict production carrier guards,
+additional revocation/correction/forget races, deletion/retention, exact-head CI,
+managed Preview, ordered release/readback and actual integrated UI/customer
+acceptance remain owed. No versioned migration has been published or applied.
+Owner explicitly reconfirmed incremental live merges: full EXP13 completion is
+not a release gate; applicable review, CI, Preview and migration order remain.

@@ -2628,3 +2628,23 @@ Opposing DM, lifecycle/file-cleanup/retirement composition, remaining original d
 full parent/managed/full-schema/JWT/RLS/customer receipt/reopen/recovery proof remain
 owed before publication. Source-only review is not independent execution. Existing
 ALG IDs/maturity unchanged; full18+6/five journeys and EXP08 remain STILL CODING.
+
+Current full original departure CHILD completed EXIT0 after resource recovery:
+`exp08-departure-full-post-currentness.log`, SHA256
+`7c212f45ac71361577beeae269885e3ce99d112dd3c60a6f088c88c5e368ec33`.
+It executes all60 original outer controls and then one separately counted53-control
+Hub integration group (61 outer entries); it is NOT the larger entity-owner parent.
+Readback removal `cc631b7a8e2f6dc0bb711118493e62ae`, member-add
+`cb353daa578ca145243b2ac5b5dbad07`, post `ad54f00d716e48866f9be3fb02ea7dce`,
+with original owners/ACLs/settings. The run disposed only its own databases; final
+owned-port catalogue contained postgres only and this chat's server was stopped.
+The earlier disk-interrupted attempt remains incomplete historical evidence.
+
+Current local composition `004e0fcbd1674747c603118d9c42abf50221c23b` normally merges
+original EXP03 closeout main215c into own29ec. Independent whole-tree comparison:
+all3 incoming documentation paths exactly equal215c; every other19,088 tracked
+leaf exactly equals29ec. The running proof's source bytes were unchanged. Final
+source-only reviewer found no new material issue after the two guard repairs;
+that is not independent execution or publication clearance. Native helper/member-add/
+post candidates remain unversioned/unpublished. All remaining gates above, actual
+both-chat producer consumers and full original assignment remain STILL CODING.

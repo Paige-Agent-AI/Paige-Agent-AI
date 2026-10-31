@@ -110,22 +110,37 @@ function AskForLink({ invoice, businessName }: { invoice: PortalInvoice; busines
   );
 }
 
+/** Representation/currentness only; native authorization and original balances
+ * remain authority. Never convert a legacy TEST simulation into actual debt. */
+function financialPaymentCurrent(invoice: PortalInvoice, payment: Extract<PortalPaymentRead, {state: "ready"}>): boolean {
+  if (payment.paymentEvidenceVersion !== invoice.payment_evidence_version) return false;
+  if (invoice.payment_evidence_version !== 2) return true;
+  return payment.remainingMinor === invoice.remaining_minor && payment.testProviderMinor === invoice.test_provider_minor
+    && (!payment.request || payment.request.currency === invoice.currency && payment.request.remainingMinor === payment.remainingMinor
+      && (!payment.request.url || payment.request.amountMinor <= payment.remainingMinor));
+}
+
 function PaymentPanel({ invoice, payment, businessName, onRetry, checking }: {
   invoice: PortalInvoice; payment: PaymentView; businessName: string; onRetry: () => void; checking: boolean;
 }) {
   const display = invoiceDisplayState(invoice);
-  const ready = payment.state === "ready" ? payment : null;
-  const remaining = ready ? ready.remainingMinor : invoice.remaining_minor;
-  const testMinor = Math.max(invoice.test_provider_minor, ready?.testProviderMinor ?? 0);
+  const observed = payment.state === "ready" ? payment : null;
+  const paymentState = observed && !financialPaymentCurrent(invoice, observed) ? "error" : payment.state;
+  const ready = paymentState === "ready" ? observed : null;
+  const actualBalance = invoice.payment_evidence_version === 2;
+  const remaining = actualBalance ? invoice.remaining_minor : ready ? ready.remainingMinor : invoice.remaining_minor;
+  const testMinor = actualBalance ? invoice.test_provider_minor : Math.max(invoice.test_provider_minor, ready?.testProviderMinor ?? 0);
   const request = ready?.request ?? null;
-  const settledByTest = display !== "voided" && remaining === 0 && testMinor > 0;
+  const settledByTest = !actualBalance && display !== "voided" && remaining === 0 && testMinor > 0;
   // Payment moves only between the customer and the business's processor; in test mode, it doesn't move.
   const testMode = ready?.environment === "test";
   // A paid part payment made in test mode already says, in its own words, that it moved no money.
   const testPartSettled = remaining > 0 && request?.state === "settled" && testMode;
   const caution = testMinor > 0 && !settledByTest && !testPartSettled && (
     <p data-testid="test-caution" className="text-sm text-muted-foreground">
-      Includes a test payment of {formatPaymentMinor(testMinor, invoice.currency)}. The test payment moved no money.
+      {actualBalance
+        ? <>A separate test payment of {formatPaymentMinor(testMinor, invoice.currency)} moved no money and did not reduce this balance.</>
+        : <>Includes a test payment of {formatPaymentMinor(testMinor, invoice.currency)}. The test payment moved no money.</>}
     </p>
   );
 
@@ -134,7 +149,7 @@ function PaymentPanel({ invoice, payment, businessName, onRetry, checking }: {
     body = (
       <p data-testid="payment-void" className="text-base font-semibold">This invoice was voided. Nothing is owed.</p>
     );
-  } else if (payment.state === "unavailable") {
+  } else if (paymentState === "unavailable") {
     // The list showed it as owed a moment ago; the read now refuses (access changed, or it is no longer
     // issued to this customer). Say only what is known; the list is re-read underneath.
     body = (
@@ -169,13 +184,13 @@ function PaymentPanel({ invoice, payment, businessName, onRetry, checking }: {
             <span className="text-sm text-muted-foreground tabular-nums">of {formatPaymentMinor(invoice.amount_minor, invoice.currency)}</span>
           )}
         </p>
-        {payment.state === "loading" || payment.state === "idle" ? (
+        {paymentState === "loading" || paymentState === "idle" ? (
           <div role="status" data-testid="payment-checking" className="space-y-2">
             <span className="sr-only">Checking for a payment link…</span>
             <Skeleton className="h-4 w-2/3 motion-reduce:animate-none" />
             <Skeleton className="h-11 w-40 motion-reduce:animate-none" />
           </div>
-        ) : payment.state === "error" ? (
+        ) : paymentState === "error" ? (
           <div role="alert" className="flex flex-wrap items-center gap-3 text-sm">
             <p className="inline-flex items-center gap-2"><AlertCircle aria-hidden="true" className="h-4 w-4 shrink-0 text-destructive" /> We couldn't check for a payment link.</p>
             <Button size="sm" variant="outline" className={QUIET_HOVER} onClick={onRetry}>Try again</Button>
@@ -212,7 +227,7 @@ function PaymentPanel({ invoice, payment, businessName, onRetry, checking }: {
                 ? <>Your test payment of <span className="tabular-nums">{formatPaymentMinor(request.amountMinor, request.currency)}</span> went through. The test payment moved no money.</>
                 : <>Your payment of <span className="tabular-nums">{formatPaymentMinor(request.amountMinor, request.currency)}</span> was confirmed.</>}
             </p>
-            <p className="text-sm">{businessName} hasn't sent a link for the rest yet.</p>
+            <p className="text-sm">{actualBalance ? `${businessName} hasn't sent a link for the current balance yet.` : `${businessName} hasn't sent a link for the rest yet.`}</p>
             <AskForLink invoice={invoice} businessName={businessName} />
           </div>
         ) : request ? (
@@ -242,7 +257,7 @@ function PaymentPanel({ invoice, payment, businessName, onRetry, checking }: {
     <section aria-labelledby="payment-heading" data-testid="payment-panel" className="space-y-3 rounded-xl border border-border bg-card p-4">
       <div className="flex items-center justify-between gap-3">
         <h2 id="payment-heading" className="text-sm font-semibold text-muted-foreground">Payment</h2>
-        {invoice.status === "issued" && remaining > 0 && (payment.state === "ready") && (
+        {invoice.status === "issued" && remaining > 0 && (paymentState === "ready") && (
           <Button size="sm" variant="ghost" className={QUIET_HOVER} disabled={checking} onClick={onRetry}>
             <RotateCw aria-hidden="true" className={`mr-1.5 h-3.5 w-3.5 ${checking ? "animate-spin motion-reduce:animate-none" : ""}`} /> Check again
           </Button>
@@ -286,6 +301,7 @@ export default function BillingInvoice() {
   const [payment, setPayment] = useState<PaymentView>({ state: "idle" });
   const [checking, setChecking] = useState(false);
   const paymentSeq = useRef(0);
+  const { refresh: refreshList } = list;
   const needsPayment = !!invoice && invoice.status === "issued" && invoice.remaining_minor > 0;
   const readPayment = useCallback(async (quiet = false) => {
     if (!invoice || !tenantId || !pageCurrent()) return;
@@ -295,14 +311,19 @@ export default function BillingInvoice() {
     setChecking(true);
     try {
       const next = await readPortalInvoicePayment({ invoiceId: invoice.id, tenantId, ...(requestContext ? {context: requestContext} : {}) });
-      if (pageCurrent() && seq === paymentSeq.current) setPayment(next);
+      if (pageCurrent() && seq === paymentSeq.current) {
+        setPayment(next);
+        // One original list refresh reconciles conflicting representations or a
+        // changed actual balance. Never override its debt with a stale request.
+        if (next.state === "ready" && !financialPaymentCurrent(invoice, next)) void refreshList();
+      }
     } catch (error) {
       if (pageCurrent() && seq === paymentSeq.current) setPayment({ state: error instanceof PortalBillingAccessFailure ? "unavailable" : "error" });
     } finally {
       if (pageCurrent() && seq === paymentSeq.current) setChecking(false);
     }
-  }, [invoice, tenantId, requestContext, pageCurrent, viewKey]);
-  const paymentKey = invoice ? `${invoice.id}:${invoice.remaining_minor}:${invoice.payable}:${invoice.status}` : "";
+  }, [invoice, tenantId, requestContext, pageCurrent, viewKey, refreshList]);
+  const paymentKey = invoice ? `${invoice.id}:${invoice.remaining_minor}:${invoice.payable}:${invoice.status}:${invoice.payment_evidence_version ?? "legacy"}:${invoice.test_provider_minor}:${invoice.currency}:${invoice.issued_snapshot_version ?? "legacy"}` : "";
   useEffect(() => {
     if (!needsPayment) { paymentSeq.current += 1; setPayment({ state: "idle" }); setChecking(false); return; }
     void readPayment();
@@ -319,7 +340,6 @@ export default function BillingInvoice() {
   }, [needsPayment, readPayment]);
   // A refusal for an invoice the list still shows as owed means the list is behind: re-read it, once per
   // refusal. It then drops the invoice (not theirs any more) or shows where it now stands (voided, paid).
-  const { refresh: refreshList } = list;
   useEffect(() => {
     if (payment.state === "unavailable") void refreshList();
   }, [payment.state, refreshList]);
@@ -490,7 +510,7 @@ export default function BillingInvoice() {
         </div>
       ) : invoice ? (
         <div className="space-y-4">
-          <PaymentPanel invoice={invoice} payment={visiblePayment} businessName={businessName} checking={checking} onRetry={() => void readPayment(payment.state === "ready")} />
+          <PaymentPanel invoice={invoice} payment={visiblePayment} businessName={businessName} checking={checking} onRetry={() => void readPayment(payment.state === "ready" && financialPaymentCurrent(invoice, payment))} />
           <section aria-label="Invoice document" className="overflow-hidden rounded-xl border border-border bg-card">
             {visibleDocError ? (
               <div role="alert" className="flex flex-wrap items-center justify-between gap-3 px-4 py-6 text-sm">

@@ -1,0 +1,67 @@
+import {act} from 'react';
+import {createRoot,type Root} from 'react-dom/client';
+import {afterEach,beforeEach,expect,it,vi} from 'vitest';
+import {CustomerIdentityProvider,type CustomerIdentityState} from '@/lib/portal/customerIdentity';
+import {useClientPortalInvoices,type ClientPortalInvoicesState} from './useClientPortalInvoices';
+const f=vi.hoisted(()=>({reply:vi.fn(),calls:[] as Array<{name:string;args:Record<string,unknown>}>,listeners:new Set<(event:string,session:{user:{id:string}}|null)=>void>()}));
+vi.mock('@/integrations/supabase/client',()=>({supabase:{rpc:(name:string,args:Record<string,unknown>)=>{
+ const query={setHeader:()=>query,then:(resolve:(v:unknown)=>unknown,reject?:(e:unknown)=>unknown)=>Promise.resolve().then(()=>{f.calls.push({name,args});return f.reply({name,args});}).then(resolve,reject)};return query;
+},auth:{getUser:async()=>({data:{user:{id:actor}},error:null}),getSession:async()=>({data:{session:{user:{id:actor},access_token:'synthetic-financial-continuity'}},error:null}),
+ onAuthStateChange:(callback:(event:string,session:{user:{id:string}}|null)=>void)=>{f.listeners.add(callback);return{data:{subscription:{unsubscribe:()=>f.listeners.delete(callback)}}};}}}}));
+globalThis.IS_REACT_ACT_ENVIRONMENT=true;
+const actor='e0447300-0000-4000-8000-000000000001',tenant='e0447300-0000-4000-8000-000000000002',other='e0447300-0000-4000-8000-000000000003';
+const client=(business:string)=>business===tenant?'e0447300-0000-4000-8000-000000000004':'e0447300-0000-4000-8000-000000000005';
+const id=(n:number)=>'e0447301-0000-4000-8000-'+String(n).padStart(12,'0');
+function page(mode:2|3,n=1,more=false,business=tenant,empty=false){return{
+ schema_version:mode,...(mode===3?{payment_evidence_version:2}:{}),tenant_id:business,business_name:'Test consultancy',
+ invoices:empty?[]:[{id:id(n),invoice_number:'TEST-'+n,status:'issued',currency:'usd',issued_at:'2026-10-29T00:15:00Z',due_date:null,issued_snapshot_version:1,
+  amount_minor:'2000',remaining_minor:mode===3?'2000':'1000',provider_verified_minor:mode===3?'0':'1000',manual_recorded_minor:'0',test_provider_minor:'1000',payable:false,past_due:false}],
+ balances:[{currency:'usd',remaining_minor:mode===3?'4000':'2000',provider_verified_minor:mode===3?'0':'2000',manual_recorded_minor:'0',test_provider_minor:'2000'}],
+ invoice_count:2,open_count:2,has_more:more,next_cursor:more?{issued_at:'2026-10-29T00:15:00Z',id:id(n)}:null,
+ read_at:'2026-10-29T00:15:00Z',calendar:{state:'configured',zone:'America/Los_Angeles',local_date:'2026-10-28'},
+};}
+const result=(data:unknown)=>({data,error:null});
+const pending=()=>{let resolve!:(v:ReturnType<typeof result>)=>void;return{promise:new Promise<ReturnType<typeof result>>(r=>{resolve=r;}),resolve:(v:ReturnType<typeof result>)=>resolve(v)};};
+let root:Root,host:HTMLDivElement,state:ClientPortalInvoicesState;
+const snapshots:Array<{business:string;versions:Array<2|undefined>;ids:string[]}>=[];
+function Probe({business}:{business:string}){state=useClientPortalInvoices();snapshots.push({business,versions:state.invoices.map(i=>i.payment_evidence_version),ids:state.invoices.map(i=>i.id)});return null;}
+const flush=async()=>{for(let i=0;i<100;i++)await Promise.resolve();};
+const render=async(business=tenant,phase:CustomerIdentityState['phase']='ready')=>act(async()=>{root.render(<CustomerIdentityProvider state={{phase,frame:{actorId:actor,profile:{id:client(business),tenant_id:business,linked_user_id:actor,first_name:'Test',last_name:'Customer'},brand:{tenant_name:'Test consultancy'},config:{}} as CustomerIdentityState['frame']}}><Probe business={business}/></CustomerIdentityProvider>);await flush();});
+beforeEach(()=>{f.reply.mockReset();f.calls=[];f.listeners.clear();snapshots.length=0;host=document.createElement('div');document.body.append(host);root=createRoot(host);});
+afterEach(()=>{act(()=>root.unmount());host.remove();});
+it.each([[2,3],[3,2]] as const)('refreshes %s→%s financial representation before appending, retaining the exact original cursor/transport',async(before,after)=>{
+ f.reply.mockResolvedValueOnce(result(page(before,1,true))).mockResolvedValueOnce(result(page(after,2))).mockResolvedValueOnce(result(page(after,3)));
+ await render();await act(async()=>{await state.loadMore();await flush();});
+ expect(f.calls).toHaveLength(3);expect(f.calls[1]).toMatchObject({name:'client_portal_invoices_calendar_scoped',args:{p_tenant_id:tenant,p_expected_client_id:client(tenant),p_after:{issued_at:'2026-10-29T00:15:00Z',id:id(1)}}});
+ expect(f.calls[2].args.p_after).toBeNull();expect(state.invoices.map(i=>i.id)).toEqual([id(3)]);
+ expect(state.invoices[0].payment_evidence_version).toBe(after===3?2:undefined);expect(snapshots.every(s=>new Set(s.versions).size<=1)).toBe(true);
+});
+it.each([2,3] as const)('preserves original pagination when financial representation %s is unchanged',async mode=>{
+ f.reply.mockResolvedValueOnce(result(page(mode,1,true))).mockResolvedValueOnce(result(page(mode,2)));await render();await act(async()=>state.loadMore());
+ expect(state.invoices.map(i=>i.id)).toEqual([id(1),id(2)]);expect(f.calls).toHaveLength(2);expect(state.error).toBeNull();
+});
+it('retains the native financial marker even on an empty first page before a legacy continuation',async()=>{
+ f.reply.mockResolvedValueOnce(result(page(3,1,true,tenant,true))).mockResolvedValueOnce(result(page(2,2))).mockResolvedValueOnce(result(page(2,3)));
+ await render();await act(async()=>state.loadMore());expect(f.calls).toHaveLength(3);expect(state.invoices.map(i=>i.id)).toEqual([id(3)]);
+});
+it('a failed representation refresh leaves no blended financial rows and recovers through the SAME refresh',async()=>{
+ f.reply.mockResolvedValueOnce(result(page(2,1,true))).mockResolvedValueOnce(result(page(3,2))).mockResolvedValueOnce({data:null,error:{code:'synthetic_connection'}});
+ await render();await act(async()=>state.loadMore());expect(state.invoices).toEqual([]);expect(state.balances).toEqual([]);expect(state.error).toBeTruthy();expect(state.loading).toBe(false);
+ f.reply.mockResolvedValueOnce(result(page(3,3)));await act(async()=>state.refresh());expect(state.invoices.map(i=>i.id)).toEqual([id(3)]);expect(state.error).toBeNull();
+});
+it('a late financial-mode continuation cannot replace a fresh scope or its next representation',async()=>{
+ const old=pending();f.reply.mockResolvedValueOnce(result(page(2,1,true))).mockReturnValueOnce(old.promise).mockResolvedValueOnce(result(page(3,3,true,other))).mockResolvedValueOnce(result(page(3,4,false,other)));
+ await render();await act(async()=>{void state.loadMore();await flush();});await render(other);old.resolve(result(page(3,2)));await act(flush);
+ await act(async()=>state.loadMore());expect(state.invoices.map(i=>i.id)).toEqual([id(3),id(4)]);expect(snapshots.filter(s=>s.business===other).every(s=>!s.ids.includes(id(1))&&!s.ids.includes(id(2)))).toBe(true);
+});
+it('an intervening refresh owns financial truth and retires the older load-more response',async()=>{
+ const old=pending();f.reply.mockResolvedValueOnce(result(page(2,1,true))).mockReturnValueOnce(old.promise).mockResolvedValueOnce(result(page(3,3)));
+ await render();await act(async()=>{void state.loadMore();await flush();});await act(async()=>state.refresh());old.resolve(result(page(2,2)));await act(flush);
+ expect(state.invoices.map(i=>i.id)).toEqual([id(3)]);expect(state.invoices[0].payment_evidence_version).toBe(2);expect(f.calls).toHaveLength(3);
+});
+it('original signout retirement clears financial facts and a fresh same-actor session can use legacy pagination',async()=>{
+ f.reply.mockResolvedValueOnce(result(page(3,1,true))).mockResolvedValueOnce(result(page(2,3,true))).mockResolvedValueOnce(result(page(2,4)));
+ await render();await act(async()=>{for(const callback of f.listeners)callback('SIGNED_OUT',null);await flush();});expect(state.invoices).toEqual([]);
+ await act(async()=>{for(const callback of f.listeners)callback('SIGNED_IN',{user:{id:actor}});await flush();});await act(async()=>state.loadMore());
+ expect(state.invoices.map(i=>i.id)).toEqual([id(3),id(4)]);expect(state.invoices.every(i=>i.payment_evidence_version===undefined)).toBe(true);
+});

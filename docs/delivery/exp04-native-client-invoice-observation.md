@@ -351,3 +351,52 @@ in original ANT-51, ANT-147 and ANT-163. ANT-161 also refuses new replies at its
 no history was deleted. Detailed evidence stays local, no raw-source upload/alternate encoding or
 rerouting occurred. A concrete limited technical checkpoint is prepared for explicit publication
 authorization; the existing canonical tracker notes have not been overwritten or claimed updated.
+
+## October 31 C173 — original customer financial continuity
+
+The explicit E09 financial-only source window is received in original ANT163/973f705f and
+incorporated in22775573. The existing invoice hook retains the native representation even on
+an empty page, clears it with the original data, and uses the SAME calendar-rollover fresh-read
+path before appending a different representation. Original client/Auth/frame/relationship epochs,
+calendar/cursor/limit and transport/refusal remain intact. No broader Portal source is assumed.
+
+The original per-invoice decoder retains explicit native actual-debt evidence and refuses an
+unsupported marker or missing/malformed required TEST fact, while unversioned legacy behavior
+is preserved. The original PaymentPanel uses actual native invoice debt; a legacy or stale
+payment read cannot override it, expose a mismatched link or mark it paid. Genuine full LIVE
+settlement remains paid even with historical TEST evidence. The original list refresh and
+deliberate retry reconcile compatible current reads; no new polling, payment or sender exists.
+
+Focused tests first reproduced22 failures in55 cases. The repaired focused selection passes55;
+the fresh broader exact eight-suite selection passes149, including original denials/recovery.
+The prior138 result is an overlapping earlier selection, not additional acceptance. Scoped
+lint and whitespace checks pass. Original native core13/getter17/ledger20 controls pass again,
+with the original full-LIVE-plus-TEST case captured before rollback. All original source/metadata,
+replay and cleanup controls remain. The owned disposable database was dropped and local cluster
+stopped. This is selected-source native proof, not full-schema/API/Auth/provider evidence.
+
+Selected-native outputs feed the actual invoice hook/page, original navigation and frozen
+renderer through the existing customer-mount harness with explicitly synthetic identity and
+transport. Sixteen financial/theme/desktop/narrow cases show correct native amounts, no false
+TEST settlement, no outer overflow, page errors or outside requests. Four frames were personally
+inspected; a bounded two-case confirmation additionally retains the original mismatch/error
+before Enter-driven same-read recovery. Warning contrast measures5.43:1 light/7.27:1 dark.
+The light confirmation focus-shadow capture is transparent, so visible focus is UNVERIFIED;
+programmatic focus/44px target/Enter recovery do not establish full keyboard acceptance.
+
+The original harness files and protected layout/navigation remain unchanged. Synthetic Auth,
+the PAIGE placeholder, missing old menu-fixture Payments entry, controlled document transport
+and zero provider calls are explicit limits, not signed-in/customer proof. Full-shell viewport
+modes, complete Tab/zoom/device/AT, actual PDF/provider/Owner/client receipts/reload/reopen remain
+owed. Detailed evidence and failures are recorded in
+[the original UI evidence directory](../evidence/ui-delivery/exp04-client-invoice-financial-continuity.md).
+
+The original native per-invoice payment-request projection remains a distinct requested
+financial source window in ANT163/d70ae74a, not implicitly cleared by the UI return. No producer
+SQL/header change, forward migration, push, PR, reviewed exact head, hosted CI, merge, deployment,
+activation or actual financial action is claimed by this increment. SAME O5 remains primary;
+remaining original balance consumers, explicit refund/credit/dispute disposition, native producer,
+ordered release and genuine authorized proof still need completion. ALG-01/12 support is bounded
+to deterministic original currentness/replay/refusal checks; ALG-02/13 and full12/founder remain
+open. Safe concise original Linear reporting continues; detailed export permission and canonical
+tracker-note updates remain separately pending, with no alternate export or quota workaround.

@@ -79,6 +79,8 @@ export interface PortalInvoicePage {
   read_at: string;
   /** Absent on the compatible legacy UTC reader. Never derived from the viewer's clock. */
   calendar?: PortalInvoiceCalendar;
+  /** Retain the native representation even when this page has no invoice rows. */
+  payment_evidence_version?: 2;
 }
 
 /**
@@ -313,6 +315,7 @@ export function parseInvoicePage(data: unknown): PortalInvoicePage | null {
     next_cursor: cursor,
     balances: parsedBalances,
     ...(calendar ? {calendar} : {}),
+    ...(financialEvidenceVersion ? {payment_evidence_version: financialEvidenceVersion} : {}),
   };
 }
 
@@ -346,7 +349,7 @@ export type PortalPaymentRead =
    * request. `environment` is the request's provider environment: "test" means paying moves no money;
    * null when there is no request or the value is not one the contract names (never assumed live).
    */
-  | { state: "ready"; request: CustomerPaymentRequest | null; remainingMinor: number; testProviderMinor: number; environment: "test" | "live" | null }
+  | { state: "ready"; request: CustomerPaymentRequest | null; remainingMinor: number; testProviderMinor: number; environment: "test" | "live" | null; paymentEvidenceVersion?: 2 }
   /** Not this customer's invoice, not issued (voided), or gone. */
   | { state: "unavailable" };
 
@@ -367,14 +370,19 @@ export async function readPortalInvoicePayment(args: { invoiceId: string; tenant
     throw new Error("Unexpected payment response");
   }
   const testCents = data.test_provider_cents;
+  const evidenceVersion = data.payment_evidence_version;
+  if (evidenceVersion !== undefined && (evidenceVersion !== 2 || !Number.isSafeInteger(testCents) || Number(testCents) < 0)) {
+    throw new Error("Unexpected payment representation");
+  }
+  const evidence = evidenceVersion === 2 ? {paymentEvidenceVersion: 2 as const} : {};
   const testProviderMinor = Number.isSafeInteger(testCents) && Number(testCents) >= 0 ? Number(testCents) : 0;
-  if (data.payment_request === null) return { state: "ready", request: null, remainingMinor: Number(data.remaining_cents), testProviderMinor, environment: null };
+  if (data.payment_request === null) return { state: "ready", request: null, remainingMinor: Number(data.remaining_cents), testProviderMinor, environment: null, ...evidence };
   const request = readCustomerPaymentRequest(data);
   // A request the parser cannot read is never shown as "no request": that would hide a link the business sent.
   if (!request) throw new Error("Unexpected payment response");
   const env = isObject(data.payment_request) ? data.payment_request.environment : null;
   const environment = env === "test" || env === "live" ? env : null;
-  return { state: "ready", request, remainingMinor: request.remainingMinor, testProviderMinor, environment };
+  return { state: "ready", request, remainingMinor: request.remainingMinor, testProviderMinor, environment, ...evidence };
 }
 
 export interface ClientPortalInvoicesState {
@@ -455,6 +463,7 @@ export function useClientPortalInvoices(enabled = true, initialLimit = PORTAL_IN
   const [loaded, setLoaded] = useState(false);
   const [calendar, setCalendar] = useState<PortalInvoiceCalendar>();
   const calendarRef = useRef<PortalInvoiceCalendar | undefined>(undefined);
+  const financialVersionRef = useRef<2 | undefined>(undefined);
 
   // Mirrors for async callbacks; each async result is applied only if its epoch is current.
   const epoch = useRef(0);
@@ -482,6 +491,7 @@ export function useClientPortalInvoices(enabled = true, initialLimit = PORTAL_IN
     setLoaded(false);
     setCalendar(undefined);
     calendarRef.current = undefined;
+    financialVersionRef.current = undefined;
   }, []);
 
   const resetScope = useCallback(() => {
@@ -512,6 +522,7 @@ export function useClientPortalInvoices(enabled = true, initialLimit = PORTAL_IN
     setHasMore(page.has_more);
     setCalendar(page.calendar);
     calendarRef.current = page.calendar;
+    financialVersionRef.current = page.payment_evidence_version;
     setInvoices((prev) => {
       if (!append) { countRef.current = page.invoices.length; return page.invoices; }
       const seen = new Set(prev.map((i) => i.id));
@@ -583,7 +594,8 @@ export function useClientPortalInvoices(enabled = true, initialLimit = PORTAL_IN
       if (!page || page.tenant_id !== pinned) throw new Error("Invoice business changed");
       // Never blend invoice-date states from different original business days.
       // This is a fresh read, not a retry of any financial or provider action.
-      if (JSON.stringify(page.calendar) !== JSON.stringify(calendarRef.current)) {
+      if (JSON.stringify(page.calendar) !== JSON.stringify(calendarRef.current)
+        || page.payment_evidence_version !== financialVersionRef.current) {
         clearData();
         setLoading(true);
         await refresh();

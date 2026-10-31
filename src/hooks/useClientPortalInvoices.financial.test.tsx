@@ -1,5 +1,5 @@
 import {beforeEach,expect,it,vi} from 'vitest';
-import {invoiceDisplayState,liveProviderMinor,parseInvoicePage,readPortalInvoices,type PortalBillingReadContext} from './useClientPortalInvoices';
+import {invoiceDisplayState,liveProviderMinor,parseInvoicePage,readPortalInvoices,readPortalInvoicePayment,type PortalBillingReadContext} from './useClientPortalInvoices';
 
 const f=vi.hoisted(()=>({reply:vi.fn(),calls:[] as Array<{name:string;args:Record<string,unknown>;headers:Record<string,string>}>}));
 vi.mock('@/integrations/supabase/client',()=>({supabase:{rpc:(name:string,args:Record<string,unknown>)=>{
@@ -74,4 +74,24 @@ it('retains refusal and stale-context guards without an unscoped fallback',async
 it('refuses another business financial result under the original selected relationship',async()=>{
  f.reply.mockResolvedValue({data:{...financialPage(),tenant_id:'e0446500-0000-4000-8000-000000000099'},error:null});
  await expect(readPortalInvoices({context})).rejects.toThrow();expect(f.calls).toHaveLength(1);
+});
+
+const invoiceId='e0446500-0000-4000-8000-000000000004';
+const paymentReply=()=>({invoice_id:invoiceId,remaining_cents:100000,test_provider_cents:50000,payment_request:null});
+it('retains explicit native actual-receivable evidence on the original per-invoice read',async()=>{
+ f.reply.mockResolvedValue({data:{...paymentReply(),payment_evidence_version:2},error:null});
+ expect(await readPortalInvoicePayment({invoiceId,tenantId:tenant,context})).toMatchObject({state:'ready',remainingMinor:100000,testProviderMinor:50000,paymentEvidenceVersion:2});
+ expect(f.calls[0]).toMatchObject({name:'client_portal_invoice_payment_request_scoped',args:{p_invoice_id:invoiceId,p_tenant_id:tenant,p_expected_client_id:client}});
+});
+it.each([null,1,3,'2',{}])('refuses unsupported payment financial representation %j rather than silently calling it legacy',async marker=>{
+ f.reply.mockResolvedValue({data:{...paymentReply(),payment_evidence_version:marker},error:null});
+ await expect(readPortalInvoicePayment({invoiceId,tenantId:tenant,context})).rejects.toThrow();expect(f.calls).toHaveLength(1);
+});
+it.each([undefined,null,-1,'50000'])('new-format TEST facts must be explicit valid native facts: %j',async test=>{
+ f.reply.mockResolvedValue({data:{...paymentReply(),payment_evidence_version:2,test_provider_cents:test},error:null});
+ await expect(readPortalInvoicePayment({invoiceId,tenantId:tenant,context})).rejects.toThrow();
+});
+it('retains old unversioned payment responses and their original missing-TEST compatibility',async()=>{
+ f.reply.mockResolvedValue({data:{...paymentReply(),test_provider_cents:undefined},error:null});
+ const value=await readPortalInvoicePayment({invoiceId,tenantId:tenant,context});expect(value).toMatchObject({state:'ready',testProviderMinor:0});expect(value).not.toHaveProperty('paymentEvidenceVersion');
 });

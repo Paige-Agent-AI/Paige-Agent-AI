@@ -43,3 +43,8 @@ continuation preserves uncertainty after its attempted effect. Pending list
 asserts immediately after awaiting the existing read helper. Six suites224 PASS;
 isolated source strict types PASS. This is modeled source proof, not a confirmed
 live privacy exposure. Final independent residual recheck remains required.
+Actual independent residual recheck received clear at f20becb7e: all three
+captured-scope continuations repaired, boundary controls and retained failure
+evidence inspected. No remaining material finding in that bounded recheck.
+Reviewer did not execute tests. Focused lint/diff checks also PASS; no release,
+deployment or customer readiness follows from this local review.

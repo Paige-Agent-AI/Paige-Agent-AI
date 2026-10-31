@@ -46,7 +46,7 @@ SOLO_900X1000_PAIGE_OPEN: PASS: identity-departure a/b light/dark900-open frames
 
 ## Source and evidence boundaries
 
-The identity frames ran at2e46b2c6 product source; the three affected UI/harness input
+The identity frames ran at2e46b2c6 product source; the affected UI/harness input
 files remain unchanged in28bc. The new native metadata guards do not alter UI rendering.
 Protected frames retain their earlier exact2ad01113 source boundary; they are not
 authenticated or new identity-message proof. Report hashes: identity

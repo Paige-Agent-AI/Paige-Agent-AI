@@ -2403,3 +2403,32 @@ OWED; earlier original-parent ENOSPC FAIL is not cleared by these selections. Ne
 staged carrier version-collision1546, definer-grant and managed-schema lint PASS.
 Managed full-schema/JWT/RLS/authenticated result/receipt/reopen/recovery and all original
 outcome acceptance remain owed. This carrier is preparation, not an applied release.
+
+#### Departure carrier publication and original-record capacity disposition
+
+Original draftPR3164 publishes native140008 from product/native/proof source28bc9786;
+this is source publication only, not production apply or outcome acceptance. The full
+published peer manifests were renewed before publication and actual production still
+read130013/own14absent. Distinct whole-head non-author SOURCE review6539838483 found
+no new material issue after the two P2 repairs; no reviewer execution. Normal exact
+CI, genuine managed full schema/current floor/readback and release gates remain.
+
+Exact28bc UI-evidence124459792256 FAIL required an ADDED non-template record, rather
+than a modified historical one. Evidence-only successor19d47e2d adds the new original
+dated departure record; original validator unchanged/local full gate PASS. Source/doc
+review clear/no execution. All product/native/proof/UI/harness blobs remain28bc;
+new exact hosted checks are required, prior head results remain historical. Original
+full-parent ENOSPC FAIL remains open; selected passes are not a substitute.
+
+Managed no-data Preview1d96145f-730e-4635-9306-bdf44313fdec/projectvgmvycmzftnnmhekjjiq
+was observed CREATING_PROJECT, not ready/applied. No production data copy, manual
+production SQL, reset/history rewrite or held/provider activation. All proof statuses
+stay separate; original row4/full Experience remain incomplete.
+
+ANT161 capacity: additive update exceeded250000 characters; automatic approval review
+rejected replacing an older status paragraph because coordination history could be
+lost. Original/peer history remains intact, with no replacement/deletion/restructure
+or alternate-account/newissue workaround. Coordinator's disposition received and
+explicitly ACKed original ANT147/8f19d721-7512-461b-8256-632dafcabd4a: continue original
+full matrix/repository evidence, existing ANT147 and canonical Google own notes with
+readback; chats supplement those records. Capacity is not product/release clearance.

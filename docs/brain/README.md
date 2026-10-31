@@ -1,3 +1,20 @@
+## EXP05 October30 — preserve the original reminder occurrence
+
+Verified [#3156/9f9da129](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3156)
+producer/Edge93/four-source/configuration and both-origin web release is recorded
+beside the original E05 rows in [Master §4.0](../PAIGE-MASTER-PROJECT-REFERENCE.md#40-shipped-delivery-log).
+Reuse the actual native claim acknowledgment and raw timestamp precision;
+never reconstruct an occurrence with a local clock or call its claim-stage
+version the final Work version. Missing acknowledgment holds before dispatch;
+an uncertain insert retains its original no-repeat claim.
+
+The exact eight-field metadata extends the existing notification, not a second
+store or sender. EXP08 still owns current-recipient admission, consumer mount
+and actual occurrence/read-state/reopen proof; no manual cron/provider effect
+was used. [Original evidence](../evidence/ui-delivery/exp05-reminder-occurrence-reference.md).
+This finite prerequisite does not close O01, the full ten/E5, ZION Planning's
+native integration or founder acceptance. Prior histories remain unchanged.
+
 ## EXP09 October30 — the enclosing history reader owns file-context continuity
 
 Verified [#3152/90a99e6f](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3152) source/web release is now recorded in [Master §4.0](../PAIGE-MASTER-PROJECT-REFERENCE.md#40-shipped-delivery-log). Removing the enclosing history initializer's null reset preserves the original private Documents lifetime during the SAME customer recheck. Initial unknown identity remains empty; native currentness/admission, genuine scope remounts, different native threads and explicit upload/Send remain authoritative. A retained identifier is never an authorization grant.

@@ -1489,7 +1489,12 @@ const ANCESTRY_SOURCES = {
  // metadata, dispatch scalar or other dependency changes. Hostile controls retained.
  "supabase/functions/_shared/paige-turn/record-links.ts": "099fbfdf3d42338d10429fba33caaf64dc7905b45ea37a07e0ef0d1b806a1abe",
  // Original extraction input/acknowledgment validation remains authoritative.
- "supabase/functions/_shared/knowledge-extraction.ts": "458e778114b65959f35c5a65f1b371992faf199f6828d2928df8cb0c5435578d",
+ // EXP13 October31: exact0b5a helper independently reviewed before this renewal.
+ // Original-main458e reproduced; only this source input changed across131
+ // dependencies/29 dispatches. Native13 live; raw/text evidence and original
+ // authority/unknown-effect controls preserved. ANT87/c8d78d41 no-conflict.
+ // Other130 pins, dispatch fingerprints, validator and hostile controls unchanged.
+ "supabase/functions/_shared/knowledge-extraction.ts": "c9d67abaf52d8426a8135f1e260c47ba04c38be6405fe5cc1a4111dd7ebde939",
  // Original CURA history and strict native preparation adapter; native authority unchanged.
  "supabase/functions/_shared/paige-turn/interactive-cura-history.ts": "46578149462437bb3e1e5243277af11b5f7d251a345e75aece2efb020bf7ef88",
  "supabase/functions/_shared/cura-knowledge-teaching.ts": "b421c4302a7772d7b376a7ff99cd96691991593eb3ab1db31d1ac82a9825df87",

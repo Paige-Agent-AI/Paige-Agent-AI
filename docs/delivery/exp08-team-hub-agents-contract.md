@@ -2290,3 +2290,19 @@ schema, actual trigger graph, JWT/RLS or authenticated-customer proof. Finite ca
 inspection additionally covers relationship refresh/legal-profile/connector-cancel
 callees without direct Auth write-lock findings; that inspection is source evidence,
 not execution of those transitive paths. Carrier and full outcome gates remain owed.
+
+The complete original parent run is subsequently **FAIL / EXIT1** before the new
+departure child: PostgreSQL could not extend `base/48945/2608` (ENOSPC) during original
+`identityRestore`, after a genuine original Billing authority wait. Transcript
+`exp08-full-native-identity-fk.log` SHA256
+`3f3a4afa5d3ad046221371cf02c0fd2a502981a3dfbab7711e267b085168068f`.
+Own database disposed/current QOF cluster cleanly stopped/PID marker absent. Its1.5GiB
+preflight passed initially; free capacity later fell sharply. Inspection saw own
+database about8.7MB/WAL32MB; no cause attribution to another process is established.
+No timeout/assertion waiver, peer cleanup or immediate broad retry. Original57 and
+focusedFK10 remain bounded historical evidence; final58/full-parent result remains
+owed. Identity rendering stays pending until resource headroom is adequate.
+
+Pinned Impeccable4.1.0 targeted detector for the two identity-copy files completed
+EXIT0/no findings. First unversioned `npx --no-install` attempt failed registry DNS
+lookup and is retained separately. Neither static detector result proves rendering.

@@ -267,3 +267,12 @@ Knowledge actor and read dependencies, grounded in the fresh production code
 catalogue. New generated carrier hash0f1111fdc6b621933a1ac2ef1da771ed42f9b352240a71f5d996101cf8f22364
 has NOT yet run natively or received independent review. Prior60/native PASS
 applies only to preceding8f3736d45; no green borrowing across this change.
+Successor dependency carrier0f1111fdc6 now actually completed native session62239
+exit0. Expanded84 drift refusals cover original Memory and Knowledge dependency
+source/owner/security/path/role ACL plus four real default-expression mutations.
+Each refusal retains exact definition/ACL rollback readback. Whole carrier repeat,
+all original publication/Memory lifecycle/access controls and real duplicate-save/
+inspection lock waits pass; DROP DATABASE observed and only own server stopped.
+Log `work/exp13-memory-dependency-carrier-native.log`. Python compile/diff checks
+pass. Independent source review of this successor remains owed; no native version,
+publication/application, hosted CI/Preview or customer behavior claim.

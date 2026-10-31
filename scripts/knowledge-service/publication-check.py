@@ -54,7 +54,7 @@ try:
    if a.memory_install_guards:
     carriers=[(a.memory_review_candidate_file,['record_paige_memory(text,text,uuid,jsonb,boolean,text,uuid,uuid,jsonb)']),('scripts/knowledge-service/reviewed-memory-lifecycle-candidate.sql',['get_paige_memory(text[],integer,uuid,uuid,jsonb)','forget_paige_memory(uuid,uuid,uuid,jsonb)'])]
     if a.memory_review_carrier_file:
-     carriers=[(a.memory_review_carrier_file,[signature for _,signatures in carriers for signature in signatures]+['record_paige_memory(text,text,uuid,jsonb,boolean,text,uuid,uuid)','get_paige_memory(text[],integer,uuid,uuid)','forget_paige_memory(uuid,uuid,uuid)'])]
+     carriers=[(a.memory_review_carrier_file,[signature for _,signatures in carriers for signature in signatures]+['record_paige_memory(text,text,uuid,jsonb,boolean,text,uuid,uuid)','get_paige_memory(text[],integer,uuid,uuid)','forget_paige_memory(uuid,uuid,uuid)','knowledge_actor_authorized(uuid,uuid)','read_tenant_knowledge(uuid,uuid,integer,integer)'])]
     for path,signatures in carriers:
      run(['-d',db,'-f',path]) # exact known installation must replay safely
      carrier=(root/path).read_text(encoding='utf-8')
@@ -62,9 +62,13 @@ try:
      body=carrier.split('BEGIN;',1)[1].rsplit('COMMIT;',1)[0]
      for signature in signatures:
       mutations=['ALTER FUNCTION public.'+signature+' SECURITY INVOKER;', 'ALTER FUNCTION public.'+signature+' STABLE;', 'ALTER FUNCTION public.'+signature+' PARALLEL SAFE;', 'ALTER FUNCTION public.'+signature+' STRICT;', 'ALTER FUNCTION public.'+signature+' OWNER TO authenticated;', 'ALTER FUNCTION public.'+signature+' SET search_path TO public,pg_temp;', 'GRANT EXECUTE ON FUNCTION public.'+signature+' TO anon;', 'GRANT EXECUTE ON FUNCTION public.'+signature+' TO service_role;', 'GRANT EXECUTE ON FUNCTION public.'+signature+' TO authenticated WITH GRANT OPTION;']
-      if signature=='get_paige_memory(text[],integer,uuid,uuid)': mutations[1]='ALTER FUNCTION public.'+signature+' VOLATILE;'
-      if signature in ['record_paige_memory(text,text,uuid,jsonb,boolean,text,uuid,uuid)','get_paige_memory(text[],integer,uuid,uuid)','forget_paige_memory(uuid,uuid,uuid)']:
+      if signature in ['get_paige_memory(text[],integer,uuid,uuid)','knowledge_actor_authorized(uuid,uuid)']: mutations[1]='ALTER FUNCTION public.'+signature+' VOLATILE;'
+      if signature in ['record_paige_memory(text,text,uuid,jsonb,boolean,text,uuid,uuid)','get_paige_memory(text[],integer,uuid,uuid)','forget_paige_memory(uuid,uuid,uuid)','knowledge_actor_authorized(uuid,uuid)']:
        mutations[7]='REVOKE EXECUTE ON FUNCTION public.'+signature+' FROM service_role;'
+      defaults={'record_paige_memory(text,text,uuid,jsonb,boolean,text,uuid,uuid)':('DEFAULT false','DEFAULT true'),'get_paige_memory(text[],integer,uuid,uuid)':('DEFAULT 50','DEFAULT 51'),'forget_paige_memory(uuid,uuid,uuid)':('DEFAULT NULL::uuid',"DEFAULT '10000000-0000-0000-0000-000000000001'::uuid"),'read_tenant_knowledge(uuid,uuid,integer,integer)':('DEFAULT 50','DEFAULT 51')}
+      if signature in defaults:
+       before,after=defaults[signature]
+       mutations.append("DO $defaults$ DECLARE d text; BEGIN d:=pg_get_functiondef('public."+signature+"'::regprocedure); IF strpos(d,'"+before.replace("'","''")+"')=0 THEN RAISE EXCEPTION 'DEFAULT_CONTROL_SETUP_FAILED'; END IF; EXECUTE replace(d,'"+before.replace("'","''")+"','"+after.replace("'","''")+"'); END $defaults$;")
       mutations.append("DO $mutate$ DECLARE f record; BEGIN SELECT oid,prosrc INTO STRICT f FROM pg_proc WHERE oid='public."+signature+"'::regprocedure; EXECUTE replace(pg_get_functiondef(f.oid),f.prosrc,f.prosrc||E'\\n-- unexpected source drift\\n'); END $mutate$;")
       snapshot_sql="SELECT jsonb_build_object('definition',pg_get_functiondef(oid),'acl',proacl::text) FROM pg_proc WHERE oid='public."+signature+"'::regprocedure"
       snapshot=subprocess.check_output(base+['-d',db,'-Atc',snapshot_sql],text=True,encoding='utf-8')

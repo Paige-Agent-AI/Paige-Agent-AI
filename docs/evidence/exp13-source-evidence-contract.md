@@ -97,3 +97,49 @@ control failed first (18 PASS / 1 FAIL), then both split endpoints were refused
 without silently changing selection; the whole Unicode character remains valid.
 Focused ESLint, diff whitespace and Deno 2.1.4 check PASS. Hosted exact-head CI,
 merge, deployment, authenticated roles and integrated customer proof remain owed.
+
+## Local native quotation groundwork (not source admission)
+
+The original private knowledge_utf16_length(text) already exists in Knowledge
+review/extraction migrations. Current migration search found no native exact
+UTF16-offset/literal-quote matcher. The LOCAL unversioned
+scripts/knowledge-service/native-source-quotation.sql reuses that length helper
+to find exact PostgreSQL code-point boundaries for existing JS UTF16 selections.
+Split surrogate endpoints, moved repeated quotations, normalization/case changes,
+invalid ranges and oversized inputs refuse. It is I/O-free and private: PUBLIC,
+anon, authenticated and service_role have no execution grant. No document access,
+source approval, domain confirmation or Work authority follows from a text match.
+
+Original publication-check.py gains optional source-quotation proof/baseline flags
+requiring the verified disposable database directory. Baseline37722 reaches a
+missing-function42883: demonstrated feature absence, not a production defect.
+Native63223 passes initial25 quotation observations and private ACL. Final37992
+times out in ORIGINAL publication-recovery-behavior.sql:263 scale control BEFORE
+the new quotation controls; that failure remains recorded. Unchanged retry4551
+passes28 quotation observations plus private ACL and all original publication
+controls, exits0 and DROPS its disposable database. No existing assertion or
+timeout changed. Logs: work/exp13-source-quotation-baseline.log,
+work/exp13-source-quotation-native.log,
+work/exp13-source-quotation-native-final.log and
+work/exp13-source-quotation-native-final-retry.log.
+
+Production carrier/replay, atomic permitted source/version/textSHA locking,
+selected original domain-approval receipt, saved Mission binding and original
+Planning proposal/claim/resume integration remain OWNED integration work. This
+private predicate is not mounted, versioned, published or applied. No canonical
+ALG maturity, customer upload/plan/task readiness or authenticated acceptance is
+claimed. The original source helper's factConfirmation:not_asserted remains.
+
+Independent source review identified a P2 caller-collation gap in the new local
+predicate. Actual native6242 creates real ICU und-u-ks-level1 nondeterministic
+collation, verifies it ignores case/accent, then the exact-positive call FAILS in
+the original UTF16 helper's regex. This is a new-candidate finding, not a deployed
+customer incident. Repair changes only the new predicate: pin all three existing
+length-helper inputs to pg_catalog.C and compare final UTF8 bytea values rather
+than collation-sensitive text. Native74943 exits0 with original28 quote controls,
+private ACL, real ICU sanity, exact-positive, case-negative and accent-negative,
+plus all original publication controls; disposable DB DROPPED. Baseline and final
+logs are work/exp13-source-quotation-collation-baseline.log and
+work/exp13-source-quotation-collation-final.log. No original helper is modified.
+Distinct final source recheck marks the P2 resolved and finds no remaining
+material issue in this bounded predicate; reviewer did not run native tests.

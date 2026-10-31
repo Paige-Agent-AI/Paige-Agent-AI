@@ -1,5 +1,6 @@
 import argparse,pathlib,subprocess,uuid
-p=argparse.ArgumentParser(); p.add_argument('--psql',default='psql'); p.add_argument('--port',default='55439'); p.add_argument('--user',default='knowledge_test'); p.add_argument('--expected-data-directory'); p.add_argument('--publication-recovery',action='store_true'); p.add_argument('--recovery-baseline',action='store_true'); p.add_argument('--recovery-migration',default='supabase/migrations/20271110011000_knowledge_publication_recovery.sql'); a=p.parse_args()
+p=argparse.ArgumentParser(); p.add_argument('--psql',default='psql'); p.add_argument('--port',default='55439'); p.add_argument('--user',default='knowledge_test'); p.add_argument('--expected-data-directory'); p.add_argument('--publication-recovery',action='store_true'); p.add_argument('--recovery-baseline',action='store_true'); p.add_argument('--recovery-migration',default='supabase/migrations/20271110011000_knowledge_publication_recovery.sql'); p.add_argument('--source-quotation-proof',action='store_true'); p.add_argument('--source-quotation-baseline',action='store_true'); a=p.parse_args()
+if (a.source_quotation_proof or a.source_quotation_baseline) and not a.expected_data_directory: p.error('Source quotation proof requires a verified disposable data directory')
 root=pathlib.Path(__file__).resolve().parents[2]; db='knowledge_publish_test_'+uuid.uuid4().hex
 base=[a.psql,'-X','-h','127.0.0.1','-p',a.port,'-U',a.user,'-v','ON_ERROR_STOP=1']
 def run(args):
@@ -18,5 +19,8 @@ try:
  files+=['scripts/knowledge-service/extraction-behavior.sql','scripts/knowledge-service/publication-behavior.sql']
  if a.publication_recovery: files+=['scripts/knowledge-service/publication-recovery-behavior.sql']
  for f in files: run(['-d',db,'-f',f])
+ if a.source_quotation_proof or a.source_quotation_baseline:
+  if not a.source_quotation_baseline: run(['-d',db,'-f','scripts/knowledge-service/native-source-quotation.sql'])
+  run(['-d',db,'-f','scripts/knowledge-service/native-source-quotation-behavior.sql'])
  print('PASS: native Knowledge publication SQL')
 finally: run(['-d','postgres','-c','DROP DATABASE '+db])

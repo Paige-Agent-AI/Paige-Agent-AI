@@ -2161,3 +2161,33 @@ runs remain excluded from final proof. Final exact UI/source review, full origin
 runner on this new delta, rendered/AT and managed carrier/customer proof remain owed.
 Local free disk fell to about468MB; no broad rerun or peer cleanup was attempted.
 Frozen3130/00f is unchanged; no new version/publication/apply or row4/full acceptance.
+
+#### October31 actual release and same-row4 full native verification
+
+Original3130 is normally released as `21da54c8988743e63ebf9caadfdf8583abf30251`
+after all13 exact00f check runs, both web successes, zero threads and non-author
+SOURCE review. Production four lower migrations, eight exact catalogue/permission
+readbacks, three inverses, normal Chat606 source certificate and both public build
+identities were independently verified. Full receipt is original PR comment6539217377
+and original EXP13 receiving thread ANT21/4d81acdd. This is a bounded source release;
+original matrix4/13/16/18 remain PARTIAL/PROOF OWED for their stated full outcomes.
+
+EXP13 subsequently returned its original3154/130013 native receipt; independent
+production read confirms frontier20271126130013/count1 and own140008count0. It
+clears only that named ordering dependency, never remaining own coding/review/CI or
+worker/Memory/Work/customer activation. Preserve all incoming peer source/CI tests.
+
+Same primaryrow4 successor `cfd49ddbef3d9b6032f0233a3e417ee855cde62e` now completes
+the NORMAL no-argument original native runner, including its original final Billing
+advisory/contact authority waits and NEW38-control departure tail: **EXIT0**.
+Transcript `exp08-full-native-protected-final.log` SHA256
+`550afabcd46e761e65742c16b7a0ee73b87c981b977f8e18f6d6304234394f75`.
+Parent and child own test databases disposed; controller cleanly stopped current QOF
+cluster and its PID marker is absent. Original old idle server remains preserved.
+This clears the local combined-native gap on this delta. Earlier failures remain.
+
+The same delta has40 removal UI tests and32 real-SoloApp browser cases/frames PASS,
+with original approval/design preserved and no live effects. Normal guarded carrier,
+current-main composition, exact review/CI/managed readback and authenticated/RLS/AT/
+native zoom/customer proof remain owed. Original recovery/co-owner/Setup/delegated
+management and all other original18+6/five-journey integrations remain STILL CODING.

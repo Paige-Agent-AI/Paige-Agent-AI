@@ -78,6 +78,14 @@ customer session, actual membership effect, database/RLS, screen-reader speech o
 native200percent zoom proof. Complete native runner on this protected delta and all
 normal managed/release/customer/remaining original-row obligations remain owed.
 
+Later terminal native receipt: exact successorcfd49ddbe NORMAL no-argument original
+runner EXIT0, including original final Billing authority races and new38 departure
+controls. Transcript SHA256 `550afabcd46e761e65742c16b7a0ee73b87c981b977f8e18f6d6304234394f75`;
+both own proof databases disposed, current QOF cluster cleanly stopped/PID absent.
+This supersedes only the local combined-native proof gap above, retaining prior
+FAILs. Managed/current-main carrier/review/CI and authenticated/RLS/AT/native zoom
+proof remain owed; the complete original row4 and full EXP08 are not accepted.
+
 UI_DELIVERY_EVIDENCE_VERSION: 1
 FLOW_BY_FLOW: PASS: flow packet is the tier-matrix ledger "EXP08 team lifecycle" (docs/doctrine/tier-matrix.md: the authority rule, the per-tier table, the departure-review hand-over contract naming each existing writer, and what a suspension does to mailboxes and approvals) plus "Solo Settings → Team: the screens for the team lifecycle" added in this PR; the flows are suspend, reinstate, the Team conversations switch (row and invitation form), departure review → hand-over → remove, Team Hub with conversations off, and accept-invite refused for a held seat; backend for all of them merged and applied in #2912 (e0263aac0)
 PAIGE_UI_DESIGN: PASS: Impeccable's reference/craft-floor.md and .agents/skills/paige-ui-design/SKILL.md applied (Solo verification: four viewports PAIGE closed and open, both themes, states, keyboard, reflow, reduced motion), recorded below; the owner saw the rendered design and approved it on 2026-10-26, then asked for "a touch more color", applied token-only

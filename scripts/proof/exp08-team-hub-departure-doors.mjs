@@ -284,7 +284,7 @@ export async function verifyHubDoorDeparture({repo,sql,connection,ids,database,p
   }
   return JSON.parse(sql(`SELECT jsonb_build_object('signature',p.oid::regprocedure::text,'body',md5(p.prosrc)) FROM pg_proc p WHERE oid='${signature}'::regprocedure`));
  }
- if(fileOnly){await postAttachmentCurrentness(true);results.push(...await verifyHubFileCurrentness(postContext));assert.equal(results.length,11);return {controls:results,catalogue:{post:postCatalogue,files:fileCatalogue()}};}
+ if(fileOnly){await postAttachmentCurrentness(true);results.push(...await verifyHubFileCurrentness(postContext));assert.equal(results.length,16);return {controls:results,catalogue:{post:postCatalogue,files:fileCatalogue()}};}
  if(contextDoorOnly){const catalogue=await contextDoorCurrentness(contextDoorOnly);if(contextDoorOnly==='dm')await originalDmCases(true);return {controls:results,catalogue};}
  if(createOnly){const catalogue=await createChannelCurrentness();return {controls:results,catalogue};}
  if(postOnly){await postAttachmentCurrentness();return {controls:results,catalogue:postCatalogue};}
@@ -492,7 +492,7 @@ export async function verifyHubDoorDeparture({repo,sql,connection,ids,database,p
  await originalDmCases(true);
  assert.equal(results.length,85);
  results.push(...await verifyHubFileCurrentness(postContext));
- assert.equal(results.length,95);
+ assert.equal(results.length,100);
  const catalogue=JSON.parse(sql("SELECT jsonb_build_object('signature',p.oid::regprocedure::text,'body',md5(p.prosrc),'owner',p.proowner::regrole::text,'definer',p.prosecdef,'volatility',p.provolatile,'config',p.proconfig,'acl',p.proacl) FROM pg_proc p WHERE p.oid='public.team_hub_add_members(uuid,uuid,uuid[])'::regprocedure"));
  return {controls:results,catalogue:{...catalogue,post:postCatalogue,create:createCatalogue,join:joinCatalogue,agent:agentCatalogue,dm:dmCatalogue,files:fileCatalogue()}};
 }

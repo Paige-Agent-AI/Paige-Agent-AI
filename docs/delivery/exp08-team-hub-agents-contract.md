@@ -2819,3 +2819,32 @@ unpublished. Original18+6/five journeys and full EXP08 remain STILL CODING.
 Selected11 log `exp08-file-cleanup-currentness.log`, SHA256
 `8349b860c1efa7e3f6f3c293e5b48c16d8f722a1a5674f0afd50fdeef9288caa`;
 actual original discard702b36/stale4e47e1 and postad54 readback, own database disposed.
+
+#### Same outcome4: original cancellation currentness, inert repair
+
+Original discard702b36 genuinely failed a local native file-wait/context-commit
+control after all original10 file controls and actual leave/own-cancellation positive.
+Log `exp08-discard-context-before.log`, SHA256
+`d2b5cf1f5504ea6393759a0b59f6dc0df23d13682c80d3f4256f5ed247c4e3c0`.
+No production/customer incident or Storage-byte effect is claimed.
+
+NEW INERT `exp08-team-hub-discard-currentness-patch.sql` changes ONLY original
+`team_hub_discard_file(uuid,uuid)`, after its own file-row wait. Ordered existing
+actor/seat/profile/current-context guards precede the original posted/state checks.
+No conversation-visibility requirement: actual original leave then own unposted
+cancellation remains allowed. Exact original inverse, ABI/helper/FK/RI/ACL/OID/all
+metadata and replay are guarded. No Auth/profile/Setup/Work writer, grant, provider,
+new authority engine, migration version or live apply.
+
+Selected16 passed: original setupABInegative1 plus file15 (original10, actual leave
+positive1, committed/rollback workspace2, BOTH actual removal orders2). Actual
+original removal receipt, profile clear, no-deadlock and correct file state verified.
+Log `exp08-discard-removal-composition.log`, SHA256
+`8d0b4c4000879110fc97dd173d88162e80de8634c6d3cd22e3b36fa8b5eb6c8b`.
+Final discard body `f59f67d3654fd40d319e8eb7adf4688a`; original stale-claim4e47e1
+and postad54 unchanged. Auth role-port restored, own database disposed. Original10,
+then13, then15 assertions remain; normal original85 before file15 now100. Distinct
+source-only review found no material issue, not independent execution/publication.
+Fresh whole100, remaining broader locking/retirement/drift/full-schema/Auth/RLS/
+Storage-byte/customer and normal release gates remain owed. Earlier full-parent85
+PASS remains bounded historical proof. Original18+6/five journeys/full EXP08 STILL CODING.

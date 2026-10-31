@@ -13,6 +13,26 @@ Failing-first native proof reproduced original P0001 raw protection through unch
 
 UI failing-first code-to-copy test FAIL1 (`exp08-protected-copy-before.log`), then the complete original removal suite PASS37/37 (`exp08-protected-copy-after.log`). New mapping is one exact authored-code entry; raw-trigger compatibility remains. Distinct native source reviewer P2 repaired/source re-review clear, no reviewer execution; final UI/source review, rendered exact new-copy geometry/AT, whole original parent native runner on this final delta and managed carrier proof remain owed. Low local disk capacity prevented a justified full parent rerun at this checkpoint; no test waiver or peer cleanup. The frozen lower release PR3130/00f is unchanged; this unversioned candidate has no production apply or release identity.
 
+Same-row4 rendered-proof preparation: three isolated `team-departure-*` files in the
+existing `scripts/live-drive/harness/team-hub-shell-mount` reuse its REAL `SoloApp`,
+original root/context fixtures and incumbent transport. The derived alias supplies only
+fictional roster/empty holdings/authored refusal ports; no removal-success writer or
+provider invocation is introduced. Intended32 cases cover both contexts/themes/four
+viewports/PAIGE states, keyboard action sequence, refusal, disabled retry, close/reopen
+and workspace-switch withdrawal. Captured and restored geometry are separate; the
+incumbent narrow PAIGE overlay is explicitly labelled, never measured after folding
+and misreported as its open state. Non-author SOURCE review caught/fixed that P2 and
+reports no further material finding, with no execution.
+
+Actual Vite configuration load verifies original root/local5298/narrow alias; syntax,
+lint and whitespace checks pass. Browser preflight EXIT1 at about387MB free before
+launch (`exp08-protected-render-preflight.log`): **ZERO browser sessions/frames**, so
+the new rendered flow is **UNVERIFIED**. The768MiB local technical preflight is a
+test-resource guard, not a product billing/usage policy or a measured capacity guarantee.
+No new server, off-machine browser call, authenticated customer act or source release.
+Run later with the derived config and the same drive when capacity permits; inspect
+actual frames/control clipping before accepting its limited center-point measurements.
+
 UI_DELIVERY_EVIDENCE_VERSION: 1
 FLOW_BY_FLOW: PASS: flow packet is the tier-matrix ledger "EXP08 team lifecycle" (docs/doctrine/tier-matrix.md: the authority rule, the per-tier table, the departure-review hand-over contract naming each existing writer, and what a suspension does to mailboxes and approvals) plus "Solo Settings → Team: the screens for the team lifecycle" added in this PR; the flows are suspend, reinstate, the Team conversations switch (row and invitation form), departure review → hand-over → remove, Team Hub with conversations off, and accept-invite refused for a held seat; backend for all of them merged and applied in #2912 (e0263aac0)
 PAIGE_UI_DESIGN: PASS: Impeccable's reference/craft-floor.md and .agents/skills/paige-ui-design/SKILL.md applied (Solo verification: four viewports PAIGE closed and open, both themes, states, keyboard, reflow, reduced motion), recorded below; the owner saw the rendered design and approved it on 2026-10-26, then asked for "a touch more color", applied token-only

@@ -85,4 +85,17 @@ describe("original Planning reminder consumer", () => {
     expect(await readRow(notification(), () => false)).toEqual({ kind: "unavailable" });
     expect(readWeeklyPlanningSource).not.toHaveBeenCalled();
   });
+  it("preserves the original nullable target without inventing recipient normalization", async () => {
+    const current = { ...item(), remind_target: null };
+    vi.mocked(readWeeklyPlanningSource).mockResolvedValue({ kind: "verified", item: current });
+    expect(await read({ ...metadata(), remind_target: null })).toEqual({ kind: "verified", notificationId,
+      isRead: false, readAt: null, item: current });
+  });
+  it("withholds an original null target when the current source was retargeted", async () => {
+    expect(await read({ ...metadata(), remind_target: null })).toEqual({ kind: "unavailable" });
+  });
+  for (const value of [undefined, false, 1, {}, ""]) it(`refuses malformed target ${String(value)} before private read`, async () => {
+    expect(await read({ ...metadata(), remind_target: value })).toEqual({ kind: "unavailable" });
+    expect(readWeeklyPlanningSource).not.toHaveBeenCalled();
+  });
 });

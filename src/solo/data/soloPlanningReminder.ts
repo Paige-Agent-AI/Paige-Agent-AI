@@ -40,8 +40,9 @@ async function readSoloPlanningReminder(metadata: unknown,
     if (Object.keys(data).length !== keys.length || !keys.every(key => Object.prototype.hasOwnProperty.call(data, key))
       || data.source !== "paige_planning" || !uuid(data.tenant_id) || !uuid(data.plan_item_id)
       || data.tenant_id.toLowerCase() !== origin.tenantId.toLowerCase()
-      || (data.plan_id !== null && !uuid(data.plan_id)) || typeof data.remind_target !== "string"
-      || !data.remind_target || instant(data.claim_source_version) === null) return unavailable;
+      || (data.plan_id !== null && !uuid(data.plan_id))
+      || (data.remind_target !== null && (typeof data.remind_target !== "string" || !data.remind_target))
+      || instant(data.claim_source_version) === null) return unavailable;
     // Capture before awaiting: caller mutation cannot redirect a pending occurrence.
     const address = { tenant: data.tenant_id.toLowerCase(), item: data.plan_item_id.toLowerCase(),
       plan: typeof data.plan_id === "string" ? data.plan_id.toLowerCase() : null,

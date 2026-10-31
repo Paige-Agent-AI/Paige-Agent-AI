@@ -152,7 +152,7 @@ export async function newTurnToken(random: (n: number) => Uint8Array = (n) => cr
  *   in_flight           a turn for this question is already running (another tab): show "is writing…".
  *   conversations_off   CONVERSATIONS_OFF.
  *   not_visible         "<Agent> couldn't reply: you can't see this conversation any more."
- *   rate_limited        "You've reached 30 agent replies this hour. Try again later."
+ *   rate_limited        "Too many requests right now. Try again shortly." (legacy/technical refusal)
  *   could_not_start     "<Agent> couldn't start just now. Ask again."
  *   no_reply            "<Agent> didn't reply. Ask again." (the turn ended without a post; a retry re-arms it).
  *   cannot_post_here    "<Agent> can't post here."

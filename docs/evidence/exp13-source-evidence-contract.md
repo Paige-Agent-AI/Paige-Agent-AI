@@ -97,3 +97,40 @@ control failed first (18 PASS / 1 FAIL), then both split endpoints were refused
 without silently changing selection; the whole Unicode character remains valid.
 Focused ESLint, diff whitespace and Deno 2.1.4 check PASS. Hosted exact-head CI,
 merge, deployment, authenticated roles and integrated customer proof remain owed.
+
+## Binary source native release prerequisite — October31 UTC
+
+Separate local release child d89ad415eed4a197efdf6b4de19add1f66b3807e is based on
+fresh main e0c2d936e1cb1615099161f2b53f219a847e8639. It carries only the original
+three-file native candidate from f24be1a14; the cumulative upload/UI/client branch
+is retained separately. This entry accompanies that candidate, not the unmounted
+source-reference helper's original merge. No new Knowledge store or executor.
+
+Fresh original publication-check.py --publication-recovery --binary-source ran
+against a verified disposable PostgreSQL16 cluster on loopback port55483: exit0,
+214 PASS-labelled observations across original and binary-source controls (not
+214 distinct outcomes). Original migrations and candidate replay, source/ACL drift
+refusals, exact raw/text identities, UTF16 quotation bounds, permission/current
+scope refusals, publication readback, canonical source reopen, correction/discard
+and receipt-once replay controls are retained. Auth/vector/receipt fixture ports
+are explicitly modeled; this does NOT prove Supabase/full schema/customer roles.
+Log: work/exp13-native-release-d89-proof.log in the owning workspace. The test
+runner dropped its disposable database and its exact cluster was stopped.
+
+Initial restricted initdb setup stalled in its child PostgreSQL configuration
+probe before assertions; handle32401 was deliberately stopped, exit1 retained.
+Authorized isolated setup23264 completed exit0, then verification49891 completed
+exit0. No live handle was duplicated and no peer process/database was stopped.
+
+Fresh NON-AUTHOR SOURCE review at exact d89 reports no material findings; all
+three candidate files match prior reviewed f24. Python compilation/diffcheck0.
+Production READONLY frontier is20271126080007; candidate130013count0, source and
+extraction evidence columns absent. Seven original native body/owner/security/
+search-path projections were read without customer contents. No production apply.
+
+Original E08 PR3130 remains OPEN421e, its published80008/90008/100008/110008
+migration order protected. E03's never-published120003 slot remains withdrawn;
+future peer reservations must still be re-read before release. Managed Preview,
+normal ordered native release/exact-head CI and authoritative readback remain
+required. No admitted binary worker/UI or reviewed fact/Memory/GamePlan/actual
+Work availability is established by this prerequisite. Full EXP13 remains active.

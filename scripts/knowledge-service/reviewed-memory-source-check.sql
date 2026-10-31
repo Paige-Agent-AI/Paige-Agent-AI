@@ -1,0 +1,4 @@
+SELECT public.test_assert((SELECT md5(prosrc)='2ca751faa9d87bc6c4a586fd607847d0' FROM pg_proc WHERE oid='public.record_paige_memory(text,text,uuid,jsonb,boolean,text,uuid,uuid)'::regprocedure),'original record source matches freshly inspected production body');
+SELECT public.test_assert((SELECT md5(prosrc)='6f0ecfc77ce855160db184e6770000f4' FROM pg_proc WHERE oid='public.get_paige_memory(text[],integer,uuid,uuid)'::regprocedure),'original get source matches freshly inspected production body');
+SELECT public.test_assert((SELECT md5(prosrc)='f145788514336a0ae4e48aa950c82b55' FROM pg_proc WHERE oid='public.forget_paige_memory(uuid,uuid,uuid)'::regprocedure),'original forget source matches freshly inspected production body');
+GRANT EXECUTE ON FUNCTION public.record_paige_memory(text,text,uuid,jsonb,boolean,text,uuid,uuid) TO authenticated;

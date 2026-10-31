@@ -1,5 +1,6 @@
 import argparse,pathlib,subprocess,uuid
-p=argparse.ArgumentParser(); p.add_argument('--psql',default='psql'); p.add_argument('--port',default='55439'); p.add_argument('--user',default='knowledge_test'); p.add_argument('--expected-data-directory'); p.add_argument('--publication-recovery',action='store_true'); p.add_argument('--recovery-baseline',action='store_true'); p.add_argument('--recovery-migration',default='supabase/migrations/20271110011000_knowledge_publication_recovery.sql'); a=p.parse_args()
+p=argparse.ArgumentParser(); p.add_argument('--psql',default='psql'); p.add_argument('--port',default='55439'); p.add_argument('--user',default='knowledge_test'); p.add_argument('--expected-data-directory'); p.add_argument('--publication-recovery',action='store_true'); p.add_argument('--recovery-baseline',action='store_true'); p.add_argument('--recovery-migration',default='supabase/migrations/20271110011000_knowledge_publication_recovery.sql'); p.add_argument('--binary-source',action='store_true'); p.add_argument('--binary-baseline',action='store_true'); p.add_argument('--binary-migration',default='supabase/migrations/20271126130013_knowledge_binary_source_evidence.sql'); a=p.parse_args()
+if a.binary_source and (not a.expected_data_directory or not a.publication_recovery): p.error('binary source proof requires the verified disposable data directory and original publication recovery')
 root=pathlib.Path(__file__).resolve().parents[2]; db='knowledge_publish_test_'+uuid.uuid4().hex
 base=[a.psql,'-X','-h','127.0.0.1','-p',a.port,'-U',a.user,'-v','ON_ERROR_STOP=1']
 def run(args):
@@ -15,8 +16,23 @@ try:
  files+=['supabase/migrations/20270533100000_knowledge_publication_worker_adoption.sql']*2
  files+=['supabase/migrations/20270533200000_knowledge_submit_activation.sql']*2
  if a.publication_recovery and not a.recovery_baseline: files+=[a.recovery_migration]*2
+ if a.binary_source and not a.binary_baseline: files+=[a.binary_migration]*2
  files+=['scripts/knowledge-service/extraction-behavior.sql','scripts/knowledge-service/publication-behavior.sql']
  if a.publication_recovery: files+=['scripts/knowledge-service/publication-recovery-behavior.sql']
- for f in files: run(['-d',db,'-f',f])
+ if a.binary_source: files+=['scripts/knowledge-service/binary-source-behavior.sql']
+ for f in files:
+  run(['-d',db,'-f',f])
+  if a.binary_source and not a.binary_baseline and f==a.binary_migration:
+   # Faults exist only inside this verified disposable database transaction.
+   # ON_ERROR_STOP closes the failed connection, rolling every fault back.
+   faults=[
+    "CREATE OR REPLACE FUNCTION public.complete_knowledge_extraction(_work_id uuid,_server_key text,_attempt integer,_revision integer,_content text,_hash text) RETURNS jsonb LANGUAGE sql SECURITY DEFINER SET search_path='' AS $$ SELECT NULL::jsonb $$",
+    'GRANT EXECUTE ON FUNCTION public.complete_knowledge_extraction(uuid,text,integer,integer,text,text) TO authenticated',
+    'GRANT EXECUTE ON FUNCTION public.complete_knowledge_extraction(uuid,text,integer,integer,text,text,jsonb) TO pg_monitor',
+   ]
+   for fault in faults:
+    rejected=subprocess.run(base+['-d',db,'-c','BEGIN','-c',fault,'-f',a.binary_migration],cwd=root,text=True,capture_output=True,encoding='utf-8')
+    if rejected.returncode==0 or 'KNOWLEDGE_BINARY_SOURCE_DRIFT' not in rejected.stderr: raise RuntimeError('source/ACL fault was not refused: '+rejected.stdout+rejected.stderr)
+    print('PASS: transactional source/ACL drift refused; fixture fault rolled back')
  print('PASS: native Knowledge publication SQL')
 finally: run(['-d','postgres','-c','DROP DATABASE '+db])

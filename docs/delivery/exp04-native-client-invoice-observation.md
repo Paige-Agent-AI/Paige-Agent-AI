@@ -272,3 +272,82 @@ Next remains SAME O5: integrate provider adjustments and explicit commercial dis
 the original receipts/obligations/consumers, ordered independent review and exact-head release,
 then correct-merchant and authorized Owner/client result/reload/reopen/recovery proof. The full
 twelve-outcome Experience is STILL CODING; no outcome or founder acceptance is claimed.
+
+## October 31 C172 — refund/dispute signals into original verification work
+
+The current live event adapter only locates per-payment work through event metadata or the
+existing balance-available path. Refund/dispute snapshot objects do not reliably carry the
+original payment-intent metadata. A new UNMOUNTED export in that SAME adapter handles only the
+ten explicitly supported refund/dispute snapshot signals. The existing verified-signature
+ingress remains mandatory and unchanged. It passes only bounded event/type/account/environment/
+charge references to a service-only candidate in the original observation-work fixture. Native
+scope resolves the original settled operation and receipt, validates the current merchant through
+the existing context, and delegates to the SAME original event-occurrence writer. No caller amount,
+status, tenant metadata or object contents become payment evidence or financial authority.
+
+An unrelated merchant remains another domain. A known original payment with retired merchant
+authority remains an explicit scope refusal, rather than being silently discarded as unrelated.
+A known merchant whose original captured payment is
+not yet linked remains verification-pending/retryable; no payment or occurrence is invented. The
+same event/charge can register after the ORIGINAL allocator establishes capture. Registration
+returns only that the original occurrence exists, including replay of blocked/terminal work;
+it does not mean observation completed, a refund occurred, debt changed or work will run again.
+There is no provider call, new scheduler, second queue, new settlement dispatch or provider-effect
+API. The existing live router, endpoint, configuration and immutable migrations are untouched.
+
+Evidence: all 503 tests in the 19 original payment suites pass; the existing event-adapter suite
+now has 35 tests, including its five incumbent cases. The actual original native provider proof
+also passes with the candidate installed before incumbent lifecycle cases: 36 original observation
+controls, all 39 incumbent event-work controls plus 15 appended ingress controls, the pre-capture
+pending/post-capture registration case, original two-session observation cases and event-work race.
+The original missing-link-guard and missing-merchant-binding causal failures still occur at their
+specific unchanged assertions and roll back. Original payment, financial balance and terminal
+settlement work are conserved. All five native proof source pins match the executed source.
+The owned disposable database was removed and owned local cluster stopped, with zero left.
+
+The added merchant-replacement case also has a causal control: reintroducing an early
+"other domain" return causes that exact retained-scope assertion to fail. The test restores
+the original resolver byte-for-byte after rollback. A first control injection lacked the
+terminating SQL separator and failed with a syntax error; that is INVALID as causal proof.
+The separator was fixed without changing product logic or the expected assertion, and the
+final full native run proves both the specific causal failure and all 54 positive controls.
+
+Complete original-source inverses are exact for all five changed implementation/test files after
+removing only this bounded extension and restoring the prior total-count expectation. The complete
+incumbent 39-control count guard remains before the appended block. Strict Deno checking uses the
+same cached/pinned Stripe SDK and frozen original server lock, which remains byte-exact; scoped
+lint, syntax and diff checks pass. This narrow server graph does not substitute for the owed full
+application compiler or exact-head hosted release checks.
+
+The first native extension run correctly rejected a synthetic event ID derived from a name with
+underscores. Only the fixture ID was corrected; native production-format validation and all
+assertions remain. Earlier Deno attempts used the wrong command path/default dependency cache,
+then tried to include unrelated frontend-package workspace metadata in the old server-only lock.
+Those failures remain retained. Reusing the original explicit server cache/lock and excluding
+frontend package discovery completed the unchanged narrow check without rewriting a lock or
+upgrading dependencies. The final original-source inverse probe and executed source pins pass.
+
+Provider semantics were rechecked against the official [event types](https://docs.stripe.com/api/events/types),
+[refund object](https://docs.stripe.com/api/refunds/object),
+[dispute object](https://docs.stripe.com/api/disputes/object), and
+[credit-note documentation](https://docs.stripe.com/invoicing/dashboard/credit-notes).
+Refunds, failed-refund reversals, dispute withdrawals/reinstatements and commercial credits are
+distinct records/effects. A credit note can reduce an invoice without recording a payment. Our
+existing inline Checkout and canonical PAIGE invoice do not establish a Stripe Billing invoice;
+using Stripe Billing credit-note APIs as a replacement PAIGE ledger is not an integration plan.
+Explicit canonical commercial disposition, actual cash adjustment/allocation, uncertainty and
+customer-visible balances/history still need implementation and integrated proof. No automatic
+debt forgiveness, actual refund, dispute decision, signed-term change or payment is inferred here.
+
+ALG-01 has bounded deterministic event identity/replay/original-source support in these tests;
+ALG-12 has bounded unknown/unlinked/role/scope refusal and recovery support. Neither is a genuine
+signed provider event or production reconciliation proof. ALG-02 onboarding and ALG-13 next-step
+quality are not established. The same full twelve-outcome assignment and complete-working-
+Experience amendment remain required; O5 is still the only primary and is NOT accepted.
+
+Coordination limitation: automatic approval review rejected the detailed source/release update
+to Linear. A concise outcome/acceptance-limits summary and amendment ACK were successfully posted
+in original ANT-51, ANT-147 and ANT-163. ANT-161 also refuses new replies at its 2000-comment quota;
+no history was deleted. Detailed evidence stays local, no raw-source upload/alternate encoding or
+rerouting occurred. A concrete limited technical checkpoint is prepared for explicit publication
+authorization; the existing canonical tracker notes have not been overwritten or claimed updated.

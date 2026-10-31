@@ -322,6 +322,11 @@ try {
  assert.equal(run(`SELECT state FROM paige_invoice_provider_operations WHERE id='${paidOp}';`),'outcome_unknown');
  const readback={provider:'stripe',merchant_account_id:'acct_fixtureA',environment:'test',provider_object_id:'cs_test_settlement',provider_transaction_id:'ch_fixture',provider_settlement_id:'txn_fixture',amount_minor:50000,currency:'usd',status:'verified',readback_reference:'req_fixture',invoice_id:invoice,client_id:client,invoice_version:3,issued_snapshot_version:1,provider_received_at:new Date(Date.now()-1000).toISOString()};
  const allocate=(fact=readback,t=tenant)=>service(`SELECT allocate_verified_sales_invoice_payment('${t}','${paidOp}','${paidToken}',${literal(fact)});`);
+ if(process.argv.includes('--observation-work')){
+  const early=JSON.parse(run(service("SELECT public.register_sales_provider_observation_event('evt_earlyCapture','refund.created','acct_fixtureA','test','ch_fixture');")).split('\n').at(-1));
+  assert.equal(early.state,'verification_pending','early adjustment event remains pending before ORIGINAL capture exists');
+  assert.equal(run("SELECT count(*) FROM paige_durable_work WHERE work_kind='sales_provider_observation' AND request_payload->>'event_id'='evt_earlyCapture';"),'0','unlinked early event cannot invent an operation or work');
+ }
  deny(allocate({...readback,amount_minor:50001}),/readback|tuple|conflict/i);
  deny(allocate({...readback,status:'provider_accepted'}),/Invalid|readback/i);
  deny(allocate({...readback,card_number:'4111111111111111'}),/Invalid|readback/i);
@@ -493,10 +498,25 @@ try {
     deny(workChecks.replace('begin;\n',()=> 'begin;\n'+mutant+'\n'),/FAIL: different merchant cannot register event work accepted/);
     assert.equal(run("SELECT pg_get_functiondef('public.register_sales_provider_observation_work(uuid,uuid,text,text,text,text)'::regprocedure);"),definitionBefore,'negative-control connection restores exact original event writer');
     console.log('SALES_PROVIDER_OBSERVATION_WORK_CONTROL_PASS: removing merchant binding caused the exact cross-merchant admission failure; rollback restored the original writer.');
+    // C172 silent-drop negative control: original scopes must remain visible as
+    // verification failures after replacement, without granting retired authority.
+    const eventDefinition=run("SELECT pg_get_functiondef('public.register_sales_provider_observation_event(text,text,text,text,text)'::regprocedure);");
+    const eventAnchor=' select count(*) into matches from public.paige_invoice_provider_operations p';
+    assert(eventDefinition.includes(eventAnchor),'exact original-payment lookup anchor');
+    const silentDrop=eventDefinition.replace(eventAnchor,` if not exists(select 1 from public.tenant_stripe_accounts m
+     where m.stripe_account_id=_merchant_account_id and m.provider_environment=_environment) then
+     return jsonb_build_object('state','other_domain');end if;
+`+eventAnchor);
+    deny(workChecks.replace('begin;\n',()=> 'begin;\n'+silentDrop+';\n'),/FAIL: known original payment with retired merchant scope is refused rather than silently ignored accepted/);
+    assert.equal(run("SELECT pg_get_functiondef('public.register_sales_provider_observation_event(text,text,text,text,text)'::regprocedure);"),eventDefinition,'silent-drop control rolls back to the exact original event resolver');
+    observationProof.ingress_silent_drop_negative_control=true;
+    console.log('SALES_PROVIDER_OBSERVATION_INGRESS_CONTROL_PASS: silently dropping a retired original merchant fails the exact retained-scope assertion; rollback restores the resolver.');
+    // End C172 silent-drop negative control.
    }
    const line=run(workChecks).split('\n').find(x=>x.startsWith('{')&&x.includes('E04_PROVIDER_OBSERVATION_WORK'));
    assert(line,'native work proof summary');observationProof.work=JSON.parse(line);
-   assert.equal(observationProof.work.checks,39,'all native event-work controls executed');
+    assert.equal(observationProof.work.checks,54,'all39 original and15 appended native event-work controls executed');
+    observationProof.work.early_capture_order_case=1;
    const event='evt_workRealSessions';
    const registerEvent=()=>service(`BEGIN;SELECT jsonb_build_object('backend',pg_backend_pid(),'result',public.register_sales_provider_observation_work('${tenant}','${paidOp}','${event}','acct_fixtureA','test','ch_fixture'));SELECT pg_sleep(0.1);COMMIT;`);
    const registered=await Promise.all([execute(registerEvent()),execute(registerEvent())]);

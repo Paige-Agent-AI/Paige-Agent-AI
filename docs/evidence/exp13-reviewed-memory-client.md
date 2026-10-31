@@ -50,6 +50,11 @@ only an explicit missing-function error with null data as UNAVAILABLE/no effect;
 contradictory data or transport failure remain uncertain and are never replayed.
 Focused suite then 22 PASS, isolated strict source types/lint PASS. This narrow
 error-classification follow-up still needs bounded non-author source recheck.
+Actual narrow non-author recheck received: no material finding, catch preserves
+the current missing-function attempt's no-effect classification; contradictory
+responses and transport failure stay uncertain. Tests inspected, not rerun.
+This does not resolve any earlier uncertain attempt with the same intent; it
+must still be inspected before deciding what happened. No automatic retry grant.
 Remaining client proof includes exhaustive malformed row/selected correction,
 permission changes, missing native API and interruption cases. Consumer UI,
 reviewed Setup facts, saved Mission and original admitted Work/CRM creation remain

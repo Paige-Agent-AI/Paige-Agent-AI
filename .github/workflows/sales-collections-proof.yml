@@ -85,7 +85,7 @@ jobs:
       - name: Incumbent provider lifecycle plus original observation integrity and recovery
         env:
           PGPASSWORD: isolated-test-password
-        run: node scripts/sql/sales-provider-operation-proof.mjs "$(command -v psql)" 56347 postgres /var/lib/postgresql/data --current --accepted-obligation-writers --provider-observations --observation-self-test
+        run: node scripts/sql/sales-provider-operation-proof.mjs "$(command -v psql)" 56347 postgres /var/lib/postgresql/data --current --accepted-obligation-writers --provider-observations --observation-self-test --observation-work
       - name: Accepted dated obligations, exact target source, service-only admission and stale refusals
         env:
           PGPASSWORD: isolated-test-password

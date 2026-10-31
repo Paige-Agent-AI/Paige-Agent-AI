@@ -32,3 +32,27 @@ tests, retaining all incoming code and source leases. Existing original source
 producers/Knowledge CRUD/native permissions/Storage/work/review/publish and their
 receipts remain authoritative. No new batch ledger, scheduler, executor, Memory,
 approval inbox or copied client/private conversation store is created.
+
+## Current local source/build checkpoint
+
+Exact UI composition8d13327fb has11 suites306 PASS; focused ten-file ESLint and
+diff checks PASS. Actual esbuild fixture compiles current Add/Bulk/Pending/source
+components and original controls/CSS/font with1634 inputs; only explicit synthetic
+authority/native/Storage ports, CSP connect-src none, two synthetic text files.
+This is compilation, not browser rendering, indexing or authenticated persistence.
+
+Actual browser tab7 could not reach loopback8769 (connection timeout). Same own
+Python session87798 remains live; exact host process48536 matches the known
+http.server/knowledge-ui-preview command, but listener inspection found no TCP
+listener. Authorized host HTTP also timed out. No process was presumed dead,
+restarted, peer-killed or network protection changed. Browser error-page data URL
+was refused by browser policy during attempted inspection; no bypass or alternate
+control used. This setup does not prove a product failure or any new rendered
+PASS. Earlier component captures remain dated historical proof only.
+
+Distinct functional source review of8d13327fb received no material finding:
+original authority/publication paths, per-file unknown recovery, source/data vs
+review/fact separation and parent workspace/actor incarnation disposal retained.
+Reviewer did not execute tests and cannot certify geometry/keyboard/AT/full shell,
+deployed source/index persistence or customer acceptance. All such proof stays
+UNVERIFIED; this is still local preparation, not a ready UI release.

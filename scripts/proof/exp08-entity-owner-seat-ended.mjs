@@ -507,6 +507,15 @@ try {
   if(!onlyOwnerRead&&!onlyBilling){
     const historyFixture=readFileSync(new URL('../../supabase/tests/exp08_first_owner_history.sql',import.meta.url),'utf8');
     const historyPatch=readFileSync(new URL('./exp08-first-owner-history-patch.sql',import.meta.url),'utf8');
+    for(const [name,drift] of [
+      ['wrong history type','ADD COLUMN first_owner_seated_at text'],
+      ['history default','ADD COLUMN first_owner_seated_at timestamptz DEFAULT now()'],
+      ['non-null history','ADD COLUMN first_owner_seated_at timestamptz NOT NULL DEFAULT now(); ALTER TABLE public.tenants ALTER COLUMN first_owner_seated_at DROP DEFAULT'],
+      ['generated history',"ADD COLUMN first_owner_seated_at timestamptz GENERATED ALWAYS AS (TIMESTAMPTZ '2020-01-01 00:00:00+00') STORED"],
+    ]) {
+      sql(`BEGIN;\n${historyFixture}\nALTER TABLE public.tenants ${drift};\n${historyPatch}\nROLLBACK;`,database,true,/EXP08 first owner history column drift/);
+      console.log(JSON.stringify({phase:'first-owner-history-column-drift',name,refused:true}));
+    }
     const historyRun=patch=>sql(`BEGIN;\n${historyFixture}\n${patch}\nSELECT row_to_json(t) FROM proof.owner_history_cases() t;\nROLLBACK;`).split('\n').filter(Boolean).map(JSON.parse);
     const rows=historyRun(historyPatch);
     console.log(JSON.stringify({phase:'first-owner-history-component',cases:rows}));

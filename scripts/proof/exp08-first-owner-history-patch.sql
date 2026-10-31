@@ -1,5 +1,19 @@
 -- UNVERSIONED I2 component candidate; NOT a deployable migration or released invitation gate.
 -- Original approved co-owner contract §5.4b. Run only in the original disposable native proof.
+-- IF NOT EXISTS alone admits a previously installed, incompatible column. Freeze its catalogue
+-- shape through admission and the backfill; a default/generated value must never invent history.
+LOCK TABLE public.tenants IN ACCESS EXCLUSIVE MODE;
+DO $history_column$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_catalog.pg_attribute a
+    WHERE a.attrelid='public.tenants'::regclass AND a.attname='first_owner_seated_at'
+      AND NOT a.attisdropped
+      AND (a.atttypid<>'pg_catalog.timestamptz'::regtype OR a.atttypmod<>-1
+        OR a.attnotnull OR a.atthasdef OR a.attidentity<>'' OR a.attgenerated<>'')) THEN
+    RAISE EXCEPTION 'EXP08 first owner history column drift';
+  END IF;
+END
+$history_column$;
 ALTER TABLE public.tenants ADD COLUMN IF NOT EXISTS first_owner_seated_at timestamptz;
 
 -- Audit is a one-time historical input, never the runtime authority source. The injected parent

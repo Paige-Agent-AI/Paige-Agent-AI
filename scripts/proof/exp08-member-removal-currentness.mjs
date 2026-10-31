@@ -421,7 +421,7 @@ try{
     ['parallel',`ALTER FUNCTION ${signature} PARALLEL SAFE`],
     ['owner',`ALTER FUNCTION ${signature} OWNER TO service_role`],
     ['grant option',`GRANT EXECUTE ON FUNCTION ${signature} TO service_role WITH GRANT OPTION`],
-    ['missing grant',`REVOKE EXECUTE ON FUNCTION ${signature} FROM service_role`],
+    ['missing essential grant',`REVOKE EXECUTE ON FUNCTION ${signature} FROM ${mapping?'PUBLIC':'postgres'}`],
    ]){
     sql(change);
     try{
@@ -454,6 +454,29 @@ try{
   sql(candidatePatch);
   checks.push({signature:mapping,change:'return ABI',refused:true,removalUnchanged:true,metadataExceptRecreatedOidRestored:true});
   assert.equal(checks.length,31);
+  const helperMetadata=()=>sql("SELECT jsonb_object_agg(p.proname,to_jsonb(p)) FROM pg_proc p WHERE p.oid IN ('public.map_tenant_role_to_app_role(public.tenant_role)'::regprocedure,'public.sync_tenant_member_to_user_roles()'::regprocedure,'public.prevent_owner_admin_removal()'::regprocedure)");
+  try{
+   // Actual no-data managed rebuild: mapping default ACL, both trigger helpers owner-only.
+   sql(`DROP FUNCTION ${mapping};${saved};REVOKE EXECUTE ON FUNCTION public.sync_tenant_member_to_user_roles(),public.prevent_owner_admin_removal() FROM service_role;`);
+   assert.equal(sql(`SELECT proacl IS NULL FROM pg_proc WHERE oid='${mapping}'::regprocedure`),'t','fixture must exercise actual managed default representation');
+   const exactManaged=helperMetadata();
+   sql(candidatePatch);sql(candidatePatch);
+   assert.equal(helperMetadata(),exactManaged,'patch/replay preserve every managed helper field and raw ACL verbatim');
+   assert.equal(business(),before);
+   assert.equal(sql("SELECT pg_get_functiondef('public.remove_solo_team_member(uuid,uuid)'::regprocedure)"),removal);
+   // A browser grant on either private trigger helper remains forbidden in this tighter form.
+   for(const signature of ['public.sync_tenant_member_to_user_roles()','public.prevent_owner_admin_removal()']){
+    sql(`GRANT EXECUTE ON FUNCTION ${signature} TO authenticated`);
+    try{assert.throws(()=>sql(candidatePatch),/EXP08 departure currentness original helper drift:/,'managed private trigger must not acquire browser access');}
+    finally{sql(`REVOKE EXECUTE ON FUNCTION ${signature} FROM authenticated`);}
+    assert.equal(helperMetadata(),exactManaged);
+   }
+   output.push({change:'actual managed helper ACL variants',defaultPublicMapping:true,ownerOnlyTriggers:true,rawMetadataConserved:true,forbiddenBrowserGrantsRefused:2});
+  }finally{
+   sql(`DROP FUNCTION ${mapping};${saved};REVOKE ALL ON FUNCTION ${mapping} FROM PUBLIC,postgres,anon,authenticated,service_role;GRANT EXECUTE ON FUNCTION ${mapping} TO postgres,PUBLIC,anon,authenticated,service_role;GRANT EXECUTE ON FUNCTION public.sync_tenant_member_to_user_roles(),public.prevent_owner_admin_removal() TO service_role;`);
+  }
+  assert.equal(sql(`SELECT (to_jsonb(p)-'oid')::text FROM pg_proc p WHERE oid='${mapping}'::regprocedure`),metadata,'restore production fixture except the necessary recreated mapping OID');
+  sql(candidatePatch);
   output.push({change:'original helper prerequisites',controls:checks});
  }
  if(candidate&&!mutant&&!protectedOnly&&!identityOnly){
@@ -475,7 +498,7 @@ try{
   assert.equal(report.cases.length,10,'all original profile FK cases must execute');
   output.push({change:'original profile FK suite',controls:report.cases,disposed:true});
  }
- if(!mutant)assert.equal(output.length,prerequisitesOnly?1:identityFkOnly?10:identityOnly?17:protectedOnly?8:candidate?59:4,'Every intended control must execute');
+ if(!mutant)assert.equal(output.length,prerequisitesOnly?2:identityFkOnly?10:identityOnly?17:protectedOnly?8:candidate?60:4,'Every intended control must execute');
  const catalogue=JSON.parse(sql("SELECT jsonb_build_object('signature',p.oid::regprocedure::text,'md5',md5(p.prosrc),'owner',p.proowner::regrole::text,'definer',p.prosecdef,'volatility',p.provolatile,'config',p.proconfig,'acl',p.proacl) FROM pg_proc p WHERE p.oid='public.remove_solo_team_member(uuid,uuid)'::regprocedure"));
  console.log(JSON.stringify({scope:'isolated native original writer/helpers; minimal tables and Auth/platform ports, no customer or RLS proof',carrier:'20271126140008_exp08_departure_currentness.sql',carrierLfSha256:createHash('sha256').update(candidatePatch).digest('hex'),catalogue,cases:output},null,2));
 }finally{

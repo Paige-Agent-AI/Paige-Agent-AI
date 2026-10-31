@@ -86,8 +86,13 @@ BEGIN
    OR p.proargmodes IS NOT NULL OR p.proallargtypes IS NOT NULL
    OR p.proargnames IS DISTINCT FROM (CASE WHEN helper.public_mapping THEN ARRAY['_tenant_role']::text[] ELSE NULL::text[] END)
    OR pg_get_function_arguments(p.oid) IS DISTINCT FROM (CASE WHEN helper.public_mapping THEN '_tenant_role tenant_role' ELSE '' END)
-   OR (SELECT count(*) FROM aclexplode(coalesce(p.proacl,acldefault('f',p.proowner))))
-      <> (CASE WHEN helper.public_mapping THEN 5 ELSE 2 END)
+   -- Fresh managed rebuilds retain the mapping's PUBLIC default and tighter owner-only
+   -- trigger grants; production may explicitly repeat PUBLIC access or grant service.
+   -- Preserve either observed form verbatim, never normalize or widen a helper's ACL.
+   OR NOT EXISTS(SELECT 1 FROM aclexplode(coalesce(p.proacl,acldefault('f',p.proowner))) a
+     WHERE a.grantee='postgres'::regrole AND a.privilege_type='EXECUTE' AND NOT a.is_grantable)
+   OR (helper.public_mapping AND NOT EXISTS(SELECT 1 FROM aclexplode(coalesce(p.proacl,acldefault('f',p.proowner))) a
+     WHERE a.grantee=0 AND a.privilege_type='EXECUTE' AND NOT a.is_grantable))
    OR EXISTS(SELECT 1 FROM aclexplode(coalesce(p.proacl,acldefault('f',p.proowner))) a
      WHERE a.privilege_type<>'EXECUTE' OR a.is_grantable
       OR (helper.public_mapping AND a.grantee NOT IN (0,'postgres'::regrole,'anon'::regrole,'authenticated'::regrole,'service_role'::regrole))

@@ -67,3 +67,18 @@ checks. Final required CI/managed verification and normal release remain mandato
 The initial28bc UI-evidence check124459792256 failed because only the existing historical
 record changed; this new record supplies current evidence routing, with validator and
 all assertions unchanged. No field is a waiver of unverified product outcomes.
+
+## Subsequent native precondition compatibility
+
+Actual no-data managed catalogue exposed mapping default PUBLIC ACL and tighter
+owner-only trigger ACLs. No environment grants were changed. The never-applied14
+carrier now accepts only those observed equivalent/stricter forms while retaining
+required owner/PUBLIC entries, private-grantee restrictions and all typed/source guards.
+New focused run retained31 negative controls and proved managed raw-ACL replay
+conservation plus two forbidden private-browser-grant refusals; source-only review
+found no material issue. Carrier LF SHA256 now
+1f40c0b087d9fdf4b8bfdc108ccf8e20d102b2492714484f8a482aac0a43d3a7;
+resulting removal body remainscc631b7a. UI/harness inputs and their stated rendered
+boundaries are unchanged. Earlier native snapshot hashes are historical; complete60
+outer-entry/parent proof and fresh CI/managed/full-schema/authenticated/release gates
+remain owed, with local ENOSPC failure retained. This is not a permission waiver.

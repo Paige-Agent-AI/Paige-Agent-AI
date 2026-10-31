@@ -2432,3 +2432,40 @@ or alternate-account/newissue workaround. Coordinator's disposition received and
 explicitly ACKed original ANT147/8f19d721-7512-461b-8256-632dafcabd4a: continue original
 full matrix/repository evidence, existing ANT147 and canonical Google own notes with
 readback; chats supplement those records. Capacity is not product/release clearance.
+
+#### Actual managed helper-ACL compatibility repair
+
+No-data Preview1d96145f/projectvgmvycmzftnnmhekjjiq was ACTIVE_HEALTHY but branch still
+CREATING_PROJECT. Read-only catalogue proved floor130013/own14absent/originald8c0.
+Helper bodies/security/config/typed ABI match production, but mapping ACL is NULL
+(original PUBLIC+postgres defaults), and both trigger helpers are postgres-only.
+Production has redundant explicit mapping grants and optional service trigger grants.
+The first count/service-required guard would incorrectly reject this actual rebuild.
+No Preview/production GRANT, metadata normalization or manual migration apply occurred.
+
+The new carrier preflight preserves either observed permission form verbatim: require
+postgres execute; require mapping PUBLIC execute; allow only the original mapping
+grantees and private postgres/service grantees; refuse grant options, other privilege
+kinds and unexpected/browser grantees on private helpers. Source/typed ABI/security/
+inverse guards remain. Missing-grant negatives now remove ESSENTIAL mapping PUBLIC
+or private owner grants; redundant/optional service absence is not a policy breach.
+This is evidence-grounded compatibility, not deletion of negative assertions.
+
+Focused native selection EXIT0: all31 prerequisite negatives retained plus one managed
+ACL-variant entry proving actual NULL/default mapping and owner-only trigger forms,
+exact helper raw-metadata conservation on patch/replay and two forbidden browser-grant
+refusals. Only disposable fixture restoration changes grants. Log
+`exp08-departure-managed-acl.log` SHA256
+`c593dd58c4de9feed7885c02bb06b0de0433b768c93a9282fe6901a48ec4abfb`.
+Own database disposed/current cluster stopped. Carrier LF SHA256 is now
+`1f40c0b087d9fdf4b8bfdc108ccf8e20d102b2492714484f8a482aac0a43d3a7`;
+removal function body remains EXACTcc631b7a with original metadata/ACL. Earlier e3aa
+carrier selections remain historical, not new-head whole-run proof. Actual Preview
+14count0/d8c0 was renewed immediately before this unapplied carrier edit.
+
+Distinct non-author SOURCE review found no material ACL-safety issue, no execution.
+No-argument departure suite now60 outer entries (prior59 plus managed-variant entry),
+with31 prerequisite negatives and10 FK cases explicitly nested. Final60/full-parent,
+new exact-head CI, managed application/readback/full-schema/trigger integration,
+production and authenticated outcomes remain owed. Local full-parent ENOSPC FAIL
+remains open; current low capacity prohibits another broad rerun, not safe source work.

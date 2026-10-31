@@ -100,6 +100,79 @@ describe("ZION reuses the original Planning reader behind current native publica
     assert.equal(p.rpcArgs.length, 2, "revalidation is scope proof, not another plan read");
   });
 
+  it("requires the same original Planning source, including raw versions and nested facts, before publication", async () => {
+    for (const change of ["version", "nested", "removed"] as const) {
+      const source = { plans: [{ id: PLAN, title: "Prepare launch", updated_at: "2026-10-31T00:00:00.000001Z",
+        items: [{ id: ACTOR, status: "open" }] }], loose_items: [] };
+      const p = ports();
+      p.deps.caller = { rpc: async (name, args) => {
+        p.rpcArgs.push({ name, args });
+        return { data: name === "current_user_tenant_id" ? TENANT : structuredClone(source), error: null };
+      } };
+      const read = await readZionPlans(scope(), p.deps, "plan_list", { horizon: "week" });
+      assert.equal(read.model.success, true);
+      if (change === "version") source.plans[0].updated_at = "2026-10-31T00:00:00.000002Z";
+      if (change === "nested") source.plans[0].items[0].status = "done";
+      if (change === "removed") source.plans.length = 0;
+      assert.equal(await read.revalidate(), false, change);
+      assert.equal(p.rpcArgs.filter(row => row.name === "plan_list").length, 2, "same original source is checked, not a cached scope");
+    }
+  });
+
+  it("keeps the admitted source snapshot and reuses the exact original arguments for a current publication check", async () => {
+    const p = ports();
+    const input = { horizon: "week", limit: 3 };
+    const read = await readZionPlans(scope(), p.deps, "plan_list", input);
+    input.horizon = "year";
+    assert.equal(await read.revalidate(), true);
+    const queries = p.rpcArgs.filter(row => row.name === "plan_list");
+    assert.equal(queries.length, 2);
+    assert.deepEqual(queries[0].args, queries[1].args);
+    assert.equal(queries[1].args?.p_horizon, "week");
+  });
+
+  it("withholds publication when its original read marker or native stage cannot be renewed", async () => {
+    for (const boundary of ["receipt", "stage"] as const) {
+      const p = ports(), read = await readZionPlans(scope(), p.deps, "plan_list", {});
+      assert.equal(read.model.success, true);
+      if (boundary === "receipt") p.deps.recordRead = async () => false;
+      else p.deps.stageReadContext = async () => false;
+      assert.equal(await read.revalidate(), false, boundary);
+    }
+  });
+
+  it("retains the original source snapshot when the caller reuses a response object during staging", async () => {
+    const source = { plans: [{ id: PLAN, title: "Prepare launch", updated_at: "2026-10-31T00:00:00.000001Z", items: [] }], loose_items: [] };
+    const p = ports();
+    p.deps.caller = { rpc: async name => ({ data: name === "current_user_tenant_id" ? TENANT : source, error: null }) };
+    p.deps.stageReadContext = async () => { source.plans[0].updated_at = "2026-10-31T00:00:00.000002Z"; return true; };
+    const read = await readZionPlans(scope(), p.deps, "plan_list", {});
+    assert.ok(JSON.stringify(read.model).includes("2026-10-31T00:00:00.000001Z"));
+    assert.ok(!JSON.stringify(read.model).includes("2026-10-31T00:00:00.000002Z"));
+    assert.equal(await read.revalidate(), false);
+  });
+
+  it("retires a timed-out final source check before a late reply can start its pin read or native stage", async t => {
+    t.mock.timers.enable({ apis: ["setTimeout"] });
+    const p = ports(), read = await readZionPlans(scope(), p.deps, "plan_list", {});
+    let release!: (reply: { data: unknown; error: null }) => void, begin!: () => void;
+    const begun = new Promise<void>(resolve => { begin = resolve; });
+    p.deps.caller = { rpc: async (name, args) => {
+      p.rpcArgs.push({ name, args });
+      if (name !== "plan_list") throw Error("Late revalidation must not start another RPC");
+      begin(); return await new Promise(resolve => { release = resolve; });
+    } };
+    const pending = read.revalidate();
+    await begun;
+    t.mock.timers.tick(5001);
+    assert.equal(await pending, false);
+    release({ data: { plans: [], loose_items: [] }, error: null });
+    await new Promise<void>(resolve => setImmediate(resolve));
+    assert.deepEqual(p.rpcArgs.map(row => row.name), ["plan_list", "current_user_tenant_id", "plan_list"]);
+    assert.equal(p.events.filter(event => event === "stage").length, 1);
+    t.mock.timers.reset();
+  });
+
   it("snapshots arguments and scope before waiting, preserving original requested history semantics", async () => {
     const original = { ...scope(), storedTools: ["plan_list"] }, input = { plan_id: PLAN, status: "cancelled" };
     let first = true;

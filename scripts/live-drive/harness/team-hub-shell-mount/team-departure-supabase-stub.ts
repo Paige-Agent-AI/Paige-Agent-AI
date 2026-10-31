@@ -26,7 +26,10 @@ export const supabase = { ...incumbent,
     }
     if(name==='remove_solo_team_member'){
       attempts.push({tenant:tenant.id,target:args._member_user_id});
-      return {data:null,error:{code:'42501',message:'TEAM_MEMBER_PROTECTED: this Paige account is protected; nothing was changed'}};
+      const identity=new URLSearchParams(window.location.search).get('departure')==='identity';
+      return {data:null,error:{code:'42501',message:identity
+        ?'TEAM_MEMBER_IDENTITY_UNAVAILABLE: current account access could not be confirmed; nothing was removed'
+        :'TEAM_MEMBER_PROTECTED: this Paige account is protected; nothing was changed'}};
     }
     return incumbent.rpc(name,args);
   },

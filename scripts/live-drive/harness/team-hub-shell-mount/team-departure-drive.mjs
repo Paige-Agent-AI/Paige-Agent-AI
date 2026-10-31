@@ -6,9 +6,11 @@ const base=process.env.TEAM_DEPARTURE_URL??'http://127.0.0.1:5298';
 assert.equal(new URL(base).hostname,'127.0.0.1','Disposable local mount only');
 const disk=statfsSync(process.cwd());
 assert(disk.bavail*disk.bsize>=768*1024*1024,'Insufficient local disk headroom for this browser proof; no browser started');
-const out='docs/evidence/ui-delivery/assets/exp08-protected-departure';
+const scenario=process.env.TEAM_DEPARTURE_SCENARIO??'protected';
+assert(['protected','identity'].includes(scenario),'Known local refusal scenario required');
+const out=`docs/evidence/ui-delivery/assets/exp08-${scenario==='identity'?'identity':'protected'}-departure`;
 mkdirSync(out,{recursive:true});
-const report={scope:'real SoloApp / synthetic transport / not authenticated / no membership effect',records:[],failures:[]};
+const report={scope:'real SoloApp / synthetic transport / not authenticated / no membership effect',scenario,records:[],failures:[]};
 const {chromium}=await resolvePlaywright();
 const browser=await chromium.launch({headless:true,...(resolveExecutablePath()?{executablePath:resolveExecutablePath()}:{}),args:['--no-proxy-server']});
 try{
@@ -17,7 +19,7 @@ try{
   page.on('pageerror',e=>errors.push(String(e)));
   await page.route('**/*',route=>new URL(route.request().url()).hostname==='127.0.0.1'?route.continue():route.abort());
   const name=tenant==='a'?'Priya Nair':'Rowan Parker',account=tenant==='a'?'3855':'4120';
-  await page.goto(`${base}/solo/${account}/settings/team?theme=${theme}&tenant=${tenant}`,{waitUntil:'domcontentloaded',timeout:60000});
+  await page.goto(`${base}/solo/${account}/settings/team?theme=${theme}&tenant=${tenant}&departure=${scenario}`,{waitUntil:'domcontentloaded',timeout:60000});
   await page.getByRole('button',{name:`Actions for ${name}`,exact:true}).waitFor({timeout:45000});
   const shell=page.locator('[data-tenant-shell]');
   if(await shell.getAttribute('data-paige')!=='closed')await page.getByRole('button',{name:'Fold PAIGE conversation',exact:true}).first().click();
@@ -29,7 +31,9 @@ try{
   await open();
   const drawer=page.locator('.stw-drawer');await drawer.getByRole('button',{name:'Continue',exact:true}).press('Enter');
   await drawer.getByRole('button',{name:`Remove ${name}`,exact:true}).press('Enter');
-  const alert=drawer.getByRole('alert'),expected=`${name}'s Paige account is protected, so they can't be removed from the business here. Nothing changed.`;
+  const alert=drawer.getByRole('alert'),expected=scenario==='identity'
+    ?'Your account access could not be confirmed, so nothing was removed. Check your access before opening Team again.'
+    :`${name}'s Paige account is protected, so they can't be removed from the business here. Nothing changed.`;
   await alert.getByText(expected,{exact:true}).waitFor();
   assert(await drawer.getByRole('button',{name:'Try again',exact:true}).isDisabled());
   assert.equal(await page.evaluate(()=>window.__departureEvidence.attempts.length),1);

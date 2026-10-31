@@ -2265,3 +2265,28 @@ Own proof databases disposed/current QOF cluster cleanly stopped/PID marker abse
 This supersedes only the combined57 pending statement above. Real FK/transitive
 lock interactions, parent full proof, rendered copy and all stated carrier/customer
 gates remain owed. No production mutation or outcome-acceptance promotion.
+
+#### Same outcome4 — original profile foreign-key compatibility
+
+The same disposable proof now has an explicit `--identity-fk-only` selection modeling
+the actual catalog's profiles.user_id CASCADE and profiles.suspended_by NO ACTION
+constraints. **10/10 native cases PASS**, EXIT0: nine actual identity/removal waits in
+both orders plus a restriction refusal/rolled-back cascade followed by authorized
+team removal. Only a committed original Auth deletion may delete the actor profile;
+target membership/profile and audit consequences remain attributed to their writers.
+Transcript `exp08-member-identity-fk.log` SHA256
+`64a7feb6aa6a774b3098b3a37cb989efd2f691e6b23c7f58d8b5b5744dfb7721`.
+Own database disposed/current cluster stopped. The no-argument departure runner now
+requires this child to exit successfully, dispose its own database and return all10
+cases:58 outer checks = prior57 plus one explicitly nested10-case suite. Complete
+original parent native runner is LIVE at this checkpoint, not PASS. Original source,
+role/context/opposing/replay/drift/mutant controls remain retained.
+
+Non-author SOURCE review of the proof and local harness delta found no material
+finding; no reviewer execution. Local original Team-departure mount adds an identity
+scenario with separate output directory; protected default and earlier frames remain.
+New identity rendering is pending. Constraints alone are not the complete managed
+schema, actual trigger graph, JWT/RLS or authenticated-customer proof. Finite catalog
+inspection additionally covers relationship refresh/legal-profile/connector-cancel
+callees without direct Auth write-lock findings; that inspection is source evidence,
+not execution of those transitive paths. Carrier and full outcome gates remain owed.

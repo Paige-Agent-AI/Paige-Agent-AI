@@ -11,8 +11,9 @@ assert(['127.0.0.1','localhost','::1'].includes(host),'Dedicated loopback proof 
 assert.match(process.env.PGPORT??'',/^\d+$/,'Explicit local port required');
 const options=process.argv.slice(2),mutants=['scope','authority','pair-locks','protected','identity-check','identity-lock'];
 const protectedOnly=options.includes('--protected-only');
-const identityOnly=options.includes('--identity-only');
-assert(options.length<=1&&options.every(a=>a==='--baseline'||a==='--protected-only'||a==='--identity-only'||mutants.some(m=>a==='--mutant-'+m)),'Unknown proof option');
+const identityFkOnly=options.includes('--identity-fk-only');
+const identityOnly=options.includes('--identity-only')||identityFkOnly;
+assert(options.length<=1&&options.every(a=>a==='--baseline'||a==='--protected-only'||a==='--identity-only'||a==='--identity-fk-only'||mutants.some(m=>a==='--mutant-'+m)),'Unknown proof option');
 const mutant=mutants.find(m=>options.includes('--mutant-'+m));
 const repo=fileURLToPath(new URL('../../',import.meta.url));
 // Reuse the shared fixture unchanged, preserving the original EXP08 loopback-host ABI.
@@ -31,7 +32,7 @@ const source=(file,name)=>{const s=readFileSync(join(repo,file),'utf8');const a=
 const candidatePatch=readFileSync(join(repo,'scripts/proof/exp08-member-removal-currentness-patch.sql'),'utf8').replace(/\r\n/g,'\n');
 const connections=[];
 const ids={tenant:'e8000000-0000-4000-8000-000000080010',other:'e8000000-0000-4000-8000-000000080020',actor:'e8000000-0000-4000-8000-000000080300',target:'e8000000-0000-4000-8000-000000080200'};
-const resetIdentities=()=>sql(`TRUNCATE auth.users;INSERT INTO auth.users(id,email) VALUES('${ids.actor}','test-actor@tests.invalid'),('${ids.target}','test-target@tests.invalid');`);
+const resetIdentities=()=>sql(`TRUNCATE auth.users,public.profiles;INSERT INTO auth.users(id,email) VALUES('${ids.actor}','test-actor@tests.invalid'),('${ids.target}','test-target@tests.invalid');`);
 const output=[];
 const business=()=>sql("SELECT jsonb_build_object('members',(SELECT jsonb_agg(to_jsonb(t) ORDER BY t.user_id) FROM public.tenant_members t),'profiles',(SELECT jsonb_agg(to_jsonb(p) ORDER BY p.user_id) FROM public.profiles p),'audits',(SELECT jsonb_agg(to_jsonb(a)) FROM public.audit_logs a))");
 const candidate=!process.argv.includes('--baseline');
@@ -56,6 +57,11 @@ try{
  CREATE FUNCTION public.agency_can_manage_child(uuid,uuid) RETURNS boolean LANGUAGE sql AS $$SELECT false$$;
  CREATE FUNCTION public.agency_team_role(uuid,uuid) RETURNS text LANGUAGE sql AS $$SELECT NULL::text$$;
  GRANT USAGE ON SCHEMA auth,public TO authenticated,anon,service_role;`);
+ if(identityFkOnly)sql(`ALTER TABLE public.profiles
+  ADD CONSTRAINT profiles_user_id_fkey FOREIGN KEY(user_id) REFERENCES auth.users(id) ON DELETE CASCADE,
+  ADD COLUMN suspended_by uuid,
+  ADD CONSTRAINT profiles_suspended_by_fkey FOREIGN KEY(suspended_by) REFERENCES auth.users(id);
+  COMMENT ON CONSTRAINT profiles_user_id_fkey ON public.profiles IS 'Exact production constraint semantics; other profile columns/triggers remain outside this minimal fixture';`);
  sql(source('supabase/migrations/20270521000000_operator_authority_in_company_workspaces.sql','is_tenant_owner'));
  sql(source('supabase/migrations/20260714144656_tier_rail_phaseB_agency_standing.sql','current_user_tenant_id'));
  sql(source('supabase/migrations/20271115040008_exp08_team_lifecycle.sql','remove_solo_team_member'));
@@ -129,9 +135,9 @@ try{
    }
    output.push({change:c.name,authoredPreWriteRefusal:!!c.refused,originalRoleSync:true,success:!!c.success});
   }
-  sql('DROP TRIGGER trg_sync_tenant_member_to_user_roles ON public.tenant_members;DROP TRIGGER protect_owner_admin ON public.user_roles;TRUNCATE public.user_roles,auth.users,public.app_settings_owner;');
+  sql('DROP TRIGGER trg_sync_tenant_member_to_user_roles ON public.tenant_members;DROP TRIGGER protect_owner_admin ON public.user_roles;TRUNCATE public.user_roles,auth.users,public.profiles,public.app_settings_owner;');
  }
- if(candidate&&(!mutant||mutant==='identity-check')&&!protectedOnly)for(const c of [
+ if(candidate&&(!mutant||mutant==='identity-check')&&!protectedOnly&&!identityFkOnly)for(const c of [
   {name:'active actor',success:true},
   {name:'banned actor',banned:true},
   {name:'deleted actor',deleted:true},
@@ -175,10 +181,15 @@ try{
    assert(observed,'original removal must actually wait for the actor identity transaction');
   }finally{held.p.stdin.end(commit?'COMMIT;\n':'ROLLBACK;\n');assert.equal((await held.done).code,0);}
   const result=await waiting.done;
-  if(commit){assert.notEqual(result.code,0);assert(result.err.includes('TEAM_MEMBER_IDENTITY_UNAVAILABLE'),result.err);assert.equal(business(),before,'committed identity revocation leaves membership/profile/audit unchanged');}
+  if(commit){
+   assert.notEqual(result.code,0);assert(result.err.includes('TEAM_MEMBER_IDENTITY_UNAVAILABLE'),result.err);
+   const expected=JSON.parse(before);
+   if(identityFkOnly&&change==='delete')expected.profiles=expected.profiles.filter(p=>p.user_id!==ids.actor);
+   assert.deepEqual(JSON.parse(business()),expected,'revocation leaves all membership/target-profile/audit rows unchanged; only the original Auth cascade may delete actor profile');
+  }
   else{assert.equal(result.code,0,result.err);assert.equal(sql('SELECT count(*) FROM public.audit_logs'),'1');assert.equal(sql(`SELECT count(*) FROM public.tenant_members WHERE user_id='${ids.target}'`),'0');}
   assert(!/deadlock|statement timeout/i.test(result.err),'identity serialization must not depend on an abort');
-  output.push({change:'identity-first '+change,commit,actualIdentityLockWait:true,removed:!commit});
+  output.push({change:'identity-first '+change,commit,actualIdentityLockWait:true,removed:!commit,actualProfileFkSemantics:identityFkOnly});
  }
  if(candidate&&!mutant&&!protectedOnly)for(const change of ['ban','delete','soft-delete']){
   resetIdentities();
@@ -211,7 +222,24 @@ try{
   assert.equal(sql(`SELECT count(*) FROM public.tenant_members WHERE user_id='${ids.target}'`),'0');
   assert.equal(sql(`SELECT active_tenant_id IS NULL FROM public.profiles WHERE user_id='${ids.target}'`),'t');
   assert.equal(sql(`SELECT EXISTS(SELECT 1 FROM auth.users WHERE id='${ids.actor}' AND deleted_at IS NULL AND (banned_until IS NULL OR banned_until<=clock_timestamp()))`),'f');
-  output.push({change:'removal-first '+change,actualTargetLockWait:true,actualIdentityLockWait:true,serialRemovalThenRevocation:true,audits:1});
+  if(identityFkOnly&&change==='delete')assert.equal(sql(`SELECT count(*) FROM public.profiles WHERE user_id='${ids.actor}'`),'0','Auth deletion applies the original actor-profile cascade after removal');
+  output.push({change:'removal-first '+change,actualTargetLockWait:true,actualIdentityLockWait:true,serialRemovalThenRevocation:true,audits:1,actualProfileFkSemantics:identityFkOnly});
+ }
+ if(identityFkOnly){
+  resetIdentities();
+  sql(`TRUNCATE public.tenant_members,public.profiles,public.audit_logs,public.tenants;
+   INSERT INTO public.tenants VALUES('${ids.tenant}');
+   INSERT INTO public.tenant_members(tenant_id,user_id,status,is_owner,role) VALUES
+    ('${ids.tenant}','${ids.actor}','active',false,'admin'),('${ids.tenant}','${ids.target}','active',false,'member');
+   INSERT INTO public.profiles(user_id,active_tenant_id,suspended_by) VALUES('${ids.actor}','${ids.tenant}',NULL),('${ids.target}','${ids.tenant}','${ids.actor}');`);
+  const before=business();
+  assert.throws(()=>sql(`DELETE FROM auth.users WHERE id='${ids.actor}'`),e=>e.code==='23503','original suspended_by NO ACTION must refuse Auth deletion');
+  assert.equal(business(),before,'failed original Auth deletion rolls back its profile cascade');
+  sql(`BEGIN;SELECT set_config('request.jwt.claim.sub','${ids.actor}',true);SET LOCAL ROLE authenticated;SELECT public.remove_solo_team_member('${ids.target}','${ids.tenant}');COMMIT;`);
+  assert.equal(sql('SELECT count(*) FROM public.audit_logs'),'1');
+  assert.equal(sql(`SELECT count(*) FROM public.tenant_members WHERE user_id='${ids.target}'`),'0');
+  assert.equal(sql(`SELECT suspended_by='${ids.actor}' AND active_tenant_id IS NULL FROM public.profiles WHERE user_id='${ids.target}'`),'t','team removal neither bypasses nor rewrites original Auth restriction');
+  output.push({change:'original suspended_by NO ACTION',authDeleteRefused:true,authCascadeRolledBack:true,authorizedTeamRemoval:true,audits:1});
  }
  if(!protectedOnly&&!identityOnly)for(const change of ['unchanged','demoted','suspended','workspace']){
   resetIdentities();
@@ -349,7 +377,7 @@ try{
    output.push({change:'drift: '+name,refused:true,businessUnchanged:true,metadataRestored:true});
   }
  }
- if(candidate&&!mutant&&!protectedOnly){
+ if(candidate&&!mutant&&!protectedOnly&&!identityFkOnly){
   const signature='public.remove_solo_team_member(uuid,uuid)';
   const before=business(),definition=sql(`SELECT pg_get_functiondef('${signature}'::regprocedure)`);
   const identities=sql('SELECT jsonb_agg(to_jsonb(u) ORDER BY id) FROM auth.users u');
@@ -375,8 +403,16 @@ try{
    assert((child.stdout??'').includes('Disposed only the local proof database created by this run.'),name+' must dispose its own database before counting the mutation');
    output.push({change:'mutant: '+name,killed:true,actualBehaviorFailure:true});
   }
+  const child=spawnSync(process.execPath,[fileURLToPath(import.meta.url),'--identity-fk-only'],{encoding:'utf8',windowsHide:true,timeout:60000,maxBuffer:4e6});
+  if(child.error)throw child.error;
+  assert.equal(child.status,0,'original profile FK concurrency suite must pass: '+child.stderr);
+  const end=child.stdout.lastIndexOf('\nDisposed only the local proof database created by this run.');
+  assert(end>0,'FK child must dispose only its own database');
+  const report=JSON.parse(child.stdout.slice(0,end));
+  assert.equal(report.cases.length,10,'all original profile FK cases must execute');
+  output.push({change:'original profile FK suite',controls:report.cases,disposed:true});
  }
- if(!mutant)assert.equal(output.length,identityOnly?17:protectedOnly?8:candidate?57:4,'Every intended control must execute');
+ if(!mutant)assert.equal(output.length,identityFkOnly?10:identityOnly?17:protectedOnly?8:candidate?58:4,'Every intended control must execute');
  console.log(JSON.stringify({scope:'isolated native original writer/helpers; minimal tables and Auth/platform ports, no customer or RLS proof',cases:output},null,2));
 }finally{
  db.run(`SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname='${db.database}' AND pid<>pg_backend_pid()`,[],'postgres');

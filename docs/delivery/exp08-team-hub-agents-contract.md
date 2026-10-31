@@ -2033,3 +2033,26 @@ No duplicate runtime, registry, Work/memory/meter, approval inbox, scheduler, pr
 Receiving ACK, this original-matrix incorporation, canonical Google note readback, actual coding,
 integration, release, authenticated useful outcomes and final owner acceptance are separate evidence.
 One integrated owner evaluation remains; full assignment status is **STILL CODING**.
+<!-- EXP08 outcome-sequence receiving checkpoint; prior history preserved. -->
+## October31 owner sequencing: finish original outcome4
+
+Receiving ACK: original ANT147/5b88ccc9-4bc0-4fab-9f69-f4278437edfa.
+The primary original matrix outcome is **4, least privilege and departure/revocation**:
+an authorized owner ends a member or owner seat, reopens an accurate roster, and
+the former participant loses access while the original recovery path is preserved.
+All original18 cases, six amendments and five lifecycle journeys remain required.
+
+The frozen lower repair in original PR3130/ff7 is the named prerequisite exception
+for EXP13's original source-evidence/130013 outcome. Its managed Preview and actual
+source/ACL readback passed; database-contract41160479697 passed. General verify
+41160479734 is still running. Merge, production deployment/readback and the actual
+EXP13 predecessor receipt remain owed. This is not outcome4 acceptance.
+
+Then complete outcome4's remaining original Setup guard, owner/recovery/projection
+and interface integration, current tenant/role/privacy negatives, actual revocation,
+reload/reopen and recovery proof. The original E01 Setup request b618c8ac remains
+pending; no shared-writer takeover. Current source already withdraws the cached
+roster and captured controls after a native NULL or authority refusal; historical
+notes describing that source repair as missing do not override the current code.
+Existing notification/workshop work is preserved without starting another
+discretionary outcome. **STILL CODING**; one full integrated owner review remains owed.

@@ -1,3 +1,20 @@
+## EXP05 October30 — preserve the original reminder occurrence
+
+Verified [#3156/9f9da129](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3156)
+producer/Edge93/four-source/configuration and both-origin web release is recorded
+beside the original E05 rows in [Master §4.0](../PAIGE-MASTER-PROJECT-REFERENCE.md#40-shipped-delivery-log).
+Reuse the actual native claim acknowledgment and raw timestamp precision;
+never reconstruct an occurrence with a local clock or call its claim-stage
+version the final Work version. Missing acknowledgment holds before dispatch;
+an uncertain insert retains its original no-repeat claim.
+
+The exact eight-field metadata extends the existing notification, not a second
+store or sender. EXP08 still owns current-recipient admission, consumer mount
+and actual occurrence/read-state/reopen proof; no manual cron/provider effect
+was used. [Original evidence](../evidence/ui-delivery/exp05-reminder-occurrence-reference.md).
+This finite prerequisite does not close O01, the full ten/E5, ZION Planning's
+native integration or founder acceptance. Prior histories remain unchanged.
+
 ## EXP09 October30 — the enclosing history reader owns file-context continuity
 
 Verified [#3152/90a99e6f](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3152) source/web release is now recorded in [Master §4.0](../PAIGE-MASTER-PROJECT-REFERENCE.md#40-shipped-delivery-log). Removing the enclosing history initializer's null reset preserves the original private Documents lifetime during the SAME customer recheck. Initial unknown identity remains empty; native currentness/admission, genuine scope remounts, different native threads and explicit upload/Send remain authoritative. A retained identifier is never an authorization grant.
@@ -5600,6 +5617,20 @@ universal SOLO and full Experience acceptance. No second scheduler/ledger/runtim
 Original3109 reviewed0c771919262a6dd914000f4c21680d2fc484ffc9 normally merged62bdeca0866d31c7a2ce7f03516b2b333e70a730 after required exact-head checks, genuine Preview and recorded reviews. Same original task/message/thread reopening and scoped unsent PAIGE continuation reuse Work/Trust/domain writers. Native40008 and exact62 web were read back. Old62 Edge strict failure is retained; source-owner-coordinated notify-only refresh and normal compatible cumulative571 verifier record24/24 source/config matches, db-live/edge-live571 and public571 builds. Exact terminal API conclusion remains separately pending at this checkpoint. See Master4.0 and originalANT161; no authenticated customer outcome follows from source parity.
 
 Full EXP08 remains STILL CODING: all original18 rows/6 amendments/five lifecycle journeys retained; I2–I5/current management delegation, goals/adaptive coordination, A2c standing execution, both-chat workshop/proactive continuity and production result/receipt/reopen/recovery/role negatives remain built/partial/missing/proof owed according to original matrix. Owner-approved Solo bell/activity amendment is incorporated as MISSING/PROOF OWED; discover original Work/approval/recipient/read-state contracts, never operator notification data or a duplicate engine. Existing E01/E05/domain writers retain custody. ALG01/08/11/12 partial,03/13 gaps, actual evaluation/cost per verified outcome proof owed; no invented maturity. One integrated owner review after complete coding/integration/release; no customer acceptance or new activation asserted.
+
+## EXP08 October31 — lower lifecycle/admission production source receipt
+
+Original3130 reviewed00f75f0c78abea242dde960674e370967772cc61/all13 exactchecks,
+two web successes and non-author SOURCE review6538715894; normal merge21da54c89.
+Native80008/90008/100008/110008 and8 catalogue/ACL plus3 inverse readbacks match;
+normal Chat606/JWTtrue certificate325 source bindings and both production app builds
+are verified. Exact workflow/deployment identities and proof limits are in the
+[Master4.0](../PAIGE-MASTER-PROJECT-REFERENCE.md#40-shipped-delivery-log) and
+[original receipt](https://github.com/Paige-Agent-AI/Paige-Agent-AI/pull/3130#issuecomment-6539217377).
+Actual predecessor receipt delivered to original EXP13; it is not worker/fact/Memory/
+Work activation or authenticated outcome acceptance. Full original Team lifecycle,
+both-chat workshop/goals/standing authority and one integrated owner review remain
+STILL CODING. Existing domain writers and all original matrix rows remain authoritative.
 
 ## 2026-10-30 EXP02 — weekly delivery and Billing release readback
 

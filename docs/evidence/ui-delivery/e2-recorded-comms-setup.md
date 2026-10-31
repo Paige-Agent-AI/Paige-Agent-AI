@@ -225,3 +225,61 @@ Independent current915 Edge41009746030/job123912694812 failed source parity
 for two original importers. Existing EXP04 release owner receiving request is
 ANT51/9442bda5. No E02 upload/tag/retry, containing-merge bypass or action/provider
 activation. Same full19/nine/role/Live/founder/monthly boundaries remain open.
+
+## October31 UTC — current full-shell source proof and corrected release gate
+
+The owner's preview question prompted a fresh policy/finding audit. Current
+AGENTS merge-after-green and UI evidence rules do not impose a separate ordinary
+customer sign-in to a frontend preview as a universal source-release gate. That
+extra access request is withdrawn (ANT138/66eeb00a); this is not a waiver, customer
+acceptance or permission to bypass this original material finding.
+
+Same3018 receives actual main `d95f7ff3d060ef8060dbff11b8bdb63c4f6deea9` at
+`ea41752aedb825007ca75dc8cd27c12c30308d4f`, tree
+`b736ed1bb5d0fe32daf9f2d6b48fddc3bde4491f`. ALL18,700 incoming outside-owned
+leaves, ten original product/test/raster/evidence leaves and the original three
+shared-document additions were independently conserved; removing each addition
+reconstructs its WHOLE incoming document. Coordinator confirmed this ordinary
+composition is not blocked by E13's separate NEW mechanical-log edit slot.
+
+The CURRENT original shell/CommandHub/Systems component/CSS now has EIGHT fresh
+native JPEG frames at EXACT1536x770,1366x768,1024x768,900x1000 with PAIGE folded
+and open. Every current frame retains the same original finding, loaded Schibsted
+Grotesk100-900, strict true/false facts and corrected recorded-setup disclosure;
+document width equals viewport and close targets are44x44. No READY overclaim or
+private sentinel appears. Frames and measured scroll/geometry are in the existing
+[current-source gallery/manifest](e2-recorded-comms/current-main/render-observations.json).
+Chat is a disabled synthetic composer, not authenticated conversation proof.
+
+Actual390x844 DOM/mobile reflow has a native390x843 JPEG; the one-pixel raster
+difference is explicit, not resized or presented as844. Escape returns focus to
+the original Email and phone setup opener; Enter reopens the same finding at
+desktop and phone widths. Viewport overrides were reset and only the owned proof
+tab/server closed. No original domain, provider, approval or action was invoked.
+
+The original ACTUAL native200-percent/scroll proof above remains supporting
+evidence on its unchanged rendered source. An explicit recursive comparison from
+443300fe to ea417 verifies the original component, CommandHub, shell, styles,
+font tree, Tailwind/PostCSS and entire committed renderer tree unchanged. ALL
+incumbent dependency entries/integrities are unchanged;16 additional Live-only
+entries are not consumed by the disabled-conversation renderer. This does not
+claim a new native zoom run: today's native attempt was occluded by an unrelated
+foreground window, is INVALID/excluded, and performed no native input or zoom
+change. Older actual two-legitimate-SOLO checks remain BASELINE, not this release.
+
+Initial blank/paused-document frames, the384MiB renderer heap failure and timed-out
+captures are retained/excluded. A controlled same512MiB local renderer and one
+documented fresh-owned-tab recovery produced the valid frames. Prior209/7 source
+tests remain supporting evidence on identical product/test blobs; no new heavy
+local test job was started under current low available memory. New final-head
+review and ALL required hosted CI remain mandatory; prior greens are not borrowed.
+
+Functional: source implementation unchanged; final release and real customer proof
+owed. Visual: current full-shell8/mobile/keyboard proof above, with precise zoom
+boundaries. Experiential: original review/Chat toggle/source and keyboard return
+preserved in synthetic source; real production roles/cohorts/reload/AT/Live remain
+owed. Founder Acceptance/all19/nine OPEN. Original material thread remains OPEN
+until final documented source-evidence disposition and required release checks.
+No algorithm/catalogue maturity, capability/provider/scan/action activation or
+customer release identity/announcement. Safe production QA follows ordinary
+reviewed release/readback; it is never inferred from these synthetic frames.

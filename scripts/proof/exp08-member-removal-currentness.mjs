@@ -1,6 +1,6 @@
 // Original EXP08 outcome4 departure proof. Explicit disposable loopback database only.
 import assert from 'node:assert/strict';
-import {spawn} from 'node:child_process';
+import {spawn,spawnSync} from 'node:child_process';
 import {readFileSync} from 'node:fs';
 import {join} from 'node:path';
 import {fileURLToPath} from 'node:url';
@@ -8,14 +8,19 @@ import {OperatorPostgresFixture} from './operator-postgres-fixture.mjs';
 assert.equal(process.env.EXP08_DISPOSABLE,'1','Explicit disposable proof opt-in required');
 assert.equal(process.env.PGHOST,'127.0.0.1','Dedicated loopback proof only');
 assert.match(process.env.PGPORT??'',/^\d+$/,'Explicit local port required');
-assert(process.argv.slice(2).every(a=>a==='--baseline'),'Unknown proof option');
+const options=process.argv.slice(2),mutants=['scope','authority','pair-locks'];
+assert(options.length<=1&&options.every(a=>a==='--baseline'||mutants.some(m=>a==='--mutant-'+m)),'Unknown proof option');
+const mutant=mutants.find(m=>options.includes('--mutant-'+m));
 const repo=fileURLToPath(new URL('../../',import.meta.url));
 const db=new OperatorPostgresFixture(Number(process.env.PGPORT));db.prefix=()=>'';
 const program=()=>db.psql,args=()=>db.args(),sql=s=>db.run(s);
 const source=(file,name)=>{const s=readFileSync(join(repo,file),'utf8');const a=s.indexOf('CREATE OR REPLACE FUNCTION public.'+name+'('),b=s.indexOf('$function$;',a);assert(a>=0&&b>a);return s.slice(a,b+11);};
+// Canonical Git/LF for this never-applied candidate only; incumbent source hashes stay exact.
+const candidatePatch=readFileSync(join(repo,'scripts/proof/exp08-member-removal-currentness-patch.sql'),'utf8').replace(/\r\n/g,'\n');
 const connections=[];
 const ids={tenant:'e8000000-0000-4000-8000-000000080010',other:'e8000000-0000-4000-8000-000000080020',actor:'e8000000-0000-4000-8000-000000080300',target:'e8000000-0000-4000-8000-000000080200'};
 const output=[];
+const business=()=>sql("SELECT jsonb_build_object('members',(SELECT jsonb_agg(to_jsonb(t) ORDER BY t.user_id) FROM public.tenant_members t),'profiles',(SELECT jsonb_agg(to_jsonb(p) ORDER BY p.user_id) FROM public.profiles p),'audits',(SELECT jsonb_agg(to_jsonb(a)) FROM public.audit_logs a))");
 const candidate=!process.argv.includes('--baseline');
 const delay=()=>new Promise(r=>setTimeout(r,20));
 function connection(text,interactive=false){const p=spawn(program('psql'),args(),{stdio:['pipe','pipe','pipe'],windowsHide:true});let out='',err='';p.stdout.on('data',d=>out+=d);p.stderr.on('data',d=>err+=d);const done=new Promise((resolve,reject)=>{p.on('error',reject);p.on('close',code=>resolve({code,out,err}));});p.stdin[interactive?'write':'end'](text+'\n');connections.push({p,done});return {p,done,read:()=>out};}
@@ -44,9 +49,21 @@ try{
  assert.equal(sql("SELECT md5(prosrc) FROM pg_proc WHERE oid='public.remove_solo_team_member(uuid,uuid)'::regprocedure"),'d8c0eb6a8fdc3fef52eda7df4f9274e1');
  if(candidate){
   const metadata=sql("SELECT (to_jsonb(p)-'prosrc')::text FROM pg_proc p WHERE oid='public.remove_solo_team_member(uuid,uuid)'::regprocedure");
-  const patch=readFileSync(join(repo,'scripts/proof/exp08-member-removal-currentness-patch.sql'),'utf8');
+  const patch=candidatePatch;
   sql(patch);sql(patch);
   assert.equal(sql("SELECT (to_jsonb(p)-'prosrc')::text FROM pg_proc p WHERE oid='public.remove_solo_team_member(uuid,uuid)'::regprocedure"),metadata,'all original pg_proc metadata and ACLs conserved on patch/replay');
+  if(mutant){
+   // psql on Windows renders LF as CRLF; normalize the transport copy, never a database hash.
+   const before=sql("SELECT pg_get_functiondef('public.remove_solo_team_member(uuid,uuid)'::regprocedure)").replace(/\r\n/g,'\n');
+   const edits={
+    scope:['IF public.current_user_tenant_id() IS DISTINCT FROM _tenant THEN','IF false THEN'],
+    authority:['IF NOT _caller_owner AND NOT EXISTS (\n    SELECT 1 FROM public.tenant_members current_actor','IF false AND NOT EXISTS (\n    SELECT 1 FROM public.tenant_members current_actor'],
+    'pair-locks':['  PERFORM 1 FROM public.tenant_members departure_seat\n    WHERE departure_seat.tenant_id = _tenant AND departure_seat.user_id IN (_actor, _member_user_id)\n    ORDER BY departure_seat.user_id FOR UPDATE;','  PERFORM 1;'],
+   };
+   const [original,replacement]=edits[mutant];
+   assert.equal(before.split(original).length,2,'mutant must alter exactly one actual source span: '+JSON.stringify(before.match(/IF NOT _caller_owner[\s\S]{0,130}/g)));
+   sql(before.replace(original,replacement));
+  }
  }
  for(const change of ['unchanged','demoted','suspended','workspace']){
   sql(`TRUNCATE public.tenant_members,public.profiles,public.audit_logs,public.tenants;
@@ -100,10 +117,11 @@ try{
    second=connection(`SET application_name='exp08_opposing_second';SET statement_timeout='10s';SELECT set_config('request.jwt.claim.sub','${ids.target}',false);SET ROLE authenticated;SELECT public.remove_solo_team_member('${ids.actor}','${ids.tenant}');`);
    let secondWait=false;
    for(let i=0;i<150;i++){
-    if(sql("SELECT EXISTS(SELECT 1 FROM pg_stat_activity w WHERE w.application_name='exp08_opposing_second' AND w.wait_event_type='Lock' AND EXISTS(SELECT 1 FROM pg_stat_activity h WHERE h.application_name='exp08_opposing_first' AND h.pid=ANY(pg_blocking_pids(w.pid))))")==='t'){secondWait=true;break;}
+    if(sql("SELECT EXISTS(SELECT 1 FROM pg_stat_activity w WHERE w.application_name='exp08_opposing_second' AND w.wait_event_type='Lock')")==='t'){secondWait=true;break;}
     await delay();
    }
-   assert(secondWait,'opposing departure uses the same original membership row order');
+   assert(secondWait,'opposing departure must actually wait');
+   assert.equal(sql("SELECT EXISTS(SELECT 1 FROM pg_stat_activity w WHERE w.application_name='exp08_opposing_second' AND EXISTS(SELECT 1 FROM pg_stat_activity h WHERE h.application_name='exp08_opposing_first' AND h.pid=ANY(pg_blocking_pids(w.pid))))"),'t','opposing departure uses the same original membership row order');
   }finally{held.p.stdin.end('COMMIT;\n');assert.equal((await held.done).code,0);}
   const a=await first.done,b=await second.done;
   assert.equal(a.code,0,a.err);assert.notEqual(b.code,0);assert(b.err.includes('your active workspace changed'),b.err);
@@ -114,11 +132,51 @@ try{
   output.push({change:'opposing-departures',actualMembershipOrderWait:true,authorizedRemoval:true,revokedCallerRefused:true,deadlock:false,audits:1});
  }
  if(candidate){
+  for(const c of [
+   {name:'self',self:true,error:'you cannot remove yourself'},
+   {name:'wrong expected workspace',wrongWorkspace:true,error:'your active workspace changed'},
+   {name:'member caller',actorRole:'member',error:'only an owner or an admin'},
+   {name:'owner target',targetOwner:true,error:'an owner cannot be removed'},
+   {name:'admin target',targetRole:'admin',error:'only the workspace owner may remove an admin'},
+   {name:'foreign target',foreign:true,code:'P0001',error:'that person is not on this workspace'},
+   {name:'anonymous execution',role:'anon',error:'permission denied for function'},
+   {name:'service execution',role:'service_role',error:'permission denied for function'},
+   {name:'suspended target',targetStatus:'suspended',success:true},
+   {name:'original company standing without actor seat',company:true,success:true},
+   {name:'original missing-profile fallback',missingProfile:true,success:true},
+  ]){
+   sql(`TRUNCATE public.tenant_members,public.profiles,public.audit_logs,public.tenants;
+    INSERT INTO public.tenants VALUES('${ids.tenant}'),('${ids.other}');
+    INSERT INTO public.tenant_members(tenant_id,user_id,status,is_owner,role) VALUES
+     ('${ids.tenant}','${ids.actor}','active',false,'${c.actorRole??'admin'}'),
+     ('${c.foreign?ids.other:ids.tenant}','${ids.target}','${c.targetStatus??'active'}',${c.targetOwner?'true':'false'},'${c.targetRole??'member'}');
+    INSERT INTO public.profiles VALUES('${ids.actor}','${ids.tenant}'),('${ids.target}','${c.foreign?ids.other:ids.tenant}');`);
+   if(c.missingProfile)sql(`DELETE FROM public.profiles WHERE user_id='${ids.actor}'`);
+   if(c.company){
+    sql(`DELETE FROM public.tenant_members WHERE user_id='${ids.actor}';
+     CREATE OR REPLACE FUNCTION public.is_company_workspace(uuid) RETURNS boolean LANGUAGE sql AS $$SELECT $1='${ids.tenant}'::uuid$$;
+     CREATE OR REPLACE FUNCTION public.is_platform_admin(uuid) RETURNS boolean LANGUAGE sql AS $$SELECT $1='${ids.actor}'::uuid$$;`);
+   }
+   const before=business();
+   const call=()=>sql(`BEGIN;SELECT set_config('request.jwt.claim.sub','${ids.actor}',true);SET LOCAL ROLE ${c.role??'authenticated'};SELECT public.remove_solo_team_member('${c.self?ids.actor:ids.target}','${c.wrongWorkspace?ids.other:ids.tenant}');COMMIT;`);
+   if(c.success){
+    call();
+    assert.equal(sql(`SELECT count(*) FROM public.tenant_members WHERE tenant_id='${ids.tenant}' AND user_id='${ids.target}'`),'0',c.name);
+    assert.equal(sql('SELECT count(*) FROM public.audit_logs'),'1',c.name);
+    assert.equal(sql(`SELECT active_tenant_id IS NULL FROM public.profiles WHERE user_id='${ids.target}'`),'t',c.name);
+   }else{
+    assert.throws(call,e=>e.code===(c.code??'42501')&&e.message.includes(c.error),c.name+' must use its original authority refusal');
+    assert.equal(business(),before,c.name+' must change no business row');
+   }
+   if(c.company)sql('CREATE OR REPLACE FUNCTION public.is_company_workspace(uuid) RETURNS boolean LANGUAGE sql AS $$SELECT false$$;CREATE OR REPLACE FUNCTION public.is_platform_admin(uuid) RETURNS boolean LANGUAGE sql AS $$SELECT false$$;');
+   output.push({change:'original boundary: '+c.name,success:c.success??false,businessEffects:c.success?1:0});
+  }
+ }
+ if(candidate){
   const signature='public.remove_solo_team_member(uuid,uuid)';
   const saved=sql(`SELECT pg_get_functiondef('${signature}'::regprocedure)`);
   const metadata=sql(`SELECT (to_jsonb(p)-'prosrc')::text FROM pg_proc p WHERE oid='${signature}'::regprocedure`);
-  const business=()=>sql("SELECT jsonb_build_object('members',(SELECT jsonb_agg(to_jsonb(t) ORDER BY t.user_id) FROM public.tenant_members t),'profiles',(SELECT jsonb_agg(to_jsonb(p) ORDER BY p.user_id) FROM public.profiles p),'audits',(SELECT jsonb_agg(to_jsonb(a)) FROM public.audit_logs a))");
-  const before=business(),patch=readFileSync(join(repo,'scripts/proof/exp08-member-removal-currentness-patch.sql'),'utf8');
+  const before=business(),patch=candidatePatch;
   for(const [name,change] of [
    ['source',saved.replace('BEGIN','BEGIN\n PERFORM 1;')],
    ['security',`ALTER FUNCTION ${signature} SECURITY INVOKER`],
@@ -140,6 +198,17 @@ try{
    output.push({change:'drift: '+name,refused:true,businessUnchanged:true,metadataRestored:true});
   }
  }
+ if(candidate&&!mutant){
+  for(const name of mutants){
+   const child=spawnSync(process.execPath,[fileURLToPath(import.meta.url),'--mutant-'+name],{encoding:'utf8',windowsHide:true,timeout:60000,maxBuffer:4e6});
+   if(child.error)throw child.error;
+   assert.equal(child.status,1,'changed original source must fail its actual behavior control: '+name);
+   assert((child.stderr??'').includes(name==='pair-locks'?'opposing departure uses the same original membership row order':'candidate must refuse through the intended authority boundary'),name+' must fail for the specific reintroduced behavior, not unrelated setup: '+child.stderr);
+   assert((child.stdout??'').includes('Disposed only the local proof database created by this run.'),name+' must dispose its own database before counting the mutation');
+   output.push({change:'mutant: '+name,killed:true,actualBehaviorFailure:true});
+  }
+ }
+ if(!mutant)assert.equal(output.length,candidate?29:4,'Every intended control must execute');
  console.log(JSON.stringify({scope:'isolated native original writer/helpers; minimal tables and Auth/platform ports, no customer or RLS proof',cases:output},null,2));
 }finally{
  db.run(`SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname='${db.database}' AND pid<>pg_backend_pid()`,[],'postgres');

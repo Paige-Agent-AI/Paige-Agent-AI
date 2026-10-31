@@ -2092,3 +2092,18 @@ in the revised patch and runner, with SOURCE-ONLY assurance and no test executio
 Mutants, broader company/agency/Auth/protected-account and other-writer interactions,
 original full-runner/CI registration and managed deployment are still owed. This
 unversioned successor candidate does not alter frozen3130/833 or complete outcome4.
+
+The same proof now passes29 intended controls, including11 additive original
+role/tenant/refusal and compatibility cases plus three causal mutants. A mutation
+counts only after an actual child run fails the specific behavior assertion and
+disposes its own database; setup failures cannot qualify. The first authority
+mutation failed its exact-span setup check and was retained, not counted killed.
+Its diagnostic confirmed Windows psql LF-to-CRLF rendering. Only the transport copy
+and never-applied candidate use canonical Git/LF; actual database hash guards are
+unchanged. Each repaired negative leaves the full membership/profile/audit snapshot
+unchanged, and positive controls retain the original effects. Original company
+standing without an actor seat, suspended-target removal and missing-profile
+fallback remain usable under their original contracts. The final29-control run
+exited0 and stopped its owned cluster. Non-author SOURCE-ONLY review found no
+material finding; the reviewer ran no tests. Actual Auth/RLS/agency/protected-account,
+other-writer integration, full CI/native carrier and customer proof remain owed.
